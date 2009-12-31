@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.8 2009/01/02 15:35:54 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.9 2009/12/31 11:50:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -102,6 +102,10 @@
 #define LDC_SET_MAP_TABLE	0xea
 #define LDC_GET_MAP_TABLE	0xeb
 #define LDC_COPY		0xec
+
+#define LDC_MAPIN		0xed
+#define LDC_UNMAP		0xee
+#define LDC_REVOKE		0xef
 
 #define RNG_GET_DIAG_CONTROL	0x130
 #define RNG_CTL_READ		0x131
@@ -497,6 +501,21 @@ ENTRY(hv_ldc_copy)
 	ta	FAST_TRAP
 	retl
 	 stx	%o1, [%g5]
+
+ENTRY(hv_ldc_mapin)
+	mov	%o2, %o4
+	mov	LDC_MAPIN, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o4]
+	retl
+	 stx	%o2, [%o3]
+
+ENTRY(hv_ldc_unmap)
+	mov	%o1, %o2
+	mov	LDC_UNMAP, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
 
 ENTRY(hv_rng_get_diag_control)
 	mov	RNG_GET_DIAG_CONTROL, %o5
