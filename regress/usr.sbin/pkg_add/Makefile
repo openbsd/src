@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2009/12/31 11:32:09 espie Exp $
+# $OpenBSD: Makefile,v 1.26 2009/12/31 12:12:59 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
@@ -119,6 +119,15 @@ missing: rep1/missa-0.tgz rep1/missb-0.tgz rep1/missc-0.tgz rep1/missd-0.tgz rep
 	ROOT=${D16} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} missc
 	-ROOT=${D15} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} missa missb missf
 
+lib-report1: rep0/o1-0.tgz rep1/o1-1.tgz rep1/p1-0.tgz
+	-rm -rf ${D17}
+	ROOT=${D17} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o1
+	ROOT=${D17} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u o1
+
+lib-report2: rep0/o2-0.tgz rep1/o2-1.tgz rep1/p2-0.tgz
+	-rm -rf ${D18}
+	ROOT=${D18} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o2
+	ROOT=${D18} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u o2
 plist1:
 	@echo "@owner "`whoami` >$@
 	@echo ${LONG1} >>$@
@@ -179,17 +188,28 @@ rep0/a-0.tgz:
 rep1/a-1.tgz rep0/b-0.tgz rep0/i-0.tgz rep0/j-0.tgz rep1/j-1.tgz \
 rep1/i-1.tgz rep0/k-0.tgz rep0/l-0.tgz rep1/l-1.tgz rep0/m-0.tgz \
 rep0/n-0.tgz rep1/m-1.tgz rep0/o-0.tgz rep0/fam-0.tgz \
+rep0/o1-0.tgz rep0/o2-0.tgz \
 rep1/missc-0.tgz:
 	${PKG_CREATE} -f ${.CURDIR}/empty $@
 
 rep1/o-1.tgz:
 	${PKG_CREATE} -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
 
-rep1/p-0.tgz: plist8
+rep1/o1-1.tgz:
+	${PKG_CREATE} -P't/p1:p1-*:p1-0' -W'coincoin.0' -f ${.CURDIR}/empty $@
+
+rep1/o2-1.tgz:
+	${PKG_CREATE} -P't/p2:p2-*:p2-0' -W'coincoin.0' -f ${.CURDIR}/empty $@
+
+rep1/p-0.tgz rep1/p1-0.tgz: plist8
 	mkdir -p ${SRC13}/lib
 	@touch ${SRC13}/lib/libcoincoin.so.0.0
 	${PKG_CREATE} -B src13 -DLIBcoincoin_VERSION=0.0 -f plist8 $@
 
+rep1/p2-0.tgz: plist8
+	mkdir -p ${SRC14}/lib
+	@touch ${SRC14}/lib/libcoincoin.so.0
+	${PKG_CREATE} -B src14 -DLIBcoincoin_VERSION=0 -f plist8 $@
 
 rep1/b-1.tgz:
 	${PKG_CREATE} -P't/a:a-*:a-1' -f ${.CURDIR}/empty $@
@@ -298,7 +318,8 @@ rep1/missf-0.tgz:
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
-	collision-check1 collision-check2 collision-check4 collision-check5
+	collision-check1 collision-check2 collision-check4 collision-check5 \
+	lib-report1 lib-report2
 
 clean:
 	-rm -rf rep* dest* plist* src*
