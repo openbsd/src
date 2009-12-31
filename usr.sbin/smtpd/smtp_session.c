@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.127 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.128 2009/12/31 15:37:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -530,8 +530,16 @@ session_command(struct session *s, char *cmd)
 	char		*ep, *args;
 	unsigned int	 i;
 
-	if ((ep = strchr(cmd, ':')) == NULL)
+	/*
+	 * unlike other commands, "mail from" and "rcpt to" contain a
+	 * space in the command name.
+	 */
+	if (strncasecmp("mail from:", cmd, 10) == 0 ||
+	    strncasecmp("rcpt to:", cmd, 8) == 0)
+		ep = strchr(cmd, ':');
+	else
 		ep = strchr(cmd, ' ');
+
 	if (ep != NULL) {
 		*ep = '\0';
 		args = ++ep;
