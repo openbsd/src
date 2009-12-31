@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.115 2009/12/31 14:43:54 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.116 2009/12/31 14:46:37 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -563,7 +563,7 @@ sub solve_depends
 	$self->{all_dependencies} = {};
 	$self->{to_register} = {};
 	$self->{deplist} = {};
-	$self->{installed} = [];
+	delete $self->{installed};
 
 	for my $package ($self->{set}->newer) {
 		$package->{before} = [];
