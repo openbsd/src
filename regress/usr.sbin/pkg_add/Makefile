@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.23 2009/12/12 17:15:58 espie Exp $
+# $OpenBSD: Makefile,v 1.24 2009/12/31 10:46:15 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
-	merge-update split-update big-merge family-circus
+	merge-update split-update big-merge family-circus missing
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -114,6 +114,11 @@ family-circus: old/glib-0.0.tgz old/fam-0.0.tgz new/fam-1.0.tgz new/glib-1.0.tgz
 	ROOT=${D15} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} glib
 	ROOT=${D15} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -F updatedepends -u glib
 
+missing: new/missa-0.tgz new/missb-0.tgz new/missc-0.tgz new/missd-0.tgz new/missf-0.tgz
+	-rm -rf ${D16}
+	ROOT=${D16} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} missc
+	ROOT=${D15} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} missa missb missf
+
 plist1:
 	@echo "@owner "`whoami` >$@
 	@echo ${LONG1} >>$@
@@ -165,12 +170,16 @@ plist10:
 	@echo "@conflict fam-*" >$@
 	@echo "@pkgpath test/fam" >>$@
 
+plist11:
+	@echo "@conflict missc-*" >$@
+
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
 
 new/a-1.0.tgz old/b-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz new/j-1.0.tgz \
 new/i-1.0.tgz old/k-0.0.tgz old/l-0.0.tgz new/l-1.0.tgz old/m-0.0.tgz \
-old/n-0.0.tgz new/m-1.0.tgz old/o-0.0.tgz old/fam-0.0.tgz:
+old/n-0.0.tgz new/m-1.0.tgz old/o-0.0.tgz old/fam-0.0.tgz \
+new/missc-0.tgz:
 	${PKG_CREATE} -f ${.CURDIR}/empty $@
 
 new/o-1.0.tgz:
@@ -274,6 +283,18 @@ new/fam-1.0.tgz: plist9
 
 new/gamin-0.0.tgz: plist10
 	${PKG_CREATE} -f plist10 $@
+
+new/missa-0.tgz:
+	${PKG_CREATE} -P'test/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
+
+new/missb-0.tgz:
+	${PKG_CREATE} -P'test/missd:missd-*:missd-0' -f ${.CURDIR}/empty $@
+
+new/missd-0.tgz: plist11
+	${PKG_CREATE} -f plist11 $@
+
+new/missf-0.tgz:
+	${PKG_CREATE} -P'test/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
