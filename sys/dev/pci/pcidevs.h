@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1518 2009/12/25 22:01:34 miod Exp 
+ *	OpenBSD: pcidevs,v 1.1519 2009/12/31 17:34:19 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1609,7 +1609,6 @@
 #define	PCI_PRODUCT_CIRRUS_CS4610	0x6001		/* CS4610 SoundFusion */
 #define	PCI_PRODUCT_CIRRUS_CS4615	0x6004		/* CS4615 */
 #define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280/46xx CrystalClear */
-#define	PCI_PRODUCT_CIRRUS_CS4615	0x6004		/* CS4615 */
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear */
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
@@ -4564,6 +4563,9 @@
 #define	PCI_PRODUCT_RICOH_R5C832	0x0832		/* 5C832 Firewire */
 #define	PCI_PRODUCT_RICOH_R5C843	0x0843		/* 5C843 MMC */
 #define	PCI_PRODUCT_RICOH_R5C852	0x0852		/* 5C852 xD */
+#define	PCI_PRODUCT_RICOH_R5U230	0xe230		/* 5U230 Memory Stick */
+#define	PCI_PRODUCT_RICOH_R5U822	0xe822		/* 5U822 SD/MMC */
+#define	PCI_PRODUCT_RICOH_R5U832	0xe832		/* 5U832 Firewire */
 
 /* Rockwell products */
 #define	PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1	0x2005		/* RS56/SP-PCI11P1 Modem */

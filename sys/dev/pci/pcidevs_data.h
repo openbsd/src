@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1518 2009/12/25 22:01:34 miod Exp 
+ *	OpenBSD: pcidevs,v 1.1519 2009/12/31 17:34:19 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4626,10 +4626,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280,
 	    "CS4280/46xx CrystalClear",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4615,
-	    "CS4615",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
@@ -15202,6 +15198,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C852,
 	    "5C852 xD",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5U230,
+	    "5U230 Memory Stick",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5U822,
+	    "5U822 SD/MMC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5U832,
+	    "5U832 Firewire",
 	},
 	{
 	    PCI_VENDOR_ROCKWELL, PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1,
