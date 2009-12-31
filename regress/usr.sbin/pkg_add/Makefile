@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.27 2009/12/31 12:58:22 espie Exp $
+# $OpenBSD: Makefile,v 1.28 2009/12/31 13:31:53 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
-	merge-update split-update big-merge family-circus missing
+	merge-update split-update big-merge family-circus missing \
+	lib-report1 lib-report2 lib-report3
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -122,12 +123,17 @@ missing: rep1/missa-0.tgz rep1/missb-0.tgz rep1/missc-0.tgz rep1/missd-0.tgz rep
 lib-report1: rep0/o1-0.tgz rep1/o1-1.tgz rep1/p1-0.tgz
 	@-rm -rf ${D17}
 	@ROOT=${D17} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o1
-	@ROOT=${D17} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u o1
+	-@ROOT=${D17} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u o1
 
 lib-report2: rep0/o2-0.tgz rep1/o2-1.tgz rep1/p2-0.tgz
 	@-rm -rf ${D18}
 	@ROOT=${D18} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o2
-	@ROOT=${D18} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u o2
+	-@ROOT=${D18} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u o2
+
+lib-report3: rep0/o3-0.tgz
+	@-rm -rf ${D19}
+	-@ROOT=${D19} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o3
+
 plist1:
 	@echo "@owner "`whoami` >$@
 	@echo ${LONG1} >>$@
@@ -200,6 +206,9 @@ rep1/o1-1.tgz:
 
 rep1/o2-1.tgz:
 	@${PKG_CREATE} -P't/p2:p2-*:p2-0' -W'coincoin.0' -f ${.CURDIR}/empty $@
+
+rep0/o3-0.tgz:
+	@${PKG_CREATE} -W'unlikelylibraryname.0.0' -f ${.CURDIR}/empty $@
 
 rep1/p-0.tgz rep1/p1-0.tgz: plist8
 	@mkdir -p ${SRC13}/lib
@@ -312,8 +321,7 @@ rep1/missf-0.tgz:
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
-	collision-check1 collision-check2 collision-check4 collision-check5 \
-	lib-report1 lib-report2
+	collision-check1 collision-check2 collision-check4 collision-check5
 
 clean:
 	-rm -rf rep* dest* plist* src*
