@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.16 2009/12/31 12:38:19 espie Exp $
+# $OpenBSD: Handle.pm,v 1.17 2009/12/31 13:48:52 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -111,7 +111,7 @@ sub error_message
 		return "bad package";
 	} elsif ($error == CANT_INSTALL) {
 		if ($self->{errorinfo}) {
-			return "can't install: $self->{errorinfo}";
+			return "$self->{errorinfo}";
 		} else {
 			return "can't install";
 		}
