@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.15 2009/12/30 10:02:52 espie Exp $
+# $OpenBSD: Handle.pm,v 1.16 2009/12/31 12:38:19 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -34,8 +34,9 @@ use constant {
 
 sub cleanup
 {
-	my ($self, $error) = @_;
+	my ($self, $error, $errorinfo) = @_;
 	$self->{error} //= $error;
+	$self->{errorinfo} //= $errorinfo;
 	if (defined $self->location) {
 		if (defined $self->{error} &&
 		    $self->{error} == ALREADY_INSTALLED) {
@@ -109,7 +110,11 @@ sub error_message
 	if ($error == BAD_PACKAGE) {
 		return "bad package";
 	} elsif ($error == CANT_INSTALL) {
-		return "can't install";
+		if ($self->{errorinfo}) {
+			return "can't install: $self->{errorinfo}";
+		} else {
+			return "can't install";
+		}
 	} elsif ($error == NOT_FOUND) {
 		return "not found";
 	} elsif ($error == ALREADY_INSTALLED) {

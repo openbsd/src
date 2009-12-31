@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.452 2009/12/30 23:45:57 espie Exp $
+# $OpenBSD: pkg_add,v 1.453 2009/12/31 12:38:19 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -250,11 +250,11 @@ sub complete
 		$o->complete_old($state);
 	}
 
-	my $check = $set->can_install($state);
+	my $check = $set->install_issues($state);
 	return 0 if !defined $check;
 
-	if (!$check) {
-		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+	if ($check) {
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, $check);
 		$state->tracker->cant($set);
 	}
 	return 1;
@@ -283,17 +283,17 @@ sub mark_as_manual_install
 	}
 }
 
-sub can_install
+sub install_issues
 {
 	my ($set, $state) = @_;
 
 	my @conflicts = $set->find_conflicts($state);
 
-	return 1 if @conflicts == 0;
+	return 0 if @conflicts == 0;
 	if (!$state->{allow_replacing}) {
 		$state->errsay("Can't install ", $set->print, 
 		    " because of conflicts (",join(',', @conflicts), ")");
-		return 0;
+		return "conflicts";
 	}
 
 
@@ -302,7 +302,7 @@ sub can_install
 		if ($state->tracker->is_installed($toreplace)) {
 			$state->errsay("Cannot replace $toreplace in ", 
 			    $set->print, ": just got installed");
-			return 0;
+			return "replacing just installed";
 		}
 
 		next if defined $set->{older}->{$toreplace};
@@ -339,7 +339,7 @@ sub can_install
 
 	$set->mark_as_manual_install if $manual_install;
 
-	return 1;
+	return 0;
 }
 
 sub check_forward_dependencies
@@ -748,13 +748,13 @@ sub install_set
 		$state->errsay("Can't install ", $set->print,
 		    ": can't resolve ", join(',', @baddeps));
 		$bad++;
-		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL,"bad dependencies");
 		$state->tracker->cant($set);
 		return ();
 	}
 
 	if (!$set->solver->solve_wantlibs($state)) {
-		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "libs not found");
 		$state->tracker->cant($set);
 		$bad++;
 		return ();
@@ -766,14 +766,14 @@ sub install_set
 #		}
 #	}
 	if (!$set->recheck_conflicts($state)) {
-		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "fatal conflicts");
 		$state->tracker->cant($set);
 		return ();
 	}
 	if ($set->older_to_do) {
 		require OpenBSD::Replace;
 		if (!OpenBSD::Replace::is_set_safe($set, $state)) {
-			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "exec detected");
 			$state->tracker->cant($set);
 			return ();
 		}
