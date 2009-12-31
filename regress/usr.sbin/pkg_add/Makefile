@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.24 2009/12/31 10:46:15 espie Exp $
+# $OpenBSD: Makefile,v 1.25 2009/12/31 11:32:09 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
@@ -21,103 +21,103 @@ DEST$i ?= ${D$i}/usr/local
 pkgnames:
 	perl ${.CURDIR}/check-name
 
-depends-check: old/a-0.0.tgz old/b-0.0.tgz new/a-1.0.tgz new/b-1.0.tgz
+depends-check: rep0/a-0.tgz rep0/b-0.tgz rep1/a-1.tgz rep1/b-1.tgz
 	-rm -rf ${D1}
-	ROOT=${D1} ${PKG_ADD} old/a-0.0.tgz old/b-0.0.tgz
-	ROOT=${D1} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u a b
-	ROOT=${D1} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} -F downgrade -u a b
+	ROOT=${D1} ${PKG_ADD} rep0/a-0.tgz rep0/b-0.tgz
+	ROOT=${D1} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u a b
+	ROOT=${D1} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} -F downgrade -u a b
 
-longnames: new/c-0.0.tgz
+longnames: rep1/c-0.tgz
 	-rm -rf ${D2}
-	ROOT=${D2} ${PKG_ADD} new/c-0.0.tgz
+	ROOT=${D2} ${PKG_ADD} rep1/c-0.tgz
 	@test -f ${DEST2}/${LONG1}
 	@test -f ${DEST2}/${LONG2}
 	@cd ${DEST2} && test -h ${LONG3} && test `readlink ${LONG3}` = ${LONG2}
 	@cd ${DEST2} && test `stat -f '%i' ${LONG1}` = `stat -f '%i' ${LONG4}`
 
-collision-check1: new/d-0.0.tgz new/e-0.0.tgz
+collision-check1: rep1/d-0.tgz rep1/e-0.tgz
 	-rm -rf ${D3}
-	ROOT=${D3} ${PKG_ADD} new/d-0.0.tgz
-	ROOT=${D3} ${PKG_ADD} new/e-0.0.tgz
+	ROOT=${D3} ${PKG_ADD} rep1/d-0.tgz
+	ROOT=${D3} ${PKG_ADD} rep1/e-0.tgz
 
-collision-check2: new/d-0.0.tgz new/e-0.0.tgz
+collision-check2: rep1/d-0.tgz rep1/e-0.tgz
 	-rm -rf ${D4}
-	ROOT=${D4} ${PKG_ADD} new/d-0.0.tgz
-	-rm -rf ${D4}/pkgdb/d-0.0
-	ROOT=${D4} ${PKG_ADD} new/e-0.0.tgz
+	ROOT=${D4} ${PKG_ADD} rep1/d-0.tgz
+	-rm -rf ${D4}/pkgdb/d-0
+	ROOT=${D4} ${PKG_ADD} rep1/e-0.tgz
 
-collision-check3: new/d-0.0.tgz new/f-0.0.tgz
+collision-check3: rep1/d-0.tgz rep1/f-0.tgz
 	-rm -rf ${D5}
-	ROOT=${D5} ${PKG_ADD} new/d-0.0.tgz new/f-0.0.tgz
-	-rm -rf ${D5}/pkgdb/d-0.0
-	ROOT=${D5} ${PKG_ADD} -F repair new/d-0.0.tgz
+	ROOT=${D5} ${PKG_ADD} rep1/d-0.tgz rep1/f-0.tgz
+	-rm -rf ${D5}/pkgdb/d-0
+	ROOT=${D5} ${PKG_ADD} -F repair rep1/d-0.tgz
 	PKG_DBDIR=${D5}/pkgdb pkg_info -qR d
 
-collision-check4: new/d-0.0.tgz new/e-0.0.tgz
+collision-check4: rep1/d-0.tgz rep1/e-0.tgz
 	-rm -rf ${D6}
-	ROOT=${D6} ${PKG_ADD} new/d-0.0.tgz
-	-rm -rf ${D6}/pkgdb/d-0.0
-	ROOT=${D6} ${PKG_ADD} -F repair new/e-0.0.tgz
+	ROOT=${D6} ${PKG_ADD} rep1/d-0.tgz
+	-rm -rf ${D6}/pkgdb/d-0
+	ROOT=${D6} ${PKG_ADD} -F repair rep1/e-0.tgz
 
-collision-check5: new/d-0.0.tgz new/e-0.0.tgz
+collision-check5: rep1/d-0.tgz rep1/e-0.tgz
 	-rm -rf ${D7}
-	ROOT=${D7} ${PKG_ADD} new/d-0.0.tgz
-	-rm -rf ${D7}/pkgdb/d-0.0
-	ROOT=${D7} ${PKG_ADD} -F removecollisions new/d-0.0.tgz
+	ROOT=${D7} ${PKG_ADD} rep1/d-0.tgz
+	-rm -rf ${D7}/pkgdb/d-0
+	ROOT=${D7} ${PKG_ADD} -F removecollisions rep1/d-0.tgz
 
-always-update: old/g-0.0.tgz new/g-0.0.tgz
+always-update: rep0/g-0.tgz rep1/g-0.tgz
 	-rm -rf ${D8}
-	ROOT=${D8} ${PKG_ADD} old/g-0.0.tgz
-	ROOT=${D8} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u
+	ROOT=${D8} ${PKG_ADD} rep0/g-0.tgz
+	ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u
 	PKG_DBDIR=${D8}/pkgdb pkg_info -qf g|fgrep -q comment2
 
-list-check: new/a-1.0.tgz new/b-1.0.tgz new/c-0.0.tgz new/d-0.0.tgz \
-	new/e-0.0.tgz new/f-0.0.tgz new/g-0.0.tgz
+list-check: rep1/a-1.tgz rep1/b-1.tgz rep1/c-0.tgz rep1/d-0.tgz \
+	rep1/e-0.tgz rep1/f-0.tgz rep1/g-0.tgz
 	-rm -rf ${D9}
-	ROOT=${D9} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -l ${.CURDIR}/list
+	ROOT=${D9} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -l ${.CURDIR}/list
 	PKG_DBDIR=${D9}/pkgdb pkg_info -q|diff - ${.CURDIR}/list.out
 
-partial-update-test: old/h-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz \
-	new/h-1.0.tgz new/i-1.0.tgz new/j-1.0.tgz
+partial-update-test: rep0/h-0.tgz rep0/i-0.tgz rep0/j-0.tgz \
+	rep1/h-1.tgz rep1/i-1.tgz rep1/j-1.tgz
 	-rm -rf ${D10}
-	ROOT=${D10} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} h j
-	ROOT=${D10} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u h
+	ROOT=${D10} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} h j
+	ROOT=${D10} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u h
 	PKG_DBDIR=${D10}/pkgdb pkg_info -q|diff - ${.CURDIR}/list2.out
 
-conflict-update: old/k-0.0.tgz old/l-0.0.tgz new/k-1.0.tgz new/l-1.0.tgz
+conflict-update: rep0/k-0.tgz rep0/l-0.tgz rep1/k-1.tgz rep1/l-1.tgz
 	-rm -rf ${D11}
-	ROOT=${D11} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} k l
-	ROOT=${D11} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u k
+	ROOT=${D11} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} k l
+	ROOT=${D11} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u k
 	PKG_DBDIR=${D11}/pkgdb pkg_info -q|diff - ${.CURDIR}/list3.out
 
-merge-update: old/m-0.0.tgz old/n-0.0.tgz new/m-1.0.tgz new/n-1.0.tgz
+merge-update: rep0/m-0.tgz rep0/n-0.tgz rep1/m-1.tgz rep1/n-1.tgz
 	-rm -rf ${D12}
-	ROOT=${D12} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} m n
-	ROOT=${D12} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u n
+	ROOT=${D12} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} m n
+	ROOT=${D12} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u n
 	PKG_DBDIR=${D12}/pkgdb pkg_info -q|diff - ${.CURDIR}/list4.out
 
-split-update: old/o-0.0.tgz new/o-1.0.tgz new/p-0.0.tgz
+split-update: rep0/o-0.tgz rep1/o-1.tgz rep1/p-0.tgz
 	-rm -rf ${D13}
-	ROOT=${D13} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} o
-	ROOT=${D13} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u o
+	ROOT=${D13} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o
+	ROOT=${D13} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u o
 	PKG_DBDIR=${D13}/pkgdb pkg_info -q |diff - ${.CURDIR}/list5.out
 
-big-merge: old/q1-0.0.tgz old/q2-0.0.tgz old/q3-0.0.tgz old/q4-0.0.tgz \
-	old/q5-0.0.tgz old/q6-0.0.tgz new/q5-1.0.tgz new/q6-1.0.tgz \
-	new/q1-1.0.tgz new/q2-1.0.tgz new/q3-1.0.tgz new/q4-1.0.tgz
+big-merge: rep0/q1-0.tgz rep0/q2-0.tgz rep0/q3-0.tgz rep0/q4-0.tgz \
+	rep0/q5-0.tgz rep0/q6-0.tgz rep1/q5-1.tgz rep1/q6-1.tgz \
+	rep1/q1-1.tgz rep1/q2-1.tgz rep1/q3-1.tgz rep1/q4-1.tgz
 	-rm -rf ${D14}
-	ROOT=${D14} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} q1 q2 q3 q4 q5 q6
-	ROOT=${D14} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -F update -u 2>&1|fgrep XXX|fgrep -v @|diff - ${.CURDIR}/list6.out
+	ROOT=${D14} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} q1 q2 q3 q4 q5 q6
+	ROOT=${D14} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -x -F update -u 2>&1 |fgrep XXX|fgrep -v @|diff - ${.CURDIR}/list6.out
 
-family-circus: old/glib-0.0.tgz old/fam-0.0.tgz new/fam-1.0.tgz new/glib-1.0.tgz new/gamin-0.0.tgz
+family-circus: rep0/glib-0.tgz rep0/fam-0.tgz rep1/fam-1.tgz rep1/glib-1.tgz rep1/gamin-0.tgz
 	-rm -rf ${D15}
-	ROOT=${D15} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} glib
-	ROOT=${D15} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -F updatedepends -u glib
+	ROOT=${D15} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} glib
+	ROOT=${D15} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -F updatedepends -u glib
 
-missing: new/missa-0.tgz new/missb-0.tgz new/missc-0.tgz new/missd-0.tgz new/missf-0.tgz
+missing: rep1/missa-0.tgz rep1/missb-0.tgz rep1/missc-0.tgz rep1/missd-0.tgz rep1/missf-0.tgz
 	-rm -rf ${D16}
-	ROOT=${D16} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} missc
-	ROOT=${D15} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} missa missb missf
+	ROOT=${D16} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} missc
+	-ROOT=${D15} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} missa missb missf
 
 plist1:
 	@echo "@owner "`whoami` >$@
@@ -151,15 +151,15 @@ plist5:
 	@echo "@comment comment2" >>$@
 
 plist6:
-	@echo "@conflict l-<1.0" >$@
+	@echo "@conflict l-<1" >$@
 
 plist7:
-	@echo "@conflict m-<1.0" >$@
-	@echo "@pkgpath test/m" >>$@
+	@echo "@conflict m-<1" >$@
+	@echo "@pkgpath t/m" >>$@
 
 plist8:
-	@echo "@conflict o-<1.0" >$@
-	@echo "@pkgpath test/o" >>$@
+	@echo "@conflict o-<1" >$@
+	@echo "@pkgpath t/o" >>$@
 	@echo "@owner "`whoami` >>$@
 	@echo '@lib lib/libcoincoin.so.$${LIBcoincoin_VERSION}' >>$@
 
@@ -168,33 +168,33 @@ plist9:
 
 plist10:
 	@echo "@conflict fam-*" >$@
-	@echo "@pkgpath test/fam" >>$@
+	@echo "@pkgpath t/fam" >>$@
 
 plist11:
 	@echo "@conflict missc-*" >$@
 
-old/a-0.0.tgz:
-	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
+rep0/a-0.tgz:
+	${PKG_CREATE} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
 
-new/a-1.0.tgz old/b-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz new/j-1.0.tgz \
-new/i-1.0.tgz old/k-0.0.tgz old/l-0.0.tgz new/l-1.0.tgz old/m-0.0.tgz \
-old/n-0.0.tgz new/m-1.0.tgz old/o-0.0.tgz old/fam-0.0.tgz \
-new/missc-0.tgz:
+rep1/a-1.tgz rep0/b-0.tgz rep0/i-0.tgz rep0/j-0.tgz rep1/j-1.tgz \
+rep1/i-1.tgz rep0/k-0.tgz rep0/l-0.tgz rep1/l-1.tgz rep0/m-0.tgz \
+rep0/n-0.tgz rep1/m-1.tgz rep0/o-0.tgz rep0/fam-0.tgz \
+rep1/missc-0.tgz:
 	${PKG_CREATE} -f ${.CURDIR}/empty $@
 
-new/o-1.0.tgz:
-	${PKG_CREATE} -P'test/p:p-*:p-0.0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
+rep1/o-1.tgz:
+	${PKG_CREATE} -P't/p:p-*:p-0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
 
-new/p-0.0.tgz: plist8
+rep1/p-0.tgz: plist8
 	mkdir -p ${SRC13}/lib
 	@touch ${SRC13}/lib/libcoincoin.so.0.0
 	${PKG_CREATE} -B src13 -DLIBcoincoin_VERSION=0.0 -f plist8 $@
 
 
-new/b-1.0.tgz:
-	${PKG_CREATE} -P'test/a:a-*:a-1.0' -f ${.CURDIR}/empty $@
+rep1/b-1.tgz:
+	${PKG_CREATE} -P't/a:a-*:a-1' -f ${.CURDIR}/empty $@
 
-new/c-0.0.tgz: plist1
+rep1/c-0.tgz: plist1
 	mkdir -p ${SRC1}
 	@touch ${SRC1}/${LONG1}
 	@touch ${SRC1}/${LONG2}
@@ -202,105 +202,105 @@ new/c-0.0.tgz: plist1
 	@cd ${SRC1} && ln -f ${LONG1} ${LONG4}
 	${PKG_CREATE} -B src1 -f plist1 $@
 
-new/k-1.0.tgz: plist6
+rep1/k-1.tgz: plist6
 	${PKG_CREATE} -f plist6 $@
 
-new/n-1.0.tgz: plist7
+rep1/n-1.tgz: plist7
 	${PKG_CREATE} -f plist7 $@
 
-new/d-0.0.tgz: plist2
+rep1/d-0.tgz: plist2
 	mkdir -p ${SRC2}
 	touch ${SRC2}/a ${SRC2}/b ${SRC2}/c
 	echo "coucou" >${SRC2}/f
 	echo "not coucou" >${SRC2}/g
 	${PKG_CREATE} -B src2 -f plist2 $@
 
-new/e-0.0.tgz: plist3
+rep1/e-0.tgz: plist3
 	mkdir -p ${SRC3}
 	touch ${SRC3}/a ${SRC3}/c ${SRC3}/d
 	echo "coucou" >${SRC3}/f
 	echo "coucou" >${SRC3}/g
 	${PKG_CREATE} -B src3 -f plist3 $@
 
-new/f-0.0.tgz:
-	${PKG_CREATE} -P'test/d:d-*:d-0.0' -f ${.CURDIR}/empty $@
+rep1/f-0.tgz:
+	${PKG_CREATE} -P't/d:d-*:d-0' -f ${.CURDIR}/empty $@
 
-old/g-0.0.tgz: plist4
+rep0/g-0.tgz: plist4
 	${PKG_CREATE} -f plist4 $@
 
-new/g-0.0.tgz: plist5
+rep1/g-0.tgz: plist5
 	${PKG_CREATE} -f plist5 $@
 
-old/h-0.0.tgz:
-	${PKG_CREATE} -P'test/i:i-*:i-0.0' -f ${.CURDIR}/empty $@
+rep0/h-0.tgz:
+	${PKG_CREATE} -P't/i:i-*:i-0' -f ${.CURDIR}/empty $@
 
-new/h-1.0.tgz:
-	${PKG_CREATE} -P'test/j:j->=1:j-1.0' -f ${.CURDIR}/empty $@
+rep1/h-1.tgz:
+	${PKG_CREATE} -P't/j:j->=1:j-1' -f ${.CURDIR}/empty $@
 
-depend_q1=-P'test/q5:q5-*:q5-0.0'
-depend_q2=${depend_q1} -P'test/q1:q1-*:q1-0.0'
-depend_q3=${depend_q1} -P'test/q2:q2-*:q2-0.0'
-depend_q4=${depend_q1} -P'test/q3:q3-*:q3-0.0'
+depend_q1=-P't/q5:q5-*:q5-0'
+depend_q2=${depend_q1} -P't/q1:q1-*:q1-0'
+depend_q3=${depend_q1} -P't/q2:q2-*:q2-0'
+depend_q4=${depend_q1} -P't/q3:q3-*:q3-0'
 
 .for n in q1 q2 q3 q4
-plist-old-$n:
-	@echo "@unexec echo 1>&2 'XXXold $n'" >$@
+plist-rep0-$n:
+	@echo "@unexec echo 1>&2 'XXXrep0 $n'" >$@
 
-old/$n-0.0.tgz: plist-old-$n
-	${PKG_CREATE} ${depend_$n} -f plist-old-$n $@
-new/$n-1.0.tgz: plist-new-$n
-	${PKG_CREATE} ${depend_$n} -f plist-new-$n $@
+rep0/$n-0.tgz: plist-rep0-$n
+	${PKG_CREATE} ${depend_$n} -f plist-rep0-$n $@
+rep1/$n-1.tgz: plist-rep1-$n
+	${PKG_CREATE} ${depend_$n} -f plist-rep1-$n $@
 
-plist-new-$n:
-	@echo "@conflict q1-0.0" >$@
-	@echo "@conflict q2-0.0" >>$@
-	@echo "@conflict q3-0.0" >>$@
-	@echo "@conflict q4-0.0" >>$@
-	@echo "@exec echo 1>&2 'XXXnew $n'" >>$@
+plist-rep1-$n:
+	@echo "@conflict q1-0" >$@
+	@echo "@conflict q2-0" >>$@
+	@echo "@conflict q3-0" >>$@
+	@echo "@conflict q4-0" >>$@
+	@echo "@exec echo 1>&2 'XXXrep1 $n'" >>$@
 
 .endfor
 	
-old/q5-0.0.tgz:
+rep0/q5-0.tgz:
 	${PKG_CREATE} -f ${.CURDIR}/empty $@
 
-new/q5-1.0.tgz:
+rep1/q5-1.tgz:
 	${PKG_CREATE} -f ${.CURDIR}/empty $@
 
-old/q6-0.0.tgz:
-	${PKG_CREATE} -P'test/q3:q3-*:q3-0.0' -f ${.CURDIR}/empty $@
+rep0/q6-0.tgz:
+	${PKG_CREATE} -P't/q3:q3-*:q3-0' -f ${.CURDIR}/empty $@
 
-new/q6-1.0.tgz:
-	${PKG_CREATE} -P'test/q3:q3-*:q3-0.0' -f ${.CURDIR}/empty $@
+rep1/q6-1.tgz:
+	${PKG_CREATE} -P't/q3:q3-*:q3-0' -f ${.CURDIR}/empty $@
 
-old/glib-0.0.tgz:
-	${PKG_CREATE} -P 'test/fam:fam-*:fam-0.0' -f ${.CURDIR}/empty $@
+rep0/glib-0.tgz:
+	${PKG_CREATE} -P't/fam:fam-*:fam-0' -f ${.CURDIR}/empty $@
 
-new/glib-1.0.tgz:
-	${PKG_CREATE} -P 'test/gamin:gamin-*:gamin-0.0' -f ${.CURDIR}/empty $@
+rep1/glib-1.tgz:
+	${PKG_CREATE} -P't/gamin:gamin-*:gamin-0' -f ${.CURDIR}/empty $@
 
-new/fam-1.0.tgz: plist9
+rep1/fam-1.tgz: plist9
 	${PKG_CREATE} -f plist9 $@
 
-new/gamin-0.0.tgz: plist10
+rep1/gamin-0.tgz: plist10
 	${PKG_CREATE} -f plist10 $@
 
-new/missa-0.tgz:
-	${PKG_CREATE} -P'test/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
+rep1/missa-0.tgz:
+	${PKG_CREATE} -P't/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
 
-new/missb-0.tgz:
-	${PKG_CREATE} -P'test/missd:missd-*:missd-0' -f ${.CURDIR}/empty $@
+rep1/missb-0.tgz:
+	${PKG_CREATE} -P't/missd:missd-*:missd-0' -f ${.CURDIR}/empty $@
 
-new/missd-0.tgz: plist11
+rep1/missd-0.tgz: plist11
 	${PKG_CREATE} -f plist11 $@
 
-new/missf-0.tgz:
-	${PKG_CREATE} -P'test/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
+rep1/missf-0.tgz:
+	${PKG_CREATE} -P't/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
 	collision-check1 collision-check2 collision-check4 collision-check5
 
 clean:
-	-rm -rf old new dest* plist* src*
+	-rm -rf rep* dest* plist* src*
 
 .include <bsd.regress.mk>
