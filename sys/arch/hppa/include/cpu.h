@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.62 2009/12/29 13:40:09 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.63 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -70,6 +70,8 @@
 struct cpu_info {
 	struct proc	*ci_curproc;
 
+	volatile int	ci_cpl;
+	volatile int	ci_in_intr;
 	int		ci_want_resched;
 
 	struct schedstate_percpu ci_schedstate;

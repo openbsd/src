@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.178 2009/08/11 19:17:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.179 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -286,6 +286,7 @@ hppa_init(start)
 {
 	extern u_long cpu_hzticks;
 	extern int kernel_text;
+	struct cpu_info *ci;
 	int error;
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
@@ -354,6 +355,9 @@ hppa_init(start)
 		PAGE0->ivec_mempf = (u_int)hppa_pfr;
 		PAGE0->ivec_mempflen = (hppa_pfr_end - hppa_pfr + 1) * 4;
 	}
+
+	ci = curcpu();
+	ci->ci_cpl = IPL_NESTED;
 
 	cpuid();
 	ptlball();

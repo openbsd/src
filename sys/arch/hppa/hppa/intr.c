@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.26 2009/07/30 14:50:20 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -61,7 +61,6 @@ struct hppa_iv {
 } __packed;
 
 register_t kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
-volatile int cpu_inintr, cpl = IPL_NESTED;
 u_long cpu_mask;
 struct hppa_iv intr_store[8*2*CPU_NINTS] __attribute__ ((aligned(32))),
     *intr_more = intr_store, *intr_list;
@@ -83,9 +82,10 @@ volatile u_long ipending, imask[NIPL] = {
 void
 splassert_check(int wantipl, const char *func)
 {
-	if (cpl < wantipl) {
-		splassert_fail(wantipl, cpl, func);
-	}
+	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_cpl < wantipl)
+		splassert_fail(wantipl, ci->ci_cpl, func);
 }
 #endif
 
@@ -282,14 +282,15 @@ fls(u_int mask)
 void
 cpu_intr(void *v)
 {
+	struct cpu_info *ci = curcpu();
 	struct trapframe *frame = v;
 	u_long mask;
 	int s;
 
 	mtctl(0, CR_EIEM);
 
-	s = cpl;
-	if (cpu_inintr++)
+	s = ci->ci_cpl;
+	if (ci->ci_in_intr++)
 		frame->tf_flags |= TFF_INTR;
 
 	while ((mask = ipending & ~imask[s])) {
@@ -304,7 +305,7 @@ cpu_intr(void *v)
 		if (iv->flags & HPPA_IV_SOFT)
 			uvmexp.softs++;
 
-		cpl = iv->pri;
+		ci->ci_cpl = iv->pri;
 		mtctl(frame->tf_eiem, CR_EIEM);
 		for (r = iv->flags & HPPA_IV_SOFT;
 		    iv && iv->handler; iv = iv->next)
@@ -316,14 +317,14 @@ cpu_intr(void *v)
 			}
 #if 0	/* XXX this does not work, lasi gives us double ints */
 		if (!r) {
-			cpl = 0;
+			ci->ci_cpl = 0;
 			printf("stray interrupt %d\n", bit);
 		}
 #endif
 		mtctl(0, CR_EIEM);
 	}
-	cpu_inintr--;
-	cpl = s;
+	ci->ci_in_intr--;
+	ci->ci_cpl = s;
 
 	mtctl(frame->tf_eiem, CR_EIEM);
 }

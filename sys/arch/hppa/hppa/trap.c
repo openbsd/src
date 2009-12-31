@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.103 2009/12/29 13:40:09 jsing Exp $	*/
+/*	$OpenBSD: trap.c,v 1.104 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -156,6 +156,7 @@ trap(type, frame)
 	int type;
 	struct trapframe *frame;
 {
+	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
 	vaddr_t va;
 	struct vm_map *map;
@@ -168,7 +169,7 @@ trap(type, frame)
 	const char *tts;
 	vm_fault_t fault = VM_FAULT_INVALID;
 #ifdef DIAGNOSTIC
-	int oldcpl = cpl;
+	int oldcpl = ci->ci_cpl;
 #endif
 
 	trapnum = type & ~T_USER;
@@ -562,13 +563,13 @@ if (kdb_trap (type, va, frame))
 	}
 
 #ifdef DIAGNOSTIC
-	if (cpl != oldcpl)
+	if (ci->ci_cpl != oldcpl)
 		printf("WARNING: SPL (%d) NOT LOWERED ON "
-		    "TRAP (%d) EXIT\n", cpl, trapnum);
+		    "TRAP (%d) EXIT\n", ci->ci_cpl, trapnum);
 #endif
 
 	if (trapnum != T_INTERRUPT)
-		splx(cpl);	/* process softints */
+		splx(ci->ci_cpl);	/* process softints */
 
 	/*
 	 * in case we were interrupted from the syscall gate page
@@ -702,12 +703,13 @@ process_sstep(struct proc *p, int sstep)
 void
 syscall(struct trapframe *frame)
 {
+	struct cpu_info *ci = curcpu();
 	register struct proc *p = curproc;
 	register const struct sysent *callp;
 	int retq, nsys, code, argsize, argoff, oerror, error;
 	register_t args[8], rval[2];
 #ifdef DIAGNOSTIC
-	int oldcpl = cpl;
+	int oldcpl = ci->ci_cpl;
 #endif
 
 	uvmexp.syscalls++;
@@ -848,14 +850,14 @@ syscall(struct trapframe *frame)
 		ktrsysret(p, code, oerror, rval[0]);
 #endif
 #ifdef DIAGNOSTIC
-	if (cpl != oldcpl) {
+	if (ci->ci_cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
 		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
-		    cpl, code, args[0], args[1], args[2], p->p_pid);
-		cpl = oldcpl;
+		    ci->ci_cpl, code, args[0], args[1], args[2], p->p_pid);
+		ci->ci_cpl = oldcpl;
 	}
 #endif
-	splx(cpl);	/* process softints */
+	splx(ci->ci_cpl);	/* process softints */
 }
 
 /*

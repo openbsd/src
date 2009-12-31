@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.163 2009/12/29 16:37:10 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.164 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -101,6 +101,7 @@
 	.import	panic, code
 
 #define curproc	(cpu_info_primary + CI_CURPROC)
+#define cpl	(cpu_info_primary + CI_CPL)
 
 #define	EMRG_STACKSIZE	(1*NBPG)
 #define	FPEMU_STACKSIZE	(1*NBPG)
@@ -2103,7 +2104,6 @@ intr_ticks
 #define	INTR_PROF_AFT	/* */
 #endif
 
-	.import	cpl, data
 	.import	ipending, data
 	.import	imask, data
 	.import	intr_table, data
