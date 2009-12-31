@@ -1,4 +1,4 @@
-.\"     $OpenBSD: cbus.4,v 1.4 2009/12/15 19:46:55 kettenis Exp $
+.\"     $OpenBSD: cbus.4,v 1.5 2009/12/31 14:54:13 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2009 $
+.Dd $Mdocdate: December 31 2009 $
 .Dt CBUS 4 sparc64
 .Os
 .Sh NAME
@@ -34,6 +34,8 @@ provides support for the following devices:
 .Bl -tag -width "vdisk(4)XX" -offset 3n -compact
 .It Xr vcc 4
 virtual console concentrator
+.It Xr vds 4
+virtual disk server
 .It Xr vdsk 4
 virtual disk
 .It Xr vnet 4
