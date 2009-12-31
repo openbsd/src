@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.36 2009/11/23 16:33:59 jsing Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.37 2009/12/31 14:00:45 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -177,6 +177,7 @@ struct bioc_createraid {
 	void		*bc_cookie;
 	void		*bc_dev_list;
 	u_int16_t	bc_dev_list_len;
+	int32_t		bc_key_disk;
 #define BIOC_CRMAXLEN		1024
 	u_int16_t	bc_level;
 	u_int32_t	bc_flags;

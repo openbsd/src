@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.87 2009/12/24 10:06:35 sobrado Exp $       */
+/* $OpenBSD: bioctl.c,v 1.88 2009/12/31 14:00:45 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -76,7 +76,7 @@ int			bio_getvolbyname(char *);
 void			bio_setstate(char *, int, char *);
 void			bio_setblink(char *, char *, int);
 void			bio_blink(char *, int, int);
-void			bio_createraid(u_int16_t, char *);
+void			bio_createraid(u_int16_t, char *, char *);
 void			bio_deleteraid(char *);
 void			bio_changepass(char *);
 u_int32_t		bio_createflags(char *);
@@ -101,6 +101,7 @@ main(int argc, char *argv[])
 	char			*bioc_dev = NULL, *sd_dev = NULL;
 	char			*realname = NULL, *al_arg = NULL;
 	char			*bl_arg = NULL, *dev_list = NULL;
+	char			*key_disk = NULL;
 	const char		*errstr;
 	int			ch, rv, blink = 0, changepass = 0, diskinq = 0;
 	int			ss_func = 0;
@@ -109,7 +110,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hil:Pp:qr:R:vu:")) !=
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:Pp:qr:R:vu:")) !=
 	    -1) {
 		switch (ch) {
 		case 'a': /* alarm */
@@ -150,6 +151,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i': /* inquiry */
 			func |= BIOC_INQ;
+			break;
+		case 'k': /* Key disk. */
+			key_disk = optarg;
 			break;
 		case 'l': /* device list */
 			func |= BIOC_DEVLIST;
@@ -239,7 +243,7 @@ main(int argc, char *argv[])
 			errx(1, "need -l parameter");
 		if (sd_dev)
 			errx(1, "can't use sd device");
-		bio_createraid(cr_level, dev_list);
+		bio_createraid(cr_level, dev_list, key_disk);
 	}
 
 	return (0);
@@ -258,7 +262,7 @@ usage(void)
 		"\t[-u channel:target[.lun]] "
 		"device\n"
                 "       %s [-dhiPqv] "
-                "[-C flag[,flag,...]] [-c raidlevel]\n"
+                "[-C flag[,flag,...]] [-c raidlevel] [-k special]\n"
                 "\t[-l special[,special,...]] [-p passfile]\n"
                 "\t[-R device | channel:target[.lun] [-r rounds] "
 		"device\n", __progname, __progname);
@@ -446,7 +450,9 @@ bio_inq(char *name)
 				snprintf(volname, sizeof volname, "    %3u",
 				    bd.bd_diskid);
 
-			if (human)
+			if (bv.bv_level == 'C' && bd.bd_size == 0)
+				snprintf(size, sizeof size, "%14s", "key disk");
+			else if (human)
 				fmt_scaled(bd.bd_size, size);
 			else
 				snprintf(size, sizeof size, "%14llu",
@@ -689,13 +695,14 @@ bio_blink(char *enclosure, int target, int blinktype)
 }
 
 void
-bio_createraid(u_int16_t level, char *dev_list)
+bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 {
 	struct bioc_createraid	create;
 	struct sr_crypto_kdfinfo kdfinfo;
 	struct sr_crypto_kdf_pbkdf2 kdfhint;
-	int			rv, no_dev;
-	dev_t			*dt;
+	struct stat		sb;
+	int			rv, no_dev, i;
+	dev_t			*dt, kd = NODEV;
 	u_int16_t		min_disks = 0;
 
 	if (!dev_list)
@@ -742,10 +749,14 @@ bio_createraid(u_int16_t level, char *dev_list)
 	create.bc_dev_list_len = no_dev * sizeof(dev_t);
 	create.bc_dev_list = dt;
 	create.bc_flags = BIOC_SCDEVT | cflags;
+	create.bc_key_disk = NODEV;
 
-	if (level == 'C') {
+	if (level == 'C' && key_disk == NULL) {
+
 		memset(&kdfinfo, 0, sizeof(kdfinfo));
 		memset(&kdfhint, 0, sizeof(kdfhint));
+
+		create.bc_flags |= BIOC_SCNOAUTOASSEMBLE;
 
 		create.bc_opaque = &kdfhint;
 		create.bc_opaque_size = sizeof(kdfhint);
@@ -760,13 +771,29 @@ bio_createraid(u_int16_t level, char *dev_list)
 			memset(&kdfhint, 0, sizeof(kdfhint));
 		} else  {
 			bio_kdf_generate(&kdfinfo);
-			/* no auto assembling */
-			create.bc_flags |= BIOC_SCNOAUTOASSEMBLE;
 		}
 
 		create.bc_opaque = &kdfinfo;
 		create.bc_opaque_size = sizeof(kdfinfo);
 		create.bc_opaque_flags = BIOC_SOIN;
+
+	} else if (level == 'C' && key_disk != NULL) {
+
+		if (stat(key_disk, &sb) == -1)
+			err(1, "could not stat %s", key_disk);
+		create.bc_key_disk = sb.st_rdev;
+
+		memset(&kdfinfo, 0, sizeof(kdfinfo));
+
+		kdfinfo.genkdf.len = sizeof(kdfinfo.genkdf);
+		kdfinfo.genkdf.type = SR_CRYPTOKDFT_KEYDISK;
+		kdfinfo.len = sizeof(kdfinfo);
+		kdfinfo.flags = SR_CRYPTOKDF_HINT;
+
+		create.bc_opaque = &kdfinfo;
+		create.bc_opaque_size = sizeof(kdfinfo);
+		create.bc_opaque_flags = BIOC_SOIN;
+
 	}
 
 	rv = ioctl(devh, BIOCCREATERAID, &create);
@@ -815,7 +842,7 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 	kdfinfo->pbkdf2.type = SR_CRYPTOKDFT_PBKDF2;
 	kdfinfo->pbkdf2.rounds = rflag;
 	kdfinfo->len = sizeof(*kdfinfo);
-	kdfinfo->flags = (SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT);
+	kdfinfo->flags = SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT;
 
 	/* generate salt */
 	arc4random_buf(kdfinfo->pbkdf2.salt, sizeof(kdfinfo->pbkdf2.salt));

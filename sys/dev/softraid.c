@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.187 2009/12/15 15:51:43 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.188 2009/12/31 14:00:45 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -136,14 +136,9 @@ void			sr_sensors_delete(struct sr_discipline *);
 /* metadata */
 int			sr_meta_probe(struct sr_discipline *, dev_t *, int);
 int			sr_meta_attach(struct sr_discipline *, int);
-void			sr_meta_getdevname(struct sr_softc *, dev_t, char *,
-			    int);
 int			sr_meta_rw(struct sr_discipline *, dev_t, void *,
 			    size_t, daddr64_t, long);
 int			sr_meta_clear(struct sr_discipline *);
-int			sr_meta_read(struct sr_discipline *);
-int			sr_meta_validate(struct sr_discipline *, dev_t,
-			    struct sr_metadata *, void *);
 void			sr_meta_chunks_create(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_meta_init(struct sr_discipline *,
@@ -181,8 +176,6 @@ int			sr_meta_native_bootprobe(struct sr_softc *,
 int			sr_meta_native_probe(struct sr_softc *,
 			   struct sr_chunk *);
 int			sr_meta_native_attach(struct sr_discipline *, int);
-int			sr_meta_native_read(struct sr_discipline *, dev_t,
-			    struct sr_metadata *, void *);
 int			sr_meta_native_write(struct sr_discipline *, dev_t,
 			    struct sr_metadata *,void *);
 
@@ -211,9 +204,7 @@ struct sr_meta_driver {
 	{ SR_META_OFFSET, SR_META_SIZE * 512,
 	  sr_meta_native_probe, sr_meta_native_attach, NULL,
 	  sr_meta_native_read, sr_meta_native_write, NULL },
-#define SR_META_F_NATIVE	0
 	{ 0, 0, NULL, NULL, NULL, NULL }
-#define SR_META_F_INVALID	-1
 };
 
 int
@@ -990,7 +981,7 @@ sr_boot_assembly(struct sr_softc *sc)
 {
 	struct device		*dv;
 	struct bioc_createraid	bc;
-	struct sr_metadata_list_head mlh;
+	struct sr_metadata_list_head mlh, kdh;
 	struct sr_metadata_list *mle, *mlenext, *mle1, *mle2;
 	struct sr_metadata	*metadata;
 	struct sr_boot_volume_head bvh;
@@ -1027,7 +1018,10 @@ sr_boot_assembly(struct sr_softc *sc)
 	/*
 	 * Create a list of volumes and associate chunks with each volume.
 	 */
+
 	SLIST_INIT(&bvh);
+	SLIST_INIT(&kdh);
+
 	for (mle = SLIST_FIRST(&mlh); mle != SLIST_END(&mlh); mle = mlenext) {
 
 		mlenext = SLIST_NEXT(mle, sml_link);
@@ -1035,6 +1029,12 @@ sr_boot_assembly(struct sr_softc *sc)
 
 		metadata = (struct sr_metadata *)&mle->sml_metadata;
 		mle->sml_chunk_id = metadata->ssdi.ssd_chunk_id;
+
+		/* Handle key disks separately. */
+		if (metadata->ssdi.ssd_level == SR_KEYDISK_LEVEL) {
+			SLIST_INSERT_HEAD(&kdh, mle, sml_link);
+			continue;
+		}
 
 		SLIST_FOREACH(vol, &bvh, sbv_link) {
 			if (bcmp(&metadata->ssdi.ssd_uuid, &vol->sbv_uuid,
@@ -1184,6 +1184,8 @@ sr_boot_assembly(struct sr_softc *sc)
 	 */
 	SLIST_FOREACH(vol, &bvh, sbv_link) {
 
+		bzero(&bc, sizeof(bc));
+
 		/* Check if this is a hotspare "volume". */
 		if (vol->sbv_level == SR_HOTSPARE_LEVEL &&
 		    vol->sbv_chunk_no == 1)
@@ -1196,6 +1198,23 @@ sr_boot_assembly(struct sr_softc *sc)
 		DNPRINTF(SR_D_META, " volid %u with %u chunks\n",
 		    vol->sbv_volid, vol->sbv_chunk_no);
 #endif
+
+		/*
+		 * If this is a crypto volume, try to find a matching
+		 * key disk...
+		 */
+		bc.bc_key_disk = NODEV;
+		if (vol->sbv_level == 'C') {
+			SLIST_FOREACH(mle, &kdh, sml_link) {
+				metadata =
+				    (struct sr_metadata *)&mle->sml_metadata;
+				if (bcmp(&metadata->ssdi.ssd_uuid,
+				    &vol->sbv_uuid,
+				    sizeof(metadata->ssdi.ssd_uuid)) == 0) {
+					bc.bc_key_disk = mle->sml_mm;
+				}
+			}
+		}
 
 		for (i = 0; i < BIOC_CRMAXLEN; i++) {
 			devs[i] = NODEV; /* mark device as illegal */
@@ -1231,7 +1250,6 @@ sr_boot_assembly(struct sr_softc *sc)
 			    DEVNAME(sc), vol->sbv_volid);
 		}
 
-		bzero(&bc, sizeof(bc));
 		bc.bc_level = vol->sbv_level;
 		bc.bc_dev_list_len = vol->sbv_chunk_no * sizeof(dev_t);
 		bc.bc_dev_list = devs;
@@ -2037,6 +2055,13 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 		bv->bv_size = sd->sd_meta->ssdi.ssd_size << DEV_BSHIFT;
 		bv->bv_level = sd->sd_meta->ssdi.ssd_level;
 		bv->bv_nodisk = sd->sd_meta->ssdi.ssd_chunk_no;
+
+#ifdef CRYPTO
+		if (sd->sd_meta->ssdi.ssd_level == 'C' &&
+		    sd->mds.mdd_crypto.key_disk != NULL)
+			bv->bv_nodisk++;
+#endif
+
 		if (bv->bv_status == BIOC_SVREBUILD) {
 			sz = sd->sd_meta->ssdi.ssd_size;
 			rb = sd->sd_meta->ssd_rebuild;
@@ -2090,10 +2115,18 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 			continue;
 
 		id = bd->bd_diskid;
-		if (id >= sc->sc_dis[i]->sd_meta->ssdi.ssd_chunk_no)
+
+		if (id < sc->sc_dis[i]->sd_meta->ssdi.ssd_chunk_no)
+			src = sc->sc_dis[i]->sd_vol.sv_chunks[id];
+#ifdef CRYPTO
+		else if (id == sc->sc_dis[i]->sd_meta->ssdi.ssd_chunk_no &&
+		    sc->sc_dis[i]->sd_meta->ssdi.ssd_level == 'C' &&
+		    sc->sc_dis[i]->mds.mdd_crypto.key_disk != NULL)
+			src = sc->sc_dis[i]->mds.mdd_crypto.key_disk;
+#endif
+		else
 			break;
 
-		src = sc->sc_dis[i]->sd_vol.sv_chunks[id];
 		bd->bd_status = src->src_meta.scm_status;
 		bd->bd_size = src->src_meta.scmi.scm_size << DEV_BSHIFT;
 		bd->bd_channel = vol;
@@ -2764,6 +2797,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_meta->ssdi.ssd_level = bc->bc_level;
 		sd->sd_meta->ssdi.ssd_chunk_no = no_chunk;
 
+		/* Make the volume UUID available. */
+		bcopy(&ch_entry->src_meta.scmi.scm_uuid,
+		    &sd->sd_meta->ssdi.ssd_uuid,
+		    sizeof(sd->sd_meta->ssdi.ssd_uuid));
+
 		if (sd->sd_create) {
 			if ((i = sd->sd_create(sd, bc, no_chunk,
 			    ch_entry->src_meta.scmi.scm_coerced_size))) {
@@ -3018,7 +3056,7 @@ sr_ioctl_discipline(struct sr_softc *sc, struct bioc_discipline *bd)
 	/* Dispatch a discipline specific ioctl. */
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_discipline %s\n", DEVNAME(sc),
-	    dr->bd_dev);
+	    bd->bd_dev);
 
 	for (i = 0; i < SR_MAXSCSIBUS; i++)
 		if (sc->sc_dis[i]) {

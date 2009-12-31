@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.87 2009/12/15 13:19:37 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.88 2009/12/31 14:00:45 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -29,10 +29,16 @@ struct sr_uuid {
 
 #define SR_HOTSPARE_LEVEL	0xffffffff
 #define SR_HOTSPARE_VOLID	0xffffffff
+#define SR_KEYDISK_LEVEL	0xfffffffe
+#define SR_KEYDISK_VOLID	0xfffffffe
 
 #define SR_META_SIZE		64	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
 #define SR_META_VERSION		3	/* bump when sr_metadata changes */
+
+#define SR_META_F_NATIVE	0	/* Native metadata format. */
+#define SR_META_F_INVALID	-1
+
 struct sr_metadata {
 	struct sr_meta_invariant {
 		/* do not change order of ssd_magic, ssd_version */
@@ -150,8 +156,9 @@ struct sr_meta_opt {
 struct sr_crypto_genkdf {
 	u_int32_t	len;
 	u_int32_t	type;
-#define SR_CRYPTOKDFT_INVALID	(0)
-#define SR_CRYPTOKDFT_PBKDF2	(1<<0)
+#define SR_CRYPTOKDFT_INVALID	0
+#define SR_CRYPTOKDFT_PBKDF2	1
+#define SR_CRYPTOKDFT_KEYDISK	2
 };
 
 /* this is a hint for KDF using PKCS#5.  Not interpreted by the kernel */
@@ -330,6 +337,7 @@ struct sr_raid6 {
 #define SR_CRYPTO_NOWU		16
 struct sr_crypto {
 	struct sr_meta_crypto	scr_meta;
+	struct sr_chunk		*key_disk;
 
 	struct pool		sr_uiopl;
 	struct pool		sr_iovpl;
@@ -549,8 +557,15 @@ void			sr_wu_put(struct sr_workunit *);
 
 /* misc functions */
 int32_t			sr_validate_stripsize(u_int32_t);
+int			sr_meta_read(struct sr_discipline *);
+int			sr_meta_native_read(struct sr_discipline *, dev_t,
+			    struct sr_metadata *, void *);
+int			sr_meta_validate(struct sr_discipline *, dev_t,
+			    struct sr_metadata *, void *);
 void			sr_meta_save_callback(void *, void *);
 int			sr_meta_save(struct sr_discipline *, u_int32_t);
+void			sr_meta_getdevname(struct sr_softc *, dev_t, char *,
+			    int);
 void			sr_checksum(struct sr_softc *, void *, void *,
 			    u_int32_t);
 int			sr_validate_io(struct sr_workunit *, daddr64_t *,
@@ -558,6 +573,7 @@ int			sr_validate_io(struct sr_workunit *, daddr64_t *,
 int			sr_check_io_collision(struct sr_workunit *);
 void			sr_scsi_done(struct sr_discipline *,
 			    struct scsi_xfer *);
+int			sr_chunk_in_use(struct sr_softc *, dev_t);
 
 /* discipline functions */
 int			sr_raid_inquiry(struct sr_workunit *);
@@ -588,6 +604,8 @@ void			sr_raid1_set_vol_state(struct sr_discipline *);
 int			sr_crypto_get_kdf(struct bioc_createraid *,
 			    struct sr_discipline *);
 int			sr_crypto_create_keys(struct sr_discipline *);
+struct sr_chunk *	sr_crypto_create_key_disk(struct sr_discipline *, dev_t);
+struct sr_chunk *	sr_crypto_read_key_disk(struct sr_discipline *, dev_t);
 
 #ifdef SR_DEBUG
 void			sr_dump_mem(u_int8_t *, int);
