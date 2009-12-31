@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.151 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.152 2009/12/31 15:34:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -101,15 +101,11 @@ int
 main(int argc, char *argv[])
 {
 	struct bgpd_config	 conf;
-	struct peer		*peer_l, *p;
 	struct mrt_head		 mrt_l;
-	struct network_head	 net_l;
+	struct peer		*peer_l, *p;
 	struct filter_head	*rules_l;
-	struct network		*net;
-	struct filter_rule	*r;
 	struct mrt		*m;
 	struct listen_addr	*la;
-	struct rde_rib		*rr;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
@@ -129,9 +125,8 @@ main(int argc, char *argv[])
 		err(1, NULL);
 
 	bzero(&conf, sizeof(conf));
-	LIST_INIT(&mrt_l);
-	TAILQ_INIT(&net_l);
 	TAILQ_INIT(rules_l);
+	LIST_INIT(&mrt_l);
 	peer_l = NULL;
 	conf.csock = SOCKET_NAME;
 
@@ -177,12 +172,15 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
-	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l, rules_l)) {
-		free(rules_l);
-		exit(1);
-	}
-
 	if (conf.opts & BGPD_OPT_NOACTION) {
+		struct network_head	 net_l;
+		TAILQ_INIT(&net_l);
+		if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l,
+		    rules_l)) {
+			free(rules_l);
+			exit(1);
+		}
+
 		if (conf.opts & BGPD_OPT_VERBOSE)
 			print_config(&conf, &ribnames, &net_l, peer_l, rules_l,
 			    &mrt_l);
@@ -226,13 +224,10 @@ main(int argc, char *argv[])
 	session_socket_blockmode(pipe_s2r_c[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_s2r_c[1], BM_NONBLOCK);
 
-	prepare_listeners(&conf);
-
 	/* fork children */
-	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, &mrt_l, &ribnames,
-	    pipe_m2r, pipe_s2r, pipe_m2s, pipe_s2r_c, debug);
-	io_pid = session_main(&conf, peer_l, &net_l, rules_l, &mrt_l, &ribnames,
-	    pipe_m2s, pipe_s2r, pipe_m2r, pipe_s2r_c);
+	rde_pid = rde_main(pipe_m2r, pipe_s2r, pipe_m2s, pipe_s2r_c, debug);
+	io_pid = session_main(pipe_m2s, pipe_s2r, pipe_m2r, pipe_s2r_c,
+	    conf.csock, conf.rcsock);
 
 	setproctitle("parent");
 
@@ -260,27 +255,7 @@ main(int argc, char *argv[])
 		quit = 1;
 	if (pftable_clear_all() != 0)
 		quit = 1;
-
-	while ((net = TAILQ_FIRST(&net_l)) != NULL) {
-		TAILQ_REMOVE(&net_l, net, entry);
-		filterset_free(&net->net.attrset);
-		free(net);
-	}
-
-	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
-		TAILQ_REMOVE(rules_l, r, entry);
-		free(r);
-	}
-	TAILQ_FOREACH(la, conf.listen_addrs, entry) {
-		close(la->fd);
-		la->fd = -1;
-	}
-	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
-		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
-		free(rr);
-	}
-
-	mrt_reconfigure(&mrt_l);
+	quit = reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
 
 	while (quit == 0) {
 		bzero(pfd, sizeof(pfd));

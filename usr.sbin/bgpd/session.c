@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.302 2009/12/08 14:03:40 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.303 2009/12/31 15:34:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -93,11 +93,11 @@ struct peer	*getpeerbyip(struct sockaddr *);
 int		 session_match_mask(struct peer *, struct bgpd_addr *);
 struct peer	*getpeerbyid(u_int32_t);
 
-struct bgpd_config	*conf, *nconf = NULL;
+struct bgpd_config	*conf, *nconf;
 struct bgpd_sysdep	 sysdep;
-struct peer		*npeers;
-volatile sig_atomic_t	 session_quit = 0;
-int			 pending_reconf = 0;
+struct peer		*peers, *npeers;
+volatile sig_atomic_t	 session_quit;
+int			 pending_reconf;
 int			 csock = -1, rcsock = -1;
 u_int			 peer_cnt;
 struct imsgbuf		*ibuf_rde;
@@ -174,10 +174,8 @@ setup_listeners(u_int *la_cnt)
 }
 
 pid_t
-session_main(struct bgpd_config *config, struct peer *cpeers,
-    struct network_head *net_l, struct filter_head *rules,
-    struct mrt_head *m_l, struct rib_names *rib_l, int pipe_m2s[2],
-    int pipe_s2r[2], int pipe_m2r[2], int pipe_s2rctl[2])
+session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2], 
+    int pipe_s2rctl[2], char *cname, char *rcname)
 {
 	int			 nfds, timeout;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
@@ -188,18 +186,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	u_int32_t		 ctl_queued;
 	struct passwd		*pw;
 	struct peer		*p, **peer_l = NULL, *last, *next;
-	struct network		*net;
 	struct mrt		*m, *xm, **mrt_l = NULL;
-	struct filter_rule	*r;
 	struct pollfd		*pfd = NULL;
 	struct ctl_conn		*ctl_conn;
 	struct listen_addr	*la;
-	struct rde_rib		*rr;
 	void			*newp;
 	short			 events;
-
-	conf = config;
-	peers = cpeers;
 
 	switch (pid = fork()) {
 	case -1:
@@ -211,10 +203,9 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	}
 
 	/* control socket is outside chroot */
-	if ((csock = control_init(0, conf->csock)) == -1)
+	if ((csock = control_init(0, cname)) == -1)
 		fatalx("control socket setup failed");
-	if (conf->rcsock != NULL &&
-	    (rcsock = control_init(1, conf->rcsock)) == -1)
+	if (rcname != NULL && (rcsock = control_init(1, rcname)) == -1)
 		fatalx("control socket setup failed");
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
@@ -236,20 +227,18 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	listener_cnt = 0;
-	setup_listeners(&listener_cnt);
-
 	signal(SIGTERM, session_sighdlr);
 	signal(SIGINT, session_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
-	log_info("session engine ready");
+	signal(SIGALRM, SIG_IGN);
+	signal(SIGUSR1, SIG_IGN);
+
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
 	close(pipe_s2rctl[1]);
 	close(pipe_m2r[0]);
 	close(pipe_m2r[1]);
-	init_conf(conf);
 	if ((ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_rde_ctl = malloc(sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
@@ -257,37 +246,23 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	imsg_init(ibuf_rde, pipe_s2r[0]);
 	imsg_init(ibuf_rde_ctl, pipe_s2rctl[0]);
 	imsg_init(ibuf_main, pipe_m2s[1]);
+
 	TAILQ_INIT(&ctl_conns);
 	control_listen(csock);
 	control_listen(rcsock);
 	LIST_INIT(&mrthead);
+	listener_cnt = 0;
 	peer_cnt = 0;
 	ctl_cnt = 0;
 
-	/* filter rules are not used in the SE */
-	while ((r = TAILQ_FIRST(rules)) != NULL) {
-		TAILQ_REMOVE(rules, r, entry);
-		free(r);
-	}
-	free(rules);
+	if ((conf = malloc(sizeof(struct bgpd_config))) == NULL)
+		fatal(NULL);
+	if ((conf->listen_addrs = calloc(1, sizeof(struct listen_addrs))) ==
+	    NULL)
+		fatal(NULL);
+	TAILQ_INIT(conf->listen_addrs);
 
-	/* network list is not used in the SE */
-	while ((net = TAILQ_FIRST(net_l)) != NULL) {
-		TAILQ_REMOVE(net_l, net, entry);
-		filterset_free(&net->net.attrset);
-		free(net);
-	}
-
-	/* main mrt list is not used in the SE */
-	while ((m = LIST_FIRST(m_l)) != NULL) {
-		LIST_REMOVE(m, entry);
-		free(m);
-	}
-	/* rib names not used in the SE */
-	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
-		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
-		free(rr);
-	}
+	log_info("session engine ready");
 
 	while (session_quit == 0) {
 		/* check for peers to be initialized or deleted */
@@ -308,7 +283,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 				/* reinit due? */
 				if (p->conf.reconf_action == RECONF_REINIT) {
 					session_stop(p, ERR_CEASE_ADMIN_RESET);
-					timer_set(p, Timer_IdleHold, 0);
+					if (!p->conf.down)
+						timer_set(p, Timer_IdleHold, 0);
 				}
 
 				/* deletion due? */

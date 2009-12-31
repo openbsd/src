@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.278 2009/12/18 15:51:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.279 2009/12/31 15:34:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,22 +146,13 @@ u_int32_t	attrhashsize = 512;
 u_int32_t	nexthophashsize = 64;
 
 pid_t
-rde_main(struct bgpd_config *config, struct peer *peer_l,
-    struct network_head *net_l, struct filter_head *rules,
-    struct mrt_head *mrt_l, struct rib_names *rib_n, int pipe_m2r[2],
-    int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2], int debug)
+rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
+    int debug)
 {
 	pid_t			 pid;
 	struct passwd		*pw;
-	struct peer		*p;
-	struct listen_addr	*la;
 	struct pollfd		*pfd = NULL;
-	struct filter_rule	*f;
-	struct filter_set	*set;
-	struct nexthop		*nh;
-	struct rde_rib		*rr;
 	struct rde_mrt_ctx	*mctx, *xmctx;
-	struct mrt		*mrt;
 	void			*newp;
 	u_int			 pfd_elms = 0, i, j;
 	int			 timeout;
@@ -174,8 +165,6 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	default:
 		return (pid);
 	}
-
-	conf = config;
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal("getpwnam");
@@ -197,6 +186,8 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	signal(SIGINT, rde_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
+	signal(SIGALRM, SIG_IGN);
+	signal(SIGUSR1, SIG_IGN);
 
 	close(pipe_s2r[0]);
 	close(pipe_s2rctl[0]);
@@ -213,49 +204,20 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	imsg_init(ibuf_se_ctl, pipe_s2rctl[1]);
 	imsg_init(ibuf_main, pipe_m2r[1]);
 
-	/* peer list, mrt list and listener list are not used in the RDE */
-	while ((p = peer_l) != NULL) {
-		peer_l = p->next;
-		free(p);
-	}
-
-	while ((mrt = LIST_FIRST(mrt_l)) != NULL) {
-		LIST_REMOVE(mrt, entry);
-		free(mrt);
-	}
-
-	while ((la = TAILQ_FIRST(config->listen_addrs)) != NULL) {
-		TAILQ_REMOVE(config->listen_addrs, la, entry);
-		close(la->fd);
-		free(la);
-	}
-	free(config->listen_addrs);
-
 	pt_init();
-	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
-		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
-		rib_new(-1, rr->name, rr->flags);
-		free(rr);
-	}
 	path_init(pathhashsize);
 	aspath_init(pathhashsize);
 	attr_init(attrhashsize);
 	nexthop_init(nexthophashsize);
 	peer_init(peerhashsize);
-	rules_l = rules;
-	network_init(net_l);
 
+	rules_l = calloc(1, sizeof(struct filter_head));
+	if (rules_l == NULL)
+		fatal(NULL);
+	TAILQ_INIT(rules_l);
+	if ((conf = malloc(sizeof(struct bgpd_config))) == NULL)
+		fatal(NULL);
 	log_info("route decision engine ready");
-
-	TAILQ_FOREACH(f, rules, entry) {
-		f->peer.ribid = rib_find(f->rib);
-		TAILQ_FOREACH(set, &f->set, entry) {
-			if (set->type == ACTION_SET_NEXTHOP) {
-				nh = nexthop_get(&set->action.nexthop);
-				nh->refcnt++;
-			}
-		}
-	}
 
 	while (rde_quit == 0) {
 		if (pfd_elms < PFD_PIPE_COUNT + rde_mrt_cnt) {
@@ -660,6 +622,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			free(nconf);
 			nconf = NULL;
 			parent_set = NULL;
+			/* sync peerself with conf */
+			peerself->remote_bgpid = ntohl(conf->bgpid);
+			peerself->conf.local_as = conf->as;
+			peerself->conf.remote_as = conf->as;
+			peerself->short_as = conf->short_as;
 			prefix_network_clean(peerself, reloadtime, 0);
 
 			/* check if filter changed */
@@ -2567,7 +2534,6 @@ void
 peer_init(u_int32_t hashsize)
 {
 	struct peer_config pc;
-	struct in_addr   id;
 	u_int32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
@@ -2583,17 +2549,13 @@ peer_init(u_int32_t hashsize)
 	peertable.peer_hashmask = hs - 1;
 
 	bzero(&pc, sizeof(pc));
-	pc.remote_as = conf->as;
-	id.s_addr = conf->bgpid;
-	snprintf(pc.descr, sizeof(pc.descr), "LOCAL: ID %s", inet_ntoa(id));
+	snprintf(pc.descr, sizeof(pc.descr), "LOCAL");
 
 	peerself = peer_add(0, &pc);
 	if (peerself == NULL)
 		fatalx("peer_init add self");
 
 	peerself->state = PEER_UP;
-	peerself->remote_bgpid = ntohl(conf->bgpid);
-	peerself->short_as = conf->short_as;
 }
 
 void
