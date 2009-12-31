@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.114 2009/12/31 11:52:25 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.115 2009/12/31 14:43:54 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -253,6 +253,13 @@ our @ISA=(qw(_cache));
 sub do
 {
 	my ($v, $solver, $state, $dep, $package) = @_;
+	my $alt = $solver->find_dep_in_self($state, $dep);
+	if ($alt) {
+		$solver->set_cache($dep, _cache::self->new($alt));
+		push(@{$package->{before}}, $alt);
+		return $alt;
+	}
+
 	if ($state->tracker->{to_update}{$$v}) {
 		$solver->add_dep($state->tracker->{to_update}{$$v});
 	    	return $$v;
