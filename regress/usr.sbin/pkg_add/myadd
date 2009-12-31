@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: myadd,v 1.1 2009/11/14 10:59:11 espie Exp $
+# $OpenBSD: myadd,v 1.2 2009/12/31 12:58:22 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,7 @@ if ($ENV{'DEBUG'}) {
 	unshift(@args, 'pkg_add');
 	$prog = 'pkg_add';
 }
+print join(' ', "pkg_add", @ARGV), "\n" unless $ENV{'SILENT'} || $ENV{'VERBOSE'};
 print join(' ', @args), "\n" if $ENV{'VERBOSE'};
 
 exec {$prog} @args;
