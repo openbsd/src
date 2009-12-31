@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.42 2009/12/31 13:12:27 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.43 2009/12/31 13:25:03 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -212,22 +212,28 @@ sub report_problem
 	my ($dir, $name) = normalize_dir_and_spec($base, $p);
 	my ($stem, $major, $minor) = parse_spec($name);
 
-	return unless defined $stem;
-	return unless defined $registered_libs->{$stem};
-
 	my $r = "";
-	while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
-		my @l = ();
-		while (my ($M, $w) = each %$v) {
-			for my $e (@$w) {
-				push(@l, entry_string($stem, $M, $e->[0]).
-				    " (".why_is_this_bad($base, $name, $dir, 
-				    $d, $major, $M, $minor, $e->[0], $e->[1]).
-				    ")");
+	if (!defined $stem) {
+		$r = "| bad library specification\n";
+	} elsif (!defined $registered_libs->{stem}) {
+		$r = "| not found anywhere\n";
+	} else {
+		while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
+			my @l = ();
+			while (my ($M, $w) = each %$v) {
+				for my $e (@$w) {
+					push(@l, 
+					    entry_string($stem, $M, $e->[0]).
+					    " (".
+					    why_is_this_bad($base, $name, $dir, 
+						$d, $major, $M, $minor, 
+						$e->[0], $e->[1]).
+					    ")");
+				}
 			}
-		}
-		if (@l > 0) {
-			$r .= "| in $d: ". join(", ", sort @l). "\n";
+			if (@l > 0) {
+				$r .= "| in $d: ". join(", ", sort @l). "\n";
+			}
 		}
 	}
 	if (!defined $printed->{$name} || $printed->{$name} ne $r) {
