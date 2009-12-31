@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.43 2009/12/31 13:25:03 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.44 2009/12/31 14:14:08 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -215,7 +215,7 @@ sub report_problem
 	my $r = "";
 	if (!defined $stem) {
 		$r = "| bad library specification\n";
-	} elsif (!defined $registered_libs->{stem}) {
+	} elsif (!defined $registered_libs->{$stem}) {
 		$r = "| not found anywhere\n";
 	} else {
 		while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
