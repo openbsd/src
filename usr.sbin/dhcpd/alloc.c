@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.5 2010/01/01 01:47:41 krw Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.6 2010/01/01 06:25:37 krw Exp $	*/
 
 /* Memory allocation... */
 
@@ -104,14 +104,6 @@ new_hash_table(int count, char *name)
 	return (rval);
 }
 
-struct hash_bucket *
-new_hash_bucket(char *name)
-{
-	struct hash_bucket *rval = dmalloc(sizeof(struct hash_bucket), name);
-
-	return (rval);
-}
-
 void
 free_hash_bucket(struct hash_bucket *ptr, char *name)
 {
@@ -167,28 +159,6 @@ free_lease_state(struct lease_state *ptr, char *name)
 		dfree(ptr->prl, name);
 	ptr->next = free_lease_states;
 	free_lease_states = ptr;
-}
-
-struct lease *
-new_leases(int n, char *name)
-{
-	struct lease *rval = dmalloc(n * sizeof(struct lease), name);
-	return (rval);
-}
-
-struct lease *
-new_lease(char *name)
-{
-	struct lease *rval = dmalloc(sizeof(struct lease), name);
-	return (rval);
-}
-
-struct group *
-new_group(char *name)
-{
-	struct group *rval =
-		dmalloc(sizeof(struct group), name);
-	return (rval);
 }
 
 void

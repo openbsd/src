@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.17 2010/01/01 01:47:41 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.18 2010/01/01 06:25:37 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -228,7 +228,7 @@ new_address_range(struct iaddr low, struct iaddr high, struct subnet *subnet,
 	}
 
 	/* Get a lease structure for each address in the range. */
-	address_range = new_leases(max - min + 1, "new_address_range");
+	address_range = calloc(max - min + 1, sizeof(struct lease));
 	if (!address_range) {
 		strlcpy(lowbuf, piaddr(low), sizeof(lowbuf));
 		strlcpy(highbuf, piaddr(high), sizeof(highbuf));
@@ -411,7 +411,7 @@ enter_lease(struct lease *lease)
 
 	/* If we don't have a place for this lease yet, save it for later. */
 	if (!comp) {
-		comp = new_lease("enter_lease");
+		comp = calloc(1, sizeof(struct lease));
 		if (!comp)
 			error("No memory for lease %s\n",
 			    piaddr(lease->ip_addr));
@@ -834,7 +834,9 @@ find_class(int type, unsigned char *name, int len)
 struct group *
 clone_group(struct group *group, char *caller)
 {
-	struct group *g = new_group(caller);
+	struct group *g;
+
+	g = calloc(1, sizeof(struct group));
 	if (!g)
 		error("%s: can't allocate new group", caller);
 	*g = *group;
