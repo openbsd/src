@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.50 2009/11/07 08:10:07 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.51 2010/01/01 14:18:45 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: November 7 2009 $
+.Dd $Mdocdate: January 1 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -36,19 +36,16 @@
 .Oo Fl D Ar name
 .Ns = Ns Ar value
 .Oc
-.Op Fl i Ar iscript
-.Op Fl k Ar dscript
 .Op Fl L Ar localbase
 .Op Fl M Ar displayfile
 .Op Fl P Ar pkg-dependency
-.Op Fl p Ar prefix
 .Op Fl s Ar signature-parameter
-.Op Fl S Ar pkg-destdir
 .Op Fl U Ar undisplayfile
 .Op Fl W Ar wantedlib
-.Fl c Ar desc
 .Fl d Ar desc
+.Fl D Ar COMMENT Ns = Ns Ar value
 .Fl f Ar packinglist
+.Fl p Ar prefix
 .Ar pkg-name
 .Ek
 .Nm pkg_create
@@ -101,26 +98,31 @@ to mean any architecture (e.g., arch-independent packages).
 Set
 .Ar pkg-destdir
 as the prefix to prepend to any file to select for the package.
-.It Fl c No [-] Ns Ar desc
-Fetch package
-.Dq one line description
-from file
-.Ar desc
-or, if preceded by
-.Sq - ,
-the argument itself.
-This string should also
-give some idea of which version of the product (if any) the package
-represents.
-Deprecated, use
-.Fl D Ar COMMENT Ns = Ns Ar value
-instead.
 .It Fl D Ar name Ns = Ns Ar value
 Define
 .Ar name
 to
 .Ar value ,
 for substitution and fragment inclusion purposes.
+Some specific
+.Ar names
+have extra meaning, see
+.Xr bsd.port.mk 5
+for details:
+.Pp
+.Bl -tag -width FULLPKGPATH -compact
+.It Ar COMMENT
+Set package
+.Dq one line description
+(mandatory).
+.It Ar FULLPKGPATH
+.It Ar HOMEPAGE
+If defined, appended to the description.
+.It Ar MAINTAINER
+If defined, appended to the description.
+.It Ar PERMIT_PACKAGE_CDROM
+.It Ar PERMIT_PACKAGE_FTP
+.El
 .It Fl d No [-] Ns Ar desc
 Fetch long description for package from file
 .Ar desc
@@ -134,24 +136,6 @@ for package from the file
 .Ar packinglist .
 Several packing-lists can be mentioned, in which case they will be
 concatenated together.
-.It Fl i Ar iscript
-Set
-.Ar iscript
-to be the install procedure for the package (deprecated, use
-.Cm @exec
-instead).
-This can be any executable program (or shell script).
-It will be invoked automatically
-when the package is later installed.
-.It Fl k Ar dscript
-Set
-.Ar dscript
-to be the de-install procedure for the package (deprecated, use
-.Cm @unexec
-instead).
-This can be any executable program (or shell script).
-It will be invoked automatically
-when the package is later (if ever) de-installed.
 .It Fl L Ar localbase
 Record
 .Ar localbase
@@ -195,7 +179,7 @@ Most often used in combination with
 .Fl s Ar cert
 .Fl s Ar privkey
 .Xc
-Specify signature parameters for signed packages. 
+Specify signature parameters for signed packages.
 For now, the only supported use involves three
 .Fl s
 options:
@@ -212,11 +196,6 @@ This assumes the existence of a certificate authority (or several), whose
 public information is recorded as a
 .Pa /etc/ssl/pkgca.pem
 file.
-.It Fl S Ar pkg-destdir
-Deprecated, use
-identical
-.Fl B
-option instead.
 .It Fl U Ar undisplayfile
 Display the file (using
 .Xr more 1 )
@@ -343,14 +322,6 @@ If
 .Ar name
 does not begin with an @, same as
 .Dl name/
-.Pp
-.It Cm @dirrm Ar directoryname
-Declare directory
-.Pa directoryname
-to be deleted at deinstall time.
-Deprecated, use
-.Dl directoryname/
-instead, as it handles proper directory creation as well.
 .Pp
 .It Cm @display Ar name
 Declare
@@ -533,6 +504,10 @@ database when needed.
 Added after a file entry by
 .Nm
 to record the files's cryptographic checksum.
+Replaced by
+.Cm @sha
+since
+.Ox 4.5 .
 .Pp
 .It Cm @mode Ar mode
 Set default permission for all subsequently extracted files to
@@ -612,6 +587,12 @@ uses some simplified information to decide whether an installed package
 needs updating.
 With this option, the package is updated whenever anything changes.
 To be used sparingly, as this is more expensive.
+.It Ar explicit-update
+packages tagged with this option, either in the installed version or in an
+update candidate, won't be considered during a global update.
+User has to explicitly ask to update them.
+Typical use is for firmware packages, whose updates are usually tied to
+kernel changes.
 .It Ar no-default-conflict
 By default, a package conflicts with other versions of the same package.
 With this option, the older package version will still be noticed, but the
@@ -679,6 +660,12 @@ If
 ends with a slash,
 it refers to a configuration directory instead.
 .Pp
+.It Cm @sha
+Added after a file entry by
+.Nm
+to record the files's cryptographic checksum,
+as a sha25 digest encoded in base64.
+.Pp
 .It Cm @shell Ar filename
 Specialized version of
 .Cm @file ,
@@ -743,6 +730,10 @@ Similar to
 except it only gets executed while removing an old package during updates,
 and not during true deletions.
 .Pp
+.It Cm @url
+Original location of the package, automatically recorded in installed packages
+by
+.Xr pkg_add 1 .
 .It Cm @wantlib Ar libspec
 Package needs a shared library to work.
 .Ar libspec
