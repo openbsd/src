@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.16 2006/12/17 18:03:33 stevesk Exp $ */
+/*	$OpenBSD: confpars.c,v 1.17 2010/01/01 08:02:34 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -232,7 +232,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		/* Otherwise, cons up a fake shared network structure
 		   and populate it with the lone subnet... */
 
-		share = new_shared_network("parse_statement");
+		share = calloc(1, sizeof(struct shared_network));
 		if (!share)
 			error("No memory for shared subnet");
 		share->group = clone_group(group, "parse_statement:subnet");
@@ -618,7 +618,7 @@ void parse_shared_net_declaration(cfile, group)
 	char *name;
 	int declaration = 0;
 
-	share = new_shared_network("parse_shared_net_declaration");
+	share = calloc(1, sizeof(struct shared_network));
 	if (!share)
 		error("No memory for shared subnet");
 	share->leases = NULL;
@@ -688,7 +688,7 @@ void parse_subnet_declaration(cfile, share)
 	int len = sizeof addr;
 	int declaration = 0;
 
-	subnet = new_subnet("parse_subnet_declaration");
+	subnet = calloc(1, sizeof(struct subnet));
 	if (!subnet)
 		error("No memory for new subnet");
 	subnet->shared_network = share;

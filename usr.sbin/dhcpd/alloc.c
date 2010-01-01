@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.6 2010/01/01 06:25:37 krw Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.7 2010/01/01 08:02:34 krw Exp $	*/
 
 /* Memory allocation... */
 
@@ -121,21 +121,6 @@ void
 free_tree(struct tree *ptr, char *name)
 {
 	dfree(ptr, name);
-}
-
-struct shared_network *
-new_shared_network(char *name)
-{
-	struct shared_network *rval =
-		dmalloc(sizeof(struct shared_network), name);
-	return (rval);
-}
-
-struct subnet *
-new_subnet(char *name)
-{
-	struct subnet *rval = dmalloc(sizeof(struct subnet), name);
-	return (rval);
 }
 
 struct lease_state *
