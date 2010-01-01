@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.128 2010/01/01 16:09:35 espie Exp $
+# $OpenBSD: pkg_create,v 1.129 2010/01/01 16:12:21 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -611,12 +611,14 @@ if ($regen_package) {
 		$plist->set_pkgname($pkgname);
 	}
 	my $fullpkgpath = $subst->value('FULLPKGPATH');
-	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM');
-	my $ftp = $subst->value('PERMIT_PACKAGE_FTP');
+	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') || 
+	    $subst->value('CDROM');;
+	my $ftp = $subst->value('PERMIT_PACKAGE_FTP') ||
+	    $subst->value('FTP');
 	if (defined $fullpkgpath || defined $cdrom || defined $ftp) {
 		$fullpkgpath //= '';
-		$cdrom //= '';
-		$ftp //= '';
+		$cdrom //= 'no';
+		$ftp //= 'no';
 		$cdrom = 'yes' if $cdrom =~ m/^yes$/io;
 		$ftp = 'yes' if $ftp =~ m/^yes$/io;
 
