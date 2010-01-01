@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.28 2009/12/31 13:31:53 espie Exp $
+# $OpenBSD: Makefile,v 1.29 2010/01/01 16:36:17 espie Exp $
 
-REGRESS_TARGETS=pkgnames depends-check longnames always-update \
+REGRESS_TARGETS=pkgnames depends-check longnames update-check1 \
 	collision-check3 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3
@@ -66,11 +66,16 @@ collision-check5: rep1/d-0.tgz rep1/e-0.tgz
 	@-rm -rf ${D7}/pkgdb/d-0
 	@ROOT=${D7} ${PKG_ADD} -F removecollisions rep1/d-0.tgz
 
-always-update: rep0/g-0.tgz rep1/g-0.tgz
+update-check1: rep0/g-0.tgz rep1/g-0.tgz rep0/ga-0.tgz rep1/ga-0.tgz \
+	rep0/gb-0.tgz rep1/gb-0p0.tgz rep0/gc-0.tgz rep1/gc-0.tgz \
+	rep0/gd-0.tgz rep1/gd-1.tgz rep0/ge-0.tgz rep1/ge-1.tgz \
+	rep0/gf-1.tgz rep1/gf-0.tgz
 	@-rm -rf ${D8}
-	@ROOT=${D8} ${PKG_ADD} rep0/g-0.tgz
+	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} g ga gb gc gd ge gf
 	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u
-	@PKG_DBDIR=${D8}/pkgdb pkg_info -qf g|fgrep -q comment2
+	@PKG_DBDIR=${D8}/pkgdb pkg_info |diff - ${.CURDIR}/list7.out
+	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u gd ge
+	@PKG_DBDIR=${D8}/pkgdb pkg_info |diff - ${.CURDIR}/list8.out
 
 list-check: rep1/a-1.tgz rep1/b-1.tgz rep1/c-0.tgz rep1/d-0.tgz \
 	rep1/e-0.tgz rep1/f-0.tgz rep1/g-0.tgz
@@ -159,11 +164,9 @@ plist3:
 
 plist4:
 	@echo "@option always-update" >$@
-	@echo "@comment comment1" >>$@
 
 plist5:
-	@echo "@option always-update" >$@
-	@echo "@comment comment2" >>$@
+	@echo "@option explicit-update" >$@
 
 plist6:
 	@echo "@conflict l-<1" >$@
@@ -194,7 +197,9 @@ rep0/a-0.tgz:
 rep1/a-1.tgz rep0/b-0.tgz rep0/i-0.tgz rep0/j-0.tgz rep1/j-1.tgz \
 rep1/i-1.tgz rep0/k-0.tgz rep0/l-0.tgz rep1/l-1.tgz rep0/m-0.tgz \
 rep0/n-0.tgz rep1/m-1.tgz rep0/o-0.tgz rep0/fam-0.tgz \
-rep0/o1-0.tgz rep0/o2-0.tgz \
+rep0/o1-0.tgz rep0/o2-0.tgz rep0/ga-0.tgz \
+rep0/gb-0.tgz rep1/gb-0p0.tgz rep1/gd-1.tgz rep0/ge-0.tgz \
+rep0/gf-1.tgz rep1/gf-0.tgz \
 rep1/missc-0.tgz rep0/q5-0.tgz rep1/q5-1.tgz:
 	@${PKG_CREATE} -f ${.CURDIR}/empty $@
 
@@ -257,8 +262,20 @@ rep1/f-0.tgz:
 rep0/g-0.tgz: plist4
 	@${PKG_CREATE} -f plist4 $@
 
-rep1/g-0.tgz: plist5
+rep1/g-0.tgz: plist4
+	@PACKAGE_COMMENT=updated ${PKG_CREATE} -f plist4 $@
+
+rep0/gd-0.tgz rep1/ge-1.tgz: plist5
 	@${PKG_CREATE} -f plist5 $@
+
+rep1/ga-0.tgz:
+	@PACKAGE_COMMENT=updated ${PKG_CREATE} -f ${.CURDIR}/empty $@
+
+rep0/gc-0.tgz:
+	@${PKG_CREATE} -P't/ga:gb-*:gb-0' -f ${.CURDIR}/empty $@
+
+rep1/gc-0.tgz:
+	@PACKAGE_COMMENT=updated ${PKG_CREATE} -P't/ga:gb-*:gb-0p0' -f ${.CURDIR}/empty $@
 
 rep0/h-0.tgz:
 	@${PKG_CREATE} -P't/i:i-*:i-0' -f ${.CURDIR}/empty $@
