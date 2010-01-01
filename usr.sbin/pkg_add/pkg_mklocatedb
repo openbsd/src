@@ -1,6 +1,6 @@
 #! /usr/bin/perl
-# Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.21 2009/11/10 11:36:56 espie Exp $
+# Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
+# $OpenBSD: pkg_mklocatedb,v 1.22 2010/01/01 16:09:35 espie Exp $
 # 
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -46,9 +46,9 @@ sub info
 	my $plist = shift;
 	my $r;
 	if ($opt_a) {
-		$r = $plist->{extrainfo}->{subdir}.":".$plist->pkgname;
+		$r = $plist->fullpkgpath.":".$plist->pkgname;
 	} elsif ($opt_P) {
-		$r = $plist->{extrainfo}->{subdir};
+		$r = $plist->fullpkgpath;
 	} else {
 		$r = $plist->pkgname;
 	}
@@ -165,6 +165,7 @@ if ($opt_p) {
 
 elsif ($opt_d) {
 	require File::Find;
+	no warnings qw(once);
 	die "Bad argument: $opt_d is not a directory" unless -d $opt_d;
 	File::Find::find(
 		sub {

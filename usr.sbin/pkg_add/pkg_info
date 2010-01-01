@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.81 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: pkg_info,v 1.82 2010/01/01 16:09:35 espie Exp $
 #
-# Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -229,8 +229,10 @@ sub find_by_path
 				OpenBSD::PackingList->from_installation($pkg,
 				    \&OpenBSD::PackingList::ExtraInfoOnly);
 			next if !defined $plist;
-			add_to_path_info($plist->{extrainfo}->{subdir}, 
-			    $plist->pkgname);
+			if (defined $plist->fullpkgpath) {
+				add_to_path_info($plist->fullpkgpath,
+				    $plist->pkgname);
+			}
 			if ($plist->has('pkgpath')) {
 				for my $p (@{$plist->{pkgpath}}) {
 					add_to_path_info($p->name, 
@@ -376,7 +378,13 @@ sub print_info
 			    \&OpenBSD::PackingList::ExtraInfoOnly);
 			just_in_time_header($pkg, $handle ,\$done);
 			print "Pkgpath:\n" unless $opt_q;
-			print $plist->{extrainfo}->{subdir}, "\n";
+			if (defined $plist->fullpkgpath) {
+				print $plist->fullpkgpath;
+			} else {
+				print STDERR $plist->pkgname, 
+				    " has no FULLPKGPATH\n";
+			}
+			print "\n";
 		}
 
 		if ($opt_f) {
