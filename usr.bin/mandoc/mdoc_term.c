@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.65 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.66 2010/01/01 21:37:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -466,7 +466,11 @@ a2width(const struct mdoc_argv *arg, int pos)
 	if ( ! a2roffsu(arg->value[pos], &su, SCALE_MAX))
 		SCALE_HS_INIT(&su, strlen(arg->value[pos]));
 
-	/* XXX: pachemu? */
+	/*
+	 * This is a bit if a magic number on groff's part.  Be careful
+	 * in changing it, as the MDOC_Column handler will subtract one
+	 * from this for >5 columns (don't go below zero!).
+	 */
 	return(term_hspan(&su) + 2);
 }
 
@@ -646,7 +650,8 @@ termp_it_pre(DECL_ARGS)
 	const struct mdoc_node *bl, *nn;
 	char		        buf[7];
 	int		        i, type, keys[3], vals[3];
-	size_t		        width, offset;
+	size_t		        width, offset, ncols;
+	int			dcol;
 
 	if (MDOC_BLOCK == n->type) {
 		print_bvspace(p, n->parent->parent, n);
@@ -674,41 +679,48 @@ termp_it_pre(DECL_ARGS)
 	type = arg_listtype(bl);
 	assert(-1 != type);
 
+	if (vals[1] >= 0) 
+		offset = a2offs(&bl->args->argv[vals[1]]);
+
 	/* Calculate real width and offset. */
 
 	switch (type) {
 	case (MDOC_Column):
 		if (MDOC_BODY == n->type)
 			break;
-		/* 
-		 * Work around groff's column handling.  The offset is
-		 * equal to the sum of all widths leading to the current
-		 * column (plus the -offset value).  If this column
-		 * exceeds the stated number of columns, the width is
-		 * set as 0, else it's the stated column width (later
-		 * the 0 will be adjusted to default 10 or, if in the
-		 * last column case, set to stretch to the margin).
+
+		/*
+		 * Imitate groff's column handling.
+		 * For each earlier column, add its width.
+		 * For less than 5 columns, add two more blanks per column.
+		 * For exactly 5 columns, add only one more blank per column.
+		 * For more than 5 columns, SUBTRACT one column.  We can
+		 * do this because a2width() pads exactly 2 spaces.
 		 */
-		for (i = 0, nn = n->prev; nn && 
-				i < (int)bl->args->argv[vals[2]].sz; 
-				nn = nn->prev, i++)
-			offset += a2width 
-				(&bl->args->argv[vals[2]], i);
+		ncols = bl->args->argv[vals[2]].sz;
+		dcol = ncols < 5 ? 2 : ncols == 5 ? 1 : -1;
+		for (i=0, nn=n->prev; nn && i < (int)ncols; nn=nn->prev, i++)
+			offset += a2width(&bl->args->argv[vals[2]], i) + 
+				(size_t)dcol;
 
-		/* Whether exceeds maximum column. */
-		if (i < (int)bl->args->argv[vals[2]].sz)
-			width = a2width(&bl->args->argv[vals[2]], i);
-		else
-			width = 0;
+		/*
+		 * Use the declared column widths,
+		 * extended as explained in the preceding paragraph.
+		 */
+		if (i < (int)ncols)
+			width = a2width(&bl->args->argv[vals[2]], i) + 
+				(size_t)dcol;
 
-		if (vals[1] >= 0) 
-			offset += a2offs(&bl->args->argv[vals[1]]);
+		/*
+		 * When exceeding the declared number of columns,
+		 * leave the remaining widths at 0.
+		 * This will later be adjusted to the default width of 10,
+		 * or, for the last column, stretched to the right margin.
+		 */
 		break;
 	default:
 		if (vals[0] >= 0) 
 			width = a2width(&bl->args->argv[vals[0]], 0);
-		if (vals[1] >= 0) 
-			offset += a2offs(&bl->args->argv[vals[1]]);
 		break;
 	}
 
@@ -893,7 +905,8 @@ termp_it_pre(DECL_ARGS)
 		 * right-most column is filled to the right margin.
 		 */
 		if (MDOC_HEAD == n->type &&
-				MDOC_BODY == n->next->type)
+				MDOC_BODY == n->next->type &&
+				p->rmargin < p->maxrmargin)
 			p->rmargin = p->maxrmargin;
 		break;
 	default:
