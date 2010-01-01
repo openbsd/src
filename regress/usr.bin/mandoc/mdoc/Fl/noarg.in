@@ -1,0 +1,13 @@
+.Dd $Mdocdate: January 1 2010 $
+.Dt FL-NOARG 1
+.Os
+.Sh NAME
+.Nm Fl-noarg
+.Nd Fl macro without arguments
+.Sh DESCRIPTION
+Without an argument, it yields
+.Fl
+a dash.
+.Pp
+This is true even before punctuation
+.Fl .
