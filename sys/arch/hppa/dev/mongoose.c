@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.18 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -506,11 +506,26 @@ mgattach_gedoens(parent, self, aux)
 {
 	register struct confargs *ca = aux;
 	register struct mongoose_softc *sc = (struct mongoose_softc *)self;
+	bus_space_handle_t ioh;
 
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_iomap = ca->ca_hpa;
-	sc->sc_regs = (struct mongoose_regs *)(ca->ca_hpa + MONGOOSE_MONGOOSE);
-	sc->sc_ctrl = (struct mongoose_ctrl *)(ca->ca_hpa + MONGOOSE_CTRL);
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
+	    sizeof(struct mongoose_regs), 0, &ioh) != 0) {
+		printf(": can't map IO space\n");
+		return;
+	}
+	sc->sc_regs = (struct mongoose_regs *)ioh;
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_CTRL,
+	    sizeof(struct mongoose_ctrl), 0, &ioh) != 0) {
+		printf(": can't map control registers\n");
+		bus_space_unmap(ca->ca_iot, (bus_space_handle_t)sc->sc_regs,
+		    sizeof(struct mongoose_regs));
+		return;
+	}
+	sc->sc_ctrl = (struct mongoose_ctrl *)ioh;
 
 	if (mgattach_common(sc) != 0)
 		return;
