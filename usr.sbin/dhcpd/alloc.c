@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.9 2010/01/01 19:10:24 krw Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.10 2010/01/01 20:30:24 krw Exp $	*/
 
 /* Memory allocation... */
 
@@ -83,22 +83,10 @@ new_tree_cache(char *name)
 }
 
 void
-free_hash_bucket(struct hash_bucket *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
 free_tree_cache(struct tree_cache *ptr)
 {
 	ptr->value = (unsigned char *)free_tree_caches;
 	free_tree_caches = ptr;
-}
-
-void
-free_tree(struct tree *ptr, char *name)
-{
-	dfree(ptr, name);
 }
 
 struct lease_state *
@@ -122,10 +110,4 @@ free_lease_state(struct lease_state *ptr, char *name)
 		dfree(ptr->prl, name);
 	ptr->next = free_lease_states;
 	free_lease_states = ptr;
-}
-
-void
-free_lease(struct lease *ptr, char *name)
-{
-	dfree(ptr, name);
 }

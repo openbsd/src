@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.42 2010/01/01 19:10:24 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.43 2010/01/01 20:30:25 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -607,10 +607,7 @@ void dfree(void *, char *);
 struct tree_cache *new_tree_cache(char *);
 struct lease_state *new_lease_state(char *);
 void free_lease_state(struct lease_state *, char *);
-void free_lease(struct lease *, char *);
-void free_hash_bucket(struct hash_bucket *, char *);
 void free_tree_cache(struct tree_cache *);
-void free_tree(struct tree *, char *);
 
 /* print.c */
 char *print_hw_addr(int, int, unsigned char *);

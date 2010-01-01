@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.12 2010/01/01 18:01:44 krw Exp $ */
+/*	$OpenBSD: tree.c,v 1.13 2010/01/01 20:30:25 krw Exp $ */
 
 /* Routines for manipulating parse trees... */
 
@@ -122,7 +122,7 @@ tree_concat(struct tree *left, struct tree *right)
 		dfree(right->data.const_val.data, "tree_concat");
 		left->data.const_val.data = buf;
 		left->data.const_val.len += right->data.const_val.len;
-		free_tree(right, "tree_concat");
+		free(right);
 		return left;
 	}
 

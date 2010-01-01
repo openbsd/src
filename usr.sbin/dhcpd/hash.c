@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.5 2010/01/01 19:10:24 krw Exp $	*/
+/*	$OpenBSD: hash.c,v 1.6 2010/01/01 20:30:25 krw Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -124,7 +124,7 @@ delete_hash_entry(struct hash_table *table, unsigned char *name, int len)
 				pbp->next = bp->next;
 			else
 				table->buckets[hashno] = bp->next;
-			free_hash_bucket(bp, "delete_hash_entry");
+			free(bp);
 			break;
 		}
 		pbp = bp;	/* jwg, 9/6/96 - nice catch! */

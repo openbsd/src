@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.18 2010/01/01 06:25:37 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.19 2010/01/01 20:30:25 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -302,7 +302,7 @@ new_address_range(struct iaddr low, struct iaddr high, struct subnet *subnet,
 			address_range[lhost - i].client_hostname =
 			    lp->client_hostname;
 			supersede_lease(&address_range[lhost - i], lp, 0);
-			free_lease(lp, "new_address_range");
+			free(lp);
 		} else
 			plp = lp;
 	}
