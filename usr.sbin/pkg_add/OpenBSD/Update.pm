@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.125 2010/01/01 13:41:49 espie Exp $
+# $OpenBSD: Update.pm,v 1.126 2010/01/01 17:37:08 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -219,6 +219,22 @@ sub process_handle
 	}
 }
 
+sub find_nearest
+{
+	my ($base, $locs) = @_;
+
+	my $pkgname = OpenBSD::PackageName->from_string($base);
+	return undef if !defined $pkgname->{version};
+	my @sorted = sort {$a->pkgname->{version}->compare($b->pkgname->{version}) } @$locs;
+	if ($sorted[0]->pkgname->{version}->compare($pkgname->{version}) > 0) {
+		return $sorted[0];
+	}
+	if ($sorted[-1]->pkgname->{version}->compare($pkgname->{version}) < 0) {
+		return $sorted[-1];
+	}
+	return undef;
+}
+
 sub process_hint
 {
 	my ($self, $set, $hint, $state) = @_;
@@ -234,6 +250,13 @@ sub process_hint
 		my $t = $hint_name;
 		$t =~ s/\-\d([^-]*)\-?/--/;
 		$l = $set->match_locations(OpenBSD::Search::Stem->new($t), $k);
+	}
+	if (@$l > 1) {
+		my $r = find_nearest($hint_name, $l);
+		if (defined $r) {
+			$self->add_location($set, $hint, $r);
+			return 1;
+		}
 	}
 	my $r = $state->choose_location($hint_name, $l);
 	if (defined $r) {
