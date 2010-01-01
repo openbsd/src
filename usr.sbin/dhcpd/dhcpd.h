@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.36 2008/05/07 12:19:20 beck Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.37 2010/01/01 01:47:41 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -613,7 +613,6 @@ struct hash_bucket *new_hash_bucket(char *);
 struct lease *new_lease(char *);
 struct lease *new_leases(int, char *);
 struct subnet *new_subnet(char *);
-struct class *new_class(char *);
 struct shared_network *new_shared_network(char *);
 struct group *new_group(char *);
 struct protocol *new_protocol(char *);

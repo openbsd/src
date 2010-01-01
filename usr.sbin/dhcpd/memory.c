@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.16 2009/12/10 01:22:09 deraadt Exp $ */
+/*	$OpenBSD: memory.c,v 1.17 2010/01/01 01:47:41 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -794,8 +794,11 @@ hw_hash_delete(struct lease *lease)
 struct class *
 add_class(int type, char *name)
 {
-	struct class *class = new_class("add_class");
-	char *tname = malloc(strlen(name) + 1);
+	struct class *class;
+	char *tname;
+
+	class = calloc(1, sizeof(*class));
+	tname = strdup(name);
 
 	if (!vendor_class_hash)
 		vendor_class_hash = new_hash();
@@ -803,12 +806,12 @@ add_class(int type, char *name)
 		user_class_hash = new_hash();
 
 	if (!tname || !class || !vendor_class_hash || !user_class_hash) {
+		warning("No memory for %s.", name);
+		free(class);
 		free(tname);
 		return NULL;
 	}
 
-	memset(class, 0, sizeof *class);
-	strlcpy(tname, name, strlen(name) + 1);
 	class->name = tname;
 
 	if (type)
@@ -817,6 +820,7 @@ add_class(int type, char *name)
 	else
 		add_hash(vendor_class_hash, (unsigned char *)tname,
 		    strlen(tname), (unsigned char *)class);
+
 	return class;
 }
 
