@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.167 2009/12/30 09:39:08 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.168 2010/01/01 13:36:07 espie Exp $
 #
-# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -774,6 +774,8 @@ sub new
 		return OpenBSD::PackingElement::SystemPackage->new;
 	} elsif ($args eq 'always-update') {
 		return OpenBSD::PackingElement::AlwaysUpdate->new;
+	} elsif ($args eq 'explicit-update') {
+		return OpenBSD::PackingElement::ExplicitUpdate->new;
 	} else {
 		die "Unknown option: $args";
 	}
@@ -822,6 +824,13 @@ sub category()
 	'always-update';
 }
 
+package OpenBSD::PackingElement::ExplicitUpdate;
+our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
+
+sub category()
+{
+	'explicit-update';
+}
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
 our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Comment);
