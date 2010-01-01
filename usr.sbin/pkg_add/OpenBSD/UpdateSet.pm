@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.47 2010/01/01 12:47:14 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.48 2010/01/01 12:57:08 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -86,6 +86,19 @@ sub add_repositories
 		$set->{path} = OpenBSD::PackageRepositoryList->new;
 	}
 	$set->{path}->add(@repos);
+}
+
+sub merge_paths
+{
+	my ($set, $other) = @_;
+
+	if (defined $other->path) {
+		if (!defined $set->path) {
+			$set->{path} = $other->path;
+		} elsif ($set->{path} ne $other->path) {
+			$set->add_path(@{$other->{path}});
+		}
+	}
 }
 
 sub match_locations
@@ -348,13 +361,7 @@ sub merge
 		$self->add_newer($set->newer);
 		$self->add_older($set->older);
 		$self->add_kept($set->kept);
-		if (defined $set->path) {
-			if (!defined $self->path) {
-				$self->{path} = $set->path;
-			} elsif ($set->{path} ne $self->path) {
-				$self->add_path(@{$set->{path}});
-			}
-		}
+		$self->merge_paths($set);
 		# ... and mark it as already done
 		$set->{finished} = 1;
 		$tracker->handle_set($set);
