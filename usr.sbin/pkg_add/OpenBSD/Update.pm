@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.122 2009/12/28 19:28:59 espie Exp $
+# $OpenBSD: Update.pm,v 1.123 2010/01/01 12:58:30 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -43,7 +43,6 @@ sub update
 
 package OpenBSD::Update;
 use OpenBSD::PackageInfo;
-use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
 use OpenBSD::Error;
 use OpenBSD::UpdateSet;
@@ -165,7 +164,7 @@ sub process_handle
 		push(@search, OpenBSD::Search::FilterLocation->keep_most_recent);
 	}
 
-	my $l = OpenBSD::PackageLocator->match_locations(@search);
+	my $l = $set->match_locations(@search);
 	if (@$l == 0) {
 		if ($oldfound) {
 			$h->{update_found} = $h;
@@ -214,11 +213,11 @@ sub process_hint
 	# first try to find us exactly
 
 	$state->progress->message("Looking for $hint_name");
-	$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Exact->new($hint_name), $k);
+	$l = $set->match_locations(OpenBSD::Search::Exact->new($hint_name), $k);
 	if (@$l == 0) {
 		my $t = $hint_name;
 		$t =~ s/\-\d([^-]*)\-?/--/;
-		$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Stem->new($t), $k);
+		$l = $set->match_locations(OpenBSD::Search::Stem->new($t), $k);
 	}
 	my $r = $state->choose_location($hint_name, $l);
 	if (defined $r) {
@@ -236,15 +235,13 @@ sub process_hint2
 	my ($self, $set, $hint, $state) = @_;
 	my $pkgname = $hint->pkgname;
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
-		my ($h, $path, $repo);
 		if ($pkgname =~ m/\//o) {
-			($repo, $path, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
-			$h = $repo;
-		} else {
-			$h = 'OpenBSD::PackageLocator';
-			$path = "";
-		}
-		my $l = $state->updater->stem2location($h, $pkgname, $state, 
+			require OpenBSD::PackageLocator;
+			my $repo;
+			($repo, undef, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
+			$set->add_repositories($repo);
+		};
+		my $l = $state->updater->stem2location($set, $pkgname, $state, 
 		    $set->{quirks});
 		if (defined $l) {
 			$self->add_location($set, $hint, $l);
@@ -289,8 +286,8 @@ sub process_set
 
 sub stem2location
 {
-	my ($self, $repo, $name, $state, $is_quirks) = @_;
-	my $l = $repo->match_locations(OpenBSD::Search::Stem->new($name));
+	my ($self, $locator, $name, $state, $is_quirks) = @_;
+	my $l = $locator->match_locations(OpenBSD::Search::Stem->new($name));
 	if (@$l > 1 && !$state->{defines}->{allversions}) {
 		$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.116 2009/12/31 14:46:37 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.117 2010/01/01 12:58:30 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -388,9 +388,8 @@ sub dependencies
 sub find_dep_in_repositories
 {
 	my ($self, $state, $dep) = @_;
-	require OpenBSD::PackageLocator;
 
-	my $candidates = OpenBSD::PackageLocator->match_locations($dep->spec);
+	my $candidates = $self->{set}->match_locations($dep->spec);
 	if (!$state->{defines}->{allversions}) {
 		require OpenBSD::Search;
 		$candidates = OpenBSD::Search::FilterLocation->
@@ -527,6 +526,7 @@ sub solve_dependency
 				return $v;
 			}
 			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->create_old($v, $state));
+			$set->merge_paths($self->{set});
 			$self->add_dep($set);
 			$self->set_cache($dep, _cache::to_update->new($v));
 			$state->tracker->todo($set);
@@ -539,17 +539,18 @@ sub solve_dependency
 	}
 
 	$v = $self->find_dep_in_repositories($state, $dep);
+
+	my $s;
 	if ($v) {
-		my $s = OpenBSD::UpdateSet->from_location($v);
-		$state->tracker->todo($s);
-		$self->add_dep($s);
-		$self->set_cache($dep, _cache::to_install->new($v->name));
-		return $v->name;
+		$s = OpenBSD::UpdateSet->from_location($v);
+		$v = $v->name;
+	} else {
+		# resort to default if nothing else
+		$v = $dep->{def};
+		$s = OpenBSD::UpdateSet->create_new($v);
 	}
 
-	# resort to default if nothing else
-	$v = $dep->{def};
-	my $s = OpenBSD::UpdateSet->create_new($v);
+	$s->merge_paths($self->{set});
 	$state->tracker->todo($s);
 	$self->add_dep($s);
 	$self->set_cache($dep, _cache::to_install->new($v));
