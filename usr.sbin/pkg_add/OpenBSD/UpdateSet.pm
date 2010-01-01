@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.45 2009/12/29 18:16:14 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.46 2010/01/01 12:46:09 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -71,11 +71,12 @@ sub new
 
 sub cleanup
 {
-	my ($self, $error) = @_;
+	my ($self, $error, $errorinfo) = @_;
 	for my $h ($self->older, $self->newer) {
-		$h->cleanup($error);
+		$h->cleanup($error, $errorinfo);
 	}
 	$self->{error} //= $error;
+	$self->{errorinfo} //= $errorinfo;
 	delete $self->{solver};
 	delete $self->{conflict_cache};
 	$self->{finished} = 1;
