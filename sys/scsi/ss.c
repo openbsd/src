@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.63 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: ss.c,v 1.64 2010/01/01 06:30:27 dlg Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -638,11 +638,14 @@ ssstart(v)
 	 */
 	while (sc_link->openings > 0) {
 		/* if a special awaits, let it proceed first */
-		if (sc_link->flags & SDEV_WAITING) {
-			sc_link->flags &= ~SDEV_WAITING;
+		mtx_enter(&sc_link->mtx);
+		if (ISSET(sc_link->state, SDEV_S_WAITING)) {
+			atomic_clearbits_int(&sc_link->state, SDEV_S_WAITING);
 			wakeup((caddr_t)sc_link);
+			mtx_leave(&sc_link->mtx);
 			return;
 		}
+		mtx_leave(&sc_link->mtx);
 
 		/*
 		 * See if there is a buf with work for us to do..

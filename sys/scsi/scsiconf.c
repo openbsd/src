@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.152 2009/12/01 01:40:02 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.153 2010/01/01 06:30:27 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -255,6 +255,7 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 	dev = link->device_softc;
 	switch (act) {
 	case DVACT_ACTIVATE:
+		atomic_clearbits_int(&link->state, SDEV_S_DYING);
 #if NMPATH > 0
 		if (dev == NULL)
 			mpath_path_activate(link);
@@ -264,6 +265,7 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		atomic_setbits_int(&link->state, SDEV_S_DYING);
 #if NMPATH > 0
 		if (dev == NULL)
 			mpath_path_deactivate(link);

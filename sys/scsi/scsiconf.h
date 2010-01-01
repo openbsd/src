@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.115 2009/12/06 17:24:28 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.116 2010/01/01 06:30:27 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -340,6 +340,10 @@ struct scsi_device {
  * as well.
  */
 struct scsi_link {
+	u_int		state;
+#define SDEV_S_WAITING		(1<<0)
+#define SDEV_S_DYING		(1<<1)
+
 	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
@@ -352,7 +356,6 @@ struct scsi_link {
 	u_int16_t flags;		/* flags that all devices have */
 #define	SDEV_REMOVABLE	 	0x0001	/* media is removable */
 #define	SDEV_MEDIA_LOADED 	0x0002	/* device figures are still valid */
-#define	SDEV_WAITING	 	0x0004	/* a process is waiting for this */
 #define	SDEV_OPEN	 	0x0008	/* at least 1 open session */
 #define	SDEV_DBX		0x00f0	/* debugging flags (scsi_debug.h) */
 #define	SDEV_EJECTING		0x0100	/* eject on device close */
