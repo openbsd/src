@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: mycreate,v 1.3 2010/01/01 14:20:35 espie Exp $
+# $OpenBSD: mycreate,v 1.4 2010/01/01 14:27:57 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -37,6 +37,7 @@ push(@l,
 	'-DPERMIT_PACKAGE_CDROM='.($ENV{'PACKAGE_CDROM'} || 'Yes'),
 	'-DPERMIT_PACKAGE_FTP='.($ENV{'PACKAGE_FTP'} || 'Yes'),
 	"-DFULLPKGPATH=$pkgpath",
+	'-DMAINTAINER=regress-tests',
 	'-DCOMMENT='.($ENV{'PACKAGE_COMMENT'} || 'comment'),
 	'-d', $ENV{'PACKAGE_DESCR'} || '-descr',
 	'-A', $ENV{'PACKAGE_ARCH'} || '*');
