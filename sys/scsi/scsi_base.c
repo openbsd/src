@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.148 2010/01/01 06:30:27 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.149 2010/01/01 07:06:27 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -708,7 +708,6 @@ scsi_report_luns(struct scsi_link *sc_link, int selectreport,
 void
 scsi_xs_exec(struct scsi_xfer *xs)
 {
-	int rv;
 	int s;
 
 	xs->flags &= ~ITSDONE;
@@ -731,8 +730,7 @@ scsi_xs_exec(struct scsi_xfer *xs)
 	 * In those cases we must call scsi_done() for it.
 	 */
 
-	rv = xs->sc_link->adapter->scsi_cmd(xs);
-	if (rv == NO_CCB) {
+	if (xs->sc_link->adapter->scsi_cmd(xs) == NO_CCB) {
 		/*
 		 * Give the xs back to the device driver to retry on its own.
 		 */
@@ -742,10 +740,6 @@ scsi_xs_exec(struct scsi_xfer *xs)
 		scsi_done(xs);
 		splx(s);
 	}
-
-	/*
-	 * The adapter has called or will call scsi_done().
-	 */
 }
 
 /*
