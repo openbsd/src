@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.455 2010/01/01 02:19:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.456 2010/01/01 11:49:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -369,7 +369,7 @@ sub check_forward_dependencies
 	my $bad = $set->{forward}->check($state);
 
 	if (%$bad) {
-		if ($state->{defines}->{mergeupdates}) {
+		if (!$state->{defines}->{dontmerge}) {
 			my $okay = 1;
 			for my $m (keys %$bad) {
 				$set->try_merging($m, $state) or $okay = 0;

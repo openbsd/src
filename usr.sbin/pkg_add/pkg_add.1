@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.89 2009/12/21 11:03:00 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.90 2010/01/01 11:49:55 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: December 21 2009 $
+.Dd $Mdocdate: January 1 2010 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -237,6 +237,12 @@ These include:
 do not trim older p* variants of packages for updates.
 .It Ar arch
 architecture recorded in package may not match.
+.It Ar dontmerge
+by default, if dependencies are too strict,
+.Nm
+will merge updates together to make sure everything stays in synch.
+.Fl F Ar dontmerge
+disables that behavior.
 .It Ar downgrades
 don't filter out package versions older than what's currently installed.
 .It Ar installed
