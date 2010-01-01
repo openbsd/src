@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.66 2010/01/01 21:37:52 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.67 2010/01/01 23:28:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1028,7 +1028,12 @@ termp_fl_pre(DECL_ARGS)
 
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, "\\-");
-	p->flags |= TERMP_NOSPACE;
+
+	/* A blank `Fl' should incur a subsequent space. */
+
+	if (n->child)
+		p->flags |= TERMP_NOSPACE;
+
 	return(1);
 }
 
