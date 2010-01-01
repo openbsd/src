@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.46 2010/01/01 12:46:09 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.47 2010/01/01 12:47:14 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -67,6 +67,39 @@ sub new
 	my $class = shift;
 	return bless {newer => {}, older => {}, kept => {}, hints => [], updates => 0}, 
 	    $class;
+}
+
+sub path
+{
+	my $set = shift;
+	
+	return $set->{path};
+}
+
+sub add_repositories
+{
+	my ($set, @repos) = @_;
+
+	if (!defined $set->{path}) {
+		require OpenBSD::PackageRepositoryList;
+
+		$set->{path} = OpenBSD::PackageRepositoryList->new;
+	}
+	$set->{path}->add(@repos);
+}
+
+sub match_locations
+{
+	my ($set, @spec) = @_;
+	my $r = [];
+	if (defined $set->{path}) {
+		$r = $set->{path}->match_locations(@spec);
+	}
+	if (@$r == 0) {
+		require OpenBSD::PackageLocator;
+		$r = OpenBSD::PackageLocator->match_locations(@spec);
+	}
+	return $r;
 }
 
 sub cleanup
@@ -315,6 +348,13 @@ sub merge
 		$self->add_newer($set->newer);
 		$self->add_older($set->older);
 		$self->add_kept($set->kept);
+		if (defined $set->path) {
+			if (!defined $self->path) {
+				$self->{path} = $set->path;
+			} elsif ($set->{path} ne $self->path) {
+				$self->add_path(@{$set->{path}});
+			}
+		}
 		# ... and mark it as already done
 		$set->{finished} = 1;
 		$tracker->handle_set($set);
