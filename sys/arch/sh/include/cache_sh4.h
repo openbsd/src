@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_sh4.h,v 1.2 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: cache_sh4.h,v 1.3 2010/01/01 13:18:37 miod Exp $	*/
 /*	$NetBSD: cache_sh4.h,v 1.11 2006/03/04 01:55:03 uwe Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@
 #define	  CCIA_A		  0x00000008	/* associate bit */
 #define	  CCIA_ENTRY_SHIFT	  5		/* line size 32B */
 #define	  CCIA_ENTRY_MASK	  0x00001fe0	/* [12:5] 256-entries */
-#define	  CCIA_EMODE_ENTRY_MASK	  0x00003fe0	/* [13:5] 512-entries */
 /* data specification */
 #define	  CCIA_V		  0x00000001
 #define	  CCIA_TAGADDR_MASK	  0xfffffc00	/* [31:10] */
@@ -94,52 +93,6 @@
 
 /* Store Queue */
 #define	SH4_SQ			0xe0000000
-
-/*
- * cache flush macro for locore level code.
- */
-#define	SH4_CACHE_FLUSH()						\
-do {									\
-	uint32_t __e, __a;						\
-									\
-	/* D-cache */							\
-	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
-		__a = SH4_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
-		(*(volatile uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
-	}								\
-	/* I-cache */							\
-	for (__e = 0; __e < (SH4_ICACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
-		__a = SH4_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
-		(*(volatile uint32_t *)__a) &= ~(CCIA_V);		\
-	}								\
-} while(/*CONSTCOND*/0)
-
-#define	SH4_EMODE_CACHE_FLUSH()						\
-do {									\
-	uint32_t __e, __a;						\
-									\
-	/* D-cache */							\
-	for (__e = 0;__e < (SH4_EMODE_DCACHE_SIZE / SH4_CACHE_LINESZ);__e++) {\
-		__a = SH4_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
-		(*(volatile uint32_t *)__a) &= ~(CCDA_U | CCDA_V);	\
-	}								\
-	/* I-cache */							\
-	for (__e = 0;__e < (SH4_EMODE_ICACHE_SIZE / SH4_CACHE_LINESZ);__e++) {\
-		__a = SH4_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
-		(*(volatile uint32_t *)__a) &= ~(CCIA_V);		\
-	}								\
-} while(/*CONSTCOND*/0)
-
-#define	SH7750_CACHE_FLUSH()		SH4_CACHE_FLUSH()
-#define	SH7750S_CACHE_FLUSH()		SH4_CACHE_FLUSH()
-#define	SH7751_CACHE_FLUSH()		SH4_CACHE_FLUSH()
-#if defined(SH4_CACHE_DISABLE_EMODE)
-#define	SH7750R_CACHE_FLUSH()		SH4_CACHE_FLUSH()
-#define	SH7751R_CACHE_FLUSH()		SH4_CACHE_FLUSH()
-#else
-#define	SH7750R_CACHE_FLUSH()		SH4_EMODE_CACHE_FLUSH()
-#define	SH7751R_CACHE_FLUSH()		SH4_EMODE_CACHE_FLUSH()
-#endif
 
 #ifndef _LOCORE
 extern void sh4_cache_config(void);
