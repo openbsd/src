@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.125 2009/12/13 08:54:32 espie Exp $
+# $OpenBSD: pkg_create,v 1.126 2010/01/01 14:22:01 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -693,6 +693,7 @@ if (defined $cert) {
 	$sig->add_object($plist);
 	require OpenBSD::x509;
 	$sig->{b64sig} = OpenBSD::x509::compute_signature($plist, $cert, $privkey);
+	$plist->save if $regen_package;
 }
 	
 my $wname;
