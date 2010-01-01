@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_sh4.c,v 1.5 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: cache_sh4.c,v 1.6 2010/01/01 13:20:33 miod Exp $	*/
 /*	$NetBSD: cache_sh4.c,v 1.15 2005/12/24 23:24:02 perry Exp $	*/
 
 /*-
@@ -403,7 +403,7 @@ void
 sh4_emode_icache_sync_all(void)
 {
 	vaddr_t va = 0;
-	vaddr_t eva = SH4_EMODE_ICACHE_SIZE;
+	vaddr_t eva = SH4_ICACHE_SIZE;
 
 	sh4_emode_dcache_wbinv_all();
 
@@ -443,7 +443,7 @@ void
 sh4_emode_dcache_wbinv_all(void)
 {
 	vaddr_t va = 0;
-	vaddr_t eva = SH4_EMODE_DCACHE_SIZE;
+	vaddr_t eva = SH4_DCACHE_SIZE;
 
 	while (va < eva) {
 		cache_sh4_emode_op_8lines_32(va, SH4_CCDA, CCDA_ENTRY_MASK,
