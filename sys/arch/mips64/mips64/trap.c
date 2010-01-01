@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2009/12/28 06:55:27 syuu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2010/01/01 15:04:00 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,6 +141,7 @@ extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
 extern void MipsFPTrap(u_int, u_int, u_int, union sigval);
 
 void	ast(void);
+void	fpu_trapsignal(struct proc *, u_long, int, union sigval);
 void	trap(struct trap_frame *);
 #ifdef PTRACE
 int	cpu_singlestep(struct proc *);
@@ -848,6 +849,17 @@ child_return(arg)
 #endif
 }
 
+/*
+ * Wrapper around trapsignal() for use by the floating point code.
+ */
+void
+fpu_trapsignal(struct proc *p, u_long ucode, int typ, union sigval sv)
+{
+	KERNEL_PROC_LOCK(p);
+	trapsignal(p, SIGFPE, ucode, typ, sv);
+	KERNEL_PROC_UNLOCK(p);
+}
+
 #if defined(DDB) || defined(DEBUG)
 void
 trapDump(msg)
@@ -898,16 +910,14 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 	int condition;
 	register_t *regsPtr = (register_t *)framePtr;
 
-#define GetBranchDest(InstPtr, inst) \
-	((unsigned long)InstPtr + 4 + ((short)inst.IType.imm << 2))
+#define	GetBranchDest(InstPtr, inst) \
+	    ((unsigned long)InstPtr + 4 + ((short)inst.IType.imm << 2))
 
 
-	if (curinst) {
+	if (curinst)
 		inst = *(InstFmt *)&curinst;
-	}
-	else {
+	else
 		inst = *(InstFmt *)instPC;
-	}
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
@@ -1023,7 +1033,9 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 	default:
 		retAddr = instPC + 4;
 	}
+
 	return (retAddr);
+#undef	GetBranchDest
 }
 
 #ifdef PTRACE

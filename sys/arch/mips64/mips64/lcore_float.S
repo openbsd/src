@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.17 2009/09/30 06:22:00 syuu Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.18 2010/01/01 15:04:00 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -484,27 +484,27 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
  * Send a floating point exception signal to the current process.
  */
 3:
-	cfc1	a2, FPC_CSR		# code = FP exceptions
+	cfc1	a1, FPC_CSR		# code = FP exceptions
 	GET_CPU_INFO(t2, t3)	
 	PTR_L	a0, CI_CURPROC(t2)	# get current process
-	PTR_L	a4, 3*REGSZ(sp)
-	and	v0, a2, FPC_EXCEPTION_INEXACT
+	PTR_L	a3, 3*REGSZ(sp)
+	and	v0, a1, FPC_EXCEPTION_INEXACT
 	bnez	v0, 4f
-	li	a3, 6
-	and	v0, a2, FPC_EXCEPTION_UNDERFLOW
+	li	a2, FPE_FLTRES
+	and	v0, a1, FPC_EXCEPTION_UNDERFLOW
 	bnez	v0, 4f
-	li	a3, 5
-	and	v0, a2, FPC_EXCEPTION_OVERFLOW
+	li	a2, FPE_FLTUND
+	and	v0, a1, FPC_EXCEPTION_OVERFLOW
 	bnez	v0, 4f
-	li	a3, 4
-	and	v0, a2, FPC_EXCEPTION_DIV0
+	li	a2, FPE_FLTOVF
+	and	v0, a1, FPC_EXCEPTION_DIV0
 	bnez	v0, 4f
-	li	a3, 3
-	li	a3, 7			# XXX FPE_FLTINV
+	li	a2, FPE_FLTDIV
+	li	a2, FPE_FLTINV
 4:
 	ctc1	zero, FPC_CSR		# Clear exceptions
-	jal	trapsignal
-	li	a1, SIGFPE
+	jal	fpu_trapsignal
+	nop
 	b	FPReturn
 	nop
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1.1.1 2009/12/09 19:38:31 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2010/01/01 15:03:58 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -30,6 +30,7 @@ include <sys/buf.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>
+include <sys/siginfo.h>
 
 include <uvm/uvm.h>
 
@@ -75,3 +76,9 @@ export	PMAP_SEGTABSIZE
 export	SEGSHIFT
 
 export	CCA_CACHED
+
+export	FPE_FLTDIV
+export	FPE_FLTOVF
+export	FPE_FLTUND
+export	FPE_FLTRES
+export	FPE_FLTINV
