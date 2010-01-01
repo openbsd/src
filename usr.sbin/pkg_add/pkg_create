@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.126 2010/01/01 14:22:01 espie Exp $
+# $OpenBSD: pkg_create,v 1.127 2010/01/01 14:34:59 espie Exp $
 #
-# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -332,8 +332,8 @@ package main;
 
 my $subst = OpenBSD::Subst->new;
 
-our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k,
-	$opt_S, $opt_s, $opt_O, $opt_A, $opt_L,
+our ($opt_p, $opt_f, $opt_d, $opt_v,
+	$opt_s, $opt_A, $opt_L,
 	$opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
 	$opt_B, $opt_q, $opt_Q);
 
@@ -420,7 +420,7 @@ sub add_special_file
 
 sub add_description
 {
-	my ($plist, $name, $opt_c, $opt_d) = @_;
+	my ($plist, $name, $opt_d) = @_;
 	my $o = OpenBSD::PackingElement::FDESC->add($plist, $name);
 	my $comment = $subst->value('COMMENT');
 	if (defined $comment) {
@@ -430,7 +430,7 @@ sub add_description
 			print STDERR ' 'x60, "^"x (length($comment)-60), "\n";
 			exit 1;
 		}
-	} elsif (!defined $opt_c) {
+	} else {
 		Usage "Comment required";
 	}
 	if (!defined $opt_d) {
@@ -440,12 +440,6 @@ sub add_description
 	    open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
 	    if (defined $comment) {
 	    	print $fh $subst->do($comment), "\n";
-	    } else {
-		if ($opt_c =~ /^\-(.*)$/o) {
-		    print $fh $1, "\n";
-		} else {
-		    $subst->copy_fh($opt_c, $fh);
-		}
 	    }
 	    if ($opt_d =~ /^\-(.*)$/o) {
 		print $fh $1, "\n";
@@ -453,7 +447,11 @@ sub add_description
 		$subst->copy_fh($opt_d, $fh);
 	    }
 	    if (defined $comment) {
-	    	print $fh "\n", $subst->do('Maintainer: ${MAINTAINER}'), "\n";
+		if ($subst->empty('MAINTAINER')) {
+			print STDERR "Warning: no MAINTAINER\n";
+		} else {
+			print $fh "\n", $subst->do('Maintainer: ${MAINTAINER}'), "\n";
+		}
 		if (!$subst->empty('HOMEPAGE')) {
 			print $fh "\n", $subst->do('WWW: ${HOMEPAGE}'), "\n";
 		}
@@ -473,13 +471,13 @@ my ($cert, $privkey);
 
 set_usage(
 'pkg_create [-nQqv] [-A arches] [-B pkg-destdir] [-D name=value]',
-'[-i iscript] [-k dscript] [-L localbase] [-M displayfile]',
-'[-P pkg-dependency] [-p prefix] [-s x509 -s cert -s priv] [-S pkg-destdir]',
-'[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkg-name');
+'[-L localbase] [-M displayfile] [-P pkg-dependency]',
+'[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
+'-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
 
 my $plist = new OpenBSD::PackingList;
 try { 
-	getopts('p:f:c:d:vi:k:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
+	getopts('p:f:d:vM:U:hs:A:L:B:D:P:W:nqQ', 
 	{'D' => 
 		sub { 
 			$subst->parse_option(shift);
@@ -523,10 +521,6 @@ if (@signature_params > 0) {
 	}
 	$cert = $signature_params[1];
 	$privkey = $signature_params[2];
-}
-
-if (defined $opt_O) {
-	Usage "Option O is no longer supported";
 }
 
 if (defined $opt_Q) {
@@ -584,19 +578,11 @@ if ($regen_package) {
 	}
 	exit(0);
 } else {
-	if (defined $opt_i) {
-		print STDERR "Warning: INSTALL scripts are deprecated\n";
-	}
-	if (defined $opt_k) {
-		print STDERR "Warning: DEINSTALL scripts are deprecated\n";
-	}
 	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v;
 	if (!$opt_q) {
 		$plist->set_infodir(OpenBSD::Temp->dir);
 	}
-	add_description($plist, DESC, $opt_c, $opt_d);
-	add_special_file($plist, INSTALL, $opt_i);
-	add_special_file($plist, DEINSTALL, $opt_k);
+	add_description($plist, DESC, $opt_d);
 	add_special_file($plist, DISPLAY, $opt_M);
 	add_special_file($plist, UNDISPLAY, $opt_U);
 	if (defined $opt_p) {
@@ -644,9 +630,6 @@ if ($regen_package) {
 my $base = '/';
 if (defined $opt_B) {
 	$base = $opt_B;
-} elsif (defined $opt_S) {
-	print STDERR "Warning: -S is deprecated, use -B instead\n";
-	$base = $opt_S;
 } elsif (defined $ENV{'PKG_PREFIX'}) {
 	$base = $ENV{'PKG_PREFIX'};
 }
