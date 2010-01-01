@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.11 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.12 2010/01/01 19:26:31 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,7 +40,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.11 2009/10/22 22:08:54 miod Exp $
+ *	$Id: process_machdep.c,v 1.12 2010/01/01 19:26:31 miod Exp $
  */
 
 /*
@@ -74,8 +74,9 @@
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 #include <machine/frame.h>
+#include <machine/reg.h>
 
-#define	REGSIZE sizeof(struct trap_frame)
+#define	REGSIZE (sizeof(struct trap_frame) - sizeof(register_t))
 
 extern void cpu_singlestep(struct proc *);
 
@@ -92,7 +93,8 @@ process_read_regs(p, regs)
 		else
 			MipsSaveCurFPState16(p);
 	}
-	bcopy((caddr_t)p->p_md.md_regs, (caddr_t)regs, REGSIZE);
+	bcopy(&p->p_md.md_regs->ast, &regs->r_regs[AST], REGSIZE);
+	regs->r_regs[ZERO] = 0;
 	return (0);
 }
 
@@ -115,7 +117,7 @@ process_write_regs(p, regs)
 	sr = p->p_md.md_regs->sr;
 	ic = p->p_md.md_regs->ic;
 	ipl = p->p_md.md_regs->ipl;
-	bcopy((caddr_t)regs, (caddr_t)p->p_md.md_regs, REGSIZE);
+	bcopy(&regs->r_regs[AST], &p->p_md.md_regs->ast, REGSIZE);
 	p->p_md.md_regs->sr = sr;
 	p->p_md.md_regs->ic = ic;
 	p->p_md.md_regs->ipl = ipl;
