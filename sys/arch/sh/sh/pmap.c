@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2009/07/23 19:20:56 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 2010/01/01 13:17:52 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -931,7 +931,7 @@ __pmap_pv_page_free(struct pool *pool, void *v)
 
 	/* Invalidate cache for next use of this page */
 	if (SH_HAS_VIRTUAL_ALIAS)
-		sh_icache_sync_range_index(va, PAGE_SIZE);
+		sh_dcache_inv_range(va, PAGE_SIZE);
 	uvm_pagefree(PHYS_TO_VM_PAGE(SH3_P1SEG_TO_PHYS(va)));
 }
 
@@ -1094,4 +1094,32 @@ __pmap_asid_free(int asid)
 
 	i = asid >> 5;
 	__pmap_asid.map[i] &= ~(1 << (asid - (i << 5)));
+}
+
+/*
+ * Routines used by PMAP_MAP_DIRECT() and PMAP_UNMAP_DIRECT() to provide
+ * directly-translated pages.
+ *
+ * Because of cache virtual aliases, it is necessary to evict these pages
+ * from the cache, when `unmapping' them (as they might be reused by a
+ * different allocator). We also rely upon all users of pages to either
+ * use them with pmap_enter()/pmap_remove(), to enforce proper cache handling,
+ * or to invoke sh_dcache_inv_range() themselves, as done for page tables.
+ */
+vaddr_t
+pmap_map_direct(vm_page_t pg)
+{
+	return SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
+}
+
+vm_page_t
+pmap_unmap_direct(vaddr_t va)
+{
+	paddr_t pa = SH3_P1SEG_TO_PHYS(va);
+	vm_page_t pg = PHYS_TO_VM_PAGE(pa);
+
+	if (SH_HAS_VIRTUAL_ALIAS)
+		sh_dcache_inv_range(va, PAGE_SIZE);
+
+	return pg;
 }

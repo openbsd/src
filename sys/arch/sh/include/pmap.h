@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.6 2010/01/01 13:17:50 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -86,8 +86,8 @@ void pmap_prefer(vaddr_t, vaddr_t *);
 #endif /* SH4 */
 
 #define	__HAVE_PMAP_DIRECT
-#define	pmap_map_direct(pg)		SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
-#define	pmap_unmap_direct(va)		PHYS_TO_VM_PAGE(SH3_P1SEG_TO_PHYS((va)))
+vaddr_t	pmap_map_direct(vm_page_t);
+vm_page_t pmap_unmap_direct(vaddr_t);
 
 /* MD pmap utils. */
 pt_entry_t *__pmap_pte_lookup(pmap_t, vaddr_t);
