@@ -1,9 +1,9 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.454 2009/12/31 13:48:52 espie Exp $
+# $OpenBSD: pkg_add,v 1.455 2010/01/01 02:19:20 espie Exp $
 #
-# Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -342,6 +342,24 @@ sub install_issues
 	return 0;
 }
 
+sub try_merging
+{
+	my ($set, $m, $state) = @_;
+
+	my $s = $state->tracker->is_to_update($m);
+	if (!defined $s) {
+		$s = OpenBSD::UpdateSet->new->add_older(
+		    OpenBSD::Handle->create_old($m, $state));
+	}
+	if ($state->updater->process_set($s, $state)) {
+		$state->say("Merging ", $s->print, $state->ntogo);
+		$set->merge($state->tracker, $s);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 sub check_forward_dependencies
 {
 	my ($set, $state) = @_;
@@ -352,18 +370,13 @@ sub check_forward_dependencies
 
 	if (%$bad) {
 		if ($state->{defines}->{mergeupdates}) {
+			my $okay = 1;
 			for my $m (keys %$bad) {
-				my $s = $state->tracker->is_to_update($m);
-				if (defined $s) {
-					$set->merge($state->tracker, $s);
-				} else {
-					$set->add_older(OpenBSD::Handle->create_old(
-					    $m, $state));
-				}
+				$set->try_merging($m, $state) or $okay = 0;
 			}
-			$state->say("Merging ", $set->print, $state->ntogo);
-			return 0;
-		} elsif ($state->{defines}->{updatedepends}) {
+			return 0 if $okay == 1;
+		}
+		if ($state->{defines}->{updatedepends}) {
 			$state->errsay("Forcing update");
 			return 1;
 		} elsif ($state->{interactive}) {
