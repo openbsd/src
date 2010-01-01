@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.123 2010/01/01 12:58:30 espie Exp $
+# $OpenBSD: Update.pm,v 1.124 2010/01/01 13:00:05 espie Exp $
 #
-# Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
