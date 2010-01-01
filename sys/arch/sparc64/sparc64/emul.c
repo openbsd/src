@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.15 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: emul.c,v 1.16 2010/01/01 13:13:08 miod Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -497,7 +497,9 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	if (asi < ASI_PRIMARY) {
 		/* privileged asi */
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
+		KERNEL_PROC_UNLOCK(p);
 		return (0);
 	}
 	if (asi > ASI_SECONDARY_NOFAULT_LITTLE ||
@@ -508,7 +510,9 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	if ((freg & 3) != 0) {
 		/* only valid for %fN where N % 4 = 0 */
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
+		KERNEL_PROC_UNLOCK(p);
 		return (0);
 	}
 
@@ -517,7 +521,9 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 		 * If process doesn't want us to fix alignment and the
 		 * request isn't aligned, kill it.
 		 */
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		KERNEL_PROC_UNLOCK(p);
 		return (0);
 	}
 
@@ -554,7 +560,9 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 	return (1);
 
 segv:
+	KERNEL_PROC_LOCK(p);
 	trapsignal(p, SIGSEGV, isload ? VM_PROT_READ : VM_PROT_WRITE,
+	KERNEL_PROC_UNLOCK(p);
 	    SEGV_MAPERR, sv);
 	return (0);
 }
