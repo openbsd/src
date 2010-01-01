@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.8 2010/01/01 18:01:44 krw Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.9 2010/01/01 19:10:24 krw Exp $	*/
 
 /* Memory allocation... */
 
@@ -79,20 +79,6 @@ new_tree_cache(char *name)
 		if (!rval)
 			error("unable to allocate tree cache for %s.", name);
 	}
-	return (rval);
-}
-
-struct hash_table *
-new_hash_table(int count, char *name)
-{
-	struct hash_table *rval;
-
-	rval = dmalloc(sizeof(struct hash_table) -
-	    (DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *)) +
-	    (count * sizeof(struct hash_bucket *)), name);
-	if (rval == NULL)
-		return (NULL);
-	rval->hash_count = count;
 	return (rval);
 }
 

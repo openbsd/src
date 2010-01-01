@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.4 2010/01/01 06:25:37 krw Exp $	*/
+/*	$OpenBSD: hash.c,v 1.5 2010/01/01 19:10:24 krw Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -47,11 +47,14 @@ static int do_hash(unsigned char *, int, int);
 struct hash_table *
 new_hash(void)
 {
-	struct hash_table *rv = new_hash_table(DEFAULT_HASH_SIZE, "new_hash");
+	struct hash_table *rv;
+
+	rv = calloc(1, sizeof(struct hash_table));
 	if (!rv)
-		return (rv);
-	memset(&rv->buckets[0], 0,
-	    DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *));
+		warning("No memory for new hash.");
+	else
+		rv->hash_count = DEFAULT_HASH_SIZE;
+
 	return (rv);
 }
 
