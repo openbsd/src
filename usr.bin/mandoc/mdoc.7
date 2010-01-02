@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.20 2009/12/24 02:08:14 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.21 2010/01/02 02:42:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2009 $
+.Dd $Mdocdate: January 2 2010 $
 .Dt MDOC 7
 .Os
 .
@@ -419,6 +419,11 @@ The
 macro(s) must precede the
 .Sx \&Nd
 macro.
+.Pp
+See 
+.Sx \&Nm
+and
+.Sx \&Nd .
 .
 .It Em LIBRARY
 The name of the library containing the documented material, which is
@@ -429,8 +434,7 @@ this is as follows:
 .Ed
 .Pp
 See
-.Sx \&Lb
-for details.
+.Sx \&Lb .
 .
 .It Em SYNOPSIS
 Documents the utility invocation syntax, function call syntax, or device
@@ -467,6 +471,14 @@ And for the third, configurations (section 4):
 .Pp
 Manuals not in these sections generally don't need a 
 .Em SYNOPSIS .
+.Pp
+See 
+.Sx \&Op ,
+.Sx \&Cd ,
+.Sx \&Fn ,
+.Sx \&Ft ,
+and
+.Sx \&Vt .
 .
 .It Em DESCRIPTION
 This expands upon the brief, one-line description in 
@@ -480,6 +492,7 @@ The arguments are as follows:
 Print verbose information.
 \&.El
 .Ed
+.Pp
 Manuals not documenting a command won't include the above fragment.
 .
 .It Em IMPLEMENTATION NOTES
@@ -535,7 +548,8 @@ for manuals in sections 1, 6, and 8; however, this practise is
 discouraged.
 .Pp
 See
-.Sx \&Bl No \-diag .
+.Sx \&Bl
+.Fl diag .
 .
 .It Em ERRORS
 Documents error handling in sections 2, 3, and 9.
@@ -1160,7 +1174,60 @@ and
 .Ss \&Bf
 .Ss \&Bk
 .Ss \&Bl
-.
+.\" Begins a list composed of one or more list entries.  A list entry is
+.\" specified by the
+.\" .Sx \&It
+.\" macro, which consists of a head and optional body.  By default, a list
+.\" is preceded by a blank line.  A list must specify one of the following
+.\" list types:
+.\" .Bl -tag -width 12n
+.\" .It Fl bullet
+.\" A list offset by a bullet.  The head of list entries must be empty.
+.\" List entry bodies are justified after the bullet.
+.\" .It Fl column
+.\" A columnated list.  The number of columns is specified as arguments to
+.\" the
+.\" .Sx \&Bl
+.\" macro (the deprecated form of following the invocation of
+.\" .Fl column
+.\" is also accepted).  Arguments dictate the width of columns specified in
+.\" list entries.  List entry bodies must be left empty.  Columns specified
+.\" in the list entry head are justified to their position in the sequence
+.\" of columns.
+.\" .It Fl dash
+.\" A list offset by a dash (hyphen).  The head of list entries must be
+.\" empty.  List entry bodies are justified past the dash.
+.\" .It Fl diag
+.\" Like
+.\" .Fl inset
+.\" lists, but with additional formatting to the head.
+.\" .It Fl enum
+.\" A list offset by a number indicating list entry position.  The head of
+.\" list entries must be empty.  List entry bodies are justified past the
+.\" enumeration.
+.\" .It Fl hang
+.\" Like
+.\" .Fl tag ,
+.\" but instead of list bodies justifying to the head on the first line,
+.\" they trail the head text.
+.\" .It Fl hyphen
+.\" Synonym for
+.\" .Fl dash .
+.\" .It Fl inset
+.\" Like
+.\" .Fl tag ,
+.\" but list entry bodies aren't justified.
+.\" .It Fl item
+.\" An un-justified list.  This produces blocks of text.
+.\" .It Fl ohang
+.\" List bodies are placed on the line following the head.
+.\" .It Fl tag
+.\" A list offset by list entry heads.  List entry bodies are justified
+.\" after the head.
+.\" .El
+.\" .Pp
+.\" More...
+.\" .
 .Ss \&Bo
 Begins a block enclosed by square brackets.  Does not have any head
 arguments.
@@ -1596,6 +1663,22 @@ is provided.
 .Ss \&Fc
 .Ss \&Fd
 .Ss \&Fl
+Command-line flag.  Used when listing arguments to command-line
+utilities.  Prints a fixed-width hyphen
+.Sq \-
+before each delimited argument.  If no arguments are provided, a hyphen
+is still printed.
+.Pp
+Examples:
+.Bd -literal -offset indent
+\&.Fl a b c
+\&.Fl
+\&.Op Fl o Ns Ar file
+.Ed
+.Pp
+See also
+.Sx \&Cm .
+.
 .Ss \&Fn
 .Ss \&Fo
 .Ss \&Fr
@@ -1830,6 +1913,23 @@ file re-write
 .Pp
 .Bl -dash -compact
 .It
+The comment syntax
+.Sq \e."
+is no longer accepted.
+.It
+In
+.Xr groff 1 ,
+the
+.Sx \&Pa
+macro does not format its arguments when used in the FILES section under
+certain list types.  This irregular behaviour has been discontinued.
+.It
+Historic 
+.Xr groff 1
+does not print a dash for empty 
+.Sx \&Fl
+arguments.  This behaviour has been discontinued.
+.It
 .Xr groff 1
 behaves strangely (even between versions) when specifying
 .Sq \ef
@@ -1839,7 +1939,7 @@ normalised.
 Negative scaling units are now truncated to zero instead of creating
 interesting conditions, such as with
 .Sx \&sp
-.Cm \-1i .
+.Fl 1i .
 Furthermore, the
 .Sq f
 scaling unit, while accepted, is rendered as the default unit.

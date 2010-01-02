@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.5 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.6 2010/01/02 02:42:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
-#include <sys/param.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -35,6 +34,10 @@
 #define	MDOC_ARGS	  const struct mdoc_meta *m, \
 			  const struct mdoc_node *n, \
 			  struct html *h
+
+#ifndef MIN
+#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#endif
 
 struct	htmlmdoc {
 	int		(*pre)(MDOC_ARGS);
@@ -656,10 +659,19 @@ mdoc_fl_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag, "flag");
 	print_otag(h, TAG_SPAN, 1, &tag);
-	if (MDOC_Fl == n->tok) {
-		print_text(h, "\\-");
+
+	/* `Cm' has no leading hyphen. */
+
+	if (MDOC_Cm == n->tok)
+		return(1);
+
+	print_text(h, "\\-");
+
+	/* A blank `Fl' should incur a subsequent space. */
+
+	if (n->child)
 		h->flags |= HTML_NOSPACE;
-	}
+
 	return(1);
 }
 
@@ -1568,9 +1580,9 @@ mdoc_vt_pre(MDOC_ARGS)
 	struct roffsu	 su;
 
 	if (SEC_SYNOPSIS == n->sec) {
-		if (n->next && MDOC_Vt != n->next->tok) {
+		if (n->prev && MDOC_Vt != n->prev->tok) {
 			SCALE_VS_INIT(&su, 1);
-			bufcat_su(h, "margin-bottom", &su);
+			bufcat_su(h, "margin-top", &su);
 			PAIR_STYLE_INIT(&tag, h);
 			print_otag(h, TAG_DIV, 1, &tag);
 		} else

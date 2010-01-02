@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.32 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.33 2010/01/02 02:42:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -93,11 +93,11 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	"Nm",		"Op",		"Ot",		"Pa",
 	"Rv",		"St",		"Va",		"Vt",
 	/* LINTED */
-	"Xr",		"\%A",		"\%B",		"\%D",
+	"Xr",		"%A",		"%B",		"%D",
 	/* LINTED */
-	"\%I",		"\%J",		"\%N",		"\%O",
+	"%I",		"%J",		"%N",		"%O",
 	/* LINTED */
-	"\%P",		"\%R",		"\%T",		"\%V",
+	"%P",		"%R",		"%T",		"%V",
 	"Ac",		"Ao",		"Aq",		"At",
 	"Bc",		"Bf",		"Bo",		"Bq",
 	"Bsx",		"Bx",		"Db",		"Dc",
@@ -114,11 +114,11 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	"Fr",		"Ud",		"Lb",		"Lp",
 	"Lk",		"Mt",		"Brq",		"Bro",
 	/* LINTED */
-	"Brc",		"\%C",		"Es",		"En",
+	"Brc",		"%C",		"Es",		"En",
 	/* LINTED */
-	"Dx",		"\%Q",		"br",		"sp",
+	"Dx",		"%Q",		"br",		"sp",
 	/* LINTED */
-	"\%U"
+	"%U"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -147,7 +147,6 @@ static	int		  parsemacro(struct mdoc *, int, char *);
 static	int		  macrowarn(struct mdoc *, int, const char *);
 static	int		  pstring(struct mdoc *, int, int, 
 				const char *, size_t);
-
 
 const struct mdoc_node *
 mdoc_node(const struct mdoc *m)
