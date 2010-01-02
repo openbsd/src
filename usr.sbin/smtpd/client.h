@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.h,v 1.9 2010/01/02 11:06:37 jacekm Exp $	*/
+/*	$OpenBSD: client.h,v 1.10 2010/01/02 13:42:42 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -23,10 +23,10 @@
 struct smtp_client;
 
 /* return codes for io routines */
-#define CLIENT_DONE		 0	/* finished */
-#define CLIENT_WANT_WRITE	-1	/* want read + write */
-#define CLIENT_STOP_WRITE	-2	/* want read */
-#define CLIENT_RCPT_FAIL	-3	/* recipient refused */
+#define CLIENT_DONE		-1	/* finished */
+#define CLIENT_WANT_WRITE	-2	/* want read + write */
+#define CLIENT_STOP_WRITE	-3	/* want read */
+#define CLIENT_RCPT_FAIL	-4	/* recipient refused */
 
 /* client commands */
 #define CLIENT_BANNER		0x1
