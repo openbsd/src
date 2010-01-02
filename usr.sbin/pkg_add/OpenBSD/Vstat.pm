@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.46 2009/12/21 13:24:57 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.47 2010/01/02 12:59:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -201,6 +201,30 @@ sub avail
 	my $self = shift;
 
 	return $self->{avail} - $self->{used}/$self->{blocksize};
+}
+
+sub ro
+{
+	my $self = shift;
+	return $self->{ro};
+}
+
+sub noexec
+{
+	my $self = shift;
+	return $self->{noexec};
+}
+
+sub nosuid
+{
+	my $self = shift;
+	return $self->{nosuid};
+}
+
+sub nodev
+{
+	my $self = shift;
+	return $self->{nodev};
 }
 
 sub report_ro
