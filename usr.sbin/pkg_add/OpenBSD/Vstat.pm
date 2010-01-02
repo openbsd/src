@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.48 2010/01/02 14:13:02 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.49 2010/01/02 14:33:57 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -36,7 +36,11 @@ sub stat
 	if (!defined $dev && $fname ne '/') {
 		return $self->stat(dirname($fname));
 	}
-	return OpenBSD::MountPoint->find($dev, $fname, $self->{state});
+	my $mp = OpenBSD::MountPoint->find($dev, $fname, $self->{state});
+	if (!defined $self->{p}[0]{$mp}) {
+		$self->{p}[0]{$mp} = OpenBSD::MountPoint::Proxy->new(0, $mp);
+	}
+	return $self->{p}[0]{$mp};
 }
 
 sub account_for
@@ -59,7 +63,7 @@ sub new
 {
 	my ($class, $state) = @_;
 
-	bless {v => [{}], state => $state}, $class;
+	bless {v => [{}], p => [{}], state => $state}, $class;
 }
 
 sub exists
@@ -76,7 +80,10 @@ sub exists
 sub synchronize
 {
 	my ($self) = @_;
-	OpenBSD::MountPoint->synchronize;
+	for my $v (values %{$self->{p}[0]}) {
+		$v->{used} += $v->{delayed};
+		$v->{delayed} = 0;
+	}
 	return if $self->{state}->{not};
 	$self->{v} = [{}];
 }
@@ -101,7 +108,18 @@ sub remove
 
 sub tally
 {
-	OpenBSD::MountPoint->tally;
+	my $self = shift;
+
+	for my $data (values %{$self->{p}[0]}) {
+		if ($data->{used} != 0) {
+			print $data->name, ": ", $data->{used}, " bytes";
+			my $avail = $data->avail; 
+			if ($avail < 0) {
+				print " (missing ", int(-$avail+1), " blocks)";
+			}
+			print "\n";
+		}
+	}
 }
 
 package OpenBSD::MountPoint;
@@ -149,7 +167,7 @@ sub create
 {
 	my ($class, $dev, $opts) = @_;
 	my $n = bless 
-	    { dev => $dev, used => 0, delayed => 0, problems => 0 },
+	    { dev => $dev, problems => 0 },
 	    $class;
 	if (defined $opts) {
 		$n->parse_opts($opts);
@@ -245,33 +263,17 @@ sub find
 	return $info;
 }
 
-sub synchronize
+sub compute_avail
 {
-	while (my ($k, $v) = each %$devinfo) {
-		$v->{used} += $v->{delayed};
-		$v->{delayed} = 0;
-	}
-}
-
-sub tally
-{
-	while (my ($device, $data) = each %$devinfo) {
-		if ($data->{used} != 0) {
-			print $device, ": ", $data->{used}, " bytes";
-			my $avail = $data->avail; 
-			if ($avail < 0) {
-				print " (missing ", int(-$avail+1), " blocks)";
-			}
-			print "\n";
-		}
-	}
+	my ($self, $used) = @_;
+	return $self->{avail} - $used/$self->{blocksize};
 }
 
 sub avail
 {
 	my $self = shift;
 
-	return $self->{avail} - $self->{used}/$self->{blocksize};
+	return $self->compute_avail($self->{used});
 }
 
 sub report_ro
@@ -315,12 +317,42 @@ our @ISA=qw(OpenBSD::MountPoint);
 sub new
 {
 	my $class = shift;
-	bless { avail => 0, used => 0, dev => '???' }, $class;
+	bless { avail => 0, dev => '???' }, $class;
+}
+
+sub compute_avail
+{
+	return 1;
+}
+
+package OpenBSD::MountPoint::Proxy;
+
+sub new
+{
+	my ($class, $used, $mp) = @_;
+	bless {real => $mp, used => $used, delayed => 0}, $class;
+}
+
+sub ro
+{
+	return shift->{real}->ro;
+}
+
+sub noexec
+{
+	return shift->{real}->noexec;
 }
 
 sub avail
 {
-	return 1;
+	my $self = shift;
+	return $self->{real}->compute_avail($self->{used});
+}
+
+sub name
+{
+	my $self = shift;
+	return $self->{real}->{dev};
 }
 
 1;
