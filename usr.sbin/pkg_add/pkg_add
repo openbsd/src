@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.458 2010/01/02 12:52:18 espie Exp $
+# $OpenBSD: pkg_add,v 1.459 2010/01/02 16:51:51 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -522,12 +522,6 @@ sub really_add
 {
 	my ($set, $state) = @_;
 
-	for my $h ($set->newer) {
-		$h->plist->set_infodir($h->location->info);
-	}
-
-	$set->validate_plists($state);
-
 	my $errors = 0;
 
 	check_x509_signature($set, $state);
@@ -792,6 +786,17 @@ sub install_set
 		}
 	}
 	if ($set->newer > 0 || $set->older_to_do > 0) {
+		for my $h ($set->newer) {
+			$h->plist->set_infodir($h->location->info);
+		}
+
+		if (!$set->validate_plists($state)) {
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, 
+			    "file issues");
+			$state->tracker->cant($set);
+			return ();
+		}
+
 		really_add($set, $state);
 	}
 	$set->cleanup;

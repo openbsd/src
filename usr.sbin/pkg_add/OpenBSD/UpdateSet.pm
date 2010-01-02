@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.49 2010/01/01 13:00:05 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.50 2010/01/02 16:51:51 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -305,10 +305,12 @@ sub validate_plists
 		$state->vstat->tally;
 	}
 	if ($state->{problems}) {
-		require OpenBSD::Error;
-		OpenBSD::Error::Fatal "fatal issues in ", $self->short_print;
+		$state->vstat->drop_changes;
+		return 0;
+	} else {
+		$state->vstat->synchronize;
+		return 1;
 	}
-	$state->vstat->synchronize;
 }
 
 sub compute_size
