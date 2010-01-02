@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.29 2010/01/01 20:46:19 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.30 2010/01/02 04:21:16 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -951,7 +951,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	/* Save the parameter request list if there is one. */
 	i = DHO_DHCP_PARAMETER_REQUEST_LIST;
 	if (packet->options[i].data) {
-		state->prl = dmalloc(packet->options[i].len, "ack_lease: prl");
+		state->prl = calloc(1, packet->options[i].len);
 		if (!state->prl)
 			warning("no memory for parameter request list");
 		else {

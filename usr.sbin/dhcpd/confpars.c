@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.17 2010/01/01 08:02:34 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.18 2010/01/02 04:21:16 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -515,8 +515,7 @@ void parse_host_declaration(cfile, group)
 	if (!name)
 		return;
 
-	host = (struct host_decl *)dmalloc(sizeof (struct host_decl),
-	    "parse_host_declaration");
+	host = calloc(1, sizeof (struct host_decl));
 	if (!host)
 		error("can't allocate host decl struct %s.", name);
 

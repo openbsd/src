@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.25 2010/01/01 20:46:20 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.26 2010/01/02 04:21:16 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -159,7 +159,8 @@ parse_option_buffer(struct packet *packet,
 		 * space for it and copy it there.
 		 */
 		if (!packet->options[code].data) {
-			if (!(t = dmalloc(len + 1, "parse_option_buffer")))
+			t = calloc(1, len + 1);
+			if (!t)
 				error("Can't allocate storage for option %s.",
 				    dhcp_options[code].name);
 			/*
@@ -176,8 +177,7 @@ parse_option_buffer(struct packet *packet,
 			 * we last saw.   This is really only required
 			 * for clients, but what the heck...
 			 */
-			t = dmalloc(len + packet->options[code].len + 1,
-			    "parse_option_buffer");
+			t = calloc(1, len + packet->options[code].len + 1);
 			if (!t)
 				error("Can't expand storage for option %s.",
 				    dhcp_options[code].name);

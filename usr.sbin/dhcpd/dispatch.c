@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.24 2008/09/15 20:38:17 claudio Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.25 2010/01/02 04:21:16 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -109,8 +109,7 @@ discover_interfaces(void)
 		/* If there isn't already an interface by this name,
 		   allocate one. */
 		if (tmp == NULL) {
-			tmp = ((struct interface_info *)dmalloc(sizeof *tmp,
-			    "discover_interfaces"));
+			tmp = calloc(1, sizeof *tmp);
 			if (!tmp)
 				error("Insufficient memory to %s %s",
 				    "record interface", ifa->ifa_name);

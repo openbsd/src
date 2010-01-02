@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.14 2010/01/01 20:46:20 krw Exp $ */
+/*	$OpenBSD: tree.c,v 1.15 2010/01/02 04:21:16 krw Exp $ */
 
 /* Routines for manipulating parse trees... */
 
@@ -49,7 +49,9 @@ static void do_data_copy(int *, unsigned char **, int *, unsigned char *, int);
 pair
 cons(caddr_t car, pair cdr)
 {
-	pair	foo = (pair)dmalloc(sizeof *foo, "cons");
+	pair foo;
+
+	foo = calloc(1, sizeof *foo);
 	if (!foo)
 		error("no memory for cons.");
 	foo->car = car;
@@ -109,8 +111,10 @@ tree_concat(struct tree *left, struct tree *right)
 
 	/* If both trees are constant, combine them. */
 	if (left->op == TREE_CONST && right->op == TREE_CONST) {
-		unsigned char *buf = dmalloc(left->data.const_val.len
-		    + right->data.const_val.len, "tree_concat");
+		unsigned char *buf;
+
+		buf = calloc(1, left->data.const_val.len
+		    + right->data.const_val.len);
 
 		if (!buf)
 			error("No memory to concatenate constants.");
@@ -188,8 +192,11 @@ tree_evaluate(struct tree_cache *tree_cache)
 	 * If we can't allocate more memory, return with what we
 	 * have (maybe nothing).
 	 */
-	if (!(bp = (unsigned char *)dmalloc(bufix, "tree_evaluate")))
+	bp = calloc(1, bufix);
+	if (!bp) {
+		warning("no more memory for option data");
 		return 0;
+	}
 
 	/* Record the change in conditions... */
 	bc = bufix;
