@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.8 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.9 2010/01/02 22:50:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,7 +35,7 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	cmd_target_parse,
 	cmd_copy_mode_exec,
 	cmd_target_free,
-	NULL
+	cmd_target_print
 };
 
 void
