@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.82 2010/01/01 16:09:35 espie Exp $
+# $OpenBSD: pkg_info,v 1.83 2010/01/02 12:52:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -369,7 +369,7 @@ sub print_info
 		if ($opt_S) {
 			just_in_time_header($pkg, $handle ,\$done);
 			print "Signature: " unless $opt_q;
-			print $plist->signature, "\n";
+			print $plist->signature->string, "\n";
 		}
 		if ($opt_P) {
 			require OpenBSD::PackingList;

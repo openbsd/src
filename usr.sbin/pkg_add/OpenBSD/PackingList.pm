@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.98 2010/01/01 16:09:35 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.99 2010/01/02 12:52:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -538,22 +538,6 @@ sub to_installation
 }
 
 
-sub signature
-{
-	my $self = shift;
-	if ($self->has('always-update')) {
-		my $s;
-		open my $fh, '>', \$s;
-		$self->write_no_sig($fh);
-		close $fh;
-		return $s;
-	} else {
-		my $k = {};
-		$self->visit('signature', $k);
-		return join(',', $self->pkgname, sort keys %$k);
-	}
-}
-
 sub forget
 {
 }
@@ -579,6 +563,53 @@ sub AUTOLOAD
 	} else {
 		die "Can't call $sub on ", __PACKAGE__;
 	}
+}
+
+sub signature
+{
+	my $self = shift;
+	if ($self->has('always-update')) {
+		my $s;
+		open my $fh, '>', \$s;
+		$self->write_no_sig($fh);
+		close $fh;
+		return OpenBSD::PackingList::FullSignature->new($self->pkgname,
+		    $s);
+	} else {
+		my $k = {};
+		$self->visit('signature', $k);
+		my $o = [$self->pkgname, sort keys %$k];
+		return OpenBSD::PackingList::Signature->new($self->pkgname,
+		    [sort keys %$k]);
+	}
+}
+
+package OpenBSD::PackingList::Signature;
+sub new
+{
+	my ($class, $pkgname, $extra) = @_;
+	bless { name => $pkgname, extra => $extra }, $class;
+}
+
+sub string
+{
+	my $self = shift;
+	return join(',', $self->{name}, @{$self->{extra}});
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+	return $a->string cmp $b->string;
+}
+
+package OpenBSD::PackingList::FullSignature;
+our @ISA=qw(OpenBSD::PackingList::Signature);
+
+sub string
+{
+	my $self = shift;
+	return $self->{extra};
 }
 
 1;

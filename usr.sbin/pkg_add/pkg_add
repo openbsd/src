@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.457 2010/01/01 13:41:49 espie Exp $
+# $OpenBSD: pkg_add,v 1.458 2010/01/02 12:52:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -53,9 +53,9 @@ sub has_new_sig
 	if (!defined $plist->{new_sig}) {
 		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
 		my $o = $plist->signature;
-		$state->say("Comparing full signature for ", $plist->pkgname, " \"$o\" vs. \"$n\": ", $n eq $o ? "equal" : "different") 
+		$state->say("Comparing full signature for ", $plist->pkgname, " \"".$o->string."\" vs. \"".$n->string."\": ", $n->compare($o) eq 0 ? "equal" : "different") 
 		    if $state->verbose >= 3;
-		$plist->{new_sig} = $n ne $o;
+		$plist->{new_sig} = $n->compare($o) ne 0;
 	}
 	return $plist->{new_sig};
 }
