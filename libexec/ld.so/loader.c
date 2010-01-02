@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.117 2009/02/04 19:44:51 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.118 2010/01/02 12:16:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -776,7 +776,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 			}
 
 			ra = (Elf_Addr *)(rp->r_offset + loff);
-			RELOC_RELA(rp, sp, ra, loff);
+			RELOC_RELA(rp, sp, ra, loff, dynld.dyn.pltgot);
 			rp++;
 		}
 	}

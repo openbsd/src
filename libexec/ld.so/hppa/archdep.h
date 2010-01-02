@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2008/04/09 21:45:26 kurt Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.5 2010/01/02 12:16:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -74,13 +74,15 @@ RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
  * prepare to code around this problem, or fix it here.
  */
 static inline void
-RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
+    Elf_Addr *pltgot)
 {
 	/* XXX fille out _sl ??? */
 	if (ELF_R_TYPE(r->r_info) == RELOC_DIR32) {
 		*p = v + r->r_addend;
 	} else if (ELF_R_TYPE(r->r_info) == RELOC_IPLT) {
-		*p = v + s->st_value + r->r_addend;
+		p[0] = v + s->st_value + r->r_addend;
+		p[1] = (Elf_Addr)pltgot;
 	} else if (ELF_R_TYPE(r->r_info) == RELOC_PLABEL32) {
 		*p = v + s->st_value + r->r_addend;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.13 2004/05/24 20:16:12 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.14 2010/01/02 12:16:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -73,7 +73,8 @@ RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 }
 
 static inline void
-RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
+RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v,
+    Elf_Addr *pltgot)
 {
 	if (ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		*p = v + r->r_addend;

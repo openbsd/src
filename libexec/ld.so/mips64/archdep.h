@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.5 2006/05/08 20:37:01 deraadt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.6 2010/01/02 12:16:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -52,7 +52,7 @@ do {									\
 	}								\
 } while (0)
 
-#define RELOC_RELA(rela, sym, ptr, val)					\
+#define RELOC_RELA(rela, sym, ptr, val, pltgot)				\
 do {									\
 	_dl_exit(20);	/* We don't do RELA now */			\
 } while (0)
