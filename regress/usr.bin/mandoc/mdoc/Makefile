@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2009/12/25 02:00:46 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2010/01/02 02:35:53 schwarze Exp $
 
-SUBDIR+= Bl Fl In Pa Rs
+SUBDIR+= Bl Fl In Pa Rs Sm
 
 groff groff-clean: _SUBDIRUSE
 

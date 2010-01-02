@@ -1,0 +1,30 @@
+.Dd $Mdocdate: January 2 2010 $
+.Dt SM-SCOPE 1
+.Os
+.Sh NAME
+.Nm Sm-scope
+.Nd scope of the spacing macro
+.Sh DESCRIPTION
+Using an abbreviated example from the
+.Xr ksh 1
+manual.
+.Pp
+Modifiers can be applied to the
+.Pf ${ Ns Ar name Ns }
+form of parameter substitution:
+.Bl -tag -width Ds
+.Sm off
+.It ${ Ar name No :- Ar word No }
+.Sm on
+If
+.Ar name
+is set and not
+.Dv NULL ,
+it is substituted; otherwise,
+.Ar word
+is substituted.
+.El
+.Pp
+In the above modifiers, the
+.Ql \&:
+can be omitted, ...
