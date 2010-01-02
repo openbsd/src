@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.106 2009/05/31 21:23:28 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.107 2010/01/02 01:20:38 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1352,7 +1352,8 @@ device_register(struct device *dev, void *aux)
 	}
 
 	if (strcmp(devname, "scsibus") == 0) {
-		struct scsi_link *sl = aux;
+		struct scsibus_attach_args *saa = aux;
+		struct scsi_link *sl = saa->saa_sc_link;
 
 		if (strcmp(bp->name, "fp") == 0 &&
 		    bp->val[0] == sl->scsibus) {
