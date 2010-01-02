@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.8 2009/11/02 20:34:58 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.9 2010/01/02 14:56:02 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -364,6 +364,7 @@ struct ctl_rt {
 	u_int8_t		 flags;
 	u_int8_t		 prefixlen;
 	u_int8_t		 connected;
+	u_int8_t		 in_use;
 };
 
 struct ctl_sum {
