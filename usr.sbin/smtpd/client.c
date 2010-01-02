@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.23 2009/12/23 17:16:03 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.24 2010/01/02 11:06:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -47,6 +47,7 @@ void		 client_status(struct smtp_client *, char *, ...);
 int		 client_getln(struct smtp_client *, int);
 void		 client_putln(struct smtp_client *, char *, ...);
 struct buf	*client_content_read(FILE *, size_t);
+int		 client_poll(struct smtp_client *);
 
 #ifndef CLIENT_NO_SSL
 int		 client_ssl_connect(struct smtp_client *);
@@ -98,7 +99,6 @@ client_init(int fd, int body, char *ehlo, int verbose)
 	msgbuf_init(&sp->w);
 	sp->w.fd = fd;
 	sp->sndlowat = -1;
-	sp->iomode = CLIENT_WANT_WRITE;
 
 	sp->exts[CLIENT_EXT_STARTTLS].want = 1;
 	sp->exts[CLIENT_EXT_STARTTLS].must = 1;
@@ -303,7 +303,6 @@ client_talk(struct smtp_client *sp, int writable)
 		TAILQ_INSERT_TAIL(&sp->cmdsendq, c, entry);
 
 		/* prepare for the banner */
-		sp->iomode = CLIENT_STOP_WRITE;
 		writable = 0;
 	}
 
@@ -319,8 +318,7 @@ client_talk(struct smtp_client *sp, int writable)
 				client_status(sp, "130 SSL init failed");
 				return (CLIENT_DONE);
 			}
-			sp->iomode = CLIENT_WANT_WRITE;
-			return (sp->iomode);
+			return (CLIENT_WANT_WRITE);
 		} else
 			return client_ssl_connect(sp);
 	}
@@ -347,12 +345,10 @@ client_read(struct smtp_client *sp)
 			break;
 
 		case SSL_ERROR_WANT_READ:
-			sp->iomode = CLIENT_STOP_WRITE;
-			return (sp->iomode);
+			return (CLIENT_STOP_WRITE);
 
 		case SSL_ERROR_WANT_WRITE:
-			sp->iomode = CLIENT_WANT_WRITE;
-			return (sp->iomode);
+			return (CLIENT_WANT_WRITE);
 
 		default:
 			client_status(sp, "130 ssl_buf_read error");
@@ -384,7 +380,7 @@ again:
 	if (client_getln(sp, cmd->type) < 0)
 		goto quit2;
 	if (*sp->reply == '\0')
-		return (sp->iomode);
+		return client_poll(sp);
 
 	/* reply fully received */
 	TAILQ_REMOVE(&sp->cmdrecvq, cmd, entry);
@@ -394,15 +390,9 @@ again:
 	free(cmd);
 	sp->cmdi--;
 
-	/* re-enable write events if window allows */
-	if (sp->cmdi < sp->cmdw)
-		sp->iomode = CLIENT_WANT_WRITE;
-	else
-		sp->iomode = CLIENT_STOP_WRITE;
-
 	/* dying?  ignore all replies as we wait for EOF. */
 	if (sp->dying)
-		return (sp->iomode);
+		return client_poll(sp);
 
 	switch (type) {
 	case CLIENT_BANNER:
@@ -492,7 +482,7 @@ again:
 	if (!TAILQ_EMPTY(&sp->cmdrecvq))
 		goto again;
 
-	return (sp->iomode);
+	return client_poll(sp);
 
 quit:
 	client_status(sp, "%s", sp->reply);
@@ -509,7 +499,7 @@ quit2:
 	/* ignore all replies from now on, eg. those still in the pipeline */
 	sp->dying = 1; 
 
-	return (sp->iomode);
+	return client_poll(sp);
 }
 
 /*
@@ -563,12 +553,10 @@ client_write(struct smtp_client *sp)
 			break;
 
 		case SSL_ERROR_WANT_READ:
-			sp->iomode = CLIENT_STOP_WRITE;
-			return (sp->iomode);
+			return (CLIENT_STOP_WRITE);
 
 		case SSL_ERROR_WANT_WRITE:
-			sp->iomode = CLIENT_WANT_WRITE;
-			return (sp->iomode);
+			return (CLIENT_WANT_WRITE);
 
 		default:
 			client_status(sp, "130 ssl_buf_write error");
@@ -583,13 +571,7 @@ client_write(struct smtp_client *sp)
 		}
 	}
 
-	/*
-	 * Disable write events when send window prevents us from sending more.
-	 */
-	if (sp->w.queued == 0 && sp->cmdi >= sp->cmdw)
-		sp->iomode = CLIENT_STOP_WRITE;
-
-	return (sp->iomode);
+	return client_poll(sp);
 }
 
 #ifndef CLIENT_NO_SSL
@@ -606,12 +588,10 @@ client_ssl_connect(struct smtp_client *sp)
 
 	switch (SSL_get_error(sp->ssl, ret)) {
 	case SSL_ERROR_WANT_READ:
-		sp->iomode = CLIENT_STOP_WRITE;
-		return (sp->iomode);
+		return (CLIENT_STOP_WRITE);
 
 	case SSL_ERROR_WANT_WRITE:
-		sp->iomode = CLIENT_WANT_WRITE;
-		return (sp->iomode);
+		return (CLIENT_WANT_WRITE);
 
 	case SSL_ERROR_NONE:
 		sp->ssl_handshake = 0;
@@ -625,10 +605,8 @@ client_ssl_connect(struct smtp_client *sp)
 			sp->exts[CLIENT_EXT_STARTTLS].fail = 1;
 			SSL_free(sp->ssl);
 			sp->ssl = NULL;
-			if (client_use_extensions(sp) == 0) {
-				sp->iomode = CLIENT_WANT_WRITE;
-				return (sp->iomode);
-			}
+			if (client_use_extensions(sp) == 0)
+				return client_poll(sp);
 		} else
 			client_status(sp, "130 SSL_connect error");
 
@@ -640,13 +618,11 @@ client_ssl_connect(struct smtp_client *sp)
 	if (sp->exts[CLIENT_EXT_STARTTLS].want) {
 		c = cmd_new(CLIENT_EHLO, "EHLO %s", sp->ehlo);
 		TAILQ_INSERT_HEAD(&sp->cmdsendq, c, entry);
-		sp->iomode = CLIENT_WANT_WRITE;
-	} else
-		sp->iomode = CLIENT_STOP_WRITE;
+	}
 
 	sp->exts[CLIENT_EXT_STARTTLS].done = 1;
 
-	return (sp->iomode);
+	return client_poll(sp);
 }
 #endif
 
@@ -887,6 +863,18 @@ client_content_read(FILE *fp, size_t max)
 	}
 
 	return (b);
+}
+
+/*
+ * Inform the caller what kind of polling should be done.
+ */
+int
+client_poll(struct smtp_client *sp)
+{
+	if (sp->cmdi < sp->cmdw || sp->w.queued)
+		return (CLIENT_WANT_WRITE);
+	else
+		return (CLIENT_STOP_WRITE);
 }
 
 /*
