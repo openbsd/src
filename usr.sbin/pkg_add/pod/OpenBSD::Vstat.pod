@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Vstat.pod,v 1.4 2009/12/17 11:41:30 espie Exp $
+$OpenBSD: OpenBSD::Vstat.pod,v 1.5 2010/01/02 14:13:02 espie Exp $
 
 =head1 NAME
 
@@ -8,29 +8,33 @@ OpenBSD::Vstat - virtual filesystem for C<pkg_add(1)> simulations
 
     use OpenBSD::Vstat;
 
-    $h = OpenBSD::Vstat::add($filename, $size, $tag);
-    OpenBSD::Vstat::remove($filename, $size);
-    $e = OpenBSD::Vstat::vexists($filename);
-    OpenBSD::Vstat::tally();
+    my $v = OpenBSD::Vstat->new($state);
+
+    $h = $v->add($filename, $size, $tag);
+    $v->remove($filename, $size);
+    $e = $v->exists($filename);
+    $v->tally;
 
 =head1 DESCRIPTION
 
-C<OpenBSD::Vstat> provides functions to layout a virtual file system on top
+C<OpenBSD::Vstat> provides methods to layout a virtual file system on top
 of the real one.  This is generally used to simulate file system manipulations
 before doing them for real.
 
-The functions C<OpenBSD::Vstat::add> (respectively
-C<OpenBSD::Vstat::remove>) can be used to add a filename to
+The constructor C<new> expect a C<$state> object, that is, an object with
+C<$state-E<gt>{not}> and C<$state-E<gt>errsay> defined.
+
+The method C<add> (respectively C<remove>) can be used to add a filename to
 the file system (resp. remove a filename from the file system).
-The function C<OpenBSD::Vstat:vexists> looks for
+The method C<exists> looks for
 a given filename: first it checks if it has been added or removed in
 the virtual filesystem. Failing that, it looks into the real file system
 using C<-e>.
 
-Both C<OpenBSD::Vstat::add> and C<OpenBSD::Vstat::remove> also know about
+Both C<add> and C<remove> also know about
 Unix filesystem semantics, namely C<mount(8)> points and disk usage.
 They return a small object corresponding to the filename's file system with
-the following fields
+the following methods
 
 =over 8
 
@@ -50,28 +54,24 @@ defined if the filesystem forbids execution.
 
 defined if the filesystem forbids SUID files.
 
-=item avail()
+=item avail
 
 returns the number of bytes still available on the filesystem.
 
 =back
 
-C<OpenBSD::Vstat::vexists> returns a true value if the filename exists.
-If it is a virtual name added through C<OpenBSD::Vstat::add>, it returns
+C<exists> returns a true value if the filename exists.
+If it is a virtual name added through C<add>, it returns
 the C<$tag> specified as an optional argument. Otherwise, it returns 1.
 
-C<OpenBSD::Vstat:tally> displays a summary of filesystem manipulations
+C<tally> displays a summary of filesystem manipulations
 after a series of additions and removals.
 
 Due to the way packages get updated, size modifications through
-C<OpenBSD::Vstat::remove> are delayed until the next call to
-C<OpenBSD::Vstat::synchronize>: old files must be removed before
+C<remove> are delayed until the next call to
+C<synchronize>: old files must be removed before
 adding the new files in order to properly account for collisions,
 but the old files occupy disk space while the new package gets extracted.
-
-=head1 CAVEATS
-
-The API to this module may change.
 
 =head1 BUGS AND LIMITATIONS
 
