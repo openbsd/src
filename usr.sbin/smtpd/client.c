@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.25 2010/01/02 13:42:42 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.26 2010/01/02 16:41:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -77,13 +77,13 @@ client_init(int fd, int body, char *ehlo, int verbose)
 {
 	struct smtp_client	*sp = NULL;
 	struct client_cmd	*c;
+	socklen_t		 len;
 
 	if ((sp = calloc(1, sizeof(*sp))) == NULL)
 		fatal(NULL);
 	if (ehlo == NULL || *ehlo == '\0') {
 		char			 buf[NI_MAXHOST];
 		struct sockaddr_storage	 sa;
-		socklen_t		 len;
 
 		len = sizeof(sa);
 		if (getsockname(fd, (struct sockaddr *)&sa, &len))
@@ -104,7 +104,10 @@ client_init(int fd, int body, char *ehlo, int verbose)
 	sp->timeout.tv_sec = 300;
 	msgbuf_init(&sp->w);
 	sp->w.fd = fd;
-	sp->sndlowat = -1;
+	sp->flags = CLIENT_FLAG_FIRSTTIME;
+	len = sizeof(sp->sndlowat);
+	if (getsockopt(fd, SOL_SOCKET, SO_SNDLOWAT, &sp->sndlowat, &len) == -1)
+		fatal("client_init: getsockopt");
 
 	sp->exts[CLIENT_EXT_STARTTLS].want = 1;
 	sp->exts[CLIENT_EXT_STARTTLS].must = 1;
@@ -168,7 +171,7 @@ cmd_free(struct client_cmd *cmd)
 void
 client_ssl_smtps(struct smtp_client *sp)
 {
-	sp->ssl_handshake = 1;
+	sp->flags |= CLIENT_FLAG_HANDSHAKING;
 	sp->exts[CLIENT_EXT_STARTTLS].want = 0;
 	sp->exts[CLIENT_EXT_STARTTLS].must = 0;
 }
@@ -297,14 +300,10 @@ int
 client_talk(struct smtp_client *sp, int writable)
 {
 	struct client_cmd	*c;
-	socklen_t		 len;
 
 	/* first call -> complete the initialisation */
-	if (sp->sndlowat == -1) {
-		len = sizeof(sp->sndlowat);
-		if (getsockopt(sp->w.fd, SOL_SOCKET, SO_SNDLOWAT,
-		    &sp->sndlowat, &len) == -1)
-			fatal("client_talk: getsockopt");
+	if (sp->flags & CLIENT_FLAG_FIRSTTIME) {
+		sp->flags &= ~CLIENT_FLAG_FIRSTTIME;
 
 		c = cmd_new(CLIENT_DATA, "DATA");
 		TAILQ_INSERT_TAIL(&sp->cmdsendq, c, entry);
@@ -320,8 +319,7 @@ client_talk(struct smtp_client *sp, int writable)
 	}
 
 #ifndef CLIENT_NO_SSL
-	/* transition to ssl requested? */
-	if (sp->ssl_handshake) {
+	if (sp->flags & CLIENT_FLAG_HANDSHAKING) {
 		if (sp->ssl == NULL) {
 			log_debug("client: ssl handshake started");
 			sp->ssl = ssl_client_init(sp->w.fd,
@@ -364,7 +362,7 @@ client_read(struct smtp_client *sp)
 		sp->cmdi--;
 
 		/* if dying, ignore all replies as we wait for an EOF. */
-		if (!sp->dying)
+		if (!(sp->flags & CLIENT_FLAG_DYING))
 			client_get_reply(sp, cmd, &ret);
 
 		cmd_free(cmd);
@@ -416,7 +414,7 @@ client_get_reply(struct smtp_client *sp, struct client_cmd *cmd, int *ret)
 			if (client_use_extensions(sp) < 0)
 				client_quit(sp);
 		} else
-			sp->ssl_handshake = 1;
+			sp->flags |= CLIENT_FLAG_HANDSHAKING;
 		return;
 
 	case CLIENT_AUTH:
@@ -431,7 +429,7 @@ client_get_reply(struct smtp_client *sp, struct client_cmd *cmd, int *ret)
 
 	case CLIENT_RCPTTO:
 		if (*sp->reply == '2')
-			sp->rcptokay++;
+			sp->flags |= CLIENT_FLAG_RCPTOKAY;
 		else {
 			sp->rcptfail = cmd->data;
 			*ret = CLIENT_RCPT_FAIL;
@@ -442,7 +440,7 @@ client_get_reply(struct smtp_client *sp, struct client_cmd *cmd, int *ret)
 		if (*sp->reply != '3') {
 			client_status(sp, "%s", sp->reply);
 			client_quit(sp);
-		} else if (sp->rcptokay > 0) {
+		} else if (sp->flags & CLIENT_FLAG_RCPTOKAY) {
 			sp->content = sp->head;
 			sp->head = NULL;
 			if (sp->content == NULL)
@@ -538,35 +536,33 @@ client_ssl_connect(struct smtp_client *sp)
 		return (CLIENT_WANT_WRITE);
 
 	case SSL_ERROR_NONE:
-		sp->ssl_handshake = 0;
-		break;
+		log_debug("client: ssl handshake completed");
+		sp->flags &= ~CLIENT_FLAG_HANDSHAKING;
+
+		if (sp->exts[CLIENT_EXT_STARTTLS].want) {
+			c = cmd_new(CLIENT_EHLO, "EHLO %s", sp->ehlo);
+			TAILQ_INSERT_HEAD(&sp->cmdsendq, c, entry);
+		}
+		sp->exts[CLIENT_EXT_STARTTLS].done = 1;
+		return client_poll(sp);
 
 	default:
 		log_debug("client: ssl handshake failed");
-		sp->ssl_handshake = 0;
+		sp->flags &= ~CLIENT_FLAG_HANDSHAKING;
 
 		if (sp->exts[CLIENT_EXT_STARTTLS].want) {
 			sp->exts[CLIENT_EXT_STARTTLS].fail = 1;
 			SSL_free(sp->ssl);
 			sp->ssl = NULL;
-			if (client_use_extensions(sp) == 0)
+			if (client_use_extensions(sp) < 0)
+				return (CLIENT_DONE);
+			else
 				return client_poll(sp);
-		} else
+		} else {
 			client_status(sp, "130 SSL_connect error");
-
-		return (CLIENT_DONE);
+			return (CLIENT_DONE);
+		}
 	}
-
-	log_debug("client: ssl handshake completed");
-
-	if (sp->exts[CLIENT_EXT_STARTTLS].want) {
-		c = cmd_new(CLIENT_EHLO, "EHLO %s", sp->ehlo);
-		TAILQ_INSERT_HEAD(&sp->cmdsendq, c, entry);
-	}
-
-	sp->exts[CLIENT_EXT_STARTTLS].done = 1;
-
-	return client_poll(sp);
 }
 #endif
 
@@ -655,7 +651,7 @@ client_status(struct smtp_client *sp, char *fmt, ...)
 {
 	va_list ap;
 
-	if (sp->dying)
+	if (sp->flags & CLIENT_FLAG_DYING)
 		return;
 
 	va_start(ap, fmt);
@@ -833,7 +829,7 @@ client_quit(struct smtp_client *sp)
 		TAILQ_REMOVE(&sp->cmdsendq, cmd, entry);
 		cmd_free(cmd);
 	}
-	sp->dying = 1; 
+	sp->flags |= CLIENT_FLAG_DYING;
 }
 
 /*
