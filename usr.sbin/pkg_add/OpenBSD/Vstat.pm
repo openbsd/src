@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.50 2010/01/02 14:45:40 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.51 2010/01/02 14:53:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -79,14 +79,38 @@ sub exists
 
 sub synchronize
 {
-	my ($self) = @_;
+	my $self = shift;
+
 	for my $v (values %{$self->{p}}) {
 		$v->{used} += $v->{delayed};
 		$v->{delayed} = 0;
 		$v->{real}->{used} = $v->{used};
 	}
-	return if $self->{state}->{not};
-	$self->{v} = [{}];
+	if ($self->{state}->{not}) {
+		# this is the actual stacking case: in pretend mode,
+		# I have to put a second vfs on top
+		if (@{$self->{v}} == 2) {
+			my $top = shift @{$self->{v}};
+			while (my ($k, $v) = each %$top) {
+				$self->{v}[0]{$k} = $v;
+			}
+		}
+		unshift(@{$self->{v}}, {});
+	} else {
+		$self->{v} = [{}];
+	}
+}
+
+sub drop_changes
+{
+	my $self = shift;
+
+	for my $v (values %{$self->{p}}) {
+		$v->{used} = $v->{real}->{used};
+		$v->{delayed} = 0;
+	}
+	# drop the top layer
+	$self->{v}[0] = {};
 }
 
 sub add
