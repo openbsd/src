@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.13 2009/02/08 17:15:10 jmc Exp $
+.\"	$OpenBSD: tr.1,v 1.14 2010/01/02 20:15:15 schwarze Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: January 2 2010 $
 .Dt TR 1
 .Os
 .Sh NAME
@@ -143,7 +143,7 @@ the octal sequence to the full 3 octal digits.
 A backslash followed by certain special characters maps to special
 values.
 .Pp
-.Bl -column
+.Bl -column "nn" "<alert character>"
 .It \ea	<alert character>
 .It \eb	<backspace>
 .It \ef	<form-feed>
@@ -160,7 +160,7 @@ Represents the range of characters between the range endpoints, inclusively.
 Represents all characters belonging to the defined character class.
 Class names are:
 .Pp
-.Bl -column
+.Bl -column "xdigit" "<lower-case alphabetic characters>"
 .It alnum	<alphanumeric characters>
 .It alpha	<alphabetic characters>
 .It blank	<blank characters>

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bluetooth.4,v 1.4 2007/11/26 09:28:33 martynas Exp $
+.\"	$OpenBSD: bluetooth.4,v 1.5 2010/01/02 20:15:15 schwarze Exp $
 .\"	$NetBSD: bluetooth.4,v 1.5 2007/04/21 06:15:22 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
@@ -31,7 +31,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 26 2007 $
+.Dd $Mdocdate: January 2 2010 $
 .Dt BLUETOOTH 4
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ Bluetooth protocol family sockets all use a
 structure which contains a Bluetooth Device Address (BDADDR).
 This consists of a six byte string in least significant byte
 first order.
-.Bd -literal -offset -indent
+.Bd -literal -offset indent
 struct sockaddr_bt {
 	uint8_t		bt_len;
 	sa_family_t	bt_family;
