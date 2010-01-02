@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.33 2008/06/22 16:32:05 krw Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.34 2010/01/02 23:28:51 dlg Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -54,7 +54,8 @@
 
 int scanjet_set_params(struct ss_softc *, struct scan_io *);
 int scanjet_trigger_scanner(struct ss_softc *);
-int scanjet_read(struct ss_softc *, struct buf *);
+int scanjet_read(struct ss_softc *, struct scsi_xfer *, struct buf *);
+void scanjet_read_done(struct scsi_xfer *);
 
 /* only used internally */
 int scanjet_ctl_write(struct ss_softc *, char *, u_int, int);
@@ -276,42 +277,84 @@ scanjet_trigger_scanner(ss)
 }
 
 int
-scanjet_read(ss, bp)
+scanjet_read(ss, xs, bp)
 	struct ss_softc *ss;
+	struct scsi_xfer *xs;
 	struct buf *bp;
 {
-	struct scsi_rw_scanner cmd;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsi_rw_scanner *cdb;
 
-	/*
-	 *  Fill out the scsi command
-	 */
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = READ;
+	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_read: start\n"));
 
-	/*
-	 * Handle "fixed-block-mode" tape drives by using the
-	 * block count instead of the length.
-	 */
-	_lto3b(bp->b_bcount, cmd.len);
+	cdb = (struct scsi_rw_scanner *)xs->cmd;
+	xs->cmdlen = sizeof(*cdb);
 
-	/*
-	 * go ask the adapter to do all this for us
-	 */
-	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
-	    (u_char *) bp->b_data, bp->b_bcount, SCSI_RETRIES, 100000, bp,
-	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
-		printf("%s: not queued\n", ss->sc_dev.dv_xname);
-	else {
-		if (bp->b_bcount >= ss->sio.scan_window_size)
-			ss->sio.scan_window_size = 0;
-		else
-			ss->sio.scan_window_size -= bp->b_bcount;
-	}
+	cdb->opcode = READ;
+	_lto3b(bp->b_bcount, cdb->len);
+
+	xs->data = bp->b_data;
+	xs->datalen = bp->b_bcount;
+	xs->flags |= SCSI_DATA_IN;
+	xs->timeout = 100000;
+	xs->done = scanjet_read_done;
+	xs->cookie = bp;
+
+	scsi_xs_exec(xs);
 
 	return (0);
 }
 
+void
+scanjet_read_done(struct scsi_xfer *xs)
+{
+	struct ss_softc *ss = xs->sc_link->device_softc;
+	struct buf *bp = xs->cookie;
+
+	splassert(IPL_BIO);
+
+	switch (xs->error) {
+	case XS_NOERROR:
+		if (bp->b_bcount >= ss->sio.scan_window_size)
+			ss->sio.scan_window_size = 0;
+		else
+			ss->sio.scan_window_size -= bp->b_bcount;
+
+		bp->b_error = 0;
+		bp->b_resid = xs->resid;
+		break;
+
+	case XS_NO_CCB:
+		/* The adapter is busy, requeue the buf and try it later. */
+                ss_buf_requeue(ss, bp);
+                scsi_xs_put(xs);
+		SET(ss->flags, SSF_WAITING); /* break out of cdstart loop */
+		timeout_add(&ss->timeout, 1);
+		return;
+
+	case XS_SENSE:
+	case XS_SHORTSENSE:
+		if (scsi_interpret_sense(xs) != ERESTART)
+			xs->retries = 0;
+
+		/* FALLTHROUGH */
+	case XS_BUSY:
+	case XS_TIMEOUT:
+		if (xs->retries--) {
+			scsi_xs_exec(xs);
+			return;
+		}
+
+		/* FALLTHROUGH */
+	default:
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		break;
+	}
+
+	biodone(bp);
+	scsi_xs_put(xs);
+}
 
 /*
  * Do a synchronous write.  Used to send control messages.

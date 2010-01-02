@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.16 2008/06/22 16:32:05 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.17 2010/01/02 23:28:51 dlg Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -69,7 +69,8 @@
 int mustek_set_params(struct ss_softc *, struct scan_io *);
 int mustek_trigger_scanner(struct ss_softc *);
 void mustek_minphys(struct ss_softc *, struct buf *);
-int mustek_read(struct ss_softc *, struct buf *);
+int mustek_read(struct ss_softc *, struct scsi_xfer *xs, struct buf *);
+void mustek_read_done(struct scsi_xfer *);
 int mustek_rewind_scanner(struct ss_softc *);
 
 /* only used internally */
@@ -433,39 +434,88 @@ mustek_rewind_scanner(ss)
  * read the requested number of bytes/lines from the scanner
  */
 int
-mustek_read(ss, bp)
+mustek_read(ss, xs, bp)
 	struct ss_softc *ss;
+	struct scsi_xfer *xs;
 	struct buf *bp;
 {
-	struct mustek_read_cmd cmd;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct mustek_read_cmd *cdb;
 	u_long lines_to_read;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: start\n"));
 
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = MUSTEK_READ;
+	cdb = (struct mustek_read_cmd *)xs->cmd;
+	xs->cmdlen = sizeof(*cdb);
+
+	cdb->opcode = MUSTEK_READ;
 
 	/* instead of the bytes, the mustek wants the number of lines */
 	lines_to_read = bp->b_bcount /
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: read %ld lines\n",
 	    lines_to_read));
-	_lto3b(lines_to_read, cmd.length);
+	_lto3b(lines_to_read, cdb->length);
 
-	/*
-	 * go ask the adapter to do all this for us
-	 */
-	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
-	    (u_char *) bp->b_data, bp->b_bcount, SCSI_RETRIES, 10000, bp,
-	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
-		printf("%s: not queued\n", ss->sc_dev.dv_xname);
-	else {
-		ss->sio.scan_lines -= lines_to_read;
-		ss->sio.scan_window_size -= bp->b_bcount;
-	}
+	xs->data = bp->b_data;
+	xs->datalen = bp->b_bcount;
+	xs->flags |= SCSI_DATA_IN;
+	xs->done = mustek_read_done;
+	xs->cookie = bp;
+
+	scsi_xs_exec(xs);
 
 	return (0);
+}
+
+void
+mustek_read_done(struct scsi_xfer *xs)
+{
+	struct ss_softc *ss = xs->sc_link->device_softc;
+	struct buf *bp = xs->cookie;
+
+	splassert(IPL_BIO);
+
+	switch (xs->error) {
+	case XS_NOERROR:
+		ss->sio.scan_lines -= bp->b_bcount /
+		    ((ss->sio.scan_pixels_per_line *
+		    ss->sio.scan_bits_per_pixel) / 8);
+		ss->sio.scan_window_size -= bp->b_bcount;
+		bp->b_error = 0;
+		bp->b_resid = xs->resid;
+		break;
+
+	case XS_NO_CCB:
+		/* The adapter is busy, requeue the buf and try it later. */
+                ss_buf_requeue(ss, bp);
+                scsi_xs_put(xs);
+		SET(ss->flags, SSF_WAITING); /* break out of cdstart loop */
+		timeout_add(&ss->timeout, 1);
+		return;
+
+	case XS_SENSE:
+	case XS_SHORTSENSE:
+		if (scsi_interpret_sense(xs) != ERESTART)
+			xs->retries = 0;
+
+		/* FALLTHROUGH */
+	case XS_BUSY:
+	case XS_TIMEOUT:
+		if (xs->retries--) {
+			scsi_xs_exec(xs);
+			return;
+		}
+
+		/* FALLTHROUGH */
+	default:
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		break;
+	}
+
+	biodone(bp);
+	scsi_xs_put(xs);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.12 2008/11/10 18:04:41 deraadt Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.13 2010/01/02 23:28:51 dlg Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct ss_special {
 	int	(*get_params)(struct ss_softc *);
 	/* some scanners only send line-multiples */
 	void	(*minphys)(struct ss_softc *, struct buf *);
-	int	(*read)(struct ss_softc *, struct buf *);
+	int	(*read)(struct ss_softc *, struct scsi_xfer *, struct buf *);
 	int	(*rewind_scanner)(struct ss_softc *);
 	int	(*load_adf)(struct ss_softc *);
 	int	(*unload_adf)(struct ss_softc *);
@@ -67,12 +67,21 @@ struct ss_softc {
 	int flags;
 #define SSF_TRIGGERED	0x01	/* read operation has been primed */
 #define	SSF_LOADED	0x02	/* parameters loaded */
+#define SSF_WAITING	0x04
+#define SSF_STARTING	0x08
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc.	*/
 	struct scan_io sio;
 	struct buf buf_queue;		/* the queue of pending IO operations */
 	const struct quirkdata *quirkdata; /* if we have a rogue entry */
 	struct ss_special special;	/* special handlers for spec. devices */
+	struct timeout timeout;
+	struct mutex queue_mtx;
+	struct mutex start_mtx;
 };
+
+struct buf *ss_buf_dequeue(struct ss_softc *);
+void	ss_buf_enqueue(struct ss_softc *, struct buf *);
+void	ss_buf_requeue(struct ss_softc *, struct buf *);
 
 /*
  * define the special attach routines if configured
