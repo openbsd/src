@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.49 2010/01/02 14:33:57 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.50 2010/01/02 14:45:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -37,10 +37,10 @@ sub stat
 		return $self->stat(dirname($fname));
 	}
 	my $mp = OpenBSD::MountPoint->find($dev, $fname, $self->{state});
-	if (!defined $self->{p}[0]{$mp}) {
-		$self->{p}[0]{$mp} = OpenBSD::MountPoint::Proxy->new(0, $mp);
+	if (!defined $self->{p}{$mp}) {
+		$self->{p}{$mp} = OpenBSD::MountPoint::Proxy->new($mp);
 	}
-	return $self->{p}[0]{$mp};
+	return $self->{p}{$mp};
 }
 
 sub account_for
@@ -63,7 +63,7 @@ sub new
 {
 	my ($class, $state) = @_;
 
-	bless {v => [{}], p => [{}], state => $state}, $class;
+	bless {v => [{}], p => {}, state => $state}, $class;
 }
 
 sub exists
@@ -80,9 +80,10 @@ sub exists
 sub synchronize
 {
 	my ($self) = @_;
-	for my $v (values %{$self->{p}[0]}) {
+	for my $v (values %{$self->{p}}) {
 		$v->{used} += $v->{delayed};
 		$v->{delayed} = 0;
+		$v->{real}->{used} = $v->{used};
 	}
 	return if $self->{state}->{not};
 	$self->{v} = [{}];
@@ -110,7 +111,7 @@ sub tally
 {
 	my $self = shift;
 
-	for my $data (values %{$self->{p}[0]}) {
+	for my $data (values %{$self->{p}}) {
 		if ($data->{used} != 0) {
 			print $data->name, ": ", $data->{used}, " bytes";
 			my $avail = $data->avail; 
@@ -167,7 +168,7 @@ sub create
 {
 	my ($class, $dev, $opts) = @_;
 	my $n = bless 
-	    { dev => $dev, problems => 0 },
+	    { dev => $dev, used => 0 },
 	    $class;
 	if (defined $opts) {
 		$n->parse_opts($opts);
@@ -276,48 +277,13 @@ sub avail
 	return $self->compute_avail($self->{used});
 }
 
-sub report_ro
-{
-	my ($s, $state, $fname) = @_;
-
-	if ($state->verbose >= 3 or ++($s->{problems}) < 4) {
-		$state->errsay("Error: ", $s->{dev}, 
-		    " is read-only ($fname)");
-	} elsif ($s->{problems} == 4) {
-		$state->errsay("Error: ... more files on ", $s->{dev});
-	}
-	$state->{problems}++;
-}
-
-sub report_overflow
-{
-	my ($s, $state, $fname) = @_;
-
-	if ($state->verbose >= 3 or ++($s->{problems}) < 4) {
-		$state->errsay("Error: ", $s->{dev}, 
-		    " is not large enough ($fname)");
-	} elsif ($s->{problems} == 4) {
-		$state->errsay("Error: ... more files do not fit on ", 
-		    $s->{dev});
-	}
-	$state->{problems}++;
-	$state->{overflow} = 1;
-}
-
-sub report_noexec
-{
-	my ($s, $state, $fname) = @_;
-	$state->errsay("Error: ", $s->{dev}, " is noexec ($fname)");
-	$state->{problems}++;
-}
-
 package OpenBSD::MountPoint::Fail;
 our @ISA=qw(OpenBSD::MountPoint);
 
 sub new
 {
 	my $class = shift;
-	bless { avail => 0, dev => '???' }, $class;
+	bless { avail => 0, used => 0, dev => '???' }, $class;
 }
 
 sub compute_avail
@@ -329,8 +295,9 @@ package OpenBSD::MountPoint::Proxy;
 
 sub new
 {
-	my ($class, $used, $mp) = @_;
-	bless {real => $mp, used => $used, delayed => 0}, $class;
+	my ($class, $mp) = @_;
+	bless {real => $mp, used => $mp->{used}, delayed => 0,
+	    problems => 0}, $class;
 }
 
 sub ro
@@ -353,6 +320,41 @@ sub name
 {
 	my $self = shift;
 	return $self->{real}->{dev};
+}
+
+sub report_ro
+{
+	my ($s, $state, $fname) = @_;
+
+	if ($state->verbose >= 3 or ++($s->{problems}) < 4) {
+		$state->errsay("Error: ", $s->name, 
+		    " is read-only ($fname)");
+	} elsif ($s->{problems} == 4) {
+		$state->errsay("Error: ... more files on ", $s->name);
+	}
+	$state->{problems}++;
+}
+
+sub report_overflow
+{
+	my ($s, $state, $fname) = @_;
+
+	if ($state->verbose >= 3 or ++($s->{problems}) < 4) {
+		$state->errsay("Error: ", $s->name,
+		    " is not large enough ($fname)");
+	} elsif ($s->{problems} == 4) {
+		$state->errsay("Error: ... more files do not fit on ", 
+		    $s->name);
+	}
+	$state->{problems}++;
+	$state->{overflow} = 1;
+}
+
+sub report_noexec
+{
+	my ($s, $state, $fname) = @_;
+	$state->errsay("Error: ", $s->name, " is noexec ($fname)");
+	$state->{problems}++;
 }
 
 1;
