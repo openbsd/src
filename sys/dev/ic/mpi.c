@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.130 2010/01/03 07:26:44 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.131 2010/01/03 07:28:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2731,7 +2731,7 @@ mpi_bio_get_pg0_raid(struct mpi_softc *sc, int id)
 	struct mpi_cfg_raid_vol_pg0 *rpg0;
 
 	/* get IOC page 2 */
-	if (mpi_cfg_page(sc, 0, &sc->sc_cfg_hdr, 1, sc->sc_vol_page,
+	if (mpi_req_cfg_page(sc, 0, 0, &sc->sc_cfg_hdr, 1, sc->sc_vol_page,
 	    sc->sc_cfg_hdr.page_length * 4) != 0) {
 		DNPRINTF(MPI_D_IOCTL, "%s: mpi_bio_get_pg0_raid unable to "
 		    "fetch IOC page 2\n", DEVNAME(sc));
@@ -2761,10 +2761,10 @@ mpi_bio_get_pg0_raid(struct mpi_softc *sc, int id)
 	/* get raid vol page 0 */
 	address = sc->sc_vol_list[id].vol_id |
 	    (sc->sc_vol_list[id].vol_bus << 8);
-	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	if (mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0, 0,
 	    address, &hdr) != 0)
 		goto done;
-	if (mpi_cfg_page(sc, address, &hdr, 1, rpg0, len)) {
+	if (mpi_req_cfg_page(sc, address, 0, &hdr, 1, rpg0, len)) {
 		DNPRINTF(MPI_D_RAID, "%s: can't get RAID vol cfg page 0\n",
 		    DEVNAME(sc));
 		goto done;
