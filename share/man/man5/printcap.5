@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.21 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: printcap.5,v 1.22 2010/01/03 14:31:01 schwarze Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 3 2010 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@ Refer to
 .Xr termcap 5
 for a description of the file layout.
 .Bl -column "xx" "xx" "/var/spool/"
-.Sy Name	Type	Default	Description
+.It Sy Name	Type	Default	Description
 .It "af	str" Ta Dv NULL Ta No "name of accounting file"
 .It "br	num	none	if lp is a tty, set baud rate"
 .Pf ( Xr ioctl 2

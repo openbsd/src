@@ -1,4 +1,4 @@
-.\" $OpenBSD: ahd.4,v 1.14 2007/05/31 19:19:49 jmc Exp $
+.\" $OpenBSD: ahd.4,v 1.15 2010/01/03 14:31:01 schwarze Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ahd.4,v 1.5 2004/07/04 14:17:41 simon Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 3 2010 $
 .Dt AHD 4
 .Os
 .Sh NAME
@@ -99,21 +99,21 @@ console when
 is enabled.
 Logically OR the following bits together:
 .Bl -column -offset indent Value Function
-.Em "Value	Function"
-0x0001	Show miscellaneous information
-0x0002	Show sense data
-0x0004	Show Serial EEPROM contents
-0x0008	Show bus termination settings
-0x0010	Show host memory usage
-0x0020	Show SCSI protocol messages
-0x0040	Show mode pointer of the chip register window
-0x0080	Show selection timeouts
-0x0100	Show FIFO usage messages
-0x0200	Show Queue Full status
-0x0400	Show SCB queue status
-0x0800	Show inbound packet information
-0x1000	Show S/G list information
-0x2000	Enable extra diagnostic code in the firmware
+.It Em "Value	Function"
+.It 0x0001	Show miscellaneous information
+.It 0x0002	Show sense data
+.It 0x0004	Show Serial EEPROM contents
+.It 0x0008	Show bus termination settings
+.It 0x0010	Show host memory usage
+.It 0x0020	Show SCSI protocol messages
+.It 0x0040	Show mode pointer of the chip register window
+.It 0x0080	Show selection timeouts
+.It 0x0100	Show FIFO usage messages
+.It 0x0200	Show Queue Full status
+.It 0x0400	Show SCB queue status
+.It 0x0800	Show inbound packet information
+.It 0x1000	Show S/G list information
+.It 0x2000	Enable extra diagnostic code in the firmware
 .El
 .Pp
 Per target configuration performed in the

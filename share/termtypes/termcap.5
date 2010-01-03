@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.22 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.23 2010/01/03 14:31:01 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 3 2010 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -82,14 +82,14 @@ in 132-column mode would be
 The following suffixes should be used where possible:
 .Bd -filled
 .Bl -column indent "With automatic margins (usually default)xx"
-.Sy Suffix	Meaning	Example
--w	Wide mode (more than 80 columns).	vt100-w
--am	With automatic margins (usually default).	vt100-am
--nam	Without automatic margins.	vt100-nam
-.Pf \- Ar n Ta No "Number of lines on screen.	aaa-60"
--na	No arrow keys (leave them in local).	concept100-na
-.Pf \- Ar \&np Ta No "Number of pages of memory.	concept100-4p"
--rv	Reverse video.	concept100-rv
+.It Sy Suffix	Meaning	Example
+.It \-w	Wide mode (more than 80 columns).	vt100-w
+.It \-am	With automatic margins (usually default).	vt100-am
+.It \-nam	Without automatic margins.	vt100-nam
+.It Pf \- Ar n Ta No "Number of lines on screen.	aaa-60"
+.It \-na	No arrow keys (leave them in local).	concept100-na
+.It Pf \- Ar \&np Ta No "Number of pages of memory.	concept100-4p"
+.It \-rv	Reverse video.	concept100-rv
 .El
 .Ed
 .Sh CAPABILITIES
@@ -112,7 +112,7 @@ equivalents, since they were considered useless,
 or are subsumed by other capabilities.
 New software should not rely on them at all.
 .Bl -column indent indent indent
-.Sy Name	Type	Notes	Description
+.It Sy Name	Type	Notes	Description
 .It "ae	str	(P)	End alternate character set."
 .It "AL	str	(NP*)	Add"
 .Em n
