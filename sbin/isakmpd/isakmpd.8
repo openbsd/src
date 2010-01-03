@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.104 2007/05/31 19:19:45 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.105 2010/01/03 16:43:45 schwarze Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 3 2010 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -314,8 +314,8 @@ starts, it creates a FIFO (named pipe) where it listens for user
 requests.
 All commands start with a single letter, followed by command-specific options.
 Available commands are:
-.Bl -tag -width Ds -compact
 .Pp
+.Bl -tag -width Ds -compact
 .It Xo
 .Ic C add
 .Sm off

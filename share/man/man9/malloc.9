@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.43 2008/12/11 09:07:16 jmc Exp $
+.\"	$OpenBSD: malloc.9,v 1.44 2010/01/03 16:43:46 schwarze Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2008 $
+.Dd $Mdocdate: January 3 2010 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -310,8 +310,8 @@ and
 .Fn free
 functions.
 Failing consistency checks will cause a panic or a system console message:
-.Bl -bullet -offset indent -compact
 .Pp
+.Bl -bullet -offset indent -compact
 .It
 panic:
 .Dq malloc - bogus type

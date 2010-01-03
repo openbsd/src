@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.41 2009/04/23 15:37:14 sobrado Exp $
+.\"	$OpenBSD: mdoc.7,v 1.42 2010/01/03 16:43:45 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mdoc.7	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: April 23 2009 $
+.Dd $Mdocdate: January 3 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -67,8 +67,8 @@ formatting packages.
 .Ss Title Macros
 To create a valid manual page, these three macros, in this order,
 are required:
-.Bl -tag -width "xxxx.Os OPERATINGxSYSTEM [version/release]" -compact
 .Pp
+.Bl -tag -width "xxxx.Os OPERATINGxSYSTEM [version/release]" -compact
 .It Li "\&.Dd   $\&Mdocdate$"
 Expands to document date.
 .It Li "\&.Dt  " Ar "DOCUMENT_TITLE [section] [volume]"
