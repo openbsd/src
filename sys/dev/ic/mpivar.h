@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.26 2010/01/03 06:15:30 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.27 2010/01/03 06:36:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -69,6 +69,7 @@ struct mpi_softc;
 
 struct mpi_rcb {
 	void			*rcb_reply;
+	bus_addr_t		rcb_offset;
 	u_int32_t		rcb_reply_dva;
 };
 

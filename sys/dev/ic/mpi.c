@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.125 2010/01/03 06:15:30 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.126 2010/01/03 06:36:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -92,10 +92,11 @@ struct mpi_ccb		*mpi_get_ccb(struct mpi_softc *);
 void			mpi_put_ccb(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_alloc_replies(struct mpi_softc *);
 void			mpi_push_replies(struct mpi_softc *);
+u_int32_t		mpi_pop_reply(struct mpi_softc *);
+void			mpi_push_reply(struct mpi_softc *, struct mpi_rcb *);
 
 void			mpi_start(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
-u_int32_t		mpi_pop_mtx_reply(struct mpi_softc *);
 struct mpi_ccb		*mpi_reply(struct mpi_softc *, u_int32_t);
 
 int			mpi_cfg_spi_port(struct mpi_softc *);
@@ -169,8 +170,8 @@ void		mpi_refresh_sensors(void *);
 #define mpi_write_db(s, v)	mpi_write((s), MPI_DOORBELL, (v))
 #define mpi_read_intr(s)	mpi_read((s), MPI_INTR_STATUS)
 #define mpi_write_intr(s, v)	mpi_write((s), MPI_INTR_STATUS, (v))
-#define mpi_pop_reply(s)	mpi_read((s), MPI_REPLY_QUEUE)
-#define mpi_push_reply(s, v)	mpi_write((s), MPI_REPLY_QUEUE, (v))
+#define mpi_pop_reply_db(s)	mpi_read((s), MPI_REPLY_QUEUE)
+#define mpi_push_reply_db(s, v)	mpi_write((s), MPI_REPLY_QUEUE, (v))
 
 #define mpi_wait_db_int(s)	mpi_wait_ne((s), MPI_INTR_STATUS, \
 				    MPI_INTR_STATUS_DOORBELL, 0)
@@ -781,7 +782,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 		return (1);
 
 	if (ccb->ccb_rcb != NULL)
-		mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+		mpi_push_reply(sc, ccb->ccb_rcb);
 
 	mpi_put_ccb(sc, ccb);
 
@@ -819,12 +820,12 @@ mpi_detach(struct mpi_softc *sc)
 }
 
 u_int32_t
-mpi_pop_mtx_reply(struct mpi_softc *sc)
+mpi_pop_reply(struct mpi_softc *sc)
 {
 	u_int32_t			reg;
 
 	mtx_enter(&sc->sc_reply_mtx);
-	reg = mpi_pop_reply(sc);
+	reg = mpi_pop_reply_db(sc);
 	mtx_leave(&sc->sc_reply_mtx);
 
 	return (reg);
@@ -837,7 +838,7 @@ mpi_intr(void *arg)
 	struct mpi_ccb			*ccb = NULL;
 	u_int32_t			reg;
 
-	while ((reg = mpi_pop_mtx_reply(sc)) != 0xffffffff) {
+	while ((reg = mpi_pop_reply(sc)) != 0xffffffff) {
 		ccb = mpi_reply(sc, reg);
 		ccb->ccb_done(ccb);
 	}
@@ -858,22 +859,18 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 	DNPRINTF(MPI_D_INTR, "%s: mpi_reply reg: 0x%08x\n", DEVNAME(sc), reg);
 
 	if (reg & MPI_REPLY_QUEUE_ADDRESS) {
-		bus_dmamap_sync(sc->sc_dmat,
-		    MPI_DMA_MAP(sc->sc_replies), 0, sc->sc_repq *
-		    MPI_REPLY_SIZE, BUS_DMASYNC_POSTREAD);
-
 		reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
-
 		i = (reply_dva - (u_int32_t)MPI_DMA_DVA(sc->sc_replies)) /
 		    MPI_REPLY_SIZE;
 		rcb = &sc->sc_rcbs[i];
+
+		bus_dmamap_sync(sc->sc_dmat,
+		    MPI_DMA_MAP(sc->sc_replies), rcb->rcb_offset,
+		    MPI_REPLY_SIZE, BUS_DMASYNC_POSTREAD);
+
 		reply = rcb->rcb_reply;
 
 		id = letoh32(reply->msg_context);
-
-		bus_dmamap_sync(sc->sc_dmat,
-		    MPI_DMA_MAP(sc->sc_replies), 0, sc->sc_repq *
-		    MPI_REPLY_SIZE, BUS_DMASYNC_PREREAD);
 	} else {
 		switch (reg & MPI_REPLY_QUEUE_TYPE_MASK) {
 		case MPI_REPLY_QUEUE_TYPE_INIT:
@@ -1079,6 +1076,14 @@ mpi_alloc_replies(struct mpi_softc *sc)
 }
 
 void
+mpi_push_reply(struct mpi_softc *sc, struct mpi_rcb *rcb)
+{
+	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_replies),
+	    rcb->rcb_offset, MPI_REPLY_SIZE, BUS_DMASYNC_PREREAD);
+	mpi_push_reply_db(sc, rcb->rcb_reply_dva);
+}
+
+void
 mpi_push_replies(struct mpi_softc *sc)
 {
 	struct mpi_rcb			*rcb;
@@ -1092,9 +1097,10 @@ mpi_push_replies(struct mpi_softc *sc)
 		rcb = &sc->sc_rcbs[i];
 
 		rcb->rcb_reply = kva + MPI_REPLY_SIZE * i;
+		rcb->rcb_offset = MPI_REPLY_SIZE * i;
 		rcb->rcb_reply_dva = (u_int32_t)MPI_DMA_DVA(sc->sc_replies) +
 		    MPI_REPLY_SIZE * i;
-		mpi_push_reply(sc, rcb->rcb_reply_dva);
+		mpi_push_reply_db(sc, rcb->rcb_reply_dva);
 	}
 }
 
@@ -1127,7 +1133,7 @@ mpi_poll(struct mpi_softc *sc, struct mpi_ccb *ccb, int timeout)
 	mtx_enter(&sc->sc_reply_mtx);
 	mpi_start(sc, ccb);
 	do {
-		reg = mpi_pop_reply(sc);
+		reg = mpi_pop_reply_db(sc);
 		if (reg == 0xffffffff) {
 			if (timeout-- == 0) {
 				printf("%s: timeout\n", DEVNAME(sc));
@@ -1385,7 +1391,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	DNPRINTF(MPI_D_CMD, "%s:  xs err: 0x%02x status: %d\n", DEVNAME(sc),
 	    xs->error, xs->status);
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 	mpi_put_ccb(sc, ccb);
 	s = splbio();
 	scsi_done(xs);
@@ -2065,7 +2071,7 @@ mpi_portfacts(struct mpi_softc *sc)
 	if (sc->sc_target == -1)
 		sc->sc_target = letoh16(pfp->port_scsi_id);
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 	rv = 0;
 err:
 	mpi_put_ccb(sc, ccb);
@@ -2185,7 +2191,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 
 	if (enp->ack_required)
 		mpi_eventack(sc, enp);
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 
 #if 0
 	/* fc hbas have a bad habit of setting this without meaning it. */
@@ -2269,7 +2275,7 @@ mpi_eventack_done(struct mpi_ccb *ccb)
 
 	DNPRINTF(MPI_D_EVT, "%s: event ack done\n", DEVNAME(sc));
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 	mpi_put_ccb(sc, ccb);
 }
 
@@ -2306,7 +2312,7 @@ mpi_portenable(struct mpi_softc *sc)
 		return (1);
 	}
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 	mpi_put_ccb(sc, ccb);
 
 	return (0);
@@ -2373,7 +2379,7 @@ mpi_fwupload(struct mpi_softc *sc)
 	if (letoh16(upp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
 		rv = 1;
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 	mpi_put_ccb(sc, ccb);
 
 	return (rv);
@@ -2555,7 +2561,7 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	} else
 		*hdr = cp->config_header;
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 	mpi_put_ccb(sc, ccb);
 
 	return (rv);
@@ -2672,7 +2678,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	else if (read)
 		bcopy(kva, page, len);
 
-	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
+	mpi_push_reply(sc, ccb->ccb_rcb);
 	mpi_put_ccb(sc, ccb);
 
 	return (rv);
