@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.25 2009/10/19 19:46:56 guenther Exp $
+#	$OpenBSD: Makefile.sgi,v 1.26 2010/01/03 14:17:27 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -134,9 +134,11 @@ if_arp.o if_ether.o: Makefile
 ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
 tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 
-assym.h: $S/kern/genassym.sh ${SGI}/sgi/genassym.cf Makefile
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${SGI}/sgi/genassym.cf > assym.h.tmp && \
+assym.h: $S/kern/genassym.sh \
+	 ${MIPS64}/mips64/genassym.cf ${SGI}/sgi/genassym.cf Makefile
+	cat ${MIPS64}/mips64/genassym.cf ${SGI}/sgi/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} \
+	    > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 links:
@@ -174,8 +176,8 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SGI}/sgi/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${SGI}/sgi/genassym.cf
+	cat ${MIPS64}/mips64/genassym.cf ${SGI}/sgi/genassym.cf | \
+	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
