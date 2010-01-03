@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-down-pane.c,v 1.7 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-down-pane.c,v 1.8 2010/01/03 12:51:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,6 +54,7 @@ cmd_down_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 			w->active = TAILQ_FIRST(&w->panes);
 	} while (!window_pane_visible(w->active));
 	server_status_window(wl->window);
+	server_redraw_window_borders(wl->window);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.32 2009/12/22 10:20:08 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.33 2010/01/03 12:51:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -162,6 +162,21 @@ server_redraw_window(struct window *w)
 			server_redraw_client(c);
 	}
 	w->flags |= WINDOW_REDRAW;
+}
+
+void
+server_redraw_window_borders(struct window *w)
+{
+	struct client	*c;
+	u_int		 i;
+
+	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
+		c = ARRAY_ITEM(&clients, i);
+		if (c == NULL || c->session == NULL)
+			continue;
+		if (c->session->curw->window == w)
+			c->flags |= CLIENT_BORDERS;
+	}
 }
 
 void
