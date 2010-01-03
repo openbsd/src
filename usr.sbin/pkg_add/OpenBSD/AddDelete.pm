@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.14 2010/01/02 14:13:02 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.15 2010/01/03 09:34:22 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -99,7 +99,8 @@ sub framework
 		$state->progress->clear;
 		$state->log->dump;
 		finish_display();
-		if ($state->verbose >= 2 || $opt_s) {
+		if ($state->verbose >= 2 || $opt_s || 
+		    $state->{defines}->{tally}) {
 			$state->vstat->tally;
 		}
 		# show any error, and show why we died...
