@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.128 2010/01/03 06:47:58 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.129 2010/01/03 07:05:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -98,6 +98,9 @@ void			mpi_push_reply(struct mpi_softc *, struct mpi_rcb *);
 void			mpi_start(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
 struct mpi_ccb		*mpi_reply(struct mpi_softc *, u_int32_t);
+
+void			mpi_wait(struct mpi_softc *sc, struct mpi_ccb *);
+void			mpi_wait_done(struct mpi_ccb *);
 
 int			mpi_cfg_spi_port(struct mpi_softc *);
 void			mpi_squash_ppr(struct mpi_softc *);
@@ -1169,6 +1172,38 @@ timeout:
 	}
 
 	return (rv);
+}
+
+void
+mpi_wait(struct mpi_softc *sc, struct mpi_ccb *ccb)
+{
+	struct mutex			cookie = MUTEX_INITIALIZER(IPL_BIO);
+	void				(*done)(struct mpi_ccb *);
+
+	done = ccb->ccb_done;
+	ccb->ccb_done = mpi_wait_done;
+
+	/* XXX this will wait forever for the ccb to complete */
+
+	mpi_start(sc, ccb);
+
+	mtx_enter(&cookie);
+	while (ccb->ccb_cookie != NULL)
+		msleep(ccb, &cookie, PRIBIO, "mpiwait", 0);
+	mtx_leave(&cookie);
+
+	done(ccb);
+}
+
+void
+mpi_wait_done(struct mpi_ccb *ccb)
+{
+	struct mutex			*cookie = ccb->ccb_cookie;
+
+	mtx_enter(cookie);
+	ccb->ccb_cookie = NULL;
+	wakeup_one(ccb);
+	mtx_leave(cookie);
 }
 
 int
@@ -2479,7 +2514,6 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	struct mpi_ecfg_hdr			*ehdr = p;
 	int					etype = 0;
 	int					rv = 0;
-	int					s;
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_req_cfg_header type: %#x number: %x "
 	    "address: 0x%08x flags: 0x%b\n", DEVNAME(sc), type, number,
@@ -2511,21 +2545,15 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 
+	ccb->ccb_done = mpi_empty_done;
 	if (ISSET(flags, MPI_PG_POLL)) {
-		ccb->ccb_done = mpi_empty_done;
 		if (mpi_poll(sc, ccb, 50000) != 0) {
 			DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header poll\n",
 			    DEVNAME(sc));
 			return (1);
 		}
-	} else {
-		ccb->ccb_done = (void (*)(struct mpi_ccb *))wakeup;
-		s = splbio();
-		mpi_start(sc, ccb);
-		while (ccb->ccb_state != MPI_CCB_READY)
-			tsleep(ccb, PRIBIO, "mpipghdr", 0);
-		splx(s);
-	}
+	} else
+		mpi_wait(sc, ccb);
 
 	if (ccb->ccb_rcb == NULL)
 		panic("%s: unable to fetch config header\n", DEVNAME(sc));
@@ -2581,7 +2609,6 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	char					*kva;
 	int					page_length;
 	int					rv = 0;
-	int					s;
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page address: %d read: %d type: %x\n",
 	    DEVNAME(sc), address, read, hdr->page_type);
@@ -2633,21 +2660,15 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 	if (!read)
 		bcopy(page, kva, len);
 
+	ccb->ccb_done = mpi_empty_done;
 	if (ISSET(flags, MPI_PG_POLL)) {
-		ccb->ccb_done = mpi_empty_done;
 		if (mpi_poll(sc, ccb, 50000) != 0) {
 			DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header poll\n",
 			    DEVNAME(sc));
 			return (1);
 		}
-	} else {
-		ccb->ccb_done = (void (*)(struct mpi_ccb *))wakeup;
-		s = splbio();
-		mpi_start(sc, ccb);
-		while (ccb->ccb_state != MPI_CCB_READY)
-			tsleep(ccb, PRIBIO, "mpipghdr", 0);
-		splx(s);
-	}
+	} else
+		mpi_wait(sc, ccb);
 
 	if (ccb->ccb_rcb == NULL) {
 		mpi_put_ccb(sc, ccb);
