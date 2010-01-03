@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.16 2008/11/09 12:34:47 tobias Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.17 2010/01/03 22:18:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -285,6 +285,18 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	return (fails);
 }
 
+extern void _dl_bind_start(void);
+
+#define PLT_STUB_SIZE	(7 * 4)
+#define PLT_ENTRY_SIZE	(2 * 4)
+#define PLT_STUB_GOTOFF	(4 * 4)
+
+#define PLT_STUB_MAGIC1	0x00c0ffee
+#define PLT_STUB_MAGIC2	0xdeadbeef
+
+#define PLT_STUB_INSN1	0x0e801081	/* ldw	0(%r20), %r1 */
+#define PLT_STUB_INSN2	0xe820c000	/* bv	%r0(%r1) */
+
 int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
@@ -295,8 +307,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	if (object->dyn.pltrel != DT_RELA)
 		return (0);
-
-	lazy = 0;	/* force busy binding */
 
 	object->got_addr = NULL;
 	object->got_size = 0;
@@ -323,17 +333,66 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
+		register Elf_Addr ltp __asm ("%r19");
+		Elf_Addr *got = NULL;
+
 		rela = (Elf_RelA *)(object->dyn.jmprel);
 		numrela = object->dyn.pltrelsz / sizeof(Elf_RelA);
 		ooff = object->obj_base;
 
+		/*
+		 * Find the PLT stub by looking at all the
+		 * relocations.  The PLT stub should be at the end of
+		 * the .plt section so we start with the last
+		 * relocation, since the linker should have emitted
+		 * them in order.
+		 */
+		for (i = numrela - 1; i >= 0; i--) {
+			got = (Elf_Addr *)(ooff + rela[i].r_offset +
+			    PLT_ENTRY_SIZE + PLT_STUB_SIZE);
+			if (got[-2] == PLT_STUB_MAGIC1 ||
+			    got[-1] == PLT_STUB_MAGIC2)
+				break;
+			got = NULL;
+		}
+		if (got == NULL)
+			return (1);
+
+		/*
+		 * Patch up the PLT stub such that it doesn't clobber
+		 * %r22, which is used to pass on the errno values
+		 * from failed system calls to __cerrno() in libc.
+		 */
+		got[-7] = PLT_STUB_INSN1;
+		got[-6] = PLT_STUB_INSN2;
+		__asm __volatile("fdc 0(%0)" :: "r" (&got[-7]));
+		__asm __volatile("fdc 0(%0)" :: "r" (&got[-6]));
+		__asm __volatile("sync");
+		__asm __volatile("fic 0(%0)" :: "r" (&got[-7]));
+		__asm __volatile("fic 0(%0)" :: "r" (&got[-6]));
+		__asm __volatile("sync");
+
+		/*
+		 * Fill in the PLT stub such that it invokes the
+		 * _dl_bind_start() trampoline to fix up the
+		 * relocation.
+		 */
+		got[1] = (Elf_Addr)object;
+		got[-2] = (Elf_Addr)&_dl_bind_start;
+		got[-1] = ltp;
 		for (i = 0; i < numrela; i++, rela++) {
 			Elf_Addr *r_addr = (Elf_Addr *)(ooff + rela->r_offset);
 
+			if (ELF_R_TYPE(rela->r_info) != RELOC_IPLT) {
+				_dl_printf("unexpected reloc 0x%x\n",
+				    ELF_R_TYPE(rela->r_info));
+				return (1);
+			}
+
 			if (ELF_R_SYM(rela->r_info)) {
-				r_addr[0] = 0;	/* TODO */
-				r_addr[1] = (Elf_Addr) ((void *)rela -
-				    (void *)object->dyn.jmprel);
+				r_addr[0] = (Elf_Addr)got - PLT_STUB_GOTOFF;
+				r_addr[1] = (Elf_Addr) (rela -
+				    (Elf_RelA *)object->dyn.jmprel);
 			} else {
 				r_addr[0] = ooff + rela->r_addend;
 				r_addr[1] = (Elf_Addr)object->dyn.pltgot;
@@ -342,7 +401,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 	if (object->got_size != 0)
 		_dl_mprotect((void *)object->got_start, object->got_size,
-		    GOT_PERMS);
+		    GOT_PERMS|PROT_EXEC);
 
 	return (fails);
 }
@@ -361,7 +420,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf_RelA *rela;
 	sigset_t omask, nmask;
 
-	rela = (Elf_RelA *)(object->dyn.jmprel + reloff);
+	rela = (Elf_RelA *)object->dyn.jmprel + reloff;
 
 	sym = object->dyn.symtab;
 	sym += ELF_R_SYM(rela->r_info);
@@ -375,8 +434,9 @@ _dl_bind(elf_object_t *object, int reloff)
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
 	}
+	DL_DEB(("%s: %s\n", symn, sobj->load_name));
 
-	value = ooff + this->st_value;
+	value = ooff + this->st_value + rela->r_addend;
 
 	/* if PLT+GOT is protected, allow the write */
 	if (object->got_size != 0) {
@@ -395,10 +455,10 @@ _dl_bind(elf_object_t *object, int reloff)
 	if (object->got_size != 0) {
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
-		    PROT_READ);
+		    PROT_READ|PROT_EXEC);
 		_dl_thread_bind_lock(1);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
-	return (value);
+	return ((Elf_Addr)addr);
 }

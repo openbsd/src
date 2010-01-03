@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2006/05/03 16:10:52 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.5 2010/01/03 22:18:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -123,6 +123,13 @@ ENTRY(hppa_call,0)
 	ldwm	-HPPA_FRAME_SIZE(sp), r3
 EXIT(hppa_call)
 
+/*
+ * This is a magic branch instruction that is used by GCC's
+ * __canonicalize_funcptr_for_compare() function to fixup relocations
+ * in order to do function pointer comparisons.
+ */
+	bl	_dl_bind, rp
+
 ENTRY(_dl_bind_start,32)
 	copy	r3, r1
 	copy	sp, r3
@@ -133,6 +140,7 @@ ENTRY(_dl_bind_start,32)
 	stw	arg1, HPPA_FRAME_ARG(1)(r3)
 	stw	arg2, HPPA_FRAME_ARG(2)(r3)
 	stw	arg3, HPPA_FRAME_ARG(3)(r3)
+	stw	t1, 4(r3)
 	stw	ret0, 8(r3)
 	stw	ret1, 12(r3)
 
@@ -150,6 +158,7 @@ ENTRY(_dl_bind_start,32)
 	ldw	HPPA_FRAME_ARG(1)(r3), arg1
 	ldw	HPPA_FRAME_ARG(2)(r3), arg2
 	ldw	HPPA_FRAME_ARG(3)(r3), arg3
+	ldw	4(r3), t1
 	ldw	8(r3), ret0
 	ldw	12(r3), ret0
 
