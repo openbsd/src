@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.284 2009/12/28 23:52:32 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.285 2010/01/03 18:37:24 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -54,7 +54,7 @@ acpithinkpad*	at acpi?
 acpivideo*	at acpi?
 acpivout*	at acpivideo?
 acpipwrres*	at acpi?
-#aibs*		at acpi?
+aibs*		at acpi?
 
 mpbios0		at bios0
 
