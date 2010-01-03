@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.127 2010/01/03 06:41:22 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.128 2010/01/03 06:47:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1048,7 +1048,7 @@ mpi_put_ccb(struct mpi_softc *sc, struct mpi_ccb *ccb)
 	DNPRINTF(MPI_D_CCB, "%s: mpi_put_ccb %p\n", DEVNAME(sc), ccb);
 
 	ccb->ccb_state = MPI_CCB_FREE;
-	ccb->ccb_xs = NULL;
+	ccb->ccb_cookie = NULL;
 	ccb->ccb_done = NULL;
 	bzero(ccb->ccb_cmd, MPI_REQUEST_SIZE);
 	mtx_enter(&sc->sc_ccb_mtx);
@@ -1205,7 +1205,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(MPI_D_CMD, "%s: ccb_id: %d xs->flags: 0x%x\n",
 	    DEVNAME(sc), ccb->ccb_id, xs->flags);
 
-	ccb->ccb_xs = xs;
+	ccb->ccb_cookie = xs;
 	ccb->ccb_done = mpi_scsi_cmd_done;
 
 	mcb = ccb->ccb_cmd;
@@ -1282,7 +1282,7 @@ void
 mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc		*sc = ccb->ccb_sc;
-	struct scsi_xfer		*xs = ccb->ccb_xs;
+	struct scsi_xfer		*xs = ccb->ccb_cookie;
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	struct mpi_msg_scsi_io_error	*sie;
@@ -1408,7 +1408,7 @@ int
 mpi_load_xs(struct mpi_ccb *ccb)
 {
 	struct mpi_softc		*sc = ccb->ccb_sc;
-	struct scsi_xfer		*xs = ccb->ccb_xs;
+	struct scsi_xfer		*xs = ccb->ccb_cookie;
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
 	struct mpi_msg_scsi_io		*io = &mcb->mcb_io;
 	struct mpi_sge			*sge, *nsge = &mcb->mcb_sgl[0];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.27 2010/01/03 06:36:50 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.28 2010/01/03 06:47:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -77,7 +77,7 @@ struct mpi_ccb {
 	struct mpi_softc	*ccb_sc;
 	int			ccb_id;
 
-	struct scsi_xfer	*ccb_xs;
+	void 			*ccb_cookie;
 	bus_dmamap_t		ccb_dmamap;
 
 	bus_addr_t		ccb_offset;
