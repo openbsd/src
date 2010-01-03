@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.29 2010/01/01 16:36:17 espie Exp $
+# $OpenBSD: Makefile,v 1.30 2010/01/03 23:51:40 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames update-check1 \
 	collision-check3 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
-	lib-report1 lib-report2 lib-report3
+	lib-report1 lib-report2 lib-report3 loop1
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -139,6 +139,10 @@ lib-report3: rep0/o3-0.tgz
 	@-rm -rf ${D19}
 	-@ROOT=${D19} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o3
 
+loop1: rep0/ocaml-3.11.1.tgz rep0/tcl-8.5.7.tgz rep0/tk-8.5.7.tgz
+	@-rm -rf ${D20}
+	-@ROOT=${D20} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} -z ocaml-3.11.1p0 tcl-8.5.8 tk-8.5.8
+
 plist1:
 	@echo "@owner "`whoami` >$@
 	@echo ${LONG1} >>$@
@@ -200,7 +204,8 @@ rep0/n-0.tgz rep1/m-1.tgz rep0/o-0.tgz rep0/fam-0.tgz \
 rep0/o1-0.tgz rep0/o2-0.tgz rep0/ga-0.tgz \
 rep0/gb-0.tgz rep1/gb-0p0.tgz rep1/gd-1.tgz rep0/ge-0.tgz \
 rep0/gf-1.tgz rep1/gf-0.tgz \
-rep1/missc-0.tgz rep0/q5-0.tgz rep1/q5-1.tgz:
+rep1/missc-0.tgz rep0/q5-0.tgz rep1/q5-1.tgz \
+rep0/tcl-8.5.7.tgz:
 	@${PKG_CREATE} -f ${.CURDIR}/empty $@
 
 rep1/o-1.tgz:
@@ -335,6 +340,14 @@ rep1/missd-0.tgz: plist11
 
 rep1/missf-0.tgz:
 	@${PKG_CREATE} -P't/misse:misse-*:misse-0' -f ${.CURDIR}/empty $@
+
+rep0/ocaml-3.11.1.tgz:
+	@${PKG_CREATE} -P'test/tcl:tcl->=8.5,<8.6:tcl-8.5.7' \
+		-P'test/tk:tk->=8.5,<8.6:tk-8.5.7' -f ${.CURDIR}/empty $@
+
+rep0/tk-8.5.7.tgz:
+	@${PKG_CREATE} -P'test/tcl:tcl->=8.5.7,<8.5.8:tcl-8.5.7' \
+		-f ${.CURDIR}/empty $@
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
