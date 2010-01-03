@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsockopt3a.c,v 1.1 2009/12/26 01:34:18 fgsch Exp $	*/
+/*	$OpenBSD: setsockopt3a.c,v 1.2 2010/01/03 23:02:34 fgsch Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2009. Public Domain.
  */
@@ -54,11 +54,11 @@ sock_accept(void *arg)
 	CHECKe(connect(s, (struct sockaddr *)&sin, sizeof(sin)));
 	to.tv_sec = 2;
 	to.tv_usec = 0.5 * 1e6;
-	ASSERT(check_timeout(s, 3, &to) == 0);
+	CHECKr(check_timeout(s, 3, &to));
 	CHECKe(s2 = dup(s));
 	CHECKe(s3 = fcntl(s, F_DUPFD, s));
-	ASSERT(check_timeout(s2, 3, &to) == 0);
-	ASSERT(check_timeout(s3, 3, &to) == 0);
+	CHECKr(check_timeout(s2, 3, &to));
+	CHECKr(check_timeout(s3, 3, &to));
 	return (NULL);
 }
 
