@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.146 2009/11/11 18:09:55 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.147 2010/01/03 19:23:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1312,6 +1312,17 @@ pmap_kremove(va, size)
 	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove: leaving\n"));
+}
+
+void
+pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+{
+	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+
+	fdcache(pmap->pm_space, va, len);
+	sync_caches();
+	ficache(pmap->pm_space, va, len);
+	sync_caches();
 }
 
 struct vm_page *
