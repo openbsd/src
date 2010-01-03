@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.594 2009/07/23 00:30:03 krw Exp $
+#	$OpenBSD: install.sub,v 1.595 2010/01/03 04:25:42 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1953,10 +1953,11 @@ if [[ $MODE == install ]]; then
 fi
 
 # Get ROOTDISK, ROOTDEV and SWAPDEV.
-[[ -n $(get_dkdevs) ]] || { echo "No disks found." ; exit ; }
-
-ask_which "disk" "is the root disk" '$(get_dkdevs)'
-[[ $resp == done ]] && exit
+while :; do
+	ask_which "disk" "is the root disk" '$(get_dkdevs | sed s,^$,none, )'
+	[[ $resp == done ]] && exit
+	[[ $resp != none ]] && break
+done
 makedev $resp || exit
 
 ROOTDISK=$resp
