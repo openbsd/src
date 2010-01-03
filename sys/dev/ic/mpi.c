@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.129 2010/01/03 07:05:43 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.130 2010/01/03 07:26:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1182,6 +1182,7 @@ mpi_wait(struct mpi_softc *sc, struct mpi_ccb *ccb)
 
 	done = ccb->ccb_done;
 	ccb->ccb_done = mpi_wait_done;
+	ccb->ccb_cookie = &cookie;
 
 	/* XXX this will wait forever for the ccb to complete */
 
