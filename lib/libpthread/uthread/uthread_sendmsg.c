@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sendmsg.c,v 1.8 2007/05/01 18:16:38 kurt Exp $	*/
+/*	$OpenBSD: uthread_sendmsg.c,v 1.9 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -56,9 +56,10 @@ sendmsg(int fd, const struct msghdr *msg, int flags)
 				curthread->data.fd.fd = fd;
 
 				/* Set the timeout: */
-				_thread_kern_set_timeout(NULL);
+				_thread_kern_set_timeout(_FD_SNDTIMEO(fd));
 				curthread->interrupted = 0;
 				curthread->closing_fd = 0;
+				curthread->timeout = 0;
 				_thread_kern_sched_state(PS_FDW_WAIT, __FILE__, __LINE__);
 
 				/* Check if the operation was interrupted: */
@@ -68,6 +69,10 @@ sendmsg(int fd, const struct msghdr *msg, int flags)
 					break;
 				} else if (curthread->closing_fd) {
 					errno = EBADF;
+					ret = -1;
+					break;
+				} else if (curthread->timeout) {
+					errno = EWOULDBLOCK;
 					ret = -1;
 					break;
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_recvfrom.c,v 1.10 2009/04/11 20:26:58 jakemsr Exp $	*/
+/*	$OpenBSD: uthread_recvfrom.c,v 1.11 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -57,9 +57,10 @@ recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr * from, sockl
 				curthread->data.fd.fd = fd;
 
 				/* Set the timeout: */
-				_thread_kern_set_timeout(NULL);
+				_thread_kern_set_timeout(_FD_RCVTIMEO(fd));
 				curthread->interrupted = 0;
 				curthread->closing_fd = 0;
+				curthread->timeout = 0;
 				_thread_kern_sched_state(PS_FDR_WAIT, __FILE__, __LINE__);
 
 				/* Check if the wait was interrupted: */
@@ -71,6 +72,11 @@ recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr * from, sockl
 				} else if (curthread->closing_fd) {
 					/* Return an error status: */
 					errno = EBADF;
+					ret = -1;
+					break;
+				} else if (curthread->timeout) {
+					/* Return an error status: */
+					errno = EWOULDBLOCK;
 					ret = -1;
 					break;
 				}

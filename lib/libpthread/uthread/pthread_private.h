@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.73 2009/12/06 17:54:59 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.74 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -501,11 +501,16 @@ enum pthread_state {
 #define _FD_LOCK(_fd,_type,_ts)	_thread_fd_lock(_fd, _type, _ts)
 #define _FD_UNLOCK(_fd,_type)	_thread_fd_unlock(_fd, _type)
 
+/* Get a suitable argument for _thread_kern_set_timeout(), given an fd */
+#define _FD_RCVTIMEO(_fd)	_thread_fd_timeout((_fd), 0)
+#define _FD_SNDTIMEO(_fd)	_thread_fd_timeout((_fd), 1)
+
 /*
- * File status flags struture - shared for dup'ed fd's
+ * File status flags structure - shared for dup'ed fd's
  */
 struct fs_flags {
 	int			flags;
+#define _FD_NOTSOCK	O_EXCL		/* Not a socket. */
 	int			refcnt;
 	SLIST_ENTRY(fs_flags)	fe;     /* free list entry. */
 };
@@ -1152,6 +1157,7 @@ void	_thread_dump_data(const void *, int);
 void    _thread_dump_info(void);
 int	_thread_fd_lock(int, int, struct timespec *);
 void	_thread_fd_unlock(int, int);
+struct timespec	*_thread_fd_timeout(int, int);
 void    _thread_init(void);
 void	_thread_kern_lock(int);
 void    _thread_kern_sched(struct sigcontext *);

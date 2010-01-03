@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_write.c,v 1.13 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_write.c,v 1.14 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -104,11 +104,12 @@ write(int fd, const void *buf, size_t nbytes)
 			if (blocking && ((n < 0 && (errno == EWOULDBLOCK ||
 			    errno == EAGAIN)) || (n > 0 && num < nbytes))) {
 				curthread->data.fd.fd = fd;
-				_thread_kern_set_timeout(NULL);
+				_thread_kern_set_timeout(_FD_SNDTIMEO(fd));
 
 				/* Reset the interrupted operation flag: */
 				curthread->interrupted = 0;
 				curthread->closing_fd = 0;
+				curthread->timeout = 0;
 
 				_thread_kern_sched_state(PS_FDW_WAIT,
 				    __FILE__, __LINE__);
@@ -117,7 +118,9 @@ write(int fd, const void *buf, size_t nbytes)
 				 * Check if the operation was
 				 * interrupted by a signal
 				 */
-				if (curthread->interrupted || curthread->closing_fd) {
+				if (curthread->interrupted ||
+				    curthread->closing_fd ||
+				    curthread->timeout) {
 					if (num > 0) {
 						/* Return partial success: */
 						ret = (ssize_t)num;
@@ -125,8 +128,10 @@ write(int fd, const void *buf, size_t nbytes)
 						/* Return an error: */
 						if (curthread->closing_fd)
 							errno = EBADF;
-						else
+						else if (curthread->interrupted)
 							errno = EINTR;
+						else
+							errno = EWOULDBLOCK;
 						ret = -1;
 					}
 				}

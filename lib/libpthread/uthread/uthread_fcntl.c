@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fcntl.c,v 1.9 2006/09/26 14:18:28 kurt Exp $	*/
+/*	$OpenBSD: uthread_fcntl.c,v 1.10 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -44,6 +44,7 @@ fcntl(int fd, int cmd,...)
 {
 	int             flags = 0;
 	int		nonblock;
+	int		notsock;
 	int             oldfd;
 	int             ret;
 	va_list         ap;
@@ -87,7 +88,8 @@ fcntl(int fd, int cmd,...)
 			ret = _thread_sys_fcntl(fd, cmd, 0);
 			break;
 		case F_GETFL:
-			ret = _thread_fd_table[fd]->status_flags->flags;
+			ret = _thread_fd_table[fd]->status_flags->flags &
+			    ~_FD_NOTSOCK;
 			break;
 		case F_SETFL:
 			/*
@@ -102,8 +104,13 @@ fcntl(int fd, int cmd,...)
 			 */
 			nonblock = flags & O_NONBLOCK;
 
+			/* Remember the non-socket flag: */
+			notsock = _thread_fd_table[fd]->status_flags->flags &
+			    _FD_NOTSOCK;
+
 			/* Set the file descriptor flags: */
-			if ((ret = _thread_sys_fcntl(fd, cmd, flags | O_NONBLOCK)) != 0) {
+			if ((ret = _thread_sys_fcntl(fd, cmd,
+			    flags | O_NONBLOCK)) != 0) {
 
 			/* Get the flags so that we behave like the kernel: */
 			} else if ((flags = _thread_sys_fcntl(fd,
@@ -117,10 +124,17 @@ fcntl(int fd, int cmd,...)
 			 */
 			} else if (nonblock)
 				/* A non-blocking descriptor: */
-				_thread_fd_table[fd]->status_flags->flags = flags | O_NONBLOCK;
+				_thread_fd_table[fd]->status_flags->flags =
+				    flags | O_NONBLOCK;
 			else
 				/* Save the flags: */
-				_thread_fd_table[fd]->status_flags->flags = flags & ~O_NONBLOCK;
+				_thread_fd_table[fd]->status_flags->flags =
+				    flags & ~O_NONBLOCK;
+
+			/* Restore if previously set: */
+			if (ret != -1 && notsock)
+				_thread_fd_table[fd]->status_flags->flags |=
+				    _FD_NOTSOCK;
 			break;
 		default:
 			/* Might want to make va_arg use a union */

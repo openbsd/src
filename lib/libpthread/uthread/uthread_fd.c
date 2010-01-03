@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.32 2009/12/06 17:54:59 kurt Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.33 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -33,11 +33,13 @@
  * $FreeBSD: uthread_fd.c,v 1.13 1999/08/28 00:03:31 peter Exp $
  *
  */
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
@@ -724,7 +726,7 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
 					 * Schedule this thread to wait on
 					 * the read lock. It will only be
 					 * woken when it becomes the next in
-					 * the   queue and is granted access
+					 * the queue and is granted access
 					 * to the lock by the thread that is
 					 * unlocking the file descriptor.
 					 */
@@ -837,6 +839,32 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
 
 	/* Return the completion status: */
 	return (ret);
+}
+
+struct timespec *
+_thread_fd_timeout(int fd, int which)
+{
+	struct timeval tv;
+	socklen_t len;
+	int saved_errno;
+	
+	/* Avoid calling getsockopt if fd is not a socket. */
+	if (!(_thread_fd_table[fd]->status_flags->flags & _FD_NOTSOCK)) {
+		len = sizeof(tv);
+		saved_errno = errno;
+		if (_thread_sys_getsockopt(fd, SOL_SOCKET, which ?
+		    SO_SNDTIMEO : SO_RCVTIMEO, &tv, &len) == 0) {
+			if (timerisset(&tv)) {
+				static struct timespec ts;
+				TIMEVAL_TO_TIMESPEC(&tv, &ts);
+				return (&ts);
+			}
+		} else if (errno == ENOTSOCK)
+			_thread_fd_table[fd]->status_flags->flags |=
+			    _FD_NOTSOCK;
+		errno = saved_errno;
+	}
+	return (NULL);
 }
 
 #endif

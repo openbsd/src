@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigmask.c,v 1.8 2008/04/24 03:31:33 kurt Exp $	*/
+/*	$OpenBSD: uthread_sigmask.c,v 1.9 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -80,7 +80,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 		}
 
 		/*
-		 * Check  if there are pending signals for the running
+		 * Check if there are pending signals for the running
 		 * thread or process that aren't blocked:
 		 */
 		sigset = curthread->sigpend;

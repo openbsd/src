@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_read.c,v 1.9 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_read.c,v 1.10 2010/01/03 23:05:35 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -73,19 +73,20 @@ read(int fd, void *buf, size_t nbytes)
 			if ((_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) == 0 &&
 			    (errno == EWOULDBLOCK || errno == EAGAIN)) {
 				curthread->data.fd.fd = fd;
-				_thread_kern_set_timeout(NULL);
+				_thread_kern_set_timeout(_FD_RCVTIMEO(fd));
 
 				/* Reset the interrupted operation flag: */
 				curthread->interrupted = 0;
 				curthread->closing_fd = 0;
+				curthread->timeout = 0;
 
 				_thread_kern_sched_state(PS_FDR_WAIT,
 				    __FILE__, __LINE__);
 
 				/*
 				 * Check if the operation was
-				 * interrupted by a signal or
-				 * a closing fd.
+				 * interrupted by a signal,
+				 * a closing fd or timed out.
 				 */
 				if (curthread->interrupted) {
 					errno = EINTR;
@@ -93,6 +94,10 @@ read(int fd, void *buf, size_t nbytes)
 					break;
 				} else if (curthread->closing_fd) {
 					errno = EBADF;
+					ret = -1;
+					break;
+				} else if (curthread->timeout) {
+					errno = EWOULDBLOCK;
 					ret = -1;
 					break;
 				}
