@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.52 2010/01/03 00:59:31 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.53 2010/01/03 09:30:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -36,7 +36,7 @@ sub stat
 	if (!defined $dev && $fname ne '/') {
 		return $self->stat(dirname($fname));
 	}
-	return OpenBSD::MountPoint->find($dev, $fname, $self->{state});
+	return OpenBSD::Mounts->find($dev, $fname, $self->{state});
 }
 
 sub account_for
@@ -77,7 +77,7 @@ sub synchronize
 {
 	my $self = shift;
 
-	OpenBSD::MountPoint->synchronize;
+	OpenBSD::Mounts->synchronize;
 	if ($self->{state}->{not}) {
 		# this is the actual stacking case: in pretend mode,
 		# I have to put a second vfs on top
@@ -97,7 +97,7 @@ sub drop_changes
 {
 	my $self = shift;
 
-	OpenBSD::MountPoint->drop_changes;
+	OpenBSD::Mounts->drop_changes;
 	# drop the top layer
 	$self->{v}[0] = {};
 }
@@ -124,14 +124,126 @@ sub tally
 {
 	my $self = shift;
 
-	OpenBSD::MountPoint->tally($self->{state});
+	OpenBSD::Mounts->tally($self->{state});
 }
 
-package OpenBSD::MountPoint;
+package OpenBSD::Mounts;
 
 my $devinfo;
 my $devinfo2;
 my $giveup;
+
+sub new
+{
+	my ($class, $dev, $opts) = @_;
+
+	if (!defined $devinfo->{$dev}) {
+		$devinfo->{$dev} = OpenBSD::MountPoint->new($dev, $opts);
+	}
+	return $devinfo->{$dev};
+}
+
+sub run
+{
+	my $state = shift;
+	my $code = pop;
+	open(my $cmd, "-|", @_) or
+		$state->errsay("Can't run ",join(' ', @_))
+		and return;
+	my $_;
+	while (<$cmd>) {
+		&$code($_);
+	}
+	if (!close($cmd)) {
+		if ($!) {
+			$state->errsay("Error running ", join(' ', @_),": $!");
+		} else {
+			$state->errsay("Exit status $? from ", join(' ', @_));
+		}
+	}
+}
+
+sub ask_mount
+{
+	my ($class, $state) = shift;
+
+	$giveup = OpenBSD::MountPoint::Fail->new;
+	delete $ENV{'BLOCKSIZE'};
+	run($state, OpenBSD::Paths->mount, sub {
+		my $_ = shift;
+		chomp;
+		if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
+			my ($dev, $opts) = ($1, $2);
+			$class->new($dev, $opts);
+		} else {
+			$state->errsay("Can't parse mount line: $_");
+		}
+	});
+}
+
+sub ask_df
+{
+	my ($class, $fname, $state) = @_;
+
+	my $info = $giveup;
+	my $blocksize = 512;
+
+	$class->ask_mount($state) if !defined $devinfo;
+	run($state, OpenBSD::Paths->df, "--", $fname, sub {
+		my $_ = shift;
+		chomp;
+		if (m/^Filesystem\s+(\d+)\-blocks/o) {
+			$blocksize = $1;
+		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\-?\d+)\s+\d+\%\s+\/.*?$/o) {
+			my ($dev, $avail) = ($1, $2);
+			$info = $devinfo->{$dev};
+			if (!defined $info) {
+				$info = $class->new($dev);
+			}
+			$info->{avail} = $avail;
+			$info->{blocksize} = $blocksize;
+		}
+	});
+
+	return $info;
+}
+
+sub find
+{
+	my ($class, $dev, $fname, $state) = @_;
+	if (!defined $dev) {
+		return $giveup;
+	}
+	if (!defined $devinfo2->{$dev}) {
+		$devinfo2->{$dev} = $class->ask_df($fname, $state);
+	}
+	return $devinfo2->{$dev};
+}
+
+sub synchronize
+{
+	for my $v (values %$devinfo2) {
+		$v->synchronize;
+	}
+}
+
+sub drop_changes
+{
+	for my $v (values %$devinfo2) {
+		$v->drop_changes;
+	}
+}
+
+sub tally
+{
+	my ($self, $state) = @_;
+
+	for my $v ((sort {$a->name cmp $b->name } values %$devinfo2), $giveup) {
+		$v->tally($state);
+	}
+}
+
+package OpenBSD::MountPoint;
 
 sub parse_opts
 {
@@ -169,7 +281,7 @@ sub noexec
 	return shift->{noexec};
 }
 
-sub create
+sub new
 {
 	my ($class, $dev, $opts) = @_;
 	my $n = bless { commited_use => 0, used => 0, delayed => 0, 
@@ -180,92 +292,6 @@ sub create
 	return $n;
 }
 
-sub new
-{
-	my ($class, $dev, $opts) = @_;
-
-	if (!defined $devinfo->{$dev}) {
-		$devinfo->{$dev} = $class->create($dev, $opts);
-	}
-	return $devinfo->{$dev};
-}
-
-sub run
-{
-	my $state = shift;
-	my $code = pop;
-	open(my $cmd, "-|", @_) or
-		$state->errsay("Can't run ",join(' ', @_))
-		and return;
-	my $_;
-	while (<$cmd>) {
-		&$code($_);
-	}
-	if (!close($cmd)) {
-		if ($!) {
-			$state->errsay("Error running ", join(' ', @_),": $!");
-		} else {
-			$state->errsay("Exit status $? from ", join(' ', @_));
-		}
-	}
-}
-
-sub ask_mount
-{
-	my $state = shift;
-
-	$giveup = OpenBSD::MountPoint::Fail->new;
-	delete $ENV{'BLOCKSIZE'};
-	run($state, OpenBSD::Paths->mount, sub {
-		my $_ = shift;
-		chomp;
-		if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
-			my ($dev, $opts) = ($1, $2);
-			OpenBSD::MountPoint->new($dev, $opts);
-		} else {
-			$state->errsay("Can't parse mount line: $_");
-		}
-	});
-}
-
-sub ask_df
-{
-	my ($fname, $state) = @_;
-
-	my $info = $giveup;
-	my $blocksize = 512;
-
-	ask_mount($state) if !defined $devinfo;
-	run($state, OpenBSD::Paths->df, "--", $fname, sub {
-		my $_ = shift;
-		chomp;
-		if (m/^Filesystem\s+(\d+)\-blocks/o) {
-			$blocksize = $1;
-		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\-?\d+)\s+\d+\%\s+\/.*?$/o) {
-			my ($dev, $avail) = ($1, $2);
-			$info = $devinfo->{$dev};
-			if (!defined $info) {
-				$info = OpenBSD::MountPoint->new($dev);
-			}
-			$info->{avail} = $avail;
-			$info->{blocksize} = $blocksize;
-		}
-	});
-
-	return $info;
-}
-
-sub find
-{
-	my ($class, $dev, $fname, $state) = @_;
-	if (!defined $dev) {
-		return $giveup;
-	}
-	if (!defined $devinfo2->{$dev}) {
-		$devinfo2->{$dev} = ask_df($fname, $state);
-	}
-	return $devinfo2->{$dev};
-}
 
 sub avail
 {
@@ -316,38 +342,37 @@ sub report_noexec
 
 sub synchronize
 {
-	for my $v (values %$devinfo2) {
-		if ($v->{used} > $v->{hw}) {
-			$v->{hw} = $v->{used};
-		}
-		$v->{used} += $v->{delayed};
-		$v->{delayed} = 0;
-		$v->{commited_use} = $v->{used};
+	my $v = shift;
+
+	if ($v->{used} > $v->{hw}) {
+		$v->{hw} = $v->{used};
 	}
+	$v->{used} += $v->{delayed};
+	$v->{delayed} = 0;
+	$v->{commited_use} = $v->{used};
 }
 
 sub drop_changes
 {
-	for my $v (values %$devinfo2) {
-		$v->{used} = $v->{commited_use};
-		$v->{delayed} = 0;
-	}
+	my $v = shift;
+
+	$v->{used} = $v->{commited_use};
+	$v->{delayed} = 0;
 }
 
 sub tally
 {
-	my ($self, $state) = @_;
-	for my $data (values %$devinfo2) {
-		next if $data->{used} == 0;
-		$state->print($data->name, ": ", $data->{used}, " bytes");
-		my $avail = $data->avail; 
-		if ($avail < 0) {
-			$state->print(" (missing ", int(-$avail+1), " blocks)");
-		} elsif ($data->{hw} > $data->{used}) {
-			$state->print(" (highwater ", $data->{hw}, " bytes)");
-		}
-		$state->say;
+	my ($data, $state) = @_;
+
+	return  if $data->{used} == 0;
+	$state->print($data->name, ": ", $data->{used}, " bytes");
+	my $avail = $data->avail; 
+	if ($avail < 0) {
+		$state->print(" (missing ", int(-$avail+1), " blocks)");
+	} elsif ($data->{hw} >0 && $data->{hw} > $data->{used}) {
+		$state->print(" (highwater ", $data->{hw}, " bytes)");
 	}
+	$state->say;
 }
 
 package OpenBSD::MountPoint::Fail;
@@ -361,7 +386,7 @@ sub avail
 sub new
 {
 	my $class = shift;
-	my $n = $class->SUPER::create('???');
+	my $n = $class->SUPER::new('???');
 	$n->{avail} = 0;
 	return $n;
 }
