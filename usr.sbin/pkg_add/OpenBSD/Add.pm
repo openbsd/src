@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.102 2010/01/02 12:59:45 espie Exp $
+# $OpenBSD: Add.pm,v 1.103 2010/01/03 19:55:35 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -480,7 +480,9 @@ sub prepare_for_addition
 {
 	my ($self, $state, $pkgname) = @_;
 	if (!defined $self->{copyfrom}) {
-		Fatal "\@sample element does not reference a valid file\n";
+		$state->errsay("\@sample element ",$self->fullname, 
+		    " does not reference a valid file");
+		$state->{problems}++;
 	}
 	my $fname = $state->{destdir}.$self->fullname;
 	# If file already exists, we won't change it
