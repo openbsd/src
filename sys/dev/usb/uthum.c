@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.5 2009/12/17 08:28:03 yuo Exp $   */
+/*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -76,8 +76,6 @@ struct uthum_softc {
 	size_t			 sc_flen;	/* feature report length */
 	size_t			 sc_ilen;	/* input report length */
 	size_t			 sc_olen;	/* output report length */
-
-	uint8_t			*sc_ibuf;
 
 	/* sensor framework */
 	struct ksensor		 sc_sensor[UTHUM_MAX_SENSORS];
@@ -259,12 +257,7 @@ uthum_activate(struct device *self, int act)
 void
 uthum_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
-	struct uthum_softc *sc = (struct uthum_softc *)addr;
-	if (sc->sc_ibuf == NULL)
-		return;
-
-	/* nothing to do? */
-	return;
+	/* do nothing */
 }
 
 int
