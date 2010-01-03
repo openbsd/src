@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.66 2009/12/14 19:49:22 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.67 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -206,6 +206,15 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			}
 
 			session_pickup(s, NULL);
+			break;
+		}
+		case IMSG_CTL_VERBOSE: {
+			int verbose;
+
+			IMSG_SIZE_CHECK(&verbose);
+
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		}
 		default:

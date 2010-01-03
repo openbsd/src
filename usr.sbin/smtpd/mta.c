@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.83 2009/12/23 17:16:03 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.84 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -146,6 +146,15 @@ mta_dispatch_parent(int sig, short event, void *p)
 				break;
 			env->sc_flags &= ~SMTPD_CONFIGURING;
 			break;
+		case IMSG_CTL_VERBOSE: {
+			int verbose;
+
+			IMSG_SIZE_CHECK(&verbose);
+
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
+			break;
+		}
 		default:
 			log_warnx("mta_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);

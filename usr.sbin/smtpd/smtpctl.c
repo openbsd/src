@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.44 2009/12/14 18:21:53 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.45 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	struct imsg		imsg;
 	int			ctl_sock;
 	int			done = 0;
-	int			n;
+	int			n, verbose = 0;
 
 	/* parse options */
 	if (strcmp(__progname, "sendmail") == 0 || strcmp(__progname, "send-mail") == 0)
@@ -192,6 +192,15 @@ connected:
 	case MONITOR:
 		/* XXX */
 		break;
+	case LOG_VERBOSE:
+		verbose = 1;
+		/* FALLTHROUGH */
+	case LOG_BRIEF:
+		imsg_compose(ibuf, IMSG_CTL_VERBOSE, 0, 0, -1, &verbose,
+		    sizeof(verbose));
+		printf("logging request sent.\n");
+		done = 1;
+		break;
 	default:
 		err(1, "unknown request (%d)", res->action);
 	}
@@ -221,6 +230,8 @@ connected:
 			case RESUME_MDA:
 			case RESUME_MTA:
 			case RESUME_SMTP:
+			case LOG_VERBOSE:
+			case LOG_BRIEF:
 				done = show_command_output(&imsg);
 				break;
 			case SHOW_STATS:

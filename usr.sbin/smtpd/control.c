@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.44 2009/12/23 17:16:03 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.45 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -399,6 +399,22 @@ control_dispatch_ext(int fd, short event, void *arg)
 			env->sc_flags |= SMTPD_EXITING;
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
+		case IMSG_CTL_VERBOSE: {
+			int verbose;
+
+			if (euid)
+				goto badcred;
+
+			if (IMSG_DATA_SIZE(&imsg) != sizeof(verbose))
+				goto badcred;
+
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
+			imsg_compose_event(env->sc_ievs[PROC_PARENT], IMSG_CTL_VERBOSE,
+			    0, 0, -1, &verbose, sizeof(verbose));
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
+		}
 		case IMSG_MDA_PAUSE:
 			if (euid)
 				goto badcred;

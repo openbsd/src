@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.9 2009/10/25 19:46:31 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.10 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -61,6 +61,7 @@ static const struct token t_show[];
 static const struct token t_pause[];
 static const struct token t_resume[];
 static const struct token t_schedule[];
+static const struct token t_log[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"show",		NONE,		t_show},
@@ -70,6 +71,7 @@ static const struct token t_main[] = {
 	{KEYWORD,	"resume",	NONE,      	t_resume},
 	{KEYWORD,	"stop",		SHUTDOWN,      	NULL},
 	{KEYWORD,	"schedule",    	SCHEDULE,      	t_schedule},
+	{KEYWORD,	"log",    	NONE,      	t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -96,6 +98,12 @@ static const struct token t_resume[] = {
 
 static const struct token t_schedule[] = {
 	{VARIABLE,	"message id/uid",      	SCHEDULE,	NULL},
+	{ENDTOKEN,	"",			NONE,      	NULL}
+};
+
+static const struct token t_log[] = {
+	{KEYWORD,	"verbose",      	LOG_VERBOSE,	NULL},
+	{KEYWORD,	"brief",	      	LOG_BRIEF,	NULL},
 	{ENDTOKEN,	"",			NONE,      	NULL}
 };
 

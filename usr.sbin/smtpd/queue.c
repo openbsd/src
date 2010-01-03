@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.76 2009/12/14 19:56:55 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.77 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,6 +39,7 @@
 
 __dead void	queue_shutdown(void);
 void		queue_sig_handler(int, short, void *);
+void		queue_dispatch_parent(int, short, void *);
 void		queue_dispatch_control(int, short, void *);
 void		queue_dispatch_smtp(int, short, void *);
 void		queue_dispatch_mda(int, short, void *);
@@ -70,6 +71,59 @@ queue_sig_handler(int sig, short event, void *p)
 	default:
 		fatalx("queue_sig_handler: unexpected signal");
 	}
+}
+
+void
+queue_dispatch_parent(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgev		*iev;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	iev = env->sc_ievs[PROC_PARENT];
+	ibuf = &iev->ibuf;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&iev->ev);
+			event_loopexit(NULL);
+			return;
+		}
+	}
+
+	if (event & EV_WRITE) {
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("queue_dispatch_parent: imsg_get error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_CTL_VERBOSE: {
+			int verbose;
+
+			IMSG_SIZE_CHECK(&verbose);
+
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
+			break;
+		}
+		default:
+			log_warnx("got imsg %d", imsg.hdr.type);
+			fatalx("queue_dispatch_parent: unexpected imsg");
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
 }
 
 void
@@ -530,6 +584,7 @@ queue(struct smtpd *env)
 	struct event	 ev_sigterm;
 
 	struct peer peers[] = {
+		{ PROC_PARENT,	queue_dispatch_parent },
 		{ PROC_CONTROL,	queue_dispatch_control },
 		{ PROC_SMTP,	queue_dispatch_smtp },
 		{ PROC_MDA,	queue_dispatch_mda },

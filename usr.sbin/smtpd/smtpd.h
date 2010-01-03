@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.166 2009/12/24 14:19:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.167 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,6 +119,7 @@ enum imsg_type {
 	IMSG_CTL_OK,		/* answer to smtpctl requests */
 	IMSG_CTL_FAIL,
 	IMSG_CTL_SHUTDOWN,
+	IMSG_CTL_VERBOSE,
 	IMSG_CONF_START,
 	IMSG_CONF_SSL,
 	IMSG_CONF_SSL_CERT,
@@ -827,6 +828,7 @@ int bounce_session_switch(struct smtpd *, FILE *, enum session_state *, char *,
 
 /* log.c */
 void		log_init(int);
+void		log_verbose(int);
 void		log_warn(const char *, ...)
     __attribute__ ((format (printf, 1, 2)));
 void		log_warnx(const char *, ...)

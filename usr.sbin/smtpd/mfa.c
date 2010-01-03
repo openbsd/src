@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.42 2009/10/18 20:41:21 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.43 2010/01/03 14:37:37 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -99,6 +99,15 @@ mfa_dispatch_parent(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_CTL_VERBOSE: {
+			int verbose;
+
+			IMSG_SIZE_CHECK(&verbose);
+
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
+			break;
+		}
 		default:
 			log_warnx("mfa_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
