@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.23 2009/06/06 05:35:48 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.24 2010/01/03 11:09:41 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -283,6 +283,7 @@ struct scsi_reassign_blocks_data {
 #define PAGE_RIGID_GEOMETRY	4
 #define PAGE_FLEX_GEOMETRY	5
 #define PAGE_REDUCED_GEOMETRY	6
+#define PAGE_CACHING_MODE	8
 
 struct page_disk_format {
 	u_int8_t pg_code;	/* page code (should be 3) */
@@ -372,4 +373,26 @@ struct page_reduced_geometry {
 #define	READ_DISABLED	0x8
 	u_int8_t reserved;
 };
+
+struct page_caching_mode {
+	u_int8_t pg_code;	/* page code (should be 8) */
+	u_int8_t pg_length;	/* page length (should be 0x12) */
+	u_int8_t flags;
+#define PG_CACHE_FL_IC		(1<<0)
+#define PG_CACHE_FL_ABPF	(1<<1)
+#define PG_CACHE_FL_CAP		(1<<2)
+#define PG_CACHE_FL_DISC	(1<<3)
+#define PG_CACHE_FL_SIZE	(1<<4)
+#define PG_CACHE_FL_WCE		(1<<5)
+#define PG_CACHE_FL_MF		(1<<6)
+#define PG_CACHE_FL_RCD		(1<<7)
+	u_int8_t priority;
+#define PG_CACHE_PRI_DEMAND(_f)		((_f) & 0x0f)
+#define PG_CACHE_PRI_WRITE(_f)		(((_f) >> 4) & 0x0f)
+	u_int8_t dis_prefetch_tl[2];
+	u_int8_t min_prefetch[2];
+	u_int8_t max_prefetch[2];
+	u_int8_t max_prefetch_ceil[2];
+};
+
 #endif /* _SCSI_SCSI_DISK_H */
