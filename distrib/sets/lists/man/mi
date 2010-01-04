@@ -2338,6 +2338,7 @@
 ./usr/share/man/cat7/man.0
 ./usr/share/man/cat7/mandoc.0
 ./usr/share/man/cat7/mandoc.samples.0
+./usr/share/man/cat7/mandoc_char.0
 ./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/mdoc.samples.0
 ./usr/share/man/cat7/me.0
