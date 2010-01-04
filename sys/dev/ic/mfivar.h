@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.35 2009/01/28 23:45:12 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.36 2010/01/04 07:57:28 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -157,6 +157,7 @@ struct mfi_softc {
 	struct mfi_mem		*sc_sense;
 
 	struct mfi_ccb_list	sc_ccb_freeq;
+	struct mutex		sc_ccb_mtx;
 
 	/* mgmt lock */
 	struct rwlock		sc_lock;

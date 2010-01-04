@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.96 2010/01/03 14:57:10 chl Exp $ */
+/* $OpenBSD: mfi.c,v 1.97 2010/01/04 07:57:28 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -152,15 +152,14 @@ struct mfi_ccb *
 mfi_get_ccb(struct mfi_softc *sc)
 {
 	struct mfi_ccb		*ccb;
-	int			s;
 
-	s = splbio();
+	mtx_enter(&sc->sc_ccb_mtx);
 	ccb = TAILQ_FIRST(&sc->sc_ccb_freeq);
-	if (ccb) {
+	if (ccb != NULL) {
 		TAILQ_REMOVE(&sc->sc_ccb_freeq, ccb, ccb_link);
 		ccb->ccb_state = MFI_CCB_READY;
 	}
-	splx(s);
+	mtx_leave(&sc->sc_ccb_mtx);
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_get_ccb: %p\n", DEVNAME(sc), ccb);
 
@@ -172,7 +171,6 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 {
 	struct mfi_softc	*sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
-	int			s;
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_put_ccb: %p\n", DEVNAME(sc), ccb);
 
@@ -189,9 +187,9 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_data = NULL;
 	ccb->ccb_len = 0;
 
-	s = splbio();
+	mtx_enter(&sc->sc_ccb_mtx);
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
-	splx(s);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
 
 int
@@ -641,6 +639,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		return (1);
 
 	TAILQ_INIT(&sc->sc_ccb_freeq);
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 
 	rw_init(&sc->sc_lock, "mfi_lock");
 
