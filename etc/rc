@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.334 2009/12/04 21:58:41 deraadt Exp $
+#	$OpenBSD: rc,v 1.335 2010/01/04 18:03:30 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -778,6 +778,13 @@ if [ X"${krb5_slave_kdc}" = X"YES" ]; then
 	/usr/libexec/kdc &
 	# Remember to enable hpropd in inetd.conf
 fi
+
+# If rc.firstime exists, run it just once, and make sure it is deleted
+if [ -f /etc/rc.firsttime ]; then
+	mv /etc/rc.firsttime /etc/rc.firsttime.run
+	. /etc/rc.firsttime.run 2>&1 | mail -s 'rc.firsttime output' root
+fi
+rm -f /etc/rc.firsttime.run
 
 [ -f /etc/rc.local ] && . /etc/rc.local
 
