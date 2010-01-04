@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.38 2009/12/01 01:40:02 dlg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.39 2010/01/04 00:45:58 dlg Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 {
 	struct scsi_xfer *xs;
 	int err = 0;
-	int s;
 
 	if (screq->cmdlen > sizeof(struct scsi_generic))
 		return (EFAULT);
@@ -132,13 +131,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	xs->timeout = screq->timeout;
 	xs->retries = 0; /* user must do the retries *//* ignored */
 
-	xs->done = (void (*)(struct scsi_xfer *))wakeup;
-
-	scsi_xs_exec(xs);
-	s = splbio();
-	while (!ISSET(xs->flags, ITSDONE))
-		tsleep(xs, PRIBIO, "scsiioc", 0);
-	splx(s);
+	scsi_xs_sync(xs);
 
 	screq->retsts = 0;
 	screq->status = xs->status;

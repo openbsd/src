@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.116 2010/01/01 06:30:27 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.117 2010/01/04 00:45:58 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -579,6 +579,7 @@ extern const u_int8_t version_to_spc[];
 
 struct scsi_xfer *	scsi_xs_get(struct scsi_link *, int);
 void			scsi_xs_exec(struct scsi_xfer *);
+int			scsi_xs_sync(struct scsi_xfer *);
 void			scsi_xs_put(struct scsi_xfer *);
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.149 2010/01/01 07:06:27 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.150 2010/01/04 00:45:58 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -52,10 +52,10 @@
 
 static __inline void asc2ascii(u_int8_t, u_int8_t ascq, char *result,
     size_t len);
-int	sc_err1(struct scsi_xfer *);
+int	scsi_xs_error(struct scsi_xfer *);
 char   *scsi_decode_sense(struct scsi_sense_data *, int);
 
-void	scsi_xs_done(struct scsi_xfer *);
+void	scsi_xs_sync_done(struct scsi_xfer *);
 
 /* Values for flag parameter to scsi_decode_sense. */
 #define	DECODE_SENSE_KEY	1
@@ -210,7 +210,7 @@ scsi_xs_get(struct scsi_link *link, int flags)
 		xs->flags = flags;
 		xs->sc_link = link;
 		xs->retries = SCSI_RETRIES;
-		xs->timeout = 0;
+		xs->timeout = 10000;
 		bzero(&xs->cmdstore, sizeof(xs->cmdstore));
 		xs->cmd = &xs->cmdstore;
 		xs->cmdlen = 0;
@@ -334,32 +334,43 @@ scsi_test_unit_ready(struct scsi_link *sc_link, int retries, int flags)
  * Use the scsi_cmd routine in the switch table.
  */
 int
-scsi_inquire(struct scsi_link *sc_link, struct scsi_inquiry_data *inqbuf,
+scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
     int flags)
 {
-	struct scsi_inquiry			scsi_cmd;
-	int					length;
-	int					error;
+	struct scsi_xfer *xs;
+	struct scsi_inquiry *cdb;
+	size_t length;
+	int error;
 
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = INQUIRY;
-
-	bzero(inqbuf, sizeof(*inqbuf));
-
-	memset(&inqbuf->vendor, ' ', sizeof inqbuf->vendor);
-	memset(&inqbuf->product, ' ', sizeof inqbuf->product);
-	memset(&inqbuf->revision, ' ', sizeof inqbuf->revision);
-	memset(&inqbuf->extra, ' ', sizeof inqbuf->extra);
+	xs = scsi_xs_get(link, flags);
+	if (xs == NULL)
+		return (EBUSY);
 
 	/*
 	 * Ask for only the basic 36 bytes of SCSI2 inquiry information. This
 	 * avoids problems with devices that choke trying to supply more.
 	 */
 	length = SID_INQUIRY_HDR + SID_SCSI2_ALEN;
-	_lto2b(length, scsi_cmd.length);
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)inqbuf, length, 2, 10000, NULL,
-	    SCSI_DATA_IN | flags);
+
+	cdb = (struct scsi_inquiry *)xs->cmd;
+	cdb->opcode = INQUIRY;
+	_lto2b(length, cdb->length);
+
+	xs->cmdlen = sizeof(*cdb);
+
+	xs->flags |= SCSI_DATA_IN;
+	xs->data = (void *)inqbuf;
+	xs->datalen = length;
+
+	bzero(inqbuf, sizeof(*inqbuf));
+	memset(&inqbuf->vendor, ' ', sizeof inqbuf->vendor);
+	memset(&inqbuf->product, ' ', sizeof inqbuf->product);
+	memset(&inqbuf->revision, ' ', sizeof inqbuf->revision);
+	memset(&inqbuf->extra, ' ', sizeof inqbuf->extra);
+
+	error = scsi_xs_sync(xs);
+
+	scsi_xs_put(xs);
 
 	return (error);
 }
@@ -764,6 +775,49 @@ scsi_done(struct scsi_xfer *xs)
 	xs->done(xs);
 }
 
+int
+scsi_xs_sync(struct scsi_xfer *xs)
+{
+	struct mutex cookie = MUTEX_INITIALIZER(IPL_BIO);
+	int error;
+
+	/*
+	 * If we cant sleep while waiting for completion, get the adapter to
+	 * complete it for us.
+	 */
+	if (ISSET(xs->flags, SCSI_NOSLEEP))
+		SET(xs->flags, SCSI_POLL);
+
+	xs->done = scsi_xs_sync_done;
+
+	do {
+		xs->cookie = &cookie;
+
+		scsi_xs_exec(xs);
+
+		mtx_enter(&cookie);
+		while (xs->cookie != NULL)
+			msleep(xs, &cookie, PRIBIO, "syncxs", 0);
+		mtx_leave(&cookie);
+
+		error = scsi_xs_error(xs);
+	} while (error == ERESTART);
+
+	return (error);
+}
+
+void
+scsi_xs_sync_done(struct scsi_xfer *xs)
+{
+	struct mutex *cookie = xs->cookie;
+
+	mtx_enter(cookie);
+	xs->cookie = NULL;
+	if (!ISSET(xs->flags, SCSI_NOSLEEP))
+		wakeup_one(xs);
+	mtx_leave(cookie);
+}
+
 /*
  * ask the scsi driver to perform a command for us.
  * tell it where to read/write the data, and how
@@ -795,19 +849,7 @@ scsi_scsi_cmd(struct scsi_link *link, struct scsi_generic *scsi_cmd,
 	xs->retries = retries;
 	xs->timeout = timeout;
 
-	xs->done = scsi_xs_done;
-
-	do {
-		scsi_xs_exec(xs);
-		if (!ISSET(xs->flags, SCSI_POLL)) {
-			s = splbio();
-			while (!ISSET(xs->flags, ITSDONE))
-				tsleep(xs, PRIBIO, "scsicmd", 0);
-			splx(s);
-		}
-
-		error = sc_err1(xs);
-	} while (error == ERESTART);
+	error = scsi_xs_sync(xs);
 
 	if (error != EAGAIN) {
 		if (bp != NULL) {
@@ -841,82 +883,48 @@ scsi_scsi_cmd(struct scsi_link *link, struct scsi_generic *scsi_cmd,
 	return (error);
 }
 
-void
-scsi_xs_done(struct scsi_xfer *xs)
-{
-	if (!ISSET(xs->flags, SCSI_POLL))
-		wakeup_one(xs);
-}
-
 int
-sc_err1(struct scsi_xfer *xs)
+scsi_xs_error(struct scsi_xfer *xs)
 {
-	int					error;
+	int error = EIO;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("sc_err1,err = 0x%x\n", xs->error));
+	SC_DEBUG(xs->sc_link, SDEV_DB3, ("scsi_xs_error,err = 0x%x\n",
+	    xs->error));
 
-	/*
-	 * If it has a buf, we might be working with
-	 * a request from the buffer cache or some other
-	 * piece of code that requires us to process
-	 * errors at interrupt time. We have probably
-	 * been called by scsi_done()
-	 */
 	switch (xs->error) {
 	case XS_NOERROR:	/* nearly always hit this one */
-		error = 0;
+		return (0);
+		break;
+
+	case XS_NO_CCB:
+		return (EAGAIN);
 		break;
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-		if ((error = scsi_interpret_sense(xs)) == ERESTART)
-			goto retry;
+		error = scsi_interpret_sense(xs);
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsi_interpret_sense returned %#x\n", error));
-		break;
 
-	case XS_BUSY:
-		if (xs->retries) {
-			if ((error = scsi_delay(xs, 1)) == EIO)
-				goto lose;
-		}
+		if (error != ERESTART)
+			xs->retries = 0;
+
 		/* FALLTHROUGH */
+	case XS_BUSY:
 	case XS_TIMEOUT:
-	retry:
-		if (xs->retries--) {
-			xs->error = XS_NOERROR;
-			xs->flags &= ~ITSDONE;
-			return ERESTART;
-		}
+	case XS_RESET:
+		if (xs->retries--)
+			return (ERESTART);
+
 		/* FALLTHROUGH */
 	case XS_DRIVER_STUFFUP:
-	lose:
-		error = EIO;
-		break;
-
 	case XS_SELTIMEOUT:
-		/* XXX Disable device? */
-		error = EIO;
-		break;
-
-	case XS_RESET:
-		if (xs->retries) {
-			SC_DEBUG(xs->sc_link, SDEV_DB3,
-			    ("restarting command destroyed by reset\n"));
-			goto retry;
-		}
-		error = EIO;
-		break;
-
-	case XS_NO_CCB:
-		error = EAGAIN;
 		break;
 
 	default:
 		sc_print_addr(xs->sc_link);
 		printf("unknown error category (0x%x) from scsi driver\n",
 		    xs->error);
-		error = EIO;
 		break;
 	}
 
