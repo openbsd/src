@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2004/10/10 02:44:18 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 2010/01/04 17:50:39 deraadt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
 
 # Missing or not installed:
@@ -6,19 +6,6 @@
 
 DOCDIR=	/usr/share/doc/smm
 FILES=	00.contents Makefile Title
-SUBDIR=	01.setup 04.quotas 05.fastfs 06.nfs 17.password 18.net
-.if exists(03.fsck_ffs)
-SUBDIR+= 03.fsck_ffs
-.endif
-.if exists(07.lpd)
-SUBDIR+= 07.lpd
-.endif
-.if exists(08.sendmailop)
-SUBDIR+= 08.sendmailop
-.endif
-.if exists(09.sendmail)
-SUBDIR+= 09.sendmail
-.endif
 
 Title.ps: ${FILES}
 	groff Title > ${.TARGET}

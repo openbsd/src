@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2005/11/24 20:49:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2010/01/04 17:50:38 deraadt Exp $
 
 CFLAGS+=#-DTFILE=\"/dev/ttyp0\"
 CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}
@@ -13,10 +13,6 @@ SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 	standout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c
 SRCS+=	termcap.c tgoto.c tputs.c
 MAN=	ocurses.3 otermcap.3
-
-.if make(install)
-SUBDIR+= PSD.doc
-.endif
 
 includes:
 	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/ocurses.h || \

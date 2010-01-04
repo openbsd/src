@@ -1,8 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2004/10/10 02:42:59 mickey Exp $
-
-# Missing or not installed:
-# 01.cacm 02.implement 03.iosys 04.uprog 06.Clang
-# 07.pascal 08.f77 09.f77io 11.adb 13.rcs 14.sccs
+#	$OpenBSD: Makefile,v 1.7 2010/01/04 17:50:39 deraadt Exp $
 
 DOCDIR=	/usr/share/doc/psd
 FILES=	00.contents Makefile Title

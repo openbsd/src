@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/11/24 15:43:08 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2010/01/04 17:50:39 deraadt Exp $
 
 PROG=	awk
 LINKS=	${BINDIR}/awk ${BINDIR}/nawk
@@ -9,11 +9,6 @@ CLEANFILES+=proctab.c maketab ytab.c ytab.h stamp_tabs
 CFLAGS+=-I. -I${.CURDIR} -DHAS_ISBLANK -DNDEBUG
 HOSTCFLAGS+=-I. -I${.CURDIR} -DHAS_ISBLANK -DNDEBUG
 MLINKS=	awk.1 nawk.1
-
-# This just gets installed verbatim
-.if make(install)
-SUBDIR+= USD.doc
-.endif
 
 stamp_tabs: awkgram.y
 	${YACC} -d ${.CURDIR}/awkgram.y

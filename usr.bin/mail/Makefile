@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/09/21 11:49:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2010/01/04 17:50:39 deraadt Exp $
 
 PROG=	mail
 SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c \
@@ -16,9 +16,5 @@ beforeinstall:
 distribution:
 	cd ${.CURDIR}/misc; ${INSTALL} ${INSTALL_COPY} -o root -g wheel \
 	    -m 644 ${EFILES} ${DESTDIR}/etc
-
-.if make(install)
-SUBDIR+= USD.doc
-.endif
 
 .include <bsd.prog.mk>

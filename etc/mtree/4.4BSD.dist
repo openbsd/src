@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.199 2009/09/06 16:51:01 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.200 2010/01/04 17:50:38 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -651,74 +651,9 @@ programs  type=dir uname=root gname=wheel mode=755
 # ./usr/share/doc/psd
 psd
 
-# ./usr/share/doc/psd/01.cacm
-01.cacm
-# ./usr/share/doc/psd/01.cacm
-..
-
-# ./usr/share/doc/psd/02.implement
-02.implement
-# ./usr/share/doc/psd/02.implement
-..
-
-# ./usr/share/doc/psd/03.iosys
-03.iosys
-# ./usr/share/doc/psd/03.iosys
-..
-
-# ./usr/share/doc/psd/04.uprog
-04.uprog
-# ./usr/share/doc/psd/04.uprog
-..
-
-# ./usr/share/doc/psd/05.sysman
-05.sysman
-# ./usr/share/doc/psd/05.sysman
-..
-
-# ./usr/share/doc/psd/06.Clang
-06.Clang
-# ./usr/share/doc/psd/06.Clang
-..
-
-# ./usr/share/doc/psd/07.pascal
-07.pascal
-# ./usr/share/doc/psd/07.pascal
-..
-
-# ./usr/share/doc/psd/08.f77
-08.f77
-# ./usr/share/doc/psd/08.f77
-..
-
-# ./usr/share/doc/psd/09.f77io
-09.f77io
-# ./usr/share/doc/psd/09.f77io
-..
-
-# ./usr/share/doc/psd/10.gdb
-10.gdb
-# ./usr/share/doc/psd/10.gdb
-..
-
-# ./usr/share/doc/psd/11.adb
-11.adb
-# ./usr/share/doc/psd/11.adb
-..
-
 # ./usr/share/doc/psd/12.make
 12.make
 # ./usr/share/doc/psd/12.make
-..
-
-# ./usr/share/doc/psd/13.rcs
-13.rcs
-# ./usr/share/doc/psd/13.rcs
-..
-
-# ./usr/share/doc/psd/14.sccs
-14.sccs
-# ./usr/share/doc/psd/14.sccs
 ..
 
 # ./usr/share/doc/psd/15.yacc
@@ -731,29 +666,9 @@ psd
 # ./usr/share/doc/psd/16.lex
 ..
 
-# ./usr/share/doc/psd/17.m4
-17.m4
-# ./usr/share/doc/psd/17.m4
-..
-
 # ./usr/share/doc/psd/18.gprof
 18.gprof
 # ./usr/share/doc/psd/18.gprof
-..
-
-# ./usr/share/doc/psd/19.curses
-19.curses
-# ./usr/share/doc/psd/19.curses
-..
-
-# ./usr/share/doc/psd/20.ipctut
-20.ipctut
-# ./usr/share/doc/psd/20.ipctut
-..
-
-# ./usr/share/doc/psd/21.ipc
-21.ipc
-# ./usr/share/doc/psd/21.ipc
 ..
 
 # ./usr/share/doc/psd
@@ -762,89 +677,9 @@ psd
 # ./usr/share/doc/smm
 smm
 
-# ./usr/share/doc/smm/01.setup
-01.setup
-# ./usr/share/doc/smm/01.setup
-..
-
-# ./usr/share/doc/smm/02.config
-02.config
-# ./usr/share/doc/smm/02.config
-..
-
-# ./usr/share/doc/smm/03.fsck_ffs
-03.fsck_ffs
-# ./usr/share/doc/smm/03.fsck_ffs
-..
-
-# ./usr/share/doc/smm/04.quotas
-04.quotas
-# ./usr/share/doc/smm/04.quotas
-..
-
-# ./usr/share/doc/smm/05.fastfs
-05.fastfs
-# ./usr/share/doc/smm/05.fastfs
-..
-
-# ./usr/share/doc/smm/06.nfs
-06.nfs
-# ./usr/share/doc/smm/06.nfs
-..
-
-# ./usr/share/doc/smm/07.lpd
-07.lpd
-# ./usr/share/doc/smm/07.lpd
-..
-
 # ./usr/share/doc/smm/08.sendmailop
 08.sendmailop
 # ./usr/share/doc/smm/08.sendmailop
-..
-
-# ./usr/share/doc/smm/09.sendmail
-09.sendmail
-# ./usr/share/doc/smm/09.sendmail
-..
-
-# ./usr/share/doc/smm/11.timedop
-11.timedop
-# ./usr/share/doc/smm/11.timedop
-..
-
-# ./usr/share/doc/smm/12.timed
-12.timed
-# ./usr/share/doc/smm/12.timed
-..
-
-# ./usr/share/doc/smm/13.amd
-13.amd
-# ./usr/share/doc/smm/13.amd
-..
-
-# ./usr/share/doc/smm/14.uucpimpl
-14.uucpimpl
-# ./usr/share/doc/smm/14.uucpimpl
-..
-
-# ./usr/share/doc/smm/15.uucpnet
-15.uucpnet
-# ./usr/share/doc/smm/15.uucpnet
-..
-
-# ./usr/share/doc/smm/16.security
-16.security
-# ./usr/share/doc/smm/16.security
-..
-
-# ./usr/share/doc/smm/17.password
-17.password
-# ./usr/share/doc/smm/17.password
-..
-
-# ./usr/share/doc/smm/18.net
-18.net
-# ./usr/share/doc/smm/18.net
 ..
 
 # ./usr/share/doc/smm
@@ -853,54 +688,9 @@ smm
 # ./usr/share/doc/usd
 usd
 
-# ./usr/share/doc/usd/01.begin
-01.begin
-# ./usr/share/doc/usd/01.begin
-..
-
-# ./usr/share/doc/usd/02.learn
-02.learn
-# ./usr/share/doc/usd/02.learn
-..
-
-# ./usr/share/doc/usd/03.shell
-03.shell
-# ./usr/share/doc/usd/03.shell
-..
-
-# ./usr/share/doc/usd/04.csh
-04.csh
-# ./usr/share/doc/usd/04.csh
-..
-
-# ./usr/share/doc/usd/05.dc
-05.dc
-# ./usr/share/doc/usd/05.dc
-..
-
 # ./usr/share/doc/usd/06.bc
 06.bc
 # ./usr/share/doc/usd/06.bc
-..
-
-# ./usr/share/doc/usd/07.mail
-07.mail
-# ./usr/share/doc/usd/07.mail
-..
-
-# ./usr/share/doc/usd/08.mh
-08.mh
-# ./usr/share/doc/usd/08.mh
-..
-
-# ./usr/share/doc/usd/09.edtut
-09.edtut
-# ./usr/share/doc/usd/09.edtut
-..
-
-# ./usr/share/doc/usd/10.edadv
-10.edadv
-# ./usr/share/doc/usd/10.edadv
 ..
 
 # ./usr/share/doc/usd/11.edit
@@ -921,91 +711,6 @@ usd
 # ./usr/share/doc/usd/13.ex
 13.ex
 # ./usr/share/doc/usd/13.ex
-..
-
-# ./usr/share/doc/usd/14.jove
-14.jove
-# ./usr/share/doc/usd/14.jove
-..
-
-# ./usr/share/doc/usd/15.sed
-15.sed
-# ./usr/share/doc/usd/15.sed
-..
-
-# ./usr/share/doc/usd/16.awk
-16.awk
-# ./usr/share/doc/usd/16.awk
-..
-
-# ./usr/share/doc/usd/17.msmacros
-17.msmacros
-# ./usr/share/doc/usd/17.msmacros
-..
-
-# ./usr/share/doc/usd/18.msdiffs
-18.msdiffs
-# ./usr/share/doc/usd/18.msdiffs
-..
-
-# ./usr/share/doc/usd/19.memacros
-19.memacros
-# ./usr/share/doc/usd/19.memacros
-..
-
-# ./usr/share/doc/usd/20.meref
-20.meref
-# ./usr/share/doc/usd/20.meref
-..
-
-# ./usr/share/doc/usd/21.troff
-21.troff
-# ./usr/share/doc/usd/21.troff
-..
-
-# ./usr/share/doc/usd/22.trofftut
-22.trofftut
-# ./usr/share/doc/usd/22.trofftut
-..
-
-# ./usr/share/doc/usd/23.eqn
-23.eqn
-# ./usr/share/doc/usd/23.eqn
-..
-
-# ./usr/share/doc/usd/24.eqnguide
-24.eqnguide
-# ./usr/share/doc/usd/24.eqnguide
-..
-
-# ./usr/share/doc/usd/25.tbl
-25.tbl
-# ./usr/share/doc/usd/25.tbl
-..
-
-# ./usr/share/doc/usd/26.refer
-26.refer
-# ./usr/share/doc/usd/26.refer
-..
-
-# ./usr/share/doc/usd/27.invert
-27.invert
-# ./usr/share/doc/usd/27.invert
-..
-
-# ./usr/share/doc/usd/28.bib
-28.bib
-# ./usr/share/doc/usd/28.bib
-..
-
-# ./usr/share/doc/usd/29.diction
-29.diction
-# ./usr/share/doc/usd/29.diction
-..
-
-# ./usr/share/doc/usd/31.trek
-31.trek
-# ./usr/share/doc/usd/31.trek
 ..
 
 # ./usr/share/doc/usd

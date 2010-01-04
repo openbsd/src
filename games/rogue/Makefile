@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2004/01/21 19:12:13 espie Exp $
+#	$OpenBSD: Makefile,v 1.11 2010/01/04 17:50:38 deraadt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rogue
@@ -10,10 +10,6 @@ DPADD=	${LIBCURSES}
 LDADD=	-lcurses
 MAN=	rogue.6
 BINMODE=2555
-
-.if make(install)
-SUBDIR+= USD.doc
-.endif
 
 beforeinstall: 
 	@if [ ! -f ${DESTDIR}/var/games/rogue.scores ]; then \

@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.usr,v 1.22 2004/08/06 21:49:10 pefo Exp $
+#	$OpenBSD: 4.4BSD.usr,v 1.23 2010/01/04 17:50:38 deraadt Exp $
 #	$NetBSD: 4.4BSD.usr,v 1.3 1996/05/12 23:30:37 thorpej Exp $
 #
 #	   user: bostic
@@ -116,13 +116,6 @@ term            type=dir uname=root gname=wheel mode=0755
 ..
 
 
-# ./contrib/lib/jove
-/set type=file gname=wheel uname=root mode=0755
-jove            type=dir
-# ./contrib/lib/jove
-..
-
-
 # ./contrib/lib/perl
 /set type=file gname=obin uname=root mode=0644
 perl            type=dir mode=0755
@@ -190,49 +183,6 @@ cat8            type=dir gname=wheel mode=0755
 ..
 
 # ./contrib/man
-..
-
-
-# ./contrib/mh-6.8
-/set type=file gname=wheel uname=root mode=0755
-mh-6.8          type=dir
-
-# ./contrib/mh-6.8/bin
-/set type=file gname=wheel uname=root mode=0755
-bin             type=dir
-# ./contrib/mh-6.8/bin
-..
-
-
-# ./contrib/mh-6.8/lib
-/set type=file gname=wheel uname=root mode=0644
-lib             type=dir mode=0755
-# ./contrib/mh-6.8/lib
-..
-
-# ./contrib/mh-6.8
-..
-
-
-# ./contrib/news
-/set type=file gname=news uname=news mode=0775
-news            type=dir
-
-# ./contrib/news/bin
-bin             type=dir
-# ./contrib/news/bin
-..
-
-# ./contrib/news
-..
-
-
-# ./contrib/rnews
-rnews           type=dir
-# ./contrib/rnews
-..
-
-# ./contrib
 ..
 
 
@@ -727,99 +677,10 @@ curses		type=dir uname=root gname=wheel mode=0755
 /set type=file gname=wheel uname=root mode=0775
 psd             type=dir
 
-# ./share/doc/psd/01.cacm
-/set type=file gname=bin uname=root mode=0444
-01.cacm         type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/01.cacm
-..
-
-
-# ./share/doc/psd/02.implement
-/set type=file gname=bin uname=root mode=0444
-02.implement    type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/02.implement
-..
-
-
-# ./share/doc/psd/03.iosys
-/set type=file gname=bin uname=root mode=0444
-03.iosys        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/03.iosys
-..
-
-
-# ./share/doc/psd/04.uprog
-/set type=file gname=bin uname=root mode=0444
-04.uprog        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/04.uprog
-..
-
-
-# ./share/doc/psd/05.sysman
-/set type=file gname=bin uname=root mode=0444
-05.sysman       type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/05.sysman
-..
-
-
-# ./share/doc/psd/06.Clang
-/set type=file gname=bin uname=root mode=0444
-06.Clang        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/06.Clang
-..
-
-
-# ./share/doc/psd/07.pascal
-/set type=file gname=bin uname=root mode=0444
-07.pascal       type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/07.pascal
-..
-
-
-# ./share/doc/psd/08.f77
-/set type=file gname=bin uname=root mode=0444
-08.f77          type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/08.f77
-..
-
-
-# ./share/doc/psd/09.f77io
-/set type=file gname=bin uname=root mode=0444
-09.f77io        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/09.f77io
-..
-
-
-# ./share/doc/psd/10.gdb
-10.gdb          type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/10.gdb
-..
-
-
-# ./share/doc/psd/11.adb
-/set type=file gname=bin uname=root mode=0444
-11.adb          type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/11.adb
-..
-
-
 # ./share/doc/psd/12.make
 /set type=file gname=bin uname=root mode=0444
 12.make         type=dir uname=root gname=wheel mode=0775
 # ./share/doc/psd/12.make
-..
-
-
-# ./share/doc/psd/13.rcs
-13.rcs          type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/13.rcs
-..
-
-
-# ./share/doc/psd/14.sccs
-/set type=file gname=bin uname=root mode=0444
-14.sccs         type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/14.sccs
 ..
 
 
@@ -837,39 +698,12 @@ psd             type=dir
 ..
 
 
-# ./share/doc/psd/17.m4
-/set type=file gname=bin uname=root mode=0444
-17.m4           type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/17.m4
-..
-
-
 # ./share/doc/psd/18.gprof
 /set type=file gname=bin uname=root mode=0444
 18.gprof        type=dir uname=root gname=wheel mode=0775
 # ./share/doc/psd/18.gprof
 ..
 
-
-# ./share/doc/psd/19.curses
-/set type=file gname=bin uname=root mode=0444
-19.curses       type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/19.curses
-..
-
-
-# ./share/doc/psd/20.ipctut
-/set type=file gname=bin uname=root mode=0444
-20.ipctut       type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/20.ipctut
-..
-
-
-# ./share/doc/psd/21.ipc
-/set type=file gname=bin uname=root mode=0444
-21.ipc          type=dir uname=root gname=wheel mode=0775
-# ./share/doc/psd/21.ipc
-..
 
 # ./share/doc/psd
 ..
@@ -949,13 +783,6 @@ vax             type=dir uname=root gname=wheel mode=0775
 ..
 
 
-# ./share/doc/smm/09.sendmail
-/set type=file gname=bin uname=root mode=0444
-09.sendmail     type=dir uname=root gname=wheel mode=0775
-# ./share/doc/smm/09.sendmail
-..
-
-
 # ./share/doc/smm/11.timedop
 /set type=file gname=bin uname=root mode=0444
 11.timedop      type=dir uname=root gname=wheel mode=0775
@@ -1018,27 +845,6 @@ vax             type=dir uname=root gname=wheel mode=0775
 /set type=file gname=wheel uname=root mode=0775
 usd             type=dir
 
-# ./share/doc/usd/01.begin
-/set type=file gname=bin uname=root mode=0444
-01.begin        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/01.begin
-..
-
-
-# ./share/doc/usd/02.learn
-/set type=file gname=bin uname=root mode=0444
-02.learn        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/02.learn
-..
-
-
-# ./share/doc/usd/03.shell
-/set type=file gname=bin uname=root mode=0444
-03.shell        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/03.shell
-..
-
-
 # ./share/doc/usd/04.csh
 /set type=file gname=bin uname=root mode=0444
 04.csh          type=dir uname=root gname=wheel mode=0775
@@ -1046,51 +852,10 @@ usd             type=dir
 ..
 
 
-# ./share/doc/usd/05.dc
-/set type=file gname=bin uname=root mode=0444
-05.dc           type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/05.dc
-..
-
-
 # ./share/doc/usd/06.bc
 /set type=file gname=bin uname=root mode=0444
 06.bc           type=dir uname=root gname=wheel mode=0775
 # ./share/doc/usd/06.bc
-..
-
-
-# ./share/doc/usd/07.mail
-/set type=file gname=bin uname=root mode=0444
-07.mail         type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/07.mail
-..
-
-
-# ./share/doc/usd/08.mh
-08.mh           type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/08.mh
-..
-
-
-# ./share/doc/usd/09.edtut
-/set type=file gname=bin uname=root mode=0444
-09.edtut        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/09.edtut
-..
-
-
-# ./share/doc/usd/10.edadv
-/set type=file gname=bin uname=root mode=0444
-10.edadv        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/10.edadv
-..
-
-
-# ./share/doc/usd/11.edit
-/set type=file gname=bin uname=root mode=0444
-11.edit         type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/11.edit
 ..
 
 
@@ -1105,13 +870,6 @@ usd             type=dir
 /set type=file gname=bin uname=root mode=0444
 13.ex           type=dir uname=root gname=wheel mode=0775
 # ./share/doc/usd/13.ex
-..
-
-
-# ./share/doc/usd/14.jove
-/set type=file gname=bin uname=root mode=0444
-14.jove         type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/14.jove
 ..
 
 
@@ -1219,12 +977,6 @@ usd             type=dir
 # ./share/doc/usd/29.diction
 ..
 
-
-# ./share/doc/usd/31.trek
-/set type=file gname=bin uname=root mode=0444
-31.trek         type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/31.trek
-..
 
 # ./share/doc/usd
 ..

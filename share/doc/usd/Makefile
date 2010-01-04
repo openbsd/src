@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2004/10/10 02:53:28 mickey Exp $
+#	$OpenBSD: Makefile,v 1.9 2010/01/04 17:50:39 deraadt Exp $
 
 # Missing or not installed:
 # 03.shell 08.mh 14.jove 21.troff 22.trofftut 23.eqn 24.eqnguide
@@ -6,7 +6,6 @@
 
 DOCDIR=	/usr/share/doc/usd
 FILES=	00.contents Makefile Title
-SUBDIR=	01.begin 17.msmacros 18.msdiffs 19.memacros 20.meref
 
 Title.ps: ${FILES}
 	groff Title > ${.TARGET}

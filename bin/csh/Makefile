@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2008/01/11 20:16:02 jmc Exp $
+#	$OpenBSD: Makefile,v 1.10 2010/01/04 17:50:36 deraadt Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -39,9 +39,5 @@ const.h: const.c
 	    sort >> $@
 
 .depend alloc.o: const.h error.h 
-
-.if make(install)
-SUBDIR+= USD.doc
-.endif
 
 .include <bsd.prog.mk>
