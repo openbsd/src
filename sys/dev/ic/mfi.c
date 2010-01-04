@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.97 2010/01/04 07:57:28 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.98 2010/01/04 08:04:43 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -177,7 +177,7 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	hdr->mfh_cmd_status = 0x0;
 	hdr->mfh_flags = 0x0;
 	ccb->ccb_state = MFI_CCB_FREE;
-	ccb->ccb_xs = NULL;
+	ccb->ccb_cookie = NULL;
 	ccb->ccb_flags = 0;
 	ccb->ccb_done = NULL;
 	ccb->ccb_direction = 0;
@@ -870,7 +870,7 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint64_t blockno,
 	io->mif_sense_addr_hi = 0;
 
 	ccb->ccb_done = mfi_scsi_xs_done;
-	ccb->ccb_xs = xs;
+	ccb->ccb_cookie = xs;
 	ccb->ccb_frame_size = MFI_IO_FRAME_SIZE;
 	ccb->ccb_sgl = &io->mif_sgl;
 	ccb->ccb_data = xs->data;
@@ -886,7 +886,7 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint64_t blockno,
 void
 mfi_scsi_xs_done(struct mfi_ccb *ccb)
 {
-	struct scsi_xfer	*xs = ccb->ccb_xs;
+	struct scsi_xfer	*xs = ccb->ccb_cookie;
 	struct mfi_softc	*sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
@@ -953,7 +953,7 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 	memcpy(pf->mpf_cdb, &xs->cmdstore, xs->cmdlen);
 
 	ccb->ccb_done = mfi_scsi_xs_done;
-	ccb->ccb_xs = xs;
+	ccb->ccb_cookie = xs;
 	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
 	ccb->ccb_sgl = &pf->mpf_sgl;
 

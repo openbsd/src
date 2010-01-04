@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.36 2010/01/04 07:57:28 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.37 2010/01/04 08:04:43 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -76,8 +76,7 @@ struct mfi_ccb {
 #define MFI_DATA_IN	1
 #define MFI_DATA_OUT	2
 
-	struct scsi_xfer	*ccb_xs;
-
+	void			*ccb_cookie;
 	void			(*ccb_done)(struct mfi_ccb *);
 
 	volatile enum {
