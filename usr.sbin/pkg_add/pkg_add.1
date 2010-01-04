@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.90 2010/01/01 11:49:55 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.91 2010/01/04 00:20:05 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 1 2010 $
+.Dd $Mdocdate: January 4 2010 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -297,7 +297,11 @@ as saved in
 Generally, use with
 .Li pkg_info \*(Gtfile ,
 to reproduce an installation from machine to machine.
+With
+.Fl z
+and
 .Fl l
+.Nm
 will try its best to reproduce the installation, even if the
 version numbers don't quite match and even if some packages cannot
 be found.
