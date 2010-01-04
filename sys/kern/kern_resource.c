@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.33 2008/05/22 17:04:59 thib Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.34 2010/01/04 02:48:56 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -231,8 +231,11 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 			return (error);
 	if (p->p_p->ps_limit->p_refcnt > 1 &&
 	    (p->p_p->ps_limit->p_lflags & PL_SHAREMOD) == 0) {
-		p->p_p->ps_limit->p_refcnt--;
-		p->p_p->ps_limit = limcopy(p->p_p->ps_limit);
+		struct plimit *l = p->p_p->ps_limit;
+
+		/* limcopy() can sleep, so copy before decrementing refcnt */
+		p->p_p->ps_limit = limcopy(l);
+		l->p_refcnt--;
 		alimp = &p->p_rlimit[which];
 	}
 
