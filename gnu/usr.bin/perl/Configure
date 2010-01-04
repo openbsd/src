@@ -23,7 +23,7 @@
 # See Porting/pumpkin.pod for more information on metaconfig.
 #
 
-# $Id: Configure,v 1.20 2009/10/12 18:24:20 millert Exp $
+# $Id: Configure,v 1.21 2009/10/14 19:08:07 millert Exp $
 #
 # Generated on Tue Aug 18 19:22:01 CEST 2009 [metaconfig 3.5 PL0]
 # (with additional metaconfig patches by perlbug@perl.org)
@@ -21884,6 +21884,8 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
+	CVS|RCS|SCCS|.svn)
+		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"
 		;;
 	esac
