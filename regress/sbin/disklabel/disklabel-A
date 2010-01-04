@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+D="\
+  18000\
+    256\
+    400\
+    800\
+   1000\
+   1024\
+   2000\
+   2200\
+   2300\
+   3000\
+   3500\
+   4000\
+   4100\
+   5000\
+   6000\
+   7000\
+   8000\
+   9000\
+  90000\
+  12000\
+  20000\
+  40000\
+ 300000\
+ 900000\
+"
+
+for i in $D; do
+	vnconfig -u svnd0 > /dev/null 2>&1
+	echo "${i}MB disk"
+	rm -f /tmp/image f
+	dd if=/dev/zero of=/tmp/image bs=1m count=1 seek=${i} > /dev/null 2>&1
+	ls -lh /tmp/image
+	vnconfig svnd0 /tmp/image
+	fdisk -iy svnd0 > /dev/null
+	(disklabel -A -p g svnd0; \
+	 disklabel -Aw -f f svnd0; \
+	 disklabel svnd0) | grep '^  [a-p]: ' \
+	    | egrep -v "unused" | sort; cat f
+	vnconfig -u svnd0 > /dev/null 2>&1
+	read
+done
+vnconfig -u svnd0 > /dev/null 2>&1
