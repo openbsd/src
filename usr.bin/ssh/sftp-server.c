@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.88 2009/10/17 12:10:39 sobrado Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.89 2010/01/04 02:25:15 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -1368,8 +1368,8 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 	logit("session opened for local user %s from [%s]",
 	    pw->pw_name, client_addr);
 
-	in = dup(STDIN_FILENO);
-	out = dup(STDOUT_FILENO);
+	in = STDIN_FILENO;
+	out = STDOUT_FILENO;
 
 	max = 0;
 	if (in > max)
