@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.40 2009/11/22 14:14:10 krw Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.41 2010/01/04 02:23:10 krw Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -301,20 +301,24 @@ ispcmd(XS_T *xs)
 
 	timeout_set(&xs->stimeout, isp_wdog, xs);
 
+	ISP_LOCK(isp);
+
 	if (XS_LUN(xs) >= isp->isp_maxluns) {
 		xs->error = XS_SELTIMEOUT;
+		scsi_done(xs);
+		ISP_UNLOCK(isp);
 		return (COMPLETE);
 	}
 
-	ISP_LOCK(isp);
 	if (isp->isp_state < ISP_RUNSTATE) {
 		ISP_DISABLE_INTS(isp);
 		isp_init(isp);
 		if (isp->isp_state != ISP_INITSTATE) {
 			ISP_ENABLE_INTS(isp);
-			ISP_UNLOCK(isp);
 			XS_SETERR(xs, HBA_BOTCH);
-			return (CMD_COMPLETE);
+			scsi_done(xs);
+			ISP_UNLOCK(isp);
+			return (COMPLETE);
 		}
 		isp->isp_state = ISP_RUNSTATE;
 		ISP_ENABLE_INTS(isp);
@@ -402,9 +406,9 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 		result = NO_CCB;
 		break;
 	case CMD_COMPLETE:
+		scsi_done(xs);
 		result = COMPLETE;
 		break;
-		
 	}
 
 	if (result != SUCCESSFULLY_QUEUED) {
@@ -442,8 +446,8 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 			XS_SETERR(xs, HBA_BOTCH);
 		}
 	}
-	result = COMPLETE;
-	return (result);
+
+	return (COMPLETE);
 }
 
 void
