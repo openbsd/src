@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.459 2010/01/02 16:51:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.460 2010/01/04 00:10:52 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -713,8 +713,7 @@ sub install_set
 
 	for my $handle ($set->newer) {
 		if ($state->tracker->is_installed($handle->pkgname)) {
-			$set->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
-			return ();
+			$set->move_kept($handle);
 		}
 	}
 
@@ -908,6 +907,8 @@ sub do_quirks
 
 sub process_parameters
 {
+	my $add_hints = $opt_z ? "add_hints" : "add_hints2";
+
 	# match fuzzily against a list
 	if ($opt_l) {
 		open my $f, '<', $opt_l or die "$!: bad list $opt_l";
@@ -915,7 +916,7 @@ sub process_parameters
 		while (<$f>) {
 			chomp;
 			s/\s.*//;
-			push(@todo2, OpenBSD::UpdateSet->new->add_hints($_));
+			push(@todo2, OpenBSD::UpdateSet->new->$add_hints($_));
 		}
 	}
 
@@ -945,10 +946,10 @@ sub process_parameters
 	} else {
 
 	# actual names
-		my $m = $opt_z ? "add_hints" : "add_hints2";
 		for my $pkgname (@ARGV) {
 			next if $pkgname =~ m/^quirks\-\d/;
-			push(@todo2, OpenBSD::UpdateSet->new->$m($pkgname));
+			push(@todo2, 
+			    OpenBSD::UpdateSet->new->$add_hints($pkgname));
 		}
 	}
 }
