@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.79 2009/10/12 18:24:20 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.80 2010/01/05 13:46:39 millert Exp $
 #
 # Build wrapper for Perl 5.10.0
 #
@@ -65,7 +65,7 @@ GENERATED=	config.sh ${GEN_AFTER}
 
 ${GEN_AFTER}: config.sh
 
-CLEANFILES=	config.sh Policy.sh ${MANALL} ${PSALL} ${MANSRCALL} stamp-mansrc.build
+CLEANFILES=	config.sh Policy.sh DynaLoader.c ${MANALL} ${PSALL} ${MANSRCALL} stamp-mansrc.build
 
 all:	perl.build man.build
 

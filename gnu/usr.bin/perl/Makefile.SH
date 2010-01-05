@@ -1238,14 +1238,14 @@ _mopup:
 	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 	-rm -f perl$(EXE_EXT) suidperl$(EXE_EXT) miniperl$(EXE_EXT) $(LIBPERL) libperl.* microperl
 	-rm -f opcode.h-old opnames.h-old pp.sym-old pp_proto.h-old
-	-rm -f config.arch config.over $(DTRACE_H)
+	-rm -f $(DTRACE_H)
 
 # Do not 'make _tidy' directly.
 _tidy:
 	-cd pod; $(LDLIBPTH) $(MAKE) clean
 	-cd utils; $(LDLIBPTH) $(MAKE) clean
 	-cd x2p; $(LDLIBPTH) $(MAKE) clean
-	-rm -f lib/Config_git.pl git_version.h
+	-rm -f lib/Config_git.pl
 	-@for x in $(DYNALOADER) $(dynamic_ext) $(static_ext) $(nonxs_ext) ; do \
 	$(LDLIBPTH) $(RUN) ./miniperl$(EXE_EXT) -Ilib make_ext.pl --target=clean $$x MAKE=$(MAKE) ; \
 	done
