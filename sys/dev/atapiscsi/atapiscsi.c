@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.85 2010/01/05 00:16:30 dlg Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.86 2010/01/05 12:17:54 dlg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -327,7 +327,7 @@ wdc_atapi_send_cmd(sc_xfer)
  	struct channel_softc *chp = as->chp;
 	struct ata_drive_datas *drvp = &chp->ch_drive[as->drive];
 	struct wdc_xfer *xfer;
-	int s, ret = SUCCESSFULLY_QUEUED;;
+	int s, ret = SUCCESSFULLY_QUEUED;
 	int idx;
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d start\n",
