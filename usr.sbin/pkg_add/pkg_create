@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.129 2010/01/01 16:12:21 espie Exp $
+# $OpenBSD: pkg_create,v 1.130 2010/01/05 19:38:21 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -299,6 +299,17 @@ sub makesum_plist
 	}
 }
 
+package OpenBSD::PackingElement::Dependency;
+sub avert_duplicates_and_other_checks
+{
+	my ($self, $allfiles) = @_;
+	if (!$self->spec->is_valid) {
+		print STDERR "Error in packing-list: invalid dependency: $self->{pattern}\n";
+		$main::errors++;
+	}
+	$self->SUPER::avert_duplicates_and_other_checks($allfiles);
+}
+
 # put together file and filename, in order to handle fragments simply
 package MyFile;
 sub new
@@ -448,7 +459,7 @@ sub add_description
 	    }
 	    if (defined $comment) {
 		if ($subst->empty('MAINTAINER')) {
-			Warn "no MAINTAINER";
+			Warn "no MAINTAINER\n";
 		} else {
 			print $fh "\n", $subst->do('Maintainer: ${MAINTAINER}'), "\n";
 		}
@@ -625,7 +636,7 @@ if ($regen_package) {
 		OpenBSD::PackingElement::ExtraInfo->add($plist, 
 		    $fullpkgpath, $cdrom, $ftp);
 	} else {
-		Warn "Package without FULLPKGPATH";
+		Warn "Package without FULLPKGPATH\n";
 	}
 	for my $contentsfile (@contents) {
 		read_fragments($plist, $contentsfile) or 
