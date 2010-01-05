@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.20 2010/01/05 11:31:07 espie Exp $
+# $OpenBSD: Search.pm,v 1.21 2010/01/05 12:20:47 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,6 +66,12 @@ sub add_pkgpath_hint
 
 sub spec_class
 { "OpenBSD::PkgSpec" }
+
+sub is_valid
+{
+	my $self = shift;
+	return $self->{spec}->is_valid;
+}
 
 package OpenBSD::Search::Exact;
 our @ISA=(qw(OpenBSD::Search::PkgSpec));

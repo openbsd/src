@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.25 2009/12/30 19:04:06 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.26 2010/01/05 12:20:47 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,6 +84,27 @@ sub match
 	return $$self->match($name->{version});
 }
 
+package OpenBSD::PkgSpec::badspec;
+sub new
+{
+	my $class = shift;
+	bless {}, $class;
+}
+
+sub match_ref
+{
+	return ();
+}
+
+sub match_locations
+{
+	return ();
+}
+
+sub is_valid
+{
+	return 0;
+}
 
 package OpenBSD::PkgSpec::SubPattern;
 use OpenBSD::PackageName;
@@ -143,22 +164,25 @@ sub parse
 {
 	my ($class, $p) = @_;
 
+	my $r = {};
+
 	if (defined $exception->{$p}) {
 		$p = $exception->{$p};
+		$r->{e} = 1;
 	}
 
 	# let's try really hard to find the stem and the flavors
 	unless ($p =~ m/^(.*?)\-((?:(?:\>|\>\=|\<\=|\<|\=)?\d|\*)[^-]*)(.*)$/) {
-		die "Invalid spec $p";
+		return undef;
 	}
-	my ($stemspec, $vspec, $flavorspec) = ($1, $2, $3);
+	($r->{stemspec}, $r->{vspec}, $r->{flavorspec}) = ($1, $2, $3);
 
-	$stemspec =~ s/\./\\\./go;
-	$stemspec =~ s/\+/\\\+/go;
-	$stemspec =~ s/\*/\.\*/go;
-	$stemspec =~ s/\?/\./go;
-	$stemspec =~ s/^(\\\.libs)\-/$1\\d*\-/go;
-	return ($stemspec, $vspec, $flavorspec);
+	$r->{stemspec} =~ s/\./\\\./go;
+	$r->{stemspec} =~ s/\+/\\\+/go;
+	$r->{stemspec} =~ s/\*/\.\*/go;
+	$r->{stemspec} =~ s/\?/\./go;
+	$r->{stemspec} =~ s/^(\\\.libs)\-/$1\\d*\-/go;
+	return $r;
 }
 
 sub add_version_constraints
@@ -192,16 +216,25 @@ sub new
 {
 	my ($class, $p) = @_;
 
-	my ($stemspec, $vspec, $flavorspec) = $class->parse($p);
-	my $constraints = [];
-	$class->add_version_constraints($constraints, $vspec);
-	$class->add_flavor_constraints($constraints, $flavorspec);
+	my $r = $class->parse($p);
+	if (defined $r) {
+		my $stemspec = $r->{stemspec};
+		my $constraints = [];
+		$class->add_version_constraints($constraints, $r->{vspec});
+		$class->add_flavor_constraints($constraints, $r->{flavorspec});
 
-	bless { 
-	    exactstem => qr{^$stemspec$}, 
-	    fuzzystem => qr{^$stemspec\-\d.*$}, 
-	    constraints => $constraints, 
-	}, $class;
+		my $o = bless { 
+			exactstem => qr{^$stemspec$}, 
+			fuzzystem => qr{^$stemspec\-\d.*$}, 
+			constraints => $constraints, 
+		    }, $class;
+		if (defined $r->{e}) {
+			$o->{e} = 1;
+		}
+	   	return $o;
+	} else {
+		return OpenBSD::PkgSpec::badspec->new;
+	}
 }
 
 sub match_ref
@@ -240,6 +273,11 @@ LOOP2:
 	return $result;
 }
 
+sub is_valid
+{
+	return !defined shift->{e};
+}
+
 package OpenBSD::PkgSpec;
 sub subpattern_class
 { "OpenBSD::PkgSpec::SubPattern" }
@@ -273,6 +311,15 @@ sub match_locations
 		push(@$l, @{$subpattern->match_locations($r)});
 	}
 	return $l;
+}
+
+sub is_valid
+{
+	my $self = @_;
+	for my $subpattern (@$self) {
+		return 0 unless $subpattern->is_valid;
+	}
+	return 1;
 }
 
 package OpenBSD::PkgSpec::SubPattern::Exact;
