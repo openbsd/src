@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.279 2009/12/31 15:34:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.280 2010/01/05 08:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -619,6 +619,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					nconf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 			}
 			memcpy(conf, nconf, sizeof(struct bgpd_config));
+			conf->listen_addrs = NULL;
+			conf->csock = NULL;
+			conf->rcsock = NULL;
 			free(nconf);
 			nconf = NULL;
 			parent_set = NULL;

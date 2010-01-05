@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.303 2009/12/31 15:34:02 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.304 2010/01/05 08:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2360,10 +2360,16 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				fatalx("reconf request not from parent");
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
-			conf->as = nconf->as;
-			conf->holdtime = nconf->holdtime;
+			conf->flags = nconf->flags;
+			conf->log = nconf->log;
+			conf->rtableid = nconf->rtableid;
 			conf->bgpid = nconf->bgpid;
+			conf->clusterid = nconf->clusterid;
+			conf->as = nconf->as;
+			conf->short_as = nconf->short_as;
+			conf->holdtime = nconf->holdtime;
 			conf->min_holdtime = nconf->min_holdtime;
+			conf->connectretry = nconf->connectretry;
 
 			/* add new peers */
 			for (p = npeers; p != NULL; p = next) {
