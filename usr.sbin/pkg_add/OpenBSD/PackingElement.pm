@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.169 2010/01/05 11:31:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.170 2010/01/05 17:53:23 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -901,6 +901,7 @@ sub category() { "conflict" }
 
 package OpenBSD::PackingElement::Dependency;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
+use OpenBSD::Error;
 
 sub keyword() { "depend" }
 __PACKAGE__->register_with_factory;
