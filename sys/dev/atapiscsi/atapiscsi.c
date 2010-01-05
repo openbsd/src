@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.84 2009/11/27 09:18:01 sobrado Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.85 2010/01/05 00:16:30 dlg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -327,7 +327,7 @@ wdc_atapi_send_cmd(sc_xfer)
  	struct channel_softc *chp = as->chp;
 	struct ata_drive_datas *drvp = &chp->ch_drive[as->drive];
 	struct wdc_xfer *xfer;
-	int s, ret;
+	int s, ret = SUCCESSFULLY_QUEUED;;
 	int idx;
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d start\n",
@@ -425,12 +425,14 @@ wdc_atapi_send_cmd(sc_xfer)
 	}
 
 	wdc_exec_xfer(chp, xfer);
+	if (xfer->c_flags & C_POLL) {
 #ifdef DIAGNOSTIC
-	if ((xfer->c_flags & C_POLL) != 0 &&
-	    (sc_xfer->flags & ITSDONE) == 0)
-		panic("wdc_atapi_send_cmd: polled command not done");
+		if ((sc_xfer->flags & ITSDONE) == 0)
+			panic("wdc_atapi_send_cmd: polled command not done");
 #endif
-	ret = (sc_xfer->flags & ITSDONE) ? COMPLETE : SUCCESSFULLY_QUEUED;
+		scsi_done(sc_xfer);
+		ret = COMPLETE;
+	}
 	splx(s);
 	return (ret);
 }
