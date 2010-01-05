@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.19 2009/11/15 09:53:52 espie Exp $
+# $OpenBSD: Error.pm,v 1.20 2010/01/05 11:16:08 espie Exp $
 #
-# Copyright (c) 2004 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,22 @@
 
 use strict;
 use warnings;
+
+package OpenBSD::Auto;
+sub cache(*&)
+{
+	my ($sym, $code) = @_;
+	my $callpkg = caller;
+	my $actual = sub {
+		my $self = shift;
+		if (!defined $self->{$sym}) {
+			$self->{$sym} = &$code($self);
+		}
+		return $self->{$sym};
+	};
+	no strict 'refs';
+	*{$callpkg."::$sym"} = $actual;
+}
 
 package OpenBSD::Error;
 require Exporter;
