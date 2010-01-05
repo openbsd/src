@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.19 2009/12/27 00:22:44 espie Exp $
+# $OpenBSD: Search.pm,v 1.20 2010/01/05 11:31:07 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -61,6 +61,7 @@ sub add_pkgpath_hint
 {
 	my ($self, $pkgpath) = @_;
 	$self->{pkgpath} = $pkgpath;
+	return $self;
 }
 
 sub spec_class
