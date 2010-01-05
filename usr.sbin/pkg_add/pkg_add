@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.462 2010/01/05 11:42:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.463 2010/01/05 12:01:07 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -104,25 +104,17 @@ sub set_name_from_handle
 	$state->log->set_context($extra.$h->pkgname);
 }
 
-sub updater
-{
-	my $state = shift;
-	if (!defined $state->{updater}) {
-		require OpenBSD::Update;
-		$state->{updater} = OpenBSD::Update->new;
-	}
-	return $state->{updater};
-}
+OpenBSD::Auto::cache(updater,
+    sub {
+	require OpenBSD::Update;
+	return OpenBSD::Update->new;
+    });
 
-sub tracker
-{
-	my $state = shift;
-	if (!defined $state->{tracker}) {
-		require OpenBSD::Tracker;
-		$state->{tracker} = OpenBSD::Tracker->new;
-	}
-	return $state->{tracker};
-}
+OpenBSD::Auto::cache(tracker,
+    sub {
+	require OpenBSD::Tracker;
+	return OpenBSD::Tracker->new;
+    });
 
 sub quirks
 {
@@ -168,12 +160,12 @@ use OpenBSD::Error;
 
 OpenBSD::Auto::cache(solver,
     sub {
-	    return OpenBSD::Dependencies::Solver->new(shift);
+	return OpenBSD::Dependencies::Solver->new(shift);
     });
 
 OpenBSD::Auto::cache(conflict_cache,
     sub {
-	    return OpenBSD::ConflictCache->new;
+	return OpenBSD::ConflictCache->new;
     });
 
 sub setup_header
