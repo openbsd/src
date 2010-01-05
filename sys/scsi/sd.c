@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.174 2010/01/04 00:45:58 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.175 2010/01/05 01:21:34 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -782,9 +782,6 @@ sd_buf_done(struct scsi_xfer *xs)
 
 	splassert(IPL_BIO);
 
-	disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
-	    bp->b_flags & B_READ);
-
 	switch (xs->error) {
 	case XS_NOERROR:
 		bp->b_error = 0;
@@ -793,6 +790,8 @@ sd_buf_done(struct scsi_xfer *xs)
 
 	case XS_NO_CCB:
 		/* The adapter is busy, requeue the buf and try it later. */
+		disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
+		    bp->b_flags & B_READ);
 		sd_buf_requeue(sc, bp);
 		scsi_xs_put(xs);
 		SET(sc->flags, SDF_WAITING); /* break out of sdstart loop */
@@ -819,6 +818,9 @@ sd_buf_done(struct scsi_xfer *xs)
 		bp->b_resid = bp->b_bcount;
 		break;
 	}
+
+	disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
+	    bp->b_flags & B_READ);
 
 	biodone(bp);
 	scsi_xs_put(xs);
