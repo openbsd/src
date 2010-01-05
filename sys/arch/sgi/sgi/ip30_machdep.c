@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.28 2009/12/28 06:55:27 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.29 2010/01/05 06:44:58 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -67,6 +67,7 @@ paddr_t	ip30_widget_short(int16_t, u_int);
 paddr_t	ip30_widget_long(int16_t, u_int);
 paddr_t	ip30_widget_map(int16_t, u_int, bus_addr_t *, bus_size_t *);
 int	ip30_widget_id(int16_t, u_int, uint32_t *);
+static u_long ip30_get_ncpusfound(void);
 
 static	paddr_t ip30_iocbase;
 
@@ -185,6 +186,8 @@ ip30_setup()
 		hw_prod = "Octane";
 	else
 		hw_prod = "Octane2";
+
+	ncpusfound = ip30_get_ncpusfound();
 }
 
 /*
@@ -201,14 +204,12 @@ ip30_autoconf(struct device *parent)
 	maa.maa_name = "cpu";
 	config_found(parent, &maa, mbprint);
 
+#ifdef MULTIPROCESSOR
 	int cpuid;
 	for(cpuid = 1; cpuid < MAXCPUS; cpuid++)
-		if (ip30_cpu_exists(cpuid) == 0) {
-			ncpusfound++;
-#ifdef MULTIPROCESSOR
+		if (ip30_cpu_exists(cpuid))
 			config_found(parent, &maa, mbprint);
 #endif
-		}
 	maa.maa_name = "clock";
 	config_found(parent, &maa, mbprint);
 	maa.maa_name = "xbow";
@@ -310,10 +311,18 @@ ip30_cpu_exists(int cpuid)
 {
        uint32_t magic =
            *(volatile uint32_t *)(mpconf + MPCONF_MAGIC(cpuid));
-       if (magic == MPCONF_MAGIC_VAL)
-               return 0;
-       else
-               return 1;
+       return magic == MPCONF_MAGIC_VAL;
+}
+
+u_long
+ip30_get_ncpusfound(void)
+{
+	int i;
+	for (i = 1; i < MAXCPUS; i++)
+		if (!ip30_cpu_exists(i))
+			break;
+
+	return i;
 }
 
 #ifdef MULTIPROCESSOR

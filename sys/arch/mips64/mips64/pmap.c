@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 2009/12/30 01:17:59 syuu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.46 2010/01/05 06:44:58 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -133,15 +133,16 @@ int pmapdebug = PDB_ENTER|PDB_FOLLOW;
 
 #endif	/* PMAPDEBUG */
 
-
-struct pmap	kernel_pmap_store;
+static struct pmap	kernel_pmap_store
+	[(PMAP_SIZEOF(MAXCPUS) + sizeof(struct pmap) - 1)
+		/ sizeof(struct pmap)];
+struct pmap *const kernel_pmap_ptr = kernel_pmap_store;
 
 psize_t	mem_size;	/* memory size in bytes */
 vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
 vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
-u_int		tlbpid_gen[MAXCPUS];	/* TLB PID generation count */
-u_int		tlbpid_cnt[MAXCPUS];	/* next available TLB PID */
+static struct pmap_asid_info pmap_asid_info[MAXCPUS];
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
@@ -191,10 +192,11 @@ pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 		if (cpuset_isset(&cpus_running, ci)) {
 			unsigned int i = ci->ci_cpuid;
 			unsigned int m = 1 << i;
-			if (pmap->pm_tlbgen[i] != tlbpid_gen[i])
+			if (pmap->pm_asid[i].pma_asidgen !=
+			    pmap_asid_info[i].pma_asidgen)
 				continue;
 			else if (ci->ci_curpmap != pmap) {
-				pmap->pm_tlbgen[i] = 0;
+				pmap->pm_asid[i].pma_asidgen = 0;
 				continue;
 			}
 			cpumask |= m;
@@ -214,7 +216,7 @@ pmap_invalidate_user_page_action(void *arg)
 	unsigned int cpuid = cpu_number();
 	u_long asid;
 
-	asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+	asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
 	tlb_flush_addr(va | asid);
 }
 
@@ -263,10 +265,11 @@ pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 		if (cpuset_isset(&cpus_running, ci)) {
 			unsigned int i = ci->ci_cpuid;
 			unsigned int m = 1 << i;
-			if (pmap->pm_tlbgen[i] != tlbpid_gen[i])
+      		if (pmap->pm_asid[i].pma_asidgen != 
+			    pmap_asid_info[i].pma_asidgen)
 				continue;
 			else if (ci->ci_curpmap != pmap) {
-				pmap->pm_tlbgen[i] = 0;
+				pmap->pm_asid[i].pma_asidgen = 0;
 				continue;
 			}
 			cpumask |= m;
@@ -288,7 +291,7 @@ pmap_update_user_page_action(void *arg)
 	unsigned int cpuid = cpu_number();
 	u_long asid;
 
-	asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+	asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
 	tlb_update(va | asid, entry);
 }
 #else
@@ -302,9 +305,10 @@ static void
 pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 {
 	u_long cpuid = cpu_number();
-	u_long asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+	u_long asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
 
-	if (pmap->pm_tlbgen[cpuid] == tlbpid_gen[cpuid])
+	if (pmap->pm_asid[cpuid].pma_asidgen ==
+	    pmap_asid_info[cpuid].pma_asidgen)
 		tlb_flush_addr(va | asid);
 }
 
@@ -318,9 +322,10 @@ void
 pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 {
 	u_long cpuid = cpu_number();
-	u_long asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+	u_long asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
 
-	if (pmap->pm_tlbgen[cpuid] == tlbpid_gen[cpuid])
+	if (pmap->pm_asid[cpuid].pma_asidgen ==
+	    pmap_asid_info[cpuid].pma_asidgen)
 		tlb_update(va | asid, entry);
 }
 #endif
@@ -329,7 +334,7 @@ pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
  *	Bootstrap the system enough to run with virtual memory.
  */
 void
-pmap_bootstrap()
+pmap_bootstrap(void)
 {
 	u_int i;
 	pt_entry_t *spte;
@@ -351,7 +356,7 @@ pmap_bootstrap()
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,"pmappl", NULL);
+	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(ncpusfound), 0, 0, 0,"pmappl", NULL);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0,"pvpl", NULL);
 	pool_init(&pmap_pg_pool, PMAP_L2SIZE, PMAP_L2SIZE, 0, 0, "pmappgpl",
 	    &pmap_pg_allocator);
@@ -371,8 +376,8 @@ pmap_bootstrap()
 		*spte = PG_G;
 
 	for (i = 0; i < MAXCPUS; i++) {
-		tlbpid_gen[i] = 1;
-		tlbpid_cnt[i] = 2;
+		pmap_asid_info[i].pma_asidgen = 1;
+		pmap_asid_info[i].pma_asid = 2;
 	}
 }
 
@@ -496,15 +501,16 @@ extern struct user *proc0paddr;
 		 * The initial process has already been allocated a TLBPID
 		 * in mach_init().
 		 */
-		for (i = 0; i < MAXCPUS; i++) {
-			pmap->pm_tlbpid[i] = 1;
-			pmap->pm_tlbgen[i] = tlbpid_gen[i];
+		for (i = 0; i < ncpusfound; i++) {
+			pmap->pm_asid[i].pma_asid = 1;
+			pmap->pm_asid[i].pma_asidgen =
+				pmap_asid_info[i].pma_asidgen;
 		}
 		proc0paddr->u_pcb.pcb_segtab = pmap->pm_segtab;
 	} else {
-		for (i = 0; i < MAXCPUS; i++) {
-			pmap->pm_tlbpid[i] = 0;
-			pmap->pm_tlbgen[i] = 0;
+		for (i = 0; i < ncpusfound; i++) {
+			pmap->pm_asid[i].pma_asid = 0;
+			pmap->pm_asid[i].pma_asidgen = 0;
 		}
 	}
 
@@ -961,9 +967,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * MIPS pages in a OpenBSD page.
 	 */
 	npte |= vad_to_pfn(pa);
-	if (pmap->pm_tlbgen[cpuid] == tlbpid_gen[cpuid]) {
+	if (pmap->pm_asid[cpuid].pma_asidgen == 
+	    pmap_asid_info[cpuid].pma_asidgen) {
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x tlbpid %u\n",
-			npte, pmap->pm_tlbpid[cpuid]));
+			npte, pmap->pm_asid[cpuid].pma_asid));
 	} else {
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x\n", npte));
 	}
@@ -1381,20 +1388,22 @@ pmap_alloc_tlbpid(struct proc *p)
 	u_long cpuid = cpu_number();
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	if (pmap->pm_tlbgen[cpuid] != tlbpid_gen[cpuid]) {
-		id = tlbpid_cnt[cpuid];
+	if (pmap->pm_asid[cpuid].pma_asidgen != 
+	    pmap_asid_info[cpuid].pma_asidgen) {
+		id = pmap_asid_info[cpuid].pma_asid;
 		if (id >= VMNUM_PIDS) {
 			tlb_flush(sys_config.cpu[0].tlbsize);
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
-			if (++tlbpid_gen[cpuid] == 0)
-				tlbpid_gen[cpuid] = 1;
+			if (++pmap_asid_info[cpuid].pma_asidgen == 0)
+				pmap_asid_info[cpuid].pma_asidgen = 1;
 			id = 1;
 		}
-		tlbpid_cnt[cpuid] = id + 1;
-		pmap->pm_tlbpid[cpuid] = id;
-		pmap->pm_tlbgen[cpuid] = tlbpid_gen[cpuid];
+		pmap_asid_info[cpuid].pma_asid = id + 1;
+		pmap->pm_asid[cpuid].pma_asid = id;
+		pmap->pm_asid[cpuid].pma_asidgen = 
+			pmap_asid_info[cpuid].pma_asidgen;
 	} else {
-		id = pmap->pm_tlbpid[cpuid];
+		id = pmap->pm_asid[cpuid].pma_asid;
 	}
 
 	if (curproc) {

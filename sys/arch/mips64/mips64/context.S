@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.35 2009/12/28 06:55:27 syuu Exp $ */
+/*	$OpenBSD: context.S,v 1.36 2010/01/05 06:44:58 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -148,10 +148,10 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	PTR_L	t1, VMSPACE_PMAP(t0)		# ->vm_map.pmap
 #ifdef MULTIPROCESSOR
 	HW_CPU_NUMBER(v0)			# cpuid
-	PTR_SLL	v0, v0, 0x2
+	PTR_SLL	v0, v0, 0x3			# size of pmap_asid_info
 	PTR_ADDU t1, t1, v0
 #endif
-	lw	v0, PM_TLBPID(t1)		# ->pm_tlbpid[cpuid]
+	lw	v0, PM_ASID(t1)			# ->pm_asid[cpuid].pma_asid
 
 #if UPAGES > 1
 	or	v0, t3

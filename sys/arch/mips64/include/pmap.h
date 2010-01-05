@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.18 2009/12/30 01:17:59 syuu Exp $ */
+/*      $OpenBSD: pmap.h,v 1.19 2010/01/05 06:44:58 syuu Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -91,6 +91,11 @@ struct segtab {
 	pt_entry_t	*seg_tab[PMAP_SEGTABSIZE];
 };
 
+struct pmap_asid_info {
+	u_int			pma_asid;	/* address space tag */
+	u_int			pma_asidgen;	/* TLB PID generation number */
+};
+
 /*
  * Machine dependent pmap structure.
  */
@@ -98,10 +103,17 @@ typedef struct pmap {
 	int			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	u_int			pm_tlbpid[MAXCPUS];	/* address space tag */
-	u_int			pm_tlbgen[MAXCPUS];	/* TLB PID generation number */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
+	struct pmap_asid_info	pm_asid[1];	/* ASID information */
 } *pmap_t;
+
+/*
+ * Compute the sizeof of a pmap structure.  Subtract one because one
+ * ASID info structure is already included in the pmap structure itself.
+ */
+#define	PMAP_SIZEOF(x)							\
+	(ALIGN(sizeof(struct pmap) +					\
+	       (sizeof(struct pmap_asid_info) * ((x) - 1))))
 
 
 /* flags for pv_entry */
@@ -111,11 +123,11 @@ typedef struct pmap {
 #define	PV_ATTR_REF	PG_PMAP3
 #define	PV_PRESERVE	(PV_ATTR_MOD | PV_ATTR_REF)
 
-extern	struct pmap kernel_pmap_store;
+extern	struct pmap *const kernel_pmap_ptr;
 
 #define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define pmap_kernel()			(&kernel_pmap_store)
+#define pmap_kernel()			(kernel_pmap_ptr)
 #define	pmap_phys_address(ppn)		ptoa(ppn)
 
 #define	PMAP_STEAL_MEMORY		/* Enable 'stealing' during boot */

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2010/01/03 14:17:27 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2010/01/05 06:44:58 syuu Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -70,7 +70,7 @@ struct	vmspace
 member	VMSPACE_PMAP	vm_map.pmap
 
 struct	pmap
-member	pm_tlbpid
+member	PM_ASID pm_asid[0].pma_asid
 export	NPTEPG
 export	PMAP_SEGTABSIZE
 export	SEGSHIFT
