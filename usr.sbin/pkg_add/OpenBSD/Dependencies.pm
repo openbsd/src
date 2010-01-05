@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.119 2010/01/04 00:14:31 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.120 2010/01/05 11:30:19 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -71,7 +71,7 @@ sub dump
 	my $self = shift;
 
 	return unless %{$self->{done}};
-	print "Full dependency tree is ", join(',', keys %{$self->{done}}), 
+	print "Full dependency tree is ", join(' ', keys %{$self->{done}}), 
 	    "\n";
 }
 
@@ -604,9 +604,9 @@ sub dump
 	my $self = shift;
 	if ($self->dependencies) {
 	    print "Direct dependencies for ", $self->{set}->print, 
-	    	" resolve to: ", join(', ',  $self->dependencies);
+	    	" resolve to: ", join(' ',  $self->dependencies);
 	    print " (todo: ", 
-	    	join(',', (map {$_->print} values %{$self->{deplist}})), 
+	    	join(' ', (map {$_->print} values %{$self->{deplist}})), 
 		")" 
 	    	if %{$self->{deplist}};
 	    print "\n";
