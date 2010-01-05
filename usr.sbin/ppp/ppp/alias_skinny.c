@@ -27,7 +27,7 @@
  *
  * Author: Joe Marcus Clarke <marcus@FreeBSD.org>
  *
- * $OpenBSD: alias_skinny.c,v 1.1 2005/07/26 01:32:25 brad Exp $
+ * $OpenBSD: alias_skinny.c,v 1.2 2010/01/05 22:28:09 jasper Exp $
  */
 
 #include <stdio.h>
@@ -238,7 +238,7 @@ AliasHandleSkinny(struct ip *pip, struct alias_link *link)
    * the packet using len to determine message boundaries.  This comes
    * into play big time with port messages being in the same packet as
    * register messages.  Also, open receive channel acks are
-   * usually buried in a pakcet some 400 bytes long.
+   * usually buried in a packet some 400 bytes long.
    */
   while (dlen >= skinny_hdr_len) {
     len = (sd->len);

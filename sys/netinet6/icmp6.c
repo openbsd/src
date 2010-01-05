@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.108 2009/11/20 09:02:21 guenther Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.109 2010/01/05 22:28:09 jasper Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 	 * we should basically suppress sending an error (RFC 2463, Section
 	 * 2.4).
 	 * We have two exceptions (the item e.2 in that section):
-	 * - the Pakcet Too Big message can be sent for path MTU discovery.
+	 * - the Packet Too Big message can be sent for path MTU discovery.
 	 * - the Parameter Problem Message that can be allowed an icmp6 error
 	 *   in the option type field.  This check has been done in
 	 *   ip6_unknown_opt(), so we can just check the type and code.
