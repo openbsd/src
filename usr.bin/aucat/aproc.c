@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.40 2009/11/15 21:44:09 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.41 2010/01/05 10:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -157,7 +157,7 @@ aproc_depend(struct aproc *p, struct aproc *dep)
 }
 
 int
-rpipe_in(struct aproc *p, struct abuf *ibuf_dummy)
+rfile_in(struct aproc *p, struct abuf *ibuf_dummy)
 {
 	struct abuf *obuf = LIST_FIRST(&p->obuflist);
 	struct file *f = p->u.io.file;
@@ -177,7 +177,7 @@ rpipe_in(struct aproc *p, struct abuf *ibuf_dummy)
 }
 
 int
-rpipe_out(struct aproc *p, struct abuf *obuf)
+rfile_out(struct aproc *p, struct abuf *obuf)
 {
 	struct file *f = p->u.io.file;
 	unsigned char *data;
@@ -196,7 +196,7 @@ rpipe_out(struct aproc *p, struct abuf *obuf)
 }
 
 void
-rpipe_done(struct aproc *p)
+rfile_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
 	struct abuf *obuf;
@@ -219,43 +219,43 @@ rpipe_done(struct aproc *p)
 }
 
 void
-rpipe_eof(struct aproc *p, struct abuf *ibuf_dummy)
+rfile_eof(struct aproc *p, struct abuf *ibuf_dummy)
 {
 	aproc_del(p);
 }
 
 void
-rpipe_hup(struct aproc *p, struct abuf *obuf)
+rfile_hup(struct aproc *p, struct abuf *obuf)
 {
 	aproc_del(p);
 }
 
-struct aproc_ops rpipe_ops = {
+struct aproc_ops rfile_ops = {
 	"rpipe",
-	rpipe_in,
-	rpipe_out,
-	rpipe_eof,
-	rpipe_hup,
+	rfile_in,
+	rfile_out,
+	rfile_eof,
+	rfile_hup,
 	NULL, /* newin */
 	NULL, /* newout */
 	aproc_ipos,
 	aproc_opos,
-	rpipe_done
+	rfile_done
 };
 
 struct aproc *
-rpipe_new(struct file *f)
+rfile_new(struct file *f)
 {
 	struct aproc *p;
 
-	p = aproc_new(&rpipe_ops, f->name);
+	p = aproc_new(&rfile_ops, f->name);
 	p->u.io.file = f;
 	f->rproc = p;
 	return p;
 }
 
 void
-wpipe_done(struct aproc *p)
+wfile_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
 	struct abuf *ibuf;
@@ -278,7 +278,7 @@ wpipe_done(struct aproc *p)
 }
 
 int
-wpipe_in(struct aproc *p, struct abuf *ibuf)
+wfile_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct file *f = p->u.io.file;
 	unsigned char *data;
@@ -297,7 +297,7 @@ wpipe_in(struct aproc *p, struct abuf *ibuf)
 }
 
 int
-wpipe_out(struct aproc *p, struct abuf *obuf_dummy)
+wfile_out(struct aproc *p, struct abuf *obuf_dummy)
 {
 	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
 	struct file *f = p->u.io.file;
@@ -321,36 +321,36 @@ wpipe_out(struct aproc *p, struct abuf *obuf_dummy)
 }
 
 void
-wpipe_eof(struct aproc *p, struct abuf *ibuf)
+wfile_eof(struct aproc *p, struct abuf *ibuf)
 {
 	aproc_del(p);
 }
 
 void
-wpipe_hup(struct aproc *p, struct abuf *obuf_dummy)
+wfile_hup(struct aproc *p, struct abuf *obuf_dummy)
 {
 	aproc_del(p);
 }
 
-struct aproc_ops wpipe_ops = {
+struct aproc_ops wfile_ops = {
 	"wpipe",
-	wpipe_in,
-	wpipe_out,
-	wpipe_eof,
-	wpipe_hup,
+	wfile_in,
+	wfile_out,
+	wfile_eof,
+	wfile_hup,
 	NULL, /* newin */
 	NULL, /* newout */
 	aproc_ipos,
 	aproc_opos,
-	wpipe_done
+	wfile_done
 };
 
 struct aproc *
-wpipe_new(struct file *f)
+wfile_new(struct file *f)
 {
 	struct aproc *p;
 
-	p = aproc_new(&wpipe_ops, f->name);
+	p = aproc_new(&wfile_ops, f->name);
 	p->u.io.file = f;
 	f->wproc = p;
 	return p;

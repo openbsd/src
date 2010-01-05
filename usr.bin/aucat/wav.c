@@ -15,8 +15,14 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 
+#include "abuf.h"
+#include "aproc.h"
 #include "conf.h"
+#include "dev.h"
 #include "wav.h"
 
 short wav_ulawmap[256] = {
@@ -109,33 +115,287 @@ struct fileops wav_ops = {
 	pipe_revents
 };
 
-struct wav *
-wav_new_in(struct fileops *ops, int fd, char *name,
-    struct aparams *par, unsigned hdr)
-{
-	struct wav *f;
+int rwav_in(struct aproc *, struct abuf *);
+int rwav_out(struct aproc *, struct abuf *);
+void rwav_eof(struct aproc *, struct abuf *);
+void rwav_hup(struct aproc *, struct abuf *);
+void rwav_done(struct aproc *);
 
+int wwav_in(struct aproc *, struct abuf *);
+int wwav_out(struct aproc *, struct abuf *);
+void wwav_eof(struct aproc *, struct abuf *);
+void wwav_hup(struct aproc *, struct abuf *);
+void wwav_done(struct aproc *);
+
+struct aproc_ops rwav_ops = {
+	"rwav",
+	rwav_in,
+	rwav_out,
+	rwav_eof,
+	rwav_hup,
+	NULL, /* newin */
+	NULL, /* newout */
+	NULL, /* ipos */
+	NULL, /* opos */
+	rwav_done
+};
+
+struct aproc_ops wwav_ops = {
+	"wwav",
+	wwav_in,
+	wwav_out,
+	wwav_eof,
+	wwav_hup,
+	NULL, /* newin */
+	NULL, /* newout */
+	NULL, /* ipos */
+	NULL, /* opos */
+	wwav_done
+};
+
+struct aproc *
+rwav_new(struct file *f)
+{
+	struct aproc *p;
+
+	p = aproc_new(&rwav_ops, f->name);
+	p->u.io.file = f;
+	f->rproc = p;
+	return p;
+}
+
+int
+rwav_in(struct aproc *p, struct abuf *ibuf_dummy)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct file *f = p->u.io.file;
+	unsigned char *data;
+	unsigned count;
+
+	if (ABUF_FULL(obuf) || !(f->state & FILE_ROK))
+		return 0;
+	data = abuf_wgetblk(obuf, &count, 0);
+	count = file_read(f, data, count);
+	if (count == 0)
+		return 0;
+	abuf_wcommit(obuf, count);
+	if (!abuf_flush(obuf))
+		return 0;
+	return 1;
+}
+
+int
+rwav_out(struct aproc *p, struct abuf *obuf)
+{
+	struct file *f = p->u.io.file;
+	unsigned char *data;
+	unsigned count;
+
+	if (f->state & FILE_RINUSE)
+		return 0;
+	if (ABUF_FULL(obuf) || !(f->state & FILE_ROK))
+		return 0;
+	data = abuf_wgetblk(obuf, &count, 0);
+	count = file_read(f, data, count);
+	if (count == 0)
+		return 0;
+	abuf_wcommit(obuf, count);
+	return 1;
+}
+
+void
+rwav_done(struct aproc *p)
+{
+	struct file *f = p->u.io.file;
+	struct abuf *obuf;
+
+	if (f == NULL)
+		return;
+	/*
+	 * all buffers must be detached before deleting f->wproc,
+	 * because otherwise it could trigger this code again
+	 */
+	obuf = LIST_FIRST(&p->obuflist);
+	if (obuf)
+		abuf_eof(obuf);
+	if (f->wproc) {
+		f->rproc = NULL;
+		aproc_del(f->wproc);
+	} else
+		file_del(f);
+	p->u.io.file = NULL;
+}
+
+void
+rwav_eof(struct aproc *p, struct abuf *ibuf_dummy)
+{
+	aproc_del(p);
+}
+
+void
+rwav_hup(struct aproc *p, struct abuf *obuf)
+{
+	aproc_del(p);
+}
+
+struct aproc *
+wwav_new(struct file *f)
+{
+	struct aproc *p;
+
+	p = aproc_new(&wwav_ops, f->name);
+	p->u.io.file = f;
+	f->wproc = p;
+	return p;
+}
+
+void
+wwav_done(struct aproc *p)
+{
+	struct file *f = p->u.io.file;
+	struct abuf *ibuf;
+
+	if (f == NULL)
+		return;
+	/*
+	 * all buffers must be detached before deleting f->rproc,
+	 * because otherwise it could trigger this code again
+	 */
+	ibuf = LIST_FIRST(&p->ibuflist);
+	if (ibuf)
+		abuf_hup(ibuf);
+	if (f->rproc) {
+		f->wproc = NULL;
+		aproc_del(f->rproc);
+	} else
+		file_del(f);
+	p->u.io.file = NULL;
+}
+
+int
+wwav_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct file *f = p->u.io.file;
+	unsigned char *data;
+	unsigned count;
+
+	if (f->state & FILE_WINUSE)
+		return 0;
+	if (ABUF_EMPTY(ibuf) || !(f->state & FILE_WOK))
+		return 0;
+	data = abuf_rgetblk(ibuf, &count, 0);
+	count = file_write(f, data, count);
+	if (count == 0)
+		return 0;
+	abuf_rdiscard(ibuf, count);
+	return 1;
+}
+
+int
+wwav_out(struct aproc *p, struct abuf *obuf_dummy)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct file *f = p->u.io.file;
+	unsigned char *data;
+	unsigned count;
+
+	if (!abuf_fill(ibuf))
+		return 0;
+	if (ABUF_EMPTY(ibuf) || !(f->state & FILE_WOK))
+		return 0;
+	data = abuf_rgetblk(ibuf, &count, 0);
+	if (count == 0) {
+		/* XXX: this can't happen, right ? */
+		return 0;
+	}
+	count = file_write(f, data, count);
+	if (count == 0)
+		return 0;
+	abuf_rdiscard(ibuf, count);
+	return 1;
+}
+
+void
+wwav_eof(struct aproc *p, struct abuf *ibuf)
+{
+	aproc_del(p);
+}
+
+void
+wwav_hup(struct aproc *p, struct abuf *obuf_dummy)
+{
+	aproc_del(p);
+}
+
+struct wav *
+wav_new_in(struct fileops *ops, char *name, unsigned hdr, 
+    struct aparams *par, unsigned xrun, unsigned volctl)
+{
+	int fd;
+	struct wav *f;
+	struct aproc *p;
+	struct abuf *buf;
+	unsigned nfr;
+
+	if (name != NULL) {
+		fd = open(name, O_RDONLY | O_NONBLOCK, 0666);
+		if (fd < 0) {
+			perror(name);
+			return NULL;
+		}
+	} else {
+		name = "stdin";
+		fd = STDIN_FILENO;
+		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+			perror(name);
+	}
 	f = (struct wav *)pipe_new(ops, fd, name);
 	if (f == NULL)
 		return NULL;
 	if (hdr == HDR_WAV) {
-		if (!wav_readhdr(f->pipe.fd, par, &f->rbytes, &f->map))
-			exit(1);
+		if (!wav_readhdr(f->pipe.fd, par, &f->rbytes, &f->map)) {
+			file_del((struct file *)f);
+			return NULL;
+		}
 		f->hpar = *par;
 	} else {
 		f->rbytes = -1;
 		f->map = NULL;
 	}
 	f->hdr = 0;
+	nfr = dev_bufsz * par->rate / dev_rate;
+	buf = abuf_new(nfr, par);
+	p = rwav_new((struct file *)f);
+	aproc_setout(p, buf);
+	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
+	dev_attach(name, buf, par, xrun, NULL, NULL, 0, ADATA_UNIT);
+	dev_setvol(buf, MIDI_TO_ADATA(volctl));
 	return f;
 }
 
 struct wav *
-wav_new_out(struct fileops *ops, int fd, char *name,
-    struct aparams *par, unsigned hdr)
+wav_new_out(struct fileops *ops, char *name, unsigned hdr,
+    struct aparams *par, unsigned xrun)
 {
+	int fd;
 	struct wav *f;
+	struct aproc *p;
+	struct abuf *buf;
+	unsigned nfr;
 
+	if (name == NULL) {
+		name = "stdout";
+		fd = STDOUT_FILENO;
+		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+			perror(name);
+	} else {
+		fd = open(name,
+		    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
+		if (fd < 0) {
+			perror(name);
+			return NULL;
+		}
+	}
 	f = (struct wav *)pipe_new(ops, fd, name);
 	if (f == NULL)
 		return NULL;
@@ -143,13 +403,20 @@ wav_new_out(struct fileops *ops, int fd, char *name,
 		par->le = 1;
 		par->sig = (par->bits <= 8) ? 0 : 1;
 		par->bps = (par->bits + 7) / 8;
-		if (!wav_writehdr(f->pipe.fd, par))
-			exit(1);
+		if (!wav_writehdr(f->pipe.fd, par)) {
+			file_del((struct file *)f);
+			return NULL;
+		}
 		f->hpar = *par;
 		f->wbytes = WAV_DATAMAX;
 	} else
 		f->wbytes = -1;
 	f->hdr = hdr;
+	nfr = dev_bufsz * par->rate / dev_rate;
+	p = wwav_new((struct file *)f);
+	buf = abuf_new(nfr, par);
+	aproc_setin(p, buf);
+	dev_attach(name, NULL, NULL, 0, buf, par, xrun, 0);
 	return f;
 }
 
@@ -224,3 +491,4 @@ wav_close(struct file *file)
 		wav_writehdr(f->pipe.fd, &f->hpar);
 	pipe_close(file);
 }
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.76 2009/11/21 14:21:08 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.77 2010/01/05 10:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -37,7 +37,6 @@
 #include "dev.h"
 #include "listen.h"
 #include "midi.h"
-#include "miofile.h"
 #include "opt.h"
 #include "wav.h"
 
@@ -168,19 +167,18 @@ SLIST_HEAD(farglist, farg);
 void
 farg_add(struct farglist *list,
     struct aparams *ipar, struct aparams *opar, unsigned vol,
-    int hdr, int xrun, int mmc, char *optarg)
+    int hdr, int xrun, int mmc, char *name)
 {
 	struct farg *fa;
 	size_t namelen;
 
 	fa = malloc(sizeof(struct farg));
 	if (fa == NULL)
-		err(1, "%s", optarg);
+		err(1, "%s", name);
 
 	if (hdr == HDR_AUTO) {
-		namelen = strlen(optarg);
-		if (namelen >= 4 &&
-		    strcasecmp(optarg + namelen - 4, ".wav") == 0) {
+		if (name != NULL && (namelen = strlen(name)) >= 4 &&
+		    strcasecmp(name + namelen - 4, ".wav") == 0) {
 			fa->hdr = HDR_WAV;
 		} else {
 			fa->hdr = HDR_RAW;
@@ -191,117 +189,9 @@ farg_add(struct farglist *list,
 	fa->ipar = *ipar;
 	fa->opar = *opar;
 	fa->vol = vol;
-	fa->name = optarg;
+	fa->name = name; 
 	fa->mmc = mmc;
 	SLIST_INSERT_HEAD(list, fa, entry);
-}
-
-/*
- * Open an input file and setup converter if necessary.
- */
-void
-newinput(struct farg *fa)
-{
-	int fd;
-	struct wav *f;
-	struct aproc *proc;
-	struct abuf *buf;
-	unsigned nfr;
-
-	if (strcmp(fa->name, "-") == 0) {
-		fd = STDIN_FILENO;
-		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-			warn("stdin");
-		fa->name = "stdin";
-	} else {
-		fd = open(fa->name, O_RDONLY | O_NONBLOCK, 0666);
-		if (fd < 0)
-			err(1, "%s", fa->name);
-	}
-	/*
-	 * XXX : we should round rate, right ?
-	 */
-	f = wav_new_in(&wav_ops, fd, fa->name, &fa->ipar, fa->hdr);
-	if (f == NULL) {
-		if (fd != STDIN_FILENO)
-			close(fd);
-		return;
-	}
-	nfr = dev_bufsz * fa->ipar.rate / dev_rate;
-	buf = abuf_new(nfr, &fa->ipar);
-	proc = rpipe_new((struct file *)f);
-	aproc_setout(proc, buf);
-	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
-	dev_attach(fa->name, buf, &fa->ipar, fa->xrun,
-	    NULL, NULL, 0, ADATA_UNIT);
-	dev_setvol(buf, MIDI_TO_ADATA(fa->vol));
-}
-
-/*
- * Open an output file and setup converter if necessary.
- */
-void
-newoutput(struct farg *fa)
-{
-	int fd;
-	struct wav *f;
-	struct aproc *proc;
-	struct abuf *buf;
-	unsigned nfr;
-
-	if (strcmp(fa->name, "-") == 0) {
-		fd = STDOUT_FILENO;
-		if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-			warn("stdout");
-		fa->name = "stdout";
-	} else {
-		fd = open(fa->name,
-		    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
-		if (fd < 0)
-			err(1, "%s", fa->name);
-	}
-	/*
-	 * XXX : we should round rate, right ?
-	 */
-	f = wav_new_out(&wav_ops, fd, fa->name, &fa->opar, fa->hdr);
-	if (f == NULL) {
-		if (fd != STDOUT_FILENO)
-			close(fd);
-		return;
-	}
-	nfr = dev_bufsz * fa->opar.rate / dev_rate;
-	proc = wpipe_new((struct file *)f);
-	buf = abuf_new(nfr, &fa->opar);
-	aproc_setin(proc, buf);
-	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->opar, fa->xrun, 0);
-}
-
-/*
- * Open a MIDI device and connect it to the thru box
- */
-void
-newmidi(struct farg *fa, int in, int out)
-{
-	struct file *dev;
-	struct abuf *rbuf = NULL, *wbuf = NULL;
-	struct aproc *rproc, *wproc;
-
-	dev = (struct file *)miofile_new(&miofile_ops, fa->name, in, out);
-	if (dev == NULL) {
-		errx(1, "%s: can't open device", 
-		    fa->name ? fa->name : "<default>");
-	}
-	if (in) {
-		rproc = rpipe_new(dev);
-		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
-		aproc_setout(rproc, rbuf);
-	}
-	if (out) {
-		wproc = wpipe_new(dev);
-		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
-		aproc_setin(wproc, wbuf);
-	}
-	dev_midiattach(rbuf, wbuf);
 }
 
 void
@@ -372,7 +262,7 @@ aucat_main(int argc, char **argv)
 	struct farg *fa;
 	struct farglist ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
-	char base[PATH_MAX], path[PATH_MAX];
+	char base[PATH_MAX], path[PATH_MAX], *file;
 	unsigned bufsz, round, mode;
 	char *devpath;
 	const char *str;
@@ -440,12 +330,18 @@ aucat_main(int argc, char **argv)
 				errx(1, "%s: volume is %s", optarg, str);
 			break;
 		case 'i':
+			file = optarg;
+			if (strcmp(file, "-") == 0)
+				file = NULL;
 			farg_add(&ifiles, &ipar, &opar, volctl,
-			    hdr, xrun, 0, optarg);
+			    hdr, xrun, 0, file);
 			break;
 		case 'o':
+			file = optarg;
+			if (strcmp(file, "-") == 0)
+				file = NULL;
 			farg_add(&ofiles, &ipar, &opar, volctl,
-			    hdr, xrun, 0, optarg);
+			    hdr, xrun, 0, file);
 			break;
 		case 's':
 			farg_add(&sfiles, &ipar, &opar, volctl,
@@ -592,13 +488,16 @@ aucat_main(int argc, char **argv)
 	while (!SLIST_EMPTY(&ifiles)) {
 		fa = SLIST_FIRST(&ifiles);
 		SLIST_REMOVE_HEAD(&ifiles, entry);
-		newinput(fa);
+		if (!wav_new_in(&wav_ops, fa->name,
+			fa->hdr, &fa->ipar, fa->xrun, fa->vol))
+			exit(1);
 		free(fa);
 	}
 	while (!SLIST_EMPTY(&ofiles)) {
 		fa = SLIST_FIRST(&ofiles);
 		SLIST_REMOVE_HEAD(&ofiles, entry);
-		newoutput(fa);
+		if (!wav_new_out(&wav_ops, fa->name,
+			fa->hdr, &fa->ipar, fa->xrun))
 		free(fa);
 	}
 	while (!SLIST_EMPTY(&sfiles)) {
@@ -752,9 +651,12 @@ midicat_main(int argc, char **argv)
 	while (!SLIST_EMPTY(&dfiles)) {
 		fa = SLIST_FIRST(&dfiles);
 		SLIST_REMOVE_HEAD(&dfiles, entry);
-		newmidi(fa,
-		    !SLIST_EMPTY(&ofiles) || l_flag,
-		    !SLIST_EMPTY(&ifiles) || l_flag);
+		if (!dev_thruadd(fa->name, 
+			!SLIST_EMPTY(&ofiles) || l_flag,
+			!SLIST_EMPTY(&ifiles) || l_flag)) {
+			errx(1, "%s: can't open device", 
+			    fa->name ? fa->name : "<default>");
+		}
 		free(fa);
 	}
 	if (l_flag) {
@@ -777,7 +679,7 @@ midicat_main(int argc, char **argv)
 				err(1, "%s", fa->name);
 		}
 		stdx = (struct file *)pipe_new(&pipe_ops, fd, fa->name);
-		p = rpipe_new(stdx);
+		p = rfile_new(stdx);
 		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(p, buf);
 		dev_midiattach(buf, NULL);
@@ -797,7 +699,7 @@ midicat_main(int argc, char **argv)
 				err(1, "%s", fa->name);
 		}
 		stdx = (struct file *)pipe_new(&pipe_ops, fd, fa->name);
-		p = wpipe_new(stdx);
+		p = wfile_new(stdx);
 		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(p, buf);
 		dev_midiattach(NULL, buf);

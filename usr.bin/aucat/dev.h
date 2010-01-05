@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.15 2009/11/03 21:31:37 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.16 2010/01/05 10:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,6 +26,7 @@ extern struct aparams dev_ipar, dev_opar;
 extern struct aproc *dev_mix, *dev_sub, *dev_midi;
 
 void dev_thruinit(void);
+int  dev_thruadd(char *, int, int);
 void dev_midiattach(struct abuf *, struct abuf *);
 unsigned dev_roundof(unsigned);
 void dev_loopinit(struct aparams *, struct aparams *, unsigned);

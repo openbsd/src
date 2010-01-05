@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.37 2009/11/08 00:08:41 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.38 2010/01/05 10:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,6 +24,7 @@
 #include "conf.h"
 #include "dev.h"
 #include "pipe.h"
+#include "miofile.h"
 #include "safile.h"
 #include "midi.h"
 
@@ -40,6 +41,33 @@ dev_thruinit(void)
 {
 	dev_midi = thru_new("thru");
 	dev_midi->refs++;
+}
+
+/*
+ * Open a MIDI device and connect it to the thru box
+ */
+int
+dev_thruadd(char *name, int in, int out)
+{
+	struct file *f;
+	struct abuf *rbuf = NULL, *wbuf = NULL;
+	struct aproc *rproc, *wproc;
+
+	f = (struct file *)miofile_new(&miofile_ops, name, in, out);
+	if (f == NULL)
+		return 0;
+	if (in) {
+		rproc = rfile_new(f);
+		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
+		aproc_setout(rproc, rbuf);
+	}
+	if (out) {
+		wproc = wfile_new(f);
+		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
+		aproc_setin(wproc, wbuf);
+	}
+	dev_midiattach(rbuf, wbuf);
+	return 1;
 }
 
 /*
@@ -160,7 +188,7 @@ dev_init(char *devpath,
 		/*
 		 * Create the read end.
 		 */
-		dev_rec = rpipe_new(f);
+		dev_rec = rfile_new(f);
 		dev_rec->refs++;
 		buf = abuf_new(nfr, dipar);
 		aproc_setout(dev_rec, buf);
@@ -198,7 +226,7 @@ dev_init(char *devpath,
 		/*
 		 * Create the write end.
 		 */
-		dev_play = wpipe_new(f);
+		dev_play = wfile_new(f);
 		dev_play->refs++;
 		buf = abuf_new(nfr, dopar);
 		aproc_setin(dev_play, buf);

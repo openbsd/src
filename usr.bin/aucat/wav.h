@@ -1,4 +1,4 @@
-/*	$OpenBSD: wav.h,v 1.4 2009/07/25 10:52:19 ratchov Exp $	*/
+/*	$OpenBSD: wav.h,v 1.5 2010/01/05 10:18:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,9 +36,9 @@ struct wav {
 
 extern struct fileops wav_ops;
 
-struct wav *wav_new_in(struct fileops *, int, char *,
-    struct aparams *, unsigned);
-struct wav *wav_new_out(struct fileops *, int, char *,
+struct wav *wav_new_in(struct fileops *, char *, unsigned,
+    struct aparams *, unsigned, unsigned);
+struct wav *wav_new_out(struct fileops *, char *, unsigned,
     struct aparams *, unsigned);
 unsigned wav_read(struct file *, unsigned char *, unsigned);
 unsigned wav_write(struct file *, unsigned char *, unsigned);
