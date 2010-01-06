@@ -1,4 +1,4 @@
-.\"	$Id: mandoc_char.7,v 1.1 2010/01/03 23:29:03 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.2 2010/01/06 23:28:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -13,8 +13,8 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.\" 
-.Dd $Mdocdate: January 3 2010 $
+.\"
+.Dd $Mdocdate: January 6 2010 $
 .Dt MANDOC_CHAR 7
 .Os
 .
@@ -25,7 +25,7 @@
 .
 .
 .Sh DESCRIPTION
-This documents the special characters and predefined strings accepted by 
+This page documents the special characters and predefined strings accepted by
 .Xr mandoc 1
 to format
 .Xr mdoc 7
@@ -38,7 +38,7 @@ Both
 .Xr mdoc 7
 and
 .Xr man 7
-encode special characters with 
+encode special characters with
 .Sq \eX
 .Pq for a one-character escape ,
 .Sq \e(XX
@@ -54,7 +54,7 @@ and
 .Sq \eX
 as
 .Sq \e[X] .
-Predefined strings are functionally similar to special characters, using 
+Predefined strings are functionally similar to special characters, using
 .Sq \e*X
 .Pq for a one-character escape ,
 .Sq \e*(XX
@@ -73,7 +73,8 @@ as
 .
 .Pp
 Note that each output mode will have a different rendering of the
-characters.  It's guaranteed that each input symbol will correspond to a
+characters.
+It's guaranteed that each input symbol will correspond to a
 (more or less) meaningful output rendering, regardless the mode.
 .
 .
@@ -82,7 +83,7 @@ These are the preferred input symbols for producing special characters.
 .
 .Pp
 Spacing:
-.Bl -column -compact -offset indent 10m 20m
+.Bl -column -compact -offset indent "Input" "Description"
 .It Em Input Ta Em Description
 .It \e~      Ta non-breaking, non-collapsing space
 .It \e       Ta breaking, non-collapsing n-width space
@@ -96,7 +97,7 @@ Spacing:
 .
 .Pp
 Lines:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(ba    Ta \(ba        Ta bar
 .It \e(br    Ta \(br        Ta box rule
@@ -109,7 +110,7 @@ Lines:
 .
 .Pp
 Text markers:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(ci    Ta \(ci        Ta circle
 .It \e(bu    Ta \(bu        Ta bullet
@@ -129,7 +130,7 @@ Text markers:
 .
 .Pp
 Legal symbols:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(co    Ta \(co        Ta copyright
 .It \e(rg    Ta \(rg        Ta registered
@@ -138,12 +139,11 @@ Legal symbols:
 .
 .Pp
 Punctuation:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(em    Ta \(em        Ta em-dash
 .It \e(en    Ta \(en        Ta en-dash
 .It \e(hy    Ta \(hy        Ta hyphen
-.It \e\e     Ta \\          Ta back-slash
 .It \ee      Ta \e          Ta back-slash
 .It \e.      Ta \.          Ta period
 .It \e(r!    Ta \(r!        Ta upside-down exclamation
@@ -152,7 +152,7 @@ Punctuation:
 .
 .Pp
 Quotes:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(Bq    Ta \(Bq        Ta right low double-quote
 .It \e(bq    Ta \(bq        Ta right low single-quote
@@ -170,7 +170,7 @@ Quotes:
 .
 .Pp
 Brackets:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "x[bracketrightbp]" Rendered Description
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(lB    Ta \(lB        Ta left bracket
 .It \e(rB    Ta \(rB        Ta right bracket
@@ -210,7 +210,7 @@ Brackets:
 .
 .Pp
 Arrows:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(<-    Ta \(<-        Ta left arrow
 .It \e(->    Ta \(->        Ta right arrow
@@ -228,7 +228,7 @@ Arrows:
 .
 .Pp
 Logical:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(AN    Ta \(AN        Ta logical and
 .It \e(OR    Ta \(OR        Ta logical or
@@ -244,7 +244,7 @@ Logical:
 .
 .Pp
 Mathematical:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(pl    Ta \(pl        Ta plus
 .It \e(mi    Ta \(mi        Ta minus
@@ -310,7 +310,7 @@ Mathematical:
 .
 .Pp
 Ligatures:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(ff    Ta \(ff        Ta ff ligature
 .It \e(fi    Ta \(fi        Ta fi ligature
@@ -328,7 +328,7 @@ Ligatures:
 .
 .Pp
 Accents:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(a"    Ta \(a"        Ta Hungarian umlaut
 .It \e(a-    Ta \(a-        Ta macron
@@ -351,7 +351,7 @@ Accents:
 .
 .Pp
 Accented letters:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e('A    Ta \('A        Ta acute A
 .It \e('E    Ta \('E        Ta acute E
@@ -412,7 +412,7 @@ Accented letters:
 .
 .Pp
 Special letters:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(-D    Ta \(-D        Ta Eth
 .It \e(Sd    Ta \(Sd        Ta eth
@@ -424,7 +424,7 @@ Special letters:
 .
 .Pp
 Currency:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(Do    Ta \(Do        Ta dollar
 .It \e(ct    Ta \(ct        Ta cent
@@ -438,7 +438,7 @@ Currency:
 .
 .Pp
 Units:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(de    Ta \(de        Ta degree
 .It \e(%0    Ta \(%0        Ta per-thousand
@@ -449,7 +449,7 @@ Units:
 .
 .Pp
 Greek letters:
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(*A    Ta \(*A        Ta Alpha
 .It \e(*B    Ta \(*B        Ta Beta
@@ -512,7 +512,7 @@ These are not recommended for use, as they differ across
 implementations:
 .
 .Pp
-.Bl -column -compact -offset indent 10m 10m 10m
+.Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e*(Ba   Ta \*(Ba       Ta vertical bar
 .It \e*(Ne   Ta \*(Ne       Ta not equal
@@ -594,5 +594,5 @@ having no known representation:
 .Sh AUTHORS
 The
 .Nm
-utility was written by 
+manual page was written by
 .An Kristaps Dzonsons Aq kristaps@kth.se .
