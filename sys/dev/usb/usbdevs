@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.466 2009/12/27 21:07:23 jsg Exp $
+$OpenBSD: usbdevs,v 1.467 2010/01/06 23:24:22 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1022,6 +1022,7 @@ product CANON S100_EU		0x3047	PowerShot S100
 product CANON G1		0x3048	PowerShot G1
 product CANON A20		0x304e	PowerShot A20
 product CANON A540		0x311b	PowerShot A540
+product CANON SX100		0x315e	PowerShot SX100
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate Ethernet
@@ -1971,6 +1972,7 @@ product LINKSYS4 WUSB100	0x0070	WUSB100
 product LINKSYS4 WUSB600N	0x0071	WUSB600N
 product LINKSYS4 WUSB54GCV2	0x0073	WUSB54GC v2
 product LINKSYS4 WUSB54GCV3	0x0077	WUSB54GC v3
+product LINKSYS4 WUSB600NV2	0x0079	WUSB600N v2
 product LINKSYS MAUSB2		0x0105	Camedia MAUSB-2
 product LINKSYS USB10TX1	0x200c	USB10TX
 product LINKSYS USB10T		0x2202	USB10T Ethernet
