@@ -1,11 +1,11 @@
-.\"	$OpenBSD: mrouted.8,v 1.20 2010/01/03 16:43:46 schwarze Exp $
+.\"	$OpenBSD: mrouted.8,v 1.21 2010/01/06 07:59:15 jmc Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
 .\"
 .\" The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
 .\" Leland Stanford Junior University.
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: January 6 2010 $
 .Dt MROUTED 8
 .Os
 .Sh NAME
@@ -53,9 +53,9 @@ Older versions of
 .Nm
 tunnel use IP source routing, which puts a heavy load on some
 types of routers.
-This version does not support IP source route tunneling.
+This version does not support IP source route tunnelling.
 .Pp
-The tunneling mechanism allows
+The tunnelling mechanism allows
 .Nm
 to establish a virtual internet, for the purpose of multicasting only,
 which is independent of the physical internet, and which may span
@@ -75,13 +75,20 @@ With the use of tunnels, it is not necessary for
 .Nm
 to have access to more than one physical subnet
 in order to perform multicast forwarding.
-.Sh INVOCATION
-If no
-.Fl d
-option is given, or if the debug level is specified as 0,
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar config_file
+Specify an alternative configuration file,
+instead of the default
+.Pa mrouted.conf .
+.It Fl d Op Ar debug_level
+By default,
 .Nm
 detaches from the invoking terminal.
-Otherwise, it remains attached to the invoking terminal and responsive
+If this option is specified,
+.Nm
+remains attached to the invoking terminal and responsive
 to signals from that terminal.
 If
 .Fl d
@@ -89,11 +96,14 @@ is given with no argument, the debug level defaults to 2.
 Regardless of the debug level,
 .Nm
 always writes warning and error messages to the system log daemon.
-Non-zero debug levels have the following effects:
+Debug levels have the following effects:
 .Pp
 .Bl -hang -compact -offset indent
+.It 0
+Detach from the invoking terminal.
 .It 1
-All syslog'ed
+All
+.Xr syslog 3
 messages are also printed to stderr.
 .It 2
 All level 1 messages plus notifications of "significant"
@@ -102,92 +112,78 @@ events are printed to stderr.
 All level 2 messages plus notifications of all packet
 arrivals and departures are printed to stderr.
 .El
-.Pp
-Upon startup,
+.It Fl p
+Start
 .Nm
-writes its pid to the file
-.Pa /var/run/mrouted.pid .
-.Sh CONFIGURATION
+in a non-pruning mode.
+It is expected that a router would be configured in this manner for test
+purposes only.
+The default mode is pruning enabled.
+.El
+.Pp
 .Nm
 automatically configures itself to forward on all multicast-capable
-interfaces, i.e., interfaces that have the IFF_MULTICAST flag set (excluding
+interfaces, i.e. interfaces that have the IFF_MULTICAST flag set (excluding
 the loopback "interface"), and it finds other
 .Nm
 directly reachable via those interfaces.
 To override the default configuration, or to add tunnel links to other
 .Nm mrouted ,
 configuration commands may be placed in
-.Pa /etc/mrouted.conf
-(or an alternative file, specified by the
-.Fl c
-option).
+.Pa /etc/mrouted.conf .
 There are five types of configuration commands:
 .Bl -item -offset indent
 .It
-.Tn phyint <local-addr> [disable] [metric <m>]
-.Bl -tag -width flag -compact -offset indent
-.It [threshold <t>] [rate_limit <b>]
-.It [boundary (<boundary-name>|<scoped-addr>/<mask-len>)]
-.It [altnet <network>/<mask-len>]
-.El
+.Cm cache_lifetime
+.Ar ct
 .It
-.Tn tunnel <local-addr> <remote-addr> [metric <m>]
-.Bl -tag -width flag -compact -offset indent
-.It [threshold <t>] [rate_limit <b>]
-.It [boundary (<boundary-name>|<scoped-addr>/<mask-len>)]
-.El
+.Cm name
+.Ar boundary-name | scoped-addr Ns / Ns Ar mask-len
 .It
-.Tn cache_lifetime <ct>
+.Cm phyint
+.Ar local-addr
+.Oo
+.Cm altnet
+.Ar network Ns / Ns Ar mask-len
+.Oc
+.br
+.Oo
+.Cm boundary
+.Ar boundary-name | scoped-addr Ns / Ns Ar mask-len
+.Oc
+.Op Cm disable
+.br
+.Op Cm metric Ar m
+.Op Cm rate_limit Ar b
+.Op Cm threshold Ar t
 .It
-.Tn pruning <off/on>
+.Cm pruning
+.Op Cm off | on
 .It
-.Tn name <boundary-name> <scoped-addr>/<mask-len>
+.Cm tunnel
+.Ar local-addr
+.Ar remote-addr
+.br
+.Oo
+.Cm boundary
+.Ar boundary-name | scoped-addr Ns / Ns Ar mask-len
+.Oc
+.Op Cm metric Ar m
+.Op Cm rate_limit Ar b
+.Op Cm threshold Ar t
 .El
 .Pp
-The file format is free-form; whitespace (including newlines) is not
+The file format is free-form: whitespace (including newlines) is not
 significant.
 The
-.Ar boundary
+.Cm boundary
+option
+can accept either a name or a boundary;
+the
+.Cm boundary
 and
-.Ar altnet
+.Cm altnet
 options may be specified as many times as necessary.
-.Pp
-The
-.Nm phyint
-command can be used to disable multicast routing on the physical
-interface identified by local IP address
-.Ar <local-addr> ,
-or to associate a non-default metric or threshold with the specified
-physical interface.
-The local IP address
-.Ar <local-addr>
-may be replaced by the interface name (e.g., le0).
-If a phyint is attached to multiple IP subnets, describe each additional
-subnet with the
-.Ar altnet
-keyword.
-Phyint commands must precede tunnel commands.
-.Pp
-The
-.Nm tunnel
-command can be used to establish a tunnel link between local IP address
-.Ar <local-addr>
-and remote IP address
-.Ar <remote-addr> ,
-and to associate a non-default metric or threshold with that tunnel.
-The local IP address
-.Ar <local-addr>
-may be replaced by the interface name (e.g., le0).
-The remote IP address
-.Ar <remote-addr>
-may be replaced by a host name, if and only if the host name has a single
-IP address associated with it.
-The tunnel must be set up in the mrouted.conf files of both routers before
-it can be used.
-'\"For backwards compatibility with older
-'\".IR mrouted s,
-'\"the srcrt keyword specifies
-'\"encapsulation using IP source routing.
 .Pp
 The
 .Nm cache_lifetime
@@ -197,32 +193,59 @@ The value of this entry should lie between 300 (5 min) and 86400 (1 day).
 It defaults to 300.
 .Pp
 The
+.Nm name
+option assigns names to boundaries to make configuration easier.
+.Pp
+The
+.Nm phyint
+command can be used to disable multicast routing on the physical
+interface identified by local IP address
+.Ar local-addr ,
+or to associate a non-default metric or threshold with the specified
+physical interface.
+The local IP address
+.Ar local-addr
+may be replaced by the interface name (e.g. le0).
+If a phyint is attached to multiple IP subnets, describe each additional
+subnet with the
+.Cm altnet
+keyword.
+Phyint commands must precede tunnel commands.
+.Pp
+The
 .Nm pruning
 option is provided for
 .Nm
 to act as a non-pruning router.
-It is also possible to start
-.Nm
-in a non-pruning mode using the
-.Fl p
-option on the command line.
-It is expected that a router would be configured in this manner for test
-purposes only.
-The default mode is pruning enabled.
 .Pp
-You may assign names to boundaries to make configuration easier with the
-.Nm name
-keyword.
 The
-.Ar boundary
-option on
-.Nm phyint
-or
 .Nm tunnel
-commands can accept either a name or a boundary.
+command can be used to establish a tunnel link between local IP address
+.Ar local-addr
+and remote IP address
+.Ar remote-addr ,
+and to associate a non-default metric or threshold with that tunnel.
+The local IP address
+.Ar local-addr
+may be replaced by the interface name (e.g. le0).
+The remote IP address
+.Ar remote-addr
+may be replaced by a host name, if and only if the host name has a single
+IP address associated with it.
+The tunnel must be set up in the mrouted.conf files of both routers before
+it can be used.
+\."For backwards compatibility with older versions of
+\.".Nm ,
+\."the srcrt keyword specifies
+\."encapsulation using IP source routing.
 .Pp
-The
-.Ar metric
+.Cm boundary
+allows an interface to be configured as an administrative boundary
+for the specified scoped address.
+Packets belonging to this address will not be forwarded on a scoped interface.
+The boundary option accepts either a name or a boundary spec.
+.Pp
+.Cm metric
 is the "cost" associated with sending a datagram on the given
 interface or tunnel; it may be used to influence the choice of routes.
 The metric defaults to 1.
@@ -230,8 +253,13 @@ Metrics should be kept as small as possible, because
 .Nm
 cannot route along paths with a sum of metrics greater than 31.
 .Pp
-The
-.Ar threshold
+.Cm rate_limit
+allows the network administrator to specify a
+certain bandwidth in Kbits/second which would be allocated to multicast
+traffic.
+It defaults to 500Kbps on tunnels, and 0 (unlimited) on physical interfaces.
+.Pp
+.Cm threshold
 is the minimum IP time-to-live required for a multicast datagram
 to be forwarded to the given interface or tunnel.
 It is used to control the scope of multicast datagrams.
@@ -245,28 +273,15 @@ In general, all
 connected to a particular subnet or tunnel should
 use the same metric and threshold for that subnet or tunnel.
 .Pp
-The
-.Ar rate_limit
-option allows the network administrator to specify a
-certain bandwidth in Kbits/second which would be allocated to multicast
-traffic.
-It defaults to 500Kbps on tunnels, and 0 (unlimited) on physical interfaces.
-.Pp
-The
-.Ar boundary
-option allows an interface to be configured as an administrative boundary
-for the specified scoped address.
-Packets belonging to this address will not be forwarded on a scoped interface.
-The boundary option accepts either a name or a boundary spec.
-.Pp
 .Nm
-will not initiate execution if it has fewer than two enabled vifs,
-where a vif (virtual interface) is either a physical multicast-capable
+will not initiate execution
+if it has fewer than two enabled virtual interfaces (vifs),
+where a vif is either a physical multicast-capable
 interface or a tunnel.
 It will log a warning if all of its vifs are tunnels; such an
 .Nm
 configuration would be better replaced by more
-direct tunnels (i.e., eliminate the middle man).
+direct tunnels (i.e. eliminate the middle man).
 .Sh EXAMPLE CONFIGURATION
 This is an example configuration for a mythical multicast router at a big
 school.
@@ -310,37 +325,37 @@ responds to the following signals:
 .Pp
 .Bl -tag -width TERM -compact
 .It HUP
-restarts
+Restarts
 .Nm mrouted .
 The configuration file is reread every time this signal is evoked.
 .It INT
-terminates execution gracefully (i.e., by sending
+Terminates execution gracefully (i.e. by sending
 good-bye messages to all neighboring routers).
 .It TERM
-same as INT
+The same as INT.
 .It USR1
-dumps the internal routing tables to
+Dumps the internal routing tables to
 .Pa /var/tmp/mrouted.dump .
 .It USR2
-dumps the internal cache tables to
+Dumps the internal cache tables to
 .Pa /var/tmp/mrouted.cache .
 .It QUIT
-dumps the internal routing tables to stderr (only if
+Dumps the internal routing tables to stderr (only if
 .Nm
 was invoked with a non-zero debug level).
 .El
 .Pp
 For convenience in sending signals,
 .Nm
-writes its pid to
+writes its process ID to
 .Pa /var/run/mrouted.pid
 upon startup.
 .Sh FILES
 .Bl -tag -width /var/tmp/mrouted.cache -compact
 .It Pa /etc/mrouted.conf
-.It Pa /var/run/mrouted.pid
-.It Pa /var/tmp/mrouted.dump
 .It Pa /var/tmp/mrouted.cache
+.It Pa /var/tmp/mrouted.dump
+.It Pa /var/run/mrouted.pid
 .El
 .Sh EXAMPLES
 The routing tables look like this:
@@ -389,7 +404,7 @@ This instance of
 is the one responsible for sending periodic group membership queries on the
 vif 0 and vif 1 subnets, as indicated by the "querier" flags.
 The list of boundaries indicate the scoped addresses on that interface.
-A count of the no. of incoming and outgoing packets is also
+A count of the number of incoming and outgoing packets is also
 shown at each interface.
 .Pp
 Associated with each subnet from which a multicast datagram can originate
@@ -412,14 +427,14 @@ The cache tables look like this:
 Multicast Routing Cache Table (147 entries)
  Origin             Mcast-group     CTmr  Age Ptmr IVif Forwvifs
  13.2.116/22        224.2.127.255     3m   2m    -  0    1
->13.2.116.19
->13.2.116.196
+\*(Gt13.2.116.19
+\*(Gr13.2.116.196
  138.96.48/21       224.2.127.255     5m   2m    -  0    1
->138.96.48.108
+\*(Gt138.96.48.108
  128.9.160/20       224.2.127.255     3m   2m    -  0    1
->128.9.160.45
+\*(Gt128.9.160.45
  198.106.194/24     224.2.135.190     9m  28s   9m  0P
->198.106.194.22
+\*(Gt198.106.194.22
 .Ed
 .Pp
 Each entry is characterized by the origin subnet number and mask and the
@@ -443,9 +458,11 @@ the source-group are forwarded.
 A "p" indicates that no datagrams are being forwarded along that interface.
 An unlisted interface is a leaf subnet with no members of the particular
 group on that subnet.
-A "b" on an interface indicates that it is a boundary interface, i.e.,
+A "b" on an interface indicates that it is a boundary interface, i.e.\&
 traffic will not be forwarded on the scoped address on that interface.
-An additional line with a ">" as the first character is printed for
+An additional line with a
+.Sq \*(Gt
+as the first character is printed for
 each source on the subnet.
 Note that there can be many sources in one subnet.
 .Sh SEE ALSO
