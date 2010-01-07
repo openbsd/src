@@ -1,4 +1,4 @@
-/* $Id: layout-string.c,v 1.1 2009/12/08 07:49:31 nicm Exp $ */
+/* $Id: layout-string.c,v 1.2 2010/01/07 20:28:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,7 +42,9 @@ struct layout_cell *layout_find_bottomright(struct layout_cell *);
 struct layout_cell *
 layout_find_string(struct window *w, const char *s)
 {
-	struct layout_cell	*lc = w->layout_root;
+	struct layout_cell	*lc;
+
+	lc = NULL;
 
 	if (strcasecmp(s, "top") == 0)
 		lc = layout_find_top(lc);
