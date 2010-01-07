@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.37 2010/01/07 10:58:37 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.38 2010/01/07 11:03:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -923,7 +923,7 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 	}
 
 	CISS_UNLOCK(sc, lock);
-	return xs->flags & SCSI_POLL? COMPLETE : SUCCESSFULLY_QUEUED;
+	return (COMPLETE);
 }
 
 int
@@ -988,7 +988,7 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	CISS_UNLOCK(sc, lock);
-	return xs->flags & SCSI_POLL? COMPLETE : SUCCESSFULLY_QUEUED;
+	return (COMPLETE);
 }
 
 int
