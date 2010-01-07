@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.26 2010/01/05 12:20:47 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.27 2010/01/07 13:11:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -315,7 +315,7 @@ sub match_locations
 
 sub is_valid
 {
-	my $self = @_;
+	my $self = shift;
 	for my $subpattern (@$self) {
 		return 0 unless $subpattern->is_valid;
 	}
