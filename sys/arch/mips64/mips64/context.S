@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.36 2010/01/05 06:44:58 syuu Exp $ */
+/*	$OpenBSD: context.S,v 1.37 2010/01/07 20:24:15 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -140,6 +140,9 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	PTR_S	s0, CI_CURPROC(t1)		# set curproc
 	PTR_S	t3, CI_CURPROCPADDR(t1)
 	
+#ifdef MULTIPROCESSOR
+	PTR_S	t1, P_CPU(s0)
+#endif
 	li	t1, SONPROC
 	sb	t1, P_STAT(s0)			# set to onproc.
 
