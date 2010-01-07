@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.9 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.10 2010/01/07 12:26:06 sthen Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -113,7 +113,7 @@ void	ale_get_macaddr(struct ale_softc *);
 void	ale_mac_config(struct ale_softc *);
 void	ale_phy_reset(struct ale_softc *);
 void	ale_reset(struct ale_softc *);
-void	ale_rxfilter(struct ale_softc *);
+void	ale_iff(struct ale_softc *);
 void	ale_rxvlan(struct ale_softc *);
 void	ale_stats_clear(struct ale_softc *);
 void	ale_stats_update(struct ale_softc *);
@@ -1117,7 +1117,7 @@ ale_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			ale_rxfilter(sc);
+			ale_iff(sc);
 		error = 0;
 	}
 
@@ -1835,7 +1835,8 @@ ale_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 
 	/* Set up the receive filter. */
-	ale_rxfilter(sc);
+	ale_iff(sc);
+
 	ale_rxvlan(sc);
 
 	/* Acknowledge all pending interrupts and clear it. */
@@ -1993,7 +1994,7 @@ ale_rxvlan(struct ale_softc *sc)
 }
 
 void
-ale_rxfilter(struct ale_softc *sc)
+ale_iff(struct ale_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &ac->ac_if;

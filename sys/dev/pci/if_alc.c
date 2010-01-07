@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.2 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.3 2010/01/07 12:26:06 sthen Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -110,7 +110,7 @@ void	alc_phy_reset(struct alc_softc *);
 void	alc_reset(struct alc_softc *);
 void	alc_rxeof(struct alc_softc *, struct rx_rdesc *);
 int	alc_rxintr(struct alc_softc *);
-void	alc_rxfilter(struct alc_softc *);
+void	alc_iff(struct alc_softc *);
 void	alc_rxvlan(struct alc_softc *);
 void	alc_start_queue(struct alc_softc *);
 void	alc_stats_clear(struct alc_softc *);
@@ -1231,7 +1231,7 @@ alc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			alc_rxfilter(sc);
+			alc_iff(sc);
 		error = 0;
 	}
 
@@ -2072,7 +2072,8 @@ alc_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, ALC_MAC_CFG, reg);
 
 	/* Set up the receive filter. */
-	alc_rxfilter(sc);
+	alc_iff(sc);
+
 	alc_rxvlan(sc);
 
 	/* Acknowledge all pending interrupts and clear it. */
@@ -2335,7 +2336,7 @@ alc_rxvlan(struct alc_softc *sc)
 }
 
 void
-alc_rxfilter(struct alc_softc *sc)
+alc_iff(struct alc_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &ac->ac_if;

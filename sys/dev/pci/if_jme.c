@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.20 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.21 2010/01/07 12:26:06 sthen Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -112,7 +112,7 @@ void	jme_tick(void *);
 void	jme_stop(struct jme_softc *);
 void	jme_reset(struct jme_softc *);
 void	jme_set_vlan(struct jme_softc *);
-void	jme_set_filter(struct jme_softc *);
+void	jme_iff(struct jme_softc *);
 void	jme_stop_tx(struct jme_softc *);
 void	jme_stop_rx(struct jme_softc *);
 void	jme_mac_config(struct jme_softc *);
@@ -1311,7 +1311,7 @@ jme_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			jme_set_filter(sc);
+			jme_iff(sc);
 		error = 0;
 	}
 
@@ -1900,7 +1900,8 @@ jme_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, JME_RXMAC, 0);
 
 	/* Set up the receive filter. */
-	jme_set_filter(sc);
+	jme_iff(sc);
+
 	jme_set_vlan(sc);
 
 	/*
@@ -2260,7 +2261,7 @@ jme_set_vlan(struct jme_softc *sc)
 }
 
 void
-jme_set_filter(struct jme_softc *sc)
+jme_iff(struct jme_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &ac->ac_if;

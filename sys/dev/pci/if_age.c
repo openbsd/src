@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.7 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.8 2010/01/07 12:26:06 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -116,7 +116,7 @@ void	age_stats_update(struct age_softc *);
 void	age_stop_txmac(struct age_softc *);
 void	age_stop_rxmac(struct age_softc *);
 void	age_rxvlan(struct age_softc *sc);
-void	age_rxfilter(struct age_softc *);
+void	age_iff(struct age_softc *);
 
 const struct pci_matchid age_devices[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1 }
@@ -1100,7 +1100,7 @@ age_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			age_rxfilter(sc);
+			age_iff(sc);
 		error = 0;
 	}
 
@@ -1808,7 +1808,8 @@ age_init(struct ifnet *ifp)
 	    MAC_CFG_PREAMBLE_MASK));
 
 	/* Set up the receive filter. */
-	age_rxfilter(sc);
+	age_iff(sc);
+
 	age_rxvlan(sc);
 
 	reg = CSR_READ_4(sc, AGE_MAC_CFG);
@@ -2211,7 +2212,7 @@ age_rxvlan(struct age_softc *sc)
 }
 
 void
-age_rxfilter(struct age_softc *sc)
+age_iff(struct age_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &ac->ac_if;
