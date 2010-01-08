@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.42 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.43 2010/01/08 13:29:08 oga Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -394,6 +394,8 @@ cp(char *from, char *to, mode_t mode)
 		errno = sverrno;
 		error(buf);
 	}
+	close(to_fd);
+	close(from_fd);
 }
 
 void
