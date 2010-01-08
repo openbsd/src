@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.7 2010/01/02 14:56:02 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.8 2010/01/08 16:45:51 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -176,7 +176,10 @@ lde_kernel_insert(struct kroute *kr)
 {
 	struct rt_node		*rn;
 	struct rt_label		*rl;
+	struct iface		*iface;
+	struct lde_nbr		*ln;
 	struct lde_nbr_address	*addr;
+	struct map		 localmap;
 
 	rn = rt_find(kr->prefix.s_addr, kr->prefixlen);
 	if (rn == NULL) {
@@ -230,18 +233,16 @@ lde_kernel_insert(struct kroute *kr)
 		return;
 	}
 
-	/* There is already a local mapping, check if there
-	   is also a remote one */
-	if (rn->local_label) {
-		TAILQ_FOREACH(rl, &rn->labels_list, entry) {
-			addr = lde_address_find(rl->nexthop, &rn->nexthop);
-			if (addr != NULL) {
-				rn->remote_label =
-				    htonl(rl->label << MPLS_LABEL_OFFSET);
-				break;
-			}
+	TAILQ_FOREACH(rl, &rn->labels_list, entry) {
+		addr = lde_address_find(rl->nexthop, &rn->nexthop);
+		if (addr != NULL) {
+			rn->remote_label =
+			    htonl(rl->label << MPLS_LABEL_OFFSET);
+			break;
 		}
-	} else {
+	}
+
+	if (!rn->local_label) {
 		/* Directly connected route */
 		if (kr->nexthop.s_addr == INADDR_ANY) {
 			rn->local_label =
@@ -252,6 +253,32 @@ lde_kernel_insert(struct kroute *kr)
 	}
 
 	lde_send_insert_klabel(rn);
+
+	/* Redistribute the current mapping to every nbr */
+	localmap.label = (ntohl(rn->local_label) & MPLS_LABEL_MASK) >>
+	   MPLS_LABEL_OFFSET;
+	localmap.prefix = rn->prefix.s_addr;
+	localmap.prefixlen = rn->prefixlen;
+
+	LIST_FOREACH(iface, &ldeconf->iface_list, entry) {
+	       LIST_FOREACH(ln, &iface->lde_nbr_list, entry) {
+		       if (ln->self)
+			       continue;
+
+		       if (ldeconf->mode & MODE_ADV_UNSOLICITED &&
+			   ldeconf->mode & MODE_DIST_INDEPENDENT)
+			       lde_send_labelmapping(ln->peerid, &localmap);
+
+		       if (ldeconf->mode & MODE_ADV_UNSOLICITED &&
+			   ldeconf->mode & MODE_DIST_ORDERED) {
+			       /* XXX */
+			       if (rn->nexthop.s_addr == INADDR_ANY ||
+				   rn->remote_label != 0)
+				       lde_send_labelmapping(ln->peerid,
+					   &localmap);
+		       }
+	       }
+	}
 }
 
 void
