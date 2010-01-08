@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.27 2010/01/03 12:51:05 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.28 2010/01/08 09:14:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -290,6 +290,7 @@ server_client_handle_key(int key, struct mouse_event *mouse, void *data)
 	if (key == KEYC_MOUSE) {
 		if (options_get_number(oo, "mouse-select-pane")) {
 			window_set_active_at(w, mouse->x, mouse->y);
+			server_redraw_window_borders(w);
 			wp = w->active;
 		}
 		window_pane_mouse(wp, c, mouse);
