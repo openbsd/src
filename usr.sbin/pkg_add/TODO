@@ -17,3 +17,4 @@ different but older.
 cases, we're going to install this package right away, so we should try to
 keep it open to avoid spurious ftp disconnects.
 - get an update path for libraries to be able to adjust dependencies correctly.
+- provide a "smart" is it installed ? option. pkg_info -u package ?

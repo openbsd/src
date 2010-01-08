@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.29 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.30 2010/01/08 16:42:56 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -29,8 +29,8 @@ sub find_collisions
 	my $bypkg = {};
 	for my $name (keys %$todo) {
 		my $p = $state->vstat->exists($name);
-		if (ref $p) {
-			my $pkg = $$p;
+		if (defined $p && $p->value) {
+			my $pkg = $p->value;
 			push(@{$bypkg->{$pkg}}, $name);
 			delete $todo->{$name};
 		}

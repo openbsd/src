@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.54 2010/01/05 11:00:57 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.55 2010/01/08 16:42:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,59 @@
 
 use strict;
 use warnings;
+
+{
+package OpenBSD::Vstat::Object;
+my $cache = {};
+my $x = undef;
+my $dummy = bless \$x, __PACKAGE__;
+
+sub new
+{
+	my ($class, $value) = shift;
+	if (!defined $value) {
+		return $dummy;
+	}
+	if (!defined $cache->{$value}) {
+		$cache->{value} = bless \$value, $class;
+	}
+	return $cache->{value};
+}
+
+sub exists
+{
+	return 1;
+}
+
+sub value
+{
+	my $self = shift;
+	return $$self;
+}
+
+sub none
+{
+	return OpenBSD::Vstat::Object::None->new;
+}
+
+}
+{
+package OpenBSD::Vstat::Object::None;
+our @ISA = qw(OpenBSD::Vstat::Object);
+
+my $x = undef;
+my $none = bless \$x, __PACKAGE__;
+
+sub exists
+{
+	return 0;
+}
+
+sub new
+{
+	return $none;
+}
+}
 
 package OpenBSD::Vstat;
 use File::Basename;
@@ -67,7 +120,7 @@ sub exists
 	my ($self, $name) = @_;
 	for my $v (@{$self->{v}}) {
 		if (defined $v->{$name}) {
-			return $v->{$name};
+			return $v->{$name}->exists;
 		}
 	}
 	return -e $name;
@@ -105,18 +158,15 @@ sub drop_changes
 sub add
 {
 	my ($self, $name, $size, $value) = @_;
-	if (defined $value) {
-		$self->{v}[0]->{$name} = $value;
-	} else {
-		$self->{v}[0]->{$name} = 1;
-	}
+	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object->new($value);
+
 	return defined($size) ? $self->account_for($name, $size) : undef;
 }
 
 sub remove
 {
 	my ($self, $name, $size) = @_;
-	$self->{v}[0]->{$name} = 0;
+	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object->none;
 	return defined($size) ? $self->account_later($name, -$size) : undef;
 }
 
