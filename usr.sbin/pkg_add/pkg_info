@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.84 2010/01/05 12:20:47 espie Exp $
+# $OpenBSD: pkg_info,v 1.85 2010/01/08 17:06:00 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -254,8 +254,8 @@ sub find_by_path
 	}
 }
 
-our ($opt_c, $opt_C, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, 
-    $opt_L, $opt_Q, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h,
+our ($opt_c, $opt_C, $opt_D, $opt_d, $opt_f, $opt_I, $opt_K, 
+    $opt_L, $opt_Q, $opt_q, $opt_R, $opt_s, $opt_v, $opt_h,
     $opt_l, $opt_a, $opt_m, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
 my $terse = 0;
 my $exit_code = 0;
@@ -314,24 +314,6 @@ sub print_info
 			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Deinstall notice:\n" unless $opt_q;
 			printfile($handle->info.UNDISPLAY);
-			print "\n";
-		}
-		if ($opt_i && -f $handle->info.INSTALL) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Install script:\n" unless $opt_q;
-			printfile($handle->info.INSTALL);
-			print "\n";
-		}
-		if ($opt_k && -f $handle->info.DEINSTALL) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "De-Install script:\n" unless $opt_q;
-			printfile($handle->info.DEINSTALL, \*STDOUT);
-			print "\n";
-		}
-		if ($opt_r && -f $handle->info.REQUIRING) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Require script:\n" unless $opt_q;
-			printfile($handle->info.REQUIRING, \*STDOUT);
 			print "\n";
 		}
 		my $plist;
@@ -404,12 +386,12 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-AacCDdfIiKkLMmPqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+set_usage('pkg_info [-AacCDdfIKLMmPqRSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
 my %defines;
 my $locked;
 try { 
-	getopts('cCDdfF:hIikKLmPQ:qRrsSUve:E:Ml:aAt',
+	getopts('cCDdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;
@@ -452,8 +434,8 @@ if ($opt_D) {
 	$opt_M = 1;
 }
 
-unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
-	$opt_k || $opt_L || $opt_R || $opt_r || $opt_s || 
+unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || 
+	$opt_L || $opt_R || $opt_s || 
 	$opt_S || $opt_P || $terse) {
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;
@@ -479,7 +461,7 @@ if ($opt_Q) {
 }
 
 if ($opt_v) {
-	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_M =
+	$opt_c = $opt_d = $opt_f = $opt_M =
 	    $opt_U = $opt_R = $opt_s = $opt_S = 1;
 }
 
