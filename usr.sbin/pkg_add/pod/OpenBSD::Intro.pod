@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.12 2009/12/17 11:41:30 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.13 2010/01/08 18:01:54 espie Exp $
 
 =head1 NAME
 
@@ -130,9 +130,8 @@ whole system. An update set is simply a minimal bag of packages, with old
 packages that are going to be removed, new packages that are going
 to replace them, and an area to record related ongoing computations.
 The old set may be empty, the new set may be empty, and in all cases,
-the update set shall be small (as small as possible).   Currently,
-the package tools do not deal with all the cases they should. This is still
-under construction.  We have already met with update situations where
+the update set shall be small (as small as possible). 
+We have already met with update situations where
 dependencies between packages invert (A-1.0 depends on B-1.0, but B-0.0
 depends on A-0.0), or where files move between packages, which in
 theory will require update-sets with two new packages that replace two
@@ -183,8 +182,8 @@ the C<OpenBSD::PackingElement::Depend> class.
 
 A specific C<OpenBSD::Dependencies::Solver> object is used for the resolution
 of dependencies (see L<OpenBSD::Dependencies(3p)>, the solver is mostly
-a tree-walker, but there are performance considerations, so it may need
-to cache a lot of information).
+a tree-walker, but there are performance considerations, so it also caches
+a lot of information and cooperates with the C<OpenBSD::Tracker>.
 Specificities of shared libraries are handled by L<OpenBSD::SharedLibs(3p)>.
 In particular, the base system also provides some shared libraries which are
 not recorded within the dependency tree.
@@ -301,6 +300,11 @@ An update operation starts with update sets that contain only old packages.
 There is some specific code (the C<OpenBSD::Update> module) which is used
 to figure out the new package name from the old one.
 
+Note that updates are slightly more complicated than straight replacement:
+a package may replace an older one if it conflicts with it. But an older
+package can only be updated if the new package matches (both conflicts and
+correct pkgpath markers).
+
 In every update or replacement, pkg_add will first try to install or update
 the quirks package, which contains a global list of exceptions, such as
 extra stems to search for (allowing for package renames), or packages to
@@ -329,10 +333,6 @@ suitable candidates are found.
 There are a few desireable changes that will happen in the future:
 
 =over
-
-=item *
-
-some complicated update scenarios are not fully handled through updatesets.
 
 =item *
 
