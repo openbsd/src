@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.10 2008/05/04 09:57:47 martin Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.11 2010/01/08 01:35:52 syuu Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,6 +104,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
+	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
 	struct sigframe *fp;
 	struct trap_frame *regs;
@@ -152,15 +153,10 @@ sendsig(catcher, sig, mask, code, type, val)
 		sizeof(ksc.sc_regs) - sizeof(register_t));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
-		extern struct proc *machFPCurProcPtr;
-
 		/* if FPU has current state, save it first */
-		if (p == machFPCurProcPtr) {
-			if (regs->sr & SR_FR_32)
-				MipsSaveCurFPState(p);
-			else
-				MipsSaveCurFPState16(p);
-		}
+		if (p == ci->ci_fpuproc)
+			save_fpu();
+
 		bcopy((caddr_t)&p->p_md.md_regs->f0, (caddr_t)ksc.sc_fpregs,
 			sizeof(ksc.sc_fpregs));
 	}
@@ -220,6 +216,7 @@ sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct cpu_info *ci = curcpu();
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
@@ -227,7 +224,6 @@ sys_sigreturn(p, v, retval)
 	struct trap_frame *regs;
 	struct sigcontext ksc;
 	int error;
-	extern struct proc *machFPCurProcPtr;
 
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
@@ -265,8 +261,8 @@ sys_sigreturn(p, v, retval)
 	regs->mullo = scp->mullo;
 	regs->mulhi = scp->mulhi;
 	regs->sr &= ~SR_COP_1_BIT;	/* Zap current FP state */
-	if (p == machFPCurProcPtr) 
-		machFPCurProcPtr = NULL;
+	if (p == ci->ci_fpuproc)
+		ci->ci_fpuproc = NULL;
 	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs->ast,
 		sizeof(scp->sc_regs) - sizeof(register_t));
 	if (scp->sc_fpused)

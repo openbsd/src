@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.50 2009/12/30 01:17:59 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.51 2010/01/08 01:35:52 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -370,6 +370,7 @@ struct cpu_info {
 	struct cpu_info *ci_next;	/* next cpu */
 	struct proc	*ci_curproc;
 	struct user	*ci_curprocpaddr;
+	struct proc	*ci_fpuproc;	/* pointer to last proc to use FP */
 
 	struct schedstate_percpu
 			ci_schedstate;
@@ -602,8 +603,9 @@ int	tlb_update(vaddr_t, unsigned);
 void	tlb_read(int, struct tlb_entry *);
 
 void	savectx(struct user *, int);
-void	MipsSaveCurFPState(struct proc *);
-void	MipsSaveCurFPState16(struct proc *);
+
+void	enable_fpu(struct proc *);
+void	save_fpu(void);
 
 int	guarded_read_4(paddr_t, uint32_t *);
 int	guarded_write_4(paddr_t, uint32_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.18 2010/01/01 15:04:00 miod Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.19 2010/01/08 01:35:52 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -279,7 +279,7 @@ END(MipsSwitchFPState16)
  *	None.
  *
  * Side effects:
- *	machFPCurProcPtr is cleared.
+ *	curcpu()->ci_fpuproc is cleared.
  *
  *----------------------------------------------------------------------------
  */
@@ -289,7 +289,8 @@ LEAF(MipsSaveCurFPState, 0)
 	or	t0, t1, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
-	PTR_S	zero, machFPCurProcPtr		# indicate state has been saved
+	GET_CPU_INFO(t2, t3)
+	PTR_S	zero, CI_FPUPROC(t2)		# indicate state has been saved
 /*
  * First read out the status register to make sure that all FP operations
  * have completed.
@@ -349,7 +350,8 @@ LEAF(MipsSaveCurFPState16, 0)
 	or	t0, t1, SR_COP_1_BIT	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
-	PTR_S	zero, machFPCurProcPtr		# indicate state has been saved
+	GET_CPU_INFO(t2, t3)
+	PTR_S	zero, CI_FPUPROC(t2)		# indicate state has been saved
 /*
  * First read out the status register to make sure that all FP operations
  * have completed.

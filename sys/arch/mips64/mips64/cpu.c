@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2009/12/28 06:55:27 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.23 2010/01/08 01:35:52 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -311,6 +311,54 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	}
 	printf("cpu%d: Status Register %x\n", cpuno, CpuStatusRegister);
 #endif
+}
+
+extern void cpu_switchto_asm(struct proc *, struct proc *);
+extern void MipsSaveCurFPState(struct proc *);
+extern void MipsSaveCurFPState16(struct proc *);
+extern void MipsSwitchFPState(struct proc *, struct trap_frame *);
+extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
+
+void
+cpu_switchto(struct proc *oldproc, struct proc *newproc)
+{
+	struct cpu_info *ci = curcpu();
+	if (ci->ci_fpuproc)
+		save_fpu();
+
+	cpu_switchto_asm(oldproc, newproc);
+}
+
+void
+enable_fpu(struct proc *p)
+{
+	struct cpu_info *ci = curcpu();
+
+	KASSERT(!ci->ci_fpuproc);
+
+
+	if (p->p_md.md_regs->sr & SR_FR_32)
+		MipsSwitchFPState(NULL, p->p_md.md_regs);
+	else
+		MipsSwitchFPState16(NULL, p->p_md.md_regs);
+
+	ci->ci_fpuproc = p;
+	p->p_md.md_regs->sr |= SR_COP_1_BIT;
+	p->p_md.md_flags |= MDP_FPUSED;
+}
+
+void
+save_fpu(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct proc *p;
+
+	KASSERT(ci->ci_fpuproc);
+	p = ci->ci_fpuproc;
+	if (p->p_md.md_regs->sr & SR_FR_32)
+		MipsSaveCurFPState(p);
+	else
+		MipsSaveCurFPState16(p);
 }
 
 #ifdef MULTIPROCESSOR

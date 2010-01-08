@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.21 2009/12/07 19:01:06 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.22 2010/01/08 01:35:52 syuu Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -68,13 +68,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void (*func)(void *);
 	void *arg;
 {
+	struct cpu_info *ci = curcpu();
 	struct pcb *pcb;
 #if UPAGES == 1
 	paddr_t pa;
-#endif
-	extern struct proc *machFPCurProcPtr;
 
-#if UPAGES == 1
 	/* replace p_addr with a direct translation address */
 	p2->p_md.md_uarea = (vaddr_t)p2->p_addr;
 	pmap_extract(pmap_kernel(), p2->p_md.md_uarea, &pa);
@@ -85,12 +83,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * If we own the FPU, save its state before copying the PCB.
 	 */
-	if (p1 == machFPCurProcPtr) {
-		if (p1->p_addr->u_pcb.pcb_regs.sr & SR_FR_32)
-			MipsSaveCurFPState(p1);
-		else
-			MipsSaveCurFPState16(p1);
-	}
+	if (p1 == ci->ci_fpuproc)
+		save_fpu();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FORKSAVE;
 
@@ -140,10 +134,10 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	extern struct proc *machFPCurProcPtr;
+	struct cpu_info *ci = curcpu();
 
-	if (machFPCurProcPtr == p)
-		machFPCurProcPtr = (struct proc *)0;
+	if (ci->ci_fpuproc == p)
+		ci->ci_fpuproc = NULL;
 
 	pmap_deactivate(p);
 #if UPAGES == 1
@@ -163,10 +157,10 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
+	struct cpu_info *ci = curcpu();
 	int error;
 	/*register struct user *up = p->p_addr;*/
 	struct coreseg cseg;
-	extern struct proc *machFPCurProcPtr;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MIPS, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
@@ -177,12 +171,8 @@ cpu_coredump(p, vp, cred, chdr)
 	 * Copy floating point state from the FP chip if this process
 	 * has state stored there.
 	 */
-	if (p == machFPCurProcPtr) {
-		if (p->p_md.md_regs->sr & SR_FR_32)
-			MipsSaveCurFPState(p);
-		else
-			MipsSaveCurFPState16(p);
-	}
+	if (p == ci->ci_fpuproc)
+		save_fpu();
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MIPS, CORE_CPU);
 	cseg.c_addr = 0;

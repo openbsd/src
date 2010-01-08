@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.37 2010/01/07 20:24:15 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.38 2010/01/08 01:35:52 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -87,9 +87,9 @@ LEAF(cpu_idle_cycle, 0)
 END(cpu_idle_cycle)
 
 /*
- * cpu_switchto(struct proc *oldproc, struct proc *newproc)
+ * cpu_switchto_asm(struct proc *oldproc, struct proc *newproc)
  */
-NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
+NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	GET_CPU_INFO(t1, t3)
 	PTR_L	t3, CI_CURPROCPADDR(t1)
 	REG_S	sp, PCB_CONTEXT+8*REGSZ(t3)	# save old sp

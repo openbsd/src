@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.12 2010/01/01 19:26:31 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.13 2010/01/08 01:35:52 syuu Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,7 +40,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.12 2010/01/01 19:26:31 miod Exp $
+ *	$Id: process_machdep.c,v 1.13 2010/01/08 01:35:52 syuu Exp $
  */
 
 /*
@@ -85,14 +85,11 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	extern struct proc *machFPCurProcPtr;
+	struct cpu_info *ci = curcpu();
 
-	if (p == machFPCurProcPtr) {
-		if (p->p_md.md_regs->sr & SR_FR_32)
-			MipsSaveCurFPState(p);
-		else
-			MipsSaveCurFPState16(p);
-	}
+	if (p == ci->ci_fpuproc)
+		save_fpu();
+
 	bcopy(&p->p_md.md_regs->ast, &regs->r_regs[AST], REGSIZE);
 	regs->r_regs[ZERO] = 0;
 	return (0);
@@ -105,15 +102,12 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	struct cpu_info *ci = curcpu();
 	register_t sr, ic, ipl;
-	extern struct proc *machFPCurProcPtr;
 
-	if (p == machFPCurProcPtr) {
-		if (p->p_md.md_regs->sr & SR_FR_32)
-			MipsSaveCurFPState(p);
-		else
-			MipsSaveCurFPState16(p);
-	}
+	if (p == ci->ci_fpuproc)
+		save_fpu();
+
 	sr = p->p_md.md_regs->sr;
 	ic = p->p_md.md_regs->ic;
 	ipl = p->p_md.md_regs->ipl;

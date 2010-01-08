@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2009/12/12 20:07:10 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.95 2010/01/08 01:35:52 syuu Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -821,7 +821,7 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	extern struct proc *machFPCurProcPtr;
+	struct cpu_info *ci = curcpu();
 
 	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trap_frame));
 	p->p_md.md_regs->sp = stack;
@@ -836,8 +836,8 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;
 	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
 	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (machFPCurProcPtr == p)
-		machFPCurProcPtr = (struct proc *)0;
+	if (ci->ci_fpuproc == p)
+		ci->ci_fpuproc = (struct proc *)0;
 	p->p_md.md_ss_addr = 0;
 	p->p_md.md_pc_ctrl = 0;
 	p->p_md.md_watch_1 = 0;
