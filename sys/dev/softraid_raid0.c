@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.18 2009/12/15 13:19:37 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.19 2010/01/09 23:15:06 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -431,7 +431,6 @@ sr_raid0_intr(struct buf *bp)
 
 		xs->error = XS_NOERROR;
 		xs->resid = 0;
-		xs->flags |= ITSDONE;
 
 		pend = 0;
 		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
@@ -468,7 +467,6 @@ sr_raid0_intr(struct buf *bp)
 	return;
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
-	xs->flags |= ITSDONE;
 	sr_wu_put(wu);
 	sr_scsi_done(sd, xs);
 	splx(s);

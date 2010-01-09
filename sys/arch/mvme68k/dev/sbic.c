@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.23 2009/11/22 20:16:43 krw Exp $ */
+/*	$OpenBSD: sbic.c,v 1.24 2010/01/09 23:15:06 krw Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -602,8 +602,6 @@ sbic_scsidone(acb, stat)
     } else {
         xs->resid = 0;      /* XXXX */
     }
-
-    xs->flags |= ITSDONE;
 
     /*
      * Remove the ACB from whatever queue it's on.  We have to do a bit of

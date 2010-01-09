@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.93 2009/03/23 17:40:56 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.94 2010/01/09 23:15:07 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1547,7 +1547,6 @@ ips_done_xs(struct ips_softc *sc, struct ips_ccb *ccb)
 
 	xs->resid = 0;
 	xs->error = ips_error_xs(sc, ccb);
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
 
@@ -1589,7 +1588,6 @@ ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
 			xs->error = XS_DRIVER_STUFFUP;
 	}
 
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
 

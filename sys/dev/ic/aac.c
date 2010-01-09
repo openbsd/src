@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.41 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.42 2010/01/09 23:15:06 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1107,7 +1107,6 @@ aac_bio_complete(struct aac_command *cm)
 
 	xs->error = status == ST_OK? XS_NOERROR : XS_DRIVER_STUFFUP;
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
 	splx(s);
 }
@@ -2095,7 +2094,6 @@ aac_command_timeout(struct aac_command *cm)
 		struct scsi_xfer *xs = cm->cm_private;
 		int s = splbio();
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		splx(s);
 
@@ -2523,7 +2521,6 @@ aac_raw_scsi_cmd(struct scsi_xfer *xs)
 
 	/* XXX Not yet implemented */
 	xs->error = XS_DRIVER_STUFFUP;
-	xs->flags |= ITSDONE;
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
@@ -2553,7 +2550,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		 * faked sense too.
 		 */
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		splx(s);
 		return (COMPLETE);
@@ -2576,7 +2572,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 	case VERIFY:
 #endif
 		aac_internal_cache_cmd(xs);
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		goto ready;
 
@@ -2584,7 +2579,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		AAC_DPRINTF(AAC_D_CMD, ("PREVENT/ALLOW "));
 		/* XXX Not yet implemented */
 		xs->error = XS_NOERROR;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		goto ready;
 
@@ -2592,7 +2586,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		AAC_DPRINTF(AAC_D_CMD, ("SYNCHRONIZE_CACHE "));
 		/* XXX Not yet implemented */
 		xs->error = XS_NOERROR;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		goto ready;
 
@@ -2600,7 +2593,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		AAC_DPRINTF(AAC_D_CMD, ("unknown opc %#x ", xs->cmd->opcode));
 		/* XXX Not yet implemented */
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		goto ready;
 
@@ -2637,7 +2629,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 			 * sense too.
 			 */
 			xs->error = XS_DRIVER_STUFFUP;
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 		}
@@ -2676,7 +2667,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 				splx(s);
 				return (NO_CCB);
 			}
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 		}
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.98 2010/01/04 08:04:43 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.99 2010/01/09 23:15:06 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -922,7 +922,6 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb)
 	}
 
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 
 	mfi_put_ccb(ccb);
 	scsi_done(xs);
@@ -1086,7 +1085,6 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		}
 
 		mfi_put_ccb(ccb);
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1103,7 +1101,6 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 stuffup:
 	xs->error = XS_DRIVER_STUFFUP;
 complete:
-	xs->flags |= ITSDONE;
 	s = splbio();
 	scsi_done(xs);
 	splx(s);

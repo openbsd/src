@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.14 2009/09/04 04:57:14 miod Exp $	*/
+/*	$OpenBSD: uha.c,v 1.15 2010/01/09 23:15:06 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -329,7 +329,6 @@ uha_done(sc, mscp)
 			xs->resid = 0;
 	}
 	uha_free_mscp(sc, mscp);
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
 
@@ -492,7 +491,6 @@ uha_scsi_cmd(xs)
 
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
-	xs->flags |= ITSDONE;
 	s = splbio();
 	scsi_done(xs);
 	splx(s);

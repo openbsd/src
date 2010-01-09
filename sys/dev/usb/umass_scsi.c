@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.25 2009/07/02 18:50:37 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.26 2010/01/09 23:15:07 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -262,7 +262,6 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 
 	/* Return if command finishes early. */
  done:
-	xs->flags |= ITSDONE;
 	if (xs->flags & SCSI_POLL)
 		rslt = COMPLETE;
 	else
@@ -370,7 +369,6 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	if (xs->flags & SCSI_POLL)
 		return;
 
-	xs->flags |= ITSDONE;
 
 	DPRINTF(UDMASS_CMD,("umass_scsi_cb: at %lu.%06lu: return error=%d, "
 			    "status=0x%x resid=%d\n",
@@ -411,8 +409,6 @@ umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
-
-	xs->flags |= ITSDONE;
 
 	DPRINTF(UDMASS_CMD,("umass_scsi_sense_cb: return xs->error=%d, "
 		"xs->flags=0x%x xs->resid=%d\n", xs->error, xs->status,

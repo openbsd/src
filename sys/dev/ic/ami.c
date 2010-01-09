@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.198 2009/12/06 12:31:10 chl Exp $	*/
+/*	$OpenBSD: ami.c,v 1.199 2010/01/09 23:15:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1195,7 +1195,6 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	timeout_del(&xs->stimeout);
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 
 	if (ccb->ccb_flags & AMI_CCB_F_ERR)
 		xs->error = XS_DRIVER_STUFFUP;
@@ -1234,7 +1233,6 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	timeout_del(&xs->stimeout);
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 
 	if (ccb->ccb_flags & AMI_CCB_F_ERR)
 		xs->error = XS_DRIVER_STUFFUP;
@@ -1253,7 +1251,6 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 	if (ccb->ccb_flags & AMI_CCB_F_ERR) {
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->resid = 0;
-		xs->flags |= ITSDONE;
 
 		ami_put_ccb(ccb);
 		scsi_done(xs);
@@ -1274,7 +1271,6 @@ ami_done_sysflush(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	timeout_del(&xs->stimeout);
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 	if (ccb->ccb_flags & AMI_CCB_F_ERR)
 		xs->error = XS_DRIVER_STUFFUP;
 
@@ -1346,7 +1342,6 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1382,7 +1377,6 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	if (ami_load_ptmem(sc, ccb, xs->data, xs->datalen,
 	    xs->flags & SCSI_DATA_IN, xs->flags & SCSI_NOSLEEP) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		ami_put_ccb(ccb);
 		scsi_done(xs);
@@ -1468,7 +1462,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		AMI_DPRINTF(AMI_D_CMD, ("no target %d ", target));
 		/* XXX should be XS_SENSE and sense filled out */
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1517,7 +1510,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		AMI_DPRINTF(AMI_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
 		    target));
 		xs->error = XS_NOERROR;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1534,7 +1526,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ami_copy_internal_data(xs, &sd, sizeof(sd));
 
 		xs->error = XS_NOERROR;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1555,7 +1546,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ami_copy_internal_data(xs, &inq, sizeof(inq));
 
 		xs->error = XS_NOERROR;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1569,7 +1559,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ami_copy_internal_data(xs, &rcd, sizeof(rcd));
 
 		xs->error = XS_NOERROR;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1580,7 +1569,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		    xs->cmd->opcode, target));
 
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1603,7 +1591,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		printf("%s: out of bounds %u-%u >= %u\n", DEVNAME(sc),
 		    blockno, blockcnt, sc->sc_hdr[target].hd_size);
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1636,7 +1623,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 			printf("error %d loading dma map\n", error);
 
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		ami_put_ccb(ccb);
 		scsi_done(xs);

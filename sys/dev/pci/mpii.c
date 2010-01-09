@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii.c,v 1.5 2009/12/01 00:09:03 bluhm Exp $ */
+/* $OpenBSD: mpii.c,v 1.6 2010/01/09 23:15:07 krw Exp $ */
 /*
  * Copyright (c) James Giannoules
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -4838,7 +4838,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -4911,7 +4910,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	if (mpii_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		mpii_put_ccb(sc, ccb);
 		scsi_done(xs);
@@ -4937,7 +4935,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL) {
 		if (mpii_poll(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			xs->flags |= ITSDONE;
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
@@ -4975,7 +4972,6 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	/* timeout_del */
 	xs->error = XS_NOERROR;
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */

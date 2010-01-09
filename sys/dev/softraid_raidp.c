@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.13 2009/12/15 13:19:37 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.14 2010/01/09 23:15:06 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -633,7 +633,6 @@ sr_raidp_intr(struct buf *bp)
 		if (xs != NULL) {
 			xs->error = XS_NOERROR;
 			xs->resid = 0;
-			xs->flags |= ITSDONE;
 		}
 
 		pend = 0;
@@ -684,7 +683,6 @@ retry:
 	return;
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
-	xs->flags |= ITSDONE;
 	if (wu->swu_flags & SR_WUF_REBUILD) {
 		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
 		wakeup(wu);

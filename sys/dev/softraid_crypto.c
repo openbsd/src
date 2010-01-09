@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.46 2009/12/31 14:42:31 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.47 2010/01/09 23:15:06 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1311,7 +1311,6 @@ sr_crypto_finish_io(struct sr_workunit *wu)
 	    DEVNAME(sc), wu, xs);
 
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
 		if (ccb->ccb_opaque == NULL)

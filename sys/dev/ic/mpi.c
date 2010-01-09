@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.132 2010/01/03 07:47:20 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.133 2010/01/09 23:15:06 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1227,7 +1227,6 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1289,7 +1288,6 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 
 	if (mpi_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		mpi_put_ccb(sc, ccb);
 		s = splbio();
 		scsi_done(xs);
@@ -1302,7 +1300,6 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL) {
 		if (mpi_poll(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			xs->flags |= ITSDONE;
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
@@ -1335,7 +1332,6 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	/* timeout_del */
 	xs->error = XS_NOERROR;
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */

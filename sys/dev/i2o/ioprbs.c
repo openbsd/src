@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.18 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.19 2010/01/09 23:15:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -432,7 +432,6 @@ ioprbs_scsi_cmd(xs)
 		case VERIFY:
 #endif
 			ioprbs_internal_cache_cmd(xs);
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 
@@ -440,7 +439,6 @@ ioprbs_scsi_cmd(xs)
 			DPRINTF(("PREVENT/ALLOW "));
 			/* XXX Not yet implemented */
 			xs->error = XS_NOERROR;
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 
@@ -448,7 +446,6 @@ ioprbs_scsi_cmd(xs)
 			DPRINTF(("SYNCHRONIZE_CACHE "));
 			/* XXX Not yet implemented */
 			xs->error = XS_NOERROR;
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 
@@ -456,7 +453,6 @@ ioprbs_scsi_cmd(xs)
 			DPRINTF(("unknown opc %d ", xs->cmd->opcode));
 			/* XXX Not yet implemented */
 			xs->error = XS_DRIVER_STUFFUP;
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 
@@ -491,7 +487,6 @@ ioprbs_scsi_cmd(xs)
 					 * sense too.
 					 */
 					xs->error = XS_DRIVER_STUFFUP;
-					xs->flags |= ITSDONE;
 					scsi_done(xs);
 					goto ready;
 				}
@@ -523,7 +518,6 @@ ioprbs_scsi_cmd(xs)
 					    sc->sc_dv.dv_xname);
 					return (NO_CCB);
 				}
-				xs->flags |= ITSDONE;
 				scsi_done(xs);
 #endif
 			}

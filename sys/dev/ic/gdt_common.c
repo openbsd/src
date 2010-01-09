@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.46 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.47 2010/01/09 23:15:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -607,7 +607,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		 * faked sense too.
 		 */
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		splx(s);
 		return (COMPLETE);
@@ -644,7 +643,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		case VERIFY:
 #endif
 			gdt_internal_cache_cmd(xs);
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 
@@ -652,7 +650,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			GDT_DPRINTF(GDT_D_CMD, ("PREVENT/ALLOW "));
 			/* XXX Not yet implemented */
 			xs->error = XS_NOERROR;
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 
@@ -661,7 +658,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			    ("unknown opc %d ", xs->cmd->opcode));
 			/* XXX Not yet implemented */
 			xs->error = XS_DRIVER_STUFFUP;
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
 
@@ -702,7 +698,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 					 * sense too.
 					 */
 					xs->error = XS_DRIVER_STUFFUP;
-					xs->flags |= ITSDONE;
 					scsi_done(xs);
 					goto ready;
 				}
@@ -744,7 +739,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 
 					gdt_free_ccb(sc, ccb);
 					xs->error = XS_DRIVER_STUFFUP;
-					xs->flags |= ITSDONE;
 					scsi_done(xs);
 					goto ready;
 				}
@@ -765,7 +759,6 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 					    ccb->gc_cmd_index);
 					return (NO_CCB);
 				}
-				xs->flags |= ITSDONE;
 				scsi_done(xs);
 			}
 		}
@@ -1030,7 +1023,6 @@ gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	xs->error = XS_DRIVER_STUFFUP;
-	xs->flags |= ITSDONE;
 	s = splbio();
 	scsi_done(xs);
 	gdt_free_ccb(sc, ccb);
@@ -1174,7 +1166,6 @@ gdt_intr(void *arg)
 
 	switch (sync_val) {
 	case 1:
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		break;
 

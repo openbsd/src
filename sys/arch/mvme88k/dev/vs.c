@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.77 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.78 2010/01/09 23:15:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -326,7 +326,6 @@ vs_poll(struct vs_softc *sc, struct vs_cb *cb)
 	if (rc != 0) {
 		xs->error = XS_SELTIMEOUT;
 		xs->status = -1;
-		xs->flags |= ITSDONE;
 #ifdef VS_DEBUG
 		printf("%s: polled command timed out\n", __func__);
 #endif
@@ -400,7 +399,6 @@ vs_scsidone(struct vs_softc *sc, struct vs_cb *cb)
 		vs_chksense(cb, xs);
 	}
 
-	xs->flags |= ITSDONE;
 	vs_free(sc, cb);
 	scsi_done(xs);
 }
@@ -1227,7 +1225,6 @@ vs_eintr(void *vsc)
 	if (xs != NULL) {
 		xs->error = XS_SELTIMEOUT;
 		xs->status = -1;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
 

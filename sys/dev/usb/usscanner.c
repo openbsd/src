@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.29 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.30 2010/01/09 23:15:07 krw Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ int	usscannerdebug = 0;
 #define show_scsipi_cmd         show_scsi_cmd
 #define xs_control		flags
 #define xs_status		status
-#define XS_STS_DONE		ITSDONE
 #define XS_CTL_POLL		SCSI_POLL
 
 #define USSCANNER_CONFIG_NO		1
@@ -488,7 +487,6 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	sc->sc_state = UAS_IDLE;
 
-	sc->sc_xs->xs_control |= XS_STS_DONE;
 	s = splbio();
 	scsipi_done(sc->sc_xs);
 	splx(s);
@@ -765,7 +763,6 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 
  done:
 	sc->sc_state = UAS_IDLE;
-	xs->xs_control |= XS_STS_DONE;
 	s = splbio();
 	scsipi_done(xs);
 	splx(s);

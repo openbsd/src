@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.19 2009/10/03 18:42:36 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.20 2010/01/09 23:15:07 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -306,7 +306,6 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		    DEVNAME(sc), link->target));
 		/* XXX should be XS_SENSE and sense filled out */
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -477,7 +476,6 @@ sdmmc_done_xs(struct sdmmc_ccb *ccb)
 	    curproc ? curproc->p_comm : "", xs->error));
 
 	xs->resid = 0;
-	xs->flags |= ITSDONE;
 
 	if (ISSET(ccb->ccb_flags, SDMMC_CCB_F_ERR))
 		xs->error = XS_DRIVER_STUFFUP;

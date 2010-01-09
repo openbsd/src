@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.79 2009/08/13 11:10:27 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.80 2010/01/09 23:15:06 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -726,7 +726,6 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -738,7 +737,6 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -749,7 +747,6 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 
 	if (arc_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		s = splbio();
 		arc_put_ccb(sc, ccb);
 		scsi_done(xs);
@@ -790,7 +787,6 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		rv = COMPLETE;
 		if (arc_complete(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			xs->flags |= ITSDONE;
 			scsi_done(xs);
 		}
 	}
@@ -848,9 +844,6 @@ arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, u_int32_t reg)
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 	}
-
-	/* timeout_del */
-	xs->flags |= ITSDONE;
 
 	if (reg & ARC_RA_REPLY_QUEUE_ERR) {
 		cmd = &ccb->ccb_cmd->cmd;

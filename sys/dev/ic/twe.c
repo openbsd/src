@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.32 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.33 2010/01/09 23:15:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -737,7 +737,6 @@ twe_done(sc, ccb)
 
 	if (xs) {
 		xs->resid = 0;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
 	TWE_UNLOCK(sc, lock);
