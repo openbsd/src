@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.51 2010/01/08 01:35:52 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.52 2010/01/09 20:33:16 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -364,21 +364,30 @@ extern vaddr_t uncached_base;
 
 #include <machine/intr.h>
 
+struct cpu_hwinfo {
+	uint32_t	c0prid;
+	uint32_t	c1prid;
+	uint32_t	clock;	/* Hz */
+	uint32_t	tlbsize;
+	uint		type;
+};
+
 struct cpu_info {
-	struct device   *ci_dev;	/* our device */
-	struct cpu_info *ci_self;	/* pointer to this structure */
-	struct cpu_info *ci_next;	/* next cpu */
+	struct device	*ci_dev;	/* our device */
+	struct cpu_info	*ci_self;	/* pointer to this structure */
+	struct cpu_info	*ci_next;	/* next cpu */
 	struct proc	*ci_curproc;
 	struct user	*ci_curprocpaddr;
 	struct proc	*ci_fpuproc;	/* pointer to last proc to use FP */
-
+	struct cpu_hwinfo
+			ci_hw;
 	struct schedstate_percpu
 			ci_schedstate;
 	int		ci_want_resched;	/* need_resched() invoked */
-	cpuid_t		ci_cpuid;              /* our CPU ID */
+	cpuid_t		ci_cpuid;		/* our CPU ID */
 	uint32_t	ci_randseed;		/* per cpu random seed */
-	int		ci_ipl;		/* software IPL */
-	uint32_t	ci_softpending;	/* pending soft interrupts */
+	int		ci_ipl;			/* software IPL */
+	uint32_t	ci_softpending;		/* pending soft interrupts */
 	int		ci_clock_started;
 	u_int32_t	ci_cpu_counter_last;
 	u_int32_t	ci_cpu_counter_interval;

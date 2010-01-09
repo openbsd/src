@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.41 2009/12/04 22:48:11 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.42 2010/01/09 20:33:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -205,7 +205,6 @@ ip27_setup()
 			continue;
 		kl_scan_config(gda->nasid[node]);
 	}
-	kl_scan_done();
 
 	/*
 	 * Initialize the early console parameters.
@@ -312,7 +311,7 @@ ip27_setup()
 void
 ip27_autoconf(struct device *parent)
 {
-	struct mainbus_attach_args maa;
+	struct cpu_attach_args caa;
 	uint node;
 
 	/*
@@ -320,12 +319,13 @@ ip27_autoconf(struct device *parent)
 	 * if any, will get attached as they are discovered.
 	 */
 
-	bzero(&maa, sizeof maa);
-	maa.maa_nasid = currentnasid = masternasid;
-	maa.maa_name = "cpu";
-	config_found(parent, &maa, ip27_print);
-	maa.maa_name = "clock";
-	config_found(parent, &maa, ip27_print);
+	bzero(&caa, sizeof caa);
+	caa.caa_maa.maa_name = "cpu";
+	caa.caa_maa.maa_nasid = currentnasid = masternasid;
+	caa.caa_hw = &bootcpu_hwinfo;
+	config_found(parent, &caa, ip27_print);
+	caa.caa_maa.maa_name = "clock";
+	config_found(parent, &caa.caa_maa, ip27_print);
 
 	/*
 	 * Now attach all nodes' I/O devices.

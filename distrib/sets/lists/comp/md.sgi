@@ -155,6 +155,7 @@
 ./usr/include/mips64/archtype.h
 ./usr/include/mips64/asm.h
 ./usr/include/mips64/atomic.h
+./usr/include/mips64/autoconf.h
 ./usr/include/mips64/cdefs.h
 ./usr/include/mips64/cpu.h
 ./usr/include/mips64/cpustate.h

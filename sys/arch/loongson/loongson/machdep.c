@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1.1.1 2009/12/25 22:06:03 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.2 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -107,6 +107,7 @@ struct	user *proc0paddr;
 int	kbd_reset;
 
 struct sys_rec sys_config;
+struct cpu_hwinfo bootcpu_hwinfo;
 
 /* Pointers to the start and end of the symbol table. */
 caddr_t	ssym;
@@ -274,7 +275,7 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 		cpuspeed = atoi(envvar, 10);	/* speed in Hz */
 	if (cpuspeed < 100 * 1000000)
 		cpuspeed = 797000000;  /* Reasonable default */
-	sys_config.cpu[0].clock = cpuspeed;
+	bootcpu_hwinfo.clock = cpuspeed;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -385,15 +386,11 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 		}
 	}
 
-	sys_config.cpu[0].type = (prid >> 8) & 0xff;
-	sys_config.cpu[0].vers_maj = (prid >> 4) & 0x0f;
-	sys_config.cpu[0].vers_min = prid & 0x0f;
+	bootcpu_hwinfo.c0prid = prid;
+	bootcpu_hwinfo.type = (prid >> 8) & 0xff;
 	/* FPU reports itself as type 5, version 0.1... */
-	sys_config.cpu[0].fptype = sys_config.cpu[0].type;
-	sys_config.cpu[0].fpvers_maj = sys_config.cpu[0].vers_maj;
-	sys_config.cpu[0].fpvers_min = sys_config.cpu[0].vers_min;
-
-	sys_config.cpu[0].tlbsize = 64;
+	bootcpu_hwinfo.c1prid = bootcpu_hwinfo.c0prid;
+	bootcpu_hwinfo.tlbsize = 64;
 
 	/*
 	 * Configure cache.
@@ -403,11 +400,10 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 
 	Loongson2_ConfigCache();
 
-	sys_config.cpu[0].tlbwired = UPAGES / 2;
 	tlb_set_page_mask(TLB_PAGE_MASK);
 	tlb_set_wired(0);
-	tlb_flush(sys_config.cpu[0].tlbsize);
-	tlb_set_wired(sys_config.cpu[0].tlbwired);
+	tlb_flush(bootcpu_hwinfo.tlbsize);
+	tlb_set_wired(UPAGES / 2);
 
 	/*
 	 * Get a console, very early but after initial mapping setup.
@@ -707,7 +703,7 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	extern struct proc *machFPCurProcPtr;
+	struct cpu_info *ci = curcpu();
 
 	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trap_frame));
 	p->p_md.md_regs->sp = stack;
@@ -718,8 +714,8 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;
 	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
 	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (machFPCurProcPtr == p)
-		machFPCurProcPtr = NULL;
+	if (ci->ci_fpuproc == p)
+		ci->ci_fpuproc = NULL;
 	p->p_md.md_ss_addr = 0;
 	p->p_md.md_pc_ctrl = 0;
 	p->p_md.md_watch_1 = 0;

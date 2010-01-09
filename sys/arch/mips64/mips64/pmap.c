@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2010/01/05 06:44:58 syuu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.47 2010/01/09 20:33:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1385,14 +1385,15 @@ pmap_alloc_tlbpid(struct proc *p)
 {
 	pmap_t pmap;
 	uint id;
-	u_long cpuid = cpu_number();
+	struct cpu_info *ci = curcpu();
+	u_long cpuid = ci->ci_cpuid;
 
 	pmap = p->p_vmspace->vm_map.pmap;
 	if (pmap->pm_asid[cpuid].pma_asidgen != 
 	    pmap_asid_info[cpuid].pma_asidgen) {
 		id = pmap_asid_info[cpuid].pma_asid;
 		if (id >= VMNUM_PIDS) {
-			tlb_flush(sys_config.cpu[0].tlbsize);
+			tlb_flush(ci->ci_hw.tlbsize);
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++pmap_asid_info[cpuid].pma_asidgen == 0)
 				pmap_asid_info[cpuid].pma_asidgen = 1;

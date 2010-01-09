@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.95 2010/01/08 01:35:52 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.96 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -111,6 +111,7 @@ int16_t	masternasid;
 
 int32_t *environment;
 struct sys_rec sys_config;
+struct cpu_hwinfo bootcpu_hwinfo;
 
 /* Pointers to the start and end of the symbol table. */
 caddr_t	ssym;
@@ -338,87 +339,10 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		}
 	}
 
-	switch (sys_config.system_type) {
-#if defined(TGT_O2) || defined(TGT_OCTANE)
-	case SGI_O2:
-	case SGI_OCTANE:
-		sys_config.cpu[0].type = (cp0_get_prid() >> 8) & 0xff;
-		sys_config.cpu[0].vers_maj = (cp0_get_prid() >> 4) & 0x0f;
-		sys_config.cpu[0].vers_min = cp0_get_prid() & 0x0f;
-		sys_config.cpu[0].fptype = (cp1_get_prid() >> 8) & 0xff;
-		sys_config.cpu[0].fpvers_maj = (cp1_get_prid() >> 4) & 0x0f;
-		sys_config.cpu[0].fpvers_min = cp1_get_prid() & 0x0f;
-
-		/*
-		 * Configure TLB.
-		 */
-		switch(sys_config.cpu[0].type) {
-#ifdef CPU_RM7000
-		case MIPS_RM7000:
-			/*
-			 * Rev A (version >= 2) CPU's have 64 TLB entries.
-			 *
-			 * However, the last 16 are only enabled if one
-			 * particular configuration bit (mode bit #24)
-			 * is set on cpu reset, so check whether the
-			 * extra TLB are really usable.
-			 *
-			 * If they are disabled, they are nevertheless
-			 * writable, but random TLB insert operations
-			 * will never use any of them. This can be
-			 * checked by inserting dummy entries and check
-			 * if any of the last 16 entries have been used.
-			 *
-			 * Of course, due to the way the random replacement
-			 * works (hashing various parts of the TLB data,
-			 * such as address bits and ASID), not all the
-			 * available TLB will be used; we simply check
-			 * the highest valid TLB entry we can find and
-			 * see if it is in the upper 16 entries or not.
-			 */
-			sys_config.cpu[0].tlbsize = 48;
-			if (sys_config.cpu[0].vers_maj >= 2) {
-				struct tlb_entry te;
-				int e, lastvalid;
-
-				tlb_set_wired(0);
-				tlb_flush(64);
-				for (e = 0; e < 64 * 8; e++)
-					tlb_update(XKSSEG_BASE + ptoa(2 * e),
-					    pfn_to_pad(0) | PG_ROPAGE);
-				lastvalid = 0;
-				for (e = 0; e < 64; e++) {
-					tlb_read(e, &te);
-					if ((te.tlb_lo0 & PG_V) != 0)
-						lastvalid = e;
-				}
-				tlb_flush(64);
-				if (lastvalid >= 48)
-					sys_config.cpu[0].tlbsize = 64;
-			}
-			break;
-#endif
-#ifdef CPU_R10000
-		case MIPS_R10000:
-		case MIPS_R12000:
-		case MIPS_R14000:
-			sys_config.cpu[0].tlbsize = 64;
-			break;
-#endif
-		default:
-			sys_config.cpu[0].tlbsize = 48;
-			break;
-		}
-		break;
-#endif
-	default:
-		break;
-	}
-
 	/*
 	 * Configure cache.
 	 */
-	switch(sys_config.cpu[0].type) {
+	switch (bootcpu_hwinfo.type) {
 #ifdef CPU_R10000
 	case MIPS_R10000:
 	case MIPS_R12000:
@@ -489,11 +413,10 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 */
 	delay(20*1000);		/* Let any UART FIFO drain... */
 
-	sys_config.cpu[0].tlbwired = UPAGES / 2;
 	tlb_set_page_mask(TLB_PAGE_MASK);
 	tlb_set_wired(0);
-	tlb_flush(sys_config.cpu[0].tlbsize);
-	tlb_set_wired(sys_config.cpu[0].tlbwired);
+	tlb_flush(bootcpu_hwinfo.tlbsize);
+	tlb_set_wired(UPAGES / 2);
 
 	/*
 	 * Get a console, very early but after initial mapping setup.
@@ -830,7 +753,7 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs->sr = SR_FR_32 | SR_XX | SR_KSU_USER | SR_KX | SR_UX |
 	    SR_EXL | SR_INT_ENAB;
 #if defined(CPU_R10000) && !defined(TGT_COHERENT)
-	if (sys_config.cpu[0].type == MIPS_R12000)
+	if (ci->ci_hw.type == MIPS_R12000)
 		p->p_md.md_regs->sr |= SR_DSD;
 #endif
 	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.11 2009/10/16 00:15:48 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.12 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -411,7 +411,6 @@ typedef struct gda {
 console_t *kl_get_console(void);
 void	kl_init(int);
 void	kl_scan_config(int);
-void	kl_scan_done(void);
 int	kl_scan_node(int, uint, int (*)(lboard_t *, void *), void *);
 #define	KLBRD_ANY	0
 int	kl_scan_board(lboard_t *, uint, int (*)(klinfo_t *, void *), void *);

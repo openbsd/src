@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.27 2009/12/25 21:02:18 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.28 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,23 +38,9 @@
 /*
  * Structure holding all misc config information.
  */
-#define MAX_CPUS	4
-
 struct sys_rec {
 	int	system_type;
 	int	system_subtype;		/* IP35 only */
-
-	struct cpuinfo {
-		u_int16_t type;
-		u_int8_t  vers_maj;
-		u_int8_t  vers_min;
-		u_int16_t fptype;
-		u_int8_t  fpvers_maj;
-		u_int8_t  fpvers_min;
-		u_int32_t clock;
-		u_int32_t tlbsize;
-		u_int32_t tlbwired;
-	} cpu[MAX_CPUS];
 
 	/* Published cache operations. */
 	void    (*_SyncCache)(void);
@@ -74,6 +60,8 @@ struct mainbus_attach_args {
 	const char	*maa_name;
 	int16_t		 maa_nasid;
 };
+
+#include <mips64/autoconf.h>
 
 void	enaddr_aton(const char *, u_int8_t *);
 u_long	bios_getenvint(const char *);

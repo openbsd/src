@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.29 2010/01/05 06:44:58 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.30 2010/01/09 20:33:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -149,10 +149,14 @@ ip30_setup()
 	xbow_widget_map = ip30_widget_map;
 	xbow_widget_id = ip30_widget_id;
 
+	bootcpu_hwinfo.c0prid = cp0_get_prid();
+	bootcpu_hwinfo.c1prid = cp1_get_prid();
 	cpuspeed = bios_getenvint("cpufreq");
 	if (cpuspeed < 100)
 		cpuspeed = 175;		/* reasonable default */
-	sys_config.cpu[0].clock = cpuspeed * 1000000;
+	bootcpu_hwinfo.clock = cpuspeed * 1000000;
+	bootcpu_hwinfo.tlbsize = 64;	/* R10000 family */
+	bootcpu_hwinfo.type = (bootcpu_hwinfo.c0prid >> 8) & 0xff;
 
 	/*
 	 * Initialize the early console parameters.
@@ -197,25 +201,43 @@ ip30_setup()
 void
 ip30_autoconf(struct device *parent)
 {
-	struct mainbus_attach_args maa;
+	struct cpu_attach_args caa;
+#ifdef MULTIPROCESSOR
+	struct cpu_hwinfo hw;
+	int cpuid;
+#endif
 
-	bzero(&maa, sizeof maa);
-	maa.maa_nasid = masternasid;
-	maa.maa_name = "cpu";
-	config_found(parent, &maa, mbprint);
+	bzero(&caa, sizeof caa);
+	caa.caa_maa.maa_nasid = masternasid;
+	caa.caa_maa.maa_name = "cpu";
+	caa.caa_hw = &bootcpu_hwinfo;
+	config_found(parent, &caa, mbprint);
 
 #ifdef MULTIPROCESSOR
-	int cpuid;
-	for(cpuid = 1; cpuid < MAXCPUS; cpuid++)
-		if (ip30_cpu_exists(cpuid))
-			config_found(parent, &maa, mbprint);
+	for (cpuid = 1; cpuid < MAXCPUS; cpuid++)
+		if (ip30_cpu_exists(cpuid)) {
+			/*
+			 * Attach other processors with the same hardware
+			 * information as the boot processor, unless we
+			 * can get this information from the MPCONF area;
+			 * since Octane processors should be identical
+			 * (model, speed and cache), this should be safe.
+			 */
+			bcopy(&bootcpu_hwinfo, &hw, sizeof(struct cpu_hwinfo));
+			hw.c0prid = 
+		           *(volatile uint32_t *)(mpconf + MPCONF_PRID(cpuid));
+			hw.type = (hw.c0prid >> 8) & 0xff;
+			caa.caa_hw = &hw;
+			config_found(parent, &caa, mbprint);
+		}
 #endif
-	maa.maa_name = "clock";
-	config_found(parent, &maa, mbprint);
-	maa.maa_name = "xbow";
-	config_found(parent, &maa, mbprint);
-	maa.maa_name = "power";
-	config_found(parent, &maa, mbprint);
+
+	caa.caa_maa.maa_name = "clock";
+	config_found(parent, &caa.caa_maa, mbprint);
+	caa.caa_maa.maa_name = "xbow";
+	config_found(parent, &caa.caa_maa, mbprint);
+	caa.caa_maa.maa_name = "power";
+	config_found(parent, &caa.caa_maa, mbprint);
 }
 
 /*
@@ -385,7 +407,6 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
 void
 hw_cpu_hatch(struct cpu_info *ci)
 {
-       int cpuid = ci->ci_cpuid;
        int s;
 
        /*
@@ -395,25 +416,12 @@ hw_cpu_hatch(struct cpu_info *ci)
         */
        setsr(getsr() | SR_KX | SR_UX);
 
-       /*
-        * Determine system type and set up configuration record data.
-        */
-       sys_config.cpu[cpuid].clock = sys_config.cpu[0].clock;
-       sys_config.cpu[cpuid].type = (cp0_get_prid() >> 8) & 0xff;
-       sys_config.cpu[cpuid].vers_maj = (cp0_get_prid() >> 4) & 0x0f;
-       sys_config.cpu[cpuid].vers_min = cp0_get_prid() & 0x0f;
-       sys_config.cpu[cpuid].fptype = (cp1_get_prid() >> 8) & 0xff;
-       sys_config.cpu[cpuid].fpvers_maj = (cp1_get_prid() >> 4) & 0x0f;
-       sys_config.cpu[cpuid].fpvers_min = cp1_get_prid() & 0x0f;
-       sys_config.cpu[cpuid].tlbsize = 64;
-
        Mips10k_ConfigCache();
 
-       sys_config.cpu[cpuid].tlbwired = UPAGES / 2;
 	tlb_set_page_mask(TLB_PAGE_MASK);
-       tlb_set_wired(0);
-       tlb_flush(sys_config.cpu[cpuid].tlbsize);
-       tlb_set_wired(sys_config.cpu[cpuid].tlbwired);
+	tlb_set_wired(0);
+	tlb_flush(64);
+	tlb_set_wired(UPAGES / 2);
 
        tlb_set_pid(0);
 
@@ -427,10 +435,10 @@ hw_cpu_hatch(struct cpu_info *ci)
         */
        Mips_SyncCache();
 
+       cpu_startclock(ci);
+
        ncpus++;
        cpuset_add(&cpus_running, ci);
-
-       cpu_startclock(ci);
 
        mips64_ipi_init();
        xheart_setintrmask(0);

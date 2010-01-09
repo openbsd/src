@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2009/11/07 18:56:55 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.8 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,7 +61,7 @@ mbmatch(struct device *parent, void *cfdata, void *aux)
 void
 mbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args maa;
+	struct cpu_attach_args caa;
 	extern char *hw_prod;
 
 	if (hw_prod != NULL)
@@ -69,8 +69,8 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/*
-	 * On IP27 and IP35 system, delegate everything to the IP-specific
-	 * code.
+	 * On multiprocessor capable systems, delegate everything to the
+	 * IP-specific code.
 	 */
 	switch (sys_config.system_type) {
 #ifdef TGT_ORIGIN
@@ -94,19 +94,21 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	 * discovered.
 	 */
 
-	bzero(&maa, sizeof maa);
-	maa.maa_name = "cpu";
-	config_found(self, &maa, mbprint);
-	maa.maa_name = "clock";
-	config_found(self, &maa, mbprint);
+	bzero(&caa, sizeof caa);
+	caa.caa_maa.maa_name = "cpu";
+	caa.caa_hw = &bootcpu_hwinfo;
+	config_found(self, &caa, mbprint);
+
+	caa.caa_maa.maa_name = "clock";
+	config_found(self, &caa.caa_maa, mbprint);
 
 	switch (sys_config.system_type) {
 #ifdef TGT_O2
 	case SGI_O2:
-		maa.maa_name = "macebus";
-		config_found(self, &maa, mbprint);
-		maa.maa_name = "gbe";
-		config_found(self, &maa, mbprint);
+		caa.caa_maa.maa_name = "macebus";
+		config_found(self, &caa.caa_maa, mbprint);
+		caa.caa_maa.maa_name = "gbe";
+		config_found(self, &caa.caa_maa, mbprint);
 		break;
 #endif
 	default:

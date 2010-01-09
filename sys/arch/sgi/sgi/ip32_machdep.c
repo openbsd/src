@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.12 2009/11/19 20:16:27 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.13 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -127,10 +127,74 @@ ip32_setup()
 		break;
 	}
 
+	bootcpu_hwinfo.c0prid = cp0_get_prid();
+	bootcpu_hwinfo.c1prid = cp1_get_prid();
 	cpuspeed = bios_getenvint("cpufreq");
 	if (cpuspeed < 100)
 		cpuspeed = 180;		/* reasonable default */
-	sys_config.cpu[0].clock = cpuspeed * 1000000;
+	bootcpu_hwinfo.clock = cpuspeed * 1000000;
+	bootcpu_hwinfo.type = (bootcpu_hwinfo.c0prid >> 8) & 0xff;
+
+	/*
+	 * Figure out how many TLB are available.
+	 */
+	switch (bootcpu_hwinfo.type) {
+#ifdef CPU_RM7000
+	case MIPS_RM7000:
+		/*
+		 * Rev A (version >= 2) CPU's have 64 TLB entries.
+		 *
+		 * However, the last 16 are only enabled if one
+		 * particular configuration bit (mode bit #24)
+		 * is set on cpu reset, so check whether the
+		 * extra TLB are really usable.
+		 *
+		 * If they are disabled, they are nevertheless
+		 * writable, but random TLB insert operations
+		 * will never use any of them. This can be
+		 * checked by inserting dummy entries and check
+		 * if any of the last 16 entries have been used.
+		 *
+		 * Of course, due to the way the random replacement
+		 * works (hashing various parts of the TLB data,
+		 * such as address bits and ASID), not all the
+		 * available TLB will be used; we simply check
+		 * the highest valid TLB entry we can find and
+		 * see if it is in the upper 16 entries or not.
+		 */
+		bootcpu_hwinfo.tlbsize = 48;
+		if (((bootcpu_hwinfo.c0prid >> 4) & 0x0f) >= 2) {
+			struct tlb_entry te;
+			int e, lastvalid;
+
+			tlb_set_wired(0);
+			tlb_flush(64);
+			for (e = 0; e < 64 * 8; e++)
+				tlb_update(XKSSEG_BASE + ptoa(2 * e),
+				    pfn_to_pad(0) | PG_ROPAGE);
+			lastvalid = 0;
+			for (e = 0; e < 64; e++) {
+				tlb_read(e, &te);
+				if ((te.tlb_lo0 & PG_V) != 0)
+					lastvalid = e;
+			}
+			tlb_flush(64);
+			if (lastvalid >= 48)
+				bootcpu_hwinfo.tlbsize = 64;
+		}
+		break;
+#endif
+#ifdef CPU_R10000
+	case MIPS_R10000:
+	case MIPS_R12000:
+	case MIPS_R14000:
+		bootcpu_hwinfo.tlbsize = 64;
+		break;
+#endif
+	default:	/* R5000, RM52xx */
+		bootcpu_hwinfo.tlbsize = 48;
+		break;
+	}
 
 	comconsaddr = MACE_ISA_SER1_OFFS;
 	comconsfreq = 1843200;

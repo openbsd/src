@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1.1.1 2009/11/21 18:30:18 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.2 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,22 +38,8 @@
 /*
  * Structure holding all misc config information.
  */
-#define MAX_CPUS	1
-
 struct sys_rec {
 	int	system_type;
-
-	struct cpuinfo {
-		u_int16_t type;
-		u_int8_t  vers_maj;
-		u_int8_t  vers_min;
-		u_int16_t fptype;
-		u_int8_t  fpvers_maj;
-		u_int8_t  fpvers_min;
-		u_int32_t clock;
-		u_int32_t tlbsize;
-		u_int32_t tlbwired;
-	} cpu[MAX_CPUS];
 
 	/* Serial console configuration. */
 	struct mips_bus_space console_io;
@@ -64,5 +50,7 @@ extern struct sys_rec sys_config;
 struct mainbus_attach_args {
 	const char	*maa_name;
 };
+
+#include <mips64/autoconf.h>
 
 #endif /* _MACHINE_AUTOCONF_H_ */

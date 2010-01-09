@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.15 2009/11/19 06:06:51 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.16 2010/01/09 20:33:16 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -54,8 +54,6 @@
 #include <machine/mnode.h>
 #include <sgi/xbow/hub.h>
 
-int nextcpu = 0;
-
 void	kl_add_memory_ip27(int16_t, int16_t *, unsigned int);
 void	kl_add_memory_ip35(int16_t, int16_t *, unsigned int);
 
@@ -104,16 +102,6 @@ kl_scan_config(int nasid)
 	kl_scan_node(nasid, KLBRD_ANY, kl_first_pass_board, NULL);
 }
 
-void
-kl_scan_done()
-{
-	if (nextcpu > MAX_CPUS) {
-		bios_printf("%u processors found, increase MAX_CPUS\n",
-		    nextcpu);
-	}
-	ncpusfound = nextcpu;
-}
-
 /*
  * Callback routine for the initial enumeration (boards).
  */
@@ -137,7 +125,6 @@ kl_first_pass_board(lboard_t *boardinfo, void *arg)
 int
 kl_first_pass_comp(klinfo_t *comp, void *arg)
 {
-	struct cpuinfo *cpu;
 	klcpu_t *cpucomp;
 	klmembnk_m_t *memcomp_m;
 #ifdef DEBUG
@@ -154,22 +141,22 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		    cpucomp->cpu_prid, cpucomp->cpu_fpirr, cpucomp->cpu_speed,
 		    cpucomp->cpu_scachesz, cpucomp->cpu_scachespeed));
 
-		if (nextcpu < MAX_CPUS) {
-			cpu = &sys_config.cpu[nextcpu];
-			cpu->clock = cpucomp->cpu_speed * 1000000;
-			cpu->type = (cpucomp->cpu_prid >> 8) & 0xff;
-			cpu->vers_maj = (cpucomp->cpu_prid >> 4) & 0x0f;
-			cpu->vers_min = cpucomp->cpu_prid & 0x0f;
+		/*
+		 * XXX this assumes the first cpu encountered is the boot
+		 * XXX cpu.
+		 */
+		if (bootcpu_hwinfo.clock == 0) {
+			bootcpu_hwinfo.c0prid = cpucomp->cpu_prid;
 #if 0
-			cpu->fptype = (cpucomp->cpu_fpirr >> 8) & 0xff;
+			bootcpu_hwinfo.c1prid = cpucomp->cpu_fpirr;
 #else
-			cpu->fptype = cpu->type;
+			bootcpu_hwinfo.c1prid = cpucomp->cpu_prid;
 #endif
-			cpu->fpvers_maj = (cpucomp->cpu_fpirr >> 4) & 0x0f;
-			cpu->fpvers_min = cpucomp->cpu_fpirr & 0x0f;
-			cpu->tlbsize = 64;
-		}
-		nextcpu++;
+			bootcpu_hwinfo.clock = cpucomp->cpu_speed * 1000000;
+			bootcpu_hwinfo.tlbsize = 64;
+			bootcpu_hwinfo.type = (cpucomp->cpu_prid >> 8) & 0xff;
+		} else
+			ncpusfound++;
 		break;
 
 	case KLSTRUCT_MEMBNK:

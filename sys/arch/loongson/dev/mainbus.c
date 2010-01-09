@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1.1.1 2009/12/25 21:11:09 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.2 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,18 +58,20 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args maa;
+	struct cpu_attach_args caa;
 
 	printf("\n");
 
-	bzero(&maa, sizeof maa);
-	maa.maa_name = "cpu";
-	config_found(self, &maa, mainbus_print);
-	maa.maa_name = "clock";
-	config_found(self, &maa, mainbus_print);
+	bzero(&caa, sizeof caa);
+	caa.caa_maa.maa_name = "cpu";
+	caa.caa_hw = &bootcpu_hwinfo;
+	config_found(self, &caa, mainbus_print);
 
-	maa.maa_name = "bonito";
-	config_found(self, &maa, mainbus_print);
+	caa.caa_maa.maa_name = "clock";
+	config_found(self, &caa.caa_maa, mainbus_print);
+
+	caa.caa_maa.maa_name = "bonito";
+	config_found(self, &caa.caa_maa, mainbus_print);
 }
 
 int

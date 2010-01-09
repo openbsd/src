@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.31 2009/12/28 06:55:27 syuu Exp $ */
+/*	$OpenBSD: clock.c,v 1.32 2010/01/09 20:33:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -52,6 +52,7 @@ struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
 };
 
+void	clock_calibrate(struct cpu_info *);
 uint32_t clock_int5(uint32_t, struct trap_frame *);
 
 u_int cp0_get_timecount(struct timecounter *);
@@ -188,9 +189,10 @@ delay(int n)
 {
 	int dly;
 	int p, c;
+	struct cpu_info *ci = curcpu();
 
 	p = cp0_get_count();
-	dly = (sys_config.cpu[0].clock / 1000000) * n / 2;
+	dly = (ci->ci_hw.clock / 1000000) * n / 2;
 	while (dly > 0) {
 		c = cp0_get_count();
 		dly -= c - p;
@@ -205,49 +207,57 @@ delay(int n)
 struct tod_desc sys_tod;
 
 /*
+ * Calibrate cpu clock against the TOD clock if available.
+ */
+void
+clock_calibrate(struct cpu_info *ci)
+{
+	struct tod_desc *cd = &sys_tod;
+	struct tod_time ct;
+	u_int first_cp0, second_cp0, cycles_per_sec;
+	int first_sec;
+
+	if (cd->tod_get == NULL)
+		return;
+
+	(*cd->tod_get)(cd->tod_cookie, 0, &ct);
+	first_sec = ct.sec;
+
+	/* Let the clock tick one second. */
+	do {
+		first_cp0 = cp0_get_count();
+		(*cd->tod_get)(cd->tod_cookie, 0, &ct);
+	} while (ct.sec == first_sec);
+	first_sec = ct.sec;
+	/* Let the clock tick one more second. */
+	do {
+		second_cp0 = cp0_get_count();
+		(*cd->tod_get)(cd->tod_cookie, 0, &ct);
+	} while (ct.sec == first_sec);
+
+	cycles_per_sec = second_cp0 - first_cp0;
+	ci->ci_hw.clock = cycles_per_sec * 2;
+}
+
+/*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
 void
 cpu_initclocks()
 {
-	struct tod_desc *cd = &sys_tod;
-	struct tod_time ct;
-	u_int first_cp0, second_cp0, cycles_per_sec;
-	int first_sec;
 	struct cpu_info *ci = curcpu();
 
 	hz = 100;
 	profhz = 100;
 	stathz = 0;	/* XXX no stat clock yet */
 
-	/*
-	 * Calibrate the cycle counter frequency.
-	 */
-	if (cd->tod_get != NULL) {
-		(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-		first_sec = ct.sec;
-
-		/* Let the clock tick one second. */
-		do {
-			first_cp0 = cp0_get_count();
-			(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-		} while (ct.sec == first_sec);
-		first_sec = ct.sec;
-		/* Let the clock tick one more second. */
-		do {
-			second_cp0 = cp0_get_count();
-			(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-		} while (ct.sec == first_sec);
-
-		cycles_per_sec = second_cp0 - first_cp0;
-		sys_config.cpu[0].clock = cycles_per_sec * 2;
-	}
+	clock_calibrate(ci);
 
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 	tickadj = 240000 / (60 * hz);		/* can adjust 240ms in 60s */
 
-	cp0_timecounter.tc_frequency = sys_config.cpu[0].clock / 2;
+	cp0_timecounter.tc_frequency = (uint64_t)ci->ci_hw.clock / 2;
 	tc_init(&cp0_timecounter);
 	cpu_startclock(ci);
 }
@@ -264,11 +274,13 @@ cpu_startclock(struct cpu_info *ci)
 
 		/* try to avoid getting clock interrupts early */
 		cp0_set_compare(cp0_get_count() - 1);
+
+		clock_calibrate(ci);
 	}
 
 	/* Start the clock. */
 	s = splclock();
-	ci->ci_cpu_counter_interval = cp0_timecounter.tc_frequency / hz;
+	ci->ci_cpu_counter_interval = (ci->ci_hw.clock / 2) / hz;
 	ci->ci_cpu_counter_last = cp0_get_count() + ci->ci_cpu_counter_interval;
 	cp0_set_compare(ci->ci_cpu_counter_last);
 	ci->ci_clock_started++;
@@ -309,7 +321,7 @@ inittodr(time_t base)
 	if (base < 35 * SECYR) {
 		printf("WARNING: preposterous time in file system");
 		/* read the system clock anyway */
-		base = 38 * SECYR;	/* 2008 */
+		base = 40 * SECYR;	/* 2010 */
 	}
 
 	/*
@@ -414,5 +426,6 @@ resettodr()
 u_int
 cp0_get_timecount(struct timecounter *tc)
 {
+	/* XXX SMP */
 	return (cp0_get_count());
 }
