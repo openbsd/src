@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.27 2009/11/19 20:15:04 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.28 2010/01/09 23:43:43 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -49,10 +49,6 @@
 
 	.set	mips3
 
-	.data
-	.globl	int_nest_cntr
-int_nest_cntr:
-	.word	-1
 	.text
 
 k_exception_table:
@@ -183,19 +179,10 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
-	LA	t1, int_nest_cntr
-	lw	t2, (t1)
-	addiu	t2, 1
-	sw	t2, (t1)
-	ITLBNOPFIX
+	ITLBNOPFIX			# XXX necessary?
 	PTR_S	a0, 0(sp)
 	jal	interrupt
 	PTR_S	a3, CF_RA_OFFS + KERN_REG_SIZE(sp)
-
-	LA	t1, int_nest_cntr
-	lw	t2, (t1)
-	addiu	t2, -1
-	sw	t2, (t1)
 
 	PTR_L	a0, CF_RA_OFFS + KERN_REG_SIZE(sp)
 	.set	noat
@@ -232,22 +219,18 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
-	LA	t1, int_nest_cntr
-	lw	t2, (t1)
-	addiu	t2, 1
-	sw	t2, (t1)
-	ITLBNOPFIX
+	ITLBNOPFIX			# XXX necessary?
 	PTR_S	a0, 0(sp)
 	jal	interrupt
-	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
+	PTR_S	a3, CF_RA_OFFS(sp)	# for debugging
 
 	mfc0	t0, COP_0_STATUS_REG	# enable interrupts before checking
 	ori	t0, SR_INT_ENAB		# for ast.
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
 
-0:
 	GET_CPU_INFO(t1, t0)
+0:
 	PTR_L	t0, CI_CURPROC(t1)
 	lw	v0, P_ASTPENDING(t0)	# any pending AST?
 	beq	v0, zero, 4f
@@ -313,21 +296,17 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 
 4:
 	mfc0	t0, COP_0_STATUS_REG	# disable interrupts
-	li	t1, ~SR_INT_ENAB
-	and	t0, t0, t1
+	li	v0, ~SR_INT_ENAB
+	and	t0, t0, v0
 	mtc0	t0, COP_0_STATUS_REG
 	ITLBNOPFIX
-
-	LA	t1, int_nest_cntr
-	lw	t2, (t1)
-	addiu	t2, -1
-	sw	t2, (t1)
 
 	ori	t0, SR_EXL		# restoring to user mode.
 	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	ITLBNOPFIX
 
-	GET_CPU_INFO(k1, k0)
+	# t1 is curcpu() from earlier
+	move	k1, t1
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
 	sw	a3, CI_IPL(k1)
@@ -437,14 +416,14 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	jal	trap
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
-0:
 	GET_CPU_INFO(t1, t0)
+0:
 	PTR_L	t0, CI_CURPROC(t1)
 	lw	v0, P_ASTPENDING(t0)	# any pending AST?
 	beq	v0, zero, 4f
 	nop
 
-	PTR_L	t0, P_ADDR(t0)		# curprocpaddr
+	PTR_L	t0, CI_CURPROCPADDR(t1)	# curprocpaddr
 	SAVE_CPU_SREG(t0, 0)
 
 	jal	ast

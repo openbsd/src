@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2010/01/09 23:34:29 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2010/01/09 23:43:43 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -39,10 +39,10 @@ include <machine/cpu.h>
 export	SONPROC
 
 struct	proc
-member	p_stat
 member	p_addr
-member	p_vmspace
 member	p_cpu
+member	p_stat
+member	p_vmspace
 member	P_ASTPENDING	p_md.md_astpending
 member	P_PC_CTRL	p_md.md_pc_ctrl
 member	P_PC_COUNT	p_md.md_pc_count
@@ -61,6 +61,16 @@ struct	cpu_info
 member	ci_curproc
 member	ci_curprocpaddr
 member	ci_fpuproc
+member	ci_cacheconfiguration
+member	ci_cacheways
+member	ci_l1instcachesize
+member	ci_l1instcacheline
+member	ci_l1instcacheset
+member	ci_l1datacachesize
+member	ci_l1datacacheline
+member	ci_l1datacacheset
+member	ci_l2size
+member	ci_l3size
 member	ci_ipl
 member	ci_cacheconfiguration
 member	ci_cacheways

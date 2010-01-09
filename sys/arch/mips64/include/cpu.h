@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.53 2010/01/09 23:34:29 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.54 2010/01/09 23:43:41 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -406,6 +406,7 @@ struct cpu_info {
 	u_int32_t	ci_cpu_counter_interval;
 	u_int32_t	ci_pendingticks;
 	struct pmap	*ci_curpmap;
+	uint		ci_intrdepth;		/* interrupt depth */
 #ifdef MULTIPROCESSOR
 	u_long		ci_flags;		/* flags; see below */
 	struct intrhand	ci_ipiih;
@@ -468,12 +469,11 @@ void cpu_startclock(struct cpu_info *);
  * Arguments to hardclock encapsulate the previous machine state in
  * an opaque clockframe.
  */
-extern int int_nest_cntr;
 #define	clockframe trap_frame	/* Use normal trap frame */
 
 #define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(int_nest_cntr > 0)
+#define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth > 1)	/* XXX */
 
 /*
  * This is used during profiling to integrate system time.

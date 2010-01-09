@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.55 2009/11/27 00:08:27 syuu Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.56 2010/01/09 23:43:43 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -111,6 +111,8 @@ interrupt(struct trap_frame *trapframe)
 	if (!(trapframe->sr & SR_INT_ENAB))
 		return;
 
+	ci->ci_intrdepth++;
+
 #ifdef DEBUG_INTERRUPT
 	trapdebug_enter(trapframe, 0);
 #endif
@@ -146,6 +148,8 @@ interrupt(struct trap_frame *trapframe)
 		ci->ci_ipl = s;	/* no-overhead splx */
 		__asm__ ("sync\n\t.set reorder\n");
 	}
+
+	ci->ci_intrdepth--;
 }
 
 
