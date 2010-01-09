@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.18 2010/01/09 09:37:45 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.19 2010/01/09 09:45:40 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -36,6 +36,9 @@ sub find
 {
 	my ($self, $pkgname, $arch) = @_;
 
+	if ($pkgname eq '-') {
+		return OpenBSD::PackageRepository::Local::Pipe->new->find($pkgname, $arch);
+	}
 	for my $repo (@$self) {
 		my $pkg = $repo->find($pkgname, $arch);
 		return $pkg if defined $pkg;
@@ -46,6 +49,10 @@ sub find
 sub grabPlist
 {
 	my ($self, $pkgname, $arch, $code) = @_;
+
+	if ($pkgname eq '-') {
+		return OpenBSD::PackageRepository::Local::Pipe->new->grabPlist($pkgname, $arch, $code);
+	}
 
 	for my $repo (@$self) {
 		my $plist = $repo->grabPlist($pkgname, $arch, $code);

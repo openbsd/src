@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.68 2009/10/13 11:49:25 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.69 2010/01/09 09:45:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -365,6 +365,12 @@ sub relative_url
 sub may_exist
 {
 	return 1;
+}
+
+sub new
+{
+	my $class = shift;
+	bless {}, $class;
 }
 
 sub open_pipe
