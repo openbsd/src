@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.13 2009/11/19 20:16:27 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.14 2010/01/09 18:51:59 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -57,8 +57,11 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/memconf.h>
 
 #include <uvm/uvm_extern.h>
+
+boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 
 caddr_t zeropage;
 
@@ -125,21 +128,19 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = min(iov->iov_len, MAXPHYS);
 
 			/* Allow access to RAM through XKPHYS... */
-			if (IS_XKPHYS(v) && IS_XKPHYS(v + (vsize_t)c) &&
-			    XKPHYS_TO_PHYS(v + (vsize_t)c) <= ptoa(physmem))
-				allowed = TRUE;
+			if (IS_XKPHYS(v))
+				allowed = is_memory_range(XKPHYS_TO_PHYS(v),
+				    (psize_t)c, 0);
 			/* ...or through CKSEG0... */
 			else if (v >= CKSEG0_BASE &&
-			    v + (vsize_t)c < CKSEG0_BASE + CKSEG_SIZE &&
-			    (physmem >= atop(CKSEG_SIZE) ||
-			     v + (vsize_t)c <= CKSEG0_BASE + ptoa(physmem)))
-				allowed = TRUE;
+			    v < CKSEG0_BASE + CKSEG_SIZE)
+				allowed = is_memory_range(CKSEG0_TO_PHYS(v),
+				    (psize_t)c, CKSEG_SIZE);
 			/* ...or through CKSEG1... */
 			else if (v >= CKSEG1_BASE &&
-			    v + (vsize_t)c < CKSEG1_BASE + CKSEG_SIZE &&
-			    (physmem >= atop(CKSEG_SIZE) ||
-			     v + c <= CKSEG1_BASE + ptoa(physmem)))
-				allowed = TRUE;
+			    v < CKSEG1_BASE + CKSEG_SIZE)
+				allowed = is_memory_range(CKSEG1_TO_PHYS(v),
+				    (psize_t)c, CKSEG_SIZE);
 			/* ...otherwise, check it's within kernel kvm limits. */
 			else
 				allowed = uvm_kernacc((caddr_t)v, c,
@@ -195,4 +196,24 @@ int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
+}
+
+boolean_t
+is_memory_range(paddr_t pa, psize_t len, psize_t limit)
+{
+	struct phys_mem_desc *seg;
+	uint64_t fp, lp;
+	int i;
+
+	fp = atop(pa);
+	lp = atop(round_page(pa + len));
+
+	if (limit != 0 && lp > atop(limit))
+		return FALSE;
+
+	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
+		if (fp >= seg->mem_first_page && lp <= seg->mem_last_page)
+			return TRUE;
+
+	return FALSE;
 }
