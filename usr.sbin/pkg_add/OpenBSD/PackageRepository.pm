@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.75 2010/01/09 12:01:57 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.76 2010/01/09 13:42:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -47,18 +47,25 @@ sub new
 	return $o;
 }
 
-# we have to pass a reference because we want to:
-# - strip the scheme
-# - report whether we stripped it
-# (relevant for file: url, where we strip, but don't care if we did
-# vs other schemes, where not having the ftp: marker is a problem)
+my $cache = {};
+
+sub unique
+{
+	my ($class, $o) = @_;
+	return $o unless defined $o;
+	if (defined $cache->{$o->url}) {
+		return $cache->{$o->url};
+	}
+	$cache->{$o->url} = $o;
+	return $o;
+}
 
 sub parse_fullurl
 {
 	my ($class, $r) = @_;
 
 	$class->strip_urlscheme($r) or return undef;
-	return $class->parse_url($r);
+	return $class->unique($class->parse_url($r));
 }
 
 sub parse
@@ -264,7 +271,7 @@ sub parse_fullurl
 	if (!$ok && $o->{path} eq $class->pkg_db()."/") {
 		return OpenBSD::PackageRepository::Installed->new;
 	} else {
-		return $o;
+		return $class->unique($o);
 	}
 }
 
@@ -353,10 +360,11 @@ sub may_exist
 	return 1;
 }
 
+my $s = bless {}, __PACKAGE__;
+
 sub new
 {
-	my $class = shift;
-	bless {}, $class;
+	return $s;
 }
 
 sub open_pipe
