@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.82 2010/01/09 12:01:57 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.83 2010/01/09 13:44:57 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -23,10 +23,6 @@ package OpenBSD::PackageLocator;
 use OpenBSD::PackageRepositoryList;
 use OpenBSD::PackageRepository;
 
-# this returns an archive handle from an uninstalled package name, currently
-# There is a cache available.
-
-my %packages;
 my $pkgpath = OpenBSD::PackageRepositoryList->new;
 
 if (defined $ENV{PKG_PATH}) {
@@ -57,9 +53,6 @@ sub find
 {
 	my ($class, $_, $arch) = @_;
 
-	if (exists $packages{$_}) {
-		return $packages{$_};
-	}
 	my $package;
 	if (m/[\/\:]/o) {
 		my ($repository, undef, $pkgname) = path_parse($_);
@@ -70,7 +63,6 @@ sub find
 	} else {
 		$package = $pkgpath->find($_, $arch);
 	}
-	$packages{$_} = $package if defined($package);
 	return $package;
 }
 
