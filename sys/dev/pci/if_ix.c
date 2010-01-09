@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.30 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.31 2010/01/09 05:30:19 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -1924,9 +1924,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 		case IPPROTO_UDP:
 			if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
-			break;
-		default:
-			offload = FALSE;
 			break;
 		}
 	}
