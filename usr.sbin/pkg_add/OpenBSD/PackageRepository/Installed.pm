@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.17 2010/01/09 10:44:42 espie Exp $
+# $OpenBSD: Installed.pm,v 1.18 2010/01/09 11:26:58 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -25,34 +25,6 @@ use warnings;
 # of PackageRepository::Installed to have full access...
 
 package OpenBSD::PackageRepositoryBase;
-
-sub parse_url
-{
-	my ($class, $path) = @_;
-	$path .= '/' unless $path =~ m/\/$/;
-	bless { path => $path }, $class;
-}
-
-sub parse_fullurl
-{
-	my ($class, $_) = @_;
-
-	$class->strip_urlscheme(\$_) or return undef;
-	return $class->parse_url($_);
-}
-
-sub strip_urlscheme
-{
-	my ($class, $r) = @_;
-	if ($$r =~ m/^(.*?)\:(.*)$/) {
-		my $scheme = lc($1);
-		if ($scheme eq $class->urlscheme) {
-			$$r = $2;
-			return 1;
-	    	}
-	}
-	return 0;
-}
 
 sub match_locations
 {
