@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.89 2010/01/09 14:55:53 espie Exp $
+# $OpenBSD: pkg_info,v 1.90 2010/01/09 15:10:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -104,10 +104,10 @@ sub find_pkg
 	}
 	require OpenBSD::PackageLocator;
 
-	my ($repo, $path);
+	my $repo;
 
 	if ($pkgname =~ m/[\/\:]/o) {
-		($repo, $path, $pkgname) = 
+		($repo, $pkgname) = 
 		    OpenBSD::PackageLocator->path_parse($pkgname);
 	} else {
 		$repo = 'OpenBSD::PackageLocator';
