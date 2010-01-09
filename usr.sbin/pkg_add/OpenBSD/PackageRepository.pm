@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.71 2010/01/09 10:17:09 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.72 2010/01/09 10:44:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -30,13 +30,6 @@ our @ISA=(qw(OpenBSD::PackageRepositoryBase));
 use OpenBSD::PackageLocation;
 use OpenBSD::Paths;
 
-sub parse_url
-{
-	my ($class, $path) = @_;
-	$path .= '/' unless $path =~ m/\/$/;
-	bless { path => $path }, $class;
-}
-
 sub baseurl
 {
 	my $self = shift;
@@ -56,19 +49,6 @@ sub new
 # - report whether we stripped it
 # (relevant for file: url, where we strip, but don't care if we did
 # vs other schemes, where not having the ftp: marker is a problem)
-
-sub strip_urlscheme
-{
-	my ($class, $r) = @_;
-	if ($$r =~ m/^(.*?)\:(.*)$/) {
-		my $scheme = lc($1);
-		if ($scheme eq $class->urlscheme) {
-			$$r = $2;
-			return 1;
-	    	}
-	}
-	return 0;
-}
 
 sub parse_fullurl
 {
@@ -101,6 +81,8 @@ sub parse
 		return OpenBSD::PackageRepository::Local->parse_fullurl($_);
 	} elsif (m/^inst\:$/io) {
 		return OpenBSD::PackageRepository::Installed->parse_fullurl($_);
+	} elsif (m/^pipe\:$/io) {
+		return OpenBSD::PackageRepository::Local::Pipe->parse_fullurl($_);
 	} else {
 		return OpenBSD::PackageRepository::Local->parse_fullurl($_);
 	}
