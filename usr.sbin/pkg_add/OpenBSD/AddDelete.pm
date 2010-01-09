@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.15 2010/01/03 09:34:22 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.16 2010/01/09 14:49:53 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub do_the_main_work
 		exit(1);
 	}
 
-	my $handler = sub { my $sig = shift; die "Caught SIG$sig"; };
+	my $handler = sub { my $sig = shift; Fatal "Caught SIG$sig"; };
 	local $SIG{'INT'} = $handler;
 	local $SIG{'QUIT'} = $handler;
 	local $SIG{'HUP'} = $handler;
@@ -107,6 +107,7 @@ sub framework
 		rethrow $dielater;
 	} catch {
 		print STDERR "$0: $_\n";
+		OpenBSD::Handler->reset;
 		if ($_ =~ m/^Caught SIG(\w+)/o) {
 			kill $1, $$;
 		}

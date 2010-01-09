@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.20 2010/01/09 13:43:14 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.21 2010/01/09 14:49:53 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -71,14 +71,6 @@ sub match_locations
 		}
 	}
 	return [];
-}
-
-sub cleanup
-{
-	my $self = shift;
-	for my $repo (@$self) {
-		$repo->cleanup;
-	}
 }
 
 sub print_without_src

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.20 2010/01/05 11:16:08 espie Exp $
+# $OpenBSD: Error.pm,v 1.21 2010/01/09 14:49:53 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,36 @@ sub cache(*&)
 	no strict 'refs';
 	*{$callpkg."::$sym"} = $actual;
 }
+
+package OpenBSD::Handler;
+
+my $list = [];
+
+sub register
+{
+	my ($class, $code) = @_;
+	push(@$list, $code);
+}
+
+my $handler = sub {
+	my $sig = shift;
+	for my $c (@$list) {
+		&$c($sig);
+	}
+	$SIG{$sig} = 'DEFAULT';
+	kill $sig, $$;
+};
+
+sub reset 
+{
+	$SIG{'INT'} = $handler;
+	$SIG{'QUIT'} = $handler;
+	$SIG{'HUP'} = $handler;
+	$SIG{'KILL'} = $handler;
+	$SIG{'TERM'} = $handler;
+}
+
+__PACKAGE__->reset;
 
 package OpenBSD::Error;
 require Exporter;
@@ -256,7 +286,7 @@ sub dienow
 {
 	my ($error, $handler) = @_;
 	if ($error) {
-		if ($error =~ m/^(Expected:\s+)?(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/o) {
+		if ($error =~ m/^(Expected\:\s+)?(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/o) {
 			local $_ = $2;
 			$FileName = $3;
 			$Line = $4;
