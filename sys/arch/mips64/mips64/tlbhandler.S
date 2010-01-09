@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.25 2009/12/12 20:07:10 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.26 2010/01/09 23:43:17 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -124,6 +124,7 @@ tlb_load:
 /*---------------------------------------------------------------- xtlb_miss
  *	Low level XTLB exception handler.
  */
+#if defined(CPU_R5000) || defined(CPU_RM7000)
 	.globl	xtlb_miss_err_r5k
 	.ent	xtlb_miss_err_r5k, 0
 xtlb_miss_err_r5k:
@@ -135,6 +136,7 @@ xtlb_miss_err_r5k:
 	j	k_tlb_inv
 	 nop
 	.end	xtlb_miss_err_r5k
+#endif	/* CPU_R5000 || CPU_RM7000 */
 
 	.globl	xtlb_miss
 	.ent	xtlb_miss, 0
