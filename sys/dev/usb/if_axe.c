@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.95 2009/11/22 22:13:51 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -518,6 +518,9 @@ axe_ax88178_init(struct axe_softc *sc)
 	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
 	    AXE_SW_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
 	usbd_delay_ms(sc->axe_udev, 150);
+	/* Enable MII/GMII/RGMII for external PHY */
+	axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0, NULL);
+	usbd_delay_ms(sc->axe_udev, 10);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
 }
 
