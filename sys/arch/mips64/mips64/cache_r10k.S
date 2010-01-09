@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.11 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.12 2010/01/09 23:47:41 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -240,13 +240,14 @@ LEAF(Mips10k_SyncCache, 0)
 
 /* Do L2 */
 	LOAD_XKPHYS(t3, CCA_CACHED)
-	lw	ta0, CI_L2SIZE(a0)		# XXX Need set size here.
+	lw	ta0, CI_L2SIZE(a0)
+	PTR_SRL	ta0, ta0, 1			# proper set size
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
 	cache	IndexWBInvalidate_S, 1(t3)
-	PTR_SUBU ta0, 32			# Fixed L2 cache line size.
+	PTR_SUBU ta0, 64			# Fixed L2 cache line size.
 	bgtz	ta0, 10b
-	PTR_ADDU t3, 32
+	PTR_ADDU t3, 64
 
 	j	ra
 	nop
