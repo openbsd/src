@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.181 2009/12/29 16:38:41 stevesk Exp $ */
+/* $OpenBSD: readconf.c,v 1.182 2010/01/09 23:04:13 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -127,8 +127,8 @@ typedef enum {
 	oServerAliveInterval, oServerAliveCountMax, oIdentitiesOnly,
 	oSendEnv, oControlPath, oControlMaster, oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
-	oVisualHostKey, oUseRoaming, oRDomain,
-	oZeroKnowledgePasswordAuthentication, oDeprecated, oUnsupported
+	oVisualHostKey, oUseRoaming, oZeroKnowledgePasswordAuthentication,
+	oDeprecated, oUnsupported
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -226,7 +226,6 @@ static struct {
 	{ "permitlocalcommand", oPermitLocalCommand },
 	{ "visualhostkey", oVisualHostKey },
 	{ "useroaming", oUseRoaming },
-	{ "routingdomain", oRDomain },
 #ifdef JPAKE
 	{ "zeroknowledgepasswordauthentication",
 	    oZeroKnowledgePasswordAuthentication },
@@ -915,19 +914,6 @@ parse_int:
 		intptr = &options->use_roaming;
 		goto parse_flag;
 
-	case oRDomain:
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing argument.",
-			    filename, linenum);
-		value = a2rdomain(arg);
-		if (value == -1)
-			fatal("%.200s line %d: Bad rdomain.",
-			    filename, linenum);
-		if (*activep)
-			options->rdomain = value;
-		break;
-
 	case oDeprecated:
 		debug("%s line %d: Deprecated option \"%s\"",
 		    filename, linenum, keyword);
@@ -1078,7 +1064,6 @@ initialize_options(Options * options)
 	options->local_command = NULL;
 	options->permit_local_command = -1;
 	options->use_roaming = -1;
-	options->rdomain = -1;
 	options->visual_host_key = -1;
 	options->zero_knowledge_password_authentication = -1;
 }
@@ -1227,7 +1212,6 @@ fill_default_options(Options * options)
 	/* options->hostname will be set in the main program if appropriate */
 	/* options->host_key_alias should not be set by default */
 	/* options->preferred_authentications will be set in ssh */
-	/* options->rdomain should not be set by default */
 }
 
 /*
