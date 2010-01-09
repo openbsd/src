@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.3 2010/01/09 23:34:29 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -398,7 +398,7 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 	 * need to invalidate or flush it.
 	 */
 
-	Loongson2_ConfigCache();
+	Loongson2_ConfigCache(curcpu());
 
 	tlb_set_page_mask(TLB_PAGE_MASK);
 	tlb_set_wired(0);

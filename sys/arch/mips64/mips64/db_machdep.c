@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.22 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.23 2010/01/09 23:34:29 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -197,10 +197,12 @@ db_write_bytes(addr, size, data)
 		kdbpokeb(ptr, *data++);
 	}
 	if (addr < VM_MAXUSER_ADDRESS) {
+		struct cpu_info *ci = curcpu();
+
 		/* XXX we don't know where this page is mapped... */
-		Mips_HitSyncDCache(addr, PHYS_TO_XKPHYS(addr, CCA_CACHED),
+		Mips_HitSyncDCache(ci, addr, PHYS_TO_XKPHYS(addr, CCA_CACHED),
 		    size);
-		Mips_InvalidateICache(PHYS_TO_CKSEG0(addr & 0xffff), size);
+		Mips_InvalidateICache(ci, PHYS_TO_CKSEG0(addr & 0xffff), size);
 	}
 }
 

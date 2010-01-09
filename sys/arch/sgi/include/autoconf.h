@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.28 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.29 2010/01/09 23:34:29 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,17 +38,19 @@
 /*
  * Structure holding all misc config information.
  */
+struct cpu_info;
+
 struct sys_rec {
 	int	system_type;
 	int	system_subtype;		/* IP35 only */
 
 	/* Published cache operations. */
-	void    (*_SyncCache)(void);
-	void    (*_InvalidateICache)(vaddr_t, size_t);
-	void    (*_SyncDCachePage)(vaddr_t);
-	void    (*_HitSyncDCache)(vaddr_t, size_t);
-	void    (*_IOSyncDCache)(vaddr_t, size_t, int);
-	void    (*_HitInvalidateDCache)(vaddr_t, size_t);
+	void    (*_SyncCache)(struct cpu_info *);
+	void    (*_InvalidateICache)(struct cpu_info *, vaddr_t, size_t);
+	void    (*_SyncDCachePage)(struct cpu_info *, vaddr_t);
+	void    (*_HitSyncDCache)(struct cpu_info *, vaddr_t, size_t);
+	void    (*_IOSyncDCache)(struct cpu_info *, vaddr_t, size_t, int);
+	void    (*_HitInvalidateDCache)(struct cpu_info *, vaddr_t, size_t);
 
 	/* Serial console configuration. */
 	struct mips_bus_space console_io;

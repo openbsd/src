@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.27 2009/12/25 20:59:45 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.28 2010/01/09 23:34:29 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -27,18 +27,18 @@
  */
 
 /*
- *  NOTE!
+ * NOTE!
  *
- *  This code does not support caches with other linesize than 32.
- *  Neither will it support R4000 or R4400 Secondary caches. These
- *  configurations will need another set of cache functions.
+ * This code does not support caches with other linesize than 32.
+ * Neither will it support R4000 or R4400 Secondary caches. These
+ * configurations will need another set of cache functions.
  *
- *  Processors supported:
- *  R4600/R4700 (if option CPUR4600)
- *  R5000
- *  RM52xx
- *  RM7xxx
- *  RM9xxx
+ * Processors supported:
+ * R4600/R4700 (if option CPUR4600)
+ * R5000
+ * RM52xx
+ * RM7xxx
+ * RM9xxx
  */
 
 #include <sys/errno.h>
@@ -52,10 +52,6 @@
 #include "assym.h"
 
 	.set	mips3
-
-#define	LOAD_XKPHYS(reg, cca) \
-	li	reg, cca | 0x10; \
-	dsll	reg, reg, 59
 
 /*
  *  Skip the .h file. Noone else need to know!
@@ -145,7 +141,7 @@
 
 /*----------------------------------------------------------------------------
  *
- * Mips5k_ConfigCache --
+ * Mips5k_ConfigCache(struct cpu_info *ci) --
  *
  *	Size and configure the caches.
  *	NOTE: should only be called from mips_init().
@@ -154,12 +150,12 @@
  *	Returns the value of the cpu configuration register.
  *
  * Side effects:
- *	The size of the data cache is stored into CpuPrimaryDataCacheSize.
- *	The size of instruction cache is stored into CpuPrimaryInstCacheSize.
+ *	The size of the data cache is stored into ci_l1datacachesize.
+ *	The size of instruction cache is stored into ci_l1instcachesize.
  *	Alignment mask for cache aliasing test is stored in CpuCacheAliasMask.
- *	CpuSecondaryCacheSize is set to the size of the secondary cache.
- *	CpuTertiaryCacheSize is set to the size of the tertiary cache.
- *	CpuNWayCache is set to 0 for direct mapped caches, 2 for two way
+ *	ci_l2size is set to the size of the secondary cache.
+ *	ci_l3size is set to the size of the tertiary cache.
+ *	ci_cacheways is set to 0 for direct mapped caches, 2 for two way
  *	caches and 4 for four way caches. This primarily indicates the
  *	primary cache associativity.
  *
@@ -187,7 +183,7 @@ LEAF(Mips5k_ConfigCache, 0)
 	and	t2, v0, 0x20
 	srl	t2, t2, 1			# Get I cache line size.
 	addu	t2, t2, 16
-	sw	t2, CpuPrimaryInstCacheLSize
+	sw	t2, CI_L1INSTCACHELINE(a0)
 
 	srl	t1, v0, 6			# Get D cache size.
 	and	t1, 7
@@ -196,7 +192,7 @@ LEAF(Mips5k_ConfigCache, 0)
 
 	and	t2, v0, 0x10
 	addu	t2, t2, 16			# Get D cache line size.
-	sw	t2, CpuPrimaryDataCacheLSize
+	sw	t2, CI_L1DATACACHELINE(a0)
 
 	li	t2, CTYPE_2WAY			# Assume two way cache
 	li	ta2, 0				# Secondary size 0.
@@ -300,7 +296,7 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	li	ta3, 512*1024			# 512k per 'click'.
 	sll	ta3, t1
 #else
-	lw	ta3, CpuTertiaryCacheSize
+	lw	ta3, CI_L3SIZE(a0)
 	and	t2, ~CTYPE_HAS_XL3
 	beqz	ta3, Conf7KL2			# No L3 cache present
 	nop
@@ -362,29 +358,26 @@ Conf7KL2:
  * ta2 = secondary size, ta3 = tertiary size.
  */
 ConfResult:
-	sw	v0, CpuConfigRegister
-	mfc0	t3, COP_0_STATUS_REG
-	sw	t2, CpuCacheType		# Save cache attributes
-	sw	t3, CpuStatusRegister
+	sw	t2, CI_CACHECONFIGURATION(a0)	# Save cache attributes
 	and	t2, CTYPE_WAYMASK		# isolate number of sets.
-	sw	t2, CpuNWayCache
+	sw	t2, CI_CACHEWAYS(a0)
 	srl	t2, 1				# get div shift for set size.
 
-	sw	ta2, CpuSecondaryCacheSize
-	sw	ta3, CpuTertiaryCacheSize
+	sw	ta2, CI_L2SIZE(a0)
+	sw	ta3, CI_L3SIZE(a0)
 
 	addu	t1, ta0, -1			# Use icache for alias mask
 	srl	t1, t2				# Some cpus have different
 	and	t1, ~(NBPG - 1)			# i and d cache sizes...
-	sw	t1, CpuCacheAliasMask
+	PTR_S	t1, CpuCacheAliasMask
 
-	sw	ta0, CpuPrimaryInstCacheSize	# store cache size.
+	sw	ta0, CI_L1INSTCACHESIZE(a0)	# store cache size.
 	srl	ta0, t2				# calculate set size.
-	sw	ta0, CpuPrimaryInstSetSize
+	sw	ta0, CI_L1INSTCACHESET(a0)
 
-	sw	ta1, CpuPrimaryDataCacheSize	# store cache size.
+	sw	ta1, CI_L1DATACACHESIZE(a0)	# store cache size.
 	srl	ta1, t2				# calculate set size.
-	sw	ta1, CpuPrimaryDataSetSize
+	sw	ta1, CI_L1DATACACHESET(a0)
 
 	and	v0, ~7
 	or	v0, CCA_CACHED			# set cachable writeback kseg0
@@ -396,7 +389,7 @@ END(Mips5k_ConfigCache)
 
 /*----------------------------------------------------------------------------
  *
- * Mips5k_SyncCache --
+ * Mips5k_SyncCache(struct cpu_info *ci) --
  *
  *	Sync ALL caches.
  *	No need to look at number of sets since we are cleaning out
@@ -412,8 +405,8 @@ END(Mips5k_ConfigCache)
  */
 LEAF(Mips5k_SyncCache, 0)
 	.set	noreorder
-	lw	t1, CpuPrimaryInstCacheSize
-	lw	t2, CpuPrimaryDataCacheSize
+	lw	t1, CI_L1INSTCACHESIZE(a0)
+	lw	t2, CI_L1DATACACHESIZE(a0)
 
 /*
  * Sync the instruction cache.
@@ -455,14 +448,14 @@ LEAF(Mips5k_SyncCache, 0)
 	PTR_ADDU t0, t0, 128
 
 /* Do on chip L2 if present */
-	lw	t0, CpuCacheType
+	lw	t0, CI_CACHECONFIGURATION(a0)
 	and	t0, CTYPE_HAS_IL2
 	beqz	t0, 20f
 	nop
 
 3:
 	LOAD_XKPHYS(t3, CCA_CACHED)
-	lw	ta0, CpuSecondaryCacheSize
+	lw	ta0, CI_L2SIZE(a0)
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
 	PTR_SUBU ta0, 32			# Fixed cache line size.
@@ -471,14 +464,14 @@ LEAF(Mips5k_SyncCache, 0)
 
 /* Do off chip L2 if present */
 20:
-	lw	t0, CpuCacheType
+	lw	t0, CI_CACHECONFIGURATION(a0)
 	and	t0, CTYPE_HAS_XL2
 	beqz	t0, 30f
 	nop
 
 	mtc0    zero, COP_0_TAG_LO
 	LOAD_XKPHYS(t3, CCA_CACHED)
-	lw	ta0, CpuSecondaryCacheSize
+	lw	ta0, CI_L2SIZE(a0)
 21:
 	cache	InvalidateSecondaryPage, 0(t3)
 	PTR_SUBU ta0, 4096			# Fixed cache page size.
@@ -487,14 +480,14 @@ LEAF(Mips5k_SyncCache, 0)
 
 /* Do off chip L3 if present */
 30:
-	lw	t0, CpuCacheType
+	lw	t0, CI_CACHECONFIGURATION(a0)
 	and	t0, CTYPE_HAS_XL3
 	beqz	t0, 99f
 	nop
 
 	mtc0    zero, COP_0_TAG_LO
 	LOAD_XKPHYS(t3, CCA_CACHED)
-	lw	ta0, CpuTertiaryCacheSize
+	lw	ta0, CI_L3SIZE(a0)
 31:
 	cache	InvalidatePage_T, 0(t3)
 	PTR_SUBU ta0, 4096			# Fixed cache page size.
@@ -514,8 +507,7 @@ END(Mips5k_SyncCache)
  *
  * Mips5k_InvalidateICache --
  *
- *	void Mips5k_SyncICache(addr, len)
- *		vaddr_t addr, len;
+ *	void Mips5k_SyncICache(struct cpu_info *, vaddr_t addr, size_t len)
  *
  *	Invalidate the L1 instruction cache for at least range
  *	of addr to addr + len - 1.
@@ -535,25 +527,25 @@ LEAF(Mips5k_InvalidateICache, 0)
 	li	v0, SR_DIAG_DE
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
-	lw	v0, CpuNWayCache		# Cache properties
-	lw	t0, CpuPrimaryInstSetSize	# Set size
-	and	a0, 0x00ffffff			# Reduce addr to cache index
-	LOAD_XKPHYS(a2, CCA_CACHED)
-	PTR_ADDU a1, 31				# Round up size
-	PTR_ADDU a1, a0				# Add extra from address
-	and	a0, -32				# Align start address
-	PTR_SUBU a1, a1, a0
-	PTR_ADDU a0, a2				# a0 now new XKPHYS address
-	srl	a1, a1, 5			# Number of unrolled loops
+	lw	v0, CI_CACHEWAYS(a0)		# Cache properties
+	lw	t0, CI_L1INSTCACHESET(a0)	# Set size
+	and	a1, 0x00ffffff			# Reduce addr to cache index
+	LOAD_XKPHYS(a3, CCA_CACHED)
+	PTR_ADDU a2, 31				# Round up size
+	PTR_ADDU a2, a1				# Add extra from address
+	and	a1, -32				# Align start address
+	PTR_SUBU a2, a2, a1
+	PTR_ADDU a1, a3				# a1 now new XKPHYS address
+	srl	a2, a2, 5			# Number of unrolled loops
 	addiu	v0, -2				# <0 1way, 0 = two, >0 four
 1:
 	bltz	v0, 3f
-	PTR_ADDU a1, -1
+	PTR_ADDU a2, -1
 
 2:
-	PTR_ADDU t1, t0, a0			# Nway cache, flush set B.
+	PTR_ADDU t1, t0, a1			# Nway cache, flush set B.
 	cache	IndexInvalidate_I, 0(t1)
-	beqz	v0, 3f				# Is two way do set A
+	beqz	v0, 3f				# If two way do set A
 	PTR_ADDU t1, t0				# else step to set C.
 
 	cache	IndexInvalidate_I, 0(t1)
@@ -562,10 +554,10 @@ LEAF(Mips5k_InvalidateICache, 0)
 	cache	IndexInvalidate_I, 0(t1)
 
 3:
-	cache	IndexInvalidate_I, 0(a0)	# do set (A if NWay)
+	cache	IndexInvalidate_I, 0(a1)	# do set (A if NWay)
 
-	bne	a1, zero, 1b
-	PTR_ADDU a0, 32
+	bne	a2, zero, 1b
+	PTR_ADDU a1, 32
 
 #ifdef CPUR4600
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
@@ -579,8 +571,7 @@ END(Mips5k_InvalidateICache)
  *
  * Mips5k_SyncDCachePage --
  *
- *	void Mips5k_SyncDCachePage(addr)
- *		vaddr_t addr;
+ *	void Mips5k_SyncDCachePage(struct cpu_info *ci, vaddr_t addr)
  *
  *	Sync the L1 data cache page for address addr.
  *	The address is reduced to a XKPHYS index to avoid TLB faults.
@@ -600,45 +591,44 @@ LEAF(Mips5k_SyncDCachePage, 0)
 	li	v0, SR_DIAG_DE
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
-	LOAD_XKPHYS(a2, CCA_CACHED)
-	lw	v0, CpuNWayCache
-	dsll	a0, 34
-	dsrl	a0, 34
-	PTR_ADDU a0, a2				# a0 now new XKPHYS address
-	and	a0, ~PAGE_MASK			# Page align start address
-	PTR_ADDU a1, a0, PAGE_SIZE-128
+	LOAD_XKPHYS(a3, CCA_CACHED)
+	lw	v0, CI_CACHEWAYS(a0)
+	dsll	a1, 34
+	dsrl	a1, 34
+	PTR_ADDU a1, a3				# a1 now new XKPHYS address
+	and	a1, ~PAGE_MASK			# Page align start address
+	PTR_ADDU a2, a1, PAGE_SIZE-128
 	addiu	v0, -2				# <0 1way, 0 = two, >0 four
-	lw	a2, CpuPrimaryDataSetSize
+	lw	a3, CI_L1DATACACHESET(a0)
 
 1:
 	bltz	v0, 3f
-	PTR_ADDU t1, a0, a2			# flush set B.
-	cache	IndexWBInvalidate_D, 0(t1)
+	PTR_ADDU t1, a1, a3
+	cache	IndexWBInvalidate_D, 0(t1)	# flush set B.
 	cache	IndexWBInvalidate_D, 32(t1)
 	cache	IndexWBInvalidate_D, 64(t1)
 	cache	IndexWBInvalidate_D, 96(t1)
-	beqz	v0, 3f				# Two way, do set A,
-	PTR_ADDU t1, a2
+	beqz	v0, 3f				# two way, skip C and D.
+	PTR_ADDU t1, a3
 
 	cache	IndexWBInvalidate_D, 0(t1)	# do set C
 	cache	IndexWBInvalidate_D, 32(t1)
 	cache	IndexWBInvalidate_D, 64(t1)
 	cache	IndexWBInvalidate_D, 96(t1)
 
-	PTR_ADDU t1, a2				# do set D
+	PTR_ADDU t1, a3				# do set D
 	cache	IndexWBInvalidate_D, 0(t1)
 	cache	IndexWBInvalidate_D, 32(t1)
 	cache	IndexWBInvalidate_D, 64(t1)
 	cache	IndexWBInvalidate_D, 96(t1)
-
 3:
-	cache	IndexWBInvalidate_D, 0(a0)	# do set A
-	cache	IndexWBInvalidate_D, 32(a0)
-	cache	IndexWBInvalidate_D, 64(a0)
-	cache	IndexWBInvalidate_D, 96(a0)
+	cache	IndexWBInvalidate_D, 0(a1)	# do set A
+	cache	IndexWBInvalidate_D, 32(a1)
+	cache	IndexWBInvalidate_D, 64(a1)
+	cache	IndexWBInvalidate_D, 96(a1)
 
-	bne	a1, a0, 1b
-	PTR_ADDU a0, 128
+	bne	a2, a1, 1b
+	PTR_ADDU a1, 128
 
 #ifdef CPUR4600
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
@@ -651,8 +641,8 @@ END(Mips5k_SyncDCachePage)
  *
  * Mips5k_HitSyncDCache --
  *
- *	void Mips5k_HitSyncDCache(addr, len)
- *		vaddr_t addr, len;
+ *	void Mips5k_HitSyncDCache(struct cpu_info *ci,
+ *	    vaddr_t addr, size_t len)
  *
  *	Sync data cache for range of addr to addr + len - 1.
  *	The address can be any valid virtual address as long
@@ -679,18 +669,18 @@ LEAF(Mips5k_HitSyncDCache, 0)
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
 
-	beq	a1, zero, 3f			# size is zero!
-	PTR_ADDU a1, 31				# Round up
-	PTR_ADDU a1, a1, a0			# Add extra from address
-	and	a0, a0, -32			# align address
-	PTR_SUBU a1, a1, a0
-	srl	a1, a1, 5			# Compute number of cache lines
+	beq	a2, zero, 3f			# size is zero!
+	PTR_ADDU a2, 31				# Round up
+	PTR_ADDU a2, a2, a1			# Add extra from address
+	and	a1, a1, -32			# align address
+	PTR_SUBU a2, a2, a1
+	srl	a2, a2, 5			# Compute number of cache lines
 
 1:
-	PTR_ADDU a1, -1
-	cache	HitWBInvalidate_D, 0(a0)
-	bne	a1, zero, 1b
-	PTR_ADDU a0, 32
+	PTR_ADDU a2, -1
+	cache	HitWBInvalidate_D, 0(a1)
+	bne	a2, zero, 1b
+	PTR_ADDU a1, 32
 
 3:
 #ifdef CPUR4600
@@ -706,8 +696,8 @@ END(Mips5k_HitSyncDCache)
  *
  * Mips5k_HitSyncSCache --
  *
- *	void Mips5k_HitSyncSCache(addr, len)
- *		vaddr_t addr, len;
+ *	static void Mips5k_HitSyncSCache(struct cpu_info *ci,
+ *	    vaddr_t addr, size_t len)
  *
  *	Sync secondary cache for range of addr to addr + len - 1.
  *	The address can be any valid virtual address as long
@@ -734,18 +724,18 @@ LEAF(Mips5k_HitSyncSCache, 0)
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
 
-	beq	a1, zero, 3f			# size is zero!
-	PTR_ADDU a1, a1, a0			# Add in extra from align
-	and	a0, a0, -32			# Align address
-	PTR_SUBU a1, a1, a0
+	beq	a2, zero, 3f			# size is zero!
+	PTR_ADDU a2, a2, a1			# Add in extra from align
+	and	a1, a1, -32			# Align address
+	PTR_SUBU a2, a2, a1
 1:
-	PTR_ADDU a1, -32
+	PTR_ADDU a2, -32
 
-	cache	HitWBInvalidate_S, 0(a0)
-	cache	HitWBInvalidate_D, 0(a0)	# Kill any orphans...
+	cache	HitWBInvalidate_S, 0(a1)
+	cache	HitWBInvalidate_D, 0(a1)	# Kill any orphans...
 
-	bgtz	a1, 1b
-	PTR_ADDU a0, 32
+	bgtz	a2, 1b
+	PTR_ADDU a1, 32
 
 3:
 #ifdef CPUR4600
@@ -760,8 +750,8 @@ END(Mips5k_HitSyncSCache)
  *
  * Mips5k_HitInvalidateDCache --
  *
- *	void Mips5k_HitInvalidateDCache(addr, len)
- *		vaddr_t addr, len;
+ *	void Mips5k_HitInvalidateDCache(struct cpu_info *ci,
+ *	    vaddr_t addr, size_t len)
  *
  *	Invalidate data cache for range of addr to addr + len - 1.
  *	The address can be any valid address as long as no TLB misses occur.
@@ -783,18 +773,18 @@ LEAF(Mips5k_HitInvalidateDCache, 0)
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
 
-	beq	a1, zero, 3f			# size is zero!
-	PTR_ADDU a1, a1, a0			# Add in extra from align
-	and	a0, a0, -32			# Align address
-	PTR_SUBU a1, a1, a0
+	beq	a2, zero, 3f			# size is zero!
+	PTR_ADDU a2, a2, a1			# Add in extra from align
+	and	a1, a1, -32			# Align address
+	PTR_SUBU a2, a2, a1
 
 1:
-	PTR_ADDU a1, -32
+	PTR_ADDU a2, -32
 
-	cache	HitInvalidate_D, 0(a0)
+	cache	HitInvalidate_D, 0(a1)
 
-	bgtz	a1, 1b
-	PTR_ADDU a0, 32
+	bgtz	a2, 1b
+	PTR_ADDU a1, 32
 
 3:
 #ifdef CPUR4600
@@ -810,8 +800,8 @@ END(Mips5k_HitInvalidateDCache)
  *
  * Mips5k_HitInvalidateSCache --
  *
- *	void Mips5k_HitInvalidateSCache(addr, len)
- *		vaddr_t addr, len;
+ *	static void Mips5k_HitInvalidateSCache(struct cpu_info *ci,
+ *	    vaddr_t addr, size_t len)
  *
  *	Invalidate secondary cache for range of addr to addr + len - 1.
  *	The address can be any valid address as long as no TLB misses occur.
@@ -833,18 +823,18 @@ LEAF(Mips5k_HitInvalidateSCache, 0)
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
 
-	beq	a1, zero, 3f			# size is zero!
-	PTR_ADDU a1, a1, a0			# Add in extra from align
-	and	a0, a0, -32			# Align address
-	PTR_SUBU a1, a1, a0
+	beq	a2, zero, 3f			# size is zero!
+	PTR_ADDU a2, a2, a1			# Add in extra from align
+	and	a1, a1, -32			# Align address
+	PTR_SUBU a2, a2, a1
 1:
-	PTR_ADDU a1, -32
+	PTR_ADDU a2, -32
 
-	cache	HitInvalidate_S, 0(a0)
-	cache	HitInvalidate_D, 0(a0)		# Orphans in L1
+	cache	HitInvalidate_S, 0(a1)
+	cache	HitInvalidate_D, 0(a1)		# Orphans in L1
 
-	bgtz	a1, 1b
-	PTR_ADDU a0, 32
+	bgtz	a2, 1b
+	PTR_ADDU a1, 32
 
 3:
 #ifdef CPUR4600
@@ -859,9 +849,8 @@ END(Mips5k_HitInvalidateSCache)
  *
  * Mips5k_IOSyncDCache --
  *
- *	void Mips5k_IOSyncDCache(addr, len, rw)
- *		vaddr_t addr;
- *		int  len, rw;
+ *	void Mips5k_IOSyncDCache(struct cpu_info *ci,
+ *	    vaddr_t addr, size_t len, int rw)
  *
  *	Invalidate or flush data cache for range of addr to addr + len - 1.
  *	The address can be any valid address as long as no TLB misses occur.
@@ -893,14 +882,14 @@ NON_LEAF(Mips5k_IOSyncDCache, FRAMESZ(CF_SZ+2*REGSZ), ra)
 
 	PTR_SUBU sp, FRAMESZ(CF_SZ+2*REGSZ)
 	PTR_S	ra, CF_RA_OFFS+2*REGSZ(sp)
-	REG_S	a0, CF_ARGSZ(sp)		# save args
-	beqz	a2, SyncRD			# Sync PREREAD
-	REG_S	a1, CF_ARGSZ+REGSZ(sp)
-	addiu	a2, -1
-	bnez	a2, SyncRDWB			# Sync PREWRITE+PREREAD
+	REG_S	a1, CF_ARGSZ(sp)		# save args
+	beqz	a3, SyncRD			# Sync PREREAD
+	REG_S	a2, CF_ARGSZ+REGSZ(sp)
+	addiu	a3, -1
+	bnez	a3, SyncRDWB			# Sync PREWRITE+PREREAD
 	nop
 
-	lw	t0, CpuCacheType		# Sync PREWRITE
+	lw	t0, CI_CACHECONFIGURATION(a0)	# Sync PREWRITE
 	and	t0, CTYPE_HAS_IL2		# Have internal L2?
 	bnez	t0, SyncSC			# Yes
 	nop
@@ -916,16 +905,16 @@ SyncSC:
 	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)
 
 SyncRD:
-	and	t0, a0, 31			# check if invalidate possible
+	and	t0, a1, 31			# check if invalidate possible
 	bnez	t0, SyncRDWB			# both address and size must
-	and	t0, a1, 31			# be aligned at the cache size
+	and	t0, a2, 31			# be aligned at the cache size
 	bnez	t0, SyncRDWB
 	nop
 
 /*
  *  Sync for aligned read, no writeback required.
  */
-	lw	t0, CpuCacheType		# Aligned, do invalidate
+	lw	t0, CI_CACHECONFIGURATION(a0)	# Aligned, do invalidate
 	and	t0, CTYPE_HAS_IL2		# Have internal L2?
 	bnez	t0, SyncRDL2
 	nop
@@ -941,13 +930,13 @@ SyncRDL2:
 	nop					# L1 done in parallel
 
 	b	SyncRDL3
-	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)		# L3 invalidate if present
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)	# L3 invalidate if present
 
 /*
  *  Sync for unaligned read or write-read.
  */
 SyncRDWB:
-	lw	t0, CpuCacheType
+	lw	t0, CI_CACHECONFIGURATION(a0)
 	and	t0, CTYPE_HAS_IL2		# Have internal L2?
 	bnez	t0, SyncRDWBL2			# Yes, do L2
 	nop
@@ -956,48 +945,48 @@ SyncRDWB:
 	nop
 
 	b	SyncRDXL2
-	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)		# External L2 if present
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)	# External L2 if present
 
 SyncRDWBL2:
 	jal	Mips5k_HitSyncSCache		# Internal L2 cache
 	nop					# L1 done in parallel
 
 	b	SyncRDL3
-	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)		# L3 invalidate if present
+	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)	# L3 invalidate if present
 
 SyncRDXL2:
-	lw	t0, CpuCacheType
+	lw	t0, CI_CACHECONFIGURATION(a0)
 	and	t0, CTYPE_HAS_XL2		# Have external L2?
 	beqz	t0, SyncRDL3			# Nope.
-	REG_L	a0, CF_ARGSZ(sp)
-	REG_L	a1, CF_ARGSZ+REGSZ(sp)
-	and	a2, a0, 4095			# align on page size
-	PTR_SUBU a0, a2
-	PTR_ADDU a1, a2
+	REG_L	a1, CF_ARGSZ(sp)
+	REG_L	a2, CF_ARGSZ+REGSZ(sp)
+	and	a3, a1, 4095			# align on page size
+	PTR_SUBU a1, a3
+	PTR_ADDU a2, a3
 50:
-	blez	a1, SyncDone
-	PTR_SUBU a1, 4096			# Fixed cache page size.
+	blez	a2, SyncDone
+	PTR_SUBU a2, 4096			# Fixed cache page size.
 
-	cache	InvalidateSecondaryPage, 0(a0)
+	cache	InvalidateSecondaryPage, 0(a1)
 	b	50b
-	PTR_ADDU a0, 4096
+	PTR_ADDU a1, 4096
 
 SyncRDL3:
-	lw	t0, CpuCacheType
+	lw	t0, CI_CACHECONFIGURATION(a0)
 	and	t0, CTYPE_HAS_XL3		# Have L3?
 	beqz	t0, SyncDone			# Nope.
-	REG_L	a0, CF_ARGSZ(sp)
-	REG_L	a1, CF_ARGSZ+REGSZ(sp)
-	and	a2, a0, 4095			# align on page size
-	PTR_SUBU a0, a2
-	PTR_ADDU a1, a2
+	REG_L	a1, CF_ARGSZ(sp)
+	REG_L	a2, CF_ARGSZ+REGSZ(sp)
+	and	a3, a1, 4095			# align on page size
+	PTR_SUBU a1, a3
+	PTR_ADDU a2, a3
 40:
-	blez	a1, SyncDone
-	PTR_SUBU a1, 4096			# Fixed cache page size.
+	blez	a2, SyncDone
+	PTR_SUBU a2, 4096			# Fixed cache page size.
 
-	cache	InvalidatePage_T, 0(a0)
+	cache	InvalidatePage_T, 0(a1)
 	b	40b
-	PTR_ADDU a0, 4096
+	PTR_ADDU a1, 4096
 
 SyncDone:
 	j	ra

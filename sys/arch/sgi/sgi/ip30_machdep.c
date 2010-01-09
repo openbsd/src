@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.30 2010/01/09 20:33:16 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.31 2010/01/09 23:34:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -416,7 +416,7 @@ hw_cpu_hatch(struct cpu_info *ci)
         */
        setsr(getsr() | SR_KX | SR_UX);
 
-       Mips10k_ConfigCache();
+	Mips10k_ConfigCache(ci);
 
 	tlb_set_page_mask(TLB_PAGE_MASK);
 	tlb_set_wired(0);
@@ -433,7 +433,7 @@ hw_cpu_hatch(struct cpu_info *ci)
        /*
         * Clear out the I and D caches.
         */
-       Mips_SyncCache();
+       Mips_SyncCache(ci);
 
        cpu_startclock(ci);
 

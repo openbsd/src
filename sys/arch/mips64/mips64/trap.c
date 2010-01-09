@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.57 2010/01/08 01:35:52 syuu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2010/01/09 23:34:29 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -580,7 +580,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			locr0->a3 = 1;
 		}
 		if (code == SYS_ptrace)
-			Mips_SyncCache();
+			Mips_SyncCache(curcpu());
 #ifdef SYSCALL_DEBUG
 		KERNEL_PROC_LOCK(p);
 		scdebug_ret(p, code, i, rval);
@@ -668,7 +668,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 				uio.uio_procp = curproc;
 				error = process_domem(curproc, p, &uio,
 				    PT_WRITE_I);
-				Mips_SyncCache();
+				Mips_SyncCache(curcpu());
 
 				if (error)
 					printf("Warning: can't restore instruction at %x: %x\n",
@@ -1105,7 +1105,7 @@ cpu_singlestep(p)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
 	error = process_domem(curproc, p, &uio, PT_WRITE_I);
-	Mips_SyncCache();
+	Mips_SyncCache(curcpu());
 	if (error)
 		return (EFAULT);
 

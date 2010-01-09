@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.25 2010/01/09 23:34:29 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -52,21 +52,7 @@ struct cpuset cpus_running;
 struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
 #endif
 
-u_int	CpuPrimaryInstCacheSize;
-u_int	CpuPrimaryInstCacheLSize;
-u_int	CpuPrimaryInstSetSize;
-u_int	CpuPrimaryDataCacheSize;
-u_int	CpuPrimaryDataCacheLSize;
-u_int	CpuPrimaryDataSetSize;
-u_int	CpuCacheAliasMask;
-u_int	CpuSecondaryCacheSize;
-u_int	CpuTertiaryCacheSize;
-u_int	CpuNWayCache;
-u_int	CpuCacheType;		/* R4K, R5K, RM7K */
-u_int	CpuConfigRegister;
-u_int	CpuStatusRegister;
-u_int	CpuExternalCacheOn;	/* R5K, RM7K */
-u_int	CpuOnboardCacheOn;	/* RM7K */
+vaddr_t	CpuCacheAliasMask;
 
 int cpu_is_rm7k = 0;
 
@@ -131,7 +117,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	vers_min = ch->c0prid & 0x0f;
 	switch (ch->type) {
 	case MIPS_R4000:
-		if (CpuPrimaryInstCacheSize == 16384)
+		if (ci->ci_l1instcachesize == 16384)
 			printf("MIPS R4400 CPU");
 		else
 			printf("MIPS R4000 CPU");
@@ -245,10 +231,10 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf(" rev %d.%d", vers_maj, vers_min);
 	printf("\n");
 
-	printf("cpu%d: cache L1-I %dKB", cpuno, CpuPrimaryInstCacheSize / 1024);
-	printf(" D %dKB ", CpuPrimaryDataCacheSize / 1024);
+	printf("cpu%d: cache L1-I %dKB D %dKB ", cpuno,
+	    ci->ci_l1instcachesize / 1024, ci->ci_l1datacachesize / 1024);
 
-	switch (CpuNWayCache) {
+	switch (ci->ci_cacheways) {
 	case 2:
 		printf("2 way");
 		break;
@@ -260,58 +246,59 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		break;
 	}
 
-	if (CpuSecondaryCacheSize != 0) {
+	if (ci->ci_l2size != 0) {
 		switch (ch->type) {
 		case MIPS_R10000:
 		case MIPS_R12000:
 		case MIPS_R14000:
-			printf(", L2 %dKB 2 way", CpuSecondaryCacheSize / 1024);
+			printf(", L2 %dKB 2 way", ci->ci_l2size / 1024);
 			break;
 		case MIPS_RM7000:
 		case MIPS_RM9000:
 		case MIPS_LOONGSON2:
-			printf(", L2 %dKB 4 way", CpuSecondaryCacheSize / 1024);
+			printf(", L2 %dKB 4 way", ci->ci_l2size / 1024);
 			break;
 		default:
-			printf(", L2 %dKB direct", CpuSecondaryCacheSize / 1024);
+			printf(", L2 %dKB direct", ci->ci_l2size / 1024);
 			break;
 		}
 	}
-	if (CpuTertiaryCacheSize != 0)
-		printf(", L3 %dKB direct", CpuTertiaryCacheSize / 1024);
+	if (ci->ci_l3size != 0)
+		printf(", L3 %dKB direct", ci->ci_l3size / 1024);
 	printf("\n");
 
 #ifdef DEBUG
 	printf("cpu%d: Setsize %d:%d\n", cpuno,
-	    CpuPrimaryInstSetSize, CpuPrimaryDataSetSize);
-	printf("cpu%d: Alias mask 0x%x\n", cpuno, CpuCacheAliasMask);
-	printf("cpu%d: Config Register %x\n", cpuno, CpuConfigRegister);
-	printf("cpu%d: Cache type %x\n", cpuno, CpuCacheType);
+	    ci->ci_l1instset, ci->ci_l1dataset);
+	printf("cpu%d: Alias mask %p\n", cpuno, CpuCacheAliasMask);
+	printf("cpu%d: Config Register %08x\n", cpuno, cp0_get_config());
+	printf("cpu%d: Cache configuration %x\n",
+	    cpuno, ci->ci_cacheconfiguration);
 	if (ch->type == MIPS_RM7000) {
-		u_int tmp = CpuConfigRegister;
+		uint32_t tmp = cp0_get_config();
 
 		printf("cpu%d: ", cpuno);
-		printf("K0 = %1d  ",0x7 & tmp);
-		printf("SE = %1d  ",0x1 & (tmp>>3));
-		printf("DB = %1d  ",0x1 & (tmp>>4));
-		printf("IB = %1d\n",0x1 & (tmp>>5));
+		printf("K0 = %1d  ", 0x7 & tmp);
+		printf("SE = %1d  ", 0x1 & (tmp>>3));
+		printf("DB = %1d  ", 0x1 & (tmp>>4));
+		printf("IB = %1d\n", 0x1 & (tmp>>5));
 		printf("cpu%d: ", cpuno);
-		printf("DC = %1d  ",0x7 & (tmp>>6));
-		printf("IC = %1d  ",0x7 & (tmp>>9));
-		printf("TE = %1d  ",0x1 & (tmp>>12));
-		printf("EB = %1d\n",0x1 & (tmp>>13));
+		printf("DC = %1d  ", 0x7 & (tmp>>6));
+		printf("IC = %1d  ", 0x7 & (tmp>>9));
+		printf("TE = %1d  ", 0x1 & (tmp>>12));
+		printf("EB = %1d\n", 0x1 & (tmp>>13));
 		printf("cpu%d: ", cpuno);
-		printf("EM = %1d  ",0x1 & (tmp>>14));
-		printf("BE = %1d  ",0x1 & (tmp>>15));
-		printf("TC = %1d  ",0x1 & (tmp>>17));
-		printf("EW = %1d\n",0x3 & (tmp>>18));
+		printf("EM = %1d  ", 0x1 & (tmp>>14));
+		printf("BE = %1d  ", 0x1 & (tmp>>15));
+		printf("TC = %1d  ", 0x1 & (tmp>>17));
+		printf("EW = %1d\n", 0x3 & (tmp>>18));
 		printf("cpu%d: ", cpuno);
-		printf("TS = %1d  ",0x3 & (tmp>>20));
-		printf("EP = %1d  ",0xf & (tmp>>24));
-		printf("EC = %1d  ",0x7 & (tmp>>28));
-		printf("SC = %1d\n",0x1 & (tmp>>31));
+		printf("TS = %1d  ", 0x3 & (tmp>>20));
+		printf("EP = %1d  ", 0xf & (tmp>>24));
+		printf("EC = %1d  ", 0x7 & (tmp>>28));
+		printf("SC = %1d\n", 0x1 & (tmp>>31));
 	}
-	printf("cpu%d: Status Register %x\n", cpuno, CpuStatusRegister);
+	printf("cpu%d: Status Register %08x\n", cpuno, getsr());
 #endif
 }
 

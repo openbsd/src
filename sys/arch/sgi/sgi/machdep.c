@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.97 2010/01/09 23:34:29 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -385,7 +385,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	default:
 #if defined(CPU_R5000) || defined(CPU_RM7000)
 	case MIPS_R5000:
-		Mips5k_ConfigCache();
+		Mips5k_ConfigCache(curcpu());
 		sys_config._SyncCache = Mips5k_SyncCache;
 		sys_config._InvalidateICache = Mips5k_InvalidateICache;
 		sys_config._SyncDCachePage = Mips5k_SyncDCachePage;
@@ -396,7 +396,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #endif
 #ifdef CPU_R10000
 	case MIPS_R10000:
-		Mips10k_ConfigCache();
+		Mips10k_ConfigCache(curcpu());
 		sys_config._SyncCache = Mips10k_SyncCache;
 		sys_config._InvalidateICache = Mips10k_InvalidateICache;
 		sys_config._SyncDCachePage = Mips10k_SyncDCachePage;
@@ -494,7 +494,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Clear out the I and D caches.
 	 */
-	Mips_SyncCache();
+	Mips_SyncCache(curcpu());
 
 #ifdef DDB
 	db_machine_init();

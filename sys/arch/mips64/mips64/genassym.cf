@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2010/01/08 06:35:16 syuu Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2010/01/09 23:34:29 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -62,6 +62,16 @@ member	ci_curproc
 member	ci_curprocpaddr
 member	ci_fpuproc
 member	ci_ipl
+member	ci_cacheconfiguration
+member	ci_cacheways
+member	ci_l1instcachesize
+member	ci_l1instcacheline
+member	ci_l1instcacheset
+member	ci_l1datacachesize
+member	ci_l1datacacheline
+member	ci_l1datacacheset
+member	ci_l2size
+member	ci_l3size
 
 export	CKSEG0_BASE
 export	CKSEG1_BASE

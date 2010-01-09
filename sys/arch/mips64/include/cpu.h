@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.52 2010/01/09 20:33:16 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.53 2010/01/09 23:34:29 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -381,6 +381,19 @@ struct cpu_info {
 	struct proc	*ci_fpuproc;	/* pointer to last proc to use FP */
 	struct cpu_hwinfo
 			ci_hw;
+
+	/* cache information */
+	uint		ci_cacheconfiguration;
+	uint		ci_cacheways;
+	uint		ci_l1instcachesize;
+	uint		ci_l1instcacheline;
+	uint		ci_l1instcacheset;
+	uint		ci_l1datacachesize;
+	uint		ci_l1datacacheline;
+	uint		ci_l1datacacheset;
+	uint		ci_l2size;
+	uint		ci_l3size;
+
 	struct schedstate_percpu
 			ci_schedstate;
 	int		ci_want_resched;	/* need_resched() invoked */
@@ -550,27 +563,14 @@ extern int int_nest_cntr;
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-extern u_int	CpuPrimaryInstCacheSize;
-extern u_int	CpuPrimaryInstCacheLSize;
-extern u_int	CpuPrimaryInstSetSize;
-extern u_int	CpuPrimaryDataCacheSize;
-extern u_int	CpuPrimaryDataCacheLSize;
-extern u_int	CpuPrimaryDataSetSize;
-extern u_int	CpuCacheAliasMask;
-extern u_int	CpuSecondaryCacheSize;
-extern u_int	CpuTertiaryCacheSize;
-extern u_int	CpuNWayCache;
-extern u_int	CpuCacheType;		/* R4K, R5K, RM7K */
-extern u_int	CpuConfigRegister;
-extern u_int	CpuStatusRegister;
-extern u_int	CpuExternalCacheOn;	/* R5K, RM7K */
-extern u_int	CpuOnboardCacheOn;	/* RM7K */
+extern vaddr_t CpuCacheAliasMask;
 
 struct tlb_entry;
 struct user;
 
 u_int	cp0_get_count(void);
-u_int	cp0_get_prid(void);
+uint32_t cp0_get_config(void);
+uint32_t cp0_get_prid(void);
 void	cp0_set_compare(u_int);
 u_int	cp1_get_prid(void);
 void	tlb_set_page_mask(uint32_t);
@@ -581,29 +581,29 @@ void	tlb_set_wired(int);
  * Available cache operation routines. See <machine/cpu.h> for more.
  */
 
-int	Loongson2_ConfigCache(void);
-void	Loongson2_SyncCache(void);
-void	Loongson2_InvalidateICache(vaddr_t, size_t);
-void	Loongson2_SyncDCachePage(paddr_t);
-void	Loongson2_HitSyncDCache(paddr_t, size_t);
-void	Loongson2_HitInvalidateDCache(paddr_t, size_t);
-void	Loongson2_IOSyncDCache(paddr_t, size_t, int);
+int	Loongson2_ConfigCache(struct cpu_info *);
+void	Loongson2_SyncCache(struct cpu_info *);
+void	Loongson2_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
+void	Loongson2_SyncDCachePage(struct cpu_info *, paddr_t);
+void	Loongson2_HitSyncDCache(struct cpu_info *, paddr_t, size_t);
+void	Loongson2_HitInvalidateDCache(struct cpu_info *, paddr_t, size_t);
+void	Loongson2_IOSyncDCache(struct cpu_info *, paddr_t, size_t, int);
 
-int	Mips5k_ConfigCache(void);
-void	Mips5k_SyncCache(void);
-void	Mips5k_InvalidateICache(vaddr_t, size_t);
-void	Mips5k_SyncDCachePage(vaddr_t);
-void	Mips5k_HitSyncDCache(vaddr_t, size_t);
-void	Mips5k_HitInvalidateDCache(vaddr_t, size_t);
-void	Mips5k_IOSyncDCache(vaddr_t, size_t, int);
+int	Mips5k_ConfigCache(struct cpu_info *);
+void	Mips5k_SyncCache(struct cpu_info *);
+void	Mips5k_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
+void	Mips5k_SyncDCachePage(struct cpu_info *, vaddr_t);
+void	Mips5k_HitSyncDCache(struct cpu_info *, vaddr_t, size_t);
+void	Mips5k_HitInvalidateDCache(struct cpu_info *, vaddr_t, size_t);
+void	Mips5k_IOSyncDCache(struct cpu_info *, vaddr_t, size_t, int);
 
-int	Mips10k_ConfigCache(void);
-void	Mips10k_SyncCache(void);
-void	Mips10k_InvalidateICache(vaddr_t, size_t);
-void	Mips10k_SyncDCachePage(vaddr_t);
-void	Mips10k_HitSyncDCache(vaddr_t, size_t);
-void	Mips10k_HitInvalidateDCache(vaddr_t, size_t);
-void	Mips10k_IOSyncDCache(vaddr_t, size_t, int);
+int	Mips10k_ConfigCache(struct cpu_info *);
+void	Mips10k_SyncCache(struct cpu_info *);
+void	Mips10k_InvalidateICache(struct cpu_info *, vaddr_t, size_t);
+void	Mips10k_SyncDCachePage(struct cpu_info *, vaddr_t);
+void	Mips10k_HitSyncDCache(struct cpu_info *, vaddr_t, size_t);
+void	Mips10k_HitInvalidateDCache(struct cpu_info *, vaddr_t, size_t);
+void	Mips10k_IOSyncDCache(struct cpu_info *, vaddr_t, size_t, int);
 
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);
@@ -630,10 +630,10 @@ void	setsoftintr0(void);
 void	clearsoftintr0(void);
 void	setsoftintr1(void);
 void	clearsoftintr1(void);
-u_int32_t enableintr(void);
-u_int32_t disableintr(void);
-void	setsr(u_int32_t);
-u_int32_t getsr(void);
+uint32_t enableintr(void);
+uint32_t disableintr(void);
+uint32_t getsr(void);
+uint32_t setsr(uint32_t);
 
 #endif /* _KERNEL */
 #endif /* !_MIPS_CPU_H_ */

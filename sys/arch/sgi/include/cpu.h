@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2009/12/28 07:18:39 syuu Exp $ */
+/*	$OpenBSD: cpu.h,v 1.8 2010/01/09 23:34:29 miod Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,18 +75,18 @@ void hw_ipi_intr_clear(u_long);
 /*
  * Define soft selected cache functions.
  */
-#define	Mips_SyncCache()			\
-	(*(sys_config._SyncCache))()
-#define	Mips_InvalidateICache(va, l)		\
-	(*(sys_config._InvalidateICache))((va), (l))
-#define	Mips_SyncDCachePage(va, pa)		\
-	(*(sys_config._SyncDCachePage))((va))
-#define	Mips_HitSyncDCache(va, pa, l)		\
-	(*(sys_config._HitSyncDCache))((va), (l))
-#define	Mips_IOSyncDCache(va, pa, l, h)		\
-	(*(sys_config._IOSyncDCache))((va), (l), (h))
-#define	Mips_HitInvalidateDCache(va, pa, l)	\
-	(*(sys_config._HitInvalidateDCache))((va), (l))
+#define	Mips_SyncCache(ci)			\
+	(*(sys_config._SyncCache))((ci))
+#define	Mips_InvalidateICache(ci, va, l)	\
+	(*(sys_config._InvalidateICache))((ci), (va), (l))
+#define	Mips_SyncDCachePage(ci, va, pa)		\
+	(*(sys_config._SyncDCachePage))((ci), (va))
+#define	Mips_HitSyncDCache(ci, va, pa, l)	\
+	(*(sys_config._HitSyncDCache))((ci), (va), (l))
+#define	Mips_IOSyncDCache(ci, va, pa, l, h)	\
+	(*(sys_config._IOSyncDCache))((ci), (va), (l), (h))
+#define	Mips_HitInvalidateDCache(ci, va, pa, l)	\
+	(*(sys_config._HitInvalidateDCache))((ci), (va), (l))
 
 #endif/* _KERNEL */
 
