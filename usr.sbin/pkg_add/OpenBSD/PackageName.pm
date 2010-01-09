@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.38 2009/12/30 19:04:06 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.39 2010/01/09 17:42:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -207,7 +207,7 @@ sub make
 sub to_string
 {
 	my $self = shift;
-	my $r = join('.', [$self->{deweys}]);
+	my $r = join('.', @{$self->{deweys}});
 	for my $suffix (qw(pl pre beta rc)) {
 		if (defined $self->{$suffix}) {
 			$r .= $suffix . $self->{$suffix};
@@ -446,7 +446,7 @@ sub to_string
 {
 	my $o = shift;
 	return join('-', $o->{stem}, $o->{version}->to_string, 
-	    $o->flavor_string);
+	    sort keys %{$o->{flavors}});
 }
 
 sub to_pattern
