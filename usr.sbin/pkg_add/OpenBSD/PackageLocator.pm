@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.76 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.77 2010/01/09 09:37:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -112,12 +112,6 @@ sub grabPlist
 sub cleanup
 {
 	$pkgpath->cleanup;
-}
-
-sub match
-{
-	my ($class, @search) = @_;
-	return $pkgpath->match(@search);
 }
 
 sub match_locations

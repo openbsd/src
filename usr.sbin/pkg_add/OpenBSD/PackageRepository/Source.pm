@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Source.pm,v 1.9 2010/01/05 11:31:07 espie Exp $
+# $OpenBSD: Source.pm,v 1.10 2010/01/09 09:37:45 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -62,7 +62,7 @@ sub build_package
 	return $repo;
 }
 
-sub match
+sub match_locations
 {
 	my ($self, $search, @filters) = @_;
 	my $built;
@@ -71,7 +71,7 @@ sub match
 		$built = $self->build_package($search->{pkgpath});
 	}
 	if ($built) {
-		return $built->match($search, @filters);
+		return $built->match_locations($search, @filters);
 	}
 	return ();
 }
