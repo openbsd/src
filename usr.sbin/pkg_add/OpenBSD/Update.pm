@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.127 2010/01/02 12:52:18 espie Exp $
+# $OpenBSD: Update.pm,v 1.128 2010/01/09 10:45:32 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -275,7 +275,7 @@ sub process_hint2
 	my ($self, $set, $hint, $state) = @_;
 	my $pkgname = $hint->pkgname;
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
-		if ($pkgname =~ m/\//o) {
+		if ($pkgname =~ m/[\/\:]/o) {
 			require OpenBSD::PackageLocator;
 			my $repo;
 			($repo, undef, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
