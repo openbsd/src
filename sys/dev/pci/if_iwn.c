@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.78 2009/11/08 11:54:48 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.79 2010/01/09 12:53:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2525,8 +2525,10 @@ iwn_intr(void *arg)
 			sc->ict_cur = (sc->ict_cur + 1) % IWN_ICT_COUNT;
 		}
 		tmp = letoh32(tmp);
-		if (tmp == 0xffffffff)
-			tmp = 0;	/* Shouldn't happen. */
+		if (tmp == 0xffffffff)	/* Shouldn't happen. */
+			tmp = 0;
+		else if (tmp & 0xc0000)	/* Workaround a HW bug. */
+			tmp |= 0x8000;
 		r1 = (tmp & 0xff00) << 16 | (tmp & 0xff);
 		r2 = 0;	/* Unused. */
 	} else {
