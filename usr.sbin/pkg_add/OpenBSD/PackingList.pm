@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.99 2010/01/02 12:52:18 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.100 2010/01/09 17:44:21 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -578,9 +578,7 @@ sub signature
 	} else {
 		my $k = {};
 		$self->visit('signature', $k);
-		my $o = [$self->pkgname, sort keys %$k];
-		return OpenBSD::PackingList::Signature->new($self->pkgname,
-		    [sort keys %$k]);
+		return OpenBSD::PackingList::Signature->new($self->pkgname, $k);
 	}
 }
 
@@ -594,7 +592,7 @@ sub new
 sub string
 {
 	my $self = shift;
-	return join(',', $self->{name}, @{$self->{extra}});
+	return join(',', $self->{name}, sort map {$_->to_string} values %{$self->{extra}});
 }
 
 sub compare
@@ -612,4 +610,16 @@ sub string
 	return $self->{extra};
 }
 
+package OpenBSD::LibrarySpec;
+sub new
+{
+	my ($class, $stem, $major, $minor) = @_;
+	bless {stem => $stem, major => $major, minor => $minor}, $class;
+}
+
+sub to_string
+{
+	my $self = shift;
+	return join('.', $self->{stem}, $self->{major}, $self->{minor});
+}
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.170 2010/01/05 17:53:23 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.171 2010/01/09 17:44:21 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -314,12 +314,6 @@ sub category
 # all dependency information
 package OpenBSD::PackingElement::Depend;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
-
-sub signature
-{
-	my ($self, $hash) = @_;
-	$hash->{$self->name} = 1;
-}
 
 # Abstract class for all file-like elements
 package OpenBSD::PackingElement::FileBase;
@@ -922,6 +916,12 @@ sub stringize
 	    (qw(pkgpath pattern def)));
 }
 
+sub signature
+{
+	my ($self, $hash) = @_;
+	$hash->{$self->{pkgpath}} = OpenBSD::PackageName->from_string($self->{def});
+}
+
 OpenBSD::Auto::cache(spec,
     sub {
 	require OpenBSD::Search;
@@ -956,6 +956,16 @@ sub write
 sub add_digest
 {
 	&OpenBSD::PackingElement::FileBase::add_digest;
+}
+
+sub signature
+{
+	my ($self, $hash) = @_;
+	require OpenBSD::SharedLibs;
+
+	if (my ($stem, $major, $minor) = OpenBSD::SharedLibs::parse_spec($self->name)) {
+	    $hash->{$stem} = OpenBSD::LibrarySpec->new($stem, $major, $minor);
+	}
 }
 
 package OpenBSD::PackingElement::PkgPath;
