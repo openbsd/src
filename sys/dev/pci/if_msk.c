@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.85 2009/12/18 21:46:24 sthen Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.86 2010/01/09 02:40:18 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -780,10 +780,9 @@ mskc_reset(struct sk_softc *sc)
 	sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM, 16);
 
 #if 0
-	sk_win_write_4(sc, SK_Y2_LEV_TIMERINIT, SK_IM_USECS(100));
-	sk_win_write_4(sc, 0x0ec0, SK_IM_USECS(1000));
-
-	sk_win_write_4(sc, 0x0ed0, SK_IM_USECS(20));
+	sk_win_write_4(sc, SK_Y2_LEV_ITIMERINIT, SK_IM_USECS(100));
+	sk_win_write_4(sc, SK_Y2_TX_ITIMERINIT, SK_IM_USECS(1000));
+	sk_win_write_4(sc, SK_Y2_ISR_ITIMERINIT, SK_IM_USECS(20));
 #else
 	sk_win_write_4(sc, SK_Y2_ISR_ITIMERINIT, SK_IM_USECS(4));
 #endif
