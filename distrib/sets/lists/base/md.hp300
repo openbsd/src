@@ -266,7 +266,6 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/PerlIO/scalar.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/PerlIO/via.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/SDBM_File.pm
-./usr/libdata/perl5/m68k-openbsd/5.10.1/Safe.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Scalar
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Scalar/Util.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Socket.pm
