@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.153 2010/01/09 21:04:55 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.154 2010/01/09 22:24:34 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -813,13 +813,8 @@ scsi_xs_sync_done(struct scsi_xfer *xs)
 {
 	struct mutex *cookie = xs->cookie;
 
-	if (cookie == NULL) {
-#ifdef DIAGNOSTIC
-		sc_print_addr(xs->sc_link);
-		printf("scsi_done already called on xs(%p)\n", xs);
-#endif
-		return;
-	}
+	if (cookie == NULL)
+		panic("scsi_done calle twice on xs(%p)", xs);
 
 	mtx_enter(cookie);
 	xs->cookie = NULL;
