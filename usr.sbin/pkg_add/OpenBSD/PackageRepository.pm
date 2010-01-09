@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.70 2010/01/09 09:58:49 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.71 2010/01/09 10:17:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -30,11 +30,11 @@ our @ISA=(qw(OpenBSD::PackageRepositoryBase));
 use OpenBSD::PackageLocation;
 use OpenBSD::Paths;
 
-sub _new
+sub parse_url
 {
-	my ($class, $path, $host) = @_;
+	my ($class, $path) = @_;
 	$path .= '/' unless $path =~ m/\/$/;
-	bless { host => $host, path => $path }, $class;
+	bless { path => $path }, $class;
 }
 
 sub baseurl
@@ -70,33 +70,12 @@ sub strip_urlscheme
 	return 0;
 }
 
-sub parse_local_url
-{
-	my ($class, $r, @args) = @_;
-
-	my $o;
-
-	if ($$r =~ m/^(.*?)\:(.*)/) {
-		$o = $class->_new($1, @args);
-		$$r = $2;
-	} else {
-		$o = $class->_new($$r, @args);
-		$$r = '';
-	}
-	return $o;
-}
-
-sub parse_url
-{
-	&parse_local_url;
-}
-
 sub parse_fullurl
 {
 	my ($class, $_) = @_;
 
 	$class->strip_urlscheme(\$_) or return undef;
-	return $class->parse_url(\$_);
+	return $class->parse_url($_);
 }
 
 sub parse
@@ -284,7 +263,7 @@ sub parse_fullurl
 	my ($class, $_) = @_;
 
 	$class->strip_urlscheme(\$_);
-	return $class->parse_local_url(\$_);
+	return $class->parse_url($_);
 }
 
 # wrapper around copy, that sometimes does not copy
@@ -412,18 +391,14 @@ sub baseurl
 
 sub parse_url
 {
-	&parse_distant_url;
-}
-
-sub parse_distant_url
-{
-	my ($class, $r) = @_;
+	my ($class, $_) = @_;
 	# same heuristics as ftp(1):
 	# find host part, rest is parsed as a local url
-	if ($$r =~ m/^\/\/(.*?)(\/.*)$/) {
-		my $host = $1;
-		$$r = $2;
-		return $class->parse_local_url($r, $host);
+	if (my ($host, $path) = m/^\/\/(.*?)(\/.*)$/) {
+		
+		my $o = $class->SUPER::parse_url($path);
+		$o->{host} = $host;
+		return $o;
 	} else {
 		return undef;
 	}
