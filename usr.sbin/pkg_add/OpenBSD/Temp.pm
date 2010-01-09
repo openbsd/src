@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.16 2010/01/09 14:49:53 espie Exp $
+# $OpenBSD: Temp.pm,v 1.17 2010/01/09 16:37:03 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,7 @@ package OpenBSD::Temp;
 
 use File::Temp;
 use OpenBSD::Paths;
+use OpenBSD::Error;
 
 our $tempbase = $ENV{'PKG_TMPDIR'} || OpenBSD::Paths->vartmp;
 
