@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.16 2009/11/29 23:12:30 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.17 2010/01/09 02:44:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -148,8 +148,14 @@ sched_idle(void *v)
 
 		cpuset_add(&sched_idle_cpus, ci);
 		cpu_idle_enter();
-		while (spc->spc_whichqs == 0)
+		while (spc->spc_whichqs == 0) {
+			if (spc->spc_schedflags & SPCF_SHOULDHALT) {
+				atomic_setbits_int(&spc->spc_schedflags,
+				    SPCF_HALTED);
+				wakeup(spc);
+			}
 			cpu_idle_cycle();
+		}
 		cpu_idle_leave();
 		cpuset_del(&sched_idle_cpus, ci);
 	}
@@ -245,6 +251,13 @@ sched_chooseproc(void)
 	int queue;
 
 	SCHED_ASSERT_LOCKED();
+
+	if (spc->spc_schedflags & SPCF_SHOULDHALT) {
+		p = spc->spc_idleproc;
+		KASSERT(p);
+		p->p_stat = SRUN;
+		return (p);
+	}
 
 again:
 	if (spc->spc_whichqs) {

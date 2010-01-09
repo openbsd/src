@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.14 2009/11/29 23:12:30 kettenis Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.15 2010/01/09 02:44:17 kettenis Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -65,6 +65,29 @@ sys_reboot(struct proc *p, void *v, register_t *retval)
 		if (CPU_IS_PRIMARY(ci)) {
 			sched_peg_curproc(ci);
 			break;
+		}
+	}
+
+	/*
+	 * Make sure we stop the secondary CPUs.
+	 */
+	CPU_INFO_FOREACH(cii, ci) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		atomic_setbits_int(&spc->spc_schedflags, SPCF_SHOULDHALT);
+	}
+	CPU_INFO_FOREACH(cii, ci) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+		struct sleep_state sls;
+
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		while ((spc->spc_schedflags & SPCF_HALTED) == 0) {
+			sleep_setup(&sls, spc, PZERO, "schedstate");
+			sleep_finish(&sls,
+			    (spc->spc_schedflags & SPCF_HALTED) == 0);
 		}
 	}
 
