@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.157 2009/12/16 10:51:28 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.158 2010/01/09 21:12:06 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ struct cd_softc {
 #define	CDF_LABELLING	0x08		/* writing label */
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 #define CDF_WAITING	0x100
-#define CDF_STARTING	0x200
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
 		u_int32_t blksize;
@@ -611,15 +610,6 @@ cdstart(void *v)
 	 * Check if the device has room for another command
 	 */
 
-	mtx_enter(&sc->sc_start_mtx);
-	if (ISSET(sc->sc_flags, CDF_STARTING)) {
-		mtx_leave(&sc->sc_start_mtx);
-		return;
-	}
-
-	SET(sc->sc_flags, CDF_STARTING);
-	mtx_leave(&sc->sc_start_mtx);
-
 	CLR(sc->sc_flags, CDF_WAITING);
 	while (!ISSET(sc->sc_flags, CDF_WAITING) &&
 	    (bp = cd_buf_dequeue(sc)) != NULL) {
@@ -700,9 +690,6 @@ cdstart(void *v)
 
 		scsi_xs_exec(xs);
 	}
-	mtx_enter(&sc->sc_start_mtx);
-	CLR(sc->sc_flags, CDF_STARTING);
-	mtx_leave(&sc->sc_start_mtx);
 }
 
 void

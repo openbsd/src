@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.13 2010/01/02 23:28:51 dlg Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.14 2010/01/09 21:12:06 dlg Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ struct ss_softc {
 #define SSF_TRIGGERED	0x01	/* read operation has been primed */
 #define	SSF_LOADED	0x02	/* parameters loaded */
 #define SSF_WAITING	0x04
-#define SSF_STARTING	0x08
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc.	*/
 	struct scan_io sio;
 	struct buf buf_queue;		/* the queue of pending IO operations */

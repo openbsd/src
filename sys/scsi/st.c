@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.88 2009/12/26 09:12:55 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.89 2010/01/09 21:12:06 dlg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -287,7 +287,6 @@ struct scsi_device st_switch = {
 #define	ST_MOUNTED	0x0800	/* Device is presently mounted */
 #define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
 #define ST_WAITING	0x2000
-#define ST_STARTING	0x4000
 
 #define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_BLANK_READ)
 #define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN | \
@@ -991,15 +990,6 @@ ststart(void *v)
 	 * doing one
 	 */
 
-	mtx_enter(&st->start_mtx);
-	if (ISSET(st->flags, ST_STARTING)) {
-		mtx_leave(&st->start_mtx);
-		return;
-	}
-
-	SET(st->flags, ST_STARTING);
-	mtx_leave(&st->start_mtx);
-
 	CLR(st->flags, ST_WAITING);
 	while (!ISSET(st->flags, ST_WAITING) &&
 	    (bp = st_buf_dequeue(st)) != NULL) {
@@ -1124,10 +1114,6 @@ ststart(void *v)
 		 */
 		scsi_xs_exec(xs);
 	} /* go back and see if we can cram more work in.. */
-
-	mtx_enter(&st->start_mtx);
-	CLR(st->flags, ST_STARTING);
-	mtx_leave(&st->start_mtx);
 }
 
 void
