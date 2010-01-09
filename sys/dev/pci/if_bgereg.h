@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.99 2009/10/11 10:36:31 sthen Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.100 2010/01/09 06:19:01 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -210,6 +210,7 @@
 #define BGE_PCI_ISR_MBX_LO		0xB4
 #define BGE_PCI_PRODID_ASICREV		0xBC
 #define BGE_PCI_GEN2_PRODID_ASICREV	0xF4
+#define BGE_PCI_GEN15_PRODID_ASICREV	0xFC
 
 /* XXX:
  * Used in PCI-Express code for 575x chips.
@@ -326,6 +327,7 @@
 #define BGE_ASICREV_BCM5785		0x5785
 #define BGE_ASICREV_BCM57780		0x57780
 #define BGE_ASICREV_BCM5717		0x5717
+#define BGE_ASICREV_BCM57765		0x57785
 
 /* chip revisions */
 #define BGE_CHIPREV(x)			((x) >> 8)
