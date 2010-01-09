@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.31 2010/01/09 05:30:19 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.32 2010/01/09 05:44:41 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -2490,9 +2490,9 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		rxcsum |= IXGBE_RXCSUM_PCSD;
 	}
 
-#if defined(IX_CSUM_OFFLOAD)
-	rxcsum |= IXGBE_RXCSUM_PCSD;
-#endif
+	if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
+		rxcsum |= IXGBE_RXCSUM_PCSD;
+
 	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
 
