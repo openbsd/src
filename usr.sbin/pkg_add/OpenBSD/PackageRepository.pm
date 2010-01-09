@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.69 2010/01/09 09:45:40 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.70 2010/01/09 09:58:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -47,9 +47,15 @@ sub baseurl
 sub new
 {
 	my ($class, $baseurl) = @_;
-	my $o = $class->parse(\$baseurl);
+	my $o = $class->parse($baseurl);
 	return $o;
 }
+
+# we have to pass a reference because we want to:
+# - strip the scheme
+# - report whether we stripped it
+# (relevant for file: url, where we strip, but don't care if we did
+# vs other schemes, where not having the ftp: marker is a problem)
 
 sub strip_urlscheme
 {
@@ -87,38 +93,37 @@ sub parse_url
 
 sub parse_fullurl
 {
-	my ($class, $r) = @_;
+	my ($class, $_) = @_;
 
-	$class->strip_urlscheme($r) or return undef;
-	return $class->parse_url($r);
+	$class->strip_urlscheme(\$_) or return undef;
+	return $class->parse_url(\$_);
 }
 
 sub parse
 {
-	my ($class, $ref) = @_;
-	my $_ = $$ref;
+	my ($class, $_) = @_;
 	return undef if $_ eq '';
 
 	if (m/^ftp\:/io) {
-		return OpenBSD::PackageRepository::FTP->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::FTP->parse_fullurl($_);
 	} elsif (m/^http\:/io) {
-		return OpenBSD::PackageRepository::HTTP->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::HTTP->parse_fullurl($_);
 	} elsif (m/^https\:/io) {
-		return OpenBSD::PackageRepository::HTTPS->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::HTTPS->parse_fullurl($_);
 	} elsif (m/^scp\:/io) {
 		require OpenBSD::PackageRepository::SCP;
 
-		return OpenBSD::PackageRepository::SCP->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::SCP->parse_fullurl($_);
 	} elsif (m/^src\:/io) {
 		require OpenBSD::PackageRepository::Source;
 
-		return OpenBSD::PackageRepository::Source->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::Source->parse_fullurl($_);
 	} elsif (m/^file\:/io) {
-		return OpenBSD::PackageRepository::Local->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::Local->parse_fullurl($_);
 	} elsif (m/^inst\:$/io) {
-		return OpenBSD::PackageRepository::Installed->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::Installed->parse_fullurl($_);
 	} else {
-		return OpenBSD::PackageRepository::Local->parse_fullurl($ref);
+		return OpenBSD::PackageRepository::Local->parse_fullurl($_);
 	}
 }
 
@@ -276,10 +281,10 @@ sub urlscheme
 
 sub parse_fullurl
 {
-	my ($class, $r) = @_;
+	my ($class, $_) = @_;
 
-	$class->strip_urlscheme($r);
-	return $class->parse_local_url($r);
+	$class->strip_urlscheme(\$_);
+	return $class->parse_local_url(\$_);
 }
 
 # wrapper around copy, that sometimes does not copy
