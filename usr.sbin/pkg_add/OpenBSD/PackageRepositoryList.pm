@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.19 2010/01/09 09:45:40 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.20 2010/01/09 13:43:14 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -23,48 +23,48 @@ package OpenBSD::PackageRepositoryList;
 sub new
 {
 	my $class = shift;
-	return bless [], $class;
+	return bless {l => [], c => {}, k => {}}, $class;
 }
 
 sub add
 {
 	my $self = shift;
-	push @$self, @_;
+	for my $r (@_) {
+		next if $self->{k}{$r};
+		push @{$self->{l}}, $r;
+	}
+}
+
+sub do_something
+{
+	my ($self, $do, $pkgname, @args) = @_;
+	if ($pkgname eq '-') {
+		return OpenBSD::PackageRepository::Local::Pipe->new->$do($pkgname, @args);
+	}
+	for my $repo (@{$self->{l}}) {
+		my $r = $repo->$do($pkgname, @args);
+		return $r if defined $r;
+	}
+	return undef;
 }
 
 sub find
 {
-	my ($self, $pkgname, $arch) = @_;
+	my ($self, @args) = @_;
 
-	if ($pkgname eq '-') {
-		return OpenBSD::PackageRepository::Local::Pipe->new->find($pkgname, $arch);
-	}
-	for my $repo (@$self) {
-		my $pkg = $repo->find($pkgname, $arch);
-		return $pkg if defined $pkg;
-	}
-	return;
+	return $self->do_something('find', @args);
 }
 
 sub grabPlist
 {
-	my ($self, $pkgname, $arch, $code) = @_;
-
-	if ($pkgname eq '-') {
-		return OpenBSD::PackageRepository::Local::Pipe->new->grabPlist($pkgname, $arch, $code);
-	}
-
-	for my $repo (@$self) {
-		my $plist = $repo->grabPlist($pkgname, $arch, $code);
-		return $plist if defined $plist;
-	}
-	return;
+	my ($self, @args) = @_;
+	return $self->do_something('grabPlist', @args);
 }
 
 sub match_locations
 {
 	my ($self, @search) = @_;
-	for my $repo (@$self) {
+	for my $repo (@{$self->{l}}) {
 		my $l = $repo->match_locations(@search);
 		if (@$l > 0) {
 			return $l;
