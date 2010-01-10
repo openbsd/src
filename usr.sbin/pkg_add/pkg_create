@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.130 2010/01/05 19:38:21 espie Exp $
+# $OpenBSD: pkg_create,v 1.131 2010/01/10 11:47:48 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -305,6 +305,20 @@ sub avert_duplicates_and_other_checks
 	my ($self, $allfiles) = @_;
 	if (!$self->spec->is_valid) {
 		print STDERR "Error in packing-list: invalid dependency: $self->{pattern}\n";
+		$main::errors++;
+	}
+	$self->SUPER::avert_duplicates_and_other_checks($allfiles);
+}
+
+package OpenBSD::PackingElement::Wantlib;
+sub avert_duplicates_and_other_checks
+{
+	my ($self, $allfiles) = @_;
+	require OpenBSD::SharedLibs;
+
+	if (!defined OpenBSD::SharedLibs::parse_spec($self->name)) {
+		print STDERR "Error in packing-list: invalid wantlib: ", 
+		    $self->name, "\n";
 		$main::errors++;
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($allfiles);
@@ -685,9 +699,10 @@ if ($plist->{deprecated}) {
 
 $plist->avert_duplicates_and_other_checks({});
 
-if ($errors) {
+if ($errors && $subst->empty('REGRESSION_TESTING')) {
 	exit 1;
 }
+$errors = 0;
 
 if (defined $cert) {
 	my $sig = OpenBSD::PackingElement::DigitalSignature->new_x509;
