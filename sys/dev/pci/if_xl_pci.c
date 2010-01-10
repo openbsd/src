@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.26 2009/10/15 17:54:56 deraadt Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.27 2010/01/10 04:04:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -189,24 +189,29 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_3COM_3CCFE575BT:
 		sc->xl_flags = XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 |
 		    XL_FLAG_8BITROM | XL_FLAG_INVERT_LED_PWR;
+		sc->xl_flags |= XL_FLAG_FUNCREG;
 		break;
 	case PCI_PRODUCT_3COM_3CCFE575CT:
 		sc->xl_flags = XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 |
 		    XL_FLAG_8BITROM | XL_FLAG_INVERT_MII_PWR;
+		sc->xl_flags |= XL_FLAG_FUNCREG;
 		break;
 	case PCI_PRODUCT_3COM_3CCFEM656:
 		sc->xl_flags = XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 |
 		    XL_FLAG_8BITROM | XL_FLAG_INVERT_LED_PWR |
 		    XL_FLAG_INVERT_MII_PWR;
+		sc->xl_flags |= XL_FLAG_FUNCREG;
 		break;
 	case PCI_PRODUCT_3COM_3CCFEM656B:
 		sc->xl_flags = XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 |
 		    XL_FLAG_8BITROM | XL_FLAG_INVERT_LED_PWR |
 		    XL_FLAG_INVERT_MII_PWR;
+		sc->xl_flags |= XL_FLAG_FUNCREG;
 		break;
 	case PCI_PRODUCT_3COM_3CCFEM656C:
 		sc->xl_flags = XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 |
 		    XL_FLAG_8BITROM | XL_FLAG_INVERT_MII_PWR;
+		sc->xl_flags |= XL_FLAG_FUNCREG;
 		break;
 	default:
 		break;
