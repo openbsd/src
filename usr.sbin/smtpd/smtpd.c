@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.94 2010/01/03 14:37:37 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.95 2010/01/10 08:59:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1013,6 +1013,9 @@ main(int argc, char *argv[])
 			err(1, "failed to daemonize");
 
 	log_info("startup%s", (debug > 1)?" [debug mode]":"");
+
+	if (env.sc_hostname[0] == '\0')
+		errx(1, "machine does not have a hostname set");
 
 	env.stats = mmap(NULL, sizeof(struct stats), PROT_WRITE|PROT_READ,
 	    MAP_ANON|MAP_SHARED, -1, (off_t)0);
