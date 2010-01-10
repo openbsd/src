@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.132 2009/01/29 10:05:50 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.133 2010/01/10 12:39:43 markus Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -2464,7 +2464,7 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 	 * estimate.
          */
 	size = MAX(sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-	    sizeof "asn1_dn/" + id_len - ISAKMP_ID_DATA_OFF);
+	    sizeof "asn1_dn/" + id_len);
 	buf = malloc(size);
 	if (!buf)
 		/* XXX Log?  */
@@ -2502,8 +2502,7 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 	case IPSEC_ID_DER_ASN1_DN:
 		strlcpy(buf, "asn1_dn/", size);
 		len = strlen(buf);
-		addrstr = x509_DN_string(id + ISAKMP_ID_DATA_OFF,
-		    id_len - ISAKMP_ID_DATA_OFF);
+		addrstr = x509_DN_string(id + ISAKMP_ID_DATA_OFF, id_len);
 		if (!addrstr)
 			goto fail;
 		if (size < len + strlen(addrstr) + 1)
