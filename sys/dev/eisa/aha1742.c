@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.35 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.36 2010/01/10 00:10:23 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -684,7 +684,6 @@ ahb_done(sc, ecb)
 			xs->resid = 0;
 	}
 done:
-	xs->flags |= ITSDONE;
 	ahb_free_ecb(sc, ecb, xs->flags);
 	scsi_done(xs);
 }

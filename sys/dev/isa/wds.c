@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.31 2009/09/24 19:48:50 miod Exp $	*/
+/*	$OpenBSD: wds.c,v 1.32 2010/01/10 00:10:23 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -844,7 +844,6 @@ wds_done(sc, scb, stat)
 	}
 #endif
 	wds_free_scb(sc, scb);
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
 

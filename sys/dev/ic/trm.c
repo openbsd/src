@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.14 2009/09/24 19:47:09 miod Exp $
+/*	$OpenBSD: trm.c,v 1.15 2010/01/10 00:10:23 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -2090,8 +2090,6 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	}
 
 	trm_ReleaseSRB(sc, pSRB);
-
-	xs->flags |= ITSDONE;
 
 	/*
 	 * Notify cmd done

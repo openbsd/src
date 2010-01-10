@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.43 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.44 2010/01/10 00:10:23 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -278,7 +278,6 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 
         s = splbio();       
 	ahc_free_scb(ahc, scb);
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
         splx(s);       
 }
@@ -576,7 +575,6 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 		s = splbio();
 		ahc_free_scb(ahc, scb);
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		splx(s);
 		return (COMPLETE);

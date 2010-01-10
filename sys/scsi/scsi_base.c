@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.154 2010/01/09 22:24:34 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.155 2010/01/10 00:10:23 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -774,6 +774,7 @@ scsi_done(struct scsi_xfer *xs)
 	}
 #endif /* SCSIDEBUG */
 
+	SET(xs->flags, ITSDONE);
 	xs->done(xs);
 }
 

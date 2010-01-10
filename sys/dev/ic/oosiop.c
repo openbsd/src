@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.12 2009/03/07 15:38:43 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.13 2010/01/10 00:10:23 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -950,7 +950,6 @@ oosiop_done(struct oosiop_softc *sc, struct oosiop_cb *cb)
 		/* Put it on the free list. */
 FREE:
 		xs->resid = 0;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.33 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.34 2010/01/10 00:10:23 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -278,7 +278,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 
 	ahd_lock(ahd, &s);
 	ahd_free_scb(ahd, scb);
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
 	ahd_unlock(ahd, &s);
 }
@@ -322,7 +321,6 @@ ahd_action(struct scsi_xfer *xs)
 	ahd_lock(ahd, &s);
 	if ((ahd->flags & AHD_INITIATORROLE) == 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		ahd_unlock(ahd, &s);
 		return (COMPLETE);
@@ -546,7 +544,6 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 		ahd_lock(ahd, &s);
 		ahd_free_scb(ahd, scb);
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		ahd_unlock(ahd, &s);
 		return (COMPLETE);

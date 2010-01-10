@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbic.c,v 1.3 2009/02/18 20:49:25 miod Exp $	*/
+/*	$OpenBSD: vsbic.c,v 1.4 2010/01/10 00:10:23 krw Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1391,7 +1391,6 @@ vsbic_wrapup(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
 	}
 
 	vsbic_free_ccb(sc, ccb);
-	SET(xs->flags, ITSDONE);
 	scsi_done(xs);
 }
 
