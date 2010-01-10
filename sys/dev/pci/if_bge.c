@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.290 2010/01/09 06:19:01 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.291 2010/01/10 00:07:40 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2493,15 +2493,18 @@ void
 bge_rxeof(struct bge_softc *sc)
 {
 	struct ifnet *ifp;
+	uint16_t rx_prod, rx_cons;
 	int stdcnt = 0, jumbocnt = 0;
 	bus_dmamap_t dmamap;
 	bus_addr_t offset, toff;
 	bus_size_t tlen;
 	int tosync;
 
+	rx_cons = sc->bge_rx_saved_considx;
+	rx_prod = sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx;
+
 	/* Nothing to do */
-	if (sc->bge_rx_saved_considx ==
-	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx)
+	if (rx_cons == rx_prod)
 		return;
 
 	ifp = &sc->arpcom.ac_if;
@@ -2512,13 +2515,12 @@ bge_rxeof(struct bge_softc *sc)
 	    BUS_DMASYNC_POSTREAD);
 
 	offset = offsetof(struct bge_ring_data, bge_rx_return_ring);
-	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx -
-	    sc->bge_rx_saved_considx;
+	tosync = rx_prod - rx_cons;
 
-	toff = offset + (sc->bge_rx_saved_considx * sizeof (struct bge_rx_bd));
+	toff = offset + (rx_cons * sizeof (struct bge_rx_bd));
 
 	if (tosync < 0) {
-		tlen = (sc->bge_return_ring_cnt - sc->bge_rx_saved_considx) *
+		tlen = (sc->bge_return_ring_cnt - rx_cons) *
 		    sizeof (struct bge_rx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    toff, tlen, BUS_DMASYNC_POSTREAD);
@@ -2529,17 +2531,15 @@ bge_rxeof(struct bge_softc *sc)
 	    offset, tosync * sizeof (struct bge_rx_bd),
 	    BUS_DMASYNC_POSTREAD);
 
-	while(sc->bge_rx_saved_considx !=
-	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx) {
+	while (rx_cons != rx_prod) {
 		struct bge_rx_bd	*cur_rx;
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
 
-		cur_rx = &sc->bge_rdata->
-			bge_rx_return_ring[sc->bge_rx_saved_considx];
+		cur_rx = &sc->bge_rdata->bge_rx_return_ring[rx_cons];
 
 		rxidx = cur_rx->bge_idx;
-		BGE_INC(sc->bge_rx_saved_considx, sc->bge_return_ring_cnt);
+		BGE_INC(rx_cons, sc->bge_return_ring_cnt);
 
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_JUMBO_RING) {
 			m = sc->bge_cdata.bge_rx_jumbo_chain[rxidx];
@@ -2629,6 +2629,7 @@ bge_rxeof(struct bge_softc *sc)
 		ether_input_mbuf(ifp, m);
 	}
 
+	sc->bge_rx_saved_considx = rx_cons;
 	bge_writembx(sc, BGE_MBX_RX_CONS0_LO, sc->bge_rx_saved_considx);
 	if (stdcnt)
 		bge_fill_rx_ring_std(sc);
