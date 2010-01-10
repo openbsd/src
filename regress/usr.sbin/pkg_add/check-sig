@@ -1,9 +1,9 @@
 #! /usr/bin/perl
-# $OpenBSD: check-sig,v 1.1 2010/01/10 11:49:56 espie Exp $
+# $OpenBSD: check-sig,v 1.2 2010/01/10 12:41:20 espie Exp $
 # Written by Marc Espie
 # Public domain
 
-use Test::Simple tests => 9;
+use Test::Simple tests => 11;
 use OpenBSD::PackingList;
 sub mycode
 {
@@ -17,7 +17,7 @@ sub mycode
 
 my @sig;
 my $fh = \*DATA;
-for my $i (1..6) {
+for my $i (1..7) {
 	push(@sig, OpenBSD::PackingList->read($fh, \&mycode)->signature);
 }
 
@@ -30,6 +30,8 @@ ok($sig[0]->compare($sig[2]) < 0, "pkgname");
 ok($sig[1]->compare($sig[0]) > 0, "other way");
 ok($sig[3]->compare($sig[4]) < 0, "lib");
 ok($sig[3]->compare($sig[5]) < 0, "depend");
+ok(!defined($sig[0]->compare($sig[6])), "non comparable");
+ok(!defined($sig[6]->compare($sig[0])), "non comparable");
 
 __DATA__
 @name foo-1.0
@@ -55,4 +57,7 @@ __END__ #5
 @name bar-1.0
 @depend test/x:x-*:x-2.0
 @wantlib a.1.5
-__END__
+__END__ #6
+@name foo-1.0
+@depend test/x:x-*:x-1.0
+@depend test/y:y-*:y-2.0

@@ -1,0 +1,6 @@
+Error: foo-1.0 exists in two non-comparable versions
+Someone forgot to bump a PKGNAME
+foo-1.0,x-1.0 vs. foo-1.0,x-1.0,y-2.0
+Error: foo-1.0 exists in two non-comparable versions
+Someone forgot to bump a PKGNAME
+foo-1.0,x-1.0,y-2.0 vs. foo-1.0,x-1.0

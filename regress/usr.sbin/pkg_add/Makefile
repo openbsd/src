@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2010/01/10 11:49:56 espie Exp $
+# $OpenBSD: Makefile,v 1.32 2010/01/10 12:41:20 espie Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 partial-update-test conflict-update \
@@ -22,8 +22,11 @@ DEST$i ?= ${D$i}/usr/local
 pkgnames:
 	perl ${.CURDIR}/check-name
 
-signatures:
-	perl ${.CURDIR}/check-sig
+signatures.out:
+	perl ${.CURDIR}/check-sig 2>signatures.out
+
+signatures: signatures.out
+	diff -u signatures.out ${.CURDIR}/signatures.ref
 
 depends-check: rep0/a-0.tgz rep0/b-0.tgz rep1/a-1.tgz rep1/b-1.tgz
 	@-rm -rf ${D1}
@@ -357,6 +360,6 @@ rep0/tk-8.5.7.tgz:
 	collision-check1 collision-check2 collision-check4 collision-check5
 
 clean:
-	-rm -rf rep* dest* plist* src*
+	-rm -rf rep* dest* plist* src* signatures.out
 
 .include <bsd.regress.mk>
