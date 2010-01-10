@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.89 2009/09/01 13:42:00 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.90 2010/01/10 07:45:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -123,6 +123,7 @@ struct node_host {
 	struct node_host	*next;
 	struct node_host	*tail;
 };
+void	freehostlist(struct node_host *);
 
 struct node_os {
 	char			*os;

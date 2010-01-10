@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.578 2009/12/24 10:06:35 sobrado Exp $	*/
+/*	$OpenBSD: parse.y,v 1.579 2010/01/10 07:45:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2676,11 +2676,13 @@ ipspec		: ANY				{ $$ = NULL; }
 
 host_list	: ipspec optnl			{ $$ = $1; }
 		| host_list comma ipspec optnl	{
-			if ($3 == NULL)
+			if ($1 == NULL) {
+				freehostlist($3);
 				$$ = $1;
-			else if ($1 == NULL)
+			} else if ($3 == NULL) {
+				freehostlist($1);
 				$$ = $3;
-			else {
+			} else {
 				$1->tail->next = $3;
 				$1->tail = $3->tail;
 				$$ = $1;
@@ -4832,6 +4834,12 @@ expand_skip_interface(struct node_if *interfaces)
 		return (1);
 	else
 		return (0);
+}
+
+void
+freehostlist(struct node_host *h)
+{
+	FREE_LIST(struct node_host, h);
 }
 
 #undef FREE_LIST
