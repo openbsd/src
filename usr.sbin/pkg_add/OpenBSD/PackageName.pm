@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.39 2010/01/09 17:42:25 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.40 2010/01/10 11:31:08 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -453,6 +453,15 @@ sub to_pattern
 {
 	my $o = shift;
 	return join('-', $o->{stem}, '*', $o->flavor_string);
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+	if ($a->{stem} ne $b->{stem} || $a->flavor_string ne $b->flavor_string) {
+		return undef;
+	}
+	return $a->{version}->compare($b->{version});
 }
 
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.100 2010/01/09 17:44:21 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.101 2010/01/10 11:31:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -568,58 +568,9 @@ sub AUTOLOAD
 sub signature
 {
 	my $self = shift;
-	if ($self->has('always-update')) {
-		my $s;
-		open my $fh, '>', \$s;
-		$self->write_no_sig($fh);
-		close $fh;
-		return OpenBSD::PackingList::FullSignature->new($self->pkgname,
-		    $s);
-	} else {
-		my $k = {};
-		$self->visit('signature', $k);
-		return OpenBSD::PackingList::Signature->new($self->pkgname, $k);
-	}
+
+	require OpenBSD::Signature;
+	return OpenBSD::Signature->from_plist($self);
 }
 
-package OpenBSD::PackingList::Signature;
-sub new
-{
-	my ($class, $pkgname, $extra) = @_;
-	bless { name => $pkgname, extra => $extra }, $class;
-}
-
-sub string
-{
-	my $self = shift;
-	return join(',', $self->{name}, sort map {$_->to_string} values %{$self->{extra}});
-}
-
-sub compare
-{
-	my ($a, $b) = @_;
-	return $a->string cmp $b->string;
-}
-
-package OpenBSD::PackingList::FullSignature;
-our @ISA=qw(OpenBSD::PackingList::Signature);
-
-sub string
-{
-	my $self = shift;
-	return $self->{extra};
-}
-
-package OpenBSD::LibrarySpec;
-sub new
-{
-	my ($class, $stem, $major, $minor) = @_;
-	bless {stem => $stem, major => $major, minor => $minor}, $class;
-}
-
-sub to_string
-{
-	my $self = shift;
-	return join('.', $self->{stem}, $self->{major}, $self->{minor});
-}
 1;
