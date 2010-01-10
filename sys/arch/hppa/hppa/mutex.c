@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.6 2009/12/29 15:01:59 jsing Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.7 2010/01/10 04:07:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -36,29 +36,26 @@
 static inline int
 try_lock(struct mutex *mtx)
 {
+	volatile int *lock = (int *)(((vaddr_t)mtx->mtx_lock + 0xf) & ~0xf);
 	volatile register_t ret = 0;
-
-#ifdef DIAGNOSTIC
-	if (((u_int32_t)(&mtx->mtx_lock) & 0xf) != 0) {
-		db_printf("mtx_lock is not 16-byte aligned\n");
-		Debugger();
-	}
-#endif
 
 	/* Note: lock must be 16-byte aligned. */
 	asm volatile (
 		"ldcws      0(%2), %0"
-		: "=&r" (ret), "+m" (mtx->mtx_lock)
-		: "r" (&mtx->mtx_lock)
+		: "=&r" (ret), "+m" (lock)
+		: "r" (lock)
 	);
-	
+
 	return ret;
 }
 
 void
 mtx_init(struct mutex *mtx, int wantipl)
 {
-	mtx->mtx_lock = MUTEX_UNLOCKED;
+	mtx->mtx_lock[0] = 1;
+	mtx->mtx_lock[1] = 1;
+	mtx->mtx_lock[2] = 1;
+	mtx->mtx_lock[3] = 1;
 	mtx->mtx_wantipl = wantipl;
 	mtx->mtx_oldipl = IPL_NONE;
 }
@@ -105,7 +102,10 @@ void
 mtx_leave(struct mutex *mtx)
 {
 	MUTEX_ASSERT_LOCKED(mtx);
-	mtx->mtx_lock = MUTEX_UNLOCKED;
+	mtx->mtx_lock[0] = 1;
+	mtx->mtx_lock[1] = 1;
+	mtx->mtx_lock[2] = 1;
+	mtx->mtx_lock[3] = 1;
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(mtx->mtx_oldipl);
 	mtx->mtx_owner = NULL;

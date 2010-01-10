@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.3 2009/12/29 15:01:59 jsing Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.4 2010/01/10 04:07:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,16 +28,16 @@
 #ifndef _MACHINE_MUTEX_H_
 #define _MACHINE_MUTEX_H_
 
-#define	MUTEX_LOCKED	0
-#define	MUTEX_UNLOCKED	1
+#define	MUTEX_LOCKED	{ 0, 0, 0, 0 }
+#define	MUTEX_UNLOCKED	{ 1, 1, 1, 1 }
 
 /* Note: mtx_lock must be 16-byte aligned. */
 struct mutex {
-	volatile int mtx_lock;
+	volatile int mtx_lock[4];
 	int mtx_wantipl;
 	int mtx_oldipl;
 	void *mtx_owner;
-} __attribute__ ((__aligned__(16)));
+};
 
 void mtx_init(struct mutex *, int);
 
@@ -45,12 +45,14 @@ void mtx_init(struct mutex *, int);
 
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock != MUTEX_LOCKED)				\
+	if ((mtx)->mtx_lock[0] == 1 && (mtx)->mtx_lock[1] == 1 &&	\
+	    (mtx)->mtx_lock[2] == 1 && (mtx)->mtx_lock[3] == 1)		\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock != MUTEX_UNLOCKED)				\
+	if ((mtx)->mtx_lock[0] != 1 && (mtx)->mtx_lock[1] != 1 &&	\
+	    (mtx)->mtx_lock[2] != 1 && (mtx)->mtx_lock[3] != 1)		\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 #else
