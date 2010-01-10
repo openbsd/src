@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.155 2010/01/10 00:10:23 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.156 2010/01/10 23:06:43 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -899,11 +899,11 @@ scsi_xs_error(struct scsi_xfer *xs)
 
 	switch (xs->error) {
 	case XS_NOERROR:	/* nearly always hit this one */
-		return (0);
+		error = 0;
 		break;
 
 	case XS_NO_CCB:
-		return (EAGAIN);
+		error = EAGAIN;
 		break;
 
 	case XS_SENSE:
@@ -911,18 +911,17 @@ scsi_xs_error(struct scsi_xfer *xs)
 		error = scsi_interpret_sense(xs);
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsi_interpret_sense returned %#x\n", error));
+		break;
 
-		if (error != ERESTART)
-			xs->retries = 0;
-
-		/* FALLTHROUGH */
 	case XS_BUSY:
+		error = scsi_delay(xs, 1);
+		break;
+
 	case XS_TIMEOUT:
 	case XS_RESET:
-		if (xs->retries--)
-			return (ERESTART);
+		error = ERESTART;
+		break;
 
-		/* FALLTHROUGH */
 	case XS_DRIVER_STUFFUP:
 	case XS_SELTIMEOUT:
 		break;
@@ -934,7 +933,10 @@ scsi_xs_error(struct scsi_xfer *xs)
 		break;
 	}
 
-	return (error);
+	if (error == ERESTART && xs->retries < 1)
+		return (EIO);
+	else
+		return (error);
 }
 
 int
