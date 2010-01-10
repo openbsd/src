@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.463 2010/01/05 12:01:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.464 2010/01/10 16:03:49 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -47,17 +47,34 @@ sub uses_old_libs
 	    OpenBSD::Requiring->new($plist->pkgname)->list;
 }
 
-sub has_new_sig
+sub has_different_sig
 {
 	my ($plist, $state) = @_;
-	if (!defined $plist->{new_sig}) {
+	if (!defined $plist->{different_sig}) {
 		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
 		my $o = $plist->signature;
-		$state->say("Comparing full signature for ", $plist->pkgname, " \"".$o->string."\" vs. \"".$n->string."\": ", $n->compare($o) eq 0 ? "equal" : "different") 
-		    if $state->verbose >= 3;
-		$plist->{new_sig} = $n->compare($o) ne 0;
+		my $r = $n->compare($o);
+		$state->print("Comparing full signature for ", 
+		    $plist->pkgname, " \"", $o->string, "\" vs. \"",
+		    $n->string,"\": ")
+			if $state->verbose >= 3;
+		if (defined $r) {
+			if ($r == 0) {
+				$plist->{different_sig} = 0;
+				$state->say("equal") if $state->verbose >= 3;
+			} elsif ($r > 0) {
+				$plist->{different_sig} = 1;
+				$state->say("greater") if $state->verbose >= 3;
+			} else {
+				$plist->{different_sig} = 1;
+				$state->say("less") if $state->verbose >= 3;
+			}
+		} else {
+			$plist->{different_sig} = 1;
+			$state->say("non comparable") if $state->verbose >= 3;
+		}
 	}
-	return $plist->{new_sig};
+	return $plist->{different_sig};
 }
 
 package OpenBSD::State;
@@ -212,7 +229,7 @@ sub complete
 		if (is_installed($pkgname) && 
 		    (!$state->{allow_replacing} ||	
 		      !$state->{defines}->{installed} &&
-		      !$plist->has_new_sig($state) && 
+		      !$plist->has_different_sig($state) && 
 		      !$plist->uses_old_libs)) {
 		      	my $o = $set->{older}->{$pkgname};
 			if (!defined $o) {
