@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: mycreate,v 1.4 2010/01/01 14:27:57 espie Exp $
+# $OpenBSD: mycreate,v 1.5 2010/01/10 11:49:56 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -34,8 +34,6 @@ if (!defined $pkgpath) {
 my @l;
 push(@l, 
 	'-p', $ENV{'PACKAGE_BASE'} || '/usr/local',
-	'-DPERMIT_PACKAGE_CDROM='.($ENV{'PACKAGE_CDROM'} || 'Yes'),
-	'-DPERMIT_PACKAGE_FTP='.($ENV{'PACKAGE_FTP'} || 'Yes'),
 	"-DFULLPKGPATH=$pkgpath",
 	'-DMAINTAINER=regress-tests',
 	'-DCOMMENT='.($ENV{'PACKAGE_COMMENT'} || 'comment'),
@@ -45,4 +43,4 @@ push(@l,
 
 my @args = ('pkg_create', @l, @ARGV, $target);
 print join(' ', @args), "\n" if $ENV{'VERBOSE'};
-exec {'pkg_create'} @args;
+exec {$args[0]}  @args;

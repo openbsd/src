@@ -1,0 +1,58 @@
+#! /usr/bin/perl
+# $OpenBSD: check-sig,v 1.1 2010/01/10 11:49:56 espie Exp $
+# Written by Marc Espie
+# Public domain
+
+use Test::Simple tests => 9;
+use OpenBSD::PackingList;
+sub mycode
+{
+	my ($fh, $cont) = @_;
+	my $_;
+	while (<$fh>) {
+		return if m/^__END__/;
+		&$cont($_);
+	}
+}
+
+my @sig;
+my $fh = \*DATA;
+for my $i (1..6) {
+	push(@sig, OpenBSD::PackingList->read($fh, \&mycode)->signature);
+}
+
+ok($sig[0]->compare($sig[0]) == 0, "self compare");
+ok($sig[3]->compare($sig[3]) == 0, "self compare");
+ok($sig[5]->compare($sig[5]) == 0, "self compare");
+ok(!defined($sig[0]->compare($sig[3])), "non comparable");
+ok($sig[0]->compare($sig[1]) < 0, "depend");
+ok($sig[0]->compare($sig[2]) < 0, "pkgname");
+ok($sig[1]->compare($sig[0]) > 0, "other way");
+ok($sig[3]->compare($sig[4]) < 0, "lib");
+ok($sig[3]->compare($sig[5]) < 0, "depend");
+
+__DATA__
+@name foo-1.0
+@depend test/x:x-*:x-1.0
+file
+__END__ #1
+@name foo-1.0
+@depend test/x:x-*:x-2.0
+file
+__END__ #2
+@name foo-2.0
+@depend test/x:x-*:x-2.0
+file
+__END__ #3
+@name bar-1.0
+@depend test/x:x-*:x-1.0
+@wantlib a.1.5
+__END__ #4
+@name bar-1.0
+@depend test/x:x-*:x-1.0
+@wantlib a.2.0
+__END__ #5
+@name bar-1.0
+@depend test/x:x-*:x-2.0
+@wantlib a.1.5
+__END__
