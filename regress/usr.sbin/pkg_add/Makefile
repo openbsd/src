@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2010/01/10 12:41:20 espie Exp $
+# $OpenBSD: Makefile,v 1.33 2010/01/10 16:06:10 espie Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 partial-update-test conflict-update \
@@ -22,10 +22,9 @@ DEST$i ?= ${D$i}/usr/local
 pkgnames:
 	perl ${.CURDIR}/check-name
 
-signatures.out:
+signatures: 
+	-rm -f signatures.out
 	perl ${.CURDIR}/check-sig 2>signatures.out
-
-signatures: signatures.out
 	diff -u signatures.out ${.CURDIR}/signatures.ref
 
 depends-check: rep0/a-0.tgz rep0/b-0.tgz rep1/a-1.tgz rep1/b-1.tgz
@@ -124,7 +123,7 @@ big-merge: rep0/q1-0.tgz rep0/q2-0.tgz rep0/q3-0.tgz rep0/q4-0.tgz \
 family-circus: rep0/glib-0.tgz rep0/fam-0.tgz rep1/fam-1.tgz rep1/glib-1.tgz rep1/gamin-0.tgz
 	@-rm -rf ${D15}
 	@ROOT=${D15} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} glib
-	@ROOT=${D15} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -F updatedepends -u glib
+	@ROOT=${D15} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u glib
 
 missing: rep1/missa-0.tgz rep1/missb-0.tgz rep1/missc-0.tgz rep1/missd-0.tgz rep1/missf-0.tgz
 	@-rm -rf ${D16}
