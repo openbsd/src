@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.167 2010/01/03 14:37:37 chl Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.168 2010/01/10 16:42:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -157,6 +157,7 @@ enum imsg_type {
 	IMSG_RUNNER_UPDATE_ENVELOPE,
 	IMSG_RUNNER_STATS,
 	IMSG_RUNNER_SCHEDULE,
+	IMSG_RUNNER_REMOVE,
 
 	IMSG_BATCH_CREATE,
 	IMSG_BATCH_APPEND,
@@ -695,6 +696,12 @@ struct stats {
 };
 
 struct sched {
+	int			fd;
+	char			mid[MAX_ID_SIZE];
+	int			ret;
+};
+
+struct remove {
 	int			fd;
 	char			mid[MAX_ID_SIZE];
 	int			ret;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.77 2010/01/03 14:37:37 chl Exp $	*/
+/*	$OpenBSD: runner.c,v 1.78 2010/01/10 16:42:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -82,6 +82,9 @@ struct batch	*batch_lookup(struct smtpd *, struct message *);
 
 int		runner_force_envelope_schedule(char *);
 int		runner_force_message_schedule(char *);
+
+int		runner_force_envelope_remove(char *);
+int		runner_force_message_remove(char *);
 
 void
 runner_sig_handler(int sig, short event, void *p)
@@ -212,6 +215,20 @@ runner_dispatch_control(int sig, short event, void *p)
 				s->ret = runner_force_message_schedule(s->mid);
 
 			imsg_compose_event(iev, IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
+			break;
+		}
+		case IMSG_RUNNER_REMOVE: {
+			struct remove *s = imsg.data;
+
+			IMSG_SIZE_CHECK(s);
+
+			s->ret = 0;
+			if (valid_message_uid(s->mid))
+				s->ret = runner_force_envelope_remove(s->mid);
+			else if (valid_message_id(s->mid))
+				s->ret = runner_force_message_remove(s->mid);
+
+			imsg_compose_event(iev, IMSG_RUNNER_REMOVE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 		default:
@@ -924,6 +941,48 @@ runner_force_message_schedule(char *mid)
 	while ((dp = readdir(dirp)) != NULL) {
 		if (valid_message_uid(dp->d_name))
 			runner_force_envelope_schedule(dp->d_name);
+	}
+	closedir(dirp);
+
+	return 1;
+}
+
+
+int
+runner_force_envelope_remove(char *mid)
+{
+	struct message message;
+
+	if (! queue_load_envelope(&message, mid))
+		return 0;
+
+	if (! message.flags & (F_MESSAGE_PROCESSING|F_MESSAGE_SCHEDULED))
+		return 0;
+
+	if (! queue_remove_envelope(&message))
+		return 0;
+
+	return 1;
+}
+
+int
+runner_force_message_remove(char *mid)
+{
+	char path[MAXPATHLEN];
+	DIR *dirp;
+	struct dirent *dp;
+
+	if (! bsnprintf(path, MAXPATHLEN, "%s/%d/%s/envelopes",
+		PATH_QUEUE, queue_hash(mid), mid))
+		return 0;
+
+	dirp = opendir(path);
+	if (dirp == NULL)
+		return 0;
+
+	while ((dp = readdir(dirp)) != NULL) {
+		if (valid_message_uid(dp->d_name))
+			runner_force_envelope_remove(dp->d_name);
 	}
 	closedir(dirp);
 

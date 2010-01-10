@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.45 2010/01/03 14:37:37 chl Exp $	*/
+/*	$OpenBSD: control.c,v 1.46 2010/01/10 16:42:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -361,6 +361,27 @@ control_dispatch_ext(int fd, short event, void *arg)
 			}
 
 			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
+			break;
+		}
+
+		case IMSG_RUNNER_REMOVE: {
+			struct remove *s = imsg.data;
+
+			if (euid)
+				goto badcred;
+	
+			if (IMSG_DATA_SIZE(&imsg) != sizeof(*s))
+				goto badcred;
+
+			s->fd = fd;
+
+			if (! valid_message_id(s->mid) && ! valid_message_uid(s->mid)) {
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
+				    NULL, 0);
+				break;
+			}
+
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_RUNNER_REMOVE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 /*
@@ -750,6 +771,24 @@ control_dispatch_runner(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 		case IMSG_RUNNER_SCHEDULE: {
 			struct sched	*s = imsg.data;
+			struct ctl_conn	*c;
+
+			IMSG_SIZE_CHECK(s);
+
+			if ((c = control_connbyfd(s->fd)) == NULL) {
+				log_warn("control_dispatch_runner: fd %d not found", s->fd);
+				imsg_free(&imsg);
+				return;
+			}
+
+			if (s->ret)
+				imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			else
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
+			break;
+		}
+		case IMSG_RUNNER_REMOVE: {
+			struct remove	*s = imsg.data;
 			struct ctl_conn	*c;
 
 			IMSG_SIZE_CHECK(s);

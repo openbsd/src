@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.45 2010/01/03 14:37:37 chl Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.46 2010/01/10 16:42:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,23 +47,6 @@
 __dead void	usage(void);
 int		show_command_output(struct imsg*);
 int		show_stats_output(struct imsg *);
-
-/*
-struct imsgname {
-	int type;
-	char *name;
-	void (*func)(struct imsg *);
-};
-
-struct imsgname imsgs[] = {
-	{ IMSG_CTL_SHUTDOWN,		"stop",			NULL },
-	{ IMSG_CONF_RELOAD,		"reload",		NULL },
-	{ 0,				NULL,			NULL }
-};
-struct imsgname imsgunknown = {
-	-1,				"<unknown>",		NULL
-};
-*/
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -189,6 +172,15 @@ connected:
 		imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &s, sizeof (s));
 		break;
 	}
+	case REMOVE: {
+		struct remove s;
+
+		s.fd = -1;
+		bzero(s.mid, sizeof (s.mid));
+		strlcpy(s.mid, res->data, sizeof (s.mid));
+		imsg_compose(ibuf, IMSG_RUNNER_REMOVE, 0, 0, -1, &s, sizeof (s));
+		break;
+	}
 	case MONITOR:
 		/* XXX */
 		break;
@@ -224,6 +216,7 @@ connected:
 /*			case RELOAD:*/
 			case SHUTDOWN:
 			case SCHEDULE:
+			case REMOVE:
 			case PAUSE_MDA:
 			case PAUSE_MTA:
 			case PAUSE_SMTP:
