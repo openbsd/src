@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.156 2009/12/28 01:36:12 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.157 2010/01/10 13:19:02 grange Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1770,6 +1770,20 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 			/* Errored slot is easy to determine from CMD. */
 			err_slot = AHCI_PREG_CMD_CCS(ahci_pread(ap,
 			    AHCI_PREG_CMD));
+
+			if ((ci_saved & (1 << err_slot)) == 0) {
+				/*
+				 * Hardware doesn't seem to report correct
+				 * slot number. If there's only one
+				 * outstanding command we can cope,
+				 * otherwise fail all active commands.
+				 */
+				if (ap->ap_active_cnt == 1)
+					err_slot = ffs(ap->ap_active) - 1;
+				else
+					goto failall;
+			}
+
 			ccb = &ap->ap_ccbs[err_slot];
 
 			/* Preserve received taskfile data from the RFIS. */
