@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.579 2010/01/10 07:45:41 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.580 2010/01/10 23:48:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -465,7 +465,7 @@ int	parseport(char *, struct range *r, int);
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE SETTOS
-%token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO RDRTO RECEIVEDON
+%token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO RDRTO RECEIVEDON NE LE GE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
@@ -3808,10 +3808,10 @@ yesno		: NO			{ $$ = 0; }
 		;
 
 unaryop		: '='		{ $$ = PF_OP_EQ; }
-		| '!' '='	{ $$ = PF_OP_NE; }
-		| '<' '='	{ $$ = PF_OP_LE; }
+		| NE		{ $$ = PF_OP_NE; }
+		| LE		{ $$ = PF_OP_LE; }
 		| '<'		{ $$ = PF_OP_LT; }
-		| '>' '='	{ $$ = PF_OP_GE; }
+		| GE		{ $$ = PF_OP_GE; }
 		| '>'		{ $$ = PF_OP_GT; }
 		;
 
@@ -5178,12 +5178,19 @@ top:
 		if (yylval.v.string == NULL)
 			err(1, "yylex: strdup");
 		return (STRING);
+	case '!':
+		next = lgetc(0);
+		if (next == '=')
+			return (NE);
+		lungetc(next);
+		break;		
 	case '<':
 		next = lgetc(0);
 		if (next == '>') {
 			yylval.v.i = PF_OP_XRG;
 			return (PORTBINARY);
-		}
+		} else if (next == '=')
+			return (LE);
 		lungetc(next);
 		break;
 	case '>':
@@ -5191,7 +5198,8 @@ top:
 		if (next == '<') {
 			yylval.v.i = PF_OP_IRG;
 			return (PORTBINARY);
-		}
+		} else if (next == '=')
+			return (GE);
 		lungetc(next);
 		break;
 	}
