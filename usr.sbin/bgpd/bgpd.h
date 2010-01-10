@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.250 2009/12/16 15:40:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.251 2010/01/10 00:15:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -579,8 +579,8 @@ struct ctl_show_rib_request {
 	pid_t			pid;
 	u_int16_t		flags;
 	enum imsg_type		type;
-	sa_family_t		af;
 	u_int8_t		prefixlen;
+	u_int8_t		aid;
 };
 
 enum filter_actions {
@@ -741,11 +741,6 @@ struct filter_set {
 		u_int8_t		origin;
 	} action;
 	enum action_types		type;
-};
-
-struct rrefresh {
-	u_int16_t	afi;
-	u_int8_t	safi;
 };
 
 struct rde_rib {

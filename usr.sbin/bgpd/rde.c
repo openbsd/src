@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.280 2010/01/05 08:49:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.281 2010/01/10 00:15:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -658,12 +658,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				else if (ribs[rid].state == RIB_NEW)
 					rib_dump(&ribs[0],
 					    rde_softreconfig_load, &ribs[rid],
-					    AF_UNSPEC);
+					    AID_UNSPEC);
 			}
 			/* sync local-RIB first */
 			if (reconf_in)
 				rib_dump(&ribs[0], rde_softreconfig_in, NULL,
-				    AF_UNSPEC);
+				    AID_UNSPEC);
 			/* then sync peers */
 			if (reconf_out) {
 				int i;
@@ -672,7 +672,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 						/* already synced by _load */
 						continue;
 					rib_dump(&ribs[i], rde_softreconfig_out,
-					    NULL, AF_UNSPEC);
+					    NULL, AID_UNSPEC);
 				}
 			}
 
@@ -2010,7 +2010,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	}
 	ctx->ribctx.ctx_done = rde_dump_done;
 	ctx->ribctx.ctx_arg = ctx;
-	ctx->ribctx.ctx_af = ctx->req.af;
+	ctx->ribctx.ctx_aid = ctx->req.aid;
 	rib_dump_r(&ctx->ribctx);
 }
 
@@ -2049,7 +2049,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
 	ctx->ribctx.ctx_done = mrt_done;
 	ctx->ribctx.ctx_arg = &ctx->mrt;
-	ctx->ribctx.ctx_af = AF_UNSPEC;
+	ctx->ribctx.ctx_aid = AID_UNSPEC;
 	LIST_INSERT_HEAD(&rde_mrts, ctx, entry);
 	rde_mrt_cnt++;
 	rib_dump_r(&ctx->ribctx);
@@ -2736,7 +2736,6 @@ void
 peer_dump(u_int32_t id, u_int8_t aid)
 {
 	struct rde_peer		*peer;
-	sa_family_t		 af;	/* XXX needs to be replaced with aid */
 
 	peer = peer_get(id);
 	if (peer == NULL) {
@@ -2744,12 +2743,10 @@ peer_dump(u_int32_t id, u_int8_t aid)
 		return;
 	}
 
-	af = aid2af(aid);
-
 	if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 		up_generate_default(rules_l, peer, aid);
 	else
-		rib_dump(&ribs[peer->ribid], rde_up_dump_upcall, peer, af);
+		rib_dump(&ribs[peer->ribid], rde_up_dump_upcall, peer, aid);
 	if (peer->capa.restart)
 		peer_send_eor(peer, aid);
 }

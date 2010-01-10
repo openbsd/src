@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.118 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.119 2010/01/10 00:15:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -254,7 +254,7 @@ rib_empty(struct rib_entry *re)
 
 void
 rib_dump(struct rib *rib, void (*upcall)(struct rib_entry *, void *),
-    void *arg, sa_family_t af)
+    void *arg, u_int8_t aid)
 {
 	struct rib_context	*ctx;
 
@@ -263,7 +263,7 @@ rib_dump(struct rib *rib, void (*upcall)(struct rib_entry *, void *),
 	ctx->ctx_rib = rib;
 	ctx->ctx_upcall = upcall;
 	ctx->ctx_arg = arg;
-	ctx->ctx_af = af;
+	ctx->ctx_aid = aid;
 	rib_dump_r(ctx);
 }
 
@@ -280,8 +280,8 @@ rib_dump_r(struct rib_context *ctx)
 		re = rib_restart(ctx);
 
 	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
-		if (ctx->ctx_af != AF_UNSPEC &&
-		    ctx->ctx_af != aid2af(re->prefix->aid))
+		if (ctx->ctx_aid != AID_UNSPEC &&
+		    ctx->ctx_aid != re->prefix->aid)
 			continue;
 		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
 		    (re->flags & F_RIB_ENTRYLOCK) == 0) {

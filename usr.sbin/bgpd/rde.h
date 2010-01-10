@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.126 2009/12/18 15:51:37 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.127 2010/01/10 00:15:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -250,7 +250,7 @@ struct rib_context {
 	void		(*ctx_wait)(void *);
 	void				*ctx_arg;
 	unsigned int			 ctx_count;
-	sa_family_t			 ctx_af;
+	u_int8_t			 ctx_aid;
 };
 
 struct rib_entry {
@@ -361,7 +361,7 @@ void		 rib_free(struct rib *);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
 struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
 void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
-		     void *, sa_family_t);
+		     void *, u_int8_t);
 void		 rib_dump_r(struct rib_context *);
 void		 rib_dump_runner(void);
 int		 rib_dump_pending(void);
