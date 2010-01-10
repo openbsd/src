@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.58 2009/12/01 14:29:40 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.59 2010/01/10 00:16:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -416,12 +416,12 @@ match_token(int *argc, char **argv[], const struct token table[])
 			if (!strcmp(word, "inet") || !strcmp(word, "IPv4")) {
 				match++;
 				t = &table[i];
-				res.af = AF_INET;
+				res.aid = AID_INET;
 			}
 			if (!strcmp(word, "inet6") || !strcmp(word, "IPv6")) {
 				match++;
 				t = &table[i];
-				res.af = AF_INET6;
+				res.aid = AID_INET6;
 			}
 			break;
 		case ADDRESS:

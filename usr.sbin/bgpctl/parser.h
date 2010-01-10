@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.20 2009/11/02 20:38:45 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.21 2010/01/10 00:16:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,7 +63,7 @@ struct parse_result {
 	int			 flags;
 	enum actions		action;
 	u_int8_t		 prefixlen;
-	sa_family_t		 af;
+	u_int8_t		 aid;
 };
 
 __dead void		 usage(void);

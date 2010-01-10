@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.154 2009/12/16 15:42:19 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.155 2010/01/10 00:16:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -165,13 +165,15 @@ main(int argc, char *argv[])
 	case SHOW_FIB:
 		if (!res->addr.aid) {
 			struct buf	*msg;
+			sa_family_t	 af;
 
+			af = aid2af(res->aid);
 			if ((msg = imsg_create(ibuf, IMSG_CTL_KROUTE, 0, 0,
-			    sizeof(res->flags) + sizeof(res->af))) == NULL)
+			    sizeof(res->flags) + sizeof(af))) == NULL)
 				errx(1, "imsg_create failure");
 			if (imsg_add(msg, &res->flags, sizeof(res->flags)) ==
 			    -1 ||
-			    imsg_add(msg, &res->af, sizeof(res->af)) == -1)
+			    imsg_add(msg, &af, sizeof(af)) == -1)
 				errx(1, "imsg_add failure");
 			imsg_close(ibuf, msg);
 		} else
@@ -219,7 +221,7 @@ main(int argc, char *argv[])
 		memcpy(&ribreq.neighbor, &neighbor,
 		    sizeof(ribreq.neighbor));
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
-		ribreq.af = res->af;
+		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
 		imsg_compose(ibuf, type, 0, 0, -1, &ribreq, sizeof(ribreq));
 		if (!(res->flags & F_CTL_DETAIL))
@@ -289,7 +291,7 @@ main(int argc, char *argv[])
 		break;
 	case NETWORK_SHOW:
 		bzero(&ribreq, sizeof(ribreq));
-		ribreq.af = res->af;
+		ribreq.aid = res->aid;
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
 		    &ribreq, sizeof(ribreq));
