@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.7 2009/11/06 19:25:45 ajacoutot Exp $
+#	$OpenBSD: BSD.x11.dist,v 1.8 2010/01/10 13:35:10 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -390,6 +390,8 @@
             ..
         ..
         db
+            sysmerge
+            ..
             xkb
             ..
         ..
