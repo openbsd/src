@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.9 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.10 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,6 +16,9 @@
  */
 
 #include "aparams.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 int aparams_ctltovol[128] = {
 	    0,
@@ -181,6 +184,25 @@ aparams_init(struct aparams *par, unsigned cmin, unsigned cmax, unsigned rate)
 	par->rate = rate;
 }
 
+#ifdef DEBUG
+/*
+ * Print the format/channels/encoding on stderr.
+ */
+void
+aparams_dbg(struct aparams *par)
+{
+	char enc[ENCMAX];
+
+	aparams_enctostr(par, enc);
+	dbg_puts(enc);
+	dbg_puts(",");
+	dbg_putu(par->cmin);
+	dbg_puts(":");
+	dbg_putu(par->cmax);
+	dbg_puts(",");
+	dbg_putu(par->rate);
+}
+#endif
 
 /*
  * Return true if both encodings are the same.

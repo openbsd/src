@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.41 2010/01/05 10:18:12 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.42 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -44,7 +44,100 @@
 #include "conf.h"
 #include "file.h"
 #include "midi.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
+#ifdef DEBUG
+void
+aproc_dbg(struct aproc *p)
+{
+	dbg_puts(p->ops->name);
+	dbg_puts("(");
+	dbg_puts(p->name);
+	dbg_puts(")");
+}
+
+int
+zomb_in(struct aproc *p, struct abuf *ibuf)
+{
+	aproc_dbg(p);
+	dbg_puts(": in: terminated\n");
+	dbg_panic();
+	return 0;
+}
+
+
+int
+zomb_out(struct aproc *p, struct abuf *obuf)
+{
+	aproc_dbg(p);
+	dbg_puts(": out: terminated\n");
+	dbg_panic();
+	return 0;
+}
+
+void
+zomb_eof(struct aproc *p, struct abuf *ibuf)
+{
+	aproc_dbg(p);
+	dbg_puts(": eof: terminated\n");
+	dbg_panic();
+}
+
+void
+zomb_hup(struct aproc *p, struct abuf *obuf)
+{
+	aproc_dbg(p);
+	dbg_puts(": hup: terminated\n");
+	dbg_panic();
+}
+
+void
+zomb_newin(struct aproc *p, struct abuf *ibuf)
+{
+	aproc_dbg(p);
+	dbg_puts(": newin: terminated\n");
+	dbg_panic();
+}
+
+void
+zomb_newout(struct aproc *p, struct abuf *obuf)
+{
+	aproc_dbg(p);
+	dbg_puts(": newout: terminated\n");
+	dbg_panic();
+}
+
+void
+zomb_ipos(struct aproc *p, struct abuf *ibuf, int delta)
+{
+	aproc_dbg(p);
+	dbg_puts(": ipos: terminated\n");
+	dbg_panic();
+}
+
+void
+zomb_opos(struct aproc *p, struct abuf *obuf, int delta)
+{
+	aproc_dbg(p);
+	dbg_puts(": opos: terminated\n");
+	dbg_panic();
+}
+
+struct aproc_ops zomb_ops = {
+	"zomb",
+	zomb_in,
+	zomb_out,
+	zomb_eof,
+	zomb_hup,
+	zomb_newin,
+	zomb_newout,
+	zomb_ipos,
+	zomb_opos,
+	NULL
+};
+#endif
 
 struct aproc *
 aproc_new(struct aproc_ops *ops, char *name)
@@ -69,7 +162,19 @@ aproc_del(struct aproc *p)
 	struct abuf *i;
 
 	if (!(p->flags & APROC_ZOMB)) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			aproc_dbg(p);
+			dbg_puts(": terminating...\n");
+		}
+#endif
 		if (p->ops->done) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				aproc_dbg(p);
+				dbg_puts(": done\n");
+			}
+#endif
 			p->ops->done(p);
 		}
 		while (!LIST_EMPTY(&p->ibuflist)) {
@@ -83,8 +188,21 @@ aproc_del(struct aproc *p)
 		p->flags |= APROC_ZOMB;
 	}
 	if (p->refs > 0) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			aproc_dbg(p);
+			dbg_puts(": free delayed\n");
+			p->ops = &zomb_ops;
+		}
+#endif
 		return;
 	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": freed\n");
+	}
+#endif
 	free(p);
 }
 
@@ -366,6 +484,14 @@ mix_bzero(struct abuf *obuf, unsigned zcount)
 	short *odata;
 	unsigned ocount;
 
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		abuf_dbg(obuf);
+		dbg_puts(": bzero(");
+		dbg_putu(zcount);
+		dbg_puts(")\n");
+	}
+#endif
 	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->w.mix.todo);
 	ocount -= ocount % obuf->bpf;
 	if (ocount > zcount)
@@ -385,6 +511,16 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	unsigned scount, icount, ocount, zcount;
 	int vol;
 
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		abuf_dbg(ibuf);
+		dbg_puts(": badd: todo = ");
+		dbg_putu(obuf->w.mix.todo);
+		dbg_puts("/");
+		dbg_putu(ibuf->r.mix.done);
+		dbg_puts("\n");
+	}
+#endif
 	/*
 	 * Calculate the maximum we can read.
 	 */
@@ -425,6 +561,18 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	abuf_rdiscard(ibuf, scount * ibuf->bpf);
 	ibuf->r.mix.done += scount * obuf->bpf;
 
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		abuf_dbg(ibuf);
+		dbg_puts(": badd: done = ");
+		dbg_putu(scount);
+		dbg_puts(", todo = ");
+		dbg_putu(ibuf->r.mix.done);
+		dbg_puts("/");
+		dbg_putu(obuf->w.mix.todo);
+		dbg_puts("\n");
+	}
+#endif
 }
 
 /*
@@ -443,12 +591,28 @@ mix_xrun(struct abuf *i, struct abuf *obuf)
 	}
 	mix_bzero(obuf, obuf->len);
 	fdrop = obuf->w.mix.todo / obuf->bpf;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		abuf_dbg(i);
+		dbg_puts(": underrun, dropping ");
+		dbg_putu(fdrop);
+		dbg_puts(" + ");
+		dbg_putu(i->drop / i->bpf);
+		dbg_puts("\n");
+	}
+#endif
 	i->r.mix.done += fdrop * obuf->bpf;
 	if (i->r.mix.xrun == XRUN_SYNC)
 		i->drop += fdrop * i->bpf;
 	else {
 		abuf_opos(i, -(int)fdrop);
 		if (i->duplex) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				abuf_dbg(i->duplex);
+				dbg_puts(": full-duplex resync\n");
+			}
+#endif
 			i->duplex->drop += fdrop * i->duplex->bpf;
 			abuf_ipos(i->duplex, -(int)fdrop);
 		}
@@ -462,6 +626,20 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->obuflist);
 	unsigned odone;
 
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": used = ");
+		dbg_putu(ibuf->used);
+		dbg_puts("/");
+		dbg_putu(ibuf->len);
+		dbg_puts(", todo = ");
+		dbg_putu(obuf->w.mix.todo);
+		dbg_puts("/");
+		dbg_putu(ibuf->r.mix.done);
+		dbg_puts("\n");
+	}
+#endif
 	if (!ABUF_ROK(ibuf))
 		return 0;
 	odone = obuf->len;
@@ -492,6 +670,20 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	struct abuf *i, *inext;
 	unsigned odone;
 
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": used = ");
+		dbg_putu(obuf->used);
+		dbg_puts("/");
+		dbg_putu(obuf->len);
+		dbg_puts(", todo = ");
+		dbg_putu(obuf->w.mix.todo);
+		dbg_puts("/");
+		dbg_putu(obuf->len);
+		dbg_puts("\n");
+	}
+#endif
 	if (!ABUF_WOK(obuf))
 		return 0;
 	odone = obuf->len;
@@ -540,6 +732,12 @@ mix_eof(struct aproc *p, struct abuf *ibuf)
 	mix_setmaster(p);
 
 	if (!aproc_inuse(p)) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			aproc_dbg(p);
+			dbg_puts(": running other streams\n");
+		}
+#endif
 		/*
 		 * Find a blocked input.
 		 */
@@ -569,6 +767,14 @@ mix_hup(struct aproc *p, struct abuf *obuf)
 void
 mix_newin(struct aproc *p, struct abuf *ibuf)
 {
+#ifdef DEBUG
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	if (!obuf || ibuf->cmin < obuf->cmin || ibuf->cmax > obuf->cmax) {
+		dbg_puts("newin: channel ranges mismatch\n");
+		dbg_panic();
+	}
+#endif
 	p->u.mix.idle = 0;
 	ibuf->r.mix.done = 0;
 	ibuf->r.mix.vol = ADATA_UNIT;
@@ -580,12 +786,30 @@ mix_newin(struct aproc *p, struct abuf *ibuf)
 void
 mix_newout(struct aproc *p, struct abuf *obuf)
 {
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": newin, will use ");
+		dbg_putu(obuf->len / obuf->bpf);
+		dbg_puts(" fr\n");
+	}
+#endif
 	obuf->w.mix.todo = 0;
 }
 
 void
 mix_opos(struct aproc *p, struct abuf *obuf, int delta)
 {
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": opos: lat = ");
+		dbg_puti(p->u.mix.lat);
+		dbg_puts("/");
+		dbg_puti(p->u.mix.maxlat);
+		dbg_puts(" fr\n");
+	}
+#endif
 	p->u.mix.lat -= delta;
 	if (p->u.mix.ctl)
 		ctl_ontick(p->u.mix.ctl, delta);
@@ -652,6 +876,16 @@ mix_setmaster(struct aproc *p)
 		if (weight > i->r.mix.maxweight)
 			weight = i->r.mix.maxweight;
 		i->r.mix.weight = weight;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			abuf_dbg(i);
+			dbg_puts(": setmaster: ");
+			dbg_puti(i->r.mix.weight);
+			dbg_puts("/");
+			dbg_puti(i->r.mix.maxweight);
+			dbg_puts("\n");
+		}
+#endif
 	}
 }
 
@@ -697,6 +931,14 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 	}
 	abuf_wcommit(obuf, scount * obuf->bpf);
 	obuf->w.sub.done += scount * ibuf->bpf;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		abuf_dbg(obuf);
+		dbg_puts(": bcopy ");
+		dbg_putu(scount);
+		dbg_puts(" fr\n");
+	}
+#endif
 }
 
 /*
@@ -714,11 +956,27 @@ sub_xrun(struct abuf *ibuf, struct abuf *i)
 		return 0;
 	}
 	fdrop = ibuf->used / ibuf->bpf;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		abuf_dbg(i);
+		dbg_puts(": overrun, silence ");
+		dbg_putu(fdrop);
+		dbg_puts(" + ");
+		dbg_putu(i->silence / i->bpf);
+		dbg_puts("\n");
+	}
+#endif
 	if (i->w.sub.xrun == XRUN_SYNC)
 		i->silence += fdrop * i->bpf;
 	else {
 		abuf_ipos(i, -(int)fdrop);
 		if (i->duplex) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				abuf_dbg(i->duplex);
+				dbg_puts(": full-duplex resync\n");
+			}
+#endif
 			i->duplex->silence += fdrop * i->duplex->bpf;
 			abuf_opos(i->duplex, -(int)fdrop);
 		}
@@ -813,6 +1071,12 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 	unsigned idone;
 
 	if (!aproc_inuse(p)) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			aproc_dbg(p);
+			dbg_puts(": running other streams\n");
+		}
+#endif
 		/*
 		 * Find a blocked output.
 		 */
@@ -836,6 +1100,14 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 void
 sub_newout(struct aproc *p, struct abuf *obuf)
 {
+#ifdef DEBUG
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+
+	if (!ibuf || obuf->cmin < ibuf->cmin || obuf->cmax > ibuf->cmax) {
+		dbg_puts("newout: channel ranges mismatch\n");
+		dbg_panic();
+	}
+#endif
 	p->u.sub.idle = 0;
 	obuf->w.sub.done = 0;
 	obuf->w.sub.xrun = XRUN_IGNORE;
@@ -845,6 +1117,16 @@ void
 sub_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 {
 	p->u.sub.lat += delta;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": ipos: lat = ");
+		dbg_puti(p->u.sub.lat);
+		dbg_puts("/");
+		dbg_puti(p->u.sub.maxlat);
+		dbg_puts(" fr\n");
+	}
+#endif
 	if (p->u.sub.ctl)
 		ctl_ontick(p->u.sub.ctl, delta);
 	aproc_ipos(p, ibuf, delta);
@@ -929,6 +1211,16 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	/*
 	 * Start conversion.
 	 */
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": resamp starting ifr = ");
+		dbg_putu(ifr);
+		dbg_puts(", ofr = ");
+		dbg_puti(ofr);
+		dbg_puts(" fr\n");
+	}
+#endif
 	for (;;) {
 		if (diff < 0) {
 			if (ifr == 0)
@@ -957,6 +1249,16 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	}
 	p->u.resamp.diff = diff;
 	p->u.resamp.ctx_start = ctx_start;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": resamp done ifr = ");
+		dbg_putu(ifr);
+		dbg_puts(", ofr = ");
+		dbg_puti(ofr);
+		dbg_puts(" fr\n");
+	}
+#endif
 	/*
 	 * Update FIFO pointers.
 	 */
@@ -1062,6 +1364,16 @@ resamp_new(char *name, unsigned iblksz, unsigned oblksz)
 	p->u.resamp.ctx_start = 0;
 	for (i = 0; i < NCHAN_MAX * RESAMP_NCTX; i++)
 		p->u.resamp.ctx[i] = 0;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": new ");
+		dbg_putu(iblksz);
+		dbg_puts("/");
+		dbg_putu(oblksz);
+		dbg_puts("\n");
+	}
+#endif
 	return p;
 }
 
@@ -1109,6 +1421,14 @@ cmap_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 			ctx++;
 		}
 	}
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": bcopy ");
+		dbg_putu(scount);
+		dbg_puts(" fr\n");
+	}
+#endif
 	abuf_rdiscard(ibuf, scount * ibuf->bpf);
 	abuf_wcommit(obuf, scount * obuf->bpf);
 }
@@ -1173,6 +1493,16 @@ cmap_new(char *name, struct aparams *ipar, struct aparams *opar)
 	p = aproc_new(&cmap_ops, name);
 	for (i = 0; i < NCHAN_MAX; i++)
 		p->u.cmap.ctx[i] = 0;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": new ");
+		aparams_dbg(ipar);
+		dbg_puts(" -> ");
+		aparams_dbg(opar);
+		dbg_puts("\n");
+	}
+#endif
 	return p;
 }
 
@@ -1207,6 +1537,16 @@ enc_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 		return;
 	scount = (icount < ocount) ? icount : ocount;
 	nch = ibuf->cmax - ibuf->cmin + 1;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": bcopy ");
+		dbg_putu(scount);
+		dbg_puts(" fr * ");
+		dbg_putu(nch);
+		dbg_puts(" ch\n");
+	}
+#endif
 	/*
 	 * Partially copy structures into local variables, to avoid
 	 * unnecessary indirections; this also allows the compiler to
@@ -1315,6 +1655,14 @@ enc_new(char *name, struct aparams *par)
 		p->u.conv.bnext = 1;
 		p->u.conv.snext = 0;
 	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": new ");
+		aparams_dbg(par);
+		dbg_puts("\n");
+	}
+#endif
 	return p;
 }
 
@@ -1349,6 +1697,16 @@ dec_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 		return;
 	scount = (icount < ocount) ? icount : ocount;
 	nch = obuf->cmax - obuf->cmin + 1;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": bcopy ");
+		dbg_putu(scount);
+		dbg_puts(" fr * ");
+		dbg_putu(nch);
+		dbg_puts(" ch\n");
+	}
+#endif
 	/*
 	 * Partially copy structures into local variables, to avoid
 	 * unnecessary indirections; this also allows the compiler to
@@ -1457,5 +1815,13 @@ dec_new(char *name, struct aparams *par)
 		p->u.conv.bnext = 1;
 		p->u.conv.snext = 0;
 	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": new ");
+		aparams_dbg(par);
+		dbg_puts("\n");
+	}
+#endif
 	return p;
 }

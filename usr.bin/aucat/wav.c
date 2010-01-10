@@ -24,6 +24,9 @@
 #include "conf.h"
 #include "dev.h"
 #include "wav.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 short wav_ulawmap[256] = {
 	-32124, -31100, -30076, -29052, -28028, -27004, -25980, -24956,
@@ -447,6 +450,12 @@ wav_read(struct file *file, unsigned char *data, unsigned count)
 	if (f->rbytes >= 0 && count > f->rbytes) {
 		count = f->rbytes; /* file->rbytes fits in count */
 		if (count == 0) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				file_dbg(&f->pipe.file);
+				dbg_puts(": read complete\n");
+			}
+#endif
 			file_eof(&f->pipe.file);
 			return 0;
 		}
@@ -472,6 +481,12 @@ wav_write(struct file *file, unsigned char *data, unsigned count)
 	if (f->wbytes >= 0 && count > f->wbytes) {
 		count = f->wbytes; /* wbytes fits in count */
 		if (count == 0) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				file_dbg(&f->pipe.file);
+				dbg_puts(": write complete\n");
+			}
+#endif
 			file_hup(&f->pipe.file);
 			return 0;
 		}

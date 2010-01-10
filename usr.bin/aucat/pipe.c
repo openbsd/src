@@ -27,6 +27,9 @@
 
 #include "conf.h"
 #include "pipe.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 struct fileops pipe_ops = {
 	"pipe",
@@ -62,6 +65,12 @@ pipe_read(struct file *file, unsigned char *data, unsigned count)
 	while ((n = read(f->fd, data, count)) < 0) {
 		f->file.state &= ~FILE_ROK;
 		if (errno == EAGAIN) {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(&f->file);
+				dbg_puts(": reading blocked\n");
+			}
+#endif
 		} else {
 			warn("%s", f->file.name);
 			file_eof(&f->file);
@@ -86,6 +95,12 @@ pipe_write(struct file *file, unsigned char *data, unsigned count)
 	while ((n = write(f->fd, data, count)) < 0) {
 		f->file.state &= ~FILE_WOK;
 		if (errno == EAGAIN) {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(&f->file);
+				dbg_puts(": writing blocked\n");
+			}
+#endif
 		} else {
 			if (errno != EPIPE)
 				warn("%s", f->file.name);

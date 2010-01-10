@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.3 2009/11/03 21:31:37 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.4 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,6 +20,9 @@
 
 #include "conf.h"
 #include "opt.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 struct optlist opt_list = SLIST_HEAD_INITIALIZER(&opt_list);
 
@@ -55,6 +58,20 @@ opt_new(char *name,
 	o->rpar = *rpar;
 	o->maxweight = maxweight;
 	o->mmc = mmc;
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		dbg_puts(o->name);
+		dbg_puts(": rec ");
+		aparams_dbg(&o->wpar);
+		dbg_puts(", play ");
+		aparams_dbg(&o->rpar);
+		dbg_puts(", vol ");
+		dbg_putu(o->maxweight);
+		if (o->mmc)
+			dbg_puts(", mmc");
+		dbg_puts("\n");
+	}
+#endif
 	SLIST_INSERT_HEAD(&opt_list, o, entry);
 }
 
@@ -65,9 +82,21 @@ opt_byname(char *name)
 
 	SLIST_FOREACH(o, &opt_list, entry) {
 		if (strcmp(name, o->name) == 0) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				dbg_puts(o->name);
+				dbg_puts(": option found\n");
+			}
+#endif
 			return o;
 		}
 	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		dbg_puts(name);
+		dbg_puts(": option not found\n");
+	}
+#endif
 	return NULL;
 }
 

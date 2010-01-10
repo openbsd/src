@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.77 2010/01/05 10:18:12 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.78 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,6 +39,9 @@
 #include "midi.h"
 #include "opt.h"
 #include "wav.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 #define MODE_PLAY	1
 #define MODE_REC	2
@@ -46,6 +49,9 @@
 #define PROG_AUCAT	"aucat"
 #define PROG_MIDICAT	"midicat"
 
+#ifdef DEBUG
+int debug_level = 0;
+#endif
 volatile int quit_flag = 0;
 
 /*
@@ -61,6 +67,27 @@ sigint(int s)
 	quit_flag = 1;
 }
 
+#ifdef DEBUG
+/*
+ * Increase debug level on SIGUSR1.
+ */
+void
+sigusr1(int s)
+{
+	if (debug_level < 4)
+		debug_level++;
+}
+
+/*
+ * Decrease debug level on SIGUSR2.
+ */
+void
+sigusr2(int s)
+{
+	if (debug_level > 0)
+		debug_level--;
+}
+#endif
 
 void
 opt_ch(struct aparams *par)
@@ -209,6 +236,14 @@ setsig(void)
 		err(1, "sigaction(term) failed");
 	if (sigaction(SIGHUP, &sa, NULL) < 0)
 		err(1, "sigaction(hup) failed");
+#ifdef DEBUG
+	sa.sa_handler = sigusr1;
+	if (sigaction(SIGUSR1, &sa, NULL) < 0)
+		err(1, "sigaction(usr1) failed");
+	sa.sa_handler = sigusr2;
+	if (sigaction(SIGUSR2, &sa, NULL) < 0)
+		err(1, "sigaction(usr2) failed1n");
+#endif
 }
 
 void
@@ -219,6 +254,12 @@ unsetsig(void)
 	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_DFL;
+#ifdef DEBUG
+	if (sigaction(SIGUSR2, &sa, NULL) < 0)
+		err(1, "unsetsig(usr2): sigaction failed");
+	if (sigaction(SIGUSR1, &sa, NULL) < 0)
+		err(1, "unsetsig(usr1): sigaction failed");
+#endif
 	if (sigaction(SIGHUP, &sa, NULL) < 0)
 		err(1, "unsetsig(hup): sigaction failed\n");
 	if (sigaction(SIGTERM, &sa, NULL) < 0)
@@ -291,6 +332,10 @@ aucat_main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "dnb:c:C:e:r:h:x:v:i:o:f:m:lus:U:t:z:")) != -1) {
 		switch (c) {
 		case 'd':
+#ifdef DEBUG
+			if (d_flag)
+				debug_level++;
+#endif
 			d_flag = 1;
 			break;
 		case 'n':
@@ -535,6 +580,10 @@ aucat_main(int argc, char **argv)
 			if (!l_flag)
 				break;
 			if (!suspend) {
+#ifdef DEBUG
+				if (debug_level >= 2)
+					dbg_puts("suspending\n");
+#endif
 				suspend = 1;
 				dev_stop();
 				dev_clear();
@@ -544,6 +593,10 @@ aucat_main(int argc, char **argv)
 		    (dev_sub && dev_sub->u.sub.idle == 0) ||
 		    ((dev_mix || dev_sub) && dev_midi->u.ctl.tstate == CTL_RUN)) {
 			if (suspend) {
+#ifdef DEBUG
+				if (debug_level >= 2)
+					dbg_puts("resuming\n");
+#endif
 				suspend = 0;
 				dev_start();
 			}
@@ -555,6 +608,10 @@ aucat_main(int argc, char **argv)
 			warn("rmdir(\"%s\")", base);
 	}
 	if (suspend) {
+#ifdef DEBUG
+		if (debug_level >= 2)
+			dbg_puts("resuming to drain\n");
+#endif
 		suspend = 0;
 		dev_start();
 	}
@@ -593,6 +650,10 @@ midicat_main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "di:o:lf:U:")) != -1) {
 		switch (c) {
 		case 'd':
+#ifdef DEBUG
+			if (d_flag)
+				debug_level++;
+#endif
 			d_flag = 1;
 			break;
 		case 'i':

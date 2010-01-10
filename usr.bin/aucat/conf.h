@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.11 2009/11/03 21:31:37 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.12 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,6 +17,18 @@
 #ifndef CONF_H
 #define CONF_H
 
+#ifdef DEBUG
+/*
+ * Debug trace levels:
+ *
+ * 0 - fatal errors: bugs, asserts, internal errors.
+ * 1 - warnings: bugs in clients, failed allocations, non-fatal errors.
+ * 2 - misc information (hardware parameters, incoming clients)
+ * 3 - structural changes (new aproc structures and files stream params changes)
+ * 4 - data blocks and messages
+ */
+extern int debug_level;
+#endif
 
 /*
  * Number of blocks in the device play/record buffers.  Because Sun API

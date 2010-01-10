@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.3 2009/11/05 08:36:48 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.4 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,6 +27,9 @@
 #include "conf.h"
 #include "file.h"
 #include "miofile.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 struct miofile {
 	struct file file;
@@ -94,8 +97,18 @@ miofile_read(struct file *file, unsigned char *data, unsigned count)
 	if (n == 0) {
 		f->file.state &= ~FILE_ROK;
 		if (mio_eof(f->hdl)) {
+#ifdef DEBUG
+			dbg_puts(f->file.name);
+			dbg_puts(": failed to read from device\n");
+#endif
 			file_eof(&f->file);
 		} else {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(&f->file);
+				dbg_puts(": reading blocked\n");
+			}
+#endif
 		}
 		return 0;
 	}
@@ -113,8 +126,18 @@ miofile_write(struct file *file, unsigned char *data, unsigned count)
 	if (n == 0) {
 		f->file.state &= ~FILE_WOK;
 		if (mio_eof(f->hdl)) {
+#ifdef DEBUG
+			dbg_puts(f->file.name);
+			dbg_puts(": failed to write on device\n");
+#endif
 			file_hup(&f->file);
 		} else {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(&f->file);
+				dbg_puts(": writing blocked\n");
+			}
+#endif
 		}
 		return 0;
 	}

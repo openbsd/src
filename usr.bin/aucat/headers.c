@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.9 2009/12/12 15:15:34 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.10 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -164,6 +164,10 @@ wav_readhdr(int fd, struct aparams *par, off_t *datasz, short **map)
 			*datasz = csize;
 			break;
 		} else {
+#ifdef DEBUG
+			if (debug_level >= 1) 
+				warnx("ignoring chuck <%.4s>\n", chunk.id);
+#endif
 		}
 
 		/*

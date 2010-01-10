@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.14 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.15 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,6 +57,9 @@
 #include "aproc.h"
 #include "conf.h"
 #include "file.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 #define MAXFDS 100
 
@@ -90,6 +93,16 @@ timo_add(struct timo *o, unsigned delta)
 	unsigned val;
 	int diff;
 
+#ifdef DEBUG
+	if (o->set) {
+		dbg_puts("timo_set: already set\n");
+		dbg_panic();
+	}
+	if (delta == 0) {
+		dbg_puts("timo_set: zero timeout is evil\n");
+		dbg_panic();
+	}
+#endif
 	val = timo_abstime + delta;
 	for (i = &timo_queue; *i != NULL; i = &(*i)->next) {
 		diff = (*i)->val - val;
@@ -118,6 +131,10 @@ timo_del(struct timo *o)
 			return;
 		}
 	}
+#ifdef DEBUG
+	if (debug_level >= 4)
+		dbg_puts("timo_del: not found\n");
+#endif
 }
 
 /*
@@ -171,9 +188,40 @@ timo_init(void)
 void
 timo_done(void)
 {
+#ifdef DEBUG
+	if (timo_queue != NULL) {
+		dbg_puts("timo_done: timo_queue not empty!\n");
+		dbg_panic();
+	}
+#endif
 	timo_queue = (struct timo *)0xdeadbeef;
 }
 
+#ifdef DEBUG
+void
+file_dbg(struct file *f)
+{
+	dbg_puts(f->ops->name);
+	dbg_puts("(");
+	dbg_puts(f->name);
+	dbg_puts("|");
+	if (f->state & FILE_ROK)
+		dbg_puts("r");
+	if (f->state & FILE_RINUSE)
+		dbg_puts("R");
+	if (f->state & FILE_WOK)
+		dbg_puts("w");
+	if (f->state & FILE_WINUSE)
+		dbg_puts("W");
+	if (f->state & FILE_EOF)
+		dbg_puts("e");
+	if (f->state & FILE_HUP)
+		dbg_puts("h");
+	if (f->state & FILE_ZOMB)
+		dbg_puts("Z");
+	dbg_puts(")");
+}
+#endif
 
 struct file *
 file_new(struct fileops *ops, char *name, unsigned nfds)
@@ -183,6 +231,12 @@ file_new(struct fileops *ops, char *name, unsigned nfds)
 	LIST_FOREACH(f, &file_list, entry)
 		nfds += f->ops->nfds(f);
 	if (nfds > MAXFDS) {
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			dbg_puts(name);
+			dbg_puts(": too many polled files\n");
+		}
+#endif
 		return NULL;
 	}
 	f = malloc(ops->size);
@@ -194,16 +248,34 @@ file_new(struct fileops *ops, char *name, unsigned nfds)
 	f->rproc = NULL;
 	f->wproc = NULL;
 	LIST_INSERT_HEAD(&file_list, f, entry);
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		file_dbg(f);
+		dbg_puts(": created\n");
+	}
+#endif
 	return f;
 }
 
 void
 file_del(struct file *f)
 {
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		file_dbg(f);
+		dbg_puts(": terminating...\n");
+	}
+#endif
 	if (f->state & (FILE_RINUSE | FILE_WINUSE)) {
 		f->state |= FILE_ZOMB;
 	} else {
 		LIST_REMOVE(f, entry);
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			file_dbg(f);
+			dbg_puts(": destroyed\n");
+		}
+#endif
 		f->ops->close(f);
 		free(f);
 	}
@@ -225,6 +297,11 @@ file_poll(void)
 	 * Fill the pfds[] array with files that are blocked on reading
 	 * and/or writing, skipping those that are just waiting.
 	 */
+#ifdef DEBUG
+	dbg_flush();
+	if (debug_level >= 4) 
+		dbg_puts("poll:");
+#endif
 	nfds = 0;
 	LIST_FOREACH(f, &file_list, entry) {
 		events = 0;
@@ -232,6 +309,12 @@ file_poll(void)
 			events |= POLLIN;
 		if (f->wproc && !(f->state & FILE_WOK))
 			events |= POLLOUT;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			dbg_puts(" ");
+			file_dbg(f);
+		}
+#endif
 		n = f->ops->pollfd(f, pfds + nfds, events);
 		if (n == 0) {
 			f->pfd = NULL;
@@ -240,7 +323,21 @@ file_poll(void)
 		f->pfd = pfds + nfds;
 		nfds += n;
 	}
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		dbg_puts("\npfds[] =");
+		for (n = 0; n < nfds; n++) {
+			dbg_puts(" ");
+			dbg_putx(pfds[n].events);
+		}
+		dbg_puts("\n");
+	}
+#endif
 	if (LIST_EMPTY(&file_list)) {
+#ifdef DEBUG
+		if (debug_level >= 3)
+			dbg_puts("nothing to do...\n");
+#endif
 		return 0;
 	}
 	if (nfds > 0) {
@@ -272,12 +369,24 @@ file_poll(void)
 		revents = f->ops->revents(f, f->pfd);
 		if (!(f->state & FILE_ZOMB) && (revents & POLLIN)) {
 			revents &= ~POLLIN;
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(f);
+				dbg_puts(": rok\n");
+			}
+#endif
 			f->state |= FILE_ROK;
 			f->state |= FILE_RINUSE;
 			for (;;) {
 				p = f->rproc;
 				if (!p)
 					break;
+#ifdef DEBUG
+				if (debug_level >= 4) {
+					aproc_dbg(p);
+					dbg_puts(": in\n");
+				}
+#endif
 				if (!p->ops->in(p, NULL))
 					break;
 			}
@@ -285,33 +394,75 @@ file_poll(void)
 		}
 		if (!(f->state & FILE_ZOMB) && (revents & POLLOUT)) {
 			revents &= ~POLLOUT;
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(f);
+				dbg_puts(": wok\n");
+			}
+#endif
 			f->state |= FILE_WOK;
 			f->state |= FILE_WINUSE;
 			for (;;) {
 				p = f->wproc;
 				if (!p)
 					break;
+#ifdef DEBUG
+				if (debug_level >= 4) {
+					aproc_dbg(p);
+					dbg_puts(": out\n");
+				}
+#endif
 				if (!p->ops->out(p, NULL))
 					break;
 			}
 			f->state &= ~FILE_WINUSE;
 		}
 		if (!(f->state & FILE_ZOMB) && (revents & POLLHUP)) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				file_dbg(f);
+				dbg_puts(": disconnected\n");
+			}
+#endif
 			f->state |= (FILE_EOF | FILE_HUP);
 		}
 		if (!(f->state & FILE_ZOMB) && (f->state & FILE_EOF)) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				file_dbg(f);
+				dbg_puts(": eof\n");
+			}
+#endif
 			p = f->rproc;
 			if (p) {
 				f->state |= FILE_RINUSE;
+#ifdef DEBUG
+				if (debug_level >= 3) {
+					aproc_dbg(p);
+					dbg_puts(": eof\n");
+				}
+#endif
 				p->ops->eof(p, NULL);
 				f->state &= ~FILE_RINUSE;
 			}
 			f->state &= ~FILE_EOF;
 		}
 		if (!(f->state & FILE_ZOMB) && (f->state & FILE_HUP)) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				file_dbg(f);
+				dbg_puts(": hup\n");
+			}
+#endif
 			p = f->wproc;
 			if (p) {
 				f->state |= FILE_WINUSE;
+#ifdef DEBUG
+				if (debug_level >= 3) {
+					aproc_dbg(p);
+					dbg_puts(": hup\n");
+				}
+#endif
 				p->ops->hup(p, NULL);
 				f->state &= ~FILE_WINUSE;
 			}
@@ -323,6 +474,10 @@ file_poll(void)
 		f = fnext;
 	}
 	if (LIST_EMPTY(&file_list)) {
+#ifdef DEBUG
+		if (debug_level >= 3)
+			dbg_puts("no files anymore...\n");
+#endif
 		return 0;
 	}
 	return 1;
@@ -340,11 +495,28 @@ filelist_init(void)
 	LIST_INIT(&file_list);
 	timo_init();
 	gettimeofday(&file_tv, NULL);
+#ifdef DEBUG
+	dbg_sync = 0;
+#endif
 }
 
 void
 filelist_done(void)
 {
+#ifdef DEBUG
+	struct file *f;
+
+	if (!LIST_EMPTY(&file_list)) {
+		LIST_FOREACH(f, &file_list, entry) {
+			dbg_puts("\t");
+			file_dbg(f);
+			dbg_puts("\n");
+		}
+		dbg_panic();
+	}
+	dbg_sync = 1;
+	dbg_flush();
+#endif
 	timo_done();
 }
 
@@ -369,7 +541,31 @@ unsigned
 file_read(struct file *f, unsigned char *data, unsigned count)
 {
 	unsigned n;
+#ifdef DEBUG
+	struct timeval tv0, tv1, dtv;
+	unsigned us;
+
+	gettimeofday(&tv0, NULL);
+	if (!(f->state & FILE_ROK)) {
+		file_dbg(f);
+		dbg_puts(": read: bad state\n");
+		dbg_panic();
+	}
+#endif
 	n = f->ops->read(f, data, count);
+#ifdef DEBUG
+	gettimeofday(&tv1, NULL);
+	timersub(&tv1, &tv0, &dtv);
+	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
+	if (debug_level >= 4 || (debug_level >= 1 && us >= 5000)) {
+		dbg_puts(f->name);
+		dbg_puts(": read ");
+		dbg_putu(n);
+		dbg_puts(" bytes in ");
+		dbg_putu(us);
+		dbg_puts("us\n");
+	}
+#endif
 	return n;
 }
 
@@ -377,7 +573,31 @@ unsigned
 file_write(struct file *f, unsigned char *data, unsigned count)
 {
 	unsigned n;
+#ifdef DEBUG
+	struct timeval tv0, tv1, dtv;
+	unsigned us;
+
+	if (!(f->state & FILE_WOK)) {
+		file_dbg(f);
+		dbg_puts(": write: bad state\n");
+		dbg_panic();
+	}
+	gettimeofday(&tv0, NULL);
+#endif
 	n = f->ops->write(f, data, count);
+#ifdef DEBUG
+	gettimeofday(&tv1, NULL);
+	timersub(&tv1, &tv0, &dtv);
+	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
+	if (debug_level >= 4 || (debug_level >= 1 && us >= 5000)) {
+		dbg_puts(f->name);
+		dbg_puts(": wrote ");
+		dbg_putu(n);
+		dbg_puts(" bytes in ");
+		dbg_putu(us);
+		dbg_puts("us\n");
+	}
+#endif
 	return n;
 }
 
@@ -386,10 +606,22 @@ file_eof(struct file *f)
 {
 	struct aproc *p;
 
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		file_dbg(f);
+		dbg_puts(": eof requested\n");
+	}
+#endif
 	if (!(f->state & (FILE_RINUSE | FILE_WINUSE))) {
 		p = f->rproc;
 		if (p) {
 			f->state |= FILE_RINUSE;
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				aproc_dbg(p);
+				dbg_puts(": eof\n");
+			}
+#endif
 			p->ops->eof(p, NULL);
 			f->state &= ~FILE_RINUSE;
 		}
@@ -406,10 +638,22 @@ file_hup(struct file *f)
 {
 	struct aproc *p;
 
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		file_dbg(f);
+		dbg_puts(": hup requested\n");
+	}
+#endif
 	if (!(f->state & (FILE_RINUSE | FILE_WINUSE))) {
 		p = f->wproc;
 		if (p) {
 			f->state |= FILE_WINUSE;
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				aproc_dbg(p);
+				dbg_puts(": hup\n");
+			}
+#endif
 			p->ops->hup(p, NULL);
 			f->state &= ~FILE_WINUSE;
 		}
@@ -426,16 +670,34 @@ file_close(struct file *f)
 {
 	struct aproc *p;
 
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		file_dbg(f);
+		dbg_puts(": closing\n");
+	}
+#endif
 	if (!(f->state & (FILE_RINUSE | FILE_WINUSE))) {
 		p = f->rproc;
 		if (p) {
 			f->state |= FILE_RINUSE;
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				aproc_dbg(p);
+				dbg_puts(": eof\n");
+			}
+#endif
 			p->ops->eof(p, NULL);
 			f->state &= ~FILE_RINUSE;
 		}
 		p = f->wproc;
 		if (p) {
 			f->state |= FILE_WINUSE;
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				aproc_dbg(p);
+				dbg_puts(": hup\n");
+			}
+#endif
 			p->ops->hup(p, NULL);
 			f->state &= ~FILE_WINUSE;
 		}

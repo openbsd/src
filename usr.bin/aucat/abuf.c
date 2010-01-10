@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.16 2009/10/09 16:49:48 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.17 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,7 +41,40 @@
 #include "aparams.h"
 #include "aproc.h"
 #include "conf.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
+#ifdef DEBUG
+void
+abuf_dbg(struct abuf *buf)
+{
+	if (buf->wproc) {
+		aproc_dbg(buf->wproc);
+	} else {
+		dbg_puts("none");
+	}
+	dbg_puts(buf->inuse ? "=>" : "->");
+	if (buf->rproc) {
+		aproc_dbg(buf->rproc);
+	} else {
+		dbg_puts("none");
+	}
+}
+
+void
+abuf_dump(struct abuf *buf)
+{
+	abuf_dbg(buf);
+	dbg_puts(": used = ");
+	dbg_putu(buf->used);
+	dbg_puts("/");
+	dbg_putu(buf->len);
+	dbg_puts(" start = ");
+	dbg_putu(buf->start);
+	dbg_puts("\n");
+}
+#endif
 
 struct abuf *
 abuf_new(unsigned nfr, struct aparams *par)
@@ -53,7 +86,16 @@ abuf_new(unsigned nfr, struct aparams *par)
 	len = nfr * bpf;
 	buf = malloc(sizeof(struct abuf) + len);
 	if (buf == NULL) {
+#ifdef DEBUG
+		dbg_puts("couldn't allocate abuf of ");
+		dbg_putu(nfr);
+		dbg_puts("fr * ");
+		dbg_putu(bpf);
+		dbg_puts("bpf\n");
+		dbg_panic();
+#else
 		err(1, "malloc");
+#endif
 	}
 	buf->bpf = bpf;
 	buf->cmin = par->cmin;
@@ -80,6 +122,28 @@ abuf_del(struct abuf *buf)
 {
 	if (buf->duplex)
 		buf->duplex->duplex = NULL;
+#ifdef DEBUG
+	if (buf->rproc || buf->wproc) {
+		abuf_dbg(buf);
+		dbg_puts(": can't delete referenced buffer\n");
+		dbg_panic();
+	}
+	if (ABUF_ROK(buf)) {
+		/*
+		 * XXX : we should call abort(), here.
+		 * However, poll() doesn't seem to return POLLHUP,
+		 * so the reader is never destroyed; instead it appears	
+		 * as blocked. Fix file_poll(), if fixable, and add
+		 * a call to abord() here.
+		 */
+		if (debug_level >= 3) {
+			abuf_dbg(buf);
+			dbg_puts(": deleting non-empty buffer, used = ");
+			dbg_putu(buf->used);
+			dbg_puts("\n");
+		}
+	}
+#endif
 	free(buf);
 }
 
@@ -89,6 +153,12 @@ abuf_del(struct abuf *buf)
 void
 abuf_clear(struct abuf *buf)
 {
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		abuf_dbg(buf);
+		dbg_puts(": cleared\n");
+	}
+#endif
 	buf->used = 0;
 	buf->start = 0;
 	buf->abspos = 0;
@@ -108,6 +178,15 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 	used = buf->used - ofs;
 	if (start >= buf->len)
 		start -= buf->len;
+#ifdef DEBUG
+	if (start >= buf->len || used > buf->used) {
+		abuf_dump(buf);
+		dbg_puts(": rgetblk: bad ofs = ");
+		dbg_putu(ofs);
+		dbg_puts("\n");
+		dbg_panic();
+	}
+#endif
 	count = buf->len - start;
 	if (count > used)
 		count = used;
@@ -121,6 +200,15 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 void
 abuf_rdiscard(struct abuf *buf, unsigned count)
 {
+#ifdef DEBUG
+	if (count > buf->used) {
+		abuf_dump(buf);
+		dbg_puts(": rdiscard: bad count = ");
+		dbg_putu(count);
+		dbg_puts("\n");
+		dbg_panic();
+	}
+#endif
 	buf->used -= count;
 	buf->start += count;
 	if (buf->start >= buf->len)
@@ -134,6 +222,15 @@ abuf_rdiscard(struct abuf *buf, unsigned count)
 void
 abuf_wcommit(struct abuf *buf, unsigned count)
 {
+#ifdef DEBUG
+	if (count > (buf->len - buf->used)) {
+		abuf_dump(buf);
+		dbg_puts(": rdiscard: bad count = ");
+		dbg_putu(count);
+		dbg_puts("\n");
+		dbg_panic();
+	}
+#endif
 	buf->used += count;
 }
 
@@ -149,6 +246,15 @@ abuf_wgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 	end = buf->start + buf->used + ofs;
 	if (end >= buf->len)
 		end -= buf->len;
+#ifdef DEBUG
+	if (end >= buf->len) {
+		abuf_dump(buf);
+		dbg_puts(": rgetblk: bad ofs = ");
+		dbg_putu(ofs);
+		dbg_puts("\n");
+		dbg_panic();
+	}
+#endif
 	avail = buf->len - (buf->used + ofs);
 	count = buf->len - end;
 	if (count > avail)
@@ -172,14 +278,36 @@ abuf_flush_do(struct abuf *buf)
 		if (count > buf->used)
 			count = buf->used;
 		if (count == 0) {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				abuf_dbg(buf);
+				dbg_puts(": flush: no data to drop\n");
+			}
+#endif
 			return 0;
 		}
 		abuf_rdiscard(buf, count);
 		buf->drop -= count;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			abuf_dbg(buf);
+			dbg_puts(": flush: dropped ");
+			dbg_putu(count);
+			dbg_puts(", to drop = ");
+			dbg_putu(buf->drop);
+			dbg_puts("\n");
+		}
+#endif
 	} else {
 		p = buf->rproc;
 		if (!p)
 			return 0;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			aproc_dbg(p);
+			dbg_puts(": in\n");
+		}
+#endif
 		if (!p->ops->in(p, buf))
 			return 0;
 	}
@@ -202,16 +330,38 @@ abuf_fill_do(struct abuf *buf)
 		if (count >= buf->silence)
 			count = buf->silence;
 		if (count == 0) {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				abuf_dbg(buf);
+				dbg_puts(": fill: no space for silence\n");
+			}
+#endif
 			return 0;
 		}
 		memset(data, 0, count);
 		abuf_wcommit(buf, count);
 		buf->silence -= count;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			abuf_dbg(buf);
+			dbg_puts(": fill: inerted ");
+			dbg_putu(count);
+			dbg_puts(", remaining silence = ");
+			dbg_putu(buf->silence);
+			dbg_puts("\n");
+		}
+#endif
 		p = buf->wproc;
 	} else {
 		p = buf->wproc;
 		if (!p)
 			return 0;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			aproc_dbg(p);
+			dbg_puts(": out\n");
+		}
+#endif
 		if (!p->ops->out(p, buf)) {
 			return 0;
 		}
@@ -233,6 +383,12 @@ abuf_eof_do(struct abuf *buf)
 		buf->rproc = NULL;
 		LIST_REMOVE(buf, ient);
 		buf->inuse++;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			aproc_dbg(p);
+			dbg_puts(": eof\n");
+		}
+#endif
 		p->ops->eof(p, buf);
 		buf->inuse--;
 	}
@@ -249,6 +405,14 @@ abuf_hup_do(struct abuf *buf)
 	struct aproc *p;
 
 	if (ABUF_ROK(buf)) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			abuf_dbg(buf);
+			dbg_puts(": hup: lost ");
+			dbg_putu(buf->used);
+			dbg_puts(" bytes\n");
+		}
+#endif
 		buf->used = 0;
 	}
 	p = buf->wproc;
@@ -256,6 +420,12 @@ abuf_hup_do(struct abuf *buf)
 		buf->wproc = NULL;
 		LIST_REMOVE(buf, oent);
 		buf->inuse++;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			aproc_dbg(p);
+			dbg_puts(": hup\n");
+		}
+#endif
 		p->ops->hup(p, buf);
 		buf->inuse--;
 	}
@@ -270,6 +440,12 @@ int
 abuf_flush(struct abuf *buf)
 {
 	if (buf->inuse) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			abuf_dbg(buf);
+			dbg_puts(": flush blocked (inuse)\n");
+		}
+#endif
 	} else {
 		buf->inuse++;
 		for (;;) {
@@ -298,6 +474,12 @@ int
 abuf_fill(struct abuf *buf)
 {
 	if (buf->inuse) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			abuf_dbg(buf);
+			dbg_puts(": fill blocked (inuse)\n");
+		}
+#endif
 	} else {
 		buf->inuse++;
 		for (;;) {
@@ -327,6 +509,12 @@ abuf_run(struct abuf *buf)
 	int canfill = 1, canflush = 1;
 
 	if (buf->inuse) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			abuf_dbg(buf);
+			dbg_puts(": run blocked (inuse)\n");
+		}
+#endif
 		return;
 	}
 	buf->inuse++;
@@ -363,6 +551,17 @@ abuf_run(struct abuf *buf)
 void
 abuf_eof(struct abuf *buf)
 {
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		abuf_dbg(buf);
+		dbg_puts(": eof requested\n");
+	}
+	if (buf->wproc == NULL) {
+		abuf_dbg(buf);
+		dbg_puts(": eof, no writer\n");
+		dbg_panic();
+	}
+#endif
 	LIST_REMOVE(buf, oent);
 	buf->wproc = NULL;
 	if (buf->rproc != NULL) {
@@ -373,10 +572,22 @@ abuf_eof(struct abuf *buf)
 			 * Could not flush everything, the reader will
 			 * have a chance to delete the abuf later.
 			 */
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				abuf_dbg(buf);
+				dbg_puts(": eof, blocked (drain)\n");
+			}
+#endif
 			return;
 		}
 	}
 	if (buf->inuse) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			abuf_dbg(buf);
+			dbg_puts(": eof, blocked (inuse)\n");
+		}
+#endif
 		return;
 	}
 	abuf_eof_do(buf);
@@ -389,10 +600,27 @@ abuf_eof(struct abuf *buf)
 void
 abuf_hup(struct abuf *buf)
 {
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		abuf_dbg(buf);
+		dbg_puts(": hup requested\n");
+	}
+	if (buf->rproc == NULL) {
+		abuf_dbg(buf);
+		dbg_puts(": hup, no reader\n");
+		dbg_panic();
+	}
+#endif
 	buf->rproc = NULL;
 	LIST_REMOVE(buf, ient);
 	if (buf->wproc != NULL) {
 		if (buf->inuse) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				abuf_dbg(buf);
+				dbg_puts(": eof, blocked (inuse)\n");
+			}
+#endif
 			return;
 		}
 	}
@@ -409,6 +637,14 @@ abuf_ipos(struct abuf *buf, int delta)
 
 	if (p && p->ops->ipos) {
 		buf->inuse++;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			aproc_dbg(p);
+			dbg_puts(": ipos delta = ");
+			dbg_puti(delta);
+			dbg_puts("\n");
+		}
+#endif
 		p->ops->ipos(p, buf, delta);
 		buf->inuse--;
 	}
@@ -426,6 +662,14 @@ abuf_opos(struct abuf *buf, int delta)
 
 	if (p && p->ops->opos) {
 		buf->inuse++;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			aproc_dbg(p);
+			dbg_puts(": opos delta = ");
+			dbg_puti(delta);
+			dbg_puts("\n");
+		}
+#endif
 		p->ops->opos(p, buf, delta);
 		buf->inuse--;
 	}

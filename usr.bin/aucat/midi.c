@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.13 2009/11/03 21:31:37 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.14 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,6 +32,9 @@
 #include "conf.h"
 #include "dev.h"
 #include "midi.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 /*
  * input data rate is XFER / TIMO (in bytes per microsecond),
@@ -80,8 +83,24 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 
 	itodo = ibuf->r.midi.used;
 	idata = ibuf->r.midi.msg;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": flushing ");
+		dbg_putu(itodo);
+		dbg_puts(" byte message\n");
+	}
+#endif
 	while (itodo > 0) {
 		if (!ABUF_WOK(obuf)) {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				aproc_dbg(p);
+				dbg_puts(": overrun, discarding ");
+				dbg_putu(obuf->used);
+				dbg_puts(" bytes\n");
+			}
+#endif
 			abuf_rdiscard(obuf, obuf->used);
 			if (p->u.thru.owner == ibuf)
 				p->u.thru.owner = NULL;
@@ -108,7 +127,23 @@ thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
 	unsigned ocount;
 	unsigned char *odata;
 
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": ");
+		dbg_putu(c);
+		dbg_puts(": flushing realtime message\n");
+	}
+#endif
 	if (!ABUF_WOK(obuf)) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			aproc_dbg(p);
+			dbg_puts(": overrun, discarding ");
+			dbg_putu(obuf->used);
+			dbg_puts(" bytes\n");
+		}
+#endif
 		abuf_rdiscard(obuf, obuf->used);
 		if (p->u.thru.owner == ibuf)
 			p->u.thru.owner = NULL;
@@ -199,6 +234,12 @@ thru_in(struct aproc *p, struct abuf *ibuf)
 	if (!ABUF_ROK(ibuf))
 		return 0;
 	if (ibuf->tickets == 0) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			abuf_dbg(ibuf);
+			dbg_puts(": out of tickets, blocking\n");
+		}
+#endif
 		return 0;
 	}
 	todo = ibuf->used;
@@ -304,6 +345,42 @@ thru_new(char *name)
 	return p;
 }
 
+#ifdef DEBUG
+void
+ctl_slotdbg(struct aproc *p, int slot)
+{
+	struct ctl_slot *s;
+
+	aproc_dbg(p);
+	if (slot < 0) {
+		dbg_puts("/none");
+	} else {
+		s = p->u.ctl.slot + slot;
+		dbg_puts(s->name);
+		dbg_putu(s->unit);
+		dbg_puts("=");
+		dbg_putu(s->vol);
+		dbg_puts("/");
+		switch (s->tstate) {
+		case CTL_OFF:
+			dbg_puts("off");
+			break;
+		case CTL_RUN:
+			dbg_puts("run");
+			break;
+		case CTL_START:
+			dbg_puts("sta");
+			break;
+		case CTL_STOP:
+			dbg_puts("stp");
+			break;
+		default:
+			dbg_puts("unk");
+			break;
+		}
+	}
+}
+#endif
 
 /*
  * broadcast a message to all output buffers on the behalf of ibuf.
@@ -324,11 +401,27 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 		idata = msg;
 		while (itodo > 0) {
 			if (!ABUF_WOK(i)) {
+#ifdef DEBUG
+				if (debug_level >= 4) {
+					abuf_dbg(i);
+					dbg_puts(": overrun, discarding ");
+					dbg_putu(i->used);
+					dbg_puts(" bytes\n");
+				}
+#endif
 				abuf_rdiscard(i, i->used);
 			}
 			odata = abuf_wgetblk(i, &ocount, 0);
 			if (ocount > itodo)
 				ocount = itodo;
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				abuf_dbg(i);
+				dbg_puts(": stored ");
+				dbg_putu(ocount);
+				dbg_puts(" bytes\n");
+			}
+#endif
 			memcpy(odata, idata, ocount);
 			abuf_wcommit(i, ocount);
 			itodo -= ocount;
@@ -474,6 +567,15 @@ ctl_getidx(struct aproc *p, char *who)
 		if ((umap & (1 << unit)) == 0)
 			break;
 	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": new control name is ");
+		dbg_puts(name);
+		dbg_putu(unit);
+		dbg_puts("\n");
+	}
+#endif
 	/*
 	 * find a free controller slot with the same name/unit
 	 */
@@ -481,6 +583,14 @@ ctl_getidx(struct aproc *p, char *who)
 		if (slot->ops == NULL &&
 		    strcmp(slot->name, name) == 0 &&
 		    slot->unit == unit) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				aproc_dbg(p);
+				dbg_puts(": found slot ");
+				dbg_putu(i);
+				dbg_puts("\n");
+			}
+#endif
 			return i;
 		}
 	}
@@ -507,6 +617,14 @@ ctl_getidx(struct aproc *p, char *who)
 	slot->serial = p->u.ctl.serial++;
 	slot->unit = unit;
 	slot->vol = MIDI_MAXCTL;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": overwritten slot ");
+		dbg_putu(bestidx);
+		dbg_puts("\n");
+	}
+#endif
 	return bestidx;
 }
 
@@ -521,12 +639,20 @@ ctl_trystart(struct aproc *p, int caller)
 	struct ctl_slot *s;
 
 	if (p->u.ctl.tstate != CTL_START) {
+#ifdef DEBUG
+		aproc_dbg(p);
+		dbg_puts(": not in starting state\n");
+#endif
 		return 0;
 	}
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
 		if (!s->ops || i == caller)
 			continue;
 		if (s->tstate != CTL_OFF && s->tstate != CTL_START) {
+#ifdef DEBUG
+			ctl_slotdbg(p, i);
+			dbg_puts(": not ready to start, start delayed\n");
+#endif
 			return 0;
 		}
 	}
@@ -534,6 +660,10 @@ ctl_trystart(struct aproc *p, int caller)
 		if (!s->ops || i == caller)
 			continue;
 		if (s->tstate == CTL_START) {
+#ifdef DEBUG
+			ctl_slotdbg(p, i);
+			dbg_puts(": started\n");
+#endif
 			s->tstate = CTL_RUN;
 			s->ops->start(s->arg);
 		}
@@ -552,6 +682,14 @@ ctl_trystart(struct aproc *p, int caller)
 		p->u.ctl.fps_id = MTC_FPS_24;
 		p->u.ctl.fps = 24;
 	} 
+#ifdef DEBUG
+	ctl_slotdbg(p, caller);
+	dbg_puts(": started server at ");
+	dbg_puti(p->u.ctl.delta);
+	dbg_puts(", ");
+	dbg_puti(p->u.ctl.fps);
+	dbg_puts(" mtc fps\n");
+#endif
 	ctl_full(p);
 	return 1;
 }
@@ -644,6 +782,14 @@ ctl_slotvol(struct aproc *p, int slot, unsigned vol)
 
 	if (p == NULL)
 		return;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		ctl_slotdbg(p, slot);
+		dbg_puts(": changing volume to ");
+		dbg_putu(vol);
+		dbg_puts("\n");
+	}
+#endif
 	p->u.ctl.slot[slot].vol = vol;
 	msg[0] = MIDI_CTL | slot;
 	msg[1] = MIDI_CTLVOL;
@@ -705,6 +851,19 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 	unsigned chan;
 	struct ctl_slot *slot;
 	unsigned fps;
+#ifdef DEBUG
+	unsigned i;
+
+	if (debug_level >= 3) {
+		abuf_dbg(ibuf);
+		dbg_puts(": got event:");
+		for (i = 0; i < ibuf->r.midi.idx; i++) {
+			dbg_puts(" ");
+			dbg_putx(ibuf->r.midi.msg[i]);
+		}
+		dbg_puts("\n");
+	}
+#endif
 	if ((ibuf->r.midi.msg[0] & MIDI_CMDMASK) == MIDI_CTL &&
 	    ibuf->r.midi.msg[1] == MIDI_CTLVOL) {
 		chan = ibuf->r.midi.msg[0] & MIDI_CHANMASK;
@@ -724,14 +883,41 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 	    ibuf->r.midi.msg[5] == 0xf7) {	/* subtype is mmc */
 		switch (ibuf->r.midi.msg[4]) {
 		case 0x01:	/* mmc stop */
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				abuf_dbg(ibuf);
+				dbg_puts(": mmc stop\n");
+			}
+#endif
 			if (p->u.ctl.tstate == CTL_RUN ||
 		            p->u.ctl.tstate == CTL_START) 
 				p->u.ctl.tstate = CTL_STOP;
+#ifdef DEBUG
+			else {
+				if (debug_level >= 1) {
+					aproc_dbg(p);
+					dbg_puts(": ignored mmc stop\n");
+				}
+			}
+#endif
 			break;
 		case 0x02:	/* mmc start */
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				abuf_dbg(ibuf);
+				dbg_puts(": mmc start\n");
+			}
+#endif
 			if (p->u.ctl.tstate == CTL_STOP) {
 				p->u.ctl.tstate = CTL_START;
 				(void)ctl_trystart(p, -1);
+#ifdef DEBUG
+			} else {
+				if (debug_level >= 1) {
+					abuf_dbg(ibuf);
+					dbg_puts(": ignoring mmc start\n");
+				}
+#endif
 			}
 			break;
 		}
@@ -764,6 +950,14 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		    ibuf->r.midi.msg[9] * MTC_SEC +
 		    ibuf->r.midi.msg[10] * (MTC_SEC / fps) +
 		    ibuf->r.midi.msg[11] * (MTC_SEC / 100 / fps);
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			aproc_dbg(p);
+			dbg_puts(": relocated to ");
+			dbg_putu(p->u.ctl.origin);
+			dbg_puts("\n");
+		}
+#endif
 	}
 }
 
@@ -862,6 +1056,20 @@ ctl_newin(struct aproc *p, struct abuf *ibuf)
 void
 ctl_done(struct aproc *p)
 {
+#ifdef DEBUG
+	unsigned i;
+	struct ctl_slot *s;
+
+	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
+		/*
+		 * XXX: shouldn't we abord() here ?
+		 */
+		if (s->ops != NULL) {
+			ctl_slotdbg(p, i);
+			dbg_puts(": still in use\n");
+		}
+	}
+#endif
 }
 
 struct aproc_ops ctl_ops = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.38 2010/01/05 10:18:12 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.39 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,6 +27,9 @@
 #include "miofile.h"
 #include "safile.h"
 #include "midi.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 unsigned dev_bufsz, dev_round, dev_rate;
 struct aparams dev_ipar, dev_opar;
@@ -161,9 +164,23 @@ dev_init(char *devpath,
 	if (f == NULL)
 		return 0;
 	if (dipar) {
+#ifdef DEBUG
+		if (debug_level >= 2) {
+			dbg_puts("hw recording ");
+			aparams_dbg(dipar);
+			dbg_puts("\n");
+		}
+#endif
 		dev_rate = dipar->rate;
 	}
 	if (dopar) {
+#ifdef DEBUG
+		if (debug_level >= 2) {
+			dbg_puts("hw playing ");
+			aparams_dbg(dopar);
+			dbg_puts("\n");
+		}
+#endif
 		dev_rate = dopar->rate;
 	}
 	ibufsz = obufsz = dev_bufsz;
@@ -255,6 +272,15 @@ dev_init(char *devpath,
 		dev_mix = NULL;
 	}
 	dev_bufsz = (dopar) ? obufsz : ibufsz;
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		dbg_puts("device block size is ");
+		dbg_putu(dev_round);
+		dbg_puts(" frames, using ");
+		dbg_putu(dev_bufsz / dev_round);
+		dbg_puts(" blocks\n");
+	}
+#endif
 	dev_start();
 	return 1;
 }
@@ -268,6 +294,10 @@ dev_done(void)
 {
 	struct file *f;
 
+#ifdef DEBUG
+	if (debug_level >= 2) 
+		dbg_puts("closing audio device\n");
+#endif
 	if (dev_mix) {
 		/*
 		 * Put the mixer in ``autoquit'' state and generate
@@ -404,6 +434,12 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 		ibuf = *sibuf;
 		for (;;) {
 			if (!ibuf || !ibuf->rproc) {
+#ifdef DEBUG
+				if (debug_level >= 3) {
+					abuf_dbg(*sibuf);
+					dbg_puts(": not connected to device\n");
+				}
+#endif
 				return 0;
 			}
 			if (ibuf->rproc == dev_mix)
@@ -416,6 +452,12 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 		obuf = *sobuf;
 		for (;;) {
 			if (!obuf || !obuf->wproc) {
+#ifdef DEBUG
+				if (debug_level >= 3) {
+					abuf_dbg(*sobuf);
+					dbg_puts(": not connected to device\n");
+				}
+#endif
 				return 0;
 			}
 			if (obuf->wproc == dev_sub)
@@ -457,6 +499,23 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 	    rbuf->bpf * (pbuf->abspos + pbuf->used) -
 	    pbuf->bpf *  rbuf->abspos;
 	delta /= pbuf->bpf * rbuf->bpf;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		dbg_puts("syncing device, delta = ");
+		dbg_putu(delta);
+		dbg_puts(": ");
+		abuf_dbg(pbuf);
+		dbg_puts(" abspos = ");
+		dbg_putu(pbuf->abspos);
+		dbg_puts(" used = ");
+		dbg_putu(pbuf->used);
+		dbg_puts(" <---> ");
+		abuf_dbg(rbuf);
+		dbg_puts(" abspos = ");
+		dbg_putu(rbuf->abspos);
+		dbg_puts("\n");
+	}
+#endif
 	if (delta > 0) {
 		/*
 		 * The play chain is ahead (most cases) drop some of
@@ -510,6 +569,15 @@ dev_getpos(void)
 			rlat -= delta;
 		else if (delta < 0)
 			plat += delta;
+#ifdef DEBUG
+		if (rlat != plat) {
+			dbg_puts("dev_getpos: play/rec out of sync: plat = ");
+			dbg_puti(plat);
+			dbg_puts(", rlat = ");
+			dbg_puti(rlat);
+			dbg_puts("\n");
+		}
+#endif
 	}
 	return dev_mix ? plat : rlat;
 }
@@ -621,6 +689,14 @@ dev_attach(char *name,
 void
 dev_setvol(struct abuf *ibuf, int vol)
 {
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		abuf_dbg(ibuf);
+		dbg_puts(": setting volume to ");
+		dbg_putu(vol);
+		dbg_puts("\n");
+	}
+#endif
 	if (!dev_getep(&ibuf, NULL)) {
 		return;
 	}
@@ -637,6 +713,12 @@ dev_clear(void)
 	struct abuf *buf;
 
 	if (dev_mix) {
+#ifdef DEBUG
+		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
+			dbg_puts("play end not idle, can't clear device\n");
+			dbg_panic();	
+		}
+#endif
 		buf = LIST_FIRST(&dev_mix->obuflist);
 		while (buf) {
 			abuf_clear(buf);
@@ -645,6 +727,12 @@ dev_clear(void)
 		mix_clear(dev_mix);
 	}
 	if (dev_sub) {
+#ifdef DEBUG
+		if (!LIST_EMPTY(&dev_sub->obuflist)) {
+			dbg_puts("record end not idle, can't clear device\n");
+			dbg_panic();	
+		}
+#endif
 		buf = LIST_FIRST(&dev_sub->ibuflist);
 		while (buf) {
 			abuf_clear(buf);

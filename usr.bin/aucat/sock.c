@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.36 2010/01/05 10:18:12 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.37 2010/01/10 21:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,6 +32,9 @@
 #include "midi.h"
 #include "opt.h"
 #include "sock.h"
+#ifdef DEBUG
+#include "dbg.h"
+#endif
 
 int sock_attach(struct sock *, int);
 int sock_read(struct sock *);
@@ -52,6 +55,27 @@ struct fileops sock_ops = {
 	pipe_revents
 };
 
+#ifdef DEBUG
+void
+sock_dbg(struct sock *f)
+{
+	static char *pstates[] = { "hel", "ini", "sta", "run", "mid" };
+	static char *rstates[] = { "rdat", "rmsg", "rret" };
+	static char *wstates[] = { "widl", "wmsg", "wdat" };
+
+	if (f->slot >= 0 && dev_midi) {
+		dbg_puts(dev_midi->u.ctl.slot[f->slot].name);
+		dbg_putu(dev_midi->u.ctl.slot[f->slot].unit);
+	} else
+		dbg_puts(f->pipe.file.name);
+	dbg_puts("/");
+	dbg_puts(pstates[f->pstate]);
+	dbg_puts("|");
+	dbg_puts(rstates[f->rstate]);
+	dbg_puts("|");
+	dbg_puts(wstates[f->wstate]);
+}
+#endif
 
 void sock_setvol(void *, unsigned);
 void sock_startreq(void *);
@@ -138,6 +162,14 @@ rsock_opos(struct aproc *p, struct abuf *obuf, int delta)
 		return;
 
 	f->delta += delta;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": moved to delta = ");
+		dbg_puti(f->delta);
+		dbg_puts("\n");
+	}
+#endif
 	f->tickpending++;
 	for (;;) {
 		if (!sock_write(f))
@@ -229,6 +261,14 @@ wsock_ipos(struct aproc *p, struct abuf *obuf, int delta)
 		return;
 
 	f->delta += delta;
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": moved to delta = ");
+		dbg_puti(f->delta);
+		dbg_puts("\n");
+	}
+#endif
 	f->tickpending++;
 	for (;;) {
 		if (!sock_write(f))
@@ -302,6 +342,12 @@ sock_freebuf(struct sock *f)
 	struct abuf *rbuf, *wbuf;
 
 	f->pstate = SOCK_INIT;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		sock_dbg(f);
+		dbg_puts(": freeing buffers\n");
+	}
+#endif
 	wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
 	if (rbuf || wbuf)
@@ -331,6 +377,14 @@ sock_allocbuf(struct sock *f)
 	}
 	f->delta = 0;
 	f->tickpending = 0;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		sock_dbg(f);
+		dbg_puts(": allocating ");
+		dbg_putu(f->bufsz);
+		dbg_puts(" fr buffers\n");
+	}
+#endif
 	f->pstate = SOCK_START;
 	if (!(f->mode & AMSG_PLAY) && ctl_slotstart(dev_midi, f->slot))
 		(void)sock_attach(f, 0);
@@ -348,6 +402,12 @@ sock_setvol(void *arg, unsigned vol)
 	f->vol = vol;
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
 	if (!rbuf) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": no read buffer to set volume yet\n");
+		}
+#endif
 		return;
 	}
 	dev_setvol(rbuf, MIDI_TO_ADATA(vol));
@@ -361,6 +421,13 @@ sock_startreq(void *arg)
 {
 	struct sock *f = (struct sock *)arg;
 
+#ifdef DEBUG
+	if (f->pstate != SOCK_START) {
+		sock_dbg(f);
+		dbg_puts(": not in START state\n");
+		dbg_panic();
+	}
+#endif
 	(void)sock_attach(f, 0);
 }
 
@@ -382,6 +449,12 @@ sock_attach(struct sock *f, int force)
 	if (!force && rbuf && ABUF_WOK(rbuf))
 		return 0;
 
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		sock_dbg(f);
+		dbg_puts(": attaching to device\n");
+	}
+#endif
 	f->pstate = SOCK_RUN;
 
 	/*
@@ -436,6 +509,14 @@ sock_rmsg(struct sock *f)
 
 	while (f->rtodo > 0) {
 		if (!(f->pipe.file.state & FILE_ROK)) {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				sock_dbg(f);
+				dbg_puts(": reading message blocked, ");
+				dbg_putu(f->rtodo);
+				dbg_puts(" bytes remaining\n");
+			}
+#endif
 			return 0;
 		}
 		data = (unsigned char *)&f->rmsg;
@@ -445,6 +526,12 @@ sock_rmsg(struct sock *f)
 			return 0;
 		f->rtodo -= count;
 	}
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		sock_dbg(f);
+		dbg_puts(": read full message\n");
+	}
+#endif
 	return 1;
 }
 
@@ -461,6 +548,14 @@ sock_wmsg(struct sock *f, struct amsg *m, unsigned *ptodo)
 
 	while (*ptodo > 0) {
 		if (!(f->pipe.file.state & FILE_WOK)) {
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				sock_dbg(f);
+				dbg_puts(": writing message blocked, ");
+				dbg_putu(*ptodo);
+				dbg_puts(" bytes remaining\n");
+			}
+#endif
 			return 0;
 		}
 		data = (unsigned char *)m;
@@ -470,6 +565,12 @@ sock_wmsg(struct sock *f, struct amsg *m, unsigned *ptodo)
 			return 0;
 		*ptodo -= count;
 	}
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		sock_dbg(f);
+		dbg_puts(": wrote full message\n");
+	}
+#endif
 	return 1;
 }
 
@@ -485,6 +586,13 @@ sock_rdata(struct sock *f)
 	unsigned char *data;
 	unsigned count, n;
 
+#ifdef DEBUG
+	if (f->pstate != SOCK_MIDI && f->rtodo == 0) {
+		sock_dbg(f);
+		dbg_puts(": data block already read\n");
+		dbg_panic();
+	}
+#endif
 	p = f->pipe.file.rproc;
 	obuf = LIST_FIRST(&p->obuflist);
 	if (obuf == NULL)
@@ -517,6 +625,13 @@ sock_wdata(struct sock *f)
 #define ZERO_MAX 0x1000
 	static unsigned char zero[ZERO_MAX];
 
+#ifdef DEBUG
+	if (f->pstate != SOCK_MIDI && f->wtodo == 0) {
+		sock_dbg(f);
+		dbg_puts(": attempted to write zero-sized data block\n");
+		dbg_panic();
+	}
+#endif
 	if (!(f->pipe.file.state & FILE_WOK))
 		return 0;
 	p = f->pipe.file.wproc;
@@ -561,16 +676,42 @@ sock_setpar(struct sock *f)
 
 	if (AMSG_ISSET(p->bits)) {
 		if (p->bits < BITS_MIN || p->bits > BITS_MAX) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": ");
+				dbg_putu(p->bits);
+				dbg_puts(": bits out of bounds\n");
+			}
+#endif
 			return 0;
 		}
 		if (AMSG_ISSET(p->bps)) {
 			if (p->bps < ((p->bits + 7) / 8) || p->bps > 4) {
+#ifdef DEBUG
+				if (debug_level >= 1) {
+					sock_dbg(f);
+					dbg_puts(": ");
+					dbg_putu(p->bps);
+					dbg_puts(": wrong bytes per sample\n");
+				}
+#endif
 				return 0;
 			}
 		} else
 			p->bps = APARAMS_BPS(p->bits);
 		f->rpar.bits = f->wpar.bits = p->bits;
 		f->rpar.bps = f->wpar.bps = p->bps;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": using ");
+			dbg_putu(p->bits);
+			dbg_puts("bits, ");
+			dbg_putu(p->bps);
+			dbg_puts(" bytes per sample\n");
+		}
+#endif
 	}
 	if (AMSG_ISSET(p->sig))
 		f->rpar.sig = f->wpar.sig = p->sig ? 1 : 0;
@@ -587,6 +728,16 @@ sock_setpar(struct sock *f)
 		f->wpar.cmax = f->opt->wpar.cmin + p->rchan - 1;
 		if (f->wpar.cmax > f->opt->wpar.cmax)
 			f->wpar.cmax = f->opt->wpar.cmax;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": using recording channels ");
+			dbg_putu(f->wpar.cmin);
+			dbg_puts("..");
+			dbg_putu(f->wpar.cmax);
+			dbg_puts("\n");
+		}
+#endif
 	}
 	if (AMSG_ISSET(p->pchan) && (f->mode & AMSG_PLAY)) {
 		if (p->pchan < 1)
@@ -597,6 +748,16 @@ sock_setpar(struct sock *f)
 		f->rpar.cmax = f->opt->rpar.cmin + p->pchan - 1;
 		if (f->rpar.cmax > f->opt->rpar.cmax)
 			f->rpar.cmax = f->opt->rpar.cmax;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": using playback channels ");
+			dbg_putu(f->rpar.cmin);
+			dbg_puts("..");
+			dbg_putu(f->rpar.cmax);
+			dbg_puts("\n");
+		}
+#endif
 	}
 	if (AMSG_ISSET(p->rate)) {
 		if (p->rate < RATE_MIN)
@@ -607,23 +768,65 @@ sock_setpar(struct sock *f)
 		f->rpar.rate = f->wpar.rate = p->rate;
 		if (!AMSG_ISSET(p->appbufsz)) {
 			p->appbufsz = dev_bufsz / dev_round * f->round;
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				sock_dbg(f);
+				dbg_puts(": using ");
+				dbg_putu(p->appbufsz);
+				dbg_puts(" fr app buffer size\n");
+			}
+#endif
 		}
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": using ");
+			dbg_putu(p->rate);
+			dbg_puts("Hz sample rate, ");
+			dbg_putu(f->round);
+			dbg_puts(" fr block size\n");
+		}
+#endif
 	}
 	if (AMSG_ISSET(p->xrun)) {
 		if (p->xrun != AMSG_IGNORE &&
 		    p->xrun != AMSG_SYNC &&
 		    p->xrun != AMSG_ERROR) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": ");
+				dbg_putx(p->xrun);
+				dbg_puts(": bad xrun policy\n");
+			}
+#endif
 			return 0;
 		}
 		f->xrun = p->xrun;
 		if (f->opt->mmc && f->xrun == AMSG_IGNORE)
 			f->xrun = AMSG_SYNC;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": using 0x");
+			dbg_putx(f->xrun);
+			dbg_puts(" xrun policy\n");
+		}
+#endif
 	}
 	if (AMSG_ISSET(p->bufsz)) {
 		/*
 		 * XXX: bufsz will become read-only, but for now
 		 *      allow old library to properly work
 		 */
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			sock_dbg(f);
+			dbg_puts(": legacy client using ");
+			dbg_putx(p->bufsz);
+			dbg_puts("fr total buffer size\n");
+		}
+#endif
 		min = (dev_bufsz / dev_round) * f->round;
 		if (p->bufsz < min)
 			p->bufsz = min;
@@ -642,7 +845,35 @@ sock_setpar(struct sock *f)
 		if (p->appbufsz > max)
 			p->appbufsz = max;
 		f->bufsz = p->appbufsz;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": using ");
+			dbg_putu(f->bufsz);
+			dbg_puts(" buffer size\n");
+		}
+#endif
 	}
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		if (f->slot >= -1 && dev_midi) {
+			dbg_puts(dev_midi->u.ctl.slot[f->slot].name);
+			dbg_putu(dev_midi->u.ctl.slot[f->slot].unit);
+		} else
+			dbg_puts(f->pipe.file.name);
+		dbg_puts(": buffer size = ");
+		dbg_putu(f->bufsz);
+		if (f->mode & AMSG_PLAY) {
+			dbg_puts(", play = ");
+			aparams_dbg(&f->rpar);
+		}
+		if (f->mode & AMSG_REC) {
+			dbg_puts(", rec:");
+			aparams_dbg(&f->wpar);
+		}
+		dbg_puts("\n");
+	}
+#endif
 	return 1;
 }
 
@@ -670,7 +901,27 @@ sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
 
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		sock_dbg(f);
+		dbg_puts(": hello from <");
+		dbg_puts(p->who);
+		dbg_puts(">, proto = ");
+		dbg_putx(p->proto);
+		dbg_puts(", ver ");
+		dbg_putu(p->version);
+		dbg_puts("\n");
+	}
+#endif
 	if (p->version != AMSG_VERSION) {
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			sock_dbg(f);
+			dbg_puts(": ");
+			dbg_putu(p->version);
+			dbg_puts(": bad version\n");
+		}
+#endif
 		return 0;
 	}
 	/*
@@ -678,6 +929,14 @@ sock_hello(struct sock *f)
 	 */
 	if (dev_midi && (p->proto & (AMSG_MIDIIN | AMSG_MIDIOUT))) {
 		if (p->proto & ~(AMSG_MIDIIN | AMSG_MIDIOUT)) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": ");
+				dbg_putx(p->proto);
+				dbg_puts(": bad hello protocol\n");
+			}
+#endif
 			return 0;
 		}
 		f->mode = p->proto;
@@ -696,17 +955,37 @@ sock_hello(struct sock *f)
 		f->xrun = AMSG_SYNC;
 	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0 ||
 	    (p->proto &  (AMSG_PLAY | AMSG_REC)) == 0) {
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			sock_dbg(f);
+			dbg_puts(": ");
+			dbg_putx(p->proto);
+			dbg_puts(": unsupported hello protocol\n");
+		}
+#endif
 		return 0;
 	}
 	f->mode = 0;
 	if (p->proto & AMSG_PLAY) {
 		if (!dev_mix) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": playback not available\n");
+			}
+#endif
 			return 0;
 		}
 		f->mode |= AMSG_PLAY;
 	}
 	if (p->proto & AMSG_REC) {
 		if (!dev_sub) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": recording not available\n");
+			}
+#endif
 			return 0;
 		}
 		f->mode |= AMSG_REC;
@@ -716,6 +995,12 @@ sock_hello(struct sock *f)
 		     p->who, &ctl_sockops, f,
 		     f->opt->mmc);
 		if (f->slot < 0) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": out of mixer slots\n");
+			}
+#endif
 			return 0;
 		}
 	}
@@ -734,28 +1019,70 @@ sock_execmsg(struct sock *f)
 
 	switch (m->cmd) {
 	case AMSG_DATA:
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			sock_dbg(f);
+			dbg_puts(": DATA message\n");
+		}
+#endif
 		if (f->pstate != SOCK_RUN && f->pstate != SOCK_START) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": DATA, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		if (!(f->mode & AMSG_PLAY)) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": DATA not allowed in record-only mode\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		if (f->pstate == SOCK_START &&
 		    ABUF_FULL(LIST_FIRST(&f->pipe.file.rproc->obuflist))) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": DATA client violates flow control\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		f->rstate = SOCK_RDATA;
 		f->rtodo = m->u.data.size;
 		if (f->rtodo == 0) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": zero-length data chunk\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		break;
 	case AMSG_START:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": START message\n");
+		}
+#endif
 		if (f->pstate != SOCK_INIT) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": START, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -764,7 +1091,19 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_STOP:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": STOP message\n");
+		}
+#endif
 		if (f->pstate != SOCK_RUN && f->pstate != SOCK_START) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": STOP, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -778,7 +1117,19 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_SETPAR:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": SETPAR message\n");
+		}
+#endif
 		if (f->pstate != SOCK_INIT) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": SETPAR, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -790,7 +1141,19 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RMSG;
 		break;
 	case AMSG_GETPAR:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": GETPAR message\n");
+		}
+#endif
 		if (f->pstate != SOCK_INIT) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": GETPAR, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -813,7 +1176,19 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_GETCAP:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": GETCAP message\n");
+		}
+#endif
 		if (f->pstate != SOCK_INIT) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": GETCAP, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -830,12 +1205,30 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_SETVOL:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": SETVOL message\n");
+		}
+#endif
 		if (f->pstate != SOCK_RUN &&
 		    f->pstate != SOCK_START && f->pstate != SOCK_INIT) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": SETVOL, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		if (m->u.vol.ctl > MIDI_MAXCTL) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": SETVOL, volume out of range\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -846,7 +1239,19 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RMSG;
 		break;
 	case AMSG_HELLO:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": HELLO message\n");
+		}
+#endif
 		if (f->pstate != SOCK_HELLO) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": HELLO, bad state\n");
+			}
+#endif
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -860,11 +1265,29 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_BYE:
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": BYE message\n");
+		}
+#endif
 		if (f->pstate != SOCK_INIT) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				sock_dbg(f);
+				dbg_puts(": BYE, bad state\n");
+			}
+#endif
 		}
 		aproc_del(f->pipe.file.rproc);
 		return 0;
 	default:
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			sock_dbg(f);
+			dbg_puts(": unknown command in message\n");
+		}
+#endif
 		aproc_del(f->pipe.file.rproc);
 		return 0;
 	}
@@ -872,6 +1295,12 @@ sock_execmsg(struct sock *f)
 		if (f->wstate != SOCK_WIDLE ||
 		    !sock_wmsg(f, &f->rmsg, &f->rtodo))
 			return 0;
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": RRET done\n");
+		}
+#endif
 		if (f->pstate == SOCK_MIDI && (f->mode & AMSG_MIDIOUT)) {
 			f->rstate = SOCK_RDATA;
 			f->rtodo = 0;
@@ -893,6 +1322,12 @@ sock_buildmsg(struct sock *f)
 	struct abuf *ibuf;
 
 	if (f->pstate == SOCK_MIDI) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			sock_dbg(f);
+			dbg_puts(": switching to MIDI mode\n");
+		}
+#endif
 		f->wstate = SOCK_WDATA;
 		f->wtodo = 0;
 		return 1;
@@ -902,6 +1337,14 @@ sock_buildmsg(struct sock *f)
 	 * If pos changed, build a MOVE message.
 	 */
 	if (f->tickpending) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			sock_dbg(f);
+			dbg_puts(": building POS message, delta = ");
+			dbg_puti(f->delta);
+			dbg_puts("\n");
+		}
+#endif
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_MOVE;
 		f->wmsg.u.ts.delta = f->delta;
@@ -916,6 +1359,14 @@ sock_buildmsg(struct sock *f)
 	 * if volume changed build a SETVOL message
 	 */
 	if (f->pstate >= SOCK_START && f->vol != f->lastvol) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			sock_dbg(f);
+			dbg_puts(": building SETVOL message, vol = ");
+			dbg_puti(f->vol);
+			dbg_puts("\n");
+		}
+#endif
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_SETVOL;
 		f->wmsg.u.vol.ctl = f->vol;
@@ -941,6 +1392,12 @@ sock_buildmsg(struct sock *f)
 		f->wstate = SOCK_WMSG;
 		return 1;
 	}
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		sock_dbg(f);
+		dbg_puts(": no messages to build anymore, idling...\n");
+	}
+#endif
 	f->wstate = SOCK_WIDLE;
 	return 0;
 }
@@ -953,6 +1410,16 @@ sock_buildmsg(struct sock *f)
 int
 sock_read(struct sock *f)
 {
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		sock_dbg(f);
+		dbg_puts(": reading, state = ");
+		dbg_putu(f->rstate);
+		dbg_puts(", todo = ");
+		dbg_putu(f->rtodo);
+		dbg_puts("\n");
+	}
+#endif
 	switch (f->rstate) {
 	case SOCK_RMSG:
 		if (!sock_rmsg(f))
@@ -974,6 +1441,12 @@ sock_read(struct sock *f)
 			(void)sock_attach(f, 0);
 		break;
 	case SOCK_RRET:
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			sock_dbg(f);
+			dbg_puts(": blocked by pending RRET message\n");
+		}
+#endif
 		return 0;
 	}
 	return 1;
@@ -990,6 +1463,12 @@ sock_return(struct sock *f)
 	while (f->rstate == SOCK_RRET) {
 		if (!sock_wmsg(f, &f->rmsg, &f->rtodo))
 			return 0;
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			sock_dbg(f);
+			dbg_puts(": sent RRET message\n");
+		}
+#endif
 		if (f->pstate == SOCK_MIDI && (f->mode & AMSG_MIDIOUT)) {
 			f->rstate = SOCK_RDATA;
 			f->rtodo = 0;
@@ -1024,6 +1503,16 @@ sock_return(struct sock *f)
 int
 sock_write(struct sock *f)
 {
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		sock_dbg(f);
+		dbg_puts(": writing, state = ");
+		dbg_putu(f->wstate);
+		dbg_puts(", todo = ");
+		dbg_putu(f->wtodo);
+		dbg_puts("\n");
+	}
+#endif
 	switch (f->wstate) {
 	case SOCK_WMSG:
 		if (!sock_wmsg(f, &f->wmsg, &f->wtodo))
@@ -1050,6 +1539,12 @@ sock_write(struct sock *f)
 		if (!sock_buildmsg(f))
 			return 0;
 		break;
+#ifdef DEBUG
+	default:
+		sock_dbg(f);
+		dbg_puts(": bad writing end state\n");
+		dbg_panic();
+#endif
 	}
 	return 1;
 }
