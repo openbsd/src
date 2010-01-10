@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.31 2010/01/10 21:27:59 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.32 2010/01/10 22:44:00 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -62,14 +62,14 @@ as the prefix to prepend to any object deleted.
 Delete extra configuration file, mentioned as
 .Dl @extra file
 in the packing-list.
-.It Fl D Ar name Ns = Ns Ar value
+.It Xo
+.Fl D
+.Ar name Ns Op = Ns Ar value
+.Xc
 Force removal of the package.
 .Ar name
 is a keyword that states what failsafe
 should be waived.
-The
-.Op = Ns value
-part is actually unnecessary in most cases.
 Recognized keywords include:
 .Bl -tag -width "dependenciesXX"
 .It Ar ambiguous

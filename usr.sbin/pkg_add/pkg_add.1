@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.92 2010/01/10 21:27:59 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.93 2010/01/10 22:44:00 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -228,14 +228,14 @@ While replacing packages, delete extra configuration file in the old package,
 mentioned as
 .Dl @extra file
 in the packing-list.
-.It Fl D Ar name Ns = Ns Ar value
+.It Xo
+.Fl D
+.Ar name Ns Op = Ns Ar value
+.Xc
 Force installation of the package.
 .Ar name
 is a keyword that states what failsafe
 should be waived.
-The
-.Op = Ns value
-part is actually unnecessary in most cases.
 Recognized keywords include:
 .Pp
 .Bl -tag -width "updatedependsXX" -compact
