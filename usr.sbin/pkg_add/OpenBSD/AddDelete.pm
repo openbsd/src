@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.16 2010/01/09 14:49:53 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.17 2010/01/10 21:27:59 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -30,9 +30,17 @@ sub handle_options
 	set_usage(@usage);
 	$state = OpenBSD::State->new;
 	$hash->{h} = sub { Usage(); };
-	$hash->{f} = $hash->{F} = sub { 
+	$hash->{F} = sub { 
 		for my $o (split /\,/o, shift) { 
 			$defines{$o} = 1;
+		}
+	};
+	$hash->{D} = sub {
+		my $_ = shift;
+		if (m/^(.*?)=(.*)/) {
+			$defines{$1} = $2;
+		} else {
+			$defines{$_} = 1;
 		}
 	};
 	try {

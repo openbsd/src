@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.30 2009/12/21 11:03:00 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.31 2010/01/10 21:27:59 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: December 21 2009 $
+.Dd $Mdocdate: January 10 2010 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -25,7 +25,10 @@
 .Nm pkg_delete
 .Op Fl cIinqsvx
 .Op Fl B Ar pkg-destdir
-.Op Fl F Ar keywords
+.Oo Fl D Ar name
+.Ns Oo Ns = Ns Ar value
+.Oc
+.Oc
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
@@ -59,12 +62,15 @@ as the prefix to prepend to any object deleted.
 Delete extra configuration file, mentioned as
 .Dl @extra file
 in the packing-list.
-.It Fl F Ar keywords
+.It Fl D Ar name Ns = Ns Ar value
 Force removal of the package.
-.Ar keywords
-is a comma-separated list of keywords that state what failsafes
+.Ar name
+is a keyword that states what failsafe
 should be waived.
-These include:
+The
+.Op = Ns value
+part is actually unnecessary in most cases.
+Recognized keywords include:
 .Bl -tag -width "dependenciesXX"
 .It Ar ambiguous
 delete all packages matching ambiguous package specifications.

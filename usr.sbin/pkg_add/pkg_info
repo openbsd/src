@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.91 2010/01/10 11:59:57 espie Exp $
+# $OpenBSD: pkg_info,v 1.92 2010/01/10 21:27:59 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -275,7 +275,7 @@ sub find_by_path
 	}
 }
 
-our ($opt_c, $opt_C, $opt_D, $opt_d, $opt_f, $opt_I, $opt_K, 
+our ($opt_c, $opt_C, $opt_d, $opt_f, $opt_I, $opt_K, 
     $opt_L, $opt_Q, $opt_q, $opt_R, $opt_s, $opt_v, $opt_h,
     $opt_l, $opt_a, $opt_m, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
 my $terse = 0;
@@ -407,12 +407,12 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-AacCDdfIKLMmPqRSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+set_usage('pkg_info [-AacCdfIKLMmPqRSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
 my %defines;
 my $locked;
 try { 
-	getopts('cCDdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
+	getopts('cCdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;
@@ -450,10 +450,6 @@ try {
 };
 
 lock_db(1, $opt_q) unless $locked or $defines{nolock};
-
-if ($opt_D) {
-	$opt_M = 1;
-}
 
 unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || 
 	$opt_L || $opt_R || $opt_s || 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.91 2010/01/04 00:20:05 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.92 2010/01/10 21:27:59 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 4 2010 $
+.Dd $Mdocdate: January 10 2010 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -27,7 +27,10 @@
 .Op Fl acIinqrsUuvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
-.Op Fl F Ar keywords
+.Oo Fl D Ar name
+.Ns Oo Ns = Ns Ar value
+.Oc
+.Oc
 .Op Fl L Ar localbase
 .Op Fl l Ar file
 .Op Fl P Ar type
@@ -225,12 +228,15 @@ While replacing packages, delete extra configuration file in the old package,
 mentioned as
 .Dl @extra file
 in the packing-list.
-.It Fl F Ar keywords
+.It Fl D Ar name Ns = Ns Ar value
 Force installation of the package.
-.Ar keywords
-is a comma-separated list of keywords that state what failsafes
+.Ar name
+is a keyword that states what failsafe
 should be waived.
-These include:
+The
+.Op = Ns value
+part is actually unnecessary in most cases.
+Recognized keywords include:
 .Pp
 .Bl -tag -width "updatedependsXX" -compact
 .It Ar allversions

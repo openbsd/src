@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.54 2010/01/05 11:31:07 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.55 2010/01/10 21:27:59 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 5 2010 $
+.Dd $Mdocdate: January 10 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -34,7 +34,8 @@
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
 .Oo Fl D Ar name
-.Ns = Ns Ar value
+.Ns Oo Ns = Ns Ar value
+.Oc
 .Oc
 .Op Fl L Ar localbase
 .Op Fl M Ar displayfile

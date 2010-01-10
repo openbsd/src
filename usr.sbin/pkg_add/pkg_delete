@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.132 2009/12/21 11:03:00 espie Exp $
+# $OpenBSD: pkg_delete,v 1.133 2010/01/10 21:27:59 espie Exp $
 #
-# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -40,7 +40,7 @@ use OpenBSD::PackageInfo;
 use OpenBSD::UpdateSet;
 
 handle_options('chxDnq', {},
-    'pkg_delete [-cIinqsvx] [-B pkg-destdir] [-F keywords] pkg-name [...]');
+    'pkg_delete [-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
 
 local $SIG{'INFO'} = sub { $state->status->print($state); };
 $opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
