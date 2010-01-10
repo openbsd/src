@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.75 2010/01/09 22:59:42 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.76 2010/01/10 08:32:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -478,6 +478,53 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	path_put(asp);
 }
 
+/* generate a EoR marker in the update list. This is a horrible hack. */
+int
+up_generate_marker(struct rde_peer *peer, u_int8_t aid)
+{
+	struct update_attr	*ua;
+	struct update_attr	*na = NULL;
+	struct uplist_attr	*upl = NULL;
+
+	ua = calloc(1, sizeof(struct update_attr));
+	if (ua == NULL)
+		fatal("up_generate_marker");
+	
+
+	switch (aid) {
+	case AID_INET:
+		upl = &peer->updates;
+		break;
+	case AID_INET6:
+		upl = &peer->updates6;
+		break;
+	default:
+		fatalx("up_generate_marker: unknown AID");
+	}
+
+	/* 1. search for attr */
+	if ((na = RB_FIND(uptree_attr, &peer->up_attrs, ua)) == NULL) {
+		/* 1.1 if not found -> add */
+		TAILQ_INIT(&ua->prefix_h);
+		if (RB_INSERT(uptree_attr, &peer->up_attrs, ua) != NULL) {
+			log_warnx("uptree_attr insert failed");
+			/* cleanup */
+			free(ua);
+			return (-1);
+		}
+		TAILQ_INSERT_TAIL(upl, ua, attr_l);
+		peer->up_acnt++;
+	} else {
+		/* 1.2 if found -> use that, free ua */
+		free(ua);
+		ua = na;
+		/* move to end of update queue */
+		TAILQ_REMOVE(upl, ua, attr_l);
+		TAILQ_INSERT_TAIL(upl, ua, attr_l);
+	}
+	return (0);
+}
+
 u_char	up_attr_buf[4096];
 
 /* only for IPv4 */
@@ -835,6 +882,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	 */
 	while ((upa = TAILQ_FIRST(&peer->updates)) != NULL)
 		if (TAILQ_EMPTY(&upa->prefix_h)) {
+			attr_len = upa->attr_len;
 			if (RB_REMOVE(uptree_attr, &peer->up_attrs,
 			    upa) == NULL)
 				log_warnx("dequeuing update failed.");
@@ -843,6 +891,10 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 			free(upa->mpattr);
 			free(upa);
 			peer->up_acnt--;
+			/* XXX horrible hack,
+			 * if attr_len is 0, it is a EoR marker */
+			if (attr_len == 0)
+				return (-1);
 		} else
 			break;
 
@@ -948,12 +1000,12 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	return (buf + wpos);
 }
 
-u_char *
+int
 up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 {
 	struct update_attr	*upa;
 	int			wpos;
-	u_int16_t		datalen, tmp;
+	u_int16_t		attr_len, datalen, tmp;
 	u_int8_t		flags = ATTR_OPTIONAL;
 
 	/*
@@ -962,6 +1014,7 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	 */
 	while ((upa = TAILQ_FIRST(&peer->updates6)) != NULL)
 		if (TAILQ_EMPTY(&upa->prefix_h)) {
+			attr_len = upa->attr_len;
 			if (RB_REMOVE(uptree_attr, &peer->up_attrs,
 			    upa) == NULL)
 				log_warnx("dequeuing update failed.");
@@ -970,11 +1023,15 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 			free(upa->mpattr);
 			free(upa);
 			peer->up_acnt--;
+			/* XXX horrible hack,
+			 * if attr_len is 0, it is a EoR marker */
+			if (attr_len == 0)
+				return (-1);
 		} else
 			break;
 
 	if (upa == NULL)
-		return (NULL);
+		return (-2);
 
 	/*
 	 * reserve space for attr len, the attributes, the
@@ -982,12 +1039,12 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	 */
 	wpos = 2 + 2 + upa->attr_len + 4 + upa->mpattr_len;
 	if (*len < wpos)
-		return (NULL);
+		return (-2);
 
 	datalen = up_dump_prefix(buf + wpos, *len - wpos,
 	    &upa->prefix_h, peer);
 	if (datalen == 0)
-		return (NULL);
+		return (-2);
 
 	if (upa->mpattr_len == 0 || upa->mpattr == NULL)
 		fatalx("mulitprotocol update without MP attrs");
@@ -1035,5 +1092,5 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	}
 
 	*len = datalen + 4;
-	return (buf + wpos);
+	return (wpos);
 }

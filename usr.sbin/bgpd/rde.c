@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.281 2010/01/10 00:15:09 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.282 2010/01/10 08:32:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2394,7 +2394,7 @@ void
 rde_update_queue_runner(void)
 {
 	struct rde_peer		*peer;
-	int			 r, sent, max = RDE_RUNNER_ROUNDS;
+	int			 r, sent, max = RDE_RUNNER_ROUNDS, eor = 0;
 	u_int16_t		 len, wd_len, wpos;
 
 	len = sizeof(queue_buf) - MSGSIZE_HEADER;
@@ -2418,20 +2418,38 @@ rde_update_queue_runner(void)
 			/* now bgp path attributes */
 			r = up_dump_attrnlri(queue_buf + wpos, len - wpos,
 			    peer);
-			wpos += r;
-
-			if (wpos == 4)
-				/*
-				 * No packet to send. The 4 bytes are the
-				 * needed withdraw and path attribute length.
-				 */
-				continue;
+			switch (r) {
+			case -1:
+				eor = 1;
+				if (wd_len == 0) {
+					/* no withdraws queued just send EoR */
+					peer_send_eor(peer, AID_INET);
+					continue;
+				}
+				break;
+			case 2:
+				if (wd_len == 0) {
+					/*
+					 * No packet to send. No withdraws and
+					 * no path attributes. Skip.
+					 */
+					continue;
+				}
+				/* FALLTHROUGH */
+			default:
+				wpos += r;
+				break;
+			}
 
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 			    0, -1, queue_buf, wpos) == -1)
 				fatal("imsg_compose error");
 			sent++;
+			if (eor) {
+				eor = 0;
+				peer_send_eor(peer, AID_INET);
+			}
 		}
 		max -= sent;
 	} while (sent != 0 && max > 0);
@@ -2442,7 +2460,7 @@ rde_update6_queue_runner(void)
 {
 	struct rde_peer		*peer;
 	u_char			*b;
-	int			 sent, max = RDE_RUNNER_ROUNDS / 2;
+	int			 r, sent, max = RDE_RUNNER_ROUNDS / 2;
 	u_int16_t		 len;
 
 	/* first withdraws ... */
@@ -2477,10 +2495,18 @@ rde_update6_queue_runner(void)
 			if (peer->state != PEER_UP)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
-			b = up_dump_mp_reach(queue_buf, &len, peer);
-
-			if (b == NULL)
+			r = up_dump_mp_reach(queue_buf, &len, peer);
+			switch (r) {
+			case -2:
 				continue;
+			case -1:
+				peer_send_eor(peer, AID_INET6);
+				continue;
+			default:
+				b = queue_buf + r;
+				break;
+			}
+				
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 			    0, -1, b, len) == -1)
@@ -2748,7 +2774,7 @@ peer_dump(u_int32_t id, u_int8_t aid)
 	else
 		rib_dump(&ribs[peer->ribid], rde_up_dump_upcall, peer, aid);
 	if (peer->capa.restart)
-		peer_send_eor(peer, aid);
+		up_generate_marker(peer, aid);
 }
 
 /* End-of-RIB marker, RFC 4724 */
