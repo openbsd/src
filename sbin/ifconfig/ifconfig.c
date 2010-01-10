@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.227 2009/12/22 17:48:49 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.228 2010/01/10 03:58:14 guenther Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
 void	trunk_status(void);
-void	setpriority(const char *, int);
+void	setifpriority(const char *, int);
 void	setinstance(const char *, int);
 int	main(int, char *[]);
 int	prefix(void *val, int);
@@ -325,7 +325,7 @@ const struct	cmd {
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
-	{ "priority",	NEXTARG,	0,		setpriority },
+	{ "priority",	NEXTARG,	0,		setifpriority },
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlanprio",	NEXTARG,	0,		setvlanprio },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
@@ -4395,7 +4395,7 @@ trunk_status(void)
 #endif /* SMALL */
 
 void
-setpriority(const char *id, int param)
+setifpriority(const char *id, int param)
 {
 #ifndef SMALL
 	const char *errmsg = NULL;
