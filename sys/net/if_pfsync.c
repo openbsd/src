@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.135 2009/12/14 12:31:45 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.136 2010/01/10 23:54:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1668,6 +1668,7 @@ pfsync_sendout(void)
 		}
 
 		bzero(subh, sizeof(*subh));
+		subh->len = sizeof(ur->ur_msg) >> 2;
 		subh->action = PFSYNC_ACT_UPD_REQ;
 		subh->count = htons(count);
 	}
@@ -1696,6 +1697,7 @@ pfsync_sendout(void)
 
 		bzero(subh, sizeof(*subh));
 		subh->action = PFSYNC_ACT_TDB;
+		subh->len = sizeof(struct pfsync_tdb) >> 2;
 		subh->count = htons(count);
 	}
 
@@ -1722,6 +1724,7 @@ pfsync_sendout(void)
 
 		bzero(subh, sizeof(*subh));
 		subh->action = pfsync_qs[q].action;
+		subh->len = pfsync_qs[q].len >> 2;
 		subh->count = htons(count);
 	}
 
@@ -1730,6 +1733,7 @@ pfsync_sendout(void)
 
 	bzero(subh, sizeof(*subh));
 	subh->action = PFSYNC_ACT_EOF;
+	subh->len = 0 >> 2;
 	subh->count = htons(1);
 
 	/* we're done, let's put it on the wire */
@@ -2082,6 +2086,7 @@ pfsync_clear_states(u_int32_t creatorid, const char *ifname)
 	bzero(&r, sizeof(r));
 
 	r.subh.action = PFSYNC_ACT_CLR;
+	r.subh.len = sizeof(struct pfsync_clr) >> 2;
 	r.subh.count = htons(1);
 
 	strlcpy(r.clr.ifname, ifname, sizeof(r.clr.ifname));
@@ -2286,6 +2291,7 @@ pfsync_bulk_status(u_int8_t status)
 	bzero(&r, sizeof(r));
 
 	r.subh.action = PFSYNC_ACT_BUS;
+	r.subh.len = sizeof(struct pfsync_bus) >> 2;
 	r.subh.count = htons(1);
 
 	r.bus.creatorid = pf_status.hostid;
