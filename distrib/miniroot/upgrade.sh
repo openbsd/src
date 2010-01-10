@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.69 2009/05/06 01:29:48 deraadt Exp $
+#	$OpenBSD: upgrade.sh,v 1.70 2010/01/10 13:32:56 deraadt Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -42,6 +42,14 @@ MODE=upgrade
 
 # include common subroutines and initialization code
 . install.sub
+
+cat <<__EOT
+
+NOTE: Once your system has been upgraded, you must manually merge any
+changes to files in the 'etc' set into the files already on your system.
+sysmerge(8) can help.
+
+__EOT
 
 # Have the user confirm that $ROOTDEV is the root filesystem.
 while :; do

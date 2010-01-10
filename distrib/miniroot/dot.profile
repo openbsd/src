@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.13 2009/06/12 03:30:00 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.14 2010/01/10 13:32:56 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -64,17 +64,9 @@ __EOT
 	while :; do
 		read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
 		case $REPLY in
-		i*|I*)	echo "\nCool! Let's get to it.\n"
-			/install && break
+		i*|I*)	/install && break
 			;;
-		u*|U*)	cat <<__EOT
-
-NOTE: Once your system has been upgraded, you must manually merge any
-changes to files in the 'etc' set into the files already on your system.
-sysmerge(8) can help.
-
-__EOT
-			/upgrade && break
+		u*|U*)	/upgrade && break
 			;;
 		s*|S*)	break
 			;;
