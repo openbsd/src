@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.6 2010/01/10 00:10:23 krw Exp $	*/
+/*	$OpenBSD: sii.c,v 1.7 2010/01/10 00:40:25 krw Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -1701,7 +1701,6 @@ sii_CmdDone(sc, target, error)
 	xs->status = sc->sc_st[target].statusByte;
 	xs->error = error;
 	xs->resid = sc->sc_st[target].buflen;
-	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
 
