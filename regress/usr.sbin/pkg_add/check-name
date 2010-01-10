@@ -1,9 +1,9 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.8 2009/11/03 11:22:53 espie Exp $
+# $OpenBSD: check-name,v 1.9 2010/01/10 00:40:25 espie Exp $
 # Written by Marc Espie
 # Public domain
 
-use Test::Simple tests => 13;
+use Test::Simple tests => 15;
 use OpenBSD::Search;
 use OpenBSD::PackageName;
 
@@ -79,3 +79,8 @@ ok(check_list([],
 ok(check_list([qw(hugs-noversion)],
     $hash->find('hugs-noversion')),
     	'stem matching with no version');
+ok(OpenBSD::PackageName->from_string('foo-1.0-f2-f1')->to_string
+    eq 'foo-1.0-f1-f2', 
+    	'canonical names');
+ok(!OpenBSD::Search::PkgSpec->new('foo-<>1.5')->is_valid, 
+	'invalid spec');
