@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.100 2009/06/15 17:59:44 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.101 2010/01/10 03:37:50 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -126,7 +126,9 @@ struct ctlname {
 #define	KERN_HOSTID		11	/* int: host identifier */
 #define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
 #define	KERN_VNODE		13	/* struct: vnode structures */
+#if defined(_KERNEL) || defined(_LIBKVM)
 #define	KERN_PROC		14	/* struct: process entries */
+#endif
 #define	KERN_FILE		15	/* struct: file entries */
 #define	KERN_PROF		16	/* node: kernel profiling info */
 #define	KERN_POSIX1		17	/* int: POSIX.1 version */
@@ -466,6 +468,161 @@ struct kinfo_proc2 {
 	u_int64_t p_cpuid;		/* LONG: CPU id */
 	u_int64_t p_vm_map_size;	/* VSIZE_T: virtual size */
 };
+
+#if defined(_KERNEL) || defined(_LIBKVM)
+
+/*
+ * Macros for filling in the bulk of a kinfo_proc2 structure, used
+ * in the kernel to implement the KERN_PROC2 sysctl and in userland
+ * in libkvm to implement reading from kernel crashes.  The macro
+ * arguments are all pointers; by name they are:
+ *	kp - target kinfo_proc2 structure
+ *	copy_str - a function or macro invoked as copy_str(dst,src,maxlen)
+ *	    that has strlcpy or memcpy semantics; the destination is
+ *	    pre-filled with zeros
+ *	p - source struct proc
+ *	pr - source struct process
+ *	pc - source struct pcreds
+ *	uc - source struct ucreds
+ *	pg - source struct pgrp
+ *	paddr - kernel address of the source struct proc
+ *	sess - source struct session
+ *	vm - source struct vmspace
+ *	lim - source struct plimits
+ *	ps - source struct pstats
+ * There are some members that are not handled by these macros
+ * because they're too painful to generalize: p_ppid, p_sid, p_tdev,
+ * p_tpgid, p_tsess, p_vm_rssize, p_u[us]time_{sec,usec}, p_cpuid
+ */
+
+#define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
+
+#define FILL_KPROC2(kp, copy_str, p, pr, pc, uc, pg, paddr, sess, vm, lim, ps) \
+do {									\
+	memset((kp), 0, sizeof(*(kp)));					\
+									\
+	(kp)->p_paddr = PTRTOINT64(paddr);				\
+	(kp)->p_fd = PTRTOINT64((p)->p_fd);				\
+	(kp)->p_stats = PTRTOINT64((p)->p_stats);			\
+	(kp)->p_limit = PTRTOINT64((pr)->ps_limit);			\
+	(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);			\
+	(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);			\
+	(kp)->p_sess = PTRTOINT64((p)->p_session);			\
+	(kp)->p_ru = PTRTOINT64((p)->p_ru);				\
+									\
+	(kp)->p_exitsig = (p)->p_exitsig;				\
+	(kp)->p_flag = (p)->p_flag | P_INMEM;				\
+									\
+	(kp)->p_pid = (p)->p_pid;					\
+	(kp)->p__pgid = (pg)->pg_id;					\
+									\
+	(kp)->p_uid = (uc)->cr_uid;					\
+	(kp)->p_ruid = (pc)->p_ruid;					\
+	(kp)->p_gid = (uc)->cr_gid;					\
+	(kp)->p_rgid = (pc)->p_rgid;					\
+	(kp)->p_svuid = (pc)->p_svuid;					\
+	(kp)->p_svgid = (pc)->p_svgid;					\
+									\
+	memcpy((kp)->p_groups, (uc)->cr_groups,				\
+	    MIN(sizeof((kp)->p_groups), sizeof((uc)->cr_groups)));	\
+	(kp)->p_ngroups = (uc)->cr_ngroups;				\
+									\
+	(kp)->p_jobc = (pg)->pg_jobc;					\
+									\
+	(kp)->p_estcpu = (p)->p_estcpu;					\
+	(kp)->p_rtime_sec = (p)->p_rtime.tv_sec;			\
+	(kp)->p_rtime_usec = (p)->p_rtime.tv_usec;			\
+	(kp)->p_cpticks = (p)->p_cpticks;				\
+	(kp)->p_pctcpu = (p)->p_pctcpu;					\
+									\
+	(kp)->p_uticks = (p)->p_uticks;					\
+	(kp)->p_sticks = (p)->p_sticks;					\
+	(kp)->p_iticks = (p)->p_iticks;					\
+									\
+	(kp)->p_tracep = PTRTOINT64((p)->p_tracep);			\
+	(kp)->p_traceflag = (p)->p_traceflag;				\
+									\
+	(kp)->p_siglist = (p)->p_siglist;				\
+	(kp)->p_sigmask = (p)->p_sigmask;				\
+	(kp)->p_sigignore = (p)->p_sigignore;				\
+	(kp)->p_sigcatch = (p)->p_sigcatch;				\
+									\
+	(kp)->p_stat = (p)->p_stat;					\
+	(kp)->p_nice = (p)->p_nice;					\
+									\
+	(kp)->p_xstat = (p)->p_xstat;					\
+	(kp)->p_acflag = (p)->p_acflag;					\
+									\
+	/* XXX depends on p_emul being an array and not a pointer */	\
+	copy_str((kp)->p_emul, (char *)(p)->p_emul +			\
+	    offsetof(struct emul, e_name), sizeof((kp)->p_emul));	\
+	copy_str((kp)->p_comm, (p)->p_comm, sizeof((kp)->p_comm));	\
+	copy_str((kp)->p_login, (sess)->s_login,			\
+	    MIN(sizeof((kp)->p_login) - 1, sizeof((sess)->s_login)));	\
+									\
+	if ((sess)->s_ttyvp)						\
+		(kp)->p_eflag |= EPROC_CTTY;				\
+	if ((sess)->s_leader == (paddr))				\
+		(kp)->p_eflag |= EPROC_SLEADER;				\
+									\
+	if ((p)->p_stat != SIDL && !P_ZOMBIE(p)) {			\
+		if ((vm) != NULL) {					\
+			(kp)->p_vm_rssize = (vm)->vm_rssize;		\
+			(kp)->p_vm_tsize = (vm)->vm_tsize;		\
+			(kp)->p_vm_dsize = (vm)->vm_dused;		\
+			(kp)->p_vm_ssize = (vm)->vm_ssize;		\
+		}							\
+		(kp)->p_addr = PTRTOINT64((p)->p_addr);			\
+		(kp)->p_stat = (p)->p_stat;				\
+		(kp)->p_swtime = (p)->p_swtime;				\
+		(kp)->p_slptime = (p)->p_slptime;			\
+		(kp)->p_holdcnt = 1;					\
+		(kp)->p_priority = (p)->p_priority;			\
+		(kp)->p_usrpri = (p)->p_usrpri;				\
+		if ((p)->p_wmesg)					\
+			copy_str((kp)->p_wmesg, (p)->p_wmesg,		\
+			    sizeof((kp)->p_wmesg));			\
+		(kp)->p_wchan = PTRTOINT64((p)->p_wchan);		\
+	}								\
+									\
+	if (lim)							\
+		(kp)->p_rlim_rss_cur =					\
+		    (lim)->pl_rlimit[RLIMIT_RSS].rlim_cur;		\
+									\
+	if (!P_ZOMBIE(p) && (ps) != NULL) {				\
+		struct timeval tv;					\
+									\
+		(kp)->p_uvalid = 1;					\
+									\
+		(kp)->p_ustart_sec = (ps)->p_start.tv_sec;		\
+		(kp)->p_ustart_usec = (ps)->p_start.tv_usec;		\
+									\
+		(kp)->p_uru_maxrss = (ps)->p_ru.ru_maxrss;		\
+		(kp)->p_uru_ixrss = (ps)->p_ru.ru_ixrss;		\
+		(kp)->p_uru_idrss = (ps)->p_ru.ru_idrss;		\
+		(kp)->p_uru_isrss = (ps)->p_ru.ru_isrss;		\
+		(kp)->p_uru_minflt = (ps)->p_ru.ru_minflt;		\
+		(kp)->p_uru_majflt = (ps)->p_ru.ru_majflt;		\
+		(kp)->p_uru_nswap = (ps)->p_ru.ru_nswap;		\
+		(kp)->p_uru_inblock = (ps)->p_ru.ru_inblock;		\
+		(kp)->p_uru_oublock = (ps)->p_ru.ru_oublock;		\
+		(kp)->p_uru_msgsnd = (ps)->p_ru.ru_msgsnd;		\
+		(kp)->p_uru_msgrcv = (ps)->p_ru.ru_msgrcv;		\
+		(kp)->p_uru_nsignals = (ps)->p_ru.ru_nsignals;		\
+		(kp)->p_uru_nvcsw = (ps)->p_ru.ru_nvcsw;		\
+		(kp)->p_uru_nivcsw = (ps)->p_ru.ru_nivcsw;		\
+									\
+		timeradd(&(ps)->p_cru.ru_utime,				\
+			 &(ps)->p_cru.ru_stime, &tv);			\
+		(kp)->p_uctime_sec = tv.tv_sec;				\
+		(kp)->p_uctime_usec = tv.tv_usec;			\
+	}								\
+									\
+	(kp)->p_cpuid = KI_NOCPU;					\
+} while (0)
+
+#endif /* defined(_KERNEL) || defined(_LIBKVM) */
+
 
 /*
  * kern.file2 returns an array of these structures, which are designed

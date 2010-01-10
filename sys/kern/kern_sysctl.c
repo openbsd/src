@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.179 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.180 2010/01/10 03:37:50 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -100,8 +100,6 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
-#define	PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
@@ -1526,126 +1524,28 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	struct tty *tp;
 	struct timeval ut, st;
 
-	bzero(ki, sizeof(*ki));
+	FILL_KPROC2(ki, strlcpy, p, p->p_p, p->p_cred, p->p_ucred, p->p_pgrp,
+	    p, p->p_session, p->p_vmspace, p->p_p->ps_limit, p->p_stats);
 
-	ki->p_paddr = PTRTOINT64(p);
-	ki->p_fd = PTRTOINT64(p->p_fd);
-	ki->p_stats = PTRTOINT64(p->p_stats);
-	ki->p_limit = PTRTOINT64(p->p_p->ps_limit);
-	ki->p_vmspace = PTRTOINT64(p->p_vmspace);
-	ki->p_sigacts = PTRTOINT64(p->p_sigacts);
-	ki->p_sess = PTRTOINT64(p->p_session);
-	ki->p_tsess = 0;	/* may be changed if controlling tty below */
-	ki->p_ru = PTRTOINT64(p->p_ru);
-
-	ki->p_eflag = 0;
-	ki->p_exitsig = p->p_exitsig;
-	ki->p_flag = p->p_flag | P_INMEM;
-
-	ki->p_pid = p->p_pid;
+	/* stuff that's too painful to generalize into the macros */
 	if (p->p_pptr)
 		ki->p_ppid = p->p_pptr->p_pid;
-	else
-		ki->p_ppid = 0;
 	if (p->p_session->s_leader)
 		ki->p_sid = p->p_session->s_leader->p_pid;
-	else
-		ki->p_sid = 0;
-	ki->p__pgid = p->p_pgrp->pg_id;
 
-	ki->p_tpgid = -1;	/* may be changed if controlling tty below */
-
-	ki->p_uid = p->p_ucred->cr_uid;
-	ki->p_ruid = p->p_cred->p_ruid;
-	ki->p_gid = p->p_ucred->cr_gid;
-	ki->p_rgid = p->p_cred->p_rgid;
-	ki->p_svuid = p->p_cred->p_svuid;
-	ki->p_svgid = p->p_cred->p_svgid;
-
-	memcpy(ki->p_groups, p->p_cred->pc_ucred->cr_groups,
-	    min(sizeof(ki->p_groups), sizeof(p->p_cred->pc_ucred->cr_groups)));
-	ki->p_ngroups = p->p_cred->pc_ucred->cr_ngroups;
-
-	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 		ki->p_tdev = tp->t_dev;
 		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : -1;
 		ki->p_tsess = PTRTOINT64(tp->t_session);
 	} else {
 		ki->p_tdev = NODEV;
+		ki->p_tpgid = -1;
 	}
 
-	ki->p_estcpu = p->p_estcpu;
-	ki->p_rtime_sec = p->p_rtime.tv_sec;
-	ki->p_rtime_usec = p->p_rtime.tv_usec;
-	ki->p_cpticks = p->p_cpticks;
-	ki->p_pctcpu = p->p_pctcpu;
-
-	ki->p_uticks = p->p_uticks;
-	ki->p_sticks = p->p_sticks;
-	ki->p_iticks = p->p_iticks;
-
-	ki->p_tracep = PTRTOINT64(p->p_tracep);
-	ki->p_traceflag = p->p_traceflag;
-
-	ki->p_siglist = p->p_siglist;
-	ki->p_sigmask = p->p_sigmask;
-	ki->p_sigignore = p->p_sigignore;
-	ki->p_sigcatch = p->p_sigcatch;
-
-	ki->p_stat = p->p_stat;
-	ki->p_nice = p->p_nice;
-
-	ki->p_xstat = p->p_xstat;
-	ki->p_acflag = p->p_acflag;
-
-	strlcpy(ki->p_emul, p->p_emul->e_name, sizeof(ki->p_emul));
-	strlcpy(ki->p_comm, p->p_comm, sizeof(ki->p_comm));
-	strncpy(ki->p_login, p->p_session->s_login,
-	    min(sizeof(ki->p_login) - 1, sizeof(p->p_session->s_login)));
-
-	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
-		ki->p_vm_rssize = 0;
-		ki->p_vm_tsize = 0;
-		ki->p_vm_dsize = 0;
-		ki->p_vm_ssize = 0;
-	} else {
-		struct vmspace *vm = p->p_vmspace;
-
-		ki->p_vm_rssize = vm_resident_count(vm);
-		ki->p_vm_tsize = vm->vm_tsize;
-		ki->p_vm_dsize = vm->vm_dused;
-		ki->p_vm_ssize = vm->vm_ssize;
-		ki->p_forw = ki->p_back = 0;
-		ki->p_addr = PTRTOINT64(p->p_addr);
-		ki->p_stat = p->p_stat;
-		ki->p_swtime = p->p_swtime;
-		ki->p_slptime = p->p_slptime;
-		ki->p_schedflags = 0;
-		ki->p_holdcnt = 1;
-		ki->p_priority = p->p_priority;
-		ki->p_usrpri = p->p_usrpri;
-		if (p->p_wmesg)
-			strlcpy(ki->p_wmesg, p->p_wmesg, sizeof(ki->p_wmesg));
-		ki->p_wchan = PTRTOINT64(p->p_wchan);
-
-	}
-
-	if (p->p_session->s_ttyvp)
-		ki->p_eflag |= EPROC_CTTY;
-	if (SESS_LEADER(p))
-		ki->p_eflag |= EPROC_SLEADER;
-	if (p->p_rlimit)
-		ki->p_rlim_rss_cur = p->p_rlimit[RLIMIT_RSS].rlim_cur;
-
-	/* XXX Is this double check necessary? */
-	if (P_ZOMBIE(p)) {
-		ki->p_uvalid = 0;
-	} else {
-		ki->p_uvalid = 1;
-
-		ki->p_ustart_sec = p->p_stats->p_start.tv_sec;
-		ki->p_ustart_usec = p->p_stats->p_start.tv_usec;
+	/* fixups that can only be done in the kernel */
+	if (!P_ZOMBIE(p)) {
+		if (p->p_stat != SIDL)
+			ki->p_vm_rssize = vm_resident_count(p->p_vmspace);
 
 		calcru(p, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
@@ -1653,26 +1553,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_ustime_sec = st.tv_sec;
 		ki->p_ustime_usec = st.tv_usec;
 
-		ki->p_uru_maxrss = p->p_stats->p_ru.ru_maxrss;
-		ki->p_uru_ixrss = p->p_stats->p_ru.ru_ixrss;
-		ki->p_uru_idrss = p->p_stats->p_ru.ru_idrss;
-		ki->p_uru_isrss = p->p_stats->p_ru.ru_isrss;
-		ki->p_uru_minflt = p->p_stats->p_ru.ru_minflt;
-		ki->p_uru_majflt = p->p_stats->p_ru.ru_majflt;
-		ki->p_uru_nswap = p->p_stats->p_ru.ru_nswap;
-		ki->p_uru_inblock = p->p_stats->p_ru.ru_inblock;
-		ki->p_uru_oublock = p->p_stats->p_ru.ru_oublock;
-		ki->p_uru_msgsnd = p->p_stats->p_ru.ru_msgsnd;
-		ki->p_uru_msgrcv = p->p_stats->p_ru.ru_msgrcv;
-		ki->p_uru_nsignals = p->p_stats->p_ru.ru_nsignals;
-		ki->p_uru_nvcsw = p->p_stats->p_ru.ru_nvcsw;
-		ki->p_uru_nivcsw = p->p_stats->p_ru.ru_nivcsw;
-
-		timeradd(&p->p_stats->p_cru.ru_utime,
-			 &p->p_stats->p_cru.ru_stime, &ut);
-		ki->p_uctime_sec = ut.tv_sec;
-		ki->p_uctime_usec = ut.tv_usec;
-		ki->p_cpuid = KI_NOCPU;
 #ifdef MULTIPROCESSOR
 		if (p->p_cpu != NULL)
 			ki->p_cpuid = CPU_INFO_UNIT(p->p_cpu);
