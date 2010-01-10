@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.38 2010/01/08 01:35:52 syuu Exp $ */
+/*	$OpenBSD: context.S,v 1.39 2010/01/10 13:00:24 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -300,4 +300,4 @@ ctx3:
 	ITLBNOPFIX
 	j	ra
 	nop
-END(cpu_switchto)
+END(cpu_switchto_asm)
