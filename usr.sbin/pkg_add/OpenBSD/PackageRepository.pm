@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.77 2010/01/09 14:49:53 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.78 2010/01/10 11:32:41 espie Exp $
 #
-# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
