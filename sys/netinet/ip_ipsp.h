@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.139 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.140 2010/01/10 12:43:07 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -61,7 +61,7 @@ union sockaddr_union {
 #define	SHA2_384HMAC96_KEYSIZE	48
 #define	SHA2_512HMAC96_KEYSIZE	64
 
-#define	AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
+#define	AH_HMAC_MAX_HASHLEN	32	/* 256 bits of authenticator for SHA512 */
 #define	AH_HMAC_RPLENGTH	4	/* 32 bits of replay counter */
 #define	AH_HMAC_INITIAL_RPL	1	/* Replay counter initial value */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.17 2009/10/30 18:18:09 deraadt Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.18 2010/01/10 12:43:07 markus Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -411,13 +411,13 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 			axf = &auth_hash_hmac_ripemd_160_96;
 			goto authcommon;
 		case CRYPTO_SHA2_256_HMAC:
-			axf = &auth_hash_hmac_sha2_256_96;
+			axf = &auth_hash_hmac_sha2_256_128;
 			goto authcommon;
 		case CRYPTO_SHA2_384_HMAC:
-			axf = &auth_hash_hmac_sha2_384_96;
+			axf = &auth_hash_hmac_sha2_384_192;
 			goto authcommon;
 		case CRYPTO_SHA2_512_HMAC:
-			axf = &auth_hash_hmac_sha2_512_96;
+			axf = &auth_hash_hmac_sha2_512_256;
 		authcommon:
 			swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
 			    M_NOWAIT|M_ZERO);
@@ -447,7 +447,7 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 			axf->Init(swd->sw_ictx);
 			axf->Update(swd->sw_ictx, c->cri_key, c->cri_klen / 8);
 			axf->Update(swd->sw_ictx, hmac_ipad_buffer,
-			    HMAC_BLOCK_LEN - (c->cri_klen / 8));
+			    axf->blocksize - (c->cri_klen / 8));
 
 			for (i = 0; i < c->cri_klen / 8; i++)
 				c->cri_key[i] ^= (HMAC_IPAD_VAL ^
@@ -456,7 +456,7 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 			axf->Init(swd->sw_octx);
 			axf->Update(swd->sw_octx, c->cri_key, c->cri_klen / 8);
 			axf->Update(swd->sw_octx, hmac_opad_buffer,
-			    HMAC_BLOCK_LEN - (c->cri_klen / 8));
+			    axf->blocksize - (c->cri_klen / 8));
 
 			for (i = 0; i < c->cri_klen / 8; i++)
 				c->cri_key[i] ^= HMAC_OPAD_VAL;

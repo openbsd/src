@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.41 2007/12/14 18:33:41 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.42 2010/01/10 12:43:07 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -37,8 +37,6 @@
 
 #ifndef _NETINET_IP_ESP_H_
 #define _NETINET_IP_ESP_H_
-
-#define ESP_ALEN	12	/* 96-bit authenticator */
 
 struct espstat
 {

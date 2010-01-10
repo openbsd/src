@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.36 2008/09/06 22:23:21 djm Exp $	*/
+/*	$OpenBSD: xform.c,v 1.37 2010/01/10 12:43:07 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -228,70 +228,70 @@ struct enc_xform enc_xform_null = {
 /* Authentication instances */
 struct auth_hash auth_hash_hmac_md5_96 = {
 	CRYPTO_MD5_HMAC, "HMAC-MD5",
-	16, 16, 12, sizeof(MD5_CTX),
+	16, 16, 12, sizeof(MD5_CTX), HMAC_MD5_BLOCK_LEN,
 	(void (*) (void *)) MD5Init, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 struct auth_hash auth_hash_hmac_sha1_96 = {
 	CRYPTO_SHA1_HMAC, "HMAC-SHA1",
-	20, 20, 12, sizeof(SHA1_CTX),
+	20, 20, 12, sizeof(SHA1_CTX), HMAC_SHA1_BLOCK_LEN,
 	(void (*) (void *)) SHA1Init, SHA1Update_int,
 	(void (*) (u_int8_t *, void *)) SHA1Final
 };
 
 struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 	CRYPTO_RIPEMD160_HMAC, "HMAC-RIPEMD-160",
-	20, 20, 12, sizeof(RMD160_CTX),
+	20, 20, 12, sizeof(RMD160_CTX), HMAC_RIPEMD160_BLOCK_LEN,
 	(void (*)(void *)) RMD160Init, RMD160Update_int,
 	(void (*)(u_int8_t *, void *)) RMD160Final
 };
 
-struct auth_hash auth_hash_hmac_sha2_256_96 = {
+struct auth_hash auth_hash_hmac_sha2_256_128 = {
 	CRYPTO_SHA2_256_HMAC, "HMAC-SHA2-256",
-	32, 32, 12, sizeof(SHA2_CTX),
+	32, 32, 16, sizeof(SHA2_CTX), HMAC_SHA2_256_BLOCK_LEN,
 	(void (*)(void *)) SHA256Init, SHA256Update_int,
 	(void (*)(u_int8_t *, void *)) SHA256Final
 };
 
-struct auth_hash auth_hash_hmac_sha2_384_96 = {
+struct auth_hash auth_hash_hmac_sha2_384_192 = {
 	CRYPTO_SHA2_384_HMAC, "HMAC-SHA2-384",
-	48, 48, 12, sizeof(SHA2_CTX),
+	48, 48, 24, sizeof(SHA2_CTX), HMAC_SHA2_384_BLOCK_LEN,
 	(void (*)(void *)) SHA384Init, SHA384Update_int,
 	(void (*)(u_int8_t *, void *)) SHA384Final
 };
 
-struct auth_hash auth_hash_hmac_sha2_512_96 = {
+struct auth_hash auth_hash_hmac_sha2_512_256 = {
 	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
-	64, 64, 12, sizeof(SHA2_CTX),
+	64, 64, 32, sizeof(SHA2_CTX), HMAC_SHA2_512_BLOCK_LEN,
 	(void (*)(void *)) SHA512Init, SHA512Update_int,
 	(void (*)(u_int8_t *, void *)) SHA512Final
 };
 
 struct auth_hash auth_hash_key_md5 = {
 	CRYPTO_MD5_KPDK, "Keyed MD5",
-	0, 16, 16, sizeof(MD5_CTX),
+	0, 16, 16, sizeof(MD5_CTX), 0,
 	(void (*)(void *)) MD5Init, MD5Update_int,
 	(void (*)(u_int8_t *, void *)) MD5Final
 };
 
 struct auth_hash auth_hash_key_sha1 = {
 	CRYPTO_SHA1_KPDK, "Keyed SHA1",
-	0, 20, 20, sizeof(SHA1_CTX),
+	0, 20, 20, sizeof(SHA1_CTX), 0,
 	(void (*)(void *)) SHA1Init, SHA1Update_int,
 	(void (*)(u_int8_t *, void *)) SHA1Final
 };
 
 struct auth_hash auth_hash_md5 = {
 	CRYPTO_MD5, "MD5",
-	0, 16, 16, sizeof(MD5_CTX),
+	0, 16, 16, sizeof(MD5_CTX), 0,
 	(void (*) (void *)) MD5Init, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 struct auth_hash auth_hash_sha1 = {
 	CRYPTO_SHA1, "SHA1",
-	0, 20, 20, sizeof(SHA1_CTX),
+	0, 20, 20, sizeof(SHA1_CTX), 0,
 	(void (*)(void *)) SHA1Init, SHA1Update_int,
 	(void (*)(u_int8_t *, void *)) SHA1Final
 };

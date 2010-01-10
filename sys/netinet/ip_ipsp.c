@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.178 2009/08/12 00:13:43 martynas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.179 2010/01/10 12:43:07 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1230,7 +1230,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 
 			/* Update the length of trailing ESP authenticators. */
 			if (tdb->tdb_authalgxform)
-				trail += AH_HMAC_HASHLEN;
+				trail += tdb->tdb_authalgxform->authsize;
 
 			splx(s);
 

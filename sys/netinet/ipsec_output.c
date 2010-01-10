@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.41 2008/08/26 12:19:01 henning Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.42 2010/01/10 12:43:07 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -551,7 +551,7 @@ ipsec_hdrsz(struct tdb *tdbp)
 			adjust += sizeof(struct udphdr);
 		/* Authenticator */
 		if (tdbp->tdb_authalgxform != NULL)
-			adjust += AH_HMAC_HASHLEN;
+			adjust += tdbp->tdb_authalgxform->authsize;
 		/* Padding */
 		adjust += tdbp->tdb_encalgxform->blocksize;
 		break;

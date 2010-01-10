@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.19 2008/06/09 07:07:15 djm Exp $	*/
+/*	$OpenBSD: via.c,v 1.20 2010/01/10 12:43:07 markus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -89,8 +89,8 @@ struct viac3_softc {
 static struct viac3_softc *vc3_sc;
 extern int i386_has_xcrypt;
 
-extern const u_int8_t hmac_ipad_buffer[64];
-extern const u_int8_t hmac_opad_buffer[64];
+extern const u_int8_t hmac_ipad_buffer[HMAC_MAX_BLOCK_LEN];
+extern const u_int8_t hmac_opad_buffer[HMAC_MAX_BLOCK_LEN];
 
 void viac3_crypto_setup(void);
 int viac3_crypto_newsession(u_int32_t *, struct cryptoini *);
@@ -220,13 +220,13 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			axf = &auth_hash_hmac_ripemd_160_96;
 			goto authcommon;
 		case CRYPTO_SHA2_256_HMAC:
-			axf = &auth_hash_hmac_sha2_256_96;
+			axf = &auth_hash_hmac_sha2_256_128;
 			goto authcommon;
 		case CRYPTO_SHA2_384_HMAC:
-			axf = &auth_hash_hmac_sha2_384_96;
+			axf = &auth_hash_hmac_sha2_384_192;
 			goto authcommon;
 		case CRYPTO_SHA2_512_HMAC:
-			axf = &auth_hash_hmac_sha2_512_96;
+			axf = &auth_hash_hmac_sha2_512_256;
 		authcommon:
 			swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
 			    M_NOWAIT|M_ZERO);
@@ -256,7 +256,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			axf->Init(swd->sw_ictx);
 			axf->Update(swd->sw_ictx, c->cri_key, c->cri_klen / 8);
 			axf->Update(swd->sw_ictx, hmac_ipad_buffer,
-			    HMAC_BLOCK_LEN - (c->cri_klen / 8));
+			    axf->blocksize - (c->cri_klen / 8));
 
 			for (i = 0; i < c->cri_klen / 8; i++)
 				c->cri_key[i] ^= (HMAC_IPAD_VAL ^
@@ -265,7 +265,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			axf->Init(swd->sw_octx);
 			axf->Update(swd->sw_octx, c->cri_key, c->cri_klen / 8);
 			axf->Update(swd->sw_octx, hmac_opad_buffer,
-			    HMAC_BLOCK_LEN - (c->cri_klen / 8));
+			    axf->blocksize - (c->cri_klen / 8));
 
 			for (i = 0; i < c->cri_klen / 8; i++)
 				c->cri_key[i] ^= HMAC_OPAD_VAL;

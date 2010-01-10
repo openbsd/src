@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.19 2008/09/06 22:23:21 djm Exp $	*/
+/*	$OpenBSD: xform.h,v 1.20 2010/01/10 12:43:07 markus Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -37,6 +37,7 @@ struct auth_hash {
 	u_int16_t hashsize;
 	u_int16_t authsize;
 	u_int16_t ctxsize;
+	u_int16_t blocksize;
 	void (*Init) (void *);
 	int  (*Update) (void *, const u_int8_t *, u_int16_t);
 	void (*Final) (u_int8_t *, void *);
@@ -87,9 +88,9 @@ extern struct auth_hash auth_hash_key_sha1;
 extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
-extern struct auth_hash auth_hash_hmac_sha2_256_96;
-extern struct auth_hash auth_hash_hmac_sha2_384_96;
-extern struct auth_hash auth_hash_hmac_sha2_512_96;
+extern struct auth_hash auth_hash_hmac_sha2_256_128;
+extern struct auth_hash auth_hash_hmac_sha2_384_192;
+extern struct auth_hash auth_hash_hmac_sha2_512_256;
 
 extern struct comp_algo comp_algo_deflate;
 extern struct comp_algo comp_algo_lzs;

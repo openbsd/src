@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.26 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: safe.c,v 1.27 2010/01/10 12:43:07 markus Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1382,7 +1382,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			MD5Update(&md5ctx, macini->cri_key,
 			    macini->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer,
-			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
+			    HMAC_MD5_BLOCK_LEN - (macini->cri_klen / 8));
 			bcopy(md5ctx.state, ses->ses_hminner,
 			    sizeof(md5ctx.state));
 		} else {
@@ -1390,7 +1390,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			SHA1Update(&sha1ctx, macini->cri_key,
 			    macini->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer,
-			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
+			    HMAC_SHA1_BLOCK_LEN - (macini->cri_klen / 8));
 			bcopy(sha1ctx.state, ses->ses_hminner,
 			    sizeof(sha1ctx.state));
 		}
@@ -1403,7 +1403,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			MD5Update(&md5ctx, macini->cri_key,
 			    macini->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_opad_buffer,
-			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
+			    HMAC_MD5_BLOCK_LEN - (macini->cri_klen / 8));
 			bcopy(md5ctx.state, ses->ses_hmouter,
 			    sizeof(md5ctx.state));
 		} else {
@@ -1411,7 +1411,7 @@ safe_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			SHA1Update(&sha1ctx, macini->cri_key,
 			    macini->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_opad_buffer,
-			    HMAC_BLOCK_LEN - (macini->cri_klen / 8));
+			    HMAC_SHA1_BLOCK_LEN - (macini->cri_klen / 8));
 			bcopy(sha1ctx.state, ses->ses_hmouter,
 			    sizeof(sha1ctx.state));
 		}
