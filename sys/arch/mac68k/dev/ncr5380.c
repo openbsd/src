@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.35 2009/02/16 21:19:05 miod Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.36 2010/01/10 01:14:26 krw Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -333,14 +333,6 @@ mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	reqp->xdata_len = xs->datalen;
 	memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
 	reqp->xcmd.bytes[0] |= reqp->targ_lun << 5;
-
-	/*
-	 * Sanity check on flags...
-	 */
-	if (flags & ITSDONE) {
-		ncr_tprint(reqp, "scsi_cmd: command already done.....\n");
-		xs->flags &= ~ITSDONE;
-	}
 
 #ifdef REAL_DMA
 	/*
