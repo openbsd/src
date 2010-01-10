@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.1 2010/01/10 11:31:08 espie Exp $
+# $OpenBSD: Signature.pm,v 1.2 2010/01/10 12:38:27 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -87,19 +87,39 @@ sub compare
 	}
 }
 
+sub print_error
+{
+	my ($a, $b) = @_;
+
+	print STDERR "Error: $a->{name} exists in two non-comparable versions\n";
+	print STDERR "Someone forgot to bump a PKGNAME\n";
+	print STDERR $a->string, " vs. ", $b->string, "\n";
+}
+
 sub revert_compare
 {
 	my ($b, $a) = @_;
 
 	my $awins = 0;
 	my $bwins = 0;
+	my $done = {};
 	while (my ($k, $v) = each %{$a->{extra}}) {
-		next if !defined $b->{extra}{$k};
+		if (!defined $b->{extra}{$k}) {
+			$a->print_error($b);
+			return undef;
+		}
+		$done->{$k} = 1;
 		my $r = $v->compare($b->{extra}{$k});
 		if ($r > 0) {
 			$awins++;
 		} elsif ($r < 0) {
 			$bwins++;
+		}
+	}
+	for my $k (keys %{$b->{extra}}) {
+		if (!$done->{$k}) {
+			$a->print_error($b);
+			return undef;
 		}
 	}
 	if ($awins == 0) {
