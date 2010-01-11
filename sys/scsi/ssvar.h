@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.14 2010/01/09 21:12:06 dlg Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.15 2010/01/11 08:56:17 krw Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -74,8 +74,9 @@ struct ss_softc {
 	const struct quirkdata *quirkdata; /* if we have a rogue entry */
 	struct ss_special special;	/* special handlers for spec. devices */
 	struct timeout timeout;
-	struct mutex queue_mtx;
-	struct mutex start_mtx;
+	struct mutex sc_buf_mtx;
+	struct mutex sc_start_mtx;
+	u_int sc_start_count;
 };
 
 struct buf *ss_buf_dequeue(struct ss_softc *);

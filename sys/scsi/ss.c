@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.66 2010/01/09 21:12:06 dlg Exp $	*/
+/*	$OpenBSD: ss.c,v 1.67 2010/01/11 08:56:17 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -354,8 +354,8 @@ ssattach(parent, self, aux)
 	/* XXX fill in the rest of the scan_io struct by calling the
 	   compute_sizes routine */
 
-	mtx_init(&ss->queue_mtx, IPL_BIO);
-	mtx_init(&ss->start_mtx, IPL_BIO);
+	mtx_init(&ss->sc_buf_mtx, IPL_BIO);
+	mtx_init(&ss->sc_start_mtx, IPL_BIO);
 
 	timeout_set(&ss->timeout, ssstart, ss);
 
@@ -610,13 +610,13 @@ ss_buf_enqueue(struct ss_softc *ss, struct buf *bp)
 {
 	struct buf *dp;
 
-	mtx_enter(&ss->queue_mtx);
+	mtx_enter(&ss->sc_buf_mtx);
 	dp = &ss->buf_queue;
 	bp->b_actf = NULL;
 	bp->b_actb = dp->b_actb;
 	*dp->b_actb = bp;
 	dp->b_actb = &bp->b_actf;
-	mtx_leave(&ss->queue_mtx);
+	mtx_leave(&ss->sc_buf_mtx);
 }
 
 struct buf *
@@ -624,13 +624,13 @@ ss_buf_dequeue(struct ss_softc *ss)
 {
 	struct buf *bp;
 
-	mtx_enter(&ss->queue_mtx);
+	mtx_enter(&ss->sc_buf_mtx);
 	bp = ss->buf_queue.b_actf;
 	if (bp != NULL)
 		ss->buf_queue.b_actf = bp->b_actf;
 	if (ss->buf_queue.b_actf == NULL)
 		ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
-	mtx_leave(&ss->queue_mtx);
+	mtx_leave(&ss->sc_buf_mtx);
 
 	return (bp);
 }
@@ -638,12 +638,12 @@ ss_buf_dequeue(struct ss_softc *ss)
 void
 ss_buf_requeue(struct ss_softc *ss, struct buf *bp)
 {
-	mtx_enter(&ss->queue_mtx);
+	mtx_enter(&ss->sc_buf_mtx);
 	bp->b_actf = ss->buf_queue.b_actf;
 	ss->buf_queue.b_actf = bp;
 	if (bp->b_actf == NULL)
 		ss->buf_queue.b_actb = &bp->b_actf;
-	mtx_leave(&ss->queue_mtx);
+	mtx_leave(&ss->sc_buf_mtx);
 }
 
 
@@ -673,6 +673,14 @@ ssstart(v)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart\n"));
 
+	mtx_enter(&ss->sc_start_mtx);
+	ss->sc_start_count++;
+	if (ss->sc_start_count > 1) {
+		mtx_leave(&ss->sc_start_mtx);
+		return;
+	}
+	mtx_leave(&ss->sc_start_mtx);
+restart:
 	CLR(ss->flags, SSF_WAITING);
 	while (!ISSET(ss->flags, SSF_WAITING) &&
 	    (bp = ss_buf_dequeue(ss)) != NULL) {
@@ -701,6 +709,14 @@ ssstart(v)
 			scsi_xs_exec(xs);
 		}
 	}
+	mtx_enter(&ss->sc_start_mtx);
+	ss->sc_start_count--;
+	if (ss->sc_start_count != 0) {
+		ss->sc_start_count = 1;
+		mtx_leave(&ss->sc_start_mtx);
+		goto restart;
+	}
+	mtx_leave(&ss->sc_start_mtx);
 }
 
 void

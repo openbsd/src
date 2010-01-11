@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.89 2010/01/09 21:12:06 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.90 2010/01/11 08:56:17 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -218,8 +218,9 @@ struct st_softc {
 
 	struct buf buf_queue;		/* the queue of pending IO operations */
 	struct timeout sc_timeout;
-	struct mutex queue_mtx;
-	struct mutex start_mtx;
+	struct mutex sc_buf_mtx;
+	struct mutex sc_start_mtx;
+	u_int sc_start_count;
 };
 
 
@@ -339,8 +340,8 @@ stattach(struct device *parent, struct device *self, void *aux)
 	st_identify_drive(st, sa->sa_inqbuf);
 	printf("\n");
 
-	mtx_init(&st->queue_mtx, IPL_BIO);
-	mtx_init(&st->start_mtx, IPL_BIO);
+	mtx_init(&st->sc_buf_mtx, IPL_BIO);
+	mtx_init(&st->sc_start_mtx, IPL_BIO);
 
 	timeout_set(&st->sc_timeout, ststart, st);
 	
@@ -919,13 +920,13 @@ st_buf_enqueue(struct st_softc *st, struct buf *bp)
 {
 	struct buf *dp;
 
-	mtx_enter(&st->queue_mtx);
+	mtx_enter(&st->sc_buf_mtx);
 	dp = &st->buf_queue;
 	bp->b_actf = NULL;
 	bp->b_actb = dp->b_actb;
 	*dp->b_actb = bp;
 	dp->b_actb = &bp->b_actf;
-	mtx_leave(&st->queue_mtx);
+	mtx_leave(&st->sc_buf_mtx);
 }
 
 struct buf *
@@ -933,13 +934,13 @@ st_buf_dequeue(struct st_softc *st)
 {
 	struct buf *bp;
 
-	mtx_enter(&st->queue_mtx);
+	mtx_enter(&st->sc_buf_mtx);
 	bp = st->buf_queue.b_actf;
 	if (bp != NULL)
 		st->buf_queue.b_actf = bp->b_actf;
 	if (st->buf_queue.b_actf == NULL)
 		st->buf_queue.b_actb = &st->buf_queue.b_actf;
-	mtx_leave(&st->queue_mtx);
+	mtx_leave(&st->sc_buf_mtx);
 
 	return (bp);
 }
@@ -947,12 +948,12 @@ st_buf_dequeue(struct st_softc *st)
 void
 st_buf_requeue(struct st_softc *st, struct buf *bp)
 {
-	mtx_enter(&st->queue_mtx);
+	mtx_enter(&st->sc_buf_mtx);
 	bp->b_actf = st->buf_queue.b_actf;
 	st->buf_queue.b_actf = bp;
 	if (bp->b_actf == NULL)
 		st->buf_queue.b_actb = &bp->b_actf;
-	mtx_leave(&st->queue_mtx);
+	mtx_leave(&st->sc_buf_mtx);
 }
 
 
@@ -985,11 +986,14 @@ ststart(void *v)
 	if (st->flags & ST_DYING)
 		return;
 
-	/*
-	 * See if there is a buf to do and we are not already
-	 * doing one
-	 */
-
+	mtx_enter(&st->sc_start_mtx);
+	st->sc_start_count++;
+	if (st->sc_start_count > 1) {
+		mtx_leave(&st->sc_start_mtx);
+		return;
+	}
+	mtx_leave(&st->sc_start_mtx);
+restart:
 	CLR(st->flags, ST_WAITING);
 	while (!ISSET(st->flags, ST_WAITING) &&
 	    (bp = st_buf_dequeue(st)) != NULL) {
@@ -1114,6 +1118,15 @@ ststart(void *v)
 		 */
 		scsi_xs_exec(xs);
 	} /* go back and see if we can cram more work in.. */
+
+	mtx_enter(&st->sc_start_mtx);
+	st->sc_start_count--;
+	if (st->sc_start_count != 0) {
+		st->sc_start_count = 1;
+		mtx_leave(&st->sc_start_mtx);
+		goto restart;
+	}
+	mtx_leave(&st->sc_start_mtx);
 }
 
 void

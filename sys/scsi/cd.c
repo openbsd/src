@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.159 2010/01/11 00:44:40 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.160 2010/01/11 08:56:17 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -110,8 +110,9 @@ struct cd_softc {
 		daddr64_t disksize;	/* total number sectors */
 	} sc_params;
 	struct buf sc_buf_queue;
-	struct mutex sc_queue_mtx;
+	struct mutex sc_buf_mtx;
 	struct mutex sc_start_mtx;
+	u_int sc_start_count;
 	struct timeout sc_timeout;
 	void *sc_cdpwrhook;		/* our power hook */
 };
@@ -215,7 +216,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach:\n"));
 
-	mtx_init(&sc->sc_queue_mtx, IPL_BIO);
+	mtx_init(&sc->sc_buf_mtx, IPL_BIO);
 	mtx_init(&sc->sc_start_mtx, IPL_BIO);
 
 	/*
@@ -525,9 +526,9 @@ cdstrategy(struct buf *bp)
 	/*
 	 * Place it in the queue of disk activities for this disk
 	 */
-	mtx_enter(&sc->sc_queue_mtx);
+	mtx_enter(&sc->sc_buf_mtx);
 	disksort(&sc->sc_buf_queue, bp);
-	mtx_leave(&sc->sc_queue_mtx);
+	mtx_leave(&sc->sc_buf_mtx);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -557,13 +558,13 @@ cd_buf_dequeue(struct cd_softc *sc)
 {
 	struct buf *bp;
 
-	mtx_enter(&sc->sc_queue_mtx);
+	mtx_enter(&sc->sc_buf_mtx);
 	bp = sc->sc_buf_queue.b_actf;
 	if (bp != NULL)
 		sc->sc_buf_queue.b_actf = bp->b_actf;
 	if (sc->sc_buf_queue.b_actf == NULL)
 		sc->sc_buf_queue.b_actb = &sc->sc_buf_queue.b_actf;
-	mtx_leave(&sc->sc_queue_mtx);
+	mtx_leave(&sc->sc_buf_mtx);
 
 	return (bp);
 }
@@ -571,12 +572,12 @@ cd_buf_dequeue(struct cd_softc *sc)
 void
 cd_buf_requeue(struct cd_softc *sc, struct buf *bp)
 {
-	mtx_enter(&sc->sc_queue_mtx);
+	mtx_enter(&sc->sc_buf_mtx);
 	bp->b_actf = sc->sc_buf_queue.b_actf;
 	sc->sc_buf_queue.b_actf = bp;
 	if (bp->b_actf == NULL)
 		sc->sc_buf_queue.b_actb = &bp->b_actf;
-	mtx_leave(&sc->sc_queue_mtx);
+	mtx_leave(&sc->sc_buf_mtx);
 }
 
 /*
@@ -610,10 +611,15 @@ cdstart(void *v)
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart\n"));
-	/*
-	 * Check if the device has room for another command
-	 */
 
+	mtx_enter(&sc->sc_start_mtx);
+	sc->sc_start_count++;
+	if (sc->sc_start_count > 1) {
+		mtx_leave(&sc->sc_start_mtx);
+		return;
+	}
+	mtx_leave(&sc->sc_start_mtx);
+restart:
 	CLR(sc->sc_flags, CDF_WAITING);
 	while (!ISSET(sc->sc_flags, CDF_WAITING) &&
 	    (bp = cd_buf_dequeue(sc)) != NULL) {
@@ -694,6 +700,14 @@ cdstart(void *v)
 
 		scsi_xs_exec(xs);
 	}
+	mtx_enter(&sc->sc_start_mtx);
+	sc->sc_start_count--;
+	if (sc->sc_start_count != 0) {
+		sc->sc_start_count = 1;
+		mtx_leave(&sc->sc_start_mtx);
+		goto restart;
+	}
+	mtx_leave(&sc->sc_start_mtx);
 }
 
 void
