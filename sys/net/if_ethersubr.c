@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.136 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.137 2010/01/11 03:50:56 yasuoka Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -145,6 +145,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#endif
+
+#ifdef PIPEX
+#include <net/pipex.h>
 #endif
 
 #ifdef NETATALK
@@ -736,7 +740,7 @@ decapsulate:
 		aarpinput((struct arpcom *)ifp, m);
 		goto done;
 #endif
-#if NPPPOE > 0
+#if NPPPOE > 0 || defined(PIPEX)
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
 		/* XXX we dont have this flag */
@@ -758,7 +762,16 @@ decapsulate:
 
 		eh_tmp = mtod(m, struct ether_header *);
 		bcopy(eh, eh_tmp, sizeof(struct ether_header));
+#ifdef PIPEX
+	{
+		struct pipex_session *session;
 
+		if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
+			pipex_pppoe_input(m, session);
+			return;
+		}
+	}
+#endif
 		if (etype == ETHERTYPE_PPPOEDISC)
 			inq = &pppoediscinq;
 		else
@@ -766,7 +779,7 @@ decapsulate:
 
 		schednetisr(NETISR_PPPOE);
 		break;
-#endif /* NPPPOE > 0 */
+#endif /* NPPPOE > 0 || defined(PIPEX) */
 #ifdef AOE
 	case ETHERTYPE_AOE:
 		aoe_input(ifp, m);

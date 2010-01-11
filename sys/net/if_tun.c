@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.100 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.101 2010/01/11 03:50:56 yasuoka Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,10 @@
 #include <netinet/if_ether.h>
 #endif
 
+#ifdef PIPEX
+#include <net/pipex.h>
+#endif
+
 #ifdef NETATALK
 #include <netatalk/at.h>
 #include <netatalk/at_var.h>
@@ -99,6 +103,10 @@ struct tun_softc {
 	pid_t		tun_pgid;	/* the process group - if any */
 	u_short		tun_flags;	/* misc flags */
 #define tun_if	arpcom.ac_if
+#ifdef PIPEX
+	/* pipex context */
+	struct pipex_iface_context	pipex_iface;
+#endif
 };
 
 #ifdef	TUN_DEBUG
@@ -155,6 +163,9 @@ tunattach(int n)
 {
 	LIST_INIT(&tun_softc_list);
 	if_clone_attach(&tun_cloner);
+#ifdef PIPEX
+	pipex_init();
+#endif
 }
 
 int
@@ -231,6 +242,9 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	s = splnet();
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
 	splx(s);
+#ifdef PIPEX
+	pipex_iface_init(&tp->pipex_iface, ifp);
+#endif
 
 	return (0);
 }
@@ -241,6 +255,9 @@ tun_clone_destroy(struct ifnet *ifp)
 	struct tun_softc	*tp = ifp->if_softc;
 	int			 s;
 
+#ifdef PIPEX
+	pipex_iface_stop(&tp->pipex_iface);
+#endif
 	tun_wakeup(tp);
 
 	s = splhigh();
@@ -583,6 +600,9 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct tun_softc	*tp = ifp->if_softc;
 	int			 s, len, error;
 	u_int32_t		*af;
+#ifdef PIPEX
+	struct pipex_session *session;
+#endif /* PIPEX */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m0);
@@ -614,6 +634,13 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
+#ifdef PIPEX
+	if ((session = pipex_ip_lookup_session(m0, &tp->pipex_iface)) != NULL) {
+		pipex_ip_output(m0, session);
+		simple_unlock(&tp->pppac_lock);
+		return (0);
+	}
+#endif /* PIPEX */
 
 	len = m0->m_pkthdr.len;
 	IFQ_ENQUEUE(&ifp->if_snd, m0, NULL, error);
@@ -746,8 +773,17 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    sizeof(tp->arpcom.ac_enaddr));
 		break;
 	default:
+#ifdef PIPEX
+	    {
+		int ret;
+		ret = pipex_ioctl(&tp->pipex_iface, cmd, data);
+		splx(s);
+		return ret;
+	    }
+#else
 		splx(s);
 		return (ENOTTY);
+#endif
 	}
 	splx(s);
 	return (0);

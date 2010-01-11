@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.483 2009/11/25 19:07:52 oga Exp $
+#	$OpenBSD: files,v 1.484 2010/01/11 03:50:55 yasuoka Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -811,6 +811,7 @@ file net/if_tun.c			tun			needs-count
 file net/if_bridge.c			bridge			needs-count
 file net/bridgestp.c			bridge
 file net/if_vlan.c			vlan			needs-count
+file net/pipex.c			pipex
 file net/radix.c
 file net/radix_mpath.c			!small_kernel
 file net/raw_cb.c
