@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.681 2010/01/11 03:52:03 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.682 2010/01/11 04:07:07 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -849,9 +849,10 @@ pf_state_key_setup(struct pf_pdesc *pd,
 	    PF_ANEQ(*daddr, pd->dst, pd->af) ||
 	    *sport != pd->osport || *dport != pd->odport ||
 	    wrdom != pd->rdomain) {	/* NAT */
-		if ((sk2 = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL)
+		if ((sk2 = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL) {
+			pool_put(&pf_state_key_pl, sk1);
 			return (ENOMEM);
-
+		}
 		PF_ACPY(&sk2->addr[pd->sidx], *saddr, pd->af);
 		PF_ACPY(&sk2->addr[pd->didx], *daddr, pd->af);
 		sk2->port[pd->sidx] = *sport;
