@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.48 2009/08/13 15:00:14 jasper Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.49 2010/01/11 07:13:30 krw Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -531,6 +531,7 @@ cd9660_readdir(v)
 	}
 	idp->eofflag = 1;
 	idp->curroff = uio->uio_offset;
+	idp->uio_off = uio->uio_offset;
 
 	if ((entryoffsetinblock = idp->curroff & bmask) &&
 	    (error = cd9660_bufatoff(dp, (off_t)idp->curroff, NULL, &bp))) {
