@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.17 2010/01/10 21:27:59 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.18 2010/01/11 12:29:13 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -44,7 +44,7 @@ sub handle_options
 		}
 	};
 	try {
-		getopts('hciInqvsxB:f:F:L:'.$opt_string, $hash);
+		getopts('hciInqvsxB:D:F:L:'.$opt_string, $hash);
 	} catchall {
 		Usage($_);
 	};
