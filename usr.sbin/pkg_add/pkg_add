@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.465 2010/01/10 21:27:59 espie Exp $
+# $OpenBSD: pkg_add,v 1.466 2010/01/11 12:25:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -291,12 +291,15 @@ sub install_issues
 	my @conflicts = $set->find_conflicts($state);
 
 	return 0 if @conflicts == 0;
-	if (!$state->{allow_replacing}) {
-		$state->errsay("Can't install ", $set->print, 
-		    " because of conflicts (",join(',', @conflicts), ")");
-		return "conflicts";
-	}
 
+	if (!$state->{allow_replacing}) {
+		if (grep { !/^.libs\d*\-/ && !/^partial\-/ } @conflicts) {
+			$state->errsay("Can't install ", $set->print, 
+			    " because of conflicts (",
+			    join(',', @conflicts), ")");
+			return "conflicts";
+		}
+	}
 
 	my $later = 0;
 	for my $toreplace (@conflicts) {
@@ -559,8 +562,8 @@ sub really_add
 	local $SIG{'TERM'} = $handler;
 
 	if ($replacing) {
-		require OpenBSD::Replace;
-		OpenBSD::Replace::save_old_libraries($set, $state);
+		require OpenBSD::OldLibs;
+		OpenBSD::OldLibs->save($set, $state);
 	}
 
 	$set->compute_size;
