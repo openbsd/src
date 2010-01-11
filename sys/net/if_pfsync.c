@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.136 2010/01/10 23:54:21 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.137 2010/01/11 00:19:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1878,8 +1878,6 @@ pfsync_deferred(struct pf_state *st, int drop)
 	panic("pfsync_send_deferred: unable to find deferred state");
 }
 
-u_int pfsync_upds = 0;
-
 void
 pfsync_update_state(struct pf_state *st)
 {
@@ -1927,10 +1925,8 @@ pfsync_update_state(struct pf_state *st)
 		    st->sync_state);
 	}
 
-	if (sync || (time_uptime - st->pfsync_time) < 2) {
-		pfsync_upds++;
+	if (sync || (time_uptime - st->pfsync_time) < 2)
 		schednetisr(NETISR_PFSYNC);
-	}
 }
 
 void
