@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2009/03/31 21:03:48 tobias Exp $	*/
+/*	$OpenBSD: parse.y,v 1.42 2010/01/11 03:55:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -152,7 +152,7 @@ struct hostapd_ieee80211_frame *frame_ieee80211;
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
 %token	ADDRESS PORT ON NOTIFY TTL INCLUDE ROUTE ROAMING RSSI TXRATE FREQ
-%token	HOPPER DELAY
+%token	HOPPER DELAY NE LE GE ARROW
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.in>		ipv4addr
@@ -1079,7 +1079,7 @@ passive		: /* empty */
 		}
 		;
 
-assign		: '-' '>'
+assign		: ARROW
 		;
 
 mask		: '&'
@@ -1123,11 +1123,11 @@ unaryop		: /* any */
 		{
 			$$ = HOSTAPD_OP_NE;
 		}
-		| '!' '='
+		| NE
 		{
 			$$ = HOSTAPD_OP_NE;
 		}
-		| '<' '='
+		| LE
 		{
 			$$ = HOSTAPD_OP_LE;
 		}
@@ -1135,7 +1135,7 @@ unaryop		: /* any */
 		{
 			$$ = HOSTAPD_OP_LT;
 		}
-		| '>' '='
+		| GE
 		{
 			$$ = HOSTAPD_OP_GE;
 		}
@@ -1494,6 +1494,30 @@ top:
 		if (yylval.v.string == NULL)
 			hostapd_fatal("yylex: strdup");
 		return (STRING);
+	case '-':
+		next = lgetc(0);
+		if (next == '>')
+			return (ARROW);
+		lungetc(next);
+		break;
+	case '!':
+		next = lgetc(0);
+		if (next == '=')
+			return (NE);
+		lungetc(next);
+		break;		
+	case '<':
+		next = lgetc(0);
+		if (next == '=')
+			return (LE);
+		lungetc(next);
+		break;
+	case '>':
+		next = lgetc(0);
+		if (next == '=')
+			return (GE);
+		lungetc(next);
+		break;
 	}
 
 #define allowed_to_end_number(x) \
