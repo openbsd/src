@@ -15,4 +15,3 @@ easy to plug another interface in (mostly done)
 cases, we're going to install this package right away, so we should try to
 keep it open to avoid spurious ftp disconnects.
 - get an update path for libraries to be able to adjust dependencies correctly.
-- allow pkg_add newpackage to do updates or install.
