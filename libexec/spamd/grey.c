@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.48 2009/11/12 04:08:46 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.49 2010/01/11 10:00:22 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -146,7 +146,7 @@ server_lookup(struct sockaddr *client, struct sockaddr *proxy,
 	if (client->sa_family == AF_INET)
 		return (server_lookup4(satosin(client), satosin(proxy),
 		    satosin(server)));
-	
+
 	if (client->sa_family == AF_INET6)
 		return (server_lookup6(satosin6(client), satosin6(proxy),
 		    satosin6(server)));
@@ -169,7 +169,7 @@ server_lookup4(struct sockaddr_in *client, struct sockaddr_in *proxy,
 	memcpy(&pnl.daddr.v4, &proxy->sin_addr.s_addr, sizeof pnl.daddr.v4);
 	pnl.sport = client->sin_port;
 	pnl.dport = proxy->sin_port;
-	
+
 	if (ioctl(pfdev, DIOCNATLOOK, &pnl) == -1)
 		return (-1);
 
@@ -179,7 +179,7 @@ server_lookup4(struct sockaddr_in *client, struct sockaddr_in *proxy,
 	memcpy(&server->sin_addr.s_addr, &pnl.rdaddr.v4,
 	    sizeof server->sin_addr.s_addr);
 	server->sin_port = pnl.rdport;
-		
+
 	return (0);
 }
 
@@ -197,7 +197,7 @@ server_lookup6(struct sockaddr_in6 *client, struct sockaddr_in6 *proxy,
 	memcpy(&pnl.daddr.v6, &proxy->sin6_addr.s6_addr, sizeof pnl.daddr.v6);
 	pnl.sport = client->sin6_port;
 	pnl.dport = proxy->sin6_port;
-	
+
 	if (ioctl(pfdev, DIOCNATLOOK, &pnl) == -1)
 		return (-1);
 

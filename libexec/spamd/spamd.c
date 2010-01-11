@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.106 2009/05/20 20:37:43 thib Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.107 2010/01/11 09:57:00 beck Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -117,7 +117,7 @@ u_short sync_port;
 
 extern struct sdlist *blacklists;
 extern int pfdev;
-extern char *low_prio_mx_ip; 
+extern char *low_prio_mx_ip;
 
 int conffd = -1;
 int trapfd = -1;
@@ -560,7 +560,7 @@ setlog(char *p, size_t len, char *f)
 		*s = '\0';
 }
 
-/* 
+/*
  * Get address client connected to, by doing a DIOCNATLOOK call.
  * Uses server_lookup code from ftp-proxy.
  */
@@ -580,10 +580,10 @@ getcaddr(struct con *cp) {
 		return;
 	error = getnameinfo(odp, odp->sa_len, cp->caddr, sizeof(cp->caddr),
 	    NULL, 0, NI_NUMERICHOST);
-	if (error) 
+	if (error)
 		cp->caddr[0] = '\0';
 }
-	
+
 
 void
 gethelo(char *p, size_t len, char *f)
@@ -739,7 +739,7 @@ nextstate(struct con *cp)
 		if (match(cp->ibuf, "HELO") ||
 		    match(cp->ibuf, "EHLO")) {
 			int nextstate = 2;
-			cp->helo[0] = '\0'; 
+			cp->helo[0] = '\0';
 			gethelo(cp->helo, sizeof cp->helo, cp->ibuf);
 			if (cp->helo[0] == '\0') {
 				nextstate = 0;
@@ -857,7 +857,7 @@ nextstate(struct con *cp)
 				goto done;
 			}
 		} else {
-			if (match(cp->ibuf, "NOOP")) 
+			if (match(cp->ibuf, "NOOP"))
 				snprintf(cp->obuf, cp->osize,
 				    "250 2.0.0 OK I did nothing\r\n");
 			else
@@ -1116,7 +1116,7 @@ main(int argc, char *argv[])
 				errx(1, "-h arg too long");
 			break;
 		case 's':
-			i = strtonum(optarg, 0, 10, &errstr);			
+			i = strtonum(optarg, 0, 10, &errstr);
 			if (errstr)
 				usage();
 			stutter = i;
