@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.32 2010/01/09 05:44:41 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.33 2010/01/11 02:04:25 reyk Exp $	*/
 
 /******************************************************************************
 
@@ -1359,15 +1359,14 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	
 	m_clsetwms(ifp, MCLBYTES, 4, sc->num_rx_desc);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
 #ifdef IX_CSUM_OFFLOAD
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-				IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 #endif
 
 	sc->max_frame_size =
