@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.14 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: chroot.2,v 1.15 2010/01/11 22:17:36 deraadt Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 11 2010 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -74,16 +74,16 @@ is set to indicate an error.
 .Sh EXAMPLES
 The following example changes the root directory to
 .Va newroot ,
-sets the current directory to the new root, and drops any
+sets the current directory to the new root, and drops some
 setuid privileges.
+There may be other privileges which need to be dropped as well.
 .Bd -literal -offset indent
 #include <err.h>
 #include <unistd.h>
 
 if (chroot(newroot) != 0 || chdir("/") != 0)
 	err(1, "%s", newroot);
-seteuid(getuid());
-setuid(getuid());
+setreseuid(getuid(), getuid(), getuid());
 .Ed
 .Sh ERRORS
 .Fn chroot
