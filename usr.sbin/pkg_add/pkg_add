@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.466 2010/01/11 12:25:38 espie Exp $
+# $OpenBSD: pkg_add,v 1.467 2010/01/11 12:49:53 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -284,6 +284,41 @@ sub mark_as_manual_install
 	}
 }
 
+sub updates
+{
+	my ($n, $plist) = @_;
+	if (!$n->location->update_info->match_pkgpath($plist)) {
+		return 0;
+	}
+	if (!$n->plist->conflict_list->conflicts_with($plist->pkgname)) {
+		return 0;
+	}
+	my $r = OpenBSD::PackageName->from_string($n->pkgname)->compare(
+	    OpenBSD::PackageName->from_string($plist->pkgname));
+	if (defined $r && $r < 0) {
+		return 0;
+	}
+	return 1;
+}
+
+sub is_an_update_from
+{
+	my ($set, @conflicts) = @_;
+LOOP:	for my $c (@conflicts) {
+		next if $c =~ m/^\.libs\d*\-/;
+		next if $c =~ m/^partial\-/;
+		my $plist = OpenBSD::PackingList->from_installation($c, \&OpenBSD::PackingList::UpdateInfoOnly);
+		return 0 unless defined $plist;
+		for my $n ($set->newer) {
+			if (updates($n, $plist)) {
+				next LOOP;
+			}
+		}
+	    	return 0;
+	}
+	return 1;
+}
+
 sub install_issues
 {
 	my ($set, $state) = @_;
@@ -294,10 +329,12 @@ sub install_issues
 
 	if (!$state->{allow_replacing}) {
 		if (grep { !/^.libs\d*\-/ && !/^partial\-/ } @conflicts) {
-			$state->errsay("Can't install ", $set->print, 
-			    " because of conflicts (",
-			    join(',', @conflicts), ")");
-			return "conflicts";
+			if (!$set->is_an_update_from(@conflicts)) {
+				$state->errsay("Can't install ", $set->print, 
+				    " because of conflicts (",
+				    join(',', @conflicts), ")");
+				return "conflicts";
+			}
 		}
 	}
 
