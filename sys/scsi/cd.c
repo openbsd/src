@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.158 2010/01/09 21:12:06 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.159 2010/01/11 00:44:40 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -561,6 +561,8 @@ cd_buf_dequeue(struct cd_softc *sc)
 	bp = sc->sc_buf_queue.b_actf;
 	if (bp != NULL)
 		sc->sc_buf_queue.b_actf = bp->b_actf;
+	if (sc->sc_buf_queue.b_actf == NULL)
+		sc->sc_buf_queue.b_actb = &sc->sc_buf_queue.b_actf;
 	mtx_leave(&sc->sc_queue_mtx);
 
 	return (bp);
@@ -572,6 +574,8 @@ cd_buf_requeue(struct cd_softc *sc, struct buf *bp)
 	mtx_enter(&sc->sc_queue_mtx);
 	bp->b_actf = sc->sc_buf_queue.b_actf;
 	sc->sc_buf_queue.b_actf = bp;
+	if (bp->b_actf == NULL)
+		sc->sc_buf_queue.b_actb = &bp->b_actf;
 	mtx_leave(&sc->sc_queue_mtx);
 }
 
