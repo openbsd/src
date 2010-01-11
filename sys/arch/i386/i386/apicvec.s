@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.20 2009/08/10 16:40:50 oga Exp $ */
+/* $OpenBSD: apicvec.s,v 1.21 2010/01/11 23:09:52 kettenis Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -299,6 +299,7 @@ _C_LABEL(Xintr_##name##num):						\
 	jz      _C_LABEL(Xstray_##name##num)				;\
 	APIC_STRAY_INIT			/* nobody claimed it yet */	;\
 7:									 \
+	incl	CPUVAR(IDEPTH)						;\
 	LOCK_KERNEL(IF_PPL(%esp))					;\
 	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
@@ -315,6 +316,7 @@ _C_LABEL(Xintr_##name##num):						\
 	adcl	$0,IH_COUNT+4(%ebx)					;\
 4:									 \
 	UNLOCK_KERNEL(IF_PPL(%esp))					;\
+	decl	CPUVAR(IDEPTH)						;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
