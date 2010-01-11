@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.27 2010/01/10 04:04:13 kettenis Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.28 2010/01/11 23:21:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -98,6 +98,7 @@ struct xl_pci_softc {
 	struct xl_softc		psc_softc;
 	pci_chipset_tag_t	psc_pc;
 	bus_size_t		psc_iosize;
+	bus_size_t		psc_funsize;
 };
 
 struct cfattach xl_pci_ca = {
@@ -277,6 +278,7 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #endif
+	psc->psc_iosize = iosize;
 
 	if (sc->xl_flags & XL_FLAG_FUNCREG) {
 		if (pci_mapreg_map(pa, XL_PCI_FUNCMEM, PCI_MAPREG_TYPE_MEM, 0,
@@ -285,6 +287,7 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 			bus_space_unmap(sc->xl_btag, sc->xl_bhandle, iosize);
 			return;
 		}
+		psc->psc_funsize = funsize;
 		sc->intr_ack = xl_pci_intr_ack;
 	}
 
@@ -311,7 +314,6 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 			bus_space_unmap(sc->xl_funct, sc->xl_funch, funsize);
 		return;
 	}
-	psc->psc_iosize = iosize;
 	printf(": %s", intrstr);
 
 	xl_attach(sc);
@@ -323,9 +325,14 @@ xl_pci_detach(struct device *self, int flags)
 	struct xl_pci_softc *psc = (void *)self;
 	struct xl_softc *sc = &psc->psc_softc;
 
-	pci_intr_disestablish(psc->psc_pc, sc->xl_intrhand);
-	xl_detach(sc);
-	bus_space_unmap(sc->xl_btag, sc->xl_bhandle, psc->psc_iosize);
+	if (sc->xl_intrhand != NULL) {
+		pci_intr_disestablish(psc->psc_pc, sc->xl_intrhand);
+		xl_detach(sc);
+	}
+	if (psc->psc_iosize > 0)
+		bus_space_unmap(sc->xl_btag, sc->xl_bhandle, psc->psc_iosize);
+	if (psc->psc_funsize > 0)
+		bus_space_unmap(sc->xl_funct, sc->xl_funch, psc->psc_funsize);
 	return (0);
 }
 
