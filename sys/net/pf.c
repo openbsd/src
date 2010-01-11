@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.680 2009/12/24 04:24:19 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.681 2010/01/11 03:52:03 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -828,6 +828,7 @@ pf_state_key_setup(struct pf_pdesc *pd,
 	struct pf_addr **saddr, struct pf_addr **daddr,
 	u_int16_t *sport, u_int16_t *dport, int rtableid)
 {
+	/* if returning error we MUST pool_put state keys ourselves */
 	struct pf_state_key *sk1, *sk2;
 	u_int wrdom = pd->rdomain;
 
@@ -849,7 +850,7 @@ pf_state_key_setup(struct pf_pdesc *pd,
 	    *sport != pd->osport || *dport != pd->odport ||
 	    wrdom != pd->rdomain) {	/* NAT */
 		if ((sk2 = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL)
-			return (ENOMEM); /* caller must handle cleanup */
+			return (ENOMEM);
 
 		PF_ACPY(&sk2->addr[pd->sidx], *saddr, pd->af);
 		PF_ACPY(&sk2->addr[pd->didx], *daddr, pd->af);
@@ -877,7 +878,6 @@ pf_state_key_setup(struct pf_pdesc *pd,
 
 	return (0);
 }
-
 
 int
 pf_state_insert(struct pfi_kif *kif, struct pf_state_key *skw,
@@ -1035,7 +1035,6 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int dir, int *more)
 }
 
 /* END state table stuff */
-
 
 void
 pf_purge_thread(void *v)
@@ -3168,38 +3167,32 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 		if (s->state_flags & PFSTATE_SCRUB_TCP &&
 		    pf_normalize_tcp_init(m, off, pd, th, &s->src, &s->dst)) {
 			REASON_SET(&reason, PFRES_MEMORY);
-			pf_src_tree_remove_state(s);
-			STATE_DEC_COUNTERS(s);
-			pool_put(&pf_state_pl, s);
-			return (PF_DROP);
+			goto csfailed;
 		}
 		if (s->state_flags & PFSTATE_SCRUB_TCP && s->src.scrub &&
 		    pf_normalize_tcp_stateful(m, off, pd, &reason, th, s,
 		    &s->src, &s->dst, rewrite)) {
 			/* This really shouldn't happen!!! */
 			DPFPRINTF(PF_DEBUG_URGENT,
-			    ("pf_normalize_tcp_stateful failed on first pkt"));
-			pf_normalize_tcp_cleanup(s);
-			pf_src_tree_remove_state(s);
-			STATE_DEC_COUNTERS(s);
-			pool_put(&pf_state_pl, s);
-			return (PF_DROP);
+			    ("pf_normalize_tcp_stateful failed on first pkt\n"));
+			goto csfailed;
 		}
 	}
 	s->direction = pd->dir;
 
 	if (pf_state_key_setup(pd, skw, sks, &saddr, &daddr, &sport, &dport,
-	    act->rtableid))
-		goto csfailed;	/* XXX leaks */
+	    act->rtableid)) {
+		REASON_SET(&reason, PFRES_MEMORY);
+		goto csfailed;
+	}
 
 	if (pf_state_insert(BOUND_IFACE(r, kif), *skw, *sks, s)) {
-		if (pd->proto == IPPROTO_TCP)
-			pf_normalize_tcp_cleanup(s);
+		if (*skw != *sks)
+			pool_put(&pf_state_key_pl, *skw);
+		pool_put(&pf_state_key_pl, *sks);
+		*skw = *sks = NULL;
 		REASON_SET(&reason, PFRES_STATEINS);
-		pf_src_tree_remove_state(s);
-		STATE_DEC_COUNTERS(s);
-		pool_put(&pf_state_pl, s);
-		return (PF_DROP);
+		goto csfailed;
 	} else
 		*sm = s;
 
@@ -3246,19 +3239,15 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 	return (PF_PASS);
 
 csfailed:
-	/* skw/sks checks obsolete */
-	if (*skw != NULL) {
-		pool_put(&pf_state_key_pl, *skw);
-		*skw = NULL;
-	}
-	if (*sks != NULL) {
-		pool_put(&pf_state_key_pl, *sks);
-		*sks = NULL;
-	}
-
 	for (i = 0; i < PF_SN_MAX; i++)
 		if (sns[i] != NULL)
 			pf_remove_src_node(sns[i]);
+	if (s) {
+		pf_normalize_tcp_cleanup(s);	/* safe even w/o init */
+		pf_src_tree_remove_state(s);
+		STATE_DEC_COUNTERS(s);
+		pool_put(&pf_state_pl, s);
+	}
 
 	return (PF_DROP);
 }
