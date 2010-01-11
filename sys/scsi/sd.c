@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.176 2010/01/09 21:12:06 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.177 2010/01/11 00:14:52 beck Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -693,6 +693,14 @@ sdstart(void *v)
 
 	SC_DEBUG(link, SDEV_DB2, ("sdstart\n"));
 
+	mtx_enter(&sc->sc_start_mtx);
+	sc->sc_start_count++;
+	if (sc->sc_start_count > 1) {
+		mtx_leave(&sc->sc_start_mtx);
+		return;
+	}
+	mtx_leave(&sc->sc_start_mtx);
+restart:
 	CLR(sc->flags, SDF_WAITING);
 	while (!ISSET(sc->flags, SDF_WAITING) &&
 	    (bp = sd_buf_dequeue(sc)) != NULL) {
@@ -759,6 +767,14 @@ sdstart(void *v)
 
 		scsi_xs_exec(xs);
 	}
+	mtx_enter(&sc->sc_start_mtx);
+	sc->sc_start_count--;
+	if (sc->sc_start_count != 0) {
+		sc->sc_start_count = 1;
+		mtx_leave(&sc->sc_start_mtx);
+		goto restart;
+	}
+	mtx_leave(&sc->sc_start_mtx);
 }
 
 void

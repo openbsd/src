@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.26 2010/01/09 21:12:06 dlg Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.27 2010/01/11 00:14:52 beck Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -72,10 +72,10 @@ struct sd_softc {
 	} params;
 	struct mutex sc_buf_mtx;
 	struct mutex sc_start_mtx;
+	u_int sc_start_count;
 	struct buf sc_buf_queue;
 	void *sc_sdhook;		/* our shutdown hook */
 	struct timeout sc_timeout;
-	
 };
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */
