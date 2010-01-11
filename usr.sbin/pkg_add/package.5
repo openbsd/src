@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.8 2009/04/14 17:53:58 espie Exp $
+.\"	$OpenBSD: package.5,v 1.9 2010/01/11 10:16:20 jmc Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: April 14 2009 $
+.Dd $Mdocdate: January 11 2010 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -87,14 +87,15 @@ will reconstitute the correct names behind the scenes.
 .Sh PACKAGE SIGNATURES
 All information within a package is checksummed, using SHA256 since
 .Ox 4.4 .
-During creation and creation, meta-information, such as file owners and
-permissions, are also checked: any important stuff that isn't recorded 
+During creation and installation, meta-information, such as file owners and
+permissions, are also checked: any important stuff that isn't recorded
 in the packing-list is an error.
 .Pp
-Packing-lists can be signed. If a signature is found, then it will be checked
+Packing-lists can be signed.
+If a signature is found, then it will be checked
 during installation, and failure to verify will prevent the package from
 installing correctly.
-Currently, only x509-style signatures are supported. 
+Currently, only x509-style signatures are supported.
 They rely on a certificate authority file being present as
 .Pa /etc/ssl/pkgca.pem
 and all signatures will be checked against it.

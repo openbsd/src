@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.94 2010/01/11 09:43:08 bernd Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.95 2010/01/11 10:16:20 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -347,7 +347,7 @@ will refuse to replace packages as soon as it needs to run scripts that
 might fail
 .Po
 use
-.Fl F Ar update
+.Fl D Ar update
 to force the replacement
 .Pc ;
 .Nm
@@ -355,7 +355,7 @@ will also refuse to replace packages when the dependencies don't quite
 match
 .Po
 use
-.Fl F Ar updatedepends
+.Fl D Ar updatedepends
 to force the replacement
 .Pc .
 .It Fl s
@@ -557,7 +557,7 @@ When replacing packages, the procedure is slightly different.
 .It
 A check is made to determine if a similar package is already installed.
 If its signature is identical to that of the new package, no replacement
-is performed (unless -F installed is specified).
+is performed (unless -D installed is specified).
 .It
 A check is made to determine what old package(s) the new package(s) should
 replace, using conflicts.
@@ -573,8 +573,8 @@ update to those packages.
 .It
 A check is made to determine whether the old packages will be deleted without
 issue, and whether the new packages will install correctly.
-This includes refusing to run any code (unless -F update), and verifying
-that the new package still matches dependencies (unless -F updatedepends).
+This includes refusing to run any code (unless -D update), and verifying
+that the new package still matches dependencies (unless -D updatedepends).
 .It
 Shared libraries deserve special treatment: each shared library from the old
 packages that does no longer exist in the new packages, but that is required
@@ -621,7 +621,7 @@ package first, which may contain exceptions to these rules.
 This special package contains global information, such as packages that
 can be deleted because they're now part of base, or stem changes.
 .It
-Version matching occurs: unless -F downgrade, only packages with newer
+Version matching occurs: unless -D downgrade, only packages with newer
 versions will be considered as update candidates.
 Note that version matching is costly, thus
 .Ev PKG_PATH
