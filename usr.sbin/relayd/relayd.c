@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.93 2009/11/11 13:09:39 jsg Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.94 2010/01/11 06:40:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -617,6 +617,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 	struct ctl_demote	 demote;
 	struct ctl_netroute	 crt;
 	struct relayd		*env;
+	int			 verbose;
 
 	iev = ptr;
 	ibuf = &iev->ibuf;
@@ -666,6 +667,10 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 			 * so far we only get here if no L7 (relay) is done.
 			 */
 			reconfigure();
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("main_dispatch_pfe: unexpected imsg %d",

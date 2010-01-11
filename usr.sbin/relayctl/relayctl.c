@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.40 2009/09/01 08:51:34 claudio Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.41 2010/01/11 06:40:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	int			 ctl_sock;
 	int			 done = 0;
-	int			 n;
+	int			 n, verbose = 0;
 
 	/* parse options */
 	if ((res = parse(argc - 1, argv + 1)) == NULL)
@@ -184,6 +184,15 @@ main(int argc, char *argv[])
 	case MONITOR:
 		imsg_compose(ibuf, IMSG_CTL_NOTIFY, 0, 0, -1, NULL, 0);
 		break;
+	case LOG_VERBOSE:
+		verbose = 2;
+		/* FALLTHROUGH */
+	case LOG_BRIEF:
+		imsg_compose(ibuf, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
+		    &verbose, sizeof(verbose));
+		printf("logging request sent.\n");
+		done = 1;
+		break;
 	}
 
 	while (ibuf->w.queued)
@@ -224,6 +233,8 @@ main(int argc, char *argv[])
 				done = show_command_output(&imsg);
 				break;
 			case NONE:
+			case LOG_VERBOSE:
+			case LOG_BRIEF:
 				break;
 			case MONITOR:
 				done = monitor(&imsg);

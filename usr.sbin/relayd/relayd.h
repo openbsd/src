@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.132 2009/11/03 21:33:22 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.133 2010/01/11 06:40:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -735,6 +735,7 @@ enum imsg_type {
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_RDR_STATS,
 	IMSG_CTL_RELAY_STATS,
+	IMSG_CTL_LOG_VERBOSE,
 	IMSG_RDR_ENABLE,	/* notifies from pfe to hce */
 	IMSG_RDR_DISABLE,
 	IMSG_TABLE_ENABLE,
@@ -931,6 +932,7 @@ u_int16_t	shuffle_generate16(struct shuffle *);
 
 /* log.c */
 void	log_init(int);
+void	log_verbose(int);
 void	log_warn(const char *, ...);
 void	log_warnx(const char *, ...);
 void	log_info(const char *, ...);

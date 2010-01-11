@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.117 2009/08/07 11:21:53 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.118 2010/01/11 06:40:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2405,6 +2405,7 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	struct table		*table;
 	struct ctl_status	 st;
 	objid_t			 id;
+	int			 verbose;
 
 	iev = ptr;
 	ibuf = &iev->ibuf;
@@ -2507,6 +2508,10 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 					    0, 0, -1, con, sizeof(*con));
 			imsg_compose_event(iev, IMSG_CTL_END,
 			    0, 0, -1, NULL, 0);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("relay_dispatch_msg: unexpected imsg %d",

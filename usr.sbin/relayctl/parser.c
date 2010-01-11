@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.22 2009/11/13 20:09:54 jsg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.23 2010/01/11 06:40:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -64,6 +64,7 @@ static const struct token t_host[];
 static const struct token t_rdr_id[];
 static const struct token t_table_id[];
 static const struct token t_host_id[];
+static const struct token t_log[];
 
 static const struct token t_main[] = {
 	{KEYWORD,	"monitor",	MONITOR,	NULL},
@@ -74,6 +75,7 @@ static const struct token t_main[] = {
 	{KEYWORD,	"redirect",	NONE,		t_rdr},
 	{KEYWORD,	"table",	NONE,		t_table},
 	{KEYWORD,	"host",		NONE,		t_host},
+	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -121,6 +123,12 @@ static const struct token t_table_id[] = {
 static const struct token t_host_id[] = {
 	{HOSTID,	"",		NONE,		NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_log[] = {
+	{KEYWORD,	"verbose",	LOG_VERBOSE, 	NULL},
+	{KEYWORD,	"brief",	LOG_BRIEF, 	NULL},
+	{ENDTOKEN, 	"",		NONE,		NULL}
 };
 
 static struct parse_result	res;

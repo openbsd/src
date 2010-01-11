@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.53 2009/06/05 23:39:51 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.54 2010/01/11 06:40:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -368,6 +368,7 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 	objid_t			 id;
 	struct host		*host;
 	struct table		*table;
+	int			 verbose;
 
 	iev = ptr;
 	ibuf = &iev->ibuf;
@@ -434,6 +435,10 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			TAILQ_FOREACH(table, env->sc_tables, entry)
 				table->skipped = 0;
 			hce_launch_checks(-1, EV_TIMEOUT, env);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("hce_dispatch_msg: unexpected imsg %d",

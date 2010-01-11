@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.33 2009/12/02 19:10:02 mk Exp $	*/
+/*	$OpenBSD: control.c,v 1.34 2010/01/11 06:40:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -196,6 +196,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	struct imsg		 imsg;
 	struct ctl_id		 id;
 	int			 n;
+	int			 verbose;
 	struct relayd		*env = arg;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
@@ -355,6 +356,22 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				break;
 			}
 			c->flags |= CTL_CONN_NOTIFY;
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(verbose))
+				break;
+
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+
+			imsg_compose_event(iev_hce, IMSG_CTL_LOG_VERBOSE,
+			    0, 0, -1, &verbose, sizeof(verbose));
+			imsg_compose_event(iev_main, IMSG_CTL_LOG_VERBOSE,
+			    0, 0, -1, &verbose, sizeof(verbose));
+			memcpy(imsg.data, &verbose, sizeof(verbose));
+			control_imsg_forward(&imsg);
+
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("control_dispatch_imsg: "
