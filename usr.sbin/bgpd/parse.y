@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.246 2009/12/16 15:40:55 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.247 2010/01/11 03:24:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -183,6 +183,7 @@ typedef struct {
 %token	IPSEC ESP AH SPI IKE
 %token	IPV4 IPV6
 %token	QUALIFY VIA
+%token	NE LE GE XRANGE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number optnumber yesno inout
@@ -1842,15 +1843,15 @@ comma		: ","
 		;
 
 unaryop		: '='		{ $$ = OP_EQ; }
-		| '!' '='	{ $$ = OP_NE; }
-		| '<' '='	{ $$ = OP_LE; }
+		| NE		{ $$ = OP_NE; }
+		| LE		{ $$ = OP_LE; }
 		| '<'		{ $$ = OP_LT; }
-		| '>' '='	{ $$ = OP_GE; }
+		| GE		{ $$ = OP_GE; }
 		| '>'		{ $$ = OP_GT; }
 		;
 
 binaryop	: '-'		{ $$ = OP_RANGE; }
-		| '>' '<'	{ $$ = OP_XRANGE; }
+		| XRANGE	{ $$ = OP_XRANGE; }
 		;
 
 %%
@@ -2160,6 +2161,26 @@ top:
 		if (yylval.v.string == NULL)
 			fatal("yylex: strdup");
 		return (STRING);
+	case '!':
+		next = lgetc(0);
+		if (next == '=')
+			return (NE);
+		lungetc(next);
+		break;		
+	case '<':
+		next = lgetc(0);
+		if (next == '=')
+			return (LE);
+		lungetc(next);
+		break;
+	case '>':
+		next = lgetc(0);
+		if (next == '<')
+			return (XRANGE);
+		else if (next == '=')
+			return (GE);
+		lungetc(next);
+		break;
 	}
 
 #define allowed_to_end_number(x) \
