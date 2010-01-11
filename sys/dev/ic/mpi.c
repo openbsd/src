@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.133 2010/01/09 23:15:06 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.134 2010/01/11 03:51:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -92,12 +92,12 @@ struct mpi_ccb		*mpi_get_ccb(struct mpi_softc *);
 void			mpi_put_ccb(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_alloc_replies(struct mpi_softc *);
 void			mpi_push_replies(struct mpi_softc *);
-u_int32_t		mpi_pop_reply(struct mpi_softc *);
 void			mpi_push_reply(struct mpi_softc *, struct mpi_rcb *);
 
 void			mpi_start(struct mpi_softc *, struct mpi_ccb *);
 int			mpi_poll(struct mpi_softc *, struct mpi_ccb *, int);
-struct mpi_ccb		*mpi_reply(struct mpi_softc *, u_int32_t);
+void			mpi_poll_done(struct mpi_ccb *);
+void			mpi_reply(struct mpi_softc *, u_int32_t);
 
 void			mpi_wait(struct mpi_softc *sc, struct mpi_ccb *);
 void			mpi_wait_done(struct mpi_ccb *);
@@ -173,7 +173,7 @@ void		mpi_refresh_sensors(void *);
 #define mpi_write_db(s, v)	mpi_write((s), MPI_DOORBELL, (v))
 #define mpi_read_intr(s)	mpi_read((s), MPI_INTR_STATUS)
 #define mpi_write_intr(s, v)	mpi_write((s), MPI_INTR_STATUS, (v))
-#define mpi_pop_reply_db(s)	mpi_read((s), MPI_REPLY_QUEUE)
+#define mpi_pop_reply(s)	mpi_read((s), MPI_REPLY_QUEUE)
 #define mpi_push_reply_db(s, v)	mpi_write((s), MPI_REPLY_QUEUE, (v))
 
 #define mpi_wait_db_int(s)	mpi_wait_ne((s), MPI_INTR_STATUS, \
@@ -204,8 +204,6 @@ mpi_attach(struct mpi_softc *sc)
 {
 	struct scsibus_attach_args	saa;
 	struct mpi_ccb			*ccb;
-
-	mtx_init(&sc->sc_reply_mtx, IPL_BIO);
 
 	printf("\n");
 
@@ -822,34 +820,22 @@ mpi_detach(struct mpi_softc *sc)
 
 }
 
-u_int32_t
-mpi_pop_reply(struct mpi_softc *sc)
-{
-	u_int32_t			reg;
-
-	mtx_enter(&sc->sc_reply_mtx);
-	reg = mpi_pop_reply_db(sc);
-	mtx_leave(&sc->sc_reply_mtx);
-
-	return (reg);
-}
-
 int
 mpi_intr(void *arg)
 {
 	struct mpi_softc		*sc = arg;
-	struct mpi_ccb			*ccb = NULL;
 	u_int32_t			reg;
+	int				rv = 0;
 
 	while ((reg = mpi_pop_reply(sc)) != 0xffffffff) {
-		ccb = mpi_reply(sc, reg);
-		ccb->ccb_done(ccb);
+		mpi_reply(sc, reg);
+		rv = 1;
 	}
 
-	return ((ccb == NULL) ? 0 : 1);
+	return (rv);
 }
 
-struct mpi_ccb *
+void
 mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 {
 	struct mpi_ccb			*ccb;
@@ -897,7 +883,7 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 	ccb->ccb_state = MPI_CCB_READY;
 	ccb->ccb_rcb = rcb;
 
-	return (ccb);
+	ccb->ccb_done(ccb);
 }
 
 struct mpi_dmamem *
@@ -1124,23 +1110,26 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 int
 mpi_poll(struct mpi_softc *sc, struct mpi_ccb *ccb, int timeout)
 {
-	struct mpi_ccb_list		completed =
-					    TAILQ_HEAD_INITIALIZER(completed);
-	struct mpi_ccb			*nccb = NULL;
+	void				(*done)(struct mpi_ccb *);
+	void				*cookie;
+	int				rv = 1;
 	u_int32_t			reg;
-	int				rv = 0;
 
 	DNPRINTF(MPI_D_INTR, "%s: mpi_poll timeout %d\n", DEVNAME(sc),
 	    timeout);
 
-	mtx_enter(&sc->sc_reply_mtx);
+	done = ccb->ccb_done;
+	cookie = ccb->ccb_cookie;
+
+	ccb->ccb_done = mpi_poll_done;
+	ccb->ccb_cookie = &rv;
+
 	mpi_start(sc, ccb);
-	do {
-		reg = mpi_pop_reply_db(sc);
+	while (rv == 1) {
+		reg = mpi_pop_reply(sc);
 		if (reg == 0xffffffff) {
 			if (timeout-- == 0) {
 				printf("%s: timeout\n", DEVNAME(sc));
-				rv = 1;
 				goto timeout;
 			}
 
@@ -1148,30 +1137,22 @@ mpi_poll(struct mpi_softc *sc, struct mpi_ccb *ccb, int timeout)
 			continue;
 		}
 
-		nccb = mpi_reply(sc, reg);
-
-		/* 
-		 * The ccb used for event notification can come out of the
-		 * reply doorbell multiple times. Avoid enqueuing it here for
-		 * completion outside the reply mutex since that can screw the
-		 * completed TAILQ up. We know it will not cause new ccbs to be
-		 * generated and issued, so it is safe to complete here.
-		 */
-		if (nccb == sc->sc_evt_ccb)
-			nccb->ccb_done(nccb);
-		else
-			TAILQ_INSERT_TAIL(&completed, nccb, ccb_link);
-
-	} while (ccb != nccb);
-	mtx_leave(&sc->sc_reply_mtx);
-
-timeout:
-	while ((nccb = TAILQ_FIRST(&completed)) != NULL) {
-		TAILQ_REMOVE(&completed, nccb, ccb_link);
-		nccb->ccb_done(nccb);
+		mpi_reply(sc, reg);
 	}
 
+	ccb->ccb_cookie = cookie;
+	done(ccb);
+
+timeout:
 	return (rv);
+}
+
+void
+mpi_poll_done(struct mpi_ccb *ccb)
+{
+	int				*rv = ccb->ccb_cookie;
+
+	*rv = 0;
 }
 
 void

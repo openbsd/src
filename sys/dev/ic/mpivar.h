@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.28 2010/01/03 06:47:58 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.29 2010/01/11 03:51:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -111,8 +111,6 @@ struct mpi_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
-
-	struct mutex		sc_reply_mtx;
 
 	u_int8_t		sc_porttype;
 	int			sc_maxcmds;
