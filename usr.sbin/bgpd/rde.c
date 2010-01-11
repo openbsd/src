@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.282 2010/01/10 08:32:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.283 2010/01/11 01:34:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,8 @@ int		 rde_attr_parse(u_char *, u_int16_t, struct rde_peer *,
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
 int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int16_t,
 		     struct rde_aspath *);
+int		 rde_update_extract_prefix(u_char *, u_int16_t, void *,
+		     u_int8_t, u_int8_t);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 int		 rde_update_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
@@ -1555,69 +1557,77 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 }
 
 int
+rde_update_extract_prefix(u_char *p, u_int16_t len, void *va,
+    u_int8_t pfxlen, u_int8_t max)
+{
+	static u_char addrmask[] = {
+	    0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
+	u_char		*a = va;
+	int		 i;
+	u_int16_t	 plen = 0;
+
+	for (i = 0; pfxlen && i < max; i++) {
+		if (len <= plen)
+			return (-1);
+		if (pfxlen < 8) {
+			a[i] = *p++ & addrmask[pfxlen];
+			plen++;
+			break;
+		} else {
+			a[i] = *p++;
+			plen++;
+			pfxlen -= 8;
+		}
+	}
+	return (plen);
+}
+
+int
 rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
     u_int8_t *prefixlen)
 {
-	int		i;
-	u_int8_t	pfxlen;
-	u_int16_t	plen;
-	union {
-		struct in_addr	a32;
-		u_int8_t	a8[4];
-	}		addr;
+	u_int8_t	 pfxlen;
+	int		 plen;
 
 	if (len < 1)
 		return (-1);
 
-	memcpy(&pfxlen, p, 1);
-	p += 1;
-	plen = 1;
+	pfxlen = *p++;
+	len--;
 
 	bzero(prefix, sizeof(struct bgpd_addr));
-	addr.a32.s_addr = 0;
-	for (i = 0; i <= 3; i++) {
-		if (pfxlen > i * 8) {
-			if (len - plen < 1)
-				return (-1);
-			memcpy(&addr.a8[i], p++, 1);
-			plen++;
-		}
-	}
 	prefix->aid = AID_INET;
-	prefix->v4.s_addr = addr.a32.s_addr;
 	*prefixlen = pfxlen;
 
-	return (plen);
+	if ((plen = rde_update_extract_prefix(p, len, &prefix->v4, pfxlen,
+	    sizeof(prefix->v4))) == -1)
+		return (-1);
+
+	return (plen + 1);	/* pfxlen needs to be added */
 }
 
 int
 rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
     u_int8_t *prefixlen)
 {
-	int		i;
+	int		plen;
 	u_int8_t	pfxlen;
-	u_int16_t	plen;
 
 	if (len < 1)
 		return (-1);
 
-	memcpy(&pfxlen, p, 1);
-	p += 1;
-	plen = 1;
+	pfxlen = *p++;
+	len--;
 
 	bzero(prefix, sizeof(struct bgpd_addr));
-	for (i = 0; i <= 15; i++) {
-		if (pfxlen > i * 8) {
-			if (len - plen < 1)
-				return (-1);
-			memcpy(&prefix->v6.s6_addr[i], p++, 1);
-			plen++;
-		}
-	}
 	prefix->aid = AID_INET6;
 	*prefixlen = pfxlen;
 
-	return (plen);
+	if ((plen = rde_update_extract_prefix(p, len, &prefix->v6, pfxlen,
+	    sizeof(prefix->v6))) == -1)
+		return (-1);
+
+	return (plen + 1);	/* pfxlen needs to be added */
 }
 
 void
