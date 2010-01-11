@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.31 2009/12/23 17:16:03 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.32 2010/01/11 21:43:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -199,7 +199,7 @@ enqueue(int argc, char *argv[])
 	    verbose);
 
 	/* parse message */
-	if ((body = buf_dynamic(0, SIZE_T_MAX)) < 0)
+	if ((body = buf_dynamic(0, SIZE_T_MAX)) == NULL)
 		err(1, "buf_dynamic failed");
 	noheader = parse_message(stdin, fake_from == NULL, tflag, body);
 
