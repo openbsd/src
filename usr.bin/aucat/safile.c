@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.20 2010/01/10 21:47:41 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.21 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -210,7 +210,7 @@ safile_read(struct file *file, unsigned char *data, unsigned count)
 	struct safile *f = (struct safile *)file;
 	unsigned n;
 
-	n = sio_read(f->hdl, data, count);
+	n = f->started ? sio_read(f->hdl, data, count) : 0;
 	if (n == 0) {
 		f->file.state &= ~FILE_ROK;
 		if (sio_eof(f->hdl)) {
@@ -239,7 +239,7 @@ safile_write(struct file *file, unsigned char *data, unsigned count)
 	struct safile *f = (struct safile *)file;
 	unsigned n;
 
-	n = sio_write(f->hdl, data, count);
+	n = f->started ? sio_write(f->hdl, data, count) : 0;
 	if (n == 0) {
 		f->file.state &= ~FILE_WOK;
 		if (sio_eof(f->hdl)) {
@@ -270,6 +270,10 @@ safile_nfds(struct file *file)
 int
 safile_pollfd(struct file *file, struct pollfd *pfd, int events)
 {
+	struct safile *f = (struct safile *)file;
+
+	if (!f->started)
+		events &= ~(POLLIN | POLLOUT);
 	return sio_pollfd(((struct safile *)file)->hdl, pfd, events);
 }
 

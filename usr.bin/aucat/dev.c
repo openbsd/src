@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.39 2010/01/10 21:47:41 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.40 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -227,7 +227,7 @@ dev_init(char *devpath,
 		 * Append a "sub" to which clients will connect.
 		 * Link it to the controller only in record-only mode
 		 */
-		dev_sub = sub_new("rec", nfr, dopar ? NULL : dev_midi);
+		dev_sub = sub_new("rec", ibufsz, dopar ? NULL : dev_midi);
 		dev_sub->refs++;
 		aproc_setin(dev_sub, buf);
 	} else {
@@ -264,7 +264,7 @@ dev_init(char *devpath,
 		/*
 		 * Append a "mix" to which clients will connect.
 		 */
-		dev_mix = mix_new("play", nfr, dev_midi);
+		dev_mix = mix_new("play", obufsz, dev_midi);
 		dev_mix->refs++;
 		aproc_setout(dev_mix, buf);
 	} else {
@@ -739,5 +739,23 @@ dev_clear(void)
 			buf = LIST_FIRST(&buf->wproc->ibuflist);
 		}
 		sub_clear(dev_sub);
+	}
+}
+
+/*
+ * Fill with silence play buffers and schedule the same amount of recorded
+ * samples to drop
+ */
+void
+dev_prime(void)
+{
+	if (dev_mix) {
+#ifdef DEBUG
+		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
+			dbg_puts("play end not idle, can't prime device\n");
+			dbg_panic();	
+		}
+#endif
+		mix_prime(dev_mix);
 	}
 }

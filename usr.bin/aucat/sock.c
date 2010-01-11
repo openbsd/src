@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.37 2010/01/10 21:47:41 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.38 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -834,8 +834,8 @@ sock_setpar(struct sock *f)
 	}
 	if (AMSG_ISSET(p->appbufsz)) {
 		rate = (f->mode & AMSG_PLAY) ? f->rpar.rate : f->wpar.rate;
-		min = 1;
-		max = 1 + rate / dev_round;
+		min = 2;
+		max = 2 + rate / dev_round;
 		min *= f->round;
 		max *= f->round;
 		p->appbufsz += f->round - 1;

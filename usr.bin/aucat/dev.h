@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.16 2010/01/05 10:18:12 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.17 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,5 +43,6 @@ void dev_attach(char *,
     struct abuf *, struct aparams *, unsigned, int);
 void dev_setvol(struct abuf *, int);
 void dev_clear(void);
+void dev_prime(void);
 
 #endif /* !define(DEV_H) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.78 2010/01/10 21:47:41 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.79 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -587,6 +587,7 @@ aucat_main(int argc, char **argv)
 				suspend = 1;
 				dev_stop();
 				dev_clear();
+				dev_prime();
 			}
 		}
 		if ((dev_mix && dev_mix->u.mix.idle == 0) ||

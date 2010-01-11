@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.42 2010/01/10 21:47:41 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.43 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -349,7 +349,7 @@ rfile_hup(struct aproc *p, struct abuf *obuf)
 }
 
 struct aproc_ops rfile_ops = {
-	"rpipe",
+	"rfile",
 	rfile_in,
 	rfile_out,
 	rfile_eof,
@@ -451,7 +451,7 @@ wfile_hup(struct aproc *p, struct abuf *obuf_dummy)
 }
 
 struct aproc_ops wfile_ops = {
-	"wpipe",
+	"wfile",
 	wfile_in,
 	wfile_out,
 	wfile_eof,
@@ -514,10 +514,10 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		abuf_dbg(ibuf);
-		dbg_puts(": badd: todo = ");
-		dbg_putu(obuf->w.mix.todo);
-		dbg_puts("/");
+		dbg_puts(": badd: done = ");
 		dbg_putu(ibuf->r.mix.done);
+		dbg_puts("/");
+		dbg_putu(obuf->w.mix.todo);
 		dbg_puts("\n");
 	}
 #endif
@@ -633,10 +633,10 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 		dbg_putu(ibuf->used);
 		dbg_puts("/");
 		dbg_putu(ibuf->len);
-		dbg_puts(", todo = ");
-		dbg_putu(obuf->w.mix.todo);
-		dbg_puts("/");
+		dbg_puts(", done = ");
 		dbg_putu(ibuf->r.mix.done);
+		dbg_puts("/");
+		dbg_putu(obuf->w.mix.todo);
 		dbg_puts("\n");
 	}
 #endif
@@ -896,6 +896,49 @@ mix_clear(struct aproc *p)
 
 	p->u.mix.lat = 0;
 	obuf->w.mix.todo = 0;
+}
+
+void
+mix_prime(struct aproc *p)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	unsigned todo, count;
+
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": prime1: lat/maxlat=");
+		dbg_puti(p->u.mix.lat);
+		dbg_puts("/");
+		dbg_puti(p->u.mix.maxlat);
+		dbg_puts("\n");
+	}
+#endif
+	for (;;) {
+		if (!ABUF_WOK(obuf))
+			break;
+		todo = (p->u.mix.maxlat - p->u.mix.lat) * obuf->bpf;
+		if (todo == 0)
+			break;
+		mix_bzero(obuf, obuf->len);
+		count = obuf->w.mix.todo;
+		if (count > todo)
+			count = todo;
+		obuf->w.mix.todo -= count;
+		p->u.mix.lat += count / obuf->bpf;
+		abuf_wcommit(obuf, count);
+		abuf_flush(obuf);
+	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
+		dbg_puts(": prime: lat/maxlat=");
+		dbg_puti(p->u.mix.lat);
+		dbg_puts("/");
+		dbg_puti(p->u.mix.maxlat);
+		dbg_puts("\n");
+	}
+#endif
 }
 
 /*

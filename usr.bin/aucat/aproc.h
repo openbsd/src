@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.28 2010/01/05 10:18:12 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.29 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -219,9 +219,9 @@ struct aproc *cmap_new(char *, struct aparams *, struct aparams *);
 struct aproc *enc_new(char *, struct aparams *);
 struct aproc *dec_new(char *, struct aparams *);
 
-void mix_pushzero(struct aproc *);
 void mix_setmaster(struct aproc *);
 void mix_clear(struct aproc *);
+void mix_prime(struct aproc *);
 void sub_clear(struct aproc *);
 
 #endif /* !defined(APROC_H) */

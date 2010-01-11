@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.17 2010/01/10 21:47:41 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.18 2010/01/11 13:06:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -249,7 +249,7 @@ abuf_wgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 #ifdef DEBUG
 	if (end >= buf->len) {
 		abuf_dump(buf);
-		dbg_puts(": rgetblk: bad ofs = ");
+		dbg_puts(": wgetblk: bad ofs = ");
 		dbg_putu(ofs);
 		dbg_puts("\n");
 		dbg_panic();
