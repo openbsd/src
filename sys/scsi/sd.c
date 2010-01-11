@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.178 2010/01/11 00:44:40 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.179 2010/01/11 11:16:38 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1508,6 +1508,7 @@ sd_flush(struct sd_softc *sc, int flags)
 
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 100000;
+	xs->flags |= SCSI_IGNORE_ILLEGAL_REQUEST;
 
 	if (scsi_xs_sync(xs) == 0)
 		sc->flags &= ~SDF_DIRTY;
