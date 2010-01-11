@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.13 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.14 2010/01/11 23:46:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -312,8 +312,7 @@ window_choose_write_line(
 	struct options			*oo = &wp->window->options;
 	struct screen			*s = &data->screen;
 	struct grid_cell		 gc;
-	int				 utf8flag;
-	char				 key;
+	int				 utf8flag, key;
 
 	if (data->callbackfn == NULL)
 		fatalx("called before callback assigned");
