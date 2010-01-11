@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.467 2010/01/11 12:49:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.468 2010/01/11 13:40:58 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -974,6 +974,7 @@ sub process_parameters
 		for my $pkgname (@ARGV) {
 			my $l;
 
+			next if $pkgname =~ m/^quirks\-\d/;
 			if (OpenBSD::PackageName::is_stem($pkgname)) {
 				$l = $state->updater->stem2location($inst, $pkgname, $state);
 			} else {
