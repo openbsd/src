@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.682 2010/01/11 04:07:07 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.683 2010/01/12 03:20:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -105,7 +105,6 @@
 struct pf_state_tree	 pf_statetbl;
 
 struct pf_altqqueue	 pf_altqs[2];
-struct pf_palist	 pf_pabuf[3];
 struct pf_altqqueue	*pf_altqs_active;
 struct pf_altqqueue	*pf_altqs_inactive;
 struct pf_status	 pf_status;
@@ -113,7 +112,6 @@ struct pf_status	 pf_status;
 u_int32_t		 ticket_altqs_active;
 u_int32_t		 ticket_altqs_inactive;
 int			 altqs_inactive_open;
-u_int32_t		 ticket_pabuf;
 
 MD5_CTX			 pf_tcp_secret_ctx;
 u_char			 pf_tcp_secret[16];
@@ -127,7 +125,7 @@ struct pf_anchor_stackframe {
 	struct pf_anchor			*child;
 } pf_anchor_stack[64];
 
-struct pool		 pf_src_tree_pl, pf_rule_pl, pf_pooladdr_pl;
+struct pool		 pf_src_tree_pl, pf_rule_pl;
 struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl;
 struct pool		 pf_altq_pl, pf_rule_item_pl, pf_sn_item_pl;
 
@@ -1521,6 +1519,7 @@ pf_addr_wrap_neq(struct pf_addr_wrap *aw1, struct pf_addr_wrap *aw2)
 		return (0);
 	case PF_ADDR_DYNIFTL:
 		return (aw1->p.dyn->pfid_kt != aw2->p.dyn->pfid_kt);
+	case PF_ADDR_NONE:
 	case PF_ADDR_NOROUTE:
 	case PF_ADDR_URPFFAILED:
 		return (0);
@@ -2656,14 +2655,14 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 	case AF_INET:
 		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, &sn,
 		    &r->route, PF_SN_ROUTE);
-		s->rt_kif = r->route.cur->kif;
+		s->rt_kif = r->route.kif;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, &sn,
 		    &r->route, PF_SN_ROUTE);
-		s->rt_kif = r->route.cur->kif;
+		s->rt_kif = r->route.kif;
 		break;
 #endif /* INET6 */
 	}
@@ -5095,18 +5094,18 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
 	} else {
-		if (TAILQ_EMPTY(&r->route.list)) {
-			DPFPRINTF(PF_DEBUG_URGENT,
-			    ("pf_route: TAILQ_EMPTY(&r->route.list)\n"));
-			goto bad;
-		}
 		if (s == NULL) {
-			pf_map_addr(AF_INET, r, (struct pf_addr *)&ip->ip_src,
-			    &naddr, NULL, &sn, &r->route, PF_SN_ROUTE);
+			if (pf_map_addr(AF_INET, r, (struct pf_addr *)&ip->ip_src,
+			    &naddr, NULL, &sn, &r->route, PF_SN_ROUTE)) {
+				DPFPRINTF(PF_DEBUG_URGENT,
+				    ("pf_route: pf_map_addr() failed.\n"));
+				goto bad;
+			}
+
 			if (!PF_AZERO(&naddr, AF_INET))
 				dst->sin_addr.s_addr = naddr.v4.s_addr;
-			ifp = r->route.cur->kif ?
-			    r->route.cur->kif->pfik_ifp : NULL;
+			ifp = r->route.kif ?
+			    r->route.kif->pfik_ifp : NULL;
 		} else {
 			if (!PF_AZERO(&s->rt_addr, AF_INET))
 				dst->sin_addr.s_addr =
@@ -5116,6 +5115,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 	if (ifp == NULL)
 		goto bad;
+
 
 	if (oifp != ifp) {
 		if (pf_test(PF_OUT, ifp, &m0, NULL) != PF_PASS)
@@ -5277,18 +5277,17 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		return;
 	}
 
-	if (TAILQ_EMPTY(&r->route.list)) {
-		DPFPRINTF(PF_DEBUG_URGENT,
-		    ("pf_route6: TAILQ_EMPTY(&r->route.list)\n"));
-		goto bad;
-	}
 	if (s == NULL) {
-		pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
-		    &naddr, NULL, &sn, &r->route, PF_SN_ROUTE);
+		if (pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
+		    &naddr, NULL, &sn, &r->route, PF_SN_ROUTE)) {
+			DPFPRINTF(PF_DEBUG_URGENT,
+			    ("pf_route6: pf_map_addr() failed.\n"));
+			goto bad;
+		}
 		if (!PF_AZERO(&naddr, AF_INET6))
 			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
 			    &naddr, AF_INET6);
-		ifp = r->route.cur->kif ? r->route.cur->kif->pfik_ifp : NULL;
+		ifp = r->route.kif ? r->route.kif->pfik_ifp : NULL;
 	} else {
 		if (!PF_AZERO(&s->rt_addr, AF_INET6))
 			PF_ACPY((struct pf_addr *)&dst->sin6_addr,

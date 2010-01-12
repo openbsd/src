@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.303 2009/12/24 04:24:19 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.304 2010/01/12 03:20:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -113,7 +113,7 @@ enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN };
 enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 	  PF_ADDR_TABLE, PF_ADDR_RTLABEL, PF_ADDR_URPFFAILED,
-	  PF_ADDR_RANGE };
+	  PF_ADDR_RANGE, PF_ADDR_NONE };
 #define PF_POOL_TYPEMASK	0x0f
 #define PF_POOL_STICKYADDR	0x20
 #define	PF_WSCALE_FLAG		0x80
@@ -361,15 +361,6 @@ struct pf_rule_addr {
 	u_int8_t		 port_op;
 };
 
-struct pf_pooladdr {
-	struct pf_addr_wrap		 addr;
-	TAILQ_ENTRY(pf_pooladdr)	 entries;
-	char				 ifname[IFNAMSIZ];
-	struct pfi_kif			*kif;
-};
-
-TAILQ_HEAD(pf_palist, pf_pooladdr);
-
 struct pf_poolhashkey {
 	union {
 		u_int8_t		key8[16];
@@ -382,10 +373,11 @@ struct pf_poolhashkey {
 };
 
 struct pf_pool {
-	struct pf_palist	 list;
-	struct pf_pooladdr	*cur;
+	struct pf_addr_wrap	 addr;
 	struct pf_poolhashkey	 key;
-	struct pf_addr		 counter;
+	struct pf_addr	 	 counter;
+	char			 ifname[IFNAMSIZ];
+	struct pfi_kif		*kif;
 	int			 tblidx;
 	u_int16_t		 proxy_port[2];
 	u_int8_t		 port_op;
@@ -993,10 +985,13 @@ struct pfr_addr {
 		struct in_addr	 _pfra_ip4addr;
 		struct in6_addr	 _pfra_ip6addr;
 	}		 pfra_u;
+	char		 pfra_ifname[IFNAMSIZ];
 	u_int8_t	 pfra_af;
 	u_int8_t	 pfra_net;
 	u_int8_t	 pfra_not;
 	u_int8_t	 pfra_fback;
+	u_int8_t	 pfra_type;
+	u_int8_t	 pad[7];
 };
 #define	pfra_ip4addr	pfra_u._pfra_ip4addr
 #define	pfra_ip6addr	pfra_u._pfra_ip6addr
@@ -1033,26 +1028,53 @@ struct pfr_kcounters {
 };
 
 SLIST_HEAD(pfr_kentryworkq, pfr_kentry);
-struct pfr_kentry {
-	struct radix_node	 pfrke_node[2];
-	union sockaddr_union	 pfrke_sa;
-	SLIST_ENTRY(pfr_kentry)	 pfrke_workq;
-	union {
-		
-		struct pfr_kcounters		*pfrke_counters;
-#if 0
-		struct pfr_kroute		*pfrke_route;
-#endif
-	} u;
-	long			 pfrke_tzero;
-	u_int8_t		 pfrke_af;
-	u_int8_t		 pfrke_net;
-	u_int8_t		 pfrke_not;
-	u_int8_t		 pfrke_mark;
+struct _pfr_kentry {
+	struct radix_node	 _pfrke_node[2];
+	union sockaddr_union	 _pfrke_sa;
+	SLIST_ENTRY(pfr_kentry)	 _pfrke_workq;
+	struct pfr_kcounters	*_pfrke_counters;
+	long			 _pfrke_tzero;
+	u_int8_t		 _pfrke_af;
+	u_int8_t		 _pfrke_net;
+	u_int8_t		 _pfrke_flags;
+	u_int8_t		 _pfrke_type;
 };
-#define pfrke_counters	u.pfrke_counters
-#define pfrke_route	u.pfrke_route
+#define PFRKE_FLAG_NOT		0x01
+#define PFRKE_FLAG_MARK		0x02
 
+/* pfrke_type */
+enum { PFRKE_PLAIN, PFRKE_ROUTE, PFRKE_MAX };
+
+struct pfr_kentry {
+	union {
+		struct _pfr_kentry	_ke;	
+	} u;
+};
+#define pfrke_node	u._ke._pfrke_node
+#define pfrke_sa	u._ke._pfrke_sa
+#define pfrke_workq	u._ke._pfrke_workq
+#define pfrke_counters	u._ke._pfrke_counters
+#define pfrke_tzero	u._ke._pfrke_tzero
+#define pfrke_af	u._ke._pfrke_af
+#define pfrke_net	u._ke._pfrke_net
+#define pfrke_flags	u._ke._pfrke_flags
+#define pfrke_type	u._ke._pfrke_type
+
+struct pfr_kentry_route {
+	union {
+		struct _pfr_kentry	_ke;
+	} u;
+
+	struct pfi_kif		*kif;
+};
+
+struct pfr_kentry_all {
+	union {
+		struct _pfr_kentry		_ke;
+		struct pfr_kentry_route		kr;
+	} u;
+};
+#define pfrke_rkif	u.kr.kif
 
 SLIST_HEAD(pfr_ktableworkq, pfr_ktable);
 RB_HEAD(pfr_ktablehead, pfr_ktable);
@@ -1111,13 +1133,15 @@ struct pfi_kif {
 	struct ifg_group		*pfik_group;
 	int				 pfik_states;
 	int				 pfik_rules;
+	int				 pfik_routes;
 	TAILQ_HEAD(, pfi_dynaddr)	 pfik_dynaddrs;
 };
 
 enum pfi_kif_refs {
 	PFI_KIF_REF_NONE,
 	PFI_KIF_REF_STATE,
-	PFI_KIF_REF_RULE
+	PFI_KIF_REF_RULE,
+	PFI_KIF_REF_ROUTE
 };
 
 #define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */
@@ -1390,24 +1414,9 @@ struct pf_divert {
  * ioctl parameter structures
  */
 
-struct pfioc_pooladdr {
-	u_int32_t		 action;
-	u_int32_t		 ticket;
-	u_int32_t		 nr;
-	u_int32_t		 r_num;
-	u_int8_t		 r_action;
-	u_int8_t		 r_last;
-	u_int8_t		 af;
-	u_int8_t		 which;
-	u_int8_t		 pad[3];
-	char			 anchor[MAXPATHLEN];
-	struct pf_pooladdr	 addr;
-};
-
 struct pfioc_rule {
 	u_int32_t	 action;
 	u_int32_t	 ticket;
-	u_int32_t	 pool_ticket;
 	u_int32_t	 nr;
 	char		 anchor[MAXPATHLEN];
 	char		 anchor_call[MAXPATHLEN];
@@ -1592,12 +1601,7 @@ struct pfioc_iface {
 #define DIOCGETALTQ	_IOWR('D', 48, struct pfioc_altq)
 #define DIOCCHANGEALTQ	_IOWR('D', 49, struct pfioc_altq)
 #define DIOCGETQSTATS	_IOWR('D', 50, struct pfioc_qstats)
-#define DIOCBEGINADDRS	_IOWR('D', 51, struct pfioc_pooladdr)
-#define DIOCADDADDR	_IOWR('D', 52, struct pfioc_pooladdr)
-#define DIOCGETADDRS	_IOWR('D', 53, struct pfioc_pooladdr)
-#define DIOCGETADDR	_IOWR('D', 54, struct pfioc_pooladdr)
-#define DIOCCHANGEADDR	_IOWR('D', 55, struct pfioc_pooladdr)
-/* XXX cut 55 - 57 */
+/* XXX cut 51 - 57 */
 #define	DIOCGETRULESETS	_IOWR('D', 58, struct pfioc_ruleset)
 #define	DIOCGETRULESET	_IOWR('D', 59, struct pfioc_ruleset)
 #define	DIOCRCLRTABLES	_IOWR('D', 60, struct pfioc_table)
@@ -1758,7 +1762,8 @@ int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
 int	pfr_pool_get(struct pfr_ktable *, int *, struct pf_addr *,
-	    struct pf_addr **, struct pf_addr **, sa_family_t);
+	    struct pf_addr **, struct pf_addr **, struct pfi_kif **,
+	    sa_family_t);
 void	pfr_dynaddr_update(struct pfr_ktable *, struct pfi_dynaddr *);
 struct pfr_ktable *
 	pfr_attach_table(struct pf_ruleset *, char *, int);

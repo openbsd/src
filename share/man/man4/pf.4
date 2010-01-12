@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.66 2009/11/15 21:01:30 mpf Exp $
+.\"	$OpenBSD: pf.4,v 1.67 2010/01/12 03:20:51 mcbride Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 15 2009 $
+.Dd $Mdocdate: January 12 2010 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -93,36 +93,6 @@ Start the ALTQ bandwidth control system (see
 .Xr altq 9 ) .
 .It Dv DIOCSTOPALTQ
 Stop the ALTQ bandwidth control system.
-.It Dv DIOCBEGINADDRS Fa "struct pfioc_pooladdr *pp"
-.Bd -literal
-struct pfioc_pooladdr {
-	u_int32_t		action;
-	u_int32_t		ticket;
-	u_int32_t		nr;
-	u_int32_t		r_num;
-	u_int8_t		r_action;
-	u_int8_t		r_last;
-	u_int8_t		af;
-	u_int8_t		which;
-	u_int8_t		pad[3];
-	char			anchor[MAXPATHLEN];
-	struct pf_pooladdr	addr;
-};
-.Ed
-.Pp
-Clear the buffer address pool and get a
-.Va ticket
-for subsequent
-.Dv DIOCADDADDR ,
-.Dv DIOCADDRULE ,
-and
-.Dv DIOCCHANGERULE
-calls.
-.It Dv DIOCADDADDR Fa "struct pfioc_pooladdr *pp"
-.Pp
-Add the pool address
-.Va addr
-to the buffer address pool to be used in the following
 .Dv DIOCADDRULE
 or
 .Dv DIOCCHANGERULE
@@ -148,13 +118,7 @@ This call requires a
 .Va ticket
 obtained through a preceding
 .Dv DIOCXBEGIN
-call and a
-.Va pool_ticket
-obtained through a
-.Dv DIOCBEGINADDRS
 call.
-.Dv DIOCADDADDR
-must also be called if any pool addresses are required.
 The optional
 .Va anchor
 name indicates the anchor in which to append the rule.
@@ -195,33 +159,6 @@ If
 is set to
 .Dv PF_GET_CLR_CNTR ,
 the per-rule statistics on the requested rule are cleared.
-.It Dv DIOCGETADDRS Fa "struct pfioc_pooladdr *pp"
-Get a
-.Va ticket
-for subsequent
-.Dv DIOCGETADDR
-calls and the number
-.Va nr
-of pool addresses in the rule specified with
-.Va r_action ,
-.Va r_num ,
-and
-.Va anchor .
-.It Dv DIOCGETADDR Fa "struct pfioc_pooladdr *pp"
-Get the pool address
-.Va addr
-by its number
-.Va nr
-from the rule specified with
-.Va r_action ,
-.Va r_num ,
-and
-.Va anchor
-using the
-.Va ticket
-obtained through a preceding
-.Dv DIOCGETADDRS
-call.
 .It Dv DIOCGETALTQS Fa "struct pfioc_altq *pa"
 Get a
 .Va ticket
@@ -431,13 +368,6 @@ must be set to the value obtained with
 .Dv PF_CHANGE_GET_TICKET
 for all actions except
 .Dv PF_CHANGE_GET_TICKET .
-.Va pool_ticket
-must be set to the value obtained with the
-.Dv DIOCBEGINADDRS
-call for all actions except
-.Dv PF_CHANGE_REMOVE
-and
-.Dv PF_CHANGE_GET_TICKET .
 .Va anchor
 indicates to which anchor the operation applies.
 .Va nr
@@ -448,14 +378,6 @@ or
 .Dv PF_CHANGE_REMOVE
 actions are applied.
 .\" It Dv DIOCCHANGEALTQ Fa "struct pfioc_altq *pcr"
-.It Dv DIOCCHANGEADDR Fa "struct pfioc_pooladdr *pca"
-Add or remove the pool address
-.Va addr
-from the rule specified by
-.Va r_action ,
-.Va r_num ,
-and
-.Va anchor .
 .It Dv DIOCSETTIMEOUT Fa "struct pfioc_tm *pt"
 .Bd -literal
 struct pfioc_tm {

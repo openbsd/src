@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.58 2009/08/25 23:21:04 krw Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.59 2010/01/12 03:20:51 mcbride Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -132,6 +132,9 @@ pfi_kif_ref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_STATE:
 		kif->pfik_states++;
 		break;
+	case PFI_KIF_REF_ROUTE:
+		kif->pfik_routes++;
+		break;
 	default:
 		panic("pfi_kif_ref with unknown type");
 	}
@@ -160,6 +163,13 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 		}
 		kif->pfik_states--;
 		break;
+	case PFI_KIF_REF_ROUTE:
+		if (kif->pfik_routes <= 0) {
+			printf("pfi_kif_unref: state refcount <= 0\n");
+			return;
+		}
+		kif->pfik_routes--;
+		break;
 	default:
 		panic("pfi_kif_unref with unknown type");
 	}
@@ -167,7 +177,7 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	if (kif->pfik_ifp != NULL || kif->pfik_group != NULL || kif == pfi_all)
 		return;
 
-	if (kif->pfik_rules || kif->pfik_states)
+	if (kif->pfik_rules || kif->pfik_states || kif->pfik_routes)
 		return;
 
 	RB_REMOVE(pfi_ifhead, &pfi_ifs, kif);

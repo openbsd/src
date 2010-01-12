@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.291 2009/12/10 15:57:20 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.292 2010/01/12 03:20:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -78,8 +78,6 @@ int	 pfctl_load_debug(struct pfctl *, unsigned int);
 int	 pfctl_load_logif(struct pfctl *, char *);
 int	 pfctl_load_hostid(struct pfctl *, unsigned int);
 int	 pfctl_load_reassembly(struct pfctl *, u_int32_t);
-int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
-	    char *, int);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int);
 int	 pfctl_show_src_nodes(int, int);
@@ -686,64 +684,6 @@ pfctl_id_kill_states(int dev, const char *iface, int opts)
 	return (0);
 }
 
-int
-pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
-    u_int32_t ticket, int r_action, char *anchorname, int which)
-{
-	struct pfioc_pooladdr pp;
-	struct pf_pooladdr *pa;
-	u_int32_t pnr, mpnr;
-
-	memset(&pp, 0, sizeof(pp));
-	memcpy(pp.anchor, anchorname, sizeof(pp.anchor));
-	pp.r_action = r_action;
-	pp.r_num = nr;
-	pp.ticket = ticket;
-	pp.which = which;
-	if (ioctl(dev, DIOCGETADDRS, &pp)) {
-		warn("DIOCGETADDRS");
-		return (-1);
-	}
-	mpnr = pp.nr;
-	TAILQ_INIT(&pool->list);
-	for (pnr = 0; pnr < mpnr; ++pnr) {
-		pp.nr = pnr;
-		if (ioctl(dev, DIOCGETADDR, &pp)) {
-			warn("DIOCGETADDR");
-			return (-1);
-		}
-		pa = calloc(1, sizeof(struct pf_pooladdr));
-		if (pa == NULL)
-			err(1, "calloc");
-		bcopy(&pp.addr, pa, sizeof(struct pf_pooladdr));
-		TAILQ_INSERT_TAIL(&pool->list, pa, entries);
-	}
-
-	return (0);
-}
-
-void
-pfctl_move_pool(struct pf_pool *src, struct pf_pool *dst)
-{
-	struct pf_pooladdr *pa;
-
-	while ((pa = TAILQ_FIRST(&src->list)) != NULL) {
-		TAILQ_REMOVE(&src->list, pa, entries);
-		TAILQ_INSERT_TAIL(&dst->list, pa, entries);
-	}
-}
-
-void
-pfctl_clear_pool(struct pf_pool *pool)
-{
-	struct pf_pooladdr *pa;
-
-	while ((pa = TAILQ_FIRST(&pool->list)) != NULL) {
-		TAILQ_REMOVE(&pool->list, pa, entries);
-		free(pa);
-	}
-}
-
 void
 pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 {
@@ -840,16 +780,6 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			goto error;
 		}
 
-		if (pfctl_get_pool(dev, &pr.rule.rdr,
-		    nr, pr.ticket, PF_PASS, path, PF_RDR) != 0)
-			goto error;
-		if (pfctl_get_pool(dev, &pr.rule.nat,
-		    nr, pr.ticket, PF_PASS, path, PF_NAT) != 0)
-			goto error;
-		if (pfctl_get_pool(dev, &pr.rule.route,
-		    nr, pr.ticket, PF_PASS, path, PF_RT) != 0)
-			goto error;
-
 		switch (format) {
 		case PFCTL_SHOW_LABELS:
 			if (pr.rule.label[0]) {
@@ -902,9 +832,6 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		case PFCTL_SHOW_NOTHING:
 			break;
 		}
-		pfctl_clear_pool(&pr.rule.rdr);
-		pfctl_clear_pool(&pr.rule.nat);
-		pfctl_clear_pool(&pr.rule.route);
 	}
 	path[len] = '\0';
 	return (0);
@@ -1071,21 +998,6 @@ pfctl_show_limits(int dev, int opts)
 
 /* callbacks for rule/nat/rdr/addr */
 int
-pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af, int which)
-{
-	struct pf_pooladdr *pa;
-
-	pf->paddr.af = af;
-	TAILQ_FOREACH(pa, &p->list, entries) {
-		pf->paddr.which = which;
-		memcpy(&pf->paddr.addr, pa, sizeof(struct pf_pooladdr));
-		if (ioctl(pf->dev, DIOCADDADDR, &pf->paddr))
-			err(1, "DIOCADDADDR");
-	}
-	return (0);
-}
-
-int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 {
 	struct pf_rule		*rule;
@@ -1119,12 +1031,6 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 	if ((rule = calloc(1, sizeof(*rule))) == NULL)
 		err(1, "calloc");
 	bcopy(r, rule, sizeof(*rule));
-	TAILQ_INIT(&rule->rdr.list);
-	pfctl_move_pool(&r->rdr, &rule->rdr);
-	TAILQ_INIT(&rule->nat.list);
-	pfctl_move_pool(&r->nat, &rule->nat);
-	TAILQ_INIT(&rule->route.list);
-	pfctl_move_pool(&r->route, &rule->route);
 
 	TAILQ_INSERT_TAIL(rs->rules.active.ptr, rule, entries);
 	return (0);
@@ -1242,15 +1148,6 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 		name = "";
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr))
-			err(1, "DIOCBEGINADDRS");
-		if (pfctl_add_pool(pf, &r->rdr, r->af, PF_RDR))
-			return (1);
-		if (pfctl_add_pool(pf, &r->nat, r->af, PF_NAT))
-			return (1);
-		if (pfctl_add_pool(pf, &r->route, r->af, PF_RT))
-			return (1);
-		pr.pool_ticket = pf->paddr.ticket;
 		memcpy(&pr.rule, r, sizeof(pr.rule));
 		if (r->anchor && strlcpy(pr.anchor_call, name,
 		    sizeof(pr.anchor_call)) >= sizeof(pr.anchor_call))
@@ -1265,8 +1162,6 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 		    pf->opts & PF_OPT_VERBOSE2);
 	}
 	path[len] = '\0';
-	pfctl_clear_pool(&r->rdr);
-	pfctl_clear_pool(&r->nat);
 	return (0);
 }
 

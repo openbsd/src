@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.11 2009/11/22 23:30:05 deraadt Exp $ */
+/*	$OpenBSD: filter.c,v 1.12 2010/01/12 03:20:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -39,7 +39,7 @@
 #define satosin(sa)	((struct sockaddr_in *)(sa))
 #define satosin6(sa)	((struct sockaddr_in6 *)(sa))
 
-int add_addr(struct sockaddr *, int);
+int add_addr(struct sockaddr *, struct pf_pool *);
 int prepare_rule(u_int32_t, struct sockaddr *, struct sockaddr *,
     u_int16_t);
 int server_lookup4(struct sockaddr_in *, struct sockaddr_in *,
@@ -47,7 +47,6 @@ int server_lookup4(struct sockaddr_in *, struct sockaddr_in *,
 int server_lookup6(struct sockaddr_in6 *, struct sockaddr_in6 *,
     struct sockaddr_in6 *);
 
-static struct pfioc_pooladdr	pfp;
 static struct pfioc_rule	pfr;
 static struct pfioc_trans	pft;
 static struct pfioc_trans_e	pfte;
@@ -55,20 +54,18 @@ static int dev, rule_log;
 static char *qname, *tagname;
 
 int
-add_addr(struct sockaddr *addr, int which)
+add_addr(struct sockaddr *addr, struct pf_pool *pfp)
 {
 	if (addr->sa_family == AF_INET) {
-		memcpy(&pfp.addr.addr.v.a.addr.v4,
+		memcpy(&pfp->addr.v.a.addr.v4,
 		    &satosin(addr)->sin_addr.s_addr, 4);
-		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 4);
+		memset(&pfp->addr.v.a.mask.addr8, 255, 4);
 	} else {
-		memcpy(&pfp.addr.addr.v.a.addr.v6,
+		memcpy(&pfp->addr.v.a.addr.v6,
 		    &satosin6(addr)->sin6_addr.s6_addr, 16);
-		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 16);
+		memset(&pfp->addr.v.a.mask.addr8, 255, 16);
 	}
-	pfp.which = which;
-	if (ioctl(dev, DIOCADDADDR, &pfp) == -1)
-		return (-1);
+	pfp->addr.type = PF_ADDR_ADDRMASK;
 	return (0);
 }
 
@@ -86,7 +83,7 @@ add_nat(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 	if (prepare_rule(id, src, dst, d_port) == -1)
 		return (-1);
 
-	if (add_addr(nat, PF_NAT) == -1)
+	if (add_addr(nat, &pfr.rule.nat) == -1)
 		return (-1);
 
 	pfr.rule.direction = PF_OUT;
@@ -111,7 +108,7 @@ add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 	if (prepare_rule(id, src, dst, d_port) == -1)
 		return (-1);
 
-	if (add_addr(rdr, PF_RDR) == -1)
+	if (add_addr(rdr, &pfr.rule.rdr) == -1)
 		return (-1);
 
 	pfr.rule.direction = PF_IN;
@@ -196,17 +193,12 @@ prepare_rule(u_int32_t id, struct sockaddr *src,
 		return (-1);
 	}
 
-	memset(&pfp, 0, sizeof pfp);
 	memset(&pfr, 0, sizeof pfr);
 	snprintf(an, PF_ANCHOR_NAME_SIZE, "%s/%d.%d", FTP_PROXY_ANCHOR,
 	    getpid(), id);
-	strlcpy(pfp.anchor, an, PF_ANCHOR_NAME_SIZE);
 	strlcpy(pfr.anchor, an, PF_ANCHOR_NAME_SIZE);
 
 	pfr.ticket = pfte.ticket;
-	if (ioctl(dev, DIOCBEGINADDRS, &pfp) == -1)
-		return (-1);
-	pfr.pool_ticket = pfp.ticket;
 
 	/* Generic for all rule types. */
 	pfr.rule.af = src->sa_family;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.255 2009/12/24 10:06:35 sobrado Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.256 2010/01/12 03:20:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -398,38 +398,13 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 
 void
 print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
-    sa_family_t af, int id)
+    sa_family_t af, int id, int verbose)
 {
-	struct pf_pooladdr	*pooladdr;
-
-	if ((TAILQ_FIRST(&pool->list) != NULL) &&
-	    TAILQ_NEXT(TAILQ_FIRST(&pool->list), entries) != NULL)
-		printf("{ ");
-	TAILQ_FOREACH(pooladdr, &pool->list, entries){
-		switch (id) {
-		case PF_NAT:
-		case PF_RDR:
-		case PF_BINAT:
-			print_addr(&pooladdr->addr, af, 0);
-			break;
-		case PF_PASS:
-		case PF_MATCH:
-			if (PF_AZERO(&pooladdr->addr.v.a.addr, af))
-				printf("%s", pooladdr->ifname);
-			else {
-				printf("(%s ", pooladdr->ifname);
-				print_addr(&pooladdr->addr, af, 0);
-				printf(")");
-			}
-			break;
-		default:
-			break;
-		}
-		if (TAILQ_NEXT(pooladdr, entries) != NULL)
-			printf(", ");
-		else if (TAILQ_NEXT(TAILQ_FIRST(&pool->list), entries) != NULL)
-			printf(" }");
-	}
+	if (pool->ifname[0]) {
+		print_addr(&pool->addr, af, verbose);
+		printf("@%s", pool->ifname);
+	} else
+		print_addr(&pool->addr, af, verbose);
 	switch (id) {
 	case PF_NAT:
 		if ((p1 != PF_NAT_PROXY_PORT_LOW ||
@@ -1022,15 +997,15 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	}
 	if (r->divert_packet.port)
 		printf(" divert-packet port %u", ntohs(r->divert_packet.port));
-	if (!anchor_call[0] && !TAILQ_EMPTY(&r->nat.list)) {
+	if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE) {
 		printf (" nat-to ");
 		print_pool(&r->nat, r->nat.proxy_port[0],
-		    r->nat.proxy_port[1], r->af, PF_NAT);
+		    r->nat.proxy_port[1], r->af, PF_NAT, verbose);
 	}
-	if (!r->rt && !anchor_call[0] && !TAILQ_EMPTY(&r->rdr.list)) {
+	if (!r->rt && !anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
 		printf (" rdr-to ");
 		print_pool(&r->rdr, r->rdr.proxy_port[0],
-		    r->rdr.proxy_port[1], r->af, PF_RDR);
+		    r->rdr.proxy_port[1], r->af, PF_RDR, verbose);
 	}
 	if (r->rt) {
 		if (r->rt == PF_ROUTETO)
@@ -1043,7 +1018,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf(" fastroute");
 		if (r->rt != PF_FASTROUTE) {
 			printf(" ");
-			print_pool(&r->route, 0, 0, r->af, PF_PASS);
+			print_pool(&r->route, 0, 0, r->af, PF_PASS, verbose);
 		}
 	}
 }
@@ -1072,6 +1047,8 @@ print_tabledef(const char *name, int flags, int addrs,
 			for (h = ti->host; h != NULL; h = h->next) {
 				printf(h->not ? " !" : " ");
 				print_addr(&h->addr, h->af, 0);
+				if (h->ifname)
+					printf("@%s", h->ifname);
 			}
 			nti = SIMPLEQ_NEXT(ti, entries);
 			if (nti != NULL && nti->file == NULL)
@@ -1420,26 +1397,24 @@ ifa_skip_if(const char *filter, struct node_host *p)
 struct node_host *
 host(const char *s)
 {
-	struct node_host	*h = NULL;
-	int			 mask, v4mask, v6mask, cont = 1;
-	char			*p, *q, *ps;
+	struct node_host	*h = NULL, *n;
+	int			 mask = -1, v4mask = 32, v6mask = 128, cont = 1;
+	char			*p, *q, *ps, *if_name;
 
-	if ((p = strrchr(s, '/')) != NULL) {
+	if ((ps = strdup(s)) == NULL)
+		err(1, "host: strdup");
+
+	if ((if_name = strrchr(ps, '@')) != NULL) {
+		if_name[0] = '\0';
+		if_name++;
+	} else if ((p = strrchr(ps, '/')) != NULL) {
 		mask = strtol(p+1, &q, 0);
 		if (!q || *q || mask > 128 || q == (p+1)) {
 			fprintf(stderr, "invalid netmask '%s'\n", p);
 			return (NULL);
 		}
-		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			err(1, "host: malloc");
-		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
+		p[0] = '\0';
 		v4mask = v6mask = mask;
-	} else {
-		if ((ps = strdup(s)) == NULL)
-			err(1, "host: strdup");
-		v4mask = 32;
-		v6mask = 128;
-		mask = -1;
 	}
 
 	/* interface with this name exists? */
@@ -1463,6 +1438,12 @@ host(const char *s)
 		fprintf(stderr, "no IP address found for %s\n", s);
 		return (NULL);
 	}
+	if (if_name)
+		for (n = h; n != NULL; n = n->next)
+			if ((h->ifname = strdup(if_name)) == NULL)
+				err(1, "host: strdup");
+
+	h->addr.type = PF_ADDR_ADDRMASK;
 	return (h);
 }
 
@@ -1690,6 +1671,12 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 		addr.pfra_not = n->not ^ not;
 		addr.pfra_af = n->af;
 		addr.pfra_net = unmask(&n->addr.v.a.mask, n->af);
+		if (n->ifname) {
+			if (strlcpy(addr.pfra_ifname, n->ifname,
+		 	   sizeof(addr.pfra_ifname)) >= sizeof(addr.pfra_ifname))
+				errx(1, "append_addr_host: strlcpy");
+			addr.pfra_type = PFRKE_ROUTE;
+		}
 		switch (n->af) {
 		case AF_INET:
 			addr.pfra_ip4addr.s_addr = n->addr.v.a.addr.addr32[0];

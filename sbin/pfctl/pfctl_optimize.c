@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.23 2009/12/10 15:57:20 deraadt Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.24 2010/01/12 03:20:51 mcbride Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -205,8 +205,6 @@ struct pf_rule_field {
 
 
 
-int	add_opt_table(struct pfctl *, struct pf_opt_tbl **, sa_family_t,
-	    struct pf_rule_addr *);
 int	addrs_combineable(struct pf_rule_addr *, struct pf_rule_addr *);
 int	addrs_equal(struct pf_rule_addr *, struct pf_rule_addr *);
 int	block_feedback(struct pfctl *, struct superblock *);
@@ -218,7 +216,6 @@ void	exclude_supersets(struct pf_rule *, struct pf_rule *);
 int	interface_group(const char *);
 int	load_feedback_profile(struct pfctl *, struct superblocks *);
 int	optimize_superblock(struct pfctl *, struct superblock *);
-int	pf_opt_create_table(struct pfctl *, struct pf_opt_tbl *);
 void	remove_from_skipsteps(struct skiplist *, struct superblock *,
 	    struct pf_opt_rule *, struct pf_skip_step *);
 int	remove_identical_rules(struct pfctl *, struct superblock *);
@@ -285,24 +282,6 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 		if ((por = calloc(1, sizeof(*por))) == NULL)
 			err(1, "calloc");
 		memcpy(&por->por_rule, r, sizeof(*r));
-		if (TAILQ_FIRST(&r->rdr.list) != NULL) {
-			TAILQ_INIT(&por->por_rule.rdr.list);
-			pfctl_move_pool(&r->rdr, &por->por_rule.rdr);
-		} else
-			bzero(&por->por_rule.rdr,
-			    sizeof(por->por_rule.rdr));
-		if (TAILQ_FIRST(&r->nat.list) != NULL) {
-			TAILQ_INIT(&por->por_rule.nat.list);
-			pfctl_move_pool(&r->nat, &por->por_rule.nat);
-		} else
-			bzero(&por->por_rule.nat,
-			    sizeof(por->por_rule.nat));
-		if (TAILQ_FIRST(&r->route.list) != NULL) {
-			TAILQ_INIT(&por->por_rule.route.list);
-			pfctl_move_pool(&r->route, &por->por_rule.route);
-		} else
-			bzero(&por->por_rule.route,
-			    sizeof(por->por_rule.route));
 
 		TAILQ_INSERT_TAIL(&opt_queue, por, por_entry);
 	}
@@ -331,12 +310,6 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 			if ((r = calloc(1, sizeof(*r))) == NULL)
 				err(1, "calloc");
 			memcpy(r, &por->por_rule, sizeof(*r));
-			TAILQ_INIT(&r->rdr.list);
-			TAILQ_INIT(&r->nat.list);
-			TAILQ_INIT(&r->route.list);
-			pfctl_move_pool(&por->por_rule.rdr, &r->rdr);
-			pfctl_move_pool(&por->por_rule.nat, &r->nat);
-			pfctl_move_pool(&por->por_rule.route, &r->route);
 			TAILQ_INSERT_TAIL(rs->rules.active.ptr, r, entries);
 			free(por);
 		}
@@ -525,10 +498,10 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 				    p1->por_rule.nr, p2->por_rule.nr);
 				if (p1->por_dst_tbl == NULL &&
 				    add_opt_table(pf, &p1->por_dst_tbl,
-				    p1->por_rule.af, &p1->por_rule.dst))
+				    p1->por_rule.af, &p1->por_rule.dst, NULL))
 					return (1);
 				if (add_opt_table(pf, &p1->por_dst_tbl,
-				    p1->por_rule.af, &p2->por_rule.dst))
+				    p1->por_rule.af, &p2->por_rule.dst, NULL))
 					return (1);
 				p2->por_dst_tbl = p1->por_dst_tbl;
 				if (p1->por_dst_tbl->pt_rulecount >=
@@ -547,10 +520,10 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 				    p1->por_rule.nr, p2->por_rule.nr);
 				if (p1->por_src_tbl == NULL &&
 				    add_opt_table(pf, &p1->por_src_tbl,
-				    p1->por_rule.af, &p1->por_rule.src))
+				    p1->por_rule.af, &p1->por_rule.src, NULL))
 					return (1);
 				if (add_opt_table(pf, &p1->por_src_tbl,
-				    p1->por_rule.af, &p2->por_rule.src))
+				    p1->por_rule.af, &p2->por_rule.src, NULL))
 					return (1);
 				p2->por_src_tbl = p1->por_src_tbl;
 				if (p1->por_src_tbl->pt_rulecount >=
@@ -567,6 +540,7 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 	/*
 	 * Then we make a final pass to create a valid table name and
 	 * insert the name into the rules.
+	 * Convert translation/routing mapping pools to tables as well.
 	 */
 	for (p1 = TAILQ_FIRST(&block->sb_rules); p1; p1 = por_next) {
 		por_next = TAILQ_NEXT(p1, por_entry);
@@ -920,15 +894,6 @@ load_feedback_profile(struct pfctl *pf, struct superblocks *superblocks)
 		memcpy(&por->por_rule, &pr.rule, sizeof(por->por_rule));
 		rs = pf_find_or_create_ruleset(pr.anchor_call);
 		por->por_rule.anchor = rs->anchor;
-		if (TAILQ_EMPTY(&por->por_rule.rdr.list))
-			memset(&por->por_rule.rdr, 0,
-			    sizeof(por->por_rule.rdr));
-		if (TAILQ_EMPTY(&por->por_rule.nat.list))
-			memset(&por->por_rule.nat, 0,
-			    sizeof(por->por_rule.nat));
-		if (TAILQ_EMPTY(&por->por_rule.route.list))
-			memset(&por->por_rule.route, 0,
-			    sizeof(por->por_rule.route));
 		TAILQ_INSERT_TAIL(&queue, por, por_entry);
 
 		/* XXX pfctl_get_pool(pf->dev, &pr.rule.rpool, nr, pr.ticket,
@@ -1232,7 +1197,7 @@ skip_init(void)
  */
 int
 add_opt_table(struct pfctl *pf, struct pf_opt_tbl **tbl, sa_family_t af,
-    struct pf_rule_addr *addr)
+    struct pf_rule_addr *addr, char *ifname)
 {
 #ifdef OPT_DEBUG
 	char buf[128];
@@ -1257,6 +1222,7 @@ add_opt_table(struct pfctl *pf, struct pf_opt_tbl **tbl, sa_family_t af,
 	memset(&node_host, 0, sizeof(node_host));
 	node_host.af = af;
 	node_host.addr = addr->addr;
+	node_host.ifname = ifname;
 
 #ifdef OPT_DEBUG
 	DEBUG("<%s> adding %s/%d", (*tbl)->pt_name, inet_ntop(af,
@@ -1330,7 +1296,6 @@ again:
 		}
 	}
 	tablenum++;
-
 
 	if (pfctl_define_table(tbl->pt_name, PFR_TFLAG_CONST, 1,
 	    pf->astack[0]->name, tbl->pt_buf, pf->astack[0]->ruleset.tticket)) {

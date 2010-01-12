@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.580 2010/01/10 23:48:22 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.581 2010/01/12 03:20:51 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -343,6 +343,8 @@ void		 expand_label_nr(const char *, char *, size_t);
 void		 expand_label(char *, size_t, const char *, u_int8_t,
 		    struct node_host *, struct node_port *, struct node_host *,
 		    struct node_port *, u_int8_t);
+int		 collapse_redirspec(struct pf_pool *, struct pf_rule *,
+		    struct redirspec *rs);
 int		 apply_redirspec(struct pf_pool *, struct pf_rule *,
 		    struct redirspec *, int, struct node_port *);
 void		 expand_rule(struct pf_rule *, int, struct node_if *,
@@ -3575,7 +3577,15 @@ redirspec	: host				{ $$ = $1; }
 		| '{' optnl redir_host_list '}'	{ $$ = $3; }
 		;
 
-redir_host_list	: host optnl			{ $$ = $1; }
+redir_host_list	: host optnl			{
+			if ($1->addr.type != PF_ADDR_ADDRMASK) {
+				free($1);
+				yyerror("only addresses can be listed for"
+				    "redirection pools ");
+				YYERROR;
+			}
+			$$ = $1;
+		}
 		| redir_host_list comma host optnl {
 			$1->tail->next = $3;
 			$1->tail = $3->tail;
@@ -3709,18 +3719,51 @@ pool_opt	: BITMASK	{
 		;
 
 route_host	: STRING			{
+			/* try to find @if0 address specs */
+			if (strrchr($1, '@') != NULL) {
+				if (($$ = host($1)) == NULL)	{
+					yyerror("invalid host for route spec");
+					YYERROR;
+				}
+			} else {
+				$$ = calloc(1, sizeof(struct node_host));
+				if ($$ == NULL)
+					err(1, "route_host: calloc");
+				$$->ifname = $1;
+				$$->addr.type = PF_ADDR_DYNIFTL;
+				set_ipmask($$, 128);
+				$$->next = NULL;
+				$$->tail = $$;
+			}
+		}
+		| '<' STRING '>'	{
+			if (strlen($2) >= PF_TABLE_NAME_SIZE) {
+				yyerror("table name '%s' too long", $2);
+				free($2);
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
-				err(1, "route_host: calloc");
-			$$->ifname = $1;
-			$$->addr.type = PF_ADDR_DYNIFTL;
-			set_ipmask($$, 128);
+				err(1, "host: calloc");
+			$$->addr.type = PF_ADDR_TABLE;
+			if (strlcpy($$->addr.v.tblname, $2,
+			    sizeof($$->addr.v.tblname)) >=
+			    sizeof($$->addr.v.tblname))
+				errx(1, "host: strlcpy");
+			free($2);
 			$$->next = NULL;
 			$$->tail = $$;
 		}
+		| dynaddr			{
+			$$ = $1;
+		}
 		| '(' STRING host ')'		{
+			struct node_host	*n;
+
 			$$ = $3;
-			$$->ifname = $2;
+			/* XXX check masks, only full mask should be allowed */
+			for (n = $3; n != NULL; n = n->next)
+				$$->ifname = $2;
 		}
 		;
 
@@ -3924,17 +3967,17 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 		    "synproxy state or modulate state");
 		problems++;
 	}
-	if ((!TAILQ_EMPTY(&r->nat.list) ||
-	    (!r->rt && !TAILQ_EMPTY(&r->rdr.list)))  &&
+	if ((r->nat.addr.type != PF_ADDR_NONE ||
+	    r->rdr.addr.type != PF_ADDR_NONE) &&
 	    r->action != PF_MATCH && !r->keep_state) {
 		yyerror("nat-to and rdr-to require keep state");
 		problems++;
 	}
-	if (!TAILQ_EMPTY(&r->nat.list) && r->direction != PF_OUT) {
+	if (r->nat.addr.type != PF_ADDR_NONE && r->direction != PF_OUT) {
 		yyerror("nat-to can only be used outbound");
 		problems++;
 	}
-	if (!r->rt && !TAILQ_EMPTY(&r->rdr.list) && r->direction != PF_IN) {
+	if (r->rdr.addr.type != PF_ADDR_NONE && r->direction != PF_IN) {
 		yyerror("rdr-to can only be used inbound");
 		problems++;
 	}
@@ -4453,21 +4496,90 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 }
 
 int
+collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs)
+{
+	struct pf_opt_tbl *tbl = NULL;
+	struct node_host *h;
+	struct pf_rule_addr ra;
+
+	if (!rs || !rs->rdr) {
+		rpool->addr.type = PF_ADDR_NONE;
+		return (0);
+	}
+
+	h = rs->rdr->host;
+	if (h == NULL)			/* no pool address */
+		return (0);
+	else if (h->next == NULL) {	/* only one address */
+		if (!r->af)
+			r->af = h->af;
+		else {
+			if (r->af && h->af && r->af != h->af) {
+				yyerror("address family mismatch "
+				    "on translationh address");
+				return (1);
+			}
+		}
+
+		rpool->addr = h->addr;
+		if (h->ifname && strlcpy(rpool->ifname, h->ifname,
+		    sizeof(rpool->ifname)) >= sizeof(rpool->ifname))
+			errx(1, "collapse_redirspec: strlcpy");
+		
+		return (0);
+	} else {			/* more than one address */
+		if (rs->pool_opts.type &&
+		     rs->pool_opts.type != PF_POOL_ROUNDROBIN) {
+			yyerror("only round-robin valid for multiple "
+			    "translation or routing addresses");
+			return (1);
+		}
+		while (h != NULL) {
+			if (h->addr.type != PF_ADDR_ADDRMASK) {
+				yyerror("multiple tables or dynamic interfaces "
+				    "not supported for translation or routing");
+				return (1);
+			}
+			memset(&ra, 0, sizeof(ra));
+			ra.addr = h->addr;
+			if (add_opt_table(pf, &tbl,
+			    h->af, &ra, h->ifname))
+				return (1);
+			h = h->next;
+                }
+	}
+	if (tbl) {
+		if ((pf->opts & PF_OPT_NOACTION) == 0 &&
+		     pf_opt_create_table(pf, tbl))
+				return (1);
+
+		pf->tdirty = 1;
+
+		if (pf->opts & PF_OPT_VERBOSE)
+			print_tabledef(tbl->pt_name, PFR_TFLAG_CONST,
+			    1, &tbl->pt_nodes);
+
+		memset(&rpool->addr, 0, sizeof(rpool->addr));
+		rpool->addr.type = PF_ADDR_TABLE;
+		strlcpy(rpool->addr.v.tblname, tbl->pt_name,
+		    sizeof(rpool->addr.v.tblname));
+
+		pfr_buf_clear(tbl->pt_buf);
+		free(tbl->pt_buf);
+		tbl->pt_buf = NULL;
+		free(tbl);
+	}
+	return (0);
+}
+
+
+int
 apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
     int isrdr, struct node_port *np)
 {
-	struct node_host	*h;
-	struct pf_pooladdr	*pa;
-
 	if (!rs || !rs->rdr)
 		return (0);
 
-	if (!r->af && ! rs->rdr->host->ifindex)
-		r->af = rs->rdr->host->af;
-
-	remove_invalid_hosts(&rs->rdr->host, &r->af);
-	if (invalid_redirect(rs->rdr->host, r->af))
-		return (1);
 	if (check_netmask(rs->rdr->host, r->af))
 		return (1);
 
@@ -4494,21 +4606,6 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 	    rs->rdr->host->addr.type == PF_ADDR_TABLE ||
 	    DYNIF_MULTIADDR(rs->rdr->host->addr)))
 		rpool->opts = PF_POOL_ROUNDROBIN;
-	if ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN &&
-	    disallow_table(rs->rdr->host, "tables are only supported in "
-	    "round-robin redirection pools"))
-		return (1);
-	if ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN &&
-	    disallow_alias(rs->rdr->host, "interface (%s) is only supported in "
-	    "round-robin redirection pools"))
-		return (1);
-	if (rs->rdr->host->next != NULL) {
-		if ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN) {
-			yyerror("only round-robin valid for multiple "
-			    "redirection addresses");
-			return (1);
-		}
-	}
 
 	if (rs->pool_opts.key != NULL)
 		memcpy(&rpool->key, rs->pool_opts.key,
@@ -4531,20 +4628,6 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 		}
 		rpool->proxy_port[0] = 0;
 		rpool->proxy_port[1] = 0;
-	}
-
-	TAILQ_INIT(&rpool->list);
-	for (h = rs->rdr->host; h != NULL; h = h->next) {
-		if ((pa = calloc(1, sizeof(struct pf_pooladdr))) == NULL)
-			err(1, "apply_redirspec: calloc");
-		pa->addr = h->addr;
-		if (h->ifname != NULL) {
-			if (strlcpy(pa->ifname, h->ifname, sizeof pa->ifname) >=
-			    sizeof(pa->ifname))
-				errx(1, "apply_redirspec: strlcpy");
-		} else
-			pa->ifname[0] = 0;
-		TAILQ_INSERT_TAIL(&rpool->list, pa, entries);
 	}
 
 	return (0);
@@ -4582,6 +4665,12 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	flags = r->flags;
 	flagset = r->flagset;
 	keep_state = r->keep_state;
+
+	collapse_redirspec(&r->rdr, r, rdr);
+	collapse_redirspec(&r->nat, r, nat);
+	collapse_redirspec(&r->route, r, rroute);
+
+	r->src.addr.type = r->dst.addr.type = PF_ADDR_ADDRMASK;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,

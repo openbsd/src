@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.40 2009/11/23 00:45:41 claudio Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.41 2010/01/12 03:20:51 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -360,7 +360,6 @@ void
 sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 {
 	struct pfioc_rule	 rio;
-	struct pfioc_pooladdr	 pio;
 	struct sockaddr_in	*sain;
 	struct sockaddr_in6	*sain6;
 	struct address		*address;
@@ -393,7 +392,6 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 
 	TAILQ_FOREACH(address, &rdr->virts, entry) {
 		memset(&rio, 0, sizeof(rio));
-		memset(&pio, 0, sizeof(pio));
 		(void)strlcpy(rio.anchor, anchor, sizeof(rio.anchor));
 
 		rio.rule.action = PF_PASS;
@@ -422,10 +420,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		}
 
 		rio.ticket = env->sc_pf->pfte.ticket;
-		if (ioctl(env->sc_pf->dev, DIOCBEGINADDRS, &pio) == -1)
-			fatal("sync_ruleset: cannot initialise address pool");
 
-		rio.pool_ticket = pio.ticket;
 		rio.rule.af = address->ss.ss_family;
 		rio.rule.proto = address->ipproto;
 		rio.rule.src.addr.type = PF_ADDR_ADDRMASK;
@@ -461,17 +456,14 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 			memset(&rio.rule.dst.addr.v.a.mask.addr8, 0xff, 16);
 		}
 
-		pio.addr.addr.type = PF_ADDR_TABLE;
+		rio.rule.rdr.addr.type = PF_ADDR_TABLE;
 		if (strlen(t->conf.ifname))
-			(void)strlcpy(pio.addr.ifname, t->conf.ifname,
-			    sizeof(pio.addr.ifname));
-		if (strlcpy(pio.addr.addr.v.tblname, rdr->conf.name,
-		    sizeof(pio.addr.addr.v.tblname)) >=
-		    sizeof(pio.addr.addr.v.tblname))
+			(void)strlcpy(rio.rule.rdr.ifname, t->conf.ifname,
+			    sizeof(rio.rule.rdr.ifname));
+		if (strlcpy(rio.rule.rdr.addr.v.tblname, rdr->conf.name,
+		    sizeof(rio.rule.rdr.addr.v.tblname)) >=
+		    sizeof(rio.rule.rdr.addr.v.tblname))
 			fatal("sync_ruleset: table name too long");
-		pio.which = PF_RDR;
-		if (ioctl(env->sc_pf->dev, DIOCADDADDR, &pio) == -1)
-			fatal("sync_ruleset: cannot add address to pool");
 
 		if (address->port.op == PF_OP_EQ ||
 		    rdr->table->conf.flags & F_PORT) {
