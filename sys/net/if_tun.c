@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.101 2010/01/11 03:50:56 yasuoka Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.102 2010/01/12 03:41:29 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -179,7 +179,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 {
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
-	u_int32_t		 macaddr_rnd;
 	int			 s;
 
 	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT|M_ZERO);
@@ -189,20 +188,11 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	tp->tun_unit = unit;
 	tp->tun_flags = TUN_INITED|TUN_STAYUP;
 
-	/* generate fake MAC address: 00 bd xx xx xx unit_no */
-	tp->arpcom.ac_enaddr[0] = 0x00;
-	tp->arpcom.ac_enaddr[1] = 0xbd;
-	/*
-	 * This no longer happens pre-scheduler so let's use the real
-	 * random subsystem instead of random().
-	 */
-	macaddr_rnd = arc4random();
-	bcopy(&macaddr_rnd, &tp->arpcom.ac_enaddr[2], sizeof(u_int32_t));
-	tp->arpcom.ac_enaddr[5] = (u_char)unit + 1;
-
 	ifp = &tp->tun_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
 	    unit);
+	ether_fakeaddr(ifp);
+
 	ifp->if_softc = tp;
 	ifp->if_ioctl = tun_ioctl;
 	ifp->if_output = tun_output;

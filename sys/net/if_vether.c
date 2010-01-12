@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.6 2009/11/22 12:33:25 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.7 2010/01/12 03:41:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -98,27 +98,16 @@ vether_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet 		*ifp;
 	struct vether_softc	*sc;
-	u_int32_t		 macaddr_rnd;
 	int 			 s;
 
 	if ((sc = malloc(sizeof(*sc),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	/* from if_tun.c: generate fake MAC address: 00 bd xx xx xx unit_no */
-	sc->sc_ac.ac_enaddr[0] = 0x00;
-	sc->sc_ac.ac_enaddr[1] = 0xbd;
-	/*
-	 * This no longer happens pre-scheduler so let's use the real
-	 * random subsystem instead of random().
-	 */
-	macaddr_rnd = arc4random();
-	bcopy(&macaddr_rnd, &sc->sc_ac.ac_enaddr[2], sizeof(u_int32_t));
-	sc->sc_ac.ac_enaddr[5] = (u_char)unit + 1;
-
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "vether%d", unit);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ether_fakeaddr(ifp);
 
 	ifp->if_softc = sc;
 	ifp->if_ioctl = vetherioctl;

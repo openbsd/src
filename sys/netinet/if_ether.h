@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.45 2009/10/25 21:42:02 mk Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.46 2010/01/12 03:41:29 deraadt Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -122,6 +122,8 @@ do {									\
 	(enaddr)[4] = ((u_int8_t *)ip6addr)[14];			\
 	(enaddr)[5] = ((u_int8_t *)ip6addr)[15];			\
 } while (/* CONSTCOND */ 0)
+
+void	ether_fakeaddr(struct ifnet *);
 #endif
 
 /*

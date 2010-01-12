@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.137 2010/01/11 03:50:56 yasuoka Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.138 2010/01/12 03:41:29 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -879,30 +879,36 @@ ether_sprintf(ap)
 }
 
 /*
+ * Generate a (hopefully) acceptable MAC address, if asked.
+ */
+void
+ether_fakeaddr(struct ifnet *ifp)
+{
+	static int unit;
+	int rng;
+
+	((struct arpcom *)ifp)->ac_enaddr[0] = 0xfe;
+	((struct arpcom *)ifp)->ac_enaddr[1] = 0xe1;
+	((struct arpcom *)ifp)->ac_enaddr[2] = 0xba;
+	((struct arpcom *)ifp)->ac_enaddr[3] = 0xd0 | (unit++ & 0xf);
+	rng = cold ? random() ^ (long)ifp : arc4random();
+	((struct arpcom *)ifp)->ac_enaddr[4] = rng;
+	((struct arpcom *)ifp)->ac_enaddr[5] = rng >> 8;
+}
+
+/*
  * Perform common duties while attaching to interface list
  */
 void
 ether_ifattach(ifp)
 	struct ifnet *ifp;
 {
-
 	/*
 	 * Any interface which provides a MAC address which is obviously
 	 * invalid gets whacked, so that users will notice.
 	 */
-	if (ETHER_IS_MULTICAST(((struct arpcom *)ifp)->ac_enaddr)) {
-		((struct arpcom *)ifp)->ac_enaddr[0] = 0x00;
-		((struct arpcom *)ifp)->ac_enaddr[1] = 0xfe;
-		((struct arpcom *)ifp)->ac_enaddr[2] = 0xe1;
-		((struct arpcom *)ifp)->ac_enaddr[3] = 0xba;
-		((struct arpcom *)ifp)->ac_enaddr[4] = 0xd0;
-		/*
-		 * XXX use of random() by anything except the scheduler is
-		 * normally invalid, but this is boot time, so pre-scheduler,
-		 * and the random subsystem is not alive yet
-		 */
-		((struct arpcom *)ifp)->ac_enaddr[5] = (u_char)random() & 0xff;
-	}
+	if (ETHER_IS_MULTICAST(((struct arpcom *)ifp)->ac_enaddr))
+		ether_fakeaddr(ifp);
 
 	ifp->if_type = IFT_ETHER;
 	ifp->if_addrlen = ETHER_ADDR_LEN;
