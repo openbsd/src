@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.581 2010/01/12 03:20:51 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.582 2010/01/12 03:33:28 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3725,6 +3725,7 @@ route_host	: STRING			{
 					yyerror("invalid host for route spec");
 					YYERROR;
 				}
+				free($1);
 			} else {
 				$$ = calloc(1, sizeof(struct node_host));
 				if ($$ == NULL)
