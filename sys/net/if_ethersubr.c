@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.138 2010/01/12 03:41:29 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.139 2010/01/12 06:47:25 yasuoka Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -768,7 +768,7 @@ decapsulate:
 
 		if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
 			pipex_pppoe_input(m, session);
-			return;
+			goto done;
 		}
 	}
 #endif
