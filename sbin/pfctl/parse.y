@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.582 2010/01/12 03:33:28 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.583 2010/01/12 14:44:26 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3763,8 +3763,16 @@ route_host	: STRING			{
 
 			$$ = $3;
 			/* XXX check masks, only full mask should be allowed */
-			for (n = $3; n != NULL; n = n->next)
-				$$->ifname = $2;
+			for (n = $3; n != NULL; n = n->next) {
+				if ($$->ifname) {
+					yyerror("cannot specify interface twice "
+					    "in route spec");
+					YYERROR;
+				}
+				if (($$->ifname = strdup($2)) == NULL)
+					errx(1, "host: strdup");
+			}
+			free($2);
 		}
 		;
 
@@ -4509,6 +4517,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *r
 	}
 
 	h = rs->rdr->host;
+	if (r->af)
+		remove_invalid_hosts(&h, &r->af);
 	if (h == NULL)			/* no pool address */
 		return (0);
 	else if (h->next == NULL) {	/* only one address */
@@ -4549,6 +4559,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *r
 			h = h->next;
                 }
 	}
+	freehostlist(h);
+	rs->rdr->host = NULL;
 	if (tbl) {
 		if ((pf->opts & PF_OPT_NOACTION) == 0 &&
 		     pf_opt_create_table(pf, tbl))
@@ -4581,9 +4593,6 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 	if (!rs || !rs->rdr)
 		return (0);
 
-	if (check_netmask(rs->rdr->host, r->af))
-		return (1);
-
 	rpool->proxy_port[0] = ntohs(rs->rdr->rport.a);
 
 	if (isrdr) {
@@ -4602,10 +4611,8 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 	}
 
 	rpool->opts = rs->pool_opts.type;
-	if ((rpool->opts & PF_POOL_TYPEMASK) == PF_POOL_NONE &&
-	    (rs->rdr->host->next != NULL ||
-	    rs->rdr->host->addr.type == PF_ADDR_TABLE ||
-	    DYNIF_MULTIADDR(rs->rdr->host->addr)))
+	if (rpool->addr.type == PF_ADDR_TABLE ||
+	    DYNIF_MULTIADDR(rpool->addr))
 		rpool->opts = PF_POOL_ROUNDROBIN;
 
 	if (rs->pool_opts.key != NULL)
@@ -4667,9 +4674,9 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	flagset = r->flagset;
 	keep_state = r->keep_state;
 
-	collapse_redirspec(&r->rdr, r, rdr);
-	collapse_redirspec(&r->nat, r, nat);
-	collapse_redirspec(&r->route, r, rroute);
+	error += collapse_redirspec(&r->rdr, r, rdr);
+	error += collapse_redirspec(&r->nat, r, nat);
+	error += collapse_redirspec(&r->route, r, rroute);
 
 	r->src.addr.type = r->dst.addr.type = PF_ADDR_ADDRMASK;
 
@@ -4880,10 +4887,6 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 		FREE_LIST(struct node_uid, uids);
 		FREE_LIST(struct node_gid, gids);
 		FREE_LIST(struct node_icmp, icmp_types);
-		if (nat && nat->rdr)
-			FREE_LIST(struct node_host, nat->rdr->host);
-		if (rdr && rdr->rdr)
-			FREE_LIST(struct node_host, rdr->rdr->host);
 	}
 
 	if (!added)
@@ -4929,6 +4932,11 @@ expand_skip_interface(struct node_if *interfaces)
 void
 freehostlist(struct node_host *h)
 {
+	struct node_host *n;
+
+	for (n = h; n != NULL; n = n->next)
+		if (n->ifname)
+			free(n->ifname);
 	FREE_LIST(struct node_host, h);
 }
 

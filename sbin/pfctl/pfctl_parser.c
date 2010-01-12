@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.256 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.257 2010/01/12 14:44:26 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1407,7 +1407,8 @@ host(const char *s)
 	if ((if_name = strrchr(ps, '@')) != NULL) {
 		if_name[0] = '\0';
 		if_name++;
-	} else if ((p = strrchr(ps, '/')) != NULL) {
+	} 
+	if ((p = strrchr(ps, '/')) != NULL) {
 		mask = strtol(p+1, &q, 0);
 		if (!q || *q || mask > 128 || q == (p+1)) {
 			fprintf(stderr, "invalid netmask '%s'\n", p);
@@ -1422,7 +1423,7 @@ host(const char *s)
 		cont = 0;
 
 	/* IPv4 address? */
-	if (cont && (h = host_v4(s, mask)) != NULL)
+	if (cont && (h = host_v4(ps, mask)) != NULL)
 		cont = 0;
 
 	/* IPv6 address? */
@@ -1432,18 +1433,19 @@ host(const char *s)
 	/* dns lookup */
 	if (cont && (h = host_dns(ps, v4mask, v6mask)) != NULL)
 		cont = 0;
-	free(ps);
 
+	if (if_name && if_name[0])
+		for (n = h; n != NULL; n = n->next)
+			if ((n->ifname = strdup(if_name)) == NULL)
+				err(1, "host: strdup");
+
+	free(ps);	/* after we copy the name out */
 	if (h == NULL || cont == 1) {
 		fprintf(stderr, "no IP address found for %s\n", s);
 		return (NULL);
 	}
-	if (if_name)
-		for (n = h; n != NULL; n = n->next)
-			if ((h->ifname = strdup(if_name)) == NULL)
-				err(1, "host: strdup");
-
-	h->addr.type = PF_ADDR_ADDRMASK;
+	for (n = h; n != NULL; n = n->next)
+		n->addr.type = PF_ADDR_ADDRMASK;
 	return (h);
 }
 
