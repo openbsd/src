@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.51 2009/10/04 16:08:37 michele Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.52 2010/01/12 23:33:24 yasuoka Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ struct protosw inetsw[] = {
 #if NGRE > 0
 { SOCK_RAW,     &inetdomain,    IPPROTO_GRE,    PR_ATOMIC|PR_ADDR,
   gre_input,    rip_output,     0,              rip_ctloutput,
-  rip_usrreq,
+  gre_usrreq,
   0,            0,              0,             0,		gre_sysctl
 },
 { SOCK_RAW,     &inetdomain,    IPPROTO_MOBILE, PR_ATOMIC|PR_ADDR,
