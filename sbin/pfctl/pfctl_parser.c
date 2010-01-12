@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.257 2010/01/12 14:44:26 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.258 2010/01/12 15:49:43 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1399,7 +1399,7 @@ host(const char *s)
 {
 	struct node_host	*h = NULL, *n;
 	int			 mask = -1, v4mask = 32, v6mask = 128, cont = 1;
-	char			*p, *q, *ps, *if_name;
+	char			*p, *q, *r, *ps, *if_name;
 
 	if ((ps = strdup(s)) == NULL)
 		err(1, "host: strdup");
@@ -1408,7 +1408,10 @@ host(const char *s)
 		if_name[0] = '\0';
 		if_name++;
 	} 
+
 	if ((p = strrchr(ps, '/')) != NULL) {
+		if ((r = strdup(ps)) == NULL)
+			err(1, "host: strdup");
 		mask = strtol(p+1, &q, 0);
 		if (!q || *q || mask > 128 || q == (p+1)) {
 			fprintf(stderr, "invalid netmask '%s'\n", p);
@@ -1416,15 +1419,18 @@ host(const char *s)
 		}
 		p[0] = '\0';
 		v4mask = v6mask = mask;
-	}
+	} else
+		r = ps;
 
 	/* interface with this name exists? */
 	if (cont && (h = host_if(ps, mask)) != NULL)
 		cont = 0;
 
 	/* IPv4 address? */
-	if (cont && (h = host_v4(ps, mask)) != NULL)
+	if (cont && (h = host_v4(r, mask)) != NULL)
 		cont = 0;
+	if (r != ps)
+		free(r);
 
 	/* IPv6 address? */
 	if (cont && (h = host_v6(ps, v6mask)) != NULL)
