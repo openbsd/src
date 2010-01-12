@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.30 2009/12/12 18:13:59 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.31 2010/01/12 22:36:38 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -453,8 +453,12 @@ tryagain:
 void
 timeout(int signo)
 {
+	int saved_errno = errno;
+
 	signal(SIGALRM, timeout);
 	timedout = 1;
+
+	errno = saved_errno;
 }
 
 /*
