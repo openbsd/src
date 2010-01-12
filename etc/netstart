@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.128 2009/12/10 00:51:55 todd Exp $
+#	$OpenBSD: netstart,v 1.129 2010/01/12 07:43:41 henning Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -203,7 +203,7 @@ fi
 
 # Set the address for the loopback interface.  Bringing the
 # interface up, automatically invokes the IPv6 address ::1)
-ifconfig lo0 inet 127.0.0.1
+ifconfig lo0 inet 127.0.0.1/8
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# IPv6 configurations.
