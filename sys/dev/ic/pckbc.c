@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.20 2009/08/27 16:45:20 jsg Exp $ */
+/* $OpenBSD: pckbc.c,v 1.21 2010/01/12 20:31:22 drahn Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -102,6 +102,7 @@ const char *pckbc_slot_names[] = { "kbd", "aux" };
 
 #define KBC_DEVCMD_ACK 0xfa
 #define KBC_DEVCMD_RESEND 0xfe
+#define KBC_DEVCMD_BAT 0xaa
 
 #define	KBD_DELAY	DELAY(8)
 
@@ -620,9 +621,14 @@ pckbc_poll_cmd1(t, slot, cmd)
 			cmd->cmdidx++;
 			continue;
 		}
-		if (c == KBC_DEVCMD_RESEND) {
+		/*
+		 * Some legacy free PCs keep returning Basic Assurance Test
+		 * (BAT) instead of something usable, so fail gracefully.
+		 */
+		if (c == KBC_DEVCMD_RESEND || c == KBC_DEVCMD_BAT) {
 #ifdef PCKBCDEBUG
-			printf("pckbc_cmd: RESEND\n");
+			printf("pckbc_cmd: %s\n",
+			    c == KBC_DEVCMD_RESEND ? "RESEND": "BAT");
 #endif
 			if (cmd->retries++ < 5)
 				continue;
