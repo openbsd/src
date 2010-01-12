@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.9 2010/01/12 11:29:35 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.10 2010/01/12 11:31:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -15,9 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "vether.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,10 +37,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/in_var.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
 #endif
 
 void	vetherattach(int);
