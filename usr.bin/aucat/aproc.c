@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.43 2010/01/11 13:06:32 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.44 2010/01/12 21:42:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -904,16 +904,6 @@ mix_prime(struct aproc *p)
 	struct abuf *obuf = LIST_FIRST(&p->obuflist);
 	unsigned todo, count;
 
-#ifdef DEBUG
-	if (debug_level >= 3) {
-		aproc_dbg(p);
-		dbg_puts(": prime1: lat/maxlat=");
-		dbg_puti(p->u.mix.lat);
-		dbg_puts("/");
-		dbg_puti(p->u.mix.maxlat);
-		dbg_puts("\n");
-	}
-#endif
 	for (;;) {
 		if (!ABUF_WOK(obuf))
 			break;

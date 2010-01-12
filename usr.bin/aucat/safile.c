@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.21 2010/01/11 13:06:32 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.22 2010/01/12 21:42:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -68,6 +68,15 @@ safile_cb(void *addr, int delta)
 	struct safile *f = (struct safile *)addr;
 	struct aproc *p;
 
+#ifdef DEBUG
+       if (delta < 0 || delta > (60 * RATE_MAX)) {
+		dbg_puts(f->file.name);
+		dbg_puts(": ");
+		dbg_puti(delta);
+		dbg_puts(": bogus sndio delta");
+		dbg_panic();
+       }
+#endif
 	if (delta != 0) {
 		p = f->file.wproc;
 		if (p && p->ops->opos)
