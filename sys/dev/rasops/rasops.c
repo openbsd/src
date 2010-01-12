@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.20 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.21 2010/01/12 00:41:03 chl Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1147,8 +1147,6 @@ rasops_rotate_font(int *cookie)
 	 */
 
 	f = malloc(sizeof(struct rotatedfont), M_DEVBUF, M_WAITOK);
-	if (f == NULL)
-		return;
 
 	if ((ncookie = wsfont_rotate(*cookie)) == -1)
 		return;
