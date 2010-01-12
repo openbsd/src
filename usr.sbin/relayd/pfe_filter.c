@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.41 2010/01/12 03:20:51 mcbride Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.42 2010/01/12 23:27:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -456,6 +456,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 			memset(&rio.rule.dst.addr.v.a.mask.addr8, 0xff, 16);
 		}
 
+		rio.rule.nat.addr.type = PF_ADDR_NONE;
 		rio.rule.rdr.addr.type = PF_ADDR_TABLE;
 		if (strlen(t->conf.ifname))
 			(void)strlcpy(rio.rule.rdr.ifname, t->conf.ifname,
