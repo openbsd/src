@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.22 2009/10/15 17:54:56 deraadt Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.23 2010/01/12 00:39:10 chl Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t iob, command, bhlc;
+	cardbusreg_t command, bhlc;
 	const struct xl_cardbus_product *ecp;
 	bus_space_handle_t ioh;
 	bus_addr_t adr;
@@ -222,7 +222,6 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->xl_flags = ecp->ecp_flags;
 	sc->sc_dmat = ca->ca_dmat;
 
-	iob = adr;
 	sc->xl_bhandle = ioh;
 
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
