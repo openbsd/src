@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.137 2010/01/11 00:19:11 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.138 2010/01/12 02:47:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -334,9 +334,6 @@ pfsync_clone_destroy(struct ifnet *ifp)
 #if NCARP > 0
 	if (!pfsync_sync_ok)
 		carp_group_demote_adj(&sc->sc_if, -1);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	if_detach(ifp);
 

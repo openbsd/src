@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.27 2007/12/20 02:53:02 brad Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.28 2010/01/12 02:47:07 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -148,9 +148,6 @@ pflog_clone_destroy(struct ifnet *ifp)
 	LIST_REMOVE(pflogif, sc_list);
 	splx(s);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	if_detach(ifp);
 	free(pflogif, M_DEVBUF);
 	return (0);
