@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.102 2010/01/12 03:41:29 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.103 2010/01/12 04:06:55 yasuoka Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -627,7 +627,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef PIPEX
 	if ((session = pipex_ip_lookup_session(m0, &tp->pipex_iface)) != NULL) {
 		pipex_ip_output(m0, session);
-		simple_unlock(&tp->pppac_lock);
+		splx(s);
 		return (0);
 	}
 #endif /* PIPEX */
