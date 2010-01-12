@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.468 2010/01/11 13:40:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.469 2010/01/12 10:57:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -240,8 +240,7 @@ sub complete
 			$set->move_kept($o);
 			$o->{tweaked} = 
 			    OpenBSD::Add::tweak_package_status($pkgname, $state);
-			$state->say("Not reinstalling $pkgname")
-			    if $state->verbose >= 2 and !$n->{tweaked};
+			$state->updater->progress_message($state, "No need to reinstall $pkgname");
 			delete $set->{newer}->{$pkgname};
 			$n->cleanup;
 		} 
