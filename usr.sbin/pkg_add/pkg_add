@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.469 2010/01/12 10:57:05 espie Exp $
+# $OpenBSD: pkg_add,v 1.470 2010/01/12 20:14:09 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -324,7 +324,13 @@ sub install_issues
 
 	my @conflicts = $set->find_conflicts($state);
 
-	return 0 if @conflicts == 0;
+	if (@conflicts == 0) {
+		if ($state->{defines}{update_only}) {
+			return "only update, no install";
+		} else {
+			return 0;
+		}
+	}
 
 	if (!$state->{allow_replacing}) {
 		if (grep { !/^.libs\d*\-/ && !/^partial\-/ } @conflicts) {
