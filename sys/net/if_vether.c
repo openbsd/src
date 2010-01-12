@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.8 2010/01/12 11:28:09 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.9 2010/01/12 11:29:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -44,12 +44,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#ifdef VETHER_DEBUG
-#define DPRINTF(x)    do { if (vetherdebug) printf x ; } while (0)
-#else
-#define DPRINTF(x)
 #endif
 
 void	vetherattach(int);
