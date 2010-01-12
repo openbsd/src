@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.202 2009/12/23 07:40:31 guenther Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.203 2010/01/12 01:30:09 beck Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -933,8 +933,12 @@ sendorfree:
 	/*
 	 * If there is no room for all the fragments, don't queue
 	 * any of them.
+	 *
+	 * Queue them anyway on virtual interfaces
+	 * (vlan, etc) with queue length 1 and hope the
+	 * underlying interface can cope.
 	 */
-	if (ifp != NULL) {
+	if (ifp != NULL && ifp->if_snd.ifq_maxlen != 1) {
 		s = splnet();
 		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
 		    error == 0) {
