@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.41 2010/01/10 23:54:21 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.42 2010/01/12 23:38:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -60,7 +60,7 @@
 #define PFSYNC_ACT_DEL_F	9	/* delete fragments */
 #define PFSYNC_ACT_BUS		10	/* bulk update status */
 #define PFSYNC_ACT_TDB		11	/* TDB replay counter update */
-#define PFSYNC_ACT_EOF		12	/* end of frame */
+#define PFSYNC_ACT_EOF		12	/* end of frame - DEPRECATED */
 #define PFSYNC_ACT_INS		13	/* insert state */
 #define PFSYNC_ACT_UPD		14	/* update state */
 #define PFSYNC_ACT_MAX		15
@@ -81,12 +81,9 @@
 				"INS ST",		\
 				"UPD ST"
 
-#define PFSYNC_HMAC_LEN	20
-
 /*
  * A pfsync frame is built from a header followed by several sections which
- * are all prefixed with their own subheaders. Frames must be terminated with
- * an EOF subheader.
+ * are all prefixed with their own subheaders.
  *
  * | ...			|
  * | IP header			|
@@ -102,8 +99,6 @@
  * +----------------------------+
  * | second action fields	|
  * | ...			|
- * +----------------------------+
- * | EOF pfsync_subheader	|
  * +============================+
  */
 
@@ -228,12 +223,10 @@ struct pfsync_tdb {
  * EOF
  */
 
-struct pfsync_eof {
-	u_int8_t			hmac[PFSYNC_HMAC_LEN];
-} __packed;
+/* this message is deprecated */
+
 
 #define PFSYNC_HDRLEN		sizeof(struct pfsync_header)
-
 
 
 /*

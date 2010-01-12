@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.139 2010/01/12 10:21:38 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.140 2010/01/12 23:38:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -88,8 +88,7 @@
 
 #define PFSYNC_MINPKT ( \
 	sizeof(struct ip) + \
-	sizeof(struct pfsync_header) + \
-	sizeof(struct pfsync_subheader))
+	sizeof(struct pfsync_header))
 
 struct pfsync_pkt {
 	struct ip *ip;
@@ -100,22 +99,22 @@ struct pfsync_pkt {
 int	pfsync_upd_tcp(struct pf_state *, struct pfsync_state_peer *,
 	    struct pfsync_state_peer *);
 
-int	pfsync_in_clr(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_iack(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_upd_c(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_ureq(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_del(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_del_c(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_bus(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_tdb(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_ins(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_upd(struct pfsync_pkt *, struct mbuf *, int, int);
-int	pfsync_in_eof(struct pfsync_pkt *, struct mbuf *, int, int);
+int	pfsync_in_clr(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_iack(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_upd_c(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_ureq(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_del(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_del_c(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_bus(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_tdb(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_ins(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_upd(struct pfsync_pkt *, caddr_t, int, int);
+int	pfsync_in_eof(struct pfsync_pkt *, caddr_t, int, int);
 
-int	pfsync_in_error(struct pfsync_pkt *, struct mbuf *, int, int);
+int	pfsync_in_error(struct pfsync_pkt *, caddr_t, int, int);
 
 struct {
-	int	(*in)(struct pfsync_pkt *, struct mbuf *, int, int);
+	int	(*in)(struct pfsync_pkt *, caddr_t, int, int);
 	size_t	len;
 } pfsync_acts[] = {
 	/* PFSYNC_ACT_CLR */
@@ -143,7 +142,7 @@ struct {
 	/* PFSYNC_ACT_TDB */
 	{ pfsync_in_tdb,	sizeof(struct pfsync_tdb) },
 	/* PFSYNC_ACT_EOF */
-	{ pfsync_in_eof,	0 },
+	{ pfsync_in_error,	0 },
 	/* PFSYNC_ACT_INS */
 	{ pfsync_in_ins,	sizeof(struct pfsync_state) },
 	/* PFSYNC_ACT_UPD */
@@ -643,10 +642,11 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_pkt pkt;
 	struct ip *ip = mtod(m, struct ip *);
+	struct mbuf *mp;
 	struct pfsync_header *ph;
 	struct pfsync_subheader subh;
 
-	int offset, len, count, mlen;
+	int offset, offp, len, count, mlen;
 
 	pfsyncstats.pfsyncs_ipackets++;
 
@@ -717,7 +717,7 @@ pfsync_input(struct mbuf *m, ...)
 		    mlen < pfsync_acts[subh.action].len) {
 			/*
 			 * subheaders are always followed by at least one
-			 * message (except for EOF), so if the peer is new
+			 * message, so if the peer is new
 			 * enough to tell us how big its messages are then we
 			 * know enough to skip them.
 			 */
@@ -729,8 +729,15 @@ pfsync_input(struct mbuf *m, ...)
 			goto done;
 		}
 
-		if (pfsync_acts[subh.action].in(&pkt, m, offset, count) == -1)
+		mp = m_pulldown(m, offset, mlen * count, &offp);
+		if (mp == NULL) {
+			pfsyncstats.pfsyncs_badlen++;
 			return;
+		}
+
+		if (pfsync_acts[subh.action].in(&pkt, mp->m_data + offp,
+		    mlen, count) != 0)
+			goto done;
 
 		offset += mlen * count;
 	}
@@ -740,11 +747,10 @@ done:
 }
 
 int
-pfsync_in_clr(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_clr(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
 	struct pfsync_clr *clr;
-	struct mbuf *mp;
-	int i, offp;
+	int i;
 
 	struct pf_state *st, *nexts;
 	struct pf_state_key *sk, *nextsk;
@@ -752,18 +758,12 @@ pfsync_in_clr(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 	u_int32_t creatorid;
 	int s;
 
-	mp = m_pulldown(m, offset, sizeof(*clr) * count, &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	clr = (struct pfsync_clr *)(mp->m_data + offp);
-
 	s = splsoftnet();
 	for (i = 0; i < count; i++) {
-		creatorid = clr[i].creatorid;
+		clr = (struct pfsync_clr *)buf + len * i;
+		creatorid = clr->creatorid;
 
-		if (clr[i].ifname[0] == '\0') {
+		if (clr->ifname[0] == '\0') {
 			for (st = RB_MIN(pf_state_tree_id, &tree_id);
 			    st; st = nexts) {
 				nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
@@ -773,7 +773,7 @@ pfsync_in_clr(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 				}
 			}
 		} else {
-			if (pfi_kif_get(clr[i].ifname) == NULL)
+			if (pfi_kif_get(clr->ifname) == NULL)
 				continue;
 
 			/* XXX correct? */
@@ -797,24 +797,16 @@ pfsync_in_clr(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_ins(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_ins(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	struct mbuf *mp;
-	struct pfsync_state *sa, *sp;
-	int i, offp;
+	struct pfsync_state *sp;
+	int i;
 
 	int s;
 
-	mp = m_pulldown(m, offset, sizeof(*sp) * count, &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	sa = (struct pfsync_state *)(mp->m_data + offp);
-
 	s = splsoftnet();
 	for (i = 0; i < count; i++) {
-		sp = &sa[i];
+		sp = (struct pfsync_state *)(buf + len * i);
 
 		/* check for invalid values */
 		if (sp->timeout >= PFTM_MAX ||
@@ -841,26 +833,17 @@ pfsync_in_ins(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_iack(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_iack(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	struct pfsync_ins_ack *ia, *iaa;
+	struct pfsync_ins_ack *ia;
 	struct pf_state_cmp id_key;
 	struct pf_state *st;
-
-	struct mbuf *mp;
-	int offp, i;
+	int i;
 	int s;
-
-	mp = m_pulldown(m, offset, count * sizeof(*ia), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	iaa = (struct pfsync_ins_ack *)(mp->m_data + offp);
 
 	s = splsoftnet();
 	for (i = 0; i < count; i++) {
-		ia = &iaa[i];
+		ia = (struct pfsync_ins_ack *)(buf + len * i);
 
 		bcopy(&ia->id, &id_key.id, sizeof(id_key.id));
 		id_key.creatorid = ia->creatorid;
@@ -910,27 +893,20 @@ pfsync_upd_tcp(struct pf_state *st, struct pfsync_state_peer *src,
 }
 
 int
-pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_upd(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	struct pfsync_state *sa, *sp;
+	struct pfsync_state *sp;
 	struct pf_state_cmp id_key;
 	struct pf_state *st;
 	int sync;
 
-	struct mbuf *mp;
-	int offp, i;
+	int i;
 	int s;
 
-	mp = m_pulldown(m, offset, count * sizeof(*sp), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	sa = (struct pfsync_state *)(mp->m_data + offp);
 
 	s = splsoftnet();
 	for (i = 0; i < count; i++) {
-		sp = &sa[i];
+		sp = (struct pfsync_state *)(buf + len * i);
 
 		/* check for invalid values */
 		if (sp->timeout >= PFTM_MAX ||
@@ -999,28 +975,20 @@ pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_upd_c(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	struct pfsync_upd_c *ua, *up;
+	struct pfsync_upd_c *up;
 	struct pf_state_cmp id_key;
 	struct pf_state *st;
 
 	int sync;
 
-	struct mbuf *mp;
-	int offp, i;
+	int i;
 	int s;
-
-	mp = m_pulldown(m, offset, count * sizeof(*up), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	ua = (struct pfsync_upd_c *)(mp->m_data + offp);
 
 	s = splsoftnet();
 	for (i = 0; i < count; i++) {
-		up = &ua[i];
+		up = (struct pfsync_upd_c *)(buf + len * i);
 
 		/* check for invalid values */
 		if (up->timeout >= PFTM_MAX ||
@@ -1087,24 +1055,16 @@ pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_ureq(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_ureq(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	struct pfsync_upd_req *ur, *ura;
-	struct mbuf *mp;
-	int i, offp;
+	struct pfsync_upd_req *ur;
+	int i;
 
 	struct pf_state_cmp id_key;
 	struct pf_state *st;
 
-	mp = m_pulldown(m, offset, count * sizeof(*ur), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	ura = (struct pfsync_upd_req *)(mp->m_data + offp);
-
 	for (i = 0; i < count; i++) {
-		ur = &ura[i];
+		ur = (struct pfsync_upd_req *)(buf + len * i);
 
 		bcopy(&ur->id, &id_key.id, sizeof(id_key.id));
 		id_key.creatorid = ur->creatorid;
@@ -1128,25 +1088,17 @@ pfsync_in_ureq(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_del(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_del(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	struct mbuf *mp;
-	struct pfsync_state *sa, *sp;
+	struct pfsync_state *sp;
 	struct pf_state_cmp id_key;
 	struct pf_state *st;
-	int offp, i;
+	int i;
 	int s;
-
-	mp = m_pulldown(m, offset, count * sizeof(*sp), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	sa = (struct pfsync_state *)(mp->m_data + offp);
 
 	s = splsoftnet();
 	for (i = 0; i < count; i++) {
-		sp = &sa[i];
+		sp = (struct pfsync_state *)(buf + len * i);
 
 		bcopy(sp->id, &id_key.id, sizeof(id_key.id));
 		id_key.creatorid = sp->creatorid;
@@ -1165,25 +1117,17 @@ pfsync_in_del(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_del_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_del_c(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	struct mbuf *mp;
-	struct pfsync_del_c *sa, *sp;
+	struct pfsync_del_c *sp;
 	struct pf_state_cmp id_key;
 	struct pf_state *st;
-	int offp, i;
+	int i;
 	int s;
-
-	mp = m_pulldown(m, offset, count * sizeof(*sp), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	sa = (struct pfsync_del_c *)(mp->m_data + offp);
 
 	s = splsoftnet();
 	for (i = 0; i < count; i++) {
-		sp = &sa[i];
+		sp = (struct pfsync_del_c *)(buf + len * i);
 
 		bcopy(&sp->id, &id_key.id, sizeof(id_key.id));
 		id_key.creatorid = sp->creatorid;
@@ -1203,23 +1147,16 @@ pfsync_in_del_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_bus(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_bus(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_bus *bus;
-	struct mbuf *mp;
-	int offp;
 
 	/* If we're not waiting for a bulk update, who cares. */
 	if (sc->sc_ureq_sent == 0)
 		return (0);
 
-	mp = m_pulldown(m, offset, count * sizeof(*bus), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	bus = (struct pfsync_bus *)(mp->m_data + offp);
+	bus = (struct pfsync_bus *)buf;
 
 	switch (bus->status) {
 	case PFSYNC_BUS_START:
@@ -1258,24 +1195,16 @@ pfsync_in_bus(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 }
 
 int
-pfsync_in_tdb(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_tdb(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
 #if defined(IPSEC)
 	struct pfsync_tdb *tp;
-	struct mbuf *mp;
-	int offp;
 	int i;
 	int s;
 
-	mp = m_pulldown(m, offset, count * sizeof(struct pfsync_tdb), &offp);
-	if (mp == NULL) {
-		pfsyncstats.pfsyncs_badlen++;
-		return (-1);
-	}
-	tp = (struct pfsync_tdb *)(mp->m_data + offp);
-
 	s = splsoftnet();
 	for (i = 0; i < count; i++)
+		tp = (struct pfsync_tdb *)(buf + len * i);
 		pfsync_update_net_tdb(&tp[i]);
 	splx(s);
 #endif
@@ -1327,22 +1256,19 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 
 
 int
-pfsync_in_eof(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_eof(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
-	/* check if we are at the right place in the packet */
-	if (offset != m->m_pkthdr.len)
-		pfsyncstats.pfsyncs_badlen++;
+	if (len > 0 || count > 0)
+		pfsyncstats.pfsyncs_badact++;
 
 	/* we're done. let the caller return */
-	return (0);
+	return (1);
 }
 
 int
-pfsync_in_error(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
+pfsync_in_error(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 {
 	pfsyncstats.pfsyncs_badact++;
-
-	m_freem(m);
 	return (-1);
 }
 
@@ -1744,14 +1670,6 @@ pfsync_sendout(void)
 		subh->len = pfsync_qs[q].len >> 2;
 		subh->count = htons(count);
 	}
-
-	subh = (struct pfsync_subheader *)(m->m_data + offset);
-	offset += sizeof(*subh);
-
-	bzero(subh, sizeof(*subh));
-	subh->action = PFSYNC_ACT_EOF;
-	subh->len = 0 >> 2;
-	subh->count = htons(0);
 
 	/* we're done, let's put it on the wire */
 #if NBPFILTER > 0
