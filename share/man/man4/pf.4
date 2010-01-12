@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.67 2010/01/12 03:20:51 mcbride Exp $
+.\"	$OpenBSD: pf.4,v 1.68 2010/01/12 07:58:17 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -93,11 +93,6 @@ Start the ALTQ bandwidth control system (see
 .Xr altq 9 ) .
 .It Dv DIOCSTOPALTQ
 Stop the ALTQ bandwidth control system.
-.Dv DIOCADDRULE
-or
-.Dv DIOCCHANGERULE
-call.
-All other members of the structure are ignored.
 .It Dv DIOCADDRULE Fa "struct pfioc_rule *pr"
 .Bd -literal
 struct pfioc_rule {
@@ -270,7 +265,7 @@ It works like
 but ignores all fields of the
 .Vt pfioc_state_kill
 structure, except
-.Va psk_ifname.
+.Va psk_ifname .
 .It Dv DIOCSETSTATUSIF Fa "struct pfioc_if *pi"
 Specify the interface for which statistics are accumulated.
 .Bd -literal
