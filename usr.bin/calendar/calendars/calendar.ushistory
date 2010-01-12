@@ -1,7 +1,7 @@
 /*
  * USA history
  *
- * $OpenBSD: calendar.ushistory,v 1.3 2006/07/04 16:02:37 mickey Exp $
+ * $OpenBSD: calendar.ushistory,v 1.4 2010/01/12 08:11:46 jmc Exp $
  */
 
 #ifndef _calendar_ushistory_
@@ -104,7 +104,7 @@
 07/08	Liberty Bell cracks while being rung at funeral of John Marshall, 1835
 07/09	10-hour working day set by law, NH, 1847
 07/10	134 degrees F, in Death Valley, 1913
-07/16	Detonation of the first atomic bomb at Alamagordo, NM, 1945
+07/16	Detonation of the first atomic bomb at Alamogordo, NM, 1945
 07/18	Ty Cobb gets 4000th base hit, 1927
 07/19	Five Massachusetts women executed for witchcraft, 1692
 07/21	First Train Robbery, Jesse James gets $3000 near Adair, Iowa, 1873
