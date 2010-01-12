@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.103 2010/01/12 04:06:55 yasuoka Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.104 2010/01/12 11:28:09 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -85,9 +85,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-/* for arc4random() */
-#include <dev/rndvar.h>
 
 #include <net/if_tun.h>
 

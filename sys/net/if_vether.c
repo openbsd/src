@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.7 2010/01/12 03:41:29 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.8 2010/01/12 11:28:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -41,8 +41,6 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_var.h>
 #endif
-
-#include <dev/rndvar.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
