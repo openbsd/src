@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.249 2009/11/20 00:15:41 dtucker Exp $ */
+/* $OpenBSD: session.c,v 1.250 2010/01/12 01:31:05 dtucker Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1105,10 +1105,12 @@ do_nologin(struct passwd *pw)
 	if (!login_getcapbool(lc, "ignorenologin", 0) && pw->pw_uid)
 		f = fopen(login_getcapstr(lc, "nologin", _PATH_NOLOGIN,
 		    _PATH_NOLOGIN), "r");
-	if (f) {
+	if (f != NULL || errno == EPERM) {
 		/* /etc/nologin exists.  Print its contents and exit. */
 		logit("User %.100s not allowed because %s exists",
 		    pw->pw_name, _PATH_NOLOGIN);
+		if (f == NULL)
+			exit(254);
 		while (fgets(buf, sizeof(buf), f))
 			fputs(buf, stderr);
 		fclose(f);
