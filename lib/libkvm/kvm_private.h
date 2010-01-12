@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.15 2009/06/24 13:04:24 millert Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.16 2010/01/12 08:15:51 jasper Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@ struct __kvm {
 	 * if this value is null, errors are saved in errbuf[]
 	 */
 	const char *program;
-	char	*errp;		/* XXX this can probably go away */
 	char	errbuf[_POSIX2_LINE_MAX];
 	DB	*db;
 	int	pmfd;		/* physical memory file (or crashdump) */
