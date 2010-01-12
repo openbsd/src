@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.583 2010/01/12 14:44:26 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.584 2010/01/12 15:52:07 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -344,7 +344,7 @@ void		 expand_label(char *, size_t, const char *, u_int8_t,
 		    struct node_host *, struct node_port *, struct node_host *,
 		    struct node_port *, u_int8_t);
 int		 collapse_redirspec(struct pf_pool *, struct pf_rule *,
-		    struct redirspec *rs);
+		    struct redirspec *rs, u_int8_t);
 int		 apply_redirspec(struct pf_pool *, struct pf_rule *,
 		    struct redirspec *, int, struct node_port *);
 void		 expand_rule(struct pf_rule *, int, struct node_if *,
@@ -4505,7 +4505,8 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 }
 
 int
-collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs)
+collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
+    struct redirspec *rs, u_int8_t allow_if)
 {
 	struct pf_opt_tbl *tbl = NULL;
 	struct node_host *h;
@@ -4533,6 +4534,10 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *r
 		}
 
 		rpool->addr = h->addr;
+		if (!allow_if && h->ifname) {
+			yyerror("@if not permitted for translation");
+			return (1);
+		}
 		if (h->ifname && strlcpy(rpool->ifname, h->ifname,
 		    sizeof(rpool->ifname)) >= sizeof(rpool->ifname))
 			errx(1, "collapse_redirspec: strlcpy");
@@ -4546,9 +4551,14 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *r
 			return (1);
 		}
 		while (h != NULL) {
-			if (h->addr.type != PF_ADDR_ADDRMASK) {
+			if (h->addr.type != PF_ADDR_ADDRMASK &&
+			    h->addr.type != PF_ADDR_NONE) {
 				yyerror("multiple tables or dynamic interfaces "
 				    "not supported for translation or routing");
+				return (1);
+			}
+			if (!allow_if && h->ifname) {
+				yyerror("@if not permitted for translation");
 				return (1);
 			}
 			memset(&ra, 0, sizeof(ra));
@@ -4674,9 +4684,9 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	flagset = r->flagset;
 	keep_state = r->keep_state;
 
-	error += collapse_redirspec(&r->rdr, r, rdr);
-	error += collapse_redirspec(&r->nat, r, nat);
-	error += collapse_redirspec(&r->route, r, rroute);
+	error += collapse_redirspec(&r->rdr, r, rdr, 0);
+	error += collapse_redirspec(&r->nat, r, nat, 0);
+	error += collapse_redirspec(&r->route, r, rroute, 1);
 
 	r->src.addr.type = r->dst.addr.type = PF_ADDR_ADDRMASK;
 
@@ -4692,6 +4702,14 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	LOOP_THROUGH(struct node_gid, gid, gids,
 
 		r->af = af;
+		/* disallow @if in from or to for the time being */
+		if ((src_host->addr.type == PF_ADDR_ADDRMASK &&
+		    src_host->ifname) ||
+		    (dst_host->addr.type == PF_ADDR_ADDRMASK &&
+		    dst_host->ifname)) {
+			yyerror("@if syntax not permitted in from or to");
+			error++;
+		}
 		/* for link-local IPv6 address, interface must match up */
 		if ((r->af && src_host->af && r->af != src_host->af) ||
 		    (r->af && dst_host->af && r->af != dst_host->af) ||
@@ -4800,19 +4818,21 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			    disallow_alias(src_host, "invalid use of interface "
 			    "(%s) as the source address of a binat-to rule")) {
 				error++;
-			} else if (src_host->af == AF_UNSPEC) {
+			} else if ((src_host->addr.type != PF_ADDR_ADDRMASK &&
+			    src_host->addr.type != PF_ADDR_DYNIFTL)) {
 				yyerror("binat-to requires a specified "
 				    "source and redirect address");
 				error++;
 			}
-			if (disallow_table(src_host, "invalid use of table "
-			    "<%s> as the redirect address of a "
-			    "binat-to rule") ||
-			    disallow_alias(dst_host, "invalid use of interface "
-			    "(%s) as the redirect address of a "
-			    "binat-to rule") ||
-			    disallow_urpf_failed(dst_host, "\"urpf-failed\" "
-			    "is not permitted as a binat-to destination")) {
+			if (DYNIF_MULTIADDR(r->src.addr) ||
+			    DYNIF_MULTIADDR(r->nat.addr)) {
+				yyerror ("dynamic interfaces must be used with "
+				    ":0 in a binat-to rule");
+				error++;
+			}
+			if (r->nat.addr.type == PF_ADDR_TABLE) {
+				yyerror ("tables cannot be used as the redirect "
+				    "address of a binat-to rule");
 				error++;
 			}
 			if (r->direction != PF_INOUT) {
