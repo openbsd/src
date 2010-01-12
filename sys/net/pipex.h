@@ -1,4 +1,4 @@
-/*	$Id: pipex.h,v 1.1 2010/01/11 03:50:56 yasuoka Exp $	*/
+/*	$Id: pipex.h,v 1.2 2010/01/12 02:24:35 yasuoka Exp $	*/
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -122,13 +122,13 @@ struct pipex_session_config_req {
 };
 
 /* PIPEX ioctls */
-#define PIPEXSMODE	_IOW ('t', 91, int)
-#define PIPEXGMODE	_IOR ('t', 92, int)
-#define PIPEXASESSION	_IOW ('t', 94, struct pipex_session_req)
-#define PIPEXDSESSION	_IOWR('t', 93, struct pipex_session_close_req)
-#define PIPEXCSESSION	_IOW ('t', 95, struct pipex_session_config_req)
-#define PIPEXGSTAT	_IOWR('t', 96, struct pipex_session_stat_req)
-#define PIPEXGCLOSED	_IOR ('t', 97, struct pipex_session_list_req)
+#define PIPEXSMODE	_IOW ('t',  96, int)
+#define PIPEXGMODE	_IOR ('t',  97, int)
+#define PIPEXASESSION	_IOW ('t',  98, struct pipex_session_req)
+#define PIPEXDSESSION	_IOWR('t',  99, struct pipex_session_close_req)
+#define PIPEXCSESSION	_IOW ('t', 100, struct pipex_session_config_req)
+#define PIPEXGSTAT	_IOWR('t', 101, struct pipex_session_stat_req)
+#define PIPEXGCLOSED	_IOR ('t', 102, struct pipex_session_list_req)
 
 #ifdef _KERNEL
 
