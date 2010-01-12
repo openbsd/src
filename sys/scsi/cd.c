@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.160 2010/01/11 08:56:17 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.161 2010/01/12 23:33:57 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -619,8 +619,8 @@ cdstart(void *v)
 		return;
 	}
 	mtx_leave(&sc->sc_start_mtx);
-restart:
 	CLR(sc->sc_flags, CDF_WAITING);
+restart:
 	while (!ISSET(sc->sc_flags, CDF_WAITING) &&
 	    (bp = cd_buf_dequeue(sc)) != NULL) {
 

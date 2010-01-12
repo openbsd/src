@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.67 2010/01/11 08:56:17 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.68 2010/01/12 23:33:57 dlg Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -680,8 +680,8 @@ ssstart(v)
 		return;
 	}
 	mtx_leave(&ss->sc_start_mtx);
-restart:
 	CLR(ss->flags, SSF_WAITING);
+restart:
 	while (!ISSET(ss->flags, SSF_WAITING) &&
 	    (bp = ss_buf_dequeue(ss)) != NULL) {
 
