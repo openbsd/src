@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.17 2009/04/19 15:18:23 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.18 2010/01/12 10:14:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,7 @@ package OpenBSD::PackageLocation;
 
 use OpenBSD::PackageInfo;
 use OpenBSD::Temp;
+use OpenBSD::Error;
 
 sub new
 {
@@ -56,25 +57,17 @@ sub name
 	return $self->{name};
 }
 
-sub pkgname
-{
+OpenBSD::Auto::cache(pkgname,
+    sub {
 	my $self = shift;
-	if (!defined $self->{pkgname}) {
-		require OpenBSD::PackageName;
+	return OpenBSD::PackageName->from_string($self->name);
+    });
 
-		$self->{pkgname} = OpenBSD::PackageName->from_string($self->name);
-	}
-	return $self->{pkgname};
-}
-
-sub update_info
-{
+OpenBSD::Auto::cache(update_info,
+    sub {
 	my $self = shift;
-	if (!defined $self->{update_info}) {
-		$self->{update_info} = $self->grabPlist(\&OpenBSD::PackingList::UpdateInfoOnly);
-	}
-	return $self->{update_info};
-}
+	return $self->grabPlist(\&OpenBSD::PackingList::UpdateInfoOnly);
+    });
 
 
 # make sure self is opened and move to the right location if need be.

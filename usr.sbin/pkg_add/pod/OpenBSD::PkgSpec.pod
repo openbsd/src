@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PkgSpec.pod,v 1.6 2009/11/10 14:42:14 espie Exp $
+$OpenBSD: OpenBSD::PkgSpec.pod,v 1.7 2010/01/12 10:14:37 espie Exp $
 
 =head1 NAME
 
@@ -21,3 +21,7 @@ extract matching package names from a C<@list>.  The resulting list
 C<@sublist> will only hold the package names that match the specification.
 
 For performance reason, the result may contain duplicates.
+
+Note that any pattern will create a C<PkgSpec> object. If the syntax is 
+incorrect, the resulting object won't match anything. Use
+C<$spec-E<gt>is_valid> to check for correctness.
