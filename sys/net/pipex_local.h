@@ -1,4 +1,4 @@
-/*	$Id: pipex_local.h,v 1.1 2010/01/11 03:50:56 yasuoka Exp $	*/
+/*	$Id: pipex_local.h,v 1.2 2010/01/12 02:26:37 yasuoka Exp $	*/
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -163,20 +163,6 @@ struct pipex_gre_header {
 	uint16_t len;			/* length not include gre header */
 	uint16_t call_id;			/* call_id */
 } __attribute__((__packed__));
-
-/* ppp/ccp header */
-struct pipex_ccp_header {
-	uint8_t code;
-	uint8_t id;
-	uint16_t len;
-} __attribute__((__packed__));
-
-/* ppp header */
-struct pipex_ppp_header {
-	uint8_t		c[0];			/* ppp proto */
-	uint16_t	code;			/* ppp proto (2 oct) */
-} __attribute__((__packed__));
-
 
 /* pppoe header */
 struct pipex_pppoe_header {
