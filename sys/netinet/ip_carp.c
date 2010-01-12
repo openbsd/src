@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.171 2009/06/17 20:17:19 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.172 2010/01/12 01:02:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -858,10 +858,9 @@ carp_clone_create(ifc, unit)
 	struct carp_softc *sc;
 	struct ifnet *ifp;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
 		return (ENOMEM);
-	bzero(sc, sizeof(*sc));
 
 	LIST_INIT(&sc->carp_vhosts);
 	sc->sc_vhe_count = 0;
