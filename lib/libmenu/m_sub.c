@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_sub.c,v 1.4 2001/01/22 18:02:06 millert Exp $	*/
+/* $OpenBSD: m_sub.c,v 1.5 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_sub.c,v 1.5 2000/12/10 02:16:48 tom Exp $")
+MODULE_ID("$Id: m_sub.c,v 1.5 2010/01/12 23:22:08 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -51,18 +51,20 @@ MODULE_ID("$From: m_sub.c,v 1.5 2000/12/10 02:16:48 tom Exp $")
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-set_menu_sub (MENU *menu, WINDOW *win)
+set_menu_sub(MENU * menu, WINDOW *win)
 {
+  T((T_CALLED("set_menu_sub(%p,%p)"), menu, win));
+
   if (menu)
     {
-      if ( menu->status & _POSTED )
+      if (menu->status & _POSTED)
 	RETURN(E_POSTED);
       menu->usersub = win;
       _nc_Calculate_Item_Length_and_Width(menu);
     }
   else
     _nc_Default_Menu.usersub = win;
-  
+
   RETURN(E_OK);
 }
 
@@ -75,10 +77,12 @@ set_menu_sub (MENU *menu, WINDOW *win)
 |   Return Values :  NULL on error, otherwise a pointer to the window
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(WINDOW *)
-menu_sub (const MENU * menu)
+menu_sub(const MENU * menu)
 {
-  const MENU* m = Normalize_Menu(menu);
-  return Get_Menu_Window(m);
+  const MENU *m = Normalize_Menu(menu);
+
+  T((T_CALLED("menu_sub(%p)"), menu));
+  returnWin(Get_Menu_Window(m));
 }
 
 /* m_sub.c ends here */

@@ -1,7 +1,7 @@
-.\" $OpenBSD: menu_pattern.3,v 1.5 1999/01/22 03:45:07 millert Exp $
+.\" $OpenBSD: menu_pattern.3,v 1.6 2010/01/12 23:22:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: menu_pattern.3x,v 1.5 1998/03/11 21:12:53 juergen Exp $
+.\" $Id: menu_pattern.3,v 1.6 2010/01/12 23:22:08 nicm Exp $
 .TH menu_pattern 3 ""
 .SH NAME
 \fBmenu_pattern\fR - get and set a menu's pattern buffer
@@ -41,30 +41,39 @@ char *menu_pattern(const MENU *menu);
 .br
 .SH DESCRIPTION
 Every menu has an associated pattern match buffer.  As input events that are
-printable ASCII characters come in, they are appended to this match buffer
+printable characters come in, they are appended to this match buffer
 and tested for a match, as described in \fBmenu_driver\fR(3).
-
+.PP
 The function \fBset_menu_pattern\fR sets the pattern buffer for the given menu
 and tries to find the first matching item.  If it succeeds, that item becomes
-current; if not, the current item does not change.
-
+current; if not, the current item does not change. 
+.PP
 The function \fBmenu_pattern\fR returns the pattern buffer of the given
 \fImenu\fR.
 .SH RETURN VALUE
-The function \fBmenu_pattern\fR returns \fBNULL\fR on error.  The function
-\fBset_menu_pattern\fR may return the following error codes:
+The function \fBmenu_pattern\fR returns a pointer, which is \fBNULL\fR if the \fImenu\fP parameter is \fBNULL\fP.
+Otherwise, it is a pointer to a string which is empty if no pattern has been set.
+It does not set errno.
+.PP
+The function \fBset_menu_pattern\fR may return the following error codes:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
-System error occurred (see \fBerrno\fR).
-.TP 5
-\fBE_BAD_ARGUMENT\fR
+.B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
 .TP 5
-\fBE_NO_MATCH\fR
+.B E_BAD_STATE
+Routine was called from an initialization or termination function.
+.TP 5
+.B E_NOT_CONNECTED
+No items are connected to menu.
+.TP 5
+.B E_NO_MATCH
 Character failed to match.
+.TP 5
+.B E_SYSTEM_ERROR
+System error occurred (see \fBerrno\fR).
 .SH SEE ALSO
 \fBcurses\fR(3), \fBmenu\fR(3).
 .SH NOTES

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.58 2009/08/13 19:54:58 jmc Exp $
+#	$OpenBSD: Makefile,v 1.59 2010/01/12 23:21:58 nicm Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -17,13 +17,13 @@ WANTLINT=
 SRCS=	codes.c comp_captab.c expanded.c fallback.c lib_gen.c lib_keyname.c \
 	names.c unctrl.c
 # base
-SRCS+=	define_key.c keybound.c keyok.c lib_adabind.c lib_addch.c lib_addstr.c \
-	lib_beep.c lib_bkgd.c lib_box.c lib_chgat.c lib_clear.c \
-	lib_clearok.c lib_clrbot.c lib_clreol.c lib_color.c \
-	lib_colorset.c lib_delch.c lib_delwin.c lib_dft_fgbg.c \
-	lib_echo.c lib_endwin.c lib_erase.c lib_flash.c lib_freeall.c \
-	lib_getch.c lib_getstr.c lib_hline.c lib_immedok.c lib_inchstr.c \
-	lib_initscr.c lib_insch.c lib_insdel.c lib_insstr.c lib_instr.c \
+SRCS+=	define_key.c key_defined.c keybound.c keyok.c legacy_coding.c \
+	lib_addch.c lib_addstr.c lib_beep.c lib_bkgd.c lib_box.c lib_chgat.c \
+	lib_clear.c lib_clearok.c lib_clrbot.c lib_clreol.c lib_color.c \
+	lib_colorset.c lib_delch.c lib_delwin.c lib_dft_fgbg.c lib_echo.c \
+	lib_endwin.c lib_erase.c lib_flash.c lib_freeall.c lib_getch.c \
+	lib_getstr.c lib_hline.c lib_immedok.c lib_inchstr.c lib_initscr.c \
+	lib_insnstr.c lib_insch.c lib_insdel.c lib_instr.c \
 	lib_isendwin.c lib_leaveok.c lib_mouse.c lib_move.c lib_mvwin.c \
 	lib_newterm.c lib_newwin.c lib_nl.c lib_overlay.c lib_pad.c \
 	lib_printw.c lib_redrawln.c lib_refresh.c lib_restart.c \
@@ -34,20 +34,22 @@ SRCS+=	define_key.c keybound.c keyok.c lib_adabind.c lib_addch.c lib_addstr.c \
 	lib_slkrefr.c lib_slkset.c lib_slktouch.c lib_touch.c \
 	lib_ungetch.c lib_vline.c lib_wattroff.c lib_wattron.c \
 	lib_winch.c lib_window.c nc_panel.c resizeterm.c safe_sprintf.c \
-	sigaction.c tries.c version.c wresize.c
+	tries.c use_window.c version.c vsscanf.c wresize.c
 # tinfo
 SRCS+=	access.c add_tries.c alloc_entry.c alloc_ttype.c captoinfo.c \
 	comp_error.c comp_expand.c comp_hash.c comp_parse.c comp_scan.c \
-	doalloc.c free_ttype.c getenv_num.c home_terminfo.c init_keytry.c \
-	lib_acs.c lib_baudrate.c lib_cur_term.c lib_data.c lib_has_cap.c \
-	lib_kernel.c lib_longname.c lib_napms.c lib_options.c lib_print.c \
-	lib_raw.c lib_setup.c lib_termcap.c lib_termname.c lib_tgoto.c \
-	lib_ti.c lib_tparm.c lib_tputs.c lib_ttyflags.c name_match.c \
-	parse_entry.c read_bsd_terminfo.c read_entry.c read_termcap.c \
-	setbuf.c strings.c write_entry.c
+	db_iterator.c doalloc.c entries.c free_ttype.c getenv_num.c \
+	hashed_db.c home_terminfo.c init_keytry.c lib_acs.c lib_baudrate.c \
+	lib_cur_term.c lib_data.c lib_has_cap.c lib_kernel.c lib_longname.c \
+	lib_napms.c lib_options.c lib_print.c lib_raw.c lib_setup.c \
+	lib_termcap.c lib_termname.c lib_tgoto.c lib_ti.c lib_tparm.c \
+	lib_tputs.c lib_ttyflags.c name_match.c parse_entry.c \
+	read_bsd_terminfo.c read_entry.c read_termcap.c setbuf.c strings.c \
+	trim_sgr0.c use_screen.c write_entry.c
 # trace
 SRCS+=	lib_trace.c lib_traceatr.c lib_tracebits.c lib_tracechr.c \
-	lib_tracedmp.c lib_tracemse.c trace_buf.c trace_tries.c trace_xnames.c
+	lib_tracedmp.c lib_tracemse.c trace_buf.c trace_tries.c trace_xnames.c \
+	varargs.c visbuf.c
 # tty
 SRCS+=	hardscroll.c hashmap.c lib_mvcur.c lib_tstp.c lib_twait.c \
 	lib_vidattr.c tty_update.c
@@ -57,16 +59,30 @@ HOSTLDFLAGS?=	${LDFLAGS}
 HOSTCFLAGS+=	-I. -I${.CURDIR} ${CURSESTRACE}
 CFLAGS+=	-I. -I${.CURDIR} ${CURSESTRACE}
 
-MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
-	curs_bkgd.3 curs_border.3 curs_clear.3 curs_color.3 curs_delch.3 \
-	curs_deleteln.3 curs_extend.3 curs_getch.3 curs_getstr.3 curs_getyx.3 \
-	curs_inch.3 curs_inchstr.3 curs_initscr.3 curs_inopts.3 curs_insch.3 \
-	curs_insstr.3 curs_instr.3 curs_kernel.3 curs_mouse.3 curs_move.3 \
-	curs_outopts.3 curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 \
-	curs_refresh.3 curs_scanw.3 curs_scr_dump.3 curs_scroll.3 curs_slk.3 \
-	curs_termattrs.3 curs_touch.3 curs_util.3 curs_window.3 \
-	curses.3 define_key.3 default_colors.3 keybound.3 keyok.3 resizeterm.3 \
-	wresize.3 termcap.3 terminfo.3 terminfo.5 term.5 term.7
+MAN=	curs_addch.3tbl curs_addchstr.3 curs_addstr.3 curs_attr.3tbl \
+	curs_beep.3 curs_bkgd.3 curs_bkgrnd.3 curs_border.3 curs_border_set.3 \
+	curs_clear.3 curs_color.3 \
+	curs_delch.3 curs_deleteln.3 \
+	curs_extend.3 \
+	curs_getch.3tbl curs_getstr.3 curs_getyx.3 \
+	curs_inch.3tbl curs_inchstr.3 curs_initscr.3 curs_inopts.3 curs_insch.3 curs_insstr.3 curs_instr.3 \
+	curs_kernel.3 \
+	curs_legacy.3 \
+	curs_mouse.3tbl curs_move.3 \
+	curs_opaque.3 curs_outopts.3 curs_overlay.3 \
+	curs_pad.3 curs_print.3 curs_printw.3 \
+	curs_refresh.3 \
+	curs_scanw.3 curs_scr_dump.3 curs_scroll.3 curs_slk.3 \
+	curs_termattrs.3 curs_touch.3 \
+	curs_util.3 \
+	curs_window.3 \
+	default_colors.3 define_key.3 \
+	key_defined.3 keybound.3 keyok.3 \
+	curses.3tbl \
+	resizeterm.3 \
+	term.5tbl term.7 termcap.3 terminfo.3 terminfo.5tbl \
+	wresize.3
+
 MLINKS+=curses.3 ncurses.3
 MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_addch.3 mvwaddch.3 curs_addch.3 echochar.3 curs_addch.3 \
@@ -186,9 +202,28 @@ MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
 	terminfo.3 tigetflag.3 terminfo.3 tigetnum.3 terminfo.3 tigetstr.3
 MLINKS+= termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 	termcap.3 tgetstr.3 termcap.3 tgoto.3 termcap.3 tputs.3
+MLINKS+= curs_bkgrnd.3 bkgrnd.3 curs_bkgrnd.3 wbkgrnd.3 \
+	curs_bkgrnd.3 bkgrndset.3 curs_bkgrnd.3 wbkgrndset.3 \
+	curs_bkgrnd.3 getbkgrnd.3 curs_bkgrnd.3 wgetbkgrnd.3
+MLINKS+= curs_border_set.3 border_set.3 curs_border_set.3 wborder_set.3 \
+	curs_border_set.3 box_set.3 curs_border_set.3 hline_set.3 \
+	curs_border_set.3 whline_set.3 curs_border_set.3 mvhline_set.3 \
+	curs_border_set.3 mvhline_set.3 curs_border_set.3 mvwhline_set.3 \
+	curs_border_set.3 vline_set.3 curs_border_set.3 wvline_set.3 \
+	curs_border_set.3 mvvline_set.3 curs_border_set.3 mvwvline_set.3
+MLINKS+= curs_legacy.3 getbegx.3 curs_legacy.3 getbegy.3 \
+	curs_legacy.3 getcurx.3 curs_legacy.3 getcury.3 \
+	curs_legacy.3 getmaxx.3 curs_legacy.3 getmaxy.3 \
+	curs_legacy.3 getparx.3 curs_legacy.3 getpary.3
+MLINKS+= curs_opaque.3 is_cleared.3 curs_opaque.3 is_idcok.3 \
+	curs_opaque.3 is_idlok.3 curs_opaque.3 is_immedok.3 \
+	curs_opaque.3 is_keypad.3 curs_opaque.3 is_leaveok.3 \
+	curs_opaque.3 is_nodelay.3 curs_opaque.3 is_notimeout.3 \
+	curs_opaque.3 is_scrollok.3 curs_opaque.3 is_syncok.3 \
+	curs_opaque.3 wgetparent.3 curs_opaque.3 wgetscrreg.3
 
-GENERATED= init_keytry.h nomacros.h codes.c comp_captab.c expanded.c \
-	fallback.c lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
+GENERATED= init_keytry.h codes.c comp_captab.c expanded.c fallback.c \
+	keys.list lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
 CLEANFILES+= ${GENERATED} stamp_namebuild
 
 .if make(install)
@@ -208,44 +243,51 @@ includes:
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
 
-fallback.c: ${.CURDIR}/term.h ${.CURDIR}/curses.priv.h ${.CURDIR}/tinfo/MKfallback.sh
+keys.list: ${.CURDIR}/tinfo/MKkeys_list.sh
+	sh ${.CURDIR}/tinfo/MKkeys_list.sh ${.CURDIR}/Caps | sort > ${.TARGET}
+
+fallback.c: ${.CURDIR}/tinfo/MKfallback.sh
 	sh ${.CURDIR}/tinfo/MKfallback.sh $(FALLBACK_LIST) > ${.TARGET}
 
-lib_gen.c: ${.CURDIR}/curses.h ${.CURDIR}/base/MKlib_gen.sh
-	sh ${.CURDIR}/base/MKlib_gen.sh "${CPP} -I${.CURDIR}" "${AWK}" < ${.CURDIR}/curses.h > lib_gen.c
+lib_gen.c: ${.CURDIR}/base/MKlib_gen.sh
+	sh ${.CURDIR}/base/MKlib_gen.sh "${CPP} -I${.CURDIR}" \
+		"${AWK}" generated < ${.CURDIR}/curses.h > lib_gen.c
 
-nomacros.h: ${.CURDIR}/base/MKlib_gen.sh lib_gen.c
-	fgrep undef lib_gen.c > ${.TARGET}
+init_keytry.h: make_keys keys.list
+	./make_keys keys.list > ${.TARGET}
 
-init_keytry.h: make_keys ${.CURDIR}/tinfo/keys.list
-	./make_keys ${.CURDIR}/tinfo/keys.list > ${.TARGET}
+make_keys: ${.CURDIR}/tinfo/make_keys.c ${.CURDIR}/curses.priv.h names.c
+	${HOSTCC} ${LDSTATIC} ${HOSTCFLAGS} ${HOSTLDFLAGS} \
+		-o ${.TARGET} ${.CURDIR}/tinfo/make_keys.c ${LDADD}
 
-make_keys: ${.CURDIR}/tinfo/make_keys.c names.c
-	${HOSTCC} ${LDSTATIC} ${HOSTCFLAGS} ${HOSTLDFLAGS} -o ${.TARGET} ${.CURDIR}/tinfo/make_keys.c ${LDADD}
+make_hash: ${.CURDIR}/tinfo/comp_hash.c ${.CURDIR}/curses.priv.h \
+		${.CURDIR}/hashsize.h
+	${HOSTCC} ${LDSTATIC} ${HOSTCFLAGS} -DMAIN_PROGRAM ${HOSTLDFLAGS} \
+		-o ${.TARGET} ${.CURDIR}/tinfo/comp_hash.c ${LDADD}
 
-make_hash: ${.CURDIR}/tinfo/comp_hash.c ${.CURDIR}/hashsize.h
-	${HOSTCC} ${LDSTATIC} ${HOSTCFLAGS} -DMAIN_PROGRAM ${HOSTLDFLAGS} -o ${.TARGET} ${.CURDIR}/tinfo/comp_hash.c ${LDADD}
-
-expanded.c: ${.CURDIR}/term.h ${.CURDIR}/curses.priv.h ${.CURDIR}/tty/MKexpanded.sh
+expanded.c: ${.CURDIR}/term.h ${.CURDIR}/curses.priv.h \
+		${.CURDIR}/ncurses_cfg.h ${.CURDIR}/tty/MKexpanded.sh
 	sh ${.CURDIR}/tty/MKexpanded.sh "${CPP}" ${CPPFLAGS} > ${.TARGET}
 
-comp_captab.c: make_hash ${.CURDIR}/ncurses_cfg.h ${.CURDIR}/tic.h ${.CURDIR}/term.h
-	sh ${.CURDIR}/tinfo/MKcaptab.awk ${AWK} ${.CURDIR}/Caps > ${.TARGET}
+comp_captab.c: make_hash
+	sh ${.CURDIR}/tinfo/MKcaptab.sh ${AWK} 1 \
+		${.CURDIR}/tinfo/MKcaptab.awk ${.CURDIR}/Caps > ${.TARGET}
 
-lib_keyname.c: ${.CURDIR}/ncurses_cfg.h ${.CURDIR}/curses.h ${.CURDIR}/term.h  ${.CURDIR}/tinfo/keys.list ${.CURDIR}/base/MKkeyname.awk
-	${AWK} -f ${.CURDIR}/base/MKkeyname.awk ${.CURDIR}/tinfo/keys.list > ${.TARGET}
+lib_keyname.c: keys.list ${.CURDIR}/base/MKkeyname.awk
+	${AWK} -f ${.CURDIR}/base/MKkeyname.awk bigstrings=1 \
+		keys.list > ${.TARGET}
 
 names.c codes.c: stamp_namebuild
 
-stamp_namebuild: ${.CURDIR}/tinfo/MKnames.awk
-	${AWK} -f ${.CURDIR}/tinfo/MKnames.awk ${.CURDIR}/Caps
-	cat namehdr boolnames boolfnames numnames numfnames strnames strfnames nameftr > names.c
-	cat namehdr boolcodes numcodes strcodes codeftr > codes.c
-	-rm -f namehdr nameftr codeftr boolnames boolfnames boolcodes numnames numfnames numcodes strnames strfnames strcodes
+stamp_namebuild: ${.CURDIR}/tinfo/MKnames.awk ${.CURDIR}/tinfo/MKcodes.awk
+	${AWK} -f ${.CURDIR}/tinfo/MKnames.awk \
+		${.CURDIR}/Caps > names.c
+	${AWK} -f ${.CURDIR}/tinfo/MKcodes.awk \
+		bigstrings=1 ${.CURDIR}/Caps > codes.c
 	touch $@
 
 unctrl.c: ${.CURDIR}/base/MKunctrl.awk
-	echo | ${AWK} -f ${.CURDIR}/base/MKunctrl.awk > ${.TARGET}
+	echo | ${AWK} -f ${.CURDIR}/base/MKunctrl.awk bigstrings=1 > ${.TARGET}
 
 .include <bsd.own.mk>
 

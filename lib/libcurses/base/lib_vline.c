@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_vline.c,v 1.3 2001/01/22 18:01:47 millert Exp $	*/
+/* $OpenBSD: lib_vline.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2001,2006 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_vline.c,v 1.7 2000/12/10 02:43:28 tom Exp $")
+MODULE_ID("$Id: lib_vline.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 wvline(WINDOW *win, chtype ch, int n)
@@ -54,6 +54,7 @@ wvline(WINDOW *win, chtype ch, int n)
     T((T_CALLED("wvline(%p,%s,%d)"), win, _tracechtype(ch), n));
 
     if (win) {
+	NCURSES_CH_T wch;
 	row = win->_cury;
 	col = win->_curx;
 	end = row + n - 1;
@@ -61,12 +62,14 @@ wvline(WINDOW *win, chtype ch, int n)
 	    end = win->_maxy;
 
 	if (ch == 0)
-	    ch = ACS_VLINE;
-	ch = _nc_render(win, ch);
+	    SetChar2(wch, ACS_VLINE);
+	else
+	    SetChar2(wch, ch);
+	wch = _nc_render(win, wch);
 
 	while (end >= row) {
 	    struct ldat *line = &(win->_line[end]);
-	    line->text[col] = ch;
+	    line->text[col] = wch;
 	    CHANGED_CELL(line, col);
 	    end--;
 	}

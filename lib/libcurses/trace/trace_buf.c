@@ -1,7 +1,7 @@
-/*	$OpenBSD: trace_buf.c,v 1.3 2001/01/22 18:01:58 millert Exp $	*/
+/* $OpenBSD: trace_buf.c,v 1.4 2010/01/12 23:22:07 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
+ *  Author: Thomas E. Dickey                 1997-on                        *
  ****************************************************************************/
 /*
  *	trace_buf.c - Tracing/Debugging buffers (attributes)
@@ -37,47 +37,85 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: trace_buf.c,v 1.9 2000/12/10 03:02:45 tom Exp $")
+MODULE_ID("$Id: trace_buf.c,v 1.4 2010/01/12 23:22:07 nicm Exp $")
 
-typedef struct {
-    char *text;
-    size_t size;
-} LIST;
+#define MyList _nc_globals.tracebuf_ptr
+#define MySize _nc_globals.tracebuf_used
 
+static char *
+_nc_trace_alloc(int bufnum, size_t want)
+{
+#ifdef TRACE
+    char *result = 0;
+
+    if (bufnum >= 0) {
+	if ((size_t) (bufnum + 1) > MySize) {
+	    size_t need = (bufnum + 1) * 2;
+	    if ((MyList = typeRealloc(TRACEBUF, need, MyList)) != 0) {
+		while (need > MySize)
+		    MyList[MySize++].text = 0;
+	    }
+	}
+
+	if (MyList != 0) {
+	    if (MyList[bufnum].text == 0
+		|| want > MyList[bufnum].size) {
+		MyList[bufnum].text = typeRealloc(char, want, MyList[bufnum].text);
+		if (MyList[bufnum].text != 0)
+		    MyList[bufnum].size = want;
+	    }
+	    result = MyList[bufnum].text;
+	}
+    }
+#if NO_LEAKS
+    else {
+	if (MySize) {
+	    if (MyList) {
+		while (MySize--) {
+		    if (MyList[MySize].text != 0) {
+			free(MyList[MySize].text);
+		    }
+		}
+		free(MyList);
+		MyList = 0;
+	    }
+	    MySize = 0;
+	}
+    }
+#endif
+    return result;
+#else
+    return NULL;
+#endif
+}
+
+/*
+ * (re)Allocate a buffer big enough for the caller's wants.
+ */
 NCURSES_EXPORT(char *)
 _nc_trace_buf(int bufnum, size_t want)
 {
-    static LIST *list;
-    static size_t have;
+    char *result = _nc_trace_alloc(bufnum, want);
+    if (result != 0)
+	*result = '\0';
+    return result;
+}
 
-#if NO_LEAKS
-    if (bufnum < 0) {
-	if (have) {
-	    while (have--) {
-		free(list[have].text);
-	    }
-	    free(list);
-	}
-	return 0;
+/*
+ * Append a new string to an existing buffer.
+ */
+NCURSES_EXPORT(char *)
+_nc_trace_bufcat(int bufnum, const char *value)
+{
+    char *buffer = _nc_trace_alloc(bufnum, 0);
+    if (buffer != 0) {
+        size_t have = strlen(buffer), length;
+
+	length = 1 + have + strlen(value);
+	buffer = _nc_trace_alloc(bufnum, length);
+	if (buffer != 0)
+	     (void) strlcpy(buffer + have, value, length);
+
     }
-#endif
-
-    if ((size_t) (bufnum + 1) > have) {
-	size_t need = (bufnum + 1) * 2;
-	if ((list = typeRealloc(LIST, need, list)) == 0)
-	    return (0);
-	while (need > have)
-	    list[have++].text = 0;
-    }
-
-    if (list[bufnum].text == 0
-	|| want > list[bufnum].size) {
-	if ((list[bufnum].text = typeRealloc(char, want, list[bufnum].text))
-	    != 0)
-	      list[bufnum].size = want;
-    }
-
-    if (list[bufnum].text != 0)
-	*(list[bufnum].text) = '\0';
-    return list[bufnum].text;
+    return buffer;
 }

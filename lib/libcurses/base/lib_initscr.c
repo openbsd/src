@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_initscr.c,v 1.2 2001/01/22 18:01:40 millert Exp $	*/
+/* $OpenBSD: lib_initscr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-2003               *
  ****************************************************************************/
 
 /*
@@ -41,41 +42,60 @@
 */
 
 #include <curses.priv.h>
-#include <tic.h>		/* for MAX_ALIAS */
 
 #if HAVE_SYS_TERMIO_H
 #include <sys/termio.h>		/* needed for ISC */
 #endif
 
-MODULE_ID("$From: lib_initscr.c,v 1.28 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_initscr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
 
 NCURSES_EXPORT(WINDOW *)
 initscr(void)
 {
-    static bool initialized = FALSE;
-    NCURSES_CONST char *name;
-    int value;
+    WINDOW *result;
 
+    NCURSES_CONST char *name;
+
+    START_TRACE();
     T((T_CALLED("initscr()")));
+
+    _nc_init_pthreads();
+    _nc_lock_global(curses);
+
     /* Portable applications must not call initscr() more than once */
-    if (!initialized) {
-	initialized = TRUE;
+    if (!_nc_globals.init_screen) {
+	_nc_globals.init_screen = TRUE;
 
 	if ((name = getenv("TERM")) == 0
 	    || *name == '\0')
 	    name = "unknown";
+#ifdef __CYGWIN__
+	/*
+	 * 2002/9/21
+	 * Work around a bug in Cygwin.  Full-screen subprocesses run from
+	 * bash, in turn spawned from another full-screen process, will dump
+	 * core when attempting to write to stdout.  Opening /dev/tty
+	 * explicitly seems to fix the problem.
+	 */
+	if (isatty(fileno(stdout))) {
+	    FILE *fp = fopen("/dev/tty", "w");
+	    if (fp != 0 && isatty(fileno(fp))) {
+		fclose(stdout);
+		dup2(fileno(fp), STDOUT_FILENO);
+		stdout = fdopen(STDOUT_FILENO, "w");
+	    }
+	}
+#endif
 	if (newterm(name, stdout, stdin) == 0) {
 	    fprintf(stderr, "Error opening terminal: %s.\n", name);
 	    exit(EXIT_FAILURE);
 	}
 
-	/* allow user to set maximum escape delay from the environment */
-	if ((value = _nc_getenv_num("ESCDELAY")) >= 0) {
-	    ESCDELAY = value;
-	}
-
 	/* def_shell_mode - done in newterm/_nc_setupscreen */
 	def_prog_mode();
     }
-    returnWin(stdscr);
+    result = stdscr;
+    _nc_unlock_global(curses);
+
+    returnWin(result);
 }

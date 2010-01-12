@@ -1,7 +1,7 @@
-.\" $OpenBSD: curs_addchstr.3,v 1.8 2004/12/10 03:54:19 jaredy Exp $
+.\" $OpenBSD: curs_addchstr.3,v 1.9 2010/01/12 23:21:58 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,15 +28,24 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_addchstr.3x,v 1.7 2000/07/01 19:53:33 tom Exp $
+.\" $Id: curs_addchstr.3,v 1.9 2010/01/12 23:21:58 nicm Exp $
 .TH curs_addchstr 3 ""
+.na
+.hy 0
 .SH NAME
-\fBaddchstr\fR, \fBaddchnstr\fR, \fBwaddchstr\fR,
-\fBwaddchnstr\fR, \fBmvaddchstr\fR, \fBmvaddchnstr\fR, \fBmvwaddchstr\fR,
+\fBaddchstr\fR,
+\fBaddchnstr\fR,
+\fBwaddchstr\fR,
+\fBwaddchnstr\fR,
+\fBmvaddchstr\fR,
+\fBmvaddchnstr\fR,
+\fBmvwaddchstr\fR,
 \fBmvwaddchnstr\fR - add a string of characters (and attributes) to a \fBcurses\fR window
+.ad
+.hy
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
-
+.PP
 \fBint addchstr(const chtype *chstr);\fR
 .br
 \fBint addchnstr(const chtype *chstr, int n);\fR
@@ -58,25 +67,32 @@ the current cursor position.  The four routines with \fIn\fR as the last
 argument copy at most \fIn\fR elements, but no more than will fit on the line.
 If \fBn\fR=\fB-1\fR then the whole string is copied, to the maximum number of
 characters that will fit on the line.
-
+.PP
 The window cursor is \fInot\fR advanced, and these routines work faster than
-\fBwaddnstr\fR.  On the other hand, they don't perform any kind of checking
-(such as for the newline, backspace, or carriage return characters), they don't
-advance the current cursor position, they don't expand other control characters
+\fBwaddnstr\fR.  On the other hand, they do not perform any kind of checking
+(such as for the newline, backspace, or carriage return characters), they do not
+advance the current cursor position, they do not expand other control characters
 to ^-escapes, and they truncate the string if it crosses the right margin,
 rather than wrapping it around to the new line.
-
 .SH RETURN VALUES
 All routines return the integer \fBERR\fR upon failure and \fBOK\fR on success
 (the SVr4 manuals specify only "an integer value other than \fBERR\fR") upon
 successful completion, unless otherwise noted in the preceding routine
 descriptions.
+.PP
+X/Open does not define any error conditions.
+This implementation returns an error
+if the window pointer is null.
 .SH NOTES
 Note that all routines except \fBwaddchnstr\fR may be macros.
 .SH PORTABILITY
-All these entry points are described in the XSI Curses standard, Issue 4.
+These entry points are described in the XSI Curses standard, Issue 4.
 .SH SEE ALSO
 \fBcurses\fR(3).
+.PP
+Comparable functions in the wide-character (ncursesw) library are
+described in
+\fBcurs_add_wchstr\fR(3).
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

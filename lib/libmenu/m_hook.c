@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_hook.c,v 1.6 2001/01/22 18:02:03 millert Exp $	*/
+/* $OpenBSD: m_hook.c,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,12 +39,13 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_hook.c,v 1.9 2000/12/10 02:16:48 tom Exp $")
+MODULE_ID("$Id: m_hook.c,v 1.7 2010/01/12 23:22:08 nicm Exp $")
 
 /* "Template" macro to generate function to set application specific hook */
 #define GEN_HOOK_SET_FUNCTION( typ, name ) \
 NCURSES_IMPEXP int NCURSES_API set_ ## typ ## _ ## name (MENU *menu, Menu_Hook func )\
 {\
+   T((T_CALLED("set_" #typ "_" #name "(%p,%p)"), menu, func));\
    (Normalize_Menu(menu) -> typ ## name = func );\
    RETURN(E_OK);\
 }
@@ -53,7 +54,8 @@ NCURSES_IMPEXP int NCURSES_API set_ ## typ ## _ ## name (MENU *menu, Menu_Hook f
 #define GEN_HOOK_GET_FUNCTION( typ, name ) \
 NCURSES_IMPEXP Menu_Hook NCURSES_API typ ## _ ## name ( const MENU *menu )\
 {\
-   return (Normalize_Menu(menu) -> typ ## name);\
+   T((T_CALLED(#typ "_" #name "(%p)"), menu));\
+   returnMenuHook(Normalize_Menu(menu) -> typ ## name);\
 }
 
 /*---------------------------------------------------------------------------
@@ -65,7 +67,7 @@ NCURSES_IMPEXP Menu_Hook NCURSES_API typ ## _ ## name ( const MENU *menu )\
 |
 |   Return Values :  E_OK               - success
 +--------------------------------------------------------------------------*/
-GEN_HOOK_SET_FUNCTION( menu, init )		  
+GEN_HOOK_SET_FUNCTION(menu, init)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -77,7 +79,7 @@ GEN_HOOK_SET_FUNCTION( menu, init )
 |
 |   Return Values :  Menu init function address or NULL
 +--------------------------------------------------------------------------*/
-GEN_HOOK_GET_FUNCTION( menu, init )
+GEN_HOOK_GET_FUNCTION(menu, init)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -88,7 +90,7 @@ GEN_HOOK_GET_FUNCTION( menu, init )
 |
 |   Return Values :  E_OK               - success
 +--------------------------------------------------------------------------*/
-GEN_HOOK_SET_FUNCTION( menu, term )		  
+GEN_HOOK_SET_FUNCTION(menu, term)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -100,7 +102,7 @@ GEN_HOOK_SET_FUNCTION( menu, term )
 |
 |   Return Values :  Menu finalization function address or NULL
 +--------------------------------------------------------------------------*/
-GEN_HOOK_GET_FUNCTION( menu, term )
+GEN_HOOK_GET_FUNCTION(menu, term)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -111,7 +113,7 @@ GEN_HOOK_GET_FUNCTION( menu, term )
 |
 |   Return Values :  E_OK               - success
 +--------------------------------------------------------------------------*/
-GEN_HOOK_SET_FUNCTION( item, init )		  
+GEN_HOOK_SET_FUNCTION(item, init)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -123,7 +125,7 @@ GEN_HOOK_SET_FUNCTION( item, init )
 |
 |   Return Values :  Item init function address or NULL
 +--------------------------------------------------------------------------*/
-GEN_HOOK_GET_FUNCTION( item, init )
+GEN_HOOK_GET_FUNCTION(item, init)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -134,7 +136,7 @@ GEN_HOOK_GET_FUNCTION( item, init )
 |
 |   Return Values :  E_OK               - success
 +--------------------------------------------------------------------------*/
-GEN_HOOK_SET_FUNCTION( item, term )		  
+GEN_HOOK_SET_FUNCTION(item, term)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -146,6 +148,6 @@ GEN_HOOK_SET_FUNCTION( item, term )
 |
 |   Return Values :  Item finalization function address or NULL
 +--------------------------------------------------------------------------*/
-GEN_HOOK_GET_FUNCTION( item, term )
+GEN_HOOK_GET_FUNCTION(item, term)
 
 /* m_hook.c ends here */

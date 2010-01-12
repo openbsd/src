@@ -1,7 +1,7 @@
-/*	$OpenBSD: tset.c,v 1.34 2009/11/11 23:49:01 nicm Exp $	*/
+/*	$OpenBSD: tset.c,v 1.35 2010/01/12 23:22:14 nicm Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -70,6 +71,7 @@
  * SUCH DAMAGE.
  */
 
+#define USE_LIBTINFO
 #define __INTERNAL_CAPS_VISIBLE	/* we need to see has_hardware_tabs */
 #include <progs.priv.h>
 
@@ -85,23 +87,45 @@
 char *ttyname(int fd);
 #endif
 
-/* this is just to stifle a missing-prototype warning */
-#if defined(linux) || defined(__OpenBSD__)
-# include <sys/ioctl.h>
+#if HAVE_SIZECHANGE
+# if !defined(sun) || !TERMIOS
+#  if HAVE_SYS_IOCTL_H
+#   include <sys/ioctl.h>
+#  endif
+# endif
 #endif
 
 #if NEED_PTEM_H
 /* they neglected to define struct winsize in termios.h -- it's only
    in termio.h	*/
-#include	<sys/stream.h>
-#include	<sys/ptem.h>
+#include <sys/stream.h>
+#include <sys/ptem.h>
 #endif
 
-#include <curses.h>		/* for bool typedef */
 #include <dump_entry.h>
 #include <transform.h>
 
-MODULE_ID("$From: tset.c,v 0.49 2001/02/24 23:29:33 tom Exp $")
+MODULE_ID("$Id: tset.c,v 1.35 2010/01/12 23:22:14 nicm Exp $")
+
+/*
+ * SCO defines TIOCGSIZE and the corresponding struct.  Other systems (SunOS,
+ * Solaris, IRIX) define TIOCGWINSZ and struct winsize.
+ */
+#ifdef TIOCGSIZE
+# define IOCTL_GET_WINSIZE TIOCGSIZE
+# define IOCTL_SET_WINSIZE TIOCSSIZE
+# define STRUCT_WINSIZE struct ttysize
+# define WINSIZE_ROWS(n) n.ts_lines
+# define WINSIZE_COLS(n) n.ts_cols
+#else
+# ifdef TIOCGWINSZ
+#  define IOCTL_GET_WINSIZE TIOCGWINSZ
+#  define IOCTL_SET_WINSIZE TIOCSWINSZ
+#  define STRUCT_WINSIZE struct winsize
+#  define WINSIZE_ROWS(n) n.ws_row
+#  define WINSIZE_COLS(n) n.ws_col
+# endif
+#endif
 
 extern char **environ;
 
@@ -110,15 +134,19 @@ extern char **environ;
 
 const char *_nc_progname = "tset";
 
-static TTY mode, oldmode;
+static TTY mode, oldmode, original;
 
+static bool opt_c;		/* set control-chars */
+static bool opt_w;		/* set window-size */
+
+static bool can_restore = FALSE;
 static bool isreset = FALSE;	/* invoked as reset */
 static int terasechar = -1;	/* new erase character */
 static int intrchar = -1;	/* new interrupt character */
 static int tkillchar = -1;	/* new kill character */
 static int tlines, tcolumns;	/* window size */
 
-#define LOWERCASE(c) ((isalpha(CharOf(c)) && isupper(CharOf(c))) ? tolower(CharOf(c)) : (c))
+#define LOWERCASE(c) ((isalpha(UChar(c)) && isupper(UChar(c))) ? tolower(UChar(c)) : (c))
 
 static int
 CaselessCmp(const char *a, const char *b)
@@ -133,42 +161,51 @@ CaselessCmp(const char *a, const char *b)
 }
 
 static void
+exit_error(void)
+{
+    if (can_restore)
+	SET_TTY(STDERR_FILENO, &original);
+    (void) fprintf(stderr, "\n");
+    fflush(stderr);
+    ExitProgram(EXIT_FAILURE);
+    /* NOTREACHED */
+}
+
+static void
 err(const char *fmt,...)
 {
     va_list ap;
     va_start(ap, fmt);
-    (void) fprintf(stderr, "tset: ");
+    (void) fprintf(stderr, "%s: ", _nc_progname);
     (void) vfprintf(stderr, fmt, ap);
     va_end(ap);
-    (void) fprintf(stderr, "\n");
-    exit(EXIT_FAILURE);
+    exit_error();
     /* NOTREACHED */
 }
 
 static void
 failed(const char *msg)
 {
-    (void)fputs("tset: ", stderr);
+    fprintf(stderr, "%s: ", _nc_progname);
     perror(msg);
-    exit(EXIT_FAILURE);
+    exit_error();
     /* NOTREACHED */
 }
 
 static void
 cat(char *file)
 {
-    int fd, nr;
+    FILE *fp;
+    size_t nr;
     char buf[BUFSIZ];
 
-    if ((fd = open(file, O_RDONLY, 0)) < 0)
+    if ((fp = fopen(file, "r")) == 0)
 	failed(file);
 
-    while ((nr = read(fd, buf, sizeof(buf))) > 0)
-	if (write(STDERR_FILENO, buf, (size_t) nr) == -1)
-	    failed("write to stderr");
-    if (nr != 0)
-	failed(file);
-    (void) close(fd);
+    while ((nr = fread(buf, sizeof(char), sizeof(buf), fp)) != 0)
+	if (fwrite(buf, sizeof(char), nr, stderr) != nr)
+	      failed("write to stderr");
+    fclose(fp);
 }
 
 static int
@@ -184,9 +221,11 @@ askuser(const char *dflt)
     static char answer[256];
 
     /* We can get recalled; if so, don't continue uselessly. */
+    clearerr(stdin);
     if (feof(stdin) || ferror(stdin)) {
 	(void) fprintf(stderr, "\n");
-	exit(EXIT_FAILURE);
+	exit_error();
+	/* NOTREACHED */
     }
     for (;;) {
 	if (dflt)
@@ -197,8 +236,8 @@ askuser(const char *dflt)
 
 	if (fgets(answer, sizeof(answer), stdin) == NULL) {
 	    if (dflt == 0) {
-		(void) fprintf(stderr, "\n");
-		exit(EXIT_FAILURE);
+		exit_error();
+		/* NOTREACHED */
 	    }
 	    return (dflt);
 	}
@@ -334,7 +373,7 @@ add_mapping(const char *port, char *arg)
     char *base = 0;
 
     copy = strdup(arg);
-    mapp = malloc(sizeof(MAP));
+    mapp = (MAP *) malloc(sizeof(MAP));
     if (copy == 0 || mapp == 0)
 	failed("malloc");
     mapp->next = 0;
@@ -412,9 +451,12 @@ add_mapping(const char *port, char *arg)
 	mapp->conditional = ~mapp->conditional & (EQ | GT | LT);
 
     /* If user specified a port with an option flag, set it. */
-  done:if (port) {
-	if (mapp->porttype)
-	  badmopt:err("illegal -m option format: %s", copy);
+  done:
+    if (port) {
+	if (mapp->porttype) {
+	  badmopt:
+	    err("illegal -m option format: %s", copy);
+	}
 	mapp->porttype = port;
     }
     free(copy);
@@ -531,7 +573,7 @@ get_termcap_entry(char *userarg)
 
 	    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 		for (s = buffer, t = d = 0; *s; s++) {
-		    if (isspace(CharOf(*s)))
+		    if (isspace(UChar(*s)))
 			*s = '\0';
 		    else if (t == 0)
 			t = s;
@@ -559,7 +601,7 @@ get_termcap_entry(char *userarg)
      * real entry from /etc/termcap.  This prevents us from being fooled
      * by out of date stuff in the environment.
      */
-  found:if ((p = getenv("TERMCAP")) != 0 && *p != '/') {
+  found:if ((p = getenv("TERMCAP")) != 0 && !_nc_is_abs_path(p)) {
 	/* 'unsetenv("TERMCAP")' is not portable.
 	 * The 'environ' array is better.
 	 */
@@ -588,13 +630,13 @@ get_termcap_entry(char *userarg)
     while (setupterm((NCURSES_CONST char *) ttype, STDOUT_FILENO, &errret)
 	   != OK) {
 	if (errret == 0) {
-	    (void) fprintf(stderr, "tset: unknown terminal type %s\n",
-			   ttype);
+	    (void) fprintf(stderr, "%s: unknown terminal type %s\n",
+			   _nc_progname, ttype);
 	    ttype = 0;
 	} else {
 	    (void) fprintf(stderr,
-			   "tset: can't initialize terminal type %s (error %d)\n",
-			   ttype, errret);
+			   "%s: can't initialize terminal type %s (error %d)\n",
+			   _nc_progname, ttype, errret);
 	    ttype = 0;
 	}
 	ttype = askuser(ttype);
@@ -612,8 +654,10 @@ get_termcap_entry(char *userarg)
  **************************************************************************/
 
 /* some BSD systems have these built in, some systems are missing
- * one or more definitions. The safest solution is to override.
+ * one or more definitions. The safest solution is to override unless the
+ * commonly-altered ones are defined.
  */
+#if !(defined(CERASE) && defined(CINTR) && defined(CKILL) && defined(CQUIT))
 #undef CEOF
 #undef CERASE
 #undef CINTR
@@ -624,20 +668,49 @@ get_termcap_entry(char *userarg)
 #undef CSTART
 #undef CSTOP
 #undef CSUSP
+#endif
 
 /* control-character defaults */
+#ifndef CEOF
 #define CEOF	CTRL('D')
+#endif
+#ifndef CERASE
 #define CERASE	CTRL('H')
+#endif
+#ifndef CINTR
 #define CINTR	127		/* ^? */
+#endif
+#ifndef CKILL
 #define CKILL	CTRL('U')
+#endif
+#ifndef CLNEXT
 #define CLNEXT  CTRL('v')
+#endif
+#ifndef CRPRNT
 #define CRPRNT  CTRL('r')
+#endif
+#ifndef CQUIT
 #define CQUIT	CTRL('\\')
+#endif
+#ifndef CSTART
 #define CSTART	CTRL('Q')
+#endif
+#ifndef CSTOP
 #define CSTOP	CTRL('S')
+#endif
+#ifndef CSUSP
 #define CSUSP	CTRL('Z')
+#endif
 
-#define	CHK(val, dft)	((int)val <= 0 ? dft : val)
+#if defined(_POSIX_VDISABLE)
+#define DISABLED(val)   (((_POSIX_VDISABLE != -1) \
+		       && ((val) == _POSIX_VDISABLE)) \
+		      || ((val) <= 0))
+#else
+#define DISABLED(val)   ((int)(val) <= 0)
+#endif
+
+#define CHK(val, dft)   (DISABLED(val) ? dft : val)
 
 static bool set_tabs(void);
 
@@ -720,7 +793,22 @@ reset_mode(void)
 		      | OFDEL
 #endif
 #ifdef NLDLY
-		      | NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY
+		      | NLDLY
+#endif
+#ifdef CRDLY
+		      | CRDLY
+#endif
+#ifdef TABDLY
+		      | TABDLY
+#endif
+#ifdef BSDLY
+		      | BSDLY
+#endif
+#ifdef VTDLY
+		      | VTDLY
+#endif
+#ifdef FFDLY
+		      | FFDLY
 #endif
 	);
 
@@ -754,11 +842,7 @@ reset_mode(void)
 	);
 #endif
 
-#ifdef TERMIOS
-    tcsetattr(STDERR_FILENO, TCSADRAIN, &mode);
-#else
-    stty(STDERR_FILENO, &mode);
-#endif
+    SET_TTY(STDERR_FILENO, &mode);
 }
 
 /*
@@ -793,14 +877,14 @@ static void
 set_control_chars(void)
 {
 #ifdef TERMIOS
-    if (mode.c_cc[VERASE] == 0 || terasechar >= 0)
-	mode.c_cc[VERASE] = terasechar >= 0 ? terasechar : default_erase();
+    if (DISABLED(mode.c_cc[VERASE]) || terasechar >= 0)
+	mode.c_cc[VERASE] = (terasechar >= 0) ? terasechar : default_erase();
 
-    if (mode.c_cc[VINTR] == 0 || intrchar >= 0)
-	mode.c_cc[VINTR] = intrchar >= 0 ? intrchar : CINTR;
+    if (DISABLED(mode.c_cc[VINTR]) || intrchar >= 0)
+	mode.c_cc[VINTR] = (intrchar >= 0) ? intrchar : CINTR;
 
-    if (mode.c_cc[VKILL] == 0 || tkillchar >= 0)
-	mode.c_cc[VKILL] = tkillchar >= 0 ? tkillchar : CKILL;
+    if (DISABLED(mode.c_cc[VKILL]) || tkillchar >= 0)
+	mode.c_cc[VKILL] = (tkillchar >= 0) ? tkillchar : CKILL;
 #endif
 }
 
@@ -888,7 +972,7 @@ set_init(void)
 #ifdef TAB3
     if (oldmode.c_oflag & (TAB3 | ONLCR | OCRNL | ONLRET)) {
 	oldmode.c_oflag &= (TAB3 | ONLCR | OCRNL | ONLRET);
-	tcsetattr(STDERR_FILENO, TCSADRAIN, &oldmode);
+	SET_TTY(STDERR_FILENO, &oldmode);
     }
 #endif
     settle = set_tabs();
@@ -938,10 +1022,10 @@ set_tabs(void)
 	     * used to try a bunch of half-clever things
 	     * with cup and hpa, for an average saving of
 	     * somewhat less than two character times per
-	     * tab stop, less that .01 sec at 2400cps. We
+	     * tab stop, less than .01 sec at 2400cps. We
 	     * lost all this cruft because it seemed to be
 	     * introducing some odd bugs.
-	     * ----------12345678----------- */
+	     * -----------12345678----------- */
 	    (void) fputs("        ", stderr);
 	    tputs(set_tab, 0, outc);
 	}
@@ -962,9 +1046,9 @@ set_tabs(void)
  */
 #ifdef TERMIOS
 static void
-report(const char *name, int which, unsigned int def)
+report(const char *name, int which, unsigned def)
 {
-    unsigned int older, newer;
+    unsigned older, newer;
     char *p;
 
     newer = mode.c_cc[which];
@@ -975,11 +1059,13 @@ report(const char *name, int which, unsigned int def)
 
     (void) fprintf(stderr, "%s %s ", name, older == newer ? "is" : "set to");
 
+    if (DISABLED(newer))
+	(void) fprintf(stderr, "undef.\n");
     /*
      * Check 'delete' before 'backspace', since the key_backspace value
      * is ambiguous.
      */
-    if (newer == 0177)
+    else if (newer == 0177)
 	(void) fprintf(stderr, "delete.\n");
     else if ((p = key_backspace) != 0
 	     && newer == (unsigned char) p[0]
@@ -987,9 +1073,9 @@ report(const char *name, int which, unsigned int def)
 	(void) fprintf(stderr, "backspace.\n");
     else if (newer < 040) {
 	newer ^= 0100;
-	(void) fprintf(stderr, "control-%c (^%c).\n", newer, newer);
+	(void) fprintf(stderr, "control-%c (^%c).\n", UChar(newer), UChar(newer));
     } else
-	(void) fprintf(stderr, "%c.\n", newer);
+	(void) fprintf(stderr, "%c.\n", UChar(newer));
 }
 #endif
 
@@ -1028,28 +1114,46 @@ obsolete(char **argv)
 }
 
 static void
-usage(const char *pname)
+usage(void)
 {
-    (void) fprintf(stderr, "usage: %s [-IQqrSsV] [-] "
-		   "[-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n",
-		   pname);
-    exit(EXIT_FAILURE);
+    static const char *tbl[] =
+    {
+	""
+	,"Options:"
+	,"  -c          set control characters"
+	,"  -e ch       erase character"
+	,"  -I          no initialization strings"
+	,"  -i ch       interrupt character"
+	,"  -k ch       kill character"
+	,"  -m mapping  map identifier to type"
+	,"  -Q          do not output control key settings"
+	,"  -r          display term on stderr"
+	,"  -s          output TERM set command"
+	,"  -V          print curses-version"
+	,"  -w          set window-size"
+    };
+    unsigned n;
+    (void) fprintf(stderr, "Usage: %s [-cIQqrSsVw] [-] "
+	"[-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n",
+	_nc_progname);
+    for (n = 0; n < sizeof(tbl) / sizeof(tbl[0]); ++n)
+	fprintf(stderr, "%s\n", tbl[n]);
+
+    exit_error();
+    /* NOTREACHED */
 }
 
 static char
 arg_to_char(void)
 {
-    return (optarg[0] == '^' && optarg[1] != '\0')
-	? ((optarg[1] == '?') ? '\177' : CTRL(optarg[1]))
-	: optarg[0];
+    return (char) ((optarg[0] == '^' && optarg[1] != '\0')
+		   ? ((optarg[1] == '?') ? '\177' : CTRL(optarg[1]))
+		   : optarg[0]);
 }
 
 int
 main(int argc, char **argv)
 {
-#if defined(TIOCGWINSZ) && defined(TIOCSWINSZ)
-    struct winsize win;
-#endif
     int ch, noinit, noset, quiet, Sflag, sflag, showterm;
     const char *p;
     const char *ttype;
@@ -1059,27 +1163,12 @@ main(int argc, char **argv)
     void wrtermcap (char *);
 #endif /* __OpenBSD__ */
 
-    if (GET_TTY(STDERR_FILENO, &mode) < 0)
-	failed("standard error");
-    oldmode = mode;
-#ifdef TERMIOS
-    ospeed = cfgetospeed(&mode);
-#else
-    ospeed = mode.sg_ospeed;
-#endif
-
-    p = _nc_basename(*argv);
-    if (!strcmp(p, PROG_RESET)) {
-	isreset = TRUE;
-	reset_mode();
-    }
-
     obsolete(argv);
     noinit = noset = quiet = Sflag = sflag = showterm = 0;
-    while ((ch = getopt(argc, argv, "a:d:e:Ii:k:m:np:qQSrsV")) != -1) {
+    while ((ch = getopt(argc, argv, "a:cd:e:Ii:k:m:np:qQSrsVw")) != -1) {
 	switch (ch) {
-	case 'q':		/* display term only */
-	    noset = 1;
+	case 'c':		/* set control-chars */
+	    opt_c = TRUE;
 	    break;
 	case 'a':		/* OBSOLETE: map identifier to type */
 	    add_mapping("arpanet", optarg);
@@ -1110,28 +1199,54 @@ main(int argc, char **argv)
 	case 'Q':		/* don't output control key settings */
 	    quiet = 1;
 	    break;
-	case 'S':		/* OBSOLETE: output TERM & TERMCAP */
-	    Sflag = 1;
+	case 'q':		/* display term only */
+	    noset = 1;
 	    break;
 	case 'r':		/* display term on stderr */
 	    showterm = 1;
 	    break;
+	case 'S':		/* OBSOLETE: output TERM & TERMCAP */
+	    Sflag = 1;
+	    break;
 	case 's':		/* output TERM set command */
 	    sflag = 1;
 	    break;
-	case 'V':
+	case 'V':		/* print curses-version */
 	    puts(curses_version());
-	    return EXIT_SUCCESS;
+	    ExitProgram(EXIT_SUCCESS);
+	case 'w':		/* set window-size */
+	    opt_w = TRUE;
+	    break;
 	case '?':
 	default:
-	    usage(*argv);
+	    usage();
 	}
     }
+
+    _nc_progname = _nc_rootname(*argv);
     argc -= optind;
     argv += optind;
 
     if (argc > 1)
-	usage(*argv);
+	usage();
+
+    if (!opt_c && !opt_w)
+	opt_c = opt_w = TRUE;
+
+    if (GET_TTY(STDERR_FILENO, &mode) < 0)
+	failed("standard error");
+    can_restore = TRUE;
+    original = oldmode = mode;
+#ifdef TERMIOS
+    ospeed = (NCURSES_OSPEED) cfgetospeed(&mode);
+#else
+    ospeed = (NCURSES_OSPEED) mode.sg_ospeed;
+#endif
+
+    if (!strcmp(_nc_progname, PROG_RESET)) {
+	isreset = TRUE;
+	reset_mode();
+    }
 
     ttype = get_termcap_entry(*argv);
 #ifdef __OpenBSD__
@@ -1143,29 +1258,31 @@ main(int argc, char **argv)
 	tcolumns = columns;
 	tlines = lines;
 
-#if defined(TIOCGWINSZ) && defined(TIOCSWINSZ)
-	/* Set window size */
-	(void) ioctl(STDERR_FILENO, TIOCGWINSZ, &win);
-	if (win.ws_row == 0 && win.ws_col == 0 &&
-	    tlines > 0 && tcolumns > 0) {
-	    win.ws_row = tlines;
-	    win.ws_col = tcolumns;
-	    (void) ioctl(STDERR_FILENO, TIOCSWINSZ, &win);
+#if HAVE_SIZECHANGE
+	if (opt_w) {
+	    STRUCT_WINSIZE win;
+	    /* Set window size if not set already */
+	    (void) ioctl(STDERR_FILENO, IOCTL_GET_WINSIZE, &win);
+	    if (WINSIZE_ROWS(win) == 0 &&
+		WINSIZE_COLS(win) == 0 &&
+		tlines > 0 && tcolumns > 0) {
+		WINSIZE_ROWS(win) = tlines;
+		WINSIZE_COLS(win) = tcolumns;
+		(void) ioctl(STDERR_FILENO, IOCTL_SET_WINSIZE, &win);
+	    }
 	}
 #endif
-	set_control_chars();
-	set_conversions();
+	if (opt_c) {
+	    set_control_chars();
+	    set_conversions();
 
-	if (!noinit)
-	    set_init();
+	    if (!noinit)
+		set_init();
 
-	/* Set the modes if they've changed. */
-	if (memcmp(&mode, &oldmode, sizeof(mode))) {
-#ifdef TERMIOS
-	    tcsetattr(STDERR_FILENO, TCSADRAIN, &mode);
-#else
-	    stty(STDERR_FILENO, &mode);
-#endif
+	    /* Set the modes if they've changed. */
+	    if (memcmp(&mode, &oldmode, sizeof(mode))) {
+		SET_TTY(STDERR_FILENO, &mode);
+	    }
 	}
     }
 
@@ -1184,8 +1301,8 @@ main(int argc, char **argv)
 #ifdef TERMIOS
 	if (!quiet) {
 	    report("Erase", VERASE, CERASE);
-	    report("Kill", VKILL, CINTR);
-	    report("Interrupt", VINTR, CKILL);
+	    report("Kill", VKILL, CKILL);
+	    report("Interrupt", VINTR, CINTR);
 	}
 #endif
     }
@@ -1198,7 +1315,7 @@ main(int argc, char **argv)
 	} else
 	    err("No termcap entry for %s, only terminfo.", ttype);
     }
-#else           
+#else
     if (Sflag)
 	err("The -S option is not supported under terminfo.");
 #endif /* __OpenBSD__ */
@@ -1239,12 +1356,16 @@ main(int argc, char **argv)
     }
 #else
     if (sflag) {
+	int len;
+	char *var;
+	char *leaf;
 	/*
 	 * Figure out what shell we're using.  A hack, we look for an
 	 * environmental variable SHELL ending in "csh".
 	 */
-	if ((p = getenv("SHELL")) != 0
-	    && !strcmp(p + strlen(p) - 3, "csh"))
+	if ((var = getenv("SHELL")) != 0
+	    && ((len = (int) strlen(leaf = _nc_basename(var))) >= 3)
+	    && !strcmp(leaf + len - 3, "csh"))
 	    p = "set noglob;\nsetenv TERM %s;\nunset noglob;\n";
 	else
 	    p = "TERM=%s;\n";
@@ -1252,7 +1373,5 @@ main(int argc, char **argv)
     }
 #endif /* __OpenBSD__ */
 
-    return EXIT_SUCCESS;
+    ExitProgram(EXIT_SUCCESS);
 }
-
-/* tset.c ends here */

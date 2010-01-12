@@ -1,7 +1,5 @@
-/*	$OpenBSD: fld_user.c,v 1.6 2001/01/22 18:02:14 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,12 +27,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_user.c,v 1.9 2000/12/10 02:09:38 tom Exp $")
+MODULE_ID("$Id: fld_user.c,v 1.7 2010/01/12 23:22:07 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -46,9 +44,11 @@ MODULE_ID("$From: fld_user.c,v 1.9 2000/12/10 02:09:38 tom Exp $")
 |   Return Values :  E_OK         - on success
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-set_field_userptr (FIELD * field, void  *usrptr)
+set_field_userptr(FIELD *field, void *usrptr)
 {
-  Normalize_Field( field )->usrptr = usrptr;
+  T((T_CALLED("set_field_userptr(%p,%p)"), field, usrptr));
+
+  Normalize_Field(field)->usrptr = usrptr;
   RETURN(E_OK);
 }
 
@@ -63,9 +63,10 @@ set_field_userptr (FIELD * field, void  *usrptr)
 |                    NULL is returned
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(void *)
-field_userptr (const FIELD *field)
+field_userptr(const FIELD *field)
 {
-  return Normalize_Field( field )->usrptr;
+  T((T_CALLED("field_userptr(%p)"), field));
+  returnVoidPtr(Normalize_Field(field)->usrptr);
 }
 
 /* fld_user.c ends here */

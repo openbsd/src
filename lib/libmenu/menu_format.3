@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: menu_format.3,v 1.6 1999/01/22 03:45:06 millert Exp $
+.\" $OpenBSD: menu_format.3,v 1.7 2010/01/12 23:22:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2001,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: menu_format.3x,v 1.7 1998/11/29 01:09:39 Rick.Ohnemus Exp $
+.\" $Id: menu_format.3,v 1.7 2010/01/12 23:22:08 nicm Exp $
 .TH menu_format 3 ""
 .SH NAME
 \fBmenu_format\fR - set and get menu sizes
@@ -38,35 +38,38 @@
 .br
 int set_menu_format(MENU *menu, int rows, int cols);
 .br
-int menu_format(const MENU *menu, int *rows, int *cols);
+void menu_format(const MENU *menu, int *rows, int *cols);
 .br
 .SH DESCRIPTION
 The function \fBset_menu_format\fR sets the maximum display size of the given
 menu.  If this size is too small to display all menu items, the menu will be
 made scrollable. If this size is larger than the menus subwindow and the
 subwindow is too small to display all menu items, \fBpost_menu()\fR will fail.
-
+.PP
 The default format is 16 rows, 1 column.  Calling \fBset_menu_format\fR with a
 null menu pointer will change this default.  A zero row or column argument to
 \fBset_menu_format\fR is interpreted as a request not to change the current
 value.
-
+.PP
 The function \fBmenu_format\fR returns the maximum-size constraints for the
 given menu into the storage addressed by \fBrows\fR and \fBcols\fR.
 .SH RETURN VALUE
 These routines returns one of the following:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
+.B E_SYSTEM_ERROR
 System error occurred (see \fBerrno\fR).
 .TP 5
-\fBE_BAD_ARGUMENT\fR
+.B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
 .TP 5
-\fBE_POSTED\fR
+.B E_POSTED
 The menu is already posted.
+.TP 5
+.B E_NOT_CONNECTED
+No items are connected to the menu.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBmenu\fR(3).
 .SH NOTES

@@ -1,7 +1,7 @@
-/*	$OpenBSD: captoinfo.c,v 1.15 2006/10/24 17:25:48 moritz Exp $	*/
+/* $OpenBSD: captoinfo.c,v 1.16 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -41,7 +42,7 @@
  *
  *	There is just one entry point:
  *
- *	char *_nc_captoinfo(n, s, parametrized)
+ *	char *_nc_captoinfo(n, s, parameterized)
  *
  *	Convert value s for termcap string capability named n into terminfo
  *	format.
@@ -94,7 +95,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: captoinfo.c,v 1.40 2000/11/05 00:22:36 tom Exp $")
+MODULE_ID("$Id: captoinfo.c,v 1.16 2010/01/12 23:22:06 nicm Exp $")
 
 #define MAX_PUSHED	16	/* max # args we can push onto the stack */
 
@@ -117,7 +118,7 @@ init_string(void)
     if (my_string == 0)
 	my_string = typeMalloc(char, my_length = 256);
     if (my_string == 0)
-	_nc_err_abort("Out of memory");
+	_nc_err_abort(MSG_NO_MEMORY);
 
     *my_string = '\0';
     return my_string;
@@ -132,19 +133,19 @@ save_string(char *d, const char *const s)
     if (need > my_length) {
 	my_string = (char *) realloc(my_string, my_length = (need + need));
 	if (my_string == 0)
-	    _nc_err_abort("Out of memory");
+	    _nc_err_abort(MSG_NO_MEMORY);
 	d = my_string + have;
     }
     if ((copied = strlcpy(d, s, my_length - have)) >= my_length - have)
-	_nc_err_abort("Buffer overflow");
+	    _nc_err_abort("Buffer overflow");
     return d + copied;
 }
 
-static inline char *
-save_char(char *s, char c)
+static NCURSES_INLINE char *
+save_char(char *s, int c)
 {
     static char temp[2];
-    temp[0] = c;
+    temp[0] = (char) c;
     return save_string(s, temp);
 }
 
@@ -152,7 +153,7 @@ static void
 push(void)
 /* push onstack on to the stack */
 {
-    if (stackptr > MAX_PUSHED)
+    if (stackptr >= MAX_PUSHED)
 	_nc_warning("string too complex to convert");
     else
 	stack[stackptr++] = onstack;
@@ -186,7 +187,7 @@ cvtchar(register const char *sp)
 	case '$':
 	case '\\':
 	case '%':
-	    c = *sp;
+	    c = (unsigned char) (*sp);
 	    len = 2;
 	    break;
 	case '\0':
@@ -198,13 +199,13 @@ cvtchar(register const char *sp)
 	case '2':
 	case '3':
 	    len = 1;
-	    while (isdigit(CharOf(*sp))) {
+	    while (isdigit(UChar(*sp))) {
 		c = 8 * c + (*sp++ - '0');
 		len++;
 	    }
 	    break;
 	default:
-	    c = *sp;
+	    c = (unsigned char) (*sp);
 	    len = 2;
 	    break;
 	}
@@ -214,7 +215,7 @@ cvtchar(register const char *sp)
 	len = 2;
 	break;
     default:
-	c = *sp;
+	c = (unsigned char) (*sp);
 	len = 1;
     }
     if (isgraph(c) && c != ',' && c != '\'' && c != '\\' && c != ':') {
@@ -276,12 +277,12 @@ getparm(int parm, int n)
  * Convert a termcap string to terminfo format.
  * 'cap' is the relevant terminfo capability index.
  * 's' is the string value of the capability.
- * 'parametrized' tells what type of translations to do:
+ * 'parameterized' tells what type of translations to do:
  *	% translations if 1
  *	pad translations if >=0
  */
-char *
-_nc_captoinfo(const char *cap, const char *s, int const parametrized)
+NCURSES_EXPORT(char *)
+_nc_captoinfo(const char *cap, const char *s, int const parameterized)
 {
     const char *capstart;
 
@@ -298,16 +299,16 @@ _nc_captoinfo(const char *cap, const char *s, int const parametrized)
     capstart = 0;
     if (s == 0)
 	s = "";
-    if (parametrized >= 0 && isdigit(CharOf(*s)))
+    if (parameterized >= 0 && isdigit(UChar(*s)))
 	for (capstart = s;; s++)
-	    if (!(isdigit(CharOf(*s)) || *s == '*' || *s == '.'))
+	    if (!(isdigit(UChar(*s)) || *s == '*' || *s == '.'))
 		break;
 
     while (*s != '\0') {
 	switch (*s) {
 	case '%':
 	    s++;
-	    if (parametrized < 1) {
+	    if (parameterized < 1) {
 		dp = save_char(dp, '%');
 		break;
 	    }
@@ -468,7 +469,7 @@ _nc_captoinfo(const char *cap, const char *s, int const parametrized)
 		dp = save_char(dp, '%');
 		s--;
 		_nc_warning("unknown %% code %s (%#x) in %s",
-			    unctrl((chtype) * s), CharOf(*s), cap);
+			    unctrl((chtype) *s), UChar(*s), cap);
 		break;
 	    }
 	    break;
@@ -549,7 +550,7 @@ _nc_captoinfo(const char *cap, const char *s, int const parametrized)
     if (capstart) {
 	dp = save_string(dp, "$<");
 	for (s = capstart;; s++)
-	    if (isdigit(CharOf(*s)) || *s == '*' || *s == '.')
+	    if (isdigit(UChar(*s)) || *s == '*' || *s == '.')
 		dp = save_char(dp, *s);
 	    else
 		break;
@@ -573,8 +574,8 @@ bcd_expression(const char *str)
     char ch1, ch2;
 
     if (sscanf(str, fmt, &ch1, &ch2) == 2
-	&& isdigit(CharOf(ch1))
-	&& isdigit(CharOf(ch2))
+	&& isdigit(UChar(ch1))
+	&& isdigit(UChar(ch2))
 	&& (ch1 == ch2)) {
 	len = 28;
 #ifndef NDEBUG
@@ -640,8 +641,8 @@ save_tc_inequality(char *bufptr, int c1, int c2)
  * Convert a terminfo string to termcap format.  Parameters are as in
  * _nc_captoinfo().
  */
-char *
-_nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parametrized)
+NCURSES_EXPORT(char *)
+_nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parameterized)
 {
     int seenone = 0, seentwo = 0, saw_m = 0, saw_n = 0;
     const char *padding;
@@ -655,13 +656,13 @@ _nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parametrize
     padding = str + strlen(str) - 1;
     if (padding > str && *padding == '>' && *--padding == '/') {
 	--padding;
-	while (isdigit(CharOf(*padding)) || *padding == '.' || *padding == '*')
+	while (isdigit(UChar(*padding)) || *padding == '.' || *padding == '*')
 	    padding--;
 	if (padding > str && *padding == '<' && *--padding == '$')
 	    trimmed = padding;
 	padding += 2;
 
-	while (isdigit(CharOf(*padding)) || *padding == '.' || *padding == '*')
+	while (isdigit(UChar(*padding)) || *padding == '.' || *padding == '*')
 	    bufptr = save_char(bufptr, *padding++);
     }
 
@@ -673,7 +674,7 @@ _nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parametrize
 	    bufptr = save_char(bufptr, *++str);
 	} else if (str[0] == '$' && str[1] == '<') {	/* discard padding */
 	    str += 2;
-	    while (isdigit(CharOf(*str))
+	    while (isdigit(UChar(*str))
 		   || *str == '.'
 		   || *str == '*'
 		   || *str == '/'
@@ -682,7 +683,8 @@ _nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parametrize
 	    --str;
 	} else if (str[0] == '%' && str[1] == '%') {	/* escaped '%' */
 	    bufptr = save_string(bufptr, "%%");
-	} else if (*str != '%' || (parametrized < 1)) {
+	    ++str;
+	} else if (*str != '%' || (parameterized < 1)) {
 	    bufptr = save_char(bufptr, *str);
 	} else if (sscanf(str, "%%?%%{%d}%%>%%t%%{%d}%%+%%;", &c1, &c2) == 2) {
 	    str = strchr(str, ';');
@@ -741,7 +743,7 @@ _nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parametrize
 	    case '8':
 	    case '9':
 		bufptr = save_char(bufptr, '%');
-		while (isdigit(CharOf(*str)))
+		while (isdigit(UChar(*str)))
 		    bufptr = save_char(bufptr, *str++);
 		if (strchr("doxX.", *str)) {
 		    if (*str != 'd')	/* termcap doesn't have octal, hex */
@@ -790,6 +792,11 @@ _nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parametrize
 	    }			/* endswitch (*str) */
 	}			/* endelse (*str == '%') */
 
+	/*
+	 * 'str' always points to the end of what was scanned in this step,
+	 * but that may not be the end of the string.
+	 */
+	assert(str != 0);
 	if (*str == '\0')
 	    break;
 
@@ -807,7 +814,7 @@ main(int argc, char *argv[])
 {
     int c, tc = FALSE;
 
-    while ((c = getopt(argc, argv, "c")) != -1)
+    while ((c = getopt(argc, argv, "c")) != EOF)
 	switch (c) {
 	case 'c':
 	    tc = TRUE;
@@ -817,7 +824,6 @@ main(int argc, char *argv[])
     curr_line = 0;
     for (;;) {
 	char buf[BUFSIZ];
-	size_t buflen;
 
 	++curr_line;
 	if (fgets(buf, sizeof(buf), stdin) == NULL)
@@ -840,4 +846,13 @@ main(int argc, char *argv[])
 }
 #endif /* MAIN */
 
-/* captoinfo.c ends here */
+#if NO_LEAKS
+NCURSES_EXPORT(void)
+_nc_captoinfo_leaks(void)
+{
+    if (my_string != 0) {
+	FreeAndNull(my_string);
+    }
+    my_length = 0;
+}
+#endif

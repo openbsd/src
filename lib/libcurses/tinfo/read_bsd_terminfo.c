@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.17 2009/10/28 23:22:45 schwarze Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.18 2010/01/12 23:22:06 nicm Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -245,13 +245,10 @@ _nc_lookup_bsd_terminfo_entry(tn, filename, tp)
 	    goto done;
 	}
 
-	/*
-	 * Save term entry and prevent _nc_free_entries() from freeing
-	 * up the string table (since we use it in tp).
-	 */
-	*tp = _nc_head->tterm;
-	_nc_head->tterm.str_table = NULL;
-	_nc_free_entries(_nc_head);
+        /* Save term entry and free from _nc_head list. */
+        *tp = _nc_head->tterm;
+	_nc_free_entry(_nc_head, tp);
+	_nc_head = _nc_tail = NULL;
     }
 
 done:

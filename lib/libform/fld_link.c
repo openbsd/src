@@ -1,7 +1,5 @@
-/*	$OpenBSD: fld_link.c,v 1.4 2001/01/22 18:02:12 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2004,2007 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,12 +27,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_link.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
+MODULE_ID("$Id: fld_link.c,v 1.5 2010/01/12 23:22:07 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -51,43 +49,48 @@ MODULE_ID("$From: fld_link.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
 |   Return Values :  Pointer to the new field or NULL if failure
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(FIELD *)
-link_field (FIELD * field, int frow, int fcol)
+link_field(FIELD *field, int frow, int fcol)
 {
   FIELD *New_Field = (FIELD *)0;
   int err = E_BAD_ARGUMENT;
 
-  if (field && (frow>=0) && (fcol>=0) &&
-      ((err=E_SYSTEM_ERROR) != 0) && /* trick: this resets the default error */
-      (New_Field = (FIELD *)malloc(sizeof(FIELD))) )
+  T((T_CALLED("link_field(%p,%d,%d)"), field, frow, fcol));
+  if (field && (frow >= 0) && (fcol >= 0) &&
+      ((err = E_SYSTEM_ERROR) != 0) &&	/* trick: this resets the default error */
+      (New_Field = typeMalloc(FIELD, 1)))
     {
-      *New_Field        = *_nc_Default_Field;
-      New_Field->frow   = frow;
-      New_Field->fcol   = fcol;
-      New_Field->link   = field->link;
-      field->link       = New_Field;
-      New_Field->buf    = field->buf;
-      New_Field->rows   = field->rows;
-      New_Field->cols   = field->cols;
-      New_Field->nrow   = field->nrow;
-      New_Field->nbuf   = field->nbuf;
-      New_Field->drows  = field->drows;
-      New_Field->dcols  = field->dcols;
-      New_Field->maxgrow= field->maxgrow;
-      New_Field->just   = field->just;
-      New_Field->fore   = field->fore;
-      New_Field->back   = field->back;
-      New_Field->pad    = field->pad;
-      New_Field->opts   = field->opts;
+      T((T_CREATE("field %p"), New_Field));
+      *New_Field = *_nc_Default_Field;
+      New_Field->frow = frow;
+      New_Field->fcol = fcol;
+
+      New_Field->link = field->link;
+      field->link = New_Field;
+
+      New_Field->buf = field->buf;
+      New_Field->rows = field->rows;
+      New_Field->cols = field->cols;
+      New_Field->nrow = field->nrow;
+      New_Field->nbuf = field->nbuf;
+      New_Field->drows = field->drows;
+      New_Field->dcols = field->dcols;
+      New_Field->maxgrow = field->maxgrow;
+      New_Field->just = field->just;
+      New_Field->fore = field->fore;
+      New_Field->back = field->back;
+      New_Field->pad = field->pad;
+      New_Field->opts = field->opts;
       New_Field->usrptr = field->usrptr;
-      if (_nc_Copy_Type(New_Field,field)) 
-	return New_Field;
+
+      if (_nc_Copy_Type(New_Field, field))
+	returnField(New_Field);
     }
 
-  if (New_Field) 
+  if (New_Field)
     free_field(New_Field);
 
-  SET_ERROR( err );
-  return (FIELD *)0;
+  SET_ERROR(err);
+  returnField((FIELD *)0);
 }
 
 /* fld_link.c ends here */

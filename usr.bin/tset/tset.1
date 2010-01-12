@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.16 2007/05/31 19:20:18 jmc Exp $
+.\"	$OpenBSD: tset.1,v 1.17 2010/01/12 23:22:14 nicm Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 12 2010 $
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd terminal initialization
 .Sh SYNOPSIS
 .Nm tset
-.Op Fl IQqrSsV
+.Op Fl cIQqrSsVw
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -45,7 +45,7 @@
 .Op Fl m Ar mapping
 .Op Ar terminal
 .Nm reset
-.Op Fl IQqrSsV
+.Op Fl cIQqrSsVw
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -95,6 +95,12 @@ and tab initialization strings are sent to the standard error output.
 Finally, if the erase, interrupt and line kill characters have changed,
 or are not set to their default values, their values are displayed to the
 standard error output.
+Use the
+.Fl c
+or
+.Fl w
+option to select only the window sizing versus the other initialization.
+If neither option is given, both are assumed.
 .Pp
 When invoked as
 .Nm reset ,
@@ -117,6 +123,8 @@ not initialized in any way.
 This option has been deprecated in favor of the
 .Fl q
 flag.
+.It Fl c
+Set control characters and modes.
 .It Fl e Ar ch
 Set the erase character to
 .Ar ch .
@@ -133,6 +141,10 @@ Specify a mapping from a port type to a terminal.
 See below for more information.
 .It Fl Q
 Don't display any values for the erase, interrupt and line kill characters.
+Normally
+.Nm
+displays the values for control characters which differ from the system's
+default values.
 .It Fl q
 The terminal type is displayed to the standard output, and the terminal is
 not initialized in any way.
@@ -150,6 +162,12 @@ to the standard output.
 See the section below on setting the environment for details.
 .It Fl V
 Report the version of ncurses which was used in this program, and exit.
+.It Fl w
+Resize the window to match the size deduced via
+.Xr setupterm 3 .
+Normally this has no effect, unless
+.Xr setupterm 3
+is not able to detect the window size.
 .El
 .Pp
 The arguments for the

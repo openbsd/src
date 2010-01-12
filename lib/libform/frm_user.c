@@ -1,7 +1,5 @@
-/*	$OpenBSD: frm_user.c,v 1.6 2001/01/22 18:02:16 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,12 +27,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_user.c,v 1.9 2000/12/10 02:09:37 tom Exp $")
+MODULE_ID("$Id: frm_user.c,v 1.7 2010/01/12 23:22:07 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -46,8 +44,10 @@ MODULE_ID("$From: frm_user.c,v 1.9 2000/12/10 02:09:37 tom Exp $")
 |   Return Values :  E_OK         - on success
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-set_form_userptr (FORM * form, void *usrptr)
+set_form_userptr(FORM *form, void *usrptr)
 {
+  T((T_CALLED("set_form_userptr(%p,%p)"), form, usrptr));
+
   Normalize_Form(form)->usrptr = usrptr;
   RETURN(E_OK);
 }
@@ -63,9 +63,10 @@ set_form_userptr (FORM * form, void *usrptr)
 |                    NULL is returned
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(void *)
-form_userptr (const FORM * form)
+form_userptr(const FORM *form)
 {
-  return Normalize_Form(form)->usrptr;
+  T((T_CALLED("form_userptr(%p)"), form));
+  returnVoidPtr(Normalize_Form(form)->usrptr);
 }
 
 /* frm_user.c ends here */

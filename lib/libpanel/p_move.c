@@ -1,7 +1,7 @@
-/*	$OpenBSD: p_move.c,v 1.5 2001/02/28 22:58:53 millert Exp $	*/
+/* $OpenBSD: p_move.c,v 1.6 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000,2005 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,21 +38,21 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_move.c,v 1.7 2001/02/24 23:41:35 tom Exp $")
+MODULE_ID("$Id: p_move.c,v 1.6 2010/01/12 23:22:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
-move_panel (PANEL *pan, int starty, int startx)
+move_panel(PANEL * pan, int starty, int startx)
 {
-  if(!pan)
-    return(ERR);
+  T((T_CALLED("move_panel(%p,%d,%d)"), pan, starty, startx));
 
-  if (IS_LINKED(pan)) {
-    Touchpan(pan);
-    PANEL_UPDATE(pan,(PANEL*)0);
-  }
+  if (!pan)
+    returnCode(ERR);
 
-  if (mvwin(pan->win,starty,startx))
-    return(ERR);
+  if (IS_LINKED(pan))
+    {
+      Touchpan(pan);
+      PANEL_UPDATE(pan, (PANEL *) 0);
+    }
 
-  return(OK);
+  returnCode(mvwin(pan->win, starty, startx));
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_ti.c,v 1.6 2001/01/22 18:01:54 millert Exp $	*/
+/* $OpenBSD: lib_ti.c,v 1.7 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2000,2003 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,12 +38,12 @@
 #include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_ti.c,v 1.22 2000/12/10 02:55:08 tom Exp $")
+MODULE_ID("$Id: lib_ti.c,v 1.7 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 tigetflag(NCURSES_CONST char *str)
 {
-    int i;
+    unsigned i;
 
     T((T_CALLED("tigetflag(%s)"), str));
 
@@ -64,7 +64,7 @@ tigetflag(NCURSES_CONST char *str)
 NCURSES_EXPORT(int)
 tigetnum(NCURSES_CONST char *str)
 {
-    int i;
+    unsigned i;
 
     T((T_CALLED("tigetnum(%s)"), str));
 
@@ -86,7 +86,7 @@ tigetnum(NCURSES_CONST char *str)
 NCURSES_EXPORT(char *)
 tigetstr(NCURSES_CONST char *str)
 {
-    int i;
+    unsigned i;
 
     T((T_CALLED("tigetstr(%s)"), str));
 

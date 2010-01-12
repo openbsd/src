@@ -1,8 +1,6 @@
-'\" t
-.\" $OpenBSD: captoinfo.1tbl,v 1.7 2000/10/08 22:47:09 millert Exp $
-.\"
+.\" $OpenBSD: captoinfo.1tbl,v 1.8 2010/01/12 23:22:14 nicm Exp $
 .\"***************************************************************************
-.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,10 +27,10 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: From: captoinfo.1m,v 1.16 2000/08/13 01:56:49 tom Exp $
+.\" $Id: captoinfo.1tbl,v 1.8 2010/01/12 23:22:14 nicm Exp $
 .TH captoinfo 1 ""
 .ds n 5
-.ds d /usr/share/terminfo
+.ds d /usr/share/misc/terminfo
 .SH NAME
 \fBcaptoinfo\fR - convert a \fItermcap\fR description into a \fIterminfo\fR description
 .SH SYNOPSIS
@@ -42,7 +40,7 @@
 one found, an equivalent \fBterminfo\fR description is written to standard
 output.  Termcap \fBtc\fR capabilities are translated directly to terminfo
 \fBuse\fR capabilities.
-
+.PP
 If no \fIfile\fR is given, then the environment variable \fBTERMCAP\fR is used
 for the filename or entry.  If \fBTERMCAP\fR is a full pathname to a file, only
 the terminal whose name is specified in the environment variable \fBTERM\fR is
@@ -147,13 +145,12 @@ GG	acs magic cookie count
 .TE
 .PP
 If the single-line capabilities occur in an entry, they will automatically
-be composed into an \fBacsc\fR string.  The double-line capabilities and
+be composed into an \fIacsc\fR string.  The double-line capabilities and
 \fBGG\fR are discarded with a warning message.
 .PP
 IBM's AIX has a terminfo facility descended from SVr1 terminfo but incompatible
 with the SVr4 format. The following AIX extensions are automatically
 translated:
-.PP
 .TS
 c c
 l l.
@@ -167,20 +164,25 @@ font2	s2ds
 font3	s3ds
 .TE
 .PP
-Additionally, the AIX \fBbox1\fR capability will be automatically translated to
-an \fBacsc\fR string.
+Additionally, the AIX \fIbox1\fR capability will be automatically translated to
+an \fIacsc\fR string.
 .PP
 Hewlett-Packard's terminfo library supports two nonstandard terminfo
-capabilities \fBmeml\fR (memory lock) and \fBmemu\fR (memory unlock).
+capabilities \fImeml\fR (memory lock) and \fImemu\fR (memory unlock).
 These will be discarded with a warning message.
 .SH NOTES
-This utility is actually a link to \fItic\fR(1), running in \fI-I\fR mode.
-You can use other \fItic\fR options such as \fB-f\fR and  \fB-x\fR.
-
-The trace option isn't identical to SVr4's.  Under SVr4, instead of following
-the -v with a trace level n, you repeat it n times.
+This utility is actually a link to \fBtic\fR(1), running in \fI-I\fR mode.
+You can use other \fBtic\fR options such as \fB-f\fR and  \fB-x\fR.
+.PP
+The trace option is not identical to SVr4's.  Under SVr4, instead of following
+the \fB-v\fR with a trace level n, you repeat it n times.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBtic\fR(1), \fBterminfo\fR(\*n)
+\fBinfocmp\fR(1),
+\fBcurses\fR(3),
+\fBterminfo\fR(\*n)
+.PP
+This describes \fBncurses\fR
+version 5.7.
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com>
 .\"#

@@ -1,8 +1,8 @@
-'\" t 
-.\" $OpenBSD: curs_getch.3tbl,v 1.11 2003/05/12 11:06:49 jmc Exp $
+'\" t
+.\" $OpenBSD: curs_getch.3tbl,v 1.12 2010/01/12 23:21:59 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,8 +29,10 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_getch.3x,v 1.18 2001/02/25 00:20:30 tom Exp $
+.\" $Id: curs_getch.3tbl,v 1.12 2010/01/12 23:21:59 nicm Exp $
 .TH curs_getch 3 ""
+.na
+.hy 0
 .SH NAME
 \fBgetch\fR,
 \fBwgetch\fR,
@@ -38,9 +40,11 @@
 \fBmvwgetch\fR,
 \fBungetch\fR,
 \fBhas_key\fR \- get (or push back) characters from \fBcurses\fR terminal keyboard
+.ad
+.hy
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
-
+.PP
 \fBint getch(void);\fR
 .br
 \fBint wgetch(WINDOW *win);\fR
@@ -55,14 +59,19 @@
 .br
 .SH DESCRIPTION
 The \fBgetch\fR, \fBwgetch\fR, \fBmvgetch\fR and \fBmvwgetch\fR, routines read
-a character from the window.  In no-delay mode, if no input is waiting, the
-value \fBERR\fR is returned.  In delay mode, the program waits until the system
-passes text through to the program.  Depending on the setting of \fBcbreak\fR,
-this is after one character (cbreak mode), or after the first newline (nocbreak
-mode).  In half-delay mode, the program waits until a character is typed or the
+a character from the window.
+In no-delay mode, if no input is waiting, the value \fBERR\fR is returned.
+In delay mode, the program waits until the system
+passes text through to the program.
+Depending on the setting of \fBcbreak\fR,
+this is after one character (cbreak mode),
+or after the first newline (nocbreak mode).
+In half-delay mode,
+the program waits until a character is typed or the
 specified timeout has been reached.
-
-Unless \fBnoecho\fR has been set, then the character will also be echoed into the
+.PP
+Unless \fBnoecho\fR has been set,
+then the character will also be echoed into the
 designated window according to the following rules:
 If the character is the current erase character, left arrow, or backspace,
 the cursor is moved one space to the left and that screen position is erased
@@ -70,32 +79,36 @@ as if \fBdelch\fR had been called.
 If the character value is any other \fBKEY_\fR define, the user is alerted
 with a \fBbeep\fR call.
 Otherwise the character is simply output to the screen.
-
+.PP
 If the window is not a pad, and it has been moved or modified since the last
 call to \fBwrefresh\fR, \fBwrefresh\fR will be called before another character
 is read.
-
+.PP
 If \fBkeypad\fR is \fBTRUE\fR, and a function key is pressed, the token for
-that function key is returned instead of the raw characters.  Possible function
+that function key is returned instead of the raw characters.
+Possible function
 keys are defined in \fB<curses.h>\fR as macros with values outside the range
 of 8-bit characters whose names begin with \fBKEY_\fR. Thus, a variable
 intended to hold the return value of a function key must be of short size or
 larger.
-
+.PP
 When a character that could be the beginning of a function key is received
-(which, on modern terminals, means an escape character), \fBcurses\fR sets a
-timer.  If the remainder of the sequence does not come in within the designated
-time, the character is passed through; otherwise, the function key value is
-returned.  For this reason, many terminals experience a delay between the time
+(which, on modern terminals, means an escape character),
+\fBcurses\fR sets a timer.
+If the remainder of the sequence does not come in within the designated
+time, the character is passed through;
+otherwise, the function key value is returned.
+For this reason, many terminals experience a delay between the time
 a user presses the escape key and the escape is returned to the program.
-
+.PP
 The \fBungetch\fR routine places \fIch\fR back onto the input queue to be
-returned by the next call to \fBwgetch\fR.  Note that there is, in effect,
-just one input queue for all windows.
-
+returned by the next call to \fBwgetch\fR.
+There is just one input queue for all windows.
+.PP
 .SS Function Keys
 The following function keys, defined in \fB<curses.h>\fR, might be returned by
-\fBgetch\fR if \fBkeypad\fR has been enabled.  Note that not all of these are
+\fBgetch\fR if \fBkeypad\fR has been enabled.
+Note that not all of these are
 necessarily supported on any particular terminal.
 .sp
 .TS
@@ -103,7 +116,6 @@ center tab(/) ;
 l l
 l l .
 \fIName\fR/\fIKey\fR \fIname\fR
-
 KEY_BREAK/Break key
 KEY_DOWN/The four arrow keys ...
 KEY_UP
@@ -201,7 +213,7 @@ KEY_SUNDO/Shifted undo key
 KEY_SUSPEND/Suspend key
 KEY_UNDO/Undo key
 .TE
-
+.PP
 Keypad is arranged like this:
 .sp
 .TS
@@ -213,73 +225,103 @@ c c c .
 .TE
 .sp
 The \fBhas_key\fR routine takes a key value from the above list, and
-returns TRUE or FALSE according to whether the current terminal type
-recognizes a key with that value.
-
+returns TRUE or FALSE according to whether
+the current terminal type recognizes a key with that value.
+Note that a few values do not correspond to a real key,
+e.g., \fBKEY_RESIZE\fP and \fBKEY_MOUSE\fP.
+See \fBresizeterm\fR(3) for more details about \fBKEY_RESIZE\fP, and
+\fBcurs_mouse\fR(3) for a discussion of \fBKEY_MOUSE\fP.
+.PP
 .SH RETURN VALUE
 All routines return the integer \fBERR\fR upon failure and an integer value
 other than \fBERR\fR (\fBOK\fR in the case of ungetch()) upon successful
 completion.
+.RS
+.TP 5
+\fBungetch\fP
+returns an error
+if there is no more room in the FIFO.
+.TP 5
+\fBwgetch\fP
+returns an error
+if the window pointer is null, or
+if its timeout expires without having any data.
+.RE
 .SH NOTES
 Use of the escape key by a programmer for a single character function is
 discouraged, as it will cause a delay of up to one second while the
 keypad code looks for a following function-key sequence.
-
+.PP
 Note that some keys may be the same as commonly used control
-keys, e.g., KEY_ENTER versus control/M, KEY_BACKSPACE versus control/H.
+keys, e.g., \fBKEY_ENTER\fP versus control/M, \fBKEY_BACKSPACE\fP versus control/H.
 Some curses implementations may differ according to whether they
 treat these control keys specially (and ignore the terminfo), or
 use the terminfo definitions.
 \fBNcurses\fR uses the terminfo definition.
-If it says that KEY_ENTER is control/M, \fBgetch\fR will return KEY_ENTER
+If it says that \fBKEY_ENTER\fP is control/M,
+\fBgetch\fR will return \fBKEY_ENTER\fP
 when you press control/M.
-
+.PP
 When using \fBgetch\fR, \fBwgetch\fR, \fBmvgetch\fR, or
 \fBmvwgetch\fR, nocbreak mode (\fBnocbreak\fR) and echo mode
-(\fBecho\fR) should not be used at the same time.  Depending on the
+(\fBecho\fR) should not be used at the same time.
+Depending on the
 state of the tty driver when each character is typed, the program may
 produce undesirable results.
-
+.PP
 Note that \fBgetch\fR, \fBmvgetch\fR, and \fBmvwgetch\fR may be macros.
-
+.PP
 Historically, the set of keypad macros was largely defined by the extremely
-function-key-rich keyboard of the AT&T 7300, aka 3B1, aka Safari 4.  Modern
-personal computers usually have only a small subset of these.  IBM PC-style
+function-key-rich keyboard of the AT&T 7300, aka 3B1, aka Safari 4.
+Modern
+personal computers usually have only a small subset of these.
+IBM PC-style
 consoles typically support little more than \fBKEY_UP\fR, \fBKEY_DOWN\fR,
 \fBKEY_LEFT\fR, \fBKEY_RIGHT\fR, \fBKEY_HOME\fR, \fBKEY_END\fR,
-\fBKEY_NPAGE\fR, \fBKEY_PPAGE\fR, and function keys 1 through 12.  The Ins key
+\fBKEY_NPAGE\fR, \fBKEY_PPAGE\fR, and function keys 1 through 12.
+The Ins key
 is usually mapped to \fBKEY_IC\fR.
 .SH PORTABILITY
-The *get* functions are described in the XSI Curses standard, Issue 4.  They
-read single-byte characters only.  The standard specifies that they return
+The *get* functions are described in the XSI Curses standard, Issue 4.
+They
+read single-byte characters only.
+The standard specifies that they return
 \fBERR\fR on failure, but specifies no error conditions.
-
+.PP
 The echo behavior of these functions on input of \fBKEY_\fR or backspace
-characters was not specified in the SVr4 documentation.  This description is
+characters was not specified in the SVr4 documentation.
+This description is
 adopted from the XSI Curses standard.
-
+.PP
 The behavior of \fBgetch\fR and friends in the presence of handled signals is
-unspecified in the SVr4 and XSI Curses documentation.  Under historical curses
+unspecified in the SVr4 and XSI Curses documentation.
+Under historical curses
 implementations, it varied depending on whether the operating system's
 implementation of handled signal receipt interrupts a \fBread\fR(2) call in
 progress or not, and also (in some implementations) depending on whether an
-input timeout or non-blocking mode hsd been set.
-
+input timeout or non-blocking mode has been set.
+.PP
 Programmers concerned about portability should be prepared for either of two
 cases: (a) signal receipt does not interrupt \fBgetch\fR; (b) signal receipt
 interrupts \fBgetch\fR and causes it to return ERR with \fBerrno\fR set to
-\fBEINTR\fR.  Under the \fBncurses\fR implementation, handled signals never
+\fBEINTR\fR.
+Under the \fBncurses\fR implementation, handled signals never
 interrupt \fBgetch\fR.
-
-The \fBhas_key\fR function is unique to \fBncurses\fR.  We recommend that
+.PP
+The \fBhas_key\fR function is unique to \fBncurses\fR.
+We recommend that
 any code using it be conditionalized on the \fBNCURSES_VERSION\fR feature macro.
 .SH SEE ALSO
 \fBcurses\fR(3),
 \fBcurs_inopts\fR(3),
 \fBcurs_mouse\fR(3),
 \fBcurs_move\fR(3),
-\fBcurs_refresh\fR(3).
+\fBcurs_refresh\fR(3),
 \fBresizeterm\fR(3).
+.PP
+Comparable functions in the wide-character (ncursesw) library are
+described in
+\fBcurs_get_wch\fR(3).
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

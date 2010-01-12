@@ -1,7 +1,7 @@
-/*	$OpenBSD: init_keytry.c,v 1.5 2001/01/22 18:01:51 millert Exp $	*/
+/* $OpenBSD: init_keytry.c,v 1.6 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1999-2006,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -30,11 +30,15 @@
 
 #include <curses.priv.h>
 
-#include <term.h>		/* keypad_xmit, keypad_local, meta_on, meta_off */
-			/* cursor_visible,cursor_normal,cursor_invisible */
+#include <term.h>
+/* keypad_xmit, keypad_local, meta_on, meta_off */
+/* cursor_visible,cursor_normal,cursor_invisible */
+
 #include <tic.h>		/* struct tinfo_fkeys */
 
-MODULE_ID("$From: init_keytry.c,v 1.5 2000/12/10 02:55:07 tom Exp $")
+#include <term_entry.h>
+
+MODULE_ID("$Id: init_keytry.c,v 1.6 2010/01/12 23:22:06 nicm Exp $")
 
 /*
 **      _nc_init_keytry()
@@ -42,6 +46,13 @@ MODULE_ID("$From: init_keytry.c,v 1.5 2000/12/10 02:55:07 tom Exp $")
 **      Construct the try for the current terminal's keypad keys.
 **
 */
+
+/*
+ * Internal entrypoints use SCREEN* parameter to obtain capabilities rather
+ * than cur_term.
+ */
+#undef CUR
+#define CUR (sp->_term)->type.
 
 #if	BROKEN_LINKER
 #undef	_nc_tinfo_fkeys
@@ -54,7 +65,7 @@ MODULE_ID("$From: init_keytry.c,v 1.5 2000/12/10 02:55:07 tom Exp $")
 #endif*/
 
 #if	BROKEN_LINKER
-struct tinfo_fkeys *
+const struct tinfo_fkeys *
 _nc_tinfo_fkeysf(void)
 {
     return _nc_tinfo_fkeys;
@@ -62,21 +73,47 @@ _nc_tinfo_fkeysf(void)
 #endif
 
 NCURSES_EXPORT(void)
-_nc_init_keytry(void)
+_nc_init_keytry(SCREEN *sp)
 {
     size_t n;
 
-    /* The SP->_keytry value is initialized in newterm(), where the SP
+    /* The sp->_keytry value is initialized in newterm(), where the sp
      * structure is created, because we can not tell where keypad() or
      * mouse_activate() (which will call keyok()) are first called.
      */
 
-    for (n = 0; _nc_tinfo_fkeys[n].code; n++)
-	if (_nc_tinfo_fkeys[n].offset < STRCOUNT)
-	    _nc_add_to_try(&(SP->_keytry),
-			   CUR Strings[_nc_tinfo_fkeys[n].offset],
-			   _nc_tinfo_fkeys[n].code);
-#ifdef TRACE
-    _nc_trace_tries(SP->_keytry);
+    if (sp != 0) {
+	for (n = 0; _nc_tinfo_fkeys[n].code; n++) {
+	    if (_nc_tinfo_fkeys[n].offset < STRCOUNT) {
+		(void) _nc_add_to_try(&(sp->_keytry),
+				      CUR Strings[_nc_tinfo_fkeys[n].offset],
+				      _nc_tinfo_fkeys[n].code);
+	    }
+	}
+#if NCURSES_XNAMES
+	/*
+	 * Add any of the extended strings to the tries if their name begins
+	 * with 'k', i.e., they follow the convention of other terminfo key
+	 * names.
+	 */
+	{
+	    TERMTYPE *tp = &(sp->_term->type);
+	    for (n = STRCOUNT; n < NUM_STRINGS(tp); ++n) {
+		const char *name = ExtStrname(tp, n, strnames);
+		char *value = tp->Strings[n];
+		if (name != 0
+		    && *name == 'k'
+		    && value != 0
+		    && key_defined(value) == 0) {
+		    (void) _nc_add_to_try(&(sp->_keytry),
+					  value,
+					  n - STRCOUNT + KEY_MAX);
+		}
+	    }
+	}
 #endif
+#ifdef TRACE
+	_nc_trace_tries(sp->_keytry);
+#endif
+    }
 }

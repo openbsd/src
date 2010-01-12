@@ -1,7 +1,5 @@
-/*	$OpenBSD: menu.h,v 1.7 2001/01/22 18:02:07 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2007 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,8 +27,10 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
+
+/* $Id: menu.h,v 1.8 2010/01/12 23:22:08 nicm Exp $ */
 
 #ifndef ETI_MENU
 #define ETI_MENU
@@ -78,7 +78,7 @@ typedef struct tagITEM
   short          x;
   bool           value;       /* Selection value                           */
                              
-  struct tagITEM *left;       /* neighbour items                           */
+  struct tagITEM *left;       /* neighbor items                            */
   struct tagITEM *right;
   struct tagITEM *up;
   struct tagITEM *down;
@@ -217,23 +217,23 @@ extern NCURSES_EXPORT(int)	pos_menu_cursor (const MENU *);
 extern NCURSES_EXPORT(int)	post_menu (MENU *);
 extern NCURSES_EXPORT(int)	scale_menu (const MENU *,int *,int *);
 extern NCURSES_EXPORT(int)	set_current_item (MENU *menu,ITEM *item);
-extern NCURSES_EXPORT(int)	set_item_init (MENU *,void(*)(MENU *));
+extern NCURSES_EXPORT(int)	set_item_init (MENU *, Menu_Hook);
 extern NCURSES_EXPORT(int)	set_item_opts (ITEM *,Item_Options);
-extern NCURSES_EXPORT(int)	set_item_term (MENU *,void(*)(MENU *));
+extern NCURSES_EXPORT(int)	set_item_term (MENU *, Menu_Hook);
 extern NCURSES_EXPORT(int)	set_item_userptr (ITEM *, void *);
 extern NCURSES_EXPORT(int)	set_item_value (ITEM *,bool);
 extern NCURSES_EXPORT(int)	set_menu_back (MENU *,chtype);
 extern NCURSES_EXPORT(int)	set_menu_fore (MENU *,chtype);
 extern NCURSES_EXPORT(int)	set_menu_format (MENU *,int,int);
 extern NCURSES_EXPORT(int)	set_menu_grey (MENU *,chtype);
-extern NCURSES_EXPORT(int)	set_menu_init (MENU *,void(*)(MENU *));
+extern NCURSES_EXPORT(int)	set_menu_init (MENU *, Menu_Hook);
 extern NCURSES_EXPORT(int)	set_menu_items (MENU *,ITEM **);
 extern NCURSES_EXPORT(int)	set_menu_mark (MENU *, const char *);
 extern NCURSES_EXPORT(int)	set_menu_opts (MENU *,Menu_Options);
 extern NCURSES_EXPORT(int)	set_menu_pad (MENU *,int);
 extern NCURSES_EXPORT(int)	set_menu_pattern (MENU *,const char *);
 extern NCURSES_EXPORT(int)	set_menu_sub (MENU *,WINDOW *);
-extern NCURSES_EXPORT(int)	set_menu_term (MENU *,void(*)(MENU *));
+extern NCURSES_EXPORT(int)	set_menu_term (MENU *, Menu_Hook);
 extern NCURSES_EXPORT(int)	set_menu_userptr (MENU *,void *);
 extern NCURSES_EXPORT(int)	set_menu_win (MENU *,WINDOW *);
 extern NCURSES_EXPORT(int)	set_top_row (MENU *,int);

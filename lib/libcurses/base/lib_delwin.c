@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_delwin.c,v 1.2 2001/01/22 18:01:38 millert Exp $	*/
+/* $OpenBSD: lib_delwin.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_delwin.c,v 1.12 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_delwin.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
 
 static bool
 cannot_delete(WINDOW *win)
@@ -50,11 +50,11 @@ cannot_delete(WINDOW *win)
     WINDOWLIST *p;
     bool result = TRUE;
 
-    for (p = _nc_windows; p != 0; p = p->next) {
-	if (p->win == win) {
+    for (each_window(p)) {
+	if (&(p->win) == win) {
 	    result = FALSE;
-	} else if ((p->win->_flags & _SUBWIN) != 0
-		   && p->win->_parent == win) {
+	} else if ((p->win._flags & _SUBWIN) != 0
+		   && p->win._parent == win) {
 	    result = TRUE;
 	    break;
 	}
@@ -65,16 +65,24 @@ cannot_delete(WINDOW *win)
 NCURSES_EXPORT(int)
 delwin(WINDOW *win)
 {
+    int result = ERR;
+
     T((T_CALLED("delwin(%p)"), win));
 
-    if (win == 0
-	|| cannot_delete(win))
-	returnCode(ERR);
+    if (_nc_try_global(curses) == 0) {
+	if (win == 0
+	    || cannot_delete(win)) {
+	    result = ERR;
+	} else {
 
-    if (win->_flags & _SUBWIN)
-	touchwin(win->_parent);
-    else if (curscr != 0)
-	touchwin(curscr);
+	    if (win->_flags & _SUBWIN)
+		touchwin(win->_parent);
+	    else if (curscr != 0)
+		touchwin(curscr);
 
-    returnCode(_nc_freewin(win));
+	    result = _nc_freewin(win);
+	}
+	_nc_unlock_global(curses);
+    }
+    returnCode(result);
 }

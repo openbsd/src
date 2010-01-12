@@ -1,7 +1,5 @@
-/*	$OpenBSD: panel.priv.h,v 1.8 2001/02/28 22:58:53 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 2000 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -28,10 +26,10 @@
  * authorization.                                                           *
  ****************************************************************************/
 
-/* $From: panel.priv.h,v 1.17 2001/02/24 23:47:05 tom Exp $ */
+/* $Id: panel.priv.h,v 1.9 2010/01/12 23:22:08 nicm Exp $ */
 
-#ifndef _PANEL_PRIV_H
-#define _PANEL_PRIV_H
+#ifndef NCURSES_PANEL_PRIV_H
+#define NCURSES_PANEL_PRIV_H 1
 
 #if HAVE_CONFIG_H
 #  include <ncurses_cfg.h>
@@ -41,22 +39,9 @@
 #include <string.h>
 #include <assert.h>
 
-#if HAVE_LIBDMALLOC
-#  include <dmalloc.h>    /* Gray Watson's library */
-#endif
-
-#if HAVE_LIBDBMALLOC
-#  include <dbmalloc.h>   /* Conor Cahill's library */
-#endif
-
+#include "curses.priv.h"
 #include "panel.h"
 #include <nc_panel.h>
-
-#if ( CC_HAS_INLINE_FUNCS && !defined(TRACE) )
-#  define INLINE inline
-#else
-#  define INLINE
-#endif
 
 #if USE_RCS_IDS
 #  define MODULE_ID(id) static const char Ident[] = id;
@@ -73,6 +58,9 @@
 #    define USER_PTR(ptr) _nc_my_visbuf((const char *)ptr)
 #  endif
 
+#  define returnPanel(code)	TRACE_RETURN(code,panel)
+
+   extern NCURSES_EXPORT(PANEL *) _nc_retrace_panel (PANEL *);
    extern NCURSES_EXPORT(void) _nc_dPanel (const char*, const PANEL*);
    extern NCURSES_EXPORT(void) _nc_dStack (const char*, int, const PANEL*);
    extern NCURSES_EXPORT(void) _nc_Wnoutrefresh (const PANEL*);
@@ -86,6 +74,7 @@
 #  define Touchpan(pan) _nc_Touchpan(pan)
 #  define Touchline(pan,start,count) _nc_Touchline(pan,start,count)
 #else /* !TRACE */
+#  define returnPanel(code)	return code
 #  define dBug(x)
 #  define dPanel(text,pan)
 #  define dStack(fmt,num,pan)
@@ -99,18 +88,9 @@
 #define _nc_bottom_panel _nc_panelhook()->bottom_panel
 
 #define EMPTY_STACK() (_nc_top_panel==_nc_bottom_panel)
-#define Is_Bottom(p)  (((p)!=(PANEL*)0) && !EMPTY_STACK() && (_nc_bottom_panel->above==(p))) 
+#define Is_Bottom(p)  (((p)!=(PANEL*)0) && !EMPTY_STACK() && (_nc_bottom_panel->above==(p)))
 #define Is_Top(p) (((p)!=(PANEL*)0) && !EMPTY_STACK() && (_nc_top_panel==(p)))
 #define Is_Pseudo(p) ((p) && ((p)==_nc_bottom_panel))
-
-/* borrowed from curses.priv.h */
-#define CHANGED_RANGE(line,start,end) \
-	if (line->firstchar == _NOCHANGE \
-	 || line->firstchar > (start)) \
-		line->firstchar = start; \
-	if (line->lastchar == _NOCHANGE \
-	 || line->lastchar < (end)) \
-		line->lastchar = end
 
 /*+-------------------------------------------------------------------------
 	IS_LINKED(pan) - check to see if panel is in the stack
@@ -148,9 +128,9 @@
 /*+-------------------------------------------------------------------------
 	Walk through the panel stack starting at the given location and
         check for intersections; overlapping panels are "touched", so they
-        are incrementally overwriting cells that should be hidden. 
+        are incrementally overwriting cells that should be hidden.
         If the "touch" flag is set, the panel gets touched before it is
-        updated. 
+        updated.
 ---------------------------------------------------------------------------*/
 #define PANEL_UPDATE(pan,panstart)\
 {  PANEL* pan2 = ((panstart) ? (panstart) : _nc_bottom_panel);\
@@ -200,4 +180,4 @@
       err = err_if_unlinked;\
   }
 
-#endif /* _PANEL_PRIV_H */
+#endif /* NCURSES_PANEL_PRIV_H */

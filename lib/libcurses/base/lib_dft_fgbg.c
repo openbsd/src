@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_dft_fgbg.c,v 1.7 2001/01/22 18:01:39 millert Exp $	*/
+/* $OpenBSD: lib_dft_fgbg.c,v 1.8 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2004,2005 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,13 +29,13 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1997,1999                   *
+ *  Author: Thomas E. Dickey                                                *
  ****************************************************************************/
 
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_dft_fgbg.c,v 1.15 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_dft_fgbg.c,v 1.8 2010/01/12 23:22:05 nicm Exp $")
 
 /*
  * Modify the behavior of color-pair 0 so that the library doesn't assume that
@@ -45,7 +45,7 @@ NCURSES_EXPORT(int)
 use_default_colors(void)
 {
     T((T_CALLED("use_default_colors()")));
-    returnCode(assume_default_colors(C_MASK, C_MASK));
+    returnCode(assume_default_colors(-1, -1));
 }
 
 /*
@@ -63,11 +63,15 @@ assume_default_colors(int fg, int bg)
     if (initialize_pair)	/* don't know how to handle this */
 	returnCode(ERR);
 
-    SP->_default_color = (fg < 0 || fg == C_MASK) || (bg < 0 || bg == C_MASK);
+    SP->_default_color = isDefaultColor(fg) || isDefaultColor(bg);
     SP->_has_sgr_39_49 = (tigetflag("AX") == TRUE);
-    SP->_default_fg = (fg >= 0) ? (fg & C_MASK) : C_MASK;
-    SP->_default_bg = (bg >= 0) ? (bg & C_MASK) : C_MASK;
-    if (SP->_color_pairs != 0)
-	init_pair(0, fg, bg);
+    SP->_default_fg = isDefaultColor(fg) ? COLOR_DEFAULT : (fg & C_MASK);
+    SP->_default_bg = isDefaultColor(bg) ? COLOR_DEFAULT : (bg & C_MASK);
+    if (SP->_color_pairs != 0) {
+	bool save = SP->_default_color;
+	SP->_default_color = TRUE;
+	init_pair(0, (short) fg, (short) bg);
+	SP->_default_color = save;
+    }
     returnCode(OK);
 }

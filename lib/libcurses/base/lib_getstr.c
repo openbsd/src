@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_getstr.c,v 1.2 2001/01/22 18:01:39 millert Exp $	*/
+/* $OpenBSD: lib_getstr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -43,7 +43,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_getstr.c,v 1.23 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_getstr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
 
 /*
  * This wipes out the last character, no matter whether it was a tab, control
@@ -72,8 +72,12 @@ WipeOut(WINDOW *win, int y, int x, char *first, char *last, bool echoed)
 }
 
 NCURSES_EXPORT(int)
-wgetnstr(WINDOW *win, char *str, int maxlen)
+wgetnstr_events(WINDOW *win,
+		char *str,
+		int maxlen,
+		EVENTLIST_1st(_nc_eventlist * evl))
 {
+    SCREEN *sp = _nc_screen_of(win);
     TTY buf;
     bool oldnl, oldecho, oldraw, oldcbreak;
     char erasec;
@@ -89,10 +93,10 @@ wgetnstr(WINDOW *win, char *str, int maxlen)
 
     _nc_get_tty_mode(&buf);
 
-    oldnl = SP->_nl;
-    oldecho = SP->_echo;
-    oldraw = SP->_raw;
-    oldcbreak = SP->_cbreak;
+    oldnl = sp->_nl;
+    oldecho = sp->_echo;
+    oldraw = sp->_raw;
+    oldcbreak = sp->_cbreak;
     nl();
     noecho();
     noraw();
@@ -107,7 +111,7 @@ wgetnstr(WINDOW *win, char *str, int maxlen)
     if (is_wintouched(win) || (win->_flags & _HASMOVED))
 	wrefresh(win);
 
-    while ((ch = wgetch(win)) != ERR) {
+    while ((ch = wgetch_events(win, evl)) != ERR) {
 	/*
 	 * Some terminals (the Wyse-50 is the most common) generate
 	 * a \n from the down-arrow key.  With this logic, it's the
@@ -124,6 +128,14 @@ wgetnstr(WINDOW *win, char *str, int maxlen)
 		wechochar(win, (chtype) '\n');
 	    break;
 	}
+#ifdef KEY_EVENT
+	if (ch == KEY_EVENT)
+	    break;
+#endif
+#ifdef KEY_RESIZE
+	if (ch == KEY_RESIZE)
+	    break;
+#endif
 	if (ch == erasec || ch == KEY_LEFT || ch == KEY_BACKSPACE) {
 	    if (str > oldstr) {
 		str = WipeOut(win, y, x, oldstr, str, oldecho);
@@ -136,7 +148,7 @@ wgetnstr(WINDOW *win, char *str, int maxlen)
 		   || (maxlen >= 0 && str - oldstr >= maxlen)) {
 	    beep();
 	} else {
-	    *str++ = ch;
+	    *str++ = (char) ch;
 	    if (oldecho == TRUE) {
 		int oldy = win->_cury;
 		if (waddch(win, (chtype) ch) == ERR) {
@@ -178,18 +190,38 @@ wgetnstr(WINDOW *win, char *str, int maxlen)
     /* Restore with a single I/O call, to fix minor asymmetry between
      * raw/noraw, etc.
      */
-    SP->_nl = oldnl;
-    SP->_echo = oldecho;
-    SP->_raw = oldraw;
-    SP->_cbreak = oldcbreak;
+    sp->_nl = oldnl;
+    sp->_echo = oldecho;
+    sp->_raw = oldraw;
+    sp->_cbreak = oldcbreak;
 
     _nc_set_tty_mode(&buf);
 
     *str = '\0';
     if (ch == ERR)
-	returnCode(ERR);
+	returnCode(ch);
 
     T(("wgetnstr returns %s", _nc_visbuf(oldstr)));
 
+#ifdef KEY_EVENT
+    if (ch == KEY_EVENT)
+	returnCode(ch);
+#endif
+#ifdef KEY_RESIZE
+    if (ch == KEY_RESIZE)
+	returnCode(ch);
+#endif
+
     returnCode(OK);
 }
+
+#ifdef NCURSES_WGETCH_EVENTS
+NCURSES_EXPORT(int)
+wgetnstr(WINDOW *win, char *str, int maxlen)
+{
+    returnCode(wgetnstr_events(win,
+			       str,
+			       maxlen,
+			       EVENTLIST_1st((_nc_eventlist *) 0)));
+}
+#endif

@@ -1,7 +1,5 @@
-/*	$OpenBSD: frm_adabind.c,v 1.2 1998/07/24 02:37:24 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 2004,2005 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,55 +27,51 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author:  Thomas E. Dickey                                              *
  ****************************************************************************/
 
-/***************************************************************************
-* Module frm_adabind.c                                                     *
-* Helper routines to ease the implementation of an Ada95 binding to        *
-* ncurses. For details and copyright of the binding see the ../Ada95       *
-* subdirectory.                                                            *
-***************************************************************************/
-#include "form.priv.h"
+#include "menu.priv.h"
 
-MODULE_ID("$From: frm_adabind.c,v 1.5 1998/02/11 12:13:43 tom Exp $")
+MODULE_ID("$Id: m_trace.c,v 1.1 2010/01/12 23:22:08 nicm Exp $")
 
-/* Prototypes for the functions in this module */
-void   _nc_ada_normalize_field_opts (int *opt);
-void   _nc_ada_normalize_form_opts (int *opt);
-void*  _nc_ada_getvarg(va_list *);
-FIELD* _nc_get_field(const FORM*, int);
-
-
-void _nc_ada_normalize_field_opts (int *opt)
+NCURSES_EXPORT(ITEM *)
+_nc_retrace_item(ITEM * code)
 {
-  *opt = ALL_FIELD_OPTS & (*opt);
+  T((T_RETURN("%p"), code));
+  return code;
 }
 
-void _nc_ada_normalize_form_opts (int *opt)
+NCURSES_EXPORT(ITEM **)
+_nc_retrace_item_ptr(ITEM ** code)
 {
-  *opt = ALL_FORM_OPTS & (*opt);
+  T((T_RETURN("%p"), code));
+  return code;
 }
 
-
-/*  This tiny stub helps us to get a void pointer from an argument list.
-//  The mechanism for libform to handle arguments to field types uses
-//  unfortunately functions with variable argument lists. In the Ada95
-//  binding we replace this by a mechanism that only uses one argument
-//  that is a pointer to a record describing all the specifics of an
-//  user defined field type. So we need only this simple generic
-//  procedure to get the pointer from the arglist.
-*/
-void *_nc_ada_getvarg(va_list *ap)
+NCURSES_EXPORT(Item_Options)
+_nc_retrace_item_opts(Item_Options code)
 {
-  return va_arg(*ap,void*);
+  T((T_RETURN("%d"), code));
+  return code;
 }
 
-FIELD* _nc_get_field(const FORM* frm, int idx) {
-  if (frm && frm->field && idx>=0 && (idx<frm->maxfield))
-    {
-      return frm->field[idx];
-    }
-  else
-    return (FIELD*)0;
+NCURSES_EXPORT(MENU *)
+_nc_retrace_menu(MENU * code)
+{
+  T((T_RETURN("%p"), code));
+  return code;
+}
+
+NCURSES_EXPORT(Menu_Hook)
+_nc_retrace_menu_hook(Menu_Hook code)
+{
+  T((T_RETURN("%p"), code));
+  return code;
+}
+
+NCURSES_EXPORT(Menu_Options)
+_nc_retrace_menu_opts(Menu_Options code)
+{
+  T((T_RETURN("%d"), code));
+  return code;
 }

@@ -1,7 +1,7 @@
-.\" $OpenBSD: default_colors.3,v 1.1 2000/07/24 04:06:10 millert Exp $
+.\" $OpenBSD: default_colors.3,v 1.2 2010/01/12 23:21:59 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,22 +28,19 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" Author: Thomas E. Dickey <dickey@clark.net> 1997,1999,2000
+.\" Author: Thomas E. Dickey 1997,1999,2000,2005
 .\"
-.\" $From: default_colors.3x,v 1.13 2000/07/15 22:06:50 tom Exp $
+.\" $Id: default_colors.3,v 1.2 2010/01/12 23:21:59 nicm Exp $
 .TH default_colors 3 ""
 .SH NAME
-\fBdefault_colors\fR,
 \fBuse_default_colors\fR,
 \fBassume_default_colors\fR \- use terminal's default colors
-..
 .SH SYNOPSIS
 \fB#include <curses.h>\fP
-
+.sp
 \fBint use_default_colors(void);\fP
 .br
 \fBint assume_default_colors(int fg, int bg);\fP
-..
 .SH DESCRIPTION
 The
 .I use_default_colors()
@@ -102,28 +99,42 @@ or
 .I assume_default_colors()
 ncurses will paint a white foreground (text) with black background
 for color pair 0.
-..
 .SH RETURN VALUE
 These functions return the integer \fBERR\fP upon failure and \fBOK\fP on success.
 They will fail if either the terminal does not support
 the \fIorig_pair\fP or \fIorig_colors\fP capability.
 If the \fIinitialize_pair\fP capability is found, this causes an
 error as well.
-..
 .SH NOTES
-Associated with this extension, the \fBinit_pair\fR(3) function accepts
-negative arguments to specify default foreground or background
-colors.
-..
+Associated with this extension, the \fBinit_pair\fR function accepts
+negative arguments to specify default foreground or background colors.
+.PP
+The \fIuse_default_colors()\fP function was added to support \fIded\fP.
+This is a full-screen application which uses curses to manage only part
+of the screen.  The bottom portion of the screen, which is of adjustable
+size, is left uncolored to display the results from shell commands.
+The top portion of the screen colors filenames using a scheme like the
+"color ls" programs.
+Attempting to manage the background color of the screen for this application
+would give unsatisfactory results for a variety of reasons.
+This extension was devised after
+noting that color xterm (and similar programs) provides a background color
+which does not necessarily correspond to any of the ANSI colors.
+While a special terminfo entry could be constructed using nine colors,
+there was no mechanism provided within curses to account for the related
+\fIorig_pair\fP and \fIback_color_erase\fP capabilities.
+.PP
+The \fIassume_default_colors()\fP function was added to solve
+a different problem: support for applications which would use
+environment variables and other configuration to bypass curses'
+notion of the terminal's default colors, setting specific values.
 .SH PORTABILITY
 These routines are specific to ncurses.  They were not supported on
 Version 7, BSD or System V implementations.  It is recommended that
 any code depending on them be conditioned using NCURSES_VERSION.
-..
 .SH SEE ALSO
 \fBcurs_color\fR(3),
 \fBded\fP(1).
-..
 .SH AUTHOR
 Thomas Dickey (from an analysis of the requirements for color xterm
 for XFree86 3.1.2C, February 1996).

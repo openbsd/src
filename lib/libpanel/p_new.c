@@ -1,7 +1,7 @@
-/*	$OpenBSD: p_new.c,v 1.4 2001/01/22 18:02:09 millert Exp $	*/
+/* $OpenBSD: p_new.c,v 1.5 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1995                    *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Juergen Pfeifer                         1997-1999               *
+ *     and: Thomas E. Dickey                        2000-on                 *
  ****************************************************************************/
 
 /* p_new.c
@@ -38,61 +40,68 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_new.c,v 1.6 2000/12/10 02:20:44 tom Exp $")
+MODULE_ID("$Id: p_new.c,v 1.5 2010/01/12 23:22:08 nicm Exp $")
 
 #ifdef TRACE
-static char* stdscr_id;
-static char* new_id;
+static char *stdscr_id;
+static char *new_id;
 #endif
 
 /*+-------------------------------------------------------------------------
   Get root (i.e. stdscr's) panel.
   Establish the pseudo panel for stdscr if necessary.
 --------------------------------------------------------------------------*/
-static PANEL*
+static PANEL *
 root_panel(void)
 {
-  if(_nc_stdscr_pseudo_panel == (PANEL*)0)
+  if (_nc_stdscr_pseudo_panel == (PANEL *) 0)
     {
-      
+
       assert(stdscr && !_nc_bottom_panel && !_nc_top_panel);
-      _nc_stdscr_pseudo_panel = (PANEL*)malloc(sizeof(PANEL));
-      if (_nc_stdscr_pseudo_panel != 0) {
-	PANEL* pan  = _nc_stdscr_pseudo_panel;
-	WINDOW* win = stdscr;
-	pan->win = win;
-	pan->below   = (PANEL*)0;
-	pan->above   = (PANEL*)0;
-#ifdef TRACE
-	if (!stdscr_id)
-	  stdscr_id = strdup("stdscr");
-	pan->user = stdscr_id;
-#else
-	pan->user = (void*)0;
+#if NO_LEAKS
+      _nc_panelhook()->destroy = del_panel;
 #endif
-	_nc_bottom_panel = _nc_top_panel = pan;
-      }
+      _nc_stdscr_pseudo_panel = (PANEL *) malloc(sizeof(PANEL));
+      if (_nc_stdscr_pseudo_panel != 0)
+	{
+	  PANEL *pan = _nc_stdscr_pseudo_panel;
+	  WINDOW *win = stdscr;
+
+	  pan->win = win;
+	  pan->below = (PANEL *) 0;
+	  pan->above = (PANEL *) 0;
+#ifdef TRACE
+	  if (!stdscr_id)
+	    stdscr_id = strdup("stdscr");
+	  pan->user = stdscr_id;
+#else
+	  pan->user = (void *)0;
+#endif
+	  _nc_bottom_panel = _nc_top_panel = pan;
+	}
     }
   return _nc_stdscr_pseudo_panel;
 }
 
 NCURSES_EXPORT(PANEL *)
-new_panel (WINDOW *win)
+new_panel(WINDOW *win)
 {
-  PANEL *pan = (PANEL*)0;
+  PANEL *pan = (PANEL *) 0;
+
+  T((T_CALLED("new_panel(%p)"), win));
 
   if (!win)
-    return(pan);
+    returnPanel(pan);
 
   if (!_nc_stdscr_pseudo_panel)
     (void)root_panel();
   assert(_nc_stdscr_pseudo_panel);
 
-  if (!(win->_flags & _ISPAD) && (pan = (PANEL*)malloc(sizeof(PANEL))))
+  if (!(win->_flags & _ISPAD) && (pan = (PANEL *) malloc(sizeof(PANEL))))
     {
       pan->win = win;
-      pan->above = (PANEL *)0;
-      pan->below = (PANEL *)0;
+      pan->above = (PANEL *) 0;
+      pan->below = (PANEL *) 0;
 #ifdef TRACE
       if (!new_id)
 	new_id = strdup("new");
@@ -102,5 +111,5 @@ new_panel (WINDOW *win)
 #endif
       (void)show_panel(pan);
     }
-  return(pan);
+  returnPanel(pan);
 }

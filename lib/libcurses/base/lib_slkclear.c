@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_slkclear.c,v 1.3 2001/01/22 18:01:46 millert Exp $	*/
+/* $OpenBSD: lib_slkclear.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Juergen Pfeifer                         1996-1999               *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -40,24 +42,27 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slkclear.c,v 1.6 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_slkclear.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 slk_clear(void)
 {
+    int rc = ERR;
+
     T((T_CALLED("slk_clear()")));
 
-    if (SP == NULL || SP->_slk == NULL)
-	returnCode(ERR);
-    SP->_slk->hidden = TRUE;
-    /* For simulated SLK's it's looks much more natural to
-       inherit those attributes from the standard screen */
-    SP->_slk->win->_bkgd = stdscr->_bkgd;
-    SP->_slk->win->_attrs = stdscr->_attrs;
-    if (SP->_slk->win == stdscr) {
-	returnCode(OK);
-    } else {
-	werase(SP->_slk->win);
-	returnCode(wrefresh(SP->_slk->win));
+    if (SP != NULL && SP->_slk != NULL) {
+	SP->_slk->hidden = TRUE;
+	/* For simulated SLK's it looks much more natural to
+	   inherit those attributes from the standard screen */
+	SP->_slk->win->_nc_bkgd = stdscr->_nc_bkgd;
+	WINDOW_ATTRS(SP->_slk->win) = WINDOW_ATTRS(stdscr);
+	if (SP->_slk->win == stdscr) {
+	    rc = OK;
+	} else {
+	    werase(SP->_slk->win);
+	    rc = wrefresh(SP->_slk->win);
+	}
     }
+    returnCode(rc);
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_item_use.c,v 1.6 2001/01/22 18:02:04 millert Exp $	*/
+/* $OpenBSD: m_item_use.c,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_item_use.c,v 1.11 2000/12/10 02:16:48 tom Exp $")
+MODULE_ID("$Id: m_item_use.c,v 1.7 2010/01/12 23:22:08 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -51,10 +51,11 @@ MODULE_ID("$From: m_item_use.c,v 1.11 2000/12/10 02:16:48 tom Exp $")
 |   Return Values :  E_OK               - success
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-set_item_userptr (ITEM * item, void * userptr)
+set_item_userptr(ITEM * item, void *userptr)
 {
+  T((T_CALLED("set_item_userptr(%p,%p)"), item, userptr));
   Normalize_Item(item)->userptr = userptr;
-  RETURN( E_OK );
+  RETURN(E_OK);
 }
 
 /*---------------------------------------------------------------------------
@@ -68,9 +69,10 @@ set_item_userptr (ITEM * item, void * userptr)
 |                    NULL is returned.
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(void *)
-item_userptr (const ITEM * item)
+item_userptr(const ITEM * item)
 {
-  return Normalize_Item(item)->userptr;
+  T((T_CALLED("item_userptr(%p)"), item));
+  returnVoidPtr(Normalize_Item(item)->userptr);
 }
 
 /* m_item_use.c */

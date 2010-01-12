@@ -1,7 +1,7 @@
-.\" $OpenBSD: curs_beep.3,v 1.6 2003/05/12 11:06:49 jmc Exp $
+.\" $OpenBSD: curs_beep.3,v 1.7 2010/01/12 23:21:58 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2003,2005 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,13 +28,13 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_beep.3x,v 1.7 1998/03/11 21:12:53 juergen Exp $
+.\" $Id: curs_beep.3,v 1.7 2010/01/12 23:21:58 nicm Exp $
 .TH curs_beep 3 ""
 .SH NAME
 \fBbeep\fR, \fBflash\fR - \fBcurses\fR bell and screen flash routines
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
-
+.PP
 \fBint beep(void);\fR
 .br
 \fBint flash(void);\fR
@@ -53,8 +53,8 @@ These routines return \fBOK\fR if they succeed in beeping or flashing,
 SVr4's beep and flash routines always returned \fBOK\fR, so it was not
 possible to tell when the beep or flash failed.
 .SH PORTABILITY
-These functions are defined in the XSI Curses standard, Issue 4.  Like SVr4, it
-specifies that they always return \fBOK\fR.
+These functions are described in the XSI Curses standard, Issue 4.
+Like SVr4, it specifies that they always return \fBOK\fR.
 .SH SEE ALSO
 \fBcurses\fR(3)
 .\"#

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_slkattr.c,v 1.2 2001/01/22 18:01:46 millert Exp $	*/
+/* $OpenBSD: lib_slkattr.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -29,8 +29,8 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
- *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *  Author:  Juergen Pfeifer, 1997                                          *
+ *     and:  Thomas E. Dickey 2005                                          *
  ****************************************************************************/
 
 /*
@@ -40,7 +40,7 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slkattr.c,v 1.5 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_slkattr.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(attr_t)
 slk_attr(void)
@@ -48,7 +48,11 @@ slk_attr(void)
     T((T_CALLED("slk_attr()")));
 
     if (SP != 0 && SP->_slk != 0) {
-	returnAttr(SP->_slk->attr);
+	attr_t result = AttrOf(SP->_slk->attr) & ALL_BUT_COLOR;
+	int pair = GetPair(SP->_slk->attr);
+
+	result |= COLOR_PAIR(pair);
+	returnAttr(result);
     } else
 	returnAttr(0);
 }

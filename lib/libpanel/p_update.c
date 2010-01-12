@@ -1,7 +1,7 @@
-/*	$OpenBSD: p_update.c,v 1.5 2001/02/28 22:58:53 millert Exp $	*/
+/* $OpenBSD: p_update.c,v 1.6 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000,2005 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,18 +38,19 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_update.c,v 1.7 2001/02/24 23:41:42 tom Exp $")
+MODULE_ID("$Id: p_update.c,v 1.6 2010/01/12 23:22:08 nicm Exp $")
 
 NCURSES_EXPORT(void)
-update_panels (void)
+update_panels(void)
 {
   PANEL *pan;
 
+  T((T_CALLED("update_panels()")));
   dBug(("--> update_panels"));
   pan = _nc_bottom_panel;
-  while(pan && pan->above)
+  while (pan && pan->above)
     {
-      PANEL_UPDATE(pan,pan->above);
+      PANEL_UPDATE(pan, pan->above);
       pan = pan->above;
     }
 
@@ -59,4 +60,6 @@ update_panels (void)
       Wnoutrefresh(pan);
       pan = pan->above;
     }
+
+  returnVoid;
 }

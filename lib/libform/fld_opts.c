@@ -1,7 +1,5 @@
-/*	$OpenBSD: fld_opts.c,v 1.5 2001/01/22 18:02:13 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,11 +27,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
+
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_opts.c,v 1.7 2000/12/10 02:09:38 tom Exp $")
+MODULE_ID("$Id: fld_opts.c,v 1.6 2010/01/12 23:22:07 nicm Exp $")
 
 /*----------------------------------------------------------------------------
   Field-Options manipulation routines
@@ -52,12 +51,15 @@ MODULE_ID("$From: fld_opts.c,v 1.7 2000/12/10 02:09:38 tom Exp $")
 |                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-set_field_opts (FIELD * field, Field_Options opts)
+set_field_opts(FIELD *field, Field_Options opts)
 {
   int res = E_BAD_ARGUMENT;
+
+  T((T_CALLED("set_field_opts(%p,%d)"), field, opts));
+
   opts &= ALL_FIELD_OPTS;
   if (!(opts & ~ALL_FIELD_OPTS))
-    res = _nc_Synchronize_Options( Normalize_Field(field), opts );
+    res = _nc_Synchronize_Options(Normalize_Field(field), opts);
   RETURN(res);
 }
 
@@ -70,9 +72,11 @@ set_field_opts (FIELD * field, Field_Options opts)
 |   Return Values :  The options.
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(Field_Options)
-field_opts (const FIELD * field)
+field_opts(const FIELD *field)
 {
-  return ALL_FIELD_OPTS & Normalize_Field( field )->opts;
+  T((T_CALLED("field_opts(%p)"), field));
+
+  returnCode(ALL_FIELD_OPTS & Normalize_Field(field)->opts);
 }
 
 /*---------------------------------------------------------------------------
@@ -88,15 +92,17 @@ field_opts (const FIELD * field)
 |                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-field_opts_on (FIELD * field, Field_Options opts)
+field_opts_on(FIELD *field, Field_Options opts)
 {
   int res = E_BAD_ARGUMENT;
+
+  T((T_CALLED("field_opts_on(%p,%d)"), field, opts));
 
   opts &= ALL_FIELD_OPTS;
   if (!(opts & ~ALL_FIELD_OPTS))
     {
-      Normalize_Field( field );
-      res = _nc_Synchronize_Options( field, field->opts | opts );
+      Normalize_Field(field);
+      res = _nc_Synchronize_Options(field, field->opts | opts);
     }
   RETURN(res);
 }
@@ -114,17 +120,19 @@ field_opts_on (FIELD * field, Field_Options opts)
 |                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-field_opts_off (FIELD  * field, Field_Options opts)
+field_opts_off(FIELD *field, Field_Options opts)
 {
   int res = E_BAD_ARGUMENT;
+
+  T((T_CALLED("field_opts_off(%p,%d)"), field, opts));
 
   opts &= ALL_FIELD_OPTS;
   if (!(opts & ~ALL_FIELD_OPTS))
     {
-      Normalize_Field( field );
-      res = _nc_Synchronize_Options( field, field->opts & ~opts );
+      Normalize_Field(field);
+      res = _nc_Synchronize_Options(field, field->opts & ~opts);
     }
   RETURN(res);
-}	
+}
 
 /* fld_opts.c ends here */

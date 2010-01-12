@@ -1,9 +1,9 @@
-/*	$OpenBSD: parametrized.h,v 1.2 1999/01/18 19:09:04 millert Exp $	*/
+/* $OpenBSD: parametrized.h,v 1.3 2010/01/12 23:21:59 nicm Exp $ */
 
 /*
  * parametrized.h --- is a termcap capability parametrized?
  *
- * Note: this file is generated using parametrized.sh, do not edit by hand.
+ * Note: this file is generated using MKparametrized.sh, do not edit by hand.
  * A value of -1 in the table means suppress both pad and % translations.
  * A value of 0 in the table means do pad but not % translations.
  * A value of 1 in the table means do both pad and % translations.
@@ -25,7 +25,7 @@ static short const parametrized[] = {
 0,	/*  home  */
 0,	/*  civis  */
 0,	/*  cub1  */
-0,	/*  mrcup  */
+1,	/*  mrcup  */
 0,	/*  cnorm  */
 0,	/*  cuf1  */
 0,	/*  ll  */
@@ -145,7 +145,7 @@ static short const parametrized[] = {
 0,	/*  hts  */
 1,	/*  wind  */
 0,	/*  ht  */
-0,	/*  tsl  */
+1,	/*  tsl  */
 0,	/*  uc  */
 0,	/*  hu  */
 0,	/*  iprog  */
@@ -285,7 +285,7 @@ static short const parametrized[] = {
 0,	/*  smgr  */
 0,	/*  fln  */
 1,	/*  sclk  */
-1,	/*  dclk  */
+0,	/*  dclk  */
 0,	/*  rmclk  */
 1,	/*  cwin  */
 1,	/*  wingo  */
@@ -314,11 +314,11 @@ static short const parametrized[] = {
 1,	/*  scp  */
 1,	/*  setf  */
 1,	/*  setb  */
-0,	/*  cpi  */
-0,	/*  lpi  */
-0,	/*  chr  */
-0,	/*  cvr  */
-0,	/*  defc  */
+1,	/*  cpi  */
+1,	/*  lpi  */
+1,	/*  chr  */
+1,	/*  cvr  */
+1,	/*  defc  */
 0,	/*  swidm  */
 0,	/*  sdrfq  */
 0,	/*  sitm  */
@@ -342,14 +342,14 @@ static short const parametrized[] = {
 0,	/*  mcud1  */
 0,	/*  mcub1  */
 0,	/*  mcuf1  */
-0,	/*  mvpa  */
+1,	/*  mvpa  */
 0,	/*  mcuu1  */
 0,	/*  porder  */
 0,	/*  mcud  */
 0,	/*  mcub  */
 0,	/*  mcuf  */
 0,	/*  mcuu  */
-0,	/*  scs  */
+1,	/*  scs  */
 0,	/*  smgb  */
 1,	/*  smgbp  */
 1,	/*  smglp  */
@@ -357,20 +357,20 @@ static short const parametrized[] = {
 0,	/*  smgt  */
 1,	/*  smgtp  */
 0,	/*  sbim  */
-0,	/*  scsd  */
+1,	/*  scsd  */
 0,	/*  rbim  */
-0,	/*  rcsd  */
+1,	/*  rcsd  */
 0,	/*  subcs  */
 0,	/*  supcs  */
 0,	/*  docr  */
 0,	/*  zerom  */
-0,	/*  csnm  */
+1,	/*  csnm  */
 0,	/*  kmous  */
 0,	/*  minfo  */
 0,	/*  reqmp  */
-0,	/*  getm  */
-0,	/*  setaf  */
-0,	/*  setab  */
+1,	/*  getm  */
+1,	/*  setaf  */
+1,	/*  setab  */
 1,	/*  pfxl  */
 0,	/*  devt  */
 0,	/*  csin  */
@@ -388,7 +388,7 @@ static short const parametrized[] = {
 0,	/*  endbi  */
 1,	/*  setcolor  */
 1,	/*  slines  */
-0,	/*  dispc  */
+1,	/*  dispc  */
 0,	/*  smpch  */
 0,	/*  rmpch  */
 0,	/*  smsc  */
@@ -553,61 +553,10 @@ static short const parametrized[] = {
 0,	/*  ksf10  */
 0,	/*  kf11  */
 0,	/*  kf12  */
-0,	/*  kf13  */
-0,	/*  kf14  */
-0,	/*  kf15  */
-0,	/*  kf16  */
-0,	/*  kf17  */
-0,	/*  kf18  */
-0,	/*  kf19  */
-0,	/*  kf20  */
-0,	/*  kf21  */
-0,	/*  kf22  */
-0,	/*  kf23  */
-0,	/*  kf24  */
-0,	/*  kf25  */
-0,	/*  kf26  */
-0,	/*  kf26  */
-0,	/*  kf28  */
-0,	/*  kf29  */
-0,	/*  kf30  */
-0,	/*  kf31  */
-0,	/*  kf31  */
-0,	/*  kf33  */
-0,	/*  kf34  */
-0,	/*  kf35  */
-0,	/*  kf36  */
-0,	/*  kf37  */
-0,	/*  kf38  */
-0,	/*  kf39  */
-0,	/*  kf40  */
-0,	/*  kf41  */
-0,	/*  kf42  */
-0,	/*  kf43  */
-0,	/*  kf44  */
-0,	/*  kf45  */
-0,	/*  kf46  */
-0,	/*  kf47  */
-0,	/*  kf48  */
-0,	/*  kf49  */
-0,	/*  kf50  */
-0,	/*  kf51  */
-0,	/*  kf52  */
-0,	/*  kf53  */
-0,	/*  kf54  */
-0,	/*  kf55  */
-0,	/*  kf56  */
-0,	/*  kf57  */
-0,	/*  kf58  */
-0,	/*  kf59  */
-0,	/*  kf60  */
-0,	/*  kf61  */
-0,	/*  kf62  */
-0,	/*  kf63  */
 0,	/*  kact  */
 0,	/*  topl  */
 0,	/*  btml  */
 0,	/*  rvert  */
 0,	/*  lvert  */
-} /* 599 entries */;
+} /* 548 entries */;
 

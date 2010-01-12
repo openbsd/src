@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: menu_spacing.3,v 1.5 1999/01/22 03:45:07 millert Exp $
+.\" $OpenBSD: menu_spacing.3,v 1.6 2010/01/12 23:22:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2001,2004 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: menu_spacing.3x,v 1.5 1998/11/29 01:10:51 Rick.Ohnemus Exp $
+.\" $Id: menu_spacing.3,v 1.6 2010/01/12 23:22:08 nicm Exp $
 .TH menu_spacing 3 ""
 .SH NAME
 \fBmenu_spacing\fR - Control spacing between menu items.
@@ -37,12 +37,12 @@
 \fB#include <menu.h>\fR
 .br
 int set_menu_spacing(MENU *menu,
-                     int spc_description
+                     int spc_description,
                      int spc_rows,
                      int spc_columns);
 .br
 int menu_spacing(const MENU *menu,
-                 int* spc_description
+                 int* spc_description,
                  int* spc_rows,
                  int* spc_columns);
 .br
@@ -53,7 +53,7 @@ description. It must not be larger than \fBTABSIZE\fR. The menu system puts in t
 middle of this spacing area the pad character. The remaining parts are filled with
 spaces.
 \fBspc_rows\fR controls the number of rows that are used for an item. It must not be
-larger than 3. The menu system inserts then blank lines between item rows, these lines
+larger than 3. The menu system inserts the blank lines between item rows, these lines
 will contain the pad character in the appropriate positions.
 \fBspc_columns\fR controls the number of blanks between columns of items. It must not
 be larger than TABSIZE.

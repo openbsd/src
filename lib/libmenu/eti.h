@@ -1,7 +1,7 @@
-/*	$OpenBSD: eti.h,v 1.5 1999/05/17 03:04:18 millert Exp $	*/
+/* $OpenBSD: eti.h,v 1.6 2010/01/12 23:22:07 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998-2002,2003 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,11 +29,13 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
-#ifndef _ETI_ERRNO_H_
-#define _ETI_ERRNO_H_
+/* $Id: eti.h,v 1.6 2010/01/12 23:22:07 nicm Exp $ */
+
+#ifndef NCURSES_ETI_H_incl
+#define NCURSES_ETI_H_incl 1
 
 #define	E_OK			(0)
 #define	E_SYSTEM_ERROR	 	(-1)

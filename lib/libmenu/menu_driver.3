@@ -1,7 +1,7 @@
-.\" $OpenBSD: menu_driver.3,v 1.6 2000/03/14 21:31:46 aaron Exp $
+.\" $OpenBSD: menu_driver.3,v 1.7 2010/01/12 23:22:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: menu_driver.3x,v 1.8 1999/01/09 22:55:18 tom Exp $
+.\" $Id: menu_driver.3,v 1.7 2010/01/12 23:22:08 nicm Exp $
 .TH menu_driver 3 ""
 .SH NAME
 \fBmenu_driver\fR - command-processing loop of the menu system
@@ -39,9 +39,21 @@ int menu_driver(MENU *menu, int c);
 .br
 .SH DESCRIPTION
 Once a menu has been posted (displayed), you should funnel input events to it
-through \fBmenu_driver\fR.  This routine has three major input cases; either
-the input is a menu navigation request, it's a printable ASCII character or it
-is the KEY_MOUSE special key associated with an mouse event.
+through \fBmenu_driver\fR.  This routine has three major input cases:
+.TP 3
+-
+The input is a form navigation request.
+Navigation request codes are constants defined in \fB<form.h>\fP,
+which are distinct from the key- and character codes returned by \fBwgetch\fP.
+.TP 3
+-
+The input is a printable character.
+Printable characters (which must be positive, less than 256) are
+checked according to the program's locale settings.
+.TP 3
+-
+The input is the KEY_MOUSE special key associated with an mouse event.
+.PP
 The menu driver requests are as follows:
 .TP 5
 REQ_LEFT_ITEM
@@ -95,34 +107,65 @@ Move to the next item matching the pattern match.
 REQ_PREV_MATCH
 Move to the previous item matching the pattern match.
 .PP
-If the second argument is a printable ASCII character, the code appends
+If the second argument is a printable character, the code appends
 it to the pattern buffer and attempts to move to the next item matching
 the new pattern.  If there is no such match, \fBmenu_driver\fR returns
 \fBE_NO_MATCH\fR and deletes the appended character from the buffer.
 .PP
 If the second argument is one of the above pre-defined requests, the
 corresponding action is performed.
+.SS MOUSE HANDLING
 .PP
 If the second argument is the KEY_MOUSE special key, the associated
 mouse event is translated into one of the above pre-defined requests.
 Currently only clicks in the user window (e.g., inside the menu display
-area or the decoration window) are handled. If you click above the
-display region of the menu, a REQ_SCR_ULINE is generated, if you
-doubleclick a REQ_SCR_UPAGE is generated and if you tripleclick a
-REQ_FIRST_ITEM is generated. If you click below the display region of
-the menu, a REQ_SCR_DLINE is generated, if you doubleclick a REQ_SCR_DPAGE
-is generated and if you tripleclick a REQ_LAST_ITEM is generated. If you
-click at an item inside the display area of the menu, the menu cursor
-is positioned to that item. If you double-click at an item a REQ_TOGGLE_ITEM
-is generated and \fBE_UNKNOWN_COMMAND\fR is returned. This return value makes
-sense, because a double click usually means that an item-specific action should
-be returned. It's exactly the purpose of this return value to signal that an
-application specific command should be executed. If a translation
-into a request was done, \fBmenu_driver\fR returns the result of this request.
-If you clicked outside the user window or the mouse event couldn't be translated
-into a menu request an \fBE_REQUEST_DENIED\fR is returned.
+area or the decoration window) are handled.
 .PP
-If the second argument is neither printable ASCII nor one of the above
+If you click above the display region of the menu:
+.RS
+.TP
+a REQ_SCR_ULINE is generated for a single click,
+.TP
+a REQ_SCR_UPAGE is generated for a double-click and
+.TP
+a REQ_FIRST_ITEM is generated for a triple-click.
+.RE
+.PP
+If you click below the display region of the menu:
+.RS
+.TP
+a REQ_SCR_DLINE is generated for a single click,
+.TP
+a REQ_SCR_DPAGE is generated for a double-click and
+.TP
+a REQ_LAST_ITEM is generated for a triple-click.
+.RE
+.PP
+If you click at an item inside the display area of the menu:
+.RS
+.TP 3
+-
+the menu cursor is positioned to that item.
+.TP 3
+-
+If you double-click an item a REQ_TOGGLE_ITEM
+is generated and \fBE_UNKNOWN_COMMAND\fR is returned.
+This return value makes sense,
+because a double click usually means that an item-specific action should
+be returned.
+It is exactly the purpose of this return value to signal that an
+application specific command should be executed.
+.TP 3
+-
+If a translation
+into a request was done, \fBmenu_driver\fR returns the result of this request.
+.RE
+.PP
+If you clicked outside the user window or the mouse event could not be translated
+into a menu request an \fBE_REQUEST_DENIED\fR is returned.
+.SS APPLICATION-DEFINED COMMANDS
+.PP
+If the second argument is neither printable nor one of the above
 pre-defined menu requests or KEY_MOUSE, the drive assumes it is an application-specific
 command and returns \fBE_UNKNOWN_COMMAND\fR.  Application-defined commands
 should be defined relative to \fBMAX_COMMAND\fR, the maximum value of these
@@ -130,31 +173,33 @@ pre-defined requests.
 .SH RETURN VALUE
 \fBmenu_driver\fR return one of the following error codes:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
+.B E_SYSTEM_ERROR
 System error occurred (see \fBerrno\fR).
 .TP 5
-\fBE_BAD_ARGUMENT\fR
+.B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
 .TP 5
-\fBE_BAD_STATE\fR
+.B E_BAD_STATE
 Routine was called from an initialization or termination function.
 .TP 5
-\fBE_NOT_POSTED\fR
+.B E_NOT_POSTED
 The menu has not been posted.
 .TP 5
-\fBE_UNKNOWN_COMMAND\fR
+.B E_UNKNOWN_COMMAND
 The menu driver code saw an unknown request code.
 .TP 5
-\fBE_NO_MATCH\fR
+.B E_NO_MATCH
 Character failed to match.
 .TP 5
-\fBE_REQUEST_DENIED\fR
+.B E_REQUEST_DENIED
 The menu driver could not process the request.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBmenu\fR(3).
+\fBcurses\fR(3),
+\fBmenu\fR(3),
+\fBwgetch\fR(3).
 .SH NOTES
 The header file \fB<menu.h>\fR automatically includes the header files
 \fB<curses.h>\fR.

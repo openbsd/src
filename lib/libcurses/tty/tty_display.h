@@ -1,7 +1,7 @@
-/*	$OpenBSD: tty_display.h,v 1.3 2001/01/22 18:02:00 millert Exp $	*/
+/* $OpenBSD: tty_display.h,v 1.4 2010/01/12 23:22:07 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,9 @@
 #ifndef TTY_DISPLAY_H
 #define TTY_DISPLAY_H 1
 
+/*
+ * $Id: tty_display.h,v 1.4 2010/01/12 23:22:07 nicm Exp $
+ */
 extern NCURSES_EXPORT(bool) _nc_tty_beep (void);
 extern NCURSES_EXPORT(bool) _nc_tty_check_resize (void);
 extern NCURSES_EXPORT(bool) _nc_tty_cursor (int);
@@ -113,11 +116,11 @@ struct tty_display_data {
 		: ((enter_insert_mode && exit_insert_mode) \
 		  ? D->_smir_cost + D->_rmir_cost + (D->_ip_cost * count) \
 		  : ((insert_character != 0) \
-		    ? (D->_ich1_cost * count) \
+		    ? ((D->_ich1_cost + D->_ip_cost) * count) \
 		    : INFINITY)))
 
 #if USE_XMC_SUPPORT
-#define UpdateAttrs(c)	if (D->_current_attr != AttrOf(c)) { \
+#define UpdateAttrs(c)	if (!SameAttrOf(D->_current_attr, AttrOf(c))) { \
 				attr_t chg = D->_current_attr; \
 				vidattr(AttrOf(c)); \
 				if (magic_cookie_glitch > 0 \
@@ -130,7 +133,7 @@ struct tty_display_data {
 				} \
 			}
 #else
-#define UpdateAttrs(c)	if (D->_current_attr != AttrOf(c)) \
+#define UpdateAttrs(c)	if (!SameAttrOf(D->_current_attr, AttrOf(c))) \
 				vidattr(AttrOf(c));
 #endif
 

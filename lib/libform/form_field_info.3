@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: form_field_info.3,v 1.8 2000/06/19 03:53:56 millert Exp $
+.\" $OpenBSD: form_field_info.3,v 1.9 2010/01/12 23:22:07 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: form_field_info.3x,v 1.6 2000/04/15 22:21:31 tom Exp $
+.\" $Id: form_field_info.3,v 1.9 2010/01/12 23:22:07 nicm Exp $
 .TH form_field_info 3 ""
 .SH NAME
 \fBform_field_info\fR - retrieve field characteristics
@@ -39,31 +39,32 @@
 int field_info(const FIELD *field, int *rows, int *cols,
               int *frow, int *fcol, int *nrow, int *nbuf);
 .br
-int dynamic_field_info(const FIELD *field, int *rows, int *cols, *max);
+int dynamic_field_info(const FIELD *field, int *rows, int *cols, int *max);
 .br
 .SH DESCRIPTION
 The function \fBfield_info\fR returns the sizes and other attributes passed in
 to the field at its creation time.  The attributes are: height, width, row of
 upper-left corner, column of upper-left corner, number off-screen rows, and
 number of working buffers.
-
+.PP
 The function \fBdynamic_field_info\fR returns the actual size of the field, and
 its maximum possible size.  If the field has no size limit, the location
-addressed by the third argument will be set to 0.  (A field can be made dynamic
-by turning off the \fBO_STATIC\fR).
+addressed by the third argument will be set to 0.
+A field can be made dynamic
+by turning off the \fBO_STATIC\fR option with \fBfield_opts_off\fR.
 .SH RETURN VALUE
 These routines return one of the following:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
+.B E_SYSTEM_ERROR
 System error occurred (see \fBerrno\fR).
 .TP 5
-\fBE_BAD_ARGUMENT\fR
+.B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
 .SH SEE ALSO
-\fBcurses\fR(3) and 3 pages whose names begin with "form_" for detailed
+\fBcurses\fR(3) and related pages whose names begin "form_" for detailed
 descriptions of the entry points.
 .SH NOTES
 The header file \fB<form.h>\fR automatically includes the header file

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_inchstr.c,v 1.2 2001/01/22 18:01:40 millert Exp $	*/
+/* $OpenBSD: lib_inchstr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,2000,2001 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_inchstr.c,v 1.9 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_inchstr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
 
 NCURSES_EXPORT(int)
 winchnstr(WINDOW *win, chtype * str, int n)
@@ -56,7 +56,9 @@ winchnstr(WINDOW *win, chtype * str, int n)
 
     if (win) {
 	for (; (n < 0 || (i < n)) && (win->_curx + i <= win->_maxx); i++)
-	    str[i] = win->_line[win->_cury].text[win->_curx + i];
+	    str[i] =
+		CharOf(win->_line[win->_cury].text[win->_curx + i]) |
+		AttrOf(win->_line[win->_cury].text[win->_curx + i]);
     }
     str[i] = (chtype) 0;
 

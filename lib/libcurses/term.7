@@ -1,7 +1,7 @@
-.\" $OpenBSD: term.7,v 1.7 2003/05/14 08:55:19 jmc Exp $
+.\" $OpenBSD: term.7,v 1.8 2010/01/12 23:21:59 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,11 +28,10 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: term.7,v 1.12 2000/08/13 01:56:42 tom Exp $
-.\" $OpenBSD: term.7,v 1.7 2003/05/14 08:55:19 jmc Exp $
-.TH TERM 7
+.\" $Id: term.7,v 1.8 2010/01/12 23:21:59 nicm Exp $
+.TH term 7
 .ds n 5
-.ds d /usr/share/terminfo
+.ds d /usr/share/misc/terminfo
 .SH NAME
 term \- conventions for naming terminal types
 .SH DESCRIPTION
@@ -68,16 +67,16 @@ which you wish to override the system default type for your line.
 .PP
 Terminal type descriptions are stored as files of capability data underneath
 \*d.  To browse a list of all terminal names recognized by the system, do
-
+.sp
 	toe | more
-
+.sp
 from your shell.  These capability files are in a binary format optimized for
 retrieval speed (unlike the old text-based \fBtermcap\fR format they replace);
-to examine an entry, you must use the \fBinfocmp\fR(1) command.  Invoke it as
-follows:
-
+to examine an entry, you must use the \fBinfocmp\fR(1) command.
+Invoke it as follows:
+.sp
 	infocmp \fIentry-name\fR
-
+.sp
 where \fIentry-name\fR is the name of the type you wish to examine (and the
 name of its capability file the subdirectory of \*d named for its first
 letter).  This command dumps a capability file in the text format described by
@@ -99,7 +98,7 @@ terminals that also explains how to parse them:
 First, choose a root name.  The root will consist of a lower-case letter
 followed by up to seven lower-case letters or digits.  You need to avoid using
 punctuation characters in root names, because they are used and interpreted as
-filenames, and shell meta-characters (such as !, $, *, ?, etc.) embedded in them
+filenames and shell meta-characters (such as !, $, *, ?, etc.) embedded in them
 may cause odd and unhelpful behavior.  The slash (/), or any other character
 that may be interpreted by anyone's file system (\e, $, [, ]), is especially
 dangerous (terminfo is platform-independent, and choosing names with special
@@ -122,7 +121,7 @@ i.e. \fBlinux\fR, \fBbsdos\fR, \fBfreebsd\fR, \fBnetbsd\fR.  It should
 multi-platform environment!  If a model number follows, it should indicate
 either the OS release level or the console driver release level.
 .PP
-The root name for a terminal emulator (assuming it doesn't fit one of the
+The root name for a terminal emulator (assuming it does not fit one of the
 standard ANSI or vt100 types) should be the program name or a readily
 recognizable abbreviation of it (i.e. \fBversaterm\fR, \fBctrm\fR).
 .PP
@@ -197,7 +196,7 @@ tty line initialization (AT&T-like UNIXes)
 .TP 5
 /etc/ttys
 tty line initialization (BSD-like UNIXes)
-.SH "SEE ALSO"
+.SH SEE ALSO
 \fBcurses\fR(3), \fBterminfo\fR(\*n), \fBterm\fR(\*n).
 .\"#
 .\"# The following sets edit modes for GNU EMACS

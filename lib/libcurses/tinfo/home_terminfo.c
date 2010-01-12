@@ -1,7 +1,7 @@
-/*	$OpenBSD: home_terminfo.c,v 1.8 2003/03/17 19:16:59 millert Exp $	*/
+/* $OpenBSD: home_terminfo.c,v 1.9 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1998,2000                   *
+ *  Author: Thomas E. Dickey                                                *
  ****************************************************************************/
 
 /*
@@ -39,29 +39,31 @@
 #include <curses.priv.h>
 #include <tic.h>
 
-MODULE_ID("$From: home_terminfo.c,v 1.6 2000/12/10 02:55:07 tom Exp $")
-
-#define my_length (strlen(home) + sizeof(PRIVATE_INFO))
+MODULE_ID("$Id: home_terminfo.c,v 1.9 2010/01/12 23:22:06 nicm Exp $")
 
 /* ncurses extension...fall back on user's private directory */
+
+#define MyBuffer _nc_globals.home_terminfo
 
 NCURSES_EXPORT(char *)
 _nc_home_terminfo(void)
 {
+    char *result = 0;
+#if USE_HOME_TERMINFO
     char *home;
-    static char *temp = 0;
 
     if (use_terminfo_vars()) {
-	if (temp == 0) {
-	    if ((home = getenv("HOME")) != 0 && *home != '\0'
-		&& my_length <= PATH_MAX) {
-		temp = typeMalloc(char, my_length);
-		if (temp == 0)
-		    _nc_err_abort("Out of memory");
-		(void) snprintf(temp, my_length, PRIVATE_INFO, home);
+	if (MyBuffer == 0) {
+	    if ((home = getenv("HOME")) != 0 && *home != '\0') {
+		size_t want = (strlen(home) + sizeof(PRIVATE_INFO));
+		MyBuffer = typeMalloc(char, want);
+		if (MyBuffer == 0)
+		    _nc_err_abort(MSG_NO_MEMORY);
+		(void) snprintf(MyBuffer, want, PRIVATE_INFO, home);
 	    }
 	}
-	return temp;
+	result = MyBuffer;
     }
-    return 0;
+#endif
+    return result;
 }

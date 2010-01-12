@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_item_val.c,v 1.6 2001/01/22 18:02:04 millert Exp $	*/
+/* $OpenBSD: m_item_val.c,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,13 +39,13 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_item_val.c,v 1.9 2000/12/10 02:16:48 tom Exp $")
+MODULE_ID("$Id: m_item_val.c,v 1.7 2010/01/12 23:22:08 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
 |   Function      :  int set_item_value(ITEM *item, int value)
 |   
-|   Description   :  Programmatically set the items selection value. This is
+|   Description   :  Programmatically set the item's selection value. This is
 |                    only allowed if the item is selectable at all and if
 |                    it is not connected to a single-valued menu.
 |                    If the item is connected to a posted menu, the menu
@@ -55,18 +55,19 @@ MODULE_ID("$From: m_item_val.c,v 1.9 2000/12/10 02:16:48 tom Exp $")
 |                    E_REQUEST_DENIED  - not selectable or single valued menu
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-set_item_value (ITEM *item, bool value)
+set_item_value(ITEM * item, bool value)
 {
   MENU *menu;
-  
+
+  T((T_CALLED("set_item_value(%p,%d)"), item, value));
   if (item)
     {
       menu = item->imenu;
-      
+
       if ((!(item->opt & O_SELECTABLE)) ||
-	  (menu && (menu->opt & O_ONEVALUE))) 
+	  (menu && (menu->opt & O_ONEVALUE)))
 	RETURN(E_REQUEST_DENIED);
-      
+
       if (item->value ^ value)
 	{
 	  item->value = value ? TRUE : FALSE;
@@ -74,7 +75,7 @@ set_item_value (ITEM *item, bool value)
 	    {
 	      if (menu->status & _POSTED)
 		{
-		  Move_And_Post_Item(menu,item);
+		  Move_And_Post_Item(menu, item);
 		  _nc_Show_Menu(menu);
 		}
 	    }
@@ -82,7 +83,7 @@ set_item_value (ITEM *item, bool value)
     }
   else
     _nc_Default_Item.value = value;
-  
+
   RETURN(E_OK);
 }
 
@@ -96,9 +97,10 @@ set_item_value (ITEM *item, bool value)
 |                    FALSE  - if item is not selected
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(bool)
-item_value (const ITEM *item)
+item_value(const ITEM * item)
 {
-  return ((Normalize_Item(item)->value) ? TRUE : FALSE);
+  T((T_CALLED("item_value(%p)"), item));
+  returnBool((Normalize_Item(item)->value) ? TRUE : FALSE);
 }
 
 /* m_item_val.c ends here */

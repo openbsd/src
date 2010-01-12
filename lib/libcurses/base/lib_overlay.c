@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_overlay.c,v 1.2 2001/01/22 18:01:42 millert Exp $	*/
+/* $OpenBSD: lib_overlay.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,30 +42,61 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_overlay.c,v 1.14 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_overlay.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
 
 static int
-overlap(const WINDOW *const s, WINDOW *const d, int const flag)
+overlap(const WINDOW *const src, WINDOW *const dst, int const flag)
 {
-    int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol;
+    int rc = ERR;
+    int sx1, sy1, sx2, sy2;
+    int dx1, dy1, dx2, dy2;
+    int sminrow, smincol;
+    int dminrow, dmincol;
+    int dmaxrow, dmaxcol;
 
-    T(("overlap : sby %d, sbx %d, smy %d, smx %d, dby %d, dbx %d, dmy %d, dmx %d",
-       s->_begy, s->_begx, s->_maxy, s->_maxx,
-       d->_begy, d->_begx, d->_maxy, d->_maxx));
+    T((T_CALLED("overlap(%p,%p,%d)"), src, dst, flag));
 
-    if (!s || !d)
-	returnCode(ERR);
+    if (src != 0 && dst != 0) {
+	_nc_lock_global(curses);
 
-    sminrow = max(s->_begy, d->_begy) - s->_begy;
-    smincol = max(s->_begx, d->_begx) - s->_begx;
-    dminrow = max(s->_begy, d->_begy) - d->_begy;
-    dmincol = max(s->_begx, d->_begx) - d->_begx;
-    dmaxrow = min(s->_maxy + s->_begy, d->_maxy + d->_begy) - d->_begy;
-    dmaxcol = min(s->_maxx + s->_begx, d->_maxx + d->_begx) - d->_begx;
+	T(("src : begy %ld, begx %ld, maxy %ld, maxx %ld",
+	   (long) src->_begy,
+	   (long) src->_begx,
+	   (long) src->_maxy,
+	   (long) src->_maxx));
+	T(("dst : begy %ld, begx %ld, maxy %ld, maxx %ld",
+	   (long) dst->_begy,
+	   (long) dst->_begx,
+	   (long) dst->_maxy,
+	   (long) dst->_maxx));
 
-    return (copywin(s, d,
-		    sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol,
-		    flag));
+	sx1 = src->_begx;
+	sy1 = src->_begy;
+	sx2 = sx1 + src->_maxx;
+	sy2 = sy1 + src->_maxy;
+
+	dx1 = dst->_begx;
+	dy1 = dst->_begy;
+	dx2 = dx1 + dst->_maxx;
+	dy2 = dy1 + dst->_maxy;
+
+	if (dx2 >= sx1 && dx1 <= sx2 && dy2 >= sy1 && dy1 <= sy2) {
+	    sminrow = max(sy1, dy1) - sy1;
+	    smincol = max(sx1, dx1) - sx1;
+	    dminrow = max(sy1, dy1) - dy1;
+	    dmincol = max(sx1, dx1) - dx1;
+	    dmaxrow = min(sy2, dy2) - dy1;
+	    dmaxcol = min(sx2, dx2) - dx1;
+
+	    rc = copywin(src, dst,
+			 sminrow, smincol,
+			 dminrow, dmincol,
+			 dmaxrow, dmaxcol,
+			 flag);
+	}
+	_nc_unlock_global(curses);
+    }
+    returnCode(rc);
 }
 
 /*
@@ -103,59 +134,75 @@ overwrite(const WINDOW *win1, WINDOW *win2)
 }
 
 NCURSES_EXPORT(int)
-copywin
-(const WINDOW *src, WINDOW *dst,
- int sminrow, int smincol,
- int dminrow, int dmincol, int dmaxrow, int dmaxcol,
- int over)
+copywin(const WINDOW *src, WINDOW *dst,
+	int sminrow, int smincol,
+	int dminrow, int dmincol,
+	int dmaxrow, int dmaxcol,
+	int over)
 {
+    int rc = ERR;
     int sx, sy, dx, dy;
     bool touched;
-    chtype bk = AttrOf(dst->_bkgd);
-    chtype mask = ~(chtype) ((bk & A_COLOR) ? A_COLOR : 0);
+    attr_t bk;
+    attr_t mask;
 
     T((T_CALLED("copywin(%p, %p, %d, %d, %d, %d, %d, %d, %d)"),
        src, dst, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, over));
 
-    if (!src || !dst)
-	returnCode(ERR);
+    if (src && dst) {
+	_nc_lock_global(curses);
 
-    /* make sure rectangle exists in source */
-    if ((sminrow + dmaxrow - dminrow) > (src->_maxy + 1) ||
-	(smincol + dmaxcol - dmincol) > (src->_maxx + 1)) {
-	returnCode(ERR);
-    }
+	bk = AttrOf(dst->_nc_bkgd);
+	mask = ~(attr_t) ((bk & A_COLOR) ? A_COLOR : 0);
 
-    T(("rectangle exists in source"));
+	/* make sure rectangle exists in source */
+	if ((sminrow + dmaxrow - dminrow) <= (src->_maxy + 1) &&
+	    (smincol + dmaxcol - dmincol) <= (src->_maxx + 1)) {
 
-    /* make sure rectangle fits in destination */
-    if (dmaxrow > dst->_maxy || dmaxcol > dst->_maxx) {
-	returnCode(ERR);
-    }
+	    T(("rectangle exists in source"));
 
-    T(("rectangle fits in destination"));
+	    /* make sure rectangle fits in destination */
+	    if (dmaxrow <= dst->_maxy && dmaxcol <= dst->_maxx) {
 
-    for (dy = dminrow, sy = sminrow; dy <= dmaxrow; sy++, dy++) {
-	touched = FALSE;
-	for (dx = dmincol, sx = smincol; dx <= dmaxcol; sx++, dx++) {
-	    if (over) {
-		if ((TextOf(src->_line[sy].text[sx]) != ' ') &&
-		    (dst->_line[dy].text[dx] != src->_line[sy].text[sx])) {
-		    dst->_line[dy].text[dx] =
-			(src->_line[sy].text[sx] & mask) | bk;
-		    touched = TRUE;
+		T(("rectangle fits in destination"));
+
+		for (dy = dminrow, sy = sminrow;
+		     dy <= dmaxrow;
+		     sy++, dy++) {
+
+		    touched = FALSE;
+		    for (dx = dmincol, sx = smincol;
+			 dx <= dmaxcol;
+			 sx++, dx++) {
+			if (over) {
+			    if ((CharOf(src->_line[sy].text[sx]) != L(' ')) &&
+				(!CharEq(dst->_line[dy].text[dx],
+					 src->_line[sy].text[sx]))) {
+				dst->_line[dy].text[dx] =
+				    src->_line[sy].text[sx];
+				SetAttr(dst->_line[dy].text[dx],
+					((AttrOf(src->_line[sy].text[sx]) &
+					  mask) | bk));
+				touched = TRUE;
+			    }
+			} else {
+			    if (!CharEq(dst->_line[dy].text[dx],
+					src->_line[sy].text[sx])) {
+				dst->_line[dy].text[dx] =
+				    src->_line[sy].text[sx];
+				touched = TRUE;
+			    }
+			}
+		    }
+		    if (touched) {
+			touchline(dst, dminrow, (dmaxrow - dminrow + 1));
+		    }
 		}
-	    } else {
-		if (dst->_line[dy].text[dx] != src->_line[sy].text[sx]) {
-		    dst->_line[dy].text[dx] = src->_line[sy].text[sx];
-		    touched = TRUE;
-		}
+		T(("finished copywin"));
+		rc = OK;
 	    }
 	}
-	if (touched) {
-	    touchline(dst, 0, getmaxy(dst));
-	}
+	_nc_unlock_global(curses);
     }
-    T(("finished copywin"));
-    returnCode(OK);
+    returnCode(rc);
 }

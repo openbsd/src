@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_move.c,v 1.3 2001/01/22 18:01:41 millert Exp $	*/
+/* $OpenBSD: lib_move.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -42,16 +43,14 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_move.c,v 1.11 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_move.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 wmove(WINDOW *win, int y, int x)
 {
     T((T_CALLED("wmove(%p,%d,%d)"), win, y, x));
 
-    if (win &&
-	x >= 0 && x <= win->_maxx &&
-	y >= 0 && y <= win->_maxy) {
+    if (LEGALYX(win, y, x)) {
 	win->_curx = (NCURSES_SIZE_T) x;
 	win->_cury = (NCURSES_SIZE_T) y;
 

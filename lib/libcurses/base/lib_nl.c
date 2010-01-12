@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_nl.c,v 1.5 2001/01/22 18:01:42 millert Exp $	*/
+/* $OpenBSD: lib_nl.c,v 1.6 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -44,7 +44,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_nl.c,v 1.8 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_nl.c,v 1.6 2010/01/12 23:22:06 nicm Exp $")
 
 #ifdef __EMX__
 #include <io.h>

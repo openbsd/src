@@ -1,5 +1,7 @@
+/* $OpenBSD: version.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+
 /****************************************************************************
- * Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1999-2004,2005 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,16 +34,11 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: version.c,v 1.4 2000/12/10 02:43:28 tom Exp $")
+MODULE_ID("$Id: version.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(const char *)
 curses_version(void)
 {
-    static char my_version[80];
-
     T((T_CALLED("curses_version()")));
-    snprintf(my_version, sizeof(my_version), "ncurses %s.%d",
-	    NCURSES_VERSION,
-	    NCURSES_VERSION_PATCH);
-    returnPtr(my_version);
+    returnCPtr("ncurses " NCURSES_VERSION_STRING);
 }

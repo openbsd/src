@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_adabind.c,v 1.1 1998/07/24 16:38:52 millert Exp $	*/
+/* $OpenBSD: use_screen.c,v 1.1 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 2007,2008 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,39 +29,32 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *     Author: Thomas E. Dickey                        2007                 *
  ****************************************************************************/
 
-/***************************************************************************
-* Module m_adabind.c                                                       *
-* Helper routines to ease the implementation of an Ada95 binding to        *
-* ncurses. For details and copyright of the binding see the ../Ada95       *
-* subdirectory.                                                            *
-***************************************************************************/
-#include "menu.priv.h"
+#include <curses.priv.h>
 
-MODULE_ID("$From: m_adabind.c,v 1.6 1998/02/11 12:13:50 tom Exp $")
+MODULE_ID("$Id: use_screen.c,v 1.1 2010/01/12 23:22:06 nicm Exp $")
 
-/* Prototypes for the functions in this module */
-void  _nc_ada_normalize_menu_opts (int *opt);
-void  _nc_ada_normalize_item_opts (int *opt);
-ITEM* _nc_get_item(const MENU*, int);
-
-void _nc_ada_normalize_menu_opts (int *opt)
+NCURSES_EXPORT(int)
+use_screen(SCREEN *screen, NCURSES_SCREEN_CB func, void *data)
 {
-  *opt = ALL_MENU_OPTS & (*opt);
-}
+    SCREEN *save_SP;
+    int code = OK;
 
-void _nc_ada_normalize_item_opts (int *opt)
-{
-  *opt = ALL_ITEM_OPTS & (*opt);
-}
+    T((T_CALLED("use_screen(%p,%p,%p)"), screen, func, data));
 
-ITEM* _nc_get_item(const MENU* menu, int idx) {
-  if (menu && menu->items && idx>=0 && (idx<menu->nitems))
-    {
-      return menu->items[idx];
-    }
-  else
-    return (ITEM*)0;
+    /*
+     * FIXME - add a flag so a given thread can check if _it_ has already
+     * recurred through this point, return an error if so.
+     */
+    _nc_lock_global(curses);
+    save_SP = SP;
+    set_term(screen);
+
+    code = func(screen, data);
+
+    set_term(save_SP);
+    _nc_unlock_global(curses);
+    returnCode(code);
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: mf_common.h,v 1.6 2000/10/08 22:47:07 millert Exp $	*/
+/* $OpenBSD: mf_common.h,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,14 +29,18 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
+
+/* $Id: mf_common.h,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
 
 /* Common internal header for menu and form library */
 
-#if HAVE_CONFIG_H
-#  include <ncurses_cfg.h>
-#endif
+#ifndef MF_COMMON_H_incl
+#define MF_COMMON_H_incl 1
+
+#include <ncurses_cfg.h>
+#include <curses.h>
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -69,27 +73,25 @@ extern int errno;
 #define MAX_REGULAR_CHARACTER (0xff)
 
 #define SET_ERROR(code) (errno=(code))
-#define GET_ERROR() (errno)
-#define RETURN(code) return( SET_ERROR(code) )
+#define GET_ERROR()     (errno)
+
+#ifdef TRACE
+#define RETURN(code)    returnCode( SET_ERROR(code) )
+#else
+#define RETURN(code)    return( SET_ERROR(code) )
+#endif
 
 /* The few common values in the status fields for menus and forms */
-#define _POSTED         (0x01)  /* menu or form is posted                  */
-#define _IN_DRIVER      (0x02)  /* menu or form is processing hook routine */
+#define _POSTED         (0x01U)  /* menu or form is posted                  */
+#define _IN_DRIVER      (0x02U)  /* menu or form is processing hook routine */
 
 /* Call object hook */
 #define Call_Hook( object, handler ) \
-   if ( (object) && ((object)->handler) )\
+   if ( (object) != 0 && ((object)->handler) != (void *) 0 )\
    {\
 	(object)->status |= _IN_DRIVER;\
 	(object)->handler(object);\
 	(object)->status &= ~_IN_DRIVER;\
    }
 
-#define INLINE
-
-#ifndef TRACE
-#  if CC_HAS_INLINE_FUNCS
-#    undef INLINE
-#    define INLINE inline
-#  endif
-#endif
+#endif /* MF_COMMON_H_incl */

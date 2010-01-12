@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_tgoto.c,v 1.4 2003/03/18 16:55:54 millert Exp $	*/
+/* $OpenBSD: lib_tgoto.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2000 Free Software Foundation, Inc.                        *
+ * Copyright (c) 2000-2006,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <termcap.h>
 
-MODULE_ID("$From: lib_tgoto.c,v 1.5 2000/12/10 01:33:16 tom Exp $")
+MODULE_ID("$Id: lib_tgoto.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
 
 #if !PURE_TERMINFO
 static bool
@@ -91,13 +91,13 @@ tgoto_internal(const char *string, int x, int y)
     while (*string != 0) {
 	if ((used + need) > length) {
 	    length += (used + need);
-	    if ((result = _nc_doalloc(result, length)) == 0) {
+	    if ((result = typeRealloc(char, length, result)) == 0) {
 		length = 0;
 		break;
 	    }
 	}
 	if (*string == '%') {
-	    char *fmt = 0;
+	    const char *fmt = 0;
 
 	    switch (*++string) {
 	    case '\0':
@@ -115,7 +115,7 @@ tgoto_internal(const char *string, int x, int y)
 		*value %= 1000;
 		break;
 	    case '+':
-		*value += CharOf(*++string);
+		*value += UChar(*++string);
 		/* FALLTHRU */
 	    case '.':
 		/*
@@ -131,7 +131,7 @@ tgoto_internal(const char *string, int x, int y)
 			*value = 0200;	/* tputs will treat this as \0 */
 		    }
 		}
-		result[used++] = *value++;
+		result[used++] = (char) *value++;
 		break;
 	    case '%':
 		result[used++] = *string;
@@ -158,7 +158,7 @@ tgoto_internal(const char *string, int x, int y)
 		*value = 16 * (*value / 10) + (*value % 10);
 		break;
 	    case 'D':		/* Reverse coding (Delta Data) */
-		*value -= 2 * (*value / 16);
+		*value -= 2 * (*value % 16);
 		break;
 	    }
 	    if (fmt != 0) {
@@ -175,14 +175,14 @@ tgoto_internal(const char *string, int x, int y)
 	}
 	string++;
     }
-    if (need_BC) {
+    if (result != 0) {
 	copied = strlcpy(result + used, BC, length - used);
 	if (copied < length - used)
 	    used += copied;
 	else
 	    used += length - used - 1;
+	result[used] = '\0';
     }
-    result[used] = '\0';
     return result;
 }
 #endif
@@ -192,8 +192,7 @@ tgoto_internal(const char *string, int x, int y)
  * the last two arguments when invoking tparm().
  */
 NCURSES_EXPORT(char *)
-tgoto
-(const char *string, int x, int y)
+tgoto(const char *string, int x, int y)
 {
     char *result;
 
@@ -203,6 +202,6 @@ tgoto
 	result = tgoto_internal(string, x, y);
     else
 #endif
-	result = tparm((NCURSES_CONST char *) string, y, x);
+	result = TPARM_2((NCURSES_CONST char *) string, y, x);
     returnPtr(result);
 }

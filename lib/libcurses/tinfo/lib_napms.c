@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_napms.c,v 1.7 2001/01/22 18:01:53 millert Exp $	*/
+/* $OpenBSD: lib_napms.c,v 1.8 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,6 +38,8 @@
  *
  *	The routine napms.
  *
+ *	(This file was originally written by Eric Raymond; however except for
+ *	comments, none of the original code remains - T.Dickey).
  */
 
 #include <curses.priv.h>
@@ -47,20 +49,9 @@
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>		/* needed for MacOS X DP3 */
 #endif
-#elif USE_FUNC_POLL
-#if HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-#elif HAVE_SELECT
-#if HAVE_SYS_TIME_H && HAVE_SYS_TIME_SELECT
-#include <sys/time.h>
-#endif
-#if HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 #endif
 
-MODULE_ID("$From: lib_napms.c,v 1.11 2000/12/10 02:55:07 tom Exp $")
+MODULE_ID("$Id: lib_napms.c,v 1.8 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 napms(int ms)
@@ -69,23 +60,17 @@ napms(int ms)
 
 #if HAVE_NANOSLEEP
     {
-	struct timespec ts;
-	ts.tv_sec = ms / 1000;
-	ts.tv_nsec = (ms % 1000) * 1000000;
-	nanosleep(&ts, NULL);
+	struct timespec request, remaining;
+	request.tv_sec = ms / 1000;
+	request.tv_nsec = (ms % 1000) * 1000000;
+	while (nanosleep(&request, &remaining) == -1
+	       && errno == EINTR) {
+	    request = remaining;
+	}
     }
-#elif USE_FUNC_POLL
-    {
-	struct pollfd fds[1];
-	poll(fds, 0, ms);
-    }
-#elif HAVE_SELECT
-    {
-	struct timeval tval;
-	tval.tv_sec = ms / 1000;
-	tval.tv_usec = (ms % 1000) * 1000;
-	select(0, NULL, NULL, NULL, &tval);
-    }
+#else
+    _nc_timed_wait(0, 0, ms, (int *) 0 EVENTLIST_2nd(0));
 #endif
+
     returnCode(OK);
 }

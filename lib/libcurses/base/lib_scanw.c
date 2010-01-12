@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_scanw.c,v 1.2 2001/01/22 18:01:43 millert Exp $	*/
+/* $OpenBSD: lib_scanw.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,2000,2001 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,15 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_scanw.c,v 1.10 2000/12/10 02:43:27 tom Exp $")
-
-#if !HAVE_VSSCANF
-#if defined(__QNX__)
-extern int vsscanf(const char *str, const char *format, __va_list __arg);
-#else
-extern int vsscanf(const char *str, const char *format,...);
-#endif
-#endif
+MODULE_ID("$Id: lib_scanw.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 vwscanw(WINDOW *win, NCURSES_CONST char *fmt, va_list argp)

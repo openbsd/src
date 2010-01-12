@@ -1,7 +1,7 @@
-/*	$OpenBSD: keybound.c,v 1.4 2007/10/17 20:10:44 chl Exp $	*/
+/* $OpenBSD: keybound.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1999-2005,2006 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,25 +29,26 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1999                        *
+ *  Author: Thomas E. Dickey                 1999-on                        *
  ****************************************************************************/
 
 #include <curses.priv.h>
 #include <limits.h>
 
-MODULE_ID("$From: keybound.c,v 1.3 2000/12/10 02:43:26 tom Exp $")
+MODULE_ID("$Id: keybound.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
 
 /*
  * Returns the count'th string definition which is associated with the
  * given keycode.  The result is malloc'd, must be freed by the caller.
  */
-
 NCURSES_EXPORT(char *)
 keybound(int code, int count)
 {
-    if (code < 0 || code > (int)USHRT_MAX) {
-    	return NULL;
-    } else {
-	return _nc_expand_try(SP->_key_ok, (unsigned short)code, &count, 0);
+    char *result = 0;
+
+    T((T_CALLED("keybound(%d,%d)"), code, count));
+    if (SP != 0 && code >= 0) {
+	result = _nc_expand_try(SP->_keytry, (unsigned) code, &count, 0);
     }
+    returnPtr(result);
 }

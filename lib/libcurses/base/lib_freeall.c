@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_freeall.c,v 1.4 2001/01/22 18:01:39 millert Exp $	*/
+/* $OpenBSD: lib_freeall.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,11 +29,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1996,1997                   *
+ *  Author: Thomas E. Dickey                    1996-on                     *
  ****************************************************************************/
 
 #include <curses.priv.h>
 #include <term_entry.h>
+#include <tic.h>
 
 #if HAVE_NC_FREEALL
 
@@ -41,31 +42,7 @@
 extern int malloc_errfd;	/* FIXME */
 #endif
 
-MODULE_ID("$From: lib_freeall.c,v 1.18 2000/12/10 02:43:27 tom Exp $")
-
-static void
-free_slk(SLK * p)
-{
-    if (p != 0) {
-	FreeIfNeeded(p->ent);
-	FreeIfNeeded(p->buffer);
-	free(p);
-    }
-}
-
-static void
-free_tries(struct tries *p)
-{
-    struct tries *q;
-
-    while (p != 0) {
-	q = p->sibling;
-	if (p->child != 0)
-	    free_tries(p->child);
-	free(p);
-	p = q;
-    }
-}
+MODULE_ID("$Id: lib_freeall.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
 
 /*
  * Free all ncurses data.  This is used for testing only (there's no practical
@@ -75,61 +52,92 @@ NCURSES_EXPORT(void)
 _nc_freeall(void)
 {
     WINDOWLIST *p, *q;
+    static va_list empty_va;
 
+    T((T_CALLED("_nc_freeall()")));
 #if NO_LEAKS
-    _nc_free_tparm();
+    if (SP != 0) {
+	if (SP->_oldnum_list != 0) {
+	    FreeAndNull(SP->_oldnum_list);
+	}
+	if (SP->_panelHook.destroy != 0) {
+	    SP->_panelHook.destroy(SP->_panelHook.stdscr_pseudo_panel);
+	}
+    }
 #endif
     if (SP != 0) {
+	_nc_lock_global(curses);
+
 	while (_nc_windows != 0) {
+	    bool deleted = FALSE;
+
 	    /* Delete only windows that're not a parent */
-	    for (p = _nc_windows; p != 0; p = p->next) {
+	    for (each_window(p)) {
 		bool found = FALSE;
 
-		for (q = _nc_windows; q != 0; q = q->next) {
+		for (each_window(q)) {
 		    if ((p != q)
-			&& (q->win->_flags & _SUBWIN)
-			&& (p->win == q->win->_parent)) {
+			&& (q->win._flags & _SUBWIN)
+			&& (&(p->win) == q->win._parent)) {
 			found = TRUE;
 			break;
 		    }
 		}
 
 		if (!found) {
-		    delwin(p->win);
+		    if (delwin(&(p->win)) != ERR)
+			deleted = TRUE;
 		    break;
 		}
 	    }
+
+	    /*
+	     * Don't continue to loop if the list is trashed.
+	     */
+	    if (!deleted)
+		break;
 	}
-
-	free_tries(SP->_keytry);
-	free_tries(SP->_key_ok);
-	free_slk(SP->_slk);
-	FreeIfNeeded(SP->_color_pairs);
-	FreeIfNeeded(SP->_color_table);
-#if !BROKEN_LINKER
-	FreeAndNull(SP);
-#endif
+	delscreen(SP);
+	_nc_unlock_global(curses);
     }
+    if (cur_term != 0)
+	del_curterm(cur_term);
 
-    if (cur_term != 0) {
-	_nc_free_termtype(&(cur_term->type));
-	free(cur_term);
-    }
+    (void) _nc_printf_string(0, empty_va);
 #ifdef TRACE
     (void) _nc_trace_buf(-1, 0);
 #endif
+#if USE_WIDEC_SUPPORT
+    FreeIfNeeded(_nc_wacs);
+#endif
+    _nc_leaks_tinfo();
+
 #if HAVE_LIBDBMALLOC
     malloc_dump(malloc_errfd);
 #elif HAVE_LIBDMALLOC
+#elif HAVE_LIBMPATROL
+    __mp_summary();
 #elif HAVE_PURIFY
     purify_all_inuse();
 #endif
+    returnVoid;
 }
 
 NCURSES_EXPORT(void)
 _nc_free_and_exit(int code)
 {
+    char *last_setbuf = (SP != 0) ? SP->_setbuf : 0;
+
     _nc_freeall();
+#ifdef TRACE
+    trace(0);			/* close trace file, freeing its setbuf */
+    {
+	static va_list fake;
+	free(_nc_varargs("?", fake));
+    }
+#endif
+    fclose(stdout);
+    FreeIfNeeded(last_setbuf);
     exit(code);
 }
 
@@ -137,5 +145,15 @@ _nc_free_and_exit(int code)
 NCURSES_EXPORT(void)
 _nc_freeall(void)
 {
+}
+
+NCURSES_EXPORT(void)
+_nc_free_and_exit(int code)
+{
+    if (SP)
+	delscreen(SP);
+    if (cur_term != 0)
+	del_curterm(cur_term);
+    exit(code);
 }
 #endif

@@ -1,7 +1,5 @@
-/*	$OpenBSD: fld_info.c,v 1.4 2001/01/22 18:02:12 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,12 +27,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_info.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
+MODULE_ID("$Id: fld_info.c,v 1.5 2010/01/12 23:22:07 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -49,24 +47,35 @@ MODULE_ID("$From: fld_info.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
 |                    E_BAD_ARGUMENT - invalid field pointer
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-field_info 
-    (const FIELD *field,
-     int *rows, int *cols, 
-     int *frow, int *fcol, 
-     int *nrow, int *nbuf)
+field_info(const FIELD *field,
+	   int *rows, int *cols,
+	   int *frow, int *fcol,
+	   int *nrow, int *nbuf)
 {
-  if (!field) 
+  T((T_CALLED("field_info(%p,%p,%p,%p,%p,%p,%p)"),
+     field,
+     rows, cols,
+     frow, fcol,
+     nrow, nbuf));
+
+  if (!field)
     RETURN(E_BAD_ARGUMENT);
 
-  if (rows) *rows = field->rows;
-  if (cols) *cols = field->cols;
-  if (frow) *frow = field->frow;
-  if (fcol) *fcol = field->fcol;
-  if (nrow) *nrow = field->nrow;
-  if (nbuf) *nbuf = field->nbuf;
+  if (rows)
+    *rows = field->rows;
+  if (cols)
+    *cols = field->cols;
+  if (frow)
+    *frow = field->frow;
+  if (fcol)
+    *fcol = field->fcol;
+  if (nrow)
+    *nrow = field->nrow;
+  if (nbuf)
+    *nbuf = field->nbuf;
   RETURN(E_OK);
 }
-	
+
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
 |   Function      :  int dynamic_field_info(const FIELD *field,
@@ -80,15 +89,19 @@ field_info
 |                    E_BAD_ARGUMENT - invalid argument
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-dynamic_field_info
-(const FIELD *field, int *drows, int *dcols, int *maxgrow)
+dynamic_field_info(const FIELD *field, int *drows, int *dcols, int *maxgrow)
 {
+  T((T_CALLED("dynamic_field_info(%p,%p,%p,%p)"), field, drows, dcols, maxgrow));
+
   if (!field)
     RETURN(E_BAD_ARGUMENT);
 
-  if (drows)   *drows   = field->drows;
-  if (dcols)   *dcols   = field->dcols;
-  if (maxgrow) *maxgrow = field->maxgrow;
+  if (drows)
+    *drows = field->drows;
+  if (dcols)
+    *dcols = field->dcols;
+  if (maxgrow)
+    *maxgrow = field->maxgrow;
 
   RETURN(E_OK);
 }

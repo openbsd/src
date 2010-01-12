@@ -1,7 +1,7 @@
-.\" $OpenBSD: curs_extend.3,v 1.5 2003/05/12 11:06:49 jmc Exp $
+.\" $OpenBSD: curs_extend.3,v 1.6 2010/01/12 23:21:59 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1999-2004,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,22 +28,20 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" Author: Thomas E. Dickey <dickey@clark.net> 1999
+.\" Author: Thomas E. Dickey 1999-on
 .\"
-.\" $From: curs_extend.3x,v 1.6 2000/07/15 22:57:20 tom Exp $
+.\" $Id: curs_extend.3,v 1.6 2010/01/12 23:21:59 nicm Exp $
 .TH curs_extend 3 ""
 .SH NAME
-\fBcurs_extend\fR,
 \fBcurses_version\fP,
 \fBuse_extended_names\fP \- miscellaneous curses extensions
-..
+.
 .SH SYNOPSIS
 \fB#include <curses.h>\fP
-
+.sp
 \fBconst char * curses_version(void);\fP
 .br
 \fBint use_extended_names(bool enable);\fP
-..
 .SH DESCRIPTION
 These functions are extensions to the curses library
 which do not fit easily into other categories.
@@ -60,27 +58,25 @@ is able to use user-defined or nonstandard names
 which may be compiled into the terminfo
 description, i.e., via the terminfo or termcap interfaces.
 Normally these names are available for use, since the essential decision
-is made by using the \fB-x\fP option of \fItic\fP to compile
+is made by using the \fB-x\fP option of \fBtic\fP to compile
 extended terminal definitions.
 However you can disable this feature
 to ensure compatibility with other implementations of curses.
-..
 .SH PORTABILITY
 These routines are specific to ncurses.  They were not supported on
 Version 7, BSD or System V implementations.  It is recommended that
 any code depending on them be conditioned using NCURSES_VERSION.
-..
 .SH SEE ALSO
 \fBcurs_getch\fR(3),
 \fBcurs_mouse\fR(3),
 \fBcurs_print\fR(3),
+\fBcurs_util\fR(3),
 \fBdefault_colors\fR(3),
 \fBdefine_key\fR(3),
 \fBkeybound\fR(3),
 \fBkeyok\fR(3),
 \fBresizeterm\fR(3),
 \fBwresize\fR(3).
-..
 .SH AUTHOR
 Thomas Dickey.
 .\"#

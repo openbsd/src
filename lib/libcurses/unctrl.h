@@ -1,4 +1,4 @@
-/*	$OpenBSD: unctrl.h,v 1.8 2001/01/22 18:01:35 millert Exp $	*/
+/* $OpenBSD: unctrl.h,v 1.9 2010/01/12 23:21:59 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -41,13 +41,13 @@
  * as ^?. Printable characters are displayed as is.
  */
 
-/* $From: unctrl.h.in,v 1.9 2000/12/10 02:02:15 tom Exp $ */
+/* $Id: unctrl.h,v 1.9 2010/01/12 23:21:59 nicm Exp $ */
 
-#ifndef _UNCTRL_H
-#define _UNCTRL_H	1
+#ifndef NCURSES_UNCTRL_H_incl
+#define NCURSES_UNCTRL_H_incl	1
 
 #undef  NCURSES_VERSION
-#define NCURSES_VERSION "5.2"
+#define NCURSES_VERSION "5.7"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,4 +62,4 @@ NCURSES_EXPORT(NCURSES_CONST char *) unctrl (chtype);
 }
 #endif
 
-#endif /* _UNCTRL_H */
+#endif /* NCURSES_UNCTRL_H_incl */

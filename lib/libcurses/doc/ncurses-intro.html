@@ -1,11 +1,39 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3.0//EN">
 <!--
-  $From: ncurses-intro.html,v 1.34 2000/06/11 00:03:55 tom Exp $
+  $Id: ncurses-intro.html,v 1.7 2010/01/12 23:22:06 nicm Exp $
+  ****************************************************************************
+  * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+  *                                                                          *
+  * Permission is hereby granted, free of charge, to any person obtaining a  *
+  * copy of this software and associated documentation files (the            *
+  * "Software"), to deal in the Software without restriction, including      *
+  * without limitation the rights to use, copy, modify, merge, publish,      *
+  * distribute, distribute with modifications, sublicense, and/or sell       *
+  * copies of the Software, and to permit persons to whom the Software is    *
+  * furnished to do so, subject to the following conditions:                 *
+  *                                                                          *
+  * The above copyright notice and this permission notice shall be included  *
+  * in all copies or substantial portions of the Software.                   *
+  *                                                                          *
+  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+  * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+  *                                                                          *
+  * Except as contained in this notice, the name(s) of the above copyright   *
+  * holders shall not be used in advertising or otherwise to promote the     *
+  * sale, use or other dealings in this Software without prior written       *
+  * authorization.                                                           *
+  ****************************************************************************
 -->
 <HTML>
 <HEAD>
 <TITLE>Writing Programs with NCURSES</TITLE>
 <link rev="made" href="mailto:bugs-ncurses@gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </HEAD>
 <BODY>
 
@@ -221,16 +249,11 @@ maintainer of this package is
 &lt;esr@snark.thyrsus.com&gt;
 wrote many of the new features in versions after 1.8.1
 and wrote most of this introduction.
-<A HREF="mailto:juergen.pfeifer@gmx.net">J&uuml;rgen Pfeifer</A>
+J&uuml;rgen Pfeifer
 wrote all of the menu and forms code as well as the
 <A HREF="http://www.adahome.com">Ada95</A> binding.
 Ongoing work is being done by
-<A HREF="mailto:dickey@herndon4.his.com">Thomas Dickey</A>
-and
-<A HREF="mailto:juergen.pfeifer@gmx.net">J&uuml;rgen Pfeifer</A>.
-<A HREF="mailto:florian@gnu.org">Florian La Roche</A>
-acts as the maintainer for the Free Software Foundation, which holds the
-copyright on ncurses.
+<A HREF="mailto:dickey@invisible-island.net">Thomas Dickey</A> (maintainer).
 Contact the current maintainers at
 <A HREF="mailto:bug-ncurses@gnu.org">bug-ncurses@gnu.org</A>.
 <P>
@@ -613,6 +636,7 @@ Presently, mouse event reporting works in the following environments:
 <li>xterm and similar programs such as rxvt.
 <li>Linux console, when configured with <CODE>gpm</CODE>(1), Alessandro
 Rubini's mouse server.
+<li>FreeBSD sysmouse (console)
 <li>OS/2 EMX
 </ul>
 <P>
@@ -690,7 +714,7 @@ the first call to <CODE>refresh()</CODE> will clear the screen.  If an error
 occurs a message is written to standard error and the program
 exits. Otherwise it returns a pointer to stdscr.  A few functions may be
 called before initscr (<CODE>slk_init()</CODE>, <CODE>filter()</CODE>,
-<CODE>ripofflines()</CODE>, <CODE>use_env()</CODE>, and, if you are using multiple
+<CODE>ripoffline()</CODE>, <CODE>use_env()</CODE>, and, if you are using multiple
 terminals, <CODE>newterm()</CODE>.)
 <DT> <CODE>endwin()</CODE>
 <DD> Your program should always call <CODE>endwin()</CODE> before exiting or
@@ -704,7 +728,11 @@ restore the ncurses screen from before the escape.
 <CODE>newterm()</CODE> instead of <CODE>initscr()</CODE>.  <CODE>newterm()</CODE> should
 be called once for each terminal.  It returns a variable of type
 <CODE>SCREEN *</CODE> which should be saved as a reference to that
-terminal. The arguments are the type of the terminal (a string) and
+terminal.
+(NOTE: a SCREEN variable is not a <em>screen</em> in the sense we
+are describing in this introduction, but a collection of 
+parameters used to assist in optimizing the display.)
+The arguments are the type of the terminal (a string) and
 <CODE>FILE</CODE> pointers for the output and input of the terminal.  If
 type is NULL then the environment variable <CODE>$TERM</CODE> is used.
 <CODE>endwin()</CODE> should called once at wrapup time for each terminal
@@ -728,7 +756,7 @@ the  terminal,  as  other  routines  merely  manipulate data
 structures.  <CODE>wrefresh()</CODE> copies the named window  to the physical
 terminal screen,  taking  into account  what is already
 there in  order to  do optimizations.  <CODE>refresh()</CODE> does a
-refresh of <CODE>stdscr()</CODE>.   Unless <CODE>leaveok()</CODE> has been
+refresh of <CODE>stdscr</CODE>.   Unless <CODE>leaveok()</CODE> has been
 enabled, the physical cursor of the terminal is left at  the
 location of the window's cursor.
 <DT> <CODE>doupdate()</CODE> and <CODE>wnoutrefresh(win)</CODE>
@@ -886,15 +914,14 @@ Here is some sample code for shellout:
 
 <H3><A NAME="xterm">Using NCURSES under XTERM</A></H3>
 
-A resize operation in X sends SIGWINCH to the application running under xterm.
-The <CODE>ncurses</CODE> library provides an experimental signal
-handler, but in general does not catch this signal, because it cannot
-know how you want the screen re-painted.  You will usually have to write the
-SIGWINCH handler yourself.  Ncurses can give you some help. <P>
+A resize operation in X sends <CODE>SIGWINCH</CODE> to the application running
+under xterm.
 
-The easiest way to code your SIGWINCH handler is to have it do an
-<CODE>endwin</CODE>, followed by an <CODE>refresh</CODE> and a screen repaint you code
-yourself.  The <CODE>refresh</CODE> will pick up the new screen size from the
+The easiest way to handle <CODE>SIGWINCH</CODE>
+is to do an <CODE>endwin</CODE>,
+followed by an <CODE>refresh</CODE> and a screen repaint you code
+yourself.
+The <CODE>refresh</CODE> will pick up the new screen size from the
 xterm's environment. <P>
 
 That is the standard way, of course (it even works with some vendor's curses
@@ -906,8 +933,17 @@ not resize subwindows which must be shrunk.
 are limited to the new screen dimensions, and pads <CODE>stdscr</CODE>
 with blanks if the screen is larger. <P>
 
-Finally, ncurses can be configured to provide its own SIGWINCH handler,
-based on <CODE>resizeterm</CODE>.
+The <CODE>ncurses</CODE> library provides a SIGWINCH signal handler,
+which pushes a <CODE>KEY_RESIZE</CODE> via the wgetch() calls.
+When <CODE>ncurses</CODE> returns that code,
+it calls <code>resizeterm</CODE>
+to update the size of the standard screen's window, repainting that
+(filling with blanks or truncating as needed).
+It also resizes other windows,
+but its effect may be less satisfactory because it cannot
+know how you want the screen re-painted.
+You will usually have to write special-purpose code to handle
+<CODE>KEY_RESIZE</CODE> yourself.
 
 <H3><A NAME="screens">Handling Multiple Terminal Screens</A></H3>
 
@@ -1016,7 +1052,7 @@ guarantee an entire-contents copy anywhere. <P>
 
 The really clean way to handle this is to use the panels library.  If,
 when you want a screen update, you do <CODE>update_panels()</CODE>, it will
-do all the necessary <CODE>wnoutrfresh()</CODE> calls for whatever panel
+do all the necessary <CODE>wnoutrefresh()</CODE> calls for whatever panel
 stacking order you have defined.  Then you can do one <CODE>doupdate()</CODE>
 and there will be a <EM>single</EM> burst of physical I/O that will do
 all your updates.
@@ -1218,10 +1254,10 @@ The general flow of control of a menu program looks like this:
 <LI>Initialize <CODE>curses</CODE>.
 <LI>Create the menu items, using <CODE>new_item()</CODE>.
 <LI>Create the menu using <CODE>new_menu()</CODE>.
-<LI>Post the menu using <CODE>menu_post()</CODE>.
+<LI>Post the menu using <CODE>post_menu()</CODE>.
 <LI>Refresh the screen.
 <LI>Process user requests via an input loop.
-<LI>Unpost the menu using <CODE>menu_unpost()</CODE>.
+<LI>Unpost the menu using <CODE>unpost_menu()</CODE>.
 <LI>Free the menu, using <CODE>free_menu()</CODE>.
 <LI>Free the items using <CODE>free_item()</CODE>.
 <LI>Terminate <CODE>curses</CODE>.
@@ -1304,8 +1340,8 @@ refreshed or erased at post/unpost time.  The inner window or
 By default, both windows are <CODE>stdscr</CODE>.  You can set them with the
 functions in <CODE>menu_win(3x)</CODE>. <P>
 
-When you call <CODE>menu_post()</CODE>, you write the menu to its
-subwindow.  When you call <CODE>menu_unpost()</CODE>, you erase the
+When you call <CODE>post_menu()</CODE>, you write the menu to its
+subwindow.  When you call <CODE>unpost_menu()</CODE>, you erase the
 subwindow, However, neither of these actually modifies the screen.  To
 do that, call <CODE>wrefresh()</CODE> or some equivalent.
 
@@ -1437,10 +1473,10 @@ The general flow of control of a form program looks like this:
 <LI>Initialize <CODE>curses</CODE>.
 <LI>Create the form fields, using <CODE>new_field()</CODE>.
 <LI>Create the form using <CODE>new_form()</CODE>.
-<LI>Post the form using <CODE>form_post()</CODE>.
+<LI>Post the form using <CODE>post_form()</CODE>.
 <LI>Refresh the screen.
 <LI>Process user requests via an input loop.
-<LI>Unpost the form using <CODE>form_unpost()</CODE>.
+<LI>Unpost the form using <CODE>unpost_form()</CODE>.
 <LI>Free the form, using <CODE>free_form()</CODE>.
 <LI>Free the fields using <CODE>free_field()</CODE>.
 <LI>Terminate <CODE>curses</CODE>.
@@ -1476,7 +1512,7 @@ the screen (the third and fourth arguments, which must be zero or
 greater). Note that these coordinates are relative to the form
 subwindow, which will coincide with <CODE>stdscr</CODE> by default but
 need not be <CODE>stdscr</CODE> if you've done an explicit
-<CODE>set_form_window()</CODE> call. <P>
+<CODE>set_form_win()</CODE> call. <P>
 
 The fifth argument allows you to specify a number of off-screen rows.  If
 this is zero, the entire field will always be displayed.  If it is
@@ -2156,7 +2192,7 @@ These requests treat the list as cyclic; that is, <CODE>REQ_NEXT_PAGE</CODE>
 from the last page goes to the first, and <CODE>REQ_PREV_PAGE</CODE> from
 the first page goes to the last.
 
-<H3><A NAME="#ffield">Inter-Field Navigation Requests</A></H3>
+<H3><A NAME="ffield">Inter-Field Navigation Requests</A></H3>
 
 These requests handle navigation between fields on the same page.
 
@@ -2210,7 +2246,7 @@ of B and C to the right of B.  A <CODE>REQ_MOVE_RIGHT</CODE> from A will
 go to B only if A, B, and C <EM>all</EM> share the same first line;
 otherwise it will skip over B to C.
 
-<H3><A NAME="#fifield">Intra-Field Navigation Requests</A></H3>
+<H3><A NAME="fifield">Intra-Field Navigation Requests</A></H3>
 
 These requests drive movement of the edit cursor within the currently
 selected field.
@@ -2515,13 +2551,13 @@ By default, all options are on.  Here are the available option bits:
 <DL>
 <DT> O_NL_OVERLOAD
 <DD> Enable overloading of <CODE>REQ_NEW_LINE</CODE> as described in <A
-NAME="fedit">Editing Requests</A>.  The value of this option is
+href="#fedit">Editing Requests</A>.  The value of this option is
 ignored on dynamic fields that have not reached their size limit;
 these have no last line, so the circumstances for triggering a
 <CODE>REQ_NEXT_FIELD</CODE> never arise.
 <DT> O_BS_OVERLOAD
 <DD> Enable overloading of <CODE>REQ_DEL_PREV</CODE> as described in
-<A NAME="fedit">Editing Requests</A>.
+<A href="#fedit">Editing Requests</A>.
 </DL>
 
 The option values are bit-masks and can be composed with logical-or in

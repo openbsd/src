@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: menu_attributes.3,v 1.1 2000/07/24 04:06:12 millert Exp $
+.\" $OpenBSD: menu_attributes.3,v 1.2 2010/01/12 23:22:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: menu_attributes.3x,v 1.6 1998/11/29 01:09:20 Rick.Ohnemus Exp $
+.\" $Id: menu_attributes.3,v 1.2 2010/01/12 23:22:08 nicm Exp $
 .TH menu_attributes 3 ""
 .SH NAME
 \fBmenu_attributes\fR - color and attribute control for menus
@@ -56,34 +56,34 @@ int menu_pad(const MENU *menu);
 The function \fBset_menu_fore\fR sets the foreground attribute of
 \fImenu\fR. This is the highlight used for selected menu items.
 \fBmenu_fore\fR returns the foreground attribute.  The default
-is \fBA_STANDOUT\fR.
-
+is \fBA_REVERSE\fR.
+.PP
 The function \fBset_menu_back\fR sets the background attribute of
 \fImenu\fR. This is the highlight used for selectable (but not currently
 selected) menu items.  The function \fBmenu_back\fR returns the background
 attribute.  The default is \fBA_NORMAL\fR.
-
+.PP
 The function \fBset_menu_grey\fR sets the grey attribute of \fImenu\fR. This is
 the highlight used for un-selectable menu items in menus that permit more than
 one selection.  The function \fBmenu_grey\fR returns the grey attribute.
 The default is \fBA_UNDERLINE\fR.
-
+.PP
 The function \fBset_menu_pad\fR sets the character used to fill the space
 between the name and description parts of a menu item.  \fBmenu_pad\fR returns
 the given menu's pad character.  The default is a blank.
 .SH RETURN VALUE
 These routines return one of the following:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
+.B E_SYSTEM_ERROR
 System error occurred (see \fBerrno\fR).
 .TP 5
-\fBE_BAD_ARGUMENT\fR
+.B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
 .SH SEE ALSO
-\fBcurses\fR(3) and 3 pages whose names begin with "menu_" for detailed
+\fBcurses\fR(3) and related pages whose names begin "menu_" for detailed
 descriptions of the entry points.
 .SH NOTES
 The header file \fB<menu.h>\fR automatically includes the header file

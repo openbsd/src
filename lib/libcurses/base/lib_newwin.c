@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_newwin.c,v 1.5 2009/11/11 18:34:10 deraadt Exp $	*/
+/*	$OpenBSD: lib_newwin.c,v 1.6 2010/01/12 23:22:06 nicm Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -41,8 +42,40 @@
 */
 
 #include <curses.priv.h>
+#include <stddef.h>
 
-MODULE_ID("$From: lib_newwin.c,v 1.27 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_newwin.c,v 1.6 2010/01/12 23:22:06 nicm Exp $")
+
+#define window_is(name) ((sp)->_##name == win)
+
+#if USE_REENTRANT
+#define remove_window(name) \
+		sp->_##name = 0
+#else
+#define remove_window(name) \
+		sp->_##name = 0; \
+		if (win == name) \
+		    name = 0
+#endif
+
+static void
+remove_window_from_screen(WINDOW *win)
+{
+    SCREEN *sp;
+
+    for (each_screen(sp)) {
+	if (window_is(curscr)) {
+	    remove_window(curscr);
+	    break;
+	} else if (window_is(stdscr)) {
+	    remove_window(stdscr);
+	    break;
+	} else if (window_is(newscr)) {
+	    remove_window(newscr);
+	    break;
+	}
+    }
+}
 
 NCURSES_EXPORT(int)
 _nc_freewin(WINDOW *win)
@@ -51,44 +84,43 @@ _nc_freewin(WINDOW *win)
     int i;
     int result = ERR;
 
+    T((T_CALLED("_nc_freewin(%p)"), win));
+
     if (win != 0) {
-	for (p = _nc_windows, q = 0; p != 0; q = p, p = p->next) {
-	    if (p->win == win) {
-		if (q == 0)
-		    _nc_windows = p->next;
-		else
-		    q->next = p->next;
-		free(p);
+	if (_nc_try_global(curses) == 0) {
+	    q = 0;
+	    for (each_window(p)) {
+		if (&(p->win) == win) {
+		    remove_window_from_screen(win);
+		    if (q == 0)
+			_nc_windows = p->next;
+		    else
+			q->next = p->next;
 
-		if (!(win->_flags & _SUBWIN)) {
-		    for (i = 0; i <= win->_maxy; i++)
-			FreeIfNeeded(win->_line[i].text);
+		    if (!(win->_flags & _SUBWIN)) {
+			for (i = 0; i <= win->_maxy; i++)
+			    FreeIfNeeded(win->_line[i].text);
+		    }
+		    free(win->_line);
+		    free(p);
+
+		    result = OK;
+		    T(("...deleted win=%p", win));
+		    break;
 		}
-		free(win->_line);
-		free(win);
-
-		if (win == curscr)
-		    curscr = 0;
-		if (win == stdscr)
-		    stdscr = 0;
-		if (win == newscr)
-		    newscr = 0;
-
-		result = OK;
-		T(("...deleted win=%p", win));
-		break;
+		q = p;
 	    }
+	    _nc_unlock_global(curses);
 	}
     }
-    return result;
+    returnCode(result);
 }
 
 NCURSES_EXPORT(WINDOW *)
-newwin
-(int num_lines, int num_columns, int begy, int begx)
+newwin(int num_lines, int num_columns, int begy, int begx)
 {
     WINDOW *win;
-    chtype *ptr;
+    NCURSES_CH_T *ptr;
     int i;
 
     T((T_CALLED("newwin(%d,%d,%d,%d)"), num_lines, num_columns, begy, begx));
@@ -101,31 +133,26 @@ newwin
     if (num_columns == 0)
 	num_columns = screen_columns - begx;
 
-    if (num_columns + begx > SP->_columns || num_lines + begy > SP->_lines_avail)
-	returnWin(0);
-
     if ((win = _nc_makenew(num_lines, num_columns, begy, begx, 0)) == 0)
 	returnWin(0);
 
     for (i = 0; i < num_lines; i++) {
-	win->_line[i].text = typeCalloc(chtype, (unsigned) num_columns);
+	win->_line[i].text = typeCalloc(NCURSES_CH_T, (unsigned) num_columns);
 	if (win->_line[i].text == 0) {
 	    (void) _nc_freewin(win);
 	    returnWin(0);
 	}
-	for (ptr = win->_line[i].text; ptr < win->_line[i].text +
-	     num_columns;)
-	    *ptr++ = ' ';
+	for (ptr = win->_line[i].text;
+	     ptr < win->_line[i].text + num_columns;
+	     ptr++)
+	    SetChar(*ptr, BLANK_TEXT, BLANK_ATTR);
     }
-
-    T(("newwin: returned window is %p", win));
 
     returnWin(win);
 }
 
 NCURSES_EXPORT(WINDOW *)
-derwin
-(WINDOW *orig, int num_lines, int num_columns, int begy, int begx)
+derwin(WINDOW *orig, int num_lines, int num_columns, int begy, int begx)
 {
     WINDOW *win;
     int i;
@@ -135,7 +162,7 @@ derwin
        begy, begx));
 
     /*
-       ** make sure window fits inside the original one
+     * make sure window fits inside the original one
      */
     if (begy < 0 || begx < 0 || orig == 0 || num_lines < 0 || num_columns < 0)
 	returnWin(0);
@@ -158,25 +185,22 @@ derwin
 
     win->_pary = begy;
     win->_parx = begx;
-    win->_attrs = orig->_attrs;
-    win->_bkgd = orig->_bkgd;
+    WINDOW_ATTRS(win) = WINDOW_ATTRS(orig);
+    win->_nc_bkgd = orig->_nc_bkgd;
 
     for (i = 0; i < num_lines; i++)
 	win->_line[i].text = &orig->_line[begy++].text[begx];
 
     win->_parent = orig;
 
-    T(("derwin: returned window is %p", win));
-
     returnWin(win);
 }
 
 NCURSES_EXPORT(WINDOW *)
-subwin
-(WINDOW *w, int l, int c, int y, int x)
+subwin(WINDOW *w, int l, int c, int y, int x)
 {
     T((T_CALLED("subwin(%p, %d, %d, %d, %d)"), w, l, c, y, x));
-    T(("parent has begy = %d, begx = %d", w->_begy, w->_begx));
+    T(("parent has begy = %ld, begx = %ld", (long) w->_begy, (long) w->_begx));
 
     returnWin(derwin(w, l, c, y - w->_begy, x - w->_begx));
 }
@@ -189,32 +213,32 @@ dimension_limit(int value)
 }
 
 NCURSES_EXPORT(WINDOW *)
-_nc_makenew
-(int num_lines, int num_columns, int begy, int begx, int flags)
+_nc_makenew(int num_lines, int num_columns, int begy, int begx, int flags)
 {
     int i;
     WINDOWLIST *wp;
     WINDOW *win;
     bool is_pad = (flags & _ISPAD);
 
-    T(("_nc_makenew(%d,%d,%d,%d)", num_lines, num_columns, begy, begx));
+    T((T_CALLED("_nc_makenew(%d,%d,%d,%d)"), num_lines, num_columns, begy, begx));
+
+    if (SP == 0)
+	returnWin(0);
 
     if (!dimension_limit(num_lines) || !dimension_limit(num_columns))
-	return 0;
+	returnWin(0);
 
     if ((wp = typeCalloc(WINDOWLIST, 1)) == 0)
-	return 0;
+	returnWin(0);
 
-    if ((win = typeCalloc(WINDOW, 1)) == 0) {
-	  free(wp);
-	  return 0;
-    }
+    win = &(wp->win);
 
     if ((win->_line = typeCalloc(struct ldat, ((unsigned) num_lines))) == 0) {
 	free(wp);
-	free(win);
-	return 0;
+	returnWin(0);
     }
+
+    _nc_lock_global(curses);
 
     win->_curx = 0;
     win->_cury = 0;
@@ -225,8 +249,8 @@ _nc_makenew
     win->_yoffset = SP->_topstolen;
 
     win->_flags = flags;
-    win->_attrs = A_NORMAL;
-    win->_bkgd = BLANK;
+    WINDOW_ATTRS(win) = A_NORMAL;
+    SetChar(win->_nc_bkgd, BLANK_TEXT, BLANK_ATTR);
 
     win->_clear = is_pad ? FALSE : (num_lines == screen_lines
 				    && num_columns == screen_columns);
@@ -289,10 +313,28 @@ _nc_makenew
     }
 
     wp->next = _nc_windows;
-    wp->win = win;
+    wp->screen = SP;
     _nc_windows = wp;
 
     T((T_CREATE("window %p"), win));
 
-    return (win);
+    _nc_unlock_global(curses);
+    returnWin(win);
+}
+
+/*
+ * wgetch() and other functions with a WINDOW* parameter may use a SCREEN*
+ * internally, and it is useful to allow those to be invoked without switching
+ * SCREEN's, e.g., for multi-threaded applications.
+ */
+NCURSES_EXPORT(SCREEN *)
+_nc_screen_of(WINDOW *win)
+{
+    SCREEN *sp = 0;
+
+    if (win != 0) {
+	WINDOWLIST *wp = (WINDOWLIST *) win;
+	sp = wp->screen;
+    }
+    return (sp);
 }

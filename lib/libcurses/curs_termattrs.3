@@ -1,7 +1,7 @@
-.\" $OpenBSD: curs_termattrs.3,v 1.7 2000/07/10 03:06:09 millert Exp $
+.\" $OpenBSD: curs_termattrs.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998-2003,2007 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,18 +28,28 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_termattrs.3x,v 1.6 2000/07/08 12:53:34 tom Exp $
+.\" $Id: curs_termattrs.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
 .TH curs_termattrs 3 ""
 .SH NAME
-\fBbaudrate\fR, \fBerasechar\fR, \fBhas_ic\fR,
-\fBhas_il\fR, \fBkillchar\fR, \fBlongname\fR, \fBtermattrs\fR,
+\fBbaudrate\fR,
+\fBerasechar\fR,
+\fBerasewchar\fR,
+\fBhas_ic\fR,
+\fBhas_il\fR,
+\fBkillchar\fR,
+\fBkillwchar\fR,
+\fBlongname\fR,
+\fBterm_attrs\fR,
+\fBtermattrs\fR,
 \fBtermname\fR - \fBcurses\fR environment query routines
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
-
+.PP
 \fBint baudrate(void);\fR
 .br
 \fBchar erasechar(void);\fR
+.br
+\fBint erasewchar(wchar_t *\fR\fIch\fR\fB);\fR
 .br
 \fBbool has_ic(void);\fR
 .br
@@ -47,9 +57,13 @@
 .br
 \fBchar killchar(void);\fR
 .br
+\fBint killwchar(wchar_t *\fR\fIch\fR\fB);\fR
+.br
 \fBchar *longname(void);\fR
 .br
-\fBattr_t termattrs(void);\fR
+\fBattr_t term_attrs(void);\fR
+.br
+\fBchtype termattrs(void);\fR
 .br
 \fBchar *termname(void);\fR
 .br
@@ -57,19 +71,29 @@
 The \fBbaudrate\fR routine returns the output speed of the terminal.  The
 number returned is in bits per second, for example \fB9600\fR, and is an
 integer.
-
+.PP
 The \fBerasechar\fR routine returns the user's current erase character.
-
+.PP
+The \fBerasewchar\fR routine stores the current erase character
+in the location referenced by \fIch\fR.
+If no erase character has been defined, the routine fails
+and the location referenced by \fIch\fR is not changed.
+.PP
 The \fBhas_ic\fR routine is true if the terminal has insert- and delete-
 character capabilities.
-
+.PP
 The \fBhas_il\fR routine is true if the terminal has insert- and delete-line
 capabilities, or can simulate them using scrolling regions.  This might
 be used to determine if it would be appropriate to turn on physical
 scrolling using \fBscrollok\fR.
-
+.PP
 The \fBkillchar\fR routine returns the user's current line kill character.
-
+.PP
+The \fBkillwchar\fR routine stores the current line-kill character
+in the location referenced by \fIch\fR.
+If no line-kill character has been defined,
+the routine fails and the location referenced by \fIch\fR is not changed.
+.PP
 The \fBlongname\fR routine returns a pointer to a static area
 containing a verbose description of the current terminal.  The maximum
 length of a verbose description is 128 characters.  It is defined only
@@ -78,19 +102,20 @@ overwritten by each call to \fBnewterm\fR and is not restored by
 \fBset_term\fR, so the value should be saved between calls to
 \fBnewterm\fR if \fBlongname\fR is going to be used with multiple
 terminals.
-
-If a given terminal doesn't support a video attribute that an
+.PP
+If a given terminal does not support a video attribute that an
 application program is trying to use, \fBcurses\fR may substitute a
-different video attribute for it.  The \fBtermattrs\fR function
-returns a logical \fBOR\fR of all video attributes supported by the
-terminal.  This information is useful when a \fBcurses\fR program
+different video attribute for it.
+The \fBtermattrs\fR and \fBterm_attrs\fR functions
+return a logical \fBOR\fR of all video attributes supported by the
+terminal using \fIA_\fR and \fIWA_\fR constants respectively.
+This information is useful when a \fBcurses\fR program
 needs complete control over the appearance of the screen.
-
-The \fBtermname\fR routine returns the value of the environmental
-variable \fBTERM\fR (truncated to 14 characters).
+.PP
+The \fBtermname\fR routine returns the terminal name used by \fBsetupterm\fR.
 .SH RETURN VALUE
 \fBlongname\fR and \fBtermname\fR return \fBNULL\fR on error.
-
+.PP
 Routines that return an integer return \fBERR\fR upon failure and \fBOK\fR
 (SVr4 only specifies "an integer value other than \fBERR\fR") upon successful
 completion.
@@ -99,6 +124,8 @@ Note that \fBtermattrs\fR may be a macro.
 .SH PORTABILITY
 The XSI Curses standard, Issue 4 describes these functions.  It changes the
 return type of \fBtermattrs\fR to the new type \fBattr_t\fR.
+Most versions of curses truncate the result returned by \fBtermname\fR to
+14 characters.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBcurs_initscr\fR(3), \fBcurs_outopts\fR(3)
 .\"#

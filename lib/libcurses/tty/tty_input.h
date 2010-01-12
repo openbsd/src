@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_input.h,v 1.2 2001/01/22 18:02:00 millert Exp $	*/
+/* $OpenBSD: tty_input.h,v 1.3 2010/01/12 23:22:07 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /*
- * $From: tty_input.h,v 1.2 2000/12/10 02:26:51 tom Exp $
+ * $Id: tty_input.h,v 1.3 2010/01/12 23:22:07 nicm Exp $
  */
 
 #ifndef TTY_INPUT_H

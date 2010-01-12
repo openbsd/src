@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_erase.c,v 1.2 2001/01/22 18:01:39 millert Exp $	*/
+/* $OpenBSD: lib_erase.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,2000,2001 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -42,23 +43,41 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_erase.c,v 1.13 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_erase.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
 
 NCURSES_EXPORT(int)
 werase(WINDOW *win)
 {
     int code = ERR;
     int y;
-    chtype blank;
-    chtype *sp, *end, *start;
+    NCURSES_CH_T blank;
+    NCURSES_CH_T *sp, *end, *start;
 
     T((T_CALLED("werase(%p)"), win));
 
     if (win) {
-	blank = _nc_background(win);
+	blank = win->_nc_bkgd;
 	for (y = 0; y <= win->_maxy; y++) {
 	    start = win->_line[y].text;
 	    end = &start[win->_maxx];
+
+	    /*
+	     * If this is a derived window, we have to handle the case where
+	     * a multicolumn character extends into the window that we are
+	     * erasing.
+	     */
+	    if_WIDEC({
+		if (isWidecExt(start[0])) {
+		    int x = (win->_parent != 0) ? (win->_begx) : 0;
+		    while (x-- > 0) {
+			if (isWidecBase(start[-1])) {
+			    --start;
+			    break;
+			}
+			--start;
+		    }
+		}
+	    });
 
 	    for (sp = start; sp <= end; sp++)
 		*sp = blank;

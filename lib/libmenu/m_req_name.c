@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_req_name.c,v 1.5 2001/01/22 18:02:06 millert Exp $	*/
+/* $OpenBSD: m_req_name.c,v 1.6 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,27 +39,29 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_req_name.c,v 1.13 2000/12/10 02:16:48 tom Exp $")
+MODULE_ID("$Id: m_req_name.c,v 1.6 2010/01/12 23:22:08 nicm Exp $")
 
-static const char *request_names[ MAX_MENU_COMMAND - MIN_MENU_COMMAND + 1 ] = {
-  "LEFT_ITEM"    ,
-  "RIGHT_ITEM"   ,
-  "UP_ITEM"      ,
-  "DOWN_ITEM"    ,
-  "SCR_ULINE"    ,
-  "SCR_DLINE"    ,
-  "SCR_DPAGE"    ,
-  "SCR_UPAGE"    ,
-  "FIRST_ITEM"   ,
-  "LAST_ITEM"    ,
-  "NEXT_ITEM"    ,
-  "PREV_ITEM"    ,
-  "TOGGLE_ITEM"  ,
+static const char *request_names[MAX_MENU_COMMAND - MIN_MENU_COMMAND + 1] =
+{
+  "LEFT_ITEM",
+  "RIGHT_ITEM",
+  "UP_ITEM",
+  "DOWN_ITEM",
+  "SCR_ULINE",
+  "SCR_DLINE",
+  "SCR_DPAGE",
+  "SCR_UPAGE",
+  "FIRST_ITEM",
+  "LAST_ITEM",
+  "NEXT_ITEM",
+  "PREV_ITEM",
+  "TOGGLE_ITEM",
   "CLEAR_PATTERN",
-  "BACK_PATTERN" ,
-  "NEXT_MATCH"   ,
-  "PREV_MATCH"          
+  "BACK_PATTERN",
+  "NEXT_MATCH",
+  "PREV_MATCH"
 };
+
 #define A_SIZE (sizeof(request_names)/sizeof(request_names[0]))
 
 /*---------------------------------------------------------------------------
@@ -72,17 +74,17 @@ static const char *request_names[ MAX_MENU_COMMAND - MIN_MENU_COMMAND + 1 ] = {
 |                    NULL                 - on invalid request code
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(const char *)
-menu_request_name ( int request )
+menu_request_name(int request)
 {
-  if ( (request < MIN_MENU_COMMAND) || (request > MAX_MENU_COMMAND) )
+  T((T_CALLED("menu_request_name(%d)"), request));
+  if ((request < MIN_MENU_COMMAND) || (request > MAX_MENU_COMMAND))
     {
       SET_ERROR(E_BAD_ARGUMENT);
-      return (const char *)0;
+      returnCPtr((const char *)0);
     }
   else
-    return request_names[ request - MIN_MENU_COMMAND ];
+    returnCPtr(request_names[request - MIN_MENU_COMMAND]);
 }
-
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -94,28 +96,30 @@ menu_request_name ( int request )
 |                    E_NO_MATCH       - request not found
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-menu_request_by_name ( const char *str )
-{ 
+menu_request_by_name(const char *str)
+{
   /* because the table is so small, it doesn't really hurt
      to run sequentially through it.
-  */
+   */
   unsigned int i = 0;
   char buf[16];
-  
+
+  T((T_CALLED("menu_request_by_name(%s)"), _nc_visbuf(str)));
+
   if (str)
     {
-      strncpy(buf,str,sizeof(buf));
-      while( (i<sizeof(buf)) && (buf[i] != '\0') )
+      strncpy(buf, str, sizeof(buf));
+      while ((i < sizeof(buf)) && (buf[i] != '\0'))
 	{
-	  buf[i] = toupper(buf[i]);
+	  buf[i] = toupper(UChar(buf[i]));
 	  i++;
 	}
-      
-      for (i=0; i < A_SIZE; i++)
+
+      for (i = 0; i < A_SIZE; i++)
 	{
-	  if (strncmp(request_names[i],buf,sizeof(buf))==0)
-	    return MIN_MENU_COMMAND + i;
-	} 
+	  if (strncmp(request_names[i], buf, sizeof(buf)) == 0)
+	    returnCode(MIN_MENU_COMMAND + (int)i);
+	}
     }
   RETURN(E_NO_MATCH);
 }

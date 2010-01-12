@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_opts.c,v 1.7 2001/01/22 18:02:05 millert Exp $	*/
+/* $OpenBSD: m_opts.c,v 1.8 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_opts.c,v 1.13 2000/12/10 02:16:48 tom Exp $")
+MODULE_ID("$Id: m_opts.c,v 1.8 2010/01/12 23:22:08 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu
@@ -55,8 +55,10 @@ MODULE_ID("$From: m_opts.c,v 1.13 2000/12/10 02:16:48 tom Exp $")
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-set_menu_opts (MENU * menu, Menu_Options opts)
+set_menu_opts(MENU * menu, Menu_Options opts)
 {
+  T((T_CALLED("set_menu_opts(%p,%d)"), menu, opts));
+
   opts &= ALL_MENU_OPTS;
 
   if (opts & ~ALL_MENU_OPTS)
@@ -64,18 +66,18 @@ set_menu_opts (MENU * menu, Menu_Options opts)
 
   if (menu)
     {
-      if ( menu->status & _POSTED )
+      if (menu->status & _POSTED)
 	RETURN(E_POSTED);
 
-      if ( (opts&O_ROWMAJOR) != (menu->opt&O_ROWMAJOR))
+      if ((opts & O_ROWMAJOR) != (menu->opt & O_ROWMAJOR))
 	{
 	  /* we need this only if the layout really changed ... */
 	  if (menu->items && menu->items[0])
 	    {
-	      menu->toprow  = 0;
+	      menu->toprow = 0;
 	      menu->curitem = menu->items[0];
 	      assert(menu->curitem);
-	      set_menu_format( menu, menu->frows, menu->fcols );
+	      set_menu_format(menu, menu->frows, menu->fcols);
 	    }
 	}
 
@@ -85,13 +87,13 @@ set_menu_opts (MENU * menu, Menu_Options opts)
 	{
 	  ITEM **item;
 
-	  if ( ((item=menu->items) != (ITEM**)0) )
-	    for(;*item;item++)
+	  if (((item = menu->items) != (ITEM **) 0))
+	    for (; *item; item++)
 	      (*item)->value = FALSE;
 	}
 
       if (opts & O_SHOWDESC)	/* this also changes the geometry */
-	_nc_Calculate_Item_Length_and_Width( menu );
+	_nc_Calculate_Item_Length_and_Width(menu);
     }
   else
     _nc_Default_Menu.opt = opts;
@@ -113,10 +115,13 @@ set_menu_opts (MENU * menu, Menu_Options opts)
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-menu_opts_off (MENU *menu, Menu_Options  opts)
+menu_opts_off(MENU * menu, Menu_Options opts)
 {
-  MENU *cmenu = menu; /* use a copy because set_menu_opts must detect
-                         NULL menu itself to adjust its behaviour */
+  MENU *cmenu = menu;		/* use a copy because set_menu_opts must detect
+
+				   NULL menu itself to adjust its behavior */
+
+  T((T_CALLED("menu_opts_off(%p,%d)"), menu, opts));
 
   opts &= ALL_MENU_OPTS;
   if (opts & ~ALL_MENU_OPTS)
@@ -125,7 +130,7 @@ menu_opts_off (MENU *menu, Menu_Options  opts)
     {
       Normalize_Menu(cmenu);
       opts = cmenu->opt & ~opts;
-      return set_menu_opts( menu, opts );
+      returnCode(set_menu_opts(menu, opts));
     }
 }
 
@@ -143,10 +148,13 @@ menu_opts_off (MENU *menu, Menu_Options  opts)
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-menu_opts_on (MENU * menu, Menu_Options opts)
+menu_opts_on(MENU * menu, Menu_Options opts)
 {
-  MENU *cmenu = menu; /* use a copy because set_menu_opts must detect
-                         NULL menu itself to adjust its behaviour */
+  MENU *cmenu = menu;		/* use a copy because set_menu_opts must detect
+
+				   NULL menu itself to adjust its behavior */
+
+  T((T_CALLED("menu_opts_on(%p,%d)"), menu, opts));
 
   opts &= ALL_MENU_OPTS;
   if (opts & ~ALL_MENU_OPTS)
@@ -155,7 +163,7 @@ menu_opts_on (MENU * menu, Menu_Options opts)
     {
       Normalize_Menu(cmenu);
       opts = cmenu->opt | opts;
-      return set_menu_opts(menu, opts);
+      returnCode(set_menu_opts(menu, opts));
     }
 }
 
@@ -168,9 +176,10 @@ menu_opts_on (MENU * menu, Menu_Options opts)
 |   Return Values :  Menu options
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(Menu_Options)
-menu_opts (const MENU *menu)
+menu_opts(const MENU * menu)
 {
-  return (ALL_MENU_OPTS & Normalize_Menu( menu )->opt);
+  T((T_CALLED("menu_opts(%p)"), menu));
+  returnMenuOpts(ALL_MENU_OPTS & Normalize_Menu(menu)->opt);
 }
 
 /* m_opts.c ends here */

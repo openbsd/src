@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: form_requestname.3,v 1.6 1999/01/22 03:30:54 millert Exp $
+.\" $OpenBSD: form_requestname.3,v 1.7 2010/01/12 23:22:07 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2006 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: form_requestname.3x,v 1.6 1998/11/29 01:08:18 Rick.Ohnemus Exp $
+.\" $Id: form_requestname.3,v 1.7 2010/01/12 23:22:07 nicm Exp $
 .TH form_requestname 3 ""
 .SH NAME
 \fBform_requestname\fR - handle printable form request names
@@ -51,6 +51,7 @@ with the given name and returns its request code. Otherwise E_NO_MATCH is return
 to \fBE_BAD_ARGUMENT\fR.
 .br
 \fBform_request_by_name\fR returns \fBE_NO_MATCH\fR on error.
+It does not set errno.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBform\fR(3).
 .SH NOTES

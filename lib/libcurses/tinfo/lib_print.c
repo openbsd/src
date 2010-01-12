@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_print.c,v 1.4 2003/03/18 16:55:54 millert Exp $	*/
+/* $OpenBSD: lib_print.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2002,2006 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -37,7 +37,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_print.c,v 1.13 2000/12/10 02:55:07 tom Exp $")
+MODULE_ID("$Id: lib_print.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 mcprint(char *data, int len)
@@ -53,7 +53,7 @@ mcprint(char *data, int len)
     }
 
     if (prtr_non) {
-	switchon = tparm(prtr_non, len);
+	switchon = TPARM_1(prtr_non, len);
 	onsize = strlen(switchon);
 	offsize = 0;
     } else {
@@ -63,13 +63,13 @@ mcprint(char *data, int len)
     }
 
     res = onsize + len + offsize + 1;
-    if ((mybuf = typeMalloc(char, res)) == (char *) 0) {
+    if (switchon == 0 || (mybuf = typeMalloc(char, res)) == 0) {
 	errno = ENOMEM;
 	return (ERR);
     }
 
     (void) strlcpy(mybuf, switchon, res);
-    memcpy(mybuf + onsize, data, len);
+    memcpy(mybuf + onsize, data, (unsigned) len);
     if (offsize)
 	(void) strlcpy(mybuf + onsize + len, prtr_off, res - onsize - len);
 

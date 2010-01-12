@@ -1,7 +1,7 @@
-/*	$OpenBSD: make_keys.c,v 1.8 2006/10/10 21:38:16 cloder Exp $	*/
+/* $OpenBSD: make_keys.c,v 1.9 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
+ *  Author: Thomas E. Dickey                    1997-on                     *
  ****************************************************************************/
 
 /*
@@ -37,9 +37,11 @@
  * making the output show the indices into the TERMTYPE Strings array.  Doing
  * it that way lets us cut down on the size of the init_keytry() function.
  */
+
+#define USE_TERMLIB 1
 #include <curses.priv.h>
 
-MODULE_ID("$From: make_keys.c,v 1.10 2000/12/10 02:55:08 tom Exp $")
+MODULE_ID("$Id: make_keys.c,v 1.9 2010/01/12 23:22:06 nicm Exp $")
 
 #include <names.c>
 
@@ -68,17 +70,23 @@ lookup(const char *name)
 }
 
 static void
-make_keys(FILE * ifp, FILE * ofp)
+make_keys(FILE *ifp, FILE *ofp)
 {
     char buffer[BUFSIZ];
-    char from[BUFSIZ];
-    char to[BUFSIZ];
+    char from[256];
+    char to[256];
     int maxlen = 16;
+    int scanned;
 
     while (fgets(buffer, sizeof(buffer), ifp) != NULL) {
 	if (*buffer == '#')
 	    continue;
-	if (sscanf(buffer, "%s %s", to, from) == 2) {
+
+	to[sizeof(to) - 1] = '\0';
+	from[sizeof(from) - 1] = '\0';
+
+	scanned = sscanf(buffer, "%255s %255s", to, from);
+	if (scanned == 2) {
 	    int code = lookup(from);
 	    if (code == UNKNOWN)
 		continue;
@@ -94,7 +102,7 @@ make_keys(FILE * ifp, FILE * ofp)
 }
 
 static void
-write_list(FILE * ofp, const char **list)
+write_list(FILE *ofp, const char **list)
 {
     while (*list != 0)
 	fprintf(ofp, "%s\n", *list++);
@@ -113,7 +121,7 @@ main(int argc, char *argv[])
 	"#if BROKEN_LINKER",
 	"static",
 	"#endif",
-	"struct tinfo_fkeys _nc_tinfo_fkeys[] = {",
+	"const struct tinfo_fkeys _nc_tinfo_fkeys[] = {",
 	0
     };
     static const char *suffix[] =

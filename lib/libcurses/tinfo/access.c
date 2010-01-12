@@ -1,5 +1,7 @@
+/* $OpenBSD: access.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -27,27 +29,83 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1998,2000                   *
+ *  Author: Thomas E. Dickey                                                *
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <tic.h>
 
-MODULE_ID("$From: access.c,v 1.7 2000/12/10 02:55:07 tom Exp $")
+#include <ctype.h>
+#include <sys/stat.h>
+
+#include <tic.h>
+#include <nc_alloc.h>
+
+MODULE_ID("$Id: access.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
+
+#define LOWERCASE(c) ((isalpha(UChar(c)) && isupper(UChar(c))) ? tolower(UChar(c)) : (c))
+
+NCURSES_EXPORT(char *)
+_nc_rootname(char *path)
+{
+    char *result = _nc_basename(path);
+#if !MIXEDCASE_FILENAMES || defined(PROG_EXT)
+    static char *temp;
+    char *s;
+
+    temp = strdup(result);
+    result = temp;
+#if !MIXEDCASE_FILENAMES
+    for (s = result; *s != '\0'; ++s) {
+	*s = LOWERCASE(*s);
+    }
+#endif
+#if defined(PROG_EXT)
+    if ((s = strrchr(result, '.')) != 0) {
+	if (!strcmp(s, PROG_EXT))
+	    *s = '\0';
+    }
+#endif
+#endif
+    return result;
+}
+
+/*
+ * Check if a string appears to be an absolute pathname.
+ */
+NCURSES_EXPORT(bool)
+_nc_is_abs_path(const char *path)
+{
+#if defined(__EMX__) || defined(__DJGPP__)
+#define is_pathname(s) ((((s) != 0) && ((s)[0] == '/')) \
+		  || (((s)[0] != 0) && ((s)[1] == ':')))
+#else
+#define is_pathname(s) ((s) != 0 && (s)[0] == '/')
+#endif
+    return is_pathname(path);
+}
+
+/*
+ * Return index of the basename
+ */
+NCURSES_EXPORT(unsigned)
+_nc_pathlast(const char *path)
+{
+    const char *test = strrchr(path, '/');
+#ifdef __EMX__
+    if (test == 0)
+	test = strrchr(path, '\\');
+#endif
+    if (test == 0)
+	test = path;
+    else
+	test++;
+    return (test - path);
+}
 
 NCURSES_EXPORT(char *)
 _nc_basename(char *path)
 {
-    char *result = strrchr(path, '/');
-#ifdef __EMX__
-    if (result == 0)
-	result = strrchr(path, '\\');
-#endif
-    if (result == 0)
-	result = path;
-    else
-	result++;
-    return result;
+    return path + _nc_pathlast(path);
 }
 
 NCURSES_EXPORT(int)
@@ -59,10 +117,10 @@ _nc_access(const char *path, int mode)
 	    && strlen(path) < PATH_MAX) {
 	    char *leaf, head[PATH_MAX];
 
-	    strlcpy(head, path, sizeof(head));
-	    if ((leaf = _nc_basename(head)) == 0)
-		leaf = head;
-	    *leaf = '\0';
+            strlcpy(head, path, sizeof(head));
+            if ((leaf = _nc_basename(head)) == 0)
+		    leaf = head;
+            *leaf = '\0';
 	    if (head == leaf)
 		(void) strlcpy(head, ".", sizeof(head));
 
@@ -71,6 +129,32 @@ _nc_access(const char *path, int mode)
 	return -1;
     }
     return 0;
+}
+
+NCURSES_EXPORT(bool)
+_nc_is_dir_path(const char *path)
+{
+    bool result = FALSE;
+    struct stat sb;
+
+    if (stat(path, &sb) == 0
+	&& (sb.st_mode & S_IFMT) == S_IFDIR) {
+	result = TRUE;
+    }
+    return result;
+}
+
+NCURSES_EXPORT(bool)
+_nc_is_file_path(const char *path)
+{
+    bool result = FALSE;
+    struct stat sb;
+
+    if (stat(path, &sb) == 0
+	&& (sb.st_mode & S_IFMT) == S_IFREG) {
+	result = TRUE;
+    }
+    return result;
 }
 
 #ifndef USE_ROOT_ENVIRON

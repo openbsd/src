@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_colorset.c,v 1.4 2001/01/22 18:01:38 millert Exp $	*/
+/* $OpenBSD: lib_colorset.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2005 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,8 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1998                  *
+ *  Author: Juergen Pfeifer,  1998                                          *
+ *     and: Thomas E. Dickey, 2005                                          *
  ****************************************************************************/
 
 /*
@@ -42,19 +43,19 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_colorset.c,v 1.7 2000/12/10 01:24:50 tom Exp $")
+MODULE_ID("$Id: lib_colorset.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
 
 NCURSES_EXPORT(int)
-wcolor_set
-(WINDOW *win, short color_pair_number, void *opts)
+wcolor_set(WINDOW *win, short color_pair_number, void *opts)
 {
     T((T_CALLED("wcolor_set(%p,%d)"), win, color_pair_number));
     if (win
 	&& !opts
 	&& (color_pair_number >= 0)
 	&& (color_pair_number < COLOR_PAIRS)) {
-	TR(TRACE_ATTRS, ("... current %ld", (long) PAIR_NUMBER(win->_attrs)));
-	toggle_attr_on(win->_attrs, COLOR_PAIR(color_pair_number));
+	TR(TRACE_ATTRS, ("... current %ld", (long) GET_WINDOW_PAIR(win)));
+	SET_WINDOW_PAIR(win, color_pair_number);
+	if_EXT_COLORS(win->_color = color_pair_number);
 	returnCode(OK);
     } else
 	returnCode(ERR);

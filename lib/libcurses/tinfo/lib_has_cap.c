@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_has_cap.c,v 1.2 2001/01/22 18:01:52 millert Exp $	*/
+/* $OpenBSD: lib_has_cap.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000,2003 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-2003               *
  ****************************************************************************/
 
 /*
@@ -44,7 +45,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_has_cap.c,v 1.3 2000/12/10 02:55:07 tom Exp $")
+MODULE_ID("$Id: lib_has_cap.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(bool)
 has_ic(void)

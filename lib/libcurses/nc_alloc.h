@@ -1,7 +1,7 @@
-/*	$OpenBSD: nc_alloc.h,v 1.6 2000/06/19 03:53:36 millert Exp $	*/
+/* $OpenBSD: nc_alloc.h,v 1.7 2010/01/12 23:21:59 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,14 +29,20 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1996,1997                   *
+ *  Author: Thomas E. Dickey                    1996-on                     *
  ****************************************************************************/
-/* $From: nc_alloc.h,v 1.8 2000/04/08 23:42:57 tom Exp $ */
+/* $Id: nc_alloc.h,v 1.7 2010/01/12 23:21:59 nicm Exp $ */
 
 #ifndef NC_ALLOC_included
 #define NC_ALLOC_included 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if HAVE_LIBDMALLOC
+#include <string.h>
+#undef strndup		/* workaround for #define in GLIBC 2.7 */
 #include <dmalloc.h>    /* Gray Watson's library */
 #else
 #undef  HAVE_LIBDMALLOC
@@ -50,6 +56,13 @@
 #define HAVE_LIBDBMALLOC 0
 #endif
 
+#if HAVE_LIBMPATROL
+#include <mpatrol.h>    /* Memory-Patrol library */
+#else
+#undef  HAVE_LIBMPATROL
+#define HAVE_LIBMPATROL 0
+#endif
+
 #ifndef NO_LEAKS
 #define NO_LEAKS 0
 #endif
@@ -57,9 +70,12 @@
 #if HAVE_LIBDBMALLOC || HAVE_LIBDMALLOC || NO_LEAKS
 #define HAVE_NC_FREEALL 1
 struct termtype;
-extern void _nc_free_and_exit(int) GCC_NORETURN;
-extern void _nc_free_tparm(void);
-extern void _nc_leaks_dump_entry(void);
+extern NCURSES_EXPORT(void) _nc_free_and_exit(int) GCC_NORETURN;
+extern NCURSES_EXPORT(void) _nc_free_tinfo(int) GCC_NORETURN;
+extern NCURSES_EXPORT(void) _nc_free_tic(int) GCC_NORETURN;
+extern NCURSES_EXPORT(void) _nc_free_tparm(void);
+extern NCURSES_EXPORT(void) _nc_leaks_dump_entry(void);
+extern NCURSES_EXPORT(void) _nc_leaks_tic(void);
 #define ExitProgram(code) _nc_free_and_exit(code)
 #endif
 
@@ -68,18 +84,25 @@ extern void _nc_leaks_dump_entry(void);
 #endif
 
 #ifndef ExitProgram
-#define ExitProgram(code) return code
+#define ExitProgram(code) exit(code)
 #endif
 
 /* doalloc.c */
-extern void *_nc_doalloc(void *, size_t);
+extern NCURSES_EXPORT(void *) _nc_doalloc(void *, size_t);
 #if !HAVE_STRDUP
 #define strdup _nc_strdup
-extern char *_nc_strdup(const char *);
+extern NCURSES_EXPORT(char *) _nc_strdup(const char *);
 #endif
+
+/* entries.c */
+extern NCURSES_EXPORT(void) _nc_leaks_tinfo(void);
 
 #define typeMalloc(type,elts) (type *)malloc((elts)*sizeof(type))
 #define typeCalloc(type,elts) (type *)calloc((elts),sizeof(type))
 #define typeRealloc(type,elts,ptr) (type *)_nc_doalloc(ptr, (elts)*sizeof(type))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NC_ALLOC_included */

@@ -1,7 +1,7 @@
-.\" $OpenBSD: curs_addstr.3,v 1.6 2000/07/10 03:06:04 millert Exp $
+.\" $OpenBSD: curs_addstr.3,v 1.7 2010/01/12 23:21:58 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998-2003,2005 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,8 +28,10 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_addstr.3x,v 1.9 2000/07/01 19:54:05 tom Exp $
+.\" $Id: curs_addstr.3,v 1.7 2010/01/12 23:21:58 nicm Exp $
 .TH curs_addstr 3 ""
+.na
+.hy 0
 .SH NAME
 \fBaddstr\fR,
 \fBaddnstr\fR,
@@ -39,34 +41,47 @@
 \fBmvaddnstr\fR,
 \fBmvwaddstr\fR,
 \fBmvwaddnstr\fR - add a string of characters to a \fBcurses\fR window and advance cursor
+.ad
+.hy
 .SH SYNOPSIS
+.nf
 \fB#include <curses.h>\fR
-
-\fBint addstr(const char *str);\fR
+.PP
+\fBint addstr(const char *\fR\fIstr\fR\fB);\fR
 .br
-\fBint addnstr(const char *str, int n);\fR
+\fBint addnstr(const char *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
 .br
-\fBint waddstr(WINDOW *win, const char *str);\fR
+\fBint waddstr(WINDOW *\fR\fIwin\fR\fB, const char *\fR\fIstr\fR\fB);\fR
 .br
-\fBint waddnstr(WINDOW *win, const char *str, int n);\fR
+\fBint waddnstr(WINDOW *\fR\fIwin\fR\fB, const char *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
 .br
-\fBint mvaddstr(int y, int x, const char *str);\fR
+\fBint mvaddstr(int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr\fR\fB);\fR
 .br
-\fBint mvaddnstr(int y, int x, const char *str, int n);\fR
+\fBint mvaddnstr(int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
 .br
-\fBint mvwaddstr(WINDOW *win, int y, int x, const char *str);\fR
+\fBint mvwaddstr(WINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr\fR\fB);\fR
 .br
-\fBint mvwaddnstr(WINDOW *win, int y, int x, const char *str, int n);\fR
+\fBint mvwaddnstr(WINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr, int \fR\fIn\fR\fB);\fR
+.fi
 .SH DESCRIPTION
 These routines write the characters of the (null-terminated) character string
-\fIstr\fR on the given window.  It is similar to calling \fBwaddch\fR once for
-each character in the string.  The four routines with \fIn\fR as the last
-argument write at most \fIn\fR characters.  If \fIn\fR is -1, then the
-entire string will be added.
+\fIstr\fR on the given window.
+It is similar to calling \fBwaddch\fR once for each character in the string.
+The four routines with \fIn\fR as the last argument
+write at most \fIn\fR characters.
+If \fIn\fR is -1, then the entire string will be added,
+up to the maximum number of characters that will fit on the line,
+or until a terminating null is reached.
 .SH RETURN VALUE
 All routines return the integer \fBERR\fR upon failure and \fBOK\fR on success
 (the SVr4 manuals specify only "an integer value other than \fBERR\fR") upon
 successful completion.
+.PP
+X/Open does not define any error conditions.
+This implementation returns an error
+if the window pointer is null or
+if the string pointer is null or
+if the corresponding calls to \fBwaddch\fP return an error.
 .SH NOTES
 Note that all of these routines except \fBwaddstr\fR and \fBwaddnstr\fR may be
 macros.

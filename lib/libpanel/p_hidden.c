@@ -1,7 +1,7 @@
-/*	$OpenBSD: p_hidden.c,v 1.4 2001/01/22 18:02:09 millert Exp $	*/
+/* $OpenBSD: p_hidden.c,v 1.5 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000,2005 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,12 +38,13 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_hidden.c,v 1.5 2000/12/10 02:20:44 tom Exp $")
+MODULE_ID("$Id: p_hidden.c,v 1.5 2010/01/12 23:22:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
-panel_hidden (const PANEL *pan)
+panel_hidden(const PANEL * pan)
 {
-  if(!pan)
-    return(ERR);
-  return(IS_LINKED(pan) ? FALSE : TRUE);
-} 
+  T((T_CALLED("panel_hidden(%p)"), pan));
+  if (!pan)
+    returnCode(ERR);
+  returnCode(IS_LINKED(pan) ? FALSE : TRUE);
+}

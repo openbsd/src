@@ -1,7 +1,7 @@
-/*	$OpenBSD: hashmap.c,v 1.7 2002/06/22 18:13:05 deraadt Exp $	*/
+/*	$OpenBSD: hashmap.c,v 1.8 2010/01/12 23:22:07 nicm Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -72,7 +72,7 @@ AUTHOR
 #include <curses.priv.h>
 #include <term.h>		/* for back_color_erase */
 
-MODULE_ID("$From: hashmap.c,v 1.36 2000/12/10 03:04:30 tom Exp $")
+MODULE_ID("$Id: hashmap.c,v 1.8 2010/01/12 23:22:07 nicm Exp $")
 
 #ifdef HASHDEBUG
 
@@ -83,7 +83,8 @@ MODULE_ID("$From: hashmap.c,v 1.36 2000/12/10 03:04:30 tom Exp $")
 # define screen_lines MAXLINES
 # define TEXTWIDTH	1
 int oldnums[MAXLINES], reallines[MAXLINES];
-static chtype oldtext[MAXLINES][TEXTWIDTH], newtext[MAXLINES][TEXTWIDTH];
+static NCURSES_CH_T oldtext[MAXLINES][TEXTWIDTH];
+static NCURSES_CH_T newtext[MAXLINES][TEXTWIDTH];
 # define OLDNUM(n)	oldnums[n]
 # define OLDTEXT(n)	oldtext[n]
 # define NEWTEXT(m)	newtext[m]
@@ -91,7 +92,7 @@ static chtype oldtext[MAXLINES][TEXTWIDTH], newtext[MAXLINES][TEXTWIDTH];
 
 #else /* !HASHDEBUG */
 
-# define OLDNUM(n)	_nc_oldnums[n]
+# define OLDNUM(n)	SP->_oldnum_list[n]
 # define OLDTEXT(n)	curscr->_line[n].text
 # define NEWTEXT(m)	newscr->_line[m].text
 # define TEXTWIDTH	(curscr->_maxx+1)
@@ -99,47 +100,58 @@ static chtype oldtext[MAXLINES][TEXTWIDTH], newtext[MAXLINES][TEXTWIDTH];
 
 #endif /* !HASHDEBUG */
 
-#define oldhash	(SP->oldhash)
-#define newhash	(SP->newhash)
+#define oldhash		(SP->oldhash)
+#define newhash		(SP->newhash)
+#define hashtab		(SP->hashtab)
+#define lines_alloc	(SP->hashtab_len)
 
-static inline unsigned long
-hash(chtype * text)
+#if USE_WIDEC_SUPPORT
+#define HASH_VAL(ch) (ch.chars[0])
+#else
+#define HASH_VAL(ch) (ch)
+#endif
+
+static const NCURSES_CH_T blankchar = NewChar(BLANK_TEXT);
+
+static NCURSES_INLINE unsigned long
+hash(NCURSES_CH_T * text)
 {
     int i;
-    chtype ch;
+    NCURSES_CH_T ch;
     unsigned long result = 0;
     for (i = TEXTWIDTH; i > 0; i--) {
 	ch = *text++;
-	result += (result << 5) + ch;
+	result += (result << 5) + HASH_VAL(ch);
     }
     return result;
 }
 
 /* approximate update cost */
 static int
-update_cost(chtype * from, chtype * to)
+update_cost(NCURSES_CH_T * from, NCURSES_CH_T * to)
 {
     int cost = 0;
     int i;
 
-    for (i = TEXTWIDTH; i > 0; i--)
-	if (*from++ != *to++)
+    for (i = TEXTWIDTH; i > 0; i--, from++, to++)
+	if (!(CharEq(*from, *to)))
 	    cost++;
 
     return cost;
 }
+
 static int
-update_cost_from_blank(chtype * to)
+update_cost_from_blank(NCURSES_CH_T * to)
 {
     int cost = 0;
     int i;
-    chtype blank = BLANK;
+    NCURSES_CH_T blank = blankchar;
 
     if (back_color_erase)
-	blank |= (stdscr->_bkgd & A_COLOR);
+	SetPair(blank, GetPair(stdscr->_nc_bkgd));
 
-    for (i = TEXTWIDTH; i > 0; i--)
-	if (blank != *to++)
+    for (i = TEXTWIDTH; i > 0; i--, to++)
+	if (!(CharEq(blank, *to)))
 	    cost++;
 
     return cost;
@@ -149,7 +161,7 @@ update_cost_from_blank(chtype * to)
  * Returns true when moving line 'from' to line 'to' seems to be cost
  * effective. 'blank' indicates whether the line 'to' would become blank.
  */
-static inline bool
+static NCURSES_INLINE bool
 cost_effective(const int from, const int to, const bool blank)
 {
     int new_from;
@@ -172,15 +184,6 @@ cost_effective(const int from, const int to, const bool blank)
 		 : update_cost(OLDTEXT(new_from), NEWTEXT(from)))
 		+ update_cost(OLDTEXT(from), NEWTEXT(to)))) ? TRUE : FALSE;
 }
-
-typedef struct {
-    unsigned long hashval;
-    int oldcount, newcount;
-    int oldindex, newindex;
-} sym;
-
-static sym *hashtab = 0;
-static int lines_alloc = 0;
 
 static void
 grow_hunks(void)
@@ -269,14 +272,14 @@ grow_hunks(void)
 NCURSES_EXPORT(void)
 _nc_hash_map(void)
 {
-    sym *sp;
+    HASHMAP *sp;
     register int i;
     int start, shift, size;
 
     if (screen_lines > lines_alloc) {
 	if (hashtab)
 	    free(hashtab);
-	hashtab = typeMalloc(sym, (screen_lines + 1) * 2);
+	hashtab = typeMalloc(HASHMAP, (screen_lines + 1) * 2);
 	if (!hashtab) {
 	    if (oldhash) {
 		FreeAndNull(oldhash);
@@ -296,9 +299,9 @@ _nc_hash_map(void)
     } else {
 	/* re-hash all */
 	if (oldhash == 0)
-	    oldhash = typeCalloc(unsigned long, screen_lines);
+	    oldhash = typeCalloc(unsigned long, (unsigned) screen_lines);
 	if (newhash == 0)
-	    newhash = typeCalloc(unsigned long, screen_lines);
+	    newhash = typeCalloc(unsigned long, (unsigned) screen_lines);
 	if (!oldhash || !newhash)
 	    return;		/* malloc failure */
 	for (i = 0; i < screen_lines; i++) {
@@ -389,11 +392,6 @@ _nc_hash_map(void)
 
     /* After clearing invalid hunks, try grow the rest. */
     grow_hunks();
-
-#if NO_LEAKS
-    FreeAndNull(hashtab);
-    lines_alloc = 0;
-#endif
 }
 
 NCURSES_EXPORT(void)
@@ -406,7 +404,7 @@ _nc_make_oldhash(int i)
 NCURSES_EXPORT(void)
 _nc_scroll_oldhash(int n, int top, int bot)
 {
-    int size;
+    size_t size;
     int i;
 
     if (!oldhash)
@@ -451,11 +449,14 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
     char line[BUFSIZ], *st, *last;
     int n;
 
-    SP = typeCalloc(SCREEN, 1);
+    if (setupterm(NULL, fileno(stdout), (int *) 0) == ERR)
+	return EXIT_FAILURE;
+    (void) _nc_alloc_screen();
+
     for (n = 0; n < screen_lines; n++) {
 	reallines[n] = n;
 	oldnums[n] = _NEWINDEX;
-	oldtext[n][0] = newtext[n][0] = '.';
+	CharOf(oldtext[n][0]) = CharOf(newtext[n][0]) = '.';
     }
 
     if (isatty(fileno(stdin)))
@@ -467,7 +468,7 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
     for (;;) {
 	/* grab a test command */
 	if (fgets(line, sizeof(line), stdin) == (char *) NULL)
-	    exit(EXIT_SUCCESS);
+	    break;
 
 	switch (line[0]) {
 	case '#':		/* comment */
@@ -489,22 +490,22 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 
 	case 'n':		/* use following letters as text of new lines */
 	    for (n = 0; n < screen_lines; n++)
-		newtext[n][0] = '.';
+		CharOf(newtext[n][0]) = '.';
 	    for (n = 0; n < screen_lines; n++)
 		if (line[n + 1] == '\n')
 		    break;
 		else
-		    newtext[n][0] = line[n + 1];
+		    CharOf(newtext[n][0]) = line[n + 1];
 	    break;
 
 	case 'o':		/* use following letters as text of old lines */
 	    for (n = 0; n < screen_lines; n++)
-		oldtext[n][0] = '.';
+		CharOf(oldtext[n][0]) = '.';
 	    for (n = 0; n < screen_lines; n++)
 		if (line[n + 1] == '\n')
 		    break;
 		else
-		    oldtext[n][0] = line[n + 1];
+		    CharOf(oldtext[n][0]) = line[n + 1];
 	    break;
 
 	case 'd':		/* dump state of test arrays */
@@ -513,12 +514,12 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 #endif
 	    (void) fputs("Old lines: [", stdout);
 	    for (n = 0; n < screen_lines; n++)
-		putchar(oldtext[n][0]);
+		putchar(CharOf(oldtext[n][0]));
 	    putchar(']');
 	    putchar('\n');
 	    (void) fputs("New lines: [", stdout);
 	    for (n = 0; n < screen_lines; n++)
-		putchar(newtext[n][0]);
+		putchar(CharOf(newtext[n][0]));
 	    putchar(']');
 	    putchar('\n');
 	    break;
@@ -532,12 +533,17 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 	    _nc_scroll_optimize();
 	    (void) fputs("Done.\n", stderr);
 	    break;
+	default:
 	case '?':
 	    usage();
 	    break;
 	}
     }
+#if NO_LEAKS
+    _nc_free_and_exit(EXIT_SUCCESS);
+#else
     return EXIT_SUCCESS;
+#endif
 }
 
 #endif /* HASHDEBUG */

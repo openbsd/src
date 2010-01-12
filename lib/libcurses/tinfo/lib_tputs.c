@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_tputs.c,v 1.11 2003/03/18 16:55:54 millert Exp $	*/
+/* $OpenBSD: lib_tputs.c,v 1.12 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -47,16 +48,30 @@
 #include <termcap.h>		/* ospeed */
 #include <tic.h>
 
-MODULE_ID("$From: lib_tputs.c,v 1.55 2000/12/10 02:55:08 tom Exp $");
+MODULE_ID("$Id: lib_tputs.c,v 1.12 2010/01/12 23:22:06 nicm Exp $")
 
-NCURSES_EXPORT_VAR(char)
-PC = 0;				/* used by termcap library */
-NCURSES_EXPORT_VAR(NCURSES_OSPEED) ospeed = 0;	/* used by termcap library */
+NCURSES_EXPORT_VAR(char) PC = 0;              /* used by termcap library */
+NCURSES_EXPORT_VAR(NCURSES_OSPEED) ospeed = 0;        /* used by termcap library */
 
-NCURSES_EXPORT_VAR(int)
-_nc_nulls_sent = 0;		/* used by 'tack' program */
+NCURSES_EXPORT_VAR(int) _nc_nulls_sent = 0;   /* used by 'tack' program */
 
-     static int (*my_outch) (int c) = _nc_outch;
+#if NCURSES_NO_PADDING
+NCURSES_EXPORT(void)
+_nc_set_no_padding(SCREEN *sp)
+{
+    bool no_padding = (getenv("NCURSES_NO_PADDING") != 0);
+
+    if (sp)
+	sp->_no_padding = no_padding;
+    else
+	_nc_prescreen._no_padding = no_padding;
+
+    TR(TRACE_CHARPUT | TRACE_MOVE, ("padding will%s be used",
+				    GetNoPadding(sp) ? " not" : ""));
+}
+#endif
+
+static int (*my_outch) (int c) = _nc_outch;
 
 NCURSES_EXPORT(int)
 delay_output(int ms)
@@ -69,7 +84,7 @@ delay_output(int ms)
     } else {
 	register int nullcount;
 
-	nullcount = (ms * _nc_baudrate(ospeed)) / 10000;
+	nullcount = (ms * _nc_baudrate(ospeed)) / (BAUDBYTE * 1000);
 	for (_nc_nulls_sent += nullcount; nullcount > 0; nullcount--)
 	    my_outch(PC);
 	if (my_outch == _nc_outch)
@@ -88,9 +103,7 @@ _nc_flush(void)
 NCURSES_EXPORT(int)
 _nc_outch(int ch)
 {
-#ifdef TRACE
-    _nc_outchars++;
-#endif /* TRACE */
+    COUNT_OUTCHARS(1);
 
     if (SP != 0
 	&& SP->_cleanup) {
@@ -106,72 +119,6 @@ _nc_outch(int ch)
     return OK;
 }
 
-#if USE_WIDEC_SUPPORT
-/*
- * Reference: The Unicode Standard 2.0
- *
- * No surrogates supported (we're storing only one 16-bit Unicode value per
- * cell).
- */
-NCURSES_EXPORT(int)
-_nc_utf8_outch(int ch)
-{
-    static const unsigned byteMask = 0xBF;
-    static const unsigned otherMark = 0x80;
-    static const unsigned firstMark[] =
-    {0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC};
-
-    int result[7], *ptr;
-    int count = 0;
-
-    if ((unsigned int) ch < 0x80)
-	count = 1;
-    else if ((unsigned int) ch < 0x800)
-	count = 2;
-    else if ((unsigned int) ch < 0x10000)
-	count = 3;
-    else if ((unsigned int) ch < 0x200000)
-	count = 4;
-    else if ((unsigned int) ch < 0x4000000)
-	count = 5;
-    else if ((unsigned int) ch <= 0x7FFFFFFF)
-	count = 6;
-    else {
-	count = 3;
-	ch = 0xFFFD;
-    }
-    ptr = result + count;
-    switch (count) {
-    case 6:
-	*--ptr = (ch | otherMark) & byteMask;
-	ch >>= 6;
-	/* FALLTHRU */
-    case 5:
-	*--ptr = (ch | otherMark) & byteMask;
-	ch >>= 6;
-	/* FALLTHRU */
-    case 4:
-	*--ptr = (ch | otherMark) & byteMask;
-	ch >>= 6;
-	/* FALLTHRU */
-    case 3:
-	*--ptr = (ch | otherMark) & byteMask;
-	ch >>= 6;
-	/* FALLTHRU */
-    case 2:
-	*--ptr = (ch | otherMark) & byteMask;
-	ch >>= 6;
-	/* FALLTHRU */
-    case 1:
-	*--ptr = (ch | firstMark[count]);
-	break;
-    }
-    while (count--)
-	_nc_outch(*ptr++);
-    return OK;
-}
-#endif
-
 NCURSES_EXPORT(int)
 putp(const char *string)
 {
@@ -179,8 +126,7 @@ putp(const char *string)
 }
 
 NCURSES_EXPORT(int)
-tputs
-(const char *string, int affcnt, int (*outc) (int))
+tputs(const char *string, int affcnt, int (*outc) (int))
 {
     bool always_delay;
     bool normal_delay;
@@ -192,7 +138,7 @@ tputs
 #ifdef TRACE
     char addrbuf[32];
 
-    if (_nc_tracing & TRACE_TPUTS) {
+    if (USE_TRACEF(TRACE_TPUTS)) {
 	if (outc == _nc_outch)
 	    (void) strlcpy(addrbuf, "_nc_outch", sizeof(addrbuf));
 	else
@@ -203,7 +149,8 @@ tputs
 	} else {
 	    _tracef("tputs(%s, %d, %s) called", _nc_visbuf(string), affcnt, addrbuf);
 	}
-	_nc_tputs_trace = (char *) NULL;
+	TPUTS_TRACE(NULL);
+	_nc_unlock_global(tracef);
     }
 #endif /* TRACE */
 
@@ -219,7 +166,7 @@ tputs
 	    !xon_xoff
 	    && padding_baud_rate
 #if NCURSES_NO_PADDING
-	    && (SP == 0 || !(SP->_no_padding))
+	    && !GetNoPadding(SP)
 #endif
 	    && (_nc_baudrate(ospeed) >= padding_baud_rate);
     }
@@ -230,19 +177,19 @@ tputs
      * (like nethack) actually do the likes of tputs("50") to get delays.
      */
     trailpad = 0;
-    if (isdigit(*string)) {
-	while (isdigit(*string)) {
+    if (isdigit(UChar(*string))) {
+	while (isdigit(UChar(*string))) {
 	    trailpad = trailpad * 10 + (*string - '0');
 	    string++;
 	}
 	trailpad *= 10;
 	if (*string == '.') {
 	    string++;
-	    if (isdigit(*string)) {
+	    if (isdigit(UChar(*string))) {
 		trailpad += (*string - '0');
 		string++;
 	    }
-	    while (isdigit(*string))
+	    while (isdigit(UChar(*string)))
 		string++;
 	}
 
@@ -267,7 +214,7 @@ tputs
 		bool mandatory;
 
 		string++;
-		if ((!isdigit(CharOf(*string)) && *string != '.')
+		if ((!isdigit(UChar(*string)) && *string != '.')
 		    || !strchr(string, '>')) {
 		    (*outc) ('$');
 		    (*outc) ('<');
@@ -275,18 +222,18 @@ tputs
 		}
 
 		number = 0;
-		while (isdigit(CharOf(*string))) {
+		while (isdigit(UChar(*string))) {
 		    number = number * 10 + (*string - '0');
 		    string++;
 		}
 		number *= 10;
 		if (*string == '.') {
 		    string++;
-		    if (isdigit(CharOf(*string))) {
+		    if (isdigit(UChar(*string))) {
 			number += (*string - '0');
 			string++;
 		    }
-		    while (isdigit(CharOf(*string)))
+		    while (isdigit(UChar(*string)))
 			string++;
 		}
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_window.c,v 1.2 2001/01/22 18:01:48 millert Exp $	*/
+/* $OpenBSD: lib_window.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,7 +41,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_window.c,v 1.15 2000/12/10 02:43:28 tom Exp $")
+MODULE_ID("$Id: lib_window.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(void)
 _nc_synchook(WINDOW *win)
@@ -100,7 +100,8 @@ wsyncup(WINDOW *win)
 {
     WINDOW *wp;
 
-    if (win && win->_parent)
+    T((T_CALLED("wsyncup(%p)"), win));
+    if (win && win->_parent) {
 	for (wp = win; wp->_parent; wp = wp->_parent) {
 	    int y;
 	    WINDOW *pp = wp->_parent;
@@ -120,6 +121,8 @@ wsyncup(WINDOW *win)
 		}
 	    }
 	}
+    }
+    returnVoid;
 }
 
 NCURSES_EXPORT(void)
@@ -127,6 +130,8 @@ wsyncdown(WINDOW *win)
 /* mark changed every cell in win that is changed in any of its ancestors */
 /* Rewritten by J. Pfeifer, 1-Apr-96 (don't even think that...)           */
 {
+    T((T_CALLED("wsyncdown(%p)"), win));
+
     if (win && win->_parent) {
 	WINDOW *pp = win->_parent;
 	int y;
@@ -146,7 +151,7 @@ wsyncdown(WINDOW *win)
 		/* left and right character in child coordinates */
 		int left = pp->_line[win->_pary + y].firstchar - win->_parx;
 		int right = pp->_line[win->_pary + y].lastchar - win->_parx;
-		/* The change maybe outside the childs range */
+		/* The change may be outside the child's range */
 		if (left < 0)
 		    left = 0;
 		if (right > win->_maxx)
@@ -155,6 +160,7 @@ wsyncdown(WINDOW *win)
 	    }
 	}
     }
+    returnVoid;
 }
 
 NCURSES_EXPORT(void)
@@ -162,64 +168,85 @@ wcursyncup(WINDOW *win)
 /* sync the cursor in all derived windows to its value in the base window */
 {
     WINDOW *wp;
+
+    T((T_CALLED("wcursyncup(%p)"), win));
     for (wp = win; wp && wp->_parent; wp = wp->_parent) {
 	wmove(wp->_parent, wp->_pary + wp->_cury, wp->_parx + wp->_curx);
     }
+    returnVoid;
 }
 
 NCURSES_EXPORT(WINDOW *)
 dupwin(WINDOW *win)
 /* make an exact duplicate of the given window */
 {
-    WINDOW *nwin;
+    WINDOW *nwin = 0;
     size_t linesize;
     int i;
 
     T((T_CALLED("dupwin(%p)"), win));
 
-    if ((win == NULL) ||
-	((nwin = newwin(win->_maxy + 1, win->_maxx + 1, win->_begy,
-	 win->_begx)) == NULL))
-	returnWin(0);
+    if (win != 0) {
 
-    nwin->_curx = win->_curx;
-    nwin->_cury = win->_cury;
-    nwin->_maxy = win->_maxy;
-    nwin->_maxx = win->_maxx;
-    nwin->_begy = win->_begy;
-    nwin->_begx = win->_begx;
-    nwin->_yoffset = win->_yoffset;
+	_nc_lock_global(curses);
+	if (win->_flags & _ISPAD) {
+	    nwin = newpad(win->_maxy + 1,
+			  win->_maxx + 1);
+	} else {
+	    nwin = newwin(win->_maxy + 1,
+			  win->_maxx + 1,
+			  win->_begy,
+			  win->_begx);
+	}
 
-    nwin->_flags = win->_flags & ~_SUBWIN;
-    /* Due to the use of newwin(), the clone is not a subwindow.
-     * The text is really copied into the clone.
-     */
+	if (nwin != 0) {
 
-    nwin->_attrs = win->_attrs;
-    nwin->_bkgd = win->_bkgd;
+	    nwin->_curx = win->_curx;
+	    nwin->_cury = win->_cury;
+	    nwin->_maxy = win->_maxy;
+	    nwin->_maxx = win->_maxx;
+	    nwin->_begy = win->_begy;
+	    nwin->_begx = win->_begx;
+	    nwin->_yoffset = win->_yoffset;
 
-    nwin->_clear = win->_clear;
-    nwin->_scroll = win->_scroll;
-    nwin->_leaveok = win->_leaveok;
-    nwin->_use_keypad = win->_use_keypad;
-    nwin->_delay = win->_delay;
-    nwin->_immed = win->_immed;
-    nwin->_sync = win->_sync;
+	    nwin->_flags = win->_flags & ~_SUBWIN;
+	    /* Due to the use of newwin(), the clone is not a subwindow.
+	     * The text is really copied into the clone.
+	     */
 
-    nwin->_parx = 0;
-    nwin->_pary = 0;
-    nwin->_parent = (WINDOW *) 0;
-    /* See above: the clone isn't a subwindow! */
+	    WINDOW_ATTRS(nwin) = WINDOW_ATTRS(win);
+	    nwin->_nc_bkgd = win->_nc_bkgd;
 
-    nwin->_regtop = win->_regtop;
-    nwin->_regbottom = win->_regbottom;
+	    nwin->_notimeout = win->_notimeout;
+	    nwin->_clear = win->_clear;
+	    nwin->_leaveok = win->_leaveok;
+	    nwin->_scroll = win->_scroll;
+	    nwin->_idlok = win->_idlok;
+	    nwin->_idcok = win->_idcok;
+	    nwin->_immed = win->_immed;
+	    nwin->_sync = win->_sync;
+	    nwin->_use_keypad = win->_use_keypad;
+	    nwin->_delay = win->_delay;
 
-    linesize = (win->_maxx + 1) * sizeof(chtype);
-    for (i = 0; i <= nwin->_maxy; i++) {
-	memcpy(nwin->_line[i].text, win->_line[i].text, linesize);
-	nwin->_line[i].firstchar = win->_line[i].firstchar;
-	nwin->_line[i].lastchar = win->_line[i].lastchar;
+	    nwin->_parx = 0;
+	    nwin->_pary = 0;
+	    nwin->_parent = (WINDOW *) 0;
+	    /* See above: the clone isn't a subwindow! */
+
+	    nwin->_regtop = win->_regtop;
+	    nwin->_regbottom = win->_regbottom;
+
+	    if (win->_flags & _ISPAD)
+		nwin->_pad = win->_pad;
+
+	    linesize = (win->_maxx + 1) * sizeof(NCURSES_CH_T);
+	    for (i = 0; i <= nwin->_maxy; i++) {
+		memcpy(nwin->_line[i].text, win->_line[i].text, linesize);
+		nwin->_line[i].firstchar = win->_line[i].firstchar;
+		nwin->_line[i].lastchar = win->_line[i].lastchar;
+	    }
+	}
+	_nc_unlock_global(curses);
     }
-
     returnWin(nwin);
 }

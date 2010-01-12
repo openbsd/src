@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_screen.c,v 1.3 2001/01/22 18:01:43 millert Exp $	*/
+/* $OpenBSD: lib_screen.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,92 +31,111 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996 on                 *
  ****************************************************************************/
 
 #include <curses.priv.h>
 
-#include <sys/stat.h>
-#include <time.h>
-#include <term.h>		/* exit_ca_mode, non_rev_rmcup */
+MODULE_ID("$Id: lib_screen.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
 
-MODULE_ID("$From: lib_screen.c,v 1.17 2000/12/10 02:43:27 tom Exp $")
-
-static time_t dumptime;
+#define MAX_SIZE 0x3fff		/* 16k is big enough for a window or pad */
 
 NCURSES_EXPORT(WINDOW *)
-getwin(FILE * filep)
+getwin(FILE *filep)
 {
     WINDOW tmp, *nwin;
     int n;
 
     T((T_CALLED("getwin(%p)"), filep));
 
+    clearerr(filep);
     (void) fread(&tmp, sizeof(WINDOW), 1, filep);
-    if (ferror(filep))
+    if (ferror(filep)
+	|| tmp._maxy == 0
+	|| tmp._maxy > MAX_SIZE
+	|| tmp._maxx == 0
+	|| tmp._maxx > MAX_SIZE)
 	returnWin(0);
 
-    if ((nwin = newwin(tmp._maxy + 1, tmp._maxx + 1, 0, 0)) == 0)
-	returnWin(0);
+    if (tmp._flags & _ISPAD) {
+	nwin = newpad(tmp._maxy + 1, tmp._maxx + 1);
+    } else {
+	nwin = newwin(tmp._maxy + 1, tmp._maxx + 1, 0, 0);
+    }
 
     /*
      * We deliberately do not restore the _parx, _pary, or _parent
      * fields, because the window hierarchy within which they
      * made sense is probably gone.
      */
-    nwin->_curx = tmp._curx;
-    nwin->_cury = tmp._cury;
-    nwin->_maxy = tmp._maxy;
-    nwin->_maxx = tmp._maxx;
-    nwin->_begy = tmp._begy;
-    nwin->_begx = tmp._begx;
-    nwin->_yoffset = tmp._yoffset;
-    nwin->_flags = tmp._flags & ~(_SUBWIN | _ISPAD);
+    if (nwin != 0) {
+	nwin->_curx = tmp._curx;
+	nwin->_cury = tmp._cury;
+	nwin->_maxy = tmp._maxy;
+	nwin->_maxx = tmp._maxx;
+	nwin->_begy = tmp._begy;
+	nwin->_begx = tmp._begx;
+	nwin->_yoffset = tmp._yoffset;
+	nwin->_flags = tmp._flags & ~(_SUBWIN);
 
-    nwin->_attrs = tmp._attrs;
-    nwin->_bkgd = tmp._bkgd;
+	WINDOW_ATTRS(nwin) = WINDOW_ATTRS(&tmp);
+	nwin->_nc_bkgd = tmp._nc_bkgd;
 
-    nwin->_clear = tmp._clear;
-    nwin->_scroll = tmp._scroll;
-    nwin->_leaveok = tmp._leaveok;
-    nwin->_use_keypad = tmp._use_keypad;
-    nwin->_delay = tmp._delay;
-    nwin->_immed = tmp._immed;
-    nwin->_sync = tmp._sync;
+	nwin->_notimeout = tmp._notimeout;
+	nwin->_clear = tmp._clear;
+	nwin->_leaveok = tmp._leaveok;
+	nwin->_idlok = tmp._idlok;
+	nwin->_idcok = tmp._idcok;
+	nwin->_immed = tmp._immed;
+	nwin->_scroll = tmp._scroll;
+	nwin->_sync = tmp._sync;
+	nwin->_use_keypad = tmp._use_keypad;
+	nwin->_delay = tmp._delay;
 
-    nwin->_regtop = tmp._regtop;
-    nwin->_regbottom = tmp._regbottom;
+	nwin->_regtop = tmp._regtop;
+	nwin->_regbottom = tmp._regbottom;
 
-    for (n = 0; n < nwin->_maxy + 1; n++) {
-	(void) fread(nwin->_line[n].text,
-		     sizeof(chtype), (size_t) (nwin->_maxx + 1), filep);
-	if (ferror(filep)) {
-	    delwin(nwin);
-	    returnWin(0);
+	if (tmp._flags & _ISPAD)
+	    nwin->_pad = tmp._pad;
+
+	for (n = 0; n <= nwin->_maxy; n++) {
+	    clearerr(filep);
+	    (void) fread(nwin->_line[n].text,
+			 sizeof(NCURSES_CH_T),
+			 (size_t) (nwin->_maxx + 1),
+			 filep);
+	    if (ferror(filep)) {
+		delwin(nwin);
+		returnWin(0);
+	    }
 	}
+	touchwin(nwin);
     }
-    touchwin(nwin);
-
     returnWin(nwin);
 }
 
 NCURSES_EXPORT(int)
-putwin(WINDOW *win, FILE * filep)
+putwin(WINDOW *win, FILE *filep)
 {
     int code = ERR;
     int n;
 
     T((T_CALLED("putwin(%p,%p)"), win, filep));
 
-    if (win) {
-	(void) fwrite(win, sizeof(WINDOW), 1, filep);
-	if (ferror(filep))
-	    returnCode(code);
+    if (win != 0) {
+	size_t len = (size_t) (win->_maxx + 1);
 
-	for (n = 0; n < win->_maxy + 1; n++) {
-	    (void) fwrite(win->_line[n].text,
-			  sizeof(chtype), (size_t) (win->_maxx + 1), filep);
-	    if (ferror(filep))
+	clearerr(filep);
+	if (fwrite(win, sizeof(WINDOW), 1, filep) != 1
+	    || ferror(filep))
+	      returnCode(code);
+
+	for (n = 0; n <= win->_maxy; n++) {
+	    if (fwrite(win->_line[n].text,
+		       sizeof(NCURSES_CH_T), len, filep) != len
+		|| ferror(filep)) {
 		returnCode(code);
+	    }
 	}
 	code = OK;
     }
@@ -131,11 +150,14 @@ scr_restore(const char *file)
     T((T_CALLED("scr_restore(%s)"), _nc_visbuf(file)));
 
     if (_nc_access(file, R_OK) < 0
-	|| (fp = fopen(file, "rb")) == 0)
+	|| (fp = fopen(file, "rb")) == 0) {
 	returnCode(ERR);
-    else {
+    } else {
 	delwin(newscr);
-	newscr = getwin(fp);
+	SP->_newscr = getwin(fp);
+#if !USE_REENTRANT
+	newscr = SP->_newscr;
+#endif
 	(void) fclose(fp);
 	returnCode(OK);
     }
@@ -149,12 +171,11 @@ scr_dump(const char *file)
     T((T_CALLED("scr_dump(%s)"), _nc_visbuf(file)));
 
     if (_nc_access(file, W_OK) < 0
-	|| (fp = fopen(file, "wb")) == 0)
+	|| (fp = fopen(file, "wb")) == 0) {
 	returnCode(ERR);
-    else {
+    } else {
 	(void) putwin(newscr, fp);
 	(void) fclose(fp);
-	dumptime = time((time_t *) 0);
 	returnCode(OK);
     }
 }
@@ -163,7 +184,6 @@ NCURSES_EXPORT(int)
 scr_init(const char *file)
 {
     FILE *fp = 0;
-    struct stat stb;
 
     T((T_CALLED("scr_init(%s)"), _nc_visbuf(file)));
 
@@ -171,13 +191,14 @@ scr_init(const char *file)
 	returnCode(ERR);
 
     if (_nc_access(file, R_OK) < 0
-	|| (fp = fopen(file, "rb")) == 0)
+	|| (fp = fopen(file, "rb")) == 0) {
 	returnCode(ERR);
-    else if (fstat(STDOUT_FILENO, &stb) || stb.st_mtime > dumptime)
-	returnCode(ERR);
-    else {
+    } else {
 	delwin(curscr);
-	curscr = getwin(fp);
+	SP->_curscr = getwin(fp);
+#if !USE_REENTRANT
+	curscr = SP->_curscr;
+#endif
 	(void) fclose(fp);
 	returnCode(OK);
     }
@@ -188,11 +209,14 @@ scr_set(const char *file)
 {
     T((T_CALLED("scr_set(%s)"), _nc_visbuf(file)));
 
-    if (scr_init(file) == ERR)
+    if (scr_init(file) == ERR) {
 	returnCode(ERR);
-    else {
+    } else {
 	delwin(newscr);
-	newscr = dupwin(curscr);
+	SP->_newscr = dupwin(curscr);
+#if !USE_REENTRANT
+	newscr = SP->_newscr;
+#endif
 	returnCode(OK);
     }
 }

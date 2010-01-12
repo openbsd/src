@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_item_nam.c,v 1.6 2001/01/22 18:02:04 millert Exp $	*/
+/* $OpenBSD: m_item_nam.c,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_item_nam.c,v 1.10 2000/12/10 02:16:48 tom Exp $")
+MODULE_ID("$Id: m_item_nam.c,v 1.7 2010/01/12 23:22:08 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -50,11 +50,12 @@ MODULE_ID("$From: m_item_nam.c,v 1.10 2000/12/10 02:16:48 tom Exp $")
 |   Return Values :  See above; returns NULL if item is invalid
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(const char *)
-item_name (const ITEM * item) 
+item_name(const ITEM * item)
 {
-  return ((item) ? item->name.str : (char *)0);
+  T((T_CALLED("item_name(%p)"), item));
+  returnCPtr((item) ? item->name.str : (char *)0);
 }
-		
+
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
 |   Function      :  char *item_description(const ITEM *item)
@@ -64,9 +65,10 @@ item_name (const ITEM * item)
 |   Return Values :  See above; Returns NULL if item is invalid
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(const char *)
-item_description (const ITEM * item)
+item_description(const ITEM * item)
 {
-  return ((item) ? item->description.str : (char *)0);
+  T((T_CALLED("item_description(%p)"), item));
+  returnCPtr((item) ? item->description.str : (char *)0);
 }
 
 /* m_item_nam.c ends here */

@@ -1,7 +1,7 @@
-.\" $OpenBSD: mitem_value.3,v 1.2 1998/07/24 16:39:49 millert Exp $
+.\" $OpenBSD: mitem_value.3,v 1.3 2010/01/12 23:22:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2002,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: mitem_value.3x,v 1.4 1998/03/11 21:12:53 juergen Exp $
+.\" $Id: mitem_value.3,v 1.3 2010/01/12 23:22:08 nicm Exp $
 .TH mitem_value 3 ""
 .SH NAME
 \fBmitem_value\fR - set and get menu item values
@@ -44,20 +44,20 @@ If you turn off the menu option \fBO_ONEVALUE\fR (e.g., with
 \fBset_menu_opts\fR or \fBmenu_opts_off\fR; see \fBmenu_opts\fR(3)), the menu
 becomes multi-valued; that is, more than one item may simultaneously be
 selected.
-
+.PP
 In a multi_valued menu, you can used \fBset_item_value\fR to select the
 given menu item (second argument \fBTRUE\fR) or deselect it (second argument
 \fBFALSE\fR).
 .SH RETURN VALUE
 The function \fBset_item_value\fR returns one of the following:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
+.B E_SYSTEM_ERROR
 System error occurred (see \fBerrno\fR).
 .TP 5
-\fBE_REQUEST_DENIED\fR
+.B E_REQUEST_DENIED
 The menu driver could not process the request.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBmenu\fR(3).

@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.10 2009/06/11 23:18:52 chl Exp $	 */
+/* $Id: engine.c,v 1.11 2010/01/12 23:22:14 nicm Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -1044,7 +1044,7 @@ setup_term(int dmax)
 }
 
 void
-resize_term(void)
+do_resize_term(void)
 {
 	struct winsize ws;
 
@@ -1315,7 +1315,7 @@ engine_loop(int countmax)
 		if (gotsig_close)
 			break;
 		if (gotsig_resize) {
-			resize_term();
+			do_resize_term();
 			gotsig_resize = 0;
 			need_update = 1;
 		}

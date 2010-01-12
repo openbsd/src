@@ -1,7 +1,5 @@
-/*	$OpenBSD: fld_move.c,v 1.4 2001/01/22 18:02:13 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,12 +27,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_move.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
+MODULE_ID("$Id: fld_move.c,v 1.5 2010/01/12 23:22:07 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -48,12 +46,14 @@ MODULE_ID("$From: fld_move.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
 |                    E_CONNECTED     - field is connected
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-move_field (FIELD *field, int frow, int fcol)
+move_field(FIELD *field, int frow, int fcol)
 {
-  if ( !field || (frow<0) || (fcol<0) ) 
+  T((T_CALLED("move_field(%p,%d,%d)"), field, frow, fcol));
+
+  if (!field || (frow < 0) || (fcol < 0))
     RETURN(E_BAD_ARGUMENT);
 
-  if (field->form) 
+  if (field->form)
     RETURN(E_CONNECTED);
 
   field->frow = frow;
@@ -62,4 +62,3 @@ move_field (FIELD *field, int frow, int fcol)
 }
 
 /* fld_move.c ends here */
-

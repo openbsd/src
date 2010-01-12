@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_redrawln.c,v 1.2 2001/01/22 18:01:43 millert Exp $	*/
+/* $OpenBSD: lib_redrawln.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,16 +41,19 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_redrawln.c,v 1.9 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_redrawln.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
 
 NCURSES_EXPORT(int)
 wredrawln(WINDOW *win, int beg, int num)
 {
     int i;
     int end;
-    size_t len = (win->_maxx + 1) * sizeof(chtype);
+    size_t len;
 
     T((T_CALLED("wredrawln(%p,%d,%d)"), win, beg, num));
+
+    if (win == 0)
+	returnCode(ERR);
 
     if (beg < 0)
 	beg = 0;
@@ -58,13 +61,25 @@ wredrawln(WINDOW *win, int beg, int num)
     if (touchline(win, beg, num) == ERR)
 	returnCode(ERR);
 
+    if (touchline(curscr, beg + win->_begy, num) == ERR)
+	returnCode(ERR);
+
     end = beg + num;
+    if (end > curscr->_maxy + 1)
+	end = curscr->_maxy + 1;
     if (end > win->_maxy + 1)
 	end = win->_maxy + 1;
 
+    len = (win->_maxx + 1);
+    if (len > (size_t) (curscr->_maxx + 1))
+	len = (size_t) (curscr->_maxx + 1);
+    len *= sizeof(curscr->_line[0].text[0]);
+
     for (i = beg; i < end; i++) {
-	memset(curscr->_line[i + win->_begy].text + win->_begx, 0, len);
-	_nc_make_oldhash(i + win->_begy);
+	int crow = i + win->_begy;
+
+	memset(curscr->_line[crow].text + win->_begx, 0, len);
+	_nc_make_oldhash(crow);
     }
 
     returnCode(OK);

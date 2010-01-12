@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_kernel.c,v 1.2 2001/01/22 18:01:52 millert Exp $	*/
+/* $OpenBSD: lib_kernel.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey 2002                                           *
  ****************************************************************************/
 
 /*
@@ -49,7 +50,28 @@
 #include <curses.priv.h>
 #include <term.h>		/* cur_term */
 
-MODULE_ID("$From: lib_kernel.c,v 1.21 2000/12/10 02:55:07 tom Exp $")
+MODULE_ID("$Id: lib_kernel.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+
+static int
+_nc_vdisable(void)
+{
+    int value = -1;
+#if defined(_POSIX_VDISABLE) && HAVE_UNISTD_H
+    value = _POSIX_VDISABLE;
+#endif
+#if defined(_PC_VDISABLE)
+    if (value == -1) {
+	value = fpathconf(0, _PC_VDISABLE);
+	if (value == -1) {
+	    value = 0377;
+	}
+    }
+#elif defined(VDISABLE)
+    if (value == -1)
+	value = VDISABLE;
+#endif
+    return value;
+}
 
 /*
  *	erasechar()
@@ -61,16 +83,19 @@ MODULE_ID("$From: lib_kernel.c,v 1.21 2000/12/10 02:55:07 tom Exp $")
 NCURSES_EXPORT(char)
 erasechar(void)
 {
+    int result = ERR;
     T((T_CALLED("erasechar()")));
 
     if (cur_term != 0) {
 #ifdef TERMIOS
-	returnCode(cur_term->Ottyb.c_cc[VERASE]);
+	result = cur_term->Ottyb.c_cc[VERASE];
+	if (result == _nc_vdisable())
+	    result = ERR;
 #else
-	returnCode(cur_term->Ottyb.sg_erase);
+	result = cur_term->Ottyb.sg_erase;
 #endif
     }
-    returnCode(ERR);
+    returnCode(result);
 }
 
 /*
@@ -83,16 +108,19 @@ erasechar(void)
 NCURSES_EXPORT(char)
 killchar(void)
 {
+    int result = ERR;
     T((T_CALLED("killchar()")));
 
     if (cur_term != 0) {
 #ifdef TERMIOS
-	returnCode(cur_term->Ottyb.c_cc[VKILL]);
+	result = cur_term->Ottyb.c_cc[VKILL];
+	if (result == _nc_vdisable())
+	    result = ERR;
 #else
-	returnCode(cur_term->Ottyb.sg_kill);
+	result = cur_term->Ottyb.sg_kill;
 #endif
     }
-    returnCode(ERR);
+    returnCode(result);
 }
 
 /*

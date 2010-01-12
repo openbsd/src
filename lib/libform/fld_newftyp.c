@@ -1,7 +1,5 @@
-/*	$OpenBSD: fld_newftyp.c,v 1.5 2001/01/22 18:02:13 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2004,2007 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,76 +27,80 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_newftyp.c,v 1.6 2000/12/10 02:09:38 tom Exp $")
+MODULE_ID("$Id: fld_newftyp.c,v 1.6 2010/01/12 23:22:07 nicm Exp $")
 
-static FIELDTYPE const default_fieldtype = {
-  0,                   /* status                                      */
-  0L,                  /* reference count                             */
-  (FIELDTYPE *)0,      /* pointer to left  operand                    */
-  (FIELDTYPE *)0,      /* pointer to right operand                    */
-  NULL,                /* makearg function                            */
-  NULL,                /* copyarg function                            */
-  NULL,                /* freearg function                            */
-  NULL,                /* field validation function                   */
-  NULL,                /* Character check function                    */
-  NULL,                /* enumerate next function                     */
-  NULL                 /* enumerate previous function                 */
+static FIELDTYPE const default_fieldtype =
+{
+  0,				/* status                                      */
+  0L,				/* reference count                             */
+  (FIELDTYPE *)0,		/* pointer to left  operand                    */
+  (FIELDTYPE *)0,		/* pointer to right operand                    */
+  NULL,				/* makearg function                            */
+  NULL,				/* copyarg function                            */
+  NULL,				/* freearg function                            */
+  NULL,				/* field validation function                   */
+  NULL,				/* Character check function                    */
+  NULL,				/* enumerate next function                     */
+  NULL				/* enumerate previous function                 */
 };
 
-NCURSES_EXPORT_VAR(const FIELDTYPE*) _nc_Default_FieldType = &default_fieldtype;
-
+NCURSES_EXPORT_VAR(const FIELDTYPE *)
+_nc_Default_FieldType = &default_fieldtype;
+
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  FIELDTYPE *new_fieldtype(
 |                       bool (* const field_check)(FIELD *,const void *),
-|                       bool (* const char_check) (int, const void *) ) 
-|   
+|                       bool (* const char_check) (int, const void *) )
+|
 |   Description   :  Create a new fieldtype. The application programmer must
 |                    write a field_check and a char_check function and give
 |                    them as input to this call.
-|                    If an error occurs, errno is set to                    
+|                    If an error occurs, errno is set to
 |                       E_BAD_ARGUMENT  - invalid arguments
 |                       E_SYSTEM_ERROR  - system error (no memory)
 |
-|   Return Values :  Fieldtype pointer or NULL if error occured
+|   Return Values :  Fieldtype pointer or NULL if error occurred
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(FIELDTYPE *)
-new_fieldtype (
- bool (* const field_check)(FIELD *,const void *),
- bool (* const char_check) (int,const void *) )
+new_fieldtype(bool (*const field_check) (FIELD *, const void *),
+	      bool (*const char_check) (int, const void *))
 {
   FIELDTYPE *nftyp = (FIELDTYPE *)0;
-  
-  if ( (field_check) || (char_check) )
+
+  T((T_CALLED("new_fieldtype(%p,%p)"), field_check, char_check));
+  if ((field_check) || (char_check))
     {
-      nftyp = (FIELDTYPE *)malloc(sizeof(FIELDTYPE));
+      nftyp = typeMalloc(FIELDTYPE, 1);
+
       if (nftyp)
 	{
+	  T((T_CREATE("fieldtype %p"), nftyp));
 	  *nftyp = default_fieldtype;
 	  nftyp->fcheck = field_check;
 	  nftyp->ccheck = char_check;
 	}
       else
 	{
-	  SET_ERROR( E_SYSTEM_ERROR );
+	  SET_ERROR(E_SYSTEM_ERROR);
 	}
     }
   else
     {
-      SET_ERROR( E_BAD_ARGUMENT );
+      SET_ERROR(E_BAD_ARGUMENT);
     }
-  return nftyp;
+  returnFieldType(nftyp);
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int free_fieldtype(FIELDTYPE *typ)
-|   
+|
 |   Description   :  Release the memory associated with this fieldtype.
 |
 |   Return Values :  E_OK            - success
@@ -106,12 +108,14 @@ new_fieldtype (
 |                    E_BAD_ARGUMENT  - invalid fieldtype pointer
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-free_fieldtype (FIELDTYPE *typ)
+free_fieldtype(FIELDTYPE *typ)
 {
+  T((T_CALLED("free_fieldtype(%p)"), typ));
+
   if (!typ)
     RETURN(E_BAD_ARGUMENT);
 
-  if (typ->ref!=0)
+  if (typ->ref != 0)
     RETURN(E_CONNECTED);
 
   if (typ->status & _RESIDENT)
@@ -119,8 +123,10 @@ free_fieldtype (FIELDTYPE *typ)
 
   if (typ->status & _LINKED_TYPE)
     {
-      if (typ->left ) typ->left->ref--;
-      if (typ->right) typ->right->ref--;
+      if (typ->left)
+	typ->left->ref--;
+      if (typ->right)
+	typ->right->ref--;
     }
   free(typ);
   RETURN(E_OK);

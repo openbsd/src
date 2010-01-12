@@ -1,7 +1,7 @@
-.\" $OpenBSD: form_field_validation.3,v 1.8 2003/05/16 08:48:27 jmc Exp $
+.\" $OpenBSD: form_field_validation.3,v 1.9 2010/01/12 23:22:07 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2003,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: form_field_validation.3x,v 1.10 1998/03/11 21:12:53 juergen Exp $
+.\" $Id: form_field_validation.3,v 1.9 2010/01/12 23:22:07 nicm Exp $
 .TH form_field_validation 3 ""
 .SH NAME
 \fBform_field_validation\fR - data type validation for fields
@@ -40,10 +40,25 @@ int set_field_type(FIELD *field, FIELDTYPE *type, ...);
 FIELDTYPE *field_type(const FIELD *field);
 .br
 void *field_arg(const FIELD *field);
+.sp
+FIELDTYPE *TYPE_ALNUM;
+.br
+FIELDTYPE *TYPE_ALPHA;
+.br
+FIELDTYPE *TYPE_ENUM;
+.br
+FIELDTYPE *TYPE_INTEGER;
+.br
+FIELDTYPE *TYPE_NUMERIC;
+.br
+FIELDTYPE *TYPE_REGEXP;
+.br
+FIELDTYPE *TYPE_IPV4;
 .br
 .SH DESCRIPTION
 The function \fBset_field_type\fR declares a data type for a given form field.
-This is the type checked by validation functions.  The types are as follows:
+This is the type checked by validation functions.
+The predefined types are as follows:
 .TP 5
 TYPE_ALNUM
 Alphanumeric data.  Requires a third \fBint\fR argument, a minimum field width.
@@ -86,7 +101,7 @@ For details of the precision handling see \fBprintf's\fR man-page.
 TYPE_REGEXP
 Regular expression data.  Requires a regular expression \fB(char *)\fR third argument;
 the data is valid if the regular expression matches it.  Regular expressions
-are in the format of \fBregcomp\fR(3) and \fBregexec\fR(3). Please notice
+are in the format of \fBregcomp\fR and \fBregexec\fR. Please notice
 that the regular expression must match the whole field. If you have for
 example an eight character wide field, a regular expression "^[0-9]*$" always
 means that you have to fill all eight positions with digits. If you want to
@@ -100,17 +115,17 @@ is checked whether or not the buffer has the form a.b.c.d, where a,b,c and d are
 numbers between 0 and 255. Trailing blanks in the buffer are ignored. The address
 itself is not validated. Please note that this is an ncurses extension. This
 field type may not be available in other curses implementations.
-
+.PP
 It is possible to set up new programmer-defined field types.  See the
 \fBform_fieldtype\fR(3) manual page.
 .SH RETURN VALUE
 The functions \fBfield_type\fR and \fBfield_arg\fR return \fBNULL\fR on
 error. The function \fBset_field_type\fR returns one of the following:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
+.B E_SYSTEM_ERROR
 System error occurred (see \fBerrno\fR).
 .SH SEE ALSO
 \fBcurses\fR(3), \fBform\fR(3).

@@ -1,5 +1,7 @@
+/* $OpenBSD: read_termcap.c,v 1.22 2010/01/12 23:22:06 nicm Exp $ */
+
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,6 +31,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -52,25 +55,31 @@
 #include <curses.priv.h>
 
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_termcap.c,v 1.55 2000/12/10 02:55:08 tom Exp $")
+MODULE_ID("$Id: read_termcap.c,v 1.22 2010/01/12 23:22:06 nicm Exp $")
 
 #if !PURE_TERMINFO
 
-#ifdef __EMX__
-#define is_pathname(s) ((((s) != 0) && ((s)[0] == '/')) \
-		  || (((s)[0] != 0) && ((s)[1] == ':')))
-#else
-#define is_pathname(s) ((s) != 0 && (s)[0] == '/')
-#endif
-
 #define TC_SUCCESS     0
-#define TC_UNRESOLVED -1
-#define TC_NOT_FOUND  -2
-#define TC_SYS_ERR    -3
-#define TC_REF_LOOP   -4
+#define TC_NOT_FOUND  -1
+#define TC_SYS_ERR    -2
+#define TC_REF_LOOP   -3
+#define TC_UNRESOLVED -4	/* this is not returned by BSD cgetent */
+
+static NCURSES_CONST char *
+get_termpath(void)
+{
+    NCURSES_CONST char *result;
+
+    if (!use_terminfo_vars() || (result = getenv("TERMPATH")) == 0)
+	result = TERMPATH;
+    T(("TERMPATH is %s", result));
+    return result;
+}
 
 #if USE_GETCAP
 
@@ -119,13 +128,7 @@ static int _nc_nfcmp(const char *, char *);
 
 #define	BFRAG		1024
 #define	BSIZE		1024
-#define	ESC		('[' & 037)	/* ASCII ESC */
 #define	MAX_RECURSION	32	/* maximum getent recursion */
-#define	SFRAG		100	/* cgetstr mallocs in SFRAG chunks */
-
-#define RECOK	(char)0
-#define TCERR	(char)1
-#define	SHADOW	(char)2
 
 static size_t topreclen;	/* toprec length */
 static char *toprec;		/* Additional record specified by cgetset() */
@@ -218,10 +221,10 @@ _nc_cgetcap(char *buf, const char *cap, int type)
  * Returns:
  *
  * positive #    on success (i.e., the index in db_array)
- * TC_UNRESOLVED if we had too many recurrences to resolve
  * TC_NOT_FOUND  if the requested record couldn't be found
  * TC_SYS_ERR    if a system error was encountered (e.g.,couldn't open a file)
  * TC_REF_LOOP   if a potential reference loop is detected
+ * TC_UNRESOLVED if we had too many recurrences to resolve
  */
 static int
 _nc_cgetent(char **buf, int *oline, char **db_array, const char *name)
@@ -284,7 +287,7 @@ _nc_getent(
 	    errno = ENOMEM;
 	    return (TC_SYS_ERR);
 	}
-	(void) strlcpy(record, toprec, topreclen + BFRAG);
+        (void) strlcpy(record, toprec, topreclen + BFRAG);
 	rp = record + topreclen + 1;
 	r_end = rp + BFRAG;
 	current = in_array;
@@ -659,7 +662,11 @@ _nc_nfcmp(const char *nf, char *rec)
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgment:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -701,7 +708,7 @@ get_tc_token(char **srcp, int *endp)
 	    if (*s == '\0') {
 		break;
 	    } else if (*s++ == '\n') {
-		while (isspace(*s))
+		while (isspace(UChar(*s)))
 		    s++;
 	    } else {
 		found = TRUE;
@@ -715,7 +722,7 @@ get_tc_token(char **srcp, int *endp)
 		break;
 	    }
 	    base = s;
-	} else if (isgraph(ch)) {
+	} else if (isgraph(UChar(ch))) {
 	    found = TRUE;
 	}
     }
@@ -735,7 +742,7 @@ copy_tc_token(char *dst, const char *src, size_t len)
 
     while ((ch = *src++) != '\0') {
 	if (ch == '\\' && *src == '\n') {
-	    while (isspace(*src))
+	    while (isspace(UChar(*src)))
 		src++;
 	    continue;
 	}
@@ -755,7 +762,6 @@ static int
 _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 {
     static char *the_source;
-
     register char *p;
     register char *cp;
     char *dummy = NULL;
@@ -765,7 +771,7 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
     char pathbuf[PBUFSIZ];	/* holds raw path of filenames */
     char *pathvec[PVECSIZ];	/* to point to names in pathbuf */
     char **pvec;		/* holds usable tail of path vector */
-    char *termpath;
+    NCURSES_CONST char *termpath;
     string_desc desc;
 
     fname = pathvec;
@@ -785,23 +791,23 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
      */
     _nc_str_init(&desc, pathbuf, sizeof(pathbuf));
     if (cp == NULL) {
-	_nc_safe_strcpy(&desc, "/usr/share/misc/termcap /etc/termcap");
-    } else if (!is_pathname(cp)) {	/* TERMCAP holds an entry */
-	if ((termpath = getenv("TERMPATH")) != 0) {
+	_nc_safe_strcpy(&desc, get_termpath());
+    } else if (!_nc_is_abs_path(cp)) {	/* TERMCAP holds an entry */
+	if ((termpath = get_termpath()) != 0) {
 	    _nc_safe_strcat(&desc, termpath);
 	} else {
 	    char temp[PBUFSIZ];
-	    size_t len;
 	    temp[0] = 0;
 	    if ((home = getenv("HOME")) != 0 && *home != '\0'
-	     && strchr(home, ' ') == 0) { /* setup path */
-		len = snprintf(temp, sizeof(temp), "%s/.termcap", home);
-		if (len < sizeof(temp)) {
-		    _nc_safe_strcat(&desc, temp);
-		}
+		&& strchr(home, ' ') == 0
+		&& strlen(home) < sizeof(temp) - 10) {	/* setup path */
+		snprintf(temp, sizeof(temp), "%s/", home);	/* $HOME first */
 	    }
-	    _nc_safe_strcat(&desc, " /usr/share/misc/termcap");
-	    _nc_safe_strcat(&desc, " /etc/termcap");
+	    /* if no $HOME look in current directory */
+	    strlcat(temp, ".termcap", sizeof temp);
+	    _nc_safe_strcat(&desc, temp);
+	    _nc_safe_strcat(&desc, " ");
+	    _nc_safe_strcat(&desc, get_termpath());
 	}
     } else {			/* user-defined name in TERMCAP */
 	_nc_safe_strcat(&desc, cp);	/* still can be tokenized */
@@ -824,7 +830,7 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 	}
     }
     *fname = 0;			/* mark end of vector */
-    if (is_pathname(cp)) {
+    if (_nc_is_abs_path(cp)) {
 	if (_nc_cgetset(cp) < 0) {
 	    return (TC_SYS_ERR);
 	}
@@ -877,8 +883,21 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
      * cgetent, then it is the actual filename).
      */
     if (i >= 0) {
+#if HAVE_BSD_CGETENT
+	char temp[PATH_MAX];
+
+	_nc_str_init(&desc, temp, sizeof(temp));
+	_nc_safe_strcpy(&desc, pathvec[i]);
+	_nc_safe_strcat(&desc, ".db");
+	if (_nc_access(temp, R_OK) == 0) {
+	    _nc_safe_strcpy(&desc, pathvec[i]);
+	}
+	if ((the_source = strdup(temp)) != 0)
+	    *sourcename = the_source;
+#else
 	if ((the_source = strdup(pathvec[i])) != 0)
 	    *sourcename = the_source;
+#endif
     }
 
     return (i);
@@ -896,20 +915,26 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 static int
 add_tc(char *termpaths[], char *path, int count)
 {
+    char *save = strchr(path, NCURSES_PATHSEP);
+    if (save != 0)
+	*save = '\0';
     if (count < MAXPATHS
-	&& _nc_access(path, R_OK) == 0)
+	&& _nc_access(path, R_OK) == 0) {
 	termpaths[count++] = path;
+	T(("Adding termpath %s", path));
+    }
     termpaths[count] = 0;
+    if (save != 0)
+	*save = NCURSES_PATHSEP;
     return count;
 }
 #define ADD_TC(path, count) filecount = add_tc(termpaths, path, count)
 #endif /* !USE_GETCAP */
 
 NCURSES_EXPORT(int)
-_nc_read_termcap_entry
-(const char *const tn, TERMTYPE * const tp)
+_nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 {
-    int found = FALSE;
+    int found = TGETENT_NO;
     ENTRY *ep;
 #if USE_GETCAP_CACHE
     char cwd_buf[PATH_MAX];
@@ -920,20 +945,31 @@ _nc_read_termcap_entry
     static char *source;
     static int lineno;
 
+    T(("read termcap entry for %s", tn));
+
+    if (strlen(tn) == 0
+	|| strcmp(tn, ".") == 0
+	|| strcmp(tn, "..") == 0
+	|| _nc_pathlast(tn) != 0) {
+	T(("illegal or missing entry name '%s'", tn));
+	return TGETENT_NO;
+    }
+
     if (use_terminfo_vars() && (p = getenv("TERMCAP")) != 0
-	&& !is_pathname(p) && _nc_name_match(p, tn, "|:")) {
+	&& !_nc_is_abs_path(p) && _nc_name_match(p, tn, "|:")) {
 	/* TERMCAP holds a termcap entry */
-	strlcpy(tc, p, sizeof(tc));
+	strncpy(tc, p, sizeof(tc) - 1);
+	tc[sizeof(tc) - 1] = '\0';
 	_nc_set_source("TERMCAP");
     } else {
 	/* we're using getcap(3) */
 	if ((status = _nc_tgetent(tc, &source, &lineno, tn)) < 0)
-	    return (status == -1 ? 0 : -1);
+	    return (status == TC_NOT_FOUND ? TGETENT_NO : TGETENT_ERR);
 
 	_nc_curr_line = lineno;
 	_nc_set_source(source);
     }
-    _nc_read_entry_source((FILE *) 0, tc, FALSE, TRUE, NULLHOOK);
+    _nc_read_entry_source((FILE *) 0, tc, FALSE, FALSE, NULLHOOK);
 #else
     /*
      * Here is what the 4.4BSD termcap(3) page prescribes:
@@ -964,65 +1000,98 @@ _nc_read_termcap_entry
     FILE *fp;
     char *tc, *termpaths[MAXPATHS];
     int filecount = 0;
+    int j, k;
     bool use_buffer = FALSE;
+    bool normal = TRUE;
     char tc_buf[1024];
     char pathbuf[PATH_MAX];
+    char *copied = 0;
+    char *cp;
+    struct stat test_stat[MAXPATHS];
 
     termpaths[filecount] = 0;
     if (use_terminfo_vars() && (tc = getenv("TERMCAP")) != 0) {
-	if (is_pathname(tc)) {	/* interpret as a filename */
+	if (_nc_is_abs_path(tc)) {	/* interpret as a filename */
 	    ADD_TC(tc, 0);
+	    normal = FALSE;
 	} else if (_nc_name_match(tc, tn, "|:")) {	/* treat as a capability file */
 	    use_buffer = TRUE;
-	    (void) snprintf(tc_buf, sizeof(tc_buf), "%.*s\n",
-		(int) sizeof(tc_buf) - 2, tc);
-	} else if ((tc = getenv("TERMPATH")) != 0) {
-	    char *cp;
-
-	    for (cp = tc; *cp; cp++) {
-		if (*cp == NCURSES_PATHSEP)
-		    *cp = '\0';
-		else if (cp == tc || cp[-1] == '\0') {
-		    ADD_TC(cp, filecount);
-		}
-	    }
+	    (void) snprintf(tc_buf, sizeof(tc_buf), "%.*s\n", (int) sizeof(tc_buf) - 2, tc);
+	    normal = FALSE;
 	}
-    } else {			/* normal case */
+    }
+
+    if (normal) {		/* normal case */
 	char envhome[PATH_MAX], *h;
 
-	filecount = 0;
-
-	/*
-	 * Probably /etc/termcap is a symlink to /usr/share/misc/termcap.
-	 * Avoid reading the same file twice.
-	 */
-	if (_nc_access("/etc/termcap", F_OK) == 0)
-	    ADD_TC("/etc/termcap", filecount);
-	else
-	    ADD_TC("/usr/share/misc/termcap", filecount);
+	copied = strdup(get_termpath());
+	for (cp = copied; *cp; cp++) {
+	    if (*cp == NCURSES_PATHSEP)
+		*cp = '\0';
+	    else if (cp == copied || cp[-1] == '\0') {
+		ADD_TC(cp, filecount);
+	    }
+	}
 
 #define PRIVATE_CAP "%s/.termcap"
 
 	if (use_terminfo_vars() && (h = getenv("HOME")) != NULL && *h != '\0'
 	    && (strlen(h) + sizeof(PRIVATE_CAP)) < PATH_MAX) {
 	    /* user's .termcap, if any, should override it */
-	    (void) strlcpy(envhome, h, sizeof(envhome));
+            (void) strlcpy(envhome, h, sizeof(envhome);
 	    (void) snprintf(pathbuf, sizeof(pathbuf), PRIVATE_CAP, envhome);
 	    ADD_TC(pathbuf, filecount);
 	}
     }
 
+    /*
+     * Probably /etc/termcap is a symlink to /usr/share/misc/termcap.
+     * Avoid reading the same file twice.
+     */
+#if HAVE_LINK
+    for (j = 0; j < filecount; j++) {
+	bool omit = FALSE;
+	if (stat(termpaths[j], &test_stat[j]) != 0
+	    || (test_stat[j].st_mode & S_IFMT) != S_IFREG) {
+	    omit = TRUE;
+	} else {
+	    for (k = 0; k < j; k++) {
+		if (test_stat[k].st_dev == test_stat[j].st_dev
+		    && test_stat[k].st_ino == test_stat[j].st_ino) {
+		    omit = TRUE;
+		    break;
+		}
+	    }
+	}
+	if (omit) {
+	    T(("Path %s is a duplicate", termpaths[j]));
+	    for (k = j + 1; k < filecount; k++) {
+		termpaths[k - 1] = termpaths[k];
+		test_stat[k - 1] = test_stat[k];
+	    }
+	    --filecount;
+	    --j;
+	}
+    }
+#endif
+
     /* parse the sources */
     if (use_buffer) {
 	_nc_set_source("TERMCAP");
-	_nc_read_entry_source((FILE *) 0, tc_buf, FALSE, TRUE, NULLHOOK);
+
+	/*
+	 * We don't suppress warning messages here.  The presumption is
+	 * that since it's just a single entry, they won't be a pain.
+	 */
+	_nc_read_entry_source((FILE *) 0, tc_buf, FALSE, FALSE, NULLHOOK);
     } else {
 	int i;
 
 	for (i = 0; i < filecount; i++) {
 
 	    T(("Looking for %s in %s", tn, termpaths[i]));
-	    if ((fp = fopen(termpaths[i], "r")) != (FILE *) 0) {
+	    if (_nc_access(termpaths[i], R_OK) == 0
+		&& (fp = fopen(termpaths[i], "r")) != (FILE *) 0) {
 		_nc_set_source(termpaths[i]);
 
 		/*
@@ -1036,13 +1105,15 @@ _nc_read_termcap_entry
 	    }
 	}
     }
+    if (copied != 0)
+	free(copied);
 #endif /* USE_GETCAP */
 
     if (_nc_head == 0)
-	return (ERR);
+	return (TGETENT_ERR);
 
     /* resolve all use references */
-    _nc_resolve_uses(TRUE);
+    _nc_resolve_uses2(TRUE, FALSE);
 
     /* find a terminal matching tn, if we can */
 #if USE_GETCAP_CACHE
@@ -1052,13 +1123,12 @@ _nc_read_termcap_entry
 	for_entry_list(ep) {
 	    if (_nc_name_match(ep->tterm.term_names, tn, "|:")) {
 		/*
-		 * Make a local copy of the terminal capabilities.  Free all
-		 * entry storage except the string table for the loaded type
-		 * (which we disconnected from the list by NULLing out
-		 * ep->tterm.str_table above).
+		 * Make a local copy of the terminal capabilities, delinked
+		 * from the list.
 		 */
 		*tp = ep->tterm;
-		ep->tterm.str_table = (char *) 0;
+		_nc_delink_entry(_nc_head, &(ep->tterm));
+		free(ep);
 
 		/*
 		 * OK, now try to write the type to user's terminfo directory. 
@@ -1075,7 +1145,7 @@ _nc_read_termcap_entry
 #if USE_GETCAP_CACHE
 		(void) _nc_write_entry(tp);
 #endif
-		found = TRUE;
+		found = TGETENT_YES;
 		break;
 	    }
 	}
@@ -1084,7 +1154,6 @@ _nc_read_termcap_entry
     }
 #endif
 
-    _nc_free_entries(_nc_head);
     return (found);
 }
 #else

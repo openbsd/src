@@ -1,7 +1,5 @@
-/*	$OpenBSD: frm_post.c,v 1.4 2001/01/22 18:02:15 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,11 +27,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
+ *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
+
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_post.c,v 1.5 2000/12/10 02:09:37 tom Exp $")
+MODULE_ID("$Id: frm_post.c,v 1.5 2010/01/12 23:22:07 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -49,37 +48,39 @@ MODULE_ID("$From: frm_post.c,v 1.5 2000/12/10 02:09:37 tom Exp $")
 |                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-post_form (FORM * form)
+post_form(FORM *form)
 {
   WINDOW *formwin;
   int err;
   int page;
 
+  T((T_CALLED("post_form(%p)"), form));
+
   if (!form)
     RETURN(E_BAD_ARGUMENT);
 
-  if (form->status & _POSTED)   
+  if (form->status & _POSTED)
     RETURN(E_POSTED);
 
   if (!(form->field))
     RETURN(E_NOT_CONNECTED);
-  
+
   formwin = Get_Form_Window(form);
-  if ((form->cols > getmaxx(formwin)) || (form->rows > getmaxy(formwin))) 
+  if ((form->cols > getmaxx(formwin)) || (form->rows > getmaxy(formwin)))
     RETURN(E_NO_ROOM);
 
   /* reset form->curpage to an invald value. This forces Set_Form_Page
      to do the page initialization which is required by post_form.
-  */
+   */
   page = form->curpage;
   form->curpage = -1;
-  if ((err = _nc_Set_Form_Page(form,page,form->current))!=E_OK)
+  if ((err = _nc_Set_Form_Page(form, page, form->current)) != E_OK)
     RETURN(err);
 
   form->status |= _POSTED;
 
-  Call_Hook(form,forminit);
-  Call_Hook(form,fieldinit);
+  Call_Hook(form, forminit);
+  Call_Hook(form, fieldinit);
 
   _nc_Refresh_Current_Field(form);
   RETURN(E_OK);
@@ -97,19 +98,21 @@ post_form (FORM * form)
 |                    E_BAD_STATE     - called from a hook routine
 +--------------------------------------------------------------------------*/
 NCURSES_EXPORT(int)
-unpost_form (FORM * form)
+unpost_form(FORM *form)
 {
+  T((T_CALLED("unpost_form(%p)"), form));
+
   if (!form)
     RETURN(E_BAD_ARGUMENT);
 
-  if (!(form->status & _POSTED)) 
+  if (!(form->status & _POSTED))
     RETURN(E_NOT_POSTED);
 
-  if (form->status & _IN_DRIVER) 
+  if (form->status & _IN_DRIVER)
     RETURN(E_BAD_STATE);
 
-  Call_Hook(form,fieldterm);
-  Call_Hook(form,formterm);
+  Call_Hook(form, fieldterm);
+  Call_Hook(form, formterm);
 
   werase(Get_Form_Window(form));
   delwin(form->w);

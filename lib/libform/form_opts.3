@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: form_opts.3,v 1.8 1999/05/12 13:26:49 aaron Exp $
+.\" $OpenBSD: form_opts.3,v 1.9 2010/01/12 23:22:07 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,33 +29,33 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: form_opts.3x,v 1.6 1998/11/29 01:07:53 Rick.Ohnemus Exp $
+.\" $Id: form_opts.3,v 1.9 2010/01/12 23:22:07 nicm Exp $
 .TH form_opts 3 ""
 .SH NAME
 \fBform_opts\fR - set and get form options
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int set_form_opts(FORM *form, OPTIONS opts);
+int set_form_opts(FORM *form, Field_Options opts);
 .br
-int form_opts_on(FORM *form, OPTIONS opts);
+int form_opts_on(FORM *form, Field_Options opts);
 .br
-int form_opts_off(FORM *form, OPTIONS opts);
+int form_opts_off(FORM *form, Field_Options opts);
 .br
-OPTIONS form_opts(const FORM *form);
+Field_Options form_opts(const FORM *form);
 .br
 .SH DESCRIPTION
 The function \fBset_form_opts\fR sets all the given form's option bits (form
 option bits may be logically OR'ed together).
-
+.PP
 The function \fBform_opts_on\fR turns on the given option bits, and leaves
 others alone.
-
+.PP
 The function \fBform_opts_off\fR turns off the given option bits, and leaves
 others alone.
-
+.PP
 The function \fBform_opts\fR returns the form's current option bits.
-
+.PP
 The following options are defined (all are on by default):
 .TP 5
 O_NL_OVERLOAD
@@ -68,10 +68,10 @@ beginning of a field goes to the previous field.
 .SH RETURN VALUE
 Except for \fBform_opts\fR, each routine returns one of the following:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
+.B E_SYSTEM_ERROR
 System error occurred (see \fBerrno\fR).
 .SH SEE ALSO
 \fBcurses\fR(3), \fBform\fR(3).

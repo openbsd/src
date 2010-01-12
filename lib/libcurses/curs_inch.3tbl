@@ -1,8 +1,8 @@
-'\" t 
-.\" $OpenBSD: curs_inch.3tbl,v 1.7 1999/01/18 19:07:13 millert Exp $
+'\" t
+.\" $OpenBSD: curs_inch.3tbl,v 1.8 2010/01/12 23:21:59 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2006 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,14 +29,14 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_inch.3x,v 1.11 1998/11/29 01:04:34 Rick.Ohnemus Exp $
+.\" $Id: curs_inch.3tbl,v 1.8 2010/01/12 23:21:59 nicm Exp $
 .TH curs_inch 3 ""
 .SH NAME
 \fBinch\fR, \fBwinch\fR, \fBmvinch\fR, \fBmvwinch\fR
 - get a character and attributes from a \fBcurses\fR window
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
-
+.sp
 \fBchtype inch(void);\fR
 .br
 \fBchtype winch(WINDOW *win);\fR
@@ -51,10 +51,10 @@ position in the named window.  If any attributes are set for that position,
 their values are OR'ed into the value returned.  Constants defined in
 \fB<curses.h>\fR can be used with the \fB&\fR (logical AND) operator to
 extract the character or attributes alone.
-
+.
 .SS Attributes
 The following bit-masks may be AND-ed with characters returned by \fBwinch\fR.
-
+.
 .TS
 l l .
 \fBA_CHARTEXT\fR	Bit-mask to extract character
@@ -67,6 +67,10 @@ Note that all of these routines may be macros.
 These functions are described in the XSI Curses standard, Issue 4.
 .SH SEE ALSO
 \fBcurses\fR(3).
+.PP
+Comparable functions in the wide-character (ncursesw) library are
+described in
+\fBcurs_in_wch\fR(3).
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

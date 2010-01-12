@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: mitem_new.3,v 1.5 2003/10/22 08:07:09 jmc Exp $
+.\" $OpenBSD: mitem_new.3,v 1.6 2010/01/12 23:22:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998-2003,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: mitem_new.3x,v 1.7 1998/11/29 01:11:38 Rick.Ohnemus Exp $
+.\" $Id: mitem_new.3,v 1.6 2010/01/12 23:22:08 nicm Exp $
 .TH mitem_new 3 ""
 .SH NAME
 \fBmitem_new\fR - create and destroy menu items
@@ -52,20 +52,27 @@ is the responsibility of the application to release the memory for the
 name or the description of the item.
 .SH RETURN VALUE
 The function \fBnew_item\fR returns \fBNULL\fR on error.
-
-The function \fBfree_item\fR returns one of the following:
+It sets errno according to the function's failure:
 .TP 5
-\fBE_OK\fR
-The routine succeeded.
-.TP 5
-\fBE_SYSTEM_ERROR\fR
-System error occurred (see \fBerrno\fR).
-.TP 5
-\fBE_BAD_ARGUMENT\fR
+.B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
 .TP 5
-\fBE_CONNECTED\fR
+.B E_SYSTEM_ERROR
+System error occurred, e.g., malloc failure.
+.PP
+The function \fBfree_item\fR returns one of the following:
+.TP 5
+.B E_OK
+The routine succeeded.
+.TP 5
+.B E_BAD_ARGUMENT
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+.B E_CONNECTED
 Item is connected to a menu.
+.TP 5
+.B E_SYSTEM_ERROR
+System error occurred (see \fBerrno\fR).
 .SH SEE ALSO
 \fBcurses\fR(3), \fBmenu\fR(3).
 .SH NOTES

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_slk.c,v 1.4 2001/01/22 18:01:44 millert Exp $	*/
+/* $OpenBSD: lib_slk.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,8 +29,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
- *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *  Authors:                                                                *
+ *          Gerhard Fuernkranz                      1993 (original)         *
+ *          Zeyd M. Ben-Halim                       1992,1995 (sic)         *
+ *          Eric S. Raymond                                                 *
+ *          Juergen Pfeifer                         1996-on                 *
+ *          Thomas E. Dickey                                                *
  ****************************************************************************/
 
 /*
@@ -43,40 +47,20 @@
 #include <ctype.h>
 #include <term.h>		/* num_labels, label_*, plab_norm */
 
-MODULE_ID("$From: lib_slk.c,v 1.20 2000/12/10 02:43:27 tom Exp $")
+MODULE_ID("$Id: lib_slk.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
 
 /*
- * We'd like to move these into the screen context structure, but cannot,
- * because slk_init() is called before initscr()/newterm().
+ * Free any memory related to soft labels, return an error.
  */
-NCURSES_EXPORT_VAR(int)
-_nc_slk_format = 0;		/* one more than format specified in slk_init() */
-
-/*
- * Paint the info line for the PC style SLK emulation.
- *
- */
-     static void
-       slk_paint_info(WINDOW *win)
+static int
+slk_failed(void)
 {
-    if (win && SP->slk_format == 4) {
-	int i;
-
-	mvwhline(win, 0, 0, 0, getmaxx(win));
-	wmove(win, 0, 0);
-
-	for (i = 0; i < SP->_slk->maxlab; i++) {
-	    if (win && SP->slk_format == 4) {
-		mvwaddch(win, 0, SP->_slk->ent[i].x, (chtype) 'F');
-		if (i < 9)
-		    waddch(win, (chtype) '1' + i);
-		else {
-		    waddch(win, (chtype) '1');
-		    waddch(win, (chtype) '0' + (i - 9));
-		}
-	    }
-	}
+    if (SP->_slk) {
+	FreeIfNeeded(SP->_slk->ent);
+	free(SP->_slk);
+	SP->_slk = (SLK *) 0;
     }
+    return ERR;
 }
 
 /*
@@ -88,101 +72,108 @@ _nc_slk_initialize(WINDOW *stwin, int cols)
 {
     int i, x;
     int res = OK;
-    char *p;
+    unsigned max_length;
 
-    T(("slk_initialize()"));
+    T((T_CALLED("_nc_slk_initialize()")));
 
     if (SP->_slk) {		/* we did this already, so simply return */
-	return (OK);
+	returnCode(OK);
     } else if ((SP->_slk = typeCalloc(SLK, 1)) == 0)
-	return (ERR);
+	returnCode(ERR);
 
     SP->_slk->ent = NULL;
-    SP->_slk->buffer = NULL;
-    SP->_slk->attr = A_STANDOUT;
 
-    SP->_slk->maxlab = (num_labels > 0) ?
-	num_labels : MAX_SKEY(_nc_slk_format);
-    SP->_slk->maxlen = (num_labels > 0) ?
-	label_width * label_height : MAX_SKEY_LEN(_nc_slk_format);
-    SP->_slk->labcnt = (SP->_slk->maxlab < MAX_SKEY(_nc_slk_format)) ?
-	MAX_SKEY(_nc_slk_format) : SP->_slk->maxlab;
+    /*
+     * If we use colors, vidputs() will suppress video attributes that conflict
+     * with colors.  In that case, we're still guaranteed that "reverse" would
+     * work.
+     */
+    if ((no_color_video & 1) == 0)
+	SetAttr(SP->_slk->attr, A_STANDOUT);
+    else
+	SetAttr(SP->_slk->attr, A_REVERSE);
 
-    SP->_slk->ent = typeCalloc(slk_ent, SP->_slk->labcnt);
-    if (SP->_slk->ent == NULL)
-	goto exception;
+    SP->_slk->maxlab = ((num_labels > 0)
+			? num_labels
+			: MAX_SKEY(_nc_globals.slk_format));
+    SP->_slk->maxlen = ((num_labels > 0)
+			? label_width * label_height
+			: MAX_SKEY_LEN(_nc_globals.slk_format));
+    SP->_slk->labcnt = ((SP->_slk->maxlab < MAX_SKEY(_nc_globals.slk_format))
+			? MAX_SKEY(_nc_globals.slk_format)
+			: SP->_slk->maxlab);
 
-    p = SP->_slk->buffer = (char *) calloc(2 * SP->_slk->labcnt, (1 + SP->_slk->maxlen));
-    if (SP->_slk->buffer == NULL)
-	goto exception;
+    if (SP->_slk->maxlen <= 0
+	|| SP->_slk->labcnt <= 0
+	|| (SP->_slk->ent = typeCalloc(slk_ent,
+				       (unsigned) SP->_slk->labcnt)) == NULL)
+	returnCode(slk_failed());
 
+    max_length = SP->_slk->maxlen;
     for (i = 0; i < SP->_slk->labcnt; i++) {
-	SP->_slk->ent[i].text = p;
-	p += (1 + SP->_slk->maxlen);
-	SP->_slk->ent[i].form_text = p;
-	p += (1 + SP->_slk->maxlen);
-	memset(SP->_slk->ent[i].form_text, ' ', (unsigned) (SP->_slk->maxlen));
-	SP->_slk->ent[i].visible = (i < SP->_slk->maxlab);
+	size_t used = max_length + 1;
+
+	if ((SP->_slk->ent[i].ent_text = (char *) _nc_doalloc(0, used)) == 0)
+	    returnCode(slk_failed());
+	memset(SP->_slk->ent[i].ent_text, 0, used);
+
+	if ((SP->_slk->ent[i].form_text = (char *) _nc_doalloc(0, used)) == 0)
+	    returnCode(slk_failed());
+	memset(SP->_slk->ent[i].form_text, 0, used);
+
+	memset(SP->_slk->ent[i].form_text, ' ', max_length);
+	SP->_slk->ent[i].visible = (char) (i < SP->_slk->maxlab);
     }
-    if (_nc_slk_format >= 3) {	/* PC style */
-	int gap = (cols - 3 * (3 + 4 * SP->_slk->maxlen)) / 2;
+    if (_nc_globals.slk_format >= 3) {	/* PC style */
+	int gap = (cols - 3 * (3 + 4 * max_length)) / 2;
 
 	if (gap < 1)
 	    gap = 1;
 
 	for (i = x = 0; i < SP->_slk->maxlab; i++) {
-	    SP->_slk->ent[i].x = x;
-	    x += SP->_slk->maxlen;
+	    SP->_slk->ent[i].ent_x = x;
+	    x += max_length;
 	    x += (i == 3 || i == 7) ? gap : 1;
 	}
-	if (_nc_slk_format == 4)
-	    slk_paint_info(stwin);
     } else {
-	if (_nc_slk_format == 2) {	/* 4-4 */
-	    int gap = cols - (SP->_slk->maxlab * SP->_slk->maxlen) - 6;
+	if (_nc_globals.slk_format == 2) {	/* 4-4 */
+	    int gap = cols - (SP->_slk->maxlab * max_length) - 6;
 
 	    if (gap < 1)
 		gap = 1;
 	    for (i = x = 0; i < SP->_slk->maxlab; i++) {
-		SP->_slk->ent[i].x = x;
-		x += SP->_slk->maxlen;
+		SP->_slk->ent[i].ent_x = x;
+		x += max_length;
 		x += (i == 3) ? gap : 1;
 	    }
 	} else {
-	    if (_nc_slk_format == 1) {	/* 1 -> 3-2-3 */
-		int gap = (cols - (SP->_slk->maxlab * SP->_slk->maxlen) - 5)
+	    if (_nc_globals.slk_format == 1) {	/* 1 -> 3-2-3 */
+		int gap = (cols - (SP->_slk->maxlab * max_length) - 5)
 		/ 2;
 
 		if (gap < 1)
 		    gap = 1;
 		for (i = x = 0; i < SP->_slk->maxlab; i++) {
-		    SP->_slk->ent[i].x = x;
-		    x += SP->_slk->maxlen;
+		    SP->_slk->ent[i].ent_x = x;
+		    x += max_length;
 		    x += (i == 2 || i == 4) ? gap : 1;
 		}
 	    } else
-		goto exception;
+		returnCode(slk_failed());
 	}
     }
     SP->_slk->dirty = TRUE;
     if ((SP->_slk->win = stwin) == NULL) {
-      exception:
-	if (SP->_slk) {
-	    FreeIfNeeded(SP->_slk->buffer);
-	    FreeIfNeeded(SP->_slk->ent);
-	    free(SP->_slk);
-	    SP->_slk = (SLK *) 0;
-	    res = (ERR);
-	}
+	returnCode(slk_failed());
     }
 
     /* We now reset the format so that the next newterm has again
      * per default no SLK keys and may call slk_init again to
      * define a new layout. (juergen 03-Mar-1999)
      */
-    SP->slk_format = _nc_slk_format;
-    _nc_slk_format = 0;
-    return (res);
+    SP->slk_format = _nc_globals.slk_format;
+    _nc_globals.slk_format = 0;
+    returnCode(res);
 }
 
 /*
@@ -197,8 +188,6 @@ slk_restore(void)
 	return (ERR);
     SP->_slk->hidden = FALSE;
     SP->_slk->dirty = TRUE;
-    /* we have to repaint info line eventually */
-    slk_paint_info(SP->_slk->win);
 
     returnCode(slk_refresh());
 }

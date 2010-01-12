@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: form_fieldtype.3,v 1.10 2003/05/16 08:48:27 jmc Exp $
+.\" $OpenBSD: form_fieldtype.3,v 1.11 2010/01/12 23:22:07 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998-2003,2006 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: form_fieldtype.3x,v 1.8 2000/07/15 22:02:03 tom Exp $
+.\" $Id: form_fieldtype.3,v 1.11 2010/01/12 23:22:07 nicm Exp $
 .TH form_fieldtype 3 ""
 .SH NAME
 \fBform_fieldtype\fR - define validation-field types
@@ -49,7 +49,7 @@ int set_fieldtype_arg(
     void  (* const free_arg)(void *));
 .br
 int set_fieldtype_choice(
-    FIELDTYPE *fieldtype
+    FIELDTYPE *fieldtype,
     bool (* const next_choice)(FIELD *, const void *),
     bool (* const prev_choice)(FIELD *, const void *));
 .br
@@ -63,54 +63,76 @@ validity of an entered data string whenever the user attempts to leave a field.
 The (FIELD *) argument is passed in so the validation predicate can see the
 field's buffer, sizes and other attributes; the second argument is an
 argument-block structure, about which more below.
-
+.PP
 You also supply \fBnew_fieldtype\fR with \fIchar_check\fR,
 a function to validate input characters as they are entered; it will be passed
 the character to be checked and a pointer to an argument-block structure.
-
+.PP
 The function \fBfree_fieldtype\fR frees the space allocated for a given
 validation type.
-
-The function \fBset_fieldtype\fR associates three storage-management functions
-with a field type.  The \fImak_arg\fR function is automatically applied to the
+.PP
+The function \fBset_fieldtype_arg\fR associates three storage-management functions
+with a field type.
+The \fImake_arg\fR function is automatically applied to the
 list of arguments you give \fBset_field_type\fR when attaching validation
 to a field; its job is to bundle these into an allocated argument-block
-object which can later be passed to validation predicated.  The other two
-hook arguments should copy and free argument-block structures.  They will
-be used by the forms-driver code. You must supply the \fImak_arg\fR function,
-the other two are optional, you may supply NULL for them. In this case it
-is assumed that \fImak_arg\fR doesn't allocate memory but simply loads the
+object which can later be passed to validation predicated.
+The other two hook arguments should copy and free argument-block structures.
+They will be used by the forms-driver code.
+You must supply the \fImake_arg\fR function,
+the other two are optional, you may supply NULL for them.
+In this case it is assumed
+that \fImake_arg\fR does not allocate memory but simply loads the
 argument into a single scalar value.
-
+.PP
+The function \fBlink_fieldtype\fR creates
+a new field type from the two given types.
+They are connected by an logical 'OR'.
+.PP
 The form driver requests \fBREQ_NEXT_CHOICE\fR and \fBREQ_PREV_CHOICE\fR assume
 that the possible values of a field form an ordered set, and provide the forms
-user with a way to move through the set.  The \fBset_fieldtype_choice\fR
+user with a way to move through the set.
+The \fBset_fieldtype_choice\fR
 function allows forms programmers to define successor and predecessor functions
-for the field type.  These functions take the field pointer and an
+for the field type.
+These functions take the field pointer and an
 argument-block structure as arguments.
 .SH RETURN VALUE
 The pointer-valued routines return NULL on error.
-
+They set errno according to their success:
+.TP 5
+.B E_OK
+The routine succeeded.
+.TP 5
+.B E_BAD_ARGUMENT
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+.B E_SYSTEM_ERROR
+System error occurred, e.g., malloc failure.
+.PP
 The integer-valued routines return one of the following codes on
 error:
 .TP 5
-\fBE_OK\fR
+.B E_OK
 The routine succeeded.
 .TP 5
-\fBE_SYSTEM_ERROR\fR
-System error occurred (see \fBerrno\fR).
-.TP 5
-\fBE_BAD_ARGUMENT\fR
+.B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
 .TP 5
-\fBE_CONNECTED\fR
+.B E_CONNECTED
 The field is already connected to a form.
+.TP 5
+.B E_CURRENT
+The field is the current field.
+.TP 5
+.B E_SYSTEM_ERROR
+System error occurred (see \fBerrno\fR).
 .SH SEE ALSO
 \fBcurses\fR(3), \fBform\fR(3).
 .SH NOTES
 The header file \fB<form.h>\fR automatically includes the header file
 \fB<curses.h>\fR.
-
+.PP
 All of the \fB(char *)\fR arguments of these functions should actually be
 \fB(void *)\fR.  The type has been left uncorrected for strict compatibility
 with System V.
