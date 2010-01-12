@@ -1942,6 +1942,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/netisr_dispatch.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/net/pipex.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/net/pipex_local.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/ppp-comp.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/ppp_defs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/radix.ph

@@ -1873,6 +1873,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/netisr_dispatch.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/pipex.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/pipex_local.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/ppp-comp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/ppp_defs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/radix.ph

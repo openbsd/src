@@ -957,6 +957,7 @@
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Unformated.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Whatis.pm
 ./usr/libdata/perl5/OpenBSD/Mtree.pm
+./usr/libdata/perl5/OpenBSD/OldLibs.pm
 ./usr/libdata/perl5/OpenBSD/PackageInfo.pm
 ./usr/libdata/perl5/OpenBSD/PackageLocation.pm
 ./usr/libdata/perl5/OpenBSD/PackageLocator.pm

@@ -1119,6 +1119,8 @@
 ./usr/include/net/netisr_dispatch.h
 ./usr/include/net/pfkeyv2.h
 ./usr/include/net/pfvar.h
+./usr/include/net/pipex.h
+./usr/include/net/pipex_local.h
 ./usr/include/net/ppp-comp.h
 ./usr/include/net/ppp_defs.h
 ./usr/include/net/radix.h
