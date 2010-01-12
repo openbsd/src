@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.585 2010/01/12 16:22:49 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.586 2010/01/12 19:18:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -368,7 +368,6 @@ int	 rule_label(struct pf_rule *, char *);
 
 void	 mv_rules(struct pf_ruleset *, struct pf_ruleset *);
 void	 decide_address_family(struct node_host *, sa_family_t *);
-void	 remove_invalid_hosts(struct node_host **, sa_family_t *);
 int	 invalid_redirect(struct node_host *, sa_family_t);
 u_int16_t parseicmpspec(char *, sa_family_t);
 int	 kw_casecmp(const void *, const void *);
@@ -2020,7 +2019,6 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if (r.rt && r.rt != PF_FASTROUTE) {
 				decide_address_family($8.route.host, &r.af);
-				remove_invalid_hosts(&$8.route.host, &r.af);
 				if ($8.route.host == NULL) {
 					yyerror("no routing address with "
 					    "matching address family found.");
@@ -4511,28 +4509,28 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 	struct pf_opt_tbl *tbl = NULL;
 	struct node_host *h;
 	struct pf_rule_addr ra;
+	int	i = 0;
 
 	if (!rs || !rs->rdr) {
 		rpool->addr.type = PF_ADDR_NONE;
 		return (0);
 	}
 
-	h = rs->rdr->host;
-	if (r->af)
-		remove_invalid_hosts(&h, &r->af);
-	if (h == NULL)			/* no pool address */
-		return (0);
-	else if (h->next == NULL) {	/* only one address */
-		if (!r->af)
-			r->af = h->af;
-		else {
-			if (r->af && h->af && r->af != h->af) {
-				yyerror("address family mismatch "
-				    "on translationh address");
-				return (1);
-			}
+	/* count matching addresses */
+	for (h = rs->rdr->host; h != NULL; h = h->next) {
+		if (!r->af || !h->af || h->af == r->af) {
+			i++;
+			if (h->af && !r->af)
+				r->af = h->af;
 		}
+	}
 
+	if (i == 0)		/* no pool address */
+		return (0);
+	else if (i == 1) {	/* only one address */
+		for (h = rs->rdr->host; h != NULL; h = h->next)
+			if (!h->af || !r->af || r->af == h->af) 
+				break;
 		rpool->addr = h->addr;
 		if (!allow_if && h->ifname) {
 			yyerror("@if not permitted for translation");
@@ -4543,14 +4541,16 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			errx(1, "collapse_redirspec: strlcpy");
 		
 		return (0);
-	} else {			/* more than one address */
+	} else {		/* more than one address */
 		if (rs->pool_opts.type &&
 		     rs->pool_opts.type != PF_POOL_ROUNDROBIN) {
 			yyerror("only round-robin valid for multiple "
 			    "translation or routing addresses");
 			return (1);
 		}
-		while (h != NULL) {
+		for (h = rs->rdr->host; h != NULL; h = h->next) {
+			if (r->af != h->af)
+				continue;
 			if (h->addr.type != PF_ADDR_ADDRMASK &&
 			    h->addr.type != PF_ADDR_NONE) {
 				yyerror("multiple tables or dynamic interfaces "
@@ -4566,11 +4566,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			if (add_opt_table(pf, &tbl,
 			    h->af, &ra, h->ifname))
 				return (1);
-			h = h->next;
                 }
 	}
-	freehostlist(h);
-	rs->rdr->host = NULL;
 	if (tbl) {
 		if ((pf->opts & PF_OPT_NOACTION) == 0 &&
 		     pf_opt_create_table(pf, tbl))
@@ -4684,10 +4681,6 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	flagset = r->flagset;
 	keep_state = r->keep_state;
 
-	error += collapse_redirspec(&r->rdr, r, rdr, 0);
-	error += collapse_redirspec(&r->nat, r, nat, 0);
-	error += collapse_redirspec(&r->route, r, rroute, 1);
-
 	r->src.addr.type = r->dst.addr.type = PF_ADDR_ADDRMASK;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
@@ -4702,6 +4695,11 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 	LOOP_THROUGH(struct node_gid, gid, gids,
 
 		r->af = af;
+
+		error += collapse_redirspec(&r->rdr, r, rdr, 0);
+		error += collapse_redirspec(&r->nat, r, nat, 0);
+		error += collapse_redirspec(&r->route, r, rroute, 1);
+
 		/* disallow @if in from or to for the time being */
 		if ((src_host->addr.type == PF_ADDR_ADDRMASK &&
 		    src_host->ifname) ||
@@ -4874,7 +4872,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 
 			if ((dsth = calloc(1, sizeof(*dsth))) == NULL)
 				err(1, "expand_rule: calloc");
-			bcopy(nat->rdr->host, dsth, sizeof(*dsth));
+			bcopy(&rb.nat.addr, &dsth->addr, sizeof(dsth->addr));
 			dsth->ifname = NULL;
 			dsth->next = NULL;
 			dsth->tail = NULL;
@@ -4907,6 +4905,11 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 		FREE_LIST(struct node_uid, uids);
 		FREE_LIST(struct node_gid, gids);
 		FREE_LIST(struct node_icmp, icmp_types);
+		if (nat && nat->rdr)
+			FREE_LIST(struct node_host, nat->rdr->host);
+		if (rdr && rdr->rdr)
+			FREE_LIST(struct node_host, rdr->rdr->host);
+
 	}
 
 	if (!added)
@@ -5599,38 +5602,6 @@ decide_address_family(struct node_host *n, sa_family_t *af)
 		if (n->af != *af) {
 			*af = 0;
 			return;
-		}
-	}
-}
-
-void
-remove_invalid_hosts(struct node_host **nh, sa_family_t *af)
-{
-	struct node_host	*n = *nh, *prev = NULL;
-
-	while (n != NULL) {
-		if (*af && n->af && n->af != *af) {
-			/* unlink and free n */
-			struct node_host *next = n->next;
-
-			/* adjust tail pointer */
-			if (n == (*nh)->tail)
-				(*nh)->tail = prev;
-			/* adjust previous node's next pointer */
-			if (prev == NULL)
-				*nh = next;
-			else
-				prev->next = next;
-			/* free node */
-			if (n->ifname != NULL)
-				free(n->ifname);
-			free(n);
-			n = next;
-		} else {
-			if (n->af && !*af)
-				*af = n->af;
-			prev = n;
-			n = n->next;
 		}
 	}
 }
