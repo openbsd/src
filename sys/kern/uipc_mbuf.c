@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.134 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.135 2010/01/12 04:05:45 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -115,6 +115,10 @@ int max_protohdr;		/* largest protocol header */
 int max_hdr;			/* largest link+protocol header */
 int max_datalen;		/* MHLEN - max_hdr */
 
+struct timeout m_cltick_tmo;
+int	m_clticks;
+void	m_cltick(void *);
+
 void	m_extfree(struct mbuf *);
 struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 void	nmbclust_update(void);
@@ -143,6 +147,9 @@ mbinit(void)
 	}
 
 	nmbclust_update();
+
+	timeout_set(&m_cltick_tmo, m_cltick, NULL);
+	m_cltick(NULL);
 }
 
 void
@@ -298,7 +305,20 @@ m_clsetwms(struct ifnet *ifp, u_int pktlen, u_int lwm, u_int hwm)
 	ifp->if_data.ifi_mclpool[pi].mcl_hwm = hwm;
 }
 
-extern int m_clticks;
+/*
+ * Record when the last timeout has been run.  If the delta is
+ * too high, m_cldrop() will notice and decrease the interface
+ * high water marks.
+ */
+void
+m_cltick(void *arg)
+{
+	extern int ticks;
+
+	m_clticks = ticks;
+	timeout_add(&m_cltick_tmo, 1);
+}
+
 int m_livelock;
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.203 2010/01/08 19:21:19 stsp Exp $	*/
+/*	$OpenBSD: if.c,v 1.204 2010/01/12 04:05:47 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -152,24 +152,6 @@ TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
-struct timeout m_cltick_tmo;
-int m_clticks;
-
-/*
- * Record when the last timeout has been run.  If the delta is
- * too high, m_cldrop() will notice and decrease the interface
- * high water marks.
- */
-static void
-m_cltick(void *arg)
-{
-	extern int ticks;
-	extern void m_cltick(void *);
-
-	m_clticks = ticks;
-	timeout_add(&m_cltick_tmo, 1);
-}
-
 /*
  * Network interface utility routines.
  *
@@ -184,9 +166,6 @@ ifinit()
 	timeout_set(&if_slowtim, if_slowtimo, &if_slowtim);
 
 	if_slowtimo(&if_slowtim);
-
-	timeout_set(&m_cltick_tmo, m_cltick, NULL);
-	m_cltick(NULL);
 }
 
 static int if_index = 0;
