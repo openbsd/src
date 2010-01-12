@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.35 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.36 2010/01/12 06:10:33 naddy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -320,7 +320,7 @@ trunc:
  * don't modifiy the packet.
  */
 u_short
-in_cksum(const u_short *addr, register int len, u_short csum)
+in_cksum(const u_short *addr, register int len, int csum)
 {
 	int nleft = len;
 	const u_short *w = addr;

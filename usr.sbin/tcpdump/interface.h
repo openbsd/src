@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.59 2009/11/04 09:43:11 jsing Exp $	*/
+/*	$OpenBSD: interface.h,v 1.60 2010/01/12 06:10:33 naddy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.59 2009/11/04 09:43:11 jsing Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.60 2010/01/12 06:10:33 naddy Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -288,4 +288,4 @@ extern void ospf6_print(const u_char *, u_int);
 extern void dhcp6_print(const u_char *, u_int, u_short, u_short);
 #endif /*INET6*/
 
-extern u_short in_cksum(const u_short *addr, register int len, u_short csum);
+extern u_short in_cksum(const u_short *addr, register int len, int csum);
