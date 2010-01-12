@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.469 2010/01/12 03:20:51 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.470 2010/01/12 18:42:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2145,7 +2145,7 @@ Parameters are specified enclosed in parentheses.
 At least one of the following parameters must be specified:
 .Bl -tag -width xxxx
 .It Ar max-mss Aq Ar number
-Enforces a maximum MSS for matching TCP packets.
+Enforces a maximum segment size (MSS) for matching TCP packets.
 .It Ar min-ttl Aq Ar number
 Enforces a minimum TTL for matching IP packets.
 .It Ar no-df

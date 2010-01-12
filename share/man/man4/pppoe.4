@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.21 2009/04/06 13:53:53 ajacoutot Exp $
+.\"	$OpenBSD: pppoe.4,v 1.22 2010/01/12 18:42:36 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 6 2009 $
+.Dd $Mdocdate: January 12 2010 $
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -175,7 +175,7 @@ Network Address Translation (NAT)
 and
 .Nm .
 Standard Ethernet uses a
-Maximum Transmission Unit (MTU)
+maximum transmission unit (MTU)
 of 1500 bytes,
 whereas PPPoE mechanisms need a further 8 bytes of overhead.
 This leaves a maximum MTU of 1492.
@@ -194,7 +194,7 @@ which is enabled by default and takes care of this,
 users have to rely on other methods.
 Using a packet filter,
 the
-Maximum Segment Size (MSS)
+maximum segment size (MSS)
 can be set (clamped) to the required value.
 The following rule in
 .Xr pf.conf 5
