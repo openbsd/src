@@ -2,7 +2,6 @@ pass in on lo0 from any to any route-to { (pflog0 127.0.0.1), (pflog0 127.0.0.2)
 pass out on lo0 from any to any route-to { (pflog0 127.0.0.1), (pflog0 127.0.0.2) } round-robin
 pass in on lo0 from any to any route-to (pflog0 127.0.0.1/24) bitmask
 pass out on lo0 from any to any dup-to (pflog0 127.0.0.1/24) random
-pass in on lo0 inet6 from any to any reply-to { pflog0, pflog0 } round-robin
 pass in on lo0 inet from any to any reply-to (pflog0 127.0.0.0/28) source-hash 0x0123456789ABCDEF0123456789abcdef
 pass out on lo0 from any to any  route-to (pflog0 127.0.0.1/24) source-hash foobarlicious 
 pass in on lo0 from any to any dup-to (pflog0 127.0.0.1/24) round-robin
