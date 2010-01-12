@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.110 2009/09/17 13:27:24 claudio Exp $	*/
+/*	$OpenBSD: if.h,v 1.111 2010/01/12 00:39:18 deraadt Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -462,7 +462,8 @@ struct if_msghdr {
 	u_short ifm_hdrlen;	/* sizeof(if_msghdr) to skip over the header */
 	u_short	ifm_index;	/* index for associated ifp */
 	u_short	ifm_tableid;	/* routing table id */
-	u_short ifm_pad;
+	u_char	ifm_pad1;
+	u_char	ifm_pad2;
 	int	ifm_addrs;	/* like rtm_addrs */
 	int	ifm_flags;	/* value of if_flags */
 	int	ifm_xflags;
@@ -480,7 +481,8 @@ struct ifa_msghdr {
 	u_short ifam_hdrlen;	/* sizeof(ifa_msghdr) to skip over the header */
 	u_short	ifam_index;	/* index for associated ifp */
 	u_short	ifam_tableid;	/* routing table id */
-	u_short ifam_pad;
+	u_char	ifam_pad1;
+	u_char	ifam_pad2;
 	int	ifam_addrs;	/* like rtm_addrs */
 	int	ifam_flags;	/* value of ifa_flags */
 	int	ifam_metric;	/* value of ifa_metric */
