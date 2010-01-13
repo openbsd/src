@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.157 2010/01/13 00:49:24 jcs Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.158 2010/01/13 02:46:19 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -933,7 +933,7 @@ scsi_xs_error(struct scsi_xfer *xs)
 		break;
 	}
 
-	if (error == ERESTART && xs->retries < 1)
+	if (error == ERESTART && xs->retries-- < 1)
 		return (EIO);
 	else
 		return (error);
