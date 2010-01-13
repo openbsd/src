@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.82 2010/01/11 08:26:29 dlg Exp $	*/
+/*	$OpenBSD: show.c,v 1.83 2010/01/13 23:49:06 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -698,7 +698,7 @@ netname4(in_addr_t in, struct sockaddr_in *maskp)
 	int mbits;
 
 	in = ntohl(in);
-	mask = maskp ? ntohl(maskp->sin_addr.s_addr) : 0;
+	mask = maskp && maskp->sin_len != 0 ? ntohl(maskp->sin_addr.s_addr) : 0;
 	if (!nflag && in != INADDR_ANY) {
 		if ((np = getnetbyaddr(in, AF_INET)) != NULL)
 			cp = np->n_name;
