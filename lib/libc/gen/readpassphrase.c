@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.21 2008/01/17 16:27:07 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.22 2010/01/13 10:20:54 dtucker Exp $	*/
 
 /*
  * Copyright (c) 2000-2002, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <readpassphrase.h>
 
-static volatile sig_atomic_t signo;
+static volatile sig_atomic_t signo[_NSIG];
 
 static void handler(int);
 
@@ -39,7 +39,7 @@ char *
 readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 {
 	ssize_t nr;
-	int input, output, save_errno;
+	int input, output, save_errno, i, need_restart;
 	char ch, *p, *end;
 	struct termios term, oterm;
 	struct sigaction sa, savealrm, saveint, savehup, savequit, saveterm;
@@ -52,9 +52,11 @@ readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 	}
 
 restart:
-	signo = 0;
+	for (i = 0; i < _NSIG; i++)
+		signo[i] = 0;
 	nr = -1;
 	save_errno = 0;
+	need_restart = 0;
 	/*
 	 * Read and write to /dev/tty if available.  If not, read from
 	 * stdin and write to stderr unless a tty is required.
@@ -103,7 +105,7 @@ restart:
 	}
 
 	/* No I/O if we are already backgrounded. */
-	if (signo != SIGTTOU && signo != SIGTTIN) {
+	if (signo[SIGTTOU] != 1 && signo[SIGTTIN] != 1) {
 		if (!(flags & RPP_STDIN))
 			(void)write(output, prompt, strlen(prompt));
 		end = buf + bufsiz - 1;
@@ -149,15 +151,19 @@ restart:
 	 * If we were interrupted by a signal, resend it to ourselves
 	 * now that we have restored the signal handlers.
 	 */
-	if (signo) {
-		kill(getpid(), signo);
-		switch (signo) {
-		case SIGTSTP:
-		case SIGTTIN:
-		case SIGTTOU:
-			goto restart;
+	for (i = 0; i < _NSIG; i++) {
+		if (signo[i]) {
+			kill(getpid(), i);
+			switch (i) {
+			case SIGTSTP:
+			case SIGTTIN:
+			case SIGTTOU:
+				need_restart = 1;
+			}
 		}
 	}
+	if (need_restart)
+		goto restart;
 
 	if (save_errno)
 		errno = save_errno;
@@ -175,5 +181,5 @@ getpass(const char *prompt)
 static void handler(int s)
 {
 
-	signo = s;
+	signo[s] = 1;
 }
