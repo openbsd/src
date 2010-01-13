@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.48 2009/01/30 10:47:46 mcbride Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.49 2010/01/13 02:13:12 henning Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -697,7 +697,7 @@ in6_ifdetach(struct ifnet *ifp)
 		}
 
 		/* remove from the linked list */
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+		ifa_del(ifp, (struct ifaddr *)ia);
 		IFAFREE(&ia->ia_ifa);
 
 		/* also remove from the IPv6 address chain(itojun&jinmei) */

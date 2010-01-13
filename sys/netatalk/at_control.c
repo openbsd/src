@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.14 2009/11/13 15:07:23 claudio Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.15 2010/01/13 02:13:12 henning Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -190,7 +190,8 @@ at_control( cmd, data, ifp, p )
 
 	    aa = aa0;
 
-	    TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)aa, ifa_list);
+	    ifa_add(ifp, (struct ifaddr *)aa);
+
 	    /* FreeBSD found this. Whew */
 	    aa->aa_ifa.ifa_refcnt++;
 
@@ -258,7 +259,7 @@ at_control( cmd, data, ifp, p )
     case SIOCDIFADDR:
 	at_scrub( ifp, aa );
 	ifa0 = (struct ifaddr *)aa;
-	TAILQ_REMOVE(&ifp->if_addrlist, ifa0, ifa_list);
+	ifa_del(ifp, ifa0);
 
 	/* FreeBSD */
 	IFAFREE(ifa0);

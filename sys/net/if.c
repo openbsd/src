@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.204 2010/01/12 04:05:47 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.205 2010/01/13 02:13:12 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -319,7 +319,6 @@ if_alloc_sadl(struct ifnet *ifp)
 	ifnet_addrs[ifp->if_index] = ifa;
 	ifa->ifa_ifp = ifp;
 	ifa->ifa_rtrequest = link_rtrequest;
-	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
 	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
@@ -327,6 +326,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	sdl->sdl_len = masklen;
 	while (namelen != 0)
 		sdl->sdl_data[--namelen] = 0xff;
+	ifa_add(ifp, ifa);
 }
 
 /*
@@ -347,7 +347,7 @@ if_free_sadl(struct ifnet *ifp)
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
 #if 0
-	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	ifa_del(ifp, ifa);
 	ifnet_addrs[ifp->if_index] = NULL;
 #endif
 	ifp->if_sadl = NULL;
@@ -592,7 +592,7 @@ do { \
 	 * Deallocate private resources.
 	 */
 	while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
-		TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+		ifa_del(ifp, ifa);
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			TAILQ_REMOVE(&in_ifaddr, (struct in_ifaddr *)ifa,
@@ -1474,7 +1474,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 				TAILQ_REMOVE(&in_ifaddr,
 				    (struct in_ifaddr *)ifa, ia_list);
-				TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+				ifa_del(ifp, ifa);
 				ifa->ifa_ifp = NULL;
 				IFAFREE(ifa);
 			}
@@ -2148,3 +2148,19 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 	/* NOTREACHED */
 }
+
+void
+ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	if (ifa->ifa_addr->sa_family == AF_LINK)
+		TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
+	else
+		TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
+}
+
+void
+ifa_del(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+}
+

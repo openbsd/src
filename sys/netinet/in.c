@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.56 2010/01/13 01:26:28 henning Exp $	*/
+/*	$OpenBSD: in.c,v 1.57 2010/01/13 02:13:12 henning Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -282,8 +282,6 @@ in_control(so, cmd, data, ifp)
 			ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
 			s = splsoftnet();
 			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
-			    ifa_list);
 			ia->ia_addr.sin_family = AF_INET;
 			ia->ia_addr.sin_len = sizeof(ia->ia_addr);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
@@ -298,6 +296,7 @@ in_control(so, cmd, data, ifp)
 			LIST_INIT(&ia->ia_multiaddrs);
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in_interfaces++;
+			ifa_add(ifp, (struct ifaddr *)ia);
 			splx(s);
 
 			newifaddr = 1;
@@ -450,7 +449,7 @@ cleanup:
 		 */
 		s = splsoftnet();
 		in_ifscrub(ifp, ia);
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+		ifa_del(ifp, (struct ifaddr *)ia);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		if (ia->ia_allhosts != NULL) {
 			in_delmulti(ia->ia_allhosts);

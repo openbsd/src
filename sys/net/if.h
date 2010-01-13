@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.111 2010/01/12 00:39:18 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.112 2010/01/13 02:13:12 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -826,5 +826,7 @@ void	loopattach(int);
 int	looutput(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
 void	lortrequest(int, struct rtentry *, struct rt_addrinfo *);
+void	ifa_add(struct ifnet *, struct ifaddr *);
+void	ifa_del(struct ifnet *, struct ifaddr *);
 #endif /* _KERNEL */
 #endif /* _NET_IF_H_ */

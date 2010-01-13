@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.84 2010/01/13 02:02:43 henning Exp $	*/
+/*	$OpenBSD: in6.c,v 1.85 2010/01/13 02:13:12 henning Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -944,8 +944,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		} else
 			in6_ifaddr = ia;
 		ia->ia_addr = ifra->ifra_addr;
-		TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
-				  ifa_list);
+		ifa_add(ifp, &ia->ia_ifa);
 	}
 
 	/* set prefix mask */
@@ -1277,7 +1276,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	struct in6_ifaddr *oia;
 	int	s = splnet();
 
-	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
+	ifa_del(ifp, &ia->ia_ifa);
 
 	oia = ia;
 	if (oia == (ia = in6_ifaddr))
