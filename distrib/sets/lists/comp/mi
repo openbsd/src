@@ -3337,6 +3337,8 @@
 ./usr/share/man/cat3/bitstring.0
 ./usr/share/man/cat3/bkgd.0
 ./usr/share/man/cat3/bkgdset.0
+./usr/share/man/cat3/bkgrnd.0
+./usr/share/man/cat3/bkgrndset.0
 ./usr/share/man/cat3/blf_cbc_decrypt.0
 ./usr/share/man/cat3/blf_cbc_encrypt.0
 ./usr/share/man/cat3/blf_dec.0
@@ -3381,8 +3383,10 @@
 ./usr/share/man/cat3/bn_sub_words.0
 ./usr/share/man/cat3/bn_wexpand.0
 ./usr/share/man/cat3/border.0
+./usr/share/man/cat3/border_set.0
 ./usr/share/man/cat3/bottom_panel.0
 ./usr/share/man/cat3/box.0
+./usr/share/man/cat3/box_set.0
 ./usr/share/man/cat3/bsd_auth.0
 ./usr/share/man/cat3/bsearch.0
 ./usr/share/man/cat3/bstring.0
@@ -3493,7 +3497,9 @@
 ./usr/share/man/cat3/curs_attr.0
 ./usr/share/man/cat3/curs_beep.0
 ./usr/share/man/cat3/curs_bkgd.0
+./usr/share/man/cat3/curs_bkgrnd.0
 ./usr/share/man/cat3/curs_border.0
+./usr/share/man/cat3/curs_border_set.0
 ./usr/share/man/cat3/curs_clear.0
 ./usr/share/man/cat3/curs_color.0
 ./usr/share/man/cat3/curs_delch.0
@@ -3510,8 +3516,10 @@
 ./usr/share/man/cat3/curs_insstr.0
 ./usr/share/man/cat3/curs_instr.0
 ./usr/share/man/cat3/curs_kernel.0
+./usr/share/man/cat3/curs_legacy.0
 ./usr/share/man/cat3/curs_mouse.0
 ./usr/share/man/cat3/curs_move.0
+./usr/share/man/cat3/curs_opaque.0
 ./usr/share/man/cat3/curs_outopts.0
 ./usr/share/man/cat3/curs_overlay.0
 ./usr/share/man/cat3/curs_pad.0
@@ -3923,8 +3931,11 @@
 ./usr/share/man/cat3/get_myaddress.0
 ./usr/share/man/cat3/getaddrinfo.0
 ./usr/share/man/cat3/getarg.0
+./usr/share/man/cat3/getbegx.0
+./usr/share/man/cat3/getbegy.0
 ./usr/share/man/cat3/getbegyx.0
 ./usr/share/man/cat3/getbkgd.0
+./usr/share/man/cat3/getbkgrnd.0
 ./usr/share/man/cat3/getbsize.0
 ./usr/share/man/cat3/getc.0
 ./usr/share/man/cat3/getc_unlocked.0
@@ -3932,6 +3943,8 @@
 ./usr/share/man/cat3/getch.0
 ./usr/share/man/cat3/getchar.0
 ./usr/share/man/cat3/getchar_unlocked.0
+./usr/share/man/cat3/getcurx.0
+./usr/share/man/cat3/getcury.0
 ./usr/share/man/cat3/getcwd.0
 ./usr/share/man/cat3/getdiskbyname.0
 ./usr/share/man/cat3/getdomainname.0
@@ -3955,6 +3968,8 @@
 ./usr/share/man/cat3/getifaddrs.0
 ./usr/share/man/cat3/getloadavg.0
 ./usr/share/man/cat3/getmaxpartitions.0
+./usr/share/man/cat3/getmaxx.0
+./usr/share/man/cat3/getmaxy.0
 ./usr/share/man/cat3/getmaxyx.0
 ./usr/share/man/cat3/getmntinfo.0
 ./usr/share/man/cat3/getmode.0
@@ -3969,6 +3984,8 @@
 ./usr/share/man/cat3/getopt_long.0
 ./usr/share/man/cat3/getopt_long_only.0
 ./usr/share/man/cat3/getpagesize.0
+./usr/share/man/cat3/getparx.0
+./usr/share/man/cat3/getpary.0
 ./usr/share/man/cat3/getparyx.0
 ./usr/share/man/cat3/getpass.0
 ./usr/share/man/cat3/getprotobyname.0
@@ -4108,6 +4125,7 @@
 ./usr/share/man/cat3/history_end.0
 ./usr/share/man/cat3/history_init.0
 ./usr/share/man/cat3/hline.0
+./usr/share/man/cat3/hline_set.0
 ./usr/share/man/cat3/hosts_access.0
 ./usr/share/man/cat3/hosts_ctl.0
 ./usr/share/man/cat3/hsearch.0
@@ -4237,7 +4255,17 @@
 ./usr/share/man/cat3/intro.0
 ./usr/share/man/cat3/iruserok.0
 ./usr/share/man/cat3/iruserok_sa.0
+./usr/share/man/cat3/is_cleared.0
+./usr/share/man/cat3/is_idcok.0
+./usr/share/man/cat3/is_idlok.0
+./usr/share/man/cat3/is_immedok.0
+./usr/share/man/cat3/is_keypad.0
+./usr/share/man/cat3/is_leaveok.0
 ./usr/share/man/cat3/is_linetouched.0
+./usr/share/man/cat3/is_nodelay.0
+./usr/share/man/cat3/is_notimeout.0
+./usr/share/man/cat3/is_scrollok.0
+./usr/share/man/cat3/is_syncok.0
 ./usr/share/man/cat3/is_wintouched.0
 ./usr/share/man/cat3/isalnum.0
 ./usr/share/man/cat3/isalpha.0
@@ -4313,6 +4341,7 @@
 ./usr/share/man/cat3/kafs_settoken.0
 ./usr/share/man/cat3/kafs_settoken5.0
 ./usr/share/man/cat3/kafs_settoken_rxkad.0
+./usr/share/man/cat3/key_defined.0
 ./usr/share/man/cat3/keybound.0
 ./usr/share/man/cat3/keycrunch.0
 ./usr/share/man/cat3/keyname.0
@@ -5026,6 +5055,7 @@
 ./usr/share/man/cat3/mvgetnstr.0
 ./usr/share/man/cat3/mvgetstr.0
 ./usr/share/man/cat3/mvhline.0
+./usr/share/man/cat3/mvhline_set.0
 ./usr/share/man/cat3/mvinch.0
 ./usr/share/man/cat3/mvinchnstr.0
 ./usr/share/man/cat3/mvinchstr.0
@@ -5037,6 +5067,7 @@
 ./usr/share/man/cat3/mvprintw.0
 ./usr/share/man/cat3/mvscanw.0
 ./usr/share/man/cat3/mvvline.0
+./usr/share/man/cat3/mvvline_set.0
 ./usr/share/man/cat3/mvwaddch.0
 ./usr/share/man/cat3/mvwaddchnstr.0
 ./usr/share/man/cat3/mvwaddchstr.0
@@ -5048,6 +5079,7 @@
 ./usr/share/man/cat3/mvwgetnstr.0
 ./usr/share/man/cat3/mvwgetstr.0
 ./usr/share/man/cat3/mvwhline.0
+./usr/share/man/cat3/mvwhline_set.0
 ./usr/share/man/cat3/mvwin.0
 ./usr/share/man/cat3/mvwinch.0
 ./usr/share/man/cat3/mvwinchnstr.0
@@ -5060,6 +5092,7 @@
 ./usr/share/man/cat3/mvwprintw.0
 ./usr/share/man/cat3/mvwscanw.0
 ./usr/share/man/cat3/mvwvline.0
+./usr/share/man/cat3/mvwvline_set.0
 ./usr/share/man/cat3/nan.0
 ./usr/share/man/cat3/nanf.0
 ./usr/share/man/cat3/nanl.0
@@ -5851,6 +5884,7 @@
 ./usr/share/man/cat3/vidputs.0
 ./usr/share/man/cat3/vis.0
 ./usr/share/man/cat3/vline.0
+./usr/share/man/cat3/vline_set.0
 ./usr/share/man/cat3/vprintf.0
 ./usr/share/man/cat3/vscanf.0
 ./usr/share/man/cat3/vsnprintf.0
@@ -5880,7 +5914,10 @@
 ./usr/share/man/cat3/wattrset.0
 ./usr/share/man/cat3/wbkgd.0
 ./usr/share/man/cat3/wbkgdset.0
+./usr/share/man/cat3/wbkgrnd.0
+./usr/share/man/cat3/wbkgrndset.0
 ./usr/share/man/cat3/wborder.0
+./usr/share/man/cat3/wborder_set.0
 ./usr/share/man/cat3/wchgat.0
 ./usr/share/man/cat3/wclear.0
 ./usr/share/man/cat3/wclrtobot.0
@@ -5924,10 +5961,14 @@
 ./usr/share/man/cat3/wechochar.0
 ./usr/share/man/cat3/wenclose.0
 ./usr/share/man/cat3/werase.0
+./usr/share/man/cat3/wgetbkgrnd.0
 ./usr/share/man/cat3/wgetch.0
 ./usr/share/man/cat3/wgetnstr.0
+./usr/share/man/cat3/wgetparent.0
+./usr/share/man/cat3/wgetscrreg.0
 ./usr/share/man/cat3/wgetstr.0
 ./usr/share/man/cat3/whline.0
+./usr/share/man/cat3/whline_set.0
 ./usr/share/man/cat3/winch.0
 ./usr/share/man/cat3/winchnstr.0
 ./usr/share/man/cat3/winchstr.0
@@ -5960,6 +6001,7 @@
 ./usr/share/man/cat3/wtimeout.0
 ./usr/share/man/cat3/wtouchln.0
 ./usr/share/man/cat3/wvline.0
+./usr/share/man/cat3/wvline_set.0
 ./usr/share/man/cat3/x509.0
 ./usr/share/man/cat3/xdr.0
 ./usr/share/man/cat3/xdr_accepted_reply.0
