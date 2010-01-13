@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.203 2010/01/12 01:30:09 beck Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.204 2010/01/13 12:09:36 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -542,7 +542,7 @@ reroute:
 	}
 
 	/*
-	 * Look for broadcast address and and verify user is allowed to send
+	 * Look for broadcast address and verify user is allowed to send
 	 * such a packet; if the packet is going in an IPsec tunnel, skip
 	 * this check.
 	 */
