@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.586 2010/01/12 19:18:55 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.587 2010/01/13 00:56:13 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2019,11 +2019,6 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if (r.rt && r.rt != PF_FASTROUTE) {
 				decide_address_family($8.route.host, &r.af);
-				if ($8.route.host == NULL) {
-					yyerror("no routing address with "
-					    "matching address family found.");
-					YYERROR;
-				}
 				if ((r.route.opts & PF_POOL_TYPEMASK) ==
 				    PF_POOL_NONE && ($8.route.host->next != NULL ||
 				    $8.route.host->addr.type == PF_ADDR_TABLE ||
@@ -3735,6 +3730,20 @@ route_host	: STRING			{
 				$$->tail = $$;
 			}
 		}
+		| STRING '/' STRING 		{
+			char	*buf;
+
+			if (asprintf(&buf, "%s/%s", $1, $3) == -1)
+				err(1, "host: asprintf");
+			free($1);
+			if (($$ = host(buf)) == NULL)	{
+				/* error. "any" is handled elsewhere */
+				free(buf);
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
+			free(buf);
+		}
 		| '<' STRING '>'	{
 			if (strlen($2) >= PF_TABLE_NAME_SIZE) {
 				yyerror("table name '%s' too long", $2);
@@ -3753,8 +3762,16 @@ route_host	: STRING			{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| dynaddr			{
+		| dynaddr '/' NUMBER		{
+			struct node_host	*n;
+
+			if ($3 < 0 || $3 > 128) {
+				yyerror("bit number too big");
+				YYERROR;
+			}
 			$$ = $1;
+			for (n = $1; n != NULL; n = n->next)
+				set_ipmask(n, $3);
 		}
 		| '(' STRING host ')'		{
 			struct node_host	*n;
@@ -4511,7 +4528,8 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 	struct pf_rule_addr ra;
 	int	i = 0;
 
-	if (!rs || !rs->rdr) {
+
+	if (!rs || !rs->rdr || rs->rdr->host == NULL) {
 		rpool->addr.type = PF_ADDR_NONE;
 		return (0);
 	}
@@ -4525,9 +4543,11 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		}
 	}
 
-	if (i == 0)		/* no pool address */
-		return (0);
-	else if (i == 1) {	/* only one address */
+	if (i == 0) {		/* no pool address */
+		yyerror("af mismatch in %s spec",
+		    allow_if ? "routing" : "translation");
+		return (1);
+	} else if (i == 1) {	/* only one address */
 		for (h = rs->rdr->host; h != NULL; h = h->next)
 			if (!h->af || !r->af || r->af == h->af) 
 				break;
@@ -4816,8 +4836,10 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			    disallow_alias(src_host, "invalid use of interface "
 			    "(%s) as the source address of a binat-to rule")) {
 				error++;
-			} else if ((src_host->addr.type != PF_ADDR_ADDRMASK &&
-			    src_host->addr.type != PF_ADDR_DYNIFTL)) {
+			} else if ((r->src.addr.type != PF_ADDR_ADDRMASK &&
+			    r->src.addr.type != PF_ADDR_DYNIFTL) ||
+			    (r->nat.addr.type != PF_ADDR_ADDRMASK &&
+			    r->nat.addr.type != PF_ADDR_DYNIFTL)) {
 				yyerror("binat-to requires a specified "
 				    "source and redirect address");
 				error++;
@@ -4826,6 +4848,12 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			    DYNIF_MULTIADDR(r->nat.addr)) {
 				yyerror ("dynamic interfaces must be used with "
 				    ":0 in a binat-to rule");
+				error++;
+			}
+			if (PF_AZERO(&r->src.addr.v.a.mask, af) || 
+			    PF_AZERO(&r->nat.addr.v.a.mask, af)) {
+				yyerror ("source and redir addresess must have "
+				    "a matching network mask in binat-rule");
 				error++;
 			}
 			if (r->nat.addr.type == PF_ADDR_TABLE) {
