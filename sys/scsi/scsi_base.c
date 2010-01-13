@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.161 2010/01/13 08:04:39 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.162 2010/01/13 10:53:11 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -200,8 +200,8 @@ scsi_xs_get(struct scsi_link *link, int flags)
 	mtx_leave(&link->mtx);
 
 	/* pool is shared, link mtx is not */
-	xs = pool_get(&scsi_xfer_pool,
-	    ISSET(flags, SCSI_NOSLEEP) ? PR_NOWAIT : PR_WAITOK);
+	xs = pool_get(&scsi_xfer_pool, PR_ZERO |
+	    (ISSET(flags, SCSI_NOSLEEP) ? PR_NOWAIT : PR_WAITOK));
 	if (xs == NULL) {
 		mtx_enter(&link->mtx);
 		link->openings++;
@@ -211,13 +211,7 @@ scsi_xs_get(struct scsi_link *link, int flags)
 		xs->sc_link = link;
 		xs->retries = SCSI_RETRIES;
 		xs->timeout = 10000;
-		bzero(&xs->cmdstore, sizeof(xs->cmdstore));
 		xs->cmd = &xs->cmdstore;
-		xs->cmdlen = 0;
-		xs->data = NULL;
-		xs->datalen = 0;
-		xs->resid = 0;
-		xs->bp = NULL;
 	}
 
 	return (xs);
@@ -783,6 +777,13 @@ scsi_xs_sync(struct scsi_xfer *xs)
 {
 	struct mutex cookie = MUTEX_INITIALIZER(IPL_BIO);
 	int error;
+
+#ifdef DIAGNOSTIC
+	if (xs->cookie != NULL)
+		panic("xs->cookie != NULL in scsi_xs_sync\n");
+	if (xs->done != NULL)
+		panic("xs->done != NULL in scsi_xs_sync\n");
+#endif
 
 	/*
 	 * If we cant sleep while waiting for completion, get the adapter to
