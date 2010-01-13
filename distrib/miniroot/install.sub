@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.595 2010/01/03 04:25:42 krw Exp $
+#	$OpenBSD: install.sub,v 1.596 2010/01/13 00:15:26 todd Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -884,7 +884,7 @@ enable_network() {
 
 	# Set the address for the loopback interface. Bringing the
 	# interface up, automatically invokes the IPv6 address ::1.
-	ifconfig lo0 inet 127.0.0.1
+	ifconfig lo0 inet 127.0.0.1/8
 
 	# configure all of the non-loopback interfaces which we know about.
 	# refer to hostname.if(5)
