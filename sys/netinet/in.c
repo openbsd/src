@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.59 2010/01/13 10:30:31 henning Exp $	*/
+/*	$OpenBSD: in.c,v 1.60 2010/01/13 10:45:21 henning Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -95,38 +95,18 @@ int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
 int in_addprefix(struct in_ifaddr *, int);
 int in_scrubprefix(struct in_ifaddr *);
 
-#ifndef SUBNETSARELOCAL
-#define	SUBNETSARELOCAL	0
-#endif
-
-int subnetsarelocal = SUBNETSARELOCAL;
-
-/*
- * Return 1 if an internet address is for a ``local'' host
- * (one to which we have a connection).  If subnetsarelocal
- * is true, this includes other subnets of the local net.
- * Otherwise, it includes only the directly-connected (sub)nets.
- */
+/* Return 1 if an internet address is for a directly connected host */
 int
 in_localaddr(struct in_addr in, u_int rdomain)
 {
 	struct in_ifaddr *ia;
 
 	rdomain = rtable_l2(rdomain);
-	if (subnetsarelocal) {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (ia->ia_ifp->if_rdomain != rdomain)
-				continue;
-			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
-				return (1);
-		}
-	} else {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-			if (ia->ia_ifp->if_rdomain != rdomain)
-				continue;
-			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
-				return (1);
-		}
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+		if (ia->ia_ifp->if_rdomain != rdomain)
+			continue;
+		if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
+			return (1);
 	}
 	return (0);
 }
