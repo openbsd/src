@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
 /*@file
  * npppd 設定関連を操作する関数を格納するファイル。
  */
@@ -184,9 +184,6 @@ npppd_modules_reload(npppd *_this)
 #ifdef USE_NPPPD_PPTP
 	rval |= pptpd_reload(&_this->pptpd, _this->properties, "pptpd",
 	    1);
-#ifdef IDGW_SSLDIP
-	rval |= pptpd_reload(&_this->ssldipd, _this->properties, "ssldipd", 0);
-#endif
 #endif
 #ifdef USE_NPPPD_PPPOE
 	rval |= pppoed_reload(&_this->pppoed, _this->properties, "pppoed", 0);

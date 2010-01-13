@@ -1,4 +1,5 @@
 #
+# $Id
 #
 NPPPD_COMMON_DIR=	${.CURDIR}/../common
 NOMAN=			#
@@ -32,7 +33,7 @@ SRCS+=		pppoe_session.c pppoed.c
 
 #SRCS+=		eap.c radius_common.c
 
-CPPFLAGS+=	-D__COPYRIGHT\(x\)= -D__RCSID=\(x\)=
+CPPFLAGS+=	-D__COPYRIGHT\(x\)= -D__RCSID\(x\)=
 CPPFLAGS+=	-DUSE_NPPPD_MPPE
 CPPFLAGS+=	-DUSE_NPPPD_PIPEX
 CPPFLAGS+=	-DUSE_NPPPD_RADIUS
@@ -52,7 +53,6 @@ CPPFLAGS+=	-DNPPPD_AUTH_DEBUG=1 -DRT_ZEBRA_DEBUG=1
 CPPFLAGS+=	-DPAP_DEBUG=1 -DCHAP_DEBUG=1
 CPPFLAGS+=	-DNPPPD_IFACE_DEBUG
 .endif
-# common
 
 .include <bsd.prog.mk>
-.PATH: ${.CURDIR}/../common ${.CURDIR}
+.PATH: ${.CURDIR}/../common

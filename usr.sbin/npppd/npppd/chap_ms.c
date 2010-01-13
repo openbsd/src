@@ -60,18 +60,6 @@ __COPYRIGHT(
 #include <openssl/opensslv.h>
 #include "chap_ms.h"
 
-#if (OPENSSL_VERSION_NUMBER - 0 >= 0x00907000)
-/*
- * 0.9.7
- */
-#define	des_key_schedule 	DES_key_schedule
-#define	des_set_odd_parity	DES_set_odd_parity
-#define	des_set_key		DES_set_key
-#define	des_ecb_encrypt		DES_ecb_encrypt
-#define	des_cblock 		DES_cblock
-#define	des_set_key 		DES_set_key
-#define	des_ebc_encrypt 	DES_ebc_encrypt
-#endif
 /*
  * Documentation & specifications:
  *
@@ -127,7 +115,7 @@ MakeKey(u_char *key, u_char *des_key)
     des_key[6] = Get7Bits(key, 42);
     des_key[7] = Get7Bits(key, 49);
 
-    des_set_odd_parity((des_cblock *)des_key);
+    DES_set_odd_parity((des_cblock *)des_key);
 }
 
 static void /* IN 8 octets IN 7 octest OUT 8 octets */
@@ -138,13 +126,8 @@ DesEncrypt(u_char *clear, u_char *key, u_char *cipher)
 
     MakeKey(key, des_key);
 
-#if (OPENSSL_VERSION_NUMBER - 0 >= 0x00907000)
-    des_set_key(&des_key, &key_schedule);
-    des_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, &key_schedule, 1);
-#else
-    des_set_key(&des_key, key_schedule);
-    des_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, key_schedule, 1);
-#endif
+    DES_set_key(&des_key, &key_schedule);
+    DES_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, &key_schedule, 1);
 }
 
 static void      /* IN 8 octets      IN 16 octets     OUT 24 octets */

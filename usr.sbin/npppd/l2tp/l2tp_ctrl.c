@@ -26,7 +26,7 @@
 /**@file
  * L2TP LNS のコントロールコネクションの処理を提供します。
  */
-// $Id: l2tp_ctrl.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+// $Id: l2tp_ctrl.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -62,9 +62,6 @@
 #include "net_utils.h"
 #include "config_helper.h"
 #include "version.h"
-#ifdef _SEIL_EXT_
-#include "rtev.h"
-#endif
 
 static int                l2tp_ctrl_init (l2tp_ctrl *, l2tpd *, struct sockaddr *, struct sockaddr *, void *);
 static void               l2tp_ctrl_reload (l2tp_ctrl *);
@@ -867,19 +864,6 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 				l2tpd_log_access_deny(_this, errmsg, peer);
 				goto reigai;
 			}
-#if defined(_SEIL_EXT_) && !defined(USE_LIBSOCKUTIL)
-			if (!rtev_ifa_is_primary(ifname, sock)) {
-				char hostbuf[NI_MAXHOST];
-				getnameinfo(sock, sock->sa_len, hostbuf,
-				    sizeof(hostbuf), NULL, 0, NI_NUMERICHOST);
-				snprintf(errmsg, sizeof(errmsg),
-				    "connecting to %s (an alias address of %s)"
-				    " is not allowed by this version.",
-				    hostbuf, ifname);
-				l2tpd_log_access_deny(_this, errmsg, peer);
-				goto reigai;
-			}
-#endif
 		}
 
 		if ((ctrl = l2tp_ctrl_create()) == NULL) {

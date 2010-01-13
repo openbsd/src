@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
 /**@file
  *
  * MPPE(Microsoft Point-To-Point Encryption Protocol) ¤Î¼ÂÁõ¡£
@@ -558,9 +558,6 @@ static u_char SHAPad1[] = {
 #define	ZeroMemory(dst, len)		memset(dst, 0, len)
 #define	MoveMemory(dst, src, len)	memcpy(dst, src, len)
 
-#if defined(WITH_BSAFE) || defined(WITH_NBSAFE)
-#include "mppe_bsafe.c"
-#else
 #include <openssl/rc4.h>
 #include <openssl/sha.h>
 
@@ -602,7 +599,6 @@ rc4_destroy(mppe *_mppe, mppe_rc4_t *_this)
 		free(_this->rc4ctx);
 	_this->rc4ctx = NULL;
 }
-#endif
 
 static void
 GetNewKeyFromSHA(u_char *StartKey, u_char *SessionKey, int SessionKeyLength,

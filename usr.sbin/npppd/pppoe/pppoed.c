@@ -29,11 +29,8 @@
  *  <dt>RFC 2516</dt>
  *  <dd>A Method for Transmitting PPP Over Ethernet (PPPoE)</dd>
  * </dl>
- * $Id: pppoed.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+ * $Id: pppoed.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $
  */
-#ifdef	_SEIL_EXT_
-#include <seil/features.h>
-#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/endian.h>

@@ -206,10 +206,6 @@ struct _npppd {
 #ifdef	USE_NPPPD_PPTP
 	/** PPTP デーモン */
 	pptpd pptpd;
-#ifdef	IDGW_SSLDIP
-	/** SSLDIP 用 PPTP デーモン */
-	pptpd ssldipd;
-#endif
 #endif
 #ifdef	USE_NPPPD_PPPOE
 	/** PPPOE デーモン */

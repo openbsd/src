@@ -114,6 +114,7 @@ const char *npppd_ppp_get_realm_name(npppd *, npppd_ppp *);
 int        npppd_ppp_bind_iface(npppd *, npppd_ppp *);
 void       npppd_ppp_unbind_iface(npppd *, npppd_ppp *);
 const char *npppd_ppp_get_iface_name(npppd *, npppd_ppp *);
+void *     npppd_get_radius_req_setting(npppd *, npppd_ppp *);
 void       npppd_radius_server_failure_notify(npppd *, npppd_ppp *, void *, const char *);
 int        npppd_ppp_pipex_enable(npppd *, npppd_ppp *);
 int        npppd_ppp_pipex_disable(npppd *, npppd_ppp *);

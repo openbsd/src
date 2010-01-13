@@ -27,7 +27,7 @@
  * Next pppd。npppd プロセスと npppdインスタンスの実装。
  *
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+ * $Id: npppd.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -172,25 +172,12 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-#if defined(__NetBSD__) && (__NetBSD_Version__ < 300000000) && \
-    defined(USE_NPPPD_PPPOE) 
-	/*
-	 * FIXME: BPF + kqueue on NetBSD 2.0.2 は問題あり。パケット受信しても
-	 * すぐに event 飛んでこない。
-	 */
-	setenv("EVENT_NOKQUEUE", "nokqueue", 0);
-#endif
-
 	if (debuglevel > 0) {
 		debug_set_debugfp(stderr);
 		debug_use_syslog(0);
 	} else {
 		debug_set_syslog_level_adjust(ll_adjust);
-#ifdef _SEIL_EXT_
-		openlog(NULL, 0, LOG_NPPPD);
-#else
 		openlog(NULL, LOG_PID, LOG_NPPPD);
-#endif
 		if (runasdaemon)
 			daemon(0, 0);
 	}
@@ -421,9 +408,6 @@ npppd_stop(npppd *_this)
 #ifdef	USE_NPPPD_PPTP
 	pptpd_stop(&_this->pptpd);
 #endif
-#ifdef	IDGW_SSLDIP
-	pptpd_stop(&_this->ssldipd);
-#endif
 #ifdef	USE_NPPPD_PPPOE
 	pppoed_stop(&_this->pppoed);
 #endif
@@ -463,10 +447,6 @@ npppd_stop_really(npppd *_this)
 #ifdef	USE_NPPPD_PPTP
 	if (!pptpd_is_stopped(&_this->pptpd))
 		wait_again |= 1;
-#ifdef	IDGW_SSLDIP
-	if (!pptpd_is_stopped(&_this->ssldipd))
-		wait_again |= 1;
-#endif
 #endif
 	if (wait_again != 0) {
 		npppd_reset_timer(_this);
@@ -475,9 +455,6 @@ npppd_stop_really(npppd *_this)
 #endif
 #ifdef NPPPD_USE_RT_ZEBRA
 	rt_zebra_stop(rt_zebra_get_instance());
-#endif
-#ifdef	_SEIL_EXT_
-	unlink(_this->pidpath);
 #endif
 	for (i = countof(_this->iface) - 1; i >= 0; i--) {
 		if (_this->iface[i].initialized != 0)
@@ -498,9 +475,6 @@ npppd_fini(npppd *_this)
 #endif
 #ifdef USE_NPPPD_PPTP
 	pptpd_uninit(&_this->pptpd);
-#ifdef	IDGW_SSLDIP
-	pptpd_uninit(&_this->ssldipd);
-#endif
 #endif
 #ifdef USE_NPPPD_PPPOE
 	pppoed_uninit(&_this->pppoed);
@@ -598,12 +572,8 @@ npppd_timer(int fd, short evtype, void *ctx)
 #ifdef NPPPD_USE_RT_ZEBRA
 	if (!rt_zebra_is_running(rt_zebra_get_instance())) {
 		rt_zebra_start(rt_zebra_get_instance());
-#ifdef _SEIL_EXT_
-		/* zebra@seil は、プールアドレスを消してしまう */
-		npppd_reset_routing_table(_this, 1);
-#endif	
 	}
-#endif	
+#endif
 
 	npppd_reset_timer(_this);
 }
@@ -1945,23 +1915,6 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 			    (lsuffix == 0 || (lsuffix < lusername &&
 			    strcmp(username + lusername - lsuffix,
 				npppd_auth_get_suffix(realm0)) == 0))) {
-#ifdef IDGW
-				/* 
-				 * ローカル認証でユーザが存在しない場合には、
-				 * 次のレルムにフォールバックする
-				 */
-				if (npppd_auth_get_type(realm0)
-				    == NPPPD_AUTH_TYPE_LOCAL) {
-					if (!npppd_auth_is_ready(realm0))
-						continue;
-					if (npppd_auth_get_user_password(realm0,
-					    npppd_auth_username_for_auth(
-						realm0, username, buf1),
-						NULL, NULL) == 1) {
-						continue;
-					}
-				}
-#endif
 				/* check prefix */
 				lprefix = strlen(npppd_auth_get_suffix(realm0));
 				if (lprefix > 0 &&

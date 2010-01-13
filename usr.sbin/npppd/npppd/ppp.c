@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
 /**@file
  * {@link :: _npppd_ppp PPPインスタンス} に関する処理を提供します。
  */
@@ -557,15 +557,9 @@ ppp_auth_ok(npppd_ppp *_this)
 	if (_this->peer_auth != 0) {
 		/* ユーザ毎の最大接続数を制限する */
 		if (!npppd_check_user_max_session(_this->pppd, _this)) {
-#ifdef IDGW
-			ppp_log(_this, LOG_ALERT, "logtype=TUNNELDENY user=\"%s\" "
-			    "reason=\"PPP duplicate login limit exceeded\"",
-			    _this->username);
-#else
 			ppp_log(_this, LOG_WARNING,
 			    "user %s exceeds user-max-session limit",
 			    _this->username);
-#endif
 			ppp_stop(_this, NULL);
 
 			return;
@@ -1086,12 +1080,6 @@ ppp_on_network_pipex(npppd_ppp *_this)
 		return;
 	if (_this->pipex_started != 0)
 		return;	/* already started */
-
-	PPP_DBG((_this, LOG_INFO, "%s() assigned_ip4_enabled = %s, "
-	    "MPPE_MUST_NEGO = %s, ccp.fsm.state = %s", __func__,
-	    (_this->assigned_ip4_enabled != 0)? "true" : "false",
-	    (MPPE_MUST_NEGO(_this))? "true" : "false",
-	    (_this->ccp.fsm.state == OPENED)? "true" : "false"));
 
 	if (_this->assigned_ip4_enabled != 0 &&
 	    (!MPPE_MUST_NEGO(_this) || _this->ccp.fsm.state == OPENED)) {

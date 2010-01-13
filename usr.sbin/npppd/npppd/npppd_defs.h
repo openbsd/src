@@ -26,15 +26,6 @@
 #ifndef NPPPD_DEFS_H
 #define NPPPD_DEFS_H 1
 
-#ifdef  _SEIL_EXT_
-#include <seil/features.h>
-
-#define	NPPPD_DEFAULT_MAX_PPP		MAX_NUMBER_OF_PPPAC_SESSION
-#define	DEFAULT_NPPPD_CTL_MAX_MSGSZ				\
-	    (NPPPD_DEFAULT_MAX_PPP*sizeof(struct npppd_who)	\
-	    + sizeof(struct npppd_who_list) + 256)
-#endif
-
 #define NPPPD_MAX_POOLED_ADDRS		8192
 #define NPPPD_USER_HASH_SIZ		1777
 #define	NPPPD_GENERIC_NAME_LEN		32

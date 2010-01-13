@@ -26,7 +26,7 @@
 /**@file
  * npppd の補助的な関数を提供します。
  */
-/* $Id: npppd_subr.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: npppd_subr.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
 #include <sys/cdefs.h>
 #ifndef LINT
 __COPYRIGHT(
@@ -205,20 +205,6 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 	else
 		rtm->rtm_flags |= RTF_MASK;
 #endif
-#ifdef	_SEIL_EXT_
-	/*
-	 * phash で interface のアドレスを変更されると、route flush される。
-	 * route flush コマンドに -xpppac (Except pppac) オプションを追加
-	 * して、RTF_PROTO2 ならば flush しないような修正を行い、phash で
-	 * 使用される の flush_route() では -xpppac 付きで route コマンド
-	 * を実行する。
-	 */
-	rtm->rtm_flags |= RTF_PROTO2;
-	/* 
-	 * RTF_STATIC が立っていないと Zebra が消す場合がある。
-	 */
-	rtm->rtm_flags |= RTF_STATIC;
-#endif	/* _SEIL_EXT_ */
 
 	if (type == RTM_ADD && mtu > 0) {
 		rtm->rtm_inits = RTV_MTU;

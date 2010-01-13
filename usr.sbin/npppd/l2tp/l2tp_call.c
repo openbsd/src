@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
 /**@file
  * L2TP LNS のコールの実装。
  */
@@ -1013,23 +1013,10 @@ l2tp_call_bind_ppp(l2tp_call *_this, dialin_proxy_info *dpi)
 	ppp->send_packet = l2tp_call_ppp_output;
 	ppp->phy_close = l2tp_call_closed_by_ppp;
 
-#ifdef IDGW_DIALIN
-	if (DIALIN_PROXY_IS_REQUESTED(dpi)) {
-		strlcpy(ppp->phy_label, L2TPD_DIALIN_LAYER2_LABEL,
-		    sizeof(ppp->phy_label));
-		ppp->phy_info.peer_pn.pn_len =  sizeof(npppd_phone_number);
-		ppp->phy_info.peer_pn.pn_family = NPPPD_AF_PHONE_NUMBER;
-		strlcpy(ppp->phy_info.peer_pn.pn_number, _this->calling_number,
-		    sizeof(ppp->phy_info.peer_pn.pn_number));
-	} else {
-#endif
 	strlcpy(ppp->phy_label, _this->ctrl->phy_label,
 	    sizeof(ppp->phy_label));
 	memcpy(&ppp->phy_info.peer_in, &_this->ctrl->peer,
 	    _this->ctrl->peer.ss_len);
-#ifdef IDGW_DIALIN
-	}
-#endif
 	strlcpy(ppp->calling_number, _this->calling_number,
 	    sizeof(ppp->calling_number));
 	if (ppp_init(npppd_get_npppd(), ppp) != 0) {

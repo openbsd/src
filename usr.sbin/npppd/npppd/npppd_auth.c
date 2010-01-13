@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  */
 /**@file 認証レルム */
-/* $Id: npppd_auth.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
 /* なるべく npppd に非依存で書いていきたいところ。*/
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -267,11 +267,6 @@ npppd_auth_get_user_password(npppd_auth_base *base,
 
 	if ((user = npppd_auth_find_user(base, username)) == NULL)
 		return 1;
-#ifdef IDGW
-	/* パスワードを * で潰してあるユーザは、パスワードは使わない */
-	if (strcmp(user->password, "*") == 0) 
-		return 1;
-#endif
 
 	if (password == NULL && plpassword == NULL)
 		return 0;
@@ -484,21 +479,10 @@ npppd_auth_reload_acctlist(npppd_auth_base *base)
 		/* ファイルが存在しない場合は、空とする */
 		if (errno == ENOENT)
 			hash_delete_all(base->users_hash, 1);
-#ifdef _SEIL_EXT_
-		if (errno == ENOENT)
-			npppd_auth_base_log(base, LOG_NOTICE,
-			    "Realm is not ready");
-		else
-			npppd_auth_base_log(base, LOG_ERR,
-			    "Open %s failed: %m", base->acctlist_path);
-		base->acctlist_ready = 0;
-		return 0;
-#else
 		npppd_auth_base_log(base,
 		    (errno == ENOENT)? LOG_DEBUG : LOG_ERR,
 		    "Open %s failed: %m", base->acctlist_path);
 		return 0;
-#endif
 	}
 	if ((csv = csvreader_create()) == NULL) {
 		npppd_auth_base_log(base, LOG_ERR,
