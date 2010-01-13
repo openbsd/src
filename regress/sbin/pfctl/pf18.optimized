@@ -50,7 +50,7 @@
   [ Skip steps: i=15 d=end f=end p=15 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 match out on lo0 inet from 192.168.0.0/24 to any nat-to (lo0) round-robin
+@13 match out on lo0 inet from 192.168.0.0/24 to any nat-to (lo0:1) round-robin
   [ Skip steps: i=15 d=end f=end p=15 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

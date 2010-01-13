@@ -1,3 +1,2 @@
-no rdr on lo0 inet from 10.0.1.0/24 to any tag regress
-rdr on lo0 inet proto tcp from 10.0.0.0/8 to any port = www -> 127.0.0.1
+match in on lo0 inet proto tcp from 10.0.0.0/8 to any port = www rdr-to 127.0.0.1
 block drop out on lo0 all tagged regress
