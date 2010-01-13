@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.304 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.305 2010/01/13 01:54:38 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1649,7 +1649,6 @@ extern struct pf_state_queue state_list;
 TAILQ_HEAD(pf_poolqueue, pf_pool);
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		  pf_altqs[2];
-extern struct pf_palist			  pf_pabuf[3];
 
 extern u_int32_t		 ticket_altqs_active;
 extern u_int32_t		 ticket_altqs_inactive;
