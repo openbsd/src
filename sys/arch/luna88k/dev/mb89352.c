@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.10 2009/11/01 23:06:03 fgsch Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.11 2010/01/13 06:09:44 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -803,8 +803,6 @@ spc_done(sc, acb)
 			}
 		}
 	}
-
-	xs->flags |= ITSDONE;
 
 #ifdef SPC_DEBUG
 	if ((spc_debug & SPC_SHOWMISC) != 0) {

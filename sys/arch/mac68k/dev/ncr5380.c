@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.36 2010/01/10 01:14:26 krw Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.37 2010/01/13 06:09:44 krw Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -188,9 +188,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 	reqp->next = free_head;
 	free_head  = reqp;
 
-	xs->flags |= ITSDONE;
-	if (!(reqp->dr_flag & DRIVER_LINKCHK))
-		scsi_done(xs);
+	scsi_done(xs);
 	splx(sps);
 }
 

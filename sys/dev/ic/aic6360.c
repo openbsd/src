@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.20 2009/11/01 23:06:03 fgsch Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.21 2010/01/13 06:09:44 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -842,8 +842,6 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 			xs->resid = acb->data_length;
 		}
 	}
-
-	xs->flags |= ITSDONE;
 
 #ifdef AIC_DEBUG
 	if ((aic_debug & AIC_SHOWMISC) != 0) {
