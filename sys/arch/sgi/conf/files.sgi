@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.42 2009/11/21 23:28:14 syuu Exp $
+#	$OpenBSD: files.sgi,v 1.43 2010/01/13 22:57:28 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -16,6 +16,7 @@ file	arch/sgi/sgi/disksubr.c			disk
 file	arch/sgi/sgi/lock_machdep.c		multiprocessor
 file	arch/sgi/sgi/ip27_machdep.c		tgt_origin
 file	arch/sgi/sgi/ip30_machdep.c		tgt_octane
+file	arch/sgi/sgi/ip30_nmi.S			tgt_octane & ddb
 file	arch/sgi/sgi/ip32_machdep.c		tgt_o2
 file	arch/sgi/sgi/l1.c			tgt_origin
 file	arch/sgi/sgi/machdep.c

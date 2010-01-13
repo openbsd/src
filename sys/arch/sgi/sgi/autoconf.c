@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2009/11/19 06:06:51 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2010/01/13 22:57:29 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -102,6 +102,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sgi/sgi/ip30.h>
 #include <sgi/xbow/xbow.h>
 #include <dev/pci/pcivar.h>
 #include <scsi/scsi_all.h>
@@ -182,6 +183,17 @@ memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask,
 #endif
 	physmem += endpfn - startpfn;
 
+#ifdef TGT_OCTANE
+	/*
+	 * On Octane, the second 16KB page is reserved for the NMI handler.
+	 */
+	if (sys_config.system_type == SGI_OCTANE &&
+	    startpfn < atop(IP30_MEMORY_BASE) + 2) {
+		startpfn = atop(IP30_MEMORY_BASE) + 2;
+		if (startpfn >= endpfn)
+			return 0;
+	}
+#endif
 	/*
 	 * Prevent use of memory above 16GB physical, until pmap can support
 	 * this.

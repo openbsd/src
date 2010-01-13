@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.31 2010/01/09 23:34:29 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.32 2010/01/13 22:57:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -23,6 +23,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 #include <sys/tty.h>
 
 #include <mips64/arcbios.h>
@@ -69,6 +70,11 @@ paddr_t	ip30_widget_map(int16_t, u_int, bus_addr_t *, bus_size_t *);
 int	ip30_widget_id(int16_t, u_int, uint32_t *);
 static u_long ip30_get_ncpusfound(void);
 
+#ifdef DDB
+void	ip30_nmi(void);			/* ip30_nmi.S */
+void	ip30_nmi_handler(void);
+#endif
+
 static	paddr_t ip30_iocbase;
 
 static const paddr_t mpconf =
@@ -84,6 +90,9 @@ ip30_setup()
 	uint32_t memcfg;
 	uint64_t start, count, end;
 	u_long cpuspeed;
+#ifdef DDB
+	struct ip30_gda *gda;
+#endif
 
 	/*
 	 * Although being r10k/r12k based, the uncached spaces are
@@ -179,6 +188,15 @@ ip30_setup()
 	comconsrate = bios_getenvint("dbaud");
 	if (comconsrate < 50 || comconsrate > 115200)
 		comconsrate = 9600;
+
+#ifdef DDB
+	/*
+	 * Setup NMI handler.
+	 */
+	gda = (struct ip30_gda *)PHYS_TO_XKPHYS(GDA_BASE, CCA_CACHED);
+	if (gda->magic == GDA_MAGIC)
+		gda->nmi_cb = ip30_nmi;
+#endif
 
 	/*
 	 * Octane and Octane2 can be told apart with a GPIO source bit
@@ -331,9 +349,9 @@ ip30_lights_frob(uint32_t hwpend, struct trap_frame *cf)
 static int
 ip30_cpu_exists(int cpuid)
 {
-       uint32_t magic =
-           *(volatile uint32_t *)(mpconf + MPCONF_MAGIC(cpuid));
-       return magic == MPCONF_MAGIC_VAL;
+	uint32_t magic =
+	    *(volatile uint32_t *)(mpconf + MPCONF_MAGIC(cpuid));
+	return magic == MPCONF_MAGIC_VAL;
 }
 
 u_long
@@ -342,126 +360,156 @@ ip30_get_ncpusfound(void)
 	int i;
 	for (i = 1; i < MAXCPUS; i++)
 		if (!ip30_cpu_exists(i))
-			break;
+			continue;
 
 	return i;
 }
+
+#ifdef DDB
+void
+ip30_nmi_handler()
+{
+	extern int kdb_trap(int, struct trap_frame *);
+	extern void stacktrace(struct trap_frame *);
+	struct trap_frame *fr0, *fr1;
+
+	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+	printf("NMI\n");
+
+	fr0 = (struct trap_frame *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x4000,
+	    CCA_CACHED);
+	fr1 = (struct trap_frame *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x6000,
+	    CCA_CACHED);
+
+	printf("cpu #0 traceback\n");
+	stacktrace(fr0);
+	printf("cpu #1 traceback\n");
+	stacktrace(fr1);
+
+	kdb_trap(-1, fr0);
+
+	printf("Resetting system...\n");
+	boot(RB_USERREQ);
+}
+#endif
 
 #ifdef MULTIPROCESSOR
 void
 hw_cpu_boot_secondary(struct cpu_info *ci)
 {
-       int cpuid =  ci->ci_cpuid;
-       vaddr_t kstack;
+	int cpuid =  ci->ci_cpuid;
+	vaddr_t kstack;
 
 #ifdef DEBUG
-        uint64_t stackaddr =
-               *(volatile uint64_t *)(mpconf + MPCONF_STACKADDR(cpuid));
-        uint64_t lparam =
-               *(volatile uint64_t *)(mpconf + MPCONF_LPARAM(cpuid));
-        uint64_t launch =
-               *(volatile uint64_t *)(mpconf + MPCONF_LAUNCH(cpuid));
+	uint64_t stackaddr =
+		*(volatile uint64_t *)(mpconf + MPCONF_STACKADDR(cpuid));
+	uint64_t lparam =
+		*(volatile uint64_t *)(mpconf + MPCONF_LPARAM(cpuid));
+	uint64_t launch =
+		*(volatile uint64_t *)(mpconf + MPCONF_LAUNCH(cpuid));
 	uint32_t magic =
-               *(volatile uint32_t *)(mpconf + MPCONF_MAGIC(cpuid));
-        uint32_t prid =
-               *(volatile uint32_t *)(mpconf + MPCONF_PRID(cpuid));
-        uint32_t physid =
-               *(volatile uint32_t *)(mpconf + MPCONF_PHYSID(cpuid));
-        uint32_t virtid =
-               *(volatile uint32_t *)(mpconf + MPCONF_VIRTID(cpuid));
-        uint32_t scachesz =
-               *(volatile uint32_t *)(mpconf + MPCONF_SCACHESZ(cpuid));
-        uint16_t fanloads =
-               *(volatile uint16_t *)(mpconf + MPCONF_FANLOADS(cpuid));
-        uint64_t rndvz =
-               *(volatile uint64_t *)(mpconf + MPCONF_RNDVZ(cpuid));
-        uint64_t rparam =
-               *(volatile uint64_t *)(mpconf + MPCONF_RPARAM(cpuid));
-        uint32_t idleflag =
-               *(volatile uint32_t *)(mpconf + MPCONF_IDLEFLAG(cpuid));
+		*(volatile uint32_t *)(mpconf + MPCONF_MAGIC(cpuid));
+	uint32_t prid =
+		*(volatile uint32_t *)(mpconf + MPCONF_PRID(cpuid));
+	uint32_t physid =
+		*(volatile uint32_t *)(mpconf + MPCONF_PHYSID(cpuid));
+	uint32_t virtid =
+		*(volatile uint32_t *)(mpconf + MPCONF_VIRTID(cpuid));
+	uint32_t scachesz =
+		*(volatile uint32_t *)(mpconf + MPCONF_SCACHESZ(cpuid));
+	uint16_t fanloads =
+		*(volatile uint16_t *)(mpconf + MPCONF_FANLOADS(cpuid));
+	uint64_t rndvz =
+		*(volatile uint64_t *)(mpconf + MPCONF_RNDVZ(cpuid));
+	uint64_t rparam =
+		*(volatile uint64_t *)(mpconf + MPCONF_RPARAM(cpuid));
+	uint32_t idleflag =
+		*(volatile uint32_t *)(mpconf + MPCONF_IDLEFLAG(cpuid));
 
-       printf("ci:%p cpuid:%d magic:%x prid:%x physid:%x virtid:%x\n"
-           "scachesz:%u fanloads:%x launch:%llx rndvz:%llx\n"
-           "stackaddr:%llx lparam:%llx rparam:%llx idleflag:%x\n",
-           ci, cpuid, magic, prid, physid, virtid,
-           scachesz, fanloads, launch, rndvz,
-           stackaddr, lparam, rparam, idleflag);
+	printf("ci:%p cpuid:%d magic:%x prid:%x physid:%x virtid:%x\n"
+	    "scachesz:%u fanloads:%x launch:%llx rndvz:%llx\n"
+	    "stackaddr:%llx lparam:%llx rparam:%llx idleflag:%x\n",
+	    ci, cpuid, magic, prid, physid, virtid,
+	    scachesz, fanloads, launch, rndvz,
+	    stackaddr, lparam, rparam, idleflag);
 #endif
-       kstack = smp_malloc(USPACE);
-       if (kstack == NULL)
-	       panic("unable to allocate idle stack\n");
-       bzero((char *)kstack, USPACE);
-       ci->ci_curprocpaddr = (void *)kstack;
+	kstack = smp_malloc(USPACE);
+	if (kstack == NULL)
+		panic("unable to allocate idle stack\n");
+	bzero((char *)kstack, USPACE);
+	ci->ci_curprocpaddr = (void *)kstack;
 
-       *(volatile uint64_t *)(mpconf + MPCONF_STACKADDR(cpuid)) =
-           (uint64_t)(kstack + USPACE);
-       *(volatile uint64_t *)(mpconf + MPCONF_LPARAM(cpuid)) =
-           (uint64_t)ci;
-       *(volatile uint64_t *)(mpconf + MPCONF_LAUNCH(cpuid)) =
-           (uint64_t)hw_cpu_spinup_trampoline;
+	*(volatile uint64_t *)(mpconf + MPCONF_STACKADDR(cpuid)) =
+	    (uint64_t)(kstack + USPACE);
+	*(volatile uint64_t *)(mpconf + MPCONF_LPARAM(cpuid)) =
+	    (uint64_t)ci;
+	*(volatile uint64_t *)(mpconf + MPCONF_LAUNCH(cpuid)) =
+	    (uint64_t)hw_cpu_spinup_trampoline;
 
-       while(!cpuset_isset(&cpus_running, ci))
-	       ;
+	while (!cpuset_isset(&cpus_running, ci))
+		;
 }
 
 void
 hw_cpu_hatch(struct cpu_info *ci)
 {
-       int s;
+	int s;
 
-       /*
-        * Make sure we can access the extended address space.
-        * Note that r10k and later do not allow XUSEG accesses
-        * from kernel mode unless SR_UX is set.
-        */
-       setsr(getsr() | SR_KX | SR_UX);
-
-	Mips10k_ConfigCache(ci);
+	/*
+	 * Make sure we can access the extended address space.
+	 * Note that r10k and later do not allow XUSEG accesses
+	 * from kernel mode unless SR_UX is set.
+	 */
+	setsr(getsr() | SR_KX | SR_UX);
 
 	tlb_set_page_mask(TLB_PAGE_MASK);
 	tlb_set_wired(0);
 	tlb_flush(64);
 	tlb_set_wired(UPAGES / 2);
 
-       tlb_set_pid(0);
+	tlb_set_pid(0);
 
-       /*
-        * Turn off bootstrap exception vectors.
-        */
-       setsr(getsr() & ~SR_BOOT_EXC_VEC);
+	/*
+	 * Turn off bootstrap exception vectors.
+	 */
+	setsr(getsr() & ~SR_BOOT_EXC_VEC);
 
-       /*
-        * Clear out the I and D caches.
-        */
-       Mips_SyncCache(ci);
+	/*
+	 * Clear out the I and D caches.
+	 */
+	Mips10k_ConfigCache(ci);
+	Mips_SyncCache(ci);
 
-       cpu_startclock(ci);
+	cpu_startclock(ci);
 
-       ncpus++;
-       cpuset_add(&cpus_running, ci);
+	ncpus++;
+	cpuset_add(&cpus_running, ci);
 
-       mips64_ipi_init();
-       xheart_setintrmask(0);
+	mips64_ipi_init();
+	xheart_setintrmask(0);
 
-       spl0();
-       (void)updateimask(0);
+	spl0();
+	(void)updateimask(0);
 
-       SCHED_LOCK(s);
-       cpu_switchto(NULL, sched_chooseproc());
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
 }
 
-int hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
+int
+hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
 {
 	return xheart_intr_establish(func, (void *)cpuid, HEART_ISR_IPI(cpuid), 
 	    IPL_IPI, NULL, &curcpu()->ci_ipiih);
 };
 
-void hw_ipi_intr_set(u_long cpuid)
+void
+hw_ipi_intr_set(u_long cpuid)
 {
 	xheart_intr_set(HEART_ISR_IPI(cpuid));
 }
 
-void hw_ipi_intr_clear(u_long cpuid)
+void
+hw_ipi_intr_clear(u_long cpuid)
 {
 	xheart_intr_clear(HEART_ISR_IPI(cpuid));
 }

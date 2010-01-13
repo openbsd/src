@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30.h,v 1.6 2010/01/05 06:44:58 syuu Exp $	*/
+/*	$OpenBSD: ip30.h,v 1.7 2010/01/13 22:57:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -56,21 +56,39 @@
  * Multiprocessor configuration area
  */
 
-#define MPCONF_BASE         0x0000000000000600UL
-#define MPCONF_LEN          0x80
+#define MPCONF_BASE		0x0000000000000600UL
+#define MPCONF_LEN		0x80
 
-#define MPCONF_MAGIC(i)     ((i) * MPCONF_LEN + 0x00)
-#define MPCONF_PRID(i)      ((i) * MPCONF_LEN + 0x04)
-#define MPCONF_PHYSID(i)    ((i) * MPCONF_LEN + 0x08)
-#define MPCONF_VIRTID(i)    ((i) * MPCONF_LEN + 0x0c)
-#define MPCONF_SCACHESZ(i)  ((i) * MPCONF_LEN + 0x10)
-#define MPCONF_FANLOADS(i)  ((i) * MPCONF_LEN + 0x14)
-#define MPCONF_LAUNCH(i)    ((i) * MPCONF_LEN + 0x18)
-#define MPCONF_RNDVZ(i)     ((i) * MPCONF_LEN + 0x20)
-#define MPCONF_STACKADDR(i) ((i) * MPCONF_LEN + 0x40)
-#define MPCONF_LPARAM(i)    ((i) * MPCONF_LEN + 0x48)
-#define MPCONF_RPARAM(i)    ((i) * MPCONF_LEN + 0x50)
-#define MPCONF_IDLEFLAG(i)  ((i) * MPCONF_LEN + 0x58)
+#define MPCONF_MAGIC(i)		((i) * MPCONF_LEN + 0x00)
+#define MPCONF_PRID(i)		((i) * MPCONF_LEN + 0x04)
+#define MPCONF_PHYSID(i)	((i) * MPCONF_LEN + 0x08)
+#define MPCONF_VIRTID(i)	((i) * MPCONF_LEN + 0x0c)
+#define MPCONF_SCACHESZ(i)	((i) * MPCONF_LEN + 0x10)
+#define MPCONF_FANLOADS(i)	((i) * MPCONF_LEN + 0x14)
+#define MPCONF_LAUNCH(i)	((i) * MPCONF_LEN + 0x18)
+#define MPCONF_RNDVZ(i)		((i) * MPCONF_LEN + 0x20)
+#define MPCONF_STACKADDR(i)	((i) * MPCONF_LEN + 0x40)
+#define MPCONF_LPARAM(i)	((i) * MPCONF_LEN + 0x48)
+#define MPCONF_RPARAM(i)	((i) * MPCONF_LEN + 0x50)
+#define MPCONF_IDLEFLAG(i)	((i) * MPCONF_LEN + 0x58)
 
-#define MPCONF_MAGIC_VAL    0xbaddeed2
+#define MPCONF_MAGIC_VAL	0xbaddeed2
 
+/*
+ * Global data area
+ */
+
+#define	GDA_BASE		0x0000000000000400UL
+
+#define	GDA_MAGIC		0x58464552		/* XFER */
+
+#if !defined(_LOCORE)
+struct ip30_gda {
+	uint32_t	magic;		/* GDA_MAGIC */
+	uint32_t 	promop;
+	void		(*nmi_cb)(void);
+	uint64_t	masterspid;
+	void		*tlb_handlers[3];
+	uint64_t	nmi_count;
+};
+#endif
