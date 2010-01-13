@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.83 2009/12/21 23:46:25 sthen Exp $	*/
+/*	$OpenBSD: in6.c,v 1.84 2010/01/13 02:02:43 henning Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -115,8 +115,7 @@ const struct in6_addr in6mask128 = IN6MASK128;
 
 static int in6_lifaddr_ioctl(struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *);
-static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
-	struct sockaddr_in6 *, int);
+static int in6_ifinit(struct ifnet *, struct in6_ifaddr *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 
 const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
@@ -944,6 +943,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			oia->ia_next = ia;
 		} else
 			in6_ifaddr = ia;
+		ia->ia_addr = ifra->ifra_addr;
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
 				  ifa_list);
 	}
@@ -1005,7 +1005,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia6_lifetime.ia6t_preferred = 0;
 
 	/* reset the interface and routing table appropriately. */
-	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0)
+	if ((error = in6_ifinit(ifp, ia, hostIsNew)) != 0)
 		goto unlink;
 
 	/*
@@ -1582,8 +1582,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
  * and routing table entry.
  */
 static int
-in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia, 
-	struct sockaddr_in6 *sin6, int newhost)
+in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia, int newhost)
 {
 	int	error = 0, plen, ifacount = 0;
 	int	s = splnet();
@@ -1601,8 +1600,6 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 			continue;
 		ifacount++;
 	}
-
-	ia->ia_addr = *sin6;
 
 	if ((ifacount <= 1 || ifp->if_type == IFT_CARP) && ifp->if_ioctl &&
 	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
