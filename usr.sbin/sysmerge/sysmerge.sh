@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.55 2009/12/18 15:33:02 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.56 2010/01/13 16:22:56 sthen Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -389,9 +389,6 @@ diff_loop() {
 	unset FORCE_UPG
 
 	while [ "${HANDLE_COMPFILE}" = "v" -o "${HANDLE_COMPFILE}" = "todo" ]; do
-		if [ "${HANDLE_COMPFILE}" = "v" ]; then
-			echo "\n========================================================================\n"
-		fi
 		if [ -f "${DESTDIR}${COMPFILE#.}" -a -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
 			if [ -z "${DIFFMODE}" ]; then
 				# automatically install files if current != new and current = old
@@ -413,6 +410,7 @@ diff_loop() {
 			fi
 			if [ "${HANDLE_COMPFILE}" = "v" ]; then
 				(
+					echo "\n========================================================================\n"
 					echo "===> Displaying differences between ${COMPFILE} and installed version:"
 					echo ""
 					diff -u "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"
@@ -571,7 +569,7 @@ do_compare() {
 		fi
 	done
 
-	echo "\n===> Comparison complete"
+	echo "===> Comparison complete"
 }
 
 
