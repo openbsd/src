@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_nmi.S,v 1.1 2010/01/13 22:57:30 miod Exp $	*/
+/*	$OpenBSD: ip30_nmi.S,v 1.2 2010/01/13 23:24:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -84,11 +84,6 @@ ip30_nmi:
 	and	a1, a1, ~SR_INT_ENAB
 	mtc0	a1, COP_0_STATUS_REG
 	ITLBNOPFIX
-
-	LA	k0, HW_CPU_NUMBER_REG
-	PTR_L	k1, 0(k0)
-	bnez	k1, 9f
-	nop
 
 	jal	ip30_nmi_handler		/* ip30_machdep.c */
 	nop
