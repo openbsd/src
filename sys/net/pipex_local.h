@@ -1,4 +1,4 @@
-/*	$Id: pipex_local.h,v 1.2 2010/01/12 02:26:37 yasuoka Exp $	*/
+/*	$Id: pipex_local.h,v 1.3 2010/01/13 06:05:47 dlg Exp $	*/
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,6 +24,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifdef __OpenBSD__
+#define Static
+#else
+#define Static static
+#endif
+
 #define	PIPEX_PPTP	1
 #define	PIPEX_PPPOE	1
 #define	PIPEX_MPPE	1
@@ -259,47 +266,47 @@ struct pipex_pppoe_header {
 /*
  * static function prototypes
  */
-static int                   pipex_add_session (struct pipex_session_req *, struct pipex_iface_context *);
-static int                   pipex_close_session (struct pipex_session_close_req *);
-static int                   pipex_config_session (struct pipex_session_config_req *);
-static int                   pipex_get_stat (struct pipex_session_stat_req *);
-static int                   pipex_get_closed (struct pipex_session_list_req *);
-static int                   pipex_destroy_session (struct pipex_session *);
-static struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
-static struct pipex_session  *pipex_lookup_by_session_id (int, int);
-static void                  pipex_ppp_output (struct mbuf *, struct pipex_session *, int);
-static inline int            pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
-static void                  pipex_ppp_input (struct mbuf *, struct pipex_session *, int);
-static void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
+Static int                   pipex_add_session (struct pipex_session_req *, struct pipex_iface_context *);
+Static int                   pipex_close_session (struct pipex_session_close_req *);
+Static int                   pipex_config_session (struct pipex_session_config_req *);
+Static int                   pipex_get_stat (struct pipex_session_stat_req *);
+Static int                   pipex_get_closed (struct pipex_session_list_req *);
+Static int                   pipex_destroy_session (struct pipex_session *);
+Static struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
+Static struct pipex_session  *pipex_lookup_by_session_id (int, int);
+Static void                  pipex_ppp_output (struct mbuf *, struct pipex_session *, int);
+Static inline int            pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
+Static void                  pipex_ppp_input (struct mbuf *, struct pipex_session *, int);
+Static void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
 
 #ifdef PIPEX_PPPOE
-static void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);
+Static void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);
 #endif
 
 #ifdef PIPEX_PPTP
-static void                  pipex_pptp_output (struct mbuf *, struct pipex_session *, int, int);
+Static void                  pipex_pptp_output (struct mbuf *, struct pipex_session *, int, int);
 #endif
 
 #ifdef PIPEX_MPPE
-static void                  pipex_mppe_req_init (struct pipex_mppe_req *, struct pipex_mppe *);
-static void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *);
-static inline int            rc4_key (struct pipex_mppe *, int, u_char *);
-static inline void           rc4 (struct pipex_mppe *, int, u_char *, u_char *);
-static int                   rc4_key (struct pipex_mppe *, int, u_char *);
-static void                  rc4 (struct pipex_mppe *, int, u_char *, u_char *);
-static void                  pipex_mppe_reduce_key (struct pipex_mppe *);
-static void                  mppe_key_change (struct pipex_mppe *);
-static void                  pipex_mppe_input (struct mbuf *, struct pipex_session *);
-static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *);
-static void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
-static int                   pipex_ccp_output (struct pipex_session *, int, int);
+Static void                  pipex_mppe_req_init (struct pipex_mppe_req *, struct pipex_mppe *);
+Static void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *);
+Static inline int            rc4_key (struct pipex_mppe *, int, u_char *);
+Static inline void           rc4 (struct pipex_mppe *, int, u_char *, u_char *);
+Static int                   rc4_key (struct pipex_mppe *, int, u_char *);
+Static void                  rc4 (struct pipex_mppe *, int, u_char *, u_char *);
+Static void                  pipex_mppe_reduce_key (struct pipex_mppe *);
+Static void                  mppe_key_change (struct pipex_mppe *);
+Static void                  pipex_mppe_input (struct mbuf *, struct pipex_session *);
+Static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *);
+Static void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
+Static int                   pipex_ccp_output (struct pipex_session *, int, int);
 #endif
 
-static struct mbuf           *adjust_tcp_mss (struct mbuf *, int);
-static struct mbuf           *ip_is_idle_packet (struct mbuf *, int *);
-static void                  pipex_session_log (struct pipex_session *, int, const char *, ...)  __attribute__((__format__(__printf__,3,4)));
-static int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct ifqueue *);
-static void                  pipex_ppp_dequeue (void);
-static void                  pipex_timer_start (void);
-static void                  pipex_timer_stop (void);
-static void                  pipex_timer (void *);
+Static struct mbuf           *adjust_tcp_mss (struct mbuf *, int);
+Static struct mbuf           *ip_is_idle_packet (struct mbuf *, int *);
+Static void                  pipex_session_log (struct pipex_session *, int, const char *, ...)  __attribute__((__format__(__printf__,3,4)));
+Static int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct ifqueue *);
+Static void                  pipex_ppp_dequeue (void);
+Static void                  pipex_timer_start (void);
+Static void                  pipex_timer_stop (void);
+Static void                  pipex_timer (void *);

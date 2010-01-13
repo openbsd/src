@@ -1,4 +1,4 @@
-/*	$Id: pipex.c,v 1.1 2010/01/11 03:50:56 yasuoka Exp $	*/
+/*	$Id: pipex.c,v 1.2 2010/01/13 06:05:47 dlg Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -117,7 +117,7 @@ struct pipex_tag {
 };
 #if defined(__OpenBSD__) || defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 void *pipex_softintr = NULL;
-static void pipex_softintr_handler(void *);
+Static void pipex_softintr_handler(void *);
 #else
 struct callout pipex_softintr = CALLOUT_INITIALIZER;
 void pipex_softintr_handler(void *);
@@ -282,7 +282,7 @@ pipex_ioctl(struct pipex_iface_context *pipex_iface, int cmd, caddr_t data)
 /************************************************************************
  * Session management functions
  ************************************************************************/
-static int
+Static int
 pipex_add_session(struct pipex_session_req *req,
     struct pipex_iface_context *iface)
 {
@@ -464,7 +464,7 @@ pipex_notify_close_session_all(void)
 	return 0;
 }
 
-static int
+Static int
 pipex_close_session(struct pipex_session_close_req *req)
 {
 	struct pipex_session *session;
@@ -490,7 +490,7 @@ pipex_close_session(struct pipex_session_close_req *req)
 	return 0;
 }
 
-static int
+Static int
 pipex_config_session(struct pipex_session_config_req *req)
 {
 	struct pipex_session *session;
@@ -509,7 +509,7 @@ pipex_config_session(struct pipex_session_config_req *req)
 	return 0;
 }
 
-static int
+Static int
 pipex_get_stat(struct pipex_session_stat_req *req)
 {
 	struct pipex_session *session;
@@ -528,7 +528,7 @@ pipex_get_stat(struct pipex_session_stat_req *req)
 	return 0;
 }
 
-static int
+Static int
 pipex_get_closed(struct pipex_session_list_req *req)
 {
 	struct pipex_session *session;
@@ -551,7 +551,7 @@ pipex_get_closed(struct pipex_session_list_req *req)
 	return 0;
 }
 
-static int
+Static int
 pipex_destroy_session(struct pipex_session *session)
 {
 	struct radix_node *rn;
@@ -583,7 +583,7 @@ pipex_destroy_session(struct pipex_session *session)
 	return 0;
 }
 
-static struct pipex_session *
+Static struct pipex_session *
 pipex_lookup_by_ip_address(struct in_addr addr)
 {
 	struct pipex_session *session;
@@ -610,7 +610,7 @@ pipex_lookup_by_ip_address(struct in_addr addr)
 	return session;
 }
 
-static struct pipex_session *
+Static struct pipex_session *
 pipex_lookup_by_session_id(int protocol, int session_id)
 {
 	struct pipex_hash_head *list;
@@ -637,7 +637,7 @@ pipex_lookup_by_session_id(int protocol, int session_id)
  * Queue and Software Interrupt Handler
  ***********************************************************************/
 #if defined(__OpenBSD__) || defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
-static void
+Static void
 pipex_softintr_handler(void *dummy)
 {
 	/* called at splsoftnet() */
@@ -656,7 +656,7 @@ pipex_softintr_handler(void *dummy)
 }
 #endif
 
-static void
+Static void
 pipex_ppp_dequeue(void)
 {
 	struct mbuf *m;
@@ -743,7 +743,7 @@ pipex_ppp_dequeue(void)
 	return;
 }
 
-static int
+Static int
 pipex_ppp_enqueue(struct mbuf *m0, struct pipex_session *session,
     struct ifqueue *queue)
 {
@@ -792,7 +792,7 @@ fail:
 /*
  * pipex_timer_start
  */
-static void
+Static void
 pipex_timer_start(void)
 {	
 	/* init timeout */
@@ -803,7 +803,7 @@ pipex_timer_start(void)
 /*
  * pipex_timer_stop
  */
-static void
+Static void
 pipex_timer_stop(void)
 {
 	timeout_del(&pipex_timer_ch);
@@ -812,7 +812,7 @@ pipex_timer_stop(void)
 /*
  * pipex_timer
  */
-static void
+Static void
 pipex_timer(void *ignored_arg)
 {
 	int s;
@@ -956,7 +956,7 @@ drop:
 	return;
 }
 
-static void
+Static void
 pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 {
 	u_char *cp, hdr[16];
@@ -1024,7 +1024,7 @@ drop:
 /*
  * pipex_ppp_input
  */
-static void
+Static void
 pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 {
 	int proto, hlen = 0;
@@ -1077,7 +1077,7 @@ drop:
 /*
  * pipex_ip_input
  */
-static void
+Static void
 pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 {
 	struct ifnet *ifp;
@@ -1175,7 +1175,7 @@ drop:
 /*
  * pipex_ppp_proto
  */
-static inline int
+Static inline int
 pipex_ppp_proto(struct mbuf *m0, struct pipex_session *session, int off,
     int *hlenp)
 {
@@ -1217,7 +1217,7 @@ pipex_ppp_proto(struct mbuf *m0, struct pipex_session *session, int off,
 /***********************************************************************
  * PPPoE
  ***********************************************************************/
-static u_char	pipex_pppoe_padding[ETHERMIN];
+Static u_char	pipex_pppoe_padding[ETHERMIN];
 /*
  * pipex_pppoe_lookup_session
  */
@@ -1299,7 +1299,7 @@ drop:
 /*
  * pipex_ppope_output
  */
-static void
+Static void
 pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 {
 	struct pipex_pppoe_header *pppoe;
@@ -1353,7 +1353,7 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 /*
  * pipex_pptp_output
  */
-static void
+Static void
 pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
     int has_seq, int has_ack)
 {
@@ -1805,7 +1805,7 @@ pipex_pptp_userland_output(struct mbuf *m0, struct pipex_session *session)
  ***********************************************************************/
 #define	PIPEX_COHERENCY_CNT_MASK		0x0fff
 
-static void
+Static void
 pipex_mppe_req_init(struct pipex_mppe_req *mppe_req, struct pipex_mppe *mppe)
 {
 	if (mppe_req->stateless)
@@ -1857,7 +1857,7 @@ static u_char SHAPad1[] = {
     rc4_crypt((struct rc4_ctx *)(_ctx), (_in), (_out), (_len))
 #endif
 
-static inline int
+Static inline int
 rc4_key(struct pipex_mppe *mppe, int lkey, u_char *key)
 {
 
@@ -1866,7 +1866,7 @@ rc4_key(struct pipex_mppe *mppe, int lkey, u_char *key)
 	return 0;
 }
 
-static inline void
+Static inline void
 rc4(struct pipex_mppe *mppe, int len, u_char *indata, u_char *outdata)
 {
 
@@ -1880,7 +1880,7 @@ rc4(struct pipex_mppe *mppe, int len, u_char *indata, u_char *outdata)
 #define SHAUpdate			SHA1Update
 #define SHAFinal(ctx,digest)		SHA1Final(digest, ctx)
 
-static void
+Static void
 GetNewKeyFromSHA(StartKey, SessionKey, SessionKeyLength, InterimKey)
 	u_char *StartKey;
 	u_char *SessionKey;
@@ -1905,7 +1905,7 @@ GetNewKeyFromSHA(StartKey, SessionKey, SessionKeyLength, InterimKey)
 /*
  * pipex_mppe_reduce_key
  */
-static void
+Static void
 pipex_mppe_reduce_key(struct pipex_mppe *mppe)
 {
 	switch (mppe->keylenbits) {
@@ -1920,7 +1920,7 @@ pipex_mppe_reduce_key(struct pipex_mppe *mppe)
 /*
  * mppe_key_change
  */
-static void
+Static void
 mppe_key_change(struct pipex_mppe *mppe)
 {
 	u_char interim[16];
@@ -1939,7 +1939,7 @@ mppe_key_change(struct pipex_mppe *mppe)
 /*
  * mppe_decap - mppe decapsulation and payload decryption
  */
-static void
+Static void
 pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 {
 	int pktloss, encrypt, flushed, m, n, len;
@@ -2068,7 +2068,7 @@ drop:
 /*
  * pipex_mppe_output - mppe payload encryption and encapsulation
  */
-static void
+Static void
 pipex_mppe_output(struct mbuf *m0, struct pipex_session *session)
 {
 	int encrypt, flushed, len;
@@ -2156,7 +2156,7 @@ drop:
 	session->stat.oerrors++;
 }
 
-static void
+Static void
 pipex_ccp_input(struct mbuf *m0, struct pipex_session *session)
 {
 	u_char *cp;
@@ -2198,7 +2198,7 @@ drop:
 	session->stat.ierrors++;
 }
 
-static int
+Static int
 pipex_ccp_output(struct pipex_session *session, int code, int id)
 {
 	u_char *cp;
@@ -2279,7 +2279,7 @@ pipex_ccp_output(struct pipex_session *session, int code, int id)
  * The mtu parameter should be the MTU bottleneck (as far as we know)
  * on the link between the source and the destination.
  */
-static struct mbuf *
+Static struct mbuf *
 adjust_tcp_mss(struct mbuf *m0, int mtu)
 {
 	int opt, optlen, acc, mss, maxmss, lpktp;
@@ -2368,7 +2368,7 @@ drop:
  *  Check whether a packet should reset idle timer
  *  Returns 1 to don't reset timer (i.e. the packet is "idle" packet)
  */
-static struct mbuf *
+Static struct mbuf *
 ip_is_idle_packet(struct mbuf *m0, int *ris_idle)
 {
 	u_int16_t ip_off;
@@ -2453,7 +2453,7 @@ error:
 /*
  * log for the pipex_session. 
  */
-static void
+Static void
 pipex_session_log(struct pipex_session *session, int prio, const char *fmt, ...)
 {
 	char logbuf[1024];
