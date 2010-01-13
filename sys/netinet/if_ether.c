@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.82 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.83 2010/01/13 05:27:19 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -573,9 +573,6 @@ in_arpinput(m)
 	struct llinfo_arp *la = 0;
 	struct rtentry *rt;
 	struct in_ifaddr *ia;
-#if NBRIDGE > 0
-	struct in_ifaddr *bridge_ia = NULL;
-#endif
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -623,40 +620,7 @@ in_arpinput(m)
 #endif
 			if (ia->ia_ifp == m->m_pkthdr.rcvif)
 				break;
-#if NBRIDGE > 0
-		/*
-		 * If the interface we received the packet on
-		 * is part of a bridge, check to see if we need
-		 * to "bridge" the packet to ourselves at this
-		 * layer.  Note we still prefer a perfect match,
-		 * but allow this weaker match if necessary.
-		 */
-		if (m->m_pkthdr.rcvif->if_bridge != NULL) {
-			if (m->m_pkthdr.rcvif->if_bridge ==
-			    ia->ia_ifp->if_bridge)
-				bridge_ia = ia;
-#if NCARP > 0
-			else if (ia->ia_ifp->if_carpdev != NULL &&
-			    m->m_pkthdr.rcvif->if_bridge ==
-			    ia->ia_ifp->if_carpdev->if_bridge) {
-				if (carp_iamatch(ia, ea->arp_sha,
-				    &enaddr, &ether_shost))
-					bridge_ia = ia;
-				else
-					goto out;
-			}
-#endif
-		}
-#endif
 	}
-
-#if NBRIDGE > 0
-	/* use bridge_ia if there was no direct match */
-	if (ia == NULL && bridge_ia != NULL) {
-		ia = bridge_ia;
-		ac = (struct arpcom *)bridge_ia->ia_ifp;
-	}
-#endif
 
 	/* Second try: check source against our addresses */
 	if (ia == NULL) {
