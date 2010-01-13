@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.41 2010/01/12 21:39:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.42 2010/01/13 10:02:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,7 +25,7 @@
 #include "dev.h"
 #include "pipe.h"
 #include "miofile.h"
-#include "safile.h"
+#include "siofile.h"
 #include "midi.h"
 #ifdef DEBUG
 #include "dbg.h"
@@ -159,7 +159,7 @@ dev_init(char *devpath,
 	dev_round = round;
 	dev_bufsz = (bufsz + 3) / 4 + (dev_round - 1);
 	dev_bufsz -= dev_bufsz % dev_round;
-	f = (struct file *)safile_new(&safile_ops, devpath,
+	f = (struct file *)siofile_new(&siofile_ops, devpath,
 	    dipar, dopar, &dev_bufsz, &dev_round);
 	if (f == NULL)
 		return 0;

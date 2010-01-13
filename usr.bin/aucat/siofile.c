@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.22 2010/01/12 21:42:59 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.1 2010/01/13 10:02:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,53 +29,53 @@
 #include "conf.h"
 #include "dev.h"
 #include "file.h"
-#include "safile.h"
+#include "siofile.h"
 #ifdef DEBUG
 #include "dbg.h"
 #endif
 
-struct safile {
+struct siofile {
 	struct file file;
 	struct sio_hdl *hdl;
 	int started;
 };
 
-void safile_close(struct file *);
-unsigned safile_read(struct file *, unsigned char *, unsigned);
-unsigned safile_write(struct file *, unsigned char *, unsigned);
-void safile_start(struct file *);
-void safile_stop(struct file *);
-int safile_nfds(struct file *);
-int safile_pollfd(struct file *, struct pollfd *, int);
-int safile_revents(struct file *, struct pollfd *);
+void siofile_close(struct file *);
+unsigned siofile_read(struct file *, unsigned char *, unsigned);
+unsigned siofile_write(struct file *, unsigned char *, unsigned);
+void siofile_start(struct file *);
+void siofile_stop(struct file *);
+int siofile_nfds(struct file *);
+int siofile_pollfd(struct file *, struct pollfd *, int);
+int siofile_revents(struct file *, struct pollfd *);
 
-struct fileops safile_ops = {
+struct fileops siofile_ops = {
 	"sio",
-	sizeof(struct safile),
-	safile_close,
-	safile_read,
-	safile_write,
-	safile_start,
-	safile_stop,
-	safile_nfds,
-	safile_pollfd,
-	safile_revents
+	sizeof(struct siofile),
+	siofile_close,
+	siofile_read,
+	siofile_write,
+	siofile_start,
+	siofile_stop,
+	siofile_nfds,
+	siofile_pollfd,
+	siofile_revents
 };
 
 void
-safile_cb(void *addr, int delta)
+siofile_cb(void *addr, int delta)
 {
-	struct safile *f = (struct safile *)addr;
+	struct siofile *f = (struct siofile *)addr;
 	struct aproc *p;
 
 #ifdef DEBUG
-       if (delta < 0 || delta > (60 * RATE_MAX)) {
+	if (delta < 0 || delta > (60 * RATE_MAX)) {
 		dbg_puts(f->file.name);
 		dbg_puts(": ");
 		dbg_puti(delta);
 		dbg_puts(": bogus sndio delta");
 		dbg_panic();
-       }
+	}
 #endif
 	if (delta != 0) {
 		p = f->file.wproc;
@@ -92,14 +92,14 @@ safile_cb(void *addr, int delta)
 /*
  * Open the device.
  */
-struct safile *
-safile_new(struct fileops *ops, char *path,
+struct siofile *
+siofile_new(struct fileops *ops, char *path,
     struct aparams *ipar, struct aparams *opar,
     unsigned *bufsz, unsigned *round)
 {
 	struct sio_par par;
 	struct sio_hdl *hdl;
-	struct safile *f;
+	struct siofile *f;
 	int mode;
 
 	mode = 0;
@@ -157,12 +157,12 @@ safile_new(struct fileops *ops, char *path,
 	*round = par.round;
 	if (path == NULL)
 		path = "default";
-	f = (struct safile *)file_new(ops, path, sio_nfds(hdl));
+	f = (struct siofile *)file_new(ops, path, sio_nfds(hdl));
 	if (f == NULL)
 		goto bad_close;
 	f->hdl = hdl;
 	f->started = 0;
-	sio_onmove(f->hdl, safile_cb, f);
+	sio_onmove(f->hdl, siofile_cb, f);
 	return f;
  bad_close:
 	sio_close(hdl);
@@ -170,9 +170,9 @@ safile_new(struct fileops *ops, char *path,
 }
 
 void
-safile_start(struct file *file)
+siofile_start(struct file *file)
 {
-	struct safile *f = (struct safile *)file;
+	struct siofile *f = (struct siofile *)file;
 
 	if (!sio_start(f->hdl)) {
 #ifdef DEBUG
@@ -192,9 +192,9 @@ safile_start(struct file *file)
 }
 
 void
-safile_stop(struct file *file)
+siofile_stop(struct file *file)
 {
-	struct safile *f = (struct safile *)file;
+	struct siofile *f = (struct siofile *)file;
 
 	f->started = 0;
 	if (!sio_eof(f->hdl) && !sio_stop(f->hdl)) {
@@ -214,9 +214,9 @@ safile_stop(struct file *file)
 }
 
 unsigned
-safile_read(struct file *file, unsigned char *data, unsigned count)
+siofile_read(struct file *file, unsigned char *data, unsigned count)
 {
-	struct safile *f = (struct safile *)file;
+	struct siofile *f = (struct siofile *)file;
 	unsigned n;
 
 	n = f->started ? sio_read(f->hdl, data, count) : 0;
@@ -243,9 +243,9 @@ safile_read(struct file *file, unsigned char *data, unsigned count)
 }
 
 unsigned
-safile_write(struct file *file, unsigned char *data, unsigned count)
+siofile_write(struct file *file, unsigned char *data, unsigned count)
 {
-	struct safile *f = (struct safile *)file;
+	struct siofile *f = (struct siofile *)file;
 	unsigned n;
 
 	n = f->started ? sio_write(f->hdl, data, count) : 0;
@@ -271,33 +271,33 @@ safile_write(struct file *file, unsigned char *data, unsigned count)
 }
 
 int
-safile_nfds(struct file *file)
+siofile_nfds(struct file *file)
 {
-	return sio_nfds(((struct safile *)file)->hdl);
+	return sio_nfds(((struct siofile *)file)->hdl);
 }
 
 int
-safile_pollfd(struct file *file, struct pollfd *pfd, int events)
+siofile_pollfd(struct file *file, struct pollfd *pfd, int events)
 {
-	struct safile *f = (struct safile *)file;
+	struct siofile *f = (struct siofile *)file;
 
 	if (!f->started)
 		events &= ~(POLLIN | POLLOUT);
-	return sio_pollfd(((struct safile *)file)->hdl, pfd, events);
+	return sio_pollfd(((struct siofile *)file)->hdl, pfd, events);
 }
 
 int
-safile_revents(struct file *file, struct pollfd *pfd)
+siofile_revents(struct file *file, struct pollfd *pfd)
 {
-	return sio_revents(((struct safile *)file)->hdl, pfd);
+	return sio_revents(((struct siofile *)file)->hdl, pfd);
 }
 
 void
-safile_close(struct file *file)
+siofile_close(struct file *file)
 {
-	struct safile *f = (struct safile *)file;
+	struct siofile *f = (struct siofile *)file;
 
 	if (f->started)
-		safile_stop(&f->file);
-	return sio_close(((struct safile *)file)->hdl);
+		siofile_stop(&f->file);
+	return sio_close(((struct siofile *)file)->hdl);
 }
