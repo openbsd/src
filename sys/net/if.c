@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.205 2010/01/13 02:13:12 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.206 2010/01/13 02:26:49 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -148,9 +148,18 @@ struct if_clone	*if_clone_lookup(const char *, int *);
 void	if_congestion_clear(void *);
 int	if_group_egress_build(void);
 
+int	ifai_cmp(struct ifaddr_item *,  struct ifaddr_item *);
+void	ifa_item_insert(struct sockaddr *, struct ifaddr *, struct ifnet *);
+void	ifa_item_remove(struct sockaddr *, struct ifaddr *, struct ifnet *);
+RB_HEAD(ifaddr_items, ifaddr_item) ifaddr_items = RB_INITIALIZER(&ifaddr_items);
+RB_PROTOTYPE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
+RB_GENERATE(ifaddr_items, ifaddr_item, ifai_entry, ifai_cmp);
+
 TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
+
+struct pool ifaddr_item_pl;
 
 /*
  * Network interface utility routines.
@@ -162,6 +171,9 @@ void
 ifinit()
 {
 	static struct timeout if_slowtim;
+
+	pool_init(&ifaddr_item_pl, sizeof(struct ifaddr_item), 0, 0, 0,
+	    "ifaddritempool", NULL);
 
 	timeout_set(&if_slowtim, if_slowtimo, &if_slowtim);
 
@@ -888,6 +900,7 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rdomain)
 	}
 	return (NULL);
 }
+
 /*
  * Locate the point to point interface with a given destination address.
  */
@@ -2156,11 +2169,73 @@ ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
 		TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
 	else
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
+	ifa_item_insert(ifa->ifa_addr, ifa, ifp);
+	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
+		ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 void
 ifa_del(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	ifa_item_remove(ifa->ifa_addr, ifa, ifp);
+	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
+		ifa_item_remove(ifa->ifa_broadaddr, ifa, ifp);
 }
 
+int
+ifai_cmp(struct ifaddr_item *a, struct ifaddr_item *b)
+{
+	if (a->ifai_rdomain != b->ifai_rdomain)
+		return (a->ifai_rdomain - b->ifai_rdomain);
+	/* safe even with a's sa_len > b's because memcmp aborts early */
+	return (memcmp(a->ifai_addr, b->ifai_addr, a->ifai_addr->sa_len));
+}
+
+void
+ifa_item_insert(struct sockaddr *sa, struct ifaddr *ifa, struct ifnet *ifp)
+{
+	struct ifaddr_item	*ifai, *p;
+
+	ifai = pool_get(&ifaddr_item_pl, PR_WAITOK);
+	ifai->ifai_addr = sa;
+	ifai->ifai_ifa = ifa;
+	ifai->ifai_rdomain = ifp->if_rdomain;
+	ifai->ifai_next = NULL;
+	if ((p = RB_INSERT(ifaddr_items, &ifaddr_items, ifai)) != NULL) {
+		if (sa->sa_family == AF_LINK) {
+			RB_REMOVE(ifaddr_items, &ifaddr_items, p);
+			ifai->ifai_next = p;
+			RB_INSERT(ifaddr_items, &ifaddr_items, ifai);
+		} else {
+			while(p->ifai_next)
+				p = p->ifai_next;
+			p->ifai_next = ifai;
+		}
+	}
+}
+
+void
+ifa_item_remove(struct sockaddr *sa, struct ifaddr *ifa, struct ifnet *ifp)
+{
+	struct ifaddr_item	*ifai, *ifai_first, *ifai_last, key;
+
+	bzero(&key, sizeof(key));
+	key.ifai_addr = sa;
+	key.ifai_rdomain = ifp->if_rdomain;
+	ifai_first = RB_FIND(ifaddr_items, &ifaddr_items, &key);
+	for (ifai = ifai_first; ifai; ifai = ifai->ifai_next) {
+		if (ifai->ifai_ifa == ifa)
+			break;
+		ifai_last = ifai;
+	}
+	if (!ifai)
+		return;
+	if (ifai == ifai_first) {
+		RB_REMOVE(ifaddr_items, &ifaddr_items, ifai);
+		if (ifai->ifai_next)
+			RB_INSERT(ifaddr_items, &ifaddr_items, ifai->ifai_next);
+	} else
+		ifai_last->ifai_next = ifai->ifai_next;
+	pool_put(&ifaddr_item_pl, ifai);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.112 2010/01/13 02:13:12 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.113 2010/01/13 02:26:49 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #define _NET_IF_H_
 
 #include <sys/queue.h>
+#include <sys/tree.h>
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
@@ -450,6 +451,14 @@ struct ifaddr {
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP		/* route installed */
+
+struct ifaddr_item {
+	RB_ENTRY(ifaddr_item)	 ifai_entry;
+	struct sockaddr		*ifai_addr;
+	struct ifaddr		*ifai_ifa;
+	struct ifaddr_item	*ifai_next;
+	u_int			 ifai_rdomain;
+};
 
 /*
  * Message format for use in obtaining information about interfaces
