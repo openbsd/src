@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.158 2010/01/13 02:46:19 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.159 2010/01/13 03:09:05 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -783,6 +783,9 @@ scsi_xs_sync(struct scsi_xfer *xs)
 {
 	struct mutex cookie = MUTEX_INITIALIZER(IPL_BIO);
 	int error;
+
+	if (xs->done != NULL || xs->cookie != NULL)
+		panic("scsi_xs_sync: xs done or cookie is set!");
 
 	/*
 	 * If we cant sleep while waiting for completion, get the adapter to
