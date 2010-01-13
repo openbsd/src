@@ -1,4 +1,4 @@
-/*	$Id: pipex_local.h,v 1.3 2010/01/13 06:05:47 dlg Exp $	*/
+/*	$Id: pipex_local.h,v 1.4 2010/01/13 07:23:38 yasuoka Exp $	*/
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -45,11 +45,6 @@
 #ifndef	PIPEX_MAX_SESSION
 #define PIPEX_MAX_SESSION		512
 #endif
-#ifdef	NBSAFE_RC4
-#define PIPEX_RC4_CTXLEN		288
-#else
-#define PIPEX_RC4_CTXLEN		1152
-#endif
 #define PIPEX_HASH_DIV			8
 #define PIPEX_HASH_SIZE			(PIPEX_MAX_SESSION/PIPEX_HASH_DIV)
 #define PIPEX_HASH_MASK			(PIPEX_HASH_SIZE-1)	
@@ -71,9 +66,7 @@ struct pipex_mppe {
 	int16_t	keylenbits;			/* key length */
 	int16_t keylen;
 	uint16_t coher_cnt;			/* cohency counter */
-	struct {
-		u_char rc4ctx_space[PIPEX_RC4_CTXLEN]; /* space for rc4ctx */
-	} rc4ctx;				/* rc4ctx */
+	struct  rc4_ctx rc4ctx;
 	u_char master_key[PIPEX_MPPE_KEYLEN];	/* master key of MPPE */
 	u_char session_key[PIPEX_MPPE_KEYLEN];	/* session key of MPPE */
 };
@@ -199,28 +192,38 @@ struct pipex_pppoe_header {
 #define PIPEX_ADDR_HASHTABLE(key)					\
 	(&pipex_addr_hashtable[ntohl((key)) & PIPEX_HASH_MASK])
 
-#define GETCHAR(c, cp) { (c) = *(cp)++; }
-#define PUTCHAR(s, cp) { *(cp)++ = (u_char) (s); }
-#define GETSHORT(s, cp) { 						\
+#define GETCHAR(c, cp) do {						\
+	(c) = *(cp)++;							\
+} while (0)
+
+#define PUTCHAR(s, cp) do {						\
+	*(cp)++ = (u_char)(s);						\
+} while (0)
+
+#define GETSHORT(s, cp) do { 						\
 	(s) = *(cp)++ << 8;						\
 	(s) |= *(cp)++;							\
-}
-#define PUTSHORT(s, cp) {						\
+} while (0)
+
+#define PUTSHORT(s, cp) do {						\
 	*(cp)++ = (u_char) ((s) >> 8); 					\
 	*(cp)++ = (u_char) (s);						\
-}
-#define GETLONG(l, cp) {						\
+} while (0)
+
+#define GETLONG(l, cp) do {						\
 	(l) = *(cp)++ << 8;						\
 	(l) |= *(cp)++; (l) <<= 8;					\
 	(l) |= *(cp)++; (l) <<= 8;					\
 	(l) |= *(cp)++;							\
-}
-#define PUTLONG(l, cp) {						\
+} while (0)
+
+#define PUTLONG(l, cp) do {						\
 	*(cp)++ = (u_char) ((l) >> 24);					\
 	*(cp)++ = (u_char) ((l) >> 16);					\
 	*(cp)++ = (u_char) ((l) >> 8);					\
 	*(cp)++ = (u_char) (l);						\
-}
+} while (0)
+
 #define PIPEX_PULLUP(m0, l)						\
 	if ((m0)->m_len < (l)) {					\
 		if ((m0)->m_pkthdr.len < (l)) {				\
@@ -242,7 +245,6 @@ struct pipex_pppoe_header {
 #define SEQ32_GE(a,b)	((int)((a) - (b)) >= 0)
 #define SEQ32_SUB(a,b)	((int32_t)((a) - (b)))
 
-#define RUPDIV(n,d)     (((n) + (d) - ((n) % (d))) / (d))
 #define	pipex_session_is_acfc_accepted(s)				\
     (((s)->ppp_flags & PIPEX_PPP_ACFC_ACCEPTED)? 1 : 0)
 #define	pipex_session_is_pfc_accepted(s)				\
@@ -290,10 +292,6 @@ Static void                  pipex_pptp_output (struct mbuf *, struct pipex_sess
 #ifdef PIPEX_MPPE
 Static void                  pipex_mppe_req_init (struct pipex_mppe_req *, struct pipex_mppe *);
 Static void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *);
-Static inline int            rc4_key (struct pipex_mppe *, int, u_char *);
-Static inline void           rc4 (struct pipex_mppe *, int, u_char *, u_char *);
-Static int                   rc4_key (struct pipex_mppe *, int, u_char *);
-Static void                  rc4 (struct pipex_mppe *, int, u_char *, u_char *);
 Static void                  pipex_mppe_reduce_key (struct pipex_mppe *);
 Static void                  mppe_key_change (struct pipex_mppe *);
 Static void                  pipex_mppe_input (struct mbuf *, struct pipex_session *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.104 2010/01/12 11:28:09 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.105 2010/01/13 07:23:38 yasuoka Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -101,8 +101,7 @@ struct tun_softc {
 	u_short		tun_flags;	/* misc flags */
 #define tun_if	arpcom.ac_if
 #ifdef PIPEX
-	/* pipex context */
-	struct pipex_iface_context	pipex_iface;
+	struct pipex_iface_context pipex_iface; /* pipex context */
 #endif
 };
 
@@ -588,8 +587,8 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	int			 s, len, error;
 	u_int32_t		*af;
 #ifdef PIPEX
-	struct pipex_session *session;
-#endif /* PIPEX */
+	struct pipex_session	*session;
+#endif
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m0);
@@ -627,7 +626,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		splx(s);
 		return (0);
 	}
-#endif /* PIPEX */
+#endif
 
 	len = m0->m_pkthdr.len;
 	IFQ_ENQUEUE(&ifp->if_snd, m0, NULL, error);
@@ -765,7 +764,7 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		int ret;
 		ret = pipex_ioctl(&tp->pipex_iface, cmd, data);
 		splx(s);
-		return ret;
+		return (ret);
 	    }
 #else
 		splx(s);
