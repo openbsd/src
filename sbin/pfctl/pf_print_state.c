@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.55 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.56 2010/01/13 00:57:49 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -126,7 +126,7 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 	    PF_AZERO(&addr->v.a.mask, AF_INET6))) {
 		int bits = unmask(&addr->v.a.mask, af);
 
-		if (bits != (af == AF_INET ? 32 : 128))
+		if (bits < (af == AF_INET ? 32 : 128))
 			printf("/%d", bits);
 	}
 }
