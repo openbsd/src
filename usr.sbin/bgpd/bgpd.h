@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.251 2010/01/10 00:15:09 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.252 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,10 +113,11 @@ enum reconf_action {
 #define	AFI_IPv6	2
 
 /* Subsequent Address Family Identifier as per RFC 4760 */
-#define	SAFI_NONE	0x00
-#define	SAFI_UNICAST	0x01
-#define	SAFI_MULTICAST	0x02
-#define	SAFI_MPLS	0x04
+#define	SAFI_NONE	0
+#define	SAFI_UNICAST	1
+#define	SAFI_MULTICAST	2
+#define	SAFI_MPLS	4
+#define	SAFI_MPLSVPN	128
 
 struct aid {
 	u_int16_t	 afi;
@@ -130,33 +131,50 @@ extern const struct aid aid_vals[];
 #define	AID_UNSPEC	0
 #define	AID_INET	1
 #define	AID_INET6	2
-#define	AID_MAX		3
+#define	AID_VPN_IPv4	3
+#define	AID_MAX		4
 
 #define AID_VALS	{					\
 	/* afi, af, safii, name */				\
 	{ AFI_UNSPEC, AF_UNSPEC, SAFI_NONE, "unspec"},		\
 	{ AFI_IPv4, AF_INET, SAFI_UNICAST, "IPv4 unicast" },	\
-	{ AFI_IPv6, AF_INET6, SAFI_UNICAST, "IPv6 unicast" }	\
+	{ AFI_IPv6, AF_INET6, SAFI_UNICAST, "IPv6 unicast" },	\
+	{ AFI_IPv4, AF_INET, SAFI_MPLSVPN, "IPv4 vpn" }		\
 }
 
 #define AID_PTSIZE	{				\
 	0,						\
 	sizeof(struct pt_entry4), 			\
-	sizeof(struct pt_entry6)			\
+	sizeof(struct pt_entry6),			\
+	sizeof(struct pt_entry_vpn4)			\
 }
 
+struct vpn4_addr {
+	u_int64_t	rd;
+	struct in_addr	addr;
+	u_int8_t	labelstack[21];	/* max that makes sense */
+	u_int8_t	labellen;
+	u_int8_t	pad1;
+	u_int8_t	pad2;
+};
+
+#define BGP_MPLS_BOS	0x01
+
 struct bgpd_addr {
-	u_int8_t	aid;
 	union {
 		struct in_addr		v4;
 		struct in6_addr		v6;
-		u_int8_t		addr8[16];
-		u_int16_t		addr16[8];
-		u_int32_t		addr32[4];
+		struct vpn4_addr	vpn4;
+		/* maximum size for a prefix is 256 bits */
+		u_int8_t		addr8[32];
+		u_int16_t		addr16[16];
+		u_int32_t		addr32[8];
 	} ba;		    /* 128-bit address */
 	u_int32_t	scope_id;	/* iface scope id for v6 */
+	u_int8_t	aid;
 #define	v4	ba.v4
 #define	v6	ba.v6
+#define	vpn4	ba.vpn4
 #define	addr8	ba.addr8
 #define	addr16	ba.addr16
 #define	addr32	ba.addr32

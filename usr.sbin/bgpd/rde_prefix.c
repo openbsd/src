@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.30 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.31 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -81,6 +81,14 @@ pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 		    sizeof(addr->v6));
 		/* XXX scope_id ??? */
 		break;
+	case AID_VPN_IPv4:
+		addr->vpn4.addr = ((struct pt_entry_vpn4 *)pte)->prefix4;
+		addr->vpn4.rd = ((struct pt_entry_vpn4 *)pte)->rd;
+		addr->vpn4.labellen = ((struct pt_entry_vpn4 *)pte)->labellen;
+		memcpy(addr->vpn4.labelstack,
+		    ((struct pt_entry_vpn4 *)pte)->labelstack,
+		    addr->vpn4.labellen);
+		break;
 	default:
 		fatalx("pt_getaddr: unknown af");
 	}
@@ -89,15 +97,15 @@ pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 struct pt_entry *
 pt_fill(struct bgpd_addr *prefix, int prefixlen)
 {
-	static struct pt_entry4	pte4;
-	static struct pt_entry6	pte6;
-	in_addr_t		addr_hbo;
+	static struct pt_entry4		pte4;
+	static struct pt_entry6		pte6;
+	static struct pt_entry_vpn4	pte_vpn4;
+	in_addr_t			addr_hbo;
 
 	switch (prefix->aid) {
 	case AID_INET:
 		bzero(&pte4, sizeof(pte4));
-		if (af2aid(AF_INET, 0, &pte4.aid))
-			fatalx("pt_fill: unknown aid");
+		pte4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");
 		addr_hbo = ntohl(prefix->v4.s_addr);
@@ -107,16 +115,28 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		return ((struct pt_entry *)&pte4);
 	case AID_INET6:
 		bzero(&pte6, sizeof(pte6));
-		if (af2aid(AF_INET6, 0, &pte6.aid))
-			fatalx("pt_fill: unknown aid");
+		pte6.aid = prefix->aid;
 		if (prefixlen > 128)
 			fatalx("pt_get: bad IPv6 prefixlen");
 		pte6.prefixlen = prefixlen;
 		inet6applymask(&pte6.prefix6, &prefix->v6, prefixlen);
 		return ((struct pt_entry *)&pte6);
+	case AID_VPN_IPv4:
+		bzero(&pte_vpn4, sizeof(pte_vpn4));
+		pte_vpn4.aid = prefix->aid;
+		if (prefixlen > 32)
+			fatalx("pt_fill: bad IPv4 prefixlen");
+		addr_hbo = ntohl(prefix->vpn4.addr.s_addr);
+		pte_vpn4.prefix4.s_addr = htonl(addr_hbo &
+		    prefixlen2mask(prefixlen));
+		pte_vpn4.prefixlen = prefixlen;
+		pte_vpn4.rd = prefix->vpn4.rd;
+		pte_vpn4.labellen = prefix->vpn4.labellen;
+		memcpy(pte_vpn4.labelstack, prefix->vpn4.labelstack,
+		    prefix->vpn4.labellen);
+		return ((struct pt_entry *)&pte_vpn4);
 	default:
-		log_warnx("pt_fill: unknown af");
-		return (NULL);
+		fatalx("pt_fill: unknown af");
 	}
 }
 
@@ -164,6 +184,7 @@ pt_lookup(struct bgpd_addr *addr)
 
 	switch (addr->aid) {
 	case AID_INET:
+	case AID_VPN_IPv4:
 		i = 32;
 		break;
 	case AID_INET6:
@@ -183,9 +204,10 @@ pt_lookup(struct bgpd_addr *addr)
 int
 pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 {
-	const struct pt_entry4	*a4, *b4;
-	const struct pt_entry6	*a6, *b6;
-	int			 i;
+	const struct pt_entry4		*a4, *b4;
+	const struct pt_entry6		*a6, *b6;
+	const struct pt_entry_vpn4	*va4, *vb4;
+	int				 i;
 
 	if (a->aid > b->aid)
 		return (1);
@@ -218,6 +240,22 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 			return (-1);
 		if (a6->prefixlen > b6->prefixlen)
 			return (1);
+		return (0);
+	case AID_VPN_IPv4:
+		va4 = (const struct pt_entry_vpn4 *)a;
+		vb4 = (const struct pt_entry_vpn4 *)b;
+		if (ntohl(va4->prefix4.s_addr) > ntohl(vb4->prefix4.s_addr))
+			return (1);
+		if (ntohl(va4->prefix4.s_addr) < ntohl(vb4->prefix4.s_addr))
+			return (-1);
+		if (va4->prefixlen > vb4->prefixlen)
+			return (1);
+		if (va4->prefixlen < vb4->prefixlen)
+			return (-1);
+		if (betoh64(va4->rd) > betoh64(vb4->rd))
+			return (1);
+		if (betoh64(va4->rd) < betoh64(vb4->rd))
+			return (-1);
 		return (0);
 	default:
 		fatalx("pt_prefix_cmp: unknown af");

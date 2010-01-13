@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.119 2010/01/10 00:15:09 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.120 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -175,6 +175,7 @@ rib_lookup(struct rib *rib, struct bgpd_addr *addr)
 
 	switch (addr->aid) {
 	case AID_INET:
+	case AID_VPN_IPv4:
 		for (i = 32; i >= 0; i--) {
 			re = rib_get(rib, addr, i);
 			if (re != NULL)
@@ -661,6 +662,24 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 				    (b->v6.s6_addr[prefixlen / 8] & m));
 		}
 		return (0);
+	case AID_VPN_IPv4:
+		if (prefixlen > 32)
+			fatalx("prefix_cmp: bad IPv4 VPN prefixlen");
+		if (betoh64(a->vpn4.rd) > betoh64(b->vpn4.rd))
+			return (1);
+		if (betoh64(a->vpn4.rd) < betoh64(b->vpn4.rd))
+			return (-1);
+		mask = htonl(prefixlen2mask(prefixlen));
+		aa = ntohl(a->vpn4.addr.s_addr & mask);
+		ba = ntohl(b->vpn4.addr.s_addr & mask);
+		if (aa != ba)
+			return (aa - ba);
+		if (a->vpn4.labellen > b->vpn4.labellen)
+			return (1);
+		if (a->vpn4.labellen < b->vpn4.labellen)
+			return (-1);
+		return (memcmp(a->vpn4.labelstack, b->vpn4.labelstack,
+		    a->vpn4.labellen));
 	default:
 		fatalx("prefix_cmp: unknown af");
 	}
@@ -807,16 +826,33 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
 {
 	int	totlen;
 
-	if (prefix->aid != AID_INET && prefix->aid != AID_INET6)
-		return (-1);
+	switch (prefix->aid) {
+	case AID_INET:
+	case AID_INET6:
+		totlen = PREFIX_SIZE(plen);
 
-	totlen = PREFIX_SIZE(plen);
+		if (totlen > len)
+			return (-1);
+		*buf++ = plen;
+		memcpy(buf, &prefix->ba, totlen - 1);
+		return (totlen);
+	case AID_VPN_IPv4:
+		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn4.rd) +
+		    prefix->vpn4.labellen;
+		plen += (sizeof(prefix->vpn4.rd) + prefix->vpn4.labellen) * 8;
 
-	if (totlen > len)
+		if (totlen > len)
+			return (-1);
+		*buf++ = plen;
+		memcpy(buf, &prefix->vpn4.labelstack, prefix->vpn4.labellen);
+		buf += prefix->vpn4.labellen;
+		memcpy(buf, &prefix->vpn4.rd, sizeof(prefix->vpn4.rd));
+		buf += sizeof(prefix->vpn4.rd);
+		memcpy(buf, &prefix->vpn4.addr, PREFIX_SIZE(plen) - 1);
+		return (totlen);
+	default:
 		return (-1);
-	*buf++ = plen;
-	memcpy(buf, &prefix->ba, totlen - 1);
-	return (totlen);
+	}
 }
 
 /*
@@ -1277,7 +1313,7 @@ nexthop_hash(struct bgpd_addr *nexthop)
 		    nexthoptable.nexthop_hashmask;
 		break;
 	case AID_INET6:
-		h = hash32_buf(nexthop->v6.s6_addr, sizeof(struct in6_addr),
+		h = hash32_buf(&nexthop->v6, sizeof(struct in6_addr),
 		    HASHINIT) & nexthoptable.nexthop_hashmask;
 		break;
 	default:

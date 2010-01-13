@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.283 2010/01/11 01:34:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.284 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,13 +51,15 @@ void		 rde_update_withdraw(struct rde_peer *, struct bgpd_addr *,
 int		 rde_attr_parse(u_char *, u_int16_t, struct rde_peer *,
 		     struct rde_aspath *, struct mpattr *);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
-int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int16_t,
+int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
 		     struct rde_aspath *);
 int		 rde_update_extract_prefix(u_char *, u_int16_t, void *,
 		     u_int8_t, u_int8_t);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 int		 rde_update_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
+		     u_int8_t *);
+int		 rde_update_get_vpn4(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
@@ -85,7 +87,7 @@ void		 rde_softreconfig_out(struct rib_entry *, void *);
 void		 rde_softreconfig_in(struct rib_entry *, void *);
 void		 rde_softreconfig_load(struct rib_entry *, void *);
 void		 rde_update_queue_runner(void);
-void		 rde_update6_queue_runner(void);
+void		 rde_update6_queue_runner(u_int8_t);
 
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
@@ -158,6 +160,7 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 	void			*newp;
 	u_int			 pfd_elms = 0, i, j;
 	int			 timeout;
+	u_int8_t		 aid;
 
 	switch (pid = fork()) {
 	case -1:
@@ -310,7 +313,8 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 		}
 
 		rde_update_queue_runner();
-		rde_update6_queue_runner();
+		for (aid = AID_INET6; aid < AID_MAX; aid++)
+			rde_update6_queue_runner(aid);
 		if (ibuf_se_ctl->w.queued <= 0)
 			rib_dump_runner();
 	}
@@ -424,7 +428,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 					goto badnet;
 				network_add(&netconf_s, 0);
 				break;
-				case AID_INET6:
+			case AID_INET6:
 				if (netconf_s.prefixlen > 128)
 					goto badnet;
 				network_add(&netconf_s, 0);
@@ -922,6 +926,32 @@ rde_update_dispatch(struct imsg *imsg)
 				rde_update_withdraw(peer, &prefix, prefixlen);
 			}
 			break;
+		case AID_VPN_IPv4:
+			while (mplen > 0) {
+				if ((pos = rde_update_get_vpn4(mpp, mplen,
+				    &prefix, &prefixlen)) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad VPNv4 withdraw prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpa.unreach, mpa.unreach_len);
+					goto done;
+				}
+				if (prefixlen > 32) {
+					log_peer_warnx(&peer->conf,
+					    "bad VPNv4 withdraw prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpa.unreach, mpa.unreach_len);
+					goto done;
+				}
+
+				mpp += pos;
+				mplen -= pos;
+
+				rde_update_withdraw(peer, &prefix, prefixlen);
+			}
+			break;
 		default:
 			/* silently ignore unsupported multiprotocol AF */
 			break;
@@ -1016,8 +1046,8 @@ rde_update_dispatch(struct imsg *imsg)
 			(void)nexthop_delete(asp->nexthop);
 			asp->nexthop = NULL;
 		}
-		if ((pos = rde_get_mp_nexthop(mpp, mplen, afi, asp)) == -1) {
-			log_peer_warnx(&peer->conf, "bad IPv6 nlri prefix");
+		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, asp)) == -1) {
+			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    mpa.reach, mpa.reach_len);
 			goto done;
@@ -1038,6 +1068,42 @@ rde_update_dispatch(struct imsg *imsg)
 					goto done;
 				}
 				if (prefixlen > 128) {
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpa.reach, mpa.reach_len);
+					goto done;
+				}
+
+				mpp += pos;
+				mplen -= pos;
+
+				rde_update_update(peer, asp, &prefix,
+				    prefixlen);
+
+				/* max prefix checker */
+				if (peer->conf.max_prefix &&
+				    peer->prefix_cnt >= peer->conf.max_prefix) {
+					log_peer_warnx(&peer->conf,
+					    "prefix limit reached");
+					rde_update_err(peer, ERR_CEASE,
+					    ERR_CEASE_MAX_PREFIX, NULL, 0);
+					goto done;
+				}
+
+			}
+			break;
+		case AID_VPN_IPv4:
+			while (mplen > 0) {
+				if ((pos = rde_update_get_vpn4(mpp, mplen,
+				    &prefix, &prefixlen)) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad VPNv4 nlri prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR,
+					    mpa.reach, mpa.reach_len);
+					goto done;
+				}
+				if (prefixlen > 32) {
 					rde_update_err(peer, ERR_UPDATE,
 					    ERR_UPD_OPTATTR,
 					    mpa.reach, mpa.reach_len);
@@ -1502,7 +1568,7 @@ rde_attr_missing(struct rde_aspath *a, int ebgp, u_int16_t nlrilen)
 }
 
 int
-rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
+rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
     struct rde_aspath *asp)
 {
 	struct bgpd_addr	nexthop;
@@ -1519,8 +1585,9 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 		return (-1);
 
 	bzero(&nexthop, sizeof(nexthop));
-	switch (afi) {
-	case AFI_IPv6:
+	nexthop.aid = aid;
+	switch (aid) {
+	case AID_INET6:
 		/*
 		 * RFC2545 describes that there may be a link-local
 		 * address carried in nexthop. Yikes!
@@ -1533,27 +1600,48 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 			log_warnx("bad multiprotocol nexthop, bad size");
 			return (-1);
 		}
-		nexthop.aid = AID_INET6;
 		memcpy(&nexthop.v6.s6_addr, data, 16);
-		asp->nexthop = nexthop_get(&nexthop);
-		/*
-		 * lock the nexthop because it is not yet linked else
-		 * withdraws may remove this nexthop which in turn would
-		 * cause a use after free error.
-		 */
-		asp->nexthop->refcnt++;
-
-		/* ignore reserved (old SNPA) field as per RFC 4760 */
-		totlen += nhlen + 1;
-		data += nhlen + 1;
-
-		return (totlen);
-	default:
-		log_warnx("bad multiprotocol nexthop, bad AF");
 		break;
+	case AID_VPN_IPv4:
+		/*
+		 * Neither RFC4364 nor RFC3107 specify the format of the
+		 * nexthop in an explicit way. The quality of RFC went down
+		 * the toilet the larger the the number got. 
+		 * RFC4364 is very confusing about VPN-IPv4 address and the
+		 * VPN-IPv4 prefix that carries also a MPLS label.
+		 * So the nexthop is a 12-byte address with a 64bit RD and
+		 * an IPv4 address following. In the nexthop case the RD can
+		 * be ignored.
+		 * Since the nexthop has to be in the main IPv4 table just
+		 * create an AID_INET nexthop. So we don't need to handle
+		 * AID_VPN_IPv4 in nexthop and kroute.
+		 */
+		if (nhlen != 12) {
+			log_warnx("bad multiprotocol nexthop, bad size");
+			return (-1);
+		}
+		data += sizeof(u_int64_t);
+		nexthop.aid = AID_INET;
+		memcpy(&nexthop.v4, data, sizeof(nexthop.v4));
+		break;
+	default:
+		log_warnx("bad multiprotocol nexthop, bad AID");
+		return (-1);
 	}
 
-	return (-1);
+	asp->nexthop = nexthop_get(&nexthop);
+	/*
+	 * lock the nexthop because it is not yet linked else
+	 * withdraws may remove this nexthop which in turn would
+	 * cause a use after free error.
+	 */
+	asp->nexthop->refcnt++;
+
+	/* ignore reserved (old SNPA) field as per RFC4760 */
+	totlen += nhlen + 1;
+	data += nhlen + 1;
+
+	return (totlen);
 }
 
 int
@@ -1628,6 +1716,61 @@ rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 		return (-1);
 
 	return (plen + 1);	/* pfxlen needs to be added */
+}
+
+int
+rde_update_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
+    u_int8_t *prefixlen)
+{
+	int		 rv, done = 0;
+	u_int8_t	 pfxlen;
+	u_int16_t	 plen;
+
+	if (len < 1)
+		return (-1);
+
+	memcpy(&pfxlen, p, 1);
+	p += 1;
+	plen = 1;
+
+	bzero(prefix, sizeof(struct bgpd_addr));
+
+	/* label stack */
+	do {
+		if (len - plen < 3 || pfxlen < 3 * 8)
+			return (-1);
+		if (prefix->vpn4.labellen + 3U >
+		    sizeof(prefix->vpn4.labelstack))
+			return (-1);
+		prefix->vpn4.labelstack[prefix->vpn4.labellen++] = *p++;
+		prefix->vpn4.labelstack[prefix->vpn4.labellen++] = *p++;
+		prefix->vpn4.labelstack[prefix->vpn4.labellen] = *p++;
+		if (prefix->vpn4.labelstack[prefix->vpn4.labellen] &
+		    BGP_MPLS_BOS)
+			done = 1;
+		prefix->vpn4.labellen++;
+		plen += 3;
+		pfxlen -= 3 * 8;
+	} while (!done);
+
+	/* RD */
+	if (len - plen < (int)sizeof(u_int64_t) ||
+	    pfxlen < sizeof(u_int64_t) * 8)
+		return (-1);
+	memcpy(&prefix->vpn4.rd, p, sizeof(u_int64_t));
+	pfxlen -= sizeof(u_int64_t) * 8;
+	p += sizeof(u_int64_t);
+	plen += sizeof(u_int64_t);
+
+	/* prefix */
+	prefix->aid = AID_VPN_IPv4;
+	*prefixlen = pfxlen;
+
+	if ((rv = rde_update_extract_prefix(p, len, &prefix->vpn4.addr,
+	    pfxlen, sizeof(prefix->vpn4.addr))) == -1)
+		return (-1);
+
+	return (plen + rv);
 }
 
 void
@@ -2133,6 +2276,10 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 		    sizeof(kl6)) == -1)
 			fatal("imsg_compose error");
 		break;
+	case AID_VPN_IPv4:
+		break;
+	default:
+		fatal("rde_send_kroute: unhandled AID");
 	}
 }
 
@@ -2418,7 +2565,7 @@ rde_update_queue_runner(void)
 			/* first withdraws */
 			wpos = 2; /* reserve space for the length field */
 			r = up_dump_prefix(queue_buf + wpos, len - wpos - 2,
-			    &peer->withdraws, peer);
+			    &peer->withdraws[AID_INET], peer);
 			wd_len = r;
 			/* write withdraws length filed */
 			wd_len = htons(wd_len);
@@ -2466,7 +2613,7 @@ rde_update_queue_runner(void)
 }
 
 void
-rde_update6_queue_runner(void)
+rde_update6_queue_runner(u_int8_t aid)
 {
 	struct rde_peer		*peer;
 	u_char			*b;
@@ -2482,7 +2629,7 @@ rde_update6_queue_runner(void)
 			if (peer->state != PEER_UP)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
-			b = up_dump_mp_unreach(queue_buf, &len, peer);
+			b = up_dump_mp_unreach(queue_buf, &len, peer, aid);
 
 			if (b == NULL)
 				continue;
@@ -2505,7 +2652,7 @@ rde_update6_queue_runner(void)
 			if (peer->state != PEER_UP)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
-			r = up_dump_mp_reach(queue_buf, &len, peer);
+			r = up_dump_mp_reach(queue_buf, &len, peer, aid);
 			switch (r) {
 			case -2:
 				continue;

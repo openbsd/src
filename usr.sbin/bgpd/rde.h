@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.128 2010/01/10 08:32:08 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.129 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -56,10 +56,8 @@ struct rde_peer {
 	struct bgpd_addr		 local_v6_addr;
 	struct uptree_prefix		 up_prefix;
 	struct uptree_attr		 up_attrs;
-	struct uplist_attr		 updates;
-	struct uplist_prefix		 withdraws;
-	struct uplist_attr		 updates6;
-	struct uplist_prefix		 withdraws6;
+	struct uplist_attr		 updates[AID_MAX];
+	struct uplist_prefix		 withdraws[AID_MAX];
 	struct capabilities		 capa;
 	u_int64_t			 prefix_rcvd_update;
 	u_int64_t			 prefix_rcvd_withdraw;
@@ -239,6 +237,19 @@ struct pt_entry6 {
 	u_int8_t			 prefixlen;
 	u_int16_t			 refcnt;
 	struct in6_addr			 prefix6;
+};
+
+struct pt_entry_vpn4 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	u_int8_t			 aid;
+	u_int8_t			 prefixlen;
+	u_int16_t			 refcnt;
+	struct in_addr			 prefix4;
+	u_int64_t			 rd;
+	u_int8_t			 labelstack[21];
+	u_int8_t			 labellen;
+	u_int8_t			 pad1;
+	u_int8_t			 pad2;
 };
 
 struct rib_context {
@@ -425,8 +436,10 @@ int		 up_generate_marker(struct rde_peer *, u_int8_t);
 int		 up_dump_prefix(u_char *, int, struct uplist_prefix *,
 		     struct rde_peer *);
 int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
-u_char		*up_dump_mp_unreach(u_char *, u_int16_t *, struct rde_peer *);
-int		 up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *);
+u_char		*up_dump_mp_unreach(u_char *, u_int16_t *, struct rde_peer *,
+		     u_int8_t);
+int		 up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *,
+		     u_int8_t);
 
 /* rde_prefix.c */
 #define pt_empty(pt)	((pt)->refcnt == 0)

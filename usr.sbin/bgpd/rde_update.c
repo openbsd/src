@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.76 2010/01/10 08:32:08 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.77 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -65,10 +65,12 @@ RB_GENERATE(uptree_attr, update_attr, entry, up_attr_cmp)
 void
 up_init(struct rde_peer *peer)
 {
-	TAILQ_INIT(&peer->updates);
-	TAILQ_INIT(&peer->withdraws);
-	TAILQ_INIT(&peer->updates6);
-	TAILQ_INIT(&peer->withdraws6);
+	u_int8_t	i;
+
+	for (i = 0; i < AID_MAX; i++) {
+		TAILQ_INIT(&peer->updates[i]);
+		TAILQ_INIT(&peer->withdraws[i]);
+	}
 	RB_INIT(&peer->up_prefix);
 	RB_INIT(&peer->up_attrs);
 	peer->up_pcnt = 0;
@@ -103,8 +105,10 @@ up_clear(struct uplist_attr *updates, struct uplist_prefix *withdraws)
 void
 up_down(struct rde_peer *peer)
 {
-	up_clear(&peer->updates, &peer->withdraws);
-	up_clear(&peer->updates6, &peer->withdraws6);
+	u_int8_t	i;
+
+	for (i = 0; i < AID_MAX; i++)
+		up_clear(&peer->updates[i], &peer->withdraws[i]);
 
 	RB_INIT(&peer->up_prefix);
 	RB_INIT(&peer->up_attrs);
@@ -140,6 +144,25 @@ up_prefix_cmp(struct update_prefix *a, struct update_prefix *b)
 		if (i < 0)
 			return (-1);
 		break;
+	case AID_VPN_IPv4:
+		if (betoh64(a->prefix.vpn4.rd) < betoh64(b->prefix.vpn4.rd))
+			return (-1);
+		if (betoh64(a->prefix.vpn4.rd) > betoh64(b->prefix.vpn4.rd))
+			return (1);
+		if (ntohl(a->prefix.v4.s_addr) < ntohl(b->prefix.v4.s_addr))
+			return (-1);
+		if (ntohl(a->prefix.v4.s_addr) > ntohl(b->prefix.v4.s_addr))
+			return (1);
+		if (a->prefixlen < b->prefixlen)
+			return (-1);
+		if (a->prefixlen > b->prefixlen)
+			return (1);
+		if (a->prefix.vpn4.labellen < b->prefix.vpn4.labellen)
+			return (-1);
+		if (a->prefix.vpn4.labellen > b->prefix.vpn4.labellen)
+			return (1);
+		return (memcmp(a->prefix.vpn4.labelstack,
+		    b->prefix.vpn4.labelstack, a->prefix.vpn4.labellen));
 	default:
 		fatalx("pt_prefix_cmp: unknown af");
 	}
@@ -174,18 +197,8 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 	struct uplist_attr	*upl = NULL;
 	struct uplist_prefix	*wdl = NULL;
 
-	switch (p->prefix.aid) {
-	case AID_INET:
-		upl = &peer->updates;
-		wdl = &peer->withdraws;
-		break;
-	case AID_INET6:
-		upl = &peer->updates6;
-		wdl = &peer->withdraws6;
-		break;
-	default:
-		fatalx("up_add: unknown AID");
-	}
+	upl = &peer->updates[p->prefix.aid];
+	wdl = &peer->withdraws[p->prefix.aid];
 
 	/* 1. search for attr */
 	if (a != NULL && (na = RB_FIND(uptree_attr, &peer->up_attrs, a)) ==
@@ -489,18 +502,8 @@ up_generate_marker(struct rde_peer *peer, u_int8_t aid)
 	ua = calloc(1, sizeof(struct update_attr));
 	if (ua == NULL)
 		fatal("up_generate_marker");
-	
 
-	switch (aid) {
-	case AID_INET:
-		upl = &peer->updates;
-		break;
-	case AID_INET6:
-		upl = &peer->updates6;
-		break;
-	default:
-		fatalx("up_generate_marker: unknown AID");
-	}
+	upl = &peer->updates[aid];
 
 	/* 1. search for attr */
 	if ((na = RB_FIND(uptree_attr, &peer->up_attrs, ua)) == NULL) {
@@ -595,9 +598,10 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 		upa->mpattr = malloc(upa->mpattr_len);
 		if (upa->mpattr == NULL)
 			fatal("up_generate_mp_reach");
-		tmp = htons(AFI_IPv6);
+		if (aid2afi(aid, &tmp, &upa->mpattr[2]))
+			fatalx("up_generate_mp_reachi: bad AID");
+		tmp = htons(tmp);
 		memcpy(upa->mpattr, &tmp, sizeof(tmp));
-		upa->mpattr[2] = SAFI_UNICAST;
 		upa->mpattr[3] = sizeof(struct in6_addr);
 		upa->mpattr[20] = 0; /* Reserved must be 0 */
 
@@ -636,6 +640,54 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 			/* ebgp multihop */
 			memcpy(&upa->mpattr[4], &peer->local_v6_addr.v6,
 			    sizeof(struct in6_addr));
+		return (0);
+	case AID_VPN_IPv4:
+		upa->mpattr_len = 17; /* AFI + SAFI + NH LEN + NH + Reserved */
+		upa->mpattr = calloc(upa->mpattr_len, 1);
+		if (upa->mpattr == NULL)
+			fatal("up_generate_mp_reach");
+		if (aid2afi(aid, &tmp, &upa->mpattr[2]))
+			fatalx("up_generate_mp_reachi: bad AID");
+		tmp = htons(tmp);
+		memcpy(upa->mpattr, &tmp, sizeof(tmp));
+		upa->mpattr[3] = sizeof(u_int64_t) + sizeof(struct in_addr);
+
+		/* nexthop dance see also up_get_nexthop() */
+		if (peer->conf.ebgp == 0) {
+			/* ibgp */
+			if (a->nexthop == NULL ||
+			    (a->nexthop->exit_nexthop.aid == AID_INET &&
+			    memcmp(&a->nexthop->exit_nexthop.v4,
+			    &peer->remote_addr.v4, sizeof(struct in_addr))))
+				memcpy(&upa->mpattr[12],
+				    &peer->local_v4_addr.v4,
+				    sizeof(struct in_addr));
+			else
+				memcpy(&upa->mpattr[12],
+				    &a->nexthop->exit_nexthop.v4,
+				    sizeof(struct in_addr));
+		} else if (peer->conf.distance == 1) {
+			/* ebgp directly connected */
+			if (a->nexthop != NULL &&
+			    a->nexthop->flags & NEXTHOP_CONNECTED)
+				if (prefix_compare(&peer->remote_addr,
+				    &a->nexthop->nexthop_net,
+				    a->nexthop->nexthop_netlen) == 0) {
+					/*
+					 * nexthop and peer are in the same
+					 * subnet
+					 */
+					memcpy(&upa->mpattr[12],
+					    &a->nexthop->exit_nexthop.v4,
+					    sizeof(struct in_addr));
+					return (0);
+				}
+			memcpy(&upa->mpattr[12], &peer->local_v4_addr.v4,
+			    sizeof(struct in_addr));
+		} else
+			/* ebgp multihop */
+			memcpy(&upa->mpattr[12], &peer->local_v4_addr.v4,
+			    sizeof(struct in_addr));
 		return (0);
 	default:
 		break;
@@ -846,6 +898,7 @@ up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
 {
 	struct update_prefix	*upp;
 	int			 r, wpos = 0;
+	u_int8_t		 i;
 
 	while ((upp = TAILQ_FIRST(prefix_head)) != NULL) {
 		if ((r = prefix_write(buf + wpos, len - wpos,
@@ -856,13 +909,14 @@ up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
 			log_warnx("dequeuing update failed.");
 		TAILQ_REMOVE(upp->prefix_h, upp, prefix_l);
 		peer->up_pcnt--;
-		if (upp->prefix_h == &peer->withdraws ||
-		    upp->prefix_h == &peer->withdraws6) {
-			peer->up_wcnt--;
-			peer->prefix_sent_withdraw++;
-		} else {
-			peer->up_nlricnt--;
-			peer->prefix_sent_update++;
+		for (i = 0; i < AID_MAX; i++) {
+			if (upp->prefix_h == &peer->withdraws[i]) {
+				peer->up_wcnt--;
+				peer->prefix_sent_withdraw++;
+			} else {
+				peer->up_nlricnt--;
+				peer->prefix_sent_update++;
+			}
 		}
 		free(upp);
 	}
@@ -880,13 +934,13 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	 * It is possible that a queued path attribute has no nlri prefix.
 	 * Ignore and remove those path attributes.
 	 */
-	while ((upa = TAILQ_FIRST(&peer->updates)) != NULL)
+	while ((upa = TAILQ_FIRST(&peer->updates[AID_INET])) != NULL)
 		if (TAILQ_EMPTY(&upa->prefix_h)) {
 			attr_len = upa->attr_len;
 			if (RB_REMOVE(uptree_attr, &peer->up_attrs,
 			    upa) == NULL)
 				log_warnx("dequeuing update failed.");
-			TAILQ_REMOVE(&peer->updates, upa, attr_l);
+			TAILQ_REMOVE(&peer->updates[AID_INET], upa, attr_l);
 			free(upa->attr);
 			free(upa->mpattr);
 			free(upa);
@@ -925,7 +979,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	if (TAILQ_EMPTY(&upa->prefix_h)) {
 		if (RB_REMOVE(uptree_attr, &peer->up_attrs, upa) == NULL)
 			log_warnx("dequeuing update failed.");
-		TAILQ_REMOVE(&peer->updates, upa, attr_l);
+		TAILQ_REMOVE(&peer->updates[AID_INET], upa, attr_l);
 		free(upa->attr);
 		free(upa->mpattr);
 		free(upa);
@@ -936,12 +990,13 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 }
 
 u_char *
-up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
+up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer,
+    u_int8_t aid)
 {
 	int		wpos;
 	u_int16_t	datalen, tmp;
 	u_int16_t	attrlen = 2;	/* attribute header (without len) */
-	u_int8_t	flags = ATTR_OPTIONAL;
+	u_int8_t	flags = ATTR_OPTIONAL, safi;
 
 	/*
 	 * reserve space for withdraw len, attr len, the attribute header
@@ -953,7 +1008,7 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 		return (NULL);
 
 	datalen = up_dump_prefix(buf + wpos, *len - wpos,
-	    &peer->withdraws6, peer);
+	    &peer->withdraws[aid], peer);
 	if (datalen == 0)
 		return (NULL);
 
@@ -961,9 +1016,11 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 
 	/* prepend header, need to do it reverse */
 	/* safi & afi */
-	buf[--wpos] = SAFI_UNICAST;
+	if (aid2afi(aid, &tmp, &safi))
+		fatalx("up_dump_mp_unreach: bad AID");
+	buf[--wpos] = safi;
 	wpos -= sizeof(u_int16_t);
-	tmp = htons(AFI_IPv6);
+	tmp = htons(tmp);
 	memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
 
 	/* attribute length */
@@ -1001,7 +1058,8 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 }
 
 int
-up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
+up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer,
+    u_int8_t aid)
 {
 	struct update_attr	*upa;
 	int			wpos;
@@ -1012,13 +1070,13 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	 * It is possible that a queued path attribute has no nlri prefix.
 	 * Ignore and remove those path attributes.
 	 */
-	while ((upa = TAILQ_FIRST(&peer->updates6)) != NULL)
+	while ((upa = TAILQ_FIRST(&peer->updates[aid])) != NULL)
 		if (TAILQ_EMPTY(&upa->prefix_h)) {
 			attr_len = upa->attr_len;
 			if (RB_REMOVE(uptree_attr, &peer->up_attrs,
 			    upa) == NULL)
 				log_warnx("dequeuing update failed.");
-			TAILQ_REMOVE(&peer->updates6, upa, attr_l);
+			TAILQ_REMOVE(&peer->updates[aid], upa, attr_l);
 			free(upa->attr);
 			free(upa->mpattr);
 			free(upa);
@@ -1084,7 +1142,7 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	if (TAILQ_EMPTY(&upa->prefix_h)) {
 		if (RB_REMOVE(uptree_attr, &peer->up_attrs, upa) == NULL)
 			log_warnx("dequeuing update failed.");
-		TAILQ_REMOVE(&peer->updates6, upa, attr_l);
+		TAILQ_REMOVE(&peer->updates[aid], upa, attr_l);
 		free(upa->attr);
 		free(upa->mpattr);
 		free(upa);

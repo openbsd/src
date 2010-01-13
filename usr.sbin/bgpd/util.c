@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2009/12/16 15:40:55 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.10 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -33,10 +33,20 @@ log_addr(const struct bgpd_addr *addr)
 {
 	static char	buf[48];
 
-	if (inet_ntop(aid2af(addr->aid), &addr->ba, buf, sizeof(buf)) == NULL)
-		return ("?");
-	else
+	switch (addr->aid) {
+	case AID_INET:
+	case AID_INET6:
+		if (inet_ntop(aid2af(addr->aid), &addr->ba, buf,
+		    sizeof(buf)) == NULL)
+			return ("?");
 		return (buf);
+	case AID_VPN_IPv4:
+		if (inet_ntop(AF_INET, &addr->vpn4.addr, buf,
+		    sizeof(buf)) == NULL)
+			return ("?");
+		return (buf);
+	}
+	return ("???");
 }
 
 const char *

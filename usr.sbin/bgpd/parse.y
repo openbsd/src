@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.247 2010/01/11 03:24:35 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.248 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -852,9 +852,11 @@ peeropts	: REMOTEAS as4number	{
 			if (!strcmp($3, "none")) {
 				safi = SAFI_UNICAST;
 				val = 0;
-			} else if (!strcmp($3, "unicast"))
+			} else if (!strcmp($3, "unicast")) {
 				safi = SAFI_UNICAST;
-			else {
+			} else if (!strcmp($3, "vpn")) {
+				safi = SAFI_MPLSVPN;
+			} else {
 				yyerror("unknown/unsupported SAFI \"%s\"",
 				    $3);
 				free($3);

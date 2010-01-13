@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.67 2009/12/08 15:54:50 jsg Exp $ */
+/*	$OpenBSD: control.c,v 1.68 2010/01/13 06:02:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -404,8 +404,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					break;
 				}
 				if ((imsg.hdr.type == IMSG_CTL_SHOW_RIB_PREFIX)
-				    && (ribreq->prefix.aid != AID_INET)
-				    && (ribreq->prefix.aid != AID_INET6)) {
+				    && (ribreq->prefix.aid == AID_UNSPEC)) {
 					/* malformed request, must specify af */
 					control_result(c, CTL_RES_PARSE_ERROR);
 					break;
