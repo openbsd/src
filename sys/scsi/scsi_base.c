@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.156 2010/01/10 23:06:43 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.157 2010/01/13 00:49:24 jcs Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -815,7 +815,7 @@ scsi_xs_sync_done(struct scsi_xfer *xs)
 	struct mutex *cookie = xs->cookie;
 
 	if (cookie == NULL)
-		panic("scsi_done calle twice on xs(%p)", xs);
+		panic("scsi_done called twice on xs(%p)", xs);
 
 	mtx_enter(cookie);
 	xs->cookie = NULL;
