@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.587 2010/01/13 00:56:13 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.588 2010/01/13 05:20:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1144,12 +1144,12 @@ antispoof_opts_l	: antispoof_opts_l antispoof_opt
 			| antispoof_opt
 			;
 
-antispoof_opt	: label	{
+antispoof_opt	: LABEL label	{
 			if (antispoof_opts.label) {
 				yyerror("label cannot be redefined");
 				YYERROR;
 			}
-			antispoof_opts.label = $1;
+			antispoof_opts.label = $2;
 		}
 		| RTABLE NUMBER				{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
@@ -2171,19 +2171,19 @@ filter_opt	: USER uids {
 		| ALLOWOPTS {
 			filter_opts.allowopts = 1;
 		}
-		| label	{
+		| LABEL label	{
 			if (filter_opts.label) {
 				yyerror("label cannot be redefined");
 				YYERROR;
 			}
-			filter_opts.label = $1;
+			filter_opts.label = $2;
 		}
-		| qname	{
+		| QUEUE qname	{
 			if (filter_opts.queues.qname) {
 				yyerror("queue cannot be redefined");
 				YYERROR;
 			}
-			filter_opts.queues = $1;
+			filter_opts.queues = $2;
 		}
 		| TAG string				{
 			filter_opts.tag = $2;
@@ -2661,7 +2661,7 @@ ipportspec	: ipspec			{
 		;
 
 optnl		: '\n' optnl
-		|
+		| /* empty */
 		;
 
 ipspec		: ANY				{ $$ = NULL; }
@@ -3329,9 +3329,9 @@ tos	: STRING			{
 		}
 		;
 
-sourcetrack	: SOURCETRACK		{ $$ = PF_SRCTRACK; }
-		| SOURCETRACK GLOBAL	{ $$ = PF_SRCTRACK_GLOBAL; }
-		| SOURCETRACK RULE	{ $$ = PF_SRCTRACK_RULE; }
+sourcetrack	: /* empty */		{ $$ = PF_SRCTRACK; }
+		| GLOBAL		{ $$ = PF_SRCTRACK_GLOBAL; }
+		| RULE			{ $$ = PF_SRCTRACK_RULE; }
 		;
 
 statelock	: IFBOUND {
@@ -3472,12 +3472,12 @@ state_opt_item	: MAXIMUM NUMBER		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| sourcetrack {
+		| SOURCETRACK sourcetrack {
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
 			$$->type = PF_STATE_OPT_SRCTRACK;
-			$$->data.src_track = $1;
+			$$->data.src_track = $2;
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -3538,22 +3538,22 @@ state_opt_item	: MAXIMUM NUMBER		{
 		}
 		;
 
-label		: LABEL STRING			{
-			$$ = $2;
+label		: STRING			{
+			$$ = $1;
 		}
 		;
 
-qname		: QUEUE STRING				{
+qname		: STRING				{
+			$$.qname = $1;
+			$$.pqname = NULL;
+		}
+		| '(' STRING ')'			{
 			$$.qname = $2;
 			$$.pqname = NULL;
 		}
-		| QUEUE '(' STRING ')'			{
-			$$.qname = $3;
-			$$.pqname = NULL;
-		}
-		| QUEUE '(' STRING comma STRING ')'	{
-			$$.qname = $3;
-			$$.pqname = $5;
+		| '(' STRING comma STRING ')'	{
+			$$.qname = $2;
+			$$.pqname = $4;
 		}
 		;
 
