@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.6 2009/11/02 20:25:27 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.7 2010/01/13 11:33:12 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -62,8 +62,8 @@ struct parse_result {
 };
 
 struct parse_result	*parse(int, char *[]);
-const struct token	*match_token(const char *, const struct token []);
-void			 show_valid_args(const struct token []);
+const struct token	*match_token(const char *, const struct token *);
+void			 show_valid_args(const struct token *);
 int			 parse_addr(const char *, struct in6_addr *);
 int			 parse_prefix(const char *, struct in6_addr *,
 			     u_int8_t *);
