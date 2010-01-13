@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.28 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.29 2010/01/13 10:58:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -178,8 +178,6 @@ void  doclear(void);
 void  end_it(void);
 void  erasep(int);
 void  error(char *);
-void  errwrite(char *);
-void  errwrite1(char *);
 void  execute(char *filename, char *cmd, char *, char *, char *);
 void  initterm(void);
 void  kill_line(void);
@@ -1167,6 +1165,7 @@ colon(char *filename, int cmd, int nlines)
 	case 'q':
 	case 'Q':
 		end_it();
+		/*FALLTHROUGH*/
 	default:
 		write(STDERR_FILENO, &bell, 1);
 		return (-1);
