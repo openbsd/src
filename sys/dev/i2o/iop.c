@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.36 2009/04/02 18:44:49 oga Exp $	*/
+/*	$OpenBSD: iop.c,v 1.37 2010/01/13 00:31:04 chl Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -1134,7 +1134,7 @@ iop_lct_get(struct iop_softc *sc)
 	struct i2o_lct *lct;
 
 	esize = letoh32(sc->sc_status.expectedlctsize);
-	lct = (struct i2o_lct *)malloc(esize, M_DEVBUF, M_WAITOK);
+	lct = malloc(esize, M_DEVBUF, M_WAITOK | M_CANFAIL);
 	if (lct == NULL)
 		return (ENOMEM);
 
@@ -1146,7 +1146,7 @@ iop_lct_get(struct iop_softc *sc)
 	size = letoh16(lct->tablesize) << 2;
 	if (esize != size) {
 		free(lct, M_DEVBUF);
-		lct = (struct i2o_lct *)malloc(size, M_DEVBUF, M_WAITOK);
+		lct = malloc(size, M_DEVBUF, M_WAITOK | M_CANFAIL);
 		if (lct == NULL)
 			return (ENOMEM);
 
@@ -1184,11 +1184,13 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	im = iop_msg_alloc(sc, ii, (ii == NULL ? IM_WAIT : 0) | IM_NOSTATUS);
-	if ((pgop = malloc(sizeof(*pgop), M_DEVBUF, M_WAITOK)) == NULL) {
+	pgop = malloc(sizeof(*pgop), M_DEVBUF, M_WAITOK | M_CANFAIL);
+	if (pgop == NULL) {
 		iop_msg_free(sc, im);
 		return (ENOMEM);
 	}
-	if ((rf = malloc(sizeof(*rf), M_DEVBUF, M_WAITOK)) == NULL) {
+	rf = malloc(sizeof(*rf), M_DEVBUF, M_WAITOK | M_CANFAIL);
+	if (rf == NULL) {
 		iop_msg_free(sc, im);
 		free(pgop, M_DEVBUF);
 		return (ENOMEM);
@@ -1601,10 +1603,8 @@ void
 iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
-	struct iop_softc *sc;
 	u_int event;
 
-	sc = (struct iop_softc *)dv;
 	rb = reply;
 
 	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0)
@@ -2301,7 +2301,7 @@ iopopen(dev_t dev, int flag, int mode, struct proc *p)
 	sc->sc_flags |= IOP_OPEN;
 
 	sc->sc_ptb = malloc(IOP_MAX_XFER * IOP_MAX_MSG_XFERS, M_DEVBUF,
-	    M_WAITOK);
+	    M_WAITOK | M_CANFAIL);
 	if (sc->sc_ptb == NULL) {
 		sc->sc_flags ^= IOP_OPEN;
 		return (ENOMEM);
@@ -2419,7 +2419,7 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt)
 			goto bad;
 		}
 
-	mf = malloc(IOP_MAX_MSG_SIZE, M_DEVBUF, M_WAITOK);
+	mf = malloc(IOP_MAX_MSG_SIZE, M_DEVBUF, M_WAITOK | M_CANFAIL);
 	if (mf == NULL)
 		return (ENOMEM);
 
