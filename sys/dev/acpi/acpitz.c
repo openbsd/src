@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.34 2009/12/09 04:55:00 marco Exp $ */
+/* $OpenBSD: acpitz.c,v 1.35 2010/01/13 23:31:25 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
 
 #include <machine/bus.h>
 
@@ -73,6 +74,8 @@ struct cfdriver acpitz_cd = {
 	NULL, "acpitz", DV_DULL
 };
 
+void	acpitz_init_perf(void *);
+void	acpitz_setperf(int);
 void	acpitz_monitor(struct acpitz_softc *);
 void	acpitz_refresh(void *);
 int	acpitz_notify(struct aml_node *, int, void *);
@@ -80,12 +83,11 @@ int	acpitz_gettempreading(struct acpitz_softc *, char *);
 int	acpitz_getreading(struct acpitz_softc *, char *);
 int	acpitz_setfan(struct acpitz_softc *, int, char *);
 void	acpitz_init(struct acpitz_softc *, int);
-#if 0
-int	acpitz_setcpu(struct acpitz_softc *, int);
-#endif
 
-extern void (*cpu_setperf)(int);
-extern int perflevel;
+void		(*acpitz_cpu_setperf)(int);
+int		acpitz_perflevel = -1;
+extern void	(*cpu_setperf)(int);
+extern int	perflevel;
 #define PERFSTEP 10
 
 #define ACPITZ_TRIPS	(1L << 0)
@@ -93,6 +95,35 @@ extern int perflevel;
 #define ACPITZ_INIT	ACPITZ_TRIPS+ACPITZ_DEVLIST
 
 extern struct aml_node aml_root;
+
+void
+acpitz_init_perf(void *arg)
+{
+	if (acpitz_perflevel == -1)
+		acpitz_perflevel = perflevel;
+
+	if (cpu_setperf != acpitz_setperf) {
+		acpitz_cpu_setperf = cpu_setperf;
+		cpu_setperf = acpitz_setperf;
+	}
+}
+
+void
+acpitz_setperf(int level)
+{
+	extern struct acpi_softc *acpi_softc;
+
+	if (level < 0 || level > 100)
+		return;
+
+	if (acpi_softc == NULL)
+		return;
+	if (acpi_softc->sc_pse && level > acpitz_perflevel)
+		return;
+
+	if (acpitz_cpu_setperf)
+		acpitz_cpu_setperf(level);
+}
 
 void
 acpitz_init(struct acpitz_softc *sc, int flag)
@@ -196,38 +227,14 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_register_notify(sc->sc_devnode, NULL,
 	    acpitz_notify, sc, ACPIDEV_POLL);
-}
 
-#if 0
-int
-acpitz_setcpu(struct acpitz_softc *sc, int perc)
-{
-	struct aml_value res0, *ref;
-	int x;
-
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSL", 0, NULL, &res0)) {
-		printf("%s: _PSL failed\n", DEVNAME(sc));
-		goto out;
-	}
-	if (res0.type != AML_OBJTYPE_PACKAGE) {
-		printf("%s: not a package\n", DEVNAME(sc));
-		goto out;
-	}
-	for (x = 0; x < res0.length; x++) {
-		if (res0.v_package[x]->type != AML_OBJTYPE_OBJREF) {
-			printf("%s: _PSL[%d] not a object ref\n",
-			    DEVNAME(sc), x);
-			continue;
-		}
-		ref = res0.v_package[x]->v_objref.ref;
-		if (ref->type != AML_OBJTYPE_PROCESSOR)
-			printf("%s: _PSL[%d] not a CPU\n", DEVNAME(sc), x);
-	}
- out:
-	aml_freevalue(&res0);
-	return (0);
+	/*
+	 * XXX use kthread_create_deferred to ensure we are the very last
+	 * piece of code that touches this pointer after all CPUs have been
+	 * fully attached
+	 */
+	kthread_create_deferred(acpitz_init_perf, sc);
 }
-#endif
 
 int
 acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
@@ -331,7 +338,7 @@ acpitz_refresh(void *arg)
 		    "tc2: %d psv: %d\n", DEVNAME(sc), sc->sc_lasttmp,
 		    sc->sc_tc1, sc->sc_tc2, sc->sc_psv);
 
-		nperf = perflevel;
+		nperf = acpitz_perflevel;
 		if (sc->sc_psv <= sc->sc_tmp) {
 			/* Passive cooling enabled */
 			dnprintf(1, "%s: enabling passive %d %d\n", 
@@ -363,10 +370,14 @@ acpitz_refresh(void *arg)
 		else if (nperf > 100)
 			nperf = 100;
 
+		/* clamp passive cooling request */
+		if (nperf > perflevel)
+			nperf = perflevel;
+
 		/* Perform CPU setperf */
-		if (cpu_setperf && nperf != perflevel) {
-			perflevel = nperf;
-			cpu_setperf(nperf);
+		if (acpitz_cpu_setperf && nperf != acpitz_perflevel) {
+			acpitz_perflevel = nperf;
+			acpitz_cpu_setperf(nperf);
 		}
 	}
 	sc->sc_lasttmp = sc->sc_tmp;
