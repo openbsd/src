@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.260 2010/01/13 01:41:58 jsg Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.261 2010/01/13 05:09:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1417,7 +1417,6 @@ host(const char *s)
 			err(1, "host: strdup");
 		mask = strtol(p+1, &q, 0);
 		if (!q || *q || mask > 128 || q == (p+1)) {
-			free(p);
 			free(r);
 			fprintf(stderr, "invalid netmask '%s'\n", p);
 			return (NULL);
