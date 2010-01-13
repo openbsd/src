@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.159 2010/01/13 03:09:05 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.160 2010/01/13 05:08:55 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -899,6 +899,9 @@ scsi_xs_error(struct scsi_xfer *xs)
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("scsi_xs_error,err = 0x%x\n",
 	    xs->error));
+
+	if (ISSET(xs->sc_link->state, SDEV_S_DYING))
+		return (ENXIO);
 
 	switch (xs->error) {
 	case XS_NOERROR:	/* nearly always hit this one */
