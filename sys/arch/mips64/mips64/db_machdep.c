@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.23 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.24 2010/01/13 22:55:54 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -248,22 +248,25 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 /* Jump here when done with a frame, to start a new one */
 loop:
 	symname = NULL;
-	ra = 0;
 	subr = 0;
 	stksize = 0;
 
-	if (count-- == 0)
+	if (count-- == 0) {
+		ra = 0;
 		goto end;
+	}
 
 	/* check for bad SP: could foul up next frame */
 	if (sp & 3 || !VALID_ADDRESS(sp)) {
 		(*pr)("SP %p: not in kernel\n", sp);
+		ra = 0;
 		goto done;
 	}
 
 	/* check for bad PC */
 	if (pc & 3 || !VALID_ADDRESS(pc)) {
 		(*pr)("PC %p: not in kernel\n", pc);
+		ra = 0;
 		goto done;
 	}
 
