@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.14 2010/01/13 01:26:28 henning Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.15 2010/01/13 07:05:28 henning Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -50,7 +50,6 @@ struct in_ifaddr {
 					/* ia_net{,mask} in host order */
 	u_int32_t ia_net;		/* network number of interface */
 	u_int32_t ia_netmask;		/* mask of net part */
-	struct	in_addr ia_netbroadcast; /* to recognize net broadcasts */
 	TAILQ_ENTRY(in_ifaddr) ia_list;	/* list of internet addresses */
 	struct	sockaddr_in ia_addr;	/* reserve space for interface name */
 	struct	sockaddr_in ia_dstaddr;	/* reserve space for broadcast addr */

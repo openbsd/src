@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.175 2010/01/13 01:26:28 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.176 2010/01/13 07:05:28 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -695,7 +695,6 @@ in_iawithaddr(struct in_addr ina, struct mbuf *m, u_int rdomain)
 		    ia->ia_ifp == m->m_pkthdr.rcvif)) &&
 		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
 			if (ina.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
-			    ina.s_addr == ia->ia_netbroadcast.s_addr ||
 			    /*
 			     * Look for all-0's host part (old broadcast addr),
 			     * either for subnet or net.
