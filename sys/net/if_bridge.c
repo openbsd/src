@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.176 2009/11/22 12:33:25 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.177 2010/01/13 05:25:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1463,6 +1463,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			}
 			if (ifl != LIST_END(&sc->sc_iflist)) {
 				m->m_pkthdr.rcvif = ifl->ifp;
+				m->m_pkthdr.rdomain = ifl->ifp->if_rdomain;
 #if NBPFILTER > 0
 				if (ifl->ifp->if_bpf)
 					bpf_mtap(ifl->ifp->if_bpf, m,
@@ -1525,6 +1526,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			sc->sc_if.if_ibytes += ETHER_HDR_LEN + m->m_pkthdr.len;
 
 			m->m_pkthdr.rcvif = ifl->ifp;
+			m->m_pkthdr.rdomain = ifl->ifp->if_rdomain;
 			if (ifp->if_type == IFT_GIF) {
 				m->m_flags |= M_PROTO1;
 				ether_input(ifl->ifp, eh, m);
@@ -1697,17 +1699,18 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		sc->sc_if.if_oerrors++;
 		return;
 	}
-	m_adj(m1, ETHER_HDR_LEN);
-
 	/* fixup header a bit */
 	m1->m_pkthdr.rcvif = ifp;
+	m1->m_pkthdr.rdomain = ifp->if_rdomain;
+	m1->m_flags |= M_PROTO1;
+
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m,
+		bpf_mtap(ifp->if_bpf, m1,
 		    BPF_DIRECTION_IN);
 #endif
-	m1->m_flags |= M_PROTO1;
-	ether_input(ifp, eh, m1);
+
+	ether_input(ifp, NULL, m1);
 	ifp->if_ipackets++;
 }
 
@@ -2601,7 +2604,6 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 #endif /* IPSEC */
 
 		/* Finally, we get to filter the packet! */
-		m->m_pkthdr.rcvif = ifp;
 		if (pf_test(dir, ifp, &m, eh) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
