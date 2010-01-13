@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.58 2010/01/13 07:05:28 henning Exp $	*/
+/*	$OpenBSD: in.c,v 1.59 2010/01/13 10:30:31 henning Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -99,12 +99,7 @@ int in_scrubprefix(struct in_ifaddr *);
 #define	SUBNETSARELOCAL	0
 #endif
 
-#ifndef HOSTZEROBROADCAST
-#define HOSTZEROBROADCAST 1
-#endif
-
 int subnetsarelocal = SUBNETSARELOCAL;
-int hostzeroisbroadcast = HOSTZEROBROADCAST;
 
 /*
  * Return 1 if an internet address is for a ``local'' host
@@ -922,12 +917,7 @@ in_broadcast(in, ifp)
 		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list)
 			if (ifa->ifa_addr->sa_family == AF_INET &&
 			    in.s_addr != ia->ia_addr.sin_addr.s_addr &&
-			    (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
-			     (hostzeroisbroadcast &&
-			      /*
-			       * Check for old-style (host 0) broadcast.
-			       */
-			      in.s_addr == ia->ia_net)))
+			    in.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
 				return 1;
 	}
 	return (0);
