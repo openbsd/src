@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.12 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: filter.c,v 1.13 2010/01/13 01:07:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -205,6 +205,9 @@ prepare_rule(u_int32_t id, struct sockaddr *src,
 	pfr.rule.proto = IPPROTO_TCP;
 	pfr.rule.src.addr.type = PF_ADDR_ADDRMASK;
 	pfr.rule.dst.addr.type = PF_ADDR_ADDRMASK;
+	pfr.rule.nat.addr.type = PF_ADDR_NONE;
+	pfr.rule.rdr.addr.type = PF_ADDR_NONE;
+
 	if (src->sa_family == AF_INET) {
 		memcpy(&pfr.rule.src.addr.v.a.addr.v4,
 		    &satosin(src)->sin_addr.s_addr, 4);
