@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.29 2009/12/15 13:28:23 jsing Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.30 2010/01/13 01:26:28 henning Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ igmp_input(struct mbuf *m, ...)
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 			IFP_TO_IA(ifp, ia);
 			if (ia)
-				ip->ip_src.s_addr = ia->ia_subnet;
+				ip->ip_src.s_addr = ia->ia_net;
 		}
 
 		/*
@@ -421,7 +421,7 @@ igmp_input(struct mbuf *m, ...)
 			IFP_TO_IA(ifp, ia);
 #endif
 			if (ia)
-				ip->ip_src.s_addr = ia->ia_subnet;
+				ip->ip_src.s_addr = ia->ia_net;
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.55 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.56 2010/01/13 01:26:28 henning Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ in_localaddr(struct in_addr in, u_int rdomain)
 		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 			if (ia->ia_ifp->if_rdomain != rdomain)
 				continue;
-			if ((in.s_addr & ia->ia_subnetmask) == ia->ia_subnet)
+			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
 				return (1);
 		}
 	}
@@ -393,7 +393,7 @@ in_control(so, cmd, data, ifp)
 		return error;
 
 	case SIOCSIFNETMASK:
-		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr =
+		ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
 		    ifra->ifra_addr.sin_addr.s_addr;
 		break;
 
@@ -413,7 +413,7 @@ in_control(so, cmd, data, ifp)
 		if (ifra->ifra_mask.sin_len) {
 			in_ifscrub(ifp, ia);
 			ia->ia_sockmask = ifra->ifra_mask;
-			ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
+			ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr;
 			maskIsNew = 1;
 		}
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
@@ -716,24 +716,18 @@ in_ifinit(ifp, ia, sin, scrub)
 		in_ifscrub(ifp, ia);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 	}
-	if (IN_CLASSA(i))
-		ia->ia_netmask = IN_CLASSA_NET;
-	else if (IN_CLASSB(i))
-		ia->ia_netmask = IN_CLASSB_NET;
-	else
-		ia->ia_netmask = IN_CLASSC_NET;
-	/*
-	 * The subnet mask usually includes at least the standard network part,
-	 * but may may be smaller in the case of supernetting.
-	 * If it is set, we believe it.
-	 */
-	if (ia->ia_subnetmask == 0) {
-		ia->ia_subnetmask = ia->ia_netmask;
-		ia->ia_sockmask.sin_addr.s_addr = ia->ia_subnetmask;
-	} else
-		ia->ia_netmask &= ia->ia_subnetmask;
+
+	if (ia->ia_netmask == 0) {
+		if (IN_CLASSA(i))
+			ia->ia_netmask = IN_CLASSA_NET;
+		else if (IN_CLASSB(i))
+			ia->ia_netmask = IN_CLASSB_NET;
+		else
+			ia->ia_netmask = IN_CLASSC_NET;
+		ia->ia_sockmask.sin_addr.s_addr = ia->ia_netmask;
+	}
+
 	ia->ia_net = i & ia->ia_netmask;
-	ia->ia_subnet = i & ia->ia_subnetmask;
 	in_socktrim(&ia->ia_sockmask);
 	/*
 	 * Add route for the network.
@@ -741,7 +735,7 @@ in_ifinit(ifp, ia, sin, scrub)
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		ia->ia_broadaddr.sin_addr.s_addr =
-			ia->ia_subnet | ~ia->ia_subnetmask;
+			ia->ia_net | ~ia->ia_netmask;
 		ia->ia_netbroadcast.s_addr =
 			ia->ia_net | ~ia->ia_netmask;
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
@@ -937,8 +931,7 @@ in_broadcast(in, ifp)
 			      /*
 			       * Check for old-style (host 0) broadcast.
 			       */
-			      (in.s_addr == ia->ia_subnet ||
-			       in.s_addr == ia->ia_net))))
+			      in.s_addr == ia->ia_net)))
 				return 1;
 	}
 	return (0);

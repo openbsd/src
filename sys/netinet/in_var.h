@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.13 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.14 2010/01/13 01:26:28 henning Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -47,11 +47,9 @@ struct in_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
 #define ia_flags	ia_ifa.ifa_flags
-					/* ia_{,sub}net{,mask} in host order */
+					/* ia_net{,mask} in host order */
 	u_int32_t ia_net;		/* network number of interface */
 	u_int32_t ia_netmask;		/* mask of net part */
-	u_int32_t ia_subnet;		/* subnet number, including net */
-	u_int32_t ia_subnetmask;	/* mask of subnet part */
 	struct	in_addr ia_netbroadcast; /* to recognize net broadcasts */
 	TAILQ_ENTRY(in_ifaddr) ia_list;	/* list of internet addresses */
 	struct	sockaddr_in ia_addr;	/* reserve space for interface name */
