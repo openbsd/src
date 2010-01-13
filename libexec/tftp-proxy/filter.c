@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.7 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: filter.c,v 1.8 2010/01/13 01:08:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -89,6 +89,7 @@ add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 	if (prepare_rule(id, src, dst, d_port, proto) == -1)
 		return (-1);
 
+	pfr.rule.rdr.addr.type = PF_ADDR_ADDRMASK;
 	if (rdr->sa_family == AF_INET) {
 		memcpy(&pfr.rule.rdr.addr.v.a.addr.v4,
 		    &satosin(rdr)->sin_addr.s_addr, 4);
@@ -197,6 +198,9 @@ prepare_rule(u_int32_t id, struct sockaddr *src,
 	pfr.rule.proto = proto;
 	pfr.rule.src.addr.type = PF_ADDR_ADDRMASK;
 	pfr.rule.dst.addr.type = PF_ADDR_ADDRMASK;
+	pfr.rule.rdr.addr.type = PF_ADDR_NONE;
+	pfr.rule.nat.addr.type = PF_ADDR_NONE;
+
 	if (src->sa_family == AF_INET) {
 		memcpy(&pfr.rule.src.addr.v.a.addr.v4,
 		    &satosin(src)->sin_addr.s_addr, 4);
