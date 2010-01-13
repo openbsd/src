@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.34 2010/01/02 23:28:51 dlg Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.35 2010/01/13 01:51:20 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ scanjet_read(ss, xs, bp)
 {
 	struct scsi_rw_scanner *cdb;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_read: start\n"));
+	SC_DEBUG(ss->sc_link, SDEV_DB1, ("scanjet_read: start\n"));
 
 	cdb = (struct scsi_rw_scanner *)xs->cmd;
 	xs->cmdlen = sizeof(*cdb);

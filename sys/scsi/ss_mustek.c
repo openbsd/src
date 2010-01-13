@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.17 2010/01/02 23:28:51 dlg Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.18 2010/01/13 01:51:20 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -442,7 +442,7 @@ mustek_read(ss, xs, bp)
 	struct mustek_read_cmd *cdb;
 	u_long lines_to_read;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: start\n"));
+	SC_DEBUG(ss->sc_link, SDEV_DB1, ("mustek_read: start\n"));
 
 	cdb = (struct mustek_read_cmd *)xs->cmd;
 	xs->cmdlen = sizeof(*cdb);
@@ -452,7 +452,7 @@ mustek_read(ss, xs, bp)
 	/* instead of the bytes, the mustek wants the number of lines */
 	lines_to_read = bp->b_bcount /
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
-	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: read %ld lines\n",
+	SC_DEBUG(ss->sc_link, SDEV_DB1, ("mustek_read: read %ld lines\n",
 	    lines_to_read));
 	_lto3b(lines_to_read, cdb->length);
 
