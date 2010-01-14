@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.29 2010/01/13 10:58:38 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.30 2010/01/14 00:47:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -153,7 +153,7 @@ int		pstate = 0;	/* current UL state */
 int		altscr = 0;	/* terminal supports an alternate screen */
 size_t		linsize = LINSIZ;
 
-volatile sig_atomic_t signo;	/* signal received */
+volatile sig_atomic_t signo[_NSIG];	/* signals received */
 
 struct {
 	off_t chrctr, line;
@@ -1536,69 +1536,73 @@ retry:
 }
 
 int
-handle_signal(int sig)
+handle_signal(void)
 {
-	int ch = -1;
+	int sig, ch = -1;
 
-	signo = 0;
+	for (sig = 0; sig < _NSIG; sig++) {
+		if (signo[sig] == 0)
+			continue;
+		signo[sig] = 0;
 
-	switch (sig) {
-	case SIGQUIT:
-		if (!inwait) {
-			putchar('\n');
-			if (startup)
-				Pause++;
-		} else if (!dum_opt && notell) {
-			write(STDERR_FILENO, QUIT_IT,
-			    sizeof(QUIT_IT) - 1);
-			promptlen += sizeof(QUIT_IT) - 1;
-			notell = 0;
-		}
-		break;
-	case SIGTSTP:
-	case SIGTTIN:
-	case SIGTTOU:
-		/* XXX - should use saved values instead of SIG_DFL */
-		sa.sa_handler = SIG_DFL;
-		sa.sa_flags = SA_RESTART;
-		(void)sigaction(SIGTSTP, &sa, NULL);
-		(void)sigaction(SIGTTIN, &sa, NULL);
-		(void)sigaction(SIGTTOU, &sa, NULL);
-		reset_tty();
-		kill(getpid(), sig);
-
-		sa.sa_handler = onsignal;
-		sa.sa_flags = 0;
-		(void)sigaction(SIGTSTP, &sa, NULL);
-		(void)sigaction(SIGTTIN, &sa, NULL);
-		(void)sigaction(SIGTTOU, &sa, NULL);
-		set_tty();
-		if (!no_intty)
-			ch = '\f';	/* force redraw */
-		break;
-	case SIGINT:
-		end_it();
-		break;
-	case SIGWINCH: {
-		struct winsize win;
-
-		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != 0)
+		switch (sig) {
+		case SIGQUIT:
+			if (!inwait) {
+				putchar('\n');
+				if (startup)
+					Pause++;
+			} else if (!dum_opt && notell) {
+				write(STDERR_FILENO, QUIT_IT,
+				    sizeof(QUIT_IT) - 1);
+				promptlen += sizeof(QUIT_IT) - 1;
+				notell = 0;
+			}
 			break;
-		if (win.ws_row != 0) {
-			Lpp = win.ws_row;
-			nscroll = Lpp/2 - 1;
-			if (nscroll <= 0)
-				nscroll = 1;
-			dlines = Lpp - 1;
+		case SIGTSTP:
+		case SIGTTIN:
+		case SIGTTOU:
+			/* XXX - should use saved values instead of SIG_DFL */
+			sa.sa_handler = SIG_DFL;
+			sa.sa_flags = SA_RESTART;
+			(void)sigaction(SIGTSTP, &sa, NULL);
+			(void)sigaction(SIGTTIN, &sa, NULL);
+			(void)sigaction(SIGTTOU, &sa, NULL);
+			reset_tty();
+			kill(getpid(), sig);
+	
+			sa.sa_handler = onsignal;
+			sa.sa_flags = 0;
+			(void)sigaction(SIGTSTP, &sa, NULL);
+			(void)sigaction(SIGTTIN, &sa, NULL);
+			(void)sigaction(SIGTTOU, &sa, NULL);
+			set_tty();
+			if (!no_intty)
+				ch = '\f';	/* force redraw */
+			break;
+		case SIGINT:
+			end_it();
+			break;
+		case SIGWINCH: {
+			struct winsize win;
+	
+			if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != 0)
+				break;
+			if (win.ws_row != 0) {
+				Lpp = win.ws_row;
+				nscroll = Lpp/2 - 1;
+				if (nscroll <= 0)
+					nscroll = 1;
+				dlines = Lpp - 1;
+			}
+			if (win.ws_col != 0)
+				Mcol = win.ws_col;
+			if (!no_intty)
+				ch = '\f';	/* force redraw */
+			break;
+		} default:
+			/* NOTREACHED */
+			break;
 		}
-		if (win.ws_col != 0)
-			Mcol = win.ws_col;
-		if (!no_intty)
-			ch = '\f';	/* force redraw */
-		break;
-	} default:
-		/* NOTREACHED */
-		break;
 	}
 	return (ch);
 }
@@ -1613,7 +1617,7 @@ readch(void)
 again:
 	if (read(STDERR_FILENO, &ch, 1) <= 0) {
 		if (signo != 0) {
-			if ((ch = handle_signal(signo)) == -1)
+			if ((ch = handle_signal()) == -1)
 				goto again;
 		} else {
 			if (errno != EINTR)
@@ -1865,7 +1869,7 @@ resize_line(char *pos)
 void
 onsignal(int sig)
 {
-	signo = sig;
+	signo[sig] = 1;
 }
 
 __dead void
