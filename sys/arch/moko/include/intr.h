@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2009/07/14 13:59:49 drahn Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2010/01/14 02:14:25 kevlo Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -56,9 +56,8 @@
 #define	IPL_CLOCK	10	/* clock interrupt */
 #define	IPL_STATCLOCK	11	/* statistics clock interrupt */
 #define	IPL_HIGH	12	/* everything */
-#define	IPL_SERIAL	13	/* serial device */
 
-#define	NIPL		14
+#define	NIPL		13
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
