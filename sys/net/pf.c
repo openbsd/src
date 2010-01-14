@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.684 2010/01/13 23:45:14 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.685 2010/01/14 00:00:05 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3190,10 +3190,9 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 	}
 
 	if (pf_state_insert(BOUND_IFACE(r, kif), *skw, *sks, s)) {
-		if (*skw != *sks)
-			pool_put(&pf_state_key_pl, *skw);
-		pool_put(&pf_state_key_pl, *sks);
-		*skw = *sks = NULL;
+		pf_state_key_detach(s, PF_SK_STACK);
+		pf_state_key_detach(s, PF_SK_WIRE);
+		*sks = *skw = NULL;
 		REASON_SET(&reason, PFRES_STATEINS);
 		goto csfailed;
 	} else
