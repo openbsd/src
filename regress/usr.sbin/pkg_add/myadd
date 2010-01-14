@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: myadd,v 1.2 2009/12/31 12:58:22 espie Exp $
+# $OpenBSD: myadd,v 1.3 2010/01/14 19:38:37 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,7 @@ $ENV{'PKG_DBDIR'} = "$root/pkgdb";
 my @args = ('-F', 'nonroot', '-B', $root, @ARGV);
 my $prog;
 if ($ENV{'DEBUG'}) {
-	unshift(@args, 'perl', '-d', '/usr/sbin/pkg_add', '-F', 'debug');
+	unshift(@args, 'perl', '-d', '/usr/sbin/pkg_add', '-D', 'debug');
 	$prog = 'perl';
 } else {
 	unshift(@args, 'pkg_add');
