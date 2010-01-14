@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.44 2010/01/12 21:42:59 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.45 2010/01/14 17:57:47 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1344,14 +1344,10 @@ resamp_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 {
 	struct abuf *obuf = LIST_FIRST(&p->obuflist);
 	long long ipos;
-	int ifac, ofac;
-
-	ifac = p->u.resamp.iblksz;
-	ofac = p->u.resamp.oblksz;
-	ipos = p->u.resamp.idelta + (long long)delta * ofac;
-	delta = (ipos + ifac - 1) / ifac;
-	p->u.resamp.idelta = ipos - (long long)delta * ifac;
-	abuf_ipos(obuf, delta);
+	
+	ipos = (long long)delta * p->u.resamp.oblksz + p->u.resamp.idelta;
+	p->u.resamp.idelta = ipos % p->u.resamp.iblksz;
+	abuf_ipos(obuf, ipos / (int)p->u.resamp.iblksz);
 }
 
 void
@@ -1359,14 +1355,10 @@ resamp_opos(struct aproc *p, struct abuf *obuf, int delta)
 {
 	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
 	long long opos;
-	int ifac, ofac;
 
-	ifac = p->u.resamp.iblksz;
-	ofac = p->u.resamp.oblksz;
-	opos = p->u.resamp.odelta + (long long)delta * ifac;
-	delta = (opos + ofac - 1) / ofac;
-	p->u.resamp.odelta = opos - (long long)delta * ofac;
-	abuf_opos(ibuf, delta);
+	opos = (long long)delta * p->u.resamp.iblksz + p->u.resamp.odelta;
+	p->u.resamp.odelta = opos % p->u.resamp.oblksz;
+	abuf_opos(ibuf, opos / p->u.resamp.oblksz);
 }
 
 struct aproc_ops resamp_ops = {
