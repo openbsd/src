@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.163 2010/01/14 00:32:46 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.164 2010/01/14 04:56:08 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -763,8 +763,6 @@ scsi_done(struct scsi_xfer *xs)
 	if (xs->sc_link->flags & SDEV_DB1) {
 		if (xs->datalen && (xs->flags & SCSI_DATA_IN))
 			scsi_show_mem(xs->data, min(64, xs->datalen));
-		if (xs->status == XS_SENSE || xs->status == XS_SHORTSENSE)
-			scsi_show_mem((u_char *)&xs->sense, sizeof(xs->sense));
 	}
 #endif /* SCSIDEBUG */
 
@@ -992,6 +990,23 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 	    sense->flags & SSD_FILEMARK ? 1 : 0,
 	    sense->extra_len));
 
+#ifdef SCSIDEBUG
+	if (xs->sc_link->flags & SDEV_DB1)
+		scsi_show_mem((u_char *)&xs->sense, sizeof(xs->sense));
+#endif /* SCSIDEBUG */
+
+	serr = sense->error_code & SSD_ERRCODE;
+	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED)
+		skey = 0xff;	/* Invalid value, since key is 4 bit value. */
+	else
+		skey = sense->flags & SSD_KEY;
+
+#ifndef SCSIDEBUG
+	/* If not SCSIDEBUG, only print sense in some cases. */
+	if (skey && (xs->flags & SCSI_SILENT) == 0)
+#endif /* SCSIDEBUG */
+		scsi_print_sense(xs);
+
 	/*
 	 * If the device has its own error handler, call it first.
 	 * If it returns a legit error value, return that, otherwise
@@ -1005,14 +1020,9 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 			return (error); /* error >= 0  better ? */
 	}
 
-	/* Default sense interpretation. */
-	serr = sense->error_code & SSD_ERRCODE;
-	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED)
-		skey = 0xff;	/* Invalid value, since key is 4 bit value. */
-	else
-		skey = sense->flags & SSD_KEY;
-
 	/*
+	 * Default sense interpretation.
+	 *
 	 * Interpret the key/asc/ascq information where appropriate.
 	 */
 	error = 0;
@@ -1128,9 +1138,6 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		error = EIO;
 		break;
 	}
-
-	if (skey && (xs->flags & SCSI_SILENT) == 0)
-		scsi_print_sense(xs);
 
 	return (error);
 }
@@ -1895,22 +1902,19 @@ scsi_xs_show(struct scsi_xfer *xs)
 	int i = 0;
 
 	sc_print_addr(xs->sc_link);
-
-	printf("xs(%p): ", xs);
+	printf("xs  (%p): ", xs);
 
 	printf("flg(0x%x)", xs->flags);
 	printf("sc_link(%p)", xs->sc_link);
 	printf("retr(0x%x)", xs->retries);
 	printf("timo(0x%x)", xs->timeout);
-	printf("cmd(%p)", xs->cmd);
-	printf("len(0x%x)", xs->cmdlen);
 	printf("data(%p)", xs->data);
-	printf("len(0x%x)", xs->datalen);
 	printf("res(0x%x)", xs->resid);
 	printf("err(0x%x)", xs->error);
 	printf("bp(%p)\n", xs->bp);
 
-	printf("command: ");
+	sc_print_addr(xs->sc_link);
+	printf("cmd (%p): ", xs->cmd);
 
 	if ((xs->flags & SCSI_RESET) == 0) {
 		while (i < xs->cmdlen) {
