@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.24 2010/01/13 22:55:54 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.25 2010/01/14 07:24:43 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -208,7 +208,7 @@ db_write_bytes(addr, size, data)
 
 #define	VALID_ADDRESS(va) \
 	(((va) >= VM_MIN_KERNEL_ADDRESS && (va) < VM_MAX_KERNEL_ADDRESS) || \
-	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSSEG_BASE))
+	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSEG1_BASE))
 
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2010/01/09 23:34:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2010/01/14 07:24:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1141,7 +1141,7 @@ stacktrace(regs)
 
 #define	VALID_ADDRESS(va) \
 	(((va) >= VM_MIN_KERNEL_ADDRESS && (va) < VM_MAX_KERNEL_ADDRESS) || \
-	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSSEG_BASE))
+	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSEG1_BASE))
 
 void
 stacktrace_subr(regs, printfn)
@@ -1183,30 +1183,6 @@ loop:
 		subr = 0;
 		goto done;
 	}
-
-#if 0
-	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (vaddr_t)MipsKernIntr && pc < (vaddr_t)MipsUserIntr) {
-		(*printfn)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc - (vaddr_t)MipsKernIntr, a0, a1, a2);
-		regs = (struct trap_frame *)(sp + STAND_ARG_SIZE);
-		a0 = kdbpeek(&regs->a0);
-		a1 = kdbpeek(&regs->a1);
-		a2 = kdbpeek(&regs->a2);
-		a3 = kdbpeek(&regs->a3);
-
-		pc = kdbpeek(&regs->pc); /* exc_pc - pc at time of exception */
-		ra = kdbpeek(&regs->ra); /* ra at time of exception */
-		sp = kdbpeek(&regs->sp);
-		goto specialframe;
-	}
-#endif
-
-
-# define Between(x, y, z) \
-		( ((x) <= (y)) && ((y) < (z)) )
-# define pcBetween(a,b) \
-		Between((vaddr_t)a, pc, (vaddr_t)b)
 
 	/* check for bad PC */
 	if (pc & 3 || !VALID_ADDRESS(pc)) {
