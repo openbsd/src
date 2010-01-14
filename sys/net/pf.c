@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.685 2010/01/14 00:00:05 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.686 2010/01/14 01:06:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3165,7 +3165,6 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 	s->creation = time_second;
 	s->expire = time_second;
 
-	/* XXX on error all these should goto csfailed after extra cleanup */
 	if (pd->proto == IPPROTO_TCP) {
 		if (s->state_flags & PFSTATE_SCRUB_TCP &&
 		    pf_normalize_tcp_init(m, off, pd, th, &s->src, &s->dst)) {
