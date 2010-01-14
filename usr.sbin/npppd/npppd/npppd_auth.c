@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  */
 /**@file 認証レルム */
-/* $Id: npppd_auth.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.3 2010/01/14 23:35:39 yasuoka Exp $ */
 /* なるべく npppd に非依存で書いていきたいところ。*/
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -685,6 +685,7 @@ radius_server_address_load(radius_req_setting *radius, int idx,
     const char *address)
 {
 	struct addrinfo *ai;
+	struct sockaddr_in *sin;
 
 	memset(&radius->server[idx], 0, sizeof(radius->server[0]));
 
@@ -699,8 +700,10 @@ radius_server_address_load(radius_req_setting *radius, int idx,
 	case AF_INET6:
 		break;
 	}
-	if (sin46_port(ai->ai_addr) == 0)
-		sin46_port(ai->ai_addr) = htons(DEFAULT_RADIUS_AUTH_PORT);
+
+	sin = (struct sockaddr_in *)(ai->ai_addr);
+	if (sin->sin_port == 0)
+		sin->sin_port = htons(DEFAULT_RADIUS_AUTH_PORT);
 	memcpy(&radius->server[idx].peer, ai->ai_addr,
 	    MIN(sizeof(radius->server[idx].peer), ai->ai_addrlen));
 
