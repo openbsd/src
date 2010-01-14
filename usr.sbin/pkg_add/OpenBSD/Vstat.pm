@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.55 2010/01/08 16:42:56 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.56 2010/01/14 19:35:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -32,14 +32,14 @@ my $dummy = bless \$x, __PACKAGE__;
 
 sub new
 {
-	my ($class, $value) = shift;
+	my ($class, $value) = @_;
 	if (!defined $value) {
 		return $dummy;
 	}
 	if (!defined $cache->{$value}) {
-		$cache->{value} = bless \$value, $class;
+		$cache->{$value} = bless \$value, $class;
 	}
-	return $cache->{value};
+	return $cache->{$value};
 }
 
 sub exists
@@ -126,6 +126,17 @@ sub exists
 	return -e $name;
 }
 
+sub value
+{
+	my ($self, $name) = @_;
+	for my $v (@{$self->{v}}) {
+		if (defined $v->{$name}) {
+			return $v->{$name}->value;
+		}
+	}
+	return undef;
+}
+
 sub synchronize
 {
 	my $self = shift;
@@ -159,7 +170,6 @@ sub add
 {
 	my ($self, $name, $size, $value) = @_;
 	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object->new($value);
-
 	return defined($size) ? $self->account_for($name, $size) : undef;
 }
 
