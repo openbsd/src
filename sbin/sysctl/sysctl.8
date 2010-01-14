@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.152 2009/10/04 16:08:37 michele Exp $
+.\"	$OpenBSD: sysctl.8,v 1.153 2010/01/14 22:25:05 guenther Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: October 4 2009 $
+.Dd $Mdocdate: January 14 2010 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -339,6 +339,7 @@ not all of the variables are relevant to all architectures.
 .It hw.version	string	no
 .It hw.serialno	string	no
 .It hw.uuid	string	no
+.It hw.ncpufound	integer	no
 .It machdep.console_device	dev_t	no
 .It machdep.unaligned_print	integer	yes
 .It machdep.unaligned_fix	integer	yes

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.191 2010/01/03 16:43:45 schwarze Exp $
+.\"	$OpenBSD: sysctl.3,v 1.192 2010/01/14 22:25:05 guenther Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: January 14 2010 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -298,6 +298,7 @@ privileges may change the value.
 .It Dv HW_MACHINE No "	string	no"
 .It Dv HW_MODEL No "	string	no"
 .It Dv HW_NCPU No "	integer	no"
+.It Dv HW_NCPUFOUND No "	integer	no"
 .It Dv HW_PAGESIZE No "	integer	no"
 .It Dv HW_PHYSMEM No "	integer	no"
 .It Dv HW_PHYSMEM64 No "	int64_t	no"
@@ -330,7 +331,9 @@ The machine class.
 .It Dv HW_MODEL
 The machine model.
 .It Dv HW_NCPU
-The number of CPUs.
+The number of CPUs being used.
+.It Dv HW_NCPUFOUND
+The number of CPUs found.
 .It Dv HW_PAGESIZE
 The software page size.
 .It Dv HW_PHYSMEM
@@ -548,6 +551,10 @@ Note that using this interface exposes duplicate entries which are
 consolidated by the userland frontend.
 .It Dv KERN_FILE
 Return the entire file table.
+This name is deprecated, as the layout of the returned structures
+is not a stable ABI; use
+.Dv KERN_FILE2
+instead.
 The returned data consists of a single
 .Li struct filehead
 followed by an array of
@@ -559,6 +566,14 @@ Like
 but an array of
 .Li struct kinfo_file2
 structures is returned.
+The third and fourth level names are as follows:
+.Bl -column "Third level nameXXXXXX" "Fourth level is:XXXXXX" -offset indent
+.It Sy Third level name	Fourth level is:
+.It Dv KERN_FILE_BYFILE No "	Zero"
+.It Dv KERN_FILE_BYPID No "	A process ID"
+.It Dv KERN_FILE_BYUID No "	A user ID"
+.El
+.Pp
 The fifth level name is the size of the
 .Li struct kinfo_file2
 and the sixth level name is the number of structures to return.
@@ -685,6 +700,10 @@ The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
 .It Dv KERN_PROC
 Return the entire process table, or a subset of it.
+This name is deprecated, as the layout of the returned structures
+is not a stable ABI; use
+.Dv KERN_PROC2
+instead.
 An array of
 .Li struct kinfo_proc
 structures is returned,
