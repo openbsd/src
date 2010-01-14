@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.33 2010/01/10 16:06:10 espie Exp $
+# $OpenBSD: Makefile,v 1.34 2010/01/14 13:55:58 espie Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 partial-update-test conflict-update \
@@ -149,14 +149,16 @@ loop1: rep0/ocaml-3.11.1.tgz rep0/tcl-8.5.7.tgz rep0/tk-8.5.7.tgz
 	-@ROOT=${D20} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} -z ocaml-3.11.1p0 tcl-8.5.8 tk-8.5.8
 
 plist1:
-	@echo "@owner "`whoami` >$@
+	@echo "@owner "`id -un` >$@
+	@echo "@group "`id -gn` >>$@
 	@echo ${LONG1} >>$@
 	@echo ${LONG2} >>$@
 	@echo ${LONG3} >>$@
 	@echo ${LONG4} >>$@
 
 plist2:
-	@echo "@owner "`whoami` >$@
+	@echo "@owner "`id -un` >$@
+	@echo "@group "`id -gn` >>$@
 	@echo a >>$@
 	@echo b >>$@
 	@echo c >>$@
@@ -164,7 +166,8 @@ plist2:
 	@echo g >>$@
 
 plist3:
-	@echo "@owner "`whoami` >$@
+	@echo "@owner "`id -un` >$@
+	@echo "@group "`id -gn` >>$@
 	@echo a >>$@
 	@echo c >>$@
 	@echo d >>$@
@@ -187,7 +190,8 @@ plist7:
 plist8:
 	@echo "@conflict o-<1" >$@
 	@echo "@pkgpath t/o" >>$@
-	@echo "@owner "`whoami` >>$@
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
 	@echo '@lib lib/libcoincoin.so.$${LIBcoincoin_VERSION}' >>$@
 
 plist9:
