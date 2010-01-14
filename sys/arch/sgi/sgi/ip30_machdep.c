@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.33 2010/01/13 23:24:27 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.34 2010/01/14 07:22:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -371,33 +371,45 @@ ip30_nmi_handler()
 {
 	extern int kdb_trap(int, struct trap_frame *);
 	extern void stacktrace(struct trap_frame *);
-	struct cpu_info *ci = curcpu();
-	struct trap_frame *fr0, *fr1;
+	struct trap_frame *fr0;
 	int s;
+#ifdef MULTIPROCESSOR
+	struct trap_frame *fr1;
+	struct cpu_info *ci = curcpu();
+#endif
 
 	setsr(getsr() & ~SR_BOOT_EXC_VEC);
 
 	s = splhigh();
+#ifdef MULTIPROCESSOR
 	ENABLEIPI();
 
 	if (!CPU_IS_PRIMARY(ci)) {
 		for (;;) ;
 	}
+#endif
 
 	printf("NMI\n");
 
 	fr0 = (struct trap_frame *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x4000,
 	    CCA_CACHED);
+#ifdef MULTIPROCESSOR
 	fr1 = (struct trap_frame *)PHYS_TO_XKPHYS(IP30_MEMORY_BASE + 0x6000,
 	    CCA_CACHED);
+#endif
 
+#ifdef MULTIPROCESSOR
 	printf("cpu #0 traceback\n");
+#endif
 	stacktrace(fr0);
+#ifdef MULTIPROCESSOR
 	printf("cpu #1 traceback\n");
 	stacktrace(fr1);
+#endif
 
 	kdb_trap(-1, fr0);
 
+	splx(s);
 	printf("Resetting system...\n");
 	boot(RB_USERREQ);
 }
