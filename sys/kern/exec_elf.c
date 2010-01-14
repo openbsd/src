@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.71 2009/11/19 02:36:27 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.72 2010/01/14 23:12:11 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -201,7 +201,7 @@ ELFNAME(check_header)(Elf_Ehdr *ehdr)
 	/*
 	 * We need to check magic, class size, endianess, and version before
 	 * we look at the rest of the Elf_Ehdr structure. These few elements
-	 * are represented in a machine independant fashion.
+	 * are represented in a machine independent fashion.
 	 */
 	if (!IS_ELF(*ehdr) ||
 	    ehdr->e_ident[EI_CLASS] != ELF_TARG_CLASS ||
@@ -209,7 +209,7 @@ ELFNAME(check_header)(Elf_Ehdr *ehdr)
 	    ehdr->e_ident[EI_VERSION] != ELF_TARG_VER)
 		return (ENOEXEC);
 
-	/* Now check the machine dependant header */
+	/* Now check the machine dependent header */
 	if (ehdr->e_machine != ELF_TARG_MACH ||
 	    ehdr->e_version != ELF_TARG_VER)
 		return (ENOEXEC);
@@ -641,7 +641,7 @@ native:
 			    pp, &addr, &size, &prot, flags);
 
 			/*
-			 * Update exe_base in case allignment was off.
+			 * Update exe_base in case alignment was off.
 			 * For PIE, addr is relative to exe_base so
 			 * adjust it (non PIE exe_base is 0 so no change).
 			 */

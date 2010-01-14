@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.41 2009/10/13 20:53:41 miod Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.42 2010/01/14 23:12:11 schwarze Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -636,7 +636,7 @@ extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
 	 * that we don't have to traverse the list again when
 	 * we insert ourselves.  If "last" is NULL when we
 	 * finally insert ourselves, we go at the head of the
-	 * list.  See extent_insert_and_optimize() for deatails.
+	 * list.  See extent_insert_and_optimize() for details.
 	 */
 	last = NULL;
 
@@ -1092,7 +1092,7 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 
 		/*
 		 * Don't muck with flags after pulling it off the
-		 * freelist; it may be a dynamiclly allocated
+		 * freelist; it may be a dynamically allocated
 		 * region pointer that was kindly given to us,
 		 * and we need to preserve that information.
 		 */

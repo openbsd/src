@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.69 2009/11/04 19:14:10 kettenis Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.70 2010/01/14 23:12:11 schwarze Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -280,7 +280,7 @@ hardclock(struct clockframe *frame)
 	 * ntp_tick_permanent accumulates the clock correction each
 	 * tick. The unit is ns per tick shifted left 32 bits. If we have
 	 * accumulated more than 1us, we bump delta in the right
-	 * direction. Use a loop to avoid long long div; typicallly
+	 * direction. Use a loop to avoid long long div; typically
 	 * the loops will be executed 0 or 1 iteration.
 	 */
 	if (ntp_tick_permanent != 0) {

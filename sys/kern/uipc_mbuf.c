@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.135 2010/01/12 04:05:45 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.136 2010/01/14 23:12:11 schwarze Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -967,7 +967,7 @@ bad:
  * m_pullup2() works like m_pullup, save that len can be <= MCLBYTES.
  * m_pullup2() only works on values of len such that MHLEN < len <= MCLBYTES,
  * it calls m_pullup() for values <= MHLEN.  It also only coagulates the
- * reqested number of bytes.  (For those of us who expect unwieldly option
+ * requested number of bytes.  (For those of us who expect unwieldy option
  * headers.
  *
  * KEBE SAYS:  Remember that dtom() calls with data in clusters does not work!

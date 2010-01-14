@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.110 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.111 2010/01/14 23:12:11 schwarze Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ int stackgap_random = STACKGAP_RANDOM;
  * EXEC SWITCH EXIT:
  *	ok:	return 0, filled exec package, one locked vnode.
  *	error:	destructive:
- *			everything deallocated execept exec header.
+ *			everything deallocated except exec header.
  *		non-destructive:
  *			error code, locked vnode, exec header unmodified
  */

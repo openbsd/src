@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.107 2009/12/28 02:54:24 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.108 2010/01/14 23:12:11 schwarze Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*
-	 * Update stats now that we know the fork was successfull.
+	 * Update stats now that we know the fork was successful.
 	 */
 	uvmexp.forks++;
 	if (flags & FORK_PPWAIT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.21 2007/04/12 22:14:15 tedu Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.22 2010/01/14 23:12:11 schwarze Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -193,7 +193,7 @@ acct_process(struct proc *p)
 	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_usec);
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_usec);
 
-	/* (3) The elapsed time the commmand ran (and its starting time) */
+	/* (3) The elapsed time the command ran (and its starting time) */
 	acct.ac_btime = p->p_stats->p_start.tv_sec;
 	getmicrotime(&tmp);
 	timersub(&tmp, &p->p_stats->p_start, &tmp);

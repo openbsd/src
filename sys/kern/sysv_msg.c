@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.22 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.23 2010/01/14 23:12:11 schwarze Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -560,7 +560,7 @@ msg_dequeue(struct que *que, struct msg *msg, struct proc *p)
  *
  * The data to be copied is laid out as a single userspace buffer, with a
  * long preceding an opaque buffer of len bytes. The long value ends
- * up being the message type, which needs to be copied seperately from
+ * up being the message type, which needs to be copied separately from
  * the buffer data, which is stored in in mbufs.
  */
 
