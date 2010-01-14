@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.70 2010/01/03 13:24:09 schwarze Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.71 2010/01/14 04:57:06 jsing Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: January 14 2010 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -260,16 +260,18 @@ Standard output is used if
 is
 .Ql - .
 .It Fl X
-Print each packet
-.Pq minus its link-level header
-in hex and ASCII.
+Print each packet in hex and ASCII.
+If the
+.Fl e
+option is also specified, the link-level header will be included.
 The smaller of the entire packet or
 .Ar snaplen
 bytes will be printed.
 .It Fl x
-Print each packet
-.Pq minus its link-level header
-in hex.
+Print each packet in hex.
+If the
+.Fl e
+option is also specified, the link-level header will be included.
 The smaller of the entire packet or
 .Ar snaplen
 bytes will be printed.

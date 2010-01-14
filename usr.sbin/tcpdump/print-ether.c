@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.26 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.27 2010/01/14 04:57:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -135,18 +135,31 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 				printf("(LLC %s) ",
 			       etherproto_string(htons(extracted_ethertype)));
 			}
-			if (!xflag && !qflag)
-				default_print(p, caplen);
+			if (!xflag && !qflag) {
+				if (eflag)
+					default_print(packetp,
+					    snapend - packetp);
+				else
+					default_print(p, caplen);
+			}
 		}
 	} else if (ether_encap_print(ether_type, p, length, caplen) == 0) {
 		/* ether_type not known, print raw packet */
 		if (!eflag)
 			ether_print((u_char *)ep, length + sizeof(*ep));
-		if (!xflag && !qflag)
+		if (!xflag && !qflag) {
+			if (eflag)
+				default_print(packetp, snapend - packetp);
+			else
+				default_print(p, caplen);
+		}
+	}
+	if (xflag) {
+		if (eflag)
+			default_print(packetp, snapend - packetp);
+		else
 			default_print(p, caplen);
 	}
-	if (xflag)
-		default_print(p, caplen);
  out:
 	putchar('\n');
 }
