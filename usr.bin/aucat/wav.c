@@ -373,6 +373,14 @@ wav_new_in(struct fileops *ops, char *name, unsigned hdr,
 	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
 	dev_attach(name, buf, par, xrun, NULL, NULL, 0, ADATA_UNIT);
 	dev_setvol(buf, MIDI_TO_ADATA(volctl));
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		dbg_puts(name);
+		dbg_puts(": playing ");
+		aparams_dbg(par);
+		dbg_puts("\n");
+	}
+#endif
 	return f;
 }
 
@@ -420,6 +428,14 @@ wav_new_out(struct fileops *ops, char *name, unsigned hdr,
 	buf = abuf_new(nfr, par);
 	aproc_setin(p, buf);
 	dev_attach(name, NULL, NULL, 0, buf, par, xrun, 0);
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		dbg_puts(name);
+		dbg_puts(": recording ");
+		aparams_dbg(par);
+		dbg_puts("\n");
+	}
+#endif
 	return f;
 }
 

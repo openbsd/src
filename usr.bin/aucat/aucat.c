@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.79 2010/01/11 13:06:32 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.80 2010/01/14 17:43:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -542,7 +542,7 @@ aucat_main(int argc, char **argv)
 		fa = SLIST_FIRST(&ofiles);
 		SLIST_REMOVE_HEAD(&ofiles, entry);
 		if (!wav_new_out(&wav_ops, fa->name,
-			fa->hdr, &fa->ipar, fa->xrun))
+			fa->hdr, &fa->opar, fa->xrun))
 		free(fa);
 	}
 	while (!SLIST_EMPTY(&sfiles)) {
