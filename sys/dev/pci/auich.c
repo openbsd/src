@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.79 2009/11/05 01:29:06 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.80 2010/01/14 18:15:27 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -1450,12 +1450,24 @@ auich_intr(v)
 void
 auich_trigger_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 {
-	int blksize, qptr;
+	int blksize, qptr, oqptr;
 	struct auich_dmalist *q;
 
 	blksize = ring->blksize;
 
-	for (qptr = 0; qptr < AUICH_DMALIST_MAX; qptr++) {
+	DPRINTF(AUICH_DEBUG_INTR, ("auich_trigger_pipe: ring->qptr: %d\n",
+	    ring->qptr));
+
+	qptr = bus_space_read_1(sc->iot, sc->aud_ioh, pipe + AUICH_CIV);
+	oqptr = qptr;
+
+	DPRINTF(AUICH_DEBUG_INTR, ("auich_trigger_pipe: qptr: %d\n", qptr));
+
+	if(oqptr >= AUICH_DMALIST_MAX) {
+		printf("%s: Unexpected CIV: %d\n", sc->sc_dev.dv_xname, oqptr);
+		qptr = oqptr = 0;
+	}
+	do {
 		q = &ring->dmalist[qptr];
 		q->base = ring->p;
 		q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
@@ -1463,11 +1475,13 @@ auich_trigger_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 		ring->p += blksize;
 		if (ring->p >= ring->end)
 			ring->p = ring->start;
-	}
-	ring->qptr = 0;
-
+		qptr++;
+		if (qptr == AUICH_DMALIST_MAX)
+			qptr = 0;
+	} while (qptr != oqptr);
+	ring->qptr = qptr;
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_LVI,
-	    (qptr - 1) & AUICH_LVI_MASK);
+	    (AUICH_DMALIST_MAX - 1) & AUICH_LVI_MASK);
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_CTRL,
 	    AUICH_IOCE | AUICH_FEIE | AUICH_RPBM);
 }
