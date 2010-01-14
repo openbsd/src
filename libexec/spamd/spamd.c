@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.107 2010/01/11 09:57:00 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.108 2010/01/14 00:44:12 beck Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -79,6 +79,7 @@ struct con {
 	int data_lines;
 	int data_body;
 	int stutter;
+	int badcmd;
 	int sr;
 } *con;
 
@@ -860,9 +861,16 @@ nextstate(struct con *cp)
 			if (match(cp->ibuf, "NOOP"))
 				snprintf(cp->obuf, cp->osize,
 				    "250 2.0.0 OK I did nothing\r\n");
-			else
+			else {
                         	snprintf(cp->obuf, cp->osize,
 				    "500 5.5.1 Command unrecognized\r\n");
+				cp->badcmd++;
+				if (cp->badcmd > 20) {
+					cp->laststate = cp->state;
+					cp->state = 98;
+					goto done;
+				}
+			}
 			cp->state = cp->laststate;
 			cp->ip = cp->ibuf;
 			cp->il = sizeof(cp->ibuf) - 1;
