@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.687 2010/01/14 01:19:46 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.688 2010/01/14 20:43:19 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -788,7 +788,7 @@ pf_state_key_detach(struct pf_state *s, int idx)
 {
 	struct pf_state_item	*si;
 
-	if (&s->key[idx] == NULL)
+	if (s->key[idx] == NULL)
 		return;
 
 	si = TAILQ_FIRST(&s->key[idx]->states);
