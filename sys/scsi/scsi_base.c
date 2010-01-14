@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.162 2010/01/13 10:53:11 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.163 2010/01/14 00:32:46 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -726,9 +726,9 @@ scsi_xs_exec(struct scsi_xfer *xs)
 
 #ifdef SCSIDEBUG
 	if (xs->sc_link->flags & SDEV_DB1) {
-		show_scsi_xs(xs);
+		scsi_xs_show(xs);
 		if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
-			show_mem(xs->data, min(64, xs->datalen));
+			scsi_show_mem(xs->data, min(64, xs->datalen));
 	}
 #endif /* SCSIDEBUG */
 
@@ -762,9 +762,9 @@ scsi_done(struct scsi_xfer *xs)
 #ifdef SCSIDEBUG
 	if (xs->sc_link->flags & SDEV_DB1) {
 		if (xs->datalen && (xs->flags & SCSI_DATA_IN))
-			show_mem(xs->data, min(64, xs->datalen));
+			scsi_show_mem(xs->data, min(64, xs->datalen));
 		if (xs->status == XS_SENSE || xs->status == XS_SHORTSENSE)
-			show_mem((u_char *)&xs->sense, sizeof(xs->sense));
+			scsi_show_mem((u_char *)&xs->sense, sizeof(xs->sense));
 	}
 #endif /* SCSIDEBUG */
 
@@ -1889,7 +1889,7 @@ scsi_decode_sense(struct scsi_sense_data *sense, int flag)
  * Given a scsi_xfer, dump the request, in all its glory
  */
 void
-show_scsi_xs(struct scsi_xfer *xs)
+scsi_xs_show(struct scsi_xfer *xs)
 {
 	u_char *b = (u_char *)xs->cmd;
 	int i = 0;
@@ -1924,7 +1924,7 @@ show_scsi_xs(struct scsi_xfer *xs)
 }
 
 void
-show_mem(u_char *address, int num)
+scsi_show_mem(u_char *address, int num)
 {
 	int x;
 
