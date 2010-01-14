@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bluetooth.4,v 1.5 2010/01/02 20:15:15 schwarze Exp $
+.\"	$OpenBSD: bluetooth.4,v 1.6 2010/01/14 05:35:06 tedu Exp $
 .\"	$NetBSD: bluetooth.4,v 1.5 2007/04/21 06:15:22 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
@@ -31,7 +31,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 2 2010 $
+.Dd $Mdocdate: January 14 2010 $
 .Dt BLUETOOTH 4
 .Os
 .Sh NAME
@@ -60,6 +60,16 @@ struct sockaddr_bt {
 .Pp
 The local address used by the socket can be set with
 .Xr bind 2 .
+.Pp
+.Ox 
+provides support for the following devices.
+.Ss Human Interface Devices
+.Bl -tag -width 12n -offset ind -compact
+.It Xr btkbd 4
+Bluetooth keyboards
+.It Xr btms 4
+Bluetooth mouse devices
+.El
 .Sh PROTOCOLS
 Protocols included are:
 .Bl -tag -width XX
