@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.12 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.13 2010/01/14 21:53:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -167,6 +167,25 @@ key_string_lookup_string(const char *string)
 
 		if (key >= 32 && key <= 127)
 			return (key | KEYC_ESCAPE);
+		return (KEYC_NONE);
+	}
+
+	if ((string[0] == 'S' || string[0] == 's') && string[1] == '-') {
+		ptr = string + 2;
+		if (ptr[0] == '\0')
+			return (KEYC_NONE);
+		key = key_string_lookup_string(ptr);
+		if (key != KEYC_NONE) {
+			if (key >= KEYC_BASE)
+				return (key | KEYC_SHIFT);
+		} else {
+			if (ptr[1] == '\0')
+				return (KEYC_NONE);
+			key = (u_char) ptr[0];
+		}
+
+		if (key >= 32 && key <= 127)
+			return (key | KEYC_SHIFT);
 		return (KEYC_NONE);
 	}
 
