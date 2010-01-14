@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.28 2010/01/11 08:28:44 dlg Exp $	*/
+/*	$OpenBSD: show.c,v 1.29 2010/01/14 00:02:08 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -834,6 +834,7 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 
 	case AF_INET:
 		return netname4(((struct sockaddr_in *)sa)->sin_addr.s_addr,
+		    mask->sa_len == 0 ? 0 :
 		    ((struct sockaddr_in *)mask)->sin_addr.s_addr);
 	case AF_INET6:
 		return netname6((struct sockaddr_in6 *)sa,
