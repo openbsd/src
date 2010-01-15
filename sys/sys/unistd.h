@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.16 2008/08/22 14:39:21 deraadt Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.17 2010/01/15 10:17:48 sthen Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -142,6 +142,8 @@
 
 #define	_SC_PHYS_PAGES		500
 #define	_SC_AVPHYS_PAGES	501
+#define	_SC_NPROCESSORS_CONF	502
+#define	_SC_NPROCESSORS_ONLN	503
 
 /* configurable system strings */
 #define	_CS_PATH		 1
