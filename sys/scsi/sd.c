@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.181 2010/01/15 05:31:38 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.182 2010/01/15 05:50:31 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -87,14 +87,10 @@ void	sd_shutdown(void *);
 int	sd_interpret_sense(struct scsi_xfer *);
 int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
 void	sd_flush(struct sd_softc *, int);
-void	sd_kill_buffers(struct sd_softc *);
 
 void	viscpy(u_char *, u_char *, int);
 
 int	sd_ioctl_inquiry(struct sd_softc *, struct dk_inquiry *);
-
-struct buf *sd_buf_dequeue(struct sd_softc *);
-void	sd_buf_requeue(struct sd_softc *, struct buf *);
 
 void	sd_cmd_rw6(struct scsi_xfer *, int, daddr64_t, u_int);
 void	sd_cmd_rw10(struct scsi_xfer *, int, daddr64_t, u_int);
@@ -278,7 +274,7 @@ sdactivate(struct device *self, int act)
 
 	case DVACT_DEACTIVATE:
 		sc->flags |= SDF_DYING;
-		sd_kill_buffers(sc);
+		scsi_buf_killqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
 		break;
 	}
 
@@ -292,7 +288,7 @@ sddetach(struct device *self, int flags)
 	struct sd_softc *sc = (struct sd_softc *)self;
 	int bmaj, cmaj, mn;
 
-	sd_kill_buffers(sc);
+	scsi_buf_killqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
@@ -591,33 +587,6 @@ done:
 		device_unref(&sc->sc_dev);
 }
 
-struct buf *
-sd_buf_dequeue(struct sd_softc *sc)
-{
-	struct buf *bp;
-
-	mtx_enter(&sc->sc_buf_mtx);
-	bp = sc->sc_buf_queue.b_actf;
-	if (bp != NULL)
-		sc->sc_buf_queue.b_actf = bp->b_actf;
-	if (sc->sc_buf_queue.b_actf == NULL)
-		sc->sc_buf_queue.b_actb = &sc->sc_buf_queue.b_actf;
-	mtx_leave(&sc->sc_buf_mtx);
-
-	return (bp);
-}
-
-void
-sd_buf_requeue(struct sd_softc *sc, struct buf *bp)
-{
-	mtx_enter(&sc->sc_buf_mtx);
-	bp->b_actf = sc->sc_buf_queue.b_actf;
-	sc->sc_buf_queue.b_actf = bp;
-	if (bp->b_actf == NULL)
-		sc->sc_buf_queue.b_actb = &bp->b_actf;
-	mtx_leave(&sc->sc_buf_mtx);
-}
-
 void
 sd_cmd_rw6(struct scsi_xfer *xs, int read, daddr64_t blkno, u_int nblks)
 {
@@ -707,7 +676,7 @@ sdstart(void *v)
 	CLR(sc->flags, SDF_WAITING);
 restart:
 	while (!ISSET(sc->flags, SDF_WAITING) &&
-	    (bp = sd_buf_dequeue(sc)) != NULL) {
+	    (bp = scsi_buf_dequeue(&sc->sc_buf_queue, &sc->sc_buf_mtx)) != NULL) {
 		/*
 		 * If the device has become invalid, abort all the
 		 * reads and writes until all files have been closed and
@@ -725,7 +694,7 @@ restart:
 
 		xs = scsi_xs_get(link, SCSI_NOSLEEP);
 		if (xs == NULL) {
-			sd_buf_requeue(sc, bp);
+			scsi_buf_requeue(&sc->sc_buf_queue, bp, &sc->sc_buf_mtx);
 			break;
 		}
 
@@ -799,7 +768,7 @@ sd_buf_done(struct scsi_xfer *xs)
 		/* The adapter is busy, requeue the buf and try it later. */
 		disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
 		    bp->b_flags & B_READ);
-		sd_buf_requeue(sc, bp);
+		scsi_buf_requeue(&sc->sc_buf_queue, bp, &sc->sc_buf_mtx);
 		scsi_xs_put(xs);
 		SET(sc->flags, SDF_WAITING); /* break out of sdstart loop */
 		timeout_add(&sc->sc_timeout, 1);
@@ -1523,22 +1492,4 @@ sd_flush(struct sd_softc *sc, int flags)
 		SC_DEBUG(link, SDEV_DB1, ("cache sync failed\n"));
 
 	scsi_xs_put(xs);
-}
-
-/*
- * Remove unprocessed buffers from queue.
- */
-void
-sd_kill_buffers(struct sd_softc *sc)
-{
-	struct buf *bp;
-	int s;
-
-	while ((bp = sd_buf_dequeue(sc)) != NULL) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-	}
 }

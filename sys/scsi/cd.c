@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.162 2010/01/15 05:31:38 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.163 2010/01/15 05:50:31 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -121,7 +121,6 @@ void	cdstart(void *);
 void	cd_buf_done(struct scsi_xfer *);
 void	cdminphys(struct buf *);
 int	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
-void	cd_kill_buffers(struct cd_softc *);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
 int	cd_getvol(struct cd_softc *cd, struct ioc_vol *, int);
 int	cd_setvol(struct cd_softc *, const struct ioc_vol *, int);
@@ -138,9 +137,6 @@ int	cd_read_toc(struct cd_softc *, int, int, void *, int, int);
 int	cd_get_parms(struct cd_softc *, int);
 int	cd_load_toc(struct cd_softc *, struct cd_toc *, int);
 int	cd_interpret_sense(struct scsi_xfer *);
-
-struct buf *cd_buf_dequeue(struct cd_softc *);
-void	cd_buf_requeue(struct cd_softc *, struct buf *);
 
 int	dvd_auth(struct cd_softc *, union dvd_authinfo *);
 int	dvd_read_physical(struct cd_softc *, union dvd_struct *);
@@ -277,7 +273,7 @@ cddetach(struct device *self, int flags)
 	struct cd_softc *sc = (struct cd_softc *)self;
 	int bmaj, cmaj, mn;
 
-	cd_kill_buffers(sc);
+	scsi_buf_killqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
@@ -553,33 +549,6 @@ done:
 		device_unref(&sc->sc_dev);
 }
 
-struct buf *
-cd_buf_dequeue(struct cd_softc *sc)
-{
-	struct buf *bp;
-
-	mtx_enter(&sc->sc_buf_mtx);
-	bp = sc->sc_buf_queue.b_actf;
-	if (bp != NULL)
-		sc->sc_buf_queue.b_actf = bp->b_actf;
-	if (sc->sc_buf_queue.b_actf == NULL)
-		sc->sc_buf_queue.b_actb = &sc->sc_buf_queue.b_actf;
-	mtx_leave(&sc->sc_buf_mtx);
-
-	return (bp);
-}
-
-void
-cd_buf_requeue(struct cd_softc *sc, struct buf *bp)
-{
-	mtx_enter(&sc->sc_buf_mtx);
-	bp->b_actf = sc->sc_buf_queue.b_actf;
-	sc->sc_buf_queue.b_actf = bp;
-	if (bp->b_actf == NULL)
-		sc->sc_buf_queue.b_actb = &bp->b_actf;
-	mtx_leave(&sc->sc_buf_mtx);
-}
-
 /*
  * cdstart looks to see if there is a buf waiting for the device
  * and that the device is not already busy. If both are true,
@@ -622,8 +591,7 @@ cdstart(void *v)
 	CLR(sc->sc_flags, CDF_WAITING);
 restart:
 	while (!ISSET(sc->sc_flags, CDF_WAITING) &&
-	    (bp = cd_buf_dequeue(sc)) != NULL) {
-
+	    (bp = scsi_buf_dequeue(&sc->sc_buf_queue, &sc->sc_buf_mtx)) != NULL) {
 		/*
 		 * If the device has become invalid, abort all the
 		 * reads and writes until all files have been closed and
@@ -641,7 +609,7 @@ restart:
 
 		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
 		if (xs == NULL) {
-			cd_buf_requeue(sc, bp);
+			scsi_buf_requeue(&sc->sc_buf_queue, bp, &sc->sc_buf_mtx);
 			break;
 		}
 
@@ -728,7 +696,7 @@ cd_buf_done(struct scsi_xfer *xs)
 		/* The adapter is busy, requeue the buf and try it later. */
 		disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
 		    bp->b_flags & B_READ);
-		cd_buf_requeue(sc, bp);
+		scsi_buf_requeue(&sc->sc_buf_queue, bp, &sc->sc_buf_mtx);
 		scsi_xs_put(xs);
 		SET(sc->sc_flags, CDF_WAITING); /* break out of cdstart loop */
 		timeout_add(&sc->sc_timeout, 1);
@@ -2016,24 +1984,6 @@ cd_interpret_sense(struct scsi_xfer *xs)
 		break;
 	}
 	return (EJUSTRETURN); /* use generic handler in scsi_base */
-}
-
-/*
- * Remove unprocessed buffers from queue.
- */
-void
-cd_kill_buffers(struct cd_softc *sc)
-{
-	struct buf *bp;
-	int s;
-
-	while ((bp = cd_buf_dequeue(sc)) != NULL) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-	}
 }
 
 #if defined(__macppc__)

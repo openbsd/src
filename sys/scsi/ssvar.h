@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.15 2010/01/11 08:56:17 krw Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.16 2010/01/15 05:50:31 krw Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct ss_softc {
 #define SSF_WAITING	0x04
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc.	*/
 	struct scan_io sio;
-	struct buf buf_queue;		/* the queue of pending IO operations */
+	struct buf sc_buf_queue;	/* the queue of pending IO operations */
 	const struct quirkdata *quirkdata; /* if we have a rogue entry */
 	struct ss_special special;	/* special handlers for spec. devices */
 	struct timeout timeout;
@@ -78,10 +78,6 @@ struct ss_softc {
 	struct mutex sc_start_mtx;
 	u_int sc_start_count;
 };
-
-struct buf *ss_buf_dequeue(struct ss_softc *);
-void	ss_buf_enqueue(struct ss_softc *, struct buf *);
-void	ss_buf_requeue(struct ss_softc *, struct buf *);
 
 /*
  * define the special attach routines if configured

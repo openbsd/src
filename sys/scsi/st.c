@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.92 2010/01/15 05:31:38 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.93 2010/01/15 05:50:31 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ struct st_softc {
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
 
-	struct buf buf_queue;		/* the queue of pending IO operations */
+	struct buf sc_buf_queue;	/* the queue of pending IO operations */
 	struct timeout sc_timeout;
 	struct mutex sc_buf_mtx;
 	struct mutex sc_start_mtx;
@@ -230,16 +230,12 @@ int	stactivate(struct device *, int);
 int	stdetach(struct device *, int);
 
 void	stminphys(struct buf *);
-void	st_kill_buffers(struct st_softc *);
 void	st_identify_drive(struct st_softc *, struct scsi_inquiry_data *);
 void	st_loadquirks(struct st_softc *);
 int	st_mount_tape(dev_t, int);
 void	st_unmount(struct st_softc *, int, int);
 int	st_decide_mode(struct st_softc *, int);
 void	ststart(void *);
-struct buf *st_buf_dequeue(struct st_softc *);
-void	st_buf_enqueue(struct st_softc *, struct buf *);
-void	st_buf_requeue(struct st_softc *, struct buf *);
 void	st_buf_done(struct scsi_xfer *);
 int	st_read(struct st_softc *, char *, int, int);
 int	st_read_block_limits(struct st_softc *, int);
@@ -348,9 +344,9 @@ stattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	st->buf_queue.b_active = 0;
-	st->buf_queue.b_actf = 0;
-	st->buf_queue.b_actb = &st->buf_queue.b_actf;
+	st->sc_buf_queue.b_active = 0;
+	st->sc_buf_queue.b_actf = 0;
+	st->sc_buf_queue.b_actb = &st->sc_buf_queue.b_actf;
 
 	/* Start up with media position unknown. */
 	st->media_fileno = -1;
@@ -376,7 +372,7 @@ stactivate(struct device *self, int act)
 
 	case DVACT_DEACTIVATE:
 		st->flags |= ST_DYING;
-		st_kill_buffers(st);
+		scsi_buf_killqueue(&st->sc_buf_queue, &st->sc_buf_mtx);
 		break;
 	}
 
@@ -389,7 +385,7 @@ stdetach(struct device *self, int flags)
 	struct st_softc *st = (struct st_softc *)self;
 	int bmaj, cmaj, mn;
 
-	st_kill_buffers(st);
+	scsi_buf_killqueue(&st->sc_buf_queue, &st->sc_buf_mtx);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = STUNIT(self->dv_unit);
@@ -891,7 +887,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	st_buf_enqueue(st, bp);
+	scsi_buf_enqueue(&st->sc_buf_queue, bp, &st->sc_buf_mtx);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -914,48 +910,6 @@ done:
 	biodone(bp);
 	splx(s);
 }
-
-void
-st_buf_enqueue(struct st_softc *st, struct buf *bp)
-{
-	struct buf *dp;
-
-	mtx_enter(&st->sc_buf_mtx);
-	dp = &st->buf_queue;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	mtx_leave(&st->sc_buf_mtx);
-}
-
-struct buf *
-st_buf_dequeue(struct st_softc *st)
-{
-	struct buf *bp;
-
-	mtx_enter(&st->sc_buf_mtx);
-	bp = st->buf_queue.b_actf;
-	if (bp != NULL)
-		st->buf_queue.b_actf = bp->b_actf;
-	if (st->buf_queue.b_actf == NULL)
-		st->buf_queue.b_actb = &st->buf_queue.b_actf;
-	mtx_leave(&st->sc_buf_mtx);
-
-	return (bp);
-}
-
-void
-st_buf_requeue(struct st_softc *st, struct buf *bp)
-{
-	mtx_enter(&st->sc_buf_mtx);
-	bp->b_actf = st->buf_queue.b_actf;
-	st->buf_queue.b_actf = bp;
-	if (bp->b_actf == NULL)
-		st->buf_queue.b_actb = &bp->b_actf;
-	mtx_leave(&st->sc_buf_mtx);
-}
-
 
 /*
  * ststart looks to see if there is a buf waiting for the device
@@ -996,7 +950,7 @@ ststart(void *v)
 	CLR(st->flags, ST_WAITING);
 restart:
 	while (!ISSET(st->flags, ST_WAITING) &&
-	    (bp = st_buf_dequeue(st)) != NULL) {
+	    (bp = scsi_buf_dequeue(&st->sc_buf_queue, &st->sc_buf_mtx)) != NULL) {
 
 		/*
 		 * if the device has been unmounted by the user
@@ -1017,7 +971,7 @@ restart:
 
 		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
 		if (xs == NULL) {
-			st_buf_requeue(st, bp);
+			scsi_buf_requeue(&st->sc_buf_queue, bp, &st->sc_buf_mtx);
 			break;
 		}
 
@@ -1145,7 +1099,7 @@ st_buf_done(struct scsi_xfer *xs)
 
 	case XS_NO_CCB:
 		/* The adapter is busy, requeue the buf and try it later. */
-		st_buf_requeue(st, bp);
+		scsi_buf_requeue(&st->sc_buf_queue, bp, &st->sc_buf_mtx);
 		scsi_xs_put(xs);
 		SET(st->flags, ST_WAITING); /* break out of cdstart loop */
 		timeout_add(&st->sc_timeout, 1);
@@ -2202,22 +2156,4 @@ stdump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 
 	/* Not implemented. */
 	return ENXIO;
-}
-
-/*
- * Remove unprocessed buffers from queue.
- */
-void
-st_kill_buffers(struct st_softc *st)
-{
-	struct buf *bp;
-	int s;
-
-	while ((bp = st_buf_dequeue(st)) != NULL) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-	}
 }

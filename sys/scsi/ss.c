@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.69 2010/01/15 05:31:38 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.70 2010/01/15 05:50:31 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -362,9 +362,9 @@ ssattach(parent, self, aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	ss->buf_queue.b_active = 0;
-	ss->buf_queue.b_actf = 0;
-	ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
+	ss->sc_buf_queue.b_active = 0;
+	ss->sc_buf_queue.b_actf = 0;
+	ss->sc_buf_queue.b_actb = &ss->sc_buf_queue.b_actf;
 }
 
 void
@@ -584,7 +584,7 @@ ssstrategy(bp)
 	 * at the end (a bit silly because we only have on user..)
 	 * (but it could fork() or dup())
 	 */
-	ss_buf_enqueue(ss, bp);
+	scsi_buf_enqueue(&ss->sc_buf_queue, bp, &ss->sc_buf_mtx);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -604,48 +604,6 @@ done:
 	biodone(bp);
 	splx(s);
 }
-
-void
-ss_buf_enqueue(struct ss_softc *ss, struct buf *bp)
-{
-	struct buf *dp;
-
-	mtx_enter(&ss->sc_buf_mtx);
-	dp = &ss->buf_queue;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	mtx_leave(&ss->sc_buf_mtx);
-}
-
-struct buf *
-ss_buf_dequeue(struct ss_softc *ss)
-{
-	struct buf *bp;
-
-	mtx_enter(&ss->sc_buf_mtx);
-	bp = ss->buf_queue.b_actf;
-	if (bp != NULL)
-		ss->buf_queue.b_actf = bp->b_actf;
-	if (ss->buf_queue.b_actf == NULL)
-		ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
-	mtx_leave(&ss->sc_buf_mtx);
-
-	return (bp);
-}
-
-void
-ss_buf_requeue(struct ss_softc *ss, struct buf *bp)
-{
-	mtx_enter(&ss->sc_buf_mtx);
-	bp->b_actf = ss->buf_queue.b_actf;
-	ss->buf_queue.b_actf = bp;
-	if (bp->b_actf == NULL)
-		ss->buf_queue.b_actb = &bp->b_actf;
-	mtx_leave(&ss->sc_buf_mtx);
-}
-
 
 /*
  * ssstart looks to see if there is a buf waiting for the device
@@ -683,7 +641,7 @@ ssstart(v)
 	CLR(ss->flags, SSF_WAITING);
 restart:
 	while (!ISSET(ss->flags, SSF_WAITING) &&
-	    (bp = ss_buf_dequeue(ss)) != NULL) {
+	    (bp = scsi_buf_dequeue(&ss->sc_buf_queue, &ss->sc_buf_mtx)) != NULL) {
 
 		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
 		if (xs == NULL)
@@ -735,7 +693,7 @@ ssdone(struct scsi_xfer *xs)
 
 	case XS_NO_CCB:
 		/* The adapter is busy, requeue the buf and try it later. */
-		ss_buf_requeue(ss, bp);
+		scsi_buf_requeue(&ss->sc_buf_queue, bp, &ss->sc_buf_mtx);
 		scsi_xs_put(xs);
 		SET(ss->flags, SSF_WAITING); /* break out of cdstart loop */
 		timeout_add(&ss->timeout, 1);
