@@ -1,0 +1,85 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2010/01/15 19:28:00 jakob Exp $
+
+.include <bsd.own.mk>
+
+BINDIR=		/usr/sbin
+CHROOTDIR=	/var/nsd
+USER=		named
+
+XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}" \
+		YACC="/usr/bin/yacc"
+CONFIGURE_OPTS=	--prefix=/usr \
+		--localstatedir=/var \
+		--sysconfdir=/etc \
+		--with-ssl=/usr \
+		--with-user=${USER} \
+		--with-nsd-conf-file=/etc/nsd.conf \
+		--with-pidfile=${CHROOTDIR}/nsd.pid \
+		--with-zonesdir=${CHROOTDIR}/zones \
+		--with-dbfile=${CHROOTDIR}/nsd.db \
+		--with-difffile=${CHROOTDIR}/ixfr.db \
+		--with-xfrdfile=${CHROOTDIR}/xfrd.state \
+		--enable-root-server \
+		--enable-nsid
+
+PROG=	nsd zonec \
+	nsd-notify nsd-checkconf nsd-patch nsd-xfer
+
+MAN=	nsd.8 nsdc.8 zonec.8 \
+	nsd-notify.8 nsd-checkconf.8 nsd-patch.8 nsd-xfer.8 \
+	nsd.conf.5
+
+
+all:	config.status
+	${MAKE}
+
+.FORCE: .IGNORE
+
+config: .FORCE
+	-rm -f config.cache
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${XCFLAGS} \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure ${CONFIGURE_OPTS}
+
+config.status:
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${XCFLAGS} \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure ${CONFIGURE_OPTS}
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
+
+install: maninstall
+.for file in ${PROG}
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} \
+		-o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${file} ${DESTDIR}${BINDIR}
+.endfor
+	${INSTALL} ${INSTALL_COPY} \
+		-o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		nsdc.sh  ${DESTDIR}${BINDIR}/nsdc
+
+BEFOREMAN= config.status
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+	rm -f ${CLEANFILES}
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif
