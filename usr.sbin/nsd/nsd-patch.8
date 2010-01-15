@@ -1,0 +1,69 @@
+.TH "nsd\-patch" "8" "Jan  6, 2010" "NLnet Labs" "nsd 3.2.4"
+.\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
+.\" See LICENSE for the license.
+.SH "NAME"
+.LP
+.B nsd\-patch
+\- NSD zone patcher version 3.2.4.
+.SH "SYNOPSIS"
+.B nsd\-patch
+.RB [ \-c
+.IR configfile ]
+.RB [ \-f ]
+.RB [ \-h ]
+.RB [ \-l ]
+.RB [ \-o
+.IR dbfile ]
+.RB [ \-s ]
+.RB [ \-x
+.IR difffile ]
+.SH "DESCRIPTION"
+.LP
+.B Nsd\-patch
+is the zone patcher for nsd(8). It reads in the nsd database 
+(nsd.db) and difffile (ixfr.db), and overwrites the zone text files 
+if they have been updated. Running this regularly ensures that the 
+difffile does not grow infinitely.
+.SH "OPTIONS" 
+.TP
+.B \-c\fI configfile
+Read specified configfile instead of the default
+.IR /etc/nsd/nsd.conf .
+.TP
+.B \-f
+Forces writing zone files. Also zones that have not changed are written
+back to their zone files.
+.TP
+.B \-h
+Print usage help information and exit.
+.TP
+.B \-l
+List the journal entries from the difffile. Does not write to zone files.
+.TP
+.B \-o\fI dbfile
+Store the output directly to dbfile.
+.TP
+.B \-s
+Skip writing zone files. No zones are written back to their zone files.
+.TP
+.B \-x\fI difffile
+Read specified difffile. Overrides the config file setting.
+.SH "FILES"
+.TP
+/var/db/nsd/nsd.db
+default
+.B NSD
+database
+.TP
+/etc/nsd/nsd.conf
+default
+.B NSD
+configuration file
+.SH "SEE ALSO"
+nsd(8), nsdc(8), nsd.conf(5), nsd-checkconf(8), nsd-notify(8), 
+nsd-xfer(8), zonec(8)
+.SH "AUTHORS"
+.LP
+.B NSD
+was written by NLnet Labs and RIPE NCC joint team. Please see
+CREDITS file in the distribution for further details.

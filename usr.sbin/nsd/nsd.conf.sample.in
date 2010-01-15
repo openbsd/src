@@ -1,0 +1,180 @@
+#
+# nsd.conf -- the NSD(8) configuration file, nsd.conf(5).
+#
+# Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+#
+# See LICENSE for the license.
+#
+
+# This is a comment.
+# Sample configuration file
+
+# options for the nsd server
+server:
+	# uncomment to specify specific interfaces to bind (default all).
+	# ip-address: 1.2.3.4
+	# ip-address: 12fe::8ef0
+
+	# don't answer VERSION.BIND and VERSION.SERVER CHAOS class queries
+	# hide-version: no
+
+	# enable debug mode, does not fork daemon process into the background.
+	# debug-mode: no
+
+	# listen only on IPv4 connections
+	# ip4-only: no
+
+	# listen only on IPv6 connections
+	# ip6-only: no
+	
+	# the database to use
+	# database: "@dbfile@"
+
+	# identify the server (CH TXT ID.SERVER entry).
+	# identity: "unidentified server"
+
+	# log messages to file. Default to stderr and syslog.
+	# logfile: "/var/log/nsd.log"
+
+	# Number of NSD servers to fork.
+	# server-count: 1
+
+	# Maximum number of concurrent TCP connections per server.
+	# This option should have a value below 1000.
+	# tcp-count: 10
+
+	# Maximum number of queries served on a single TCP connection.
+	# By default 0, which means no maximum.
+	# tcp-query-count: 0
+
+	# Override the default (120 seconds) TCP timeout.
+	# tcp-timeout: 120
+
+	# Preferred EDNS buffer size for IPv4.
+	# ipv4-edns-size: 4096
+
+	# Preferred EDNS buffer size for IPv6.
+	# ipv6-edns-size: 4096
+
+	# File to store pid for nsd in.
+	# pidfile: "@pidfile@"
+
+	# port to answer queries on. default is 53.
+	# port: 53
+
+	# statistics are produced every number of seconds.
+	# statistics: 3600
+
+	# Run NSD in a chroot-jail.
+	# make sure to have pidfile and database reachable from there.
+	# by default, no chroot-jail is used.
+	# chroot: "@configdir@"
+
+	# After binding socket, drop user privileges.
+	# can be a username, id or id.gid.
+	# username: @user@
+
+	# The directory for zonefile: files.
+	# zonesdir: "@zonesdir@"
+
+	# The file where incoming zone transfers are stored.
+	# run nsd-patch to update zone files, then you can safely delete it.
+	# difffile: "@difffile@"
+
+	# The file where secondary zone refresh and expire timeouts are kept.
+	# If you delete this file, all secondary zones are forced to be 
+	# 'refreshing' (as if nsd got a notify).
+	# xfrdfile: "@xfrdfile@"
+
+	# Number of seconds between reloads triggered by xfrd.
+	# xfrd-reload-timeout: 10
+
+	# Verbosity level.
+	# verbosity: 0
+
+# key for zone 1
+key:
+	name: mskey
+	algorithm: hmac-md5
+	secret: "K2tf3TRjvQkVCmJF3/Z9vA=="
+
+# Sample zone 1
+zone:
+	name: "example.com"
+	zonefile: "example.com.zone"
+
+	# This is a slave zone. Masters are listed below.
+
+	# master 1
+	allow-notify: 168.192.44.42 mskey
+	request-xfr: 168.192.44.42 mskey
+
+	# set local interface for sending zone transfer requests.
+	outgoing-interface: 10.0.0.10
+
+	# master 2
+	allow-notify: 10.0.0.11 NOKEY
+	request-xfr: 10.0.0.11 NOKEY
+
+	# By default, a slave will request a zone transfer with IXFR/TCP.
+	# If you want to make use of IXFR/UDP use
+	allow-notify: 10.0.0.12 NOKEY
+	request-xfr: UDP 10.0.0.12 NOKEY
+
+	# for a master that only speaks AXFR (like NSD) use
+	allow-notify: 10.0.0.13 NOKEY
+	request-xfr: AXFR 10.0.0.13 NOKEY
+
+	# Attention: You cannot use UDP and AXFR together. AXFR is always over 
+	# TCP. If you use UDP, we higly recommend you to deploy TSIG.
+
+	# Allow AXFR fallback if the master does not support IXFR. Default
+	# is yes.
+	allow-axfr-fallback: "yes"
+
+	# uncomment to provide AXFR to all the world
+	# provide-xfr: 0.0.0.0/0 NOKEY
+	# provide-xfr: ::0/0 NOKEY
+
+# Sample zone 2
+zone:
+	name: "example.net"
+	zonefile: "example.net.signed.zone"
+
+	# This is a master zone. Slaves are listed below.
+
+	# secondary 1. Uses port 5300.
+	notify: 10.0.0.14@5300 sec1_key
+	provide-xfr: 10.0.0.14@5300 sec1_key
+
+	# set local interface for sending notifies
+	outgoing-interface: 10.0.0.15
+
+	# secondary 2. 
+	notify: 10.11.12.14 sec2_key
+	provide-xfr: 10.11.12.14 sec2_key
+
+	# also provide xfr to operator's network.
+	provide-xfr: 169.192.85.0/24 NOKEY
+	# uncomment to disable xfr for the address.
+	# provide-xfr: 169.192.85.66 BLOCKED
+
+	# set the number of retries for notify.
+	notify-retry: 5
+
+# keys for zone 2
+key:
+	name: "sec1_key"
+	algorithm: hmac-md5
+	secret: "6KM6qiKfwfEpamEq72HQdA=="
+
+key:
+	name: sec2_key
+	algorithm: hmac-sha1
+	secret: "m83H2x8R0zbDf3yRKhrqgw=="
+
+key:
+	name: sec3_key
+	algorithm: hmac-sha256
+	secret: "m83H2x8R0zbDf3yRKhrqgw=="
+
