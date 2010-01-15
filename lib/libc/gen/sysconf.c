@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.10 2008/06/25 14:54:44 millert Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.11 2010/01/15 08:35:47 sthen Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -237,6 +237,15 @@ yesno:		if (sysctl(mib, namelen, &value, &len, NULL, 0) == -1)
 			return (-1);
 		return (vmtotal.t_free);
 	}
+
+	case _SC_NPROCESSORS_CONF:
+		mib[0] = CTL_HW;
+		mib[1] = HW_NCPU;
+		break;
+	case _SC_NPROCESSORS_ONLN:
+		mib[0] = CTL_HW;
+		mib[1] = HW_NCPU;
+		break;
 
 	default:
 		errno = EINVAL;
