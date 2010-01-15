@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.35 2010/01/13 01:51:20 krw Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.36 2010/01/15 05:31:38 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -335,16 +335,23 @@ scanjet_read_done(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 		if (scsi_interpret_sense(xs) != ERESTART)
 			xs->retries = 0;
+		goto retry;
 
-		/* FALLTHROUGH */
 	case XS_BUSY:
+		if (xs->retries) {
+			if (scsi_delay(xs, 1) != ERESTART)
+				xs->retries = 0;
+		}
+		goto retry;
+
 	case XS_TIMEOUT:
+retry:
 		if (xs->retries--) {
 			scsi_xs_exec(xs);
 			return;
 		}
-
 		/* FALLTHROUGH */
+
 	default:
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;

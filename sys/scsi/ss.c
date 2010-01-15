@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.68 2010/01/12 23:33:57 dlg Exp $	*/
+/*	$OpenBSD: ss.c,v 1.69 2010/01/15 05:31:38 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -745,16 +745,23 @@ ssdone(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 		if (scsi_interpret_sense(xs) != ERESTART)
 			xs->retries = 0;
+		goto retry;
 
-		/* FALLTHROUGH */
 	case XS_BUSY:
+		if (xs->retries) {
+			if (scsi_delay(xs, 1) != ERESTART)
+				xs->retries = 0;
+		}
+		goto retry;
+
 	case XS_TIMEOUT:
+retry:
 		if (xs->retries--) {
 			scsi_xs_exec(xs);
 			return;
 		}
-
 		/* FALLTHROUGH */
+
 	default:
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;

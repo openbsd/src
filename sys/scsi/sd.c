@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.180 2010/01/12 08:33:19 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.181 2010/01/15 05:31:38 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -809,16 +809,23 @@ sd_buf_done(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 		if (scsi_interpret_sense(xs) != ERESTART)
 			xs->retries = 0;
+		goto retry;
 
-		/* FALLTHROUGH */
 	case XS_BUSY:
+		if (xs->retries) {
+			if (scsi_delay(xs, 1) != ERESTART)
+				xs->retries = 0;
+		}
+		goto retry;
+
 	case XS_TIMEOUT:
+retry:
 		if (xs->retries--) {
 			scsi_xs_exec(xs);
 			return;
 		}
-
 		/* FALLTHROUGH */
+
 	default:
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;

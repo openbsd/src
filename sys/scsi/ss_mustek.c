@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.18 2010/01/13 01:51:20 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.19 2010/01/15 05:31:38 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -497,16 +497,23 @@ mustek_read_done(struct scsi_xfer *xs)
 	case XS_SHORTSENSE:
 		if (scsi_interpret_sense(xs) != ERESTART)
 			xs->retries = 0;
+		goto retry;
 
-		/* FALLTHROUGH */
 	case XS_BUSY:
+		if (xs->retries) {
+			if (scsi_delay(xs, 1) != ERESTART)
+				xs->retries = 0;
+		}
+		goto retry;
+
 	case XS_TIMEOUT:
+retry:
 		if (xs->retries--) {
 			scsi_xs_exec(xs);
 			return;
 		}
-
 		/* FALLTHROUGH */
+
 	default:
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
