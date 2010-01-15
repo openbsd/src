@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.38 2010/01/11 13:06:32 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.39 2010/01/15 22:17:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -374,6 +374,7 @@ sock_allocbuf(struct sock *f)
 	if (f->mode & AMSG_REC) {
 		wbuf = abuf_new(f->bufsz, &f->wpar);
 		aproc_setin(f->pipe.file.wproc, wbuf);
+		f->walign = dev_round * wbuf->bpf;
 	}
 	f->delta = 0;
 	f->tickpending = 0;
@@ -1320,6 +1321,7 @@ sock_buildmsg(struct sock *f)
 {
 	struct aproc *p;
 	struct abuf *ibuf;
+	unsigned size;
 
 	if (f->pstate == SOCK_MIDI) {
 #ifdef DEBUG
@@ -1382,12 +1384,17 @@ sock_buildmsg(struct sock *f)
 	p = f->pipe.file.wproc;
 	ibuf = LIST_FIRST(&p->ibuflist);
 	if (ibuf && ABUF_ROK(ibuf)) {
+		size = ibuf->used - (ibuf->used % ibuf->bpf);
+		if (size > AMSG_DATAMAX)
+			size = AMSG_DATAMAX - (AMSG_DATAMAX % ibuf->bpf);
+		if (size > f->walign)
+			size = f->walign;
+		f->walign -= size;
+		if (f->walign == 0)
+			f->walign = dev_round * ibuf->bpf;
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_DATA;
-		f->wmsg.u.data.size = ibuf->used - (ibuf->used % ibuf->bpf);
-		if (f->wmsg.u.data.size > AMSG_DATAMAX)
-			f->wmsg.u.data.size =
-			    AMSG_DATAMAX - (AMSG_DATAMAX % ibuf->bpf);
+		f->wmsg.u.data.size = size;
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
 		return 1;
@@ -1413,11 +1420,9 @@ sock_read(struct sock *f)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		sock_dbg(f);
-		dbg_puts(": reading, state = ");
-		dbg_putu(f->rstate);
-		dbg_puts(", todo = ");
+		dbg_puts(": reading ");
 		dbg_putu(f->rtodo);
-		dbg_puts("\n");
+		dbg_puts(" todo\n");
 	}
 #endif
 	switch (f->rstate) {
@@ -1506,11 +1511,9 @@ sock_write(struct sock *f)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		sock_dbg(f);
-		dbg_puts(": writing, state = ");
-		dbg_putu(f->wstate);
-		dbg_puts(", todo = ");
+		dbg_puts(": writing ");
 		dbg_putu(f->wtodo);
-		dbg_puts("\n");
+		dbg_puts(" todo\n");
 	}
 #endif
 	switch (f->wstate) {
