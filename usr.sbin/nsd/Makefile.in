@@ -60,7 +60,7 @@ EDIT		= sed \
 			-e 's,@spriority\@,$(spriority),g' \
 			-e 's,@kpriority\@,$(kpriority),g' 
 
-TARGETS 	= nsd zonec nsd-notify nsd-xfer nsdc.sh nsd-checkconf nsd-patch nsd.conf.sample
+TARGETS 	= nsd nsd-zonec nsd-notify nsd-xfer nsdc.sh nsd-checkconf nsd-patch nsd.conf.sample
 
 ALL_OBJECTS	=			\
 	answer.o			\
@@ -134,7 +134,7 @@ NSD_OBJECTS	=				\
 	xfrd-tcp.o				\
 	xfrd.o
 
-ZONEC_OBJECTS	=				\
+NSD_ZONEC_OBJECTS	=			\
 	answer.o				\
 	axfr.o					\
 	buffer.o				\
@@ -324,7 +324,7 @@ install: all
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man8
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man5
 	$(INSTALL) nsd $(DESTDIR)$(sbindir)/nsd
-	$(INSTALL) zonec $(DESTDIR)$(sbindir)/zonec
+	$(INSTALL) nsd-zonec $(DESTDIR)$(sbindir)/nsd-zonec
 	$(INSTALL) nsdc.sh $(DESTDIR)$(sbindir)/nsdc
 	$(INSTALL) nsd-notify $(DESTDIR)$(sbindir)/nsd-notify
 	$(INSTALL) nsd-checkconf $(DESTDIR)$(sbindir)/nsd-checkconf
@@ -332,7 +332,7 @@ install: all
 	$(INSTALL) nsd-xfer $(DESTDIR)$(sbindir)/nsd-xfer
 	$(INSTALL_DATA) $(srcdir)/nsd.8 $(DESTDIR)$(mandir)/man8
 	$(INSTALL_DATA) $(srcdir)/nsdc.8 $(DESTDIR)$(mandir)/man8
-	$(INSTALL_DATA) $(srcdir)/zonec.8 $(DESTDIR)$(mandir)/man8
+	$(INSTALL_DATA) $(srcdir)/nsd-zonec.8 $(DESTDIR)$(mandir)/man8/nsd-zonec.8
 	$(INSTALL_DATA) $(srcdir)/nsd-notify.8 $(DESTDIR)$(mandir)/man8/nsd-notify.8
 	$(INSTALL_DATA) $(srcdir)/nsd-checkconf.8 $(DESTDIR)$(mandir)/man8/nsd-checkconf.8
 	$(INSTALL_DATA) $(srcdir)/nsd-patch.8 $(DESTDIR)$(mandir)/man8/nsd-patch.8
@@ -342,8 +342,8 @@ install: all
 
 uninstall:
 	@echo
-	rm -f -- $(DESTDIR)$(sbindir)/nsd $(DESTDIR)$(sbindir)/zonec $(DESTDIR)$(sbindir)/nsdc $(DESTDIR)$(sbindir)/nsd-notify $(DESTDIR)$(sbindir)/nsd-xfer $(DESTDIR)$(sbindir)/nsd-checkconf $(DESTDIR)$(sbindir)/nsd-patch
-	rm -f -- $(DESTDIR)$(mandir)/man8/nsd.8 $(DESTDIR)$(mandir)/man8/nsdc.8 $(DESTDIR)$(mandir)/man8/zonec.8 $(DESTDIR)$(mandir)/man8/nsd-notify.8 $(DESTDIR)$(mandir)/man8/nsd-xfer.8 $(DESTDIR)$(mandir)/man5/nsd.conf.5
+	rm -f -- $(DESTDIR)$(sbindir)/nsd $(DESTDIR)$(sbindir)/nsd-zonec $(DESTDIR)$(sbindir)/nsdc $(DESTDIR)$(sbindir)/nsd-notify $(DESTDIR)$(sbindir)/nsd-xfer $(DESTDIR)$(sbindir)/nsd-checkconf $(DESTDIR)$(sbindir)/nsd-patch
+	rm -f -- $(DESTDIR)$(mandir)/man8/nsd.8 $(DESTDIR)$(mandir)/man8/nsdc.8 $(DESTDIR)$(mandir)/man8/nsd-zonec.8 $(DESTDIR)$(mandir)/man8/nsd-notify.8 $(DESTDIR)$(mandir)/man8/nsd-xfer.8 $(DESTDIR)$(mandir)/man5/nsd.conf.5
 	rm -f -- $(DESTDIR)$(mandir)/man8/nsd-checkconf.8 $(DESTDIR)$(mandir)/man8/nsd-patch.8
 	rm -f -- $(DESTDIR)$(pidfile) $(DESTDIR)$(dbfile)
 	@echo
@@ -354,8 +354,8 @@ test:
 nsd:	$(NSD_OBJECTS) $(LIBOBJS)
 	$(LINK) -o $@ $(NSD_OBJECTS) $(LIBOBJS) $(LIBS)
 
-zonec:	$(ZONEC_OBJECTS) $(LIBOBJS)
-	$(LINK) -o $@ $(ZONEC_OBJECTS) $(LIBOBJS) $(LIBS)
+nsd-zonec:	$(NSD_ZONEC_OBJECTS) $(LIBOBJS)
+	$(LINK) -o $@ $(NSD_ZONEC_OBJECTS) $(LIBOBJS) $(LIBS)
 
 nsd-notify:	$(NSD_NOTIFY_OBJECTS) $(LIBOBJS)
 	$(LINK) -o $@ $(NSD_NOTIFY_OBJECTS) $(LIBOBJS) $(LIBS)

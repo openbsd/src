@@ -1368,9 +1368,9 @@ static void
 usage (void)
 {
 #ifndef NDEBUG
-	fprintf(stderr, "usage: zonec [-v|-h|-C|-F|-L] [-c configfile] [-o origin] [-d directory] [-f database] [-z zonefile]\n\n");
+	fprintf(stderr, "usage: nsd-zonec [-v|-h|-C|-F|-L] [-c configfile] [-o origin] [-d directory] [-f database] [-z zonefile]\n\n");
 #else
-	fprintf(stderr, "usage: zonec [-v|-h|-C] [-c configfile] [-o origin] [-d directory] [-f database] [-z zonefile]\n\n");
+	fprintf(stderr, "usage: nsd-zonec [-v|-h|-C] [-c configfile] [-o origin] [-d directory] [-f database] [-z zonefile]\n\n");
 #endif
 	fprintf(stderr, "\tNSD zone compiler, creates database from zone files.\n");
 	fprintf(stderr, "\tVersion %s. Report bugs to <%s>.\n\n",
@@ -1405,7 +1405,7 @@ main (int argc, char **argv)
 	const char* singlefile = NULL;
 	nsd_options_t* nsd_options = NULL;
 
-	log_init("zonec");
+	log_init("nsd-zonec");
 
 	global_region = region_create(xalloc, free);
 	rr_region = region_create(xalloc, free);
@@ -1466,14 +1466,14 @@ main (int argc, char **argv)
 		nsd_options = nsd_options_create(global_region);
 		if(!parse_options_file(nsd_options, configfile))
 		{
-			fprintf(stderr, "zonec: could not read config: %s\n", configfile);
+			fprintf(stderr, "nsd-zonec: could not read config: %s\n", configfile);
 			exit(1);
 		}
 	}
 	if(nsd_options && zonesdir == 0) zonesdir = nsd_options->zonesdir;
 	if(zonesdir && zonesdir[0]) {
 		if (chdir(zonesdir)) {
-			fprintf(stderr, "zonec: cannot chdir to %s: %s\n", zonesdir, strerror(errno));
+			fprintf(stderr, "nsd-zonec: cannot chdir to %s: %s\n", zonesdir, strerror(errno));
 			exit(1);
 		}
 	}
@@ -1484,14 +1484,14 @@ main (int argc, char **argv)
 
 	/* Create the database */
 	if ((db = namedb_new(dbfile)) == NULL) {
-		fprintf(stderr, "zonec: error creating the database (%s): %s\n",
+		fprintf(stderr, "nsd-zonec: error creating the database (%s): %s\n",
 			dbfile, strerror(errno));
 		exit(1);
 	}
 
 	parser = zparser_create(global_region, rr_region, db);
 	if (!parser) {
-		fprintf(stderr, "zonec: error creating the parser\n");
+		fprintf(stderr, "nsd-zonec: error creating the parser\n");
 		exit(1);
 	}
 
@@ -1504,34 +1504,34 @@ main (int argc, char **argv)
 		 * Read a single zone file with the specified origin
 		 */
 		if(!singlefile) {
-			fprintf(stderr, "zonec: must have -z zonefile when reading single zone.\n");
+			fprintf(stderr, "nsd-zonec: must have -z zonefile when reading single zone.\n");
 			exit(1);
 		}
 		if(!origin) {
-			fprintf(stderr, "zonec: must have -o origin when reading single zone.\n");
+			fprintf(stderr, "nsd-zonec: must have -o origin when reading single zone.\n");
 			exit(1);
 		}
 		if (vflag > 0)
-			fprintf(stdout, "zonec: reading zone \"%s\".\n", origin);
+			fprintf(stdout, "nsd-zonec: reading zone \"%s\".\n", origin);
 		zone_read(origin, singlefile, nsd_options);
 		if (vflag > 0)
-			fprintf(stdout, "zonec: processed %ld RRs in \"%s\".\n", totalrrs, origin);
+			fprintf(stdout, "nsd-zonec: processed %ld RRs in \"%s\".\n", totalrrs, origin);
 	} else {
 		zone_options_t* zone;
 		if(!nsd_options) {
-			fprintf(stderr, "zonec: no zones specified.\n");
+			fprintf(stderr, "nsd-zonec: no zones specified.\n");
 			exit(1);
 		}
 		/* read all zones */
 		RBTREE_FOR(zone, zone_options_t*, nsd_options->zone_options)
 		{
 			if (vflag > 0)
-				fprintf(stdout, "zonec: reading zone \"%s\".\n",
+				fprintf(stdout, "nsd-zonec: reading zone \"%s\".\n",
 					zone->name);
 			zone_read(zone->name, zone->zonefile, nsd_options);
 			if (vflag > 0)
 				fprintf(stdout,
-					"zonec: processed %ld RRs in \"%s\".\n",
+					"nsd-zonec: processed %ld RRs in \"%s\".\n",
 					totalrrs, zone->name);
 			totalrrs = 0;
 		}
@@ -1551,14 +1551,14 @@ main (int argc, char **argv)
 
 	/* Close the database */
 	if (namedb_save(db) != 0) {
-		fprintf(stderr, "zonec: error writing the database (%s): %s\n", db->filename, strerror(errno));
+		fprintf(stderr, "nsd-zonec: error writing the database (%s): %s\n", db->filename, strerror(errno));
 		namedb_discard(db);
 		exit(1);
 	}
 
 	/* Print the total number of errors */
 	if (vflag > 0 || totalerrors > 0) {
-		fprintf(stderr, "\nzonec: done with %ld errors.\n",
+		fprintf(stderr, "\nnsd-zonec: done with %ld errors.\n",
 			totalerrors);
 	}
 

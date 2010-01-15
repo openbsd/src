@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2010/01/15 19:28:00 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2010/01/15 19:39:36 jakob Exp $
 
 .include <bsd.own.mk>
 
@@ -22,12 +22,10 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--enable-root-server \
 		--enable-nsid
 
-PROG=	nsd zonec \
-	nsd-notify nsd-checkconf nsd-patch nsd-xfer
+PROG=	nsd nsd-zonec nsd-notify nsd-checkconf nsd-patch nsd-xfer
 
-MAN=	nsd.8 nsdc.8 zonec.8 \
-	nsd-notify.8 nsd-checkconf.8 nsd-patch.8 nsd-xfer.8 \
-	nsd.conf.5
+MAN=	nsd.8 nsdc.8 nsd-zonec.8 nsd-notify.8 nsd-checkconf.8 nsd-patch.8 \
+	nsd-xfer.8 nsd.conf.5
 
 
 all:	config.status

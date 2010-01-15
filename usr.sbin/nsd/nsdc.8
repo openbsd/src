@@ -30,7 +30,7 @@
 .SH "DESCRIPTION"
 .LP
 .B Nsdc
-is the shell script that used to control nsd(8) and zonec(8) from 
+is the shell script that used to control nsd(8) and nsd-zonec(8) from 
 .B NSD
 distribution.
 .B Nsdc
@@ -67,7 +67,7 @@ Initiate nsd(8) name space database reload by sending
 .IR SIGHUP.
 .TP 
 .I rebuild
-Rebuild the nsd(8) database by invoking zonec(8) with appropriate 
+Rebuild the nsd(8) database by invoking nsd-zonec(8) with appropriate 
 arguments.
 .TP 
 .I restart
@@ -150,7 +150,7 @@ otherwise.
 .SH "SEE ALSO"
 .LP
 nsd(8), nsd.conf(5), nsd\-checkconf(8), nsd\-notify(8), 
-nsd\-patch(8), nsd\-xfer(8), zonec(8)
+nsd\-patch(8), nsd\-xfer(8), nsd-zonec(8)
 .SH "AUTHORS"
 .LP
 .B NSD
