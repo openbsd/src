@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.6/2.95.3/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.6/2.95.3/specs
 ./usr/lib/libasn1.so.17.0
-./usr/lib/libc.so.53.0
+./usr/lib/libc.so.53.1
 ./usr/lib/libcom_err.so.17.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.11.0
