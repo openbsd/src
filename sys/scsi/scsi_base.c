@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.165 2010/01/15 05:50:31 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.166 2010/01/15 06:27:12 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -993,19 +993,8 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 #ifdef SCSIDEBUG
 	if (xs->sc_link->flags & SDEV_DB1)
 		scsi_show_mem((u_char *)&xs->sense, sizeof(xs->sense));
+	scsi_print_sense(xs);
 #endif /* SCSIDEBUG */
-
-	serr = sense->error_code & SSD_ERRCODE;
-	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED)
-		skey = 0xff;	/* Invalid value, since key is 4 bit value. */
-	else
-		skey = sense->flags & SSD_KEY;
-
-#ifndef SCSIDEBUG
-	/* If not SCSIDEBUG, only print sense in some cases. */
-	if (skey && (xs->flags & SCSI_SILENT) == 0)
-#endif /* SCSIDEBUG */
-		scsi_print_sense(xs);
 
 	/*
 	 * If the device has its own error handler, call it first.
@@ -1020,9 +1009,14 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 			return (error); /* error >= 0  better ? */
 	}
 
+	/* Default sense interpretation. */
+	serr = sense->error_code & SSD_ERRCODE;
+	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED)
+		skey = 0xff;	/* Invalid value, since key is 4 bit value. */
+	else
+		skey = sense->flags & SSD_KEY;
+
 	/*
-	 * Default sense interpretation.
-	 *
 	 * Interpret the key/asc/ascq information where appropriate.
 	 */
 	error = 0;
@@ -1138,6 +1132,12 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 		error = EIO;
 		break;
 	}
+
+#ifndef SCSIDEBUG
+	/* SCSIDEBUG would mean it has already been printed. */
+	if (skey && (xs->flags & SCSI_SILENT) == 0)
+		scsi_print_sense(xs);
+#endif /* SCSIDEBUG */
 
 	return (error);
 }
