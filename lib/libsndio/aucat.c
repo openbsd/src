@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.32 2009/10/26 19:06:28 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.33 2010/01/15 22:28:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,6 +41,7 @@ struct aucat_hdl {
 	unsigned rstate, wstate;	/* one of above */
 	unsigned rbpf, wbpf;		/* read and write bytes-per-frame */
 	int maxwrite;			/* latency constraint */
+	int canwrite;			/* got POLLOUT event */
 	int events;			/* events the user requested */
 	unsigned curvol, reqvol;	/* current and requested volume */
 	unsigned devbufsz;		/* server side buffer size (in frames) */
@@ -126,6 +127,7 @@ aucat_wmsg(struct aucat_hdl *hdl)
 				hdl->sio.eof = 1;
 				DPERROR("aucat_wmsg: write");
 			}
+			hdl->canwrite = 0;
 			return 0;
 		}
 		hdl->wtodo -= n;
@@ -332,6 +334,7 @@ aucat_start(struct sio_hdl *sh)
 		hdl->sio.eof = 1;
 		return 0;
 	}
+	hdl->canwrite = 0;
 	return 1;
 }
 
@@ -608,6 +611,7 @@ aucat_write(struct sio_hdl *sh, const void *buf, size_t len)
 			hdl->sio.eof = 1;
 			DPERROR("aucat_write: write");
 		}
+		hdl->canwrite = 0;
 		return 0;
 	}
 	hdl->maxwrite -= n;
@@ -625,12 +629,14 @@ aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
 	hdl->events = events;
-	if (hdl->maxwrite <= 0)
+	if (hdl->canwrite)
 		events &= ~POLLOUT;
+	else
+		events |= POLLOUT;
 	if (hdl->rstate == STATE_MSG)
 		events |= POLLIN;
 	pfd->fd = hdl->fd;
-	pfd->events = events;		
+	pfd->events = events;
 	return 1;
 }
 
@@ -640,6 +646,8 @@ aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 	int revents = pfd->revents;
 
+	if (revents & POLLOUT)
+		hdl->canwrite = 1;
 	if (revents & POLLIN) {
 		while (hdl->rstate == STATE_MSG) {
 			if (!aucat_runmsg(hdl)) {
@@ -648,10 +656,9 @@ aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 			}
 		}
 	}
-	if (revents & POLLOUT) {
-		if (hdl->maxwrite <= 0)
-			revents &= ~POLLOUT;
-	}
+	revents &= ~POLLOUT;
+	if (hdl->canwrite && hdl->maxwrite > 0)
+		revents |= POLLOUT;
 	if (hdl->sio.eof)
 		return POLLHUP;
 	return revents & (hdl->events | POLLHUP);
