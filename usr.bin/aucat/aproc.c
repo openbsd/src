@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.45 2010/01/14 17:57:47 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.46 2010/01/15 22:17:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1247,10 +1247,12 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		aproc_dbg(p);
-		dbg_puts(": resamp starting ifr = ");
+		dbg_puts(": resamp starting diff = ");
+		dbg_puti(diff);
+		dbg_puts(", ifr = ");
 		dbg_putu(ifr);
 		dbg_puts(", ofr = ");
-		dbg_puti(ofr);
+		dbg_putu(ofr);
 		dbg_puts(" fr\n");
 	}
 #endif
@@ -1266,7 +1268,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 			}
 			diff += oblksz;
 			ifr--;
-		} else {
+		} else if (diff > 0) {
 			if (ofr == 0)
 				break;
 			ctx = ctxbuf;
@@ -1278,6 +1280,18 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 			}
 			diff -= iblksz;
 			ofr--;
+		} else {
+			if (ifr == 0 || ofr == 0)
+				break;
+			ctx_start ^= 1;
+			ctx = ctxbuf + ctx_start;
+			for (c = inch; c > 0; c--) {
+				*ctx = *odata++ = *idata++;
+				ctx += RESAMP_NCTX;
+			}
+			ifr--;
+			ofr--;
+			diff += oblksz - iblksz;
 		}
 	}
 	p->u.resamp.diff = diff;
@@ -1285,10 +1299,12 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 #ifdef DEBUG
 	if (debug_level >= 4) {
 		aproc_dbg(p);
-		dbg_puts(": resamp done ifr = ");
+		dbg_puts(": resamp done delta = ");
+		dbg_puti(diff);
+		dbg_puts(", ifr = ");
 		dbg_putu(ifr);
 		dbg_puts(", ofr = ");
-		dbg_puti(ofr);
+		dbg_putu(ofr);
 		dbg_puts(" fr\n");
 	}
 #endif
