@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.467 2010/01/06 23:24:22 sthen Exp $
+$OpenBSD: usbdevs,v 1.468 2010/01/15 10:16:03 sobrado Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2002,6 +2002,7 @@ product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH PAGESCAN	0x040f	PageScan
 product LOGITECH QUICKCAMWEB	0x0801	QuickCam Web
+product LOGITECH WEBCAMC200	0x0802	Webcam C200
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
 product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
