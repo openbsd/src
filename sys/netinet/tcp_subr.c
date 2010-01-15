@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.109 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.110 2010/01/15 18:20:23 chl Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -462,10 +462,9 @@ tcp_newtcpcb(struct inpcb *inp)
 	struct tcpcb *tp;
 	int i;
 
-	tp = pool_get(&tcpcb_pool, PR_NOWAIT);
+	tp = pool_get(&tcpcb_pool, PR_NOWAIT|PR_ZERO);
 	if (tp == NULL)
 		return ((struct tcpcb *)0);
-	bzero((char *) tp, sizeof(struct tcpcb));
 	TAILQ_INIT(&tp->t_segq);
 	tp->t_maxseg = tcp_mssdflt;
 	tp->t_maxopd = 0;

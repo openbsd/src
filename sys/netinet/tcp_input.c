@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.230 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.231 2010/01/15 18:20:23 chl Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4022,7 +4022,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		return (1);
 	}
 
-	sc = pool_get(&syn_cache_pool, PR_NOWAIT);
+	sc = pool_get(&syn_cache_pool, PR_NOWAIT|PR_ZERO);
 	if (sc == NULL) {
 		if (ipopts)
 			(void) m_free(ipopts);
@@ -4033,8 +4033,6 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * Fill in the cache, and put the necessary IP and TCP
 	 * options into the reply.
 	 */
-	bzero(sc, sizeof(struct syn_cache));
-	bzero(&sc->sc_timer, sizeof(sc->sc_timer));
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
 	sc->sc_rdomain = sotoinpcb(so)->inp_rdomain;
