@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.79 2010/01/09 12:53:32 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.80 2010/01/16 12:42:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -485,12 +485,15 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 #if IWN_RBUF_SIZE == 8192
 	    IEEE80211_HTCAP_AMSDU7935 |
 #endif
-	    IEEE80211_HTCAP_SMPS_DIS |
 	    IEEE80211_HTCAP_CBW20_40 |
 	    IEEE80211_HTCAP_SGI20 |
 	    IEEE80211_HTCAP_SGI40;
 	if (sc->hw_type != IWN_HW_REV_TYPE_4965)
 		ic->ic_htcaps |= IEEE80211_HTCAP_GF;
+	if (sc->hw_type == IWN_HW_REV_TYPE_6050)
+		ic->ic_htcaps |= IEEE80211_HTCAP_SMPS_DYN;
+	else
+		ic->ic_htcaps |= IEEE80211_HTCAP_SMPS_DIS;
 #endif	/* !IEEE80211_NO_HT */
 
 	/* Set supported legacy rates. */
@@ -502,11 +505,11 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	}
 #ifndef IEEE80211_NO_HT
 	/* Set supported HT rates. */
-	ic->ic_sup_mcs[0] = 0xff;
+	ic->ic_sup_mcs[0] = 0xff;		/* MCS 0-7 */
 	if (sc->nrxchains > 1)
-		ic->ic_sup_mcs[1] = 0xff;
+		ic->ic_sup_mcs[1] = 0xff;	/* MCS 7-15 */
 	if (sc->nrxchains > 2)
-		ic->ic_sup_mcs[2] = 0xff;
+		ic->ic_sup_mcs[2] = 0xff;	/* MCS 16-23 */
 #endif
 
 	/* IBSS channel undefined for now. */
@@ -2060,7 +2063,8 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	switch (calib->code) {
 	case IWN5000_PHY_CALIB_DC:
-		if (sc->hw_type == IWN_HW_REV_TYPE_5150)
+		if (sc->hw_type == IWN_HW_REV_TYPE_5150 ||
+		    sc->hw_type == IWN_HW_REV_TYPE_6050)
 			idx = 0;
 		break;
 	case IWN5000_PHY_CALIB_LO:
@@ -4915,7 +4919,8 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
-	if (sc->hw_type != IWN_HW_REV_TYPE_5150) {
+	if (sc->hw_type != IWN_HW_REV_TYPE_5150 &&
+	    sc->hw_type != IWN_HW_REV_TYPE_6050) {
 		struct iwn5000_phy_calib_crystal cmd;
 
 		/* Perform crystal calibration. */
