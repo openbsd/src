@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.25 2010/01/14 07:24:43 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.26 2010/01/16 23:28:10 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -51,16 +51,16 @@
 
 extern void trapDump(char *);
 u_long MipsEmulateBranch(db_regs_t *, int, int, u_int);
-void  stacktrace_subr(db_regs_t *, int (*)(const char*, ...));
+void  stacktrace_subr(db_regs_t *, int, int (*)(const char*, ...));
 
-int   kdbpeek(void *);
-int64_t kdbpeekd(void *);
-short kdbpeekw(void *);
-char  kdbpeekb(void *);
-void  kdbpoke(vaddr_t, int);
-void  kdbpoked(vaddr_t, int64_t);
-void  kdbpokew(vaddr_t, short);
-void  kdbpokeb(vaddr_t, char);
+uint32_t kdbpeek(vaddr_t);
+uint64_t kdbpeekd(vaddr_t);
+uint16_t kdbpeekw(vaddr_t);
+uint8_t  kdbpeekb(vaddr_t);
+void  kdbpoke(vaddr_t, uint32_t);
+void  kdbpoked(vaddr_t, uint64_t);
+void  kdbpokew(vaddr_t, uint16_t);
+void  kdbpokeb(vaddr_t, uint8_t);
 int   kdb_trap(int, struct trap_frame *);
 
 void db_trap_trace_cmd(db_expr_t, int, db_expr_t, char *);
@@ -155,21 +155,20 @@ db_read_bytes(addr, size, data)
 	size_t      size;
 	char       *data;
 {
-	while (size >= sizeof(int)) {
-		*((int *)data)++ = kdbpeek((void *)addr);
-		addr += sizeof(int);
-		size -= sizeof(int);
+	while (size >= sizeof(uint32_t)) {
+		*((uint32_t *)data)++ = kdbpeek(addr);
+		addr += sizeof(uint32_t);
+		size -= sizeof(uint32_t);
 	}
 
-	if (size >= sizeof(short)) {
-		*((short *)data)++ = kdbpeekw((void *)addr);
-		addr += sizeof(short);
-		size -= sizeof(short);
+	if (size >= sizeof(uint16_t)) {
+		*((uint16_t *)data)++ = kdbpeekw(addr);
+		addr += sizeof(uint16_t);
+		size -= sizeof(uint16_t);
 	}
 
-	if (size) {
-		*data++ = kdbpeekb((void *)addr);
-	}
+	if (size)
+		*(uint8_t *)data = kdbpeekb(addr);
 }
 
 void
@@ -181,21 +180,21 @@ db_write_bytes(addr, size, data)
 	vaddr_t ptr = addr;
 	size_t len = size;
 
-	while (len >= sizeof(int)) {
-		kdbpoke(ptr, *((int *)data)++);
-		ptr += sizeof(int);
-		len -= sizeof(int);
+	while (len >= sizeof(uint32_t)) {
+		kdbpoke(ptr, *((uint32_t *)data)++);
+		ptr += sizeof(uint32_t);
+		len -= sizeof(uint32_t);
 	}
 
-	if (len >= sizeof(short)) {
-		kdbpokew(ptr, *((short *)data)++);
-		ptr += sizeof(int);
-		len -= sizeof(int);
+	if (len >= sizeof(uint16_t)) {
+		kdbpokew(ptr, *((uint16_t *)data)++);
+		ptr += sizeof(uint16_t);
+		len -= sizeof(uint16_t);
 	}
 
-	if (len) {
-		kdbpokeb(ptr, *data++);
-	}
+	if (len)
+		kdbpokeb(ptr, *(uint8_t *)data);
+
 	if (addr < VM_MAXUSER_ADDRESS) {
 		struct cpu_info *ci = curcpu();
 
@@ -206,10 +205,6 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-#define	VALID_ADDRESS(va) \
-	(((va) >= VM_MIN_KERNEL_ADDRESS && (va) < VM_MAX_KERNEL_ADDRESS) || \
-	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSEG1_BASE))
-
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
@@ -218,17 +213,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char		*modif;
 	int		(*pr)(const char *, ...);
 {
-	db_sym_t sym;
-	db_expr_t diff;
-	db_addr_t subr;
-	char *symname;
-	vaddr_t pc, sp, ra, va;
-	register_t a0, a1, a2, a3;
-	unsigned instr, mask;
-	InstFmt i;
-	int more, stksize;
-	extern char k_intr[];
-	extern char k_general[];
 	struct trap_frame *regs = &ddb_regs;
 
 	if (have_addr) {
@@ -236,198 +220,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		return;
 	}
 
-	/* get initial values from the exception frame */
-	sp = (vaddr_t)regs->sp;
-	pc = (vaddr_t)regs->pc;
-	ra = (vaddr_t)regs->ra;		/* May be a 'leaf' function */
-	a0 = regs->a0;
-	a1 = regs->a1;
-	a2 = regs->a2;
-	a3 = regs->a3;
-
-/* Jump here when done with a frame, to start a new one */
-loop:
-	symname = NULL;
-	subr = 0;
-	stksize = 0;
-
-	if (count-- == 0) {
-		ra = 0;
-		goto end;
-	}
-
-	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || !VALID_ADDRESS(sp)) {
-		(*pr)("SP %p: not in kernel\n", sp);
-		ra = 0;
-		goto done;
-	}
-
-	/* check for bad PC */
-	if (pc & 3 || !VALID_ADDRESS(pc)) {
-		(*pr)("PC %p: not in kernel\n", pc);
-		ra = 0;
-		goto done;
-	}
-
-	/*
-	 * Dig out the function from the symbol table.
-	 * Watch out for function tail optimizations.
-	 */
-	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
-	db_symbol_values(sym, &symname, 0);
-	if (sym != DB_SYM_NULL) {
-		subr = pc - diff;
-	} else {
-		subr = 0;
-	}
-
-	/*
-	 * Find the beginning of the current subroutine by scanning backwards
-	 * from the current PC for the end of the previous subroutine.
-	 */
-	if (!subr) {
-		va = pc - sizeof(int);
-		while ((instr = kdbpeek((int *)va)) != MIPS_JR_RA)
-			va -= sizeof(int);
-		va += 2 * sizeof(int);	/* skip back over branch & delay slot */
-		/* skip over nulls which might separate .o files */
-		while ((instr = kdbpeek((int *)va)) == 0)
-			va += sizeof(int);
-		subr = va;
-	}
-
-	/*
-	 * Jump here for locore entry points for which the preceding
-	 * function doesn't end in "j ra"
-	 */
-	/* scan forwards to find stack size and any saved registers */
-	stksize = 0;
-	more = 3;
-	mask = 0;
-	for (va = subr; more; va += sizeof(int),
-	    more = (more == 3) ? 3 : more - 1) {
-		/* stop if hit our current position */
-		if (va >= pc)
-			break;
-		instr = kdbpeek((int *)va);
-		i.word = instr;
-		switch (i.JType.op) {
-		case OP_SPECIAL:
-			switch (i.RType.func) {
-			case OP_JR:
-			case OP_JALR:
-				more = 2; /* stop after next instruction */
-				break;
-
-			case OP_SYSCALL:
-			case OP_BREAK:
-				more = 1; /* stop now */
-			};
-			break;
-
-		case OP_BCOND:
-		case OP_J:
-		case OP_JAL:
-		case OP_BEQ:
-		case OP_BNE:
-		case OP_BLEZ:
-		case OP_BGTZ:
-			more = 2; /* stop after next instruction */
-			break;
-
-		case OP_COP0:
-		case OP_COP1:
-		case OP_COP2:
-		case OP_COP3:
-			switch (i.RType.rs) {
-			case OP_BCx:
-			case OP_BCy:
-				more = 2; /* stop after next instruction */
-			};
-			break;
-
-		case OP_SW:
-		case OP_SD:
-			/* look for saved registers on the stack */
-			if (i.IType.rs != 29)
-				break;
-			/* only restore the first one */
-			if (mask & (1 << i.IType.rt))
-				break;
-			mask |= (1 << i.IType.rt);
-			switch (i.IType.rt) {
-			case 4: /* a0 */
-				a0 = kdbpeekd((long *)(sp + (short)i.IType.imm));
-				break;
-
-			case 5: /* a1 */
-				a1 = kdbpeekd((long *)(sp + (short)i.IType.imm));
-				break;
-
-			case 6: /* a2 */
-				a2 = kdbpeekd((long *)(sp + (short)i.IType.imm));
-				break;
-
-			case 7: /* a3 */
-				a3 = kdbpeekd((long *)(sp + (short)i.IType.imm));
-				break;
-
-			case 31: /* ra */
-				ra = kdbpeekd((long *)(sp + (short)i.IType.imm));
-				break;
-			}
-			break;
-
-		case OP_ADDI:
-		case OP_ADDIU:
-		case OP_DADDI:
-		case OP_DADDIU:
-			/* look for stack pointer adjustment */
-			if (i.IType.rs != 29 || i.IType.rt != 29)
-				break;
-			stksize = - ((short)i.IType.imm);
-		}
-	}
-
-done:
-	if (symname == NULL)
-		(*pr)("%p ", subr);
-	else
-		(*pr)("%s+%p ", symname, diff);
-	(*pr)("(%llx,%llx,%llx,%llx) sp %llx ra %llx, sz %d\n", a0, a1, a2, a3, sp, ra, stksize);
-
-	if (subr == (vaddr_t)k_intr || subr == (vaddr_t)k_general) {
-		if (subr == (vaddr_t)k_intr)
-			(*pr)("(KERNEL INTERRUPT)\n");
-		else
-			(*pr)("(KERNEL TRAP)\n");
-		sp = *(register_t *)sp;
-		pc = ((struct trap_frame *)sp)->pc;
-		ra = ((struct trap_frame *)sp)->ra;
-		sp = ((struct trap_frame *)sp)->sp;	/* last */
-		goto loop;
-	}
-
-end:
-	if (ra) {
-		if (pc == ra && stksize == 0)
-			(*pr)("stacktrace: loop!\n");
-		else {
-			pc = ra;
-			sp += stksize;
-			ra = 0;
-			goto loop;
-		}
-	} else {
-		if (curproc)
-			(*pr)("User-level: pid %d\n", curproc->p_pid);
-		else
-			(*pr)("User-level: curproc NULL\n");
-	}
+	stacktrace_subr(regs, count, pr);
 }
-
-#undef	VALID_ADDRESS
 
 /*
  *	To do a single step ddb needs to know the next address

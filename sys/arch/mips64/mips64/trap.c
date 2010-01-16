@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.59 2010/01/14 07:24:43 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.60 2010/01/16 23:28:10 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,7 +127,8 @@ const char *trap_type[] = {
 struct trapdebug trapdebug[TRAPSIZE], *trp = trapdebug;
 
 void	stacktrace(struct trap_frame *);
-int	kdbpeek(void *);
+uint32_t kdbpeek(vaddr_t);
+uint64_t kdbpeekd(vaddr_t);
 #endif	/* DDB || DEBUG */
 
 #if defined(DDB)
@@ -1125,9 +1126,9 @@ cpu_singlestep(p)
 
 /* forward */
 #if !defined(DDB)
-char *fn_name(long addr);
+const char *fn_name(vaddr_t);
 #endif
-void stacktrace_subr(struct trap_frame *, int (*)(const char*, ...));
+void stacktrace_subr(struct trap_frame *, int, int (*)(const char*, ...));
 
 /*
  * Print a stack backtrace.
@@ -1136,7 +1137,7 @@ void
 stacktrace(regs)
 	struct trap_frame *regs;
 {
-	stacktrace_subr(regs, printf);
+	stacktrace_subr(regs, 6, printf);
 }
 
 #define	VALID_ADDRESS(va) \
@@ -1144,21 +1145,25 @@ stacktrace(regs)
 	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSEG1_BASE))
 
 void
-stacktrace_subr(regs, printfn)
-	struct trap_frame *regs;
-	int (*printfn)(const char*, ...);
+stacktrace_subr(struct trap_frame *regs, int count,
+    int (*pr)(const char*, ...))
 {
-	vaddr_t pc, sp, fp, ra, va, subr;
-	long a0, a1, a2, a3;
-	unsigned instr, mask;
+	vaddr_t pc, sp, ra, va, subr;
+	register_t a0, a1, a2, a3;
+	uint32_t instr, mask;
 	InstFmt i;
 	int more, stksize;
-	unsigned int frames =  0;
+	extern char k_intr[];
+	extern char k_general[];
+#ifdef DDB
+	db_expr_t diff;
+	db_sym_t sym;
+	char *symname;
+#endif
 
 	/* get initial values from the exception frame */
 	sp = (vaddr_t)regs->sp;
 	pc = (vaddr_t)regs->pc;
-	fp = (vaddr_t)regs->s8;
 	ra = (vaddr_t)regs->ra;		/* May be a 'leaf' function */
 	a0 = regs->a0;
 	a1 = regs->a1;
@@ -1167,29 +1172,41 @@ stacktrace_subr(regs, printfn)
 
 /* Jump here when done with a frame, to start a new one */
 loop:
-
-/* Jump here after a nonstandard (interrupt handler) frame */
-	stksize = 0;
+#ifdef DDB
+	symname = NULL;
+#endif
 	subr = 0;
-	if (frames++ > 6) {
-		(*printfn)("stackframe count exceeded\n");
-		return;
+	stksize = 0;
+
+	if (count-- == 0) {
+		ra = 0;
+		goto end;
 	}
 
 	/* check for bad SP: could foul up next frame */
 	if (sp & 3 || !VALID_ADDRESS(sp)) {
-		(*printfn)("SP %p: not in kernel\n", sp);
+		(*pr)("SP %p: not in kernel\n", sp);
 		ra = 0;
-		subr = 0;
 		goto done;
 	}
 
 	/* check for bad PC */
 	if (pc & 3 || !VALID_ADDRESS(pc)) {
-		(*printfn)("PC %p: not in kernel\n", pc);
+		(*pr)("PC %p: not in kernel\n", pc);
 		ra = 0;
 		goto done;
 	}
+
+#ifdef DDB
+	/*
+	 * Dig out the function from the symbol table.
+	 * Watch out for function tail optimizations.
+	 */
+	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+	db_symbol_values(sym, &symname, 0);
+	if (sym != DB_SYM_NULL)
+		subr = pc - (vaddr_t)diff;
+#endif
 
 	/*
 	 * Find the beginning of the current subroutine by scanning backwards
@@ -1197,11 +1214,11 @@ loop:
 	 */
 	if (!subr) {
 		va = pc - sizeof(int);
-		while ((instr = kdbpeek((void *)va)) != MIPS_JR_RA)
-		va -= sizeof(int);
+		while ((instr = kdbpeek(va)) != MIPS_JR_RA)
+			va -= sizeof(int);
 		va += 2 * sizeof(int);	/* skip back over branch & delay slot */
 		/* skip over nulls which might separate .o files */
-		while ((instr = kdbpeek((void *)va)) == 0)
+		while ((instr = kdbpeek(va)) == 0)
 			va += sizeof(int);
 		subr = va;
 	}
@@ -1219,7 +1236,7 @@ loop:
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;
-		instr = kdbpeek((void *)va);
+		instr = kdbpeek(va);
 		i.word = instr;
 		switch (i.JType.op) {
 		case OP_SPECIAL:
@@ -1256,67 +1273,70 @@ loop:
 			};
 			break;
 
-		case OP_SW:
 		case OP_SD:
 			/* look for saved registers on the stack */
-			if (i.IType.rs != 29)
+			if (i.IType.rs != SP)
 				break;
 			/* only restore the first one */
 			if (mask & (1 << i.IType.rt))
 				break;
 			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
-			case 4: /* a0 */
-				a0 = kdbpeek((void *)(sp + (short)i.IType.imm));
+			case A0:
+				a0 = kdbpeekd(sp + (int16_t)i.IType.imm);
 				break;
-
-			case 5: /* a1 */
-				a1 = kdbpeek((void *)(sp + (short)i.IType.imm));
+			case A1:
+				a1 = kdbpeekd(sp + (int16_t)i.IType.imm);
 				break;
-
-			case 6: /* a2 */
-				a2 = kdbpeek((void *)(sp + (short)i.IType.imm));
+			case A2:
+				a2 = kdbpeekd(sp + (int16_t)i.IType.imm);
 				break;
-
-			case 7: /* a3 */
-				a3 = kdbpeek((void *)(sp + (short)i.IType.imm));
+			case A3:
+				a3 = kdbpeekd(sp + (int16_t)i.IType.imm);
 				break;
-
-			case 30: /* fp */
-				fp = kdbpeek((void *)(sp + (short)i.IType.imm));
+			case RA:
+				ra = kdbpeekd(sp + (int16_t)i.IType.imm);
 				break;
-
-			case 31: /* ra */
-				ra = kdbpeek((void *)(sp + (short)i.IType.imm));
 			}
 			break;
 
-		case OP_ADDI:
-		case OP_ADDIU:
 		case OP_DADDI:
 		case OP_DADDIU:
 			/* look for stack pointer adjustment */
-			if (i.IType.rs != 29 || i.IType.rt != 29)
+			if (i.IType.rs != SP || i.IType.rt != SP)
 				break;
-			stksize = - ((short)i.IType.imm);
+			stksize = -((int16_t)i.IType.imm);
 		}
 	}
 
 done:
 #ifdef DDB
-	db_printsym(pc, DB_STGY_ANY, printfn);
-#else
-	(*printfn)("%s+%x", fn_name(subr), pc - subr);
-#endif
-	if (frames == 1)
-		(*printfn)(" ra %p sp %p (%p,%p,%p,%p)\n",
-		    ra, sp, a0, a1, a2, a3);
+	if (symname == NULL)
+		(*pr)("%p ", subr);
 	else
-		(*printfn)(" ra %p sp %p\n", ra, sp);
+		(*pr)("%s+%p ", symname, diff);
+#else
+	(*pr)("%s+%p ", fn_name(subr), pc - subr);
+#endif
+	(*pr)("(%llx,%llx,%llx,%llx) ", a0, a1, a2, a3);
+	(*pr)(" ra %p sp %p, sz %d\n", ra, sp, stksize);
 
+	if (subr == (vaddr_t)k_intr || subr == (vaddr_t)k_general) {
+		if (subr == (vaddr_t)k_intr)
+			(*pr)("(KERNEL INTERRUPT)\n");
+		else
+			(*pr)("(KERNEL TRAP)\n");
+		sp = *(register_t *)sp;
+		pc = ((struct trap_frame *)sp)->pc;
+		ra = ((struct trap_frame *)sp)->ra;
+		sp = ((struct trap_frame *)sp)->sp;
+		goto loop;
+	}
+
+end:
 	if (ra) {
 		if (pc == ra && stksize == 0)
-			(*printfn)("stacktrace: loop!\n");
+			(*pr)("stacktrace: loop!\n");
 		else {
 			pc = ra;
 			sp += stksize;
@@ -1325,9 +1345,9 @@ done:
 		}
 	} else {
 		if (curproc)
-			(*printfn)("User-level: pid %d\n", curproc->p_pid);
+			(*pr)("User-level: pid %d\n", curproc->p_pid);
 		else
-			(*printfn)("User-level: curproc NULL\n");
+			(*pr)("User-level: curproc NULL\n");
 	}
 }
 
@@ -1342,24 +1362,24 @@ done:
 #else
 #define Name(_fn) { _fn, "_fn"}
 #endif
-static struct { void *addr; char *name;} names[] = {
+static const struct { void *addr; const char *name;} names[] = {
 	Name(trap),
-	{0, 0}
+	{ 0, NULL }
 };
 
 /*
  * Map a function address to a string name, if known; or a hex string.
  */
-char *
-fn_name(long addr)
+const char *
+fn_name(vaddr_t addr)
 {
-	static char buf[17];
+	static char buf[19];
 	int i = 0;
 
-	for (i = 0; names[i].name; i++)
+	for (i = 0; names[i].name != NULL; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	snprintf(buf, sizeof(buf), "%x", addr);
+	snprintf(buf, sizeof(buf), "%p", addr);
 	return (buf);
 }
 #endif	/* !DDB */
