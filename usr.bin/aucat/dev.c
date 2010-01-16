@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.42 2010/01/13 10:02:52 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.43 2010/01/16 23:18:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -335,6 +335,8 @@ dev_done(void)
 	}
 	if (dev_midi) {
 		dev_midi->flags |= APROC_QUIT;
+		if (LIST_EMPTY(&dev_midi->ibuflist))
+			aproc_del(dev_midi);
  	restart_midi:
 		LIST_FOREACH(f, &file_list, entry) {
 			if (f->rproc &&
