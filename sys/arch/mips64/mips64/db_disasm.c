@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 2007/11/24 19:39:20 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.9 2010/01/16 23:26:43 miod Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.8 2007/11/24 19:39:20 miod Exp $
+ *      $Id: db_disasm.c,v 1.9 2010/01/16 23:26:43 miod Exp $
  */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 
-static char *op_name[64] = {
+static const char *op_name[64] = {
 /* 0 */	"spec",	"bcond","j",	"jal",	"beq",	"bne",	"blez",	"bgtz",
 /* 8 */	"addi",	"addiu","slti",	"sltiu","andi",	"ori",	"xori",	"lui",
 /*16 */	"cop0",	"cop1",	"cop2",	"cop3",	"beql",	"bnel",	"blezl","bgtzl",
@@ -58,7 +58,7 @@ static char *op_name[64] = {
 /*56 */	"sc",	"swc1",	"swc2",	"swc3",	"scd",	"sdc1",	"sdc2",	"sd"
 };
 
-static char *spec_name[64] = {
+static const char *spec_name[64] = {
 /* 0 */	"sll",	"spec01","srl",	"sra",	"sllv",	"spec05","srlv","srav",
 /* 8 */	"jr",	"jalr",	"spec12","spec13","syscall","break","spec16","sync",
 /*16 */	"mfhi",	"mthi",	"mflo",	"mtlo",	"dsllv","spec25","dsrlv","dsrav",
@@ -69,14 +69,14 @@ static char *spec_name[64] = {
 /*56 */	"dsll","spec71","dsrl","dsra","dsll32","spec75","dsrl32","dsra32"
 };
 
-static char *bcond_name[32] = {
+static const char *bcond_name[32] = {
 /* 0 */	"bltz",	"bgez", "bltzl", "bgezl", "?", "?", "?", "?",
 /* 8 */	"tgei", "tgeiu", "tlti", "tltiu", "teqi", "?", "tnei", "?",
 /*16 */	"bltzal", "bgezal", "bltzall", "bgezall", "?", "?", "?", "?",
 /*24 */	"?", "?", "?", "?", "?", "?", "?", "?",
 };
 
-static char *cop1_name[64] = {
+static const char *cop1_name[64] = {
 /* 0 */	"fadd",	"fsub",	"fmpy",	"fdiv",	"fsqrt","fabs",	"fmov",	"fneg",
 /* 8 */	"fop08","fop09","fop0a","fop0b","fop0c","fop0d","fop0e","fop0f",
 /*16 */	"fop10","fop11","fop12","fop13","fop14","fop15","fop16","fop17",
@@ -89,21 +89,21 @@ static char *cop1_name[64] = {
 	"fcmp.le","fcmp.ngt"
 };
 
-static char *fmt_name[16] = {
+static const char *fmt_name[16] = {
 	"s",	"d",	"e",	"fmt3",
 	"w",	"fmt5",	"fmt6",	"fmt7",
 	"fmt8",	"fmt9",	"fmta",	"fmtb",
 	"fmtc",	"fmtd",	"fmte",	"fmtf"
 };
 
-static char *reg_name[32] = {
+static const char *reg_name[32] = {
 	"zero",	"at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3",
 	"ta0",	"ta1",	"ta2",	"ta3",	"t0",	"t1",	"t2",	"t3",
 	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7",
 	"t8",	"t9",	"k0",	"k1",	"gp",	"sp",	"s8",	"ra"
 };
 
-static char *c0_opname[64] = {
+static const char *c0_opname[64] = {
 	"c0op00","tlbr",  "tlbwi", "c0op03","c0op04","c0op05","tlbwr", "c0op07",
 	"tlbp",  "c0op11","c0op12","c0op13","c0op14","c0op15","c0op16","c0op17",
 	"rfe",   "c0op21","c0op22","c0op23","c0op24","c0op25","c0op26","c0op27",
@@ -114,27 +114,25 @@ static char *c0_opname[64] = {
 	"c0op70","c0op71","c0op72","c0op73","c0op74","c0op75","c0op77","c0op77",
 };
 
-static char *c0_reg[32] = {
+static const char *c0_reg[32] = {
 	"index","random","tlblo0","tlblo1","context","tlbmask","wired","c0r7",
 	"badvaddr","count","tlbhi","c0r11","sr","cause","epc",	"prid",
 	"config","lladr","watchlo","watchhi","xcontext","c0r21","c0r22","c0r23",
 	"c0r24","c0r25","ecc","cacheerr","taglo","taghi","errepc","c0r31"
 };
 
-int  kdbpeek(void *);
+uint32_t kdbpeek(vaddr_t);
 
-static int md_printins(int ins, int mdbdot);
+static int md_printins(uint32_t ins, db_addr_t mdbdot);
 
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t loc;
-	boolean_t altfmt;
+db_disasm(db_addr_t loc, boolean_t altfmt)
 {
-        if (md_printins(kdbpeek((void *)loc), loc)) {
+        if (md_printins(kdbpeek(loc), loc)) {
 		loc += 4;
 		db_printsym(loc, DB_STGY_ANY, db_printf);
 		db_printf(":\t ");
-		md_printins(kdbpeek((void *)loc), loc);
+		md_printins(kdbpeek(loc), loc);
 	}
 	loc += 4;
         return loc;
@@ -142,7 +140,7 @@ db_disasm(loc, altfmt)
 
 /* ARGSUSED */
 static int
-md_printins(int ins, int mdbdot)
+md_printins(uint32_t ins, db_addr_t mdbdot)
 {
 	InstFmt i;
 	int delay = 0;
@@ -260,7 +258,7 @@ md_printins(int ins, int mdbdot)
 			reg_name[i.IType.rt]);
 	pr_displ:
 		delay = 1;
-		db_printsym(mdbdot + 4 + ((short)i.IType.imm << 2),
+		db_printsym(mdbdot + 4 + ((int16_t)i.IType.imm << 2),
 		    DB_STGY_PROC, db_printf);
 		break;
 
@@ -344,8 +342,8 @@ md_printins(int ins, int mdbdot)
 	case OP_J:
 	case OP_JAL:
 		db_printf("%s\t", op_name[i.JType.op]);
-		db_printsym((mdbdot & ~0x0fffffffL) | (i.JType.target << 2),
-		    DB_STGY_PROC, db_printf);
+		db_printsym((mdbdot & ~0x0fffffffUL) |
+		    (db_addr_t)(i.JType.target << 2), DB_STGY_PROC, db_printf);
 		delay = 1;
 		break;
 
@@ -369,7 +367,7 @@ md_printins(int ins, int mdbdot)
 		db_printf("%s\t%s,", op_name[i.IType.op],
 			reg_name[i.IType.rt]);
 	loadstore:
-		db_printf("%d(%s)", (short)i.IType.imm,
+		db_printf("%d(%s)", (int16_t)i.IType.imm,
 			reg_name[i.IType.rs]);
 		break;
 
@@ -398,7 +396,7 @@ md_printins(int ins, int mdbdot)
 	case OP_CACHE:
 		db_printf("%s\t0x%x,%d(%s)", op_name[i.IType.op],
 			i.IType.rt,
-			(short)i.IType.imm,
+			(int16_t)i.IType.imm,
 			reg_name[i.IType.rs]);
 		break;
 
@@ -409,7 +407,7 @@ md_printins(int ins, int mdbdot)
 		if (i.IType.rs == 0) {
 			db_printf("li\t%s,%d",
 				reg_name[i.IType.rt],
-				(short)i.IType.imm);
+				(int16_t)i.IType.imm);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -417,7 +415,7 @@ md_printins(int ins, int mdbdot)
 		db_printf("%s\t%s,%s,%d", op_name[i.IType.op],
 			reg_name[i.IType.rt],
 			reg_name[i.IType.rs],
-			(short)i.IType.imm);
+			(int16_t)i.IType.imm);
 	}
 	db_printf("\n");
 	return(delay);
