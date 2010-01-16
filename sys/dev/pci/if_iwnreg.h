@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.34 2009/11/08 11:54:48 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.35 2010/01/16 12:48:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -828,10 +828,9 @@ struct iwn5000_cmd_txpower {
 /* Structure for command IWN_CMD_BLUETOOTH. */
 struct iwn_bluetooth {
 	uint8_t		flags;
-#define IWN_BT_COEX_DISABLE	0
-#define IWN_BT_COEX_MODE_2WIRE	1
-#define IWN_BT_COEX_MODE_3WIRE	2
-#define IWN_BT_COEX_MODE_4WIRE	3
+#define IWN_BT_COEX_CHAN_ANN	(1 << 0)
+#define IWN_BT_COEX_BT_PRIO	(1 << 1)
+#define IWN_BT_COEX_2_WIRE	(1 << 2)
 
 	uint8_t		lead_time;
 #define IWN_BT_LEAD_TIME_DEF	30

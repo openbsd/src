@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.80 2010/01/16 12:42:17 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.81 2010/01/16 12:48:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4107,7 +4107,7 @@ iwn_config(struct iwn_softc *sc)
 
 	/* Configure bluetooth coexistence. */
 	memset(&bluetooth, 0, sizeof bluetooth);
-	bluetooth.flags = IWN_BT_COEX_MODE_4WIRE;
+	bluetooth.flags = IWN_BT_COEX_CHAN_ANN | IWN_BT_COEX_BT_PRIO;
 	bluetooth.lead_time = IWN_BT_LEAD_TIME_DEF;
 	bluetooth.max_kill = IWN_BT_MAX_KILL_DEF;
 	DPRINTF(("configuring bluetooth coexistence\n"));
