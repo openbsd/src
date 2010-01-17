@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.24 2010/01/17 19:53:24 naddy Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.25 2010/01/17 19:56:58 naddy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -67,6 +67,7 @@ static struct protonames protonames[] = {
 	{ PPP_COMP,	"COMP" },	/* compressed packet */
 	{ PPP_IPCP,	"IPCP" },	/* IP Control Protocol */
 	{ PPP_IPXCP,	"IPXCP" },	/* IPX Control Protocol (RFC1552) */
+	{ PPP_IPV6CP,	"IPV6CP" },	/* IPv6 Control Protocol */
 	{ PPP_CCP,	"CCP" },	/* Compression Control Protocol */
 	{ PPP_LCP,	"LCP" },	/* Link Control Protocol */
 	{ PPP_PAP,	"PAP" },	/* Password Authentication Protocol */
@@ -198,10 +199,26 @@ static char *papcode[] = {
 #define IPCP_CP		2
 #define IPCP_ADDR	3
 
+/* IPV6CP */
+
+#define IPV6CP_CODE_CFG_REQ	1
+#define IPV6CP_CODE_CFG_ACK	2
+#define IPV6CP_CODE_CFG_NAK	3
+#define IPV6CP_CODE_CFG_REJ	4
+#define IPV6CP_CODE_TRM_REQ	5
+#define IPV6CP_CODE_TRM_ACK	6
+#define IPV6CP_CODE_COD_REJ	7
+
+#define IPV6CP_CODE_MIN IPV6CP_CODE_CFG_REQ
+#define IPV6CP_CODE_MAX IPV6CP_CODE_COD_REJ
+
+#define IPV6CP_IFID	1
+
 static int print_lcp_config_options(u_char *p);
 static void handle_lcp(const u_char *p, int length);
 static void handle_chap(const u_char *p, int length);
 static void handle_ipcp(const u_char *p, int length);
+static void handle_ipv6cp(const u_char *p, int length);
 static void handle_pap(const u_char *p, int length);
 
 struct pppoe_header {
@@ -252,6 +269,9 @@ ppp_hdlc_print(p, length)
 				break;
 			case PPP_IPCP:
 				handle_ipcp(p, length);
+				break;
+			case PPP_IPV6CP:
+				handle_ipv6cp(p, length);
 				break;
 			}
 			break;
@@ -549,6 +569,46 @@ trunc:
 	printf("[|ipcp]");
 }
 
+/* IPV6CP */
+
+static void
+handle_ipv6cp(p, length)
+	const u_char *p;
+	int length;
+{
+	int x;
+
+	TCHECK(*(p+4));
+	x = *(p+4);
+
+	if((x >= IPV6CP_CODE_MIN) && (x <= IPV6CP_CODE_MAX))
+		printf("%s", lcpcodes[x-1]);    /* share table with LCP */
+	else {
+		printf("0x%02x", x);
+		return;
+	}
+
+	TCHECK(*(p+8));
+	switch(*(p+8)) {
+	case IPV6CP_IFID:
+		TCHECK2(*(p + 10), 8);
+		printf(", Interface-ID=%04x:%04x:%04x:%04x",
+			EXTRACT_16BITS(p + 10),
+			EXTRACT_16BITS(p + 12),
+			EXTRACT_16BITS(p + 14),
+			EXTRACT_16BITS(p + 16));
+		break;
+
+	default:
+		printf(", Unknown IPV6CP code 0x%x", *(p+8));
+		break;
+	}
+	return;
+
+trunc:
+	printf("[|ipv6cp]");
+}
+
 void
 ppp_if_print(user, h, p)
 	u_char *user;
@@ -703,6 +763,9 @@ ppp_ether_if_print(user, h, p)
 				break;
 			case PPP_IPCP:
 				handle_ipcp(p - 2, length + 2);
+				break;
+			case PPP_IPV6CP:
+				handle_ipv6cp(p - 2, length + 2);
 				break;
 			case PPP_IP:
 				ip_print(p + 2, length - 2);
@@ -873,6 +936,9 @@ pppoe_if_print(ethertype, p, length, caplen)
 					break;
 				case PPP_IPCP:
 					handle_ipcp(p - 2, length + 2);
+					break;
+				case PPP_IPV6CP:
+					handle_ipv6cp(p - 2, length + 2);
 					break;
 				case PPP_IP:
 					ip_print(p + 2, length - 2);
