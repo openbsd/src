@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strfile.8,v 1.13 2007/05/31 19:19:17 jmc Exp $
+.\"	$OpenBSD: strfile.8,v 1.14 2010/01/17 13:15:34 schwarze Exp $
 .\"	$NetBSD: strfile.8,v 1.3 1995/03/23 08:28:45 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)strfile.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 17 2010 $
 .Dt STRFILE 8
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@ a header structure and a table of file offsets for each group of lines.
 This allows random access of the strings.
 .Pp
 The output file, if not specified on the command line, is named
-.Ar source_file Ns Sy .out .
+.Ar source_file Ns Sy .dat .
 .Pp
 The options are as follows:
 .Bl -tag -width "-c char"
@@ -125,7 +125,7 @@ It prints out the strings contained in the file
 .Ar source_file
 in the order that they are listed in
 the header file
-.Ar source_file Ns Pa .dat
+.Ar source_file Ns Sy .dat
 to standard output.
 It is possible to create sorted versions of input files by using
 .Fl o
@@ -135,8 +135,8 @@ is run and then using
 .Nm unstr
 to dump them out in the table order.
 .Sh FILES
-.Bl -tag -width strfile.out -compact
-.It Pa strfile.out
+.Bl -tag -width source_file.dat -compact
+.It Ar source_file Ns Sy .dat
 default output file.
 .El
 .Sh SEE ALSO
