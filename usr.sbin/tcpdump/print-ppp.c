@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.23 2010/01/13 11:15:20 naddy Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.24 2010/01/17 19:53:24 naddy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -235,8 +235,6 @@ ppp_hdlc_print(p, length)
 	int proto = PPP_PROTOCOL(p);
 	int i;
 
-	printf("ID-%03d ", *(p+5));
-
 	for (i = sizeof(protonames) / sizeof(protonames[0]) - 1; i >= 0; i--) {
 		if (proto == protonames[i].protocol) {
 			printf("%s: ", protonames[i].name);
@@ -273,6 +271,7 @@ handle_lcp(p, length)
 	int x, j;
 	u_char *ptr;
 
+	TCHECK(*(p + 4));
 	x = *(p + 4);
 
 	if ((x >= LCP_MIN) && (x <= LCP_MAX))
@@ -303,6 +302,7 @@ handle_lcp(p, length)
 
 	case LCP_ECHO_REQ:
 	case LCP_ECHO_RPL:
+		TCHECK2(*(p + 8), 4);
 		printf(", Magic-Number=%d", ((*(p+ 8) << 24) + (*(p+9) << 16) +
 					     (*(p+10) <<  8) + (*(p+11))));
 		break;
@@ -314,6 +314,10 @@ handle_lcp(p, length)
 	default:
 		break;
 	}
+	return;
+
+trunc:
+	printf("[|lcp]");
 }
 
 /* LCP config options */
@@ -322,23 +326,30 @@ static int
 print_lcp_config_options(p)
 	u_char *p;
 {
-	int len	= *(p+1);
-	int opt = *p;
+	int len, opt;
+
+	TCHECK2(*p, 2);
+	len = *(p+1);
+	opt = *p;
 
 	if((opt >= LCPOPT_MIN) && (opt <= LCPOPT_MAX))
 		printf(", %s", lcpconfopts[opt]);
 
 	switch(opt) {
 	case LCPOPT_MRU:
-		if(len == 4)
+		if(len == 4) {
+			TCHECK2(*(p + 2), 2);
 			printf("=%d", (*(p+2) << 8) + *(p+3));
+		}
 		break;
 	case LCPOPT_AP:
 		if(len >= 4) {
+			TCHECK2(*(p + 2), 2);
 			if(*(p+2) == 0xc0 && *(p+3) == 0x23)
 				printf(" PAP");
 			else if(*(p+2) == 0xc2 && *(p+3) == 0x23) {
 				printf(" CHAP/");
+				TCHECK(*(p+4));
 				switch(*(p+4)) {
 				default:
 					printf("unknown-algorithm-%d", *(p+4));
@@ -362,6 +373,7 @@ print_lcp_config_options(p)
 		break;
 	case LCPOPT_QP:
 		if(len >= 4) {
+			TCHECK2(*(p + 2), 2);
 			if(*(p+2) == 0xc0 && *(p+3) == 0x25)
 				printf(" LQR");
 			else
@@ -369,9 +381,11 @@ print_lcp_config_options(p)
 		}
 		break;
 	case LCPOPT_MN:
-		if(len == 6)
+		if(len == 6) {
+			TCHECK2(*(p + 2), 4);
 			printf("=%d", ((*(p+2) << 24) + (*(p+3) << 16) +
 				       (*(p+4) <<  8) + (*(p+5))));
+		}
 		break;
 	case LCPOPT_PFC:
 		printf(" PFC");
@@ -381,6 +395,10 @@ print_lcp_config_options(p)
 		break;
 	}
 	return(len);
+
+trunc:
+	printf("[|lcp]");
+	return 0;
 }
 
 /* CHAP */
@@ -393,6 +411,7 @@ handle_chap(p, length)
 	int x;
 	u_char *ptr;
 
+	TCHECK(*(p+4));
 	x = *(p+4);
 
 	if((x >= CHAP_CODEMIN) && (x <= CHAP_CODEMAX))
@@ -408,16 +427,25 @@ handle_chap(p, length)
 	case CHAP_CHAL:
 	case CHAP_RESP:
 		printf(", Value=");
+		TCHECK(*(p+8));
 		x = *(p+8);	/* value size */
 		ptr = (u_char *)p+9;
-		while(--x >= 0)
+		while(--x >= 0) {
+			TCHECK(*ptr);
 			printf("%02x", *ptr++);
+		}
 		x = length - *(p+8) - 1;
 		printf(", Name=");
-		while(--x >= 0)
-			printf("%c", *ptr++);
+		while(--x >= 0) {
+			TCHECK(*ptr);
+			safeputchar(*ptr++);
+		}
 		break;
 	}
+	return;
+
+trunc:
+	printf("[|chap]");
 }
 
 /* PAP */
@@ -430,6 +458,7 @@ handle_pap(p, length)
 	int x;
 	u_char *ptr;
 
+	TCHECK(*(p+4));
 	x = *(p+4);
 
 	if((x >= PAP_CODEMIN) && (x <= PAP_CODEMAX))
@@ -444,19 +473,29 @@ handle_pap(p, length)
 	switch(x) {
 	case PAP_AREQ:
 		printf(", Peer-Id=");
+		TCHECK(*(p+8));
 		x = *(p+8);	/* peerid size */
 		ptr = (u_char *)p+9;
-		while(--x >= 0)
-			printf("%c", *ptr++);
+		while(--x >= 0) {
+			TCHECK(*ptr);
+			safeputchar(*ptr++);
+		}
+		TCHECK(*ptr);
 		x = *ptr++;
 		printf(", Passwd=");
-		while(--x >= 0)
-			printf("%c", *ptr++);
+		while(--x >= 0) {
+			TCHECK(*ptr);
+			safeputchar(*ptr++);
+		}
 		break;
 	case PAP_AACK:
 	case PAP_ANAK:		
 		break;			
 	}
+	return;
+
+trunc:
+	printf("[|pap]");
 }
 
 /* IPCP */
@@ -468,6 +507,7 @@ handle_ipcp(p, length)
 {
 	int x;
 
+	TCHECK(*(p+4));
 	x = *(p+4);
 
 	if((x >= IPCP_CODE_MIN) && (x <= IPCP_CODE_MAX))
@@ -478,10 +518,12 @@ handle_ipcp(p, length)
 	}
 
 	length -= 4;
-	
+
+	TCHECK(*(p+8));	
 	switch(*(p+8)) {
 	case IPCP_2ADDR:
 		printf(", IP-Addresses");
+		TCHECK2(*(p+10), 8);
 		printf(", Src=%d.%d.%d.%d",
 		       *(p+10), *(p+11), *(p+12), *(p+13));
 		printf(", Dst=%d.%d.%d.%d",
@@ -493,6 +535,7 @@ handle_ipcp(p, length)
 		break;
 
 	case IPCP_ADDR:
+		TCHECK2(*(p+10), 4);
 		printf(", IP-Address=%d.%d.%d.%d",
 		       *(p+10), *(p+11), *(p+12), *(p+13));
 		break;
@@ -500,6 +543,10 @@ handle_ipcp(p, length)
 		printf(", Unknown IPCP code 0x%x", *(p+8));
 		break;
 	}
+	return;
+
+trunc:
+	printf("[|ipcp]");
 }
 
 void
