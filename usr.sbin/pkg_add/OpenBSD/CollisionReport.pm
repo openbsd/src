@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.31 2010/01/14 19:35:55 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.32 2010/01/17 11:56:46 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -99,9 +99,9 @@ sub collision_report($$)
 			    my $d = $old->new($destdir.$item);
 
 			    if ($d->equals($old)) {
-				    $state->errsay("(same checksum)");
+				    $state->errsay(" (same checksum)");
 			    } else {
-				    $state->errsay("(different checksum)");
+				    $state->errsay(" (different checksum)");
 			    }
 		    } else {
 			    $state->errsay("");

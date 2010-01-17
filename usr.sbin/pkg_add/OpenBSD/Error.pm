@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.21 2010/01/09 14:49:53 espie Exp $
+# $OpenBSD: Error.pm,v 1.22 2010/01/17 11:56:46 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -73,7 +73,7 @@ our ($FileName, $Line, $FullMessage);
 
 my @signal_name = ();
 
-sub Carp::croak;
+use Carp;
 
 sub fillup_names
 {
@@ -182,8 +182,7 @@ sub Unlink
 
 sub Fatal
 {
-	require Carp;
-	Carp::croak "Expected: @_";
+	croak @_;
 }
 
 sub Warn
@@ -215,12 +214,10 @@ sub warn
 sub fatal
 {
 	my $self = shift;
-	require Carp;
 	if (defined $self->{pkgname}) {
-		Carp::croak("Expected: ", $self->{pkgname}, ':', @_);
-	} else {
-		Carp::croak("Expected: ", @_);
-	}
+		unshift @_, $self->{pkgname}, ':';
+	} 
+	croak @_;
 }
 
 sub print
@@ -286,13 +283,13 @@ sub dienow
 {
 	my ($error, $handler) = @_;
 	if ($error) {
-		if ($error =~ m/^(Expected\:\s+)?(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/o) {
-			local $_ = $2;
-			$FileName = $3;
-			$Line = $4;
+		if ($error =~ m/^(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/o) {
+			local $_ = $1;
+			$FileName = $2;
+			$Line = $3;
 			$FullMessage = $error;
 
-			$handler->exec($error, $1, $2, $3, $4);
+			$handler->exec($error, '', $1, $2, $3);
 		} else {
 			die "Fatal error: can't parse $error";
 		}
@@ -308,8 +305,7 @@ sub try(&@)
 
 sub throw 
 {
-	require Carp;
-	Carp::croak "Expected: @_";
+	croak @_;
 
 }
 
