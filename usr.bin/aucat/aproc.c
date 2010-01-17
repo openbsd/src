@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.46 2010/01/15 22:17:10 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.47 2010/01/17 16:09:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1268,7 +1268,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 			}
 			diff += oblksz;
 			ifr--;
-		} else if (diff > 0) {
+		} else {
 			if (ofr == 0)
 				break;
 			ctx = ctxbuf;
@@ -1280,18 +1280,6 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 			}
 			diff -= iblksz;
 			ofr--;
-		} else {
-			if (ifr == 0 || ofr == 0)
-				break;
-			ctx_start ^= 1;
-			ctx = ctxbuf + ctx_start;
-			for (c = inch; c > 0; c--) {
-				*ctx = *odata++ = *idata++;
-				ctx += RESAMP_NCTX;
-			}
-			ifr--;
-			ofr--;
-			diff += oblksz - iblksz;
 		}
 	}
 	p->u.resamp.diff = diff;
@@ -1399,7 +1387,7 @@ resamp_new(char *name, unsigned iblksz, unsigned oblksz)
 	p = aproc_new(&resamp_ops, name);
 	p->u.resamp.iblksz = iblksz;
 	p->u.resamp.oblksz = oblksz;
-	p->u.resamp.diff = 0;
+	p->u.resamp.diff = (iblksz >= oblksz) ? -oblksz : 0;
 	p->u.resamp.idelta = 0;
 	p->u.resamp.odelta = 0;
 	p->u.resamp.ctx_start = 0;
