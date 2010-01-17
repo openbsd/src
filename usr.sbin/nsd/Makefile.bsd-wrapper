@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 2010/01/16 17:33:46 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2010/01/17 19:34:41 jakob Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--with-ssl=/usr \
 		--with-user=${USER} \
 		--with-nsd-conf-file=/etc/nsd.conf \
+		--with-chroot=${CHROOTDIR} \
 		--with-pidfile=${CHROOTDIR}/nsd.pid \
 		--with-zonesdir=${CHROOTDIR}/zones \
 		--with-dbfile=${CHROOTDIR}/nsd.db \
