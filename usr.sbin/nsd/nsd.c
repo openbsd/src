@@ -649,6 +649,7 @@ main(int argc, char *argv[])
 #endif /* BIND8_STATS */
 #ifdef HAVE_CHROOT
 	if(nsd.chrootdir == 0) nsd.chrootdir = nsd.options->chroot;
+	if(nsd.chrootdir == 0) nsd.chrootdir = strdup(CHROOTDIR);
 #endif /* HAVE_CHROOT */
 	if(nsd.username == 0) {
 		if(nsd.options->username) nsd.username = nsd.options->username;
