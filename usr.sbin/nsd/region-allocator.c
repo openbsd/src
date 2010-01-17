@@ -426,8 +426,9 @@ void
 region_log_stats(region_type *region)
 {
 	char buf[10240], *str=buf;
+	int strl = sizeof(buf);
 	int len=0;
-	sprintf(str, "%lu objects (%lu small/%lu large), %lu bytes allocated (%lu wasted) in %lu chunks, %lu cleanups, %lu in recyclebin%n",
+	snprintf(str, strl, "%lu objects (%lu small/%lu large), %lu bytes allocated (%lu wasted) in %lu chunks, %lu cleanups, %lu in recyclebin%n",
 		(unsigned long) (region->small_objects + region->large_objects),
 		(unsigned long) region->small_objects,
 		(unsigned long) region->large_objects,
@@ -438,6 +439,7 @@ region_log_stats(region_type *region)
 		(unsigned long) region->recycle_size,
 		&len);
 	str+=len;
+	strl-=len;
 	if(1 && region->recycle_bin) {
 		/* print details of the recycle bin */
 		size_t i;
@@ -449,9 +451,10 @@ region_log_stats(region_type *region)
 				el = el->next;
 			}
 			if(i%ALIGNMENT == 0 && i!=0) {
-				sprintf(str, " %lu%n", (unsigned long)count,
+				snprintf(str, strl, " %lu%n", (unsigned long)count,
 					&len);
 				str+=len;
+				strl-=len;
 			}
 		}
 	}

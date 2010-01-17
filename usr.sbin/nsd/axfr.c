@@ -179,7 +179,7 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 				if (addr2ip(q->addr, address, 128)) {
 					DEBUG(DEBUG_XFRD,1, (LOG_INFO,
 						"addr2ip failed"));
-					strcpy(address, "[unknown]");
+					strlcpy(address, "[unknown]", sizeof(address));
 				}
 
 				VERBOSITY(1, (LOG_INFO, "axfr for zone %s from client %s refused, %s", dname_to_string(q->qname, NULL), address, acl?"blocked":"no acl matches"));

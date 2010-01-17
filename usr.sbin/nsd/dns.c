@@ -522,7 +522,7 @@ rrclass_to_string(uint16_t rrclass)
 	lookup_table_type *entry = lookup_by_id(dns_rrclasses, rrclass);
 	if (entry) {
 		assert(strlen(entry->name) < sizeof(buf));
-		strcpy(buf, entry->name);
+		strlcpy(buf, entry->name, sizeof(buf));
 	} else {
 		snprintf(buf, sizeof(buf), "CLASS%d", (int) rrclass);
 	}

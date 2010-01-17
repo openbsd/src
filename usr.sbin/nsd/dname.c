@@ -389,7 +389,7 @@ dname_to_string(const dname_type *dname, const dname_type *origin)
 	const uint8_t *src;
 
 	if (dname->label_count == 1) {
-		strcpy(buf, ".");
+		strlcpy(buf, ".", sizeof(buf));
 		return buf;
 	}
 
