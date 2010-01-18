@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.54 2010/01/09 23:43:41 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.55 2010/01/18 16:59:22 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -360,9 +360,8 @@ extern vaddr_t uncached_base;
 
 #include <sys/device.h>
 #include <sys/lock.h>
-#include <sys/sched.h>
-
 #include <machine/intr.h>
+#include <sys/sched.h>
 
 struct cpu_hwinfo {
 	uint32_t	c0prid;
