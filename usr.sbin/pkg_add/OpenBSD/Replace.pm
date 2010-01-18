@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.68 2010/01/11 12:25:38 espie Exp $
+# $OpenBSD: Replace.pm,v 1.69 2010/01/18 10:04:53 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -212,6 +212,10 @@ sub is_new_package_safe
 sub is_set_safe
 {
 	my ($set, $state) = @_;
+
+	if ($state->{defines}->{update} && !$state->verbose) {
+		return 1;
+	}
 
 	my $ok = 1;
 
