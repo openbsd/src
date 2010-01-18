@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.120 2009/09/01 15:51:06 jsing Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.121 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -37,6 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/pool.h>
+#include <sys/syslog.h>
 
 #include <dev/rndvar.h>
 #include <net/if.h>
@@ -114,13 +115,6 @@ struct pf_fragment	*pf_find_fragment(struct ip *, struct pf_frag_tree *);
 struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment **,
 			    struct pf_frent *, int);
 
-#define	DPFPRINTF(x) do {				\
-	if (pf_status.debug >= PF_DEBUG_MISC) {		\
-		printf("%s: ", __func__);		\
-		printf x ;				\
-	}						\
-} while(0)
-
 /* Globals */
 struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
 struct pool		 pf_state_scrub_pl;
@@ -181,7 +175,7 @@ pf_purge_expired_fragments(void)
 		if (frag->fr_timeout > expire)
 			break;
 
-		DPFPRINTF(("expiring %d(%p)\n", frag->fr_id, frag));
+		DPFPRINTF(LOG_NOTICE, "expiring %d(%p)", frag->fr_id, frag);
 		pf_free_fragment(frag);
 	}
 
@@ -190,7 +184,7 @@ pf_purge_expired_fragments(void)
 		if (frag->fr_timeout > expire)
 			break;
 
-		DPFPRINTF(("expiring %d(%p)\n", frag->fr_id, frag));
+		DPFPRINTF(LOG_NOTICE, "expiring %d(%p)", frag->fr_id, frag);
 		pf_free_fragment(frag);
 		KASSERT(TAILQ_EMPTY(&pf_cachequeue) ||
 		    TAILQ_LAST(&pf_cachequeue, pf_cachequeue) != frag);
@@ -208,8 +202,8 @@ pf_flush_fragments(void)
 	int			 goal;
 
 	goal = pf_nfrents * 9 / 10;
-	DPFPRINTF(("trying to free > %d frents\n",
-	    pf_nfrents - goal));
+	DPFPRINTF(LOG_NOTICE, "trying to free > %d frents",
+	    pf_nfrents - goal);
 	while (goal < pf_nfrents) {
 		frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue);
 		if (frag == NULL)
@@ -219,8 +213,8 @@ pf_flush_fragments(void)
 
 
 	goal = pf_ncache * 9 / 10;
-	DPFPRINTF(("trying to free > %d cache entries\n",
-	    pf_ncache - goal));
+	DPFPRINTF(LOG_NOTICE, "trying to free > %d cache entries",
+	    pf_ncache - goal);
 	while (goal < pf_ncache) {
 		frag = TAILQ_LAST(&pf_cachequeue, pf_cachequeue);
 		if (frag == NULL)
@@ -383,7 +377,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		if (precut >= ip_len)
 			goto drop_fragment;
 		m_adj(frent->fr_m, precut);
-		DPFPRINTF(("overlap -%d\n", precut));
+		DPFPRINTF(LOG_NOTICE, "overlap -%d", precut);
 		/* Enforce 8 byte boundaries */
 		ip->ip_off = htons(ntohs(ip->ip_off) + (precut >> 3));
 		off = (ntohs(ip->ip_off) & IP_OFFMASK) << 3;
@@ -397,7 +391,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		u_int16_t	aftercut;
 
 		aftercut = ip_len + off - FR_IP_OFF(frea);
-		DPFPRINTF(("adjust overlap %d\n", aftercut));
+		DPFPRINTF(LOG_NOTICE, "adjust overlap %d", aftercut);
 		if (aftercut < ntohs(frea->fr_ip->ip_len) - frea->fr_ip->ip_hl
 		    * 4)
 		{
@@ -443,13 +437,14 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		if (off < (*frag)->fr_max &&
 		    (next == NULL || FR_IP_OFF(next) != off))
 		{
-			DPFPRINTF(("missing fragment at %d, next %d, max %d\n",
+			DPFPRINTF(LOG_NOTICE,
+			    "missing fragment at %d, next %d, max %d",
 			    off, next == NULL ? -1 : FR_IP_OFF(next),
-			    (*frag)->fr_max));
+			    (*frag)->fr_max);
 			return (NULL);
 		}
 	}
-	DPFPRINTF(("%d < %d?\n", off, (*frag)->fr_max));
+	DPFPRINTF(LOG_NOTICE, "%d < %d?", off, (*frag)->fr_max);
 	if (off < (*frag)->fr_max)
 		return (NULL);
 
@@ -457,7 +452,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 	frent = LIST_FIRST(&(*frag)->fr_queue);
 	KASSERT(frent != NULL);
 	if ((frent->fr_ip->ip_hl << 2) + off > IP_MAXPACKET) {
-		DPFPRINTF(("drop: too big: %d\n", off));
+		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", off);
 		pf_free_fragment(*frag);
 		*frag = NULL;
 		return (NULL);
@@ -502,7 +497,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		m->m_pkthdr.len = plen;
 	}
 
-	DPFPRINTF(("complete: %p(%d)\n", m, ntohs(ip->ip_len)));
+	DPFPRINTF(LOG_NOTICE, "complete: %p(%d)", m, ntohs(ip->ip_len));
 	return (m);
 
  drop_fragment:
@@ -552,7 +547,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	 * no-df above, fine. Otherwise drop it.
 	 */
 	if (h->ip_off & htons(IP_DF)) {
-		DPFPRINTF(("IP_DF\n"));
+		DPFPRINTF(LOG_NOTICE, "IP_DF");
 		goto bad;
 	}
 
@@ -561,13 +556,13 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 
 	/* All fragments are 8 byte aligned */
 	if (mff && (ip_len & 0x7)) {
-		DPFPRINTF(("mff and %d\n", ip_len));
+		DPFPRINTF(LOG_NOTICE, "mff and %d", ip_len);
 		goto bad;
 	}
 
 	/* Respect maximum length */
 	if (fragoff + ip_len > IP_MAXPACKET) {
-		DPFPRINTF(("max packet %d\n", fragoff + ip_len));
+		DPFPRINTF(LOG_NOTICE, "max packet %d", fragoff + ip_len);
 		goto bad;
 	}
 	max = fragoff + ip_len;
@@ -591,7 +586,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	frent->fr_m = m;
 
 	/* Might return a completely reassembled mbuf, or NULL */
-	DPFPRINTF(("reass frag %d @ %d-%d\n", h->ip_id, fragoff, max));
+	DPFPRINTF(LOG_NOTICE,
+	    "reass frag %d @ %d-%d\n", h->ip_id, fragoff, max);
 	*m0 = m = pf_reassemble(m0, &frag, frent, mff);
 
 	if (m == NULL)
@@ -619,7 +615,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	return (PF_DROP);
 
  bad:
-	DPFPRINTF(("dropping bad fragment\n"));
+	DPFPRINTF(LOG_NOTICE, "dropping bad fragment");
 
 	/* Free associated fragments */
 	if (frag != NULL)
@@ -992,10 +988,12 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 
 				if (got_ts) {
 					/* Huh?  Multiple timestamps!? */
-					if (pf_status.debug >= PF_DEBUG_MISC) {
-						DPFPRINTF(("multiple TS??"));
+					if (pf_status.debug >= LOG_NOTICE) {
+						log(LOG_NOTICE,
+						    "pf: %s: multiple TS??",
+						    __func__);
 						pf_print_state(state);
-						printf("\n");
+						addlog("\n");
 					}
 					REASON_SET(reason, PFRES_TS);
 					return (PF_DROP);
@@ -1061,20 +1059,20 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 	if (src->scrub && (src->scrub->pfss_flags & PFSS_PAWS) &&
 	    (uptime.tv_sec - src->scrub->pfss_last.tv_sec > TS_MAX_IDLE ||
 	    time_second - state->creation > TS_MAX_CONN))  {
-		if (pf_status.debug >= PF_DEBUG_MISC) {
-			DPFPRINTF(("src idled out of PAWS\n"));
+		if (pf_status.debug >= LOG_NOTICE) {
+			log(LOG_NOTICE, "pf: src idled out of PAWS ");
 			pf_print_state(state);
-			printf("\n");
+			addlog("\n");
 		}
 		src->scrub->pfss_flags = (src->scrub->pfss_flags & ~PFSS_PAWS)
 		    | PFSS_PAWS_IDLED;
 	}
 	if (dst->scrub && (dst->scrub->pfss_flags & PFSS_PAWS) &&
 	    uptime.tv_sec - dst->scrub->pfss_last.tv_sec > TS_MAX_IDLE) {
-		if (pf_status.debug >= PF_DEBUG_MISC) {
-			DPFPRINTF(("dst idled out of PAWS\n"));
+		if (pf_status.debug >= LOG_NOTICE) {
+			log(LOG_NOTICE, "pf: dst idled out of PAWS ");
 			pf_print_state(state);
-			printf("\n");
+			addlog("\n");
 		}
 		dst->scrub->pfss_flags = (dst->scrub->pfss_flags & ~PFSS_PAWS)
 		    | PFSS_PAWS_IDLED;
@@ -1179,25 +1177,29 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			 *   an old timestamp.
 			 */
 
-			DPFPRINTF(("Timestamp failed %c%c%c%c\n",
+			DPFPRINTF(LOG_NOTICE, "Timestamp failed %c%c%c%c",
 			    SEQ_LT(tsval, dst->scrub->pfss_tsecr) ? '0' : ' ',
 			    SEQ_GT(tsval, src->scrub->pfss_tsval +
 			    tsval_from_last) ? '1' : ' ',
 			    SEQ_GT(tsecr, dst->scrub->pfss_tsval) ? '2' : ' ',
-			    SEQ_LT(tsecr, dst->scrub->pfss_tsval0)? '3' : ' '));
-			DPFPRINTF((" tsval: %lu  tsecr: %lu  +ticks: %lu  "
-			    "idle: %lus %lums\n",
+			    SEQ_LT(tsecr, dst->scrub->pfss_tsval0)? '3' : ' ');
+			DPFPRINTF(LOG_NOTICE,
+			    " tsval: %lu  tsecr: %lu  +ticks: %lu  "
+			    "idle: %lus %lums",
 			    tsval, tsecr, tsval_from_last, delta_ts.tv_sec,
-			    delta_ts.tv_usec / 1000));
-			DPFPRINTF((" src->tsval: %lu  tsecr: %lu\n",
-			    src->scrub->pfss_tsval, src->scrub->pfss_tsecr));
-			DPFPRINTF((" dst->tsval: %lu  tsecr: %lu  tsval0: %lu"
-			    "\n", dst->scrub->pfss_tsval,
-			    dst->scrub->pfss_tsecr, dst->scrub->pfss_tsval0));
-			if (pf_status.debug >= PF_DEBUG_MISC) {
+			    delta_ts.tv_usec / 1000);
+			DPFPRINTF(LOG_NOTICE,
+			    " src->tsval: %lu  tsecr: %lu",
+			    src->scrub->pfss_tsval, src->scrub->pfss_tsecr);
+			DPFPRINTF(LOG_NOTICE,
+			    " dst->tsval: %lu  tsecr: %lu  tsval0: %lu",
+			    dst->scrub->pfss_tsval, dst->scrub->pfss_tsecr,
+			    dst->scrub->pfss_tsval0);
+			if (pf_status.debug >= LOG_NOTICE) {
+				log(LOG_NOTICE, "pf: ");
 				pf_print_state(state);
 				pf_print_flags(th->th_flags);
-				printf("\n");
+				addlog("\n");
 			}
 			REASON_SET(reason, PFRES_TS);
 			return (PF_DROP);
@@ -1242,12 +1244,13 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			 * Hey!  Someone tried to sneak a packet in.  Or the
 			 * stack changed its RFC1323 behavior?!?!
 			 */
-			if (pf_status.debug >= PF_DEBUG_MISC) {
-				DPFPRINTF(("Did not receive expected RFC1323 "
-				    "timestamp\n"));
+			if (pf_status.debug >= LOG_NOTICE) {
+				log(LOG_NOTICE,
+				    "pf: did not receive expected RFC1323 "
+				    "timestamp");
 				pf_print_state(state);
 				pf_print_flags(th->th_flags);
-				printf("\n");
+				addlog("\n");
 			}
 			REASON_SET(reason, PFRES_TS);
 			return (PF_DROP);
@@ -1269,15 +1272,16 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			src->scrub->pfss_flags |= PFSS_DATA_TS;
 		else {
 			src->scrub->pfss_flags |= PFSS_DATA_NOTS;
-			if (pf_status.debug >= PF_DEBUG_MISC && dst->scrub &&
+			if (pf_status.debug >= LOG_NOTICE && dst->scrub &&
 			    (dst->scrub->pfss_flags & PFSS_TIMESTAMP)) {
 				/* Don't warn if other host rejected RFC1323 */
-				DPFPRINTF(("Broken RFC1323 stack did not "
+				log(LOG_NOTICE,
+				    "pf: broken RFC1323 stack did not "
 				    "timestamp data packet. Disabled PAWS "
-				    "security.\n"));
+				    "security.");
 				pf_print_state(state);
 				pf_print_flags(th->th_flags);
-				printf("\n");
+				addlog("\n");
 			}
 		}
 	}

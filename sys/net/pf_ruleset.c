@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.5 2009/11/22 22:34:50 henning Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.6 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,6 +41,7 @@
 # include <sys/systm.h>
 #endif /* _KERNEL */
 #include <sys/mbuf.h>
+#include <sys/syslog.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -56,9 +57,6 @@
 
 
 #ifdef _KERNEL
-# define DPFPRINTF(format, x...)		\
-	if (pf_status.debug >= PF_DEBUG_NOISY)	\
-		printf(format , ##x)
 #define rs_malloc(x)		malloc(x, M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO)
 #define rs_free(x)		free(x, M_TEMP)
 
@@ -74,11 +72,8 @@
 # define rs_free(x)		 free(x)
 
 # ifdef PFDEBUG
-#  include <sys/stdarg.h>
-#  define DPFPRINTF(format, x...)	fprintf(stderr, format , ##x)
-# else
-#  define DPFPRINTF(format, x...)	((void)0)
-# endif /* PFDEBUG */
+#  include <sys/stdarg.h>	/* for DPFPRINTF() */
+# endif
 #endif /* _KERNEL */
 
 
@@ -196,8 +191,9 @@ pf_find_or_create_ruleset(const char *path)
 		strlcat(anchor->path, anchor->name, sizeof(anchor->path));
 		if ((dup = RB_INSERT(pf_anchor_global, &pf_anchors, anchor)) !=
 		    NULL) {
-			printf("pf_find_or_create_ruleset: RB_INSERT1 "
-			    "'%s' '%s' collides with '%s' '%s'\n",
+			DPFPRINTF(LOG_NOTICE,
+			    "pf_find_or_create_ruleset: RB_INSERT1 "
+			    "'%s' '%s' collides with '%s' '%s'",
 			    anchor->path, anchor->name, dup->path, dup->name);
 			rs_free(anchor);
 			rs_free(p);
@@ -207,9 +203,10 @@ pf_find_or_create_ruleset(const char *path)
 			anchor->parent = parent;
 			if ((dup = RB_INSERT(pf_anchor_node, &parent->children,
 			    anchor)) != NULL) {
-				printf("pf_find_or_create_ruleset: "
+				DPFPRINTF(LOG_NOTICE,
+				    "pf_find_or_create_ruleset: "
 				    "RB_INSERT2 '%s' '%s' collides with "
-				    "'%s' '%s'\n", anchor->path, anchor->name,
+				    "'%s' '%s'", anchor->path, anchor->name,
 				    dup->path, dup->name);
 				RB_REMOVE(pf_anchor_global, &pf_anchors,
 				    anchor);
@@ -282,7 +279,8 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 			strlcpy(path, s->anchor->path, MAXPATHLEN);
 		while (name[0] == '.' && name[1] == '.' && name[2] == '/') {
 			if (!path[0]) {
-				printf("pf_anchor_setup: .. beyond root\n");
+				DPFPRINTF(LOG_NOTICE,
+				    "pf_anchor_setup: .. beyond root");
 				rs_free(path);
 				return (1);
 			}
@@ -304,7 +302,8 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 	ruleset = pf_find_or_create_ruleset(path);
 	rs_free(path);
 	if (ruleset == NULL || ruleset->anchor == NULL) {
-		printf("pf_anchor_setup: ruleset\n");
+		DPFPRINTF(LOG_NOTICE,
+		    "pf_anchor_setup: ruleset");
 		return (1);
 	}
 	r->anchor = ruleset->anchor;
@@ -342,7 +341,8 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 			    sizeof(pr->anchor_call));
 		}
 		if (strncmp(a, r->anchor->path, strlen(a))) {
-			printf("pf_anchor_copyout: '%s' '%s'\n", a,
+			DPFPRINTF(LOG_NOTICE,
+			    "pf_anchor_copyout: '%s' '%s'", a,
 			    r->anchor->path);
 			rs_free(a);
 			return (1);
@@ -364,7 +364,8 @@ pf_anchor_remove(struct pf_rule *r)
 	if (r->anchor == NULL)
 		return;
 	if (r->anchor->refcnt <= 0) {
-		printf("pf_anchor_remove: broken refcount\n");
+		DPFPRINTF(LOG_NOTICE,
+		    "pf_anchor_remove: broken refcount");
 		r->anchor = NULL;
 		return;
 	}

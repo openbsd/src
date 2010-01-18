@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.305 2010/01/13 01:54:38 jsg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.306 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -64,7 +64,6 @@ enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 enum	{ PF_TRANS_RULESET, PF_TRANS_ALTQ, PF_TRANS_TABLE };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
 	  PF_OP_LE, PF_OP_GT, PF_OP_GE, PF_OP_XRG, PF_OP_RRG };
-enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC, PF_DEBUG_NOISY };
 enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
 	  PF_CHANGE_ADD_BEFORE, PF_CHANGE_ADD_AFTER,
 	  PF_CHANGE_REMOVE, PF_CHANGE_GET_TICKET };
@@ -185,11 +184,44 @@ struct pfi_dynaddr {
 	sa_family_t			 pfid_af;	/* rule af */
 	u_int8_t			 pfid_iflags;	/* PFI_AFLAG_* */
 };
+#endif /* _KERNEL */
+
+
+/*
+ * Logging macros
+ */
+
+#ifndef PF_DEBUGNAME
+#define PF_DEBUGNAME "pf: "
+#endif
+ 
+#ifdef _KERNEL
+#define	DPFPRINTF(n, format, x...)					\
+	do {								\
+		if (pf_status.debug >= (n)) {				\
+			log(n, PF_DEBUGNAME);				\
+			addlog(format, ##x);				\
+			addlog("\n");					\
+		}							\
+	} while (0)
+#else
+#ifdef PFDEBUG								\
+#define	DPFPRINTF(n, format, x...)					\
+	do {								\
+		fprintf(stderr, format, ##x);				\
+		fprintf(stderr, "\n");					\
+	} while (0)
+#else
+#define	DPFPRINTF(n, format, x...)	((void)0)
+#endif /* PFDEBUG */
+#endif /* _KERNEL */
+
 
 /*
  * Address manipulation macros
  */
 
+#ifdef _KERNEL
 #ifdef INET
 #ifndef INET6
 #define PF_INET_ONLY

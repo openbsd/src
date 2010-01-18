@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.10 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.11 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,6 +51,7 @@
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+#include <sys/syslog.h>
 
 #include <crypto/md5.h>
 
@@ -92,8 +93,6 @@
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
-
-#define DPFPRINTF(n, x)	if (pf_status.debug >= (n)) printf x
 
 /*
  * Global variables
@@ -282,13 +281,13 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		if (sns[type] != NULL) {
 			if (!PF_AZERO(&(sns[type])->raddr, af))
 				PF_ACPY(naddr, &(sns[type])->raddr, af);
-			if (pf_status.debug >= PF_DEBUG_NOISY) {
-				printf("pf_map_addr: src tracking (%u) maps ",
-				    type);
+			if (pf_status.debug >= LOG_DEBUG) {
+				log(LOG_DEBUG, "pf: pf_map_addr: "
+				    "src tracking (%u) maps ", type);
 				pf_print_host(&k.addr, 0, af);
-				printf(" to ");
+				addlog(" to ");
 				pf_print_host(naddr, 0, af);
-				printf("\n");
+				addlog("\n");
 			}
 			return (0);
 		}
@@ -408,11 +407,11 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			return (1);
 	}
 
-	if (pf_status.debug >= PF_DEBUG_MISC &&
+	if (pf_status.debug >= LOG_NOTICE &&
 	    (rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
-		printf("pf_map_addr: selected address ");
+		log(LOG_NOTICE, "pf: pf_map_addr: selected address ");
 		pf_print_host(naddr, 0, af);
-		printf("\n");
+		addlog("\n");
 	}
 
 	return (0);
@@ -432,11 +431,10 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 		if (pf_get_sport(pd->af, pd->proto, r, saddr,
 		    daddr, *dport, &naddr, &nport, r->nat.proxy_port[0],
 		    r->nat.proxy_port[1], sns, pd->rdomain)) {
-			DPFPRINTF(PF_DEBUG_MISC,
-			    ("pf: NAT proxy port allocation "
-			    "(%u-%u) failed\n",
+			DPFPRINTF(LOG_NOTICE,
+			    "pf: NAT proxy port allocation (%u-%u) failed",
 			    r->nat.proxy_port[0],
-			    r->nat.proxy_port[1]));
+			    r->nat.proxy_port[1]);
 			return (-1);
 		}
 		PF_ACPY(saddr, &naddr, pd->af);

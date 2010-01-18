@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.261 2010/01/13 05:09:07 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.262 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,6 +55,9 @@
 #include <err.h>
 #include <ifaddrs.h>
 #include <unistd.h>
+
+#define SYSLOG_NAMES
+#include <syslog.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
@@ -292,6 +295,45 @@ geticmpcodebyname(u_long type, char *w, sa_family_t af)
 	return (NULL);
 }
 
+/*
+ *  Decode a symbolic name to a numeric value.
+ *  From syslogd.
+ */
+int
+string_to_loglevel(const char *name)
+{
+	CODE *c;
+	char *p, buf[40];
+
+	if (isdigit(*name))
+		return (atoi(name));
+
+	for (p = buf; *name && p < &buf[sizeof(buf) - 1]; p++, name++) {
+		if (isupper(*name))
+			*p = tolower(*name);
+		else
+			*p = *name;
+	}
+	*p = '\0';
+	for (c = prioritynames; c->c_name; c++)
+		if (!strcmp(buf, c->c_name))
+			return (c->c_val);
+
+	return (-1);
+}
+
+const char *
+loglevel_to_string(int level)
+{
+	CODE *c;
+	
+	for (c = prioritynames; c->c_name; c++)
+		if (c->c_val == level)
+			return (c->c_name);
+	
+	return ("unknown");
+}
+
 void
 print_op(u_int8_t op, const char *a1, const char *a2)
 {
@@ -460,7 +502,7 @@ const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 void
 print_status(struct pf_status *s, int opts)
 {
-	char			statline[80], *running;
+	char			statline[80], *running, *debug;
 	time_t			runtime;
 	int			i;
 	char			buf[PF_MD5_DIGEST_LENGTH * 2 + 1];
@@ -484,20 +526,8 @@ print_status(struct pf_status *s, int opts)
 	} else
 		snprintf(statline, sizeof(statline), "Status: %s", running);
 	printf("%-44s", statline);
-	switch (s->debug) {
-	case PF_DEBUG_NONE:
-		printf("%15s\n\n", "Debug: None");
-		break;
-	case PF_DEBUG_URGENT:
-		printf("%15s\n\n", "Debug: Urgent");
-		break;
-	case PF_DEBUG_MISC:
-		printf("%15s\n\n", "Debug: Misc");
-		break;
-	case PF_DEBUG_NOISY:
-		printf("%15s\n\n", "Debug: Loud");
-		break;
-	}
+	asprintf(&debug, "Debug: %s", loglevel_to_string(s->debug));
+	printf("%15s\n\n", debug);
 
 	if (opts & PF_OPT_VERBOSE) {
 		printf("Hostid:   0x%08x\n", ntohl(s->hostid));

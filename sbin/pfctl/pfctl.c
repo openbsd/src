@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.293 2010/01/13 01:41:58 jsg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.294 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -52,6 +52,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <syslog.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
@@ -214,7 +216,10 @@ static const char *tblcmdopt_list[] = {
 };
 
 static const char *debugopt_list[] = {
-	"none", "urgent", "misc", "loud", NULL
+	"debug", "info", "notice", "warning",
+	"error", "crit", "alert", "emerg",
+	"none", "urgent", "misc", "loud",
+	NULL
 };
 
 static const char *optiopt_list[] = {
@@ -1382,7 +1387,8 @@ pfctl_init_options(struct pfctl *pf)
 	if (mem <= 100*1024*1024)
 		pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT_SMALL; 
 
-	pf->debug = PF_DEBUG_URGENT;
+	pf->debug = LOG_ERR;
+	pf->debug_set = 0;
 	pf->reassemble = PF_REASS_ENABLED;
 }
 
@@ -1667,23 +1673,26 @@ int
 pfctl_set_debug(struct pfctl *pf, char *d)
 {
 	u_int32_t	level;
+	int		loglevel;
 
 	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
 		return (0);
 
 	if (!strcmp(d, "none"))
-		pf->debug = PF_DEBUG_NONE;
+		level = LOG_CRIT;
 	else if (!strcmp(d, "urgent"))
-		pf->debug = PF_DEBUG_URGENT;
+		level = LOG_ERR;
 	else if (!strcmp(d, "misc"))
-		pf->debug = PF_DEBUG_MISC;
+		level = LOG_NOTICE;
 	else if (!strcmp(d, "loud"))
-		pf->debug = PF_DEBUG_NOISY;
+		level = LOG_DEBUG;
+	else if ((loglevel = string_to_loglevel(d)) >= 0)
+		level = loglevel;
 	else {
 		warnx("unknown debug level \"%s\"", d);
 		return (-1);
 	}
-
+	pf->debug = level;
 	pf->debug_set = 1;
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0)
@@ -1746,27 +1755,9 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 	    pfctl_trans(dev, &t, DIOCXCOMMIT, 0))
 		err(1, "pfctl_debug ioctl");
 
-	if ((opts & PF_OPT_QUIET) == 0) {
-		fprintf(stderr, "debug level set to '");
-		switch (level) {
-		case PF_DEBUG_NONE:
-			fprintf(stderr, "none");
-			break;
-		case PF_DEBUG_URGENT:
-			fprintf(stderr, "urgent");
-			break;
-		case PF_DEBUG_MISC:
-			fprintf(stderr, "misc");
-			break;
-		case PF_DEBUG_NOISY:
-			fprintf(stderr, "loud");
-			break;
-		default:
-			fprintf(stderr, "<invalid>");
-			break;
-		}
-		fprintf(stderr, "'\n");
-	}
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "debug level set to '%s'\n",
+		    loglevel_to_string(level));
 }
 
 int
@@ -1828,11 +1819,17 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 const char *
 pfctl_lookup_option(char *cmd, const char **list)
 {
+	const char *item = NULL;
 	if (cmd != NULL && *cmd)
 		for (; *list; list++)
-			if (!strncmp(cmd, *list, strlen(cmd)))
-				return (*list);
-	return (NULL);
+			if (!strncmp(cmd, *list, strlen(cmd))) {
+				if (item == NULL)
+					item = *list;
+				else
+					errx(1, "%s is ambigious", cmd);
+			}
+
+	return (item);
 }
 
 
@@ -1912,6 +1909,7 @@ main(int argc, char *argv[])
 	int	 mode = O_RDONLY;
 	int	 opts = 0;
 	int	 optimize = PF_OPTIMIZE_BASIC;
+	int	 level;
 	char	 anchorname[MAXPATHLEN];
 	char	*path;
 	char	*lfile = NULL, *sfile = NULL;
@@ -2277,20 +2275,24 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (debugopt != NULL) {
-		switch (*debugopt) {
-		case 'n':
-			pfctl_debug(dev, PF_DEBUG_NONE, opts);
-			break;
-		case 'u':
-			pfctl_debug(dev, PF_DEBUG_URGENT, opts);
-			break;
-		case 'm':
-			pfctl_debug(dev, PF_DEBUG_MISC, opts);
-			break;
-		case 'l':
-			pfctl_debug(dev, PF_DEBUG_NOISY, opts);
-			break;
+		if ((level = string_to_loglevel((char *)debugopt)) < 0) {
+			switch (*debugopt) {
+			case 'n':
+				level = LOG_CRIT;
+				break;
+			case 'u':
+				level = LOG_ERR;
+				break;
+			case 'm':
+				level = LOG_NOTICE;
+				break;
+			case 'l':
+				level = LOG_DEBUG;
+				break;
+			}
 		}
+		if (level >= 0)
+			pfctl_debug(dev, level, opts);
 	}
 
 	if (sfile != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.91 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.92 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -256,6 +256,9 @@ const struct icmptypeent *geticmptypebynumber(u_int8_t, u_int8_t);
 const struct icmptypeent *geticmptypebyname(char *, u_int8_t);
 const struct icmpcodeent *geticmpcodebynumber(u_int8_t, u_int8_t, u_int8_t);
 const struct icmpcodeent *geticmpcodebyname(u_long, char *, u_int8_t);
+
+int			  string_to_loglevel(const char *);
+const char		 *loglevel_to_string(int);
 
 struct pf_timeout {
 	const char	*name;

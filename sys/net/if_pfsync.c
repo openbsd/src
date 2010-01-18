@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.140 2010/01/12 23:38:02 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.141 2010/01/18 23:52:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -53,6 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -80,6 +81,7 @@
 #include <netinet/ip_carp.h>
 #endif
 
+#define PF_DEBUGNAME	"pfsync: "
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
 
@@ -484,16 +486,15 @@ pfsync_state_import(struct pfsync_state *sp, u_int8_t flags)
 	int pool_flags;
 	int error;
 
-	if (sp->creatorid == 0 && pf_status.debug >= PF_DEBUG_MISC) {
-		printf("pfsync_state_import: invalid creator id:"
-		    " %08x\n", ntohl(sp->creatorid));
+	if (sp->creatorid == 0) {
+		DPFPRINTF(LOG_NOTICE, "pfsync_state_import: "
+		    "invalid creator id: %08x", ntohl(sp->creatorid));
 		return (EINVAL);
 	}
 
 	if ((kif = pfi_kif_get(sp->ifname)) == NULL) {
-		if (pf_status.debug >= PF_DEBUG_MISC)
-			printf("pfsync_state_import: "
-			    "unknown interface: %s\n", sp->ifname);
+		DPFPRINTF(LOG_NOTICE, "pfsync_state_import: "
+		    "unknown interface: %s", sp->ifname);
 		if (flags & PFSYNC_SI_IOCTL)
 			return (EINVAL);
 		return (0);	/* skip this state */
@@ -814,10 +815,8 @@ pfsync_in_ins(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 		    sp->dst.state > PF_TCPS_PROXY_DST ||
 		    sp->direction > PF_OUT ||
 		    (sp->af != AF_INET && sp->af != AF_INET6)) {
-			if (pf_status.debug >= PF_DEBUG_MISC) {
-				printf("pfsync_input: PFSYNC5_ACT_INS: "
-				    "invalid value\n");
-			}
+			DPFPRINTF(LOG_NOTICE,
+			    "pfsync_input: PFSYNC5_ACT_INS: invalid value");
 			pfsyncstats.pfsyncs_badval++;
 			continue;
 		}
@@ -912,10 +911,29 @@ pfsync_in_upd(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 		if (sp->timeout >= PFTM_MAX ||
 		    sp->src.state > PF_TCPS_PROXY_DST ||
 		    sp->dst.state > PF_TCPS_PROXY_DST) {
-			if (pf_status.debug >= PF_DEBUG_MISC) {
-				printf("pfsync_input: PFSYNC_ACT_UPD: "
-				    "invalid value\n");
-			}
+			DPFPRINTF(LOG_NOTICE,
+			    "pfsync_input: PFSYNC_ACT_UPD: invalid value");
+			pfsyncstats.pfsyncs_badval++;
+			continue;
+		}
+
+		bcopy(sp->id, &id_key.id, sizeof(id_key.id));
+		id_key.creatorid = sp->creatorid;
+
+		st = pf_find_state_byid(&id_key);
+		if (st == NULL) {
+			/* insert the update */
+			if (pfsync_state_import(sp, 0))
+				pfsyncstats.pfsyncs_badstate++;
+			continue;
+		}
+
+		if (ISSET(st->state_flags, PFSTATE_ACK))
+			pfsync_deferred(st, 1);
+
+		if (st->key[PF_SK_WIRE]->proto == IPPROTO_TCP) {
+			DPFPRINTF(LOG_NOTICE,
+			    "pfsync_input: PFSYNC_ACT_UPD: invalid value");
 			pfsyncstats.pfsyncs_badval++;
 			continue;
 		}
@@ -994,11 +1012,8 @@ pfsync_in_upd_c(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 		if (up->timeout >= PFTM_MAX ||
 		    up->src.state > PF_TCPS_PROXY_DST ||
 		    up->dst.state > PF_TCPS_PROXY_DST) {
-			if (pf_status.debug >= PF_DEBUG_MISC) {
-				printf("pfsync_input: "
-				    "PFSYNC_ACT_UPD_C: "
-				    "invalid value\n");
-			}
+			DPFPRINTF(LOG_NOTICE,
+			    "pfsync_input: PFSYNC_ACT_UPD_C: invalid value");
 			pfsyncstats.pfsyncs_badval++;
 			continue;
 		}
@@ -1164,8 +1179,7 @@ pfsync_in_bus(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 		    pf_pool_limits[PF_LIMIT_STATES].limit /
 		    ((sc->sc_if.if_mtu - PFSYNC_MINPKT) /
 		    sizeof(struct pfsync_state)));
-		if (pf_status.debug >= PF_DEBUG_MISC)
-			printf("pfsync: received bulk update start\n");
+		DPFPRINTF(LOG_INFO, "received bulk update start");
 		break;
 
 	case PFSYNC_BUS_END:
@@ -1180,13 +1194,10 @@ pfsync_in_bus(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 				carp_group_demote_adj(&sc->sc_if, -1);
 #endif
 			pfsync_sync_ok = 1;
-			if (pf_status.debug >= PF_DEBUG_MISC)
-				printf("pfsync: received valid "
-				    "bulk update end\n");
+			DPFPRINTF(LOG_INFO, "received valid bulk update end");
 		} else {
-			if (pf_status.debug >= PF_DEBUG_MISC)
-				printf("pfsync: received invalid "
-				    "bulk update end: bad timestamp\n");
+			DPFPRINTF(LOG_WARNING, "received invalid "
+			    "bulk update end: bad timestamp");
 		}
 		break;
 	}
@@ -1246,9 +1257,8 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 	return;
 
  bad:
-	if (pf_status.debug >= PF_DEBUG_MISC)
-		printf("pfsync_insert: PFSYNC_ACT_TDB_UPD: "
-		    "invalid value\n");
+	DPFPRINTF(LOG_WARNING, "pfsync_insert: PFSYNC_ACT_TDB_UPD: "
+	    "invalid value");
 	pfsyncstats.pfsyncs_badstate++;
 	return;
 }
@@ -1875,8 +1885,7 @@ pfsync_request_full_update(struct pfsync_softc *sc)
 			carp_group_demote_adj(&sc->sc_if, 1);
 #endif
 		pfsync_sync_ok = 0;
-		if (pf_status.debug >= PF_DEBUG_MISC)
-			printf("pfsync: requesting bulk update\n");
+		DPFPRINTF(LOG_INFO, "requesting bulk update");
 		timeout_add(&sc->sc_bulkfail_tmo, 4 * hz +
 		    pf_pool_limits[PF_LIMIT_STATES].limit /
 		    ((sc->sc_if.if_mtu - PFSYNC_MINPKT) /
@@ -2162,8 +2171,7 @@ pfsync_bulk_start(void)
 		sc->sc_bulk_next = TAILQ_FIRST(&state_list);
 	sc->sc_bulk_last = sc->sc_bulk_next;
 
-	if (pf_status.debug >= PF_DEBUG_MISC)
-		printf("pfsync: received bulk update request\n");
+	DPFPRINTF(LOG_INFO, "received bulk update request");
 
 	pfsync_bulk_status(PFSYNC_BUS_START);
 	timeout_add(&sc->sc_bulk_tmo, 0);
@@ -2250,8 +2258,7 @@ pfsync_bulk_fail(void *arg)
 			carp_group_demote_adj(&sc->sc_if, -1);
 #endif
 		pfsync_sync_ok = 1;
-		if (pf_status.debug >= PF_DEBUG_MISC)
-			printf("pfsync: failed to receive bulk update\n");
+		DPFPRINTF(LOG_ERR, "failed to receive bulk update");
 	}
 }
 

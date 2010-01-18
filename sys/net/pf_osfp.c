@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.15 2008/06/14 02:22:13 henning Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.16 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -24,6 +24,7 @@
 #include <sys/pool.h>
 #endif /* _KERNEL */
 #include <sys/mbuf.h>
+#include <sys/syslog.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -40,9 +41,6 @@
 
 
 #ifdef _KERNEL
-# define DPFPRINTF(format, x...)		\
-	if (pf_status.debug >= PF_DEBUG_NOISY)	\
-		printf(format , ##x)
 typedef struct pool pool_t;
 
 #else
@@ -60,11 +58,9 @@ typedef struct pool pool_t;
 # define pool_init(pool, size, a, ao, f, m, p)	(*(pool)) = (size)
 
 # ifdef PFDEBUG
-#  include <sys/stdarg.h>
-#  define DPFPRINTF(format, x...)	fprintf(stderr, format , ##x)
-# else
-#  define DPFPRINTF(format, x...)	((void)0)
+#  include <sys/stdarg.h>	/* for DPFPRINTF() */
 # endif /* PFDEBUG */
+
 #endif /* _KERNEL */
 
 
@@ -240,8 +236,9 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 		optlen = MAX(optlen, 1);	/* paranoia */
 	}
 
-	DPFPRINTF("fingerprinted %s:%d  %d:%d:%d:%d:%llx (%d) "
-	    "(TS=%s,M=%s%d,W=%s%d)\n",
+	DPFPRINTF(LOG_NOTICE,
+	    "fingerprinted %s:%d  %d:%d:%d:%d:%llx (%d) "
+	    "(TS=%s,M=%s%d,W=%s%d)",
 	    srcname, ntohs(tcp->th_sport),
 	    fp.fp_wsize, fp.fp_ttl, (fp.fp_flags & PF_OSFP_DF) != 0,
 	    fp.fp_psize, (long long int)fp.fp_tcpopts, fp.fp_optcnt,
@@ -270,7 +267,7 @@ pf_osfp_match(struct pf_osfp_enlist *list, pf_osfp_t os)
 	if (os == PF_OSFP_ANY)
 		return (1);
 	if (list == NULL) {
-		DPFPRINTF("osfp no match against %x\n", os);
+		DPFPRINTF(LOG_NOTICE, "osfp no match against %x", os);
 		return (os == PF_OSFP_UNKNOWN);
 	}
 	PF_OSFP_UNPACK(os, os_class, os_version, os_subtype);
@@ -279,13 +276,14 @@ pf_osfp_match(struct pf_osfp_enlist *list, pf_osfp_t os)
 		if ((os_class == PF_OSFP_ANY || en_class == os_class) &&
 		    (os_version == PF_OSFP_ANY || en_version == os_version) &&
 		    (os_subtype == PF_OSFP_ANY || en_subtype == os_subtype)) {
-			DPFPRINTF("osfp matched %s %s %s  %x==%x\n",
+			DPFPRINTF(LOG_NOTICE, 
+			    "osfp matched %s %s %s  %x==%x",
 			    entry->fp_class_nm, entry->fp_version_nm,
 			    entry->fp_subtype_nm, os, entry->fp_os);
 			return (1);
 		}
 	}
-	DPFPRINTF("fingerprint 0x%x didn't match\n", os);
+	DPFPRINTF(LOG_NOTICE, "fingerprint 0x%x didn't match", os);
 	return (0);
 }
 
@@ -335,9 +333,9 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	fpadd.fp_wscale = fpioc->fp_wscale;
 	fpadd.fp_ttl = fpioc->fp_ttl;
 
-#if 0	/* XXX RYAN wants to fix logging */
-	DPFPRINTF("adding osfp %s %s %s = %s%d:%d:%d:%s%d:0x%llx %d "
-	    "(TS=%s,M=%s%d,W=%s%d) %x\n",
+	DPFPRINTF(LOG_DEBUG,
+	    "adding osfp %s %s %s = %s%d:%d:%d:%s%d:0x%llx %d "
+	    "(TS=%s,M=%s%d,W=%s%d) %x",
 	    fpioc->fp_os.fp_class_nm, fpioc->fp_os.fp_version_nm,
 	    fpioc->fp_os.fp_subtype_nm,
 	    (fpadd.fp_flags & PF_OSFP_WSIZE_MOD) ? "%" :
@@ -359,7 +357,6 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	    (fpadd.fp_flags & PF_OSFP_WSCALE_DC) ? "*" : "",
 	    fpadd.fp_wscale,
 	    fpioc->fp_os.fp_os);
-#endif
 
 	if ((fp = pf_osfp_find_exact(&pf_osfp_list, &fpadd))) {
 		 SLIST_FOREACH(entry, &fp->fp_oses, fp_entry) {
@@ -401,7 +398,8 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 
 #ifdef PFDEBUG
 	if ((fp = pf_osfp_validate()))
-		printf("Invalid fingerprint list\n");
+		DPFPRINTF(LOG_NOTICE,
+		    "Invalid fingerprint list");
 #endif /* PFDEBUG */
 	return (0);
 }
@@ -570,7 +568,8 @@ pf_osfp_validate(void)
 			find.fp_wsize *= 2;
 		if (f != (f2 = pf_osfp_find(&pf_osfp_list, &find, 0))) {
 			if (f2)
-				printf("Found \"%s %s %s\" instead of "
+				DPFPRINTF(LOG_NOTICE,
+				    "Found \"%s %s %s\" instead of "
 				    "\"%s %s %s\"\n",
 				    SLIST_FIRST(&f2->fp_oses)->fp_class_nm,
 				    SLIST_FIRST(&f2->fp_oses)->fp_version_nm,
@@ -579,7 +578,8 @@ pf_osfp_validate(void)
 				    SLIST_FIRST(&f->fp_oses)->fp_version_nm,
 				    SLIST_FIRST(&f->fp_oses)->fp_subtype_nm);
 			else
-				printf("Couldn't find \"%s %s %s\"\n",
+				DPFPRINTF(LOG_NOTICE,
+				    "Couldn't find \"%s %s %s\"\n",
 				    SLIST_FIRST(&f->fp_oses)->fp_class_nm,
 				    SLIST_FIRST(&f->fp_oses)->fp_version_nm,
 				    SLIST_FIRST(&f->fp_oses)->fp_subtype_nm);

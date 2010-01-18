@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.141 2009/09/28 22:13:20 dlg Exp $
+.\" $OpenBSD: pfctl.8,v 1.142 2010/01/18 23:52:46 mcbride Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 28 2009 $
+.Dd $Mdocdate: January 18 2010 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -640,19 +640,21 @@ will produce even more verbose output including ruleset warnings.
 See the previous section for its effect on table commands.
 .It Fl x Ar level
 Set the debug
-.Ar level
-(may be abbreviated) to one of the following:
-.Pp
-.Bl -tag -width xxxxxxxxxxxx -compact
-.It Fl x Cm none
-Don't generate debug messages.
-.It Fl x Cm urgent
-Generate debug messages only for serious errors.
-.It Fl x Cm misc
-Generate debug messages for various errors.
-.It Fl x Cm loud
-Generate debug messages for common conditions.
-.El
+.Ar level ,
+which limits the severity of log messages printed by pf. This should be is a
+keyword from the following ordered list (highest to lowest):
+.Ar emerg ,
+.Ar alert ,
+.Ar crit ,
+.Ar err ,
+.Ar warning ,
+.Ar notice ,
+.Ar info ,
+and 
+.Ar debug .
+These keywords correspond to the similar (LOG_) values specified
+to the syslog library routine, and may be abbreviated on the command
+line.
 .It Fl z
 Clear per-rule statistics.
 .El

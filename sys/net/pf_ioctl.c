@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.231 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.232 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -53,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 #include <sys/rwlock.h>
+#include <sys/syslog.h>
 #include <uvm/uvm_extern.h>
 
 #include <net/if.h>
@@ -144,7 +145,6 @@ int			 pf_rtlabel_add(struct pf_addr_wrap *);
 void			 pf_rtlabel_remove(struct pf_addr_wrap *);
 void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
 
-#define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
 void
 pfattach(int num)
@@ -223,7 +223,7 @@ pfattach(int num)
 
 	pf_normalize_init();
 	bzero(&pf_status, sizeof(pf_status));
-	pf_status.debug = PF_DEBUG_URGENT;
+	pf_status.debug = LOG_ERR;
 	pf_status.reass = PF_REASS_ENABLED;
 
 	/* XXX do our best to avoid a conflict */
@@ -978,7 +978,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_status.stateid = time_second;
 				pf_status.stateid = pf_status.stateid << 32;
 			}
-			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
+			DPFPRINTF(LOG_NOTICE, "pf: started");
 		}
 		break;
 
@@ -988,7 +988,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		else {
 			pf_status.running = 0;
 			pf_status.since = time_second;
-			DPFPRINTF(PF_DEBUG_MISC, ("pf: stopped\n"));
+			DPFPRINTF(LOG_NOTICE, "pf: stopped");
 		}
 		break;
 
@@ -1723,7 +1723,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		if (error == 0)
 			pf_altq_running = 1;
-		DPFPRINTF(PF_DEBUG_MISC, ("altq: started\n"));
+		DPFPRINTF(LOG_NOTICE, "altq: started");
 		break;
 	}
 
@@ -1740,7 +1740,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		if (error == 0)
 			pf_altq_running = 0;
-		DPFPRINTF(PF_DEBUG_MISC, ("altq: stopped\n"));
+		DPFPRINTF(LOG_NOTICE, "altq: stopped");
 		break;
 	}
 

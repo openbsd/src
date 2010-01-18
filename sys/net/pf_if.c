@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.59 2010/01/12 03:20:51 mcbride Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.60 2010/01/18 23:52:46 mcbride Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,7 @@
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/pool.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -151,21 +152,24 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 		break;
 	case PFI_KIF_REF_RULE:
 		if (kif->pfik_rules <= 0) {
-			printf("pfi_kif_unref: rules refcount <= 0\n");
+			DPFPRINTF(LOG_ERR,
+			    "pfi_kif_unref: rules refcount <= 0");
 			return;
 		}
 		kif->pfik_rules--;
 		break;
 	case PFI_KIF_REF_STATE:
 		if (kif->pfik_states <= 0) {
-			printf("pfi_kif_unref: state refcount <= 0\n");
+			DPFPRINTF(LOG_ERR,
+			    "pfi_kif_unref: state refcount <= 0");
 			return;
 		}
 		kif->pfik_states--;
 		break;
 	case PFI_KIF_REF_ROUTE:
 		if (kif->pfik_routes <= 0) {
-			printf("pfi_kif_unref: state refcount <= 0\n");
+			DPFPRINTF(LOG_ERR,
+			    "pfi_kif_unref: state refcount <= 0");
 			return;
 		}
 		kif->pfik_routes--;
@@ -457,8 +461,9 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 
 	if ((e = pfr_set_addrs(&kt->pfrkt_t, pfi_buffer, pfi_buffer_cnt, &size2,
 	    NULL, NULL, NULL, 0, PFR_TFLAG_ALLMASK)))
-		printf("pfi_table_update: cannot set %d new addresses "
-		    "into table %s: %d\n", pfi_buffer_cnt, kt->pfrkt_name, e);
+		DPFPRINTF(LOG_ERR,
+		    "pfi_table_update: cannot set %d new addresses "
+		    "into table %s: %d", pfi_buffer_cnt, kt->pfrkt_name, e);
 }
 
 void
@@ -528,15 +533,17 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 		int		 new_max = pfi_buffer_max * 2;
 
 		if (new_max > PFI_BUFFER_MAX) {
-			printf("pfi_address_add: address buffer full (%d/%d)\n",
+			DPFPRINTF(LOG_ERR,
+			    "pfi_address_add: address buffer full (%d/%d)",
 			    pfi_buffer_cnt, PFI_BUFFER_MAX);
 			return;
 		}
 		p = malloc(new_max * sizeof(*pfi_buffer), PFI_MTYPE,
 		    M_DONTWAIT);
 		if (p == NULL) {
-			printf("pfi_address_add: no memory to grow buffer "
-			    "(%d/%d)\n", pfi_buffer_cnt, PFI_BUFFER_MAX);
+			DPFPRINTF(LOG_ERR,
+			    "pfi_address_add: no memory to grow buffer "
+			    "(%d/%d)", pfi_buffer_cnt, PFI_BUFFER_MAX);
 			return;
 		}
 		memcpy(p, pfi_buffer, pfi_buffer_max * sizeof(*pfi_buffer));

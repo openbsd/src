@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.81 2010/01/12 03:20:51 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.82 2010/01/18 23:52:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -36,6 +36,7 @@
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
