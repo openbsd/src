@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.39 2010/01/10 13:00:24 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.40 2010/01/18 17:04:11 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -287,8 +287,6 @@ ctx3:
 	REG_L	s7, PCB_CONTEXT+7*REGSZ(t3)
 	REG_L	sp, PCB_CONTEXT+8*REGSZ(t3)
 	REG_L	s8, PCB_CONTEXT+9*REGSZ(t3)
-	jal	splx
-	REG_L	a0, PCB_CONTEXT+13*REGSZ(t3)
 	REG_L	ra, PCB_CONTEXT+10*REGSZ(t3)
 	REG_L	v0, PCB_CONTEXT+11*REGSZ(t3)
 #ifdef RM7000_ICR
