@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.35 2010/01/14 19:38:37 espie Exp $
+# $OpenBSD: Makefile,v 1.36 2010/01/18 12:58:12 espie Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 collision-check5 partial-update-test conflict-update \
@@ -78,9 +78,9 @@ collision-check5: rep1/d-0.tgz rep1/e-0.tgz
 update-check1: rep0/g-0.tgz rep1/g-0.tgz rep0/ga-0.tgz rep1/ga-0.tgz \
 	rep0/gb-0.tgz rep1/gb-0p0.tgz rep0/gc-0.tgz rep1/gc-0.tgz \
 	rep0/gd-0.tgz rep1/gd-1.tgz rep0/ge-0.tgz rep1/ge-1.tgz \
-	rep0/gf-1.tgz rep1/gf-0.tgz
+	rep0/gf-1.tgz rep1/gf-0.tgz rep0/gg-0.tgz rep1/gg-0.tgz
 	@-rm -rf ${D8}
-	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} g ga gb gc gd ge gf
+	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} g ga gb gc gd ge gf gg
 	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u
 	@PKG_DBDIR=${D8}/pkgdb pkg_info |diff - ${.CURDIR}/list7.out
 	@ROOT=${D8} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u gd ge
@@ -282,6 +282,12 @@ rep0/g-0.tgz: plist4
 
 rep1/g-0.tgz: plist4
 	@PACKAGE_COMMENT=updated ${PKG_CREATE} -f plist4 $@
+
+rep0/gg-0.tgz: plist4 
+	@${PKG_CREATE} -P't/g:g-*:g-1' -f plist4 $@
+
+rep1/gg-0.tgz: plist4 
+	@PACKAGE_COMMENT=updated ${PKG_CREATE} -P't/g:g-*:g-0' -f plist4 $@
 
 rep0/gd-0.tgz rep1/ge-1.tgz: plist5
 	@${PKG_CREATE} -f plist5 $@
