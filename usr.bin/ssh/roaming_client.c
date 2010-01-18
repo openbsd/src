@@ -1,4 +1,4 @@
-/* $OpenBSD: roaming_client.c,v 1.2 2010/01/09 05:17:00 dtucker Exp $ */
+/* $OpenBSD: roaming_client.c,v 1.3 2010/01/18 01:50:27 dtucker Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
  *
@@ -118,7 +118,7 @@ roaming_auth_required(void)
 	calculate_new_key(&key1, cookie, chall);
 	calculate_new_key(&key2, cookie, chall);
 
-	debug("Received %llu bytes", (long long unsigned)get_recv_bytes());
+	debug("Received %llu bytes", (unsigned long long)get_recv_bytes());
 	debug("Sent roaming_auth packet");
 }
 
@@ -212,7 +212,7 @@ roaming_resume(void)
 		goto fail;
 	}
 	recv_bytes = packet_get_int64() ^ oldkey2;
-	debug("Peer received %llu bytes", (long long unsigned)recv_bytes);
+	debug("Peer received %llu bytes", (unsigned long long)recv_bytes);
 	resend_bytes(packet_get_connection_out(), &recv_bytes);
 
 	resume_in_progress = 0;
