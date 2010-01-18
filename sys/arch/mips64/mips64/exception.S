@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.28 2010/01/09 23:43:43 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.29 2010/01/18 16:58:42 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -491,6 +491,9 @@ END(u_general)
  *	Setup for and return to user.
  */
 LEAF(proc_trampoline, 0)
+#ifdef DDB
+	move	zero, ra
+#endif
 #ifdef MULTIPROCESSOR
 	jal	_C_LABEL(proc_trampoline_mp)
 	nop
@@ -500,8 +503,10 @@ LEAF(proc_trampoline, 0)
 	 * start at spl0 and with interrupts enabled, and these
 	 * won't ``return to userland''.
 	 */
+#ifndef MULTIPROCESSOR	/* done by proc_trampoline_mp() */
 	jal	splx
 	xor	a0, a0
+#endif
 	jal	updateimask		# Make sure SR imask is updated
 	xor	a0, a0			# and interrupts enabled
 
