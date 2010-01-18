@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.h,v 1.11 2009/11/12 19:45:53 miod Exp $	*/
+/*      $OpenBSD: trap.h,v 1.12 2010/01/18 16:57:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,40 +84,44 @@
 #if defined(DDB) || defined(DEBUG)
 
 struct trapdebug {              /* trap history buffer for debugging */
-	u_int	status;
-        u_int	cause;
-        u_long	vadr;
-        u_long   pc;
-        u_long   ra;
-        u_long   sp;
+	uint32_t status;
+        uint32_t cause;
+        register_t vadr;
+        register_t pc;
+        register_t ra;
+        register_t sp;
         u_int   code;
 	u_int	ipl;
 };
 
-#define	trapdebug_enter(x, cd) {	\
-	u_int32_t __s = disableintr();	\
-	trp->status = x->sr;		\
-	trp->cause = x->cause;		\
-	trp->vadr = x->badvaddr;	\
-	trp->pc = x->pc;		\
-	trp->sp = x->sp;		\
-	trp->ra = x->ra;		\
-	trp->ipl = x->ipl;		\
-	trp->code = cd;				\
-	if (++trp == &trapdebug[TRAPSIZE])	\
-		trp = trapdebug;		\
-	setsr(__s);				\
- }
+#define	trapdebug_enter(ci, frame, cd)					\
+do {									\
+	uint32_t sr = disableintr();					\
+	u_long cpuid = ci->ci_cpuid;					\
+	struct trapdebug *t;						\
+									\
+	t = trapdebug + TRAPSIZE * cpuid + trppos[cpuid];		\
+	t->status = frame->sr;						\
+	t->cause = frame->cause;					\
+	t->vadr = frame->badvaddr;					\
+	t->pc = frame->pc;						\
+	t->sp = frame->sp;						\
+	t->ra = frame->ra;						\
+	t->ipl = frame->ipl;						\
+	t->code = cd;							\
+	if (++trppos[cpuid] == TRAPSIZE)				\
+		trppos[cpuid] = 0;					\
+	setsr(sr);							\
+} while (0)
 
 #define TRAPSIZE 10		/* Trap log buffer length */
-extern struct trapdebug trapdebug[TRAPSIZE], *trp;
+extern struct trapdebug trapdebug[MAXCPUS * TRAPSIZE];
+extern uint trppos[MAXCPUS];
 
 void trapDump(char *msg);
 
 #else
-
-#define	trapdebug_enter(x, y)
-
+#define	trapdebug_enter(ci, frame, code)
 #endif
 #endif /* _LOCORE */
 

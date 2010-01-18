@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.56 2010/01/09 23:43:43 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.57 2010/01/18 16:57:46 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -114,7 +114,7 @@ interrupt(struct trap_frame *trapframe)
 	ci->ci_intrdepth++;
 
 #ifdef DEBUG_INTERRUPT
-	trapdebug_enter(trapframe, 0);
+	trapdebug_enter(ci, trapframe, T_INT);
 #endif
 	atomic_add_int(&uvmexp.intrs, 1);
 
