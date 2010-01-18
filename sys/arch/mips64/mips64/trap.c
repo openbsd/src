@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2010/01/18 16:57:46 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2010/01/18 18:27:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -856,15 +856,15 @@ fpu_trapsignal(struct proc *p, u_long ucode, int typ, union sigval sv)
 
 #if defined(DDB) || defined(DEBUG)
 void
-trapDump(msg)
-	char *msg;
+trapDump(char *msg)
 {
 #ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;
 #endif
 	struct cpu_info *ci;
-	struct trapdebug *ptrp;
+	struct trapdebug *base, *ptrp;
 	int i;
+	uint pos;
 	int s;
 
 	s = splhigh();
@@ -875,10 +875,17 @@ trapDump(msg)
 	CPU_INFO_FOREACH(cii, ci)
 #endif
 	{
+#ifdef MULTIPROCESSOR
+		printf("cpu%d\n", ci->ci_cpuid);
+#endif
 		/* walk in reverse order */
+		pos = trppos[ci->ci_cpuid];
+		base = trapdebug + ci->ci_cpuid * TRAPSIZE;
 		for (i = TRAPSIZE - 1; i >= 0; i--) {
-			ptrp = trapdebug + ci->ci_cpuid * TRAPSIZE;
-			ptrp += (trppos[ci->ci_cpuid] + i) % TRAPSIZE;
+			if (pos + i >= TRAPSIZE)
+				ptrp = base + pos + i - TRAPSIZE;
+			else
+				ptrp = base + pos + i;
 
 			if (ptrp->cause == 0)
 				break;
@@ -1194,14 +1201,14 @@ loop:
 	if (sp & 3 || !VALID_ADDRESS(sp)) {
 		(*pr)("SP %p: not in kernel\n", sp);
 		ra = 0;
-		goto done;
+		goto end;
 	}
 
 	/* check for bad PC */
 	if (pc & 3 || !VALID_ADDRESS(pc)) {
 		(*pr)("PC %p: not in kernel\n", pc);
 		ra = 0;
-		goto done;
+		goto end;
 	}
 
 #ifdef DDB
@@ -1316,7 +1323,6 @@ loop:
 		}
 	}
 
-done:
 #ifdef DDB
 	if (symname == NULL)
 		(*pr)("%p ", subr);
