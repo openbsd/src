@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.97 2009/11/27 20:05:50 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.98 2010/01/18 19:09:39 schwarze Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -282,7 +282,7 @@
 			    int *alen); } ogetsockname
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
-; system calls.  (This includes various calls added for compatibity
+; system calls.  (This includes various calls added for compatibility
 ; with other Unix variants.)
 ; Some of these calls are now supported by BSD...
 151	UNIMPL
