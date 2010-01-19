@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.22 2010/01/17 11:56:46 espie Exp $
+# $OpenBSD: Error.pm,v 1.23 2010/01/19 14:58:53 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -24,10 +24,7 @@ sub cache(*&)
 	my $callpkg = caller;
 	my $actual = sub {
 		my $self = shift;
-		if (!defined $self->{$sym}) {
-			$self->{$sym} = &$code($self);
-		}
-		return $self->{$sym};
+		return $self->{$sym} //= &$code($self);
 	};
 	no strict 'refs';
 	*{$callpkg."::$sym"} = $actual;

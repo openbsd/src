@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.1 2010/01/19 14:26:24 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.2 2010/01/19 14:58:53 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -55,7 +55,15 @@ sub badspec
 	"OpenBSD::LibSpec::BadSpec";
 }
 
+my $cached = {};
+
 sub from_string
+{
+	my ($class, $_) = @_;
+	return $cached->{$_} //= $class->new_from_string($_);
+}
+
+sub new_from_string
 {
 	my ($class, $string) = @_;
 	if (my ($stem, $major, $minor) = $string =~ m/^(.*)\.(\d+)\.(\d+)$/o) {

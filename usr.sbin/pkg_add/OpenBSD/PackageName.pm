@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.40 2010/01/10 11:31:08 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.41 2010/01/19 14:58:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -44,37 +44,11 @@ sub splitname
 }
 
 my $cached = {};
-my $calls = 0;
-my $nohits = 0;
-my $dewey_calls = 0;
-my $dewey_hits = 0;
-my $tocalls = 0;
-my $strings = 0;
-
-sub stats
-{
-	require Devel::Size;
-
-	print STDERR "Size=", Devel::Size::total_size($cached), "\n";
-	print STDERR "Total calls: ", $calls, "\n";
-	print STDERR "Cache hits: ", $calls - $nohits, "\n";
-	print STDERR "Dewey calls: ", $dewey_calls, "\n";
-	print STDERR "Dewey hits: ", $dewey_hits, "\n";
-	print STDERR "to_string calls: ", $tocalls, "\n";
-	print STDERR "string compares: ", $strings, "\n";
-#	print STDERR join(',', sort keys %$cached), "\n";
-}
 
 sub from_string
 {
 	my ($class, $_) = @_;
-	$calls++;
-	if (!defined $cached->{$_}) {
-		$nohits++;
-		return $cached->{$_} = $class->new_from_string($_);
-	} else {
-		return $cached->{$_};
-	}
+	return $cached->{$_} //= $class->new_from_string($_);
 }
 
 sub new_from_string
@@ -195,13 +169,7 @@ sub from_string
 sub make
 {
 	my ($class, $string) = @_;
-	$dewey_calls++;
-	if (!defined $cache->{$string}) {
-		return $cache->{$string} = $class->from_string($string);
-	} else {
-		$dewey_hits++;
-		return $cache->{$string};
-	}
+	return $cache->{$string} //= $class->from_string($string);
 }
 
 sub to_string
@@ -308,7 +276,6 @@ sub from_string
 sub to_string
 {
 	my $o = shift;
-	$tocalls++;
 	my $string = $o->{dewey}->to_string;
 	if (defined $o->{p}) {
 		$string .= 'p'.$o->{p};
@@ -334,7 +301,6 @@ sub compare
 	}
 	# Simple case: only p number differs
 	if ($a->{dewey} eq $b->{dewey}) {
-		$strings++;
 		return $a->pnum_compare($b);
 	} 
 
