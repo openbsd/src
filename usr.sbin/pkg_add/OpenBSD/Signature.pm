@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.3 2010/01/19 10:21:28 espie Exp $
+# $OpenBSD: Signature.pm,v 1.4 2010/01/19 14:32:22 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -32,12 +32,10 @@ package OpenBSD::PackingElement::Wantlib;
 sub signature
 {
 	my ($self, $hash) = @_;
-	require OpenBSD::SharedLibs;
 
-	my ($stem, $major, $minor) = OpenBSD::SharedLibs::parse_spec($self->name);
-	if (defined $stem) {
-		$hash->{$stem} = OpenBSD::LibrarySpec->new($stem, 
-		    $major, $minor);
+	my $spec = $self->spec;
+	if ($spec->is_valid) {
+		$hash->{$spec->key} = $spec;
 	}
 }
 
@@ -172,30 +170,19 @@ sub compare
 	return $r;
 }
 
-package OpenBSD::LibrarySpec;
-sub new
-{
-	my ($class, $stem, $major, $minor) = @_;
-	bless {stem => $stem, major => $major, minor => $minor}, $class;
-}
-
-sub to_string
-{
-	my $self = shift;
-	return join('.', $self->{stem}, $self->{major}, $self->{minor});
-}
+package OpenBSD::LibSpec;
 
 sub compare
 {
 	my ($a, $b) = @_;
 	
-	if ($a->{stem} ne $b->{stem}) {
+	if ($a->key ne $b->key) {
 		return undef;
 	}
-	if ($a->{major} != $b->{major}) {
-		return $a->{major} <=> $b->{major};
+	if ($a->major != $b->major) {
+		return $a->major <=> $b->major;
 	}
-	return $a->{minor} <=> $b->{minor};
+	return $a->minor <=> $b->minor;
 }
 
 1;
