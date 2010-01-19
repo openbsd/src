@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.34 2010/01/14 07:22:31 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.35 2010/01/19 19:54:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -232,7 +232,7 @@ ip30_autoconf(struct device *parent)
 	config_found(parent, &caa, mbprint);
 
 #ifdef MULTIPROCESSOR
-	for (cpuid = 1; cpuid < MAXCPUS; cpuid++)
+	for (cpuid = 1; cpuid < IP30_MAXCPUS; cpuid++)
 		if (ip30_cpu_exists(cpuid)) {
 			/*
 			 * Attach other processors with the same hardware
@@ -358,11 +358,13 @@ u_long
 ip30_get_ncpusfound(void)
 {
 	int i;
-	for (i = 1; i < MAXCPUS; i++)
-		if (!ip30_cpu_exists(i))
-			continue;
+	int ncpus = 0;
 
-	return i;
+	for (i = 0; i < IP30_MAXCPUS; i++)
+		if (ip30_cpu_exists(i))
+			ncpus++;
+
+	return ncpus;
 }
 
 #ifdef DDB

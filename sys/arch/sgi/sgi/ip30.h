@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30.h,v 1.7 2010/01/13 22:57:30 miod Exp $	*/
+/*	$OpenBSD: ip30.h,v 1.8 2010/01/19 19:54:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -55,6 +55,8 @@
 /*
  * Multiprocessor configuration area
  */
+
+#define	IP30_MAXCPUS		4
 
 #define MPCONF_BASE		0x0000000000000600UL
 #define MPCONF_LEN		0x80
