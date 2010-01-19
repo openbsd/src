@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.20 2009/06/04 00:44:47 krw Exp $
+#	$OpenBSD: install.md,v 1.21 2010/01/19 19:55:52 miod Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,19 +32,33 @@
 # machine dependent section of installation/upgrade script.
 #
 
-IPARCH=`sysctl -n hw.model`
+IPARCH=$(sysctl -n hw.model)
+NCPU=$(sysctl -n hw.ncpufound)
 
 MDSETS="bsd.${IPARCH} bsd.rd.${IPARCH}"
-DEFAULTSETS=${MDSETS}
 SANESETS="bsd.${IPARCH}"
+if ((NCPU > 1)); then
+	MDSETS="${MDSETS} bsd.mp.${IPARCH}"
+	SANESETS="${SANESETS} bsd.mp.${IPARCH}"
+fi
+DEFAULTSETS=${MDSETS}
 
 md_installboot() {
 	cd /mnt
 	if [[ -f bsd.${IPARCH} ]]; then
 		mv bsd.${IPARCH} bsd
 	fi
+	if [[ -f bsd.mp.${IPARCH} ]]; then
+		mv bsd.mp.${IPARCH} bsd.mp
+	fi
 	if [[ -f bsd.rd.${IPARCH} ]]; then
 		mv bsd.rd.${IPARCH} bsd.rd
+	fi
+
+	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
+		echo "Multiprocessor machine; using bsd.mp instead of bsd."
+		mv bsd bsd.sp 2>/dev/null
+		mv bsd.mp bsd
 	fi
 }
 
