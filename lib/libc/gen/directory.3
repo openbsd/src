@@ -1,4 +1,4 @@
-.\"	$OpenBSD: directory.3,v 1.19 2009/11/23 23:08:35 mk Exp $
+.\"	$OpenBSD: directory.3,v 1.20 2010/01/19 17:43:39 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2009 $
+.Dd $Mdocdate: January 19 2010 $
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -66,11 +66,11 @@ function opens the directory named by
 .Fa filename ,
 associates a directory stream with it, and returns a pointer to be used
 to identify the directory stream in subsequent operations.
-A null pointer is returned if
-.Fa filename
-cannot be accessed, or if
-.Xr malloc 3
-cannot allocate enough memory to hold the entire structure.
+On failure,
+.Dv NULL
+is returned and
+.Va errno
+is set to indicate the error.
 .Pp
 The
 .Fn readdir
@@ -114,6 +114,9 @@ The
 function returns the current location associated with the named
 directory stream
 .Fa dirp .
+On failure, \-1 is returned and
+.Va errno
+is set to indicate the error.
 .Pp
 The
 .Fn seekdir
@@ -177,6 +180,50 @@ if (dirp) {
 }
 return (NOT_FOUND);
 .Ed
+.Sh ERRORS
+The
+.Fn opendir
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er ENOTDIR
+The supplied
+.Fa filename
+is not a directory.
+.El
+.Pp
+The
+.Fn opendir
+function may also fail and set
+.Va errno
+for any of the errors specified for the routines
+.Xr fcntl 2 ,
+.Xr fstat 2 ,
+.Xr open 2 ,
+and
+.Xr malloc 3 .
+.Pp
+The
+.Fn readdir
+and
+.Fn readdir_r
+functions may also fail and set
+.Va errno
+for any of the errors specified for the routine
+.Xr getdirentries 2 .
+.Pp
+The
+.Fn telldir
+function may also fail and set
+.Va errno
+for any of the errors specified for the routine
+.Xr realloc 3 .
+.Pp
+The
+.Fn closedir
+function may also fail and set
+.Va errno
+for any of the errors specified for the routine
+.Xr close 2 .
 .Sh SEE ALSO
 .Xr close 2 ,
 .Xr getdirentries 2 ,
