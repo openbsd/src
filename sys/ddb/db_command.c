@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.60 2009/08/17 13:11:58 jasper Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.61 2010/01/19 01:08:16 guenther Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -518,7 +518,7 @@ struct db_command db_show_cmds[] = {
 	{ "nfsnode",	db_nfsnode_print_cmd,	0,	NULL },
 #endif
 	{ "object",	db_object_print_cmd,	0,	NULL },
-#ifdef DDB_STRUCT_INFORMATION
+#ifdef DDB_STRUCT
 	{ "offset",	db_struct_offset_cmd,	CS_OWN,	NULL },
 #endif
 	{ "page",	db_page_print_cmd,	0,	NULL },
@@ -526,7 +526,7 @@ struct db_command db_show_cmds[] = {
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
 	{ "proc",	db_proc_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
-#ifdef DDB_STRUCT_INFORMATION
+#ifdef DDB_STRUCT
 	{ "struct",	db_struct_layout_cmd,	CS_OWN,	NULL },
 #endif
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
