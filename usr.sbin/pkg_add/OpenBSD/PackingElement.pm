@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.172 2010/01/10 11:31:08 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.173 2010/01/19 14:26:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -951,6 +951,13 @@ sub add_digest
 	&OpenBSD::PackingElement::FileBase::add_digest;
 }
 
+OpenBSD::Auto::cache(spec,
+    sub {
+    	my $self = shift;
+
+    	require OpenBSD::LibSpec;
+	return OpenBSD::LibSpec->from_string($self->name);
+    });
 package OpenBSD::PackingElement::PkgPath;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
