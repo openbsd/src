@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.8 2010/01/08 16:45:51 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.9 2010/01/19 18:03:08 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -300,15 +300,13 @@ lde_kernel_remove(struct kroute *kr)
 		rl->label = rn->remote_label;
 
 		ln = lde_find_address(rn->nexthop);
-		if (ln == NULL)
-			fatalx("lde_kernel_remove: unable to find neighbor");
-
-		rl->nexthop = ln;
-
-		TAILQ_INSERT_TAIL(&rn->labels_list, rl, entry);
+		if (ln != NULL) {
+			rl->nexthop = ln;
+			TAILQ_INSERT_TAIL(&rn->labels_list, rl, entry);
+		} else
+			free (rl);
 	}
 
-	/* XXX */
 	rn->remote_label = 0;
 	rn->nexthop.s_addr = INADDR_ANY;
 	rn->present = 0;
