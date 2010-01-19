@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1 2008/06/12 22:26:01 canacar Exp $ */
+/*	$OpenBSD: pf.c,v 1.2 2010/01/19 05:59:20 mcbride Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -39,6 +39,7 @@
 #include <err.h>
 #include <ifaddrs.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <net/pfvar.h>
 #include "pfctl_parser.h"
 #include "engine.h"
@@ -245,17 +246,29 @@ print_pf(void)
 	ADD_LINE_A("pf", "Since", tm);
 
 	switch (s->debug) {
-	case PF_DEBUG_NONE:
-		debug = "None";
+	case LOG_EMERG:
+		debug = "emerg";
 		break;
-	case PF_DEBUG_URGENT:
-		debug = "Urgent";
+	case LOG_ALERT:
+		debug = "alert";
 		break;
-	case PF_DEBUG_MISC:
-		debug = "Misc";
+	case LOG_CRIT:
+		debug = "crit";
 		break;
-	case PF_DEBUG_NOISY:
-		debug = "Loud";
+	case LOG_ERR:
+		debug = "err";
+		break;
+	case LOG_WARNING:
+		debug = "warning";
+		break;
+	case LOG_NOTICE:
+		debug = "notice";
+		break;
+	case LOG_INFO:
+		debug = "info";
+		break;
+	case LOG_DEBUG:
+		debug = "debug";
 		break;
 	}
 	ADD_LINE_S("pf", "Debug", debug);
