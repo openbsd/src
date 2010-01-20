@@ -949,6 +949,7 @@
 ./usr/libdata/perl5/OpenBSD/Handle.pm
 ./usr/libdata/perl5/OpenBSD/IdCache.pm
 ./usr/libdata/perl5/OpenBSD/Interactive.pm
+./usr/libdata/perl5/OpenBSD/LibSpec.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis
 ./usr/libdata/perl5/OpenBSD/Makewhatis.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Check.pm
