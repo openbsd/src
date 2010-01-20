@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.yp,v 1.15 2009/12/20 13:08:40 schwarze Exp $
+#	$OpenBSD: Makefile.yp,v 1.16 2010/01/20 23:20:28 schwarze Exp $
 
 # ----------------------------------------------------------------------
 # User-configurable settings; see Makefile.yp(8) for details.
@@ -24,6 +24,7 @@ MAXGID=32765
 USEDNS=
 
 all: passwd group hosts ethers networks rpc services protocols netid netgroup amd.home aliases
+	pkill -HUP ypserv
 
 # ----------------------------------------------------------------------
 # End of user-configurable settings; you may also add new targets, though.

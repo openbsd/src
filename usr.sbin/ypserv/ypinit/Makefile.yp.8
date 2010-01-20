@@ -1,4 +1,4 @@
-.\"	$OpenBSD: Makefile.yp.8,v 1.5 2009/12/20 17:10:58 jmc Exp $
+.\"	$OpenBSD: Makefile.yp.8,v 1.6 2010/01/20 23:20:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 20 2009 $
+.Dd $Mdocdate: January 20 2010 $
 .Dt MAKEFILE.YP 8
 .Os
 .Sh NAME
@@ -261,7 +261,9 @@ Generates the
 map from the file
 .Pa /etc/amd/amd.home .
 .It Ic all
-Generates all of the above.
+Generates all of the above, and sends a hangup signal to
+.Xr ypserv 8
+such that it uses the new maps.
 .El
 .Pp
 In order to keep additional custom YP maps up to date, the
@@ -289,3 +291,17 @@ Cookies controlling the operation of
 .Xr ypinit 8 ,
 .Xr yppush 8 ,
 .Xr ypserv 8
+.Sh BUGS
+When
+.Dv NOPUSH
+is set and individual maps are regenerated (as opposed to
+.Ic all ) ,
+the hangup signal to
+.Xr ypserv 8
+must be sent manually, or the new maps won't be used.
+.Pp
+When
+.Dv NOPUSH
+is unset, maps are pushed to the master server on the local host too,
+slowing down
+.Nm .

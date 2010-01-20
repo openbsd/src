@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.25 2008/10/22 20:31:20 jmc Exp $
+.\"	$OpenBSD: ypserv.8,v 1.26 2010/01/20 23:20:28 schwarze Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2008 $
+.Dd $Mdocdate: January 20 2010 $
 .Dt YPSERV 8
 .Os
 .Sh NAME
@@ -70,14 +70,6 @@ This file can have any name since it's given by the argument to
 .Fl a
 (use full path).
 .Pp
-The file used can be reread by sending a
-.Dv SIGHUP
-to
-.Nm ypserv .
-The process PID
-can be found in the file
-.Pa /var/run/ypserv.pid .
-.Pp
 If a host isn't secure all queries to the server will result in a YP_NODOM
 result.
 .Pp
@@ -94,6 +86,21 @@ and the directory
 exists), then
 .Nm
 will be automatically started at boot time.
+.Pp
+On receipt of a hangup signal,
+.Dv SIGHUP ,
+.Nm
+will reopen the log file and reread its configuration,
+including both the
+.Xr db 3
+map files and the
+.Xr ypserv.acl 5
+or
+.Xr securenet 5
+configuration file.
+The process ID
+can be found in the file
+.Pa /var/run/ypserv.pid .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
