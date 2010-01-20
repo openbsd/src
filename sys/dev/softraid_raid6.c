@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.11 2010/01/09 23:15:06 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.12 2010/01/20 19:55:15 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -460,7 +460,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 	int			s, fail, i, rwmode;
 	daddr64_t		blk, lbaoffs, strip_no, chunk, qchunk, pchunk, fchunk;
 	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
-	daddr64_t		strip_bits, length, strip_offs, datalen;
+	daddr64_t		strip_bits, length, strip_offs, datalen, row_size;
 	void		        *pbuf, *data, *qbuf;
 
 	/* blk and scsi error will be handled by sr_validate_io */
@@ -470,6 +470,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
 	strip_bits = sd->mds.mdd_raid6.sr6_strip_bits;
 	no_chunk = sd->sd_meta->ssdi.ssd_chunk_no - 2;
+	row_size = (no_chunk << strip_bits) >> DEV_BSHIFT;
 
 	data = xs->data;
 	datalen = xs->datalen;
@@ -511,8 +512,8 @@ sr_raid6_rw(struct sr_workunit *wu)
 	
 		/* XXX big hammer.. exclude I/O from entire stripe */
 		if (wu->swu_blk_start == 0)
-			wu->swu_blk_start = chunk_offs >> DEV_BSHIFT;
-		wu->swu_blk_end = ((chunk_offs + (no_chunk << strip_bits)) >> DEV_BSHIFT) - 1;
+			wu->swu_blk_start = (strip_no / no_chunk) * row_size;
+		wu->swu_blk_end = (strip_no / no_chunk) * row_size + (row_size - 1);
 
 		fail = 0;
 		fchunk = -1;
