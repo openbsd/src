@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.306 2010/01/18 23:52:46 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.307 2010/01/20 21:41:17 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -205,7 +205,7 @@ struct pfi_dynaddr {
 		}							\
 	} while (0)
 #else
-#ifdef PFDEBUG								\
+#ifdef PFDEBUG
 #define	DPFPRINTF(n, format, x...)					\
 	do {								\
 		fprintf(stderr, format, ##x);				\
