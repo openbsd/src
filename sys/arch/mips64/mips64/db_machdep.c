@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.26 2010/01/16 23:28:10 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.27 2010/01/21 17:50:44 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -373,7 +373,7 @@ char *attr[] = {
 if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 (pfn_to_pad(tlb.tlb_lo0) == pfn_to_pad(tlbp.tlb_lo0) && tlb.tlb_lo0 & PG_V) ||
 (pfn_to_pad(tlb.tlb_lo1) == pfn_to_pad(tlbp.tlb_lo1) && tlb.tlb_lo1 & PG_V)) {
-					printf("MATCH:\n");
+					db_printf("MATCH:\n");
 					db_dump_tlb_cmd(tlbno, 1, 1, "");
 					db_dump_tlb_cmd(check, 1, 1, "");
 				}
@@ -397,32 +397,32 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 			continue;
 
 		if (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
-			printf("%2d v=%16llx", tlbno, tlb.tlb_hi & ~0xffL);
-			printf("/%02x ", tlb.tlb_hi & 0xff);
+			db_printf("%2d v=%16llx", tlbno, tlb.tlb_hi & ~0xffL);
+			db_printf("/%02x ", tlb.tlb_hi & 0xff);
 
 			if (tlb.tlb_lo0 & PG_V) {
-				printf("%16llx ", pfn_to_pad(tlb.tlb_lo0));
-				printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
-				printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
-				printf("%s ", attr[(tlb.tlb_lo0 >> 3) & 7]);
+				db_printf("%16llx ", pfn_to_pad(tlb.tlb_lo0));
+				db_printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
+				db_printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
+				db_printf("%s ", attr[(tlb.tlb_lo0 >> 3) & 7]);
 			} else {
-				printf("invalid             ");
+				db_printf("invalid                 ");
 			}
 
 			if (tlb.tlb_lo1 & PG_V) {
-				printf("%16llx ", pfn_to_pad(tlb.tlb_lo1));
-				printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
-				printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
-				printf("%s ", attr[(tlb.tlb_lo1 >> 3) & 7]);
+				db_printf("%16llx ", pfn_to_pad(tlb.tlb_lo1));
+				db_printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
+				db_printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
+				db_printf("%s ", attr[(tlb.tlb_lo1 >> 3) & 7]);
 			} else {
-				printf("invalid             ");
+				db_printf("invalid                 ");
 			}
-			printf(" sz=%x", tlb.tlb_mask);
+			db_printf(" sz=%x", tlb.tlb_mask);
 		}
 		else if (pid < 0) {
-			printf("%2d v=invalid    ", tlbno);
+			db_printf("%2d v=invalid    ", tlbno);
 		}
-		printf("\n");
+		db_printf("\n");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.62 2010/01/18 18:27:32 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.63 2010/01/21 17:50:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,7 @@
 
 #ifdef DDB
 #include <mips64/db_machdep.h>
+#include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 #endif
 
@@ -866,9 +867,15 @@ trapDump(char *msg)
 	int i;
 	uint pos;
 	int s;
+	int (*pr)(const char*, ...);
 
+#ifdef DDB
+	pr = db_printf;
+#else
+	pr = printf;
+#endif
 	s = splhigh();
-	printf("trapDump(%s)\n", msg);
+	(*pr)("trapDump(%s)\n", msg);
 #ifndef MULTIPROCESSOR
 	ci = curcpu();
 #else
@@ -876,7 +883,7 @@ trapDump(char *msg)
 #endif
 	{
 #ifdef MULTIPROCESSOR
-		printf("cpu%d\n", ci->ci_cpuid);
+		(*pr)("cpu%d\n", ci->ci_cpuid);
 #endif
 		/* walk in reverse order */
 		pos = trppos[ci->ci_cpuid];
@@ -890,11 +897,11 @@ trapDump(char *msg)
 			if (ptrp->cause == 0)
 				break;
 
-			printf("%s: PC %p CR 0x%08x SR 0x%08x\n",
+			(*pr)("%s: PC %p CR 0x%08x SR 0x%08x\n",
 			    trap_type[(ptrp->cause & CR_EXC_CODE) >>
 			      CR_EXC_CODE_SHIFT],
 			    ptrp->pc, ptrp->cause, ptrp->status);
-			printf(" RA %p SP %p ADR %p\n",
+			(*pr)(" RA %p SP %p ADR %p\n",
 			    ptrp->ra, ptrp->sp, ptrp->vadr);
 		}
 	}
