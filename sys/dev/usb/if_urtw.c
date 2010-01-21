@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.28 2009/10/13 19:33:17 pirofti Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.29 2010/01/21 21:30:42 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -574,6 +574,8 @@ usbd_status	urtw_8225v2_b_update_chan(struct urtw_softc *);
 usbd_status	urtw_8225v2_b_rf_init(struct urtw_rf *);
 usbd_status	urtw_8225v2_b_rf_set_chan(struct urtw_rf *, int);
 usbd_status	urtw_8225v2_b_set_txpwrlvl(struct urtw_softc *, int);
+int		urtw_set_bssid(struct urtw_softc *, const uint8_t *);
+int		urtw_set_macaddr(struct urtw_softc *, const uint8_t *);
 
 int urtw_match(struct device *, void *, void *);
 void urtw_attach(struct device *, struct device *, void *);
@@ -2276,8 +2278,9 @@ urtw_init(struct ifnet *ifp)
 
 	/* applying MAC address again. */
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
-	urtw_write32_m(sc, URTW_MAC0, ((uint32_t *)ic->ic_myaddr)[0]);
-	urtw_write16_m(sc, URTW_MAC4, ((uint32_t *)ic->ic_myaddr)[1] & 0xffff);
+	error = urtw_set_macaddr(sc, ic->ic_myaddr);
+	if (error)
+		goto fail;
 	error = urtw_set_mode(sc, URTW_EPROM_CMD_NORMAL);
 	if (error)
 		goto fail;
@@ -3538,9 +3541,9 @@ urtw_task(void *arg)
 		ni = ic->ic_bss;
 
 		/* setting bssid. */
-		urtw_write32_m(sc, URTW_BSSID, ((uint32_t *)ni->ni_bssid)[0]);
-		urtw_write16_m(sc, URTW_BSSID + 4,
-		    ((uint16_t *)ni->ni_bssid)[2]);
+		error = urtw_set_bssid(sc, ni->ni_bssid);
+		if (error != 0)
+			goto fail;
 		urtw_update_msr(sc);
 		/* XXX maybe the below would be incorrect. */
 		urtw_write16_m(sc, URTW_ATIM_WND, 2);
@@ -3663,8 +3666,9 @@ urtw_8187b_init(struct ifnet *ifp)
 	if (error)
 		goto fail;
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
-	urtw_write32_m(sc, URTW_MAC0, ((uint32_t *)ic->ic_myaddr)[0]);
-	urtw_write16_m(sc, URTW_MAC4, ((uint32_t *)ic->ic_myaddr)[1] & 0xffff);
+	error = urtw_set_macaddr(sc, ic->ic_myaddr);
+	if (error)
+		goto fail;
 	error = urtw_set_mode(sc, URTW_EPROM_CMD_NORMAL);
 	if (error)
 		goto fail;
@@ -4075,3 +4079,34 @@ fail:
 	return (error);
 }
 
+int
+urtw_set_bssid(struct urtw_softc *sc, const uint8_t *bssid)
+{
+	int error;
+
+	urtw_write32_m(sc, URTW_BSSID,
+	    bssid[0] | bssid[1] << 8 | bssid[2] << 16 | bssid[3] << 24);
+	urtw_write16_m(sc, URTW_BSSID + 4,
+	    bssid[4] | bssid[5] << 8);
+
+	return 0;
+
+fail:
+	return error;
+}
+
+int
+urtw_set_macaddr(struct urtw_softc *sc, const uint8_t *addr)
+{
+	int error;
+
+	urtw_write32_m(sc, URTW_MAC0,
+	    addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24);
+	urtw_write16_m(sc, URTW_MAC4,
+	    addr[4] | addr[5] << 8);
+
+	return 0;
+
+fail:
+	return error;
+}
