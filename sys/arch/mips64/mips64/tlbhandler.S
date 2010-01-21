@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.26 2010/01/09 23:43:17 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.27 2010/01/21 17:52:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -236,12 +236,12 @@ NLEAF(k_tlb_inv, 0)
 #if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
 	mfc0	v0, COP_0_PRID
 	and	v0, 0xff00
-	subi	v0, (MIPS_LOONGSON2 << 8)
+	sub	v0, (MIPS_LOONGSON2 << 8)
 	bnez	v0, 7f
 	nop
 #endif
 	li	v0, COP_0_DIAG_ITLB_CLEAR
-	mfc0	v0, COP_0_DIAG
+	dmtc0	v0, COP_0_DIAG
 7:
 #endif
 
@@ -275,12 +275,12 @@ k_tlb_inv_odd:
 #if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
 	mfc0	v0, COP_0_PRID
 	and	v0, 0xff00
-	subi	v0, (MIPS_LOONGSON2 << 8)
+	sub	v0, (MIPS_LOONGSON2 << 8)
 	bnez	v0, 7f
 	nop
 #endif
 	li	v0, COP_0_DIAG_ITLB_CLEAR
-	mfc0	v0, COP_0_DIAG
+	dmtc0	v0, COP_0_DIAG
 7:
 #endif
 
@@ -421,12 +421,12 @@ LEAF(tlb_write_indexed, 0)
 #if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
 	mfc0	v0, COP_0_PRID
 	and	v0, 0xff00
-	subi	v0, (MIPS_LOONGSON2 << 8)
+	sub	v0, (MIPS_LOONGSON2 << 8)
 	bnez	v0, 7f
 	nop
 #endif
 	li	v0, COP_0_DIAG_ITLB_CLEAR
-	mfc0	v0, COP_0_DIAG
+	dmtc0	v0, COP_0_DIAG
 7:
 #endif
 
@@ -479,12 +479,12 @@ LEAF(tlb_flush, 0)
 #if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
 	mfc0	v0, COP_0_PRID
 	and	v0, 0xff00
-	subi	v0, (MIPS_LOONGSON2 << 8)
+	sub	v0, (MIPS_LOONGSON2 << 8)
 	bnez	v0, 7f
 	nop
 #endif
 	li	v0, COP_0_DIAG_ITLB_CLEAR
-	mfc0	v0, COP_0_DIAG
+	dmtc0	v0, COP_0_DIAG
 7:
 #endif
 
@@ -540,12 +540,12 @@ LEAF(tlb_flush_addr, 0)
 #if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
 	mfc0	v0, COP_0_PRID
 	and	v0, 0xff00
-	subi	v0, (MIPS_LOONGSON2 << 8)
+	sub	v0, (MIPS_LOONGSON2 << 8)
 	bnez	v0, 7f
 	nop
 #endif
 	li	v0, COP_0_DIAG_ITLB_CLEAR
-	mfc0	v0, COP_0_DIAG
+	dmtc0	v0, COP_0_DIAG
 7:
 #endif
 
@@ -648,12 +648,12 @@ LEAF(tlb_update, 0)
 #if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
 	mfc0	v0, COP_0_PRID
 	and	v0, 0xff00
-	subi	v0, (MIPS_LOONGSON2 << 8)
+	sub	v0, (MIPS_LOONGSON2 << 8)
 	bnez	v0, 7f
 	nop
 #endif
 	li	v0, COP_0_DIAG_ITLB_CLEAR
-	mfc0	v0, COP_0_DIAG
+	dmtc0	v0, COP_0_DIAG
 7:
 #endif
 

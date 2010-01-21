@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.40 2010/01/18 17:04:11 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.41 2010/01/21 17:52:25 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -264,12 +264,12 @@ ctx3:
 #if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
 	mfc0	v0, COP_0_PRID
 	and	v0, 0xff00
-	subi	v0, (MIPS_LOONGSON2 << 8)
+	sub	v0, (MIPS_LOONGSON2 << 8)
 	bnez	v0, 7f
 	nop
 #endif
 	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_CLEAR
-	mfc0	v0, COP_0_DIAG
+	dmtc0	v0, COP_0_DIAG
 7:
 #endif
 
