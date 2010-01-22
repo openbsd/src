@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock.c,v 1.2 2010/01/21 17:49:23 miod Exp $	*/
+/*	$OpenBSD: mcclock.c,v 1.3 2010/01/22 21:44:00 miod Exp $	*/
 /*	$NetBSD: mcclock.c,v 1.4 1996/10/13 02:59:41 christos Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ mcclock_get(dev, base, ct)
 	ct->dow = regs[MC_DOW];
 	ct->day = regs[MC_DOM];
 	ct->mon = regs[MC_MONTH];
-	ct->year = regs[MC_YEAR] + 2000;
+	ct->year = regs[MC_YEAR] + 100;
 }
 
 /*
@@ -120,7 +120,7 @@ mcclock_set(dev, ct)
 	regs[MC_DOW] = ct->dow;
 	regs[MC_DOM] = ct->day;
 	regs[MC_MONTH] = ct->mon;
-	regs[MC_YEAR] = ct->year - 2000;
+	regs[MC_YEAR] = ct->year - 100;
 
 	s = splclock();
 	MC146818_PUTTOD(sc, &regs);
