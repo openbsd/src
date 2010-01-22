@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.11 2007/12/23 17:09:49 deraadt Exp $	*/
+/*	$OpenBSD: bio.c,v 1.12 2010/01/22 21:56:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -88,12 +88,23 @@ bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return (ENOENT);
 		break;
 
-	default:
+	case BIOCINQ:
+	case BIOCDISK:
+	case BIOCVOL:
+	case BIOCALARM:
+	case BIOCBLINK:
+	case BIOCSETSTATE:
+	case BIOCCREATERAID:
+	case BIOCDELETERAID:
+	case BIOCDISCIPLINE:
 		common = (struct bio_common *)addr;
 		if (!bio_validate(common->bc_cookie))
 			return (ENOENT);
 		return (bio_delegate_ioctl(
 		    (struct bio_mapping *)common->bc_cookie, cmd, addr));
+
+	default:
+		return (ENXIO);
 	}
 	return (0);
 }
