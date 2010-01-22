@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.1.1.1 2009/12/25 22:04:21 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.2 2010/01/22 21:45:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -30,6 +30,7 @@
 
 extern struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
+boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	loongson2e_setup(u_long, u_long);
 void	loongson2f_setup(u_long, u_long);
 
@@ -41,23 +42,6 @@ paddr_t loongson_dma_base = 0;
 /*
  * Setup memory mappings for Loongson 2E processors.
  */
-
-void
-loongson2e_setup(u_long memlo, u_long memhi)
-{
-	memlo = atop(memlo << 20);
-	memhi = atop(memhi << 20);
-	physmem = memlo + memhi;
-
-	/*
-	 * Only register the first 256MB of memory.
-	 * This will be hopefully be revisited once we get our hands
-	 * on Loongson 2E-based hardware...
-	 */
-
-	mem_layout[0].mem_first_page = 1; /* do NOT stomp on exception area */
-	mem_layout[0].mem_last_page = memlo;
-}
 
 /*
  * Canonical crossbow assignments on Loongson 2F based designs.
@@ -83,6 +67,25 @@ loongson2e_setup(u_long memlo, u_long memhi)
 #define	PCI_DDR_BASE		0x0000000080000000UL	/* PCI->DDR at 2GB */
 #define	PCI_DDR_SIZE		DDR_PHYSICAL_SIZE
 #define	PCI_DDR_WINDOW_BASE	DDR_PHYSICAL_BASE
+
+void
+loongson2e_setup(u_long memlo, u_long memhi)
+{
+	memlo = atop(memlo << 20);
+	memhi = atop(memhi << 20);
+	physmem = memlo + memhi;
+
+	/*
+	 * Only register the first 256MB of memory.
+	 * This will be hopefully be revisited once we get our hands
+	 * on Loongson 2E-based hardware...
+	 */
+
+	mem_layout[0].mem_first_page = 1; /* do NOT stomp on exception area */
+	mem_layout[0].mem_last_page = memlo;
+
+	loongson_dma_base = PCI_DDR_BASE;
+}
 
 /*
  * Setup memory mappings for Loongson 2F processors.
@@ -159,4 +162,35 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	    LOONGSON_AWR_MMAP(MASTER_CPU, WINDOW_CPU_DDR), CCA_NC);
 	*awrreg = DDR_PHYSICAL_BASE | MASTER_CPU;
 	(void)*awrreg;
+}
+
+boolean_t
+is_memory_range(paddr_t pa, psize_t len, psize_t limit)
+{
+	struct phys_mem_desc *seg;
+	uint64_t fp, lp;
+	int i;
+
+	fp = atop(pa);
+	lp = atop(round_page(pa + len));
+
+	if (limit != 0 && lp > atop(limit))
+		return FALSE;
+
+	/*
+	 * Allow access to the low 256MB aliased region on 2F systems.
+	 */
+	if (/* curcpu()->ci_hw.type == MIPS_LOONGSON2 && */
+	    (curcpu()->ci_hw.c0prid & 0xff) == 0x2f - 0x2c) {
+		if (pa < 0x10000000) {
+			fp += atop(DDR_WINDOW_BASE);
+			lp += atop(DDR_WINDOW_BASE);
+		}
+	}
+
+	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
+		if (fp >= seg->mem_first_page && lp <= seg->mem_last_page)
+			return TRUE;
+
+	return FALSE;
 }

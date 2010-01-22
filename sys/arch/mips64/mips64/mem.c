@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.14 2010/01/09 18:51:59 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.15 2010/01/22 21:45:25 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -196,24 +196,4 @@ int
 mmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	return (EOPNOTSUPP);
-}
-
-boolean_t
-is_memory_range(paddr_t pa, psize_t len, psize_t limit)
-{
-	struct phys_mem_desc *seg;
-	uint64_t fp, lp;
-	int i;
-
-	fp = atop(pa);
-	lp = atop(round_page(pa + len));
-
-	if (limit != 0 && lp > atop(limit))
-		return FALSE;
-
-	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
-		if (fp >= seg->mem_first_page && lp <= seg->mem_last_page)
-			return TRUE;
-
-	return FALSE;
 }

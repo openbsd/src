@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.97 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.98 2010/01/22 21:45:26 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -129,6 +129,7 @@ static void dobootopts(int, void *);
 
 void	arcbios_halt(int);
 void	build_trampoline(vaddr_t, vaddr_t);
+boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 
 void	(*md_halt)(int) = arcbios_halt;
 
@@ -944,6 +945,26 @@ dumpsys()
 void
 initcpu()
 {
+}
+
+boolean_t
+is_memory_range(paddr_t pa, psize_t len, psize_t limit)
+{
+	struct phys_mem_desc *seg;
+	uint64_t fp, lp;
+	int i;
+
+	fp = atop(pa);
+	lp = atop(round_page(pa + len));
+
+	if (limit != 0 && lp > atop(limit))
+		return FALSE;
+
+	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
+		if (fp >= seg->mem_first_page && lp <= seg->mem_last_page)
+			return TRUE;
+
+	return FALSE;
 }
 
 #ifdef CPU_RM7000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.1.1.1 2009/12/25 22:09:45 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.2 2010/01/22 21:45:22 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -300,13 +300,13 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 bus_addr_t
 bonito_pa_to_device(paddr_t pa)
 {
-	return pa;
+	return pa ^ loongson_dma_base;
 }
 
 paddr_t
 bonito_device_to_pa(bus_addr_t addr)
 {
-	return addr;
+	return addr ^ loongson_dma_base;
 }
 
 int
