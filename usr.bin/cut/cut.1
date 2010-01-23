@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cut.1,v 1.15 2009/02/08 17:15:09 jmc Exp $
+.\"	$OpenBSD: cut.1,v 1.16 2010/01/23 00:32:12 schwarze Exp $
 .\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: January 23 2010 $
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ by a special character.
 Column numbering starts from 1.
 .Pp
 .Ar list
-is a comma or whitespace separated set of increasing numbers and/or
+is a comma or whitespace separated set of numbers and/or
 number ranges.
 Number ranges consist of a number, a dash
 .Pq Sq \- ,
@@ -136,3 +136,12 @@ The
 utility is compliant with the
 .St -p1003.1-2008
 specification.
+.Sh CAVEATS
+The current implementation does not support multi-byte characters.
+Consequently
+.Fl c
+does the same as
+.Fl b ,
+and
+.Fl n
+has no effect.

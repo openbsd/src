@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.14 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: cut.c,v 1.15 2010/01/23 00:32:12 schwarze Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -154,11 +154,11 @@ get_list(char *list)
 			}
 		}
 		if (*p)
-			errx(1, "[-cf] list: illegal list value");
+			errx(1, "[-bcf] list: illegal list value");
 		if (!stop || !start)
-			errx(1, "[-cf] list: values may not include zero");
+			errx(1, "[-bcf] list: values may not include zero");
 		if (stop > _POSIX2_LINE_MAX)
-			errx(1, "[-cf] list: %d too large (max %d)",
+			errx(1, "[-bcf] list: %d too large (max %d)",
 			    stop, _POSIX2_LINE_MAX);
 		if (maxval < stop)
 			maxval = stop;
