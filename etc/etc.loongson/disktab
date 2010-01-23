@@ -1,0 +1,26 @@
+# $OpenBSD: disktab,v 1.1 2010/01/23 19:26:45 matthieu Exp $
+#
+#	@(#)disktab	5.5 (Berkeley) 2/27/91
+#
+# Disk geometry and partition layout tables.
+# Key:
+#	ty	type of disk
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	rm	rpm, 3600 default
+#	se	sector size, 512 default
+#	sf	supports bad144-style bad sector forwarding
+#	so	partition offsets in sectors
+#	p[a-p]	partition sizes in sectors
+#	b[a-p]	partition block sizes in bytes
+#	f[a-p]	partition fragment sizes in bytes
+#
+
+
+# Leave nc=16; adjust size using: ns
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#2:ns#256:\
+	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#8192:
+
