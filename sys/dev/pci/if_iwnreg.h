@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.35 2010/01/16 12:48:58 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.36 2010/01/23 09:14:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1537,8 +1537,8 @@ static const struct iwn_sensitivity_limits iwn4965_sensitivity_limits = {
 };
 
 static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
-	120, 155,
-	240, 290,
+	120, 120,	/* min = max for performance bug in DSP. */
+	240, 240,	/* min = max for performance bug in DSP. */
 	 90, 120,
 	170, 210,
 	125, 200,
@@ -1560,8 +1560,20 @@ static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
 	 95
 };
 
+static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
+	120, 155,
+	240, 290,
+	 90, 120,
+	170, 210,
+	125, 200,
+	170, 400,
+	 95,
+	 95,
+	 95
+};
+
 static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
-	105, 145,
+	105, 110,
 	192, 232,
 	 80, 145,
 	128, 232,
@@ -1627,7 +1639,7 @@ static const char * const iwn_fw_errmsg[] = {
 	"DEBUG_1",
 	"DEBUG_2",
 	"DEBUG_3",
-	"UNKNOWN"
+	"ADVANCED_SYSASSERT"
 };
 
 /* Find least significant bit that is set. */

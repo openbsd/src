@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.81 2010/01/16 12:48:58 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.82 2010/01/23 09:14:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -605,7 +605,7 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		break;
 	case IWN_HW_REV_TYPE_1000:
 		sc->sc_hal = &iwn5000_hal;
-		sc->limits = &iwn5000_sensitivity_limits;
+		sc->limits = &iwn1000_sensitivity_limits;
 		sc->fwname = "iwn-1000";
 		sc->txchainmask = IWN_ANT_A;
 		sc->rxchainmask = IWN_ANT_AB;
@@ -4919,8 +4919,7 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
-	if (sc->hw_type != IWN_HW_REV_TYPE_5150 &&
-	    sc->hw_type != IWN_HW_REV_TYPE_6050) {
+	if (sc->hw_type != IWN_HW_REV_TYPE_5150) {
 		struct iwn5000_phy_calib_crystal cmd;
 
 		/* Perform crystal calibration. */
