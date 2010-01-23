@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.33 2010/01/03 12:51:05 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.34 2010/01/23 21:07:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -260,13 +260,13 @@ server_kill_window(struct window *w)
 		s = ARRAY_ITEM(&sessions, i);
 		if (s == NULL || !session_has(s, w))
 			continue;
-		if ((wl = winlink_find_by_window(&s->windows, w)) == NULL)
-			continue;
-
-		if (session_detach(s, wl))
-			server_destroy_session_group(s);
-		else
-			server_redraw_session_group(s);
+		while ((wl = winlink_find_by_window(&s->windows, w)) != NULL) {
+			if (session_detach(s, wl)) {
+				server_destroy_session_group(s);
+				break;
+			} else
+				server_redraw_session_group(s);
+		}
 	}
 }
 
