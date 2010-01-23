@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.4 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.5 2010/01/23 17:50:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,10 +61,12 @@ cmd_switch_client_parse(struct cmd *self, int argc, char **argv, char **cause)
 	while ((opt = getopt(argc, argv, "c:t:")) != -1) {
 		switch (opt) {
 		case 'c':
-			data->name = xstrdup(optarg);
+			if (data->name == NULL)
+				data->name = xstrdup(optarg);
 			break;
 		case 't':
-			data->target = xstrdup(optarg);
+			if (data->target == NULL)
+				data->target = xstrdup(optarg);
 			break;
 		default:
 			goto usage;
