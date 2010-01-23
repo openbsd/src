@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.3 2008/09/07 20:36:07 martynas Exp $	*/
+/*	$OpenBSD: ieee.h,v 1.4 2010/01/23 19:11:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,25 +99,47 @@
 } while(0)
 
 struct ieee_single {
+#ifdef __MIPSEB__
 	u_int	sng_sign:1;
 	u_int	sng_exp:8;
 	u_int	sng_frac:23;
+#else
+	u_int	sng_frac:23;
+	u_int	sng_exp:8;
+	u_int	sng_sign:1;
+#endif
 };
 
 struct ieee_double {
+#ifdef __MIPSEB__
 	u_int	dbl_sign:1;
 	u_int	dbl_exp:11;
 	u_int	dbl_frach:20;
 	u_int	dbl_fracl;
+#else
+	u_int	dbl_fracl;
+	u_int	dbl_frach:20;
+	u_int	dbl_exp:11;
+	u_int	dbl_sign:1;
+#endif
 };
 
 struct ieee_ext {
+#ifdef __MIPSEB__
 	u_int	ext_sign:1;
 	u_int	ext_exp:15;
 	u_int	ext_frach:16;
 	u_int	ext_frachm;
 	u_int	ext_fraclm;
 	u_int	ext_fracl;
+#else
+	u_int	ext_fracl;
+	u_int	ext_fraclm;
+	u_int	ext_frachm;
+	u_int	ext_frach:16;
+	u_int	ext_exp:15;
+	u_int	ext_sign:1;
+#endif
 };
 
 /*
