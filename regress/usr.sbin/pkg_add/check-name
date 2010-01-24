@@ -1,9 +1,9 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.9 2010/01/10 00:40:25 espie Exp $
+# $OpenBSD: check-name,v 1.10 2010/01/24 14:12:57 espie Exp $
 # Written by Marc Espie
 # Public domain
 
-use Test::Simple tests => 15;
+use Test::Simple tests => 19;
 use OpenBSD::Search;
 use OpenBSD::PackageName;
 
@@ -12,10 +12,15 @@ sub check_list
 	my $expected = shift;
 	@_ = sort(@_);
 	if (@$expected != @_) {
+		print STDERR "length: ", scalar(@$expected)," vs. ", 
+		    scalar(@_), "\n";
+		    print STDERR join(',', @$expected), "\n";
+		    print STDERR join(',', @_), "\n";
 		return 0;
 	}
 	for my $i (0 .. @_ -1) {
 		if ($expected->[$i] ne $_[$i]) {
+			print STDERR "$expected->[$i] vs. $_[$i]\n";
 			return 0;
 		}
 	}
@@ -28,6 +33,12 @@ sub check_pkgspec
 
 	my $o = OpenBSD::Search::PkgSpec->new($s);
 	return $o->filter(@list);
+}
+
+sub check_name
+{
+	my $s = shift;
+	return OpenBSD::PackageName->from_string($s)->has_issues;
 }
 
 @list = qw(py-MxDateTime-2.0.1-py2.1);
@@ -84,3 +95,12 @@ ok(OpenBSD::PackageName->from_string('foo-1.0-f2-f1')->to_string
     	'canonical names');
 ok(!OpenBSD::Search::PkgSpec->new('foo-<>1.5')->is_valid, 
 	'invalid spec');
+
+ok(check_list(["is a stem"], check_name("pkgname-without-version")),
+	"pkgname without version");
+ok(check_list(["flavor 1flavor can't start with digit"],
+	check_name("pkgname-1.0-flavor-1flavor")),
+	"numerical flavor");
+ok(check_list(["correct order is pNvM"], check_name("pkgname-1.0v0p0")),
+	"mixed up vp");
+ok(check_list([], check_name("pkgname-1.0p0v0")), "correct name");
