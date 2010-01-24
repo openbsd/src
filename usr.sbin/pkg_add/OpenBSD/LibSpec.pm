@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.2 2010/01/19 14:58:53 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.3 2010/01/24 14:31:13 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -18,24 +18,16 @@
 use strict;
 use warnings;
 
-package OpenBSD::Library;
-
-package OpenBSD::LibSpec;
-
-sub new
-{
-	my ($class, $dir, $stem, $major, $minor) = @_;
-	$dir //= "lib";
-	bless { 
-		dir => $dir, stem => $stem, 
-		major => $major, minor => $minor 
-	    }, $class;
-}
+package OpenBSD::LibObject;
 
 sub key
 {
 	my $self = shift;
-	return "$self->{dir}/$self->{stem}";
+	if (defined $self->{dir}) {
+		return "$self->{dir}/$self->{stem}";
+	} else {
+		return $self->{stem};
+	}
 }
 
 sub major
@@ -50,9 +42,128 @@ sub minor
 	return $self->{minor};
 }
 
-sub badspec
+sub is_valid
 {
-	"OpenBSD::LibSpec::BadSpec";
+	return 1;
+}
+
+sub stem
+{
+	my $self = shift;
+	return $self->{stem};
+}
+
+sub badclass
+{
+	"OpenBSD::BadLib";
+}
+
+sub lookup
+{
+	my ($spec, $repo, $base) = @_;
+
+	my $approx = $spec->lookup_stem($repo);
+	if (!defined $approx) {
+		return undef;
+	}
+	my $r = [];
+	for my $c (@$approx) {
+		if ($spec->match($c, $base)) {
+			push(@$r, $c);
+		}
+	}
+	return $r;
+}
+
+package OpenBSD::BadLib;
+our @ISA=qw(OpenBSD::LibObject);
+
+sub to_string
+{
+	my $self = shift;
+	return $$self;
+}
+
+sub new
+{
+	my ($class, $string) = @_;
+	bless \$string, $class;
+}
+
+sub is_valid
+{
+	return 0;
+}
+
+sub lookup_stem
+{
+	return undef;
+}
+
+sub match
+{
+	return 0;
+}
+
+package OpenBSD::LibRepo;
+sub new
+{
+	my $class = shift;
+	bless {}, $class;
+}
+
+sub register
+{
+	my ($repo, $lib, $origin) = @_;
+	$lib->set_origin($origin);
+	push @{$repo->{$lib->stem}}, $lib;
+}
+
+
+
+package OpenBSD::Library;
+our @ISA = qw(OpenBSD::LibObject);
+
+sub from_string
+{
+	my ($class, $filename) = @_;
+	if (my ($dir, $stem, $major, $minor) = $filename =~ m/^(.*)\/lib([^\/]+)\.so\.(\d+)\.(\d+)$/o) {
+		bless { dir => $dir, stem => $stem, major => $major, 
+		    minor => $minor }, $class;
+	} else {
+		return $class->badclass->new($filename);
+	}
+}
+
+sub to_string
+{
+	my $self = shift;
+	return "$self->{dir}/lib$self->{stem}.so.$self->{major}.$self->{minor}";
+}
+
+sub set_origin
+{
+	my ($self, $origin) = @_;
+	$self->{origin} = $origin;
+	return $self;
+}
+
+sub origin
+{
+	my $self = shift;
+	return $self->{origin};
+}
+
+package OpenBSD::LibSpec;
+our @ISA = qw(OpenBSD::LibObject);
+
+sub new
+{
+	my ($class, $dir, $stem, $major, $minor) = @_;
+	bless { 
+		dir => $dir, stem => $stem, 
+		major => $major, minor => $minor 
+	    }, $class;
 }
 
 my $cached = {};
@@ -73,42 +184,49 @@ sub new_from_string
 			return $class->new(undef, $stem, $major, $minor);
 		}
 	} else {
-		return $class->badspec->new($string);
+		return $class->badclass->new($string);
 	}
 }
 
 sub to_string
 {
 	my $self = shift;
-	my $s = join('.', $self->{stem}, $self->{major}, $self->{minor});
+	return join('.', $self->key, $self->major, $self->minor);
 
-	if ($self->{dir} ne 'lib') {
-		$s = "$self->{dir}/$s";
+}
+
+sub lookup_stem
+{
+	my ($spec, $repo) = @_;
+
+	my $result = $repo->{$spec->stem};
+	if (!defined $result) {
+		return undef;
+	} else {
+		return $result;
 	}
-	return $s;
 }
 
-sub is_valid
+sub match
 {
-	return 1;
-}
-package OpenBSD::LibSpec::BadSpec;
-our @ISA=qw(OpenBSD::LibSpec);
-
-sub to_string
-{
-	my $self = shift;
-	return $$self;
-}
-
-sub new
-{
-	my ($class, $string) = @_;
-	bless \$string, $class;
-}
-
-sub is_valid
-{
+	my ($spec, $library, $base) = @_;
+	if ($spec->major != $library->major) {
+		return 0;
+	}
+	if ($spec->minor > $library->minor) {
+		return 0;
+	}
+	if (defined $spec->{dir}) {
+		if ("$base/$spec->{dir}" eq $library->{dir}) {
+			return 1;
+		}
+	} else {
+		for my $d ($base, OpenBSD::Paths->library_dirs) {
+			if ("$d/lib" eq $library->{dir}) {
+				return 1;
+			}
+		}
+	}
 	return 0;
 }
 
