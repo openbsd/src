@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.56 2009/12/19 00:27:17 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.57 2010/01/24 18:12:46 krw Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -475,6 +475,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 			;
 		else
 		        pmp->pm_fsinfo = 0;
+		/* XXX make sure this tiny buf doesn't come back in fillinusemap! */
+		SET(bp->b_flags, B_INVAL);
 		brelse(bp);
 		bp = NULL;
 	}
