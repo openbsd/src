@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.116 2010/01/24 05:22:56 tedu Exp $	*/
+/*	$OpenBSD: theo.c,v 1.117 2010/01/24 15:02:15 jasper Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -161,7 +161,7 @@ static const char *talk[] = {
 	"You aren't being conservative -- you are trying to be a caveman."
 };
 
-static const int ntalk = nitems(talk);
+static const int ntalk = sizeof(talk)/sizeof(talk[0]);
 
 /* ARGSUSED */
 static int
