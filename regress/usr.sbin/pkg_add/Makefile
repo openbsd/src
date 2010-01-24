@@ -1,9 +1,12 @@
-# $OpenBSD: Makefile,v 1.36 2010/01/18 12:58:12 espie Exp $
+# $OpenBSD: Makefile,v 1.37 2010/01/24 15:33:38 espie Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 collision-check5 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
-	lib-report1 lib-report2 lib-report3 loop1
+	lib-report1 lib-report2 lib-report3 loop1 \
+	lib-report4 lib-report5 lib-report6 lib-report7
+
+
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -12,7 +15,8 @@ LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwew
 LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
-.for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+.for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 \
+    26 27 28 29 30 31 32 33 34 35
 S$i ?= ${.OBJDIR}/src$i
 SRC$i ?= ${S$i}/usr/local
 D$i ?= ${.OBJDIR}/dest$i
@@ -148,6 +152,22 @@ lib-report3: rep0/o3-0.tgz
 	@-rm -rf ${D19}
 	-@ROOT=${D19} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o3
 
+lib-report4: rep0/o4-0.tgz rep0/p4-0.tgz
+	@-rm -rf ${D22}
+	-@ROOT=${D22} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o4
+
+lib-report5: rep0/o5-0.tgz rep0/p4-0.tgz
+	@-rm -rf ${D23}
+	-@ROOT=${D23} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o5
+
+lib-report6: rep0/o6-0.tgz rep0/p4-0.tgz rep0/oo6-0.tgz
+	@-rm -rf ${D24}
+	-@ROOT=${D24} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o6 oo6
+
+lib-report7: rep0/o7-0.tgz rep0/p4-0.tgz
+	@-rm -rf ${D25}
+	-@ROOT=${D25} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} o7
+
 loop1: rep0/ocaml-3.11.1.tgz rep0/tcl-8.5.7.tgz rep0/tk-8.5.7.tgz
 	@-rm -rf ${D20}
 	-@ROOT=${D20} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} -z ocaml-3.11.1p0 tcl-8.5.8 tk-8.5.8
@@ -208,6 +228,11 @@ plist10:
 plist11:
 	@echo "@conflict missc-*" >$@
 
+plist12:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo '@lib lib/liba.so.$${LIBa_VERSION}' >>$@
+
 rep0/a-0.tgz:
 	@${PKG_CREATE} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
 
@@ -242,6 +267,26 @@ rep1/p2-0.tgz: plist8
 	@mkdir -p ${SRC14}/lib
 	@touch ${SRC14}/lib/libcoincoin.so.0
 	@${PKG_CREATE} -DREGRESSION_TESTING -B src14 -DLIBcoincoin_VERSION=0 -f plist8 $@
+
+rep0/p4-0.tgz: plist12
+	@mkdir -p ${SRC15}/lib
+	@touch ${SRC15}/lib/liba.so.0.0
+	@${PKG_CREATE} -B src15 -DLIBa_VERSION=0.0 -f plist12 $@
+
+rep0/o4-0.tgz:
+	@${PKG_CREATE} -W'a.1.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+
+rep0/o5-0.tgz:
+	@${PKG_CREATE} -W'a.0.2' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+
+rep0/o6-0.tgz:
+	@${PKG_CREATE} -W'a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
+
+rep0/oo6-0.tgz:
+	@${PKG_CREATE} -W'a.0.0' -f ${.CURDIR}/empty $@
+
+rep0/o7-0.tgz:
+	@${PKG_CREATE} -W'dir/a.0.0' -P't/p4:p4-*:p4-0' -f ${.CURDIR}/empty $@
 
 rep1/b-1.tgz:
 	@${PKG_CREATE} -P't/a:a-*:a-1' -f ${.CURDIR}/empty $@
