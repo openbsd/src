@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.3 2010/01/24 14:31:13 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.4 2010/01/24 15:31:38 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -207,27 +207,32 @@ sub lookup_stem
 	}
 }
 
-sub match
+sub no_match
 {
 	my ($spec, $library, $base) = @_;
 	if ($spec->major != $library->major) {
-		return 0;
+		return "bad major";
 	}
 	if ($spec->minor > $library->minor) {
-		return 0;
+		return "minor is too small";
 	}
 	if (defined $spec->{dir}) {
 		if ("$base/$spec->{dir}" eq $library->{dir}) {
-			return 1;
+			return undef;
 		}
 	} else {
 		for my $d ($base, OpenBSD::Paths->library_dirs) {
 			if ("$d/lib" eq $library->{dir}) {
-				return 1;
+				return undef;
 			}
 		}
 	}
-	return 0;
+	return "bad directory";
+}
+sub match
+{
+	my ($spec, $library, $base) = @_;
+	return !$spec->no_match($library, $base);
 }
 
 1;
