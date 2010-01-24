@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.35 2009/12/22 19:32:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.36 2010/01/24 12:21:05 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1393,6 +1393,8 @@ link_lsa_from_full_nbr(struct lsa *lsa, struct iface *iface)
 struct lsa *
 orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 {
+	char			lsa_prefix_buf[sizeof(struct lsa_prefix)
+				    + sizeof(struct in6_addr)];
 	struct lsa		*lsa;
 	struct lsa_prefix	*lsa_prefix;
 	struct in6_addr		*prefix;
@@ -1435,16 +1437,13 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 				continue;
 		}
 
-		if ((lsa_prefix = calloc(sizeof(*lsa_prefix)
-		    + sizeof(struct in6_addr), 1)) == NULL)
-			fatal("orig_intra_lsa_rtr");
+		lsa_prefix = (struct lsa_prefix *)lsa_prefix_buf;
 
 		TAILQ_FOREACH(ia, &iface->ifa_list, entry) {
 			if (IN6_IS_ADDR_LINKLOCAL(&ia->addr))
 				continue;
 			
-			bzero(lsa_prefix, sizeof(*lsa_prefix)
-			    + sizeof(struct in6_addr));
+			bzero(lsa_prefix_buf, sizeof(lsa_prefix_buf));
 
 			if (iface->type == IF_TYPE_POINTOMULTIPOINT ||
 			    iface->state & IF_STA_LOOPBACK) {
@@ -1463,8 +1462,6 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 			append_prefix_lsa(&lsa, &len, lsa_prefix);
 			numprefix++;
 		}
-
-		free(lsa_prefix);
 
 		/* TOD: Add prefixes of directly attached hosts, too */
 		/* TOD: Add prefixes for virtual links */
