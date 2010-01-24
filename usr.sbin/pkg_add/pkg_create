@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.133 2010/01/19 14:32:22 espie Exp $
+# $OpenBSD: pkg_create,v 1.134 2010/01/24 14:23:47 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -311,6 +311,34 @@ sub avert_duplicates_and_other_checks
 	$self->SUPER::avert_duplicates_and_other_checks($allfiles);
 }
 
+package OpenBSD::PackingElement::Dependency;
+sub avert_duplicates_and_other_checks
+{
+	my ($self, $allfiles) = @_;
+
+	my @issues = OpenBSD::PackageName->from_string($self->{def})->has_issues;
+	if (@issues > 0) {
+		print STDERR "Error in packing-list: invalid \@", 
+		    $self->keyword, " ", $self->stringize, "\n";
+		print STDERR "$self->{def}: ", join(' ', @issues), "\n";
+		$main::errors++;
+	}
+
+	$self->SUPER::avert_duplicates_and_other_checks($allfiles);
+}
+
+package OpenBSD::PackingElement::Name;
+sub avert_duplicates_and_other_checks
+{
+	my ($self, $allfiles) = @_;
+
+	my @issues = OpenBSD::PackageName->from_string($self->name)->has_issues;
+	if (@issues > 0) {
+		print STDERR "Bad packagename ", $self->name, ":", 
+		    join(' ', @issues), "\n";
+		$main::errors++;
+	}
+}
 
 # put together file and filename, in order to handle fragments simply
 package MyFile;
