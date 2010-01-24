@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.44 2009/12/31 14:14:08 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.45 2010/01/24 15:00:26 espie Exp $
 #
-# Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -166,7 +166,7 @@ sub parse_spec
 
 sub lookup_libspec
 {
-	my ($dir, $spec) = normalize_dir_and_spec(@_);
+	my ($dir, $spec) = normalize_dir_and_spec($_[0], $_[1]->to_string);
 	my @r = ();
 	my ($libname, $major, $minor) = parse_spec($spec);
 	if (defined $libname) {
@@ -209,7 +209,7 @@ sub report_problem
 {
 	my ($state, $p) = @_;
 	my $base = $state->{localbase};
-	my ($dir, $name) = normalize_dir_and_spec($base, $p);
+	my ($dir, $name) = normalize_dir_and_spec($base, $p->to_string);
 	my ($stem, $major, $minor) = parse_spec($name);
 
 	my $r = "";

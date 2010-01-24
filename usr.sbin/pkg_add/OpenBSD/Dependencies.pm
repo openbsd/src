@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.120 2010/01/05 11:30:19 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.121 2010/01/24 15:00:26 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -78,6 +78,14 @@ sub dump
 package OpenBSD::lookup::library;
 our @ISA=qw(OpenBSD::lookup);
 
+sub say_found
+{
+	my ($self, $state, $obj, $msg) = @_;
+
+	$state->say("found libspec ", $obj->to_string, " ", $msg)
+	    if $state->verbose >= 3;
+}
+
 sub find_in_already_done
 {
 	my ($self, $solver, $state, $obj) = @_;
@@ -86,8 +94,7 @@ sub find_in_already_done
 	my $r = $solver->check_lib_spec($solver->{localbase}, $obj, 
 	    $self->{known});
 	if ($r) {
-		$state->say("found libspec $obj in package $r") 
-		    if $state->verbose >= 3;
+		$self->say_found($state, $obj, "in package $r");
 		return $r;
 	} else {
 		return undef;
@@ -97,13 +104,12 @@ sub find_in_already_done
 sub find_in_extra_sources
 {
 	my ($self, $solver, $state, $obj) = @_;
-	return undef if $obj =~ m/\//;
+	return undef if !$obj->is_valid || defined $obj->{dir};
 
 	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
 	for my $dir (OpenBSD::SharedLibs::system_dirs()) {
 		if ($solver->check_lib_spec($dir, $obj, {system => 1})) {
-			$state->say("found libspec $obj in $dir/lib")
-			    if $state->verbose >= 3;
+			$self->say_found($state, $obj, "in $dir/lib");
 			return 'system';
 		}
 	}
@@ -121,8 +127,7 @@ sub find_in_new_source
 	}
 	if ($solver->check_lib_spec($solver->{localbase}, $obj, 
 	    {$dep => 1})) {
-		$state->say("found libspec $obj in package $dep") 
-		    if $state->verbose >= 3;
+	    	$self->say_found($state, $obj, "in package $dep");
 		return $dep;
 	} 
 	return undef;
@@ -137,8 +142,8 @@ sub find_elsewhere
 			my $r = $solver->find_old_lib($state, 
 			    $solver->{localbase}, $dep->{pattern}, $obj);
 			if ($r) {
-				$state->say("found libspec $obj in old package $r")
-				    if $state->verbose;
+				$self->say_found($state, $obj,
+				    "in old package $r");
 				return $r;
 			}
 		}
@@ -685,14 +690,14 @@ sub solve_wantlibs
 			$solver->{localbase} = $h->{plist}->localbase;
 			next if $lib_finder->lookup($solver, 
 			    $solver->{to_register}->{$h}, $state, 
-			    $lib->{name});
+			    $lib->spec);
 			if ($okay) {
 				$state->errsay("Can't install ", 
 				    $h->pkgname, " because of libraries");
 			}
 			$okay = 0;
 			OpenBSD::SharedLibs::report_problem($state, 
-			    $lib->{name});
+			    $lib->spec);
 		}
 	}
 	if (!$okay) {
