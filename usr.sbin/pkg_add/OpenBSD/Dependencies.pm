@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.121 2010/01/24 15:00:26 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.122 2010/01/24 15:13:15 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -652,10 +652,10 @@ use OpenBSD::SharedLibs;
 sub check_lib_spec
 {
 	my ($self, $base, $spec, $dependencies) = @_;
-	my @r = OpenBSD::SharedLibs::lookup_libspec($base, $spec);
-	for my $candidate (@r) {
-		if ($dependencies->{$candidate}) {
-			return $candidate;
+	my $r = OpenBSD::SharedLibs::lookup_libspec($base, $spec);
+	for my $candidate (@$r) {
+		if ($dependencies->{$candidate->origin}) {
+			return $candidate->origin;
 		}
 	}
 	return;
