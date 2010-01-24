@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.41 2010/01/19 14:58:53 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.42 2010/01/24 14:12:24 espie Exp $
 #
-# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -307,6 +307,16 @@ sub compare
 	return $a->{dewey}->compare($b->{dewey});
 }
 
+sub has_issues
+{
+	my $self = shift;
+	if ($self->{dewey}{deweys}[-1] =~ m/v\d+$/ && defined $self->{p}) {
+		return ("correct order is pNvM");
+	} else {
+		return ();
+	}
+}
+
 package OpenBSD::PackageName::versionspec;
 our @ISA = qw(OpenBSD::PackageName::version);
 
@@ -401,6 +411,12 @@ sub to_pattern
 	return $o->{stem}.'-*';
 }
 
+sub has_issues
+{
+	my $self = shift;
+	return ("is a stem");
+}
+
 package OpenBSD::PackageName::Name;
 sub flavor_string
 {
@@ -428,6 +444,14 @@ sub compare
 		return undef;
 	}
 	return $a->{version}->compare($b->{version});
+}
+
+sub has_issues
+{
+	my $self = shift;
+	return ((map {"flavor $_ can't start with digit"} 
+	    	grep { /^\d/ } keys %{$self->{flavors}}), 
+		$self->{version}->has_issues);
 }
 
 1;
