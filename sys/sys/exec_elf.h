@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.44 2009/03/05 19:52:24 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.45 2010/01/25 05:18:35 miod Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -369,6 +369,20 @@ typedef struct {
 #define	ELF64_R_SYM(info)	((info) >> 32)
 #define	ELF64_R_TYPE(info)	((info) & 0xFFFFFFFF)
 #define ELF64_R_INFO(s,t) 	(((s) << 32) + (__uint32_t)(t))
+
+#if defined(__mips64__) && defined(__MIPSEL__)
+/*
+ * The 64-bit MIPS ELF ABI uses a slightly different relocation format
+ * than the regular ELF ABI: the r_info field is split into several
+ * pieces (see gnu/usr.bin/binutils/include/elf/mips.h for details).
+ */
+#undef	ELF64_R_SYM
+#undef	ELF64_R_TYPE
+#undef	ELF64_R_INFO
+#define	ELF64_R_TYPE(info)	(swap32((info) >> 32))
+#define	ELF64_R_SYM(info)	((info) & 0xFFFFFFFF)
+#define	ELF64_R_INFO(s,t)	((swap32(t) << 32) + (__uint32_t)(s))
+#endif	/* __mips64__ && __MIPSEL__ */
 
 /* Program Header */
 typedef struct {
