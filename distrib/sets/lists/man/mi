@@ -2797,6 +2797,8 @@
 ./usr/share/man/cat8/ldpd.0
 ./usr/share/man/cat8/lmccontrol.0
 ./usr/share/man/cat8/locate.updatedb.0
+./usr/share/man/cat8/loongson
+./usr/share/man/cat8/loongson/MAKEDEV.0
 ./usr/share/man/cat8/login_activ.0
 ./usr/share/man/cat8/login_chpass.0
 ./usr/share/man/cat8/login_crypto.0
@@ -3194,6 +3196,7 @@
 ./usr/share/man/man8/hppa64
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/landisk
+./usr/share/man/man8/loongson
 ./usr/share/man/man8/luna88k
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/macppc
@@ -3321,6 +3324,7 @@
 ./usr/share/man/ps8/hppa64
 ./usr/share/man/ps8/i386
 ./usr/share/man/ps8/landisk
+./usr/share/man/ps8/loongson
 ./usr/share/man/ps8/luna88k
 ./usr/share/man/ps8/mac68k
 ./usr/share/man/ps8/macppc
