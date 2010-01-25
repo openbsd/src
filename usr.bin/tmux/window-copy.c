@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.37 2010/01/25 21:33:39 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.38 2010/01/25 21:37:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -492,6 +492,7 @@ window_copy_scroll_to(struct window_pane *wp, u_int px, u_int py)
 	}
 	data->oy = gd->hsize - offset;
 
+	window_copy_update_selection(wp);
 	window_copy_redraw_screen(wp);
 }
 
@@ -690,6 +691,7 @@ window_copy_goto_line(struct window_pane *wp, const char *linestr)
 		return;
 
 	data->oy = lineno;
+	window_copy_update_selection(wp);
 	window_copy_redraw_screen(wp);
 }
 
