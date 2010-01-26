@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.1.1.1 2009/12/25 21:04:25 miod Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.2 2010/01/26 05:14:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -27,7 +27,9 @@
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/sysctl.h>
+#if 0
 #include <sys/timetc.h>
+#endif
 
 #include <machine/bus.h>
 
@@ -127,7 +129,9 @@
 struct glxpcib_softc {
 	struct device		sc_dev;
 
+#if 0
 	struct timecounter	sc_timecounter;
+#endif
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
@@ -154,7 +158,9 @@ struct cfattach glxpcib_ca = {
 /* from arch/<*>/pci/pcib.c */
 void	pcibattach(struct device *parent, struct device *self, void *aux);
 
+#if 0
 u_int	glxpcib_get_timecount(struct timecounter *tc);
+#endif
 
 #if NGPIO > 0
 void	glxpcib_gpio_pin_ctl(void *, int, int);
@@ -180,14 +186,21 @@ glxpcib_match(struct device *parent, void *match, void *aux)
 void
 glxpcib_attach(struct device *parent, struct device *self, void *aux)
 {
+#if (NGPIO > 0) || 0
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
+#endif
+#if 0
 	struct timecounter *tc = &sc->sc_timecounter;
+#endif
 #if NGPIO > 0
 	u_int64_t wa, ga;
 	struct gpiobus_attach_args gba;
 	int i, gpio = 0;
 #endif
 
+	printf(": rev %d",
+	    (int)rdmsr(AMD5536_REV) & AMD5536_REV_MASK);
+#if 0
 	tc->tc_get_timecount = glxpcib_get_timecount;
 	tc->tc_counter_mask = 0xffffffff;
 	tc->tc_frequency = 3579545;
@@ -196,9 +209,9 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	tc->tc_priv = sc;
 	tc_init(tc);
 
-	printf(": rev %d, 32-bit %lluHz timer",
-	    (int)rdmsr(AMD5536_REV) & AMD5536_REV_MASK,
+	printf(", 32-bit %lluHz timer",
 	    tc->tc_frequency);
+#endif
 
 #if NGPIO > 0
 	/* Attach the watchdog timer */
@@ -258,11 +271,13 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
+#if 0
 u_int
 glxpcib_get_timecount(struct timecounter *tc)
 {
         return rdmsr(AMD5536_TMC);
 }
+#endif
 
 #if NGPIO > 0
 int
