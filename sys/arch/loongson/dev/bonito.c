@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.2 2010/01/22 21:45:22 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.3 2010/01/26 05:35:55 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -259,6 +259,8 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	REGVAL(BONITO_INTPOL) = bc->bc_intPol;
 	REGVAL(BONITO_INTENCLR) = -1L;
 	(void)REGVAL(BONITO_INTENCLR);
+	wbflush();
+	
 	bonito_isaimr = bonito_get_isa_imr();
 
 	set_intr(INTPRI_BONITO, CR_INT_4, bonito_intr);
@@ -466,6 +468,7 @@ bonito_intr(uint32_t hwpend, struct trap_frame *frame)
 	 */
 	REGVAL(BONITO_INTENCLR) = isr;
 	(void)REGVAL(BONITO_INTENCLR);
+	wbflush();
 
 	/*
 	 * If interrupts are spl-masked, mask them and wait for splx()
@@ -516,6 +519,7 @@ bonito_intr(uint32_t hwpend, struct trap_frame *frame)
 		 */
 		REGVAL(BONITO_INTENSET) = imr;
 		(void)REGVAL(BONITO_INTENSET);
+		wbflush();
 	}
 
 	return hwpend;
@@ -619,11 +623,15 @@ void
 bonito_setintrmask(int level)
 {
 	uint64_t active = bonito_intem & ~bonito_imask[level];
+	uint32_t sr;
 
+	sr = disableintr();
 	REGVAL(BONITO_INTENCLR) = bonito_imask[level] & 0xffff;
 	REGVAL(BONITO_INTENSET) = active & 0xffff;
 	(void)REGVAL(BONITO_INTENSET);
+	wbflush();
 	bonito_set_isa_imr(active >> 16);
+	setsr(sr);
 }
 
 /*
@@ -661,10 +669,6 @@ bonito_attach_hook(struct device *parent, struct device *self,
 /*
  * PCI configuration space access routines
  */
-
-/* Bonito systems are always single-processor, so this is sufficient. */
-#define	PCI_CONF_LOCK(s)	(s) = splhigh()
-#define	PCI_CONF_UNLOCK(s)	splx((s))
 
 int
 bonito_bus_maxdevs(void *v, int busno)
@@ -746,9 +750,10 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 {
 	struct bonito_softc *sc = v;
 	pcireg_t data;
-	u_int32_t cfgoff, dummy, pcimap_cfg;
+	u_int32_t cfgoff, pcimap_cfg;
 	struct bonito_cfg_hook *hook;
-	int s;
+	uint32_t sr;
+	uint64_t imr;
 
 	SLIST_FOREACH(hook, &sc->sc_hook, next) {
 		if (hook->read != NULL &&
@@ -760,7 +765,11 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 	if (bonito_conf_addr(sc, tag, offset, &cfgoff, &pcimap_cfg))
 		return (pcireg_t)-1;
 
-	PCI_CONF_LOCK(s);
+	sr = disableintr();
+	imr = REGVAL(BONITO_INTEN);
+	REGVAL(BONITO_INTENCLR) = -1L;
+	(void)REGVAL(BONITO_INTENCLR);
+	wbflush();
 
 	/* clear aborts */
 	REGVAL(BONITO_PCICMD) |=
@@ -768,10 +777,8 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 
 	/* high 16 bits of address go into PciMapCfg register */
 	REGVAL(BONITO_PCIMAP_CFG) = (cfgoff >> 16) | pcimap_cfg;
-
+	(void)REGVAL(BONITO_PCIMAP_CFG);
 	wbflush();
-	/* Issue a read to make sure the write is posted */
-	dummy = REGVAL(BONITO_PCIMAP_CFG);
 
 	/* low 16 bits of address are offset into config space */
 	data = REGVAL(BONITO_PCICFG_BASE + (cfgoff & 0xfffc));
@@ -784,7 +791,10 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 		data = (pcireg_t) -1;
 	}
 
-	PCI_CONF_UNLOCK(s);
+	REGVAL(BONITO_INTENSET) = imr;
+	(void)REGVAL(BONITO_INTENSET);
+	wbflush();
+	setsr(sr);
 
 	return data;
 }
@@ -793,9 +803,10 @@ void
 bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct bonito_softc *sc = v;
-	u_int32_t cfgoff, dummy, pcimap_cfg;
+	u_int32_t cfgoff, pcimap_cfg;
 	struct bonito_cfg_hook *hook;
-	int s;
+	uint32_t sr;
+	uint64_t imr;
 
 	SLIST_FOREACH(hook, &sc->sc_hook, next) {
 		if (hook->write != NULL &&
@@ -807,7 +818,11 @@ bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 	if (bonito_conf_addr(sc, tag, offset, &cfgoff, &pcimap_cfg))
 		panic("bonito_conf_write");
 
-	PCI_CONF_LOCK(s);
+	sr = disableintr();
+	imr = REGVAL(BONITO_INTEN);
+	REGVAL(BONITO_INTENCLR) = -1L;
+	(void)REGVAL(BONITO_INTENCLR);
+	wbflush();
 
 	/* clear aborts */
 	REGVAL(BONITO_PCICMD) |=
@@ -815,15 +830,16 @@ bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 
 	/* high 16 bits of address go into PciMapCfg register */
 	REGVAL(BONITO_PCIMAP_CFG) = (cfgoff >> 16) | pcimap_cfg;
-
+	(void)REGVAL(BONITO_PCIMAP_CFG);
 	wbflush();
-	/* Issue a read to make sure the write is posted */
-	dummy = REGVAL(BONITO_PCIMAP_CFG);
 
 	/* low 16 bits of address are offset into config space */
 	REGVAL(BONITO_PCICFG_BASE + (cfgoff & 0xfffc)) = data;
 
-	PCI_CONF_UNLOCK(s);
+	REGVAL(BONITO_INTENSET) = imr;
+	(void)REGVAL(BONITO_INTENSET);
+	wbflush();
+	setsr(sr);
 }
 
 /*
@@ -950,6 +966,7 @@ bonito_set_isa_imr(uint newimr)
 	imr1 &= ~(1 << 2);	/* enable cascade */
 	imr2 = 0xff & ~(newimr >> 8);
 
+	/* interrupts have been disabled by the caller */
 	if ((newimr ^ bonito_isaimr) & 0xff00) {
 		REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 1) = imr2;
 		(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 1);
@@ -966,7 +983,7 @@ bonito_isa_specific_eoi(int bit)
 {
 	if (bit & 8) {
 		REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 0) = 0x60 | (bit & 7);
-		(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 0);
+		(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 0);
 		bit = 2;
 	}
 	REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 0) = 0x60 | bit;
