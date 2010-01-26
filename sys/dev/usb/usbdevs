@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.468 2010/01/15 10:16:03 sobrado Exp $
+$OpenBSD: usbdevs,v 1.469 2010/01/26 18:41:09 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -441,6 +441,7 @@ vendor FALCOM		0x0f94	Falcom Wireless Communications
 vendor RIM		0x0fca	Research In Motion
 vendor DYNASTREAM	0x0fcf	Dynastream Innovations
 vendor QUALCOMM2	0x1004	Qualcomm
+vendor MOTOROLA4	0x100d	Motorola
 vendor THURLBY		0x103e	Thurlby Thandar Instruments
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
@@ -2216,6 +2217,9 @@ product MOTOROLA2 USBLAN2	0x6027	USBLAN
 product MOTOROLA3 SB4100	0x4100	SB4100 Cable Modem
 product MOTOROLA3 SB5100	0x5100	SB5100 Cable Modem
 
+/* Motorola(4) products */
+product MOTOROLA4 RT2770	0x9031	RT2770
+
 /* MultiTech products */
 product MULTITECH ATLAS		0xf101	MT5634ZBA modem
 
@@ -2598,6 +2602,7 @@ product RALINK RT2870		0x2870	RT2870
 product RALINK RT3070		0x3070	RT3070
 product RALINK RT3071		0x3071	RT3071
 product RALINK RT3072		0x3072	RT3072
+product RALINK RT3572		0x3572	RT3572
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK RT2573_2		0x9021	RT2573
 
