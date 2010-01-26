@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.470 2010/01/12 20:14:09 espie Exp $
+# $OpenBSD: pkg_add,v 1.471 2010/01/26 11:31:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -403,6 +403,7 @@ sub try_merging
 		$set->merge($state->tracker, $s);
 		return 1;
 	} else {
+		$state->errsay("NOT MERGING: can't find update for ", $s->print, $state->ntogo);
 		return 0;
 	}
 }
@@ -416,19 +417,24 @@ sub check_forward_dependencies
 	my $bad = $set->{forward}->check($state);
 
 	if (%$bad) {
+		my $no_merge = 1;
 		if (!$state->{defines}->{dontmerge}) {
 			my $okay = 1;
 			for my $m (keys %$bad) {
-				$set->try_merging($m, $state) or $okay = 0;
+				if ($set->try_merging($m, $state)) {
+					$no_merge = 0;
+				} else {
+					$okay = 0;
+				}
 			}
 			return 0 if $okay == 1;
 		}
 		if ($state->{defines}->{updatedepends}) {
 			$state->errsay("Forcing update");
-			return 1;
+			return $no_merge;
 		} elsif ($state->{interactive}) {
 			if ($state->confirm("Proceed with update anyways", 0)) {
-				return 1;
+				return $no_merge;
 			} else {
 				return undef;
 			}
