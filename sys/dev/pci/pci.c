@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.72 2010/01/13 06:12:48 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.73 2010/01/26 17:47:36 otto Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -531,13 +531,12 @@ pci_reserve_resources(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
-	pcireg_t bhlc, blr, csr, type;
+	pcireg_t bhlc, blr, type;
 	bus_addr_t base, limit;
 	bus_size_t size;
 	int reg, reg_start, reg_end;
 	int flags;
 
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(bhlc)) {
 	case 0:
@@ -555,7 +554,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	default:
 		return (0);
 	}
-
+    
 	for (reg = reg_start; reg < reg_end; reg += 4) {
 		if (!pci_mapreg_probe(pc, tag, reg, &type))
 			continue;
@@ -580,14 +579,9 @@ pci_reserve_resources(struct pci_attach_args *pa)
 			    base, size, EX_NOWAIT)) {
 				printf("mem address conflict 0x%x/0x%x\n",
 				    base, size);
-				if (csr & PCI_COMMAND_MEM_ENABLE) {
-					extent_alloc_region(pa->pa_memex,
-					    base, size, EX_NOWAIT | EX_CONFLICTOK);
-				} else {
-					pci_conf_write(pc, tag, reg, 0);
-					if (type & PCI_MAPREG_MEM_TYPE_64BIT)
-						pci_conf_write(pc, tag, reg + 4, 0);
-				}
+				pci_conf_write(pc, tag, reg, 0);
+				if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+					pci_conf_write(pc, tag, reg + 4, 0);
 			}
 			break;
 		case PCI_MAPREG_TYPE_IO:
@@ -595,12 +589,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 			    base, size, EX_NOWAIT)) {
 				printf("io address conflict 0x%x/0x%x\n",
 				    base, size);
-				if (csr & PCI_COMMAND_IO_ENABLE) {
-					extent_alloc_region(pa->pa_memex,
-					    base, size, EX_NOWAIT | EX_CONFLICTOK);
-				} else {
-					pci_conf_write(pc, tag, reg, 0);
-				}
+				pci_conf_write(pc, tag, reg, 0);
 			}
 			break;
 		}
