@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.1 2009/11/21 23:28:14 syuu Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.2 2010/01/26 04:56:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -67,6 +67,7 @@ void
 __mp_lock(struct __mp_lock *mpl)
 {
 	uint32_t sr;
+	struct cpu_info *ci = curcpu();
 
 	/*
 	 * Please notice that mpl_count gets incremented twice for the
@@ -81,10 +82,12 @@ __mp_lock(struct __mp_lock *mpl)
 	 */
 	while (1) {
 		sr = disableintr();
-		if (__cpu_cas(&mpl->mpl_count, 0, 1) == 0)
-			mpl->mpl_cpu = curcpu();
+		if (__cpu_cas(&mpl->mpl_count, 0, 1) == 0) {
+			__asm__ __volatile__ ("sync" ::: "memory");
+			mpl->mpl_cpu = ci;
+		}
 
-		if (mpl->mpl_cpu == curcpu()) {
+		if (mpl->mpl_cpu == ci) {
 			mpl->mpl_count++;
 			setsr(sr);
 			break;
@@ -110,6 +113,7 @@ __mp_unlock(struct __mp_lock *mpl)
 	sr = disableintr();
 	if (--mpl->mpl_count == 1) {
 		mpl->mpl_cpu = NULL;
+		__asm__ __volatile__ ("sync" ::: "memory");
 		mpl->mpl_count = 0;
 	}
 
@@ -131,6 +135,7 @@ __mp_release_all(struct __mp_lock *mpl)
 
 	sr = disableintr();
 	mpl->mpl_cpu = NULL;
+	__asm__ __volatile__ ("sync" ::: "memory");
 	mpl->mpl_count = 0;
 	setsr(sr);
 
