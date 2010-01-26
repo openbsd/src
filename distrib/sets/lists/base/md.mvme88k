@@ -1,10 +1,10 @@
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.6
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.6/2.95.3
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.6/2.95.3/cc1
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.6/2.95.3/collect2
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.6/2.95.3/cpp0
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.6/2.95.3/include
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.6/2.95.3/specs
+./usr/lib/gcc-lib/m88k-unknown-openbsd4.7
+./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3
+./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/cc1
+./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/collect2
+./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/cpp0
+./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/include
+./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/specs
 ./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/m88k-openbsd/5.10.1
 ./usr/libdata/perl5/m88k-openbsd/5.10.1/.packlist

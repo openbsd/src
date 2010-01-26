@@ -1,6 +1,6 @@
 <CHRP-BOOT>
 <LICENSE>
-/*      $OpenBSD: bsd.tbxi,v 1.23 2009/06/20 23:38:12 miod Exp $      */
+/*      $OpenBSD: bsd.tbxi,v 1.24 2010/01/26 23:04:28 miod Exp $      */
 /*
  * Copyright (c) 2001 Dale Rahn.
  * All rights reserved.
@@ -34,7 +34,7 @@ MacRISC MacRISC3 MacRISC4
 OpenBSD/macppc bootloader
 </DESCRIPTION>
 <BOOT-SCRIPT>
-boot cd:,ofwboot /4.6/macppc/bsd.rd
+boot cd:,ofwboot /4.7/macppc/bsd.rd
 </BOOT-SCRIPT>
 <OS-BADGE-ICONS>
 201B
