@@ -1,4 +1,4 @@
-/* $OpenBSD: mux.c,v 1.10 2010/01/26 01:28:35 djm Exp $ */
+/* $OpenBSD: mux.c,v 1.11 2010/01/26 02:15:20 djm Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -16,8 +16,6 @@
  */
 
 /* ssh session multiplexing support */
-
-// XXX signal of slave passed to master
 
 /*
  * TODO:
@@ -278,7 +276,7 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	/* Reply for SSHMUX_COMMAND_OPEN */
 	cctx = xcalloc(1, sizeof(*cctx));
 	cctx->term = NULL;
-	cmd = NULL;
+	cmd = reserved = NULL;
 	if ((reserved = buffer_get_string_ret(m, NULL)) == NULL ||
 	    buffer_get_int_ret(&cctx->want_tty, m) != 0 ||
 	    buffer_get_int_ret(&cctx->want_x_fwd, m) != 0 ||
@@ -288,12 +286,17 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	    (cctx->term = buffer_get_string_ret(m, &len)) == NULL ||
 	    (cmd = buffer_get_string_ret(m, &len)) == NULL) {
  malf:
+		if (cmd != NULL)
+			xfree(cmd);
+		if (reserved != NULL)
+			xfree(reserved);
 		if (cctx->term != NULL)
 			xfree(cctx->term);
 		error("%s: malformed message", __func__);
 		return -1;
 	}
 	xfree(reserved);
+	reserved = NULL;
 
 	cctx->env = NULL;
 	env_len = 0;
@@ -326,6 +329,7 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	buffer_init(&cctx->cmd);
 	buffer_append(&cctx->cmd, cmd, strlen(cmd));
 	xfree(cmd);
+	cmd = NULL;
 
 	/* Gather fds from client */
 	for(i = 0; i < 3; i++) {
@@ -719,9 +723,12 @@ process_mux_stdio_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	u_int cport, i, j;
 	int new_fd[2];
 
+	chost = reserved = NULL;
 	if ((reserved = buffer_get_string_ret(m, NULL)) == NULL ||
 	   (chost = buffer_get_string_ret(m, NULL)) == NULL ||
 	    buffer_get_int_ret(&cport, m) != 0) {
+		if (reserved != NULL)
+			xfree(reserved);
 		if (chost != NULL)
 			xfree(chost);
 		error("%s: malformed message", __func__);
