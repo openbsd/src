@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.95 2010/01/11 10:16:20 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.96 2010/01/26 15:03:39 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 11 2010 $
+.Dd $Mdocdate: January 26 2010 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -249,7 +249,7 @@ by default, if dependencies are too strict,
 will merge updates together to make sure everything stays in synch.
 .Fl D Ar dontmerge
 disables that behavior.
-.It Ar downgrades
+.It Ar downgrade
 don't filter out package versions older than what's currently installed.
 .It Ar installed
 in update mode, reinstall an existing package with the same signature.

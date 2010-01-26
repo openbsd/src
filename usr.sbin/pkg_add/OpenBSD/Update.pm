@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.133 2010/01/10 16:03:49 espie Exp $
+# $OpenBSD: Update.pm,v 1.134 2010/01/26 15:03:39 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -164,7 +164,7 @@ sub process_handle
 			next;
 		    }
 		    my $r = $plist->signature->compare($p2->signature);
-		    if (defined $r && $r > 0 && !$state->{defines}{downgrades}) {
+		    if (defined $r && $r > 0 && !$state->{defines}{downgrade}) {
 		    	$oldfound = 1;
 			next;
 		    }
