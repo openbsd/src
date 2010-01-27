@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.113 2009/11/23 00:47:56 claudio Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.114 2010/01/27 15:36:17 todd Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -320,10 +320,20 @@ main(int argc, char *argv[])
 	}
 
 	while (1) {
+		struct stat sb;
+		char *path_message;
 		printf("\r\nHello %s. ", luser);
 		printf("You are authenticated from host \"%s\"\r\n", ipsrc);
 		setproctitle("%s@%s", luser, ipsrc);
-		print_message(PATH_MESSAGE);
+		if (asprintf(&path_message, "%s/%s/authpf.message",
+		    PATH_USER_DIR, luser) == -1)
+			do_death(1);
+		if (stat(path_message, &sb) == -1 || ! S_ISREG(sb.st_mode)) {
+			free(path_message);
+			if ((path_message = strdup(PATH_MESSAGE)) == NULL)
+				do_death(1);
+		}
+		print_message(path_message);
 		while (1) {
 			sleep(10);
 			if (want_death)
