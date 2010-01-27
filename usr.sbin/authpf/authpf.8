@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.51 2010/01/27 15:36:17 todd Exp $
+.\" $OpenBSD: authpf.8,v 1.52 2010/01/27 21:36:58 jmc Exp $
 .\"
 .\" Copyright (c) 1998-2007 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -180,7 +180,7 @@ This file will first be searched for in
 .Pa /etc/authpf/users/$USER/
 and then in
 .Pa /etc/authpf/ .
-Only first of these files will be used if both are present.
+Only one of these files will be used if both are present.
 .Pp
 There exist two methods for providing additional granularity to the control
 offered by
