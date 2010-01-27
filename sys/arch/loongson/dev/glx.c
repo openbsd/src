@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.1.1.1 2009/12/25 22:11:08 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.2 2010/01/27 05:35:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -112,25 +112,36 @@ uint64_t
 rdmsr(uint msr)
 {
 	uint64_t lo, hi;
+	uint32_t sr;
 
+#ifdef DIAGNOSTIC
 	if (glxbase_tag == 0)
 		panic("rdmsr invoked before glx initialization");
+#endif
 
+	sr = disableintr();
 	pci_conf_write(glxbase_pc, glxbase_tag, PCI_MSR_ADDR, msr);
 	lo = (uint32_t)pci_conf_read(glxbase_pc, glxbase_tag, PCI_MSR_LO32);
 	hi = (uint32_t)pci_conf_read(glxbase_pc, glxbase_tag, PCI_MSR_HI32);
+	setsr(sr);
 	return (hi << 32) | lo;
 }
 
 void
 wrmsr(uint msr, uint64_t value)
 {
-	if (glxbase_tag == 0)
-		panic("rdmsr invoked before glx initialization");
+	uint32_t sr;
 
+#ifdef DIAGNOSTIC
+	if (glxbase_tag == 0)
+		panic("wrmsr invoked before glx initialization");
+#endif
+
+	sr = disableintr();
 	pci_conf_write(glxbase_pc, glxbase_tag, PCI_MSR_ADDR, msr);
 	pci_conf_write(glxbase_pc, glxbase_tag, PCI_MSR_LO32, (uint32_t)value);
 	pci_conf_write(glxbase_pc, glxbase_tag, PCI_MSR_HI32, value >> 32);
+	setsr(sr);
 }
 
 int
