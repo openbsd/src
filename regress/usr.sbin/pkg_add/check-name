@@ -1,9 +1,9 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.10 2010/01/24 14:12:57 espie Exp $
+# $OpenBSD: check-name,v 1.11 2010/01/27 15:41:58 espie Exp $
 # Written by Marc Espie
 # Public domain
 
-use Test::Simple tests => 19;
+use Test::Simple tests => 20;
 use OpenBSD::Search;
 use OpenBSD::PackageName;
 
@@ -39,6 +39,20 @@ sub check_name
 {
 	my $s = shift;
 	return OpenBSD::PackageName->from_string($s)->has_issues;
+}
+
+sub check_order
+{
+	my @l = map {OpenBSD::PackageName->from_string($_)} @_;
+	while (my $a = shift @l) {
+		for my $b (@l) {
+			if ($a->compare($b) >= 0) {
+				print $a->to_string, " > ", $b->to_string, "\n";
+				return 0;
+			}
+		}
+	}
+	return 1;
 }
 
 @list = qw(py-MxDateTime-2.0.1-py2.1);
@@ -104,3 +118,6 @@ ok(check_list(["flavor 1flavor can't start with digit"],
 ok(check_list(["correct order is pNvM"], check_name("pkgname-1.0v0p0")),
 	"mixed up vp");
 ok(check_list([], check_name("pkgname-1.0p0v0")), "correct name");
+
+ok(check_order(qw(speex-1.2beta3 speex-1.2rc1 speex-1.2 speex-1.2pl1 
+    speex-1.3beta1)), 'check order');
