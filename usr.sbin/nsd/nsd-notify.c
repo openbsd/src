@@ -330,7 +330,7 @@ main (int argc, char *argv[])
 
 	/* Set up the header */
 	OPCODE_SET(q.packet, OPCODE_NOTIFY);
-	ID_SET(q.packet, 42);	/* Does not need to be random. */
+	ID_SET(q.packet, qid_generate());
 	AA_SET(q.packet);
 	QDCOUNT_SET(q.packet, 1);
 	buffer_skip(q.packet, QHEADERSZ);

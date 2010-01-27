@@ -958,3 +958,9 @@ addr2ip(
 
 	return (0);
 }
+
+uint16_t
+qid_generate()
+{
+	return (uint16_t) random();
+}

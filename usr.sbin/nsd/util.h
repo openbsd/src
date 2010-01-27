@@ -365,4 +365,9 @@ int addr2ip(
 #endif
 , char address[], socklen_t size);
 
+/*
+ * Generate a random query ID
+ */
+uint16_t qid_generate(void);
+
 #endif /* _UTIL_H_ */

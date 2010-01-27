@@ -702,7 +702,7 @@ init_query(query_type *q,
 	   uint16_t klass,
 	   tsig_record_type *tsig)
 {
-	uint16_t query_id = (uint16_t) random();
+	uint16_t query_id = qid_generate();
 
 	buffer_clear(q->packet);
 

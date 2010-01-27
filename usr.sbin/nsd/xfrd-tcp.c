@@ -41,7 +41,7 @@ xfrd_setup_packet(buffer_type* packet,
 {
 	/* Set up the header */
 	buffer_clear(packet);
-	ID_SET(packet, (uint16_t) random());
+	ID_SET(packet, qid_generate());
 	FLAGS_SET(packet, 0);
 	OPCODE_SET(packet, OPCODE_QUERY);
 	QDCOUNT_SET(packet, 1);
