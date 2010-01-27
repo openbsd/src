@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.42 2010/01/24 14:12:24 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.43 2010/01/27 15:57:16 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -156,12 +156,12 @@ my $cache = {};
 sub from_string
 {
 	my ($class, $string) = @_;
-	my $o = bless { deweys => [ split(/\./o, $string) ]}, $class;
-	for my $suffix (qw(rc beta pre pl)) {
-		if ($o->{deweys}->[-1] =~ m/^(\d+)$suffix(\d*)$/) {
-			$o->{deweys}->[-1] = $1;
-			$o->{$suffix} = $2;
-		}
+	my $o = bless { deweys => [ split(/\./o, $string) ],
+		suffix => '', suffix_value => 0}, $class;
+	if ($o->{deweys}->[-1] =~ m/^(\d+)(rc|beta|pre|pl)(\d*)$/) {
+		$o->{deweys}->[-1] = $1;
+		$o->{suffix} = $2;
+		$o->{suffix_value} = $3;
 	}
 	return $o;
 }
@@ -176,12 +176,38 @@ sub to_string
 {
 	my $self = shift;
 	my $r = join('.', @{$self->{deweys}});
-	for my $suffix (qw(pl pre beta rc)) {
-		if (defined $self->{$suffix}) {
-			$r .= $suffix . $self->{$suffix};
-		}
+	if ($self->{suffix}) {
+		$r .= $self->{suffix} . $self->{suffix_value};
 	}
 	return $r;
+}
+
+sub suffix_compare
+{
+	my ($a, $b) = @_;
+	if ($a->{suffix} eq $b->{suffix}) {
+		return $a->{suffix_value} <=> $b->{suffix_value};
+	}
+	if ($a->{suffix} eq 'pl') {
+		return 1;
+	}
+	if ($b->{suffix} eq 'pl') {
+		return -1;
+	}
+
+	if ($a->{suffix} gt $b->{suffix}) {
+		return -suffix_compare($b, $a);
+	}
+	# order is '', beta, pre, rc
+	# we know that a < b, 
+	if ($a->{suffix} eq '') {
+		return 1;
+	}
+	if ($a->{suffix} eq 'beta') {
+		return -1;
+	}
+	# refuse to compare pre vs. rc
+	return 0;
 }
 
 sub compare
@@ -203,22 +229,7 @@ sub compare
 			$b->{deweys}->[$i]);
 		return $r if $r != 0;
 	}
-	# finally try all the usual suspects
-	# release candidates and beta and pre releases.
-	for my $suffix (qw(rc beta pre pl)) {
-		my $result = $suffix eq 'pl' ? 1 : -1;
-		if (defined $a->{$suffix} && defined $b->{$suffix}) {
-			return $a->{$suffix} <=> $b->{$suffix};
-		}
-		if (defined $a->{$suffix} && !defined $b->{$suffix}) {
-			return $result;
-		}
-		if (!defined $a->{$suffix} && defined $b->{$suffix}) {
-			return -$result;
-		}
-	}
-	# give up: we don't know how to make a difference
-	return 0;
+	return suffix_compare($a, $b);
 }
 
 sub dewey_compare
