@@ -962,5 +962,5 @@ addr2ip(
 uint16_t
 qid_generate()
 {
-	return (uint16_t) random();
+	return (uint16_t) arc4random();
 }
