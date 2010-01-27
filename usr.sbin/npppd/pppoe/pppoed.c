@@ -29,7 +29,7 @@
  *  <dt>RFC 2516</dt>
  *  <dd>A Method for Transmitting PPP Over Ethernet (PPPoE)</dd>
  * </dl>
- * $Id: pppoed.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $
+ * $Id: pppoed.c,v 1.3 2010/01/27 07:27:02 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -970,7 +970,7 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 		if (tlv0->type == PPPOE_TAG_SERVICE_NAME) {
 
 			len = tlv0->length;
-			if (len > sizeof(sn))
+			if (len >= sizeof(sn))
 				goto reigai;
 
 			memcpy(sn, tlv0->value, len);

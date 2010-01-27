@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.3 2010/01/27 07:27:02 yasuoka Exp $ */
 /**@file
  * L2TP LNS のコールの実装。
  */
@@ -659,7 +659,7 @@ l2tp_recv_CDN(l2tp_call *_this, u_char *pkt, int pktlen)
 				    avp->attr_value[3];
 				len = avp->length - 12;
 				if (len > 0) {
-					len = MIN(len, sizeof(pmes));
+					len = MIN(len, sizeof(pmes) - 1);
 					memcpy(pmes, &avp->attr_value[4], len);
 					pmes[len] = '\0';
 				}
