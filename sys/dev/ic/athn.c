@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.21 2009/12/05 23:10:33 jsg Exp $	*/
+/*	$OpenBSD: athn.c,v 1.22 2010/01/27 18:26:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -3190,8 +3190,8 @@ athn_tx_process(struct athn_softc *sc, int qid)
 	 * each series that was fully processed.
 	 */
 	failcnt  = MS(ds->ds_status1, AR_TXS1_DATA_FAIL_CNT);
-	/* XXX Assume one single try per series. */
-	failcnt += MS(ds->ds_status9, AR_TXS9_FINAL_IDX);
+	/* XXX Assume two tries per series. */
+	failcnt += MS(ds->ds_status9, AR_TXS9_FINAL_IDX) * 2;
 
 	/* Update rate control statistics. */
 	an->amn.amn_txcnt++;
@@ -3495,7 +3495,6 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	/* Setup multi-rate retries. */
 	for (i = 0; i < 4; i++) {
-		series[i].tries = 1;	/* XXX more for last. */
 		series[i].hwrate = athn_rates[ridx[i]].hwrate;
 		if (athn_rates[ridx[i]].phy == IEEE80211_T_DS &&
 		    ridx[i] != ATHN_RIDX_CCK1 &&
@@ -3513,10 +3512,10 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	/* Write number of tries for each series. */
 	ds->ds_ctl2 =
-	    SM(AR_TXC2_XMIT_DATA_TRIES0, series[0].tries) |
-	    SM(AR_TXC2_XMIT_DATA_TRIES1, series[1].tries) |
-	    SM(AR_TXC2_XMIT_DATA_TRIES2, series[2].tries) |
-	    SM(AR_TXC2_XMIT_DATA_TRIES3, series[3].tries);
+	    SM(AR_TXC2_XMIT_DATA_TRIES0, 2) |
+	    SM(AR_TXC2_XMIT_DATA_TRIES1, 2) |
+	    SM(AR_TXC2_XMIT_DATA_TRIES2, 2) |
+	    SM(AR_TXC2_XMIT_DATA_TRIES3, 4);
 
 	/* Tell HW to update duration field in 802.11 header. */
 	if (type != AR_FRAME_TYPE_PSPOLL)

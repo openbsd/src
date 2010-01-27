@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.6 2009/11/22 08:52:45 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.7 2010/01/27 18:26:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -152,9 +152,8 @@ static const struct athn_rate {
 };
 
 struct athn_series {
-	uint8_t		tries;
-	uint8_t		hwrate;
 	uint16_t	dur;
+	uint8_t		hwrate;
 };
 
 struct athn_pier {
