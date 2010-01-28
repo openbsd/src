@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.42 2010/01/28 05:27:16 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.43 2010/01/28 21:24:08 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -261,7 +261,7 @@ ctx2:
 ctx3:
 
 #ifdef CPU_LOONGSON2
-	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR /* | COP_0_DIAG_RAS_CLEAR */
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	v0, COP_0_DIAG
 #endif
 

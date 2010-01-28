@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.28 2010/01/28 05:27:16 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.29 2010/01/28 21:24:08 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -120,7 +120,7 @@ tlb_load:
 	nop
 
 #ifdef CPU_LOONGSON2
-	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
@@ -239,7 +239,7 @@ NLEAF(k_tlb_inv, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
@@ -270,7 +270,7 @@ k_tlb_inv_odd:
 	nop
 
 #ifdef CPU_LOONGSON2
-	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
@@ -319,7 +319,7 @@ NLEAF(k_tlb_miss, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	k0, COP_0_DIAG
 #endif
 
@@ -414,7 +414,7 @@ LEAF(tlb_write_indexed, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	v0, COP_0_DIAG
 #endif
 
@@ -464,7 +464,7 @@ LEAF(tlb_flush, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	v0, COP_0_DIAG
 #endif
 
@@ -517,7 +517,7 @@ LEAF(tlb_flush_addr, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	v0, COP_0_DIAG
 #endif
 
@@ -617,7 +617,7 @@ LEAF(tlb_update, 0)
 	nop				# use the tlb.
 
 #ifdef CPU_LOONGSON2
-	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	v0, COP_0_DIAG
 #endif
 

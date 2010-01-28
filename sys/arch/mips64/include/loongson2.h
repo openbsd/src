@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2.h,v 1.1 2009/08/06 21:11:38 miod Exp $	*/
+/*	$OpenBSD: loongson2.h,v 1.2 2010/01/28 21:24:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -55,6 +55,6 @@
 
 #define	COP_0_DIAG_ITLB_CLEAR		0x04
 #define	COP_0_DIAG_BTB_CLEAR		0x02
-#define	COP_0_DIAG_RAS_CLEAR		0x01
+#define	COP_0_DIAG_RAS_DISABLE		0x01
 
 #endif	/* _MACHINE_LOONGSON2_H_ */
