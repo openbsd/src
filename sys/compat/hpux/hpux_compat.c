@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.30 2008/11/01 05:59:21 deraadt Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.31 2010/01/28 19:23:06 guenther Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -949,7 +949,7 @@ out:
 
 /*
  * This is the equivalent of BSD getpgrp but with more restrictions.
- * Note we do not check the real uid or "saved" uid.
+ * XXX Need to verify the differences between this and sys_getpgid()
  */
 int
 hpux_sys_getpgrp2(cp, v, retval)
@@ -960,13 +960,19 @@ hpux_sys_getpgrp2(cp, v, retval)
 	struct hpux_sys_getpgrp2_args *uap = v;
 	struct proc *p;
 
+	/* If zero, the call applies to the calling process */
 	if (SCARG(uap, pid) == 0)
-		SCARG(uap, pid) = cp->p_pid;
-	p = pfind(SCARG(uap, pid));
-	if (p == 0)
+		p = cp;
+	else
+		p = pfind(SCARG(uap, pid));
+	if (p == NULL)
 		return (ESRCH);
-	if (cp->p_ucred->cr_uid && p->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
-	    !inferior(p))
+	/* Skip exiting processes. */
+	if (p->p_pgrp->pg_session->s_leader == NULL)
+		return (ESRCH);
+	/* Both processes need to be in the same session. */
+	if (cp != p && cp->p_pgrp->pg_session->s_leader->p_pid !=
+	    p->p_pgrp->pg_session->s_leader->p_pid)
 		return (EPERM);
 	*retval = p->p_pgid;
 	return (0);
