@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.27 2010/01/21 17:52:25 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.28 2010/01/28 05:27:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -118,6 +118,12 @@ tlb_load:
 	nop
 	nop
 	nop
+
+#ifdef CPU_LOONGSON2
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	dmtc0	k0, COP_0_DIAG
+#endif
+
 	eret				# RM7000 need 4 for JTLB usage.
 	.end	tlb_miss
 
@@ -217,7 +223,7 @@ NLEAF(k_tlb_inv, 0)
 	dsrl	k0, k0, 34
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
 	and	k0, k0, PG_V			# check for valid entry
-	beq	k0, zero, go_k_general	# PTE invalid
+	beq	k0, zero, go_k_general		# PTE invalid
 	lw	k0, 4(k1)			# get odd PTE entry
 	dsll	k0, k0, 34
 	dsrl	k0, k0, 34
@@ -233,16 +239,8 @@ NLEAF(k_tlb_inv, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-#if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
-	mfc0	v0, COP_0_PRID
-	and	v0, 0xff00
-	sub	v0, (MIPS_LOONGSON2 << 8)
-	bnez	v0, 7f
-	nop
-#endif
-	li	v0, COP_0_DIAG_ITLB_CLEAR
-	dmtc0	v0, COP_0_DIAG
-7:
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	dmtc0	k0, COP_0_DIAG
 #endif
 
 	eret
@@ -272,16 +270,8 @@ k_tlb_inv_odd:
 	nop
 
 #ifdef CPU_LOONGSON2
-#if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
-	mfc0	v0, COP_0_PRID
-	and	v0, 0xff00
-	sub	v0, (MIPS_LOONGSON2 << 8)
-	bnez	v0, 7f
-	nop
-#endif
-	li	v0, COP_0_DIAG_ITLB_CLEAR
-	dmtc0	v0, COP_0_DIAG
-7:
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	dmtc0	k0, COP_0_DIAG
 #endif
 
 	eret
@@ -327,6 +317,12 @@ NLEAF(k_tlb_miss, 0)
 	nop
 	nop
 	nop
+
+#ifdef CPU_LOONGSON2
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
+	dmtc0	k0, COP_0_DIAG
+#endif
+
 	eret
 
 sys_stk_chk:
@@ -418,16 +414,8 @@ LEAF(tlb_write_indexed, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-#if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
-	mfc0	v0, COP_0_PRID
-	and	v0, 0xff00
-	sub	v0, (MIPS_LOONGSON2 << 8)
-	bnez	v0, 7f
-	nop
-#endif
-	li	v0, COP_0_DIAG_ITLB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
 	dmtc0	v0, COP_0_DIAG
-7:
 #endif
 
 	dmtc0	ta0, COP_0_TLB_HI		# Restore the PID.
@@ -476,16 +464,8 @@ LEAF(tlb_flush, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-#if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
-	mfc0	v0, COP_0_PRID
-	and	v0, 0xff00
-	sub	v0, (MIPS_LOONGSON2 << 8)
-	bnez	v0, 7f
-	nop
-#endif
-	li	v0, COP_0_DIAG_ITLB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
 	dmtc0	v0, COP_0_DIAG
-7:
 #endif
 
 	dmtc0	ta0, COP_0_TLB_HI	# Restore the PID
@@ -537,16 +517,8 @@ LEAF(tlb_flush_addr, 0)
 	nop
 
 #ifdef CPU_LOONGSON2
-#if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
-	mfc0	v0, COP_0_PRID
-	and	v0, 0xff00
-	sub	v0, (MIPS_LOONGSON2 << 8)
-	bnez	v0, 7f
-	nop
-#endif
-	li	v0, COP_0_DIAG_ITLB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
 	dmtc0	v0, COP_0_DIAG
-7:
 #endif
 
 1:
@@ -645,16 +617,8 @@ LEAF(tlb_update, 0)
 	nop				# use the tlb.
 
 #ifdef CPU_LOONGSON2
-#if 0	/* enable if Loongson2 + R5K|R10K kernel ever exist... */
-	mfc0	v0, COP_0_PRID
-	and	v0, 0xff00
-	sub	v0, (MIPS_LOONGSON2 << 8)
-	bnez	v0, 7f
-	nop
-#endif
-	li	v0, COP_0_DIAG_ITLB_CLEAR
+	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR
 	dmtc0	v0, COP_0_DIAG
-7:
 #endif
 
 	dmtc0	ta0, COP_0_TLB_HI	# restore PID
