@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.31 2010/01/28 19:23:06 guenther Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.32 2010/01/28 19:59:07 miod Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -946,37 +946,6 @@ out:
 }
 
 /* hpux_sys_getcontext() is found in hpux_machdep.c */
-
-/*
- * This is the equivalent of BSD getpgrp but with more restrictions.
- * XXX Need to verify the differences between this and sys_getpgid()
- */
-int
-hpux_sys_getpgrp2(cp, v, retval)
-	struct proc *cp;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_getpgrp2_args *uap = v;
-	struct proc *p;
-
-	/* If zero, the call applies to the calling process */
-	if (SCARG(uap, pid) == 0)
-		p = cp;
-	else
-		p = pfind(SCARG(uap, pid));
-	if (p == NULL)
-		return (ESRCH);
-	/* Skip exiting processes. */
-	if (p->p_pgrp->pg_session->s_leader == NULL)
-		return (ESRCH);
-	/* Both processes need to be in the same session. */
-	if (cp != p && cp->p_pgrp->pg_session->s_leader->p_pid !=
-	    p->p_pgrp->pg_session->s_leader->p_pid)
-		return (EPERM);
-	*retval = p->p_pgid;
-	return (0);
-}
 
 /*
  * This is the equivalent of BSD setpgrp but with more restrictions.

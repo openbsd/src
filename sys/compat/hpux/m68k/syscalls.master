@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.1 2004/07/09 21:33:45 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.2 2010/01/28 19:59:11 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.13 1997/03/16 03:48:04 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -140,7 +140,7 @@
 78	UNIMPL
 79	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 80	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
-81	STD		{ int hpux_sys_getpgrp2(pid_t pid); }
+81	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 82	STD		{ int hpux_sys_setpgrp2(pid_t pid, pid_t pgid); }
 83	NOARGS		{ int sys_setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
