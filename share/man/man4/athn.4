@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.6 2010/01/03 14:31:01 schwarze Exp $
+.\" $OpenBSD: athn.4,v 1.7 2010/01/28 17:02:55 damien Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: January 28 2010 $
 .Os
 .Dt ATHN 4
 .Sh NAME
@@ -137,8 +137,10 @@ to secure wireless communication,
 due to serious weaknesses in it.
 The
 .Nm
-driver offloads encryption and decryption to the hardware for the WEP40,
-WEP104, TKIP(+MIC) and CCMP ciphers.
+driver relies on the software 802.11 stack for both encryption and decryption
+of data frames.
+.\" driver offloads encryption and decryption to the hardware for the WEP40,
+.\" WEP104, TKIP(+MIC) and CCMP ciphers.
 .Pp
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
