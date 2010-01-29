@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.68 2009/12/10 13:16:02 tedu Exp $	*/
+/*	$OpenBSD: top.c,v 1.69 2010/01/29 00:36:09 tedu Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -322,7 +322,7 @@ main(int argc, char *argv[])
 	if (order_name != NULL) {
 		if ((order_index = string_index(order_name,
 		    statics.order_names)) == -1) {
-			char **pp, msg[80];
+			char **pp, msg[512];
 
 			snprintf(msg, sizeof(msg),
 			    "'%s' is not a recognized sorting order",

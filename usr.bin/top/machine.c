@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.64 2009/04/28 21:24:41 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.65 2010/01/29 00:36:09 tedu Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -118,7 +118,7 @@ char *memorynames[] = {
 
 /* these are names given to allowed sorting orders -- first is default */
 char	*ordernames[] = {
-	"cpu", "size", "res", "time", "pri", NULL
+	"cpu", "size", "res", "time", "pri", "pid", "command", NULL
 };
 
 /* these are for keeping track of the proc array */
@@ -539,6 +539,10 @@ static unsigned char sorted_state[] =
 	if ((result = p2->p_vm_rssize - p1->p_vm_rssize) == 0)
 #define ORDERKEY_MEM \
 	if ((result = PROCSIZE(p2) - PROCSIZE(p1)) == 0)
+#define ORDERKEY_PID \
+	if ((result = p1->p_pid - p2->p_pid) == 0)
+#define ORDERKEY_CMD \
+	if ((result = strcmp(p1->p_comm, p2->p_comm)) == 0)
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 static int
@@ -660,12 +664,63 @@ compare_prio(const void *v1, const void *v2)
 	return (result);
 }
 
+static int
+compare_pid(const void *v1, const void *v2)
+{
+	struct proc **pp1 = (struct proc **) v1;
+	struct proc **pp2 = (struct proc **) v2;
+	struct kinfo_proc2 *p1, *p2;
+	pctcpu lresult;
+	int result;
+
+	/* remove one level of indirection */
+	p1 = *(struct kinfo_proc2 **) pp1;
+	p2 = *(struct kinfo_proc2 **) pp2;
+
+	ORDERKEY_PID
+	ORDERKEY_PCTCPU
+	ORDERKEY_CPUTIME
+	ORDERKEY_STATE
+	ORDERKEY_PRIO
+	ORDERKEY_RSSIZE
+	ORDERKEY_MEM
+		;
+	return (result);
+}
+
+static int
+compare_cmd(const void *v1, const void *v2)
+{
+	struct proc **pp1 = (struct proc **) v1;
+	struct proc **pp2 = (struct proc **) v2;
+	struct kinfo_proc2 *p1, *p2;
+	pctcpu lresult;
+	int result;
+
+	/* remove one level of indirection */
+	p1 = *(struct kinfo_proc2 **) pp1;
+	p2 = *(struct kinfo_proc2 **) pp2;
+
+	ORDERKEY_CMD
+	ORDERKEY_PCTCPU
+	ORDERKEY_CPUTIME
+	ORDERKEY_STATE
+	ORDERKEY_PRIO
+	ORDERKEY_RSSIZE
+	ORDERKEY_MEM
+		;
+	return (result);
+}
+
+
 int (*proc_compares[])(const void *, const void *) = {
 	compare_cpu,
 	compare_size,
 	compare_res,
 	compare_time,
 	compare_prio,
+	compare_pid,
+	compare_cmd,
 	NULL
 };
 
