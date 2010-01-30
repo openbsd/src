@@ -1,16 +1,17 @@
-# $OpenBSD: Makefile,v 1.8 2009/09/09 12:10:35 marex Exp $
+# $OpenBSD: Makefile,v 1.9 2010/01/30 20:48:21 miod Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
 
 # USB capable systems only
-.if (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "alpha") || \
-    (${MACHINE} == "amd64") || (${MACHINE} == "armish") || \
-    (${MACHINE} == "hppa") || (${MACHINE} == "hppa64") || \
-    (${MACHINE} == "i386") || (${MACHINE} == "sgi") || \
-    (${MACHINE} == "sparc64") || (${MACHINE} == "zaurus") || \
-    (${MACHINE} == "landisk") || (${MACHINE} == "palm")
+.if (${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
+    ${MACHINE} == "armish" || ${MACHINE} == "hppa" || \
+    ${MACHINE} == "hppa64" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
+    ${MACHINE} == "palm" || ${MACHINE} == "sgi" || \
+    ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus")
 
 FIRM=	zd1211 zd1211b
 
