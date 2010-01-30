@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.201 2010/01/24 15:38:49 matthieu Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.202 2010/01/30 20:53:18 miod Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1228,6 +1228,8 @@ i386
 ..
 landisk
 ..
+loongson
+..
 luna88k
 ..
 mac68k
@@ -1298,6 +1300,8 @@ i386
 ..
 landisk
 ..
+loongson
+..
 luna88k
 ..
 mac68k
@@ -1354,6 +1358,8 @@ i386
 ..
 landisk
 ..
+loongson
+..
 luna88k
 ..
 mac68k
@@ -1404,6 +1410,8 @@ hppa64
 i386
 ..
 landisk
+..
+loongson
 ..
 luna88k
 ..
@@ -1519,6 +1527,8 @@ i386
 ..
 landisk
 ..
+loongson
+..
 luna88k
 ..
 mac68k
@@ -1569,6 +1579,8 @@ hppa64
 i386
 ..
 landisk
+..
+loongson
 ..
 luna88k
 ..
@@ -1642,6 +1654,8 @@ i386
 ..
 landisk
 ..
+loongson
+..
 luna88k
 ..
 mac68k
@@ -1698,6 +1712,8 @@ i386
 ..
 landisk
 ..
+loongson
+..
 luna88k
 ..
 mac68k
@@ -1748,6 +1764,8 @@ hppa64
 i386
 ..
 landisk
+..
+loongson
 ..
 luna88k
 ..
@@ -1863,6 +1881,8 @@ i386
 ..
 landisk
 ..
+loongson
+..
 luna88k
 ..
 mac68k
@@ -1913,6 +1933,8 @@ hppa64
 i386
 ..
 landisk
+..
+loongson
 ..
 luna88k
 ..
@@ -1979,6 +2001,8 @@ hppa64
 i386
 ..
 landisk
+..
+loongson
 ..
 luna88k
 ..
