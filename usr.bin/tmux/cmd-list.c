@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list.c,v 1.2 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-list.c,v 1.3 2010/01/30 19:08:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -77,13 +77,32 @@ int
 cmd_list_exec(struct cmd_list *cmdlist, struct cmd_ctx *ctx)
 {
 	struct cmd	*cmd;
-	int		 n;
+	int		 n, retval;
 
+	retval = 0;
 	TAILQ_FOREACH(cmd, cmdlist, qentry) {
-		if ((n = cmd_exec(cmd, ctx)) != 0)
-			return (n);
+		if ((n = cmd_exec(cmd, ctx)) == -1)
+			return (-1);
+
+		/*
+		 * A 1 return value means the command client is being attached
+		 * (sent MSG_READY).
+		 */
+		if (n == 1) {
+			retval = 1;
+
+			/*
+			 * The command client has been attached, so mangle the
+			 * context to treat any following commands as if they
+			 * were called from inside.
+			 */
+			if (ctx->curclient == NULL) {
+				ctx->curclient = ctx->cmdclient;
+				ctx->cmdclient = NULL;
+			}
+		}
 	}
-	return (0);
+	return (retval);
 }
 
 void
