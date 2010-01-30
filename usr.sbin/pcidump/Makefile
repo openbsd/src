@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.3 2008/05/13 21:12:44 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2010/01/30 20:48:53 miod Exp $
 
-.if (${MACHINE} == "alpha") || (${MACHINE} == "amd64") || \
-    (${MACHINE} == "armish") || (${MACHINE} == "hppa") || \
-    (${MACHINE} == "hppa64") || (${MACHINE} == "landisk") || \
-    (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
-    (${MACHINE} == "sgi") || (${MACHINE} == "socppc") || \
-    (${MACHINE} == "sparc64")
+.if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
+    ${MACHINE} == "armish" || ${MACHINE} == "hppa" || \
+    ${MACHINE} == "hppa64" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
+    ${MACHINE} == "macppc" || ${MACHINE} == "sgi" || \
+    ${MACHINE} == "socppc" || ${MACHINE} == "sparc64"
 
 PROG=	pcidump
 
