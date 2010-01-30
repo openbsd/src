@@ -2515,6 +2515,7 @@ push_frame_in_operand (insn, orig, push_size, boundary)
       else if (XEXP (x, 0) == frame_pointer_rtx
 	       && GET_CODE (XEXP (x, 1)) == REG
 	       && PREV_INSN (insn)
+	       && !NOTE_P (PREV_INSN (insn))
 	       && PATTERN (PREV_INSN (insn))
 	       && SET_DEST (PATTERN (PREV_INSN (insn))) == XEXP (x, 1)
 	       && CONSTANT_P (SET_SRC (PATTERN (PREV_INSN (insn)))))
