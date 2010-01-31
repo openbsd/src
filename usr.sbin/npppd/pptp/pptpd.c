@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $ */
 /**@file
  * PPTPデーモンの実装。現在は PAC(PPTP Access Concentrator) としての実装
  * のみです。
@@ -65,6 +65,7 @@
 
 #include "pptp.h"
 #include "pptp_local.h"
+#include "privsep.h"
 
 static int pptpd_seqno = 0;
 
@@ -375,7 +376,7 @@ pptpd_listener_start(pptpd_listener *_this)
 
 	/* GRE */
 	bind_sin_gre.sin_port = 0;
-	if ((sock_gre = socket(AF_INET, SOCK_RAW, IPPROTO_GRE)) < 0) {
+	if ((sock_gre = priv_socket(AF_INET, SOCK_RAW, IPPROTO_GRE)) < 0) {
 		pptpd_log(_this->self, LOG_ERR, "socket() failed at %s(): %m",
 		    __func__);
 		goto reigai;

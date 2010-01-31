@@ -26,7 +26,7 @@
 /**@file
  * npppd の補助的な関数を提供します。
  */
-/* $Id: npppd_subr.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
+/* $Id: npppd_subr.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $ */
 #include <sys/cdefs.h>
 #ifndef LINT
 __COPYRIGHT(
@@ -68,6 +68,7 @@ __COPYRIGHT(
 #include <event.h>
 #include "rt_zebra.h"
 #endif
+#include "privsep.h"
 
 static u_int16_t route_seq = 0;
 static int  in_route0(int, struct in_addr *, struct in_addr *, struct in_addr *, int, const char *, uint32_t);
@@ -100,7 +101,7 @@ load_resolv_conf(struct in_addr *pri, struct in_addr *sec)
 	sec->s_addr = INADDR_NONE;
 
 	filep = NULL;
-	if ((filep = fopen(_PATH_RESCONF, "r")) == NULL)
+	if ((filep = priv_fopen(_PATH_RESCONF)) == NULL)
 		return 1;
 
 	i = 0;
@@ -258,7 +259,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 		log_printf(LOG_ERR, "rtev_write failed in %s: %m", __func__);
 #else
 
-	if ((sock = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC)) < 0) {
+	if ((sock = priv_socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC)) < 0) {
 		log_printf(LOG_ERR, "socket() failed in %s() on %s : %m",
 		    __func__, strtype);
 		goto reigai;
@@ -277,7 +278,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 		goto reigai;
 	}
 
-	if ((rval = write(sock, buf, rtm->rtm_msglen)) <= 0) {
+	if ((rval = priv_send(sock, buf, rtm->rtm_msglen, 0)) <= 0) {
 		if (!(type == RTM_DELETE && errno == ESRCH) &&
 		    !(type == RTM_ADD    && errno == EEXIST)) {
 			log_printf(LOG_DEBUG,

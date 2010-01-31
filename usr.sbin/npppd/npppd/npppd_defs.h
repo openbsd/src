@@ -97,9 +97,6 @@
 #define	NPPPD_DEFAULT_IP_ASSIGN_RADIUS		0
 #endif
 
-/** rtev_write() を使う */
-#define NPPPD_USE_RTEV_WRITE			1
-
 #ifndef DEFAULT_RTSOCK_EVENT_DELAY
 /** Routing ソケットイベントを受けてから、処理を開始するまでの待ち時間(秒)*/
 #define	DEFAULT_RTSOCK_EVENT_DELAY		5

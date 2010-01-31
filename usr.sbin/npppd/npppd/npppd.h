@@ -26,6 +26,7 @@
 #ifndef	NPPPD_H
 #define	NPPPD_H 1
 
+#define	NPPPD_USER			"_npppd"
 
 #ifndef	NPPPD_DEFAULT_TUN_IFNAME	
 #define	NPPPD_DEFAULT_TUN_IFNAME	"tun0"

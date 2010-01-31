@@ -29,7 +29,7 @@
  *  <dt>RFC 2516</dt>
  *  <dd>A Method for Transmitting PPP Over Ethernet (PPPoE)</dd>
  * </dl>
- * $Id: pppoed.c,v 1.3 2010/01/27 07:27:02 yasuoka Exp $
+ * $Id: pppoed.c,v 1.4 2010/01/31 05:49:51 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@
 #include "properties.h"
 #include "config_helper.h"
 #include "rtev.h"
+#include "privsep.h"
 
 #include "pppoe.h"
 #include "pppoe_local.h"
@@ -278,7 +279,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	/* FIXME: NetBSD 3.0 では、/dev/bpf 一つで何度も開けるらしい */
 	for (i = 0; i < 256; i++) {
 		snprintf(buf, sizeof(buf), "/dev/bpf%d", i);
-		if ((_this->bpf = open(buf, O_RDWR, 0600)) >= 0) {
+		if ((_this->bpf = priv_open(buf, O_RDWR, 0600)) >= 0) {
 			break;
 		} else if (errno == ENXIO || errno == ENOENT)
 			break;	/* これ以上探してもみつからないはず */

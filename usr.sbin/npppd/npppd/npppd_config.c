@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $ */
 /*@file
  * npppd 設定関連を操作する関数を格納するファイル。
  */
@@ -105,7 +105,7 @@ npppd_reload_config(npppd *_this)
 	FILE *conffp = NULL;
 	struct properties *proptmp = NULL;
 
-	if ((conffp = fopen(_this->config_file, "r")) == NULL) {
+	if ((conffp = priv_fopen(_this->config_file)) == NULL) {
 		log_printf(LOG_ERR, "Load configuration from='%s' failed: %m",
 		    _this->config_file);
 		retval = -1;

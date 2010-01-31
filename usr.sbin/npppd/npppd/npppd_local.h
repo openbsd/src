@@ -68,6 +68,8 @@
 #include "npppd_iface.h"
 #include "npppd.h"
 
+#include "privsep.h"
+
 #ifdef	USE_NPPPD_NPPPD_CTL
 typedef struct _npppd_ctl {
 	/** イベントコンテキスト */

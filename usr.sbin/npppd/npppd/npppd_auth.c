@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  */
 /**@file 認証レルム */
-/* $Id: npppd_auth.c,v 1.3 2010/01/14 23:35:39 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.4 2010/01/31 05:49:51 yasuoka Exp $ */
 /* なるべく npppd に非依存で書いていきたいところ。*/
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -475,7 +475,7 @@ npppd_auth_reload_acctlist(npppd_auth_base *base)
 
 	slist_init(&users);
 	csv = NULL;
-	if ((file = fopen(base->acctlist_path, "r")) == NULL) {
+	if ((file = priv_fopen(base->acctlist_path)) == NULL) {
 		/* ファイルが存在しない場合は、空とする */
 		if (errno == ENOENT)
 			hash_delete_all(base->users_hash, 1);

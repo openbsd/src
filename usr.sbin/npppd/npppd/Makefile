@@ -14,6 +14,7 @@ SRCS+=		rtev_libevent.c bytebuf.c debugutil.c csvreader.c net_utils.c
 SRCS+=		radish.c time_utils.c npppd_pool.c addr_range.c
 SRCS+=		radius+.cc
 SRCS+=		recvfromto.c
+SRCS+=		privsep.c
 #SRCS+=		ipsec_util.c
 
 CPPFLAGS+=	-DUSE_NPPPD_NPPPD_CTL=1

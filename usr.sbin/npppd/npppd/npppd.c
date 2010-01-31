@@ -27,7 +27,7 @@
  * Next pppd。npppd プロセスと npppdインスタンスの実装。
  *
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $
+ * $Id: npppd.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -66,6 +66,8 @@ __COPYRIGHT(
 #include <event.h>
 #include <errno.h>
 #include <ifaddrs.h>
+#include <err.h>
+#include <pwd.h>
 
 #include "pathnames.h"
 #include "debugutil.h"
@@ -151,6 +153,7 @@ main(int argc, char *argv[])
 	int ch, retval = 0, ll_adjust = 0, runasdaemon = 0;
 	extern char *optarg;
 	const char *npppd_conf0 = DEFAULT_NPPPD_CONF;
+	struct passwd *pw;
 
 	while ((ch = getopt(argc, argv, "Dc:dhs")) != -1) {
 		switch (ch) {
@@ -182,14 +185,38 @@ main(int argc, char *argv[])
 			daemon(0, 0);
 	}
 
+	/* check for root privileges */
+	if (geteuid())
+		errx(1, "need root privileges");
+	/* check for npppd user */
+	if (getpwnam(NPPPD_USER) == NULL)
+		errx(1, "unknown user %s", NPPPD_USER);
+
+	if (privsep_init() != 0)
+		err(1, "cannot drop privileges");
+
 	if (npppd_init(&s_npppd, npppd_conf0) != 0) {
 		retval = 1;
 		goto reigai;
 	}
+
+	if ((pw = getpwnam(NPPPD_USER)) == NULL)
+		err(1, "gwpwnam");
+	if (chroot(pw->pw_dir) == -1)
+		err(1, "chroot");
+	if (chdir("/") == -1)
+		err(1, "chdir(\"/\")");
+        if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		err(1, "cannot drop privileges");
+	/* privileges is dropped */
+
 	npppd_start(&s_npppd);
 	npppd_fini(&s_npppd);
-	// FALL THROUGH
+	/* FALLTHROUGH */
 reigai:
+	privsep_fini();
 	log_printf(LOG_NOTICE, "Terminate npppd.");
 
 	return retval;
