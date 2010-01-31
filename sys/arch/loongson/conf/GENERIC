@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2010/01/31 15:50:07 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.3 2010/01/31 19:12:30 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,7 +17,7 @@ option		CPU_LOONGSON2
 makeoption	LINK_ADDRESS="0xffffffff80200000"
 
 option		USER_PCICONF
-option		WSDISPLAY_COMPAT_RAWKBD
+option		WSDISPLAY_COMPAT_RAWKBD	# provide raw scancodes; needed for X11
 
 option		PCIVERBOSE
 option		USBVERBOSE
@@ -80,3 +80,6 @@ cd*		at scsibus?
 ch*		at scsibus?
 ss*		at scsibus?
 uk*		at scsibus?
+
+pseudo-device	hotplug	1	# devices hot plugging
+pseudo-device	wsmux	2	# mouse & keyboard multiplexor
