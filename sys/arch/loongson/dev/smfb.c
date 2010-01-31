@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.1.1.1 2009/12/25 21:19:32 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.2 2010/01/31 15:30:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -247,7 +247,7 @@ smfb_mmap(void *v, off_t offset, int prot)
 	if (offset < 0 || offset >= ri->ri_stride * ri->ri_height)
 		return -1;
 
-	pa = XKPHYS_TO_PHYS((paddr_t)ri->ri_hw) + offset;
+	pa = XKPHYS_TO_PHYS((paddr_t)ri->ri_bits) + offset;
 	return atop(pa);
 }
 
