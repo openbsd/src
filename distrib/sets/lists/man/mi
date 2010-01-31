@@ -470,6 +470,7 @@
 ./usr/share/man/cat1/logname.0
 ./usr/share/man/cat1/look.0
 ./usr/share/man/cat1/lookbib.0
+./usr/share/man/cat1/loongson
 ./usr/share/man/cat1/lpq.0
 ./usr/share/man/cat1/lpr.0
 ./usr/share/man/cat1/lprm.0
@@ -859,6 +860,7 @@
 ./usr/share/man/cat3/hppa64
 ./usr/share/man/cat3/i386
 ./usr/share/man/cat3/landisk
+./usr/share/man/cat3/loongson
 ./usr/share/man/cat3/luna88k
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/macppc
@@ -1814,6 +1816,7 @@
 ./usr/share/man/cat4/lmtemp.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
+./usr/share/man/cat4/loongson
 ./usr/share/man/cat4/lpt.0
 ./usr/share/man/cat4/luna88k
 ./usr/share/man/cat4/luna88k/autoconf.0
@@ -2492,6 +2495,7 @@
 ./usr/share/man/cat5/ldpd.conf.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/login.conf.0
+./usr/share/man/cat5/loongson
 ./usr/share/man/cat5/luna88k
 ./usr/share/man/cat5/mac68k
 ./usr/share/man/cat5/macppc
@@ -3120,6 +3124,7 @@
 ./usr/share/man/cat9/hppa64
 ./usr/share/man/cat9/i386
 ./usr/share/man/cat9/landisk
+./usr/share/man/cat9/loongson
 ./usr/share/man/cat9/luna88k
 ./usr/share/man/cat9/mac68k
 ./usr/share/man/cat9/macppc
@@ -3144,6 +3149,7 @@
 ./usr/share/man/man1/hppa64
 ./usr/share/man/man1/i386
 ./usr/share/man/man1/landisk
+./usr/share/man/man1/loongson
 ./usr/share/man/man1/luna88k
 ./usr/share/man/man1/mac68k
 ./usr/share/man/man1/macppc
@@ -3170,6 +3176,7 @@
 ./usr/share/man/man4/hppa64
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/landisk
+./usr/share/man/man4/loongson
 ./usr/share/man/man4/luna88k
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
@@ -3221,6 +3228,7 @@
 ./usr/share/man/ps1/hppa64
 ./usr/share/man/ps1/i386
 ./usr/share/man/ps1/landisk
+./usr/share/man/ps1/loongson
 ./usr/share/man/ps1/luna88k
 ./usr/share/man/ps1/mac68k
 ./usr/share/man/ps1/macppc
@@ -3252,6 +3260,7 @@
 ./usr/share/man/ps3/hppa64
 ./usr/share/man/ps3/i386
 ./usr/share/man/ps3/landisk
+./usr/share/man/ps3/loongson
 ./usr/share/man/ps3/luna88k
 ./usr/share/man/ps3/mac68k
 ./usr/share/man/ps3/macppc
@@ -3276,6 +3285,7 @@
 ./usr/share/man/ps4/hppa64
 ./usr/share/man/ps4/i386
 ./usr/share/man/ps4/landisk
+./usr/share/man/ps4/loongson
 ./usr/share/man/ps4/luna88k
 ./usr/share/man/ps4/mac68k
 ./usr/share/man/ps4/macppc
@@ -3299,6 +3309,7 @@
 ./usr/share/man/ps5/hppa64
 ./usr/share/man/ps5/i386
 ./usr/share/man/ps5/landisk
+./usr/share/man/ps5/loongson
 ./usr/share/man/ps5/luna88k
 ./usr/share/man/ps5/mac68k
 ./usr/share/man/ps5/macppc
@@ -3348,6 +3359,7 @@
 ./usr/share/man/ps9/hppa64
 ./usr/share/man/ps9/i386
 ./usr/share/man/ps9/landisk
+./usr/share/man/ps9/loongson
 ./usr/share/man/ps9/luna88k
 ./usr/share/man/ps9/mac68k
 ./usr/share/man/ps9/macppc
