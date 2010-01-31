@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.3 2010/01/26 05:35:55 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.4 2010/01/31 19:12:12 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -236,13 +236,10 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	const struct bonito_config *bc;
-	pcireg_t rev;
+	uint32_t reg;
 
-	rev = PCI_REVISION(REGVAL(BONITO_PCICLASS));
-
-	printf(": memory and PCI controller, %s rev. %d.%d\n",
-	    BONITO_REV_FPGA(rev) ? "FPGA" : "ASIC",
-	    BONITO_REV_MAJOR(rev), BONITO_REV_MINOR(rev));
+	printf(": memory and PCI-X controller, rev. %d\n",
+	    PCI_REVISION(REGVAL(BONITO_PCI_REG(PCI_CLASS_REG))));
 
 	bc = &yeelong_bonito;
 
@@ -250,16 +247,31 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sc->sc_hook);
 
 	/*
+	 * Setup proper abitration.
+	 */
+
+	/*
+	 * according to linux, changing the value of this undocumented
+	 * register ``avoids deadlock of PCI reading/writing lock operation''.
+	 */
+	REGVAL(BONITO_PCI_REG(0x4c)) =  0xd2000001; /* instead of c2000001 */
+
+	/* all pci devices may need to hold the bus */
+	reg = REGVAL(LOONGSON_PXARB_CFG);
+	reg &= ~LOONGSON_PXARB_RUDE_DEV_MSK;
+	reg |= 0xfe << LOONGSON_PXARB_RUDE_DEV_SHFT;
+	REGVAL(LOONGSON_PXARB_CFG) = reg;
+	(void)REGVAL(LOONGSON_PXARB_CFG);
+
+	/*
 	 * Setup interrupt handling.
 	 */
 
 	REGVAL(BONITO_GPIOIE) = bc->bc_gpioIE;
 	REGVAL(BONITO_INTEDGE) = bc->bc_intEdge;
-	REGVAL(BONITO_INTSTEER) = 0;
 	REGVAL(BONITO_INTPOL) = bc->bc_intPol;
-	REGVAL(BONITO_INTENCLR) = -1L;
+	REGVAL(BONITO_INTENCLR) = 0xffffffff;
 	(void)REGVAL(BONITO_INTENCLR);
-	wbflush();
 	
 	bonito_isaimr = bonito_get_isa_imr();
 
@@ -457,18 +469,17 @@ bonito_intr(uint32_t hwpend, struct trap_frame *frame)
 	isr = REGVAL(BONITO_INTISR) & YEELONG_INTRMASK_LVL4;
 	imr = REGVAL(BONITO_INTEN);
 	isr &= imr;
-	if (isr == 0)
-		return 0;	/* not for us */
-
 #ifdef DEBUG
 	printf("pci interrupt: imr %04x isr %04x\n", imr, isr);
 #endif
+	if (isr == 0)
+		return 0;	/* not for us */
+
 	/*
 	 * Mask all pending interrupts.
 	 */
 	REGVAL(BONITO_INTENCLR) = isr;
 	(void)REGVAL(BONITO_INTENCLR);
-	wbflush();
 
 	/*
 	 * If interrupts are spl-masked, mask them and wait for splx()
@@ -508,18 +519,19 @@ bonito_intr(uint32_t hwpend, struct trap_frame *frame)
 				if (rc == 0)
 					printf("spurious interrupt %d\n", bit);
 
-				isr ^= mask;
+				if ((isr ^= mask) == 0)
+					goto done;
 				if ((tmpisr ^= mask) == 0)
 					break;
 			}
 		}
+done:
 
 		/*
 		 * Reenable interrupts which have been serviced.
 		 */
 		REGVAL(BONITO_INTENSET) = imr;
 		(void)REGVAL(BONITO_INTENSET);
-		wbflush();
 	}
 
 	return hwpend;
@@ -603,11 +615,13 @@ bonito_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 
 				bonito_isa_specific_eoi(bitno);
 
-				isr ^= mask;
+				if ((isr ^= mask) == 0)
+					goto done;
 				if ((tmpisr ^= mask) == 0)
 					break;
 			}
 		}
+done:
 
 		/*
 		 * Reenable interrupts which have been serviced.
@@ -622,15 +636,24 @@ bonito_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 void
 bonito_setintrmask(int level)
 {
-	uint64_t active = bonito_intem & ~bonito_imask[level];
+	uint64_t active;
+	uint32_t clear, set;
 	uint32_t sr;
 
+	active = bonito_intem & ~bonito_imask[level];
+	clear = bonito_imask[level] & 0xffff;
+	set = active & 0xffff;
+
 	sr = disableintr();
-	REGVAL(BONITO_INTENCLR) = bonito_imask[level] & 0xffff;
-	REGVAL(BONITO_INTENSET) = active & 0xffff;
+
+	if (clear != 0)
+		REGVAL(BONITO_INTENCLR) = clear;
+	if (set != 0)
+		REGVAL(BONITO_INTENSET) = set;
 	(void)REGVAL(BONITO_INTENSET);
-	wbflush();
+
 	bonito_set_isa_imr(active >> 16);
+
 	setsr(sr);
 }
 
@@ -767,12 +790,11 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 
 	sr = disableintr();
 	imr = REGVAL(BONITO_INTEN);
-	REGVAL(BONITO_INTENCLR) = -1L;
+	REGVAL(BONITO_INTENCLR) = 0xffffffff;
 	(void)REGVAL(BONITO_INTENCLR);
-	wbflush();
 
 	/* clear aborts */
-	REGVAL(BONITO_PCICMD) |=
+	REGVAL(BONITO_PCI_REG(PCI_COMMAND_STATUS_REG)) |=
 	    PCI_STATUS_MASTER_ABORT | PCI_STATUS_MASTER_TARGET_ABORT;
 
 	/* high 16 bits of address go into PciMapCfg register */
@@ -784,16 +806,15 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 	data = REGVAL(BONITO_PCICFG_BASE + (cfgoff & 0xfffc));
 
 	/* check for error */
-	if (REGVAL(BONITO_PCICMD) &
+	if (REGVAL(BONITO_PCI_REG(PCI_COMMAND_STATUS_REG)) &
 	    (PCI_STATUS_MASTER_ABORT | PCI_STATUS_MASTER_TARGET_ABORT)) {
-		REGVAL(BONITO_PCICMD) |=
+		REGVAL(BONITO_PCI_REG(PCI_COMMAND_STATUS_REG)) |=
 		    PCI_STATUS_MASTER_ABORT | PCI_STATUS_MASTER_TARGET_ABORT;
 		data = (pcireg_t) -1;
 	}
 
 	REGVAL(BONITO_INTENSET) = imr;
 	(void)REGVAL(BONITO_INTENSET);
-	wbflush();
 	setsr(sr);
 
 	return data;
@@ -820,12 +841,11 @@ bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 
 	sr = disableintr();
 	imr = REGVAL(BONITO_INTEN);
-	REGVAL(BONITO_INTENCLR) = -1L;
+	REGVAL(BONITO_INTENCLR) = 0xffffffff;
 	(void)REGVAL(BONITO_INTENCLR);
-	wbflush();
 
 	/* clear aborts */
-	REGVAL(BONITO_PCICMD) |=
+	REGVAL(BONITO_PCI_REG(PCI_COMMAND_STATUS_REG)) |=
 	    PCI_STATUS_MASTER_ABORT | PCI_STATUS_MASTER_TARGET_ABORT;
 
 	/* high 16 bits of address go into PciMapCfg register */
@@ -838,7 +858,6 @@ bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 
 	REGVAL(BONITO_INTENSET) = imr;
 	(void)REGVAL(BONITO_INTENSET);
-	wbflush();
 	setsr(sr);
 }
 
@@ -933,6 +952,10 @@ bonito_pci_intr_disestablish(void *cookie, void *ihp)
 {
 	bonito_intr_disestablish(ihp);
 }
+
+/*
+ * ISA Interrupt handling
+ */
 
 uint
 bonito_get_isa_imr()
