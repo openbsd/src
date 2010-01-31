@@ -1,0 +1,116 @@
+$Id: HOWTO_PIPEX_NPPPD.txt,v 1.1 2010/01/31 13:27:36 yasuoka Exp $
+
+How to test npppd and pipex
+---------------------------
+
+  client ------ server
+                A.B.C.D
+
+on server
+
+  1. create user '_npppd'
+  2. update your source tree
+  3. build and update kernel
+  4. build npppd
+     % cd usr.sbin/npppd
+     % make
+  5. copy npppd.conf and npppd-user.csv to /tmp/
+     - npppd.conf and npppd-users.csv are attached below.
+     - if you are using 10.0.0.0/24, edit npppd.conf.
+  6. set net.inet.gre.allow=1
+     % sudo sysctl net.inet.gre.allow=1
+  7. run npppd
+     % sudo usr.sbin/npppd/npppd/npppd -dc /tmp/npppd.conf
+
+on client
+
+  1. install 'pptp' from ports.
+  2. edit /etc/ppp/ppp.conf
+     -------------------------------
+     test_pptp:
+       set device "!/usr/local/sbin/pptp --nolaunchpppd A.B.C.D"
+       set authname test
+       set authkey hogehoge
+       set mppe 128 stateless
+       disable protocomp
+       deny protocomp
+       disable ipv6cp
+     -------------------------------
+     modify "A.B.C.D" to actual IP address.
+  3. dial test_pptp
+     % sudo ppp -ddial test_pptp
+
+
+How to test L2TP/IPsec
+----------------------
+
+  1. run isakmpd
+     % sudo isakmpd -Kv
+  2. append below lines to /etc/ipsec.conf
+     -------------------------------
+     ike passive esp transport \
+         proto udp from A.B.C.D to any port 1701 \
+         main auth "hmac-sha" enc "3des" group modp2048 \
+         quick auth "hmac-sha" enc "aes" \
+         psk "secret"
+     -------------------------------
+     - change A.B.C.D to actual IP address
+     - change "secret" to actual shared secret
+
+   3. exec ipsecctl to notice isakmpd
+     % sudo ipsecctl -f /etc/ipsec.conf
+
+   4. connect from iPhone, MacOS or Windows
+
+
+[npppd.conf]
+-------------------------------------------------------------------------------
+#
+# Simplest npppd.conf sample
+#
+# $Id: HOWTO_PIPEX_NPPPD.txt,v 1.1 2010/01/31 13:27:36 yasuoka Exp $
+
+interface_list:                         tun0
+interface.tun0.ip4addr:                 10.0.0.1
+
+# IP address pool
+pool.dyna_pool:                         10.0.0.0/25
+pool.pool:                              10.0.0.128/25
+
+# Authentication
+auth.local.realm_list:                  local
+auth.local.realm.acctlist:              /tmp/npppd-users.csv
+realm.local.concentrate:                tun0
+
+lcp.mru:                                1400
+auth.method:                            mschapv2 chap
+#auth.method:                           mschapv2 chap pap
+#ipcp.dns_primary:                      192.168.4.20
+#ipcp.dns_secondary:                    192.168.6.20
+#ipcp.nbns_primary:                     192.168.4.20
+#ipcp.nbns_secondary:                   192.168.6.20
+#ipcp.assign_fixed:                     true
+#ipcp.assign_userselect:                true
+
+pptpd.enabled:                          true
+pptpd.ip4_allow:                        0.0.0.0/0
+#pptpd.listener_in:                     PPTP 192.168.0.1
+
+# L2TP daemon
+l2tpd.enabled:                          true
+l2tpd.ip4_allow:                        0.0.0.0/0
+#l2tpd.listener_in:                     L2TP 192.168.0.1
+#l2tpd.purge_ipsec_sa:                  true
+l2tpd.require_ipsec:                    false
+
+# PPPoE daemon
+#pppoed.enabled:                                true
+#pppoed.interface:                      PPPoE vic0
+-------------------------------------------------------------------------------
+
+[npppd-users.csv]
+  - First line of the CSV is *IGNORED*.  It is treated as a title line.
+-------------------------------------------------------------------------------
+Username,Password,Framed-IP-Address,Framed-IP-Netmask,Description,Calling-Id
+user1,user1's secret,10.0.0.129,,memo for user1
+-------------------------------------------------------------------------------
