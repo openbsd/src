@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.2 2010/01/22 21:45:24 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.3 2010/01/31 15:29:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -81,10 +81,11 @@ loongson2e_setup(u_long memlo, u_long memhi)
 	 * on Loongson 2E-based hardware...
 	 */
 
-	mem_layout[0].mem_first_page = 1; /* do NOT stomp on exception area */
-	mem_layout[0].mem_last_page = memlo;
+	/* do NOT stomp on exception area */
+	mem_layout[0].mem_first_page = atop(DDR_PHYSICAL_BASE) + 1;
+	mem_layout[0].mem_last_page = atop(DDR_PHYSICAL_BASE) + memlo;
 
-	loongson_dma_base = PCI_DDR_BASE;
+	loongson_dma_base = PCI_DDR_BASE ^ DDR_PHYSICAL_BASE;
 }
 
 /*
@@ -133,13 +134,25 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	 * kernel is loaded, really).
 	 */
 
-	/* do NOT stomp on exception area */
-	mem_layout[0].mem_first_page = atop(DDR_WINDOW_BASE) + 1;
-	mem_layout[0].mem_last_page = atop(DDR_WINDOW_BASE) + memlo + memhi;
+	if (memhi != 0) {
+		/* do NOT stomp on exception area */
+		mem_layout[0].mem_first_page = atop(DDR_WINDOW_BASE) + 1;
+		mem_layout[0].mem_last_page = atop(DDR_WINDOW_BASE) +
+		    memlo + memhi;
+		loongson_dma_base = PCI_DDR_BASE ^ DDR_WINDOW_BASE;
+	} else {
+		/* do NOT stomp on exception area */
+		mem_layout[0].mem_first_page = atop(DDR_PHYSICAL_BASE) + 1;
+		mem_layout[0].mem_last_page = atop(DDR_PHYSICAL_BASE) +
+		    memlo + memhi;
+		loongson_dma_base = PCI_DDR_BASE ^ DDR_PHYSICAL_BASE;
+	}
 
 	/*
 	 * Allow access to memory beyond 256MB, by programming the
 	 * Loongson 2F address window registers.
+	 * This also makes sure PCI->DDR accesses can use a contiguous
+	 * area regardless of the actual memory size.
 	 */
 
 	/*
@@ -178,14 +191,12 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 		return FALSE;
 
 	/*
-	 * Allow access to the low 256MB aliased region on 2F systems.
+	 * Allow access to the low 256MB aliased region on 2F systems,
+	 * if we are accessing memory at 2GB onwards.
 	 */
-	if (/* curcpu()->ci_hw.type == MIPS_LOONGSON2 && */
-	    (curcpu()->ci_hw.c0prid & 0xff) == 0x2f - 0x2c) {
-		if (pa < 0x10000000) {
-			fp += atop(DDR_WINDOW_BASE);
-			lp += atop(DDR_WINDOW_BASE);
-		}
+	if (pa < 0x10000000) {
+		fp += mem_layout[0].mem_first_page - 1;
+		lp += mem_layout[0].mem_first_page - 1;
 	}
 
 	for (i = 0, seg = mem_layout; i < MAXMEMSEGS; i++, seg++)
