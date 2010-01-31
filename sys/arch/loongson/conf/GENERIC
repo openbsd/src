@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1.1.1 2009/12/25 22:15:11 miod Exp $
+#	$OpenBSD: GENERIC,v 1.2 2010/01/31 15:50:07 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,6 +17,7 @@ option		CPU_LOONGSON2
 makeoption	LINK_ADDRESS="0xffffffff80200000"
 
 option		USER_PCICONF
+option		WSDISPLAY_COMPAT_RAWKBD
 
 option		PCIVERBOSE
 option		USBVERBOSE
