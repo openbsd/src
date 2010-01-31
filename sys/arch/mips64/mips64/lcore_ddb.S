@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.10 2009/09/30 06:22:00 syuu Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.11 2010/01/31 19:39:04 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -39,7 +39,6 @@
 
 	.set	noreorder		# Noreorder is default style!
 
-#ifdef __LP64__
 LEAF(kdbpeekd, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
@@ -58,7 +57,6 @@ LEAF(kdbpeekd, 0)
 	jr	ra
 	sw	zero, PCB_ONFAULT(t0)
 END(kdbpeekd)
-#endif
 
 LEAF(kdbpeek, 0)
 	GET_CPU_INFO(t1, t0)
@@ -112,7 +110,6 @@ kt_ddberr:
 	jr	ra
 	li	v0, -1
 
-#ifdef __LP64__
 LEAF(kdbpoked, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
@@ -131,8 +128,6 @@ LEAF(kdbpoked, 0)
 	jr	ra
 	sw	zero, PCB_ONFAULT(t0)
 END(kdbpoked)
-#endif
-
 
 LEAF(kdbpoke, 0)
 	GET_CPU_INFO(t1, t0)
@@ -222,4 +217,3 @@ LEAF(longjmp, 0)
 	jr	ra
 	li	v0, 1			# longjmp return
 END(longjmp)
-

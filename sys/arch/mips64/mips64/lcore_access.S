@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.18 2009/09/30 06:22:00 syuu Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.19 2010/01/31 19:39:04 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -80,16 +80,6 @@ sigcode:
 	.globl	esigcode
 esigcode:
 
-/* Mips o32 ABI sigcode. 32 bit pointers. */
-	.globl	sigcode_o32
-sigcode_o32:
-	addu	a0, sp, 16		# address of sigcontext
-	li	v0, SYS_sigreturn	# sigreturn(scp)
-	syscall
-	break	0			# just in case sigreturn fails
-	.globl	esigcode_o32
-esigcode_o32:
-
 /*
  * Copy a null terminated string within the kernel address space.
  * Maxlength may be null if count not wanted.
@@ -120,44 +110,6 @@ LEAF(copystr, 0)
 	j	ra
 	nop
 END(copystr)
-
-#ifndef __LP64__
-/*
- *  Read 64 bits from bus in non LP64 mode.
- *  XXX ints should be disabled!
- */
-LEAF(lp32_read8, 0)
-#if defined(__MIPSEB__)
-	ld	v1, 0(a0)
-	jr	ra
-	dsrl	v0, v1, 32
-#else
-	ld	v0, 0(a0)
-	jr	ra
-	dsrl	v1, v0, 32
-#endif
-END(lp32_read8)
-
-/*
- *  Write 64 bits to bus in non LP64 mode.
- *  XXX ints should be disabled!
- */
-LEAF(lp32_write8, 0)
-#if defined(__MIPSEB__)
-	dsll	a2, 32
-	dsll	a3, 32
-	dsrl	a3, 32
-	or	a2, a3
-#else
-	dsll	a3, 32
-	dsll	a2, 32
-	dsrl	a2, 32
-	or	a3, a2
-#endif
-	jr	ra
-	sd	a2, 0(a0)
-END(lp32_write8)
-#endif
 
 /*
  * Optimized memory zero code.
