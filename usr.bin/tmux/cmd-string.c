@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.12 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.13 2010/01/31 18:47:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -344,8 +344,7 @@ cmd_string_expand_tilde(const char *s, size_t *p)
 			return (NULL);
 		if ((pw = getpwnam(username)) != NULL)
 			home = pw->pw_dir;
-		if (username != NULL)
-			xfree(username);
+		xfree(username);
 	}
 	if (home == NULL)
 		return (NULL);
