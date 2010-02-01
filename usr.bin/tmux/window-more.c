@@ -1,4 +1,4 @@
-/* $OpenBSD: window-more.c,v 1.11 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: window-more.c,v 1.12 2010/02/01 22:15:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -135,9 +135,11 @@ window_more_key(struct window_pane *wp, unused struct client *c, int key)
 		window_pane_reset_mode(wp);
 		break;
 	case MODEKEYCHOICE_UP:
+	case MODEKEYCHOICE_SCROLLUP:
 		window_more_scroll_up(wp);
 		break;
 	case MODEKEYCHOICE_DOWN:
+	case MODEKEYCHOICE_SCROLLDOWN:
 		window_more_scroll_down(wp);
 		break;
 	case MODEKEYCHOICE_PAGEUP:
