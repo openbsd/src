@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.82 2010/01/01 14:29:18 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.83 2010/02/01 23:06:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -484,7 +484,7 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int py, u_int ox, u_int oy)
 	gl = NULL;
 	if (py != 0)
 		gl = &s->grid->linedata[s->grid->hsize + py - 1];
-	if (oy + py == 0 || (gl != NULL && !(gl->flags & GRID_LINE_WRAPPED)) ||
+	if (oy + py == 0 || gl == NULL || !(gl->flags & GRID_LINE_WRAPPED) ||
 	    tty->cx < tty->sx || ox != 0 ||
 	    (oy + py != tty->cy + 1 && tty->cy != s->rlower + oy))
 		tty_cursor(tty, ox, oy + py);
