@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.43 2010/01/13 22:57:28 miod Exp $
+#	$OpenBSD: files.sgi,v 1.44 2010/02/01 22:06:27 jasper Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -92,6 +92,8 @@ include	"dev/i2o/files.i2o"
 
 include	"dev/pci/files.pci"
 file	arch/sgi/pci/pci_machdep.c		pci
+
+include	"dev/puc/files.puc"
 
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia

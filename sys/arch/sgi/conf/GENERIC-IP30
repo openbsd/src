@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.23 2009/12/23 18:03:07 jasper Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.24 2010/02/01 22:06:27 jasper Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -235,5 +235,10 @@ uk*		at scsibus?
 lofn*		at pci?		# Hifn6500
 hifn*		at pci?		# Hifn7751/7811/7951
 ubsec*		at pci?		# Broadcom 58xx
+
+# PCI "universal" communication device
+puc*	at pci?
+com*	at puc?
+#lpt*	at puc?
 
 pseudo-device	crypto	1

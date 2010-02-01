@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.16 2009/12/23 18:03:07 jasper Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.17 2010/02/01 22:06:27 jasper Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -235,6 +235,11 @@ uk*		at scsibus?
 lofn*		at pci?		# Hifn6500
 hifn*		at pci?		# Hifn7751/7811/7951
 ubsec*		at pci?		# Broadcom 58xx
+
+# PCI "universal" communication device
+puc*	at pci?
+com*	at puc?
+#lpt*	at puc?
 
 pseudo-device	wsmux	2       # Mouse and keyboard multiplexor
 pseudo-device	crypto	1
