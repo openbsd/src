@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.29 2010/01/18 16:58:42 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.30 2010/02/01 05:26:17 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -44,6 +44,9 @@
 #include <machine/cpu.h>
 #include <machine/regnum.h>
 #include <machine/cpustate.h>
+#ifdef CPU_LOONGSON2
+#include <machine/loongson2.h>
+#endif
 
 #include "assym.h"
 
@@ -129,6 +132,15 @@ u_exception_table:
 	.globl	exception
 exception:
 	.set	noat
+#ifdef CPU_LOONGSON2
+	/*
+	 * To work around a branch prediction issue on earlier LS2F
+	 * chips, it is necessary to clear the BTB upon
+	 * userland->kernel boundaries.
+	 */
+	li	k0, COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
+	dmtc0	k0, COP_0_DIAG
+#endif
 	mfc0	k0, COP_0_STATUS_REG
 	mfc0	k1, COP_0_CAUSE_REG
 	and	k0, k0, SR_KSU_USER
