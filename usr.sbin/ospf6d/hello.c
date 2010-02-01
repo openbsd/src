@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.14 2009/03/29 16:24:38 stsp Exp $ */
+/*	$OpenBSD: hello.c,v 1.15 2010/02/01 10:22:06 jacekm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -125,7 +125,7 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 	u_int32_t		 nbr_id, opts;
 	int			 nbr_change = 0;
 
-	if (len < sizeof(hello) && (len & 0x03)) {
+	if (len < sizeof(hello) || (len & 0x03)) {
 		log_warnx("recv_hello: bad packet size, interface %s",
 		    iface->name);
 		return;
