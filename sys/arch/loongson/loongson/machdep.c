@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2010/01/31 15:29:59 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.5 2010/02/01 05:23:21 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -349,13 +349,13 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 		paddr_t firstkernpa, lastkernpa;
 
 		/* kernel is linked in CKSEG0 */
-		firstkernpa = CKSEG0_TO_PHYS((vaddr_t)start) +
-		    mem_layout[0].mem_first_page - 1;
-		lastkernpa = CKSEG0_TO_PHYS((vaddr_t)ekern) +
-		    mem_layout[0].mem_first_page - 1;
+		firstkernpa = CKSEG0_TO_PHYS((vaddr_t)start);
+		lastkernpa = CKSEG0_TO_PHYS((vaddr_t)ekern);
 
-		firstkernpage = atop(trunc_page(firstkernpa));
-		lastkernpage = atop(round_page(lastkernpa));
+		firstkernpage = atop(trunc_page(firstkernpa)) +
+		    mem_layout[0].mem_first_page - 1;
+		lastkernpage = atop(round_page(lastkernpa)) +
+		    mem_layout[0].mem_first_page - 1;
 
 		fp = mem_layout[i].mem_first_page;
 		lp = mem_layout[i].mem_last_page;
