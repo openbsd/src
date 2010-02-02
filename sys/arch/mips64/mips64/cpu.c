@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.25 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.26 2010/02/02 01:29:56 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -311,9 +311,11 @@ extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
 void
 cpu_switchto(struct proc *oldproc, struct proc *newproc)
 {
+#ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 	if (ci->ci_fpuproc)
 		save_fpu();
+#endif
 
 	cpu_switchto_asm(oldproc, newproc);
 }
@@ -323,13 +325,10 @@ enable_fpu(struct proc *p)
 {
 	struct cpu_info *ci = curcpu();
 
-	KASSERT(!ci->ci_fpuproc);
-
-
 	if (p->p_md.md_regs->sr & SR_FR_32)
-		MipsSwitchFPState(NULL, p->p_md.md_regs);
+		MipsSwitchFPState(ci->ci_fpuproc, p->p_md.md_regs);
 	else
-		MipsSwitchFPState16(NULL, p->p_md.md_regs);
+		MipsSwitchFPState16(ci->ci_fpuproc, p->p_md.md_regs);
 
 	ci->ci_fpuproc = p;
 	p->p_md.md_regs->sr |= SR_COP_1_BIT;
