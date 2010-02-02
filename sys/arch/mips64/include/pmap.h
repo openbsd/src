@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.19 2010/01/05 06:44:58 syuu Exp $ */
+/*      $OpenBSD: pmap.h,v 1.20 2010/02/02 02:49:57 syuu Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -149,7 +149,11 @@ void	pmap_page_cache(vm_page_t, int);
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 void pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
+#ifdef MULTIPROCESSOR
 void pmap_update_kernel_page(vaddr_t, pt_entry_t);
+#else
+#define pmap_update_kernel_page(va, entry) tlb_update(va, entry)
+#endif
 #endif	/* _KERNEL */
 
 #endif	/* !_MIPS_PMAP_H_ */

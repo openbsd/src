@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2010/01/09 23:34:29 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.49 2010/02/02 02:49:57 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,13 +70,15 @@ struct pool_allocator pmap_pg_allocator = {
 	pmap_pg_alloc, pmap_pg_free
 };
 
-static void pmap_invalidate_kernel_page(vaddr_t);
 static void pmap_invalidate_user_page(pmap_t, vaddr_t);
 #ifdef MULTIPROCESSOR
+static void pmap_invalidate_kernel_page(vaddr_t);
 static void pmap_invalidate_kernel_page_action(void *);
 static void pmap_invalidate_user_page_action(void *);
 static void pmap_update_kernel_page_action(void *);
 static void pmap_update_user_page_action(void *);
+#else
+#define pmap_invalidate_kernel_page(va) tlb_flush_addr(va)
 #endif
 
 #ifdef PMAPDEBUG
@@ -183,7 +185,7 @@ pmap_invalidate_kernel_page_action(void *arg)
 static void
 pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 {
-	struct pmap_invalidate_page_arg arg;
+	unsigned int cpuid = cpu_number();
 	unsigned int cpumask = 0;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -202,10 +204,19 @@ pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 			cpumask |= m;
 		}
 
-	arg.pmap = pmap;
-	arg.va = va;
+	if (cpumask == 1 << cpuid) {
+		u_long asid;
 
-	smp_rendezvous_cpus(cpumask, pmap_invalidate_user_page_action, &arg);
+		asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+		tlb_flush_addr(va | asid);
+	} else if (cpumask) {
+		struct pmap_invalidate_page_arg arg;
+		arg.pmap = pmap;
+		arg.va = va;
+
+		smp_rendezvous_cpus(cpumask, pmap_invalidate_user_page_action,
+			&arg);
+	}
 }
 
 static void
@@ -256,7 +267,7 @@ pmap_update_kernel_page_action(void *arg)
 void
 pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 {
-	struct pmap_update_page_arg arg;
+	unsigned int cpuid = cpu_number();
 	unsigned long cpumask = 0;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -275,11 +286,19 @@ pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 			cpumask |= m;
 		}
 
-	arg.pmap = pmap;
-	arg.va = va;
-	arg.entry = entry;
-	smp_rendezvous_cpus(cpumask,
-			    pmap_update_user_page_action, &arg);
+	if (cpumask == 1 << cpuid) {
+		u_long asid;
+
+		asid = pmap->pm_asid[cpuid].pma_asid << VMTLB_PID_SHIFT;
+		tlb_update(va | asid, entry);
+	} else if (cpumask) {
+		struct pmap_update_page_arg arg;
+		arg.pmap = pmap;
+		arg.va = va;
+		arg.entry = entry;
+		smp_rendezvous_cpus(cpumask,
+				    pmap_update_user_page_action, &arg);
+	}
 }
 
 static void
@@ -296,12 +315,6 @@ pmap_update_user_page_action(void *arg)
 }
 #else
 static void
-pmap_invalidate_kernel_page(vaddr_t va)
-{
-	tlb_flush_addr(va);
-}
-
-static void
 pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 {
 	u_long cpuid = cpu_number();
@@ -310,12 +323,6 @@ pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 	if (pmap->pm_asid[cpuid].pma_asidgen ==
 	    pmap_asid_info[cpuid].pma_asidgen)
 		tlb_flush_addr(va | asid);
-}
-
-void
-pmap_update_kernel_page(vaddr_t va, pt_entry_t entry)
-{
-	tlb_update(va, entry);
 }
 
 void
