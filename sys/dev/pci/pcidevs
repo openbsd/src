@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1522 2010/02/01 17:11:44 damien Exp $
+$OpenBSD: pcidevs,v 1.1523 2010/02/02 17:08:28 damien Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1364,6 +1364,7 @@ product ATHEROS AR9160		0x0027	AR9160
 product ATHEROS AR9280		0x0029	AR9280
 product ATHEROS AR9281		0x002a	AR9281
 product ATHEROS AR9285		0x002b	AR9285
+product ATHEROS AR2427		0x002c	AR2427
 product ATHEROS AR9227		0x002d	AR9227
 product ATHEROS AR9287		0x002e	AR9287
 product ATHEROS AR5210_AP	0x0207	AR5210 (Early)
