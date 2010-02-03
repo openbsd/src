@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2010/02/01 05:38:09 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.7 2010/02/03 21:46:42 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -325,10 +325,6 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 		break;
 	default:
 	case 0x2f:
-#define	I_HEART_SCARY_ERRATA_FROM_HELL
-#ifdef	I_HEART_SCARY_ERRATA_FROM_HELL
-		memhi = 0;
-#endif
 		loongson2f_setup(memlo, memhi);
 		break;
 	}
