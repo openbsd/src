@@ -861,6 +861,7 @@
 ./usr/share/man/cat3/i386
 ./usr/share/man/cat3/landisk
 ./usr/share/man/cat3/loongson
+./usr/share/man/cat3/loongson/cacheflush.0
 ./usr/share/man/cat3/luna88k
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/macppc
