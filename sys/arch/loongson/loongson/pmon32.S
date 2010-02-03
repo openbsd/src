@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmon32.S,v 1.1.1.1 2009/12/11 05:15:14 miod Exp $	*/
+/*	$OpenBSD: pmon32.S,v 1.2 2010/02/03 21:45:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -47,8 +47,6 @@ pmon_callvec:
 	.word	0
 
 	.text
-
-	.set	noat
 
 /*
  * Note that we need to provide a 32-bit CF_SZ untouched area above sp, or
