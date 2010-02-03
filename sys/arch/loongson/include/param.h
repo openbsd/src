@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.1.1.1 2009/12/25 21:04:47 miod Exp $ */
+/* $OpenBSD: param.h,v 1.2 2010/02/03 20:50:57 miod Exp $ */
 /* public domain */
 
 #ifndef _MACHINE_PARAM_H_
@@ -8,6 +8,9 @@
 #define	_MACHINE	loongson
 #define MACHINE_ARCH	"mips64el"
 #define _MACHINE_ARCH	mips64el
+/* not the canonical endianness */
+#define	MACHINE_CPU	"mips64"
+#define	_MACHINE_CPU	mips64
 
 #define MID_MACHINE	MID_MIPS64
 
