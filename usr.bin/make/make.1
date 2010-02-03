@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.84 2009/02/10 19:24:17 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.85 2010/02/03 20:45:44 miod Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: February 10 2009 $
+.Dd $Mdocdate: February 3 2010 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -667,6 +667,15 @@ Name of the machine architecture
 was compiled for, obtained from the
 .Ev MACHINE_ARCH
 environment variable, or defined at compilation time.
+.It Va MACHINE_CPU
+Name of the machine processor
+.Nm
+was compiled for, obtained from the
+.Ev MACHINE_CPU
+environment variable, or defined at compilation time.
+On processors where only one endianness is possible, the value of this
+variable is always the same as
+.Ev MACHINE_ARCH .
 .It Va MAKEFILE
 Possibly the file name of the last makefile that has been read.
 It should not be used; see the

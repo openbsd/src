@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.92 2008/11/04 07:22:35 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.93 2010/02/03 20:45:44 miod Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ static void record_option(int, const char *);
 
 static char *figure_out_MACHINE(void);
 static char *figure_out_MACHINE_ARCH(void);
+static char *figure_out_MACHINE_CPU(void);
 static void no_fd_limits(void);
 
 static char *chdir_verify_path(const char *, struct dirs *);
@@ -406,7 +407,7 @@ add_dirpath(Lst l, const char *n)
  * Get the name of this type of MACHINE from utsname so we can share an
  * executable for similar machines. (i.e. m68k: amiga hp300, mac68k, sun3, ...)
  *
- * Note that both MACHINE and MACHINE_ARCH are decided at
+ * Note that MACHINE, MACHINE_ARCH and MACHINE_CPU are decided at
  * run-time.
  */
 static char *
@@ -438,6 +439,23 @@ figure_out_MACHINE_ARCH()
 		r = "unknown";	/* XXX: no uname -p yet */
 #else
 		r = MACHINE_ARCH;
+#endif
+	}
+	return r;
+}
+static char *
+figure_out_MACHINE_CPU()
+{
+	char *r = getenv("MACHINE_CPU");
+	if (r == NULL) {
+#if !defined(MACHINE_CPU) && ! defined(MACHINE_ARCH)
+		r = "unknown";	/* XXX: no uname -p yet */
+#else
+#if defined(MACHINE_CPU)
+		r = MACHINE_CPU;
+#else
+		r = MACHINE_ARCH;
+#endif
 #endif
 	}
 	return r;
@@ -653,6 +671,7 @@ main(int argc, char **argv)
 	bool outOfDate = true;	/* false if all targets up to date */
 	char *machine = figure_out_MACHINE();
 	char *machine_arch = figure_out_MACHINE_ARCH();
+	char *machine_cpu = figure_out_MACHINE_CPU();
 	const char *syspath = _PATH_DEFSYSPATH;
 	char *p;
 	static struct dirs d;
@@ -706,6 +725,7 @@ main(int argc, char **argv)
 	Var_Set("MFLAGS", "");
 	Var_Set("MACHINE", machine);
 	Var_Set("MACHINE_ARCH", machine_arch);
+	Var_Set("MACHINE_CPU", machine_cpu);
 
 	/*
 	 * First snag any flags out of the MAKEFLAGS environment variable.

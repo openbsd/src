@@ -1,11 +1,12 @@
 #	$OpenPackages: Makefile.boot,v 1.5 2001/04/06 00:09:55 will Exp $
-#	$OpenBSD: Makefile.boot,v 1.8 2001/05/29 12:41:18 espie Exp $
+#	$OpenBSD: Makefile.boot,v 1.9 2010/02/03 20:45:44 miod Exp $
 #
 # a very simple makefile...
 #
 # You only want to use this if you aren't running OpenBSD.
 #
-# modify MACHINE and MACHINE_ARCH as appropriate for your target architecture
+# modify MACHINE, MACHINE_ARCH and MACHINE_CPU as appropriate
+# for your target architecture
 #
 
 .c.o:
@@ -13,7 +14,8 @@
 
 MACHINE=sun
 MACHINE_ARCH=sparc
-CFLAGS= -Iohash -I. -DTARGET_MACHINE=\"${MACHINE}\" -DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" -DMACHINE=\"${MACHINE}\" \
+MACHINE_CPU=sparc
+CFLAGS= -Iohash -I. -DTARGET_MACHINE=\"${MACHINE}\" -DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" -DTARGET_MACHINE_CPU=\"${MACHINE_CPU}\" -DMACHINE=\"${MACHINE}\" \
 	-DMAKE_BOOTSTRAP -DNEED_FGETLN
 LIBS= ohash/libohash.a
 
