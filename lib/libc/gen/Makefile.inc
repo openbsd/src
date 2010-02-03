@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.49 2009/11/18 07:43:22 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.50 2010/02/03 20:49:00 miod Exp $
 
 # gen sources
-.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
 
 SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         basename.c clock.c closedir.c confstr.c ctermid.c ctype_.c \
@@ -33,7 +33,7 @@ SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
 #	_setjmp() fabs() frexp() infinity ldexp() modf() nan
 #	setjmp() sigsetjmp()
 
-.include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
+.include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen/Makefile.inc"
 
 .ifdef _NOTDEF_XXX_
 

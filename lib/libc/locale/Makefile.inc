@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2009/01/13 18:44:01 kettenis Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2010/02/03 20:49:00 miod Exp $
 
 # locale sources
-.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/locale ${LIBCSRCDIR}/locale
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/locale ${LIBCSRCDIR}/locale
 
 SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	localeconv.c nl_langinfo.c setlocale.c iswctype.c mbrtowc_sb.c \

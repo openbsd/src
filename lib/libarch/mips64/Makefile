@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2009/09/27 18:20:13 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2010/02/03 20:49:00 miod Exp $
 
 MAN=		cacheflush.3
-MANSUBDIR=	sgi
+MANSUBDIR=	loongson sgi
 
-#.if ${MACHINE_ARCH} == "mips64"
+#.if ${MACHINE_CPU} == "mips64"
 #NOPIC=
 #SRCS=
 #.include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2010/01/10 03:37:50 guenther Exp $
+#	$OpenBSD: Makefile,v 1.14 2010/02/03 20:49:00 miod Exp $
 #	$NetBSD: Makefile,v 1.11 1996/03/18 22:33:07 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -10,8 +10,13 @@ WANTLINT=
 SRCS=	kvm_${MACHINE}.c
 .else
 # Less specific name (i.e. m68k)
-CFLAGS+=-D${MACHINE}
+.if	exists(kvm_${MACHINE_ARCH}.c)
 SRCS=	kvm_${MACHINE_ARCH}.c
+.else
+# Even less specific name (i.e. mips64)
+CFLAGS+=-D${MACHINE_CPU}
+SRCS=	kvm_${MACHINE_CPU}.c
+.endif
 .endif
 
 CFLAGS+= -D_LIBKVM

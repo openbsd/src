@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 2004/11/02 21:12:15 pefo Exp $
+#	$OpenBSD: Makefile,v 1.6 2010/02/03 20:49:00 miod Exp $
 
 LIB=	smutil
 SRCS=	debug.c err.c lockfile.c safefile.c snprintf.c cf.c
 ENVDEF=	-DNOT_SENDMAIL
 
-.if ${MACHINE_ARCH} == mips64
+.if ${MACHINE_CPU} == mips64
 CFLAGS+= -fno-stack-protector
 .endif
 

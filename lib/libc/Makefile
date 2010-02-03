@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2009/11/24 20:11:08 mk Exp $
+#	$OpenBSD: Makefile,v 1.29 2010/02/03 20:49:00 miod Exp $
 #
 # The NLS (message catalog) functions are always in libc.  To choose that
 # strerror(), perror(), strsignal(), psignal(), etc. actually call the NLS
@@ -31,16 +31,16 @@ copy-to-libkern-machind: ${KSRCS}
 
 copy-to-libkern-machdep: ${KMSRCS}
 .if defined(KMSRCS) && !empty(KMSRCS)
-	cp -p ${.ALLSRC} ${LIBKERN}/arch/${MACHINE_ARCH}
+	cp -p ${.ALLSRC} ${LIBKERN}/arch/${MACHINE_CPU}
 .endif
 .if defined(KMINCLUDES) && !empty(KMINCLUDES)
-	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/arch/${MACHINE_ARCH})
+	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/arch/${MACHINE_CPU})
 .endif
 
 rm-from-libkern:
 	for i in ${KSRCS}; do rm -f ${LIBKERN}/$$i; done
 .if defined(KMSRCS) && !empty(KMSRCS)
-	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${MACHINE_ARCH}/$$i; done
+	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${MACHINE_CPU}/$$i; done
 .endif
 .endif
 

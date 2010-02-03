@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2008/03/16 22:08:12 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2010/02/03 20:49:00 miod Exp $
 
-.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/crypt ${LIBCSRCDIR}/crypt
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/crypt ${LIBCSRCDIR}/crypt
 
 SRCS+=	cast.c crypt.c crypt2.c md5crypt.c arc4random.c blowfish.c
 SRCS+=  bcrypt.c skipjack.c

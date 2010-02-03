@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.20 2007/10/25 22:41:02 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.21 2010/02/03 20:49:00 miod Exp $
 
 # string sources
-.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string ${LIBCSRCDIR}/string
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
 SRCS+=	bm.c memccpy.c memrchr.c strcasecmp.c strcasestr.c strcoll.c strdup.c \
 	strerror.c strerror_r.c strlcat.c strmode.c strsignal.c strtok.c \
@@ -20,7 +20,7 @@ SRCS+=	bm.c memccpy.c memrchr.c strcasecmp.c strcasestr.c strcoll.c strdup.c \
 # m-d Makefile.inc may include sources for:
 #	memcpy() memmove() strchr() strrchr()
 
-.include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string/Makefile.inc"
+.include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/string/Makefile.inc"
 
 # if no machine specific memmove(3), build one out of bcopy(3).
 .if empty(SRCS:Mmemmove.S)

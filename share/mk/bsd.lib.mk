@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.58 2009/02/05 19:15:21 miod Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.59 2010/02/03 20:49:01 miod Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -160,7 +160,7 @@ _LIBS+=lib${LIB}_p.a
 .endif
 
 .if !defined(NOPIC)
-.if (${MACHINE_ARCH} != "mips64")
+.if (${MACHINE_CPU} != "mips64")
 _LIBS+=lib${LIB}_pic.a
 .endif
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
@@ -272,7 +272,7 @@ realinstall:
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
-.if !defined(NOPIC) && (${MACHINE_ARCH} != "mips64") 
+.if !defined(NOPIC) && (${MACHINE_CPU} != "mips64") 
 #	ranlib lib${LIB}_pic.a
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}

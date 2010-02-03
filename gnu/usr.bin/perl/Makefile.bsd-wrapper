@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.80 2010/01/05 13:46:39 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.81 2010/02/03 20:49:00 miod Exp $
 #
 # Build wrapper for Perl 5.10.0
 #
@@ -195,7 +195,7 @@ install.lib:
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
-.if !defined(NOPIC) && (${MACHINE_ARCH} != "mips64") 
+.if !defined(NOPIC) && (${MACHINE_CPU} != "mips64") 
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
 .if (${INSTALL_COPY} != "-p")

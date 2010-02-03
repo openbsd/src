@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.51 2009/01/09 12:16:52 djm Exp $
+# $OpenBSD: Makefile,v 1.52 2010/02/03 20:49:00 miod Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -8,9 +8,11 @@ SSL_SRC=	${.CURDIR}/../${SSLEAYDIST}
 LCRYPTO_SRC=	${SSL_SRC}/crypto
 FIPS_SRC=	${SSL_SRC}/fips
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "vax" || ${MACHINE_ARCH} == "amd64" || \
-    ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "sh"
+# arm and sh default to little endian, mips defaults to big endian
+.if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "amd64" || \
+    ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "sh" || \
+    ${MACHINE_ARCH} == "vax"
 CFLAGS+= -DL_ENDIAN
 .else
 CFLAGS+= -DB_ENDIAN
@@ -197,7 +199,7 @@ SRCS+=	str_err.c str_lib.c str_mem.c str_meth.c
 	${LCRYPTO_SRC}/ec ${LCRYPTO_SRC}/ecdh ${LCRYPTO_SRC}/ecdsa \
 	${LCRYPTO_SRC}/pqueue ${LCRYPTO_SRC}/store \
 	${LCRYPTO_SRC} \
-	${LCRYPTO_SRC}/acss ${.CURDIR}/arch/${MACHINE_ARCH} \
+	${LCRYPTO_SRC}/acss ${.CURDIR}/arch/${MACHINE_CPU} \
 	${LCRYPTO_SRC}/bn/asm \
 	${FIPS_SRC}/ ${FIPS_SRC}/aes ${FIPS_SRC}/des ${FIPS_SRC}/dh \
 	${FIPS_SRC}/dsa ${FIPS_SRC}/rand ${FIPS_SRC}/rsa ${FIPS_SRC}/sha1
@@ -272,7 +274,7 @@ HDRS=\
 	fips/rand/fips_rand.h 
 
 HDRS_GEN=\
-	${.CURDIR}/arch/${MACHINE_ARCH}/opensslconf.h \
+	${.CURDIR}/arch/${MACHINE_CPU}/opensslconf.h \
 	${.OBJDIR}/obj_mac.h
 
 includes: obj_mac.h

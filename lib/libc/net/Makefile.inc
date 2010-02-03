@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.46 2009/11/18 07:43:22 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.47 2010/02/03 20:49:00 miod Exp $
 
 # net sources
-.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
 
 CFLAGS+=-DRESOLVSORT
 
@@ -25,7 +25,7 @@ SRCS+=	ip6opt.c rthdr.c vars6.c
 # m-d Makefile.inc must include sources for:
 #	htonl() htons() ntohl() ntohs()
 
-.include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
+.include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/net/Makefile.inc"
 
 MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
 	getifaddrs.3 getnameinfo.3 getnetent.3 getprotoent.3 \

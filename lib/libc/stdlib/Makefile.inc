@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.42 2009/06/03 15:52:16 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.43 2010/02/03 20:49:00 miod Exp $
 
 # stdlib sources
-.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/stdlib ${LIBCSRCDIR}/stdlib
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	cfree.c exit.c ecvt.c gcvt.c getenv.c getopt_long.c \
@@ -12,28 +12,28 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c \
 	lrand48.c mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c _Exit.c
 
-.if   (${MACHINE_ARCH} == "m68k")
+.if   (${MACHINE_CPU} == "m68k")
 SRCS+=	abs.S div.c labs.c ldiv.c
 LSRCS+=	abs.c
-.elif (${MACHINE_ARCH} == "i386")
+.elif (${MACHINE_CPU} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S
 LSRCS+=	abs.c div.c labs.c ldiv.c
-.elif (${MACHINE_ARCH} == "ns32k")
+.elif (${MACHINE_CPU} == "ns32k")
 SRCS+=	abs.S div.c labs.c ldiv.c
 LSRCS+=	abs.c
-.elif (${MACHINE_ARCH} == "tahoe")
+.elif (${MACHINE_CPU} == "tahoe")
 SRCS+=	abs.S div.c labs.c ldiv.c
 LSRCS+=	abs.c
-.elif (${MACHINE_ARCH} == "vax")
+.elif (${MACHINE_CPU} == "vax")
 SRCS+=	abs.c div.c labs.c ldiv.c
-.elif (${MACHINE_ARCH} == "alpha")
+.elif (${MACHINE_CPU} == "alpha")
 # XXX should be .S's
 SRCS+=	abs.c div.c labs.c ldiv.c
 .else
 SRCS+=	abs.c div.c labs.c ldiv.c
 .endif
 
-.if (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "m68k")
+.if (${MACHINE_CPU} == "vax") || (${MACHINE_CPU} == "m68k")
 SRCS+=	insque.S remque.S
 .else
 SRCS+=	insque.c remque.c
