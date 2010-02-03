@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.152 2009/06/24 13:04:24 millert Exp $
+#	$OpenBSD: Makefile,v 1.153 2010/02/03 20:49:58 miod Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -102,8 +102,8 @@ includes:
 		done; \
 	done
 	@rm -rf ${DESTDIR}/usr/include/openssl ${DESTDIR}/usr/include/ssl \
-		${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_ARCH}-openbsd/ssl \
-		${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_ARCH}-openbsd/openssl
+		${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_CPU}-openbsd/ssl \
+		${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_CPU}-openbsd/openssl
 	@mkdir ${DESTDIR}/usr/include/openssl
 	@ln -sf openssl ${DESTDIR}/usr/include/ssl
 	@echo installing ${LFILES}
@@ -141,19 +141,19 @@ copies:
 	pax -rw -pa -L \
 	    `find ${LDIRS} -follow -type f -name '*.h' \
 	    '!' -path 'dev/microcode/*' -print` ${DESTDIR}/usr/include
-	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_ARCH} machine
+	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_CPU} machine
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/${MACHINE}
 	pax -rw -pa -s "|\.\./sys/arch/${MACHINE}/include||" \
 	    ../sys/arch/${MACHINE}/include/*.h \
 	    ${DESTDIR}/usr/include/${MACHINE}
-	if test ${MACHINE} != ${MACHINE_ARCH} -a \
-	    -d ../sys/arch/${MACHINE_ARCH}/include; then \
+	if test ${MACHINE} != ${MACHINE_CPU} -a \
+	    -d ../sys/arch/${MACHINE_CPU}/include; then \
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
-		pax -rw -pa -s "|\.\./sys/arch/${MACHINE_ARCH}/include||" \
-		    ../sys/arch/${MACHINE_ARCH}/include/*.h \
-		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
+	    	    ${DESTDIR}/usr/include/${MACHINE_CPU}; \
+		pax -rw -pa -s "|\.\./sys/arch/${MACHINE_CPU}/include||" \
+		    ../sys/arch/${MACHINE_CPU}/include/*.h \
+		    ${DESTDIR}/usr/include/${MACHINE_CPU}; \
 	fi
 	ln -sf ${MACHINE} ${DESTDIR}/usr/include/machine; \
 
@@ -163,12 +163,12 @@ symlinks:
 		rm -rf ${DESTDIR}/usr/include/$$i && \
 		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
 	done
-	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_ARCH} machine
+	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_CPU} machine
 	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/${MACHINE}
-	if test ${MACHINE} != ${MACHINE_ARCH} -a \
-	    -d ../sys/arch/${MACHINE_ARCH}/include ; then \
-		ln -s /sys/arch/${MACHINE_ARCH}/include \
-		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
+	if test ${MACHINE} != ${MACHINE_CPU} -a \
+	    -d ../sys/arch/${MACHINE_CPU}/include ; then \
+		ln -s /sys/arch/${MACHINE_CPU}/include \
+		    ${DESTDIR}/usr/include/${MACHINE_CPU} ; \
 	fi
 	ln -sf ${MACHINE} ${DESTDIR}/usr/include/machine
 
