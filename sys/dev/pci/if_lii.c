@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.24 2009/11/24 02:29:11 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.25 2010/02/03 14:08:41 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -197,7 +197,7 @@ int
 lii_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, lii_devices,   
-	    sizeof(lii_devices)/sizeof(lii_devices[0])));
+	    nitems(lii_devices)));
 }
 
 void
