@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.66 2009/11/22 00:04:48 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.67 2010/02/03 00:41:00 jsing Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 22 2009 $
+.Dd $Mdocdate: February 3 2010 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -602,6 +602,9 @@ is found, or just after where the search area finishes.
 Displays various things, depending on
 .Ar what :
 .Bl -tag -width 4n
+.\" --------------------
+.It Ic show bcstats
+Prints the buffer cache statistics.
 .\" --------------------
 .It Ic show breaks
 Prints a list of all breakpoints that have been set with the
