@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.7 2009/05/24 04:56:19 drahn Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.8 2010/02/03 05:25:58 kevlo Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -193,7 +193,7 @@
 #define CPU_ID_ARM966ESR1	0x41059660 /* XXX no MMU */
 #define CPU_ID_ARM1020E		0x4115a200 /* (AKA arm10 rev 1) */
 #define CPU_ID_ARM1022ES	0x4105a220
-#define CPU_ID_ARM1022EJS	0x4106a260
+#define CPU_ID_ARM1026EJS	0x4106a260
 #define CPU_ID_ARM1136JS	0x4107b360
 #define CPU_ID_ARM1136JSR1	0x4117b360
 #define CPU_ID_SA110		0x4401a100
