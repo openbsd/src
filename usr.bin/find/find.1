@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.76 2009/12/20 20:19:49 schwarze Exp $
+.\"	$OpenBSD: find.1,v 1.77 2010/02/03 00:08:15 schwarze Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 20 2009 $
+.Dd $Mdocdate: February 3 2010 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -271,10 +271,9 @@ is numeric and there is no such group name, then
 .Ar gname
 is treated as a group ID.
 .It Ic -iname Ar pattern
-True if the last component of the pathname being examined
-matches
-.Ar pattern .
-Case insensitive.
+Identical to the
+.Ic -name
+primary except that the matching is done in a case insensitive manner.
 .It Ic -inum Ar n
 True if the file has inode number
 .Ar n .
@@ -314,18 +313,9 @@ was started, rounded up to the next full 24-hour period, is
 24-hour periods.
 .It Ic -name Ar pattern
 True if the last component of the pathname being examined matches
-.Ar pattern .
-Special shell pattern matching characters
-.Pf ( Ql [ ,
-.Ql \&] ,
-.Ql * ,
-and
-.Ql \&? )
-may be used as part of
-.Ar pattern .
-These characters may be matched explicitly by escaping them with a
-backslash
-.Pq Ql \e .
+.Ar pattern ,
+which may use any of the special characters documented in
+.Xr glob 7 .
 .It Ic -newer Ar file
 True if the current file has a more recent last modification time than
 .Ar file .
@@ -354,18 +344,9 @@ value of the
 expression is false.
 .It Ic -path Ar pattern
 True if the pathname being examined matches
-.Ar pattern .
-Special shell pattern matching characters
-.Pf ( Ql [ ,
-.Ql \&] ,
-.Ql * ,
-and
-.Ql \&? )
-may be used as part of
-.Ar pattern .
-These characters may be matched explicitly by escaping them with a
-backslash
-.Pq Ql \e .
+.Ar pattern ,
+which may use any of the special characters documented in
+.Xr glob 7 .
 Slashes
 .Pq Ql /
 are treated as normal characters and do not have to be
@@ -553,14 +534,13 @@ or
 .Xr chflags 1 ,
 .Xr chmod 1 ,
 .Xr locate 1 ,
+.Xr ls 1 ,
 .Xr whereis 1 ,
 .Xr which 1 ,
 .Xr xargs 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
-.Xr getgrent 3 ,
-.Xr getpwent 3 ,
-.Xr strmode 3 ,
+.Xr glob 7 ,
 .Xr symlink 7
 .Sh STANDARDS
 The
