@@ -1,0 +1,5 @@
+dnl	$OpenBSD: whatis,v 1.1 2010/02/03 17:10:44 miod Exp $
+
+OpenBSD/MACHINE runs on the Lemote Yeeloong MIPS-based netbooks.
+dnl OpenBSD/MACHINE runs on various Loonson processor-based systems, such
+dnl as the popular Lemote Yeeloong and Gdium Liberty netbooks.

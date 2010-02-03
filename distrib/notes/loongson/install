@@ -1,0 +1,93 @@
+dnl	$OpenBSD: install,v 1.1 2010/02/03 17:10:44 miod Exp $
+OpenBSDInstallPrelude
+
+dnl Describe netboot?
+Booting the installation media:
+
+The easiest way to boot into the OpenBSD installer is to copy the bsd.rd
+installation kernel to the main linux partition, and boot from it.
+
+Assuming the installation kernel has been copied to /boot/bsd.rd on the
+Linux system, at the PMON prompt, enter:
+
+    PMON> boot /dev/fs/ext2@wd0/boot/bsd.rd
+
+to boot the installation kernel.
+
+Alternatively, if your particular PMON flavour supports `fat' filesystems,
+you can boot the kernel from an usb key with:
+
+dnl check syntax
+    PMON> boot /dev/fs/msdos@usb0:/bsd.rd
+
+OpenBSDInstallPart2
+
+OpenBSDInstallPart3(,"sd0 for USB storage, or wd0 for internal storage
+	(either a disk drive or an SSD)")
+
+OpenBSDInstallPart4
+
+OpenBSDInstallMBRPart1
+
+dnl not until we have boot blocks... and then we'll probably need to
+dnl add text to mention the necessary little boot partition...
+dnl OpenBSDInstallMBRPart2
+	The fdisk(8) utility will be invoked to let you edit your MBR
+	partitioning.  The current MBR partitions defined will be
+	displayed and you will be allowed to modify them, and add new
+	partitions.
+
+	After your OpenBSD MBR partition has been setup, the real
+	partition setup can follow.
+
+OpenBSDInstallPart5({:-
+	If you have left Linux partitions defined on the disk, these will
+	usually show up as partition 'i', 'j' and so on.-:})
+
+OpenBSDInstallPart6({:-CD-ROM, -:})
+
+OpenBSDURLInstall
+
+OpenBSDCDROMInstall
+
+OpenBSDDISKInstall({:-"wdN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
+
+OpenBSDCommonInstall
+
+dnl usb tape drives anyone?
+dnl OpenBSDTAPEInstall
+dnl
+OpenBSDInstallWrapup
+
+	As the OpenBSD/MACHINE port is very new, there is not yet a proper
+	bootloader. In addition to these steps, you will need, for the time
+	being, to copy the kernel image to the Linux partition and boot
+	from it. This annoyance is being worked on and should disappear
+	very soon.
+
+	After the installation is complete, you should add an OpenBSD
+	entry to the boot menu to be able to boot OpenBSD more easily.
+
+	The boot menu contents are found in /boot/boot.cfg on the Linux
+	partition. To add an OpenBSD entry, simply add a new entry in the
+	file, such as:
+
+	title OpenBSD
+		kernel /dev/fs/ext2@wd0/boot/bsd
+		args ""
+
+	In the example above, /dev/fs/ext2@wd0/boot/bsd is the PMON path
+	to the kernel image.
+
+	You may make OpenBSD the default option by changing the ``default''
+	line near the top of the file. The value on this line is the index
+	of the default entry, starting at zero. So if you added the OpenBSD
+	entry as the fourth entry in the file, it would become the default
+	choice with:
+
+	default 3
+
+	The timeout until the default choice is selected, in seconds, can be
+	modified on the ``timeout'' line.
+
+OpenBSDCongratulations

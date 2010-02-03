@@ -1,0 +1,12 @@
+dnl	$OpenBSD: hardware,v 1.1 2010/02/03 17:10:44 miod Exp $
+dnl When more than one model is supported, turn this into a list...
+The following machines are supported by OpenBSD/MACHINE:
+
+	Lemote Yeeloong (8.9" and 10.1" models)
+	  all onboard devices (keyboard, trackpad, display, SD card reader,
+	  USB ports, Ethernet adapter, wireless network adapter) are
+	  supported except for the audio controller;
+	  suspend/resume and battery information are not supported yet.
+dnl	Gdium Liberty 1000
+dnl
+dnl XXX give a list of tested USB devices too
