@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.84 2010/02/02 17:06:53 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.85 2010/02/03 17:51:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -3683,7 +3683,7 @@ iwn_init_sensitivity(struct iwn_softc *sc)
 	/* Set initial correlation values. */
 	calib->ofdm_x1     = sc->limits->min_ofdm_x1;
 	calib->ofdm_mrc_x1 = sc->limits->min_ofdm_mrc_x1;
-	calib->ofdm_x4     = 90;
+	calib->ofdm_x4     = sc->limits->min_ofdm_x4;
 	calib->ofdm_mrc_x4 = sc->limits->min_ofdm_mrc_x4;
 	calib->cck_x4      = 125;
 	calib->cck_mrc_x4  = sc->limits->min_cck_mrc_x4;
