@@ -612,8 +612,10 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"flushid", "",		0xbc030000, 0xffffffff, 0, 			L1	},
 {"hibernate","",        0x42000023, 0xffffffff,	0, 			V1	},
 {"ins",     "t,r,+A,+B", 0x7c000004, 0xfc00003f, WR_t|RD_s,    		I33	},
+{"jr",      "s",	0,	(int) M_JR_S,	INSN_MACRO,		I1	},
 {"jr",      "s",	0x00000008, 0xfc1fffff,	UBD|RD_s,		I1	},
 {"jr.hb",   "s",	0x00000408, 0xfc1fffff,	UBD|RD_s,		I33	},
+{"j",       "s",	0,	(int) M_J_S,	INSN_MACRO,		I1	},
 {"j",       "s",	0x00000008, 0xfc1fffff,	UBD|RD_s,		I1	}, /* jr */
 /* SVR4 PIC code requires special handling for j, so it must be a
    macro.  */
@@ -622,7 +624,9 @@ const struct mips_opcode mips_builtin_opcodes[] =
    assembler, but will never match user input (because the line above
    will match first).  */
 {"j",       "a",	0x08000000, 0xfc000000,	UBD,			I1	},
+{"jalr",    "s",	0,	(int) M_JALR_S,	INSN_MACRO,		I1	},
 {"jalr",    "s",	0x0000f809, 0xfc1fffff,	UBD|RD_s|WR_d,		I1	},
+{"jalr",    "d,s",	0,	(int) M_JALR_DS, INSN_MACRO,		I1	},
 {"jalr",    "d,s",	0x00000009, 0xfc1f07ff,	UBD|RD_s|WR_d,		I1	},
 {"jalr.hb", "s",	0x0000fc09, 0xfc1fffff,	UBD|RD_s|WR_d,		I33	},
 {"jalr.hb", "d,s",	0x00000409, 0xfc1f07ff,	UBD|RD_s|WR_d,		I33	},
