@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.23 2009/10/22 12:35:53 sobrado Exp $
+.\"	$OpenBSD: xargs.1,v 1.24 2010/02/04 23:12:48 schwarze Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: February 4 2010 $
 .Dt XARGS 1
 .Os
 .Sh NAME
@@ -318,8 +318,16 @@ utility is compliant with the
 specification.
 .Pp
 The flags
+.Fl I
+and
+.Fl L
+are compliant with the
+.St -xpg4
+specification.
+.Pp
+The flags
 .Op Fl 0JoPRr
-are extensions to that specification.
+are extensions to those specifications.
 .Pp
 The meanings of the 123, 124, and 125 exit values were taken from
 .Tn GNU
