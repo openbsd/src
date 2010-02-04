@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.85 2010/02/03 20:45:44 miod Exp $
+.\"	$OpenBSD: make.1,v 1.86 2010/02/04 07:46:20 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: February 3 2010 $
+.Dd $Mdocdate: February 4 2010 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1290,6 +1290,7 @@ If no sources are specified, any previously specified suffixes are deleted.
 uses the following environment variables, if they exist:
 .Ev MACHINE ,
 .Ev MACHINE_ARCH ,
+.Ev MACHINE_CPU ,
 .Ev MAKEFLAGS ,
 .Ev MAKEOBJDIR ,
 .Ev MAKEOBJDIRPREFIX ,
