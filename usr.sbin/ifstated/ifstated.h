@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.5 2007/10/25 06:03:31 pyr Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.6 2010/02/04 13:50:14 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -37,9 +37,9 @@ struct ifsd_ifstate {
 	TAILQ_ENTRY(ifsd_ifstate)	 entries;
 	struct ifsd_expression_list	 expressions;
 	int				 ifstate;
-#define IFSD_LINKUNKNOWN	0	/* LINK_STATE_UNKNOWN */
-#define IFSD_LINKDOWN		1	/* LINK_STATE_DOWN */
-#define IFSD_LINKUP		2	/* LINK_STATE_UP */
+#define IFSD_LINKUNKNOWN	0
+#define IFSD_LINKDOWN		1
+#define IFSD_LINKUP		2
 	int				 prevstate;
 	u_int32_t			 refcount;
 	u_short				 ifindex;

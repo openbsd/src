@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.35 2009/06/25 17:14:57 sthen Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.36 2010/02/04 13:50:14 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -406,6 +406,9 @@ external_evtimer_setup(struct ifsd_state *state, int action)
 	}
 }
 
+#define	LINK_STATE_IS_DOWN(_s)						\
+	(!LINK_STATE_IS_UP((_s)) && (_s) != LINK_STATE_UNKNOWN)
+
 int
 scan_ifstate_single(int ifindex, int s, struct ifsd_state *state)
 {
@@ -422,7 +425,11 @@ scan_ifstate_single(int ifindex, int s, struct ifsd_state *state)
 				struct ifsd_expression *expression;
 				int truth;
 
-				truth = (ifstate->ifstate == s) ||
+				truth =
+				    (ifstate->ifstate == IFSD_LINKUNKNOWN &&
+				    s == LINK_STATE_UNKNOWN) ||
+				    (ifstate->ifstate == IFSD_LINKDOWN &&
+				    LINK_STATE_IS_DOWN(s)) ||
 				    (ifstate->ifstate == IFSD_LINKUP &&
 				    LINK_STATE_IS_UP(s));
 
