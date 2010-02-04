@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.1 2010/02/03 17:10:44 miod Exp $
+dnl	$OpenBSD: prep,v 1.2 2010/02/04 21:32:11 jasper Exp $
 Most MACHINE systems are shipped with a Linux system installed on the disk
 drive or SSD.  This system will likely use two partitions, one for the
 system and applications, and another for the user data. OpenBSD will in turn
@@ -12,16 +12,15 @@ If you intend to only use OpenBSD on your machine, please note that, at this
 point, it is necessary to keep an ext2 or ext3 Linux partition, to be able
 to boot the system.
 
-dnl
 Before you install your system, you should familiarize yourself with PMON,
 the open source firmware and bootloader of your machine.
 
 Entering PMON:
 dnl maybe lemote specific, does gdium use a boot menu too?
-    Upon powerup, or after a reset, a splash screen is displayed while PMON
+    Upon power-up, or after a reset, a splash screen is displayed while PMON
     initializes, and then a text mode boot menu appears.
 
-    At this menu, you can either select one of the sytems to boot with the
+    At this menu, you can either select one of the systems to boot with the
     arrows keys and press enter, or abort the countdown sequence and get to
     the PMON commandline by hitting `c'.
 
@@ -32,10 +31,10 @@ dnl maybe lemote specific, does gdium use a boot menu too?
 
 PMON file path concepts:
 
-    The filenames used by PMON always mention explicitely the location of
+    The filenames used by PMON always mention explicitly the location of
     the filesystem they refer to, as well as the filesystem type. They
     are constructed as
-    	/dev/fs/<filesystem type>@<device name>/<path wihtin the filesystem>
+    	/dev/fs/<filesystem type>@<device name>/<path within the filesystem>
 
 dnl On the Lemote Yeeloong,
     The internal storage (either a disk drive or an SSD) is `wd0'.
