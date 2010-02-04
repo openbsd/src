@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.13 2010/02/04 03:34:05 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.14 2010/02/04 07:30:27 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -76,6 +76,7 @@ void	sr_put_block(struct sr_discipline *, void *);
 void	gf_init(void);
 uint8_t gf_inv(uint8_t);
 int	gf_premul(uint8_t);
+uint8_t gf_mul(uint8_t, uint8_t);
 
 #define SR_NOFAIL		0x00
 #define SR_FAILX		(1L << 0)
@@ -457,7 +458,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
-	int			s, fail, i, rwmode;
+	int			s, fail, i, rwmode, gxinv;
 	daddr64_t		blk, lbaoffs, strip_no, chunk, qchunk, pchunk, fchunk;
 	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
 	daddr64_t		strip_bits, length, strip_offs, datalen, row_size;
@@ -550,11 +551,13 @@ sr_raid6_rw(struct sr_workunit *wu)
 				printf("Disk %llx offline, "
 				    "regenerating Dx+P\n", chunk);
 
+				gxinv = gf_inv(gf_pow[chunk]);
+
 				/* Calculate: Dx = (Q^Dz*gz)*inv(gx) */
 				memset(data, 0, length);
 				if (sr_raid6_addio(wu, qchunk, lba, length, NULL,
 				    SCSI_DATA_IN, SR_CCBF_FREEBUF, NULL, data,
-				    gf_inv(gf_pow[chunk])))
+				    gxinv))
 					goto bad;
 			
 				/* Read Dz * gz * inv(gx) */
@@ -565,7 +568,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 					if (sr_raid6_addio(wu, i, lba, 
 					   length, NULL, SCSI_DATA_IN,
 					   SR_CCBF_FREEBUF, NULL,
-					   data, gf_pow[i+255-chunk]))
+					   data, gf_mul(gf_pow[i], gxinv)))
 					   	goto bad;
 				}
 
@@ -574,12 +577,26 @@ sr_raid6_rw(struct sr_workunit *wu)
 				/* Dx, Dy failed */
 				printf("Disk %llx & %llx offline, "
 				    "regenerating Dx+Dy\n", chunk, fchunk);
-				qbuf = sr_get_block(sd, length);
-				if (qbuf == NULL)
-					goto bad;
 				pbuf = sr_get_block(sd, length);
 				if (pbuf == NULL)
 					goto bad;
+
+				gxinv = gf_inv(gf_pow[chunk] ^ gf_pow[fchunk]);
+
+				/* read Q * inv(gx + gy) */
+				memset(data, 0, length);
+				if (sr_raid6_addio(wu, qchunk, lba, 
+				    length,  NULL, SCSI_DATA_IN,
+				    SR_CCBF_FREEBUF, NULL,
+				    data, gxinv))
+				    	goto bad;
+
+				/* read P */
+				if (sr_raid6_addio(wu, pchunk, lba,
+				    length,  NULL, SCSI_DATA_IN,
+				    SR_CCBF_FREEBUF, pbuf, 
+				    NULL, 0))
+				    	goto bad;
 
 				/* Calculate: Dx*gx^Dy*gy = Q^(Dz*gz) ; Dx^Dy = P^Dz
 				 *   Q:  sr_raid6_xorp(qbuf, --, length);
@@ -587,30 +604,17 @@ sr_raid6_rw(struct sr_workunit *wu)
 				 *   Dz: sr_raid6_xorp(pbuf, --, length);
 				 *	 sr_raid6_xorq(qbuf, --, length, gf_pow[i]);
 				 */
-				memset(data, 0, length);
 				for (i = 0; i < no_chunk+2; i++) {
-					if (i == qchunk) {
-						/* read Q */
-						if (sr_raid6_addio(wu, i, lba, 
-						    length,  NULL, SCSI_DATA_IN,
-						    SR_CCBF_FREEBUF, qbuf, 
-						    NULL, 0))
-						    	goto bad;
-					} else if (i == pchunk) {
-						/* read P */
-						if (sr_raid6_addio(wu, i, lba,
-						    length,  NULL, SCSI_DATA_IN,
-						    SR_CCBF_FREEBUF, pbuf, 
-						    NULL, 0))
-						    	goto bad;
-					} else if (i != chunk) {
-						/* read Dz * gz */
-						if (sr_raid6_addio(wu, i, lba,
-						    length, NULL, SCSI_DATA_IN,
-						    SR_CCBF_FREEBUF, pbuf,
-						    qbuf, gf_pow[i]))
-						    	goto bad;
-					}
+					if (i == qchunk || i == pchunk ||
+					    i == chunk || i == fchunk)
+						continue;
+
+					/* read Dz * gz */
+					if (sr_raid6_addio(wu, i, lba,
+					    length, NULL, SCSI_DATA_IN,
+					    SR_CCBF_FREEBUF, pbuf,
+					    data, gf_mul(gf_pow[i], gxinv)))
+					    	goto bad;
 				}
 
 				/* run fake wu when read i/o is complete */
@@ -621,11 +625,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 				wu_w->swu_flags |= SR_WUF_FAIL;
 				if (sr_raid6_addio(wu_w, 0, 0, length, pbuf, 0,
 				    SR_CCBF_FREEBUF, NULL, data,
-				    gf_inv(gf_pow[255+chunk-fchunk] ^ 1)))
-					goto bad;
-				if (sr_raid6_addio(wu_w, 0, 0, length, qbuf, 0,
-				    SR_CCBF_FREEBUF, NULL, data,
-				    gf_inv(gf_pow[chunk] ^ gf_pow[fchunk])))
+				    gf_mul(gf_pow[fchunk], gxinv)))
 					goto bad;
 			} else {
 				/* Two cases: single disk (Dx) or (Dx+Q)
@@ -1079,6 +1079,12 @@ uint8_t
 gf_inv(uint8_t a)
 {
 	return gf_pow[255 - gf_log[a]];
+}
+
+uint8_t
+gf_mul(uint8_t a, uint8_t b)
+{
+	return gf_pow[gf_log[a] + gf_log[b]];
 }
 
 /* Precalculate multiplication tables for drive gn */
