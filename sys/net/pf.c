@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.689 2010/01/18 23:52:46 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.690 2010/02/04 14:10:12 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2901,8 +2901,13 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 					/* order is irrelevant */
 					SLIST_INSERT_HEAD(&rules, ri, entry);
 					pf_rule_to_actions(r, &act);
-					pf_get_transaddr(r, pd, &saddr, &sport,
-					    &daddr, &dport, sns);
+					if (pf_get_transaddr(r, pd,
+					    &saddr, &sport, &daddr, &dport,
+					    sns) == -1) {
+						REASON_SET(&reason,
+						    PFRES_MEMORY);
+						goto cleanup;
+					}
 				} else {
 					match = 1;
 					*rm = r;
@@ -2928,8 +2933,11 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	/* apply actions for last matching rule */
 	if (lastr && lastr->action != PF_MATCH) {
 		pf_rule_to_actions(lastr, &act);
-		pf_get_transaddr(lastr, pd, &saddr, &sport, &daddr, &dport,
-		    sns);
+		if (pf_get_transaddr(lastr, pd, &saddr, &sport, &daddr,
+		    &dport, sns) == -1) {
+			REASON_SET(&reason, PFRES_MEMORY);
+			goto cleanup;
+		}
 	}
 
 	REASON_SET(&reason, PFRES_MATCH);

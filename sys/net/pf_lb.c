@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.11 2010/01/18 23:52:46 mcbride Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.12 2010/02/04 14:10:12 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -101,9 +101,9 @@
 void			 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
 int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_rule *,
-			    struct pf_addr *, struct pf_addr *, u_int16_t,
-			    struct pf_addr *, u_int16_t *, u_int16_t, u_int16_t,
-			    struct pf_src_node **, int);
+			    struct pf_addr *, u_int16_t, struct pf_addr *,
+			    u_int16_t, struct pf_addr *, u_int16_t *,
+			    u_int16_t, u_int16_t, struct pf_src_node **, int);
 
 #define mix(a,b,c) \
 	do {					\
@@ -164,7 +164,8 @@ pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
 
 int
 pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
-    struct pf_addr *saddr, struct pf_addr *daddr, u_int16_t dport,
+    struct pf_addr *saddr, u_int16_t sport,
+    struct pf_addr *daddr, u_int16_t dport,
     struct pf_addr *naddr, u_int16_t *nport, u_int16_t low, u_int16_t high,
     struct pf_src_node **sn, int rdomain)
 {
@@ -190,9 +191,9 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		key.af = af;
 		key.proto = proto;
 		key.rdomain = rdomain;
-		PF_ACPY(&key.addr[1], daddr, key.af);
-		PF_ACPY(&key.addr[0], naddr, key.af);
-		key.port[1] = dport;
+		PF_ACPY(&key.addr[0], daddr, key.af);
+		PF_ACPY(&key.addr[1], naddr, key.af);
+		key.port[0] = dport;
 
 		/*
 		 * port search; start random, step;
@@ -200,16 +201,21 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		 */
 		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP ||
 		    proto == IPPROTO_ICMP)) {
-			/* XXX bug icmp states dont use the id on both sides */
-			key.port[0] = dport;
-			if (pf_find_state_all(&key, PF_IN, NULL) == NULL)
+			/* XXX bug: icmp states dont use the id on both
+			 * XXX sides (traceroute -I through nat) */
+			key.port[1] = sport;
+			if (pf_find_state_all(&key, PF_IN, NULL) == NULL) {
+				*nport = sport;
 				return (0);
+			}
 		} else if (low == 0 && high == 0) {
-			key.port[0] = *nport;
-			if (pf_find_state_all(&key, PF_IN, NULL) == NULL)
+			key.port[1] = sport;
+			if (pf_find_state_all(&key, PF_IN, NULL) == NULL) {
+				*nport = sport;
 				return (0);
+			}
 		} else if (low == high) {
-			key.port[0] = htons(low);
+			key.port[1] = htons(low);
 			if (pf_find_state_all(&key, PF_IN, NULL) == NULL) {
 				*nport = htons(low);
 				return (0);
@@ -226,7 +232,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 			cut = arc4random_uniform(1 + high - low) + low;
 			/* low <= cut <= high */
 			for (tmp = cut; tmp <= high; ++(tmp)) {
-				key.port[0] = htons(tmp);
+				key.port[1] = htons(tmp);
 				if (pf_find_state_all(&key, PF_IN, NULL) ==
 				    NULL && !in_baddynamic(tmp, proto)) {
 					*nport = htons(tmp);
@@ -234,7 +240,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 				}
 			}
 			for (tmp = cut - 1; tmp >= low; --(tmp)) {
-				key.port[0] = htons(tmp);
+				key.port[1] = htons(tmp);
 				if (pf_find_state_all(&key, PF_IN, NULL) ==
 				    NULL && !in_baddynamic(tmp, proto)) {
 					*nport = htons(tmp);
@@ -428,7 +434,7 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 	if (r->nat.addr.type != PF_ADDR_NONE) {
 		/* XXX is this right? what if rtable is changed at the same
 		 * XXX time? where do I need to figure out the sport? */
-		if (pf_get_sport(pd->af, pd->proto, r, saddr,
+		if (pf_get_sport(pd->af, pd->proto, r, saddr, *sport,
 		    daddr, *dport, &naddr, &nport, r->nat.proxy_port[0],
 		    r->nat.proxy_port[1], sns, pd->rdomain)) {
 			DPFPRINTF(LOG_NOTICE,
@@ -438,8 +444,7 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 			return (-1);
 		}
 		PF_ACPY(saddr, &naddr, pd->af);
-		if (nport)
-			*sport = nport;
+		*sport = nport;
 	}
 	if (r->rdr.addr.type != PF_ADDR_NONE) {
 		if (pf_map_addr(pd->af, r, saddr, &naddr, NULL, sns, &r->rdr,
