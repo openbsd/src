@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.66 2010/01/03 12:51:05 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.67 2010/02/04 18:20:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -328,6 +328,7 @@ main(int argc, char **argv)
 	options_set_string(so, "default-shell", "%s", getshell());
 	options_set_string(so, "default-terminal", "screen");
 	options_set_number(so, "display-panes-colour", 4);
+	options_set_number(so, "display-panes-active-colour", 1);
 	options_set_number(so, "display-panes-time", 1000);
 	options_set_number(so, "display-time", 750);
 	options_set_number(so, "history-limit", 2000);
