@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2010/02/03 21:46:42 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.8 2010/02/04 16:41:16 otto Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -82,6 +82,7 @@
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
 char	cpu_model[30];
+char	pmon_bootp[80];
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -122,6 +123,7 @@ static void dobootopts(int);
 void	build_trampoline(vaddr_t, vaddr_t);
 void	dumpsys(void);
 void	dumpconf(void);
+extern	void parsepmonbp(void);
 vaddr_t	mips_init(int32_t, int32_t, int32_t, int32_t);
 
 extern	void loongson2e_setup(u_long, u_long);
@@ -567,6 +569,10 @@ dobootopts(int argc)
 
 		if (*arg != '-') {
 			/* found filename or non-option argument */
+			if (*pmon_bootp == '\0') {
+				strlcpy(pmon_bootp, arg, sizeof pmon_bootp);
+				parsepmonbp();
+			}
 			ignore = 0;
 			continue;
 		}

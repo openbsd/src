@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1.1.1 2009/11/24 11:28:11 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2010/02/04 16:41:16 otto Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -22,9 +22,14 @@
 #include <sys/reboot.h>
 
 extern void dumpconf(void);
+void parsepmonbp(void);
 
 int	cold = 1;
 struct device *bootdv = NULL;
+char    bootdev[16];
+enum devclass bootdev_class = DV_DULL;
+
+extern char pmon_bootp[];
 
 void
 cpu_configure(void)
@@ -39,8 +44,38 @@ cpu_configure(void)
 }
 
 void
+parsepmonbp(void)
+{
+	char *p, *q;
+	size_t len;
+
+	if (strncmp(pmon_bootp, "tftp://", 7) == 0) {
+		bootdev_class = DV_IFNET;
+		strlcpy(bootdev, "netboot", sizeof bootdev);
+		return;
+	}
+	strlcpy(bootdev, "unknown", sizeof bootdev);
+
+	p = strchr(pmon_bootp, '@');
+	if (p == NULL)
+		return;
+	p++;
+	q = strchr(p, '/');
+	if (q == NULL)
+		return;
+	len = q - p;
+	if (len <= 2 || len >= sizeof bootdev - 1)
+		return;
+	memcpy(bootdev, p, len);
+	bootdev[len] = '\0';
+	bootdev_class = DV_DISK;
+}
+
+void
 diskconf(void)
 {
+	printf("pmon bootpath: %s\n", pmon_bootp);
+
 	if (bootdv != NULL)
 		printf("boot device: %s\n", bootdv->dv_xname);
 
@@ -51,10 +86,43 @@ diskconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	const char *drvrname = dev->dv_cfdata->cf_driver->cd_name;
+	const char *name = dev->dv_xname;
+
 	if (bootdv != NULL)
 		return;
 
-	/* ... */
+	if (dev->dv_class != bootdev_class)
+		return;	
+	/* 
+	 * The device numbering must match. There's no way
+	 * pmon tells us more info. Depending on the usb slot
+	 * and hubs used you may be lucky. Also, assume umass/sd for usb
+	 * attached devices.
+	 */
+	switch (bootdev_class) {
+	case DV_DISK:
+		if (strcmp(drvrname, "wd") == 0 && strcmp(name, bootdev) == 0)
+			bootdv = dev;
+		else {
+			/* XXX this really only works safely for usb0... */
+		    	if ((strcmp(drvrname, "sd") == 0 ||
+			    strcmp(drvrname, "cd") == 0) &&
+			    strncmp(bootdev, "usb", 3) == 0 &&
+			    strcmp(name + 2, bootdev + 3) == 0)
+				bootdv = dev;
+		}
+		break;
+	case DV_IFNET:
+		/*
+		 * This relies on the onboard Ethernet interface being
+		 * attached before any other (usb) interface.
+		 */
+		bootdv = dev;
+		break;
+	default:
+		break;
+	}
 }
 
 struct nam2blk nam2blk[] = {
