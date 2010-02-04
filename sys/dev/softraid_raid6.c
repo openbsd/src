@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.12 2010/01/20 19:55:15 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.13 2010/02/04 03:34:05 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -550,43 +550,26 @@ sr_raid6_rw(struct sr_workunit *wu)
 				printf("Disk %llx offline, "
 				    "regenerating Dx+P\n", chunk);
 
-				qbuf = sr_get_block(sd, length);
-				if (qbuf == NULL)
-					goto bad;
-
-				/* Calculate: Dx*gx = Q^(Dz*gz)
-				 *   Q:  sr_raid6_xorp(data, --, length);
-				 *   Dz: sr_raid6_xorq(data, --, length, gf_pow[i]);
-				 */
+				/* Calculate: Dx = (Q^Dz*gz)*inv(gx) */
 				memset(data, 0, length);
-				for (i = 0; i < no_chunk+2; i++) {
-					if  (i == qchunk) {
-						/* Read Q */
-						if (sr_raid6_addio(wu, i, lba, 
-						    length, NULL, SCSI_DATA_IN, 
-						    SR_CCBF_FREEBUF, qbuf, 
-						    NULL, 0))
-						    	goto bad;
-					} else if (i != chunk && i != pchunk) {
-						/* Read Dz * gz */
-						if (sr_raid6_addio(wu, i, lba, 
-						   length, NULL, SCSI_DATA_IN,
-						   SR_CCBF_FREEBUF, NULL,
-						   qbuf, gf_pow[i]))
-						   	goto bad;
-					}
-				}
-
-				/* run fake wu when read i/o is complete */
-				if (wu_w == NULL && 
-				    (wu_w = sr_wu_get(sd, 0)) == NULL)
-					goto bad;
-
-				wu_w->swu_flags |= SR_WUF_FAIL;
-				if (sr_raid6_addio(wu_w, 0, 0, length, qbuf, 0,
-				    SR_CCBF_FREEBUF, NULL, data,
+				if (sr_raid6_addio(wu, qchunk, lba, length, NULL,
+				    SCSI_DATA_IN, SR_CCBF_FREEBUF, NULL, data,
 				    gf_inv(gf_pow[chunk])))
 					goto bad;
+			
+				/* Read Dz * gz * inv(gx) */
+				for (i = 0; i < no_chunk+2; i++) {
+					if  (i == qchunk || i == pchunk || i == chunk) 
+						continue;
+
+					if (sr_raid6_addio(wu, i, lba, 
+					   length, NULL, SCSI_DATA_IN,
+					   SR_CCBF_FREEBUF, NULL,
+					   data, gf_pow[i+255-chunk]))
+					   	goto bad;
+				}
+
+				/* data will contain correct value on completion */
 			} else if (fail & SR_FAILY) {
 				/* Dx, Dy failed */
 				printf("Disk %llx & %llx offline, "
