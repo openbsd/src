@@ -1,7 +1,7 @@
-/*	$OpenBSD: smfb.c,v 1.3 2010/02/05 20:53:24 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.4 2010/02/05 20:56:49 miod Exp $	*/
 
 /*
- * Copyright (c) 2009 Miodrag Vallat.
+ * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,13 +43,18 @@
 #define	DPR_READ(fb, reg)	(fb)->dpr[(reg) / 4]
 #define	DPR_WRITE(fb, reg, val)	(fb)->dpr[(reg) / 4] = (val)
 
+#define	REG_READ(fb, reg)	(fb)->regs[(reg) / 4]
+#define	REG_WRITE(fb, reg, val)	(fb)->regs[(reg) / 4] = (val)
+
 struct smfb_softc;
 
 /* minimal frame buffer information, suitable for early console */
 struct smfb {
 	struct smfb_softc	*sc;
 	struct rasops_info	ri;
+	int			is5xx;
 
+	volatile uint32_t	*regs;
 	volatile uint32_t	*dpr;
 	volatile uint8_t	*mmio;
 	struct wsscreen_descr	wsd;
@@ -62,6 +67,9 @@ struct smfb_softc {
 
 	bus_space_tag_t		 sc_memt;
 	bus_space_handle_t	 sc_memh;
+
+	bus_space_tag_t		 sc_regt;
+	bus_space_handle_t	 sc_regh;
 
 	struct wsscreen_list	 sc_wsl;
 	struct wsscreen_descr	*sc_scrlist[1];
@@ -99,7 +107,7 @@ struct wsdisplay_accessops smfb_accessops = {
 	NULL	/* burner */
 };
 
-int	smfb_setup(struct smfb *, vaddr_t);
+int	smfb_setup(struct smfb *, vaddr_t, vaddr_t);
 
 void	smfb_copyrect(struct smfb *, int, int, int, int, int, int);
 void	smfb_fillrect(struct smfb *, int, int, int, int, int);
@@ -109,19 +117,30 @@ int	smfb_do_cursor(struct rasops_info *);
 int	smfb_erasecols(void *, int, int, int, long);
 int	smfb_eraserows(void *, int, int, long);
 int	smfb_wait(struct smfb *);
+int	smfb_is5xx(pcireg_t);
 
 static struct smfb smfbcn;
 
-const struct pci_matchid smfb_devices[] = {
-	{ PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM712 }
-};
+int
+smfb_is5xx(pcireg_t id)
+{
+	switch(id) {
+	default:
+		return -1;
+	case PCI_ID_CODE(PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM712):
+		return 0;
+	case PCI_ID_CODE(PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM501):
+		return 1;
+	}
+}
 
 int
 smfb_match(struct device *parent, void *vcf, void *aux)
 {
-	struct pci_attach_args *paa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	int is5xx = smfb_is5xx(pa->pa_id);
 
-	return pci_matchbyid(paa, smfb_devices, nitems(smfb_devices));
+	return is5xx < 0 ? 0 : 1;
 }
 
 void
@@ -130,14 +149,24 @@ smfb_attach(struct device *parent, struct device *self, void *aux)
 	struct smfb_softc *sc = (struct smfb_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct wsemuldisplaydev_attach_args waa;
-	vaddr_t fbbase;
+	vaddr_t fbbase, regbase;
 	int console;
+	int is5xx = smfb_is5xx(pa->pa_id);
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_memt, &sc->sc_memh,
 	    NULL, NULL, 0) != 0) {
 		printf(": can't map frame buffer\n");
 		return;
+	}
+
+	if (is5xx) {
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x04,
+		    PCI_MAPREG_TYPE_MEM,
+		    BUS_SPACE_MAP_LINEAR, &sc->sc_regt, &sc->sc_regh,
+		    NULL, NULL, 0) != 0) {
+			printf(": can't map registers\n%s", self->dv_xname);
+		}
 	}
 
 	console = smfbcn.ri.ri_hw != NULL;
@@ -147,8 +176,15 @@ smfb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fb->sc = sc;
 	} else {
 		sc->sc_fb = &sc->sc_fb_store;
+		sc->sc_fb->is5xx = is5xx;
 		fbbase = (vaddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
-		if (smfb_setup(sc->sc_fb, fbbase) != 0) {
+		if (sc->sc_regh != 0) {
+			regbase = (vaddr_t)bus_space_vaddr(sc->sc_regt,
+			    sc->sc_regh);
+		} else {
+			regbase = 0;
+		}
+		if (smfb_setup(sc->sc_fb, fbbase, regbase) != 0) {
 			printf(": can't setup frame buffer\n");
 			return;
 		}
@@ -256,9 +292,10 @@ smfb_mmap(void *v, off_t offset, int prot)
  */
 
 int
-smfb_setup(struct smfb *fb, vaddr_t fbbase)
+smfb_setup(struct smfb *fb, vaddr_t fbbase, vaddr_t regbase)
 {
 	struct rasops_info *ri;
+	int accel = 0;
 
 	ri = &fb->ri;
 	ri->ri_width = 1024;
@@ -289,30 +326,49 @@ smfb_setup(struct smfb *fb, vaddr_t fbbase)
 	fb->wsd.fontheight = ri->ri_font->fontheight;
 	fb->wsd.capabilities = ri->ri_caps;
 
-	fb->dpr = (volatile uint32_t *)(fbbase + DPR_BASE);
-	fb->mmio = (volatile uint8_t *)(fbbase + MMIO_BASE);
+	if (fb->is5xx) {
+		if (regbase != 0) {
+			fb->dpr = (volatile uint32_t *)
+			    (regbase + SM5XX_DPR_BASE);
+			fb->mmio = NULL;
+			fb->regs = (volatile uint32_t *)
+			    (regbase + SM5XX_REG_BASE);
+			accel = 1;
+		}
+	} else {
+		fb->dpr = (volatile uint32_t *)(fbbase + SM7XX_DPR_BASE);
+		fb->mmio = (volatile uint8_t *)(fbbase + SM7XX_MMIO_BASE);
+		fb->regs = NULL;
+		accel = 1;
+	}
 
 	/*
-	 * Setup 2D acceleration
+	 * Setup 2D acceleration whenever possible
 	 */
 
-	smfb_wait(fb);
+	if (accel) {
+		if (smfb_wait(fb) != 0)
+			accel = 0;
+	}
+	if (accel) {
+		DPR_WRITE(fb, DPR_CROP_TOPLEFT_COORDS, DPR_COORDS(0, 0));
+		/* use of width both times is intentional */
+		DPR_WRITE(fb, DPR_PITCH,
+		    DPR_COORDS(ri->ri_width, ri->ri_width));
+		DPR_WRITE(fb, DPR_SRC_WINDOW,
+		    DPR_COORDS(ri->ri_width, ri->ri_width));
+		DPR_WRITE(fb, DPR_BYTE_BIT_MASK, 0xffffffff);
+		DPR_WRITE(fb, DPR_COLOR_COMPARE_MASK, 0);
+		DPR_WRITE(fb, DPR_COLOR_COMPARE, 0);
+		DPR_WRITE(fb, DPR_SRC_BASE, 0);
+		DPR_WRITE(fb, DPR_DST_BASE, 0);
+		DPR_READ(fb, DPR_DST_BASE);
 
-	DPR_WRITE(fb, DPR_CROP_TOPLEFT_COORDS, DPR_COORDS(0, 0));
-	/* use of width both times is intentional */
-	DPR_WRITE(fb, DPR_PITCH, DPR_COORDS(ri->ri_width, ri->ri_width));
-	DPR_WRITE(fb, DPR_SRC_WINDOW, DPR_COORDS(ri->ri_width, ri->ri_width));
-	DPR_WRITE(fb, DPR_BYTE_BIT_MASK, 0xffffffff);
-	DPR_WRITE(fb, DPR_COLOR_COMPARE_MASK, 0);
-	DPR_WRITE(fb, DPR_COLOR_COMPARE, 0);
-	DPR_WRITE(fb, DPR_SRC_BASE, 0);
-	DPR_WRITE(fb, DPR_DST_BASE, 0);
-	DPR_READ(fb, DPR_DST_BASE);
-
-	ri->ri_ops.copycols = smfb_copycols;
-	ri->ri_ops.copyrows = smfb_copyrows;
-	ri->ri_ops.erasecols = smfb_erasecols;
-	ri->ri_ops.eraserows = smfb_eraserows;
+		ri->ri_ops.copycols = smfb_copycols;
+		ri->ri_ops.copyrows = smfb_copyrows;
+		ri->ri_ops.erasecols = smfb_erasecols;
+		ri->ri_ops.eraserows = smfb_eraserows;
+	}
 
 	return 0;
 }
@@ -445,16 +501,23 @@ smfb_eraserows(void *cookie, int row, int num, long attr)
 int
 smfb_wait(struct smfb *fb)
 {
-	uint8_t reg;
+	uint32_t reg;
 	int i;
 
 	i = 10000;
 	while (i-- != 0) {
-		fb->mmio[0x3c4] = 0x16;
-		(void)fb->mmio[0x3c4];	/* posted write */
-		reg = fb->mmio[0x3c5];
-		if ((reg & 0x18) == 0x10)
-			return 0;
+		if (fb->is5xx) {
+			reg = REG_READ(fb, REG_SYSTEM_CONTROL);
+			if ((reg & (RSC_FIFO_EMPTY | RSC_STATUS_BUSY)) ==
+			    RSC_FIFO_EMPTY)
+				return 0;
+		} else {
+			fb->mmio[0x3c4] = 0x16;
+			(void)fb->mmio[0x3c4];	/* posted write */
+			reg = fb->mmio[0x3c5];
+			if ((reg & 0x18) == 0x10)
+				return 0;
+		}
 		delay(1);
 	}
 
@@ -472,16 +535,30 @@ smfb_cnattach(bus_space_tag_t memt, pcitag_t tag, pcireg_t id)
 {
 	long defattr;
 	struct rasops_info *ri;
-	vaddr_t fbbase;
+	vaddr_t fbbase, regbase;
 	pcireg_t bar;
-	int rc;
+	int rc, is5xx;
+
+	/* filter out unrecognized devices */
+	is5xx = smfb_is5xx(id);
+	if (is5xx < 0)
+		return ENODEV;
+
+	smfbcn.is5xx = is5xx;
 
 	bar = pci_conf_read_early(tag, PCI_MAPREG_START);
 	if (PCI_MAPREG_TYPE(bar) != PCI_MAPREG_TYPE_MEM)
 		return EINVAL;
 	fbbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
 
-	rc = smfb_setup(&smfbcn, fbbase);
+	regbase = 0;
+	if (smfbcn.is5xx) {
+		bar = pci_conf_read_early(tag, PCI_MAPREG_START + 0x04);
+		if (PCI_MAPREG_TYPE(bar) == PCI_MAPREG_TYPE_MEM)
+			regbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
+	}
+
+	rc = smfb_setup(&smfbcn, fbbase, regbase);
 	if (rc != 0)
 		return rc;
 
