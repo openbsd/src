@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.2 2010/01/27 05:35:02 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.3 2010/02/05 20:44:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -322,12 +322,10 @@ glx_fn0_read(int reg)
 		else {
 			data = pcib_bar_values[index];
 			if (data == 0xffffffff)
-				data = PCI_MAPREG_IO_ADDR_MASK &
-				    ~(pcib_bar_sizes[index] - 1);
-			else {
-				msr = rdmsr(pcib_bar_msr[index]);
-				data = msr & 0xfffff000;
-			}
+				data = PCI_MAPREG_IO_ADDR_MASK;
+			else
+				data = (pcireg_t)rdmsr(pcib_bar_msr[index]);
+			data &= ~(pcib_bar_sizes[index] - 1);
 			if (data != 0)
 				data |= PCI_MAPREG_TYPE_IO;
 		}
@@ -389,7 +387,7 @@ glx_fn0_write(int reg, pcireg_t data)
 			if ((data & PCI_MAPREG_TYPE_MASK) ==
 			    PCI_MAPREG_TYPE_IO) {
 				data &= PCI_MAPREG_IO_ADDR_MASK;
-				data &= 0xfffff000;
+				data &= ~(pcib_bar_sizes[index] - 1);
 				wrmsr(pcib_bar_msr[index],
 				    (0x0000f000UL << 32) | (1UL << 32) | data);
 			} else {
