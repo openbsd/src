@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2010/02/04 16:37:53 otto Exp $
+#	$OpenBSD: GENERIC,v 1.5 2010/02/05 21:07:39 otto Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -77,6 +77,8 @@ urtw*		at uhub?
 
 url*		at uhub?
 urlphy*		at mii?
+uaudio*		at uhub?
+audio*		at uaudio?
 uvideo*		at uhub?
 video*		at uvideo?
 
