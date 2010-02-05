@@ -1,7 +1,7 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.3 2010/01/31 15:29:59 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.4 2010/02/05 20:45:37 miod Exp $	*/
 
 /*
- * Copyright (c) 2009 Miodrag Vallat.
+ * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,20 +28,19 @@
 #include <machine/memconf.h>
 #include <machine/pmon.h>
 
+#include <loongson/dev/bonitoreg.h>
+
 extern struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	loongson2e_setup(u_long, u_long);
 void	loongson2f_setup(u_long, u_long);
+void	loongson2f_setup_window(uint, uint, uint64_t, uint64_t, uint64_t, uint);
 
 /* CPU view of PCI resources */
 paddr_t	loongson_pci_base = 0;
 /* PCI view of CPU memory */
 paddr_t loongson_dma_base = 0;
-
-/*
- * Setup memory mappings for Loongson 2E processors.
- */
 
 /*
  * Canonical crossbow assignments on Loongson 2F based designs.
@@ -51,8 +50,9 @@ paddr_t loongson_dma_base = 0;
 #define	MASTER_CPU	0
 #define	MASTER_PCI	1
 
+#define	WINDOW_CPU_LOW	0
+#define	WINDOW_CPU_PCI	1
 #define	WINDOW_CPU_DDR	2
-#define	WINDOW_CPU_PCI	3
 
 #define	WINDOW_PCI_DDR	0
 
@@ -62,11 +62,12 @@ paddr_t loongson_dma_base = 0;
 
 #define	PCI_RESOURCE_BASE	0x0000000000000000UL
 #define	PCI_RESOURCE_SIZE	0x0000000080000000UL
-#define	PCI_WINDOW_BASE		0x0000000100000000UL
 
 #define	PCI_DDR_BASE		0x0000000080000000UL	/* PCI->DDR at 2GB */
-#define	PCI_DDR_SIZE		DDR_PHYSICAL_SIZE
-#define	PCI_DDR_WINDOW_BASE	DDR_PHYSICAL_BASE
+
+/*
+ * Setup memory mappings for Loongson 2E processors.
+ */
 
 void
 loongson2e_setup(u_long memlo, u_long memhi)
@@ -95,8 +96,6 @@ loongson2e_setup(u_long memlo, u_long memhi)
 void
 loongson2f_setup(u_long memlo, u_long memhi)
 {
-	volatile uint64_t *awrreg;
-
 	/*
 	 * Because we'll only set up a 2GB window for the PCI bus to
 	 * access local memory, we'll limit ourselves to 2GB of usable
@@ -107,13 +106,18 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	 * and use bounce buffers if physmem > 3GB; but at the moment
 	 * there is no need to solve this problem until Loongson 2F-based
 	 * hardware with more than 2GB of memory is commonly encountered.
+	 *
+	 * Also note that, despite the crossbar window registers being
+	 * 64-bit wide, the upper 32-bit always read back as zeroes, so
+	 * it is dubious whether it is possible to use more than a 4GB
+	 * address space... and thus more than 2GB of physical memory.
 	 */
 
 	physmem = memlo + memhi;	/* in MB so far */
-	if (physmem > 2048) {
+	if (physmem > (DDR_PHYSICAL_SIZE >> 20)) {
 		pmon_printf("WARNING! %d MB of memory will not be used",
-		    physmem - 2048);
-		memhi = 2048 - 256;
+		    physmem - (DDR_PHYSICAL_SIZE >> 20));
+		memhi = (DDR_PHYSICAL_SIZE >> 20) - 256;
 	}
 
 	memlo = atop(memlo << 20);
@@ -156,26 +160,68 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	 */
 
 	/*
-	 * Make window #2 span the whole memory at 2GB onwards.
-	 * XXX Note that this assumes total memory size is
-	 * XXX a power of two.  This is always true on the Lemote
-	 * XXX Yeelong, might not be on other products.
+	 * Master #0 (cpu) window #0 allows access to the low 256MB
+	 * of memory at address zero onwards.
+	 * This window is inherited from PMON; we set it up just in case.
 	 */
+	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_LOW, DDR_PHYSICAL_BASE,
+	    ~(0x0fffffffUL), DDR_PHYSICAL_BASE, MASTER_CPU);
+
+	/*
+	 * Master #0 (cpu) window #1 allows access to the ``low'' PCI
+	 * space (from 0x10000000 to 0x1fffffff).
+	 * This window is inherited from PMON; we set it up just in case.
+	 */
+	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_PCI, BONITO_PCILO_BASE,
+	    ~(0x0fffffffUL), BONITO_PCILO_BASE, MASTER_PCI);
+
+	/*
+	 * Master #1 (PCI) window #0 allows access to the memory space
+	 * by PCI devices at addresses 0x80000000 onwards.
+	 * This window is inherited from PMON, but its mask might be too
+	 * restrictive (256MB) so we make sure it matches our needs.
+	 */
+	loongson2f_setup_window(MASTER_PCI, WINDOW_PCI_DDR, PCI_DDR_BASE,
+	    ~(DDR_PHYSICAL_SIZE - 1), DDR_PHYSICAL_BASE, MASTER_CPU);
+
+	/*
+	 * Master #0 (CPU) window #2 allows access to the whole memory space
+	 * at addresses 0x80000000 onwards.
+	 */
+	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_DDR, DDR_WINDOW_BASE,
+	    ~(DDR_PHYSICAL_SIZE - 1), DDR_PHYSICAL_BASE, MASTER_CPU);
+}
+
+/*
+ * Setup a window in the Loongson2F crossbar.
+ */
+
+void
+loongson2f_setup_window(uint master, uint window, uint64_t base, uint64_t mask,
+    uint64_t mmap, uint slave)
+{
+	volatile uint64_t *awrreg;
+
 	awrreg = (volatile uint64_t *)PHYS_TO_XKPHYS(
-	    LOONGSON_AWR_BASE(MASTER_CPU, WINDOW_CPU_DDR), CCA_NC);
-	*awrreg = DDR_WINDOW_BASE;
+	    LOONGSON_AWR_BASE(master, window), CCA_NC);
+	*awrreg = base;
 	(void)*awrreg;
 
 	awrreg = (volatile uint64_t *)PHYS_TO_XKPHYS(
-	    LOONGSON_AWR_SIZE(MASTER_CPU, WINDOW_CPU_DDR), CCA_NC);
-	*awrreg = 0xffffffffffffffffUL << (ffs(DDR_PHYSICAL_SIZE) - 1);
+	    LOONGSON_AWR_SIZE(master, window), CCA_NC);
+	*awrreg = mask;
 	(void)*awrreg;
 
 	awrreg = (volatile uint64_t *)PHYS_TO_XKPHYS(
-	    LOONGSON_AWR_MMAP(MASTER_CPU, WINDOW_CPU_DDR), CCA_NC);
-	*awrreg = DDR_PHYSICAL_BASE | MASTER_CPU;
+	    LOONGSON_AWR_MMAP(master, window), CCA_NC);
+	*awrreg = mmap | slave;
 	(void)*awrreg;
 }
+
+/*
+ * Return whether a given physical address points to managed memory.
+ * (used by /dev/mem)
+ */
 
 boolean_t
 is_memory_range(paddr_t pa, psize_t len, psize_t limit)
