@@ -39,9 +39,9 @@ minicdroot|minicdramdiskroot|RAM-disk root FS image:\
 	:ob#0:pb#0:oc#0:pc#16384:
 
 cdroot|cdramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#2048:nc#16:nt#240:ns#32:\
-	:ta=4.2BSD:oa#80:pa#122800:fa#2048:ba#16384:\
-	:ob#0:pb#0:oc#0:pc#122880:op#0:pp#80:
+	:ty=simulated:se#2048:nc#16:nt#280:ns#32:\
+	:ta=4.2BSD:oa#80:pa#143280:fa#2048:ba#16384:\
+	:ob#0:pb#0:oc#0:pc#143360:op#0:pp#80:
 
 # Seagate ST31200N
 ST31200N-MBR:\
