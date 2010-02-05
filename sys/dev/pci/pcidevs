@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1525 2010/02/05 17:04:41 jasper Exp $
+$OpenBSD: pcidevs,v 1.1526 2010/02/05 20:55:48 miod Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4788,6 +4788,7 @@ product SMC 37C665		0x1000	FDC 37C665
 product SMC 37C922		0x1001	FDC 37C922
 
 /* Silicon Motion products */
+product SMI SM501		0x0501	Voyager GX
 product SMI SM710		0x0710	LynxEM
 product SMI SM712		0x0712	LynxEM+
 product SMI SM720		0x0720	Lynx3DM
