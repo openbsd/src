@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1525 2010/02/05 17:04:41 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1526 2010/02/05 20:55:48 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4793,6 +4793,7 @@
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 
 /* Silicon Motion products */
+#define	PCI_PRODUCT_SMI_SM501	0x0501		/* Voyager GX */
 #define	PCI_PRODUCT_SMI_SM710	0x0710		/* LynxEM */
 #define	PCI_PRODUCT_SMI_SM712	0x0712		/* LynxEM+ */
 #define	PCI_PRODUCT_SMI_SM720	0x0720		/* Lynx3DM */
