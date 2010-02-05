@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.2 2010/01/31 15:30:29 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.3 2010/02/05 20:53:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -465,19 +465,21 @@ smfb_wait(struct smfb *fb)
  * Early console code
  */
 
-int smfb_cnattach(void);
+int smfb_cnattach(bus_space_tag_t, pcitag_t, pcireg_t);
 
 int
-smfb_cnattach()
+smfb_cnattach(bus_space_tag_t memt, pcitag_t tag, pcireg_t id)
 {
 	long defattr;
 	struct rasops_info *ri;
 	vaddr_t fbbase;
+	pcireg_t bar;
 	int rc;
-	extern paddr_t loongson_pci_base;
 
-	/* XXX hardwired fbmem address */
-	fbbase = PHYS_TO_XKPHYS(loongson_pci_base + 0x14000000, CCA_NC);
+	bar = pci_conf_read_early(tag, PCI_MAPREG_START);
+	if (PCI_MAPREG_TYPE(bar) != PCI_MAPREG_TYPE_MEM)
+		return EINVAL;
+	fbbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
 
 	rc = smfb_setup(&smfbcn, fbbase);
 	if (rc != 0)

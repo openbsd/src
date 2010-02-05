@@ -1,5 +1,20 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1.1.1 2009/12/25 21:11:16 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2010/02/05 20:53:28 miod Exp $ */
 
+/*
+ * Copyright (c) 2010 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 2001 Aaron Campbell
  * All rights reserved.
@@ -33,20 +48,23 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 
+#include <mips64/archtype.h>
+
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <loongson/dev/bonitoreg.h>
-
 #include <dev/cons.h>
-#if 0
-#include <dev/wscons/wsconsio.h>
-#endif
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include "wsdisplay.h"
 #if NWSDISPLAY > 0
 #include <dev/wscons/wsdisplayvar.h>
 #endif
+#include "smfb.h"
+extern int smfb_cnattach(bus_space_tag_t, pcitag_t, pcireg_t);
 
 #include "pckbc.h"
 #if NPCKBC > 0
@@ -54,12 +72,14 @@
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #endif
-
 #include "pckbd.h"
-#if NPCKBD > 0
+#include "ukbd.h"
+#if NUKBD > 0
+#include <dev/usb/ukbdvar.h>
+#endif
+#if NPCKBD > 0 || NUKBD > 0
 #include <dev/wscons/wskbdvar.h>
 #endif
-#include "smfb.h"
 
 cons_decl(ws);
 
@@ -86,28 +106,72 @@ wscnprobe(struct consdev *cp)
 void
 wscninit(struct consdev *cp)
 {
-static int initted;
+static	int initted;
+	pcitag_t tag;
+	pcireg_t id, class;
+	int dev, rc;
+	extern struct mips_bus_space bonito_pci_io_space_tag;
+	extern struct mips_bus_space bonito_pci_mem_space_tag;
 
 	if (initted)
 		return;
 
 	initted = 1;
 
-#if NSMFB > 0
-	{
-		extern int smfb_cnattach(void);
+	/*
+	 * Look for a suitable video device.
+	 */
 
-		if (smfb_cnattach() != 0)
-			return;
+	for (dev = 0; dev < 32; dev++) {
+		tag = pci_make_tag_early(0, dev, 0);
+		id = pci_conf_read_early(tag, PCI_ID_REG);
+		if (id == 0 || PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+
+		class = pci_conf_read_early(tag, PCI_CLASS_REG);
+		if (PCI_CLASS(class) != PCI_CLASS_DISPLAY)
+			continue;
+
+		/*
+		 * Try to configure this device as glass console.
+		 */
+
+		rc = ENXIO;
+#if NSMFB > 0
+		if (rc != 0)
+			rc = smfb_cnattach(&bonito_pci_mem_space_tag, tag, id);
+#endif
+		if (rc == 0)
+			goto setup_kbd;
+	}
+
+	/* no glass console... */
+	return;
+
+setup_kbd:
+
+	/*
+	 * Look for a suitable input device.
+	 */
+
+	rc = ENXIO;
+
+#if NPCKBC > 0
+	switch (sys_config.system_type) {
+	case LOONGSON_GDIUM:
+		/* no legacy hardware */
+		break;
+	default:
+	case LOONGSON_YEELOONG:
+		if (rc != 0)
+			rc = pckbc_cnattach(&bonito_pci_io_space_tag, IO_KBD,
+			    KBCMDP, PCKBC_KBD_SLOT, 0);
+		break;
 	}
 #endif
-#if NPCKBC > 0
-	{
-		extern struct mips_bus_space bonito_pci_io_space_tag;
-		if (!pckbc_cnattach(&bonito_pci_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT, 0 /* PCKBC_CANT_TRANSLATE */))
-			return;
-	}
+#if NUKBD > 0
+	if (rc != 0)
+		rc = ukbd_cnattach();
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.6 2010/02/05 20:51:22 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.7 2010/02/05 20:53:24 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -102,6 +102,7 @@ int	 bonito_bus_maxdevs(void *, int);
 pcitag_t bonito_make_tag(void *, int, int, int);
 void	 bonito_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t bonito_conf_read(void *, pcitag_t, int);
+pcireg_t bonito_conf_read_internal(const struct bonito_config *, pcitag_t, int);
 void	 bonito_conf_write(void *, pcitag_t, int, pcireg_t);
 int	 bonito_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *
@@ -110,8 +111,8 @@ void	*bonito_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
 void	 bonito_pci_intr_disestablish(void *, void *);
 
-int	 bonito_conf_addr(struct bonito_softc *, pcitag_t, int, u_int32_t *,
-	    u_int32_t *);
+int	 bonito_conf_addr(const struct bonito_config *, pcitag_t, int,
+	    u_int32_t *, u_int32_t *);
 
 uint	 bonito_get_isa_imr(void);
 uint	 bonito_get_isa_isr(void);
@@ -799,13 +800,13 @@ bonito_bus_maxdevs(void *v, int busno)
 }
 
 pcitag_t
-bonito_make_tag(void *v, int b, int d, int f)
+bonito_make_tag(void *unused, int b, int d, int f)
 {
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 void
-bonito_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
+bonito_decompose_tag(void *unused, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
 		*bp = (tag >> 16) & 0xff;
@@ -816,15 +817,15 @@ bonito_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 }
 
 int
-bonito_conf_addr(struct bonito_softc *sc, pcitag_t tag, int offset,
+bonito_conf_addr(const struct bonito_config *bc, pcitag_t tag, int offset,
     u_int32_t *cfgoff, u_int32_t *pcimap_cfg)
 {
 	int b, d, f;
 
-	bonito_decompose_tag(sc, tag, &b, &d, &f);
+	bonito_decompose_tag(NULL, tag, &b, &d, &f);
 
 	if (b == 0) {
-		d += sc->sc_bonito->bc_adbase;
+		d += bc->bc_adbase;
 		if (d > 31)
 			return 1;
 		*cfgoff = (1 << d) | (f << 8) | offset;
@@ -868,11 +869,8 @@ pcireg_t
 bonito_conf_read(void *v, pcitag_t tag, int offset)
 {
 	struct bonito_softc *sc = v;
-	pcireg_t data;
-	u_int32_t cfgoff, pcimap_cfg;
 	struct bonito_cfg_hook *hook;
-	uint32_t sr;
-	uint64_t imr;
+	pcireg_t data;
 
 	SLIST_FOREACH(hook, &sc->sc_hook, next) {
 		if (hook->read != NULL &&
@@ -881,7 +879,19 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 			return data;
 	}
 
-	if (bonito_conf_addr(sc, tag, offset, &cfgoff, &pcimap_cfg))
+	return bonito_conf_read_internal(sc->sc_bonito, tag, offset);
+}
+
+pcireg_t
+bonito_conf_read_internal(const struct bonito_config *bc, pcitag_t tag,
+    int offset)
+{
+	pcireg_t data;
+	u_int32_t cfgoff, pcimap_cfg;
+	uint32_t sr;
+	uint64_t imr;
+
+	if (bonito_conf_addr(bc, tag, offset, &cfgoff, &pcimap_cfg))
 		return (pcireg_t)-1;
 
 	sr = disableintr();
@@ -932,7 +942,7 @@ bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 			return;
 	}
 
-	if (bonito_conf_addr(sc, tag, offset, &cfgoff, &pcimap_cfg))
+	if (bonito_conf_addr(sc->sc_bonito, tag, offset, &cfgoff, &pcimap_cfg))
 		panic("bonito_conf_write");
 
 	sr = disableintr();
@@ -1104,4 +1114,20 @@ void
 isa_intr_disestablish(void *v, void *ih)
 {
 	bonito_intr_disestablish(ih);
+}
+
+/*
+ * Functions used during early system configuration (before bonito attaches).
+ */
+
+pcitag_t
+pci_make_tag_early(int b, int d, int f)
+{
+	return bonito_make_tag(NULL, b, d, f);
+}
+
+pcireg_t
+pci_conf_read_early(pcitag_t tag, int reg)
+{
+	return bonito_conf_read_internal(sys_config.sys_bc, tag, reg);
 }

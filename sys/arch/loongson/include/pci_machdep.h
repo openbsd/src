@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.1.1.1 2009/08/05 09:46:47 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.2 2010/02/05 20:53:26 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -79,7 +79,12 @@ struct mips_pci_chipset {
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 
-/* CPU view of PCI resources */
-extern paddr_t loongson_pci_base;
 /* PCI view of CPU memory */
 extern paddr_t loongson_dma_base;
+
+/*
+ * Functions used during early system configuration.
+ */
+
+pcitag_t pci_make_tag_early(int, int, int);
+pcireg_t pci_conf_read_early(pcitag_t, int);

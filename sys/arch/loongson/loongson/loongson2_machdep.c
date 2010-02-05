@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.4 2010/02/05 20:45:37 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.5 2010/02/05 20:53:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -37,8 +37,6 @@ void	loongson2e_setup(u_long, u_long);
 void	loongson2f_setup(u_long, u_long);
 void	loongson2f_setup_window(uint, uint, uint64_t, uint64_t, uint64_t, uint);
 
-/* CPU view of PCI resources */
-paddr_t	loongson_pci_base = 0;
 /* PCI view of CPU memory */
 paddr_t loongson_dma_base = 0;
 
