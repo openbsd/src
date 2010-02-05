@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.28 2009/09/21 19:44:23 matthieu Exp $
+# $OpenBSD: Makefile.cross,v 1.29 2010/02/05 22:36:27 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -18,6 +18,9 @@ TARGET_ARCH=	m68k
 TARGET_ARCH=	m88k
 .elif	(${TARGET} == "sgi")
 TARGET_ARCH=	mips64
+.elif	(${TARGET} == "loongson")
+TARGET_ARCH=	mips64el
+TARGET_CPU=	mips64
 .elif	(${TARGET} == "solbourne")
 TARGET_ARCH=	sparc
 .elif	(${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || \
@@ -28,6 +31,7 @@ TARGET_ARCH=	sh
 .else
 TARGET_ARCH=	${TARGET}
 .endif
+TARGET_CPU?=	${TARGET_ARCH}
 
 #CROSSCPPFLAGS?=	-nostdinc -I${CROSSDIR}/usr/include
 #CROSSLDFLAGS?=	-nostdlib -L${CROSSDIR}/usr/lib -static
@@ -90,6 +94,7 @@ cross-gcc:	${CROSSGCC}
 cross-env:
 	@echo ${CROSSENV} MACHINE=${TARGET} \
 	    MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    MACHINE_CPU=`cat ${CROSSDIR}/TARGET_CPU` \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET}
 
@@ -97,8 +102,10 @@ ${CROSSDIRS}:
 	@-mkdir -p ${CROSSDIR}
 	@echo ${TARGET_ARCH} > ${CROSSDIR}/TARGET_ARCH
 	@echo TARGET_ARCH is `cat ${CROSSDIR}/TARGET_ARCH`
+	@echo ${TARGET_CPU} > ${CROSSDIR}/TARGET_CPU
+	@echo TARGET_CPU is `cat ${CROSSDIR}/TARGET_CPU`
 	@eval `grep '^osr=' sys/conf/newvers.sh`; \
-	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
+	   echo ${TARGET_ARCH}-unknown-openbsd$$osr > \
 	   ${CROSSDIR}/TARGET_CANON
 	@-mkdir -p ${CROSSDIR}
 	@-mkdir -p ${CROSSDIR}/usr/${TARGET_CANON}
@@ -115,7 +122,7 @@ ${CROSSOBJ}:	${CROSSDIRS}
 	@(cd ${.CURDIR} && \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    MACHINE=${TARGET} \
-	    MACHINE_ARCH=${TARGET_ARCH} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj)
 	@touch ${CROSSOBJ}
@@ -123,13 +130,15 @@ ${CROSSOBJ}:	${CROSSDIRS}
 ${CROSSINCLUDES}:	${CROSSOBJ}
 	@-mkdir -p ${CROSSDIR}/usr/include
 	@(cd ${.CURDIR}/include && \
-	    MACHINE=${TARGET} MACHINE_ARCH=${TARGET_ARCH} \
+	    MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    TARGET_ARCH=${TARGET_ARCH} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} prereq && \
-	    MACHINE=${TARGET} MACHINE_ARCH=${TARGET_ARCH} \
+	    MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    TARGET_ARCH=${TARGET_ARCH} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} DESTDIR=${CROSSDIR} includes)
 	@touch ${CROSSINCLUDES}
 
@@ -147,14 +156,18 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	(cd ${.CURDIR}/gnu/usr.bin/binutils; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
-	    TARGET_ARCH=${TARGET_ARCH} PATH=${CROSSPATH} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
+	    PATH=${CROSSPATH} \
 	    ${MAKE} -f Makefile.bsd-wrapper depend && \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
-	    TARGET_ARCH=${TARGET_ARCH} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} -f Makefile.bsd-wrapper install)
 .if ${NEW_BINUTILS:L} != "yes"
 	(cd ${.CURDIR}/gnu/usr.bin/gas; \
@@ -232,10 +245,12 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 .if ${TARGET_USE_GCC3:L} == "yes"
 	(cd ${.CURDIR}/gnu/usr.bin/gcc; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    TARGET_ARCH=${TARGET_ARCH} CROSSDIR=${CROSSDIR} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
+	    CROSSDIR=${CROSSDIR} \
 	    PATH=${CROSSPATH} ${MAKE} -f Makefile.bsd-wrapper depend && \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    TARGET_ARCH=${TARGET_ARCH} CROSSDIR=${CROSSDIR} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
+	    CROSSDIR=${CROSSDIR} \
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
 	    env CROSSDIR=${CROSSDIR} DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    PATH=${CROSSPATH} ${MAKE} -f Makefile.bsd-wrapper install)
@@ -290,8 +305,9 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 
 # XXX MAKEOBJDIR maybe should be obj.${TARGET} here, revisit later
 cross-lib:	${CROSSGCC}
-	MACHINE=${TARGET} MACHINE_ARCH=${TARGET_ARCH}; \
-	export MACHINE MACHINE_ARCH; \
+	MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU}; \
+	export MACHINE MACHINE_ARCH MACHINE_CPU; \
 	(cd ${.CURDIR}/lib; \
 	    for lib in csu libc; do \
 	    (cd $$lib; \
@@ -308,8 +324,9 @@ cross-lib:	${CROSSGCC}
 	        ${MAKE} WANTLINT=no install)
 
 cross-bin:	${CROSSOBJ}
-	MACHINE=${TARGET} MACHINE_ARCH=${TARGET_ARCH}; \
-	export MACHINE MACHINE_ARCH; \
+	MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU}; \
+	export MACHINE MACHINE_ARCH MACHINE_CPU; \
 	for i in libexec bin sbin usr.bin usr.sbin; do \
 	(cd ${.CURDIR}/$$i; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -321,8 +338,9 @@ cross-bin:	${CROSSOBJ}
 	done
 
 cross-gnu:	${CROSSOBJ}
-	MACHINE=${TARGET} MACHINE_ARCH=${TARGET_ARCH}; \
-	export MACHINE MACHINE_ARCH; \
+	MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU}; \
+	export MACHINE MACHINE_ARCH MACHINE_CPU; \
 	for i in gnu/lib gnu/usr.sbin gnu/usr.bin ; do \
 	(cd ${.CURDIR}/$$i; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -334,8 +352,9 @@ cross-gnu:	${CROSSOBJ}
 	done
 
 cross-share:   ${CROSSOBJ}
-	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
-	export MACHINE MACHINE_ARCH; \
+	MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU}; \
+	export MACHINE MACHINE_ARCH MACHINE_CPU; \
 	for i in share; do \
 	    (cd ${.CURDIR}/$$i; \
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -344,8 +363,9 @@ cross-share:   ${CROSSOBJ}
 	done
 
 cross-sys:   ${CROSSOBJ}
-	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
-	export MACHINE MACHINE_ARCH; \
+	MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU}; \
+	export MACHINE MACHINE_ARCH MACHINE_CPU; \
 	for i in sys; do \
 	    (cd ${.CURDIR}/$$i; \
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -355,8 +375,10 @@ cross-sys:   ${CROSSOBJ}
 
 cross-etc-root-var:	${CROSSOBJ}
 	(cd ${.CURDIR}/etc && \
-	    MACHINE=${TARGET} MACHINE_ARCH=${TARGET_ARCH} \
-	    DESTDIR=${CROSSDIR} ${MAKE} distribution-etc-root-var)
+	    MACHINE=${TARGET} \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
+	    DESTDIR=${CROSSDIR} \
+	    ${MAKE} distribution-etc-root-var)
 
 cross-depend:
 	@(cd ${.CURDIR} && \
