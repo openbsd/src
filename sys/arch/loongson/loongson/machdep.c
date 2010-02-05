@@ -1,7 +1,7 @@
-/*	$OpenBSD: machdep.c,v 1.8 2010/02/04 16:41:16 otto Exp $ */
+/*	$OpenBSD: machdep.c,v 1.9 2010/02/05 20:51:22 miod Exp $ */
 
 /*
- * Copyright (c) 2009 Miodrag Vallat.
+ * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,6 +78,7 @@
 #include <mips64/archtype.h>
 
 #include <loongson/dev/bonitoreg.h>
+#include <loongson/dev/bonitovar.h>
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
@@ -143,6 +144,28 @@ struct consdev pmoncons = {
 };
 
 /*
+ * List of supported system types, from the ``Version'' environment
+ * variable.
+ */
+
+struct bonito_flavour {
+	const char *prefix;
+	int	systype;
+	const struct bonito_config *bc;
+};
+
+const struct bonito_flavour bonito_flavours[] = {
+	/* 8.9" Lemote Yeeloong netbook */
+	{ "LM8089",	LOONGSON_YEELOONG,	&yeeloong_bonito },
+	/* supposedly 10.1" Lemote Yeeloong netbook, but those found so far
+	   report themselves as LM8089 */
+	{ "LM8101",	LOONGSON_YEELOONG,	&yeeloong_bonito },
+	/* EMTEC Gdium Liberty 1000 */
+	{ "Gdium",	LOONGSON_GDIUM,		&gdium_bonito },
+	{ NULL }
+};
+
+/*
  * Do all the stuff that locore normally does before calling main().
  * Reset mapping and set up mapping to hardware and init "wired" reg.
  */
@@ -155,6 +178,7 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 	vaddr_t xtlb_handler;
 	const char *envvar;
 	int i;
+	const struct bonito_flavour *f;
 
 	extern char start[], edata[], end[];
 	extern char exception[], e_exception[];
@@ -241,10 +265,12 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 		goto unsupported;
 	}
 
-	/* Lemote Yeelong 8089 */
-	if (strncmp(envvar, "LM8089", 6) == 0) {
-		sys_config.system_type = LOONGSON_YEELONG;
-	}
+	for (f = bonito_flavours; f->prefix != NULL; f++)
+		if (strncmp(envvar, f->prefix, strlen(f->prefix)) == 0) {
+			sys_config.system_type = f->systype;
+			sys_config.sys_bc = f->bc;
+			break;
+		}
 
 	if (sys_config.system_type == 0) {
 		pmon_printf("This kernel doesn't support model \"%s\".\n",
@@ -253,9 +279,13 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 	}
 
 	switch (sys_config.system_type) {
-	case LOONGSON_YEELONG:
+	case LOONGSON_YEELOONG:
 		hw_vendor = "Lemote";
-		hw_prod = "Yeelong";
+		hw_prod = "Yeeloong";
+		break;
+	case LOONGSON_GDIUM:
+		hw_vendor = "EMTEC";
+		hw_prod = "Gdium";
 		break;
 	default:	/* won't happen */
 		goto unsupported;
@@ -784,8 +814,18 @@ haltsys:
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN) {
 			printf("System Power Down.\n");
-			REGVAL(BONITO_GPIODATA) &= ~0x00000001;
-			REGVAL(BONITO_GPIOIE) &= ~0x00000001;
+			switch (sys_config.system_type) {
+			case LOONGSON_YEELOONG:
+				REGVAL(BONITO_GPIODATA) &= ~0x00000001;
+				REGVAL(BONITO_GPIOIE) &= ~0x00000001;
+				break;
+			case LOONGSON_GDIUM:
+				REGVAL(BONITO_GPIODATA) |= 0x00000002;
+				REGVAL(BONITO_GPIOIE) &= ~0x00000002;
+				break;
+			default:
+				break;
+			}
 		} else
 			printf("System Halt.\n");
 	} else {
@@ -909,6 +949,10 @@ pmoncngetc(dev_t dev)
 	 * PMON does not give us a getc routine.  So try to get a whole line
 	 * and return it char by char, trying not to lose the \n.  Kind
 	 * of ugly but should work.
+	 *
+	 * Note that one could theoretically use pmon_read(STDIN, &c, 1)
+	 * but the value of STDIN within PMON is not a constant and there
+	 * does not seem to be a way of letting us know which value to use.
 	 */
 	static char buf[1 + PMON_MAXLN];
 	static char *bufpos = buf;

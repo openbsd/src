@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.3 2010/02/05 20:51:22 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -35,14 +35,16 @@
 
 #include <machine/bus.h>
 
+struct bonito_config;
+
 /*
  * Structure holding all misc config information.
  */
 struct sys_rec {
 	int	system_type;
 
-	/* Serial console configuration. */
-	struct mips_bus_space console_io;
+	/* Bonito configuration */
+	const struct bonito_config *sys_bc;
 };
 
 extern struct sys_rec sys_config;
@@ -50,6 +52,9 @@ extern struct sys_rec sys_config;
 struct mainbus_attach_args {
 	const char	*maa_name;
 };
+
+extern const struct bonito_config gdium_bonito;
+extern const struct bonito_config yeeloong_bonito;
 
 #include <mips64/autoconf.h>
 

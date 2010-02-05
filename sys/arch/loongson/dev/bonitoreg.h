@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonitoreg.h,v 1.2 2010/01/31 19:12:12 miod Exp $	*/
+/*	$OpenBSD: bonitoreg.h,v 1.3 2010/02/05 20:51:22 miod Exp $	*/
 /*	$NetBSD: bonitoreg.h,v 1.6 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
@@ -70,6 +70,10 @@
 
 #define BONITO_PCI_REG(x)		BONITO(BONITO_PCICONFIGBASE + (x))
 
+#define	BONITO_REV_FPGA(x)		((x) & 0x80)
+#define	BONITO_REV_MAJOR(x)		(((x) >> 4) & 0x7)
+#define	BONITO_REV_MINOR(x)		((x) & 0xf)
+
 /* Controller configuration */
 
 #define	LOONGSON_PONCFG			BONITO(BONITO_REGBASE + 0x00)
@@ -90,7 +94,7 @@
 /* ICU Configuration Regs - r/w */
 
 #define BONITO_INTEDGE			BONITO(BONITO_REGBASE + 0x24)
-/* INTSTEER is not implemented */
+#define	BONITO_INTSTEER			BONITO(BONITO_REGBASE + 0x28)
 #define BONITO_INTPOL			BONITO(BONITO_REGBASE + 0x2c)
 
 /* ICU Enable Regs - INTEN and INTISR are read only */
