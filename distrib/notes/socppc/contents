@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.6 2009/05/12 21:06:51 miod Exp $
+dnl	$OpenBSD: contents,v 1.7 2010/02/05 07:48:50 jasper Exp $
 TopPart
 
 OpenBSDdistsets
@@ -11,6 +11,9 @@ OpenBSDrd
 			by the U-Boot firmware.  Used for installation.
 
 	boot		The OpenBSD/MACHINE secondary boot loader.
+
+	boot.elf	The secondary boot loader in ELF format, for
+			use of RB600A boards.
 
 DistributionDescription(eleven)
 
