@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.11 2007/09/25 06:02:36 otto Exp $	*/
+/*	$OpenBSD: top.h,v 1.12 2010/02/05 10:21:10 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -38,9 +38,6 @@
 
 /* Current major version number */
 #define VERSION		3
-
-/* Number of lines of header information on the standard screen */
-extern int Header_lines;
 
 /* Maximum number of columns allowed for display */
 #define MAX_COLS	256

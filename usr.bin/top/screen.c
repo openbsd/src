@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.19 2008/09/24 18:53:55 chl Exp $	 */
+/* $OpenBSD: screen.c,v 1.20 2010/02/05 10:21:10 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -49,6 +49,7 @@
 
 #include "top.h"
 #include "screen.h"
+#include "layout.h"
 #include "boolean.h"
 
 int	screen_length, screen_width;
@@ -104,7 +105,7 @@ init_termcap(int interactive)
 	}
 
 	/* set up common terminal capabilities */
-	if ((screen_length = tgetnum("li")) <= Header_lines) {
+	if ((screen_length = tgetnum("li")) <= y_procs) {
 		screen_length = smart_terminal = 0;
 		return;
 	}

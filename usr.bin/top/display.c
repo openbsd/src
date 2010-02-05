@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.36 2010/01/29 00:36:09 tedu Exp $	 */
+/* $OpenBSD: display.c,v 1.37 2010/02/05 10:21:10 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -100,7 +100,6 @@ int y_idlecursor;
 int y_procs;
 extern int ncpu;
 extern int combine_cpus;
-int Header_lines;
 
 int header_status = Yes;
 
@@ -130,11 +129,10 @@ display_resize(void)
 	y_mem = 2 + cpu_lines;
 	y_header = 4 + cpu_lines;
 	y_procs = 5 + cpu_lines;
-	Header_lines = 5 + cpu_lines;
 
 	/* calculate the current dimensions */
 	/* if operating in "dumb" mode, we only need one line */
-	display_lines = smart_terminal ? screen_length - Header_lines : 1;
+	display_lines = smart_terminal ? screen_length - y_procs : 1;
 
 	y_idlecursor = y_message = 3 + (combine_cpus ? 1 : ncpu);
 	if (screen_length <= y_message)
