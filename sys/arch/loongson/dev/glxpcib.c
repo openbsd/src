@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.2 2010/01/26 05:14:11 miod Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.3 2010/02/05 22:19:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -27,9 +27,7 @@
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/sysctl.h>
-#if 0
 #include <sys/timetc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -129,9 +127,7 @@
 struct glxpcib_softc {
 	struct device		sc_dev;
 
-#if 0
 	struct timecounter	sc_timecounter;
-#endif
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
@@ -158,9 +154,7 @@ struct cfattach glxpcib_ca = {
 /* from arch/<*>/pci/pcib.c */
 void	pcibattach(struct device *parent, struct device *self, void *aux);
 
-#if 0
 u_int	glxpcib_get_timecount(struct timecounter *tc);
-#endif
 
 #if NGPIO > 0
 void	glxpcib_gpio_pin_ctl(void *, int, int);
@@ -186,12 +180,8 @@ glxpcib_match(struct device *parent, void *match, void *aux)
 void
 glxpcib_attach(struct device *parent, struct device *self, void *aux)
 {
-#if (NGPIO > 0) || 0
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
-#endif
-#if 0
 	struct timecounter *tc = &sc->sc_timecounter;
-#endif
 #if NGPIO > 0
 	u_int64_t wa, ga;
 	struct gpiobus_attach_args gba;
@@ -200,18 +190,19 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": rev %d",
 	    (int)rdmsr(AMD5536_REV) & AMD5536_REV_MASK);
-#if 0
 	tc->tc_get_timecount = glxpcib_get_timecount;
 	tc->tc_counter_mask = 0xffffffff;
 	tc->tc_frequency = 3579545;
 	tc->tc_name = "CS5536";
+#ifdef __loongson__
+	tc->tc_quality = 0;
+#else
 	tc->tc_quality = 1000;
+#endif
 	tc->tc_priv = sc;
 	tc_init(tc);
 
-	printf(", 32-bit %lluHz timer",
-	    tc->tc_frequency);
-#endif
+	printf(", 32-bit %lluHz timer", tc->tc_frequency);
 
 #if NGPIO > 0
 	/* Attach the watchdog timer */
@@ -271,13 +262,11 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-#if 0
 u_int
 glxpcib_get_timecount(struct timecounter *tc)
 {
         return rdmsr(AMD5536_TMC);
 }
-#endif
 
 #if NGPIO > 0
 int
