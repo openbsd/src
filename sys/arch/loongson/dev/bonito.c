@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.4 2010/01/31 19:12:12 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.5 2010/02/05 20:47:15 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -54,6 +54,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -236,6 +238,7 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	const struct bonito_config *bc;
+	struct extent *ioex, *memex;
 	uint32_t reg;
 
 	printf(": memory and PCI-X controller, rev. %d\n",
@@ -280,6 +283,30 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	register_splx_handler(bonito_splx);
 
 	/*
+	 * Setup PCI resource extents.
+	 */
+
+	ioex = extent_create("pciio", 0, 0xffffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT | EX_FILLED);
+	if (ioex != NULL)
+		(void)extent_free(ioex, 0, BONITO_PCIIO_SIZE, EX_NOWAIT);
+
+	memex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT | EX_FILLED);
+	if (memex != NULL) {
+		reg = REGVAL(BONITO_PCIMAP);
+		(void)extent_free(memex, BONITO_PCIMAP_WINBASE((reg &
+		    BONITO_PCIMAP_PCIMAP_LO0) >> BONITO_PCIMAP_PCIMAP_LO0_SHIFT),
+		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT);
+		(void)extent_free(memex, BONITO_PCIMAP_WINBASE((reg &
+		    BONITO_PCIMAP_PCIMAP_LO1) >> BONITO_PCIMAP_PCIMAP_LO1_SHIFT),
+		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT);
+		(void)extent_free(memex, BONITO_PCIMAP_WINBASE((reg &
+		    BONITO_PCIMAP_PCIMAP_LO2) >> BONITO_PCIMAP_PCIMAP_LO2_SHIFT),
+		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT);
+	}
+
+	/*
 	 * Attach PCI bus.
 	 */
 
@@ -305,8 +332,8 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	/* XXX setup extents: I/O is only BONITO_PCIIO_SIZE long, memory is
-	  BONITO_PCILO_SIZE and BONITO_PCIHI_SIZE */
+	pba.pba_ioex = ioex;
+	pba.pba_memex = memex;
 
 	config_found(&sc->sc_dev, &pba, bonito_print);
 }
