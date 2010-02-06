@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.6 2009/01/27 11:33:22 aschrijver Exp $ */
-/*	$OpenBSD: aldap.h,v 1.6 2009/01/27 11:33:22 aschrijver Exp $ */
+/*	$Id: aldap.h,v 1.7 2010/02/06 08:04:45 blambert Exp $ */
+/*	$OpenBSD: aldap.h,v 1.7 2010/02/06 08:04:45 blambert Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -72,6 +72,7 @@ struct aldap_url {
 	char		*attributes[MAXATTR];
 	int		 scope;
 	char		*filter;
+	char		*buffer;
 };
 
 enum protocol_op {
@@ -195,8 +196,11 @@ char	*aldap_get_dn(struct aldap_message *);
 char	*aldap_get_diagmsg(struct aldap_message *);
 char	**aldap_get_references(struct aldap_message *);
 void	 aldap_free_references(char **values);
+#if 0
 int	 aldap_parse_url(char *, struct aldap_url *);
 void	 aldap_free_url(struct aldap_url *);
+int	 aldap_search_url(struct aldap *, char *, int, int, int);
+#endif
 
 int	 aldap_count_entries(struct aldap_message *);
 int	 aldap_match_entry(struct aldap_message *, char *, char ***);

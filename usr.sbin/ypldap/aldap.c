@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.20 2009/07/08 13:13:17 blambert Exp $ */
-/*	$OpenBSD: aldap.c,v 1.20 2009/07/08 13:13:17 blambert Exp $ */
+/*	$Id: aldap.c,v 1.21 2010/02/06 08:04:45 blambert Exp $ */
+/*	$OpenBSD: aldap.c,v 1.21 2010/02/06 08:04:45 blambert Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -59,7 +59,6 @@ aldap_close(struct aldap *al)
 
 	return (0);
 }
-
 
 struct aldap *
 aldap_init(int fd)
@@ -444,26 +443,23 @@ aldap_free_entry(char **values)
 	return (1);
 }
 
+#if 0
 void
 aldap_free_url(struct aldap_url *lu)
 {
-	int i;
-	free(lu->host);
-	free(lu->dn);
-	for (i = 0; i < MAXATTR && lu->attributes[i] != NULL; i++) {
-		free(lu->attributes[i]);
-	}
+	free(lu->buffer);
 	free(lu->filter);
 }
 
 int
 aldap_parse_url(char *url, struct aldap_url *lu)
 {
-	char		*dupstr, *p, *forward, *forward2;
+	char		*p, *forward, *forward2;
 	const char	*errstr = NULL;
 	int		 i;
 
-	p = dupstr = strdup(url);
+	if ((lu->buffer = p = strdup(url)) == NULL)
+		return (-1);
 
 	/* protocol */
 	if (strncasecmp(LDAP_URL, p, strlen(LDAP_URL)) != 0)
@@ -488,7 +484,7 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 	/* fail if no host is given */
 	if (strlen(p) == 0)
 		goto fail;
-	lu->host = strdup(p);
+	lu->host = p;
 	if (forward == NULL)
 		goto done;
 	/* p is assigned either a pointer to a character or to '\0' */
@@ -499,7 +495,7 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 	/* dn */
 	if ((forward = strchr(p, '?')) != NULL)
 		*forward = '\0';
-	lu->dn = strdup(p);
+	lu->dn = p;
 	if (forward == NULL)
 		goto done;
 	/* p is assigned either a pointer to a character or to '\0' */
@@ -514,11 +510,11 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 		if ((forward2 = strchr(p, ',')) == NULL) {
 			if (strlen(p) == 0)
 				break;
-			lu->attributes[i] = strdup(p);
+			lu->attributes[i] = p;
 			break;
 		}
 		*forward2 = '\0';
-		lu->attributes[i] = strdup(p);
+		lu->attributes[i] = p;
 		p = ++forward2;
 	}
 	if (forward == NULL)
@@ -537,6 +533,8 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 		lu->scope = LDAP_SCOPE_ONELEVEL;
 	else if (strcmp(p, "sub") == 0)
 		lu->scope = LDAP_SCOPE_SUBTREE;
+	else
+		goto fail;
 	if (forward == NULL)
 		goto done;
 	p = ++forward;
@@ -544,17 +542,39 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 		goto done;
 
 	/* filter */
-	if (p == NULL)
-		goto done;
-	lu->filter = strdup(p);
-
+	if (p)
+		lu->filter = p;
 done:
-	free(dupstr);
 	return (1);
 fail:
-	free(dupstr);
+	free(lu->buffer);
+	lu->buffer = NULL;
 	return (-1);
 }
+
+int
+aldap_search_url(struct aldap *ldap, char *url, int typesonly, int sizelimit,
+    int timelimit)
+{
+	struct aldap_url *lu;
+
+	if ((lu = calloc(1, sizeof(*lu))) == NULL)
+		return (-1);
+
+	if (aldap_parse_url(url, lu))
+		goto fail;
+
+	if (aldap_search(ldap, lu->dn, lu->scope, lu->filter, lu->attributes,
+	    typesonly, sizelimit, timelimit) == -1)
+		goto fail;
+
+	aldap_free_url(lu);
+	return (ldap->msgid);
+fail:
+	aldap_free_url(lu);
+	return (-1);
+}
+#endif /* 0 */
 
 /*
  * internal functions
@@ -1114,6 +1134,7 @@ parseval(char *p, size_t len)
 
 	return buffer;
 }
+
 int
 aldap_get_errno(struct aldap *a, const char **estr)
 {
