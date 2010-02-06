@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.8 2010/02/06 17:15:33 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.9 2010/02/06 23:22:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -89,18 +89,18 @@ int
 cmd_source_file_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct cmd_source_file_data	*data = self->data;
-	char			       **causes;
-	u_int				 i, ncauses;
+	struct causelist		 causes;
+	char				*cause;
+	u_int				 i;
 
-	causes = NULL;
-	ncauses = 0;
-
-	if (load_cfg(data->path, ctx, &ncauses, &causes) != 0) {
-		for (i = 0; i < ncauses; i++) {
-			ctx->print(ctx, "%s", causes[i]);
-			xfree(causes[i]);
+	ARRAY_INIT(&causes);
+	if (load_cfg(data->path, ctx, &causes) != 0) {
+		for (i = 0; i < ARRAY_LENGTH(&causes); i++) {
+			cause = ARRAY_ITEM(&causes, i);
+			ctx->print(ctx, "%s", cause);
+			xfree(cause);
 		}
-		xfree(causes);
+		ARRAY_FREE(&causes);
 	}
 
 	return (0);
