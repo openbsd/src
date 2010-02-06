@@ -1,9 +1,9 @@
-#!/bin/sh -
+#!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.56 2010/01/13 16:22:56 sthen Exp $
+# $OpenBSD: sysmerge.sh,v 1.57 2010/02/06 14:02:36 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
-# Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +20,8 @@
 
 umask 0022
 
-unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE NEED_NEWALIASES
-unset OBSOLETE_FILES SRCDIR TGZ TGZURL XTGZ XTGZURL
+unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
+unset OBSOLETE_FILES SRCDIR SRCSUM TGZ TGZURL XETCSUM XTGZ XTGZURL
 
 WRKDIR=`mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
@@ -38,12 +38,15 @@ clean_src() {
 	fi
 }
 
-# restore files from backups
+# restore files from backups or remove the newly generated sum files if
+# they did not exist
 restore_bak() {
-	for i in ${DESTDIR}/${DBDIR}/.*.bak; do
+	for i in ${DESTDIR}/${DBDIR}/.{${SRCSUM},${ETCSUM},${XETCSUM}}.bak; do
 		_i=`basename ${i} .bak`
 		if [ -f "${i}" ]; then
 			mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
+		elif [ -f "${DESTDIR}/${DBDIR}/${_i#.}" ]; then
+			rm ${DESTDIR}/${DBDIR}/${_i#.}
 		fi
 	done
 }
@@ -127,7 +130,6 @@ do_populate() {
 	echo "===> Creating and populating temporary root under"
 	echo "     ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
-	local SRCSUM ETCSUM XETCSUM
 	if [ "${SRCDIR}" ]; then
 		SRCSUM=srcsum
 		cd ${SRCDIR}/etc
