@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 2010/02/04 19:23:55 otto Exp $
+#	$OpenBSD: Makefile,v 1.3 2010/02/06 18:54:32 otto Exp $
 
 REV=	${OSrev}
 
 TOP=		${.CURDIR}/..
 
 BSD_RD=		bsd.rd
-BSD_BIN=	bsd.bin
 IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=	${CBIN}.conf
@@ -96,7 +95,7 @@ clean cleandir:
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD_RD} ${BSD_BIN} ${RELEASEDIR}
+	cp ${BSD_RD} ${RELEASEDIR}
 .endif
 
 .include <bsd.obj.mk>
