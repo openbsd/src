@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.28 2010/01/08 09:14:15 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.29 2010/02/06 18:47:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -692,17 +692,6 @@ server_client_msg_command(struct client *c, struct msg_command_data *data)
 		goto error;
 	}
 	cmd_free_argv(argc, argv);
-
-	if (data->pid != -1) {
-		TAILQ_FOREACH(cmd, cmdlist, qentry) {
-			if (cmd->entry->flags & CMD_CANTNEST) {
-				server_client_msg_error(&ctx,
-				    "sessions should be nested with care. "
-				    "unset $TMUX to force");
-				goto error;
-			}
-		}
-	}
 
 	if (cmd_list_exec(cmdlist, &ctx) != 1)
 		server_write_client(c, MSG_EXIT, NULL, 0);

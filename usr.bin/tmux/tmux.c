@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.70 2010/02/06 18:29:15 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.71 2010/02/06 18:47:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -484,6 +484,7 @@ main(int argc, char **argv)
 		cmddata.pid = envdata.pid;
 		cmddata.idx = envdata.idx;
 
+		/* Prepare command for server. */
 		cmddata.argc = argc;
 		if (cmd_pack_argv(
 		    argc, argv, cmddata.argv, sizeof cmddata.argv) != 0) {
@@ -499,7 +500,7 @@ main(int argc, char **argv)
 	if (shellcmd != NULL)
 		cmdflags |= CMD_STARTSERVER;
 	else if (argc == 0)	/* new-session is the default */
-		cmdflags |= CMD_STARTSERVER|CMD_SENDENVIRON;
+		cmdflags |= CMD_STARTSERVER|CMD_SENDENVIRON|CMD_CANTNEST;
 	else {
 		/*
 		 * It sucks parsing the command string twice (in client and
@@ -516,8 +517,22 @@ main(int argc, char **argv)
 				cmdflags |= CMD_STARTSERVER;
 			if (cmd->entry->flags & CMD_SENDENVIRON)
 				cmdflags |= CMD_SENDENVIRON;
+			if (cmd->entry->flags & CMD_CANTNEST)
+				cmdflags |= CMD_CANTNEST;
 		}
 		cmd_list_free(cmdlist);
+	}
+
+	/*
+	 * Check if this could be a nested session, if the command can't nest:
+	 * if the socket path matches $TMUX, this is probably the same server.
+	 */
+	if (shellcmd == NULL && envdata.path != NULL &&
+	    cmdflags & CMD_CANTNEST &&
+	    (path == envdata.path || strcmp(path, envdata.path) == 0)) {
+		log_warnx("sessions should be nested with care. "
+		    "unset $TMUX to force.");
+		exit(1);
 	}
 
 	if ((main_ibuf = client_init(path, cmdflags, flags)) == NULL)
