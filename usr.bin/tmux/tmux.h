@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.202 2010/02/04 20:00:26 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.203 2010/02/06 17:15:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1257,7 +1257,11 @@ int		 checkshell(const char *);
 int		 areshell(const char *);
 
 /* cfg.c */
-int		 load_cfg(const char *, struct cmd_ctx *, char **);
+extern int       cfg_finished;
+extern char    **cfg_causes;
+extern u_int     cfg_ncauses;
+void printflike3 cfg_add_cause(u_int *, char ***, const char *, ...);
+int		 load_cfg(const char *, struct cmd_ctx *, u_int *, char ***);
 
 /* mode-key.c */
 extern const struct mode_key_table mode_key_tables[];
@@ -1867,6 +1871,7 @@ void		 window_copy_pageup(struct window_pane *);
 
 /* window-more.c */
 extern const struct window_mode window_more_mode;
+void		 window_more_add(struct window_pane *, const char *, ...);
 void		 window_more_vadd(struct window_pane *, const char *, va_list);
 
 /* window-choose.c */
