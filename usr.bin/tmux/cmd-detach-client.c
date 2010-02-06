@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.4 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.5 2010/02/06 22:55:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,7 +29,7 @@ int	cmd_detach_client_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_detach_client_entry = {
 	"detach-client", "detach",
 	CMD_TARGET_CLIENT_USAGE,
-	0, "",
+	CMD_READONLY, "",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_detach_client_exec,
