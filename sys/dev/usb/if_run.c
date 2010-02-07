@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.39 2010/02/07 10:36:25 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.40 2010/02/07 10:42:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -297,6 +297,7 @@ void		run_start(struct ifnet *);
 void		run_watchdog(struct ifnet *);
 int		run_ioctl(struct ifnet *, u_long, caddr_t);
 void		run_select_chan_group(struct run_softc *, int);
+void		run_set_agc(struct run_softc *, uint8_t);
 void		run_set_rx_antenna(struct run_softc *, int);
 void		run_rt2870_set_chan(struct run_softc *, u_int);
 void		run_rt3070_set_chan(struct run_softc *, u_int);
@@ -2277,6 +2278,7 @@ void
 run_select_chan_group(struct run_softc *sc, int group)
 {
 	uint32_t tmp;
+	uint8_t agc;
 
 	run_bbp_write(sc, 62, 0x37 - sc->lna[group]);
 	run_bbp_write(sc, 63, 0x37 - sc->lna[group]);
@@ -2324,10 +2326,18 @@ run_select_chan_group(struct run_softc *sc, int group)
 	run_write(sc, RT2860_TX_PIN_CFG, tmp);
 
 	/* set initial AGC value */
-	if (group == 0)
-		run_bbp_write(sc, 66, 0x2e + sc->lna[0]);
-	else
-		run_bbp_write(sc, 66, 0x32 + (sc->lna[group] * 5) / 3);
+	if (group == 0) {	/* 2GHz band */
+		if (sc->mac_ver >= 0x3070)
+			agc = 0x1c + sc->lna[0] * 2;
+		else
+			agc = 0x2e + sc->lna[0];
+	} else {		/* 5GHz band */
+		if (sc->mac_ver == 0x3572)
+			agc = 0x22 + (sc->lna[group] * 5) / 3;
+		else
+			agc = 0x32 + (sc->lna[group] * 5) / 3;
+	}
+	run_set_agc(sc, agc);
 }
 
 void
@@ -2437,6 +2447,22 @@ run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 	/* enable RF tuning */
 	run_rt3070_rf_read(sc, 7, &rf);
 	run_rt3070_rf_write(sc, 7, rf | 0x01);
+}
+
+void
+run_set_agc(struct run_softc *sc, uint8_t agc)
+{
+	uint8_t bbp;
+
+	if (sc->mac_ver == 0x3572) {
+		run_bbp_read(sc, 27, &bbp);
+		bbp &= ~(0x3 << 5);
+		run_bbp_write(sc, 27, bbp | 0 << 5);	/* select Rx0 */
+		run_bbp_write(sc, 66, agc);
+		run_bbp_write(sc, 27, bbp | 1 << 5);	/* select Rx1 */
+		run_bbp_write(sc, 66, agc);
+	} else
+		run_bbp_write(sc, 66, agc);
 }
 
 void
