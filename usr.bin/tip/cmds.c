@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.31 2010/01/12 22:36:38 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.32 2010/02/07 20:16:47 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ transfer(char *buf, int fd, char *eofchars)
 
 	parwrite(FD, buf, size(buf));
 	quit = 0;
-	kill(tipout_pid, SIGIOT);
+	write(tipout_fd, "W", 1);
 	read(tipout_fd, (char *)&ccc, 1);  /* Wait until read process stops */
 
 	/*
@@ -297,7 +297,7 @@ transmit(FILE *fp, char *eofchars, char *command)
 	time_t start_t, stop_t;
 	sig_t f;
 
-	kill(tipout_pid, SIGIOT);	/* put TIPOUT into a wait state */
+	write(tipout_fd, "W", 1);	/* put TIPOUT into a wait state */
 	stop = 0;
 	f = signal(SIGINT, stopsnd);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -476,7 +476,7 @@ pipeout(int c)
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
-	kill(tipout_pid, SIGIOT);	/* put TIPOUT into a wait state */
+	write(tipout_fd, "W", 1);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -529,7 +529,7 @@ consh(int c)
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
-	kill(tipout_pid, SIGIOT);	/* put TIPOUT into a wait state */
+	write(tipout_fd, "W", 1);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -610,7 +610,7 @@ setscript(void)
 	/*
 	 * enable TIPOUT side for dialogue
 	 */
-	kill(tipout_pid, SIGEMT);
+	write(tipout_fd, "S", 1);
 	if (boolean(value(SCRIPT)))
 		write(tipout_fd, value(RECORD), size(value(RECORD)));
 	write(tipout_fd, "\n", 1);
@@ -745,7 +745,7 @@ variable(int c)
 	vlex(buf);
 	if (vtable[BEAUTIFY].v_access&CHANGED) {
 		vtable[BEAUTIFY].v_access &= ~CHANGED;
-		kill(tipout_pid, SIGSYS);
+		write(tipout_fd, "B", 1);
 	}
 	if (vtable[SCRIPT].v_access&CHANGED) {
 		vtable[SCRIPT].v_access &= ~CHANGED;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.20 2009/12/12 13:38:09 nicm Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.21 2010/02/07 20:16:47 nicm Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -30,6 +30,10 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+
+#include <poll.h>
+
 #include "tip.h"
 
 /*
@@ -39,33 +43,30 @@
  *  reading from the remote host
  */
 
-static	jmp_buf sigbuf;
+static void	tipout_wait(void);
+static void	tipout_script(void);
+static void	tipout_write(char *, size_t);
+static void	tipout_sighandler(int);
 
-static void	intIOT(int);
-static void	intEMT(int);
-static void	intTERM(int);
-static void	intSYS(int);
+volatile sig_atomic_t tipout_die;
 
 /*
  * TIPOUT wait state routine --
- *   sent by TIPIN when it wants to posses the remote host
+ *   sent by TIPIN when it wants to possess the remote host
  */
-/*ARGSUSED*/
 static void
-intIOT(int signo)
+tipout_wait(void)
 {
 	write(tipin_fd, &ccc, 1);
 	read(tipin_fd, &ccc, 1);
-	longjmp(sigbuf, 1);
 }
 
 /*
  * Scripting command interpreter --
  *  accepts script file name over the pipe and acts accordingly
  */
-/*ARGSUSED*/
 static void
-intEMT(int signo)
+tipout_script(void)
 {
 	char c, line[256];
 	char *pline = line;
@@ -91,25 +92,39 @@ intEMT(int signo)
 		}
 	}
 	write(tipin_fd, &reply, 1);
-	longjmp(sigbuf, 1);
 }
 
+/*
+ * Write remote input out to stdout (and script file if enabled).
+ */
 static void
-intTERM(int signo)
+tipout_write(char *buf, size_t len)
 {
-	if (boolean(value(SCRIPT)) && fscript != NULL)
-		fclose(fscript);
-	if (signo && tipin_pid)
-		kill(tipin_pid, signo);
-	exit(0);
+	char *cp;
+
+	for (cp = buf; cp < buf + len; cp++)
+		*cp &= STRIP_PAR;
+
+	write(STDOUT_FILENO, buf, len);
+
+	if (boolean(value(SCRIPT)) && fscript != NULL) {
+		if (!boolean(value(BEAUTIFY)))
+			fwrite(buf, 1, len, fscript);
+		else {
+			for (cp = buf; cp < buf + len; cp++) {
+				if ((*cp >= ' ' && *cp <= '~') ||
+				    any(*cp, value(EXCEPTIONS)))
+					putc(*cp, fscript);
+			}
+		}
+	}
 }
 
-/*ARGSUSED*/
+/* ARGSUSED */
 static void
-intSYS(int signo)
+tipout_sighandler(int signo)
 {
-	setboolean(value(BEAUTIFY), !boolean(value(BEAUTIFY)));
-	longjmp(sigbuf, 1);
+	tipout_die = 1;
 }
 
 /*
@@ -118,54 +133,78 @@ intSYS(int signo)
 void
 tipout(void)
 {
-	char buf[BUFSIZ];
-	char *cp;
-	ssize_t scnt;
-	size_t cnt;
-	sigset_t mask, omask;
+	struct pollfd pfds[2];
+	char buf[BUFSIZ], ch;
+	ssize_t len;
+	int flag;
 
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
-	signal(SIGEMT, intEMT);		/* attention from TIPIN */
-	signal(SIGTERM, intTERM);	/* time to go signal */
-	signal(SIGIOT, intIOT);		/* scripting going on signal */
-	signal(SIGHUP, intTERM);	/* for dial-ups */
-	signal(SIGSYS, intSYS);		/* beautify toggle */
-	(void) setjmp(sigbuf);
-	sigprocmask(SIG_BLOCK, NULL, &omask);
-	for (;;) {
-		sigprocmask(SIG_SETMASK, &omask, NULL);
-		scnt = read(FD, buf, BUFSIZ);
-		if (scnt <= 0) {
-			/* lost carrier */
-			if (scnt == 0 || (scnt < 0 && errno == EIO)) {
-				sigemptyset(&mask);
-				sigaddset(&mask, SIGTERM);
-				sigprocmask(SIG_BLOCK, &mask, NULL);
-				intTERM(0);
-				/*NOTREACHED*/
-			}
-			continue;
-		}
-		cnt = scnt;
-		sigemptyset(&mask);
-		sigaddset(&mask, SIGEMT);
-		sigaddset(&mask, SIGTERM);
-		sigaddset(&mask, SIGIOT);
-		sigaddset(&mask, SIGSYS);
-		sigprocmask(SIG_BLOCK, &mask, NULL);
-		for (cp = buf; cp < buf + cnt; cp++)
-			*cp &= STRIP_PAR;
-		write(STDOUT_FILENO, buf, cnt);
-		if (boolean(value(SCRIPT)) && fscript != NULL) {
-			if (!boolean(value(BEAUTIFY))) {
-				fwrite(buf, 1, cnt, fscript);
+
+	tipout_die = 0;
+	signal(SIGTERM, tipout_sighandler);
+	signal(SIGHUP, tipout_sighandler);
+
+	pfds[0].fd = tipin_fd;
+	pfds[0].events = POLLIN;
+
+	pfds[1].fd = FD;
+	pfds[1].events = POLLIN;
+
+	while (!tipout_die) {
+		if (poll(pfds, 2, INFTIM) == -1) {
+			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			goto fail;
+		}
+
+		if (pfds[0].revents & (POLLHUP|POLLERR))
+			goto fail;
+		if (pfds[0].revents & POLLIN) {
+			switch (read(tipin_fd, &ch, 1)) {
+			case 0:
+				goto fail;
+			case -1:
+				if (errno == EINTR || errno == EAGAIN)
+					break;
+				goto fail;
+			default:
+				switch (ch) {
+				case 'W':	/* wait state */
+					tipout_wait();
+					break;
+				case 'S':	/* script file */
+					tipout_script();
+					break;
+				case 'B':	/* toggle beautify */
+					flag = !boolean(value(BEAUTIFY));
+					setboolean(value(BEAUTIFY), flag);
+					break;
+				}
+				break;
 			}
-			for (cp = buf; cp < buf + cnt; cp++)
-				if ((*cp >= ' ' && *cp <= '~') ||
-				    any(*cp, value(EXCEPTIONS)))
-					putc(*cp, fscript);
+		}
+
+		if (pfds[1].revents & (POLLHUP|POLLERR))
+			goto fail;
+		if (pfds[1].revents & POLLIN) {
+			switch (len = read(FD, buf, BUFSIZ)) {
+			case 0:
+				goto fail;
+			case -1:
+				if (errno == EINTR || errno == EAGAIN)
+					continue;
+				goto fail;
+			default:
+				tipout_write(buf, len);
+				break;
+			}
 		}
 	}
+
+fail:
+	if (boolean(value(SCRIPT)) && fscript != NULL)
+		fclose(fscript);
+	kill(tipin_pid, SIGTERM);
+	exit(0);
 }
