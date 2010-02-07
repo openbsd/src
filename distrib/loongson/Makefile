@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2010/01/31 21:36:01 otto Exp $
+#	$OpenBSD: Makefile,v 1.2 2010/02/07 08:38:40 otto Exp $
 
-SUBDIR= ramdisk
+SUBDIR= ramdisk cdfs
 
 .include <bsd.subdir.mk>
