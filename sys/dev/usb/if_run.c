@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.46 2010/02/07 11:44:00 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.47 2010/02/07 11:54:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -168,12 +168,14 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(LINKSYS4,	WUSB100),
 	USB_ID(LINKSYS4,	WUSB54GCV3),
 	USB_ID(LINKSYS4,	WUSB600N),
+	USB_ID(LINKSYS4,	WUSB600NV2),
 	USB_ID(LOGITEC,		RT2870_1),
 	USB_ID(LOGITEC,		RT2870_2),
 	USB_ID(LOGITEC,		RT2870_3),
 	USB_ID(MELCO,		WLIUCAG300N),
 	USB_ID(MELCO,		WLIUCG300N),
 	USB_ID(MELCO,		WLIUCGN),
+	USB_ID(MOTOROLA4,	RT2770),
 	USB_ID(MSI,		RT3070_1),
 	USB_ID(MSI,		RT3070_2),
 	USB_ID(MSI,		RT3070_3),
@@ -198,6 +200,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(RALINK,		RT3070),
 	USB_ID(RALINK,		RT3071),
 	USB_ID(RALINK,		RT3072),
+	USB_ID(RALINK,		RT3572),
 	USB_ID(SAMSUNG2,	RT2870_1),
 	USB_ID(SENAO,		RT2870_1),
 	USB_ID(SENAO,		RT2870_2),
@@ -2988,6 +2991,11 @@ run_rt3070_rf_init(struct run_softc *sc)
 	run_read(sc, RT3070_OPT_14, &tmp);
 	run_write(sc, RT3070_OPT_14, tmp | 1);
 
+	if (sc->mac_ver == 0x3572) {
+		/* save default BBP registers 25 and 26 values */
+		run_bbp_read(sc, 25, &sc->bbp25);
+		run_bbp_read(sc, 26, &sc->bbp26);
+	}
 	if (sc->mac_ver == 0x3071) {
 		run_rt3070_rf_read(sc, 1, &rf);
 		rf &= ~(RT3070_RX0_PD | RT3070_TX0_PD);
