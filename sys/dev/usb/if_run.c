@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.41 2010/02/07 10:52:33 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.42 2010/02/07 10:56:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2732,7 +2732,7 @@ int
 run_rt3070_rf_init(struct run_softc *sc)
 {
 	uint32_t tmp;
-	uint8_t rf, bbp4;
+	uint8_t rf, target, bbp4;
 	int i;
 
 	run_rt3070_rf_read(sc, 30, &rf);
@@ -2776,7 +2776,8 @@ run_rt3070_rf_init(struct run_softc *sc)
 
 	/* calibrate filter for 20MHz bandwidth */
 	sc->rf24_20mhz = 0x1f;	/* default value */
-	run_rt3070_filter_calib(sc, 0x07, 0x16, &sc->rf24_20mhz);
+	target = (sc->mac_ver < 0x3071) ? 0x16 : 0x13;
+	run_rt3070_filter_calib(sc, 0x07, target, &sc->rf24_20mhz);
 
 	/* select 40MHz bandwidth */
 	run_bbp_read(sc, 4, &bbp4);
@@ -2784,7 +2785,8 @@ run_rt3070_rf_init(struct run_softc *sc)
 
 	/* calibrate filter for 40MHz bandwidth */
 	sc->rf24_40mhz = 0x2f;	/* default value */
-	run_rt3070_filter_calib(sc, 0x27, 0x19, &sc->rf24_40mhz);
+	target = (sc->mac_ver < 0x3071) ? 0x19 : 0x15;
+	run_rt3070_filter_calib(sc, 0x27, target, &sc->rf24_40mhz);
 
 	/* go back to 20MHz bandwidth */
 	run_bbp_read(sc, 4, &bbp4);
