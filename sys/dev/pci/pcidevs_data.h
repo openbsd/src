@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1526 2010/02/05 20:55:48 miod Exp 
+ *	OpenBSD: pcidevs,v 1.1527 2010/02/07 16:19:28 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17622,6 +17622,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_6,
 	    "VT3351 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_AHCI,
+	    "VT8251 AHCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M890_6,
