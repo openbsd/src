@@ -95,6 +95,7 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/fakesdio.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/fakethr.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/form.h
+./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/git_version.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/gv.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/handy.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/hv.h
@@ -103,6 +104,7 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/keywords.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/malloc_ctl.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/mg.h
+./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/mydtrace.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/nostdio.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/op.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/opcode.h
@@ -139,10 +141,12 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/CORE/warnings.h
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Compress
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Compress/Raw
+./usr/libdata/perl5/m68k-openbsd/5.10.1/Compress/Raw/Bzip2.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Compress/Raw/Zlib.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Compress/Zlib.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Config.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Config.pod
+./usr/libdata/perl5/m68k-openbsd/5.10.1/Config_git.pl
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Config_heavy.pl
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Cwd.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/DB_File.pm
@@ -205,11 +209,13 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Adapter
+./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Adapter/Bzip2.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Adapter/Deflate.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Adapter/Identity.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Base
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Base.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Base/Common.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Bzip2.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Deflate.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Gzip
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Compress/Gzip.pm
@@ -234,11 +240,13 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Socket/UNIX.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Adapter
+./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Adapter/Bunzip2.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Adapter/Identity.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Adapter/Inflate.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/AnyInflate.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/AnyUncompress.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Base.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Bunzip2.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Gunzip.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/Inflate.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IO/Uncompress/RawInflate.pm
@@ -246,9 +254,13 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IPC
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IPC/Msg.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IPC/Semaphore.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/IPC/SharedMem.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/IPC/SysV.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/List
+./usr/libdata/perl5/m68k-openbsd/5.10.1/List/Util
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/List/Util.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/List/Util/PP.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/List/Util/XS.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/MIME
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/MIME/Base64.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/MIME/QuotedPrint.pm
@@ -267,7 +279,9 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/PerlIO/via.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/SDBM_File.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Scalar
+./usr/libdata/perl5/m68k-openbsd/5.10.1/Scalar/Util
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Scalar/Util.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/Scalar/Util/PP.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Socket.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Storable.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/Sys
@@ -288,6 +302,9 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/B/B.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress/Raw
+./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress/Raw/Bzip2
+./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress/Raw/Bzip2/Bzip2.so
+./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress/Raw/Bzip2/autosplit.ix
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress/Raw/Zlib
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress/Raw/Zlib/Zlib.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Compress/Raw/Zlib/autosplit.ix
@@ -604,6 +621,8 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/Unicode/Normalize/Normalize.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/attrs
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/attrs/attrs.so
+./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/mro
+./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/mro/mro.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/re
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/re/re.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/sdbm
@@ -614,6 +633,7 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/threads/threads.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/encoding.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/lib.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/mro.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/ops.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/re.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/threads
