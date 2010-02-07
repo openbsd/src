@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.38 2010/02/07 10:25:21 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.39 2010/02/07 10:36:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2445,13 +2445,11 @@ run_set_rx_antenna(struct run_softc *sc, int aux)
 	uint32_t tmp;
 
 	if (aux) {
-		run_read(sc, RT2860_PCI_EECTRL, &tmp);
-		run_write(sc, RT2860_PCI_EECTRL, tmp & ~RT2860_C);
+		run_mcu_cmd(sc, RT2860_MCU_CMD_ANTSEL, 0);
 		run_read(sc, RT2860_GPIO_CTRL, &tmp);
 		run_write(sc, RT2860_GPIO_CTRL, (tmp & ~0x0808) | 0x08);
 	} else {
-		run_read(sc, RT2860_PCI_EECTRL, &tmp);
-		run_write(sc, RT2860_PCI_EECTRL, tmp | RT2860_C);
+		run_mcu_cmd(sc, RT2860_MCU_CMD_ANTSEL, 1);
 		run_read(sc, RT2860_GPIO_CTRL, &tmp);
 		run_write(sc, RT2860_GPIO_CTRL, tmp & ~0x0808);
 	}
