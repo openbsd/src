@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.40 2010/02/07 10:42:24 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.41 2010/02/07 10:52:33 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1136,21 +1136,31 @@ run_read_eeprom(struct run_softc *sc)
 	ic->ic_myaddr[4] = val & 0xff;
 	ic->ic_myaddr[5] = val >> 8;
 
-	/* read default BBP settings */
-	for (i = 0; i < 8; i++) {
+	/* read vendor BBP settings */
+	for (i = 0; i < 10; i++) {
 		run_srom_read(sc, RT2860_EEPROM_BBP_BASE + i, &val);
 		sc->bbp[i].val = val & 0xff;
 		sc->bbp[i].reg = val >> 8;
 		DPRINTF(("BBP%d=0x%02x\n", sc->bbp[i].reg, sc->bbp[i].val));
+	}
+	if (sc->mac_ver >= 0x3071) {
+		/* read vendor RF settings */
+		for (i = 0; i < 10; i++) {
+			run_srom_read(sc, RT3071_EEPROM_RF_BASE + i, &val);
+			sc->rf[i].val = val & 0xff;
+			sc->rf[i].reg = val >> 8;
+			DPRINTF(("RF%d=0x%02x\n", sc->rf[i].reg,
+			    sc->rf[i].val));
+		}
 	}
 
 	/* read RF frequency offset from EEPROM */
 	run_srom_read(sc, RT2860_EEPROM_FREQ_LEDS, &val);
 	sc->freq = ((val & 0xff) != 0xff) ? val & 0xff : 0;
 	DPRINTF(("EEPROM freq offset %d\n", sc->freq & 0xff));
-
-	if ((sc->leds = val >> 8) != 0xff) {
+	if ((val >> 8) != 0xff) {
 		/* read LEDs operating mode */
+		sc->leds = val >> 8;
 		run_srom_read(sc, RT2860_EEPROM_LED1, &sc->led[0]);
 		run_srom_read(sc, RT2860_EEPROM_LED2, &sc->led[1]);
 		run_srom_read(sc, RT2860_EEPROM_LED3, &sc->led[2]);
@@ -1168,7 +1178,12 @@ run_read_eeprom(struct run_softc *sc)
 	run_srom_read(sc, RT2860_EEPROM_ANTENNA, &val);
 	if (val == 0xffff) {
 		DPRINTF(("invalid EEPROM antenna info, using default\n"));
-		if (sc->mac_ver >= 0x3070) {
+		if (sc->mac_ver == 0x3572) {
+			/* default to RF3052 2T2R */
+			sc->rf_rev = RT3070_RF_3052;
+			sc->ntxchains = 2;
+			sc->nrxchains = 2;
+		} else if (sc->mac_ver >= 0x3070) {
 			/* default to RF3020 1T1R */
 			sc->rf_rev = RT3070_RF_3020;
 			sc->ntxchains = 1;
@@ -1187,13 +1202,18 @@ run_read_eeprom(struct run_softc *sc)
 	DPRINTF(("EEPROM RF rev=0x%02x chains=%dT%dR\n",
 	    sc->rf_rev, sc->ntxchains, sc->nrxchains));
 
-	/* check if RF supports automatic Tx access gain control */
 	run_srom_read(sc, RT2860_EEPROM_CONFIG, &val);
 	DPRINTF(("EEPROM CFG 0x%04x\n", val));
+	/* check if driver should patch the DAC issue */
+	if ((val >> 8) != 0xff)
+		sc->patch_dac = (val >> 15) & 1;
 	if ((val & 0xff) != 0xff) {
 		sc->ext_5ghz_lna = (val >> 3) & 1;
 		sc->ext_2ghz_lna = (val >> 2) & 1;
+		/* check if RF supports automatic Tx access gain control */
 		sc->calib_2ghz = sc->calib_5ghz = (val >> 1) & 1;
+		/* check if we have a hardware radio switch */
+		sc->rfswitch = val & 1;
 	}
 
 	/* read power settings for 2GHz channels */
@@ -1275,14 +1295,32 @@ run_read_eeprom(struct run_softc *sc)
 	sc->rssi_2ghz[0] = val & 0xff;	/* Ant A */
 	sc->rssi_2ghz[1] = val >> 8;	/* Ant B */
 	run_srom_read(sc, RT2860_EEPROM_RSSI2_2GHZ, &val);
-	sc->rssi_2ghz[2] = val & 0xff;	/* Ant C */
+	if (sc->mac_ver >= 0x3070) {
+		/*
+		 * On RT3070 chips (limited to 2 Rx chains), this ROM
+		 * field contains the Tx mixer gain for the 2GHz band.
+		 */
+		if ((val & 0xff) != 0xff)
+			sc->txmixgain_2ghz = val & 0x7;
+		DPRINTF(("tx mixer gain=%u (2GHz)\n", sc->txmixgain_2ghz));
+	} else
+		sc->rssi_2ghz[2] = val & 0xff;	/* Ant C */
 	sc->lna[2] = val >> 8;		/* channel group 2 */
 
 	run_srom_read(sc, RT2860_EEPROM_RSSI1_5GHZ, &val);
 	sc->rssi_5ghz[0] = val & 0xff;	/* Ant A */
 	sc->rssi_5ghz[1] = val >> 8;	/* Ant B */
 	run_srom_read(sc, RT2860_EEPROM_RSSI2_5GHZ, &val);
-	sc->rssi_5ghz[2] = val & 0xff;	/* Ant C */
+	if (sc->mac_ver == 0x3572) {
+		/*
+		 * On RT3572 chips (limited to 2 Rx chains), this ROM
+		 * field contains the Tx mixer gain for the 5GHz band.
+		 */
+		if ((val & 0xff) != 0xff)
+			sc->txmixgain_5ghz = val & 0x7;
+		DPRINTF(("tx mixer gain=%u (5GHz)\n", sc->txmixgain_5ghz));
+	} else
+		sc->rssi_5ghz[2] = val & 0xff;	/* Ant C */
 	sc->lna[3] = val >> 8;		/* channel group 3 */
 
 	run_srom_read(sc, RT2860_EEPROM_LNA, &val);

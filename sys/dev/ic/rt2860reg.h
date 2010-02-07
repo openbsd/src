@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.22 2010/02/07 10:36:25 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.23 2010/02/07 10:52:33 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -883,6 +883,7 @@ struct rt2860_rxwi {
 #define RT2860_EEPROM_TSSI5_5GHZ	0x6e
 #define RT2860_EEPROM_RPWR		0x6f
 #define RT2860_EEPROM_BBP_BASE		0x78
+#define RT3071_EEPROM_RF_BASE		0x82
 
 #define RT2860_RIDX_CCK1	 0
 #define RT2860_RIDX_CCK11	 3
