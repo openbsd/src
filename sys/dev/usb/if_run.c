@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.44 2010/02/07 11:06:31 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.45 2010/02/07 11:42:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2905,15 +2905,36 @@ run_rt3070_rf_init(struct run_softc *sc)
 	run_rt3070_rf_write(sc, 30, rf & ~0x80);
 
 	/* initialize RF registers to default value */
-	for (i = 0; i < nitems(rt3070_def_rf); i++) {
-		run_rt3070_rf_write(sc, rt3070_def_rf[i].reg,
-		    rt3070_def_rf[i].val);
+	if (sc->mac_ver == 0x3572) {
+		for (i = 0; i < nitems(rt3070_def_rf); i++) {
+			run_rt3070_rf_write(sc, rt3070_def_rf[i].reg,
+			    rt3070_def_rf[i].val);
+		}
+	} else {
+		for (i = 0; i < nitems(rt3572_def_rf); i++) {
+			run_rt3070_rf_write(sc, rt3572_def_rf[i].reg,
+			    rt3572_def_rf[i].val);
+		}
 	}
-	if (sc->mac_ver == 0x3070) {
-		/* change voltage from 1.2V to 1.35V for RT3070 */
-		run_read(sc, RT3070_LDO_CFG0, &tmp);
-		tmp = (tmp & ~0x0f000000) | 0x0d000000;
-		run_write(sc, RT3070_LDO_CFG0, tmp);
+	if (sc->mac_ver == 0x3572) {
+		run_rt3070_rf_read(sc, 6, &rf);
+		run_rt3070_rf_write(sc, 6, rf | 0x40);
+
+		if (sc->mac_rev < 0x0211 && sc->patch_dac) {
+			/* increase voltage from 1.2V to 1.35V */
+			run_read(sc, RT3070_LDO_CFG0, &tmp);
+			tmp = (tmp & ~0x1f000000) | 0x0d000000;
+			run_write(sc, RT3070_LDO_CFG0, tmp);
+		} else {
+			/* increase voltage from 1.2V to 1.35V */
+			run_read(sc, RT3070_LDO_CFG0, &tmp);
+			tmp = (tmp & ~0x1f000000) | 0x0d000000;
+			run_write(sc, RT3070_LDO_CFG0, tmp);
+			DELAY(1000);
+			/* decrease voltage back to 1.2V */
+			tmp = (tmp & ~0x1f000000) | 0x01000000;
+			run_write(sc, RT3070_LDO_CFG0, tmp);
+		}
 
 	} else if (sc->mac_ver == 0x3071) {
 		run_rt3070_rf_read(sc, 6, &rf);
@@ -2923,14 +2944,20 @@ run_rt3070_rf_init(struct run_softc *sc)
 		run_read(sc, RT3070_LDO_CFG0, &tmp);
 		tmp &= ~0x1f000000;
 		if (sc->mac_rev < 0x0211)
-			tmp |= 0x0d000000;
+			tmp |= 0x0d000000;	/* 1.35V */
 		else
-			tmp |= 0x01000000;
+			tmp |= 0x01000000;	/* 1.2V */
 		run_write(sc, RT3070_LDO_CFG0, tmp);
 
 		/* patch LNA_PE_G1 */
 		run_read(sc, RT3070_GPIO_SWITCH, &tmp);
 		run_write(sc, RT3070_GPIO_SWITCH, tmp & ~0x20);
+
+	} else if (sc->mac_ver == 0x3070) {
+		/* increase voltage from 1.2V to 1.35V */
+		run_read(sc, RT3070_LDO_CFG0, &tmp);
+		tmp = (tmp & ~0x0f000000) | 0x0d000000;
+		run_write(sc, RT3070_LDO_CFG0, tmp);
 	}
 
 	/* select 20MHz bandwidth */
