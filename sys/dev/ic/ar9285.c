@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.4 2009/11/19 17:44:03 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.5 2010/02/07 12:02:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -465,11 +465,12 @@ ar9285_1_2_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 	int ntries;
 
 	AR_SETBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_CL_CAL_ENABLE);
-	if (extc == NULL) {	/* XXX IS_CHAN_HT20!! */
+#ifndef IEEE80211_NO_HT
+	if (0 && extc == NULL) {	/* XXX IS_CHAN_HT20!! */
 		AR_SETBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_PARALLEL_CAL_ENABLE);
 		AR_SETBITS(sc, AR_PHY_TURBO, AR_PHY_FC_DYN2040_EN);
 		AR_CLRBITS(sc, AR_PHY_AGC_CONTROL,
-		    AR_PHY_AGC_CONTROL_FLTR_CAL); 
+		    AR_PHY_AGC_CONTROL_FLTR_CAL);
 		AR_CLRBITS(sc, AR_PHY_TPCRG1, AR_PHY_TPCRG1_PD_CAL_ENABLE);
 		AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_CAL);
 		for (ntries = 0; ntries < 10000; ntries++) {
@@ -484,6 +485,7 @@ ar9285_1_2_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 		AR_CLRBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_PARALLEL_CAL_ENABLE);
 		AR_CLRBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_CL_CAL_ENABLE);
 	}
+#endif
 	AR_CLRBITS(sc, AR_PHY_ADC_CTL, AR_PHY_ADC_CTL_OFF_PWDADC);
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_FLTR_CAL);
 	AR_SETBITS(sc, AR_PHY_TPCRG1, AR_PHY_TPCRG1_PD_CAL_ENABLE);
