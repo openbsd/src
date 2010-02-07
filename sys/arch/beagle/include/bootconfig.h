@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.1 2009/05/08 03:13:26 drahn Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.2 2010/02/07 18:47:45 drahn Exp $	*/
 /*	$NetBSD: bootconfig.h,v 1.2 2001/06/21 22:08:28 chris Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ typedef struct _PhysMem {
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
-#define	DRAM_BLOCKS	1
+#define	DRAM_BLOCKS	2
 
 typedef struct _BootConfig {
 	PhysMem dram[DRAM_BLOCKS];
