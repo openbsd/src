@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.36 2010/02/07 09:14:55 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.37 2010/02/07 10:10:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -352,15 +352,17 @@ static const struct rfprog {
 
 struct {
 	uint8_t	n, r, k;
-} run_rf3020_freqs[] = {
-	RT3070_RF3020
+} rt3070_freqs[] = {
+	RT3070_RF3052
 };
 
 static const struct {
 	uint8_t	reg;
 	uint8_t	val;
-} rt3070_def_rf[] = {
+}  rt3070_def_rf[] = {
 	RT3070_DEF_RF
+}, rt3572_def_rf[] = {
+	RT3572_DEF_RF
 };
 
 int
@@ -2392,10 +2394,10 @@ run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 	txpow1 = sc->txpow1[chan - 1];
 	txpow2 = sc->txpow2[chan - 1];
 
-	run_rt3070_rf_write(sc, 2, run_rf3020_freqs[chan - 1].n);
-	run_rt3070_rf_write(sc, 3, run_rf3020_freqs[chan - 1].k);
+	run_rt3070_rf_write(sc, 2, rt3070_freqs[chan - 1].n);
+	run_rt3070_rf_write(sc, 3, rt3070_freqs[chan - 1].k);
 	run_rt3070_rf_read(sc, 6, &rf);
-	rf = (rf & ~0x03) | run_rf3020_freqs[chan - 1].r;
+	rf = (rf & ~0x03) | rt3070_freqs[chan - 1].r;
 	run_rt3070_rf_write(sc, 6, rf);
 
 	/* set Tx0 power */
