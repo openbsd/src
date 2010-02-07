@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.23 2010/02/07 10:52:33 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.24 2010/02/07 11:49:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -1028,7 +1028,8 @@ static const struct rt2860_rate {
 	{  91, 0x04 },	\
 	{  92, 0x00 },	\
 	{ 103, 0x00 },	\
-	{ 105, 0x05 }
+	{ 105, 0x05 },	\
+	{ 106, 0x35 }
 
 /*
  * Default settings for RF registers; values derived from the reference driver.
