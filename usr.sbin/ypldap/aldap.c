@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.21 2010/02/06 08:04:45 blambert Exp $ */
-/*	$OpenBSD: aldap.c,v 1.21 2010/02/06 08:04:45 blambert Exp $ */
+/*	$Id: aldap.c,v 1.22 2010/02/07 13:04:25 blambert Exp $ */
+/*	$OpenBSD: aldap.c,v 1.22 2010/02/07 13:04:25 blambert Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -166,7 +166,7 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 	if ((ber = ber_add_sequence(ber)) == NULL)
 		goto fail;
 	if (attrs != NULL)
-		for (i = 0; i >= 0 && attrs[i] != NULL; i++) {
+		for (i = 0; attrs[i] != NULL; i++) {
 			if ((ber = ber_add_string(ber, attrs[i])) == NULL)
 				goto fail;
 		}
@@ -222,7 +222,7 @@ aldap_parse(struct aldap *ldap)
 	case LDAP_RES_COMPARE:
 	case LDAP_RES_SEARCH_RESULT:
 		if (ber_scanf_elements(m->protocol_op, "{EeSeSe",
-			    &m->body.res.rescode, &m->dn, &m->body.res.diagmsg, &a) != 0)
+		    &m->body.res.rescode, &m->dn, &m->body.res.diagmsg, &a) != 0)
 			goto parsefail;
 		if (m->body.res.rescode == LDAP_REFERRAL)
 			if (ber_scanf_elements(a, "{e", &m->references) != 0)
@@ -290,7 +290,7 @@ aldap_free_references(char **values)
 	if (values == NULL)
 		return;
 
-	for (i = 0; i >= 0 && values[i] != NULL; i++)
+	for (i = 0; values[i] != NULL; i++)
 		free(values[i]);
 
 	free(values);
@@ -319,7 +319,8 @@ aldap_count_entries(struct aldap_message *msg)
 	if (msg->body.search.entries == NULL)
 		return (-1);
 
-	for (i = 0, a = msg->body.search.entries; i >= 0 && a != NULL && ber_get_eoc(a) != 0;
+	for (i = 0, a = msg->body.search.entries;
+	    a != NULL && ber_get_eoc(a) != 0;
 	    i++, a = a->be_next)
 		;
 
@@ -336,8 +337,8 @@ aldap_first_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
 	if (msg->body.search.entries == NULL)
 		goto fail;
 
-	if (ber_scanf_elements(msg->body.search.entries, "{s(e)}e", &key, &b,
-		    &c) != 0)
+	if (ber_scanf_elements(msg->body.search.entries, "{s(e)}e",
+	    &key, &b, &c) != 0)
 		goto fail;
 
 	msg->body.search.iter = msg->body.search.entries->be_next;
@@ -435,7 +436,7 @@ aldap_free_entry(char **values)
 	if (values == NULL)
 		return -1;
 
-	for (i = 0; i >= 0 && values[i] != NULL; i++)
+	for (i = 0; values[i] != NULL; i++)
 		free(values[i]);
 
 	free(values);
@@ -600,7 +601,7 @@ aldap_get_stringset(struct ber_element *elm)
 	if ((ret = calloc(i + 1, sizeof(char *))) == NULL)
 		return NULL;
 
-	for (a = elm, i = 0; i >= 0 && a->be_type == BER_TYPE_OCTETSTRING;
+	for (a = elm, i = 0; a->be_type == BER_TYPE_OCTETSTRING;
 	    a = a->be_next, i++) {
 
 		ber_get_string(a, &s);
@@ -654,7 +655,7 @@ ldap_parse_search_filter(struct ber_element *ber, char *filter)
  * notes:
  *	when cp is passed to a recursive invocation, it is updated
  *	    to point one character beyond the filter that was passed
- *	    i.e., cp jumps to "(filter)"
+ *	    i.e., cp jumps to "(filter)" upon return
  *	                               ^
  *	goto's used to discriminate error-handling based on error type
  *	doesn't handle extended filters (yet)
@@ -1111,7 +1112,7 @@ parseval(char *p, size_t len)
 	if ((buffer = calloc(1, size)) == NULL)
 		return NULL;
 
-	for (i = 0, j = 0; i >= 0 && j < len; i++) {
+	for (i = j = 0; j < len; i++) {
 		if (i >= size) {
 			newsize = size + 1024;
 			if ((newbuffer = realloc(buffer, newsize)) == NULL) {
