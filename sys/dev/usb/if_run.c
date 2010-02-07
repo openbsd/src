@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.43 2010/02/07 11:02:24 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.44 2010/02/07 11:06:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2441,17 +2441,21 @@ run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 {
 	int8_t txpow1, txpow2;
 	uint8_t rf;
+	int i;
 
 	KASSERT(chan >= 1 && chan <= 14);	/* RT3070 is 2GHz only */
 
-	/* use Tx power values from EEPROM */
-	txpow1 = sc->txpow1[chan - 1];
-	txpow2 = sc->txpow2[chan - 1];
+	/* find the settings for this channel (we know it exists) */
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
 
-	run_rt3070_rf_write(sc, 2, rt3070_freqs[chan - 1].n);
-	run_rt3070_rf_write(sc, 3, rt3070_freqs[chan - 1].k);
+	/* use Tx power values from EEPROM */
+	txpow1 = sc->txpow1[i];
+	txpow2 = sc->txpow2[i];
+
+	run_rt3070_rf_write(sc, 2, rt3070_freqs[i].n);
+	run_rt3070_rf_write(sc, 3, rt3070_freqs[i].k);
 	run_rt3070_rf_read(sc, 6, &rf);
-	rf = (rf & ~0x03) | rt3070_freqs[chan - 1].r;
+	rf = (rf & ~0x03) | rt3070_freqs[i].r;
 	run_rt3070_rf_write(sc, 6, rf);
 
 	/* set Tx0 power */
@@ -2482,8 +2486,12 @@ run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 	run_rt3070_rf_write(sc, 23, rf);
 
 	/* program RF filter */
-	run_rt3070_rf_write(sc, 24, sc->rf24_20mhz);
-	run_rt3070_rf_write(sc, 31, sc->rf24_20mhz);
+	run_rt3070_rf_read(sc, 24, &rf);	/* Tx */
+	rf = (rf & ~0x3f) | sc->rf24_20mhz;
+	run_rt3070_rf_write(sc, 24, rf);
+	run_rt3070_rf_read(sc, 31, &rf);	/* Rx */
+	rf = (rf & ~0x3f) | sc->rf24_20mhz;
+	run_rt3070_rf_write(sc, 31, rf);
 
 	/* enable RF tuning */
 	run_rt3070_rf_read(sc, 7, &rf);
@@ -2545,13 +2553,13 @@ run_rt3572_set_chan(struct run_softc *sc, u_int chan)
 	run_rt3070_rf_read(sc, 1, &rf);
 	rf &= ~0xfc;
 	if (sc->ntxchains == 1)
-		rf |= 1 << 7 | 1 << 5;
+		rf |= 1 << 7 | 1 << 5;	/* 1T: disable Tx chains 2 & 3 */
 	else if (sc->ntxchains == 2)
-		rf |= 1 << 7;
+		rf |= 1 << 7;		/* 2T: disable Tx chain 3 */
 	if (sc->nrxchains == 1)
-		rf |= 1 << 6 | 1 << 4;
+		rf |= 1 << 6 | 1 << 4;	/* 1R: disable Rx chains 2 & 3 */
 	else if (sc->nrxchains == 2)
-		rf |= 1 << 6;
+		rf |= 1 << 6;		/* 2R: disable Rx chain 3 */
 	run_rt3070_rf_write(sc, 1, rf);
 
 	/* set RF offset */
