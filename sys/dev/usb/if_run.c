@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.49 2010/02/07 12:12:11 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.50 2010/02/07 12:44:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2367,7 +2367,12 @@ run_select_chan_group(struct run_softc *sc, int group)
 		if (sc->nrxchains > 1)
 			tmp |= RT2860_LNA_PE_A1_EN;
 	}
-	run_write(sc, RT2860_TX_PIN_CFG, tmp);
+	if (sc->mac_ver == 0x3572) {
+		run_rt3070_rf_write(sc, 8, 0x00);
+		run_write(sc, RT2860_TX_PIN_CFG, tmp);
+		run_rt3070_rf_write(sc, 8, 0x80);
+	} else
+		run_write(sc, RT2860_TX_PIN_CFG, tmp);
 
 	/* set initial AGC value */
 	if (group == 0) {	/* 2GHz band */
