@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.37 2010/02/07 10:10:51 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.38 2010/02/07 10:25:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -387,6 +387,7 @@ run_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	int i, nrx, ntx, ntries, error;
+	uint32_t ver;
 
 	sc->sc_udev = uaa->device;
 
@@ -440,9 +441,9 @@ run_attach(struct device *parent, struct device *self, void *aux)
 
 	/* wait for the chip to settle */
 	for (ntries = 0; ntries < 100; ntries++) {
-		if (run_read(sc, RT2860_ASIC_VER_ID, &sc->mac_rev) != 0)
+		if (run_read(sc, RT2860_ASIC_VER_ID, &ver) != 0)
 			return;
-		if (sc->mac_rev != 0 && sc->mac_rev != 0xffffffff)
+		if (ver != 0 && ver != 0xffffffff)
 			break;
 		DELAY(10);
 	}
@@ -451,13 +452,15 @@ run_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	sc->mac_ver = ver >> 16;
+	sc->mac_rev = ver & 0xffff;
 
 	/* retrieve RF rev. no and various other things from EEPROM */
 	run_read_eeprom(sc);
 
 	printf("%s: MAC/BBP RT%04X (rev 0x%04X), RF %s (MIMO %dT%dR), "
-	    "address %s\n", sc->sc_dev.dv_xname, sc->mac_rev >> 16,
-	    sc->mac_rev & 0xffff, run_get_rf(sc->rf_rev), sc->ntxchains,
+	    "address %s\n", sc->sc_dev.dv_xname, sc->mac_ver,
+	    sc->mac_rev, run_get_rf(sc->rf_rev), sc->ntxchains,
 	    sc->nrxchains, ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
@@ -685,9 +688,9 @@ run_load_microcode(struct run_softc *sc)
 	int ntries, error;
 
 	/* RT3071/RT3072 use a different firmware */
-	if ((sc->mac_rev >> 16) != 0x2860 &&
-	    (sc->mac_rev >> 16) != 0x2872 &&
-	    (sc->mac_rev >> 16) != 0x3070)
+	if (sc->mac_ver != 0x2860 &&
+	    sc->mac_ver != 0x2872 &&
+	    sc->mac_ver != 0x3070)
 		fwname = "run-rt3071";
 	else
 		fwname = "run-rt2870";
@@ -1110,7 +1113,7 @@ run_read_eeprom(struct run_softc *sc)
 
 	/* check whether the ROM is eFUSE ROM or EEPROM */
 	sc->sc_srom_read = run_eeprom_read_2;
-	if ((sc->mac_rev & 0xfff00000) >= 0x30700000) {
+	if (sc->mac_ver >= 0x3070) {
 		run_read(sc, RT3070_EFUSE_CTRL, &tmp);
 		DPRINTF(("EFUSE_CTRL=0x%08x\n", tmp));
 		if (tmp & RT3070_SEL_EFUSE)
@@ -1164,7 +1167,7 @@ run_read_eeprom(struct run_softc *sc)
 	run_srom_read(sc, RT2860_EEPROM_ANTENNA, &val);
 	if (val == 0xffff) {
 		DPRINTF(("invalid EEPROM antenna info, using default\n"));
-		if ((sc->mac_rev >> 16) >= 0x3070) {
+		if (sc->mac_ver >= 0x3070) {
 			/* default to RF3020 1T1R */
 			sc->rf_rev = RT3070_RF_3020;
 			sc->ntxchains = 1;
@@ -2464,7 +2467,7 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return EINVAL;
 
-	if ((sc->mac_rev >> 16) >= 0x3070)
+	if (sc->mac_ver >= 0x3070)
 		run_rt3070_set_chan(sc, chan);
 	else
 		run_rt2870_set_chan(sc, chan);
@@ -2648,15 +2651,15 @@ run_bbp_init(struct run_softc *sc)
 	}
 
 	/* fix BBP84 for RT2860E */
-	if ((sc->mac_rev >> 16) == 0x2860 && (sc->mac_rev & 0xffff) != 0x0101)
+	if (sc->mac_ver == 0x2860 && sc->mac_rev != 0x0101)
 		run_bbp_write(sc,  84, 0x19);
 
-	if ((sc->mac_rev >> 16) >= 0x3070) {
+	if (sc->mac_ver >= 0x3070) {
 		run_bbp_write(sc, 79, 0x13);
 		run_bbp_write(sc, 80, 0x05);
 		run_bbp_write(sc, 81, 0x33);
 		/* XXX RT3090 needs more */
-	} else if (sc->mac_rev == 0x28600100) {
+	} else if (sc->mac_ver == 0x2860 && sc->mac_rev == 0x0100) {
 		run_bbp_write(sc, 69, 0x16);
 		run_bbp_write(sc, 73, 0x12);
 	}
@@ -2681,20 +2684,20 @@ run_rt3070_rf_init(struct run_softc *sc)
 		run_rt3070_rf_write(sc, rt3070_def_rf[i].reg,
 		    rt3070_def_rf[i].val);
 	}
-	if ((sc->mac_rev >> 16) == 0x3070) {
+	if (sc->mac_ver == 0x3070) {
 		/* change voltage from 1.2V to 1.35V for RT3070 */
 		run_read(sc, RT3070_LDO_CFG0, &tmp);
 		tmp = (tmp & ~0x0f000000) | 0x0d000000;
 		run_write(sc, RT3070_LDO_CFG0, tmp);
 
-	} else if ((sc->mac_rev >> 16) == 0x3071) {
+	} else if (sc->mac_ver == 0x3071) {
 		run_rt3070_rf_read(sc, 6, &rf);
 		run_rt3070_rf_write(sc, 6, rf | 0x40);
 		run_rt3070_rf_write(sc, 31, 0x14);
 
 		run_read(sc, RT3070_LDO_CFG0, &tmp);
 		tmp &= ~0x1f000000;
-		if ((sc->mac_rev & 0xffff) < 0x0211)
+		if (sc->mac_rev < 0x0211)
 			tmp |= 0x0d000000;
 		else
 			tmp |= 0x01000000;
@@ -2725,13 +2728,13 @@ run_rt3070_rf_init(struct run_softc *sc)
 	run_bbp_read(sc, 4, &bbp4);
 	run_bbp_write(sc, 4, bbp4 & ~0x18);
 
-	if ((sc->mac_rev & 0xffff) < 0x0211)
+	if (sc->mac_rev < 0x0211)
 		run_rt3070_rf_write(sc, 27, 0x03);
 
 	run_read(sc, RT3070_OPT_14, &tmp);
 	run_write(sc, RT3070_OPT_14, tmp | 1);
 
-	if ((sc->mac_rev >> 16) == 0x3071) {
+	if (sc->mac_ver == 0x3071) {
 		run_rt3070_rf_read(sc, 1, &rf);
 		rf &= ~(RT3070_RX0_PD | RT3070_TX0_PD);
 		rf |= RT3070_RF_BLOCK | RT3070_RX1_PD | RT3070_TX1_PD;
@@ -2742,7 +2745,7 @@ run_rt3070_rf_init(struct run_softc *sc)
 
 		run_rt3070_rf_read(sc, 17, &rf);
 		rf &= ~RT3070_TX_LO1;
-		if ((sc->mac_rev & 0xffff) >= 0x0211 && !sc->ext_2ghz_lna)
+		if (sc->mac_rev >= 0x0211 && !sc->ext_2ghz_lna)
 			rf |= 0x20;	/* fix for long range Rx issue */
 		run_rt3070_rf_write(sc, 17, rf);
 
@@ -2754,7 +2757,7 @@ run_rt3070_rf_init(struct run_softc *sc)
 
 		run_rt3070_rf_read(sc, 27, &rf);
 		rf &= ~0x77;
-		if ((sc->mac_rev & 0xffff) < 0x0211)
+		if (sc->mac_rev < 0x0211)
 			rf |= 0x03;
 		run_rt3070_rf_write(sc, 27, rf);
 	}
@@ -2957,7 +2960,7 @@ run_init(struct ifnet *ifp)
 	run_write(sc, RT2860_WMM_CWMIN_CFG, 0x00002344);
 	run_write(sc, RT2860_WMM_CWMAX_CFG, 0x000034aa);
 
-	if ((sc->mac_rev >> 16) >= 0x3070) {
+	if (sc->mac_ver >= 0x3070) {
 		/* set delay of PA_PE assertion to 1us (unit of 0.25us) */
 		run_write(sc, RT2860_TX_SW_CFG0,
 		    4 << RT2860_DLY_PAPE_EN_SHIFT);
@@ -3006,7 +3009,7 @@ run_init(struct ifnet *ifp)
 	tmp = (tmp & ~0xff) | 0x1e;
 	run_write(sc, RT2860_US_CYC_CNT, tmp);
 
-	if ((sc->mac_rev >> 16) == 0x2860 && (sc->mac_rev & 0xffff) != 0x0101)
+	if (sc->mac_ver == 0x2860 && sc->mac_rev != 0x0101)
 		run_write(sc, RT2860_TXOP_CTRL_CFG, 0x0000583f);
 
 	run_write(sc, RT2860_WMM_TXOP0_CFG, 0);
@@ -3043,7 +3046,7 @@ run_init(struct ifnet *ifp)
 		bbp1 &= ~(1 << 3 | 1 << 4);
 	run_bbp_write(sc, 1, bbp1);
 
-	if ((sc->mac_rev >> 16) >= 0x3070)
+	if (sc->mac_ver >= 0x3070)
 		run_rt3070_rf_init(sc);
 
 	/* select default channel */

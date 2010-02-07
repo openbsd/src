@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.4 2010/02/07 09:14:55 damien Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.5 2010/02/07 10:25:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -142,7 +142,8 @@ struct run_softc {
 	usbd_device_handle		sc_udev;
 	usbd_interface_handle		sc_iface;
 
-	uint32_t			mac_rev;
+	uint16_t			mac_ver;
+	uint16_t			mac_rev;
 	uint8_t				rf_rev;
 	uint8_t				freq;
 	uint8_t				ntxchains;
