@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.38 2009/12/10 21:01:29 oga Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.39 2010/02/07 09:14:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2466,7 +2466,7 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 		    rt2860_rf2850[i].chan, sc->txpow1[i], sc->txpow2[i]));
 	}
 	/* read power settings for 5GHz channels */
-	for (i = 0; i < 36; i += 2) {
+	for (i = 0; i < 40; i += 2) {
 		val = rt2860_eeprom_read(sc,
 		    RT2860_EEPROM_PWR5GHZ_BASE1 + i / 2);
 		sc->txpow1[i + 14] = (int8_t)(val & 0xff);
@@ -2478,7 +2478,7 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 		sc->txpow2[i + 15] = (int8_t)(val >> 8);
 	}
 	/* fix broken Tx power entries */
-	for (i = 0; i < 36; i++) {
+	for (i = 0; i < 40; i++) {
 		if (sc->txpow1[14 + i] < -7 || sc->txpow1[14 + i] > 15)
 			sc->txpow1[14 + i] = 5;
 		if (sc->txpow2[14 + i] < -7 || sc->txpow2[14 + i] > 15)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.35 2009/12/10 21:04:16 oga Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.36 2010/02/07 09:14:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1210,7 +1210,7 @@ run_read_eeprom(struct run_softc *sc)
 		    rt2860_rf2850[i].chan, sc->txpow1[i], sc->txpow2[i]));
 	}
 	/* read power settings for 5GHz channels */
-	for (i = 0; i < 36; i += 2) {
+	for (i = 0; i < 40; i += 2) {
 		run_srom_read(sc, RT2860_EEPROM_PWR5GHZ_BASE1 + i / 2, &val);
 		sc->txpow1[i + 14] = (int8_t)(val & 0xff);
 		sc->txpow1[i + 15] = (int8_t)(val >> 8);
@@ -1220,7 +1220,7 @@ run_read_eeprom(struct run_softc *sc)
 		sc->txpow2[i + 15] = (int8_t)(val >> 8);
 	}
 	/* fix broken Tx power entries */
-	for (i = 0; i < 36; i++) {
+	for (i = 0; i < 40; i++) {
 		if (sc->txpow1[14 + i] < -7 || sc->txpow1[14 + i] > 15)
 			sc->txpow1[14 + i] = 5;
 		if (sc->txpow2[14 + i] < -7 || sc->txpow2[14 + i] > 15)

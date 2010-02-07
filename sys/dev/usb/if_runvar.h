@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.3 2009/03/26 20:17:27 damien Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.4 2010/02/07 09:14:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -155,8 +155,8 @@ struct run_softc {
 	uint8_t				ext_5ghz_lna;
 	uint8_t				calib_2ghz;
 	uint8_t				calib_5ghz;
-	int8_t				txpow1[50];
-	int8_t				txpow2[50];
+	int8_t				txpow1[54];
+	int8_t				txpow2[54];
 	int8_t				rssi_2ghz[3];
 	int8_t				rssi_5ghz[3];
 	uint8_t				lna[4];

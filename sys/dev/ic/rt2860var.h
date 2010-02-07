@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.12 2009/08/10 17:47:23 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.13 2010/02/07 09:14:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -145,8 +145,8 @@ struct rt2860_softc {
 	uint8_t				ntxchains;
 	uint8_t				nrxchains;
 	uint8_t				pslevel;
-	int8_t				txpow1[50];
-	int8_t				txpow2[50];
+	int8_t				txpow1[54];
+	int8_t				txpow2[54];
 	int8_t				rssi_2ghz[3];
 	int8_t				rssi_5ghz[3];
 	uint8_t				lna[4];
