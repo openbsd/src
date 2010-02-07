@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.6 2010/02/07 10:52:33 damien Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.7 2010/02/07 11:02:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -150,6 +150,8 @@ struct run_softc {
 	uint8_t				nrxchains;
 	int				fixed_ridx;
 
+	uint8_t				bbp25;
+	uint8_t				bbp26;
 	uint8_t				rf24_20mhz;
 	uint8_t				rf24_40mhz;
 	uint8_t				patch_dac;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.42 2010/02/07 10:56:11 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.43 2010/02/07 11:02:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -301,6 +301,7 @@ void		run_set_agc(struct run_softc *, uint8_t);
 void		run_set_rx_antenna(struct run_softc *, int);
 void		run_rt2870_set_chan(struct run_softc *, u_int);
 void		run_rt3070_set_chan(struct run_softc *, u_int);
+void		run_rt3572_set_chan(struct run_softc *, u_int);
 int		run_set_chan(struct run_softc *, struct ieee80211_channel *);
 void		run_enable_tsf_sync(struct run_softc *);
 void		run_enable_mrr(struct run_softc *);
@@ -476,7 +477,9 @@ run_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_WEP |		/* WEP */
 	    IEEE80211_C_RSN;		/* WPA/RSN */
 
-	if (sc->rf_rev == RT2860_RF_2750 || sc->rf_rev == RT2860_RF_2850) {
+	if (sc->rf_rev == RT2860_RF_2750 ||
+	    sc->rf_rev == RT2860_RF_2850 ||
+	    sc->rf_rev == RT3070_RF_3052) {
 		/* set supported .11a rates */
 		ic->ic_sup_rates[IEEE80211_MODE_11A] =
 		    ieee80211_std_rateset_11a;
@@ -2488,6 +2491,156 @@ run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 }
 
 void
+run_rt3572_set_chan(struct run_softc *sc, u_int chan)
+{
+	int8_t txpow1, txpow2;
+	uint32_t tmp;
+	uint8_t rf;
+	int i;
+
+	/* find the settings for this channel (we know it exists) */
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
+
+	/* use Tx power values from EEPROM */
+	txpow1 = sc->txpow1[i];
+	txpow2 = sc->txpow2[i];
+
+	if (chan <= 14) {
+		run_bbp_write(sc, 25, sc->bbp25);
+		run_bbp_write(sc, 26, sc->bbp26);
+	} else {
+		/* enable IQ phase correction */
+		run_bbp_write(sc, 25, 0x09);
+		run_bbp_write(sc, 26, 0xff);
+	}
+
+	run_rt3070_rf_write(sc, 2, rt3070_freqs[i].n);
+	run_rt3070_rf_write(sc, 3, rt3070_freqs[i].k);
+	run_rt3070_rf_read(sc, 6, &rf);
+	rf  = (rf & ~0x0f) | rt3070_freqs[i].r;
+	rf |= (chan <= 14) ? 0x08 : 0x04;
+	run_rt3070_rf_write(sc, 6, rf);
+
+	/* set PLL mode */
+	run_rt3070_rf_read(sc, 5, &rf);
+	rf &= ~(0x08 | 0x04);
+	rf |= (chan <= 14) ? 0x04 : 0x08;
+	run_rt3070_rf_write(sc, 5, rf);
+
+	/* set Tx power for chain 0 */
+	if (chan <= 14)
+		rf = 0x60 | txpow1;
+	else
+		rf = 0xe0 | (txpow1 & 0xc) << 1 | (txpow1 & 0x3);
+	run_rt3070_rf_write(sc, 12, rf);
+
+	/* set Tx power for chain 1 */
+	if (chan <= 14)
+		rf = 0x60 | txpow2;
+	else
+		rf = 0xe0 | (txpow2 & 0xc) << 1 | (txpow2 & 0x3);
+	run_rt3070_rf_write(sc, 13, rf);
+
+	/* set Tx/Rx streams */
+	run_rt3070_rf_read(sc, 1, &rf);
+	rf &= ~0xfc;
+	if (sc->ntxchains == 1)
+		rf |= 1 << 7 | 1 << 5;
+	else if (sc->ntxchains == 2)
+		rf |= 1 << 7;
+	if (sc->nrxchains == 1)
+		rf |= 1 << 6 | 1 << 4;
+	else if (sc->nrxchains == 2)
+		rf |= 1 << 6;
+	run_rt3070_rf_write(sc, 1, rf);
+
+	/* set RF offset */
+	run_rt3070_rf_read(sc, 23, &rf);
+	rf = (rf & ~0x7f) | sc->freq;
+	run_rt3070_rf_write(sc, 23, rf);
+
+	/* program RF filter */
+	rf = sc->rf24_20mhz;
+	run_rt3070_rf_write(sc, 24, rf);	/* Tx */
+	run_rt3070_rf_write(sc, 31, rf);	/* Rx */
+
+	/* enable RF tuning */
+	run_rt3070_rf_read(sc, 7, &rf);
+	rf = (chan <= 14) ? 0xd8 : ((rf & ~0xc8) | 0x14);
+	run_rt3070_rf_write(sc, 7, rf);
+
+	/* TSSI */
+	rf = (chan <= 14) ? 0xc3 : 0xc0;
+	run_rt3070_rf_write(sc, 9, rf);
+
+	/* set loop filter 1 */
+	run_rt3070_rf_write(sc, 10, 0xf1);
+	/* set loop filter 2 */
+	run_rt3070_rf_write(sc, 11, (chan <= 14) ? 0xb9 : 0x00);
+
+	/* set tx_mx2_ic */
+	run_rt3070_rf_write(sc, 15, (chan <= 14) ? 0x53 : 0x43);
+	/* set tx_mx1_ic */
+	if (chan <= 14)
+		rf = 0x48 | sc->txmixgain_2ghz;
+	else
+		rf = 0x78 | sc->txmixgain_5ghz;
+	run_rt3070_rf_write(sc, 16, rf);
+
+	/* set tx_lo1 */
+	run_rt3070_rf_write(sc, 17, 0x23);
+	/* set tx_lo2 */
+	if (chan <= 14)
+		rf = 0x93;
+	else if (chan <= 64)
+		rf = 0xb7;
+	else if (chan <= 128)
+		rf = 0x74;
+	else
+		rf = 0x72;
+	run_rt3070_rf_write(sc, 19, rf);
+
+	/* set rx_lo1 */
+	if (chan <= 14)
+		rf = 0xb3;
+	else if (chan <= 64)
+		rf = 0xf6;
+	else if (chan <= 128)
+		rf = 0xf4;
+	else
+		rf = 0xf3;
+	run_rt3070_rf_write(sc, 20, rf);
+
+	/* set pfd_delay */
+	if (chan <= 14)
+		rf = 0x15;
+	else if (chan <= 64)
+		rf = 0x3d;
+	else
+		rf = 0x01;
+	run_rt3070_rf_write(sc, 25, rf);
+
+	/* set rx_lo2 */
+	run_rt3070_rf_write(sc, 26, (chan <= 14) ? 0x85 : 0x87);
+	/* set ldo_rf_vc */
+	run_rt3070_rf_write(sc, 27, (chan <= 14) ? 0x00 : 0x01);
+	/* set drv_cc */
+	run_rt3070_rf_write(sc, 29, (chan <= 14) ? 0x9b : 0x9f);
+
+	run_read(sc, RT2860_GPIO_CTRL, &tmp);
+	tmp &= ~0x8080;
+	if (chan <= 14)
+		tmp |= 0x80;
+	run_write(sc, RT2860_GPIO_CTRL, tmp);
+
+	/* enable RF tuning */
+	run_rt3070_rf_read(sc, 7, &rf);
+	run_rt3070_rf_write(sc, 7, rf | 0x01);
+
+	DELAY(2000);
+}
+
+void
 run_set_agc(struct run_softc *sc, uint8_t agc)
 {
 	uint8_t bbp;
@@ -2529,7 +2682,9 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return EINVAL;
 
-	if (sc->mac_ver >= 0x3070)
+	if (sc->mac_ver == 0x3572)
+		run_rt3572_set_chan(sc, chan);
+	else if (sc->mac_ver >= 0x3070)
 		run_rt3070_set_chan(sc, chan);
 	else
 		run_rt2870_set_chan(sc, chan);
