@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.45 2010/02/07 11:42:24 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.46 2010/02/07 11:44:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -3001,6 +3001,8 @@ run_rt3070_rf_init(struct run_softc *sc)
 		rf &= ~RT3070_TX_LO1;
 		if (sc->mac_rev >= 0x0211 && !sc->ext_2ghz_lna)
 			rf |= 0x20;	/* fix for long range Rx issue */
+		if (sc->txmixgain_2ghz >= 2)
+			rf = (rf & ~0x7) | sc->txmixgain_2ghz;
 		run_rt3070_rf_write(sc, 17, rf);
 
 		run_rt3070_rf_read(sc, 20, &rf);
@@ -3009,6 +3011,7 @@ run_rt3070_rf_init(struct run_softc *sc)
 		run_rt3070_rf_read(sc, 21, &rf);
 		run_rt3070_rf_write(sc, 21, rf & ~RT3070_RX_LO2);
 
+		/* fix Tx to Rx IQ glitch by raising RF voltage */
 		run_rt3070_rf_read(sc, 27, &rf);
 		rf &= ~0x77;
 		if (sc->mac_rev < 0x0211)
