@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.7 2010/01/28 17:02:55 damien Exp $
+.\" $OpenBSD: athn.4,v 1.8 2010/02/08 19:17:27 damien Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2010 $
+.Dd $Mdocdate: February 8 2010 $
 .Os
 .Dt ATHN 4
 .Sh NAME
@@ -76,6 +76,11 @@ It operates in the 2GHz spectrum and supports a single stream (1T1R).
 It can be combined with the AR3011 chip to form a combo WiFi/Bluetooth
 device (WB195).
 .Pp
+The AR2427 is a single-chip PCIe 802.11b/g solution similar to the other
+AR9280 solutions but with 802.11n capabilities removed.
+It exists in PCIe Mini Card form factor only.
+It operates in the 2GHz spectrum.
+.Pp
 The AR9227 and AR9287 are single-chip 802.11n solutions that
 target mid-tier PCs.
 The AR9227 exists in PCI and Mini-PCI form factors.
@@ -103,6 +108,7 @@ The following table summarizes the supported chips and their capabilities.
 .It AR9280	2GHz/5GHz	2x2	PCIe
 .It AR9281	2GHz	1x2	PCIe
 .It AR9285	2GHz	1x1	PCIe
+.It AR2427	2GHz	1x1	PCIe
 .It AR9227	2GHz	2x2	PCI
 .It AR9287	2GHz	2x2	PCIe
 .El
