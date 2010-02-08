@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.49 2010/01/13 02:13:12 henning Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.50 2010/02/08 12:04:35 jsing Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -62,10 +62,10 @@ unsigned long in6_maxmtu = 0;
 
 int ip6_auto_linklocal = 1;	/* enable by default */
 
-static int get_rand_ifid(struct ifnet *, struct in6_addr *);
-static int get_hw_ifid(struct ifnet *, struct in6_addr *);
-static int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
-static int in6_ifattach_loopback(struct ifnet *);
+int get_rand_ifid(struct ifnet *, struct in6_addr *);
+int get_hw_ifid(struct ifnet *, struct in6_addr *);
+int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
+int in6_ifattach_loopback(struct ifnet *);
 
 #define EUI64_GBIT	0x01
 #define EUI64_UBIT	0x02
@@ -87,7 +87,7 @@ static int in6_ifattach_loopback(struct ifnet *);
  *
  * in6 - upper 64bits are preserved
  */
-static int
+int
 get_rand_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	MD5_CTX ctxt;
@@ -124,7 +124,7 @@ get_rand_ifid(struct ifnet *ifp, struct in6_addr *in6)
  *
  * in6 - upper 64bits are preserved
  */
-static int
+int
 get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	struct ifaddr *ifa;
@@ -241,7 +241,7 @@ found:
  *
  * altifp - secondary EUI64 source
  */
-static int
+int
 get_ifid(struct ifnet *ifp0, struct ifnet *altifp, struct in6_addr *in6)
 {
 	struct ifnet *ifp;
@@ -439,7 +439,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
  * ifp - must be IFT_LOOP
  */
 
-static int
+int
 in6_ifattach_loopback(struct ifnet *ifp)
 {
 	struct in6_aliasreq ifra;
@@ -498,7 +498,7 @@ in6_ifattach_loopback(struct ifnet *ifp)
  */
 int
 in6_nigroup(struct ifnet *ifp, const char *name, int namelen, 
-	struct sockaddr_in6 *sa6)
+    struct sockaddr_in6 *sa6)
 {
 	const char *p;
 	u_int8_t *q;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.23 2008/11/23 13:30:59 claudio Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.24 2010/02/08 12:04:35 jsing Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -86,9 +86,9 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
-static int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
-	struct ip6_moptions *, struct route_in6 *, struct ifnet **,
-	struct rtentry **, int);
+int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
+    struct ip6_moptions *, struct route_in6 *, struct ifnet **,
+    struct rtentry **, int);
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
@@ -97,13 +97,9 @@ static int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
  * an entry to the caller for later use.
  */
 struct in6_addr *
-in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
-	struct sockaddr_in6 *dstsock;
-	struct ip6_pktopts *opts;
-	struct ip6_moptions *mopts;
-	struct route_in6 *ro;
-	struct in6_addr *laddr;
-	int *errorp;
+in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+    struct ip6_moptions *mopts, struct route_in6 *ro, struct in6_addr *laddr,
+    int *errorp)
 {
 	struct in6_addr *dst;
 	struct in6_ifaddr *ia6 = 0;
@@ -292,15 +288,10 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	return (0);
 }
 
-static int
-selectroute(dstsock, opts, mopts, ro, retifp, retrt, norouteok)
-	struct sockaddr_in6 *dstsock;
-	struct ip6_pktopts *opts;
-	struct ip6_moptions *mopts;
-	struct route_in6 *ro;
-	struct ifnet **retifp;
-	struct rtentry **retrt;
-	int norouteok;
+int
+selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
+    struct rtentry **retrt, int norouteok)
 {
 	int error = 0;
 	struct ifnet *ifp = NULL;
@@ -492,13 +483,9 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, norouteok)
 }
 
 int
-in6_selectroute(dstsock, opts, mopts, ro, retifp, retrt)
-	struct sockaddr_in6 *dstsock;
-	struct ip6_pktopts *opts;
-	struct ip6_moptions *mopts;
-	struct route_in6 *ro;
-	struct ifnet **retifp;
-	struct rtentry **retrt;
+in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
+    struct rtentry **retrt)
 {
 
 	return (selectroute(dstsock, opts, mopts, ro, retifp, retrt, 0));
@@ -514,9 +501,7 @@ in6_selectroute(dstsock, opts, mopts, ro, retifp, retrt)
 #define in6pcb		inpcb
 #define in6p_hops	inp_hops	
 int
-in6_selecthlim(in6p, ifp)
-	struct in6pcb *in6p;
-	struct ifnet *ifp;
+in6_selecthlim(struct in6pcb *in6p, struct ifnet *ifp)
 {
 	if (in6p && in6p->in6p_hops >= 0)
 		return (in6p->in6p_hops);
@@ -609,10 +594,8 @@ in6_embedscope(in6, sin6, in6p, ifpp)
  * embedded scopeid thing.
  */
 int
-in6_recoverscope(sin6, in6, ifp)
-	struct sockaddr_in6 *sin6;
-	const struct in6_addr *in6;
-	struct ifnet *ifp;
+in6_recoverscope(struct sockaddr_in6 *sin6, const struct in6_addr *in6,
+    struct ifnet *ifp)
 {
 	u_int32_t scopeid;
 
@@ -648,8 +631,7 @@ in6_recoverscope(sin6, in6, ifp)
  * just clear the embedded scope identifer.
  */
 void
-in6_clearscope(addr)
-	struct in6_addr *addr;
+in6_clearscope(struct in6_addr *addr)
 {
 	if (IN6_IS_SCOPE_EMBED(addr))
 		addr->s6_addr16[1] = 0;
