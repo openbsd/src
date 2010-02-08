@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.40 2010/02/08 18:26:31 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.41 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1437,7 +1437,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			dur = rt2860_rates[ctl_ridx].sp_ack_dur;
 		else
 			dur = rt2860_rates[ctl_ridx].lp_ack_dur;
-		*(uint16_t *)wh->i_dur = htole16(dur + sc->sifs);
+		*(uint16_t *)wh->i_dur = htole16(dur);
 	}
 #ifndef IEEE80211_STA_ONLY
 	/* ask MAC to insert timestamp into probe responses */
@@ -2022,9 +2022,6 @@ rt2860_set_chan(struct rt2860_softc *sc, struct ieee80211_channel *c)
 	rt2860_rf_write(sc, RT2860_RF2, r2);
 	rt2860_rf_write(sc, RT2860_RF3, r3);
 	rt2860_rf_write(sc, RT2860_RF4, r4);
-
-	/* 802.11a uses a 16 microseconds short interframe space */
-	sc->sifs = IEEE80211_IS_CHAN_5GHZ(c) ? 16 : 10;
 
 	/* determine channel group */
 	if (chan <= 14)

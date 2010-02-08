@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.53 2010/02/08 18:44:13 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.54 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2128,7 +2128,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			dur = rt2860_rates[ctl_ridx].sp_ack_dur;
 		else
 			dur = rt2860_rates[ctl_ridx].lp_ack_dur;
-		*(uint16_t *)wh->i_dur = htole16(dur + sc->sifs);
+		*(uint16_t *)wh->i_dur = htole16(dur);
 	}
 
 #if NBPFILTER > 0
@@ -2702,9 +2702,6 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 		run_rt3070_set_chan(sc, chan);
 	else
 		run_rt2870_set_chan(sc, chan);
-
-	/* 802.11a uses a 16 microseconds short interframe space */
-	sc->sifs = IEEE80211_IS_CHAN_5GHZ(c) ? 16 : 10;
 
 	/* determine channel group */
 	if (chan <= 14)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.7 2010/02/07 11:02:24 damien Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -190,7 +190,6 @@ struct run_softc {
 	struct run_tx_ring		txq[4];
 	struct run_host_cmd_ring	cmdq;
 	uint8_t				qfullmsk;
-	int				sifs;
 	int				sc_tx_timer;
 
 #if NBPFILTER > 0

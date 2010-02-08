@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.13 2010/02/07 09:14:55 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.14 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -136,7 +136,6 @@ struct rt2860_softc {
 
 	int				sc_tx_timer;
 	int				mgtqid;
-	int				sifs;
 	uint8_t				qfullmsk;
 
 	uint32_t			mac_rev;
