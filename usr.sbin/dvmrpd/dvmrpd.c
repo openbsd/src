@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.12 2010/02/08 00:26:51 guenther Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.13 2010/02/08 00:36:20 guenther Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, NULL);
 	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, NULL);
-	signal_set(&ev_sighup, SIGTERM, main_sig_handler, NULL);
+	signal_set(&ev_sighup, SIGHUP, main_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
