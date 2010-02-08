@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.25 2010/02/03 14:08:41 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.26 2010/02/08 12:28:42 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -690,6 +690,13 @@ lii_init(struct ifnet *ifp)
 	val |= 2 << MACC_HDX_LEFT_BUF_SHIFT;
 
 	LII_WRITE_4(sc, LII_MACC, val);
+
+	/* Set the hardware MAC address. */
+	LII_WRITE_4(sc, LII_MAC_ADDR_0, letoh32((sc->sc_ac.ac_enaddr[2] << 24) |
+	    (sc->sc_ac.ac_enaddr[3] << 16) | (sc->sc_ac.ac_enaddr[4] << 8) |
+	    sc->sc_ac.ac_enaddr[5]));
+	LII_WRITE_4(sc, LII_MAC_ADDR_1,
+	    letoh32((sc->sc_ac.ac_enaddr[0] << 8) | sc->sc_ac.ac_enaddr[1]));
 
 	/* Program promiscuous mode and multicast filters. */
 	lii_iff(sc);
