@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.S,v 1.8 2009/08/09 13:41:30 jsing Exp $	*/
+/*	$OpenBSD: fp.S,v 1.9 2010/02/08 19:26:46 miod Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.8 2009/08/09 13:41:30 jsing Exp $
+ *      $Id: fp.S,v 1.9 2010/02/08 19:26:46 miod Exp $
  */
 
 /*
@@ -59,6 +59,8 @@
 #define DEXP_MAX	1023
 #define WEXP_MAX	30		/* maximum unbiased exponent for int */
 #define WEXP_MIN	-1		/* minimum unbiased exponent for int */
+#define LEXP_MAX	62		/* maximum unbiased exponent for long */
+#define LEXP_MIN	-1		/* minimum unbiased exponent for long */
 #define SFRAC_BITS	23
 #define DFRAC_BITS	52
 #define SIMPL_ONE	0x00800000
@@ -75,6 +77,8 @@
 #define DQUIET_NAN	0x0007ffffffffffff
 #define INT_MIN		0x80000000
 #define INT_MAX		0x7fffffff
+#define LONG_MIN	0x8000000000000000
+#define LONG_MAX	0x7fffffffffffffff
 
 #define COND_UNORDERED	0x1
 #define COND_EQUAL	0x2
@@ -132,14 +136,14 @@ func_s:
 	.dword	sub_s		# 1
 	.dword	mul_s		# 2
 	.dword	div_s		# 3
-	.dword	ill		# 4
+	.dword	ill		# 4 (sqrt)
 	.dword	abs_s		# 5
 	.dword	mov_s		# 6
 	.dword	neg_s		# 7
-	.dword	ill		# 8
-	.dword	ill		# 9
-	.dword	ill		# 10
-	.dword	ill		# 11
+	.dword	round_l_s	# 8
+	.dword	trunc_l_s	# 9
+	.dword	ceil_l_s	# 10
+	.dword	floor_l_s	# 11
 	.dword	round_w_s	# 12
 	.dword	trunc_w_s	# 13
 	.dword	ceil_w_s	# 14
@@ -165,7 +169,7 @@ func_s:
 	.dword	ill		# 34
 	.dword	ill		# 35
 	.dword	cvt_w_s		# 36
-	.dword	ill		# 37
+	.dword	cvt_l_s		# 37
 	.dword	ill		# 38
 	.dword	ill		# 39
 	.dword	ill		# 40
@@ -198,14 +202,14 @@ func_d:
 	.dword	sub_d		# 1
 	.dword	mul_d		# 2
 	.dword	div_d		# 3
-	.dword	ill		# 4
+	.dword	ill		# 4 (sqrt)
 	.dword	abs_d		# 5
 	.dword	mov_d		# 6
 	.dword	neg_d		# 7
-	.dword	ill		# 8
-	.dword	ill		# 9
-	.dword	ill		# 10
-	.dword	ill		# 11
+	.dword	round_l_d	# 8
+	.dword	trunc_l_d	# 9
+	.dword	ceil_l_d	# 10
+	.dword	floor_l_d	# 11
 	.dword	round_w_d	# 12
 	.dword	trunc_w_d	# 13
 	.dword	ceil_w_d	# 14
@@ -231,7 +235,7 @@ func_d:
 	.dword	ill		# 34
 	.dword	ill		# 35
 	.dword	cvt_w_d		# 36
-	.dword	ill		# 37
+	.dword	cvt_l_d		# 37
 	.dword	ill		# 38
 	.dword	ill		# 39
 	.dword	ill		# 40
@@ -1114,11 +1118,11 @@ do_cvt_w_s:
 1:
 	subu	t1, t1, SEXP_BIAS		# unbias exponent
 	or	t2, t2, SIMPL_ONE		# add implied one bit
-	dsll	t2, t2, 32 - 3			# convert S fraction to D
+	dsll	t2, t2, DFRAC_BITS - SFRAC_BITS	# convert S fraction to D
 	b	cvt_w
 
 /*
- * Convert single to integer with specific rounding.
+ * Convert double to integer with specific rounding.
  */
 round_w_d:
 	li	t3, FPC_ROUND_RN
@@ -1238,6 +1242,161 @@ underflow_w:
 	b	invalid_w
 
 /*
+ * Convert single to long integer with specific rounding.
+ */
+round_l_s:
+	li	t3, FPC_ROUND_RN
+	b	do_cvt_l_s
+trunc_l_s:
+	li	t3, FPC_ROUND_RZ
+	b	do_cvt_l_s
+ceil_l_s:
+	li	t3, FPC_ROUND_RP
+	b	do_cvt_l_s
+floor_l_s:
+	li	t3, FPC_ROUND_RM
+	b	do_cvt_l_s
+
+/*
+ * Convert single to long integer.
+ */
+cvt_l_s:
+	and	t3, a1, FPC_ROUNDING_BITS	# get rounding mode
+do_cvt_l_s:
+	jal	get_fs_s
+	bne	t1, SEXP_INF, 1f		# is FS an infinity?
+	bne	t2, zero, invalid_l		# invalid conversion
+1:
+	bne	t1, zero, 1f			# is FS zero?
+	beq	t2, zero, result_fs_l		# result is zero
+	move	t2, zero			# result is an inexact zero
+	b	inexact_l
+1:
+	subu	t1, t1, SEXP_BIAS		# unbias exponent
+	or	t2, t2, SIMPL_ONE		# add implied one bit
+	dsll	t2, t2, DFRAC_BITS - SFRAC_BITS	# convert S fraction to D
+	b	cvt_l
+
+/*
+ * Convert double to long integer with specific rounding.
+ */
+round_l_d:
+	li	t3, FPC_ROUND_RN
+	b	do_cvt_l_d
+trunc_l_d:
+	li	t3, FPC_ROUND_RZ
+	b	do_cvt_l_d
+ceil_l_d:
+	li	t3, FPC_ROUND_RP
+	b	do_cvt_l_d
+floor_l_d:
+	li	t3, FPC_ROUND_RM
+	b	do_cvt_l_d
+
+/*
+ * Convert double to long integer.
+ */
+cvt_l_d:
+	and	t3, a1, FPC_ROUNDING_BITS	# get rounding mode
+do_cvt_l_d:
+	jal	get_fs_d
+	bne	t1, DEXP_INF, 1f		# is FS an infinity?
+	bne	t2, zero, invalid_l		# invalid conversion
+1:
+	bne	t1, zero, 2f			# is FS zero?
+	beq	t2, zero, result_fs_l		# result is zero
+	move	t2, zero			# result is an inexact zero
+	b	inexact_l
+2:
+	subu	t1, t1, DEXP_BIAS		# unbias exponent
+	or	t2, t2, DIMPL_ONE		# add implied one bit
+cvt_l:
+	blt	t1, LEXP_MIN, underflow_l	# is exponent too small?
+	li	v0, LEXP_MAX+1
+	bgt	t1, v0, overflow_l		# is exponent too large?
+	bne	t1, v0, 1f			# special check for LONG_MIN
+	beq	t0, zero, overflow_l		# if positive, overflow
+	bne	t2, DIMPL_ONE, overflow_l
+	dli	t2, LONG_MIN			# result is LONG_MIN
+	b	result_fs_l
+1:
+	subu	v0, t1, DFRAC_BITS		# compute amount to shift
+	beq	v0, zero, 2f			# is shift needed?
+	li	v1, 64
+	blt	v0, zero, 1f			# if shift < 0, shift right
+	subu	v1, v1, v0			# shift left
+	dsll	t2, t2, v0
+	b	2f
+1:
+	negu	v0				# shift right by v0
+	subu	v1, v1, v0
+	dsll	t8, t2, v1			# save bits shifted out
+	sltu	t8, zero, t8			# dont lose any ones
+	dsrl	t2, t2, v0
+/*
+ * round (t0 is sign, t2 is integer part).
+ */
+2:
+	beq	t3, FPC_ROUND_RN, 3f		# round to nearest
+	beq	t3, FPC_ROUND_RZ, 5f		# round to zero (truncate)
+	beq	t3, FPC_ROUND_RP, 1f		# round to +infinity
+	beq	t0, zero, 5f			# if sign is positive, truncate
+	b	2f
+1:
+	bne	t0, zero, 5f			# if sign is negative, truncate
+2:
+	daddu	t2, t2, DGUARDBIT		# add in fractional
+	blt	t2, zero, overflow_l		# overflow?
+	b	5f
+3:
+	daddu	t2, t2, DGUARDBIT		# add in fractional
+	blt	t2, zero, overflow_l		# overflow?
+4:
+	bne	v0, zero, 5f			# if rounded remainder is zero
+	and	t2, 0xe000000000000000		#  clear LSB (round to nearest)
+5:
+	beq	t0, zero, 1f			# result positive?
+	negu	t2				# convert to negative integer
+1:
+	b	result_fs_l
+	nop
+/*
+ * Handle inexact exception.
+ */
+inexact_l:
+	or	a1, a1, FPC_EXCEPTION_INEXACT | FPC_STICKY_INEXACT
+	and	v0, a1, FPC_ENABLE_INEXACT
+	bne	v0, zero, fpe_trap
+	ctc1	a1, FPC_CSR		# save exceptions
+	b	result_fs_l
+
+/*
+ * Conversions to integer which overflow will trap (if enabled),
+ * or generate an inexact trap (if enabled),
+ * or generate an invalid exception.
+ */
+overflow_l:
+	or	a1, a1, FPC_EXCEPTION_OVERFLOW | FPC_STICKY_OVERFLOW
+	and	v0, a1, FPC_ENABLE_OVERFLOW
+	bne	v0, zero, fpe_trap
+	and	v0, a1, FPC_ENABLE_INEXACT
+	bne	v0, zero, inexact_l		# inexact traps enabled?
+	b	invalid_l
+
+/*
+ * Conversions to integer which underflow will trap (if enabled),
+ * or generate an inexact trap (if enabled),
+ * or generate an invalid exception.
+ */
+underflow_l:
+	or	a1, a1, FPC_EXCEPTION_UNDERFLOW | FPC_STICKY_UNDERFLOW
+	and	v0, a1, FPC_ENABLE_UNDERFLOW
+	bne	v0, zero, fpe_trap
+	and	v0, a1, FPC_ENABLE_INEXACT
+	bne	v0, zero, inexact_l		# inexact traps enabled?
+	b	invalid_l
+
+/*
  * Compare single.
  */
 cmp_s:
@@ -1248,9 +1407,9 @@ cmp_s:
 	bne	ta1, SEXP_INF, 2f		# is FT an infinity?
 	bne	ta2, zero, unordered		# FT is a NAN
 2:
-	sll	t1, t1, 23			# reassemble exp & frac
+	sll	t1, t1, SFRAC_BITS		# reassemble exp & frac
 	or	t1, t1, t2
-	sll	ta1, ta1, 23			# reassemble exp & frac
+	sll	ta1, ta1, SFRAC_BITS		# reassemble exp & frac
 	or	ta1, ta1, ta2
 	beq	t0, zero, 1f			# is FS positive?
 	negu	t1
@@ -1276,9 +1435,9 @@ cmp_d:
 	bne	ta1, DEXP_INF, 2f		# is FT an infinity?
 	bne	ta2, zero, unordered		# FT is a NAN
 2:
-	dsll	t1, t1, 52			# reassemble exp & frac
+	dsll	t1, t1, DFRAC_BITS		# reassemble exp & frac
 	or	t1, t1, t2
-	dsll	ta1, ta1, 52			# reassemble exp & frac
+	dsll	ta1, ta1, DFRAC_BITS		# reassemble exp & frac
 	or	ta1, ta1, ta2
 	beq	t0, zero, 1f			# is FS positive?
 	dnegu	t1				# negate t1
@@ -1820,6 +1979,22 @@ invalid_w:					# trap invalid operation
 	b	result_fs_w
 
 /*
+ * Signal an invalid operation if the trap is enabled; otherwise,
+ * the result is LONG_MAX or LONG_MIN.
+ */
+invalid_l:					# trap invalid operation
+	or	a1, a1, FPC_EXCEPTION_INVALID | FPC_STICKY_INVALID
+	and	v0, a1, FPC_ENABLE_INVALID
+	bne	v0, zero, fpe_trap
+	ctc1	a1, FPC_CSR			# save exceptions
+	bne	t0, zero, 1f
+	dli	t2, LONG_MAX			# result is INT_MAX
+	b	result_fs_l
+1:
+	dli	t2, LONG_MIN			# result is INT_MIN
+	b	result_fs_l
+
+/*
  * Trap if the hardware should have handled this case.
  */
 fpe_trap:
@@ -1847,6 +2022,11 @@ result_fs_s:					# result is FS
 
 result_fs_w:
 	jal	set_fd_word			# save result (in t2)
+	b	done
+
+result_fs_l:
+	move	t0, t2
+	jal	set_fd_dword			# save result (in t0)
 	b	done
 
 result_ft_d:
@@ -2077,7 +2257,7 @@ get_ft_s_tbl:
 	GET_FT_S(f31)
 
 get_ft_s_done:
-	srl	ta1, ta0, 23			# get exponent
+	srl	ta1, ta0, SFRAC_BITS		# get exponent
 	and	ta1, ta1, 0xFF
 	and	ta2, ta0, 0x7FFFFF		# get fraction
 	srl	ta0, ta0, 31			# get sign
@@ -2153,7 +2333,7 @@ get_fs_s_tbl:
 	GET_FS_S(f31)
 
 get_fs_s_done:
-	srl	t1, t0, 23			# get exponent
+	srl	t1, t0, SFRAC_BITS		# get exponent
 	and	t1, t1, 0xFF
 	and	t2, t0, 0x7FFFFF		# get fraction
 	srl	t0, t0, 31			# get sign
@@ -2234,7 +2414,7 @@ get_ft_d_tbl:
 
 get_ft_d_done:
 	dsrl	ta0, ta2, 63			# get sign
-	dsrl	ta1, ta2, 52			# get exponent
+	dsrl	ta1, ta2, DFRAC_BITS		# get exponent
 	and	ta1, ta1, 0x7FF
 	dsll	ta2, 12
 	dsrl	ta2, 12				# get fraction
@@ -2311,7 +2491,7 @@ get_fs_d_tbl:
 
 get_fs_d_done:
 	dsrl	t0, t2, 63			# get sign
-	dsrl	t1, t2, 52			# get exponent
+	dsrl	t1, t2, DFRAC_BITS		# get exponent
 	and	t1, t1, 0x7FF
 	dsll	t2, 12
 	dsrl	t2, 12				# get fraction
@@ -2391,7 +2571,7 @@ cmp_fs_s_tbl:
 	CMP_FS_S(f31)
 
 cmp_fs_s_done:
-	srl	t1, t0, 23			# get exponent
+	srl	t1, t0, SFRAC_BITS		# get exponent
 	and	t1, t1, 0xFF
 	and	t2, t0, 0x7FFFFF		# get fraction
 	srl	t0, t0, 31			# get sign
@@ -2446,7 +2626,7 @@ cmp_ft_s_tbl:
 	CMP_FT_S(f30)
 
 cmp_ft_s_done:
-	srl	ta1, ta0, 23			# get exponent
+	srl	ta1, ta0, SFRAC_BITS		# get exponent
 	and	ta1, ta1, 0xFF
 	and	ta2, ta0, 0x7FFFFF		# get fraction
 	srl	ta0, ta0, 31			# get sign
@@ -2523,7 +2703,7 @@ cmp_fs_d_tbl:
 
 cmp_fs_d_done:
 	dsrl	t0, t2, 63			# get sign
-	dsrl	t1, t2, 52			# get exponent
+	dsrl	t1, t2, DFRAC_BITS		# get exponent
 	and	t1, t1, 0x7FF
 	dsll	t2, 12
 	dsrl	t2, 12				# get fraction
@@ -2580,7 +2760,7 @@ cmp_ft_d_tbl:
 
 cmp_ft_d_done:
 	dsrl	ta0, ta2, 63			# get sign
-	dsrl	ta1, ta2, 52			# get exponent
+	dsrl	ta1, ta2, DFRAC_BITS		# get exponent
 	and	ta1, ta1, 0x7FF
 	dsll	ta2, 12
 	dsrl	ta2, 12				# get fraction
@@ -2620,7 +2800,7 @@ set_fd_s_ ## n:				\
 
 LEAF(set_fd_s, 0)
 	sll	t0, t0, 31			# position sign
-	sll	t1, t1, 23			# position exponent
+	sll	t1, t1, SFRAC_BITS		# position exponent
 	or	t2, t2, t0
 	or	t2, t2, t1
 ALEAF(set_fd_word)
@@ -2692,9 +2872,10 @@ set_fd_d_ ## n:				\
 
 LEAF(set_fd_d, 0)
 	dsll	t0, 63				# set sign
-	dsll	t1, t1, 52			# set exponent
+	dsll	t1, t1, DFRAC_BITS		# set exponent
 	or	t0, t0, t1
 	or	t0, t0, t2			# set fraction
+ALEAF(set_fd_dword)
 	srl	a3, a0, 6 - 3			# get FD field
 	and	a3, a3, 0x1f << 3		# mask FD field
 	ld	a3, set_fd_d_tbl(a3)		# switch on register number
