@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.46 2010/01/12 03:41:29 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.47 2010/02/08 13:32:50 claudio Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -278,7 +278,6 @@ do {									\
 
 extern struct ifnet *myip_ifp;
 
-int arpioctl(u_long, caddr_t);
 void arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
 void revarpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);

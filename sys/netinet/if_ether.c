@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.83 2010/01/13 05:27:19 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.84 2010/02/08 13:32:50 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -854,15 +854,6 @@ arplookup(addr, create, proxy, tableid)
 		return (0);
 	}
 	return ((struct llinfo_arp *)rt->rt_llinfo);
-}
-
-int
-arpioctl(cmd, data)
-	u_long cmd;
-	caddr_t data;
-{
-
-	return (EOPNOTSUPP);
 }
 
 void
