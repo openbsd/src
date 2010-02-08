@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.50 2010/02/07 12:44:57 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.51 2010/02/08 17:21:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2338,13 +2338,14 @@ run_select_chan_group(struct run_softc *sc, int group)
 			run_bbp_write(sc, 75, 0x50);
 		}
 	} else {
-		if (sc->ext_5ghz_lna) {
+		if (sc->mac_ver == 0x3572)
+			run_bbp_write(sc, 82, 0x94);
+		else
 			run_bbp_write(sc, 82, 0xf2);
+		if (sc->ext_5ghz_lna)
 			run_bbp_write(sc, 75, 0x46);
-		} else {
-			run_bbp_write(sc, 82, 0xf2);
+		else
 			run_bbp_write(sc, 75, 0x50);
-		}
 	}
 
 	run_read(sc, RT2860_TX_BAND_CFG, &tmp);
@@ -2885,13 +2886,12 @@ run_bbp_init(struct run_softc *sc)
 
 	/* fix BBP84 for RT2860E */
 	if (sc->mac_ver == 0x2860 && sc->mac_rev != 0x0101)
-		run_bbp_write(sc,  84, 0x19);
+		run_bbp_write(sc, 84, 0x19);
 
 	if (sc->mac_ver >= 0x3070) {
 		run_bbp_write(sc, 79, 0x13);
 		run_bbp_write(sc, 80, 0x05);
 		run_bbp_write(sc, 81, 0x33);
-		/* XXX RT3090 needs more */
 	} else if (sc->mac_ver == 0x2860 && sc->mac_rev == 0x0100) {
 		run_bbp_write(sc, 69, 0x16);
 		run_bbp_write(sc, 73, 0x12);
