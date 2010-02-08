@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.284 2010/01/13 06:02:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.285 2010/02/08 17:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2879,7 +2879,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 		return;
 
 	for (i = 0; i < AID_MAX; i++) {
-		if (peer->capa.mp[i] == 1)
+		if (peer->capa.mp[i])
 			peer_dump(id, i);
 	}
 }
