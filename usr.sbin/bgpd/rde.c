@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.285 2010/02/08 17:16:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.286 2010/02/08 17:21:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2822,7 +2822,10 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 				ifa = match;
 			sa2addr(ifa->ifa_addr, &peer->local_v4_addr);
 			break;
-		} else if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		}
+	}
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family == AF_INET6 &&
 		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
 			/*
 			 * only accept global scope addresses except explicitly
