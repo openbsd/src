@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.33 2010/02/04 18:20:16 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.34 2010/02/08 00:14:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -138,6 +138,7 @@ const struct set_option_entry set_session_option_table[] = {
 
 const struct set_option_entry set_window_option_table[] = {
 	{ "aggressive-resize", SET_OPTION_FLAG, 0, 0, NULL },
+	{ "alternate-screen", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "automatic-rename", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "clock-mode-colour", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "clock-mode-style",
