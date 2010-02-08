@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.189 2010/01/09 23:15:06 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.190 2010/02/08 23:28:06 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -857,7 +857,13 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	if (majdev == -1)
 		goto done;
 	dev = MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
-	if (bdevvp(dev, &vn)) {
+
+	/*
+	 * Use character raw device to avoid SCSI complaints about missing
+	 * media on removable media devices.
+	 */
+	dev = MAKEDISKDEV(major(blktochr(dev)), dv->dv_unit, RAW_PART);
+	if (cdevvp(dev, &vn)) {
 		printf("%s:, sr_meta_native_bootprobe: can't allocate vnode\n",
 		    DEVNAME(sc));
 		goto done;
