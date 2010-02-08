@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.78 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.79 2010/02/08 13:37:02 claudio Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4825,7 +4825,7 @@ sppp_gen_ip6_addr(struct sppp *sp, struct in6_addr *addr)
 }
 
 /*
- * Set my IPv6 address.  Must be called at splimp.
+ * Set my IPv6 address.  Must be called at splnet.
  */
 HIDE void
 sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
