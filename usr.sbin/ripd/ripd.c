@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.19 2009/11/02 20:28:49 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.20 2010/02/08 00:26:51 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, NULL);
-	signal_set(&ev_sigchld, SIGINT, main_sig_handler, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, NULL);
 	signal_set(&ev_sighup, SIGHUP, main_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
