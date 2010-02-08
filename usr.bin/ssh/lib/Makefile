@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2010/02/08 10:50:20 markus Exp $
+#	$OpenBSD: Makefile,v 1.60 2010/02/08 13:05:27 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -11,7 +11,7 @@ SRCS=	authfd.c authfile.c bufaux.c bufbn.c buffer.c canohost.c channels.c \
 	rsa.c ttymodes.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c \
 	ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
-	kexdhc.c kexgexc.c scard.c msg.c progressmeter.c dns.c \
+	kexdhc.c kexgexc.c msg.c progressmeter.c dns.c \
 	monitor_fdpass.c umac.c addrmatch.c schnorr.c jpake.c ssh-pkcs11.c
 
 DEBUGLIBS= no
