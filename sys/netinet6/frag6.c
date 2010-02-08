@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.28 2009/12/27 19:38:33 jasper Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.29 2010/02/08 11:51:16 jsing Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -62,11 +62,11 @@
  */
 #define IN6_IFSTAT_STRICT
 
-static void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
-static void frag6_deq(struct ip6asfrag *);
-static void frag6_insque(struct ip6q *, struct ip6q *);
-static void frag6_remque(struct ip6q *);
-static void frag6_freef(struct ip6q *);
+void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
+void frag6_deq(struct ip6asfrag *);
+void frag6_insque(struct ip6q *, struct ip6q *);
+void frag6_remque(struct ip6q *);
+void frag6_freef(struct ip6q *);
 
 static int ip6q_locked;
 u_int frag6_nfragpackets;
@@ -132,7 +132,7 @@ do {									\
  * Initialise reassembly queue and fragment identifier.
  */
 void
-frag6_init()
+frag6_init(void)
 {
 
 	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
@@ -713,7 +713,7 @@ frag6_remque(struct ip6q *p6)
  * queue, discard it.
  */
 void
-frag6_slowtimo()
+frag6_slowtimo(void)
 {
 	struct ip6q *q6;
 	int s = splsoftnet();
@@ -766,7 +766,7 @@ frag6_slowtimo()
  * Drain off all datagram fragments.
  */
 void
-frag6_drain()
+frag6_drain(void)
 {
 
 	if (ip6q_lock_try() == 0)

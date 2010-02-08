@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.54 2008/11/25 12:11:45 markus Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.55 2010/02/08 11:56:09 jsing Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -67,13 +67,13 @@
 #define SDL(s) ((struct sockaddr_dl *)s)
 
 struct dadq;
-static struct dadq *nd6_dad_find(struct ifaddr *);
-static void nd6_dad_starttimer(struct dadq *, int);
-static void nd6_dad_stoptimer(struct dadq *);
-static void nd6_dad_timer(struct ifaddr *);
-static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
-static void nd6_dad_ns_input(struct ifaddr *);
-static void nd6_dad_na_input(struct ifaddr *);
+struct dadq *nd6_dad_find(struct ifaddr *);
+void nd6_dad_starttimer(struct dadq *, int);
+void nd6_dad_stoptimer(struct dadq *);
+void nd6_dad_timer(struct ifaddr *);
+void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
+void nd6_dad_ns_input(struct ifaddr *);
+void nd6_dad_na_input(struct ifaddr *);
 
 static int dad_ignore_ns = 0;	/* ignore NS in DAD - specwise incorrect*/
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
@@ -342,7 +342,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
  */
 void
 nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6, 
-	struct in6_addr *taddr6, struct llinfo_nd6 *ln, int dad)
+    struct in6_addr *taddr6, struct llinfo_nd6 *ln, int dad)
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
@@ -852,8 +852,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
  */
 void
 nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6, 
-	struct in6_addr *taddr6, u_long flags, int tlladdr, 
-	struct sockaddr *sdl0)
+    struct in6_addr *taddr6, u_long flags, int tlladdr, 
+    struct sockaddr *sdl0)
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
@@ -1042,7 +1042,7 @@ struct dadq {
 static struct dadq_head dadq;
 static int dad_init = 0;
 
-static struct dadq *
+struct dadq *
 nd6_dad_find(struct ifaddr *ifa)
 {
 	struct dadq *dp;
@@ -1054,7 +1054,7 @@ nd6_dad_find(struct ifaddr *ifa)
 	return NULL;
 }
 
-static void
+void
 nd6_dad_starttimer(struct dadq *dp, int ticks)
 {
 
@@ -1063,7 +1063,7 @@ nd6_dad_starttimer(struct dadq *dp, int ticks)
 	timeout_add(&dp->dad_timer_ch, ticks);
 }
 
-static void
+void
 nd6_dad_stoptimer(struct dadq *dp)
 {
 
@@ -1185,7 +1185,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 	ip6_dad_pending--;
 }
 
-static void
+void
 nd6_dad_timer(struct ifaddr *ifa)
 {
 	int s;
@@ -1325,7 +1325,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	ip6_dad_pending--;
 }
 
-static void
+void
 nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
@@ -1349,7 +1349,7 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, 1);
 }
 
-static void
+void
 nd6_dad_ns_input(struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia;
@@ -1396,7 +1396,7 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 	}
 }
 
-static void
+void
 nd6_dad_na_input(struct ifaddr *ifa)
 {
 	struct dadq *dp;
