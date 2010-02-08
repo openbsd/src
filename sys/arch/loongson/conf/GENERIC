@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 2010/02/05 21:07:39 otto Exp $
+#	$OpenBSD: GENERIC,v 1.6 2010/02/08 19:42:32 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,6 +48,7 @@ ohci*		at pci?
 uhci*		at pci?
 ehci*		at pci?
 
+ral*		at pci?
 rl*		at pci?
 rlphy*		at mii?
 ukphy*		at mii?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.2 2010/01/31 21:40:20 otto Exp $
+#	$OpenBSD: RAMDISK,v 1.3 2010/02/08 19:42:32 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -58,6 +58,7 @@ ohci*		at pci?
 uhci*		at pci?
 ehci*		at pci?
 
+ral*		at pci?
 rl*		at pci?
 rlphy*		at mii?
 ukphy*		at mii?
@@ -81,8 +82,6 @@ urtw*		at uhub?
 
 url*		at uhub?
 urlphy*		at mii?
-#uvideo*		at uhub?
-#video*		at uvideo?
 
 sd*		at scsibus?
 #st*		at scsibus?
@@ -91,9 +90,8 @@ cd*		at scsibus?
 #ss*		at scsibus?
 #uk*		at scsibus?
 
-pseudo-device	loop	1	# network loopback
-pseudo-device	bpfilter 1	# packet filter
-pseudo-device	rd	1	# ram disk
+pseudo-device	loop		1	# network loopback
+pseudo-device	bpfilter	1	# packet filter
+pseudo-device	rd		1	# ram disk
 
 option		BOOT_CONFIG	# boot-time kernel config
-
