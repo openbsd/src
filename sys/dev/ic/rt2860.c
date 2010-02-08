@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.39 2010/02/07 09:14:55 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.40 2010/02/08 18:26:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2880,8 +2880,8 @@ rt2860_init(struct ifnet *ifp)
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	rt2860_set_chan(sc, ic->ic_ibss_chan);
 
-	/* XXX not clear what the following 8051 command does.. */
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BOOT, 0);
+	/* reset RF from MCU */
+	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_RFRESET, 0);
 
 	/* set RTS threshold */
 	tmp = RAL_READ(sc, RT2860_TX_RTS_CFG);

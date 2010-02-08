@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.51 2010/02/08 17:21:01 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.52 2010/02/08 18:26:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -731,7 +731,7 @@ run_load_microcode(struct run_softc *sc)
 
 	usbd_delay_ms(sc->sc_udev, 10);
 	run_write(sc, RT2860_H2M_MAILBOX, 0);
-	if ((error = run_mcu_cmd(sc, RT2860_MCU_CMD_BOOT, 0)) != 0)
+	if ((error = run_mcu_cmd(sc, RT2860_MCU_CMD_RFRESET, 0)) != 0)
 		return error;
 
 	/* wait until microcontroller is ready */

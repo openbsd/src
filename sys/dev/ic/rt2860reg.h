@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.24 2010/02/07 11:49:04 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.25 2010/02/08 18:26:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -302,7 +302,7 @@
 #define RT2860_MCU_CMD_LED1	0x52
 #define RT2860_MCU_CMD_LED2	0x53
 #define RT2860_MCU_CMD_LED3	0x54
-#define RT2860_MCU_CMD_BOOT	0x72
+#define RT2860_MCU_CMD_RFRESET	0x72
 #define RT2860_MCU_CMD_ANTSEL	0x73
 #define RT2860_MCU_CMD_BBP	0x80
 #define RT2860_MCU_CMD_PSLEVEL	0x83
