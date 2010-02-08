@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.52 2010/02/08 18:26:31 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.53 2010/02/08 18:44:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2678,15 +2678,12 @@ run_set_rx_antenna(struct run_softc *sc, int aux)
 {
 	uint32_t tmp;
 
-	if (aux) {
-		run_mcu_cmd(sc, RT2860_MCU_CMD_ANTSEL, 0);
-		run_read(sc, RT2860_GPIO_CTRL, &tmp);
-		run_write(sc, RT2860_GPIO_CTRL, (tmp & ~0x0808) | 0x08);
-	} else {
-		run_mcu_cmd(sc, RT2860_MCU_CMD_ANTSEL, 1);
-		run_read(sc, RT2860_GPIO_CTRL, &tmp);
-		run_write(sc, RT2860_GPIO_CTRL, tmp & ~0x0808);
-	}
+	run_mcu_cmd(sc, RT2860_MCU_CMD_ANTSEL, !aux);
+	run_read(sc, RT2860_GPIO_CTRL, &tmp);
+	tmp &= ~0x0808;
+	if (aux)
+		tmp |= 0x08;
+	run_write(sc, RT2860_GPIO_CTRL, tmp);
 }
 
 int
@@ -2928,18 +2925,13 @@ run_rt3070_rf_init(struct run_softc *sc)
 		run_rt3070_rf_read(sc, 6, &rf);
 		run_rt3070_rf_write(sc, 6, rf | 0x40);
 
-		if (sc->mac_rev < 0x0211 && sc->patch_dac) {
-			/* increase voltage from 1.2V to 1.35V */
-			run_read(sc, RT3070_LDO_CFG0, &tmp);
-			tmp = (tmp & ~0x1f000000) | 0x0d000000;
-			run_write(sc, RT3070_LDO_CFG0, tmp);
-		} else {
-			/* increase voltage from 1.2V to 1.35V */
-			run_read(sc, RT3070_LDO_CFG0, &tmp);
-			tmp = (tmp & ~0x1f000000) | 0x0d000000;
-			run_write(sc, RT3070_LDO_CFG0, tmp);
-			DELAY(1000);
+		/* increase voltage from 1.2V to 1.35V */
+		run_read(sc, RT3070_LDO_CFG0, &tmp);
+		tmp = (tmp & ~0x1f000000) | 0x0d000000;
+		run_write(sc, RT3070_LDO_CFG0, tmp);
+		if (sc->mac_rev >= 0x0211 || !sc->patch_dac) {
 			/* decrease voltage back to 1.2V */
+			DELAY(1000);
 			tmp = (tmp & ~0x1f000000) | 0x01000000;
 			run_write(sc, RT3070_LDO_CFG0, tmp);
 		}
