@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.7 2008/06/09 22:47:42 djm Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.8 2010/02/08 12:16:02 jsing Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -124,16 +124,16 @@ static struct randomtab randomtab_20 = {
 	{ 2, 3, 14563, 0 },	/* factors of ru_n */
 };
 
-static u_int32_t pmod(u_int32_t, u_int32_t, u_int32_t);
-static void initid(struct randomtab *);
-static u_int32_t randomid(struct randomtab *);
+u_int32_t pmod(u_int32_t, u_int32_t, u_int32_t);
+void initid(struct randomtab *);
+u_int32_t randomid(struct randomtab *);
 
 /*
  * Do a fast modular exponation, returned value will be in the range
  * of 0 - (mod-1)
  */
 
-static u_int32_t
+u_int32_t
 pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
 {
 	u_int64_t s, t, u;
@@ -159,7 +159,7 @@ pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
  * This function is called from id_randomid() when needed, an
  * application does not have to worry about it.
  */
-static void
+void
 initid(struct randomtab *p)
 {
 	u_int32_t j, i;
@@ -203,7 +203,7 @@ initid(struct randomtab *p)
 	p->ru_msb = p->ru_msb ? 0 : (1U << (p->ru_bits - 1));
 }
 
-static u_int32_t
+u_int32_t
 randomid(struct randomtab *p)
 {
 	int i, n;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.94 2009/12/15 20:26:21 jasper Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.95 2010/02/08 12:16:02 jsing Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -133,18 +133,18 @@ int ip6_sourcecheck_interval;		/* XXX */
 
 struct ip6stat ip6stat;
 
-static void ip6_init2(void *);
+void ip6_init2(void *);
 int ip6_check_rh0hdr(struct mbuf *);
 
-static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
-static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
+int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
+struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
  * All protocols not implemented in kernel go to raw IP6 protocol handler.
  */
 void
-ip6_init()
+ip6_init(void)
 {
 	struct ip6protosw *pr;
 	int i;
@@ -167,7 +167,7 @@ ip6_init()
 	ip6_init2((void *)0);
 }
 
-static void
+void
 ip6_init2(void *dummy)
 {
 
@@ -181,7 +181,7 @@ ip6_init2(void *dummy)
  * IP6 input interrupt handling. Just pass the packet to ip6_input.
  */
 void
-ip6intr()
+ip6intr(void)
 {
 	int s;
 	struct mbuf *m;
@@ -806,9 +806,9 @@ ip6_check_rh0hdr(struct mbuf *m)
  *
  * rtalertp - XXX: should be stored in a more smart way
  */
-static int
+int
 ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
-	int *offp)
+    int *offp)
 {
 	struct mbuf *m = *mp;
 	int off = *offp, hbhlen;
@@ -852,7 +852,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
  */
 int
 ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen, 
-	u_int32_t *rtalertp, u_int32_t *plenp)
+    u_int32_t *rtalertp, u_int32_t *plenp)
 {
 	struct ip6_hdr *ip6;
 	int optlen = 0;
@@ -1235,7 +1235,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
  * pull single extension header from mbuf chain.  returns single mbuf that
  * contains the result, or NULL on error.
  */
-static struct mbuf *
+struct mbuf *
 ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 {
 	struct ip6_ext ip6e;
@@ -1455,7 +1455,7 @@ int *ipv6ctl_vars[IPV6CTL_MAXID] = IPV6CTL_VARS;
 
 int
 ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, 
-	void *newp, size_t newlen)
+    void *newp, size_t newlen)
 {
 #ifdef MROUTING
 	extern int ip6_mrtproto;
