@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.30 2009/11/02 22:31:50 sobrado Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.31 2010/02/09 13:18:04 claudio Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -178,6 +178,7 @@ u_int64_t	ifmedia_baudrate(int);
 #define	IFM_10G_CX4	20		/* 10GBase-CX4 - copper */
 #define	IFM_2500_SX	21		/* 2500baseSX - multi-mode fiber */
 #define	IFM_10G_T	22		/* 10GbaseT cat 6 */
+#define	IFM_10G_SFP_CU	23		/* 10G SFP+ direct attached cable */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -422,6 +423,8 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_10G_T,		"10GbaseT" },			\
 	{ IFM_ETHER|IFM_10G_T,		"10GT" },			\
 	{ IFM_ETHER|IFM_10G_T,		"10GBASE-T" },			\
+	{ IFM_ETHER|IFM_10G_SFP_CU,	"10GSFP+Cu" },			\
+	{ IFM_ETHER|IFM_10G_SFP_CU,	"10GCu" },			\
 									\
 	{ IFM_FDDI|IFM_FDDI_SMF,	"Single-mode" },		\
 	{ IFM_FDDI|IFM_FDDI_SMF,	"SMF" },			\
@@ -538,6 +541,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER|IFM_10G_CX4,	IF_Gbps(10) },			\
 	{ IFM_ETHER|IFM_2500_SX,	IF_Mbps(2500) },		\
 	{ IFM_ETHER|IFM_10G_T,		IF_Gbps(10) },			\
+	{ IFM_ETHER|IFM_10G_SFP_CU,	IF_Gbps(10) },			\
 									\
 	{ IFM_FDDI|IFM_FDDI_SMF,	IF_Mbps(100) },			\
 	{ IFM_FDDI|IFM_FDDI_MMF,	IF_Mbps(100) },			\
