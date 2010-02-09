@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 2010/01/31 21:36:01 otto Exp $
+#	$OpenBSD: list,v 1.2 2010/02/09 19:24:57 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -38,10 +38,11 @@ LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
-LINK	instbin					sbin/mount_udf
+LINK	instbin					sbin/mount_ext2fs
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_nfs
+LINK	instbin					sbin/mount_udf
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/newfs_msdos
 LINK	instbin					sbin/ping
@@ -89,6 +90,9 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-ext etc/firmware/atu-rfmd2958-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-int etc/firmware/atu-rfmd2958-int
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
+COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
+COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
+COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
 
 # dhcp things
 SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
