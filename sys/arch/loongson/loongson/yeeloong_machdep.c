@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.1 2010/02/05 20:51:22 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.2 2010/02/09 21:31:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -27,11 +27,14 @@
 #include <machine/autoconf.h>
 
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include <loongson/dev/bonitovar.h>
 #include <loongson/dev/bonito_irq.h>
+#include <loongson/dev/glxvar.h>
 
-int	 yeeloong_intr_map(int, int, int);
+void	yeeloong_attach_hook(pci_chipset_tag_t);
+int	yeeloong_intr_map(int, int, int);
 
 const struct bonito_config yeeloong_bonito = {
 	.bc_adbase = 11,
@@ -44,8 +47,32 @@ const struct bonito_config yeeloong_bonito = {
 	    LOONGSON_INTRMASK_PCI_SYSERR | LOONGSON_INTRMASK_PCI_PARERR |
 	    LOONGSON_INTRMASK_INT0 | LOONGSON_INTRMASK_INT1,
 
+	.bc_attach_hook = yeeloong_attach_hook,
 	.bc_intr_map = yeeloong_intr_map
 };
+
+void
+yeeloong_attach_hook(pci_chipset_tag_t pc)
+{
+	pcireg_t id;
+	pcitag_t tag;
+	int dev;
+
+	/*
+	 * Check for an AMD CS5536 chip; if one is found, register
+	 * the proper PCI configuration space hooks.
+	 */
+
+	for (dev = pci_bus_maxdevs(pc, 0); dev >= 0; dev--) {
+		tag = pci_make_tag(pc, 0, dev, 0);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (id == PCI_ID_CODE(PCI_VENDOR_AMD,
+		    PCI_PRODUCT_AMD_CS5536_PCISB)) {
+			glx_init(pc, tag, dev);
+			break;
+		}
+	}
+}
 
 int
 yeeloong_intr_map(int dev, int fn, int pin)

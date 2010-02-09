@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.7 2010/02/05 20:53:24 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.8 2010/02/09 21:31:46 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -74,7 +74,6 @@
 #include <loongson/dev/bonitoreg.h>
 #include <loongson/dev/bonitovar.h>
 #include <loongson/dev/bonito_irq.h>
-#include <loongson/dev/glxvar.h>
 
 int	bonito_match(struct device *, void *, void *);
 void	bonito_attach(struct device *, struct device *, void *);
@@ -763,27 +762,13 @@ bonito_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
 	pci_chipset_tag_t pc = pba->pba_pc;
-	pcireg_t id;
-	pcitag_t tag;
-	int dev;
+	struct bonito_softc *sc = pc->pc_conf_v;
+	const struct bonito_config *bc = sc->sc_bonito;
 
 	if (pba->pba_bus != 0)
 		return;
 
-	/*
-	 * Check for an AMD CS5536 chip; if one is found, register
-	 * the proper PCI configuration space hooks.
-	 */
-
-	for (dev = pci_bus_maxdevs(pc, pba->pba_bus); dev >= 0; dev--) {
-		tag = pci_make_tag(pc, pba->pba_bus, dev, 0);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-		if (id == PCI_ID_CODE(PCI_VENDOR_AMD,
-		    PCI_PRODUCT_AMD_CS5536_PCISB)) {
-			glx_init(pc, tag, dev);
-			break;
-		}
-	}
+	(*bc->bc_attach_hook)(pc);
 }
 
 /*

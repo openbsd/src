@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonitovar.h,v 1.2 2010/02/05 20:51:22 miod Exp $	*/
+/*	$OpenBSD: bonitovar.h,v 1.3 2010/02/09 21:31:46 miod Exp $	*/
 /*	$NetBSD: bonitovar.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
 
 /*-
@@ -46,6 +46,9 @@ struct bonito_config {
 	uint32_t	bc_intSteer;
 	uint32_t	bc_intPol;
 
+	/* PCI Attach hook for the first bus */
+	void		(*bc_attach_hook)(pci_chipset_tag_t);
+	
 	/* PCI Interrupt Assignment for the first bus */
 	int		(*bc_intr_map)(int, int, int);
 };
