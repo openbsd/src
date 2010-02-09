@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 2010/02/05 20:51:22 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.10 2010/02/09 19:24:08 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -592,22 +592,31 @@ dobootopts(int argc)
 	 * boot file has been found.
 	 */
 
+	if (argc != 0) {
+		arg = pmon_getarg(0);
+		if (arg == NULL)
+			return;
+		/* if `go', not `boot', then no path and command options */
+		if (*arg == 'g')
+			ignore = 0;
+	}
 	for (i = 1; i < argc; i++) {
 		arg = pmon_getarg(i);
 		if (arg == NULL)
 			continue;
 
-		if (*arg != '-') {
-			/* found filename or non-option argument */
+		/* device path */
+		if (*arg == '/') {
 			if (*pmon_bootp == '\0') {
 				strlcpy(pmon_bootp, arg, sizeof pmon_bootp);
 				parsepmonbp();
 			}
-			ignore = 0;
+			ignore = 0;	/* further options are for the kernel */
 			continue;
 		}
 
-		if (ignore)
+		/* not an option, or not a kernel option */
+		if (*arg != '-' || ignore)
 			continue;
 
 		for (cp = arg + 1; *cp != '\0'; cp++)
