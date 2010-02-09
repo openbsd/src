@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.14 2010/02/04 07:30:27 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.15 2010/02/09 01:18:05 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -458,7 +458,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
-	int			s, fail, i, rwmode, gxinv;
+	int			s, fail, i, rwmode, gxinv, pxinv;
 	daddr64_t		blk, lbaoffs, strip_no, chunk, qchunk, pchunk, fchunk;
 	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
 	daddr64_t		strip_bits, length, strip_offs, datalen, row_size;
@@ -577,11 +577,9 @@ sr_raid6_rw(struct sr_workunit *wu)
 				/* Dx, Dy failed */
 				printf("Disk %llx & %llx offline, "
 				    "regenerating Dx+Dy\n", chunk, fchunk);
-				pbuf = sr_get_block(sd, length);
-				if (pbuf == NULL)
-					goto bad;
 
 				gxinv = gf_inv(gf_pow[chunk] ^ gf_pow[fchunk]);
+				pxinv = gf_mul(gf_pow[fchunk], gxinv);
 
 				/* read Q * inv(gx + gy) */
 				memset(data, 0, length);
@@ -591,11 +589,11 @@ sr_raid6_rw(struct sr_workunit *wu)
 				    data, gxinv))
 				    	goto bad;
 
-				/* read P */
+				/* read P * gy * inv(gx + gy) */
 				if (sr_raid6_addio(wu, pchunk, lba,
 				    length,  NULL, SCSI_DATA_IN,
-				    SR_CCBF_FREEBUF, pbuf, 
-				    NULL, 0))
+				    SR_CCBF_FREEBUF, NULL,
+				    data, pxinv))
 				    	goto bad;
 
 				/* Calculate: Dx*gx^Dy*gy = Q^(Dz*gz) ; Dx^Dy = P^Dz
@@ -609,24 +607,13 @@ sr_raid6_rw(struct sr_workunit *wu)
 					    i == chunk || i == fchunk)
 						continue;
 
-					/* read Dz * gz */
+					/* read Dz * (gz + gy) * inv(gx + gy) */
 					if (sr_raid6_addio(wu, i, lba,
 					    length, NULL, SCSI_DATA_IN,
-					    SR_CCBF_FREEBUF, pbuf,
-					    data, gf_mul(gf_pow[i], gxinv)))
+					    SR_CCBF_FREEBUF, NULL, data,
+					    pxinv ^ gf_mul(gf_pow[i], gxinv)))
 					    	goto bad;
 				}
-
-				/* run fake wu when read i/o is complete */
-				if (wu_w == NULL && 
-				    (wu_w = sr_wu_get(sd, 0)) == NULL)
-					goto bad;
-
-				wu_w->swu_flags |= SR_WUF_FAIL;
-				if (sr_raid6_addio(wu_w, 0, 0, length, pbuf, 0,
-				    SR_CCBF_FREEBUF, NULL, data,
-				    gf_mul(gf_pow[fchunk], gxinv)))
-					goto bad;
 			} else {
 				/* Two cases: single disk (Dx) or (Dx+Q)
 				 *   Dx = Dz ^ P (same as RAID5) 
