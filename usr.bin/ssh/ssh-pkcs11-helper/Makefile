@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2010/02/08 10:50:20 markus Exp $
+#	$OpenBSD: Makefile,v 1.2 2010/02/09 08:25:32 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,7 +8,7 @@ BINOWN=	root
 BINMODE?=555
 
 BINDIR=	/usr/libexec
-NOMAN=	yes
+MAN=	ssh-pkcs11-helper.8
 
 SRCS=	ssh-pkcs11-helper.c ssh-pkcs11.c
 
