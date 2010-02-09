@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.86 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.87 2010/02/09 13:23:39 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -879,6 +879,11 @@ icmp_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
 
 	rt = rtalloc1(dst, 1, rtableid);
 	if (rt == 0)
+		return (NULL);
+
+	/* Check if the route is actually usable */
+	if (rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE) ||
+	    (rt->rt_flags & RTF_UP) == 0)
 		return (NULL);
 
 	/* If we didn't get a host route, allocate one */
