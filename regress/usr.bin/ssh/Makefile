@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2009/11/09 04:20:04 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.51 2010/02/09 06:29:02 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -59,6 +59,9 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		scp-ssh-wrapper.exe ssh_proxy_envpass remote_pid \
 		sshd_proxy_bak rsa_ssh2_cr.prv rsa_ssh2_crnl.prv
 
+# Enable all malloc(3) randomisations and checks
+TEST_ENV=      "MALLOC_OPTIONS=AFGJPRX"
+
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv
 	tr '\n' '\r' <${.CURDIR}/rsa_ssh2.prv > ${.OBJDIR}/rsa_ssh2_cr.prv
@@ -99,7 +102,8 @@ t7: t7.out
 
 .for t in ${LTESTS} ${INTEROP_TESTS}
 t-${t}:
-	env SUDO=${SUDO} sh ${.CURDIR}/test-exec.sh ${.OBJDIR} ${.CURDIR}/${t}.sh
+	env SUDO=${SUDO} ${TEST_ENV} \
+	    sh ${.CURDIR}/test-exec.sh ${.OBJDIR} ${.CURDIR}/${t}.sh
 .endfor
 
 .for t in ${LTESTS}
