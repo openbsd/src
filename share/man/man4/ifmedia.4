@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.18 2010/01/03 14:31:01 schwarze Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.19 2010/02/09 15:25:29 claudio Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: February 9 2010 $
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ The media is typically set using the
 .Xr ifconfig 8
 command.
 .Pp
-There are currently three link types supported by
+Currently these link types are supported by
 .Nm ifmedia :
 .Pp
 .Bl -tag -offset indent -width IFM_IEEE80211 -compact
@@ -58,6 +58,10 @@ Ethernet
 FDDI
 .It Dv IFM_IEEE80211
 IEEE802.11 Wireless LAN
+.It Dv IFM_TDM
+Time Division Multiplex
+.It Dv IFM_CARP
+CARP
 .El
 .Pp
 The following sections describe the possible media settings for each
@@ -93,6 +97,8 @@ This option only has meaning if the device is normally not full-duplex.
 Place the device into half-duplex mode.
 This option only has meaning if the device is normally not half-duplex.
 [half-duplex, hdx]
+.It Dv IFM_FLOW
+Enable hardware flow control on device.
 .It Dv IFM_FLAG0
 Driver-defined flag.
 [flag0]
@@ -108,7 +114,7 @@ Place the device into hardware loopback mode.
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR ETHERNET
 The following media types are defined for Ethernet:
-.Bl -tag -offset indent -width IFM_1000_FX
+.Bl -tag -offset indent -width IFM_10G_SFP_CU
 .It Dv IFM_10_T
 10BASE-T, 10Mb/s over unshielded twisted pair, RJ45 connector.
 [10baseT, UTP, 10UTP]
@@ -152,12 +158,40 @@ connector.
 .It Dv IFM_1000_T
 1000BASE-T, 1Gb/s over category 5 unshielded twisted pair, RJ45 connector.
 [1000baseT, 1000T]
+.It Dv IFM_1000_TX
+Compatibility for 1000BASE-T.
+[1000baseTX, 1000TX]
+.It Dv IFM_2500_SX
+2500BASE-SX, 2.5Gb/s over multi-mode fiber optic cables.
+[2500baseSX, 2500SX]
+.It Dv IFM_10G_CX4
+10GBASE-CX4, 10Gb/s over XAUI 4-lane PCS and copper cables.
+[10GbaseCX4, 10GCX4, 10GBASE-CX4]
+.It Dv IFM_10G_LR
+10GBASE-LR, 10Gb/s over single-mode fiber optic cables.
+[10GbaseLR, 10GLR, 10GBASE-LR]
+.It Dv IFM_10G_SFP_CU
+10GSFP+Cu, 10Gb/s over SFP+ Direct Attach cables.
+[10GSFP+Cu, 10GCu]
+.It Dv IFM_10G_SR
+10GBASE-SR, 10Gb/s over multi-mode fiber optic cables.
+[10GbaseSR, 10GSR, 10GBASE-SR]
+.It Dv IFM_10G_T
+10GBASE-T, 10Gb/s over unshielded twisted pair, RJ45 connector.
+[10GbaseT, 10GT, 10GBASE-T]
+.It Dv IFM_HPNA_1
+HomePNA 1.0, 1Mb/s over 2-wire (category 3) unshielded twisted pair
+[HomePNA1, HPNA1]
 .El
 .Pp
-The following media option is defined for Ethernet:
-.Bl -tag -offset indent -width IFM_ETH_MASTER
+The following media options are defined for Ethernet:
+.Bl -tag -offset indent -width IFM_ETH_RXPAUSE
 .It Dv IFM_ETH_MASTER
 Configure a 1000BASE-T PHY as a MASTER PHY.
+.It Dv IFM_ETH_RXPAUSE
+Receive flow control is enabled on the 1000BASE-T PHY.
+.It Dv IFM_ETH_TXPAUSE
+Transmit flow control is enabled on the 1000BASE-T PHY.
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR FDDI
 The following media types are defined for FDDI:
@@ -257,6 +291,23 @@ Turbo mode.
 [turbo]
 .El
 .Pp
+The following media modes are defined for IEEE802.11 Wireless LAN:
+.Pp
+.Bl -tag -offset indent -width IFM_IEEE80211_11A -compact
+.It Dv IFM_IEEE80211_11A
+5Ghz, OFDM mode.
+[11a]
+.It Dv IFM_IEEE80211_11B
+2GHz, Direct Sequence mode.
+[11b]
+.It Dv IFM_IEEE80211_11G
+2GHz, CCK mode.
+[11g]
+.It Dv IFM_IEEE80211_FH
+2GHz, GFSK mode.
+[fh]
+.El
+.Pp
 The channels detailed below are defined for IEEE802.11 Wireless LAN.
 The list of available frequencies is dependent on radio regulations
 specified by regional authorities.
@@ -290,6 +341,75 @@ When using multiple channels in close proximity it is suggested
 that channels be separated by at least 25MHz.
 In the US, this means that only channels 1, 6, and 11 may be used
 simultaneously without interference.
+.Sh MEDIA TYPES AND OPTIONS FOR TDM
+The following media types are defined for TDM:
+.Bl -tag -offset indent -width IFM_TDM_E1_G704_CRC4
+.It Dv IFM_TDM_E1
+E1, 2048kb/s HDB3 encoded, G.703 clearchannel serial line.
+[e1]
+.It Dv IFM_TDM_E1_AMI
+E1, 2048kb/s AMI encoded, G.703 clearchannel serial line.
+[e1-ami]
+.It Dv IFM_TDM_E1_AMI_G704
+E1, 2048kb/s AMI encoded, G.704 structured serial line.
+[e1-ami-g.704]
+.It Dv IFM_TDM_E1_G704
+E1, 2048kb/s HDB3 encoded, G.704 structured serial line.
+[e1-g.704]
+.It Dv IFM_TDM_E1_G704_CRC4
+E1, 2048kb/s HDB3 encoded, G.704 structured serial line with CRC4 checksum.
+[e1-g.704-crc4]
+.It Dv IFM_TDM_E3
+E3, 34368kb/s HDB3 encoded, G.703 clearchannel serial line.
+[e3]
+.It Dv IFM_TDM_E3_G751
+E3, 34368kb/s HDB3 encoded, G.751 structured serial line.
+[e3-g.751]
+.It Dv IFM_TDM_E3_G832
+E3, 34368kb/s HDB3 encoded, G.832 structured serial line.
+[e3-g.832]
+.It Dv IFM_TDM_T1
+T1, 1536xkb/s B8ZS encoded, extended super frame (ESF) structured serial line.
+[t1]
+.It Dv IFM_TDM_T1_AMI
+T1, 1536kb/s AMI encoded, super frame (SF) structured serial line.
+[t1-ami]
+.It Dv IFM_TDM_T3
+T3, 44736kb/s B3ZS, C-bit structured serial line.
+[t3]
+.It Dv IFM_TDM_T3_M13
+T3, 44736kb/s B3ZS, M13 structured serial line.
+[t3-m13]
+.El
+.Pp
+The following media options are defined for TDM:
+.Bl -tag -offset indent -width IFM_TDM_HDLC_CRC16
+.It Dv IFM_TDM_HDLC_CRC16
+Cisco HDLC with 16-bit CRC checksum encoding.
+[hdlc-crc16]
+.It Dv IFM_TDM_FR_ANSI
+ANSI/ITU Framerelay encoding.
+[framerelay-ansi, framerelay-itu]
+.It Dv IFM_TDM_FR_CISCO
+Cisco Framerelay encoding.
+[framerelay-cisco]
+.It Dv IFM_TDM_PPP
+PPP encoding.
+[ppp]
+.El
+.Pp
+By default TDM interfaces will use Cisco HDLC encoding with a 32-bit CRC
+checksum.
+.Pp
+The following media modes are defined for TDM:
+.Bl -tag -offset indent -width IFM_TDM_MASTER
+.It Dv IFM_TDM_MASTER
+Use local clock source as master clock.
+[master]
+.El
+.Sh MEDIA TYPES AND OPTIONS FOR CARP
+.Xr carp 4
+does not support any media types or options.
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr ifconfig 8
