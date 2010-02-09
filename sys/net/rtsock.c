@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.96 2010/02/09 16:31:14 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.97 2010/02/09 16:34:57 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1060,6 +1060,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			rtm = mtod(m, struct rt_msghdr *);
 			rtm->rtm_index = ifp->if_index;
 			rtm->rtm_flags |= rt->rt_flags;
+			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			rtm->rtm_errno = error;
 			rtm->rtm_addrs = info.rti_addrs;
 			rtm->rtm_tableid = ifp->if_rdomain;
