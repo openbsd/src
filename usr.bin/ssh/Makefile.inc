@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.34 2010/02/08 10:50:20 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.35 2010/02/09 08:55:31 markus Exp $
 
 CFLAGS+=	-I${.CURDIR}/..
 
@@ -17,7 +17,7 @@ CDIAGFLAGS+=	-Wshadow
 
 #CFLAGS+=	-DJPAKE
 
-#CFLAGS+=	-DENABLE_PKCS11
+CFLAGS+=	-DENABLE_PKCS11
 
 .include <bsd.obj.mk>
 
