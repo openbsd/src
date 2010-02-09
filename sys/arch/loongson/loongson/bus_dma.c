@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.2 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.3 2010/02/09 19:23:19 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -360,7 +360,7 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 					cacheop = SYNC_W;
 			} else {
 				if (op & BUS_DMASYNC_PREREAD)
-					cacheop = SYNC_X;
+					cacheop = SYNC_R;
 				else if (op & BUS_DMASYNC_POSTREAD)
 					cacheop = SYNC_R;
 				else
