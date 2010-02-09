@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.31 2009/11/23 15:33:37 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.32 2010/02/09 19:36:05 kettenis Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -66,6 +66,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/agpvar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <dev/rndvar.h>
 
@@ -143,8 +144,12 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	pcireg_t bcreg;
+	struct pcibus_attach_args pba;
+	pcireg_t bcreg, bir;
+	u_char pbnum;
+	pcitag_t tag;
 	int i, r;
+	int doattach = 0;
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
@@ -201,17 +206,27 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_VENDOR_VIATECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_VIATECH_VT8251_VLINK:
+		case PCI_PRODUCT_VIATECH_VT8251_PCIE_0:
 			/*
-			 * For some strange reason, the VIA VT8251
-			 * chipset can be configured to its PCIe
-			 * bridge show up as a host bridge.  We whack
-			 * it into PCI bridge mode here such that we
-			 * can see the devices behind it.
+			 * Bump the host bridge into PCI-PCI bridge
+			 * mode by clearing magic bit on the VLINK
+			 * device.  This allows us to read the bus
+			 * number for the PCI bus attached to this
+			 * host bridge.
 			 */
-			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xfc);
+			tag = pci_make_tag(pa->pa_pc, 0, 17, 7);
+			bcreg = pci_conf_read(pa->pa_pc, tag, 0xfc);
 			bcreg &= ~0x00000004; /* XXX Magic */
-			pci_conf_write(pa->pa_pc, pa->pa_tag, 0xfc, bcreg);
+			pci_conf_write(pa->pa_pc, tag, 0xfc, bcreg);
+
+			bir = pci_conf_read(pa->pa_pc,
+			    pa->pa_tag, PPB_REG_BUSINFO);
+			pbnum = PPB_BUSINFO_PRIMARY(bir);
+			doattach = 1;
+
+			/* Switch back to host bridge mode. */
+			bcreg |= 0x00000004; /* XXX Magic */
+			pci_conf_write(pa->pa_pc, tag, 0xfc, bcreg);
 			break;
 		}
 		printf("\n");
@@ -223,7 +238,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 #if NAGP > 0
 	/*
-	 * Intel IGD have an odd interface and attach at vga, however
+	 * Intel IGD have an odd interface and attach at vga, however,
 	 * in that mode they don't have the AGP cap bit, so this
 	 * test should be sufficient
 	 */
@@ -236,6 +251,19 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &aa, agpdev_print);
 	}
 #endif /* NAGP > 0 */
+
+	if (doattach == 0)
+		return;
+
+	bzero(&pba, sizeof(pba));
+	pba.pba_busname = "pci";
+	pba.pba_iot = pa->pa_iot;
+	pba.pba_memt = pa->pa_memt;
+	pba.pba_dmat = pa->pa_dmat;
+	pba.pba_domain = pa->pa_domain;
+	pba.pba_bus = pbnum;
+	pba.pba_pc = pa->pa_pc;
+	config_found(self, &pba, pchb_print);
 }
 
 int
