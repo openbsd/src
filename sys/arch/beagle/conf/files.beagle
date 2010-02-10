@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.1 2009/05/08 03:13:26 drahn Exp $
+#	$OpenBSD: files.beagle,v 1.2 2010/02/10 20:40:09 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -28,6 +28,8 @@ file	arch/arm/armv7/armv7_mutex.c
 # note that the order of the devices in _this_ file
 # affects the order that the devices will configure.
 
+include "../../../dev/sdmmc/files.sdmmc"
+
 device prcm
 attach prcm at ahb
 file	arch/beagle/dev/prcm.c			prcm
@@ -48,8 +50,9 @@ device omdog
 attach omdog at ahb
 file	arch/beagle/dev/omdog.c			omdog
 
-attach sm at ahb with sm_ahb
-file	arch/beagle/dev/if_sm_ahb.c			sm_ahb
+device ommmc: sdmmcbus
+attach ommmc at ahb
+file	arch/beagle/dev/ommmc.c			ommmc
 
 attach ohci at ahb with omohci
 file	arch/beagle/dev/omohci.c			omohci

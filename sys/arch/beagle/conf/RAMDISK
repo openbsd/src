@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.3 2009/05/24 21:02:48 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.4 2010/02/10 20:40:09 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -79,6 +79,10 @@ omgpio4		at ahb? addr 0x49056000 intr 33
 omgpio5		at ahb? addr 0x49058000 intr 34
 
 omdog0		at ahb? addr 0x48314000 		# watchdog timer
+
+ommmc0		at ahb? addr 0x4809c000 intr 83
+#ommmc1		at ahb? addr 0x480b4000 intr 86
+#ommmc2		at ahb? addr 0x480ad000 intr 94
 
 #omkbd0		at ahb? addr 0x48022000 		
 #wskbd*		at omkbd? mux 1
@@ -167,6 +171,18 @@ com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
 # LCD
 #omdisplay0	at ahb? addr 0x48050000 intr 25 # LCD DISPLAY
 #wsdisplay*	at omdisplay? console ?
+
+sdmmc*	at ommmc?		# SD/MMC bus
+scsibus* at sdmmc?		# SCSI emulation
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+ss*		at scsibus?
+uk*		at scsibus?
+
+# Bluetooth controllers
+#sbt*	at sdmmc?		# SDIO Bluetooth
 
 # APM emulation
 #apm0		at pxaip?
