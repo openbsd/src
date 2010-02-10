@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.4 2009/10/19 19:46:56 guenther Exp $
+#	$OpenBSD: Makefile.beagle,v 1.5 2010/02/10 20:36:03 drahn Exp $
 
 # Makefile for OpenBSD
 #
@@ -195,7 +195,7 @@ bsd.img: bsd.rd
 	${OBJCOPY} -O binary bsd.rd bsd.img
 
 bsd.umg: bsd.img
-	mkimage -C none -A arm -O OpenBSD -e 0x80300000 -a 0x80300000 -d bsd.img bsd.umg
+	mkimage -C none -A arm -O Linux -e 0x80300000 -a 0x80300000 -d bsd.img bsd.umg
  
 # depend on network or filesystem configuration 
 uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
