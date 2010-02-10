@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.3 2010/02/10 22:41:27 drahn Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.4 2010/02/10 23:01:49 drahn Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -1017,7 +1017,6 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 void
 ommmc_transfer_data(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 {
-printf("ommm_transfer_data\n");
 	u_char *datap = cmd->c_data;
 	int i, datalen;
 	int mask;
