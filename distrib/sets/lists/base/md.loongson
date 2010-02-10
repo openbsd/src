@@ -15,6 +15,11 @@
 ./etc/firmware/atu-rfmd2958smc-int
 ./etc/firmware/kue
 ./etc/firmware/kue-license
+./etc/firmware/ral-license
+./etc/firmware/ral-rt2561
+./etc/firmware/ral-rt2561s
+./etc/firmware/ral-rt2661
+./etc/firmware/ral-rt2860
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
 ./etc/firmware/run-license

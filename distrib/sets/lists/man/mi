@@ -1818,6 +1818,13 @@
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
 ./usr/share/man/cat4/loongson
+./usr/share/man/cat4/loongson/autoconf.0
+./usr/share/man/cat4/loongson/bonito.0
+./usr/share/man/cat4/loongson/glxpcib.0
+./usr/share/man/cat4/loongson/intro.0
+./usr/share/man/cat4/loongson/kmem.0
+./usr/share/man/cat4/loongson/mem.0
+./usr/share/man/cat4/loongson/smfb.0
 ./usr/share/man/cat4/lpt.0
 ./usr/share/man/cat4/luna88k
 ./usr/share/man/cat4/luna88k/autoconf.0
@@ -3034,6 +3041,7 @@
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/ssh-keysign.0
+./usr/share/man/cat8/ssh-pkcs11-helper.0
 ./usr/share/man/cat8/sshd.0
 ./usr/share/man/cat8/ssl.0
 ./usr/share/man/cat8/starttls.0
