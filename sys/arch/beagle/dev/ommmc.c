@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.2 2010/02/10 21:51:26 drahn Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.3 2010/02/10 22:41:27 drahn Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -51,7 +51,7 @@
 #define  MMCHS_BLK_NBLK_SHIFT	16
 #define  MMCHS_BLK_NBLK_MASK	(MMCHS_BLK_NBLK_MAX<<MMCHS_BLK_NBLK_SHIFT)
 #define  MMCHS_BLK_BLEN_MAX	0x400
-#define  MMCHS_BLK_BLEN_SHIFT	16
+#define  MMCHS_BLK_BLEN_SHIFT	0
 #define  MMCHS_BLK_BLEN_MASK	(MMCHS_BLK_BLEN_MAX<<MMCHS_BLK_BLEN_SHIFT)
 #define MMCHS_ARG	0x108
 #define MMCHS_CMD	0x10C
@@ -312,7 +312,7 @@ void	ommmc_transfer_data(struct ommmc_softc *, struct sdmmc_command *);
 void	ommmc_read_data(struct ommmc_softc *, u_char *, int);
 void	ommmc_write_data(struct ommmc_softc *, u_char *, int);
 
-//#define SDHC_DEBUG
+/* #define SDHC_DEBUG */
 #ifdef SDHC_DEBUG
 int ommmcdebug = 20;
 #define DPRINTF(n,s)	do { if ((n) <= ommmcdebug) printf s; } while (0)
@@ -766,7 +766,6 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		error = EINVAL;
 		goto ret;
 	}
-	div = 8;
 	reg = HREAD4(sc, MMCHS_SYSCTL);
 	reg &= ~MMCHS_SYSCTL_CLKD_MASK;
 	reg |= div << MMCHS_SYSCTL_CLKD_SH;
@@ -1176,13 +1175,8 @@ ommmc_intr(void *arg)
 
 	/* Acknowledge the interrupts we are about to handle. */
 	HWRITE4(sc, MMCHS_STAT, status);
-#if 1
 	DPRINTF(2,("%s: interrupt status=%b\n", HDEVNAME(sc),
 	    status, MMCHS_STAT_FMT));
-#else
-	DPRINTF(2,("%s: interrupt status=%x\n", HDEVNAME(sc),
-	    status));
-#endif
 
 	/*
 	 * Service error interrupts.
