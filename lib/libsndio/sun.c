@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.26 2009/12/02 08:19:11 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.27 2010/02/10 23:03:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -270,8 +270,8 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 			continue;
 		}
 		cap->enc[nenc].bits = ae.precision;
-		cap->enc[nenc].bps = ae.precision / 8;
-		cap->enc[nenc].msb = 0;
+		cap->enc[nenc].bps = SIO_BPS(ae.precision);
+		cap->enc[nenc].msb = 1;
 		enc_map |= (1 << nenc);
 		nenc++;
 	}
