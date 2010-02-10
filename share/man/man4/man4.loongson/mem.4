@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.1 2010/02/09 19:08:39 miod Exp $
+.\"	$OpenBSD: mem.4,v 1.2 2010/02/10 08:35:31 jmc Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)mem.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: February 9 2010 $
+.Dd $Mdocdate: February 10 2010 $
 .Dt MEM 4 loongson
 .Os
 .Sh NAME
@@ -59,8 +59,9 @@ Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Pp
 On the loongson, physical memory is always contiguous, but can be accessed
 from two distinct physical address windows:
+.Pp
 .Bl -bullet -compact
-.It 
+.It
 From address
 .Ad 0x00000000
 to
@@ -73,6 +74,7 @@ to
 .Ad 0xffffffff ,
 the whole memory, up to 2 gigabytes.
 .El
+.Pp
 This layout implies that a given memory location within the first 256
 megabytes may indifferently be addressed in the
 .Ad 0x00000000 -
