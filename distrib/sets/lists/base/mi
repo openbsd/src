@@ -1979,7 +1979,6 @@
 ./usr/libdata/perl5/warnings
 ./usr/libdata/perl5/warnings.pm
 ./usr/libdata/perl5/warnings/register.pm
-./usr/libdata/ssh
 ./usr/libexec
 ./usr/libexec/afsd
 ./usr/libexec/auth
