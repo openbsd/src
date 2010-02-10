@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.1 2010/02/10 20:40:09 drahn Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.2 2010/02/10 21:51:26 drahn Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -872,10 +872,16 @@ ommmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	 */
 	if (cmd->c_error == 0 && ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
 		if (ISSET(cmd->c_flags, SCF_RSP_136)) {
-			cmd->c_resp[0] = HREAD4(sc, MMCHS_RSP10);
-			cmd->c_resp[1] = HREAD4(sc, MMCHS_RSP32);
-			cmd->c_resp[2] = HREAD4(sc, MMCHS_RSP54);
-			cmd->c_resp[3] = HREAD4(sc, MMCHS_RSP76);
+			uint32_t v0,v1,v2,v3;
+			v0 = HREAD4(sc, MMCHS_RSP10);
+			v1 = HREAD4(sc, MMCHS_RSP32);
+			v2 = HREAD4(sc, MMCHS_RSP54);
+			v3 = HREAD4(sc, MMCHS_RSP76);
+
+			cmd->c_resp[0] = (v0 >> 8) | ((v1 & 0xff)  << 24);
+			cmd->c_resp[1] = (v1 >> 8) | ((v2 & 0xff)  << 24);
+			cmd->c_resp[2] = (v2 >> 8) | ((v3 & 0xff)  << 24);
+			cmd->c_resp[3] = v3 >> 8;
 #ifdef SDHC_DEBUG
 			printf("resp[0] 0x%08x\nresp[1] 0x%08x\nresp[2] 0x%08x\nresp[3] 0x%08x\n", cmd->c_resp[0], cmd->c_resp[1], cmd->c_resp[2], cmd->c_resp[3]);
 #endif
