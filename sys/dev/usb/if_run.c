@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.56 2010/02/08 20:21:35 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.57 2010/02/10 21:46:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3168,7 +3168,7 @@ run_rt3070_rf_setup(struct run_softc *sc)
 	/* initialize RF registers from ROM for >=RT3071*/
 	if (sc->mac_ver >= 0x3071) {
 		for (i = 0; i < 10; i++) {
-			if (sc->rf[i].reg == 0 || sc->rf[i].val == 0xff)
+			if (sc->rf[i].reg == 0 || sc->rf[i].reg == 0xff)
 				continue;
 			run_rt3070_rf_write(sc, sc->rf[i].reg, sc->rf[i].val);
 		}
