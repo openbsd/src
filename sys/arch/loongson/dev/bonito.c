@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.8 2010/02/09 21:31:46 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.9 2010/02/10 21:09:40 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -638,7 +638,8 @@ bonito_intr(uint32_t hwpend, struct trap_frame *frame)
 					}
 				}
 				if (rc == 0)
-					printf("spurious interrupt %d\n", bit);
+					printf("spurious interrupt %d\n",
+					    bitno);
 
 				if ((isr ^= mask) == 0)
 					goto done;
@@ -732,7 +733,7 @@ bonito_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 				}
 				if (rc == 0)
 					printf("spurious isa interrupt %d\n",
-					    bit);
+					    bitno);
 
 				bonito_isa_specific_eoi(bitno);
 
