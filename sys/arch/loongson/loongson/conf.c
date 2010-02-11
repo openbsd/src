@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1.1.1 2009/07/31 09:55:05 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 2010/02/11 20:14:49 otto Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ cdev_decl(pci);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_notdef(),			/* 1 was /dev/drum */
+	cdev_notdef(),			/* 1: was /dev/drum */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
@@ -152,7 +152,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 12: berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 13: network tunnel */
-	cdev_notdef(),			/* 14 */
+	cdev_notdef(),			/* 14: */
 	cdev_notdef(),			/* 15: */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
