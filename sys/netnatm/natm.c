@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.c,v 1.11 2009/05/31 19:17:20 claudio Exp $	*/
+/*	$OpenBSD: natm.c,v 1.12 2010/02/11 22:33:33 claudio Exp $	*/
 
 /*
  *
@@ -213,7 +213,7 @@ int natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
       s2 = splnet();
       if (ifp->if_ioctl != NULL)
 	  ifp->if_ioctl(ifp, SIOCATMDIS, (caddr_t) &api);
-      splx(s);
+      splx(s2);
 
       npcb_free(npcb, NPCB_REMOVE);
       soisdisconnected(so);
