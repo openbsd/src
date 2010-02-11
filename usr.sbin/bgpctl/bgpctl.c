@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.155 2010/01/10 00:16:23 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.156 2010/02/11 12:25:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1053,7 +1053,7 @@ show_rib_summary_head(void)
 	printf(
 	    "flags: * = Valid, > = Selected, I = via IBGP, A = Announced\n");
 	printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
-	printf("%-5s %-20s%-15s  %5s %5s %s\n", "flags", "destination",
+	printf("%-5s %-20s %-15s  %5s %5s %s\n", "flags", "destination",
 	    "gateway", "lpref", "med", "aspath origin");
 }
 
@@ -1127,7 +1127,7 @@ show_rib_summary_msg(struct imsg *imsg)
 		memcpy(&rib, imsg->data, sizeof(rib));
 
 		print_prefix(&rib.prefix, rib.prefixlen, rib.flags);
-		printf("%-15s ", log_addr(&rib.exit_nexthop));
+		printf(" %-15s ", log_addr(&rib.exit_nexthop));
 
 		printf(" %5u %5u ", rib.local_pref, rib.med);
 
