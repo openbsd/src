@@ -1,4 +1,4 @@
-/* $OpenBSD: pathnames.h,v 1.18 2010/02/08 10:50:20 markus Exp $ */
+/* $OpenBSD: pathnames.h,v 1.19 2010/02/11 20:37:47 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -113,7 +113,7 @@
 /* Location of ssh-keysign for hostbased authentication */
 #define _PATH_SSH_KEY_SIGN		"/usr/libexec/ssh-keysign"
 
-/* Location of ssh-keysign for hostbased authentication */
+/* Location of ssh-pkcs11-helper to support keys in tokens */
 #define _PATH_SSH_PKCS11_HELPER		"/usr/libexec/ssh-pkcs11-helper"
 
 /* xauth for X11 forwarding */
