@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.77 2010/01/13 06:02:37 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.78 2010/02/11 13:18:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -606,11 +606,23 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 		upa->mpattr[20] = 0; /* Reserved must be 0 */
 
 		/* nexthop dance see also up_get_nexthop() */
-		if (peer->conf.ebgp == 0) {
+		if (a->flags & F_NEXTHOP_NOMODIFY) {
+			/* no modify flag set */
+			if (a->nexthop == NULL)
+				memcpy(&upa->mpattr[4], &peer->local_v6_addr.v6,
+				    sizeof(struct in6_addr));
+			else
+				memcpy(&upa->mpattr[4],
+				    &a->nexthop->exit_nexthop.v6,
+				    sizeof(struct in6_addr));
+		} else if (a->flags & F_NEXTHOP_SELF)
+			memcpy(&upa->mpattr[4], &peer->local_v6_addr.v6,
+			    sizeof(struct in6_addr));
+		else if (!peer->conf.ebgp) {
 			/* ibgp */
 			if (a->nexthop == NULL ||
 			    (a->nexthop->exit_nexthop.aid == AID_INET6 &&
-			    memcmp(&a->nexthop->exit_nexthop.v6,
+			    !memcmp(&a->nexthop->exit_nexthop.v6,
 			    &peer->remote_addr.v6, sizeof(struct in6_addr))))
 				memcpy(&upa->mpattr[4], &peer->local_v6_addr.v6,
 				    sizeof(struct in6_addr));
@@ -653,11 +665,25 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 		upa->mpattr[3] = sizeof(u_int64_t) + sizeof(struct in_addr);
 
 		/* nexthop dance see also up_get_nexthop() */
-		if (peer->conf.ebgp == 0) {
+		if (a->flags & F_NEXTHOP_NOMODIFY) {
+			/* no modify flag set */
+			if (a->nexthop == NULL)
+				memcpy(&upa->mpattr[12],
+				    &peer->local_v4_addr.v4,
+				    sizeof(struct in_addr));
+			else
+				/* nexthops are stored as IPv4 addrs */
+				memcpy(&upa->mpattr[12],
+				    &a->nexthop->exit_nexthop.v4,
+				    sizeof(struct in_addr));
+		} else if (a->flags & F_NEXTHOP_SELF)
+			memcpy(&upa->mpattr[12], &peer->local_v4_addr.v4,
+			    sizeof(struct in_addr));
+		else if (!peer->conf.ebgp) {
 			/* ibgp */
 			if (a->nexthop == NULL ||
 			    (a->nexthop->exit_nexthop.aid == AID_INET &&
-			    memcmp(&a->nexthop->exit_nexthop.v4,
+			    !memcmp(&a->nexthop->exit_nexthop.v4,
 			    &peer->remote_addr.v4, sizeof(struct in_addr))))
 				memcpy(&upa->mpattr[12],
 				    &peer->local_v4_addr.v4,
