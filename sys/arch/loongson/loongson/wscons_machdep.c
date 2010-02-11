@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.2 2010/02/05 20:53:28 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.3 2010/02/11 20:15:29 otto Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -158,10 +158,9 @@ setup_kbd:
 
 #if NPCKBC > 0
 	switch (sys_config.system_type) {
-	case LOONGSON_GDIUM:
-		/* no legacy hardware */
-		break;
 	default:
+		/* no pckbc or no legacy hardware */
+		break;
 	case LOONGSON_YEELOONG:
 		if (rc != 0)
 			rc = pckbc_cnattach(&bonito_pci_io_space_tag, IO_KBD,
