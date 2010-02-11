@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.304 2010/01/05 08:49:57 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.305 2010/02/11 22:05:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2194,7 +2194,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 				log_peer_warnx(&peer->conf,
 				    "parse_capabilities: AFI %u, "
 				    "safi %u unknown", afi, safi);
-				return (-1);
+				break;
 			}
 			peer->capa.peer.mp[aid] = 1;
 			break;
