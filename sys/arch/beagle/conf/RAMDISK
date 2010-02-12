@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.4 2010/02/10 20:40:09 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.5 2010/02/12 05:36:10 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -88,6 +88,9 @@ ommmc0		at ahb? addr 0x4809c000 intr 83
 #wskbd*		at omkbd? mux 1
 
 #ohci0		at ahb? addr 0x4805E000 size 0x400 intr 78	# ohci (shim)
+#ehci0          at ahb? addr 0x48064800 size 0x400 intr 77      # ehci (shim)
+#usb*           at ehci?
+
 
 #mcspi0		at ahb? addr 0x48098000 intr 65
 #mcspi1		at ahb? addr 0x4809A000 intr 66
