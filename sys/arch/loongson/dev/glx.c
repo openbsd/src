@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.3 2010/02/05 20:44:01 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.4 2010/02/12 08:11:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -98,14 +98,27 @@ glx_init(pci_chipset_tag_t pc, pcitag_t tag, int dev)
 	/*
 	 * Perform some Geode intialization.
 	 */
+
 	msr = rdmsr(DIVIL_BALL_OPTS);	/* 0x71 */
 	wrmsr(DIVIL_BALL_OPTS, msr | 0x01);
 
-	/* route usb interrupt */
+	/*
+	 * Route usb, audio and serial interrupts
+	 */
+
 	msr = rdmsr(PIC_YSEL_LOW);
 	msr &= ~(0xfUL << 8);
+	msr &= ~(0xfUL << 16);
 	msr |= 11 << 8;
+	msr |= 9 << 16;
 	wrmsr(PIC_YSEL_LOW, msr);
+
+	msr = rdmsr(PIC_YSEL_HIGH);
+	msr &= ~(0xfUL << 24);
+	msr &= ~(0xfUL << 28);
+	msr |= 4 << 24;
+	msr |= 3 << 28;
+	wrmsr(PIC_YSEL_HIGH, msr);
 }
 
 uint64_t
