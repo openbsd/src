@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.3 2010/02/04 21:32:11 jasper Exp $
+dnl	$OpenBSD: install,v 1.4 2010/02/12 20:58:34 miod Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -7,21 +7,28 @@ The easiest way to boot into the OpenBSD installer is to copy the bsd.rd
 installation kernel to the main Linux partition, and boot from it.
 
 Assuming the installation kernel has been copied to /boot/bsd.rd on the
-Linux system, at the PMON prompt, enter:
+Linux system, at the PMON prompt, enter
 
     PMON> boot /dev/fs/ext2@wd0/boot/bsd.rd
 
-to boot the installation kernel.
+on Lemote systems, and
 
-Alternatively, if your particular PMON flavour supports `fat' filesystems,
-you can boot the kernel from an usb key with:
+    PMON> load /dev/fs/ext2@usbg0/boot/bsd.rd
+    PMON> g
 
-dnl check syntax
-    PMON> boot /dev/fs/msdos@usb0:/bsd.rd
+on Gdium systems, to boot the installation kernel.
+dnl
+dnl Alternatively, if your particular PMON flavour supports `fat' filesystems,
+dnl you can boot the kernel from an usb key with:
+dnl 
+dnl    PMON> boot /dev/fs/fat@usb0:/bsd.rd
 
 Netbooting the installation kernel can be done as well:
+
     PMON> ifaddr rtl0 <your ip>
     PMON> boot tftp://<server ip>/bsd.rd
+
+(on Gdium systems, use a `load' command followed by `g' instead of `boot').
 
 OpenBSDInstallPart2
 
@@ -68,40 +75,60 @@ OpenBSDInstallWrapup
 	from it. This annoyance is being worked on and should disappear
 	very soon.
 
-	After the installation is complete, you should add an OpenBSD
-	entry to the boot menu to be able to boot OpenBSD more easily.
+	Lemote systems final steps:
 
-	The boot menu contents are found in /boot/boot.cfg on the Linux
-	partition. To add an OpenBSD entry, simply add a new entry in the
-	file, such as:
+		Lemote systems ship with a boot menu.  After the installation
+		is complete, you should add an OpenBSD entry to the boot menu
+		to be able to boot OpenBSD more easily.
 
-	title OpenBSD
-		kernel /dev/fs/ext2@wd0/boot/bsd
-		args ""
+		The boot menu contents are found in /boot/boot.cfg on the Linux
+		partition. To add an OpenBSD entry, simply add a new entry in
+		the file, such as:
 
-	In the example above, /dev/fs/ext2@wd0/boot/bsd is the PMON path
-	to the kernel image.
+		title OpenBSD
+			kernel /dev/fs/ext2@wd0/boot/bsd
+			args ""
 
-	You may make OpenBSD the default option by changing the ``default''
-	line near the top of the file. The value on this line is the index
-	of the default entry, starting at zero. So if you added the OpenBSD
-	entry as the fourth entry in the file, it would become the default
-	choice with:
+		In the example above, /dev/fs/ext2@wd0/boot/bsd is the PMON
+		path to the kernel image.
 
-	default 3
+		You may make OpenBSD the default option by changing the
+		``default'' line near the top of the file. The value on this
+		line is the index of the default entry, starting at zero. So
+		if you added the OpenBSD entry as the fourth entry in the
+		file, it would become the default choice with:
 
-	The timeout until the default choice is selected, in seconds, can be
-	modified on the ``timeout'' line.
+		default 3
 
-	Note that using the boot menu currently disables root device
-	discovery and kernel symbol loading. Therefore it may be
-	more convenient to switch to the PMON prompt using 'c' and
-	boot with the command
+		The timeout until the default choice is selected, in seconds,
+		can be modified on the ``timeout'' line.
 
-	PMON> boot -k $bsd
+		Note that using the boot menu currently disables root device
+		discovery and kernel symbol loading. Therefore it may be
+		more convenient to switch to the PMON prompt using 'c' and
+		boot with the command
 
-	after having set the bsd variable to your boot path
+		    PMON> boot -k $bsd
 
-	PMON> set bsd /dev/fs/ext2@wd0/boot/bsd
+		after having set the bsd variable to your boot path:
+
+		    PMON> set bsd /dev/fs/ext2@wd0/boot/bsd
+
+	Gdium systems final steps:
+
+		Gdium systems do not have a boot menu, and directly boot the
+		system (Linux, by default).
+
+		The path to the file booted by default is set in the `al'
+		environment variable. To boot the bsd kernel on the G-Key
+		by default, assuming it has been copied to /boot on the first
+		ext3 partition, you can change it to:
+
+		    PMON> set al /dev/fs/ext2@usbg0/boot/bsd
+
+		Alternatively, you can disable autoboot by removing this
+		variable:
+
+		    PMON> unset al
 
 OpenBSDCongratulations
