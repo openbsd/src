@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonitoreg.h,v 1.3 2010/02/05 20:51:22 miod Exp $	*/
+/*	$OpenBSD: bonitoreg.h,v 1.4 2010/02/12 08:14:02 miod Exp $	*/
 /*	$NetBSD: bonitoreg.h,v 1.6 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #define BONITO_PCIHI_SIZE		0x20000000
 #define BONITO_PCIHI_TOP		(BONITO_PCIHI_BASE+BONITO_PCIHI_SIZE-1)
 #define BONITO_PCIIO_BASE		0x1fd00000
+#define BONITO_PCIIO_LEGACY		0x00004000
 #define BONITO_PCIIO_SIZE		0x00100000
 #define BONITO_PCIIO_TOP		(BONITO_PCIIO_BASE+BONITO_PCIIO_SIZE-1)
 #define BONITO_PCICFG_BASE		0x1fe80000

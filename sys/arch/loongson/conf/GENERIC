@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2010/02/09 12:15:37 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.8 2010/02/12 08:14:00 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,6 +43,7 @@ pckbd*		at pckbc?
 wskbd*		at pckbd? mux 1
 pmsi*		at pckbc?
 wsmouse*	at pmsi? mux 0
+com0		at isa? port 0x2f8 irq 3
 
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
@@ -118,6 +119,7 @@ wsdisplay*	at udl?
 
 # NICs
 ral*		at pci?
+re*		at pci?
 rl*		at pci?
 
 # Media Independent Interface (mii) drivers
@@ -125,6 +127,7 @@ acphy*		at mii?		# Altima AC101 PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
 bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 series PHY
+rgephy*		at mii?		# Realtek 8169S/8110S PHY
 rlphy*		at mii?		# RealTek 8139 internal PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 ukphy*		at mii?		# "unknown" PHYs

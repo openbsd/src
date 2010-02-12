@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 2010/02/05 20:51:22 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.4 2010/02/12 08:14:02 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,23 +38,32 @@
 struct bonito_config;
 
 /*
- * Structure holding all misc config information.
+ * List of legacy I/O ranges.
  */
-struct sys_rec {
-	int	system_type;
-
-	/* Bonito configuration */
-	const struct bonito_config *sys_bc;
+struct legacy_io_range {
+	bus_addr_t	start;
+	bus_size_t	end;	/* inclusive */
 };
 
-extern struct sys_rec sys_config;
+/*
+ * Per platform information.
+ */
+struct platform {
+	int				 system_type;
+	char				*vendor;
+	char				*product;
+
+	const struct bonito_config	*bonito_config;
+	const struct legacy_io_range	*legacy_io_ranges;
+
+	void				(*powerdown)(void);
+};
+
+extern const struct platform *sys_platform;
 
 struct mainbus_attach_args {
 	const char	*maa_name;
 };
-
-extern const struct bonito_config gdium_bonito;
-extern const struct bonito_config yeeloong_bonito;
 
 #include <mips64/autoconf.h>
 

@@ -1,9 +1,9 @@
-/*	$OpenBSD: bonito.c,v 1.9 2010/02/10 21:09:40 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.10 2010/02/12 08:14:02 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
 /*
- * Copyright (c) 2009 Miodrag Vallat.
+ * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,6 +50,10 @@
  * PCI configuration space support for the Loongson PCI and memory controller
  * chip, which is derived from the Algorithmics BONITO chip.
  */
+/*
+ * XXX The legacy interrupt scheme is entangled and as many parts as
+ * XXX possible should move to pcib.c...
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +78,10 @@
 #include <loongson/dev/bonitoreg.h>
 #include <loongson/dev/bonitovar.h>
 #include <loongson/dev/bonito_irq.h>
+
+#if 0
+#define	BONITO_DEBUG
+#endif
 
 int	bonito_match(struct device *, void *, void *);
 void	bonito_attach(struct device *, struct device *, void *);
@@ -113,18 +121,16 @@ void	 bonito_pci_intr_disestablish(void *, void *);
 int	 bonito_conf_addr(const struct bonito_config *, pcitag_t, int,
 	    u_int32_t *, u_int32_t *);
 
-uint	 bonito_get_isa_imr(void);
-uint	 bonito_get_isa_isr(void);
-void	 bonito_set_isa_imr(uint);
-void	 bonito_isa_specific_eoi(int);
-
-uint32_t bonito_isa_intr(uint32_t, struct trap_frame *);
-
 void	 bonito_splx(int);
 void	 bonito_setintrmask(int);
 
-void	 bonito_isa_splx(int);
-void	 bonito_isa_setintrmask(int);
+uint	 loongson_get_isa_imr(void);
+uint	 loongson_get_isa_isr(void);
+void	 loongson_set_isa_imr(uint);
+void	 loongson_isa_specific_eoi(int);
+uint32_t loongson_isa_intr(uint32_t, struct trap_frame *);
+void	 loongson_isa_splx(int);
+void	 loongson_isa_setintrmask(int);
 
 /*
  * Bonito interrupt handling declarations.
@@ -134,8 +140,7 @@ struct intrhand *bonito_intrhand[BONITO_NINTS];
 uint64_t bonito_intem;
 uint64_t bonito_imask[NIPLS];
 
-#define	REGVAL8(x)	*((volatile u_int8_t *)PHYS_TO_XKPHYS(x, CCA_NC))
-uint	bonito_isaimr;
+uint	loongson_isaimr;
 
 struct machine_bus_dma_tag bonito_bus_dma_tag = {
 	._dmamap_create = _dmamap_create,
@@ -158,6 +163,9 @@ struct machine_bus_dma_tag bonito_bus_dma_tag = {
 	._device_to_pa = bonito_device_to_pa
 };
 
+int     bonito_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+
 struct mips_bus_space bonito_pci_io_space_tag = {
 	.bus_base = PHYS_TO_XKPHYS(BONITO_PCIIO_BASE, CCA_NC),
 	._space_read_1 = generic_space_read_1,
@@ -174,7 +182,7 @@ struct mips_bus_space bonito_pci_io_space_tag = {
 	._space_write_raw_4 = generic_space_write_raw_4,
 	._space_read_raw_8 = generic_space_read_raw_8,
 	._space_write_raw_8 = generic_space_write_raw_8,
-	._space_map = generic_space_map,
+	._space_map = bonito_io_map,
 	._space_unmap = generic_space_unmap,
 	._space_subregion = generic_space_region,
 	._space_vaddr = generic_space_vaddr
@@ -220,9 +228,7 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	const struct bonito_config *bc;
-	struct extent *ioex, *memex;
 	uint32_t reg;
-	int real_bonito;
 
 	/*
 	 * Loongson 2F processors do not use a real Bonito64 chip but
@@ -232,12 +238,12 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (curcpu()->ci_hw.type == MIPS_LOONGSON2 &&
 	    (curcpu()->ci_hw.c0prid & 0xff) == 0x2f - 0x2c)
-		real_bonito = 0;
+		sc->sc_compatible = 0;
 	else
-		real_bonito = 1;
+		sc->sc_compatible = 1;
 
 	reg = PCI_REVISION(REGVAL(BONITO_PCI_REG(PCI_CLASS_REG)));
-	if (real_bonito) {
+	if (sc->sc_compatible) {
 		printf(": BONITO Memory and PCI controller, %s rev %d.%d\n",
 		    BONITO_REV_FPGA(reg) ? "FPGA" : "ASIC",
 		    BONITO_REV_MAJOR(reg), BONITO_REV_MINOR(reg));
@@ -246,26 +252,51 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 		    PCI_REVISION(REGVAL(BONITO_PCI_REG(PCI_CLASS_REG))));
 	}
 
-	bc = sys_config.sys_bc;
+	bc = sys_platform->bonito_config;
 	sc->sc_bonito = bc;
 	SLIST_INIT(&sc->sc_hook);
+
+#ifdef BONITO_DEBUG
+	if (!sc->sc_compatible)
+		printf("ISR4C: %08x\n", REGVAL(BONITO_PCI_REG(0x4c)));
+	printf("PCIMAP: %08x\n", REGVAL(BONITO_PCIMAP));
+	printf("MEMWIN: %08x.%08x - %08x.%08x\n",
+	    REGVAL(BONITO_MEM_WIN_BASE_H), REGVAL(BONITO_MEM_WIN_BASE_L),
+	    REGVAL(BONITO_MEM_WIN_MASK_H), REGVAL(BONITO_MEM_WIN_MASK_L));
+	if (!sc->sc_compatible) {
+		printf("HITSEL0: %08x.%08x\n",
+		    REGVAL(LOONGSON_PCI_HIT0_SEL_H),
+		    REGVAL(LOONGSON_PCI_HIT0_SEL_L));
+		printf("HITSEL1: %08x.%08x\n",
+		    REGVAL(LOONGSON_PCI_HIT1_SEL_H),
+		    REGVAL(LOONGSON_PCI_HIT1_SEL_L));
+		printf("HITSEL2: %08x.%08x\n",
+		    REGVAL(LOONGSON_PCI_HIT2_SEL_H),
+		    REGVAL(LOONGSON_PCI_HIT2_SEL_L));
+	}
+	printf("PCI BAR 0:%08x 1:%08x 2:%08x 3:%08x 4:%08x 5:%08x\n",
+	    REGVAL(BONITO_PCI_REG(PCI_MAPREG_START + 0 * 4)),
+	    REGVAL(BONITO_PCI_REG(PCI_MAPREG_START + 1 * 4)),
+	    REGVAL(BONITO_PCI_REG(PCI_MAPREG_START + 2 * 4)),
+	    REGVAL(BONITO_PCI_REG(PCI_MAPREG_START + 3 * 4)),
+	    REGVAL(BONITO_PCI_REG(PCI_MAPREG_START + 4 * 4)),
+	    REGVAL(BONITO_PCI_REG(PCI_MAPREG_START + 5 * 4)));
+#endif
 
 	/*
 	 * Setup proper abitration.
 	 */
 
-	if (!real_bonito) {
-		if (sys_config.system_type == LOONGSON_YEELOONG) {
-			/*
-			 * According to Linux, changing the value of this
-			 * undocumented register ``avoids deadlock of PCI
-			 * reading/writing lock operation''.
-			 * Is this really necessary, and if so, does it
-			 * matter on other designs?
-			 */
-			REGVAL(BONITO_PCI_REG(0x4c)) =  0xd2000001;
-							/* was c2000001 */
-		}
+	if (!sc->sc_compatible) {
+		/*
+		 * According to Linux, changing the value of this
+		 * undocumented register ``avoids deadlock of PCI
+		 * reading/writing lock operation''.
+		 * Is this really necessary, and if so, does it
+		 * matter on other designs?
+		 */
+		/* c2000001 -> d2000001 */
+		REGVAL(BONITO_PCI_REG(0x4c)) |= 0x10000000;
 
 		/* all pci devices may need to hold the bus */
 		reg = REGVAL(LOONGSON_PXARB_CFG);
@@ -281,56 +312,21 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 
 	REGVAL(BONITO_GPIOIE) = bc->bc_gpioIE;
 	REGVAL(BONITO_INTEDGE) = bc->bc_intEdge;
-	if (real_bonito)
+	if (sc->sc_compatible)
 		REGVAL(BONITO_INTSTEER) = bc->bc_intSteer;
 	REGVAL(BONITO_INTPOL) = bc->bc_intPol;
 
 	REGVAL(BONITO_INTENCLR) = 0xffffffff;
 	(void)REGVAL(BONITO_INTENCLR);
 	
-	switch (sys_config.system_type) {
-	case LOONGSON_YEELOONG:
+	if (bc->bc_legacy_pic) {
 		set_intr(INTPRI_BONITO, CR_INT_4, bonito_intr);
-		set_intr(INTPRI_ISA, CR_INT_0, bonito_isa_intr);
-		bonito_isaimr = bonito_get_isa_imr();
-		register_splx_handler(bonito_isa_splx);
-		break;
-	case LOONGSON_GDIUM:
+		set_intr(INTPRI_ISA, CR_INT_0, loongson_isa_intr);
+		loongson_isaimr = loongson_get_isa_imr();
+		register_splx_handler(loongson_isa_splx);
+	} else {
 		set_intr(INTPRI_BONITO, CR_INT_4, bonito_intr);
 		register_splx_handler(bonito_splx);
-		break;
-	default:
-		/* we should have died way earlier */
-		panic("missing interrupt configuration code for this system");
-		break;
-	}
-
-	/*
-	 * Setup PCI resource extents.
-	 */
-
-	ioex = extent_create("pciio", 0, 0xffffffff, M_DEVBUF, NULL, 0,
-	    EX_NOWAIT | EX_FILLED);
-	if (ioex != NULL)
-		(void)extent_free(ioex, 0, BONITO_PCIIO_SIZE, EX_NOWAIT);
-
-	memex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF, NULL, 0,
-	    EX_NOWAIT | EX_FILLED);
-	if (memex != NULL) {
-		reg = REGVAL(BONITO_PCIMAP);
-		(void)extent_free(memex, BONITO_PCIMAP_WINBASE((reg &
-		    BONITO_PCIMAP_PCIMAP_LO0) >> BONITO_PCIMAP_PCIMAP_LO0_SHIFT),
-		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT);
-		(void)extent_free(memex, BONITO_PCIMAP_WINBASE((reg &
-		    BONITO_PCIMAP_PCIMAP_LO1) >> BONITO_PCIMAP_PCIMAP_LO1_SHIFT),
-		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT);
-		(void)extent_free(memex, BONITO_PCIMAP_WINBASE((reg &
-		    BONITO_PCIMAP_PCIMAP_LO2) >> BONITO_PCIMAP_PCIMAP_LO2_SHIFT),
-		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT);
-
-		if (real_bonito) {
-			/* XXX make PCIMAP_HI available if PCIMAP_2 set */
-		}
 	}
 
 	/*
@@ -359,8 +355,10 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_ioex = ioex;
-	pba.pba_memex = memex;
+#ifdef notyet
+	pba.pba_ioex = bonito_get_resource_extent(pc, 1);
+	pba.pba_memex = bonito_get_resource_extent(pc, 0);
+#endif
 
 	config_found(&sc->sc_dev, &pba, bonito_print);
 }
@@ -443,8 +441,7 @@ bonito_intr_disestablish(void *ih)
 }
 
 /*
- * Update interrupt masks. Two set of routines: one when ISA interrupts
- * are involved, one without.
+ * Update interrupt masks. This is for designs without legacy PIC.
  */
 
 void
@@ -457,21 +454,6 @@ bonito_splx(int newipl)
 	ci->ci_ipl = newipl;
 	__asm__ ("sync\n\t.set reorder\n");
 	bonito_setintrmask(newipl);
-	/* If we still have softints pending trigger processing. */
-	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
-		setsoftintr0();
-}
-
-void
-bonito_isa_splx(int newipl)
-{
-	struct cpu_info *ci = curcpu();
-
-	/* Update masks to new ipl. Order highly important! */
-	__asm__ (".set noreorder\n");
-	ci->ci_ipl = newipl;
-	__asm__ ("sync\n\t.set reorder\n");
-	bonito_isa_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
@@ -496,30 +478,6 @@ bonito_setintrmask(int level)
 	if (set != 0)
 		REGVAL(BONITO_INTENSET) = set;
 	(void)REGVAL(BONITO_INTENSET);
-
-	setsr(sr);
-}
-
-void
-bonito_isa_setintrmask(int level)
-{
-	uint64_t active;
-	uint32_t clear, set;
-	uint32_t sr;
-
-	active = bonito_intem & ~bonito_imask[level];
-	clear = BONITO_DIRECT_MASK(bonito_imask[level]);
-	set = BONITO_DIRECT_MASK(active);
-
-	sr = disableintr();
-
-	if (clear != 0)
-		REGVAL(BONITO_INTENCLR) = clear;
-	if (set != 0)
-		REGVAL(BONITO_INTENSET) = set;
-	(void)REGVAL(BONITO_INTENSET);
-
-	bonito_set_isa_imr(BONITO_ISA_MASK(active));
 
 	setsr(sr);
 }
@@ -576,7 +534,7 @@ bonito_intr_makemasks()
 }
 
 /*
- * Process direct interrupts
+ * Process native interrupts
  */
 
 uint32_t
@@ -654,101 +612,6 @@ done:
 		 */
 		REGVAL(BONITO_INTENSET) = imr;
 		(void)REGVAL(BONITO_INTENSET);
-	}
-
-	return hwpend;
-}
-
-/*
- * Process ISA interrupts.
- *
- * XXX ISA interrupts only occur on LOONGSON_INTR_INT0, but since the other
- * XXX LOONGSON_INTR_INT# are unmaskable, bad things will happen if they
- * XXX are triggered...
- */
-
-/*
- * Interrupt dispatcher.
- */
-uint32_t
-bonito_isa_intr(uint32_t hwpend, struct trap_frame *frame)
-{
-	uint64_t imr, isr, mask;
-	int bit;
-	struct intrhand *ih;
-	int rc;
-
-	isr = bonito_get_isa_isr();
-	imr = bonito_get_isa_imr();
-
-	isr &= imr;
-	isr &= ~(1 << 2);	/* cascade */
-#ifdef DEBUG
-	printf("isa interrupt: imr %04x isr %04x\n", imr, isr);
-#endif
-	if (isr == 0)
-		return 0;	/* not for us */
-
-	/*
-	 * Mask all pending interrupts.
-	 */
-
-	bonito_set_isa_imr(imr & ~isr);
-
-	/*
-	 * If interrupts are spl-masked, mask them and wait for splx()
-	 * to reenable them when necessary.
-	 */
-	if ((mask = isr & (BONITO_ISA_MASK(bonito_imask[frame->ipl]))) != 0) {
-		isr &= ~mask;
-		imr &= ~mask;
-	}
-
-	/*
-	 * Now process allowed interrupts.
-	 */
-	if (isr != 0) {
-		int lvl, bitno;
-		uint64_t tmpisr;
-
-		/* Service higher level interrupts first */
-		bit = BONITO_NISA - 1;
-		for (lvl = IPL_HIGH - 1; lvl != IPL_NONE; lvl--) {
-			tmpisr = isr & BONITO_ISA_MASK(bonito_imask[lvl] ^
-			    bonito_imask[lvl - 1]);
-			if (tmpisr == 0)
-				continue;
-			for (bitno = bit, mask = 1UL << bitno; mask != 0;
-			    bitno--, mask >>= 1) {
-				if ((tmpisr & mask) == 0)
-					continue;
-
-				rc = 0;
-				for (ih = bonito_intrhand[BONITO_ISA_IRQ(bitno)];
-				    ih != NULL; ih = ih->ih_next) {
-					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
-						rc = 1;
-						ih->ih_count.ec_count++;
-					}
-				}
-				if (rc == 0)
-					printf("spurious isa interrupt %d\n",
-					    bitno);
-
-				bonito_isa_specific_eoi(bitno);
-
-				if ((isr ^= mask) == 0)
-					goto done;
-				if ((tmpisr ^= mask) == 0)
-					break;
-			}
-		}
-done:
-
-		/*
-		 * Reenable interrupts which have been serviced.
-		 */
-		bonito_set_isa_imr(imr);
 	}
 
 	return hwpend;
@@ -1018,11 +881,108 @@ bonito_pci_intr_disestablish(void *cookie, void *ihp)
 }
 
 /*
- * ISA Interrupt handling
+ * Legacy (ISA) interrupt handling
  */
 
+/*
+ * Process legacy interrupts.
+ *
+ * XXX ISA interrupts only occur on LOONGSON_INTR_INT0, but since the other
+ * XXX LOONGSON_INTR_INT# are unmaskable, bad things will happen if they
+ * XXX are triggered...
+ */
+
+/*
+ * Interrupt dispatcher.
+ */
+uint32_t
+loongson_isa_intr(uint32_t hwpend, struct trap_frame *frame)
+{
+	uint64_t imr, isr, mask;
+	int bit;
+	struct intrhand *ih;
+	int rc;
+
+	isr = loongson_get_isa_isr();
+	imr = loongson_get_isa_imr();
+
+	isr &= imr;
+	isr &= ~(1 << 2);	/* cascade */
+#ifdef DEBUG
+	printf("isa interrupt: imr %04x isr %04x\n", imr, isr);
+#endif
+	if (isr == 0)
+		return 0;	/* not for us */
+
+	/*
+	 * Mask all pending interrupts.
+	 */
+
+	loongson_set_isa_imr(imr & ~isr);
+
+	/*
+	 * If interrupts are spl-masked, mask them and wait for splx()
+	 * to reenable them when necessary.
+	 */
+	if ((mask = isr & (BONITO_ISA_MASK(bonito_imask[frame->ipl]))) != 0) {
+		isr &= ~mask;
+		imr &= ~mask;
+	}
+
+	/*
+	 * Now process allowed interrupts.
+	 */
+	if (isr != 0) {
+		int lvl, bitno;
+		uint64_t tmpisr;
+
+		/* Service higher level interrupts first */
+		bit = BONITO_NISA - 1;
+		for (lvl = IPL_HIGH - 1; lvl != IPL_NONE; lvl--) {
+			tmpisr = isr & BONITO_ISA_MASK(bonito_imask[lvl] ^
+			    bonito_imask[lvl - 1]);
+			if (tmpisr == 0)
+				continue;
+			for (bitno = bit, mask = 1UL << bitno; mask != 0;
+			    bitno--, mask >>= 1) {
+				if ((tmpisr & mask) == 0)
+					continue;
+
+				rc = 0;
+				for (ih = bonito_intrhand[BONITO_ISA_IRQ(bitno)];
+				    ih != NULL; ih = ih->ih_next) {
+					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+						rc = 1;
+						ih->ih_count.ec_count++;
+					}
+				}
+				if (rc == 0)
+					printf("spurious isa interrupt %d\n",
+					    bitno);
+
+				loongson_isa_specific_eoi(bitno);
+
+				if ((isr ^= mask) == 0)
+					goto done;
+				if ((tmpisr ^= mask) == 0)
+					break;
+			}
+		}
+done:
+
+		/*
+		 * Reenable interrupts which have been serviced.
+		 */
+		loongson_set_isa_imr(imr);
+	}
+
+	return hwpend;
+}
+
+#define	REGVAL8(x)	*((volatile u_int8_t *)PHYS_TO_XKPHYS(x, CCA_NC))
+
 uint
-bonito_get_isa_imr()
+loongson_get_isa_imr()
 {
 	uint imr1, imr2;
 
@@ -1034,7 +994,7 @@ bonito_get_isa_imr()
 }
 
 uint
-bonito_get_isa_isr()
+loongson_get_isa_isr()
 {
 	uint isr1, isr2;
 
@@ -1045,7 +1005,7 @@ bonito_get_isa_isr()
 }
 
 void
-bonito_set_isa_imr(uint newimr)
+loongson_set_isa_imr(uint newimr)
 {
 	uint imr1, imr2;
 
@@ -1059,19 +1019,19 @@ bonito_set_isa_imr(uint newimr)
 	 * this if the value changes.
 	 * Note that interrupts have been disabled by the caller.
 	 */
-	if ((newimr ^ bonito_isaimr) & 0xff00) {
+	if ((newimr ^ loongson_isaimr) & 0xff00) {
 		REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 1) = imr2;
 		(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 1);
 	}
-	if ((newimr ^ bonito_isaimr) & 0x00ff) {
+	if ((newimr ^ loongson_isaimr) & 0x00ff) {
 		REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 1) = imr1;
 		(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 1);
 	}
-	bonito_isaimr = newimr;
+	loongson_isaimr = newimr;
 }
 
 void
-bonito_isa_specific_eoi(int bit)
+loongson_isa_specific_eoi(int bit)
 {
 	if (bit & 8) {
 		REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 0) = 0x60 | (bit & 7);
@@ -1080,6 +1040,49 @@ bonito_isa_specific_eoi(int bit)
 	}
 	REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 0) = 0x60 | bit;
 	(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 0);
+}
+
+/*
+ * Update interrupt masks. This is for designs with legacy PIC.
+ */
+
+void
+loongson_isa_splx(int newipl)
+{
+	struct cpu_info *ci = curcpu();
+
+	/* Update masks to new ipl. Order highly important! */
+	__asm__ (".set noreorder\n");
+	ci->ci_ipl = newipl;
+	__asm__ ("sync\n\t.set reorder\n");
+	loongson_isa_setintrmask(newipl);
+	/* If we still have softints pending trigger processing. */
+	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
+		setsoftintr0();
+}
+
+void
+loongson_isa_setintrmask(int level)
+{
+	uint64_t active;
+	uint32_t clear, set;
+	uint32_t sr;
+
+	active = bonito_intem & ~bonito_imask[level];
+	clear = BONITO_DIRECT_MASK(bonito_imask[level]);
+	set = BONITO_DIRECT_MASK(active);
+
+	sr = disableintr();
+
+	if (clear != 0)
+		REGVAL(BONITO_INTENCLR) = clear;
+	if (set != 0)
+		REGVAL(BONITO_INTENSET) = set;
+	(void)REGVAL(BONITO_INTENSET);
+
+	loongson_set_isa_imr(BONITO_ISA_MASK(active));
+
+	setsr(sr);
 }
 
 void
@@ -1103,6 +1106,107 @@ isa_intr_disestablish(void *v, void *ih)
 }
 
 /*
+ * Legacy I/O access protection.
+ * Since MI ISA code does not expect bus access to cause any failure when
+ * accessing missing hardware, but only receive bogus data in return, we
+ * force bus_space_map() to fail if there is no hardware there.
+ */
+
+int
+bonito_io_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
+{
+	const struct legacy_io_range *r;
+
+	if (offs < BONITO_PCIIO_LEGACY) {
+		size--;
+		for (r = sys_platform->legacy_io_ranges; r->start != 0; r++)
+			if (offs >= r->start && offs + size <= r->end)
+				break;
+
+		if (r->start == 0)
+			return ENXIO;
+	}
+
+	*bshp = t->bus_base + offs;
+	return 0;
+}
+
+/*
+ * PCI resource handling
+ */
+
+struct extent *
+bonito_get_resource_extent(pci_chipset_tag_t pc, int io)
+{
+	struct bonito_softc *sc = pc->pc_conf_v;
+	struct extent *ex;
+	char *exname;
+	size_t exnamesz;
+	uint32_t reg;
+	int errors;
+
+	exnamesz = 1 + 16 + 4;
+	exname = (char *)malloc(exnamesz, M_DEVBUF, M_NOWAIT);
+	if (exname == NULL)
+		return NULL;
+	snprintf(exname, exnamesz, "%s%s", sc->sc_dev.dv_xname,
+	    io ? "_io" : "_mem");
+
+	ex = extent_create(exname, 0, 0xffffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT | EX_FILLED);
+	if (ex == NULL)
+		goto out;
+
+	errors = 0;
+	if (io) {
+		/*
+		 * Reserve the low 16KB of I/O space to the legacy hardware,
+		 * if any.
+		 */
+		if (extent_free(ex, BONITO_PCIIO_LEGACY, BONITO_PCIIO_SIZE,
+		    EX_NOWAIT) != 0)
+			errors++;
+	} else {
+		reg = REGVAL(BONITO_PCIMAP);
+		if (extent_free(ex,
+		    BONITO_PCIMAP_WINBASE((reg & BONITO_PCIMAP_PCIMAP_LO0) >>
+		      BONITO_PCIMAP_PCIMAP_LO0_SHIFT),
+		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT) != 0)
+			errors++;
+		if (extent_free(ex,
+		    BONITO_PCIMAP_WINBASE((reg & BONITO_PCIMAP_PCIMAP_LO1) >>
+		      BONITO_PCIMAP_PCIMAP_LO1_SHIFT),
+		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT) != 0)
+			errors++;
+		if (extent_free(ex,
+		    BONITO_PCIMAP_WINBASE((reg & BONITO_PCIMAP_PCIMAP_LO2) >>
+		      BONITO_PCIMAP_PCIMAP_LO2_SHIFT),
+		    BONITO_PCIMAP_WINSIZE, EX_NOWAIT) != 0)
+			errors++;
+
+		if (sc->sc_compatible) {
+			/* XXX make PCIMAP_HI available if PCIMAP_2 set */
+		}
+	}
+
+	if (errors != 0) {
+		extent_destroy(ex);
+		ex = NULL;
+	}
+
+#ifdef BONITO_DEBUG
+	extent_print(ex);
+#endif
+
+out:
+	if (exname != NULL)
+		free(exname, M_DEVBUF);
+
+	return ex;
+}
+
+/*
  * Functions used during early system configuration (before bonito attaches).
  */
 
@@ -1115,5 +1219,5 @@ pci_make_tag_early(int b, int d, int f)
 pcireg_t
 pci_conf_read_early(pcitag_t tag, int reg)
 {
-	return bonito_conf_read_internal(sys_config.sys_bc, tag, reg);
+	return bonito_conf_read_internal(sys_platform->bonito_config, tag, reg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.2 2010/02/09 21:31:47 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.3 2010/02/12 08:14:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -17,24 +17,30 @@
  */
 
 /*
- * Lemote Yeeloong specific code and configuration data.
+ * Lemote Fuloong 2F and Yeeloong specific code and configuration data.
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <mips64/archtype.h>
 #include <machine/autoconf.h>
+
+#include <dev/isa/isareg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <loongson/dev/bonitoreg.h>
 #include <loongson/dev/bonitovar.h>
 #include <loongson/dev/bonito_irq.h>
 #include <loongson/dev/glxvar.h>
 
 void	yeeloong_attach_hook(pci_chipset_tag_t);
 int	yeeloong_intr_map(int, int, int);
+
+void	yeeloong_powerdown(void);
 
 const struct bonito_config yeeloong_bonito = {
 	.bc_adbase = 11,
@@ -47,8 +53,65 @@ const struct bonito_config yeeloong_bonito = {
 	    LOONGSON_INTRMASK_PCI_SYSERR | LOONGSON_INTRMASK_PCI_PARERR |
 	    LOONGSON_INTRMASK_INT0 | LOONGSON_INTRMASK_INT1,
 
+	.bc_legacy_pic = 1,
+
 	.bc_attach_hook = yeeloong_attach_hook,
 	.bc_intr_map = yeeloong_intr_map
+};
+
+const struct legacy_io_range fuloong_legacy_ranges[] = {
+	/* isa */
+	{ IO_DMAPG + 4,	IO_DMAPG + 4 },
+	/* mcclock */
+	{ IO_RTC,	IO_RTC + 1 },
+	/* pciide */
+	{ 0x170,	0x170 + 7 },
+	{ 0x1f0,	0x1f0 + 7 },
+	{ 0x376,	0x376 },
+	{ 0x3f6,	0x3f6 },
+	/* com */
+	{ IO_COM2,	IO_COM2 + 8 },
+
+	{ 0 }
+};
+
+const struct legacy_io_range yeeloong_legacy_ranges[] = {
+	/* isa */
+	{ IO_DMAPG + 4,	IO_DMAPG + 4 },
+	/* pckbc */
+	{ IO_KBD,	IO_KBD },
+	{ IO_KBD + 4,	IO_KBD + 4 },
+	/* mcclock */
+	{ IO_RTC,	IO_RTC + 1 },
+	/* pciide */
+	{ 0x170,	0x170 + 7 },
+	{ 0x1f0,	0x1f0 + 7 },
+	{ 0x376,	0x376 },
+	{ 0x3f6,	0x3f6 },
+
+	{ 0 }
+};
+
+const struct platform fuloong_platform = {
+	.system_type = LOONGSON_FULOONG,
+	.vendor = "Lemote",
+	.product = "Fuloong",
+
+	.bonito_config = &yeeloong_bonito,
+	.legacy_io_ranges = fuloong_legacy_ranges,
+
+	.powerdown = NULL	/* XXX TBD */
+};
+
+const struct platform yeeloong_platform = {
+	.system_type = LOONGSON_YEELOONG,
+	.vendor = "Lemote",
+	.product = "Yeeloong",
+
+	.bonito_config = &yeeloong_bonito,
+	.legacy_io_ranges = yeeloong_legacy_ranges,
+
+	.powerdown = yeeloong_powerdown
 };
 
 void
@@ -96,7 +159,7 @@ yeeloong_intr_map(int dev, int fn, int pin)
 		switch (fn) {
 		case 1:	/* Flash */
 			return BONITO_ISA_IRQ(6);
-		case 2:	/* AC97 */
+		case 3:	/* AC97 */
 			return BONITO_ISA_IRQ(9);
 		case 4:	/* OHCI */
 		case 5:	/* EHCI */
@@ -108,4 +171,11 @@ yeeloong_intr_map(int dev, int fn, int pin)
 	}
 
 	return -1;
+}
+
+void
+yeeloong_powerdown()
+{
+	REGVAL(BONITO_GPIODATA) &= ~0x00000001;
+	REGVAL(BONITO_GPIOIE) &= ~0x00000001;
 }

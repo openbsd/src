@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2010/02/09 21:30:11 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.12 2010/02/12 08:14:02 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -108,7 +108,7 @@ int	ncpu = 1;		/* At least one CPU in the system. */
 struct	user *proc0paddr;
 int	kbd_reset;
 
-struct sys_rec sys_config;
+const struct platform *sys_platform;
 struct cpu_hwinfo bootcpu_hwinfo;
 
 /* Pointers to the start and end of the symbol table. */
@@ -150,18 +150,23 @@ struct consdev pmoncons = {
 
 struct bonito_flavour {
 	const char *prefix;
-	int	systype;
-	const struct bonito_config *bc;
+	const struct platform *platform;
 };
 
+extern const struct platform fuloong_platform;
+extern const struct platform gdium_platform;
+extern const struct platform yeeloong_platform;
+
 const struct bonito_flavour bonito_flavours[] = {
-	/* 8.9" Lemote Yeeloong netbook */
-	{ "LM8089",	LOONGSON_YEELOONG,	&yeeloong_bonito },
-	/* supposedly 10.1" Lemote Yeeloong netbook, but those found so far
-	   report themselves as LM8089 */
-	{ "LM8101",	LOONGSON_YEELOONG,	&yeeloong_bonito },
+	/* Lemote Fuloong 2F mini-PC */
+	{ "LM6004",	&fuloong_platform },
 	/* EMTEC Gdium Liberty 1000 */
-	{ "Gdium",	LOONGSON_GDIUM,		&gdium_bonito },
+	{ "Gdium",	&gdium_platform },
+	/* Lemote Yeeloong 8.9" netbook */
+	{ "LM8089",	&yeeloong_platform },
+	/* supposedly Lemote Yeeloong 10.1" netbook, but those found so far
+	   report themselves as LM8089 */
+	{ "LM8101",	&yeeloong_platform },
 	{ NULL }
 };
 
@@ -267,30 +272,18 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 
 	for (f = bonito_flavours; f->prefix != NULL; f++)
 		if (strncmp(envvar, f->prefix, strlen(f->prefix)) == 0) {
-			sys_config.system_type = f->systype;
-			sys_config.sys_bc = f->bc;
+			sys_platform = f->platform;
 			break;
 		}
 
-	if (sys_config.system_type == 0) {
+	if (sys_platform == NULL) {
 		pmon_printf("This kernel doesn't support model \"%s\".\n",
 		    envvar);
 		goto unsupported;
 	}
 
-	switch (sys_config.system_type) {
-	case LOONGSON_YEELOONG:
-		hw_vendor = "Lemote";
-		hw_prod = "Yeeloong";
-		break;
-	case LOONGSON_GDIUM:
-		hw_vendor = "EMTEC";
-		hw_prod = "Gdium";
-		break;
-	default:	/* won't happen */
-		goto unsupported;
-	}
-
+	hw_vendor = sys_platform->vendor;
+	hw_prod = sys_platform->product;
 	pmon_printf("Found %s %s, setting up.\n", hw_vendor, hw_prod);
 
 	snprintf(cpu_model, sizeof cpu_model, "Loongson %X", loongson_ver);
@@ -424,8 +417,6 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 
 	/*
 	 * Configure cache.
-	 * Note that the caches being physically tagged, there is no
-	 * need to invalidate or flush it.
 	 */
 
 	Loongson2_ConfigCache(curcpu());
@@ -823,18 +814,12 @@ haltsys:
 
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN) {
-			printf("System Power Down.\n");
-			switch (sys_config.system_type) {
-			case LOONGSON_YEELOONG:
-				REGVAL(BONITO_GPIODATA) &= ~0x00000001;
-				REGVAL(BONITO_GPIOIE) &= ~0x00000001;
-				break;
-			case LOONGSON_GDIUM:
-				REGVAL(BONITO_GPIODATA) |= 0x00000002;
-				REGVAL(BONITO_GPIOIE) &= ~0x00000002;
-				break;
-			default:
-				break;
+			if (sys_platform->powerdown != NULL) {
+				printf("System Power Down.\n");
+				(*(sys_platform->powerdown))();
+			} else {
+				printf("System Power Down not supported,"
+				    " halting system.\n");
 			}
 		} else
 			printf("System Halt.\n");
