@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.53 2009/10/26 20:17:25 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.54 2010/02/12 01:35:14 tedu Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -136,7 +136,7 @@ alloc_cpuinfo(struct mainbus_attach_args *ma)
 		if (cpi->ci_upaid == portid)
 			return cpi;
 
-	va = uvm_km_valloc_align(kernel_map, sz, 8 * PAGE_SIZE);
+	va = uvm_km_valloc_align(kernel_map, sz, 8 * PAGE_SIZE, 0);
 	if (va == 0)
 		panic("alloc_cpuinfo: no virtual space");
 	va0 = va;
