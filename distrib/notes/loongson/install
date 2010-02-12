@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.4 2010/02/12 20:58:34 miod Exp $
+dnl	$OpenBSD: install,v 1.5 2010/02/12 21:33:29 otto Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -113,6 +113,30 @@ OpenBSDInstallWrapup
 		after having set the bsd variable to your boot path:
 
 		    PMON> set bsd /dev/fs/ext2@wd0/boot/bsd
+
+		On the Fuloong 2F, getting PMON to use the serial console
+		is tricky, due to PMON bugs and design decisions made by
+		Lemote.
+		PMON's default serial speed is 115200, and OpenBSD will
+		also use that speed. By default, it is possible to use
+		serial input if no USB keyboard is attached. PMON will
+		nevertheless display output its on the VGA display.
+		To get full serial access, the first step is to boot
+		into PMON> with both serial console and VGA display but
+		no USB keyboard attached.
+		You can type on the serial console, but output will be shown
+		on the VGA display. Next enter the following
+		commands:
+
+		    PMON> set novga 1
+		    PMON> set nokbd 1
+		    PMON> set al ""
+		    PMON> set ShowBootMenu no
+
+		Then boot into linux and rename /boot/boot.cfg so that
+		it does not get found by PMON. At the next reboot
+		the Fuloong 2F will boot into the PMON
+		prompt on the serial console.
 
 	Gdium systems final steps:
 
