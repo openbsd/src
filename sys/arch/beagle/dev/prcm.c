@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.2 2009/05/24 00:36:41 drahn Exp $ */
+/* $OpenBSD: prcm.c,v 1.3 2010/02/12 05:31:11 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -50,16 +50,6 @@
 #define PM_EVEGENOFFTIM_MPU	0x09DC
 #define PM_PWSTCTRL_MPU		0x09E0
 #define PM_PWSTST_MPU		0x09E4
-#define CM_FCLKEN1_CORE		0x0a00
-#define CM_FCLKEN1_CORE_MSK	0x41fffe00
-
-#define  CM_FCLKEN2_CORE	0x0a04
-#define  CM_FCLKEN2_CORE_MSK	0x00000000
-#define  CM_FCLKEN3_CORE	0x0a08
-#define  CM_FCLKEN3_CORE_MSK	0x00000007
-#define		CM_CORE_EN_USBTLL	(2+64)
-#define		CM_CORE_EN_TS		(1+64)
-#define		CM_CORE_EN_CPEFUSE	(0+64)
 
 #define  CM_ICLKEN1_CORE	0x0a10
 #define  CM_ICLKEN1_CORE_MSK	0x7ffffed2
@@ -148,8 +138,12 @@
 #define CM_CLKSTCTRL_USBHOST	0x5448
 #define CM_CLKSTST_USBHOST	0x544C
 
-
-
+uint32_t prcm_imask_cur[PRCM_REG_MAX];
+uint32_t prcm_fmask_cur[PRCM_REG_MAX];
+uint32_t prcm_imask_mask[PRCM_REG_MAX];
+uint32_t prcm_fmask_mask[PRCM_REG_MAX];
+uint32_t prcm_imask_addr[PRCM_REG_MAX];
+uint32_t prcm_fmask_addr[PRCM_REG_MAX];
 
 #define PRCM_SIZE	0x2000
 
@@ -221,6 +215,26 @@ prcm_attach(struct device *parent, struct device *self, void *args)
 	reg |= CM_ICLKEN_WKUP_MPU_WDT | CM_ICLKEN_WKUP_GPT1;
 	bus_space_write_4(prcm_iot, prcm_ioh, CM_ICLKEN_WKUP, reg);
 #endif
+	prcm_fmask_mask[PRCM_REG_CORE_CLK1] = PRCM_REG_CORE_CLK1_FMASK;
+	prcm_imask_mask[PRCM_REG_CORE_CLK1] = PRCM_REG_CORE_CLK1_IMASK;
+	prcm_fmask_addr[PRCM_REG_CORE_CLK1] = PRCM_REG_CORE_CLK1_FADDR;
+	prcm_imask_addr[PRCM_REG_CORE_CLK1] = PRCM_REG_CORE_CLK1_IADDR;
+
+	prcm_fmask_mask[PRCM_REG_CORE_CLK2] = PRCM_REG_CORE_CLK2_FMASK;
+	prcm_imask_mask[PRCM_REG_CORE_CLK2] = PRCM_REG_CORE_CLK2_IMASK;
+	prcm_fmask_addr[PRCM_REG_CORE_CLK2] = PRCM_REG_CORE_CLK2_FADDR;
+	prcm_imask_addr[PRCM_REG_CORE_CLK2] = PRCM_REG_CORE_CLK2_IADDR;
+
+	prcm_fmask_mask[PRCM_REG_CORE_CLK3] = PRCM_REG_CORE_CLK3_FMASK;
+	prcm_imask_mask[PRCM_REG_CORE_CLK3] = PRCM_REG_CORE_CLK3_IMASK;
+	prcm_fmask_addr[PRCM_REG_CORE_CLK3] = PRCM_REG_CORE_CLK3_FADDR;
+	prcm_imask_addr[PRCM_REG_CORE_CLK3] = PRCM_REG_CORE_CLK3_IADDR;
+
+	prcm_fmask_mask[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_FMASK;
+	prcm_imask_mask[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_IMASK;
+	prcm_fmask_addr[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_FADDR;
+	prcm_imask_addr[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_IADDR;
+
 }
 
 void
@@ -252,36 +266,31 @@ void
 prcm_enableclock(int bit)
 {
 	u_int32_t fclk, iclk, fmask, imask, mbit;
-	int freg, ireg;
+	int freg, ireg, reg;
 	printf("prcm_enableclock %d:", bit);
 
-	if (bit < 32){
-		freg = CM_FCLKEN1_CORE;
-		ireg = CM_ICLKEN1_CORE;
-		fmask = CM_FCLKEN1_CORE_MSK;
-		imask = CM_ICLKEN1_CORE_MSK;
+	reg = bit >> 5;
 
-	} else if (bit < 64) {
-		freg = CM_FCLKEN2_CORE;
-		ireg = CM_ICLKEN2_CORE;
-		fmask = CM_FCLKEN2_CORE_MSK;
-		imask = CM_ICLKEN2_CORE_MSK;
-	} else {
-		freg = CM_FCLKEN3_CORE;
-		ireg = CM_ICLKEN3_CORE;
-		fmask = CM_FCLKEN3_CORE_MSK;
-		imask = CM_ICLKEN3_CORE_MSK;
-	}
+	freg = prcm_fmask_addr[reg];
+	ireg = prcm_imask_addr[reg];
+	fmask = prcm_fmask_mask[reg];
+	imask = prcm_imask_mask[reg];
 
 	mbit =  1 << (bit & 0x1f);
+#if 0
+	printf("reg %d faddr 0x%08x iaddr 0x%08x, fmask 0x%08x "
+	    "imask 0x%08x mbit %x", reg, freg, ireg, fmask, imask, mbit);
+#endif
 	if (fmask & mbit) { /* dont access the register if bit isn't present */
 		fclk = bus_space_read_4(prcm_iot, prcm_ioh, freg);
+		prcm_fmask_cur[reg] = fclk | mbit;
 		bus_space_write_4(prcm_iot, prcm_ioh, freg, fclk | mbit);
 		printf(" fclk %08x %08x",  fclk, fclk | mbit);
 	}
 
 	if (imask & mbit) { /* dont access the register if bit isn't present */
 		iclk = bus_space_read_4(prcm_iot, prcm_ioh, ireg);
+		prcm_imask_cur[reg] = iclk | mbit;
 		bus_space_write_4(prcm_iot, prcm_ioh, ireg, iclk | mbit);
 		printf(" iclk %08x %08x",  iclk, iclk | mbit);
 	}
