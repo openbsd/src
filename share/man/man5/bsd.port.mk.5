@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.236 2009/12/24 13:58:14 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.237 2010/02/12 12:12:13 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 24 2009 $
+.Dd $Mdocdate: February 12 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -454,6 +454,9 @@ completion of the
 stage, and thus is quicker than
 .Ar lib-depends-check ,
 unless you already have all binary packages.
+.It Ar prepare
+Prepare a port for building, by checking and installing all required 
+dependencies.
 .It Ar print-package-signature
 Print the package signature, in the same format used for
 .Xr pkg_info 1
@@ -1001,6 +1004,10 @@ Optional subdirectory of ${DISTDIR} where the current port's distribution
 files and patchfiles will be located.
 See target
 .Ar fetch .
+.It Ev DPB
+Set by the distributed ports builder to only get the information it needs
+from
+.Ar dump-vars .
 .It Ev ECHO_MSG
 User settings.
 Used to display
@@ -1156,11 +1163,16 @@ Defaults to gmake.
 .It Ev HOMEPAGE
 Set to a link to the homepage of the software, if applicable.
 .It Ev IGNORE
-The port is ignored and ${IGNORE} is printed if defined.
-Usually set to the reason the port is ignored.
+Usually set to the reasons for which the port is ignored.
+If non-empty, most common targets that do something (e.g.,
+.Ar fetch ,
+.Ar build ,
+.Ar install ...)
+will be ignored.
 See also
 .Ev BATCH ,
 .Ev BROKEN ,
+.Ev IGNORE_IS_FATAL ,
 .Ev IGNORE_SILENT ,
 .Ev INTERACTIVE ,
 .Ev IS_INTERACTIVE ,
@@ -1168,6 +1180,10 @@ See also
 .Ev NO_IGNORE ,
 .Ev ONLY_FOR_ARCHS ,
 .Ev USE_X11 .
+.It Ev IGNORE_IS_FATAL
+If set to
+.Sq Yes ,
+ignored ports will become fatal errors.
 .It Ev IGNORE_SILENT
 If set to
 .Sq Yes ,
