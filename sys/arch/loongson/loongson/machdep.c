@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2010/02/12 19:37:31 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.14 2010/02/12 19:39:27 otto Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -600,7 +600,7 @@ dobootopts(int argc)
 			continue;
 
 		/* device path */
-		if (*arg == '/') {
+		if (*arg == '/' || strncmp(arg, "tftp://", 7) == 0) {
 			if (*pmon_bootp == '\0') {
 				strlcpy(pmon_bootp, arg, sizeof pmon_bootp);
 				parsepmonbp();
