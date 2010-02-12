@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.3 2010/02/12 08:14:02 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.4 2010/02/12 19:37:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -35,12 +35,15 @@
 #include <loongson/dev/bonitoreg.h>
 #include <loongson/dev/bonitovar.h>
 #include <loongson/dev/bonito_irq.h>
+#include <loongson/dev/glxreg.h>
 #include <loongson/dev/glxvar.h>
 
 void	yeeloong_attach_hook(pci_chipset_tag_t);
 int	yeeloong_intr_map(int, int, int);
 
+void	fuloong_powerdown(void);
 void	yeeloong_powerdown(void);
+void	yeeloong_reset(void);
 
 const struct bonito_config yeeloong_bonito = {
 	.bc_adbase = 11,
@@ -100,7 +103,9 @@ const struct platform fuloong_platform = {
 	.bonito_config = &yeeloong_bonito,
 	.legacy_io_ranges = fuloong_legacy_ranges,
 
-	.powerdown = NULL	/* XXX TBD */
+	.setup = NULL,
+	.powerdown = fuloong_powerdown,
+	.reset = yeeloong_reset
 };
 
 const struct platform yeeloong_platform = {
@@ -111,7 +116,9 @@ const struct platform yeeloong_platform = {
 	.bonito_config = &yeeloong_bonito,
 	.legacy_io_ranges = yeeloong_legacy_ranges,
 
-	.powerdown = yeeloong_powerdown
+	.setup = NULL,
+	.powerdown = yeeloong_powerdown,
+	.reset = yeeloong_reset
 };
 
 void
@@ -174,8 +181,26 @@ yeeloong_intr_map(int dev, int fn, int pin)
 }
 
 void
+fuloong_powerdown()
+{
+	vaddr_t gpiobase;
+
+	gpiobase = BONITO_PCIIO_BASE + (rdmsr(DIVIL_LBAR_GPIO) & 0xff00);
+	/* enable GPIO 13 */
+	REGVAL(gpiobase + GPIOL_OUT_EN) = GPIO_ATOMIC_VALUE(13, 1);
+	/* set GPIO13 value to zero */
+	REGVAL(gpiobase + GPIOL_OUT_VAL) = GPIO_ATOMIC_VALUE(13, 0);
+}
+
+void
 yeeloong_powerdown()
 {
 	REGVAL(BONITO_GPIODATA) &= ~0x00000001;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000001;
+}
+
+void
+yeeloong_reset()
+{
+	wrmsr(GLCP_SYS_RST, rdmsr(GLCP_SYS_RST) | 1);
 }

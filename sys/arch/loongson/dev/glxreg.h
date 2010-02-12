@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxreg.h,v 1.1.1.1 2009/12/25 21:04:27 miod Exp $	*/
+/*	$OpenBSD: glxreg.h,v 1.2 2010/02/12 19:37:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -290,3 +290,99 @@
 #define	GLCP_SYS_RST			(GLCP_MSR_BASE + 0x14)
 #define	GLCP_DBGCLKCTRL			(GLCP_MSR_BASE + 0x16)
 #define	GLCP_CHIP_REV_ID		(GLCP_MSR_BASE + 0x17)
+
+/*
+ * GPIO registers
+ */
+
+#define	GPIOL_OUT_VAL			0x0000
+#define	GPIOL_OUT_EN			0x0004
+#define	GPIOL_OUT_OD_EN			0x0008
+#define	GPIOL_OUT_INVRT_EN		0x000c
+#define	GPIOL_OUT_AUX1_SEL		0x0010
+#define	GPIOL_OUT_AUX2_SEL		0x0014
+#define	GPIOL_PU_EN			0x0018
+#define	GPIOL_PD_EN			0x001c
+#define	GPIOL_IN_EN			0x0020
+#define	GPIOL_IN_INV_EN			0x0024
+#define	GPIOL_IN_FLTR_EN		0x0028
+#define	GPIOL_IN_EVNTCNT_EN		0x002c
+#define	GPIOL_READ_BACK			0x0030
+#define	GPIOL_IN_AUX1_SEL		0x0034
+#define	GPIOL_EVNT_EN			0x0038
+#define	GPIOL_LOCK_EN			0x003c
+#define	GPIOL_POSEDGE_EN		0x0040
+#define	GPIOL_NEGEDGE_EN		0x0044
+#define	GPIOL_POSEDGE_STS		0x0048
+#define	GPIOL_NEGEDGE_STS		0x004c
+#define	GPIO_FLTR0_AMNT			0x0050
+#define	GPIO_FLTR0_CNT			0x0052
+#define	GPIO_EVNTCNT0			0x0054
+#define	GPIO_EVNTCNT0_COMP		0x0056
+#define	GPIO_FLTR1_AMNT			0x0058
+#define	GPIO_FLTR1_CNT			0x005a
+#define	GPIO_EVNTCNT1			0x005c
+#define	GPIO_EVNTCNT1_COMP		0x005e
+#define	GPIO_FLTR2_AMNT			0x0060
+#define	GPIO_FLTR2_CNT			0x0062
+#define	GPIO_EVNTCNT2			0x0064
+#define	GPIO_EVNTCNT2_COMP		0x0066
+#define	GPIO_FLTR3_AMNT			0x0068
+#define	GPIO_FLTR3_CNT			0x006a
+#define	GPIO_EVNTCNT3			0x006c
+#define	GPIO_EVNTCNT3_COMP		0x006e
+#define	GPIO_FLTR4_AMNT			0x0070
+#define	GPIO_FLTR4_CNT			0x0072
+#define	GPIO_EVNTCNT4			0x0074
+#define	GPIO_EVNTCNT4_COMP		0x0076
+#define	GPIO_FLTR5_AMNT			0x0078
+#define	GPIO_FLTR5_CNT			0x007a
+#define	GPIO_EVNTCNT5			0x007c
+#define	GPIO_EVNTCNT5_COMP		0x007e
+#define	GPIOH_OUT_VAL			0x0080
+#define	GPIOH_OUT_EN			0x0084
+#define	GPIOH_OUT_OD_EN			0x0088
+#define	GPIOH_OUT_INVRT_EN		0x008c
+#define	GPIOH_OUT_AUX1_SEL		0x0090
+#define	GPIOH_OUT_AUX2_SEL		0x0094
+#define	GPIOH_PU_EN			0x0098
+#define	GPIOH_PD_EN			0x009c
+#define	GPIOH_IN_EN			0x00a0
+#define	GPIOH_IN_INV_EN			0x00a4
+#define	GPIOH_IN_FLTR_EN		0x00a8
+#define	GPIOH_IN_EVNTCNT_EN		0x00ac
+#define	GPIOH_READ_BACK			0x00b0
+#define	GPIOH_IN_AUX1_SEL		0x00b4
+#define	GPIOH_EVNT_EN			0x00b8
+#define	GPIOH_LOCK_EN			0x00bc
+#define	GPIOH_POSEDGE_EN		0x00c0
+#define	GPIOH_NEGEDGE_EN		0x00c4
+#define	GPIOH_POSEDGE_STS		0x00c8
+#define	GPIOH_NEGEDGE_STS		0x00cc
+#define	GPIO_FLTR6_AMNT			0x00d0
+#define	GPIO_FLTR6_CNT			0x00d2
+#define	GPIO_EVNTCNT6			0x00d4
+#define	GPIO_EVNTCNT6_COMP		0x00d6
+#define	GPIO_FLTR7_AMNT			0x00d8
+#define	GPIO_FLTR7_CNT			0x00da
+#define	GPIO_EVNTCNT7			0x00dc
+#define	GPIO_EVNTCNT7_COMP		0x00de
+#define	GPIO_MAP_X			0x00e0
+#define	GPIO_MAP_Y			0x00e4
+#define	GPIO_MAP_Z			0x00e8
+#define	GPIO_MAP_W			0x00ec
+#define	GPIO_FE0_SEL			0x00f0
+#define	GPIO_FE1_SEL			0x00f1
+#define	GPIO_FE2_SEL			0x00f2
+#define	GPIO_FE3_SEL			0x00f3
+#define	GPIO_FE4_SEL			0x00f4
+#define	GPIO_FE5_SEL			0x00f5
+#define	GPIO_FE6_SEL			0x00f6
+#define	GPIO_FE7_SEL			0x00f7
+#define	GPIOL_EVNTCNT_DEC		0x00f8
+#define	GPIOH_EVNTCNT_DEC		0x00fc
+
+#define	GPIO_ATOMIC_VALUE(pin,feature) \
+	((feature) ? \
+	    ((0 << (16 + (pin))) | (1 << (pin))) : \
+	    ((1 << (16 + (pin))) | (0 << (pin))))

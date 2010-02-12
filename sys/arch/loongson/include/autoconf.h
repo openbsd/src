@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 2010/02/12 08:14:02 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.5 2010/02/12 19:37:31 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,7 +56,9 @@ struct platform {
 	const struct bonito_config	*bonito_config;
 	const struct legacy_io_range	*legacy_io_ranges;
 
+	void				(*setup)(void);
 	void				(*powerdown)(void);
+	void				(*reset)(void);
 };
 
 extern const struct platform *sys_platform;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2010/02/12 08:14:02 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.13 2010/02/12 19:37:31 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -354,9 +354,11 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 		break;
 	}
 
+	if (sys_platform->setup != NULL)
+		(*(sys_platform->setup))();
+
 	/*
-	 * The above call might have altered address mappings,
-	 * so pmon_printf() should no longer be used from now on.
+	 * PMON functions should no longer be used from now on.
 	 */
 
 	/*
@@ -826,6 +828,11 @@ haltsys:
 	} else {
 		void (*__reset)(void) = (void (*)(void))RESET_EXC_VEC;
 		printf("System restart.\n");
+		if (sys_platform->reset != NULL)
+			(*(sys_platform->reset))();
+		(void)disableintr();
+		tlb_set_wired(0);
+		tlb_flush(bootcpu_hwinfo.tlbsize);
 		__reset();
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdium_machdep.c,v 1.3 2010/02/12 08:14:02 miod Exp $	*/
+/*	$OpenBSD: gdium_machdep.c,v 1.4 2010/02/12 19:37:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -64,7 +64,9 @@ const struct platform gdium_platform = {
 	.bonito_config = &gdium_bonito,
 	.legacy_io_ranges = NULL,
 
-	.powerdown = gdium_powerdown
+	.setup = NULL,
+	.powerdown = gdium_powerdown,
+	.reset = NULL
 };
 
 void
