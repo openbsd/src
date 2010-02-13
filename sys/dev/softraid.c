@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.192 2010/02/13 21:19:26 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.193 2010/02/13 21:23:36 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -120,7 +120,7 @@ int			sr_boot_assembly(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_hotspare(struct sr_softc *, dev_t);
 void			sr_hotspare_rebuild(struct sr_discipline *);
-int			sr_rebuild_init(struct sr_discipline *, dev_t);
+int			sr_rebuild_init(struct sr_discipline *, dev_t, int);
 void			sr_rebuild(void *);
 void			sr_rebuild_thread(void *);
 void			sr_roam_chunks(struct sr_discipline *);
@@ -2221,7 +2221,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 		break;
 
 	case BIOC_SSREBUILD:
-		rv = sr_rebuild_init(sd, (dev_t)bs->bs_other_id);
+		rv = sr_rebuild_init(sd, (dev_t)bs->bs_other_id, 0);
 		break;
 
 	default:
@@ -2522,7 +2522,7 @@ sr_hotspare_rebuild(struct sr_discipline *sd)
 
 		s = splbio();
 		rw_enter_write(&sd->sd_sc->sc_lock);
-		if (sr_rebuild_init(sd, hotspare->src_dev_mm) == 0) {
+		if (sr_rebuild_init(sd, hotspare->src_dev_mm, 1) == 0) {
 
 			/* Remove hotspare from available list. */
 			sd->sd_sc->sc_hotspare_no--;
@@ -2538,7 +2538,7 @@ done:
 }
 
 int
-sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
+sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	int			rv = EINVAL, part;
@@ -2633,7 +2633,8 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
 
 	/* make sure we are not stomping on some other partition */
 	c = sr_chunk_in_use(sc, dev);
-	if (c != BIOC_SDINVALID && c != BIOC_SDOFFLINE) {
+	if (c != BIOC_SDINVALID && c != BIOC_SDOFFLINE &&
+	    !(hotspare && c == BIOC_SDHOTSPARE)) {
 		printf("%s: %s is already in use\n", DEVNAME(sc), devname);
 		goto done;
 	}
