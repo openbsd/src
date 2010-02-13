@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.191 2010/02/13 21:16:10 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.192 2010/02/13 21:19:26 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -959,7 +959,6 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 				bcopy(md, &mle->sml_metadata,
 				    SR_META_SIZE * 512);
 				mle->sml_mm = devr;
-				mle->sml_vn = vn;
 				SLIST_INSERT_HEAD(mlh, mle, sml_link);
 				rv = SR_META_CLAIMED;
 			}
@@ -1147,7 +1146,6 @@ sr_boot_assembly(struct sr_softc *sc)
 		mle = SLIST_FIRST(&vol->sml);
 		sr_meta_getdevname(sc, mle->sml_mm, devname, sizeof(devname));
 		hotspare->src_dev_mm = mle->sml_mm;
-		hotspare->src_vn = mle->sml_vn;
 		strlcpy(hotspare->src_devname, devname,
 		    sizeof(hotspare->src_devname));
 		hotspare->src_size = metadata->ssdi.ssd_size;

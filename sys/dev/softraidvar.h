@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.88 2009/12/31 14:00:45 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.89 2010/02/13 21:19:26 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -360,7 +360,6 @@ struct sr_aoe {
 struct sr_metadata_list {
 	u_int8_t		sml_metadata[SR_META_SIZE * 512];
 	dev_t			sml_mm;
-	struct vnode		*sml_vn;
 	u_int32_t		sml_chunk_id;
 	int			sml_used;
 
