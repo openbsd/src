@@ -1,4 +1,4 @@
-.\" $OpenBSD: midiplay.1,v 1.14 2009/08/16 09:41:08 sobrado Exp $
+.\" $OpenBSD: midiplay.1,v 1.15 2010/02/13 13:45:29 ratchov Exp $
 .\" $NetBSD: midiplay.1,v 1.3 1998/08/13 18:26:36 augustss Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: February 13 2010 $
 .Dt MIDIPLAY 1
 .Os
 .Sh NAME
@@ -35,34 +35,27 @@
 .Nd play MIDI files
 .Sh SYNOPSIS
 .Nm midiplay
-.Op Fl glmqvx
-.Op Fl d Ar devno
-.Op Fl f Ar file
+.Op Fl gmqvx
+.Op Fl f Ar device
 .Op Fl t Ar tempo
 .Op Ar
 .Sh DESCRIPTION
 The
 .Nm
-command plays MIDI files using the sequencer device.
+command plays MIDI files.
 If no file name is given it will play from standard input;
 otherwise it will play the named files.
 .Pp
 The options are as follows:
-.Bl -tag -width "-d devnoXX"
-.It Fl d Ar devno
-Specifies the number of the MIDI device used for output (as listed
-by the
-.Fl l
-flag).
-The default is device 0.
-.It Fl f Ar file
-Specifies the name of the sequencer device.
+.Bl -tag -width Ds
+.It Fl f Ar device
+Specifies the name of the
+.Xr sndio 7
+MIDI device.
 .It Fl g
 Send a
 .Dq General MIDI On
 system exclusive message to the device.
-.It Fl l
-List the possible devices without playing anything.
 .It Fl m
 Show MIDI file meta events (copyright, lyrics, etc.).
 .It Fl q
@@ -76,25 +69,12 @@ If the flag is repeated, the verbosity increases.
 .It Fl x
 Play a small sample sound.
 .El
-.Sh FILES
-.Bl -tag -width /dev/music
-.It Pa /dev/music
-MIDI sequencer device
-.El
-.\".Sh ENVIRONMENT
-.\".Bl -tag -width MIDIDEVICE
-.\".It Pa AUDIOCTLDEVICE
-.\"the audio control device to use.
-.\".El
 .Sh SEE ALSO
-.Xr midi 4
+.Xr midicat 1 ,
+.Xr midi 4 ,
+.Xr sndio 7
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Nx 1.4 .
-.Sh BUGS
-It may take a long while before playing stops when
-.Nm
-is interrupted since the sequencer and MIDI buffers will still
-be emptied.

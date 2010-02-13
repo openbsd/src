@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.11 2009/10/14 18:22:49 sobrado Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.12 2010/02/13 13:45:29 ratchov Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -32,9 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/midiio.h>
-
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -42,8 +40,7 @@
 #include <err.h>
 #include <unistd.h>
 #include <string.h>
-
-#define DEVMUSIC "/dev/music"
+#include <sndio.h>
 
 struct track {
 	u_char *start, *end;
@@ -77,11 +74,15 @@ static int midi_lengths[] = { 2,2,2,2,1,1,2,0 };
 /* Number of bytes in a MIDI command */
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
+#define MIDI_IS_STATUS(d)	((d) & 0x80)
+#define MIDI_IS_COMMON(d)	((d) < 0xf0)
+#define MIDI_SYSEX_START	0xf0
+#define MIDI_SYSEX_STOP		0xf7
+
 void usage(void);
-void send_event(seq_event_rec *);
+void send_event(u_char, u_char *, u_int);
 void dometa(u_int, u_char *, u_int);
 void midireset(void);
-void send_sysex(u_char *, u_int);
 u_long getvar(struct track *);
 void playfile(FILE *, char *);
 void playdata(u_char *, u_int, char *);
@@ -126,30 +127,33 @@ void
 usage(void)
 {
 	printf("usage: "
-	       "%s [-glmqvx] [-d devno] [-f file] [-t tempo] [file ...]\n",
+	       "%s [-gmqvx] [-f device] [-t tempo] [file ...]\n",
 	       __progname);
 	exit(1);
 }
 
 int showmeta = 0;
 int verbose = 0;
-#define BASETEMPO 400000
-u_int tempo = BASETEMPO;		/* microsec / quarter note */
-u_int ttempo = 100;
-int unit = 0;
+u_int tempo = 60 * 1000000 / 100;	/* default tempo is 100bpm */
 int play = 1;
-int fd;
+struct mio_hdl *hdl;
+struct timespec ts, ts_last;
 
 void
-send_event(seq_event_rec *ev)
+send_event(u_char status, u_char *data, u_int len)
 {
-	/*
-	printf("%02x %02x %02x %02x %02x %02x %02x %02x\n",
-	       ev->arr[0], ev->arr[1], ev->arr[2], ev->arr[3], 
-	       ev->arr[4], ev->arr[5], ev->arr[6], ev->arr[7]);
-	*/
-	if (play)
-		write(fd, ev, sizeof *ev);
+	u_int i;
+
+	if (verbose > 1) {
+		printf("MIDI %02x", status);
+		for (i = 0; i < len; i++)
+			printf(" %02x", data[i]);
+		printf("\n");
+	}
+	if (play) {
+		mio_write(hdl, &status, 1);
+		mio_write(hdl, data, len);
+	}
 }
 
 u_long
@@ -213,29 +217,7 @@ midireset(void)
 	/* General MIDI reset sequence */
 	static u_char gm_reset[] = { 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
 
-	send_sysex(gm_reset, sizeof gm_reset);
-}
-
-#define SYSEX_CHUNK 6
-void
-send_sysex(u_char *p, u_int l)
-{
-	seq_event_rec event;
-	u_int n;
-
-	event.arr[0] = SEQ_SYSEX;
-	event.arr[1] = unit;
-	do {
-		n = SYSEX_CHUNK;
-		if (l < n) {
-			memset(&event.arr[2], 0xff, SYSEX_CHUNK);
-			n = l;
-		}
-		memcpy(&event.arr[2], p, n);
-		send_event(&event);
-		l -= n;
-		p += n;
-	} while (l > 0);
+	send_event(MIDI_SYSEX_START, gm_reset, sizeof gm_reset);
 }
 
 void
@@ -275,15 +257,21 @@ playfile(FILE *f, char *name)
 }
 
 void
+sigalrm(int i)
+{
+}
+
+void
 playdata(u_char *buf, u_int tot, char *name)
 {
+	long long delta_nsec = 0;
+	u_int delta_ticks;
 	int format, ntrks, divfmt, ticks, t, besttrk = 0;
-	u_int len, mlen, status, chan;
-	u_char *p, *end, byte, meta, *msg;
+	u_int len, mlen;
+	u_char *p, *end, byte, meta;
 	struct track *tracks;
 	u_long bestcur, now;
 	struct track *tp;
-	seq_event_rec event;
 
 	end = buf + tot;
 	if (verbose)
@@ -342,25 +330,10 @@ playdata(u_char *buf, u_int tot, char *name)
 	 * curtime.  Execute the event, update the curtime and repeat.
 	 */
 
-	/*
-	 * The ticks variable is the number of ticks that make up a quarter
-	 * note and is used as a reference value for the delays between
-	 * the MIDI events.
-	 * The sequencer has two "knobs": the TIMEBASE and the TEMPO.
-	 * The delay specified in TMR_WAIT_REL is specified in
-	 * sequencer time units.  The length of a unit is
-	 * 60*1000000 / (TIMEBASE * TEMPO).
-	 * Set it to 1ms/unit (adjusted by user tempo changes).
-	 */
-	t = 500 * ttempo / 100;
-	if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &t) < 0)
-		err(1, "SEQUENCER_TMR_TIMEBASE");
-	t = 120;
-	if (ioctl(fd, SEQUENCER_TMR_TEMPO, &t) < 0)
-		err(1, "SEQUENCER_TMR_TEMPO");
-	if (ioctl(fd, SEQUENCER_TMR_START, 0) < 0)
-		err(1, "SEQUENCER_TMR_START");
 	now = 0;
+	delta_nsec = 0;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts_last) < 0)
+		err(1, "clock_gettime");
 	for (;;) {
 		/* Locate lowest curtime */
 		bestcur = ~0;
@@ -376,25 +349,19 @@ playdata(u_char *buf, u_int tot, char *name)
 			printf("DELAY %4ld TRACK %2d ", bestcur-now, besttrk);
 			fflush(stdout);
 		}
-		if (now < bestcur) {
-			union {
-				u_int32_t i;
-				u_int8_t b[4];
-			} u;
-			u_int32_t delta = bestcur - now;
-			delta = (int)((double)delta * tempo / (1000.0*ticks));
-			u.i = delta;
-			if (delta != 0) {
-				event.arr[0] = SEQ_TIMING;
-				event.arr[1] = TMR_WAIT_REL;
-				event.arr[4] = u.b[0];
-				event.arr[5] = u.b[1];
-				event.arr[6] = u.b[2];
-				event.arr[7] = u.b[3];
-				send_event(&event);
-			}
+		while (now < bestcur) {
+			pause();
+			if (clock_gettime(CLOCK_MONOTONIC, &ts) < 0)
+				err(1, "clock_gettime");
+			delta_nsec += 1000000000L * (ts.tv_sec - ts_last.tv_sec);
+			delta_nsec += ts.tv_nsec - ts_last.tv_nsec;
+			ts_last = ts;
+			if (delta_nsec <= 0)
+				continue;
+			delta_ticks = delta_nsec * ticks / (1000LL * tempo);
+			delta_nsec -= 1000LL * delta_ticks * tempo / ticks;
+			now += delta_ticks;
 		}
-		now = bestcur;
 		tp = &tracks[besttrk];
 		byte = *tp->start++;
 		if (byte == MIDI_META) {
@@ -409,52 +376,16 @@ playdata(u_char *buf, u_int tot, char *name)
 				tp->status = byte;
 			else
 				tp->start--;
-			mlen = MIDI_LENGTH(tp->status);
-			msg = tp->start;
-			if (verbose > 1) {
-			    if (mlen == 1)
-				printf("MIDI %02x (%d) %02x\n",
-				       tp->status, mlen, msg[0]);
-			    else   
-				printf("MIDI %02x (%d) %02x %02x\n",
-				       tp->status, mlen, msg[0], msg[1]);
-			}
-			status = MIDI_GET_STATUS(tp->status);
-			chan = MIDI_GET_CHAN(tp->status);
-			switch (status) {
-			case MIDI_NOTEOFF:
-			case MIDI_NOTEON:
-			case MIDI_KEY_PRESSURE:
-				SEQ_MK_CHN_VOICE(&event, unit, status, chan,
-						 msg[0], msg[1]);
-				send_event(&event);
-				break;
-			case MIDI_CTL_CHANGE:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  msg[0], 0, msg[1]);
-				send_event(&event);
-				break;
-			case MIDI_PGM_CHANGE:
-			case MIDI_CHN_PRESSURE:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  msg[0], 0, 0);
-				send_event(&event);
-				break;
-			case MIDI_PITCH_BEND:
-				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
-						  0, 0, 
-						  (msg[0] & 0x7f) | 
-						  ((msg[1] & 0x7f) << 7));
-				send_event(&event);
-				break;
-			case MIDI_SYSTEM_PREFIX:
+			if (MIDI_IS_COMMON(tp->status)) {
+				mlen = MIDI_LENGTH(tp->status);
+				send_event(tp->status, tp->start, mlen);
+			} else if (tp->status == MIDI_SYSEX_START) {
 				mlen = getvar(tp);
-				if (tp->status == MIDI_SYSEX_START)
-					send_sysex(tp->start, mlen);
-				else
-					/* Sorry, can't do this yet */;
-				break;
-			default:
+				send_event(MIDI_SYSEX_START, tp->start, mlen);
+			} else if (tp->status == MIDI_SYSEX_STOP) {
+				mlen = getvar(tp);
+				/* Sorry, can't do this yet */;
+			} else {
 				if (verbose)
 					printf("MIDI event 0x%02x ignored\n",
 					       tp->status);
@@ -466,9 +397,6 @@ playdata(u_char *buf, u_int tot, char *name)
 		else
 			tp->curtime += getvar(tp);
 	}
-	if (ioctl(fd, SEQUENCER_SYNC, 0) < 0)
-		err(1, "SEQUENCER_SYNC");
-
  ret:
 	free(tracks);
 }
@@ -477,30 +405,21 @@ int
 main(int argc, char **argv)
 {
 	int ch;
-	int listdevs = 0;
 	int example = 0;
 	int gmreset = 0;
-	int nmidi;
-	char *file = DEVMUSIC;
-	struct synth_info info;
+	char *file = NULL;
 	FILE *f;
 	const char *errstr;
+	struct sigaction sa;
+	struct itimerval it;
 
 	while ((ch = getopt(argc, argv, "?d:f:glmqt:vx")) != -1) {
 		switch (ch) {
-		case 'd':
-			unit = strtonum(optarg, 0, INT_MAX, &errstr);
-			if (errstr)
-				errx(1, "unit is %s: %s", errstr, optarg);
-			break;
 		case 'f':
 			file = optarg;
 			break;
 		case 'g':
 			gmreset++;
-			break;
-		case 'l':
-			listdevs++;
 			break;
 		case 'm':
 			showmeta++;
@@ -509,7 +428,8 @@ main(int argc, char **argv)
 			play = 0;
 			break;
 		case 't':
-			ttempo = strtonum(optarg, 0, INT_MAX, &errstr);
+			tempo = 60 * 1000000 / 
+			    strtonum(optarg, 40, 240, &errstr);
 			if (errstr)
 				errx(1, "tempo is %s: %s", errstr, optarg);
 			break;
@@ -527,23 +447,24 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
     
-	fd = open(file, O_WRONLY);
-	if (fd < 0)
-		err(1, "%s", file);
-	if (ioctl(fd, SEQUENCER_NRMIDIS, &nmidi) < 0)
-		err(1, "ioctl(SEQUENCER_NRMIDIS) failed, ");
-	if (nmidi == 0)
-		errx(1, "Sorry, no MIDI devices available");
-	if (listdevs) {
-		for (info.device = 0; info.device < nmidi; info.device++) {
-			if (ioctl(fd, SEQUENCER_INFO, &info) < 0)
-				err(1, "ioctl(SEQUENCER_INFO) failed, ");
-			printf("%d: %s\n", info.device, info.name);
-		}
-		exit(0);
+	hdl = mio_open(file, MIO_OUT, 0);
+	if (hdl == NULL) {
+		fprintf(stderr, "failed to open MIDI output\n");
+		exit(1);
 	}
 	if (gmreset)
 		midireset();
+
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sigalrm;
+	sigfillset(&sa.sa_mask);
+	if (sigaction(SIGALRM, &sa, NULL) < 0)
+		err(1, "sigaction");
+	it.it_interval.tv_sec = it.it_value.tv_sec = 0;
+	it.it_interval.tv_usec = it.it_value.tv_usec = 1000;
+	if (setitimer(ITIMER_REAL, &it, NULL) < 0)
+		err(1, "setitimer");
+
 	if (example)
 		playdata(sample, sizeof sample, "<Gubben Noa>");
 	else if (argc == 0)
