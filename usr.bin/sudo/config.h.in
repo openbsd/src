@@ -366,6 +366,9 @@
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
 
+/* Define to 1 if you have the `setrlimit64' function. */
+#undef HAVE_SETRLIMIT64
+
 /* Define to 1 if you have the `setsid' function. */
 #undef HAVE_SETSID
 

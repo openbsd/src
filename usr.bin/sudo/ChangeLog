@@ -1,3 +1,31 @@
+2010-02-09  Todd C. Miller  <Todd.Miller@courtesan.com>
+	* toke.l: Fix size arg when realloc()ing include stack.
+	  From Daniel Kopecek
+
+	* toke.l: Avoid a duplicate fclose() of the sudoers file.
+
+2010-02-06  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* aix.c, config.h.in, configure, configure.in: Use setrlimit64(),
+	  if available, instead of setrlimit() when setting AIX resource
+	  limits since rlim_t is 32bits.
+
+	* logging.c: Fix use after free when sending error messages.
+	  From Timo Juhani Lindfors
+
+2009-12-17 15:02  millert
+
+	* parse.c: Fix printing of entries with multiple host entries on
+	  a single line.
+
+2009-12-09 16:05  millert
+
+	* logging.c: fix typo in last commit
+
+2009-12-08 22:19  millert
+
+	* logging.c: Convert fmt_first and fmt_confd into macros.
+
 2009-11-23 10:56  millert
 
 	* match.c: cmnd_matches() already deals with negation so

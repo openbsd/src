@@ -4,7 +4,7 @@ dnl $Sudo: configure.in,v 1.549 2009/06/13 20:52:50 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2009 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT([sudo], [1.7.2p2], [http://www.sudo.ws/bugs/], [sudo])
+AC_INIT([sudo], [1.7.2p3], [http://www.sudo.ws/bugs/], [sudo])
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT
@@ -1841,7 +1841,7 @@ dnl
 AC_FUNC_GETGROUPS
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
-	       setlocale getaddrinfo setsid setenv)
+	       setlocale getaddrinfo setsid setenv setrlimit64)
 AC_CHECK_FUNCS(unsetenv, SUDO_FUNC_UNSETENV_VOID)
 SUDO_FUNC_PUTENV_CONST
 if test -z "$SKIP_SETRESUID"; then

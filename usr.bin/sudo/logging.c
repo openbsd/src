@@ -122,6 +122,9 @@ mysyslog(pri, fmt, va_alist)
     closelog();
 }
 
+#define FMT_FIRST "%8s : %s"
+#define FMT_CONTD "%8s : (command continued) %s"
+
 /*
  * Log a message to syslog, pre-pending the username and splitting the
  * message into parts if it is longer than MAXSYSLOGLEN.
@@ -134,14 +137,12 @@ do_syslog(pri, msg)
     size_t len, maxlen;
     char *p, *tmp, save;
     const char *fmt;
-    const char *fmt_first = "%8s : %s";
-    const char *fmt_contd = "%8s : (command continued) %s";
 
     /*
      * Log the full line, breaking into multiple syslog(3) calls if necessary
      */
-    fmt = fmt_first;
-    maxlen = MAXSYSLOGLEN - (sizeof(fmt_first) - 6 + strlen(user_name));
+    fmt = FMT_FIRST;
+    maxlen = MAXSYSLOGLEN - (sizeof(FMT_FIRST) - 6 + strlen(user_name));
     for (p = msg; *p != '\0'; ) {
 	len = strlen(p);
 	if (len > maxlen) {
@@ -168,8 +169,8 @@ do_syslog(pri, msg)
 	    mysyslog(pri, fmt, user_name, p);
 	    p += len;
 	}
-	fmt = fmt_contd;
-	maxlen = MAXSYSLOGLEN - (sizeof(fmt_contd) - 6 + strlen(user_name));
+	fmt = FMT_CONTD;
+	maxlen = MAXSYSLOGLEN - (sizeof(FMT_CONTD) - 6 + strlen(user_name));
     }
 }
 
@@ -391,7 +392,8 @@ log_error(flags, fmt, va_alist)
 	else
 	    warningx("%s", message);
     }
-    efree(message);
+    if (logline != message)
+        efree(message);
 
     /*
      * Send a copy of the error via mail.
@@ -407,8 +409,7 @@ log_error(flags, fmt, va_alist)
     if (def_logfile)
 	do_logfile(logline);
 
-    if (logline != message)
-	efree(logline);
+    efree(logline);
 
     if (!ISSET(flags, NO_EXIT)) {
 	cleanup(0);
