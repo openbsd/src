@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.98 2010/01/22 21:45:26 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.99 2010/02/13 14:07:30 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -144,7 +144,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	char *cp;
 	int i;
 	u_int cputype;
-	vaddr_t tlb_handler, xtlb_handler;
+	vaddr_t xtlb_handler;
 	extern char start[], edata[], end[];
 	extern char exception[], e_exception[];
 	extern char *hw_vendor;
@@ -466,24 +466,20 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		 * This is also necessary on RM52x0 and most RM7k/RM9k,
 		 * and is a documented errata for these chips.
 		 */
-		extern void tlb_miss_err_r5k;
 		extern void xtlb_miss_err_r5k;
-		tlb_handler = (vaddr_t)&tlb_miss_err_r5k;
 		xtlb_handler = (vaddr_t)&xtlb_miss_err_r5k;
 	    }
 		break;
 #endif
 	default:
 	    {
-		extern void tlb_miss;
 		extern void xtlb_miss;
-		tlb_handler = (vaddr_t)&tlb_miss;
 		xtlb_handler = (vaddr_t)&xtlb_miss;
 	    }
 		break;
 	}
 
-	build_trampoline(TLB_MISS_EXC_VEC, tlb_handler);
+	build_trampoline(TLB_MISS_EXC_VEC, xtlb_handler);
 	build_trampoline(XTLB_MISS_EXC_VEC, xtlb_handler);
 
 	/*

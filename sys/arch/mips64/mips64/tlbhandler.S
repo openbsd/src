@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.30 2010/02/01 05:26:17 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.31 2010/02/13 14:07:30 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -47,19 +47,17 @@
 	.set	noreorder	/* Default reorder mode */
 
 /*---------------------------------------------------------------- tlb_miss
- *	Low level TLB exception handler. TLB and XTLB share some
- *	code for the moment and is copied down at the same time.
- *	This code must be PIC and not more than 64 instructions
- *	for both TLB and XTLB handling or it will overflow the
- *	available storage. If the startup code finds out that it
- *	is larger, the trampoline code is copied instead of panicing.
+ *	Low level TLB exception handler. TLB and XTLB code are
+ *	identical at the moment.
+ *	This code is not copied to the exception area, instead
+ *	trampolines branching to the appropriate code are built.
  */
 	.set	noat
 
 #if defined(CPU_R5000) || defined(CPU_RM7000)
-	.globl	tlb_miss_err_r5k
-	.ent	tlb_miss_err_r5k, 0
-tlb_miss_err_r5k:
+	.globl	xtlb_miss_err_r5k
+	.ent	xtlb_miss_err_r5k, 0
+xtlb_miss_err_r5k:
 	/*
 	 * R5000 errata: edge cases can trigger a TLB miss exception
 	 * instead of an invalid TLB exception. Servicing the TLB miss
@@ -76,70 +74,9 @@ tlb_miss_err_r5k:
 	 */
 	tlbp
 	mfc0	k1, COP_0_TLB_INDEX
-	bltz	k1, tlb_miss		# missing!
-	 nop
-	j	k_tlb_inv
-	 nop
-	.end	tlb_miss_err_r5k
-#endif	/* CPU_R5000 || CPU_RM7000 */
-
-	.globl	tlb_miss
-	.ent	tlb_miss, 0
-tlb_miss:
-	GET_CPU_INFO(k1, k0)
-	PTR_L	k1, CI_CURPROCPADDR(k1)
-	dmfc0	k0, COP_0_BAD_VADDR
-	bltz	k0, _k_miss		# kernel address space
-	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
-	PTR_L	k1, PCB_SEGTAB(k1)
-	andi	k0, k0, (PMAP_SEGTABSIZE - 1) << LOGREGSZ
-	PTR_ADDU k1, k1, k0
-	PTR_L	k1, 0(k1)		# get pointer to page table
-	dmfc0	k0, COP_0_BAD_VADDR
-	PTR_SRL	k0, k0, PGSHIFT - 2
-	andi	k0, k0, ((NPTEPG/2) - 1) << 3
-	beqz	k1, _inv_seg		# invalid segment map
-	PTR_ADDU k1, k1, k0		# index into segment map
-	lw	k0, 0(k1)		# get page PTE
-tlb_load:
-	lw	k1, 4(k1)
-	dsll	k0, k0, 34
-	dsrl	k0, k0, 34
-	dmtc0	k0, COP_0_TLB_LO0
-	dsll	k1, k1, 34
-	dsrl	k1, k1, 34
-	dmtc0	k1, COP_0_TLB_LO1
-	nop				# RM7000 needs 4 nops
-	nop
-	nop
-	nop
-	tlbwr				# update TLB
-	nop
-	nop
-	nop
-	nop
-
-#ifdef CPU_LOONGSON2
-	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
-	dmtc0	k0, COP_0_DIAG
-#endif
-
-	eret				# RM7000 need 4 for JTLB usage.
-	.end	tlb_miss
-
-/*---------------------------------------------------------------- xtlb_miss
- *	Low level XTLB exception handler.
- */
-#if defined(CPU_R5000) || defined(CPU_RM7000)
-	.globl	xtlb_miss_err_r5k
-	.ent	xtlb_miss_err_r5k, 0
-xtlb_miss_err_r5k:
-	/* See errata comments in tlb_miss above */
-	tlbp
-	mfc0	k1, COP_0_TLB_INDEX
 	bltz	k1, xtlb_miss		# missing!
 	 nop
-	j	k_tlb_inv
+	b	k_tlb_inv
 	 nop
 	.end	xtlb_miss_err_r5k
 #endif	/* CPU_R5000 || CPU_RM7000 */
@@ -166,28 +103,59 @@ xtlb_miss:
 	andi	k0, k0, ((NPTEPG/2) - 1) << 3
 	beqz	k1, _inv_seg
 	PTR_ADDU k1, k1, k0
-	b	tlb_load		# rest is same as 'tlb_miss'
 	lw	k0, 0(k1)
-
-_inv_seg:
-	j	tlb_miss_nopt		# No page table for this segment.
+	lw	k1, 4(k1)
+	dsll	k0, k0, 34
+	dsrl	k0, k0, 34
+	dmtc0	k0, COP_0_TLB_LO0
+	dsll	k1, k1, 34
+	dsrl	k1, k1, 34
+	dmtc0	k1, COP_0_TLB_LO1
+	nop				# RM7000 needs 4 nops
+	nop
+	nop
+	nop
+	tlbwr				# update TLB
+	nop				# RM7000 need 4 for JTLB usage.
+	nop
+	nop
 	nop
 
-_k_miss:
-	j	k_tlb_miss		# kernel tlbmiss.
-	dmfc0	k0, COP_0_BAD_VADDR	# must reload.
-	.end	xtlb_miss
+#ifdef CPU_LOONGSON2
+	li	k0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
+	dmtc0	k0, COP_0_DIAG
+#endif
 
-	.globl	tlb_miss_nopt
-	.ent	tlb_miss_nopt, 0
-tlb_miss_nopt:
+	eret
+
+_k_miss:
+	b	k_tlb_miss		# kernel tlbmiss.
+	dmfc0	k0, COP_0_BAD_VADDR	# must reload.
+
+_inv_seg:				# No page table for this segment.
 	mfc0	k0, COP_0_STATUS_REG
 	andi	k0, SR_KSU_USER
 	bne	k0, zero, go_u_general
 	nop
+	b	go_k_general
+	nop
+
+go_k_general:
 	j	k_general
 	nop
-	.end	tlb_miss_nopt
+go_u_general:
+#ifdef CPU_LOONGSON2
+	/*
+	 * To work around a branch prediction issue on earlier LS2F
+	 * chips, it is necessary to clear the BTB upon
+	 * userland->kernel boundaries.
+	 */
+	li	k0, COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
+	dmtc0	k0, COP_0_DIAG
+#endif
+	j	u_general
+	nop
+	.end	xtlb_miss
 
 	.set	at
 
@@ -254,7 +222,7 @@ k_tlb_inv_odd:
 	dsrl	k0, k0, 34
 	dmtc0	k0, COP_0_TLB_LO1		# save PTE entry
 	and	k0, k0, PG_V			# check for valid entry
-	beq	k0, zero, go_k_general	# PTE invalid
+	beq	k0, zero, go_k_general		# PTE invalid
 	lw	k0, -4(k1)			# get even PTE entry
 	dsll	k0, k0, 34
 	dsrl	k0, k0, 34
@@ -363,24 +331,6 @@ sys_stk_chk:
 	PANIC("kernel stack overflow")
 	/*noreturn*/
 
-go_k_general:
-	j	k_general
-	nop
-
-go_u_general:
-#ifdef CPU_LOONGSON2
-	/*
-	 * To work around a branch prediction issue on earlier LS2F
-	 * chips, it is necessary to clear the BTB upon
-	 * userland->kernel boundaries.
-	 */
-	li	k0, COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
-	dmtc0	k0, COP_0_DIAG
-#endif
-	j	u_general
-	nop
-
-
 	.data
 1:
 	.asciiz	"\rktlbmiss: PC %p RA %p ADR %p\nSR %p CR %p SP %p\n"
@@ -391,7 +341,7 @@ go_u_general:
 	.set	at
 END(k_tlb_miss)
 
-#if 0
+#if 0	/* currently unused */
 /*---------------------------------------------------------------- tlb_write_i
  *	Write the given entry into the TLB at the given index.
  */
