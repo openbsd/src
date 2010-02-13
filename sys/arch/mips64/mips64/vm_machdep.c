@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2010/01/08 01:35:52 syuu Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.23 2010/02/13 14:04:45 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -109,11 +109,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * Copy the process control block to the new proc and
 	 * create a clean stack for exit through trampoline.
-	 * pcb_context has s0-s7, sp, s8, ra, sr, icr, ipl.
+	 * pcb_context has s0-s7, sp, s8, ra, sr, icr.
 	 */
-
 	if (p1 != curproc) {
-		pcb->pcb_context.val[13] = IPL_NONE;
 #ifdef RM7000_ICR
 		pcb->pcb_context.val[12] = (idle_mask << 8) & IC_INT_MASK;
 #endif
@@ -123,8 +121,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_context.val[10] = (register_t)proc_trampoline;
 	pcb->pcb_context.val[8] = (register_t)pcb +
 	    USPACE - sizeof(struct trap_frame);
-	pcb->pcb_context.val[0] = (register_t)func;
 	pcb->pcb_context.val[1] = (register_t)arg;
+	pcb->pcb_context.val[0] = (register_t)func;
 }
 
 /*

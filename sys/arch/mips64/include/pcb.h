@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.3 2005/12/16 03:55:46 deraadt Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.4 2010/02/13 14:04:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,10 +48,9 @@
 struct pcb {
 	struct trap_frame pcb_regs;	/* saved CPU and registers */
 	struct {
-		register_t val[14];
+		register_t val[13];
 	} pcb_context;			/* kernel context for resume */
 	int	pcb_onfault;		/* for copyin/copyout faults */
-	int	pcb_kernel;
 	void	*pcb_segtab;		/* copy of pmap pm_segtab */
 };
 

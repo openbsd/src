@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.43 2010/01/28 21:24:08 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.44 2010/02/13 14:04:45 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -60,13 +60,10 @@ LEAF(savectx, 0)
 	REG_S	s8, PCB_CONTEXT+9*REGSZ(a0)
 	REG_S	ra, PCB_CONTEXT+10*REGSZ(a0)
 	REG_S	v0, PCB_CONTEXT+11*REGSZ(a0)
-	GET_CPU_INFO(t0, t1)
-	lw	t0, CI_IPL(t0)
 #ifdef RM7000_ICR
 	cfc0	t1, COP_0_ICR
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(a0)	# save status register
 #endif
-	REG_S	t0, PCB_CONTEXT+13*REGSZ(a0)
 	j	ra
 	move	v0, zero
 END(savectx)
@@ -101,7 +98,6 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	beqz	a0, 1f
 	mfc0	v0, COP_0_STATUS_REG
 
-	lw	t0, CI_IPL(t1)
 	REG_S	s0, PCB_CONTEXT+0*REGSZ(t3)	# do a 'savectx()'
 	REG_S	s1, PCB_CONTEXT+1*REGSZ(t3)
 	REG_S	s2, PCB_CONTEXT+2*REGSZ(t3)
@@ -117,7 +113,6 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	cfc0	t1, COP_0_ICR
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(t3)
 #endif
-	REG_S	t0, PCB_CONTEXT+13*REGSZ(t3)
 
 1:
 	/*
