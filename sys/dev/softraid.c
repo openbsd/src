@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.190 2010/02/08 23:28:06 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.191 2010/02/13 21:16:10 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -135,7 +135,7 @@ void			sr_sensors_delete(struct sr_discipline *);
 
 /* metadata */
 int			sr_meta_probe(struct sr_discipline *, dev_t *, int);
-int			sr_meta_attach(struct sr_discipline *, int);
+int			sr_meta_attach(struct sr_discipline *, int, int);
 int			sr_meta_rw(struct sr_discipline *, dev_t, void *,
 			    size_t, daddr64_t, long);
 int			sr_meta_clear(struct sr_discipline *);
@@ -208,7 +208,7 @@ struct sr_meta_driver {
 };
 
 int
-sr_meta_attach(struct sr_discipline *sd, int force)
+sr_meta_attach(struct sr_discipline *sd, int chunk_no, int force)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_chunk_head	*cl;
@@ -239,10 +239,7 @@ sr_meta_attach(struct sr_discipline *sd, int force)
 
 	/* we have a valid list now create an array index */
 	cl = &sd->sd_vol.sv_chunk_list;
-	SLIST_FOREACH(ch_entry, cl, src_link) {
-		i++;
-	}
-	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * i,
+	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * chunk_no,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* fill out chunk array */
@@ -2769,7 +2766,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		goto unwind;
 	}
 
-	if (sr_meta_attach(sd, bc->bc_flags & BIOC_SCFORCE)) {
+	if (sr_meta_attach(sd, no_chunk, bc->bc_flags & BIOC_SCFORCE)) {
 		printf("%s: can't attach metadata type %d\n", DEVNAME(sc),
 		    sd->sd_meta_type);
 		goto unwind;
