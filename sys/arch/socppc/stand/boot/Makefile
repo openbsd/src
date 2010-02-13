@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2009/09/11 17:45:01 dms Exp $
+#	$OpenBSD: Makefile,v 1.8 2010/02/13 17:42:06 kettenis Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -45,6 +45,12 @@ ${PROG}: ${OBJS} ${LIBSA}
 	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBSA} ${LIBSA}
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}.bin
 	${MKBOOT} -e ${RELOC} -l ${RELOC} ${PROG}.bin ${PROG}
+
+realinstall:
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
+	    -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR}/${PROG}
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
+	    -m ${BINMODE} ${PROG}.elf ${DESTDIR}${BINDIR}/${PROG}.elf
 
 .if !make(obj)
 .BEGIN:
