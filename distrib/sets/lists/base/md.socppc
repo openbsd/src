@@ -2494,6 +2494,7 @@
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/powerpc-openbsd
 ./usr/mdec/boot
+./usr/mdec/boot.elf
 ./usr/mdec/mkboot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
