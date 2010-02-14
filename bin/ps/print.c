@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.45 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.46 2010/02/14 00:17:14 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ logname(const struct kinfo_proc2 *kp, VARENT *ve)
 		(void)printf("%-*s", v->width, "-");
 }
 
-#define pgtok(a)	(((a)*getpagesize())/1024)
+#define pgtok(a)	(((unsigned long long)(a)*getpagesize())/1024)
 
 void
 state(const struct kinfo_proc2 *kp, VARENT *ve)
@@ -452,7 +452,7 @@ vsize(const struct kinfo_proc2 *kp, VARENT *ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width,
+	(void)printf("%*llu", v->width,
 	    pgtok(kp->p_vm_dsize + kp->p_vm_ssize + kp->p_vm_tsize));
 }
 
@@ -463,7 +463,7 @@ rssize(const struct kinfo_proc2 *kp, VARENT *ve)
 
 	v = ve->var;
 	/* XXX don't have info about shared */
-	(void)printf("%*d", v->width, (kp->p_flag & P_SYSTEM) ? 0 :
+	(void)printf("%*llu", v->width, (kp->p_flag & P_SYSTEM) ? 0 :
 	    pgtok(kp->p_vm_rssize));
 }
 
@@ -473,7 +473,7 @@ p_rssize(const struct kinfo_proc2 *kp, VARENT *ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, (kp->p_flag & P_SYSTEM) ? 0 :
+	(void)printf("%*llu", v->width, (kp->p_flag & P_SYSTEM) ? 0 :
 	    pgtok(kp->p_vm_rssize));
 }
 
@@ -592,7 +592,7 @@ maxrss(const struct kinfo_proc2 *kp, VARENT *ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*lld", v->width, kp->p_rlim_rss_cur / 1024);
+	(void)printf("%*llu", v->width, kp->p_rlim_rss_cur / 1024);
 }
 
 void
@@ -601,7 +601,7 @@ tsize(const struct kinfo_proc2 *kp, VARENT *ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, pgtok(kp->p_vm_tsize));
+	(void)printf("%*llu", v->width, pgtok(kp->p_vm_tsize));
 }
 
 void
@@ -610,7 +610,7 @@ dsize(const struct kinfo_proc2 *kp, VARENT *ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, pgtok(kp->p_vm_dsize));
+	(void)printf("%*llu", v->width, pgtok(kp->p_vm_dsize));
 }
 
 void
@@ -619,7 +619,7 @@ ssize(const struct kinfo_proc2 *kp, VARENT *ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, pgtok(kp->p_vm_ssize));
+	(void)printf("%*llu", v->width, pgtok(kp->p_vm_ssize));
 }
 
 /*

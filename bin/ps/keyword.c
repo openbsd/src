@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.29 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.30 2010/02/14 00:17:14 guenther Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ VAR var[] = {
 	{"jobc", "JOBC", NULL, 0, pvar, 4, 0, POFF(p_jobc), INT16, "d"},
 	{"ktrace", "KTRACE", NULL, 0, pvar, 8, 0, POFF(p_traceflag), INT32, "x"},
 	/* XXX */
-	{"ktracep", "KTRACEP", NULL, 0, pvar, 8, 0, POFF(p_tracep), UINT64, "llx"},
+	{"ktracep", "KTRACEP", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_tracep), UINT64, "llx"},
 	{"lim", "LIM", NULL, 0, maxrss, 5},
 	{"login", "LOGIN", NULL, LJUST, logname, MAXLOGNAME},
 	{"logname", "", "login"},
@@ -119,13 +119,13 @@ VAR var[] = {
 	{"nswap", "NSWAP", NULL, USER, pvar, 4, 0, POFF(p_uru_nswap), UINT64, "lld"},
 	{"nvcsw", "NVCSW", NULL, USER, pvar, 5, 0, POFF(p_uru_nvcsw), UINT64, "lld"},
 	/* XXX */
-	{"nwchan", "WCHAN", NULL, 0, pvar, 7, 0, POFF(p_wchan), UINT64, "llx"},
+	{"nwchan", "WCHAN", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_wchan), UINT64, "llx"},
 	{"oublk", "OUBLK", NULL, USER, pvar, 4, 0, POFF(p_uru_oublock), UINT64, "lld"},
 	{"oublock", "", "oublk"},
 	/* XXX */
-	{"p_ru", "P_RU", NULL, 0, pvar, 6, 0, POFF(p_ru), UINT64, "llx"},
+	{"p_ru", "P_RU", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_ru), UINT64, "llx"},
 	/* XXX */
-	{"paddr", "PADDR", NULL, 0, pvar, 6, 0, POFF(p_paddr), UINT64, "llx"},
+	{"paddr", "PADDR", NULL, 0, pvar, PTRWIDTH, 0, POFF(p_paddr), UINT64, "llx"},
 	{"pagein", "PAGEIN", NULL, USER, pagein, 6},
 	{"pcpu", "", "%cpu"},
 	{"pending", "", "sig"},
