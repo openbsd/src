@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2010/02/13 17:42:06 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.9 2010/02/14 15:16:21 kettenis Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -28,9 +28,15 @@ SRCS+=		ctime.c strtol.c cmd_socppc.c
 .PATH:	${S}/lib/libkern/arch/powerpc ${S}/lib/libkern
 SRCS+=	strlcpy.c strlen.c ashrdi3.c
 
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
 ### find out what to use for libsa
 SA_AS=          library
 SAREL=
+SA_ZLIB=	yes
 USE_LOADFILE=	yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=          ${SALIB}
@@ -41,8 +47,8 @@ RELOC=		0x100000
 LDFLAGS=	-Ttext ${RELOC}
 OBJCOPY?=	objcopy
 
-${PROG}: ${OBJS} ${LIBSA}
-	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBSA} ${LIBSA}
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
+	${LD} ${LDFLAGS} -o ${PROG}.elf ${OBJS} ${LIBSA} ${LIBZ}
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}.bin
 	${MKBOOT} -e ${RELOC} -l ${RELOC} ${PROG}.bin ${PROG}
 
