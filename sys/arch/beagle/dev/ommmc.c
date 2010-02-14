@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.4 2010/02/10 23:01:49 drahn Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.5 2010/02/14 09:08:32 mk Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -30,8 +30,8 @@
 
 #include <arch/beagle/dev/prcmvar.h>
 #include <arch/beagle/beagle/ahb.h>
-#include </sys/dev/sdmmc/sdmmcchip.h>
-#include </sys/dev/sdmmc/sdmmcvar.h>
+#include <dev/sdmmc/sdmmcchip.h>
+#include <dev/sdmmc/sdmmcvar.h>
 
 #define MMCHS1_ADDR 0x4809C000
 #define MMCHS2_ADDR 0x480B4000
