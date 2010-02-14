@@ -1,8 +1,8 @@
 
-# $OpenBSD: Makefile,v 1.24 2008/05/13 20:44:56 miod Exp $
+# $OpenBSD: Makefile,v 1.25 2010/02/14 12:30:27 miod Exp $
 
 MAKEDEVARCHS+=alpha amd64 armish aviion hp300 hppa hppa64 i386 landisk
-MAKEDEVARCHS+=luna88k mac68k macppc mvme68k
+MAKEDEVARCHS+=loongson luna88k mac68k macppc mvme68k
 #MAKEDEVARCHS+=mvmeppc
 MAKEDEVARCHS+=mvme88k sgi socppc sparc sparc64 vax zaurus
 

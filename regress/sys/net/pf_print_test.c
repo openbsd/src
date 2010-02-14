@@ -16,7 +16,8 @@
 #define	INET	1
 #define	INET6	1
 
-void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
+void			pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
+#define	addlog		printf
 
 char *ipv6_addrs[] = {
 	"::",
