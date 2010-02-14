@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661reg.h,v 1.10 2009/08/10 18:13:17 damien Exp $	*/
+/*	$OpenBSD: rt2661reg.h,v 1.11 2010/02/14 09:20:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -314,29 +314,57 @@ struct rt2661_rx_desc {
 
 #define RT2661_EEPROM_DELAY	1	/* minimum hold time (microsecond) */
 
-/*
- * control and status registers access macros
+/*-
+ * Control and status registers access functions.
+ * The ASIC does not like PCI bursts on registers because of a silicon bug.
+ * To prevent PCI read or write bursts, we issue a read to a non-contiguous
+ * register before accessing a register.  This problem does not show up on
+ * x86 architectures since the memory model makes it almost impossible to
+ * generate PCI bursts without doing DMA.
+ * This makes the RT2561S chip on the Gdium (loongson) work.
  */
-#define RAL_READ(sc, reg)						\
-	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
+static __inline uint32_t
+RAL_READ(struct rt2661_softc *sc, bus_size_t reg)
+{
+	bus_space_read_4(sc->sc_st, sc->sc_sh, RT2661_MAC_CSR0);
+	return bus_space_read_4(sc->sc_st, sc->sc_sh, reg);
+}
 
-#define RAL_READ_REGION_4(sc, offset, datap, count)			\
-	bus_space_read_region_4((sc)->sc_st, (sc)->sc_sh, (offset),	\
-	    (datap), (count))
+static __inline void
+RAL_READ_REGION_4(struct rt2661_softc *sc, bus_size_t offset,
+    uint32_t *datap, bus_size_t count)
+{
+	/* NB: do not use bus_space_read_region_4 to prevent PCI bursts. */
+	for (; count > 0; count--, datap++, offset += 4)
+		*datap = RAL_READ(sc, offset);
+}
 
-#define RAL_WRITE(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+static __inline void
+RAL_WRITE(struct rt2661_softc *sc, bus_size_t reg, uint32_t val)
+{
+	bus_space_read_4(sc->sc_st, sc->sc_sh, RT2661_MAC_CSR0);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, reg, val);
+}
 
-#define RAL_WRITE_1(sc, reg, val)					\
-	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+static __inline void
+RAL_WRITE_1(struct rt2661_softc *sc, bus_size_t reg, uint8_t val)
+{
+	bus_space_read_4(sc->sc_st, sc->sc_sh, RT2661_MAC_CSR0);
+	bus_space_write_1(sc->sc_st, sc->sc_sh, reg, val);
+}
+
+static __inline void
+RAL_WRITE_REGION_1(struct rt2661_softc *sc, bus_size_t offset,
+    const uint8_t *datap, bus_size_t count)
+{
+	/* NB: do not use bus_space_write_region_1 to prevent PCI bursts. */
+	for (; count > 0; count--, datap++, offset++)
+		RAL_WRITE_1(sc, offset, *datap);
+}
 
 #define RAL_RW_BARRIER_1(sc, reg)					\
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, (reg), 1,		\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
-
-#define RAL_WRITE_REGION_1(sc, offset, datap, count)			\
-	bus_space_write_region_1((sc)->sc_st, (sc)->sc_sh, (offset),	\
-	    (datap), (count))
 
 /*
  * EEPROM access macro
