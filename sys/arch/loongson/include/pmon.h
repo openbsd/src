@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmon.h,v 1.1.1.1 2009/08/04 20:29:35 miod Exp $	*/
+/*	$OpenBSD: pmon.h,v 1.2 2010/02/14 22:39:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -19,7 +19,7 @@
 #ifndef	_MACHINE_PMON_H_
 #define	_MACHINE_PMON_H_
 
-#if defined(_KERNEL) || defined(STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 /*
  * PMON2000 callvec definitions
@@ -34,7 +34,7 @@ int		pmon_open(const char *, int, ...);
 int		pmon_close(int);
 int		pmon_read(int, void *, pmon_size_t);
 pmon_ssize_t	pmon_write(int, const void *, pmon_size_t);
-pmon_off_t	pmon_lseek(int, quad_t /* off_t */, int);
+pmon_off_t	pmon_lseek(int, pmon_off_t, int);
 int		pmon_printf(const char *, ...);
 void		pmon_cacheflush(void);
 char *		pmon_gets(char *);
@@ -47,6 +47,6 @@ const char	*pmon_getarg(const int);
 const char	*pmon_getenv(const char *);
 void		 pmon_init(int32_t, int32_t, int32_t, int32_t);
 
-#endif	/* _KERNEL || STANDALONE */
+#endif	/* _KERNEL || _STANDALONE */
 
 #endif	/* _MACHINE_PMON_H_ */

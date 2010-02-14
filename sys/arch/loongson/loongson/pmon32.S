@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmon32.S,v 1.2 2010/02/03 21:45:48 miod Exp $	*/
+/*	$OpenBSD: pmon32.S,v 1.3 2010/02/14 22:39:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -37,7 +37,9 @@
 #include <machine/param.h>
 #include <machine/asm.h>
 
+#ifndef _STANDALONE
 #include "assym.h"
+#endif
 
 	.set	mips3
 
@@ -101,7 +103,7 @@ PMON_WRAP(pmon_gets)
 	dsra32	v0, 0
 PMON_END(pmon_gets)
 
-#if 0
+#ifdef _STANDALONE
 
 PMON_WRAP(pmon_cacheflush)
 	lw	t0, pmon_callvec
@@ -109,10 +111,6 @@ PMON_WRAP(pmon_cacheflush)
 	jalr	t0
 	nop
 PMON_END(pmon_cacheflush)
-
-/*
- * The following routines are untested.
- */
 
 PMON_WRAP(pmon_open)
 	lw	t0, pmon_callvec
@@ -135,18 +133,29 @@ PMON_WRAP(pmon_read)
 	nop
 PMON_END(pmon_read)
 
-PMON_WRAP(pmon_write)
-	lw	t0, pmon_callvec
-	lw	t0, 3 * 4 (t0)
-	jalr	t0
-	nop
-PMON_END(pmon_write)
-
 PMON_WRAP(pmon_lseek)
 	lw	t0, pmon_callvec
 	lw	t0, 4 * 4 (t0)
+#if 0
+	/*
+	 * Setup arguments the way 32-bit PMON expects them.
+	 * 64-bit mode: a0 = fd, a1 = off, a2 = whence
+	 * 32-bit mode: a0 = fd, a2:a3 = off, 16(sp) = whence
+	 */
+	sw	a2, 16(sp)
+#ifdef __MIPSEB__
+	dsll32	a3, a1, 0
+	dsrl32	a2, a1, 0	/* a2 = hi */
+	dsrl32	a3, a3, 0	/* a3 = low */
+#else
+	dsll32	a2, a1, 0
+	dsrl32	a3, a1, 0	/* a3 = hi */
+	dsrl32	a2, a2, 0	/* a2 = low */
+#endif
+#endif
 	jalr	t0
 	nop
+#if 0
 	/* rebuild the 64 bit return value */
 	dsll32	v0, 0
 	dsll32	v1, 0
@@ -158,6 +167,22 @@ PMON_WRAP(pmon_lseek)
 	dsrl32	v0, 0
 #endif
 	or	v0, v1, v0
+#endif
 PMON_END(pmon_lseek)
+
+#endif
+
+/*
+ * The following routines are untested.
+ */
+
+#if 0
+
+PMON_WRAP(pmon_write)
+	lw	t0, pmon_callvec
+	lw	t0, 3 * 4 (t0)
+	jalr	t0
+	nop
+PMON_END(pmon_write)
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2010/02/12 19:39:27 otto Exp $ */
+/*	$OpenBSD: machdep.c,v 1.15 2010/02/14 22:39:33 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -125,7 +125,7 @@ void	build_trampoline(vaddr_t, vaddr_t);
 void	dumpsys(void);
 void	dumpconf(void);
 extern	void parsepmonbp(void);
-vaddr_t	mips_init(int32_t, int32_t, int32_t, int32_t);
+vaddr_t	mips_init(int32_t, int32_t, int32_t, int32_t, char *);
 
 extern	void loongson2e_setup(u_long, u_long);
 extern	void loongson2f_setup(u_long, u_long);
@@ -176,7 +176,8 @@ const struct bonito_flavour bonito_flavours[] = {
  */
 
 vaddr_t
-mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
+mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
+    char *boot_esym)
 {
 	uint prid, loongson_ver;
 	u_long memlo, memhi, cpuspeed;
@@ -205,22 +206,31 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv)
 	cn_tab = &pmoncons;
 
 	/*
-	 * Attempt to locate ELF header and symbol table after kernel,
-	 * and reserve space for the symbol table, if it exists.
+	 * Reserve space for the symbol table, if it exists.
 	 */
 
-	ssym = (char *)(vaddr_t)*(int32_t *)end;
-	if (((long)ssym - (long)end) >= 0 &&
-	    ((long)ssym - (long)end) <= 0x1000 &&
-	    ssym[0] == ELFMAG0 && ssym[1] == ELFMAG1 &&
-	    ssym[2] == ELFMAG2 && ssym[3] == ELFMAG3 ) {
-		/* Pointers exist directly after kernel. */
-		esym = (char *)(vaddr_t)*((int32_t *)end + 1);
+	/* Attempt to locate ELF header and symbol table after kernel. */
+	if (end[0] == ELFMAG0 && end[1] == ELFMAG1 &&
+	    end[2] == ELFMAG2 && end[3] == ELFMAG3) {
+		/* ELF header exists directly after kernel. */
+		ssym = end;
+		esym = boot_esym;
 		ekern = esym;
 	} else {
-		/* Pointers aren't setup either... */
-		ssym = esym = NULL;
-		ekern = end;
+		ssym = (char *)(vaddr_t)*(int32_t *)end;
+		if (((long)ssym - (long)end) >= 0 &&
+		    ((long)ssym - (long)end) <= 0x1000 &&
+		    ssym[0] == ELFMAG0 && ssym[1] == ELFMAG1 &&
+		    ssym[2] == ELFMAG2 && ssym[3] == ELFMAG3) {
+			/* Pointers exist directly after kernel. */
+			esym = (char *)(vaddr_t)*((int32_t *)end + 1);
+			ekern = esym;
+		} else {
+			/* Pointers aren't setup either... */
+			ssym = NULL;
+			esym = NULL;
+			ekern = end;
+		}
 	}
 
 	/*

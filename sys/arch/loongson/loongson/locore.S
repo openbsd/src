@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1.1.1 2009/12/11 05:14:52 miod Exp $ */
+/*	$OpenBSD: locore.S,v 1.2 2010/02/14 22:39:33 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,8 +57,8 @@ start:
 	PTR_S	ra, CF_RA_OFFS(t0)		# save pmon return address
 	PTR_S	sp, 0(t0)			# and stack
 	move	sp, t0
-	jal	mips_init			# mips_init(argc, argv, envp, callvec)
-	nop
+	jal	mips_init			# mips_init(argc, argv, envp,
+	nop					#    callvec, esym)
 
 	beqz	v0, 1f				# upon failure, return to pmon
 	nop

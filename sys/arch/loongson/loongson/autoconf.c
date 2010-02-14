@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2010/02/11 20:14:08 otto Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2010/02/14 22:39:33 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -22,7 +22,7 @@
 #include <sys/reboot.h>
 
 extern void dumpconf(void);
-void parsepmonbp(void);
+void	parsepmonbp(void);
 
 int	cold = 1;
 struct device *bootdv = NULL;
@@ -56,14 +56,23 @@ parsepmonbp(void)
 	}
 	strlcpy(bootdev, "unknown", sizeof bootdev);
 
-	p = strchr(pmon_bootp, '@');
-	if (p == NULL)
-		return;
-	p++;
-	q = strchr(p, '/');
-	if (q == NULL)
-		return;
-	len = q - p;
+	if (strncmp(pmon_bootp, "/dev/disk/", 10) == 0) {
+		/* kernel loaded by our boot blocks */
+		p = pmon_bootp + 10;
+		len = strlen(p);
+	} else {
+		/* kernel loaded by PMON */
+		p = strchr(pmon_bootp, '@');
+		if (p == NULL)
+			return;
+		p++;
+
+		q = strchr(p, '/');
+		if (q == NULL)
+			return;
+		len = q - p;
+	}
+
 	if (len <= 2 || len >= sizeof bootdev - 1)
 		return;
 	memcpy(bootdev, p, len);

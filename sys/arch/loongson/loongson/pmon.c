@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmon.c,v 1.2 2010/02/05 20:51:22 miod Exp $	*/
+/*	$OpenBSD: pmon.c,v 1.3 2010/02/14 22:39:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -20,6 +20,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
+#include <machine/cpu.h>
 #include <machine/pmon.h>
 
 int	pmon_argc;
@@ -77,8 +78,12 @@ pmon_getenv(const char *var)
 		    (vaddr_t)envstr >= CKSSEG_BASE) {
 			pmon_printf("WARNING! CORRUPTED ENVIRONMENT!\n");
 			pmon_printf("Unable to search for %s.\n", var);
+#ifdef _STANDALONE
+			pmon_printf("If boot fails, power-cycle the machine.\n");
+#else
 			pmon_printf("If the kernel fails to identify the system"
 			    " type, please boot it again with `-k' option.\n");
+#endif
 
 			/* terminate environment for further calls */
 			*envptr = 0;
