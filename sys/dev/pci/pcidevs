@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1527 2010/02/07 16:19:28 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1528 2010/02/15 17:24:39 damien Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -245,6 +245,7 @@ vendor	EDIMAX		0x1432	Edimax
 vendor	TAMARACK	0x143d	Tamarack
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
+vendor	MSI		0x1462	Micro Star International
 vendor	AIRONET		0x14b9	Aironet
 vendor	GLOBESPAN	0x14bc	Globespan
 vendor	MYRICOM		0x14c1	Myricom
@@ -3426,6 +3427,9 @@ product MENTOR PCI0661		0x0661	PCI-PCI
 /* Micrel products */
 product MICREL KSZ8841		0x8841	KSZ8841 10/100
 product MICREL KSZ8842		0x8842	KSZ8842 dual-port 10/100 switch
+
+/* Micro Star International products */
+product MSI RT3090		0x891a	RT3090
 
 /* Microsoft products */
 product MICROSOFT MN120		0x0001	MN-120 10/100
