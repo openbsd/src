@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 2008/05/16 18:57:01 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.4 2010/02/15 13:44:57 kettenis Exp $
 
-SUBDIR=	mkboot boot
+SUBDIR=	mkboot mbr boot
 
 .include <bsd.subdir.mk>
