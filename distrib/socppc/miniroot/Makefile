@@ -39,7 +39,7 @@ do_files:
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c -t ${DISKTYPE} ${VND} ${IMAGE}
-	dd if=${DESTDIR}/usr/mdec/mbr.mini of=${VND_CDEV}
+	fdisk -i -y ${VND}
 	disklabel -w ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2010/02/15 13:43:24 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.2 2010/02/15 22:56:21 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ NOMAN=
 #MAN=	mbr.8
 
 .if ${MACHINE} == "socppc"
-PROG=	mbr.mini
+PROG=	mbr
 SRCS=	mbr.S
 AFLAGS+=-I${.OBJDIR} -I${.CURDIR}/../../.. #-Wa,a
 LDFLAGS+=-N -e start -Ttext 0

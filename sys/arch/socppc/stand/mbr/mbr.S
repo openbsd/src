@@ -16,8 +16,8 @@ ENTRY(start)
  */
 	. = _C_LABEL(start) + 0x1be
 _pbr_part0:
-	.byte	0x80, 1, 1, 0, 0x27, 9, 8, 0	
-	.byte	0x3f, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00
+	.byte	0x80, 0, 0, 0, 0x27, 0, 0, 0	
+	.byte	0x3f, 0, 0, 0, 0, 0x02, 0, 0
 _pbr_part1:
 	.byte	0, 0, 0, 0, 0, 0, 0, 0	
 	.byte	0, 0, 0, 0, 0, 0, 0, 0
@@ -25,8 +25,8 @@ _pbr_part2:
 	.byte	0, 0, 0, 0, 0, 0, 0, 0	
 	.byte	0, 0, 0, 0, 0, 0, 0, 0
 _pbr_part3:
-	.byte	0, 9, 9, 0, 0xa6, 15, 63, 7	
-	.byte	0x3f, 0x02, 0x00, 0x00, 0x41, 0x1d, 0x00, 0x00
+	.byte	0, 0, 0, 0, 0, 0, 0, 0	
+	.byte	0, 0, 0, 0, 0, 0, 0, 0
 
 	. = _C_LABEL(start) + 0x1fe
 magic:
