@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2010/02/14 15:16:21 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.10 2010/02/15 13:57:15 kettenis Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -53,7 +53,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
 	${MKBOOT} -e ${RELOC} -l ${RELOC} ${PROG}.bin ${PROG}
 
 realinstall:
-	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR}/${PROG}
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG}.elf ${DESTDIR}${BINDIR}/${PROG}.elf
