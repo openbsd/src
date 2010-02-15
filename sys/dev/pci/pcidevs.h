@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1527 2010/02/07 16:19:28 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1528 2010/02/15 17:24:39 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -250,6 +250,7 @@
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
+#define	PCI_VENDOR_MSI	0x1462		/* Micro Star International */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_GLOBESPAN	0x14bc		/* Globespan */
 #define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
@@ -3431,6 +3432,9 @@
 /* Micrel products */
 #define	PCI_PRODUCT_MICREL_KSZ8841	0x8841		/* KSZ8841 10/100 */
 #define	PCI_PRODUCT_MICREL_KSZ8842	0x8842		/* KSZ8842 dual-port 10/100 switch */
+
+/* Micro Star International products */
+#define	PCI_PRODUCT_MSI_RT3090	0x891a		/* RT3090 */
 
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 */

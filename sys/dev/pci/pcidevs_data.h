@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1527 2010/02/07 16:19:28 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1528 2010/02/15 17:24:39 damien Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11192,6 +11192,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "KSZ8842 dual-port 10/100 switch",
 	},
 	{
+	    PCI_VENDOR_MSI, PCI_PRODUCT_MSI_RT3090,
+	    "RT3090",
+	},
+	{
 	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120,
 	    "MN-120 10/100",
 	},
@@ -19218,6 +19222,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_AVERMEDIA,
 	    "Avermedia",
+	},
+	{
+	    PCI_VENDOR_MSI,
+	    "Micro Star International",
 	},
 	{
 	    PCI_VENDOR_AIRONET,
