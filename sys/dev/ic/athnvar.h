@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.7 2010/01/27 18:26:45 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.8 2010/02/15 17:16:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -393,6 +393,9 @@ struct athn_softc {
 #define ATHN_CAL_IQ		(1 << 0)
 #define ATHN_CAL_ADC_GAIN	(1 << 1)
 #define ATHN_CAL_ADC_DC		(1 << 2)
+
+	struct ieee80211_channel	*curchan;
+	struct ieee80211_channel	*curchanext;
 
 	/* Open Loop Power Control. */
 	int8_t				tx_gain_tbl[AR9280_TX_GAIN_TABLE_SIZE];

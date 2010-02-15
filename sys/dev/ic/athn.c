@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.23 2010/02/15 17:00:41 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.24 2010/02/15 17:16:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1233,6 +1233,9 @@ athn_set_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 	if ((error = ops->set_synth(sc, c, extc)) != 0)
 		return (error);
 
+	sc->curchan = c;
+	sc->curchanext = extc;
+
 	/* Set transmit power values for new channel. */
 	ops->set_txpower(sc, c, extc);
 
@@ -1256,7 +1259,6 @@ int
 athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
     struct ieee80211_channel *extc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	int error, qid;
 
 	/* Disable interrupts. */
@@ -1284,7 +1286,8 @@ athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 		goto reset;
 
 	/* If band or bandwidth changes, we need to do a full reset. */
-	if (c->ic_flags != ic->ic_bss->ni_chan->ic_flags) {
+	if (c->ic_flags != sc->curchan->ic_flags ||
+	    ((extc != NULL) ^ (sc->curchanext != NULL))) {
 		DPRINTFN(2, ("channel band switch\n"));
 		goto reset;
 	}
@@ -4635,8 +4638,8 @@ athn_init(struct ifnet *ifp)
 	struct ieee80211_channel *c, *extc;
 	int i, error;
 
-	c = ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	extc = NULL;
+	c = sc->curchan = ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+	extc = sc->curchanext = NULL;
 
 	/* In case a new MAC address has been configured. */
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
