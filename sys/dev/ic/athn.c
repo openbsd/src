@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.22 2010/01/27 18:26:45 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.23 2010/02/15 17:00:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4589,13 +4589,25 @@ athn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		/* XXX Update hardware multicast filter. */
 		ifr = (struct ifreq *)data;
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &ic->ic_ac) :
 		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
+		if (error == ENETRESET) {
+			athn_set_multi(sc);
 			error = 0;
+		}
+		break;
+
+	case SIOCS80211CHANNEL:
+		error = ieee80211_ioctl(ifp, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING))
+				athn_switch_chan(sc, ic->ic_ibss_chan, NULL);
+			error = 0;
+		}
 		break;
 
 	default:
