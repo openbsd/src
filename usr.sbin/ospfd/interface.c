@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.67 2010/02/16 08:39:05 dlg Exp $ */
+/*	$OpenBSD: interface.c,v 1.68 2010/02/16 18:20:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -551,18 +551,12 @@ if_act_reset(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
+		/* try to cleanup */
 		inet_aton(AllSPFRouters, &addr);
-		if (if_leave_group(iface, &addr)) {
-			log_warnx("if_act_reset: error leaving group %s, "
-			    "interface %s", inet_ntoa(addr), iface->name);
-		}
+		if_leave_group(iface, &addr);
 		if (iface->state & IF_STA_DRORBDR) {
 			inet_aton(AllDRouters, &addr);
-			if (if_leave_group(iface, &addr)) {
-				log_warnx("if_act_reset: "
-				    "error leaving group %s, interface %s",
-				    inet_ntoa(addr), iface->name);
-			}
+			if_leave_group(iface, &addr);
 		}
 		break;
 	case IF_TYPE_VIRTUALLINK:
@@ -781,9 +775,14 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 				break;
 
 		/* if interface is not found just try to drop membership */
-		if (ifg && --ifg->count != 0)
-			/* others still joined */
-			return (0);
+		if (ifg) {
+			if (--ifg->count != 0)
+				/* others still joined */
+				return (0);
+
+			LIST_REMOVE(ifg, entry);
+			free(ifg);
+		}
 
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
 		mreq.imr_interface.s_addr = iface->addr.s_addr;
@@ -794,11 +793,6 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 			    "interface %s address %s", iface->name,
 			    inet_ntoa(*addr));
 			return (-1);
-		}
-
-		if (ifg) {
-			LIST_REMOVE(ifg, entry);
-			free(ifg);
 		}
 		break;
 	case IF_TYPE_POINTOMULTIPOINT:
@@ -822,7 +816,7 @@ if_set_mcast(struct iface *iface)
 	case IF_TYPE_BROADCAST:
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_MULTICAST_IF,
 		    &iface->addr.s_addr, sizeof(iface->addr.s_addr)) < 0) {
-			log_debug("if_set_mcast: error setting "
+			log_warn("if_set_mcast: error setting "
 			    "IP_MULTICAST_IF, interface %s", iface->name);
 			return (-1);
 		}
