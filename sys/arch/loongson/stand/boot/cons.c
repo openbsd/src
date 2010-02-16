@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.1 2010/02/14 22:39:33 miod Exp $	*/
+/*	$OpenBSD: cons.c,v 1.2 2010/02/16 21:28:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,16 +51,7 @@ pmon_cngetc(dev_t dev)
 	 */
 	static char buf[1 + PMON_MAXLN];
 	static char *bufpos = buf;
-
 	int c;
-
-	/*
-	 * Neither pmon_gets() nor pmon_read() from stdin seem to work
-	 * on the Gdium...
-	 */
-	if (pmon_quirks & PQ_GDIUM) {
-		for (;;) ;
-	}
 
 	if (*bufpos == '\0') {
 		bufpos = buf;

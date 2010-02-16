@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2010/02/14 22:39:33 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2010/02/16 21:28:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -47,8 +47,6 @@
 #include <machine/cpu.h>
 #include <machine/pmon.h>
 #include <stand/boot/cmd.h>
-
-int	pmon_quirks = 0;
 
 /*
  * Console
@@ -131,7 +129,7 @@ void
 devboot(dev_t dev, char *path)
 {
 	const char *bootpath = NULL;
-	size_t bootpathlen;
+	size_t bootpathlen = 0;	/* gcc -Wall */
 	const char *tmp;
 	int i;
 
@@ -140,15 +138,16 @@ devboot(dev_t dev, char *path)
 	 * the default device to load the kernel from is the same.
 	 *
 	 * We may have been loaded in three different ways:
-	 * - automatic load from `al' environment variable.
+	 * - automatic load from `al' environment variable (similar to a
+	 *   `load' and `go' sequence).
 	 * - manual `boot' command, with path on the commandline.
 	 * - manual `load' and `go' commands, with no path on the commandline.
 	 */
 
 	if (pmon_argc > 0) {
-		/* manual load */
 		tmp = (const char *)pmon_getarg(0);
 		if (tmp[0] != 'g') {
+			/* manual load */
 			for (i = 1; i < pmon_argc; i++) {
 				tmp = (const char *)pmon_getarg(i);
 				if (tmp[0] != '-') {
@@ -156,10 +155,10 @@ devboot(dev_t dev, char *path)
 					break;
 				}
 			}
+		} else {
+			/* possible automatic load */
+			bootpath = pmon_getenv("al");
 		}
-	} else {
-		/* automatic load */
-		bootpath = pmon_getenv("al");
 	}
 
 	/*
@@ -189,19 +188,18 @@ devboot(dev_t dev, char *path)
 		}
 	}
 		
-	if (bootpath != NULL) {
+	if (bootpath != NULL && bootpathlen >= 3) {
 		if (bootpathlen >= BOOTDEVLEN)
 			bootpathlen = BOOTDEVLEN - 1;
 		strncpy(path, bootpath, bootpathlen);
 		path[bootpathlen] = '\0';
+		/* only add a partition letter if there is none */
+		if (bootpath[bootpathlen - 1] >= '0' &&
+		    bootpath[bootpathlen - 1] <= '9')
+			strlcat(path, "a", BOOTDEVLEN);
 	} else {
-		tmp = pmon_getenv("Version");
-		if (tmp != NULL && strncmp(tmp, "Gdium", 5) == 0)
-			strlcpy(path, "usbg0", BOOTDEVLEN);
-		else
-			strlcpy(path, "wd0", BOOTDEVLEN);
+		strlcpy(path, "wd0a", BOOTDEVLEN);
 	}
-	strlcat(path, "a", BOOTDEVLEN);
 }
 
 /*
@@ -223,15 +221,23 @@ machdep()
 {
 	const char *envvar;
 
+	cninit();
+
 	/*
 	 * Figure out whether we are running on a Gdium system, which
-	 * has an horribly castrated PMON.
+	 * has an horribly castrated PMON. If we do, return immediately.
 	 */
 	envvar = pmon_getenv("Version");
-	if (envvar != NULL && strncmp(envvar, "Gdium", 5) == 0)
-		pmon_quirks |= PQ_GDIUM;
-
-	cninit();
+	if (envvar != NULL && strncmp(envvar, "Gdium", 5) == 0) {
+		/* Here's a nickel, kid.  Get yourself a better firmware */
+		printf("\n\nSorry, OpenBSD boot blocks do not work on Gdium, "
+		    "because of dire firmware limitations.\n"
+		    "Also, the firmware has reset the USB controller so you "
+		    "will need to power cycle.\n"
+		    "We would apologize for this incovenience, but we have "
+		    "no control about the firmware of your machine.\n\n");
+		_rtt();
+	}
 
 	/*
 	 * Since we can't have non-blocking input, we will try to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.1 2010/02/14 22:39:33 miod Exp $	*/
+/*	$OpenBSD: dev.c,v 1.2 2010/02/16 21:28:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -74,6 +74,7 @@ pmon_iostrategy(void *f, int rw, daddr_t dblk, size_t size, void *buf,
 	off_t offs, pos;
 	int rc;
 
+	*rsize = 0;
 	if (size == 0)
 		return 0;
 
