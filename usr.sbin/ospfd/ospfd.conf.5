@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.40 2010/02/16 08:22:42 dlg Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.41 2010/02/16 08:27:31 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -195,7 +195,7 @@ AS-external OSPF LSAs.
 Set the SPF delay.
 The delay between receiving an update to the link
 state database and starting the shortest path first calculation.
-The default value is 1 second; valid range is 50 microseconds\-10 seconds.
+The default value is 1 second; valid range is 10 microseconds\-10 seconds.
 .Pp
 .It Xo
 .Ic spf-holdtime
@@ -205,7 +205,7 @@ The default value is 1 second; valid range is 50 microseconds\-10 seconds.
 Set the SPF holdtime.
 The minimum time between two consecutive
 shortest path first calculations.
-The default value is 5 seconds; the valid range is 50 microseconds\-5 seconds.
+The default value is 5 seconds; the valid range is 10 microseconds\-5 seconds.
 .Pp
 .It Xo
 .Ic stub Ic router
