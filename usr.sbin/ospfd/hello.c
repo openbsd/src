@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.16 2010/02/01 10:22:06 jacekm Exp $ */
+/*	$OpenBSD: hello.c,v 1.17 2010/02/16 18:10:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -161,30 +161,26 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 		return;
 	}
 
-	switch (iface->type) {
-	case IF_TYPE_POINTOPOINT:
-	case IF_TYPE_VIRTUALLINK:
-		/* match router-id */
-		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-			if (nbr == iface->self)
-				continue;
-			if (nbr->id.s_addr == rtr_id)
-				break;
+	/*
+	 * Match router-id, in case of conflict moan and ignore hello.
+	 * Only the router-id is compared since the source IP on NBMA,
+	 * broadcast and point-to-multipoint interfaces was already
+	 * compared in find_iface() and only IPs in the same subnet
+	 * are accepted. This is not excatly what the RFC specifies
+	 * but works far better.
+	 */
+	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
+		if (nbr == iface->self) {
+			if (nbr->id.s_addr == rtr_id) {
+				log_warnx("recv_hello: Router-ID colision on "
+				    "interface %s neighbor IP %s", iface->name,
+				    inet_ntoa(src));
+				return;
+			}
+			continue;
 		}
-		break;
-	case IF_TYPE_BROADCAST:
-	case IF_TYPE_NBMA:
-	case IF_TYPE_POINTOMULTIPOINT:
-		/* match src IP */
-		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-			if (nbr == iface->self)
-				continue;
-			if (nbr->addr.s_addr == src.s_addr)
-				break;
-		}
-		break;
-	default:
-		fatalx("recv_hello: unknown interface type");
+		if (nbr->id.s_addr == rtr_id)
+			break;
 	}
 
 	if (!nbr) {
