@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.114 2009/09/07 13:46:23 sthen Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.115 2010/02/16 09:11:20 sthen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.111 2009/09/07 13:46:03 sthen Exp 
+ *	OpenBSD: miidevs,v 1.112 2010/02/16 09:11:01 sthen Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -100,6 +100,7 @@
 
 /* Don't know what's going on here. */
 #define	MII_OUI_xxBROADCOM2	0x0050ef	/* Broadcom */
+#define	MII_OUI_xxBROADCOM3	0x00d897	/* Broadcom */
 #define	MII_OUI_xxDAVICOM	0x006040	/* Davicom */
 
 /* This is the OUI of the gigE PHY in the RealTek 8169S/8110S chips */
@@ -195,6 +196,8 @@
 #define	MII_STR_xxBROADCOM2_BCM5709C	"BCM5709 10/100/1000baseT PHY"
 #define	MII_MODEL_xxBROADCOM2_BCM5761	0x003d
 #define	MII_STR_xxBROADCOM2_BCM5761	"BCM5761 10/100/1000baseT PHY"
+#define	MII_MODEL_xxBROADCOM3_BCM57780	0x0019
+#define	MII_STR_xxBROADCOM3_BCM57780	"BCM57780 10/100/1000baseT PHY"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseT PHY"
 #define	MII_MODEL_BROADCOM_BCM5401	0x0005
