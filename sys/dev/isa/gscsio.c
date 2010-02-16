@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsio.c,v 1.11 2009/06/02 12:12:35 grange Exp $	*/
+/*	$OpenBSD: gscsio.c,v 1.12 2010/02/16 00:05:23 mk Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -78,7 +78,7 @@ int	gscsio_acb_acquire_bus(void *, int);
 void	gscsio_acb_release_bus(void *, int);
 int	gscsio_acb_send_start(void *, int);
 int	gscsio_acb_send_stop(void *, int);
-int	gscsio_acb_initiate_xfer(void *, uint16_t, int);
+int	gscsio_acb_initiate_xfer(void *, i2c_addr_t, int);
 int	gscsio_acb_read_byte(void *, uint8_t *, int);
 int	gscsio_acb_write_byte(void *, uint8_t, int);
 
@@ -364,7 +364,7 @@ gscsio_acb_send_stop(void *cookie, int flags)
 }
 
 int
-gscsio_acb_initiate_xfer(void *cookie, uint16_t addr, int flags)
+gscsio_acb_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
 	struct gscsio_acb *acb = cookie;
 	struct gscsio_softc *sc = acb->sc;
