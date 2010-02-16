@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.66 2009/09/30 14:39:07 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.67 2010/02/16 08:39:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -278,7 +278,10 @@ if_hello_timer(int fd, short event, void *arg)
 
 	/* reschedule hello_timer */
 	timerclear(&tv);
-	tv.tv_sec = iface->hello_interval;
+	if (iface->dead_interval == FAST_RTR_DEAD_TIME)
+		tv.tv_usec = iface->fast_hello_interval * 1000;
+	else
+		tv.tv_sec = iface->hello_interval;
 	if (evtimer_add(&iface->hello_timer, &tv) == -1)
 		fatal("if_hello_timer");
 }
@@ -629,6 +632,7 @@ if_to_ctl(struct iface *iface)
 	ictl.adj_cnt = 0;
 	ictl.baudrate = iface->baudrate;
 	ictl.dead_interval = iface->dead_interval;
+	ictl.fast_hello_interval = iface->fast_hello_interval;
 	ictl.transmit_delay = iface->transmit_delay;
 	ictl.hello_interval = iface->hello_interval;
 	ictl.flags = iface->flags;
@@ -645,9 +649,10 @@ if_to_ctl(struct iface *iface)
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&iface->hello_timer, &tv)) {
 		timersub(&tv, &now, &res);
-		ictl.hello_timer = res.tv_sec;
-	} else
-		ictl.hello_timer = -1;
+		ictl.hello_timer = res;
+	} else {
+		ictl.hello_timer.tv_sec = -1;
+	}
 
 	if (iface->state != IF_STA_DOWN) {
 		ictl.uptime = now.tv_sec - iface->uptime;

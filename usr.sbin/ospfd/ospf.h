@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.17 2010/02/16 08:22:42 dlg Exp $ */
+/*	$OpenBSD: ospf.h,v 1.18 2010/02/16 08:39:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -44,7 +44,13 @@
 #define MIN_HELLO_INTERVAL	1
 #define MAX_HELLO_INTERVAL	65535
 
+/* msec */
+#define DEFAULT_FAST_INTERVAL	333
+#define MIN_FAST_INTERVAL	50
+#define MAX_FAST_INTERVAL	333
+
 #define DEFAULT_RTR_DEAD_TIME	40
+#define FAST_RTR_DEAD_TIME	1
 #define MIN_RTR_DEAD_TIME	2
 #define MAX_RTR_DEAD_TIME	2147483647
 

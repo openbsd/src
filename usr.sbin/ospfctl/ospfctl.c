@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.51 2010/02/16 08:22:42 dlg Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.52 2010/02/16 08:39:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -386,8 +386,8 @@ show_interface_msg(struct imsg *imsg)
 			err(1, NULL);
 		printf("%-11s %-18s %-6s %-10s %-10s %s %3d %3d\n",
 		    iface->name, netid, if_state_name(iface->state),
-		    iface->hello_timer < 0 ? "-" :
-		    fmt_timeframe_core(iface->hello_timer),
+		    iface->hello_timer.tv_sec < 0 ? "-" :
+		    fmt_timeframe_core(iface->hello_timer.tv_sec),
 		    get_linkstate(iface->mediatype, iface->linkstate),
 		    fmt_timeframe_core(iface->uptime),
 		    iface->nbr_cnt, iface->adj_cnt);
@@ -432,17 +432,26 @@ show_interface_detail_msg(struct imsg *imsg)
 		printf("  Backup Designated Router (ID) %s, ",
 		    inet_ntoa(iface->bdr_id));
 		printf("interface address %s\n", inet_ntoa(iface->bdr_addr));
-		printf("  Timer intervals configured, "
-		    "hello %d, dead %d, wait %d, retransmit %d\n",
-		     iface->hello_interval, iface->dead_interval,
-		     iface->dead_interval, iface->rxmt_interval);
+		if (iface->dead_interval == FAST_RTR_DEAD_TIME) {
+			printf("  Timer intervals configured, "
+			    "hello %d msec, dead %d, wait %d, retransmit %d\n",
+			     iface->fast_hello_interval, iface->dead_interval,
+			     iface->dead_interval, iface->rxmt_interval);
+
+		} else {
+			printf("  Timer intervals configured, "
+			    "hello %d, dead %d, wait %d, retransmit %d\n",
+			     iface->hello_interval, iface->dead_interval,
+			     iface->dead_interval, iface->rxmt_interval);
+		}
 		if (iface->passive)
 			printf("    Passive interface (No Hellos)\n");
-		else if (iface->hello_timer < 0)
+		else if (iface->hello_timer.tv_sec < 0)
 			printf("    Hello timer not running\n");
 		else
-			printf("    Hello timer due in %s\n",
-			    fmt_timeframe_core(iface->hello_timer));
+			printf("    Hello timer due in %s+%ldmsec\n",
+			    fmt_timeframe_core(iface->hello_timer.tv_sec),
+			    iface->hello_timer.tv_usec / 1000);
 		printf("    Uptime %s\n", fmt_timeframe_core(iface->uptime));
 		printf("  Neighbor count is %d, adjacent neighbor count is "
 		    "%d\n", iface->nbr_cnt, iface->adj_cnt);

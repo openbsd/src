@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.14 2010/02/16 08:22:42 dlg Exp $ */
+/*	$OpenBSD: printconf.c,v 1.15 2010/02/16 08:39:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -115,7 +115,6 @@ print_iface(struct iface *iface)
 
 	printf("\tinterface %s:%s {\n", iface->name, inet_ntoa(iface->addr));
 
-	printf("\t\thello-interval %d\n", iface->hello_interval);
 	printf("\t\tmetric %d\n", iface->metric);
 
 	if (iface->passive)
@@ -124,7 +123,14 @@ print_iface(struct iface *iface)
 		printf("\t\tdemote %s\n", iface->demote_group);
 
 	printf("\t\tretransmit-interval %d\n", iface->rxmt_interval);
-	printf("\t\trouter-dead-time %d\n", iface->dead_interval);
+	if (iface->dead_interval == FAST_RTR_DEAD_TIME) {
+		printf("\t\trouter-dead-time minimal\n");
+		printf("\t\tfast-hello-interval msec %u\n",
+		    iface->fast_hello_interval);
+	} else {
+		printf("\t\trouter-dead-time %d\n", iface->dead_interval);
+		printf("\t\thello-interval %d\n", iface->hello_interval);
+	}
 	printf("\t\trouter-priority %d\n", iface->priority);
 	printf("\t\ttransmit-delay %d\n", iface->transmit_delay);
 
