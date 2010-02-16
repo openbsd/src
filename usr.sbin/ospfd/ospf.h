@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.16 2006/12/07 19:14:27 claudio Exp $ */
+/*	$OpenBSD: ospf.h,v 1.17 2010/02/16 08:22:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -60,13 +60,15 @@
 
 #define DEFAULT_NBR_TMOUT	86400	/* 24 hours */
 
-#define DEFAULT_SPF_DELAY	1
-#define MIN_SPF_DELAY		1
-#define MAX_SPF_DELAY		10
+/* msec */
+#define DEFAULT_SPF_DELAY	1000
+#define MIN_SPF_DELAY		10
+#define MAX_SPF_DELAY		10000
 
-#define DEFAULT_SPF_HOLDTIME	5
-#define MIN_SPF_HOLDTIME	1
-#define MAX_SPF_HOLDTIME	5
+/* msec */
+#define DEFAULT_SPF_HOLDTIME	5000
+#define MIN_SPF_HOLDTIME	10
+#define MAX_SPF_HOLDTIME	5000
 
 #define MIN_MD_ID		0
 #define MAX_MD_ID		255

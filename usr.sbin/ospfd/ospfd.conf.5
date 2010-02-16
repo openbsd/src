@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.39 2009/11/25 12:58:47 dlg Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.40 2010/02/16 08:22:42 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2009 $
+.Dd $Mdocdate: February 16 2010 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -187,17 +187,25 @@ Map route labels to external route tags and vice versa.
 The external route tag is a non-negative 32-bit number attached to
 AS-external OSPF LSAs.
 .Pp
-.It Ic spf-delay Ar seconds
-Set SPF delay in seconds.
+.It Xo
+.Ic spf-delay
+.Po Ar seconds Ns \&| Ns
+.Ic msec Ar microseconds Pc
+.Xc
+Set the SPF delay.
 The delay between receiving an update to the link
 state database and starting the shortest path first calculation.
-The default value is 1; valid range is 1\-10 seconds.
+The default value is 1 second; valid range is 50 microseconds\-10 seconds.
 .Pp
-.It Ic spf-holdtime Ar seconds
-Set the SPF holdtime in seconds.
+.It Xo
+.Ic spf-holdtime
+.Po Ar seconds Ns \&| Ns
+.Ic msec Ar microseconds Pc
+.Xc
+Set the SPF holdtime.
 The minimum time between two consecutive
 shortest path first calculations.
-The default value is 5 seconds; the valid range is 1\-5 seconds.
+The default value is 5 seconds; the valid range is 50 microseconds\-5 seconds.
 .Pp
 .It Xo
 .Ic stub Ic router

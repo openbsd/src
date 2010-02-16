@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.13 2009/01/07 21:16:36 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.14 2010/02/16 08:22:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -55,8 +55,8 @@ print_mainconf(struct ospfd_conf *conf)
 	print_redistribute(&conf->redist_list);
 	print_rtlabel(conf);
 
-	printf("spf-delay %u\n", conf->spf_delay);
-	printf("spf-holdtime %u\n", conf->spf_hold_time);
+	printf("spf-delay msec %u\n", conf->spf_delay);
+	printf("spf-holdtime msec %u\n", conf->spf_hold_time);
 }
 
 const char *

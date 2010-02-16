@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.50 2009/11/02 20:23:29 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.51 2010/02/16 08:22:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -327,8 +327,8 @@ show_summary_msg(struct imsg *imsg)
 		else
 			printf("disabled\n");
 
-		printf("SPF delay is %d sec(s), hold time between two SPFs "
-		    "is %d sec(s)\n", sum->spf_delay, sum->spf_hold_time);
+		printf("SPF delay is %d msec(s), hold time between two SPFs "
+		    "is %d msec(s)\n", sum->spf_delay, sum->spf_hold_time);
 		printf("Number of external LSA(s) %d\n", sum->num_ext_lsa);
 		printf("Number of areas attached to this router: %d\n",
 		    sum->num_area);

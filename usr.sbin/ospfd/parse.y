@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2009/11/25 12:55:35 dlg Exp $ */
+/*	$OpenBSD: parse.y,v 1.69 2010/02/16 08:22:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -123,12 +123,13 @@ typedef struct {
 %token	RETRANSMITINTERVAL ROUTERDEADTIME ROUTERPRIORITY
 %token	SET TYPE
 %token	YES NO
+%token	MSEC
 %token	DEMOTE
 %token	INCLUDE
 %token	ERROR
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
-%type	<v.number>	yesno no optlist optlist_l option demotecount
+%type	<v.number>	yesno no optlist optlist_l option demotecount msec
 %type	<v.string>	string
 %type	<v.redist>	redistribute
 
@@ -179,6 +180,14 @@ no		: /* empty */	{ $$ = 0; }
 		| NO		{ $$ = 1; }
 		;
 
+msec		: MSEC NUMBER {
+			$$ = $2;
+		}
+		| NUMBER {
+			$$ = $1 * 1000;
+		}
+		;
+
 varset		: STRING '=' string		{
 			if (conf->opts & OSPFD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
@@ -226,7 +235,7 @@ conf_main	: ROUTERID STRING {
 		| RFC1583COMPAT yesno {
 			conf->rfc1583compat = $2;
 		}
-		| SPFDELAY NUMBER {
+		| SPFDELAY msec {
 			if ($2 < MIN_SPF_DELAY || $2 > MAX_SPF_DELAY) {
 				yyerror("spf-delay out of range "
 				    "(%d-%d)", MIN_SPF_DELAY,
@@ -235,7 +244,7 @@ conf_main	: ROUTERID STRING {
 			}
 			conf->spf_delay = $2;
 		}
-		| SPFHOLDTIME NUMBER {
+		| SPFHOLDTIME msec {
 			if ($2 < MIN_SPF_HOLDTIME || $2 > MAX_SPF_HOLDTIME) {
 				yyerror("spf-holdtime out of range "
 				    "(%d-%d)", MIN_SPF_HOLDTIME,
@@ -694,6 +703,7 @@ lookup(char *s)
 		{"include",		INCLUDE},
 		{"interface",		INTERFACE},
 		{"metric",		METRIC},
+		{"msec",		MSEC},
 		{"no",			NO},
 		{"passive",		PASSIVE},
 		{"rdomain",		RDOMAIN},
