@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.13 2008/10/01 03:14:30 deraadt Exp $
+$OpenBSD: INSTALL.linux,v 1.14 2010/02/16 15:16:12 giovanni Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -331,6 +331,20 @@ kernel          /boot/vmlinuz root=/dev/ide/host0/bus0/target0/lun0/part3 ro
 savedefault                                                                     
 boot                                                                            
 
+Booting with GRUB2
+-----------------
+Here is a sample configuration for OpenBSD and Windows 7
+
+menuentry "OpenBSD" {
+	set root (hd0,3,a)
+	chainloader +1
+}
+
+menuentry "Windows 7" {
+	insmod ntfs
+	set root (hd0,1)
+	chainloader +1
+}
 
 Booting with lilo
 -----------------
