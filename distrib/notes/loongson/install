@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.5 2010/02/12 21:33:29 otto Exp $
+dnl	$OpenBSD: install,v 1.6 2010/02/16 22:17:35 miod Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -70,27 +70,29 @@ dnl
 OpenBSDInstallWrapup
 
 	As the OpenBSD/MACHINE port is very new, there is not yet a proper
-	bootloader. In addition to these steps, you will need, for the time
-	being, to copy the kernel image to the Linux partition and boot
-	from it. This annoyance is being worked on and should disappear
-	very soon.
+	bootloader installation. In addition to these steps, you will need,
+	for the time being, to copy either a bootblock or the kernel image
+	itself to the Linux partition and boot from it. This annoyance is
+	being worked on and should disappear very soon.
 
 	Lemote systems final steps:
 
 		Lemote systems ship with a boot menu.  After the installation
-		is complete, you should add an OpenBSD entry to the boot menu
-		to be able to boot OpenBSD more easily.
+		is complete, you should copy the OpenBSD/MACHINE bootloader
+		to a PMON bootable location, and add an OpenBSD entry to the
+		boot menu to be able to boot OpenBSD more easily.
 
 		The boot menu contents are found in /boot/boot.cfg on the Linux
 		partition. To add an OpenBSD entry, simply add a new entry in
 		the file, such as:
 
 		title OpenBSD
-			kernel /dev/fs/ext2@wd0/boot/bsd
+			kernel /dev/fs/ext2@wd0/boot/boot
 			args ""
 
-		In the example above, /dev/fs/ext2@wd0/boot/bsd is the PMON
-		path to the kernel image.
+		In the example above, /dev/fs/ext2@wd0/boot/boot is the PMON
+		path to the OpenBSD bootloader, which can be found in
+		/usr/mdec on the installed system.
 
 		You may make OpenBSD the default option by changing the
 		``default'' line near the top of the file. The value on this
@@ -103,16 +105,33 @@ OpenBSDInstallWrapup
 		The timeout until the default choice is selected, in seconds,
 		can be modified on the ``timeout'' line.
 
-		Note that using the boot menu currently disables root device
-		discovery and kernel symbol loading. Therefore it may be
-		more convenient to switch to the PMON prompt using 'c' and
-		boot with the command
+		However, due to side effects of PMON operation, automatic
+		loading of OpenBSD binaries (bootloader or kernel) causes
+		a register dump to be silently displayed by PMON; while
+		it won't be visible on screen, PMON will gladly wait for
+		user input to continue if it believes it has written too
+		much output.
 
-		    PMON> boot -k $bsd
+		To overcome this annoyance, simply change the `moresz'
+		environment variable to a large value (30 or larger will
+		do):
 
-		after having set the bsd variable to your boot path:
+		    PMON> set moresz 30
 
-		    PMON> set bsd /dev/fs/ext2@wd0/boot/bsd
+		If you do not want to use the boot menu, you may simply
+		disable it in the environment, and set the `al' variable
+		to point to the bootloader path:
+
+		    PMON> set ShowBootMenu no
+		    PMON> set al /dev/fs/ext2@wd0/boot/boot
+
+		The bootloader will attempt to load the kernel file set in
+		the `bsd' environment variable. Should this fail, it will
+		wait for user commands. The value of `bsd' should be a
+		path within the OpenBSD root filesystem on the disk, such
+		as:
+
+		    PMON> set bsd /bsd
 
 		On the Fuloong 2F, getting PMON to use the serial console
 		is tricky, due to PMON bugs and design decisions made by
@@ -141,7 +160,8 @@ OpenBSDInstallWrapup
 	Gdium systems final steps:
 
 		Gdium systems do not have a boot menu, and directly boot the
-		system (Linux, by default).
+		system (Linux, by default). Unfortunately, the OpenBSD
+		bootloader does not work on this machine.
 
 		The path to the file booted by default is set in the `al'
 		environment variable. To boot the bsd kernel on the G-Key

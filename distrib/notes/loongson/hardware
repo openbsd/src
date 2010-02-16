@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.3 2010/02/12 20:58:34 miod Exp $
+dnl	$OpenBSD: hardware,v 1.4 2010/02/16 22:17:35 miod Exp $
 The following machines are supported by OpenBSD/MACHINE:
 
 	Lemote Fuloong 2F
@@ -14,10 +14,10 @@ The following machines are supported by OpenBSD/MACHINE:
 
 	Gdium Liberty 1000
 	  all onboard devices (keyboard, trackpad, display, SD card reader,
-	  USB ports, Ethernet adapter) are supported except for the wireless
-	  network adapter and the audio controller; suspend/resume and
-	  battery information are not supported yet; keyboard actions
-	  involving the `Fn' key are not working either at the moment.
+	  USB ports, Ethernet adapter, wireless network adapter) are supported
+	  except for the audio controller; suspend/resume and battery
+	  information are not supported yet; keyboard actions involving
+	  the `Fn' key are not working either at the moment.
 
 The following USB devices have been tested to work on OpenBSD/MACHINE:
 	USB Audio
