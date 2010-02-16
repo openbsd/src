@@ -91,7 +91,7 @@ static void usage(void) __dead;
 int	Nflag;			/* run without writing file system */
 int	Oflag = 0;		/* format as conservative REV0 by default */
 int	verbosity;		/* amount of printf() output */
-#define DEFAULT_VERBOSITY 3	/* 4 is traditional behavior of newfs(8) */
+#define DEFAULT_VERBOSITY 4	/* 4 is traditional behavior of newfs(8) */
 int64_t fssize;			/* file system size */
 uint	sectorsize;		/* bytes/sector */
 uint16_t inodesize = EXT2_REV0_DINODE_SIZE;	/* inode size */
