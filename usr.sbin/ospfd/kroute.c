@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.72 2009/07/23 16:36:27 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.73 2010/02/16 18:27:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -90,6 +90,8 @@ u_int8_t	prefixlen_classful(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *, struct sockaddr_dl *);
 void		if_newaddr(u_short, struct sockaddr_in *, struct sockaddr_in *,
+		    struct sockaddr_in *);
+void		if_deladdr(u_short, struct sockaddr_in *, struct sockaddr_in *,
 		    struct sockaddr_in *);
 void		if_announce(void *);
 
@@ -1003,6 +1005,36 @@ if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 }
 
 void
+if_deladdr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
+    struct sockaddr_in *brd)
+{
+	struct kif_node *kif;
+	struct kif_addr *ka, *nka;
+	struct ifaddrdel ifc;
+
+	if (ifa == NULL || ifa->sin_family != AF_INET)
+		return;
+	if ((kif = kif_find(ifindex)) == NULL) {
+		log_warnx("if_deladdr: corresponding if %i not found", ifindex);
+		return;
+	}
+
+	for (ka = TAILQ_FIRST(&kif->addrs); ka != NULL; ka = nka) {
+		nka = TAILQ_NEXT(ka, entry);
+
+		if (ka->addr.s_addr == ifa->sin_addr.s_addr) {
+			TAILQ_REMOVE(&kif->addrs, ka, entry);
+			ifc.addr = ifa->sin_addr;
+			ifc.ifindex = ifindex;
+			main_imsg_compose_ospfe(IMSG_IFADDRDEL, 0, &ifc,
+			    sizeof(ifc));
+			free(ka);
+			return;
+		}
+	}
+}
+
+void
 if_announce(void *msg)
 {
 	struct if_announcemsghdr	*ifan;
@@ -1532,6 +1564,19 @@ add:
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
 			if_newaddr(ifam->ifam_index,
+			    (struct sockaddr_in *)rti_info[RTAX_IFA],
+			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
+			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
+			break;
+		case RTM_DELADDR:
+			ifam = (struct ifa_msghdr *)rtm;
+			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
+			    RTA_BRD)) == 0)
+				break;
+			sa = (struct sockaddr *)(ifam + 1);
+			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
+
+			if_deladdr(ifam->ifam_index,
 			    (struct sockaddr_in *)rti_info[RTAX_IFA],
 			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
 			    (struct sockaddr_in *)rti_info[RTAX_BRD]);

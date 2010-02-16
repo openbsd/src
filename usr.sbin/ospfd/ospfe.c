@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.73 2009/09/30 14:37:11 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.74 2010/02/16 18:27:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -259,6 +259,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 {
 	static struct area	*narea;
 	static struct iface	*niface;
+	struct ifaddrdel	*ifc;
 	struct imsg	 imsg;
 	struct imsgev	*iev = bula;
 	struct imsgbuf	*ibuf;
@@ -320,6 +321,26 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 							    " down",
 							    iface->name);
 						}
+					}
+				}
+			}
+			break;
+		case IMSG_IFADDRDEL:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct ifaddrdel))
+				fatalx("IFINFO imsg with wrong len");
+			ifc = imsg.data;
+
+			LIST_FOREACH(area, &oeconf->area_list, entry) {
+				LIST_FOREACH(iface, &area->iface_list, entry) {
+					if (ifc->ifindex == iface->ifindex &&
+					    ifc->addr.s_addr ==
+					    iface->addr.s_addr) {
+						if_fsm(iface, IF_EVT_DOWN);
+						log_warnx("interface %s:%s "
+						    "gone", iface->name,
+						    inet_ntoa(iface->addr));
+						break;
 					}
 				}
 			}

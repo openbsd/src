@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.85 2010/02/16 08:39:05 dlg Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.86 2010/02/16 18:27:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -118,7 +118,8 @@ enum imsg_type {
 	IMSG_RECONF_AUTHMD,
 	IMSG_RECONF_REDIST,
 	IMSG_RECONF_END,
-	IMSG_DEMOTE
+	IMSG_DEMOTE,
+	IMSG_IFADDRDEL
 };
 
 #define	REDIST_CONNECTED	0x01
@@ -342,6 +343,11 @@ struct iface {
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
 	u_int8_t		 passive;
+};
+
+struct ifaddrdel {
+	struct in_addr		addr;
+	unsigned int		ifindex;
 };
 
 /* ospf_conf */
