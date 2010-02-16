@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.24 2010/02/15 17:16:36 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.25 2010/02/16 18:49:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -3836,7 +3836,7 @@ athn_set_beacon_timers(struct athn_softc *sc)
 	    SM(AR_SLEEP2_BEACON_TIMEOUT, AR_MIN_BEACON_TIMEOUT_VAL));
 
 	AR_WRITE(sc, AR_TIM_PERIOD, intval * IEEE80211_DUR_TU);
-	AR_WRITE(sc, AR_DTIM_PERIOD, dtim_period * IEEE80211_DUR_TU);
+	AR_WRITE(sc, AR_DTIM_PERIOD, dtim_period * intval * IEEE80211_DUR_TU);
 
 	AR_SETBITS(sc, AR_TIMER_MODE,
 	    AR_TBTT_TIMER_EN | AR_TIM_TIMER_EN | AR_DTIM_TIMER_EN);
