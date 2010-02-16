@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.71 2009/11/02 20:20:54 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.72 2010/02/16 18:16:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -834,9 +834,7 @@ merge_interfaces(struct area *a, struct area *xa)
 		}
 		log_debug("merge_interfaces: proc %d area %s merging "
 		    "interface %s", ospfd_process, inet_ntoa(a->id), i->name);
-		i->addr = xi->addr;
 		i->dst = xi->dst;
-		i->mask = xi->mask;
 		i->abr_id = xi->abr_id;
 		i->baudrate = xi->baudrate;
 		i->dead_interval = xi->dead_interval;
@@ -848,6 +846,8 @@ merge_interfaces(struct area *a, struct area *xa)
 			dirty = 1;
 		i->metric = xi->metric;
 		i->priority = xi->priority;
+		if (i->self)
+			i->self->priority = i->priority;
 		i->flags = xi->flags; /* needed? */
 		i->type = xi->type; /* needed? */
 		i->media_type = xi->media_type; /* needed? */
@@ -876,7 +876,9 @@ iface_lookup(struct area *area, struct iface *iface)
 	struct iface	*i;
 
 	LIST_FOREACH(i, &area->iface_list, entry)
-		if (i->ifindex == iface->ifindex)
+		if (i->ifindex == iface->ifindex &&
+		    i->addr.s_addr == iface->addr.s_addr &&
+		    i->mask.s_addr == iface->mask.s_addr)
 			return (i);
 	return (NULL);
 }
