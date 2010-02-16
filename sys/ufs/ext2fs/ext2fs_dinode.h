@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.11 2008/11/23 23:52:35 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.12 2010/02/16 08:24:13 otto Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
  * Inode 3 to 10 are reserved in ext2fs.
  */
 #define	EXT2_ROOTINO ((ino_t)2)
+#define EXT2_RESIZEINO ((ino_t)7)
 #define EXT2_FIRSTINO ((ino_t)11)
 
 /*
@@ -118,7 +119,10 @@ struct ext2fs_dinode {
 #define EXT2_NODUMP		0x00000040	/* do not dump file */
 
 /* Size of on-disk inode. */
-#define EXT2_DINODE_SIZE(s)	(s)->e2fs.e2fs_inode_size
+#define EXT2_REV0_DINODE_SIZE	sizeof(struct ext2fs_dinode)
+#define EXT2_DINODE_SIZE(fs)	((fs)->e2fs.e2fs_rev > E2FS_REV0 ?  \
+				    (fs)->e2fs.e2fs_inode_size : \
+				    EXT2_REV0_DINODE_SIZE)
 
 /*
  * The e2di_blocks fields may be overlaid with other information for

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.13 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.14 2010/02/16 08:24:13 otto Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ struct ext2fs {
 	u_int32_t  e2fs_algo;		/* For compression */
 	u_int8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	u_int8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
-	u_int16_t  pad1;
+	u_int16_t  e2fs_reserved_ngdb;	/* # of reserved gd blocks for resize */
 	u_int32_t  reserved2[204];
 };
 
@@ -170,6 +170,9 @@ struct m_ext2fs {
 
 /* compatible/imcompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
+#define EXT2F_COMPAT_HASJOURNAL		0x0004
+#define EXT2F_COMPAT_RESIZE		0x0010
+
 
 #define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
 #define EXT2F_ROCOMPAT_LARGEFILE	0x0002
@@ -185,6 +188,14 @@ struct m_ext2fs {
 #define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
 					| EXT2F_ROCOMPAT_LARGEFILE)
 #define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
+
+/*
+ * Definitions of behavior on errors
+ */
+#define E2FS_BEH_CONTINUE	1	/* continue operation */
+#define E2FS_BEH_READONLY	2	/* remount fs read only */
+#define E2FS_BEH_PANIC		3	/* cause panic */
+#define E2FS_BEH_DEFAULT	E2FS_BEH_CONTINUE
 
 /*
  * OS identification
