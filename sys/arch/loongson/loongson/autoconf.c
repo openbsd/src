@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2010/02/14 22:39:33 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2010/02/16 21:31:36 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -20,6 +20,8 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+
+#include <machine/autoconf.h>
 
 extern void dumpconf(void);
 void	parsepmonbp(void);
@@ -83,7 +85,8 @@ parsepmonbp(void)
 void
 diskconf(void)
 {
-	printf("pmon bootpath: %s\n", pmon_bootp);
+	if (*pmon_bootp != '\0')
+		printf("pmon bootpath: %s\n", pmon_bootp);
 
 	if (bootdv != NULL)
 		printf("boot device: %s\n", bootdv->dv_xname);
@@ -95,43 +98,10 @@ diskconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	const char *drvrname = dev->dv_cfdata->cf_driver->cd_name;
-	const char *name = dev->dv_xname;
-
 	if (bootdv != NULL)
 		return;
 
-	if (dev->dv_class != bootdev_class)
-		return;	
-	/* 
-	 * The device numbering must match. There's no way
-	 * pmon tells us more info. Depending on the usb slot
-	 * and hubs used you may be lucky. Also, assume umass/sd for usb
-	 * attached devices.
-	 */
-	switch (bootdev_class) {
-	case DV_DISK:
-		if (strcmp(drvrname, "wd") == 0 && strcmp(name, bootdev) == 0)
-			bootdv = dev;
-		else {
-			/* XXX this really only works safely for usb0... */
-		    	if ((strcmp(drvrname, "sd") == 0 ||
-			    strcmp(drvrname, "cd") == 0) &&
-			    strncmp(bootdev, "usb", 3) == 0 &&
-			    strcmp(name + 2, bootdev + 3) == 0)
-				bootdv = dev;
-		}
-		break;
-	case DV_IFNET:
-		/*
-		 * This relies on the onboard Ethernet interface being
-		 * attached before any other (usb) interface.
-		 */
-		bootdv = dev;
-		break;
-	default:
-		break;
-	}
+	(*sys_platform->device_register)(dev, aux);
 }
 
 struct nam2blk nam2blk[] = {

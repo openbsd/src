@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdium_machdep.c,v 1.4 2010/02/12 19:37:31 miod Exp $	*/
+/*	$OpenBSD: gdium_machdep.c,v 1.5 2010/02/16 21:31:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -37,8 +37,10 @@
 int	gdium_revision = 0;
 
 void	gdium_attach_hook(pci_chipset_tag_t);
+void	gdium_device_register(struct device *, void *);
 int	gdium_intr_map(int, int, int);
 void	gdium_powerdown(void);
+void	gdium_reset(void);
 
 const struct bonito_config gdium_bonito = {
 	.bc_adbase = 11,
@@ -65,8 +67,10 @@ const struct platform gdium_platform = {
 	.legacy_io_ranges = NULL,
 
 	.setup = NULL,
+	.device_register = gdium_device_register,
+
 	.powerdown = gdium_powerdown,
-	.reset = NULL
+	.reset = gdium_reset
 };
 
 void
@@ -95,7 +99,6 @@ gdium_attach_hook(pci_chipset_tag_t pc)
 	 * Force a non conflicting BAR for the wireless controller,
 	 * until proper resource configuration code is added to
 	 * bonito (work in progress).
-	 * XXX The card does not work correctly anyway at the moment.
 	 */
 	tag = pci_make_tag(pc, 0, 13, 0);
 	pci_conf_write(pc, tag, PCI_MAPREG_START, 0x06228000);
@@ -150,7 +153,7 @@ int
 gdium_intr_map(int dev, int fn, int pin)
 {
 	switch (dev) {
-	/* Wireless */
+	/* mini-PCI slot */
 	case 13:	/* C D A B */
 		return BONITO_DIRECT_IRQ(LOONGSON_INTR_PCIA + (pin + 1) % 4);
 	/* Frame buffer */
@@ -179,9 +182,96 @@ gdium_intr_map(int dev, int fn, int pin)
 	return -1;
 }
 
+/*
+ * Due to PMON limitations on the Gdium Liberty, we do not get boot device
+ * information from PMON.
+ *
+ * Because of this, we always pretend the G-Key port is the boot device.
+ *
+ * Note that, unlike on the Lemote machines, other USB devices gets a fixed
+ * numbering (USB0 and USB1).
+ */
+
+extern struct cfdriver bonito_cd;
+extern struct cfdriver pci_cd;
+extern struct cfdriver ehci_cd;
+extern struct cfdriver usb_cd;
+extern struct cfdriver uhub_cd;
+extern struct cfdriver umass_cd;
+extern struct cfdriver scsibus_cd;
+extern struct cfdriver sd_cd;
+
+#include <dev/pci/pcivar.h>
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+
+void
+gdium_device_register(struct device *dev, void *aux)
+{
+	struct cfdriver *cf = dev->dv_cfdata->cf_driver;
+	static int gkey_chain_pos = 0;
+	static struct device *lastparent = NULL;
+
+	if (dev->dv_parent != lastparent && gkey_chain_pos != 0)
+		return;
+
+	switch (gkey_chain_pos) {
+	case 0:	/* bonito at mainbus */
+		if (cf == &bonito_cd)
+			goto advance;
+		break;
+	case 1:	/* pci at bonito */
+		if (cf == &pci_cd)
+			goto advance;
+		break;
+	case 2:	/* ehci at pci dev 15 */
+		if (cf == &ehci_cd) {
+			struct pci_attach_args *paa = aux;
+			if (paa->pa_device == 15)
+				goto advance;
+		}
+		break;
+	case 3:	/* usb at ehci */
+		if (cf == &usb_cd)
+			goto advance;
+		break;
+	case 4:	/* uhub at usb */
+		if (cf == &uhub_cd)
+			goto advance;
+		break;
+	case 5:	/* umass at uhub port 3 */
+		if (cf == &umass_cd) {
+			struct usb_attach_arg *uaa = aux;
+			if (uaa->port == 3)
+				goto advance;
+		}
+		break;
+	case 6:	/* scsibus at umass */
+		if (cf == &scsibus_cd)
+			goto advance;
+		break;
+	case 7:	/* sd at scsibus */
+		bootdv = dev;
+		break;
+	}
+
+	return;
+
+advance:
+	gkey_chain_pos++;
+	lastparent = dev;
+}
+
 void
 gdium_powerdown()
 {
 	REGVAL(BONITO_GPIODATA) |= 0x00000002;
+	REGVAL(BONITO_GPIOIE) &= ~0x00000002;
+}
+
+void
+gdium_reset()
+{
+	REGVAL(BONITO_GPIODATA) &= ~0x00000002;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000002;
 }

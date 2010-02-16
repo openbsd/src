@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.5 2010/02/12 19:43:43 otto Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.6 2010/02/16 21:31:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -47,15 +47,17 @@
 extern struct mips_bus_space bonito_pci_io_space_tag;
 #endif
 
-void	yeeloong_attach_hook(pci_chipset_tag_t);
-int	yeeloong_intr_map(int, int, int);
+void	lemote_attach_hook(pci_chipset_tag_t);
+void	lemote_device_register(struct device *, void *);
+int	lemote_intr_map(int, int, int);
+void	lemote_reset(void);
 
 void	fuloong_powerdown(void);
-void	yeeloong_powerdown(void);
-void	yeeloong_reset(void);
 void	fuloong_setup(void);
 
-const struct bonito_config yeeloong_bonito = {
+void	yeeloong_powerdown(void);
+
+const struct bonito_config lemote_bonito = {
 	.bc_adbase = 11,
 
 	.bc_gpioIE = LOONGSON_INTRMASK_GPIO,
@@ -68,8 +70,8 @@ const struct bonito_config yeeloong_bonito = {
 
 	.bc_legacy_pic = 1,
 
-	.bc_attach_hook = yeeloong_attach_hook,
-	.bc_intr_map = yeeloong_intr_map
+	.bc_attach_hook = lemote_attach_hook,
+	.bc_intr_map = lemote_intr_map
 };
 
 const struct legacy_io_range fuloong_legacy_ranges[] = {
@@ -110,12 +112,14 @@ const struct platform fuloong_platform = {
 	.vendor = "Lemote",
 	.product = "Fuloong",
 
-	.bonito_config = &yeeloong_bonito,
+	.bonito_config = &lemote_bonito,
 	.legacy_io_ranges = fuloong_legacy_ranges,
 
 	.setup = fuloong_setup,
+	.device_register = lemote_device_register,
+
 	.powerdown = fuloong_powerdown,
-	.reset = yeeloong_reset
+	.reset = lemote_reset
 };
 
 const struct platform yeeloong_platform = {
@@ -123,16 +127,18 @@ const struct platform yeeloong_platform = {
 	.vendor = "Lemote",
 	.product = "Yeeloong",
 
-	.bonito_config = &yeeloong_bonito,
+	.bonito_config = &lemote_bonito,
 	.legacy_io_ranges = yeeloong_legacy_ranges,
 
 	.setup = NULL,
+	.device_register = lemote_device_register,
+
 	.powerdown = yeeloong_powerdown,
-	.reset = yeeloong_reset
+	.reset = lemote_reset
 };
 
 void
-yeeloong_attach_hook(pci_chipset_tag_t pc)
+lemote_attach_hook(pci_chipset_tag_t pc)
 {
 	pcireg_t id;
 	pcitag_t tag;
@@ -155,7 +161,7 @@ yeeloong_attach_hook(pci_chipset_tag_t pc)
 }
 
 int
-yeeloong_intr_map(int dev, int fn, int pin)
+lemote_intr_map(int dev, int fn, int pin)
 {
 	switch (dev) {
 	/* onboard devices, only pin A is wired */
@@ -210,7 +216,7 @@ yeeloong_powerdown()
 }
 
 void
-yeeloong_reset()
+lemote_reset()
 {
 	wrmsr(GLCP_SYS_RST, rdmsr(GLCP_SYS_RST) | 1);
 }
@@ -234,4 +240,44 @@ fuloong_setup(void)
                 comconsrate = 115200; /* default PMON console speed */
 	}
 #endif
+}
+
+void
+lemote_device_register(struct device *dev, void *aux)
+{
+	const char *drvrname = dev->dv_cfdata->cf_driver->cd_name;
+	const char *name = dev->dv_xname;
+
+	if (dev->dv_class != bootdev_class)
+		return;	
+
+	/* 
+	 * The device numbering must match. There's no way
+	 * pmon tells us more info. Depending on the usb slot
+	 * and hubs used you may be lucky. Also, assume umass/sd for usb
+	 * attached devices.
+	 */
+	switch (bootdev_class) {
+	case DV_DISK:
+		if (strcmp(drvrname, "wd") == 0 && strcmp(name, bootdev) == 0)
+			bootdv = dev;
+		else {
+			/* XXX this really only works safely for usb0... */
+		    	if ((strcmp(drvrname, "sd") == 0 ||
+			    strcmp(drvrname, "cd") == 0) &&
+			    strncmp(bootdev, "usb", 3) == 0 &&
+			    strcmp(name + 2, bootdev + 3) == 0)
+				bootdv = dev;
+		}
+		break;
+	case DV_IFNET:
+		/*
+		 * This relies on the onboard Ethernet interface being
+		 * attached before any other (usb) interface.
+		 */
+		bootdv = dev;
+		break;
+	default:
+		break;
+	}
 }

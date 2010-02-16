@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 2010/02/12 19:37:31 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.6 2010/02/16 21:31:35 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,6 +57,9 @@ struct platform {
 	const struct legacy_io_range	*legacy_io_ranges;
 
 	void				(*setup)(void);
+	void				(*device_register)(struct device *,
+					    void *);
+
 	void				(*powerdown)(void);
 	void				(*reset)(void);
 };
@@ -66,6 +69,10 @@ extern const struct platform *sys_platform;
 struct mainbus_attach_args {
 	const char	*maa_name;
 };
+
+extern struct device *bootdv;
+extern char bootdev[];
+extern enum devclass bootdev_class;
 
 #include <mips64/autoconf.h>
 
