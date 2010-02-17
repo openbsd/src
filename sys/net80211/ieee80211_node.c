@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.55 2009/01/29 17:19:10 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.56 2010/02/17 18:34:37 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -930,7 +930,6 @@ ieee80211_needs_rxnode(struct ieee80211com *ic,
 		switch (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) {
 		case IEEE80211_FC0_SUBTYPE_BEACON:
 		case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
-			rc = 1;
 			break;
 		default:
 #ifndef IEEE80211_STA_ONLY
