@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
+/*	$OpenBSD: uthum.c,v 1.7 2010/02/17 14:06:10 yuo Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -204,7 +204,7 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_num_sensors > 0) {
-		sc->sc_sensortask = sensor_task_register(sc, uthum_refresh, 6);
+		sc->sc_sensortask = sensor_task_register(sc, uthum_refresh, 20);
 		if (sc->sc_sensortask == NULL) {
 			printf(", unable to register update task\n");
 			return;
@@ -370,7 +370,20 @@ uthum_refresh(void *arg)
 int
 uthum_sht1x_temp(unsigned int ticks)
 {
-	return (ticks - 4010);
+	/* 
+	 * VDD		constant
+	 *-----------------------
+	 * 5.0V		-4010
+	 * 4.0V		-3980
+	 * 3.5V		-3970
+	 * 3.0V		-3960
+	 * 2.5V		-3940
+	 */
+	/*
+	 * as the VDD of the SHT10 on my TEMPerHUM is 3.43V +/- 0.05V,
+	 * I choose -3970 as the constant of this formula.
+	 */
+	return (ticks - 3970);
 }
 
 /* return %RH * 1000 */
