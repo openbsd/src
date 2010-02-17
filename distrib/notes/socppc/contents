@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.7 2010/02/05 07:48:50 jasper Exp $
+dnl	$OpenBSD: contents,v 1.8 2010/02/17 21:16:23 kettenis Exp $
 TopPart
 
 OpenBSDdistsets
@@ -10,10 +10,15 @@ OpenBSDrd
 	bsd.bin		A RAMDISK kernel that can be loaded directly
 			by the U-Boot firmware.  Used for installation.
 
-	boot		The OpenBSD/MACHINE secondary boot loader.
+	boot		The OpenBSD/MACHINE secondary boot loader in
+			U-Boot format.
 
 	boot.elf	The secondary boot loader in ELF format, for
-			use of RB600A boards.
+			use with the RouterBOOT firmware.
+
+	miniroot{:--:}OSrev.fs	A miniroot filesystem image to be copied to
+			CompactFlash to allow installing OpenBSD OSREV on the
+			RouterBOARD RB600A.
 
 DistributionDescription(eleven)
 

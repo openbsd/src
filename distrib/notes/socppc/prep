@@ -1,7 +1,9 @@
-dnl	$OpenBSD: prep,v 1.7 2009/02/17 08:26:58 jasper Exp $
-To be able to boot the OpenBSD/MACHINE installation program, you will
-need to learn a bit about Das U-Boot, the low-level process that controls
-the microprocessor after hardware initialization.
+dnl	$OpenBSD: prep,v 1.8 2010/02/17 21:16:23 kettenis Exp $
+To be able to boot the OpenBSD/MACHINE installation program on the
+Thecus N1200, you will need to learn a bit about Das U-Boot, the
+low-level process that controls the microprocessor after hardware
+initialization.  On the RouterBOARD RB600A, that task is handled by
+RouterBOOT.
 
 Talking to the Thecus
 
@@ -145,3 +147,68 @@ five seconds will do in most cases:
 
     => setenv bootdelay 5
     => saveenv
+
+
+Booting the RouterBOARD RB600A
+
+The RouterBOARD RB600A comes with a standard DB9 serial port, so no
+special cables are needed.  Like the Thecus, the default baudrate is
+115200, so a command like "tip -115200 tty00" should connect you to
+the RouterBOARD console.  As soon as you apply power to the
+RouterBOARD, it will start booting.
+
+Shortly after RouterBOOT starts, you will see a message like:
+
+    Press any key within 2 seconds to enter setup.
+
+Since board initailization is very fast, it is rather easy to miss
+this message, in which case the board will load its RouterOS (which is
+just Linux) from flash.
+
+The recommended way to install OpenBSD on the RouterBOARD is to copy
+the miniroot "miniroot{:--:}OSrev.fs" image to CompactFlash on another
+machine and place in the first (J301) CompactFlash slot on the board.  
+
+Use the dd(1) utility to copy the miniroot to CompactFlash.
+The command would likely be, under OpenBSD:
+	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c
+Replace ``rsd1c'' with the appropriate device name for the raw device
+on the system used to do the copy.
+
+You will need to configure your RouterBOARD to boot from CompactFlash.
+To do this, enter the RouterBOOT setup by pressing a key when the
+message show above appears on the serial console.  This should present
+you with the following menu:
+
+    RouterBOOT-2.20
+    What do you want to configure?
+       d - boot delay
+       k - boot key
+       s - serial console
+       o - boot device
+       f - cpu frequency
+       r - reset booter configuration
+       e - format nand
+       g - upgrade firmware
+       i - board info
+       p - boot protocol
+       t - do memory testing
+       x - exit setup
+    your choice: 
+
+Choose 'o' to enter the boot device menu:
+
+    Select boot device:
+       e - boot over Ethernet
+     * n - boot from NAND, if fail then Ethernet
+       c - boot from CompactFlash only
+       1 - boot Ethernet once, then NAND
+       2 - boot Ethernet once, then CompactFlash
+       o - boot from NAND only
+       b - boot chosen device
+your choice: 
+
+Choose 'c' to select CompactFlash and then, at the main menu, choose
+'x' to save the setting.  The board will reset, and immediately
+attempt to boot from CompactFlash, straight into the OpenBSD
+installer.
