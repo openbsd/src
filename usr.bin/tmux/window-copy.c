@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.43 2010/02/11 20:39:40 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.44 2010/02/17 20:58:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1038,7 +1038,7 @@ window_copy_copy_line(struct window_pane *wp,
 	}
 
 	/* Only add a newline if the line wasn't wrapped. */
-	if (!wrapped) {
+	if (!wrapped || ex != xx) {
 		*buf = xrealloc(*buf, 1, (*off) + 1);
 		(*buf)[(*off)++] = '\n';
 	}
