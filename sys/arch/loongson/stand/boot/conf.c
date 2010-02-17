@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2010/02/16 21:28:39 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 2010/02/17 21:25:49 miod Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,7 +39,7 @@
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 
-const char version[] = "0.1";
+const char version[] = "0.2";
 #if 0	/* network code not compiled in */
 int	debug = 0;
 #endif
@@ -48,6 +48,9 @@ int	debug = 0;
  * Device configuration
  */
 struct devsw devsw[] = {
+	/* initrd */
+	{ "rd",		rd_iostrategy, rd_ioopen, rd_ioclose, noioctl },
+	/* ATA storage device */
 	{ "wd",		pmon_iostrategy, pmon_ioopen, pmon_ioclose, noioctl }
 };
 int ndevs = NENTS(devsw);
@@ -56,10 +59,15 @@ int ndevs = NENTS(devsw);
  * Filesystem configuration
  */
 struct fs_ops file_system[] = {
-	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
-	  ufs_stat,    ufs_readdir },
-	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	  cd9660_stat, cd9660_readdir }
+	/* initrd ``filesystem'' */
+	{	rdfs_open,	rdfs_close,	rdfs_read,	rdfs_write,
+		rdfs_seek,	rdfs_stat,	rdfs_readdir	},
+	/* ufs filesystem */
+	{	ufs_open,	ufs_close,	ufs_read,	ufs_write,
+		ufs_seek,	ufs_stat,	ufs_readdir	},
+	/* cd9660 filesystem - in case a cd image is dd'ed on non USB media */
+	{	cd9660_open,	cd9660_close,	cd9660_read,	cd9660_write,
+		cd9660_seek,	cd9660_stat,	cd9660_readdir	}
 };
 int nfsys = NENTS(file_system);
 

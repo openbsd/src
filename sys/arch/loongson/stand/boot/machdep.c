@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2010/02/16 21:28:39 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2010/02/17 21:25:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -47,6 +47,13 @@
 #include <machine/cpu.h>
 #include <machine/pmon.h>
 #include <stand/boot/cmd.h>
+
+void	gdium_abort(void);
+int	is_gdium;
+int	boot_rd;
+
+extern int bootprompt;
+extern char *kernelfile;
 
 /*
  * Console
@@ -134,6 +141,15 @@ devboot(dev_t dev, char *path)
 	int i;
 
 	/*
+	 * If we are booting the initrd image, things are easy...
+	 */
+
+	if (dev != 0) {
+		strlcpy(path, "rd0a", BOOTDEVLEN);
+		return;
+	}
+
+	/*
 	 * First, try to figure where we have been loaded from; we'll assume
 	 * the default device to load the kernel from is the same.
 	 *
@@ -203,7 +219,7 @@ devboot(dev_t dev, char *path)
 }
 
 /*
- * Ugly clock routines
+ * Ugly (lack of) clock routines
  */
 
 time_t
@@ -221,24 +237,6 @@ machdep()
 {
 	const char *envvar;
 
-	cninit();
-
-	/*
-	 * Figure out whether we are running on a Gdium system, which
-	 * has an horribly castrated PMON. If we do, return immediately.
-	 */
-	envvar = pmon_getenv("Version");
-	if (envvar != NULL && strncmp(envvar, "Gdium", 5) == 0) {
-		/* Here's a nickel, kid.  Get yourself a better firmware */
-		printf("\n\nSorry, OpenBSD boot blocks do not work on Gdium, "
-		    "because of dire firmware limitations.\n"
-		    "Also, the firmware has reset the USB controller so you "
-		    "will need to power cycle.\n"
-		    "We would apologize for this incovenience, but we have "
-		    "no control about the firmware of your machine.\n\n");
-		_rtt();
-	}
-
 	/*
 	 * Since we can't have non-blocking input, we will try to
 	 * autoload the kernel pointed to by the `bsd' environment
@@ -246,19 +244,58 @@ machdep()
 	 * is empty or the load fails.
 	 */
 
-	envvar = pmon_getenv("bsd");
-	if (envvar != NULL) {
-		extern int bootprompt;
-		extern char *kernelfile;
-
-		bootprompt = 0;
-		kernelfile = (char *)envvar;
+	if (boot_rd == 0) {
+		envvar = pmon_getenv("bsd");
+		if (envvar != NULL) {
+			bootprompt = 0;
+			kernelfile = (char *)envvar;
+		} else {
+			if (is_gdium)
+				gdium_abort();
+		}
 	}
 }
 
 int
 main()
 {
-	boot(0);
+	const char *envvar;
+
+	cninit();
+
+	/*
+	 * Figure out whether we are running on a Gdium system, which
+	 * has an horribly castrated PMON. If we do, the best we can do
+	 * is boot an initrd image.
+	 */
+	envvar = pmon_getenv("Version");
+	if (envvar != NULL && strncmp(envvar, "Gdium", 5) == 0)
+		is_gdium = 1;
+
+	/*
+	 * Check if we have a valid initrd loaded.
+	 */
+
+	envvar = pmon_getenv("rd");
+	if (envvar != NULL && *envvar != '\0')
+		boot_rd = rd_isvalid();
+
+	if (boot_rd != 0)
+		bootprompt = 0;
+
+	boot(boot_rd);
 	return 0;
+}
+
+void
+gdium_abort()
+{
+	/* Here's a nickel, kid.  Get yourself a better firmware */
+	printf("\n\nSorry, OpenBSD boot blocks do not work on Gdium, "
+	    "because of dire firmware limitations.\n"
+	    "Also, the firmware has reset the USB controller so you "
+	    "will need to power cycle.\n"
+	    "We would apologize for this incovenience, but we have "
+	    "no control about the firmware of your machine.\n\n");
+	_rtt();
 }

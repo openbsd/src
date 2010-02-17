@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.2 2010/02/16 21:28:39 miod Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.3 2010/02/17 21:25:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -19,6 +19,9 @@
 #include <lib/libsa/stand.h>
 
 #define	DEFAULT_KERNEL_ADDRESS	0
+
+/* where the initrd is loaded */
+#define	INITRD_BASE	PHYS_TO_CKSEG0(0x04000000)
 
 /*
  * MD interfaces for MI boot(9)
@@ -41,6 +44,25 @@ void	pmon_cnputc(dev_t, int);
 int	pmon_iostrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	pmon_ioopen(struct open_file *, ...);
 int	pmon_ioclose(struct open_file *);
+
+/*
+ * INITRD I/O
+ */
+int	rd_iostrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	rd_ioopen(struct open_file *, ...);
+int	rd_ioclose(struct open_file *);
+int	rd_isvalid(void);
+
+/*
+ * INITRD ``filesystem''
+ */
+int	rdfs_open(char *path, struct open_file *f);
+int	rdfs_close(struct open_file *f);
+int	rdfs_read(struct open_file *f, void *buf, size_t size, size_t *resid);
+int	rdfs_write(struct open_file *f, void *buf, size_t size, size_t *resid);
+off_t	rdfs_seek(struct open_file *f, off_t offset, int where);
+int	rdfs_stat(struct open_file *f, struct stat *sb);
+int	rdfs_readdir(struct open_file *f, char *name);
 
 extern int pmon_argc;
 extern int32_t *pmon_argv;
