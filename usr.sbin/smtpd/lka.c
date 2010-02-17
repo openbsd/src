@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.99 2010/02/17 08:40:24 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.100 2010/02/17 13:47:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -416,11 +416,16 @@ lka_dispatch_mta(int sig, short event, void *p)
 		case IMSG_LKA_SECRET: {
 			struct secret	*query = imsg.data;
 			char		*secret = NULL;
-			char		*map = "secrets";
+			struct map	*map = NULL;
+			char		*mapname = "secrets";
 
 			IMSG_SIZE_CHECK(query);
 
-			secret = map_dblookupbyname(env, map, query->host);
+			/* should not happen */
+			map = map_findbyname(env, mapname);
+			if (map == NULL)
+				fatalx("secrets map has  disappeared");
+			secret = map_lookup(env, map->m_id, query->host);
 
 			log_debug("secret for %s %s", query->host,
 			    secret ? "found" : "not found");
@@ -429,11 +434,11 @@ lka_dispatch_mta(int sig, short event, void *p)
 
 			if (secret == NULL) {
 				log_warnx("failed to lookup %s in the %s map",
-				    query->host, map);
+				    query->host, mapname);
 			} else if (! lka_encode_credentials(query->secret,
 			    sizeof(query->secret), secret)) {
 				log_warnx("parse error for %s in the %s map",
-				    query->host, map);
+				    query->host, mapname);
 			}
 
 			imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0, -1, query,
