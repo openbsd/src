@@ -171,6 +171,7 @@
 ./usr/include/loongson/isa_machdep.h
 ./usr/include/loongson/kcore.h
 ./usr/include/loongson/limits.h
+./usr/include/loongson/loadfile_machdep.h
 ./usr/include/loongson/lock.h
 ./usr/include/loongson/loongson2.h
 ./usr/include/loongson/memconf.h
