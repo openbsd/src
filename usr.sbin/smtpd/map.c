@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.8 2010/02/17 13:47:31 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.9 2010/02/17 17:37:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -214,7 +214,7 @@ map_stdio_get(void *hdl, char *key)
 		if (strcmp(keyp, key) != 0)
 			continue;
 
-		result = strdup(lbuf);
+		result = strdup(buf);
 		if (result == NULL)
 			err(1, NULL);
 		break;
