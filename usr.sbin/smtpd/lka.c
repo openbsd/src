@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.100 2010/02/17 13:47:31 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.101 2010/02/17 17:27:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1031,7 +1031,7 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 			return 1;
 		}
 
-		if (strlen(username) >= MAX_LOCALPART_SIZE)
+		if (strlen(username) >= MAXLOGNAME)
 			return 0;
 
 		path->flags |= F_PATH_ACCOUNT;
