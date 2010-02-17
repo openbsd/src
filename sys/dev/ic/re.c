@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.116 2009/11/24 17:40:43 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.117 2010/02/17 22:16:34 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1601,6 +1601,9 @@ re_intr(void *arg)
 			break;
 		if (status)
 			CSR_WRITE_2(sc, RL_ISR, status);
+
+		if (status & RL_ISR_TIMEOUT_EXPIRED)
+			claimed = 1;
 
 		if ((status & RL_INTRS_CPLUS) == 0)
 			break;
