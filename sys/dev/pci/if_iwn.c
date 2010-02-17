@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwn.c,v 1.85 2010/02/03 17:51:11 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.86 2010/02/17 18:23:00 damien Exp $	*/
 
 /*-
- * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1472,6 +1472,7 @@ iwn4965_print_power_group(struct iwn_softc *sc, int i)
 void
 iwn5000_read_eeprom(struct iwn_softc *sc)
 {
+	struct iwn5000_eeprom_calib_hdr hdr;
 	int32_t temp, volt;
 	uint32_t base, addr;
 	uint16_t val;
@@ -1495,6 +1496,11 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 
 	iwn_read_prom_data(sc, IWN5000_EEPROM_CAL, &val, 2);
 	base = letoh16(val);
+	iwn_read_prom_data(sc, base, &hdr, sizeof hdr);
+	DPRINTF(("calib version=%u pa type=%u voltage=%u\n",
+	    hdr.version, hdr.pa_type, letoh16(hdr.volt)));
+	sc->calib_ver = hdr.version;
+
 	if (sc->hw_type == IWN_HW_REV_TYPE_5150) {
 		/* Compute temperature offset. */
 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
@@ -5369,6 +5375,10 @@ iwn5000_nic_config(struct iwn_softc *sc)
 	if (sc->sc_flags & IWN_FLAG_INTERNAL_PA) {
 		/* Use internal power amplifier only. */
 		IWN_WRITE(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_2X2_IPA);
+	}
+	if (sc->hw_type == IWN_HW_REV_TYPE_6050 && sc->calib_ver >= 6) {
+		/* Indicate that ROM calibration version is >=6. */
+		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_CALIB_VER6);
 	}
 	return 0;
 }

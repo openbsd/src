@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.36 2010/01/23 09:14:13 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.37 2010/02/17 18:23:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -215,6 +215,7 @@
 #define IWN_GP_DRIVER_RADIO_3X3_HYB	(0 << 0)
 #define IWN_GP_DRIVER_RADIO_2X2_HYB	(1 << 0)
 #define IWN_GP_DRIVER_RADIO_2X2_IPA	(2 << 0)
+#define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
@@ -1311,6 +1312,12 @@ struct iwn_eeprom_enhinfo {
 	uint8_t		reserved;
 	int8_t		mimo2;		/* max power in half-dBm */
 	int8_t		mimo3;		/* max power in half-dBm */
+} __packed;
+
+struct iwn5000_eeprom_calib_hdr {
+	uint8_t		version;
+	uint8_t		pa_type;
+	uint16_t	volt;
 } __packed;
 
 #define IWN_NSAMPLES	3
