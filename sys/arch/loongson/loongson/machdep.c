@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2010/02/14 22:39:33 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.16 2010/02/17 17:17:35 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -679,8 +679,8 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem = %u (%uMB)\n", ptoa(physmem),
-	    ptoa(physmem)/1024/1024);
+	printf("real mem = %u (%uMB)\n", ptoa((psize_t)physmem),
+	    ptoa((psize_t)physmem)/1024/1024);
 
 	/*
 	 * Allocate a submap for exec arguments. This map effectively
