@@ -1,0 +1,21 @@
+.Dd $Mdocdate: February 17 2010 $
+.Dt XR-ARGS 1
+.Os
+.Sh NAME
+.Nm Xr-args
+.Nd additional arguments to cross references
+.Sh DESCRIPTION
+One single
+.Xr echo 1
+is fine.
+.Pp
+But listen for multiple
+.Xr echo 1 s .
+.Pp
+Listen for those
+.Xr echo 1 s really hard .
+.Pp
+A call, an
+.Xr echo 1 , and
+another
+.Xr echo 1 .
