@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.98 2010/01/03 14:37:37 chl Exp $	*/
+/*	$OpenBSD: lka.c,v 1.99 2010/02/17 08:40:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1008,7 +1008,7 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 	case C_ALL:
 	case C_NET:
 	case C_DOM: {
-		char username[MAXLOGNAME];
+		char username[MAX_LOCALPART_SIZE];
 		char *sep;
 		struct passwd *pw;
 
@@ -1026,10 +1026,13 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 			return 1;
 		}
 
+		if (strlen(username) >= MAX_LOCALPART_SIZE)
+			return 0;
+
 		path->flags |= F_PATH_ACCOUNT;
 		pw = getpwnam(username);
 		if (pw == NULL)
-			break;
+			return 0;
 
 		(void)strlcpy(path->pw_name, pw->pw_name,
 		    sizeof(path->pw_name));
