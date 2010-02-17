@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.1 2010/02/03 17:10:44 miod Exp $
+dnl	$OpenBSD: features,v 1.2 2010/02/17 18:07:41 miod Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -14,7 +14,7 @@ dnl architecture name (for the packages directory)
 define({:-MACHINE_ARCH-:},mips64el)dnl
 dnl
 dnl define if /sbin/kbd exists on the media
-define({:-MDKBD-:},)dnl
+define({:-MDKBD-:},1)dnl
 dnl
 dnl define if serial consoles need to be enabled in /etc/ttys
 dnl (i.e. md_consoleinfo is not empty)
