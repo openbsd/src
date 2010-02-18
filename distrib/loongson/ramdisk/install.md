@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2010/01/31 21:36:01 otto Exp $
+#	$OpenBSD: install.md,v 1.2 2010/02/18 20:20:52 otto Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,6 +33,18 @@
 #
 
 md_installboot() {
+	local _disk=$1
+
+	if mount -t ext2fs /dev/${_disk}i /mnt2 ; then
+		if mkdir -p /mnt2/boot && cp /usr/mdec/boot /mnt2/boot; then
+			umount /mnt2
+			return
+		fi
+	fi
+
+	echo "Failed to install bootblocks."
+	echo "You will not be able to boot OpenBSD from $_disk."
+	exit
 }
 
 md_prep_fdisk() {
@@ -40,9 +52,9 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
-		if [[ -n $(fdisk $_disk | grep 'Signature: 0xAA55') ]]; then
+		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
 			fdisk $_disk
-			if [[ -n $(fdisk $_disk | grep '^..: A6 ') ]]; then
+			if fdisk $_disk | grep -q '^..: A6 '; then
 				_q=", use the (O)penBSD area,"
 				_d=OpenBSD
 			fi
@@ -52,33 +64,44 @@ md_prep_fdisk() {
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
-			echo "Disabled, you probably do not want that."
-#			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
-#			fdisk -e ${_disk} <<__EOT >/dev/null
-#reinit
-#update
-#write
-#quit
-#__EOT
-#			echo "done."
-			return ;;
+			echo -n "Creating a 1MB ext2 partition and an OpenBSD partition for rest of $_disk..."
+			fdisk -e $_disk <<__EOT >/dev/null
+reinit
+update
+write
+quit
+__EOT
+			echo "done."
+			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
+			newfs -t ext2fs ${_disk}i
+			break ;;
 		e*|E*)
 			# Manually configure the MBR.
 			cat <<__EOT
 
-You will now create a single MBR partition to contain your OpenBSD data. This
-partition must have an id of 'A6'; must *NOT* overlap other partitions; and
-must be marked as the only active partition.  Inside the fdisk command, the
-'manual' command describes all the fdisk commands in detail.
+You will now create one MBR partition to contain your OpenBSD data
+and one MBR partition to contain the program that PMON uses
+to boot OpenBSD. Neither partition will overlap any other partition.
+
+The OpenBSD MBR partition will have an id of 'A6' and the boot MBR
+partition will have an id of '83' (Linux files). The boot partition will be
+at least 1MB and be the first 'Linux files' partition on the disk.
+The installer assumes there is already an ext2 or ext3 filesystem on the
+first 'Linux files' partition.
 
 $(fdisk ${_disk})
 __EOT
-			fdisk -e ${_disk}
-			[[ -n $(fdisk $_disk | grep ' A6 ') ]] && return
-			echo No OpenBSD partition in MBR, try again. ;;
-		o*|O*)	return ;;
+			fdisk -e $_disk
+			fdisk $_disk | grep -q '^..: 83 ' || \
+				{ echo "\nNo Linux files (id 83) partition!\n" ; continue ; }
+			fdisk $_disk | grep -q "^..: A6 " || \
+				{ echo "\nNo OpenBSD (id A6) partition!\n" ; continue ; }
+			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
+			break ;;
+		o*|O*)	break ;;
 		esac
 	done
+
 }
 
 md_prep_disklabel() {
@@ -120,6 +143,13 @@ __EOT
 }
 
 md_congrats() {
+	cat <<__EOT
+
+Once the machine has rebooted use PMON to boot into OpenBSD, as
+described in the INSTALL.$ARCH document. The command to boot the OpenBSD
+bootloader will be something like 'boot /dev/fs/ext2@wd0/boot/boot'
+
+__EOT
 }
 
 md_consoleinfo() {
