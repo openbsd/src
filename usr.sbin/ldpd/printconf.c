@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: printconf.c,v 1.2 2010/02/18 15:27:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -38,19 +38,19 @@ print_mainconf(struct ldpd_conf *conf)
 	printf("router-id %s\n\n", inet_ntoa(conf->rtr_id));
 
 	if (conf->mode & MODE_DIST_INDEPENDENT)
-		printf("Distribution: Independent\n");
+		printf("distribution independent\n");
 	else
-		printf("Distribution: Ordered\n");
+		printf("distribution ordered\n");
 
 	if (conf->mode & MODE_RET_LIBERAL)
-		printf("Retention: Liberal\n");
+		printf("retention liberal\n");
 	else
-		printf("Retention: Conservative\n");
+		printf("retention conservative\n");
 
 	if (conf->mode & MODE_ADV_ONDEMAND)
-		printf("Advertisement: On demand\n");
+		printf("advertisement ondemand\n");
 	else
-		printf("Advertisement: Unsolicited\n");
+		printf("advertisement unsolicited\n");
 }
 
 void
@@ -67,16 +67,12 @@ print_rtlabel(struct ldpd_conf *conf)
 void
 print_iface(struct iface *iface)
 {
-
-	printf("\tinterface %s: %s {\n", iface->name, inet_ntoa(iface->addr));
-
-	printf("\t\tholdtime %d\n", iface->holdtime);
-	printf("\t\thello-interval %d\n", iface->hello_interval);
-
+	printf("\ninterface %s {\n", iface->name);
+	printf("\tholdtime %d\n", iface->holdtime);
+	printf("\thello-interval %d\n", iface->hello_interval);
 	if (iface->passive)
-		printf("\t\tpassive\n");
-
-	printf("\t}\n");
+		printf("\tpassive\n");
+	printf("}\n");
 }
 
 void
@@ -84,7 +80,6 @@ print_config(struct ldpd_conf *conf)
 {
 	struct iface	*iface;
 
-	printf("\n");
 	print_mainconf(conf);
 	printf("\n");
 
