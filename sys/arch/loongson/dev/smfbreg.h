@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfbreg.h,v 1.3 2010/02/09 05:39:39 miod Exp $	*/
+/*	$OpenBSD: smfbreg.h,v 1.4 2010/02/18 22:45:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -70,13 +70,3 @@
  */
 
 #define	SM7XX_MMIO_BASE			0x00700000
-
-/*
- * Generic registers (SM5xx only)
- */
-
-#define	SM5XX_REG_BASE			0x00000000
-
-#define	REG_SYSTEM_CONTROL		0x00
-#define	RSC_FIFO_EMPTY			0x00100000
-#define	RSC_STATUS_BUSY			0x00080000

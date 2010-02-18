@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2010/02/12 19:57:52 otto Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2010/02/18 22:45:26 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,20 +46,25 @@ clock0		at mainbus0
 # Main local buses
 bonito*		at mainbus0
 pci*		at bonito?
-glxpcib*	at pci?
 
+# Lemote Fuloong 2F and Lemote Yeeloong devices
+glxpcib*	at pci?
 isa0		at glxpcib?
 mcclock0	at isa? port 0x70
-pckbc0		at isa?
-pckbd*		at pckbc?
-wskbd*		at pckbd? mux 1
-pmsi*		at pckbc?
-wsmouse*	at pmsi? mux 0
-com0		at isa? port 0x2f8 irq 3
-
+pckbc0		at isa?				# Yeeloong only
+pckbd*		at pckbc?			# Yeeloong only
+wskbd*		at pckbd? mux 1			# Yeeloong only
+pmsi*		at pckbc?			# Yeeloong only
+wsmouse*	at pmsi? mux 0			# Yeeloong only
+com0		at isa? port 0x2f8 irq 3	# Fuloong 2F only
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
-smfb*		at pci?
+smfb*		at pci?				# Yeeloong only
+
+# Gdium Liberty specific devices
+voyager*	at pci?
+smfb*		at voyager?
+
 wsdisplay*	at smfb?
 
 # USB Controllers

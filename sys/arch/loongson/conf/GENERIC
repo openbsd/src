@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2010/02/12 08:14:00 miod Exp $
+#	$OpenBSD: GENERIC,v 1.9 2010/02/18 22:45:26 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -34,20 +34,33 @@ clock0		at mainbus0
 # Main local buses
 bonito*		at mainbus0
 pci*		at bonito?
-glxpcib*	at pci?
 
+# Lemote Fuloong 2F and Lemote Yeeloong devices
+glxpcib*	at pci?
 isa0		at glxpcib?
 mcclock0	at isa? port 0x70
-pckbc0		at isa?
-pckbd*		at pckbc?
-wskbd*		at pckbd? mux 1
-pmsi*		at pckbc?
-wsmouse*	at pmsi? mux 0
-com0		at isa? port 0x2f8 irq 3
-
+pckbc0		at isa?				# Yeeloong only
+pckbd*		at pckbc?			# Yeeloong only
+wskbd*		at pckbd? mux 1			# Yeeloong only
+pmsi*		at pckbc?			# Yeeloong only
+wsmouse*	at pmsi? mux 0			# Yeeloong only
+com0		at isa? port 0x2f8 irq 3	# Fuloong 2F only
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
-smfb*		at pci?
+smfb*		at pci?				# Yeeloong only
+
+# Gdium Liberty specific devices
+voyager*	at pci?
+gpio0		at voyager?
+gdiumiic0	at gpio0 offset 6 mask 0x81	# pins 6 and 13
+gdiumiic0	at gpio0 offset 46 mask 0x03	# pins 46 and 47
+iic0		at gdiumiic0
+lmtemp0		at iic0 			# National Semiconductor LM75
+#gdiumiic1	at gpio0 offset 41 mask 0x03	# pins 41 and 42
+#iic*		at voyager?
+#ohci*		at voyager?
+smfb*		at voyager?
+
 wsdisplay*	at smfb?
 
 # USB Controllers

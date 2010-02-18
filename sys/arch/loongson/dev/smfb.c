@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.4 2010/02/05 20:56:49 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.5 2010/02/18 22:45:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -17,8 +17,7 @@
  */
 
 /*
- * Routines for early console with video memory at fixed address.
- * And eventually the whole driver as well.
+ * Minimal SiliconMotion SM502 and SM712 frame buffer driver.
  */
 
 #include <sys/param.h>
@@ -38,6 +37,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
+#include <loongson/dev/voyagerreg.h>
+#include <loongson/dev/voyagervar.h>
 #include <loongson/dev/smfbreg.h>
 
 #define	DPR_READ(fb, reg)	(fb)->dpr[(reg) / 4]
@@ -76,11 +77,17 @@ struct smfb_softc {
 	int			 sc_nscr;
 };
 
-int	smfb_match(struct device *, void *, void *);
-void	smfb_attach(struct device *, struct device *, void *);
+int	smfb_pci_match(struct device *, void *, void *);
+void	smfb_pci_attach(struct device *, struct device *, void *);
+int	smfb_voyager_match(struct device *, void *, void *);
+void	smfb_voyager_attach(struct device *, struct device *, void *);
 
-const struct cfattach smfb_ca = {
-	sizeof(struct smfb_softc), smfb_match, smfb_attach
+const struct cfattach smfb_pci_ca = {
+	sizeof(struct smfb_softc), smfb_pci_match, smfb_pci_attach
+};
+
+const struct cfattach smfb_voyager_ca = {
+	sizeof(struct smfb_softc), smfb_voyager_match, smfb_voyager_attach
 };
 
 struct cfdriver smfb_cd = {
@@ -117,41 +124,37 @@ int	smfb_do_cursor(struct rasops_info *);
 int	smfb_erasecols(void *, int, int, int, long);
 int	smfb_eraserows(void *, int, int, long);
 int	smfb_wait(struct smfb *);
-int	smfb_is5xx(pcireg_t);
+
+void	smfb_attach_common(struct smfb_softc *, int);
 
 static struct smfb smfbcn;
 
+const struct pci_matchid smfb_devices[] = {
+	{ PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM712 }
+};
+
 int
-smfb_is5xx(pcireg_t id)
+smfb_pci_match(struct device *parent, void *vcf, void *aux)
 {
-	switch(id) {
-	default:
-		return -1;
-	case PCI_ID_CODE(PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM712):
-		return 0;
-	case PCI_ID_CODE(PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM501):
-		return 1;
-	}
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+
+	return pci_matchbyid(pa, smfb_devices, nitems(smfb_devices));
 }
 
 int
-smfb_match(struct device *parent, void *vcf, void *aux)
+smfb_voyager_match(struct device *parent, void *vcf, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	int is5xx = smfb_is5xx(pa->pa_id);
+	struct voyager_attach_args *vaa = (struct voyager_attach_args *)aux;
+	struct cfdata *cf = (struct cfdata *)vcf;
 
-	return is5xx < 0 ? 0 : 1;
+	return strcmp(vaa->vaa_name, cf->cf_driver->cd_name) == 0;
 }
 
 void
-smfb_attach(struct device *parent, struct device *self, void *aux)
+smfb_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smfb_softc *sc = (struct smfb_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	struct wsemuldisplaydev_attach_args waa;
-	vaddr_t fbbase, regbase;
-	int console;
-	int is5xx = smfb_is5xx(pa->pa_id);
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_memt, &sc->sc_memh,
@@ -160,14 +163,29 @@ smfb_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (is5xx) {
-		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x04,
-		    PCI_MAPREG_TYPE_MEM,
-		    BUS_SPACE_MAP_LINEAR, &sc->sc_regt, &sc->sc_regh,
-		    NULL, NULL, 0) != 0) {
-			printf(": can't map registers\n%s", self->dv_xname);
-		}
-	}
+	smfb_attach_common(sc, 0);
+}
+
+void
+smfb_voyager_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct smfb_softc *sc = (struct smfb_softc *)self;
+	struct voyager_attach_args *vaa = (struct voyager_attach_args *)aux;
+
+	sc->sc_memt = vaa->vaa_fbt;
+	sc->sc_memh = vaa->vaa_fbh;
+	sc->sc_regt = vaa->vaa_mmiot;
+	sc->sc_regh = vaa->vaa_mmioh;
+
+	smfb_attach_common(sc, 1);
+}
+
+void
+smfb_attach_common(struct smfb_softc *sc, int is5xx)
+{
+	struct wsemuldisplaydev_attach_args waa;
+	vaddr_t fbbase, regbase;
+	int console;
 
 	console = smfbcn.ri.ri_hw != NULL;
 
@@ -178,7 +196,7 @@ smfb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fb = &sc->sc_fb_store;
 		sc->sc_fb->is5xx = is5xx;
 		fbbase = (vaddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
-		if (sc->sc_regh != 0) {
+		if (is5xx) {
 			regbase = (vaddr_t)bus_space_vaddr(sc->sc_regt,
 			    sc->sc_regh);
 		} else {
@@ -190,6 +208,7 @@ smfb_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	/* XXX print resolution */
 	printf("\n");
 
 	sc->sc_scrlist[0] = &sc->sc_fb->wsd;
@@ -327,14 +346,10 @@ smfb_setup(struct smfb *fb, vaddr_t fbbase, vaddr_t regbase)
 	fb->wsd.capabilities = ri->ri_caps;
 
 	if (fb->is5xx) {
-		if (regbase != 0) {
-			fb->dpr = (volatile uint32_t *)
-			    (regbase + SM5XX_DPR_BASE);
-			fb->mmio = NULL;
-			fb->regs = (volatile uint32_t *)
-			    (regbase + SM5XX_REG_BASE);
-			accel = 1;
-		}
+		fb->dpr = (volatile uint32_t *)(regbase + SM5XX_DPR_BASE);
+		fb->mmio = NULL;
+		fb->regs = (volatile uint32_t *)(regbase + SM5XX_MMIO_BASE);
+		accel = 1;
 	} else {
 		fb->dpr = (volatile uint32_t *)(fbbase + SM7XX_DPR_BASE);
 		fb->mmio = (volatile uint8_t *)(fbbase + SM7XX_MMIO_BASE);
@@ -507,9 +522,9 @@ smfb_wait(struct smfb *fb)
 	i = 10000;
 	while (i-- != 0) {
 		if (fb->is5xx) {
-			reg = REG_READ(fb, REG_SYSTEM_CONTROL);
-			if ((reg & (RSC_FIFO_EMPTY | RSC_STATUS_BUSY)) ==
-			    RSC_FIFO_EMPTY)
+			reg = REG_READ(fb, VOYAGER_SYSTEM_CONTROL);
+			if ((reg & (VSC_FIFO_EMPTY | VSC_STATUS_BUSY)) ==
+			    VSC_FIFO_EMPTY)
 				return 0;
 		} else {
 			fb->mmio[0x3c4] = 0x16;
@@ -540,9 +555,16 @@ smfb_cnattach(bus_space_tag_t memt, pcitag_t tag, pcireg_t id)
 	int rc, is5xx;
 
 	/* filter out unrecognized devices */
-	is5xx = smfb_is5xx(id);
-	if (is5xx < 0)
+	switch(id) {
+	default:
 		return ENODEV;
+	case PCI_ID_CODE(PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM712):
+		is5xx = 0;
+		break;
+	case PCI_ID_CODE(PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM501):
+		is5xx = 1;
+		break;
+	}
 
 	smfbcn.is5xx = is5xx;
 
@@ -551,11 +573,13 @@ smfb_cnattach(bus_space_tag_t memt, pcitag_t tag, pcireg_t id)
 		return EINVAL;
 	fbbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
 
-	regbase = 0;
 	if (smfbcn.is5xx) {
 		bar = pci_conf_read_early(tag, PCI_MAPREG_START + 0x04);
-		if (PCI_MAPREG_TYPE(bar) == PCI_MAPREG_TYPE_MEM)
-			regbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
+		if (PCI_MAPREG_TYPE(bar) != PCI_MAPREG_TYPE_MEM)
+			return EINVAL;
+		regbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
+	} else {
+		regbase = 0;
 	}
 
 	rc = smfb_setup(&smfbcn, fbbase, regbase);
