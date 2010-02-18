@@ -1,4 +1,4 @@
-/*     $OpenBSD: ispmbox.h,v 1.23 2009/06/24 11:00:53 krw Exp $ */
+/*     $OpenBSD: ispmbox.h,v 1.24 2010/02/18 10:40:53 sobrado Exp $ */
 /* $FreeBSD: src/sys/dev/isp/ispmbox.h,v 1.59 2007/03/10 02:39:54 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -27,7 +27,7 @@
  *  SUCH DAMAGE.
  */
 /*
- * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
+ * Mailbox and Queue Entry Definitions for for QLogic ISP SCSI adapters.
  */
 #ifndef	_ISPMBOX_H
 #define	_ISPMBOX_H
@@ -606,7 +606,7 @@ typedef struct {
 } isp24xx_statusreq_t;
 
 /* 
- * For Qlogic 2X00, the high order byte of SCSI status has
+ * For QLogic 2X00, the high order byte of SCSI status has
  * additional meaning.
  */
 #define	RQCS_RU	0x800	/* Residual Under */

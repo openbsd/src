@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispreg.h,v 1.16 2009/06/24 11:00:53 krw Exp $ */
+/*	$OpenBSD: ispreg.h,v 1.17 2010/02/18 10:40:53 sobrado Exp $ */
 /* $FreeBSD: src/sys/dev/isp/ispreg.h,v 1.29 2007/03/10 02:39:54 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -28,13 +28,13 @@
  */
 /*
  * Machine Independent (well, as best as possible) register
- * definitions for Qlogic ISP SCSI adapters.
+ * definitions for QLogic ISP SCSI adapters.
  */
 #ifndef	_ISPREG_H
 #define	_ISPREG_H
 
 /*
- * Hardware definitions for the Qlogic ISP  registers.
+ * Hardware definitions for the QLogic ISP  registers.
  */
 
 /*
@@ -795,7 +795,7 @@ typedef struct {
 #define	ISPBSMX(c, byte, shift, mask)	\
 	(((c)[(byte)] >> (shift)) & (mask))
 /*
- * Qlogic 1020/1040 NVRAM is an array of 128 bytes.
+ * QLogic 1020/1040 NVRAM is an array of 128 bytes.
  *
  * Some portion of the front of this is for general host adapter properties
  * This is followed by an array of per-target parameters, and is tailed off
@@ -855,7 +855,7 @@ typedef struct {
 #define	ISP_NVRAM_TGT_LUN_DISABLE(c, t)		ISPBSMX(c, _IxT(t, 3), 5, 0x01)
 
 /*
- * Qlogic 1080/1240 NVRAM is an array of 256 bytes.
+ * QLogic 1080/1240 NVRAM is an array of 256 bytes.
  *
  * Some portion of the front of this is for general host adapter properties
  * This is followed by an array of per-target parameters, and is tailed off
@@ -1038,7 +1038,7 @@ typedef struct {
 	ISPBSMX(c, _IxT16(t, 4, (b)), 7, 0x01)
 
 /*
- * Qlogic 2100 thru 2300 NVRAM is an array of 256 bytes.
+ * QLogic 2100 thru 2300 NVRAM is an array of 256 bytes.
  *
  * Some portion of the front of this is for general RISC engine parameters,
  * mostly reflecting the state of the last INITIALIZE FIRMWARE mailbox command.
@@ -1113,7 +1113,7 @@ typedef struct {
 #define	ISP2100_HBA_FEATURES(c)			((c)[232] | ((c)[233] << 8))
 
 /*
- * Qlogic 2400 NVRAM is an array of 512 bytes with a 32 bit checksum.
+ * QLogic 2400 NVRAM is an array of 512 bytes with a 32 bit checksum.
  */
 #define	ISP2400_NVRAM_PORT0_ADDR	0x80
 #define	ISP2400_NVRAM_PORT1_ADDR	0x180

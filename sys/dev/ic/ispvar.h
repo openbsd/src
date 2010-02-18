@@ -1,4 +1,4 @@
-/*     $OpenBSD: ispvar.h,v 1.27 2009/06/24 11:00:53 krw Exp $ */
+/*     $OpenBSD: ispvar.h,v 1.28 2010/02/18 10:40:53 sobrado Exp $ */
 /* $FreeBSD: src/sys/dev/isp/ispvar.h,v 1.85 2007/07/02 20:08:20 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -27,7 +27,7 @@
  *  SUCH DAMAGE.
  */
 /*
- * Soft Definitions for for Qlogic ISP SCSI adapters.
+ * Soft Definitions for for QLogic ISP SCSI adapters.
  */
 
 #ifndef	_ISPVAR_H
@@ -774,7 +774,7 @@ void isp_done(XS_T *);
  * below).
  *
  * ISPCTL_SCAN_LOOP does a local loop scan. This is only done if the connection
- * topology is NL or FL port (private or public loop). Since the Qlogic f/w
+ * topology is NL or FL port (private or public loop). Since the QLogic f/w
  * 'automatically' manages local loop connections, this function essentially
  * notes the arrival, departure, and possible shuffling around of local loop
  * entities. Thus for each arrival and departure this generates an isp_async
@@ -1002,7 +1002,7 @@ int isp_async(struct ispsoftc *, ispasync_t, void *);
  *		read from NVRAM (possibly corrected for card botches).
  *		Each platform can take that information and override
  *		it or ignore and return the Node and Port WWNs to be
- * 		used when sending the Qlogic f/w the Initialization
+ * 		used when sending the QLogic f/w the Initialization
  *		Control Block.
  *
  *	(XXX these do endian specific transformations- in transition XXX)
