@@ -41,7 +41,7 @@ rd_setup:
 	echo 'u\ne 0\n83\n\n63\n*\nw\nq\n' | fdisk -e ${VND} > /dev/null
 	echo 'w\ny\nq\n' | disklabel -E ${VND} > /dev/null
 	newfs_ext2fs ${VND_RIDEV}
-	fsck_ext2fs -f ${VND_RIDEV}
+	fsck_ext2fs ${VND_RIDEV}
 	mount ${VND_IDEV} ${MOUNT_POINT}
 
 rd_teardown:
