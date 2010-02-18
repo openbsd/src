@@ -144,7 +144,7 @@ matching principals.
 Commands include:
 .\" not using a list here, since groff apparently gets confused
 .\" with nested Xo/Xc
-.Bd -ragged -offset indent
+.Pp
 .Nm add
 .Op Fl r | Fl -random-key
 .Op Fl -random-password
@@ -159,7 +159,6 @@ Commands include:
 .Op Fl -expiration-time= Ns Ar time
 .Op Fl -pw-expiration-time= Ns Ar time
 .Ar principal...
-.Pp
 .Bd -ragged -offset indent
 Adds a new principal to the database. The options not passed on the
 command line will be promped for.
@@ -167,14 +166,12 @@ command line will be promped for.
 .Pp
 .Nm delete
 .Ar principal...
-.Pp
 .Bd -ragged -offset indent
 Removes a principal.
 .Ed
 .Pp
 .Nm del_enctype
 .Ar principal enctypes...
-.Pp
 .Bd -ragged -offset indent
 Removes some enctypes from a principal; this can be useful if the service
 belonging to the principal is known to not handle certain enctypes.
@@ -186,7 +183,6 @@ belonging to the principal is known to not handle certain enctypes.
 .Xc
 .Oc
 .Ar principal...
-.Pp
 .Bd -ragged -offset indent
 Creates a keytab with the keys of the specified principals.
 .Ed
@@ -197,7 +193,6 @@ Creates a keytab with the keys of the specified principals.
 .Op Fl t | Fl -terse
 .Op Fl o Ar string | Fl -column-info= Ns Ar string
 .Ar principal...
-.Pp
 .Bd -ragged -offset indent
 Lists the matching principals, short prints the result as a table,
 while long format produces a more verbose output. Which columns to
@@ -244,7 +239,6 @@ and
 .Op Fl -pw-expiration-time= Ns Ar time
 .Op Fl -kvno= Ns Ar number
 .Ar principal...
-.Pp
 .Bd -ragged -offset indent
 Modifies certain attributes of a principal. If run without command
 line options, you will be prompted. With command line options, it will
@@ -280,7 +274,6 @@ kadmin -l modify -a -disallow-proxiable user
 .Oc
 .Op Fl -key= Ns Ar string
 .Ar principal...
-.Pp
 .Bd -ragged -offset indent
 Changes the password of an existing principal.
 .Ed
@@ -288,7 +281,6 @@ Changes the password of an existing principal.
 .Nm password-quality
 .Ar principal
 .Ar password
-.Pp
 .Bd -ragged -offset indent
 Run the password quality check function locally.
 You can run this on the host that is configured to run the kadmind
@@ -298,7 +290,6 @@ no rpc call is done to the server.
 .Ed
 .Pp
 .Nm privileges
-.Pp
 .Bd -ragged -offset indent
 Lists the operations you are allowed to perform. These include
 .Li add ,
@@ -312,7 +303,6 @@ and
 .Pp
 .Nm rename
 .Ar from to
-.Pp
 .Bd -ragged -offset indent
 Renames a principal. This is normally transparent, but since keys are
 salted with the principal name, they will have a non-standard salt,
@@ -320,14 +310,11 @@ and clients which are unable to cope with this will fail. Kerberos 4
 suffers from this.
 .Ed
 .Pp
-.Ed
-.Pp
 When running in local mode, the following commands can also be used:
-.Bd -ragged -offset indent
+.Pp
 .Nm dump
 .Op Fl d | Fl -decrypt
 .Op Ar dump-file
-.Pp
 .Bd -ragged -offset indent
 Writes the database in
 .Dq human readable
@@ -341,7 +328,6 @@ is used.
 .Op Fl -realm-max-ticket-life= Ns Ar string
 .Op Fl -realm-max-renewable-life= Ns Ar string
 .Ar realm
-.Pp
 .Bd -ragged -offset indent
 Initializes the Kerberos database with entries for a new realm. It's
 possible to have more than one realm served by one server.
@@ -349,7 +335,6 @@ possible to have more than one realm served by one server.
 .Pp
 .Nm load
 .Ar file
-.Pp
 .Bd -ragged -offset indent
 Reads a previously dumped database, and re-creates that database from
 scratch.
@@ -357,7 +342,6 @@ scratch.
 .Pp
 .Nm merge
 .Ar file
-.Pp
 .Bd -ragged -offset indent
 Similar to
 .Nm load
@@ -375,11 +359,8 @@ but just modifies the database with the entries in the dump file.
 .Oc
 .Op Fl -convert-file
 .Op Fl -master-key-fd= Ns Ar fd
-.Pp
 .Bd -ragged -offset indent
 Writes the Kerberos master key to a file used by the KDC.
-.Ed
-.Pp
 .Ed
 .\".Sh ENVIRONMENT
 .\".Sh FILES
