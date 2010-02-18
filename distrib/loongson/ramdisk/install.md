@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2010/02/18 20:20:52 otto Exp $
+#	$OpenBSD: install.md,v 1.3 2010/02/18 22:15:12 otto Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ quit
 __EOT
 			echo "done."
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -t ext2fs ${_disk}i
+			newfs -qt ext2fs ${_disk}i
 			break ;;
 		e*|E*)
 			# Manually configure the MBR.
