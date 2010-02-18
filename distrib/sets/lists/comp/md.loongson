@@ -296,6 +296,7 @@
 ./usr/libdata/ldscripts/elf64btsmip.xs
 ./usr/libdata/ldscripts/elf64btsmip.xsc
 ./usr/libdata/ldscripts/elf64btsmip.xu
+./usr/libdata/ldscripts/elf64btsmip.xz
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.x
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xbn
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xc
@@ -305,7 +306,6 @@
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xsc
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xu
 ./usr/libdata/ldscripts/elf64ltsmip_obsd.xz
-./usr/libdata/ldscripts/elf64btsmip.xz
 ./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/readelf.0

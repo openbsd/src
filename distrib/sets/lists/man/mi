@@ -2809,8 +2809,6 @@
 ./usr/share/man/cat8/ldpd.0
 ./usr/share/man/cat8/lmccontrol.0
 ./usr/share/man/cat8/locate.updatedb.0
-./usr/share/man/cat8/loongson
-./usr/share/man/cat8/loongson/MAKEDEV.0
 ./usr/share/man/cat8/login_activ.0
 ./usr/share/man/cat8/login_chpass.0
 ./usr/share/man/cat8/login_crypto.0
@@ -2825,6 +2823,8 @@
 ./usr/share/man/cat8/login_tis.0
 ./usr/share/man/cat8/login_token.0
 ./usr/share/man/cat8/logresolve.0
+./usr/share/man/cat8/loongson
+./usr/share/man/cat8/loongson/MAKEDEV.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
 ./usr/share/man/cat8/luna88k
@@ -2902,6 +2902,7 @@
 ./usr/share/man/cat8/netstart.0
 ./usr/share/man/cat8/newaliases.0
 ./usr/share/man/cat8/newfs.0
+./usr/share/man/cat8/newfs_ext2fs.0
 ./usr/share/man/cat8/newfs_msdos.0
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0

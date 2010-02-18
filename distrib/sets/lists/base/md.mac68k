@@ -634,8 +634,8 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/auto/threads/threads.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/encoding.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/lib.pm
-./usr/libdata/perl5/m68k-openbsd/5.10.1/ops.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/mro.pm
+./usr/libdata/perl5/m68k-openbsd/5.10.1/ops.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/re.pm
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/threads
 ./usr/libdata/perl5/m68k-openbsd/5.10.1/threads.pm

@@ -5131,6 +5131,7 @@
 ./usr/share/man/cat3/ntohl.0
 ./usr/share/man/cat3/ntohs.0
 ./usr/share/man/cat3/ocurses.0
+./usr/share/man/cat3/offsetof.0
 ./usr/share/man/cat3/ohash_create_entry.0
 ./usr/share/man/cat3/ohash_delete.0
 ./usr/share/man/cat3/ohash_entries.0

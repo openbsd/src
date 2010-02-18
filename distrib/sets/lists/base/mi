@@ -136,6 +136,7 @@
 ./sbin/ncheck
 ./sbin/ncheck_ffs
 ./sbin/newfs
+./sbin/newfs_ext2fs
 ./sbin/newfs_msdos
 ./sbin/nfsd
 ./sbin/nologin
