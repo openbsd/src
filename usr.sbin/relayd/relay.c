@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.118 2010/01/11 06:40:14 jsg Exp $	*/
+/*	$OpenBSD: relay.c,v 1.119 2010/02/18 16:33:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -101,6 +101,7 @@ char		*relay_expand_http(struct ctl_relay_event *, char *,
 		    char *, size_t);
 void		 relay_close_http(struct rsession *, u_int, const char *,
 		    u_int16_t);
+void		 relay_http_request_close(struct ctl_relay_event *);
 
 SSL_CTX		*relay_ssl_ctx_create(struct relay *);
 void		 relay_ssl_transaction(struct rsession *,
@@ -1302,6 +1303,29 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 }
 
 void
+relay_http_request_close(struct ctl_relay_event *cre)
+{
+	if (cre->path != NULL) {
+		free(cre->path);
+		cre->path = NULL;
+	}
+
+	cre->args = NULL;
+	cre->version = NULL;
+
+	if (cre->buf != NULL) {
+		free(cre->buf);
+		cre->buf = NULL;
+		cre->buflen = 0;
+	}
+
+	cre->line = 0;
+	cre->method = 0;
+	cre->done = 0;
+	cre->chunked = 0;
+}
+
+void
 relay_read_http(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = (struct ctl_relay_event *)arg;
@@ -1570,10 +1594,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (relay_bufferevent_print(cre->dst, "\r\n") == -1)
 			goto fail;
 
-		cre->line = 0;
-		cre->method = 0;
-		cre->done = 0;
-		cre->chunked = 0;
+		relay_http_request_close(cre);
 
  done:
 		if (cre->dir == RELAY_DIR_REQUEST && !cre->toread &&
