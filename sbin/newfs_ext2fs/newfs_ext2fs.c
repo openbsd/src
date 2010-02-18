@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.4 2010/02/17 19:26:10 otto Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.5 2010/02/18 07:58:14 otto Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
 	verbosity = -1;
-	opstring = "D:FINO:S:V:Zb:f:i:l:m:n:s:t:v:";
+	opstring = "D:FINO:S:V:Zb:f:i:l:m:n:qs:t:v:";
 	byte_sized = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
@@ -186,6 +186,9 @@ main(int argc, char *argv[])
 		case 'n':
 			num_inodes = strsuftoi64("number of inodes",
 			    optarg, 1, INT_MAX, NULL);
+			break;
+		case 'q':
+			verbosity = 1;
 			break;
 		case 's':
 			fssize = strsuftoi64("file system size",
