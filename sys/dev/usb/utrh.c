@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.2 2009/12/19 05:49:58 yuo Exp $   */
+/*	$OpenBSD: utrh.c,v 1.3 2010/02/18 23:34:05 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -151,17 +151,12 @@ utrh_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_hdev.sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-	strlcpy(sc->sc_sensor[UTRH_TEMP].desc, "temp",
-	    sizeof(sc->sc_sensor[UTRH_TEMP].desc));
 	sc->sc_sensor[UTRH_TEMP].type = SENSOR_TEMP;
-	sc->sc_sensor[UTRH_TEMP].status = SENSOR_S_UNSPEC;
 	sc->sc_sensor[UTRH_TEMP].flags = SENSOR_FINVALID;
 
 	strlcpy(sc->sc_sensor[UTRH_HUMIDITY].desc, "humidity",
 	    sizeof(sc->sc_sensor[UTRH_HUMIDITY].desc));
 	sc->sc_sensor[UTRH_HUMIDITY].type = SENSOR_PERCENT;
-	sc->sc_sensor[UTRH_HUMIDITY].value = 0;
-	sc->sc_sensor[UTRH_HUMIDITY].status = SENSOR_S_UNSPEC;
 	sc->sc_sensor[UTRH_HUMIDITY].flags = SENSOR_FINVALID;
 
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[UTRH_TEMP]);

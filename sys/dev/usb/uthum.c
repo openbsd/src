@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.7 2010/02/17 14:06:10 yuo Exp $   */
+/*	$OpenBSD: uthum.c,v 1.8 2010/02/18 23:34:05 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -179,17 +179,12 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (sc->sc_sensortype) {
 	case UTHUM_TYPE_SHT1x:
-		strlcpy(sc->sc_sensor[UTHUM_TEMP].desc, "temp",
-		    sizeof(sc->sc_sensor[UTHUM_TEMP].desc));
 		sc->sc_sensor[UTHUM_TEMP].type = SENSOR_TEMP;
-		sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_UNSPEC;
 		sc->sc_sensor[UTHUM_TEMP].flags = SENSOR_FINVALID;
 
 		strlcpy(sc->sc_sensor[UTHUM_HUMIDITY].desc, "humidity",
 		    sizeof(sc->sc_sensor[UTHUM_HUMIDITY].desc));
 		sc->sc_sensor[UTHUM_HUMIDITY].type = SENSOR_PERCENT;
-		sc->sc_sensor[UTHUM_HUMIDITY].value = 0;
-		sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_UNSPEC;
 		sc->sc_sensor[UTHUM_HUMIDITY].flags = SENSOR_FINVALID;
 
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[UTHUM_TEMP]);
