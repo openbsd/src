@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettytab.5,v 1.18 2008/10/16 16:22:10 jmc Exp $
+.\"	$OpenBSD: gettytab.5,v 1.19 2010/02/18 13:00:18 schwarze Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 16 2008 $
+.Dd $Mdocdate: February 18 2010 $
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ hangup line on last close.
 .No "``Literal next'' character."
 .It "lo	str" Ta Pa /usr/bin/login Ta
 .No "Program to execute when name obtained."
-.It "mb	bool	false	Do flow control based on carrier."
+.It "mb	bool	false	\&Do flow control based on carrier."
 .It "nl	bool	false	Terminal has (or might have) a newline character."
 .It "np	bool	false	Terminal uses no parity (i.e., 8-bit characters)."
 .It "nx	str	default	Next table (for auto speed selection)."
@@ -163,7 +163,7 @@ use raw for input, use cbreak.
 .It "to	num	0	Timeout (seconds)."
 .It "tt	str" Ta Dv NULL Ta
 .No "Terminal type (for environment)."
-.It "ub	bool	false	Do unbuffered output (of prompts etc)."
+.It "ub	bool	false	\&Do unbuffered output (of prompts etc)."
 .It "we	str" Ta So Li ^W Sc Ta
 .No "Word erase character."
 .It "xc	bool	false	Do"
