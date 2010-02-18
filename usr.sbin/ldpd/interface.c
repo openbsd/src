@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: interface.c,v 1.2 2010/02/18 10:50:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -431,9 +431,9 @@ if_set_recvbuf(int fd)
 int
 if_set_reuse(int fd, int enable)
 {
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable,
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable,
 	    sizeof(int)) < 0) {
-		log_warn("if_set_reuse: error setting SO_REUSEPORT");
+		log_warn("if_set_reuse: error setting SO_REUSEADDR");
 		return (-1);
 	}
 
