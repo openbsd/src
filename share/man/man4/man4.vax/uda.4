@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.18 2007/05/31 19:19:57 jmc Exp $
+.\"	$OpenBSD: uda.4,v 1.19 2010/02/18 13:23:38 schwarze Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)uda.4	6.6 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 18 2010 $
 .Dt UDA 4 vax
 .Os
 .Sh NAME
@@ -398,6 +398,7 @@ This message may be followed by
 one of the following 5 messages, depending on its type, and will always
 be followed by a failure detail message (also listed below).
 .Bd -filled -offset indent
+.Bl -diag
 .It memory addr 0x%x
 A host memory access error; this is the address that could not be
 read.
@@ -429,10 +430,12 @@ Yet another kind of disk error, but for small disks.
 .Pc
 .It "unit %d: unknown error, format 0x%x"
 A mysterious error: the given format code is not known.
+.El
 .Ed
 .Pp
 The detail messages are as follows:
 .Bd -filled -offset indent
+.Bl -diag
 .It success (%s) (code 0, subcode %d)
 Everything worked, but the controller thought it would let you know
 that something went wrong.
@@ -520,6 +523,7 @@ scrambled.
 I have no idea what `lost recvr ready' means.
 A `drive detected error' is a catch-all for drive hardware trouble; `ctlr
 detected pulse or parity' errors are often caused by cabling problems.
+.El
 .Ed
 .El
 .Sh SEE ALSO
