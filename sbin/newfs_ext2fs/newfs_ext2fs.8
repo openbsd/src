@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_ext2fs.8,v 1.3 2010/02/18 07:58:14 otto Exp $
+.\"	$OpenBSD: newfs_ext2fs.8,v 1.4 2010/02/18 12:32:00 jmc Exp $
 .\"	$NetBSD: newfs_ext2fs.8,v 1.7 2009/12/01 08:47:25 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl FINZ
+.Op Fl FINqZ
 .Op Fl b Ar block-size
 .Op Fl D Ar inodesize
 .Op Fl f Ar frag-size
@@ -180,6 +180,7 @@ Enable files larger than 2G bytes.
 .El
 .El
 .It Fl q
+Operate in quiet mode.
 Equivalent to
 .Fl V Ar 1 .
 .It Fl s Ar size
