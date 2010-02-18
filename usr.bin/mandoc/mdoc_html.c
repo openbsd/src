@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.6 2010/01/02 02:42:06 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.7 2010/02/18 02:11:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -262,7 +262,7 @@ html_mdoc(void *arg, const struct mdoc *m)
 
 	h = (struct html *)arg;
 
-	print_gen_doctype(h);
+	print_gen_decls(h);
 	t = print_otag(h, TAG_HTML, 0, NULL);
 	print_mdoc(mdoc_meta(m), mdoc_node(m), h);
 	print_tagq(h, t);
@@ -1579,7 +1579,7 @@ mdoc_vt_pre(MDOC_ARGS)
 	struct htmlpair	 tag;
 	struct roffsu	 su;
 
-	if (SEC_SYNOPSIS == n->sec) {
+	if (MDOC_BLOCK == n->type) {
 		if (n->prev && MDOC_Vt != n->prev->tok) {
 			SCALE_VS_INIT(&su, 1);
 			bufcat_su(h, "margin-top", &su);
@@ -1587,7 +1587,10 @@ mdoc_vt_pre(MDOC_ARGS)
 			print_otag(h, TAG_DIV, 1, &tag);
 		} else
 			print_otag(h, TAG_DIV, 0, NULL);
-	}
+
+		return(1);
+	} else if (MDOC_HEAD == n->type)
+		return(0);
 
 	PAIR_CLASS_INIT(&tag, "type");
 	print_otag(h, TAG_SPAN, 1, &tag);

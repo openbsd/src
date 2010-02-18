@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.20 2009/12/23 22:30:17 schwarze Exp $ */
+/*	$Id: main.c,v 1.21 2010/02/18 02:11:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -49,6 +49,7 @@ enum	outt {
 	OUTT_ASCII = 0,
 	OUTT_TREE,
 	OUTT_HTML,
+	OUTT_XHTML,
 	OUTT_LINT
 };
 
@@ -416,6 +417,12 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 
 	if ( ! (curp->outman && curp->outmdoc)) {
 		switch (curp->outtype) {
+		case (OUTT_XHTML):
+			curp->outdata = xhtml_alloc(curp->outopts);
+			curp->outman = html_man;
+			curp->outmdoc = html_mdoc;
+			curp->outfree = html_free;
+			break;
 		case (OUTT_HTML):
 			curp->outdata = html_alloc(curp->outopts);
 			curp->outman = html_man;
@@ -538,6 +545,8 @@ toptions(enum outt *tflags, char *arg)
 		*tflags = OUTT_TREE;
 	else if (0 == strcmp(arg, "html"))
 		*tflags = OUTT_HTML;
+	else if (0 == strcmp(arg, "xhtml"))
+		*tflags = OUTT_XHTML;
 	else {
 		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);

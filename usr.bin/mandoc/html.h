@@ -1,4 +1,4 @@
-/*	$Id: html.h,v 1.4 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: html.h,v 1.5 2010/02/18 02:11:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,7 +28,6 @@ enum	htmltag {
 	TAG_DIV,
 	TAG_H1,
 	TAG_H2,
-	TAG_P,
 	TAG_SPAN,
 	TAG_LINK,
 	TAG_BR,
@@ -40,7 +39,6 @@ enum	htmltag {
 	TAG_LI,
 	TAG_UL,
 	TAG_OL,
-	TAG_BASE,
 	TAG_MAX
 };
 
@@ -105,6 +103,11 @@ struct	htmlpair {
 	do { (p)->key = ATTR_SUMMARY; \
 	(p)->val = (v); } while (/* CONSTCOND */ 0)
 
+enum	htmltype {
+	HTML_HTML_4_01_STRICT,
+	HTML_XHTML_1_0_STRICT
+};
+
 struct	html {
 	int		  flags;
 #define	HTML_NOSPACE	 (1 << 0)
@@ -121,11 +124,12 @@ struct	html {
 	struct tag	 *metaf;
 	enum htmlfont	  metal;
 	enum htmlfont	  metac;
+	enum htmltype	  type;
 };
 
 struct	roffsu;
 
-void		  print_gen_doctype(struct html *);
+void		  print_gen_decls(struct html *);
 void		  print_gen_head(struct html *);
 struct tag	 *print_ofont(struct html *, enum htmlfont);
 struct tag	 *print_otag(struct html *, enum htmltag, 

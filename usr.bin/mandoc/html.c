@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.5 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: html.c,v 1.6 2010/02/18 02:11:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -32,38 +32,34 @@
 
 #define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
-#define	DOCTYPE		"-//W3C//DTD HTML 4.01//EN"
-#define	DTD		"http://www.w3.org/TR/html4/strict.dtd"
-
 struct	htmldata {
 	const char	 *name;
 	int		  flags;
 #define	HTML_CLRLINE	 (1 << 0)
 #define	HTML_NOSTACK	 (1 << 1)
+#define	HTML_AUTOCLOSE	 (1 << 2) /* Tag has auto-closure. */
 };
 
 static	const struct htmldata htmltags[TAG_MAX] = {
 	{"html",	HTML_CLRLINE}, /* TAG_HTML */
 	{"head",	HTML_CLRLINE}, /* TAG_HEAD */
 	{"body",	HTML_CLRLINE}, /* TAG_BODY */
-	{"meta",	HTML_CLRLINE | HTML_NOSTACK}, /* TAG_META */
+	{"meta",	HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_META */
 	{"title",	HTML_CLRLINE}, /* TAG_TITLE */
 	{"div",		HTML_CLRLINE}, /* TAG_DIV */
 	{"h1",		0}, /* TAG_H1 */
 	{"h2",		0}, /* TAG_H2 */
-	{"p",		HTML_CLRLINE}, /* TAG_P */
 	{"span",	0}, /* TAG_SPAN */
 	{"link",	HTML_CLRLINE | HTML_NOSTACK}, /* TAG_LINK */
-	{"br",		HTML_CLRLINE | HTML_NOSTACK}, /* TAG_LINK */
+	{"br",		HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_BR */
 	{"a",		0}, /* TAG_A */
 	{"table",	HTML_CLRLINE}, /* TAG_TABLE */
-	{"col",		HTML_CLRLINE | HTML_NOSTACK}, /* TAG_COL */
+	{"col",		HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_COL */
 	{"tr",		HTML_CLRLINE}, /* TAG_TR */
 	{"td",		HTML_CLRLINE}, /* TAG_TD */
 	{"li",		HTML_CLRLINE}, /* TAG_LI */
 	{"ul",		HTML_CLRLINE}, /* TAG_UL */
 	{"ol",		HTML_CLRLINE}, /* TAG_OL */
-	{"base",	HTML_CLRLINE | HTML_NOSTACK}, /* TAG_BASE */
 };
 
 static	const char	*const htmlfonts[HTMLFONT_MAX] = {
@@ -93,12 +89,17 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 static	void		  print_spec(struct html *, const char *, size_t);
 static	void		  print_res(struct html *, const char *, size_t);
 static	void		  print_ctag(struct html *, enum htmltag);
+static	void		  print_doctype(struct html *);
+static	void		  print_xmltype(struct html *);
 static	int		  print_encode(struct html *, const char *, int);
 static	void		  print_metaf(struct html *, enum roffdeco);
+static	void		  print_attr(struct html *, 
+				const char *, const char *);
+static	void		 *ml_alloc(char *, enum htmltype);
 
 
-void *
-html_alloc(char *outopts)
+static void *
+ml_alloc(char *outopts, enum htmltype type)
 {
 	struct html	*h;
 	const char	*toks[4];
@@ -115,6 +116,7 @@ html_alloc(char *outopts)
 		exit(EXIT_FAILURE);
 	}
 
+	h->type = type;
 	h->tags.head = NULL;
 	h->ords.head = NULL;
 	h->symtab = chars_init(CHARS_HTML);
@@ -135,6 +137,21 @@ html_alloc(char *outopts)
 		}
 
 	return(h);
+}
+
+void *
+html_alloc(char *outopts)
+{
+
+	return(ml_alloc(outopts, HTML_HTML_4_01_STRICT));
+}
+
+
+void *
+xhtml_alloc(char *outopts)
+{
+
+	return(ml_alloc(outopts, HTML_XHTML_1_0_STRICT));
 }
 
 
@@ -333,12 +350,23 @@ print_encode(struct html *h, const char *p, int norecurse)
 }
 
 
+static void
+print_attr(struct html *h, const char *key, const char *val)
+{
+	printf(" %s=\"", key);
+	(void)print_encode(h, val, 1);
+	putchar('\"');
+}
+
+
 struct tag *
 print_otag(struct html *h, enum htmltag tag, 
 		int sz, const struct htmlpair *p)
 {
 	int		 i;
 	struct tag	*t;
+
+	/* Push this tags onto the stack of open scopes. */
 
 	if ( ! (HTML_NOSTACK & htmltags[tag].flags)) {
 		t = malloc(sizeof(struct tag));
@@ -356,13 +384,31 @@ print_otag(struct html *h, enum htmltag tag,
 		if ( ! (HTML_CLRLINE & htmltags[tag].flags))
 			putchar(' ');
 
+	/* Print out the tag name and attributes. */
+
 	printf("<%s", htmltags[tag].name);
-	for (i = 0; i < sz; i++) {
-		printf(" %s=\"", htmlattrs[p[i].key]);
-		assert(p->val);
-		(void)print_encode(h, p[i].val, 1);
-		putchar('\"');
+	for (i = 0; i < sz; i++)
+		print_attr(h, htmlattrs[p[i].key], p[i].val);
+
+	/* Add non-overridable attributes. */
+
+	if (TAG_HTML == tag && HTML_XHTML_1_0_STRICT == h->type) {
+		print_attr(h, "xmlns", "http://www.w3.org/1999/xhtml");
+		print_attr(h, "xml:lang", "en");
+		print_attr(h, "lang", "en");
 	}
+
+	/* Accomodate for XML "well-formed" singleton escaping. */
+
+	if (HTML_AUTOCLOSE & htmltags[tag].flags)
+		switch (h->type) {
+		case (HTML_XHTML_1_0_STRICT):
+			putchar('/');
+			break;
+		default:
+			break;
+		}
+
 	putchar('>');
 
 	h->flags |= HTML_NOSPACE;
@@ -382,12 +428,58 @@ print_ctag(struct html *h, enum htmltag tag)
 }
 
 
-/* ARGSUSED */
 void
-print_gen_doctype(struct html *h)
+print_gen_decls(struct html *h)
 {
-	
-	printf("<!DOCTYPE HTML PUBLIC \"%s\" \"%s\">", DOCTYPE, DTD);
+
+	print_xmltype(h);
+	print_doctype(h);
+}
+
+
+static void
+print_xmltype(struct html *h)
+{
+	const char	*decl;
+
+	switch (h->type) {
+	case (HTML_XHTML_1_0_STRICT):
+		decl = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+		break;
+	default:
+		decl = NULL;
+		break;
+	}
+
+	if (NULL == decl)
+		return;
+
+	printf("%s\n", decl);
+}
+
+
+static void
+print_doctype(struct html *h)
+{
+	const char	*doctype;
+	const char	*dtd;
+	const char	*name;
+
+	switch (h->type) {
+	case (HTML_HTML_4_01_STRICT):
+		name = "HTML";
+		doctype = "-//W3C//DTD HTML 4.01//EN";
+		dtd = "http://www.w3.org/TR/html4/strict.dtd";
+		break;
+	default:
+		name = "html";
+		doctype = "-//W3C//DTD XHTML 1.0 Strict//EN";
+		dtd = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
+		break;
+	}
+
+	printf("<!DOCTYPE %s PUBLIC \"%s\" \"%s\">\n", 
+			name, doctype, dtd);
 }
 
 

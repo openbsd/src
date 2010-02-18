@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.4 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.5 2010/02/18 02:11:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -110,7 +110,7 @@ html_man(void *arg, const struct man *m)
 
 	h = (struct html *)arg;
 
-	print_gen_doctype(h);
+	print_gen_decls(h);
 
 	t = print_otag(h, TAG_HTML, 0, NULL);
 	print_man(man_meta(m), man_node(m), h);

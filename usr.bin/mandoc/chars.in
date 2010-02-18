@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.3 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: chars.in,v 1.4 2010/02/18 02:11:25 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -412,7 +412,6 @@ CHAR("r?",			2,	"c",		1,	"&#191;",	6)
 CHAR("em",			2, 	"--",		2,	"&#8212;",	7)
 CHAR("en",			2, 	"-",		1,	"&#8211;",	7)
 CHAR("hy",			2, 	"-",		1,	"&#8208;",	7)
-CHAR("\\",			1,	"\\",		1,	"\\",		1)
 CHAR("e",			1,	"\\",		1,	"\\",		1)
 
 /* Units. */

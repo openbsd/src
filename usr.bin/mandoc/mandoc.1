@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.20 2009/12/24 02:08:14 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.21 2010/02/18 02:11:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2009 $
+.Dd $Mdocdate: February 18 2010 $
 .Dt MANDOC 1
 .Os
 .
@@ -167,6 +167,10 @@ styles.  This is the default.  See
 Produce strict HTML-4.01 output, with a sane default style.  See
 .Sx HTML Output .
 .
+.It Fl T Ns Ar xhtml
+Produce strict XHTML-1.0 output, with a sane default style.  See
+.Sx XHTML Output .
+.
 .It Fl T Ns Ar tree
 Produce an indented parse tree.
 .
@@ -231,7 +235,7 @@ relative URI.
 .It Fl O Ns Ar includes=fmt
 The string
 .Ar fmt ,
-for example, 
+for example,
 .Ar ../src/%I.html ,
 is used as a template for linked header files (usually via the
 .Sq \&In
@@ -242,7 +246,7 @@ hyperlink.
 .It Fl O Ns Ar man=fmt
 The string
 .Ar fmt ,
-for example, 
+for example,
 .Ar ../html%S/%N.%S.html ,
 is used as a template for linked manuals (usually via the
 .Sq \&Xr
@@ -260,7 +264,7 @@ present a hyperlink.
 This section documents output details of
 .Nm .
 In general, output conforms to the traditional manual style of a header,
-a body composed of sections and sub-sections, and a footer.  
+a body composed of sections and sub-sections, and a footer.
 .Pp
 The text style of output characters (non-macro characters, punctuation,
 and white-space) is dictated by context.
@@ -307,7 +311,7 @@ however, these rules are also applied to macro arguments when appropriate.
 .
 .
 .Ss ASCII Output
-Output produced by 
+Output produced by
 .Fl T Ns Ar ascii ,
 which is the default, is rendered in standard 7-bit ASCII documented in
 .Xr ascii 7 .
@@ -333,7 +337,7 @@ exceed this limit.
 .Ss HTML Output
 Output produced by
 .Fl T Ns Ar html
-comforms to HTML-4.01 strict.
+conforms to HTML-4.01 strict.
 .Pp
 Font styles and page structure are applied using CSS2.  By default, no
 font style is applied to any text, although CSS2 is hard-coded to format
@@ -346,6 +350,17 @@ cause rendered documents to appear as they do in
 .Fl T Ns Ar ascii .
 .Pp
 Special characters are rendered in decimal-encoded UTF-8.
+.
+.
+.Ss XHTML Output
+Output produced by
+.Fl T Ns Ar xhtml
+conforms to XHTML-1.0 strict.
+.Pp
+See
+.Sx HTML Output
+for details; beyond generating XHTML tags instead of HTML tags, these
+output modes are identical.
 .
 .
 .Sh EXAMPLES
@@ -379,15 +394,15 @@ Each input and output format is separately noted.
 .Ss ASCII Compatibility
 .Bl -bullet -compact
 .It
-The 
+The
 .Sq \e~
-special character doesn't produce expected behaviour in 
+special character doesn't produce expected behaviour in
 .Fl T Ns Ar ascii .
 .
 .It
-The 
+The
 .Sq \&Bd \-literal
-and 
+and
 .Sq \&Bd \-unfilled
 macros of
 .Xr mdoc 7
@@ -396,7 +411,7 @@ in
 are synonyms, as are \-filled and \-ragged.
 .
 .It
-In 
+In
 .Xr groff 1 ,
 the
 .Sq \&Pa
@@ -437,7 +452,7 @@ Sentences are unilaterally monospaced.
 .El
 .
 .
-.Ss HTML Compatibility
+.Ss HTML/XHTML Compatibility
 .Bl -bullet -compact
 .It
 The
@@ -446,7 +461,7 @@ escape will revert the font to the previous
 .Sq \ef
 escape, not to the last rendered decoration, which is now dictated by
 CSS instead of hard-coded.  It also will not span past the current
-scope, for the same reason.  Note that in 
+scope, for the same reason.  Note that in
 .Sx ASCII Output
 mode, this will work fine.
 .It
@@ -483,13 +498,17 @@ utility was written by
 .Sh CAVEATS
 The
 .Fl T Ns Ar html
+and
+.Fl T Ns Ar xhtml
 CSS2 styling used for
 .Fl m Ns Ar doc
 input lists does not render properly in brain-dead browsers, such as
 Internet Explorer 6 and earlier.
 .Pp
 In
-.Fl T Ns Ar html ,
+.Fl T Ns Ar html
+and
+.Fl T Ns Ar xhtml ,
 the maximum size of an element attribute is determined by
 .Dv BUFSIZ ,
 which is usually 1024 bytes.  Be aware of this when setting long link
@@ -498,7 +517,9 @@ formats, e.g.,
 .Pp
 The
 .Fl T Ns Ar html
-output mode doesn't render the
+and
+.Fl T Ns Ar xhtml
+output modes don't render the
 .Sq \es
 font size escape documented in
 .Xr mdoc 7

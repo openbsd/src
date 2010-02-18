@@ -1,6 +1,6 @@
-.\"	$Id: man.3,v 1.6 2009/10/20 10:15:04 schwarze Exp $
+.\"	$Id: man.3,v 1.7 2010/02/18 02:11:26 schwarze Exp $
 .\"
-.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+.\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2009 $
+.Dd $Mdocdate: February 18 2010 $
 .Dt MAN 3
 .Os
 .\" SECTION
@@ -91,7 +91,7 @@ Both functions (see
 and variables (see
 .Sx Variables )
 may use the following types:
-.Bl -ohang -offset "XXXX"
+.Bl -ohang
 .\" LIST-ITEM
 .It Vt struct man
 An opaque type defined in
@@ -112,7 +112,7 @@ for details.
 .\" SUBSECTION
 .Ss Functions
 Function descriptions follow:
-.Bl -ohang -offset "XXXX"
+.Bl -ohang
 .\" LIST-ITEM
 .It Fn man_alloc
 Allocates a parsing structure.  The
@@ -166,7 +166,7 @@ return 0, the data will be incomplete.
 .\" SUBSECTION
 .Ss Variables
 The following variables are also defined:
-.Bl -ohang -offset "XXXX"
+.Bl -ohang
 .\" LIST-ITEM
 .It Va man_macronames
 An array of string-ified token names.
@@ -215,7 +215,7 @@ fields) and some type-specific data.
 The tree itself is arranged according to the following normal form,
 where capitalised non-terminals represent nodes.
 .Pp
-.Bl -tag -width "ELEMENTXX" -compact -offset "XXXX"
+.Bl -tag -width "ELEMENTXX" -compact
 .\" LIST-ITEM
 .It ROOT
 \(<- mnode+
@@ -242,11 +242,8 @@ next-lint scope as documented in
 The following example reads lines from stdin and parses them, operating
 on the finished parse tree with
 .Fn parsed .
-Note that, if the last line of the file isn't newline-terminated, this
-will truncate the file's last character (see
-.Xr fgetln 3 ) .
-Further, this example does not error-check nor free memory upon failure.
-.Bd -literal -offset "XXXX"
+This example does not error-check nor free memory upon failure.
+.Bd -literal -offset indent
 struct man *man;
 struct man_node *node;
 char *buf;
@@ -255,18 +252,23 @@ int line;
 
 line = 1;
 man = man_alloc(NULL, 0, NULL);
+buf = NULL;
+alloc_len = 0;
 
-while ((buf = fgetln(fp, &len))) {
-	buf[len - 1] = '\\0';
-	if ( ! man_parseln(man, line, buf))
-		errx(1, "man_parseln");
-	line++;
+while ((len = getline(&buf, &alloc_len, stdin)) >= 0) {
+    if (len && buflen[len - 1] = '\en')
+        buf[len - 1] = '\e0';
+    if ( ! man_parseln(man, line, buf))
+        errx(1, "man_parseln");
+    line++;
 }
 
+free(buf);
+
 if ( ! man_endparse(man))
-	errx(1, "man_endparse");
+    errx(1, "man_endparse");
 if (NULL == (node = man_node(man)))
-	errx(1, "man_node");
+    errx(1, "man_node");
 
 parsed(man, node);
 man_free(man);
@@ -280,4 +282,4 @@ man_free(man);
 The
 .Nm
 utility was written by
-.An Kristaps Dzonsons Aq kristaps@kth.se .
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .

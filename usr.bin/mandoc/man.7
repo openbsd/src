@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.15 2009/12/24 02:08:14 schwarze Exp $
+.\"	$Id: man.7,v 1.16 2010/02/18 02:11:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2009 $
+.Dd $Mdocdate: February 18 2010 $
 .Dt MAN 7
 .Os
 .
@@ -102,7 +102,7 @@ and
 Terms may be text-decorated using the
 .Sq \ef
 escape followed by an indicator: B (bold), I, (italic), R (Roman), or P
-(revert to previous mode):  
+(revert to previous mode):
 .Pp
 .D1 \efBbold\efR \efIitalic\efP
 .Pp
@@ -295,7 +295,7 @@ the C library, this may be as follows:
 .D1 Standard C Library (libc, -lc)
 .It Em SYNOPSIS
 Documents the utility invocation syntax, function call syntax, or device
-configuration. 
+configuration.
 .Pp
 For the first, utilities (sections 1, 6, and 8), this is
 generally structured as follows:
@@ -310,10 +310,10 @@ And for the third, configurations (section 4):
 .Pp
 .D1 \&.B name* at cardbus ? function ?
 .Pp
-Manuals not in these sections generally don't need a 
+Manuals not in these sections generally don't need a
 .Em SYNOPSIS .
 .It Em DESCRIPTION
-This expands upon the brief, one-line description in 
+This expands upon the brief, one-line description in
 .Em NAME .
 It usually contains a break-down of the options (if documenting a
 command).
@@ -361,7 +361,7 @@ Documents error handling in sections 2, 3, and 9.
 .
 .It Em SEE ALSO
 References other manuals with related topics.  This section should exist
-for most manuals.  
+for most manuals.
 .Pp
 .D1 \&.BR bar \&( 1 \&),
 .Pp
@@ -504,7 +504,7 @@ sub-section, closed by a section or
 .Sx \&SS ;
 part, closed by a section, sub-section, or
 .Sx \&RE ;
-or paragraph, closed by a section, sub-section, part, 
+or paragraph, closed by a section, sub-section, part,
 .Sx \&HP ,
 .Sx \&IP ,
 .Sx \&LP ,
@@ -563,13 +563,13 @@ and
 .
 .
 .Ss \&BI
-Text is rendered alternately in bold face and italic.  Thus, 
+Text is rendered alternately in bold face and italic.  Thus,
 .Sq .BI this word and that
 causes
 .Sq this
 and
 .Sq and
-to render in bold face, while 
+to render in bold face, while
 .Sq word
 and
 .Sq that
@@ -819,7 +819,7 @@ The
 .Cm width
 argument must conform to
 .Sx Scaling Widths .
-If not specified, the saved or default width is used. 
+If not specified, the saved or default width is used.
 .
 .
 .Ss \&SB
@@ -960,7 +960,7 @@ Insert vertical spaces into output with the following syntax:
 .Op Cm height
 .Ed
 .Pp
-Insert 
+Insert
 .Cm height
 spaces, which must conform to
 .Sx Scaling Widths .

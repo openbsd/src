@@ -1,4 +1,4 @@
-/*	$Id: main.h,v 1.1 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: main.h,v 1.2 2010/02/18 02:11:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,6 +30,7 @@ struct	man;
  */
 
 void		 *html_alloc(char *);
+void		 *xhtml_alloc(char *);
 void		  html_mdoc(void *, const struct mdoc *);
 void		  html_man(void *, const struct man *);
 void		  html_free(void *);
