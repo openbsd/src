@@ -2478,6 +2478,7 @@
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/mips64el-openbsd
 ./usr/mdec/boot
+./usr/mdec/mbr
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
