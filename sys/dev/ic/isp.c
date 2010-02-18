@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.47 2009/07/14 18:41:02 miod Exp $ */
+/* 	$OpenBSD: isp.c,v 1.48 2010/02/18 10:16:12 sobrado Exp $ */
 /*	$FreeBSD: src/sys/dev/isp/isp.c,v 1.150 2008/12/15 21:42:38 marius Exp $*/
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -29,7 +29,7 @@
 
 /*
  * Machine and OS Independent (well, as best as possible)
- * code for the Qlogic ISP SCSI and FC-SCSI adapters.
+ * code for the QLogic ISP SCSI and FC-SCSI adapters.
  */
 
 /*
@@ -1086,7 +1086,7 @@ isp_reset(struct ispsoftc *isp)
 	}
 
 	isp_prt(isp, ISP_LOGALL,
-	    "Board Type %s, Chip Revision 0x%x, %s F/W Revision %d.%d.%d",
+	    "Board type %s rev 0x%x, %s firmware rev %d.%d.%d",
 	    btype, isp->isp_revision, dodnld? "loaded" : "resident",
 	    isp->isp_fwrev[0], isp->isp_fwrev[1], isp->isp_fwrev[2]);
 
@@ -4190,7 +4190,7 @@ isp_start(XS_T *xs)
 
 		/*
 		 * Fibre Channel always requires some kind of tag.
-		 * The Qlogic drivers seem be happy not to use a tag,
+		 * The QLogic drivers seem be happy not to use a tag,
 		 * but this breaks for some devices (IBM drives).
 		 */
 		if (XS_TAG_P(xs)) {
@@ -4264,7 +4264,7 @@ isp_start(XS_T *xs)
 
 	/*
 	 * Set up DMA and/or do any bus swizzling of the request entry
-	 * so that the Qlogic F/W understands what is being asked of it.
+	 * so that the QLogic F/W understands what is being asked of it.
 	 */
 	i = ISP_DMASETUP(isp, xs, reqp, &nxti, optr);
 	if (i != CMD_QUEUED) {
@@ -7931,7 +7931,7 @@ isp_parse_nvram_2100(struct ispsoftc *isp, u_int8_t *nvram_data)
 	 * I can find. However, we should account for this being set
 	 * at some point in the future.
 	 *
-	 * Qlogic WWNs have an NAA of 2, but usually nothing shows up in
+	 * QLogic WWNs have an NAA of 2, but usually nothing shows up in
 	 * bits 48..60. In the case of the 2202, it appears that they do
 	 * use bit 48 to distinguish between the two instances on the card.
 	 * The 2204, which I've never seen, *probably* extends this method.
