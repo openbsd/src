@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.66 2009/08/16 09:41:08 sobrado Exp $
+.\" $OpenBSD: openssl.1,v 1.67 2010/02/18 13:39:21 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: February 18 2010 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2964,13 +2964,13 @@ a Netscape certificate sequence is created from a file of certificates.
 .El
 .Sh NSEQ EXAMPLES
 Output the certificates in a Netscape certificate sequence:
-.Bd -literal
-.Dl $ openssl nseq -in nseq.pem -out certs.pem
+.Bd -literal -offset indent
+$ openssl nseq -in nseq.pem -out certs.pem
 .Ed
 .Pp
 Create a Netscape certificate sequence:
-.Bd -literal
-.Dl $ openssl nseq -in certs.pem -toseq -out nseq.pem
+.Bd -literal -offset indent
+$ openssl nseq -in certs.pem -toseq -out nseq.pem
 .Ed
 .Sh NSEQ NOTES
 The PEM-encoded form uses the same headers and footers as a certificate:
