@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.3 2010/02/12 20:58:34 miod Exp $
+dnl	$OpenBSD: prep,v 1.4 2010/02/18 20:44:41 jasper Exp $
 Most MACHINE systems are shipped with a Linux system installed on the disk
 drive or SSD.  This system will likely use two partitions, one for the
 system and applications, and another for the user data. OpenBSD will in turn
@@ -24,6 +24,12 @@ Entering PMON:
     At this menu, you can either select one of the systems to boot with the
     arrows keys and press enter, or abort the countdown sequence and get to
     the PMON commandline by hitting `c'.
+
+    If you have set up your machine to automatically boot into OpenBSD,
+    and want to enter PMON, you should press the `Del' key or
+    `ESC [ G' if you are using a serial console. You must have attached a
+    VGA monitor for the last step, as the commands you type on the console,
+    will show up on the VGA monitor.
 
     On Gdium systems, the system proceeds to immediately boot into the
     operating system; to enter PMON, repeatedly press the `del' key
