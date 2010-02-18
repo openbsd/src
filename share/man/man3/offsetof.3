@@ -1,4 +1,4 @@
-.\"	$OpenBSD: offsetof.3,v 1.1 2010/02/18 18:28:18 jmc Exp $
+.\"	$OpenBSD: offsetof.3,v 1.2 2010/02/18 18:30:19 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Thomas Pfaff <tpfaff@tp76.info>
 .\"
@@ -28,7 +28,9 @@
 .Sh DESCRIPTION
 The
 .Fn offsetof
-macro expands to an integer constant expression and yields the offset,
+macro expands to an integer constant expression of type
+.Ft size_t
+and yields the offset,
 in bytes, of the field
 .Ar member
 from the start of the structure
