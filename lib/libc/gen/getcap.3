@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.31 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: getcap.3,v 1.32 2010/02/18 13:13:39 schwarze Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 18 2010 $
 .Dt GETCAP 3
 .Os
 .Sh NAME
@@ -471,17 +471,17 @@ Non-printable
 codes, new lines, and colons may be conveniently represented by the use
 of escape sequences:
 .Bl -column "\e\|X,X\e\|X" "(ASCII octal nnn)" -offset indent
-^X	('\fIX\fP' & 037)	control-\fIX\fP
-\e\|b, \e\|B	(ASCII 010)	backspace
-\e\|t, \e\|T	(ASCII 011)	tab
-\e\|n, \e\|N	(ASCII 012)	line feed (newline)
-\e\|f, \e\|F	(ASCII 014)	form feed
-\e\|r, \e\|R	(ASCII 015)	carriage return
-\e\|e, \e\|E	(ASCII 027)	escape
-\e\|c, \e\|C	(:)	colon
-\e\|\e	(\e\|)	back slash
-\e\|^	(^)	caret
-\e\|\fInnn\fP	(ASCII octal \fInnn\fP)
+.It ^X	('\fIX\fP'\~&\~037)	control-\fIX\fP
+.It \e\|b,\~\e\|B	(ASCII\~010)	backspace
+.It \e\|t,\~\e\|T	(ASCII\~011)	tab
+.It \e\|n,\~\e\|N	(ASCII\~012)	line\~feed\~(newline)
+.It \e\|f,\~\e\|F	(ASCII\~014)	form\~feed
+.It \e\|r,\~\e\|R	(ASCII\~015)	carriage\~return
+.It \e\|e,\~\e\|E	(ASCII\~027)	escape
+.It \e\|c,\~\e\|C	(:)	colon
+.It \e\|\e	(\e\|)	backslash
+.It \e\|^	(^)	caret
+.It \e\|\fInnn\fP	(ASCII\~octal\~\fInnn\fP)
 .El
 .Pp
 A
