@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2010/02/16 08:02:21 michele Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2010/02/18 15:25:28 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -697,7 +697,8 @@ parse_config(char *filename, int opts)
 	defs->holdtime = DEFAULT_HOLDTIME;
 	defs->keepalive = DEFAULT_KEEPALIVE;
 	defs->hello_interval = DEFAULT_HELLO_INTERVAL;
-	defs->mode = (MODE_DIST_INDEPENDENT | MODE_RET_LIBERAL |
+
+	conf->mode = (MODE_DIST_INDEPENDENT | MODE_RET_LIBERAL |
 	    MODE_ADV_UNSOLICITED);
 
 	if ((file = pushfile(filename, !(conf->opts & LDPD_OPT_NOACTION))) == NULL) {
