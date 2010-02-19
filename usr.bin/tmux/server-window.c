@@ -1,4 +1,4 @@
-/* $OpenBSD: server-window.c,v 1.13 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: server-window.c,v 1.14 2010/02/19 00:03:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,7 +69,9 @@ server_window_loop(void)
 			continue;
 
 		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if (wp->fd != -1) {
+			if (wp->fd == -1)
+				continue;
+			if (!(wp->flags & PANE_FREEZE)) {
 				if (server_window_backoff(wp))
 					bufferevent_disable(wp->event, EV_READ);
 				else
