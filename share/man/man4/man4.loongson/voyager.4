@@ -1,4 +1,4 @@
-.\"	$OpenBSD: voyager.4,v 1.1 2010/02/18 23:05:06 miod Exp $
+.\"	$OpenBSD: voyager.4,v 1.2 2010/02/19 07:15:25 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: February 19 2010 $
 .Dt VOYAGER 4 loongson
 .Os
 .Sh NAME
@@ -29,35 +29,36 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Silicon Motion SM502 MMCC device.
+driver supports the Silicon Motion SM502 MMCC device.
 .Pp
-This chip is intended to fulfill most of a modern laptop I/O needs, and
+This chip is intended to fulfill most of a modern laptop's I/O needs, and
 provides:
-.Bl -bullet -compact
+.Pp
+.Bl -dash -compact -offset indent
 .It
 a 2D
 .Xr smfb 4
 frame buffer with analog RGB and digital LCD panel interfaces
 .It
-a 8-bit parallel interface
+an 8-bit parallel interface
 .It
-an USB controller
+a USB controller
 .It
 two UART or IrDA ports
 .It
 two Zoom Video interfaces
 .It
-an AC97 or I2S audio codec 
+an AC97 or I2S audio codec
 .It
-two SSP
-.Pq Synchronous Serial Ports
+two Synchronous Serial Ports
+.Pq SSP
 .It
-PWM
-.Pq Pulse Width Modulation
+Pulse Width Modulation
+.Pq PWM
 .It
 64
 .Xr gpio 4
-pins.
+pins
 .El
 .Pp
 Not all the device interfaces are supported under
