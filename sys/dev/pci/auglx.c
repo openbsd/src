@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.1 2010/02/19 15:00:15 miod Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.2 2010/02/19 15:02:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -47,7 +47,6 @@
 #include <sys/audioio.h>
 
 #include <machine/bus.h>
-#include <machine/cpufunc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -59,22 +58,6 @@
 #include <dev/ic/ac97.h>
 
 #define AUGLX_ACC_BAR		0x10
-
-/* Standard GeodeLink Device (GLD) MSRs */
-#define ACC_GLD_MSR_CAP		0x51500000	/* Capabilities */
-#define ACC_GLD_MSR_CONFIG	0x51500001	/* Master configuration */
-#define ACC_GLD_MSR_SMI		0x51500002
-#define ACC_GLD_MSR_ERROR	0x51500003
-#define ACC_GLD_MSR_PM		0x51500004	/* Power management */
-#define ACC_GLD_MSR_DIAG	0x51500005	/* Diagnostics */
-
-/* ACC_GLD_MSR_SMI Bit Definitions */
-#define IRQ_SSMI_FLAG		0x0000000100000000
-#define IRQ_SSMI_EN		0x0000000000000001
-
-/* ACC_GLD_MSR_ERROR Bit Definitions */
-#define UNEXP_TYPE_ERR_FLAG	0x0000000100000000
-#define UNEXP_TYPE_ERR_EN	0x0000000000000001
 
 /* ACC Native Registers */
 #define ACC_GPIO_STATUS		0x00
@@ -337,6 +320,7 @@ auglx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_dmamap_flags = BUS_DMA_COHERENT;
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt");
