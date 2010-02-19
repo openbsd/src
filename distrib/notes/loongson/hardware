@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2010/02/16 22:17:35 miod Exp $
+dnl	$OpenBSD: hardware,v 1.5 2010/02/19 09:08:04 otto Exp $
 The following machines are supported by OpenBSD/MACHINE:
 
 	Lemote Fuloong 2F
@@ -22,7 +22,7 @@ The following machines are supported by OpenBSD/MACHINE:
 The following USB devices have been tested to work on OpenBSD/MACHINE:
 	USB Audio
 dnl	USB Diamond Multimedia Rio MP3 players
-dnl	USB Ethernet adapters
+	USB Ethernet adapters
 	USB Generic Human Interface Devices (catch-all)
 dnl	USB Handspring Visor
 	USB Hubs
@@ -30,8 +30,7 @@ dnl	USB Handspring Visor
 	USB Mass Storage devices, i.e., USB cdrom drives and
 	  USB memory stick controllers
 	USB Mice
-dnl	USB Modems
-	Prolific PL-2303 USB serial adapter
+	USB Serial adapters
 dnl	USB Printers
 dnl	USB Scanners
 dnl	USB-USB cables
