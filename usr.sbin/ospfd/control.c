@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.30 2009/12/08 15:54:50 jsg Exp $ */
+/*	$OpenBSD: control.c,v 1.31 2010/02/19 10:35:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -227,6 +227,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_FIB_DECOUPLE:
 			ospfe_fib_update(imsg.hdr.type);
 			/* FALLTHROUGH */
+		case IMSG_CTL_FIB_RELOAD:
 		case IMSG_CTL_RELOAD:
 			c->iev.ibuf.pid = imsg.hdr.pid;
 			ospfe_imsg_compose_parent(imsg.hdr.type, 0, NULL, 0);

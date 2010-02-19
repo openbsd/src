@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.72 2010/02/16 18:16:40 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.73 2010/02/19 10:35:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -401,6 +401,9 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_FIB_DECOUPLE:
 			kr_fib_decouple();
+			break;
+		case IMSG_CTL_FIB_RELOAD:
+			kr_fib_reload();
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:

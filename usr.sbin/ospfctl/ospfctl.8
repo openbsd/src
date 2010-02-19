@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.24 2009/11/03 08:09:15 jmc Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.25 2010/02/19 10:35:52 dlg Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2009 $
+.Dd $Mdocdate: February 19 2010 $
 .Dt OSPFCTL 8
 .Os
 .Sh NAME
@@ -54,6 +54,9 @@ a.k.a. the kernel routing table.
 Decoupling the FIB from an OSPF router may create routing loops and could cause
 major routing issues in the complete OSPF cloud.
 Only routers with just one link to the OSPF cloud can safely decouple the FIB.
+.It Cm fib reload
+Refetches and relearns the routes in the Forwarding Information Base
+a.k.a. the kernel routing table.
 .It Cm log brief
 Disable verbose debug logging.
 .It Cm log verbose
