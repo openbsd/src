@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.4 2010/02/12 08:11:27 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.5 2010/02/19 15:14:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -185,6 +185,7 @@ glx_pci_read_hook(void *v, pci_chipset_tag_t pc, pcitag_t tag,
 		*data = glx_fn2_read(offset);
 		break;
 	case 3:	/* AC97 codec */
+		*data = glx_fn3_read(offset);
 		break;
 	case 4:	/* OHCI controller */
 		*data = glx_fn4_read(offset);
@@ -227,6 +228,7 @@ glx_pci_write_hook(void *v, pci_chipset_tag_t pc, pcitag_t tag,
 		glx_fn2_write(offset, data);
 		break;
 	case 3:	/* AC97 codec */
+		glx_fn3_write(offset, data);
 		break;
 	case 4:	/* OHCI controller */
 		glx_fn4_write(offset, data);
@@ -531,6 +533,109 @@ glx_fn2_write(int reg, pcireg_t data)
 		break;
 	case AMD756_UDMA:
 		wrmsr(IDE_ETC, (uint32_t)data);
+		break;
+	}
+}
+
+/*
+ * Function 3: AC97 Codec
+ */
+
+static pcireg_t ac97_bar_size = 0x80;
+static pcireg_t ac97_bar_value;
+
+pcireg_t
+glx_fn3_read(int reg)
+{
+	uint64_t msr;
+	pcireg_t data;
+
+	switch (reg) {
+	case PCI_ID_REG:
+	case PCI_SUBSYS_ID_REG:
+		data = PCI_ID_CODE(PCI_VENDOR_AMD,
+		    PCI_PRODUCT_AMD_CS5536_AUDIO);
+		break;
+	case PCI_COMMAND_STATUS_REG:
+		data = glx_get_status();
+		data |= PCI_COMMAND_IO_ENABLE;
+		msr = rdmsr(GLIU_PAE);
+		if ((msr & (0x3 << 8)) == 0x03)
+			data |= PCI_COMMAND_MASTER_ENABLE;
+		break;
+	case PCI_CLASS_REG:
+		msr = rdmsr(ACC_GLD_MSR_CAP);
+		data = (PCI_CLASS_MULTIMEDIA << PCI_CLASS_SHIFT) |
+		    (PCI_SUBCLASS_MULTIMEDIA_AUDIO << PCI_SUBCLASS_SHIFT) |
+		    (msr & PCI_REVISION_MASK);
+		break;
+	case PCI_BHLC_REG:
+		msr = rdmsr(GLPCI_CTRL);
+		data = (0x00 << PCI_HDRTYPE_SHIFT) |
+		    (((msr & 0xff00000000UL) >> 32) << PCI_LATTIMER_SHIFT) |
+		    (0x08 << PCI_CACHELINE_SHIFT);
+		break;
+	case PCI_MAPREG_START:
+		data = ac97_bar_value;
+		if (data == 0xffffffff)
+			data = PCI_MAPREG_IO_ADDR_MASK & ~(ac97_bar_size - 1);
+		else {
+			msr = rdmsr(GLIU_IOD_BM1);
+			data = (msr >> 20) & 0x000fffff;
+			data &= (msr & 0x000fffff);
+		}
+		if (data != 0)
+			data |= PCI_MAPREG_TYPE_IO;
+		break;
+	case PCI_INTERRUPT_REG:
+		data = (0x40 << PCI_MAX_LAT_SHIFT) |
+		    (PCI_INTERRUPT_PIN_A << PCI_INTERRUPT_PIN_SHIFT);
+		break;
+	default:
+		data = 0;
+		break;
+	}
+
+	return data;
+}
+
+void
+glx_fn3_write(int reg, pcireg_t data)
+{
+	uint64_t msr;
+
+	switch (reg) {
+	case PCI_COMMAND_STATUS_REG:
+		msr = rdmsr(GLIU_PAE);
+		if (data & PCI_COMMAND_MASTER_ENABLE)
+			msr |= 0x03 << 8;
+		else
+			msr &= ~(0x03 << 8);
+		wrmsr(GLIU_PAE, msr);
+		break;
+	case PCI_BHLC_REG:
+		msr = rdmsr(GLPCI_CTRL);
+		msr &= 0xff00000000UL;
+		msr |= ((uint64_t)PCI_LATTIMER(data)) << 32;
+		break;
+	case PCI_MAPREG_START:
+		if (data == 0xffffffff) {
+			ac97_bar_value = data;
+		} else {
+			if ((data & PCI_MAPREG_TYPE_MASK) ==
+			    PCI_MAPREG_TYPE_IO) {
+				data &= PCI_MAPREG_IO_ADDR_MASK;
+				msr = rdmsr(GLIU_IOD_BM1);
+				msr &= 0x0fffff0000000000UL;
+				msr |= 5UL << 61;	/* AC97 */
+				msr |= ((uint64_t)data & 0xfffff) << 20;
+				msr |= 0x000fffff & ~(ac97_bar_size - 1);
+				wrmsr(GLIU_IOD_BM1, msr);
+			} else {
+				wrmsr(GLIU_IOD_BM1, 0);
+			}
+			ac97_bar_value = 0;
+		}
 		break;
 	}
 }

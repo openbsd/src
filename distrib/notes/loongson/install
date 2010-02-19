@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.7 2010/02/19 10:48:14 otto Exp $
+dnl	$OpenBSD: install,v 1.8 2010/02/19 15:14:16 miod Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -29,7 +29,6 @@ on Lemote systems, and
     PMON> g
 
 on Gdium systems.
-
 dnl
 dnl Alternatively, if your particular PMON flavour supports `fat' filesystems,
 dnl you can boot the kernel from an usb key with:
@@ -169,14 +168,28 @@ OpenBSDInstallWrapup
 
 		Gdium systems do not have a boot menu, and directly boot the
 		system (Linux, by default). Unfortunately, the OpenBSD
-		bootloader does not work on this machine.
+		bootloader operation is very limited on this machine, as
+		it can not access USB devices (which means no keyboard
+		input as well).
+
+		To overcome this and be able to boot OpenBSD nevertheless,
+		the bootloader relies upon PMON's ability to load a Linux
+		so-called ``initrd'' image. By making PMON load the kernel
+		as the ``initrd'' image, and then run the bootloader,
+		the bootloader will be able to ``load'' the OpenBSD kernel
+		correctly.
 
 		The path to the file booted by default is set in the `al'
-		environment variable. To boot the bsd kernel on the G-Key
-		by default, assuming it has been copied to /boot on the first
-		ext3 partition, you can change it to:
+		environment variable, and the path to the initrd image is
+		set in the `rd' environment variable.
 
-		    PMON> set al /dev/fs/ext2@usbg0/boot/bsd
+		To boot the bsd kernel on the G-Key by default, assuming it
+		has been copied to /boot/bsd on the first ext3 partition, and
+		the bootloader has been copied to /boot/boot on the same
+		filesystem, the settings are:
+
+		    PMON> set al /dev/fs/ext2@usbg0/boot/boot
+		    PMON> set rd /dev/fs/ext2@usbg0/boot/bsd
 
 		Alternatively, you can disable autoboot by removing this
 		variable:

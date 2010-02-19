@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 2010/02/19 08:30:04 otto Exp $
+#	$OpenBSD: GENERIC,v 1.12 2010/02/19 15:14:19 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,6 +48,8 @@ com0		at isa? port 0x2f8 irq 3	# Fuloong 2F only
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
 smfb*		at pci?				# Yeeloong only
+auglx*		at pci?
+audio*		at auglx?
 
 # Gdium Liberty specific devices
 voyager*	at pci?
@@ -57,7 +59,6 @@ gdiumiic0	at gpio0 offset 46 mask 0x03	# pins 46 and 47
 iic0		at gdiumiic0
 lmtemp0		at iic0 			# National Semiconductor LM75
 mfokclock0	at iic0				# M41T8x todclock
-#gdiumiic1	at gpio0 offset 41 mask 0x03	# pins 41 and 42
 #iic*		at voyager?
 #ohci*		at voyager?
 smfb*		at voyager?
