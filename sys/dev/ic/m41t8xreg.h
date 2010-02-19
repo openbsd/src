@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8xreg.h,v 1.1 2010/02/19 00:21:47 miod Exp $	*/
+/*	$OpenBSD: m41t8xreg.h,v 1.2 2010/02/19 14:58:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -18,6 +18,8 @@
 
 /*
  * ST M41T8x serial access real time clock registers
+ *
+ * http://www.st.com/stonline/products/literature/ds/9074/m41t80.pdf
  */
 
 /*
