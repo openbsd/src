@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.4 2010/02/19 18:55:12 jsg Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.5 2010/02/19 19:06:31 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -2697,6 +2697,7 @@ struct ixgbe_hw {
 #define IXGBE_SFF_1GBASELX_CAPABLE           0x2
 #define IXGBE_SFF_10GBASESR_CAPABLE          0x10
 #define IXGBE_SFF_10GBASELR_CAPABLE          0x20
+#define IXGBE_SFF_DA_BAD_HP_CABLE            0x80
 #define IXGBE_I2C_EEPROM_READ_MASK           0x100
 #define IXGBE_I2C_EEPROM_STATUS_MASK         0x3
 #define IXGBE_I2C_EEPROM_STATUS_NO_OPERATION 0x0

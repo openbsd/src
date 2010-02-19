@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.3 2010/02/19 18:55:12 jsg Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.4 2010/02/19 19:06:31 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -923,6 +923,9 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		hw->phy.ops.read_i2c_eeprom(hw, IXGBE_SFF_CABLE_TECHNOLOGY,
 		                            &cable_tech);
 
+		DEBUGOUT3("SFP+ capa codes 1G %x 10G %x cable %x\n",
+		          comp_codes_1g, comp_codes_10g, cable_tech);
+
 		 /* ID Module
 		  * =========
 		  * 0   SFP_DA_CU
@@ -940,6 +943,8 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				hw->phy.sfp_type = ixgbe_sfp_type_sr;
 			else if (comp_codes_10g & IXGBE_SFF_10GBASELR_CAPABLE)
 				hw->phy.sfp_type = ixgbe_sfp_type_lr;
+			else if (comp_codes_10g & IXGBE_SFF_DA_BAD_HP_CABLE)
+				hw->phy.sfp_type = ixgbe_sfp_type_da_cu;
 			else
 				hw->phy.sfp_type = ixgbe_sfp_type_unknown;
 		} else if (hw->mac.type == ixgbe_mac_82599EB) {
@@ -1052,6 +1057,7 @@ int32_t ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				status = IXGBE_ERR_SFP_NOT_SUPPORTED;
 			}
 		} else {
+			DEBUGOUT("SFP+ module type ignored\n");
 			status = IXGBE_SUCCESS;
 		}
 	}
@@ -1117,7 +1123,13 @@ int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
 		}
 	}
 
-	if (sfp_id == IXGBE_PHY_INIT_END_NL) {
+	/*
+	 * the 82598EB SFP+ card offically supports only direct attached cables
+	 * but works fine with optical SFP+ modules as well. Even though the
+	 * EEPROM has no matching ID for them. So just accept the module.
+	 */
+	if (sfp_id == IXGBE_PHY_INIT_END_NL &&
+	    hw->mac.type >= ixgbe_mac_82599EB) {
 		DEBUGOUT("No matching SFP+ module found\n");
 		return IXGBE_ERR_SFP_NOT_SUPPORTED;
 	}
