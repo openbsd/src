@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.5 2009/09/28 09:48:46 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.6 2010/02/19 12:47:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -221,7 +221,6 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 		if (kroute_insert(kn) == -1) {
 			log_debug("kr_update_fib: cannot insert %s",
 			    inet_ntoa(kn->r.nexthop));
-			free(kn);
 		}
 	}
 
