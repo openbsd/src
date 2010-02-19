@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2010/02/18 22:45:26 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2010/02/19 00:21:43 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -63,6 +63,11 @@ smfb*		at pci?				# Yeeloong only
 
 # Gdium Liberty specific devices
 voyager*	at pci?
+gpio0		at voyager?
+gdiumiic0	at gpio0 offset 6 mask 0x81	# pins 6 and 13
+gdiumiic0	at gpio0 offset 46 mask 0x03	# pins 46 and 47
+iic0		at gdiumiic0
+mfokclock0	at iic0				# M41T8x todclock
 smfb*		at voyager?
 
 wsdisplay*	at smfb?

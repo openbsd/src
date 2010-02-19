@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdiumiic.c,v 1.1 2010/02/18 22:45:28 miod Exp $	*/
+/*	$OpenBSD: gdiumiic.c,v 1.2 2010/02/19 00:21:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -351,5 +351,12 @@ gdiumiic_sensors_scan(struct device *iicdev, struct i2cbus_attach_args *iba,
 	ia.ia_addr = 0x48;
 	ia.ia_size = 1;
 	ia.ia_name = "lm75";
+	config_found(iicdev, &ia, iic_print);
+
+	bzero(&ia, sizeof ia);
+	ia.ia_tag = iba->iba_tag;
+	ia.ia_addr = 0x68;
+	ia.ia_size = 1;
+	ia.ia_name = "mfokclock";
 	config_found(iicdev, &ia, iic_print);
 }

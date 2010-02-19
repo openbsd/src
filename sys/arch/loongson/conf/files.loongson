@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.3 2010/02/18 22:45:26 miod Exp $
+#	$OpenBSD: files.loongson,v 1.4 2010/02/19 00:21:43 miod Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -82,6 +82,11 @@ file	arch/loongson/dev/voyager.c			voyager
 device	gdiumiic: i2cbus, i2c_bitbang
 attach	gdiumiic at gpio
 file	arch/loongson/dev/gdiumiic.c			gdiumiic
+
+# Gdium M41T8x RTC
+device	mfokclock
+attach	mfokclock at i2c
+file	arch/loongson/dev/m41t8xclock.c			mfokclock
 
 # Silicon Motion SM502/SM712 frame buffer
 device	smfb: wsemuldisplaydev, rasops16
