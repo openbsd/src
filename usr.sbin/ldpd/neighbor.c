@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.7 2010/02/19 13:37:09 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.8 2010/02/19 14:32:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -210,7 +210,6 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 void
 nbr_init(u_int32_t hashsize)
 {
-	struct nbr_head	*head;
 	u_int32_t        hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
