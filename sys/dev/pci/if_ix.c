@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.34 2010/01/19 13:48:13 reyk Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.35 2010/02/19 18:55:12 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -49,13 +49,18 @@
  *********************************************************************/
 
 const struct pci_matchid ixgbe_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598_BX },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598AF_DUAL },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598AF },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598AT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598AT_DUAL },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598EB_CX4 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598EB_CX4_DUAL },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598EB_XF_LR },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598AT }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598EB_SFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598_SR_DUAL_EM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598_DA_DUAL }
 };
 
 /*********************************************************************
@@ -255,7 +260,7 @@ err_out:
  *  Device removal routine
  *
  *  The detach entry point is called when the driver is being removed.
- *  This routine stops the sc and deallocates all the resources
+ *  This routine stops the adapter and deallocates all the resources
  *  that were allocated for driver operation.
  *
  *  return 0 on success, positive on failure
@@ -1281,7 +1286,8 @@ ixgbe_free_pci_resources(struct ix_softc * sc)
 	struct ixgbe_osdep	*os = &sc->osdep;
 	struct pci_attach_args	*pa = os->os_pa;
 
-	pci_intr_disestablish(pa->pa_pc, sc->tag[0]);
+	if (sc->tag[0])
+		pci_intr_disestablish(pa->pa_pc, sc->tag[0]);
 	sc->tag[0] = NULL;
 	if (os->os_membase != NULL)
 		bus_space_unmap(os->os_memt, os->os_memh, os->os_memsize);
@@ -1316,7 +1322,7 @@ ixgbe_hardware_init(struct ix_softc *sc)
 	}
 
 	/* Get Hardware Flow Control setting */
-	sc->hw.fc.type = ixgbe_fc_full;
+	sc->hw.fc.requested_mode = ixgbe_fc_full;
 	sc->hw.fc.pause_time = IXGBE_FC_PAUSE;
 	sc->hw.fc.low_water = IXGBE_FC_LO;
 	sc->hw.fc.high_water = IXGBE_FC_HI;
@@ -1372,16 +1378,6 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 	sc->max_frame_size =
 	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
-
-	if ((hw->device_id == PCI_PRODUCT_INTEL_82598AT) ||
-	    (hw->device_id == PCI_PRODUCT_INTEL_82598AT_DUAL))
-		ixgbe_hw(hw, setup_link_speed,
-		    IXGBE_LINK_SPEED_10GB_FULL |
-		    IXGBE_LINK_SPEED_1GB_FULL, TRUE, TRUE);
-	else
-		ixgbe_hw(hw, setup_link_speed,
-		    IXGBE_LINK_SPEED_10GB_FULL,
-		    TRUE, FALSE);
 
 	/*
 	 * Specify the media types supported by this sc and register
@@ -2826,6 +2822,17 @@ ixgbe_read_pci_cfg(struct ixgbe_hw *hw, uint32_t reg)
 	value = pci_conf_read(pa->pa_pc, pa->pa_tag, reg) & 0xffff;
 
 	return (value);
+}
+
+void
+ixgbe_write_pci_cfg(struct ixgbe_hw *hw, uint32_t reg, uint16_t value)
+{
+	struct pci_attach_args	*pa;
+
+	pa = ((struct ixgbe_osdep *)hw->back)->os_pa;
+
+	/* Should we do read/mask/write...?  16 vs 32 bit!!! */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, reg, value);
 }
 
 void
