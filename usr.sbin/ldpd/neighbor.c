@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.6 2010/02/18 09:26:29 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.7 2010/02/19 13:37:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -211,7 +211,6 @@ void
 nbr_init(u_int32_t hashsize)
 {
 	struct nbr_head	*head;
-	struct nbr	*nbr;
 	u_int32_t        hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
@@ -224,22 +223,6 @@ nbr_init(u_int32_t hashsize)
 		LIST_INIT(&nbrtable.hashtbl[i]);
 
 	nbrtable.hashmask = hs - 1;
-
-	/* allocate a dummy neighbor used for self originated AS ext routes */
-	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
-		fatal("nbr_init");
-
-	nbr->id.s_addr = ldpe_router_id();
-	nbr->state = NBR_STA_DOWN;
-	nbr->peerid = NBR_IDSELF;
-	head = NBR_HASH(nbr->peerid);
-	LIST_INSERT_HEAD(head, nbr, hash);
-
-	TAILQ_INIT(&nbr->mapping_list);
-	TAILQ_INIT(&nbr->withdraw_list);
-	TAILQ_INIT(&nbr->request_list);
-	TAILQ_INIT(&nbr->release_list);
-	TAILQ_INIT(&nbr->abortreq_list);
 }
 
 struct nbr *
@@ -271,6 +254,12 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface, int self)
 		nbr->addr.s_addr = iface->addr.s_addr;
 		nbr->priority = iface->priority;
 	}
+
+	TAILQ_INIT(&nbr->mapping_list);
+	TAILQ_INIT(&nbr->withdraw_list);
+	TAILQ_INIT(&nbr->request_list);
+	TAILQ_INIT(&nbr->release_list);
+	TAILQ_INIT(&nbr->abortreq_list);
 
 	/* set event structures */
 	evtimer_set(&nbr->inactivity_timer, nbr_itimer, nbr);
@@ -618,21 +607,20 @@ int
 nbr_establish_connection(struct nbr *nbr)
 {
 	struct sockaddr_in	in;
-	int			st;
 
+	bzero(&in, sizeof(in));
 	in.sin_family = AF_INET;
 	in.sin_port = htons(LDP_PORT);
 	in.sin_addr.s_addr = nbr->addr.s_addr;
 
 	nbr->fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (nbr->fd < 0) {
+	if (nbr->fd == -1) {
 		log_debug("nbr_establish_connection: error while "
 		    "creating socket");
 		return (-1);
 	}
 
-	st = connect(nbr->fd, (struct sockaddr *)&in, sizeof(in));
-	if (st < 0 ) {
+	if (connect(nbr->fd, (struct sockaddr *)&in, sizeof(in)) == -1) {
 		log_debug("nbr_establish_connection: error while "
 		    "connecting to %s", inet_ntoa(nbr->addr));
 		nbr_act_start_idtimer(nbr);
@@ -682,7 +670,7 @@ nbr_send_labelmappings(struct nbr *nbr)
 {
 	if (leconf->mode & MODE_ADV_UNSOLICITED) {
 		ldpe_imsg_compose_lde(IMSG_LABEL_MAPPING_FULL, nbr->peerid, 0,
-		    0, 0);
+		    NULL, 0);
 	}
 }
 
@@ -699,7 +687,7 @@ nbr_mapping_add(struct nbr *nbr, struct mapping_head *mh, struct map *map)
 	me->prefixlen = map->prefixlen;
 	me->label = map->label;
 
-	TAILQ_INSERT_HEAD(mh, me, entry);
+	TAILQ_INSERT_TAIL(mh, me, entry);
 }
 
 struct mapping_entry *
