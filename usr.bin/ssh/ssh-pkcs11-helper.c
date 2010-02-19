@@ -265,12 +265,11 @@ main(int argc, char **argv)
 	SyslogFacility log_facility = SYSLOG_FACILITY_AUTH;
 	LogLevel log_level = SYSLOG_LEVEL_ERROR;
 	char buf[4*4096];
+	extern char *optarg;
+	extern char *__progname;
 
 	TAILQ_INIT(&pkcs11_keylist);
 	pkcs11_init(0);
-
-	extern char *optarg;
-	extern char *__progname;
 
 	log_init(__progname, log_level, log_facility, log_stderr);
 
