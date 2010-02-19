@@ -1820,11 +1820,14 @@
 ./usr/share/man/cat4/loongson
 ./usr/share/man/cat4/loongson/autoconf.0
 ./usr/share/man/cat4/loongson/bonito.0
+./usr/share/man/cat4/loongson/gdiumiic.0
 ./usr/share/man/cat4/loongson/glxpcib.0
 ./usr/share/man/cat4/loongson/intro.0
 ./usr/share/man/cat4/loongson/kmem.0
 ./usr/share/man/cat4/loongson/mem.0
+./usr/share/man/cat4/loongson/mfokclock.0
 ./usr/share/man/cat4/loongson/smfb.0
+./usr/share/man/cat4/loongson/voyager.0
 ./usr/share/man/cat4/lpt.0
 ./usr/share/man/cat4/luna88k
 ./usr/share/man/cat4/luna88k/autoconf.0

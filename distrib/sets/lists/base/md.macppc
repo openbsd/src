@@ -977,6 +977,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lptvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lsi64854reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lsi64854var.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/m41t8xreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/malo.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/max2820reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mc146818reg.ph

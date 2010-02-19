@@ -301,6 +301,7 @@
 ./usr/include/dev/ic/lptvar.h
 ./usr/include/dev/ic/lsi64854reg.h
 ./usr/include/dev/ic/lsi64854var.h
+./usr/include/dev/ic/m41t8xreg.h
 ./usr/include/dev/ic/malo.h
 ./usr/include/dev/ic/max2820reg.h
 ./usr/include/dev/ic/mc146818reg.h
