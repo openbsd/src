@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2010/02/19 00:21:43 miod Exp $
+#	$OpenBSD: GENERIC,v 1.11 2010/02/19 08:30:04 otto Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -79,14 +79,30 @@ uhub*		at usb?		# USB Hubs
 uhub*		at uhub?	# USB Hubs
 umodem*		at uhub?	# USB Modems/Serial
 ucom*		at umodem?
-umsm*		at uhub?
-ucom*		at umsm?
-uplcom*		at uhub?	# I/O DATA USB-RSAQ2 serial adapter
-ucom*		at uplcom?
+uvisor*		at uhub?	# Handspring Visor
+ucom*		at uvisor?
 uvscom*		at uhub?	# SUNTAC Slipper U VS-10U serial
 ucom*		at uvscom?
 ubsa*		at uhub?	# Belkin serial adapter
 ucom*		at ubsa?
+uftdi*		at uhub?	# FTDI FT8U100AX serial adapter
+ucom*		at uftdi?
+uplcom* 	at uhub?	# I/O DATA USB-RSAQ2 serial adapter
+ucom*		at uplcom?
+umct*		at uhub?	# MCT USB-RS232 serial adapter
+ucom*		at umct?
+uslcom*		at uhub?	# Silicon Laboratories CP210x serial
+ucom*		at uslcom?
+uark*		at uhub?	# Arkmicro ARK3116 serial
+ucom*		at uark?
+moscom*		at uhub?	# MosChip MCS7703 serial
+ucom*		at moscom?		
+uipaq*		at uhub?	# iPAQ serial adapter
+ucom*		at uipaq?
+umsm*		at uhub?	# Qualcomm MSM EVDO
+ucom*		at umsm?
+uchcom*		at uhub?	# WinChipHead CH341/340 serial
+ucom*		at uchcom?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
 atapiscsi*	at umass?
@@ -117,12 +133,16 @@ url*		at uhub?	# Realtek RTL8150L based adapters
 urtw*		at uhub?	# RealTek 8187
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
 zyd*		at uhub?	# Zydas ZD1211
-ugen*		at uhub?	# USB Generic driver
+uberry*		at uhub?	# Research In Motion Blackberry 
+udcf*		at uhub?	# Gude Expert mouseCLOCK
 uthum*		at uhidev?	# TEMPerHUM sensor
+ugen*		at uhub?	# USB Generic driver
 
 # USB Audio
 uaudio*		at uhub?
 audio*		at uaudio?
+umidi*		at uhub?	# USB MIDI
+midi*		at umidi?
 
 # USB Video
 uvideo*		at uhub?
