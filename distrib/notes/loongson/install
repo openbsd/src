@@ -1,9 +1,21 @@
-dnl	$OpenBSD: install,v 1.6 2010/02/16 22:17:35 miod Exp $
+dnl	$OpenBSD: install,v 1.7 2010/02/19 10:48:14 otto Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
 
-The easiest way to boot into the OpenBSD installer is to copy the bsd.rd
+The easiest way to boot into the OpenBSD installer is to copy the miniroot
+image to a USB stick using dd(1) and boot bsd.rd from the PMON prompt:
+
+    PMON> boot /dev/fs/ext2@usb0/bsd.rd
+
+on Lemote systems, and
+
+    PMON> load /dev/fs/ext2@usb0/bsd.rd
+    PMON> g
+
+on Gdium systems.
+
+Another way to boot into the OpenBSD installer is to copy the bsd.rd
 installation kernel to the main Linux partition, and boot from it.
 
 Assuming the installation kernel has been copied to /boot/bsd.rd on the
@@ -16,7 +28,8 @@ on Lemote systems, and
     PMON> load /dev/fs/ext2@usbg0/boot/bsd.rd
     PMON> g
 
-on Gdium systems, to boot the installation kernel.
+on Gdium systems.
+
 dnl
 dnl Alternatively, if your particular PMON flavour supports `fat' filesystems,
 dnl you can boot the kernel from an usb key with:
@@ -28,8 +41,6 @@ Netbooting the installation kernel can be done as well:
     PMON> ifaddr rtl0 <your ip>
     PMON> boot tftp://<server ip>/bsd.rd
 
-(on Gdium systems, use a `load' command followed by `g' instead of `boot').
-
 OpenBSDInstallPart2
 
 OpenBSDInstallPart3(,"sd0 for USB storage, or wd0 for internal storage
@@ -39,20 +50,23 @@ OpenBSDInstallPart4
 
 OpenBSDInstallMBRPart1
 
-dnl not until we have boot blocks... and then we'll probably need to
-dnl add text to mention the necessary little boot partition...
 dnl OpenBSDInstallMBRPart2
 	The fdisk(8) utility will be invoked to let you edit your MBR
 	partitioning.  The current MBR partitions defined will be
 	displayed and you will be allowed to modify them, and add new
 	partitions.
 
+	The setup will need one 'Linux files' partition and an 'OpenBSD'
+	partition. If you use the whole disk option, the install script
+	will create a small 'Linux files' partition and use the rest of
+	the disk for the OpenBSD installation.
+
 	After your OpenBSD MBR partition has been setup, the real
 	partition setup can follow.
 
 OpenBSDInstallPart5({:-
-	If you have left Linux partitions defined on the disk, these will
-	usually show up as partition 'i', 'j' and so on.-:})
+	Linux partitions defined on the disk will usually show up as
+	partition 'i', 'j' and so on.-:})
 
 OpenBSDInstallPart6({:-CD-ROM, -:})
 
@@ -68,12 +82,6 @@ dnl usb tape drives anyone?
 dnl OpenBSDTAPEInstall
 dnl
 OpenBSDInstallWrapup
-
-	As the OpenBSD/MACHINE port is very new, there is not yet a proper
-	bootloader installation. In addition to these steps, you will need,
-	for the time being, to copy either a bootblock or the kernel image
-	itself to the Linux partition and boot from it. This annoyance is
-	being worked on and should disappear very soon.
 
 	Lemote systems final steps:
 
@@ -152,10 +160,10 @@ OpenBSDInstallWrapup
 		    PMON> set al ""
 		    PMON> set ShowBootMenu no
 
-		Then boot into linux and rename /boot/boot.cfg so that
-		it does not get found by PMON. At the next reboot
-		the Fuloong 2F will boot into the PMON
-		prompt on the serial console.
+		If you have a dual boot setup, mount the Linux boot partition
+		and rename /boot/boot.cfg so that it does not get found by
+		PMON. This will enable full serial access to PMON on
+		the Fuloong 2F.
 
 	Gdium systems final steps:
 
