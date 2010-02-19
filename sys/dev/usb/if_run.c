@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.57 2010/02/10 21:46:56 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.58 2010/02/19 17:00:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -842,13 +842,12 @@ run_write_region_1(struct run_softc *sc, uint16_t reg, const uint8_t *buf,
 }
 
 int
-run_set_region_4(struct run_softc *sc, uint16_t reg, uint32_t val, int len)
+run_set_region_4(struct run_softc *sc, uint16_t reg, uint32_t val, int count)
 {
-	int i, error = 0;
+	int error = 0;
 
-	KASSERT((len & 3) == 0);
-	for (i = 0; i < len && error == 0; i += 4)
-		error = run_write(sc, reg + i, val);
+	for (; count > 0 && error == 0; count--, reg += 4)
+		error = run_write(sc, reg, val);
 	return error;
 }
 
