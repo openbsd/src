@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.9 2010/01/19 18:03:08 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.10 2010/02/19 12:49:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -205,10 +205,11 @@ lde_kernel_insert(struct kroute *kr)
 
 		if ((ldeconf->mode & MODE_RET_LIBERAL) == 0) {
 			/* XXX: we support just liberal retention for now */
+			log_warnx("lde_kernel_insert: missing mode");
 			return;
 		}
 
-		TAILQ_FOREACH(rl, &rn->labels_list, entry) {
+		TAILQ_FOREACH(rl, &rn->labels_list, node_l) {
 			addr = lde_address_find(rl->nexthop, &rn->nexthop);
 			if (addr != NULL) {
 				rn->remote_label =
@@ -218,7 +219,7 @@ lde_kernel_insert(struct kroute *kr)
 		}
 
 		log_debug("lde_kernel_insert: prefix %s, changing label to %u",
-		    inet_ntoa(rn->prefix), rl->label);
+		    inet_ntoa(rn->prefix), rl ? rl->label : 0);
 
 		lde_send_change_klabel(rn);
 		return;
@@ -233,7 +234,7 @@ lde_kernel_insert(struct kroute *kr)
 		return;
 	}
 
-	TAILQ_FOREACH(rl, &rn->labels_list, entry) {
+	TAILQ_FOREACH(rl, &rn->labels_list, node_l) {
 		addr = lde_address_find(rl->nexthop, &rn->nexthop);
 		if (addr != NULL) {
 			rn->remote_label =
@@ -293,18 +294,18 @@ lde_kernel_remove(struct kroute *kr)
 		return;
 
 	if (ldeconf->mode & MODE_RET_LIBERAL) {
-		rl = calloc(1, sizeof(*rl));
-		if (rl == NULL)
-			fatal("lde_kernel_remove");
-
-		rl->label = rn->remote_label;
-
 		ln = lde_find_address(rn->nexthop);
-		if (ln != NULL) {
+		if (ln) {
+			rl = calloc(1, sizeof(*rl));
+			if (rl == NULL)
+				fatal("lde_kernel_remove");
+
+			rl->label = rn->remote_label;
+			rl->node = rn;
 			rl->nexthop = ln;
-			TAILQ_INSERT_TAIL(&rn->labels_list, rl, entry);
-		} else
-			free (rl);
+			TAILQ_INSERT_TAIL(&rn->labels_list, rl, node_l);
+			TAILQ_INSERT_TAIL(&ln->labels_list, rl, nbr_l);
+		}
 	}
 
 	rn->remote_label = 0;
@@ -366,9 +367,11 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 			fatal("lde_check_mapping");
 
 		rl->label = map->label;
+		rl->node = rn;
 		rl->nexthop = ln;
 
-		TAILQ_INSERT_TAIL(&rn->labels_list, rl, entry);
+		TAILQ_INSERT_TAIL(&rn->labels_list, rl, node_l);
+		TAILQ_INSERT_TAIL(&ln->labels_list, rl, nbr_l);
 		return;
 	}
 
@@ -503,5 +506,19 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 		newlre->prefixlen = map->prefixlen;
 
 		TAILQ_INSERT_HEAD(&ln->req_list, newlre, entry);
+	}
+}
+
+void
+lde_label_list_free(struct lde_nbr *nbr)
+{
+	struct rt_label	*rl;
+
+	while ((rl = TAILQ_FIRST(&nbr->labels_list)) != NULL) {
+		TAILQ_REMOVE(&nbr->labels_list, rl, nbr_l);
+		TAILQ_REMOVE(&nbr->labels_list, rl, node_l);
+		if (TAILQ_EMPTY(&rl->node->labels_list))
+			rt_remove(rl->node);
+		free(rl);
 	}
 }

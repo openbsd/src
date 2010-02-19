@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.5 2009/09/28 09:48:46 michele Exp $ */
+/*	$OpenBSD: lde.h,v 1.6 2010/02/19 12:49:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -56,6 +56,7 @@ struct lde_nbr {
 	TAILQ_HEAD(, lde_map_entry)	 recv_map_list;
 	TAILQ_HEAD(, lde_map_entry)	 sent_map_list;
 	TAILQ_HEAD(, lde_nbr_address)	 addr_list;
+	TAILQ_HEAD(, rt_label)		 labels_list;
 
 	u_int32_t			 peerid;
 	unsigned int			 ifindex;
@@ -65,10 +66,13 @@ struct lde_nbr {
 	u_int16_t			 lspace;
 };
 
+struct rt_node;
+
 struct rt_label {
-	TAILQ_ENTRY(rt_label)	 entry;
-	u_int32_t		 label;
+	TAILQ_ENTRY(rt_label)	 node_l, nbr_l;
 	struct lde_nbr		*nexthop;
+	struct rt_node		*node;
+	u_int32_t		 label;
 };
 
 struct rt_node {
@@ -126,5 +130,6 @@ void		 lde_kernel_insert(struct kroute *);
 void		 lde_kernel_remove(struct kroute *);
 void		 lde_check_mapping(struct map *, struct lde_nbr *);
 void		 lde_check_request(struct map *, struct lde_nbr *);
+void		 lde_label_list_free(struct lde_nbr *);
 
 #endif	/* _LDE_H_ */
