@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.267 2009/11/25 13:28:13 dms Exp $
+#	$OpenBSD: files.pci,v 1.268 2010/02/19 15:00:15 miod Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -794,4 +794,9 @@ file	dev/pci/km.c			km
 device	gcu
 attach	gcu at pci
 file	dev/pci/gcu.c			gcu
+
+# AMD Geode CS5536 Audio
+device	auglx: audio, ac97
+attach	auglx at pci
+file	dev/pci/auglx.c			auglx
 
