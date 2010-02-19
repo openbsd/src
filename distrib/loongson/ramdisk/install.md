@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2010/02/18 22:15:12 otto Exp $
+#	$OpenBSD: install.md,v 1.4 2010/02/19 07:37:17 otto Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -146,8 +146,9 @@ md_congrats() {
 	cat <<__EOT
 
 Once the machine has rebooted use PMON to boot into OpenBSD, as
-described in the INSTALL.$ARCH document. The command to boot the OpenBSD
-bootloader will be something like 'boot /dev/fs/ext2@wd0/boot/boot'
+described in the INSTALL.$ARCH document.
+To load the OpenBSD bootloader, use 'boot /dev/fs/ext2@wd0/boot/boot',
+where wd0 is the PMON name of the boot disk.
 
 __EOT
 }
