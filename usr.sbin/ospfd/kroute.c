@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.74 2010/02/19 10:35:52 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.75 2010/02/19 10:37:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -70,7 +70,6 @@ int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
 int	kr_change_fib(struct kroute_node *, struct kroute *, int, int);
 int	kr_delete_fib(struct kroute_node *);
-int	kroute_sync(struct kroute_node *);
 
 struct kroute_node	*kroute_find(in_addr_t, u_int8_t, u_int8_t);
 struct kroute_node	*kroute_matchgw(struct kroute_node *, struct in_addr);
@@ -355,23 +354,6 @@ kr_fib_decouple(void)
 	kr_state.fib_sync = 0;
 
 	log_info("kernel routing table decoupled");
-}
-
-int
-kroute_sync(struct kroute_node *kn)
-{
-	int rv = 0;
-
-	if (kn->serial == kr_state.fib_serial)
-		return (0);
-
-	if (kn->r.priority == RTP_OSPF) {
-		kn->serial = kr_state.fib_serial;
-		rv = send_rtmsg(kr_state.fd, RTM_ADD, &kn->r);
-	} else
-		kroute_remove(kn);
-
-	return (rv);
 }
 
 void
