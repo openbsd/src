@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.472 2010/02/18 16:29:40 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.473 2010/02/19 12:29:06 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: February 19 2010 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2713,7 +2713,7 @@ ipspec         = "any" | host | "{" host-list "}"
 host           = [ "!" ] ( address [ "/" mask-bits ] | "\*(Lt" string "\*(Gt" )
 redirhost      = address [ "/" mask-bits ]
 routehost      = host | host "@" interface-name |
-                 (" interface-name [ address [ "/" mask-bits ] ] ")"
+                 "(" interface-name [ address [ "/" mask-bits ] ] ")"
 address        = ( interface-name | interface-group |
                  "(" ( interface-name | interface-group ) ")" |
                  hostname | ipv4-dotted-quad | ipv6-coloned-hex )
