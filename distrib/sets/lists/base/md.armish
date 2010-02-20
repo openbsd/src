@@ -28,6 +28,8 @@
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
 ./etc/firmware/udl_huffman
+./etc/firmware/uyap
+./etc/firmware/uyap-license
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
@@ -2477,6 +2479,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zlib.ph
 ./usr/libexec/ld.so
+./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/mdec/boot
