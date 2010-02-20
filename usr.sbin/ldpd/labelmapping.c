@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.4 2009/12/30 11:05:58 michele Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.5 2010/02/20 21:28:39 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -46,7 +46,7 @@ int		decode_fec_len_elm(char *, u_int8_t);
 int		validate_fec_elm(char *);
 
 /* Label Mapping Message */
-int
+void
 send_labelmapping(struct nbr *nbr)
 {
 	struct buf		*buf;
@@ -55,7 +55,7 @@ send_labelmapping(struct nbr *nbr)
 	u_int16_t		 tlv_size, size;
 
 	if (nbr->iface->passive)
-		return (0);
+		return;
 
 	log_debug("send_labelmapping: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -84,8 +84,6 @@ send_labelmapping(struct nbr *nbr)
 
 	bufferevent_write(nbr->bev, buf->buf, buf->wpos);
 	buf_free(buf);
-
-	return (0);
 }
 
 int
@@ -161,7 +159,7 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 /* Label Request Message */
-int
+void
 send_labelrequest(struct nbr *nbr)
 {
 	struct buf		*buf;
@@ -170,7 +168,7 @@ send_labelrequest(struct nbr *nbr)
 	u_int16_t		 tlv_size, size;
 
 	if (nbr->iface->passive)
-		return (0);
+		return;
 
 	log_debug("send_labelrequest: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -198,8 +196,6 @@ send_labelrequest(struct nbr *nbr)
 
 	bufferevent_write(nbr->bev, buf->buf, buf->wpos);
 	buf_free(buf);
-
-	return (0);
 }
 
 int
@@ -265,7 +261,7 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 /* Label Withdraw Message */
-int
+void
 send_labelwithdraw(struct nbr *nbr)
 {
 	struct buf		*buf;
@@ -274,7 +270,7 @@ send_labelwithdraw(struct nbr *nbr)
 	u_int16_t		 tlv_size, size;
 
 	if (nbr->iface->passive)
-		return (0);
+		return;
 
 	log_debug("send_labelwithdraw: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -310,8 +306,6 @@ send_labelwithdraw(struct nbr *nbr)
 	bufferevent_write(nbr->bev, buf->buf, buf->wpos);
 
 	buf_free(buf);
-
-	return (0);
 }
 
 int
@@ -340,7 +334,7 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 /* Label Release Message */
-int
+void
 send_labelrelease(struct nbr *nbr)
 {
 	struct buf		*buf;
@@ -349,7 +343,7 @@ send_labelrelease(struct nbr *nbr)
 	u_int16_t		 tlv_size, size;
 
 	if (nbr->iface->passive)
-		return (0);
+		return;
 
 	log_debug("send_labelrelease: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -384,8 +378,6 @@ send_labelrelease(struct nbr *nbr)
 
 	bufferevent_write(nbr->bev, buf->buf, buf->wpos);
 	buf_free(buf);
-
-	return (0);
 }
 
 int
@@ -414,14 +406,14 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 /* Label Abort Req Message */
-int
+void
 send_labelabortreq(struct nbr *nbr)
 {
 	struct buf	*buf;
 	u_int16_t	 size;
 
 	if (nbr->iface->passive)
-		return (0);
+		return;
 
 	log_debug("send_labelabortreq: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -439,8 +431,6 @@ send_labelabortreq(struct nbr *nbr)
 	bufferevent_write(nbr->bev, buf->buf, buf->wpos);
 
 	buf_free(buf);
-
-	return (0);
 }
 
 int

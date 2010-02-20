@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.3 2010/02/20 21:05:00 michele Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.4 2010/02/20 21:28:39 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -80,35 +80,35 @@ int	 send_hello(struct iface *);
 void	 recv_hello(struct iface *,  struct in_addr, char *, u_int16_t);
 
 /* init.c */
-int	 send_init(struct nbr *);
+void	 send_init(struct nbr *);
 int	 recv_init(struct nbr *, char *, u_int16_t);
 
 /* keepalive.c */
-int	 send_keepalive(struct nbr *);
+void	 send_keepalive(struct nbr *);
 int	 recv_keepalive(struct nbr *, char *, u_int16_t);
 
 /* notification.c */
-int	 send_notification(u_int32_t, struct iface *, int, u_int32_t,
+void	 send_notification(u_int32_t, struct iface *, int, u_int32_t,
 	    u_int32_t);
-int	 send_notification_nbr(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
+void	 send_notification_nbr(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
 int	 recv_notification(struct nbr *, char *, u_int16_t);
 
 /* address.c */
-int	 send_address(struct nbr *, struct iface *);
+void	 send_address(struct nbr *, struct iface *);
 int	 recv_address(struct nbr *, char *, u_int16_t);
-int	 send_address_withdraw(struct nbr *, struct iface *);
+void	 send_address_withdraw(struct nbr *, struct iface *);
 int	 recv_address_withdraw(struct nbr *, char *, u_int16_t);
 
 /* labelmapping.c */
-int	 send_labelmapping(struct nbr *);
+void	 send_labelmapping(struct nbr *);
 int	 recv_labelmapping(struct nbr *, char *, u_int16_t);
-int	 send_labelrequest(struct nbr *);
+void	 send_labelrequest(struct nbr *);
 int	 recv_labelrequest(struct nbr *, char *, u_int16_t);
-int	 send_labelwithdraw(struct nbr *);
+void	 send_labelwithdraw(struct nbr *);
 int	 recv_labelwithdraw(struct nbr *, char *, u_int16_t);
-int	 send_labelrelease(struct nbr *);
+void	 send_labelrelease(struct nbr *);
 int	 recv_labelrelease(struct nbr *, char *, u_int16_t);
-int	 send_labelabortreq(struct nbr *);
+void	 send_labelabortreq(struct nbr *);
 int	 recv_labelabortreq(struct nbr *, char *, u_int16_t);
 
 /* ldpe.c */
