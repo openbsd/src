@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii.c,v 1.7 2010/02/20 19:34:08 marco Exp $ */
+/* $OpenBSD: mpii.c,v 1.8 2010/02/20 19:37:14 marco Exp $ */
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1354,9 +1354,8 @@ struct mpii_cfg_raid_vol_pg1 {
 struct mpii_cfg_raid_physdisk_pg0 {
 	struct mpii_cfg_hdr	config_header;
 
-	u_int8_t		phys_disk_id;
-	u_int8_t		phys_disk_bus;
-	u_int8_t		phys_disk_ioc;
+	u_int16_t		dev_handle;
+	u_int8_t		reserved1;
 	u_int8_t		phys_disk_num;
 
 	u_int8_t		enc_id;
@@ -1367,7 +1366,7 @@ struct mpii_cfg_raid_physdisk_pg0 {
 #define MPII_CFG_RAID_PHYDISK_0_ENCTYPE_SAFTE		(0x1)
 #define MPII_CFG_RAID_PHYDISK_0_ENCTYPE_SES		(0x2)
 
-	u_int32_t		reserved1;
+	u_int32_t		reserved2;
 
 	u_int8_t		vendor_id[8];
 
@@ -1377,7 +1376,7 @@ struct mpii_cfg_raid_physdisk_pg0 {
 
 	u_int8_t		serial[32];
 
-	u_int32_t		reserved2;
+	u_int32_t		reserved3;
 
 	u_int8_t		phys_disk_state;
 #define MPII_CFG_RAID_PHYDISK_0_STATE_NOTCONFIGURED	(0x00)
@@ -1410,9 +1409,9 @@ struct mpii_cfg_raid_physdisk_pg0 {
 	u_int64_t		coerced_max_lba;
 
 	u_int16_t		block_size;
-	u_int16_t		reserved3;
+	u_int16_t		reserved4;
 
-	u_int32_t		reserved4;
+	u_int32_t		reserved5;
 } __packed;
 
 struct mpii_cfg_raid_physdisk_pg1 {
@@ -2196,6 +2195,7 @@ int		mpii_bio_hs(struct mpii_softc *, struct bioc_disk *, int,
 		    u_int8_t, int *);
 int		mpii_bio_disk(struct mpii_softc *, struct bioc_disk *,
 		    u_int8_t);
+int		mpii_bio_getphy(struct mpii_softc *, u_int16_t, u_int16_t *);
 #ifndef SMALL_KERNEL
  int		mpii_bio_volstate(struct mpii_softc *, struct bioc_vol *);
 int		mpii_create_sensors(struct mpii_softc *);
@@ -5355,7 +5355,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 		printf("%s: unable to fetch raid config page 0\n",
 		    DEVNAME(sc));
 		free(cpg, M_TEMP);
-		return (ENXIO);
+		return (EINVAL);
 	}
 
 	el = (struct mpii_raid_config_element *)(cpg + 1);
@@ -5410,8 +5410,8 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 		return (EINVAL);
 	}
 
-	bd->bd_channel = ppg.phys_disk_bus;
-	bd->bd_target = ppg.phys_disk_num;
+	if (mpii_bio_getphy(sc, ppg.dev_handle, &bd->bd_target))
+		bd->bd_target = ppg.phys_disk_num;
 
 	switch (ppg.phys_disk_state) {
 	case MPII_CFG_RAID_PHYDISK_0_STATE_ONLINE:
@@ -5442,6 +5442,32 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 
 	scsi_strvis(bd->bd_vendor, ppg.product_id, sizeof(ppg.product_id));
 	scsi_strvis(bd->bd_serial, ppg.serial, sizeof(ppg.serial));
+
+	return (0);
+}
+
+int
+mpii_bio_getphy(struct mpii_softc *sc, u_int16_t dh, u_int16_t *port)
+{
+	struct mpii_cfg_sas_dev_pg0	spg;
+	struct mpii_ecfg_hdr		ehdr;
+
+	if (!port)
+		return (EINVAL);
+
+	bzero(&ehdr, sizeof(ehdr));
+	ehdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED;
+	ehdr.ext_page_length = sizeof(spg) / 4;
+	ehdr.ext_page_type = MPII_CONFIG_REQ_PAGE_TYPE_SAS_DEVICE;
+
+	if (mpii_req_cfg_page(sc, MPII_CFG_SAS_DEV_ADDR_HANDLE | dh,
+	    MPII_PG_EXTENDED, &ehdr, 1, &spg, sizeof(spg)) != 0) {
+		printf("%s: unable to fetch sas device page 0\n",
+		    DEVNAME(sc));
+		return (EINVAL);
+	}
+
+	*port = spg.phy_num;
 
 	return (0);
 }
