@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dlfcn.3,v 1.22 2008/09/24 13:30:47 millert Exp $
+.\"	$OpenBSD: dlfcn.3,v 1.23 2010/02/20 21:08:11 schwarze Exp $
 .\"	$NetBSD: dlfcn.3,v 1.3 1996/01/09 19:43:34 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 24 2008 $
+.Dd $Mdocdate: February 20 2010 $
 .Dt DLFCN 3
 .Os
 .Sh NAME
@@ -264,8 +264,7 @@ code resides.
 provides an interface similar to
 .Xr ioctl 2
 to control several aspects of the run-time linker's operation.
-This interface is
-.Ud .
+This interface is currently under development.
 .Pp
 .Fn dlerror
 returns a character string representing the most recent error that has
