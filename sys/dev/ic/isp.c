@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.48 2010/02/18 10:16:12 sobrado Exp $ */
+/* 	$OpenBSD: isp.c,v 1.49 2010/02/20 12:39:41 sobrado Exp $ */
 /*	$FreeBSD: src/sys/dev/isp/isp.c,v 1.150 2008/12/15 21:42:38 marius Exp $*/
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -1086,7 +1086,7 @@ isp_reset(struct ispsoftc *isp)
 	}
 
 	isp_prt(isp, ISP_LOGALL,
-	    "Board type %s rev 0x%x, %s firmware rev %d.%d.%d",
+	    "board type %s rev 0x%x, %s firmware rev %d.%d.%d",
 	    btype, isp->isp_revision, dodnld? "loaded" : "resident",
 	    isp->isp_fwrev[0], isp->isp_fwrev[1], isp->isp_fwrev[2]);
 
