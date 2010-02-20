@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.24 2008/07/29 22:12:29 martynas Exp $
+.\"	$OpenBSD: math.3,v 1.25 2010/02/20 20:37:51 schwarze Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,12 +28,9 @@
 .\"
 .\"	from: @(#)math.3	6.10 (Berkeley) 5/6/91
 .\"
-.if n \
-.ds Si sig.
-.if t \
-.ds Si significant
-.Dd $Mdocdate: July 29 2008 $
+.Dd $Mdocdate: February 20 2010 $
 .Dt MATH 3
+.Os
 .Sh NAME
 .Nm math
 .Nd introduction to mathematical library functions
@@ -167,7 +164,7 @@ Properties of D_floating-point:
 .It Radix:
 Binary.
 .It Precision:
-56 \*(Si bits, roughly 17 \*(Si decimal digits.
+56 significant bits, roughly 17 significant decimal digits.
 If x and x' are consecutive positive D_floating-point
 numbers (they differ by 1 \fIulp\fR), then
 .Li 1.3e-17 \*(Lt 0.5**56 \*(Lt (x'-x)/x \*(Le 0.5**55 \*(Lt 2.8e-17.
@@ -330,7 +327,7 @@ and
 the Motorola 68881 has all the functions in
 .Em libm
 on chip, and is faster and more accurate to boot;
-it, Apple, the i8087, Z8070 and WE32106 all use 64 \*(Si bits.
+it, Apple, the i8087, Z8070 and WE32106 all use 64 significant bits.
 The main virtue of
 .Bx 4.3 's
 .Em libm
@@ -352,7 +349,7 @@ Double-Precision:
 .It Radix:
 Binary.
 .It Precision:
-53 \*(Si bits, roughly equivalent to 16 \*(Si decimals.
+53 significant bits, roughly equivalent to 16 significant decimals.
 .br
 If x and x' are consecutive positive Double-Precision
 numbers (they differ by 1 \fIulp\fR, then
@@ -403,14 +400,10 @@ comparison, rather than mere (in)equality,
 signal Invalid Operation when \*(Na is involved.
 .El
 .It Rounding:
-Every algebraic operation (+, -, \(**, /,
-.if n \
-sqrt)
-.if t \
-\(sr)
+Every algebraic operation (+, -, \(**, /, sqrt)
 is rounded by default to within half a \fIulp\fR, and
 when the rounding error is exactly half a \fIulp\fR then
-the rounded value's least \*(Si bit is zero.
+the rounded value's least significant bit is zero.
 This kind of rounding is usually the best kind,
 sometimes provably so.
 For instance, for every
@@ -496,10 +489,11 @@ because they would have been rounded off anyway.
 So gradual underflows are usually \fIprovably\fR ignorable.
 The same cannot be said of underflows flushed to 0.
 .El
-.Bl -tag -width XXX
+.Pp
 At the option of an implementor conforming to
 .St -ieee754 ,
 other ways to cope with exceptions may be provided:
+.Bl -tag -width XXX
 .It 4)
 ABORT.
 This mechanism classifies an exception in
@@ -605,7 +599,7 @@ Single-Precision:
 .It Radix:
 Binary.
 .It Precision:
-24 \*(Si bits, roughly equivalent to 7 \*(Si decimals.
+24 significant bits, roughly equivalent to 7 significant decimals.
 .br
 If x and x' are consecutive positive Double-Precision
 numbers (they differ by 1 \fIulp\fR, then
@@ -656,14 +650,10 @@ comparison, rather than mere (in)equality,
 signal Invalid Operation when \*(Na is involved.
 .El
 .It Rounding:
-Every algebraic operation (+, -, \(**, /,
-.if n \
-sqrt)
-.if t \
-\(sr)
+Every algebraic operation (+, -, \(**, /, sqrt)
 is rounded by default to within half a \fIulp\fR, and
 when the rounding error is exactly half a \fIulp\fR then
-the rounded value's least \*(Si bit is zero.
+the rounded value's least significant bit is zero.
 This kind of rounding is usually the best kind,
 sometimes provably so.
 For instance, for every
