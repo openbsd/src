@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.60 2010/02/08 13:05:27 markus Exp $
+#	$OpenBSD: Makefile,v 1.61 2010/02/20 20:28:11 markus Exp $
 
 .PATH:		${.CURDIR}/..
+.include "${.CURDIR}/../Makefile.inc"
 
 LIB=	ssh
 WANTLINT=

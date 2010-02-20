@@ -430,6 +430,7 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx, Key ***keysp,
 	return (0);
 }
 
+#ifdef HAVE_DLOPEN
 /* register a new provider, fails if provider already exists */
 int
 pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
@@ -542,3 +543,11 @@ fail:
 		dlclose(handle);
 	return (-1);
 }
+#else
+int
+pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
+{
+	error("dlopen() not supported");
+	return (-1);
+}
+#endif
