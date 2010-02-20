@@ -1,5 +1,6 @@
-.\"	$OpenBSD: mpii.4,v 1.2 2009/12/01 22:10:13 okan Exp $
+.\"	$OpenBSD: mpii.4,v 1.3 2010/02/20 19:42:09 marco Exp $
 .\"
+.\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
 .\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -14,7 +15,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 1 2009 $
+.Dd $Mdocdate: February 20 2010 $
 .Dt MPII 4
 .Os
 .Sh NAME
@@ -41,7 +42,8 @@ These chipsets can be found on the following controllers:
 .It
 LSI SAS 9200-8e,
 LSI SAS 9211-4i,
-LSI SAS 9211-8i
+LSI SAS 9211-8i,
+Dell PERC H200
 .El
 .Pp
 Some models of these controllers have varying degrees of support for RAID 0
@@ -59,3 +61,11 @@ The
 .Nm
 driver first appeared in
 .Ox 4.7 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An James Giannoules
+and
+.An Mike Belopuhov Aq mkb@crypt.org.ru .
