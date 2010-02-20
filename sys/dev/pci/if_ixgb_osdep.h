@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb_osdep.h,v 1.2 2006/05/01 21:01:12 brad Exp $ */
+/* $OpenBSD: if_ixgb_osdep.h,v 1.3 2010/02/20 22:37:05 jsg Exp $ */
 
 #ifndef _IXGB_OPENBSD_OS_H_
 #define _IXGB_OPENBSD_OS_H_
@@ -61,7 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define CMD_MEM_WRT_INVALIDATE		0x0010	/* BIT_4 */
 
-#define le16_to_cpu 
+#define le16_to_cpu		letoh16
 
 struct ixgb_osdep
 {
