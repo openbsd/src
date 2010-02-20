@@ -1,8 +1,9 @@
-/* $OpenBSD: mpii.c,v 1.6 2010/01/09 23:15:07 krw Exp $ */
+/* $OpenBSD: mpii.c,v 1.7 2010/02/20 19:34:08 marco Exp $ */
 /*
- * Copyright (c) James Giannoules
- * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
- * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
+ * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
+ * Copyright (c) 2009 James Giannoules
+ * Copyright (c) 2005 - 2010 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2005 - 2010 Marco Peereboom <marco@openbsd.org>
  *
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -30,6 +31,7 @@
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
+#include <sys/tree.h>
 
 #include <machine/bus.h>
 
@@ -1019,7 +1021,6 @@ struct mpii_cfg_hdr {
 #define MPII_CONFIG_REQ_PAGE_TYPE_MANUFACTURING		(0x09)
 #define MPII_CONFIG_REQ_PAGE_TYPE_RAID_PD		(0x0a)
 #define MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED		(0x0f)
-#define MPII_CONFIG_REQ_PAGE_TYPE_DRIVER_MAPPING	(0x17)
 } __packed;
 
 struct mpii_ecfg_hdr {
@@ -1030,6 +1031,9 @@ struct mpii_ecfg_hdr {
 
 	u_int16_t		ext_page_length;
 	u_int8_t		ext_page_type;
+#define MPII_CONFIG_REQ_PAGE_TYPE_SAS_DEVICE		(0x12)
+#define MPII_CONFIG_REQ_PAGE_TYPE_RAID_CONFIG		(0x16)
+#define MPII_CONFIG_REQ_PAGE_TYPE_DRIVER_MAPPING	(0x17)
 	u_int8_t		reserved2;
 } __packed;
 
@@ -1269,52 +1273,45 @@ struct mpii_cfg_fc_device_pg0 {
 	u_int8_t		current_bus;
 } __packed;
 
+#define MPII_CFG_RAID_VOL_ADDR_HANDLE		(1<<28)
+
 struct mpii_cfg_raid_vol_pg0 {
 	struct mpii_cfg_hdr	config_header;
 
-	u_int8_t		volume_id;
-	u_int8_t		volume_bus;
-	u_int8_t		volume_ioc;
-	u_int8_t		volume_type;
-
-	u_int8_t		volume_status;
-#define MPII_CFG_RAID_VOL_0_STATUS_ENABLED		(1<<0)
-#define MPII_CFG_RAID_VOL_0_STATUS_QUIESCED		(1<<1)
-#define MPII_CFG_RAID_VOL_0_STATUS_RESYNCING		(1<<2)
-#define MPII_CFG_RAID_VOL_0_STATUS_ACTIVE		(1<<3)
-#define MPII_CFG_RAID_VOL_0_STATUS_BADBLOCK_FULL	(1<<4)
+	u_int16_t		volume_handle;
 	u_int8_t		volume_state;
-#define MPII_CFG_RAID_VOL_0_STATE_OPTIMAL		(0x00)
-#define MPII_CFG_RAID_VOL_0_STATE_DEGRADED		(0x01)
-#define MPII_CFG_RAID_VOL_0_STATE_FAILED		(0x02)
-#define MPII_CFG_RAID_VOL_0_STATE_MISSING		(0x03)
-	u_int16_t		reserved1;
+#define MPII_CFG_RAID_VOL_0_STATE_MISSING		(0x00)
+#define MPII_CFG_RAID_VOL_0_STATE_FAILED		(0x01)
+#define MPII_CFG_RAID_VOL_0_STATE_INITIALIZING		(0x02)
+#define MPII_CFG_RAID_VOL_0_STATE_ONLINE		(0x03)
+#define MPII_CFG_RAID_VOL_0_STATE_DEGRADED		(0x04)
+#define MPII_CFG_RAID_VOL_0_STATE_OPTIMAL		(0x05)
+	u_int8_t		volume_type;
+#define MPII_CFG_RAID_VOL_0_TYPE_RAID0			(0x00)
+#define MPII_CFG_RAID_VOL_0_TYPE_RAID1E			(0x01)
+#define MPII_CFG_RAID_VOL_0_TYPE_RAID1			(0x02)
+#define MPII_CFG_RAID_VOL_0_TYPE_RAID10			(0x05)
+#define MPII_CFG_RAID_VOL_0_TYPE_UNKNOWN		(0xff)
+
+	u_int32_t		volume_status;
 
 	u_int16_t		volume_settings;
-#define MPII_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN	(1<<0)
-#define MPII_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART_ERR	(1<<1)
-#define MPII_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART	(1<<2)
-#define MPII_CFG_RAID_VOL_0_SETTINGS_AUTO_SWAP		(1<<3)
-#define MPII_CFG_RAID_VOL_0_SETTINGS_HI_PRI_RESYNC	(1<<4)
-#define MPII_CFG_RAID_VOL_0_SETTINGS_PROD_SUFFIX	(1<<5)
-#define MPII_CFG_RAID_VOL_0_SETTINGS_FAST_SCRUB		(1<<6) /* obsolete */
-#define MPII_CFG_RAID_VOL_0_SETTINGS_DEFAULTS		(1<<15)
 	u_int8_t		hot_spare_pool;
-	u_int8_t		reserved2;
+	u_int8_t		reserved1;
 
-	u_int32_t		max_lba;
-
-	u_int32_t		reserved3;
+	u_int64_t		max_lba;
 
 	u_int32_t		stripe_size;
 
-	u_int32_t		reserved4;
+	u_int16_t		block_size;
+	u_int16_t		reserved2;
 
-	u_int32_t		reserved5;
+	u_int8_t		phys_disk_types;
+	u_int8_t		resync_rate;
+	u_int16_t		data_scrub_rate;
 
 	u_int8_t		num_phys_disks;
-	u_int8_t		data_scrub_rate;
-	u_int8_t		resync_rate;
+	u_int16_t		reserved3;
 	u_int8_t		inactive_status;
 #define MPII_CFG_RAID_VOL_0_INACTIVE_UNKNOWN		(0x00)
 #define MPII_CFG_RAID_VOL_0_INACTIVE_STALE_META		(0x01)
@@ -1327,9 +1324,10 @@ struct mpii_cfg_raid_vol_pg0 {
 } __packed;
 
 struct mpii_cfg_raid_vol_pg0_physdisk {
-	u_int16_t		reserved;
+	u_int8_t		raid_set_num;
 	u_int8_t		phys_disk_map;
 	u_int8_t		phys_disk_num;
+	u_int8_t		reserved;
 } __packed;
 
 struct mpii_cfg_raid_vol_pg1 {
@@ -1351,6 +1349,8 @@ struct mpii_cfg_raid_vol_pg1 {
 	u_int32_t		reserved3;
 } __packed;
 
+#define MPII_CFG_RAID_PHYS_DISK_ADDR_NUMBER		(1<<28)
+
 struct mpii_cfg_raid_physdisk_pg0 {
 	struct mpii_cfg_hdr	config_header;
 
@@ -1369,45 +1369,50 @@ struct mpii_cfg_raid_physdisk_pg0 {
 
 	u_int32_t		reserved1;
 
-	u_int8_t		ext_disk_id[8];
-
-	u_int8_t		disk_id[16];
-
 	u_int8_t		vendor_id[8];
 
 	u_int8_t		product_id[16];
 
 	u_int8_t		product_rev[4];
 
-	u_int8_t		info[32];
+	u_int8_t		serial[32];
 
-	u_int8_t		phys_disk_status;
+	u_int32_t		reserved2;
+
+	u_int8_t		phys_disk_state;
+#define MPII_CFG_RAID_PHYDISK_0_STATE_NOTCONFIGURED	(0x00)
+#define MPII_CFG_RAID_PHYDISK_0_STATE_NOTCOMPATIBLE	(0x01)
+#define MPII_CFG_RAID_PHYDISK_0_STATE_OFFLINE		(0x02)
+#define MPII_CFG_RAID_PHYDISK_0_STATE_ONLINE		(0x03)
+#define MPII_CFG_RAID_PHYDISK_0_STATE_HOTSPARE		(0x04)
+#define MPII_CFG_RAID_PHYDISK_0_STATE_DEGRADED		(0x05)
+#define MPII_CFG_RAID_PHYDISK_0_STATE_REBUILDING	(0x06)
+#define MPII_CFG_RAID_PHYDISK_0_STATE_OPTIMAL		(0x07)
+	u_int8_t		offline_reason;
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_MISSING		(0x01)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILED		(0x01)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_INITIALIZING	(0x01)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_REQUESTED	(0x01)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILEDREQ	(0x01)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_OTHER		(0xff)
+
+	u_int8_t		incompat_reason;
+	u_int8_t		phys_disk_attrs;
+
+	u_int32_t		phys_disk_status;
 #define MPII_CFG_RAID_PHYDISK_0_STATUS_OUTOFSYNC	(1<<0)
 #define MPII_CFG_RAID_PHYDISK_0_STATUS_QUIESCED		(1<<1)
-	u_int8_t		phys_disk_state;
-#define MPII_CFG_RAID_PHYDISK_0_STATE_ONLINE		(0x00)
-#define MPII_CFG_RAID_PHYDISK_0_STATE_MISSING		(0x01)
-#define MPII_CFG_RAID_PHYDISK_0_STATE_INCOMPAT		(0x02)
-#define MPII_CFG_RAID_PHYDISK_0_STATE_FAILED		(0x03)
-#define MPII_CFG_RAID_PHYDISK_0_STATE_INIT		(0x04)
-#define MPII_CFG_RAID_PHYDISK_0_STATE_OFFLINE		(0x05)
-#define MPII_CFG_RAID_PHYDISK_0_STATE_HOSTFAIL		(0x06)
-#define MPII_CFG_RAID_PHYDISK_0_STATE_OTHER		(0xff)
-	u_int16_t		reserved2;
 
-	u_int32_t		max_lba;
+	u_int64_t		dev_max_lba;
 
-	u_int8_t		error_cdb_byte;
-	u_int8_t		error_sense_key;
+	u_int64_t		host_max_lba;
+
+	u_int64_t		coerced_max_lba;
+
+	u_int16_t		block_size;
 	u_int16_t		reserved3;
 
-	u_int16_t		error_count;
-	u_int8_t		error_asc;
-	u_int8_t		error_ascq;
-
-	u_int16_t		smart_count;
-	u_int8_t		smart_asc;
-	u_int8_t		smart_ascq;
+	u_int32_t		reserved4;
 } __packed;
 
 struct mpii_cfg_raid_physdisk_pg1 {
@@ -1489,7 +1494,16 @@ struct mpii_cfg_sas_dev_pg0 {
 #define MPII_CFG_SAS_DEV_0_FLAGS_UNSUPPORTED		(1<<8)
 #define MPII_CFG_SAS_DEV_0_FLAGS_SATA_SETTINGS		(1<<9)
 	u_int8_t		physical_port;
-	u_int8_t		reserved;
+	u_int8_t		max_port_conn;
+
+	u_int64_t		device_name;
+
+	u_int8_t		port_groups;
+	u_int8_t		dma_group;
+	u_int8_t		ctrl_group;
+	u_int8_t		reserved1;
+
+	u_int64_t		reserved2;
 } __packed;
 
 struct mpii_cfg_bios_pg2 {
@@ -1517,6 +1531,8 @@ struct mpii_cfg_bios_pg2 {
 
 	u_int32_t		c;
 } __packed;
+
+#define MPII_CFG_RAID_CONFIG_ACTIVE_CONFIG		(2<<28)
 
 struct mpii_cfg_raid_config_pg0 {
 	struct	mpii_ecfg_hdr	config_header;
@@ -1871,6 +1887,7 @@ struct mpii_softc {
 	u_int16_t		sc_vd_id_low;
 	u_int16_t		sc_vd_id_hi;
 	u_int16_t		sc_pd_id_start;
+	u_int16_t		sc_pd_count;
 	u_int16_t		sc_vd_count;
 	u_int8_t		sc_num_channels;
 	/* XXX not sure these below will stay */
@@ -1949,7 +1966,8 @@ static const struct pci_matchid mpii_devices[] = {
 int
 mpii_pci_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid(aux, mpii_devices, nitems(mpii_devices)));
+	return (pci_matchbyid(aux, mpii_devices,
+	    sizeof(mpii_devices) / sizeof(mpii_devices[0])));
 }
 
 void
@@ -2076,7 +2094,7 @@ struct scsi_adapter mpii_switch = {
 	mpii_minphys, 
 	mpii_scsi_probe, /* XXX JPG scsi_probe may prove useful for mapping nonsense */
 	NULL,
-	NULL
+	mpii_scsi_ioctl
 };
 
 struct scsi_device mpii_dev = {
@@ -2101,7 +2119,8 @@ void		mpii_push_replies(struct mpii_softc *);
 void		mpii_start(struct mpii_softc *, struct mpii_ccb *);
 int		mpii_complete(struct mpii_softc *, struct mpii_ccb *, int);
 int		mpii_poll(struct mpii_softc *, struct mpii_ccb *, int);
-int		mpii_reply(struct mpii_softc *);
+int		mpii_reply(struct mpii_softc *,
+		    struct mpii_reply_descriptor *);
 
 void		mpii_init_queues(struct mpii_softc *);
 
@@ -2169,13 +2188,16 @@ void		mpii_reorder_vds(struct mpii_softc *);
 void		mpii_reorder_boot_device(struct mpii_softc *);
 
 #if NBIO > 0
-int		mpii_bio_get_pg0_raid(struct mpii_softc *, int);
 int		mpii_ioctl(struct device *, u_long, caddr_t);
 int		mpii_ioctl_inq(struct mpii_softc *, struct bioc_inq *);
 int		mpii_ioctl_vol(struct mpii_softc *, struct bioc_vol *);
 int		mpii_ioctl_disk(struct mpii_softc *, struct bioc_disk *);
-int		mpii_ioctl_setstate(struct mpii_softc *, struct bioc_setstate *);
+int		mpii_bio_hs(struct mpii_softc *, struct bioc_disk *, int,
+		    u_int8_t, int *);
+int		mpii_bio_disk(struct mpii_softc *, struct bioc_disk *,
+		    u_int8_t);
 #ifndef SMALL_KERNEL
+ int		mpii_bio_volstate(struct mpii_softc *, struct bioc_vol *);
 int		mpii_create_sensors(struct mpii_softc *);
 void		mpii_refresh_sensors(void *);
 #endif /* SMALL_KERNEL */
@@ -2193,11 +2215,11 @@ void		mpii_refresh_sensors(void *);
 #define mpii_reply_waiting(s)	((mpii_read_intr((s)) & MPII_INTR_STATUS_REPLY)\
 				    == MPII_INTR_STATUS_REPLY)
 
-#define mpii_read_reply_free(s, v)	mpii_read((s), \
+#define mpii_read_reply_free(s)		mpii_read((s), \
 						MPII_REPLY_FREE_HOST_INDEX)
 #define mpii_write_reply_free(s, v)	mpii_write((s), \
 						MPII_REPLY_FREE_HOST_INDEX, (v))
-#define mpii_read_reply_post(s, v)	mpii_read((s), \
+#define mpii_read_reply_post(s)		mpii_read((s), \
 						MPII_REPLY_POST_HOST_INDEX)
 #define mpii_write_reply_post(s, v)	mpii_write((s), \
 						MPII_REPLY_POST_HOST_INDEX, (v))
@@ -2289,11 +2311,13 @@ mpii_attach(struct mpii_softc *sc)
 		goto free_queues;
 	}
 
+#if 0
 	if (mpii_get_dpm(sc) != 0) {
 		printf("%s: unable to get driver persistent mapping\n",
 		    DEVNAME(sc));
 		goto free_queues;
 	}
+#endif
 
 	if (mpii_cfg_coalescing(sc) != 0) {
 		printf("%s: unable to configure coalescing\n", DEVNAME(sc));
@@ -2314,19 +2338,17 @@ mpii_attach(struct mpii_softc *sc)
 		    DEVNAME(sc));
 		goto free_dpm;
 	}
-	
-	/* enable interrupts */
-	mpii_write(sc, MPII_INTR_MASK, MPII_INTR_MASK_DOORBELL 
-	    | MPII_INTR_MASK_RESET);
-	
+
 	if (mpii_portenable(sc) != 0) {
 		printf("%s: unable to enable port\n", DEVNAME(sc));
 		goto free_dev;
 	} /* assume all discovery events are complete by now */
 
+#if 0
 	if (sc->sc_discovery_in_progress)
 		printf("%s: warning: discovery still in progress\n", 
 		    DEVNAME(sc));
+#endif
 
 	if (mpii_get_bios_pg2(sc) != 0) {
 		printf("%s: unable to get bios page 2\n", DEVNAME(sc));
@@ -2361,6 +2383,22 @@ mpii_attach(struct mpii_softc *sc)
 	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
 		&saa, scsiprint);
+
+	/* enable interrupts */
+	mpii_write(sc, MPII_INTR_MASK, MPII_INTR_MASK_DOORBELL 
+	    | MPII_INTR_MASK_RESET);
+
+#if NBIO > 0
+	if (bio_register(&sc->sc_dev, mpii_ioctl) != 0)
+		panic("%s: controller registration failed", DEVNAME(sc));
+	else
+		sc->sc_ioctl = mpii_ioctl;
+
+#ifndef SMALL_KERNEL
+	if (mpii_create_sensors(sc) != 0)
+		printf("%s: unable to create sensors\n", DEVNAME(sc));
+#endif
+#endif
 
 	return (0);
 
@@ -2408,23 +2446,49 @@ mpii_detach(struct mpii_softc *sc)
 int
 mpii_intr(void *arg)
 {
-	struct mpii_softc	*sc = arg;
+	struct mpii_softc		*sc = arg;
+	struct mpii_reply_descriptor	*rdp;
+	u_int8_t			reply_flags;
+	int				rv = 0;
 
-	if (mpii_reply(sc) < 0)
-		return (0);
+	do {
+		bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq),
+		    0, 8 * sc->sc_reply_post_qdepth, BUS_DMASYNC_POSTWRITE);
 
-	while (mpii_reply(sc) >= 0)
-		;
-	
-	mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
+		rdp = &sc->sc_reply_postq_kva[sc->sc_reply_post_host_index];
+		reply_flags = (u_int8_t)(rdp->reply_flags) & 
+		    MPII_REPLY_DESCR_FLAGS_TYPE_MASK;
+		if ((reply_flags == MPII_REPLY_DESCR_FLAGS_UNUSED))
+			break;
+		if (rdp->type_dependent2 == 0xffffffff) {
+			/*
+			 * ioc is still writing to the reply post queue
+			 * race condition - bail!
+			 */
+			printf("%s: ioc is writing a reply\n", DEVNAME(sc));
+			break;
+		}
+		mpii_reply(sc, rdp);
+		sc->sc_reply_post_host_index =
+		    (sc->sc_reply_post_host_index + 1) %
+		    sc->sc_reply_post_qdepth;
+		rv |= 1;
+	} while (1);
 
-	return (1);
+	if (rv)
+		mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
+
+	return (rv);
 }
 
 void
 mpii_timeout_xs(void *arg)
 {
-/* XXX */
+	struct mpii_ccb		*ccb = arg;
+	struct mpii_softc	*sc = ccb->ccb_sc;
+
+	printf("%s: xfer timeout, ccb %d state %d\n", DEVNAME(sc),
+	    ccb->ccb_smid, ccb->ccb_state);
 }
 
 int
@@ -2540,7 +2604,6 @@ mpii_load_xs(struct mpii_ccb *ccb)
 void
 mpii_minphys(struct buf *bp, struct scsi_link *sl)
 {
-	/* XXX */
 	minphys(bp);
 }
 
@@ -3063,7 +3126,7 @@ mpii_iocinit(struct mpii_softc *sc)
 
 	hi_addr = (u_int32_t)
 	    ((u_int64_t)MPII_DMA_DVA(sc->sc_replies) >> 32);
-	iiq.system_reply_address_high = hi_addr;
+	iiq.system_reply_address_high = htole32(hi_addr);
 
 	iiq.system_request_frame_base_address = 
 	    (u_int64_t)MPII_DMA_DVA(sc->sc_requests);
@@ -3381,8 +3444,10 @@ mpii_eventnotify(struct mpii_softc *sc)
 	enq->event_masks[1] = htole32(0xfffffffc);
 	enq->event_masks[2] = htole32(0xffffffff);
 	enq->event_masks[3] = htole32(0xffffffff);
-	
+
+	s = splbio();	
 	mpii_start(sc, ccb);
+	splx(s);
 
 	return (0);
 }
@@ -3418,9 +3483,6 @@ mpii_event_process_ir_cfg_change_list(struct mpii_softc *sc,
 	ce = (struct mpii_evt_ir_cfg_element *)(ccl + 1);
 
 	for (i = 0; i < ccl->num_elements; i++, ce++) {
-
-		for (volid = 0; volid < sc->sc_max_devices; volid++)
-
 		type = (letoh16(ce->element_flags) & 
 		    MPII_EVT_IR_CFG_ELEMENT_EF_ELEMENT_TYPE_MASK);
 		
@@ -3440,7 +3502,7 @@ mpii_event_process_ir_cfg_change_list(struct mpii_softc *sc,
 			
 				if (sc->sc_mpii_dev[volid] == NULL) {
 					device = malloc(sizeof(struct mpii_device), 
-				    	    M_DEVBUF, M_ZERO);
+				    	    M_DEVBUF, M_NOWAIT | M_ZERO);
 					if (device == NULL) {
 						printf("%s: mpii_event_ir_cfg_change_list "
 					    	    "unable to allocate mpii_device\n",
@@ -3566,7 +3628,7 @@ mpii_event_process_sas_topo_change(struct mpii_softc *sc,
 				}	
 
 			device = malloc(sizeof(struct mpii_device), 
-			    M_DEVBUF, M_ZERO);
+			    M_DEVBUF, M_NOWAIT | M_ZERO);
 			if (device == NULL) {
 				printf("%s: mpii_event_ir_cfg_change_list "
 				    "unable to allocate mpii_device\n",
@@ -3574,6 +3636,7 @@ mpii_event_process_sas_topo_change(struct mpii_softc *sc,
 				break;
 			}
 			
+			sc->sc_pd_count++;		
 			device->dev_handle = letoh16(pe->attached_dev_handle);
 			device->phy_num = tcl->start_phy_num + i;
 			device->type = MPII_DEV_TYPE_PD;
@@ -3748,7 +3811,7 @@ mpii_get_bios_pg2(struct mpii_softc *sc)
 	}
 
 	pagelen = hdr.page_length * 4;
-	sc->sc_bios_pg2 = malloc(pagelen, M_TEMP, M_WAITOK|M_CANFAIL);
+	sc->sc_bios_pg2 = malloc(pagelen, M_TEMP, M_NOWAIT | M_CANFAIL);
 	if (sc->sc_bios_pg2 == NULL) {
 		DNPRINTF(MPII_D_RAID, "%s: mpii_get_bios_pg2 unable to "
 		    "allocate space for BIOS page 2\n", DEVNAME(sc));
@@ -3902,7 +3965,7 @@ mpii_get_dpm_pg0(struct mpii_softc *sc, struct mpii_cfg_dpm_pg0 *dpm_page)
 	pagelen = sizeof(struct mpii_ecfg_hdr) + sc->sc_max_dpm_entries * 
 	    sizeof(struct mpii_dpm_entry);
 	
-	dpm_page = malloc(pagelen, M_TEMP, M_WAITOK|M_CANFAIL);
+	dpm_page = malloc(pagelen, M_TEMP, M_NOWAIT | M_CANFAIL);
 	if (dpm_page == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_get_dpm_pg0 unable to allocate "
 		    "space for device persistence mapping page 0\n", DEVNAME(sc));
@@ -4054,7 +4117,7 @@ mpii_get_ioc_pg8(struct mpii_softc *sc)
 
 	pagelen = hdr.page_length * 4; /* dwords to bytes */
 	
-	page = malloc(pagelen, M_TEMP, M_WAITOK|M_CANFAIL);
+	page = malloc(pagelen, M_TEMP, M_NOWAIT | M_CANFAIL);
 	if (page == NULL) {
 		DNPRINTF(MPII_D_CFG, "%s: mpii_get_ioc_pg8 unable to allocate "
 		    "space for ioc config page 8\n", DEVNAME(sc));
@@ -4079,10 +4142,12 @@ mpii_get_ioc_pg8(struct mpii_softc *sc)
 	DNPRINTF(MPII_D_CFG, "%s:  irvolumemappingflags: 0x%04x\n", 
 	    DEVNAME(sc), letoh16(page->ir_volume_mapping_flags));
 
+#if 0
 	if (!(page->flags & MPII_IOC_PG8_FLAGS_ENCLOSURE_SLOT_MAPPING))
 		/* XXX we don't currently handle persistent mapping mode */
 		printf("%s: warning: controller requested device persistence "
 		    "mapping mode is not supported.\n");
+#endif
 
 	sc->sc_max_dpm_entries = page->max_persistent_entries;
 	sc->sc_dpm_enabled = (sc->sc_max_dpm_entries) ? 1 : 0;
@@ -4183,8 +4248,12 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 		splx(s);
 	}
 
-	if (ccb->ccb_rcb == NULL)
-		panic("%s: unable to fetch config header\n", DEVNAME(sc));
+	if (ccb->ccb_rcb == NULL) {
+		s = splbio();
+		mpii_put_ccb(sc, ccb);
+		splx(s);
+		return (1);
+	}
 	cp = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPII_D_MISC, "%s:  action: 0x%02x sgl_flags: 0x%02x "
@@ -4219,8 +4288,10 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	} else
 		*hdr = cp->config_header;
 
+	s = splbio();
 	mpii_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpii_put_ccb(sc, ccb);
+	splx(s);
 
 	return (rv);
 }
@@ -4277,7 +4348,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	cq->page_address = htole32(address);
 	cq->page_buffer.sg_hdr = htole32(MPII_SGE_FL_TYPE_SIMPLE |
 	    MPII_SGE_FL_LAST | MPII_SGE_FL_EOB | MPII_SGE_FL_EOL |
-	    (page_length * 4) |
+	    MPII_SGE_FL_SIZE_64 | (page_length * 4) |
 	    (read ? MPII_SGE_FL_DIR_IN : MPII_SGE_FL_DIR_OUT));
 
 	/* bounce the page via the request space to avoid more bus_dma games */
@@ -4309,7 +4380,9 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	}
 
 	if (ccb->ccb_rcb == NULL) {
+		s = splbio();
 		mpii_put_ccb(sc, ccb);
+		splx(s);
 		return (1);
 	}
 	cp = ccb->ccb_rcb->rcb_reply;
@@ -4339,99 +4412,64 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	else if (read)
 		bcopy(kva, page, len);
 
+	s = splbio();
 	mpii_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpii_put_ccb(sc, ccb);
+	splx(s);
 
 	return (rv);
 }
 
 int
-mpii_reply(struct mpii_softc *sc)
+mpii_reply(struct mpii_softc *sc, struct mpii_reply_descriptor *rdp)
 {
-	struct mpii_reply_descriptor	*rdp;
 	struct mpii_ccb		*ccb = NULL;
 	struct mpii_rcb		*rcb = NULL;
-	struct mpii_msg_reply	*reply = NULL;
 	u_int8_t		reply_flags;
-	u_int32_t		reply_dva, i;
+	u_int32_t		i;
 	int			smid;
 
 
 	DNPRINTF(MPII_D_INTR, "%s: mpii_reply\n", DEVNAME(sc));
 
-	/* XXX need to change to to be just the reply we expect to read */
-	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq), 0, 
-	    8 * sc->sc_reply_post_qdepth, BUS_DMASYNC_POSTWRITE);
-		 
-	rdp = &sc->sc_reply_postq_kva[sc->sc_reply_post_host_index];
-
-	reply_flags = (u_int8_t)(rdp->reply_flags) & 
-	    MPII_REPLY_DESCR_FLAGS_TYPE_MASK;
-	
-	if ((reply_flags == MPII_REPLY_DESCR_FLAGS_UNUSED))
-		return (-1);
-
-	if (dwordn(rdp, 1) == 0xffffffff)
-		/*
-		 * ioc is still writing to the reply post queue
-		 * race condition - bail!
-		 */
-		 return (-1);
-		 
 	DNPRINTF(MPII_D_INTR, "%s:  dword[0]: 0x%08x\n", DEVNAME(sc), 
 	    letoh32(dwordn(rdp, 0)));
 	DNPRINTF(MPII_D_INTR, "%s:  dword[1]: 0x%08x\n", DEVNAME(sc), 
 	    letoh32(dwordn(rdp, 1)));
 
-	switch (reply_flags) {
-	case MPII_REPLY_DESCR_FLAGS_ADDRESS_REPLY:
+	reply_flags = (u_int8_t)(rdp->reply_flags) & 
+	    MPII_REPLY_DESCR_FLAGS_TYPE_MASK;
+
+	/* smid */
+	smid = letoh16(rdp->type_dependent1);
+
+	if (reply_flags == MPII_REPLY_DESCR_FLAGS_ADDRESS_REPLY) {
 		/* reply frame address */
-		reply_dva = letoh32(rdp->type_dependent2);
-		i = (reply_dva - (u_int32_t)MPII_DMA_DVA(sc->sc_replies)) /
-			MPII_REPLY_SIZE;
-		
+		i = (letoh32(rdp->type_dependent2) -
+		    (u_int32_t)MPII_DMA_DVA(sc->sc_replies)) / MPII_REPLY_SIZE;
+
 		bus_dmamap_sync(sc->sc_dmat,
 		    MPII_DMA_MAP(sc->sc_replies), MPII_REPLY_SIZE * i,
 		    MPII_REPLY_SIZE, BUS_DMASYNC_POSTREAD);
 		
 		rcb = &sc->sc_rcbs[i];
-		reply = rcb->rcb_reply;
-		/* fall through */
-	default:
-		/* smid */
-		 smid = letoh16(rdp->type_dependent1);
 	}
 
 	DNPRINTF(MPII_D_INTR, "%s: mpii_reply reply_flags: %d smid: %d reply: %p\n",
-	    DEVNAME(sc), reply_flags, smid, reply);
+	    DEVNAME(sc), reply_flags, smid, rcb->rcb_reply);
 
-	if (smid)  {
-		ccb = &sc->sc_ccbs[smid - 1];
-
-		/* XXX why is this necessary ? */
-		bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_requests),
-		    ccb->ccb_offset, MPII_REQUEST_SIZE,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-		ccb->ccb_state = MPII_CCB_READY;
-		ccb->ccb_rcb = rcb;
-	}
-
-	DNPRINTF(MPII_D_INTR, "    rcb: 0x%04x\n", rcb);
-
-	dwordn(rdp, 0) = 0xffffffff;
-	dwordn(rdp, 1) = 0xffffffff;
+	memset(rdp, 0xff, sizeof(*rdp));
 
 	bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq), 
 	    8 * sc->sc_reply_post_host_index, 8, 
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		
-	sc->sc_reply_post_host_index = (sc->sc_reply_post_host_index + 1) %
-	    sc->sc_reply_post_qdepth;
 
-	if (smid)
+	if (smid)  {
+		ccb = &sc->sc_ccbs[smid - 1];
+		ccb->ccb_state = MPII_CCB_READY;
+		ccb->ccb_rcb = rcb;
 		ccb->ccb_done(ccb);
-	else
+	} else
 		mpii_event_process(sc, rcb->rcb_reply);
 
 	return (smid);
@@ -4465,11 +4503,11 @@ mpii_dmamem_alloc(struct mpii_softc *sc, size_t size)
 	    NULL, BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 
-	bzero(mdm->mdm_kva, size);
+	DNPRINTF(MPII_D_MEM, "  kva: %p  dva: %p  map: %p  size: %d\n",
+	    mdm->mdm_kva, mdm->mdm_map->dm_segs[0].ds_addr, mdm->mdm_map,
+	    size);
 
-	DNPRINTF(MPII_D_MEM, "%s: mpii_dmamem_alloc size: %d mdm: %#x "
-	    "map: %#x nsegs: %d segs: %#x kva: %x\n",
-	    DEVNAME(sc), size, mdm->mdm_map, nsegs, mdm->mdm_seg, mdm->mdm_kva);
+	bzero(mdm->mdm_kva, size);
 
 	return (mdm);
 
@@ -4506,7 +4544,7 @@ mpii_alloc_dev(struct mpii_softc *sc)
 
 	sc->sc_mpii_dev = malloc(sc->sc_max_devices * 
 	    sizeof(struct mpii_device *), M_DEVBUF, 
-	    M_WAITOK | M_CANFAIL | M_ZERO);
+	    M_NOWAIT | M_CANFAIL | M_ZERO);
 
 	if (sc->sc_mpii_dev == NULL) 
 		return (1);
@@ -4524,7 +4562,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	TAILQ_INIT(&sc->sc_ccb_free);
 
 	sc->sc_ccbs = malloc(sizeof(struct mpii_ccb) * (sc->sc_request_depth-1),
-	    M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
+	    M_DEVBUF, M_NOWAIT | M_CANFAIL | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
 		return (1);
@@ -4593,6 +4631,7 @@ mpii_put_ccb(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	ccb->ccb_state = MPII_CCB_FREE;
 	ccb->ccb_xs = NULL;
 	ccb->ccb_done = NULL;
+	ccb->ccb_rcb = NULL;
 	bzero(ccb->ccb_cmd, MPII_REQUEST_SIZE);
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
 }
@@ -4623,7 +4662,7 @@ mpii_alloc_replies(struct mpii_softc *sc)
 	DNPRINTF(MPII_D_MISC, "%s: mpii_alloc_replies\n", DEVNAME(sc));
 
 	sc->sc_rcbs = malloc(sc->sc_num_reply_frames * sizeof(struct mpii_rcb),
-	    M_DEVBUF, M_WAITOK|M_CANFAIL);
+	    M_DEVBUF, M_NOWAIT | M_CANFAIL);
 	if (sc->sc_rcbs == NULL)
 		return (1);
 
@@ -4656,11 +4695,13 @@ mpii_push_replies(struct mpii_softc *sc)
 		mpii_push_reply(sc, rcb->rcb_reply_dva);
 	}
 }
+
 void 
 mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 {	
 	struct mpii_request_header	*rhp;
 	struct mpii_request_descriptor	descriptor;
+	u_int32_t			*rdp = (uint32_t *)&descriptor;
 
 	DNPRINTF(MPII_D_RW, "%s: mpii_start %#x\n", DEVNAME(sc),
 	    ccb->ccb_cmd_dva);
@@ -4696,24 +4737,22 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	ccb->ccb_state = MPII_CCB_QUEUED;
 
 	DNPRINTF(MPII_D_RW, "%s:   MPII_REQ_DESC_POST_LOW (0x%08x) write "
-	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESC_POST_LOW, 
-	    dwordn(&descriptor, 0));
+	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESC_POST_LOW, *rdp);
 
 	DNPRINTF(MPII_D_RW, "%s:   MPII_REQ_DESC_POST_HIGH (0x%08x) write "
-	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESC_POST_HIGH, 
-	    dwordn(&descriptor, 1));
+	    "0x%08x\n", DEVNAME(sc), MPII_REQ_DESC_POST_HIGH, *(rdp+1)); 
 
-	/* XXX make this 64 bit? */
-	mpii_write(sc, MPII_REQ_DESC_POST_LOW, htole32(dwordn(&descriptor, 0)));
-	mpii_write(sc, MPII_REQ_DESC_POST_HIGH, 
-	    htole32(dwordn(&descriptor, 1)));
+	mpii_write(sc, MPII_REQ_DESC_POST_LOW, htole32(*rdp));
+	mpii_write(sc, MPII_REQ_DESC_POST_HIGH, htole32(*(rdp+1)));
 }
 
 int
 mpii_complete(struct mpii_softc *sc, struct mpii_ccb *ccb, int timeout)
 {
-	int			smid = -1;
-	
+	struct mpii_reply_descriptor	*rdp;
+	u_int8_t			reply_flags;
+	int				smid = -1;
+
 	DNPRINTF(MPII_D_INTR, "%s: mpii_complete timeout %d\n", DEVNAME(sc),
 	    timeout); 
 	
@@ -4726,18 +4765,34 @@ mpii_complete(struct mpii_softc *sc, struct mpii_ccb *ccb, int timeout)
 			delay(1000);
 			continue;
 		}
-		
-		smid = mpii_reply(sc);
-	
-		/* generates PCI write every completed reply, but
-		 * prevents deadlock waiting for specific smid
-		 */
-		mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
-		
-		DNPRINTF(MPII_D_INTR, "%s: mpii_complete call to mpii_reply returned: %d\n",
-		    DEVNAME(sc), smid);
 
+		bus_dmamap_sync(sc->sc_dmat, MPII_DMA_MAP(sc->sc_reply_postq),
+		    0, 8 * sc->sc_reply_post_qdepth, BUS_DMASYNC_POSTWRITE);
+
+		rdp = &sc->sc_reply_postq_kva[sc->sc_reply_post_host_index];
+		reply_flags = (u_int8_t)(rdp->reply_flags) & 
+		    MPII_REPLY_DESCR_FLAGS_TYPE_MASK;
+		if ((reply_flags == MPII_REPLY_DESCR_FLAGS_UNUSED))
+			continue;
+		if (rdp->type_dependent2 == 0xffffffff) {
+			/*
+			 * ioc is still writing to the reply post queue
+			 * race condition - bail!
+			 */
+			printf("%s: ioc is writing a reply\n", DEVNAME(sc));
+			continue;
+		}
+		smid = mpii_reply(sc, rdp);
+
+		DNPRINTF(MPII_D_INTR, "%s: mpii_complete call to mpii_reply"
+		    "returned: %d\n", DEVNAME(sc), smid);
+
+		sc->sc_reply_post_host_index =
+		    (sc->sc_reply_post_host_index + 1) %
+		    sc->sc_reply_post_qdepth;
 	} while (ccb->ccb_smid != smid);
+
+	mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
 
 	return (0);
 }
@@ -4850,27 +4905,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	if (ccb == NULL)
 		return (NO_CCB);
 	
-	/* XXX */
-	if (sc->sc_mpii_dev[link->target] == NULL) {
-		DNPRINTF(MPII_D_MAP, "%s: mpii_scsi_cmd nonexistent tid %d\n", 
-		    DEVNAME(sc), link->target);
-		return (99);
-	}
-
-	/* XXX */
-	if (sc->sc_mpii_dev[link->target]->flags & MPII_DEV_UNUSED) {
-		DNPRINTF(MPII_D_MAP, "%s: mpii_scsi_cmd tid %d is "
-		    "MPII_DEV_UNUSED\n", DEVNAME(sc), link->target);
-		return (99);
-	}
-
-	/* XXX */
-	if (sc->sc_mpii_dev[link->target]->flags & MPII_DEV_HIDDEN) {
-		DNPRINTF(MPII_D_MAP, "%s: mpii_scsi_cmd tid %d is "
-		    "MPII_DEV_HIDDEN\n", DEVNAME(sc), link->target);
-		return (99);
-	}
-
 	DNPRINTF(MPII_D_CMD, "%s: ccb_smid: %d xs->flags: 0x%x\n",
 	    DEVNAME(sc), ccb->ccb_smid, xs->flags);
 
@@ -4884,7 +4918,8 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	io->sense_buffer_length = sizeof(xs->sense);
 	io->sgl_offset0 = 24; /* XXX fix this */
 	io->io_flags = htole16(xs->cmdlen);
-	io->dev_handle = htole16(sc->sc_mpii_dev[link->target]->dev_handle);
+	ccb->ccb_dev_handle = io->dev_handle =
+	    htole16(sc->sc_mpii_dev[link->target]->dev_handle);
 	io->lun[0] = htobe16(link->lun);
 
 	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
@@ -4917,8 +4952,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		return (COMPLETE);
 	}
 
-	timeout_set(&xs->stimeout, mpii_timeout_xs, ccb);
-
 	DNPRINTF(MPII_D_CMD, "%s:  sizeof(mpii_msg_scsi_io): %d "
 	    "sizeof(mpii_ccb_bundle): %d sge offset: 0x%02x\n",
 	    DEVNAME(sc), sizeof(struct mpii_msg_scsi_io),
@@ -4941,6 +4974,9 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		}
 		return (COMPLETE);
 	}
+
+	timeout_set(&xs->stimeout, mpii_timeout_xs, ccb);
+	timeout_add(&xs->stimeout, (xs->timeout * 1000) / hz);
 
 	DNPRINTF(MPII_D_CMD, "%s:    mpii_scsi_cmd(): opcode: %02x datalen: %d "
 	    "req_sense_len: %d\n", DEVNAME(sc), xs->cmd->opcode,
@@ -4969,7 +5005,8 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, dmap);
 	}
 
-	/* timeout_del */
+	if (!(xs->flags & SCSI_POLL))
+		timeout_del(&xs->stimeout);
 	xs->error = XS_NOERROR;
 	xs->resid = 0;
 
@@ -5040,6 +5077,8 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 
 	case MPII_IOCSTATUS_BUSY:
 	case MPII_IOCSTATUS_INSUFFICIENT_RESOURCES:
+	case MPII_IOCSTATUS_SCSI_IOC_TERMINATED:
+	case MPII_IOCSTATUS_SCSI_TASK_TERMINATED:
 		xs->error = XS_BUSY;
 		break;
 
@@ -5057,10 +5096,499 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 		bcopy(&mcb->mcb_sense, &xs->sense, sizeof(xs->sense));
 
 
-	DNPRINTF(MPII_D_CMD, "%s:  xs err: 0x%02x status: %d\n", DEVNAME(sc),
+	DNPRINTF(MPII_D_CMD, "%s:  xs err: 0x%d status: %#x\n", DEVNAME(sc),
 	    xs->error, xs->status);
 
 	mpii_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 	mpii_put_ccb(sc, ccb);
 	scsi_done(xs);
 }
+
+int
+mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
+    struct proc *p)
+{
+	struct mpii_softc	*sc = (struct mpii_softc *)link->adapter_softc;
+
+	DNPRINTF(MPII_D_IOCTL, "%s: mpii_scsi_ioctl\n", DEVNAME(sc));
+
+	if (sc->sc_ioctl)
+		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+	else
+		return (ENOTTY);
+}
+
+#if NBIO > 0
+int
+mpii_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct mpii_softc	*sc = (struct mpii_softc *)dev;
+	int			error = 0;
+
+	DNPRINTF(MPII_D_IOCTL, "%s: mpii_ioctl ", DEVNAME(sc));
+
+	switch (cmd) {
+	case BIOCINQ:
+		DNPRINTF(MPII_D_IOCTL, "inq\n");
+		error = mpii_ioctl_inq(sc, (struct bioc_inq *)addr);
+		break;
+
+	case BIOCVOL:
+		DNPRINTF(MPII_D_IOCTL, "vol\n");
+		error = mpii_ioctl_vol(sc, (struct bioc_vol *)addr);
+		break;
+
+	case BIOCDISK:
+		DNPRINTF(MPII_D_IOCTL, "disk\n");
+		error = mpii_ioctl_disk(sc, (struct bioc_disk *)addr);
+		break;
+
+	default:
+		DNPRINTF(MPII_D_IOCTL, " invalid ioctl\n");
+		error = EINVAL;
+	}
+
+	return (error);
+}
+
+int
+mpii_ioctl_inq(struct mpii_softc *sc, struct bioc_inq *bi)
+{
+	DNPRINTF(MPII_D_IOCTL, "%s: mpii_ioctl_inq\n", DEVNAME(sc));
+
+	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
+
+	bi->bi_nodisk = sc->sc_pd_count;
+	bi->bi_novol = sc->sc_vd_count;
+
+	return (0);
+}
+
+int
+mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
+{
+	struct mpii_cfg_raid_vol_pg0	*vpg;
+	struct mpii_cfg_hdr		hdr;
+	struct scsi_link		*lnk;
+	struct device			*dev;
+	size_t				pagelen;
+	u_int16_t			volh;
+	int				rv, hcnt = 0;
+
+	DNPRINTF(MPII_D_IOCTL, "%s: mpii_ioctl_vol %d\n",
+	    DEVNAME(sc), bv->bv_volid);
+
+	if (bv->bv_volid > sc->sc_vd_count)
+		return (ENODEV);
+
+	volh = sc->sc_mpii_dev[sc->sc_vd_id_low + bv->bv_volid]->dev_handle;
+
+	if (mpii_req_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	    MPII_CFG_RAID_VOL_ADDR_HANDLE | volh, 0, &hdr) != 0) {
+		printf("%s: unable to fetch header for raid volume page 0\n",
+		    DEVNAME(sc));
+		return (EINVAL);
+	}
+
+	pagelen = hdr.page_length * 4;
+	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	if (vpg == NULL) {
+		printf("%s: unable to allocate space for raid "
+		    "volume page 0\n", DEVNAME(sc));
+		return (ENOMEM);
+	}
+
+	if (mpii_req_cfg_page(sc, MPII_CFG_RAID_VOL_ADDR_HANDLE | volh, 0,
+	    &hdr, 1, vpg, pagelen) != 0) {
+		printf("%s: unable to fetch raid volume page 0\n",
+		    DEVNAME(sc));
+		free(vpg, M_TEMP);
+		return (EINVAL);
+	}
+
+	bv->bv_percent = -1;
+
+	switch (vpg->volume_state) {
+	case MPII_CFG_RAID_VOL_0_STATE_ONLINE:
+	case MPII_CFG_RAID_VOL_0_STATE_OPTIMAL:
+		bv->bv_status = BIOC_SVONLINE;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_DEGRADED:
+		bv->bv_status = BIOC_SVDEGRADED;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_FAILED:
+		bv->bv_status = BIOC_SVOFFLINE;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_INITIALIZING:
+		bv->bv_status = BIOC_SVBUILDING;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_MISSING:
+		bv->bv_status = BIOC_SVINVALID;
+		break;
+	}
+
+	switch (vpg->volume_type) {
+	case MPII_CFG_RAID_VOL_0_TYPE_RAID0:
+		bv->bv_level = 0;
+		break;
+	case MPII_CFG_RAID_VOL_0_TYPE_RAID1:
+		bv->bv_level = 1;
+		break;
+	case MPII_CFG_RAID_VOL_0_TYPE_RAID1E:
+	case MPII_CFG_RAID_VOL_0_TYPE_RAID10:
+		bv->bv_level = 10;
+		break;
+	default:
+		bv->bv_level = -1;
+		break;
+	}
+
+	if ((rv = mpii_bio_hs(sc, NULL, 0, vpg->hot_spare_pool, &hcnt)) != 0) {
+		free(vpg, M_TEMP);
+		return (rv);
+	}
+
+	bv->bv_nodisk = vpg->num_phys_disks + hcnt;
+
+	bv->bv_size = letoh64(vpg->max_lba) * letoh16(vpg->block_size);
+
+	lnk = sc->sc_scsibus->sc_link[bv->bv_volid][0];
+	if (lnk != NULL) {
+		dev = lnk->device_softc;
+		strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+	}
+
+	free(vpg, M_TEMP);
+	return (0);
+}
+
+int
+mpii_ioctl_disk(struct mpii_softc *sc, struct bioc_disk *bd)
+{
+	struct mpii_cfg_raid_vol_pg0		*vpg;
+	struct mpii_cfg_raid_vol_pg0_physdisk	*pd;
+	struct mpii_cfg_hdr			hdr;
+	size_t					pagelen;
+	u_int16_t				volh;
+	u_int8_t				dn;
+
+	DNPRINTF(MPII_D_IOCTL, "%s: mpii_ioctl_disk %d/%d\n",
+	    DEVNAME(sc), bd->bd_volid, bd->bd_diskid);
+
+	if (bd->bd_volid > sc->sc_vd_count)
+		return (ENODEV);
+
+	volh = sc->sc_mpii_dev[sc->sc_vd_id_low + bd->bd_volid]->dev_handle;
+
+	if (mpii_req_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	    MPII_CFG_RAID_VOL_ADDR_HANDLE | volh, 0, &hdr) != 0) {
+		printf("%s: unable to fetch header for raid volume page 0\n",
+		    DEVNAME(sc));
+		return (EINVAL);
+	}
+
+	pagelen = hdr.page_length * 4;
+	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	if (vpg == NULL) {
+		printf("%s: unable to allocate space for raid "
+		    "volume page 0\n", DEVNAME(sc));
+		return (ENOMEM);
+	}
+
+	if (mpii_req_cfg_page(sc, MPII_CFG_RAID_VOL_ADDR_HANDLE | volh, 0,
+	    &hdr, 1, vpg, pagelen) != 0) {
+		printf("%s: unable to fetch raid volume page 0\n",
+		    DEVNAME(sc));
+		free(vpg, M_TEMP);
+		return (EINVAL);
+	}
+
+	if (bd->bd_diskid >= vpg->num_phys_disks) {
+		u_int8_t	hsmap = vpg->hot_spare_pool;
+
+		free(vpg, M_TEMP);
+		return (mpii_bio_hs(sc, bd, vpg->num_phys_disks, hsmap, NULL));
+	}
+
+	pd = (struct mpii_cfg_raid_vol_pg0_physdisk *)(vpg + 1) +
+	    bd->bd_diskid;
+	dn = pd->phys_disk_num;
+
+	free(vpg, M_TEMP);
+	return (mpii_bio_disk(sc, bd, dn));
+}
+
+int
+mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
+     u_int8_t hsmap, int *hscnt)
+{
+	struct mpii_cfg_raid_config_pg0	*cpg;
+	struct mpii_raid_config_element	*el;
+	struct mpii_ecfg_hdr		ehdr;
+	size_t				pagelen;
+	int				i, nhs = 0;
+
+	if (bd)
+		DNPRINTF(MPII_D_IOCTL, "%s: mpii_bio_hs %d\n", DEVNAME(sc),
+		    bd->bd_diskid - nvdsk);
+	else
+		DNPRINTF(MPII_D_IOCTL, "%s: mpii_bio_hs\n", DEVNAME(sc));
+
+	if (mpii_req_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_CONFIG,
+	    0, MPII_CFG_RAID_CONFIG_ACTIVE_CONFIG, MPII_PG_EXTENDED,
+	    &ehdr) != 0) {
+		printf("%s: unable to fetch header for raid config page 0\n",
+		    DEVNAME(sc));
+		return (EINVAL);
+	}
+
+	pagelen = ehdr.ext_page_length * 4;
+	cpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	if (cpg == NULL) {
+		printf("%s: unable to allocate space for raid config page 0\n",
+		    DEVNAME(sc));
+		return (ENOMEM);
+	}
+
+	if (mpii_req_cfg_page(sc, MPII_CFG_RAID_CONFIG_ACTIVE_CONFIG,
+	    MPII_PG_EXTENDED, &ehdr, 1, cpg, pagelen) != 0) {
+		printf("%s: unable to fetch raid config page 0\n",
+		    DEVNAME(sc));
+		free(cpg, M_TEMP);
+		return (ENXIO);
+	}
+
+	el = (struct mpii_raid_config_element *)(cpg + 1);
+	for (i = 0; i < cpg->num_elements; i++, el++) {
+		if (ISSET(el->element_flags,
+		    MPII_RAID_CONFIG_ELEMENT_FLAG_HSP_PHYS_DISK) &&
+		    el->hot_spare_pool == hsmap) {
+			/*
+			 * diskid comparison is based on the idea that all
+			 * disks are counted by the bio(4) in sequence, thus
+			 * substracting the number of disks in the volume
+			 * from the diskid yields us a "relative" hotspare
+			 * number, which is good enough for us.
+			 */
+			if (bd != NULL && bd->bd_diskid == nhs + nvdsk) {
+				free(cpg, M_TEMP);
+				return (mpii_bio_disk(sc, bd,
+				    el->phys_disk_num));
+			}
+			nhs++;
+		}
+	}
+
+	if (hscnt)
+		*hscnt = nhs;
+
+	free(cpg, M_TEMP);
+	return (0);
+}
+
+int
+mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
+{
+	struct mpii_cfg_raid_physdisk_pg0	ppg;
+	struct mpii_cfg_hdr			hdr;
+
+	DNPRINTF(MPII_D_IOCTL, "%s: mpii_bio_disk %d\n",
+	    DEVNAME(sc), bd->bd_diskid);
+
+	if (bd->bd_volid > sc->sc_vd_count)
+		return (ENODEV);
+
+	hdr.page_version = 0;
+	hdr.page_length = sizeof(ppg) / 4;
+	hdr.page_number = 0;
+	hdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_RAID_PD;
+
+	if (mpii_req_cfg_page(sc, MPII_CFG_RAID_PHYS_DISK_ADDR_NUMBER | dn, 0,
+	    &hdr, 1, &ppg, sizeof(ppg)) != 0) {
+		printf("%s: unable to fetch raid drive page 0\n",
+		    DEVNAME(sc));
+		return (EINVAL);
+	}
+
+	bd->bd_channel = ppg.phys_disk_bus;
+	bd->bd_target = ppg.phys_disk_num;
+
+	switch (ppg.phys_disk_state) {
+	case MPII_CFG_RAID_PHYDISK_0_STATE_ONLINE:
+	case MPII_CFG_RAID_PHYDISK_0_STATE_OPTIMAL:
+		bd->bd_status = BIOC_SDONLINE;
+		break;
+	case MPII_CFG_RAID_PHYDISK_0_STATE_OFFLINE:
+		bd->bd_status = BIOC_SDOFFLINE;
+		break;
+	case MPII_CFG_RAID_PHYDISK_0_STATE_DEGRADED:
+		bd->bd_status = BIOC_SDFAILED;
+		break;
+	case MPII_CFG_RAID_PHYDISK_0_STATE_REBUILDING:
+		bd->bd_status = BIOC_SDREBUILD;
+		break;
+	case MPII_CFG_RAID_PHYDISK_0_STATE_HOTSPARE:
+		bd->bd_status = BIOC_SDHOTSPARE;
+		break;
+	case MPII_CFG_RAID_PHYDISK_0_STATE_NOTCONFIGURED:
+		bd->bd_status = BIOC_SDUNUSED;
+		break;
+	case MPII_CFG_RAID_PHYDISK_0_STATE_NOTCOMPATIBLE:
+		bd->bd_status = BIOC_SDINVALID;
+		break;
+	}
+
+	bd->bd_size = letoh64(ppg.dev_max_lba) * letoh16(ppg.block_size);
+
+	scsi_strvis(bd->bd_vendor, ppg.product_id, sizeof(ppg.product_id));
+	scsi_strvis(bd->bd_serial, ppg.serial, sizeof(ppg.serial));
+
+	return (0);
+}
+
+#ifndef SMALL_KERNEL
+int
+mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
+{
+	struct mpii_cfg_raid_vol_pg0	*vpg;
+	struct mpii_cfg_hdr		hdr;
+	size_t				pagelen;
+	u_int16_t			volh;
+
+	DNPRINTF(MPII_D_IOCTL, "%s: mpii_ioctl_vol %d\n",
+	    DEVNAME(sc), bv->bv_volid);
+
+	if (bv->bv_volid > sc->sc_vd_count)
+		return (ENODEV);
+
+	volh = sc->sc_mpii_dev[sc->sc_vd_id_low + bv->bv_volid]->dev_handle;
+
+	if (mpii_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	    MPII_CFG_RAID_VOL_ADDR_HANDLE | volh, &hdr) != 0) {
+		printf("%s: unable to fetch header for raid volume page 0\n",
+		    DEVNAME(sc));
+		return (EINVAL);
+	}
+
+	pagelen = hdr.page_length * 4;
+	vpg = malloc(pagelen, M_TEMP, M_NOWAIT | M_CANFAIL | M_ZERO);
+	if (vpg == NULL) {
+		printf("%s: unable to allocate space for raid "
+		    "volume page 0\n", DEVNAME(sc));
+		return (ENOMEM);
+	}
+
+	if (mpii_cfg_page(sc, MPII_CFG_RAID_VOL_ADDR_HANDLE | volh,
+	    &hdr, 1, vpg, pagelen) != 0) {
+		printf("%s: unable to fetch raid volume page 0\n",
+		    DEVNAME(sc));
+		free(vpg, M_TEMP);
+		return (EINVAL);
+	}
+
+	switch (vpg->volume_state) {
+	case MPII_CFG_RAID_VOL_0_STATE_ONLINE:
+	case MPII_CFG_RAID_VOL_0_STATE_OPTIMAL:
+		bv->bv_status = BIOC_SVONLINE;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_DEGRADED:
+		bv->bv_status = BIOC_SVDEGRADED;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_FAILED:
+		bv->bv_status = BIOC_SVOFFLINE;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_INITIALIZING:
+		bv->bv_status = BIOC_SVBUILDING;
+		break;
+	case MPII_CFG_RAID_VOL_0_STATE_MISSING:
+		bv->bv_status = BIOC_SVINVALID;
+		break;
+	}
+
+	free(vpg, M_TEMP);
+	return (0);
+}
+
+int
+mpii_create_sensors(struct mpii_softc *sc)
+{
+	struct scsibus_softc	*ssc = sc->sc_scsibus;
+	struct device		*dev;
+	int			i;
+
+	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_vd_count,
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+	if (sc->sc_sensors == NULL)
+		return (1);
+
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
+	for (i = 0; i < sc->sc_vd_count; i++) {
+		if (ssc->sc_link[i][0] == NULL)
+			goto bad;
+
+		dev = ssc->sc_link[i][0]->device_softc;
+
+		sc->sc_sensors[i].type = SENSOR_DRIVE;
+		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+
+		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
+		    sizeof(sc->sc_sensors[i].desc));
+
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
+	}
+
+	if (sensor_task_register(sc, mpii_refresh_sensors, 10) == NULL)
+		goto bad;
+
+	sensordev_install(&sc->sc_sensordev);
+
+	return (0);
+
+bad:
+	free(sc->sc_sensors, M_DEVBUF);
+
+	return (1);
+}
+
+void
+mpii_refresh_sensors(void *arg)
+{
+	struct mpii_softc	*sc = arg;
+	struct bioc_vol		bv;
+	int			i;
+
+	for (i = 0; i < sc->sc_vd_count; i++) {
+		bzero(&bv, sizeof(bv));
+		bv.bv_volid = i;
+		if (mpii_bio_volstate(sc, &bv))
+			return;
+
+		switch(bv.bv_status) {
+		case BIOC_SVOFFLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sensors[i].status = SENSOR_S_CRIT;
+			break;
+
+		case BIOC_SVDEGRADED:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sensors[i].status = SENSOR_S_WARN;
+			break;
+
+		case BIOC_SVSCRUB:
+		case BIOC_SVONLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sensors[i].status = SENSOR_S_OK;
+			break;
+
+		case BIOC_SVINVALID:
+			/* FALLTRHOUGH */
+		default:
+			sc->sc_sensors[i].value = 0; /* unknown */
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		}
+	}
+}
+#endif /* SMALL_KERNEL */
+#endif /* NBIO > 0 */
