@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpii.4,v 1.3 2010/02/20 19:42:09 marco Exp $
+.\"	$OpenBSD: mpii.4,v 1.4 2010/02/20 19:49:09 marco Exp $
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
 .\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -69,3 +69,11 @@ driver was written by
 .An James Giannoules
 and
 .An Mike Belopuhov Aq mkb@crypt.org.ru .
+.Sh BUGS
+The chips supported by
+.Nm
+do not use a SCSI-like identifier.
+Instead they use an opaque ID and leave discovery order up to the operating
+system.
+The code to handle this is currently not implemented and therefore it is not a
+good idea to run this driver on a multi-boot machine or with more than 1 drive.
