@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.12 2009/05/08 16:53:45 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.13 2010/02/20 16:45:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,6 +55,7 @@ struct envy_softc {
 	struct device		dev;
 	struct device	       *audio;
 	int			isht;		/* is a Envy24HT ? */
+	int			isac97;		/* is a Envy24HT AC97 ? */
 	struct envy_buf		ibuf, obuf;
 	pcitag_t		pci_tag;
 	pci_chipset_tag_t	pci_pc;
@@ -70,6 +71,9 @@ struct envy_softc {
 	unsigned char 		shadow[4][16];
 #define ENVY_EEPROM_MAXSZ 32
 	unsigned char		eeprom[ENVY_EEPROM_MAXSZ];
+	struct ac97_codec_if   *codec_if;
+	struct ac97_host_if	host_if;
+	enum ac97_host_flags	codec_flags;
 	void (*iintr)(void *);
 	void *iarg;
 	void (*ointr)(void *);

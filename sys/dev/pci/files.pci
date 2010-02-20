@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.268 2010/02/19 15:00:15 miod Exp $
+#	$OpenBSD: files.pci,v 1.269 2010/02/20 16:45:28 ratchov Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -136,7 +136,7 @@ file	dev/pci/azalia.c		azalia
 file	dev/pci/azalia_codec.c		azalia
 
 # VIA Envy24 (aka ICE1712)
-device	envy: audio, auconv, mulaw
+device	envy: audio, auconv, mulaw, ac97
 attach	envy at pci
 file	dev/pci/envy.c			envy
 

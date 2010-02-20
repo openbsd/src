@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.31 2009/11/02 05:54:16 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.32 2010/02/20 16:45:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,11 +32,12 @@
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 #include <sys/malloc.h>
+#include <dev/audio_if.h>
+#include <dev/ic/ac97.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/envyvar.h>
 #include <dev/pci/envyreg.h>
-#include <dev/audio_if.h>
 #include <machine/bus.h>
 
 #ifdef ENVY_DEBUG
@@ -103,11 +104,20 @@ int envy_get_port(void *, struct mixer_ctrl *);
 int envy_set_port(void *, struct mixer_ctrl *);
 int envy_get_props(void *);
 
+int  envy_ac97_wait(struct envy_softc *);
+int  envy_ac97_attach_codec(void *, struct ac97_codec_if *);
+int  envy_ac97_read_codec(void *, u_int8_t, u_int16_t *);
+int  envy_ac97_write_codec(void *, u_int8_t, u_int16_t);
+void envy_ac97_reset_codec(void *);
+enum ac97_host_flags envy_ac97_flags_codec(void *);
+
 void delta_init(struct envy_softc *);
 void delta_codec_write(struct envy_softc *, int, int, int);
 
 void revo51_init(struct envy_softc *);
 void revo51_codec_write(struct envy_softc *, int, int, int);
+
+void tremor51_init(struct envy_softc *);
 
 void julia_init(struct envy_softc *);
 void julia_codec_write(struct envy_softc *, int, int, int);
@@ -275,6 +285,12 @@ struct envy_card envy_cards[] = {
 		revo51_init,
 		revo51_codec_write
 	}, {
+		PCI_ID_CODE(0x1412, 0x2403),
+		"VIA Tremor 5.1",
+		2, &unkenvy_codec, 6, &unkenvy_codec,
+		tremor51_init,
+		unkenvy_codec_write
+	}, {
 		0,
 		"unknown 1724-based card",
 		2, &unkenvy_codec, 8, &unkenvy_codec,
@@ -434,6 +450,26 @@ revo51_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 	}
 
 	envy_gpio_i2c_stop_bit(sc, REVO51_PT2258S_SDA, REVO51_PT2258S_SCL);
+}
+
+/*
+ * via tremor 5.1 specific code
+ */
+
+void
+tremor51_init(struct envy_softc *sc)
+{
+	sc->isac97 = 1;
+	sc->host_if.arg = sc;
+	sc->host_if.attach = envy_ac97_attach_codec;
+	sc->host_if.read = envy_ac97_read_codec;
+	sc->host_if.write = envy_ac97_write_codec;
+	sc->host_if.reset = envy_ac97_reset_codec;
+	sc->host_if.flags = envy_ac97_flags_codec;
+	sc->codec_flags = 0;
+
+	if (ac97_attach(&sc->host_if) != 0)
+		printf("%s: can't attach ac97\n", DEVNAME(sc));
 }
 
 /*
@@ -949,6 +985,108 @@ envy_eeprom_gpioxxx(struct envy_softc *sc, int addr)
 		val |= sc->eeprom[++addr] << 16;
 	}
 	return val;
+}
+
+int
+envy_ac97_wait(struct envy_softc *sc)
+{
+	int timeout = 50, st;
+
+        for (;;) {
+		st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD);
+		if ((st & ENVY_MT_AC97_READY) && !(st & ENVY_MT_AC97_CMD_MASK)) {
+			st = 0;
+			break;
+		}
+		if (timeout == 0) {
+			st = -1;
+			break;
+		}
+		delay(50);
+		timeout--;
+	}
+
+	return (st);
+}
+
+int
+envy_ac97_attach_codec(void *hdl, struct ac97_codec_if *codec_if)
+{
+	struct envy_softc *sc = hdl;
+
+	sc->codec_if = codec_if;
+
+	return (0);
+}
+
+int
+envy_ac97_read_codec(void *hdl, u_int8_t reg, u_int16_t *result)
+{
+	struct envy_softc *sc = hdl;
+
+	if (envy_ac97_wait(sc)) {
+		printf("%s: envy_ac97_read_codec: timed out\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_IDX, reg & 0x7f);
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD,
+	    ENVY_MT_AC97_CMD_RD);
+	delay(50);
+
+	if (envy_ac97_wait(sc)) {
+		printf("%s: envy_ac97_read_codec: timed out\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	*result = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_DATA);
+
+	return (0);
+}
+
+int
+envy_ac97_write_codec(void *hdl, u_int8_t reg, u_int16_t data)
+{
+	struct envy_softc *sc = hdl;
+
+	if (envy_ac97_wait(sc)) {
+		printf("%s: envy_ac97_write_codec: timed out\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_IDX, reg & 0x7f);
+	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_DATA, data);
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD,
+	    ENVY_MT_AC97_CMD_WR);
+	delay(50);
+
+	return (0);
+}
+
+void
+envy_ac97_reset_codec(void *hdl)
+{
+	struct envy_softc *sc = hdl;
+
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD,
+	    ENVY_MT_AC97_CMD_RST);
+	delay(50);
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_AC97_CMD, 0);
+	delay(50);
+
+	if (envy_ac97_wait(sc)) {
+		printf("%s: envy_ac97_reset_codec: timed out\n", DEVNAME(sc));
+	}
+
+	return;
+}
+
+enum ac97_host_flags
+envy_ac97_flags_codec(void *hdl)
+{
+	struct envy_softc *sc = hdl;
+
+	return (sc->codec_flags);
 }
 
 void
@@ -1617,6 +1755,9 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		AudioCinputs, AudioCoutputs, AudioCmonitor 
 	};
 
+	if (sc->isac97)
+		return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, dev));
+
 	if (dev->index < 0)
 		return ENXIO;
 
@@ -1706,6 +1847,9 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 	struct envy_softc *sc = (struct envy_softc *)self;
 	int val, idx, ndev;
 
+	if (sc->isac97)
+		return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, ctl));
+
 	if (ctl->dev < ENVY_MIX_NCLASS) {
 		return EINVAL;
 	}
@@ -1746,6 +1890,9 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
 	int maxsrc, val, idx, ndev;
+
+	if (sc->isac97)
+		return (sc->codec_if->vtbl->mixer_set_port(sc->codec_if, ctl));
 
 	if (ctl->dev < ENVY_MIX_NCLASS) {
 		return EINVAL;

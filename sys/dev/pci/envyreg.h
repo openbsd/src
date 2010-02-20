@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.11 2009/11/02 05:54:16 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.12 2010/02/20 16:45:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -107,6 +107,14 @@
 #define ENVY_MT_IMASK		3	/* HT only */
 #define   ENVY_MT_IMASK_PDMA0	0x1
 #define   ENVY_MT_IMASK_RDMA0	0x2
+#define ENVY_MT_AC97_IDX	4
+#define ENVY_MT_AC97_CMD	5
+#define   ENVY_MT_AC97_READY	0x08
+#define   ENVY_MT_AC97_CMD_MASK	0x30
+#define   ENVY_MT_AC97_CMD_RD	0x10
+#define   ENVY_MT_AC97_CMD_WR	0x20
+#define   ENVY_MT_AC97_CMD_RST	0x80
+#define ENVY_MT_AC97_DATA	6
 #define ENVY_MT_PADDR		0x10
 #define ENVY_MT_PBUFSZ		0x14
 #define ENVY_MT_PBLKSZ(s)	((s)->isht ? 0x1c : 0x16)
