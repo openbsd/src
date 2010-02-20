@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.3 2010/02/20 21:05:00 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -131,7 +131,6 @@ void		 if_del(struct iface *);
 void		 if_init(struct ldpd_conf *, struct iface *);
 
 int		 if_act_start(struct iface *);
-int		 if_act_elect(struct iface *);
 int		 if_act_reset(struct iface *);
 
 struct ctl_iface	*if_to_ctl(struct iface *);
@@ -176,14 +175,6 @@ void	 nbr_stop_idtimer(struct nbr *);
 void	 nbr_reset_idtimer(struct nbr *);
 int	 nbr_pending_idtimer(struct nbr *);
 
-int	 nbr_act_reset_itimer(struct nbr *);
-int	 nbr_act_start_itimer(struct nbr *);
-int	 nbr_act_reset_ktimer(struct nbr *);
-int	 nbr_act_start_ktimer(struct nbr *);
-int	 nbr_act_reset_ktimeout(struct nbr *);
-int	 nbr_act_start_ktimeout(struct nbr *);
-int	 nbr_act_reset_idtimer(struct nbr *);
-int	 nbr_act_start_idtimer(struct nbr *);
 int	 nbr_act_session_establish(struct nbr *, int);
 int	 nbr_close_connection(struct nbr *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.8 2010/02/19 14:32:34 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.9 2010/02/20 21:05:00 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -135,23 +135,24 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		return (0);
 	}
 
+	ret = 0;
+
 	switch (nbr_fsm_tbl[i].action) {
 	case NBR_ACT_RST_ITIMER:
-		ret = nbr_act_reset_itimer(nbr);
+		nbr_reset_itimer(nbr);
 		break;
 	case NBR_ACT_STRT_ITIMER:
-		ret = nbr_act_start_itimer(nbr);
+		nbr_start_itimer(nbr);
 		break;
 	case NBR_ACT_RST_KTIMEOUT:
-		ret = nbr_act_reset_ktimeout(nbr);
+		nbr_reset_ktimeout(nbr);
 		break;
 	case NBR_ACT_RST_KTIMER:
-		ret = nbr_act_reset_ktimer(nbr);
+		nbr_reset_ktimer(nbr);
 		break;
 	case NBR_ACT_STRT_KTIMER:
-		/* XXX */
-		ret = nbr_act_start_ktimer(nbr);
-		nbr_act_start_ktimeout(nbr);
+		nbr_start_ktimer(nbr);
+		nbr_start_ktimeout(nbr);
 		send_address(nbr, NULL);
 		nbr_send_labelmappings(nbr);
 		break;
@@ -159,21 +160,19 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		ret = nbr_act_session_establish(nbr, 0);
 		break;
 	case NBR_ACT_INIT_SEND:
-		/* XXX */
 		send_init(nbr);
-		ret = send_keepalive(nbr);
+		send_keepalive(nbr);
 		break;
 	case NBR_ACT_KEEPALIVE_SEND:
-		/* XXX */
-		ret = nbr_act_start_ktimer(nbr);
-		nbr_act_start_ktimeout(nbr);
+		nbr_start_ktimer(nbr);
+		nbr_start_ktimeout(nbr);
 		send_keepalive(nbr);
 		send_address(nbr, NULL);
 		nbr_send_labelmappings(nbr);
 		break;
 	case NBR_ACT_CLOSE_SESSION:
 		session_close(nbr);
-		ret = nbr_act_start_idtimer(nbr);
+		nbr_start_idtimer(nbr);
 		break;
 	case NBR_ACT_NOTHING:
 		/* do nothing */
@@ -536,71 +535,6 @@ nbr_reset_idtimer(struct nbr *nbr)
 	if (evtimer_add(&nbr->initdelay_timer, &tv) == -1)
 		fatal("nbr_reset_idtimer");
 }
-/* actions */
-int
-nbr_act_reset_itimer(struct nbr *nbr)
-{
-	nbr_reset_itimer(nbr);
-
-	return (0);
-}
-
-int
-nbr_act_start_itimer(struct nbr *nbr)
-{
-	nbr_start_itimer(nbr);
-
-	return (0);
-}
-
-int
-nbr_act_reset_ktimer(struct nbr *nbr)
-{
-	nbr_reset_ktimer(nbr);
-
-	return (0);
-}
-
-int
-nbr_act_start_ktimer(struct nbr *nbr)
-{
-	nbr_start_ktimer(nbr);
-
-	return (0);
-}
-
-int
-nbr_act_reset_ktimeout(struct nbr *nbr)
-{
-	nbr_reset_ktimeout(nbr);
-
-	return (0);
-}
-
-int
-nbr_act_start_ktimeout(struct nbr *nbr)
-{
-	nbr_start_ktimeout(nbr);
-
-	return (0);
-}
-
-int
-nbr_act_reset_idtimer(struct nbr *nbr)
-{
-	nbr_reset_idtimer(nbr);
-
-	return (0);
-}
-
-int
-nbr_act_start_idtimer(struct nbr *nbr)
-{
-	if (nbr->addr.s_addr < nbr->iface->addr.s_addr)
-		nbr_start_idtimer(nbr);
-
-	return (0);
-}
 
 int
 nbr_establish_connection(struct nbr *nbr)
@@ -622,7 +556,7 @@ nbr_establish_connection(struct nbr *nbr)
 	if (connect(nbr->fd, (struct sockaddr *)&in, sizeof(in)) == -1) {
 		log_debug("nbr_establish_connection: error while "
 		    "connecting to %s", inet_ntoa(nbr->addr));
-		nbr_act_start_idtimer(nbr);
+		nbr_start_idtimer(nbr);
 		close(nbr->fd);
 		return (-1);
 	}
