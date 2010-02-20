@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.470 2010/02/08 22:22:09 mpf Exp $
+$OpenBSD: usbdevs,v 1.471 2010/02/20 11:44:56 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3226,7 +3226,8 @@ product OPTION GTICON322	0xd033	GlobeTrotter Icon322 storage
 
 /* WCH/QinHeng Electronics */
 product WCH CH341		0x5523	CH341 serial/parallel
-product WCH2 CH341		0x7523	CH341 serial/parallel
+product WCH2 CH341A		0x5523	CH341A serial/parallel
+product WCH2 CH340		0x7523	CH340 serial/parallel
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet

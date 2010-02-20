@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.9 2009/10/13 19:33:17 pirofti Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.10 2010/02/20 11:44:56 jsg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -222,7 +222,8 @@ struct	ucom_methods uchcom_methods = {
 
 static const struct usb_devno uchcom_devs[] = {
 	{ USB_VENDOR_WCH, USB_PRODUCT_WCH_CH341 },
-	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH341 },
+	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH340 },
+	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH341A }
 };
 #define uchcom_lookup(v, p)	usb_lookup(uchcom_devs, v, p)
 
