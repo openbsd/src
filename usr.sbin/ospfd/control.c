@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.31 2010/02/19 10:35:52 dlg Exp $ */
+/*	$OpenBSD: control.c,v 1.32 2010/02/21 20:53:20 michele Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,8 +33,6 @@
 #include "control.h"
 
 #define	CONTROL_BACKLOG	5
-
-int control_imsg_relay(struct imsg *imsg);
 
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
