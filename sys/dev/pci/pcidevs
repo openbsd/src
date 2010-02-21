@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1529 2010/02/21 06:22:27 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1530 2010/02/21 19:33:11 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2249,7 +2249,7 @@ product INTEL PRO_100_VE_3	0x103d	PRO/100 VE
 product INTEL PRO_100_VM_5	0x103e	PRO/100 VM
 product INTEL 536EP		0x1040	V.92 Modem
 product INTEL PRO_WL_2100	0x1043	PRO/Wireless 2100
-product INTEL 82597EX		0x1048	PRO/10GbE LR (82597EX)
+product INTEL 82597EX		0x1048	PRO/10GbE (82597EX)
 product INTEL ICH8_IGP_M_AMT	0x1049	ICH8 IGP M AMT
 product INTEL ICH8_IGP_AMT	0x104a	ICH8 IGP AMT
 product INTEL ICH8_IGP_C	0x104b	ICH8 IGP C
