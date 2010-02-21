@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.23 2010/02/21 12:01:42 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.24 2010/02/21 14:48:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -165,6 +165,8 @@ struct vnet_softc {
 	int		sc_tx_prod;
 	int		sc_tx_cons;
 
+	uint8_t		sc_peer_state;
+
 	struct ldc_map	*sc_lm;
 	struct vnet_dring *sc_vd;
 	struct vnet_soft_desc *sc_vsd;
@@ -211,6 +213,7 @@ void	vnet_send_ver_info(struct vnet_softc *, uint16_t, uint16_t);
 void	vnet_send_attr_info(struct vnet_softc *);
 void	vnet_send_dring_reg(struct vnet_softc *);
 void	vio_send_rdx(struct vnet_softc *);
+void	vnet_send_dring_data(struct vnet_softc *, uint32_t);
 
 void	vnet_start(struct ifnet *);
 void	vnet_start_desc(struct ifnet *);
@@ -851,6 +854,8 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		struct ldc_map *map = sc->sc_lm;
 		int cons;
 
+		sc->sc_peer_state = dm->proc_state;
+
 		cons = sc->sc_tx_cons;
 		while (sc->sc_vd->vd_desc[cons].hdr.dstate == VIO_DESC_DONE) {
 			map->lm_slot[sc->sc_vsd[cons].vsd_map_idx].entry = 0;
@@ -863,6 +868,9 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			sc->sc_tx_cnt--;
 		}
 		sc->sc_tx_cons = cons;
+
+		if (sc->sc_tx_cnt > 0 && sc->sc_peer_state != VIO_DP_ACTIVE)
+			vnet_send_dring_data(sc, sc->sc_tx_cons);
 
 		if (sc->sc_tx_cnt < sc->sc_vd->vd_nentries)
 			ifp->if_flags &= ~IFF_OACTIVE;
@@ -1009,12 +1017,30 @@ vio_send_rdx(struct vnet_softc *sc)
 }
 
 void
+vnet_send_dring_data(struct vnet_softc *sc, uint32_t start_idx)
+{
+	struct vio_dring_msg dm;
+
+	bzero(&dm, sizeof(dm));
+	dm.tag.type = VIO_TYPE_DATA;
+	dm.tag.stype = VIO_SUBTYPE_INFO;
+	dm.tag.stype_env = VIO_DRING_DATA;
+	dm.tag.sid = sc->sc_local_sid;
+	dm.seq_no = sc->sc_seq_no++;
+	dm.dring_ident = sc->sc_dring_ident;
+	dm.start_idx = start_idx;
+	dm.end_idx = -1;
+	vio_sendmsg(sc, &dm, sizeof(dm));
+
+	sc->sc_peer_state = VIO_DP_ACTIVE;
+}
+
+void
 vnet_start(struct ifnet *ifp)
 {
 	struct vnet_softc *sc = ifp->if_softc;
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct ldc_map *map = sc->sc_lm;
-	struct vio_dring_msg dm;
 	struct mbuf *m;
 	paddr_t pa;
 	caddr_t buf;
@@ -1111,18 +1137,8 @@ vnet_start(struct ifnet *ifp)
 		m_freem(m);
 	}
 
-	if (desc != sc->sc_tx_prod) {
-		bzero(&dm, sizeof(dm));
-		dm.tag.type = VIO_TYPE_DATA;
-		dm.tag.stype = VIO_SUBTYPE_INFO;
-		dm.tag.stype_env = VIO_DRING_DATA;
-		dm.tag.sid = sc->sc_local_sid;
-		dm.seq_no = sc->sc_seq_no++;
-		dm.dring_ident = sc->sc_dring_ident;
-		dm.start_idx = sc->sc_tx_prod;
-		dm.end_idx = -1;
-		vio_sendmsg(sc, &dm, sizeof(dm));
-
+	if (sc->sc_tx_cnt > 0 && sc->sc_peer_state != VIO_DP_ACTIVE) {
+		vnet_send_dring_data(sc, sc->sc_tx_prod);
 		ifp->if_timer = 5;
 	}
 
