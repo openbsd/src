@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1528 2010/02/15 17:24:39 damien Exp $
+$OpenBSD: pcidevs,v 1.1529 2010/02/21 06:22:27 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4449,6 +4449,7 @@ product PLX PEX_8525		0x8525	PEX 8525
 product PLX PEX_8532		0x8532	PEX 8532
 product PLX PEX_8533		0x8533	PEX 8533
 product PLX PEX_8548		0x8548	PEX 8548
+product PLX PEX_8648		0x8648	PEX 8648
 product PLX 9016		0x9016	I/O 9016
 product PLX 9050		0x9050	I/O 9050
 product PLX 9080		0x9080	I/O 9080
