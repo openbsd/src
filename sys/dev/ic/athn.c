@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.25 2010/02/16 18:49:31 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.26 2010/02/21 19:57:05 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -783,14 +783,14 @@ athn_intr(void *xsc)
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 	    (IFF_UP | IFF_RUNNING))
-		return (1);
+		return (0);
 
 	/* Get pending interrupts. */
 	intr = AR_READ(sc, AR_INTR_ASYNC_CAUSE);
 	if (!(intr & AR_INTR_MAC_IRQ) || intr == AR_INTR_SPURIOUS) {
 		intr = AR_READ(sc, AR_INTR_SYNC_CAUSE);
 		if (intr == AR_INTR_SPURIOUS || (intr & sc->isync) == 0)
-			return (1);	/* Not for us. */
+			return (0);	/* Not for us. */
 	}
 
 	if ((AR_READ(sc, AR_INTR_ASYNC_CAUSE) & AR_INTR_MAC_IRQ) &&
@@ -800,7 +800,7 @@ athn_intr(void *xsc)
 		intr = 0;
 	sync = AR_READ(sc, AR_INTR_SYNC_CAUSE) & sc->isync;
 	if (intr == 0 && sync == 0)
-		return (1);	/* Not for us. */
+		return (0);	/* Not for us. */
 
 	if (intr != 0) {
 		if (intr & AR_ISR_BCNMISC) {
@@ -812,7 +812,7 @@ athn_intr(void *xsc)
 		}
 		intr = AR_READ(sc, AR_ISR_RAC);
 		if (intr == AR_INTR_SPURIOUS)
-			return (0);
+			return (1);
 
 		if (intr & (AR_ISR_RXMINTR | AR_ISR_RXINTM))
 			athn_rx_intr(sc);
@@ -859,7 +859,7 @@ athn_intr(void *xsc)
 		AR_WRITE(sc, AR_INTR_SYNC_CAUSE, sync);
 		(void)AR_READ(sc, AR_INTR_SYNC_CAUSE);
 	}
-	return (0);
+	return (1);
 }
 
 /*
