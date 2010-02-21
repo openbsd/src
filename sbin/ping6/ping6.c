@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.77 2009/12/24 10:06:35 sobrado Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.78 2010/02/21 19:00:11 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ main(int argc, char *argv[])
 		ghints.ai_socktype = SOCK_RAW;
 		ghints.ai_protocol = IPPROTO_ICMPV6;
 
-		error = getaddrinfo(gateway, NULL, &hints, &gres);
+		error = getaddrinfo(gateway, NULL, &ghints, &gres);
 		if (error) {
 			errx(1, "getaddrinfo for the gateway %s: %s",
 			     gateway, gai_strerror(error));
