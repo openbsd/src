@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.22 2009/12/26 18:54:56 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.23 2010/02/21 12:01:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -866,6 +866,8 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 		if (sc->sc_tx_cnt < sc->sc_vd->vd_nentries)
 			ifp->if_flags &= ~IFF_OACTIVE;
+		if (sc->sc_tx_cnt == 0)
+			ifp->if_timer = 0;
 
 		vnet_start(ifp);
 		break;
@@ -1120,6 +1122,8 @@ vnet_start(struct ifnet *ifp)
 		dm.start_idx = sc->sc_tx_prod;
 		dm.end_idx = -1;
 		vio_sendmsg(sc, &dm, sizeof(dm));
+
+		ifp->if_timer = 5;
 	}
 
 	sc->sc_tx_prod = desc;
@@ -1255,6 +1259,9 @@ vnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 vnet_watchdog(struct ifnet *ifp)
 {
+	struct vnet_softc *sc = ifp->if_softc;
+
+	printf("%s: watchdog timeout\n", sc->sc_dv.dv_xname);
 }
 
 int
@@ -1386,6 +1393,7 @@ vnet_stop(struct ifnet *ifp)
 	struct ldc_conn *lc = &sc->sc_lc;
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 
 	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
 	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
