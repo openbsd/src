@@ -97,7 +97,9 @@ pkcs11_provider_finalize(struct pkcs11_provider *p)
 		error("C_Finalize failed: %lu", rv);
 	p->valid = 0;
 	p->function_list = NULL;
+#ifdef HAVE_DLOPEN
 	dlclose(p->handle);
+#endif
 }
 
 /*
