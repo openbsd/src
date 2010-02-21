@@ -2058,6 +2058,7 @@
 ./usr/libexec/spamlogd
 ./usr/libexec/spellprog
 ./usr/libexec/ssh-keysign
+./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/tcpd
 ./usr/libexec/tftp-proxy
 ./usr/libexec/tftpd

@@ -2496,7 +2496,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/zlib.ph
 ./usr/libexec/ld.so
-./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/i386-openbsd
 ./usr/mdec/biosboot

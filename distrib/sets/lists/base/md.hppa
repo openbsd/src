@@ -2460,7 +2460,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/zlib.ph
 ./usr/libexec/ld.so
-./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/hppa-openbsd
 ./usr/mdec/boot
