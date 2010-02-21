@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.9 2010/02/20 21:05:00 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.10 2010/02/21 20:41:35 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -586,6 +586,11 @@ nbr_act_session_establish(struct nbr *nbr, int active)
 	}
 
 	nbr->bev = bufferevent_new(nbr->fd, readfn, NULL, errorfn, nbr);
+	if (nbr->bev == NULL) {
+		log_warn("nbr_act_session_establish: bufferevent_new");
+		return (-1);
+	}
+
 	bufferevent_settimeout(nbr->bev, 0, 0);
 	bufferevent_enable(nbr->bev, EV_READ|EV_WRITE);
 
