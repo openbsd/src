@@ -9737,17 +9737,20 @@ simplify_shift_const (x, code, result_mode, varop, orig_count)
 	  /* If we can't do that, try to simplify the shift in each arm of the
 	     logical expression, make a new logical expression, and apply
 	     the inverse distributive law.  */
-	  {
-	    rtx lhs = simplify_shift_const (NULL_RTX, code, shift_mode,
-					    XEXP (varop, 0), count);
-	    rtx rhs = simplify_shift_const (NULL_RTX, code, shift_mode,
-					    XEXP (varop, 1), count);
+#ifdef BROKEN_SIMPLIFY_SHIFT_CONST_P
+	  if (GET_CODE (XEXP (varop, 1)) == CONST_INT)
+#endif
+	    {
+	      rtx lhs = simplify_shift_const (NULL_RTX, code, shift_mode,
+					      XEXP (varop, 0), count);
+	      rtx rhs = simplify_shift_const (NULL_RTX, code, shift_mode,
+					      XEXP (varop, 1), count);
 
-	    varop = gen_binary (GET_CODE (varop), shift_mode, lhs, rhs);
-	    varop = apply_distributive_law (varop);
+	      varop = gen_binary (GET_CODE (varop), shift_mode, lhs, rhs);
+	      varop = apply_distributive_law (varop);
 
-	    count = 0;
-	  }
+	      count = 0;
+	    }
 	  break;
 
 	case EQ:
