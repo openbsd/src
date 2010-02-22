@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.471 2010/02/20 11:44:56 jsg Exp $
+$OpenBSD: usbdevs,v 1.472 2010/02/22 23:32:59 mpf Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -532,7 +532,7 @@ vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
-vendor QUALCOMM3	0x19d2	Qualcomm Inc.
+vendor ZTE		0x19d2	ZTE Inc.
 vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
 vendor WCH2		0x1a86	QinHeng Electronics
@@ -2572,11 +2572,12 @@ product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 /* Qualcomm(2) products */
 product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
 
-/* Qualcomm(3) / ZTE products */
-product QUALCOMM3 CDMA_MSM	0x0001	CDMA Technologies MSM modem
-product QUALCOMM3 K3565Z	0x0063	ZTE K3565-Z USB MSM modem
-product QUALCOMM3 K3565Z_UMASS	0x2000	ZTE K3565-Z USB MSM (umass)
-product QUALCOMM3 AC8700	0xfffe	AC8700 CDMA USB modem
+/* ZTE products */
+product ZTE CDMA_MSM	0x0001	CDMA Technologies MSM modem
+product ZTE MF637	0x0031	ZTE MF637 HSUPA USB modem
+product ZTE K3565Z	0x0063	ZTE K3565-Z USB MSM modem
+product ZTE UMASS	0x2000	ZTE USB MSM (umass mode)
+product ZTE AC8700	0xfffe	AC8700 CDMA USB modem
 
 /* Quanta products */
 product QUANTA RT3070		0x0304	RT3070
