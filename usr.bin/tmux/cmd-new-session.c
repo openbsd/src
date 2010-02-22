@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.27 2010/02/06 23:22:27 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.28 2010/02/22 20:19:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -324,10 +324,12 @@ cmd_new_session_print(struct cmd *self, char *buf, size_t len)
 		return (off);
 	if (off < len && data->flag_detached)
 		off += xsnprintf(buf + off, len - off, " -d");
-	if (off < len && data->newname != NULL)
-		off += cmd_prarg(buf + off, len - off, " -s ", data->newname);
 	if (off < len && data->winname != NULL)
 		off += cmd_prarg(buf + off, len - off, " -n ", data->winname);
+	if (off < len && data->newname != NULL)
+		off += cmd_prarg(buf + off, len - off, " -s ", data->newname);
+	if (off < len && data->target != NULL)
+		off += cmd_prarg(buf + off, len - off, " -t ", data->target);
 	if (off < len && data->cmd != NULL)
 		off += cmd_prarg(buf + off, len - off, " ", data->cmd);
 	return (off);
