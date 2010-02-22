@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.72 2010/02/08 00:14:38 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.73 2010/02/22 20:41:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -418,6 +418,7 @@ main(int argc, char **argv)
 	options_set_number(wo, "window-status-fg", 8);
 	options_set_string(wo, "window-status-format", "#I:#W#F");
 	options_set_string(wo, "window-status-current-format", "#I:#W#F");
+	options_set_string(wo, "word-separators", " -_@");
 	options_set_number(wo, "xterm-keys", 0);
 	options_set_number(wo, "remain-on-exit", 0);
 	options_set_number(wo, "synchronize-panes", 0);
