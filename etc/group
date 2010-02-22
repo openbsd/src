@@ -62,6 +62,7 @@ _btd:*:94:
 _smtpd:*:95:
 _rwalld:*:96:
 _nsd:*:97:
+_ldpd:*:98:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
