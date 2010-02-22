@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.14 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.15 2010/02/22 18:57:42 otto Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 double stdf[26] = {
 	7.97, 1.35, 3.61, 4.78, 12.37, 2.01, 1.46, 4.49, 6.39, 0.04,
 	0.42, 3.81, 2.69, 5.92,  6.96, 2.91, 0.08, 6.63, 8.77, 9.68,
-	2.62, 0.81, 1.88, 0.23,  2.07, 0.06,
+	2.62, 0.81, 1.88, 0.23,  2.07, 0.06
 };
 
 void printit(int);
@@ -68,9 +68,10 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
-	int ch, dot, i, nread, winnerdot;
+	int ch, i, nread;
 	char *inbuf, *p, **av;
 	int obs[26], try, winner;
+	double dot, winnerdot;
 
 	/* check to see if we were called as rot13 */
 	av = argv;
