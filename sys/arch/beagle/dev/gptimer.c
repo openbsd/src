@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.2 2009/05/24 00:36:09 drahn Exp $ */
+/* $OpenBSD: gptimer.c,v 1.3 2010/02/22 23:16:47 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -116,6 +116,12 @@ bus_space_tag_t gptimer_iot;
 bus_space_handle_t gptimer_ioh0,  gptimer_ioh1; 
 int gptimer_irq = 0;
 
+u_int gptimer_get_timecount(struct timecounter *);
+
+static struct timecounter gptimer_timecounter = {
+	gptimer_get_timecount, NULL, 0x7fffffff, 0, "gptimer", 0, NULL
+};
+
 volatile u_int32_t nexttickevent;
 volatile u_int32_t nextstatevent;
 u_int32_t	ticks_per_second;
@@ -167,6 +173,8 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 		    GP_TCLR_AR | GP_TCLR_ST);
 		gptimer_delay(GP_TWPS_ALL);
 
+		gptimer_timecounter.tc_frequency = TIMER_FREQUENCY;
+		tc_init(&gptimer_timecounter);
 	}
 	else 
 		panic("attaching too many gptimers at %x\n", aa->aa_addr);
@@ -510,3 +518,8 @@ resettodr(void)
 		printf("resettodr: failed to set time\n");
 }
 
+u_int
+gptimer_get_timecount(struct timecounter *tc)
+{
+	return bus_space_read_4(gptimer_iot, gptimer_ioh1, GP_TCRR);
+}
