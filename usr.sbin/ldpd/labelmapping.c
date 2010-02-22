@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.5 2010/02/20 21:28:39 michele Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.6 2010/02/22 09:44:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -68,7 +68,7 @@ send_labelmapping(struct nbr *nbr)
 	size = LDP_HDR_SIZE - TLV_HDR_LEN;
 
 	TAILQ_FOREACH(me, &nbr->mapping_list, entry) {
-		tlv_size = BASIC_LABEL_MAP_LEN + me->prefixlen/8;
+		tlv_size = BASIC_LABEL_MAP_LEN + PREFIX_SIZE(me->prefixlen);
 		size += tlv_size;
 
 		gen_msg_tlv(buf, MSG_TYPE_LABELMAPPING, tlv_size);
@@ -149,8 +149,8 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 		ldpe_imsg_compose_lde(IMSG_LABEL_MAPPING, nbr->peerid, 0, &map,
 		    sizeof(map));
 
-		buf += FEC_ELM_MIN_LEN + map.prefixlen/8;
-		feclen -= (FEC_ELM_MIN_LEN + map.prefixlen/8);
+		buf += FEC_ELM_MIN_LEN + PREFIX_SIZE(map.prefixlen);
+		feclen -= (FEC_ELM_MIN_LEN + PREFIX_SIZE(map.prefixlen));
 	}
 
 	nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
@@ -181,7 +181,7 @@ send_labelrequest(struct nbr *nbr)
 	size = LDP_HDR_SIZE - TLV_HDR_LEN;
 
 	TAILQ_FOREACH(me, &nbr->request_list, entry) {
-		tlv_size = me->prefixlen/8;
+		tlv_size = PREFIX_SIZE(me->prefixlen);
 		size += tlv_size;
 
 		gen_msg_tlv(buf, MSG_TYPE_LABELREQUEST, tlv_size);
@@ -251,8 +251,8 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 		ldpe_imsg_compose_lde(IMSG_LABEL_REQUEST, nbr->peerid, 0, &map,
 		    sizeof(map));
 
-		buf += FEC_ELM_MIN_LEN + map.prefixlen/8;
-		feclen -= (FEC_ELM_MIN_LEN + map.prefixlen/8);
+		buf += FEC_ELM_MIN_LEN + PREFIX_SIZE(map.prefixlen);
+		feclen -= (FEC_ELM_MIN_LEN + PREFIX_SIZE(map.prefixlen));
 	}
 
 	nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
@@ -284,9 +284,10 @@ send_labelwithdraw(struct nbr *nbr)
 
 	TAILQ_FOREACH(me, &nbr->withdraw_list, entry) {
 		if (me->label == NO_LABEL)
-			tlv_size = me->prefixlen/8;
+			tlv_size = PREFIX_SIZE(me->prefixlen);
 		else
-			tlv_size = BASIC_LABEL_MAP_LEN + me->prefixlen/8;
+			tlv_size = BASIC_LABEL_MAP_LEN +
+			    PREFIX_SIZE(me->prefixlen);
 
 		size += tlv_size;
 
@@ -357,9 +358,10 @@ send_labelrelease(struct nbr *nbr)
 
 	TAILQ_FOREACH(me, &nbr->release_list, entry) {
 		if (me->label == NO_LABEL)
-			tlv_size = me->prefixlen/8;
+			tlv_size = PREFIX_SIZE(me->prefixlen);
 		else
-			tlv_size = BASIC_LABEL_MAP_LEN + me->prefixlen/8;
+			tlv_size = BASIC_LABEL_MAP_LEN +
+			    PREFIX_SIZE(me->prefixlen);
 
 		size += tlv_size;
 
@@ -466,27 +468,22 @@ gen_fec_tlv(struct buf *buf, u_int32_t prefix, u_int8_t prefixlen)
 	u_int8_t	type;
 	u_int16_t	family;
 	u_int8_t	len;
-	u_int32_t	addr;
 
+	len = PREFIX_SIZE(prefixlen);
 	ft.type = htons(TLV_TYPE_FEC);
-	ft.length = htons(sizeof(ft) + (int)(prefixlen/8));
+	ft.length = htons(sizeof(type) + sizeof(family) + sizeof(prefixlen) +
+	    len);
 
 	buf_add(buf, &ft, sizeof(ft));
 
-	if (prefixlen == 32) {
-		type = FEC_ADDRESS;
-		len = prefixlen/8;
-	} else {
-		type = FEC_PREFIX;
-		len = prefixlen;
-	}
+	type = FEC_PREFIX;
 	family = htons(FEC_IPV4);
-	addr = prefix;
 
 	buf_add(buf, &type, sizeof(type));
 	buf_add(buf, &family, sizeof(family));
-	buf_add(buf, &len, sizeof(len));
-	buf_add(buf, &addr, (int)(prefixlen/8));
+	buf_add(buf, &prefixlen, sizeof(prefixlen));
+	if (len)
+		buf_add(buf, &prefix, len);
 }
 
 void
