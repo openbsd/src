@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.14 2010/02/16 15:16:12 giovanni Exp $
+$OpenBSD: INSTALL.linux,v 1.15 2010/02/22 10:44:07 giovanni Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -336,13 +336,13 @@ Booting with GRUB2
 Here is a sample configuration for OpenBSD and Windows 7
 
 menuentry "OpenBSD" {
-	set root (hd0,3,a)
+	set root=(hd0,3,a)
 	chainloader +1
 }
 
 menuentry "Windows 7" {
 	insmod ntfs
-	set root (hd0,1)
+	set root=(hd0,1)
 	chainloader +1
 }
 
