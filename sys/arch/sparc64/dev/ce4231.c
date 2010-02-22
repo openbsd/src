@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.24 2009/12/15 10:43:53 edd Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.25 2010/02/22 00:43:30 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -488,7 +488,7 @@ ce4231_setup_output(sc)
 	/* Mono DAC-out mute settings */
 	mi = ce4231_read(sc, CS_MONO_IO_CONTROL) & ~MONO_OUTPUT_MUTE;
 	if (!sc->sc_monoout_enable) {
-		DPRINTF(("ce4231_setup_output: DAC mono output is enabled"));
+		DPRINTF(("ce4231_setup_output: DAC mono output is disabled\n"));
 		mi = mi | MONO_OUTPUT_MUTE;
 	}
 
@@ -502,11 +502,11 @@ ce4231_setup_output(sc)
 	pc = (ce4231_read(sc, SP_PIN_CONTROL) &
 	    ~CS_PC_HDPHMUTE) & ~CS_PC_LINEMUTE;
 	if (!sc->sc_lineout_enable) {
-		DPRINTF(("ce4231_setup_output: DAC line output is enabled"));
+		DPRINTF(("ce4231_setup_output: DAC line output is disabled\n"));
 		pc = pc | CS_PC_LINEMUTE;
 	}
 	if (!sc->sc_hdphout_enable) {
-		DPRINTF(("ce4231_setup_output: DAC hdph output is enabled"));
+		DPRINTF(("ce4231_setup_output: DAC hdph output is disabled\n"));
 		pc = pc | CS_PC_HDPHMUTE;
 	}
 
@@ -1189,7 +1189,6 @@ ce4231_get_port(addr, cp)
 	case CSAUDIO_CD_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		//cp->un.ord = sc->sc_mute[CSPORT_AUX2] ? 1 : 0;
 		cp->un.ord = ce4231_read(sc, SP_LEFT_AUX2_CONTROL) &
 		    AUX_INPUT_MUTE ? 0 : 1;
 		error = 0;
@@ -1197,7 +1196,6 @@ ce4231_get_port(addr, cp)
 	case CSAUDIO_MIC_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		//cp->un.ord = sc->sc_mute[CSPORT_MONO] ? 1 : 0;
 		cp->un.ord = ce4231_read(sc, CS_MONO_IO_CONTROL) &
 		    MONO_INPUT_MUTE ? 0 : 1;
 		error = 0;
@@ -1205,7 +1203,6 @@ ce4231_get_port(addr, cp)
 	case CSAUDIO_MONITOR_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		//cp->un.ord = sc->sc_mute[CSPORT_MONITOR] ? 1 : 0;
 		cp->un.ord = ce4231_read(sc, SP_DIGITAL_MIX) &
 		    DIGITAL_MIX1_ENABLE ? 0 : 1;
 		error = 0;
@@ -1213,7 +1210,6 @@ ce4231_get_port(addr, cp)
 	case CSAUDIO_DAC_MONO_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		//cp->un.ord = sc->sc_monoout_enable ? 1 : 0;
 		cp->un.ord = ce4231_read(sc, CS_MONO_IO_CONTROL) &
 		    MONO_OUTPUT_MUTE ? 0 : 1;
 		error = 0;
@@ -1221,7 +1217,6 @@ ce4231_get_port(addr, cp)
 	case CSAUDIO_DAC_LINE_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		//cp->un.ord = sc->sc_lineout_enable ? 1 : 0;
 		cp->un.ord = ce4231_read(sc, SP_PIN_CONTROL) & CS_PC_LINEMUTE
 		    ? 0 : 1;
 		error = 0;
@@ -1229,7 +1224,6 @@ ce4231_get_port(addr, cp)
 	case CSAUDIO_DAC_HDPH_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		//cp->un.ord = sc->sc_hdphout_enable ? 1 : 0;
 		cp->un.ord = ce4231_read(sc, SP_PIN_CONTROL) & CS_PC_HDPHMUTE
 		    ? 0 : 1;
 		error = 0;
