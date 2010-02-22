@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.26 2009/03/29 19:18:20 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.27 2010/02/22 08:03:06 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -533,43 +533,62 @@ lsa_find_tree(struct lsa_tree *tree, u_int16_t type, u_int32_t ls_id,
 struct vertex *
 lsa_find_rtr(struct area *area, u_int32_t rtr_id)
 {
+	return lsa_find_rtr_frag(area, rtr_id, 0);
+}
+
+struct vertex *
+lsa_find_rtr_frag(struct area *area, u_int32_t rtr_id, unsigned int n)
+{
 	struct vertex	*v;
-	struct vertex	*r;
+	struct vertex	 key;
+	unsigned int	 i;
 
-	/* A router can originate multiple router LSAs,
-	 * differentiated by link state ID. Our job is
-	 * to find among those the LSA with the lowest
-	 * link state ID, because this is where the options
-	 * field and router-type bits come from. */
+	key.ls_id = 0;
+	key.adv_rtr = ntohl(rtr_id);
+	key.type = LSA_TYPE_ROUTER;
 
-	r = NULL;
-	/* XXX speed me up */
-	RB_FOREACH(v, lsa_tree, &area->lsa_tree) {
-		if (v->deleted)
-			continue;
-
-		if (v->type == LSA_TYPE_ROUTER &&
-		    v->adv_rtr == ntohl(rtr_id)) {
-			if (r == NULL)
-				r = v;
-			else if (v->ls_id < r->ls_id)
-				r = v;
+	i = 0;
+	v = RB_NFIND(lsa_tree, &area->lsa_tree, &key);
+	while (v) {
+		if (v->type != LSA_TYPE_ROUTER ||
+		    v->adv_rtr != ntohl(rtr_id)) {
+			/* no more interesting LSAs */
+			v = NULL;
+			break;
 		}
+		if (!v->deleted) {
+			if (i >= n)
+				break;
+			i++;
+		}
+		v = RB_NEXT(lsa_tree, &area->lsa_tree, v);
 	}
 
-	if (r)
-		lsa_age(r);
+	if (v) {
+		if (i == n)
+			lsa_age(v);
+		else
+			v = NULL;
+	}
 
-	return (r);
+	return (v);
 }
 
 u_int16_t
 lsa_num_links(struct vertex *v)
 {
+	unsigned int	 n = 1;
+	u_int16_t	 nlinks = 0;
+
 	switch (v->type) {
 	case LSA_TYPE_ROUTER:
-		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr) -
-		    sizeof(struct lsa_rtr)) / sizeof(struct lsa_rtr_link));
+		do {
+			nlinks += ((ntohs(v->lsa->hdr.len) -
+			    sizeof(struct lsa_hdr) - sizeof(struct lsa_rtr)) /
+			    sizeof(struct lsa_rtr_link));
+			v = lsa_find_rtr_frag(v->area, htonl(v->adv_rtr), n++);
+		} while (v);
+		return nlinks;
 	case LSA_TYPE_NETWORK:
 		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr) -
 		    sizeof(struct lsa_net)) / sizeof(struct lsa_net_link));

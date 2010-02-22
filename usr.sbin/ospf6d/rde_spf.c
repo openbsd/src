@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.20 2009/12/22 19:47:05 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.21 2010/02/22 08:03:06 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -79,10 +79,6 @@ spf_calc(struct area *area)
 
 	/* calculate SPF tree */
 	do {
-		/* TODO: Treat multiple router LSAs originated by a single
-		 * router as one aggregate. We don't do this [yet],
-		 * but RFC5340 says we MUST do it. */
-
 		/* loop links */
 		for (i = 0; i < lsa_num_links(v); i++) {
 			switch (v->type) {
@@ -1039,20 +1035,33 @@ struct lsa_rtr_link *
 get_rtr_link(struct vertex *v, unsigned int idx)
 {
 	struct lsa_rtr_link	*rtr_link = NULL;
-	char			*buf = (char *)v->lsa;
+	unsigned int		 frag = 1;
+	unsigned int		 frag_nlinks;
+	unsigned int		 nlinks = 0;
 	unsigned int		 i;
 
 	if (v->type != LSA_TYPE_ROUTER)
 		fatalx("get_rtr_link: invalid LSA type");
 
-	/* number of links validated earlier by lsa_check() */
-	rtr_link = (struct lsa_rtr_link *)(buf + sizeof(v->lsa->hdr) +
-	    sizeof(struct lsa_rtr));
-	for (i = 0; i < lsa_num_links(v); i++) {
-		if (i == idx)
-			return (rtr_link);
-		rtr_link++;
-	}
+	/* Treat multiple Router-LSAs originated by the same router
+	 * as an aggregate. */
+	do {
+		/* number of links validated earlier by lsa_check() */
+		rtr_link = (struct lsa_rtr_link *)((char *)v->lsa +
+		    sizeof(v->lsa->hdr) + sizeof(struct lsa_rtr));
+		frag_nlinks = ((ntohs(v->lsa->hdr.len) -
+		    sizeof(struct lsa_hdr) - sizeof(struct lsa_rtr)) /
+		    sizeof(struct lsa_rtr_link));
+		if (nlinks + frag_nlinks > idx) {
+			for (i = 0; i < frag_nlinks; i++) {
+				if (i + nlinks == idx)
+					return (rtr_link);
+				rtr_link++;
+			}
+		}
+		nlinks += frag_nlinks;
+		v = lsa_find_rtr_frag(v->area, htonl(v->adv_rtr), frag++);
+	} while (v);
 
 	return (NULL);
 }
