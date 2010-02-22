@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.76 2010/02/22 10:56:29 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.77 2010/02/22 13:28:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -101,6 +101,7 @@ int		send_rtmsg(int, int, struct kroute *);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
 int		fetchifs(u_short);
+int		rtmsg_process(char *, int);
 
 RB_HEAD(kroute_tree, kroute_node)	krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
@@ -1405,11 +1406,8 @@ fetchifs(u_short ifindex)
 {
 	size_t			 len;
 	int			 mib[6];
-	char			*buf, *next, *lim;
-	struct rt_msghdr	*rtm;
-	struct if_msghdr	 ifm;
-	struct ifa_msghdr	*ifam;
-	struct sockaddr		*sa, *rti_info[RTAX_MAX];
+	char			*buf;
+	int			 rv;
 
 	mib[0] = CTL_NET;
 	mib[1] = AF_ROUTE;
@@ -1432,36 +1430,10 @@ fetchifs(u_short ifindex)
 		return (-1);
 	}
 
-	lim = buf + len;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		if (rtm->rtm_version != RTM_VERSION)
-			continue;
-		switch (rtm->rtm_type) {
-		case RTM_IFINFO:
-			memcpy(&ifm, next, sizeof(ifm));
-			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-			get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
-			if_change(ifm.ifm_index, ifm.ifm_flags, &ifm.ifm_data,
-			    (struct sockaddr_dl *)rti_info[RTAX_IFP]);
-			break;
-		case RTM_NEWADDR:
-			ifam = (struct ifa_msghdr *)rtm;
-			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
-			    RTA_BRD)) == 0)
-				break;
-			sa = (struct sockaddr *)(ifam + 1);
-			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
-
-			if_newaddr(ifam->ifam_index,
-			    (struct sockaddr_in *)rti_info[RTAX_IFA],
-			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
-			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
-			break;
-		}
-	}
+	rv = rtmsg_process(buf, len);
 	free(buf);
-	return (0);
+
+	return (rv);
 }
 
 int
@@ -1469,7 +1441,23 @@ dispatch_rtmsg(void)
 {
 	char			 buf[RT_BUF_SIZE];
 	ssize_t			 n;
-	char			*next, *lim;
+
+	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
+		log_warn("dispatch_rtmsg: read error");
+		return (-1);
+	}
+
+	if (n == 0) {
+		log_warnx("routing socket closed");
+		return (-1);
+	}
+
+	return (rtmsg_process(buf, n));
+}
+
+int
+rtmsg_process(char *buf, int len)
+{
 	struct rt_msghdr	*rtm;
 	struct if_msghdr	 ifm;
 	struct ifa_msghdr	*ifam;
@@ -1482,18 +1470,11 @@ dispatch_rtmsg(void)
 	int			 flags, mpath;
 	u_short			 ifindex = 0;
 
-	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
-		log_warn("dispatch_rtmsg: read error");
-		return (-1);
-	}
+	int			 offset;
+	char			*next;
 
-	if (n == 0) {
-		log_warnx("routing socket closed");
-		return (-1);
-	}
-
-	lim = buf + n;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+	for (offset = 0; offset < len; offset += rtm->rtm_msglen) {
+		next = buf + offset;
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
@@ -1702,5 +1683,6 @@ add:
 			break;
 		}
 	}
-	return (0);
+
+	return (offset);
 }
