@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.75 2010/02/19 10:37:12 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.76 2010/02/22 10:56:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -100,7 +100,6 @@ void		if_announce(void *);
 int		send_rtmsg(int, int, struct kroute *);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
-int		refetchtable(void);
 int		fetchifs(u_short);
 
 RB_HEAD(kroute_tree, kroute_node)	krt;
@@ -363,7 +362,7 @@ kr_fib_reload(void)
 
 	kr_state.fib_serial++;
 
-	if (fetchifs(0) != 0 || refetchtable() != 0)
+	if (fetchifs(0) != 0 || fetchtable() != 0)
 		return;
 
 	for (kr = RB_MIN(kroute_tree, &krt); kr != NULL; kr = krn) {
@@ -1217,123 +1216,6 @@ fetchtable(void)
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_rtlabel	*label;
-	struct kroute_node	*kr;
-
-	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
-	mib[2] = 0;
-	mib[3] = AF_INET;
-	mib[4] = NET_RT_DUMP;
-	mib[5] = 0;
-	mib[6] = kr_state.rdomain;	/* rtableid */
-
-	if (sysctl(mib, 7, NULL, &len, NULL, 0) == -1) {
-		log_warn("sysctl");
-		return (-1);
-	}
-	if ((buf = malloc(len)) == NULL) {
-		log_warn("fetchtable");
-		return (-1);
-	}
-	if (sysctl(mib, 7, buf, &len, NULL, 0) == -1) {
-		log_warn("sysctl");
-		free(buf);
-		return (-1);
-	}
-
-	lim = buf + len;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		if (rtm->rtm_version != RTM_VERSION)
-			continue;
-		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
-
-		if ((sa = rti_info[RTAX_DST]) == NULL)
-			continue;
-
-		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
-			continue;
-
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_warn("fetchtable");
-			free(buf);
-			return (-1);
-		}
-
-		kr->r.flags = F_KERNEL;
-		kr->r.priority = rtm->rtm_priority;
-
-		switch (sa->sa_family) {
-		case AF_INET:
-			kr->r.prefix.s_addr =
-			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-			if (rtm->rtm_flags & RTF_STATIC)
-				kr->r.flags |= F_STATIC;
-			if (rtm->rtm_flags & RTF_BLACKHOLE)
-				kr->r.flags |= F_BLACKHOLE;
-			if (rtm->rtm_flags & RTF_REJECT)
-				kr->r.flags |= F_REJECT;
-			if (rtm->rtm_flags & RTF_DYNAMIC)
-				kr->r.flags |= F_DYNAMIC;
-			if (sa_in != NULL) {
-				if (sa_in->sin_len == 0)
-					break;
-				kr->r.prefixlen =
-				    mask2prefixlen(sa_in->sin_addr.s_addr);
-			} else if (rtm->rtm_flags & RTF_HOST)
-				kr->r.prefixlen = 32;
-			else
-				kr->r.prefixlen =
-				    prefixlen_classful(kr->r.prefix.s_addr);
-			break;
-		default:
-			free(kr);
-			continue;
-		}
-
-		kr->r.ifindex = rtm->rtm_index;
-		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
-			switch (sa->sa_family) {
-			case AF_INET:
-				kr->r.nexthop.s_addr =
-				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-				break;
-			case AF_LINK:
-				kr->r.flags |= F_CONNECTED;
-				break;
-			}
-
-		if (rtm->rtm_priority == RTP_OSPF)  {
-			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
-			free(kr);
-		} else {
-			if ((label = (struct sockaddr_rtlabel *)
-			    rti_info[RTAX_LABEL]) != NULL) {
-				kr->r.rtlabel =
-				    rtlabel_name2id(label->sr_label);
-				kr->r.ext_tag =
-				    rtlabel_id2tag(kr->r.rtlabel);
-			}
-			kroute_insert(kr);
-		}
-
-	}
-	free(buf);
-	return (0);
-}
-
-int
-refetchtable(void)
-{
-	size_t			 len;
-	int			 mib[7];
-	char			*buf, *next, *lim;
-	struct rt_msghdr	*rtm;
-	struct sockaddr		*sa, *rti_info[RTAX_MAX];
-	struct sockaddr_in	*sa_in;
-	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr, *okr;
 
 	struct in_addr		 prefix, nexthop;
@@ -1435,7 +1317,7 @@ refetchtable(void)
 		}
 
 		if (nexthop.s_addr == 0 && !(flags & F_CONNECTED)) {
-			log_warnx("refetchtable no nexthop for %s/%u",
+			log_warnx("fetchtable no nexthop for %s/%u",
 			    inet_ntoa(prefix), prefixlen);
 			continue;
 		}
@@ -1446,7 +1328,7 @@ refetchtable(void)
 			kr = okr;
 			if ((mpath || prio == RTP_OSPF) &&
 			    (kr = kroute_matchgw(okr, nexthop)) == NULL) {
-				log_warnx("refetchtable mpath route"
+				log_warnx("fetchtable mpath route"
 				    " not found");
 				/* add routes we missed out earlier */
 				goto add;
@@ -1481,7 +1363,7 @@ refetchtable(void)
 add:
 			if ((kr = calloc(1,
 			    sizeof(struct kroute_node))) == NULL) {
-				log_warn("refetchtable calloc");
+				log_warn("fetchtable calloc");
 				rv = -1;
 				break;
 			}
