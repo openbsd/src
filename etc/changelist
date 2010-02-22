@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.64 2010/01/01 00:24:09 dlg Exp $
+#	$OpenBSD: changelist,v 1.65 2010/02/22 15:20:22 claudio Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -50,6 +50,7 @@
 +/etc/isakmpd/private/local.key
 /etc/isakmpd/local.pub
 /etc/ksh.kshrc
+/etc/ldpd.conf
 /etc/locate.rc
 /etc/login.conf
 /etc/lynx.cfg
