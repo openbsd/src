@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.50 2009/11/25 13:36:53 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.51 2010/02/22 17:24:20 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -546,7 +546,7 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * polling from inside the interrupt routine and that
 		 * loses bigtime.
 		 */
-		if (!timeout_pending(&sc->sc_delay)) {
+		/* if (!timeout_pending(&sc->sc_delay)) */ {
 			sc->sc_data = *ud;
 			timeout_add(&sc->sc_delay, 1);
 		}
