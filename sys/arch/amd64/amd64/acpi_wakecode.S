@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.9 2009/12/09 16:20:33 pirofti Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.10 2010/02/22 19:44:11 kettenis Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -131,7 +131,7 @@ _C_LABEL(acpi_real_mode_resume):
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
-	/* jmp	nobiosreset */ 	/* XXX make this a tunable */
+	jmp	nobiosreset	/* XXX make this a tunable */
 	lcall	$0xc000,$3
 
 	/*
