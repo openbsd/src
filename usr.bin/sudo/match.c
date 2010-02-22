@@ -379,7 +379,7 @@ command_matches(sudoers_cmnd, sudoers_args)
     char *sudoers_args;
 {
     /* Check for pseudo-commands */
-    if (strchr(user_cmnd, '/') == NULL) {
+    if (sudoers_cmnd[0] != '/') {
 	/*
 	 * Return true if both sudoers_cmnd and user_cmnd are "sudoedit" AND
 	 *  a) there are no args in sudoers OR
