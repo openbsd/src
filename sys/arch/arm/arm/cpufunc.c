@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.11 2009/05/24 04:56:19 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.12 2010/02/22 16:45:29 kevlo Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1844,7 +1844,7 @@ late_abort_fixup(arg)
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) | defined(CPU_ARM11) || defined(CPU_ARMv7)
+	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARMv7)
 
 #define IGN	0
 #define OR	1
