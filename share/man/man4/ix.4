@@ -1,4 +1,4 @@
-.\" $OpenBSD: ix.4,v 1.3 2008/06/09 06:08:44 jmc Exp $
+.\" $OpenBSD: ix.4,v 1.4 2010/02/23 18:45:59 jsg Exp $
 .\"
 .\" Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 9 2008 $
+.Dd $Mdocdate: February 23 2010 $
 .Dt IX 4
 .Os
 .Sh NAME
 .Nm ix
-.Nd Intel 82598 PCI Express 10Gb Ethernet device
+.Nd Intel 82598/82599 PCI Express 10Gb Ethernet device
 .Sh SYNOPSIS
 .Cd "ix* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for PCI Express 10Gb Ethernet adapters based
-on the Intel 82598EB Ethernet controller chips, including the
+on the Intel 82598EB and 82599EB Ethernet controller chips, including the
 following:
 .Pp
 .Bl -bullet -offset indent -compact
@@ -37,6 +37,8 @@ Intel 82598AF Dual Port 10GbE Adapter (10GbaseSR)
 .It
 Intel 82598EB 10GbE Adapter (10GbaseCX4)
 .It
+Intel 82598EB 10GbE Adapter (SFP+)
+.It
 Intel 82598EB Dual Port 10GbE Adapter (10GbaseCX4)
 .It
 Intel 82598EB XF 10GbE Adapter (10GbaseLR)
@@ -44,6 +46,18 @@ Intel 82598EB XF 10GbE Adapter (10GbaseLR)
 Intel 82598AT 10GbE Adapter (10GbaseT)
 .It
 Intel 82598AT Dual Port 10GbE Adapter (10GbaseT)
+.It
+Intel 82599EB 10GbE Adapter (10GbaseCX4)
+.It
+Intel X520-DA2 Dual Port 10GbE Adapter (SFP+)
+.It
+Intel X520-SR1 10GbE Adapter (SFP+/10GbaseSR)
+.It
+Intel X520-SR2 Dual Port 10GbE Adapter (SFP+/10GbaseSR)
+.It
+Intel X520-LR1 10GbE Adapter (SFP+/10GbaseLR)
+.It
+HotLava Tambora 64G4/80G4/64G6/120G6 (SFP+)
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
