@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.6 2010/02/17 17:17:35 jasper Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.7 2010/02/23 20:41:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -45,14 +45,15 @@ paddr_t loongson_dma_base = 0;
  * Might need to move to a per-design header file in the future.
  */
 
-#define	MASTER_CPU	0
-#define	MASTER_PCI	1
+#define	MASTER_CPU		0
+#define	MASTER_PCI		1
 
-#define	WINDOW_CPU_LOW	0
-#define	WINDOW_CPU_PCI	1
-#define	WINDOW_CPU_DDR	2
+#define	WINDOW_CPU_LOW		0
+#define	WINDOW_CPU_PCILO	1
+#define	WINDOW_CPU_PCIHI	2
+#define	WINDOW_CPU_DDR		3
 
-#define	WINDOW_PCI_DDR	0
+#define	WINDOW_PCI_DDR		0
 
 #define	DDR_PHYSICAL_BASE	0x0000000000000000UL	/* memory starts at 0 */
 #define	DDR_PHYSICAL_SIZE	0x0000000080000000UL	/* up to 2GB */
@@ -170,7 +171,7 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	 * space (from 0x10000000 to 0x1fffffff).
 	 * This window is inherited from PMON; we set it up just in case.
 	 */
-	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_PCI, BONITO_PCILO_BASE,
+	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_PCILO, BONITO_PCILO_BASE,
 	    ~(0x0fffffffUL), BONITO_PCILO_BASE, MASTER_PCI);
 
 	/*
@@ -183,7 +184,14 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	    ~(DDR_PHYSICAL_SIZE - 1), DDR_PHYSICAL_BASE, MASTER_CPU);
 
 	/*
-	 * Master #0 (CPU) window #2 allows access to the whole memory space
+	 * Master #0 (CPU) window #2 allows access to a subset of the ``high''
+	 * PCI space (from 0x40000000 to 0x7fffffff only).
+	 */
+	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_PCIHI, LS2F_PCIHI_BASE,
+	    ~((uint64_t)LS2F_PCIHI_SIZE - 1), LS2F_PCIHI_BASE, MASTER_PCI);
+
+	/*
+	 * Master #0 (CPU) window #3 allows access to the whole memory space
 	 * at addresses 0x80000000 onwards.
 	 */
 	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_DDR, DDR_WINDOW_BASE,
