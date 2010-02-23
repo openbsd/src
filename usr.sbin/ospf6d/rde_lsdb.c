@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.27 2010/02/22 08:03:06 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.28 2010/02/23 11:17:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -31,6 +31,7 @@ struct vertex	*vertex_get(struct lsa *, struct rde_nbr *, struct lsa_tree *);
 
 int		 lsa_link_check(struct lsa *, u_int16_t);
 int		 lsa_intra_a_pref_check(struct lsa *, u_int16_t);
+int		 lsa_asext_check(struct lsa *, u_int16_t);
 void		 lsa_timeout(int, short, void *);
 void		 lsa_refresh(struct vertex *);
 int		 lsa_equal(struct lsa *, struct lsa *);
@@ -242,18 +243,10 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 			return (0);
 		break;
 	case LSA_TYPE_EXTERNAL:
-		if ((len % (3 * sizeof(u_int32_t))) ||
-		    len < sizeof(lsa->hdr) + sizeof(lsa->data.asext)) {
-			log_warnx("lsa_check: bad LSA as-external packet");
-			return (0);
-		}
-		metric = ntohl(lsa->data.asext.metric);
-		if (metric & ~(LSA_METRIC_MASK | LSA_ASEXT_E_FLAG)) {
-			log_warnx("lsa_check: bad LSA as-external metric");
-			return (0);
-		}
 		/* AS-external-LSA are silently discarded in stub areas */
 		if (nbr->area->stub)
+			return (0);
+		if (!lsa_asext_check(lsa, len))
 			return (0);
 		break;
 	default:
@@ -337,6 +330,62 @@ lsa_intra_a_pref_check(struct lsa *lsa, u_int16_t len)
 		}
 		off += rv;
 		len -= rv;
+	}
+
+	return (1);
+}
+
+int
+lsa_asext_check(struct lsa *lsa, u_int16_t len)
+{
+	char			*buf = (char *)lsa;
+	struct lsa_asext	*asext;
+	struct in6_addr		 fw_addr;
+	u_int32_t	 	 metric;
+	u_int16_t	 	 ref_ls_type;
+	int			 rv;
+	u_int16_t		 total_len;
+
+	asext = (struct lsa_asext *)(buf + sizeof(lsa->hdr));
+
+	if ((len % sizeof(u_int32_t)) ||
+	    len < sizeof(lsa->hdr) + sizeof(*asext)) {
+		log_warnx("lsa_asext_check: bad LSA as-external packet");
+		return (0);
+	}
+
+	total_len = sizeof(lsa->hdr) + sizeof(*asext);
+	rv = lsa_get_prefix(&asext->prefix, len, NULL);
+	if (rv == -1) {
+		log_warnx("lsa_asext_check: bad LSA as-external packet");
+		return (0);
+	}
+	total_len += rv - sizeof(struct lsa_prefix);
+
+	metric = ntohl(asext->metric);
+	if (metric & LSA_ASEXT_F_FLAG) {
+		if (total_len + sizeof(fw_addr) < len) {
+			bcopy(buf + total_len, &fw_addr, sizeof(fw_addr));
+			if (IN6_IS_ADDR_UNSPECIFIED(&fw_addr) ||
+			    IN6_IS_ADDR_LINKLOCAL(&fw_addr)) {
+				log_warnx("lsa_asext_check: bad LSA "
+				    "as-external forwarding address");
+				return (0);
+			}
+		}
+		total_len += sizeof(fw_addr);
+	}
+
+	if (metric & LSA_ASEXT_T_FLAG)
+		total_len += sizeof(u_int32_t);
+
+	ref_ls_type = asext->prefix.metric;
+	if (ref_ls_type != 0)
+		total_len += sizeof(u_int32_t);
+
+	if (len != total_len) {
+		log_warnx("lsa_asext_check: bad LSA as-external length");
+		return (0);
 	}
 
 	return (1);
