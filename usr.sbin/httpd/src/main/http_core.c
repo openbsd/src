@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.25 2008/05/21 11:28:48 mbalmer Exp $ */
+/* $OpenBSD: http_core.c,v 1.26 2010/02/23 08:15:27 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3459,15 +3459,15 @@ static int default_handler(request_rec *r)
 		ap_send_fd(f, r);
 	    }
 	    else {
-		long offset, length;
+		off_t offset, length;
 		while (ap_each_byterange(r, &offset, &length)) {
 		    /*
 		     * Non zero returns are more portable than checking
 		     * for a return of -1.
 		     */
-		    if (fseek(f, offset, SEEK_SET)) {
+		    if (fseeko(f, offset, SEEK_SET)) {
 			ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-			      "Failed to fseek for byterange (%ld, %ld): %s",
+			      "Failed to fseeko for byterange (%qd, %qd): %s",
 			      offset, length, r->filename);
 		    }
 		    else {
@@ -3504,7 +3504,7 @@ static int default_handler(request_rec *r)
 		ap_send_mmap(mm, r, 0, r->finfo.st_size);
 	    }
 	    else {
-		long offset, length;
+		off_t offset, length;
 		while (ap_each_byterange(r, &offset, &length)) {
 		    ap_send_mmap(mm, r, offset, length);
 		}

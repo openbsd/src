@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.35 2009/06/02 23:36:40 pyr Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.36 2010/02/23 08:15:27 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -156,11 +156,9 @@ static enum byterange_token
 	return BYTERANGE_EMPTY;
     }
 
-    if (ap_isdigit(*r->range)) {
-        *start = strtonum(r->range, QUAD_MIN, QUAD_MAX, &estr);
-        if (estr)
-            return BYTERANGE_BADSYNTAX;
-    } else
+    if (ap_isdigit(*r->range))
+        *start = strtoll(r->range, (char **)&r->range, 10);
+    else
         *start = -1;
 
     while (ap_isspace(*r->range))
@@ -173,11 +171,9 @@ static enum byterange_token
     while (ap_isspace(*r->range))
         ++r->range;
 
-    if (ap_isdigit(*r->range)) {
-        *end = strtonum(r->range, QUAD_MIN, QUAD_MAX, &estr);
-        if (estr)
-            return BYTERANGE_BADSYNTAX;
-    } else
+    if (ap_isdigit(*r->range))
+        *end = strtoll(r->range, (char **)&r->range, 10);
+    else
         *end = -1;
 
     while (ap_isspace(*r->range))
@@ -2430,11 +2426,11 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
 #endif
 
 /* send data from an in-memory buffer */
-API_EXPORT(size_t) ap_send_mmap(void *mm, request_rec *r, size_t offset,
-                             size_t length)
+API_EXPORT(off_t) ap_send_mmap(void *mm, request_rec *r, off_t offset,
+                             off_t length)
 {
-    size_t total_bytes_sent = 0;
-    int n, w;
+    off_t total_bytes_sent = 0;
+    off_t n, w;
 
     if (length == 0)
         return 0;

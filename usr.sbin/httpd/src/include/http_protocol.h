@@ -1,4 +1,4 @@
-/* $OpenBSD: http_protocol.h,v 1.12 2009/06/02 23:36:40 pyr Exp $ */
+/* $OpenBSD: http_protocol.h,v 1.13 2010/02/23 08:15:27 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -140,8 +140,8 @@ API_EXPORT(long) ap_send_fd_length(FILE *f, request_rec *r, long length);
 API_EXPORT(long) ap_send_fb(BUFF *f, request_rec *r);
 API_EXPORT(long) ap_send_fb_length(BUFF *f, request_rec *r, long length);
 
-API_EXPORT(size_t) ap_send_mmap(void *mm, request_rec *r, size_t offset,
-                             size_t length);
+API_EXPORT(off_t) ap_send_mmap(void *mm, request_rec *r, off_t offset,
+                             off_t length);
 
 /* Hmmm... could macrofy these for now, and maybe forever, though the
  * definitions of the macros would get a whole lot hairier.
