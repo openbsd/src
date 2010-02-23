@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.8 2009/08/10 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.9 2010/02/23 18:43:15 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -259,6 +259,7 @@ struct ix_softc {
 	struct mutex	core_mtx;
 
 	/* Legacy Fast Intr handling */
+	int		sfp_probe;
 	workq_fn	link_task;
 
 	/* Info about the board itself */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.5 2010/02/19 18:55:12 jsg Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.6 2010/02/23 18:43:15 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -225,6 +225,7 @@ void ixgbe_add_uc_addr(struct ixgbe_hw *hw, uint8_t *addr, uint32_t vmdq);
 void ixgbe_set_mta(struct ixgbe_hw *hw, uint8_t *mc_addr);
 
 int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw);
+int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw);
 
 /* PHY */
 int32_t ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw);
