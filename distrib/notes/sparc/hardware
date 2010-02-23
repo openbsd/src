@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.75 2008/08/06 18:23:56 miod Exp $
+dnl	$OpenBSD: hardware,v 1.76 2010/02/23 15:52:33 jasper Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -36,16 +36,19 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- Aries Research Inc, Parrot II (SS2 clone)
 	- Axil 243 and 245 (and possibly other models) (SS5 clones)
 	- Axil 320 (SS20 clone)
+	- CPU5V: VME card by Force Computer (sun4m)
+	- DTKstation/Classic+
+	- Fujitsu S-4/Leia2 (MicroSPARC-2 laptop)
+	- Goldstar GWS-40 (SS2 clone)
 	- Opus 5000 (SS1 clone)
 	- Opus 5250 (SS1 clone)
-	- SPARCbook 3, 3GS, 3GX, 3TX and 3XP by Tadpole (MicroSPARC-2)
-	- CPU5V: VME card by Force Computer (sun4m)
-	- TWS,SuperCOMPstation-20S (SS20 clone)
+	- RDI,PowerLite: sun4m models, available in 50MHz, 85MHz, and 110MHz
+	- RDI,BrigeLite
+	- Solair WS19L (SS10 clone)
+	- SPARCbook 3, 3GS, 3GX, 3TX and 3XP by Tadpole (MicroSPARC-2 laptops)
 	- Tatung micro COMPstation 5 (SS5 clone)
 	- Tatung micro COMPstation LX (LX clone)
-	- RDI,PowerLite: sun4m models, available in 50, 85 and 110 MHz
-	- RDI,BrideLite
-	- DTKstation/Classic+
+	- Tatung TWS,SuperCOMPstation-20S (SS20 clone)
 	- Transtec SS5/170
 
 For sun4m machines, the following mbus CPU modules are supported:
