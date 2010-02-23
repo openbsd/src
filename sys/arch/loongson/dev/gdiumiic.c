@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdiumiic.c,v 1.2 2010/02/19 00:21:45 miod Exp $	*/
+/*	$OpenBSD: gdiumiic.c,v 1.3 2010/02/23 12:21:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -29,6 +29,9 @@
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/rwlock.h>
+
+#include <machine/autoconf.h>
+#include <mips64/archtype.h>
 
 #include <dev/gpio/gpiovar.h>
 
@@ -133,7 +136,8 @@ gdiumiic_match(struct device *parent, void *match, void *aux)
 	if (ga->ga_offset == -1 || gdiumiic_bustype(ga) < 0)
 		return 0;
 
-	return (strcmp(cf->cf_driver->cd_name, "gdiumiic") == 0);
+	return (sys_platform->system_type == LOONGSON_GDIUM &&
+	    strcmp(cf->cf_driver->cd_name, "gdiumiic") == 0);
 }
 
 void
