@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.33 2009/12/16 15:40:55 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.34 2010/02/23 21:30:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2009 $
+.Dd $Mdocdate: February 23 2010 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm bgpd
 .Bk -words
 .Op Fl cdnv
-.Oo Xo
-.Fl D Ar macro Ns = Ns Ar value Oc
-.Xc
+.Oo
+.Fl D Ar macro Ns = Ns Ar value
+.Oc
 .Op Fl f Ar file
 .Op Fl r Ar path
 .Op Fl s Ar path
