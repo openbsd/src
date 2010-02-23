@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.32 2009/12/23 18:01:31 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.33 2010/02/23 16:32:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -720,8 +720,6 @@ show_db_msg_detail(struct imsg *imsg)
 		if (lsa->hdr.type != lasttype)
 			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
-		addr.s_addr = lsa->data.asext.mask;
-		printf("Network Mask: %s\n", inet_ntoa(addr));
 
 		asext = (struct lsa_asext *)((char *)lsa + sizeof(lsa->hdr));
 
@@ -732,9 +730,6 @@ show_db_msg_detail(struct imsg *imsg)
 			printf("1\n");
 		printf("    Metric: %d\n", ntohl(asext->metric)
 		    & LSA_METRIC_MASK);
-		addr.s_addr = asext->fw_addr;
-		printf("    Forwarding Address: %s\n", inet_ntoa(addr));
-		printf("    External Route Tag: %d\n\n", ntohl(asext->ext_tag));
 
 		lasttype = lsa->hdr.type;
 		break;
