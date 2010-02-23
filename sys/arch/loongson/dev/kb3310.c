@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.1 2010/02/23 21:04:16 otto Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.2 2010/02/23 21:59:38 otto Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -31,7 +31,7 @@ struct cfdriver ykbec_cd = {
 #define IO_YKBEC		0x381
 #define IO_YKBECSIZE		0x3
 
-#define KB3310_NUM_SENSORS	10
+#define KB3310_NUM_SENSORS	12
 
 struct ykbec_softc {
 	struct device		sc_dev;
@@ -141,8 +141,20 @@ ykbec_attach( struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[8].desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[8]);
 
-	sc->sc_sensor[9].type = SENSOR_INTEGER;
+	sc->sc_sensor[9].type = SENSOR_INDICATOR;
+	strlcpy(sc->sc_sensor[9].desc, "Battery charging",
+	    sizeof(sc->sc_sensor[9].desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[9]);
+
+	sc->sc_sensor[10].type = SENSOR_INDICATOR;
+	strlcpy(sc->sc_sensor[10].desc, "AC-Power",
+	    sizeof(sc->sc_sensor[10].desc));
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[10]);
+
+	sc->sc_sensor[11].type = SENSOR_INTEGER;
+	strlcpy(sc->sc_sensor[11].desc, "Battery low-level status",
+	    sizeof(sc->sc_sensor[11].desc));
+	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[11]);
 
 	sensordev_install(&sc->sc_sensordev);
 
@@ -205,8 +217,16 @@ ykbec_read16(struct ykbec_softc *mcsc, u_int reg)
 #define REG_RELATIVE_CAT_LOW		0xf493
 #define REG_BAT_VENDOR			0xf4c4
 #define REG_BAT_CELL_COUNT		0xf4c6
+
 #define REG_BAT_CHARGE			0xf4a2
+#define BAT_CHARGE_AC			0x00
+#define BAT_CHARGE_DISCHARGE		0x01
+#define BAT_CHARGE_CHARGE		0x02
+
 #define REG_POWER_FLAG			0xf440
+#define POWER_FLAG_ADAPTER_IN		(1<<0)
+#define POWER_FLAG_POWER_ON		(1<<1)
+#define POWER_FLAG_ENTER_SUS		(1<<2)
 
 #define REG_BAT_STATUS			0xf4b0
 #define BAT_STATUS_BAT_EXISTS		(1<<0)
@@ -222,17 +242,11 @@ ykbec_read16(struct ykbec_softc *mcsc, u_int reg)
 #define BAT_STATE_DISCHARGING		(1<<0)
 #define BAT_STATE_CHARGING		(1<<1)
 
-const char *REG_BAT_CHARGE_state[] = {
-    "AC-power", "Battery discharging", "Battery charging"
-};
-
-#define STATUS(a, i)  ((i) >= nitems(a) ? "unknown" : (a)[i])
-
 void
 ykbec_refresh(void *arg)
 {
 	struct ykbec_softc *sc = (struct ykbec_softc *)arg;
-	u_int val;
+	u_int val, bat_charge, bat_status, charge_status, bat_state, power_flag;
 	int current;
 
 	val = ykbec_read16(sc, REG_FAN_SPEED_HIGH);
@@ -260,39 +274,14 @@ ykbec_refresh(void *arg)
 
 	sc->sc_sensor[8].value = ykbec_read16(sc, REG_RELATIVE_CAT_HIGH) * 1000;
 
-	val = ykbec_read(sc, REG_BAT_CHARGE);
-	strlcpy(sc->sc_sensor[9].desc, STATUS(REG_BAT_CHARGE_state, val),
-	    sizeof(sc->sc_sensor[9].desc));
+	bat_charge = ykbec_read(sc, REG_BAT_CHARGE);
+	bat_status = ykbec_read(sc, REG_BAT_STATUS);
+	charge_status = ykbec_read(sc, REG_CHARGE_STATUS);
+	bat_state = ykbec_read(sc, REG_BAT_STATE);
+	power_flag = ykbec_read(sc, REG_POWER_FLAG);
 
-	val = (val << 8) | ykbec_read(sc, REG_BAT_STATUS);
-	if (!(val & BAT_STATUS_BAT_EXISTS))
-		strlcat(sc->sc_sensor[9].desc, ",not available",
-		    sizeof(sc->sc_sensor[9].desc));
-	if (val & BAT_STATUS_BAT_FULL)
-		strlcat(sc->sc_sensor[9].desc, ",full",
-		    sizeof(sc->sc_sensor[9].desc));
-	if (val & BAT_STATUS_BAT_DESTROY)
-		strlcat(sc->sc_sensor[9].desc, ",bad",
-		    sizeof(sc->sc_sensor[9].desc));
-	if (val & BAT_STATUS_BAT_LOW)
-		strlcat(sc->sc_sensor[9].desc, ",low",
-		    sizeof(sc->sc_sensor[9].desc));
-
-	val = (val << 8) | ykbec_read(sc, REG_CHARGE_STATUS);
-	if (val & CHARGE_STATUS_PRECHARGE)
-		strlcat(sc->sc_sensor[9].desc, ",precharge",
-		    sizeof(sc->sc_sensor[9].desc));
-	if (val & CHARGE_STATUS_OVERHEAT)
-		strlcat(sc->sc_sensor[9].desc, ",overheat",
-		    sizeof(sc->sc_sensor[9].desc));
-#if 0
-	val = ykbec_read(sc, REG_BAT_STATE);
-	if (val & BAT_STATE_CHARGING)
-		strlcat(sc->sc_sensor[9].desc, ",charging",
-		    sizeof(sc->sc_sensor[9].desc));
-	if (val & BAT_STATE_DISCHARGING)
-		strlcat(sc->sc_sensor[9].desc, ",discharging",
-		    sizeof(sc->sc_sensor[9].desc));
-#endif
-	sc->sc_sensor[9].value = val;
+	sc->sc_sensor[9].value = (bat_state & BAT_STATE_CHARGING) ? 1 : 0;
+	sc->sc_sensor[10].value = (power_flag & POWER_FLAG_ADAPTER_IN) ? 1 : 0;
+	sc->sc_sensor[11].value = (bat_state << 24) | (charge_status << 16) |
+	    (bat_status << 8) | bat_charge;
 }
