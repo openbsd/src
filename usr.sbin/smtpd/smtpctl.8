@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.11 2010/01/03 14:37:37 chl Exp $
+.\" $OpenBSD: smtpctl.8,v 1.12 2010/02/23 21:12:14 stevesk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: February 23 2010 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -49,11 +49,9 @@ Resume accepting incoming sessions.
 Resume deliveries to local users.
 .It Cm resume outgoing
 Resume relaying and deliveries to remote users.
-.It Cm schedule message-id
-Marks all messages with same message ID as ready
-for immediate delivery.
-.It Cm schedule message-uid
-Marks a message as ready for immediate delivery.
+.It Cm schedule Ar message-uid | message-id
+Marks a single message, or all messages with the same message ID,
+as ready for immediate delivery.
 .It Cm show queue
 Displays information concerning envelopes
 that are currently in a queue.
@@ -64,6 +62,31 @@ that are scheduled for delivery.
 Displays runtime statistics concerning
 .Xr smtpd 8 .
 .El
+.Pp
+When
+.Nm smtpd
+receives a message, it generates a
+.Ar message-id
+for the message, and one
+.Ar message-uid
+per recipient.
+The
+.Ar message-id
+consists of a timestamp followed by a random identifier
+that is guaranteed to be unique on the host system.
+The
+.Ar message-uid
+consists of the
+.Ar message-id
+followed by a random identifier that is also guaranteed
+to be unique between recipients of the same message.
+.Pp
+A command which specifies a
+.Ar message-id
+applies to all recipients of a message;
+a command which specifies a
+.Ar message-uid
+applies to a specific recipient of a message.
 .Sh FILES
 .Bl -tag -width "/var/run/smtpd.sockXX" -compact
 .It /var/run/smtpd.sock
