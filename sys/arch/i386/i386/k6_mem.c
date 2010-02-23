@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.10 2009/11/29 17:11:30 kettenis Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.11 2010/02/23 21:54:53 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -62,12 +62,13 @@
 
 void k6_mrinit(struct mem_range_softc *sc);
 int k6_mrset(struct mem_range_softc *, struct mem_range_desc *, int *);
+void k6_mrinit_cpu(struct mem_range_softc *sc);
 static __inline int k6_mrmake(struct mem_range_desc *, u_int32_t *);
 
 struct mem_range_ops k6_mrops = {
 	k6_mrinit,
 	k6_mrset,
-	NULL,
+	k6_mrinit_cpu,
 	NULL
 };
 
@@ -172,4 +173,28 @@ out:
 	enable_intr();
 
 	return 0;
+}
+
+/*
+ * Re-initialise the MTRRs on the BSP after suspend.
+ */
+void
+k6_mrinit_cpu(struct mem_range_softc *sc)
+{
+	u_int64_t reg;
+	u_int32_t mtrr;
+	int d;
+
+	for (d = 0; d < sc->mr_ndesc; d++) {
+		k6_mrmake(&sc->mr_desc[d], &mtrr);
+
+		disable_intr();
+		wbinvd();
+		reg = rdmsr(UWCCR);
+		reg &= ~(0xffffffff << (32 * d));
+		reg |= mtrr << (32 * d);
+		wrmsr(UWCCR, reg);
+		wbinvd();
+		enable_intr();
+	}
 }

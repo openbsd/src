@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.2 2009/11/29 17:11:30 kettenis Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.3 2010/02/23 21:54:53 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -64,14 +64,14 @@ char *mem_owner_bios = "BIOS";
 void	amd64_mrinit(struct mem_range_softc *sc);
 int	amd64_mrset(struct mem_range_softc *sc,
 	    struct mem_range_desc *mrd, int *arg);
-void	amd64_mrAPinit(struct mem_range_softc *sc);
-void	amd64_mrreload(struct mem_range_softc *sc);
+void	amd64_mrinit_cpu(struct mem_range_softc *sc);
+void	amd64_mrreload_cpu(struct mem_range_softc *sc);
 
 struct mem_range_ops amd64_mrops = {
 	amd64_mrinit,
 	amd64_mrset,
-	amd64_mrAPinit,
-	amd64_mrreload
+	amd64_mrinit_cpu,
+	amd64_mrreload_cpu
 };
 
 /* XXX for AP startup hook */
@@ -592,17 +592,18 @@ amd64_mrinit(struct mem_range_softc *sc)
 }
 
 /*
- * Initialise MTRRs on an AP after the BSP has run the init code.
+ * Initialise MTRRs on an AP after the BSP has run the init code (or
+ * re-initialise the MTRRs on the BSP after suspend).
  */
 void
-amd64_mrAPinit(struct mem_range_softc *sc)
+amd64_mrinit_cpu(struct mem_range_softc *sc)
 {
 	amd64_mrstoreone(sc); /* set MTRRs to match BSP */
 	wrmsr(MSR_MTRRdefType, mtrrdef); /* set MTRR behaviour to match BSP */
 }
 
 void
-amd64_mrreload(struct mem_range_softc *sc)
+amd64_mrreload_cpu(struct mem_range_softc *sc)
 {
 	disable_intr();				/* disable interrupts */
 	amd64_mrstoreone(sc); /* set MTRRs to match BSP */

@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.11 2009/11/29 17:11:30 kettenis Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.12 2010/02/23 21:54:53 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -64,14 +64,14 @@ char *mem_owner_bios = "BIOS";
 void	i686_mrinit(struct mem_range_softc *sc);
 int	i686_mrset(struct mem_range_softc *sc,
 	    struct mem_range_desc *mrd, int *arg);
-void	i686_mrAPinit(struct mem_range_softc *sc);
-void	i686_mrreload(struct mem_range_softc *sc);
+void	i686_mrinit_cpu(struct mem_range_softc *sc);
+void	i686_mrreload_cpu(struct mem_range_softc *sc);
 
 struct mem_range_ops i686_mrops = {
 	i686_mrinit,
 	i686_mrset,
-	i686_mrAPinit,
-	i686_mrreload
+	i686_mrinit_cpu,
+	i686_mrreload_cpu
 };
 
 /* XXX for AP startup hook */
@@ -592,17 +592,18 @@ i686_mrinit(struct mem_range_softc *sc)
 }
 
 /*
- * Initialise MTRRs on an AP after the BSP has run the init code.
+ * Initialise MTRRs on an AP after the BSP has run the init code (or
+ * re-initialise the MTRRs on the BSP after suspend).
  */
 void
-i686_mrAPinit(struct mem_range_softc *sc)
+i686_mrinit_cpu(struct mem_range_softc *sc)
 {
 	i686_mrstoreone(sc); /* set MTRRs to match BSP */
 	wrmsr(MSR_MTRRdefType, mtrrdef); /* set MTRR behaviour to match BSP */
 }
 
 void
-i686_mrreload(struct mem_range_softc *sc)
+i686_mrreload_cpu(struct mem_range_softc *sc)
 {
 	disable_intr();				/* disable interrupts */
 	i686_mrstoreone(sc); /* set MTRRs to match BSP */
