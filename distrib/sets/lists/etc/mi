@@ -34,6 +34,7 @@
 ./etc/inetd.conf
 ./etc/ipsec.conf
 ./etc/ksh.kshrc
+./etc/ldpd.conf
 ./etc/localtime
 ./etc/locate.rc
 ./etc/login.conf
