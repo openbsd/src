@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.77 2010/02/22 13:28:01 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.78 2010/02/23 10:59:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1210,19 +1210,9 @@ retry:
 int
 fetchtable(void)
 {
+	char			*buf;
 	size_t			 len;
 	int			 mib[7];
-	char			*buf, *next, *lim;
-	struct rt_msghdr	*rtm;
-	struct sockaddr		*sa, *rti_info[RTAX_MAX];
-	struct sockaddr_in	*sa_in;
-	struct sockaddr_rtlabel	*label;
-	struct kroute_node	*kr, *okr;
-
-	struct in_addr		 prefix, nexthop;
-	u_int8_t		 prefixlen, prio;
-	int			 flags, mpath;
-	u_short			 ifindex = 0;
 
 	int			 rv = 0;
 
@@ -1248,156 +1238,9 @@ fetchtable(void)
 		return (-1);
 	}
 
-	lim = buf + len;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		if (rtm->rtm_version != RTM_VERSION)
-			continue;
-
-		prefix.s_addr = 0;
-		prefixlen = 0;
-		nexthop.s_addr = 0;
-		mpath = 0;
-		prio = 0;
-
-		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
-
-		if ((sa = rti_info[RTAX_DST]) == NULL)
-			continue;
-
-		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
-			continue;
-
-#ifdef RTF_MPATH
-		if (rtm->rtm_flags & RTF_MPATH)
-			mpath = 1;
-#endif
-		prio = rtm->rtm_priority;
-		flags = (prio == RTP_OSPF) ? F_OSPFD_INSERTED : F_KERNEL;
-
-		switch (sa->sa_family) {
-		case AF_INET:
-			prefix.s_addr =
-			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-			sa_in = (struct sockaddr_in *)
-			    rti_info[RTAX_NETMASK];
-			if (sa_in != NULL) {
-				if (sa_in->sin_len != 0)
-					prefixlen = mask2prefixlen(
-					    sa_in->sin_addr.s_addr);
-			} else if (rtm->rtm_flags & RTF_HOST)
-				prefixlen = 32;
-			else
-				prefixlen =
-				    prefixlen_classful(prefix.s_addr);
-			if (rtm->rtm_flags & RTF_STATIC)
-				flags |= F_STATIC;
-			if (rtm->rtm_flags & RTF_BLACKHOLE)
-				flags |= F_BLACKHOLE;
-			if (rtm->rtm_flags & RTF_REJECT)
-				flags |= F_REJECT;
-			if (rtm->rtm_flags & RTF_DYNAMIC)
-				flags |= F_DYNAMIC;
-			break;
-		default:
-			continue;
-		}
-
-		ifindex = rtm->rtm_index;
-		if ((sa = rti_info[RTAX_GATEWAY]) != NULL) {
-			switch (sa->sa_family) {
-			case AF_INET:
-				nexthop.s_addr = ((struct
-				    sockaddr_in *)sa)->sin_addr.s_addr;
-				break;
-			case AF_LINK:
-				flags |= F_CONNECTED;
-				break;
-			}
-		}
-
-		if (nexthop.s_addr == 0 && !(flags & F_CONNECTED)) {
-			log_warnx("fetchtable no nexthop for %s/%u",
-			    inet_ntoa(prefix), prefixlen);
-			continue;
-		}
-
-		if ((okr = kroute_find(prefix.s_addr, prefixlen, prio))
-		    != NULL) {
-			/* get the correct route */
-			kr = okr;
-			if ((mpath || prio == RTP_OSPF) &&
-			    (kr = kroute_matchgw(okr, nexthop)) == NULL) {
-				log_warnx("fetchtable mpath route"
-				    " not found");
-				/* add routes we missed out earlier */
-				goto add;
-			}
-
-			if (kr->r.flags & F_REDISTRIBUTED)
-				flags |= F_REDISTRIBUTED;
-			kr->r.nexthop.s_addr = nexthop.s_addr;
-			kr->r.flags = flags;
-			kr->r.ifindex = ifindex;
-
-			rtlabel_unref(kr->r.rtlabel);
-			kr->r.rtlabel = 0;
-			kr->r.ext_tag = 0;
-			if ((label = (struct sockaddr_rtlabel *)
-			    rti_info[RTAX_LABEL]) != NULL) {
-				kr->r.rtlabel =
-				    rtlabel_name2id(label->sr_label);
-				kr->r.ext_tag =
-				    rtlabel_id2tag(kr->r.rtlabel);
-			}
-
-			if (kif_validate(kr->r.ifindex))
-				kr->r.flags &= ~F_DOWN;
-			else
-				kr->r.flags |= F_DOWN;
-
-			/* just readd, the RDE will care */
-			kr->serial = kr_state.fib_serial;
-			kr_redistribute(kr);
-		} else {
-add:
-			if ((kr = calloc(1,
-			    sizeof(struct kroute_node))) == NULL) {
-				log_warn("fetchtable calloc");
-				rv = -1;
-				break;
-			}
-
-			kr->r.prefix.s_addr = prefix.s_addr;
-			kr->r.prefixlen = prefixlen;
-			kr->r.nexthop.s_addr = nexthop.s_addr;
-			kr->r.flags = flags;
-			kr->r.ifindex = ifindex;
-			kr->r.priority = prio;
-
-			if (rtm->rtm_priority == RTP_OSPF) {
-				log_warnx("alien OSPF route %s/%d",
-				    inet_ntoa(prefix), prefixlen);
-				rv = send_rtmsg(kr_state.fd,
-				    RTM_DELETE, &kr->r);
-				free(kr);
-				if (rv == -1)
-					break;
-			} else {
-				if ((label = (struct sockaddr_rtlabel *)
-				    rti_info[RTAX_LABEL]) != NULL) {
-					kr->r.rtlabel =
-					    rtlabel_name2id(label->sr_label);
-					kr->r.ext_tag =
-					    rtlabel_id2tag(kr->r.rtlabel);
-				}
-
-				kroute_insert(kr);
-			}
-		}
-	}
+	rv = rtmsg_process(buf, len);
 	free(buf);
+
 	return (rv);
 }
 
@@ -1469,6 +1312,7 @@ rtmsg_process(char *buf, int len)
 	u_int8_t		 prefixlen, prio;
 	int			 flags, mpath;
 	u_short			 ifindex = 0;
+	int			 rv;
 
 	int			 offset;
 	char			*next;
@@ -1486,28 +1330,38 @@ rtmsg_process(char *buf, int len)
 		mpath = 0;
 		prio = 0;
 
-		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
-		    rtm->rtm_type == RTM_DELETE) {
+		switch (rtm->rtm_type) {
+		case RTM_ADD:
+		case RTM_GET:
+		case RTM_CHANGE:
+		case RTM_DELETE:
+			prefix.s_addr = 0;
+			prefixlen = 0;
+			nexthop.s_addr = 0;
+			mpath = 0;
+			prio = 0;
+
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 			if (rtm->rtm_tableid != kr_state.rdomain)
 				continue;
 
-			if (rtm->rtm_pid == kr_state.pid) /* caused by us */
-				continue;
-
-			if (rtm->rtm_errno)		/* failed attempts... */
+			if ((sa = rti_info[RTAX_DST]) == NULL)
 				continue;
 
 			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 				continue;
 
+			if (rtm->rtm_errno)		/* failed attempts... */
+				continue;
 #ifdef RTF_MPATH
 			if (rtm->rtm_flags & RTF_MPATH)
 				mpath = 1;
 #endif
 			prio = rtm->rtm_priority;
+			flags = (prio == RTP_OSPF) ?
+			    F_OSPFD_INSERTED : F_KERNEL;
 
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -1553,24 +1407,22 @@ rtmsg_process(char *buf, int len)
 
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
+		case RTM_GET:
 		case RTM_CHANGE:
 			if (nexthop.s_addr == 0 && !(flags & F_CONNECTED)) {
-				log_warnx("dispatch_rtmsg no nexthop for %s/%u",
+				log_warnx("no nexthop for %s/%u",
 				    inet_ntoa(prefix), prefixlen);
 				continue;
 			}
 
 			if ((okr = kroute_find(prefix.s_addr, prefixlen, prio))
 			    != NULL) {
-				/* just add new multipath routes */
-				if (mpath && rtm->rtm_type == RTM_ADD)
-					goto add;
 				/* get the correct route */
 				kr = okr;
-				if (mpath && (kr = kroute_matchgw(okr,
-				    nexthop)) == NULL) {
-					log_warnx("dispatch_rtmsg mpath route"
-					    " not found");
+				if ((mpath || prio == RTP_OSPF) &&
+				    (kr = kroute_matchgw(okr, nexthop)) ==
+				    NULL) {
+					log_warnx("mpath route not found");
 					/* add routes we missed out earlier */
 					goto add;
 				}
@@ -1598,15 +1450,17 @@ rtmsg_process(char *buf, int len)
 					kr->r.flags |= F_DOWN;
 
 				/* just readd, the RDE will care */
-				okr->serial = kr_state.fib_serial;
-				kr_redistribute(okr);
+				kr->serial = kr_state.fib_serial;
+				kr_redistribute(kr);
 			} else {
 add:
 				if ((kr = calloc(1,
 				    sizeof(struct kroute_node))) == NULL) {
-					log_warn("dispatch_rtmsg");
-					return (-1);
+					log_warn("dispatch calloc");
+					rv = -1;
+					break;
 				}
+
 				kr->r.prefix.s_addr = prefix.s_addr;
 				kr->r.prefixlen = prefixlen;
 				kr->r.nexthop.s_addr = nexthop.s_addr;
@@ -1614,15 +1468,27 @@ add:
 				kr->r.ifindex = ifindex;
 				kr->r.priority = prio;
 
-				if ((label = (struct sockaddr_rtlabel *)
-				    rti_info[RTAX_LABEL]) != NULL) {
-					kr->r.rtlabel =
-					    rtlabel_name2id(label->sr_label);
-					kr->r.ext_tag =
-					    rtlabel_id2tag(kr->r.rtlabel);
-				}
+				if (rtm->rtm_priority == RTP_OSPF) {
+					log_warnx("alien OSPF route %s/%d",
+					    inet_ntoa(prefix), prefixlen);
+					rv = send_rtmsg(kr_state.fd,
+					    RTM_DELETE, &kr->r);
+					free(kr);
+					if (rv == -1)
+						break;
+				} else {
+					if ((label = (struct sockaddr_rtlabel *)
+					    rti_info[RTAX_LABEL]) != NULL) {
+						kr->r.rtlabel =
+						    rtlabel_name2id(
+						    label->sr_label);
+						kr->r.ext_tag =
+						    rtlabel_id2tag(
+						    kr->r.rtlabel);
+					}
 
-				kroute_insert(kr);
+					kroute_insert(kr);
+				}
 			}
 			break;
 		case RTM_DELETE:
