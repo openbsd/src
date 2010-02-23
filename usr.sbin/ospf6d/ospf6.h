@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.15 2009/04/09 19:00:40 stsp Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.16 2010/02/23 11:20:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -189,7 +189,9 @@ struct ls_upd_hdr {
 
 /* LSA headers */
 #define LSA_METRIC_MASK		0x00ffffff	/* only for sum & as-ext */
-#define LSA_ASEXT_E_FLAG	0x80000000
+#define LSA_ASEXT_E_FLAG	0x04000000
+#define LSA_ASEXT_F_FLAG	0x02000000
+#define LSA_ASEXT_T_FLAG	0x01000000
 
 #define OSPF_RTR_B		0x01
 #define OSPF_RTR_E		0x02
@@ -209,7 +211,7 @@ struct ls_upd_hdr {
 struct lsa_prefix {
 	u_int8_t		prefixlen;
 	u_int8_t		options;
-	u_int16_t		metric;
+	u_int16_t		metric;	/* Ref. LS type in AS-Ext-LSA */
 	/* + an IPv6 prefix encoded in (prefixlen + 31)/32 words */
 };
 
@@ -246,10 +248,12 @@ struct lsa_rtr_sum {
 };
 
 struct lsa_asext {
-	u_int32_t		mask;
-	u_int32_t		metric;		/* lower 24 bit plus E bit */
-	u_int32_t		fw_addr;
-	u_int32_t		ext_tag;
+	u_int32_t		metric;		/* lower 24 bit plus EFT bits */
+	struct lsa_prefix	prefix;
+	/* + if F bit is set, an optional forwarding address (128bit) */
+	/* + if T bit is set, an optional external route tag (32bit) */
+	/* + if referenced LS type (i.e. prefix.metric) is non-zero, an
+	 *   optional referenced LS ID (32bit) -- not used by OSPF itself */
 };
 
 struct lsa_link {
