@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.7 2010/02/24 14:09:45 jmc Exp $
+.\" $OpenBSD: ber.3,v 1.8 2010/02/24 14:44:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -142,8 +142,6 @@ using the
 .Fn ber_unlink_elements ,
 .Fn ber_replace_elements ,
 .Fn ber_calc_len
-.Pp
-
 .Sh BER TYPES
 .Fn ber_add_sequence ,
 .Fn ber_add_set ,
@@ -161,7 +159,6 @@ using the
 .Fn ber_get_null ,
 .Fn ber_add_eoc ,
 .Fn ber_get_eoc
-
 .Sh OBJECT IDS
 Object Identifiers are commonly used in ASN.1-based protocols.
 These functions provide an interface to parse OIDs.
@@ -183,13 +180,9 @@ struct ber_oid {
 .Fn ber_get_oid ,
 .Fn ber_oid2ber ,
 .Fn ber_string2oid
-.Pp
-
 .Sh FORMAT STRINGS
 .Fn ber_printf_elements ,
 .Fn ber_scanf_elements
-.Pp
-
 .Sh I/O OPERATIONS
 .Fn ber_get_writebuf ,
 .Fn ber_write_elements ,
@@ -198,8 +191,6 @@ struct ber_oid {
 .Fn ber_free_elements ,
 .Fn ber_set_application ,
 .Fn ber_free
-.Pp
-
 .Sh RETURN VALUES
 Upon successful completion
 .Fn ber_get_integer ,
