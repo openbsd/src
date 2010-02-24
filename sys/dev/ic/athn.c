@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.26 2010/02/21 19:57:05 kettenis Exp $	*/
+/*	$OpenBSD: athn.c,v 1.27 2010/02/24 19:39:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4032,6 +4032,12 @@ athn_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	if (AR_SREV_5416_20_OR_LATER(sc) && !AR_SREV_9280_10_OR_LATER(sc)) {
 		/* Disable baseband clock gating. */
 		AR_WRITE(sc, AR_PHY(651), 0x11);
+
+		if (AR_SREV_9160(sc)) {
+			/* Disable RIFS search to fix baseband hang. */
+			AR_CLRBITS(sc, AR_PHY_HEAVY_CLIP_FACTOR_RIFS,
+			    AR_PHY_RIFS_INIT_DELAY_M);
+		}
 	}
 
 	athn_set_phy(sc, c, extc);

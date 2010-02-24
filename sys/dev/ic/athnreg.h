@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.5 2010/02/24 19:31:29 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.6 2010/02/24 19:39:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -328,6 +328,7 @@
 #define AR_PHY_CHANNEL_MASK_31_60	0x99d8
 #define AR_PHY_CHAN_INFO_MEMORY		0x99dc
 #define AR_PHY_HEAVY_CLIP_ENABLE	0x99e0
+#define AR_PHY_HEAVY_CLIP_FACTOR_RIFS	0x99ec
 #define AR_PHY_CALMODE			0x99f0
 #define AR_PHY_REFCLKDLY		0x99f4
 #define AR_PHY_REFCLKPD			0x99f8
@@ -1694,6 +1695,10 @@
 
 /* Bits for AR_PHY_CHAN_INFO_MEMORY. */
 #define AR_PHY_CHAN_INFO_MEMORY_CAPTURE_MASK	0x0001
+
+/* Bits for AR_PHY_HEAVY_CLIP_FACTOR_RIFS. */
+#define AR_PHY_RIFS_INIT_DELAY_M	0x03ff0000
+#define AR_PHY_RIFS_INIT_DELAY_S	16
 
 /* Bits for AR_PHY_CALMODE. */
 #define AR_PHY_CALMODE_IQ		0x00000000
