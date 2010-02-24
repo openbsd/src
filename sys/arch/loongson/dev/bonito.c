@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.10 2010/02/12 08:14:02 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.11 2010/02/24 22:33:20 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -289,11 +289,14 @@ bonito_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!sc->sc_compatible) {
 		/*
-		 * According to Linux, changing the value of this
-		 * undocumented register ``avoids deadlock of PCI
-		 * reading/writing lock operation''.
-		 * Is this really necessary, and if so, does it
-		 * matter on other designs?
+		 * According to Linux, changing the value of this register
+		 * ``avoids deadlock of PCI reading/writing lock operation''.
+		 *
+		 * Unfortunately, documentation for the Implementation
+		 * Specific Registers (ISR40 to ISR5C) is only found in the
+		 * chinese version of the Loongson 2F documentation.
+		 *
+		 * The particular bit we set here is ``mas_read_defer''.
 		 */
 		/* c2000001 -> d2000001 */
 		REGVAL(BONITO_PCI_REG(0x4c)) |= 0x10000000;
