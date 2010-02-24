@@ -694,7 +694,6 @@ piddir
 zonesdir
 difffile
 xfrdfile
-chrootdir
 user
 AWK
 LN_S
@@ -3825,14 +3824,15 @@ chrootdir="/"
 
 # Check whether --with-chroot was given.
 if test "${with_chroot+set}" = set; then
-  withval=$with_chroot; chrootdir=$withval
-fi
-
-
+  withval=$with_chroot;
+		chrootdir=$withval
 
 cat >>confdefs.h <<_ACEOF
 #define CHROOTDIR "`eval echo $chrootdir`"
 _ACEOF
+
+
+fi
 
 
 #
