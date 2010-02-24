@@ -830,21 +830,17 @@ main(int argc, char *argv[])
 		}
 
 		if (strncmp(nsd.chrootdir, nsd.pidfile, l) != 0) {
-			log_msg(LOG_ERR, "%s is not relative to %s: will not chroot",
+			error("%s is not relative to %s: chroot not possible",
 				nsd.pidfile, nsd.chrootdir);
-			nsd.chrootdir = NULL;
 		} else if (strncmp(nsd.chrootdir, nsd.dbfile, l) != 0) {
-			log_msg(LOG_ERR, "%s is not relative to %s: will not chroot",
+			error("%s is not relative to %s: chroot not possible",
 				nsd.dbfile, nsd.chrootdir);
-			nsd.chrootdir = NULL;
 		} else if (strncmp(nsd.chrootdir, nsd.options->xfrdfile, l) != 0) {
-			log_msg(LOG_ERR, "%s is not relative to %s: will not chroot",
+			error("%s is not relative to %s: chroot not possible",
 				nsd.options->xfrdfile, nsd.chrootdir);
-			nsd.chrootdir = NULL;
 		} else if (strncmp(nsd.chrootdir, nsd.options->difffile, l) != 0) {
-			log_msg(LOG_ERR, "%s is not relative to %s: will not chroot",
+			error("%s is not relative to %s: chroot not possible",
 				nsd.options->difffile, nsd.chrootdir);
-			nsd.chrootdir = NULL;
 		}
 	}
 
