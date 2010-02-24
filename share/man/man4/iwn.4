@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.24 2009/11/17 19:18:21 damien Exp $
+.\" $OpenBSD: iwn.4,v 1.25 2010/02/24 17:20:34 damien Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2009 $
+.Dd $Mdocdate: February 24 2010 $
 .Os
 .Dt IWN 4
 .Sh NAME
@@ -111,7 +111,7 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The driver needs at least version 5.2 of the following firmware files,
+The driver needs at least version 5.3 of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
@@ -133,7 +133,7 @@ A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Bd -literal
-http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-5.2.tgz
+http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-5.3.tgz
 .Ed
 .Sh EXAMPLES
 The following
