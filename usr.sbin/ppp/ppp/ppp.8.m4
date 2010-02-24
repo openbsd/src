@@ -25,9 +25,9 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.42 2009/09/02 08:18:17 sthen Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.43 2010/02/24 14:18:11 schwarze Exp $
 .\"
-.Dd $Mdocdate: September 2 2009 $
+.Dd $Mdocdate: February 24 2010 $
 .Dt PPP 8
 .Os
 .Sh NAME
@@ -3213,7 +3213,7 @@ Disabling this option will prevent the re-application of sticky routes,
 although the
 .Dq sticky route
 list will still be maintained.
-.It Op tcp Ns Xo
+.It Oo tcp Oc Ns Xo
 .No mssfixup
 .Xc
 Default: Enabled.
@@ -3416,7 +3416,7 @@ When running in multi-link mode, a section can be loaded if it allows
 .Em any
 of the currently existing line modes.
 .El
-.It Op !\& Ns Xo
+.It Oo !\& Oc Ns Xo
 .Ic bg Ar command
 .Xc
 The given
@@ -3768,7 +3768,7 @@ When invoked with
 .Ar sub-command ,
 only the synopsis for the given sub-command is shown.
 .El
-.It Op Ic data Ns Xo
+.It Oo Ic data Oc Ns Xo
 .Ic link
 .Ar name Ns Op , Ns Ar name Ns
 .No ... Ar command Op Ar args
@@ -3793,7 +3793,7 @@ is
 .Sq * ,
 .Ar command
 is executed on all links.
-.It Ic load Op Ar label Ns Xo
+.It Ic load Oo Ar label Oc Ns Xo
 .No ...
 .Xc
 Load the given
@@ -4200,7 +4200,7 @@ certain characters from end to end (such as XON/XOFF etc).
 .Pp
 For the XON/XOFF scenario, use
 .Dq set accmap 000a0000 .
-.It Ic set Op Ic auth Ns Xo
+.It Ic set Oo Ic auth Oc Ns Xo
 .Ic key Ar value
 .Xc
 This sets the authentication key (or password) used in client mode
@@ -4958,11 +4958,10 @@ If you wish to assign a dynamic IP number to the peer,
 .Ar hisaddr
 may also be specified as a range of IP numbers in the following format:
 .Bd -ragged -offset indent
-.Ar \&IP Ns Oo \&- Ns Ar \&IP Ns Xo
-.Oc Ns Oo , Ns Ar \&IP Ns
-.Op \&- Ns Ar \&IP Ns
-.Oc Ns ...
-.Xc
+.Sm off
+.Ar \&IP Oo \&- Ar \&IP Oc Oo ,
+.Ar \&IP Oo \&- Ar \&IP Oc Oc ...
+.Sm on
 .Ed
 .Pp
 For example:
@@ -5326,7 +5325,7 @@ below.
 In
 .Fl background
 mode, each number is attempted at most once.
-.It Ic set Op Ic proc Ns Xo
+.It Ic set Oo Ic proc Oc Ns Xo
 .Ic title Op Ar value
 .Xc
 The current process title as displayed by
@@ -5892,7 +5891,7 @@ Show the current IPCP statistics.
 Show the protocol layers currently in use.
 .It Ic show lcp
 Show the current LCP statistics.
-.It Ic show Op Ic data Ns Xo
+.It Ic show Oo Ic data Oc Ns Xo
 .Ic link
 .Xc
 Show high level link information.
