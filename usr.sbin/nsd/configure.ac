@@ -128,9 +128,10 @@ AC_SUBST(xfrdfile)
 chrootdir="/"
 AC_ARG_WITH([chroot],
 	AC_HELP_STRING([--with-chroot=dir], [NSD default chroot directory]),
-	[chrootdir=$withval])
-AC_SUBST(chrootdir)
-AC_DEFINE_UNQUOTED(CHROOTDIR, ["`eval echo $chrootdir`"], [NSD default chroot directory.])
+	[
+		chrootdir=$withval
+		AC_DEFINE_UNQUOTED(CHROOTDIR, ["`eval echo $chrootdir`"], [NSD default chroot directory.])
+	])
 
 #
 # Determine the user name to drop privileges to
