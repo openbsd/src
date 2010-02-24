@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.475 2010/02/24 20:57:52 damien Exp $
+$OpenBSD: usbdevs,v 1.476 2010/02/24 21:08:18 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -543,6 +543,7 @@ vendor TERMINUS		0x1a40	Terminus Technology
 vendor BAYER		0x1a79	Bayer Health Care
 vendor WCH2		0x1a86	QinHeng Electronics
 vendor MATRIXORB	0x1b3d	Matrix Orbital
+vendor OVISLINK		0x1b75	OvisLink
 vendor TML		0x1b91	The Mobility Lab
 vendor TCTMOBILE	0x1bbb  TCT Mobile
 vendor MDS		0x1bc8	MDS
@@ -2748,6 +2749,9 @@ product OQO ETHER01		0x8150	model 01 Ethernet
 product OTI SOLID		0x6803	Solid state disk
 product OTI DKU5		0x6858	DKU-5 Serial
 
+/* OvisLink product */
+product OVISLINK RT3072		0x3072	RT3072
+
 /* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
 product PALM M500		0x0001	Palm m500
@@ -2804,6 +2808,7 @@ product PARA RT3070		0x8888	RT3070
 product PEGATRON RT2870		0x0002	RT2870
 product PEGATRON RT3070		0x000c	RT3070
 product PEGATRON RT3070_2	0x000e	RT3070
+product PEGATRON RT3070_3	0x0010	RT3070
 
 /* Pen Driver */
 product PEN USBREADER		0x0240	6 in 1
