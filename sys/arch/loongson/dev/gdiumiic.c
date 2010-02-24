@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdiumiic.c,v 1.3 2010/02/23 12:21:01 otto Exp $	*/
+/*	$OpenBSD: gdiumiic.c,v 1.4 2010/02/24 22:16:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -349,6 +349,13 @@ gdiumiic_sensors_scan(struct device *iicdev, struct i2cbus_attach_args *iba,
 	struct i2c_attach_args ia;
 	/* not worth #define'ing _I2C_PRIVATE for */
 	extern int iic_print(void *, const char *);
+
+	bzero(&ia, sizeof ia);
+	ia.ia_tag = iba->iba_tag;
+	ia.ia_addr = 0x40;
+	ia.ia_size = 1;
+	ia.ia_name = "stsec";
+	config_found(iicdev, &ia, iic_print);
 
 	bzero(&ia, sizeof ia);
 	ia.ia_tag = iba->iba_tag;

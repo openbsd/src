@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.5 2010/02/23 21:04:16 otto Exp $
+#	$OpenBSD: files.loongson,v 1.6 2010/02/24 22:16:18 miod Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -87,6 +87,11 @@ file	arch/loongson/dev/voyager.c			voyager
 device	gdiumiic: i2cbus, i2c_bitbang
 attach	gdiumiic at gpio
 file	arch/loongson/dev/gdiumiic.c			gdiumiic
+
+# Gdium ST7 controller
+device	stsec
+attach	stsec at i2c
+file	arch/loongson/dev/stsec.c			stsec
 
 # Gdium M41T8x RTC
 device	mfokclock

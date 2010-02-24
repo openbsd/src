@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2010/02/23 21:04:16 otto Exp $
+#	$OpenBSD: GENERIC,v 1.14 2010/02/24 22:16:18 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -58,12 +58,12 @@ gpio0		at voyager?
 gdiumiic0	at gpio0 offset 6 mask 0x81	# pins 6 and 13
 gdiumiic0	at gpio0 offset 46 mask 0x03	# pins 46 and 47
 iic0		at gdiumiic0
+stsec0		at iic0				# ST7 Embedded Controller
 lmtemp0		at iic0 			# National Semiconductor LM75
 mfokclock0	at iic0				# M41T8x todclock
 #iic*		at voyager?
 #ohci*		at voyager?
 smfb*		at voyager?
-
 wsdisplay*	at smfb?
 
 # USB Controllers
