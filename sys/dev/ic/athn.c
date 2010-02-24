@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.27 2010/02/24 19:39:43 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.28 2010/02/24 20:09:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -853,7 +853,7 @@ athn_intr(void *xsc)
 			/* Turn the interface down. */
 			ifp->if_flags &= ~IFF_UP;
 			athn_stop(ifp, 1);
-			return (0);
+			return (1);
 		}
 
 		AR_WRITE(sc, AR_INTR_SYNC_CAUSE, sync);
@@ -4196,11 +4196,12 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	AR_WRITE(sc, AR_RSSI_THR, SM(AR_RSSI_THR_BM_THR, 7));
 
-	error = ops->set_synth(sc, c, extc);
-	if (error != 0) {
+	if ((error = ops->set_synth(sc, c, extc)) != 0) {
 		printf("%s: could not set channel\n", sc->sc_dev.dv_xname);
 		return (error);
 	}
+	sc->curchan = c;
+	sc->curchanext = extc;
 
 	for (i = 0; i < AR_NUM_DCU; i++)
 		AR_WRITE(sc, AR_DQCUMASK(i), 1 << i);
@@ -4644,8 +4645,8 @@ athn_init(struct ifnet *ifp)
 	struct ieee80211_channel *c, *extc;
 	int i, error;
 
-	c = sc->curchan = ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	extc = sc->curchanext = NULL;
+	c = ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+	extc = NULL;
 
 	/* In case a new MAC address has been configured. */
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
