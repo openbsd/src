@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $OpenBSD: arlad.8,v 1.11 2009/06/07 18:10:21 jmc Exp $
+.\"     $OpenBSD: arlad.8,v 1.12 2010/02/24 09:27:22 schwarze Exp $
 .\"	$arla: arlad.8,v 1.18 2003/06/06 12:53:56 hin Exp $
 .\"
 .Dd September 5, 1998
@@ -41,29 +41,29 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Oo Fl c Ar string \*(Ba Xo
-.Fl -conffile= Ns Ar string Oc
-.Xc
-.Oo Fl l Ar string \*(Ba Xo
-.Fl -log= Ns Ar string Oc
-.Xc
+.Oo
+.Fl c Ar string \*(Ba Fl -conffile= Ns Ar string
+.Oc
+.Oo
+.Fl l Ar string \*(Ba Fl -log= Ns Ar string
+.Oc
 .Op Fl -debug= Ns Ar string
-.Oo Fl d Ar string \*(Ba Xo
-.Fl -device= Ns Ar string Oc
-.Xc
+.Oo
+.Fl d Ar string \*(Ba Fl -device= Ns Ar string
+.Oc
 .Op Fl -connected-mode= Ns Ar string
-.Op Fl n | Fl -no-fork
-.Oo Fl r Ar string \*(Ba Xo
-.Fl -rxkad-level= Ns Ar string Oc
-.Xc
-.Oo Fl s Ar string \*(Ba Xo
-.Fl -sysname= Ns Ar string Oc
-.Xc
+.Op Fl n \*(Ba Fl -no-fork
+.Oo
+.Fl r Ar string \*(Ba Fl -rxkad-level= Ns Ar string
+.Oc
+.Oo
+.Fl s Ar string \*(Ba Fl -sysname= Ns Ar string
+.Oc
 .Op Fl -root-volume= Ns Ar string
 .Op Fl -port= Ns Ar number
-.Op Fl z | Fl -recover
+.Op Fl z \*(Ba Fl -recover
 .Op Fl -cache-dir= Ns Ar string
-.Op Fl D | -dynroot
+.Op Fl D \*(Ba -dynroot
 .Op Fl -cpu-usage
 .Op Fl -version
 .Op Fl -help
