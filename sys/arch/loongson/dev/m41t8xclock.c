@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8xclock.c,v 1.1 2010/02/19 00:21:45 miod Exp $	*/
+/*	$OpenBSD: m41t8xclock.c,v 1.2 2010/02/24 22:14:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -102,7 +102,8 @@ m41t8xclock_get(void *cookie, time_t unused, struct tod_time *tt)
 	for (regno = M41T8X_TOD_START;
 	    regno < M41T8X_TOD_START + M41T8X_TOD_LENGTH; regno++)
 		iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &regno, sizeof regno, data + regno, sizeof data[0], 0);
+		    &regno, sizeof regno, data + regno - M41T8X_TOD_START,
+		    sizeof data[0], 0);
 	splx(s);
 	iic_release_bus(sc->sc_tag, 0);
 
@@ -130,7 +131,8 @@ m41t8xclock_set(void *cookie, struct tod_time *tt)
 	for (regno = M41T8X_TOD_START;
 	    regno < M41T8X_TOD_START + M41T8X_TOD_LENGTH; regno++)
 		iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &regno, sizeof regno, data + regno, sizeof data[0], 0);
+		    &regno, sizeof regno, data + regno - M41T8X_TOD_START,
+		    sizeof data[0], 0);
 	/* compute new state */
 	data[M41T8X_HSEC] = 0;
 	data[M41T8X_SEC] = bin2bcd(tt->sec);
