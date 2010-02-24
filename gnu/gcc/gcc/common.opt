@@ -1092,7 +1092,7 @@ Common Report Var(flag_wrapv)
 Assume signed arithmetic overflow wraps around
 
 fzero-initialized-in-bss
-Common Report Var(flag_zero_initialized_in_bss) Init(1)
+Common Report Var(flag_zero_initialized_in_bss) Init(0)
 Put zero initialized data in the bss section
 
 g

@@ -295,6 +295,9 @@ int flag_zero_link = 0;
    contained are to replace one(s) previously loaded.  */
 int flag_replace_objc_classes = 0;
 
+/* Warn about buffer size mismatches.  */
+int warn_bounded;
+
 /* C/ObjC language option variables.  */
 
 
@@ -545,6 +548,7 @@ static tree handle_cleanup_attribute (tree *, tree, tree, int, bool *);
 static tree handle_warn_unused_result_attribute (tree *, tree, tree, int,
 						 bool *);
 static tree handle_sentinel_attribute (tree *, tree, tree, int, bool *);
+static tree handle_bounded_attribute (tree *, tree, tree, int, bool *);
 
 static void check_function_nonnull (tree, tree);
 static void check_nonnull_arg (void *, tree, unsigned HOST_WIDE_INT);
@@ -624,6 +628,8 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_deprecated_attribute },
   { "vector_size",	      1, 1, false, true, false,
 			      handle_vector_size_attribute },
+  { "bounded",		      3, 4, false, true, false, 
+			      handle_bounded_attribute },
   { "visibility",	      1, 1, false, false, false,
 			      handle_visibility_attribute },
   { "tls_model",	      1, 1, true,  false, false,
@@ -4643,6 +4649,15 @@ handle_mode_attribute (tree *node, tree name, tree args,
     }
 
   return NULL_TREE;
+}
+
+static tree
+handle_bounded_attribute (tree *ARG_UNUSED (node), tree ARG_UNUSED (name), 
+			  tree ARG_UNUSED (args),
+			  int ARG_UNUSED (flags), bool *no_add_attrs)
+{
+	*no_add_attrs = true;
+	return NULL_TREE;
 }
 
 /* Handle a "section" attribute; arguments as in

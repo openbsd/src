@@ -497,7 +497,6 @@ decode_options (unsigned int argc, const char **argv)
       flag_schedule_insns_after_reload = 1;
 #endif
       flag_regmove = 1;
-      flag_strict_aliasing = 0;
       flag_strict_overflow = 1;
 #if !defined(OPENBSD_NATIVE) && !defined(OPENBSD_CROSS)
       flag_delete_null_pointer_checks = 1;
@@ -517,6 +516,7 @@ decode_options (unsigned int argc, const char **argv)
 
   if (optimize >= 3)
     {
+      flag_strict_aliasing = 1;
       flag_inline_functions = 1;
       flag_unswitch_loops = 1;
       flag_gcse_after_reload = 1;
