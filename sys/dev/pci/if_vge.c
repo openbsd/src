@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.46 2009/11/23 23:18:16 kettenis Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.47 2010/02/24 21:44:12 kettenis Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -559,11 +559,6 @@ vge_reset(struct vge_softc *sc)
 		DELAY(5);
 		if ((CSR_READ_1(sc, VGE_EECSR) & VGE_EECSR_RELOAD) == 0)
 			break;
-	}
-
-	if (i == VGE_TIMEOUT) {
-		printf("%s: EEPROM reload timed out\n", sc->vge_dev.dv_xname);
-		return;
 	}
 
 	CSR_CLRBIT_1(sc, VGE_CHIPCFG0, VGE_CHIPCFG0_PACPI);
