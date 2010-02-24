@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.59 2010/02/24 20:58:56 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.60 2010/02/24 21:09:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -190,10 +190,12 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(MSI,		RT3070_5),
 	USB_ID(MSI,		RT3070_6),
 	USB_ID(MSI,		RT3070_7),
+	USB_ID(OVISLINK,	RT3072),
 	USB_ID(PARA,		RT3070),
 	USB_ID(PEGATRON,	RT2870),
 	USB_ID(PEGATRON,	RT3070),
 	USB_ID(PEGATRON,	RT3070_2),
+	USB_ID(PEGATRON,	RT3070_3),
 	USB_ID(PHILIPS,		RT2870),
 	USB_ID(PLANEX2,		GWUS300MINIS),
 	USB_ID(PLANEX2,		GWUSMICRON),
