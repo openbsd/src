@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.2 2010/02/23 21:59:38 otto Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.3 2010/02/24 17:38:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -116,7 +116,7 @@ ykbec_attach( struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[3].desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[3]);
 
-	sc->sc_sensor[4].type = SENSOR_VOLTS_DC; 
+	sc->sc_sensor[4].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[4].desc, "Battery design voltage",
 	    sizeof(sc->sc_sensor[4].desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[4]);
@@ -250,7 +250,7 @@ ykbec_refresh(void *arg)
 	int current;
 
 	val = ykbec_read16(sc, REG_FAN_SPEED_HIGH);
-	if (val != 0) 
+	if (val != 0)
 		val = KB3310_FAN_SPEED_DIVIDER / val;
 	else
 		val = UINT_MAX;
