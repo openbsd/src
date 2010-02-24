@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.142 2009/08/27 09:26:53 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.143 2010/02/24 15:44:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2145,6 +2145,11 @@ parse_config(const char *filename, int opts)
 	bzero(&conf->sc_proto_default, sizeof(conf->sc_proto_default));
 	conf->sc_proto_default.flags = F_USED;
 	conf->sc_proto_default.cache = RELAY_CACHESIZE;
+	conf->sc_proto_default.tcpflags = TCPFLAG_DEFAULT;
+	conf->sc_proto_default.tcpbacklog = RELAY_BACKLOG;
+	conf->sc_proto_default.sslflags = SSLFLAG_DEFAULT;
+	(void)strlcpy(conf->sc_proto_default.sslciphers, SSLCIPHERS_DEFAULT,
+	    sizeof(conf->sc_proto_default.sslciphers));
 	conf->sc_proto_default.type = RELAY_PROTO_TCP;
 	(void)strlcpy(conf->sc_proto_default.name, "default",
 	    sizeof(conf->sc_proto_default.name));
