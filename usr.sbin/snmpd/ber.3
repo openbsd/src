@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.6 2008/03/18 16:57:58 reyk Exp $
+.\" $OpenBSD: ber.3,v 1.7 2010/02/24 14:09:45 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2008 $
+.Dd $Mdocdate: February 24 2010 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -210,11 +210,12 @@ Upon successful completion
 .Fn ber_get_null ,
 .Fn ber_get_eoc ,
 .Fn ber_get_oid ,
-.Fn ber_string2oid ,
-.Fn ber_scanf_elements ,
+.Fn ber_string2oid
 and
-.Fn ber_write_elements
-return 0.
+.Fn ber_scanf_elements
+return 0, while
+.Fn ber_write_elements  
+returns the number of bytes written.
 Otherwise, \-1 is returned and the global variable errno is
 set to indicate the error.
 .Sh SEE ALSO
