@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.14 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.15 2010/02/24 19:13:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -32,7 +32,7 @@
  */
 
 /* All jobs list. */
-struct joblist	all_jobs = SLIST_HEAD_INITIALIZER(&all_jobs);
+struct joblist	all_jobs = SLIST_HEAD_INITIALIZER(all_jobs);
 
 RB_GENERATE(jobs, job, entry, job_cmp);
 
