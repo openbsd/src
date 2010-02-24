@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.60 2010/02/24 21:09:32 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.61 2010/02/24 21:15:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -240,6 +240,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(SITECOMEU,	WL608),
 	USB_ID(SPARKLAN,	RT2870_1),
 	USB_ID(SPARKLAN,	RT3070),
+	USB_ID(SWEEX2,		LW153),
 	USB_ID(SWEEX2,		LW303),
 	USB_ID(SWEEX2,		LW313),
 	USB_ID(UMEDIA,		RT2870_1),
