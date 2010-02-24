@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.474 2010/02/23 23:29:21 jsg Exp $
+$OpenBSD: usbdevs,v 1.475 2010/02/24 20:57:52 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -584,6 +584,7 @@ vendor ARKMICRO		0x6547	Arkmicro
 vendor 3COM2		0x6891	3Com
 vendor EDIMAX		0x7392	EDIMAX
 vendor INTEL		0x8086	Intel
+vendor ALLWIN		0x8516	ALLWIN Tech
 vendor SITECOM2		0x9016	Sitecom
 vendor MOSCHIP		0x9710	MosChip
 vendor MARVELL		0x9e88	Marvell
@@ -779,6 +780,15 @@ product ALCOR2 KBD_HUB		0x2802	Kbd Hub
 
 /* Allied Telesyn International products */
 product ALLIEDTELESYN ATUSB100	0xb100	AT-USB100
+
+/* ALLWIN Tech products */
+product ALLWIN RT2070		0x2070	RT2070
+product ALLWIN RT2770		0x2770	RT2770
+product ALLWIN RT2870		0x2870	RT2870
+product ALLWIN RT3070		0x3070	RT3070
+product ALLWIN RT3071		0x3071	RT3071
+product ALLWIN RT3072		0x3072	RT3072
+product ALLWIN RT3572		0x3572	RT3572
 
 /* Altec Lansing products */
 product ALTEC ADA70		0x0070	ADA70 Speakers
