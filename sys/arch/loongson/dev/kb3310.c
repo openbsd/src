@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.3 2010/02/24 17:38:39 deraadt Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.4 2010/02/24 18:29:39 otto Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -249,7 +249,7 @@ ykbec_refresh(void *arg)
 	u_int val, bat_charge, bat_status, charge_status, bat_state, power_flag;
 	int current;
 
-	val = ykbec_read16(sc, REG_FAN_SPEED_HIGH);
+	val = ykbec_read16(sc, REG_FAN_SPEED_HIGH) & 0xfffff;
 	if (val != 0)
 		val = KB3310_FAN_SPEED_DIVIDER / val;
 	else
@@ -262,11 +262,12 @@ ykbec_refresh(void *arg)
 	sc->sc_sensor[2].value = ykbec_read16(sc, REG_DESIGN_CAP_HIGH) * 1000;
 	sc->sc_sensor[3].value = ykbec_read16(sc, REG_FULLCHG_CAP_HIGH) * 1000;
 	sc->sc_sensor[4].value = ykbec_read16(sc, REG_DESIGN_VOL_HIGH) * 1000;
+
 	current = ykbec_read16(sc, REG_CURRENT_HIGH);
-	if (current & 0x8000)
-		sc->sc_sensor[5].value = (0xffff - current) * 1000;
-	else
-		sc->sc_sensor[5].value = current * 1000;
+	/* sign extend short -> int, int -> int64 will be done next statement */
+	current |= -(current & 0x8000);
+	sc->sc_sensor[5].value = current * -1000;
+
 	sc->sc_sensor[6].value = ykbec_read16(sc, REG_VOLTAGE_HIGH) * 1000;
 
 	val = ykbec_read16(sc, REG_TEMPERATURE_HIGH);
