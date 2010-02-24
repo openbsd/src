@@ -1,4 +1,4 @@
-/*	$OpenBSD: voyager.c,v 1.1 2010/02/18 22:45:28 miod Exp $	*/
+/*	$OpenBSD: voyager.c,v 1.2 2010/02/24 22:14:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -210,6 +210,7 @@ voyager_gpio_pin_write(void *cookie, int pin, int val)
 	else
 		data &= ~mask;
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, reg, data);
+	(void)bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh, reg);
 }
 
 void
@@ -232,6 +233,7 @@ voyager_gpio_pin_ctl(void *cookie, int pin, int flags)
 	else
 		data &= ~mask;
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, reg, data);
+	(void)bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh, reg);
 }
 
 void
