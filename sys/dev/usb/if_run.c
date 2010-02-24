@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.58 2010/02/19 17:00:56 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.59 2010/02/24 20:58:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -97,6 +97,13 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(ACCTON,		RT3070_3),
 	USB_ID(ACCTON,		RT3070_4),
 	USB_ID(AIRTIES,		RT3070),
+	USB_ID(ALLWIN,		RT2070),
+	USB_ID(ALLWIN,		RT2770),
+	USB_ID(ALLWIN,		RT2870),
+	USB_ID(ALLWIN,		RT3070),
+	USB_ID(ALLWIN,		RT3071),
+	USB_ID(ALLWIN,		RT3072),
+	USB_ID(ALLWIN,		RT3572),
 	USB_ID(AMIGO,		RT2870_1),
 	USB_ID(AMIGO,		RT2870_2),
 	USB_ID(AMIT,		CGWLUSB2GNR),
