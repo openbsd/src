@@ -184,14 +184,14 @@ add_key(region_type* region, const char* opt, tsig_algorithm_type** algo)
 	/* parse -y key:secret_base64 format option */
 	char* delim = strchr(opt, ':');
 	char* delim2 = NULL;
-
-	if (delim)
-		delim2 = strchr(delim+1, ':');
-
 	tsig_key_type *key = (tsig_key_type*)region_alloc(
 		region, sizeof(tsig_key_type));
 	size_t len;
 	int sz;
+
+	if (delim)
+		delim2 = strchr(delim+1, ':');
+
 	if(!key) {
 		log_msg(LOG_ERR, "region_alloc failed (add_key)");
 		return 0;
