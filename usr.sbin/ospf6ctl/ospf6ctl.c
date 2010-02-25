@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.33 2010/02/23 16:32:55 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.34 2010/02/25 16:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,6 +54,8 @@ char		*print_ls_type(u_int16_t);
 void		 show_db_hdr_msg_detail(struct lsa_hdr *);
 char		*print_rtr_link_type(u_int8_t);
 const char	*print_ospf_flags(u_int8_t);
+const char	*print_asext_flags(u_int32_t);
+const char	*print_prefix_opt(u_int8_t);
 int		 show_db_msg_detail(struct imsg *imsg);
 int		 show_nbr_msg(struct imsg *);
 const char	*print_ospf_options(u_int32_t);
@@ -696,12 +698,42 @@ print_ospf_flags(u_int8_t opts)
 	return (optbuf);
 }
 
+const char *
+print_asext_flags(u_int32_t opts)
+{
+	static char	optbuf[32];
+
+	snprintf(optbuf, sizeof(optbuf), "*|*|*|*|*|%s|%s|%s",
+	    opts & LSA_ASEXT_E_FLAG ? "E" : "-",
+	    opts & LSA_ASEXT_F_FLAG ? "F" : "-",
+	    opts & LSA_ASEXT_T_FLAG ? "T" : "-");
+	return (optbuf);
+}
+
+const char *
+print_prefix_opt(u_int8_t opts)
+{
+	static char	optbuf[32];
+
+	if (opts) {
+		snprintf(optbuf, sizeof(optbuf),
+		    " Options: *|*|*|%s|%s|x|%s|%s",
+		    opts & OSPF_PREFIX_DN ? "DN" : "-",
+		    opts & OSPF_PREFIX_P ? "P" : "-",
+		    opts & OSPF_PREFIX_LA ? "LA" : "-",
+		    opts & OSPF_PREFIX_NU ? "NU" : "-");
+		return (optbuf);
+	}
+	return ("");
+}
+
 int
 show_db_msg_detail(struct imsg *imsg)
 {
 	static struct in_addr	 area_id;
 	static char		 ifname[IF_NAMESIZE];
 	static u_int16_t	 lasttype;
+	struct in6_addr		 ia6;
 	struct in_addr		 addr, data;
 	struct area		*area;
 	struct iface		*iface;
@@ -710,6 +742,7 @@ show_db_msg_detail(struct imsg *imsg)
 	struct lsa_net_link	*net_link;
 	struct lsa_prefix	*prefix;
 	struct lsa_asext	*asext;
+	u_int32_t		 ext_tag;
 	u_int16_t		 i, nlinks, off;
 
 	/* XXX sanity checks! */
@@ -723,14 +756,33 @@ show_db_msg_detail(struct imsg *imsg)
 
 		asext = (struct lsa_asext *)((char *)lsa + sizeof(lsa->hdr));
 
-		printf("    Metric type: ");
+		printf("    Flags: %s\n",
+		    print_asext_flags(ntohl(lsa->data.asext.metric)));
+		printf("    Metric: %d Type: ", ntohl(asext->metric)
+		    & LSA_METRIC_MASK);
 		if (ntohl(lsa->data.asext.metric) & LSA_ASEXT_E_FLAG)
 			printf("2\n");
 		else
 			printf("1\n");
-		printf("    Metric: %d\n", ntohl(asext->metric)
-		    & LSA_METRIC_MASK);
 
+		prefix = &asext->prefix;
+		bzero(&ia6, sizeof(ia6));
+		bcopy(prefix + 1, &ia6, LSA_PREFIXSIZE(prefix->prefixlen));
+		printf("    Prefix: %s/%d%s\n", log_in6addr(&ia6),
+		    prefix->prefixlen, print_prefix_opt(prefix->options));
+
+		off = sizeof(*asext) + LSA_PREFIXSIZE(prefix->prefixlen);
+		if (ntohl(lsa->data.asext.metric) & LSA_ASEXT_F_FLAG) {
+			bcopy((char *)asext + off, &ia6, sizeof(ia6));
+			printf("    Forwarding Address: %s\n",
+			    log_in6addr(&ia6));
+			off += sizeof(ia6);
+		}
+		if (ntohl(lsa->data.asext.metric) & LSA_ASEXT_T_FLAG) {
+			bcopy((char *)asext + off, &ext_tag, sizeof(ext_tag));
+			printf("    External Route Tag: %d\n", ntohl(ext_tag));
+		}
+		printf("\n");
 		lasttype = lsa->hdr.type;
 		break;
 	case IMSG_CTL_SHOW_DB_LINK:
@@ -748,15 +800,14 @@ show_db_msg_detail(struct imsg *imsg)
 		off = sizeof(lsa->hdr) + sizeof(struct lsa_link);
 
 		for (i = 0; i < nlinks; i++) {
-			struct in6_addr	ia6;
 			prefix = (struct lsa_prefix *)((char *)lsa + off);
 			bzero(&ia6, sizeof(ia6));
 			bcopy(prefix + 1, &ia6,
 			    LSA_PREFIXSIZE(prefix->prefixlen));
 
-			printf("    Prefix Address: %s\n", log_in6addr(&ia6));
-			printf("    Prefix Length: %d, Options: %x\n",
-			    prefix->prefixlen, prefix->options);
+			printf("    Prefix: %s/%d%s\n", log_in6addr(&ia6),
+			    prefix->prefixlen,
+			    print_prefix_opt(prefix->options));
 
 			off += sizeof(struct lsa_prefix)
 			    + LSA_PREFIXSIZE(prefix->prefixlen);
@@ -859,15 +910,14 @@ show_db_msg_detail(struct imsg *imsg)
 		off = sizeof(lsa->hdr) + sizeof(struct lsa_intra_prefix);
 
 		for (i = 0; i < nlinks; i++) {
-			struct in6_addr	ia6;
 			prefix = (struct lsa_prefix *)((char *)lsa + off);
 			bzero(&ia6, sizeof(ia6));
 			bcopy(prefix + 1, &ia6,
 			    LSA_PREFIXSIZE(prefix->prefixlen));
 
-			printf("    Prefix Address: %s\n", log_in6addr(&ia6));
-			printf("    Prefix Length: %d, Options: %x\n",
-			    prefix->prefixlen, prefix->options);
+			printf("    Prefix: %s/%d%s\n", log_in6addr(&ia6),
+			    prefix->prefixlen,
+			    print_prefix_opt(prefix->options));
 
 			off += sizeof(struct lsa_prefix)
 			    + LSA_PREFIXSIZE(prefix->prefixlen);
