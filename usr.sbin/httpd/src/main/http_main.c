@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.53 2008/12/02 17:55:35 sthen Exp $ */
+/* $OpenBSD: http_main.c,v 1.54 2010/02/25 07:49:53 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1244,10 +1244,10 @@ API_EXPORT(int) ap_update_child_status(int child_num, int status, request_rec *r
 	     */
 	    if (status == SERVER_DEAD) {
 		ss->my_access_count = 0L;
-		ss->my_bytes_served = 0L;
+		ss->my_bytes_served = 0ULL;
 	    }
 	    ss->conn_count = (unsigned short) 0;
-	    ss->conn_bytes = (unsigned long) 0;
+	    ss->conn_bytes = 0ULL;
 	}
         else if (status == SERVER_STARTING) {
             /* clean out the start_time so that mod_status will print Req=0 */
@@ -1309,7 +1309,7 @@ void ap_time_process_request(int child_num, int status)
 
 static void increment_counts(int child_num, request_rec *r)
 {
-    long int bs = 0;
+    off_t bs = 0;
     short_score *ss;
 
     ss = &ap_scoreboard_image->servers[child_num];
@@ -1321,9 +1321,9 @@ static void increment_counts(int child_num, request_rec *r)
     ss->access_count++;
     ss->my_access_count++;
     ss->conn_count++;
-    ss->bytes_served += (unsigned long) bs;
-    ss->my_bytes_served += (unsigned long) bs;
-    ss->conn_bytes += (unsigned long) bs;
+    ss->bytes_served += bs;
+    ss->my_bytes_served += bs;
+    ss->conn_bytes += bs;
 }
 
 static int find_child_by_pid(int pid)

@@ -1576,7 +1576,7 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
 void ap_proxy_cache_tidy(cache_req *c)
 {
     server_rec *s;
-    long int bc;
+    off_t bc;
 
     if (!c || !c->fp)
         return;

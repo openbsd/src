@@ -218,8 +218,8 @@ static int status_handler(request_rec *r)
     int ready = 0;
     int busy = 0;
     unsigned long count = 0;
-    unsigned long lres, bytes;
-    unsigned long my_lres, my_bytes, conn_bytes;
+    unsigned long lres, my_lres;
+    unsigned long long bytes, my_bytes, conn_bytes;
     unsigned short conn_lres;
     unsigned long bcount = 0;
     unsigned long kbcount = 0;

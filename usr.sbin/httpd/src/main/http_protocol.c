@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.36 2010/02/23 08:15:27 pyr Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.37 2010/02/25 07:49:53 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1582,7 +1582,7 @@ API_EXPORT(void) ap_basic_http_header(request_rec *r)
  */
 static void terminate_header(BUFF *client)
 {
-    long int bs;
+    off_t bs;
 
     ap_bgetopt(client, BO_BYTECT, &bs);
     if (bs >= 255 && bs <= 257)
@@ -1645,7 +1645,7 @@ API_EXPORT(int) ap_send_http_trace(request_rec *r)
 
 API_EXPORT(int) ap_send_http_options(request_rec *r)
 {
-    const long int zero = 0L;
+    const off_t zero = 0LL;
 
     if (r->assbackwards)
         return DECLINED;
@@ -1765,7 +1765,7 @@ static void fixup_vary(request_rec *r)
 API_EXPORT(void) ap_send_http_header(request_rec *r)
 {
     int i;
-    const long int zero = 0L;
+    const off_t zero = 0LL;
 
     if (r->assbackwards) {
         if (!r->main)

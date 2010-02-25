@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_log_config.c,v 1.18 2008/10/03 19:36:36 mbalmer Exp $ */
+/*	$OpenBSD: mod_log_config.c,v 1.19 2010/02/25 07:49:53 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -385,9 +385,9 @@ clf_log_bytes_sent(request_rec *r, char *a)
 	if (!r->sent_bodyct)
 		return "-";
 	else {
-		long int bs;
+		off_t bs;
 		ap_bgetopt(r->connection->client, BO_BYTECT, &bs);
-		return ap_psprintf(r->pool, "%ld", bs);
+		return ap_psprintf(r->pool, "%qd", bs);
 	}
 }
 
@@ -397,9 +397,9 @@ log_bytes_sent(request_rec *r, char *a)
 	if (!r->sent_bodyct)
 		return "0";
 	else {
-		long int bs;
+		off_t bs;
 		ap_bgetopt(r->connection->client, BO_BYTECT, &bs);
-		return ap_psprintf(r->pool, "%ld", bs);
+		return ap_psprintf(r->pool, "%qd", bs);
 	}
 }
 

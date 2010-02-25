@@ -1,4 +1,4 @@
-/*	$OpenBSD: buff.c,v 1.20 2008/05/15 06:05:43 mbalmer Exp $ */
+/*	$OpenBSD: buff.c,v 1.21 2010/02/25 07:49:53 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -209,7 +209,7 @@ ap_bcreate(pool *p, int flags)
 	fb->outcnt = 0;
 	fb->outchunk = -1;
 	fb->error = NULL;
-	fb->bytes_sent = 0L;
+	fb->bytes_sent = 0LL;
 
 	fb->fd = -1;
 	fb->fd_in = -1;
@@ -236,8 +236,8 @@ API_EXPORT(int)
 ap_bsetopt(BUFF *fb, int optname, const void *optval)
 {
 	if (optname == BO_BYTECT) {
-		fb->bytes_sent = *(const long int *)optval -
-		    (long int)fb->outcnt;
+		fb->bytes_sent = *(off_t *)optval -
+		    (off_t)fb->outcnt;
 		return 0;
 	}
 	else {
@@ -250,10 +250,10 @@ API_EXPORT(int)
 ap_bgetopt(BUFF *fb, int optname, void *optval)
 {
 	if (optname == BO_BYTECT) {
-		long int bs = fb->bytes_sent + fb->outcnt;
-		if (bs < 0L)
-			bs = 0L;
-		*(long int *)optval = bs;
+		off_t bs = fb->bytes_sent + fb->outcnt;
+		if (bs < 0LL)
+			bs = 0LL;
+		*(off_t *)optval = bs;
 		return 0;
 	}
 	else {

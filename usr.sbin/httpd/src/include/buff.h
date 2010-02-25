@@ -1,4 +1,4 @@
-/* $OpenBSD: buff.h,v 1.12 2005/03/28 23:26:51 niallo Exp $ */
+/* $OpenBSD: buff.h,v 1.13 2010/02/25 07:49:53 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -105,7 +105,7 @@ struct buff_struct {
 	int bufsiz;
 	void (*error) (BUFF *fb, int op, void *data);
 	void *error_data;
-	long int bytes_sent;	/* number of bytes actually written */
+	off_t bytes_sent;	/* number of bytes actually written */
 
 	ap_pool *pool;
 
