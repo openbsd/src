@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.82 2009/03/06 12:28:36 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.83 2010/02/25 13:45:54 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 6 2009 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1702,14 +1702,14 @@ Assignment; the variable on the left is set to the value on the right.
 .Xc
 Assignment operators.
 .Sm off
-.Aq Xo Ar var
+.Ao Ar var Ac Xo
 .Aq Ar op
 .No = Aq Ar expr
 .Xc
 .Sm on
 is the same as
 .Sm off
-.Aq Xo Ar var
+.Ao Ar var Ac Xo
 .No = Aq Ar var
 .Aq Ar op
 .Aq Ar expr ,
