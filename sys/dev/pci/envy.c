@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.33 2010/02/25 21:19:37 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.34 2010/02/25 21:25:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -201,7 +201,7 @@ struct {
 };
 
 /*
- * ESI julia cards don't have EEPROM, use this copy
+ * ESI Julia cards don't have EEPROM, use this copy
  */
 static unsigned char julia_eeprom[ENVY_EEPROM_MAXSZ] = {
 	/* gpio mask/dir/state is from linux */
@@ -301,7 +301,7 @@ struct envy_card envy_cards[] = {
 
 
 /*
- * m-audio delta specific code
+ * M-Audio Delta specific code
  */
 
 void
@@ -354,7 +354,7 @@ delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 }
 
 /*
- * m-audio revolution 5.1 specific code
+ * M-Audio Revolution 5.1 specific code
  */
 
 #define REVO51_GPIO_CSMASK	0x30
@@ -453,7 +453,7 @@ revo51_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 }
 
 /*
- * via tremor 5.1 specific code
+ * VIA Tremor 5.1 specific code
  */
 
 void
@@ -473,7 +473,7 @@ tremor51_init(struct envy_softc *sc)
 }
 
 /*
- * esi julia specific code
+ * ESI Julia specific code
  */
 
 void
@@ -1103,7 +1103,7 @@ envy_reset(struct envy_softc *sc)
 	delay(200);
 
 	/*
-	 * read eeprom using i2c device or from a static array
+	 * read EEPROM using i2c device or from a static array
 	 */
 	if (sc->card->eeprom == NULL) {
 		for (i = 0; i < ENVY_EEPROM_MAXSZ; i++) {
@@ -1120,7 +1120,7 @@ envy_reset(struct envy_softc *sc)
 		memcpy(sc->eeprom, sc->card->eeprom, ENVY_EEPROM_MAXSZ);
 
 	/*
-	 * write eeprom values to corresponding registers
+	 * write EEPROM values to corresponding registers
 	 */
 	if (sc->isht) {
 		envy_ccs_write(sc, ENVY_CCS_CONF,
