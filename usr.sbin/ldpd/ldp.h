@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.2 2009/12/09 12:19:29 michele Exp $ */
+/*	$OpenBSD: ldp.h,v 1.3 2010/02/25 17:40:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -91,10 +91,7 @@ struct ldp_hdr {
 	u_int16_t		length;
 	u_int32_t		lsr_id;
 	u_int16_t		lspace_id;
-	u_int8_t		pad;
 };
-
-#define	PDU_HDR_SIZE		4
 
 #define	LDP_HDR_SIZE		10
 #define	INFINITE_HOLDTIME	0xffff
@@ -108,7 +105,7 @@ struct ldp_msg {
 	/* Optional Parameters */
 };
 
-#define LDP_MSG_LEN		6
+#define LDP_MSG_LEN		8
 #define	TLV_HDR_LEN		4
 
 #define	UNKNOWN_FLAGS_MASK	0xc000

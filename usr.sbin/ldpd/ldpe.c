@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.4 2010/02/18 10:50:14 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.5 2010/02/25 17:40:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -204,7 +204,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	event_add(&leconf->disc_ev, NULL);
 
 	event_set(&leconf->sess_ev, leconf->ldp_session_socket,
-	    EV_READ|EV_PERSIST, session_recv_packet, leconf);
+	    EV_READ|EV_PERSIST, session_accept, leconf);
 	event_add(&leconf->sess_ev, NULL);
 
 	/* listen on ldpd control socket */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 2010/02/20 21:28:39 michele Exp $ */
+/*	$OpenBSD: init.c,v 1.4 2010/02/25 17:40:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -65,8 +65,7 @@ send_init(struct nbr *nbr)
 
 	gen_init_prms_tlv(buf, nbr, size);
 
-	bufferevent_write(nbr->bev, buf->buf, buf->wpos);
-	buf_free(buf);
+	evbuf_enqueue(&nbr->wbuf, buf);
 }
 
 int

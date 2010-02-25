@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.10 2010/02/21 20:41:35 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.11 2010/02/25 17:40:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -233,6 +233,10 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface, int self)
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("nbr_new");
 
+	if (!self)
+		if ((nbr->rbuf = calloc(1, sizeof(struct buf_read))) == NULL)
+			fatal("nbr_new");
+
 	nbr->state = NBR_STA_DOWN;
 	nbr->id.s_addr = nbr_id;
 	nbr->lspace = lspace;
@@ -281,6 +285,8 @@ nbr_del(struct nbr *nbr)
 {
 	ldpe_imsg_compose_lde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0, NULL, 0);
 
+	session_close(nbr);
+
 	if (evtimer_pending(&nbr->inactivity_timer, NULL))
 		evtimer_del(&nbr->inactivity_timer);
 	if (evtimer_pending(&nbr->keepalive_timer, NULL))
@@ -295,6 +301,7 @@ nbr_del(struct nbr *nbr)
 	LIST_REMOVE(nbr, entry);
 	LIST_REMOVE(nbr, hash);
 
+	free(nbr->rbuf);
 	free(nbr);
 }
 
@@ -565,34 +572,16 @@ nbr_establish_connection(struct nbr *nbr)
 }
 
 int
-nbr_close_connection(struct nbr *nbr)
-{
-	bufferevent_disable(nbr->bev, EV_READ|EV_WRITE);
-	bufferevent_free(nbr->bev);
-	close(nbr->fd);
-
-	return (0);
-}
-
-int
 nbr_act_session_establish(struct nbr *nbr, int active)
 {
-	evbuffercb	readfn = session_read;
-	everrorcb	errorfn = session_error;
-
 	if (active) {
 		if (nbr_establish_connection(nbr) < 0)
 			return (-1);
 	}
 
-	nbr->bev = bufferevent_new(nbr->fd, readfn, NULL, errorfn, nbr);
-	if (nbr->bev == NULL) {
-		log_warn("nbr_act_session_establish: bufferevent_new");
-		return (-1);
-	}
-
-	bufferevent_settimeout(nbr->bev, 0, 0);
-	bufferevent_enable(nbr->bev, EV_READ|EV_WRITE);
+	evbuf_init(&nbr->wbuf, nbr->fd, session_write, nbr);
+	event_set(&nbr->rev, nbr->fd, EV_READ | EV_PERSIST, session_read, nbr);
+	event_add(&nbr->rev, NULL);
 
 	if (active) {
 		send_init(nbr);

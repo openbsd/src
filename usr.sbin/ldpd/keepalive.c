@@ -1,4 +1,4 @@
-/*	$OpenBSD: keepalive.c,v 1.4 2010/02/20 21:28:39 michele Exp $ */
+/*	$OpenBSD: keepalive.c,v 1.5 2010/02/25 17:40:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -57,8 +57,7 @@ send_keepalive(struct nbr *nbr)
 
 	gen_msg_tlv(buf, MSG_TYPE_KEEPALIVE, size);
 
-	bufferevent_write(nbr->bev, buf->buf, buf->wpos);
-	buf_free(buf);
+	evbuf_enqueue(&nbr->wbuf, buf);
 }
 
 int

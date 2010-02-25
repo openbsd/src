@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.3 2009/11/01 11:09:58 michele Exp $ */
+/*	$OpenBSD: packet.c,v 1.4 2010/02/25 17:40:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -43,6 +43,7 @@ int		 ldp_hdr_sanity_check(struct ldp_hdr *, u_int16_t,
 		    const struct iface *);
 struct iface	*find_iface(struct ldpd_conf *, unsigned int, struct in_addr);
 struct iface	*session_find_iface(struct ldpd_conf *, struct in_addr);
+ssize_t		 session_get_pdu(struct buf_read *, char **);
 
 static int	 msgcnt = 0;
 
@@ -175,19 +176,18 @@ disc_recv_packet(int fd, short event, void *bula)
 		return;
 	}
 
-	if (ntohs(ldp_hdr->length) > len ||
-	    len <= sizeof(struct ldp_hdr)) {
+	if ((l = ldp_hdr_sanity_check(ldp_hdr, len, iface)) == -1)
+		return;
+
+	if (l > len) {
 		log_debug("disc_recv_packet: invalid LDP packet length %d",
 		    ntohs(ldp_hdr->length));
 		return;
 	}
 
-	if ((l = ldp_hdr_sanity_check(ldp_hdr, len, iface)) == -1)
-		return;
-
 	ldp_msg = (struct ldp_msg *)(buf + LDP_HDR_SIZE);
 
-	if (len < LDP_MSG_LEN) {
+	if (len < LDP_HDR_SIZE + LDP_MSG_LEN) {
 		log_debug("disc_recv_packet: invalid LDP packet length %d",
 		    ntohs(ldp_hdr->length));
 		return;
@@ -264,7 +264,7 @@ find_iface(struct ldpd_conf *xconf, unsigned int ifindex, struct in_addr src)
 }
 
 void
-session_recv_packet(int fd, short event, void *bula)
+session_accept(int fd, short event, void *bula)
 {
 	struct sockaddr_in	 src;
 	struct ldpd_conf	*xconf = bula;
@@ -308,102 +308,143 @@ session_recv_packet(int fd, short event, void *bula)
 }
 
 void
-session_read(struct bufferevent *bev, void *arg)
+session_read(int fd, short event, void *arg)
 {
-	struct nbr	*nbr = (struct nbr *)arg;
+	struct nbr	*nbr = arg;
 	struct iface	*iface = nbr->iface;
 	struct ldp_hdr	*ldp_hdr;
 	struct ldp_msg	*ldp_msg;
-	u_int16_t	 len = EVBUFFER_LENGTH(EVBUFFER_INPUT(bev));
+	char		*buf, *pdu;
+	ssize_t		 n, len;
+	int		 l, msg_size;
 	u_int16_t	 pdu_len;
-	char		 buffer[LDP_MAX_LEN];
-	char		*buf = buffer;
-	int		 l, msg_size = 0;
 
-	bufferevent_read(bev, buf, len);
-
-another_packet:
-	ldp_hdr = (struct ldp_hdr *)buf;
-
-	if (ntohs(ldp_hdr->version) != LDP_VERSION) {
-		session_shutdown(nbr, S_BAD_PROTO_VER, 0, 0);
+	if (event != EV_READ) {
+		log_debug("session_read: spurious event");
 		return;
 	}
 
-	pdu_len = ntohs(ldp_hdr->length);
-
-	if (pdu_len < LDP_HDR_SIZE || pdu_len > LDP_MAX_LEN) {
-		session_shutdown(nbr, S_BAD_MSG_LEN, 0, 0);
+	if ((n = read(fd, nbr->rbuf->buf + nbr->rbuf->wpos,
+	    sizeof(nbr->rbuf->buf) - nbr->rbuf->wpos)) == -1) {
+		if (errno != EINTR && errno != EAGAIN) {
+			/* XXX find better error */
+			session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+			return;
+		}
+		/* retry read */
 		return;
 	}
-
-	if ((l = ldp_hdr_sanity_check(ldp_hdr, len, iface)) == -1)
+	if (n == 0) {
+		/* connection closed */
+		event_del(&nbr->rev);
+		session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 		return;
+	}
+	nbr->rbuf->wpos += n;
 
-	buf += LDP_HDR_SIZE;
-	len -= LDP_HDR_SIZE;
-
-	pdu_len -= LDP_HDR_SIZE - PDU_HDR_SIZE;
-
-	while (pdu_len > LDP_MSG_LEN) {
-		ldp_msg = (struct ldp_msg *)buf;
-
-		/* switch LDP packet type */
-		switch (ntohs(ldp_msg->type)) {
-		case MSG_TYPE_NOTIFICATION:
-			msg_size = recv_notification(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_INIT:
-			msg_size = recv_init(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_KEEPALIVE:
-			msg_size = recv_keepalive(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_ADDR:
-			msg_size = recv_address(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_ADDRWITHDRAW:
-			msg_size = recv_address_withdraw(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_LABELMAPPING:
-			msg_size = recv_labelmapping(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_LABELREQUEST:
-			msg_size = recv_labelrequest(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_LABELWITHDRAW:
-			msg_size = recv_labelwithdraw(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_LABELRELEASE:
-			msg_size = recv_labelrelease(nbr, buf, pdu_len);
-			break;
-		case MSG_TYPE_LABELABORTREQ:
-		case MSG_TYPE_HELLO:
-		default:
-			log_debug("session_read: unknown LDP packet type "
-			    "interface %s", iface->name);
+	while ((len = session_get_pdu(nbr->rbuf, &buf)) > 0) {
+		ldp_hdr = (struct ldp_hdr *)pdu = buf;
+		if (ntohs(ldp_hdr->version) != LDP_VERSION) {
+			session_shutdown(nbr, S_BAD_PROTO_VER, 0, 0);
+			free(buf);
 			return;
 		}
 
-		if (msg_size < 0)
+		pdu_len = ntohs(ldp_hdr->length);
+		if (pdu_len < LDP_HDR_SIZE || pdu_len > LDP_MAX_LEN) {
+			session_shutdown(nbr, S_BAD_MSG_LEN, 0, 0);
+			free(buf);
 			return;
+		}
 
-		/* Analyse the next message */
-		buf += msg_size + TLV_HDR_LEN;
-		len -= msg_size + TLV_HDR_LEN;
-		pdu_len -= msg_size + TLV_HDR_LEN;
+		if ((l = ldp_hdr_sanity_check(ldp_hdr, len, iface)) == -1) {
+			session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
+			free(buf);
+			return;
+		}
+
+		pdu += LDP_HDR_SIZE;
+		len -= LDP_HDR_SIZE;
+
+		while (len >= LDP_MSG_LEN) {
+			ldp_msg = (struct ldp_msg *)pdu;
+
+			pdu_len = ntohs(ldp_msg->length) + TLV_HDR_LEN;
+			if (pdu_len > len ||
+			    pdu_len < LDP_MSG_LEN - TLV_HDR_LEN) {
+				session_shutdown(nbr, S_BAD_TLV_LEN, 0, 0);
+				free(buf);
+				return;
+			}
+
+			/* switch LDP packet type */
+			switch (ntohs(ldp_msg->type)) {
+			case MSG_TYPE_NOTIFICATION:
+				msg_size = recv_notification(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_INIT:
+				msg_size = recv_init(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_KEEPALIVE:
+				msg_size = recv_keepalive(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_ADDR:
+				msg_size = recv_address(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_ADDRWITHDRAW:
+				msg_size = recv_address_withdraw(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_LABELMAPPING:
+				msg_size = recv_labelmapping(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_LABELREQUEST:
+				msg_size = recv_labelrequest(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_LABELWITHDRAW:
+				msg_size = recv_labelwithdraw(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_LABELRELEASE:
+				msg_size = recv_labelrelease(nbr, pdu, pdu_len);
+				break;
+			case MSG_TYPE_LABELABORTREQ:
+			case MSG_TYPE_HELLO:
+			default:
+				log_debug("session_read: unknown LDP packet type "
+				    "interface %s", iface->name);
+				free(buf);
+				return;
+			}
+
+			if (msg_size == -1) {
+				/* parser failed, giving up */
+				free(buf);
+				return;
+			}
+
+			/* Analyse the next message */
+			pdu += msg_size + TLV_HDR_LEN;
+			len -= msg_size + TLV_HDR_LEN;
+		}
+		free(buf);
+		if (len != 0) {
+			session_shutdown(nbr, S_BAD_PDU_LEN, 0, 0);
+			return;
+		}
 	}
-
-	if (len > LDP_HDR_SIZE)
-		goto another_packet;
 }
 
 void
-session_error(struct bufferevent *bev, short what, void *arg)
+session_write(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+	if (event & EV_WRITE) {
+		if (msgbuf_write(&nbr->wbuf.wbuf) == -1)
+			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+	} else
+		log_debug("session_write: spurious event");
+
+	evbuf_event_add(&nbr->wbuf);
 }
 
 void
@@ -422,12 +463,13 @@ session_close(struct nbr *nbr)
 	log_debug("session_close: closing session with nbr ID %s",
 	    inet_ntoa(nbr->id));
 
+	evbuf_clear(&nbr->wbuf);
+
 	if (evtimer_pending(&nbr->keepalive_timer, NULL))
 		evtimer_del(&nbr->keepalive_timer);
 	if (evtimer_pending(&nbr->keepalive_timeout, NULL))
 		evtimer_del(&nbr->keepalive_timeout);
 
-	bufferevent_free(nbr->bev);
 	close(nbr->fd);
 }
 
@@ -459,4 +501,33 @@ session_find_iface(struct ldpd_conf *xconf, struct in_addr src)
 	}
 
 	return (NULL);
+}
+
+ssize_t
+session_get_pdu(struct buf_read *r, char **b)
+{
+	struct ldp_hdr	l;
+	size_t		av, dlen, left;
+
+	av = r->wpos;
+	if (av < sizeof(l))
+		return (0);
+
+	memcpy(&l, r->buf, sizeof(l));
+	dlen = ntohs(l.length) + TLV_HDR_LEN;
+	if (dlen > av)
+		return (0);
+
+	if ((*b = malloc(dlen)) == NULL)
+		return (-1);
+
+	memcpy(*b, r->buf, dlen);
+	if (dlen < av) {
+		left = av - dlen;
+		memmove(r->buf, r->buf + dlen, left);
+		r->wpos = left;
+	} else
+		r->wpos = 0;
+
+	return (dlen);
 }
