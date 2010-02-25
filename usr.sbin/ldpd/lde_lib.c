@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.10 2010/02/19 12:49:21 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.11 2010/02/25 21:02:46 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -118,7 +118,7 @@ rt_dump(pid_t pid)
 		rtctl.local_label = r->local_label;
 		rtctl.remote_label = r->remote_label;
 
-		if (!r->present)
+		if (!r->present || r->remote_label == NO_LABEL)
 			rtctl.in_use = 0;
 		else
 			rtctl.in_use = 1;
@@ -189,6 +189,7 @@ lde_kernel_insert(struct kroute *kr)
 
 		rn->prefix.s_addr = kr->prefix.s_addr;
 		rn->prefixlen = kr->prefixlen;
+		rn->remote_label = NO_LABEL;
 		TAILQ_INIT(&rn->labels_list);
 
 		rt_insert(rn);
@@ -200,7 +201,7 @@ lde_kernel_insert(struct kroute *kr)
 
 		/* The nexthop has changed, change also the label associated
 		   with prefix */
-		rn->remote_label = 0;
+		rn->remote_label = NO_LABEL;
 		rn->nexthop.s_addr = kr->nexthop.s_addr;
 
 		if ((ldeconf->mode & MODE_RET_LIBERAL) == 0) {
@@ -308,7 +309,7 @@ lde_kernel_remove(struct kroute *kr)
 		}
 	}
 
-	rn->remote_label = 0;
+	rn->remote_label = NO_LABEL;
 	rn->nexthop.s_addr = INADDR_ANY;
 	rn->present = 0;
 }
@@ -338,6 +339,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		rn->prefix.s_addr = map->prefix;
 		rn->prefixlen = map->prefixlen;
 		rn->local_label = lde_assign_label();
+		rn->remote_label = NO_LABEL;
 		rn->present = 0;
 
 		TAILQ_INIT(&rn->labels_list);
