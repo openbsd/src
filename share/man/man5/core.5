@@ -1,4 +1,4 @@
-.\"	$OpenBSD: core.5,v 1.12 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: core.5,v 1.13 2010/02/25 17:11:25 jmc Exp $
 .\"	$NetBSD: core.5,v 1.4 1994/11/30 19:31:11 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)core.5	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt CORE 5
 .Os
 .Sh NAME
@@ -158,9 +158,18 @@ and flags from the following list:
 .Xr gdb 1 ,
 .Xr pmdb 1 ,
 .Xr setrlimit 2 ,
-.Xr sigaction 2
+.Xr sigaction 2 ,
+.Xr sysctl 3
 .Sh HISTORY
 A
 .Nm
 file format appeared in
 .At v3 .
+.Sh CAVEATS
+Programs with their set-user-ID bit set will not dump core,
+to prevent sensitive information from inadvertently ending up on disk.
+See
+.Li kern.nosuidcoredump
+in
+.Xr sysctl 3
+for more information.
