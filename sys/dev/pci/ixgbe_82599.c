@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82599.c,v 1.1 2010/02/23 18:43:15 jsg Exp $	*/
+/*	$OpenBSD: ixgbe_82599.c,v 1.2 2010/02/25 10:56:07 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -410,6 +410,7 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 		media_type = ixgbe_media_type_backplane;
 		break;
 	case IXGBE_DEV_ID_82599_SFP:
+	case IXGBE_DEV_ID_82599_SFP_EM:
 		media_type = ixgbe_media_type_fiber;
 		break;
 	case IXGBE_DEV_ID_82599_CX4:

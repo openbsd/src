@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.36 2010/02/23 18:43:15 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.37 2010/02/25 10:56:07 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -67,7 +67,8 @@ const struct pci_matchid ixgbe_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_XAUI },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_COMBO_BACKPLANE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_CX4 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_EM }
 };
 
 /*********************************************************************
@@ -1276,6 +1277,7 @@ ixgbe_identify_hardware(struct ix_softc *sc)
 		sc->optics = IFM_AUTO;
 		break;
 	case PCI_PRODUCT_INTEL_82599_SFP:
+	case PCI_PRODUCT_INTEL_82599_SFP_EM:
 		sc->hw.mac.type = ixgbe_mac_82599EB;
 		sc->optics = IFM_10G_SR;
 		break;
