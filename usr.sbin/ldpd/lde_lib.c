@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.12 2010/02/25 21:07:31 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.13 2010/02/25 21:47:08 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -275,7 +275,7 @@ lde_kernel_insert(struct kroute *kr)
 			    ldeconf->mode & MODE_DIST_ORDERED) {
 			       /* XXX */
 				if (rn->nexthop.s_addr == INADDR_ANY ||
-				    rn->remote_label != 0)
+				    rn->remote_label != NO_LABEL)
 					lde_send_labelmapping(ln->peerid,
 					    &localmap);
 			}
