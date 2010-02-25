@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mksuncd.1,v 1.2 2008/08/23 07:08:06 jmc Exp $
+.\"	$OpenBSD: mksuncd.1,v 1.3 2010/02/25 17:15:42 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 23 2008 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt MKSUNCD 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm mksuncd
 .Ar partition-letter
-.Ar imagefile
+.Ar isofile
 .Ar ufsfile
 .Sh DESCRIPTION
 The
@@ -41,14 +41,14 @@ The
 utility adds the file
 .Ar ufsfile
 to the end of
-.Ar imagefile .
+.Ar isofile .
 .Ar ufsfile
 is assumed to be a bootable filesystem image and
-.Ar imagefile
+.Ar isofile
 is assumed to be something like an ISO 9660 filesystem.
 A Sun-style disklabel is expected to already be present
 at the beginning of
-.Ar imagefile ,
+.Ar isofile ,
 and
 .Nm
 will update that label so that the partition (a-h) given by
@@ -56,10 +56,10 @@ will update that label so that the partition (a-h) given by
 points to
 .Ar ufsfile
 within
-.Ar imagefile .
+.Ar isofile .
 .Pp
 Based on the label in
-.Ar imagefile ,
+.Ar isofile ,
 that file is padded so that added files are always on cylinder boundaries.
 This is a requirement of the PROM.
 .Sh BUGS
