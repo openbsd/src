@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.45 2009/12/16 07:36:56 guenther Exp $
+.\"	$OpenBSD: sigaction.2,v 1.46 2010/02/25 17:10:34 schwarze Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: December 16 2009 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -304,9 +304,7 @@ with names as in the include file
 .It Dv SIGQUIT No "	create core image" "	quit program"
 .It Dv SIGILL No "	create core image" "	illegal instruction"
 .It Dv SIGTRAP No "	create core image" "	trace trap"
-.It Dv SIGABRT No "	create core image" Xr 	abort 3
-call (formerly
-.Dv SIGIOT )
+.It Dv SIGABRT No "	create core image" "	abort(3) call (formerly SIGIOT)"
 .It Dv SIGEMT No "	create core image" "	emulate instruction executed"
 .It Dv SIGFPE No "	create core image" "	floating-point exception"
 .It Dv SIGKILL No "	terminate process" "	kill program (cannot be caught or ignored)"

@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.26 2007/05/31 19:19:27 jmc Exp $
+.\"	$OpenBSD: sigvec.3,v 1.27 2010/02/25 17:10:34 schwarze Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt SIGVEC 3
 .Os
 .Sh NAME
@@ -229,9 +229,7 @@ with names as in the include file
 .It Dv SIGQUIT No "	create core image" "	quit program"
 .It Dv SIGILL No "	create core image" "	illegal instruction"
 .It Dv SIGTRAP No "	create core image" "	trace trap"
-.It Dv SIGABRT No "	create core image" Xr 	abort 3
-call (formerly
-.Dv SIGIOT )
+.It Dv SIGABRT No "	create core image" "	abort(3) call (formerly SIGIOT)"
 .It Dv SIGEMT No "	create core image" "	emulate instruction executed"
 .It Dv SIGFPE No "	create core image" "	floating-point exception"
 .It Dv SIGKILL No "	terminate process" "	kill program (cannot be caught or ignored)"
