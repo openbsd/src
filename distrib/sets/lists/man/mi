@@ -1827,7 +1827,9 @@
 ./usr/share/man/cat4/loongson/mem.0
 ./usr/share/man/cat4/loongson/mfokclock.0
 ./usr/share/man/cat4/loongson/smfb.0
+./usr/share/man/cat4/loongson/stsec.0
 ./usr/share/man/cat4/loongson/voyager.0
+./usr/share/man/cat4/loongson/ykbec.0
 ./usr/share/man/cat4/lpt.0
 ./usr/share/man/cat4/luna88k
 ./usr/share/man/cat4/luna88k/autoconf.0
