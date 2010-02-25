@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii.c,v 1.8 2010/02/20 19:37:14 marco Exp $ */
+/* $OpenBSD: mpii.c,v 1.9 2010/02/25 02:05:41 marco Exp $ */
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1294,6 +1294,8 @@ struct mpii_cfg_raid_vol_pg0 {
 #define MPII_CFG_RAID_VOL_0_TYPE_UNKNOWN		(0xff)
 
 	u_int32_t		volume_status;
+#define MPII_CFG_RAID_VOL_0_STATUS_SCRUB		(1<<20)
+#define MPII_CFG_RAID_VOL_0_STATUS_RESYNC		(1<<16)
 
 	u_int16_t		volume_settings;
 	u_int8_t		hot_spare_pool;
@@ -1389,10 +1391,10 @@ struct mpii_cfg_raid_physdisk_pg0 {
 #define MPII_CFG_RAID_PHYDISK_0_STATE_OPTIMAL		(0x07)
 	u_int8_t		offline_reason;
 #define MPII_CFG_RAID_PHYDISK_0_OFFLINE_MISSING		(0x01)
-#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILED		(0x01)
-#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_INITIALIZING	(0x01)
-#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_REQUESTED	(0x01)
-#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILEDREQ	(0x01)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILED		(0x03)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_INITIALIZING	(0x04)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_REQUESTED	(0x05)
+#define MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILEDREQ	(0x06)
 #define MPII_CFG_RAID_PHYDISK_0_OFFLINE_OTHER		(0xff)
 
 	u_int8_t		incompat_reason;
@@ -1965,8 +1967,7 @@ static const struct pci_matchid mpii_devices[] = {
 int
 mpii_pci_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid(aux, mpii_devices,
-	    sizeof(mpii_devices) / sizeof(mpii_devices[0])));
+	return (pci_matchbyid(aux, mpii_devices, nitems(mpii_devices)));
 }
 
 void
@@ -2177,7 +2178,6 @@ int		mpii_req_cfg_page(struct mpii_softc *, u_int32_t, int,
 		    void *, int, void *, size_t);
 
 int		mpii_get_ioc_pg8(struct mpii_softc *);
-void		mpii_get_raid_config_pg0(struct mpii_softc *);
 int		mpii_get_dpm(struct mpii_softc *);
 int		mpii_get_dpm_pg0(struct mpii_softc *, struct mpii_cfg_dpm_pg0 *);
 int 		mpii_get_bios_pg2(struct mpii_softc *);
@@ -3837,91 +3837,6 @@ out:
 	return (rv);
 }
 
-void
-mpii_get_raid_config_pg0(struct mpii_softc *sc)
-{
-	struct mpii_cfg_raid_config_pg0	*config_page;
-	struct mpii_raid_config_element	*element_list, *element;
-	struct mpii_ecfg_hdr	hdr;
-	size_t			pagelen;
-	struct scsi_link	*link;
-	int			i;
-
-	DNPRINTF(MPII_D_RAID, "%s: mpii_get_raid_config_pg0\n", DEVNAME(sc));
-
-	if (mpii_cfg_header(sc, MPII_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0, 0, &hdr) != 0) {
-		DNPRINTF(MPII_D_RAID, "%s: mpii_get_raid_config_pg0 unable to "
-		    "fetch header for IOC page 2\n", DEVNAME(sc));
-		return;
-	}
-
-	pagelen = hdr.ext_page_length * 4; /* dwords to bytes */
-	config_page = malloc(pagelen, M_TEMP, M_WAITOK|M_CANFAIL);
-	if (config_page == NULL) {
-		DNPRINTF(MPII_D_RAID, "%s: mpii_get_raid_config_pg0 unable to "
-		    "allocate space for raid config page 0\n", DEVNAME(sc));
-		return;
-	}
-	element_list = (struct mpii_raid_config_element *)(config_page + 1);
-
-	if (mpii_cfg_page(sc, 0, &hdr, 1, config_page, pagelen) != 0) {
-		DNPRINTF(MPII_D_RAID, "%s: mpii_get_raid_config_pg0 unable to "
-		    "fetch raid config page 0\n", DEVNAME(sc));
-		goto out;
-	}
-
-	DNPRINTF(MPII_D_RAID, "%s:  numhotspares: 0x%2x numphysdisks: 0x%02x "
-	    "numvolumes: 0x%02x confignum: 0x%02x\n", DEVNAME(sc), 
-	    config_page->num_hot_spares, config_page->num_phys_disks, 
-	    config_page->num_volumes, config_page->config_num);
-	DNPRINTF(MPII_D_RAID, "%s:  flags: 0x%08x\n", DEVNAME(sc),
-	    config_page->flags);
-	DNPRINTF(MPII_D_RAID, "%s:  configguid: 0x%08x\n", DEVNAME(sc),
-	    config_page->config_guid[0]);
-	DNPRINTF(MPII_D_RAID, "%s:              0x%08x\n", DEVNAME(sc),
-	    config_page->config_guid[1]);
-	DNPRINTF(MPII_D_RAID, "%s:              0x%08x\n", DEVNAME(sc),
-	    config_page->config_guid[2]);
-	DNPRINTF(MPII_D_RAID, "%s:              0x%08x\n", DEVNAME(sc),
-	    config_page->config_guid[3]);
-	DNPRINTF(MPII_D_RAID, "%s  numelements: 0x%02x\n", DEVNAME(sc),
-	    config_page->num_elements);
-
-	/* don't walk list if there are no RAID capability */
-	/* XXX anything like this for MPI2?
-	if (capabilities == 0xdeadbeef) {
-		printf("%s: deadbeef in raid configuration\n", DEVNAME(sc));
-		goto out;
-	}
-	*/
-
-	if (config_page->num_volumes == 0)
-		goto out;
-
-	sc->sc_flags |= MPII_F_RAID;
-
-	for (i = 0; i < config_page->num_volumes; i++) {
-		element = &element_list[i];
-
-		DNPRINTF(MPII_D_RAID, "%s:   elementflags: 0x%04x voldevhandle: "
-		    "0x%04x\n", DEVNAME(sc), letoh16(element->element_flags),
-		    letoh16(element->vol_dev_handle));
-		DNPRINTF(MPII_D_RAID, "%s:   hotsparepool: 0x%02x physdisknum: "
-		    "0x%02x physdiskdevhandle: 0x%04x\n", DEVNAME(sc),
-		    element->hot_spare_pool, element->phys_disk_num,
-		    letoh16(element->phys_disk_dev_handle));
-
-		link = sc->sc_scsibus->sc_link[element->vol_dev_handle][0];
-		if (link == NULL)
-			continue;
-
-		link->flags |= SDEV_VIRTUAL;
-	}
-
-out:
-	free(config_page, M_TEMP);
-}
-
 int
 mpii_get_dpm(struct mpii_softc *sc)
 {
@@ -5095,8 +5010,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	if (sie->scsi_state & MPII_SCSIIO_ERR_STATE_AUTOSENSE_VALID)
 		bcopy(&mcb->mcb_sense, &xs->sense, sizeof(xs->sense));
 
-
-	DNPRINTF(MPII_D_CMD, "%s:  xs err: 0x%d status: %#x\n", DEVNAME(sc),
+	DNPRINTF(MPII_D_CMD, "%s:  xs err: %d status: %#x\n", DEVNAME(sc),
 	    xs->error, xs->status);
 
 	mpii_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
@@ -5210,6 +5124,18 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 
 	switch (vpg->volume_state) {
 	case MPII_CFG_RAID_VOL_0_STATE_ONLINE:
+		switch (letoh32(vpg->volume_status)) {
+		case MPII_CFG_RAID_VOL_0_STATUS_SCRUB:
+			bv->bv_status = BIOC_SVSCRUB;
+			break;
+		case MPII_CFG_RAID_VOL_0_STATUS_RESYNC:
+			bv->bv_status = BIOC_SVREBUILD;
+			break;
+		default:
+			bv->bv_status = BIOC_SVONLINE;
+			break;
+		}
+		break;
 	case MPII_CFG_RAID_VOL_0_STATE_OPTIMAL:
 		bv->bv_status = BIOC_SVONLINE;
 		break;
@@ -5342,7 +5268,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 		return (EINVAL);
 	}
 
-	pagelen = ehdr.ext_page_length * 4;
+	pagelen = letoh16(ehdr.ext_page_length) * 4;
 	cpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (cpg == NULL) {
 		printf("%s: unable to allocate space for raid config page 0\n",
@@ -5360,7 +5286,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 
 	el = (struct mpii_raid_config_element *)(cpg + 1);
 	for (i = 0; i < cpg->num_elements; i++, el++) {
-		if (ISSET(el->element_flags,
+		if (ISSET(letoh16(el->element_flags),
 		    MPII_RAID_CONFIG_ELEMENT_FLAG_HSP_PHYS_DISK) &&
 		    el->hot_spare_pool == hsmap) {
 			/*
@@ -5391,6 +5317,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 {
 	struct mpii_cfg_raid_physdisk_pg0	ppg;
 	struct mpii_cfg_hdr			hdr;
+	int					len;
 
 	DNPRINTF(MPII_D_IOCTL, "%s: mpii_bio_disk %d\n",
 	    DEVNAME(sc), bd->bd_diskid);
@@ -5410,8 +5337,8 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 		return (EINVAL);
 	}
 
-	if (mpii_bio_getphy(sc, ppg.dev_handle, &bd->bd_target))
-		bd->bd_target = ppg.phys_disk_num;
+	if (mpii_bio_getphy(sc, letoh16(ppg.dev_handle), &bd->bd_target))
+		bd->bd_target = letoh16(ppg.phys_disk_num);
 
 	switch (ppg.phys_disk_state) {
 	case MPII_CFG_RAID_PHYDISK_0_STATE_ONLINE:
@@ -5419,7 +5346,13 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 		bd->bd_status = BIOC_SDONLINE;
 		break;
 	case MPII_CFG_RAID_PHYDISK_0_STATE_OFFLINE:
-		bd->bd_status = BIOC_SDOFFLINE;
+		if (ppg.offline_reason ==
+		    MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILED ||
+		    ppg.offline_reason ==
+		    MPII_CFG_RAID_PHYDISK_0_OFFLINE_FAILEDREQ)
+			bd->bd_status = BIOC_SDFAILED;
+		else
+			bd->bd_status = BIOC_SDOFFLINE;
 		break;
 	case MPII_CFG_RAID_PHYDISK_0_STATE_DEGRADED:
 		bd->bd_status = BIOC_SDFAILED;
@@ -5440,7 +5373,11 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 
 	bd->bd_size = letoh64(ppg.dev_max_lba) * letoh16(ppg.block_size);
 
-	scsi_strvis(bd->bd_vendor, ppg.product_id, sizeof(ppg.product_id));
+	scsi_strvis(bd->bd_vendor, ppg.vendor_id, sizeof(ppg.vendor_id));
+	len = strlen(bd->bd_vendor);
+	bd->bd_vendor[len] = ' ';
+	scsi_strvis(&bd->bd_vendor[len + 1], ppg.product_id,
+	    sizeof(ppg.product_id));
 	scsi_strvis(bd->bd_serial, ppg.serial, sizeof(ppg.serial));
 
 	return (0);
@@ -5457,7 +5394,7 @@ mpii_bio_getphy(struct mpii_softc *sc, u_int16_t dh, u_int16_t *port)
 
 	bzero(&ehdr, sizeof(ehdr));
 	ehdr.page_type = MPII_CONFIG_REQ_PAGE_TYPE_EXTENDED;
-	ehdr.ext_page_length = sizeof(spg) / 4;
+	ehdr.ext_page_length = htole16(sizeof(spg) / 4);
 	ehdr.ext_page_type = MPII_CONFIG_REQ_PAGE_TYPE_SAS_DEVICE;
 
 	if (mpii_req_cfg_page(sc, MPII_CFG_SAS_DEV_ADDR_HANDLE | dh,
@@ -5480,9 +5417,6 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 	struct mpii_cfg_hdr		hdr;
 	size_t				pagelen;
 	u_int16_t			volh;
-
-	DNPRINTF(MPII_D_IOCTL, "%s: mpii_ioctl_vol %d\n",
-	    DEVNAME(sc), bv->bv_volid);
 
 	if (bv->bv_volid > sc->sc_vd_count)
 		return (ENODEV);
@@ -5514,6 +5448,18 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 
 	switch (vpg->volume_state) {
 	case MPII_CFG_RAID_VOL_0_STATE_ONLINE:
+		switch (letoh32(vpg->volume_status)) {
+		case MPII_CFG_RAID_VOL_0_STATUS_SCRUB:
+			bv->bv_status = BIOC_SVSCRUB;
+			break;
+		case MPII_CFG_RAID_VOL_0_STATUS_RESYNC:
+			bv->bv_status = BIOC_SVREBUILD;
+			break;
+		default:
+			bv->bv_status = BIOC_SVONLINE;
+			break;
+		}
+		break;
 	case MPII_CFG_RAID_VOL_0_STATE_OPTIMAL:
 		bv->bv_status = BIOC_SVONLINE;
 		break;
