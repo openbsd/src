@@ -367,7 +367,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
 		    AP_HOOK_DECLINE(DECLINED),
 		    &rc, r, f, desthost, destportstr, destportstr);
         if (rc == DECLINED) {
-	    if (destportstr != NULL)
+	    if (destportstr != NULL && destport != DEFAULT_HTTP_PORT)
 		ap_bvputs(f, "Host: ", desthost, ":", destportstr, CRLF, NULL);
 	    else
 		ap_bvputs(f, "Host: ", desthost, CRLF, NULL);
