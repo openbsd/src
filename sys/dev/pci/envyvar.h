@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.13 2010/02/20 16:45:28 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.14 2010/02/25 21:19:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -62,10 +62,10 @@ struct envy_softc {
 	pci_intr_handle_t      *pci_ih;
 	bus_dma_tag_t		pci_dmat;
 	bus_space_tag_t		ccs_iot;
-	bus_space_handle_t      ccs_ioh;
+	bus_space_handle_t	ccs_ioh;
 	bus_size_t		ccs_iosz;
 	bus_space_tag_t		mt_iot;
-	bus_space_handle_t      mt_ioh;
+	bus_space_handle_t	mt_ioh;
 	bus_size_t		mt_iosz;
 	struct envy_card       *card;
 	unsigned char 		shadow[4][16];

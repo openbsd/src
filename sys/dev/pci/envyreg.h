@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.12 2010/02/20 16:45:28 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.13 2010/02/25 21:19:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,7 +66,7 @@
 #define ENVY_I2C_ADDR		0x11
 #define ENVY_I2C_DATA		0x12
 #define ENVY_I2C_CTL		0x13
-#define	  ENVY_I2C_CTL_BUSY	0x1
+#define   ENVY_I2C_CTL_BUSY	0x1
 
 /*
  * CCI registers to access GPIO pins
@@ -164,6 +164,7 @@
 #define   ENVY_MT_HTSRC_LINE	0x02
 #define   ENVY_MT_HTSRC_SPD	0x04
 #define   ENVY_MT_HTSRC_MASK	0x07
+
 /*
  * AK4524 control registers
  */
@@ -176,7 +177,7 @@
 #define   AK4524_RST_AD		0x02
 #define AK4524_FMT		0x02
 #define   AK4524_FMT_NORM	0
-#define   AK4524_FMT_DBL       	0x01
+#define   AK4524_FMT_DBL	0x01
 #define   AK4524_FMT_QUA	0x02
 #define   AK4524_FMT_QAUDFILT	0x04
 #define   AK4524_FMT_256	0
@@ -196,7 +197,7 @@
 #define   AK4524_DEEM_32K	0x03
 #define   AK4524_MUTE		0x80
 #define AK4524_ADC_GAIN0	0x04
-#define	AK4524_ADC_GAIN1	0x05
+#define AK4524_ADC_GAIN1	0x05
 #define AK4524_DAC_GAIN0	0x06
 #define AK4524_DAC_GAIN1	0x07
 
