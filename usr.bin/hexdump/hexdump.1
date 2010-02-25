@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.19 2007/05/31 19:20:11 jmc Exp $
+.\"	$OpenBSD: hexdump.1,v 1.20 2010/02/25 16:58:56 naddy Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -270,7 +270,7 @@ strings.
 .It \&00C\ ff\t00D\ cr\t00E\ so\t00F\ si\t010\ dle\t011\ dc1
 .It \&012\ dc2\t013\ dc3\t014\ dc4\t015\ nak\t016\ syn\t017\ etb
 .It \&018\ can\t019\ em\t01A\ sub\t01B\ esc\t01C\ fs\t01D\ gs
-.It \&01E\ rs\t01F\ us\t0FF\ del
+.It \&01E\ rs\t01F\ us\t07F\ del
 .El
 .El
 .Pp
