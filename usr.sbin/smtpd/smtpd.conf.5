@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.25 2009/10/25 22:58:51 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.26 2010/02/25 14:53:37 stevesk Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 25 2009 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -148,7 +148,7 @@ may be one of the following:
 .Bl -tag -width "fileXXX" -compact
 .It db
 Mappings are stored in a file created using
-.Nm .
+.Xr makemap 8 .
 This is the default type if none is specified.
 .It dns
 Not implemented yet.
