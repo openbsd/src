@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.8 2010/02/24 14:44:41 schwarze Exp $
+.\" $OpenBSD: ber.3,v 1.9 2010/02/25 09:59:55 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 24 2010 $
+.Dd $Mdocdate: February 25 2010 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@
 .Nm ber_calc_len ,
 .Nm ber_set_application ,
 .Nm ber_free
-.Nd Parse ASN.1 with Basic Encoding Rules.
+.Nd parse ASN.1 with Basic Encoding Rules
 .Sh SYNOPSIS
 .Fd #include <ber.h>
 .Ft "struct ber_element *"
@@ -205,7 +205,7 @@ Upon successful completion
 and
 .Fn ber_scanf_elements
 return 0, while
-.Fn ber_write_elements  
+.Fn ber_write_elements
 returns the number of bytes written.
 Otherwise, \-1 is returned and the global variable errno is
 set to indicate the error.
@@ -217,9 +217,10 @@ The
 manpage first appeared in
 .Ox 4.3 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm ber
-library was written by 
+library was written by
 .An Claudio Jeker Aq claudio@openbsd.org ,
 .An Marc Balmer Aq marc@openbsd.org
 and
