@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.238 2010/02/12 15:20:13 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.239 2010/02/26 19:27:09 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 12 2010 $
+.Dd $Mdocdate: February 26 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -701,7 +701,8 @@ to simplify bulk-package builds.
 .It Ev BROKEN
 Define only for broken ports, set to reason the port is broken.
 See also
-.Ev NO_IGNORE .
+.Ev NO_IGNORE ,
+.Ev TRY_BROKEN .
 .It Ev BSD_INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
 Macros passed to make and configure invocations.
 Set based on corresponding INSTALL_* variables.
@@ -1825,6 +1826,15 @@ dependency mechanisms will assume the database of installed packages is
 correct.
 See also
 .Ev BULK .
+.It Ev TRY_BROKEN
+User settings.
+If set to
+.Sq Yes ,
+don't set
+.Ev IGNORE
+for
+.Ev BROKEN
+ports, so that we will attempt to build them.
 .It Ev UNLOCK_CMD
 User settings.
 If set, expands to a command that will release a lock.
