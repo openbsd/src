@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.5 2010/02/18 22:45:28 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.6 2010/02/26 14:53:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -523,7 +523,7 @@ smfb_wait(struct smfb *fb)
 	while (i-- != 0) {
 		if (fb->is5xx) {
 			reg = REG_READ(fb, VOYAGER_SYSTEM_CONTROL);
-			if ((reg & (VSC_FIFO_EMPTY | VSC_STATUS_BUSY)) ==
+			if ((reg & (VSC_FIFO_EMPTY | VSC_2DENGINE_BUSY)) ==
 			    VSC_FIFO_EMPTY)
 				return 0;
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: voyager.c,v 1.2 2010/02/24 22:14:54 miod Exp $	*/
+/*	$OpenBSD: voyager.c,v 1.3 2010/02/26 14:53:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -27,6 +27,7 @@
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/gpio/gpiovar.h>
 
@@ -34,6 +35,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <loongson/dev/bonito_irq.h>	/* for BONITO_NINTS */
 #include <loongson/dev/voyagerreg.h>
 #include <loongson/dev/voyagervar.h>
 
@@ -49,7 +51,10 @@ struct voyager_softc {
 	bus_size_t		 sc_mmiosize;
 
 	struct gpio_chipset_tag	 sc_gpio_tag;
-	gpio_pin_t		 sc_gpio_pins[VOYAGER_NGPIO];
+	gpio_pin_t		 sc_gpio_pins[32 + 32];
+
+	void			*sc_ih;
+	struct intrhand		*sc_intr[32];
 };
 
 int	voyager_match(struct device *, void *, void *);
@@ -64,6 +69,7 @@ struct cfdriver voyager_cd = {
 };
 
 void	voyager_attach_gpio(struct voyager_softc *);
+int	voyager_intr(void *);
 int	voyager_print(void *, const char *);
 int	voyager_search(struct device *, void *, void *);
 
@@ -88,23 +94,54 @@ voyager_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct voyager_softc *sc = (struct voyager_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	pci_intr_handle_t ih;
+	const char *intrstr;
+
+	printf(": ");
+
+	/*
+	 * Map registers.
+	 */
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_fbt, &sc->sc_fbh,
 	    NULL, &sc->sc_fbsize, 0) != 0) {
-		printf(": can't map frame buffer\n");
+		printf("can't map frame buffer\n");
 		return;
 	}
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x04, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_mmiot, &sc->sc_mmioh,
 	    NULL, &sc->sc_mmiosize, 0) != 0) {
-		printf(": can't map mmio\n");
-		bus_space_unmap(sc->sc_fbt, sc->sc_fbh, sc->sc_fbsize);
-		return;
+		printf("can't map mmio\n");
+		goto fail1;
 	}
 
-	printf("\n");
+	/*
+	 * Setup interrut handling.
+	 */
+
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_RAW_ICR,
+	    0xffffffff);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_IMR, 0);
+	(void)bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_IMR);
+
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf("can't map interrupt\n");
+		goto fail2;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, voyager_intr,
+	    sc, self->dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf("can't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto fail2;
+	}
+
+	printf("%s\n", intrstr);
 
 	/*
 	 * Attach GPIO devices.
@@ -115,6 +152,12 @@ voyager_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach child devices.
 	 */
 	config_search(voyager_search, self, pa);
+
+	return;
+fail2:
+	bus_space_unmap(sc->sc_mmiot, sc->sc_mmioh, sc->sc_mmiosize);
+fail1:
+	bus_space_unmap(sc->sc_fbt, sc->sc_fbh, sc->sc_fbsize);
 }
 
 int
@@ -155,6 +198,89 @@ voyager_search(struct device *parent, void *vcf, void *args)
 
 	config_attach(parent, cf, &vaa, voyager_print);
 	return 1;
+}
+
+/*
+ * Interrupt disatcher
+ */
+
+int
+voyager_intr(void *vsc)
+{
+	struct voyager_softc *sc = (struct voyager_softc *)vsc;
+	uint32_t isr, imr, mask, bitno;
+	struct intrhand *ih;
+
+	isr = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_ISR);
+	imr = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_IMR);
+
+	isr &= imr;
+	if (isr == 0)
+		return 0;
+
+	for (bitno = 0, mask = 1 << 0; isr != 0; bitno++, mask <<= 1) {
+		if ((isr & mask) == 0)
+			continue;
+		isr ^= mask;
+		for (ih = sc->sc_intr[bitno]; ih != NULL; ih = ih->ih_next) {
+			if ((*ih->ih_fun)(ih->ih_arg) != 0)
+				ih->ih_count.ec_count++;
+		}
+	}
+
+	return 1;
+}
+
+void *
+voyager_intr_establish(void *cookie, int irq, int level, int (*fun)(void *),
+    void *arg, const char *name)
+{
+	struct voyager_softc *sc = (struct voyager_softc *)cookie;
+	struct intrhand *prevh, *nh;
+	uint32_t imr;
+
+#ifdef DIAGNOSTIC
+	if (irq < 0 || irq >= nitems(sc->sc_intr))
+		return NULL;
+#endif
+
+	nh = (struct intrhand *)malloc(sizeof *nh, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (nh == NULL)
+		return NULL;
+
+	nh->ih_fun = fun;
+	nh->ih_arg = arg;
+	nh->ih_level = level;
+	nh->ih_irq = irq + BONITO_NINTS;
+	evcount_attach(&nh->ih_count, name, (void *)&nh->ih_irq, &evcount_intr);
+
+	if (sc->sc_intr[irq] == NULL)
+		sc->sc_intr[irq] = nh;
+	else {
+		/* insert at tail */
+		for (prevh = sc->sc_intr[irq]; prevh->ih_next != NULL;
+		    prevh = prevh->ih_next) ;
+		prevh->ih_next = nh;
+	}
+
+	/* enable interrupt source */
+	imr = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_IMR);
+	imr |= 1 << irq;
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_IMR, imr);
+	(void)bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh, VOYAGER_IMR);
+
+	return nh;
+}
+
+const char *
+voyager_intr_string(void *vih)
+{
+	struct intrhand *ih = (struct intrhand *)vih;
+	static char intrstr[1 + 32];
+
+	snprintf(intrstr, sizeof intrstr, "voyager irq %d",
+	    ih->ih_irq - BONITO_NINTS);
+	return intrstr;
 }
 
 /*
@@ -241,22 +367,49 @@ voyager_attach_gpio(struct voyager_softc *sc)
 {
 	struct gpiobus_attach_args gba;
 	int pin;
+	uint32_t control, value;
 
 	bcopy(&voyager_gpio_tag, &sc->sc_gpio_tag, sizeof voyager_gpio_tag);
 	sc->sc_gpio_tag.gp_cookie = sc;
 
-	for (pin = 0; pin < VOYAGER_NGPIO; pin++) {
+	control = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+	    VOYAGER_GPIOL_CONTROL);
+	value = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+	    VOYAGER_GPIO_DATA_LOW);
+	for (pin = 0; pin < 32; pin++) {
 		sc->sc_gpio_pins[pin].pin_num = pin;
-		sc->sc_gpio_pins[pin].pin_caps =
-		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
-		sc->sc_gpio_pins[pin].pin_state =
-		    voyager_gpio_pin_read(sc, pin);
+		if ((control & 1) == 0) {
+			sc->sc_gpio_pins[pin].pin_caps =
+			    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+			sc->sc_gpio_pins[pin].pin_state = value & 1;
+		} else {
+			/* disable control of taken over pins */
+			sc->sc_gpio_pins[pin].pin_caps = 0;
+			sc->sc_gpio_pins[pin].pin_state = 0;
+		}
+	}
+
+	control = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+	    VOYAGER_GPIOH_CONTROL);
+	value = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+	    VOYAGER_GPIO_DATA_HIGH);
+	for (pin = 32 + 0; pin < 32 + 32; pin++) {
+		sc->sc_gpio_pins[pin].pin_num = pin;
+		if ((control & 1) == 0) {
+			sc->sc_gpio_pins[pin].pin_caps =
+			    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+			sc->sc_gpio_pins[pin].pin_state = value & 1;
+		} else {
+			/* disable control of taken over pins */
+			sc->sc_gpio_pins[pin].pin_caps = 0;
+			sc->sc_gpio_pins[pin].pin_state = 0;
+		}
 	}
 
 	gba.gba_name = "gpio";
 	gba.gba_gc = &sc->sc_gpio_tag;
 	gba.gba_pins = sc->sc_gpio_pins;
-	gba.gba_npins = VOYAGER_NGPIO;
+	gba.gba_npins = nitems(sc->sc_gpio_pins);
 
 	config_found(&sc->sc_dev, &gba, voyager_print);
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2010/02/24 22:16:18 miod Exp $
+#	$OpenBSD: GENERIC,v 1.15 2010/02/26 14:53:11 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,7 +62,7 @@ stsec0		at iic0				# ST7 Embedded Controller
 lmtemp0		at iic0 			# National Semiconductor LM75
 mfokclock0	at iic0				# M41T8x todclock
 #iic*		at voyager?
-#ohci*		at voyager?
+ohci*		at voyager?
 smfb*		at voyager?
 wsdisplay*	at smfb?
 

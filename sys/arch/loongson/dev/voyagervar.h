@@ -1,4 +1,4 @@
-/*	$OpenBSD: voyagervar.h,v 1.1 2010/02/18 22:45:28 miod Exp $	*/
+/*	$OpenBSD: voyagervar.h,v 1.2 2010/02/26 14:53:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -25,3 +25,8 @@ struct voyager_attach_args {
 	bus_space_tag_t			 vaa_mmiot;
 	bus_space_handle_t		 vaa_mmioh;
 };
+
+void	*voyager_intr_establish(void *, int, int, int (*)(void *), void *,
+	    const char *);
+const char *
+	 voyager_intr_string(void *);

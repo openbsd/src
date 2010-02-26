@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.6 2010/02/24 22:16:18 miod Exp $
+#	$OpenBSD: files.loongson,v 1.7 2010/02/26 14:53:11 miod Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -97,6 +97,10 @@ file	arch/loongson/dev/stsec.c			stsec
 device	mfokclock
 attach	mfokclock at i2c
 file	arch/loongson/dev/m41t8xclock.c			mfokclock
+
+# SM502 OHCI
+attach	ohci at voyager with ohci_voyager
+file	arch/loongson/dev/ohci_voyager.c		ohci_voyager
 
 # Silicon Motion SM502/SM712 frame buffer
 device	smfb: wsemuldisplaydev, rasops16
