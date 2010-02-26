@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2009/12/10 14:57:51 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.51 2010/02/26 15:06:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -454,13 +454,13 @@ stringel	: STRING			{
 				/* IP address ? */
 				if (inet_pton(AF_INET, $1, &ssin.sin_addr) == 1) {
 					ssin.sin_family = AF_INET;
-					me->me_key.med_addr.bits = 0;
+					me->me_key.med_addr.bits = 32;
 					memcpy(&me->me_key.med_addr.ss, &ssin, sizeof(ssin));
 					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 				}
 				else if (inet_pton(AF_INET6, $1, &ssin6.sin6_addr) == 1) {
 					ssin6.sin6_family = AF_INET6;
-					me->me_key.med_addr.bits = 0;
+					me->me_key.med_addr.bits = 128;
 					memcpy(&me->me_key.med_addr.ss, &ssin6, sizeof(ssin6));
 					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 				}
@@ -538,13 +538,13 @@ mapref		: STRING			{
 				/* IP address ? */
 				if (inet_pton(AF_INET, $1, &ssin.sin_addr) == 1) {
 					ssin.sin_family = AF_INET;
-					me->me_key.med_addr.bits = 0;
+					me->me_key.med_addr.bits = 32;
 					memcpy(&me->me_key.med_addr.ss, &ssin, sizeof(ssin));
 					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 				}
 				else if (inet_pton(AF_INET6, $1, &ssin6.sin6_addr) == 1) {
 					ssin6.sin6_family = AF_INET6;
-					me->me_key.med_addr.bits = 0;
+					me->me_key.med_addr.bits = 128;
 					memcpy(&me->me_key.med_addr.ss, &ssin6, sizeof(ssin6));
 					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 				}
@@ -886,7 +886,7 @@ from		: FROM mapref			{
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
-			me->me_key.med_addr.bits = 32;
+			me->me_key.med_addr.bits = 0;
 			me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 			ssin = (struct sockaddr_in *)&me->me_key.med_addr.ss;
 			ssin->sin_family = AF_INET;
@@ -899,7 +899,7 @@ from		: FROM mapref			{
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
-			me->me_key.med_addr.bits = 128;
+			me->me_key.med_addr.bits = 0;
 			me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 			ssin6 = (struct sockaddr_in6 *)&me->me_key.med_addr.ss;
 			ssin6->sin6_family = AF_INET6;
@@ -1761,7 +1761,7 @@ set_localaddrs(void)
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
-			me->me_key.med_addr.bits = 0;
+			me->me_key.med_addr.bits = 32;
 			me->me_key.med_addr.ss = *(struct sockaddr_storage *)sain;
 			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
 
@@ -1774,7 +1774,7 @@ set_localaddrs(void)
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
-			me->me_key.med_addr.bits = 0;
+			me->me_key.med_addr.bits = 128;
 			me->me_key.med_addr.ss = *(struct sockaddr_storage *)sin6;
 			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
 
