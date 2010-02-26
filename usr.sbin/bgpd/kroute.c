@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.174 2010/02/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.175 2010/02/26 15:50:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1073,7 +1073,7 @@ kroute6_matchgw(struct kroute6_node *kr, struct sockaddr_in6 *sa_in6)
 	memcpy(&nexthop, &sa_in6->sin6_addr, sizeof(nexthop));
 
 	while (kr) {
-		if (memcmp(&kr->r.nexthop, &nexthop, sizeof(nexthop)) == NULL)
+		if (memcmp(&kr->r.nexthop, &nexthop, sizeof(nexthop)) == 0)
 			return (kr);
 		kr = kr->next;
 	}
@@ -1684,7 +1684,7 @@ protect_lo(void)
 		log_warn("protect_lo");
 		return (-1);
 	}
-	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK);
+	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
 	kr->r.prefixlen = 8;
 	kr->r.flags = F_KERNEL|F_CONNECTED;
 
@@ -1698,7 +1698,7 @@ protect_lo(void)
 	}
 	memcpy(&kr6->r.prefix, &in6addr_loopback, sizeof(kr6->r.prefix));
 	kr6->r.prefixlen = 128;
-	kr->r.flags = F_KERNEL|F_CONNECTED;
+	kr6->r.flags = F_KERNEL|F_CONNECTED;
 
 	if (RB_INSERT(kroute6_tree, &krt6, kr6) != NULL)
 		free(kr6);	/* kernel route already there, no problem */
