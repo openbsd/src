@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.28 2010/02/23 11:17:23 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.29 2010/02/26 09:59:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,13 +54,13 @@ lsa_compare(struct vertex *a, struct vertex *b)
 		return (-1);
 	if (a->type > b->type)
 		return (1);
-	if (a->ls_id < b->ls_id)
-		return (-1);
-	if (a->ls_id > b->ls_id)
-		return (1);
 	if (a->adv_rtr < b->adv_rtr)
 		return (-1);
 	if (a->adv_rtr > b->adv_rtr)
+		return (1);
+	if (a->ls_id < b->ls_id)
+		return (-1);
+	if (a->ls_id > b->ls_id)
 		return (1);
 	return (0);
 }
