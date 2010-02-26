@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.21 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.22 2010/02/26 12:42:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -570,10 +570,13 @@ pre_TP(DECL_ARGS)
 
 	/* Calculate offset. */
 
-	if (NULL != (nn = n->parent->head->child))
-		if (NULL != nn->next)
+	if (NULL != (nn = n->parent->head->child)) {
+		while (nn && MAN_TEXT != nn->type)
+			nn = nn->next;
+		if (nn && nn->next)
 			if ((ival = a2width(nn)) >= 0)
 				len = (size_t)ival;
+	}
 
 	switch (n->type) {
 	case (MAN_HEAD):

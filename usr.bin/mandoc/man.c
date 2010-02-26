@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.18 2010/02/18 02:11:26 schwarze Exp $ */
+/*	$Id: man.c,v 1.19 2010/02/26 12:42:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -564,7 +564,8 @@ man_pmacro(struct man *m, int ln, char *buf)
 		goto err;
 
 out:
-	if ( ! (MAN_BLINE & fl))
+	if ( ! (MAN_BLINE & fl) || (MAN_TEXT != m->last->type &&
+	    (NULL == m->last->child || MAN_TEXT != m->last->child->type)))
 		return(1);
 
 	/* 

@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.11 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.12 2010/02/26 12:42:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -55,7 +55,7 @@ static	v_check	  posts_sp[] = { check_le1, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
-	{ pres_bline, posts_eq0 }, /* br */
+	{ NULL, posts_eq0 }, /* br */
 	{ pres_bline, posts_ge2_le5 }, /* TH */
 	{ pres_bline, posts_sec }, /* SH */
 	{ pres_bline, posts_sec }, /* SS */
@@ -76,9 +76,9 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, NULL }, /* I */
 	{ NULL, NULL }, /* IR */
 	{ NULL, NULL }, /* RI */
-	{ pres_bline, posts_eq0 }, /* na */
+	{ NULL, posts_eq0 }, /* na */
 	{ NULL, NULL }, /* i */
-	{ pres_bline, posts_sp }, /* sp */
+	{ NULL, posts_sp }, /* sp */
 	{ pres_bline, posts_eq0 }, /* nf */
 	{ pres_bline, posts_eq0 }, /* fi */
 	{ NULL, NULL }, /* r */
