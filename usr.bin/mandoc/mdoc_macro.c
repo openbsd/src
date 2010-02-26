@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.28 2010/02/18 02:11:26 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.29 2010/02/26 12:12:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -591,7 +591,21 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 	}
 
 	assert(n);
-	return(rew_last(m, n));
+	if ( ! rew_last(m, n))
+		return(0);
+
+	/*
+	 * The current block extends an enclosing block beyond a line break.
+	 * Now that the current block ends, close the enclosing block, too.
+	 */
+	if ((n = n->pending) != NULL) {
+		assert(MDOC_HEAD == n->type);
+		if ( ! rew_last(m, n))
+			return(0);
+		if ( ! mdoc_body_alloc(m, n->line, n->pos, n->tok))
+			return(0);
+	}
+	return(1);
 }
 
 
@@ -855,6 +869,7 @@ blk_full(MACRO_PROT_ARGS)
 {
 	int		  c, lastarg, reopen, dohead;
 	struct mdoc_arg	 *arg;
+	struct mdoc_node *head, *n;
 	char		 *p;
 
 	/* 
@@ -900,19 +915,17 @@ blk_full(MACRO_PROT_ARGS)
 
 	if ( ! mdoc_block_alloc(m, line, ppos, tok, arg))
 		return(0);
+	if ( ! mdoc_head_alloc(m, line, ppos, tok))
+		return(0);
+	head = m->last;
 
 	if (0 == buf[*pos]) {
-		if ( ! mdoc_head_alloc(m, line, ppos, tok))
-			return(0);
 		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 			return(0);
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
 		return(1);
 	}
-
-	if ( ! mdoc_head_alloc(m, line, ppos, tok))
-		return(0);
 
 	/* Immediately close out head and enter body, if applicable. */
 
@@ -935,6 +948,7 @@ blk_full(MACRO_PROT_ARGS)
 			assert(dohead);
 			if (reopen && ! mdoc_head_alloc(m, line, ppos, tok))
 				return(0);
+			head = m->last;
 			/*
 			 * Phrases are self-contained macro phrases used
 			 * in the columnar output of a macro. They need
@@ -966,6 +980,19 @@ blk_full(MACRO_PROT_ARGS)
 	/* If the body's already open, then just return. */
 	if (0 == dohead) 
 		return(1);
+
+	/*
+	 * If there is an open sub-block requiring explicit close-out,
+	 * postpone switching the current block from head to body
+	 * until the rew_sub() call closing out that sub-block.
+	 */
+	for (n = m->last; n && n != head; n = n->parent) {
+		if (MDOC_BLOCK == n->type &&
+		    MDOC_EXPLICIT & mdoc_macros[n->tok].flags) {
+			n->pending = head;
+			return(1);
+		}
+	}
 
 	if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 		return(0);
