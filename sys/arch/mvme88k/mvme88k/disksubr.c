@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.61 2009/08/13 15:23:10 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.62 2010/02/26 23:11:57 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -136,6 +136,7 @@ bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 	char *tmot = "MOTOROLA", *id = "M88K", *mot;
 	int i;
 
+	bzero(clp, sizeof(*clp));
 	clp->magic1 = lp->d_magic;
 	clp->type = lp->d_type;
 	clp->subtype = lp->d_subtype;

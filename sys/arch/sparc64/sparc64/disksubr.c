@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.57 2009/08/13 15:23:11 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.58 2010/02/26 23:11:57 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -399,6 +399,7 @@ disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 		return (EINVAL);
 
 	/* Format conversion. */
+	bzero(sl, sizeof(*sl));
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
 	sl->sl_rpm = lp->d_rpm;
 	sl->sl_pcylinders = lp->d_ncylinders + lp->d_acylinders; /* XXX */

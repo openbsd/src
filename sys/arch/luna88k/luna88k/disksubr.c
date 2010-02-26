@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.42 2009/08/13 15:23:10 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.43 2010/02/26 23:11:56 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -333,6 +333,7 @@ disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)
 		return (EINVAL);
 
 	/* Format conversion. */
+	bzero(lp, sizeof(*lp));
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
 	sl->sl_rpm = 0;					/* UniOS */
 #if 0 /* leave as was */
