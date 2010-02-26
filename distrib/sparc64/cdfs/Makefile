@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2009/04/17 03:58:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2010/02/26 23:16:19 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -22,7 +22,8 @@ ${CDROM}:
 	echo 'm 5	sun4u' >> ${.OBJDIR}/cd-dir/.slicemapfile
 	echo 'm 5	sun4us' >> ${.OBJDIR}/cd-dir/.slicemapfile
 	echo 'm 6	sun4v' >> ${.OBJDIR}/cd-dir/.slicemapfile
-	mkhybrid -A "OpenBSD ${OSREV} sparc64 bootonly CD" \
+	mkhybrid -a -R -r -T -L -d -D -N \
+	    -A "OpenBSD ${OSREV} sparc64 bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/sparc64 ${OSREV} boot-only CD" \
