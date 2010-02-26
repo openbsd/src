@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ecadc.4,v 1.2 2007/10/21 09:33:39 jmc Exp $
+.\"	$OpenBSD: ecadc.4,v 1.3 2010/02/26 14:13:30 sobrado Exp $
 .\"
 .\" Copyright (c) 2006 Damien Miller <djm@openbsd.org>
 .\"
@@ -14,18 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2007 $
+.Dd $Mdocdate: February 26 2010 $
 .Dt ECADC 4 sparc64
 .Os
 .Sh NAME
 .Nm ecadc
-.Nd Environmental Monitoring Subsystem temperature sensor
+.Nd environmental monitoring subsystem temperature sensor
 .Sh SYNOPSIS
 .Cd "ecadc* at iic?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the PCF8591 I2C Analogue to Digital Converter that is
+driver supports the PCF8591 I2C analog to digital converter that is
 part of the environmental monitoring subsystem found on the Sun
 Enterprise 250 and Sun Enterprise 450 systems.
 The temperature readings are made available through the
@@ -37,7 +37,7 @@ Sensor names, type and calibration information are read from OpenFirmware.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
-.Xr pcfadc 8 ,
+.Xr pcfadc 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
