@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aoa.4,v 1.6 2010/02/23 21:57:32 jasper Exp $
+.\"	$OpenBSD: aoa.4,v 1.7 2010/02/26 21:52:56 jasper Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink.
 .\" Copyright (c) 2004 Dale Rahn.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: February 23 2010 $
+.Dd $Mdocdate: February 26 2010 $
 .Dt AOA 4 macppc
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 The
 .Nm
 driver provides support for the audio hardware found in some macppc machines.
+These devices do not provide volume control.
 .Sh HARDWARE
 Machines supported by the
 .Nm
@@ -71,5 +72,3 @@ by Joris Vink.
 This driver needs more testing.
 .Pp
 This manual page needs more precision and detail.
-.Pp
-Right now this driver does not support volume control.
