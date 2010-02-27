@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1533 2010/02/26 11:19:15 robert Exp 
+ *	OpenBSD: pcidevs,v 1.1534 2010/02/27 10:51:15 robert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1304,6 +1304,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_2100	0x796e		/* Radeon 2100 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4870	0x9440		/* Radeon HD 4870 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4850	0x9442		/* Radeon HD 4850 */
+#define	PCI_PRODUCT_ATI_RADEON_HD4890	0x9460		/* Radeon HD 4890 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4670	0x9490		/* Radeon HD 4670 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4650	0x9498		/* Radeon HD 4650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_XT	0x94c1		/* Radeon HD 2400 XT */
