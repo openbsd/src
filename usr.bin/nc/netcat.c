@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.94 2009/10/08 15:56:46 mpf Exp $ */
+/* $OpenBSD: netcat.c,v 1.95 2010/02/27 00:58:56 nicm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -683,27 +683,27 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 	unsigned char *p, *end;
 	unsigned char obuf[4];
 
-	end = buf + size;
-	obuf[0] = '\0';
+	if (size < 3)
+		return;
+	end = buf + size - 2;
 
 	for (p = buf; p < end; p++) {
 		if (*p != IAC)
-			break;
+			continue;
 
 		obuf[0] = IAC;
 		p++;
 		if ((*p == WILL) || (*p == WONT))
 			obuf[1] = DONT;
-		if ((*p == DO) || (*p == DONT))
+		else if ((*p == DO) || (*p == DONT))
 			obuf[1] = WONT;
-		if (obuf) {
-			p++;
-			obuf[2] = *p;
-			obuf[3] = '\0';
-			if (atomicio(vwrite, nfd, obuf, 3) != 3)
-				warn("Write Error!");
-			obuf[0] = '\0';
-		}
+		else
+			continue;
+
+		p++;
+		obuf[2] = *p;
+		if (atomicio(vwrite, nfd, obuf, 3) != 3)
+			warn("Write Error!");
 	}
 }
 
