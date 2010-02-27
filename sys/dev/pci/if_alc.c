@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.3 2010/01/07 12:26:06 sthen Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.4 2010/02/27 08:19:47 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -2368,8 +2368,10 @@ alc_iff(struct alc_softc *sc)
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+
 			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}

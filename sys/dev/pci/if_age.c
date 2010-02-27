@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.8 2010/01/07 12:26:06 sthen Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.9 2010/02/27 08:19:47 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2244,7 +2244,7 @@ age_iff(struct age_softc *sc)
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			crc = ether_crc32_le(enm->enm_addrlo, 
+			crc = ether_crc32_be(enm->enm_addrlo, 
 			    ETHER_ADDR_LEN);
 
 			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
