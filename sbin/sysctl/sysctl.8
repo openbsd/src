@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.153 2010/01/14 22:25:05 guenther Exp $
+.\"	$OpenBSD: sysctl.8,v 1.154 2010/02/27 20:47:10 schwarze Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: January 14 2010 $
+.Dd $Mdocdate: February 27 2010 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -110,7 +110,9 @@ The changeable column indicates whether a process with appropriate
 privilege can change the value.
 .Pp
 Note:
-not all of the variables are relevant to all architectures.
+not all of the variables are relevant to all architectures,
+and a few require a kernel compiled with non-standard
+.Xr options 4 .
 .Bl -column net.inet.ip.ipsec-expire-acquirexxxx integerxxx
 .It Sy Name	Type	Changeable
 .It kern.ostype	string	no
@@ -409,15 +411,7 @@ not all of the variables are relevant to all architectures.
 .Pp
 The
 .Nm
-program can get or set debugging variables
-that have been identified for its display.
-This information can be obtained by using the command:
-.Pp
-.Dl $ sysctl debug
-.Pp
-In addition,
-.Nm
-can extract information about the filesystems that have been compiled
+program can extract information about the filesystems that have been compiled
 into the running system.
 This information can be obtained by using the command:
 .Pp
@@ -529,6 +523,7 @@ the maximum number of shared memory segments:
 .Ed
 .Sh SEE ALSO
 .Xr sysctl 3 ,
+.Xr options 4 ,
 .Xr sysctl.conf 5
 .Sh HISTORY
 .Nm
