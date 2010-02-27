@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.39 2010/01/04 00:45:58 dlg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.40 2010/02/27 00:03:53 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 		xs->flags |= SCSI_DATA_OUT;
 	}
 
+	xs->flags |= SCSI_SILENT;	/* User is responsible for errors. */
 	xs->timeout = screq->timeout;
 	xs->retries = 0; /* user must do the retries *//* ignored */
 
