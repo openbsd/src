@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.32 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.33 2010/02/28 17:23:25 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -190,9 +190,13 @@ delay(int n)
 	int dly;
 	int p, c;
 	struct cpu_info *ci = curcpu();
+	uint32_t delayconst;
 
+	delayconst = ci->ci_delayconst;
+	if (delayconst == 0)
+		delayconst = bootcpu_hwinfo.clock / 2;
 	p = cp0_get_count();
-	dly = (ci->ci_hw.clock / 1000000) * n / 2;
+	dly = (delayconst / 1000000) * n;
 	while (dly > 0) {
 		c = cp0_get_count();
 		dly -= c - p;
@@ -237,6 +241,7 @@ clock_calibrate(struct cpu_info *ci)
 
 	cycles_per_sec = second_cp0 - first_cp0;
 	ci->ci_hw.clock = cycles_per_sec * 2;
+	ci->ci_delayconst = cycles_per_sec;
 }
 
 /*
