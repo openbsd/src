@@ -1,4 +1,4 @@
-.\"     $OpenBSD: apm.4,v 1.1 2010/02/28 08:52:32 otto Exp $
+.\"     $OpenBSD: apm.4,v 1.2 2010/02/28 10:47:43 otto Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -134,9 +134,7 @@ value contains the estimated percentage of battery life available.
 .Pp
 The
 .Va minutes_left
-value is always -1,
-as the hardware does not provide an estimated number of minutes of
-battery life remaining.
+value contains the estimated number of minutes of battery life remaining.
 .\" .It Dv APM_IOC_NEXTEVENT
 .\" .Em NOT YET SUPPORTED on loongson
 .\" .Pq Li "struct apm_event_info"
