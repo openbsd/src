@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.1 2010/01/23 19:29:59 matthieu Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.2 2010/02/28 08:35:36 otto Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.loongson/MAKEDEV.md,v 1.26 2009/08/13 15:12:36 deraadt Exp 
+.\"	OpenBSD: etc.loongson/MAKEDEV.md,v 1.2 2010/02/28 08:31:18 otto Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2010 $
+.Dd $Mdocdate: February 28 2010 $
 .Dt MAKEDEV 8 loongson
 .Os
 .Sh NAME
@@ -177,6 +177,9 @@ Bus control devices used by usbd for attach/detach, see
 .Pp
 .Sy Special purpose devices
 .Bl -tag -width tenletters -compact
+.It Ar apm
+Power management device, see
+.Xr apm 4 .
 .It Ar audio*
 Audio devices, see
 .Xr audio 4 .
