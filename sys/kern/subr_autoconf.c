@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.59 2009/11/23 14:12:10 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.60 2010/02/28 17:31:27 miod Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -772,8 +772,6 @@ config_activate_children(struct device *parent, int act)
 	    d = TAILQ_NEXT(d, dv_list)) {
 		if (d->dv_parent != parent)
 			continue;
-		if (d->dv_cfdata->cf_attach->ca_activate)
-			printf("device %s act %d\n", d->dv_xname, act);
 		switch (act) {
 		case DVACT_ACTIVATE:
 			rv = config_activate(d);
