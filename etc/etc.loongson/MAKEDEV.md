@@ -1,6 +1,6 @@
 define(MACHINE,loongson)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.1 2010/01/23 19:26:45 matthieu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.2 2010/02/28 08:31:18 otto Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -26,6 +26,7 @@ dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
+__devitem(apm, apm, Power management device)dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramd)
@@ -63,6 +64,7 @@ _DEV(ulpt, 64)
 _DEV(urio, 65)
 _DEV(usb, 61)
 _TITLE(spec)
+_DEV(apm, 14)
 _DEV(au, 44)
 _DEV(bio, 49)
 _DEV(bpf, 12)
