@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.10 2010/02/26 15:06:40 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.11 2010/02/28 12:23:12 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -171,7 +171,7 @@ ruleset_inet6_match(struct sockaddr_in6 *ss, struct netaddr *ssmask)
 	int		 i;
 	
 	bzero(&mask, sizeof(mask));
-	for (i = 0; i < (128 - ssmask->bits) / 8; i++)
+	for (i = 0; i < ssmask->bits / 8; i++)
 		mask.s6_addr[i] = 0xff;
 	i = ssmask->bits % 8;
 	if (i)
@@ -182,8 +182,9 @@ ruleset_inet6_match(struct sockaddr_in6 *ss, struct netaddr *ssmask)
 	
 	for (i = 0; i < 16; i++) {
 		if ((in->s6_addr[i] & mask.s6_addr[i]) !=
-		    inmask->s6_addr[i])
+		    (inmask->s6_addr[i] & mask.s6_addr[i]))
 			return (0);
 	}
+
 	return (1);
 }
