@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.20 2009/12/12 13:01:00 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -947,7 +947,7 @@ lom_refresh(void *arg)
 void
 lom1_write_hostname(struct lom_softc *sc)
 {
-	char name[LOM1_IDX_HOSTNAME12 - LOM1_IDX_HOSTNAME1 + 1];
+	char name[(LOM1_IDX_HOSTNAME12 - LOM1_IDX_HOSTNAME1 + 1) + 1];
 	char *p;
 	int i;
 
@@ -957,7 +957,7 @@ lom1_write_hostname(struct lom_softc *sc)
 	 * strip off the domain name.
 	 */
 	strlcpy(name, hostname, sizeof(name));
-	if (hostnamelen > sizeof(name)) {
+	if (hostnamelen >= sizeof(name)) {
 		p = strchr(name, '.');
 		if (p)
 			*p = '\0';
