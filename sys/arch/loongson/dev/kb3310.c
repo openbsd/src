@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.5 2010/02/28 08:30:27 otto Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.6 2010/02/28 09:40:06 otto Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -306,35 +306,31 @@ ykbec_refresh(void *arg)
 		ykbec_apmdata.minutes_left = 0;
 		ykbec_apmdata.battery_life = 0;
 	} else {
-		/* if charging, return the minutes until full */
-		if (bat_state & BAT_STATE_CHARGING) {
+		if (bat_state & BAT_STATE_CHARGING)
 			ykbec_apmdata.battery_state = APM_BATT_CHARGING;
-			if (current > 0) {
-				fullcap = (100 - cap_pct) * 60 * fullcap / 100;
-				ykbec_apmdata.minutes_left = fullcap / current;
-			} else
-				ykbec_apmdata.minutes_left = 0;
-		} else {
-			/* arbitrary */
-			if (cap_pct > 60)
-				ykbec_apmdata.battery_state = APM_BATT_HIGH;
-			else if (cap_pct < 10)
-				ykbec_apmdata.battery_state = APM_BATT_CRITICAL;
-			else
-				ykbec_apmdata.battery_state = APM_BATT_LOW;
+		/* XXX arbitrary */
+		else if (cap_pct > 60)
+			ykbec_apmdata.battery_state = APM_BATT_HIGH;
+		else if (cap_pct < 10)
+			ykbec_apmdata.battery_state = APM_BATT_CRITICAL;
+		else
+			ykbec_apmdata.battery_state = APM_BATT_LOW;
 
+		/* if charging, current is positive */
+		if (bat_state & BAT_STATE_CHARGING)
+			current = 0;
+		else
 			current = -current;
-			/* Yeeloong draw is about 1A */
-			if (current <= 0)
-				current = 1000;
-			/* at 5?%, the Yeeloong shuts down */
-			if (cap_pct <= 5)
-				cap_pct = 0;
-			else
-				cap_pct -= 5;
-			fullcap = cap_pct * 60 * fullcap / 100;
-			ykbec_apmdata.minutes_left = fullcap / current;
-		}
+		/* XXX Yeeloong draw is about 1A */
+		if (current <= 0)
+			current = 1000;
+		/* XXX at 5?%, the Yeeloong shuts down */
+		if (cap_pct <= 5)
+			cap_pct = 0;
+		else
+			cap_pct -= 5;
+		fullcap = cap_pct * 60 * fullcap / 100;
+		ykbec_apmdata.minutes_left = fullcap / current;
 
 	}
 	if (old.ac_state != ykbec_apmdata.ac_state) 
