@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.5 2010/02/28 21:35:43 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.6 2010/02/28 22:32:50 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -63,6 +63,8 @@
 #if NWSDISPLAY > 0
 #include <dev/wscons/wsdisplayvar.h>
 #endif
+#include "sisfb.h"
+extern int sisfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
 #include "smfb.h"
 extern int smfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
 
@@ -137,6 +139,11 @@ static	int initted;
 		 */
 
 		rc = ENXIO;
+#if NSISFB > 0
+		if (rc != 0)
+			rc = sisfb_cnattach(&bonito_pci_mem_space_tag,
+			    &bonito_pci_io_space_tag, tag, id);
+#endif
 #if NSMFB > 0
 		if (rc != 0)
 			rc = smfb_cnattach(&bonito_pci_mem_space_tag,

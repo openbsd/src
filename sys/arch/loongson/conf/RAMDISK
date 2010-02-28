@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 2010/02/26 14:53:11 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.10 2010/02/28 22:32:50 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -59,7 +59,10 @@ wsmouse*	at pmsi? mux 0			# Yeeloong only
 com0		at isa? port 0x2f8 irq 3	# Fuloong 2F only
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
+sisfb*		at pci?				# Fuloong 2F only
+wsdisplay*	at sisfb?
 smfb*		at pci?				# Yeeloong only
+wsdisplay*	at smfb?
 
 # Gdium Liberty specific devices
 voyager*	at pci?
@@ -70,7 +73,6 @@ iic0		at gdiumiic0
 mfokclock0	at iic0				# M41T8x todclock
 ohci*		at voyager?
 smfb*		at voyager?
-
 wsdisplay*	at smfb?
 
 # USB Controllers

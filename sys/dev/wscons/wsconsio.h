@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.57 2009/12/25 22:02:47 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.58 2010/02/28 22:32:50 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -311,6 +311,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_GFXP	60	/* Sun PGX32 */
 #define		WSDISPLAY_TYPE_RADEONFB	61	/* Sun XVR-100 */
 #define		WSDISPLAY_TYPE_SMFB	62	/* SiliconMotion SM712 */
+#define		WSDISPLAY_TYPE_SISFB	63	/* SiS 315 Pro */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
