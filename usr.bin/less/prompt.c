@@ -349,6 +349,7 @@ protochar(c, where, iseditproto)
 	case 't':	/* Truncate trailing spaces in the message */
 		while (mp > message && mp[-1] == ' ')
 			mp--;
+		*mp = '\0';
 		break;
 	case 'T':	/* Type of list */
 #if TAGS
