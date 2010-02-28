@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2010/02/26 14:53:11 miod Exp $
+#	$OpenBSD: GENERIC,v 1.16 2010/02/28 08:30:27 otto Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,6 +30,7 @@ config	bsd	swap generic
 mainbus0	at root
 cpu0		at mainbus0
 clock0		at mainbus0
+apm0		at mainbus0
 
 # Main local buses
 bonito*		at mainbus0

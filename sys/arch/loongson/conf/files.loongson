@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.7 2010/02/26 14:53:11 miod Exp $
+#	$OpenBSD: files.loongson,v 1.8 2010/02/28 08:30:27 otto Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -107,3 +107,7 @@ device	smfb: wsemuldisplaydev, rasops16
 attach	smfb at pci with smfb_pci
 attach	smfb at voyager with smfb_voyager
 file	arch/loongson/dev/smfb.c			smfb	needs-flag
+
+device	apm
+attach	apm at mainbus
+file	arch/loongson/dev/apm.c				apm	needs-flag

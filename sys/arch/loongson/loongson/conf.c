@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2010/02/11 20:14:49 otto Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 2010/02/28 08:30:27 otto Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,8 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
+
+#include <machine/conf.h>
 
 /*
  *	Block devices.
@@ -101,6 +102,7 @@ cdev_decl(fd);
 #include "st.h"
 #include "bpfilter.h"
 #include "tun.h"
+#include "apm.h"
 #include "com.h"
 cdev_decl(com);
 #include "lpt.h"
@@ -152,7 +154,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 12: berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 13: network tunnel */
-	cdev_notdef(),			/* 14: */
+	cdev_apm_init(NAPM,apm),	/* 14: apm */
 	cdev_notdef(),			/* 15: */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
