@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.56 2010/02/28 17:23:23 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.57 2010/02/28 18:01:36 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -369,6 +369,7 @@ struct cpu_hwinfo {
 	uint32_t	clock;	/* Hz */
 	uint32_t	tlbsize;
 	uint		type;
+	uint32_t	l2size;
 };
 
 struct cpu_info {

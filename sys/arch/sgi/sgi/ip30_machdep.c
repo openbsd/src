@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.35 2010/01/19 19:54:24 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.36 2010/02/28 18:01:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -245,6 +245,8 @@ ip30_autoconf(struct device *parent)
 			hw.c0prid = 
 		           *(volatile uint32_t *)(mpconf + MPCONF_PRID(cpuid));
 			hw.type = (hw.c0prid >> 8) & 0xff;
+			hw.l2size = 1 << *(volatile uint32_t *)
+			    (mpconf + MPCONF_SCACHESZ(cpuid));
 			caa.caa_hw = &hw;
 			config_found(parent, &caa, mbprint);
 		}
