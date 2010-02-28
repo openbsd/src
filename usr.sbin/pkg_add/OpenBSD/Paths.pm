@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.7 2009/04/14 17:53:58 espie Exp $
+# $OpenBSD: Paths.pm,v 1.8 2010/02/28 10:06:46 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -47,6 +47,9 @@ sub df() { '/bin/df' }
 sub ssh() { '/usr/bin/ssh' }
 sub make() { '/usr/bin/make' }
 sub mklocatedb() { '/usr/libexec/locate.mklocatedb' }
+sub hostname() { '/bin/hostname' }
+sub sudo() { '/usr/bin/sudo' }
+sub du() { '/usr/bin/du' }
 
 # Various paths
 sub shells() { '/etc/shells' }
