@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.7 2010/02/23 20:41:35 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.8 2010/02/28 12:36:46 otto Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -36,6 +37,7 @@ boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	loongson2e_setup(u_long, u_long);
 void	loongson2f_setup(u_long, u_long);
 void	loongson2f_setup_window(uint, uint, uint64_t, uint64_t, uint64_t, uint);
+int	loongson2f_cpuspeed(int *);
 
 /* PCI view of CPU memory */
 paddr_t loongson_dma_base = 0;
@@ -196,6 +198,8 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	 */
 	loongson2f_setup_window(MASTER_CPU, WINDOW_CPU_DDR, DDR_WINDOW_BASE,
 	    ~(DDR_PHYSICAL_SIZE - 1), DDR_PHYSICAL_BASE, MASTER_CPU);
+
+	cpu_cpuspeed = loongson2f_cpuspeed;
 }
 
 /*
@@ -256,4 +260,11 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 			return TRUE;
 
 	return FALSE;
+}
+
+int
+loongson2f_cpuspeed(int *freq)
+{
+	*freq = bootcpu_hwinfo.clock / 1000000;
+	return 0;
 }
