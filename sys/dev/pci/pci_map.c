@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.27 2009/10/06 21:35:43 kettenis Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.28 2010/02/28 21:37:54 miod Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -342,12 +342,16 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
 
 		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 			ex = pa->pa_ioex;
-			start = max(PCI_IO_START, ex->ex_start);
-			end = min(PCI_IO_END, ex->ex_end);
+			if (ex != NULL) {
+				start = max(PCI_IO_START, ex->ex_start);
+				end = min(PCI_IO_END, ex->ex_end);
+			}
 		} else {
 			ex = pa->pa_memex;
-			start = max(PCI_MEM_START, ex->ex_start);
-			end = min(PCI_MEM_END, ex->ex_end);
+			if (ex != NULL) {
+				start = max(PCI_MEM_START, ex->ex_start);
+				end = min(PCI_MEM_END, ex->ex_end);
+			}
 		}
 
 		if (ex == NULL || extent_alloc_subregion(ex, start, end,
