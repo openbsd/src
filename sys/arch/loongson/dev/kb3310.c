@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.6 2010/02/28 09:40:06 otto Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.7 2010/02/28 17:32:30 miod Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -20,12 +20,21 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
+#include <sys/timeout.h>
 
 #include <machine/apmvar.h>
 #include <machine/bus.h>
 #include <dev/isa/isavar.h>
 
 #include "apm.h"
+#include "pckbd.h"
+#include "ukbd.h"
+
+#if NPCKBD > 0 || NUKBD > 0
+#include <dev/ic/pckbcvar.h>
+#include <dev/pckbc/pckbdvar.h>
+#include <dev/usb/ukbdvar.h>
+#endif
 
 struct cfdriver ykbec_cd = {
 	NULL, "ykbec", DV_DULL,
@@ -69,23 +78,27 @@ struct ykbec_softc {
 	bus_space_handle_t	sc_ioh;
 	struct ksensor		sc_sensor[YKBEC_NSENSORS];
 	struct ksensordev	sc_sensordev;
-
+#if NPCKBD > 0 || NUKBD > 0
+	struct timeout		sc_bell_tmo;
+#endif
 };
 
 int	ykbec_match(struct device *, void *, void *);
 void	ykbec_attach(struct device *, struct device *, void *);
-void	ykbec_refresh(void *arg);
 
 const struct cfattach ykbec_ca = {
 	sizeof(struct ykbec_softc), ykbec_match, ykbec_attach
 };
 
-void	ykbec_write(struct ykbec_softc *, u_int, u_int);
+int	ykbec_apminfo(struct apm_power_info *);
+void	ykbec_bell(void *, u_int, u_int, u_int, int);
+void	ykbec_bell_stop(void *);
 u_int	ykbec_read(struct ykbec_softc *, u_int);
 u_int	ykbec_read16(struct ykbec_softc *, u_int);
+void	ykbec_refresh(void *arg);
+void	ykbec_write(struct ykbec_softc *, u_int, u_int);
 
 #if NAPM > 0
-int	ykbec_apminfo(struct apm_power_info *);
 struct apm_power_info ykbec_apmdata;
 const char *ykbec_batstate[] = {
 	"high",
@@ -97,7 +110,6 @@ const char *ykbec_batstate[] = {
 #define BATTERY_STRING(x) ((x) < nitems(ykbec_batstate) ? \
 	ykbec_batstate[x] : ykbec_batstate[4])
 #endif
-
 
 int
 ykbec_match(struct device *parent, void *match, void *aux)
@@ -122,7 +134,6 @@ ykbec_match(struct device *parent, void *match, void *aux)
 	return (1);
 }
 
-
 void
 ykbec_attach( struct device *parent, struct device *self, void *aux)
 {
@@ -145,6 +156,8 @@ ykbec_attach( struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	printf("\n");
+
 	for (i = 0; i < YKBEC_NSENSORS; i++) {
 		sc->sc_sensor[i].type = ykbec_table[i].type; 
 		if (ykbec_table[i].desc) 
@@ -156,9 +169,19 @@ ykbec_attach( struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 
 #if NAPM > 0
+	/* make sure we have the apm state initialized before apm attaches */
+	ykbec_refresh(sc);
 	apm_setinfohook(ykbec_apminfo);
 #endif
-	printf("\n");
+#if NPCKBD > 0 || NUKBD > 0
+	timeout_set(&sc->sc_bell_tmo, ykbec_bell_stop, sc);
+#if NPCKBD > 0
+	pckbd_hookup_bell(ykbec_bell, sc);
+#endif
+#if NUKBD > 0
+	ukbd_hookup_bell(ykbec_bell, sc);
+#endif
+#endif
 }
 
 void
@@ -241,6 +264,9 @@ ykbec_read16(struct ykbec_softc *mcsc, u_int reg)
 #define REG_BAT_STATE			0xf482
 #define BAT_STATE_DISCHARGING		(1<<0)
 #define BAT_STATE_CHARGING		(1<<1)
+
+#define	REG_BEEP_CONTROL		0xf4d0
+#define	BEEP_ENABLE			(1<<0)
 
 void
 ykbec_refresh(void *arg)
@@ -344,12 +370,51 @@ ykbec_refresh(void *arg)
 
 
 #if NAPM > 0
-
 int
 ykbec_apminfo(struct apm_power_info *info)
 {
 	 bcopy(&ykbec_apmdata, info, sizeof(struct apm_power_info));
 	 return 0;
 }
+#endif
 
+#if NPCKBD > 0 || NUKBD > 0
+void
+ykbec_bell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
+{
+	struct ykbec_softc *sc = (struct ykbec_softc *)arg;
+	int bctrl;
+	int s;
+
+	s = spltty();
+	bctrl = ykbec_read(sc, REG_BEEP_CONTROL);
+	if (volume == 0 || timeout_pending(&sc->sc_bell_tmo)) {
+		timeout_del(&sc->sc_bell_tmo);
+		/* inline ykbec_bell_stop(arg); */
+		ykbec_write(sc, REG_BEEP_CONTROL, bctrl & ~BEEP_ENABLE);
+	}
+
+	if (volume != 0) {
+		ykbec_write(sc, REG_BEEP_CONTROL, bctrl | BEEP_ENABLE);
+		if (poll) {
+			delay(period * 1000);
+			ykbec_write(sc, REG_BEEP_CONTROL, bctrl & ~BEEP_ENABLE);
+		} else {
+			timeout_add_msec(&sc->sc_bell_tmo, period);
+		}
+	}
+	splx(s);
+}
+
+void
+ykbec_bell_stop(void *arg)
+{
+	struct ykbec_softc *sc = (struct ykbec_softc *)arg;
+	int s;
+
+	s = spltty();
+	ykbec_write(sc, REG_BEEP_CONTROL,
+	    ykbec_read(sc, REG_BEEP_CONTROL) & ~BEEP_ENABLE);
+	splx(s);
+}
 #endif
