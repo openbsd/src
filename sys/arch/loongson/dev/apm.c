@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.1 2010/02/28 08:30:27 otto Exp $	*/
+/*	$OpenBSD: apm.c,v 1.2 2010/02/28 09:37:28 otto Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -309,10 +309,10 @@ apmkqfilter(dev_t dev, struct knote *kn)
 int
 apm_getdefaultinfo(struct apm_power_info *info)
 {
-	info->battery_state = APM_BATTERY_ABSENT;
-	info->ac_state = APM_AC_ON;
+	info->battery_state = APM_BATT_UNKNOWN;
+	info->ac_state = APM_AC_UNKNOWN;
 	info->battery_life = 0;
-	info->minutes_left = 0;
+	info->minutes_left = -1;
 	return (0);
 }
 
