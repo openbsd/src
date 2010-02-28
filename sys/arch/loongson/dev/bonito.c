@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.11 2010/02/24 22:33:20 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.12 2010/02/28 21:35:41 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -165,6 +165,8 @@ struct machine_bus_dma_tag bonito_bus_dma_tag = {
 
 int     bonito_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
+int     bonito_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
 
 struct mips_bus_space bonito_pci_io_space_tag = {
 	.bus_base = PHYS_TO_XKPHYS(BONITO_PCIIO_BASE, CCA_NC),
@@ -189,7 +191,7 @@ struct mips_bus_space bonito_pci_io_space_tag = {
 };
 
 struct mips_bus_space bonito_pci_mem_space_tag = {
-	.bus_base = PHYS_TO_XKPHYS(BONITO_PCILO_BASE, CCA_NC),
+	.bus_base = PHYS_TO_XKPHYS(0, CCA_NC),
 	._space_read_1 = generic_space_read_1,
 	._space_write_1 = generic_space_write_1,
 	._space_read_2 = generic_space_read_2,
@@ -204,7 +206,7 @@ struct mips_bus_space bonito_pci_mem_space_tag = {
 	._space_write_raw_4 = generic_space_write_raw_4,
 	._space_read_raw_8 = generic_space_read_raw_8,
 	._space_write_raw_8 = generic_space_write_raw_8,
-	._space_map = generic_space_map,
+	._space_map = bonito_mem_map,
 	._space_unmap = generic_space_unmap,
 	._space_subregion = generic_space_region,
 	._space_vaddr = generic_space_vaddr
@@ -1133,6 +1135,106 @@ bonito_io_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
 
 	*bshp = t->bus_base + offs;
 	return 0;
+}
+
+/*
+ * PCI memory access.
+ * Things are a bit complicated here, as we can either use one of the 64MB
+ * windows in PCILO space (making sure ranges spanning multiple windows will
+ * turn contiguous), or a direct access within the PCIHI space.
+ * Note that, on 2F systems, only the PCIHI range for which CPU->PCI accesses
+ * are enabled in the crossbar is usable.
+ */
+
+int
+bonito_mem_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
+{
+	uint32_t pcimap;
+	bus_addr_t pcilo_w[3];
+	bus_addr_t ws, we, w;
+	bus_addr_t end = offs + size - 1;
+	int is2f, pcilo_window;
+
+	/*
+	 * Decode PCIMAP, and figure out what PCILO mappings are
+	 * possible.
+	 */
+
+	pcimap = REGVAL(BONITO_PCIMAP);
+	pcilo_w[0] = (pcimap & BONITO_PCIMAP_PCIMAP_LO0) >>
+	    BONITO_PCIMAP_PCIMAP_LO0_SHIFT;
+	pcilo_w[1] = (pcimap & BONITO_PCIMAP_PCIMAP_LO1) >>
+	    BONITO_PCIMAP_PCIMAP_LO1_SHIFT;
+	pcilo_w[2] = (pcimap & BONITO_PCIMAP_PCIMAP_LO2) >>
+	    BONITO_PCIMAP_PCIMAP_LO2_SHIFT;
+
+	/*
+	 * Check if the 64MB areas we want to span are all available as
+	 * contiguous PCILO mappings.
+	 */
+
+	ws = offs >> 26;
+	we = end >> 26;
+
+	pcilo_window = -1;
+	if (ws == pcilo_w[0])
+		pcilo_window = 0;
+	else if (ws == pcilo_w[1])
+		pcilo_window = 1;
+	else if (ws == pcilo_w[2])
+		pcilo_window = 2;
+
+	if (pcilo_window >= 0) {
+		/* contiguous area test */
+		for (w = ws + 1; w <= we; w++) {
+			if (pcilo_window + (w - ws) > 2 ||
+			    w != pcilo_w[pcilo_window + (w - ws)]) {
+				pcilo_window = -1;
+				break;
+			}
+		}
+	}
+
+	if (pcilo_window >= 0) {
+		*bshp = t->bus_base + BONITO_PCILO_BASE +
+		    BONITO_PCIMAP_WINBASE(pcilo_window) +
+		    BONITO_PCIMAP_WINOFFSET(offs);
+		return 0;
+	}
+
+	/*
+	 * No luck, try a PCIHI mapping.
+	 */
+
+	/* may be used before curcpu() points to valid data */
+	if ((cp0_get_prid() & 0xffff) ==
+	    ((MIPS_LOONGSON2 << 8) | (0x2f - 0x2c)))
+		is2f = 1;
+	else
+		is2f = 0;
+
+	if (is2f) {
+		if (offs >= LS2F_PCIHI_BASE && end <= LS2F_PCIHI_TOP) {
+			*bshp = t->bus_base + offs;
+			return 0;
+		}
+	} else {
+		/* PCI1.5 */
+		if (offs >= BONITO_PCIHI_BASE && end <= BONITO_PCIHI_TOP) {
+			*bshp = t->bus_base + offs;
+			return 0;
+		}
+
+		/* PCI2 */
+		w = pcimap & BONITO_PCIMAP_PCIMAP_2 ? 0x80000000UL : 0;
+		if (offs >= w && end < (w + 0x80000000UL)) {
+			*bshp = t->bus_base + 0x80000000UL + (offs - w);
+			return 0;
+		}
+	}
+
+	return EINVAL;
 }
 
 /*

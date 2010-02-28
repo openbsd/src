@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.6 2010/02/26 14:53:11 miod Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.7 2010/02/28 21:35:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -543,13 +543,15 @@ smfb_wait(struct smfb *fb)
  * Early console code
  */
 
-int smfb_cnattach(bus_space_tag_t, pcitag_t, pcireg_t);
+int smfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
 
 int
-smfb_cnattach(bus_space_tag_t memt, pcitag_t tag, pcireg_t id)
+smfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
+    pcireg_t id)
 {
 	long defattr;
 	struct rasops_info *ri;
+	bus_space_handle_t fbh, regh;
 	vaddr_t fbbase, regbase;
 	pcireg_t bar;
 	int rc, is5xx;
@@ -571,13 +573,21 @@ smfb_cnattach(bus_space_tag_t memt, pcitag_t tag, pcireg_t id)
 	bar = pci_conf_read_early(tag, PCI_MAPREG_START);
 	if (PCI_MAPREG_TYPE(bar) != PCI_MAPREG_TYPE_MEM)
 		return EINVAL;
-	fbbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
+	rc = bus_space_map(memt, PCI_MAPREG_MEM_ADDR(bar), 1 /* XXX */,
+	    BUS_SPACE_MAP_LINEAR, &fbh);
+	if (rc != 0)
+		return rc;
+	fbbase = (vaddr_t)bus_space_vaddr(memt, fbh);
 
 	if (smfbcn.is5xx) {
 		bar = pci_conf_read_early(tag, PCI_MAPREG_START + 0x04);
 		if (PCI_MAPREG_TYPE(bar) != PCI_MAPREG_TYPE_MEM)
 			return EINVAL;
-		regbase = memt->bus_base + PCI_MAPREG_MEM_ADDR(bar);
+		rc = bus_space_map(memt, PCI_MAPREG_MEM_ADDR(bar), 1 /* XXX */,
+		    BUS_SPACE_MAP_LINEAR, &regh);
+		if (rc != 0)
+			return rc;
+		regbase = (vaddr_t)bus_space_vaddr(memt, regh);
 	} else {
 		regbase = 0;
 	}
