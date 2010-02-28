@@ -1818,6 +1818,7 @@
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
 ./usr/share/man/cat4/loongson
+./usr/share/man/cat4/loongson/apm.0
 ./usr/share/man/cat4/loongson/autoconf.0
 ./usr/share/man/cat4/loongson/bonito.0
 ./usr/share/man/cat4/loongson/gdiumiic.0
@@ -2830,6 +2831,9 @@
 ./usr/share/man/cat8/logresolve.0
 ./usr/share/man/cat8/loongson
 ./usr/share/man/cat8/loongson/MAKEDEV.0
+./usr/share/man/cat8/loongson/apm.0
+./usr/share/man/cat8/loongson/apmd.0
+./usr/share/man/cat8/loongson/zzz.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
 ./usr/share/man/cat8/luna88k
