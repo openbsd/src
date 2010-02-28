@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.134 2010/01/24 14:23:47 espie Exp $
+# $OpenBSD: pkg_create,v 1.135 2010/02/28 10:08:48 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,55 @@ use File::Basename;
 
 # Extra stuff needed to archive files
 package OpenBSD::PackingElement;
+
+sub count
+{
+	my ($self, $total) = @_;
+	$$total++;
+}
+
+sub size
+{
+	my ($self, $totsize) = @_;
+	if (defined $self->{size}) {
+		$$totsize += $self->{size};
+	}
+}
+sub mark_count
+{
+	my ($self, $progress, $done, $count) = @_;
+	$$done++;
+	$progress->show($$done, $count);
+}
+
+sub mark_progress
+{
+	my ($self, $progress, $done, $totsize) = @_;
+	return unless defined $self->{size};
+	$$done += $self->{size};
+	$progress->show($$done, $totsize);
+}
+
+sub verify_checksum_and_progress
+{
+	my ($self, $base, $stash, $progress, $done, $count) = @_;
+	$self->verify_checksum($base, $stash);
+	$self->mark_count($progress, $done, $count);
+}
+
+sub makesum_plist_and_progress
+{
+	my ($self, $p2, $base, $stash, $progress, $done, $count) = @_;
+	$self->makesum_plist($p2, $base, $stash);
+	$self->mark_count($progress, $done, $count);
+}
+
+sub create_package_and_progress
+{
+	my ($self, $arc, $base, $verbose, $progress, $done, $tot) = @_;
+	$self->mark_progress($progress, $done, $tot);
+	$self->create_package($arc, $base, $verbose);
+}
 
 sub create_package 
 {
@@ -369,14 +418,24 @@ sub close
 	close($self->{fh});
 }
 
+package OpenBSD::StubProgress;
+sub show {}
+
+sub set_header {}
+
+sub clear {}
+
 package main;
+
+my $progress;
+
 
 my $subst = OpenBSD::Subst->new;
 
 our ($opt_p, $opt_f, $opt_d, $opt_v,
 	$opt_s, $opt_A, $opt_L,
 	$opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
-	$opt_B, $opt_q, $opt_Q);
+	$opt_B, $opt_q, $opt_Q, $opt_x);
 
 sub deduce_name
 {
@@ -511,14 +570,14 @@ my ($cert, $privkey);
 
 
 set_usage(
-'pkg_create [-nQqv] [-A arches] [-B pkg-destdir] [-D name[=value]]',
+'pkg_create [-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 '[-L localbase] [-M displayfile] [-P pkg-dependency]',
 '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
 '-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
 
 my $plist = new OpenBSD::PackingList;
 try { 
-	getopts('p:f:d:vM:U:hs:A:L:B:D:P:W:nqQ', 
+	getopts('p:f:d:vM:U:hs:A:L:B:D:P:W:nqQx', 
 	{'D' => 
 		sub { 
 			$subst->parse_option(shift);
@@ -543,6 +602,13 @@ try {
 } catchall {
 	Usage($_);
 };
+
+if ($opt_x) {
+	$progress = bless {}, "OpenBSD::StubProgress";
+} else {
+	require OpenBSD::ProgressMeter;
+	$progress = OpenBSD::ProgressMeter->new;
+}
 
 if (@ARGV == 0) {
 	$regen_package = 1;
@@ -684,14 +750,26 @@ if (defined $opt_B) {
 
 
 unless (defined $opt_q && defined $opt_n) {
+	my ($count, $done) = (0, 0);
+	my $cont = 0;
+	$plist->count(\$count);
+	if (!$progress->set_header("checksumming")) {
+		$| = 1;
+		print "Checksumming...";
+		$cont = 1;
+	}
+	$progress->show(0, $count);
 	if ($regen_package) {
-		$plist->verify_checksum($base, {});
+		$plist->verify_checksum_and_progress($base, {}, $progress, \$done, $count);
 	} else {
 		my $p2 = OpenBSD::PackingList->new;
-		$plist->makesum_plist($p2, $base, {});
+		$plist->makesum_plist_and_progress($p2, $base, {}, $progress, \$done, $count);
 		$p2->set_infodir($plist->infodir);
 		$plist = $p2;
 	}
+	if ($cont) {
+		print "\n";
+    	}
 }
 
 if (!defined $plist->{name}) {
@@ -756,7 +834,11 @@ if ($opt_n) {
 	open(my $fh, "|-", OpenBSD::Paths->gzip, "-f", "-o", $wname);
 	my $wrarc = OpenBSD::Ustar->new($fh, $plist->infodir);
 
-	$plist->create_package($wrarc, $base, $opt_v);
+	$progress->set_header("archiving");
+	my ($done, $totsize) = (0, 0);
+	$plist->size(\$totsize);
+	$plist->create_package_and_progress($wrarc, $base, $opt_v, $progress, \$done, $totsize);
+	$progress->clear;
 	$wrarc->close;
 	if ($errors) {
 		unlink($wname);
