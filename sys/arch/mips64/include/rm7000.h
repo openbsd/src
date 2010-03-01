@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm7000.h,v 1.2 2005/01/31 21:35:49 grange Exp $ */
+/*	$OpenBSD: rm7000.h,v 1.3 2010/03/01 22:41:09 jasper Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -60,7 +60,7 @@
 #define	PCNT_SRC_PRIWBACK	0x14	/* Primary cache writebacks */
 #define	PCNT_SRC_DCSTALL	0x15	/* Dcache miss stall cycles */
 #define	PCNT_SRC_MISS		0x16	/* Cache misses */
-#define	PCNT_SRC_FPEXC		0x17	/* FP possible execption cycles */
+#define	PCNT_SRC_FPEXC		0x17	/* FP possible exception cycles */
 #define	PCNT_SRC_MULSLIP	0x18	/* Slip cycles due to mult. busy */
 #define	PCNT_SRC_CP0SLIP	0x19	/* CP0 Slip cycles */
 #define	PCNT_SRC_LDSLIP		0x1a	/* Slip cycles  due to pend. non-b ld */

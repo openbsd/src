@@ -1,4 +1,4 @@
-*	$OpenBSD: gen_except.sa,v 1.2 1996/05/29 21:05:29 niklas Exp $
+*	$OpenBSD: gen_except.sa,v 1.3 2010/03/01 22:41:09 jasper Exp $
 *	$NetBSD: gen_except.sa,v 1.3 1994/10/26 07:49:07 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -322,7 +322,7 @@ loop1:
 	move.b	#BUSY_SIZE-4,1(a7)		;write busy fmt word.
 busy_fr:
 	move.l	FP_SCR1(a6),WBTEMP_EX(a6)	;write
-	move.l	FP_SCR1+4(a6),WBTEMP_HI(a6)	;execptional op to
+	move.l	FP_SCR1+4(a6),WBTEMP_HI(a6)	;exceptional op to
 	move.l	FP_SCR1+8(a6),WBTEMP_LO(a6)	;wbtemp
 	bset.b	#E3,E_BYTE(a6)			;set E3 flag
 	bclr.b	#E1,E_BYTE(a6)			;make sure E1 is clear

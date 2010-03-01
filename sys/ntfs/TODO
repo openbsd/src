@@ -1,4 +1,4 @@
-$OpenBSD: TODO,v 1.4 2006/01/13 22:28:36 miod Exp $
+$OpenBSD: TODO,v 1.5 2010/03/01 22:41:09 jasper Exp $
 $NetBSD: TODO,v 1.1 2002/12/23 17:38:31 jdolecek Exp $
 
 - convert the code to do caching in buffer cache indexed by
@@ -35,4 +35,4 @@ $NetBSD: TODO,v 1.1 2002/12/23 17:38:31 jdolecek Exp $
 
 - write necessary bits to support NTFS in libsa
 
-- NTFS ACL support (though usefullness of such feature is arguable)
+- NTFS ACL support (though usefulness of such feature is arguable)
