@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.21 2009/11/06 23:59:14 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.22 2010/03/01 19:00:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -16,20 +16,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <err.h>
-
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/pciio.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcidevs_data.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define PCIDEV	"/dev/pci"
 
@@ -43,6 +45,7 @@ int pci_nfuncs(int, int);
 int pci_read(int, int, int, u_int32_t, u_int32_t *);
 void dump_caplist(int, int, int, u_int8_t);
 int dump_rom(int, int, int);
+int dump_vga_bios(void);
 
 __dead void
 usage(void)
@@ -611,6 +614,15 @@ int
 dump_rom(int bus, int dev, int func)
 {
 	struct pci_rom rom;
+	u_int32_t cr, addr;
+
+	if (pci_read(bus, dev, func, PCI_ROM_REG, &addr) != 0 ||
+	    pci_read(bus, dev, func, PCI_CLASS_REG, &cr) != 0)
+		return (errno);
+
+	if (addr == 0 && PCI_CLASS(cr) == PCI_CLASS_DISPLAY &&
+	    PCI_SUBCLASS(cr) == PCI_SUBCLASS_DISPLAY_VGA)
+		return dump_vga_bios();
 
 	bzero(&rom, sizeof(rom));
 	rom.pr_sel.pc_bus = bus;
@@ -630,4 +642,34 @@ dump_rom(int bus, int dev, int func)
 		return (errno);
 
 	return (0);
+}
+
+#define VGA_BIOS_ADDR	0xc0000
+#define VGA_BIOS_LEN	0x10000
+
+int
+dump_vga_bios(void)
+{
+#if defined(__amd64__) || defined(__i386__)
+	void *bios;
+	int fd;
+
+	fd = open(_PATH_MEM, O_RDONLY, 0777);
+	if (fd == -1)
+		err(1, "%s", _PATH_MEM);
+
+	bios = malloc(VGA_BIOS_LEN);
+	if (bios == NULL)
+		return (ENOMEM);
+
+	if (pread(fd, bios, VGA_BIOS_LEN, VGA_BIOS_ADDR) == -1)
+		err(1, "%s", _PATH_MEM);
+
+	if (write(romfd, bios, VGA_BIOS_LEN) == -1)
+		return (errno);
+
+	return (0);
+#else
+	return (ENODEV);
+#endif
 }
