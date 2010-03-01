@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.31 2009/12/26 09:46:17 jmc Exp $
+.\"	$OpenBSD: termios.4,v 1.32 2010/03/01 07:54:07 jmc Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)termios.4	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 26 2009 $
+.Dd $Mdocdate: March 1 2010 $
 .Dt TERMIOS 4
 .Os
 .Sh NAME
@@ -1213,10 +1213,15 @@ or if
 has been set, the open() function returns
 immediately without waiting for the connection.
 .Pp
-The
+If
 .Dv CCTS_OFLOW
 .Pf ( Dv CRTSCTS )
-flag is currently unused.
+is set,
+transmission is stopped when
+.Dv CTS
+is lowered and resumed when
+.Dv CTS
+is raised.
 .Pp
 If
 .Dv MDMBUF
