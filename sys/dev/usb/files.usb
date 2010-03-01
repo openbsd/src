@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.87 2009/12/18 04:16:14 yuo Exp $
+#	$OpenBSD: files.usb,v 1.88 2010/03/01 07:56:47 yuo Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -158,6 +158,11 @@ file	dev/usb/uthum.c			uthum
 device	utrh: hid
 attach	utrh at uhidbus
 file	dev/usb/utrh.c			utrh
+
+# Maywa-denki/Kayac YUREX
+device	uyurex: hid
+attach	uyurex at uhidbus
+file	dev/usb/uyurex.c		uyurex
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus

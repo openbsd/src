@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.478 2010/02/25 17:44:21 damien Exp $
+$OpenBSD: usbdevs,v 1.479 2010/03/01 07:56:47 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -407,7 +407,7 @@ vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor ICOM		0x0c26	Icom
 vendor GNOTOMETRICS	0x0c33	GN Otometrics
-vendor MICRODIA		0x0c45	Microdia
+vendor MICRODIA		0x0c45	Microdia / Sonix Technology Co., Ltd.
 vendor SEALEVEL		0x0c52	Sealevel System
 vendor JETI		0x0c6c	JETI
 vendor EASYDISK		0x0c76	EasyDisk
@@ -2524,6 +2524,9 @@ product MSI RT2573_4		0xa874	RT2573
 product MSI AX88772A		0xa877	AX88772A
 product MSI BLUETOOTH_2		0xa970	Bluetooth
 product MSI BLUETOOTH_3		0xa97a	Bluetooth
+
+/* Microdia / Sonix Techonology Co., Ltd. products */
+product MICRODIA YUREX		0x1010	YUREX
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
