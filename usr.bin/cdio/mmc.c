@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmc.c,v 1.27 2009/12/04 07:43:26 claudio Exp $	*/
+/*	$OpenBSD: mmc.c,v 1.28 2010/03/01 02:09:44 krw Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -31,12 +31,110 @@
 #include "extern.h"
 
 extern int fd;
-extern int mediacap[];
+extern u_int8_t mediacap[];
 extern char *cdname;
+extern int verbose;
 
 #define SCSI_GET_CONFIGURATION		0x46
 
 #define MMC_FEATURE_HDR_LEN		8
+
+static const struct {
+	u_int16_t id;
+	char *name;
+} mmc_feature[] = {
+	{ 0x0000, "Profile List" },
+	{ 0x0001, "Core" },
+	{ 0x0002, "Morphing" },
+	{ 0x0003, "Removable Medium" },
+	{ 0x0004, "Write Protect" },
+	{ 0x0010, "Random Readable" },
+	{ 0x001d, "Multi-Read" },
+	{ 0x001e, "CD Read" },
+	{ 0x001f, "DVD Read" },
+	{ 0x0020, "Random Writable" },
+	{ 0x0021, "Incremental Streaming Writable" },
+	{ 0x0022, "Sector Erasable" },
+	{ 0x0023, "Formattable" },
+	{ 0x0024, "Hardware Defect Management" },
+	{ 0x0025, "Write Once" },
+	{ 0x0026, "Restricted Overwrite" },
+	{ 0x0027, "CD-RW CAV Write" },
+	{ 0x0028, "MRW" },
+	{ 0x0029, "Enhanced Defect Reporting" },
+	{ 0x002a, "DVD+RW" },
+	{ 0x002b, "DVD+R" },
+	{ 0x002c, "Rigid Restricted Overwrite" },
+	{ 0x002d, "CD Track at Once (TAO)" },
+	{ 0x002e, "CD Mastering (Session at Once)" },
+	{ 0x002f, "DVD-RW Write" },
+	{ 0x0030, "DDCD-ROM (Legacy)" },
+	{ 0x0031, "DDCD-R (Legacy)" },
+	{ 0x0032, "DDCD-RW (Legacy)" },
+	{ 0x0033, "Layer Jump Recording" },
+	{ 0x0037, "CD-RW Media Write Support" },
+	{ 0x0038, "BD-R Pseudo-Overwrite (POW)" },
+	{ 0x003a, "DVD+RW Dual Layer" },
+	{ 0x003b, "DVD+R Dual Layer" },
+	{ 0x0040, "BD Read" },
+	{ 0x0041, "BD Write" },
+	{ 0x0042, "Timely Safe Recording (TSR)" },
+	{ 0x0050, "HD DVD Read" },
+	{ 0x0051, "HD DVD Write" },
+	{ 0x0080, "Hybrid Disc" },
+	{ 0x0100, "Power Management" },
+	{ 0x0101, "S.M.A.R.T." },
+	{ 0x0102, "Embedded Changer" },
+	{ 0x0103, "CD Audio External Play (Legacy)" },
+	{ 0x0104, "Microcode Upgrade" },
+	{ 0x0105, "Timeout" },
+	{ 0x0106, "DVD CSS" },
+	{ 0x0107, "Real Time Streaming" },
+	{ 0x0108, "Drive Serial Number" },
+	{ 0x0109, "Media Serial Number" },
+	{ 0x010a, "Disc Control Blocks (DCBs)" },
+	{ 0x010b, "DVD CPRM" },
+	{ 0x010c, "Firmware Information" },
+	{ 0x010d, "AACS" },
+	{ 0x0110, "VCPS" },
+	{ 0, NULL }
+};
+
+static const struct {
+	u_int16_t id;
+	char *name;
+} mmc_profile[] = {
+	{ 0x0001, "Re-writable disk, capable of changing behaviour" },
+	{ 0x0002, "Re-writable, with removable media" },
+	{ 0x0003, "Magneto-Optical disk with sector erase capability" },
+	{ 0x0004, "Optical write once" },
+	{ 0x0005, "Advance Storage -- Magneto-Optical" },
+	{ 0x0008, "Read only Compact Disc" },
+	{ 0x0009, "Write once Compact Disc" },
+	{ 0x000a, "Re-writable Compact Disc" },
+	{ 0x0010, "Read only DVD" },
+	{ 0x0011, "Write once DVD using Sequential recording" },
+	{ 0x0012, "Re-writable DVD" },
+	{ 0x0013, "Re-recordable DVD using Restricted Overwrite" },
+	{ 0x0014, "Re-recordable DVD using Sequential recording" },
+	{ 0x0015, "Dual Layer DVD-R using Sequential recording" },
+	{ 0x0016, "Dual Layer DVD-R using Layer Jump recording" },
+	{ 0x001a, "DVD+ReWritable" },
+	{ 0x001b, "DVD+Recordable" },
+	{ 0x0020, "DDCD-ROM" },
+	{ 0x0021, "DDCD-R" },
+	{ 0x0022, "DDCD-RW" },
+	{ 0x002a, "DVD+Rewritable Dual Layer" },
+	{ 0x002b, "DVD+Recordable Dual Layer" },
+	{ 0x003e, "Blu-ray Disc ROM" },
+	{ 0x003f, "Blu-ray Disc Recordable -- Sequential Recording Mode" },
+	{ 0x0040, "Blu-ray Disc Recordable -- Random Recording Mode" },
+	{ 0x0041, "Blu-ray Disc Rewritable" },
+	{ 0x004e, "Read-only HD DVD" },
+	{ 0x004f, "Write-once HD DVD" },
+	{ 0x0050, "Rewritable HD DVD" },
+	{ 0, NULL }
+};
 
 int
 get_media_type(void)
@@ -63,7 +161,7 @@ get_media_type(void)
 	scr.senselen = SENSEBUFLEN;
 
 	error = ioctl(fd, SCIOCCOMMAND, &scr);
-	if (error != -1 && scr.retsts == 0 && scr.datalen_used > 7) {
+	if (error != -1 && scr.retsts == SCCMD_OK && scr.datalen_used > 7) {
 		disctype = (buf[6] >> 6) & 0x1;
 		if (disctype == 0)
 			rv = MEDIATYPE_CDR;
@@ -75,16 +173,16 @@ get_media_type(void)
 }
 
 int
-get_media_capabilities(int *cap, int rt)
+get_media_capabilities(u_int8_t *cap, int rt)
 {
 	scsireq_t scr;
 	u_char buf[4096];
 	u_int32_t i, dlen;
-	u_int16_t feature, tmp;
+	u_int16_t feature, profile, tmp;
 	u_int8_t feature_len;
-	int error;
+	int current, error, j, k;
 
-	memset(cap, 0, MMC_FEATURE_MAX / 8);
+	memset(cap, 0, MMC_FEATURE_MAX / NBBY);
 	memset(buf, 0, sizeof(buf));
 	memset(&scr, 0, sizeof(scr));
 
@@ -101,7 +199,7 @@ get_media_capabilities(int *cap, int rt)
 	scr.senselen = SENSEBUFLEN;
 
 	error = ioctl(fd, SCIOCCOMMAND, &scr);
-	if (error == -1 || scr.retsts != 0)
+	if (error == -1 || scr.retsts != SCCMD_OK)
 		return (-1);
 	if (scr.datalen_used < MMC_FEATURE_HDR_LEN)
 		return (-1);	/* Can't get the header. */
@@ -111,6 +209,8 @@ get_media_capabilities(int *cap, int rt)
 	if (dlen > scr.datalen_used)
 		dlen = scr.datalen_used;
 
+	if (verbose > 1)
+		printf("Features:\n");
 	for (i = MMC_FEATURE_HDR_LEN; i + 3 < dlen; i += feature_len) {
 		feature_len = buf[i + 3] + 4;
 		if (feature_len + i > dlen)
@@ -120,6 +220,58 @@ get_media_capabilities(int *cap, int rt)
 		if (feature >= MMC_FEATURE_MAX)
 			break;
 
+		if (verbose > 1) {
+			printf("0x%04x", feature);
+			for (j = 0; mmc_feature[j].name != NULL; j++)
+				if (feature == mmc_feature[j].id)
+					break;
+			if (mmc_feature[j].name == NULL)
+				printf(" <Undocumented>");
+			else
+				printf(" %s", mmc_feature[j].name);
+			if (feature_len > 4)
+				printf(" (%d bytes of data)", feature_len - 4);
+			printf("\n");
+			if (verbose > 2) {
+				printf("    ");
+				for (j = i; j < i + feature_len; j++) {
+					printf("%02x", buf[j]);
+					if ((j + 1) == (i + feature_len))
+						printf("\n");
+					else if ((j > i) && ((j - i + 1) % 16
+					    == 0))
+						printf("\n    ");
+					else if ((j - i) == 3)
+						printf("|");
+					else
+						printf(" ");
+				}
+			}
+		}
+		if (feature == 0 && verbose > 1) {
+			if (verbose > 2)
+				printf("    Profiles:\n");
+			for (j = i + 4; j < i + feature_len; j += 4) {
+				profile = betoh16(*(u_int16_t *)(buf+j));
+				current = buf[j+2] == 1;
+				if (verbose < 3 && !current)
+					continue;
+				if (current)
+					printf("  * ");
+				else
+					printf("    ");
+				printf("0x%04x", profile);
+				for (k = 0; mmc_profile[k].name != NULL; k++)
+					if (profile == mmc_profile[k].id)
+						break;
+				if (mmc_profile[k].name == NULL)
+					printf(" <Undocumented>");
+				else
+					printf(" %s", mmc_profile[k].name);
+				printf(" %s\n", current ? "[Current Profile]" :
+				    "" );
+			}
+		}
 		setbit(cap, feature);
 	}
 

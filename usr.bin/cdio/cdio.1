@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.54 2009/06/09 22:20:44 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.55 2010/03/01 02:09:44 krw Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 9 2009 $
+.Dd $Mdocdate: March 1 2010 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -74,7 +74,9 @@ Silent mode.
 Do not print table headers or human-readable comments.
 .It Fl v
 Verbose mode.
-Print as much information as possible.
+A second occurence of
+.Fl v
+causes even more information to be printed.
 .El
 .Pp
 The available commands are listed below.
@@ -137,6 +139,15 @@ A synonym for
 Print the list of available commands.
 .It Ic info
 Print the Table Of Contents (TOC).
+If
+.Fl v
+is also specified,
+the current features and current profile is printed.
+If
+.Fl v
+is specified twice,
+the complete list of supported profiles
+and a hex dump of each current feature is printed.
 .It Ic next
 Play the next track.
 If we're at the last track, stop.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.71 2009/06/09 22:20:44 jmc Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.72 2010/03/01 02:09:44 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -150,7 +150,7 @@ struct cd_toc_entry *toc_buffer;
 char		*cdname;
 int		fd = -1;
 int		writeperm = 0;
-int		mediacap[MMC_FEATURE_MAX / 8];
+u_int8_t	mediacap[MMC_FEATURE_MAX / NBBY];
 int		verbose = 1;
 int		msf = 1;
 const char	*cddb_host;
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 			verbose = 0;
 			break;
 		case 'v':
-			verbose = 2;
+			verbose++;
 			break;
 		case 'f':
 			cdname = optarg;
@@ -266,7 +266,7 @@ main(int argc, char **argv)
 
 	if (!cdname) {
 		cdname = DEFAULT_CD_DRIVE;
-		if (verbose == 2)
+		if (verbose > 1)
 			fprintf(stderr,
 			    "No CD device name specified. Defaulting to %s.\n",
 			    cdname);
@@ -1216,6 +1216,9 @@ info(char *arg)
 {
 	struct ioc_toc_header h;
 	int rc, i, n;
+
+	if (get_media_capabilities(mediacap, 1) == -1)
+		errx(1, "Can't determine media type");
 
 	rc = ioctl(fd, CDIOREADTOCHEADER, &h);
 	if (rc >= 0) {

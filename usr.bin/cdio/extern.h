@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.14 2008/08/30 10:41:38 fgsch Exp $ */
+/* $OpenBSD: extern.h,v 1.15 2010/03/01 02:09:44 krw Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -74,7 +74,7 @@ extern char ** 		cddb(const char *, int, struct cd_toc_entry *, char *);
 extern unsigned long 	cddb_discid(int, struct cd_toc_entry *);
 extern void		free_names(char **);
 extern int		get_media_type(void);
-extern int		get_media_capabilities(int *, int);
+extern int		get_media_capabilities(u_int8_t *, int);
 extern int		blank(void);
 extern int		unit_ready(void);
 extern int		synchronize_cache(void);
