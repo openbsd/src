@@ -1786,11 +1786,13 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/_types.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/apmvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/asm.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/atomic.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/autoconf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/bus.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/cdefs.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/conf.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/cpu.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/cpustate.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/db_machdep.ph
@@ -2480,6 +2482,9 @@
 ./usr/local/libdata/perl5/site_perl/mips64el-openbsd
 ./usr/mdec/boot
 ./usr/mdec/mbr
+./usr/sbin/apm
+./usr/sbin/apmd
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
+./usr/sbin/zzz

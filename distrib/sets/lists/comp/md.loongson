@@ -151,11 +151,13 @@
 ./usr/include/ieeefp.h
 ./usr/include/loongson
 ./usr/include/loongson/_types.h
+./usr/include/loongson/apmvar.h
 ./usr/include/loongson/asm.h
 ./usr/include/loongson/atomic.h
 ./usr/include/loongson/autoconf.h
 ./usr/include/loongson/bus.h
 ./usr/include/loongson/cdefs.h
+./usr/include/loongson/conf.h
 ./usr/include/loongson/cpu.h
 ./usr/include/loongson/cpustate.h
 ./usr/include/loongson/db_machdep.h
