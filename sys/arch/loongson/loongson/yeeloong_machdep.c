@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.9 2010/02/28 22:39:14 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.10 2010/03/01 09:29:37 otto Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -232,9 +232,9 @@ fuloong_setup(void)
 	int serial;
 
 	envvar = pmon_getenv("nokbd");
-	serial = envvar == 0;
+	serial = envvar != NULL;
 	envvar = pmon_getenv("novga");
-	serial = serial && envvar == 0;
+	serial = serial && envvar != NULL;
 
 	if (serial) {
                 comconsiot = &bonito_pci_io_space_tag;
