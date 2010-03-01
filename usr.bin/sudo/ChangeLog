@@ -1,4 +1,11 @@
+2010-02-22  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+        * match.c: Check for pseudo-command by looking at the first
+          character of the command in sudoers instead of checking the
+          user-supplied command for a slash.
+
 2010-02-09  Todd C. Miller  <Todd.Miller@courtesan.com>
+
 	* toke.l: Fix size arg when realloc()ing include stack.
 	  From Daniel Kopecek
 

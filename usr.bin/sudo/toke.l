@@ -71,10 +71,6 @@
 #include "parse.h"
 #include <gram.h>
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: toke.l,v 1.40 2009/11/22 14:54:04 millert Exp $";
-#endif /* lint */
-
 extern YYSTYPE yylval;
 extern int parse_error;
 int sudolineno = 1;
@@ -844,7 +840,7 @@ init_lexer()
 	    efree(pl);
 	}
 	efree(istack[idepth].path);
-	if (!istack[idepth].keepopen)
+	if (idepth && !istack[idepth].keepopen)
 	    fclose(istack[idepth].bs->yy_input_file);
 	yy_delete_buffer(istack[idepth].bs);
     }
@@ -869,7 +865,7 @@ _push_include(path, isdir)
 	}
 	istacksize += SUDOERS_STACK_INCREMENT;
 	istack = (struct include_stack *) realloc(istack,
-	    sizeof(istack) * istacksize);
+	    sizeof(*istack) * istacksize);
 	if (istack == NULL) {
 	    yyerror("unable to allocate memory");
 	    return(FALSE);
