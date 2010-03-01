@@ -1827,6 +1827,7 @@
 ./usr/share/man/cat4/loongson/kmem.0
 ./usr/share/man/cat4/loongson/mem.0
 ./usr/share/man/cat4/loongson/mfokclock.0
+./usr/share/man/cat4/loongson/sisfb.0
 ./usr/share/man/cat4/loongson/smfb.0
 ./usr/share/man/cat4/loongson/stsec.0
 ./usr/share/man/cat4/loongson/voyager.0
