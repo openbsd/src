@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.29 2010/02/26 09:59:44 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.30 2010/03/01 08:55:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -621,6 +621,45 @@ lsa_find_rtr_frag(struct area *area, u_int32_t rtr_id, unsigned int n)
 	}
 
 	return (v);
+}
+
+u_int32_t
+lsa_find_lsid(struct lsa_tree *tree, u_int16_t type, u_int32_t adv_rtr,
+    int (*cmp)(struct lsa *, struct lsa *), struct lsa *lsa)
+{
+#define MIN(x, y)	((x) < (y) ? (x) : (y))
+	struct vertex	*v;
+	struct vertex	 key;
+	u_int32_t	 min, cur;
+
+	key.ls_id = 0;
+	key.adv_rtr = ntohl(adv_rtr);
+	key.type = ntohs(type);
+
+	cur = 0;
+	min = 0xffffffffU;
+	v = RB_NFIND(lsa_tree, tree, &key);
+	while (v) {
+		if (v->type != key.type ||
+		    v->adv_rtr != key.adv_rtr) {
+			/* no more interesting LSAs */
+			min = MIN(min, cur + 1);
+			return (htonl(min));
+		}
+		if (cmp(lsa, v->lsa) == 0) {
+			/* match, return this ls_id */
+			return (htonl(v->ls_id));
+		}
+		if (v->ls_id > cur + 1)
+			min = cur + 1;
+		cur = v->ls_id;
+		if (cur + 1 < cur)
+			fatalx("King Bula sez: somebody got to many LSA");
+		v = RB_NEXT(lsa_tree, tree, v);
+	}
+	min = MIN(min, cur + 1);
+	return (htonl(min));
+#undef MIN
 }
 
 u_int16_t
