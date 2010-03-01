@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uyurex.4,v 1.1 2010/03/01 07:59:16 yuo Exp $
+.\"	$OpenBSD: uyurex.4,v 1.2 2010/03/01 09:36:24 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Yojiro UO <yuo@nui.org>
 .\"
@@ -25,14 +25,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides the support for the Maywa-denki & KAYAC's YUREX device.
-This device has a sensor to count user's leg twitch and it
+driver provides support for the Maywa-denki & KAYAC YUREX device.
+The device has a sensor to count user's leg twitch and it
 possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
 interface.
-The counter unit for twitch is "BBU" (BinBo-YUsuri or 
-Bounding Body from Unconciousness) and the unit for BBU speed 
+The counter unit for twitch is "BBU" (BinBo-YUsuri or
+Bounding Body from Unconciousness) and the unit for BBU speed
 is "mBBU/sec" (milli BBU per second).
 .Sh SEE ALSO
 .Xr intro 4 ,
@@ -41,7 +41,7 @@ is "mBBU/sec" (milli BBU per second).
 .Xr sysctl 8
 .Rs
 .%T The YUREX Web Page
-.%O http://bbu.kayac.com/en/about/ 
+.%O http://bbu.kayac.com/en/about/
 .Re
 .Sh AUTHORS
 .An -nosplit
