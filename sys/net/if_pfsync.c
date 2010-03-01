@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.142 2010/02/17 00:00:04 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.143 2010/03/01 12:29:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -347,6 +347,7 @@ int
 pfsync_clone_destroy(struct ifnet *ifp)
 {
 	struct pfsync_softc *sc = ifp->if_softc;
+	int s;
 
 	timeout_del(&sc->sc_bulk_tmo);
 	timeout_del(&sc->sc_tmo);
@@ -361,8 +362,10 @@ pfsync_clone_destroy(struct ifnet *ifp)
 
 	pfsync_drop(sc);
 
+	s = splsoftnet();
 	while (sc->sc_deferred > 0)
 		pfsync_undefer(TAILQ_FIRST(&sc->sc_deferrals), 0);
+	splx(s);
 
 	pool_destroy(&sc->sc_pool);
 	free(sc->sc_imo.imo_membership, M_IPMOPTS);
@@ -1758,7 +1761,6 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	pd = pool_get(&sc->sc_pool, M_NOWAIT);
 	if (pd == NULL)
 		return (0);
-	sc->sc_deferred++;
 
 	m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	SET(st->state_flags, PFSTATE_ACK);
@@ -1766,7 +1768,9 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	pd->pd_st = st;
 	pd->pd_m = m;
 
+	sc->sc_deferred++;
 	TAILQ_INSERT_TAIL(&sc->sc_deferrals, pd, pd_entry);
+
 	timeout_set(&pd->pd_tmo, pfsync_defer_tmo, pd);
 	timeout_add(&pd->pd_tmo, defer);
 
@@ -1782,11 +1786,11 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 
 	splsoftassert(IPL_SOFTNET);
 
+	timeout_del(&pd->pd_tmo); /* bah */
 	TAILQ_REMOVE(&sc->sc_deferrals, pd, pd_entry);
 	sc->sc_deferred--;
 
 	CLR(pd->pd_st->state_flags, PFSTATE_ACK);
-	timeout_del(&pd->pd_tmo); /* bah */
 	if (drop)
 		m_freem(pd->pd_m);
 	else {
@@ -1813,6 +1817,8 @@ pfsync_deferred(struct pf_state *st, int drop)
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_deferral *pd;
 
+	splsoftassert(IPL_SOFTNET);
+
 	TAILQ_FOREACH(pd, &sc->sc_deferrals, pd_entry) {
 		 if (pd->pd_st == st) {
 			pfsync_undefer(pd, drop);
@@ -1820,7 +1826,7 @@ pfsync_deferred(struct pf_state *st, int drop)
 		}
 	}
 
-	panic("pfsync_send_deferred: unable to find deferred state");
+	panic("pfsync_deferred: unable to find deferred state");
 }
 
 void
