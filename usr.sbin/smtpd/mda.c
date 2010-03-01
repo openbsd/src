@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.35 2010/01/03 14:37:37 chl Exp $	*/
+/*	$OpenBSD: mda.c,v 1.36 2010/03/01 22:00:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <errno.h>
 #include <event.h>
 #include <pwd.h>
 #include <signal.h>
@@ -414,7 +415,7 @@ void
 mda_store(struct batch *b)
 {
 	char		*p;
-	int		 ch, ret;
+	int		 ch, ret, nbytes;
 	socklen_t	 len;
 
 	if (b->message.sender.user[0] && b->message.sender.domain[0])
@@ -450,8 +451,20 @@ mda_store(struct batch *b)
 			fatal("mda_store: getsockopt");
 		if ((b->rbuf = malloc(b->rbufsz)) == NULL)
 			fatal(NULL);
-		if (write(fileno(b->mboxfp), p, ret) != ret)
-			fatal("mda_store: write");
+
+		do {
+			nbytes = write(fileno(b->mboxfp), p, ret);
+			if (nbytes == -1 &&
+			    (errno != EINTR && errno != EAGAIN))
+				break;
+		} while (nbytes == -1);
+
+		if (nbytes == -1) {
+			log_warn("mda_store: write");
+			fclose(b->mboxfp);
+			return;
+		}
+
 		event_set(&b->ev, fileno(b->mboxfp), EV_WRITE|EV_PERSIST,
 		    mda_event, b);
 		event_add(&b->ev, NULL);
@@ -465,13 +478,21 @@ mda_event(int fd, short event, void *p)
 {
 	struct batch	*b = p;
 	size_t		 len;
+	int		 error;
 
+	error = 0;
 	len = fread(b->rbuf, 1, b->rbufsz, b->datafp);
-	if (ferror(b->datafp))
-		fatal("mda_event: fread");
-	if (write(fd, b->rbuf, len) != (ssize_t)len)
-		fatal("mda_event: write");
-	if (feof(b->datafp)) {
+	if (ferror(b->datafp)) {
+		log_warnx("mda_event: read failure");
+		error = 1;
+	}
+
+	if (write(fd, b->rbuf, len) != (ssize_t)len) {
+		log_warnx("mda_event: write failure");
+		error = 1;
+	}
+
+	if (feof(b->datafp) || error) {
 		event_del(&b->ev);
 		mda_store_done(b);
 	}
@@ -548,14 +569,27 @@ mda_done(struct smtpd *env, struct batch *b)
 		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
 
 		/* log status */
-		log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
-		    b->message.message_id,
-		    b->message.recipient.user,
-		    b->message.recipient.domain,
-		    time(NULL) - b->message.creation,
-		    b->message.status & S_MESSAGE_PERMFAILURE ? "MdaPermError" :
-		    b->message.status & S_MESSAGE_TEMPFAILURE ? "MdaTempError" :
-		    "Sent");
+		if (b->message.recipient.rule.r_action != A_MAILDIR &&
+		    b->message.recipient.rule.r_action != A_MBOX) {
+			log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
+			    b->message.message_id,
+			    b->message.session_rcpt.user,
+			    b->message.session_rcpt.domain,
+			    time(NULL) - b->message.creation,
+			    b->message.status & S_MESSAGE_PERMFAILURE ? "MdaPermError" :
+			    b->message.status & S_MESSAGE_TEMPFAILURE ? "MdaTempError" :
+			    "Sent");
+		}
+		else {
+			log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
+			    b->message.message_id,
+			    b->message.recipient.user,
+			    b->message.recipient.domain,
+			    time(NULL) - b->message.creation,
+			    b->message.status & S_MESSAGE_PERMFAILURE ? "MdaPermError" :
+			    b->message.status & S_MESSAGE_TEMPFAILURE ? "MdaTempError" :
+			    "Sent");
+		}
 
 		/* deallocate resources */
 		SPLAY_REMOVE(batchtree, &env->batch_queue, b);
