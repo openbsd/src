@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.95 2010/01/10 08:59:19 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.96 2010/03/01 13:04:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -577,7 +577,7 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 			break;
 		}
 		default:
-			log_warnx("parent_dispatch_mfa: got imsg %d",
+			log_warnx("parent_dispatch_mda: got imsg %d",
 			    imsg.hdr.type);
 			fatalx("parent_dispatch_mda: unexpected imsg");
 		}
