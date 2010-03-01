@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.41 2009/07/10 21:42:26 sthen Exp $
+.\" $OpenBSD: re.4,v 1.42 2010/03/01 09:28:20 sobrado Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -31,12 +31,12 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd $Mdocdate: July 10 2009 $
+.Dd $Mdocdate: March 1 2010 $
 .Dt RE 4
 .Os
 .Sh NAME
 .Nm re
-.Nd RealTek 8139C+/8169/816xS/811xS/8168/810xE 10/100/Gigabit Ethernet device
+.Nd Realtek 8139C+/8169/816xS/811xS/8168/810xE 10/100/Gigabit Ethernet device
 .Sh SYNOPSIS
 .Cd "re* at pci?"
 .Cd "re* at cardbus?"
@@ -47,7 +47,7 @@
 The
 .Nm
 driver provides support for various NICs based on the
-RealTek RTL8139C+, RTL8169, RTL816xS, RTL811xS, RTL8168 and
+Realtek RTL8139C+, RTL8169, RTL816xS, RTL811xS, RTL8168 and
 RTL810xE PCI and PCI Express Ethernet controllers,
 including the following:
 .Pp
@@ -146,7 +146,7 @@ or
 modes.
 .It 1000baseT
 Set 1000baseT operation over twisted pair.
-The RealTek GigE chips support 1000Mbps in
+The Realtek GigE chips support 1000Mbps in
 .Ar full-duplex
 mode only.
 .\" .It 1000baseSX
@@ -182,7 +182,7 @@ For more information on configuring this device, see
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
-.%T RealTek Semiconductor RTL8139C+, RTL8169, RTL8169S and RTL8110S datasheets
+.%T Realtek Semiconductor RTL8139C+, RTL8169, RTL8169S and RTL8110S datasheets
 .%O http://www.realtek.com.tw
 .Re
 .Sh HISTORY
@@ -215,5 +215,5 @@ however it is possible to detect it.
 The user should ensure the NIC is installed in a 32-bit PCI slot to avoid
 this problem.
 .Pp
-The RealTek 8169, 8169S and 8110S chips are only capable of transmitting
+The Realtek 8169, 8169S and 8110S chips are only capable of transmitting
 Jumbo frames up to 7440 bytes in size.
