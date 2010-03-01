@@ -1,21 +1,22 @@
-dnl	$OpenBSD: hardware,v 1.6 2010/02/19 15:14:16 miod Exp $
+dnl	$OpenBSD: hardware,v 1.7 2010/03/01 17:43:30 otto Exp $
 The following machines are supported by OpenBSD/MACHINE:
 
 	Lemote Fuloong 2F
 	  onboard serial port, audio, USB and Ethernet are supported;
-          onboard display is not supported yet.
+	  onboard display is only supported in the 640x400x8 video mode
+	  set up by the firmware.
 
 	Lemote Yeeloong (8.9" and 10.1" models)
 	  all onboard devices (keyboard, trackpad, display, SD card reader,
 	  USB ports, Ethernet adapter, wireless network adapter, audio,
-	  webcam on the 8.9" model) are supported; suspend/resume and battery
-	  information are not supported yet.
+	  webcam on the 8.9" model, battery and power information) are
+	  supported; suspend/resume is not supported yet.
 
 	Gdium Liberty 1000
 	  all onboard devices (keyboard, trackpad, display, SD card reader,
-	  USB ports, Ethernet adapter, wireless network adapter) are supported
-	  except for the audio controller; suspend/resume and battery
-	  information are not supported yet; keyboard actions involving
+	  USB ports, Ethernet adapter, wireless network adapter,
+	  battery information) are supported except for the audio controller;
+	  suspend/resume is not supported yet; keyboard actions involving
 	  the `Fn' key are not working either at the moment.
 
 The following USB devices have been tested to work on OpenBSD/MACHINE:
