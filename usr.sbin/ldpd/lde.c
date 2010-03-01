@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.8 2010/02/19 12:49:21 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.9 2010/03/01 09:05:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -242,7 +242,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			rt_snap(imsg.hdr.peerid);
 
 			lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END,
-			    imsg.hdr.peerid, 0, 0, 0);
+			    imsg.hdr.peerid, 0, NULL, 0);
 
 			break;
 		case IMSG_LABEL_REQUEST:
