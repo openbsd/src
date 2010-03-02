@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.208 2010/02/19 00:03:21 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.209 2010/03/02 00:32:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -477,6 +477,7 @@ enum mode_key_cmd {
 	MODEKEYCOPY_SEARCHDOWN,
 	MODEKEYCOPY_SEARCHREVERSE,
 	MODEKEYCOPY_SEARCHUP,
+	MODEKEYCOPY_STARTNUMBERPREFIX,
 	MODEKEYCOPY_STARTOFLINE,
 	MODEKEYCOPY_STARTSELECTION,
 	MODEKEYCOPY_TOPLINE,
