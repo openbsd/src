@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.12 2010/02/28 21:35:41 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.13 2010/03/02 20:53:12 miod Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -1157,6 +1157,41 @@ bonito_mem_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
 	int is2f, pcilo_window;
 
 	/*
+	 * Try a PCIHI mapping first.
+	 */
+
+	/* may be used before curcpu() points to valid data */
+	if ((cp0_get_prid() & 0xffff) ==
+	    ((MIPS_LOONGSON2 << 8) | (0x2f - 0x2c)))
+		is2f = 1;
+	else
+		is2f = 0;
+
+	if (is2f) {
+		if (offs >= LS2F_PCIHI_BASE && end <= LS2F_PCIHI_TOP) {
+			*bshp = t->bus_base + offs;
+			return 0;
+		}
+	} else {
+		/* PCI1.5 */
+		if (offs >= BONITO_PCIHI_BASE && end <= BONITO_PCIHI_TOP) {
+			*bshp = t->bus_base + offs;
+			return 0;
+		}
+
+		/* PCI2 */
+		w = pcimap & BONITO_PCIMAP_PCIMAP_2 ? 0x80000000UL : 0;
+		if (offs >= w && end < (w + 0x80000000UL)) {
+			*bshp = t->bus_base + 0x80000000UL + (offs - w);
+			return 0;
+		}
+	}
+
+	/*
+	 * No luck, try a PCILO mapping.
+	 */
+
+	/*
 	 * Decode PCIMAP, and figure out what PCILO mappings are
 	 * possible.
 	 */
@@ -1201,37 +1236,6 @@ bonito_mem_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
 		    BONITO_PCIMAP_WINBASE(pcilo_window) +
 		    BONITO_PCIMAP_WINOFFSET(offs);
 		return 0;
-	}
-
-	/*
-	 * No luck, try a PCIHI mapping.
-	 */
-
-	/* may be used before curcpu() points to valid data */
-	if ((cp0_get_prid() & 0xffff) ==
-	    ((MIPS_LOONGSON2 << 8) | (0x2f - 0x2c)))
-		is2f = 1;
-	else
-		is2f = 0;
-
-	if (is2f) {
-		if (offs >= LS2F_PCIHI_BASE && end <= LS2F_PCIHI_TOP) {
-			*bshp = t->bus_base + offs;
-			return 0;
-		}
-	} else {
-		/* PCI1.5 */
-		if (offs >= BONITO_PCIHI_BASE && end <= BONITO_PCIHI_TOP) {
-			*bshp = t->bus_base + offs;
-			return 0;
-		}
-
-		/* PCI2 */
-		w = pcimap & BONITO_PCIMAP_PCIMAP_2 ? 0x80000000UL : 0;
-		if (offs >= w && end < (w + 0x80000000UL)) {
-			*bshp = t->bus_base + 0x80000000UL + (offs - w);
-			return 0;
-		}
 	}
 
 	return EINVAL;
