@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.12 2009/12/23 22:30:17 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.13 2010/03/02 00:13:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -64,6 +64,10 @@ mdoc_iscdelim(char p)
 	switch (p) {
 	case('|'):
 		/* FALLTHROUGH */
+	case('('):
+		/* FALLTHROUGH */
+	case('['):
+		return(1);
 	case('.'):
 		/* FALLTHROUGH */
 	case(','):
@@ -76,18 +80,10 @@ mdoc_iscdelim(char p)
 		/* FALLTHROUGH */
 	case('!'):
 		/* FALLTHROUGH */
-	case('('):
-		/* FALLTHROUGH */
 	case(')'):
 		/* FALLTHROUGH */
-	case('['):
-		/* FALLTHROUGH */
 	case(']'):
-		/* FALLTHROUGH */
-	case('{'):
-		/* FALLTHROUGH */
-	case('}'):
-		return(1);
+		return(2);
 	default:
 		break;
 	}

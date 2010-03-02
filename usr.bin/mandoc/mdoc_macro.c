@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.29 2010/02/26 12:12:24 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.30 2010/03/02 00:13:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1155,7 +1155,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 			break;
 		}
 
-		if ( ! flushed && mdoc_isdelim(p)) {
+		if ( ! flushed && mdoc_isdelim(p) > 1) {
 			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 				return(0);
 			flushed = 1;
