@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.23 2010/03/02 01:00:39 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.24 2010/03/02 01:17:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -153,6 +153,7 @@ terminal_man(void *arg, const struct man *man)
 	if (NULL == p->symtab)
 		switch (p->enc) {
 		case (TERMENC_ASCII):
+			p->maxrmargin = 65;
 			p->symtab = chars_init(CHARS_ASCII);
 			break;
 		default:
@@ -245,6 +246,7 @@ static int
 pre_fi(DECL_ARGS)
 {
 
+	p->rmargin = p->maxrmargin = 65;
 	mt->fl &= ~MANT_LITERAL;
 	return(1);
 }
@@ -255,6 +257,7 @@ static int
 pre_nf(DECL_ARGS)
 {
 
+	p->rmargin = p->maxrmargin = 160;
 	term_newln(p);
 	mt->fl |= MANT_LITERAL;
 	return(1);
