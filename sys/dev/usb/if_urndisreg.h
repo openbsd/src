@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.3 2010/03/02 20:46:02 mk Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.4 2010/03/02 20:51:42 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -152,7 +152,7 @@ struct urndis_packet_msg {
 	u_int32_t	rm_oobdataelements;
 	u_int32_t	rm_pktinfooffset;
 	u_int32_t	rm_pktinfolen;
-	u_int32_t	rm_vchandle; /* XXX zero */
+	u_int32_t	rm_vchandle;
 	u_int32_t	rm_reserved;
 };
 
@@ -215,7 +215,7 @@ struct urndis_query_req {
 	urndis_oid	rm_oid;
 	u_int32_t	rm_infobuflen;
 	u_int32_t	rm_infobufoffset;
-	u_int32_t	rm_devicevchdl; /* XXX DeviceVcHandle */
+	u_int32_t	rm_devicevchdl;
 };
 
 struct urndis_query_comp {
@@ -238,7 +238,7 @@ struct urndis_set_req {
 	urndis_oid	rm_oid;
 	u_int32_t	rm_infobuflen;
 	u_int32_t	rm_infobufoffset;
-	u_int32_t	rm_devicevchdl; /* XXX DeviceVcHandle */
+	u_int32_t	rm_devicevchdl;
 };
 
 struct urndis_set_comp {
