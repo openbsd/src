@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.40 2007/11/03 10:30:40 espie Exp $
+#	$OpenBSD: bsd.README,v 1.41 2010/03/02 20:33:55 jmc Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -422,10 +422,10 @@ If foo has multiple source files, add the line:
 The include file <bsd.subdir.mk> contains the default targets for building
 subdirectories.  It has the same eight targets as <bsd.prog.mk>: all, 
 clean, cleandir, depend, includes, install, lint, and tags.  For all of
-the directories listed in the variable SUBDIRS, the specified directory 
+the directories listed in the variable SUBDIR, the specified directory 
 will be visited and the target made.  There is also a default target which
 allows the command "make subdir" where subdir is any directory listed in
-the variable SUBDIRS.
+the variable SUBDIR.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
