@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.69 2010/02/18 02:11:26 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.70 2010/03/02 00:38:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -131,6 +131,7 @@ static	int	  termp_ud_pre(DECL_ARGS);
 static	int	  termp_vt_pre(DECL_ARGS);
 static	int	  termp_xr_pre(DECL_ARGS);
 static	int	  termp_xx_pre(DECL_ARGS);
+static	int	  termp_eos_pre(DECL_ARGS);
 
 static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_ap_pre, NULL }, /* Ap */
@@ -254,6 +255,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_sp_pre, NULL }, /* br */
 	{ termp_sp_pre, NULL }, /* sp */ 
 	{ termp_under_pre, termp____post }, /* %U */ 
+	{ termp_eos_pre, NULL }, /* eos */
 };
 
 
@@ -2125,6 +2127,18 @@ termp__t_pre(DECL_ARGS)
 {
 
 	term_word(p, "\\(lq");
+	p->flags |= TERMP_NOSPACE;
+	return(1);
+}
+
+
+/* ARGSUSED */
+static int
+termp_eos_pre(DECL_ARGS)
+{
+	const char ascii_eos[2] = { ASCII_EOS, 0 };
+
+	term_word(p, ascii_eos);
 	p->flags |= TERMP_NOSPACE;
 	return(1);
 }

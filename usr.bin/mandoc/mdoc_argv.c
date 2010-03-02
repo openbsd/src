@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.20 2010/03/02 00:13:57 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.21 2010/03/02 00:38:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -205,6 +205,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	0, /* br */
 	0, /* sp */
 	0, /* %U */
+	0, /* eos */
 };
 
 

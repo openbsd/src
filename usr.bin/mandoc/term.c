@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.20 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: term.c,v 1.21 2010/03/02 00:38:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -184,16 +184,24 @@ term_flushln(struct termp *p)
 				break;
 			else if (8 == p->buf[j])
 				vsz--;
-			else
+			else if (ASCII_EOS != p->buf[j])
 				vsz++;
 		}
+
+		/*
+		 * Skip empty words.  This happens due to the ASCII_EOS
+		 * after the end of the final sentence of a paragraph.
+		 */
+		if (vsz == 0 && j == (int)p->col)
+			break;
 
 		/*
 		 * Choose the number of blanks to prepend: no blank at the
 		 * beginning of a line, one between words -- but do not
 		 * actually write them yet.
 		 */
-		vbl = (size_t)(0 == vis ? 0 : 1);
+		vbl = (size_t)(ASCII_EOS == p->buf[i] ? 2 :
+				(0 == vis ? 0 : 1));
 
 		/*
 		 * Find out whether we would exceed the right margin.
@@ -227,11 +235,9 @@ term_flushln(struct termp *p)
 		for ( ; i < (int)p->col; i++) {
 			if (' ' == p->buf[i])
 				break;
-
-			/* The unit sep. is a non-breaking space. */
-			if (31 == p->buf[i])
+			if (ASCII_NBRSP == p->buf[i])
 				putchar(' ');
-			else
+			else if (ASCII_EOS != p->buf[i])
 				putchar(p->buf[i]);
 		}
 		vis += vsz;

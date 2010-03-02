@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.42 2010/02/18 02:11:26 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.43 2010/03/02 00:38:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -269,6 +269,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_notext },			/* br */
 	{ NULL, posts_sp },			/* sp */
 	{ NULL, posts_text1 },			/* %U */
+	{ NULL, NULL },				/* eos */
 };
 
 
@@ -904,7 +905,8 @@ post_vt(POST_ARGS)
 		return(1);
 	
 	for (n = mdoc->last->child; n; n = n->next)
-		if (MDOC_TEXT != n->type) 
+		if (MDOC_TEXT != n->type &&
+		    (MDOC_ELEM != n->type || MDOC_eos != n->tok)) 
 			if ( ! mdoc_nwarn(mdoc, n, EBADCHILD))
 				return(0);
 

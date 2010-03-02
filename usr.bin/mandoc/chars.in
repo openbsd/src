@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.4 2010/02/18 02:11:25 schwarze Exp $ */
+/*	$Id: chars.in,v 1.5 2010/03/02 00:38:59 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -31,7 +31,7 @@
  */
 
 /* Non-breaking, non-collapsing space uses unit separator. */
-static const char ascii_nbrsp[2] = { 31, 0 };
+static const char ascii_nbrsp[2] = { ASCII_NBRSP, 0 };
 
 CHAR_TBL_START
 

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.34 2010/02/18 02:11:26 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.35 2010/03/02 00:38:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -118,7 +118,7 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	/* LINTED */
 	"Dx",		"%Q",		"br",		"sp",
 	/* LINTED */
-	"%U"
+	"%U",		"eos"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -641,6 +641,16 @@ parsetext(struct mdoc *m, int line, char *buf)
 	if (j != i && ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
 		return(0);
 
+	/*
+	 * Mark the end of a sentence.  Only works when you respect
+	 * Jason's rule: "new sentence, new line".
+	 */
+	if ('.' == buf[i-1] || '!' == buf[i-1] || '?' == buf[i-1]) {
+		m->next = MDOC_NEXT_SIBLING;
+		if ( ! mdoc_elem_alloc(m, line, i, MDOC_eos, NULL))
+			return(0);
+	}
+
 	m->next = MDOC_NEXT_SIBLING;
 	return(1);
 }
@@ -668,6 +678,8 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 {
 	int		  i, j, c;
 	char		  mac[5];
+	struct mdoc_node *n;
+	char		 *t;
 
 	/* Empty lines are ignored. */
 
@@ -732,6 +744,26 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 	 */
 	if ( ! mdoc_macro(m, c, ln, 1, &i, buf)) 
 		goto err;
+
+	/*
+	 * Mark the end of a sentence, but be careful not to insert
+	 * markers into reference blocks.
+	 */
+	n = m->last;
+	if (n->child)
+		n = n->child;
+	while (n->next)
+		n = n->next;
+	if (MDOC_TEXT == n->type && m->last->parent->tok != MDOC_Rs) {
+		t = n->string;
+		while (t && t[1])
+			t++;
+		if ('.' == *t || '!' == *t || '?' == *t) {
+			if ( ! mdoc_elem_alloc(m, ln, i, MDOC_eos, NULL))
+				return(0);
+			m->next = MDOC_NEXT_SIBLING;
+		}
+	}
 
 	return(1);
 
