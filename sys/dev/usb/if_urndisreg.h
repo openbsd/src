@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.4 2010/03/02 20:51:42 mk Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.5 2010/03/02 20:54:27 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -24,7 +24,7 @@
 #define RNDIS_BUFSZ		1542
 
 struct urndis_chain {
-	struct urndis_softc	*sc_sc;
+	struct urndis_softc	*sc_softc;
 	usbd_xfer_handle	 sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;

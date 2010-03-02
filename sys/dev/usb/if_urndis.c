@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.2 2010/03/02 20:27:25 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.3 2010/03/02 20:54:27 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -942,7 +942,7 @@ urndis_rx_list_init(struct urndis_softc *sc)
 	cd = &sc->sc_data;
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
 		c = &cd->sc_rx_chain[i];
-		c->sc_sc = sc;
+		c->sc_softc = sc;
 		c->sc_idx = i;
 
 		if (urndis_newbuf(sc, c, NULL) == ENOBUFS)
@@ -972,7 +972,7 @@ urndis_tx_list_init(struct urndis_softc *sc)
 	cd = &sc->sc_data;
 	for (i = 0; i < RNDIS_TX_LIST_CNT; i++) {
 		c = &cd->sc_tx_chain[i];
-		c->sc_sc = sc;
+		c->sc_softc = sc;
 		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
@@ -1228,7 +1228,7 @@ urndis_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 	size_t			 total_len;
 
 	c = priv;
-	sc = c->sc_sc;
+	sc = c->sc_softc;
 	ifp = GET_IFP(sc);
 	total_len = 0;
 
@@ -1283,7 +1283,7 @@ urndis_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 	int			 s;
 
 	c = priv;
-	sc = c->sc_sc;
+	sc = c->sc_softc;
 	ifp = GET_IFP(sc);
 
 	DPRINTF(("%s: urndis_txeof\n", DEVNAME(sc)));
