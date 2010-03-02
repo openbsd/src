@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.7 2010/02/28 17:32:30 miod Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.8 2010/03/02 09:58:19 otto Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -283,9 +283,9 @@ ykbec_refresh(void *arg)
 	if (val != 0) {
 		val = KB3310_FAN_SPEED_DIVIDER / val;
 		sc->sc_sensor[YKBEC_FAN].value = val;
-		sc->sc_sensor[YKBEC_FAN].flags &= ~SENSOR_FINVALID;
+		CLR(sc->sc_sensor[YKBEC_FAN].flags, SENSOR_FINVALID);
 	} else
-		sc->sc_sensor[YKBEC_FAN].flags |= SENSOR_FINVALID;
+		SET(sc->sc_sensor[YKBEC_FAN].flags, SENSOR_FINVALID);
 
 	val = ykbec_read(sc, ECTEMP_CURRENT_REG);
 	sc->sc_sensor[YKBEC_ITEMP].value = val * 1000000 + 273150000;
@@ -317,33 +317,36 @@ ykbec_refresh(void *arg)
 	bat_state = ykbec_read(sc, REG_BAT_STATE);
 	power_flag = ykbec_read(sc, REG_POWER_FLAG);
 
-	sc->sc_sensor[YKBEC_CHARGING].value = (bat_state & BAT_STATE_CHARGING) ?
-	    1 : 0;
-	sc->sc_sensor[YKBEC_AC].value = (power_flag & POWER_FLAG_ADAPTER_IN) ?
-	    1 : 0;
+	sc->sc_sensor[YKBEC_CHARGING].value = !!ISSET(bat_state,
+	    BAT_STATE_CHARGING);
+	sc->sc_sensor[YKBEC_AC].value = !!ISSET(power_flag,
+	    POWER_FLAG_ADAPTER_IN);
+
+	sc->sc_sensor[YKBEC_CAP].status = ISSET(bat_status, BAT_STATUS_BAT_LOW) ?
+		SENSOR_S_CRIT : SENSOR_S_OK;
 
 #if NAPM > 0
 	bcopy(&ykbec_apmdata, &old, sizeof(old));
 	ykbec_apmdata.battery_life = cap_pct;
-	ykbec_apmdata.ac_state = (power_flag & POWER_FLAG_ADAPTER_IN) ?
+	ykbec_apmdata.ac_state = ISSET(power_flag, POWER_FLAG_ADAPTER_IN) ?
 	    APM_AC_ON : APM_AC_OFF;
-	if ((bat_status & BAT_STATUS_BAT_EXISTS) == 0) {
+	if (!ISSET(bat_status, BAT_STATUS_BAT_EXISTS)) {
 		ykbec_apmdata.battery_state = APM_BATTERY_ABSENT;
 		ykbec_apmdata.minutes_left = 0;
 		ykbec_apmdata.battery_life = 0;
 	} else {
-		if (bat_state & BAT_STATE_CHARGING)
+		if (ISSET(bat_state, BAT_STATE_CHARGING))
 			ykbec_apmdata.battery_state = APM_BATT_CHARGING;
+		else if (ISSET(bat_status, BAT_STATUS_BAT_LOW))
+			ykbec_apmdata.battery_state = APM_BATT_CRITICAL;
 		/* XXX arbitrary */
 		else if (cap_pct > 60)
 			ykbec_apmdata.battery_state = APM_BATT_HIGH;
-		else if (cap_pct < 10)
-			ykbec_apmdata.battery_state = APM_BATT_CRITICAL;
 		else
 			ykbec_apmdata.battery_state = APM_BATT_LOW;
 
 		/* if charging, current is positive */
-		if (bat_state & BAT_STATE_CHARGING)
+		if (ISSET(bat_state, BAT_STATE_CHARGING))
 			current = 0;
 		else
 			current = -current;
