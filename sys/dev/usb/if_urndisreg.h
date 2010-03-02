@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.1 2010/03/01 23:35:56 mk Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.2 2010/03/02 20:27:25 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -22,11 +22,6 @@
 #define RNDIS_RX_LIST_CNT	1
 #define RNDIS_TX_LIST_CNT	1
 #define RNDIS_BUFSZ		1542
-
-struct urndis_notification {
-	u_int32_t	notification;
-	u_int32_t	reserved;
-};
 
 struct urndis_chain {
 	struct urndis_softc	*sc_sc;
@@ -64,11 +59,6 @@ struct urndis_softc {
 	int				sc_ifaceno_ctl;
 	usbd_interface_handle		sc_iface_ctl;
 	usbd_interface_handle		sc_iface_data;
-
-	int				sc_intr_no;
-	usbd_pipe_handle		sc_intr_pipe;
-	int				sc_intr_size;
-	struct urndis_notification	sc_intr_buf;
 
 	int				sc_bulkin_no;
 	usbd_pipe_handle		sc_bulkin_pipe;

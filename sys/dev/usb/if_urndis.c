@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.1 2010/03/01 23:35:56 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.2 2010/03/02 20:27:25 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -71,7 +71,6 @@
 
 int urndis_newbuf(struct urndis_softc *, struct urndis_chain *, struct mbuf *);
 
-void urndis_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 int urndis_ioctl(struct ifnet *, u_long, caddr_t);
 void urndis_watchdog(struct ifnet *);
 
@@ -989,45 +988,6 @@ urndis_tx_list_init(struct urndis_softc *sc)
 	return (0);
 }
 
-void
-urndis_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
-{
-	struct urndis_softc	*sc;
-	u_int32_t		 count;
-
-	sc = (struct urndis_softc *)priv;
-
-	if (status == USBD_CANCELLED || sc->sc_dying)
-		return;
-
-	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("urndis_intr: status=%d\n", status));
-		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
-		return;
-	}
-
-	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-
-	if (count != sizeof(sc->sc_intr_buf)) {
-		printf("%s: intr input failure: %u bytes\n", DEVNAME(sc),
-		    count);
-		return;
-	}
-
-	sc->sc_intr_buf.notification = UGETDW(&sc->sc_intr_buf.notification);
-	switch (sc->sc_intr_buf.notification) {
-		case 0x1:
-			DPRINTF(("%s: RESPONSE_AVAILABLE\n", DEVNAME(sc)));
-			break;
-
-		default:
-			printf("%s: intr input failure: notification 0x%04x\n",
-			    DEVNAME(sc), sc->sc_intr_buf.notification);
-			break;
-	}
-}
-
 int
 urndis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
@@ -1112,23 +1072,6 @@ urndis_init(struct urndis_softc *sc)
 
 	s = splnet();
 
-	if (sc->sc_intr_no != -1 && sc->sc_intr_pipe == NULL) {
-		usbd_status err;
-
-		DPRINTF(("urndis_init: establish interrupt pipe\n"));
-		err = usbd_open_pipe_intr(sc->sc_iface_ctl,
-		    sc->sc_intr_no,
-		    USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc,
-		    &sc->sc_intr_buf, sizeof(sc->sc_intr_buf),
-		    urndis_intr, USBD_DEFAULT_INTERVAL);
-		if (err) {
-			printf("%s: open interrupt pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-			splx(s);
-			return;
-		}
-	}
-
 	if (urndis_tx_list_init(sc) == ENOBUFS) {
 		printf("%s: tx list init failed\n",
 		    DEVNAME(sc));
@@ -1211,18 +1154,6 @@ urndis_stop(struct urndis_softc *sc)
 			printf("%s: close tx pipe failed: %s\n",
 			    DEVNAME(sc), usbd_errstr(err));
 		sc->sc_bulkout_pipe = NULL;
-	}
-
-	if (sc->sc_intr_pipe != NULL) {
-		err = usbd_abort_pipe(sc->sc_intr_pipe);
-		if (err)
-			printf("%s: abort interrupt pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_intr_pipe);
-		if (err)
-			printf("%s: close interrupt pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-		sc->sc_intr_pipe = NULL;
 	}
 
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
@@ -1495,23 +1426,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface_ctl);
-	sc->sc_intr_no = -1;
-	for (i = 0; i < id->bNumEndpoints && sc->sc_intr_no == -1; i++) {
-		ed = usbd_interface2endpoint_descriptor(sc->sc_iface_ctl, i);
-		if (!ed) {
-			printf("%s: no descriptor for interrupt endpoint %u\n",
-			    DEVNAME(sc));
-			return;
-		}
-
-		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			sc->sc_intr_no = ed->bEndpointAddress;
-			break;
-		}
-	}
-	DPRINTF(("%s: found intr endpoint %u\n", DEVNAME(sc),
-	    sc->sc_intr_no));
 
 	id = usbd_get_interface_descriptor(sc->sc_iface_data);
 	cd = usbd_get_config_descriptor(sc->sc_udev);
@@ -1546,9 +1460,9 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		if (sc->sc_bulkin_no != -1 && sc->sc_bulkout_no != -1) {
-			DPRINTF(("%s: intr=0x%x, in=0x%x, out=0x%x\n",
+			DPRINTF(("%s: in=0x%x, out=0x%x\n",
 			    DEVNAME(sc),
-			    sc->sc_intr_no, sc->sc_bulkin_no,
+			    sc->sc_bulkin_no,
 			    sc->sc_bulkout_no));
 			goto found;
 		}
