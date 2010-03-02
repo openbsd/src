@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1534 2010/02/27 10:51:15 robert Exp $
+$OpenBSD: pcidevs,v 1.1535 2010/03/02 10:51:51 sthen Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2070,16 +2070,17 @@ product HP HPSAP600		0x3225	Smart Array P600
 product HP HPSA_3		0x3230	Smart Array
 product HP HPSA_4		0x3231	Smart Array
 product HP HPSA_5		0x3232	Smart Array
-product HP HPSAE500		0x3233	Smart Array E500
+product HP HPSAE500_1		0x3233	Smart Array E500
 product HP HPSAP400		0x3234	Smart Array P400
 product HP HPSAP400I		0x3235	Smart Array P400i
 product HP HPSA_6		0x3236	Smart Array
-product HP HPSA_7		0x3237	Smart Array
-product HP HPSA_8		0x3238	Smart Array
-product HP HPSA_9		0x3239	Smart Array
-product HP HPSA_10		0x323a	Smart Array
-product HP HPSA_11		0x323b	Smart Array
-product HP HPSA_12		0x323c	Smart Array
+product HP HPSAE500_2		0x3237	Smart Array E500
+product HP HPSA_7		0x3238	Smart Array
+product HP HPSA_8		0x3239	Smart Array
+product HP HPSA_9		0x323a	Smart Array
+product HP HPSA_10		0x323b	Smart Array
+product HP HPSA_11		0x323c	Smart Array
+product HP HPSAP700M		0x323d	Smart Array P700m
 product HP HPSAP212		0x3241	Smart Array P212
 product HP HPSAP410		0x3243	Smart Array P410
 product HP HPSAP410I		0x3245	Smart Array P410i
