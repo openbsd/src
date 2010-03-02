@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.15 2009/10/10 19:20:29 miod Exp $
+dnl	$OpenBSD: prep,v 1.16 2010/03/02 13:08:33 jsing Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -62,7 +62,7 @@ Switching from serial to graphics console and vice versa:
 
     will select the graphics console.
 
-    Only IP32 family systems are supported with a graphis console
+    Only IP32 family systems are supported with a graphics console
     under OpenBSD at the moment. On all other non-headless systems,
     you need to change the console to serial.
 
@@ -72,11 +72,17 @@ Switching from L1 console to serial console and vice versa:
     either on the L1 console serial port, or the regular serial port. 
 
     The `console' command at the PROM prompt, can select between them:
+
     >> console sc
+
     will switch to the L1 serial port, while
+
     >> console ioc3
+
     or
+
     >> console ioc4
+
     will select the regular serial port, depending on the I/O board type.
 
     On Fuel systems, there is no external L1 serial port, so `console sc'
@@ -94,7 +100,7 @@ Setting the environment:
     When setting up the system to boot from disk, the ``OSLoader''
     environment variable will need to be changed.
 
-    Its default value is ``sash'', which is IRIX' standalone
+    Its default value is ``sash'', which is IRIX's standalone
     shell and loader. Set it to ``boot'', the OpenBSD boot loader.
 
     Also, by default it tries to boot a kernel named ``/unix''. To
