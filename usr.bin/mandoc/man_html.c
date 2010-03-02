@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.5 2010/02/18 02:11:26 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.6 2010/03/02 01:00:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -99,6 +99,9 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_ign_pre, NULL }, /* DT */
 	{ man_ign_pre, NULL }, /* UC */
 	{ man_ign_pre, NULL }, /* PD */
+	{ man_br_pre, NULL }, /* Sp */
+	{ NULL, NULL }, /* Vb */
+	{ NULL, NULL }, /* Vi */
 };
 
 
@@ -331,7 +334,7 @@ man_br_pre(MAN_ARGS)
 
 	SCALE_VS_INIT(&su, 1);
 
-	if (MAN_sp == n->tok && n->child)
+	if ((MAN_sp == n->tok || MAN_Sp == n->tok) && n->child)
 		a2roffsu(n->child->string, &su, SCALE_VS);
 	else if (MAN_br == n->tok)
 		su.scale = 0;
