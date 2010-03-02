@@ -1593,6 +1593,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_upgtvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_urlreg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_urndisreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_urtwreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_wi_usb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_zydreg.ph
