@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 2010/02/17 17:17:35 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.17 2010/03/02 20:54:51 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -155,10 +155,12 @@ struct bonito_flavour {
 
 extern const struct platform fuloong_platform;
 extern const struct platform gdium_platform;
+extern const struct platform lynloong_platform;
 extern const struct platform yeeloong_platform;
 
 const struct bonito_flavour bonito_flavours[] = {
 	/* Lemote Fuloong 2F mini-PC */
+	/* how different is LM6003 ? */
 	{ "LM6004",	&fuloong_platform },
 	/* EMTEC Gdium Liberty 1000 */
 	{ "Gdium",	&gdium_platform },
@@ -167,6 +169,8 @@ const struct bonito_flavour bonito_flavours[] = {
 	/* supposedly Lemote Yeeloong 10.1" netbook, but those found so far
 	   report themselves as LM8089 */
 	{ "LM8101",	&yeeloong_platform },
+	/* Lemote Lynloong all-in-one computer */
+	{ "LM9001",	&lynloong_platform },
 	{ NULL }
 };
 

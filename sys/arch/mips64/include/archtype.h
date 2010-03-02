@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.10 2010/02/11 20:13:11 otto Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.11 2010/03/02 20:54:51 miod Exp $	*/
 /*
  * Copyright (c) 1997-2004 Opsycon AB, Sweden (www.opsycon.se)
  *
@@ -81,6 +81,7 @@
 #define	LOONGSON_YEELOONG	0x0061	/* Lemote Yeeloong */
 #define	LOONGSON_GDIUM		0x0062	/* EMTEC Gdium Liberty */
 #define	LOONGSON_FULOONG	0x0063	/* Lemote Fuloong */
+#define	LOONGSON_LYNLOONG	0x0064	/* Lemote Lynloong */
 
 #define	MISC_CLASS		0x00f0	/* Misc machines... */
 #define	LAGUNA			0x00f1	/* Heurikon Laguna VME board */

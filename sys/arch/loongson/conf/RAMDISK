@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2010/02/28 22:32:50 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2010/03/02 20:54:51 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,7 +47,7 @@ clock0		at mainbus0
 bonito*		at mainbus0
 pci*		at bonito?
 
-# Lemote Fuloong 2F and Lemote Yeeloong devices
+# Lemote Lynloong, Lemote Fuloong 2F and Lemote Yeeloong devices
 glxpcib*	at pci?
 isa0		at glxpcib?
 mcclock0	at isa? port 0x70
@@ -59,7 +59,7 @@ wsmouse*	at pmsi? mux 0			# Yeeloong only
 com0		at isa? port 0x2f8 irq 3	# Fuloong 2F only
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
-sisfb*		at pci?				# Fuloong 2F only
+sisfb*		at pci?				# Lynloong/Fuloong 2F only
 wsdisplay*	at sisfb?
 smfb*		at pci?				# Yeeloong only
 wsdisplay*	at smfb?

@@ -1,10 +1,15 @@
-dnl	$OpenBSD: hardware,v 1.7 2010/03/01 17:43:30 otto Exp $
+dnl	$OpenBSD: hardware,v 1.8 2010/03/02 20:54:49 miod Exp $
 The following machines are supported by OpenBSD/MACHINE:
 
 	Lemote Fuloong 2F
 	  onboard serial port, audio, USB and Ethernet are supported;
 	  onboard display is only supported in the 640x400x8 video mode
-	  set up by the firmware.
+	  set up by the firmware, without acceleration.
+
+	Lemote Lynloong
+	  onboard audio, USB and Ethernet are supported;
+	  onboard display is only supported in the 1360x768x16 video mode
+	  set up by the firmware, without acceleration.
 
 	Lemote Yeeloong (8.9" and 10.1" models)
 	  all onboard devices (keyboard, trackpad, display, SD card reader,
