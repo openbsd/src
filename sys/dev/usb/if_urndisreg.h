@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.2 2010/03/02 20:27:25 mk Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.3 2010/03/02 20:46:02 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -278,19 +278,6 @@ struct urndis_reset_comp {
 
 /* 802.3 link-state or undefined message error. */
 #define REMOTE_NDIS_INDICATE_STATUS_MSG	0x00000007
-
-struct urndis_status_msg { /* XXX unhappy about the name */
-	u_int32_t	rm_type;
-	u_int32_t	rm_len;
-	urndis_status	rm_status;
-	u_int32_t	rm_statusbuflen;
-	u_int32_t	rm_statusbufoffset;
-	urndis_status	rm_diagstatus;
-	u_int32_t	rm_erroroffset;
-#if 0
-	(RNDIS_MESSAGE) Message; /* XXX */
-#endif
-};
 
 /* Keepalive messsage.  May be sent by device. */
 #define REMOTE_NDIS_KEEPALIVE_MSG	0x00000008
