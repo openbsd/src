@@ -1,6 +1,6 @@
-.\"     $OpenBSD: gbe.4,v 1.6 2009/04/22 08:16:11 sobrado Exp $
+.\"     $OpenBSD: gbe.4,v 1.7 2010/03/02 13:06:24 jsing Exp $
 .\"
-.\" Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
+.\" Copyright (c) 2007, 2009, Joel Sing <jsing@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2009 $
+.Dd $Mdocdate: March 2 2010 $
 .Dt GBE 4 sgi
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd SGI Graphics Back End (GBE) frame buffer
 .Sh SYNOPSIS
 .Cd "gbe0 at mainbus0"
+.Cd "wsdisplay* at gbe?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -47,7 +48,7 @@ The
 .Nm
 driver was written by
 .An Joel Sing .
-.Sh BUGS
+.Sh CAVEATS
 Hardware initialization must currently be performed by the ARCS firmware.
 The resolution configured by the firmware will be used, with a fixed
 color depth of 8 bits.
