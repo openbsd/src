@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.35 2009/11/25 13:28:13 dms Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.36 2010/03/02 22:09:57 dms Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2238,6 +2238,11 @@ struct em_host_command_info {
 #define E1000_GCR_TXDSCW_NO_SNOOP       0x00000010
 #define E1000_GCR_TXDSCR_NO_SNOOP       0x00000020
 
+#define E1000_GCR_CMPL_TMOUT_MASK       0x0000F000
+#define E1000_GCR_CMPL_TMOUT_10ms       0x00001000
+#define E1000_GCR_CMPL_TMOUT_RESEND     0x00010000
+#define E1000_GCR_CAP_VER2              0x00040000
+
 #define PCI_EX_NO_SNOOP_ALL (E1000_GCR_RXD_NO_SNOOP         | \
                              E1000_GCR_RXDSCW_NO_SNOOP      | \
                              E1000_GCR_RXDSCR_NO_SNOOP      | \
@@ -2276,6 +2281,9 @@ struct em_host_command_info {
 #define PCI_EX_LINK_STATUS           0x12
 #define PCI_EX_LINK_WIDTH_MASK       0x3F0
 #define PCI_EX_LINK_WIDTH_SHIFT      4
+
+#define PCI_EX_DEVICE_CONTROL2       0x28
+#define PCI_EX_DEVICE_CONTROL2_16ms  0x0005
 
 /* EEPROM Commands - Microwire */
 #define EEPROM_READ_OPCODE_MICROWIRE  0x6  /* EEPROM read opcode */

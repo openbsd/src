@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.45 2010/01/09 22:56:24 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.46 2010/03/02 22:09:57 dms Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -162,6 +162,7 @@ static int32_t	em_host_if_read_cookie(struct em_hw *, uint8_t *);
 static uint8_t	em_calculate_mng_checksum(char *, uint32_t);
 static int32_t	em_configure_kmrn_for_10_100(struct em_hw *, uint16_t);
 static int32_t	em_configure_kmrn_for_1000(struct em_hw *);
+static int32_t	em_set_pciex_completion_timeout(struct em_hw *hw);
 
 /* IGP cable length table */
 static const uint16_t 
@@ -639,6 +640,15 @@ em_reset_hw(struct em_hw *hw)
 			DEBUGOUT("PCI-E Master disable polling has failed.\n");
 		}
 	}
+
+        /* Set the completion timeout for 82575 chips */
+        if (hw->mac_type == em_82575) {
+                ret_val = em_set_pciex_completion_timeout(hw);
+                if (ret_val) {              
+                        DEBUGOUT("PCI-E Set completion timeout has failed.\n");
+                }
+        }
+
 	/* Clear interrupt mask to stop board from generating interrupts */
 	DEBUGOUT("Masking off all interrupts\n");
 	E1000_WRITE_REG(hw, IMC, 0xffffffff);
@@ -3859,8 +3869,12 @@ em_read_phy_reg_ex(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 
 		E1000_WRITE_REG(hw, MDIC, mdic);
 
-		/* Poll the ready bit to see if the MDI read completed */
-		for (i = 0; i < 64; i++) {
+		/*
+		 * Poll the ready bit to see if the MDI read completed
+		 * Increasing the time out as testing showed failures with
+		 * the lower time out (from FreeBSD driver)
+		 */
+		for (i = 0; i < 1960; i++) {
 			usec_delay(50);
 			mdic = E1000_READ_REG(hw, MDIC);
 			if (mdic & E1000_MDIC_READY)
@@ -4378,6 +4392,14 @@ em_match_gig_phy(struct em_hw *hw)
 		if (hw->phy_id == BME1000_E_PHY_ID)
 			match = TRUE;
 		break;
+	case em_82575:
+		if (hw->phy_id == M88E1000_E_PHY_ID)
+			match = TRUE;
+		if (hw->phy_id == IGP01E1000_I_PHY_ID)
+			match = TRUE;
+		if (hw->phy_id == IGP03E1000_E_PHY_ID)
+			match = TRUE;
+		break;
 	case em_80003es2lan:
 		if (hw->phy_id == GG82563_E_PHY_ID)
 			match = TRUE;
@@ -4440,12 +4462,12 @@ em_detect_gig_phy(struct em_hw *hw)
 	 * So we explicitly set the PHY values.
 	 */
 	if (hw->mac_type == em_82571 ||
-	    hw->mac_type == em_82572 ||
-	    hw->mac_type == em_82575) {
+	    hw->mac_type == em_82572) {
 		hw->phy_id = IGP01E1000_I_PHY_ID;
 		hw->phy_type = em_phy_igp_2;
 		return E1000_SUCCESS;
 	}
+
 	/*
 	 * Some of the fiber cards dont have a phy, so we must exit cleanly
 	 * here
@@ -4599,7 +4621,6 @@ em_init_eeprom_params(struct em_hw *hw)
 		break;
 	case em_82571:
 	case em_82572:
-	case em_82575:
 		eeprom->type = em_eeprom_spi;
 		eeprom->opcode_bits = 8;
 		eeprom->delay_usec = 1;
@@ -4615,6 +4636,7 @@ em_init_eeprom_params(struct em_hw *hw)
 		break;
 	case em_82573:
 	case em_82574:
+	case em_82575:
 		eeprom->type = em_eeprom_spi;
 		eeprom->opcode_bits = 8;
 		eeprom->delay_usec = 1;
@@ -8791,4 +8813,70 @@ em_init_lcd_from_nvm(struct em_hw *hw)
 		}
 	}
 	return E1000_SUCCESS;
+}
+
+/******************************************************************************
+ *  em_set_pciex_completion_timeout - set pci-e completion timeout
+ *
+ *  The defaults for 82575 and 82576 should be in the range of 50us to 50ms,
+ *  however the hardware default for these parts is 500us to 1ms which is less
+ *  than the 10ms recommended by the pci-e spec.  To address this we need to
+ *  increase the value to either 10ms to 200ms for capability version 1 config,
+ *  or 16ms to 55ms for version 2.
+ *
+ *  * hw - pointer to em_hw structure
+ *****************************************************************************/
+int32_t
+em_set_pciex_completion_timeout(struct em_hw *hw)
+{
+	uint32_t gcr = E1000_READ_REG(hw, GCR);
+	int32_t ret_val = E1000_SUCCESS;
+
+	/* Only take action if timeout value is not set by system BIOS */
+	if (gcr & E1000_GCR_CMPL_TMOUT_MASK)
+		goto out;
+
+	DEBUGOUT("PCIe completion timeout not set by system BIOS.");
+
+	/*
+	 * If capababilities version is type 1 we can write the
+	 * timeout of 10ms to 200ms through the GCR register
+	 */
+
+	if (!(gcr & E1000_GCR_CAP_VER2)) {
+		gcr |= E1000_GCR_CMPL_TMOUT_10ms;
+		DEBUGOUT("PCIe capability version 1 detected, setting \
+		    completion timeout to 10ms.");
+		goto out;
+	}
+
+	/*
+	 * For version 2 capabilities we need to write the config space
+	 * directly in order to set the completion timeout value for
+	 * 16ms to 55ms
+	 *
+	 * XXX: Implement em_*_pcie_cap_reg() first.
+	 */
+#if 0
+	ret_val = em_read_pcie_cap_reg(hw, PCIE_DEVICE_CONTROL2,
+	    &pciex_devctl2);
+
+	if (ret_val)
+		goto out;
+
+	pciex_devctl2 |= PCIE_DEVICE_CONTROL2_16ms;
+
+	ret_val = em_write_pcie_cap_reg(hw, PCIE_DEVICE_CONTROL2,
+	    &pciex_devctl2); 
+#endif
+
+out:
+
+	/* Disable completion timeout resend */
+	gcr &= ~E1000_GCR_CMPL_TMOUT_RESEND;
+
+	DEBUGOUT("PCIe completion timeout resend disabled.");
+
+	E1000_WRITE_REG(hw, GCR, gcr);
+	return ret_val;
 }
