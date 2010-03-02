@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.8 2010/03/02 09:58:19 otto Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.9 2010/03/02 17:49:38 otto Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -51,25 +51,21 @@ static const struct {
 	{ NULL,				SENSOR_FANRPM },
 #define YKBEC_ITEMP	1
 	{ "Internal temperature",	SENSOR_TEMP },
-#define YKBEC_DCAP	2
-	{ "Battery design capacity",	SENSOR_AMPHOUR },
-#define YKBEC_FCAP	3
+#define YKBEC_FCAP	2
 	{ "Battery full charge capacity", SENSOR_AMPHOUR },
-#define YKBEC_DVOLT	4
-	{ "Battery design voltage",	SENSOR_VOLTS_DC },
-#define YKBEC_BCURRENT	5
+#define YKBEC_BCURRENT	3
 	{ "Battery current", 		SENSOR_AMPS },
-#define YKBEC_BVOLT	6
+#define YKBEC_BVOLT	4
 	{ "Battery voltage",		SENSOR_VOLTS_DC },
-#define YKBEC_BTEMP	7
+#define YKBEC_BTEMP	5
 	{ "Battery temperature",	SENSOR_TEMP },
-#define YKBEC_CAP	8
+#define YKBEC_CAP	6
 	{ "Battery capacity", 		SENSOR_PERCENT },
-#define YKBEC_CHARGING	9
+#define YKBEC_CHARGING	7
 	{ "Battery charging",		SENSOR_INDICATOR },
-#define YKBEC_AC	10
+#define YKBEC_AC	8
 	{ "AC-Power",			SENSOR_INDICATOR }
-#define YKBEC_NSENSORS	11
+#define YKBEC_NSENSORS	9
 };
 
 struct ykbec_softc {
@@ -93,6 +89,7 @@ const struct cfattach ykbec_ca = {
 int	ykbec_apminfo(struct apm_power_info *);
 void	ykbec_bell(void *, u_int, u_int, u_int, int);
 void	ykbec_bell_stop(void *);
+void	ykbec_print_bat_info(struct ykbec_softc *);
 u_int	ykbec_read(struct ykbec_softc *, u_int);
 u_int	ykbec_read16(struct ykbec_softc *, u_int);
 void	ykbec_refresh(void *arg);
@@ -135,7 +132,7 @@ ykbec_match(struct device *parent, void *match, void *aux)
 }
 
 void
-ykbec_attach( struct device *parent, struct device *self, void *aux)
+ykbec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct ykbec_softc *sc = (struct ykbec_softc *)self;
@@ -156,6 +153,9 @@ ykbec_attach( struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+#ifdef DEBUG
+	ykbec_print_bat_info(sc);
+#endif
 	printf("\n");
 
 	for (i = 0; i < YKBEC_NSENSORS; i++) {
@@ -268,6 +268,26 @@ ykbec_read16(struct ykbec_softc *mcsc, u_int reg)
 #define	REG_BEEP_CONTROL		0xf4d0
 #define	BEEP_ENABLE			(1<<0)
 
+#ifdef DEBUG
+void
+ykbec_print_bat_info(struct ykbec_softc *sc)
+{
+	uint bat_status, count, dvolt, dcap;
+
+	printf(": battery ");
+	bat_status = ykbec_read(sc, REG_BAT_STATUS);
+	if (!ISSET(bat_status, BAT_STATUS_BAT_EXISTS)) {
+		printf("absent");
+		return;
+	}
+		
+	count = ykbec_read(sc, REG_BAT_CELL_COUNT);
+	dvolt = ykbec_read16(sc, REG_DESIGN_VOL_HIGH);
+	dcap = ykbec_read16(sc, REG_DESIGN_CAP_HIGH);
+	printf("%d cells, design capacity %dmV %dmAh", count, dvolt, dcap);
+}
+#endif
+
 void
 ykbec_refresh(void *arg)
 {
@@ -290,12 +310,8 @@ ykbec_refresh(void *arg)
 	val = ykbec_read(sc, ECTEMP_CURRENT_REG);
 	sc->sc_sensor[YKBEC_ITEMP].value = val * 1000000 + 273150000;
 
-	sc->sc_sensor[YKBEC_DCAP].value = ykbec_read16(sc, REG_DESIGN_CAP_HIGH)
-	    * 1000;
 	fullcap = ykbec_read16(sc, REG_FULLCHG_CAP_HIGH);
 	sc->sc_sensor[YKBEC_FCAP].value = fullcap * 1000;
-	sc->sc_sensor[YKBEC_DVOLT].value = ykbec_read16(sc, REG_DESIGN_VOL_HIGH)
-	    * 1000;
 
 	current = ykbec_read16(sc, REG_CURRENT_HIGH);
 	/* sign extend short -> int, int -> int64 will be done next statement */
