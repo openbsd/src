@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.596 2010/01/13 00:15:26 todd Exp $
+#	$OpenBSD: install.sub,v 1.597 2010/03/02 01:24:50 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1867,8 +1867,8 @@ dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 # Are we in a real release, or a snapshot?  If this is a snapshot
 # install media, default us to a snapshot directory.
 FTPSETDIR=$SETDIR
-CURRENT=$(scan_dmesg "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p")
-[[ -n $CURRENT ]] && FTPSETDIR=snapshots/$ARCH
+set -- $(scan_dmesg "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p")
+[[ $1 == -!(stable) ]] && FTPSETDIR=snapshots/$ARCH
 
 # Scan /var/run/dmesg.boot for interesting devices.
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
