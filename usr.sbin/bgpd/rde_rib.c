@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.120 2010/01/13 06:02:37 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.121 2010/03/03 13:52:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -78,7 +78,7 @@ rib_new(int id, char *name, u_int16_t flags)
 	bzero(&ribs[id], sizeof(struct rib));
 	strlcpy(ribs[id].name, name, sizeof(ribs[id].name));
 	RB_INIT(&ribs[id].rib);
-	ribs[id].state = RIB_NEW;
+	ribs[id].state = RECONF_REINIT;
 	ribs[id].id = id;
 	ribs[id].flags = flags;
 

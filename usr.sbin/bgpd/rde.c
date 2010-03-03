@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.287 2010/02/09 13:29:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.288 2010/03/03 13:52:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -568,7 +568,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			for (rid = 0; rid < rib_size; rid++)
-				ribs[rid].state = RIB_DELETE;
+				ribs[rid].state = RECONF_DELETE;
 			break;
 		case IMSG_NETWORK_ADD:
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
@@ -598,7 +598,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (rid == RIB_FAILED)
 				rib_new(-1, rn.name, rn.flags);
 			else
-				ribs[rid].state = RIB_ACTIVE;
+				ribs[rid].state = RECONF_KEEP;
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -659,9 +659,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			}
 			/* bring ribs in sync before softreconfig dance */
 			for (rid = 0; rid < rib_size; rid++) {
-				if (ribs[rid].state == RIB_DELETE)
+				if (ribs[rid].state == RECONF_DELETE)
 					rib_free(&ribs[rid]);
-				else if (ribs[rid].state == RIB_NEW)
+				else if (ribs[rid].state == RECONF_REINIT)
 					rib_dump(&ribs[0],
 					    rde_softreconfig_load, &ribs[rid],
 					    AID_UNSPEC);
@@ -674,7 +674,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (reconf_out) {
 				int i;
 				for (i = 1; i < rib_size; i++) {
-					if (ribs[i].state == RIB_NEW)
+					if (ribs[i].state == RECONF_REINIT)
 						/* already synced by _load */
 						continue;
 					rib_dump(&ribs[i], rde_softreconfig_out,
@@ -2429,7 +2429,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 
 		for (i = 1; i < rib_size; i++) {
 			/* only active ribs need a softreconfig rerun */
-			if (ribs[i].state != RIB_ACTIVE)
+			if (ribs[i].state != RECONF_KEEP)
 				continue;
 
 			/* check if prefix changed */
