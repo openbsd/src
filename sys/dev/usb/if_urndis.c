@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.3 2010/03/02 20:54:27 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.4 2010/03/03 18:44:30 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -784,7 +784,6 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 	return(0);
 }
 
-/* XXX draft, must implement Multi-Packets Transfer ... :( */
 void
 urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, size_t len)
 {
