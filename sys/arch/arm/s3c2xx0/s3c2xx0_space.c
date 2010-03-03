@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2xx0_space.c,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: s3c2xx0_space.c,v 1.2 2010/03/03 15:12:06 oga Exp $ */
 /*	$NetBSD: s3c2xx0_space.c,v 1.7 2005/11/24 13:08:32 yamt Exp $ */
 
 /*
@@ -189,7 +189,7 @@ s3c2xx0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	/* XXX use extent manager to check duplicate mapping */
 
-	va = uvm_km_alloc(kernel_map, endpa - startpa);
+	va = uvm_km_valloc(kernel_map, endpa - startpa);
 	if (!va)
 		return (ENOMEM);
 
