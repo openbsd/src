@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.4 2010/03/03 18:44:30 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.5 2010/03/03 19:01:03 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -88,24 +88,24 @@ usbd_status urndis_ctrl_msg(struct urndis_softc *, uint8_t, uint8_t,
 usbd_status urndis_ctrl_send(struct urndis_softc *, void *, size_t);
 struct urndis_comp_hdr *urndis_ctrl_recv(struct urndis_softc *);
 
-urndis_status urndis_ctrl_handle(struct urndis_softc *,
+u_int32_t urndis_ctrl_handle(struct urndis_softc *,
     struct urndis_comp_hdr *, void **, size_t *);
-urndis_status urndis_ctrl_handle_init(struct urndis_softc *,
+u_int32_t urndis_ctrl_handle_init(struct urndis_softc *,
     const struct urndis_comp_hdr *);
-urndis_status urndis_ctrl_handle_query(struct urndis_softc *,
+u_int32_t urndis_ctrl_handle_query(struct urndis_softc *,
     const struct urndis_comp_hdr *, void **, size_t *);
-urndis_status urndis_ctrl_handle_reset(struct urndis_softc *,
+u_int32_t urndis_ctrl_handle_reset(struct urndis_softc *,
     const struct urndis_comp_hdr *);
 
-urndis_status urndis_ctrl_init(struct urndis_softc *);
-urndis_status urndis_ctrl_halt(struct urndis_softc *);
-urndis_status urndis_ctrl_query(struct urndis_softc *, urndis_oid, void *, size_t,
+u_int32_t urndis_ctrl_init(struct urndis_softc *);
+u_int32_t urndis_ctrl_halt(struct urndis_softc *);
+u_int32_t urndis_ctrl_query(struct urndis_softc *, u_int32_t, void *, size_t,
     void **, size_t *);
-urndis_status urndis_ctrl_set(struct urndis_softc *, urndis_oid, void *, size_t);
-urndis_status urndis_ctrl_set_param(struct urndis_softc *, const char *, u_int32_t,
+u_int32_t urndis_ctrl_set(struct urndis_softc *, u_int32_t, void *, size_t);
+u_int32_t urndis_ctrl_set_param(struct urndis_softc *, const char *, u_int32_t,
     void *, size_t);
-urndis_status urndis_ctrl_reset(struct urndis_softc *);
-urndis_status urndis_ctrl_keepalive(struct urndis_softc *);
+u_int32_t urndis_ctrl_reset(struct urndis_softc *);
+u_int32_t urndis_ctrl_keepalive(struct urndis_softc *);
 
 int urndis_encap(struct urndis_softc *, struct mbuf *, int);
 void urndis_decap(struct urndis_softc *, struct urndis_chain *, size_t);
@@ -215,11 +215,11 @@ urndis_ctrl_recv(struct urndis_softc *sc)
 	return pkt;
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_handle(struct urndis_softc *sc, struct urndis_comp_hdr *hdr,
     void **buf, size_t *bufsz)
 {
-	urndis_status rval;
+	u_int32_t rval;
 
 	DPRINTF(("%s: urndis_ctrl_handle\n", DEVNAME(sc)));
 
@@ -257,7 +257,7 @@ urndis_ctrl_handle(struct urndis_softc *sc, struct urndis_comp_hdr *hdr,
 	return rval;
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_handle_init(struct urndis_softc *sc, const struct urndis_comp_hdr *hdr)
 {
 	const struct urndis_init_comp	*msg;
@@ -311,7 +311,7 @@ urndis_ctrl_handle_init(struct urndis_softc *sc, const struct urndis_comp_hdr *h
 	return letoh32(msg->rm_status);
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_handle_query(struct urndis_softc *sc,
     const struct urndis_comp_hdr *hdr, void **buf, size_t *bufsz)
 {
@@ -374,12 +374,12 @@ urndis_ctrl_handle_query(struct urndis_softc *sc,
 	return letoh32(msg->rm_status);
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_handle_reset(struct urndis_softc *sc,
     const struct urndis_comp_hdr *hdr)
 {
 	const struct urndis_reset_comp	*msg;
-	urndis_status			 rval;
+	u_int32_t			 rval;
 
 	msg = (struct urndis_reset_comp *) hdr;
 
@@ -413,11 +413,11 @@ urndis_ctrl_handle_reset(struct urndis_softc *sc,
 	return rval;
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_init(struct urndis_softc *sc)
 {
 	struct urndis_init_req	*msg;
-	urndis_status		 rval;
+	u_int32_t		 rval;
 	struct urndis_comp_hdr	*hdr;
 
 	msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK);
@@ -460,11 +460,11 @@ urndis_ctrl_init(struct urndis_softc *sc)
 	return rval;
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_halt(struct urndis_softc *sc)
 {
 	struct urndis_halt_req	*msg;
-	urndis_status		 rval;
+	u_int32_t		 rval;
 
 	msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK);
 	if (msg == NULL) {
@@ -491,13 +491,13 @@ urndis_ctrl_halt(struct urndis_softc *sc)
 	return rval;
 }
 
-urndis_status
-urndis_ctrl_query(struct urndis_softc *sc, urndis_oid oid,
+u_int32_t
+urndis_ctrl_query(struct urndis_softc *sc, u_int32_t oid,
     void *qbuf, size_t qlen,
     void **rbuf, size_t *rbufsz)
 {
 	struct urndis_query_req	*msg;
-	urndis_status		 rval;
+	u_int32_t		 rval;
 	struct urndis_comp_hdr	*hdr;
 
 	msg = malloc(sizeof(*msg) + qlen, M_TEMP, M_WAITOK);
@@ -546,11 +546,11 @@ urndis_ctrl_query(struct urndis_softc *sc, urndis_oid oid,
 	return rval;
 }
 
-urndis_status
-urndis_ctrl_set(struct urndis_softc *sc, urndis_oid oid, void *buf, size_t len)
+u_int32_t
+urndis_ctrl_set(struct urndis_softc *sc, u_int32_t oid, void *buf, size_t len)
 {
 	struct urndis_set_req	*msg;
-	urndis_status		 rval;
+	u_int32_t		 rval;
 	struct urndis_comp_hdr	*hdr;
 
 	msg = malloc(sizeof(*msg) + len, M_TEMP, M_WAITOK);
@@ -601,12 +601,12 @@ urndis_ctrl_set(struct urndis_softc *sc, urndis_oid oid, void *buf, size_t len)
 	return rval;
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_set_param(struct urndis_softc *sc, const char *name, u_int32_t type,
     void *buf, size_t len)
 {
 	struct urndis_set_parameter	*param;
-	urndis_status			 rval;
+	u_int32_t			 rval;
 	size_t				 namelen, tlen;
 
 	if (name)
@@ -652,11 +652,11 @@ urndis_ctrl_set_param(struct urndis_softc *sc, const char *name, u_int32_t type,
 }
 
 /* XXX : adrreset, get it from response */
-urndis_status
+u_int32_t
 urndis_ctrl_reset(struct urndis_softc *sc)
 {
 	struct urndis_reset_req		*reset;
-	urndis_status			 rval;
+	u_int32_t			 rval;
 	struct urndis_comp_hdr		*hdr;
 
 	reset = malloc(sizeof(*reset), M_TEMP, M_WAITOK);
@@ -692,11 +692,11 @@ urndis_ctrl_reset(struct urndis_softc *sc)
 	return rval;
 }
 
-urndis_status
+u_int32_t
 urndis_ctrl_keepalive(struct urndis_softc *sc)
 {
 	struct urndis_keepalive_req	*keep;
-	urndis_status			 rval;
+	u_int32_t			 rval;
 	struct urndis_comp_hdr		*hdr;
 
 	keep = malloc(sizeof(*keep), M_TEMP, M_WAITOK);

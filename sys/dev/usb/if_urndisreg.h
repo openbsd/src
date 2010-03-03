@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.5 2010/03/02 20:54:27 mk Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.6 2010/03/03 19:01:03 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -68,8 +68,6 @@ struct urndis_softc {
 	struct urndis_cdata		sc_data;
 };
 
-typedef u_int32_t urndis_status;
-
 #define RNDIS_STATUS_BUFFER_OVERFLOW 	0x80000005L
 #define RNDIS_STATUS_FAILURE 		0xC0000001L
 #define RNDIS_STATUS_INVALID_DATA 	0xC0010015L
@@ -79,10 +77,6 @@ typedef u_int32_t urndis_status;
 #define RNDIS_STATUS_PENDING 		STATUS_PENDING /* XXX */
 #define RNDIS_STATUS_RESOURCES 		0xC000009AL
 #define RNDIS_STATUS_SUCCESS 		0x00000000L
-
-typedef u_int32_t urndis_req_id; /* seq nr. */
-
-typedef u_int32_t urndis_oid;
 
 #define	OID_GEN_SUPPORTED_LIST		0x00010101
 #define	OID_GEN_HARDWARE_STATUS		0x00010102
@@ -113,7 +107,6 @@ typedef u_int32_t urndis_oid;
 #define	OID_GEN_RNDIS_CONFIG_PARAMETER	0x0001021B
 #define	OID_GEN_VLAN_ID			0x0001021C
 
-
 #define	OID_802_3_PERMANENT_ADDRESS	0x01010101
 #define	OID_802_3_CURRENT_ADDRESS	0x01010102
 #define	OID_802_3_MULTICAST_LIST	0x01010103
@@ -130,7 +123,6 @@ typedef u_int32_t urndis_oid;
 #define	OID_802_3_XMIT_TIMES_CRS_LOST	0x01020206
 #define	OID_802_3_XMIT_LATE_COLLISIONS	0x01020207
 
-typedef u_int32_t urndis_medium;
 #define RNDIS_MEDIUM_802_3		0x00000000
 
 /* Device flags */
@@ -162,8 +154,8 @@ struct urndis_packet_msg {
 struct urndis_comp_hdr {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
-	urndis_status	rm_status;
+	u_int32_t	rm_rid;
+	u_int32_t	rm_status;
 };
 
 /* Initialize the device. */
@@ -173,7 +165,7 @@ struct urndis_comp_hdr {
 struct urndis_init_req {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
+	u_int32_t	rm_rid;
 	u_int32_t	rm_ver_major;
 	u_int32_t	rm_ver_minor;
 	u_int32_t	rm_max_xfersz;
@@ -182,12 +174,12 @@ struct urndis_init_req {
 struct urndis_init_comp {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
-	urndis_status	rm_status;
+	u_int32_t	rm_rid;
+	u_int32_t	rm_status;
 	u_int32_t	rm_ver_major;
 	u_int32_t	rm_ver_minor;
 	u_int32_t	rm_devflags;
-	urndis_medium	rm_medium;
+	u_int32_t	rm_medium;
 	u_int32_t	rm_pktmaxcnt;
 	u_int32_t	rm_pktmaxsz;
 	u_int32_t	rm_align;
@@ -201,7 +193,7 @@ struct urndis_init_comp {
 struct urndis_halt_req {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
+	u_int32_t	rm_rid;
 };
 
 /* Send a query object. */
@@ -211,8 +203,8 @@ struct urndis_halt_req {
 struct urndis_query_req {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
-	urndis_oid	rm_oid;
+	u_int32_t	rm_rid;
+	u_int32_t	rm_oid;
 	u_int32_t	rm_infobuflen;
 	u_int32_t	rm_infobufoffset;
 	u_int32_t	rm_devicevchdl;
@@ -221,8 +213,8 @@ struct urndis_query_req {
 struct urndis_query_comp {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
-	urndis_status	rm_status;
+	u_int32_t	rm_rid;
+	u_int32_t	rm_status;
 	u_int32_t	rm_infobuflen;
 	u_int32_t	rm_infobufoffset;
 };
@@ -234,8 +226,8 @@ struct urndis_query_comp {
 struct urndis_set_req {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
-	urndis_oid	rm_oid;
+	u_int32_t	rm_rid;
+	u_int32_t	rm_oid;
 	u_int32_t	rm_infobuflen;
 	u_int32_t	rm_infobufoffset;
 	u_int32_t	rm_devicevchdl;
@@ -244,8 +236,8 @@ struct urndis_set_req {
 struct urndis_set_comp {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
-	urndis_status	rm_status;
+	u_int32_t	rm_rid;
+	u_int32_t	rm_status;
 };
 
 #define REMOTE_NDIS_SET_PARAM_NUMERIC	0x00000000
@@ -266,13 +258,13 @@ struct urndis_set_parameter {
 struct urndis_reset_req {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
+	u_int32_t	rm_rid;
 };
 
 struct urndis_reset_comp {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_status	rm_status;
+	u_int32_t	rm_status;
 	u_int32_t	rm_adrreset;
 };
 
@@ -286,14 +278,14 @@ struct urndis_reset_comp {
 struct urndis_keepalive_req {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
+	u_int32_t	rm_rid;
 };
 
 struct urndis_keepalive_comp {
 	u_int32_t	rm_type;
 	u_int32_t	rm_len;
-	urndis_req_id	rm_rid;
-	urndis_status	rm_status;
+	u_int32_t	rm_rid;
+	u_int32_t	rm_status;
 };
 
 /* packet filter bits used by OID_GEN_CURRENT_PACKET_FILTER */
