@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.6 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.7 2010/03/03 10:17:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -454,14 +454,23 @@ main_dispatch_lde(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_KLABEL_INSERT:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct kroute))
+				fatalx("invalid size of IMSG_KLABEL_INSERT");
 			kroute_insert_label(imsg.data);
 			break;
 		case IMSG_KLABEL_CHANGE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct kroute))
+				fatalx("invalid size of IMSG_KLABEL_CHANGE");
 			if (kr_change(imsg.data))
 				log_warn("main_dispatch_lde: error changing "
 				    "route");
 			break;
 		case IMSG_KLABEL_DELETE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct kroute))
+				fatalx("invalid size of IMSG_KLABEL_DELETE");
 			if (kr_delete(imsg.data))
 				log_warn("main_dispatch_lde: error deleting "
 				    "route");

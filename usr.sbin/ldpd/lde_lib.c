@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.13 2010/02/25 21:47:08 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.14 2010/03/03 10:17:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -190,6 +190,7 @@ lde_kernel_insert(struct kroute *kr)
 		rn->prefix.s_addr = kr->prefix.s_addr;
 		rn->prefixlen = kr->prefixlen;
 		rn->remote_label = NO_LABEL;
+		rn->local_label = NO_LABEL;
 		TAILQ_INIT(&rn->labels_list);
 
 		rt_insert(rn);
@@ -230,7 +231,7 @@ lde_kernel_insert(struct kroute *kr)
 	rn->nexthop.s_addr = kr->nexthop.s_addr;
 
 	/* There is static assigned label for this route, record it in lib */
-	if (kr->local_label) {
+	if (kr->local_label != NO_LABEL) {
 		rn->local_label = (htonl(kr->local_label) << MPLS_LABEL_OFFSET);
 		return;
 	}
@@ -244,7 +245,7 @@ lde_kernel_insert(struct kroute *kr)
 		}
 	}
 
-	if (!rn->local_label) {
+	if (rn->local_label == NO_LABEL) {
 		/* Directly connected route */
 		if (kr->nexthop.s_addr == INADDR_ANY) {
 			rn->local_label =
@@ -290,6 +291,7 @@ lde_kernel_remove(struct kroute *kr)
 	struct rt_label		*rl;
 	struct lde_nbr		*ln;
 
+	rn = rt_find(kr->prefix.s_addr, kr->prefixlen);
 	rn = rt_find(kr->prefix.s_addr, kr->prefixlen);
 	if (rn == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.10 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.11 2010/03/03 10:17:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -50,11 +50,12 @@
 
 #define	F_LDPD_INSERTED		0x0001
 #define	F_KERNEL		0x0002
-#define	F_BGPD_INSERTED		0x0004
-#define	F_CONNECTED		0x0008
-#define	F_DOWN			0x0010
-#define	F_STATIC		0x0020
-#define	F_DYNAMIC		0x0040
+#define	F_CONNECTED		0x0004
+#define	F_STATIC		0x0008
+#define	F_DYNAMIC		0x0010
+#define	F_DOWN			0x0020
+#define	F_REJECT		0x0040
+#define	F_BLACKHOLE		0x0080
 #define	F_REDISTRIBUTED		0x0100
 
 struct evbuf {
@@ -273,11 +274,7 @@ struct kroute {
 	u_int32_t	ext_tag;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
-};
-
-struct rroute {
-	struct kroute	kr;
-	u_int32_t	metric;
+	u_int8_t	priority;
 };
 
 struct kif_addr {

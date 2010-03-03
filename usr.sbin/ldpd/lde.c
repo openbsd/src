@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.9 2010/03/01 09:05:07 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.10 2010/03/03 10:17:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -354,7 +354,6 @@ lde_dispatch_parent(int fd, short event, void *bula)
 {
 	struct imsg		 imsg;
 	struct kroute		 kr;
-	struct rroute		 rr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	ssize_t			 n;
@@ -379,15 +378,14 @@ lde_dispatch_parent(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_NETWORK_ADD:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(rr)) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
 				log_warnx("lde_dispatch_parent: "
 				    "wrong imsg len");
 				break;
 			}
-			memcpy(&rr, imsg.data, sizeof(rr));
+			memcpy(&kr, imsg.data, sizeof(kr));
 
-			lde_kernel_insert(&rr.kr);
-
+			lde_kernel_insert(&kr);
 			break;
 		case IMSG_NETWORK_DEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
@@ -398,7 +396,6 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			memcpy(&kr, imsg.data, sizeof(kr));
 
 			lde_kernel_remove(&kr);
-
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==
