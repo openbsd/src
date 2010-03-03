@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyurex.c,v 1.1 2010/03/01 07:56:47 yuo Exp $ */
+/*	$OpenBSD: uyurex.c,v 1.2 2010/03/03 19:08:02 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -343,11 +343,13 @@ uyurex_write_value_request(struct uyurex_softc *sc, uint32_t val)
 {
 	uint32_t v;
 	uint8_t req[8];
+
 	req[0] = CMD_WRITE;
+	req[1] = 0;
 	req[6] = CMD_EOF;
 	req[7] = CMD_PADDING;
-	v = htonl(val);
-	memcpy(req+1, &v, sizeof(uint32_t));
+	v = htobe32(val);
+	memcpy(req + 2, &v, sizeof(uint32_t));
 
 	sc->issueing_cmd = CMD_WRITE;
 	sc->accepted_cmd = CMD_NONE;
