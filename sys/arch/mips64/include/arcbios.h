@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.13 2009/12/07 18:56:27 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.14 2010/03/03 12:25:09 jsing Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -403,7 +403,9 @@ typedef struct arc_param_blk_64
 
 extern int bios_is_32bit;
 extern char bios_enaddr[20];
-extern char bios_console[10];
+extern char bios_console[30];
+extern char bios_graphics[6];
+extern char bios_keyboard[6];
 
 int  bios_getchar(void);
 void bios_putchar(char);

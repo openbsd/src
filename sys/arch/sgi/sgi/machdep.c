@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2010/02/13 14:07:30 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.100 2010/03/03 12:25:09 jsing Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -199,6 +199,19 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	bios_ident();
 
 	/*
+	 * Read and store ARCBios variables for future reference.
+	 */
+	cp = Bios_GetEnvironmentVariable("ConsoleOut");
+	if (cp != NULL && *cp != '\0')
+		strlcpy(bios_console, cp, sizeof(bios_console));
+	cp = Bios_GetEnvironmentVariable("gfx");
+	if (cp != NULL && *cp != '\0')
+		strlcpy(bios_graphics, cp, sizeof(bios_graphics));
+	cp = Bios_GetEnvironmentVariable("keybd");
+	if (cp != NULL && *cp != '\0')
+		strlcpy(bios_keyboard, cp, sizeof(bios_keyboard));
+
+	/*
 	 * Determine system type and set up configuration record data.
 	 */
 	hw_vendor = "SGI";
@@ -242,17 +255,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		Bios_Halt();
 		while(1);
 	}
-
-	/*
-	 * Read and store console type.
-	 */
-	cp = Bios_GetEnvironmentVariable("ConsoleOut");
-	if (cp != NULL && *cp != '\0')
-		strlcpy(bios_console, cp, sizeof bios_console);
-
-	/* Disable serial console if ARCS is telling us to use video. */
-	if (strncmp(bios_console, "video", 5) == 0)
-		comconsaddr = 0;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.

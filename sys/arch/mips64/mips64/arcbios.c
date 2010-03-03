@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.28 2009/12/07 19:39:57 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.29 2010/03/03 12:25:09 jsing Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -50,7 +50,9 @@ int bios_is_32bit;
  */
 char bios_enaddr[20] = "ff:ff:ff:ff:ff:ff";
 
-char bios_console[10];			/* Primary console. */
+char bios_console[30];			/* Primary console. */
+char bios_graphics[6];			/* Graphics state. */
+char bios_keyboard[6];			/* Keyboard layout. */
 
 extern int	physmem;		/* Total physical memory size */
 extern int	rsvdmem;		/* Total reserved memory size */
