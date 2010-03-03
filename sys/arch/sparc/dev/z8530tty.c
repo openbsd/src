@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.13 2009/11/09 17:53:39 nicm Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.14 2010/03/03 20:13:32 miod Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*-
@@ -230,8 +230,8 @@ void zstty_txint(struct zs_chanstate *);
 void zstty_softint(struct zs_chanstate *);
 void zstty_diag(void *);
 
-#define ZSUNIT(x)       (minor(x) & 0x7ffff)
-#define ZSDIALOUT(x)    (minor(x) & 0x80000)
+#define ZSUNIT(x)       (minor(x) & 0x7f)
+#define ZSDIALOUT(x)    (minor(x) & 0x80)
 
 /*
  * zstty_match: how is this zs channel configured?
@@ -421,7 +421,7 @@ zstty(dev)
 	dev_t dev;
 {
 	struct zstty_softc *zst;
-	int unit = minor(dev);
+	int unit = ZSUNIT(dev);
 
 #ifdef	DIAGNOSTIC
 	if (unit >= zstty_cd.cd_ndevs)
@@ -456,8 +456,9 @@ zs_shutdown(zst)
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
 	 */
-	if (ISSET(tp->t_cflag, HUPCL)) {
+	if (ISSET(tp->t_cflag, HUPCL) || ISSET(tp->t_state, TS_WOPEN)) {
 		zs_modem(zst, 0);
+		/* hold low for 1 second */
 		(void) tsleep(cs, TTIPRI, ttclos, hz);
 	}
 
@@ -496,7 +497,7 @@ zsopen(dev, flags, mode, p)
 	int s, s2;
 	int error, unit;
 
-	unit = minor(dev);
+	unit = ZSUNIT(dev);
 	if (unit >= zstty_cd.cd_ndevs)
 		return (ENXIO);
 	zst = zstty_cd.cd_devs[unit];
@@ -584,16 +585,12 @@ zsopen(dev, flags, mode, p)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		s2 = splzs();
+		if (ZSDIALOUT(dev))
+			SET(tp->t_state, TS_CARR_ON);
+		else
+			CLR(tp->t_state, TS_CARR_ON);
 
-		/*
-		 * Turn on DTR.  We must always do this, even if carrier is not
-		 * present, because otherwise we'd have to use TIOCSDTR
-		 * immediately after setting CLOCAL, which applications do not
-		 * expect.  We always assert DTR while the device is open
-		 * unless explicitly requested to deassert it.
-		 */
-		zs_modem(zst, 1);
+		s2 = splzs();
 
 		/* Clear the input ring, and unblock. */
 		zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
@@ -605,9 +602,83 @@ zsopen(dev, flags, mode, p)
 		splx(s2);
 	}
 
+	if (ZSDIALOUT(dev)) {
+		if (ISSET(tp->t_state, TS_ISOPEN)) {
+			/* someone already is dialed in... */
+			splx(s);
+			return EBUSY;
+		}
+		cs->cs_cua = 1;
+	}
+
+	error = 0;
+	/* wait for carrier if necessary */
+	if (ISSET(flags, O_NONBLOCK)) {
+		if (!ZSDIALOUT(dev) && cs->cs_cua) {
+			/* Opening TTY non-blocking... but the CUA is busy */
+			error = EBUSY;
+		}
+	} else
+	  while (cs->cs_cua ||
+	    (!ISSET(tp->t_cflag, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON))) {
+		int rr0;
+
+		error = 0;
+		SET(tp->t_state, TS_WOPEN);
+
+		if (!ZSDIALOUT(dev) && !cs->cs_cua) {
+			/*
+			 * Turn on DTR.  We must always do this on non-CUA
+			 * devices, even if carrier is not present, because
+			 * otherwise we'd have to use TIOCSDTR immediately
+			 * after setting CLOCAL, which applications do not
+			 * expect.  We always assert DTR while the device is
+			 * open unless explicitly requested to deassert it.
+			 */
+			s2 = splzs();
+			zs_modem(zst, 1);
+			rr0 = zs_read_csr(cs);
+			splx(s2);
+
+			/* loop, turning on the device, until carrier present */
+			if (ISSET(rr0, ZSRR0_DCD) ||
+			    ISSET(zst->zst_swflags, TIOCFLAG_SOFTCAR))
+				SET(tp->t_state, TS_CARR_ON);
+		}
+
+		if ((ISSET(tp->t_cflag, CLOCAL) ||
+		    ISSET(tp->t_state, TS_CARR_ON)) && !cs->cs_cua)
+			break;
+
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		    ttopen, 0);
+
+		if (!ZSDIALOUT(dev) && cs->cs_cua && error == EINTR) {
+			error = 0;
+			continue;
+		}
+
+		if (error) {
+			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+				s2 = splzs();
+				zs_modem(zst, 0);
+				splx(s2);
+				CLR(tp->t_state, TS_WOPEN);
+				ttwakeup(tp);
+			}
+			if (ZSDIALOUT(dev))
+				cs->cs_cua = 0;
+			CLR(tp->t_state, TS_WOPEN);
+			break;
+		}
+		if (!ZSDIALOUT(dev) && cs->cs_cua)
+			continue;
+	}
+
 	splx(s);
 
-	error = ((*linesw[tp->t_line].l_open)(dev, tp));
+	if (error == 0)
+		error = ((*linesw[tp->t_line].l_open)(dev, tp));
 	if (error)
 		goto bad;
 
@@ -636,10 +707,11 @@ zsclose(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
-	register struct tty *tp;
+	struct zs_chanstate *cs;
+	struct tty *tp;
+	int s;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	cs = zst->zst_cs;
 	tp = zst->zst_tty;
 
@@ -648,7 +720,11 @@ zsclose(dev, flags, mode, p)
 		return 0;
 
 	(*linesw[tp->t_line].l_close)(tp, flags);
+
+	s = spltty();
+	cs->cs_cua = 0;
 	ttyclose(tp);
+	splx(s);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		/*
@@ -674,7 +750,7 @@ zsread(dev, uio, flags)
 	struct zstty_softc *zst;
 	struct tty *tp;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	tp = zst->zst_tty;
 
 	return (*linesw[tp->t_line].l_read)(tp, uio, flags);
@@ -689,7 +765,7 @@ zswrite(dev, uio, flags)
 	struct zstty_softc *zst;
 	struct tty *tp;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	tp = zst->zst_tty;
 
 	return (*linesw[tp->t_line].l_write)(tp, uio, flags);
@@ -712,7 +788,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int error;
 	int s;
 
-	zst = zstty_cd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	cs = zst->zst_cs;
 	tp = zst->zst_tty;
 
@@ -793,7 +869,7 @@ zsstart(tp)
 	struct zs_chanstate *cs;
 	int s;
 
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	s = spltty();
@@ -858,7 +934,7 @@ zsstop(tp, flag)
 	struct zs_chanstate *cs;
 	int s;
 
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	s = splzs();
@@ -889,7 +965,7 @@ zsparam(tp, t)
 	u_char tmp3, tmp4, tmp5;
 	int s, error;
 
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	ospeed = t->c_ospeed;
@@ -1188,7 +1264,7 @@ zshwiflow(tp, block)
 	struct zs_chanstate *cs;
 	int s;
 
-	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
+	zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	if (cs->cs_wr5_rts == 0)

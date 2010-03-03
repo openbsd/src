@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.18 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.19 2010/03/03 20:13:34 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -221,9 +221,8 @@ static void zstty_txint(struct zs_chanstate *);
 static void zstty_softint(struct zs_chanstate *);
 static void zstty_diag(void *);
 
-
-#define	ZSUNIT(x)	(minor(x) & 0x7ffff)
-#define	ZSDIALOUT(x)	(minor(x) & 0x80000)
+#define	ZSUNIT(x)	(minor(x) & 0x7f)
+#define	ZSDIALOUT(x)	(minor(x) & 0x80)
 
 struct zstty_softc *
 zs_device_lookup(cf, unit)
@@ -447,8 +446,9 @@ zs_shutdown(zst)
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
 	 */
-	if (ISSET(tp->t_cflag, HUPCL)) {
+	if (ISSET(tp->t_cflag, HUPCL) || ISSET(tp->t_state, TS_WOPEN)) {
 		zs_modem(zst, 0);
+		/* hold low for 1 second */
 		(void) tsleep(cs, TTIPRI, ttclos, hz);
 	}
 
@@ -573,16 +573,12 @@ zsopen(dev, flags, mode, p)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		s2 = splzs();
+		if (ZSDIALOUT(dev))
+			SET(tp->t_state, TS_CARR_ON);
+		else
+			CLR(tp->t_state, TS_CARR_ON);
 
-		/*
-		 * Turn on DTR.  We must always do this, even if carrier is not
-		 * present, because otherwise we'd have to use TIOCSDTR
-		 * immediately after setting CLOCAL, which applications do not
-		 * expect.  We always assert DTR while the device is open
-		 * unless explicitly requested to deassert it.
-		 */
-		zs_modem(zst, 1);
+		s2 = splzs();
 
 		/* Clear the input ring, and unblock. */
 		zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
@@ -594,9 +590,83 @@ zsopen(dev, flags, mode, p)
 		splx(s2);
 	}
 
+	if (ZSDIALOUT(dev)) {
+		if (ISSET(tp->t_state, TS_ISOPEN)) {
+			/* someone already is dialed in... */
+			splx(s);
+			return EBUSY;
+		}
+		cs->cs_cua = 1;
+	}
+
+	error = 0;
+	/* wait for carrier if necessary */
+	if (ISSET(flags, O_NONBLOCK)) {
+		if (!ZSDIALOUT(dev) && cs->cs_cua) {
+			/* Opening TTY non-blocking... but the CUA is busy */
+			error = EBUSY;
+		}
+	} else
+	  while (cs->cs_cua ||
+	    (!ISSET(tp->t_cflag, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON))) {
+		int rr0;
+
+		error = 0;
+		SET(tp->t_state, TS_WOPEN);
+
+		if (!ZSDIALOUT(dev) && !cs->cs_cua) {
+			/*
+			 * Turn on DTR.  We must always do this on non-CUA
+			 * devices, even if carrier is not present, because
+			 * otherwise we'd have to use TIOCSDTR immediately
+			 * after setting CLOCAL, which applications do not
+			 * expect.  We always assert DTR while the device is
+			 * open unless explicitly requested to deassert it.
+			 */
+			s2 = splzs();
+			zs_modem(zst, 1);
+			rr0 = zs_read_csr(cs);
+			splx(s2);
+
+			/* loop, turning on the device, until carrier present */
+			if (ISSET(rr0, ZSRR0_DCD) ||
+			    ISSET(zst->zst_swflags, TIOCFLAG_SOFTCAR))
+				SET(tp->t_state, TS_CARR_ON);
+		}
+
+		if ((ISSET(tp->t_cflag, CLOCAL) ||
+		    ISSET(tp->t_state, TS_CARR_ON)) && !cs->cs_cua)
+			break;
+
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		    ttopen, 0);
+
+		if (!ZSDIALOUT(dev) && cs->cs_cua && error == EINTR) {
+			error = 0;
+			continue;
+		}
+
+		if (error) {
+			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+				s2 = splzs();
+				zs_modem(zst, 0);
+				splx(s2);
+				CLR(tp->t_state, TS_WOPEN);
+				ttwakeup(tp);
+			}
+			if (ZSDIALOUT(dev))
+				cs->cs_cua = 0;
+			CLR(tp->t_state, TS_WOPEN);
+			break;
+		}
+		if (!ZSDIALOUT(dev) && cs->cs_cua)
+			continue;
+	}
+
 	splx(s);
 
-	error = ((*linesw[tp->t_line].l_open)(dev, tp));
+	if (error == 0)
+		error = ((*linesw[tp->t_line].l_open)(dev, tp));
 	if (error)
 		goto bad;
 
@@ -625,14 +695,20 @@ zsclose(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct zstty_softc *zst = zs_device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
+	int s;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
 
 	(*linesw[tp->t_line].l_close)(tp, flags);
+
+	s = spltty();
+	cs->cs_cua = 0;
 	ttyclose(tp);
+	splx(s);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		/*
