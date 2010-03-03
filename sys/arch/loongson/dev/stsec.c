@@ -1,4 +1,4 @@
-/*	$OpenBSD: stsec.c,v 1.1 2010/02/24 22:16:18 miod Exp $	*/
+/*	$OpenBSD: stsec.c,v 1.2 2010/03/03 19:43:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -26,7 +26,10 @@
 #include <sys/device.h>
 #include <sys/sensors.h>
 
+#include <machine/apmvar.h>
 #include <dev/i2c/i2cvar.h>
+
+#include "apm.h"
 
 extern int gdium_revision;
 
@@ -54,6 +57,8 @@ extern int gdium_revision;
 #define	ST7_SIGNATURE	0x04
 #define	STSIG_EC_CONTROL	0x00
 #define	STSIG_OS_CONTROL	0xae
+#define STSEC_BAT_MIN_VOLT	500000	/* 0.5V */
+#define STSEC_BAT_MAX_VOLT	8000000	/* 8V */
 
 const struct {
 	const char *desc;
@@ -103,9 +108,23 @@ struct cfdriver stsec_cd = {
 	NULL, "stsec", DV_DULL
 };
 
+int	stsec_apminfo(struct apm_power_info *);
 int	stsec_read(struct stsec_softc *, uint, int *);
 int	stsec_write(struct stsec_softc *, uint, int);
 void	stsec_sensors_update(void *);
+
+#if NAPM > 0
+struct apm_power_info stsec_apmdata;
+const char *stsec_batstate[] = {
+	"high",
+	"low",
+	"critical",
+	"charging",
+	"unknown"
+};
+#define BATTERY_STRING(x) ((x) < nitems(stsec_batstate) ? \
+	stsec_batstate[x] : stsec_batstate[4])
+#endif
 
 int
 stsec_match(struct device *parent, void *vcf, void *aux)
@@ -186,6 +205,11 @@ stsec_attach(struct device *parent, struct device *self, void *aux)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
 	sensordev_install(&sc->sc_sensordev);
+#if NAPM > 0
+	/* make sure we have the apm state initialized before apm attaches */
+	stsec_sensors_update(sc);
+	apm_setinfohook(stsec_apminfo);
+#endif
 }
 
 int
@@ -228,6 +252,10 @@ stsec_sensors_update(void *vsc)
 	ulong batuv;
 	struct ksensor *ks;
 	uint i;
+#if NAPM > 0
+	struct apm_power_info old;
+	uint cap_pct;
+#endif
 
 	for (i = 0; i < nitems(sc->sc_sensors); i++)
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
@@ -255,7 +283,7 @@ stsec_sensors_update(void *vsc)
 	ks = &sc->sc_sensors[STSEC_SENSOR_BATTERY_PRESENCE];
 	switch (gdium_revision) {
 	case 0:
-		ks->value = batuv > 500000;	/* 0.5V */
+		ks->value = batuv > STSEC_BAT_MIN_VOLT;
 		break;
 	default:
 		ks->value = !!ISSET(status, STS_BATTERY_PRESENT);
@@ -270,4 +298,51 @@ stsec_sensors_update(void *vsc)
 	ks = &sc->sc_sensors[STSEC_SENSOR_BATTERY_VOLTAGE];
 	ks->value = (int64_t)batuv;
 	ks->status = SENSOR_S_OK;
+
+#if NAPM > 0
+	bcopy(&stsec_apmdata, &old, sizeof(old));
+
+	if (batuv < STSEC_BAT_MIN_VOLT)
+		batuv = STSEC_BAT_MIN_VOLT;
+	else if (batuv > STSEC_BAT_MAX_VOLT)
+		batuv = STSEC_BAT_MAX_VOLT;
+	cap_pct = (batuv - STSEC_BAT_MIN_VOLT) * 100 / (STSEC_BAT_MAX_VOLT -
+	    STSEC_BAT_MIN_VOLT);
+	stsec_apmdata.battery_life = cap_pct;
+
+	stsec_apmdata.ac_state = ISSET(status, STS_AC_AVAILABLE) ? APM_AC_ON :
+	    APM_AC_OFF;
+	if (!sc->sc_sensors[STSEC_SENSOR_BATTERY_PRESENCE].value) {
+		stsec_apmdata.battery_state = APM_BATTERY_ABSENT;
+		stsec_apmdata.minutes_left = 0;
+		stsec_apmdata.battery_life = 0;
+	} else {
+		if (ISSET(control, STC_CHARGE_ENABLE))
+			stsec_apmdata.battery_state = APM_BATT_CHARGING;
+		/* XXX arbitrary */
+		else if (cap_pct < 10)
+			stsec_apmdata.battery_state = APM_BATT_CRITICAL;
+		else if (cap_pct > 60)
+			stsec_apmdata.battery_state = APM_BATT_HIGH;
+		else
+			stsec_apmdata.battery_state = APM_BATT_LOW;
+
+		stsec_apmdata.minutes_left = -1; /* unknown */
+	}
+	if (old.ac_state != stsec_apmdata.ac_state) 
+		apm_record_event(APM_POWER_CHANGE, "AC power",
+			stsec_apmdata.ac_state ? "restored" : "lost");
+	if (old.battery_state != stsec_apmdata.battery_state) 
+		apm_record_event(APM_POWER_CHANGE, "battery",
+		    BATTERY_STRING(stsec_apmdata.battery_state));
+#endif
 }
+
+#if NAPM > 0
+int
+stsec_apminfo(struct apm_power_info *info)
+{
+	 bcopy(&stsec_apmdata, info, sizeof(struct apm_power_info));
+	 return 0;
+}
+#endif
