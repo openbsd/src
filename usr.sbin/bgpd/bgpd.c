@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.154 2010/02/11 14:40:06 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.155 2010/03/03 09:40:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -753,7 +753,6 @@ bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 		memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
 		net.prefixlen = kr6->prefixlen;
 	}
-
 
 	if (imsg_compose(ibuf_rde, type, 0, 0, -1, &net,
 	    sizeof(struct network_config)) == -1)
