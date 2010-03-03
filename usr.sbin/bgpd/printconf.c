@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.77 2009/12/17 09:32:59 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.78 2010/03/03 22:09:08 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -291,7 +291,7 @@ print_mainconf(struct bgpd_config *conf)
 		print_set(&conf->connectset6);
 		printf("\n");
 	}
-	if (conf->flags & BGPD_FLAG_REDIST_STATIC) {
+	if (conf->flags & BGPD_FLAG_REDIST6_STATIC) {
 		printf("network inet6 static");
 		if (!TAILQ_EMPTY(&conf->staticset6))
 			printf(" ");
