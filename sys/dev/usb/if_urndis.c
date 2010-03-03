@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.5 2010/03/03 19:01:03 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.6 2010/03/03 23:26:56 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -162,8 +162,8 @@ urndis_ctrl_send(struct urndis_softc *sc, void *buf, size_t len)
 struct urndis_comp_hdr *
 urndis_ctrl_recv(struct urndis_softc *sc)
 {
-#define RNDIS_RESPONSE_LEN 0x400 /* XXX seriously? */
-	struct urndis_comp_hdr	*hdr, *pkt;
+#define RNDIS_RESPONSE_LEN 0x400
+	struct urndis_comp_hdr	*hdr;
 	char			*buf;
 	usbd_status		 err;
 
@@ -197,22 +197,7 @@ urndis_ctrl_recv(struct urndis_softc *sc)
 		return NULL;
 	}
 
-	if (letoh32(hdr->rm_len) < 128) {
-		pkt = malloc(letoh32(hdr->rm_len),
-		    M_TEMP, M_WAITOK | M_CANFAIL);
-		if (pkt == NULL) {
-			printf("%s: out of memory\n", DEVNAME(sc));
-			/* XXX just use buf? */
-			free(buf, M_TEMP);
-		} else {
-			memcpy(pkt, hdr, letoh32(hdr->rm_len));
-			free(buf, M_TEMP);
-		}
-	} else {
-		pkt = hdr;
-	}
-
-	return pkt;
+	return hdr;
 }
 
 u_int32_t
