@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2010/03/02 20:54:51 miod Exp $
+#	$OpenBSD: GENERIC,v 1.20 2010/03/03 13:33:27 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -157,6 +157,18 @@ video*		at uvideo?
 
 udl*		at uhub?
 wsdisplay*	at udl?
+
+# Bluetooth controllers
+ubt*	at uhub?		# USB Bluetooth
+bthub*	at ubt?
+
+bthidev*	at bthub?		# Bluetooth HID support
+btkbd*	at bthidev?
+btms*	at bthidev?
+wskbd*	at btkbd? mux 1
+wsmouse*	at btms? mux 0
+btsco*	at bthub?		# Bluetooth audio support
+audio*	at btsco?
 
 # NICs
 ral*		at pci?

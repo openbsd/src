@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.9 2010/02/28 22:32:50 miod Exp $
+#	$OpenBSD: files.loongson,v 1.10 2010/03/03 13:33:27 jasper Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -38,6 +38,7 @@ include	"dev/mii/files.mii"
 include	"dev/pci/files.pci"
 include	"dev/pckbc/files.pckbc"
 include	"dev/usb/files.usb"
+include "dev/bluetooth/files.bluetooth"
 include "dev/rasops/files.rasops"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
