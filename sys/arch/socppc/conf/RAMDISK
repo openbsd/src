@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2009/09/12 22:03:11 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2010/03/03 22:19:40 kettenis Exp $
 
 machine		socppc powerpc
 
@@ -76,6 +76,9 @@ eephy*		at mii?		# Marvell 88E1000 series PHY
 ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# Generic unknown PHY
+
+# PCI
+athn*		at pci?		# Atheros AR9k (802.11a/g/n)
 
 pseudo-device	loop	1	# network loopback
 pseudo-device	bpfilter 1	# packet filter

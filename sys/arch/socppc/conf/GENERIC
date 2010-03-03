@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2009/12/23 18:03:07 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.14 2010/03/03 22:19:40 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -93,6 +93,9 @@ rlphy*		at mii?		# RealTek 8139 internal PHYs
 ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# Generic unknown PHY
+
+# PCI
+athn*		at pci?		# Atheros AR9k (802.11a/g/n)
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
