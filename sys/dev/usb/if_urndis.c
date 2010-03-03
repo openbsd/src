@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.6 2010/03/03 23:26:56 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.7 2010/03/03 23:37:01 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -108,7 +108,7 @@ u_int32_t urndis_ctrl_reset(struct urndis_softc *);
 u_int32_t urndis_ctrl_keepalive(struct urndis_softc *);
 
 int urndis_encap(struct urndis_softc *, struct mbuf *, int);
-void urndis_decap(struct urndis_softc *, struct urndis_chain *, size_t);
+void urndis_decap(struct urndis_softc *, struct urndis_chain *, u_int32_t);
 
 int urndis_match(struct device *, void *, void *);
 void urndis_attach(struct device *, struct device *, void *);
@@ -770,7 +770,7 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 }
 
 void
-urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, size_t len)
+urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 {
 	struct mbuf		*m;
 	struct urndis_packet_msg	*msg;
@@ -1209,7 +1209,7 @@ urndis_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 	struct urndis_chain	*c;
 	struct urndis_softc	*sc;
 	struct ifnet		*ifp;
-	size_t			 total_len;
+	u_int32_t		 total_len;
 
 	c = priv;
 	sc = c->sc_softc;
@@ -1246,7 +1246,7 @@ urndis_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 	sc->sc_rxeof_errors = 0;
 #endif
 
-	usbd_get_xfer_status(xfer, NULL, NULL, (u_int32_t*)&total_len, NULL);
+	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 	urndis_decap(sc, c, total_len);
 
 done:
