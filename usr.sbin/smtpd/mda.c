@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.36 2010/03/01 22:00:52 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.37 2010/03/03 10:52:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -276,6 +276,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 			if ((b = malloc(sizeof(*b))) == NULL)
 				fatal(NULL);
 			*b = *req;
+			msgbuf_init(&b->w);
 			b->env = env;
 			b->mboxfp = NULL;
 			b->datafp = NULL;
@@ -415,22 +416,22 @@ void
 mda_store(struct batch *b)
 {
 	char		*p;
-	int		 ch, ret, nbytes;
-	socklen_t	 len;
+	struct buf	*buf;
+	int		 ch, len;
 
 	if (b->message.sender.user[0] && b->message.sender.domain[0])
 		/* XXX: remove user provided Return-Path, if any */
-		ret = asprintf(&p, "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
+		len = asprintf(&p, "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
 		    b->message.sender.user,
 		    b->message.sender.domain,
 		    b->message.session_rcpt.user,
 		    b->message.session_rcpt.domain);
 	else
-		ret = asprintf(&p, "Delivered-To: %s@%s\n",
+		len = asprintf(&p, "Delivered-To: %s@%s\n",
 		    b->message.session_rcpt.user,
 		    b->message.session_rcpt.domain);
 
-	if (ret == -1)
+	if (len == -1)
 		fatal("mda_store: asprintf");
 
 	if (b->message.recipient.rule.r_action == A_MAILDIR) {
@@ -444,29 +445,14 @@ mda_store(struct batch *b)
 			fatal("mda_store: cannot write to file");
 		mda_store_done(b);
 	} else {
-		session_socket_blockmode(fileno(b->mboxfp), BM_NONBLOCK);
-		len = sizeof(b->rbufsz);
-		if (getsockopt(fileno(b->mboxfp), SOL_SOCKET, SO_SNDLOWAT,
-		    &b->rbufsz, &len) == -1)
-			fatal("mda_store: getsockopt");
-		if ((b->rbuf = malloc(b->rbufsz)) == NULL)
+		b->w.fd = fileno(b->mboxfp);
+		session_socket_blockmode(b->w.fd, BM_NONBLOCK);
+		if ((buf = buf_open(len)) == NULL)
 			fatal(NULL);
-
-		do {
-			nbytes = write(fileno(b->mboxfp), p, ret);
-			if (nbytes == -1 &&
-			    (errno != EINTR && errno != EAGAIN))
-				break;
-		} while (nbytes == -1);
-
-		if (nbytes == -1) {
-			log_warn("mda_store: write");
-			fclose(b->mboxfp);
-			return;
-		}
-
-		event_set(&b->ev, fileno(b->mboxfp), EV_WRITE|EV_PERSIST,
-		    mda_event, b);
+		if (buf_add(buf, p, len) < 0)
+			fatal(NULL);
+		buf_close(&b->w, buf);
+		event_set(&b->ev, b->w.fd, EV_WRITE, mda_event, b);
 		event_add(&b->ev, NULL);
 	}
 
@@ -476,26 +462,36 @@ mda_store(struct batch *b)
 void
 mda_event(int fd, short event, void *p)
 {
+	char		 tmp[16384];
 	struct batch	*b = p;
+	struct buf	*buf;
 	size_t		 len;
-	int		 error;
 
-	error = 0;
-	len = fread(b->rbuf, 1, b->rbufsz, b->datafp);
-	if (ferror(b->datafp)) {
-		log_warnx("mda_event: read failure");
-		error = 1;
+	if (b->w.queued == 0) {
+		if ((buf = buf_dynamic(0, sizeof(tmp))) == NULL)
+			fatal(NULL);
+		len = fread(tmp, 1, sizeof(tmp), b->datafp);
+		if (ferror(b->datafp))
+			fatal("mda_event: fread failed");
+		if (feof(b->datafp) && len == 0) {
+			mda_store_done(b);
+			return;
+		}
+		if (buf_add(buf, tmp, len) < 0)
+			fatal(NULL);
+		buf_close(&b->w, buf);
 	}
 
-	if (write(fd, b->rbuf, len) != (ssize_t)len) {
-		log_warnx("mda_event: write failure");
-		error = 1;
-	}
-
-	if (feof(b->datafp) || error) {
-		event_del(&b->ev);
+	if (buf_write(&b->w) < 0) {
+		/* XXX: if $? is zero, message is considered delivered despite
+		 * write error. */
+		log_warn("mda_event: write failed");
 		mda_store_done(b);
+		return;
 	}
+
+	event_set(&b->ev, fd, EV_WRITE, mda_event, b);
+	event_add(&b->ev, NULL);
 }
 
 void
@@ -597,7 +593,7 @@ mda_done(struct smtpd *env, struct batch *b)
 			fclose(b->mboxfp);
 		if (b->datafp)
 			fclose(b->datafp);
-		free(b->rbuf);
+		msgbuf_clear(&b->w);
 		free(b);
 	}
 }
