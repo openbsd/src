@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 2009/08/09 20:29:09 miod Exp $
+#	$OpenBSD: GENERIC,v 1.17 2010/03/03 20:57:28 mk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -104,6 +104,7 @@ pci*	at ppb?
 #cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 #kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 #cdce*	at uhub?		# CDC Ethernet
+#urndis*	at uhub?		# Remote NDIS Ethernet
 #udav*	at uhub?		# Davicom DM9601 based Ethernet
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #url*	at uhub?		# Realtek RTL8150L based adapters
