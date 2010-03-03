@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.7 2010/01/02 14:56:02 michele Exp $
+/*	$OpenBSD: ldpctl.c,v 1.8 2010/03/03 10:18:35 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -429,13 +429,13 @@ show_lfib_msg(struct imsg *imsg)
 		else if (k->flags & F_CONNECTED)
 			printf("link#%-13u", k->ifindex);
 
-		if (k->local_label) {
+		if (k->local_label != NO_LABEL) {
 			printf("%-18u", (ntohl(k->local_label) >>
 			    MPLS_LABEL_OFFSET));
 		} else
 			printf("-                 ");
 
-		if (k->remote_label) {
+		if (k->remote_label != NO_LABEL) {
 			printf("%u", (ntohl(k->remote_label) >>
 			    MPLS_LABEL_OFFSET));
 		} else
