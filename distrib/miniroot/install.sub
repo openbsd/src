@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.597 2010/03/02 01:24:50 krw Exp $
+#	$OpenBSD: install.sub,v 1.598 2010/03/04 02:07:55 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1418,19 +1418,18 @@ set_timezone() {
 	[[ $_zonefile = /var/tzlist && -z $TZ ]] && return
 
 	while :; do
-		_zonepath=""
-
 		ask "What timezone are you in? ('?' for list)" "$TZ"
-
-		if [[ $resp = "?" ]]; then
-			grep -v /. $_zonefile | showcols
-			continue
-		fi
-		_zonepath=$_zonepath$resp
+		_zonepath=${resp%%*(/)}
+		case $_zonepath in
+		"")	continue ;;
+		"?")	grep -v /. $_zonefile | showcols
+			continue ;;
+		esac
 
 		while isin $_zonepath/ $(cat $_zonefile); do
 			ask "What sub-timezone of '$_zonepath' are you in? ('?' for list)"
 			_zsed=$(echo $_zonepath/ | sed 's,/,\\/,g')
+			resp=${resp%%*(/)}
 			case $resp in
 			"")	;;
 			"?")	sed -n "/^$_zsed/{s/$_zsed//;/\/./!p;}" $_zonefile | showcols ;;
