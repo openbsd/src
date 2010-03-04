@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.133 2010/01/10 12:39:43 markus Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.134 2010/03/04 13:55:28 markus Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -581,6 +581,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 	case IPSEC_ID_IPV6_RANGE:
 	case IPSEC_ID_DER_ASN1_DN:
 	case IPSEC_ID_DER_ASN1_GN:
+	case IPSEC_ID_FQDN:
 	case IPSEC_ID_KEY_ID:
 	default:
 		log_print("ipsec_set_network: ID type %d (%s) not supported",
@@ -650,6 +651,17 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->dst_mask->sa_family = AF_INET6;
 		isa->dst_mask->sa_len = sizeof(struct sockaddr_in6);
 		break;
+
+	case IPSEC_ID_IPV4_RANGE:
+	case IPSEC_ID_IPV6_RANGE:
+	case IPSEC_ID_DER_ASN1_DN:
+	case IPSEC_ID_DER_ASN1_GN:
+	case IPSEC_ID_FQDN:
+	case IPSEC_ID_KEY_ID:
+	default:
+		log_print("ipsec_set_network: ID type %d (%s) not supported",
+		    id, constant_name(ipsec_id_cst, id));
+		return -1;
 	}
 
 	/* Net */

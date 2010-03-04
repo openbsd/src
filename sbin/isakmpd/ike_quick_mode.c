@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.103 2009/11/13 22:07:59 deraadt Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.104 2010/03/04 13:55:28 markus Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1080,6 +1080,22 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	if (kep)
 		ie->pfs = 1;
 
+	/* Drop message when it contains ID types we do not implement yet.  */
+	TAILQ_FOREACH(idp, &msg->payload[ISAKMP_PAYLOAD_ID], link) {
+		switch (GET_ISAKMP_ID_TYPE(idp->p)) {
+		case IPSEC_ID_IPV4_ADDR:
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+		case IPSEC_ID_IPV6_ADDR:
+		case IPSEC_ID_IPV6_ADDR_SUBNET:
+			break;
+
+		default:
+			message_drop(msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION,
+			    0, 1, 0);
+			return -1;
+		}
+	}
+
 	/* Handle optional client ID payloads.  */
 	idp = payload_first(msg, ISAKMP_PAYLOAD_ID);
 	if (idp) {
@@ -1506,6 +1522,22 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 	kep = payload_first(msg, ISAKMP_PAYLOAD_KEY_EXCH);
 	if (kep)
 		ie->pfs = 1;
+
+	/* Drop message when it contains ID types we do not implement yet.  */
+	TAILQ_FOREACH(idp, &msg->payload[ISAKMP_PAYLOAD_ID], link) {
+		switch (GET_ISAKMP_ID_TYPE(idp->p)) {
+		case IPSEC_ID_IPV4_ADDR:
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+		case IPSEC_ID_IPV6_ADDR:
+		case IPSEC_ID_IPV6_ADDR_SUBNET:
+			break;
+
+		default:
+			message_drop(msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION,
+			    0, 1, 0);
+			goto cleanup;
+		}
+	}
 
 	/* Handle optional client ID payloads.  */
 	idp = payload_first(msg, ISAKMP_PAYLOAD_ID);
