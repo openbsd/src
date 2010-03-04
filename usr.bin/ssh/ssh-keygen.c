@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.180 2010/03/02 23:20:57 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.181 2010/03/04 10:36:03 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1292,7 +1292,7 @@ parse_cert_times(char *timespec)
 	from = xstrdup(timespec);
 	to = strchr(from, ':');
 	if (to == NULL || from == to || *(to + 1) == '\0')
-		fatal("Invalid certificate life specification %s", optarg);
+		fatal("Invalid certificate life specification %s", timespec);
 	*to++ = '\0';
 
 	if (*from == '-' || *from == '+')
