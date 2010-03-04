@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.6 2010/03/03 19:01:03 mk Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.7 2010/03/04 20:23:45 armani Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -133,6 +133,7 @@ struct urndis_softc {
  * RNDIS data message
  */
 #define REMOTE_NDIS_PACKET_MSG		0x00000001
+
 
 struct urndis_packet_msg {
 	u_int32_t	rm_type;
@@ -301,3 +302,9 @@ struct urndis_keepalive_comp {
 #define RNDIS_PACKET_TYPE_ALL_FUNCTIONAL	0x00002000
 #define RNDIS_PACKET_TYPE_FUNCTIONAL		0x00004000
 #define RNDIS_PACKET_TYPE_MAC_FRAME		0x00008000
+
+/* Rndis offsets */
+#define RNDIS_HEADER_OFFSET	(sizeof(u_int32_t) * 2)
+#define RNDIS_DATA_OFFSET	(sizeof(struct urndis_packet_msg) - \
+    				 offsetof(struct urndis_packet_msg, \
+    				 rm_dataoffset))

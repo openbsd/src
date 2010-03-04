@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.7 2010/03/03 23:37:01 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.8 2010/03/04 20:23:45 armani Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -325,9 +325,9 @@ urndis_ctrl_handle_query(struct urndis_softc *sc,
 
 		return letoh32(msg->rm_status);
 	}
-	/* XXX : 8 -> rid offset in struct */
+
 	if (letoh32(msg->rm_infobuflen) + letoh32(msg->rm_infobufoffset) +
-	    8 > letoh32(msg->rm_len)) {
+	    RNDIS_HEADER_OFFSET > letoh32(msg->rm_len)) {
 		printf("%s: ctrl message error: invalid query info "
 		    "len/offset/end_position(%d/%d/%d) -> "
 		    "go out of buffer limit %d\n",
@@ -335,7 +335,7 @@ urndis_ctrl_handle_query(struct urndis_softc *sc,
 		    letoh32(msg->rm_infobuflen),
 		    letoh32(msg->rm_infobufoffset), 
 		    letoh32(msg->rm_infobuflen) +
-		    letoh32(msg->rm_infobufoffset) + 8,
+		    letoh32(msg->rm_infobufoffset) + RNDIS_HEADER_OFFSET,
 		    letoh32(msg->rm_len));
 		return RNDIS_STATUS_FAILURE;
 	}
@@ -736,13 +736,11 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 	msg->rm_type = htole32(REMOTE_NDIS_PACKET_MSG);
 	msg->rm_len = htole32(sizeof(*msg) + m->m_pkthdr.len);
 
-	/* XXX : 36 -> dataoffset corresponding in this struct */
-	msg->rm_dataoffset = htole32(36);
+	msg->rm_dataoffset = htole32(RNDIS_DATA_OFFSET);
 	msg->rm_datalen = htole32(m->m_pkthdr.len);
 
-	/* XXX : 8 -> dataoffset offset in struct */
 	m_copydata(m, 0, m->m_pkthdr.len,
-	    ((char*)msg + 36 + 8));
+	    ((char*)msg + RNDIS_DATA_OFFSET + RNDIS_HEADER_OFFSET));
 
 	DPRINTF(("%s: urndis_encap type 0x%x len %u data(off %u len %u)\n",
 	    DEVNAME(sc),
@@ -830,9 +828,10 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			    len);
 			return;
 		}
-		/* XXX : 8 -> dataoffset offset in struct */
+
 		if (letoh32(msg->rm_dataoffset) +
-		    letoh32(msg->rm_datalen) + 8 > letoh32(msg->rm_len)) {
+		    letoh32(msg->rm_datalen) + RNDIS_HEADER_OFFSET 
+		        > letoh32(msg->rm_len)) {
 			printf("%s: urndis_decap invalid data "
 			    "len/offset/end_position(%u/%u/%u) -> "
 			    "go out of receive buffer limit %u\n",
@@ -840,7 +839,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			    letoh32(msg->rm_datalen),
 			    letoh32(msg->rm_dataoffset),
 			    letoh32(msg->rm_dataoffset) +
-			    letoh32(msg->rm_datalen) + 8,
+			    letoh32(msg->rm_datalen) + RNDIS_HEADER_OFFSET,
 			    letoh32(msg->rm_len));
 			return;
 		}
