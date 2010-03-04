@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.18 2008/05/07 12:17:19 claudio Exp $
+.\"	$OpenBSD: route6d.8,v 1.19 2010/03/04 20:01:37 krw Exp $
 .\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
@@ -15,7 +15,7 @@
 .\" LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 7 2008 $
+.Dd $Mdocdate: March 4 2010 $
 .Dt ROUTE6D 8
 .Os
 .Sh NAME
@@ -135,7 +135,7 @@ any route that has longer prefix length than, or equal to, 0
 For example, with
 .Dq -L 3ffe::/16,if1 -L ::/0,if1 ,
 .Nm
-will accept the default route and routes in the 6bone test address range,
+will accept the default route and routes in the 3ffe::/16 address range,
 but no others.
 To accept any route, simply do not specify the
 .Fl L
