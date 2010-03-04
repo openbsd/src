@@ -38,10 +38,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: goodpath.c,v 1.44 2005/02/12 22:56:06 millert Exp $";
-#endif /* lint */
-
 /*
  * Verify that path is a normal file and executable by root.
  */

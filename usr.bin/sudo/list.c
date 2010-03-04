@@ -31,10 +31,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: list.c,v 1.6 2008/11/09 14:13:12 millert Exp $";
-#endif /* lint */
-
 struct list_proto {
     struct list_proto *prev;
     struct list_proto *next;

@@ -49,10 +49,6 @@
 #include "parse.h"
 #include <gram.h>
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: defaults.c,v 1.73 2008/11/09 14:13:12 millert Exp $";
-#endif /* lint */
-
 /*
  * For converting between syslog numbers and strings.
  */

@@ -44,10 +44,6 @@
 #include "sudo.h"
 #include "lbuf.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_nss.c,v 1.8 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 extern struct sudo_nss sudo_nss_file;
 #ifdef HAVE_LDAP
 extern struct sudo_nss sudo_nss_ldap;

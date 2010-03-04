@@ -104,10 +104,6 @@
 # include "nonunix.h"
 #endif
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.517 2009/05/27 00:49:07 millert Exp $";
-#endif /* lint */
-
 /*
  * Prototypes
  */

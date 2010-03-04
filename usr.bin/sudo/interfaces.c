@@ -84,10 +84,6 @@ struct rtentry;
 #include "sudo.h"
 #include "interfaces.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.87 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 /* Minix apparently lacks IFF_LOOPBACK */
 #ifndef IFF_LOOPBACK
 # define IFF_LOOPBACK	0

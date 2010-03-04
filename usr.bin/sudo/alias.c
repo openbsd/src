@@ -46,10 +46,6 @@
 #include "redblack.h"
 #include <gram.h>
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: alias.c,v 1.18 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 /*
  * Globals
  */

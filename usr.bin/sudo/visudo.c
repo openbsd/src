@@ -86,10 +86,6 @@
 #include "redblack.h"
 #include <gram.h>
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.234 2009/05/25 12:02:42 millert Exp $";
-#endif /* lint */
-
 struct sudoersfile {
     char *path;
     char *tpath;

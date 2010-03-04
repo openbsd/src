@@ -52,10 +52,6 @@
 #include "sudo.h"
 #include "lbuf.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: lbuf.c,v 1.9 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 #if !defined(TIOCGSIZE) && defined(TIOCGWINSZ)
 # define TIOCGSIZE	TIOCGWINSZ
 # define ttysize	winsize

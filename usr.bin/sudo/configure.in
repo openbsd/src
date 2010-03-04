@@ -1,6 +1,5 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.549 2009/06/13 20:52:50 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2010 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl

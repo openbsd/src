@@ -47,10 +47,6 @@
 #include "sudo.h"
 #include "sudo_auth.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: kerb4.c,v 1.16 2008/11/09 14:13:13 millert Exp $";
-#endif /* lint */
-
 int
 kerb4_init(pw, promptp, auth)
     struct passwd *pw;

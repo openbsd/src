@@ -56,10 +56,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.131 2009/05/25 12:02:42 millert Exp $";
-#endif /* lint */
-
 static volatile sig_atomic_t signo;
 
 static void handler __P((int));

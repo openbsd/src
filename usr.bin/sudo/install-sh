@@ -1,7 +1,7 @@
 #! /bin/sh
 
 ## (From INN-1.4, written by Rich Salz)
-##  $Revision: 1.10 $
+##  $Revision: 1.11 $
 ##  A script to install files and directories.
 
 PROGNAME=`basename $0`

@@ -48,10 +48,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: alloc.c,v 1.33 2008/11/09 14:13:12 millert Exp $";
-#endif /* lint */
-
 /*
  * If there is no SIZE_MAX or SIZE_T_MAX we have to assume that size_t
  * could be signed (as it is on SunOS 4.x).  This just means that

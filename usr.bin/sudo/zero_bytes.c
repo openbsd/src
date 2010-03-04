@@ -19,10 +19,6 @@
 #include <config.h>
 #include <compat.h>
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: zero_bytes.c,v 1.7 2008/11/09 14:13:12 millert Exp $";
-#endif /* lint */
-
 /*
  * Like bzero(3) but with a volatile pointer.  The hope is that
  * the compiler will not be able to optimize away this function.

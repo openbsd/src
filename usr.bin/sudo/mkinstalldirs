@@ -4,8 +4,6 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Sudo: mkinstalldirs,v 1.5 2003/04/03 15:16:22 millert Exp $
-
 umask 022
 errstatus=0
 dirmode=""

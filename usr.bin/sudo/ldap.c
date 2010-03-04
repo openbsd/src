@@ -81,10 +81,6 @@
 #include "parse.h"
 #include "lbuf.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.108 2009/05/29 13:43:12 millert Exp $";
-#endif /* lint */
-
 #ifndef LDAP_OPT_SUCCESS
 # define LDAP_OPT_SUCCESS LDAP_SUCCESS
 #endif

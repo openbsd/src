@@ -45,10 +45,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: find_path.c,v 1.115 2005/03/29 14:29:46 millert Exp $";
-#endif /* lint */
-
 /*
  * This function finds the full pathname for a command and
  * stores it in a statically allocated array, filling in a pointer

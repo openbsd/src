@@ -15831,6 +15831,7 @@ LIBS=$ac_save_LIBS
 
 
 
+
 for ac_func in strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
 	       setlocale getaddrinfo setsid setenv setrlimit64

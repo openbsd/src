@@ -28,10 +28,6 @@
 
 #include <compat.h>
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: gettime.c,v 1.8 2008/11/09 14:13:12 millert Exp $";
-#endif /* lint */
-
 /*
  * Get the current time via gettimeofday() for systems with
  * timespecs in struct stat or, otherwise, using time().

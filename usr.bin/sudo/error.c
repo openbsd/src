@@ -23,10 +23,6 @@
 #include <compat.h>
 #include "error.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: error.c,v 1.7 2005/11/18 01:39:58 millert Exp $";
-#endif /* lint */
-
 static void _warning	__P((int, const char *, va_list));
        void cleanup	__P((int));
 

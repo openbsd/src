@@ -53,10 +53,6 @@
 #include "sudo.h"
 #include "sudo_auth.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: secureware.c,v 1.13 2005/02/12 22:56:07 millert Exp $";
-#endif /* lint */
-
 int
 secureware_init(pw, promptp, auth)
     struct passwd *pw;

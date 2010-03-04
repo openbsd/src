@@ -17,8 +17,6 @@
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
- *
- * $Sudo: interfaces.h,v 1.12 2008/11/09 14:13:12 millert Exp $
  */
 
 #ifndef _SUDO_INTERFACES_H

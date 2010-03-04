@@ -57,10 +57,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: logging.c,v 1.205 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 static void do_syslog		__P((int, char *));
 static void do_logfile		__P((char *));
 static void send_mail		__P((char *));

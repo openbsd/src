@@ -49,10 +49,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: env.c,v 1.106 2009/06/23 18:24:42 millert Exp $";
-#endif /* lint */
-
 /*
  * Flags used in rebuild_env()
  */

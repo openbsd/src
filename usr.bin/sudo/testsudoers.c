@@ -70,11 +70,6 @@
 # include "emul/fnmatch.h"
 #endif /* HAVE_FNMATCH */
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.131 2009/05/25 12:02:42 millert Exp $";
-#endif /* lint */
-
-
 /*
  * Globals
  */

@@ -50,10 +50,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: term.c,v 1.4 2009/02/25 10:47:12 millert Exp $";
-#endif /* lint */
-
 #ifndef TCSASOFT
 # define TCSASOFT	0
 #endif

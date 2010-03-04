@@ -52,10 +52,6 @@
 #include "sudo.h"
 #include "redblack.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: pwutil.c,v 1.23 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 #ifdef MYPW
 extern void (*my_setgrent) __P((void));
 extern void (*my_endgrent) __P((void));

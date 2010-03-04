@@ -64,10 +64,6 @@
 #include "sudo.h"
 #include "sudo_auth.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: dce.c,v 1.14 2005/02/12 22:56:07 millert Exp $";
-#endif /* lint */
-
 static int check_dce_status __P((error_status_t, char *));
 
 int

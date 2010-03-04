@@ -4,8 +4,6 @@
 # This file MUST be edited with the 'visudo' command as root.
 #
 # See the sudoers man page for the details on how to write a sudoers file.
-#
-# $Sudo: sample.sudoers,v 1.29 2008/10/03 19:55:57 millert Exp $
 
 ##
 # Override built-in defaults

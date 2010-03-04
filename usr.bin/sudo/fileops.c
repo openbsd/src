@@ -53,10 +53,6 @@
 # define LINE_MAX 2048
 #endif
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: fileops.c,v 1.19 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 /*
  * Update the access and modify times on an fd or file.
  */

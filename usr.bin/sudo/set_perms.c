@@ -51,10 +51,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.49 2009/06/25 12:44:33 millert Exp $";
-#endif /* lint */
-
 #ifdef __TANDEM
 # define ROOT_UID	65535
 #else

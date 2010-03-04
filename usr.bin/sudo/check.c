@@ -58,10 +58,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: check.c,v 1.247 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 /* Status codes for timestamp_status() */
 #define TS_CURRENT		0
 #define TS_OLD			1

@@ -70,10 +70,6 @@
 
 #include "sudo.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: getspwuid.c,v 1.78 2005/02/12 22:56:06 millert Exp $";
-#endif /* lint */
-
 /*
  * Exported for auth/secureware.c
  */

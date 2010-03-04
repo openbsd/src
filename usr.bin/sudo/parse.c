@@ -48,10 +48,6 @@
 #include "lbuf.h"
 #include <gram.h>
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.242 2009/05/25 12:02:41 millert Exp $";
-#endif /* lint */
-
 /* Characters that must be quoted in sudoers */
 #define SUDOERS_QUOTED	":\\,=#\""
 

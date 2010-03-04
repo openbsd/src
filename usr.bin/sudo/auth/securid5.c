@@ -55,10 +55,6 @@
 #include "sudo.h"
 #include "sudo_auth.h"
 
-#ifndef lint
-__unused static const char rcsid[] = "$Sudo: securid5.c,v 1.13 2008/11/09 14:13:13 millert Exp $";
-#endif /* lint */
-
 /*
  * securid_init - Initialises communications with ACE server
  * Arguments in:
