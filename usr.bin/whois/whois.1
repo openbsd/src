@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.27 2007/08/29 10:23:20 henning Exp $
+.\"	$OpenBSD: whois.1,v 1.28 2010/03/04 18:17:03 krw Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd $Mdocdate: August 29 2007 $
+.Dd $Mdocdate: March 4 2010 $
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl 6AadgilmQRr
+.Op Fl AadgilmQRr
 .Oo
 .Fl c Ar country-code | Fl h Ar host
 .Oc
@@ -53,11 +53,6 @@ Network Information Centers
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl 6
-Use the IPv6 Resource Center
-.Pq Tn 6bone
-database.
-It contains network names and addresses for the IPv6 network.
 .It Fl A
 Use the Asia/Pacific Network Information Center
 .Pq Tn APNIC
@@ -271,15 +266,6 @@ is substituted with the actual contact identifier.
 but other
 .Tn TLDs
 can be queried by using a similar syntax.)
-.Pp
-The following example demonstrates how to obtain information about an
-.Tn IPv6
-address or hostname using the
-.Fl 6
-option, which directs the query to
-.Tn 6bone .
-.Pp
-.Dl "whois -6 IPv6-IP-Address"
 .Pp
 The following example demonstrates how to query
 a whois server using a non-standard port, where
