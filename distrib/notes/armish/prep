@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.14 2008/08/05 23:05:14 miod Exp $
+dnl	$OpenBSD: prep,v 1.15 2010/03/04 10:56:03 jasper Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about RedBoot, the low-level process that controls
 the microprocessor after hardware initialization.
@@ -92,16 +92,16 @@ boot manually.
 
 OpenBSD/armish booting ...
 initarm: Configuring system ...
-physmemory: 65536 pages at 0xa0000000 -> 0xafffffff
-[ no symbol table formats found ]
+physmemory: 32768 pages at 0xa0000000 -> 0xa7ffffff
+[ no symbol table formats found ]                  
 Copyright (c) 1982, 1986, 1989, 1991, 1993
         The Regents of the University of California.  All rights reserved.
-Copyright (c) 1995-2008 OpenBSD. All rights reserved.  http://www.OpenBSD.org
-
-OpenBSD 4.3 (RAMDISK) #175: Tue Mar  4 21:54:34 MST 2008
+Copyright (c) 1995-2010 OpenBSD. All rights reserved.  http://www.OpenBSD.org
+                                                                             
+OpenBSD 4.7-beta (RAMDISK) #84: Tue Mar  2 18:21:39 MST 2010
     deraadt@armish.openbsd.org:/usr/src/sys/arch/armish/compile/RAMDISK
-real mem  = 268435456 (256MB)
-avail mem = 250630144 (239MB)
+real mem  = 134217728 (128MB)                                          
+avail mem = 121610240 (115MB)
 ...
 Install(I), Upgrade(U) or Shell(S)?
 
