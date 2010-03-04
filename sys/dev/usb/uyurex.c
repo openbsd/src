@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyurex.c,v 1.2 2010/03/03 19:08:02 miod Exp $ */
+/*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -79,7 +79,7 @@ struct uyurex_softc {
 	struct sensor_task	*sc_sensortask;
 
 	/* device private */
-	int			 sc_notinit;
+	int			 sc_initialized;
 	uint8_t			 issueing_cmd;
 	uint8_t			 accepted_cmd;
 
@@ -165,7 +165,6 @@ uyurex_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_hdev.sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-
 	/* add BBU sensor */
 	sc->sc_sensor_val.type = SENSOR_INTEGER;
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor_val);
@@ -185,12 +184,9 @@ uyurex_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sensordev_install(&sc->sc_sensordev);
 
-	sc->sc_curval = sc->sc_oldval = 0;
-
 	DPRINTF(("uyurex_attach: complete\n"));
 
 	/* init device */ /* XXX */
-	sc->sc_notinit = 1;
 	uyurex_set_mode(sc, 0);
 }
 
@@ -269,9 +265,9 @@ uyurex_intr(struct uhidev *addr, void *ibuf, u_int len)
 	case CMD_READ:
 	case CMD_VALUE:
 		val = (buf[2] << 24) + (buf[3] << 16) + (buf[4] << 8)  + buf[5];
-		if (sc->sc_notinit) {
+		if (!sc->sc_initialized) {
 			sc->sc_oldval = val;
-			sc->sc_notinit = 0; 
+			sc->sc_initialized = 1;
 		}
 		sc->sc_sensor_val.value = val;
 		sc->sc_curval = val;
@@ -289,14 +285,14 @@ uyurex_refresh(void *arg)
 {
 	struct uyurex_softc *sc = arg;
 
-	if (sc->sc_notinit) {
+	if (!sc->sc_initialized) {
 		uyurex_read_value_request(sc);
 	} else {
 		/* calculate delta value */
-		sc->sc_sensor_delta.value = 
+		sc->sc_sensor_delta.value =
 			(1000 * (sc->sc_curval - sc->sc_oldval)) / UPDATE_TICK;
 		sc->sc_oldval = sc->sc_curval;
-	} 
+	}
 }
 
 void
@@ -333,7 +329,7 @@ uyurex_read_value_request(struct uyurex_softc *sc)
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT, req,
 		sc->sc_olen))
 		return;
-		
+
 	/* wait till sensor data are updated, 500ms will be enough */
 	tsleep(&sc->sc_sensortask, 0, "uyurex", (500*hz+999)/1000 + 1);
 }
