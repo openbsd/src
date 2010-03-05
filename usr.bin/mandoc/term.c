@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.21 2010/03/02 00:38:59 schwarze Exp $ */
+/*	$Id: term.c,v 1.22 2010/03/05 20:46:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -128,9 +128,10 @@ term_flushln(struct termp *p)
 	int		 i;     /* current input position in p->buf */
 	size_t		 vis;   /* current visual position on output */
 	size_t		 vbl;   /* number of blanks to prepend to output */
-	size_t		 vsz;   /* visual characters to write to output */
+	size_t		 vend;  /* end of word visual position on output */
 	size_t		 bp;    /* visual right border position */
 	int		 j;     /* temporary loop index */
+	int		 jhy;	/* last hyphen before line overflow */
 	size_t		 maxvis, mmax;
 	static int	 overstep = 0;
 
@@ -157,8 +158,6 @@ term_flushln(struct termp *p)
 	 * breaking the line.
 	 */
 
-	vis = 0;
-
 	/*
 	 * If in the standard case (left-justified), then begin with our
 	 * indentation, otherwise (columns, etc.) just start spitting
@@ -170,30 +169,8 @@ term_flushln(struct termp *p)
 		for (j = 0; j < (int)p->offset; j++)
 			putchar(' ');
 
-	for (i = 0; i < (int)p->col; i++) {
-		/*
-		 * Count up visible word characters.  Control sequences
-		 * (starting with the CSI) aren't counted.  A space
-		 * generates a non-printing word, which is valid (the
-		 * space is printed according to regular spacing rules).
-		 */
-
-		/* LINTED */
-		for (j = i, vsz = 0; j < (int)p->col; j++) {
-			if (j && ' ' == p->buf[j]) 
-				break;
-			else if (8 == p->buf[j])
-				vsz--;
-			else if (ASCII_EOS != p->buf[j])
-				vsz++;
-		}
-
-		/*
-		 * Skip empty words.  This happens due to the ASCII_EOS
-		 * after the end of the final sentence of a paragraph.
-		 */
-		if (vsz == 0 && j == (int)p->col)
-			break;
+	vis = vend = i = 0;
+	while (i < (int)p->col) {
 
 		/*
 		 * Choose the number of blanks to prepend: no blank at the
@@ -202,22 +179,51 @@ term_flushln(struct termp *p)
 		 */
 		vbl = (size_t)(ASCII_EOS == p->buf[i] ? 2 :
 				(0 == vis ? 0 : 1));
+		vis += vbl;
+
+		/*
+		 * Count up visible word characters.  Control sequences
+		 * (starting with the CSI) aren't counted.  A space
+		 * generates a non-printing word, which is valid (the
+		 * space is printed according to regular spacing rules).
+		 */
+
+		/* LINTED */
+		for (j = i, jhy = 0, vend = vis; j < (int)p->col; j++) {
+			if (j && ' ' == p->buf[j]) 
+				break;
+			else if (8 == p->buf[j])
+				vend--;
+			else if (ASCII_EOS != p->buf[j]) {
+				if (vend > vis && vend < bp &&
+				    '-' == p->buf[j])
+					jhy = j;
+				vend++;
+			}
+		}
+
+		/*
+		 * Skip empty words.  This happens due to the ASCII_EOS
+		 * after the end of the final sentence of a paragraph.
+		 */
+		if (vend == vis && j == (int)p->col)
+			break;
 
 		/*
 		 * Find out whether we would exceed the right margin.
 		 * If so, break to the next line.  (TODO: hyphenate)
 		 * Otherwise, write the chosen number of blanks now.
 		 */
-		if (vis && vis + vbl + vsz > bp) {
+		if (vend > bp && 0 == jhy) {
+			vend -= vis;
 			putchar('\n');
 			if (TERMP_NOBREAK & p->flags) {
 				for (j = 0; j < (int)p->rmargin; j++)
 					putchar(' ');
-				vis = p->rmargin - p->offset;
+				vend += p->rmargin - p->offset;
 			} else {
 				for (j = 0; j < (int)p->offset; j++)
 					putchar(' ');
-				vis = 0;
 			}
 			/* Remove the overstep width. */
 			bp += (int)/* LINTED */
@@ -226,21 +232,24 @@ term_flushln(struct termp *p)
 		} else {
 			for (j = 0; j < (int)vbl; j++)
 				putchar(' ');
-			vis += vbl;
 		}
 
 		/*
 		 * Finally, write out the word.
 		 */
 		for ( ; i < (int)p->col; i++) {
-			if (' ' == p->buf[i])
+			if (vend > bp && i > jhy)
 				break;
+			if (' ' == p->buf[i]) {
+				i++;
+				break;
+			}
 			if (ASCII_NBRSP == p->buf[i])
 				putchar(' ');
 			else if (ASCII_EOS != p->buf[i])
 				putchar(p->buf[i]);
 		}
-		vis += vsz;
+		vis = vend;
 	}
 
 	p->col = 0;
