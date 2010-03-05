@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.9 2010/03/05 08:21:31 otto Exp $
+dnl	$OpenBSD: install,v 1.10 2010/03/05 14:25:42 otto Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -84,10 +84,10 @@ OpenBSDInstallWrapup
 
 	Lemote systems final steps:
 
-		Lemote systems ship with a boot menu.  After the installation
-		is complete, you should copy the OpenBSD/MACHINE bootloader
-		to a PMON bootable location, and add an OpenBSD entry to the
-		boot menu to be able to boot OpenBSD more easily.
+		Lemote systems ship with a boot menu.  After an installation
+		preserving the Linux partitions is complete, you can add an
+		OpenBSD entry to the boot menu to be able to boot OpenBSD
+		more easily.
 
 		The boot menu contents are found in /boot/boot.cfg on the Linux
 		partition. To add an OpenBSD entry, simply add a new entry in
@@ -98,8 +98,8 @@ OpenBSDInstallWrapup
 			args ""
 
 		In the example above, /dev/fs/ext2@wd0/boot/boot is the PMON
-		path to the OpenBSD bootloader, which can be found in
-		/usr/mdec on the installed system.
+		path to the OpenBSD bootloader, which is copied to
+		that location by the install script.
 
 		You may make OpenBSD the default option by changing the
 		``default'' line near the top of the file. The value on this
@@ -125,13 +125,6 @@ OpenBSDInstallWrapup
 
 		    PMON> set moresz 30
 
-		If you do not want to use the boot menu, you may simply
-		disable it in the environment, and set the `al' variable
-		to point to the bootloader path:
-
-		    PMON> set ShowBootMenu no
-		    PMON> set al /dev/fs/ext2@wd0/boot/boot
-
 		The bootloader will attempt to load the kernel file set in
 		the `bsd' environment variable. Should this fail, it will
 		wait for user commands. The value of `bsd' should be a
@@ -139,6 +132,17 @@ OpenBSDInstallWrapup
 		as:
 
 		    PMON> set bsd /bsd
+
+		If you have removed the Linux installation or if you do not
+		want to use the boot menu, you may simply disable it in the
+		environment, and set the `al' variable
+		to point to the bootloader path:
+
+		    PMON> set ShowBootMenu no
+		    PMON> set al /dev/fs/ext2@wd0/boot/boot
+
+		Alternatively, you might want to create a /boot/boot.cfg
+		file in the small Linux partition created by the installation.
 
 		On the Fuloong 2F, getting PMON to use the serial console
 		is tricky, due to PMON bugs and design decisions made by
