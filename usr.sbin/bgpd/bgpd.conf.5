@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.103 2009/12/16 15:40:55 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.104 2010/03/05 15:25:00 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2009 $
+.Dd $Mdocdate: March 5 2010 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -949,6 +949,31 @@ and
 may be set to
 .Ic neighbor-as ,
 which is expanded to the current neighbor remote AS number.
+.Pp
+.It Xo
+.Ic ext-community
+.Ar subtype Ar as-number Ns Li : Ns Ar local
+.Xc
+.It Xo
+.Ic ext-community
+.Ar subtype Ar IP Ns Li : Ns Ar local
+.Xc
+.It Xo
+.Ic ext-community
+.Ar subtype Ar numvalue
+.Xc
+This rule applies only to
+.Em UPDATES
+where the
+.Em extended community
+path attribute is present and matches.
+Extended Communities are specified by a
+.Ar subtype
+and normally two values, a globally unique part (e.g. the AS number) and a
+local part.
+See also the
+.Sx ATTRIBUTE SET
+section for further information about the encoding.
 .Pp
 .It Xo
 .Pq Ic from Ns \&| Ns Ic to

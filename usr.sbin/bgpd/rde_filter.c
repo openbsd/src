@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.61 2009/12/18 15:51:37 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.62 2010/03/05 15:25:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -302,6 +302,11 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		if (community_match(asp, as, type) == 0)
 			return (0);
 	}
+	if (asp != NULL &&
+	    (f->match.ext_community.flags & EXT_COMMUNITY_FLAG_VALID))
+		if (community_ext_match(asp, &f->match.ext_community,
+		    peer->conf.remote_as) == 0)
+			return (0);
 
 	if (f->match.prefix.addr.aid != 0) {
 		if (f->match.prefix.addr.aid != prefix->aid)

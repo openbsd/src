@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.252 2010/01/13 06:02:37 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.253 2010/03/05 15:25:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -567,6 +567,7 @@ struct filter_community {
 };
 
 struct filter_extcommunity {
+	u_int16_t	flags;
 	u_int8_t	type;
 	u_int8_t	subtype;	/* if extended type */
 	union {
@@ -666,6 +667,7 @@ struct filter_peers {
 #define EXT_COMMUNITY_BGP_COLLECT	8	/* RFC 4384 */
 /* other handy defines */
 #define EXT_COMMUNITY_OPAQUE_MAX	0xffffffffffffULL
+#define EXT_COMMUNITY_FLAG_VALID	0x01
 
 struct ext_comm_pairs {
 	u_int8_t	type;
@@ -700,10 +702,11 @@ struct filter_prefixlen {
 };
 
 struct filter_match {
-	struct filter_prefix	prefix;
-	struct filter_prefixlen	prefixlen;
-	struct filter_as	as;
-	struct filter_community	community;
+	struct filter_prefix		prefix;
+	struct filter_prefixlen		prefixlen;
+	struct filter_as		as;
+	struct filter_community		community;
+	struct filter_extcommunity	ext_community;
 };
 
 TAILQ_HEAD(filter_head, filter_rule);

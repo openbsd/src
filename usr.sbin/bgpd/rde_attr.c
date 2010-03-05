@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.81 2009/12/18 15:51:37 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.82 2010/03/05 15:25:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -976,6 +976,7 @@ aspath_match(struct aspath *a, enum as_spec type, u_int32_t as)
  */
 
 int community_ext_conv(struct filter_extcommunity *, u_int16_t, u_int64_t *);
+int community_ext_matchone(struct filter_extcommunity *, u_int16_t, u_int64_t);
 
 int
 community_match(struct rde_aspath *asp, int as, int type)
@@ -989,10 +990,8 @@ community_match(struct rde_aspath *asp, int as, int type)
 		/* no communities, no match */
 		return (0);
 
-	len = a->len / 4;
 	p = a->data;
-
-	for (; len > 0; len--) {
+	for (len = a->len / 4; len > 0; len--) {
 		eas = *p++;
 		eas <<= 8;
 		eas |= *p++;
@@ -1118,6 +1117,31 @@ community_delete(struct rde_aspath *asp, int as, int type)
 }
 
 int
+community_ext_match(struct rde_aspath *asp, struct filter_extcommunity *c,
+    u_int16_t neighas)
+{
+	struct attr	*attr;
+	u_int8_t	*p;
+	u_int64_t	 ec;
+	u_int16_t	 len;
+
+	attr = attr_optget(asp, ATTR_EXT_COMMUNITIES);
+	if (attr == NULL)
+		/* no communities, no match */
+		return (0);
+
+	p = attr->data;
+	for (len = attr->len / sizeof(ec); len > 0; len--) {
+		memcpy(&ec, p, sizeof(ec));
+		if (community_ext_matchone(c, neighas, ec))
+			return (1);
+		p += sizeof(ec);
+	}
+
+	return (0);
+}
+
+int
 community_ext_set(struct rde_aspath *asp, struct filter_extcommunity *c,
     u_int16_t neighas)
 {
@@ -1133,7 +1157,7 @@ community_ext_set(struct rde_aspath *asp, struct filter_extcommunity *c,
 	attr = attr_optget(asp, ATTR_EXT_COMMUNITIES);
 	if (attr != NULL) {
 		p = attr->data;
-		ncommunities = attr->len / 8; /* 64bit per ext-community */
+		ncommunities = attr->len / sizeof(community);
 	}
 
 	/* first check if the community is not already set */
@@ -1251,6 +1275,85 @@ community_ext_conv(struct filter_extcommunity *c, u_int16_t neighas,
 	}
 
 	*community = htobe64(com);
+
+	return (0);
+}
+
+int
+community_ext_matchone(struct filter_extcommunity *c, u_int16_t neighas,
+    u_int64_t community)
+{
+	u_int64_t	com, mask;
+	u_int32_t	ip;
+
+	community = betoh64(community);
+
+	com = (u_int64_t)c->type << 56;
+	mask = 0xffULL << 56;
+	if ((com & mask) != (community & mask))
+		return (0);
+
+	switch (c->type & EXT_COMMUNITY_VALUE) {
+	case EXT_COMMUNITY_TWO_AS:
+	case EXT_COMMUNITY_IPV4:
+	case EXT_COMMUNITY_FOUR_AS:
+	case EXT_COMMUNITY_OPAQUE:
+		com = (u_int64_t)c->subtype << 48;
+		mask = 0xffULL << 48;
+		if ((com & mask) != (community & mask))
+			return (0);
+		break;
+	default:
+		com = c->data.ext_opaq & 0xffffffffffffffULL;
+		mask = 0xffffffffffffffULL;
+		if ((com & mask) == (community & mask))
+			return (1);
+		return (0);
+	}
+
+
+	switch (c->type & EXT_COMMUNITY_VALUE) {
+	case EXT_COMMUNITY_TWO_AS:
+		com = (u_int64_t)c->data.ext_as.as << 32;
+		mask = 0xffffULL << 32;
+		if ((com & mask) != (community & mask))
+			return (0);
+
+		com = c->data.ext_as.val;
+		mask = 0xffffffffULL;
+		if ((com & mask) == (community & mask))
+			return (1);
+		break;
+	case EXT_COMMUNITY_IPV4:
+		ip = ntohl(c->data.ext_ip.addr.s_addr);
+		com = (u_int64_t)ip << 16;
+		mask = 0xffffffff0000ULL;
+		if ((com & mask) != (community & mask))
+			return (0);
+
+		com = c->data.ext_ip.val;
+		mask = 0xffff;
+		if ((com & mask) == (community & mask))
+			return (1);
+		break;
+	case EXT_COMMUNITY_FOUR_AS:
+		com = (u_int64_t)c->data.ext_as4.as4 << 16;
+		mask = 0xffffffffULL << 16;
+		if ((com & mask) != (community & mask))
+			return (0);
+
+		com = c->data.ext_as4.val;
+		mask = 0xffff;
+		if ((com & mask) == (community & mask))
+			return (1);
+		break;
+	case EXT_COMMUNITY_OPAQUE:
+		com = c->data.ext_opaq & EXT_COMMUNITY_OPAQUE_MAX;
+		mask = EXT_COMMUNITY_OPAQUE_MAX;
+		if ((com & mask) == (community & mask))
+			return (1);
+		break;
+	}
 
 	return (0);
 }
