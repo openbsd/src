@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.8 2010/03/04 20:23:45 armani Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.9 2010/03/05 18:20:50 armani Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -694,7 +694,7 @@ urndis_ctrl_keepalive(struct urndis_softc *sc)
 	keep->rm_len = htole32(sizeof(*keep));
 	keep->rm_rid = 0; /* XXX rm_rid == reserved ... remove ? */
 
-	DPRINTF(("%s: urndis_ctrl_reset send: type %u len %u rid %u\n",
+	DPRINTF(("%s: urndis_ctrl_keepalive: type %u len %u rid %u\n",
 	    DEVNAME(sc),
 	    letoh32(keep->rm_type),
 	    letoh32(keep->rm_len),
