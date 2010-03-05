@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.8 2010/02/19 15:14:16 miod Exp $
+dnl	$OpenBSD: install,v 1.9 2010/03/05 08:21:31 otto Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -6,7 +6,7 @@ Booting the installation media:
 The easiest way to boot into the OpenBSD installer is to copy the miniroot
 image to a USB stick using dd(1) and boot bsd.rd from the PMON prompt:
 
-    PMON> boot /dev/fs/ext2@usb0/bsd.rd
+    PMON> boot -k /dev/fs/ext2@usb0/bsd.rd
 
 on Lemote systems, and
 
@@ -21,7 +21,7 @@ installation kernel to the main Linux partition, and boot from it.
 Assuming the installation kernel has been copied to /boot/bsd.rd on the
 Linux system, at the PMON prompt, enter
 
-    PMON> boot /dev/fs/ext2@wd0/boot/bsd.rd
+    PMON> boot -k /dev/fs/ext2@wd0/boot/bsd.rd
 
 on Lemote systems, and
 
@@ -38,7 +38,7 @@ dnl    PMON> boot /dev/fs/fat@usb0:/bsd.rd
 Netbooting the installation kernel can be done as well:
 
     PMON> ifaddr rtl0 <your ip>
-    PMON> boot tftp://<server ip>/bsd.rd
+    PMON> boot -k tftp://<server ip>/bsd.rd
 
 OpenBSDInstallPart2
 
