@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1535 2010/03/02 10:51:51 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1536 2010/03/05 19:32:05 jasper Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3608,6 +3608,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 3870",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3850,
+	    "Radeon HD 3850",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4550,
 	    "Radeon HD 4550",
 	},
@@ -3698,6 +3702,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690M_HDA,
 	    "RS690M HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870_HDA,
+	    "Radeon HD 3870 HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3600_HDA,
@@ -13540,6 +13548,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 7000M",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7050_PV,
+	    "GeForce 7050 PV",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_MEM1,
 	    "MCP67 Memory",
 	},
@@ -14830,6 +14842,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8533,
 	    "PEX 8533",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8547,
+	    "PEX 8547",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8548,
@@ -18232,6 +18248,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Virtual NIC",
 	},
 	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_MACHINE_2,
+	    "Virtual Machine Communication Interface",
+	},
+	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_EHCI,
 	    "Virtual EHCI",
 	},
@@ -18242,6 +18262,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PCIE,
 	    "Virtual PCIE-PCIE",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_MACHINE,
+	    "Virtual Machine Interface",
 	},
 	{
 	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
