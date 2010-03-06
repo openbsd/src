@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.472 2010/03/01 12:29:31 espie Exp $
+# $OpenBSD: pkg_add,v 1.473 2010/03/06 11:36:53 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -254,6 +254,7 @@ sub complete
 	return 0 if !defined $check;
 
 	if ($check) {
+		$bad++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, $check);
 		$state->tracker->cant($set);
 	}
@@ -740,6 +741,7 @@ sub newer_has_errors
 				$state->set_name_from_handle($handle);
 				$state->log($handle->pkgname, " is not for the right architecture");
 				if (!$defines{arch}) {
+					$bad++;
 					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 					$state->tracker->cant($set);
 					return 1;
@@ -791,6 +793,7 @@ sub install_set
 	if ($set->older_to_do) {
 		my $r = $set->check_forward_dependencies($state);
 		if (!defined $r) {
+			$bad++;
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 			$state->tracker->cant($set);
 			return ();
@@ -813,9 +816,9 @@ sub install_set
 	}
 
 	if (!$set->solver->solve_wantlibs($state)) {
+		$bad++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "libs not found");
 		$state->tracker->cant($set);
-		$bad++;
 		return ();
 	}
 #	if (!$set->solver->solve_tags($state)) {
@@ -825,6 +828,7 @@ sub install_set
 #		}
 #	}
 	if (!$set->recheck_conflicts($state)) {
+		$bad++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "fatal conflicts");
 		$state->tracker->cant($set);
 		return ();
@@ -832,6 +836,7 @@ sub install_set
 	if ($set->older_to_do) {
 		require OpenBSD::Replace;
 		if (!OpenBSD::Replace::is_set_safe($set, $state)) {
+			$bad++;
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "exec detected");
 			$state->tracker->cant($set);
 			return ();
@@ -843,6 +848,7 @@ sub install_set
 		}
 
 		if (!$set->validate_plists($state)) {
+			$bad++;
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, 
 			    "file issues");
 			$state->tracker->cant($set);
