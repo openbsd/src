@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.44 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.45 2010/03/06 17:09:31 mk Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -388,6 +388,9 @@ cdce_detach(struct device *self, int flags)
 
 	sc->cdce_attached = 0;
 	splx(s);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->cdce_udev,
+	    &sc->cdce_dev);
 
 	return (0);
 }
