@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.20 2010/01/10 11:32:41 espie Exp $
+# $OpenBSD: Installed.pm,v 1.21 2010/03/06 11:55:31 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -34,7 +34,7 @@ sub parse_url
 
 	if ($$r =~ m/^(.*?)\:(.*)/) {
 		$path = $1;
-		$$r = 2;
+		$$r = $2;
 	} else {
 		$path = $$r;
 		$$r = '';
