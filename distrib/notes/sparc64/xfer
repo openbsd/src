@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.26 2007/03/01 19:17:29 miod Exp $
+dnl	$OpenBSD: xfer,v 1.27 2010/03/06 13:20:40 eric Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -37,8 +37,8 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 
 	Using the "b" partition allows you to boot without overwriting
 	any useful parts of the disk; you can also use another partition,
-	but don't used the "a" or "c" partition without understanding
-	the disk label issues described below under "incompatible systems".
+	but don't use the "a" or "c" partition without understanding the
+	disk label issues described below under "incompatible systems".
 
 	This requires that you be running SunOS, Solaris, OpenBSD, or NetBSD,
 	which have a compatible view of SunOS disk labels and partitions.
