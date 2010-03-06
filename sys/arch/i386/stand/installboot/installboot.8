@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.28 2007/05/31 19:20:03 jmc Exp $
+.\"	$OpenBSD: installboot.8,v 1.29 2010/03/06 16:16:43 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 6 2010 $
 .Dt INSTALLBOOT 8 i386
 .Os
 .Sh NAME
@@ -81,14 +81,6 @@ or as the explicit device node, such as
 .Pa /dev/rsd0c
 or
 .Pa /dev/rwd0c .
-.Pp
-Note that you must be in single-user mode or have your kernel in
-insecure mode (see the
-.Xr sysctl 8
-.Va kern.securelevel
-variable or
-.Pa /etc/rc.securelevel )
-to enable access to the raw partition of a mounted disk.
 .Pp
 The
 .Sq c
