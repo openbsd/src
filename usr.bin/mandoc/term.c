@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.22 2010/03/05 20:46:48 schwarze Exp $ */
+/*	$Id: term.c,v 1.23 2010/03/06 11:27:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -133,6 +133,7 @@ term_flushln(struct termp *p)
 	int		 j;     /* temporary loop index */
 	int		 jhy;	/* last hyphen before line overflow */
 	size_t		 maxvis, mmax;
+	static int	 line_started = 0;
 	static int	 overstep = 0;
 
 	/*
@@ -157,17 +158,6 @@ term_flushln(struct termp *p)
 	 * FIXME: if bp is zero, we still output the first word before
 	 * breaking the line.
 	 */
-
-	/*
-	 * If in the standard case (left-justified), then begin with our
-	 * indentation, otherwise (columns, etc.) just start spitting
-	 * out text.
-	 */
-
-	if ( ! (p->flags & TERMP_NOLPAD))
-		/* LINTED */
-		for (j = 0; j < (int)p->offset; j++)
-			putchar(' ');
 
 	vis = vend = i = 0;
 	while (i < (int)p->col) {
@@ -208,6 +198,15 @@ term_flushln(struct termp *p)
 		 */
 		if (vend == vis && j == (int)p->col)
 			break;
+
+		/*
+		 * Usually, indent the first line of each paragraph.
+		 */
+		if (0 == i && ! (p->flags & TERMP_NOLPAD))
+			/* LINTED */
+			for (j = 0; j < (int)p->offset; j++)
+				putchar(' ');
+		line_started = 1;
 
 		/*
 		 * Find out whether we would exceed the right margin.
@@ -256,7 +255,10 @@ term_flushln(struct termp *p)
 	overstep = 0;
 
 	if ( ! (TERMP_NOBREAK & p->flags)) {
-		putchar('\n');
+		if (line_started) {
+			putchar('\n');
+			line_started = 0;
+		}
 		return;
 	}
 
