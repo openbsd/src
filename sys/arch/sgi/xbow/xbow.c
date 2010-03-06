@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.26 2009/11/25 11:23:30 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.27 2010/03/06 16:29:46 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -44,13 +44,13 @@
 /*
  *  XBOW is the mux between two nodes and XIO.
  *
- *  A Crossbow (XBOW) connects two nodeboards via their respecive
+ *  A Crossbow (XBOW) connects two nodeboards via their respective
  *  HUB to up to six different I/O controllers in XIO slots. In a
  *  multiprocessor system all processors have access to the XIO
  *  slots but may need to pass traffic via the routers.
  *
  *  To each XIO port on the XBOW a XIO interface is attached. Such
- *  interfaces can be for example PCI bridges wich then add another
+ *  interfaces can be for example PCI bridges which then add another
  *  level to the hierarchy.
  */
 
