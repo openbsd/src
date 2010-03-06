@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.122 2010/01/24 15:13:15 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.123 2010/03/06 13:38:42 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -400,6 +400,8 @@ sub dependencies
 sub find_dep_in_repositories
 {
 	my ($self, $state, $dep) = @_;
+
+	return unless $dep->spec->is_valid;
 
 	my $candidates = $self->{set}->match_locations($dep->spec);
 	if (!$state->{defines}->{allversions}) {
