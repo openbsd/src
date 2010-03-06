@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.9 2010/03/05 18:20:50 armani Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.10 2010/03/06 15:43:31 armani Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -1476,6 +1476,7 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		printf("%s: invalid address\n", DEVNAME(sc));
 		free(buf, M_TEMP);
+		urndis_stop(sc);
 		return;
 	}
 	
@@ -1486,6 +1487,7 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	if (urndis_ctrl_set(sc, OID_GEN_CURRENT_PACKET_FILTER, &filter,
 	    sizeof(filter)) != RNDIS_STATUS_SUCCESS) {
 		printf("%s: unable to set data filters\n", DEVNAME(sc));
+		urndis_stop(sc);
 		return;
 	}
 
@@ -1509,6 +1511,7 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+	sc->sc_attached = 1;
 
 	splx(s);
 
@@ -1527,6 +1530,11 @@ urndis_detach(struct device *self, int flags)
 
 	DPRINTF(("urndis_detach: %s flags %u\n", DEVNAME(sc),
 	    flags));
+	
+	if (!sc->sc_attached) {
+		splx(s);
+		return 0;
+	}
 
 	sc->sc_dying = 1;
 
@@ -1536,6 +1544,7 @@ urndis_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	urndis_stop(sc);
+	sc->sc_attached = 0;
 
 	splx(s);
 
