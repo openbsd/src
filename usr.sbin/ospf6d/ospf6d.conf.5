@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.5 2009/01/27 05:58:03 jmc Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.6 2010/03/06 23:14:43 stsp Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2009 $
+.Dd $Mdocdate: March 6 2010 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 The
 .Xr ospf6d 8
 daemon implements the Open Shortest Path First protocol version 3 as described
-in RFC 2740.
+in RFC 5340.
 .Sh SECTIONS
 The
 .Nm
@@ -155,20 +155,14 @@ Setting more then one option needs curly brackets:
 redistribute static set { metric 300 type 2 }
 .Ed
 .Pp
-.It Xo
-.Ic rfc1583compat
-.Pq Ic yes Ns \&| Ns Ic no
-.Xc
-If set to
-.Ic yes ,
-decisions regarding AS-external routes are evaluated according to RFC 1583.
-The default is
-.Ic no .
-.Pp
 .It Ic router-id Ar address
-Set the router ID; if not specified, the lowest IPv4 address of the router
+Set the router ID; if not specified, the lowest IPv4 address of
+the interfaces used by
+.Xr ospf6d 8
 will be used.
-A router ID must be specified on IPv6-only routers.
+A router ID must be specified if no IPv4 address is configured on
+any interfaces used by
+.Xr ospf6d 8 .
 .Pp
 .It Ic rtlabel Ar label Ic external-tag Ar number
 Map route labels to external route tags and vice versa.
@@ -247,13 +241,10 @@ keyword in
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 An interface is specified by its name.
-If multiple networks are configured an additional IP address can be supplied.
-By default the first IP address is used.
 .Bd -literal -offset indent
 interface em0 {
 	...
 }
-interface fxp0:192.168.1.3
 .Ed
 .Pp
 Interface-specific parameters are listed below.

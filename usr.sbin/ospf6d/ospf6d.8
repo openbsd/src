@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.8,v 1.11 2010/02/23 21:30:40 schwarze Exp $
+.\"	$OpenBSD: ospf6d.8,v 1.12 2010/03/06 23:14:43 stsp Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 23 2010 $
+.Dd $Mdocdate: March 6 2010 $
 .Dt OSPF6D 8
 .Os
 .Sh NAME
@@ -32,58 +32,63 @@
 is an Open Shortest Path First
 .Pq OSPF
 daemon which manages routing tables.
-.Pp
 This implementation supports OSPF version 3, thus it is only capable of
 maintaining IPv6 routing tables.
 .Pp
 OSPF is an interior gateway protocol designed to supersede RIP.
+It has several advantages over RIP.
+For instance, every router has an understanding of the complete network
+topology.
+Response to changes in the network is faster.
+Furthermore, failure detection is improved.
+.Pp
 The OSPF daemon maintains a Link State Database
 .Pq LSDB
-consisting of routers and networks.
+containing information about routers and networks within an Autonomous System
+.Pq AS .
 .Pp
-Dijkstra's shortest path first algorithm is used to compute the Route
-Information Base using the LSDB as input.
-The Forwarding Information Base (FIB), a.k.a. the kernel routing table,
-is updated with information from the RIB.
+Dijkstra's shortest path first algorithm is used to compute a Routing
+Information Base
+.Pq RIB
+using the LSDB as input.
+The Forwarding Information Base
+.Pq FIB ,
+a.k.a. the kernel routing table, is updated with information from the RIB.
 .Pp
-OSPF routers communicate via two multicast groups: ff02::5 all Shortest
-Path First routers and ff02::6 all Designated Routers.
-The IP protocol number 89 is reserved for OSPF, furthermore OSPF packets
-omit the use of TCP and UDP.
+OSPF routers discover one another automatically via OSPF hello packets.
+OSPF routers communicate via two multicast groups: ff02::5 (all Shortest
+Path First routers) and ff02::6 (all Designated Routers).
+OSPF runs directly on top of IP and uses neither TCP nor UDP.
+IP protocol number 89 is reserved for OSPF.
 .Pp
-OSPF has several advantages over RIP.
-For example every router has a complete network topology.
-Response to changes in the network are faster.
-Furthermore fail detection is much improved.
-.Pp
-All routers in an OSPF network spend most of their time keeping each others
+All routers in an OSPF network spend most of their time keeping each others'
 LSDBs in sync.
 All routers must have the same information in the LSDB at all times.
 Every time the LSDB is updated the RIB is updated; if needed the FIB is
 also updated.
 .Pp
-OSPF aware routers discover each other via OSPF hello packets.
-.Pp
-In a multiaccess network such as Ethernet it is unfeasible for all routers
-to synchronize with all other routers in the network.
+In a multi-access network such as Ethernet, it is unfeasible for all routers
+to synchronize their LSDB with all other routers in the network.
 In such networks a Designated Router
 .Pq DR
 and a Backup Designated Router
 .Pq BDR
-is elected.
+are elected.
 The DR's responsibility is to synchronize with all routers; the BDR will
 not do much until the DR fails.
 The first router in a network is automatically elected DR, the second
 router BDR.
 All routers have a FULL adjacency with the DR and the BDR.
+Routers with FULL adjacency exchange information about their LSDBs.
 A router not elected either DR or BDR will have 2-WAY adjacency with all
 routers but the DR and BDR.
-Routers that form 2-WAY adjacency recognize that they know each other.
-In case a DR or BDR should fail another router is elected and all routers
-change state on the newly elected router and synchronize to it.
+Routers with 2-WAY adjacency recognize that they know each other,
+but do not exchange information about their LSDBs.
+If a DR or BDR fails another router is elected DR or BDR
+and all routers form FULL adjacencies with the newly elected DR or BDR.
 .Pp
-When routers are connected via point-to-point links, the DR and BDR
-election is skipped since only two routers are connected.
+When routers are connected via point-to-point links, DR and BDR
+election is skipped since only two routers are connected to the link.
 .Pp
 To limit the impact changes in the network have on the LSDB it is possible
 to segment an OSPF network into areas.
@@ -94,13 +99,11 @@ being part of multiple areas.
 Every area must have direct access to the backbone area.
 ABRs not directly connected to the backbone area need to establish a
 virtual link to a router in the backbone area.
-Virtual links are currently not available in
-.Nm .
 .Pp
 AS Border Routers
 .Pq ASBR
-are connected to an OSPF network and other external networks, BGP, RIP,
-or statically routed.
+are connected to an OSPF network and other external networks via BGP, RIP,
+or static routing, and provide connectivity to networks outside the AS.
 .Pp
 .Nm
 is usually started at boot time, and can be enabled by
@@ -159,15 +162,42 @@ socket used for communication with
 .Xr ospf6ctl 8 .
 .El
 .Sh SEE ALSO
+.Xr ipsec.conf 5 ,
 .Xr ospf6d.conf 5 ,
 .Xr ospf6ctl 8
 .Rs
-.%R RFC 2740
+.%R RFC 5340
 .%T "OSPF for IPv6"
-.%D December 1999
+.%D July 2008
+.Re
+.Rs
+.%R RFC 4552
+.%T "Authentication/Confidentiality for OSPFv3"
+.%D June 2006
 .Re
 .Sh HISTORY
 The
 .Nm
 program first appeared in
 .Ox 4.2 .
+.Sh BUGS
+Virtual links are currently not available in
+.Nm .
+.Pp
+Support for multiple areas is currently not available in
+.Nm .
+.Pp
+Unlike OSPF for IPv4, OSPF for IPv6 has no built-in support for
+authentication of OSPF packets.
+Instead, it relies on IPsec for packet authentication.
+Because OSPF uses multicast, IKE cannot be used for configuring IPsec
+flows securing OSPF traffic.
+.Nm
+is currently entirely unaware of IPsec and has no support for helping
+users setting up IPsec flows between OSPF routers.
+However, setting up IPsec flows between routers using manual keying is
+strongly recommended to protect the OSPF network against spoofing attacks.
+Note in particular that flows need to be configured for multicast groups
+ff02::5 and ff02::6.
+See
+.Xr ipsec.conf 5 .
