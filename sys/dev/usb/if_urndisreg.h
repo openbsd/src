@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.7 2010/03/04 20:23:45 armani Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.8 2010/03/06 19:04:57 armani Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -45,6 +45,7 @@ struct urndis_cdata {
 struct urndis_softc {
 	struct device			sc_dev;
 
+	char				sc_attached;
 	int				sc_dying;
 	struct arpcom			sc_arpcom;
 
