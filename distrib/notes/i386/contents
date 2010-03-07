@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.64 2009/05/12 21:06:50 miod Exp $
+dnl	$OpenBSD: contents,v 1.65 2010/03/07 14:07:07 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -60,24 +60,24 @@ useful for the installation.
 
 DistributionDescription(eleven)
 
-OpenBSDbase(48068630,144643358)
+OpenBSDbase(50547479,156432514)
 
-OpenBSDcomp(89983487,249227039)
+OpenBSDcomp(92638541,259614258)
 
-OpenBSDetc(512993,1527714)
+OpenBSDetc(522599,1584148)
 
-OpenBSDgame(2617295,5984176)
+OpenBSDgame(2617941,5982324)
 
-OpenBSDman(8224721,30048578)
+OpenBSDman(9462469,34569064)
 
-OpenBSDmisc(2935124,9912406)
+OpenBSDmisc(364789,1175282)
 
-OpenBSDxbase(9996205,28341508)
+OpenBSDxbase(15550078,45083202)
 
-OpenBSDxetc(75214,286223)
+OpenBSDxetc(70041,268806)
 
-OpenBSDxfont(35579864,43728442)
+OpenBSDxfont(39684618,51387549)
 
-OpenBSDxserv(19945932,53013116)
+OpenBSDxserv(19878969,52803806)
 
-OpenBSDxshare(2762783,14738214)
+OpenBSDxshare(2946147,16054055)
