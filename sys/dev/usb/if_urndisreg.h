@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.10 2010/03/07 14:43:06 mk Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.11 2010/03/07 16:03:29 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -56,6 +56,7 @@ struct urndis_softc {
 	usbd_interface_handle		sc_iface_ctl;
 	usbd_interface_handle		sc_iface_data;
 
+	struct timeval			sc_rx_notice;
 	int				sc_bulkin_no;
 	usbd_pipe_handle		sc_bulkin_pipe;
 	int				sc_bulkout_no;

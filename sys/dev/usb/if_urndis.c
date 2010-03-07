@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.11 2010/03/07 14:43:06 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.12 2010/03/07 16:03:29 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -783,7 +783,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		m = c->sc_mbuf;
 
 		DPRINTF(("%s: urndis_decap buffer size left %u\n", DEVNAME(sc),
-		    (int)len));
+		    len));
 
 		DPRINTF(("%s: urndis_decap len %u data(off:%u len:%u) "
 		    "oobdata(off:%u len:%u nb:%u) perpacket(off:%u len:%u)\n",
@@ -1220,29 +1220,15 @@ urndis_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-#if 0
-		if (sc->sc_rxeof_errors == 0)
-			printf("%s: usb error on rx: %s\n", DEVNAME(sc),
-			    usbd_errstr(status));
-#endif
+		if (usbd_ratecheck(&sc->sc_rx_notice)) {
+			printf("%s: usb errors on rx: %s\n",
+			    DEVNAME(sc), usbd_errstr(status));
+		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
 
-#if 0
-		DELAY(sc->sc_rxeof_errors * 10000);
-		if (sc->sc_rxeof_errors++ > 10) {
-			printf("%s: too many errors, disabling\n",
-			    DEVNAME(sc));
-			sc->sc_dying = 1;
-			return;
-		}
-#endif
 		goto done;
 	}
-
-#if 0
-	sc->sc_rxeof_errors = 0;
-#endif
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 	urndis_decap(sc, c, total_len);
@@ -1458,6 +1444,19 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 
 	found:
 
+	ifp = GET_IFP(sc);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_start = urndis_start;
+	ifp->if_ioctl = urndis_ioctl;
+#if 0
+	ifp->if_watchdog = urndis_watchdog;
+#endif
+
+	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
+
+	IFQ_SET_READY(&ifp->if_snd);
+
 	urndis_init(sc);
 
 	s = splnet();
@@ -1491,22 +1490,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	bcopy(eaddr, (char *)&sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
-	
-	
-	ifp = GET_IFP(sc);
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_start = urndis_start;
-	ifp->if_ioctl = urndis_ioctl;
-#if 0
-	ifp->if_watchdog = urndis_watchdog;
-#endif
-
-	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
