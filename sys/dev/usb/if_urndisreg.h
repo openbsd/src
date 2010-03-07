@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.12 2010/03/07 16:20:32 fabien Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.13 2010/03/07 17:17:33 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -47,7 +47,6 @@ struct urndis_softc {
 
 	/* RNDIS device info */
 	u_int32_t			sc_lim_pktsz;
-	u_int32_t			sc_pktalign;
 	u_int32_t			sc_filter;
 
 	/* USB goo */

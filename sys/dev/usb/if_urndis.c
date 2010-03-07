@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.14 2010/03/07 16:20:32 fabien Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.15 2010/03/07 17:17:33 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -290,7 +290,6 @@ urndis_ctrl_handle_init(struct urndis_softc *sc, const struct urndis_comp_hdr *h
 	}
 
 	sc->sc_lim_pktsz = letoh32(msg->rm_pktmaxsz);
-	sc->sc_pktalign = letoh32(msg->rm_align);
 
 	return letoh32(msg->rm_status);
 }
