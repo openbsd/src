@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.30 2010/03/04 14:50:35 jsing Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.31 2010/03/07 21:26:24 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -47,6 +47,8 @@ xbow*		at mainbus0
 xbridge*	at xbow?
 xbpci*		at xbridge?
 pci*		at xbpci?
+impact*		at xbow?
+wsdisplay*	at impact?
 odyssey*	at xbow?
 wsdisplay*	at odyssey?
 

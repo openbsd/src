@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.5 2010/03/07 13:44:26 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.6 2010/03/07 21:26:24 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -71,6 +71,7 @@
 #include <sgi/dev/gbereg.h>
 #include <sgi/dev/iockbcvar.h>
 #include <sgi/dev/mkbcreg.h>
+#include <sgi/xbow/impactvar.h>
 #include <sgi/xbow/odysseyvar.h>
 
 #if defined(TGT_OCTANE)
@@ -81,6 +82,7 @@
 
 #include "gbe.h"
 #include "iockbc.h"
+#include "impact.h"
 #include "mkbc.h"
 #include "odyssey.h"
 #include "ukbd.h"
@@ -286,6 +288,12 @@ widget_cnprobe()
 	 * Try supported frame buffers in no particular order.
 	 */
 
+#if NIMPACT > 0
+	if (impact_cnprobe(output_widget_nasid, output_widget_id) != 0) {
+		output_widget_cninit = impact_cnattach;
+		goto success;
+	}
+#endif
 #if NODYSSEY > 0
 	if (odyssey_cnprobe(output_widget_nasid, output_widget_id) != 0) {
 		output_widget_cninit = odyssey_cnattach;

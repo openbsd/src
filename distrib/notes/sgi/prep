@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.17 2010/03/07 14:54:23 miod Exp $
+dnl	$OpenBSD: prep,v 1.18 2010/03/07 21:26:22 miod Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -72,10 +72,10 @@ Switching from serial to graphics console and vice versa:
 
     As of OpenBSD OSREV, supported graphics console devices are:
     - the onboard frame buffer on IP32 systems (gbe)
+    - ImpactSR (Mardigras) frame buffer on IP30 (I-Series and E-Series) (impact)
     - VPro family frame buffers on IP27, IP30 and IP35 systems (odyssey)
 
     And the following graphics devices are not supported yet:
-    - ImpactSR (Mardigras) frame buffer on IP30 (I-Series and E-Series)
     - Infinite Reality (Kona) frame buffer on IP27/IP35 Onyx systems
     - Voyager (Ultimate Vision) frame buffer on IP35 Onyx 4 systems
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.59 2010/03/04 14:31:12 jsing Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.60 2010/03/07 21:26:24 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -313,6 +313,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_SMFB	62	/* SiliconMotion SM712 */
 #define		WSDISPLAY_TYPE_SISFB	63	/* SiS 315 Pro */
 #define		WSDISPLAY_TYPE_ODYSSEY	64	/* SGI Odyssey */
+#define		WSDISPLAY_TYPE_IMPACT	65	/* SGI Impact */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

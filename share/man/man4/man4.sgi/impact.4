@@ -1,0 +1,53 @@
+.\"     $OpenBSD: impact.4,v 1.1 2010/03/07 21:26:24 miod Exp $
+.\"
+.\" Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 7 2010 $
+.Dt IMPACT 4 sgi
+.Os
+.Sh NAME
+.Nm impact
+.Nd SGI Impact (aka Mardigras) graphics
+.Sh SYNOPSIS
+.Cd "impact* at xbow?"
+.Cd "wsdisplay* at impact?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Impact (aka Mardigras) graphics card,
+which can be found in SGI
+.Tn Octane ,
+.Tn Octane2 ,
+and
+.Tn Onyx
+systems.
+Console support is provided by the
+.Xr wscons 4
+console framework.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4 ,
+.Xr xbow 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.7 .
+.\" .Sh AUTHORS
+.\" The
+.\" .Nm
+.\" driver was written by
+.\" .An Miod Vallat .

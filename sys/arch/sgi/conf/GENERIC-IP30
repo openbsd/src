@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.25 2010/03/04 14:50:35 jsing Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.26 2010/03/07 21:26:24 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -50,6 +50,8 @@ onewire*	at xheart?
 xbridge*	at xbow?
 xbpci*		at xbridge?
 pci*		at xbpci?
+impact*		at xbow?
+wsdisplay*	at impact?
 odyssey*	at xbow?
 wsdisplay*	at odyssey?
 

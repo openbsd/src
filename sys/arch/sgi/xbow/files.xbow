@@ -1,4 +1,4 @@
-#	$OpenBSD: files.xbow,v 1.6 2010/03/04 14:50:35 jsing Exp $
+#	$OpenBSD: files.xbow,v 1.7 2010/03/07 21:26:24 miod Exp $
 
 # IP30 and IP27 planar XBow bus
 define	xbow {[widget = -1], [vendor = -1], [product = -1]}
@@ -23,3 +23,7 @@ device	odyssey: wsemuldisplaydev, rasops8, rasops16, rasops32
 attach	odyssey at xbow
 file	arch/sgi/xbow/odyssey.c			odyssey		needs-flag
 
+# ImpactSR graphics
+device	impact: wsemuldisplaydev, rasops32
+attach	impact at xbow
+file	arch/sgi/xbow/impact.c			impact		needs-flag
