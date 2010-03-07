@@ -1,33 +1,39 @@
-dnl	$OpenBSD: contents,v 1.12 2010/03/07 14:07:08 miod Exp $
+dnl	$OpenBSD: contents,v 1.13 2010/03/07 14:54:23 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
 dnl three flavours of OpenBSDbsd
-	bsd.IP27	A stock GENERIC.IP27 MACHINE kernel for IP27 and IP35
+	bsd.IP27	A stock GENERIC-IP27 MACHINE kernel for IP27 and IP35
 			class machines, which will be installed on such systems
 			during the install.
 
-	bsd.IP30	A stock GENERIC.IP30 MACHINE kernel for IP30 class
+	bsd.IP30	A stock GENERIC-IP30 MACHINE kernel for IP30 class
 			machines, which will be installed on such systems
 			during the install.
 
-	bsd.IP32	A stock GENERIC.IP32 MACHINE kernel for IP32 class
+	bsd.IP32	A stock GENERIC-IP32 MACHINE kernel for IP32 class
 			machines, which will be installed on such systems
 			during the install.
+
+dnl one flavour of OpenBSDbsdmp so far...
+	bsd.IP30.mp	A stock GENERIC-IP30.MP MACHINE kernel for IP30 class
+			machines, with support for multiprocessor systems,
+			which can be used instead of the GENERIC-IP30 kernel
+			after the install.
 
 dnl three flavours of OpenBSDrd
-	bsd.rd.IP27	A compressed RAMDISK.IP27 kernel; the embedded
+	bsd.rd.IP27	A compressed RAMDISK-IP27 kernel; the embedded
 			filesystem contains the installation tools.
 			Used for simple installation from a pre-existing
 			system.
 
-	bsd.rd.IP30	A compressed RAMDISK.IP30 kernel; the embedded
+	bsd.rd.IP30	A compressed RAMDISK-IP30 kernel; the embedded
 			filesystem contains the installation tools.
 			Used for simple installation from a pre-existing
 			system.
 
-	bsd.rd.IP32	A compressed RAMDISK.IP32 kernel; the embedded
+	bsd.rd.IP32	A compressed RAMDISK-IP32 kernel; the embedded
 			filesystem contains the installation tools.
 			Used for simple installation from a pre-existing
 			system.

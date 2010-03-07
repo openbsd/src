@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.16 2010/03/02 13:08:33 jsing Exp $
+dnl	$OpenBSD: prep,v 1.17 2010/03/07 14:54:23 miod Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -21,7 +21,7 @@ Identifying your system:
 	O2, O2+
 
     IP35 family:
-	Origin 300, Origin 3000, Onyx 300
+dnl	Origin 300, Origin 3000, Onyx 300
 	Origin 350, Onyx 350, Onyx 4
 	Fuel
 	Tezro
@@ -55,16 +55,29 @@ Switching from serial to graphics console and vice versa:
 
     >> setenv console d
 
-    will select 9600 8N1, no flow control, serial console on the first
-    serial port (labeled ``(1)''), while
+    will select 8N1, no flow control, serial console on the first serial
+    port (labeled ``(1)''), while
 
     >> setenv console g
 
     will select the graphics console.
 
-    Only IP32 family systems are supported with a graphics console
-    under OpenBSD at the moment. On all other non-headless systems,
-    you need to change the console to serial.
+    The speed of the serial console is controlled by the ``dbaud'' environment
+    variable, and defaults to 9600 bps if this variable is not set.
+
+    Not all graphics options are currently supported by OpenBSD. If your
+    system is configured for graphics console but the kernel does not
+    support your frame buffer, it will fallback to serial console on the
+    first serial port.
+
+    As of OpenBSD OSREV, supported graphics console devices are:
+    - the onboard frame buffer on IP32 systems (gbe)
+    - VPro family frame buffers on IP27, IP30 and IP35 systems (odyssey)
+
+    And the following graphics devices are not supported yet:
+    - ImpactSR (Mardigras) frame buffer on IP30 (I-Series and E-Series)
+    - Infinite Reality (Kona) frame buffer on IP27/IP35 Onyx systems
+    - Voyager (Ultimate Vision) frame buffer on IP35 Onyx 4 systems
 
 Switching from L1 console to serial console and vice versa:
 

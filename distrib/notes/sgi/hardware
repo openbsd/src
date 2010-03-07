@@ -1,5 +1,6 @@
-dnl	$OpenBSD: hardware,v 1.10 2009/11/01 19:17:54 miod Exp $
+dnl	$OpenBSD: hardware,v 1.11 2010/03/07 14:54:23 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
+
 	IP27 class machines:
 		Origin 200, Onyx 2
 		Origin 2000
@@ -12,7 +13,7 @@ OpenBSD/MACHINE OSREV runs on the following machines:
 		(both R50000/RM52xx/RM70000 and R10000/R12000 configurations
 		 are supported)
 	IP35 class machines:
-		Origin 300, Origin 3000, Onyx 300
+dnl		Origin 300, Origin 3000, Onyx 300
 		Origin 350, Onyx 350, Onyx 4
 		Fuel
 		Tezro
@@ -64,8 +65,11 @@ Supported devices {:-include-:}:
         O2 Moosehead A/V Board audio (mavb)
 - Video Devices
         O2 built-in Graphics Back End framebuffer (gbe)
+	VPro frame buffer (odyssey) found on Fuel, Tezro, Octane 2, as well
+	  as on some late Octane systems.
 - Input Devices
         O2 built-in PS/2 Controller (mkbc)
+	Octane/Origin/Fuel/Tezro built-in PS/2 Controller (iockbc)
                 PS/2 mice (pms)
                 PS/2 keyboards (pckbd)
 	USB keyboard and mice (already listed above)
@@ -74,3 +78,7 @@ Supported devices {:-include-:}:
 
 If your hardware is not listed above, there is currently no support for it
 in this release.
+
+In particular, some IP35 systems are not supported yet (Origin 300,
+Origin 3000, Onyx 300), and multiprocessor kernels are only supported
+on IP30 (Octane) systems at the moment.
