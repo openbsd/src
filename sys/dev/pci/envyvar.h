@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.14 2010/02/25 21:19:37 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.15 2010/03/07 18:55:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/time.h>
 #include <dev/audio_if.h>
 
 struct envy_softc;
@@ -67,6 +68,20 @@ struct envy_softc {
 	bus_space_tag_t		mt_iot;
 	bus_space_handle_t	mt_ioh;
 	bus_size_t		mt_iosz;
+	int			iactive;	/* trigger_input called */
+	int			oactive;	/* trigger_output called */
+	int			ibusy;		/* input DMA started */
+	int			obusy;		/* output DMA started */
+#ifdef ENVY_DEBUG
+	unsigned 		spurious;
+	struct timespec		start_ts;
+#define ENVY_NINTR		16
+	unsigned 		nintr;
+	struct envy_intr {
+		int ipos, opos, st, mask, ctl, iactive, oactive;
+		struct timespec ts;
+	} intrs[ENVY_NINTR];
+#endif
 	struct envy_card       *card;
 	unsigned char 		shadow[4][16];
 #define ENVY_EEPROM_MAXSZ 32

@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.13 2010/02/25 21:19:37 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.14 2010/03/07 18:55:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -100,6 +100,7 @@
 #define ENVY_MT_INTR		0
 #define   ENVY_MT_INTR_PACK	0x01
 #define   ENVY_MT_INTR_RACK	0x02
+#define   ENVY_MT_INTR_ERR	0x08	/* HT only fifo error */
 #define   ENVY_MT_INTR_PMASK	0x40	/* !HT only */
 #define   ENVY_MT_INTR_RMASK	0x80	/* !HT only */
 #define ENVY_MT_RATE		1
@@ -107,6 +108,7 @@
 #define ENVY_MT_IMASK		3	/* HT only */
 #define   ENVY_MT_IMASK_PDMA0	0x1
 #define   ENVY_MT_IMASK_RDMA0	0x2
+#define   ENVY_MT_IMASK_ERR	0x8
 #define ENVY_MT_AC97_IDX	4
 #define ENVY_MT_AC97_CMD	5
 #define   ENVY_MT_AC97_READY	0x08
@@ -122,6 +124,7 @@
 #define   ENVY_MT_CTL_PSTART	0x01
 #define   ENVY_MT_CTL_RSTART(s)	((s)->isht ? 0x02 : 0x04)
 #define ENVY_MT_NSTREAM		0x19	/* HT only: 4 - active DACs */
+#define ENVY_MT_ERR		0x1a	/* HT only: fifo error */
 #define ENVY_MT_RADDR		0x20
 #define ENVY_MT_RBUFSZ		0x24
 #define ENVY_MT_RBLKSZ		0x26

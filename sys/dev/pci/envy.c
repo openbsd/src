@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.34 2010/02/25 21:25:03 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.35 2010/03/07 18:55:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,6 +32,8 @@
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
 #include <dev/audio_if.h>
 #include <dev/ic/ac97.h>
 #include <dev/pci/pcivar.h>
@@ -74,6 +76,7 @@ int  envy_eeprom_gpioxxx(struct envy_softc *, int);
 void envy_reset(struct envy_softc *);
 int  envy_codec_read(struct envy_softc *, int, int);
 void envy_codec_write(struct envy_softc *, int, int, int);
+void envy_pintr(struct envy_softc *);
 int  envy_intr(void *);
 
 int envy_lineout_getsrc(struct envy_softc *, int);
@@ -1158,33 +1161,13 @@ envy_reset(struct envy_softc *sc)
 	if (sc->isht) {
 		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_NSTREAM,
 		    4 - sc->card->noch / 2);
-		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_IMASK,
-		    ~(ENVY_MT_IMASK_PDMA0 | ENVY_MT_IMASK_RDMA0));
+		bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+		    ENVY_MT_IMASK, ~(ENVY_MT_IMASK_PDMA0 |
+		    ENVY_MT_IMASK_RDMA0 | ENVY_MT_IMASK_ERR));
 	}
+	sc->iactive = 0;
+	sc->oactive = 0;
 	sc->card->init(sc);
-}
-
-int
-envy_intr(void *self)
-{
-	struct envy_softc *sc = (struct envy_softc *)self;
-	int st;
-
-	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR);
-	if (!(st & (ENVY_MT_INTR_PACK | ENVY_MT_INTR_RACK))) {
-		return 0;
-	}
-	if (st & ENVY_MT_INTR_PACK) {
-		st = ENVY_MT_INTR_PACK;
-		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
-		sc->ointr(sc->oarg);
-	}
-	if (st & ENVY_MT_INTR_RACK) {
-		st = ENVY_MT_INTR_RACK;
-		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
-		sc->iintr(sc->iarg);
-	}
-	return 1;
 }
 
 int
@@ -1573,10 +1556,8 @@ envy_set_params(void *self, int setmode, int usemode,
 	struct envy_softc *sc = (struct envy_softc *)self;
 	int i, rate, reg;
 
-	if (setmode == 0) {
-		DPRINTF("%s: no params to set\n", DEVNAME(sc));
+	if (setmode == 0)
 		return 0;
-	}
 	if (setmode == (AUMODE_PLAY | AUMODE_RECORD) &&
 	    p->sample_rate != r->sample_rate) {
 		DPRINTF("%s: play/rec rates mismatch\n", DEVNAME(sc));
@@ -1639,13 +1620,115 @@ envy_round_buffersize(void *self, int dir, size_t bufsz)
 	return bufsz;
 }
 
+#ifdef ENVY_DEBUG
+void
+envy_pintr(struct envy_softc *sc)
+{
+	int i;
+
+	if (sc->spurious > 0 || envydebug >= 2) {
+		printf("%s: spurious = %u, start = %u.%ld\n", 
+			DEVNAME(sc), sc->spurious,
+			sc->start_ts.tv_sec, sc->start_ts.tv_nsec);
+		for (i = 0; i < sc->nintr; i++) {
+			printf("%u.%09ld: "
+			    "active=%d/%d pos=%d/%d st=%x/%x, ctl=%x\n",
+			    sc->intrs[i].ts.tv_sec,
+			    sc->intrs[i].ts.tv_nsec,
+			    sc->intrs[i].iactive,
+			    sc->intrs[i].oactive,
+			    sc->intrs[i].ipos,
+			    sc->intrs[i].opos,
+			    sc->intrs[i].st,
+			    sc->intrs[i].mask,
+			    sc->intrs[i].ctl);
+		}
+	}
+}
+#endif
+
+int
+envy_intr(void *self)
+{
+	struct envy_softc *sc = (struct envy_softc *)self;
+	int st, err, ctl;
+
+
+	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR);
+	if (st == 0)
+		return 0;
+#ifdef ENVY_DEBUG
+	if (sc->nintr < ENVY_NINTR) {
+		sc->intrs[sc->nintr].iactive = sc->iactive;
+		sc->intrs[sc->nintr].oactive = sc->oactive;
+		sc->intrs[sc->nintr].st = st;
+		sc->intrs[sc->nintr].ipos = 
+		    bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_RBUFSZ);
+		sc->intrs[sc->nintr].opos = 
+		    bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_PBUFSZ);
+		sc->intrs[sc->nintr].ctl = 
+		    bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
+		sc->intrs[sc->nintr].mask = 
+		    bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_IMASK);
+		nanouptime(&sc->intrs[sc->nintr].ts);
+		sc->nintr++;
+	}
+#endif
+	if (st & ENVY_MT_INTR_PACK) {
+		if (sc->oactive)
+			sc->ointr(sc->oarg);
+		else {
+			ctl = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
+			if (ctl & ENVY_MT_CTL_PSTART) {
+				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				    ENVY_MT_INTR, ENVY_MT_INTR_PACK);
+				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				    ENVY_MT_CTL, ctl & ~ENVY_MT_CTL_PSTART);
+				st &= ~ENVY_MT_INTR_PACK;
+				sc->obusy = 0;
+				wakeup(&sc->obusy);
+			}
+#ifdef ENVY_DEBUG
+			else
+				sc->spurious++;
+#endif
+		}
+	}
+	if (st & ENVY_MT_INTR_RACK) {
+		if (sc->iactive)
+			sc->iintr(sc->iarg);
+		else {
+			ctl = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
+			if (ctl & ENVY_MT_CTL_RSTART(sc)) {
+				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				    ENVY_MT_INTR, ENVY_MT_INTR_RACK);
+				bus_space_write_1(sc->mt_iot, sc->mt_ioh,
+				    ENVY_MT_CTL, ctl & ~ENVY_MT_CTL_RSTART(sc));
+				st &= ~ENVY_MT_INTR_RACK;
+				sc->ibusy = 0;
+				wakeup(&sc->ibusy);
+			}
+#ifdef ENVY_DEBUG
+			else
+				sc->spurious++;
+#endif
+		}
+	}
+	if (sc->isht && (st & ENVY_MT_INTR_ERR)) {
+		err = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_ERR);
+		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_ERR, err);
+	}
+	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
+	return 1;
+}
+
 int
 envy_trigger_output(void *self, void *start, void *end, int blksz,
     void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
 	size_t bufsz;
-	int st;
+	int s, st;
 
 	bufsz = (char *)end - (char *)start;
 #ifdef ENVY_DEBUG
@@ -1658,20 +1741,29 @@ envy_trigger_output(void *self, void *start, void *end, int blksz,
 		return EINVAL;
 	}
 #endif
+	s = splaudio();
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
 	    ENVY_MT_PBUFSZ, bufsz / 4 - 1);
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
 	    ENVY_MT_PBLKSZ(sc), blksz / 4 - 1);
 
+#ifdef ENVY_DEBUG
+	if (!sc->iactive) {
+		sc->nintr = 0;
+		sc->spurious = 0;
+		nanouptime(&sc->start_ts);
+	}
+#endif
 	sc->ointr = intr;
 	sc->oarg = arg;
-
+	sc->oactive = 1;
+	sc->obusy = 1;
 	st = ENVY_MT_INTR_PACK;
 	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
-
 	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
 	st |= ENVY_MT_CTL_PSTART;
 	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
+	splx(s);
 	return 0;
 }
 
@@ -1681,7 +1773,7 @@ envy_trigger_input(void *self, void *start, void *end, int blksz,
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
 	size_t bufsz;
-	int st;
+	int s, st;
 
 	bufsz = (char *)end - (char *)start;
 #ifdef ENVY_DEBUG
@@ -1694,20 +1786,29 @@ envy_trigger_input(void *self, void *start, void *end, int blksz,
 		return EINVAL;
 	}
 #endif
+	s = splaudio();
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
 	    ENVY_MT_RBUFSZ, bufsz / 4 - 1);
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh,
 	    ENVY_MT_RBLKSZ, blksz / 4 - 1);
 
+#ifdef ENVY_DEBUG
+	if (!sc->oactive) {
+		sc->nintr = 0;
+		sc->spurious = 0;
+		nanouptime(&sc->start_ts);
+	}
+#endif
 	sc->iintr = intr;
 	sc->iarg = arg;
-
+	sc->iactive = 1;
+	sc->ibusy = 1;
 	st = ENVY_MT_INTR_RACK;
 	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_INTR, st);
-
 	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
 	st |= ENVY_MT_CTL_RSTART(sc);
 	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
+	splx(s);
 	return 0;
 }
 
@@ -1715,11 +1816,20 @@ int
 envy_halt_output(void *self)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
-	int st;
+	int s, err;
 
-	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
-	st &= ~ENVY_MT_CTL_PSTART;
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
+	s = splaudio();
+	sc->oactive = 0;
+	if (sc->obusy) {
+		err = tsleep(&sc->obusy, PWAIT, "envyobus", 4 * hz); 
+		if (err)
+			printf("%s: output DMA halt timeout\n", DEVNAME(sc));
+	}
+	splx(s);
+#ifdef ENVY_DEBUG
+	if (!sc->iactive)
+		envy_pintr(sc);
+#endif
 	return 0;
 }
 
@@ -1727,11 +1837,20 @@ int
 envy_halt_input(void *self)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
-	int st;
+	int s, err;
 
-	st = bus_space_read_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL);
-	st &= ~ENVY_MT_CTL_RSTART(sc);
-	bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_CTL, st);
+	s = splaudio();
+	sc->iactive = 0;
+	if (sc->ibusy) {
+		err = tsleep(&sc->ibusy, PWAIT, "envyibus", 4 * hz); 
+		if (err)
+			printf("%s: input DMA halt timeout\n", DEVNAME(sc));
+	}
+#ifdef ENVY_DEBUG
+	if (!sc->oactive)
+		envy_pintr(sc);
+#endif
+	splx(s);
 	return 0;
 }
 
