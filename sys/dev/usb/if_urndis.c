@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.12 2010/03/07 16:03:29 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.13 2010/03/07 16:06:29 fabien Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -61,7 +61,7 @@
 
 #include <dev/usb/if_urndisreg.h>
 
-#ifdef RNDIS_DEBUG
+#ifdef URNDIS_DEBUG
 #define DPRINTF(x)      do { printf x; } while (0)
 #else
 #define DPRINTF(x)
