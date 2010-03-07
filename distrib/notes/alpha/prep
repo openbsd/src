@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.29 2009/02/28 20:55:49 miod Exp $
+dnl	$OpenBSD: prep,v 1.30 2010/03/07 14:53:02 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -171,9 +171,11 @@ OpenBSD/MACHINE console device restrictions:
 		plugged in.
 
 	DEC 3000/300 family machines
-		These machines will automatically switch to serial
-		console if the keyboard/mouse connector is left
-		unplugged.
+		Console is selected by the `W2' jumper block, to the
+		edge of the logic board, near the memory banks.
+
+		Setting the jumper cap on pins 1-2 selects glass
+		console, and on pins 2-3 selects serial console.
 
 	All other machines
 		From the SRM console, enter either
