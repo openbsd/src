@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.26 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: uow.c,v 1.27 2010/03/07 08:59:32 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -35,12 +35,6 @@
 #include <dev/usb/usbdi_util.h>
 
 #include <dev/usb/uowreg.h>
-
-#ifdef UOW_DEBUG
-#define DPRINTF(x) printf x
-#else
-#define DPRINTF(x)
-#endif
 
 #define UOW_TIMEOUT	1000	/* ms */
 
