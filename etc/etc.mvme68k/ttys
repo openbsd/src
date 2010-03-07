@@ -1,11 +1,11 @@
 #
-#	$OpenBSD: ttys,v 1.10 2009/03/01 22:08:12 miod Exp $
+#	$OpenBSD: ttys,v 1.11 2010/03/07 21:10:22 miod Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty std.9600"	unknown	on   secure
+console	"/usr/libexec/getty std.9600"	vt220	on   secure
 ttya	"/usr/libexec/getty std.9600"	unknown	off  secure	# 147/162 console
 ttyb	"/usr/libexec/getty std.9600"	unknown	off
 ttyc	"/usr/libexec/getty std.9600"	unknown	off
