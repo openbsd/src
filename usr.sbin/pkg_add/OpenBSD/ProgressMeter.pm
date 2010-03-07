@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.28 2010/03/06 11:42:58 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.29 2010/03/07 15:53:18 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -95,7 +95,11 @@ sub _show
 	return if $d eq $lastdisplay && !$continued;
 	$lastdisplay=$d;
 	$continued = 0;
-	print $d, "\r";
+	print $d;
+	if ($width > length($d)) {
+		print ' 'x($width - length($d) - 1);
+	}
+	print "\r";
 }
 
 sub message
