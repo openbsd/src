@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.4 2009/11/18 19:03:27 miod Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.5 2010/03/07 13:44:24 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -65,8 +65,6 @@
 
 #include <mips64/archtype.h>
 
-#include <sgi/dev/iockbcreg.h>
-
 #include <sgi/pci/iocreg.h>
 #include <sgi/pci/iocvar.h>
 #include <sgi/pci/iofreg.h>
@@ -74,6 +72,12 @@
 
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdvar.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+
+#include <sgi/dev/iockbcreg.h>
+#include <sgi/dev/iockbcvar.h>
 
 #include "iockbc.h"
 
@@ -89,13 +93,19 @@ const char *iockbc_slot_names[] = { "kbd", "mouse" };
 #define DPRINTF(x...)
 #endif
 
-struct iockbc_softc {
-	struct pckbc_softc sc_pckbc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t rx[PCKBC_NSLOTS];
-	bus_addr_t tx[PCKBC_NSLOTS];
+struct iockbc_reginfo {
+	bus_addr_t rx;
+	bus_addr_t tx;
 	bus_addr_t cs;
+	uint32_t busy;
+};
+
+struct iockbc_softc {
+	struct pckbc_softc		 sc_pckbc;
+	bus_space_tag_t			 iot;
+	bus_space_handle_t		 ioh;
+	const struct iockbc_reginfo	*reginfo;
+	int				 console;
 };
 
 int	iockbc_match(struct device *, void *, void *);
@@ -138,16 +148,20 @@ struct pckbc_slotdata {
 	struct pckbc_devcmd cmds[NCMD];
 	int rx_queue[3];
 	int rx_index;
+	const struct iockbc_reginfo *reginfo;
 };
 
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
 
-static int iockbc_console;
+struct pckbc_internal iockbc_consdata;
 
-void	iockbc_attach_common(struct iockbc_softc *, bus_addr_t);
+int	iockbc_is_ioc_console(struct ioc_attach_args *);
+int	iockbc_is_iof_console(struct iof_attach_args *);
+void	iockbc_attach_common(struct iockbc_softc *, bus_addr_t, int);
 void	iockbc_start(struct pckbc_internal *, pckbc_slot_t);
 int	iockbc_attach_slot(struct iockbc_softc *, pckbc_slot_t);
-void	iockbc_init_slotdata(struct pckbc_slotdata *);
+void	iockbc_init_slotdata(struct pckbc_slotdata *,
+	    const struct iockbc_reginfo *);
 int	iockbc_submatch(struct device *, void *, void *);
 int	iockbcprint(void *, const char *);
 int	iockbcintr(void *);
@@ -165,12 +179,46 @@ int
 iockbc_match(struct device *parent, void *cf, void *aux)
 {
 	/*
-	 * We expect ioc and iof NOT to attach us on if there are no PS/2 ports.
+	 * We expect ioc and iof NOT to attach us if there are no PS/2 ports.
 	 */
 	return 1;
 }
 
 #if NIOCKBC_IOC > 0
+/*
+ * Register assignments
+ */
+
+const struct iockbc_reginfo iockbc_ioc_normal[PCKBC_NSLOTS] = {
+	[PCKBC_KBD_SLOT] = {
+		.rx = IOC3_KBC_KBD_RX,
+		.tx = IOC3_KBC_KBD_TX,
+		.cs = IOC3_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_KBD_WRITE_PENDING
+	},
+	[PCKBC_AUX_SLOT] = {
+		.rx = IOC3_KBC_AUX_RX,
+		.tx = IOC3_KBC_AUX_TX,
+		.cs = IOC3_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_AUX_WRITE_PENDING
+	}
+};
+
+const struct iockbc_reginfo iockbc_ioc_inverted[PCKBC_NSLOTS] = {
+	[PCKBC_KBD_SLOT] = {
+		.rx = IOC3_KBC_AUX_RX,
+		.tx = IOC3_KBC_AUX_TX,
+		.cs = IOC3_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_AUX_WRITE_PENDING
+	},
+	[PCKBC_AUX_SLOT] = {
+		.rx = IOC3_KBC_KBD_RX,
+		.tx = IOC3_KBC_KBD_TX,
+		.cs = IOC3_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_KBD_WRITE_PENDING
+	}
+};
+
 void
 iockbc_ioc_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -182,18 +230,10 @@ iockbc_ioc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	if (ISSET(iaa->iaa_flags, IOC_FLAGS_OBIO) &&
-	    sys_config.system_type == SGI_IP35) {
-		isc->rx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_RX;
-		isc->rx[PCKBC_AUX_SLOT] = IOC3_KBC_KBD_RX;
-		isc->tx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_TX;
-		isc->tx[PCKBC_AUX_SLOT] = IOC3_KBC_KBD_TX;
-	} else {
-		isc->rx[PCKBC_KBD_SLOT] = IOC3_KBC_KBD_RX;
-		isc->rx[PCKBC_AUX_SLOT] = IOC3_KBC_AUX_RX;
-		isc->tx[PCKBC_KBD_SLOT] = IOC3_KBC_KBD_TX;
-		isc->tx[PCKBC_AUX_SLOT] = IOC3_KBC_AUX_TX;
-	}
-	isc->cs = IOC3_KBC_CTRL_STATUS;
+	    sys_config.system_type == SGI_IP35)
+		isc->reginfo = iockbc_ioc_inverted;
+	else
+		isc->reginfo = iockbc_ioc_normal;
 
 	/* Setup bus space mapping. */
 	isc->iot = iaa->iaa_memt;
@@ -206,22 +246,37 @@ iockbc_ioc_attach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(": unable to establish interrupt\n");
 
-	iockbc_attach_common(isc, iaa->iaa_base);
+	iockbc_attach_common(isc, iaa->iaa_base, iockbc_is_ioc_console(iaa));
 }
 #endif
 
 #if NIOCKBC_IOF > 0
+/*
+ * Register assignments
+ */
+
+const struct iockbc_reginfo iockbc_iof[PCKBC_NSLOTS] = {
+	[PCKBC_KBD_SLOT] = {
+		.rx = IOC4_KBC_KBD_RX,
+		.tx = IOC4_KBC_KBD_TX,
+		.cs = IOC4_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_KBD_WRITE_PENDING
+	},
+	[PCKBC_AUX_SLOT] = {
+		.rx = IOC4_KBC_AUX_RX,
+		.tx = IOC4_KBC_AUX_TX,
+		.cs = IOC4_KBC_CTRL_STATUS,
+		.busy = IOC3_KBC_STATUS_AUX_WRITE_PENDING
+	}
+};
+
 void
 iockbc_iof_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iockbc_softc *isc = (void*)self;
 	struct iof_attach_args *iaa = aux;
 
-	isc->rx[PCKBC_KBD_SLOT] = IOC4_KBC_KBD_RX;
-	isc->rx[PCKBC_AUX_SLOT] = IOC4_KBC_AUX_RX;
-	isc->tx[PCKBC_KBD_SLOT] = IOC4_KBC_KBD_TX;
-	isc->tx[PCKBC_AUX_SLOT] = IOC4_KBC_AUX_TX;
-	isc->cs = IOC4_KBC_CTRL_STATUS;
+	isc->reginfo = iockbc_iof;
 
 	/* Setup bus space mapping. */
 	isc->iot = iaa->iaa_memt;
@@ -234,12 +289,13 @@ iockbc_iof_attach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(": unable to establish interrupt\n");
 
-	iockbc_attach_common(isc, iaa->iaa_base);
+	iockbc_attach_common(isc, iaa->iaa_base, iockbc_is_iof_console(iaa));
 }
 #endif
 
 void
-iockbc_init_slotdata(struct pckbc_slotdata *q)
+iockbc_init_slotdata(struct pckbc_slotdata *q,
+    const struct iockbc_reginfo *reginfo)
 {
 	int i;
 	TAILQ_INIT(&q->cmdqueue);
@@ -250,6 +306,8 @@ iockbc_init_slotdata(struct pckbc_slotdata *q)
 
 	q->polling = 0;
 	q->rx_index = -1;
+
+	q->reginfo = reginfo;
 }
 
 int
@@ -277,10 +335,10 @@ iockbc_submatch(struct device *parent, void *match, void *aux)
 }
 
 int
-iockbc_attach_slot(struct iockbc_softc *sc, pckbc_slot_t slot)
+iockbc_attach_slot(struct iockbc_softc *isc, pckbc_slot_t slot)
 {
-	struct pckbc_softc *isc = &sc->sc_pckbc;
-	struct pckbc_internal *t = isc->id;
+	struct pckbc_softc *sc = &isc->sc_pckbc;
+	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
 	int found;
 
@@ -292,7 +350,7 @@ iockbc_attach_slot(struct iockbc_softc *sc, pckbc_slot_t slot)
 			printf("Failed to allocate slot data!\n");
 			return 0;
 		}
-		iockbc_init_slotdata(t->t_slotdata[slot]);
+		iockbc_init_slotdata(t->t_slotdata[slot], &isc->reginfo[slot]);
 	}
 
 	pa.pa_tag = t;
@@ -304,37 +362,45 @@ iockbc_attach_slot(struct iockbc_softc *sc, pckbc_slot_t slot)
 }
 
 void
-iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr)
+iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr, int console)
 {
 	struct pckbc_softc *sc = &isc->sc_pckbc;
 	struct pckbc_internal *t;
+	bus_addr_t cs;
 	uint32_t csr;
 
-	/*
-	 * Setup up controller: do not force pull clock and data lines low,
-	 * clamp clocks after three bytes received.
-	 */
-	csr = bus_space_read_4(isc->iot, isc->ioh, isc->cs);
-	csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
-	    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
-	    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
-	    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
-	    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
-	csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
-	bus_space_write_4(isc->iot, isc->ioh, isc->cs, csr);
+	if (console) {
+		iockbc_consdata.t_sc = sc;
+		sc->id = &iockbc_consdata;
+		isc->console = 1;
+	} else {
+		/*
+		 * Setup up controller: do not force pull clock and data lines
+		 * low, clamp clocks after three bytes received.
+		 */
+		cs = isc->reginfo[0].cs;
+		csr = bus_space_read_4(isc->iot, isc->ioh, cs);
+		csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
+		    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
+		    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
+		    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
+		    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
+		csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
+		bus_space_write_4(isc->iot, isc->ioh, cs, csr);
 
-	/* Setup pckbc_internal structure. */
-	t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
-	t->t_iot = isc->iot;
-	t->t_ioh_d = isc->ioh;
-	t->t_ioh_c = isc->ioh;
-	t->t_addr = addr;
-	t->t_sc = sc;
-	sc->id = t;
+		/* Setup pckbc_internal structure. */
+		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		t->t_iot = isc->iot;
+		t->t_ioh_d = isc->ioh;
+		t->t_ioh_c = isc->ioh;
+		t->t_addr = addr;
+		t->t_sc = sc;
+		sc->id = t;
 
-	timeout_set(&t->t_cleanup, iockbc_cleanup, t);
-	timeout_set(&t->t_poll, iockbc_poll, t);
+		timeout_set(&t->t_cleanup, iockbc_cleanup, t);
+		timeout_set(&t->t_poll, iockbc_poll, t);
+	}
 
 	/*
 	 * Attach "slots". 
@@ -368,7 +434,6 @@ iockbcintr(void *vsc)
 int
 iockbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 {
-	struct iockbc_softc *isc = (void *)sc;
 	pckbc_slot_t slot;
 	struct pckbc_slotdata *q;
 	int served = 0;
@@ -398,7 +463,7 @@ iockbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 			}
 
 			val = bus_space_read_4(t->t_iot, t->t_ioh_d,
-			    isc->rx[slot]);
+			    q->reginfo->rx);
 			if ((val & IOC3_KBC_DATA_VALID) == 0)
         	        	break;
 
@@ -447,21 +512,17 @@ iockbc_process_input(struct pckbc_softc *sc, struct pckbc_internal *t,
 int
 iockbc_poll_write(struct pckbc_internal *t, pckbc_slot_t slot, int val)
 {
-	struct iockbc_softc *isc = (void *)t->t_sc;
+	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh = t->t_ioh_d;
-	u_int64_t stat, offset, busy;
+	u_int64_t stat;
 	int timeout = 10000;
-
-	offset = isc->tx[slot];
-	busy = slot == PCKBC_AUX_SLOT ?  IOC3_KBC_STATUS_AUX_WRITE_PENDING :
-	    IOC3_KBC_STATUS_KBD_WRITE_PENDING;
 
 	/* Attempt to write a value to the controller. */
 	while (timeout--) {
-		stat = bus_space_read_4(iot, ioh, isc->cs);
-		if ((stat & busy) == 0) {
-			bus_space_write_4(iot, ioh, offset, val & 0xff);
+		stat = bus_space_read_4(iot, ioh, q->reginfo->cs);
+		if ((stat & q->reginfo->busy) == 0) {
+			bus_space_write_4(iot, ioh, q->reginfo->tx, val & 0xff);
 			return 0;
 		}
 		delay(50);
@@ -474,7 +535,6 @@ iockbc_poll_write(struct pckbc_internal *t, pckbc_slot_t slot, int val)
 int
 iockbc_poll_read(struct pckbc_internal *t, pckbc_slot_t slot)
 {
-	struct iockbc_softc *isc = (void *)t->t_sc;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	int timeout = 10000;
 	u_int32_t val;
@@ -485,7 +545,7 @@ iockbc_poll_read(struct pckbc_internal *t, pckbc_slot_t slot)
 
         /* Poll input from controller. */
         while (timeout--) {
-		val = bus_space_read_4(t->t_iot, t->t_ioh_d, isc->rx[slot]);
+		val = bus_space_read_4(t->t_iot, t->t_ioh_d, q->reginfo->rx);
 		if (val & IOC3_KBC_DATA_VALID)
                 	break;
                 delay(50);
@@ -855,6 +915,7 @@ pckbc_set_inputhandler(pckbc_tag_t self, pckbc_slot_t slot, pckbc_inputfcn func,
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;
+	struct iockbc_softc *isc = (struct iockbc_softc *)sc;
 
 	if (slot >= PCKBC_NSLOTS)
 		panic("iockbc_set_inputhandler: bad slot %d", slot);
@@ -863,7 +924,7 @@ pckbc_set_inputhandler(pckbc_tag_t self, pckbc_slot_t slot, pckbc_inputfcn func,
 	sc->inputarg[slot] = arg;
 	sc->subname[slot] = name;
 
-	if (iockbc_console && slot == PCKBC_KBD_SLOT)
+	if ((isc == NULL || isc->console) && slot == PCKBC_KBD_SLOT)
 		timeout_add_sec(&t->t_poll, 1);
 }
 
@@ -903,3 +964,110 @@ pckbc_set_poll(pckbc_tag_t self, pckbc_slot_t slot, int on)
 		}
 	}
 }
+
+/*
+ * Console support.
+ *
+ * There might multiple IOC3 and/or IOC4 devices in the system; the kernel
+ * will currently only use the one the debug serial console would be attached
+ * to as the console input device, regardless of the ConsoleIn variable.
+ */
+
+static int16_t iockbc_console_nasid;
+static int iockbc_console_widget;
+static int iockbc_console_npci;
+static uint32_t iockbc_console_type;
+
+static struct pckbc_slotdata iockbc_cons_slotdata;
+
+int
+iockbc_cnattach(int16_t nasid, int widget, int npci, uint32_t type,
+    pckbc_slot_t slot)
+{
+	bus_space_tag_t iot = &sys_config.console_io;
+	bus_space_handle_t ioh = (bus_space_handle_t)iot->bus_base;
+	struct pckbc_internal *t = &iockbc_consdata;
+	const struct iockbc_reginfo *reginfo = NULL;
+	uint32_t csr;
+	int is_ioc;
+	int rc;
+
+	is_ioc = type == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
+	if (is_ioc) {
+#if NIOCKBC_IOC > 0
+		if (sys_config.system_type == SGI_IP35)
+			reginfo = &iockbc_ioc_inverted[slot];
+		else
+			reginfo = &iockbc_ioc_normal[slot];
+#endif
+	} else {
+#if NIOCKBC_IOF > 0
+		reginfo = &iockbc_iof[slot];
+#endif
+	}
+	if (reginfo == NULL)
+		return ENXIO;
+
+	/*
+	 * Setup up controller: do not force pull clock and data lines
+	 * low, clamp clocks after three bytes received.
+	 */
+	csr = bus_space_read_4(iot, ioh, reginfo->cs);
+	csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
+	    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
+	    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
+	    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
+	    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
+	csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
+	bus_space_write_4(iot, ioh, reginfo->cs, csr);
+
+	/* Setup pckbc_internal structure. */
+	t->t_iot = iot;
+	t->t_ioh_d = (bus_space_handle_t)iot->bus_base;
+	t->t_addr = 0;	/* unused */
+
+	timeout_set(&t->t_cleanup, iockbc_cleanup, t);
+	timeout_set(&t->t_poll, iockbc_poll, t);
+
+	iockbc_init_slotdata(&iockbc_cons_slotdata, reginfo);
+	t->t_slotdata[slot] = &iockbc_cons_slotdata;
+
+	rc = pckbd_cnattach(t, slot);
+
+	/*
+	 * Upon success, remember our configuration to be able to
+	 * recognize the console input device during autoconf.
+	 */
+	if (rc == 0) {
+		iockbc_console_nasid = nasid;
+		iockbc_console_widget = widget;
+		iockbc_console_npci = npci;
+		iockbc_console_type = type;
+	}
+
+	return rc;
+}
+
+#if NIOCKBC_IOC > 0
+int
+iockbc_is_ioc_console(struct ioc_attach_args *iaa)
+{
+	return iaa->iaa_nasid == iockbc_console_nasid &&
+	    iaa->iaa_widget == iockbc_console_widget &&
+	    iaa->iaa_npci == iockbc_console_npci &&
+	    iockbc_console_type ==
+	      PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
+}
+#endif
+
+#if NIOCKBC_IOF > 0
+int
+iockbc_is_iof_console(struct iof_attach_args *iaa)
+{
+	return iaa->iaa_nasid == iockbc_console_nasid &&
+	    iaa->iaa_widget == iockbc_console_widget &&
+	    iaa->iaa_npci == iockbc_console_npci &&
+	    iockbc_console_type ==
+	      PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4);
+}
+#endif

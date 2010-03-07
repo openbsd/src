@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.36 2010/02/28 18:01:39 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.37 2010/03/07 13:44:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -38,6 +38,7 @@
 #include <sgi/sgi/ip30.h>
 #include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
+#include <sgi/xbow/xbowdevs.h>
 #include <sgi/xbow/xbridgereg.h>	/* BRIDGE_PCI0_MEM_SPACE_BASE */
 
 #include <sgi/xbow/xheartreg.h>
@@ -169,7 +170,7 @@ ip30_setup()
 
 	/*
 	 * Initialize the early console parameters.
-	 * On Octane, the BRIDGE is always widet 15, and IOC3 is always
+	 * On Octane, the BRIDGE is always widget 15, and IOC3 is always
 	 * mapped in memory space at address 0x500000.
 	 *
 	 * Also, note that by using a direct widget bus_space, there is
@@ -180,9 +181,9 @@ ip30_setup()
 
 	xbow_build_bus_space(&sys_config.console_io, 0, 15);
 	sys_config.console_io.bus_base = ip30_widget_long(0, 15) +
-	    BRIDGE_PCI0_MEM_SPACE_BASE;
+	    BRIDGE_PCI0_MEM_SPACE_BASE + 0x500000;
 
-	comconsaddr = 0x500000 + IOC3_UARTA_BASE;
+	comconsaddr = IOC3_UARTA_BASE;
 	comconsfreq = 22000000 / 3;
 	comconsiot = &sys_config.console_io;
 	comconsrate = bios_getenvint("dbaud");
@@ -202,7 +203,7 @@ ip30_setup()
 	 * Octane and Octane2 can be told apart with a GPIO source bit
 	 * in the onboard IOC3.
 	 */
-	ip30_iocbase = sys_config.console_io.bus_base + 0x500000;
+	ip30_iocbase = sys_config.console_io.bus_base;
 	if (*(volatile uint32_t *)
 	    (ip30_iocbase + IOC3_GPPR(IP30_GPIO_CLASSIC)) != 0)
 		hw_prod = "Octane";
@@ -315,6 +316,76 @@ ip30_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 	wpa = ip30_widget_short(nasid, widget);
 	if (wid != NULL)
 		*wid = *(uint32_t *)(wpa + (WIDGET_ID | 4));
+
+	return 0;
+}
+
+/*
+ * Figure out which video widget to use.
+ *
+ * If we are running with glass console, ConsoleOut will be `video(#)' with
+ * the optional number being the number of the video device in the ARCBios
+ * component tree.
+ *
+ * Unfortunately, we do not know how to match an ARCBios component to a
+ * given widget (the PROM can... it's just not sharing this with us).
+ *
+ * So simply walk the available widget space and count video devices.
+ */
+
+int
+ip30_find_video()
+{
+	uint widid, head;
+	uint32_t id, vendor, product;
+	char *p;
+
+	if (strncmp(bios_console, "video", 5) != 0)
+		return 0;	/* not graphics console */
+
+	p = bios_console + 5;
+	switch (*p) {
+	case '(':
+		/* 8 widgets max -> single digit */
+		p++;
+		if (*p == ')')
+			head = 0;
+		else {
+			if (*p < '0' || *p > '9')
+				return 0;
+			head = *p++ - '0';
+			if (*p != ')')
+				return 0;
+		}
+		break;
+	case '\0':
+		head = 0;
+		break;
+	default:
+		return 0;
+	}
+
+	for (widid = WIDGET_MIN; widid <= WIDGET_MAX; widid++) {
+		if (ip30_widget_id(0, widid, &id) != 0)
+			continue;
+
+		vendor = (id & WIDGET_ID_VENDOR_MASK) >>
+		    WIDGET_ID_VENDOR_SHIFT;
+		product = (id & WIDGET_ID_PRODUCT_MASK) >>
+		    WIDGET_ID_PRODUCT_SHIFT;
+
+		if ((vendor == XBOW_VENDOR_SGI2 &&
+		    product == XBOW_PRODUCT_SGI2_ODYSSEY) ||
+		    (vendor == XBOW_VENDOR_SGI5 &&
+		    product == XBOW_PRODUCT_SGI5_IMPACT) ||
+		    (vendor == XBOW_VENDOR_SGI5 &&
+		    product == XBOW_PRODUCT_SGI5_KONA)) {
+			/* found a video device */
+			if (head == 0)
+				return widid;
+			head--;
+		}
+	}
 
 	return 0;
 }

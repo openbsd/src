@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.31 2009/11/11 15:56:42 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.32 2010/03/07 13:44:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -66,6 +66,7 @@ struct ioc_intr {
 
 struct ioc_softc {
 	struct device		 sc_dev;
+	int			 sc_npci;
 
 	struct mips_bus_space	*sc_mem_bus_space;
 
@@ -170,6 +171,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_pc = pa->pa_pc;
+	sc->sc_npci = pa->pa_device;
 	sc->sc_dmat = pa->pa_dmat;
 
 	/*
@@ -443,6 +445,9 @@ ioc_attach_child(struct ioc_softc *sc, const char *name, bus_addr_t base,
 	memset(&iaa, 0, sizeof iaa);
 
 	iaa.iaa_name = name;
+	iaa.iaa_nasid = pci_get_nasid(sc->sc_pc);
+	iaa.iaa_widget = pci_get_widget(sc->sc_pc);
+	iaa.iaa_npci = sc->sc_npci;
 	iaa.iaa_memt = sc->sc_memt;
 	iaa.iaa_memh = sc->sc_memh;
 	iaa.iaa_dmat = sc->sc_dmat;

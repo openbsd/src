@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.42 2010/01/09 20:33:16 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.43 2010/03/07 13:44:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -29,6 +29,7 @@
 #include <sys/reboot.h>
 #include <sys/tty.h>
 
+#include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
 #include <machine/autoconf.h>
@@ -58,6 +59,7 @@ paddr_t	ip27_widget_short(int16_t, u_int);
 paddr_t	ip27_widget_long(int16_t, u_int);
 paddr_t	ip27_widget_map(int16_t, u_int,bus_addr_t *, bus_size_t *);
 int	ip27_widget_id(int16_t, u_int, uint32_t *);
+int	ip27_widget_id_early(int16_t, u_int, uint32_t *);
 
 void	ip27_halt(int);
 
@@ -159,7 +161,7 @@ ip27_setup()
 
 	xbow_widget_base = ip27_widget_short;
 	xbow_widget_map = ip27_widget_map;
-	xbow_widget_id = ip27_widget_id;
+	xbow_widget_id = ip27_widget_id_early;
 
 	md_halt = ip27_halt;
 
@@ -219,11 +221,10 @@ ip27_setup()
 	cons = kl_get_console();
 	xbow_build_bus_space(&sys_config.console_io, 0,
 	    8 /* whatever nonzero */);
-	/* Constrain to the correct window */
+	/* point to devio base */
 	sys_config.console_io.bus_base =
-	    cons->uart_base & 0xffffffffff000000UL;
-
-	comconsaddr = cons->uart_base & 0x0000000000ffffffUL;
+	    cons->uart_base & 0xfffffffffff00000UL;
+	comconsaddr = cons->uart_base & 0x00000000000fffffUL;
 	comconsrate = cons->baud;
 	if (comconsrate < 50 || comconsrate > 115200)
 		comconsrate = 9600;
@@ -236,10 +237,11 @@ ip27_setup()
 		paddr_t ioc4_base;
 
 		/*
-		 * IOC4 clocks are derived from the PCI clock, so we need to
-		 * figure out whether this is an 66MHz or a 33MHz bus.
+		 * IOC4 clocks are derived from the PCI clock,
+		 * so we need to figure out whether this is an 66MHz
+		 * or a 33MHz bus.
 		 */
-		ioc4_base = cons->uart_base & ~0xfffffUL; /* point to devio */
+		ioc4_base = sys_config.console_io.bus_base;
 		ioc4_mcr = *(volatile uint32_t *)(ioc4_base + IOC4_MCR);
 		if (ioc4_mcr & IOC4_MCR_PCI_66MHZ)
 			comconsfreq = 66666667;
@@ -313,6 +315,8 @@ ip27_autoconf(struct device *parent)
 {
 	struct cpu_attach_args caa;
 	uint node;
+
+	xbow_widget_id = ip27_widget_id;
 
 	/*
 	 * Attach the CPU we are running on early; other processors,
@@ -500,6 +504,28 @@ ip27_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 
 	if (wid != NULL)
 		*wid = id;
+
+	return 0;
+}
+
+/*
+ * Same as the above, but usable before we can handle faults.
+ * Expects the caller to only use valid widget numbers...
+ */
+int
+ip27_widget_id_early(int16_t nasid, u_int widget, uint32_t *wid)
+{
+	paddr_t wpa;
+
+	if (widget != 0)
+	{
+		if (widget < WIDGET_MIN || widget > WIDGET_MAX)
+			return EINVAL;
+	}
+
+	wpa = ip27_widget_short(nasid, widget);
+	if (wid != NULL)
+		*wid = *(uint32_t *)(wpa + (WIDGET_ID | 4));
 
 	return 0;
 }

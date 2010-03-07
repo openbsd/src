@@ -1,7 +1,6 @@
-/*	$OpenBSD: iocvar.h,v 1.5 2010/03/07 13:44:26 miod Exp $	*/
-
+/*	$OpenBSD: odysseyvar.h,v 1.1 2010/03/07 13:44:26 miod Exp $	*/
 /*
- * Copyright (c) 2008 Miodrag Vallat.
+ * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,25 +15,5 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct ioc_attach_args {
-	const char		*iaa_name;
-
-	int16_t			 iaa_nasid;
-	int			 iaa_widget;
-	int			 iaa_npci;
-
-	bus_space_tag_t		 iaa_memt;
-	bus_space_handle_t	 iaa_memh;
-	bus_dma_tag_t		 iaa_dmat;
-
-	bus_addr_t		 iaa_base;
-	int			 iaa_dev;
-
-	uint8_t			 iaa_enaddr[6];
-
-	int			 iaa_flags;
-#define	IOC_FLAGS_OBIO		0x00000001
-};
-
-void   *ioc_intr_establish(void *, u_long, int, int (*)(void *),
-	    void *, char *);
+int	odyssey_cnprobe(int16_t, int);
+int	odyssey_cnattach(int16_t, int);

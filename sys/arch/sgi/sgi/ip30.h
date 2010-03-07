@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30.h,v 1.8 2010/01/19 19:54:24 miod Exp $	*/
+/*	$OpenBSD: ip30.h,v 1.9 2010/03/07 13:44:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -33,6 +33,8 @@
 
 #define	IP30_HEART_WIDGET		8
 #define	IP30_BRIDGE_WIDGET		15
+
+#define	IP30_IOC_SLOTNO			2
 
 /*
  * On-board IOC3 specific GPIO registers wiring
@@ -93,4 +95,6 @@ struct ip30_gda {
 	void		*tlb_handlers[3];
 	uint64_t	nmi_count;
 };
+
+int	ip30_find_video(void);
 #endif

@@ -1,5 +1,20 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.4 2009/10/26 18:00:06 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.5 2010/03/07 13:44:26 miod Exp $ */
 
+/*
+ * Copyright (c) 2010 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 2001 Aaron Campbell
  * All rights reserved.
@@ -35,31 +50,57 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#if defined(TGT_ORIGIN)
+#include <machine/mnode.h>
+#endif
 
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
 #include <sgi/localbus/crimebus.h>
+#include <sgi/localbus/macebus.h>
 #include <sgi/localbus/macebusvar.h>
-
-#include <sgi/dev/gbereg.h>
-#include <sgi/dev/mkbcreg.h>
 
 #include <dev/cons.h>
 #include <dev/ic/pckbcvar.h>
 #include <dev/usb/ukbdvar.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsconsio.h>
-
-#include "gbe.h"
-#include "mkbc.h"
-
-#include "wsdisplay.h"
-#if NWSDISPLAY > 0
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <sgi/dev/gbereg.h>
+#include <sgi/dev/iockbcvar.h>
+#include <sgi/dev/mkbcreg.h>
+#include <sgi/xbow/odysseyvar.h>
+
+#if defined(TGT_OCTANE)
+#include <sgi/sgi/ip30.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 #endif
 
+#include "gbe.h"
+#include "iockbc.h"
+#include "mkbc.h"
+#include "odyssey.h"
+#include "ukbd.h"
+
 cons_decl(ws);
+extern bus_addr_t comconsaddr;
+
+#if defined(TGT_OCTANE) || defined(TGT_ORIGIN)
+int16_t	output_widget_nasid;
+int	output_widget_id;
+int	(*output_widget_cninit)(int16_t, int) = NULL;
+
+int16_t	input_widget_nasid;
+int	input_widget_id;
+int	input_widget_npci;
+uint32_t input_widget_type;
+
+int	widget_cnprobe(void);
+void	widget_cnattach(void);
+#endif
 
 void
 wscnprobe(struct consdev *cp)
@@ -81,9 +122,10 @@ wscnprobe(struct consdev *cp)
 	cp->cn_pri = CN_DEAD;
 
         switch (sys_config.system_type) {
+#if defined(TGT_O2)
 	case SGI_O2:
 #if NGBE > 0
-		if (gbe_cnprobe(&crimebus_tag, GBE_BASE)) {
+		if (gbe_cnprobe(&crimebus_tag, GBE_BASE) != 0) {
 			if (strncmp(bios_console, "video", 5) == 0)
 				cp->cn_pri = CN_FORCED;
 			else
@@ -91,6 +133,32 @@ wscnprobe(struct consdev *cp)
 		}
 #endif
 		break;
+#endif
+
+#if defined(TGT_ORIGIN)
+	case SGI_IP27:
+	case SGI_IP35:
+		if (widget_cnprobe() != 0) {
+			if (strncmp(bios_console,
+			    "/dev/graphics/textport", 22) == 0)
+				cp->cn_pri = CN_FORCED;
+			else
+				cp->cn_pri = CN_MIDPRI;
+		}
+		break;
+#endif
+
+#if defined(TGT_OCTANE)
+	case SGI_OCTANE:
+		if (widget_cnprobe() != 0) {
+			if (strncmp(bios_console, "video", 5) == 0)
+				cp->cn_pri = CN_FORCED;
+			else
+				cp->cn_pri = CN_MIDPRI;
+		}
+		break;
+#endif
+
 	default:
 		break;
 	}
@@ -106,14 +174,37 @@ static int initted;
 
 	initted = 1;
 
+        switch (sys_config.system_type) {
+#if defined(TGT_O2)
+	case SGI_O2:
 #if NGBE > 0
-	if (!gbe_cnattach(&crimebus_tag, GBE_BASE))
-		return;
+		if (gbe_cnattach(&crimebus_tag, GBE_BASE) != 0)
+			return;
 #endif
+
 #if NMKBC > 0
-	if (!mkbc_cnattach(&macebus_tag, 0x00320000, PCKBC_KBD_SLOT))
-		return;
+		if (mkbc_cnattach(&macebus_tag, MACE_IO_KBC_OFFS,
+		    PCKBC_KBD_SLOT) == 0)
+			return;	/* console keyboard found */
 #endif
+#if NUKBD > 0
+		/* fallback keyboard console attachment if the others failed */
+		ukbd_cnattach();
+#endif
+		break;
+#endif
+
+#if defined(TGT_OCTANE) || defined(TGT_ORIGIN)
+	case SGI_IP27:
+	case SGI_IP35:
+	case SGI_OCTANE:
+		widget_cnattach();
+		break;
+#endif
+
+	default:
+		break;
+	}
 }
 
 void
@@ -139,3 +230,99 @@ wscnpollc(dev_t dev, int on)
 {
 	wskbd_cnpollc(dev, on);
 }
+
+/*
+ * Try to figure out if we have a glass console widget, and if we have
+ * a driver for it.
+ */
+
+#if defined(TGT_OCTANE) || defined(TGT_ORIGIN)
+int
+widget_cnprobe()
+{
+#ifdef TGT_ORIGIN
+	console_t *cons;
+#endif
+
+        switch (sys_config.system_type) {
+#ifdef TGT_ORIGIN
+	case SGI_IP27:
+	case SGI_IP35:
+		/*
+		 * Our first pass over the KL configuration data has figured
+		 * out which component is the glass console, if any.
+		 */
+		if (kl_glass_console == NULL)
+			return 0;
+		output_widget_nasid = kl_glass_console->nasid;
+		output_widget_id = kl_glass_console->widid;
+
+		cons = kl_get_console();
+		input_widget_nasid = cons->nasid;
+		input_widget_id = cons->wid;
+		input_widget_npci = cons->npci;
+		input_widget_type = (uint32_t)cons->type;
+		break;
+#endif
+#ifdef TGT_OCTANE
+	case SGI_OCTANE:
+		output_widget_nasid = masternasid;
+		output_widget_id = ip30_find_video();
+		if (output_widget_id == 0)
+			return 0;
+
+		input_widget_nasid = masternasid;
+		input_widget_id = IP30_BRIDGE_WIDGET;
+		input_widget_npci = IP30_IOC_SLOTNO;
+		input_widget_type =
+		    PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
+		break;
+#endif
+	default:
+		return 0;
+	}
+
+	/*
+	 * Try supported frame buffers in no particular order.
+	 */
+
+#if NODYSSEY > 0
+	if (odyssey_cnprobe(output_widget_nasid, output_widget_id) != 0) {
+		output_widget_cninit = odyssey_cnattach;
+		goto success;
+	}
+#endif
+
+	return 0;
+
+success:
+	/*
+	 * At this point, we are commited to setup a glass console,
+	 * so prevent serial console from winning over.
+	 */
+	comconsaddr = 0;
+
+	return 1;
+}
+
+void
+widget_cnattach()
+{
+	/* should not happen */
+	if (output_widget_cninit == NULL)
+		return;
+
+	if ((*output_widget_cninit)(output_widget_nasid, output_widget_id) != 0)
+		return;
+
+#if NIOCKBC > 0
+	if (iockbc_cnattach(input_widget_nasid, input_widget_id,
+	    input_widget_npci, input_widget_type, PCKBC_KBD_SLOT) == 0)
+		return;	/* console keyboard found */
+#endif
+#if NUKBD > 0
+	/* fallback keyboard console attachment if the others failed */
+	ukbd_cnattach();
+#endif
+}
+#endif

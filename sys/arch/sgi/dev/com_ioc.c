@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ioc.c,v 1.7 2009/10/16 00:15:46 miod Exp $ */
+/*	$OpenBSD: com_ioc.c,v 1.8 2010/03/07 13:44:24 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,13 +58,14 @@ com_ioc_probe(struct device *parent, void *match, void *aux)
 	struct ioc_attach_args *iaa = aux;
 	bus_space_tag_t iot = iaa->iaa_memt;
 	bus_space_handle_t ioh;
-	int rv = 0, console;
+	int rv = 0, console = 0;
 
 	if (strcmp(iaa->iaa_name, com_cd.cd_name) != 0)
 		return 0;
 
-	console = iaa->iaa_memh + iaa->iaa_base ==
-	    comconsiot->bus_base + comconsaddr;
+	if (comconsiot != NULL)
+		console = iaa->iaa_memh + iaa->iaa_base ==
+		    comconsiot->bus_base + comconsaddr;
 
 	/* if it's in use as console, it's there. */
 	if (!(console && !comconsattached)) {
@@ -87,10 +88,11 @@ com_ioc_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = (void *)self;
 	struct ioc_attach_args *iaa = aux;
 	bus_space_handle_t ioh;
-	int console;
+	int console = 0;
 
-	console = iaa->iaa_memh + iaa->iaa_base ==
-	    comconsiot->bus_base + comconsaddr;
+	if (comconsiot != NULL)
+		console = iaa->iaa_memh + iaa->iaa_base ==
+		    comconsiot->bus_base + comconsaddr;
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;

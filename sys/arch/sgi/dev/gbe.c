@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.10 2009/10/26 20:14:42 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.11 2010/03/07 13:44:24 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -1375,5 +1375,5 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	wsdisplay_cnattach(&gbe_stdscreen, &gbe_consdata.ri, 0, 0, attr);
 	gbe_console = 1;
 
-	return (1);
+	return (0);
 }

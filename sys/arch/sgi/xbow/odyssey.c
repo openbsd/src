@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.1 2010/03/04 14:50:35 jsing Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.2 2010/03/07 13:44:26 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -36,9 +36,11 @@
 
 #include <mips64/arcbios.h>
 
+#include <sgi/xbow/odysseyreg.h>
+#include <sgi/xbow/odysseyvar.h>
+#include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbowdevs.h>
-#include <sgi/xbow/odysseyreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -86,6 +88,8 @@ struct odyssey_softc {
 int	odyssey_match(struct device *, void *, void *);
 void	odyssey_attach(struct device *, struct device *, void *);
 
+int	odyssey_is_console(struct xbow_attach_args *);
+
 void	odyssey_cmd_wait(struct odyssey_softc *);
 void	odyssey_data_wait(struct odyssey_softc *);
 void	odyssey_cmd_flush(struct odyssey_softc *, int);
@@ -125,6 +129,9 @@ void	odyssey_free_screen(void *, void *);
 int	odyssey_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 void	odyssey_burner(void *, u_int, u_int);
+
+static struct odyssey_screen odyssey_consdata;
+static struct odyssey_softc odyssey_cons_sc;
 
 struct wsscreen_descr odyssey_stdscreen = {
 	"std",			/* Screen name. */
@@ -192,36 +199,47 @@ odyssey_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(xaa->xaa_iot, &sc->iot_store, sizeof(struct mips_bus_space));
 	sc->iot = &sc->iot_store;
 
-	/*
-	 * Setup screen data.
-	 */
-	sc->curscr = malloc(sizeof(struct odyssey_screen), M_DEVBUF, M_NOWAIT);
-	if (sc->curscr == NULL) {
-		printf("failed to allocate screen memory!\n");
-		return;
-	}
-	sc->curscr->sc = (void *)sc;
-	screen = sc->curscr;
-
 	/* Setup bus space mappings. */
 	if (bus_space_map(sc->iot, ODYSSEY_REG_OFFSET, ODYSSEY_REG_SIZE,
 	    BUS_SPACE_MAP_LINEAR, &sc->ioh)) {
-		printf("failed to map framebuffer bus space!\n");
+		printf("failed to map bus space!\n");
 		return;
 	}
 
-	/* Setup hardware and clear screen. */
-	odyssey_setup(sc);
-	odyssey_fillrect(sc, 0, 0, 1280, 1024, 0x000000);
-	odyssey_cmd_flush(sc, 0);
+	if (odyssey_is_console(xaa)) {
+		/*
+		 * Setup has already been done via odyssey_cnattach().
+		 */
+		screen = &odyssey_consdata;
+       		sc->curscr = screen;
+		sc->curscr->sc = (void *)sc;
+		sc->console = 1;
+	} else {
+		/*
+		 * Setup screen data.
+		 */
+		sc->curscr = malloc(sizeof(struct odyssey_screen), M_DEVBUF,
+		    M_NOWAIT);
+		if (sc->curscr == NULL) {
+			printf("failed to allocate screen memory!\n");
+			return;
+		}
+		sc->curscr->sc = (void *)sc;
+		screen = sc->curscr;
 
-	/* Set screen defaults. */
-	screen->width = 1280;
-	screen->height = 1024;
-	screen->depth = 32;
-	screen->linebytes = screen->width * screen->depth / 8;
+		/* Setup hardware and clear screen. */
+		odyssey_setup(sc);
+		odyssey_fillrect(sc, 0, 0, 1280, 1024, 0x000000);
+		odyssey_cmd_flush(sc, 0);
 
-	odyssey_init_screen(screen);
+		/* Set screen defaults. */
+		screen->width = 1280;
+		screen->height = 1024;
+		screen->depth = 32;
+		screen->linebytes = screen->width * screen->depth / 8;
+
+		odyssey_init_screen(screen);
+	}
 
 	waa.console = sc->console;
 	waa.scrdata = &odyssey_screenlist;
@@ -1045,4 +1063,88 @@ ieee754_sp(int32_t v)
 		exp = 127 + i;
 
 	return (sign << 31) | (exp << 23) | ((v << (23 - i)) & 0x7fffff);
+}
+
+/*
+ * Console support.
+ */
+
+static int16_t odyssey_console_nasid;
+static int odyssey_console_widget;
+
+int
+odyssey_cnprobe(int16_t nasid, int widget)
+{
+	u_int32_t wid, vendor, product;
+
+	/* Probe for Odyssey graphics card. */
+	if (xbow_widget_id(nasid, widget, &wid) != 0)
+		return 0;
+
+	vendor = (wid & WIDGET_ID_VENDOR_MASK) >> WIDGET_ID_VENDOR_SHIFT;
+	product = (wid & WIDGET_ID_PRODUCT_MASK) >> WIDGET_ID_PRODUCT_SHIFT;
+
+	if (vendor != XBOW_VENDOR_SGI2 || product != XBOW_PRODUCT_SGI2_ODYSSEY)
+		return 0;
+
+	if (strncmp(bios_graphics, "alive", 5) != 0)
+		return 0;
+
+	return 1;
+}
+
+int
+odyssey_cnattach(int16_t nasid, int widget)
+{
+	struct odyssey_softc *sc;
+	struct odyssey_screen *screen;
+	long attr;
+	int rc;
+
+	sc = &odyssey_cons_sc;
+	screen = &odyssey_consdata;
+	sc->curscr = screen;
+	sc->curscr->sc = (void *)sc;
+
+	/* Build bus space accessor. */
+	xbow_build_bus_space(&sc->iot_store, nasid, widget);
+	sc->iot = &sc->iot_store;
+
+	/* Setup bus space mappings. */
+	rc = bus_space_map(sc->iot, ODYSSEY_REG_OFFSET, ODYSSEY_REG_SIZE,
+	    BUS_SPACE_MAP_LINEAR, &sc->ioh);
+	if (rc != 0)
+		return rc;
+
+	/* Setup hardware and clear screen. */
+	odyssey_setup(sc);
+	odyssey_fillrect(sc, 0, 0, 1280, 1024, 0x000000);
+	odyssey_cmd_flush(sc, 0);
+
+	/* Set screen defaults. */
+	screen->width = 1280;
+	screen->height = 1024;
+	screen->depth = 32;
+	screen->linebytes = screen->width * screen->depth / 8;
+
+	odyssey_init_screen(screen);
+
+	/*
+	 * Attach wsdisplay.
+	 */
+	odyssey_consdata.ri.ri_ops.alloc_attr(&odyssey_consdata.ri,
+	    0, 0, 0, &attr);
+	wsdisplay_cnattach(&odyssey_stdscreen, &odyssey_consdata.ri,
+	    0, 0, attr);
+	odyssey_console_nasid = nasid;
+	odyssey_console_widget = widget;
+
+	return 0;
+}
+
+int
+odyssey_is_console(struct xbow_attach_args *xaa)
+{
+	return xaa->xaa_nasid == odyssey_console_nasid &&
+	    xaa->xaa_widget == odyssey_console_widget;
 }
