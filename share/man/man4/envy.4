@@ -1,4 +1,4 @@
-.\" $OpenBSD: envy.4,v 1.9 2010/03/07 19:03:28 ratchov Exp $
+.\" $OpenBSD: envy.4,v 1.10 2010/03/07 19:06:20 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -123,10 +123,5 @@ driver first appeared in
 .Sh BUGS
 MIDI and S/PDIF transmitter/receivers are not yet supported.
 .Pp
-The current
-.Xr audio 4
-driver doesn't allow playback and record blocks to have the same duration,
-making the device hardly usable for block based I/O in full-duplex.
-Playback and capture cannot be started atomically.
 Ring buffer sizes are limited to 64kB,
 which can be limiting at high sample rates.
