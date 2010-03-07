@@ -1,4 +1,4 @@
-/*	$OpenBSD: stsec.c,v 1.2 2010/03/03 19:43:36 otto Exp $	*/
+/*	$OpenBSD: stsec.c,v 1.3 2010/03/07 13:32:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -57,7 +57,8 @@ extern int gdium_revision;
 #define	ST7_SIGNATURE	0x04
 #define	STSIG_EC_CONTROL	0x00
 #define	STSIG_OS_CONTROL	0xae
-#define STSEC_BAT_MIN_VOLT	500000	/* 0.5V */
+/* rough battery operating state limits */
+#define STSEC_BAT_MIN_VOLT	7000000	/* 7V */
 #define STSEC_BAT_MAX_VOLT	8000000	/* 8V */
 
 const struct {
@@ -283,7 +284,10 @@ stsec_sensors_update(void *vsc)
 	ks = &sc->sc_sensors[STSEC_SENSOR_BATTERY_PRESENCE];
 	switch (gdium_revision) {
 	case 0:
-		ks->value = batuv > STSEC_BAT_MIN_VOLT;
+		if (ISSET(status, STS_AC_AVAILABLE))
+			ks->value = batuv > 500000;
+		else
+			ks->value = 1;
 		break;
 	default:
 		ks->value = !!ISSET(status, STS_BATTERY_PRESENT);
