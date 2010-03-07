@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.12 2010/01/09 20:33:16 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.13 2010/03/07 13:42:15 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -418,5 +418,6 @@ int	kl_scan_board(lboard_t *, uint, int (*)(klinfo_t *, void *), void *);
 
 extern int kl_n_mode;
 extern u_int kl_n_shift;
+extern klinfo_t *kl_glass_console;
 
 #endif /* __MACHINE_MNODE_H__ */

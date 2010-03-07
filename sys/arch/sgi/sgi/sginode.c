@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.16 2010/01/09 20:33:16 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.17 2010/03/07 13:42:17 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -53,6 +53,7 @@
 
 #include <machine/mnode.h>
 #include <sgi/xbow/hub.h>
+#include <sgi/xbow/xbow.h>
 
 void	kl_add_memory_ip27(int16_t, int16_t *, unsigned int);
 void	kl_add_memory_ip35(int16_t, int16_t *, unsigned int);
@@ -68,6 +69,7 @@ int	kl_first_pass_comp(klinfo_t *, void *);
 
 int	kl_n_mode = 0;
 u_int	kl_n_shift = 32;
+klinfo_t *kl_glass_console = NULL;
 
 void
 kl_init(int ip35)
@@ -127,6 +129,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 {
 	klcpu_t *cpucomp;
 	klmembnk_m_t *memcomp_m;
+	arc_config64_t *arc;
 #ifdef DEBUG
 	klhub_t *hubcomp;
 	klmembnk_n_t *memcomp_n;
@@ -134,6 +137,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 	int i;
 #endif
 
+	arc = (arc_config64_t *)comp->arcs_compt;
 	switch (comp->struct_type) {
 	case KLSTRUCT_CPU:
 		cpucomp = (klcpu_t *)comp;
@@ -193,6 +197,27 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 			    kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 		break;
 
+	case KLSTRUCT_GFX:
+		DB_PRF(("\tgraphics widget %d\n", comp->widid));
+		/*
+		 * We rely upon the PROM setting up a fake ARCBios component
+		 * for the graphics console, if there is one.
+		 * Of course, the ARCBios structure is only available as long
+		 * as we do not tear down the PROM TLB, which is why we check
+		 * for this as early as possible and remember the console
+		 * component (KL struct are not short-lived).
+		 */
+		if (arc != NULL &&
+		    arc->class != 0 && arc->type == arc_DisplayController &&
+		    ISSET(arc->flags, ARCBIOS_DEVFLAGS_CONSOLE_OUTPUT)) {
+			DB_PRF(("\t(console device)\n"));
+			/* paranoia */
+			if (comp->widid >= WIDGET_MIN &&
+			    comp->widid <= WIDGET_MAX)
+				kl_glass_console = comp;
+		}
+		break;
+
 #ifdef DEBUG
 	case KLSTRUCT_HUB:
 		hubcomp = (klhub_t *)comp;
@@ -221,6 +246,17 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		break;
 #endif
 	}
+#ifdef DEBUG
+	if (arc != NULL) {
+		DB_PRF(("\tARCBios component: class %d type %d flags %02x key 0x%lx",
+		    arc->class, arc->type, arc->flags, arc->key));
+		if (arc->id_len != 0)
+			DB_PRF((" %.*s\n",
+			    (int)arc->id_len, (const char *)arc->id));
+		else
+			DB_PRF((" (no name)\n"));
+	}
+#endif
 	return 0;
 }
 
