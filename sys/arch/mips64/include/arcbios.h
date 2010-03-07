@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.14 2010/03/03 12:25:09 jsing Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.15 2010/03/07 13:36:47 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -59,6 +59,10 @@ typedef enum arc_config_type
 	arc_SecondaryDcache,
 	arc_SecondaryCache,
 
+#ifdef __sgi__
+	arc_SystemMemory,
+#endif
+
 	arc_EisaAdapter,		/* Eisa adapter         */
 	arc_TcAdapter,			/* Turbochannel adapter */
 	arc_ScsiAdapter,		/* SCSI adapter         */
@@ -87,21 +91,34 @@ typedef enum arc_config_type
 	arc_PointerPeripheral,
 	arc_KeyboardPeripheral,
 	arc_TerminalPeripheral,
+#ifdef __arc__
 	arc_OtherPeripheral,		/* denotes a peripheral not otherwise defined   */
+#endif
 	arc_LinePeripheral,
 	arc_NetworkPeripheral,
-
-	arc_SystemMemory
+#ifdef __arc__
+	arc_SystemMemory,
+#endif
+#ifdef __sgi__
+	arc_OtherPeripheral,		/* denotes a peripheral not otherwise defined   */
+#endif
 } arc_config_type_t;
 
-typedef u_char arc_dev_flags_t;
+typedef u_int32_t arc_dev_flags_t;
 
-/* Wonder how this is aligned... */
+#define	ARCBIOS_DEVFLAGS_FAILED		0x01
+#define	ARCBIOS_DEVFLAGS_READONLY	0x02
+#define	ARCBIOS_DEVFLAGS_REMOVABLE	0x04
+#define	ARCBIOS_DEVFLAGS_CONSOLE_INPUT	0x08
+#define	ARCBIOS_DEVFLAGS_CONSOLE_OUTPUT	0x10
+#define	ARCBIOS_DEVFLAGS_INPUT		0x20
+#define	ARCBIOS_DEVFLAGS_OUTPUT		0x40
+
 typedef struct arc_config
 {
-	arc_config_class_t	class;		/* Likely these three all */
-	arc_config_type_t	type;		/* need to be uchar to make */
-	arc_dev_flags_t		flags;		/* the alignment right */
+	arc_config_class_t	class;
+	arc_config_type_t	type;
+	arc_dev_flags_t		flags;
 	u_int16_t		version;
 	u_int16_t		revision;
 	u_int32_t		key;
@@ -113,9 +130,9 @@ typedef struct arc_config
 
 typedef struct arc_config64
 {
-	arc_config_class_t	class;		/* Likely these three all */
-	arc_config_type_t	type;		/* need to be uchar to make */
-	arc_dev_flags_t		flags;		/* the alignment right */
+	arc_config_class_t	class;
+	arc_config_type_t	type;
+	arc_dev_flags_t		flags;
 	u_int16_t		version;
 	u_int16_t		revision;
 	u_int64_t		key;
