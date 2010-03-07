@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii.c,v 1.9 2010/02/25 02:05:41 marco Exp $ */
+/* $OpenBSD: mpii.c,v 1.10 2010/03/07 14:10:59 marco Exp $ */
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1127,26 +1127,6 @@ struct mpii_cfg_ioc_pg1 {
 	u_int32_t       reserved2;
 } __packed;
 
-/*
-struct mpii_cfg_raid_vol_pg0 {
-	u_int8_t		vol_id;
-	u_int8_t		vol_bus;
-	u_int8_t		vol_ioc;
-	u_int8_t		vol_page;
-
-	u_int8_t		vol_type;
-#define MPII_CFG_RAID_TYPE_RAID_IS			(0x00)
-#define MPII_CFG_RAID_TYPE_RAID_IME			(0x01)
-#define MPII_CFG_RAID_TYPE_RAID_IM			(0x02)
-#define MPII_CFG_RAID_TYPE_RAID_5			(0x03)
-#define MPII_CFG_RAID_TYPE_RAID_6			(0x04)
-#define MPII_CFG_RAID_TYPE_RAID_10			(0x05)
-#define MPII_CFG_RAID_TYPE_RAID_50			(0x06)
-	u_int8_t		flags;
-#define MPII_CFG_RAID_VOL_INACTIVE	(1<<3)
-	u_int16_t		reserved;
-} __packed;
-*/
 struct mpii_cfg_ioc_pg3 {
 	struct mpii_cfg_hdr	config_header;
 
@@ -1757,8 +1737,7 @@ uint32_t  mpii_debug = 0
  */
 #define MPII_MAX_SGL			(32)
 
-#define MPII_MAX_REQUEST_CREDIT		(500)
-#define	MPII_MAX_REPLY_POST_QDEPTH	(128)
+#define MPII_MAX_REQUEST_CREDIT		(128)
 
 struct mpii_dmamem {
 	bus_dmamap_t		mdm_map;
@@ -1917,17 +1896,10 @@ struct mpii_softc {
 	struct mpii_dmamem	*sc_reply_freeq;
 	int			sc_reply_free_host_index;
 	
-	size_t			sc_fw_len;
-	struct mpii_dmamem	*sc_fw;
-
 	/* scsi ioctl from sd device */
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 
 	struct rwlock		sc_lock;
-	struct mpii_cfg_hdr	sc_cfg_hdr;
-	struct mpii_cfg_ioc_pg2	*sc_vol_page;
-	struct mpii_cfg_raid_vol *sc_vol_list;
-	struct mpii_cfg_raid_vol_pg0 *sc_rpg0;
 	struct mpii_cfg_dpm_pg0	*sc_dpm_pg0;
 	struct mpii_cfg_bios_pg2 *sc_bios_pg2;
 
@@ -2150,10 +2122,7 @@ int		mpii_iocfacts(struct mpii_softc *);
 int		mpii_portfacts(struct mpii_softc *);
 int		mpii_portenable(struct mpii_softc *);
 int			mpii_cfg_coalescing(struct mpii_softc *);
-/*
-void		mpii_get_raid(struct mpii_softc *);
-int		mpii_fwupload(struct mpii_softc *);
-*/
+
 int		mpii_eventnotify(struct mpii_softc *);
 void		mpii_eventnotify_done(struct mpii_ccb *);
 void		mpii_eventack(struct mpii_softc *,
@@ -2181,10 +2150,6 @@ int		mpii_get_ioc_pg8(struct mpii_softc *);
 int		mpii_get_dpm(struct mpii_softc *);
 int		mpii_get_dpm_pg0(struct mpii_softc *, struct mpii_cfg_dpm_pg0 *);
 int 		mpii_get_bios_pg2(struct mpii_softc *);
-
-int		mpii_dev_reorder(struct mpii_softc *);
-void		mpii_reorder_vds(struct mpii_softc *);
-void		mpii_reorder_boot_device(struct mpii_softc *);
 
 #if NBIO > 0
 int		mpii_ioctl(struct device *, u_long, caddr_t);
@@ -2344,28 +2309,11 @@ mpii_attach(struct mpii_softc *sc)
 		goto free_dev;
 	} /* assume all discovery events are complete by now */
 
-#if 0
-	if (sc->sc_discovery_in_progress)
-		printf("%s: warning: discovery still in progress\n", 
-		    DEVNAME(sc));
-#endif
 
 	if (mpii_get_bios_pg2(sc) != 0) {
 		printf("%s: unable to get bios page 2\n", DEVNAME(sc));
 		goto free_dev;	
 	}
-
-	if (mpii_dev_reorder(sc) != 0) {
-		/* error already printed */
-		goto free_bios_pg2;
-	}
-
-	/* XXX
-	if (mpii_fwupload(sc) != 0) {
-		printf("%s: unabel to upload firmware\n", DEVNAME(sc));
-		goto free_replies;
-	}
-	*/
 
 	rw_init(&sc->sc_lock, "mpii_lock");
 
@@ -2375,7 +2323,7 @@ mpii_attach(struct mpii_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_target;
 	sc->sc_link.adapter_buswidth = sc->sc_max_devices;
-	sc->sc_link.openings = sc->sc_request_depth / sc->sc_max_devices;
+	sc->sc_link.openings = sc->sc_request_depth;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -2402,7 +2350,6 @@ mpii_attach(struct mpii_softc *sc)
 
 	return (0);
 
-free_bios_pg2:
 	if (sc->sc_bios_pg2)
 		free(sc->sc_bios_pg2, M_TEMP);
 
@@ -3037,23 +2984,11 @@ mpii_iocfacts(struct mpii_softc *sc)
 	sc->sc_reply_post_qdepth = sc->sc_request_depth +
 	    sc->sc_num_reply_frames + 1;
 
-	if (sc->sc_reply_post_qdepth > MPII_MAX_REPLY_POST_QDEPTH)
-		sc->sc_reply_post_qdepth = MPII_MAX_REPLY_POST_QDEPTH;
-	
 	if (sc->sc_reply_post_qdepth > 
 	    ifp.max_reply_descriptor_post_queue_depth)
 		sc->sc_reply_post_qdepth = 
 		    ifp.max_reply_descriptor_post_queue_depth;
 
-	/* XXX JPG temporary override of calculated values.
-	 *         need to think this through as the specs
-	 *         and other existing drivers contradict
-	 */
-	sc->sc_reply_post_qdepth = 128;
-	sc->sc_request_depth = 128;
-	sc->sc_num_reply_frames = 63;
-	sc->sc_reply_free_qdepth = 64;
-	
 	DNPRINTF(MPII_D_MISC, "%s: sc_request_depth: %d "
 	    "sc_num_reply_frames: %d sc_reply_free_qdepth: %d "
 	    "sc_reply_post_qdepth: %d\n", DEVNAME(sc), sc->sc_request_depth,
@@ -3332,34 +3267,6 @@ mpii_portenable(struct mpii_softc *sc)
 	mpii_put_ccb(sc, ccb);
 
 	return (0);
-}
-
-int
-mpii_dev_reorder(struct mpii_softc *sc)
-{
-	if ((sc->sc_ir_firmware) && (sc->sc_vd_count))
-		mpii_reorder_vds(sc);
-
-	if (sc->sc_reserve_tid0)
-		mpii_reorder_boot_device(sc);
-
-	return (0);
-}
-
-void
-mpii_reorder_vds(struct mpii_softc *sc)
-{
-	/* XXX need to implement
-	 * ideas: VD creation order (still not sure what data to key off of),
-	 *        member PD slot IDs,
-	 *	  random fun
-	 */
-}
-
-void
-mpii_reorder_boot_device(struct mpii_softc *sc)
-{
-	/* mpii_get_boot_dev(sc) */
 }
 
 int
