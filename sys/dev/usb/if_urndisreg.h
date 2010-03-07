@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.8 2010/03/06 19:04:57 armani Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.9 2010/03/07 08:58:55 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <dbd@asystant.net>
@@ -28,17 +28,13 @@ struct urndis_chain {
 	usbd_xfer_handle	 sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
-	int			 sc_accum;
 	int			 sc_idx;
 };
 
 struct urndis_cdata {
 	struct urndis_chain	sc_rx_chain[RNDIS_RX_LIST_CNT];
 	struct urndis_chain	sc_tx_chain[RNDIS_TX_LIST_CNT];
-	int			sc_tx_prod;
-	int			sc_tx_cons;
 	int			sc_tx_cnt;
-	int			sc_rx_prod;
 };
 
 #define GET_IFP(sc) (&(sc)->sc_arpcom.ac_if)
