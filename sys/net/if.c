@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.210 2010/03/08 20:52:52 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.211 2010/03/08 21:00:27 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2175,8 +2175,6 @@ void
 ifa_del(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
-		ifa_item_remove(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 int
