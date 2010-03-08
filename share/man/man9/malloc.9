@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.44 2010/01/03 16:43:46 schwarze Exp $
+.\"	$OpenBSD: malloc.9,v 1.45 2010/03/08 21:57:39 oga Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: March 8 2010 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -61,9 +61,7 @@ argument further qualifies malloc's
 operational characteristics as follows:
 .Bl -tag -width xxx -offset indent
 .It Dv M_WAITOK
-This is defined to be 0, and is therefore most useful as an aid to code
-readability.
-In effect, it is the same as having no other
+The same as having no other
 .Fa flags
 specified.
 If memory is currently unavailable,
@@ -75,6 +73,11 @@ Causes
 to return
 .Dv NULL
 if the request cannot be immediately fulfilled due to resource shortage.
+One of
+.Dv M_NOWAIT
+or
+.Dv M_WAITOK
+must be specified.
 .It Dv M_CANFAIL
 In the
 .Dv M_WAITOK
