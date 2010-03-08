@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.104 2010/03/07 04:14:22 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.105 2010/03/08 03:40:50 jolan Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1264,10 +1264,10 @@ init_x86_64(paddr_t first_avail)
 		avail_start = MP_TRAMPOLINE + PAGE_SIZE;
 #endif
 
-#ifndef SMALL_KERNEL
+#if (NACPI > 0 && !defined(SMALL_KERNEL))
 	if (avail_start < ACPI_TRAMPOLINE + PAGE_SIZE)
 		avail_start = ACPI_TRAMPOLINE + PAGE_SIZE;
-#endif /* !SMALL_KERNEL */
+#endif
 
 	/* Let us know if we're supporting > 4GB ram load */
 	if (bigmem)
