@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.209 2010/03/08 20:29:41 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.210 2010/03/08 20:52:52 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2169,8 +2169,6 @@ ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
 		TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
 	else
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
-	if (ifp->if_flags & IFF_BROADCAST && ifa->ifa_broadaddr)
-		ifa_item_insert(ifa->ifa_broadaddr, ifa, ifp);
 }
 
 void
