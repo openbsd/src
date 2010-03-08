@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.1 2010/03/07 21:26:24 miod Exp $	*/
+/*	$OpenBSD: impact.c,v 1.2 2010/03/08 04:32:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -382,7 +382,7 @@ impact_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_WSDISPLAY_TYPE_IMPACT;
+		*(u_int *)data = WSDISPLAY_TYPE_IMPACT;
 		break;
 	case WSDISPLAYIO_GINFO:
 		fb = (struct wsdisplay_fbinfo *)data;
