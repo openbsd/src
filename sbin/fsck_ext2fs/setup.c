@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.15 2007/09/02 15:19:23 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.16 2010/03/08 11:19:04 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -296,6 +296,12 @@ readsb(int listerr)
 	super *= dev_bsize;
 	dev_bsize = sblock.e2fs_bsize / fsbtodb(&sblock, 1);
 	sblk.b_bno = super / dev_bsize;
+
+	if (sblock.e2fs_ncg == 1) {
+		/* no alternate superblock; assume it's okey */
+		havesb = 1;
+		return 1;
+	}
 
 	getblk(&asblk, 1 * sblock.e2fs.e2fs_bpg + sblock.e2fs.e2fs_first_dblock,
 		(long)SBSIZE);
