@@ -1,4 +1,4 @@
-/*	$OpenBSD: stsec.c,v 1.3 2010/03/07 13:32:36 miod Exp $	*/
+/*	$OpenBSD: stsec.c,v 1.4 2010/03/08 20:56:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -259,7 +259,7 @@ stsec_sensors_update(void *vsc)
 #endif
 
 	for (i = 0; i < nitems(sc->sc_sensors); i++)
-		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		sc->sc_sensors[i].flags |= SENSOR_FINVALID;
 
 	if (stsec_read(sc, ST7_STATUS, &status) != 0 ||
 	    stsec_read(sc, ST7_CONTROL, &control) != 0 ||
@@ -274,7 +274,7 @@ stsec_sensors_update(void *vsc)
 	
 	ks = &sc->sc_sensors[STSEC_SENSOR_AC_PRESENCE];
 	ks->value = !!ISSET(status, STS_AC_AVAILABLE);
-	ks->status = SENSOR_S_OK;
+	ks->flags &= ~SENSOR_FINVALID;
 
 	/*
 	 * Old mobo design does not have a battery presence bit; the Linux
@@ -293,15 +293,15 @@ stsec_sensors_update(void *vsc)
 		ks->value = !!ISSET(status, STS_BATTERY_PRESENT);
 		break;
 	}
-	ks->status = SENSOR_S_OK;
+	ks->flags &= ~SENSOR_FINVALID;
 	
 	ks = &sc->sc_sensors[STSEC_SENSOR_BATTERY_STATE];
 	ks->value = !!ISSET(control, STC_CHARGE_ENABLE);
-	ks->status = SENSOR_S_OK;
+	ks->flags &= ~SENSOR_FINVALID;
 	
 	ks = &sc->sc_sensors[STSEC_SENSOR_BATTERY_VOLTAGE];
 	ks->value = (int64_t)batuv;
-	ks->status = SENSOR_S_OK;
+	ks->flags &= ~SENSOR_FINVALID;
 
 #if NAPM > 0
 	bcopy(&stsec_apmdata, &old, sizeof(old));
