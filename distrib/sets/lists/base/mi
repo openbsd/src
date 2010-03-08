@@ -3255,6 +3255,7 @@
 ./usr/share/zoneinfo/America/Manaus
 ./usr/share/zoneinfo/America/Marigot
 ./usr/share/zoneinfo/America/Martinique
+./usr/share/zoneinfo/America/Matamoros
 ./usr/share/zoneinfo/America/Mazatlan
 ./usr/share/zoneinfo/America/Mendoza
 ./usr/share/zoneinfo/America/Menominee
@@ -3274,6 +3275,7 @@
 ./usr/share/zoneinfo/America/North_Dakota
 ./usr/share/zoneinfo/America/North_Dakota/Center
 ./usr/share/zoneinfo/America/North_Dakota/New_Salem
+./usr/share/zoneinfo/America/Ojinaga
 ./usr/share/zoneinfo/America/Panama
 ./usr/share/zoneinfo/America/Pangnirtung
 ./usr/share/zoneinfo/America/Paramaribo
@@ -3290,6 +3292,7 @@
 ./usr/share/zoneinfo/America/Resolute
 ./usr/share/zoneinfo/America/Rio_Branco
 ./usr/share/zoneinfo/America/Rosario
+./usr/share/zoneinfo/America/Santa_Isabel
 ./usr/share/zoneinfo/America/Santarem
 ./usr/share/zoneinfo/America/Santiago
 ./usr/share/zoneinfo/America/Santo_Domingo
@@ -3844,6 +3847,7 @@
 ./usr/share/zoneinfo/posix/America/Manaus
 ./usr/share/zoneinfo/posix/America/Marigot
 ./usr/share/zoneinfo/posix/America/Martinique
+./usr/share/zoneinfo/posix/America/Matamoros
 ./usr/share/zoneinfo/posix/America/Mazatlan
 ./usr/share/zoneinfo/posix/America/Mendoza
 ./usr/share/zoneinfo/posix/America/Menominee
@@ -3863,6 +3867,7 @@
 ./usr/share/zoneinfo/posix/America/North_Dakota
 ./usr/share/zoneinfo/posix/America/North_Dakota/Center
 ./usr/share/zoneinfo/posix/America/North_Dakota/New_Salem
+./usr/share/zoneinfo/posix/America/Ojinaga
 ./usr/share/zoneinfo/posix/America/Panama
 ./usr/share/zoneinfo/posix/America/Pangnirtung
 ./usr/share/zoneinfo/posix/America/Paramaribo
@@ -3879,6 +3884,7 @@
 ./usr/share/zoneinfo/posix/America/Resolute
 ./usr/share/zoneinfo/posix/America/Rio_Branco
 ./usr/share/zoneinfo/posix/America/Rosario
+./usr/share/zoneinfo/posix/America/Santa_Isabel
 ./usr/share/zoneinfo/posix/America/Santarem
 ./usr/share/zoneinfo/posix/America/Santiago
 ./usr/share/zoneinfo/posix/America/Santo_Domingo
@@ -4434,6 +4440,7 @@
 ./usr/share/zoneinfo/right/America/Manaus
 ./usr/share/zoneinfo/right/America/Marigot
 ./usr/share/zoneinfo/right/America/Martinique
+./usr/share/zoneinfo/right/America/Matamoros
 ./usr/share/zoneinfo/right/America/Mazatlan
 ./usr/share/zoneinfo/right/America/Mendoza
 ./usr/share/zoneinfo/right/America/Menominee
@@ -4453,6 +4460,7 @@
 ./usr/share/zoneinfo/right/America/North_Dakota
 ./usr/share/zoneinfo/right/America/North_Dakota/Center
 ./usr/share/zoneinfo/right/America/North_Dakota/New_Salem
+./usr/share/zoneinfo/right/America/Ojinaga
 ./usr/share/zoneinfo/right/America/Panama
 ./usr/share/zoneinfo/right/America/Pangnirtung
 ./usr/share/zoneinfo/right/America/Paramaribo
@@ -4469,6 +4477,7 @@
 ./usr/share/zoneinfo/right/America/Resolute
 ./usr/share/zoneinfo/right/America/Rio_Branco
 ./usr/share/zoneinfo/right/America/Rosario
+./usr/share/zoneinfo/right/America/Santa_Isabel
 ./usr/share/zoneinfo/right/America/Santarem
 ./usr/share/zoneinfo/right/America/Santiago
 ./usr/share/zoneinfo/right/America/Santo_Domingo
