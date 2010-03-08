@@ -16,8 +16,6 @@ VND_RIDEV=	/dev/r${VND}i
 PID!=		echo $$$$
 
 DISKTYPE=       miniroot
-# if we make the image smaller, there is no room for an alternate sb
-# out fsck_ext2fs does not like that
 NBLKS=		18432
 
 
