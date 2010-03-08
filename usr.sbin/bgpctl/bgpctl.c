@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.156 2010/02/11 12:25:12 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.157 2010/03/08 17:02:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -127,8 +127,11 @@ main(int argc, char *argv[])
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
-	if (res->action == IRRFILTER)
+	if (res->action == IRRFILTER) {
+		if (!(res->flags & (F_IPV4|F_IPV6)))
+			res->flags |= (F_IPV4|F_IPV6);
 		irr_main(res->as.as, res->flags, res->irr_outdir);
+	}
 
 	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
 	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
