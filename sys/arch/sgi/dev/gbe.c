@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.11 2010/03/07 13:44:24 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.12 2010/03/08 20:54:42 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -244,6 +244,7 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 		waa.scrdata = &gbe_screenlist;
 		waa.accessops = &gbe_accessops;
 		waa.accesscookie = &gbe_consdata;
+		waa.defaultscreens = 0;
 		config_found(self, &waa, wsemuldisplaydevprint);
 
 		return;
@@ -413,6 +414,7 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 	waa.scrdata = &gbe_screenlist;
 	waa.accessops = &gbe_accessops;
 	waa.accesscookie = screen;
+	waa.defaultscreens = 0;
 	config_found(self, &waa, wsemuldisplaydevprint);
 
 	return;

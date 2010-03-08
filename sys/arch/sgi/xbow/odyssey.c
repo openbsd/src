@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.2 2010/03/07 13:44:26 miod Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.3 2010/03/08 20:54:45 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -245,6 +245,7 @@ odyssey_attach(struct device *parent, struct device *self, void *aux)
 	waa.scrdata = &odyssey_screenlist;
 	waa.accessops = &odyssey_accessops;
 	waa.accesscookie = screen;
+	waa.defaultscreens = 0;
 	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
