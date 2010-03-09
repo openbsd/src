@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.599 2010/03/09 15:06:36 krw Exp $
+#	$OpenBSD: install.sub,v 1.600 2010/03/09 23:34:09 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1306,7 +1306,7 @@ install_mounted_fs() {
 		echo "The directory '$resp' does not exist."
 	done
 
-	install_files "file://$_dir" "$(ls -l $_dir)"
+	install_files "file://$_dir" "$(ls $_dir/)"
 }
 
 install_cdrom() {
