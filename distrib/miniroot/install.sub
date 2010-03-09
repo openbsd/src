@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.598 2010/03/04 02:07:55 krw Exp $
+#	$OpenBSD: install.sub,v 1.599 2010/03/09 15:06:36 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1017,6 +1017,10 @@ install_files() {
 	for _f in $THESETS; do
 		isin $_f $_files || continue;
 		_sets=$(addel $_f $_sets)
+		if [[ -z $DISPLAY && ! -d /mnt/etc/X11 ]]; then
+			# No displays and X isn't installed ==> skip X sets
+			isin ${_f%${VERSION}.tgz} xbase xetc xshare xfont xserv && continue
+		fi
 		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" && \
 			_get_sets=$(addel $_f $_get_sets)
 	done
@@ -1891,10 +1895,6 @@ THESETS="bsd bsd.rd bsd.mp $MDSETS"
 for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
-	if [[ -z $DISPLAY ]]; then
-		# If we have no displays, skip the X sets
-		isin $_set xbase xetc xshare xfont xserv site && continue
-	fi
 	isin $_set site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
 done
