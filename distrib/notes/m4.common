@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.89 2009/10/25 20:56:24 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.90 2010/03/09 20:38:43 otto Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -953,7 +953,7 @@ define({:-OpenBSDXferBareTape-:},
 	mt -f ${TAPE} rewind
 	for file in base etc comp game man misc $1
 	do
-		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=sync
+		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=osync
 	done
 	tar cf ${TAPE} bsd
 	mt -f ${TAPE} offline
