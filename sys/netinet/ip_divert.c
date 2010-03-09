@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.4 2010/03/08 14:18:07 jsing Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.5 2010/03/09 12:36:12 jsing Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -105,7 +105,7 @@ divert_output(struct mbuf *m, ...)
 
 	if (sin->sin_addr.s_addr != INADDR_ANY) {
 		ipaddr.sin_addr = sin->sin_addr;
-		ifa = ifa_ifwithaddr(sintosa(&ipaddr), 0);
+		ifa = ifa_ifwithaddr(sintosa(&ipaddr), m->m_pkthdr.rdomain);
 		if (ifa == NULL) {
 			divstat.divs_errors++;
 			m_freem(m);

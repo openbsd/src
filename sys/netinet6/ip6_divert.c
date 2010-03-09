@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.2 2010/03/08 14:18:07 jsing Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.3 2010/03/09 12:36:12 jsing Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -110,7 +110,7 @@ divert6_output(struct mbuf *m, ...)
 
 	if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 		ip6addr.sin6_addr = sin6->sin6_addr;
-		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr), 0);
+		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr), m->m_pkthdr.rdomain);
 		if (ifa == NULL) {
 			div6stat.divs_errors++;
 			m_freem(m);
