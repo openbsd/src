@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.13 2009/06/03 15:52:16 millert Exp $
+.\"	$OpenBSD: getenv.3,v 1.14 2010/03/10 20:46:16 kili Exp $
 .\"
-.Dd $Mdocdate: June 3 2009 $
+.Dd $Mdocdate: March 10 2010 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -122,7 +122,7 @@ is successful, the string returned should be considered read-only.
 The
 .Fn setenv
 or
-.Fn putenv
+.Fn unsetenv
 function was passed a
 .Ar name
 containing an
