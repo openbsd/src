@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.15 2010/03/07 17:17:33 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.16 2010/03/11 10:23:08 armani Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -784,6 +784,15 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		DPRINTF(("%s: urndis_decap buffer size left %u\n", DEVNAME(sc),
 		    len));
 
+		if (len < sizeof(*msg)) {
+			printf("%s: urndis_decap invalid buffer len %u < "
+			    "minimum header %u\n",
+			    DEVNAME(sc),
+			    len,
+			    sizeof(*msg));
+			return;
+		}
+
 		DPRINTF(("%s: urndis_decap len %u data(off:%u len:%u) "
 		    "oobdata(off:%u len:%u nb:%u) perpacket(off:%u len:%u)\n",
 		    DEVNAME(sc),
@@ -796,14 +805,6 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		    letoh32(msg->rm_pktinfooffset),
 		    letoh32(msg->rm_pktinfooffset)));
 
-		if (len < sizeof(*msg)) {
-			printf("%s: urndis_decap invalid buffer len %u < "
-			    "minimum header %u\n",
-			    DEVNAME(sc),
-			    letoh32(msg->rm_len),
-			    sizeof(*msg));
-			return;
-		}
 		if (letoh32(msg->rm_type) != REMOTE_NDIS_PACKET_MSG) {
 			printf("%s: urndis_decap invalid type 0x%x != 0x%x\n",
 			    DEVNAME(sc),
