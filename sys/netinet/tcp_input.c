@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.231 2010/01/15 18:20:23 chl Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.232 2010/03/11 00:24:58 sthen Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -96,6 +96,9 @@
 #include <netinet/tcp_debug.h>
 
 #include "faith.h"
+#if NFAITH > 0
+#include <net/if_types.h>
+#endif
 
 #include "pf.h"
 #if NPF > 0

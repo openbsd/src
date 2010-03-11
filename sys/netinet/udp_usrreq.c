@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.132 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.133 2010/03/11 00:24:58 sthen Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -104,6 +104,9 @@ extern int ip6_defhlim;
 #endif /* INET6 */
 
 #include "faith.h"
+#if NFAITH > 0
+#include <net/if_types.h>
+#endif
 
 #include "pf.h"
 #if NPF > 0
