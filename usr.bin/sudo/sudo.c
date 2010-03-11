@@ -536,7 +536,7 @@ main(argc, argv, envp)
 	sudo_endpwent();
 	sudo_endgrent();
 
-	closefrom(def_closefrom + 1);
+	closefrom(def_closefrom);
 
 #ifndef PROFILING
 	if (ISSET(sudo_mode, MODE_BACKGROUND) && fork() > 0) {
