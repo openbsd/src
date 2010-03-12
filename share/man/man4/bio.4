@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.26 2009/10/22 09:22:46 sobrado Exp $
+.\"	$OpenBSD: bio.4,v 1.27 2010/03/12 05:58:08 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" Copyright (c) 2006 Marco Peereboom
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: March 12 2010 $
 .Dt BIO 4
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ SCSI Enclosure Services
 .El
 .Pp
 The following ioctl calls apply to the
-.Nm bio
+.Nm
 device:
 .Bl -tag -width BIOCCAPABILITIES
 .It Dv BIOCLOCATE
@@ -128,6 +128,20 @@ and the hardware supports hardware blinking.
 Alter the state of specified physical disk.
 Supported states are: create hot-spare, online disk and offline disk.
 .El
+.Pp
+The following ioctl calls apply to the
+.Nm
+device only when talking to a
+.Xr softraid 4
+device:
+.Bl -tag -width BIOCCREATERAID
+.It Dv BIOCCREATERAID
+Create new array.
+.It Dv BIOCDELETERAID
+Remove array, optionally erasing RAID metadata.
+.It Dv BIOCDISCIPLINE
+Dispatch a discipline specific ioctl.
+.El
 .Sh FILES
 .Bl -tag -width /dev/bio -compact
 .It Pa /dev/bio
@@ -135,6 +149,7 @@ ioctl tunnel device
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr softraid 4 ,
 .Xr bioctl 8
 .Sh HISTORY
 The
