@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.33 2009/11/24 18:35:25 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.34 2010/03/12 13:36:16 mpf Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 24 2009 $
+.Dd $Mdocdate: March 12 2010 $
 .Dt CARP 4
 .Os
 .Sh NAME
@@ -98,18 +98,6 @@ packets.
 Enabled by default.
 .It net.inet.carp.preempt
 Allow virtual hosts to preempt each other.
-It is also used to failover
-.Nm
-interfaces as a group.
-When the option is enabled and one of the
-.Nm
-enabled physical interfaces
-goes down,
-.Cm advskew
-is changed to 240 on all
-.Nm
-interfaces.
-See also the first example.
 Disabled by default.
 .It net.inet.carp.log
 Make
@@ -281,11 +269,10 @@ list on all sides of the firewall.
 This ensures that packets of one connection will pass in and out
 on the same host and are not routed asymmetrically.
 .Sh EXAMPLES
-For firewalls and routers with multiple interfaces, it is desirable to
-failover all of the
-.Nm
-interfaces together, when one of the physical interfaces goes down.
-This is achieved by the preempt option.
+For most scenarios it is desirable to have a well-defined master,
+achieved by enabling the
+.Cm preempt
+option.
 Enable it on both host A and B:
 .Pp
 .Dl # sysctl net.inet.carp.preempt=1
@@ -304,15 +291,6 @@ The setup for host B is identical, but it has a higher
 # ifconfig carp0 192.168.1.1 vhid 1 advskew 100
 # ifconfig carp1 192.168.2.1 vhid 2 advskew 100
 .Ed
-.Pp
-Because of the preempt option, when one of the physical interfaces of
-host A fails,
-.Cm advskew
-is adjusted to 240 on all its
-.Nm
-interfaces.
-This will cause host B to preempt on both interfaces instead of
-just the failed one.
 .Ss LOAD BALANCING
 In order to set up a load balanced virtual host, it is necessary to configure
 one
