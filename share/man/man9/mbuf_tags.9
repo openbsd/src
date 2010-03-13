@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.24 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.25 2010/03/13 06:39:33 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 13 2010 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ If successful,
 .Fn m_tag_get
 returns a memory buffer of (len + sizeof (struct m_tag)) bytes.
 The first sizeof(struct m_tag) bytes contain a struct m_tag:
-.Bd -literal -offset 0i
+.Bd -literal
 struct m_tag {
 	SLIST_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
 	u_int16_t		m_tag_id;	/* Tag ID */
