@@ -1,6 +1,6 @@
 define(MACHINE,sgi)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.26 2009/08/13 15:12:36 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.27 2010/03/13 21:57:04 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -98,11 +98,13 @@ target(all, pty, 0, 1, 2)dnl
 target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, bio)dnl
 target(all, tun, 0, 1, 2, 3)dnl
-target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
+twrget(wscons, wscons, ttyD, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
+twrget(wscons, wscons, ttyE, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
+twrget(wscons, wscons, ttyF, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 target(ramd, pty, 0)dnl
 target(ramd, bio)dnl
