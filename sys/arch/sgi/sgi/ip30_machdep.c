@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.37 2010/03/07 13:44:26 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.38 2010/03/13 21:55:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -365,7 +365,7 @@ ip30_find_video()
 		return 0;
 	}
 
-	for (widid = WIDGET_MIN; widid <= WIDGET_MAX; widid++) {
+	for (widid = WIDGET_MAX; widid >= WIDGET_MIN; widid--) {
 		if (ip30_widget_id(0, widid, &id) != 0)
 			continue;
 
