@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.2 2010/03/08 04:32:28 deraadt Exp $	*/
+/*	$OpenBSD: impact.c,v 1.3 2010/03/13 21:56:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -191,7 +191,7 @@ impact_attach(struct device *parent, struct device *self, void *aux)
 		 * Setup screen data.
 		 */
 		scr = malloc(sizeof(struct impact_screen), M_DEVBUF,
-		    M_NOWAIT);
+		    M_NOWAIT | M_ZERO);
 		if (scr == NULL) {
 			printf("failed to allocate screen memory!\n");
 			return;
