@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.83 2009/11/18 19:57:09 halex Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.84 2010/03/14 14:37:01 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.83 2009/11/18 19:57:09 halex Exp $
+ * $Id: aic7xxx.c,v 1.84 2010/03/14 14:37:01 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -884,26 +884,28 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			if (lastphase == ahc_phase_table[i].phase)
 				break;
 		}
-		ahc_print_path(ahc, scb);
-		printf("data overrun detected %s."
-		       "  Tag == 0x%x.\n",
-		       ahc_phase_table[i].phasemsg,
-  		       scb->hscb->tag);
-#ifndef SMALL_KERNEL
-		ahc_print_path(ahc, scb);
-		printf("%s seen Data Phase.  Length = %ld.  NumSGs = %d.\n",
-		       ahc_inb(ahc, SEQ_FLAGS) & DPHASE ? "Have" : "Haven't",
-		       ahc_get_transfer_length(scb), scb->sg_count);
-		if (scb->sg_count > 0) {
-			for (i = 0; i < scb->sg_count; i++) {
+#ifdef AHC_DEBUG
+		if ((ahc_debug & AHC_SHOW_MESSAGES) != 0) {
+			ahc_print_path(ahc, scb);
+			printf("data overrun detected %s."
+			       "  Tag == 0x%x.\n",
+			       ahc_phase_table[i].phasemsg,
+			       scb->hscb->tag);
+			ahc_print_path(ahc, scb);
+			printf("%s seen Data Phase.  Length = %ld.  NumSGs = %d.\n",
+			       ahc_inb(ahc, SEQ_FLAGS) & DPHASE ? "Have" : "Haven't",
+			       ahc_get_transfer_length(scb), scb->sg_count);
+			if (scb->sg_count > 0) {
+				for (i = 0; i < scb->sg_count; i++) {
 
-				printf("sg[%d] - Addr 0x%x%x : Length %d\n",
-				       i,
-				       (aic_le32toh(scb->sg_list[i].len) >> 24
-				        & SG_HIGH_ADDR_BITS),
-				       aic_le32toh(scb->sg_list[i].addr),
-				       aic_le32toh(scb->sg_list[i].len)
-				       & AHC_SG_LEN_MASK);
+					printf("sg[%d] - Addr 0x%x%x : Length %d\n",
+					       i,
+					       (aic_le32toh(scb->sg_list[i].len) >> 24
+						& SG_HIGH_ADDR_BITS),
+					       aic_le32toh(scb->sg_list[i].addr),
+					       aic_le32toh(scb->sg_list[i].len)
+					       & AHC_SG_LEN_MASK);
+				}
 			}
 		}
 #endif
