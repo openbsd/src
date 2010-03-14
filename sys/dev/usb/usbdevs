@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.479 2010/03/01 07:56:47 yuo Exp $
+$OpenBSD: usbdevs,v 1.480 2010/03/14 22:44:56 mk Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1836,6 +1836,7 @@ product HP2 C500		0x6002	PhotoSmart C500
 /* HTC products */
 product HTC PPC6700MODEM	0x00cf	PPC6700 Modem
 product HTC SMARTPHONE		0x0a51	SmartPhone
+product HTC HERO		0x0ffe	HTC Hero
 
 /* HUAWEI products */
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
