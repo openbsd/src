@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.5 2010/01/09 23:15:06 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.6 2010/03/14 01:43:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -522,7 +522,7 @@ vscsiclose(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_opened = 0;
 
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccb_t2i)) != NULL) {
-		TAILQ_REMOVE(&sc->sc_ccb_i2t, ccb, ccb_entry);
+		TAILQ_REMOVE(&sc->sc_ccb_t2i, ccb, ccb_entry);
 		polled = ISSET(ccb->ccb_xs->flags, SCSI_POLL);
 
 		vscsi_xs_stuffup(ccb->ccb_xs);
