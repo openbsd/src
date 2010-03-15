@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.6 2009/11/08 13:11:17 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.7 2010/03/15 18:59:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -1354,19 +1354,6 @@ iec_txintr(struct iec_softc *sc, uint32_t stat)
 	once = 0;
 	for (i = sc->sc_txdirty; i != last && sc->sc_txpending != 0;
 	    i = IEC_NEXTTX(i), sc->sc_txpending--) {
-
-		if ((stat & IOC3_ENET_ISR_TX_EXPLICIT) == 0) {
-			if (stat == IOC3_ENET_ISR_TX_EMPTY)
-				continue;
-			if (once == 0) {
-				printf("%s: TX error: txstat = %08x\n",
-				    DEVNAME(sc), stat);
-				once = 1;
-			}
-			ifp->if_oerrors++;
-			continue;
-		}
-
 		txs = &sc->sc_txsoft[i];
 		if ((txs->txs_flags & IEC_TXCMD_PTR0_V) != 0) {
 			dmamap = txs->txs_dmamap;
@@ -1377,9 +1364,20 @@ iec_txintr(struct iec_softc *sc, uint32_t stat)
 			txs->txs_mbuf = NULL;
 		}
 
-		ifp->if_collisions += bus_space_read_4(st, sh, IOC3_ENET_TCDC) &
-		    IOC3_ENET_TCDC_COLLISION_MASK;
-		ifp->if_opackets++;
+		if ((stat & IOC3_ENET_ISR_TX_EXPLICIT) == 0) {
+			if (stat == IOC3_ENET_ISR_TX_EMPTY)
+				continue;
+			if (once == 0) {
+				printf("%s: TX error: txstat = %08x\n",
+				    DEVNAME(sc), stat);
+				once = 1;
+			}
+			ifp->if_oerrors++;
+		} else {
+			ifp->if_collisions += IOC3_ENET_TCDC_COLLISION_MASK &
+			    bus_space_read_4(st, sh, IOC3_ENET_TCDC);
+			ifp->if_opackets++;
+		}
 	}
 
 	/* Update the dirty TX buffer pointer. */
