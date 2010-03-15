@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.17 2010/03/14 22:50:41 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.18 2010/03/15 11:13:40 fabien Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1479,6 +1479,8 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	if (urndis_ctrl_query(sc, OID_802_3_PERMANENT_ADDRESS, NULL, 0,
 	    &buf, &bufsz) != RNDIS_STATUS_SUCCESS) {
 		printf("%s: unable to get hardware address\n", DEVNAME(sc));
+		urndis_stop(sc);
+		splx(s);
 		return;
 	}
 
@@ -1490,9 +1492,10 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: invalid address\n", DEVNAME(sc));
 		free(buf, M_TEMP);
 		urndis_stop(sc);
+		splx(s);
 		return;
 	}
-	
+
 	/* Initialize packet filter */
 	sc->sc_filter = RNDIS_PACKET_TYPE_BROADCAST; 
 	sc->sc_filter |= RNDIS_PACKET_TYPE_ALL_MULTICAST;
@@ -1501,6 +1504,7 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(filter)) != RNDIS_STATUS_SUCCESS) {
 		printf("%s: unable to set data filters\n", DEVNAME(sc));
 		urndis_stop(sc);
+		splx(s);
 		return;
 	}
 
