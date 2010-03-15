@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.159 2010/03/15 11:05:43 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.160 2010/03/15 19:54:54 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -441,6 +441,8 @@ static const struct ahci_device ahci_devices[] = {
 	    NULL,		ahci_ati_sb600_attach },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_RAID,
+	    NULL,		NULL },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801HBM_RAID,
 	    NULL,		NULL },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801JI_RAID,
 	    NULL,		NULL },
