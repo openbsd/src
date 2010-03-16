@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.37 2010/02/25 10:56:07 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.38 2010/03/16 22:48:43 kettenis Exp $	*/
 
 /******************************************************************************
 
@@ -2433,6 +2433,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
 	rxr->last_rx_desc_filled = sc->num_rx_desc - 1;
+	rxr->rx_ndescs = 0;
 
 	ixgbe_rxfill(rxr);
 	if (rxr->rx_ndescs < 1) {

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.234 2009/12/02 23:30:00 sthen Exp $ */
+/* $OpenBSD: if_em.c,v 1.235 2010/03/16 22:48:43 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2522,6 +2522,7 @@ em_setup_receive_structures(struct em_softc *sc)
 	/* Setup our descriptor pointers */
 	sc->next_rx_desc_to_check = 0;
 	sc->last_rx_desc_filled = sc->num_rx_desc - 1;
+	sc->rx_ndescs = 0;
 
 	em_rxfill(sc);
 	if (sc->rx_ndescs < 1) {
