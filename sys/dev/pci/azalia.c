@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.166 2009/12/24 10:12:19 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.167 2010/03/16 08:28:22 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3830,7 +3830,7 @@ azalia_query_encoding(void *v, audio_encoding_t *enc)
 	az = v;
 	codec = &az->codecs[az->codecno];
 
-	if (enc->index >= codec->nencs)
+	if (enc->index < 0 || enc->index >= codec->nencs)
 		return (EINVAL);
 
 	*enc = codec->encs[enc->index];
