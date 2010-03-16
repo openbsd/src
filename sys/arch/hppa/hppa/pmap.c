@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.147 2010/01/03 19:23:49 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.148 2010/03/16 17:12:50 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -276,11 +276,12 @@ void
 pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte)
 {
 	fdcache(pmap->pm_space, va, PAGE_SIZE);
-	pdtlb(pmap->pm_space, va);
 	if (pte & PTE_PROT(TLB_EXECUTE)) {
 		ficache(pmap->pm_space, va, PAGE_SIZE);
+		pdtlb(pmap->pm_space, va);
 		pitlb(pmap->pm_space, va);
-	}
+	} else
+		pdtlb(pmap->pm_space, va);
 #ifdef USE_HPT
 	if (pmap_hpt) {
 		struct vp_entry *hpt;
@@ -1170,9 +1171,9 @@ pmap_flush_page(struct vm_page *pg, int purge)
 			pdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 		else
 			fdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
-		pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
 		/* XXX Conditionalize ficache on PTE_PROT(TLB_EXECUTE)? */
 		ficache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
+		pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
 		pitlb(pve->pv_pmap->pm_space, pve->pv_va);
 	}
 	simple_unlock(&pg->mdpage.pvh_lock);
@@ -1188,8 +1189,8 @@ pmap_zero_page(struct vm_page *pg)
 	pmap_flush_page(pg, 1);
 	bzero((void *)pa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
-	pdtlb(HPPA_SID_KERNEL, pa);
 	ficache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
 	pitlb(HPPA_SID_KERNEL, pa);
 }
 
@@ -1205,10 +1206,10 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	bcopy((void *)spa, (void *)dpa, PAGE_SIZE);
 	pdcache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
-	pdtlb(HPPA_SID_KERNEL, spa);
-	pdtlb(HPPA_SID_KERNEL, dpa);
 	ficache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
 	ficache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, spa);
+	pdtlb(HPPA_SID_KERNEL, dpa);
 	pitlb(HPPA_SID_KERNEL, spa);
 	pitlb(HPPA_SID_KERNEL, dpa);
 }
@@ -1329,8 +1330,8 @@ struct vm_page *
 pmap_unmap_direct(vaddr_t va)
 {
 	fdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
-	pdtlb(HPPA_SID_KERNEL, va);
 	ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, va);
 	pitlb(HPPA_SID_KERNEL, va);
 	return (PHYS_TO_VM_PAGE(va));
 }
