@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.36 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.37 2010/03/16 17:23:09 miod Exp $
 OpenBSDInstallPrelude({:-HP-IB disks-:})
 
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
@@ -103,7 +103,7 @@ OpenBSDInstallPart5
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-OpenBSDInstallPart6({:-CD-ROM, NFS, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, NFS, -:})
 
 OpenBSDURLInstall
 

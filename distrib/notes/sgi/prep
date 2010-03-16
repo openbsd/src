@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.18 2010/03/07 21:26:22 miod Exp $
+dnl	$OpenBSD: prep,v 1.19 2010/03/16 17:23:09 miod Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -72,7 +72,8 @@ Switching from serial to graphics console and vice versa:
 
     As of OpenBSD OSREV, supported graphics console devices are:
     - the onboard frame buffer on IP32 systems (gbe)
-    - ImpactSR (Mardigras) frame buffer on IP30 (I-Series and E-Series) (impact)
+    - ImpactSR (Mardigras) frame buffer on IP30 (I-Series and E-Series)
+      (impact)
     - VPro family frame buffers on IP27, IP30 and IP35 systems (odyssey)
 
     And the following graphics devices are not supported yet:
@@ -113,11 +114,12 @@ Setting the environment:
     When setting up the system to boot from disk, the ``OSLoader''
     environment variable will need to be changed.
 
-    Its default value is ``sash'', which is IRIX's standalone
+    Its default value is ``sash'' or ``sash64'', which is IRIX's standalone
     shell and loader. Set it to ``boot'', the OpenBSD boot loader.
 
-    Also, by default it tries to boot a kernel named ``/unix''. To
-    make it boot OpenBSD, set ``OSLoadFilename'' to ``/bsd''.
+    The kernel image loaded by default is specified in the ``OSLoadFilename''
+    variable, which defaults to ``/unix''.  To boot OpenBSD, set it to
+    ``/bsd''.
 
     To enable automatic booting of OpenBSD once the machine has passed its
     diagnostic tests, change the value of ``AutoLoad'' to ``Yes''.

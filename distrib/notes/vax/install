@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.23 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.24 2010/03/16 17:23:09 miod Exp $
 OpenBSDInstallPrelude({:-MSCP or other non-SCSI disks-:})
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -98,7 +98,7 @@ OpenBSDInstallPart4
 
 OpenBSDInstallPart5
 
-OpenBSDInstallPart6({:-CD-ROM, NFS, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, NFS, -:})
 
 OpenBSDURLInstall
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.26 2005/09/18 23:42:03 martin Exp $
+dnl	$OpenBSD: hardware,v 1.27 2010/03/16 17:23:09 miod Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 8MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 120MB partition by installing just the minimum sets.
@@ -17,8 +17,8 @@ should work on:
 	* 68040 (not including the 68LC040)
 
 The following Macintosh models are supported and tested.  This means that at
-least the SCSI controller, serial console and on-board ethernet will function on
-these models.  On some of these machines, a full 68040 CPU is required to
+least the SCSI controller, serial console and on-board ethernet will function
+on these models.  On some of these machines, a full 68040 CPU is required to
 replace the default 68LC040 CPU.
 	* LC family: LC 475, Performa 475, Performa 476
 	* Centris family: 610, 650

@@ -1,11 +1,13 @@
-dnl	$OpenBSD: install,v 1.69 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.70 2010/03/16 17:23:09 miod Exp $
 OpenBSDInstallPrelude({:-SMD disks-:})
 
-There are several ways to install OpenBSD onto a disk. The easiest way
-in terms of preliminary setup is to use the OpenBSD miniroot that can
-be booted off your local disk's swap partition. The normal way is to
-use the OpenBSD CD-ROM, or the bootable CD-ROM mini image, or an
+There are several ways to install OpenBSD onto a disk.  The normal way
+is to use the OpenBSD CD-ROM, or the bootable CD-ROM mini image, or an
 installation floppy, or an installation tape, depending on your hardware.
+Alternatively, if you already have an operating system installed and
+do not wish to change the existing partition layout, it is simpler to
+use the OpenBSD miniroot that can be booted off your local disk's swap
+partition.
 
 If your SPARC is hooked up to a network, try and find a server to
 arrange for a diskless setup. This is a convenient way to install on a
@@ -180,13 +182,13 @@ OpenBSDInstallPart4
 
 OpenBSDInstallPart5
 
-OpenBSDInstallPart6({:-CD-ROM, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, -:})
 
 OpenBSDURLInstall
 
 OpenBSDCDROMInstall
 		
-OpenBSDDISKInstall(,{:-only -:})
+OpenBSDDISKInstall({:-"xdN", "xyN" or -:},{:-only -:})
 
 OpenBSDCommonInstall
 
@@ -436,9 +438,9 @@ Here's an example to illustrate this whole mess:
     else
 	server# set SKIP=0
 	server# set KARCH=SUN4C
-    server# dd if=boot of=/tftpboot/boot.MACHINE.OpenBSD.$KARCH skip=$SKIP bs=32
+    server{:-#-:} dd if=boot of=/tftpboot/boot.MACHINE.OpenBSD.$KARCH skip=$SKIP bs=32
     server# cd /tftpboot
-    server# ln -s boot.MACHINE.OpenBSD.$KARCH 8273900B.$KARCH
+    server{:-#-:} ln -s boot.MACHINE.OpenBSD.$KARCH 8273900B.$KARCH
 
 
 After the boot program has been loaded into memory and given control by

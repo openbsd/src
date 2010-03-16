@@ -1,4 +1,4 @@
-dnl     $OpenBSD: install,v 1.2 2009/10/02 07:47:44 jasper Exp $
+dnl     $OpenBSD: install,v 1.3 2010/03/16 17:23:09 miod Exp $
 OpenBSDInstallPrelude
 
 An OpenBSD/palm installation will use the PalmOS to bootstrap itself.
@@ -23,7 +23,7 @@ OpenBSDInstallMBRPart2(indeed)
 
 OpenBSDInstallPart5
 
-OpenBSDInstallPart6({:-CD-ROM, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, -:})
 
 OpenBSDURLInstall
 

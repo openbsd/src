@@ -1,10 +1,10 @@
-dnl	$OpenBSD: xfer,v 1.9 2007/08/02 17:33:12 david Exp $
+dnl	$OpenBSD: xfer,v 1.10 2010/03/16 17:23:09 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
-	FFS partitions (for upgrades only)
-	DOS (FAT) partitions (for upgrades only)
-	EXT2 partitions (for upgrades only)
+	FFS partitions
+	DOS (FAT) partitions
+dnl	EXT2 partitions
 	Tape
 dnl	Remote NFS partition
 	FTP
@@ -40,7 +40,6 @@ Creating a PXE network bootable setup using OpenBSD or other Un*x-like system:
 
 
 OpenBSDXferShortPrelude
-
 
 OpenBSDXferBareTape(xbase xetc xfont xserv xshare)
 

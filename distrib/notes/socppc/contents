@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.9 2010/03/07 14:07:08 miod Exp $
+dnl	$OpenBSD: contents,v 1.10 2010/03/16 17:23:09 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -8,7 +8,8 @@ OpenBSDbsd
 OpenBSDrd
 
 	bsd.bin		A RAMDISK kernel that can be loaded directly
-			by the U-Boot firmware.  Used for installation.
+			by the U-Boot firmware.  Used for installation
+			on Thecus N1200.
 
 	boot		The OpenBSD/MACHINE secondary boot loader in
 			U-Boot format.

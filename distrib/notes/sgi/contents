@@ -1,12 +1,12 @@
-dnl	$OpenBSD: contents,v 1.13 2010/03/07 14:54:23 miod Exp $
+dnl	$OpenBSD: contents,v 1.14 2010/03/16 17:23:09 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
 dnl three flavours of OpenBSDbsd
 	bsd.IP27	A stock GENERIC-IP27 MACHINE kernel for IP27 and IP35
-			class machines, which will be installed on such systems
-			during the install.
+			class machines, which will be installed on such
+			systems during the install.
 
 	bsd.IP30	A stock GENERIC-IP30 MACHINE kernel for IP30 class
 			machines, which will be installed on such systems
@@ -38,7 +38,11 @@ dnl three flavours of OpenBSDrd
 			Used for simple installation from a pre-existing
 			system.
 
-OpenBSDcd
+dnl can't use OpenBSDcd because of the multiple bsd.rd
+	cd{:--:}OSrev.iso	A miniroot filesystem image suitable to be used
+			as a bootable CD-ROM image, but will require the base
+			and X sets be found via another media or network;
+			otherwise similar to the bsd.rd* images above.
 
 DistributionDescription(eleven)
 

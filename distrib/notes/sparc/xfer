@@ -1,8 +1,8 @@
-dnl	$OpenBSD: xfer,v 1.44 2007/03/01 19:17:27 miod Exp $
+dnl	$OpenBSD: xfer,v 1.45 2010/03/16 17:23:09 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
-	FFS partitions (for upgrades only)
+	FFS partitions
 	Tape
 	FTP
 	HTTP
@@ -11,9 +11,9 @@ Not all methods are supported on all SPARC Systems and some of them
 work only with the floppy or the miniroot installation.
 
 If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you may be
-able to boot from it, or from the supplied bootable CD-ROM mini image. However,
-not all SPARC systems support booting from CD-ROM, and the current boot
-image is only known to work on sun4c and sun4m architecture workstations.
+able to boot from it, or from the supplied bootable CD-ROM mini image.
+However, not all SPARC systems support booting from CD-ROM, and the current
+boot image is only known to work on sun4c and sun4m architecture workstations.
 If you can boot from the CD-ROM, you are home free and can proceed to the
 installation steps.  If not, you will need to do some setup work to prepare
 a bootable image: either a floppy, hard drive, tape, or compatible net boot
@@ -77,7 +77,7 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	a partition that will be overwritten during the install process,
 	since it actually runs off a ram-disk image in the kernel.  In
 	contrast the miniroot is a normal unix root filesystem and you
-	must place it in a partition that will not be overwritten until
+	must place it in a partition that WILL NOT BE OVERWRITTEN until
 	you've completed the installation process.
 
 	To copy the floppy image to the whole disk, overwriting labels:
@@ -127,10 +127,8 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 	as required by the netboot setup.
 
 
-
 OpenBSDXferPrelude
 
-
-OpenBSDXferBootTape(xbase xetc xfont xserv xshare,bsd.rd obs=8k conv=sync,boot obs=8k conv=sync)
+OpenBSDXferBootTape(xbase xetc xfont xserv xshare,bsd.rd obs=8k conv=osync,boot obs=8k conv=osync)
 
 OpenBSDXferFFS

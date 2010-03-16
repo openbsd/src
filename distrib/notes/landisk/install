@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.7 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.8 2010/03/16 17:23:09 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -16,13 +16,13 @@ OpenBSDInstallMBRPart2(that's the way things are)
 
 OpenBSDInstallPart5
 
-OpenBSDInstallPart6({:-CD-ROM, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, -:})
 
 OpenBSDURLInstall
 
 OpenBSDCDROMInstall
 
-OpenBSDDISKInstall({:-"wdN" or -:},{:-only-:})
+OpenBSDDISKInstall({:-"wdN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
 
 OpenBSDCommonInstall
 

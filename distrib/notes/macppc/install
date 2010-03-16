@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.30 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.31 2010/03/16 17:23:09 miod Exp $
 OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -140,12 +140,14 @@ OpenBSDInstallPart5({:-
 	automatically installed if you setup a small (a few MB) MSDOS
 	partition as position `i' in the label.
 
-OpenBSDInstallPart6({:-CD-ROM, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, -:})
 
 OpenBSDURLInstall
 
 OpenBSDCDROMInstall
 		
+OpenBSDNFSInstall
+
 OpenBSDDISKInstall(,,{:- or MS-DOS-:})
 		
 OpenBSDCommonInstall

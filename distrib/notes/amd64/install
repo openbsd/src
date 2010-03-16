@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.13 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.14 2010/03/16 17:23:09 miod Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with another operating system,
@@ -54,7 +54,7 @@ OpenBSDInstallPart5({:-
 	If you have DOS or Linux partitions defined on the disk, these
 	will usually show up as partition 'i', 'j' and so on.-:})
 
-OpenBSDInstallPart6({:-CD-ROM, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, -:})
 
 OpenBSDURLInstall
 

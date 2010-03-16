@@ -1,321 +1,310 @@
-dnl	$OpenBSD: prep,v 1.15 2010/03/04 10:56:03 jasper Exp $
-To be able to boot the OpenBSD/MACHINE installation program, you will
-need to learn a bit about RedBoot, the low-level process that controls
-the microprocessor after hardware initialization.
-dnl
-dnl XXX bootable partitions
+dnl	$OpenBSD: prep,v 1.16 2010/03/16 17:23:09 miod Exp $
+To be able to boot the OpenBSD/MACHINE installation program, you will need
+to learn a bit about RedBoot, the low-level process that controls the
+microprocessor after hardware initialization.
 The enabled features between IOData HDL-G and Thecus N2100 vary, so
 different methods will be needed on both machines.
 
-All these machines use RedBoot as their firmware and boot loader
-interface, with varying limitations.  Thecus systems cannot load a
-file from disk, but can load an image from flash or network.  IOData
-systems are more restricted, and can only load an image from ext2fs
-partitions on disk, while the commands to load from flash are not
-available and network booting does not appear to work.
+All these machines use RedBoot as their firmware and boot loader interface,
+with varying limitations.  Thecus systems cannot load a file from disk, but
+can load an image from flash or network.  IOData systems however are more
+restricted, and can only load an image from ext2fs partitions on disk, while
+the commands to load from flash are not available, and network booting does
+not appear to work.
 
-Talking to the Thecus
+Thecus N2100 setup:
 
-The Thecus N2100 needs a serial cable. On the back of the disk drive
-circuit board, there is either a 10-pin header (with one pin removed),
-or 9 holes for you to solder in your own header.  The ribbon cable
-that connects from there to your serial cable or the serial port on
-your computer is of the same type as used on older i386 PCs, but
-be aware that there are two different types of 10-pin IDC to DB-9M
-ribbon cable in use, which look identical (the differences are hidden
-inside the DB-9 connector). The cable you need is wired using the
-"AT-Everex" or "Asus" pinout, as described here:
+	Talking to the Thecus
 
-    http://www.pccables.com/07120.htm
+	The Thecus N2100 needs a serial cable. On the back of the disk drive
+	circuit board, there is either a 10-pin header (with one pin removed),
+	or 9 holes for you to solder in your own header.  The ribbon cable
+	that connects from there to your serial cable or the serial port on
+	your computer is of the same type as used on older i386 PCs, but
+	be aware that there are two different types of 10-pin IDC to DB-9M
+	ribbon cable in use, which look identical (the differences are hidden
+	inside the DB-9 connector). The cable you need is wired using the
+	"AT-Everex" or "Asus" pinout, as described here:
 
-and *not* the more straightforward to solder "crossed" type:
+	    http://www.pccables.com/07120.htm
 
-    http://www.pccables.com/07121.htm.
+	and *not* the more straightforward to solder "crossed" type:
 
-If you wish to check a cable, or make your own, the pinouts are:
+	    http://www.pccables.com/07121.htm.
 
-    DB9           IDC10
-    ===           =====
-    1 2 3 4 5     1 3 5 7 9
-     6 7 8 9      2 4 6 8 10
+	If you wish to check a cable, or make your own, the pinouts are:
 
-Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
+	    DB9           IDC10
+	    ===           =====
+	    1 2 3 4 5     1 3 5 7 9
+	     6 7 8 9      2 4 6 8 10
 
-On the Thecus N2100, it is necessary to move jumper J3 to J4 to properly
-route the serial port interrupt to allow serial to work under OpenBSD.
-This jumper is under the disk drives, so you may wish to ensure its
-correct setting while you are installing the disk(s).  For instructions
-on assembling/disassembling your N2100, see the N2100 Manual at
+	Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
 
-    http://www.thecus.com/download/manual/N2100%20UM%20EN.pdf
-
-
-Booting Thecus N2100
-
-When you have connected your computer, a command like "tip -115200 tty00"
-(assuming you're using the first serial port on your machine) should 
-connect you to the Thecus console. Now apply power to the Thecus
-and start it.
-
-After some device probe information, you should see this prompt:
-
-    == Executing boot script in 3.000 seconds - enter ^C to abort
-
-To enter interactive RedBoot, it is necessary to press ^C within the given
-number of seconds of the prompt. It will typically accept the ^C if typed 
-during the diagnostics that precede this prompt.
-
-The recommended way to boot OpenBSD on Thecus is to configure networking and
-load bsd.rd from a tftp server or http server. First networking must be
-configured using the fconfig or ip_address commands.
-
-Update the IP address, netmask and server address with the commands
-listed below to allow booting from the network. TFTP and HTTP are
-supported. (BOOTP configuration _may_ not work)
-
-Using ip_address only allows you to set the local IP address and
-the IP address of the server where bsd.rd is located.  This command
-takes effect immediately but will not persist across a reboot.
-
-    RedBoot> ip_address -l 10.0.0.21 -h 10.0.0.7
-    IP: 10.0.0.21/255.255.255.0, Gateway: 0.0.0.0
-    Default server: 10.0.0.7, DNS server IP: 0.0.0.0
-
-Once you have done this, and have set up your TFTP server on
-the gateway machine (10.0.0.7 in the above example), you can
-boot manually.
-
-    RedBoot> load /bsd.rd
-    Using default protocol (TFTP)
-    Entry point: 0x00200000, address range: 0x00200000-0x0066a49c
-    RedBoot> go
-
-OpenBSD/armish booting ...
-initarm: Configuring system ...
-physmemory: 32768 pages at 0xa0000000 -> 0xa7ffffff
-[ no symbol table formats found ]                  
-Copyright (c) 1982, 1986, 1989, 1991, 1993
-        The Regents of the University of California.  All rights reserved.
-Copyright (c) 1995-2010 OpenBSD. All rights reserved.  http://www.OpenBSD.org
-                                                                             
-OpenBSD 4.7-beta (RAMDISK) #84: Tue Mar  2 18:21:39 MST 2010
-    deraadt@armish.openbsd.org:/usr/src/sys/arch/armish/compile/RAMDISK
-real mem  = 134217728 (128MB)                                          
-avail mem = 121610240 (115MB)
-...
-Install(I), Upgrade(U) or Shell(S)?
-
-If you then install to your hard disk, in future you can
-load /boot the same way and just hit "return" to boot OpenBSD.
+	On the Thecus N2100, it is also necessary to move jumper J3 to J4 to
+	properly route the serial port interrupt to allow serial to work under
+	OpenBSD. This jumper is located under the disk drives, so you may wish
+	to ensure its correct setting while you are installing the disk(s).
+	For instructions on assembling/disassembling your N2100, see the N2100
+	Manual at
+	    http://www.thecus.com/download/manual/N2100%20UM%20EN.pdf
 
 
-Automatic Booting
+	Booting Thecus N2100
 
-However, for easier booting, you may wish to modify the flash
-memory so that the Thecus will boot automatically into OpenBSD
-when it is powered up. Doing so disables the devices' built-in
-Linux kernel, however, and makes it difficult or impossible to
-apply future RedBoot firmware upgrades. There are two general 
-approaches:
-1) Just change the boot configuration (using 'fconfig') to automate the 
-   above booting (your TFTP or HTTP boot server will still be needed);
-2) Remove a file from the flash and replace it with OpenBSD's /boot;
-   this configuration can be booted standalone.
+	When you have connected your computer, a command such as
+       	"tip -115200 tty00" (assuming tty00 is your serial port device)
+	should connect you to the Thecus console. Now apply power to the
+	Thecus and start it.
 
-Thecus RedBoot provides the 'fconfig' (not ifconfig) command to
-change the boot configuration of the device. Also 'fis' is provided
-to perform flash operations.
+	After some device probe information, you should see this prompt:
 
-Due to a change made by Thecus to the firmware, fconfig does not
-work with Thecus firmware version "1.93 (Feb 2007)" or later, and
-*it is thus not possible to make the Thecus auto-boot into OpenBSD*
-(worse, it will let you enter the "script" commands below, but
-ignore them on boot). To correct this, you must "upgrade" your
-thecus down to version "1.93 Nov 29 2005" using the file 
-n2100-downgrade-reboot.rom *before* you remove any files from flash.
-You can get this file from Thecus; they have given permission for
-it to be mirrored at http://www.darwinsys.com/openbsd/. However,
-if you have removed files from flash before running this downgrade,
-it is not believed to be possible to get your machine to auto-boot.
+	    == Executing boot script in 3.000 seconds - enter ^C to abort
 
-Once the downgrade is done, if your TFTP machine will always be around,
-you can autoboot just by changing the boot script with fconfig,
-as follows: (in this example, 192.168.1.254 is both the default
-IP gateway and also the TFTP server):
+	To enter interactive RedBoot, it is necessary to press ^C within the
+	given number of seconds of the prompt. It will typically accept the
+	^C if typed during the diagnostics that precede this prompt.
 
-    RedBoot> fconfig
-    Run script at boot: true
-    Boot script: 
-    .. load /boot.armish
-    .. go
-    Enter script, terminate with empty line
-    >> load /boot.armish
-    >> go
-    >> 
-    Boot script timeout (1000ms resolution): 3
-    Use BOOTP for network configuration: false
-    Gateway IP address: 192.168.1.254
-    Local IP address: 192.168.1.253
-    Local IP address mask: 255.255.255.0
-    Default server IP address: 192.168.1.254
-    Console baud rate: 115200
-    DNS server IP address: 
-    GDB connection port: 9000
-    HW Status: 0
-    Force console for special debug messages: false
-    MAC address: 0x00:0x14:0xFD:0x30:0x25:0x14
-    MAC address 2: 0x00:0x14:0xFD:0x30:0x25:0x15
-    Network debug at boot time: false
-    Reset default: Normal
-    Serial number: N2100 V2.1.06
-    ... Unlock from 0xf0fc0000-0xf0fc1000: .
-    ... Erase from 0xf0fc0000-0xf0fc1000: .
-    ... Program from 0x07fd2000-0x07fd3000 at 0xf0fc0000: .
-    ... Lock from 0xf0fc0000-0xf0fc1000: .
-    RedBoot> 
+	The recommended way to boot OpenBSD on Thecus is to configure
+	networking and load bsd.rd from a TFTP server or HTTP server.
 
-This configuration can easily be set back to the default, as the
-Linux system does not get erased from the flash memory. To set it
-back, just change the boot script with fconfig back to what it was,
-for example:
+	Update the IP address, netmask and server address with the commands
+	listed below to allow booting from the network. TFTP and HTTP are
+	supported. (BOOTP configuration _may_ not work)
 
-    thecus_setip
-    fis load ramdisk
-    fis load kernel
-    exec -c "console=ttyS0,115200 root=/dev/ram0 initrd=0xa0800000,42M mem=128M@0xa0000000"
+	Using ip_address only allows you to set the local IP address and
+	the IP address of the server where bsd.rd is located.  This command
+	takes effect immediately but will not persist across a reboot.
 
-You could also remove the boot script altogether by not re-entering
-it, so you would be dropped to the RedBoot shell by default.
+	    RedBoot> ip_address -l 10.0.0.21 -h 10.0.0.7
+	    IP: 10.0.0.21/255.255.255.0, Gateway: 0.0.0.0
+	    Default server: 10.0.0.7, DNS server IP: 0.0.0.0
 
-Recheck the new values and use the 'reset' command.
+	Once you have done this, and have set up your TFTP server on
+	the gateway machine (10.0.0.7 in the above example), you can
+	boot manually.
+
+	    RedBoot> load /bsd.rd
+	    Using default protocol (TFTP)
+	    Entry point: 0x00200000, address range: 0x00200000-0x0066a49c
+	    RedBoot> go
+
+	Once OpenBSD is installed on the hard disk, you will only need to
+	load the OpenBSD/MACHINE boot loader (/boot) the same way, and just
+	hit "return" to boot OpenBSD.
 
 
-For the standalone booting option, you will have to load /boot into
-the flash memory...
+	Automatic Booting
 
-To overwrite the Thecus ROM and boot from the load device, it is necessary
-to delete a 'rom file' and load the openbsd bootloader image there.  With
-networking configured (as above) remove a region and load the 'boot' program.
+	However, for easier booting, you may wish to store the OpenBSD boot
+	loader in the flash memory, so that the Thecus will boot automatically
+	into OpenBSD when it is powered up.
+	Doing so disables the devices' built-in Linux kernel, however, and
+	makes it difficult or impossible to apply future RedBoot firmware
+	upgrades. There are two general approaches:
+	1) Just change the boot configuration (using 'fconfig') to automate
+	   the above booting (your TFTP or HTTP boot server will still be
+	   needed).
+	2) Remove a file from the flash and replace it with OpenBSD's /boot;
+	   this configuration can then be booted standalone.
 
-Initially the machine will contain much like the following:
+	Thecus RedBoot provides the 'fconfig' (not ifconfig) command to
+	change the boot configuration of the device. Also 'fis' is provided
+	to perform flash operations.
 
-    RedBoot> fis list
-    Name              FLASH addr  Mem addr    Length      Entry point
-    RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
-    RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
-    FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
-    ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
-    kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
-    user              0xF0EA0000  0xF0EA0000  0x00120000  0x00200000
+	Due to a change made by Thecus to the firmware, fconfig does not
+	work with Thecus firmware version "1.93 (Feb 2007)" or later, and
+	*it is thus not possible to make the Thecus auto-boot into OpenBSD*
+	(worse, it will let you enter the "script" commands below, but
+	ignore them on boot). To correct this, you must "upgrade" your
+	Thecus down to firmware version "1.93 Nov 29 2005" using the file 
+	n2100-downgrade-reboot.rom *before* you remove any files from flash.
+	You can get this file from Thecus; they have given permission for
+	it to be mirrored at
+	    http://www.darwinsys.com/openbsd/thecus.html
+	However, if you have removed files from flash before running this
+	downgrade, it is not believed to be possible to get your machine
+	to auto-boot.
 
-There is no free space in the rom for the 'boot' program, so something must
-be removed. 
-WARNING: this will make the machine unbootable into the original
-Thecus server mode and it is quite difficult to restore to the
-original software.
-EXTREME WARNING: Do not touch the RedBoot, RedBoot config, or FIS 
-directory regions, as doing so will probably brick the device.
+	Once the downgrade is done, if your TFTP machine will always be
+	around, you can autoboot just by changing the boot script with
+	fconfig, as follows: (in this example, 192.168.1.254 is both the
+	default IP gateway and also the TFTP server):
 
-Remove (with confirmation) a region to make space, eg 'user' (the
-non-root files needed to run Linux from Flash Memory).
+	    RedBoot> fconfig
+	    Run script at boot: true
+	    Boot script: 
+	    .. load /boot.armish
+	    .. go
+	    Enter script, terminate with empty line
+	    >> load /boot.armish
+	    >> go
+	    >> 
+	    Boot script timeout (1000ms resolution): 3
+	    Use BOOTP for network configuration: false
+	    Gateway IP address: 192.168.1.254
+	    Local IP address: 192.168.1.253
+	    Local IP address mask: 255.255.255.0
+	    Default server IP address: 192.168.1.254
+	    Console baud rate: 115200
+	    DNS server IP address: 
+	    GDB connection port: 9000
+	    HW Status: 0
+	    Force console for special debug messages: false
+	    MAC address: 0x00:0x14:0xFD:0x30:0x25:0x14
+	    MAC address 2: 0x00:0x14:0xFD:0x30:0x25:0x15
+	    Network debug at boot time: false
+	    Reset default: Normal
+	    Serial number: N2100 V2.1.06
+	    ... Unlock from 0xf0fc0000-0xf0fc1000: .
+	    ... Erase from 0xf0fc0000-0xf0fc1000: .
+	    ... Program from 0x07fd2000-0x07fd3000 at 0xf0fc0000: .
+	    ... Lock from 0xf0fc0000-0xf0fc1000: .
+	    RedBoot> 
 
-    RedBoot> fis delete user
-    Delete image 'user' - continue (y/n)? y
-    ... Erase from 0xf0ea0000-0xf0fc0000: .........
-    ... Unlock from 0xf0fe0000-0xf1000000: .
-    ... Erase from 0xf0fe0000-0xf1000000: .
-    ... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
-    ... Lock from 0xf0fe0000-0xf1000000: .
+	This configuration can easily be set back to the default, as the
+	Linux system does not get erased from the flash memory. To set it
+	back, just change the boot script with fconfig back to what it was,
+	for example:
 
-Load the Armish OpenBSD bootloader 'boot' via tftp or http:
+	    thecus_setip
+	    fis load ramdisk
+	    fis load kernel
+	    exec -c "console=ttyS0,115200 root=/dev/ram0 initrd=0xa0800000,42M mem=128M@0xa0000000"
 
-    RedBoot> load -m http /boot
-    Entry point: 0x00100000, address range: 0x00100000-0x001067e0
+	You could also remove the boot script altogether by not re-entering
+	it, so you would be dropped to the RedBoot shell by default.
 
-Save that loaded file to flash:
+	Recheck the new values and issue the 'reset' command.
 
-    RedBoot> fis create boot
-    ... Erase from 0xf0ea0000-0xf0ec0000: .
-    ... Program from 0x00100000-0x001067e0 at 0xf0ea0000: .
-    ... Unlock from 0xf0fe0000-0xf1000000: .
-    ... Erase from 0xf0fe0000-0xf1000000: .
-    ... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
-    ... Lock from 0xf0fe0000-0xf1000000: .
+	For the standalone booting option, you will have to load /boot into
+	the flash memory. To overwrite the Thecus ROM behaviour, it is
+	necessary to delete a 'rom file' and load the OpenBSD bootloader image
+	there.  With networking configured (as above), remove a region and
+	load the 'boot' program.
 
-Confirm its addition:
+	Initially the machine will contain much like the following:
 
-    RedBoot> fis list
-    Name              FLASH addr  Mem addr    Length      Entry point
-    RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
-    RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
-    FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
-    ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
-    kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
-    boot              0xF0EA0000  0x00100000  0x00020000  0x00100000
+	    RedBoot> fis list
+	    Name              FLASH addr  Mem addr    Length      Entry point
+	    RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
+	    RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
+	    FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
+	    ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
+	    kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
+	    user              0xF0EA0000  0xF0EA0000  0x00120000  0x00200000
 
-Now that the bootloader is in place, update fconfig to autoboot OpenBSD:
+	There is no free space in the rom for the 'boot' program, so something
+	must be removed. 
+	WARNING: this will make the machine unbootable into the original
+	Thecus server mode and it is quite difficult to restore to the
+	original software.
+	EXTREME WARNING: Do not touch the RedBoot, RedBoot config, or FIS 
+	directory regions, as doing so will probably brick the device.
 
-    RedBoot> fconfig
-    Run script at boot: true
-    Boot script:
-    .. fis load ramdisk
-    .. fis load kernel
-    .. exec ...
-    Enter script, terminate with empty line
-    >> fis load boot
-    >> go
-    >>
-    Boot script timeout (1000ms resolution): 1
-    ...
-    Update RedBoot non-volatile configuration - continue (y/n)? y
-    ... Unlock from 0xf0fc0000-0xf0fc1000: .
-    ... Erase from 0xf0fc0000-0xf0fc1000: .
-    ... Program from 0x0ffd2000-0x0ffd3000 at 0xf0fc0000: .
-    ... Lock from 0xf0fc0000-0xf0fc1000: .
+	Remove (with confirmation) a region to make space, eg 'user' (the
+	non-root files needed to run Linux from Flash Memory).
 
-The important part is that 'Run script' is true and that the commands are
-'fis load boot' and 'go' ('boot' is the file created by 'fis create boot'
-earlier). Confirm the update and type 'reset' to auto boot.
+	    RedBoot> fis delete user
+	    Delete image 'user' - continue (y/n)? y
+	    ... Erase from 0xf0ea0000-0xf0fc0000: .........
+	    ... Unlock from 0xf0fe0000-0xf1000000: .
+	    ... Erase from 0xf0fe0000-0xf1000000: .
+	    ... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
+	    ... Lock from 0xf0fe0000-0xf1000000: .
 
-The bootloader is command driven with timeout like many other OpenBSD
-architectures.
+	Load the OpenBSD/MACHINE bootloader 'boot' via TFTP or HTTP:
+
+	    RedBoot> load -m http /boot
+	    Entry point: 0x00100000, address range: 0x00100000-0x001067e0
+
+	Save that loaded file to flash:
+
+	    RedBoot> fis create boot
+	    ... Erase from 0xf0ea0000-0xf0ec0000: .
+	    ... Program from 0x00100000-0x001067e0 at 0xf0ea0000: .
+	    ... Unlock from 0xf0fe0000-0xf1000000: .
+	    ... Erase from 0xf0fe0000-0xf1000000: .
+	    ... Program from 0x07fdf000-0x07fff000 at 0xf0fe0000: .
+	    ... Lock from 0xf0fe0000-0xf1000000: .
+
+	Confirm its addition:
+
+	    RedBoot> fis list
+	    Name              FLASH addr  Mem addr    Length      Entry point
+	    RedBoot           0xF0000000  0xF0000000  0x00040000  0x00000000
+	    RedBoot config    0xF0FC0000  0xF0FC0000  0x00001000  0x00000000
+	    FIS directory     0xF0FE0000  0xF0FE0000  0x00020000  0x00000000
+	    ramdisk           0xF0040000  0x00800000  0x00D00000  0x00800000
+	    kernel            0xF0D40000  0x00200000  0x00160000  0x00200000
+	    boot              0xF0EA0000  0x00100000  0x00020000  0x00100000
+
+	Now that the bootloader is in place, update fconfig to autoboot
+	OpenBSD:
+
+	    RedBoot> fconfig
+	    Run script at boot: true
+	    Boot script:
+	    .. fis load ramdisk
+	    .. fis load kernel
+	    .. exec ...
+	    Enter script, terminate with empty line
+	    >> fis load boot
+	    >> go
+	    >>
+	    Boot script timeout (1000ms resolution): 1
+	    ...
+	    Update RedBoot non-volatile configuration - continue (y/n)? y
+	    ... Unlock from 0xf0fc0000-0xf0fc1000: .
+	    ... Erase from 0xf0fc0000-0xf0fc1000: .
+	    ... Program from 0x0ffd2000-0x0ffd3000 at 0xf0fc0000: .
+	    ... Lock from 0xf0fc0000-0xf0fc1000: .
+
+	The important part is that 'Run script' is true and that the commands
+	are 'fis load boot' followed with 'go' ('boot' being the file created
+	by 'fis create boot' earlier). Confirm the update and type 'reset'
+	to auto boot.
+
+	The bootloader is command driven with timeout like many other OpenBSD
+	architectures.
 
 
-How to boot/install IOData HDL-G:
+IOData HDL-G setup:
 
-The hda1 partition is the boot partition for Linux; it contains
-zImage and initrd. Since RedBoot only can boot from the ext2fs partition
-it is very important that this partition be present and not be reformatted.
-If this partition is destroyed, it will be necessary to remove the HD and
-recreate the partition on another machine. Note: RedBoot should be able
-to boot from the network, however that has been unsuccessful on IODATA HDL-G
-so far.
+	The hda1 partition is the boot partition for Linux; it contains
+	zImage and initrd. Since RedBoot on this machine can only boot from
+	the ext2fs partition, it is very important that this partition be
+	preserved and not be reformatted. If this partition is destroyed, it
+	will be necessary to remove the disk drive and recreate the partition
+	on another machine. (RedBoot should be able to boot from the network,
+	however that has been unsuccessful on IODATA HDL-G so far)
 
-To install OpenBSD, boot linux, and copy 'boot' and 'bsd.rd' into the
-partition mounted on /dev/hda1, after that has been done, it is possible
-to reboot into OpenBSD and install the device. Installation can proceed
-as on other machines, however care must be take to not remove wd0i/hda1
-partition (fdisk partition 0). DO NOT chose the 'full disk installation'
-option.
+	To install OpenBSD, boot linux, and copy 'boot' and 'bsd.rd' into the
+	partition mounted on /dev/hda1. After that has been done, it is
+	possible to reboot into OpenBSD and install the device. Installation
+	can then proceed as on other machines, however care must be take to
+	not remove wd0i/hda1 partition (fdisk partition 0). DO NOT chose the
+	'full disk installation' option.
 
-Unfortunately, since IODATA did not provide the 'fconfig' command it
-is not possible to change the boot commands run when RedBoot starts,
-thus it not possible to autoboot OpenBSD; the OpenBSD/MACHINE bootloader
-is currently unable to work when loaded as `zImage'.  Futhermore, to
-disable autobooting into Linux, at least one of the zImage and initrd files
-need to be renamed or removed.  This can be done from the shell in bsd.rd.
+	Unfortunately, since IODATA did not provide the 'fconfig' command, it
+	is not possible to change the boot commands run when RedBoot starts,
+	thus it not possible to autoboot OpenBSD; the OpenBSD/MACHINE
+	bootloader is currently unable to work when loaded as `zImage'.
+	Futhermore, to disable autobooting into Linux, at least one of the
+	zImage and initrd files need to be renamed or removed.  This can be
+	done from the shell in bsd.rd.
 
-To load the ramdisk kernel to install use the commands
+	To load the ramdisk kernel to install use the commands
 
-    RedBoot> load -m disk hda1:/bsd.rd
-    RedBoot> go
+	    RedBoot> load -m disk hda1:/bsd.rd
+	    RedBoot> go
 
-to boot normally, load the bootloader which will give options to boot other
-kernels.
+	to boot normally, load the bootloader which will give options to boot
+	other kernels.
 
-    RedBoot> load -m disk hda1:/boot
-    RedBoot> go
+	    RedBoot> load -m disk hda1:/boot
+	    RedBoot> go
 
-Since this bootloader is able to boot any kernel from the OpenBSD root
-partition, it is not necessary to keep bsd.rd on the hda1 partition after
-OpenBSD is installed.
+	Since this bootloader is able to boot any kernel from the OpenBSD
+	root partition, it is not necessary to keep bsd.rd on the hda
+	partition after OpenBSD is installed.

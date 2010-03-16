@@ -1,214 +1,205 @@
-dnl	$OpenBSD: prep,v 1.8 2010/02/17 21:16:23 kettenis Exp $
-To be able to boot the OpenBSD/MACHINE installation program on the
-Thecus N1200, you will need to learn a bit about Das U-Boot, the
-low-level process that controls the microprocessor after hardware
-initialization.  On the RouterBOARD RB600A, that task is handled by
-RouterBOOT.
+dnl	$OpenBSD: prep,v 1.9 2010/03/16 17:23:09 miod Exp $
+To be able to boot the OpenBSD/MACHINE installation program on the Thecus
+N1200, you will need to learn a bit about Das U-Boot, the low-level process
+that controls the microprocessor after hardware initialization.
 
-Talking to the Thecus
+On the RouterBOARD RB600A, that task is handled by RouterBOOT.
 
-The Thecus N1200 needs a serial cable. On the back of the disk drive
-circuit board, there is either a 10-pin header (with one pin removed),
-or 9 holes for you to solder in your own header.  The ribbon cable
-that connects from there to your serial cable or the serial port on
-your computer is of the same type as used on older i386 PCs, but
-be aware that there are two different types of 10-pin IDC to DB-9M
-ribbon cable in use, which look identical (the differences are hidden
-inside the DB-9 connector). The cable you need is wired using the
-"AT-Everex" or "Asus" pinout, as described here:
+Thecus N1200 setup:
 
-    http://www.pccables.com/07120.htm
+	Talking to the Thecus N1200
 
-and *not* the more straightforward to solder "crossed" type:
+	The Thecus N1200 needs a serial cable. On the back of the disk drive
+	circuit board, there is either a 10-pin header (with one pin removed),
+	or 9 holes for you to solder in your own header.  The ribbon cable
+	that connects from there to your serial cable or the serial port on
+	your computer is of the same type as used on older i386 PCs, but
+	be aware that there are two different types of 10-pin IDC to DB-9M
+	ribbon cable in use, which look identical (the differences are hidden
+	inside the DB-9 connector). The cable you need is wired using the
+	"AT-Everex" or "Asus" pinout, as described here:
 
-    http://www.pccables.com/07121.htm.
+	    http://www.pccables.com/07120.htm
 
-If you wish to check a cable, or make your own, the pinouts are:
+	and *not* the more straightforward to solder "crossed" type:
 
-    DB9           IDC10
-    ===           =====
-    1 2 3 4 5     1 3 5 7 9
-     6 7 8 9      2 4 6 8 10
+	    http://www.pccables.com/07121.htm.
 
-Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
+	If you wish to check a cable, or make your own, the pinouts are:
 
+	    DB9           IDC10
+	    ===           =====
+	    1 2 3 4 5     1 3 5 7 9
+	     6 7 8 9      2 4 6 8 10
 
-Booting Thecus N1200
-
-When you have connected your computer, a command like "tip -115200 tty00"
-(assuming you're using the first serial port on your machine) should 
-connect you to the Thecus console. Now apply power to the Thecus
-and start it.
-
-After some device probe information, you should see this prompt:
-
-    Hit any key to stop autoboot:  1
-
-You have exactly one second to press a key and enter interactive
-U-Boot.  Fortunately it will typically accept a key typed during the
-diagnostics that precede this prompt.
-
-The recommended way to boot OpenBSD on Thecus is to configure networking and
-load bsd.bin from a TFTP server. First networking must be configured
-using the setenv command.
-
-    => setenv ipaddr 10.0.0.21
-    => setenv serverip 10.0.0.7
-    => setenv gatewayip 10.0.0.7
-
-Once you have done this, and have set up your TFTP server on
-the gateway machine (10.0.0.7 in the above example), you can
-boot manually.
-
-    => tftpboot 200000 bsd.bin
-    Speed: 1000, full duplex
-    Using Freescale TSEC0 device
-    TFTP from server 10.0.0.7; our IP address is 10.0.0.21
-    Filename 'bsd.bin'.
-    Load address: 0x200000
-    Loading: ##########################################################
-          #############################################################
-          ...
-          ######
-    done
-    Bytes transferred = 295148 (480ec hex)
-    => go 200000
-
-Copyright (c) 1982, 1986, 1989, 1991, 1993
-     The Regents of the University of California.  All rights reserved.
-Copyright (c) 1995-2008 OpenBSD. All rights reserved.  http://www.OpenBSD.org
-
-OpenBSD 4.3 (RAMDISK) #175: Tue Mar  4 21:54:34 MST 2008
-    deraadt@socppc.openbsd.org:/usr/src/sys/arch/socppc/compile/RAMDISK
-real mem = 134217728 (128MB)
-avail mem = 122384384 (116MB)
-...
-Install(I), Upgrade(U) or Shell(S)?
-
-If you then install to your hard disk, in future you can
-load the OpenBSD/socppc boot loader
-
-    => tftpboot 200000 boot
-    => bootm
-
-and just hit "return" to boot OpenBSD.
+	Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
 
 
-Automatic Booting
+	Booting the Thecus N1200
 
-However, for easier booting, you may wish to modify the flash
-memory so that the Thecus will boot automatically into OpenBSD
-when it is powered up.
+	When you have connected your computer, a command such as
+	"tip -115200 tty00" (assuming tty00 is your serial port device)
+	should connect you to the Thecus console. Now apply power to the
+	Thecus and start it.
 
-    => erase fe780000 fe800000
+	After some device probe information, you should see this prompt:
+
+	    Hit any key to stop autoboot:  1
+
+	You have exactly one second to press a key and enter interactive
+	U-Boot.  Fortunately it will typically accept a key typed during the
+	diagnostics that precede this prompt.
+
+	The recommended way to boot OpenBSD on Thecus is to configure
+	networking and load bsd.bin from a TFTP server. First networking must
+	be configured using the setenv command.
+
+	    => setenv ipaddr 10.0.0.21
+	    => setenv serverip 10.0.0.7
+	    => setenv gatewayip 10.0.0.7
+
+	Once you have done this, and have set up your TFTP server on the
+	gateway machine (10.0.0.7 in the above example), you can boot
+	manually.
+
+	    => tftpboot 200000 bsd.bin
+	    Speed: 1000, full duplex
+	    Using Freescale TSEC0 device
+	    TFTP from server 10.0.0.7; our IP address is 10.0.0.21
+	    Filename 'bsd.bin'.
+	    Load address: 0x200000
+	    Loading: ##########################################################
+	          #############################################################
+	          ...
+	          ######
+	    done
+	    Bytes transferred = 295148 (480ec hex)
+	    => go 200000
+
+	Once OpenBSD is installed on the hard disk, you will only need to
+	load the OpenBSD/MACHINE boot loader:
+
+	    => tftpboot 200000 boot
+	    => bootm
+
+	and just hit "return" to boot OpenBSD.
+
+
+	Automatic Booting
+
+	However, for easier booting, you may wish to store the OpenBSD boot
+	loader in the flash memory, so that the Thecus will boot automatically
+	into OpenBSD when it is powered up.
+
+	    => erase fe780000 fe800000
     
-    .... done
-    Erased 4 sectors
-    => tftpboot 200000 boot
-    Speed: 1000, full duplex
-    Using Freescale TSEC0 device
-    TFTP from server 10.0.0.7; our IP address is 10.0.0.21
-    Filename 'boot'.
-    Load address: 0x200000
-    Loading: ##########################################################
-    done
-    Bytes transferred = 295148 (480ec hex)
-    => cp 200000 fe780000 20000
-    Copy to Flash... 
-    512 KBdone
-    => setenv bootcmd bootm FE780000
-    => saveenv
-    Saving Environment to Flash...
-    Un-Protected 2 sectors
-    Erasing Flash...
-    .. done
-    Erased 2 sectors
-    Writing to Flash... 
-    256 KBdone
-    Protected 2 sectors
-    => reset
+	    .... done
+	    Erased 4 sectors
+	    => tftpboot 200000 boot
+	    Speed: 1000, full duplex
+	    Using Freescale TSEC0 device
+	    TFTP from server 10.0.0.7; our IP address is 10.0.0.21
+	    Filename 'boot'.
+	    Load address: 0x200000
+	    Loading: ##########################################################
+	    done
+	    Bytes transferred = 295148 (480ec hex)
+	    => cp 200000 fe780000 20000
+	    Copy to Flash... 
+	    512 KBdone
+	    => setenv bootcmd bootm FE780000
+	    => saveenv
+	    Saving Environment to Flash...
+	    Un-Protected 2 sectors
+	    Erasing Flash...
+	    .. done
+	    Erased 2 sectors
+	    Writing to Flash... 
+	    256 KBdone
+	    Protected 2 sectors
+	    => reset
 
-This configuration can easily be set back to the default, as the
-Linux system does not get erased from the flash memory. To set it
-back, just change the boot script with fconfig back to what it was,
-for example:
+	This configuration can easily be set back to the default, as the
+	existing Linux system does not get erased from the flash memory.
+	To set it back, just change the boot command back to what it was,
+	for example:
 
-    => setenv bootcmd flashboot
-    => saveenv
+	    => setenv bootcmd flashboot
+	    => saveenv
 
-The bootloader is command driven with timeout like many other OpenBSD
-architectures.
+	The bootloader is command driven with timeout like many other OpenBSD
+	architectures.
 
-It may be needed to increase the 'bootdelay' variable in order to give
-the SATA-chip a chance to initialize. Having a too short delay could cause
-OpenBSD/socppc to not find it's root device (and thus kernel image).
-In some cases as much as ten seconds are needed for the delay, although
-five seconds will do in most cases:
+	It may be needed to increase the 'bootdelay' variable in order to give
+	the SATA-chip a chance to initialize. Having a too short delay could
+	cause OpenBSD/MACHINE to not find its root device (and thus kernel
+	image).  Although sometimes as much as ten seconds of delay are
+	necessary, five seconds will do in most cases:
 
-    => setenv bootdelay 5
-    => saveenv
+	    => setenv bootdelay 5
+	    => saveenv
 
 
-Booting the RouterBOARD RB600A
+RouterBOARD RB600A setup:
 
-The RouterBOARD RB600A comes with a standard DB9 serial port, so no
-special cables are needed.  Like the Thecus, the default baudrate is
-115200, so a command like "tip -115200 tty00" should connect you to
-the RouterBOARD console.  As soon as you apply power to the
-RouterBOARD, it will start booting.
+	The RouterBOARD RB600A comes with a standard DB9 serial port, so no
+	special cables are needed.  Like the Thecus, the default baudrate is
+	115200, so a command like "tip -115200 tty00" should connect you to
+	the RouterBOARD console.  As soon as you apply power to the
+	RouterBOARD, it will start booting.
 
-Shortly after RouterBOOT starts, you will see a message like:
+	Shortly after RouterBOOT starts, you will see a message like:
 
-    Press any key within 2 seconds to enter setup.
+	    Press any key within 2 seconds to enter setup.
 
-Since board initailization is very fast, it is rather easy to miss
-this message, in which case the board will load its RouterOS (which is
-just Linux) from flash.
+	Since board initailization is very fast, it is rather easy to miss
+	this message, in which case the board will load its RouterOS (which
+	is just Linux) from flash.
 
-The recommended way to install OpenBSD on the RouterBOARD is to copy
-the miniroot "miniroot{:--:}OSrev.fs" image to CompactFlash on another
-machine and place in the first (J301) CompactFlash slot on the board.  
+	The recommended way to install OpenBSD on the RouterBOARD is to copy
+	the miniroot "miniroot{:--:}OSrev.fs" image to CompactFlash on another machine
+	and place in the first (J301) CompactFlash slot on the board.  
 
-Use the dd(1) utility to copy the miniroot to CompactFlash.
-The command would likely be, under OpenBSD:
-	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c
-Replace ``rsd1c'' with the appropriate device name for the raw device
-on the system used to do the copy.
+	Use the dd(1) utility to copy the miniroot to CompactFlash.
+	The command would likely be, under OpenBSD:
+		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c
+	Replace ``rsd1c'' with the appropriate device name for the raw device
+	on the system used to do the copy.
 
-You will need to configure your RouterBOARD to boot from CompactFlash.
-To do this, enter the RouterBOOT setup by pressing a key when the
-message show above appears on the serial console.  This should present
-you with the following menu:
+	You will need to configure your RouterBOARD to boot from CompactFlash.
+	To do this, enter the RouterBOOT setup by pressing a key when the
+	message shown above appears on the serial console.  This should present
+	you with the following menu:
 
-    RouterBOOT-2.20
-    What do you want to configure?
-       d - boot delay
-       k - boot key
-       s - serial console
-       o - boot device
-       f - cpu frequency
-       r - reset booter configuration
-       e - format nand
-       g - upgrade firmware
-       i - board info
-       p - boot protocol
-       t - do memory testing
-       x - exit setup
-    your choice: 
+	    RouterBOOT-2.20
+	    What do you want to configure?
+	       d - boot delay
+	       k - boot key
+	       s - serial console
+	       o - boot device
+	       f - cpu frequency
+	       r - reset booter configuration
+	       e - format nand
+	       g - upgrade firmware
+	       i - board info
+	       p - boot protocol
+	       t - do memory testing
+	       x - exit setup
+	    your choice: 
 
-Choose 'o' to enter the boot device menu:
+	Choose 'o' to enter the boot device menu:
 
-    Select boot device:
-       e - boot over Ethernet
-     * n - boot from NAND, if fail then Ethernet
-       c - boot from CompactFlash only
-       1 - boot Ethernet once, then NAND
-       2 - boot Ethernet once, then CompactFlash
-       o - boot from NAND only
-       b - boot chosen device
-your choice: 
+	    Select boot device:
+	       e - boot over Ethernet
+	     * n - boot from NAND, if fail then Ethernet
+	       c - boot from CompactFlash only
+	       1 - boot Ethernet once, then NAND
+	       2 - boot Ethernet once, then CompactFlash
+	       o - boot from NAND only
+	       b - boot chosen device
+	your choice: 
 
-Choose 'c' to select CompactFlash and then, at the main menu, choose
-'x' to save the setting.  The board will reset, and immediately
-attempt to boot from CompactFlash, straight into the OpenBSD
-installer.
+	Choose 'c' to select CompactFlash and then, at the main menu, choose
+	'x' to save the setting.  The board will reset, and immediately
+	attempt to boot from CompactFlash, straight into the OpenBSD
+	installer.

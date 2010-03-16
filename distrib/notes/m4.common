@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.90 2010/03/09 20:38:43 otto Exp $
+dnl	$OpenBSD: m4.common,v 1.91 2010/03/16 17:23:05 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -571,8 +571,8 @@ define({:-OpenBSDInstallPart6-:},
 
 	After these preparatory steps have been completed, you will be
         able to extract the distribution sets onto your system.  There
-        are several install methods supported; FTP, HTTP, tape,
-	$1or a local disk partition.-:})dnl
+        are several install methods supported:
+	FTP, HTTP, $1or a local disk partition.-:})dnl
 dnl
 dnl Notes for various installation methods.
 dnl
@@ -693,10 +693,11 @@ define({:-OpenBSDDISKInstall-:},
 {:-	To install from a local disk partition:
 		When installing from a local disk partition, you will
 		first have to identify which disk holds the distribution
-		sets.  This is normally $1"sdN", where N is a number
-		0 through 9.  Next you will have to identify the partition
-		within that disk that holds the distribution; this is a
-		single letter between 'a' and 'p'.
+		sets.
+		This is normally $1"sdN", where N is a number.
+		Next you will have to identify the partition within that disk
+		that holds the distribution; this is a single letter between
+		'a' and 'p'.
 
 		You will also have to identify the type of file system
 		residing in the partition identified.  Currently, you can
@@ -894,7 +895,8 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	(i.e. read-only).-:})dnl
 dnl
 define({:-OpenBSDXferFloppyFromUNIX-:},
-{:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like system:
+{:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like
+system:
 
 	First, you will need obtain a local copy of the bootable filesystem
 	image as described above.  If possible use the sha1(1) command to
@@ -977,7 +979,7 @@ dnl OpenBSDXferBootTape describes how to set up a non-bootable distribution
 dnl tape, and takes as first argument, the list of X11 sets which may be put
 dnl on the tape.  Then at least one, and up to three arguments list the first
 dnl files to be put on the tape to make it bootable.  Each filename can be
-dnl followed by dd(1) arguments (such as conv=sync).
+dnl followed by dd(1) arguments (such as conv=osync).
 define({:-OpenBSDXferBootTape-:},
 {:-Creating an (optionally bootable) installation tape:
 
@@ -1005,7 +1007,7 @@ ifelse(X$4,X,,{:-		dd of=${TAPE} if=$4
 	fi
 	for file in base etc comp game man misc $1
 	do
-		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=sync
+		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=osync
 	done
 	tar cf ${TAPE} bsd
 	mt -f ${TAPE} offline

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.3 2007/02/28 22:30:05 miod Exp $
+dnl	$OpenBSD: prep,v 1.4 2010/03/16 17:23:09 miod Exp $
 The default configuration of the MACHINE systems comes with a Linux
 installation on the disk (either an IDE hard drive, or a CompactFlash
 card). At the moment, there is no known way to log in this installation
@@ -25,7 +25,6 @@ on the system used to do the copy.
 If the machine has a hard drive, and you had to change jumpers on it
 to change its ``master'' status, do not forget to configure it back
 to ``master'' or ``single drive'', as slave drives are not bootable.
-
 
 dnl I need to write a comprehensive text, also explaining that Rx/Tx
 dnl are swapped between the CF and HD models.

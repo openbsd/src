@@ -1,15 +1,14 @@
-dnl	$OpenBSD: xfer,v 1.10 2008/08/06 18:23:56 miod Exp $
+dnl	$OpenBSD: xfer,v 1.11 2010/03/16 17:23:09 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
-	FFS partitions (for upgrades only)
+	FFS partitions
 	Tape
 	Remote NFS partition
 	FTP
 	HTTP
 
 OpenBSDXferPrelude
-
 
 dnl Put back xserv when it is back
 dnl OpenBSDXferBareTape(xbase xetc xfont xserv xshare)

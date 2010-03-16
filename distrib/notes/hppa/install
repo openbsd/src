@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2009/10/25 20:56:24 miod Exp $
+dnl	$OpenBSD: install,v 1.20 2010/03/16 17:23:09 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -134,7 +134,7 @@ OpenBSDInstallPart5(,{:-
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-OpenBSDInstallPart6({:-CD-ROM, -:})
+OpenBSDInstallPart6({:-CD-ROM, tape, -:})
 
 OpenBSDURLInstall
 
