@@ -53,6 +53,10 @@ Boston, MA 02111-1307, USA.  */
 #define OBSD_HAS_CORRECT_SPECS
 #include <openbsd.h>
 
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#endif
+
 /* mips assembler uses .set for arcane purposes.  __attribute__((alias))
    and friends won't work until we get recent binutils with .weakext
 	support.  */

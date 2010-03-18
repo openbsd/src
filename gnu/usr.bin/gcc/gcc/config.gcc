@@ -1,4 +1,4 @@
-#	$OpenBSD: config.gcc,v 1.19 2007/07/05 18:59:27 kettenis Exp $
+#	$OpenBSD: config.gcc,v 1.20 2010/03/18 19:39:48 kettenis Exp $
 # GCC build-, host- and target-specific configuration file.
 # Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
@@ -1940,7 +1940,7 @@ mips*-*-openbsd*)
 	case $machine in
         mips64*-*)
 		tm_defines="MIPS_ISA_DEFAULT=3 MIPS_ABI_DEFAULT=ABI_64"
-		tmake_file="mips/t-openbsd64"
+		tmake_file="t-openbsd mips/t-openbsd64"
 		;;
         mips*-*)
 		tm_defines="MIPS_ISA_DEFAULT=3 MIPS_ABI_DEFAULT=ABI_N32"
