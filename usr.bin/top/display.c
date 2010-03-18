@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.37 2010/02/05 10:21:10 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.38 2010/03/18 12:52:06 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -800,10 +800,11 @@ show_errors(void)
 	}
 	printwp("%d error%s:\n\n", errcnt, errcnt == 1 ? "" : "s");
 	while (cnt++ < errcnt) {
-		printf("%5s: %s\n", errp->arg,
+		printwp("%5s: %s\n", errp->arg,
 		    errp->err == 0 ? "Not a number" : strerror(errp->err));
 		errp++;
 	}
+	printwp("\n");
 	if (smart_terminal) {
 		nonl();
 		refresh();
