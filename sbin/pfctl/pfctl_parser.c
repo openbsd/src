@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.262 2010/01/18 23:52:46 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.263 2010/03/18 12:15:22 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1035,7 +1035,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		print_pool(&r->nat, r->nat.proxy_port[0],
 		    r->nat.proxy_port[1], r->af, PF_NAT, verbose);
 	}
-	if (!r->rt && !anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
+	if (!anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
 		printf (" rdr-to ");
 		print_pool(&r->rdr, r->rdr.proxy_port[0],
 		    r->rdr.proxy_port[1], r->af, PF_RDR, verbose);
