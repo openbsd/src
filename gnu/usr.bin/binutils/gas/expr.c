@@ -1074,6 +1074,35 @@ operand (expressionS *expressionP)
 	    else
 	      generic_floating_point_number.sign = 'N';
 	  }
+	else if (expressionP->X_op == O_big
+		 && expressionP->X_add_number > 0)
+	  {
+	    int i;
+
+	    if (c == '~' || c == '-')
+	      {
+		for (i = 0; i < expressionP->X_add_number; ++i)
+		  generic_bignum[i] = ~generic_bignum[i];
+		if (c == '-')
+		  for (i = 0; i < expressionP->X_add_number; ++i)
+		    {
+		      generic_bignum[i] += 1;
+		      if (generic_bignum[i])
+			break;
+		    }
+	      }
+	    else if (c == '!')
+	      {
+		int nonzero = 0;
+		for (i = 0; i < expressionP->X_add_number; ++i)
+		  {
+		    if (generic_bignum[i])
+		      nonzero = 1;
+		    generic_bignum[i] = 0;
+		  }
+		generic_bignum[0] = nonzero;
+	      }
+	  }
 	else if (expressionP->X_op != O_illegal
 		 && expressionP->X_op != O_absent)
 	  {
