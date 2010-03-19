@@ -1,5 +1,21 @@
-/*	$OpenBSD: man.c,v 1.38 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.39 2010/03/19 21:04:25 schwarze Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
+
+/*
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -50,10 +66,14 @@
 #include "pathnames.h"
 
 int f_all, f_where;
-static TAG *section;	/* could be passed to cleanup() instead */
+static char gbuf[MAXPATHLEN * 2];
+static TAG *section;
 
 extern char *__progname;
 
+static void	 clearlist(TAG *);
+static void	 parse_path(TAG *, char *);
+static void	 append_subdirs(TAG *, const char *);
 static void	 build_page(char *, char **);
 static void	 cat(char *);
 static char	*check_pager(char *);
@@ -71,13 +91,13 @@ main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
-	TAG *defp, *defnewp, *sectnewp, *subp;
-	ENTRY *e_defp, *e_sectp, *e_subp, *ep;
+	TAG *searchlist;
+	ENTRY *ep;
 	glob_t pg;
 	size_t len;
 	int ch, f_cat, f_how, found;
-	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *sflag, *slashp;
-	char *conffile, buf[MAXPATHLEN * 2];
+	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *sflag;
+	char *conffile;
 
 	if (argv[1] == NULL && strcmp(basename(__progname), "help") == 0) {
 		static char *nargv[3];
@@ -157,146 +177,52 @@ main(int argc, char *argv[])
 	/* Read the configuration file. */
 	config(conffile);
 
-	/* Get the machine type unless specified by -S. */
+	/*
+	 * 1: If the user specified a section,
+	 *    use the section list from the configuration file.
+	 *    Otherwise, fall back to the default list or to an empty list.
+	 */
+	if (sflag && (section = getlist(sflag)) == NULL)
+		errx(1, "unknown manual section `%s'", sflag);
+	else if (argv[1] && (section = getlist(*argv)) != NULL)
+		++argv;
+
+	searchlist = section;
+	if (searchlist == NULL)
+		searchlist = getlist("_default");
+	if (searchlist == NULL)
+		searchlist = addlist("_default");
+
+	/*
+	 * 2: If the user set the -M option or defined the MANPATH variable,
+	 *    clear what we have and take the user's list instead.
+	 */
+	if (p_path == NULL)
+		p_path = getenv("MANPATH");
+
+	if (p_path) {
+		clearlist(searchlist);
+		parse_path(searchlist, p_path);
+	}
+
+	/*
+	 * 3: If the user set the -m option, insert the user's list before
+	 *    whatever list we have.
+	 */
+	if (p_add)
+		parse_path(searchlist, p_add);
+
+	/*
+	 * 4: Append the _subdir list where appropriate,
+	 *    and always append the machine type.
+	 */
 	if (machine || (machine = getenv("MACHINE")))
 		for (p = machine; *p; ++p)
 			*p = tolower(*p);
 	else
 		machine = MACHINE;
 
-	/* If there's no _default list, create an empty one. */
-	if ((defp = getlist("_default")) == NULL)
-		defp = addlist("_default");
-
-	/*
-	 * 1: If the user specified a MANPATH variable, or set the -M
-	 *    option, we replace the _default list with the user's list,
-	 *    appending the entries in the _subdir list and the machine.
-	 */
-	if (p_path == NULL)
-		p_path = getenv("MANPATH");
-	if (p_path != NULL) {
-		while ((e_defp = TAILQ_FIRST(&defp->list)) != NULL) {
-			free(e_defp->s);
-			TAILQ_REMOVE(&defp->list, e_defp, q);
-		}
-		for (p = strtok(p_path, ":");
-		    p != NULL; p = strtok(NULL, ":")) {
-			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : TAILQ_FIRST(&subp->list);
-			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
-				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-				    p, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
-				TAILQ_INSERT_TAIL(&defp->list, ep, q);
-			}
-		}
-	}
-
-	/*
-	 * 2: If the user did not specify MANPATH, -M or a section, rewrite
-	 *    the _default list to include the _subdir list and the machine.
-	 */
-	if (sflag == NULL && argv[1] == NULL)
-		section = NULL;
-	else {
-		if (sflag != NULL && (section = getlist(sflag)) == NULL)
-			errx(1, "unknown manual section `%s'", sflag);
-		else if (sflag == NULL && (section = getlist(*argv)) != NULL)
-			++argv;
-	}
-	if (p_path == NULL && section == NULL) {
-		defnewp = addlist("_default_new");
-		e_defp = TAILQ_FIRST(&defp->list);
-		for (; e_defp != NULL; e_defp = TAILQ_NEXT(e_defp, q)) {
-			slashp =
-			    e_defp->s[strlen(e_defp->s) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : TAILQ_FIRST(&subp->list);
-			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
-				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-				e_defp->s, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
-				TAILQ_INSERT_TAIL(&defnewp->list, ep, q);
-			}
-		}
-		defp = getlist("_default");
-		while ((e_defp = TAILQ_FIRST(&defp->list)) != NULL) {
-			free(e_defp->s);
-			TAILQ_REMOVE(&defp->list, e_defp, q);
-		}
-		free(defp->s);
-		TAILQ_REMOVE(&head, defp, q);
-		defnewp = getlist("_default_new");
-		free(defnewp->s);
-		defnewp->s = "_default";
-		defp = defnewp;
-	}
-
-	/*
-	 * 3: If the user set the -m option, insert the user's list before
-	 *    whatever list we have, again appending the _subdir list and
-	 *    the machine.
-	 */
-	if (p_add != NULL) {
-		e_sectp = NULL;
-		for (p = strtok(p_add, ":"); p != NULL; p = strtok(NULL, ":")) {
-			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : TAILQ_FIRST(&subp->list);
-			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
-				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-				    p, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
-
-				if (e_sectp == NULL)
-					TAILQ_INSERT_HEAD(&defp->list, ep, q);
-				else
-					TAILQ_INSERT_AFTER(&defp->list, e_sectp,
-					    ep, q);
-				e_sectp = ep;
-			}
-		}
-	}
-	/*
-	 * 4: If no -m was specified, and a section was, rewrite the section's
-	 *    paths (if they have a trailing slash) to append the _subdir list
-	 *    and the machine.  This then becomes the _default list.
-	 */
-	if (p_add == NULL && section != NULL) {
-		sectnewp = addlist("_section_new");
-		TAILQ_FOREACH(e_sectp, &section->list, q) {
-			if (e_sectp->s[strlen(e_sectp->s) - 1] != '/') {
-				(void)snprintf(buf, sizeof(buf),
-				    "%s{/%s,}", e_sectp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
-				TAILQ_INSERT_TAIL(&sectnewp->list, ep, q);
-				continue;
-			}
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : TAILQ_FIRST(&subp->list);
-			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
-				(void)snprintf(buf, sizeof(buf), "%s%s{/%s,}",
-				    e_sectp->s, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, NULL);
-				TAILQ_INSERT_TAIL(&sectnewp->list, ep, q);
-			}
-		}
-		sectnewp->s = section->s;
-		defp = sectnewp;
-		TAILQ_REMOVE(&head, section, q);
-	}
+	append_subdirs(searchlist, machine);
 
 	/*
 	 * 5: Search for the files.  Set up an interrupt handler, so the
@@ -311,7 +237,7 @@ main(int argc, char *argv[])
 
 	memset(&pg, 0, sizeof(pg));
 	for (found = 0; *argv; ++argv)
-		if (manual(*argv, defp, &pg))
+		if (manual(*argv, searchlist, &pg))
 			found = 1;
 
 	/* 6: If nothing found, we're done. */
@@ -379,6 +305,121 @@ main(int argc, char *argv[])
 	(void)system(cmd);
 
 	exit(cleanup());
+}
+
+/*
+ * clearlist --
+ *	Remove all entries from a list,
+ * 	but leave the list header intact.
+ */
+static void
+clearlist(TAG *t)
+{
+	ENTRY *e;
+
+	while ((e = TAILQ_FIRST(&t->list)) != NULL) {
+		free(e->s);
+		TAILQ_REMOVE(&t->list, e, q);
+		free(e);
+	}
+}
+
+/*
+ * parse_path --
+ *	Split the -M or -m argument or the MANPATH variable at colons,
+ *	and insert the parts into the searchlist.
+ */
+static void
+parse_path(TAG *t, char *path)
+{
+	ENTRY *eplast = NULL, *ep;
+	char *p, *slashp;
+
+	while ((p = strsep(&path, ":")) != NULL) {
+		if ((ep = malloc(sizeof(ENTRY))) == NULL)
+			err(1, NULL);
+
+		/* 
+		 * Bring section specific paths to the same format as
+		 * used in the configuration file, ending in /{cat,man}N.
+		 */
+		if (section) {
+			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
+			(void)snprintf(gbuf, sizeof(gbuf),
+			    "%s%s{cat,man}%s", p, slashp, t->s);
+			if ((ep->s = strdup(gbuf)) == NULL)
+				err(1, NULL);
+		}
+
+		/* Without a section, subdirs will be appended later. */
+		else
+			if ((ep->s = strdup(p)) == NULL)
+				err(1, NULL);
+
+		/*
+		 * Even in case of -M, inserting in front is fine:
+		 * We have just cleared the list.
+		 */
+		if (eplast)
+			TAILQ_INSERT_AFTER(&t->list, eplast, ep, q);
+		else
+			TAILQ_INSERT_HEAD(&t->list, ep, q);
+		eplast = ep;
+	}
+}
+
+/*
+ * append_subdirs --
+ *	Iterate the searchlist and append section and machine
+ *	subdirectories as needed.
+ */
+static void
+append_subdirs(TAG *t, const char *machine)
+{
+	TAG *tsub;
+	ENTRY *eold, *elast, *enew, *esub;
+	char *slashp;
+
+	eold = elast = TAILQ_FIRST(&t->list);
+	while (eold) {
+
+		/*
+		 * Section subdirectories *not* ending in a slash
+		 * only get the machine suffix: They already had
+		 * the {cat,man}N part in the configuration file
+		 * or got it in parse_path().
+		 */
+		if (section && eold->s[strlen(eold->s)-1] != '/') {
+			(void)snprintf(gbuf, sizeof(gbuf), "%s{/%s,}",
+			    eold->s, machine);
+			free(eold->s);
+			if ((eold->s = strdup(gbuf)) == NULL)
+				err(1, NULL);
+			eold = elast = TAILQ_NEXT(eold, q);
+			continue;
+		}
+
+		/*
+		 * Without a section, expand each entry using the
+		 * subdir list, then drop the original entry.
+		 */
+		esub = (tsub = getlist("_subdir")) == NULL ?
+		    NULL : TAILQ_FIRST(&tsub->list);
+		while (esub) {
+			slashp = eold->s[strlen(eold->s)-1] == '/' ? "" : "/";
+			(void)snprintf(gbuf, sizeof(gbuf), "%s%s%s{/%s,}",
+			    eold->s, slashp, esub->s, machine);
+			if ((enew = malloc(sizeof(ENTRY))) == NULL ||
+			    (enew->s = strdup(gbuf)) == NULL)
+				err(1, NULL);
+			TAILQ_INSERT_AFTER(&t->list, elast, enew, q);
+			elast = enew;
+			esub = TAILQ_NEXT(esub, q);
+		}
+		elast = TAILQ_NEXT(elast, q);
+		TAILQ_REMOVE(&t->list, eold, q);
+		eold = elast;
+	}
 }
 
 /*
