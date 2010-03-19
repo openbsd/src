@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.38 2010/03/16 22:48:43 kettenis Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.39 2010/03/19 13:08:56 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -137,10 +137,6 @@ uint8_t	*ixgbe_mc_array_itr(struct ixgbe_hw *, uint8_t **, uint32_t *);
 
 /* Legacy (single vector interrupt handler */
 int	ixgbe_legacy_irq(void *);
-
-#ifndef NO_82598_A0_SUPPORT
-void	desc_flip(void *);
-#endif
 
 /*********************************************************************
  *  OpenBSD Device Interface Entry Points
@@ -2049,11 +2045,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	TXD->seqnum_seed = htole32(0);
 	TXD->mss_l4len_idx = htole32(0);
 
-#ifndef NO_82598_A0_SUPPORT
-	if (sc->hw.revision_id == 0)
-		desc_flip(TXD);
-#endif
-
 	tx_buffer->m_head = NULL;
 
 	/* We've consumed the first desc, adjust counters */
@@ -2157,11 +2148,6 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, uint32_t *paylen)
 
 	TXD->seqnum_seed = htole32(0);
 	tx_buffer->m_head = NULL;
-
-#ifndef NO_82598_A0_SUPPORT
-	if (sc->hw.revision_id == 0)
-		desc_flip(TXD);
-#endif
 
 	if (++ctxd == sc->num_tx_desc)
 		ctxd = 0;
@@ -2338,23 +2324,6 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 
 	bzero(rxdesc, dsize);
 	rxdesc->read.pkt_addr = htole64(rxbuf->map->dm_segs[0].ds_addr);
-
-#ifndef NO_82598_A0_SUPPORT
-        /* A0 needs to One's Compliment descriptors */
-	if (sc->hw.revision_id == 0) {
-        	struct dhack {
-			uint32_t a1;
-			uint32_t a2;
-			uint32_t b1;
-			uint32_t b2;
-		};
-        	struct dhack *d;   
-
-        	d = (struct dhack *)rxdesc;
-        	d->a1 = ~(d->a1);
-        	d->a2 = ~(d->a2);
-	}
-#endif
 
 	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 	    dsize * i, dsize, BUS_DMASYNC_PREWRITE);
@@ -3167,26 +3136,3 @@ ixgbe_print_hw_stats(struct ix_softc * sc)
 	    sc->tso_tx);
 }
 #endif
-
-#ifndef NO_82598_A0_SUPPORT
-/*
- * A0 Workaround: invert descriptor for hardware
- */
-void
-desc_flip(void *desc)
-{
-        struct dhack {uint32_t a1; uint32_t a2; uint32_t b1; uint32_t b2;};
-        struct dhack *d;
-
-        d = (struct dhack *)desc;
-        d->a1 = ~(d->a1);
-        d->a2 = ~(d->a2);
-        d->b1 = ~(d->b1);
-        d->b2 = ~(d->b2);
-        d->b2 &= 0xFFFFFFF0;
-        d->b1 &= ~IXGBE_ADVTXD_DCMD_RS;
-}
-#endif
-
-
-
