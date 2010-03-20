@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.36 2010/01/01 05:47:00 deraadt Exp $
+#	$OpenBSD: list,v 1.37 2010/03/20 17:34:30 sobrado Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -6,7 +6,6 @@ SRCDIRS bin sbin usr.bin usr.sbin
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin			instbin
-LINK	instbin					bin/arch
 LINK	instbin					bin/cat
 LINK	instbin					bin/chmod bin/chgrp sbin/chown
 LINK	instbin					bin/cp
@@ -45,11 +44,12 @@ LINK	instbin					sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/rtsol
+LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
+LINK	instbin					usr/bin/arch
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/sed
-LINK	instbin					sbin/sysctl
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
