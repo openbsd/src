@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.480 2010/03/14 22:44:56 mk Exp $
+$OpenBSD: usbdevs,v 1.481 2010/03/20 09:15:11 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2643,6 +2643,7 @@ product NATIONAL BEARPAW2400	0x1001	BearPaw 2400
 
 /* NEC products */
 product NEC HUB			0x005a	hub
+product NEC WL300NUG		0x0249	WL300NU-G
 product NEC USB2EXTEND		0x0409	Repeater
 product NEC HUB_B		0x55aa	hub
 product NEC HUB_C		0x55ab	hub
