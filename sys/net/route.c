@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.115 2010/02/09 16:31:14 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.116 2010/03/20 10:43:11 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -235,6 +235,7 @@ rtable_add(u_int id)	/* must be called at splsoftnet */
 			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
 			bcopy(rt_tab2dom, q, sizeof(u_int) * (rtbl_id_max+1));
 			free(rt_tables, M_RTABLE);
+			free(rt_tab2dom, M_RTABLE);
 		}
 		rt_tables = p;
 		rt_tab2dom = q;
