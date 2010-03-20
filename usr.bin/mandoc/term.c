@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.23 2010/03/06 11:27:55 schwarze Exp $ */
+/*	$Id: term.c,v 1.24 2010/03/20 20:07:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -213,7 +213,7 @@ term_flushln(struct termp *p)
 		 * If so, break to the next line.  (TODO: hyphenate)
 		 * Otherwise, write the chosen number of blanks now.
 		 */
-		if (vend > bp && 0 == jhy) {
+		if (vend > bp && 0 == jhy && vis > vbl) {
 			vend -= vis;
 			putchar('\n');
 			if (TERMP_NOBREAK & p->flags) {
