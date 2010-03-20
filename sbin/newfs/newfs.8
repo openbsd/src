@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.65 2008/08/03 21:43:19 otto Exp $
+.\"	$OpenBSD: newfs.8,v 1.66 2010/03/20 14:19:38 krw Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: August 3 2008 $
+.Dd $Mdocdate: March 20 2010 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -189,9 +189,10 @@ format file system.
 This option is primarily used to build root file systems that can
 be understood by older boot ROMs.
 .It 1
-Fast File System (the default).
+Fast File System (FFS), the default for file systems smaller than 1 TB.
 .It 2
-Enhanced Fast File System (FFS2).
+Enhanced Fast File System (FFS2), the default for file systems larger than
+1 TB.
 .El
 .It Fl o Ar optimization
 .Ar space
@@ -213,7 +214,8 @@ With this option,
 .Nm
 will not print extraneous information like superblock backups.
 .It Fl S Ar sector-size
-The size of a sector in bytes (almost never anything but 512).
+The size of a sector in bytes (almost always 512).
+A sector is the smallest addressable unit on the physical device.
 Changing this is useful only when using
 .Nm
 to build a file system whose raw image will eventually be used on
@@ -226,10 +228,12 @@ to find the alternate superblocks if the standard superblock is
 lost.
 .It Fl s Ar size
 The size of the file system in sectors.
-The maximum size of a Fast File
-System is 2,147,483,647 (2^31 \- 1) sectors, which is slightly less
-than 1TB, assuming a sector size of 512 bytes.
-FFS2 file systems can be as large as the maximum partition size supported.
+This value is multiplied by the number of 512\-byte blocks in a sector
+to yield the size of the file system in 512\-byte blocks, which is the value
+used by the kernel.
+The maximum size of a FFS file system is 2,147,483,647 (2^31 \- 1) of these
+512\-byte blocks, slightly less than 1 TB.
+FFS2 file systems can be as large as 64 PB.
 Note however that for
 .Nm mount_mfs
 the practical limit is based on

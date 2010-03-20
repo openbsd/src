@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.81 2008/08/08 23:49:53 krw Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.82 2010/03/20 14:19:38 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 	struct stat st;
 	struct statfs *mp;
 	struct rlimit rl;
-	int fsi = -1, fso, len, n, maxpartitions;
+	int fsi = -1, oflagset = 0, fso, len, n, maxpartitions;
 	char *cp = NULL, *s1, *s2, *special, *opstring;
 #ifdef MFS
 	char mountfromname[BUFSIZ];
@@ -189,6 +189,7 @@ main(int argc, char *argv[])
 			Oflag = strtonum(optarg, 0, 2, &errstr);
 			if (errstr)
 				fatal("%s: invalid ffs version", optarg);
+			oflagset = 1;
 			break;
 		case 'S':
 			sectorsize = strtonum(optarg, 1, INT_MAX, &errstr);
@@ -428,12 +429,15 @@ havelabel:
 	if (fssize > DL_GETPSIZE(pp) && !mfs)
 	       fatal("%s: maximum file system size on the `%c' partition is %lld",
 			argv[0], *cp, DL_GETPSIZE(pp));
+
 	if (sectorsize == 0) {
 		sectorsize = lp->d_secsize;
 		if (sectorsize <= 0)
 			fatal("%s: no default sector size", argv[0]);
 	}
 	fssize *= sectorsize / DEV_BSIZE;
+	if (oflagset == 0 && fssize >= INT_MAX)
+		Oflag = 2;	/* FFS2 */
 	if (fsize == 0) {
 		fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (fsize <= 0)
