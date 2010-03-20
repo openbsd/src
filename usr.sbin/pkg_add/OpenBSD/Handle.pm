@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.17 2009/12/31 13:48:52 espie Exp $
+# $OpenBSD: Handle.pm,v 1.18 2010/03/20 09:55:05 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -195,7 +195,9 @@ sub get_plist
 		$handle->set_error(BAD_PACKAGE);
 		return;
 	}
-	OpenBSD::PackingElement::Url->add($plist, $location->url);
+	unless ($plist->has('url')) {
+		OpenBSD::PackingElement::Url->add($plist, $location->url);
+	}
 	if ($plist->localbase ne $state->{localbase}) {
 		$state->say("Localbase mismatch: package has: ", $plist->localbase, " , user wants: ", $state->{localbase});
 		$location->close_with_client_error;
