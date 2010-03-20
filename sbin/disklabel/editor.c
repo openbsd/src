@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.225 2009/12/24 10:06:35 sobrado Exp $	*/
+/*	$OpenBSD: editor.c,v 1.226 2010/03/20 16:53:20 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -509,7 +509,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct diskchunk *chunks;
 	daddr64_t secs, chunkstart, chunksize, cylsecs, totsecs, xtrasecs;
 	char **partmp;
-	int i, j, lastalloc, index = 0;
+	int i, j, lastalloc, index = 0, fragsize;
 	int64_t physmem;
 
 	physmem = getphysmem() / lp_org->d_secsize;
@@ -627,12 +627,15 @@ cylinderalign:
 		/* Everything seems ok so configure the partition. */
 		DL_SETPSIZE(pp, secs);
 		DL_SETPOFFSET(pp, chunkstart);
+		fragsize = 2048;
+		if (secs > 512ULL * 1024 * 1024 * 1024 / lp->d_secsize)
+			fragsize *= 4;
 #if defined (__sparc__) && !defined(__sparc64__)
 		/* can't boot from > 8k boot blocks */
 		pp->p_fragblock =
-		    DISKLABELV1_FFS_FRAGBLOCK(i == 0 ? 1024 : 2048, 8);
+		    DISKLABELV1_FFS_FRAGBLOCK(i == 0 ? 1024 : fragsize, 8);
 #else
-		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
+		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
 #endif
 		pp->p_cpg = 1;
 		if (ap->mp[0] != '/')
@@ -658,7 +661,7 @@ editor_add(struct disklabel *lp, char *p)
 	struct partition *pp;
 	struct diskchunk *chunks;
 	char buf[2];
-	int i, partno;
+	int i, partno, fragsize;
 	u_int64_t freesectors, new_offset, new_size;
 
 	freesectors = editor_countfree(lp);
@@ -739,12 +742,15 @@ editor_add(struct disklabel *lp, char *p)
 	DL_SETPSIZE(pp, new_size);
 	DL_SETPOFFSET(pp, new_offset);
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
+	fragsize = 2048;
+	if (new_size > 512ULL * 1024 * 1024 * 1024 / lp->d_secsize)
+		fragsize *= 4;
 #if defined (__sparc__) && !defined(__sparc64__)
 	/* can't boot from > 8k boot blocks */
 	pp->p_fragblock =
-	    DISKLABELV1_FFS_FRAGBLOCK(partno == 0 ? 1024 : 2048, 8);
+	    DISKLABELV1_FFS_FRAGBLOCK(partno == 0 ? 1024 : fragsize, 8);
 #else
-	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
+	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
 #endif
 	pp->p_cpg = 1;
 
