@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.66 2010/03/20 14:19:38 krw Exp $
+.\"	$OpenBSD: newfs.8,v 1.67 2010/03/20 15:24:49 jmc Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -231,7 +231,7 @@ The size of the file system in sectors.
 This value is multiplied by the number of 512\-byte blocks in a sector
 to yield the size of the file system in 512\-byte blocks, which is the value
 used by the kernel.
-The maximum size of a FFS file system is 2,147,483,647 (2^31 \- 1) of these
+The maximum size of an FFS file system is 2,147,483,647 (2^31 \- 1) of these
 512\-byte blocks, slightly less than 1 TB.
 FFS2 file systems can be as large as 64 PB.
 Note however that for
