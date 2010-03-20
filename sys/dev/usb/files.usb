@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.89 2010/03/01 23:35:56 mk Exp $
+#	$OpenBSD: files.usb,v 1.90 2010/03/20 21:05:42 matthieu Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -83,7 +83,7 @@ file	dev/usb/uhid.c			uhid			needs-flag
 device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
-file	dev/usb/ukbdmap.c		ukbd
+file	dev/usb/ukbdmap.c		ukbd | btkbd
 
 # Mice
 device	ums: hid, wsmousedev
