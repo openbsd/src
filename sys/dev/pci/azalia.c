@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.167 2010/03/16 08:28:22 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.168 2010/03/21 15:02:31 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1660,7 +1660,8 @@ azalia_codec_init(codec_t *this)
 
 	this->na_dacs = this->na_dacs_d = 0;
 	this->na_adcs = this->na_adcs_d = 0;
-	this->speaker = this->spkr_dac = this->fhp = this->fhp_dac =
+	this->speaker = this->speaker2 = this->spkr_dac =
+	    this->fhp = this->fhp_dac =
 	    this->mic = this->mic_adc = -1;
 	this->nsense_pins = 0;
 	this->nout_jacks = 0;
@@ -1704,13 +1705,22 @@ azalia_codec_init(codec_t *this)
 			case CORB_CD_FIXED:
 				switch (w->d.pin.device) {
 				case CORB_CD_SPEAKER:
-					if ((this->speaker == -1) ||
-					    (w->d.pin.association <
-					    this->w[this->speaker].d.pin.association)) {
+					if (this->speaker == -1) {
 						this->speaker = i;
+					} else if (w->d.pin.association <
+					    this->w[this->speaker].d.pin.association ||
+					    (w->d.pin.association ==
+					    this->w[this->speaker].d.pin.association &&
+					    w->d.pin.sequence <
+					    this->w[this->speaker].d.pin.sequence)) {
+						this->speaker2 = this->speaker;
+						this->speaker = i;
+					} else {
+						this->speaker2 = i;
+					}
+					if (this->speaker == i)
 						this->spkr_dac =
 						    azalia_codec_find_defdac(this, i, 0);
-					}
 					break;
 				case CORB_CD_MICIN:
 					this->mic = i;
@@ -1938,7 +1948,8 @@ azalia_codec_sort_pins(codec_t *this)
 			switch(w->d.pin.device) {
 			/* primary - output by default */
 			case CORB_CD_SPEAKER:
-				if (w->nid == this->speaker)
+				if (w->nid == this->speaker ||
+				    w->nid == this->speaker2)
 					break;
 				/* FALLTHROUGH */
 			case CORB_CD_HEADPHONE:
@@ -1991,7 +2002,8 @@ azalia_codec_sort_pins(codec_t *this)
 				break;
 			/* secondary - output by default */
 			case CORB_CD_SPEAKER:
-				if (w->nid == this->speaker)
+				if (w->nid == this->speaker ||
+				    w->nid == this->speaker2)
 					break;
 				/* FALLTHROUGH */
 			case CORB_CD_HEADPHONE:
@@ -2264,6 +2276,27 @@ azalia_codec_select_spkrdac(codec_t *this)
 				this->spkr_dac = conv;
 			else
 				this->opins[0].conv = conv;
+		}
+	}
+
+	/* If there is a speaker2, try to connect it to spkr_dac. */
+	if (this->speaker2 != -1) {
+		conn = conv = -1;
+		w = &this->w[this->speaker2];
+		for (i = 0; i < w->nconnections; i++) {
+			conv = azalia_codec_find_defdac(this,
+			    w->connections[i], 1);
+			if (conv == this->spkr_dac) {
+				conn = i;
+				break;
+			}
+		}
+		if (conn != -1) {
+			err = azalia_comresp(this, w->nid,
+			    CORB_SET_CONNECTION_SELECT_CONTROL, conn, 0);
+			if (err)
+				return(err);
+			w->selected = conn;
 		}
 	}
 
