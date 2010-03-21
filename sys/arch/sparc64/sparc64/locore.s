@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.159 2009/08/28 13:04:40 jsing Exp $	*/
+/*	$OpenBSD: locore.s,v 1.160 2010/03/21 22:23:03 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3328,8 +3328,6 @@ sun4v_datatrap:
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1
 	add	%g3, 0x50, %g2
 	ldxa	[%g2] ASI_PHYS_CACHED, %g2
-	add	%g3, 0x60, %g4
-	stxa	%sp, [%g4] ASI_PHYS_CACHED
 
 	TRAP_SETUP -CC64FSZ-TF_SIZE
 	or	%g1, %g2, %o3
