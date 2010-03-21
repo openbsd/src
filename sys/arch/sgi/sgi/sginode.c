@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.17 2010/03/07 13:42:17 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.18 2010/03/21 13:52:05 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -99,9 +99,9 @@ kl_init(int ip35)
 }
 
 void
-kl_scan_config(int nasid)
+kl_scan_config(int ip35, int16_t nasid)
 {
-	kl_scan_node(nasid, KLBRD_ANY, kl_first_pass_board, NULL);
+	kl_scan_node(nasid, KLBRD_ANY, kl_first_pass_board, &ip35);
 }
 
 /*
@@ -110,14 +110,68 @@ kl_scan_config(int nasid)
 int
 kl_first_pass_board(lboard_t *boardinfo, void *arg)
 {
-	DB_PRF(("%cboard type %x slot %x nasid %x nic %p components %d\n",
+	DB_PRF(("%cboard type %x slot %x nasid %x nic %p ncomp %d\n",
 	    boardinfo->struct_type & LBOARD ? 'l' : 'r',
-	    boardinfo->brd_type, boardinfo->brd_slot, boardinfo->brd_nasid,
-	    boardinfo->brd_nic, boardinfo->brd_numcompts));
+	    boardinfo->brd_type, boardinfo->brd_slot,
+	    boardinfo->brd_nasid, boardinfo->brd_nic,
+	    boardinfo->brd_numcompts));
 
-	kl_scan_board(boardinfo, KLSTRUCT_ANY, kl_first_pass_comp, NULL);
+	kl_scan_board(boardinfo, KLSTRUCT_ANY, kl_first_pass_comp, arg);
 	return 0;
 }
+
+#ifdef DEBUG
+static const char *klstruct_names[] = {
+	"unknown component",
+	"cpu",
+	"hub",
+	"memory",
+	"xbow",
+	"bridge",
+	"ioc3",
+	"pci",
+	"vme",
+	"router",
+	"graphics",
+	"scsi",
+	"fddi",
+	"mio",
+	"disk",
+	"tape",
+	"cdrom",
+	"hub uart",
+	"ioc3 Ethernet",
+	"ioc3 uart",
+	"component type 20",
+	"ioc3 keyboard",
+	"rad",
+	"hub tty",
+	"ioc3 tty",
+	"fc",
+	"module serialnumber",
+	"ioc3 mouse",
+	"tpu",
+	"gsn main board",
+	"gsn aux board",
+	"xthd",
+	"QLogic fc",
+	"firewire",
+	"usb",
+	"usb keyboard",
+	"usb mouse",
+	"dual scsi",
+	"PE brick",
+	"gigabit Ethernet",
+	"ide",
+	"ioc4",
+	"ioc4 uart",
+	"ioc4 tty",
+	"ioc4 keyboard",
+	"ioc4 mouse",
+	"ioc4 ATA",
+	"pci graphics"
+};
+#endif
 
 /*
  * Callback routine for the initial enumeration (components).
@@ -127,35 +181,53 @@ kl_first_pass_board(lboard_t *boardinfo, void *arg)
 int
 kl_first_pass_comp(klinfo_t *comp, void *arg)
 {
+	int ip35 = *(int *)arg;
 	klcpu_t *cpucomp;
 	klmembnk_m_t *memcomp_m;
 	arc_config64_t *arc;
 #ifdef DEBUG
-	klhub_t *hubcomp;
 	klmembnk_n_t *memcomp_n;
+	klhub_t *hubcomp;
 	klxbow_t *xbowcomp;
+	klscsi_t *scsicomp;
+	klscctl_t *scsi2comp;
 	int i;
 #endif
 
 	arc = (arc_config64_t *)comp->arcs_compt;
+
+#ifdef DEBUG
+	if (comp->struct_type < nitems(klstruct_names))
+		DB_PRF(("\t%s", klstruct_names[comp->struct_type]));
+	else
+		DB_PRF(("\tcomponent type %d", comp->struct_type));
+	DB_PRF((", widget %x physid 0x%02x virtid %d",
+	    comp->widid, comp->physid, comp->virtid));
+	if (ip35) {
+		DB_PRF((" prt %d bus %d", comp->port, comp->pci_bus_num));
+		if (comp->pci_multifunc)
+			DB_PRF((" pcifn %d", comp->pci_func_num));
+	}
+	DB_PRF(("\n"));
+#endif
+
 	switch (comp->struct_type) {
 	case KLSTRUCT_CPU:
 		cpucomp = (klcpu_t *)comp;
-		DB_PRF(("\tcpu type %x/%x %dMHz cache %dMB speed %dMHz\n",
-		    cpucomp->cpu_prid, cpucomp->cpu_fpirr, cpucomp->cpu_speed,
-		    cpucomp->cpu_scachesz, cpucomp->cpu_scachespeed));
-
+		DB_PRF(("\t  type %x/%x %dMHz cache %dMB speed %dMHz\n",
+		    cpucomp->cpu_prid, cpucomp->cpu_fpirr,
+		    cpucomp->cpu_speed, cpucomp->cpu_scachesz,
+		    cpucomp->cpu_scachespeed));
 		/*
 		 * XXX this assumes the first cpu encountered is the boot
 		 * XXX cpu.
 		 */
 		if (bootcpu_hwinfo.clock == 0) {
 			bootcpu_hwinfo.c0prid = cpucomp->cpu_prid;
-#if 0
-			bootcpu_hwinfo.c1prid = cpucomp->cpu_fpirr;
-#else
-			bootcpu_hwinfo.c1prid = cpucomp->cpu_prid;
-#endif
+			if (ip35)
+				bootcpu_hwinfo.c1prid = cpucomp->cpu_prid;
+			else
+				bootcpu_hwinfo.c1prid = cpucomp->cpu_fpirr;
 			bootcpu_hwinfo.clock = cpucomp->cpu_speed * 1000000;
 			bootcpu_hwinfo.tlbsize = 64;
 			bootcpu_hwinfo.type = (cpucomp->cpu_prid >> 8) & 0xff;
@@ -167,7 +239,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		memcomp_m = (klmembnk_m_t *)comp;
 #ifdef DEBUG
 		memcomp_n = (klmembnk_n_t *)comp;
-		DB_PRF(("\tmemory %dMB, select %x flags %x\n",
+		DB_PRF(("\t  %dMB, select %x flags %x\n",
 		    memcomp_m->membnk_memsz, memcomp_m->membnk_dimm_select,
 		    kl_n_mode ?
 		      memcomp_n->membnk_attr : memcomp_m->membnk_attr));
@@ -188,17 +260,17 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 			}
 		}
 #endif
-
-		if (sys_config.system_type == SGI_IP27)
-			kl_add_memory_ip27(comp->nasid, memcomp_m->membnk_bnksz,
-			    kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
+		if (ip35)
+			kl_add_memory_ip35(comp->nasid,
+			    memcomp_m->membnk_bnksz,
+			    kl_n_mode ?  MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 		else
-			kl_add_memory_ip35(comp->nasid, memcomp_m->membnk_bnksz,
-			    kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
+			kl_add_memory_ip27(comp->nasid,
+			    memcomp_m->membnk_bnksz,
+			    kl_n_mode ?  MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 		break;
 
 	case KLSTRUCT_GFX:
-		DB_PRF(("\tgraphics widget %d\n", comp->widid));
 		/*
 		 * We rely upon the PROM setting up a fake ARCBios component
 		 * for the graphics console, if there is one.
@@ -210,7 +282,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		if (arc != NULL &&
 		    arc->class != 0 && arc->type == arc_DisplayController &&
 		    ISSET(arc->flags, ARCBIOS_DEVFLAGS_CONSOLE_OUTPUT)) {
-			DB_PRF(("\t(console device)\n"));
+			DB_PRF(("\t  (console device)\n"));
 			/* paranoia */
 			if (comp->widid >= WIDGET_MIN &&
 			    comp->widid <= WIDGET_MAX)
@@ -221,42 +293,53 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 #ifdef DEBUG
 	case KLSTRUCT_HUB:
 		hubcomp = (klhub_t *)comp;
-		DB_PRF(("\thub widget %d port %d flag %d speed %dMHz\n",
-		    hubcomp->hub_info.widid, hubcomp->hub_port.port_nasid,
-		    hubcomp->hub_port.port_flag, hubcomp->hub_speed / 1000000));
+		DB_PRF(("\t  port %d flag %d speed %dMHz\n",
+		    hubcomp->hub_port.port_nasid, hubcomp->hub_port.port_flag,
+		    hubcomp->hub_speed / 1000000));
 		break;
 
 	case KLSTRUCT_XBOW:
 		xbowcomp = (klxbow_t *)comp;
-		DB_PRF(("\txbow hub master link %d\n",
+		DB_PRF(("\t hub master link %d\n",
 		    xbowcomp->xbow_hub_master_link));
 		for (i = 0; i < MAX_XBOW_LINKS; i++) {
-			if (xbowcomp->xbow_port_info[i].port_flag &
-			    XBOW_PORT_ENABLE)
-				DB_PRF(("\t\twidget %d nasid %d flg %u\n",
-				    8 + i,
-				    xbowcomp->xbow_port_info[i].port_nasid,
-				    xbowcomp->xbow_port_info[i].port_flag));
+			if (!ISSET(xbowcomp->xbow_port_info[i].port_flag,
+			    XBOW_PORT_ENABLE))
+				continue;
+			DB_PRF(("\t\twidget %d nasid %d flg %u\n", 8 + i,
+			    xbowcomp->xbow_port_info[i].port_nasid,
+			    xbowcomp->xbow_port_info[i].port_flag));
 		}
 		break;
 
-	default:
-		DB_PRF(("\tcomponent widget %d type %d\n",
-		    comp->widid, comp->struct_type));
+	case KLSTRUCT_SCSI2:
+		scsi2comp = (klscctl_t *)comp;
+		for (i = 0; i < scsi2comp->scsi_buscnt; i++) {
+			scsicomp = (klscsi_t *)scsi2comp->scsi_bus[i];
+			DB_PRF(("\t\tbus %d, physid 0x%02x virtid %d,"
+			    " specific %ld, numdevs %d\n",
+			    i, scsicomp->scsi_info.physid,
+			    scsicomp->scsi_info.virtid,
+			    scsicomp->scsi_specific,
+			    scsicomp->scsi_numdevs));
+		}
 		break;
 #endif
 	}
+
 #ifdef DEBUG
 	if (arc != NULL) {
-		DB_PRF(("\tARCBios component: class %d type %d flags %02x key 0x%lx",
+		DB_PRF(("\t[ARCBios component:"
+		    " class %d type %d flags %02x key 0x%lx",
 		    arc->class, arc->type, arc->flags, arc->key));
 		if (arc->id_len != 0)
-			DB_PRF((" %.*s\n",
+			DB_PRF((" %.*s]\n",
 			    (int)arc->id_len, (const char *)arc->id));
 		else
-			DB_PRF((" (no name)\n"));
+			DB_PRF((" (no name)]\n"));
 	}
 #endif
+
 	return 0;
 }
 
@@ -444,7 +527,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 #if 0
 				physmem += lp - fp;
 #endif
-				continue;
+				goto skip;
 			}
 
 			if (memrange_register(fp, lp,
@@ -460,6 +543,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				    ptoa(np) >> 20);
 			}
 		}
+skip:
 		basepa += 1UL << 30;	/* 1 GB */
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.13 2010/03/07 13:42:15 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.14 2010/03/21 13:52:03 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -153,8 +153,9 @@ typedef struct lboard_s {
 	unsigned char	brd_brevision;	/* board revision */
 	unsigned char	brd_promver;	/* board prom version, if any */
 	unsigned char	brd_flags;	/* Enabled, Disabled etc */
-	unsigned char	brd_slot;	/* slot number */
-	unsigned short	brd_debugsw;	/* Debug switches */
+	unsigned char	brd_slot;	/* slot number (widget on IP35) */
+	unsigned short	brd_bus_num: 2,	/* PIC bus number (IP35) */
+			brd_unused: 14;
 	short		brd_module;	/* module to which it belongs */
 	char		brd_partition;	/* Partition number */
 	unsigned short	brd_diagval;	/* diagnostic value */
@@ -178,6 +179,8 @@ typedef struct lboard_s {
 
 /* Definitions of board type and class */
 #define	IP27_BC_MASK	0xf0
+#define	IP27_BT_MASK	0x0f
+
 #define	IP27_BC_NODE	0x10
 #define	IP27_BC_IO	0x20
 #define	IP27_BC_ROUTER	0x30
@@ -185,13 +188,29 @@ typedef struct lboard_s {
 #define	IP27_BC_GRAF	0x50
 #define	IP27_BC_HDTV	0x60
 #define	IP27_BC_BRICK	0x70
+#define	IP27_BC_IO2	0x80
 
-#define	IP27_BT_MASK	0x0f
-#define	IP27_BT_CPU	0x01
-#define	IP27_BT_BASEIO	0x01
-#define	IP27_BT_MPLANE8	0x01
-
-#define	IP27_BRD_BASEIO		(IP27_BC_IO | IP27_BT_BASEIO)
+/* NODE types */
+#define	IP27_BRD_CPU		(IP27_BC_NODE | 0x01)
+/* IO types */
+#define	IP27_BRD_BASEIO		(IP27_BC_IO | 0x01)	/* IO6 */
+#define	IP27_BRD_MSCSI		(IP27_BC_IO | 0x02)
+#define	IP27_BRD_MENET		(IP27_BC_IO | 0x03)
+#define	IP27_BRD_FDDI		(IP27_BC_IO | 0x04)
+#define	IP27_BRD_PCI1		(IP27_BC_IO | 0x06)	/* PCI shoebox */
+#define	IP27_BRD_VME		(IP27_BC_IO | 0x07)
+#define	IP27_BRD_MIO		(IP27_BC_IO | 0x08)
+#define	IP27_BRD_FC		(IP27_BC_IO | 0x09)
+#define	IP27_BRD_LINC		(IP27_BC_IO | 0x0a)
+/* MPLANE types */
+#define	IP27_BRD_MPLANE8	(IP27_BC_MPLANE | 0x01)
+#define	IP27_BRD_IOBRICK_XBOW	(IP27_BC_MPLANE | 0x02)
+/* GRAF types */
+#define	IP27_BRD_KONA		(IP27_BC_GRAF | 0x01)
+#define	IP27_BRD_MGRAS		(IP27_BC_GRAF | 0x03)
+#define	IP27_BRD_ODSY		(IP27_BC_GRAF | 0x04)
+/* BRICK types */
+#define	IP27_BRD_IOBRICK	(IP27_BC_BRICK | 0x00)
 #define	IP27_BRD_IBRICK		(IP27_BC_BRICK | 0x01)
 #define	IP27_BRD_PBRICK		(IP27_BC_BRICK | 0x02)
 #define	IP27_BRD_XBRICK		(IP27_BC_BRICK | 0x03)
@@ -200,29 +219,43 @@ typedef struct lboard_s {
 #define	IP27_BRD_PXBRICK	(IP27_BC_BRICK | 0x06)
 #define	IP27_BRD_IXBRICK	(IP27_BC_BRICK | 0x07)
 #define	IP27_BRD_CGBRICK	(IP27_BC_BRICK | 0x08)
-
+/* IO2 types */
+#define	IP27_BRD_DIVO		(IP27_BC_IO2 | 0x01)
+#define	IP27_BRD_TPU		(IP27_BC_IO2 | 0x02)
+#define	IP27_BRD_GSN		(IP27_BC_IO2 | 0x03)
+#define	IP27_BRD_GSN_AUX	(IP27_BC_IO2 | 0x04)
+#define	IP27_BRD_PCI3		(IP27_BC_IO2 | 0x05)	/* PCI shoehorn */
+#define	IP27_BRD_HIPPI		(IP27_BC_IO2 | 0x06)
+#define	IP27_BRD_ATM		(IP27_BC_IO2 | 0x07)
 
 /* Component info. Common info about a component. */
 typedef struct klinfo_s {			/* Generic info */
-	unsigned char	struct_type;	  /* type of this structure */
-	unsigned char	struct_version;   /* version of this structure */
-	unsigned char	flags;		  /* Enabled, disabled etc */
-	unsigned char	revision;	  /* component revision */
-	unsigned short	diagval;	  /* result of diagnostics */
-	unsigned short	diagparm;	  /* diagnostic parameter */
-	unsigned char	inventory;	  /* previous inventory status */
-	uint64_t	nic;		  /* Must be aligned properly */
-	unsigned char	physid;		  /* physical id of component */
-	unsigned int	virtid;		  /* virtual id as seen by system */
-	unsigned char	widid;		  /* Widget id - if applicable */
-	int16_t		nasid;		  /* node number - from parent */
-	char		pad1;		  /* pad out structure. */
-	char		pad2;		  /* pad out structure. */
-	void		*arcs_compt;	  /* ptr to the arcs struct for ease*/
-	klconf_off_t	errinfo;	  /* component specific errors */
-	unsigned short	pad3;		  /* pci fields have moved over to */
-	unsigned short	pad4;		  /* klbri_t */
+	unsigned char	struct_type;	/* type of this structure */
+	unsigned char	struct_version;	/* version of this structure */
+	unsigned char	flags;		/* Enabled, disabled etc */
+	unsigned char	revision;	/* component revision */
+	unsigned short	diagval;	/* result of diagnostics */
+	unsigned short	diagparm;	/* diagnostic parameter */
+	unsigned char	inventory;	/* previous inventory status */
+	uint64_t	nic;		/* Must be aligned properly */
+	unsigned char	physid;		/* physical id of component */
+	unsigned int	virtid;		/* virtual id as seen by system */
+	unsigned char	widid;		/* Widget id - if applicable */
+	int16_t		nasid;		/* node number - from parent */
+	unsigned short	port: 2,	/* (IP35) port on dual port controller */
+			pci_bus_num: 2,	/* (IP35) PCI bus number if on PIC */
+			pci_multifunc: 1,
+			pci_func_num: 3,/* (IP35) PCI function number */
+			pci_unused: 8;
+	char		pad2;		/* pad out structure. */
+	void		*arcs_compt;	/* ptr to the arcs struct for ease*/
+	klconf_off_t	errinfo;	/* component specific errors */
+	unsigned short	pad3;		/* pci fields have moved over to */
+	unsigned short	pad4;		/* klbri_t */
 } klinfo_t;
+
+#define	KLINFO_PHYSID_PIC_BUS1		0x10	/* set if on PIC bus 1 */
+#define	KLINFO_PHYSID_WIDGET_MASK	0x0f
 
 #define	KLINFO_ENABLED	0x01
 #define	KLINFO_FAILED	0x02
@@ -250,7 +283,6 @@ typedef struct klinfo_s {			/* Generic info */
 #define	KLSTRUCT_HUB_UART	17
 #define	KLSTRUCT_IOC3ENET	18
 #define	KLSTRUCT_IOC3UART	19
-#define	KLSTRUCT_UNUSED		20
 #define	KLSTRUCT_IOC3PCKM	21
 #define	KLSTRUCT_RAD		22
 #define	KLSTRUCT_HUB_TTY	23
@@ -260,8 +292,8 @@ typedef struct klinfo_s {			/* Generic info */
 #define	KLSTRUCT_MOD_SERIAL_NUM	26
 #define	KLSTRUCT_IOC3MS		27
 #define	KLSTRUCT_TPU		28
-#define	KLSTRUCT_GSN_A		29
-#define	KLSTRUCT_GSN_B		30
+#define	KLSTRUCT_GSN		29
+#define	KLSTRUCT_GSN_AUX	30
 #define	KLSTRUCT_XTHD		31
 #define	KLSTRUCT_QLFIBRE	32
 #define	KLSTRUCT_FIREWIRE	33
@@ -272,6 +304,14 @@ typedef struct klinfo_s {			/* Generic info */
 #define	KLSTRUCT_PEBRICK	38
 #define	KLSTRUCT_GIGENET	39
 #define	KLSTRUCT_IDE		40
+/* new IP53 values */
+#define	KLSTRUCT_IOC4		41
+#define	KLSTRUCT_IOC4UART	42
+#define	KLSTRUCT_IOC4_TTY	43
+#define	KLSTRUCT_IOC4PCKM	44
+#define	KLSTRUCT_IOC4MS		45
+#define	KLSTRUCT_IOC4_ATA	46
+#define	KLSTRUCT_VGAGFX		47
 
 typedef struct klport_s {
 	int16_t		port_nasid;
@@ -283,7 +323,8 @@ typedef struct klport_s {
 typedef struct klcpu_s {
 	klinfo_t	cpu_info;
 	uint16_t	cpu_prid;	/* Processor PRID value */
-	uint16_t	cpu_fpirr;	/* FPU IRR value */
+	uint16_t	cpu_fpirr;	/* IP27: FPU IRR value */
+					/* IP35: mode information (?) */
 	uint16_t	cpu_speed;	/* Speed in MHZ */
 	uint16_t	cpu_scachesz;	/* secondary cache size in MB */
 	uint16_t	cpu_scachespeed;/* secondary cache speed in MHz */
@@ -306,7 +347,7 @@ typedef struct klmembnk_m_s {
 	int16_t		membnk_memsz;		/* Total memory in megabytes */
 	int16_t		membnk_dimm_select;	/* bank to phys addr mapping*/
 	int16_t		membnk_bnksz[MD_MEM_BANKS_M]; /* Memory bank sizes */
-	int16_t		membnk_attr;
+	int16_t		membnk_attr;		/* directory memory, per bank */
 } klmembnk_m_t;
 
 #define	MD_MEM_BANKS_N	4	/* N-Mode */
@@ -315,7 +356,7 @@ typedef struct klmembnk_n_s {
 	int16_t		membnk_memsz;		/* Total memory in megabytes */
 	int16_t		membnk_dimm_select;	/* bank to phys addr mapping*/
 	int16_t		membnk_bnksz[MD_MEM_BANKS_N]; /* Memory bank sizes */
-	int16_t		membnk_attr;
+	int16_t		membnk_attr;		/* directory memory, per bank */
 } klmembnk_n_t;
 
 /* KLSTRUCT_XBOW: Xbow */
@@ -331,16 +372,25 @@ typedef struct klxbow_s {
 #define	XBOW_PORT_HUB		0x02
 #define	XBOW_PORT_ENABLE	0x04
 
+/* KLSTRUCT_SCSI: SCSI Bus, or single-bus SCSI Controller */
+#define	MAX_SCSI_DEVS	16
+typedef struct klscsi_s {
+	klinfo_t	scsi_info;
+	uint64_t	scsi_specific;
+	uint8_t		scsi_numdevs;
+	klconf_off_t	scsi_devinfo[MAX_SCSI_DEVS];
+} klscsi_t;
+
 /* KLSTRUCT_IOC3: Basic I/O Controller */
 typedef struct klioc3_s {
 	klinfo_t	ioc3_info;
 	unsigned char	ioc3_ssram;	/* Info about ssram */
 	unsigned char	ioc3_nvram;	/* Info about nvram */
-	klinfo_t	ioc3_superio;	/* Info about superio */
 	klconf_off_t	ioc3_tty_off;
+	klconf_off_t	ioc3_kbd_off;
+	klinfo_t	ioc3_superio;	/* Info about superio */
 	klinfo_t	ioc3_enet;
 	klconf_off_t	ioc3_enet_off;
-	klconf_off_t	ioc3_kbd_off;
 } klioc3_t;
 
 /* KLSTRUCT_IOC3_TTY: IOC3 attached TTY */
@@ -348,6 +398,14 @@ typedef struct klttydev_s {
 	klinfo_t	ttydev_info;
 	struct terminal_data *ttydev_cfg;	/* driver fills up this */
 } klttydev_t;
+
+/* KLSTRUCT_SCSI2: SCSI Controller */
+typedef struct klscctl_s {
+	klinfo_t	scsi_info;
+	uint		type;
+	uint		scsi_buscnt;
+	uint64_t	scsi_bus[2];
+} klscctl_t;
 
 /* ========== */
 
@@ -410,7 +468,7 @@ typedef struct gda {
 
 console_t *kl_get_console(void);
 void	kl_init(int);
-void	kl_scan_config(int);
+void	kl_scan_config(int, int16_t);
 int	kl_scan_node(int, uint, int (*)(lboard_t *, void *), void *);
 #define	KLBRD_ANY	0
 int	kl_scan_board(lboard_t *, uint, int (*)(klinfo_t *, void *), void *);

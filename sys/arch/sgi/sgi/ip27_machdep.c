@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.44 2010/03/20 16:22:55 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.45 2010/03/21 13:52:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -212,13 +212,13 @@ ip27_setup()
 	 * information, starting with the master node.
 	 */
 
-	kl_scan_config(masternasid);
+	kl_scan_config(ip35, masternasid);
 	for (node = 0; node < maxnodes; node++) {
 		if (gda->nasid[node] < 0)
 			continue;
 		if (gda->nasid[node] == masternasid)
 			continue;
-		kl_scan_config(gda->nasid[node]);
+		kl_scan_config(ip35, gda->nasid[node]);
 	}
 
 	/*
