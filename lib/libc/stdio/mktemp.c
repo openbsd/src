@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.29 2010/02/11 16:48:36 guenther Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.30 2010/03/21 23:09:30 schwarze Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -82,6 +82,8 @@ mktemp_internal(char *path, int slen, int mode)
 			break;
 		}
 	} while (--tries);
+
+	errno = EEXIST;
 	return(-1);
 }
 
