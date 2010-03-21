@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.6 2010/03/14 01:43:43 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.7 2010/03/21 07:02:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -35,19 +35,6 @@
 #include <scsi/scsiconf.h>
 
 #include <dev/vscsivar.h>
-
-#ifdef VSCSI_DEBUG
-#define VSCSI_D_INIT	(1<<0)
-
-int vscsidebug = 0;
-
-#define DPRINTF(_m, _p...)	do { \
-					if (ISSET(vscsidebug, (_m))) \
-						printf(p); \
-				} while (0)
-#else
-#define DPRINTF(_m, _p...)	/* _m, _p */
-#endif
 
 int		vscsi_match(struct device *, void *, void *);
 void		vscsi_attach(struct device *, struct device *, void *);
