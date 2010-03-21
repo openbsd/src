@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.67 2010/03/20 15:24:49 jmc Exp $
+.\"	$OpenBSD: newfs.8,v 1.68 2010/03/21 07:51:23 otto Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: March 20 2010 $
+.Dd $Mdocdate: March 21 2010 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -143,7 +143,9 @@ are as follows:
 .Bl -tag -width Fl
 .It Fl b Ar block-size
 The block size of the file system, in bytes.
-The default is 16KB.
+If a disklabel is available, the default is read from it.
+Otherwise the default is 16 KB or eight times the fragment size,
+whichever is smaller.
 .It Fl c Ar fragments-per-cylinder-group
 The number of fragments per cylinder group in a file system.
 The default is to compute the maximum allowed by the other parameters.
@@ -159,7 +161,8 @@ See
 for more details on how to set this option.
 .It Fl f Ar frag-size
 The fragment size of the file system in bytes.
-The default is 2048.
+If a disklabel is available, the default is read from it.
+Otherwise the default is 2048.
 .It Fl g Ar avgfilesize
 The expected average file size for the file system in bytes.
 .It Fl h Ar avgfpdir
