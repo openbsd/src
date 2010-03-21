@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.17 2009/10/07 02:15:48 kevlo Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.18 2010/03/21 23:00:57 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -123,15 +123,29 @@
 #define	CPUID_SBF	0x80000000	/* signal break on FERR */
 
 #define	CPUIDECX_SSE3	0x00000001	/* streaming SIMD extensions #3 */
+#define CPUIDECX_PCLMUL	0x00000002	/* Carryless Multiplication */
 #define CPUIDECX_MWAIT	0x00000008	/* Monitor/Mwait */
 #define CPUIDECX_DSCPL	0x00000010	/* CPL Qualified Debug Store */
 #define CPUIDECX_VMX	0x00000020	/* Virtual Machine Extensions */
 #define CPUIDECX_SMX	0x00000040	/* Safer Mode Extensions */
 #define CPUIDECX_EST	0x00000080	/* enhanced SpeedStep */
 #define CPUIDECX_TM2	0x00000100	/* thermal monitor 2 */
+#define CPUIDECX_SSSE3	0x00000200	/* Supplemental Streaming SIMD Ext. 3 */
 #define CPUIDECX_CNXTID	0x00000400	/* Context ID */
+#define CPUIDECX_FMA3	0x00001000	/* Fused Multiply Add */
 #define CPUIDECX_CX16	0x00002000	/* has CMPXCHG16B instruction */
 #define CPUIDECX_XTPR	0x00004000	/* xTPR Update Control */
+#define CPUIDECX_PDCM	0x00008000	/* Perfmon and Debug Capability */
+#define CPUIDECX_DCA	0x00040000	/* Direct Cache Access */
+#define CPUIDECX_SSE41	0x00080000	/* Streaming SIMD Extensions 4.1 */
+#define CPUIDECX_SSE42	0x00100000	/* Streaming SIMD Extensions 4.2 */
+#define CPUIDECX_X2APIC	0x00200000	/* Extended xAPIC Support */
+#define CPUIDECX_MOVBE	0x00400000	/* MOVBE Instruction */
+#define CPUIDECX_POPCNT	0x00800000	/* POPCNT Instruction */
+#define CPUIDECX_AES	0x02000000	/* AES Instruction */
+#define CPUIDECX_XSAVE	0x04000000	/* XSAVE/XSTOR States */
+#define CPUIDECX_OSXSAVE	0x08000000	/* OSXSAVE */
+#define CPUIDECX_AVX	0x10000000	/* Advanced Vector Extensions */
 
 /*
  * AMD/VIA processor specific flags.
