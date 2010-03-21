@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.3 2010/03/13 21:56:17 miod Exp $	*/
+/*	$OpenBSD: impact.c,v 1.4 2010/03/21 17:05:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -349,7 +349,9 @@ int
 impact_cmd_fifo_wait(struct impact_screen *scr)
 {
 	u_int32_t val, timeout = 1000000;
+#ifdef DIAGNOSTIC
 	struct impact_softc *sc = scr->sc;
+#endif
 
 	val = bus_space_read_4(scr->iot, scr->ioh, IMPACTSR_FIFOSTATUS);
 	while ((val & IMPACTSR_FIFO_MASK) != 0) {
