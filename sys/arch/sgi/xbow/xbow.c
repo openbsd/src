@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.27 2010/03/06 16:29:46 jsing Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.28 2010/03/21 13:50:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -236,15 +236,15 @@ const uint8_t xbow_probe_octane[] =
 /* Origin 200: probe onboard devices, and there is nothing more */
 const uint8_t xbow_probe_singlebridge[] =
 	{ 0x08, 0 };
-/* Base I/O board: probe in ascending order */
+/* Base I/O board: probe onboard devices, then other slots in ascending order */
 const uint8_t xbow_probe_baseio[] =
-	{ 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0 };
+	{ 0x0f, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0 };
 /* I-Brick: probe PCI buses first (starting with the onboard devices) */
 const uint8_t xbow_probe_ibrick[] =
 	{ 0x0f, 0x0e, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0 };
 /* P-Brick: all widgets are PCI buses, probe in recommended order */
 const uint8_t xbow_probe_pbrick[] =
-	{ 0x09, 0x08, 0x0f, 0x0e, 0x0d, 0x0c, 0x0a, 0x0b, 0 };
+	{ 0x09, 0x08, 0x0f, 0x0e, 0x0c, 0x0d, 0x0a, 0x0b, 0 };
 /* X-Brick: all widgets are XIO devices, probe in recommended order */
 const uint8_t xbow_probe_xbrick[] =
 	{ 0x08, 0x09, 0x0c, 0x0d, 0x0a, 0x0b, 0x0e, 0x0f, 0 };
