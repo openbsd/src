@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.142 2010/03/21 15:02:31 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.143 2010/03/21 15:04:35 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -132,7 +132,8 @@ azalia_codec_init_vtbl(codec_t *this)
 		    this->subid == 0x00a3106b) {	/* APPLE_MB4 */
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
 		}
-		if (this->subid == 0x00a0106b)
+		if (this->subid == 0x00a1106b ||
+		    this->subid == 0x00a0106b)
 			this->qrks |= AZ_QRK_WID_OVREF50;
 		break;
 	case 0x10ec0888:
