@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.17 2009/12/18 11:40:16 jsing Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.18 2010/03/21 17:04:46 deraadt Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -55,6 +55,10 @@ xbow0		at mainbus0
 xbridge*	at xbow?
 xbpci*		at xbridge?
 pci*		at xbpci?
+impact*		at xbow?
+wsdisplay*	at impact?
+odyssey*	at xbow?
+wsdisplay*	at odyssey?
 
 # IOC3
 ioc*		at pci?
@@ -62,6 +66,7 @@ com0		at ioc? base 0x00020178
 com1		at ioc? base 0x00020170
 dsrtc0		at ioc?
 iec*		at ioc?
+iockbc*		at ioc?
 
 onewire*	at ioc?
 option ONEWIREVERBOSE
@@ -76,6 +81,7 @@ com2		at iof? base 0x390
 com3		at iof? base 0x398
 com*		at iof?
 dsrtc0		at iof?
+iockbc*		at iof?
 
 #### SCSI controllers
 ahc*		at pci?
@@ -192,6 +198,12 @@ rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ipgphy*		at mii?		# IC Plus IP1000A PHYs
 gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# "unknown" PHYs
+
+#### Keyboard and Mouse
+pckbd*		at iockbc?
+pms*		at iockbc?
+wskbd*		at pckbd? mux 1
+wsmouse*	at pms? mux 0
 
 #### SCSI Bus devices
 scsibus*	at ahc?
