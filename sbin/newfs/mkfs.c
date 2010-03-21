@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.73 2009/12/23 02:24:39 krw Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.74 2010/03/21 09:13:30 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -40,10 +40,12 @@
  */
 
 #include <sys/param.h>
+#include <machine/vmparam.h>
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -137,6 +139,7 @@ int		isblock(struct fs *, unsigned char *, int);
 void		rdfs(daddr64_t, int, void *);
 void		mkfs(struct partition *, char *, int, int,
 		    mode_t, uid_t, gid_t);
+static		void checksz(void);
 
 #ifndef STANDALONE
 volatile sig_atomic_t cur_cylno;
@@ -493,6 +496,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		    (float)sblock.fs_fpg * sblock.fs_fsize * B2MBFACTOR,
 		    sblock.fs_fpg / sblock.fs_frag, sblock.fs_ipg);
 #undef B2MBFACTOR
+		checksz();
 	}
 
 	/*
@@ -1152,4 +1156,49 @@ ilog2(int val)
 			return (n);
 
 	errx(1, "ilog2: %d is not a power of 2\n", val);
+}
+
+struct inoinfo {
+        struct  inoinfo *i_nexthash;    /* next entry in hash chain */
+        struct  inoinfo *i_child, *i_sibling, *i_parentp;
+        size_t  i_isize;                /* size of inode */
+        ino_t   i_number;               /* inode number of this entry */  
+        ino_t   i_parent;               /* inode number of parent */
+  
+        ino_t   i_dotdot;               /* inode number of `..' */
+        u_int   i_numblks;              /* size of block array in bytes */
+        daddr64_t       i_blks[1];              /* actually longer */
+};
+
+static void
+checksz(void)
+{
+	unsigned long long allocate, maxino, maxfsblock, ndir, bound;
+	int mib[2];
+	size_t len;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM64;
+	len = sizeof(bound);
+	
+	if (sysctl(mib, 2, &bound, &len, NULL, 0) != 0)
+		err(1, "can't get physmem");
+	bound = MIN(MAXDSIZ, bound);
+
+	allocate = 0;
+	maxino = sblock.fs_ncg * (unsigned long long)sblock.fs_ipg;
+	maxfsblock = sblock.fs_size;
+	ndir = maxino / avgfilesperdir;
+
+	allocate += roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
+	allocate += (maxino + 1) * 3;
+	allocate += sblock.fs_ncg * sizeof(long);
+	allocate += (MAX(ndir, 128) + 10) * sizeof(struct inoinfo);
+	allocate += MAX(ndir, 128) * sizeof(struct inoinfo);
+
+	if (allocate > bound)
+		warnx("warning: fsck_ffs will need %lluMB; "
+		    "min(MAXDSIZ,physmem) is %lluMB",
+		    allocate / (1024ULL * 1024ULL),
+		    bound / (1024ULL * 1024ULL));
 }
