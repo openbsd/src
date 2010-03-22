@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: tokenizer.l,v 1.6 2008/08/21 21:00:14 espie Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.7 2010/03/22 20:40:44 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "parser.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
@@ -75,6 +76,7 @@ parse_radix()
 	long base;
 	char *next;
 	long l;
+	int d;
 
 	l = 0;
 	base = strtol(yytext+2, &next, 0);
@@ -84,11 +86,19 @@ parse_radix()
 		next++;
 		while (*next != 0) {
 			if (*next >= '0' && *next <= '9')
-				l = base * l + *next - '0';
+				d = *next - '0';
 			else if (*next >= 'a' && *next <= 'z')
-				l = base * l + *next - 'a' + 10;
-			else if (*next >= 'A' && *next <= 'Z')
-				l = base * l + *next - 'A' + 10;
+				d = *next - 'a' + 10;
+			else {
+				assert(*next >= 'A' && *next <= 'Z');
+				d = *next - 'A' + 10;
+			}
+			if (d >= base) {
+				fprintf(stderr, 
+				    "m4: error in number %s\n", yytext);
+				return 0;
+			}
+			l = base * l + d;
 			next++;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
+/*	$OpenBSD: main.c,v 1.78 2010/03/22 20:40:44 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -123,6 +123,7 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "undivert",     UNDVTYPE | NOARGS },
 	{ "divnum",       DIVNTYPE | NOARGS },
 	{ "maketemp",     MKTMTYPE },
+	{ "mkstemp",      MKTMTYPE },
 	{ "errprint",     ERRPTYPE | NOARGS },
 	{ "m4wrap",       M4WRTYPE | NOARGS },
 	{ "m4exit",       EXITTYPE | NOARGS },
