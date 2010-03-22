@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list.c,v 1.3 2010/01/30 19:08:47 nicm Exp $ */
+/* $OpenBSD: cmd-list.c,v 1.4 2010/03/22 19:14:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -99,6 +99,10 @@ cmd_list_exec(struct cmd_list *cmdlist, struct cmd_ctx *ctx)
 			if (ctx->curclient == NULL) {
 				ctx->curclient = ctx->cmdclient;
 				ctx->cmdclient = NULL;
+
+				ctx->error = key_bindings_error;
+				ctx->print = key_bindings_print;
+				ctx->info = key_bindings_info;
 			}
 		}
 	}
