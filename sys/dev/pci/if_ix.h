@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.9 2010/02/23 18:43:15 jsg Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.10 2010/03/22 17:09:27 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -116,7 +116,8 @@
 #define HW_DEBUGOUT2(S, A, B)       if (DEBUG_HW) printf(S "\n", A, B)
 
 #define MAX_NUM_MULTICAST_ADDRESSES     128
-#define IXGBE_MAX_SCATTER		100
+#define IXGBE_82598_SCATTER		100
+#define IXGBE_82599_SCATTER		32
 #define IXGBE_MSIX_BAR			3
 #if 0
 #define IXGBE_TSO_SIZE			65535

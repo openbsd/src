@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.39 2010/03/19 13:08:56 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.40 2010/03/22 17:09:27 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -1713,10 +1713,16 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 	struct ifnet		*ifp;
 	struct ixgbe_tx_buf	*txbuf;
 	int			 error, i;
+	int			 max_segs;
 
 	sc = txr->sc;
 	os = &sc->osdep;
 	ifp = &sc->arpcom.ac_if;
+
+	if (sc->hw.mac.type == ixgbe_mac_82598EB)
+		max_segs = IXGBE_82598_SCATTER;
+	else
+		max_segs = IXGBE_82599_SCATTER;
 
 	if (!(txr->tx_buffers =
 	    (struct ixgbe_tx_buf *) malloc(sizeof(struct ixgbe_tx_buf) *
@@ -1732,7 +1738,7 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 	for (i = 0; i < sc->num_tx_desc; i++) {
 		txbuf = &txr->tx_buffers[i];
 		error = bus_dmamap_create(txr->txdma.dma_tag, IXGBE_TSO_SIZE,
-			    IXGBE_MAX_SCATTER, PAGE_SIZE, 0,
+			    max_segs, PAGE_SIZE, 0,
 			    BUS_DMA_NOWAIT, &txbuf->map);
 
 		if (error != 0) {
