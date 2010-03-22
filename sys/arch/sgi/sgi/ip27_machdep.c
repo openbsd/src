@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.45 2010/03/21 13:52:05 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.46 2010/03/22 21:22:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -326,7 +326,10 @@ ip27_setup()
 void
 ip27_autoconf(struct device *parent)
 {
-	struct cpu_attach_args caa;
+	union {
+		struct mainbus_attach_args maa;
+		struct cpu_attach_args caa;
+	} u;
 	uint node;
 
 	xbow_widget_id = ip27_widget_id;
@@ -336,13 +339,13 @@ ip27_autoconf(struct device *parent)
 	 * if any, will get attached as they are discovered.
 	 */
 
-	bzero(&caa, sizeof caa);
-	caa.caa_maa.maa_name = "cpu";
-	caa.caa_maa.maa_nasid = currentnasid = masternasid;
-	caa.caa_hw = &bootcpu_hwinfo;
-	config_found(parent, &caa, ip27_print);
-	caa.caa_maa.maa_name = "clock";
-	config_found(parent, &caa.caa_maa, ip27_print);
+	bzero(&u, sizeof u);
+	u.maa.maa_name = "cpu";
+	u.maa.maa_nasid = currentnasid = masternasid;
+	u.caa.caa_hw = &bootcpu_hwinfo;
+	config_found(parent, &u, ip27_print);
+	u.maa.maa_name = "clock";
+	config_found(parent, &u, ip27_print);
 
 	/*
 	 * Now attach all nodes' I/O devices.
@@ -361,12 +364,30 @@ ip27_autoconf(struct device *parent)
 void
 ip27_attach_node(struct device *parent, int16_t nasid)
 {
-	struct mainbus_attach_args maa;
+	union {
+		struct mainbus_attach_args maa;
+		struct spdmem_attach_args saa;
+	} u;
+	uint dimm;
+	void *match;
 
-	bzero(&maa, sizeof maa);
-	maa.maa_name = "xbow";
-	maa.maa_nasid = currentnasid = nasid;
-	config_found(parent, &maa, ip27_print);
+	bzero(&u, sizeof u);
+	if (ip35) {
+		u.maa.maa_name = "spdmem";
+		for (dimm = 0; dimm < L1_SPD_DIMM_MAX; dimm++) {
+			u.saa.dimm = dimm;
+			/*
+			 * inline config_found_sm() without printing a message
+			 * if match() fails, to avoid getting
+			 * ``spdmem not configured'' for empty memory slots.
+			 */
+			if ((match = config_search(NULL, parent, &u)) != NULL)
+				config_attach(parent, match, &u, ip27_print);
+		}
+	}
+	u.maa.maa_name = "xbow";
+	u.maa.maa_nasid = currentnasid = nasid;
+	config_found(parent, &u, ip27_print);
 }
 
 int
@@ -374,6 +395,8 @@ ip27_print(void *aux, const char *pnp)
 {
 	struct mainbus_attach_args *maa = aux;
 
+	if (pnp != NULL)
+		printf("%s at %s", maa->maa_name, pnp);
 	printf(" nasid %d", maa->maa_nasid);
 
 	return UNCONF;

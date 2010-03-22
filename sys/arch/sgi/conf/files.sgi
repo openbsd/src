@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.44 2010/02/01 22:06:27 jasper Exp $
+#	$OpenBSD: files.sgi,v 1.45 2010/03/22 21:22:08 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -205,3 +205,8 @@ device	owserial
 attach	owserial at onewire
 file	arch/sgi/dev/owserial.c			owserial
 file	arch/sgi/dev/owmem_subr.c		owmac | owserial
+
+# IP35 SPD memory information
+attach	spdmem at mainbus with spdmem_mainbus
+file	arch/sgi/dev/spdmem_mainbus.c		spdmem_mainbus
+

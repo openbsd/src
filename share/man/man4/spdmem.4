@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spdmem.4,v 1.5 2009/04/09 15:52:41 jsg Exp $
+.\"	$OpenBSD: spdmem.4,v 1.6 2010/03/22 21:22:06 miod Exp $
 .\"
 .\" Copyright (c) 2007 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2009 $
+.Dd $Mdocdate: March 22 2010 $
 .Dt SPDMEM 4
 .Os
 .Sh NAME
@@ -25,6 +25,9 @@
 .Pp
 .Cd "# macppc"
 .Cd "spdmem* at mem?"
+.Pp
+.Cd "# sgi"
+.Cd "spdmem* at mainbus?"
 .Sh DESCRIPTION
 The
 .Nm

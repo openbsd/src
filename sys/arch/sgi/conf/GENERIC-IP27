@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.31 2010/03/07 21:26:24 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.32 2010/03/22 21:22:08 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -38,6 +38,7 @@ config		bsd	swap generic
 #
 mainbus0	at root
 cpu*		at mainbus0
+spdmem*		at mainbus0			# SPD memory eeproms
 clock0		at mainbus0
 
 #### Main local buses

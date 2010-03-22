@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.3 2009/11/29 17:03:53 miod Exp $	*/
+/*	$OpenBSD: l1.c,v 1.4 2010/03/22 21:22:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -35,6 +35,7 @@
 
 #include <net/ppp_defs.h>
 
+#include <sgi/sgi/ip27.h>
 #include <sgi/sgi/l1.h>
 
 /*
@@ -78,6 +79,7 @@ int	l1_packet_get_ascii(u_char **, size_t *, char **);
 int	l1_packet_get_binary(u_char **, size_t *, u_char **, size_t *);
 size_t	l1_command_build(u_char *, size_t, uint32_t, uint16_t, int, ...);
 int	l1_receive_response(int16_t, u_char *, size_t *);
+int	l1_response_to_errno(uint32_t);
 
 static inline
 size_t	ia_skip(u_char *, size_t);
@@ -344,7 +346,7 @@ l1_packet_get_int(u_char **buf, size_t *buflen, uint32_t *rval)
 	u_char *b = *buf;
 
 	if (*buflen < 5)
-		return ENOMEM;
+		return EIO;
 
 	if (*b++ != L1_ARG_INT)
 		return EINVAL;
@@ -365,7 +367,7 @@ l1_packet_get_ascii(u_char **buf, size_t *buflen, char **rval)
 	u_char *s, *e;
 
 	if (*buflen < 2)
-		return ENOMEM;
+		return EIO;
 
 	if (*b != L1_ARG_ASCII)
 		return EINVAL;
@@ -394,14 +396,14 @@ l1_packet_get_binary(u_char **buf, size_t *buflen, u_char **rval, size_t *rlen)
 	size_t datalen;
 
 	if (*buflen < 1)
-		return ENOMEM;
+		return EIO;
 
 	if ((*b & L1_ARG_BINARY) == 0)
 		return EINVAL;
 
 	datalen = *b & ~L1_ARG_BINARY;
 	if (*buflen < 1 + datalen)
-		return EINVAL;
+		return ENOMEM;
 
 	b++;
 	*rval = b;
@@ -531,6 +533,35 @@ l1_receive_response(int16_t nasid, u_char *pkt, size_t *pktlen)
 }
 
 /*
+ * Process a response code.
+ */
+int
+l1_response_to_errno(uint32_t response)
+{
+	int rc;
+
+	switch (response) {
+	case L1_RESP_OK:
+		rc = 0;
+		break;
+	case L1_RESP_INVAL:
+		rc =  EINVAL;
+		break;
+	case L1_RESP_NXDATA:
+		rc = ENXIO;
+		break;
+	default:
+#ifdef L1_DEBUG
+		printf("unexpected L1 response code: %08x\n", response);
+#endif
+		rc = EIO;
+		break;
+	}
+
+	return rc;
+}
+
+/*
  * Read a board IA information record from EEPROM
  */
 
@@ -570,11 +601,11 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 	if (l1_receive_response(nasid, pkt, &pktlen) != 0)
 		return EWOULDBLOCK;
 
-	if (pktlen <= 6) {
+	if (pktlen < 6) {
 #ifdef L1_DEBUG
 		printf("truncated response (length %d)\n", pktlen);
 #endif
-		return ENXIO;
+		return EIO;
 	}
 
 	/*
@@ -582,12 +613,9 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 	 */
 
 	data = l1_packet_get_be32(&pkt[1]);
-	if (data != L1_RESP_OK) {
-#ifdef L1_DEBUG
-		printf("unexpected L1 response code: %08x\n", data);
-#endif
-		return ENXIO;
-	}
+	rc = l1_response_to_errno(data);
+	if (rc != 0)
+		return rc;
 
 	/*
 	 * EEPROM read commands should return either one or two values:
@@ -601,7 +629,7 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 #ifdef L1_DEBUG
 		printf("unexpected L1 response: %d values\n", pkt[5]);
 #endif
-		return ENXIO;
+		return EIO;
 	}
 
 	pktbuf = pkt + 6;
@@ -611,7 +639,7 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 #ifdef L1_DEBUG
 		printf("unable to parse response as integer\n");
 #endif
-		return ENXIO;
+		return EIO;
 	}
 
 	/*
@@ -653,11 +681,11 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 			goto fail;
 		}
 
-		if (pktlen <= 6) {
+		if (pktlen < 6) {
 #ifdef L1_DEBUG
 			printf("truncated response (length %d)\n", pktlen);
 #endif
-			rc = ENXIO;
+			rc = EIO;
 			goto fail;
 		}
 
@@ -666,19 +694,15 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 		 */
 
 		data = l1_packet_get_be32(&pkt[1]);
-		if (data != L1_RESP_OK) {
-#ifdef L1_DEBUG
-			printf("unexpected L1 response code: %08x\n", data);
-#endif
-			rc = ENXIO;
+		rc = l1_response_to_errno(data);
+		if (rc != 0)
 			goto fail;
-		}
 
 		if (pkt[5] != 2) {
 #ifdef L1_DEBUG
 			printf("unexpected L1 response: %d values\n", pkt[5]);
 #endif
-			rc = ENXIO;
+			rc = EIO;
 			goto fail;
 		}
 
@@ -689,7 +713,7 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 #ifdef L1_DEBUG
 			printf("unable to parse first response as integer\n");
 #endif
-			rc = ENXIO;
+			rc = EIO;
 			goto fail;
 		}
 
@@ -698,7 +722,7 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 #ifdef L1_DEBUG
 			printf("unable to parse second response as binary\n");
 #endif
-			rc = ENXIO;
+			rc = EIO;
 			goto fail;
 		}
 
@@ -707,7 +731,7 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 #ifdef L1_DEBUG
 			printf("read command returned 0 bytes\n");
 #endif
-			rc = ENXIO;
+			rc = EIO;
 			goto fail;
 		}
 
@@ -876,12 +900,16 @@ out:
 	return rc;
 }
 
+/*
+ * Issue an arbitrary L1 command.
+ */
 int
 l1_exec_command(int16_t nasid, const char *cmd)
 {
 	u_char pkt[64 + 64];	/* command and response packet buffer */
 	size_t pktlen;
 	uint32_t data;
+	int rc;
 
 	/*
 	 * Build the command packet.
@@ -905,11 +933,11 @@ l1_exec_command(int16_t nasid, const char *cmd)
 	if (l1_receive_response(nasid, pkt, &pktlen) != 0)
 		return EWOULDBLOCK;
 
-	if (pktlen <= 6) {
+	if (pktlen < 6) {
 #ifdef L1_DEBUG
 		printf("truncated response (length %d)\n", pktlen);
 #endif
-		return ENXIO;
+		return EIO;
 	}
 
 	/*
@@ -917,12 +945,9 @@ l1_exec_command(int16_t nasid, const char *cmd)
 	 */
 
 	data = l1_packet_get_be32(&pkt[1]);
-	if (data != L1_RESP_OK) {
-#ifdef L1_DEBUG
-		printf("unexpected L1 response code: %08x\n", data);
-#endif
-		return ENXIO;
-	}
+	rc = l1_response_to_errno(data);
+	if (rc != 0)
+		return rc;
 
 	/*
 	 * We do not expect anything in return.
@@ -932,8 +957,211 @@ l1_exec_command(int16_t nasid, const char *cmd)
 #ifdef L1_DEBUG
 		printf("unexpected L1 response: %d values\n", pkt[5]);
 #endif
-		return ENXIO;
+		return EIO;
 	}
 
 	return 0;
+}
+
+/*
+ * Get a DIMM SPD record.
+ */
+
+int
+l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
+{
+	u_char pkt[64 + EEPROM_CHUNK];	/* command and response packet buffer */
+	u_char *pktbuf, *chunk, *spd = NULL;
+	size_t pktlen, chunklen, spdlen, spdpos;
+	uint32_t address, data;
+	int rc;
+
+	/*
+	 * The L1 address of SPD records differs between Fuel and Origin 350
+	 * systems. This is likely because the Fuel is a single-PIMM system,
+	 * while all other IP35 are dual-PIMM, and thus carry one more PIMM
+	 * record at a lower address.
+	 * Since Fuel is also a single-node system, we can safely check for
+	 * the system subtype to decide which address to use.
+	 */
+	if (sys_config.system_subtype == IP35_FUEL)
+		address = L1_EEP_DIMMBASE_SINGLEPIMM + dimm;
+	else
+		address = L1_EEP_DIMMBASE_DUALPIMM + dimm;
+
+	/*
+	 * Build a first packet, asking for 0 bytes to be read.
+	 */
+	pktlen = l1_command_build(pkt, sizeof pkt,
+	    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
+	    L1_REQ_EEPROM, 4,
+	    L1_ARG_INT, address,
+	    L1_ARG_INT, (uint32_t)L1_EEP_SPD,
+	    L1_ARG_INT, (uint32_t)0,	/* offset */
+	    L1_ARG_INT, (uint32_t)0);	/* size */
+	if (pktlen > sizeof pkt) {
+#ifdef DIAGNOSTIC
+		panic("%s: L1 command packet too large (%zu) for buffer",
+		    __func__, pktlen);
+#endif
+		return ENOMEM;
+	}
+
+	if (l1_packet_put(nasid, pkt, pktlen) != 0)
+		return EWOULDBLOCK;
+
+	pktlen = sizeof pkt;
+	if (l1_receive_response(nasid, pkt, &pktlen) != 0)
+		return EWOULDBLOCK;
+
+	if (pktlen < 6) {
+#ifdef L1_DEBUG
+		printf("truncated response (length %d)\n", pktlen);
+#endif
+		return EIO;
+	}
+
+	/*
+	 * Check the response code.
+	 */
+
+	data = l1_packet_get_be32(&pkt[1]);
+	rc = l1_response_to_errno(data);
+	if (rc != 0)
+		return rc;
+
+	/*
+	 * EEPROM read commands should return either one or two values:
+	 * the first value is the size of the remaining EEPROM data, and
+	 * the second value is the data read itself, if we asked for a
+	 * nonzero size in the command (that size might be shorter than
+	 * the data we asked for).
+	 */
+
+	if (pkt[5] != 1) {
+#ifdef L1_DEBUG
+		printf("unexpected L1 response: %d values\n", pkt[5]);
+#endif
+		return EIO;
+	}
+
+	pktbuf = pkt + 6;
+	pktlen -= 6;
+
+	if (l1_packet_get_int(&pktbuf, &pktlen, &data) != 0) {
+#ifdef L1_DEBUG
+		printf("unable to parse response as integer\n");
+#endif
+		return EIO;
+	}
+
+	/*
+	 * Now that we know the size of the spd record, allocate memory for it.
+	 */
+
+	spdlen = (size_t)data;
+	spd = (u_char *)malloc(spdlen, M_DEVBUF, M_NOWAIT);
+	if (spd == NULL)
+		return ENOMEM;
+
+	/*
+	 * Read the EEPROM contents in small chunks, so as not to keep L1
+	 * busy for too long.
+	 */
+
+	spdpos = 0;
+	while (spdpos < spdlen) {
+		/*
+		 * Build a command packet, this time actually reading data.
+		 */
+		pktlen = l1_command_build(pkt, sizeof pkt,
+		    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
+		    L1_REQ_EEPROM, 4,
+		    L1_ARG_INT, address,
+		    L1_ARG_INT, (uint32_t)L1_EEP_SPD,
+		    L1_ARG_INT, (uint32_t)spdpos,
+		    L1_ARG_INT, (uint32_t)EEPROM_CHUNK);
+		/* no need to check size again, it's the same size as earlier */
+
+		if (l1_packet_put(nasid, pkt, pktlen) != 0) {
+			rc = EWOULDBLOCK;
+			goto fail;
+		}
+
+		pktlen = sizeof pkt;
+		if (l1_receive_response(nasid, pkt, &pktlen) != 0) {
+			rc = EWOULDBLOCK;
+			goto fail;
+		}
+
+		if (pktlen < 6) {
+#ifdef L1_DEBUG
+			printf("truncated response (length %d)\n", pktlen);
+#endif
+			rc = EIO;
+			goto fail;
+		}
+
+		/*
+		 * Check the response code.
+		 */
+
+		data = l1_packet_get_be32(&pkt[1]);
+		rc = l1_response_to_errno(data);
+		if (rc != 0)
+			goto fail;
+
+		if (pkt[5] != 2) {
+#ifdef L1_DEBUG
+			printf("unexpected L1 response: %d values\n", pkt[5]);
+#endif
+			rc = EIO;
+			goto fail;
+		}
+
+		pktbuf = pkt + 6;
+		pktlen -= 6;
+
+		if (l1_packet_get_int(&pktbuf, &pktlen, &data) != 0) {
+#ifdef L1_DEBUG
+			printf("unable to parse first response as integer\n");
+#endif
+			rc = EIO;
+			goto fail;
+		}
+
+		if (l1_packet_get_binary(&pktbuf, &pktlen,
+		    &chunk, &chunklen) != 0) {
+#ifdef L1_DEBUG
+			printf("unable to parse second response as binary\n");
+#endif
+			rc = EIO;
+			goto fail;
+		}
+
+		/* should not happen, but we don't like infinite loops */
+		if (chunklen == 0) {
+#ifdef L1_DEBUG
+			printf("read command returned 0 bytes\n");
+#endif
+			rc = EIO;
+			goto fail;
+		}
+
+		memcpy(spd + spdpos, chunk, chunklen);
+		spdpos += chunklen;
+#ifdef L1_DEBUG
+		printf("got %02x bytes of eeprom, %x/%x\n",
+		    chunklen, spdpos, spdlen);
+#endif
+	}
+
+	*rspd = spd;
+	*rspdlen = spdlen;
+	return 0;
+
+fail:
+	if (spd != NULL)
+		free(spd, M_DEVBUF);
+	return rc;
 }

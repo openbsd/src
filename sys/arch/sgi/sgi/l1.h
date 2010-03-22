@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.h,v 1.2 2009/11/29 17:03:53 miod Exp $	*/
+/*	$OpenBSD: l1.h,v 1.3 2010/03/22 21:22:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -51,7 +51,9 @@
 #define	L1_TASK_GENERAL		0x06
 
 /* response codes */
-#define	L1_RESP_OK		0x00000000
+#define	L1_RESP_OK		((uint32_t)0)
+#define	L1_RESP_NXDATA		((uint32_t)-0x68)
+#define	L1_RESP_INVAL		((uint32_t)-0x6b)
 
 /*
  * Various commands (very incomplete list)
@@ -66,9 +68,26 @@
 #define	L1_REQ_DISP2	0x1005	/* display text on LCD second line */
 
 /* L1_REQ_EEPROM additional argument value */
-#define	L1_EEP_LOGIC	0x01	/* component: logic board */
-#define	L1_EEP_BOARD	0x02	/* ia code: board */
+/* non C-brick component */
+#define	L1_EEP_POWER	0x00		/* power board */
+#define	L1_EEP_LOGIC	0x01		/* logic board */
+/* C-brick component */
+#define	L1_EEP_DIMMBASE_SINGLEPIMM	0x04
+#define	L1_EEP_DIMMBASE_DUALPIMM	0x05
+/* ia code */
+#define	L1_EEP_CHASSIS	0x01		/* chassis ia */
+#define	L1_EEP_BOARD	0x02		/* board ia */
+#define	L1_EEP_IUSE	0x03		/* internal use ia */
+#define	L1_EEP_SPD	0x04		/* spd record */
 
-int	l1_read_board_ia(int16_t, u_char **, size_t *);
-int	l1_get_brick_ethernet_address(int16_t, uint8_t *);
+#define	L1_SPD_DIMM_MAX	8
+
+struct spdmem_attach_args {
+	struct mainbus_attach_args	maa;
+	int				dimm;
+};
+
 int	l1_exec_command(int16_t, const char *);
+int	l1_get_brick_ethernet_address(int16_t, uint8_t *);
+int	l1_get_brick_spd_record(int16_t, int, u_char **, size_t *);
+int	l1_read_board_ia(int16_t, u_char **, size_t *);
