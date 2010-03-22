@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: mld6.h,v 1.2 2010/03/22 21:29:22 jsg Exp $	*/
 /*	$FreeBSD: mld6.h,v 1.1 2009/04/29 11:31:23 bms Exp $	*/
 /*-
  * Copyright (c) 2009 Bruce Simpson.
