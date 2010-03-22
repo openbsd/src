@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.70 2010/03/18 12:47:48 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.71 2010/03/22 12:20:25 lum Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -701,7 +701,7 @@ rundisplay(void)
 				char *endp;
 				double newdelay = strtod(tempbuf, &endp);
 
-				if (newdelay >= 0 && newdelay < 1000000 &&
+				if (newdelay >= 0 && newdelay <= 1000000 &&
 				    *endp == '\0') {
 					delay = newdelay;
 				} else {
