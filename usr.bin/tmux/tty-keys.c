@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.29 2009/12/17 17:39:56 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.30 2010/03/22 19:03:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -408,7 +408,7 @@ tty_keys_find1(struct tty_key *tk, const char *buf, size_t len, size_t *size)
 		(*size)++;
 
 		/* At the end of the string, return the current node. */
-		if (len == 0)
+		if (len == 0 || (tk->next == NULL && tk->key != KEYC_NONE))
 			return (tk);
 
 		/* Move into the next tree for the following character. */
