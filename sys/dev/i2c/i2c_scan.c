@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.135 2009/12/28 05:04:38 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.136 2010/03/22 23:17:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -783,6 +783,16 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 			 */
 			name = "w83781d";
 		}
+	} else if (addr == (iicprobe(0xfc) & 0x7f) &&
+	    iicprobe(0xfe) == 0x79 && iicprobe(0xfb) == 0x51 &&
+	    ((iicprobe(0xfd) == 0x5c && (iicprobe(0x00) & 0x80)) ||
+	    (iicprobe(0xfd) == 0xa3 && !(iicprobe(0x00) & 0x80)))) {
+		/*
+		 * We could toggle 0x00 bit 0x80, then re-read 0xfd to
+		 * see if the value changes to 0xa3 (indicating Nuvoton).
+		 * But we are trying to avoid writes.
+		 */
+		name = "w83795g";
 	} else if (addr == iicprobe(0x4a) && iicprobe(0x4e) == 0x50 &&
 	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
 		name = "w83l784r";
