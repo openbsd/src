@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.241 2010/03/21 11:40:39 ajacoutot Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.242 2010/03/22 22:02:08 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2010 $
+.Dd $Mdocdate: March 22 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -711,8 +711,8 @@ See also
 .Ev TRY_BROKEN .
 .It Ev BROKEN-<arch>
 Define only for ports broken on a given architecture.
-Intent distinct from 
-.Ev ONLY_FOR_ARCHS ,
+Distinct from
+.Ev ONLY_FOR_ARCHS
 and
 .Ev NOT_FOR_ARCHS ,
 which are used to mark ports for which support for some architectures
