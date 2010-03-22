@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.70 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.71 2010/03/22 16:35:27 otto Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1841,7 +1841,7 @@ parsecred(char *namelist, struct ucred *cr)
 		cr->cr_uid = pw->pw_uid;
 		ngroups = NGROUPS + 1;
 		if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups))
-			syslog(LOG_ERR, "Too many groups");
+			syslog(LOG_ERR, "Too many groups for %s: %m", pw->pw_name);
 		/*
 		 * compress out duplicate
 		 */
