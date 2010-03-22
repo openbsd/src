@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.40 2010/03/22 17:09:27 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.41 2010/03/22 17:20:27 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -2594,7 +2594,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	if (sc->hw.mac.type == ixgbe_mac_82598EB)
 		rxctrl |= IXGBE_RXCTRL_DMBYPS;
 	rxctrl |= IXGBE_RXCTRL_RXEN;
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_RXCTRL, rxctrl);
+	sc->hw.mac.ops.enable_rx_dma(&sc->hw, rxctrl);
 
 	return;
 }
