@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.210 2010/03/22 19:02:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.211 2010/03/22 19:07:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1832,6 +1832,10 @@ void		 window_pane_mouse(struct window_pane *,
 int		 window_pane_visible(struct window_pane *);
 char		*window_pane_search(
 		     struct window_pane *, const char *, u_int *);
+struct window_pane *window_pane_find_up(struct window_pane *);
+struct window_pane *window_pane_find_down(struct window_pane *);
+struct window_pane *window_pane_find_left(struct window_pane *);
+struct window_pane *window_pane_find_right(struct window_pane *);
 
 /* layout.c */
 struct layout_cell *layout_create_cell(struct layout_cell *);
