@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.33 2009/09/13 23:36:10 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.1 2010/03/22 21:20:56 miod Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <dev/i2c/i2cvar.h>
+#include <dev/spdmemvar.h>
 
 /* Encodings of the size used/total byte for certain memory types    */
 #define	SPDMEM_SPDSIZE_MASK		0x0F	/* SPD EEPROM Size   */
@@ -230,36 +230,17 @@ static const uint8_t ddr2_cycle_tenths[] = {
 	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0, 0
 };
 
-struct spdmem {
-	uint8_t sm_len;
-	uint8_t sm_size;
-	uint8_t sm_type;
-	uint8_t sm_data[60];
-	uint8_t	sm_cksum;
-} __packed;
-
 #define SPDMEM_TYPE_MAXLEN 16
-struct spdmem_softc {
-	struct device	sc_dev;
-	i2c_tag_t	sc_tag;
-	i2c_addr_t	sc_addr;
-	struct spdmem	sc_spd_data;
-};
 
-uint16_t	 spdmem_crc16(struct spdmem_softc *, int);
-int		 spdmem_match(struct device *, void *, void *);
-void		 spdmem_attach(struct device *, struct device *, void *);
-uint8_t		 spdmem_read(struct spdmem_softc *, uint8_t);
-void		 spdmem_sdram_decode(struct spdmem_softc *, struct spdmem *);
-void		 spdmem_rdr_decode(struct spdmem_softc *, struct spdmem *);
-void		 spdmem_ddr_decode(struct spdmem_softc *, struct spdmem *);
-void		 spdmem_ddr2_decode(struct spdmem_softc *, struct spdmem *);
-void		 spdmem_fbdimm_decode(struct spdmem_softc *, struct spdmem *);
-void		 spdmem_ddr3_decode(struct spdmem_softc *, struct spdmem *);
-
-struct cfattach spdmem_ca = {
-	sizeof(struct spdmem_softc), spdmem_match, spdmem_attach
-};
+uint16_t	spdmem_crc16(struct spdmem_softc *, int);
+static inline
+uint8_t		spdmem_read(struct spdmem_softc *, uint8_t);
+void		spdmem_sdram_decode(struct spdmem_softc *, struct spdmem *);
+void		spdmem_rdr_decode(struct spdmem_softc *, struct spdmem *);
+void		spdmem_ddr_decode(struct spdmem_softc *, struct spdmem *);
+void		spdmem_ddr2_decode(struct spdmem_softc *, struct spdmem *);
+void		spdmem_fbdimm_decode(struct spdmem_softc *, struct spdmem *);
+void		spdmem_ddr3_decode(struct spdmem_softc *, struct spdmem *);
 
 struct cfdriver spdmem_cd = {
 	NULL, "spdmem", DV_DULL
@@ -301,6 +282,12 @@ static const char *spdmem_parity_types[] = {
 	"cmd/addr/data parity, data ECC"
 };
 
+static inline uint8_t
+spdmem_read(struct spdmem_softc *sc, uint8_t reg)
+{
+	return (*sc->sc_read)(sc, reg);
+}
+
 /* CRC functions used for certain memory types */
 uint16_t
 spdmem_crc16(struct spdmem_softc *sc, int count)
@@ -319,75 +306,6 @@ spdmem_crc16(struct spdmem_softc *sc, int count)
 				crc = crc << 1;
 	}
 	return (crc & 0xFFFF);
-}
-
-int
-spdmem_match(struct device *parent, void *match, void *aux)
-{
-	struct i2c_attach_args *ia = aux;
-	struct spdmem_softc sc;
-	uint8_t i, val, type;
-	int cksum = 0;
-	int spd_len, spd_crc_cover;
-	uint16_t crc_calc, crc_spd;
-
-	/* clever attachments like openfirmware informed macppc */	
-	if (strcmp(ia->ia_name, "spd") == 0)
-		return (1);
-
-	/* dumb, need sanity checks */
-	if (strcmp(ia->ia_name, "eeprom") != 0)
-		return (0);
-
-	sc.sc_tag = ia->ia_tag;
-	sc.sc_addr = ia->ia_addr;
-
-	type = spdmem_read(&sc, 2);
-	/* For older memory types, validate the checksum over 1st 63 bytes */
-	if (type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
-		for (i = 0; i < 63; i++)
-			cksum += spdmem_read(&sc, i);
-
-		val = spdmem_read(&sc, 63);
-
-		if (cksum == 0 || (cksum & 0xff) != val) {
-			return 0;
-		} else
-			return 1;
-	}
-
-	/* For DDR3 and FBDIMM, verify the CRC */
-	else if (type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
-		spd_len = spdmem_read(&sc, 0);
-		if (spd_len && SPDMEM_SPDCRC_116)
-			spd_crc_cover = 116;
-		else
-			spd_crc_cover = 125;
-		switch (spd_len & SPDMEM_SPDLEN_MASK) {
-		case SPDMEM_SPDLEN_128:
-			spd_len = 128;
-			break;
-		case SPDMEM_SPDLEN_176:
-			spd_len = 176;
-			break;
-		case SPDMEM_SPDLEN_256:
-			spd_len = 256;
-			break;
-		default:
-			return 0;
-		}
-		if (spd_crc_cover > spd_len)
-			return 0;
-		crc_calc = spdmem_crc16(&sc, spd_crc_cover);
-		crc_spd = spdmem_read(&sc, 127) << 8;
-		crc_spd |= spdmem_read(&sc, 126);
-		if (crc_calc != crc_spd) {
-			return 0;
-		}
-		return 1;
-	}
-
-	return (0);
 }
 
 void
@@ -765,18 +683,67 @@ spdmem_ddr3_decode(struct spdmem_softc *sc, struct spdmem *s)
 		printf(" with thermal sensor");
 }
 
-void
-spdmem_attach(struct device *parent, struct device *self, void *aux)
+int
+spdmem_probe(struct spdmem_softc *sc)
 {
-	struct spdmem_softc *sc = (struct spdmem_softc *)self;
-	struct i2c_attach_args *ia = aux;
+	uint8_t i, val, type;
+	int cksum = 0;
+	int spd_len, spd_crc_cover;
+	uint16_t crc_calc, crc_spd;
+
+	type = spdmem_read(sc, 2);
+	/* For older memory types, validate the checksum over 1st 63 bytes */
+	if (type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
+		for (i = 0; i < 63; i++)
+			cksum += spdmem_read(sc, i);
+
+		val = spdmem_read(sc, 63);
+
+		if (cksum == 0 || (cksum & 0xff) != val) {
+			return 0;
+		} else
+			return 1;
+	}
+
+	/* For DDR3 and FBDIMM, verify the CRC */
+	else if (type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
+		spd_len = spdmem_read(sc, 0);
+		if (spd_len && SPDMEM_SPDCRC_116)
+			spd_crc_cover = 116;
+		else
+			spd_crc_cover = 125;
+		switch (spd_len & SPDMEM_SPDLEN_MASK) {
+		case SPDMEM_SPDLEN_128:
+			spd_len = 128;
+			break;
+		case SPDMEM_SPDLEN_176:
+			spd_len = 176;
+			break;
+		case SPDMEM_SPDLEN_256:
+			spd_len = 256;
+			break;
+		default:
+			return 0;
+		}
+		if (spd_crc_cover > spd_len)
+			return 0;
+		crc_calc = spdmem_crc16(sc, spd_crc_cover);
+		crc_spd = spdmem_read(sc, 127) << 8;
+		crc_spd |= spdmem_read(sc, 126);
+		if (crc_calc != crc_spd) {
+			return 0;
+		}
+		return 1;
+	}
+
+	return 0;
+}
+
+void
+spdmem_attach_common(struct spdmem_softc *sc)
+{
 	struct spdmem *s = &(sc->sc_spd_data);
 	int i;
-
-	sc->sc_tag = ia->ia_tag;
-	sc->sc_addr = ia->ia_addr;
-
-	printf(":");
 
 	/* All SPD have at least 64 bytes of data including checksum */
 	for (i = 0; i < 64; i++) {
@@ -824,17 +791,4 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
-}
-
-uint8_t
-spdmem_read(struct spdmem_softc *sc, uint8_t reg)
-{
-	uint8_t val = 0xff;
-
-	iic_acquire_bus(sc->sc_tag,0);
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &reg, sizeof reg, &val, sizeof val, 0);
-	iic_release_bus(sc->sc_tag, 0);
-
-	return val;
 }
