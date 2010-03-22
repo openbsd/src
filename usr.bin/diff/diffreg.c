@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.73 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.74 2010/03/22 19:33:19 schwarze Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -514,8 +514,10 @@ opentemp(const char *file)
 		return (NULL);
 	}
 
-	if ((ofd = mkstemp(tempfile)) < 0)
+	if ((ofd = mkstemp(tempfile)) < 0) {
+		close(ifd);
 		return (NULL);
+	}
 	unlink(tempfile);
 	while ((nread = read(ifd, buf, BUFSIZ)) > 0) {
 		if (write(ofd, buf, nread) != nread) {
