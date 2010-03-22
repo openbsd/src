@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.160 2010/03/21 22:23:03 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.161 2010/03/22 18:49:25 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3596,12 +3596,13 @@ checkalign:
  *
  */
 slowtrap:
+	TRAP_SETUP -CC64FSZ-TF_SIZE
+
 	rdpr	%tt, %g4
 	rdpr	%tstate, %g1
 	rdpr	%tpc, %g2
 	rdpr	%tnpc, %g3
 
-	TRAP_SETUP -CC64FSZ-TF_SIZE
 Lslowtrap_reenter:
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_TSTATE]
 	mov	%g4, %o1		! (type)
