@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.34 2010/01/23 21:07:31 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.35 2010/03/22 19:18:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,15 +40,6 @@ server_fill_environ(struct session *s, struct environ *env)
 
 	term = options_get_string(&s->options, "default-terminal");
 	environ_set(env, "TERM", term);
-}
-
-void
-server_write_error(struct client *c, const char *msg)
-{
-	struct msg_print_data	printdata;
-
-	strlcpy(printdata.msg, msg, sizeof printdata.msg);
-	server_write_client(c, MSG_ERROR, &printdata, sizeof printdata);
 }
 
 void
