@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.263 2010/03/18 12:15:22 sthen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.264 2010/03/22 17:04:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -528,6 +528,7 @@ print_status(struct pf_status *s, int opts)
 	printf("%-44s", statline);
 	asprintf(&debug, "Debug: %s", loglevel_to_string(s->debug));
 	printf("%15s\n\n", debug);
+	free(debug);
 
 	if (opts & PF_OPT_VERBOSE) {
 		printf("Hostid:   0x%08x\n", ntohl(s->hostid));
