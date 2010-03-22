@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.36 2007/11/25 15:56:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.37 2010/03/22 15:25:47 otto Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -46,5 +46,11 @@ manual.c:	fdisk.cat8
 .endif
 
 MAN=	fdisk.8
+
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
+    ${MACHINE} == "macppc" || ${MACHINE} == "socppc"
+CFLAGS += -DHAS_MBR
+.endif
 
 .include <bsd.prog.mk>
