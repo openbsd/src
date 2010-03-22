@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.5 2010/02/02 17:16:47 damien Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.6 2010/03/22 22:28:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -60,7 +60,7 @@ struct athn_cardbus_softc {
 
 	/* CardBus specific goo. */
 	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
 	pcireg_t		sc_bar_val;
@@ -82,7 +82,7 @@ struct cfattach athn_cardbus_ca = {
 	athn_cardbus_detach
 };
 
-static const struct cardbus_matchid athn_cardbus_devices[] = {
+static const struct pci_matchid athn_cardbus_devices[] = {
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5416 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5418 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9160 },
@@ -123,13 +123,13 @@ athn_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map control/status registers. */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
 	    &csc->sc_mapsize);
 	if (error != 0) {
 		printf(": can't map mem space\n");
 		return;
 	}
-	csc->sc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->sc_bar_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* Set up the PCI configuration registers. */
 	athn_cardbus_setup(csc);
@@ -146,7 +146,7 @@ athn_cardbus_detach(struct device *self, int flags)
 	struct athn_cardbus_softc *csc = (struct athn_cardbus_softc *)self;
 	struct athn_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	athn_detach(sc);
@@ -167,7 +167,7 @@ athn_cardbus_enable(struct athn_softc *sc)
 {
 	struct athn_cardbus_softc *csc = (struct athn_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Power on the socket. */
@@ -193,7 +193,7 @@ athn_cardbus_disable(struct athn_softc *sc)
 {
 	struct athn_cardbus_softc *csc = (struct athn_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Unhook the interrupt handler. */
@@ -219,9 +219,9 @@ void
 athn_cardbus_setup(struct athn_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t reg;
+	pcireg_t reg;
 
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BASE0_REG,
@@ -233,9 +233,9 @@ athn_cardbus_setup(struct athn_cardbus_softc *csc)
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
+	    PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 
 	/*
@@ -248,8 +248,8 @@ athn_cardbus_setup(struct athn_cardbus_softc *csc)
 	cardbus_conf_write(cc, cf, csc->sc_tag, 0x40, reg);
 
 	/* Change latency timer; default value yields poor results. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
-	reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-	reg |= 168 << CARDBUS_LATTIMER_SHIFT;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_BHLC_REG);
+	reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+	reg |= 168 << PCI_LATTIMER_SHIFT;
+	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_BHLC_REG, reg);
 }

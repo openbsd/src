@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc_cardbus.c,v 1.3 2007/12/04 21:49:35 kettenis Exp $	*/
+/*	$OpenBSD: puc_cardbus.c,v 1.4 2010/03/22 22:28:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -57,11 +57,11 @@ puc_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	struct cardbus_devfunc *ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t bhlc, reg;
+	pcireg_t bhlc, reg;
 
-	bhlc = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG);
+	bhlc = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_BHLC_REG);
 	if (PCI_HDRTYPE_TYPE(bhlc) != 0)
 		return(0);
 
@@ -85,10 +85,10 @@ puc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct puc_softc *sc = &csc->sc_psc;
 	struct cardbus_attach_args *ca = aux;
 	struct cardbus_devfunc *ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	struct puc_attach_args paa;
-	cardbusreg_t reg;
+	pcireg_t reg;
 	int i;
 
 	Cardbus_function_enable(ct);
@@ -103,7 +103,7 @@ puc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* the fifth one is some memory we dunno */
 	for (i = 0; i < PUC_NBARS; i++) {
-		cardbusreg_t type;
+		pcireg_t type;
 		int bar;
 
 		sc->sc_bar_mappings[i].mapped = 0;

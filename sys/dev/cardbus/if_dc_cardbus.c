@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.30 2009/10/15 17:54:56 deraadt Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.31 2010/03/22 22:28:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -79,7 +79,7 @@ struct dc_cardbus_softc {
 	int			sc_intrline;
 
 	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 	bus_size_t		sc_mapsize;
 	int			sc_actype;
 };
@@ -95,7 +95,7 @@ struct cfattach dc_cardbus_ca = {
 	    dc_cardbus_detach
 };
 
-const struct cardbus_matchid dc_cardbus_devices[] = {
+const struct pci_matchid dc_cardbus_devices[] = {
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
@@ -125,9 +125,9 @@ dc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct dc_softc *sc = &csc->sc_dc;
 	struct cardbus_attach_args *ca = aux;
 	struct cardbus_devfunc *ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t reg;
+	pcireg_t reg;
 	bus_addr_t addr;
 
 	sc->sc_dmat = ca->ca_dmat;
@@ -259,9 +259,9 @@ void
 dc_cardbus_setup(struct dc_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t reg;
+	pcireg_t reg;
 	int r;
 
 	/* wakeup the card if needed */

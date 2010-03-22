@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.9 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.10 2010/03/22 22:28:27 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -52,7 +52,7 @@ struct bwi_cardbus_softc {
 
 	/* cardbus specific goo */
 	cardbus_devfunc_t	 csc_ct;
-	cardbustag_t		 csc_tag;
+	pcitag_t		 csc_tag;
 	void			*csc_ih;
 
 	bus_size_t		 csc_mapsize;
@@ -74,7 +74,7 @@ struct cfattach bwi_cardbus_ca = {
 	bwi_cardbus_attach, bwi_cardbus_detach
 };
 
-static const struct cardbus_matchid bwi_cardbus_devices[] = {
+static const struct pci_matchid bwi_cardbus_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4303 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306_2 },
@@ -99,7 +99,7 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cardbus_attach_args *ca = aux;
 	struct bwi_softc *sc = &csc->csc_bwi;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbusreg_t reg;
+	pcireg_t reg;
 	bus_addr_t base;
 	int error;
 
@@ -115,13 +115,13 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_mem_bt,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_mem_bt,
 	    &sc->sc_mem_bh, &base, &csc->csc_mapsize);
 	if (error != 0) {
 		printf(": can't map mem space\n");
 		return;
 	}
-	csc->csc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->csc_bar_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* set up the PCI configuration registers */
 	bwi_cardbus_setup(csc);
@@ -152,7 +152,7 @@ bwi_cardbus_detach(struct device *self, int flags)
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
 	struct bwi_softc *sc = &csc->csc_bwi;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
@@ -177,7 +177,7 @@ void
 bwi_cardbus_setup(struct bwi_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
@@ -191,9 +191,9 @@ bwi_cardbus_setup(struct bwi_cardbus_softc *csc)
 
 	/* enable the appropriate bits in the PCI CSR */
 	reg = cardbus_conf_read(cc, cf, csc->csc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->csc_tag, CARDBUS_COMMAND_STATUS_REG,
+	    PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	cardbus_conf_write(cc, cf, csc->csc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 }
 
@@ -202,7 +202,7 @@ bwi_cardbus_enable(struct bwi_softc *sc)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* power on the socket */
@@ -229,7 +229,7 @@ bwi_cardbus_disable(struct bwi_softc *sc)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
@@ -245,7 +245,7 @@ bwi_cardbus_conf_write(void *self, uint32_t reg, uint32_t val)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	cardbus_conf_write(cc, cf, csc->csc_tag, reg, val);
@@ -256,7 +256,7 @@ bwi_cardbus_conf_read(void *self, uint32_t reg)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	return (cardbus_conf_read(cc, cf, csc->csc_tag, reg));

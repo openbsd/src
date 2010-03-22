@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.24 2010/01/13 09:10:33 jsg Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.25 2010/03/22 22:28:27 jsg Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -116,42 +116,42 @@ const struct xl_cardbus_product {
 } xl_cardbus_products[] = {
 	{ PCI_PRODUCT_3COM_3C575,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE,
 	  XL_CARDBUS_BOOMERANG },
 
 	{ PCI_PRODUCT_3COM_3CCFE575BT,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_LED_PWR,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFE575CT,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_MII_PWR,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFEM656,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_LED_PWR | XL_FLAG_INVERT_MII_PWR,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFEM656B,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_LED_PWR | XL_FLAG_INVERT_MII_PWR,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  XL_CARDBUS_CYCLONE },
 
 	{ PCI_PRODUCT_3COM_3CCFEM656C,
 	  XL_FLAG_PHYOK | XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_8BITROM |
 	      XL_FLAG_INVERT_MII_PWR,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  XL_CARDBUS_CYCLONE },
 
 	{ 0,
@@ -167,11 +167,11 @@ xl_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct xl_cardbus_product *ecp;
 
-	if (CARDBUS_VENDOR(ca->ca_id) != PCI_VENDOR_3COM)
+	if (PCI_VENDOR(ca->ca_id) != PCI_VENDOR_3COM)
 		return (NULL);
 
 	for (ecp = xl_cardbus_products; ecp->ecp_prodid != 0; ecp++)
-		if (CARDBUS_PRODUCT(ca->ca_id) == ecp->ecp_prodid)
+		if (PCI_PRODUCT(ca->ca_id) == ecp->ecp_prodid)
 			return (ecp);
 	return (NULL);
 }
@@ -194,14 +194,14 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct xl_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t command, bhlc;
+	pcireg_t command, bhlc;
 	const struct xl_cardbus_product *ecp;
 	bus_space_handle_t ioh;
 	bus_addr_t adr;
 
-	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
+	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->xl_btag, &ioh, &adr, &csc->sc_mapsize)) {
 		printf(": can't map i/o space\n");
 		return;
@@ -221,14 +221,14 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 
 	command = cardbus_conf_read(cc, cf, ca->ca_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
+	    PCI_COMMAND_STATUS_REG);
 	command |= ecp->ecp_csr;
 	csc->sc_cardtype = ecp->ecp_cardtype;
 
 	if (csc->sc_cardtype == XL_CARDBUS_CYCLONE) {
 		/* map CardBus function status window */
 		if (Cardbus_mapreg_map(ct, CARDBUS_BASE2_REG,
-		    CARDBUS_MAPREG_TYPE_MEM, 0, &csc->sc_funct,
+		    PCI_MAPREG_TYPE_MEM, 0, &csc->sc_funct,
 		    &csc->sc_funch, 0, &csc->sc_funcsize)) {
 			printf("%s: unable to map function status window\n",
 			    self->dv_xname);
@@ -244,20 +244,20 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
+	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG,
 	    command);
   
  	/*
 	 * set latency timer
 	 */
-	bhlc = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(bhlc) < 0x20) {
+	bhlc = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(bhlc) < 0x20) {
 		/* at least the value of latency timer should 0x20. */
 		DPRINTF(("if_xl_cardbus: lattimer 0x%x -> 0x20\n",
-		    CARDBUS_LATTIMER(bhlc)));
-		bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		bhlc |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG, bhlc);
+		    PCI_LATTIMER(bhlc)));
+		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		bhlc |= (0x20 << PCI_LATTIMER_SHIFT);
+		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, bhlc);
 	}
 
 	csc->sc_ct = ca->ca_ct;

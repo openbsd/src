@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.15 2010/01/13 09:10:33 jsg Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.16 2010/03/22 22:28:27 jsg Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -34,110 +34,7 @@
 #include <dev/pci/pcivar.h>	/* for pcitag_t */
 #include <dev/cardbus/rbus.h>
 
-typedef void *cardbus_chipset_tag_t;
 typedef int cardbus_intr_handle_t;
-
-/* XXX they must be in cardbusreg.h */
-typedef u_int32_t cardbusreg_t;
-typedef pcitag_t cardbustag_t;
-typedef int cardbus_intr_line_t;
-
-#define CARDBUS_ID_REG          0x00
-
-typedef u_int16_t cardbus_vendor_id_t;
-typedef u_int16_t cardbus_product_id_t;
-
-#  define CARDBUS_VENDOR_SHIFT  0
-#  define CARDBUS_VENDOR_MASK   0xffff
-#  define CARDBUS_VENDOR(id) \
-	    (((id) >> CARDBUS_VENDOR_SHIFT) & CARDBUS_VENDOR_MASK)
-
-#  define CARDBUS_PRODUCT_SHIFT  16
-#  define CARDBUS_PRODUCT_MASK   0xffff
-#  define CARDBUS_PRODUCT(id) \
-	    (((id) >> CARDBUS_PRODUCT_SHIFT) & CARDBUS_PRODUCT_MASK)
-
-
-#define	CARDBUS_COMMAND_STATUS_REG  0x04
-
-#  define CARDBUS_COMMAND_IO_ENABLE     0x00000001
-#  define CARDBUS_COMMAND_MEM_ENABLE    0x00000002
-#  define CARDBUS_COMMAND_MASTER_ENABLE 0x00000004
-
-
-#define CARDBUS_CLASS_REG       0x08
-
-#define	CARDBUS_CLASS_SHIFT				24
-#define	CARDBUS_CLASS_MASK				0xff
-#define	CARDBUS_CLASS(cr) \
-	    (((cr) >> CARDBUS_CLASS_SHIFT) & CARDBUS_CLASS_MASK)
-
-#define	CARDBUS_SUBCLASS_SHIFT			16
-#define	CARDBUS_SUBCLASS_MASK			0xff
-#define	CARDBUS_SUBCLASS(cr) \
-	    (((cr) >> CARDBUS_SUBCLASS_SHIFT) & CARDBUS_SUBCLASS_MASK)
-
-#define	CARDBUS_INTERFACE_SHIFT			8
-#define	CARDBUS_INTERFACE_MASK			0xff
-#define	CARDBUS_INTERFACE(cr) \
-	    (((cr) >> CARDBUS_INTERFACE_SHIFT) & CARDBUS_INTERFACE_MASK)
-
-#define	CARDBUS_REVISION_SHIFT			0
-#define	CARDBUS_REVISION_MASK			0xff
-#define	CARDBUS_REVISION(cr) \
-	    (((cr) >> CARDBUS_REVISION_SHIFT) & CARDBUS_REVISION_MASK)
-
-/* base classes */
-#define	CARDBUS_CLASS_PREHISTORIC		0x00
-#define	CARDBUS_CLASS_MASS_STORAGE		0x01
-#define	CARDBUS_CLASS_NETWORK			0x02
-#define	CARDBUS_CLASS_DISPLAY			0x03
-#define	CARDBUS_CLASS_MULTIMEDIA		0x04
-#define	CARDBUS_CLASS_MEMORY			0x05
-#define	CARDBUS_CLASS_BRIDGE			0x06
-#define	CARDBUS_CLASS_COMMUNICATIONS		0x07
-#define	CARDBUS_CLASS_SYSTEM			0x08
-#define	CARDBUS_CLASS_INPUT			0x09
-#define	CARDBUS_CLASS_DOCK			0x0a
-#define	CARDBUS_CLASS_PROCESSOR			0x0b
-#define	CARDBUS_CLASS_SERIALBUS			0x0c
-#define	CARDBUS_CLASS_UNDEFINED			0xff
-
-/* 0x0c serial bus subclasses */
-#define	CARDBUS_SUBCLASS_SERIALBUS_FIREWIRE	0x00
-#define	CARDBUS_SUBCLASS_SERIALBUS_ACCESS	0x01
-#define	CARDBUS_SUBCLASS_SERIALBUS_SSA		0x02
-#define	CARDBUS_SUBCLASS_SERIALBUS_USB		0x03
-#define	CARDBUS_SUBCLASS_SERIALBUS_FIBER	0x04
-
-/* BIST, Header Type, Latency Timer, Cache Line Size */
-#define CARDBUS_BHLC_REG        0x0c
-
-#define	CARDBUS_BIST_SHIFT        24
-#define	CARDBUS_BIST_MASK       0xff
-#define	CARDBUS_BIST(bhlcr) \
-	    (((bhlcr) >> CARDBUS_BIST_SHIFT) & CARDBUS_BIST_MASK)
-
-#define	CARDBUS_HDRTYPE_SHIFT     16
-#define	CARDBUS_HDRTYPE_MASK    0xff
-#define	CARDBUS_HDRTYPE(bhlcr) \
-	    (((bhlcr) >> CARDBUS_HDRTYPE_SHIFT) & CARDBUS_HDRTYPE_MASK)
-
-#define	CARDBUS_HDRTYPE_TYPE(bhlcr) \
-	    (CARDBUS_HDRTYPE(bhlcr) & 0x7f)
-#define	CARDBUS_HDRTYPE_MULTIFN(bhlcr) \
-	    ((CARDBUS_HDRTYPE(bhlcr) & 0x80) != 0)
-
-#define	CARDBUS_LATTIMER_SHIFT      8
-#define	CARDBUS_LATTIMER_MASK    0xff
-#define	CARDBUS_LATTIMER(bhlcr) \
-	    (((bhlcr) >> CARDBUS_LATTIMER_SHIFT) & CARDBUS_LATTIMER_MASK)
-
-#define	CARDBUS_CACHELINE_SHIFT     0
-#define	CARDBUS_CACHELINE_MASK   0xff
-#define	CARDBUS_CACHELINE(bhlcr) \
-	    (((bhlcr) >> CARDBUS_CACHELINE_SHIFT) & CARDBUS_CACHELINE_MASK)
-
 
 /* Base Registers */
 #define CARDBUS_BASE0_REG  0x10
@@ -163,31 +60,26 @@ typedef u_int16_t cardbus_product_id_t;
 #    define CARDBUS_CIS_ASI_BAR(x) (((CARDBUS_CIS_ASIMASK & (x))-1)*4+0x10)
 #    define CARDBUS_CIS_ASI_ROM_IMAGE(x) (((x) >> 28) & 0xf)
 
-#define	CARDBUS_INTERRUPT_REG   0x3c
-
-#define CARDBUS_MAPREG_TYPE_MEM		0x00000000
-#define CARDBUS_MAPREG_TYPE_IO		0x00000001
-
 /* XXX end */
 
 typedef struct cardbus_functions {
-	int (*cardbus_space_alloc)(cardbus_chipset_tag_t, rbus_tag_t,
+	int (*cardbus_space_alloc)(pci_chipset_tag_t, rbus_tag_t,
 	    bus_addr_t, bus_size_t, bus_addr_t, bus_size_t, int, bus_addr_t *,
 	    bus_space_handle_t *);
-	int (*cardbus_space_free)(cardbus_chipset_tag_t, rbus_tag_t,
+	int (*cardbus_space_free)(pci_chipset_tag_t, rbus_tag_t,
 	    bus_space_handle_t, bus_size_t);
-	void *(*cardbus_intr_establish)(cardbus_chipset_tag_t, int, int,
+	void *(*cardbus_intr_establish)(pci_chipset_tag_t, int, int,
 	    int (*)(void *), void *, const char *);
-	void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t, void *);
-	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
-	int (*cardbus_power)(cardbus_chipset_tag_t, int);
+	void (*cardbus_intr_disestablish)(pci_chipset_tag_t, void *);
+	int (*cardbus_ctrl)(pci_chipset_tag_t, int);
+	int (*cardbus_power)(pci_chipset_tag_t, int);
 
-	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int, int);
-	void (*cardbus_free_tag)(cardbus_chipset_tag_t, cardbustag_t);
-	cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
-	    cardbustag_t, int);
-	void (*cardbus_conf_write)(cardbus_chipset_tag_t, cardbustag_t, int,
-	    cardbusreg_t);
+	pcitag_t (*cardbus_make_tag)(pci_chipset_tag_t, int, int, int);
+	void (*cardbus_free_tag)(pci_chipset_tag_t, pcitag_t);
+	pcireg_t (*cardbus_conf_read)(pci_chipset_tag_t,
+	    pcitag_t, int);
+	void (*cardbus_conf_write)(pci_chipset_tag_t, pcitag_t, int,
+	    pcireg_t);
 } cardbus_function_t, *cardbus_function_tag_t;
 
 /*
@@ -201,7 +93,7 @@ struct cbslot_attach_args {
 
 	int cba_bus;			/* cardbus bus number */
 
-	cardbus_chipset_tag_t cba_cc;	/* cardbus chipset */
+	pci_chipset_tag_t cba_cc;	/* cardbus chipset */
 	cardbus_function_tag_t cba_cf;	/* cardbus functions */
 	int cba_intrline;		/* interrupt line */
 
@@ -235,7 +127,7 @@ struct cardbus_softc {
 	bus_space_tag_t sc_memt;	/* CardBus MEM space tag */
 	bus_dma_tag_t sc_dmat;		/* DMA tag */
 
-	cardbus_chipset_tag_t sc_cc;	/* CardBus chipset */
+	pci_chipset_tag_t sc_cc;	/* CardBus chipset */
 	cardbus_function_tag_t sc_cf;	/* CardBus function */
 
 	rbus_tag_t sc_rbus_iot;		/* CardBus i/o rbus tag */
@@ -261,7 +153,7 @@ struct cardbus_softc {
  *   disallocation.
  */
 typedef struct cardbus_devfunc {
-	cardbus_chipset_tag_t ct_cc;
+	pci_chipset_tag_t ct_cc;
 	cardbus_function_tag_t ct_cf;
 	struct cardbus_softc *ct_sc;	/* pointer to the parent */
 	int ct_bus;			/* bus number */
@@ -317,12 +209,12 @@ struct cardbus_attach_args {
 	u_int ca_bus;
 	u_int ca_device;
 	u_int ca_function;
-	cardbustag_t ca_tag;
-	cardbusreg_t ca_id;
-	cardbusreg_t ca_class;
+	pcitag_t ca_tag;
+	pcireg_t ca_id;
+	pcireg_t ca_class;
 
 	/* Interrupt information */
-	cardbus_intr_line_t ca_intrline;
+	pci_intr_line_t ca_intrline;
 
 	rbus_tag_t ca_rbus_iot;		/* CardBus i/o rbus tag */
 	rbus_tag_t ca_rbus_memt;	/* CardBus mem rbus tag */
@@ -376,15 +268,15 @@ struct cardbus_attach_args {
 
 int	cardbus_attach_card(struct cardbus_softc *);
 void	cardbus_detach_card(struct cardbus_softc *);
-void   *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
+void   *cardbus_intr_establish(pci_chipset_tag_t, cardbus_function_tag_t,
 	    cardbus_intr_handle_t irq, int level, int (*func) (void *),
 	    void *arg, const char *);
-void	cardbus_intr_disestablish(cardbus_chipset_tag_t,
+void	cardbus_intr_disestablish(pci_chipset_tag_t,
 	    cardbus_function_tag_t, void *handler);
 
-int	cardbus_mapreg_probe(cardbus_chipset_tag_t, cardbus_function_tag_t,
-	    cardbustag_t, int, pcireg_t *);
-int	cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
+int	cardbus_mapreg_probe(pci_chipset_tag_t, cardbus_function_tag_t,
+	    pcitag_t, int, pcireg_t *);
+int	cardbus_mapreg_map(struct cardbus_softc *, int, int, pcireg_t,
 	    int, bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);
 int	cardbus_mapreg_unmap(struct cardbus_softc *, int, int,
@@ -393,16 +285,10 @@ int	cardbus_mapreg_unmap(struct cardbus_softc *, int, int,
 int	cardbus_function_enable(struct cardbus_softc *, int function);
 int	cardbus_function_disable(struct cardbus_softc *, int function);
 
-int	cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
-	    cardbustag_t, int, int *, cardbusreg_t *);
-
-struct cardbus_matchid {
-	cardbus_vendor_id_t	cm_vid;
-	cardbus_product_id_t	cm_pid;
-};
-
 int	cardbus_matchbyid(struct cardbus_attach_args *,
-	    const struct cardbus_matchid *, int);
+	    const struct pci_matchid *, int);
+int	cardbus_get_capability(pci_chipset_tag_t, cardbus_function_tag_t,
+	    pcitag_t, int, int *, pcireg_t *);
 
 #define Cardbus_function_enable(ct)			\
     cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.8 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.9 2010/03/22 22:28:27 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -57,7 +57,7 @@
 struct pgt_cardbus_softc {
 	struct pgt_softc	 sc_pgt;
 	cardbus_devfunc_t	 sc_ct;
-	cardbustag_t		 sc_tag;
+	pcitag_t		 sc_tag;
 	int			 sc_intrline;
 
 	void			*sc_ih;
@@ -78,7 +78,7 @@ struct cfattach pgt_cardbus_ca = {
 	pgt_cardbus_detach
 };
 
-const struct cardbus_matchid pgt_cardbus_devices[] = {
+const struct pci_matchid pgt_cardbus_devices[] = {
 	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3877 },
 	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3890 },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE154G72 }
@@ -113,7 +113,7 @@ pgt_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_power = pgt_cardbus_power;
 
 	/* remember chipset */
-	if (CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTERSIL_ISL3877)
+	if (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTERSIL_ISL3877)
 		sc->sc_flags |= SC_ISL3877;
 
 	/* map control / status registers */
@@ -124,7 +124,7 @@ pgt_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map mem space\n");
 		return;
 	}
-	csc->sc_bar0_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->sc_bar0_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* disable all interrupts */
 	bus_space_write_4(sc->sc_iotag, sc->sc_iohandle, PGT_REG_INT_EN, 0);
@@ -148,7 +148,7 @@ pgt_cardbus_detach(struct device *self, int flags)
 	struct pgt_cardbus_softc *csc = (struct pgt_cardbus_softc *)self;
 	struct pgt_softc *sc = &csc->sc_pgt;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
@@ -174,7 +174,7 @@ pgt_cardbus_enable(struct pgt_softc *sc)
 {
         struct pgt_cardbus_softc *csc = (struct pgt_cardbus_softc *)sc;
         cardbus_devfunc_t ct = csc->sc_ct;
-        cardbus_chipset_tag_t cc = ct->ct_cc;
+        pci_chipset_tag_t cc = ct->ct_cc;
         cardbus_function_tag_t cf = ct->ct_cf;
 
         /* power on the socket */
@@ -201,7 +201,7 @@ pgt_cardbus_disable(struct pgt_softc *sc)
 {
 	struct pgt_cardbus_softc *csc = (struct pgt_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
@@ -227,7 +227,7 @@ void
 pgt_cardbus_setup(struct pgt_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
@@ -241,8 +241,8 @@ pgt_cardbus_setup(struct pgt_cardbus_softc *csc)
 
 	/* enable the appropriate bits in the PCI CSR */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
+	    PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_cardbus.c,v 1.6 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: if_malo_cardbus.c,v 1.7 2010/03/22 22:28:27 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -46,7 +46,7 @@ struct malo_cardbus_softc {
 
 	/* cardbus specific goo */
 	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 	void			*sc_ih;
 
 	bus_size_t		sc_mapsize1;
@@ -69,7 +69,7 @@ struct cfattach malo_cardbus_ca = {
 	malo_cardbus_attach, malo_cardbus_detach
 };
 
-static const struct cardbus_matchid malo_cardbus_devices[] = {
+static const struct pci_matchid malo_cardbus_devices[] = {
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_1 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2 }
@@ -106,17 +106,17 @@ malo_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_mem1_bt,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_mem1_bt,
 	    &sc->sc_mem1_bh, &base, &csc->sc_mapsize1);
 	if (error != 0) {
 		printf(": can't map mem1 space\n");
 		return;
 	}
-	csc->sc_bar1_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->sc_bar1_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE1_REG,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_mem2_bt,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_mem2_bt,
 	    &sc->sc_mem2_bh, &base, &csc->sc_mapsize2);
 	if (error != 0) {
 		printf(": can't map mem2 space\n");
@@ -124,7 +124,7 @@ malo_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_mem1_bh, csc->sc_mapsize1);
 		return;
 	}
-	csc->sc_bar2_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->sc_bar2_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* set up the PCI configuration registers */
 	malo_cardbus_setup(csc);
@@ -144,7 +144,7 @@ malo_cardbus_detach(struct device *self, int flags)
 	struct malo_cardbus_softc *csc = (struct malo_cardbus_softc *)self;
 	struct malo_softc *sc = &csc->sc_malo;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
@@ -171,7 +171,7 @@ void
 malo_cardbus_setup(struct malo_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
@@ -187,9 +187,9 @@ malo_cardbus_setup(struct malo_cardbus_softc *csc)
 
 	/* enable the appropriate bits in the PCI CSR */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
+	    PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 }
 
@@ -198,7 +198,7 @@ malo_cardbus_enable(struct malo_softc *sc)
 {
 	struct malo_cardbus_softc *csc = (struct malo_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* power on the socket */
@@ -225,7 +225,7 @@ malo_cardbus_disable(struct malo_softc *sc)
 {
 	struct malo_cardbus_softc *csc = (struct malo_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */

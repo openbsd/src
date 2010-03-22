@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.10 2010/01/13 09:10:33 jsg Exp $	*/
+/*	$OpenBSD: cardbus_map.c,v 1.11 2010/03/22 22:28:27 jsg Exp $	*/
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -56,16 +56,16 @@
 #endif
 
 
-STATIC int cardbus_io_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
-	       cardbustag_t, int, cardbusreg_t, bus_addr_t *, bus_size_t *,
+STATIC int cardbus_io_find(pci_chipset_tag_t, cardbus_function_tag_t,
+	       pcitag_t, int, pcireg_t, bus_addr_t *, bus_size_t *,
 	       int *);
-STATIC int cardbus_mem_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
-	       cardbustag_t, int, cardbusreg_t, bus_addr_t *, bus_size_t *,
+STATIC int cardbus_mem_find(pci_chipset_tag_t, cardbus_function_tag_t,
+	       pcitag_t, int, pcireg_t, bus_addr_t *, bus_size_t *,
 	       int *);
 
 int
-cardbus_mapreg_probe(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, int reg, pcireg_t *typep)
+cardbus_mapreg_probe(pci_chipset_tag_t cc, cardbus_function_tag_t cf,
+    pcitag_t tag, int reg, pcireg_t *typep)
 {
 	pcireg_t address, mask;
 	int s;
@@ -86,18 +86,18 @@ cardbus_mapreg_probe(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 }
 
 /*
- * STATIC int cardbus_io_find(cardbus_chipset_tag_t cc,
- *			      cardbus_function_tag_t cf, cardbustag_t tag,
- *			      int reg, cardbusreg_t type, bus_addr_t *basep,
+ * STATIC int cardbus_io_find(pci_chipset_tag_t cc,
+ *			      cardbus_function_tag_t cf, pcitag_t tag,
+ *			      int reg, pcireg_t type, bus_addr_t *basep,
  *			      bus_size_t *sizep, int *flagsp)
  * This code is stolen from sys/dev/pci_map.c.
  */
 STATIC int
-cardbus_io_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, int reg, cardbusreg_t type, bus_addr_t *basep,
+cardbus_io_find(pci_chipset_tag_t cc, cardbus_function_tag_t cf,
+    pcitag_t tag, int reg, pcireg_t type, bus_addr_t *basep,
     bus_size_t *sizep, int *flagsp)
 {
-	cardbusreg_t address, mask;
+	pcireg_t address, mask;
 	int s;
 
 	/* EXT ROM is able to map on memory space ONLY. */
@@ -146,18 +146,18 @@ cardbus_io_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 }
 
 /*
- * STATIC int cardbus_mem_find(cardbus_chipset_tag_t cc,
- *			       cardbus_function_tag_t cf, cardbustag_t tag,
- *			       int reg, cardbusreg_t type, bus_addr_t *basep,
+ * STATIC int cardbus_mem_find(pci_chipset_tag_t cc,
+ *			       cardbus_function_tag_t cf, pcitag_t tag,
+ *			       int reg, pcireg_t type, bus_addr_t *basep,
  *			       bus_size_t *sizep, int *flagsp)
  * This code is stolen from sys/dev/pci_map.c.
  */
 STATIC int
-cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, int reg, cardbusreg_t type, bus_addr_t *basep,
+cardbus_mem_find(pci_chipset_tag_t cc, cardbus_function_tag_t cf,
+    pcitag_t tag, int reg, pcireg_t type, bus_addr_t *basep,
     bus_size_t *sizep, int *flagsp)
 {
-	cardbusreg_t address, mask;
+	pcireg_t address, mask;
 	int s;
 
 	if (reg != CARDBUS_ROM_REG &&
@@ -232,7 +232,7 @@ cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 }
 
 /*
- * int cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
+ * int cardbus_mapreg_map(struct cardbus_softc *, int, int, pcireg_t,
  *			  int bus_space_tag_t *, bus_space_handle_t *,
  *			  bus_addr_t *, bus_size_t *)
  *    This function maps bus-space on the value of Base Address
@@ -243,10 +243,10 @@ cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
  */
 int
 cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg,
-    cardbusreg_t type, int busflags, bus_space_tag_t *tagp,
+    pcireg_t type, int busflags, bus_space_tag_t *tagp,
     bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
 {
-	cardbus_chipset_tag_t cc = sc->sc_cc;
+	pci_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	bus_space_tag_t bustag;
 	rbus_tag_t rbustag;
@@ -256,7 +256,7 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg,
 	int flags;
 	int status = 0;
 
-	cardbustag_t tag = cardbus_make_tag(cc, cf, sc->sc_bus,
+	pcitag_t tag = cardbus_make_tag(cc, cf, sc->sc_bus,
 	    sc->sc_device, func);
 
 	DPRINTF(("cardbus_mapreg_map called: %s %x\n", sc->sc_dev.dv_xname,
@@ -318,10 +318,10 @@ int
 cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg,
     bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
 {
-	cardbus_chipset_tag_t cc = sc->sc_cc;
+	pci_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	int st = 1;
-	cardbustag_t cardbustag;
+	pcitag_t cardbustag;
 	rbus_tag_t rbustag;
 
 	if (sc->sc_iot == tag) {

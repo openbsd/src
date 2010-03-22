@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.14 2009/05/12 17:43:16 damien Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.15 2010/03/22 22:28:27 jsg Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -89,7 +89,7 @@ struct ral_cardbus_softc {
 	/* cardbus specific goo */
 	struct ral_opns		*sc_opns;
 	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
 	pcireg_t		sc_bar_val;
@@ -105,7 +105,7 @@ struct cfattach ral_cardbus_ca = {
 	ral_cardbus_attach, ral_cardbus_detach
 };
 
-static const struct cardbus_matchid ral_cardbus_devices[] = {
+static const struct pci_matchid ral_cardbus_devices[] = {
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S },
@@ -146,8 +146,8 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t base;
 	int error;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_RALINK) {
-		switch (CARDBUS_PRODUCT(ca->ca_id)) {
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_RALINK) {
+		switch (PCI_PRODUCT(ca->ca_id)) {
 		case PCI_PRODUCT_RALINK_RT2560:
 			csc->sc_opns = &ral_rt2560_opns;
 			break;
@@ -179,21 +179,21 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
 	    &csc->sc_mapsize);
 	if (error != 0) {
 		printf(": can't map mem space\n");
 		return;
 	}
 
-	csc->sc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->sc_bar_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* set up the PCI configuration registers */
 	ral_cardbus_setup(csc);
 
 	printf(": irq %d", csc->sc_intrline);
 
-	(*csc->sc_opns->attach)(sc, CARDBUS_PRODUCT(ca->ca_id));
+	(*csc->sc_opns->attach)(sc, PCI_PRODUCT(ca->ca_id));
 
 	Cardbus_function_disable(ct);
 }
@@ -204,7 +204,7 @@ ral_cardbus_detach(struct device *self, int flags)
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
 	struct rt2560_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
@@ -230,7 +230,7 @@ ral_cardbus_enable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* power on the socket */
@@ -257,7 +257,7 @@ ral_cardbus_disable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
@@ -283,7 +283,7 @@ void
 ral_cardbus_setup(struct ral_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
@@ -297,8 +297,8 @@ ral_cardbus_setup(struct ral_cardbus_softc *csc)
 
 	/* enable the appropriate bits in the PCI CSR */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
+	    PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 }

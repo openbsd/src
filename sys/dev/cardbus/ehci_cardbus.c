@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.12 2009/06/02 12:32:08 deraadt Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.13 2010/03/22 22:28:27 jsg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ int	ehci_cardbus_detach(struct device *, int);
 
 struct ehci_cardbus_softc {
 	ehci_softc_t		sc;
-	cardbus_chipset_tag_t	sc_cc;
+	pci_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;
 	void 			*sc_ih;		/* interrupt vectoring */
@@ -76,7 +76,6 @@ struct cfattach ehci_cardbus_ca = {
 	    ehci_cardbus_attach, ehci_cardbus_detach, ehci_activate
 };
 
-#define CARDBUS_INTERFACE_EHCI PCI_INTERFACE_EHCI
 #define CARDBUS_CBMEM PCI_CBMEM
 #define cardbus_findvendor pci_findvendor
 
@@ -85,9 +84,9 @@ ehci_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
-	if (CARDBUS_CLASS(ca->ca_class) == CARDBUS_CLASS_SERIALBUS &&
-	    CARDBUS_SUBCLASS(ca->ca_class) == CARDBUS_SUBCLASS_SERIALBUS_USB &&
-	    CARDBUS_INTERFACE(ca->ca_class) == CARDBUS_INTERFACE_EHCI)
+	if (PCI_CLASS(ca->ca_class) == PCI_CLASS_SERIALBUS &&
+	    PCI_SUBCLASS(ca->ca_class) == PCI_SUBCLASS_SERIALBUS_USB &&
+	    PCI_INTERFACE(ca->ca_class) == PCI_INTERFACE_EHCI)
 		return (1);
  
 	return (0);
@@ -99,15 +98,15 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct ehci_cardbus_softc *sc = (struct ehci_cardbus_softc *)self;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t csr;
+	pcireg_t csr;
 	usbd_status r;
 	const char *vendor;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
 	/* Map I/O registers */
-	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
+	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf(": can't map mem space\n");
 		return;
@@ -123,10 +122,10 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Enable the device. */
 	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
-				CARDBUS_COMMAND_STATUS_REG);
-	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
-		       csr | CARDBUS_COMMAND_MASTER_ENABLE
-			   | CARDBUS_COMMAND_MEM_ENABLE);
+				PCI_COMMAND_STATUS_REG);
+	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG,
+		       csr | PCI_COMMAND_MASTER_ENABLE
+			   | PCI_COMMAND_MEM_ENABLE);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
@@ -143,12 +142,12 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = cardbus_findvendor(ca->ca_id);
-	sc->sc.sc_id_vendor = CARDBUS_VENDOR(ca->ca_id);
+	sc->sc.sc_id_vendor = PCI_VENDOR(ca->ca_id);
 	if (vendor)
 		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", CARDBUS_VENDOR(ca->ca_id));
+		    "vendor 0x%04x", PCI_VENDOR(ca->ca_id));
 	
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
