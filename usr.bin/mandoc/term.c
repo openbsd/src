@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.24 2010/03/20 20:07:18 schwarze Exp $ */
+/*	$Id: term.c,v 1.25 2010/03/22 23:16:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -237,7 +237,7 @@ term_flushln(struct termp *p)
 		 * Finally, write out the word.
 		 */
 		for ( ; i < (int)p->col; i++) {
-			if (vend > bp && i > jhy)
+			if (vend > bp && jhy > 0 && i > jhy)
 				break;
 			if (' ' == p->buf[i]) {
 				i++;
