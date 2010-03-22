@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.25 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.26 2010/03/22 12:23:32 jsg Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -80,19 +80,8 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
+#include <netinet6/mld6.h>
 #include <netinet6/mld6_var.h>
-
-/*
- * Protocol constants
- */
-
-/* denotes that the MLD max response delay field specifies time in milliseconds */
-#define MLD_TIMER_SCALE	1000
-/*
- * time between repetitions of a node's initial report of interest in a
- * multicast address(in seconds)
- */
-#define MLD_UNSOLICITED_REPORT_INTERVAL	10
 
 static struct ip6_pktopts ip6_opts;
 static int mld_timers_are_running;
@@ -145,7 +134,7 @@ mld6_start_listening(struct in6_multi *in6m)
 	} else {
 		mld6_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
 		in6m->in6m_timer =
-		    MLD_RANDOM_DELAY(MLD_UNSOLICITED_REPORT_INTERVAL *
+		    MLD_RANDOM_DELAY(MLD_V1_MAX_RI *
 		    PR_FASTHZ);
 		in6m->in6m_state = MLD_IREPORTEDLAST;
 		mld_timers_are_running = 1;
