@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.43 2009/03/01 16:30:26 millert Exp $
+.\"	$OpenBSD: mktemp.3,v 1.44 2010/03/22 20:18:12 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 1 2009 $
+.Dd $Mdocdate: March 22 2010 $
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -52,29 +52,15 @@ The
 family of functions take the given file name template and overwrite
 a portion of it to create a new file name.
 This file name is unique and suitable for use by the application.
-The template may be any file name with some number of
-.So Li X
-.Sc Ns s
-appended
+The template may be any file name with some number of Xs appended
 to it, for example
 .Pa /tmp/temp.XXXXXX .
-The trailing
-.So Li X Sc Ns s
-are replaced with a unique digit and letter combination.
-The number of unique file names that
-can be returned depends on the number of
-.So Li X Sc Ns s
-provided; six
-.So Li X
-.Sc Ns s
-will
-result in
+The trailing Xs are replaced with a unique digit and letter combination.
+The number of unique file names that can be returned
+depends on the number of Xs provided; six Xs will result in
 .Fn mktemp
 testing roughly 62 ** 6 combinations.
-At least 6
-.So Li X
-.Sc Ns s
-should be used, though 10 is much better.
+At least 6 Xs should be used, though 10 is much better.
 .Pp
 The
 .Fn mktemp
@@ -211,26 +197,26 @@ fails with an
 of
 .Er EEXIST .
 .Sh ERRORS
-The
-.Fn mkstemp
-and
-.Fn mkdtemp
-functions may set
+These functions may set
 .Va errno
 to one of the following values:
 .Bl -tag -width Er
-.It Bq Er ENOTDIR
-The path name portion of the template is not an existing directory.
+.It Bq Er EINVAL
+The
+.Ar template
+argument is an empty string.
+.It Bq Er EEXIST
+All file names tried are already in use.
+Consider appending more Xs to the
+.Ar template .
 .El
 .Pp
 The
-.Fn mkstemp
-and
-.Fn mkdtemp
-functions may also set
+.Fn mktemp
+function may also set
 .Va errno
 to any value specified by the
-.Xr stat 2
+.Xr lstat 2
 function.
 .Pp
 The
@@ -263,12 +249,31 @@ function.
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr getpid 2 ,
+.Xr lstat 2 ,
 .Xr mkdir 2 ,
 .Xr open 2 ,
-.Xr stat 2 ,
 .Xr tempnam 3 ,
 .Xr tmpfile 3 ,
 .Xr tmpnam 3
+.Sh STANDARDS
+The
+.Fn mktemp
+and
+.Fn mkstemp
+functions conform to the
+.St -xpg4 ,
+but
+.Fn mktemp
+is marked as legacy.
+The ability to specify more than six Xs and setting
+.Xr errno 2
+in case of errors are extensions to this standard.
+.Pp
+The
+.Fn mkdtemp
+and
+.Fn mkstemps
+functions are non-standard and should not be used if portability is required.
 .Sh HISTORY
 A
 .Fn mktemp
@@ -316,9 +321,3 @@ For this reason,
 .Xr ld 1
 will output a warning message whenever it links code that uses
 .Fn mktemp .
-.Pp
-The
-.Fn mkdtemp
-and
-.Fn mkstemps
-functions are non-standard and should not be used if portability is required.
