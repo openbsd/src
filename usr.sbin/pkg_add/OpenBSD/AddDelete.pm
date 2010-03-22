@@ -1,7 +1,19 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.18 2010/01/11 12:29:13 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.19 2010/03/22 20:38:44 espie Exp $
 #
-# Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
 use strict;
@@ -15,6 +27,7 @@ package OpenBSD::AddDelete;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::Paths;
+use OpenBSD::ProgressMeter;
 
 our $bad = 0;
 our %defines = ();
@@ -96,7 +109,7 @@ sub framework
 	my $code = shift;
 	try {
 		lock_db($opt_n) unless $state->{defines}->{nolock};
-		$state->setup_progressmeter($opt_x);
+		$state->progress->setup($opt_x);
 		$state->check_root;
 		process_parameters();
 		my $dielater = do_the_main_work($code);
@@ -183,7 +196,7 @@ sub init
 	my $self = shift;
 	$self->{l} = OpenBSD::Log->new;
 	$self->{vstat} = OpenBSD::Vstat->new($self);
-	$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
+	$self->{progressmeter} = OpenBSD::ProgressMeter->new;
 	$self->{status} = OpenBSD::Status->new;
 	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	$self->{v} = 0;
@@ -280,16 +293,6 @@ sub unlink
 	my $self = shift;
 	$self->progress->clear;
 	OpenBSD::Error::Unlink(@_);
-}
-
-# we always have a progressmeter we can print to...
-sub setup_progressmeter
-{
-	my ($self, $opt_x) = @_;
-	if (!$opt_x) {
-		require OpenBSD::ProgressMeter;
-		$self->{progressmeter} = OpenBSD::ProgressMeter->new;
-	}
 }
 
 sub check_root
@@ -397,76 +400,6 @@ sub new
 	my $class = shift;
 
 	bless {}, $class;
-}
-
-# stub class when no actual progressmeter that still prints out.
-package OpenBSD::StubProgress;
-sub clear {}
-
-sub show {}
-
-sub message {}
-
-sub next {}
-
-sub set_header {}
-
-sub print
-{
-	shift;
-	print @_;
-}
-
-sub ntogo
-{
-	return "";
-}
-
-sub errprint
-{
-	shift;
-	print STDERR @_;
-}
-
-package OpenBSD::PackingList;
-sub compute_size
-{
-	my $plist = shift;
-	my $totsize = 0;
-	$plist->visit('compute_size', \$totsize);
-	$totsize = 1 if $totsize == 0;
-	$plist->{totsize} = $totsize;
-}
-
-package OpenBSD::PackingElement;
-sub mark_progress
-{
-}
-
-sub compute_size
-{
-}
-
-package OpenBSD::PackingElement::FileBase;
-sub mark_progress
-{
-	my ($self, $progress, $donesize, $totsize) = @_;
-	return unless defined $self->{size};
-	$$donesize += $self->{size};
-	$progress->show($$donesize, $totsize);
-}
-
-sub compute_size
-{
-	my ($self, $totsize) = @_;
-
-	$$totsize += $self->{size} if defined $self->{size};
-}
-
-package OpenBSD::PackingElement::Sample;
-sub compute_size
-{
-	&OpenBSD::PackingElement::FileBase::compute_size;
 }
 
 1;

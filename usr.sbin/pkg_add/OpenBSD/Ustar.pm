@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.54 2009/12/17 11:57:02 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.55 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -62,6 +62,14 @@ sub new
     return bless { fh => $fh, swallow => 0, key => {}, destdir => $destdir} , $class;
 }
 
+
+sub new_object
+{
+	my ($self, $h) = @_;
+	$h->{archive} = $self;
+	$h->{destdir} = $self->{destdir};
+	return $h;
+}
 
 sub skip
 {
@@ -140,7 +148,7 @@ sub next
     }
     
     $size = oct($size);
-    my $result= {
+    my $result= $self->new_object({
 	name => $name,
 	mode => $mode,
 	mtime=> $mtime,
@@ -152,9 +160,7 @@ sub next
 	size => $size,
 	major => $major,
 	minor => $minor,
-	archive => $self,
-	destdir => $self->{destdir}
-    };
+    });
     if (defined $types->{$type}) {
     	$types->{$type}->new($result);
     } else {
@@ -266,13 +272,12 @@ sub prepare
 {
 	my ($self, $filename) = @_;
 
-	my $destdir = $self->{destdir};
-	my $realname = "$destdir/$filename";
+	my $realname = "$self->{destdir}/$filename";
 
 	my ($dev, $ino, $mode, $uid, $gid, $rdev, $size, $mtime) = 
 	    (lstat $realname)[0,1,2,4,5,6, 7,9];
 
-	my $entry = {
+	my $entry = $self->new_object({
 		key => "$dev/$ino", 
 		name => $filename,
 		realname => $realname,
@@ -285,9 +290,7 @@ sub prepare
 		gname => $gnamecache->lookup($gid),
 		major => $rdev/256,
 		minor => $rdev%256,
-		archive => $self,
-		destdir => $self->{destdir}
-	};
+	});
 	my $k = $entry->{key};
 	if (defined $self->{key}->{$k}) {
 		$entry->{linkname} = $self->{key}->{$k};
@@ -348,6 +351,14 @@ sub new
 		die "Bad archive: non null size for arbitrary entry";
 	}
 	bless $object, $class;
+}
+
+sub todo
+{
+	my ($self, $toread) = @_;
+	return if $toread == 0;
+	return unless defined $self->{archive}{callback};
+	&{$self->{archive}{callback}}($self->{size} - $toread);
 }
 
 sub name
@@ -629,7 +640,7 @@ sub new
 
 sub create
 {
-	my ($self, $callback) = @_;
+	my $self = shift;
 	$self->make_basedir($self->name);
 	my $buffer;
 	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->name);
@@ -654,9 +665,7 @@ sub create
 		}
 			
 		$toread -= $actual;
-		if ($toread > 0 && defined $callback) {
-			&$callback($self->{size} - $toread);
-		}
+		$self->todo($toread);
 	}
 	$out->close or die "Error closing $self->{destdir}", $self->name, 
 	    ": $!";
@@ -705,6 +714,7 @@ sub write_contents
 		}
 			
 		$toread -= $actual;
+		$self->todo($toread);
 	}
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512) or 

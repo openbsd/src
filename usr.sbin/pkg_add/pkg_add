@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.473 2010/03/06 11:36:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.474 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -614,8 +614,6 @@ sub really_add
 		require OpenBSD::OldLibs;
 		OpenBSD::OldLibs->save($set, $state);
 	}
-
-	$set->compute_size;
 
 	if ($replacing) {
 		for my $handle ($set->newer) {

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.59 2010/01/19 14:26:24 espie Exp $
+# $OpenBSD: Makefile,v 1.60 2010/03/22 20:38:44 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,7 @@ PACKAGES= \
     OpenBSD/PkgCfl.pm \
     OpenBSD/PkgConfig.pm \
     OpenBSD/PkgSpec.pm \
+    OpenBSD/ProgressMeter/Term.pm \
     OpenBSD/ProgressMeter.pm \
     OpenBSD/Replace.pm \
     OpenBSD/RequiredBy.pm \
@@ -58,7 +59,7 @@ PACKAGES= \
     OpenBSD/md5.pm \
     OpenBSD/x509.pm
 
-PACKAGEDIRS=OpenBSD  OpenBSD/PackageRepository
+PACKAGEDIRS=OpenBSD  OpenBSD/PackageRepository OpenBSD/ProgressMeter
 
 SCRIPTS= \
     pkg_add \

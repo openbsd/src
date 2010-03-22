@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.101 2010/01/10 11:31:08 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.102 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -358,7 +358,7 @@ sub addunique
 	my ($plist, $object) = @_;
 	my $category = $object->category;
 	if (defined $plist->{$category}) {
-		die "Duplicate $category in plist";
+		die "Duplicate $category in plist ".($plist->pkgname // "?");
 	}
 	$plist->{$category} = $object;
 }

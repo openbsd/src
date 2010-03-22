@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.135 2010/02/28 10:08:48 espie Exp $
+# $OpenBSD: pkg_create,v 1.136 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -28,73 +28,51 @@ use OpenBSD::Ustar;
 use OpenBSD::ArcCheck;
 use OpenBSD::Paths;
 use OpenBSD::Subst;
+use OpenBSD::ProgressMeter;
 use File::Basename;
+
+package OpenBSD::State;
+sub new
+{
+	my $class = shift;
+	bless {progress => OpenBSD::ProgressMeter->new, 
+	    errors => 0, stash => {}}, $class;
+}
+
+sub progress
+{
+	my $self = shift;
+	return $self->{progress};
+}
+
+sub stash
+{
+	my ($self, $key) = @_;
+	return $self->{stash}{$key};
+}
+
+sub error
+{
+	my $self = shift;
+	$self->{errors}++;
+	$self->progress->errprint(@_, "\n");
+}
 
 # Extra stuff needed to archive files
 package OpenBSD::PackingElement;
-
-sub count
-{
-	my ($self, $total) = @_;
-	$$total++;
-}
-
-sub size
-{
-	my ($self, $totsize) = @_;
-	if (defined $self->{size}) {
-		$$totsize += $self->{size};
-	}
-}
-sub mark_count
-{
-	my ($self, $progress, $done, $count) = @_;
-	$$done++;
-	$progress->show($$done, $count);
-}
-
-sub mark_progress
-{
-	my ($self, $progress, $done, $totsize) = @_;
-	return unless defined $self->{size};
-	$$done += $self->{size};
-	$progress->show($$done, $totsize);
-}
-
-sub verify_checksum_and_progress
-{
-	my ($self, $base, $stash, $progress, $done, $count) = @_;
-	$self->verify_checksum($base, $stash);
-	$self->mark_count($progress, $done, $count);
-}
-
-sub makesum_plist_and_progress
-{
-	my ($self, $p2, $base, $stash, $progress, $done, $count) = @_;
-	$self->makesum_plist($p2, $base, $stash);
-	$self->mark_count($progress, $done, $count);
-}
-
-sub create_package_and_progress
-{
-	my ($self, $arc, $base, $verbose, $progress, $done, $tot) = @_;
-	$self->mark_progress($progress, $done, $tot);
-	$self->create_package($arc, $base, $verbose);
-}
-
 sub create_package 
 {
-	my ($self, $arc, $base, $verbose) = @_;
+	my ($self, $state) = @_;
 
-	$self->archive($arc, $base);
-	if ($verbose) {
+	$self->archive($state);
+	if ($state->{verbose}) {
 		$self->comment_create_package;
 	}
 }
 
 sub pretend_to_archive
 {
-	my ($self, $arc, $base) = @_;
+	my ($self, $state) = @_;
 	$self->comment_create_package;
 }
 
@@ -105,19 +83,18 @@ sub print_file {}
 
 sub avert_duplicates_and_other_checks
 {
-	my ($self, $allfiles) = @_;
+	my ($self, $state) = @_;
 	return unless $self->NoDuplicateNames;
 	my $n = $self->fullname;
-	if (defined $allfiles->{$n}) {
-		print STDERR "Error in packing-list: duplicate item $n\n";
-		$main::errors++;
+	if (defined $state->stash($n)) {
+		$state->error("Error in packing-list: duplicate item $n");
 	}
-	$allfiles->{$n} = 1;
+	$state->{stash}{$n} = 1;
 }
 
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash) = @_;
+	my ($self, $plist, $state) = @_;
 	$self->add_object($plist);
 }
 
@@ -127,7 +104,7 @@ sub verify_checksum
 
 sub compute_checksum
 {
-	my ($self, $result, $base, $stash) = @_;
+	my ($self, $result, $state, $base) = @_;
 	my $name = $self->fullname;
 	my $fname = $name;
 	if (defined $base) {
@@ -139,58 +116,55 @@ sub compute_checksum
 		$result->make_symlink($value);
 	} elsif (-f _) {
 		my ($dev, $ino, $size) = (stat _)[0,1,7];
-		if (defined $stash->{"$dev/$ino"}) {
-			$result->make_hardlink($stash->{"$dev/$ino"});
+		if (defined $state->stash("$dev/$ino")) {
+			$result->make_hardlink($state->stash("$dev/$ino"));
 		} else {
-			$stash->{"$dev/$ino"} = $name;
+			$state->{stash}{"$dev/$ino"} = $name;
 			$result->add_digest($self->compute_digest($fname));
 			$result->add_size($size);
 		}
 	} else {
-		print STDERR "Error in package: $fname does not exist\n";
-		$main::errors++;
+		$state->error("Error in package: $fname does not exist");
 	}
 }
 
 sub makesum_plist_with_base
 {
-	my ($self, $plist, $base, $stash) = @_;
-	$self->compute_checksum($self, $base, $stash);
+	my ($self, $plist, $state, $base) = @_;
+	$self->compute_checksum($self, $state, $base);
 	$self->add_object($plist);
 }
 
 sub verify_checksum_with_base
 {
-	my ($self, $base, $stash) = @_;
+	my ($self, $state, $base) = @_;
 	my $check = ref($self)->new($self->name);
-	$self->compute_checksum($check, $base, $stash);
+	$self->compute_checksum($check, $state, $base);
 
 	for my $field (qw(symlink link size)) {  # md5
 		if ((defined $check->{$field} && defined $self->{$field} &&
 		    $check->{$field} ne $self->{$field}) ||
 		    (defined $check->{$field} xor defined $self->{$field})) {
-			print STDERR "Error: $field inconsistency for ", 
-			    $self->fullname, "\n";
-			$main::errors++;
+		    	$state->error("Error: $field inconsistency for ", 
+			    $self->fullname);
 		}
 	}
 	if ((defined $check->{d} && defined $self->{d} &&
 	    !$check->{d}->equals($self->{d})) ||
 	    (defined $check->{d} xor defined $self->{d})) {
-		print STDERR "Error: checksum inconsistency for ", 
-		    $self->fullname, "\n";
-		$main::errors++;
+	    	$state->error("Error: checksum inconsistency for ", 
+		    $self->fullname);
 	}
 }
 
 
 sub prepare_for_archival
 {
-	my ($self, $arc) = @_;
+	my ($self, $state) = @_;
 
-	my $o = $arc->prepare_long($self);
+	my $o = $state->{archive}->prepare_long($self);
 	if (!$o->verify_modes($self)) {
-		$main::errors++;
+		$state->error("Modes don't match");
 	}
 	return $o;
 }
@@ -217,21 +191,21 @@ sub comment_create_package
 
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash) = @_;
-	$self->makesum_plist_with_base($plist, undef, $stash);
+	my ($self, $plist, $state) = @_;
+	$self->makesum_plist_with_base($plist, $state, undef);
 }
 
 sub verify_checksum
 {
-	my ($self, $base, $stash) = @_;
-	$self->verify_checksum_with_base(undef, $stash);
+	my ($self, $state) = @_;
+	$self->verify_checksum_with_base($state, undef);
 }
 
 sub prepare_for_archival
 {
-	my ($self, $arc) = @_;
+	my ($self, $state) = @_;
 
-	my $o = $arc->prepare_long($self);
+	my $o = $state->{archive}->prepare_long($self);
 	$o->{uname} = 'root';
 	$o->{gname} = 'wheel';
 	$o->{uid} = 0;
@@ -262,14 +236,14 @@ sub verify_checksum
 package OpenBSD::PackingElement::Cwd;
 sub archive
 {
-	my ($self, $arc, $base) = @_;
-	$arc->destdir($base."/".$self->name);
+	my ($self, $state) = @_;
+	$state->{archive}->destdir($state->{base}."/".$self->name);
 }
 
 sub pretend_to_archive
 {
-	my ($self, $arc, $base) = @_;
-	$arc->destdir($base."/".$self->name);
+	my ($self, $state) = @_;
+	$state->{archive}->destdir($state->{base}."/".$self->name);
 	$self->comment_create_package;
 }
 
@@ -283,18 +257,18 @@ package OpenBSD::PackingElement::FileBase;
 
 sub archive
 {
-	my ($self, $arc, $base) = @_;
+	my ($self, $state) = @_;
 
-	my $o = $self->prepare_for_archival($arc);
+	my $o = $self->prepare_for_archival($state);
 
-	$o->write unless $main::errors;
+	$o->write unless $state->{errors};
 }
 
 sub pretend_to_archive
 {
-	my ($self, $arc, $base) = @_;
+	my ($self, $state) = @_;
 
-	$self->prepare_for_archival($arc);
+	$self->prepare_for_archival($state);
 	$self->comment_create_package;
 }
 
@@ -312,14 +286,14 @@ sub print_file
 
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash) = @_;
-	$self->makesum_plist_with_base($plist, $base, $stash);
+	my ($self, $plist, $state) = @_;
+	$self->makesum_plist_with_base($plist, $state, $state->{base});
 }
 
 sub verify_checksum
 {
-	my ($self, $base, $stash) = @_;
-	$self->verify_checksum_with_base($base, $stash);
+	my ($self, $state) = @_;
+	$self->verify_checksum_with_base($state, $state->{base});
 }
 
 sub copy_over
@@ -335,13 +309,13 @@ sub copy_over
 package OpenBSD::PackingElement::InfoFile;
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash) = @_;
-	$self->SUPER::makesum_plist($plist, $base, $stash);
+	my ($self, $plist, $state) = @_;
+	$self->SUPER::makesum_plist($plist, $state);
 	my $fname = $self->fullname;
 	for (my $i = 1; ; $i++) {
-		if (-e "$base/$fname-$i") {
+		if (-e "$state->{base}/$fname-$i") {
 			my $e = OpenBSD::PackingElement::File->add($plist, $self->name."-".$i);
-			$e->compute_checksum($e, $base, $stash);
+			$e->compute_checksum($e, $state, $state->{base});
 		} else {
 			last;
 		}
@@ -351,42 +325,40 @@ sub makesum_plist
 package OpenBSD::PackingElement::Depend;
 sub avert_duplicates_and_other_checks
 {
-	my ($self, $allfiles) = @_;
+	my ($self, $state) = @_;
 	if (!$self->spec->is_valid) {
-		print STDERR "Error in packing-list: invalid \@", 
-		    $self->keyword, " ", $self->stringize, "\n";
-		$main::errors++;
+		$state->error("Error in packing-list: invalid \@", 
+		    $self->keyword, " ", $self->stringize);
 	}
-	$self->SUPER::avert_duplicates_and_other_checks($allfiles);
+	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
 
 package OpenBSD::PackingElement::Dependency;
 sub avert_duplicates_and_other_checks
 {
-	my ($self, $allfiles) = @_;
+	my ($self, $state) = @_;
 
 	my @issues = OpenBSD::PackageName->from_string($self->{def})->has_issues;
 	if (@issues > 0) {
-		print STDERR "Error in packing-list: invalid \@", 
-		    $self->keyword, " ", $self->stringize, "\n";
-		print STDERR "$self->{def}: ", join(' ', @issues), "\n";
-		$main::errors++;
+		$state->error("Error in packing-list: invalid \@", 
+		    $self->keyword, " ", $self->stringize, "\n",
+		    "$self->{def}: , ", join(' ', @issues));
 	}
 
-	$self->SUPER::avert_duplicates_and_other_checks($allfiles);
+	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
 
 package OpenBSD::PackingElement::Name;
 sub avert_duplicates_and_other_checks
 {
-	my ($self, $allfiles) = @_;
+	my ($self, $state) = @_;
 
 	my @issues = OpenBSD::PackageName->from_string($self->name)->has_issues;
 	if (@issues > 0) {
-		print STDERR "Bad packagename ", $self->name, ":", 
-		    join(' ', @issues), "\n";
-		$main::errors++;
+		$state->error("Bad packagename ", $self->name, ":", 
+		    join(' ', @issues));
 	}
+	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
 
 # put together file and filename, in order to handle fragments simply
@@ -418,16 +390,9 @@ sub close
 	close($self->{fh});
 }
 
-package OpenBSD::StubProgress;
-sub show {}
-
-sub set_header {}
-
-sub clear {}
-
 package main;
 
-my $progress;
+my $state = OpenBSD::State->new;
 
 
 my $subst = OpenBSD::Subst->new;
@@ -499,8 +464,7 @@ sub read_fragments
 				}
 				if (m/^\@lib\s+(.*)$/o && 
 				    OpenBSD::PackingElement::Lib->parse($1)) {
-					Warn "Shared library without SHARED_LIBS: $_";
-					$main::errors++;
+				    	$state->error("Shared library without SHARED_LIBS: $_");
 				}
 				&$cont($subst->do($_));
 			}
@@ -560,8 +524,6 @@ sub add_description
 	}
 }
 
-our $errors = 0;
-
 my (@contents, %dependencies, %wantlib, @signature_params);
 
 my $regen_package = 0;
@@ -603,12 +565,8 @@ try {
 	Usage($_);
 };
 
-if ($opt_x) {
-	$progress = bless {}, "OpenBSD::StubProgress";
-} else {
-	require OpenBSD::ProgressMeter;
-	$progress = OpenBSD::ProgressMeter->new;
-}
+$state->progress->setup($opt_x);
+$state->{verbose} = $opt_v;
 
 if (@ARGV == 0) {
 	$regen_package = 1;
@@ -642,6 +600,7 @@ if (!@contents) {
 	}
 }
 
+my $cont = 0;
 if ($regen_package) {
 	if (@contents != 1) {
 		Usage "Exactly one single packing list is required";
@@ -734,6 +693,15 @@ if ($regen_package) {
 	} else {
 		Warn "Package without FULLPKGPATH\n";
 	}
+	unless (defined $opt_q && defined $opt_n) {
+		if ($state->progress->set_header("reading plist")) {
+			$state->progress->message;
+		} else {
+			$| = 1;
+			print "Reading plist...";
+			$cont = 1;
+		}
+	}
 	for my $contentsfile (@contents) {
 		read_fragments($plist, $contentsfile) or 
 		    Fatal "Can't read packing list $contentsfile";
@@ -748,32 +716,29 @@ if (defined $opt_B) {
 	$base = $ENV{'PKG_PREFIX'};
 }
 
+$state->{base} = $base;
 
 unless (defined $opt_q && defined $opt_n) {
-	my ($count, $done) = (0, 0);
-	my $cont = 0;
-	$plist->count(\$count);
-	if (!$progress->set_header("checksumming")) {
-		$| = 1;
-		print "Checksumming...";
-		$cont = 1;
+	if ($cont) {
+		print "\nChecksumming...";
+    	} else {
+		$state->progress->set_header("checksumming");
 	}
-	$progress->show(0, $count);
 	if ($regen_package) {
-		$plist->verify_checksum_and_progress($base, {}, $progress, \$done, $count);
+		$state->progress->visit_with_count($plist, 'verify_checksum', $state);
 	} else {
 		my $p2 = OpenBSD::PackingList->new;
-		$plist->makesum_plist_and_progress($p2, $base, {}, $progress, \$done, $count);
+		$state->progress->visit_with_count($plist, 'makesum_plist', $p2, $state);
 		$p2->set_infodir($plist->infodir);
 		$plist = $p2;
 	}
 	if ($cont) {
 		print "\n";
-    	}
+	}
 }
 
 if (!defined $plist->{name}) {
-	print STDERR "Can't write unnamed packing list\n";
+	$state->error("Can't write unnamed packing list");
 	exit 1;
 }
 
@@ -787,16 +752,17 @@ if (defined $opt_q) {
 }
 
 if ($plist->{deprecated}) {
-	print STDERR "Error: found obsolete constructs\n";
+	$state->error("Error: found obsolete constructs");
 	exit 1;
 }
 
-$plist->avert_duplicates_and_other_checks({});
+$plist->avert_duplicates_and_other_checks($state);
+$state->{stash} = {};
 
-if ($errors && $subst->empty('REGRESSION_TESTING')) {
+if ($state->{errors} && $subst->empty('REGRESSION_TESTING')) {
 	exit 1;
 }
-$errors = 0;
+$state->{errors} = 0;
 
 if (defined $cert) {
 	my $sig = OpenBSD::PackingElement::DigitalSignature->new_x509;
@@ -815,8 +781,8 @@ if ($regen_package) {
 }
 
 if ($opt_n) {
-	my $dummy = OpenBSD::Ustar->new(undef, $plist->infodir);
-	$plist->pretend_to_archive($dummy, $base);
+	$state->{archive} = OpenBSD::Ustar->new(undef, $plist->infodir);
+	$plist->pretend_to_archive($state);
 } else {
 	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
 	my $h = sub { 
@@ -832,15 +798,20 @@ if ($opt_n) {
 	local $SIG{'KILL'} = $h;
 	local $SIG{'TERM'} = $h;
 	open(my $fh, "|-", OpenBSD::Paths->gzip, "-f", "-o", $wname);
-	my $wrarc = OpenBSD::Ustar->new($fh, $plist->infodir);
+	$state->{archive} = OpenBSD::Ustar->new($fh, $plist->infodir);
 
-	$progress->set_header("archiving");
-	my ($done, $totsize) = (0, 0);
-	$plist->size(\$totsize);
-	$plist->create_package_and_progress($wrarc, $base, $opt_v, $progress, \$done, $totsize);
-	$progress->clear;
-	$wrarc->close;
-	if ($errors) {
+	if ($cont) {
+		print "Archiving...";
+	} else {
+		$state->progress->set_header("archiving");
+	}
+	$state->progress->visit_with_size($plist, 'create_package', $state);
+	if ($cont) {
+		print "\n";
+	}
+	$state->progress->clear;
+	$state->{archive}->close;
+	if ($state->{errors}) {
 		unlink($wname);
 		exit(1);
 	}

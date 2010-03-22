@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.104 2010/01/14 19:35:55 espie Exp $
+# $OpenBSD: Add.pm,v 1.105 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -95,16 +95,11 @@ sub perform_installation
 {
 	my ($handle, $state) = @_;
 
-	my $totsize = $handle->{totsize};
 	$state->{archive} = $handle->{location};
-	my $donesize = 0;
 	$state->{end_faked} = 0;
-	if (!defined $handle->{partial}) {
-		$handle->{partial} = {};
-	}
+	$handle->{partial} //= {};
 	$state->{partial} = $handle->{partial};
-	$state->progress->show(0, $totsize);
-	$handle->{plist}->install_and_progress($state, \$donesize, $totsize);
+	$state->progress->visit_with_size($handle->{plist}, 'install', $state);
 	$handle->{location}->finish_and_close;
 }
 
@@ -168,25 +163,12 @@ sub prepare_for_addition
 {
 }
 
-sub install_and_progress
-{
-	my ($self, $state, $donesize, $totsize) = @_;
-	$state->{callback} = sub {
-		my $done = shift;
-		$state->progress->show($$donesize + $done, $totsize);
-	};
-	unless ($state->{do_faked} && $state->{end_faked}) {
-		$self->install($state);
-	}
-	if ($state->{interrupted}) {
-		die "Interrupted";
-	}
-	$self->mark_progress($state->progress, $donesize, $totsize);
-}
-
 sub install
 {
 	my ($self, $state) = @_;
+	if ($state->{interrupted}) {
+		die "Interrupted";
+	}
 	$state->{partial}->{$self} = 1;
 }
 
@@ -410,7 +392,7 @@ sub install
 			$state->{archive}->skip;
 			return;
 		} else {
-			$file->create($state->{callback});
+			$file->create;
 			$self->may_check_digest($file, $state);
 
 		}

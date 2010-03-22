@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.51 2010/01/04 00:10:52 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.52 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -311,14 +311,6 @@ sub validate_plists
 	} else {
 		$state->vstat->synchronize;
 		return 1;
-	}
-}
-
-sub compute_size
-{
-	my ($self, $state) = @_;
-	for my $h ($self->older_to_do, $self->newer) {
-		$h->{totsize} = $h->{plist}->compute_size;
 	}
 }
 

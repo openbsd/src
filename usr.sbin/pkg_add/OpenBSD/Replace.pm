@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.69 2010/01/18 10:04:53 espie Exp $
+# $OpenBSD: Replace.pm,v 1.70 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -37,16 +37,9 @@ sub extract
 {
 	my ($self, $state) = @_;
 	$state->{partial}->{$self} = 1;
-}
-
-sub extract_and_progress
-{
-	my ($self, $state, $donesize, $totsize) = @_;
-	$self->extract($state);
 	if ($state->{interrupted}) {
 		die "Interrupted";
 	}
-	$self->mark_progress($state->progress, $donesize, $totsize);
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -174,11 +167,8 @@ sub perform_extraction
 
 	$handle->{partial} = {};
 	$state->{partial} = $handle->{partial};
-	my $totsize = $handle->{totsize};
 	$state->{archive} = $handle->{location};
-	my $donesize = 0;
-	$state->{donesize} = 0;
-	$handle->{plist}->extract_and_progress($state, \$donesize, $totsize);
+	$state->progress->visit_with_size($handle->{plist}, 'extract', $state);
 }
 
 sub check_plist_exec

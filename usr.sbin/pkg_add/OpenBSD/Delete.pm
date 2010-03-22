@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.96 2010/01/02 12:59:45 espie Exp $
+# $OpenBSD: Delete.pm,v 1.97 2010/03/22 20:38:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -109,7 +109,6 @@ sub delete_package
 
 	$state->{problems} = 0;
 	validate_plist($plist, $state);
-	$plist->compute_size;
 	Fatal "fatal issues in deinstalling $pkgname"
 	    if $state->{problems};
 	$state->vstat->synchronize;
@@ -143,16 +142,13 @@ sub delete_plist
 {
 	my ($plist, $state) = @_;
 
-	my $totsize = $plist->{totsize};
-	my $donesize = 0;
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
 	$ENV{'PKG_PREFIX'} = $plist->localbase;
 	if (!$state->{size_only}) {
 		$plist->register_manpage($state);
 		manpages_unindex($state);
-		$state->progress->show(0, $totsize);
-		$plist->delete_and_progress($state, \$donesize, $totsize);
+		$state->progress->visit_with_size($plist, 'delete', $state);
 		if ($plist->has(UNDISPLAY)) {
 			$plist->get(UNDISPLAY)->prepare($state);
 		}
@@ -200,13 +196,6 @@ sub prepare_for_deletion
 
 sub delete
 {
-}
-
-sub delete_and_progress
-{
-	my ($self, $state, $donesize, $totsize) = @_;
-	$self->delete($state);
-	$self->mark_progress($state->progress, $donesize, $totsize);
 }
 
 sub record_shared
