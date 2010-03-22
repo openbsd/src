@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.11 2009/12/18 11:40:16 jsing Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.12 2010/03/22 21:28:11 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -152,6 +152,7 @@ mskc*		at pci?		# Marvell Yukon-2
 msk*		at mskc?	#  each port of above
 bge*		at pci?		# Broadcom BCM570x (aka Tigon3)
 vge*		at pci?		# VIA VT612x
+bnx*		at pci?		# Broadcom BCM5706/5708 GigE
 
 ##### Media Independent Interface (mii) drivers
 exphy*		at mii?		# 3Com internal PHYs
