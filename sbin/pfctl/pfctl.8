@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.143 2010/03/23 13:31:29 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.144 2010/03/23 17:34:30 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -623,20 +623,23 @@ See the previous section for its effect on table commands.
 .It Fl x Ar level
 Set the debug
 .Ar level ,
-which limits the severity of log messages printed by pf. This should be is a
-keyword from the following ordered list (highest to lowest):
-.Ar emerg ,
-.Ar alert ,
-.Ar crit ,
-.Ar err ,
-.Ar warning ,
-.Ar notice ,
-.Ar info ,
-and 
-.Ar debug .
-These keywords correspond to the similar (LOG_) values specified
-to the syslog library routine, and may be abbreviated on the command
-line.
+which limits the severity of log messages printed by
+.Xr pf 4 .
+This should be a keyword from the following ordered list
+(highest to lowest):
+.Cm emerg ,
+.Cm alert ,
+.Cm crit ,
+.Cm err ,
+.Cm warning ,
+.Cm notice ,
+.Cm info ,
+and
+.Cm debug .
+These keywords correspond to the similar (LOG_) values specified to the
+.Xr syslog 3
+library routine,
+and may be abbreviated on the command line.
 .It Fl z
 Clear per-rule statistics.
 .El
