@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.15 2009/04/02 18:44:49 oga Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.16 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -71,7 +71,7 @@ struct cfattach iopsp_ca = {
 	sizeof(struct iopsp_softc), iopsp_match, iopsp_attach
 };
 
-int	iopsp_scsi_cmd(struct scsi_xfer *);
+void	iopsp_scsi_cmd(struct scsi_xfer *);
 void	iopspminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter iopsp_switch = {
@@ -404,7 +404,7 @@ iopspminphys(struct buf *bp, struct scsi_link *sl)
 /*
  * Start a SCSI command.
  */
-int
+void
 iopsp_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -422,7 +422,7 @@ iopsp_scsi_cmd(xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("iopsp_scsi_cmd: run_xfer\n"));
@@ -442,7 +442,7 @@ iopsp_scsi_cmd(xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 #if defined(I2ODEBUG) || defined(SCSIDEBUG)
@@ -489,7 +489,7 @@ iopsp_scsi_cmd(xs)
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
-			return (COMPLETE);
+			return;
 		}
 		if ((xs->flags & SCSI_DATA_IN) == 0)
 			mf->flags |= I2O_SCB_FLAG_XFER_TO_DEVICE;
@@ -512,10 +512,7 @@ iopsp_scsi_cmd(xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
 	}
-
-	return (xs->flags & SCSI_POLL? COMPLETE : SUCCESSFULLY_QUEUED);
 }
 
 #ifdef notyet

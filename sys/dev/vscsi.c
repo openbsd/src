@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.7 2010/03/21 07:02:02 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.8 2010/03/23 01:57:19 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -35,6 +35,19 @@
 #include <scsi/scsiconf.h>
 
 #include <dev/vscsivar.h>
+
+#ifdef VSCSI_DEBUG
+#define VSCSI_D_INIT	(1<<0)
+
+int vscsidebug = 0;
+
+#define DPRINTF(_m, _p...)	do { \
+					if (ISSET(vscsidebug, (_m))) \
+						printf(p); \
+				} while (0)
+#else
+#define DPRINTF(_m, _p...)	/* _m, _p */
+#endif
 
 int		vscsi_match(struct device *, void *, void *);
 void		vscsi_attach(struct device *, struct device *, void *);
@@ -83,7 +96,7 @@ struct cfdriver vscsi_cd = {
 	DV_DULL
 };
 
-int		vscsi_cmd(struct scsi_xfer *);
+void		vscsi_cmd(struct scsi_xfer *);
 int		vscsi_probe(struct scsi_link *);
 
 struct scsi_adapter vscsi_switch = {
@@ -149,7 +162,7 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 	    &saa, scsiprint);
 }
 
-int
+void
 vscsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link		*link = xs->sc_link;
@@ -159,20 +172,20 @@ vscsi_cmd(struct scsi_xfer *xs)
 
 	if (sc->sc_opened == 0) { 
 		vscsi_xs_stuffup(xs);
-		return (COMPLETE);
+		return;
 	}
 
 	if (ISSET(xs->flags, SCSI_POLL) && ISSET(xs->flags, SCSI_NOSLEEP)) {
 		printf("%s: POLL && NOSLEEP for 0x%02x\n", DEVNAME(sc),
 		    xs->cmd->opcode);
 		vscsi_xs_stuffup(xs);
-		return (COMPLETE);
+		return;
 	}
 
 	ccb = vscsi_ccb_get(sc, ISSET(xs->flags, SCSI_NOSLEEP) ? 0 : 1);
 	if (ccb == NULL) {
 		vscsi_xs_stuffup(xs);
-		return (COMPLETE);
+		return;
 	}
 
 	ccb->ccb_xs = xs;
@@ -188,10 +201,7 @@ vscsi_cmd(struct scsi_xfer *xs)
 			tsleep(ccb, PRIBIO, "vscsipoll", 0);
 		vscsi_ccb_put(sc, ccb);
 		rw_exit_read(&sc->sc_ccb_polling);
-		return (COMPLETE);
 	}
-
-	return (SUCCESSFULLY_QUEUED);
 }
 
 void

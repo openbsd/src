@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.56 2010/01/10 00:10:23 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.57 2010/03/23 01:57:19 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ int	siop_handle_qtag_reject(struct siop_cmd *);
 void	siop_scsicmd_end(struct siop_cmd *);
 void	siop_start(struct siop_softc *);
 void 	siop_timeout(void *);
-int	siop_scsicmd(struct scsi_xfer *);
+void	siop_scsicmd(struct scsi_xfer *);
 #ifdef DUMP_SCRIPT
 void	siop_dump_script(struct siop_softc *);
 #endif
@@ -1356,7 +1356,7 @@ siop_handle_reset(sc)
 	}
 }
 
-int
+void
 siop_scsicmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -1384,8 +1384,10 @@ siop_scsicmd(xs)
 			printf("%s: can't malloc memory for "
 			    "target %d\n", sc->sc_c.sc_dev.dv_xname,
 			    target);
+			xs->error = XS_NO_CCB;
+			scsi_done(xs);
 			splx(s);
-			return(NO_CCB);
+			return;
 		}
 		siop_target =
 		    (struct siop_target*)sc->sc_c.targets[target];
@@ -1401,8 +1403,10 @@ siop_scsicmd(xs)
 		if (siop_target->lunsw == NULL) {
 			printf("%s: can't alloc lunsw for target %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target);
+			xs->error = XS_NO_CCB;
+			scsi_done(xs);
 			splx(s);
-			return(NO_CCB);
+			return;
 		}
 		for (i=0; i < 8; i++)
 			siop_target->siop_lun[i] = NULL;
@@ -1416,16 +1420,20 @@ siop_scsicmd(xs)
 			printf("%s: can't alloc siop_lun for "
 			    "target %d lun %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target, lun);
+			xs->error = XS_NO_CCB;
+			scsi_done(xs);
 			splx(s);
-			return(NO_CCB);
+			return;
 		}
 	}
 
 	/* Looks like we could issue a command, if a ccb is available. */
 	siop_cmd = TAILQ_FIRST(&sc->free_list);
 	if (siop_cmd == NULL) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return(NO_CCB);
+		return;
 	}
 	TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
 #ifdef DIAGNOSTIC
@@ -1459,8 +1467,10 @@ siop_scsicmd(xs)
 			    sc->sc_c.sc_dev.dv_xname, error);
 			siop_cmd->cmd_c.status = CMDST_FREE;
 			TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
+			xs->error = XS_NO_CCB;
+			scsi_done(xs);
 			splx(s);
-			return(NO_CCB);
+			return;
 		}
 		bus_dmamap_sync(sc->sc_c.sc_dmat,
 		    siop_cmd->cmd_c.dmamap_data, 0,
@@ -1484,7 +1494,7 @@ siop_scsicmd(xs)
 	siop_start(sc);
 	if ((xs->flags & SCSI_POLL) == 0) {
 		splx(s);
-		return (SUCCESSFULLY_QUEUED);
+		return;
 	}
 
 	/* Poll for command completion. */
@@ -1531,7 +1541,6 @@ siop_scsicmd(xs)
 	}
 
 	splx(s);
-	return (COMPLETE);
 }
 
 void

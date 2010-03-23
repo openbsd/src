@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.80 2010/01/09 23:15:06 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.81 2010/03/23 01:57:20 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -399,7 +399,7 @@ struct cfdriver arc_cd = {
 };
 
 /* interface for scsi midlayer to talk to */
-int			arc_scsi_cmd(struct scsi_xfer *);
+void			arc_scsi_cmd(struct scsi_xfer *);
 void			arc_minphys(struct buf *, struct scsi_link *);
 
 struct scsi_adapter arc_switch = {
@@ -709,7 +709,7 @@ arc_intr(void *arg)
 	return (1);
 }
 
-int
+void
 arc_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link		*link = xs->sc_link;
@@ -717,7 +717,6 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 	struct arc_ccb			*ccb;
 	struct arc_msg_scsicmd		*cmd;
 	u_int32_t			reg;
-	int				rv = SUCCESSFULLY_QUEUED;
 	int				s;
 
 	if (xs->cmdlen > ARC_MSG_CDBLEN) {
@@ -729,7 +728,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	s = splbio();
@@ -740,7 +739,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	ccb->ccb_xs = xs;
@@ -751,7 +750,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		arc_put_ccb(sc, ccb);
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	cmd = &ccb->ccb_cmd->cmd;
@@ -784,15 +783,12 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 	s = splbio();
 	arc_push(sc, reg);
 	if (xs->flags & SCSI_POLL) {
-		rv = COMPLETE;
 		if (arc_complete(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 		}
 	}
 	splx(s);
-
-	return (rv);
 }
 
 int

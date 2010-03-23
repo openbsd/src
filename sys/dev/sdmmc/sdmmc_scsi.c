@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.20 2010/01/09 23:15:07 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.21 2010/03/23 01:57:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -78,8 +78,8 @@ void	sdmmc_free_ccbs(struct sdmmc_scsi_softc *);
 struct sdmmc_ccb *sdmmc_get_ccb(struct sdmmc_scsi_softc *, int);
 void	sdmmc_put_ccb(struct sdmmc_ccb *);
 
-int	sdmmc_scsi_cmd(struct scsi_xfer *);
-int	sdmmc_start_xs(struct sdmmc_softc *, struct sdmmc_ccb *);
+void	sdmmc_scsi_cmd(struct scsi_xfer *);
+void	sdmmc_start_xs(struct sdmmc_softc *, struct sdmmc_ccb *);
 void	sdmmc_complete_xs(void *);
 void	sdmmc_done_xs(struct sdmmc_ccb *);
 void	sdmmc_stimeout(void *);
@@ -286,7 +286,7 @@ sdmmc_scsi_decode_rw(struct scsi_xfer *xs, u_int32_t *blocknop,
 	}
 }
 
-int
+void
 sdmmc_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -309,7 +309,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 	}
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (poll=%#x)\n",
@@ -340,7 +340,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 
 	case TEST_UNIT_READY:
 	case START_STOP:
@@ -348,7 +348,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 
 	case READ_CAPACITY:
 		bzero(&rcd, sizeof rcd);
@@ -358,7 +358,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 
 	default:
 		DPRINTF(("%s: unsupported scsi command %#x\n",
@@ -367,7 +367,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 	}
 
 	/* A read or write operation. */
@@ -381,7 +381,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 	}
 
 	ccb = sdmmc_get_ccb(sc->sc_scsibus, xs->flags);
@@ -391,7 +391,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 	}
 
 	ccb->ccb_xs = xs;
@@ -400,10 +400,10 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_blockcnt = blockcnt;
 	ccb->ccb_blockno = blockno;
 
-	return sdmmc_start_xs(sc, ccb);
+	sdmmc_start_xs(sc, ccb);
 }
 
-int
+void
 sdmmc_start_xs(struct sdmmc_softc *sc, struct sdmmc_ccb *ccb)
 {
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
@@ -420,12 +420,11 @@ sdmmc_start_xs(struct sdmmc_softc *sc, struct sdmmc_ccb *ccb)
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
 		sdmmc_complete_xs(ccb);
-		return COMPLETE;
+		return;
 	}
 
 	timeout_add_msec(&xs->stimeout, xs->timeout);
 	sdmmc_add_task(sc, &ccb->ccb_task);
-	return SUCCESSFULLY_QUEUED;
 }
 
 void

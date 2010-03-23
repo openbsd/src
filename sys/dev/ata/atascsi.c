@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.71 2010/01/09 23:15:06 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.72 2010/03/23 01:57:19 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,7 @@ struct atascsi {
 	int			as_capability;
 };
 
-int		atascsi_cmd(struct scsi_xfer *);
+void		atascsi_cmd(struct scsi_xfer *);
 int		atascsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 		    struct proc *);
 int		atascsi_probe(struct scsi_link *);
@@ -300,7 +300,7 @@ atascsi_free(struct scsi_link *link)
 	as->as_methods->free(as->as_cookie, port);
 }
 
-int
+void
 atascsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
@@ -309,7 +309,7 @@ atascsi_cmd(struct scsi_xfer *xs)
 
 	if (ap == NULL) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
-		return (COMPLETE);
+		return;
 	}
 
 	switch (ap->ap_type) {
@@ -325,8 +325,6 @@ atascsi_cmd(struct scsi_xfer *xs)
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
 		break;
 	}
-
-	return (COMPLETE);
 }
 
 void

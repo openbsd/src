@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.44 2010/01/13 06:09:44 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.45 2010/03/23 01:57:19 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -789,7 +789,7 @@ ncr53c9x_get_ecb(sc, flags)
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-int
+void
 ncr53c9x_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -811,7 +811,11 @@ ncr53c9x_scsi_cmd(xs)
 	if (li == NULL) {
 		/* Initialize LUN info and add to list. */
 		if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT)) == NULL) {
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 		bzero(li, sizeof(*li));
 		li->last_used = time_second;
@@ -823,8 +827,13 @@ ncr53c9x_scsi_cmd(xs)
 		splx(s);
 	}
 
-	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL)
-		return (NO_CCB);
+	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL) {
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
+	}
 
 	/* Initialize ecb */
 	ecb->xs = xs;
@@ -852,7 +861,7 @@ ncr53c9x_scsi_cmd(xs)
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
+		return;
 
 	/* Not allowed to use interrupts, use polling instead */
 	if (ncr53c9x_poll(sc, xs, ecb->timeout)) {
@@ -860,7 +869,6 @@ ncr53c9x_scsi_cmd(xs)
 		if (ncr53c9x_poll(sc, xs, ecb->timeout))
 			ncr53c9x_timeout(ecb);
 	}
-	return (COMPLETE);
 }
 
 /*

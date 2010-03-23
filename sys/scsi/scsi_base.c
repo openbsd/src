@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.166 2010/01/15 06:27:12 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.167 2010/03/23 01:57:20 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -718,8 +718,6 @@ scsi_report_luns(struct scsi_link *sc_link, int selectreport,
 void
 scsi_xs_exec(struct scsi_xfer *xs)
 {
-	int s;
-
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
 	xs->status = 0;
@@ -730,25 +728,10 @@ scsi_xs_exec(struct scsi_xfer *xs)
 		if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
 			scsi_show_mem(xs->data, min(64, xs->datalen));
 	}
-#endif /* SCSIDEBUG */
+#endif
 
-	/*
-	 * scsi_xs_exec() guarantees that scsi_done() will be called on the xs
-	 * it was given. The adapter is responsible for calling scsi_done()
-	 * except if its scsi_cmd() routine returns NO_CCB.
-	 * In those cases we must call scsi_done() for it.
-	 */
-
-	if (xs->sc_link->adapter->scsi_cmd(xs) == NO_CCB) {
-		/*
-		 * Give the xs back to the device driver to retry on its own.
-		 */
-
-		xs->error = XS_NO_CCB;
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
-	}
+	/* The adapter's scsi_cmd() is responsible for callng scsi_done(). */
+	xs->sc_link->adapter->scsi_cmd(xs);
 }
 
 /*

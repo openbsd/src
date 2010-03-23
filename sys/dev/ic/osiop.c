@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.40 2010/01/10 00:10:23 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.41 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
 
 void osiop_attach(struct osiop_softc *);
 void osiop_minphys(struct buf *, struct scsi_link *);
-int osiop_scsicmd(struct scsi_xfer *xs);
+void osiop_scsicmd(struct scsi_xfer *xs);
 void osiop_poll(struct osiop_softc *, struct osiop_acb *);
 void osiop_sched(struct osiop_softc *);
 void osiop_scsidone(struct osiop_acb *, int);
@@ -366,7 +366,7 @@ osiop_minphys(struct buf *bp, struct scsi_link *sl)
  * used by specific osiop controller
  *
  */
-int
+void
 osiop_scsicmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -396,7 +396,11 @@ osiop_scsicmd(xs)
 		panic("osiop_scsipi_request");
 #endif
 		splx(s);
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	acb->flags = 0;
@@ -425,7 +429,7 @@ osiop_scsicmd(xs)
 			scsi_done(xs);
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			splx(s);
-			return (COMPLETE);
+			return;
 		}
 		bus_dmamap_sync(sc->sc_dmat, acb->datadma,
 		    0, acb->datalen, (acb->xsflags & SCSI_DATA_IN) ?
@@ -454,11 +458,6 @@ osiop_scsicmd(xs)
 
 	if (dopoll)
 		osiop_poll(sc, acb);
-
-	if (xs->flags & (SCSI_POLL | ITSDONE))
-		return (COMPLETE);
-	else
-		return (SUCCESSFULLY_QUEUED);
 }
 
 void

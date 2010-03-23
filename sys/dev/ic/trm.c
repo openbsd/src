@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.17 2010/02/27 00:39:40 krw Exp $
+/*	$OpenBSD: trm.c,v 1.18 2010/03/23 01:57:19 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -76,7 +76,7 @@ u_int8_t trm_get_data(bus_space_tag_t, bus_space_handle_t, u_int8_t);
 
 void	trm_wait_30us(bus_space_tag_t, bus_space_handle_t);
 
-int	trm_scsi_cmd(struct scsi_xfer *);
+void	trm_scsi_cmd(struct scsi_xfer *);
 
 struct trm_scsi_req_q *trm_GetFreeSRB(struct trm_softc *);
 
@@ -326,7 +326,7 @@ trm_StartWaitingSRB(struct trm_softc *sc)
  * Call By  : GENERIC SCSI driver
  * ------------------------------------------------------------
  */
-int
+void
 trm_scsi_cmd(struct scsi_xfer *xs) 
 {
 	struct trm_scsi_req_q *pSRB;
@@ -357,7 +357,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		intflag = splbio();
 		scsi_done(xs);
 		splx(intflag);
-		return COMPLETE;
+		return;
 	}
 	if (lun >= TRM_MAX_LUNS) {
 		printf("%s: lun=%d >= %d\n",
@@ -366,7 +366,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		intflag = splbio();
 		scsi_done(xs);
 		splx(intflag);
-		return COMPLETE;
+		return;
 	}
 
 	pDCB = sc->pDCB[target][lun];
@@ -376,7 +376,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		intflag = splbio();
 		scsi_done(xs);
 		splx(intflag);
-		return COMPLETE;
+		return;
  	}
  
 	xferflags = xs->flags;
@@ -389,7 +389,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		intflag = splbio();
 		scsi_done(xs);
 		splx(intflag);
-		return COMPLETE;
+		return;
 	}
 
 	xs->error  = XS_NOERROR;
@@ -401,8 +401,10 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	pSRB = trm_GetFreeSRB(sc);
 
 	if (pSRB == NULL) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(intflag);
-		return (NO_CCB);
+		return;
 	}
 
 	/* 
@@ -432,7 +434,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 			TAILQ_INSERT_HEAD(&sc->freeSRB, pSRB, link);
 			scsi_done(xs);
 			splx(intflag);
-			return COMPLETE;
+			return;
 		}
 
 		bus_dmamap_sync(sc->sc_dmatag, pSRB->dmamapxfer,
@@ -465,7 +467,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	if ((xferflags & SCSI_POLL) == 0) {
 		timeout_add_msec(&xs->stimeout, xs->timeout);
 		splx(intflag);
-		return SUCCESSFULLY_QUEUED;
+		return;
 	}
 
 	while ((--xs->timeout > 0) && ((xs->flags & ITSDONE) == 0)) {
@@ -477,7 +479,6 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		trm_timeout(pSRB);
 
 	splx(intflag);
-	return COMPLETE;
 }
 
 /*

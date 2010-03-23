@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.34 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.35 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ struct cfdriver cac_cd = {
 	NULL, "cac", DV_DULL
 };
 
-int     cac_scsi_cmd(struct scsi_xfer *);
+void    cac_scsi_cmd(struct scsi_xfer *);
 void	cacminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter cac_switch = {
@@ -406,7 +406,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 		/* Synchronous commands musn't wait. */
 		if ((*sc->sc_cl->cl_fifo_full)(sc)) {
 			cac_ccb_free(sc, ccb);
-			rv = ENOMEM; /* Causes NO_CCB, i/o is retried. */
+			rv = ENOMEM; /* Causes XS_NO_CCB, i/o is retried. */
 		} else {
 			ccb->ccb_flags |= CAC_CCB_ACTIVE;
 			(*sc->sc_cl->cl_submit)(sc, ccb);
@@ -579,7 +579,7 @@ cac_copy_internal_data(xs, v, size)
 	}
 }
 
-int
+void
 cac_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -601,7 +601,7 @@ cac_scsi_cmd(xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	s = splbio();
@@ -717,21 +717,20 @@ cac_scsi_cmd(xs)
 		    target, blockno, flags, xs))) {
 
 			if (error == ENOMEM || error == EBUSY) {
+				xs->error = XS_NO_CCB;
+				scsi_done(xs);
 				splx(s);
-				return (NO_CCB);
+				return;
 			} else {
 				xs->error = XS_DRIVER_STUFFUP;
 				scsi_done(xs);
-				break;
+				splx(s);
+				return;
 			}
 		}
 
 		splx(s);
-
-		if (poll)
-			return (COMPLETE);
-		else
-			return (SUCCESSFULLY_QUEUED);
+		return;
 
 	default:
 		SC_DEBUG(link, SDEV_DB1, ("unsupported scsi command %#x "
@@ -741,8 +740,6 @@ cac_scsi_cmd(xs)
 
 	scsi_done(xs);
 	splx(s);
-
-	return (COMPLETE);
 }
 
 /*

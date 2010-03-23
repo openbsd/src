@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.20 2010/01/10 00:10:23 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.21 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -93,7 +93,7 @@ void bha_start_ccbs(struct bha_softc *);
 void bha_done(struct bha_softc *, struct bha_ccb *);
 int bha_init(struct bha_softc *);
 void bhaminphys(struct buf *, struct scsi_link *);
-int bha_scsi_cmd(struct scsi_xfer *);
+void bha_scsi_cmd(struct scsi_xfer *);
 int bha_poll(struct bha_softc *, struct scsi_xfer *, int);
 void bha_timeout(void *arg);
 int bha_create_ccbs(struct bha_softc *, struct bha_ccb *, int);
@@ -1269,7 +1269,7 @@ bhaminphys(struct buf *bp, struct scsi_link *sl)
  * start a scsi operation given the command and the data address.  Also needs
  * the unit, target and lu.
  */
-int
+void
 bha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -1290,8 +1290,10 @@ bha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ccb = bha_get_ccb(sc, flags)) == NULL) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return (NO_CCB);
+		return;
 	}
 
 	splx(s);		/* done playing with the queue */
@@ -1390,7 +1392,7 @@ bha_scsi_cmd(xs)
 	 */
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 	if ((flags & SCSI_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
+		return;
 
 	/*
 	 * If we can't use interrupts, poll on completion
@@ -1400,7 +1402,7 @@ bha_scsi_cmd(xs)
 		if (bha_poll(sc, xs, ccb->timeout))
 			bha_timeout(ccb);
 	}
-	return (COMPLETE);
+	return;
 
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
@@ -1408,7 +1410,6 @@ bad:
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-	return (COMPLETE);
 }
 
 /*

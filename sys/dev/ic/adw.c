@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.41 2010/01/10 00:10:23 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.42 2010/03/23 01:57:19 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -66,7 +66,7 @@ int adw_init_ccb(ADW_SOFTC *, ADW_CCB *);
 ADW_CCB *adw_get_ccb(ADW_SOFTC *, int);
 int adw_queue_ccb(ADW_SOFTC *, ADW_CCB *, int);
 
-int adw_scsi_cmd(struct scsi_xfer *);
+void adw_scsi_cmd(struct scsi_xfer *);
 int adw_build_req(struct scsi_xfer *, ADW_CCB *, int);
 void adw_build_sglist(ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *);
 void adw_minphys(struct buf *, struct scsi_link *);
@@ -590,7 +590,7 @@ adw_minphys(struct buf *bp, struct scsi_link *sl)
  * start a scsi operation given the command and the data address.
  * Also needs the unit, target and lu.
  */
-int
+void
 adw_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -612,8 +612,10 @@ adw_scsi_cmd(xs)
 	if (nowait)
 		flags |= SCSI_NOSLEEP;
 	if ((ccb = adw_get_ccb(sc, flags)) == NULL) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return (NO_CCB);
+		return;
 	}
 	splx(s);		/* done playing with the queue */
 
@@ -635,14 +637,14 @@ retryagain:
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
-			return (COMPLETE);
+			return;
 		}
 
 		/*
 	         * Usually return SUCCESSFULLY QUEUED
 	         */
 		if ((xs->flags & SCSI_POLL) == 0)
-			return (SUCCESSFULLY_QUEUED);
+			return;
 
 		/*
 	         * If we can't use interrupts, poll on completion
@@ -658,7 +660,6 @@ retryagain:
 		scsi_done(xs);
 		splx(s);
 	}
-	return (COMPLETE);
 }
 
 

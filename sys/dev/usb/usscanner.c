@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.30 2010/01/09 23:15:07 krw Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.31 2010/03/23 01:57:20 krw Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ struct usscanner_softc {
 
 
 void usscanner_cleanup(struct usscanner_softc *sc);
-int usscanner_scsipi_cmd(struct scsipi_xfer *xs);
+void usscanner_scsipi_cmd(struct scsipi_xfer *xs);
 void usscanner_scsipi_minphys(struct buf *bp, struct scsi_link *sl);
 void usscanner_done(struct usscanner_softc *sc);
 void usscanner_sense(struct usscanner_softc *sc);
@@ -702,7 +702,7 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usscanner_done(sc);
 }
 
-int
+void
 usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 {
 	struct scsipi_link *sc_link = xs->sc_link;
@@ -759,13 +759,11 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 		goto done;
 	}
 
-	return (SUCCESSFULLY_QUEUED);
+	return;
 
  done:
 	sc->sc_state = UAS_IDLE;
 	s = splbio();
 	scsipi_done(xs);
 	splx(s);
-
-	return (COMPLETE);
 }

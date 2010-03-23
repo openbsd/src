@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.40 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.41 2010/03/23 01:57:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -69,7 +69,7 @@ struct cfdriver ciss_cd = {
 	NULL, "ciss", DV_DULL
 };
 
-int	ciss_scsi_cmd(struct scsi_xfer *xs);
+void	ciss_scsi_cmd(struct scsi_xfer *xs);
 int	ciss_scsi_ioctl(struct scsi_link *link, u_long cmd,
     caddr_t addr, int flag, struct proc *p);
 void	cissminphys(struct buf *bp, struct scsi_link *sl);
@@ -82,7 +82,7 @@ struct scsi_device ciss_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-int	ciss_scsi_raw_cmd(struct scsi_xfer *xs);
+void	ciss_scsi_raw_cmd(struct scsi_xfer *xs);
 
 struct scsi_adapter ciss_raw_switch = {
 	ciss_scsi_raw_cmd, cissminphys, NULL, NULL,
@@ -134,6 +134,11 @@ void
 ciss_put_ccb(struct ciss_ccb *ccb)
 {
 	struct ciss_softc *sc = ccb->ccb_sc;
+
+	if (ccb->ccb_xs) {
+		CISS_DPRINTF(CISS_D_CMD, ("scsi_done(%p) ", ccb->ccb_xs));
+		scsi_done(ccb->ccb_xs);
+	}
 
 	ccb->ccb_state = CISS_CCB_FREE;
 	ccb->ccb_xs = NULL;
@@ -504,10 +509,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 				printf("more than %d dma segs\n", sc->maxsg);
 			else
 				printf("error %d loading dma map\n", error);
-			if (ccb->ccb_xs) {
+			if (ccb->ccb_xs)
 				ccb->ccb_xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(ccb->ccb_xs);
-			}
 			ciss_put_ccb(ccb);
 			return (error);
 		}
@@ -681,13 +684,11 @@ ciss_done(struct ciss_ccb *ccb)
 		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 	}
 
+	if (xs)
+		xs->resid = 0;
+
 	ciss_put_ccb(ccb);
 
-	if (xs) {
-		xs->resid = 0;
-		CISS_DPRINTF(CISS_D_CMD, ("scsi_done(%p) ", xs));
-		scsi_done(xs);
-	}
 	CISS_UNLOCK(sc, lock);
 
 	return error;
@@ -865,7 +866,7 @@ ciss_sync(struct ciss_softc *sc)
 	return rv;
 }
 
-int
+void
 ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 {
 	struct scsi_link *link = xs->sc_link;
@@ -887,7 +888,7 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 		xs->error = XS_SENSE;
 		scsi_done(xs);
 		CISS_UNLOCK(sc, lock);
-		return (COMPLETE);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
@@ -899,7 +900,7 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 		xs->error = XS_NO_CCB;
 		scsi_done(xs);
 		CISS_UNLOCK(sc, lock);
-		return (COMPLETE);
+		return;
 	}
 
 	cmd = &ccb->ccb_cmd;
@@ -920,10 +921,9 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 	ciss_cmd(ccb, BUS_DMA_WAITOK, xs->flags & (SCSI_POLL|SCSI_NOSLEEP));
 
 	CISS_UNLOCK(sc, lock);
-	return (COMPLETE);
 }
 
-int
+void
 ciss_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -945,7 +945,7 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 		xs->error = XS_SENSE;
 		scsi_done(xs);
 		CISS_UNLOCK(sc, lock);
-		return (COMPLETE);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
@@ -957,7 +957,7 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 		xs->error = XS_NO_CCB;
 		scsi_done(xs);
 		CISS_UNLOCK(sc, lock);
-		return (COMPLETE);
+		return;
 	}
 
 	cmd = &ccb->ccb_cmd;
@@ -979,7 +979,6 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 	ciss_cmd(ccb, BUS_DMA_WAITOK, xs->flags & (SCSI_POLL|SCSI_NOSLEEP));
 
 	CISS_UNLOCK(sc, lock);
-	return (COMPLETE);
 }
 
 int
@@ -1303,7 +1302,6 @@ ciss_ldid(struct ciss_softc *sc, int target, struct ciss_ldid *id)
 
 	ccb->ccb_len = sizeof(*id);
 	ccb->ccb_data = id;
-	ccb->ccb_xs = NULL;
 	cmd = &ccb->ccb_cmd;
 	cmd->tgt = htole32(CISS_CMD_MODE_PERIPH);
 	cmd->tgt2 = 0;
@@ -1332,7 +1330,6 @@ ciss_ldstat(struct ciss_softc *sc, int target, struct ciss_ldstat *stat)
 
 	ccb->ccb_len = sizeof(*stat);
 	ccb->ccb_data = stat;
-	ccb->ccb_xs = NULL;
 	cmd = &ccb->ccb_cmd;
 	cmd->tgt = htole32(CISS_CMD_MODE_PERIPH);
 	cmd->tgt2 = 0;
@@ -1361,7 +1358,6 @@ ciss_pdid(struct ciss_softc *sc, u_int8_t drv, struct ciss_pdid *id, int wait)
 
 	ccb->ccb_len = sizeof(*id);
 	ccb->ccb_data = id;
-	ccb->ccb_xs = NULL;
 	cmd = &ccb->ccb_cmd;
 	cmd->tgt = htole32(CISS_CMD_MODE_PERIPH);
 	cmd->tgt2 = 0;
@@ -1440,7 +1436,6 @@ ciss_blink(struct ciss_softc *sc, int ld, int pd, int stat,
 
 	ccb->ccb_len = sizeof(*blink);
 	ccb->ccb_data = blink;
-	ccb->ccb_xs = NULL;
 	cmd = &ccb->ccb_cmd;
 	cmd->tgt = htole32(CISS_CMD_MODE_PERIPH);
 	cmd->tgt2 = 0;

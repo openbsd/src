@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.78 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.79 2010/03/23 01:57:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -65,7 +65,7 @@
 int	vsmatch(struct device *, void *, void *);
 void	vsattach(struct device *, struct device *, void *);
 void	vs_minphys(struct buf *, struct scsi_link *);
-int	vs_scsicmd(struct scsi_xfer *);
+void	vs_scsicmd(struct scsi_xfer *);
 
 struct scsi_adapter vs_scsiswitch = {
 	vs_scsicmd,
@@ -105,7 +105,7 @@ int	vs_load_command(struct vs_softc *, struct vs_cb *, bus_addr_t,
 	    bus_addr_t, struct scsi_link *, int, struct scsi_generic *, int,
 	    uint8_t *, int);
 int	vs_nintr(void *);
-int	vs_poll(struct vs_softc *, struct vs_cb *);
+void	vs_poll(struct vs_softc *, struct vs_cb *);
 void	vs_print_addr(struct vs_softc *, struct scsi_xfer *);
 struct vs_cb *vs_find_queue(struct scsi_link *, struct vs_softc *);
 void	vs_reset(struct vs_softc *, int);
@@ -312,7 +312,7 @@ do_vspoll(struct vs_softc *sc, struct scsi_xfer *xs, int canreset)
 	return 0;
 }
 
-int
+void
 vs_poll(struct vs_softc *sc, struct vs_cb *cb)
 {
 	struct scsi_xfer *xs;
@@ -340,7 +340,6 @@ vs_poll(struct vs_softc *sc, struct vs_cb *cb)
 	CRB_CLR_DONE;
 
 	vs_clear_return_info(sc);
-	return (COMPLETE);
 }
 
 void
@@ -403,7 +402,7 @@ vs_scsidone(struct vs_softc *sc, struct vs_cb *cb)
 	scsi_done(xs);
 }
 
-int
+void
 vs_scsicmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *slp = xs->sc_link;
@@ -432,7 +431,11 @@ vs_scsicmd(struct scsi_xfer *xs)
 		if (cb->cb_xs != NULL) {
 			printf("%s: master command not idle\n",
 			    sc->sc_dev.dv_xname);
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 #endif
 		s = splbio();
@@ -445,7 +448,11 @@ vs_scsicmd(struct scsi_xfer *xs)
 			printf("%s: queue for target %d is busy\n",
 			    sc->sc_dev.dv_xname, slp->target);
 #endif
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 		if (vs_getcqe(sc, &cqep, &iopb)) {
 			/* XXX shouldn't happen since our queue is ready */
@@ -453,7 +460,11 @@ vs_scsicmd(struct scsi_xfer *xs)
 #ifdef VS_DEBUG
 			printf("%s: no free CQEs\n", sc->sc_dev.dv_xname);
 #endif
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 	}
 
@@ -469,7 +480,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	vs_write(1, cqep + CQE_WORK_QUEUE, cb->cb_q);
@@ -486,10 +497,8 @@ vs_scsicmd(struct scsi_xfer *xs)
 
 	if (flags & SCSI_POLL) {
 		/* poll for the command to complete */
-		return vs_poll(sc, cb);
+		vs_poll(sc, cb);
 	}
-
-	return (SUCCESSFULLY_QUEUED);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.37 2010/01/10 00:40:25 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.38 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ struct ahb_ecb *ahb_ecb_phys_kv(struct ahb_softc *, physaddr);
 int ahb_find(bus_space_tag_t, bus_space_handle_t, struct ahb_softc *);
 void ahb_init(struct ahb_softc *);
 void ahbminphys(struct buf *, struct scsi_link *);
-int ahb_scsi_cmd(struct scsi_xfer *);
+void ahb_scsi_cmd(struct scsi_xfer *);
 void ahb_timeout(void *);
 void ahb_print_ecb(struct ahb_ecb *);
 void ahb_print_active_ecb(struct ahb_softc *);
@@ -931,7 +931,7 @@ ahbminphys(struct buf *bp, struct scsi_link *sl)
  * start a scsi operation given the command and the data address.  Also needs
  * the unit, target and lu.
  */
-int
+void
 ahb_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -952,7 +952,11 @@ ahb_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 	ecb->xs = xs;
 	timeout_set(&ecb->xs->stimeout, ahb_timeout, ecb);
@@ -965,8 +969,13 @@ ahb_scsi_cmd(xs)
 	 */
 	if (flags & SCSI_RESET) {
 		ecb->flags |= ECB_IMMED;
-		if (sc->immed_ecb)
-			return NO_CCB;
+		if (sc->immed_ecb) {
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
+		}
 		sc->immed_ecb = ecb;
 
 		s = splbio();
@@ -976,7 +985,7 @@ ahb_scsi_cmd(xs)
 		if ((flags & SCSI_POLL) == 0) {
 			splx(s);
 			timeout_add_msec(&ecb->xs->stimeout, xs->timeout);
-			return SUCCESSFULLY_QUEUED;
+			return;
 		}
 
 		splx(s);
@@ -986,7 +995,7 @@ ahb_scsi_cmd(xs)
 		 */
 		if (ahb_poll(sc, xs, xs->timeout))
 			ahb_timeout(ecb);
-		return COMPLETE;
+		return;
 	}
 
 	/*
@@ -1071,7 +1080,7 @@ ahb_scsi_cmd(xs)
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
-			return COMPLETE;
+			return;
 		}
 	} else {	/* No data xfer, use non S/G values */
 		ecb->data_addr = (physaddr)0;
@@ -1095,7 +1104,7 @@ ahb_scsi_cmd(xs)
 	if ((flags & SCSI_POLL) == 0) {
 		splx(s);
 		timeout_add_msec(&ecb->xs->stimeout, xs->timeout);
-		return SUCCESSFULLY_QUEUED;
+		return;
 	}
 
 	splx(s);
@@ -1108,7 +1117,6 @@ ahb_scsi_cmd(xs)
 		if (ahb_poll(sc, xs, 2000))
 			ahb_timeout(ecb);
 	}
-	return COMPLETE;
 }
 
 void

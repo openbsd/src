@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.87 2010/01/11 00:00:53 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.88 2010/03/23 01:57:19 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -167,7 +167,7 @@ struct atapiscsi_softc {
 void  wdc_atapi_minphys(struct buf *bp, struct scsi_link *sl);
 int   wdc_atapi_ioctl(struct scsi_link *,
 	u_long, caddr_t, int, struct proc *);
-int   wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer);
+void  wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer);
 
 static struct scsi_adapter atapiscsi_switch =
 {
@@ -319,7 +319,7 @@ atapiscsi_detach(dev, flags)
 	return (config_detach_children(dev, flags));
 }
 
-int
+void
 wdc_atapi_send_cmd(sc_xfer)
 	struct scsi_xfer *sc_xfer;
 {
@@ -338,13 +338,17 @@ wdc_atapi_send_cmd(sc_xfer)
 		s = splbio();
 		scsi_done(sc_xfer);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	xfer = wdc_get_xfer(sc_xfer->flags & SCSI_NOSLEEP
 	    ? WDC_NOSLEEP : WDC_CANSLEEP);
 	if (xfer == NULL) {
-		return (NO_CCB);
+		sc_xfer->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(sc_xfer);
+		splx(s);
+		return;
 	}
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;
@@ -426,11 +430,6 @@ wdc_atapi_send_cmd(sc_xfer)
 
 	wdc_exec_xfer(chp, xfer);
 	splx(s);
-
-	if (xfer->c_flags & C_POLL)
-		return (COMPLETE);
-	else
-		return (SUCCESSFULLY_QUEUED);
 }
 
 void

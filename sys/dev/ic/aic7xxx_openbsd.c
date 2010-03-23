@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.45 2010/01/20 08:40:41 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.46 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -48,10 +48,10 @@
 #endif
 
 
-int	ahc_action(struct scsi_xfer *);
-int	ahc_execute_scb(void *, bus_dma_segment_t *, int);
+void	ahc_action(struct scsi_xfer *);
+void	ahc_execute_scb(void *, bus_dma_segment_t *, int);
 int	ahc_poll(struct ahc_softc *, int);
-int	ahc_setup_data(struct ahc_softc *, struct scsi_xfer *, struct scb *);
+void	ahc_setup_data(struct ahc_softc *, struct scsi_xfer *, struct scb *);
 
 void	ahc_minphys(struct buf *, struct scsi_link *);
 void	ahc_adapter_req_set_xfer_mode(struct ahc_softc *, struct scb *);
@@ -290,7 +290,7 @@ ahc_minphys(struct buf *bp, struct scsi_link *sl)
 	minphys(bp);
 }
 
-int32_t
+void
 ahc_action(struct scsi_xfer *xs)
 {
 	struct ahc_softc *ahc;
@@ -311,8 +311,10 @@ ahc_action(struct scsi_xfer *xs)
 	 */
 	s = splbio();
 	if ((scb = ahc_get_scb(ahc)) == NULL) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return (NO_CCB);
+		return;
 	}
 	splx(s);
 
@@ -332,13 +334,14 @@ ahc_action(struct scsi_xfer *xs)
 		hscb->cdb_len = 0;
 		scb->flags |= SCB_DEVICE_RESET;
 		hscb->control |= MK_MESSAGE;
-		return (ahc_execute_scb(scb, NULL, 0));
+		ahc_execute_scb(scb, NULL, 0);
+		return;
 	}
 
-	return (ahc_setup_data(ahc, xs, scb));
+	ahc_setup_data(ahc, xs, scb);
 }
 
-int
+void
 ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 {
 	struct	scb *scb;
@@ -422,7 +425,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 		ahc_free_scb(ahc, scb);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	tinfo = ahc_fetch_transinfo(ahc, SCSIID_CHANNEL(ahc, scb->hscb->scsiid),
@@ -481,7 +484,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 				goto poll;
 			else {		
 				splx(s);
-				return (SUCCESSFULLY_QUEUED);
+				return;
 			}
 		}
 	}
@@ -511,7 +514,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 			ahc->inited_target[xs->sc_link->target] = 1;
 		}
 		splx(s);
-		return (SUCCESSFULLY_QUEUED);
+		return;
 	}
 
 	/*
@@ -530,7 +533,6 @@ poll:
 	} while (!(xs->flags & ITSDONE));
 
 	splx(s);
-	return (COMPLETE);
 }
 
 int
@@ -551,7 +553,7 @@ ahc_poll(struct ahc_softc *ahc, int wait)
 	return (0);
 }
 
-int
+void
 ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 	       struct scb *scb)
 {
@@ -569,7 +571,7 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	if (hscb->cdb_len > 12) {
@@ -596,15 +598,15 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 #endif
 			s = splbio();
 			ahc_free_scb(ahc, scb);
+			xs->error = XS_NO_CCB;
+			scsi_done(xs);
 			splx(s);
-			return (NO_CCB);	/* XXX fvdl */
+			return;
 }
-		error = ahc_execute_scb(scb,
-					scb->dmamap->dm_segs,
-					scb->dmamap->dm_nsegs);
-		return error;
+		ahc_execute_scb(scb, scb->dmamap->dm_segs,
+		    scb->dmamap->dm_nsegs);
 	} else {
-		return ahc_execute_scb(scb, NULL, 0);
+		ahc_execute_scb(scb, NULL, 0);
 	}
 }
 

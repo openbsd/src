@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.19 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.20 2010/03/23 01:57:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -105,7 +105,7 @@ void	ioprbs_internal_cache_cmd(struct scsi_xfer *);
 void	ioprbs_intr(struct device *, struct iop_msg *, void *);
 void	ioprbs_intr_event(struct device *, struct iop_msg *, void *);
 int	ioprbs_match(struct device *, void *, void *);
-int	ioprbs_scsi_cmd(struct scsi_xfer *);
+void	ioprbs_scsi_cmd(struct scsi_xfer *);
 int	ioprbs_start(struct ioprbs_ccb *);
 void	ioprbs_start_ccbs(struct ioprbs_softc *);
 void	ioprbs_timeout(void *);
@@ -397,7 +397,7 @@ ioprbs_unconfig(struct ioprbs_softc *sc, int evreg)
 	iop_initiator_unregister(iop, &sc->sc_ii);
 }
 
-int
+void
 ioprbs_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -408,7 +408,6 @@ ioprbs_scsi_cmd(xs)
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
 	int s;
-	int retval = SUCCESSFULLY_QUEUED;
 
 	s = splbio();
 
@@ -498,8 +497,10 @@ ioprbs_scsi_cmd(xs)
 			 * We are out of commands, try again in a little while.
 			 */
 			if (ccb == NULL) {
+				xs->error = XS_NO_CCB;
+				scsi_done(xs);
 				splx(s);
-				return (NO_CCB);
+				return;
 			}
 
 			ccb->ic_blockno = blockno;
@@ -516,7 +517,10 @@ ioprbs_scsi_cmd(xs)
 					splx(s);
 					printf("%s: command timed out\n",
 					    sc->sc_dv.dv_xname);
-					return (NO_CCB);
+					xs->error = XS_NO_CCB;
+					scsi_done(xs);
+					splx(s);
+					return;
 				}
 				scsi_done(xs);
 #endif
@@ -528,13 +532,11 @@ ioprbs_scsi_cmd(xs)
 		 * Don't process the queue if we are polling.
 		 */
 		if (xs->flags & SCSI_POLL) {
-			retval = COMPLETE;
 			break;
 		}
 	}
 
 	splx(s);
-	return (retval);
 }
 
 void

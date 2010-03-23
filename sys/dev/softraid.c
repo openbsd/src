@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.194 2010/02/13 22:10:01 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.195 2010/03/23 01:57:19 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -87,7 +87,7 @@ struct cfdriver softraid_cd = {
 };
 
 /* scsi & discipline */
-int			sr_scsi_cmd(struct scsi_xfer *);
+void			sr_scsi_cmd(struct scsi_xfer *);
 void			sr_minphys(struct buf *bp, struct scsi_link *sl);
 void			sr_copy_internal_data(struct scsi_xfer *,
 			    void *, size_t);
@@ -1829,7 +1829,7 @@ sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
 	splx(s);
 }
 
-int
+void
 sr_scsi_cmd(struct scsi_xfer *xs)
 {
 	int			s;
@@ -1868,7 +1868,10 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	 */
 	if ((wu = sr_wu_get(sd, 0)) == NULL) {
 		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd no wu\n", DEVNAME(sc));
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
@@ -1950,7 +1953,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 		goto stuffup;
 	}
 
-	return (SUCCESSFULLY_QUEUED);
+	return;
 stuffup:
 	if (sd && sd->sd_scsi_sense.error_code) {
 		xs->error = XS_SENSE;
@@ -1963,7 +1966,6 @@ complete:
 	if (wu)
 		sr_wu_put(wu);
 	sr_scsi_done(sd, xs);
-	return (COMPLETE);
 }
 int
 sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,

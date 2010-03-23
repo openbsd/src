@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.94 2010/01/09 23:15:07 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.95 2010/03/23 01:57:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -428,8 +428,8 @@ struct ips_softc {
 int	ips_match(struct device *, void *, void *);
 void	ips_attach(struct device *, struct device *, void *);
 
-int	ips_scsi_cmd(struct scsi_xfer *);
-int	ips_scsi_pt_cmd(struct scsi_xfer *);
+void	ips_scsi_cmd(struct scsi_xfer *);
+void	ips_scsi_pt_cmd(struct scsi_xfer *);
 int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 	    struct proc *);
 
@@ -446,7 +446,7 @@ void	ips_sensors(void *);
 #endif
 
 int	ips_load_xs(struct ips_softc *, struct ips_ccb *, struct scsi_xfer *);
-int	ips_start_xs(struct ips_softc *, struct ips_ccb *, struct scsi_xfer *);
+void	ips_start_xs(struct ips_softc *, struct ips_ccb *, struct scsi_xfer *);
 
 int	ips_cmd(struct ips_softc *, struct ips_ccb *);
 int	ips_poll(struct ips_softc *, struct ips_ccb *);
@@ -845,7 +845,7 @@ fail1:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 }
 
-int
+void
 ips_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -875,7 +875,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	drive = &di->drive[target];
@@ -918,7 +918,11 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		if (ccb == NULL) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: no ccb\n",
 			    sc->sc_dev.dv_xname));
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 
 		cmd = ccb->c_cmdbva;
@@ -942,7 +946,8 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 			cmd->code |= IPS_CMD_SG;
 
 		ccb->c_done = ips_done_xs;
-		return (ips_start_xs(sc, ccb, xs));
+		ips_start_xs(sc, ccb, xs);
+		return;
 	case INQUIRY:
 		bzero(&inq, sizeof(inq));
 		inq.device = T_DIRECT;
@@ -974,14 +979,19 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		if (ccb == NULL) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: no ccb\n",
 			    sc->sc_dev.dv_xname));
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 
 		cmd = ccb->c_cmdbva;
 		cmd->code = IPS_CMD_FLUSH;
 
 		ccb->c_done = ips_done_xs;
-		return (ips_start_xs(sc, ccb, xs));
+		ips_start_xs(sc, ccb, xs);
+		return;
 	case PREVENT_ALLOW:
 	case START_STOP:
 	case TEST_UNIT_READY:
@@ -995,11 +1005,9 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-
-	return (COMPLETE);
 }
 
-int
+void
 ips_scsi_pt_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -1032,7 +1040,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
@@ -1043,7 +1051,11 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 	if (ccb == NULL) {
 		DPRINTF(IPS_D_ERR, ("%s: ips_scsi_pt_cmd: no ccb\n",
 		    sc->sc_dev.dv_xname));
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	cmdb = ccb->c_cmdbva;
@@ -1090,7 +1102,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 	if (cmd->sgcnt > 0)
 		cmd->code |= IPS_CMD_SG;
@@ -1100,7 +1112,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 	cmd->sgcnt = 0;
 
 	ccb->c_done = ips_done_pt;
-	return (ips_start_xs(sc, ccb, xs));
+	ips_start_xs(sc, ccb, xs);
 }
 
 int
@@ -1421,7 +1433,7 @@ ips_load_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 	return (0);
 }
 
-int
+void
 ips_start_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 {
 	ccb->c_flags = xs->flags;
@@ -1438,12 +1450,7 @@ ips_start_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 	 * scsi_xfer on any failure and SCSI layer will handle possible
 	 * errors.
 	 */
-	(void)ips_cmd(sc, ccb);
-
-	if (ispoll)
-		return (COMPLETE);
-	else
-		return (SUCCESSFULLY_QUEUED);
+	ips_cmd(sc, ccb);
 }
 
 int

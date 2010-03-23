@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.11 2010/01/13 06:09:44 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.12 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -150,7 +150,7 @@ int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 
 void	spc_done	(struct spc_softc *, struct spc_acb *);
 void	spc_dequeue	(struct spc_softc *, struct spc_acb *);
-int	spc_scsi_cmd	(struct scsi_xfer *);
+void	spc_scsi_cmd	(struct scsi_xfer *);
 int	spc_poll	(struct spc_softc *, struct scsi_xfer *, int);
 integrate void	spc_sched_msgout(struct spc_softc *, u_char);
 integrate void	spc_setsync(struct spc_softc *, struct spc_tinfo *);
@@ -427,7 +427,7 @@ spc_get_acb(sc, flags)
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-int
+void
 spc_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -442,7 +442,11 @@ spc_scsi_cmd(xs)
 
 	flags = xs->flags;
 	if ((acb = spc_get_acb(sc, flags)) == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	/* Initialize acb */
@@ -472,13 +476,12 @@ spc_scsi_cmd(xs)
 		spc_sched(sc);
 	/*
 	 * After successful sending, check if we should return just now.
-	 * If so, return SUCCESSFULLY_QUEUED.
 	 */
 
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		return;
 
 	/* Not allowed to use interrupts, use polling instead */
 	s = splbio();
@@ -488,7 +491,6 @@ spc_scsi_cmd(xs)
 			spc_timeout(acb);
 	}
 	splx(s);
-	return COMPLETE;
 }
 
 /*

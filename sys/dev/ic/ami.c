@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.199 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.200 2010/03/23 01:57:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -92,7 +92,7 @@ struct cfdriver ami_cd = {
 	NULL, "ami", DV_DULL
 };
 
-int	ami_scsi_cmd(struct scsi_xfer *);
+void	ami_scsi_cmd(struct scsi_xfer *);
 int	ami_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
 void	amiminphys(struct buf *bp, struct scsi_link *sl);
 
@@ -104,7 +104,7 @@ struct scsi_device ami_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-int	ami_scsi_raw_cmd(struct scsi_xfer *);
+void	ami_scsi_raw_cmd(struct scsi_xfer *);
 
 struct scsi_adapter ami_raw_switch = {
 	ami_scsi_raw_cmd, amiminphys, 0, 0,
@@ -135,7 +135,7 @@ int		ami_done(struct ami_softc *, int, int);
 void		ami_runqueue_tick(void *);
 void		ami_runqueue(struct ami_softc *);
 
-int 		ami_start_xs(struct ami_softc *sc, struct ami_ccb *,
+void 		ami_start_xs(struct ami_softc *sc, struct ami_ccb *,
 		    struct scsi_xfer *);
 void		ami_done_xs(struct ami_softc *, struct ami_ccb *);
 void		ami_done_pt(struct ami_softc *, struct ami_ccb *);
@@ -967,21 +967,19 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 	return (rv);
 }
 
-int
+void
 ami_start_xs(struct ami_softc *sc, struct ami_ccb *ccb, struct scsi_xfer *xs)
 {
 	timeout_set(&xs->stimeout, ami_stimeout, ccb);
 
 	if (xs->flags & SCSI_POLL) {
 		ami_complete(sc, ccb, xs->timeout);
-		return (COMPLETE);
+		return;
 	}
 
 	/* XXX way wrong, this timeout needs to be set later */
 	timeout_add_sec(&xs->stimeout, 61);
 	ami_start(sc, ccb);
-
-	return (SUCCESSFULLY_QUEUED);
 }
 
 void
@@ -1318,7 +1316,7 @@ ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size)
 	}
 }
 
-int
+void
 ami_scsi_raw_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -1345,7 +1343,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
@@ -1354,7 +1352,11 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	ccb = ami_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	memset(ccb->ccb_pt, 0, sizeof(struct ami_passthrough));
@@ -1381,10 +1383,10 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		ami_put_ccb(ccb);
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
-	return (ami_start_xs(sc, ccb, xs));
+	ami_start_xs(sc, ccb, xs);
 }
 
 int
@@ -1435,7 +1437,7 @@ ami_load_ptmem(struct ami_softc *sc, struct ami_ccb *ccb, void *data,
 	return (0);
 }
 
-int
+void
 ami_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -1465,7 +1467,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	error = 0;
@@ -1484,7 +1486,11 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ccb = ami_get_ccb(sc);
 		splx(s);
 		if (ccb == NULL) {
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 
 		ccb->ccb_xs = xs;
@@ -1513,7 +1519,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 
 	case REQUEST_SENSE:
 		AMI_DPRINTF(AMI_D_CMD, ("REQUEST SENSE tgt %d ", target));
@@ -1529,7 +1535,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 
 	case INQUIRY:
 		AMI_DPRINTF(AMI_D_CMD, ("INQUIRY tgt %d ", target));
@@ -1549,7 +1555,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 
 	case READ_CAPACITY:
 		AMI_DPRINTF(AMI_D_CMD, ("READ CAPACITY tgt %d ", target));
@@ -1562,7 +1568,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 
 	default:
 		AMI_DPRINTF(AMI_D_CMD, ("unsupported scsi command %#x tgt %d ",
@@ -1572,7 +1578,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	/* A read or write operation. */
@@ -1594,14 +1600,18 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	s = splbio();
 	ccb = ami_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	ccb->ccb_xs = xs;
@@ -1627,7 +1637,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ami_put_ccb(ccb);
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	sgd = ccb->ccb_dmamap->dm_segs;
@@ -1654,7 +1664,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	    ccb->ccb_dmamap->dm_mapsize, (xs->flags & SCSI_DATA_IN) ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
-	return (ami_start_xs(sc, ccb, xs));
+	ami_start_xs(sc, ccb, xs);
 }
 
 int

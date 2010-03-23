@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.66 2010/01/10 00:40:25 krw Exp $	*/
+/*	$OpenBSD: aha.c,v 1.67 2010/03/23 01:57:20 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -151,7 +151,7 @@ int aha_find(struct isa_attach_args *, struct aha_softc *, int);
 void aha_init(struct aha_softc *);
 void aha_inquire_setup_information(struct aha_softc *);
 void ahaminphys(struct buf *, struct scsi_link *);
-int aha_scsi_cmd(struct scsi_xfer *);
+void aha_scsi_cmd(struct scsi_xfer *);
 int aha_poll(struct aha_softc *, struct scsi_xfer *, int);
 void aha_timeout(void *arg);
 
@@ -1238,7 +1238,7 @@ ahaminphys(struct buf *bp, struct scsi_link *sl)
  * start a scsi operation given the command and the data address. Also needs
  * the unit, target and lu.
  */
-int
+void
 aha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -1257,7 +1257,11 @@ aha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
@@ -1286,7 +1290,11 @@ aha_scsi_cmd(xs)
 		if (bus_dmamap_load(sc->sc_dmat, ccb->dmam, xs->data,
 		    xs->datalen, NULL, BUS_DMA_NOWAIT) != 0) {
 			aha_free_ccb(sc, ccb);
-			return (NO_CCB);
+			xs->error = XS_NO_CCB;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
+			return;
 		}
 		for (seg = 0; seg < ccb->dmam->dm_nsegs; seg++) {
 			ltophys(ccb->dmam->dm_segs[seg].ds_addr,
@@ -1347,12 +1355,12 @@ aha_scsi_cmd(xs)
 		aha_free_ccb(sc, ccb);
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
+		return;
 
 	/*
 	 * If we can't use interrupts, poll on completion
@@ -1362,7 +1370,6 @@ aha_scsi_cmd(xs)
 		if (aha_poll(sc, xs, ccb->timeout))
 			aha_timeout(ccb);
 	}
-	return (COMPLETE);
 }
 
 /*

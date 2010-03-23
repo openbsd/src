@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.7 2010/01/10 00:40:25 krw Exp $	*/
+/*	$OpenBSD: sii.c,v 1.8 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -156,7 +156,7 @@ int	sii_GetByte(SIIRegs *regs, int phase, int ack);
 void	sii_DoSync(struct sii_softc *, State *);
 void	sii_StartDMA(SIIRegs *regs, int phase, u_int dmaAddr, int size);
 u_int	sii_msgout(SIIRegs *, u_int, u_int8_t);
-int	sii_scsi_cmd(struct scsi_xfer *);
+void	sii_scsi_cmd(struct scsi_xfer *);
 void	sii_schedule(struct sii_softc *);
 #ifdef DEBUG
 void	sii_DumpLog(void);
@@ -225,7 +225,7 @@ sii_attach(sc)
  * connect/disconnect during an operation.
  */
 
-int
+void
 sii_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -236,11 +236,13 @@ sii_scsi_cmd(xs)
 
 	s = splbio();
 	if (sc->sc_xs[target] != NULL) {
-		splx(s);
 #ifdef DEBUG
 		printf("[busy at start]\n");
 #endif
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 	/*
 	 * Build a ScsiCmd for this command and start it.
@@ -250,9 +252,9 @@ sii_scsi_cmd(xs)
 	splx(s);
 
 	if ((xs->flags & ITSDONE) != 0)
-		return (COMPLETE);
+		return;
 	if ((xs->flags & SCSI_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
+		return;
 	count = xs->timeout;
 	while (count) {
 		s = splbio();
@@ -265,12 +267,12 @@ sii_scsi_cmd(xs)
 		--count;
 	}
 	if ((xs->flags & ITSDONE) != 0)
-		return (COMPLETE);
+		return;
 	xs->error = XS_TIMEOUT;
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-	return (COMPLETE);
+	return;
 }
 
 /*

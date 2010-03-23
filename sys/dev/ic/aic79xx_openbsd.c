@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.35 2010/01/20 08:40:41 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.36 2010/03/23 01:57:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -74,10 +74,10 @@ __FBSDID("$FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.16 2003/12/17 00:02:09
 #endif
 
 /* XXX milos add ahd_ioctl */
-int	ahd_action(struct scsi_xfer *);
-int	ahd_execute_scb(void *, bus_dma_segment_t *, int);
+void	ahd_action(struct scsi_xfer *);
+void	ahd_execute_scb(void *, bus_dma_segment_t *, int);
 int	ahd_poll(struct ahd_softc *, int);
-int	ahd_setup_data(struct ahd_softc *, struct scsi_xfer *, 
+void	ahd_setup_data(struct ahd_softc *, struct scsi_xfer *, 
 		    struct scb *);
 
 void	ahd_adapter_req_set_xfer_mode(struct ahd_softc *, struct scb *);
@@ -290,7 +290,7 @@ ahd_minphys(struct buf *bp, struct scsi_link *sl)
 	minphys(bp);
 }
 
-int32_t
+void
 ahd_action(struct scsi_xfer *xs)
 {
 	struct	ahd_softc *ahd;
@@ -315,7 +315,7 @@ ahd_action(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		ahd_unlock(ahd, &s);
-		return (COMPLETE);
+		return;
 	}
 	/*
 	 * get an scb to use.
@@ -332,8 +332,10 @@ ahd_action(struct scsi_xfer *xs)
 
 	if ((scb = ahd_get_scb(ahd, col_idx)) == NULL) {
 		ahd->flags |= AHD_RESOURCE_SHORTAGE;
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		ahd_unlock(ahd, &s);
-		return (NO_CCB);
+		return;
 	}
 	ahd_unlock(ahd, &s);
 		
@@ -355,14 +357,14 @@ ahd_action(struct scsi_xfer *xs)
 		scb->flags |= SCB_DEVICE_RESET;
 		hscb->control |= MK_MESSAGE;
 		hscb->task_management = SIU_TASKMGMT_LUN_RESET;
-		return (ahd_execute_scb(scb, NULL, 0));
+		ahd_execute_scb(scb, NULL, 0);
 	} else {
 		hscb->task_management = 0;
-		return (ahd_setup_data(ahd, xs, scb));
+		ahd_setup_data(ahd, xs, scb);
 	}
 }
 
-int
+void
 ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 {
 	struct	scb *scb;
@@ -417,7 +419,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 					  scb->dmamap);
 		ahd_free_scb(ahd, scb);
 		ahd_unlock(ahd, &s);
-		return (COMPLETE);
+		return;
 	}
 
 	tinfo = ahd_fetch_transinfo(ahd, SCSIID_CHANNEL(ahd, scb->hscb->scsiid),
@@ -481,7 +483,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		}
 
 		ahd_unlock(ahd, &s);
-		return (SUCCESSFULLY_QUEUED);
+		return;
 	}
 
 	/*
@@ -499,7 +501,6 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	} while (!(xs->flags & ITSDONE));
 
 	ahd_unlock(ahd, &s);
-	return (COMPLETE);
 }
 
 int
@@ -520,7 +521,7 @@ ahd_poll(struct ahd_softc *ahd, int wait)
 	return (0);
 }
 
-int
+void
 ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	       struct scb *scb)
 {
@@ -538,7 +539,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		ahd_unlock(ahd, &s);
-		return (COMPLETE);
+		return;
 	}
 
 	memcpy(hscb->shared_data.idata.cdb, xs->cmd, hscb->cdb_len);
@@ -562,14 +563,15 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 #endif
 			ahd_lock(ahd, &s);
 			ahd_free_scb(ahd, scb);
+			xs->error = XS_NO_CCB;
+			scsi_done(xs);
 			ahd_unlock(ahd, &s);
-			return (NO_CCB);       /* XXX fvdl */
+			return;
 		}
-		error = ahd_execute_scb(scb, scb->dmamap->dm_segs,
+		ahd_execute_scb(scb, scb->dmamap->dm_segs,
 		    scb->dmamap->dm_nsegs);
-		return error;
 	} else {
-		return ahd_execute_scb(scb, NULL, 0);
+		ahd_execute_scb(scb, NULL, 0);
 	}
 }
 

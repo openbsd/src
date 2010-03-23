@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.37 2010/01/13 06:09:44 krw Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.38 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static volatile int	main_running = 0;
 static u_char	busy;
 
 static void	ncr5380_minphys(struct buf *bp, struct scsi_link *sl);
-static int	mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs);
+static void	mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
 struct scsi_adapter ncr5380_switch = {
@@ -287,7 +287,7 @@ void		*auxp;
 /*
  * Carry out a request from the high level driver.
  */
-static int
+static void
 mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int	sps;
@@ -300,7 +300,7 @@ mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	if (flags & SCSI_RESET) {
 		scsi_reset_verbose(xs->sc_link->adapter_softc,
 				   "Got reset-command");
-		return (COMPLETE);
+		return;
 	}
 
 	/*
@@ -308,8 +308,10 @@ mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	 */
 	sps = splbio();
 	if ((reqp = free_head) == 0) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(sps);
-		return (NO_CCB);
+		return;
 	}
 	free_head  = reqp->next;
 	reqp->next = NULL;
@@ -380,10 +382,6 @@ mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 #endif
 
 	run_main(xs->sc_link->adapter_softc);
-
-	if (xs->flags & (SCSI_POLL|ITSDONE))
-		return (COMPLETE); /* We're booting or run_main has completed */
-	return (SUCCESSFULLY_QUEUED);
 }
 
 static void

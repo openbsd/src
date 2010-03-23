@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.24 2010/01/09 23:15:06 krw Exp $ */
+/*	$OpenBSD: sbic.c,v 1.25 2010/03/23 01:57:19 krw Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -367,7 +367,11 @@ sbic_scsicmd(xs)
         Debugger();
 #endif
 #endif
-        return (NO_CCB);
+	xs->error = XS_NO_CCB;
+	s = splbio();
+	scsi_done(xs);
+	splx(s);
+        return;
     }
 
     if ( flags & SCSI_DATA_IN )
@@ -419,7 +423,7 @@ sbic_scsicmd(xs)
 
         splx(s);
 
-        return(COMPLETE);
+        return;
     }
 
     s = splbio();
@@ -432,8 +436,6 @@ sbic_scsicmd(xs)
         sbic_sched(dev);
 
     splx(s);
-
-    return(SUCCESSFULLY_QUEUED);
 }
 
 /*

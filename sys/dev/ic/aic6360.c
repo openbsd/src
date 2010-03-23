@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.21 2010/01/13 06:09:44 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.22 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -158,7 +158,7 @@ void	aic_minphys(struct buf *, struct scsi_link *);
 void 	aic_init(struct aic_softc *);
 void	aic_done(struct aic_softc *, struct aic_acb *);
 void	aic_dequeue(struct aic_softc *, struct aic_acb *);
-int	aic_scsi_cmd(struct scsi_xfer *);
+void	aic_scsi_cmd(struct scsi_xfer *);
 int	aic_poll(struct aic_softc *, struct scsi_xfer *, int);
 integrate void	aic_sched_msgout(struct aic_softc *, u_char);
 integrate void	aic_setsync(struct aic_softc *, struct aic_tinfo *);
@@ -504,7 +504,7 @@ aic_get_acb(struct aic_softc *sc, int flags)
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-int
+void
 aic_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
@@ -518,7 +518,11 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 
 	flags = xs->flags;
 	if ((acb = aic_get_acb(sc, flags)) == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	/* Initialize acb */
@@ -547,7 +551,7 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		return;
 
 	/* Not allowed to use interrupts, use polling instead */
 	if (aic_poll(sc, xs, acb->timeout)) {
@@ -555,7 +559,6 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 		if (aic_poll(sc, xs, acb->timeout))
 			aic_timeout(acb);
 	}
-	return COMPLETE;
 }
 
 #ifdef notyet

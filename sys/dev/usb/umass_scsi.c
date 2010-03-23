@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.27 2010/01/13 11:46:33 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.28 2010/03/23 01:57:20 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct umass_scsi_softc {
 
 #define UMASS_ATAPI_DRIVE	0
 
-int umass_scsi_cmd(struct scsi_xfer *);
+void umass_scsi_cmd(struct scsi_xfer *);
 void umass_scsi_minphys(struct buf *, struct scsi_link *);
 
 void umass_scsi_cb(struct umass_softc *sc, void *priv, int residue,
@@ -166,7 +166,7 @@ umass_scsi_setup(struct umass_softc *sc)
 	return (scbus);
 }
 
-int
+void
 umass_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
@@ -234,7 +234,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 				      sc->polled_xfer_status));
 		usbd_set_polling(sc->sc_udev, 0);
 		/* scsi_done() has already been called. */
-		return (COMPLETE);
+		return;
 	} else {
 		DPRINTF(UDMASS_SCSI,
 			("umass_scsi_cmd: async dir=%d, cmdlen=%d"
@@ -244,7 +244,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 					  xs->data, xs->datalen, dir,
 					  xs->timeout, umass_scsi_cb, xs);
 		/* scsi_done() has already been called. */
-		return (SUCCESSFULLY_QUEUED);
+		return;
 	}
 
 	/* Return if command finishes early. */
@@ -252,8 +252,6 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-
-	return (COMPLETE);
 }
 
 void

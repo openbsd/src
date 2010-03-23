@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.11 2010/03/09 19:29:14 marco Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.12 2010/03/23 01:57:20 krw Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -2023,7 +2023,7 @@ struct cfdriver mpii_cd = {
 	DV_DULL
 };
 
-int		mpii_scsi_cmd(struct scsi_xfer *);
+void		mpii_scsi_cmd(struct scsi_xfer *);
 void		mpii_scsi_cmd_done(struct mpii_ccb *);
 void		mpii_minphys(struct buf *bp, struct scsi_link *sl);
 int		mpii_scsi_probe(struct scsi_link *);
@@ -4437,7 +4437,7 @@ mpii_poll(struct mpii_softc *sc, struct mpii_ccb *ccb, int timeout)
 	return (error);
 }
 
-int
+void
 mpii_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
@@ -4460,14 +4460,19 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	s = splbio();
 	ccb = mpii_get_ccb(sc);
 	splx(s);
-	if (ccb == NULL)
-		return (NO_CCB);
+	if (ccb == NULL) {
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
+	}
 	
 	DNPRINTF(MPII_D_CMD, "%s: ccb_smid: %d xs->flags: 0x%x\n",
 	    DEVNAME(sc), ccb->ccb_smid, xs->flags);
@@ -4513,7 +4518,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		mpii_put_ccb(sc, ccb);
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	DNPRINTF(MPII_D_CMD, "%s:  sizeof(mpii_msg_scsi_io): %d "
@@ -4536,7 +4541,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 			scsi_done(xs);
 			splx(s);
 		}
-		return (COMPLETE);
+		return;
 	}
 
 	timeout_set(&xs->stimeout, mpii_timeout_xs, ccb);
@@ -4549,7 +4554,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	s = splbio();
 	mpii_start(sc, ccb);
 	splx(s);
-	return (SUCCESSFULLY_QUEUED);
 }
 
 void

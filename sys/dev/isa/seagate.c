@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.32 2010/01/10 00:40:25 krw Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.33 2010/03/23 01:57:20 krw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -274,7 +274,7 @@ static const char *bases[] = {
 
 struct		sea_scb *sea_get_scb(struct sea_softc *, int);
 int		seaintr(void *);
-int		sea_scsi_cmd(struct scsi_xfer *);
+void		sea_scsi_cmd(struct scsi_xfer *);
 int 		sea_poll(struct sea_softc *, struct scsi_xfer *, int);
 int		sea_select(struct sea_softc *sea, struct sea_scb *scb);
 int		sea_transfer_pio(struct sea_softc *sea, u_char *phase,
@@ -532,7 +532,7 @@ sea_init(struct sea_softc *sea)
  * start a scsi operation given the command and the data address. Also needs
  * the unit, target and lu.
  */
-int
+void
 sea_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
@@ -545,7 +545,11 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 
 	flags = xs->flags;
 	if ((scb = sea_get_scb(sea, flags)) == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 	scb->flags = SCB_ACTIVE;
 	scb->xs = xs;
@@ -561,7 +565,7 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 	}
 
 	/*
@@ -584,7 +588,7 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 	if ((flags & SCSI_POLL) == 0) {
 		timeout_add_msec(&scb->xs->stimeout, xs->timeout);
 		splx(s);
-		return SUCCESSFULLY_QUEUED;
+		return;
 	}
 
 	splx(s);
@@ -597,7 +601,6 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 		if (sea_poll(sea, xs, 2000))
 			sea_timeout(scb);
 	}
-	return COMPLETE;
 }
 
 /*

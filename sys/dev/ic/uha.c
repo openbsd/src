@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.15 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.16 2010/03/23 01:57:20 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -87,7 +87,7 @@ void uha_free_mscp(struct uha_softc *, struct uha_mscp *);
 integrate void uha_init_mscp(struct uha_softc *, struct uha_mscp *);
 struct uha_mscp *uha_get_mscp(struct uha_softc *, int);
 void uhaminphys(struct buf *, struct scsi_link *);
-int uha_scsi_cmd(struct scsi_xfer *);
+void uha_scsi_cmd(struct scsi_xfer *);
 
 struct scsi_adapter uha_switch = {
 	uha_scsi_cmd,
@@ -344,7 +344,7 @@ uhaminphys(struct buf *bp, struct scsi_link *sl)
  * start a scsi operation given the command and the data address.  Also
  * needs the unit, target and lu.
  */
-int
+void
 uha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -365,7 +365,11 @@ uha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((mscp = uha_get_mscp(sc, flags)) == NULL) {
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 	mscp->xs = xs;
 	mscp->timeout = xs->timeout;
@@ -477,7 +481,7 @@ uha_scsi_cmd(xs)
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	if ((flags & SCSI_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
+		return;
 
 	/*
 	 * If we can't use interrupts, poll on completion
@@ -487,7 +491,7 @@ uha_scsi_cmd(xs)
 		if ((sc->poll)(sc, xs, mscp->timeout))
 			uha_timeout(mscp);
 	}
-	return (COMPLETE);
+	return;
 
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
@@ -495,7 +499,7 @@ bad:
 	scsi_done(xs);
 	splx(s);
 	uha_free_mscp(sc, mscp);
-	return (COMPLETE);
+	return;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbic.c,v 1.4 2010/01/10 00:10:23 krw Exp $	*/
+/*	$OpenBSD: vsbic.c,v 1.5 2010/03/23 01:57:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -411,7 +411,7 @@ void	vsbic_queue_cmd(struct vsbic_softc *, struct bpp_chan *,
 int	vsbic_request_sense(struct vsbic_softc *, struct vsbic_ccb *);
 void	vsbic_reset_command(struct vsbic_softc *, struct vsbic_cmd *,
 	    struct scsi_link *);
-int	vsbic_scsicmd(struct scsi_xfer *);
+void	vsbic_scsicmd(struct scsi_xfer *);
 int	vsbic_scsireset(struct vsbic_softc *, struct scsi_xfer *);
 void	vsbic_timeout(void *);
 void	vsbic_wrapup(struct vsbic_softc *, struct vsbic_ccb *);
@@ -1128,7 +1128,7 @@ vsbic_reset_command(struct vsbic_softc *sc, struct vsbic_cmd *cmd,
 /*
  * Try and send a command to the board.
  */
-int
+void
 vsbic_scsicmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sl = xs->sc_link;
@@ -1152,7 +1152,7 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 	}
 #endif
 
@@ -1176,7 +1176,7 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 		xs->error = XS_SENSE;
 		scsi_done(xs);
 		splx(s);
-		return COMPLETE;
+		return;
 	}
 
 	/*
@@ -1188,8 +1188,10 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 #ifdef VSBIC_DEBUG
 		printf("%s: no free CCB\n", DEVNAME(sc));
 #endif
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return NO_CCB;
+		return;
 	}
 
 	env = bpp_get_envelope(bsc);
@@ -1198,8 +1200,10 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 		printf("%s: no free envelope\n", DEVNAME(sc));
 #endif
 		vsbic_free_ccb(sc, ccb);
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return NO_CCB;
+		return;
 	}
 	cmd = vsbic_get_cmd(sc);
 	if (cmd == NULL) {
@@ -1208,8 +1212,10 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 #endif
 		bpp_put_envelope(bsc, env);
 		vsbic_free_ccb(sc, ccb);
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return NO_CCB;
+		return;
 	}
 
 	ccb->ccb_xs = xs;
@@ -1231,7 +1237,7 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	/*
@@ -1248,11 +1254,9 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 	if (ISSET(xs->flags, SCSI_POLL)) {
 		splx(s);
 		vsbic_poll(sc, ccb);
-		return (COMPLETE);
 	} else {
 		timeout_add_msec(&xs->stimeout, xs->timeout);
 		splx(s);
-		return (SUCCESSFULLY_QUEUED);
 	}
 }
 

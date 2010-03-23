@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.35 2010/01/10 00:10:23 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.36 2010/03/23 01:57:19 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -259,7 +259,7 @@ iha_setup_sg_list(sc, pScb)
  *		  from the generic SCSI driver via the field
  *		  sc_adapter.scsi_cmd of iha_softc.
  */
-int
+void
 iha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -273,14 +273,16 @@ iha_scsi_cmd(xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	pScb = iha_pop_free_scb(sc);
 	if (pScb == NULL) {
-		/* XXX - different xs->error/return if
-		 * SCSI_POLL/_NOSLEEP? */
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	pScb->SCB_Target = sc_link->target;
@@ -321,7 +323,7 @@ iha_scsi_cmd(xs)
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
-			return (COMPLETE);
+			return;
 		}
 		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
 			0, pScb->SCB_BufChars,
@@ -335,7 +337,7 @@ iha_scsi_cmd(xs)
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
-			return (COMPLETE);
+			return;
 		}
 
 	}
@@ -350,11 +352,6 @@ iha_scsi_cmd(xs)
 		timeout_add_msec(&xs->stimeout, xs->timeout);
 
 	iha_exec_scb(sc, pScb);
-
-	if (xs->flags & (SCSI_POLL | ITSDONE))
-		return (COMPLETE);
-	else
-		return (SUCCESSFULLY_QUEUED);
 }
 
 /*

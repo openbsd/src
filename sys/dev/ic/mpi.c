@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.134 2010/01/11 03:51:57 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.135 2010/03/23 01:57:19 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -62,7 +62,7 @@ struct cfdriver mpi_cd = {
 	DV_DULL
 };
 
-int			mpi_scsi_cmd(struct scsi_xfer *);
+void			mpi_scsi_cmd(struct scsi_xfer *);
 void			mpi_scsi_cmd_done(struct mpi_ccb *);
 void			mpi_minphys(struct buf *bp, struct scsi_link *sl);
 int			mpi_scsi_probe(struct scsi_link *);
@@ -1188,7 +1188,7 @@ mpi_wait_done(struct mpi_ccb *ccb)
 	mtx_leave(cookie);
 }
 
-int
+void
 mpi_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link		*link = xs->sc_link;
@@ -1211,12 +1211,17 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	ccb = mpi_get_ccb(sc);
-	if (ccb == NULL)
-		return (NO_CCB);
+	if (ccb == NULL) {
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
+	}
 
 	DNPRINTF(MPI_D_CMD, "%s: ccb_id: %d xs->flags: 0x%x\n",
 	    DEVNAME(sc), ccb->ccb_id, xs->flags);
@@ -1273,7 +1278,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	timeout_set(&xs->stimeout, mpi_timeout_xs, ccb);
@@ -1285,11 +1290,10 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 			scsi_done(xs);
 			splx(s);
 		}
-		return (COMPLETE);
+		return;
 	}
 
 	mpi_start(sc, ccb);
-	return (SUCCESSFULLY_QUEUED);
 }
 
 void

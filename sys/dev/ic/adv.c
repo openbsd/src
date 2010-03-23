@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.27 2010/01/10 00:10:23 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.28 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ static void adv_start_ccbs(ASC_SOFTC *);
 
 static u_int8_t *adv_alloc_overrunbuf(char *dvname, bus_dma_tag_t);
 
-static int adv_scsi_cmd(struct scsi_xfer *);
+static void adv_scsi_cmd(struct scsi_xfer *);
 static void advminphys(struct buf *, struct scsi_link *);
 static void adv_narrow_isr_callback(ASC_SOFTC *, ASC_QDONE_INFO *);
 
@@ -571,7 +571,7 @@ advminphys(struct buf *bp, struct scsi_link *sl)
  * start a scsi operation given the command and the data address.  Also needs
  * the unit, target and lu.
  */
-static int
+static void
 adv_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -591,8 +591,10 @@ adv_scsi_cmd(xs)
 
 	flags = xs->flags;
 	if ((ccb = adv_get_ccb(sc, flags)) == NULL) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return (NO_CCB);
+		return;
 	}
 	splx(s);		/* done playing with the queue */
 
@@ -656,7 +658,7 @@ adv_scsi_cmd(xs)
 			s = splbio();
 			scsi_done(xs);
 			splx(s);
-			return (COMPLETE);
+			return;
 		}
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
 		    0, ccb->dmamap_xfer->dm_mapsize,
@@ -699,7 +701,7 @@ adv_scsi_cmd(xs)
          * Usually return SUCCESSFULLY QUEUED
          */
 	if ((flags & SCSI_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
+		return;
 
 	/*
          * If we can't use interrupts, poll on completion
@@ -709,8 +711,6 @@ adv_scsi_cmd(xs)
 		if (adv_poll(sc, xs, ccb->timeout))
 			adv_timeout(ccb);
 	}
-
-	return (COMPLETE);
 }
 
 

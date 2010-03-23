@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.15 2010/01/09 23:15:07 krw Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.16 2010/03/23 01:57:20 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -134,7 +134,7 @@ struct qli_mem {
 
 struct qli_mem	*qli_allocmem(struct qli_softc *, size_t);
 void		qli_freemem(struct qli_softc *, struct qli_mem *);
-int		qli_scsi_cmd(struct scsi_xfer *);
+void		qli_scsi_cmd(struct scsi_xfer *);
 int		qli_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 		    struct proc *);
 void		qliminphys(struct buf *bp, struct scsi_link *sl);
@@ -997,7 +997,7 @@ nofwcb:
 	return (rv);
 }
 
-int
+void
 qli_scsi_cmd(struct scsi_xfer *xs)
 {
 	int s;
@@ -1010,15 +1010,13 @@ qli_scsi_cmd(struct scsi_xfer *xs)
 #endif
 
 	goto stuffup;
-
-	return (SUCCESSFULLY_QUEUED);
+	return;
 
 stuffup:
 	xs->error = XS_DRIVER_STUFFUP;
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-	return (COMPLETE);
 }
 
 int

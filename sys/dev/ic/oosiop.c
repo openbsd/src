@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.13 2010/01/10 00:10:23 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.14 2010/03/23 01:57:19 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ void	oosiop_phasemismatch(struct oosiop_softc *);
 void	oosiop_setup_syncxfer(struct oosiop_softc *);
 void	oosiop_set_syncparam(struct oosiop_softc *, int, int, int);
 void	oosiop_minphys(struct buf *, struct scsi_link *);
-int	oosiop_scsicmd(struct scsi_xfer *);
+void	oosiop_scsicmd(struct scsi_xfer *);
 void	oosiop_done(struct oosiop_softc *, struct oosiop_cb *);
 void	oosiop_timeout(void *);
 void	oosiop_reset(struct oosiop_softc *);
@@ -712,7 +712,7 @@ oosiop_minphys(struct buf *bp, struct scsi_link *sl)
 	minphys(bp);
 }
 
-int
+void
 oosiop_scsicmd(struct scsi_xfer *xs)
 {
 	struct oosiop_softc *sc;
@@ -748,7 +748,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		scsi_done(xs);
 		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 	bus_dmamap_sync(sc->sc_dmat, cb->cmddma, 0, xs->cmdlen,
 	    BUS_DMASYNC_PREWRITE);
@@ -771,7 +771,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 			scsi_done(xs);
 			TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 			splx(s);
-			return (COMPLETE);
+			return;
 		}
 		bus_dmamap_sync(sc->sc_dmat, cb->datadma,
 		    0, xs->datalen,
@@ -806,11 +806,6 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 	}
 	if (dopoll)
 		oosiop_poll(sc, cb);
-
-	if (xs->flags & (SCSI_POLL | ITSDONE))
-		return (COMPLETE);
-	else
-		return (SUCCESSFULLY_QUEUED);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.99 2010/01/09 23:15:06 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.100 2010/03/23 01:57:19 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -55,7 +55,7 @@ struct cfdriver mfi_cd = {
 	NULL, "mfi", DV_DULL
 };
 
-int	mfi_scsi_cmd(struct scsi_xfer *);
+void	mfi_scsi_cmd(struct scsi_xfer *);
 int	mfi_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
 void	mfiminphys(struct buf *bp, struct scsi_link *sl);
 
@@ -974,7 +974,7 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsi_xfer *xs)
 	return (0);
 }
 
-int
+void
 mfi_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
@@ -1002,7 +1002,11 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL) {
 		DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd no ccb\n", DEVNAME(sc));
-		return (NO_CCB);
+		xs->error = XS_NO_CCB;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
@@ -1088,7 +1092,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	mfi_post(sc, ccb);
@@ -1096,7 +1100,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(MFI_D_DMA, "%s: mfi_scsi_cmd queued %d\n", DEVNAME(sc),
 	    ccb->ccb_dmamap->dm_nsegs);
 
-	return (SUCCESSFULLY_QUEUED);
+	return;
 
 stuffup:
 	xs->error = XS_DRIVER_STUFFUP;
@@ -1104,7 +1108,6 @@ complete:
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-	return (COMPLETE);
 }
 
 int

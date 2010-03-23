@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.47 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.48 2010/03/23 01:57:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -82,8 +82,8 @@ int	gdt_ioctl_disk(struct gdt_softc *, struct bioc_disk *);
 int	gdt_ioctl_alarm(struct gdt_softc *, struct bioc_alarm *);
 int	gdt_ioctl_setstate(struct gdt_softc *, struct bioc_setstate *);
 #endif /* NBIO > 0 */
-int	gdt_raw_scsi_cmd(struct scsi_xfer *);
-int	gdt_scsi_cmd(struct scsi_xfer *);
+void	gdt_raw_scsi_cmd(struct scsi_xfer *);
+void	gdt_scsi_cmd(struct scsi_xfer *);
 void	gdt_start_ccbs(struct gdt_softc *);
 int	gdt_sync_event(struct gdt_softc *, int, u_int8_t,
     struct scsi_xfer *);
@@ -577,7 +577,7 @@ gdt_dequeue(struct gdt_softc *sc)
  * Start a SCSI operation on a cache device.
  * XXX Polled operation is not yet complete.  What kind of locking do we need?
  */
-int
+void
 gdt_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -591,7 +591,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
 	bus_dmamap_t xfer;
-	int error, retval = SUCCESSFULLY_QUEUED;
+	int error;
 	int s;
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_scsi_cmd "));
@@ -609,7 +609,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	/* Don't double enqueue if we came from gdt_chain. */
@@ -708,8 +708,10 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			 * We are out of commands, try again in a little while.
 			 */
 			if (ccb == NULL) {
+				xs->error = XS_NO_CCB;
+				scsi_done(xs);
 				splx(s);
-				return (NO_CCB);
+				return;
 			}
 
 			ccb->gc_blockno = blockno;
@@ -753,11 +755,13 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			/* XXX what if enqueue did not start a transfer? */
 			if (gdt_polling || (xs->flags & SCSI_POLL)) {
 				if (!gdt_wait(sc, ccb, ccb->gc_timeout)) {
-					splx(s);
 					printf("%s: command %d timed out\n",
 					    DEVNAME(sc),
 					    ccb->gc_cmd_index);
-					return (NO_CCB);
+					xs->error = XS_NO_CCB;
+					scsi_done(xs);
+					splx(s);
+					return;
 				}
 				scsi_done(xs);
 			}
@@ -768,13 +772,11 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		 * Don't process the queue if we are polling.
 		 */
 		if (xs->flags & SCSI_POLL) {
-			retval = COMPLETE;
 			break;
 		}
 	}
 
 	splx(s);
-	return (retval);
 }
 
 /* XXX Currently only for cacheservice, returns 0 if busy */
@@ -990,7 +992,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 }
 
 /* Start a raw SCSI operation */
-int
+void
 gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -1010,7 +1012,7 @@ gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	if ((ccb = gdt_get_ccb(sc, xs->flags)) == NULL) {
@@ -1019,7 +1021,7 @@ gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
-		return (COMPLETE);
+		return;
 	}
 
 	xs->error = XS_DRIVER_STUFFUP;
@@ -1028,8 +1030,6 @@ gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 	gdt_free_ccb(sc, ccb);
 
 	splx(s);
-
-	return (COMPLETE);
 }
 
 void

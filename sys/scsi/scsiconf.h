@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.119 2010/01/15 05:50:31 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.120 2010/03/23 01:57:20 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -304,20 +304,13 @@ extern int scsi_autoconf;
  * of these statically allocated.
  */
 struct scsi_adapter {
-	int		(*scsi_cmd)(struct scsi_xfer *);
+	void		(*scsi_cmd)(struct scsi_xfer *);
 	void		(*scsi_minphys)(struct buf *, struct scsi_link *);
 	int		(*dev_probe)(struct scsi_link *);
 	void		(*dev_free)(struct scsi_link *);
 	int		(*ioctl)(struct scsi_link *, u_long, caddr_t, int,
 			    struct proc *);
 };
-
-/*
- * return values for scsi_cmd()
- */
-#define SUCCESSFULLY_QUEUED	0
-#define	COMPLETE		2
-#define NO_CCB			4
 
 /*
  * These entry points are called by the low-end drivers to get services from

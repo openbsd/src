@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.17 2010/01/09 23:15:06 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.18 2010/03/23 01:57:19 krw Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -200,7 +200,7 @@ void	vdsk_send_attr_info(struct vdsk_softc *);
 void	vdsk_send_dring_reg(struct vdsk_softc *);
 void	vdsk_send_rdx(struct vdsk_softc *);
 
-int	vdsk_scsi_cmd(struct scsi_xfer *);
+void	vdsk_scsi_cmd(struct scsi_xfer *);
 int	vdsk_dev_probe(struct scsi_link *);
 void	vdsk_dev_free(struct scsi_link *);
 int	vdsk_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
@@ -914,7 +914,7 @@ vdsk_dring_free(bus_dma_tag_t t, struct vdsk_dring *vd)
 	free(vd, M_DEVBUF);
 }
 
-int
+void
 vdsk_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_rw *rw;
@@ -978,8 +978,10 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	s = splbio();
 	if (sc->sc_vio_state != VIO_ESTABLISHED ||
 	    sc->sc_tx_cnt >= sc->sc_vd->vd_nentries) {
+		xs->error = XS_NO_CCB;
+		scsi_done(xs);
 		splx(s);
-		return (NO_CCB);
+		return;
 	}
 
 	desc = sc->sc_tx_prod;
@@ -1038,7 +1040,7 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 
 	if (!ISSET(xs->flags, SCSI_POLL)) {
 		splx(s);
-		return (SUCCESSFULLY_QUEUED);
+		return;
 	}
 
 	timeout = 1000;
@@ -1050,8 +1052,6 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		delay(1000);
 	} while(--timeout > 0);
 	splx(s);
-
-	return (COMPLETE);
 }
 }
 
