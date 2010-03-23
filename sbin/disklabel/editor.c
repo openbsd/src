@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.226 2010/03/20 16:53:20 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.227 2010/03/23 14:32:34 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -113,6 +113,7 @@ const struct {
 };
 
 void	edit_parms(struct disklabel *);
+void	editor_resize(struct disklabel *, char *);
 void	editor_add(struct disklabel *, char *);
 void	editor_change(struct disklabel *, char *);
 u_int64_t editor_countfree(struct disklabel *);
@@ -148,6 +149,7 @@ void	display_edit(struct disklabel *, char, u_int64_t);
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
 static int expert;
+static int spoofed;
 
 /*
  * Simple partition editor.
@@ -369,6 +371,15 @@ editor(struct disklabel *lp, int f)
 			/* NOTREACHED */
 			break;
 
+		case 'R':
+			if (aflag && !spoofed)
+				editor_resize(&label, arg);
+			else
+				fputs("Resize only implemented for auto "
+				    "allocated labels without spoofed "
+				    "partitions\n", stderr);
+			break;
+
 		case 'r': {
 			struct diskchunk *chunks;
 			int i;
@@ -512,6 +523,11 @@ editor_allocspace(struct disklabel *lp_org)
 	int i, j, lastalloc, index = 0, fragsize;
 	int64_t physmem;
 
+	spoofed = 0;
+	for (i = 0;  i < MAXPARTITIONS; i++)
+		if (i != RAW_PART && DL_GETPSIZE(&lp_org->d_partitions[i]) != 0)
+			spoofed = 1;
+
 	physmem = getphysmem() / lp_org->d_secsize;
 
 	/* How big is the OpenBSD portion of the disk?  */
@@ -650,6 +666,104 @@ cylinderalign:
 
 	free(alloc);
 	memcpy(lp_org, lp, sizeof(struct disklabel));
+}
+
+/*
+ * Resize a partition, moving all subsequent partitions
+ */
+void
+editor_resize(struct disklabel *lp, char *p)
+{
+	struct disklabel label;
+	struct partition *pp, *prev;
+	daddr64_t secs, sz, off;
+#ifdef SUN_CYLCHECK
+	daddr64_t cylsecs;
+#endif
+	int partno, i;
+
+	label = *lp;
+
+	/* Change which partition? */
+	if (p == NULL) {
+		p = getstring("partition to resize",
+		    "The letter of the partition to name, a - p.", NULL);
+	}
+	if (p == NULL) {
+		fputs("Command aborted\n", stderr);
+		return;
+	}
+	partno = p[0] - 'a';
+        if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
+		fprintf(stderr, "Partition must be between 'a' and '%c' "
+		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
+		return;
+	}
+
+	pp = &label.d_partitions[partno];
+	sz = editor_countfree(lp);
+	secs = getuint(lp, "resize", "amount to grow (+) or shrink (-)",
+	    0, sz, 0, DO_CONVERSIONS);
+
+	if (secs == 0) {
+		fputs("Command aborted\n", stderr);
+		return;
+	}
+
+#ifdef SUN_CYLCHECK
+	cylsecs = lp->d_secpercyl;
+	if (secs > 0)
+		secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
+	else
+		secs = ((secs - cylsecs + 1) / cylsecs) * cylsecs;
+#endif
+
+	sz = DL_GETPSIZE(pp);
+	if (sz == 0) {
+		fputs("No such parititon\n", stderr);
+		return;
+	}
+	if (DL_GETPOFFSET(pp) + sz + secs > ending_sector) {
+		fputs("Amount too big\n", stderr);
+		return;
+	}
+	if (sz + secs < 0) {
+		fputs("Amount too small\n", stderr);
+		return;
+	}
+
+	DL_SETPSIZE(pp, sz + secs);
+
+	/*
+	 * Pack partitions above the resized partition, leaving unused
+	 * partions alone.
+	 */
+	prev = pp;
+	for (i = partno + 1; i < MAXPARTITIONS; i++) {
+		if (i == RAW_PART)
+			continue;
+		sz = DL_GETPSIZE(&label.d_partitions[i]);
+		if (sz == 0)
+			continue;
+
+		pp = &label.d_partitions[i];
+		off = DL_GETPOFFSET(prev) + DL_GETPSIZE(prev);
+
+		if (off < ending_sector) {
+			DL_SETPOFFSET(pp, off);
+			if (off + DL_GETPSIZE(pp) > ending_sector) {
+				DL_SETPSIZE(pp, ending_sector - off);
+				fprintf(stderr,
+				    "Partition %c shrunk to make room\n",
+				    i + 'a');
+			}
+		} else {
+			fputs("No room left for all partitions\n", stderr);
+			return;
+		}
+		prev = pp;
+	}
+	*lp = label;
 }
 
 /*
@@ -1637,6 +1751,11 @@ editor_help(char *arg)
 "letter, you will be prompted for it; the next available letter will be the\n"
 "default answer\n");
 		break;
+	case 'A':
+		puts(
+"The 'A' command clears the existing partitions and creates a new label\n"
+"based on the size of the disk\n");
+		break;
 	case 'b':
 		puts(
 "The 'b' command is used to change the boundaries of the OpenBSD portion of\n"
@@ -1697,6 +1816,12 @@ editor_help(char *arg)
 "not specify a partition letter, you will be prompted for one.  This option\n"
 "is only valid if disklabel was invoked with the -f flag.\n");
 		break;
+	case 'R':
+		puts(
+"Resize a a partition, compacting unused space between partitions\n"
+"with a higher offset. The last partition will be shrunk if needed.\n"
+"Works only for auto allocated labels with no spoofed partitions\n");
+		break;
 	case 'r':
 		puts(
 "The 'r' command is used to recalculate and display details about\n"
@@ -1746,15 +1871,15 @@ editor_help(char *arg)
 "  ? [cmd]  - show help                  n [part] - set mount point\n"
 "  A        - auto partition all space   p [unit] - print partitions\n"
 "  a [part] - add partition              q        - quit & save changes\n"
-"  b        - set OpenBSD boundaries     s [path] - save label to file\n"
+"  b        - set OpenBSD boundaries     R [part] - resize a partition\n"
 "  c [part] - change partition size      r        - display free space\n"
-"  D        - reset label to default     U        - undo all changes\n"
-"  d [part] - delete partition           u        - undo last change\n"
-"  e        - edit drive parameters      w        - write label to disk\n"
-"  g [d|u]  - [d]isk or [u]ser geometry  X        - toggle expert mode\n"
-"  l [unit] - print disk label header    x        - exit & lose changes\n"
-"  M        - disklabel(8) man page      z        - delete all partitions\n"
-"  m [part] - modify partition\n"
+"  D        - reset label to default     s [path] - save label to file\n"
+"  d [part] - delete partition           U        - undo all changes\n"
+"  e        - edit drive parameters      u        - undo last change\n"
+"  g [d|u]  - [d]isk or [u]ser geometry  w        - write label to disk\n"
+"  l [unit] - print disk label header    X        - toggle expert mode\n"
+"  M        - disklabel(8) man page      x        - exit & lose changes\n"
+"  m [part] - modify partition           z        - delete all partitions\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 "\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"

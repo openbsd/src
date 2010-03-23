@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.86 2009/07/27 12:39:50 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.87 2010/03/23 14:32:34 otto Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 27 2009 $
+.Dd $Mdocdate: March 23 2010 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -422,6 +422,11 @@ partition.
 Quit the editor.
 If any changes have been made, the user will be
 asked whether or not to save the changes to the on-disk label.
+.It Cm R Op Ar part
+Resize a partition in an auto allocated label,
+compacting unused space between partitions with a higher offset.
+The last partition will be shrunk if needed.
+Works only for auto allocated labels with no spoofed partitions.
 .It Cm r
 Recalculate free space.
 This command displays all the free areas on the disk and the total
