@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.11 2010/01/12 11:37:08 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.12 2010/03/23 00:35:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -44,10 +44,8 @@ void	vether_media_status(struct ifnet *, struct ifmediareq *);
 struct vether_softc {
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
-	LIST_ENTRY(vether_softc) sc_list;
 };
 
-LIST_HEAD(, vether_softc)	vether_list;
 struct if_clone	vether_cloner =
     IF_CLONE_INITIALIZER("vether", vether_clone_create, vether_clone_destroy);
 
@@ -67,7 +65,6 @@ vether_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 void
 vetherattach(int nvether)
 {
-	LIST_INIT(&vether_list);
 	if_clone_attach(&vether_cloner);
 }
 
@@ -76,7 +73,6 @@ vether_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet 		*ifp;
 	struct vether_softc	*sc;
-	int 			 s;
 
 	if ((sc = malloc(sizeof(*sc),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
@@ -103,9 +99,6 @@ vether_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	s = splnet();
-	LIST_INSERT_HEAD(&vether_list, sc, sc_list);
-	splx(s);
 	return (0);
 }
 
@@ -113,11 +106,6 @@ int
 vether_clone_destroy(struct ifnet *ifp)
 {
 	struct vether_softc	*sc = ifp->if_softc;
-	int			 s;
-
-	s = splnet();
-	LIST_REMOVE(sc, sc_list);
-	splx(s);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
