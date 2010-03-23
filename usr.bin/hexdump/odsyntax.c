@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.18 2009/11/12 07:54:38 nicm Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.19 2010/03/23 08:43:03 fgsch Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -40,11 +40,13 @@
 
 #include "hexdump.h"
 
+#define PADDING	"         "
+
 int deprecated;
 
 static void odoffset(int, char ***);
 static void posixtypes(char *);
-static void odprecede(void);
+static void odadd(const char *);
 
 
 /*
@@ -77,68 +79,76 @@ static const char *fmt[4][4] = {
 void
 oldsyntax(int argc, char ***argvp)
 {
+	static char empty[] = "", padding[] = PADDING;
 	int ch;
 	char *p, **argv;
+
+#define	TYPE_OFFSET	7
+	add("\"%07.7_Ao\n\"");
+	add("\"%07.7_ao  \"");
 
 	deprecated = 1;
 	argv = *argvp;
 	while ((ch = getopt(argc, argv,
-	    "aBbcDdeFfHhIij:LlN:OoPpst:wvXx")) != -1)
+	    "A:aBbcDdeFfHhIij:LlN:OoPpst:wvXx")) != -1)
 		switch (ch) {
+		case 'A':
+			switch (*optarg) {
+			case 'd': case 'o': case 'x':
+				fshead->nextfu->fmt[TYPE_OFFSET] = *optarg;
+				fshead->nextfs->nextfu->fmt[TYPE_OFFSET] =
+				    *optarg;
+				break;
+			case 'n':
+				fshead->nextfu->fmt = empty;
+				fshead->nextfs->nextfu->fmt = padding;
+				break;
+			default:
+				errx(1, "%s: invalid address base", optarg);
+			}
+			break;
 		case 'a':
-			odprecede();
-			add("16/1 \"%3_u \" \"\\n\"");
+			odadd("16/1 \"%3_u \" \"\\n\"");
 			break;
 		case 'B':
 		case 'o':
-			odprecede();
-			add("8/2 \" %06o \" \"\\n\"");
+			odadd("8/2 \" %06o \" \"\\n\"");
 			break;
 		case 'b':
-			odprecede();
-			add("16/1 \"%03o \" \"\\n\"");
+			odadd("16/1 \"%03o \" \"\\n\"");
 			break;
 		case 'c':
-			odprecede();
-			add("16/1 \"%3_c \" \"\\n\"");
+			odadd("16/1 \"%3_c \" \"\\n\"");
 			break;
 		case 'd':
-			odprecede();
-			add("8/2 \"  %05u \" \"\\n\"");
+			odadd("8/2 \"  %05u \" \"\\n\"");
 			break;
 		case 'D':
-			odprecede();
-			add("4/4 \"     %010u \" \"\\n\"");
+			odadd("4/4 \"     %010u \" \"\\n\"");
 			break;
 		case 'e':
 		case 'F':
-			odprecede();
-			add("2/8 \"          %21.14e \" \"\\n\"");
+			odadd("2/8 \"          %21.14e \" \"\\n\"");
 			break;
 			
 		case 'f':
-			odprecede();
-			add("4/4 \" %14.7e \" \"\\n\"");
+			odadd("4/4 \" %14.7e \" \"\\n\"");
 			break;
 		case 'H':
 		case 'X':
-			odprecede();
-			add("4/4 \"       %08x \" \"\\n\"");
+			odadd("4/4 \"       %08x \" \"\\n\"");
 			break;
 		case 'h':
 		case 'x':
-			odprecede();
-			add("8/2 \"   %04x \" \"\\n\"");
+			odadd("8/2 \"   %04x \" \"\\n\"");
 			break;
 		case 'I':
 		case 'L':
 		case 'l':
-			odprecede();
-			add("4/4 \"    %11d \" \"\\n\"");
+			odadd("4/4 \"    %11d \" \"\\n\"");
 			break;
 		case 'i':
-			odprecede();
-			add("8/2 \" %6d \" \"\\n\"");
+			odadd("8/2 \" %6d \" \"\\n\"");
 			break;
 		case 'j':
 			if ((skip = strtol(optarg, &p, 0)) < 0)
@@ -160,8 +170,7 @@ oldsyntax(int argc, char ***argvp)
 				errx(1, "%s: bad length value", optarg);
 			break;
 		case 'O':
-			odprecede();
-			add("4/4 \"    %011o \" \"\\n\"");
+			odadd("4/4 \"    %011o \" \"\\n\"");
 			break;
 		case 't':
 			posixtypes(optarg);
@@ -184,10 +193,8 @@ oldsyntax(int argc, char ***argvp)
 			oldusage();
 		}
 
-	if (!fshead) {
-		add("\"%07.7_Ao\n\"");
-		add("\"%07.7_ao  \" 8/2 \"%06o \" \"\\n\"");
-	}
+	if (fshead->nextfs->nextfs == NULL)
+		odadd(" 8/2 \"%06o \" \"\\n\"");
 
 	argc -= optind;
 	*argvp += optind;
@@ -205,31 +212,30 @@ posixtypes(char *type_string)
 	int x, y, nbytes;
 
 	while (*type_string) {
-		odprecede();
 		switch (*type_string) {
 		case 'a':
 			type_string++;
-			add("16/1 \"%3_u \" \"\\n\"");
+			odadd("16/1 \"%3_u \" \"\\n\"");
 			break;
 		case 'c':
 			type_string++;
-			add("16/1 \"%3_c \" \"\\n\"");
+			odadd("16/1 \"%3_c \" \"\\n\"");
 			break;
 		case 'f':
 			type_string++;
 			if        (*type_string == 'F' ||
 				   *type_string == '4') {
 				type_string++;
-				add("4/4 \" %14.7e\" \"\\n\"");
+				odadd("4/4 \" %14.7e\" \"\\n\"");
 			} else if (*type_string == 'L' ||
 				   *type_string == '8') {
 				type_string++;
-				add("2/8 \" %16.14e\" \"\\n\"");
+				odadd("2/8 \" %16.14e\" \"\\n\"");
 			} else if (*type_string == 'D')
 				/* long doubles vary in size */
 				oldusage();
 			else
-				add("2/8 \" %16.14e\" \"\\n\"");
+				odadd("2/8 \" %16.14e\" \"\\n\"");
 			break;
 		case 'd':
 			x = 0;
@@ -288,7 +294,7 @@ posixtypes(char *type_string)
 				    "supported", nbytes);
 				oldusage();
 			}
-			add(fmt[x][y]);
+			odadd(fmt[x][y]);
 			break;
 		default:
 			oldusage();
@@ -300,8 +306,8 @@ void
 oldusage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-j offset] "
-	    "[-N length] [-t type_string]\n"
+	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-A base] "
+	    "[-j offset] [-N length] [-t type_string]\n"
 	    "\t[[+]offset[.][Bb]] [file ...]\n", __progname);
 	exit(1);
 }
@@ -391,7 +397,6 @@ odoffset(int argc, char ***argvp)
 	 * If the offset uses a non-octal base, the base of the offset
 	 * is changed as well.  This isn't pretty, but it's easy.
 	 */
-#define	TYPE_OFFSET	7
 	if (base == 16) {
 		fshead->nextfu->fmt[TYPE_OFFSET] = 'x';
 		fshead->nextfs->nextfu->fmt[TYPE_OFFSET] = 'x';
@@ -405,14 +410,12 @@ odoffset(int argc, char ***argvp)
 }
 
 static void
-odprecede(void)
+odadd(const char *fmt)
 {
-	static int first = 1;
+	static int needpad;
 
-	if (first) {
-		first = 0;
-		add("\"%07.7_Ao\n\"");
-		add("\"%07.7_ao  \"");
-	} else
-		add("\"         \"");
+	if (needpad)
+		add("\""PADDING"\"");
+	add(fmt);
+	needpad = 1;
 }

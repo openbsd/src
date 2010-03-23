@@ -1,4 +1,4 @@
-.\"  $OpenBSD: od.1,v 1.21 2009/02/08 17:15:10 jmc Exp $
+.\"  $OpenBSD: od.1,v 1.22 2010/03/23 08:43:03 fgsch Exp $
 .\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: March 23 2010 $
 .Dt OD 1
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Sh SYNOPSIS
 .Nm od
 .Op Fl aBbcDdeFfHhIiLlOovXx
+.Op Fl A Ar base
 .Op Fl j Ar offset
 .Op Fl N Ar length
 .Op Fl t Ar type_string
@@ -72,6 +73,18 @@ of the offset syntax.
 .Pp
 The options are as follows:
 .Bl -tag -width Fl
+.It Fl A Ar base
+Specify the input address base.
+The argument
+.Ar base
+may be one of
+.Cm d ,
+.Cm o ,
+.Cm x ,
+or
+.Cm n ,
+which specify decimal, octal, hexadecimal
+addresses or no address, respectively.
 .It Fl a
 .Em One-byte character display .
 Display the input offset in octal, followed by sixteen
