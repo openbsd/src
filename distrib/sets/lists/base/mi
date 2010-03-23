@@ -69,6 +69,10 @@
 ./etc/magic
 ./etc/mail
 ./etc/mtree
+./etc/mtree/4.4BSD.dist
+./etc/mtree/BSD.local.dist
+./etc/mtree/BSD.x11.dist
+./etc/mtree/special
 ./etc/ppp
 ./etc/ppp/chatscript.sample
 ./etc/ppp/options.sample
@@ -976,7 +980,9 @@
 ./usr/libdata/perl5/OpenBSD/PkgCfl.pm
 ./usr/libdata/perl5/OpenBSD/PkgConfig.pm
 ./usr/libdata/perl5/OpenBSD/PkgSpec.pm
+./usr/libdata/perl5/OpenBSD/ProgressMeter
 ./usr/libdata/perl5/OpenBSD/ProgressMeter.pm
+./usr/libdata/perl5/OpenBSD/ProgressMeter/Term.pm
 ./usr/libdata/perl5/OpenBSD/Replace.pm
 ./usr/libdata/perl5/OpenBSD/RequiredBy.pm
 ./usr/libdata/perl5/OpenBSD/Search.pm

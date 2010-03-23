@@ -1320,6 +1320,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sdmmc/sdmmcvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/softraidvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/spdmemvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun/sunkbdreg.ph
@@ -1827,6 +1828,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_mroute.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6protosw.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/mld6.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/mld6_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/nd6.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/pim6.ph
@@ -2269,6 +2271,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_pdaemon.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_pglist.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_pmap.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_pmemrange.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_swap_encrypt.ph

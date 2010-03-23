@@ -804,6 +804,7 @@
 ./usr/include/dev/sdmmc/sdmmcvar.h
 ./usr/include/dev/sequencervar.h
 ./usr/include/dev/softraidvar.h
+./usr/include/dev/spdmemvar.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/sunkbdreg.h
@@ -1210,6 +1211,7 @@
 ./usr/include/netinet6/ip6_mroute.h
 ./usr/include/netinet6/ip6_var.h
 ./usr/include/netinet6/ip6protosw.h
+./usr/include/netinet6/mld6.h
 ./usr/include/netinet6/mld6_var.h
 ./usr/include/netinet6/nd6.h
 ./usr/include/netinet6/pim6.h
@@ -1667,6 +1669,7 @@
 ./usr/include/uvm/uvm_pdaemon.h
 ./usr/include/uvm/uvm_pglist.h
 ./usr/include/uvm/uvm_pmap.h
+./usr/include/uvm/uvm_pmemrange.h
 ./usr/include/uvm/uvm_stat.h
 ./usr/include/uvm/uvm_swap.h
 ./usr/include/uvm/uvm_swap_encrypt.h
