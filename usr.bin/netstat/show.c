@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.29 2010/01/14 00:02:08 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.30 2010/03/23 16:26:01 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -60,8 +60,7 @@
 
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
-char	*label_print_op(u_int32_t);
-char	*label_print(struct sockaddr *, struct sockaddr *);
+char	*label_print(struct sockaddr *);
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -211,7 +210,7 @@ WID_DST(int af)
 	if (nflag)
 		switch (af) {
 		case AF_MPLS:
-			return 34;
+			return 9;
 		case AF_INET6:
 			return 34;
 		default:
@@ -220,7 +219,7 @@ WID_DST(int af)
 	else
 		switch (af) {
 		case AF_MPLS:
-			return 34;
+			return 9;
  		default:
 			return 18;
 		}
@@ -241,7 +240,7 @@ pr_rthdr(int af, int Aflag)
 		    "Port", "Proto", "SA(Address/Proto/Type/Direction)");
 		break;
 	case PF_MPLS:
-		printf("%-16s %-10s %-6s %-18s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
+		printf("%-9s %-9s %-6s %-18s %-6.6s %5.5s %8.8s %5.5s  %4.4s %s\n",
 		    "In label", "Out label", "Op", "Gateway",
 		    "Flags", "Refs", "Use", "Mtu", "Prio", "Interface");
 		break;
@@ -303,6 +302,7 @@ p_rtentry(struct rt_msghdr *rtm)
 
 	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST,
 	    WID_GW(sa->sa_family));
+
 	p_flags(rtm->rtm_flags, "%-6.6s ");
 	printf("%5u %8llu ", rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
@@ -559,15 +559,15 @@ p_sockaddr_mpls(struct sockaddr *in, struct sockaddr *out, int flags, int width)
 	if (in->sa_family != AF_MPLS)
 		return;
 
-	if (flags & MPLS_OP_POP || flags == MPLS_OP_LOCAL)
-		cp = label_print(in, NULL);
-	else
-		cp = label_print(in, out);
+	if (flags & MPLS_OP_POP || flags == MPLS_OP_LOCAL) {
+		printf("%-*s ", width, label_print(in));
+		printf("%-*s ", width, label_print(NULL));
+	} else {
+		printf("%-*s ", width, label_print(in));
+		printf("%-*s ", width, label_print(out));
+	}
 
-	snprintf(buf, MAXHOSTNAMELEN, "%s %s", cp,
-	    label_print_op(flags));
-
-	printf("%-*s ", width, buf);
+	printf("%-6s ", mpls_op(flags));
 }
 
 void
@@ -633,7 +633,7 @@ routename(struct sockaddr *sa)
 	case AF_LINK:
 		return (link_print(sa));
 	case AF_MPLS:
-		return (label_print(sa, NULL));
+		return (label_print(sa));
 	case AF_UNSPEC:
 		if (sa->sa_len == sizeof(struct sockaddr_rtlabel)) {
 			static char name[RTLABEL_LEN];
@@ -842,7 +842,7 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 	case AF_LINK:
 		return (link_print(sa));
 	case AF_MPLS:
-		return (label_print(sa, NULL));
+		return (label_print(sa));
 	default:
 		snprintf(line, sizeof(line), "af %d: %s",
 		    sa->sa_family, any_ntoa(sa));
@@ -892,7 +892,7 @@ link_print(struct sockaddr *sa)
 }
 
 char *
-label_print_op(u_int32_t type)
+mpls_op(u_int32_t type)
 {
 	switch (type & (MPLS_OP_PUSH | MPLS_OP_POP | MPLS_OP_SWAP)) {
 	case MPLS_OP_LOCAL:
@@ -909,31 +909,15 @@ label_print_op(u_int32_t type)
 }
 
 char *
-label_print(struct sockaddr *in, struct sockaddr *out)
+label_print(struct sockaddr *sa)
 {
-	struct sockaddr_mpls	*insmpls = (struct sockaddr_mpls *)in;
-	struct sockaddr_mpls	*outsmpls = (struct sockaddr_mpls *)out;
-	char			*in_label;
-	char			*out_label;
+	struct sockaddr_mpls	*smpls = (struct sockaddr_mpls *)sa;
 
-	if (asprintf(&in_label, "%u",
-	    ntohl(insmpls->smpls_label) >> MPLS_LABEL_OFFSET) == -1)
-		err(1, NULL);
-
-	if (outsmpls) {
-		if (asprintf(&out_label, "%u",
-		    ntohl(outsmpls->smpls_label) >> MPLS_LABEL_OFFSET) == -1)
-			err(1, NULL);
-	} else {
-		if (asprintf(&out_label, "-") == -1)
-			err(1, NULL);
-	}
-
-	(void)snprintf(line, sizeof(line), "%-16s %-10s", in_label,
-	    out_label);
-
-	free(in_label);
-	free(out_label);
+	if (smpls)
+		(void)snprintf(line, sizeof(line), "%u",
+		    ntohl(smpls->smpls_label) >> MPLS_LABEL_OFFSET);
+	else
+		(void)snprintf(line, sizeof(line), "-");
 
 	return (line);
 }
