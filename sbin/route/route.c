@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.141 2009/12/01 16:21:46 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.142 2010/03/23 15:01:50 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1206,7 +1206,7 @@ char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC"
 "\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
 char addrnames[] =
-"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\013LABEL";
+"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011SRC\12SRCMASK\013LABEL";
 
 const char *
 get_linkstate(int mt, int link_state)
@@ -1325,6 +1325,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL;
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr_rtlabel *sa_rl = NULL;
+	struct sockaddr *mpls = NULL;
 	struct sockaddr *sa;
 	char *cp;
 	int i;
@@ -1366,6 +1367,9 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 					   ((struct sockaddr_dl *)sa)->sdl_nlen)
 						ifp = (struct sockaddr_dl *)sa;
 					break;
+				case RTA_SRC:
+					mpls = sa;
+					break;
 				case RTA_LABEL:
 					sa_rl = (struct sockaddr_rtlabel *)sa;
 					break;
@@ -1390,6 +1394,10 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		    ifp->sdl_nlen, ifp->sdl_data);
 	if (ifa)
 		printf(" if address: %s\n", routename(ifa));
+	if (mpls) {
+		printf(" mpls label: %s %s\n", mpls_op(rtm->rtm_mpls),
+		    routename(mpls));
+	}
 	printf("   priority: %u (%s)\n", rtm->rtm_priority,
 	   priorityname(rtm->rtm_priority)); 
 	printf("      flags: ");
