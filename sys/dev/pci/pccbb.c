@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.71 2010/03/22 22:28:27 jsg Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.72 2010/03/23 11:44:00 krw Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -2048,7 +2048,7 @@ pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
 
 	/* power down the socket to reset it, clear the card reset pin */
 
-	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	pccbb_power((pci_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
 	/*
 	 * wait 200ms until power fails (Tpf).  Then, wait 100ms since
@@ -2064,7 +2064,7 @@ pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
 	/* Power up the socket. */
 	power = Pcic_read(ph, PCIC_PWRCTL);
 	Pcic_write(ph, PCIC_PWRCTL, (power & ~PCIC_PWRCTL_OE));
-	pccbb_power(sc, voltage);
+	pccbb_power((pci_chipset_tag_t)sc, voltage);
 
 	/* Now output enable */
 	power = Pcic_read(ph, PCIC_PWRCTL);
@@ -2147,7 +2147,7 @@ pccbb_pcmcia_socket_disable(pcmcia_chipset_handle_t pch)
 	power = Pcic_read(ph, PCIC_PWRCTL);
 	power &= ~PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
-	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	pccbb_power((pci_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 	/*
 	 * wait 300ms until power fails (Tpf).
 	 */
