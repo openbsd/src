@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1536 2010/03/05 19:32:05 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1537 2010/03/23 23:42:47 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4952,6 +4952,7 @@
 #define	PCI_PRODUCT_TI_PCIXX12_SM	0x803d		/* PCIXX12 Smart Card */
 #define	PCI_PRODUCT_TI_PCI1620_MISC	0x8201		/* PCI1620 Misc */
 #define	PCI_PRODUCT_TI_XIO2000A	0x8231		/* XIO2000A PCIE-PCI */
+#define	PCI_PRODUCT_TI_XIO3130	0x8231		/* XIO3130 PCIE-PCIE */
 #define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A */
 #define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B */
 #define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 */
