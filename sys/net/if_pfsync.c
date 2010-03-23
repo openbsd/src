@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.143 2010/03/01 12:29:35 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.144 2010/03/23 22:34:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1219,7 +1219,7 @@ pfsync_in_tdb(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 	s = splsoftnet();
 	for (i = 0; i < count; i++)
 		tp = (struct pfsync_tdb *)(buf + len * i);
-		pfsync_update_net_tdb(&tp[i]);
+		pfsync_update_net_tdb(tp);
 	splx(s);
 #endif
 
