@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.97 2010/02/09 16:34:57 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.98 2010/03/23 15:03:25 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -570,6 +570,7 @@ report:
 				    (struct sockaddr *)&sa_mpls;
 				info.rti_mpls = ((struct rt_mpls *)
 				    rt->rt_llinfo)->mpls_operation;
+				rtm->rtm_mpls = info.rti_mpls;
 			}
 #endif
 			ifpaddr = 0;
