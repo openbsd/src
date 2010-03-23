@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.29 2009/11/21 16:42:05 chl Exp $ */
+/*	$OpenBSD: glob.c,v 1.30 2010/03/23 09:52:35 nicm Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -139,7 +139,7 @@ static int	 globextend(const Char *, glob_t *, size_t *);
 static const Char *
 		 globtilde(const Char *, Char *, size_t, glob_t *);
 static int	 globexp1(const Char *, glob_t *);
-static int	 globexp2(const Char *, const Char *, glob_t *, int *);
+static int	 globexp2(const Char *, const Char *, glob_t *);
 static int	 match(Char *, Char *, Char *);
 #ifdef DEBUG
 static void	 qprintf(const char *, Char *);
@@ -204,9 +204,8 @@ globexp1(const Char *pattern, glob_t *pglob)
 	if (pattern[0] == LBRACE && pattern[1] == RBRACE && pattern[2] == EOS)
 		return glob0(pattern, pglob);
 
-	while ((ptr = (const Char *) g_strchr(ptr, LBRACE)) != NULL)
-		if (!globexp2(ptr, pattern, pglob, &rv))
-			return rv;
+	if ((ptr = (const Char *) g_strchr(ptr, LBRACE)) != NULL)
+		return globexp2(ptr, pattern, pglob);
 
 	return glob0(pattern, pglob);
 }
@@ -218,9 +217,9 @@ globexp1(const Char *pattern, glob_t *pglob)
  * If it fails then it tries to glob the rest of the pattern and returns.
  */
 static int
-globexp2(const Char *ptr, const Char *pattern, glob_t *pglob, int *rv)
+globexp2(const Char *ptr, const Char *pattern, glob_t *pglob)
 {
-	int     i;
+	int     i, rv;
 	Char   *lm, *ls;
 	const Char *pe, *pm, *pl;
 	Char    patbuf[MAXPATHLEN];
@@ -253,10 +252,8 @@ globexp2(const Char *ptr, const Char *pattern, glob_t *pglob, int *rv)
 		}
 
 	/* Non matching braces; just glob the pattern */
-	if (i != 0 || *pe == EOS) {
-		*rv = glob0(patbuf, pglob);
-		return 0;
-	}
+	if (i != 0 || *pe == EOS)
+		return glob0(patbuf, pglob);
 
 	for (i = 0, pl = pm = ptr; pm <= pe; pm++) {
 		switch (*pm) {
@@ -302,7 +299,9 @@ globexp2(const Char *ptr, const Char *pattern, glob_t *pglob, int *rv)
 #ifdef DEBUG
 				qprintf("globexp2:", patbuf);
 #endif
-				*rv = globexp1(patbuf, pglob);
+				rv = globexp1(patbuf, pglob);
+				if (rv && rv != GLOB_NOMATCH)
+					return rv;
 
 				/* move after the comma, to the next string */
 				pl = pm + 1;
@@ -313,7 +312,6 @@ globexp2(const Char *ptr, const Char *pattern, glob_t *pglob, int *rv)
 			break;
 		}
 	}
-	*rv = 0;
 	return 0;
 }
 
