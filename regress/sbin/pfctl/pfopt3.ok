@@ -1,7 +1,4 @@
 ext_if = "lo0"
-set limit states 100
-set block-policy drop
-set require-order yes
 altq on lo0 priq bandwidth 10Mb tbrsize 1824 queue { pri-low pri-med pri-high }
 queue pri-low priority 0 
 queue pri-med priq( default ) 

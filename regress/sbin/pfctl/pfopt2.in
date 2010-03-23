@@ -1,25 +1,8 @@
 ext_if="lo0"
 
-# OPTIONS, -O
 set loginterface $ext_if
 set timeout tcp.established 3600
 set limit states 100
 set optimization normal
 set block-policy drop
 set require-order yes
-
-# QUEUEING, -A
-altq on $ext_if priq bandwidth 10Mb tbrsize 1824 \
-    queue { pri-low pri-med pri-high }
-queue pri-low priority 0
-queue pri-med priority 1 priq(default)
-queue pri-high priority 2
-
-# FILTER, -R
-match in on $ext_if inet from any to any rdr-to 127.0.0.1
-match out on $ext_if inet from any to any nat-to 127.0.0.1
-match on $ext_if inet from 192.168.0.0/24 to 192.168.0.1/24 binat-to 192.168.0.3/24 
-pass out on $ext_if proto tcp from any to any port 22 keep state \
-    queue(pri-med, pri-high)
-pass out on $ext_if proto tcp from any to any port 80 keep state queue pri-med
-pass in  on $ext_if proto tcp from any to any port 80 keep state queue pri-low
