@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.28 2007/05/29 00:56:56 otto Exp $	 */
+/* $OpenBSD: commands.c,v 1.29 2010/03/23 16:16:09 lum Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -37,6 +37,7 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <err.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -53,7 +54,7 @@
 #include "machine.h"
 
 static char    *next_field(char *);
-static int      scanint(char *, int *);
+static int      scan_arg(char *, int *, char *);
 static char    *err_string(void);
 static size_t   str_adderr(char *, size_t, int);
 static size_t   str_addarg(char *, size_t, char *, int);
@@ -77,25 +78,35 @@ next_field(char *str)
 	return (*str == '\0' ? NULL : str);
 }
 
+/*
+ * Scan the renice or kill interactive arguments for data and/or errors.
+ */
 static int
-scanint(char *str, int *intp)
+scan_arg(char *str, int *intp, char *nptr)
 {
-	int val = 0;
+	int val = 0, bad_flag = 0;
 	char ch;
 
-	/* if there is nothing left of the string, flag it as an error */
-	/* This fix is dedicated to Greg Earle */
+	*nptr = '\0';
+
 	if (*str == '\0')
 		return (-1);
 
 	while ((ch = *str++) != '\0') {
-		if (isdigit(ch))
-			val = val * 10 + (ch - '0');
-		else if (isspace(ch))
+		if (isspace(ch))
 			break;
+		else if (!isdigit(ch))
+			bad_flag = 1;
 		else
-			return (-1);
+			val = val * 10 + (ch - '0');
+
+		*(nptr++) = ch;
 	}
+	*nptr = '\0';
+
+	if (bad_flag == 1)
+		return(-1);
+
 	*intp = val;
 	return (0);
 }
@@ -123,7 +134,9 @@ static char    *err_listem =
 	if (errcnt >= ERRMAX) { \
 		return(err_toomany); \
 	} else { \
-		errs[errcnt].arg = (p); \
+		free(errs[errcnt].arg); \
+		if ((errs[errcnt].arg = strdup(p)) == NULL) \
+			err(1, "strdup"); \
 		errs[errcnt++].err = (e); \
 	}
 
@@ -252,6 +265,7 @@ kill_procs(char *str)
 {
 	int signum = SIGTERM, procnum;
 	uid_t uid, puid;
+	char tempbuf[TEMPBUFSIZE];
 	char *nptr;
 
 	/* reset error array */
@@ -270,7 +284,7 @@ kill_procs(char *str)
 			return (" kill: no processes specified");
 
 		if (isdigit(str[1])) {
-			(void) scanint(str + 1, &signum);
+			(void) scan_arg(str + 1, &signum, nptr);
 			if (signum <= 0 || signum >= NSIG)
 				return (" invalid signal number");
 		} else {
@@ -287,19 +301,20 @@ kill_procs(char *str)
 		/* put the new pointer in place */
 		str = nptr;
 	}
+	nptr = tempbuf;
 	/* loop thru the string, killing processes */
 	do {
-		if (scanint(str, &procnum) == -1) {
-			ERROR(str, 0);
+		if (scan_arg(str, &procnum, nptr) == -1) {
+			ERROR(nptr, 0);
 		} else {
 			/* check process owner if we're not root */
 			puid = proc_owner(procnum);
 			if (puid == (uid_t)(-1)) {
-				ERROR(str, ESRCH);
+				ERROR(nptr, ESRCH);
 			} else if (uid && (uid != puid)) {
-				ERROR(str, EACCES);
+				ERROR(nptr, EACCES);
 			} else if (kill(procnum, signum) == -1) {
-				ERROR(str, errno);
+				ERROR(nptr, errno);
 			}
 		}
 	} while ((str = next_field(str)) != NULL);
@@ -318,17 +333,25 @@ renice_procs(char *str)
 	uid_t uid;
 	char negate;
 	int prio, procnum;
+	char tempbuf[TEMPBUFSIZE];
+	char *nptr;
 
 	ERR_RESET;
 	uid = getuid();
+
+	/* skip over leading white space */
+	while (isspace(*str))
+		str++;
 
 	/* allow for negative priority values */
 	if ((negate = (*str == '-')) != 0) {
 		/* move past the minus sign */
 		str++;
 	}
+
+	nptr = tempbuf;
 	/* use procnum as a temporary holding place and get the number */
-	procnum = scanint(str, &prio);
+	procnum = scan_arg(str, &prio, nptr);
 
 	/* negate if necessary */
 	if (negate)
@@ -346,14 +369,14 @@ renice_procs(char *str)
 
 	/* loop thru the process numbers, renicing each one */
 	do {
-		if (scanint(str, &procnum) == -1) {
-			ERROR(str, 0);
+		if (scan_arg(str, &procnum, nptr) == -1) {
+			ERROR(nptr, 0);
 		}
 		/* check process owner if we're not root */
 		else if (uid && (uid != proc_owner(procnum))) {
-			ERROR(str, EACCES);
+			ERROR(nptr, EACCES);
 		} else if (setpriority(PRIO_PROCESS, procnum, prio) == -1) {
-			ERROR(str, errno);
+			ERROR(nptr, errno);
 		}
 	} while ((str = next_field(str)) != NULL);
 
