@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.227 2010/03/23 14:32:34 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.228 2010/03/23 14:59:30 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2341,7 +2341,7 @@ max_partition_size(struct disklabel *lp, int partno)
 {
 	struct partition *pp = &lp->d_partitions[partno];
 	struct diskchunk *chunks;
-	u_int64_t maxsize, offset;
+	u_int64_t maxsize = 0, offset;
 	int fstype, i;
 
 	fstype = pp->p_fstype;
