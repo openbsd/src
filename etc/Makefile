@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.286 2010/02/22 15:15:54 claudio Exp $
+#	$OpenBSD: Makefile,v 1.287 2010/03/23 21:31:02 espie Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
+MTREEDIR=	/etc/mtree
 
 NOOBJ=
 
@@ -48,6 +49,16 @@ GZIPEXT=
 .endif
 
 all clean cleandir depend etc install lint:
+
+install-mtree:
+	${INSTALL} -c -o root -g wheel -m 600 ${.CURDIR}/mtree/special \
+	    ${DESTDIR}${MTREEDIR}
+	${INSTALL} -c -o root -g wheel -m 444 ${.CURDIR}/mtree/4.4BSD.dist \
+	    ${DESTDIR}${MTREEDIR}
+	${INSTALL} -c -o root -g wheel -m 444 ${.CURDIR}/mtree/BSD.local.dist \
+	    ${DESTDIR}${MTREEDIR}
+	${INSTALL} -c -o root -g wheel -m 444 ${.CURDIR}/mtree/BSD.x11.dist \
+	    ${DESTDIR}${MTREEDIR}
 
 .ifndef DESTDIR
 distribution-etc-root-var distribution distrib-dirs release:
@@ -129,15 +140,6 @@ distribution-etc-root-var: distrib-dirs
 	cd amd; \
 		${INSTALL} -c -o root -g wheel -m 644 master.sample \
 		    ${DESTDIR}/etc/amd
-	cd mtree; \
-		${INSTALL} -c -o root -g wheel -m 600 special \
-		    ${DESTDIR}/etc/mtree; \
-		${INSTALL} -c -o root -g wheel -m 444 4.4BSD.dist \
-		    ${DESTDIR}/etc/mtree; \
-		${INSTALL} -c -o root -g wheel -m 444 BSD.local.dist \
-		    ${DESTDIR}/etc/mtree; \
-		${INSTALL} -c -o root -g wheel -m 444 BSD.x11.dist \
-		    ${DESTDIR}/etc/mtree
 	cd ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 chap-secrets \
 		    ${DESTDIR}/etc/ppp; \
@@ -307,7 +309,7 @@ update-moduli:
 	) > moduli
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
-	release allarchs kernels release-sets m4
+	release allarchs kernels release-sets m4 install-mtree
 
 SUBDIR+= etc.alpha etc.amd64 etc.armish etc.aviion etc.hp300 etc.hppa
 SUBDIR+= etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k 
