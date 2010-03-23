@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.294 2010/01/18 23:52:46 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.295 2010/03/23 13:31:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -114,7 +114,6 @@ int		 src_node_killers;
 char		*src_node_kill[2];
 int		 state_killers;
 char		*state_kill[2];
-int		 loadopt;
 int		 altqsupport;
 
 int		 dev = -1;
@@ -211,7 +210,7 @@ static const char *showopt_list[] = {
 };
 
 static const char *tblcmdopt_list[] = {
-	"kill", "flush", "add", "delete", "load", "replace", "show",
+	"kill", "flush", "add", "delete", "replace", "show",
 	"test", "zero", "expire", NULL
 };
 
@@ -231,7 +230,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-AdeghmnOqRrvz] ", __progname);
+	fprintf(stderr, "usage: %s [-deghmnqrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
 	fprintf(stderr, "\t[-k host | network | label | id] ");
@@ -1046,18 +1045,14 @@ pfctl_ruleset_trans(struct pfctl *pf, char *path, struct pf_anchor *a)
 {
 	int osize = pf->trans->pfrb_size;
 
-	if (a == pf->astack[0] && ((altqsupport &&
-	     (pf->loadopt & PFCTL_FLAG_ALTQ) != 0))) {
+	if (a == pf->astack[0] && altqsupport) {
 		if (pfctl_add_trans(pf->trans, PF_TRANS_ALTQ, path))
 			return (2);
 	}
-	if ((pf->loadopt & PFCTL_FLAG_FILTER) != 0) {
-		if (pfctl_add_trans(pf->trans, PF_TRANS_RULESET, path))
-			return (3);
-	}
-	if (pf->loadopt & PFCTL_FLAG_TABLE)
-		if (pfctl_add_trans(pf->trans, PF_TRANS_TABLE, path))
-			return (4);
+	if (pfctl_add_trans(pf->trans, PF_TRANS_RULESET, path))
+		return (3);
+	if (pfctl_add_trans(pf->trans, PF_TRANS_TABLE, path))
+		return (4);
 	if (pfctl_trans(pf->dev, pf->trans, DIOCXBEGIN, osize))
 		return (5);
 
@@ -1173,8 +1168,7 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 int
 pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 {
-	if (altqsupport &&
-	    (loadopt & PFCTL_FLAG_ALTQ) != 0) {
+	if (altqsupport) {
 		memcpy(&pf->paltq->altq, a, sizeof(struct pf_altq));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (ioctl(pf->dev, DIOCADDALTQ, pf->paltq)) {
@@ -1232,7 +1226,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.optimize = optimize;
-	pf.loadopt = loadopt;
 
 	/* non-brace anchor, create without resolving the path */
 	if ((pf.anchor = calloc(1, sizeof(*pf.anchor))) == NULL)
@@ -1250,8 +1243,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 
 	pf.astack[0] = pf.anchor;
 	pf.asd = 0;
-	if (anchorname[0])
-		pf.loadopt &= ~PFCTL_FLAG_ALTQ;
 	pf.paltq = &pa;
 	pf.trans = t;
 	pfctl_init_options(&pf);
@@ -1264,12 +1255,11 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 		 */
 		if (pfctl_ruleset_trans(&pf, anchorname, pf.anchor))
 			ERRX("pfctl_rules");
-		if (altqsupport && (pf.loadopt & PFCTL_FLAG_ALTQ))
+		if (altqsupport)
 			pa.ticket =
 			    pfctl_get_ticket(t, PF_TRANS_ALTQ, anchorname);
-		if (pf.loadopt & PFCTL_FLAG_TABLE)
-			pf.astack[0]->ruleset.tticket =
-			    pfctl_get_ticket(t, PF_TRANS_TABLE, anchorname);
+		pf.astack[0]->ruleset.tticket =
+		    pfctl_get_ticket(t, PF_TRANS_TABLE, anchorname);
 	}
 
 	if (parse_config(filename, &pf) < 0) {
@@ -1280,8 +1270,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 			goto _error;
 	}
 
-	if ((pf.loadopt & PFCTL_FLAG_FILTER &&
-	    pfctl_load_ruleset(&pf, path, rs, 0))) {
+	if (pfctl_load_ruleset(&pf, path, rs, 0)) {
 		if ((opts & PF_OPT_NOACTION) == 0)
 			ERRX("Unable to load rules into kernel");
 		else
@@ -1290,9 +1279,8 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 
 	free(path);
 
-	if ((altqsupport && (pf.loadopt & PFCTL_FLAG_ALTQ) != 0))
-		if (check_commit_altq(dev, opts) != 0)
-			ERRX("errors in altq config");
+	if (altqsupport && check_commit_altq(dev, opts) != 0)
+		ERRX("errors in altq config");
 
 	/* process "load anchor" directives */
 	if (!anchorname[0])
@@ -1397,9 +1385,6 @@ pfctl_load_options(struct pfctl *pf)
 {
 	int i, error = 0;
 
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
-
 	/* load limits */
 	for (i = 0; i < PF_LIMIT_MAX; i++) {
 		if ((pf->opts & PF_OPT_MERGE) && !pf->limit_set[i])
@@ -1501,9 +1486,6 @@ pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds, int quiet)
 {
 	int i;
 
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
-
 	for (i = 0; pf_timeouts[i].name; i++) {
 		if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
 			pf->timeout[pf_timeouts[i].timeout] = seconds;
@@ -1542,9 +1524,6 @@ pfctl_load_timeout(struct pfctl *pf, unsigned int timeout, unsigned int seconds)
 int
 pfctl_set_reassembly(struct pfctl *pf, int on, int nodf)
 {
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
-
 	pf->reass_set = 1;
 	if (on) {
 		pf->reassemble = PF_REASS_ENABLED;
@@ -1566,9 +1545,6 @@ pfctl_set_optimization(struct pfctl *pf, const char *opt)
 {
 	const struct pf_hint *hint;
 	int i, r;
-
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
 
 	for (i = 0; pf_hints[i].name; i++)
 		if (strcasecmp(opt, pf_hints[i].name) == 0)
@@ -1594,10 +1570,6 @@ pfctl_set_optimization(struct pfctl *pf, const char *opt)
 int
 pfctl_set_logif(struct pfctl *pf, char *ifname)
 {
-
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
-
 	if (!strcmp(ifname, "none")) {
 		free(pf->ifname);
 		pf->ifname = NULL;
@@ -1635,9 +1607,6 @@ pfctl_load_logif(struct pfctl *pf, char *ifname)
 int
 pfctl_set_hostid(struct pfctl *pf, u_int32_t hostid)
 {
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
-
 	HTONL(hostid);
 
 	pf->hostid = hostid;
@@ -1674,9 +1643,6 @@ pfctl_set_debug(struct pfctl *pf, char *d)
 {
 	u_int32_t	level;
 	int		loglevel;
-
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
 
 	if (!strcmp(d, "none"))
 		level = LOG_CRIT;
@@ -1719,9 +1685,6 @@ int
 pfctl_set_interface_flags(struct pfctl *pf, char *ifname, int flags, int how)
 {
 	struct pfioc_iface	pi;
-
-	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
-		return (0);
 
 	bzero(&pi, sizeof(pi));
 
@@ -1918,7 +1881,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:AdD:eqf:F:ghi:k:K:L:mnOo:p:rRS:s:t:T:vx:z")) != -1) {
+	    "a:dD:eqf:F:ghi:k:K:L:mno:p:rS:s:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1984,12 +1947,6 @@ main(int argc, char *argv[])
 		case 'g':
 			opts |= PF_OPT_DEBUG;
 			break;
-		case 'A':
-			loadopt |= PFCTL_FLAG_ALTQ;
-			break;
-		case 'R':
-			loadopt |= PFCTL_FLAG_FILTER;
-			break;
 		case 'o':
 			optiopt = pfctl_lookup_option(optarg, optiopt_list);
 			if (optiopt == NULL) {
@@ -1997,9 +1954,6 @@ main(int argc, char *argv[])
 				usage();
 			}
 			opts |= PF_OPT_OPTIMIZE;
-			break;
-		case 'O':
-			loadopt |= PFCTL_FLAG_OPTION;
 			break;
 		case 'p':
 			pf_device = optarg;
@@ -2057,18 +2011,12 @@ main(int argc, char *argv[])
 		argc -= optind;
 		argv += optind;
 		ch = *tblcmdopt;
-		if (ch == 'l') {
-			loadopt |= PFCTL_FLAG_TABLE;
-			tblcmdopt = NULL;
-		} else
-			mode = strchr("acdefkrz", ch) ? O_RDWR : O_RDONLY;
+		mode = strchr("acdefkrz", ch) ? O_RDWR : O_RDONLY;
 	} else if (argc != optind) {
 		warnx("unknown command line argument: %s ...", argv[optind]);
 		usage();
 		/* NOTREACHED */
 	}
-	if (loadopt == 0)
-		loadopt = ~0;
 
 	if ((path = calloc(1, MAXPATHLEN)) == NULL)
 		errx(1, "pfctl: calloc");
@@ -2087,7 +2035,6 @@ main(int argc, char *argv[])
 		    sizeof(anchorname)) >= sizeof(anchorname))
 			errx(1, "anchor name '%s' too long",
 			    anchoropt);
-		loadopt &= PFCTL_FLAG_FILTER|PFCTL_FLAG_TABLE;
 	}
 
 	if ((opts & PF_OPT_NOACTION) == 0) {
@@ -2248,13 +2195,12 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if ((rulesopt != NULL) && (loadopt & PFCTL_FLAG_OPTION) &&
-	    !anchorname[0])
+	if ((rulesopt != NULL) && !anchorname[0])
 		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
 			error = 1;
 
 	if (rulesopt != NULL && !(opts & (PF_OPT_MERGE|PF_OPT_NOACTION)) &&
-	    !anchorname[0] && (loadopt & PFCTL_FLAG_OPTION))
+	    !anchorname[0])
 		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
 			error = 1;
 
@@ -2265,8 +2211,7 @@ main(int argc, char *argv[])
 		if (pfctl_rules(dev, rulesopt, opts, optimize,
 		    anchorname, NULL))
 			error = 1;
-		else if (!(opts & PF_OPT_NOACTION) &&
-		    (loadopt & PFCTL_FLAG_TABLE))
+		else if (!(opts & PF_OPT_NOACTION))
 			warn_namespace_collision(NULL);
 	}
 

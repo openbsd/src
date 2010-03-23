@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.44 2009/11/03 10:59:04 claudio Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.45 2010/03/23 13:31:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -100,8 +100,6 @@ struct segment {
 	LIST_ENTRY(segment)	_next;
 	double			x, y, d, m;
 };
-
-extern	int loadopt;
 
 int		 check_commit_altq(int, int);
 void		 pfaltq_store(struct pf_altq *);

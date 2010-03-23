@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.142 2010/01/18 23:52:46 mcbride Exp $
+.\" $OpenBSD: pfctl.8,v 1.143 2010/03/23 13:31:29 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 18 2010 $
+.Dd $Mdocdate: March 23 2010 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm pfctl
 .Bk -words
-.Op Fl AdeghmnOqRrvz
+.Op Fl deghmnqrvz
 .Op Fl a Ar anchor
 .Oo Fl D Ar macro Ns =
 .Ar value Oc
@@ -111,9 +111,6 @@ The
 utility provides several commands.
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl A
-Load only the queue rules present in the rule file.
-Other rules and options are ignored.
 .It Fl a Ar anchor
 Apply flags
 .Fl f ,
@@ -328,9 +325,6 @@ Allows single options to be modified without disturbing the others:
 .Ed
 .It Fl n
 Do not actually load rules, just parse them.
-.It Fl O
-Load only the options present in the rule file.
-Other rules and options are ignored.
 .It Fl o Ar level
 Control the ruleset optimizer, overriding any rule file settings.
 .Pp
@@ -352,9 +346,6 @@ instead of the default
 .Pa /dev/pf .
 .It Fl q
 Only print errors and warnings.
-.It Fl R
-Load only the filter rules present in the rule file.
-Other rules and options are ignored.
 .It Fl r
 Perform reverse DNS lookups on states when displaying them.
 .It Fl S Ar statefile
@@ -467,15 +458,6 @@ Show the content (addresses) of a table.
 Test if the given addresses match a table.
 .It Fl T Cm zero
 Clear all the statistics of a table.
-.It Fl T Cm load
-Load only the table definitions from
-.Xr pf.conf 5 .
-This is used in conjunction with the
-.Fl f
-flag, as in:
-.Bd -literal -offset indent
-# pfctl -Tl -f pf.conf
-.Ed
 .El
 .Pp
 For the

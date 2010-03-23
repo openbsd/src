@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.588 2010/01/13 05:20:10 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.589 2010/03/23 13:31:29 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1174,11 +1174,10 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 				free($3);
 				YYERROR;
 			}
-			if (pf->loadopt & PFCTL_FLAG_TABLE)
-				if (process_tabledef($3, &$5)) {
-					free($3);
-					YYERROR;
-				}
+			if (process_tabledef($3, &$5)) {
+				free($3);
+				YYERROR;
+			}
 			free($3);
 			for (ti = SIMPLEQ_FIRST(&$5.init_nodes);
 			    ti != SIMPLEQ_END(&$5.init_nodes); ti = nti) {
@@ -4279,12 +4278,6 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	struct node_queue_bw	 bw;
 	int			 errs = 0;
 
-	if ((pf->loadopt & PFCTL_FLAG_ALTQ) == 0) {
-		FREE_LIST(struct node_if, interfaces);
-		FREE_LIST(struct node_queue, nqueues);
-		return (0);
-	}
-
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 		memcpy(&pa, a, sizeof(struct pf_altq));
 		if (strlcpy(pa.ifname, interface->ifname,
@@ -4386,11 +4379,6 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 	struct pf_altq		 pa;
 	u_int8_t		 found = 0;
 	u_int8_t		 errs = 0;
-
-	if ((pf->loadopt & PFCTL_FLAG_ALTQ) == 0) {
-		FREE_LIST(struct node_queue, nqueues);
-		return (0);
-	}
 
 	if (queues == NULL) {
 		yyerror("queue %s has no parent", a->qname);
