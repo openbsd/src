@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.3 2010/02/23 21:54:53 kettenis Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.4 2010/03/23 19:31:18 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -76,6 +76,7 @@ struct mem_range_ops amd64_mrops = {
 
 /* XXX for AP startup hook */
 u_int64_t	mtrrcap, mtrrdef;
+u_int64_t	mtrrmask = 0x0000000ffffff000ULL;
 
 struct mem_range_desc	*mem_range_match(struct mem_range_softc *sc,
 			     struct mem_range_desc *mrd);
@@ -209,13 +210,13 @@ amd64_mrfetch(struct mem_range_softc *sc)
 		msrv = rdmsr(msr);
 		mrd->mr_flags = (mrd->mr_flags & ~MDF_ATTRMASK) |
 			amd64_mtrr2mrt(msrv & 0xff);
-		mrd->mr_base = msrv & 0x0000000ffffff000LL;
+		mrd->mr_base = msrv & mtrrmask;
 		msrv = rdmsr(msr + 1);
 		mrd->mr_flags = (msrv & 0x800) ?
 			(mrd->mr_flags | MDF_ACTIVE) :
 			(mrd->mr_flags & ~MDF_ACTIVE);
 		/* Compute the range from the mask. Ick. */
-		mrd->mr_len = (~(msrv & 0xfffffffffffff000LL) & 0x0000000fffffffffLL) + 1;
+		mrd->mr_len = (~(msrv & mtrrmask) & mtrrmask) + 0x1000;
 		if (!mrvalid(mrd->mr_base, mrd->mr_len))
 			mrd->mr_flags |= MDF_BOGUS;
 		/* If unclaimed and active, must be the BIOS */
@@ -534,6 +535,7 @@ void
 amd64_mrinit(struct mem_range_softc *sc)
 {
 	struct mem_range_desc	*mrd;
+	uint32_t		 regs[4];
 	int			 nmdesc = 0;
 	int			 i;
 
@@ -580,6 +582,21 @@ amd64_mrinit(struct mem_range_softc *sc)
 	}
 	
 	/*
+	 * Fetch maximum physical address size supported by the
+	 * processor as supported by CPUID leaf function 0x80000008.
+	 * If CPUID does not support leaf function 0x80000008, use the
+	 * default a 36-bit address size.
+	 */
+	CPUID(0x80000000, regs[0], regs[1], regs[2], regs[3]);
+	if (regs[0] >= 0x80000008) {
+		CPUID(0x80000008, regs[0], regs[1], regs[2], regs[3]);
+		if (regs[0] & 0xff) {
+			mtrrmask = (1ULL << (regs[0] & 0xff)) - 1;
+			mtrrmask &= ~0x0000000000000fffULL;
+		}
+	}
+
+	/*
 	 * Get current settings, anything set now is considered to have
 	 * been set by the firmware. (XXX has something already played here?)
 	 */
@@ -609,4 +626,3 @@ amd64_mrreload_cpu(struct mem_range_softc *sc)
 	amd64_mrstoreone(sc); /* set MTRRs to match BSP */
 	enable_intr();
 }
-
