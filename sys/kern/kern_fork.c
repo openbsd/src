@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.108 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.109 2010/03/24 23:18:17 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -414,7 +414,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	} while (pidtaken(lastpid));
 	p2->p_pid = lastpid;
 
+	rw_enter_write(&allproclk);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
+	rw_exit_write(&allproclk);
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INSERT_AFTER(p1, p2, p_pglist);

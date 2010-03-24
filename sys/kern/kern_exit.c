@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.89 2009/12/20 23:54:11 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.90 2010/03/24 23:18:17 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -248,9 +248,11 @@ exit1(struct proc *p, int rv, int flags)
          * deadproc list later (using the p_hash member), and
          * wake up the reaper when we do.
          */
+	rw_enter_write(&allproclk);
 	LIST_REMOVE(p, p_hash);
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
+	rw_exit_write(&allproclk);
 
 	/*
 	 * Give orphaned children to init(8).
@@ -564,7 +566,9 @@ proc_zap(struct proc *p)
 	 * Unlink it from its process group and free it.
 	 */
 	leavepgrp(p);
+	rw_enter_write(&allproclk);
 	LIST_REMOVE(p, p_list);	/* off zombproc */
+	rw_exit_write(&allproclk);
 	LIST_REMOVE(p, p_sibling);
 
 	/*
