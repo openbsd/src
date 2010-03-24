@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.7 2010/03/03 10:17:05 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.8 2010/03/24 19:13:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1045,7 +1045,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		dst.sin_family = AF_INET;
 		dst.sin_addr.s_addr = kroute->prefix.s_addr;
 		/* adjust header */
-		hdr.rtm_priority = 0;
+		hdr.rtm_priority = kroute->priority;
 		hdr.rtm_addrs |= RTA_DST;
 		hdr.rtm_msglen += sizeof(dst);
 		/* adjust iovec */
