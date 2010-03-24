@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1538 2010/03/24 20:30:44 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1539 2010/03/24 20:37:29 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -16473,7 +16473,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_XIO3130,
-	    "XIO3130 PCIE-PCIE",
+	    "XIO3130 PCIE-PCIE upstream",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_XIO3130,
+	    "XIO3130 PCIE-PCIE downstream",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
