@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1538 2010/03/24 20:30:44 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1539 2010/03/24 20:37:29 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4947,7 +4947,8 @@ product TI PCIXX12_SD		0x803c	PCIXX12 Secure Data
 product TI PCIXX12_SM		0x803d	PCIXX12 Smart Card
 product TI PCI1620_MISC		0x8201	PCI1620 Misc
 product TI XIO2000A		0x8231	XIO2000A PCIE-PCI
-product TI XIO3130		0x8232	XIO3130 PCIE-PCIE
+product TI XIO3130		0x8232	XIO3130 PCIE-PCIE upstream
+product TI XIO3130		0x8233	XIO3130 PCIE-PCIE downstream
 product TI ACX100A		0x8400	ACX100A
 product TI ACX100B		0x8401	ACX100B
 product TI ACX111		0x9066	ACX111
