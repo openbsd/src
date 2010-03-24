@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.105 2010/03/08 03:40:50 jolan Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.106 2010/03/24 00:36:04 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1657,10 +1657,11 @@ cpu_dump_mempagecnt(void)
 int
 amd64_pa_used(paddr_t addr)
 {
-	bios_memmap_t *bmp;
+	struct vm_page	*pg;
+	bios_memmap_t	*bmp;
 
 	/* Kernel manages these */
-	if (PHYS_TO_VM_PAGE(addr))
+	if ((pg = PHYS_TO_VM_PAGE(addr)) && (pg->pg_flags & PG_DEV) == 0)
 		return 1;
 
 	/* Kernel is loaded here */
