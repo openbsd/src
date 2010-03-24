@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.18 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.19 2010/03/24 06:55:28 dlg Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -205,10 +205,10 @@ int	vdsk_dev_probe(struct scsi_link *);
 void	vdsk_dev_free(struct scsi_link *);
 int	vdsk_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
 
-int	vdsk_scsi_inq(struct scsi_xfer *);
-int	vdsk_scsi_inquiry(struct scsi_xfer *);
-int	vdsk_scsi_capacity(struct scsi_xfer *);
-int	vdsk_scsi_done(struct scsi_xfer *, int);
+void	vdsk_scsi_inq(struct scsi_xfer *);
+void	vdsk_scsi_inquiry(struct scsi_xfer *);
+void	vdsk_scsi_capacity(struct scsi_xfer *);
+void	vdsk_scsi_done(struct scsi_xfer *, int);
 
 int
 vdsk_match(struct device *parent, void *match, void *aux)
@@ -938,21 +938,25 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		break;
 
 	case INQUIRY:
-		return (vdsk_scsi_inq(xs));
+		vdsk_scsi_inq(xs);
+		return;
 	case READ_CAPACITY:
-		return (vdsk_scsi_capacity(xs));
+		vdsk_scsi_capacity(xs);
+		return;
 
 	case TEST_UNIT_READY:
 	case START_STOP:
 	case PREVENT_ALLOW:
-		return (vdsk_scsi_done(xs, XS_NOERROR));
+		vdsk_scsi_done(xs, XS_NOERROR);
+		return;
 
 	default:
 		printf("%s cmd 0x%02x\n", __func__, xs->cmd->opcode);
 	case MODE_SENSE:
 	case MODE_SENSE_BIG:
 	case REPORT_LUNS:
-		return (vdsk_scsi_done(xs, XS_DRIVER_STUFFUP));
+		vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
 	}
 
 	if (xs->cmdlen == 6) {
@@ -1055,18 +1059,18 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 }
 }
 
-int
+void
 vdsk_scsi_inq(struct scsi_xfer *xs)
 {
 	struct scsi_inquiry *inq = (struct scsi_inquiry *)xs->cmd;
 
 	if (ISSET(inq->flags, SI_EVPD))
-		return (vdsk_scsi_done(xs, XS_DRIVER_STUFFUP));
-
-	return (vdsk_scsi_inquiry(xs));
+		vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+	else
+		vdsk_scsi_inquiry(xs);
 }
 
-int
+void
 vdsk_scsi_inquiry(struct scsi_xfer *xs)
 {
 	struct vdsk_softc *sc = xs->sc_link->adapter_softc;
@@ -1086,10 +1090,10 @@ vdsk_scsi_inquiry(struct scsi_xfer *xs)
 
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 
-	return (vdsk_scsi_done(xs, XS_NOERROR));
+	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
-int
+void
 vdsk_scsi_capacity(struct scsi_xfer *xs)
 {
 	struct vdsk_softc *sc = xs->sc_link->adapter_softc;
@@ -1107,10 +1111,10 @@ vdsk_scsi_capacity(struct scsi_xfer *xs)
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
 
-	return (vdsk_scsi_done(xs, XS_NOERROR));
+	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
-int
+void
 vdsk_scsi_done(struct scsi_xfer *xs, int error)
 {
 	int s;
@@ -1120,7 +1124,6 @@ vdsk_scsi_done(struct scsi_xfer *xs, int error)
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-	return (COMPLETE);
 }
 
 int
