@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.69 2010/03/23 02:43:50 sthen Exp $
+.\"	$OpenBSD: pf.4,v 1.70 2010/03/25 21:27:13 schwarze Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2010 $
+.Dd $Mdocdate: March 25 2010 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -1019,14 +1019,14 @@ main(int argc, char *argv[])
 	int dev;
 
 	if (argc != 5) {
-		printf("%s <gwy addr> <gwy port> <ext addr> <ext port>\\n",
+		printf("%s <gwy addr> <gwy port> <ext addr> <ext port>\en",
 		    argv[0]);
 		return 1;
 	}
 
 	dev = open("/dev/pf", O_RDWR);
 	if (dev == -1)
-		err(1, "open(\\"/dev/pf\\") failed");
+		err(1, "open(\e"/dev/pf\e") failed");
 
 	memset(&nl, 0, sizeof(struct pfioc_natlook));
 	nl.saddr.v4.s_addr	= read_address(argv[1]);
@@ -1042,7 +1042,7 @@ main(int argc, char *argv[])
 
 	printf("internal host ");
 	print_address(nl.rsaddr.v4.s_addr);
-	printf(":%u\\n", ntohs(nl.rsport));
+	printf(":%u\en", ntohs(nl.rsport));
 	return 0;
 }
 .Ed
