@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1540 2010/03/25 00:35:57 ckuethe Exp $
+$OpenBSD: pcidevs,v 1.1541 2010/03/25 23:10:25 oga Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1316,6 +1316,7 @@ product ATI RADEON_HD2600_PRO	0x9589	Radeon HD 2600 Pro
 product ATI RADEON_HD3650_M	0x9591	Mobility Radeon HD 3650
 product ATI RADEON_HD3650_AGP	0x9596	Radeon HD 3650 AGP
 product ATI RADEON_HD3650	0x9598	Radeon HD 3650
+product ATI RADEON_HD3470	0x95c0	Radeon HD 3470
 product ATI RADEON_HD3400_M82	0x95c4	Mobility Radeon HD 3400
 product ATI RADEON_HD3450	0x95c5	Radeon HD 3450
 product ATI RS780_HB		0x9600	RS780 Host
