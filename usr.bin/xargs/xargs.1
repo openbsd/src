@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.24 2010/02/04 23:12:48 schwarze Exp $
+.\"	$OpenBSD: xargs.1,v 1.25 2010/03/25 01:03:57 schwarze Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 4 2010 $
+.Dd $Mdocdate: March 25 2010 $
 .Dt XARGS 1
 .Os
 .Sh NAME
@@ -170,7 +170,9 @@ Call
 .Ar utility
 for every
 .Ar number
-of lines read.
+of non-empty lines read.
+A line ending in unescaped white space and the next non-empty line
+are considered to form one single line.
 If EOF is reached and fewer than
 .Ar number
 lines have been read then

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.26 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.27 2010/03/25 01:03:57 schwarze Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -239,10 +240,23 @@ main(int argc, char *argv[])
 static void
 parse_input(int argc, char *argv[])
 {
+	int hasblank = 0;
+	static int hadblank = 0;
 	int ch, foundeof = 0;
 	char **avj;
 
-	switch (ch = getchar()) {
+	ch = getchar();
+	if (isblank(ch)) {
+		/* Quotes escape tabs and spaces. */
+		if (insingle || indouble)
+			goto addch;
+		hasblank = 1;
+		if (zflag)
+			goto addch;
+		goto arg2;
+	}
+
+	switch (ch) {
 	case EOF:
 		/* No arguments since last exec. */
 		if (p == bbp) {
@@ -252,18 +266,14 @@ parse_input(int argc, char *argv[])
 			exit(rval);
 		}
 		goto arg1;
-	case ' ':
-	case '\t':
-		/* Quotes escape tabs and spaces. */
-		if (insingle || indouble || zflag)
-			goto addch;
-		goto arg2;
 	case '\0':
 		if (zflag)
 			goto arg2;
 		goto addch;
 	case '\n':
-		count++;
+		hasblank = 1;
+		if (hadblank == 0)
+			count++;
 		if (zflag)
 			goto addch;
 
@@ -382,6 +392,7 @@ addch:		if (p < ebp) {
 		*p++ = ch;
 		break;
 	}
+	hadblank = hasblank;
 }
 
 /*
