@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.35 2010/03/02 00:38:59 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.36 2010/03/25 02:02:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -756,7 +756,7 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 		n = n->next;
 	if (MDOC_TEXT == n->type && m->last->parent->tok != MDOC_Rs) {
 		t = n->string;
-		while (t && t[1])
+		while (t[0] && t[1])
 			t++;
 		if ('.' == *t || '!' == *t || '?' == *t) {
 			if ( ! mdoc_elem_alloc(m, ln, i, MDOC_eos, NULL))
