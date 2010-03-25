@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 2009/09/02 20:29:39 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.5 2010/03/25 19:42:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -71,6 +71,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	ncpusfound = 0;
 	node = OF_finddevice("/cpus");
 	if (node != -1) {
 		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
