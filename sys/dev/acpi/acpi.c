@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.152 2009/11/26 23:44:38 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.153 2010/03/25 23:00:20 oga Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1060,7 +1060,7 @@ acpi_filtread(struct knote *kn, long hint)
 {
 #ifndef SMALL_KERNEL
 	/* XXX weird kqueue_scan() semantics */
-	if (hint & !kn->kn_data)
+	if (hint && !kn->kn_data)
 		kn->kn_data = hint;
 #endif
 	return (1);
