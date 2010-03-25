@@ -131,6 +131,7 @@ extern int _rl_input_available PARAMS((void));
 extern int _rl_input_queued PARAMS((int));
 extern void _rl_insert_typein PARAMS((int));
 extern int _rl_unget_char PARAMS((int));
+extern int _rl_pushed_input_available PARAMS((void));
 
 /* macro.c */
 extern void _rl_with_macro_input PARAMS((char *));
