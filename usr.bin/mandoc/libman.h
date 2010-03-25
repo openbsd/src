@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.11 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: libman.h,v 1.12 2010/03/25 23:23:01 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,9 +30,10 @@ struct	man {
 	int		 pflags;
 	int		 flags;
 #define	MAN_HALT	(1 << 0)
-#define	MAN_ELINE	(1 << 1) 	/* Next-line element scope. */
-#define	MAN_BLINE	(1 << 2) 	/* Next-line block scope. */
-#define	MAN_LITERAL	(1 << 3)	/* Literal input. */
+#define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
+#define	MAN_BLINE	(1 << 2) /* Next-line block scope. */
+#define	MAN_ILINE	(1 << 3) /* Ignored in next-line scope. */
+#define	MAN_LITERAL	(1 << 4) /* Literal input. */
 	enum man_next	 next;
 	struct man_node	*last;
 	struct man_node	*first;
@@ -44,6 +45,7 @@ enum	merr {
 	WMSEC,
 	WDATE,
 	WLNSCOPE,
+	WLNSCOPE2,
 	WTSPACE,
 	WTQUOTE,
 	WNODATA,
@@ -70,6 +72,7 @@ struct	man_macro {
 #define	MAN_SCOPED	 (1 << 0)
 #define	MAN_EXPLICIT	 (1 << 1)	/* See blk_imp(). */
 #define	MAN_FSCOPED	 (1 << 2)	/* See blk_imp(). */
+#define	MAN_NSCOPED	 (1 << 3)	/* See in_line_eoln(). */
 };
 
 extern	const struct man_macro *const man_macros;
@@ -92,6 +95,7 @@ int		  man_body_alloc(struct man *, int, int, int);
 int		  man_elem_alloc(struct man *, int, int, int);
 void		  man_node_free(struct man_node *);
 void		  man_node_freelist(struct man_node *);
+void		  man_node_unlink(struct man *, struct man_node *);
 void		  man_hash_init(void);
 int		  man_hash_find(const char *);
 int		  man_macroend(struct man *);

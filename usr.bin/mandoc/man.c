@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.20 2010/03/02 01:00:39 schwarze Exp $ */
+/*	$Id: man.c,v 1.21 2010/03/25 23:23:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -31,6 +31,7 @@ const	char *const __man_merrnames[WERRMAX] = {
 	"invalid manual section", /* WMSEC */
 	"invalid date format", /* WDATE */
 	"scope of prior line violated", /* WLNSCOPE */
+	"over-zealous prior line scope violation", /* WLNSCOPE2 */
 	"trailing whitespace", /* WTSPACE */
 	"unterminated quoted parameter", /* WTQUOTE */
 	"document has no body", /* WNODATA */
@@ -531,28 +532,38 @@ man_pmacro(struct man *m, int ln, char *buf)
 		if ( ! man_pwarn(m, ln, i - 1, WTSPACE))
 			goto err;
 
-	/* Remove prior ELINE macro, if applicable. */
+	/* 
+	 * Remove prior ELINE macro, as it's being clobbering by a new
+	 * macro.  Note that NSCOPED macros do not close out ELINE
+	 * macros---they don't print text---so we let those slip by.
+	 */
 
-	if (m->flags & MAN_ELINE) {
+	if ( ! (MAN_NSCOPED & man_macros[c].flags) &&
+			m->flags & MAN_ELINE) {
+		assert(MAN_TEXT != m->last->type);
+
+		/*
+		 * This occurs in the following construction:
+		 *   .B
+		 *   .br
+		 *   .B
+		 *   .br
+		 *   I hate man macros.
+		 * Flat-out disallow this madness.
+		 */
+		if (MAN_NSCOPED & man_macros[m->last->tok].flags)
+			return(man_perr(m, ln, ppos, WLNSCOPE));
+
 		n = m->last;
+
+		assert(n);
 		assert(NULL == n->child);
 		assert(0 == n->nchild);
+
 		if ( ! man_nwarn(m, n, WLNSCOPE))
 			return(0);
 
-		if (n->prev) {
-			assert(n != n->parent->child);
-			assert(n == n->prev->next);
-			n->prev->next = NULL;
-			m->last = n->prev;
-			m->next = MAN_NEXT_SIBLING;
-		} else {
-			assert(n == n->parent->child);
-			n->parent->child = NULL;
-			m->last = n->parent;
-			m->next = MAN_NEXT_CHILD;
-		}
-
+		man_node_unlink(m, n);
 		man_node_free(n);
 		m->flags &= ~MAN_ELINE;
 	}
@@ -565,9 +576,25 @@ man_pmacro(struct man *m, int ln, char *buf)
 		goto err;
 
 out:
-	if ( ! (MAN_BLINE & fl) || (MAN_TEXT != m->last->type &&
-	    (NULL == m->last->child || MAN_TEXT != m->last->child->type)))
+	/* 
+	 * We weren't in a block-line scope when entering the
+	 * above-parsed macro, so return.
+	 */
+
+	if ( ! (MAN_BLINE & fl)) {
+		m->flags &= ~MAN_ILINE; 
 		return(1);
+	}
+
+	/*
+	 * If we're in a block scope, then allow this macro to slip by
+	 * without closing scope around it.
+	 */
+
+	if (MAN_ILINE & m->flags) {
+		m->flags &= ~MAN_ILINE;
+		return(1);
+	}
 
 	/* 
 	 * If we've opened a new next-line element scope, then return
@@ -637,4 +664,29 @@ man_err(struct man *m, int line, int pos, int iserr, enum merr type)
 		return(man_verr(m, line, pos, p));
 
 	return(man_vwarn(m, line, pos, p));
+}
+
+
+void
+man_node_unlink(struct man *m, struct man_node *n)
+{
+
+	if (n->prev) {
+		n->prev->next = n->next;
+		if (m->last == n) {
+			assert(NULL == n->next);
+			m->last = n->prev;
+			m->next = MAN_NEXT_SIBLING;
+		}
+	} else {
+		n->parent->child = n->next;
+		if (m->last == n) {
+			assert(NULL == n->next);
+			m->last = n->parent;
+			m->next = MAN_NEXT_CHILD;
+		}
+	}
+
+	if (n->next)
+		n->next->prev = n->prev;
 }

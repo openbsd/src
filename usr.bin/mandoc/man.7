@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.16 2010/02/18 02:11:26 schwarze Exp $
+.\"	$Id: man.7,v 1.17 2010/03/25 23:23:01 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: March 25 2010 $
 .Dt MAN 7
 .Os
 .
@@ -423,8 +423,8 @@ subsequent lines until closed by another block macro.
 .Ss Line Macros
 Line macros are generally scoped to the current line, with the body
 consisting of zero or more arguments.  If a macro is scoped to the next
-line and the line arguments are empty, the next line is used instead,
-else the general syntax is used.  Thus:
+line and the line arguments are empty, the next line, which must be
+text, is used instead.  Thus:
 .Bd -literal -offset indent
 \&.I
 foo
@@ -433,9 +433,15 @@ foo
 .Pp
 is equivalent to
 .Sq \&.I foo .
-If next-line macros are invoked consecutively, only the last is used; in
-other words, if a next-line macro is preceded by a block macro, it is
-ignored.
+If next-line macros are invoked consecutively, only the last is used.
+If a next-line macro is followed by a non-next-line macro, an error is
+raised (unless in the case of
+.Sx \&br ,
+.Sx \&sp ,
+or
+.Sx \&na ) .
+.Pp
+The syntax is as follows:
 .Bd -literal -offset indent
 \&.YO \(lBbody...\(rB
 \(lBbody...\(rB
@@ -488,8 +494,10 @@ macros should not be used.  They're included for compatibility.
 .Ss Block Macros
 Block macros are comprised of a head and body.  Like for in-line macros,
 the head is scoped to the current line and, in one circumstance, the
-next line; the body is scoped to subsequent lines and is closed out by a
-subsequent block macro invocation.
+next line (the next-line stipulations for line macros apply here as
+well).
+.Pp
+The syntax is as follows:
 .Bd -literal -offset indent
 \&.YO \(lBhead...\(rB
 \(lBhead...\(rB

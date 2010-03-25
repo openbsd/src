@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.6 2010/03/02 01:00:39 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.7 2010/03/25 23:23:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -179,6 +179,12 @@ print_man_node(MAN_ARGS)
 	t = h->tags.head;
 
 	bufinit(h);
+
+	/*
+	 * FIXME: embedded elements within next-line scopes (e.g., `br'
+	 * within an empty `B') will cause formatting to be forgotten
+	 * due to scope closing out.
+	 */
 
 	switch (n->type) {
 	case (MAN_ROOT):
@@ -566,6 +572,8 @@ man_IP_pre(MAN_ARGS)
 	SCALE_HS_INIT(&su, INDENT);
 	width = 0;
 
+	/* Width is the last token. */
+
 	if (MAN_IP == n->tok && NULL != nn)
 		if (NULL != (nn = nn->next)) {
 			for ( ; nn->next; nn = nn->next)
@@ -573,8 +581,15 @@ man_IP_pre(MAN_ARGS)
 			width = a2width(nn, &su);
 		}
 
-	if (MAN_TP == n->tok && NULL != nn)
-		width = a2width(nn, &su);
+	/* Width is the first token. */
+
+	if (MAN_TP == n->tok && NULL != nn) {
+		/* Skip past non-text children. */
+		while (nn && MAN_TEXT != nn->type)
+			nn = nn->next;
+		if (nn)
+			width = a2width(nn, &su);
+	}
 
 	if (MAN_BLOCK == n->type) {
 		bufcat_su(h, "margin-left", &su);
@@ -599,10 +614,19 @@ man_IP_pre(MAN_ARGS)
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, 1, &tag);
 
-	/* With a length string, manually omit the last child. */
+	/*
+	 * Without a length string, we can print all of our children.
+	 */
 
 	if ( ! width)
 		return(1);
+
+	/*
+	 * When a length has been specified, we need to carefully print
+	 * our child context:  IP gets all children printed but the last
+	 * (the width), while TP gets all children printed but the first
+	 * (the width).
+	 */
 
 	if (MAN_IP == n->tok)
 		for (nn = n->child; nn->next; nn = nn->next)

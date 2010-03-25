@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.21 2010/02/18 02:11:26 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.22 2010/03/25 23:23:01 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: March 25 2010 $
 .Dt MANDOC 1
 .Os
 .
@@ -502,8 +502,8 @@ and
 .Fl T Ns Ar xhtml
 CSS2 styling used for
 .Fl m Ns Ar doc
-input lists does not render properly in brain-dead browsers, such as
-Internet Explorer 6 and earlier.
+input lists does not render properly in older browsers, such as Internet
+Explorer 6 and earlier.
 .Pp
 In
 .Fl T Ns Ar html
@@ -525,3 +525,15 @@ font size escape documented in
 .Xr mdoc 7
 and
 .Xr man 7 .
+.Pp
+Nesting elements within next-line element scopes of
+.Fl m Ar Ns an ,
+such as
+.Sq br
+within an empty
+.Sq B ,
+will confuse
+.Fl T Ns Ar html
+and
+.Fl T Ns Ar xhtml
+and cause it to forget the formatting.
