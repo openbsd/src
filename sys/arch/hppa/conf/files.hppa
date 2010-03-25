@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.80 2008/07/16 16:32:08 miod Exp $
+#	$OpenBSD: files.hppa,v 1.81 2010/03/25 14:26:21 jsing Exp $
 #
 # hppa-specific configuration info
 
@@ -307,6 +307,7 @@ file	arch/hppa/hppa/conf.c
 file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/disksubr.c		disk
+file	arch/hppa/hppa/lock_machdep.c		multiprocessor
 file	arch/hppa/hppa/machdep.c
 file	arch/hppa/hppa/mutex.c
 file	arch/hppa/hppa/pmap.c
