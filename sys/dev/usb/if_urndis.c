@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.18 2010/03/15 11:13:40 fabien Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.19 2010/03/25 19:39:34 mk Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -134,7 +134,7 @@ struct urndis_type {
 	u_int16_t	urndis_vid;
 	u_int16_t	urndis_pid;
 } urndis_devs[] = {
-	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_HERO },
+	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID },
 };
 
 usbd_status
