@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.168 2010/03/21 15:02:31 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.169 2010/03/25 03:40:47 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -100,6 +100,8 @@ int az_debug = 0;
 #define		ICH_PCI_HDCTL_SIGNALMODE	0x01
 #define ICH_PCI_HDTCSEL	0x44
 #define		ICH_PCI_HDTCSEL_MASK	0x7
+#define ICH_PCI_MMC	0x62
+#define		ICH_PCI_MMC_ME		0x1
 
 /* internal types */
 
@@ -415,7 +417,14 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL,
 	    v & ~(ICH_PCI_HDTCSEL_MASK));
- 
+
+	/* disable MSI, use INTx instead */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
+		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, ICH_PCI_MMC);
+		reg &= ~(ICH_PCI_MMC_ME);
+		azalia_pci_write(pa->pa_pc, pa->pa_tag, ICH_PCI_MMC, reg);
+	}
+
 	/* enable PCIe snoop */
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_ATI_SB450_HDA:
