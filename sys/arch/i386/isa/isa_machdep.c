@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.68 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.69 2010/03/25 22:44:57 oga Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -125,13 +125,6 @@ void	_isa_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
 
 int	_isa_bus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int);
-void	_isa_bus_dmamem_free(bus_dma_tag_t,
-	    bus_dma_segment_t *, int);
-int	_isa_bus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
-	    int, size_t, caddr_t *, int);
-void	_isa_bus_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
-paddr_t	_isa_bus_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *,
-	    int, off_t, int, int);
 
 int	_isa_dma_check_buffer(void *, bus_size_t, int, bus_size_t,
 	    struct proc *);
@@ -155,10 +148,10 @@ struct bus_dma_tag isa_bus_dma_tag = {
 	_isa_bus_dmamap_unload,
 	_isa_bus_dmamap_sync,
 	_isa_bus_dmamem_alloc,
-	_isa_bus_dmamem_free,
-	_isa_bus_dmamem_map,
-	_isa_bus_dmamem_unmap,
-	_isa_bus_dmamem_mmap,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
 };
 #endif /* NISADMA > 0 */
 
@@ -930,58 +923,20 @@ _isa_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	paddr_t high;
+	int error;
 
-	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
-		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
-	else
-		high = trunc_page(avail_end);
+	/* Try in ISA addressable region first */
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, ISA_DMA_BOUNCE_THRESHOLD);
+	if (!error)
+		return (error);
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, 0, high));
+	/* Otherwise try anywhere (we'll bounce later) */
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, (paddr_t)0, (paddr_t)-1);
+	return (error);
 }
 
-/*
- * Free memory safe for ISA DMA.
- */
-void
-_isa_bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
-{
-
-	_bus_dmamem_free(t, segs, nsegs);
-}
-
-/*
- * Map ISA DMA-safe memory into kernel virtual address space.
- */
-int
-_isa_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
-{
-
-	return (_bus_dmamem_map(t, segs, nsegs, size, kvap, flags));
-}
-
-/*
- * Unmap ISA DMA-safe memory from kernel virtual address space.
- */
-void
-_isa_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
-{
-
-	_bus_dmamem_unmap(t, kva, size);
-}
-
-/*
- * mmap(2) ISA DMA-safe memory.
- */
-paddr_t
-_isa_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    off_t off, int prot, int flags)
-{
-
-	return (_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags));
-}
 
 /**********************************************************************
  * ISA DMA utility functions
@@ -1055,18 +1010,19 @@ _isa_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t size, int
 	int error = 0;
 
 	cookie->id_bouncebuflen = round_page(size);
-	error = _isa_bus_dmamem_alloc(t, cookie->id_bouncebuflen,
+	error = _bus_dmamem_alloc_range(t, cookie->id_bouncebuflen,
 	    NBPG, map->_dm_boundary, cookie->id_bouncesegs,
-	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
+	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags,
+	    0, ISA_DMA_BOUNCE_THRESHOLD);
 	if (error)
 		goto out;
-	error = _isa_bus_dmamem_map(t, cookie->id_bouncesegs,
+	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
 	    (caddr_t *)&cookie->id_bouncebuf, flags);
 
  out:
 	if (error) {
-		_isa_bus_dmamem_free(t, cookie->id_bouncesegs,
+		_bus_dmamem_free(t, cookie->id_bouncesegs,
 		    cookie->id_nbouncesegs);
 		cookie->id_bouncebuflen = 0;
 		cookie->id_nbouncesegs = 0;
@@ -1085,9 +1041,9 @@ _isa_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 
 	STAT_DECR(isa_dma_stats_nbouncebufs);
 
-	_isa_bus_dmamem_unmap(t, cookie->id_bouncebuf,
+	_bus_dmamem_unmap(t, cookie->id_bouncebuf,
 	    cookie->id_bouncebuflen);
-	_isa_bus_dmamem_free(t, cookie->id_bouncesegs,
+	_bus_dmamem_free(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs);
 	cookie->id_bouncebuflen = 0;
 	cookie->id_nbouncesegs = 0;

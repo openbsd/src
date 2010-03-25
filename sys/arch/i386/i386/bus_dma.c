@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.19 2009/11/03 17:21:46 damien Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.20 2010/03/25 22:44:57 oga Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -618,11 +618,8 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 		plaflag |= UVM_PLA_ZERO;
 
 	TAILQ_INIT(&mlist);
-	if (high <= ISA_DMA_BOUNCE_THRESHOLD || (error = uvm_pglistalloc(size,
-	    round_page(ISA_DMA_BOUNCE_THRESHOLD), high, alignment, boundary,
-	    &mlist, nsegs, plaflag)))
-		error = uvm_pglistalloc(size, low, high, alignment, boundary,
-		    &mlist, nsegs, plaflag);
+	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	    &mlist, nsegs, plaflag);
 	if (error)
 		return (error);
 
