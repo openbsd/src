@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.132 2009/11/12 14:18:45 jsg Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.133 2010/03/25 18:37:36 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1958,6 +1958,24 @@ check_option(struct client_lease *l, int option)
 
 	switch (option) {
 	case DHO_SUBNET_MASK:
+	case DHO_SWAP_SERVER:
+	case DHO_BROADCAST_ADDRESS:
+	case DHO_DHCP_SERVER_IDENTIFIER:
+	case DHO_ROUTER_SOLICITATION_ADDRESS:
+	case DHO_DHCP_REQUESTED_ADDRESS:
+		if (ipv4addrs(opbuf) == 0) {
+			warning("Invalid IP address in option %s: %s",
+			    dhcp_options[option].name, opbuf);
+			return (0);
+		}
+		if (l->options[option].len != 4) { /* RFC 2132 */
+			warning("warning: Only 1 IP address allowed in "
+			    "%s option; length %d, must be 4",
+			    dhcp_options[option].name,
+			    l->options[option].len);
+			l->options[option].len = 4;
+		}
+		return (1);
 	case DHO_TIME_SERVERS:
 	case DHO_NAME_SERVERS:
 	case DHO_ROUTERS:
@@ -1967,16 +1985,14 @@ check_option(struct client_lease *l, int option)
 	case DHO_LPR_SERVERS:
 	case DHO_IMPRESS_SERVERS:
 	case DHO_RESOURCE_LOCATION_SERVERS:
-	case DHO_SWAP_SERVER:
-	case DHO_BROADCAST_ADDRESS:
 	case DHO_NIS_SERVERS:
 	case DHO_NTP_SERVERS:
 	case DHO_NETBIOS_NAME_SERVERS:
 	case DHO_NETBIOS_DD_SERVER:
 	case DHO_FONT_SERVERS:
-	case DHO_DHCP_SERVER_IDENTIFIER:
-		if (!ipv4addrs(opbuf)) {
-			warning("Invalid IP address in option: %s", opbuf);
+		if (ipv4addrs(opbuf) == 0) {
+			warning("Invalid IP address in option %s: %s",
+			    dhcp_options[option].name, opbuf);
 			return (0);
 		}
 		return (1);
@@ -2008,7 +2024,6 @@ check_option(struct client_lease *l, int option)
 	case DHO_PERFORM_MASK_DISCOVERY:
 	case DHO_MASK_SUPPLIER:
 	case DHO_ROUTER_DISCOVERY:
-	case DHO_ROUTER_SOLICITATION_ADDRESS:
 	case DHO_STATIC_ROUTES:
 	case DHO_TRAILER_ENCAPSULATION:
 	case DHO_ARP_CACHE_TIMEOUT:
@@ -2020,7 +2035,6 @@ check_option(struct client_lease *l, int option)
 	case DHO_NETBIOS_NODE_TYPE:
 	case DHO_NETBIOS_SCOPE:
 	case DHO_X_DISPLAY_MANAGER:
-	case DHO_DHCP_REQUESTED_ADDRESS:
 	case DHO_DHCP_LEASE_TIME:
 	case DHO_DHCP_OPTION_OVERLOAD:
 	case DHO_DHCP_MESSAGE_TYPE:
