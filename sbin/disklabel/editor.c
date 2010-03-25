@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.228 2010/03/23 14:59:30 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.229 2010/03/25 14:35:58 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -720,7 +720,7 @@ editor_resize(struct disklabel *lp, char *p)
 
 	sz = DL_GETPSIZE(pp);
 	if (sz == 0) {
-		fputs("No such parititon\n", stderr);
+		fputs("No such partition\n", stderr);
 		return;
 	}
 	if (DL_GETPOFFSET(pp) + sz + secs > ending_sector) {
