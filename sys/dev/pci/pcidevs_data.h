@@ -3648,6 +3648,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 3650",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3470,
+	    "Radeon HD 3470",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3400_M82,
 	    "Mobility Radeon HD 3400",
 	},
