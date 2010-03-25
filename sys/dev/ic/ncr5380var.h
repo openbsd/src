@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380var.h,v 1.11 2006/12/13 21:12:58 miod Exp $	*/
+/*	$OpenBSD: ncr5380var.h,v 1.12 2010/03/25 13:18:03 otto Exp $	*/
 /*	$NetBSD: ncr5380var.h,v 1.6 1996/05/10 18:04:06 gwr Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ struct ncr5380_softc {
 void	ncr5380_init(struct ncr5380_softc *);
 void	ncr5380_reset_scsibus(struct ncr5380_softc *);
 int 	ncr5380_intr(struct ncr5380_softc *);
-int 	ncr5380_scsi_cmd(struct scsi_xfer *);
+void 	ncr5380_scsi_cmd(struct scsi_xfer *);
 int 	ncr5380_pio_in(struct ncr5380_softc *, int, int, u_char *);
 int 	ncr5380_pio_out(struct ncr5380_softc *, int, int, u_char *);
 

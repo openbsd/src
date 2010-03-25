@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.24 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.25 2010/03/25 13:18:03 otto Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -593,13 +593,13 @@ out:
  * WARNING:  This can be called recursively!
  * (see comment in ncr5380_done)
  */
-int
+void
 ncr5380_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct	ncr5380_softc *sc;
 	struct sci_req	*sr;
-	int s, , flags;
+	int s, i, flags;
 
 	sc = xs->sc_link->adapter_softc;
 	flags = xs->flags;
