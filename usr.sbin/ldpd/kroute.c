@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.8 2010/03/24 19:13:10 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.9 2010/03/25 12:05:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -71,6 +71,7 @@ int	kr_change_fib(struct kroute_node *, struct kroute *, int);
 int	kr_delete_fib(struct kroute_node *);
 
 struct kroute_node	*kroute_find(in_addr_t, u_int8_t, u_int8_t);
+struct kroute_node	*kroute_find_fec(in_addr_t, u_int8_t, in_addr_t);
 struct kroute_node	*kroute_matchgw(struct kroute_node *, struct in_addr);
 int			 kroute_insert(struct kroute_node *);
 int			 kroute_remove(struct kroute_node *);
@@ -192,16 +193,6 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (0);
 
-	/* send update */
-	if (send_rtmsg(kr_state.fd, action, kroute, AF_MPLS) == -1)
-		return (-1);
-
-	if (kroute->nexthop.s_addr != INADDR_ANY &&
-	    kroute->remote_label != NO_LABEL) {
-		if (send_rtmsg(kr_state.fd, RTM_CHANGE, kroute, AF_INET) == -1)
-			return (-1);
-	}
-
 	kr->r.prefix.s_addr = kroute->prefix.s_addr;
 	kr->r.prefixlen = kroute->prefixlen;
 	kr->r.local_label = kroute->local_label;
@@ -211,6 +202,16 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 	kr->r.ext_tag = kroute->ext_tag;
 	rtlabel_unref(kr->r.rtlabel);	/* for RTM_CHANGE */
 	kr->r.rtlabel = kroute->rtlabel;
+
+	/* send update */
+	if (send_rtmsg(kr_state.fd, action, &kr->r, AF_MPLS) == -1)
+		return (-1);
+
+	if (kr->r.nexthop.s_addr != INADDR_ANY &&
+	    kr->r.remote_label != NO_LABEL) {
+		if (send_rtmsg(kr_state.fd, RTM_CHANGE, &kr->r, AF_INET) == -1)
+			return (-1);
+	}
 
 	return  (0);
 }
@@ -223,7 +224,8 @@ kr_change(struct kroute *kroute)
 
 	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
 
-	kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen, RTP_ANY);
+	kr = kroute_find_fec(kroute->prefix.s_addr, kroute->prefixlen,
+	    kroute->nexthop.s_addr);
 
 	if (kr == NULL) {
 		log_warnx("kr_change: lost FEC %s/%d",
@@ -263,8 +265,9 @@ kr_delete(struct kroute *kroute)
 {
 	struct kroute_node	*kr, *nkr;
 
-	if ((kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen,
-	    kroute->priority)) == NULL)
+	kr = kroute_find_fec(kroute->prefix.s_addr, kroute->prefixlen,
+	    kroute->nexthop.s_addr);
+	if (kr == NULL)
 		return (0);
 
 	if (kr_delete_fib(kr) == -1)
@@ -560,6 +563,30 @@ kroute_find(in_addr_t prefix, u_int8_t prefixlen, u_int8_t prio)
 			else
 				break;
 			tmp = RB_PREV(kroute_tree, &krt, kn);
+		}
+	}
+	return (kn);
+}
+
+struct kroute_node *
+kroute_find_fec(in_addr_t prefix, u_int8_t prefixlen, in_addr_t nexthop)
+{
+	struct kroute_node	s;
+	struct kroute_node	*kn;
+
+	s.r.prefix.s_addr = prefix;
+	s.r.prefixlen = prefixlen;
+	s.r.priority = 0;	/* trick to use RB_NFIND */
+
+	kn = RB_NFIND(kroute_tree, &krt, &s);
+	while (kn) {
+		if (kn->r.nexthop.s_addr == nexthop)
+			break;
+		kn = RB_NEXT(kroute_tree, &krt, kn);
+		if (kn == NULL || kn->r.prefix.s_addr != prefix ||
+		    kn->r.prefixlen != prefixlen) {
+			kn = NULL;
+			break;
 		}
 	}
 	return (kn);
