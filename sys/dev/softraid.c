@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.196 2010/03/26 11:20:34 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.197 2010/03/26 16:50:59 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -105,6 +105,8 @@ int			sr_ioctl_deleteraid(struct sr_softc *,
 			    struct bioc_deleteraid *);
 int			sr_ioctl_discipline(struct sr_softc *,
 			    struct bioc_discipline *);
+int			sr_ioctl_installboot(struct sr_softc *,
+			    struct bioc_installboot *);
 void			sr_chunks_unwind(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_discipline_free(struct sr_discipline *);
@@ -2030,6 +2032,10 @@ sr_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		rv = sr_ioctl_discipline(sc, (struct bioc_discipline *)addr);
 		break;
 
+	case BIOCINSTALLBOOT:
+		rv = sr_ioctl_installboot(sc, (struct bioc_installboot *)addr);
+		break;
+
 	default:
 		DNPRINTF(SR_D_IOCTL, "invalid ioctl\n");
 		rv = ENOTTY;
@@ -3093,6 +3099,155 @@ sr_ioctl_discipline(struct sr_softc *sc, struct bioc_discipline *bd)
 
 	if (sd && sd->sd_ioctl_handler)
 		rv = sd->sd_ioctl_handler(sd, bd);
+
+	return (rv);
+}
+
+int
+sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
+{
+	void			*bootblk = NULL, *bootldr = NULL;
+	struct sr_discipline	*sd = NULL;
+	struct sr_chunk		*chunk;
+	struct buf		b;
+	u_int32_t		bbs, bls;
+	int			rv = EINVAL;
+	int			i;
+
+	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_installboot %s\n", DEVNAME(sc),
+	    bb->bb_dev);
+
+	for (i = 0; i < SR_MAXSCSIBUS; i++)
+		if (sc->sc_dis[i]) {
+			if (!strncmp(sc->sc_dis[i]->sd_meta->ssd_devname,
+			    bb->bb_dev,
+			    sizeof(sc->sc_dis[i]->sd_meta->ssd_devname))) {
+				sd = sc->sc_dis[i];
+				break;
+			}
+		}
+
+	if (sd == NULL)
+		goto done;
+
+	if (bb->bb_bootblk_size > SR_BOOT_BLOCKS_SIZE * 512)
+		goto done;
+
+	if (bb->bb_bootldr_size > SR_BOOT_LOADER_SIZE * 512)
+		goto done;
+
+	/* Copy in boot block. */
+	bbs = howmany(bb->bb_bootblk_size, DEV_BSIZE) * DEV_BSIZE;
+	bootblk = malloc(bbs, M_DEVBUF, M_WAITOK | M_ZERO);
+	if (copyin(bb->bb_bootblk, bootblk, bb->bb_bootblk_size) != 0)
+		goto done;
+
+	/* Copy in boot loader. */
+	bls = howmany(bb->bb_bootldr_size, DEV_BSIZE) * DEV_BSIZE;
+	bootldr = malloc(bls, M_DEVBUF, M_WAITOK | M_ZERO);
+	if (copyin(bb->bb_bootldr, bootldr, bb->bb_bootldr_size) != 0)
+		goto done;
+
+	/* Save boot block and boot loader to each chunk. */
+	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
+
+		chunk = sd->sd_vol.sv_chunks[i];
+
+		/* Save boot blocks. */
+		DNPRINTF(SR_D_IOCTL,
+		    "sr_ioctl_installboot: saving boot block to %s "
+		    "(%u bytes)\n", chunk->src_devname, bbs);
+
+		bzero(&b, sizeof(b));
+		b.b_flags = B_WRITE | B_PHYS;
+		b.b_blkno = SR_BOOT_BLOCKS_OFFSET;
+		b.b_bcount = bbs;
+		b.b_bufsize = bbs;
+		b.b_resid = bbs;
+		b.b_data = bootblk;
+		b.b_error = 0;
+		b.b_proc = curproc;
+		b.b_dev = chunk->src_dev_mm;
+		b.b_vp = NULL;
+		b.b_iodone = NULL;
+		if (bdevvp(chunk->src_dev_mm, &b.b_vp)) {
+			printf("%s: sr_ioctl_installboot: vnode allocation "
+			    "failed\n", DEVNAME(sc));
+			goto done;
+		}
+		if ((b.b_flags & B_READ) == 0)
+			b.b_vp->v_numoutput++;
+		LIST_INIT(&b.b_dep);
+		VOP_STRATEGY(&b);
+		biowait(&b);
+		vput(b.b_vp);
+
+		if (b.b_flags & B_ERROR) {
+			printf("%s: 0x%x i/o error on block %llu while "
+			    "writing boot block %d\n", DEVNAME(sc),
+			    chunk->src_dev_mm, b.b_blkno, b.b_error);
+			goto done;
+		}
+
+		/* Save boot loader.*/
+		DNPRINTF(SR_D_IOCTL,
+		    "sr_ioctl_installboot: saving boot loader to %s "
+		    "(%u bytes)\n", chunk->src_devname, bls);
+
+		bzero(&b, sizeof(b));
+		b.b_flags = B_WRITE | B_PHYS;
+		b.b_blkno = SR_BOOT_LOADER_OFFSET;
+		b.b_bcount = bls;
+		b.b_bufsize = bls;
+		b.b_resid = bls;
+		b.b_data = bootldr;
+		b.b_error = 0;
+		b.b_proc = curproc;
+		b.b_dev = chunk->src_dev_mm;
+		b.b_vp = NULL;
+		b.b_iodone = NULL;
+		if (bdevvp(chunk->src_dev_mm, &b.b_vp)) {
+			printf("%s: sr_ioctl_installboot: vnode alocation "
+			    "failed\n", DEVNAME(sc));
+			goto done;
+		}
+		if ((b.b_flags & B_READ) == 0)
+			b.b_vp->v_numoutput++;
+		LIST_INIT(&b.b_dep);
+		VOP_STRATEGY(&b);
+		biowait(&b);
+		vput(b.b_vp);
+
+		if (b.b_flags & B_ERROR) {
+			printf("%s: 0x%x i/o error on block %llu while "
+			    "writing boot blocks %d\n", DEVNAME(sc),
+			    chunk->src_dev_mm, b.b_blkno, b.b_error);
+			goto done;
+		}
+
+	}
+
+	/* XXX - Install boot block on disk - MD code. */
+
+	/* Save boot details in metadata. */
+	sd->sd_meta->ssdi.ssd_flags |= BIOC_SCBOOTABLE;
+
+	/* XXX - Store size of boot block/loader in optional metadata. */
+
+	/* Save metadata. */
+	if (sr_meta_save(sd, SR_META_DIRTY)) {
+		printf("%s: could not save metadata to %s\n",
+		    DEVNAME(sc), chunk->src_devname);
+		goto done;
+	}
+
+	rv = 0;
+
+done:
+	if (bootblk)
+		free(bootblk, M_DEVBUF);
+	if (bootldr)
+		free(bootldr, M_DEVBUF);
 
 	return (rv);
 }

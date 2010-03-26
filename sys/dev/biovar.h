@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.37 2009/12/31 14:00:45 jsing Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.38 2010/03/26 16:50:59 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -184,6 +184,7 @@ struct bioc_createraid {
 #define BIOC_SCFORCE		0x01	/* do not assemble, force create */
 #define BIOC_SCDEVT		0x02	/* dev_t array or string in dev_list */
 #define BIOC_SCNOAUTOASSEMBLE	0x04	/* do not assemble during autoconf */
+#define BIOC_SCBOOTABLE		0x08	/* device is bootable */
 	u_int32_t	bc_opaque_size;
 	u_int32_t	bc_opaque_flags;
 #define	BIOC_SOINVALID		0x00	/* no opaque pointer */
@@ -212,6 +213,16 @@ struct bioc_discipline {
 	void		*bd_data;
 };
 
+#define BIOCINSTALLBOOT _IOWR('B', 40, struct bioc_installboot)
+struct bioc_installboot {
+	void		*bb_cookie;
+	char		bb_dev[16];
+	void		*bb_bootblk;
+	void		*bb_bootldr;
+	u_int32_t	bb_bootblk_size;
+	u_int32_t	bb_bootldr_size;
+};
+
 /* kernel and userspace defines */
 #define BIOC_INQ		0x0001
 #define BIOC_DISK		0x0002
@@ -222,6 +233,7 @@ struct bioc_discipline {
 #define BIOC_CREATERAID		0x0040
 #define BIOC_DELETERAID		0x0080
 #define BIOC_DISCIPLINE		0x0100
+#define BIOC_INSTALLBOOT	0x0200
 
 /* user space defines */
 #define BIOC_DEVLIST		0x10000
