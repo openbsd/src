@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.121 2010/03/03 13:52:39 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.122 2010/03/26 15:38:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -310,7 +310,7 @@ rib_restart(struct rib_context *ctx)
 	re->flags &= ~F_RIB_ENTRYLOCK;
 
 	/* find first non empty element */
-	while (rib_empty(re))
+	while (re && rib_empty(re))
 		re = RB_NEXT(rib_tree, unused, re);
 
 	/* free the previously locked rib element if empty */
