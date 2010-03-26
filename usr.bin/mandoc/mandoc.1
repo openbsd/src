@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.22 2010/03/25 23:23:01 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.23 2010/03/26 01:22:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2010 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt MANDOC 1
 .Os
 .
@@ -176,6 +176,10 @@ Produce an indented parse tree.
 .
 .It Fl T Ns Ar lint
 Parse only: produce no output.
+Implies
+.Fl W Ns Ar all
+and
+.Fl f Ns Ar strict .
 .El
 .
 .Pp
@@ -225,6 +229,8 @@ over a large set of manuals passed on the command line.
 .Ss Output Options
 For the time being, only
 .Fl T Ns Ar html
+and
+.Fl T Ns Ar xhtml
 accepts output options:
 .Bl -tag -width Ds
 .It Fl O Ns Ar style=style.css
@@ -527,7 +533,7 @@ and
 .Xr man 7 .
 .Pp
 Nesting elements within next-line element scopes of
-.Fl m Ar Ns an ,
+.Fl m Ns Ar an ,
 such as
 .Sq br
 within an empty
@@ -536,4 +542,11 @@ will confuse
 .Fl T Ns Ar html
 and
 .Fl T Ns Ar xhtml
-and cause it to forget the formatting.
+and cause them to forget the formatting of the prior next-line scope.
+.Pp
+The
+.Sq i
+macro in
+.Fl m Ns Ar an
+should italicise all subsequent text if a line argument is not provided.
+This behaviour is not implemented.

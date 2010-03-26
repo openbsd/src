@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.7 2010/03/25 23:23:01 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.8 2010/03/26 01:22:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -100,8 +100,14 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_ign_pre, NULL }, /* UC */
 	{ man_ign_pre, NULL }, /* PD */
 	{ man_br_pre, NULL }, /* Sp */
-	{ NULL, NULL }, /* Vb */
-	{ NULL, NULL }, /* Vi */
+	{ man_ign_pre, NULL }, /* Vb */
+	{ NULL, NULL }, /* Ve */
+	{ man_ign_pre, NULL }, /* de */
+	{ man_ign_pre, NULL }, /* dei */
+	{ man_ign_pre, NULL }, /* am */
+	{ man_ign_pre, NULL }, /* ami */
+	{ man_ign_pre, NULL }, /* ig */
+	{ NULL, NULL }, /* . */
 };
 
 
@@ -340,10 +346,18 @@ man_br_pre(MAN_ARGS)
 
 	SCALE_VS_INIT(&su, 1);
 
-	if ((MAN_sp == n->tok || MAN_Sp == n->tok) && n->child)
-		a2roffsu(n->child->string, &su, SCALE_VS);
-	else if (MAN_br == n->tok)
+	switch (n->tok) {
+	case (MAN_Sp):
+		SCALE_VS_INIT(&su, 0.5);
+		break;
+	case (MAN_sp):
+		if (n->child)
+			a2roffsu(n->child->string, &su, SCALE_VS);
+		break;
+	default:
 		su.scale = 0;
+		break;
+	}
 
 	bufcat_su(h, "height", &su);
 	PAIR_STYLE_INIT(&tag, h);

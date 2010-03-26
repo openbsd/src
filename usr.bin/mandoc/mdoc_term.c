@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.70 2010/03/02 00:38:59 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.71 2010/03/26 01:22:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -267,6 +267,9 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 	struct termp		*p;
 
 	p = (struct termp *)arg;
+
+	p->overstep = 0;
+	p->maxrmargin = 78;
 
 	if (NULL == p->symtab)
 		switch (p->enc) {

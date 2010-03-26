@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.13 2010/03/02 01:00:39 schwarze Exp $ */
+/*	$Id: man.h,v 1.14 2010/03/26 01:22:05 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,42 +19,50 @@
 
 #include <time.h>
 
-#define	MAN_br	 	 0
-#define	MAN_TH		 1
-#define	MAN_SH		 2
-#define	MAN_SS		 3
-#define	MAN_TP		 4
-#define	MAN_LP		 5
-#define	MAN_PP		 6
-#define	MAN_P		 7
-#define	MAN_IP		 8
-#define	MAN_HP		 9
-#define	MAN_SM		 10
-#define	MAN_SB		 11
-#define	MAN_BI		 12
-#define	MAN_IB		 13
-#define	MAN_BR		 14
-#define	MAN_RB		 15
-#define	MAN_R		 16
-#define	MAN_B		 17
-#define	MAN_I		 18
-#define	MAN_IR		 19
-#define	MAN_RI		 20
-#define	MAN_na		 21
-#define	MAN_i		 22
-#define	MAN_sp		 23
-#define	MAN_nf		 24
-#define	MAN_fi		 25
-#define	MAN_r		 26
-#define	MAN_RE		 27
-#define	MAN_RS		 28
-#define	MAN_DT		 29
-#define	MAN_UC		 30
-#define	MAN_PD		 31
-#define	MAN_Sp		 32
-#define	MAN_Vb		 33
-#define	MAN_Ve		 34
-#define	MAN_MAX	 	 35
+enum	mant {
+	MAN_br = 0,
+	MAN_TH,
+	MAN_SH,
+	MAN_SS,
+	MAN_TP,
+	MAN_LP,
+	MAN_PP,
+	MAN_P,
+	MAN_IP,
+	MAN_HP,
+	MAN_SM,
+	MAN_SB,
+	MAN_BI,
+	MAN_IB,
+	MAN_BR,
+	MAN_RB,
+	MAN_R,
+	MAN_B,
+	MAN_I,
+	MAN_IR,
+	MAN_RI,
+	MAN_na,
+	MAN_i,
+	MAN_sp,
+	MAN_nf,
+	MAN_fi,
+	MAN_r,
+	MAN_RE,
+	MAN_RS,
+	MAN_DT,
+	MAN_UC,
+	MAN_PD,
+	MAN_Sp,
+	MAN_Vb,
+	MAN_Ve,
+	MAN_de,
+	MAN_dei,
+	MAN_am,
+	MAN_ami,
+	MAN_ig,
+	MAN_dot,
+	MAN_MAX,
+};
 
 enum	man_type {
 	MAN_TEXT,
@@ -81,7 +89,7 @@ struct	man_node {
 	int		 nchild;
 	int		 line;
 	int		 pos;
-	int		 tok;
+	enum mant	 tok;
 	int		 flags;
 #define	MAN_VALID	(1 << 0)
 #define	MAN_ACTED	(1 << 1)

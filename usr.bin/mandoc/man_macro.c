@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.11 2010/03/25 23:23:01 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.12 2010/03/26 01:22:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -21,18 +21,23 @@
 
 #include "libman.h"
 
-#define	REW_REWIND	(0)		/* See rew_scope(). */
-#define	REW_NOHALT	(1)		/* See rew_scope(). */
-#define	REW_HALT	(2)		/* See rew_scope(). */
+enum	rew {
+	REW_REWIND,
+	REW_NOHALT,
+	REW_HALT,
+};
 
-static	int		 in_line_eoln(MACRO_PROT_ARGS);
-static	int		 blk_imp(MACRO_PROT_ARGS);
 static	int		 blk_close(MACRO_PROT_ARGS);
+static	int		 blk_dotted(MACRO_PROT_ARGS);
+static	int		 blk_exp(MACRO_PROT_ARGS);
+static	int		 blk_imp(MACRO_PROT_ARGS);
+static	int		 in_line_eoln(MACRO_PROT_ARGS);
 
-static	int		 rew_scope(enum man_type, struct man *, int);
-static	int 		 rew_dohalt(int, enum man_type, 
+static	int		 rew_scope(enum man_type, 
+				struct man *, enum mant);
+static	enum rew	 rew_dohalt(enum mant, enum man_type, 
 				const struct man_node *);
-static	int		 rew_block(int, enum man_type, 
+static	enum rew	 rew_block(enum mant, enum man_type, 
 				const struct man_node *);
 
 const	struct man_macro __man_macros[MAN_MAX] = {
@@ -64,13 +69,19 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* fi */
 	{ in_line_eoln, 0 }, /* r */
 	{ blk_close, 0 }, /* RE */
-	{ blk_imp, MAN_EXPLICIT }, /* RS */
+	{ blk_exp, MAN_EXPLICIT }, /* RS */
 	{ in_line_eoln, 0 }, /* DT */
 	{ in_line_eoln, 0 }, /* UC */
 	{ in_line_eoln, 0 }, /* PD */
-	{ in_line_eoln, 0 }, /* Sp */
+	{ in_line_eoln, MAN_NSCOPED }, /* Sp */
 	{ in_line_eoln, 0 }, /* Vb */
 	{ in_line_eoln, 0 }, /* Ve */
+	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* de */
+	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* dei */
+	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* am */
+	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* ami */
+	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* ig */
+	{ blk_dotted, 0 }, /* . */
 };
 
 const	struct man_macro * const man_macros = __man_macros;
@@ -81,7 +92,6 @@ man_unscope(struct man *m, const struct man_node *n)
 {
 
 	assert(n);
-	m->next = MAN_NEXT_SIBLING;
 
 	/* LINTED */
 	while (m->last != n) {
@@ -95,12 +105,18 @@ man_unscope(struct man *m, const struct man_node *n)
 
 	if ( ! man_valid_post(m))
 		return(0);
-	return(man_action_post(m));
+	if ( ! man_action_post(m))
+		return(0);
+
+	m->next = MAN_ROOT == m->last->type ? 
+		MAN_NEXT_CHILD : MAN_NEXT_SIBLING;
+
+	return(1);
 }
 
 
-static int
-rew_block(int ntok, enum man_type type, const struct man_node *n)
+static enum rew
+rew_block(enum mant ntok, enum man_type type, const struct man_node *n)
 {
 
 	if (MAN_BLOCK == type && ntok == n->parent->tok && 
@@ -115,10 +131,10 @@ rew_block(int ntok, enum man_type type, const struct man_node *n)
  * section (all less sections), and scoped to subsections (all less
  * sections and subsections).
  */
-static int 
-rew_dohalt(int tok, enum man_type type, const struct man_node *n)
+static enum rew 
+rew_dohalt(enum mant tok, enum man_type type, const struct man_node *n)
 {
-	int		 c;
+	enum rew	 c;
 
 	if (MAN_ROOT == n->type)
 		return(REW_HALT);
@@ -171,10 +187,10 @@ rew_dohalt(int tok, enum man_type type, const struct man_node *n)
  * scopes.  When a scope is closed, it must be validated and actioned.
  */
 static int
-rew_scope(enum man_type type, struct man *m, int tok)
+rew_scope(enum man_type type, struct man *m, enum mant tok)
 {
 	struct man_node	*n;
-	int		 c;
+	enum rew	 c;
 
 	/* LINTED */
 	for (n = m->last; n; n = n->parent) {
@@ -197,11 +213,50 @@ rew_scope(enum man_type type, struct man *m, int tok)
 }
 
 
+/*
+ * Closure for dotted macros (de, dei, am, ami, ign).  This must handle
+ * any of these as the parent node, so it needs special handling.
+ * Beyond this, it's the same as blk_close().
+ */
+/* ARGSUSED */
+int
+blk_dotted(MACRO_PROT_ARGS)
+{
+	enum mant	 ntok;
+	struct man_node	*nn;
+
+	for (nn = m->last->parent; nn; nn = nn->parent)
+		if (nn->tok == MAN_de || nn->tok == MAN_dei ||
+				nn->tok == MAN_am ||
+				nn->tok == MAN_ami ||
+				nn->tok == MAN_ig) {
+			ntok = nn->tok;
+			break;
+		}
+
+	if (NULL == nn) {
+		if ( ! man_pwarn(m, line, ppos, WNOSCOPE))
+			return(0);
+		return(1);
+	}
+
+	if ( ! rew_scope(MAN_BODY, m, ntok))
+		return(0);
+	if ( ! rew_scope(MAN_BLOCK, m, ntok))
+		return(0);
+
+	return(1);
+}
+
+
+/*
+ * Close out a generic explicit macro.
+ */
 /* ARGSUSED */
 int
 blk_close(MACRO_PROT_ARGS)
 {
-	int 		 	 ntok;
+	enum mant	 	 ntok;
 	const struct man_node	*nn;
 
 	switch (tok) {
@@ -225,9 +280,56 @@ blk_close(MACRO_PROT_ARGS)
 		return(0);
 	if ( ! rew_scope(MAN_BLOCK, m, ntok))
 		return(0);
-	m->next = MAN_NEXT_SIBLING;
+
 	return(1);
 }
+
+
+int
+blk_exp(MACRO_PROT_ARGS)
+{
+	int		 w, la;
+	char		*p;
+
+	/* 
+	 * Close out prior scopes.  "Regular" explicit macros cannot be
+	 * nested, but we allow roff macros to be placed just about
+	 * anywhere.
+	 */
+
+	if ( ! (MAN_NOCLOSE & man_macros[tok].flags)) {
+		if ( ! rew_scope(MAN_BODY, m, tok))
+			return(0);
+		if ( ! rew_scope(MAN_BLOCK, m, tok))
+			return(0);
+	}
+
+	if ( ! man_block_alloc(m, line, ppos, tok))
+		return(0);
+	if ( ! man_head_alloc(m, line, ppos, tok))
+		return(0);
+
+	for (;;) {
+		la = *pos;
+		w = man_args(m, line, pos, buf, &p);
+
+		if (-1 == w)
+			return(0);
+		if (0 == w)
+			break;
+
+		if ( ! man_word_alloc(m, line, la, p))
+			return(0);
+	}
+
+	assert(m);
+	assert(tok != MAN_MAX);
+
+	if ( ! rew_scope(MAN_HEAD, m, tok))
+		return(0);
+	return(man_body_alloc(m, line, ppos, tok));
+}
+
 
 
 /*
@@ -289,7 +391,6 @@ blk_imp(MACRO_PROT_ARGS)
 
 	if ( ! rew_scope(MAN_HEAD, m, tok))
 		return(0);
-
 	return(man_body_alloc(m, line, ppos, tok));
 }
 
@@ -314,11 +415,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 			return(0);
 		if (0 == w)
 			break;
-
-		/* XXX ignore Vb arguments for now */
-		if (MAN_Vb == tok)
-			continue;
-
 		if ( ! man_word_alloc(m, line, la, p))
 			return(0);
 	}
@@ -369,8 +465,9 @@ in_line_eoln(MACRO_PROT_ARGS)
 		return(0);
 	if (m->last->type != MAN_ROOT && ! man_action_post(m))
 		return(0);
-	if (m->last->type != MAN_ROOT)
-		m->next = MAN_NEXT_SIBLING;
+
+	m->next = MAN_ROOT == m->last->type ?
+		MAN_NEXT_CHILD : MAN_NEXT_SIBLING;
 
 	return(1);
 }

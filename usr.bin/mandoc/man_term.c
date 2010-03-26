@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.26 2010/03/25 23:23:01 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.27 2010/03/26 01:22:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -135,9 +135,15 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_ign, NULL, 0 }, /* DT */
 	{ pre_ign, NULL, 0 }, /* UC */
 	{ pre_ign, NULL, 0 }, /* PD */
-	{ pre_sp, NULL, MAN_NOTEXT }, /* Sp */
-	{ pre_nf, NULL, 0 }, /* Vb */
-	{ pre_fi, NULL, 0 }, /* Ve */
+ 	{ pre_sp, NULL, MAN_NOTEXT }, /* Sp */
+ 	{ pre_nf, NULL, 0 }, /* Vb */
+ 	{ pre_fi, NULL, 0 }, /* Ve */
+ 	{ pre_ign, NULL, MAN_NOTEXT }, /* de */
+ 	{ pre_ign, NULL, MAN_NOTEXT }, /* dei */
+ 	{ pre_ign, NULL, MAN_NOTEXT }, /* am */
+ 	{ pre_ign, NULL, MAN_NOTEXT }, /* ami */
+ 	{ pre_ign, NULL, MAN_NOTEXT }, /* ig */
+ 	{ NULL, NULL, 0 }, /* . */
 };
 
 
@@ -152,10 +158,12 @@ terminal_man(void *arg, const struct man *man)
 
 	p = (struct termp *)arg;
 
+	p->overstep = 0;
+	p->maxrmargin = 65;
+
 	if (NULL == p->symtab)
 		switch (p->enc) {
 		case (TERMENC_ASCII):
-			p->maxrmargin = 65;
 			p->symtab = chars_init(CHARS_ASCII);
 			break;
 		default:
@@ -259,10 +267,11 @@ static int
 pre_nf(DECL_ARGS)
 {
 
-	p->rmargin = p->maxrmargin = 160;
+	p->rmargin = p->maxrmargin = 78;
 	term_newln(p);
 	mt->fl |= MANT_LITERAL;
-	return(1);
+
+	return(MAN_Vb != n->tok);
 }
 
 
@@ -778,6 +787,8 @@ post_RS(DECL_ARGS)
 	case (MAN_BLOCK):
 		mt->offset = mt->lmargin = INDENT;
 		break;
+	case (MAN_HEAD):
+		break;
 	default:
 		term_newln(p);
 		p->offset = INDENT;
@@ -878,6 +889,7 @@ print_man_head(struct termp *p, const struct man_meta *m)
 	size_t		buflen, titlen;
 
 	p->rmargin = p->maxrmargin;
+
 	p->offset = 0;
 	buf[0] = title[0] = '\0';
 

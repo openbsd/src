@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.17 2010/03/25 23:23:01 schwarze Exp $
+.\"	$Id: man.7,v 1.18 2010/03/26 01:22:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2010 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt MAN 7
 .Os
 .
@@ -438,6 +438,7 @@ If a next-line macro is followed by a non-next-line macro, an error is
 raised (unless in the case of
 .Sx \&br ,
 .Sx \&sp ,
+.Sx \&Sp ,
 or
 .Sx \&na ) .
 .Pp
@@ -448,54 +449,51 @@ The syntax is as follows:
 .Ed
 .
 .Pp
-.Bl -column -compact -offset indent "MacroX" "ArgumentsX" "ScopeXXXXX"
-.It Em Macro Ta Em Arguments Ta Em Scope
-.It Sx \&B   Ta    n         Ta    next-line
-.It Sx \&BI  Ta    n         Ta    current
-.It Sx \&BR  Ta    n         Ta    current
-.It Sx \&DT  Ta    0         Ta    current
-.It Sx \&I   Ta    n         Ta    next-line
-.It Sx \&IB  Ta    n         Ta    current
-.It Sx \&IR  Ta    n         Ta    current
-.It Sx \&PD  Ta    n         Ta    current
-.It Sx \&R   Ta    n         Ta    next-line
-.It Sx \&RB  Ta    n         Ta    current
-.It Sx \&RI  Ta    n         Ta    current
-.It Sx \&SB  Ta    n         Ta    next-line
-.It Sx \&SM  Ta    n         Ta    next-line
-.It Sx \&TH  Ta    >1, <6    Ta    current
-.It Sx \&UC  Ta    n         Ta    current
-.It Sx \&br  Ta    0         Ta    current
-.It Sx \&fi  Ta    0         Ta    current
-.It Sx \&i   Ta    n         Ta    current
-.It Sx \&na  Ta    0         Ta    current
-.It Sx \&nf  Ta    0         Ta    current
-.It Sx \&r   Ta    0         Ta    current
-.It Sx \&sp  Ta    1         Ta    current
+.Bl -column -compact -offset indent "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX"
+.It Em Macro Ta Em Arguments Ta Em Scope     Ta Em Notes
+.It Sx \&B   Ta    n         Ta    next-line Ta    \&
+.It Sx \&BI  Ta    n         Ta    current   Ta    \&
+.It Sx \&BR  Ta    n         Ta    current   Ta    \&
+.It Sx \&DT  Ta    0         Ta    current   Ta    \&
+.It Sx \&I   Ta    n         Ta    next-line Ta    \&
+.It Sx \&IB  Ta    n         Ta    current   Ta    \&
+.It Sx \&IR  Ta    n         Ta    current   Ta    \&
+.\" .It Sx \&PD  Ta    n         Ta    current   Ta    compat
+.It Sx \&R   Ta    n         Ta    next-line Ta    \&
+.It Sx \&RB  Ta    n         Ta    current   Ta    \&
+.It Sx \&RI  Ta    n         Ta    current   Ta    \&
+.It Sx \&SB  Ta    n         Ta    next-line Ta    \&
+.It Sx \&SM  Ta    n         Ta    next-line Ta    \&
+.It Sx \&TH  Ta    >1, <6    Ta    current   Ta    \&
+.\" .It Sx \&UC  Ta    n         Ta    current   Ta    compat
+.It Sx \&br  Ta    0         Ta    current   Ta    compat
+.It Sx \&fi  Ta    0         Ta    current   Ta    compat
+.It Sx \&i   Ta    n         Ta    current   Ta    compat
+.It Sx \&na  Ta    0         Ta    current   Ta    compat
+.It Sx \&nf  Ta    0         Ta    current   Ta    compat
+.It Sx \&r   Ta    0         Ta    current   Ta    compat
+.It Sx \&sp  Ta    1         Ta    current   Ta    compat
+.\" .It Sx \&Sp  Ta    0         Ta    current   Ta    compat
+.\" .It Sx \&Vb  Ta    <1        Ta    current   Ta    compat
+.\" .It Sx \&Ve  Ta    0         Ta    current   Ta    compat
 .El
 .
 .Pp
-The
-.Sx \&PD ,
-.Sx \&RS ,
-.Sx \&RE ,
-.Sx \&UC ,
-.Sx \&br ,
-.Sx \&fi ,
-.Sx \&i ,
-.Sx \&na ,
-.Sx \&nf ,
-.Sx \&r ,
-and
-.Sx \&sp
-macros should not be used.  They're included for compatibility.
+Macros marked as
+.Qq compat
+are included for compatibility with the significant corpus of existing
+manuals that mix dialects of roff.  These macros should not be used for
+portable
+.Nm
+manuals.
 .
 .
 .Ss Block Macros
 Block macros are comprised of a head and body.  Like for in-line macros,
 the head is scoped to the current line and, in one circumstance, the
-next line (the next-line stipulations for line macros apply here as
-well).
+next line (the next-line stipulations as in
+.Sx Line Macros
+apply here as well).
 .Pp
 The syntax is as follows:
 .Bd -literal -offset indent
@@ -523,33 +521,34 @@ or
 No closure refers to an explicit block closing macro.
 .
 .Pp
-.Bl -column "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" -compact -offset indent
-.It Em Macro Ta Em Arguments Ta Em Head Scope Ta Em Body Scope
-.It Sx \&HP  Ta    <2        Ta    current    Ta    paragraph
-.It Sx \&IP  Ta    <3        Ta    current    Ta    paragraph
-.It Sx \&LP  Ta    0         Ta    current    Ta    paragraph
-.It Sx \&P   Ta    0         Ta    current    Ta    paragraph
-.It Sx \&PP  Ta    0         Ta    current    Ta    paragraph
-.It Sx \&RE  Ta    0         Ta    current    Ta    none
-.It Sx \&RS  Ta    1         Ta    current    Ta    part
-.It Sx \&SH  Ta    >0        Ta    next-line  Ta    section
-.It Sx \&SS  Ta    >0        Ta    next-line  Ta    sub-section
-.It Sx \&TP  Ta    n         Ta    next-line  Ta    paragraph
+As a rule, block macros may not be nested; thus, calling a block macro
+while another block macro scope is open, and the open scope is not
+implicitly closed, is syntactically incorrect.
+.
+.Pp
+.Bl -column -compact -offset indent "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" "compatX"
+.It Em Macro Ta Em Arguments Ta Em Head Scope Ta Em Body Scope  Ta Em Notes
+.It Sx \&HP  Ta    <2        Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&IP  Ta    <3        Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&LP  Ta    0         Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&P   Ta    0         Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&PP  Ta    0         Ta    current    Ta    paragraph   Ta    \&
+.It Sx \&RE  Ta    0         Ta    current    Ta    none        Ta    compat
+.It Sx \&RS  Ta    1         Ta    current    Ta    part        Ta    compat
+.It Sx \&SH  Ta    >0        Ta    next-line  Ta    section     Ta    \&
+.It Sx \&SS  Ta    >0        Ta    next-line  Ta    sub-section Ta    \&
+.It Sx \&TP  Ta    n         Ta    next-line  Ta    paragraph   Ta    \&
 .El
+.Pp
+.
+Macros marked
+.Qq compat
+are as mentioned in
+.Sx Line Macros .
 .
 .Pp
 If a block macro is next-line scoped, it may only be followed by in-line
-macros (excluding
-.Sx \&DT ,
-.Sx \&PD ,
-.Sx \&TH ,
-.Sx \&UC ,
-.Sx \&br ,
-.Sx \&na ,
-.Sx \&sp ,
-.Sx \&nf ,
-and
-.Sx \&fi ) .
+macros for decorating text.
 .
 .
 .Sh REFERENCE
@@ -904,14 +903,14 @@ See also
 .Sx \&P ,
 and
 .Sx \&PP .
-.
-.
-.Ss \&PD
-Has no effect.  Included for compatibility.
-.
-.
-.Ss \&UC
-Has no effect.  Included for compatibility.
+.\" .
+.\" .
+.\" .Ss \&PD
+.\" Has no effect.  Included for compatibility.
+.\" .
+.\" .
+.\" .Ss \&UC
+.\" Has no effect.  Included for compatibility.
 .
 .
 .Ss \&br
@@ -979,31 +978,43 @@ macro.  Defaults to 1, if unspecified.
 See also
 .Sx \&br .
 .
+.\" .Ss \&Sp
+.\" A synonym for
+.\" .Sx \&sp
+.\" .Cm 0.5v .
+.\" .
+.\" .Ss \&Vb
+.\" A synonym for
+.\" .Sx \&nf .
+.\" Accepts an argument (the height of the formatted space) which is
+.\" disregarded.
+.\" .
+.\" .Ss \&Ve
+.\" A synonym for
+.\" .Sx \&fi .
+.\" .
 .
 .Sh COMPATIBILITY
-This section documents compatibility with other roff implementations, at
-this time limited to
-.Xr groff 1 .
+This section documents areas of questionable portability between
+implementations of the
+.Nm
+language.
 .Pp
 .Bl -dash -compact
 .It
-The
-.Xr groff 1
-.Sx \&i
-macro will italicise all subsequent text if a line argument is not
-provided.  This behaviour is not implemented.
+In quoted literals, GNU troff allowed pair-wise double-quotes to produce
+a standalone double-quote in formatted output.  It is not known whether
+this behaviour is exhibited by other formatters.
 .It
-In quoted literals, groff allowed pair-wise double-quotes to produce a
-standalone double-quote in formatted output.  This idiosyncratic
-behaviour is no longer applicable.
+Blocks of whitespace are stripped from macro and free-form text lines
+(except when in literal mode) in mandoc.  This is not the case for GNU
+troff: for maximum portability, whitespace sensitive blocks should be
+enclosed in literal contexts.
 .It
 The
 .Sx \&sp
-macro does not accept negative numbers.
-.It
-Blocks of whitespace are stripped from both macro and free-form text
-lines (except when in literal mode), while groff would retain whitespace
-in free-form text lines.
+macro does not accept negative values in mandoc.  In GNU troff, this
+would result in strange behaviour.
 .El
 .
 .

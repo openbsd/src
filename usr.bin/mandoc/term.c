@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.25 2010/03/22 23:16:21 schwarze Exp $ */
+/*	$Id: term.c,v 1.26 2010/03/26 01:22:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -79,7 +79,6 @@ term_alloc(enum termenc enc)
 		perror(NULL);
 		exit(EXIT_FAILURE);
 	}
-	p->maxrmargin = 78;
 	p->enc = enc;
 	return(p);
 }
@@ -134,7 +133,6 @@ term_flushln(struct termp *p)
 	int		 jhy;	/* last hyphen before line overflow */
 	size_t		 maxvis, mmax;
 	static int	 line_started = 0;
-	static int	 overstep = 0;
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
@@ -145,12 +143,12 @@ term_flushln(struct termp *p)
 
 	assert(p->offset < p->rmargin);
 
-	maxvis = (int)(p->rmargin - p->offset) - overstep < 0 ?
+	maxvis = (int)(p->rmargin - p->offset) - p->overstep < 0 ?
 		/* LINTED */ 
-		0 : p->rmargin - p->offset - overstep;
-	mmax = (int)(p->maxrmargin - p->offset) - overstep < 0 ?
+		0 : p->rmargin - p->offset - p->overstep;
+	mmax = (int)(p->maxrmargin - p->offset) - p->overstep < 0 ?
 		/* LINTED */
-		0 : p->maxrmargin - p->offset - overstep;
+		0 : p->maxrmargin - p->offset - p->overstep;
 
 	bp = TERMP_NOBREAK & p->flags ? mmax : maxvis;
 
@@ -224,10 +222,10 @@ term_flushln(struct termp *p)
 				for (j = 0; j < (int)p->offset; j++)
 					putchar(' ');
 			}
-			/* Remove the overstep width. */
+			/* Remove the p->overstep width. */
 			bp += (int)/* LINTED */
-				overstep;
-			overstep = 0;
+				p->overstep;
+			p->overstep = 0;
 		} else {
 			for (j = 0; j < (int)vbl; j++)
 				putchar(' ');
@@ -252,7 +250,7 @@ term_flushln(struct termp *p)
 	}
 
 	p->col = 0;
-	overstep = 0;
+	p->overstep = 0;
 
 	if ( ! (TERMP_NOBREAK & p->flags)) {
 		if (line_started) {
@@ -264,7 +262,7 @@ term_flushln(struct termp *p)
 
 	if (TERMP_HANG & p->flags) {
 		/* We need one blank after the tag. */
-		overstep = /* LINTED */
+		p->overstep = /* LINTED */
 			vis - maxvis + 1;
 
 		/*
@@ -277,12 +275,12 @@ term_flushln(struct termp *p)
 		 * move it one step LEFT and flag the rest of the line
 		 * to be longer.
 		 */
-		if (overstep >= -1) {
-			assert((int)maxvis + overstep >= 0);
+		if (p->overstep >= -1) {
+			assert((int)maxvis + p->overstep >= 0);
 			/* LINTED */
-			maxvis += overstep;
+			maxvis += p->overstep;
 		} else
-			overstep = 0;
+			p->overstep = 0;
 
 	} else if (TERMP_DANGLE & p->flags)
 		return;

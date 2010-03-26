@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.13 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: term.h,v 1.14 2010/03/26 01:22:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,6 +35,7 @@ struct	termp {
 	size_t		  maxcols;	/* Max size of buf. */
 	size_t		  offset;	/* Margin offest. */
 	size_t		  col;		/* Bytes in buf. */
+	int		  overstep;	/* See termp_flushln(). */
 	int		  flags;
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
 #define	TERMP_NOLPAD	 (1 << 3)	/* See term_flushln(). */

@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.13 2010/03/02 01:00:39 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.14 2010/03/26 01:22:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -42,6 +42,7 @@ static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
 static	int	  check_par(CHKARGS);
 static	int	  check_part(CHKARGS);
+static	int	  check_roff(CHKARGS);
 static	int	  check_root(CHKARGS);
 static	int	  check_sec(CHKARGS);
 static	int	  check_text(CHKARGS);
@@ -53,10 +54,11 @@ static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
 static	v_check	  posts_le1[] = { check_le1, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
+static	v_check	  pres_roff[] = { check_bline, check_roff, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_eq0 }, /* br */
-	{ pres_bline, posts_ge2_le5 }, /* TH */
+	{ pres_bline, posts_ge2_le5 }, /* TH */ /* FIXME: make sure capitalised. */
 	{ pres_bline, posts_sec }, /* SH */
 	{ pres_bline, posts_sec }, /* SS */
 	{ pres_bline, posts_par }, /* TP */
@@ -90,6 +92,12 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_le1 }, /* Sp */
 	{ pres_bline, posts_le1 }, /* Vb */
 	{ pres_bline, posts_eq0 }, /* Ve */
+	{ pres_roff, NULL }, /* de */
+	{ pres_roff, NULL }, /* dei */
+	{ pres_roff, NULL }, /* am */
+	{ pres_roff, NULL }, /* ami */
+	{ pres_roff, NULL }, /* ig */
+	{ NULL, NULL }, /* . */
 };
 
 
@@ -280,6 +288,24 @@ check_bline(CHKARGS)
 	assert( ! (MAN_ELINE & m->flags));
 	if (MAN_BLINE & m->flags)
 		return(man_nerr(m, n, WLNSCOPE));
+
 	return(1);
 }
 
+
+static int
+check_roff(CHKARGS)
+{
+
+	if (MAN_BLOCK != n->type)
+		return(1);
+
+	for (n = n->parent; n; n = n->parent)
+		if (MAN_de == n->tok || MAN_dei == n->tok ||
+				MAN_am == n->tok || 
+				MAN_ami == n->tok ||
+				MAN_ig == n->tok)
+			return(man_nerr(m, n, WROFFNEST));
+
+	return(1);
+}

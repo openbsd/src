@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.21 2010/02/18 02:11:26 schwarze Exp $ */
+/*	$Id: main.c,v 1.22 2010/03/26 01:22:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -60,11 +60,11 @@ struct	curparse {
 #define	WARN_WALL	 (1 << 0)	/* All-warnings mask. */
 #define	WARN_WERR	 (1 << 2)	/* Warnings->errors. */
 	int		  fflags;
-#define	IGN_SCOPE	 (1 << 0) 	/* Ignore scope errors. */
-#define	NO_IGN_ESCAPE	 (1 << 1) 	/* Don't ignore bad escapes. */
-#define	NO_IGN_MACRO	 (1 << 2) 	/* Don't ignore bad macros. */
-#define	NO_IGN_CHARS	 (1 << 3)	/* Don't ignore bad chars. */
-#define	IGN_ERRORS	 (1 << 4)	/* Ignore failed parse. */
+#define	FL_IGN_SCOPE	 (1 << 0) 	/* Ignore scope errors. */
+#define	FL_NIGN_ESCAPE	 (1 << 1) 	/* Don't ignore bad escapes. */
+#define	FL_NIGN_MACRO	 (1 << 2) 	/* Don't ignore bad macros. */
+#define	FL_NIGN_CHARS	 (1 << 3)	/* Don't ignore bad chars. */
+#define	FL_IGN_ERRORS	 (1 << 4)	/* Ignore failed parse. */
 	enum intt	  inttype;	/* Input parsers... */
 	struct man	 *man;
 	struct man	 *lastman;
@@ -78,8 +78,12 @@ struct	curparse {
 	char		  outopts[BUFSIZ];
 };
 
+#define	FL_STRICT	  FL_NIGN_ESCAPE | \
+			  FL_NIGN_MACRO | \
+ 			  FL_NIGN_CHARS
+
 static	int		  foptions(int *, char *);
-static	int		  toptions(enum outt *, char *);
+static	int		  toptions(struct curparse *, char *);
 static	int		  moptions(enum intt *, char *);
 static	int		  woptions(int *, char *);
 static	int		  merr(void *, int, int, const char *);
@@ -132,7 +136,7 @@ main(int argc, char *argv[])
 			(void)strlcat(curp.outopts, ",", BUFSIZ);
 			break;
 		case ('T'):
-			if ( ! toptions(&curp.outtype, optarg))
+			if ( ! toptions(&curp, optarg))
 				return(EXIT_FAILURE);
 			break;
 		case ('W'):
@@ -160,7 +164,7 @@ main(int argc, char *argv[])
 		curp.fd = STDIN_FILENO;
 
 		c = fdesc(&blk, &ln, &curp);
-		if ( ! (IGN_ERRORS & curp.fflags)) 
+		if ( ! (FL_IGN_ERRORS & curp.fflags)) 
 			rc = 1 == c ? 1 : 0;
 		else
 			rc = -1 == c ? 0 : 1;
@@ -168,7 +172,7 @@ main(int argc, char *argv[])
 
 	while (rc && *argv) {
 		c = ffile(&blk, &ln, *argv, &curp);
-		if ( ! (IGN_ERRORS & curp.fflags)) 
+		if ( ! (FL_IGN_ERRORS & curp.fflags)) 
 			rc = 1 == c ? 1 : 0;
 		else
 			rc = -1 == c ? 0 : 1;
@@ -232,11 +236,11 @@ man_init(struct curparse *curp)
 
 	pflags = MAN_IGN_MACRO | MAN_IGN_ESCAPE | MAN_IGN_CHARS;
 
-	if (curp->fflags & NO_IGN_MACRO)
+	if (curp->fflags & FL_NIGN_MACRO)
 		pflags &= ~MAN_IGN_MACRO;
-	if (curp->fflags & NO_IGN_CHARS)
+	if (curp->fflags & FL_NIGN_CHARS)
 		pflags &= ~MAN_IGN_CHARS;
-	if (curp->fflags & NO_IGN_ESCAPE)
+	if (curp->fflags & FL_NIGN_ESCAPE)
 		pflags &= ~MAN_IGN_ESCAPE;
 
 	return(man_alloc(curp, pflags, &mancb));
@@ -256,13 +260,13 @@ mdoc_init(struct curparse *curp)
 
 	pflags = MDOC_IGN_MACRO | MDOC_IGN_ESCAPE | MDOC_IGN_CHARS;
 
-	if (curp->fflags & IGN_SCOPE)
+	if (curp->fflags & FL_IGN_SCOPE)
 		pflags |= MDOC_IGN_SCOPE;
-	if (curp->fflags & NO_IGN_ESCAPE)
+	if (curp->fflags & FL_NIGN_ESCAPE)
 		pflags &= ~MDOC_IGN_ESCAPE;
-	if (curp->fflags & NO_IGN_MACRO)
+	if (curp->fflags & FL_NIGN_MACRO)
 		pflags &= ~MDOC_IGN_MACRO;
-	if (curp->fflags & NO_IGN_CHARS)
+	if (curp->fflags & FL_NIGN_CHARS)
 		pflags &= ~MDOC_IGN_CHARS;
 
 	return(mdoc_alloc(curp, pflags, &mdoccb));
@@ -534,19 +538,22 @@ moptions(enum intt *tflags, char *arg)
 
 
 static int
-toptions(enum outt *tflags, char *arg)
+toptions(struct curparse *curp, char *arg)
 {
 
 	if (0 == strcmp(arg, "ascii"))
-		*tflags = OUTT_ASCII;
-	else if (0 == strcmp(arg, "lint"))
-		*tflags = OUTT_LINT;
+		curp->outtype = OUTT_ASCII;
+	else if (0 == strcmp(arg, "lint")) {
+		curp->outtype = OUTT_LINT;
+		curp->wflags |= WARN_WALL;
+		curp->fflags |= FL_STRICT;
+	}
 	else if (0 == strcmp(arg, "tree"))
-		*tflags = OUTT_TREE;
+		curp->outtype = OUTT_TREE;
 	else if (0 == strcmp(arg, "html"))
-		*tflags = OUTT_HTML;
+		curp->outtype = OUTT_HTML;
 	else if (0 == strcmp(arg, "xhtml"))
-		*tflags = OUTT_XHTML;
+		curp->outtype = OUTT_XHTML;
 	else {
 		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);
@@ -575,26 +582,25 @@ foptions(int *fflags, char *arg)
 		o = arg;
 		switch (getsubopt(&arg, UNCONST(toks), &v)) {
 		case (0):
-			*fflags |= IGN_SCOPE;
+			*fflags |= FL_IGN_SCOPE;
 			break;
 		case (1):
-			*fflags |= NO_IGN_ESCAPE;
+			*fflags |= FL_NIGN_ESCAPE;
 			break;
 		case (2):
-			*fflags |= NO_IGN_MACRO;
+			*fflags |= FL_NIGN_MACRO;
 			break;
 		case (3):
-			*fflags |= NO_IGN_CHARS;
+			*fflags |= FL_NIGN_CHARS;
 			break;
 		case (4):
-			*fflags |= IGN_ERRORS;
+			*fflags |= FL_IGN_ERRORS;
 			break;
 		case (5):
-			*fflags |= NO_IGN_ESCAPE | 
-			 	   NO_IGN_MACRO | NO_IGN_CHARS;
+			*fflags |= FL_STRICT;
 			break;
 		case (6):
-			*fflags &= ~NO_IGN_ESCAPE;
+			*fflags &= ~FL_NIGN_ESCAPE;
 			break;
 		default:
 			fprintf(stderr, "%s: Bad argument\n", o);
