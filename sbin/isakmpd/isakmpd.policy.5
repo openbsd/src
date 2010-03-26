@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.41 2007/05/31 19:19:45 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.42 2010/03/26 19:30:40 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt ISAKMPD.POLICY 5
 .Os
 .Sh NAME
@@ -559,20 +559,20 @@ policy configuration file.
     keynote-version: 2
     comment: This is an example of a policy delegating to a key.
     authorizer: "POLICY"
-    licensees: "x509-base64:MIICGDCCAYGgAwIBAgIBADANBgkqhkiG9w0BAQQ\\
-		FADBSMQswCQYDVQQGEwJHQjEOMAwGA1UEChMFQmVuQ28xETAPBg\\
-		NVBAMTCEJlbkNvIENBMSAwHgYJKoZIhvcNAQkBFhFiZW5AYWxnc\\
-		m91cC5jby51azAeFw05OTEwMTEyMjQ5MzhaFw05OTExMTAyMjQ5\\
-		MzhaMFIxCzAJBgNVBAYTAkdCMQ4wDAYDVQQKEwVCZW5DbzERMA8\\
-		GA1UEAxMIQmVuQ28gQ0ExIDAeBgkqhkiG9w0BCQEWEWJlbkBhbG\\
-		dyb3VwLmNvLnVrMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBg\\
-		QCxyAte2HEVouXg1Yu+vDihbnjDRn+6k00Rv6cZqbwA3BQ30mC/\\
-		3TFJ09VGXCaM0UKfpnxIpkBYLmOA3FWkKI0RvPU7E1AhKkhC1Ds\\
-		PSBFjYHrB15T5lYzgfwKJCIxTDzZDx2iobUgPa0FRNGVUjpQ4/k\\
-		MJ2BF4Wh7zY3X08rMzsQIDAQABMA0GCSqGSIb3DQEBBAUAA4GBA\\
-		DWJ5pbTcE7iKHWLQTMYiz8i9jGi5+Eo1yr1Bab90tgaGQV0zrRH\\
-		jDHgAAy1h8WSXuyQrXfgbx2rnWFPhx9CfmuAXn7sZmQE3mnUqeP\\
-		ZL2dW87jdBGqtoUdNcoz5zKBkC943yasNui/O01MiqgadTThTJH\\
+    licensees: "x509-base64:MIICGDCCAYGgAwIBAgIBADANBgkqhkiG9w0BAQQ\e
+		FADBSMQswCQYDVQQGEwJHQjEOMAwGA1UEChMFQmVuQ28xETAPBg\e
+		NVBAMTCEJlbkNvIENBMSAwHgYJKoZIhvcNAQkBFhFiZW5AYWxnc\e
+		m91cC5jby51azAeFw05OTEwMTEyMjQ5MzhaFw05OTExMTAyMjQ5\e
+		MzhaMFIxCzAJBgNVBAYTAkdCMQ4wDAYDVQQKEwVCZW5DbzERMA8\e
+		GA1UEAxMIQmVuQ28gQ0ExIDAeBgkqhkiG9w0BCQEWEWJlbkBhbG\e
+		dyb3VwLmNvLnVrMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBg\e
+		QCxyAte2HEVouXg1Yu+vDihbnjDRn+6k00Rv6cZqbwA3BQ30mC/\e
+		3TFJ09VGXCaM0UKfpnxIpkBYLmOA3FWkKI0RvPU7E1AhKkhC1Ds\e
+		PSBFjYHrB15T5lYzgfwKJCIxTDzZDx2iobUgPa0FRNGVUjpQ4/k\e
+		MJ2BF4Wh7zY3X08rMzsQIDAQABMA0GCSqGSIb3DQEBBAUAA4GBA\e
+		DWJ5pbTcE7iKHWLQTMYiz8i9jGi5+Eo1yr1Bab90tgaGQV0zrRH\e
+		jDHgAAy1h8WSXuyQrXfgbx2rnWFPhx9CfmuAXn7sZmQE3mnUqeP\e
+		ZL2dW87jdBGqtoUdNcoz5zKBkC943yasNui/O01MiqgadTThTJH\e
 		d1Pn17LbJC1ZVRNjR5"
     conditions: app_domain == "IPsec policy" && doi == "ipsec" &&
             pfs == "yes" && esp_present == "yes" && ah_present == "no" &&
@@ -583,42 +583,42 @@ policy configuration file.
     keynote-version: 2
     comment: This is an example of a credential, the signature does
 	     not really verify (although the keys are real).
-    licensees: "x509-base64:MIICGDCCAYGgAwIBAgIBADANBgkqhkiG9w0BAQQ\\
-		FADBSMQswCQYDVQQGEwJHQjEOMAwGA1UEChMFQmVuQ28xETAPBg\\
-		NVBAMTCEJlbkNvIENBMSAwHgYJKoZIhvcNAQkBFhFiZW5AYWxnc\\
-		m91cC5jby51azAeFw05OTEwMTEyMzA2MjJaFw05OTExMTAyMzA2\\
-		MjJaMFIxCzAJBgNVBAYTAkdCMQ4wDAYDVQQKEwVCZW5DbzERMA8\\
-		GA1UEAxMIQmVuQ28gQ0ExIDAeBgkqhkiG9w0BCQEWEWJlbkBhbG\\
-		dyb3VwLmNvLnVrMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBg\\
-		QDaCs+JAB6YRKAVkoi1NkOpE1V3syApjBj0Ahjq5HqYAACo1JhM\\
-		+QsPwuSWCNhBT51HX6G6UzfY3mOUz/vou6MJ/wor8EdeTX4nucx\\
-		NSz/r6XI262aXezAp+GdBviuJZx3Q67ON/IWYrB4QtvihI4bMn5\\
-		E55nF6TKtUMJTdATvs/wIDAQABMA0GCSqGSIb3DQEBBAUAA4GBA\\
-		MaQOSkaiR8id0h6Zo0VSB4HpBnjpWqz1jNG8N4RPN0W8muRA2b9\\
-		85GNP1bkC3fK1ZPpFTB0A76lLn11CfhAf/gV1iz3ELlUHo5J8nx\\
-		Pu6XfsGJm3HsXJOuvOog8Aean4ODo4KInuAsnbLzpGl0d+Jqa5u\\
+    licensees: "x509-base64:MIICGDCCAYGgAwIBAgIBADANBgkqhkiG9w0BAQQ\e
+		FADBSMQswCQYDVQQGEwJHQjEOMAwGA1UEChMFQmVuQ28xETAPBg\e
+		NVBAMTCEJlbkNvIENBMSAwHgYJKoZIhvcNAQkBFhFiZW5AYWxnc\e
+		m91cC5jby51azAeFw05OTEwMTEyMzA2MjJaFw05OTExMTAyMzA2\e
+		MjJaMFIxCzAJBgNVBAYTAkdCMQ4wDAYDVQQKEwVCZW5DbzERMA8\e
+		GA1UEAxMIQmVuQ28gQ0ExIDAeBgkqhkiG9w0BCQEWEWJlbkBhbG\e
+		dyb3VwLmNvLnVrMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBg\e
+		QDaCs+JAB6YRKAVkoi1NkOpE1V3syApjBj0Ahjq5HqYAACo1JhM\e
+		+QsPwuSWCNhBT51HX6G6UzfY3mOUz/vou6MJ/wor8EdeTX4nucx\e
+		NSz/r6XI262aXezAp+GdBviuJZx3Q67ON/IWYrB4QtvihI4bMn5\e
+		E55nF6TKtUMJTdATvs/wIDAQABMA0GCSqGSIb3DQEBBAUAA4GBA\e
+		MaQOSkaiR8id0h6Zo0VSB4HpBnjpWqz1jNG8N4RPN0W8muRA2b9\e
+		85GNP1bkC3fK1ZPpFTB0A76lLn11CfhAf/gV1iz3ELlUHo5J8nx\e
+		Pu6XfsGJm3HsXJOuvOog8Aean4ODo4KInuAsnbLzpGl0d+Jqa5u\e
 		TZUxsyg4QOBwYEU92H"
-    authorizer: "x509-base64:MIICGDCCAYGgAwIBAgIBADANBgkqhkiG9w0BAQQ\\
-		 FADBSMQswCQYDVQQGEwJHQjEOMAwGA1UEChMFQmVuQ28xETAPBg\\
-		 NVBAMTCEJlbkNvIENBMSAwHgYJKoZIhvcNAQkBFhFiZW5AYWxnc\\
-		 m91cC5jby51azAeFw05OTEwMTEyMjQ5MzhaFw05OTExMTAyMjQ5\\
-		 MzhaMFIxCzAJBgNVBAYTAkdCMQ4wDAYDVQQKEwVCZW5DbzERMA8\\
-		 GA1UEAxMIQmVuQ28gQ0ExIDAeBgkqhkiG9w0BCQEWEWJlbkBhbG\\
-		 dyb3VwLmNvLnVrMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBg\\
-		 QCxyAte2HEVouXg1Yu+vDihbnjDRn+6k00Rv6cZqbwA3BQ30mC/\\
-		 3TFJ09VGXCaM0UKfpnxIpkBYLmOA3FWkKI0RvPU7E1AhKkhC1Ds\\
-		 PSBFjYHrB15T5lYzgfwKJCIxTDzZDx2iobUgPa0FRNGVUjpQ4/k\\
-		 MJ2BF4Wh7zY3X08rMzsQIDAQABMA0GCSqGSIb3DQEBBAUAA4GBA\\
-		 DWJ5pbTcE7iKHWLQTMYiz8i9jGi5+Eo1yr1Bab90tgaGQV0zrRH\\
-		 jDHgAAy1h8WSXuyQrXfgbx2rnWFPhx9CfmuAXn7sZmQE3mnUqeP\\
-		 ZL2dW87jdBGqtoUdNcoz5zKBkC943yasNui/O01MiqgadTThTJH\\
+    authorizer: "x509-base64:MIICGDCCAYGgAwIBAgIBADANBgkqhkiG9w0BAQQ\e
+		 FADBSMQswCQYDVQQGEwJHQjEOMAwGA1UEChMFQmVuQ28xETAPBg\e
+		 NVBAMTCEJlbkNvIENBMSAwHgYJKoZIhvcNAQkBFhFiZW5AYWxnc\e
+		 m91cC5jby51azAeFw05OTEwMTEyMjQ5MzhaFw05OTExMTAyMjQ5\e
+		 MzhaMFIxCzAJBgNVBAYTAkdCMQ4wDAYDVQQKEwVCZW5DbzERMA8\e
+		 GA1UEAxMIQmVuQ28gQ0ExIDAeBgkqhkiG9w0BCQEWEWJlbkBhbG\e
+		 dyb3VwLmNvLnVrMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBg\e
+		 QCxyAte2HEVouXg1Yu+vDihbnjDRn+6k00Rv6cZqbwA3BQ30mC/\e
+		 3TFJ09VGXCaM0UKfpnxIpkBYLmOA3FWkKI0RvPU7E1AhKkhC1Ds\e
+		 PSBFjYHrB15T5lYzgfwKJCIxTDzZDx2iobUgPa0FRNGVUjpQ4/k\e
+		 MJ2BF4Wh7zY3X08rMzsQIDAQABMA0GCSqGSIb3DQEBBAUAA4GBA\e
+		 DWJ5pbTcE7iKHWLQTMYiz8i9jGi5+Eo1yr1Bab90tgaGQV0zrRH\e
+		 jDHgAAy1h8WSXuyQrXfgbx2rnWFPhx9CfmuAXn7sZmQE3mnUqeP\e
+		 ZL2dW87jdBGqtoUdNcoz5zKBkC943yasNui/O01MiqgadTThTJH\e
 		 d1Pn17LbJC1ZVRNjR5"
 conditions: app_domain == "IPsec policy" && doi == "ipsec" &&
 	    pfs == "yes" && esp_present == "yes" && ah_present == "no" &&
             (esp_enc_alg == "3des" || esp_enc_alg == "aes") -> "true";
-Signature: "sig-x509-sha1-base64:ql+vrUxv14DcBOQHR2jsbXayq6T\\
-            mmtMiUB745a8rjwSrQwh+KIVDlUrghPnqhSIkWSDi9oWWMbfg\\
-            mkdudZ0wjgeTLMI2NI4GibMMsToakOKMex/0q4cpdpln3DKcQ\\
+Signature: "sig-x509-sha1-base64:ql+vrUxv14DcBOQHR2jsbXayq6T\e
+            mmtMiUB745a8rjwSrQwh+KIVDlUrghPnqhSIkWSDi9oWWMbfg\e
+            mkdudZ0wjgeTLMI2NI4GibMMsToakOKMex/0q4cpdpln3DKcQ\e
             IcjzRv4khDws69FT3QfELjcpShvbLrXmh1Z00OFmxjyqDw="
 .Ed
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.17 2007/08/03 08:09:37 hshoexer Exp $
+.\" $OpenBSD: keynote.5,v 1.18 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: August 3 2007 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt KEYNOTE 5
 .\" .TH KeyNote 5 local
 .Os
@@ -167,13 +167,13 @@ becomes
 .Qq \e ) .
 The following four strings are equivalent:
 .Bd -literal
-        "this string contains a newline\\n followed by one space."
-        "this string contains a newline\\n \\
+        "this string contains a newline\en followed by one space."
+        "this string contains a newline\en \e
         followed by one space."
-        "this str\\
-           ing contains a \\
-             newline\\n followed by one space."
-        "this string contains a newline\\012\\040followed by one space."
+        "this str\e
+           ing contains a \e
+             newline\en followed by one space."
+        "this string contains a newline\e012\e040followed by one space."
 .Ed
 .Sh STRING EXPRESSIONS
 In general, anywhere a quoted string literal is allowed, a
@@ -638,7 +638,7 @@ the interest of readability.
            Licensees: Alice || Bob
            Conditions: (app_domain == "RFC822-EMAIL") &&
                        (address ~=   # only applies to one domain
-                         "^.*@keynote\\.research\\.att\\.com$") ->
+                         "^.*@keynote\e.research\e.att\e.com$") ->
 			"true";
            Signature: "RSA-SHA1:213354f9"
 

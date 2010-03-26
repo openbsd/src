@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.35 2008/11/09 12:34:47 tobias Exp $
+.\" $OpenBSD: pppd.8,v 1.36 2010/03/26 19:30:40 jmc Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2008 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -851,7 +851,7 @@ the initial /dev/ is removed from the terminal name, and any remaining
 .Pp
 An options file is parsed into a series of words, delimited by whitespace.
 Whitespace can be included in a word by enclosing the word in double-quotes (").
-A backslash (\\) quotes the following character.
+A backslash (\e) quotes the following character.
 A hash (#) starts a comment, which continues until the end of the line.
 There is no restriction on using the
 .Cm file
@@ -1203,8 +1203,8 @@ ABORT "Username/Password Incorrect"
 OK "at&d0&c1"
 OK "atdt2468135"
 "name:" "^Umyuserid"
-"word:" "\\qmypassword"
-"ispts" "\\q^Uppp"
+"word:" "\eqmypassword"
+"ispts" "\eq^Uppp"
 "~-^Uppp-~"
 .Ed
 .Pp

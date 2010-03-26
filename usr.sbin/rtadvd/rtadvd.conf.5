@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.23 2008/07/19 10:35:31 reyk Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.24 2010/03/26 19:30:40 jmc Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 19 2008 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -258,7 +258,7 @@ overrides the router lifetime parameter for the
 .Li ne0
 interface.
 .Bd -literal -offset
-ne0:\\
+ne0:\e
 	:rltime#0:
 .Ed
 .Pp
@@ -270,7 +270,7 @@ The configuration must be used with the
 option to
 .Xr rtadvd 8 .
 .Bd -literal -offset
-ef0:\\
+ef0:\e
 	:addr="2001:db8:ffff:1000::":prefixlen#64:
 .Ed
 .Pp
@@ -278,10 +278,10 @@ The following example presents the default values in an explicit manner.
 The configuration is provided just for reference purposes;
 YOU DO NOT NEED TO HAVE IT AT ALL.
 .Bd -literal -offset
-default:\\
-	:chlim#64:raflags#0:rltime#1800:rtime#0:retrans#0:\\
+default:\e
+	:chlim#64:raflags#0:rltime#1800:rtime#0:retrans#0:\e
 	:pinfoflags="la":vltime#2592000:pltime#604800:mtu#0:
-ef0:\\
+ef0:\e
 	:addr="2001:db8:ffff:1000::":prefixlen#64:tc=default:
 .Ed
 .Sh SEE ALSO

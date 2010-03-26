@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atan2.3,v 1.12 2008/12/12 00:10:26 martynas Exp $
+.\"	$OpenBSD: atan2.3,v 1.13 2010/03/26 19:30:40 jmc Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)atan2.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd $Mdocdate: December 12 2008 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt ATAN2 3
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ if
 .Ar x
 > 0,
 .It Ta sign( Ns Ar y Ns )*(\*(Pi -
-.Fn atan "\\*(Bay/x\\*(Ba" ) Ta
+.Fn atan "\*(Bay/x\*(Ba" ) Ta
 if
 .Ar x
 < 0,
@@ -102,7 +102,7 @@ if
 .Ar y
 = 0, or
 .It Ta
-.Pf sign( Ar y Ns )*\\*(Pi/2 Ta
+.Pf sign( Ar y Ns )*\*(Pi/2 Ta
 if
 .Ar x
 = 0,

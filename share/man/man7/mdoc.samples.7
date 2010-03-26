@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.85 2010/02/18 13:39:21 schwarze Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.86 2010/03/26 19:30:40 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 .\" times and is guaranteed to give a worst case performance
 .\" for an already extremely slow package.
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt MDOC.SAMPLES 7
 .Os
 .Sh NAME
@@ -413,7 +413,7 @@ is created by
 .Ql \&.Fn fetch char\e *str
 .It Fn fetch "char *str"
 can also be created by
-.Ql \&.Fn fetch "\\*qchar *str\\*q"
+.Ql \&.Fn fetch "\*qchar *str\*q"
 .El
 .Pp
 If the
@@ -1202,7 +1202,7 @@ Usage: .Fn [type] function [[type] parameters ... \*(Pu]
 .Fn getchar
 .It Li "\&.Fn strlen ) ,"
 .Fn strlen ) ,
-.It Li \&.Fn "\\*qint align\\*q" "\\*qconst * char *sptrs\\*q" ,
+.It Li \&.Fn "\*qint align\*q" "\*qconst * char *sptrs\*q" ,
 .Fn "int align" "const * char *sptrs" ,
 .El
 .Pp
@@ -3174,7 +3174,7 @@ is absolutely necessary for the scaling to work correctly.
 .It Fl width Ar "ENAMETOOLONG"
 sets width to the constant width length of the
 string given.
-.It Fl width Ar "\\*qint mkfifo\\*q"
+.It Fl width Ar "\*qint mkfifo\*q"
 again, the width is set to the constant width of the string
 given.
 .El

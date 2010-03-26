@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_intr_map.9,v 1.9 2009/08/22 02:57:06 mk Exp $
+.\"	$OpenBSD: pci_intr_map.9,v 1.10 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2009 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt PCI_INTR_MAP 9
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ xxxattach(struct device *parent, struct device *self, void *aux)
 	\&...
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": can't map interrupt\\n");
+		printf(": can't map interrupt\en");
 		bus_space_unmap(sc->iot, sc->ioh, size);
 		return;
 	}
@@ -109,12 +109,12 @@ xxxattach(struct device *parent, struct device *self, void *aux)
 		printf(": can't establish interrupt");
 		if (intrstr)
 			printf(" at %s", intrstr);
-		printf("\\n");
+		printf("\en");
 		bus_space_unmap(sc->iot, sc->ioh, size);
 		return;
 	}
 
-	printf(": %s\\n", intrstr);
+	printf(": %s\en", intrstr);
 
 	\&...
 }

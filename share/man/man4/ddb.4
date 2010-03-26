@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.67 2010/02/03 00:41:00 jsing Exp $
+.\"	$OpenBSD: ddb.4,v 1.68 2010/03/26 19:30:40 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: February 3 2010 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -245,7 +245,7 @@ display in unsigned decimal
 display in current radix, signed
 .It Cm /c
 display low 8 bits as a character.
-Non-printing characters are displayed as an octal escape code (e.g., '\\000').
+Non-printing characters are displayed as an octal escape code (e.g., '\e000').
 .It Cm /s
 display the null-terminated string at the location.
 Non-printing characters are displayed as octal escapes.

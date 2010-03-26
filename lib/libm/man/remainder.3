@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remainder.3,v 1.3 2009/08/03 21:26:07 martynas Exp $
+.\"	$OpenBSD: remainder.3,v 1.4 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\" $FreeBSD: src/lib/msun/man/remainder.3,v 1.6 2008/03/30 20:48:02 das Exp $
 .\"
-.Dd $Mdocdate: August 3 2009 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt REMAINDER 3
 .Os
 .Sh NAME
@@ -68,10 +68,10 @@ is the integer nearest the exact value of
 .Fa x Ns / Ns Fa y ;
 .Ek
 moreover if
-.Pf \\*(Ba Fa n
+.Pf \*(Ba Fa n
 \-
 .Sm off
-.Fa x No / Fa y No \\*(Ba
+.Fa x No / Fa y No \*(Ba
 .Sm on
 =
 1/2
@@ -81,11 +81,11 @@ is even.
 Consequently
 the remainder is computed exactly and
 .Sm off
-.Pf \\*(Ba Fa r No \\*(Ba
+.Pf \*(Ba Fa r No \*(Ba
 .Sm on
 \*(Le
 .Sm off
-.Pf \\*(Ba Fa y No \\*(Ba/2 .
+.Pf \*(Ba Fa y No \*(Ba/2 .
 .Sm on
 But attempting to take the remainder when
 .Fa y

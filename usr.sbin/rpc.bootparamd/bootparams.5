@@ -1,4 +1,4 @@
-.\" $OpenBSD: bootparams.5,v 1.9 2007/05/31 19:20:28 jmc Exp $
+.\" $OpenBSD: bootparams.5,v 1.10 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt BOOTPARAMS 5
 .Os
 .Sh NAME
@@ -56,8 +56,8 @@ and may be continued onto multiple lines with a backslash.
 .Pp
 For example:
 .Bd -literal -offset indent
-client	root=server:/export/client/root \\
-	swap=server:/export/client/swap \\
+client	root=server:/export/client/root \e
+	swap=server:/export/client/swap \e
 	dump=server:/export/client/swap
 .Ed
 .Pp

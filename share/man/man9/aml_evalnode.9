@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aml_evalnode.9,v 1.6 2007/09/13 03:44:21 weingart Exp $
+.\"	$OpenBSD: aml_evalnode.9,v 1.7 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2007 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt AML_EVALNODE 9
 .Os
 .Sh NAME
@@ -171,7 +171,7 @@ struct aml_node		*n;
 struct aml_value	res;
 
 if (aml_evalname(sc->sc_acpi, n, "_STA", 0, NULL, &res) != 0) {
-	dnprintf(10, "%s: no _STA\\n", DEVNAME(sc));
+	dnprintf(10, "%s: no _STA\en", DEVNAME(sc));
 	return;
 }
 .Ed
@@ -183,7 +183,7 @@ obtained from the
 call to determine if the device is a battery is done as follows:
 .Bd -literal -offset indent
 if ((aml_val2int(&res) & STA_BATTERY) == 0) {
-	dnprintf(10, %s: no battery present\\n", DEVNAME(sc));
+	dnprintf(10, %s: no battery present\en", DEVNAME(sc));
 	return;
 .Ed
 .Pp

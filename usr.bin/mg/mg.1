@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.45 2009/06/23 19:45:10 nicm Exp $
+.\"	$OpenBSD: mg.1,v 1.46 2010/03/26 19:30:40 jmc Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 23 2009 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -809,8 +809,8 @@ Strings that are normally entered by the user at any subsequent prompts
 may be specified after the command name; e.g.:
 .Bd -literal -offset indent
 global-set-key ")" self-insert-command
-global-set-key "\\^x\\^f" find-file
-global-set-key "\\e[Z" backward-char
+global-set-key "\e^x\e^f" find-file
+global-set-key "\ee[Z" backward-char
 set-default-mode fill
 set-fill-column 72
 auto-execute *.c c-mode

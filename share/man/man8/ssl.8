@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.45 2008/12/16 17:40:04 espie Exp $
+.\"	$OpenBSD: ssl.8,v 1.46 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 16 2008 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -127,7 +127,7 @@ to get a
 to sign your certificate.
 To do this use the command:
 .Bd -literal -offset indent
-# openssl req -new -key /etc/ssl/private/server.key \\
+# openssl req -new -key /etc/ssl/private/server.key \e
   -out /etc/ssl/private/server.csr
 .Ed
 .Pp
@@ -139,7 +139,7 @@ who will sign the key.
 .Pp
 You can also sign the key yourself, using the command:
 .Bd -literal -offset indent
-# openssl x509 -req -days 365 -in /etc/ssl/private/server.csr \\
+# openssl x509 -req -days 365 -in /etc/ssl/private/server.csr \e
   -signkey /etc/ssl/private/server.key -out /etc/ssl/server.crt
 .Ed
 .Pp
@@ -189,13 +189,13 @@ Once you have the
 parameters generated, you can generate a certificate
 and unencrypted private key using the command:
 .Bd -literal -offset indent
-# openssl req -x509 -nodes -newkey dsa:dsa1024.pem \\
+# openssl req -x509 -nodes -newkey dsa:dsa1024.pem \e
   -out /etc/ssl/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
 .Ed
 .Pp
 To generate an encrypted private key, you would use:
 .Bd -literal -offset indent
-# openssl req -x509 -newkey dsa:dsa1024.pem \\
+# openssl req -x509 -newkey dsa:dsa1024.pem \e
   -out /etc/ssl/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
 .Ed
 .Sh USING SSL/TLS WITH SENDMAIL

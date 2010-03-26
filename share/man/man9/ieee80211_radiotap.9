@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_radiotap.9,v 1.10 2008/03/09 15:34:34 jmc Exp $
+.\"	$OpenBSD: ieee80211_radiotap.9,v 1.11 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -27,9 +27,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_radiotap.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_radiotap.9,v 1.10 2008/03/09 15:34:34 jmc Exp $
+.\" $Id: ieee80211_radiotap.9,v 1.11 2010/03/26 19:30:40 jmc Exp $
 .\"
-.Dd $Mdocdate: March 9 2008 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt IEEE80211_RADIOTAP 9
 .Os
 .Sh NAME
@@ -225,13 +225,13 @@ struct rtw_rx_radiotap_header {
 .Pp
 Bitmap indicating which fields are present in the above structure:
 .Bd -literal -offset indent
-#define RTW_RX_RADIOTAP_PRESENT					\\
-	((1 << IEEE80211_RADIOTAP_TSFT)			|	\\
-	 (1 << IEEE80211_RADIOTAP_FLAGS)		|	\\
-	 (1 << IEEE80211_RADIOTAP_RATE)			|	\\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL)		|	\\
-	 (1 << IEEE80211_RADIOTAP_LOCK_QUALITY)		|	\\
-	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)		|	\\
+#define RTW_RX_RADIOTAP_PRESENT					\e
+	((1 << IEEE80211_RADIOTAP_TSFT)			|	\e
+	 (1 << IEEE80211_RADIOTAP_FLAGS)		|	\e
+	 (1 << IEEE80211_RADIOTAP_RATE)			|	\e
+	 (1 << IEEE80211_RADIOTAP_CHANNEL)		|	\e
+	 (1 << IEEE80211_RADIOTAP_LOCK_QUALITY)		|	\e
+	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)		|	\e
 	 0)
 .Ed
 .Sh SEE ALSO

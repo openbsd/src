@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppctl.8,v 1.15 2007/05/31 19:20:27 jmc Exp $
+.\"	$OpenBSD: pppctl.8,v 1.16 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Brian Somers <brian@Awfulhak.org>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt PPPCTL 8
 .Os
 .Sh NAME
@@ -194,13 +194,13 @@ To connect to the Internet:
 .Bd -literal -offset indent
 #! /bin/sh
 test $# -eq 0 && time=300 || time=$1
-exec pppctl /var/run/internet set timeout $time\\; dial
+exec pppctl /var/run/internet set timeout $time\e; dial
 .Ed
 .Pp
 To disconnect:
 .Bd -literal -offset indent
 #! /bin/sh
-exec pppctl /var/run/internet set timeout 300\\; close
+exec pppctl /var/run/internet set timeout 300\e; close
 .Ed
 .Pp
 To check if the line is up:

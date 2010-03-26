@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.32 2010/03/01 07:54:07 jmc Exp $
+.\"	$OpenBSD: termios.4,v 1.33 2010/03/26 19:30:40 jmc Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)termios.4	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 1 2010 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt TERMIOS 4
 .Os
 .Sh NAME
@@ -1456,7 +1456,7 @@ If
 and
 .Dv ICANON
 is set, an upper case character is preserved on input if prefixed by
-a \\ character.
+a \e character.
 In addition, this prefix is added to upper case characters on output.
 .Pp
 In addition, the following special character translations are in effect:

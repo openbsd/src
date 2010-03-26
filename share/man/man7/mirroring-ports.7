@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.18 2009/06/12 17:27:20 sthen Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.19 2010/03/26 19:30:40 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 12 2009 $
+.Dd $Mdocdate: March 26 2010 $
 .Dt MIRRORING-PORTS 7
 .Os
 .Sh NAME
@@ -59,9 +59,9 @@ all:: audio/tracker/tracker-5.3
 audio/tracker/tracker-5.3:  tracker-5.3.tgz
 
 tracker-5.3.tgz: $F
-        @MAINTAINER="espie@openbsd.org" \\
-         SITES="ftp://ftp.uni-trier.de/pub/unix/audio/tracker/ " \\
-         CIPHER="sha1" CKSUM="b0973d6a9c363caebd3a71547412f42b0681f323" \\
+        @MAINTAINER="espie@openbsd.org" \e
+         SITES="ftp://ftp.uni-trier.de/pub/unix/audio/tracker/ " \e
+         CIPHER="sha1" CKSUM="b0973d6a9c363caebd3a71547412f42b0681f323" \e
          exec ${FETCH} "$@"
 
 
