@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.11 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.12 2010/03/26 16:02:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -455,7 +455,8 @@ nbr_ktimeout(int fd, short event, void *arg)
 	    nbr->peerid);
 
 	send_notification_nbr(nbr, S_KEEPALIVE_TMR, 0, 0);
-	close(nbr->fd);
+	/* XXX race, send_notification_nbr() has no chance to be sent */
+	session_close(nbr);
 }
 
 void
