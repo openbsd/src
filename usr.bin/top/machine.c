@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.65 2010/01/29 00:36:09 tedu Exp $	 */
+/* $OpenBSD: machine.c,v 1.66 2010/03/26 05:10:50 lum Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -87,8 +87,6 @@ char	*state_abbrev[] = {
 	"", "start", "run", "sleep", "stop", "zomb", "dead", "onproc"
 };
 
-static int      stathz;
-
 /* these are for calculating cpu state percentages */
 static int64_t     **cp_time;
 static int64_t     **cp_old;
@@ -138,20 +136,6 @@ int		ncpu;
 
 unsigned int	maxslp;
 
-static int
-getstathz(void)
-{
-	struct clockinfo cinf;
-	size_t size = sizeof(cinf);
-	int mib[2];
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_CLOCKRATE;
-	if (sysctl(mib, 2, &cinf, &size, NULL, 0) == -1)
-		return (-1);
-	return (cinf.stathz);
-}
-
 int
 machine_init(struct statics *statics)
 {
@@ -178,10 +162,6 @@ machine_init(struct statics *statics)
 		    cp_diff[cpu] == NULL)
 			err(1, NULL);
 	}
-
-	stathz = getstathz();
-	if (stathz == -1)
-		return (-1);
 
 	pbase = NULL;
 	pref = NULL;
@@ -471,7 +451,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
 	pp = *(hp->next_proc++);
 	hp->remaining--;
 
-	cputime = (pp->p_uticks + pp->p_sticks + pp->p_iticks) / stathz;
+	cputime = pp->p_rtime_sec + ((pp->p_rtime_usec + 500000) / 1000000);
 
 	/* calculate the base for cpu percentages */
 	pct = pctdouble(pp->p_pctcpu);
