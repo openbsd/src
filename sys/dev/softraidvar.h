@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.89 2010/02/13 21:19:26 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.90 2010/03/26 11:20:34 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -22,22 +22,32 @@
 #include <crypto/md5.h>
 #include <sys/vnode.h>
 
-#define SR_UUID_MAX		16
-struct sr_uuid {
-	u_int8_t		sui_id[SR_UUID_MAX];
-} __packed;
+#define SR_META_VERSION		4	/* bump when sr_metadata changes */
+#define SR_META_SIZE		64	/* save space at chunk beginning */
+#define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
+
+#define SR_META_F_NATIVE	0	/* Native metadata format. */
+#define SR_META_F_INVALID	-1
+
+#define SR_BOOT_OFFSET		(SR_META_OFFSET + SR_META_SIZE)
+#define SR_BOOT_LOADER_SIZE	320	/* Size of boot loader storage. */
+#define SR_BOOT_LOADER_OFFSET	SR_BOOT_OFFSET
+#define SR_BOOT_BLOCKS_SIZE	128	/* Size of boot block storage. */
+#define SR_BOOT_BLOCKS_OFFSET	(SR_BOOT_LOADER_OFFSET + SR_BOOT_LOADER_SIZE)
+#define SR_BOOT_SIZE		(SR_BOOT_LOADER_SIZE + SR_BOOT_BLOCKS_SIZE)
+
+#define SR_HEADER_SIZE		(SR_META_SIZE + SR_BOOT_SIZE)
+#define SR_DATA_OFFSET		(SR_META_OFFSET + SR_HEADER_SIZE)
 
 #define SR_HOTSPARE_LEVEL	0xffffffff
 #define SR_HOTSPARE_VOLID	0xffffffff
 #define SR_KEYDISK_LEVEL	0xfffffffe
 #define SR_KEYDISK_VOLID	0xfffffffe
 
-#define SR_META_SIZE		64	/* save space at chunk beginning */
-#define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
-#define SR_META_VERSION		3	/* bump when sr_metadata changes */
-
-#define SR_META_F_NATIVE	0	/* Native metadata format. */
-#define SR_META_F_INVALID	-1
+#define SR_UUID_MAX		16
+struct sr_uuid {
+	u_int8_t		sui_id[SR_UUID_MAX];
+} __packed;
 
 struct sr_metadata {
 	struct sr_meta_invariant {
@@ -136,18 +146,27 @@ struct sr_meta_crypto {
 #define	chk_hmac_sha1	_scm_chk.chk_hmac_sha1
 } __packed;
 
+struct sr_meta_boot {
+	u_int64_t		sbm_root_uid;
+	u_int32_t		sbm_bootblk_size;
+	u_int32_t		sbm_bootldr_size;
+} __packed;
+
 struct sr_meta_opt {
 	struct sr_meta_opt_invariant {
 		u_int32_t	som_type;	/* optional type */
 #define SR_OPT_INVALID		0x00
 #define SR_OPT_CRYPTO		0x01
+#define SR_OPT_BOOT		0x02
 		u_int32_t	som_pad;
 		union {
 			struct sr_meta_crypto smm_crypto;
+			struct sr_meta_boot smm_boot;
 		}		som_meta;
 	} _som_invariant;
 #define somi			_som_invariant
 #define somi_crypto		_som_invariant.smm_crypto
+#define somi_boot		_som_invariant.smm_boot
 	/* MD5 of invariant optional metadata */
 	u_int8_t		som_checksum[MD5_DIGEST_LENGTH];
 } __packed;
