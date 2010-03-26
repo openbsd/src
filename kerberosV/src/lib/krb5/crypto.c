@@ -3451,6 +3451,12 @@ decrypt_internal_derived(krb5_context context,
 	return KRB5_BAD_MSIZE;
     }
 
+    if (len < checksum_sz + et->confoundersize) {
+	krb5_set_error_string(context, "Encrypted data shorter then "
+				  "checksum + confunder");
+	return KRB5_BAD_MSIZE;
+    }
+
     p = malloc(len);
     if(len != 0 && p == NULL) {
 	krb5_set_error_string(context, "malloc: out of memory");
@@ -3525,6 +3531,13 @@ decrypt_internal(krb5_context context,
     }
 
     checksum_sz = CHECKSUMSIZE(et->checksum);
+
+    if (len < checksum_sz + et->confoundersize) {
+	krb5_set_error_string(context, "Encrypted data shorter then "
+				  "checksum + confunder");
+	return KRB5_BAD_MSIZE;
+    }
+
     p = malloc(len);
     if(len != 0 && p == NULL) {
 	krb5_set_error_string(context, "malloc: out of memory");
