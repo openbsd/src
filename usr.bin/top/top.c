@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.72 2010/03/23 16:16:09 lum Exp $	*/
+/*	$OpenBSD: top.c,v 1.73 2010/03/26 16:56:00 lum Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -666,9 +666,7 @@ rundisplay(void)
 			    "Number of processes to show: ");
 
 			if (readline(tempbuf, 8) > 0) {
-				char *ptr;
-				ptr = tempbuf;
-				if ((i = atoiwi(ptr)) != Invalid) {
+				if ((i = atoiwi(tempbuf)) != Invalid) {
 					if (i > max_topn) {
 						new_message(MT_standout |
 						    MT_delayed,
@@ -722,9 +720,7 @@ rundisplay(void)
 			    itoa(displays));
 
 			if (readline(tempbuf, 10) > 0) {
-				char *ptr;
-				ptr = tempbuf;				
-				if ((i = atoiwi(ptr)) != Invalid) {
+				if ((i = atoiwi(tempbuf)) != Invalid) {
 					if (i == 0)
 						quit(0);
 					displays = i;
