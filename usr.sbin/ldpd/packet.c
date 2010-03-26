@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.4 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.5 2010/03/26 16:00:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -328,6 +328,7 @@ session_read(int fd, short event, void *arg)
 	    sizeof(nbr->rbuf->buf) - nbr->rbuf->wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
 			/* XXX find better error */
+			event_del(&nbr->rev);
 			session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 			return;
 		}
@@ -464,6 +465,7 @@ session_close(struct nbr *nbr)
 	    inet_ntoa(nbr->id));
 
 	evbuf_clear(&nbr->wbuf);
+	event_del(&nbr->rev);
 
 	if (evtimer_pending(&nbr->keepalive_timer, NULL))
 		evtimer_del(&nbr->keepalive_timer);
