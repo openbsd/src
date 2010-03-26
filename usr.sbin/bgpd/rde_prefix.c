@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.31 2010/01/13 06:02:37 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.32 2010/03/26 15:41:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -157,10 +157,8 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 	p = pt_fill(prefix, prefixlen);
 	p = pt_alloc(p);
 
-	if (RB_INSERT(pt_tree, &pttable, p) != NULL) {
-		log_warnx("pt_add: insert failed");
-		return (NULL);
-	}
+	if (RB_INSERT(pt_tree, &pttable, p) != NULL)
+		fatalx("pt_add: insert failed");
 
 	return (p);
 }
