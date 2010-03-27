@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2004/09/21 09:54:08 pefo Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2010/03/27 20:16:15 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -102,9 +102,54 @@ LEAF(_dl__syscall, 0)
 	j	ra
 END(_dl__syscall)
 
-	.globl	_dl_rt_resolve
-	.ent	_dl_rt_resolve, 0
-_dl_rt_resolve:
+FRAMESZ= MKFSIZ(4,16)
+GPOFF= FRAMESZ-2*REGSZ
+RAOFF= FRAMESZ-1*REGSZ
+A0OFF= FRAMESZ-3*REGSZ
+A1OFF= FRAMESZ-4*REGSZ
+A2OFF= FRAMESZ-5*REGSZ
+A3OFF= FRAMESZ-6*REGSZ
+A4OFF= FRAMESZ-7*REGSZ
+A5OFF= FRAMESZ-8*REGSZ
+A6OFF= FRAMESZ-9*REGSZ
+A7OFF= FRAMESZ-10*REGSZ
+S0OFF= FRAMESZ-11*REGSZ
 
-/* XXX Fix when lazy binding works */
-	.end	_dl_rt_resolve
+	.globl	_dl_bind_start
+	.ent	_dl_bind_start, 0
+_dl_bind_start:
+	ld	v1, -32744(gp)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, _dl_bind_start)
+	REG_S	a0, A0OFF(sp)
+	REG_S	a1, A1OFF(sp)
+	REG_S	a2, A2OFF(sp)
+	REG_S	a3, A3OFF(sp)
+	REG_S	a4, A4OFF(sp)
+	REG_S	a5, A5OFF(sp)
+	REG_S	a6, A6OFF(sp)
+	REG_S	a7, A7OFF(sp)
+	REG_S	$15, RAOFF(sp)
+	REG_S	s0, S0OFF(sp)
+	move	s0, sp
+	move	a0, v1
+	move	a1, t8
+	jal	_dl_bind
+	 nop
+	move	sp, s0
+	REG_L	ra, RAOFF(sp)
+	REG_L	s0, S0OFF(sp)
+	REG_L	a0, A0OFF(sp)
+	REG_L	a1, A1OFF(sp)
+	REG_L	a2, A2OFF(sp)
+	REG_L	a3, A3OFF(sp)
+	REG_L	a4, A4OFF(sp)
+	REG_L	a5, A5OFF(sp)
+	REG_L	a6, A6OFF(sp)
+	REG_L	a7, A7OFF(sp)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
+	move	t9, v0
+	jr	t9
+	 nop
+	.end	_dl_bind_start

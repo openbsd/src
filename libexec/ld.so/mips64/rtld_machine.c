@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.11 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.12 2010/03/27 20:16:15 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -32,6 +32,8 @@
 #include <sys/mman.h>
 
 #include <link.h>
+#include <signal.h>
+
 #include "resolve.h"
 #include "syscall.h"
 #include "archdep.h"
@@ -159,6 +161,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	return(fails);
 }
 
+extern void _dl_bind_start(void);
+
 /*
  *	Relocate the Global Offset Table (GOT). Currently we don't
  *	do lazy evaluation here because the GNU linker doesn't
@@ -182,7 +186,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->status & STAT_GOT_DONE)
 		return (0);
 
-	lazy = 0;	/* XXX Fix ld before enabling lazy */
 	loff = object->obj_base;
 	strt = object->dyn.strtab;
 	gotp = object->dyn.pltgot;
@@ -192,13 +195,11 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	/*
 	 *  Set up pointers for run time (lazy) resolving.
 	 */
-	gotp[0] = (long)_dl_rt_resolve;
-	if (gotp[1] & 0x0000000080000000) {
-		gotp[1] = (long)object | 0x0000000080000000;
-	}
+	gotp[0] = (long)_dl_bind_start;
+	gotp[1] = (long)object;
 
 	/*  First do all local references. */
-	for (i = ((gotp[1] & 0x0000000080000000) ? 2 : 1); i < n; i++) {
+	for (i = 2; i < n; i++) {
 		gotp[i] += loff;
 	}
 
@@ -239,7 +240,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				if (this)
 					*gotp = this->st_value + ooff;
 			} else
-				*gotp = symp->st_value + ooff;
+				*gotp = symp->st_value + loff;
 		} else if (symp->st_shndx == SHN_COMMON ||
 			symp->st_shndx == SHN_UNDEF) {
 			this = 0;
@@ -272,4 +273,49 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		    PROT_READ);
 
 	return (0);
+}
+
+Elf_Addr
+_dl_bind(elf_object_t *object, int symidx)
+{
+	Elf_Addr *gotp = object->dyn.pltgot;
+	Elf_Addr *addr, ooff;
+	const Elf_Sym *sym, *this;
+	const char *symn;
+	sigset_t omask, nmask;
+	int n;
+
+	sym = object->dyn.symtab;
+	sym += symidx;
+	symn = object->dyn.strtab + sym->st_name;
+	n = object->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM] -
+	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
+
+	ooff = _dl_find_symbol(symn, &this,
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, NULL);
+	if (this == NULL) {
+		_dl_printf("lazy binding failed\n");
+		*((int *)0) = 0;	/* XXX */
+	}
+
+	addr = &gotp[n + symidx];
+
+	/* if GOT is protected, allow the write */
+	if (object->got_size != 0) {
+		sigfillset(&nmask);
+		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
+		_dl_thread_bind_lock(0);
+		_dl_mprotect(addr, sizeof(Elf_Addr), PROT_READ|PROT_WRITE);
+	}
+
+	*addr = ooff + this->st_value;
+
+	/* if GOT is (to be protected, change back to RO */
+	if (object->got_size != 0) {
+		_dl_mprotect(addr, sizeof (Elf_Addr), PROT_READ);
+		_dl_thread_bind_lock(1);
+		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+	}
+
+	return *addr;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.57 2008/05/05 02:29:02 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.58 2010/03/27 20:16:15 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -147,8 +147,6 @@ struct dep_node {
 	TAILQ_ENTRY(dep_node) next_sib;
 	elf_object_t *data;
 };
-
-void _dl_rt_resolve(void);
 
 void _dl_add_object(elf_object_t *object);
 elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
