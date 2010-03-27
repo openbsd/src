@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.10 2010/03/22 22:28:27 jsg Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.11 2010/03/27 20:04:03 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -152,7 +152,7 @@ bwi_cardbus_detach(struct device *self, int flags)
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
 	struct bwi_softc *sc = &csc->csc_bwi;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
@@ -177,7 +177,7 @@ void
 bwi_cardbus_setup(struct bwi_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->csc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
@@ -202,7 +202,7 @@ bwi_cardbus_enable(struct bwi_softc *sc)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* power on the socket */
@@ -229,7 +229,7 @@ bwi_cardbus_disable(struct bwi_softc *sc)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
@@ -245,7 +245,7 @@ bwi_cardbus_conf_write(void *self, uint32_t reg, uint32_t val)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	cardbus_conf_write(cc, cf, csc->csc_tag, reg, val);
@@ -256,7 +256,7 @@ bwi_cardbus_conf_read(void *self, uint32_t reg)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
 	cardbus_devfunc_t ct = csc->csc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	return (cardbus_conf_read(cc, cf, csc->csc_tag, reg));

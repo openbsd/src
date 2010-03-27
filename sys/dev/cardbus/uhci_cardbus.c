@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.9 2010/03/22 22:28:27 jsg Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.10 2010/03/27 20:04:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ int	uhci_cardbus_detach(struct device *, int);
 
 struct uhci_cardbus_softc {
 	uhci_softc_t		sc;
-	pci_chipset_tag_t	sc_cc;
+	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;
 	void 			*sc_ih;		/* interrupt vectoring */
@@ -87,7 +87,7 @@ uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct uhci_cardbus_softc *sc = (struct uhci_cardbus_softc *)self;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t csr;
 	usbd_status r;

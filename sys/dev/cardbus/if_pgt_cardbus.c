@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.9 2010/03/22 22:28:27 jsg Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.10 2010/03/27 20:04:03 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -148,7 +148,7 @@ pgt_cardbus_detach(struct device *self, int flags)
 	struct pgt_cardbus_softc *csc = (struct pgt_cardbus_softc *)self;
 	struct pgt_softc *sc = &csc->sc_pgt;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
@@ -174,7 +174,7 @@ pgt_cardbus_enable(struct pgt_softc *sc)
 {
         struct pgt_cardbus_softc *csc = (struct pgt_cardbus_softc *)sc;
         cardbus_devfunc_t ct = csc->sc_ct;
-        pci_chipset_tag_t cc = ct->ct_cc;
+        cardbus_chipset_tag_t cc = ct->ct_cc;
         cardbus_function_tag_t cf = ct->ct_cf;
 
         /* power on the socket */
@@ -201,7 +201,7 @@ pgt_cardbus_disable(struct pgt_softc *sc)
 {
 	struct pgt_cardbus_softc *csc = (struct pgt_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
@@ -227,7 +227,7 @@ void
 pgt_cardbus_setup(struct pgt_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 

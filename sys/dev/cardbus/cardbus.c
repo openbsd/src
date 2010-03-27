@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.42 2010/03/22 22:28:27 jsg Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.43 2010/03/27 20:04:03 jsg Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
     u_int8_t *tuples, size_t len)
 {
 	struct cardbus_softc *sc = ca->ca_ct->ct_sc;
-	pci_chipset_tag_t cc = ca->ca_ct->ct_cc;
+	cardbus_chipset_tag_t cc = ca->ca_ct->ct_cc;
 	cardbus_function_tag_t cf = ca->ca_ct->ct_cf;
 	pcitag_t tag = ca->ca_tag;
 	pcireg_t command;
@@ -371,7 +371,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 int
 cardbus_attach_card(struct cardbus_softc *sc)
 {
-	pci_chipset_tag_t cc;
+	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
 	int cdstatus;
 	pcitag_t tag;
@@ -635,11 +635,11 @@ cardbus_detach_card(struct cardbus_softc *sc)
  * void *cardbus_intr_establish(cc, cf, irq, level, func, arg, name)
  *   Interrupt handler of pccard.
  *  args:
- *   pci_chipset_tag_t *cc
+ *   cardbus_chipset_tag_t *cc
  *   int irq:
  */
 void *
-cardbus_intr_establish(pci_chipset_tag_t cc, cardbus_function_tag_t cf,
+cardbus_intr_establish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
     cardbus_intr_handle_t irq, int level, int (*func)(void *), void *arg,
     const char *name)
 {
@@ -652,10 +652,10 @@ cardbus_intr_establish(pci_chipset_tag_t cc, cardbus_function_tag_t cf,
  * void cardbus_intr_disestablish(cc, cf, handler)
  *   Interrupt handler of pccard.
  *  args:
- *   pci_chipset_tag_t *cc
+ *   cardbus_chipset_tag_t *cc
  */
 void
-cardbus_intr_disestablish(pci_chipset_tag_t cc, cardbus_function_tag_t cf,
+cardbus_intr_disestablish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
     void *handler)
 {
 	DPRINTF(("- pccard_intr_disestablish\n"));
@@ -701,7 +701,7 @@ disable_function(struct cardbus_softc *sc, int function)
 int
 cardbus_function_enable(struct cardbus_softc *sc, int func)
 {
-	pci_chipset_tag_t cc = sc->sc_cc;
+	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	pcireg_t command;
 	pcitag_t tag;
@@ -747,14 +747,14 @@ cardbus_function_disable(struct cardbus_softc *sc, int func)
 }
 
 /*
- * int cardbus_get_capability(pci_chipset_tag_t cc,
+ * int cardbus_get_capability(cardbus_chipset_tag_t cc,
  *	cardbus_function_tag_t cf, pcitag_t tag, int capid, int *offset,
  *	pcireg_t *value)
  *
  *	Find the specified PCI capability.
  */
 int
-cardbus_get_capability(pci_chipset_tag_t cc, cardbus_function_tag_t cf,
+cardbus_get_capability(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
     pcitag_t tag, int capid, int *offset, pcireg_t *value)
 {
 	pcireg_t reg;

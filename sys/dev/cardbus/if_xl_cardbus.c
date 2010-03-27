@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.25 2010/03/22 22:28:27 jsg Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.26 2010/03/27 20:04:03 jsg Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct xl_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t command, bhlc;
 	const struct xl_cardbus_product *ecp;

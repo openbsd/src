@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.31 2010/03/22 22:28:27 jsg Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.32 2010/03/27 20:04:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -125,7 +125,7 @@ dc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct dc_softc *sc = &csc->sc_dc;
 	struct cardbus_attach_args *ca = aux;
 	struct cardbus_devfunc *ct = ca->ca_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 	bus_addr_t addr;
@@ -259,7 +259,7 @@ void
 dc_cardbus_setup(struct dc_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 	int r;

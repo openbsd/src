@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.16 2010/03/22 22:28:27 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.17 2010/03/27 20:04:03 jsg Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -321,7 +321,7 @@ rtw_cardbus_enable(struct rtw_softc *sc)
 {
 	struct rtw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/*
@@ -359,7 +359,7 @@ rtw_cardbus_disable(struct rtw_softc *sc)
 {
 	struct rtw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	RTW_WRITE(&sc->sc_regs, RTW_FEMR,
@@ -390,7 +390,7 @@ rtw_cardbus_setup(struct rtw_cardbus_softc *csc)
 {
 	struct rtw_softc *sc = &csc->sc_rtw;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 	int pmreg;

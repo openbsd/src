@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.6 2010/03/22 22:28:27 jsg Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.7 2010/03/27 20:04:03 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -146,7 +146,7 @@ athn_cardbus_detach(struct device *self, int flags)
 	struct athn_cardbus_softc *csc = (struct athn_cardbus_softc *)self;
 	struct athn_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	athn_detach(sc);
@@ -167,7 +167,7 @@ athn_cardbus_enable(struct athn_softc *sc)
 {
 	struct athn_cardbus_softc *csc = (struct athn_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Power on the socket. */
@@ -193,7 +193,7 @@ athn_cardbus_disable(struct athn_softc *sc)
 {
 	struct athn_cardbus_softc *csc = (struct athn_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Unhook the interrupt handler. */
@@ -219,7 +219,7 @@ void
 athn_cardbus_setup(struct athn_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 

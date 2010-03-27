@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.16 2010/03/22 22:28:27 jsg Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.17 2010/03/27 20:04:03 jsg Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -263,7 +263,7 @@ atw_cardbus_enable(struct atw_softc *sc)
 {
 	struct atw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/*
@@ -296,7 +296,7 @@ atw_cardbus_disable(struct atw_softc *sc)
 {
 	struct atw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Unhook the interrupt handler. */
@@ -321,7 +321,7 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	struct atw_softc *sc = &csc->sc_atw;
 #endif
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 

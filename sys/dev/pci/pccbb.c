@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.72 2010/03/23 11:44:00 krw Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.73 2010/03/27 20:04:03 jsg Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -109,21 +109,21 @@ void	pccbb_pcmcia_detach_card(struct pcic_handle *, int);
 void	pccbb_pcmcia_deactivate_card(struct pcic_handle *);
 #endif
 
-int	pccbb_ctrl(pci_chipset_tag_t, int);
-int	pccbb_power(pci_chipset_tag_t, int);
+int	pccbb_ctrl(cardbus_chipset_tag_t, int);
+int	pccbb_power(cardbus_chipset_tag_t, int);
 int	pccbb_cardenable(struct pccbb_softc * sc, int function);
 void   *pccbb_intr_establish(struct pccbb_softc *, int irq, int level,
     int (*ih) (void *), void *sc, const char *);
 void	pccbb_intr_disestablish(struct pccbb_softc *, void *ih);
 
-void   *pccbb_cb_intr_establish(pci_chipset_tag_t, int irq, int level,
+void   *pccbb_cb_intr_establish(cardbus_chipset_tag_t, int irq, int level,
     int (*ih) (void *), void *sc, const char *);
-void	pccbb_cb_intr_disestablish(pci_chipset_tag_t ct, void *ih);
+void	pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
-pcitag_t pccbb_make_tag(pci_chipset_tag_t, int, int, int);
-void	pccbb_free_tag(pci_chipset_tag_t, pcitag_t);
-pcireg_t pccbb_conf_read(pci_chipset_tag_t, pcitag_t, int);
-void	pccbb_conf_write(pci_chipset_tag_t, pcitag_t, int,
+pcitag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int, int);
+void	pccbb_free_tag(cardbus_chipset_tag_t, pcitag_t);
+pcireg_t pccbb_conf_read(cardbus_chipset_tag_t, pcitag_t, int);
+void	pccbb_conf_write(cardbus_chipset_tag_t, pcitag_t, int,
     pcireg_t);
 void	pccbb_chipinit(struct pccbb_softc *);
 
@@ -155,10 +155,10 @@ void	pccbb_pcmcia_do_mem_map(struct pcic_handle *, int);
 void	pccbb_powerhook(int, void *);
 
 /* bus-space allocation and deallocation functions */
-int	pccbb_rbus_cb_space_alloc(pci_chipset_tag_t, rbus_tag_t,
+int	pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t, rbus_tag_t,
     bus_addr_t addr, bus_size_t size, bus_addr_t mask, bus_size_t align,
     int flags, bus_addr_t * addrp, bus_space_handle_t * bshp);
-int	pccbb_rbus_cb_space_free(pci_chipset_tag_t, rbus_tag_t,
+int	pccbb_rbus_cb_space_free(cardbus_chipset_tag_t, rbus_tag_t,
     bus_space_handle_t, bus_size_t);
 
 int	pccbb_open_win(struct pccbb_softc *, bus_space_tag_t,
@@ -359,7 +359,7 @@ pccbb_shutdown(void *arg)
 	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
 
 	/* turn off power */
-	pccbb_power((pci_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
 	bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_MASK,
 	    0);
@@ -784,7 +784,7 @@ pccbb_chipinit(struct pccbb_softc *sc)
 		0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
 
 	/* turn off power */
-	pccbb_power((pci_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 }
 
 
@@ -1070,10 +1070,10 @@ pccbb_pcmcia_write(struct pcic_handle *ph, int reg, int val)
 }
 
 /*
- * int pccbb_ctrl(pci_chipset_tag_t, int)
+ * int pccbb_ctrl(cardbus_chipset_tag_t, int)
  */
 int
-pccbb_ctrl(pci_chipset_tag_t ct, int command)
+pccbb_ctrl(cardbus_chipset_tag_t ct, int command)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
@@ -1116,12 +1116,12 @@ pccbb_ctrl(pci_chipset_tag_t ct, int command)
 }
 
 /*
- * int pccbb_power(pci_chipset_tag_t, int)
+ * int pccbb_power(cardbus_chipset_tag_t, int)
  *   This function returns true when it succeeds and returns false when
  *   it fails.
  */
 int
-pccbb_power(pci_chipset_tag_t ct, int command)
+pccbb_power(cardbus_chipset_tag_t ct, int command)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
@@ -1454,7 +1454,7 @@ pccbb_cardenable(struct pccbb_softc *sc, int function)
 }
 
 /*
- * void *pccbb_cb_intr_establish(pci_chipset_tag_t ct,
+ * void *pccbb_cb_intr_establish(cardbus_chipset_tag_t ct,
  *					int irq,
  *					int level,
  *					int (* func)(void *),
@@ -1468,7 +1468,7 @@ pccbb_cardenable(struct pccbb_softc *sc, int function)
  *   The arguments irq is not used because pccbb selects intr vector.
  */
 void *
-pccbb_cb_intr_establish(pci_chipset_tag_t ct, int irq, int level,
+pccbb_cb_intr_establish(cardbus_chipset_tag_t ct, int irq, int level,
     int (*func)(void *), void *arg, const char *name)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
@@ -1478,13 +1478,13 @@ pccbb_cb_intr_establish(pci_chipset_tag_t ct, int irq, int level,
 
 
 /*
- * void *pccbb_cb_intr_disestablish(pci_chipset_tag_t ct,
+ * void *pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct,
  *					   void *ih)
  *
  *   This function removes an interrupt handler pointed by ih.
  */
 void
-pccbb_cb_intr_disestablish(pci_chipset_tag_t ct, void *ih)
+pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
@@ -1648,13 +1648,13 @@ cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
 #endif
 
 /*
- * pcitag_t pccbb_make_tag(pci_chipset_tag_t cc,
+ * pcitag_t pccbb_make_tag(cardbus_chipset_tag_t cc,
  *                                    int busno, int devno, int function)
  *   This is the function to make a tag to access config space of
  *  a CardBus Card.  It works same as pci_conf_read.
  */
 pcitag_t
-pccbb_make_tag(pci_chipset_tag_t cc, int busno, int devno, int function)
+pccbb_make_tag(cardbus_chipset_tag_t cc, int busno, int devno, int function)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 
@@ -1662,18 +1662,18 @@ pccbb_make_tag(pci_chipset_tag_t cc, int busno, int devno, int function)
 }
 
 void
-pccbb_free_tag(pci_chipset_tag_t cc, pcitag_t tag)
+pccbb_free_tag(cardbus_chipset_tag_t cc, pcitag_t tag)
 {
 }
 
 /*
- * pcireg_t pccbb_conf_read(pci_chipset_tag_t cc,
+ * pcireg_t pccbb_conf_read(cardbus_chipset_tag_t cc,
  *                                     pcitag_t tag, int offset)
  *   This is the function to read the config space of a CardBus Card.
  *  It works same as pci_conf_read.
  */
 pcireg_t
-pccbb_conf_read(pci_chipset_tag_t cc, pcitag_t tag, int offset)
+pccbb_conf_read(cardbus_chipset_tag_t cc, pcitag_t tag, int offset)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 
@@ -1681,13 +1681,13 @@ pccbb_conf_read(pci_chipset_tag_t cc, pcitag_t tag, int offset)
 }
 
 /*
- * void pccbb_conf_write(pci_chipset_tag_t cc, pcitag_t tag,
+ * void pccbb_conf_write(cardbus_chipset_tag_t cc, pcitag_t tag,
  *                              int offs, pcireg_t val)
  *   This is the function to write the config space of a CardBus Card.
  *  It works same as pci_conf_write.
  */
 void
-pccbb_conf_write(pci_chipset_tag_t cc, pcitag_t tag, int reg,
+pccbb_conf_write(cardbus_chipset_tag_t cc, pcitag_t tag, int reg,
     pcireg_t val)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
@@ -2048,7 +2048,7 @@ pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
 
 	/* power down the socket to reset it, clear the card reset pin */
 
-	pccbb_power((pci_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
 	/*
 	 * wait 200ms until power fails (Tpf).  Then, wait 100ms since
@@ -2064,7 +2064,7 @@ pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
 	/* Power up the socket. */
 	power = Pcic_read(ph, PCIC_PWRCTL);
 	Pcic_write(ph, PCIC_PWRCTL, (power & ~PCIC_PWRCTL_OE));
-	pccbb_power((pci_chipset_tag_t)sc, voltage);
+	pccbb_power((cardbus_chipset_tag_t)sc, voltage);
 
 	/* Now output enable */
 	power = Pcic_read(ph, PCIC_PWRCTL);
@@ -2147,7 +2147,7 @@ pccbb_pcmcia_socket_disable(pcmcia_chipset_handle_t pch)
 	power = Pcic_read(ph, PCIC_PWRCTL);
 	power &= ~PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
-	pccbb_power((pci_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 	/*
 	 * wait 300ms until power fails (Tpf).
 	 */
@@ -2577,7 +2577,7 @@ pccbb_pcmcia_intr_string(pcmcia_chipset_handle_t pch, void *ih)
 
 /*
  * int
- * pccbb_rbus_cb_space_alloc(pci_chipset_tag_t ct, rbus_tag_t rb,
+ * pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t ct, rbus_tag_t rb,
  *			    bus_addr_t addr, bus_size_t size,
  *			    bus_addr_t mask, bus_size_t align,
  *			    int flags, bus_addr_t *addrp;
@@ -2587,7 +2587,7 @@ pccbb_pcmcia_intr_string(pcmcia_chipset_handle_t pch, void *ih)
  *   clients.  This function is called from CardBus card drivers.
  */
 int
-pccbb_rbus_cb_space_alloc(pci_chipset_tag_t ct, rbus_tag_t rb,
+pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t ct, rbus_tag_t rb,
     bus_addr_t addr, bus_size_t size, bus_addr_t mask, bus_size_t align,
     int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
@@ -2624,13 +2624,13 @@ pccbb_rbus_cb_space_alloc(pci_chipset_tag_t ct, rbus_tag_t rb,
 
 /*
  * int
- * pccbb_rbus_cb_space_free(pci_chipset_tag_t *ct, rbus_tag_t rb,
+ * pccbb_rbus_cb_space_free(cardbus_chipset_tag_t *ct, rbus_tag_t rb,
  *			   bus_space_handle_t *bshp, bus_size_t size);
  *
  *   This function is called from CardBus card drivers.
  */
 int
-pccbb_rbus_cb_space_free(pci_chipset_tag_t ct, rbus_tag_t rb,
+pccbb_rbus_cb_space_free(cardbus_chipset_tag_t ct, rbus_tag_t rb,
     bus_space_handle_t bsh, bus_size_t size)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;

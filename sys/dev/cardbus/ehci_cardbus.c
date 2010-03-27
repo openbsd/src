@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.13 2010/03/22 22:28:27 jsg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.14 2010/03/27 20:04:03 jsg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ int	ehci_cardbus_detach(struct device *, int);
 
 struct ehci_cardbus_softc {
 	ehci_softc_t		sc;
-	pci_chipset_tag_t	sc_cc;
+	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;
 	void 			*sc_ih;		/* interrupt vectoring */
@@ -98,7 +98,7 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct ehci_cardbus_softc *sc = (struct ehci_cardbus_softc *)self;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t csr;
 	usbd_status r;

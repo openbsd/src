@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.15 2010/03/22 22:28:27 jsg Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.16 2010/03/27 20:04:03 jsg Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -204,7 +204,7 @@ ral_cardbus_detach(struct device *self, int flags)
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
 	struct rt2560_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
@@ -230,7 +230,7 @@ ral_cardbus_enable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* power on the socket */
@@ -257,7 +257,7 @@ ral_cardbus_disable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
@@ -283,7 +283,7 @@ void
 ral_cardbus_setup(struct ral_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 

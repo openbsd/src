@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.37 2010/03/22 22:28:27 jsg Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.38 2010/03/27 20:04:03 jsg Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -284,7 +284,7 @@ void
 com_cardbus_setup(struct com_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->cc_ct;
-	pci_chipset_tag_t cc = ct->ct_cc;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
@@ -318,7 +318,7 @@ com_cardbus_enable(struct com_softc *sc)
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	struct cardbus_softc *psc =
 	    (struct cardbus_softc *)sc->sc_dev.dv_parent;
-	pci_chipset_tag_t cc = psc->sc_cc;
+	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
 	Cardbus_function_enable(csc->cc_ct);
@@ -344,7 +344,7 @@ com_cardbus_disable(struct com_softc *sc)
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	struct cardbus_softc *psc =
 	    (struct cardbus_softc *)sc->sc_dev.dv_parent;
-	pci_chipset_tag_t cc = psc->sc_cc;
+	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
 	cardbus_intr_disestablish(cc, cf, csc->cc_ih);

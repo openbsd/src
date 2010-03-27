@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.25 2010/03/22 22:28:27 jsg Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.26 2010/03/27 20:04:03 jsg Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ fxp_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cardbus_attach_args *ca = aux;
 	struct cardbus_softc *psc =
 	    (struct cardbus_softc *)sc->sc_dev.dv_parent;
-	pci_chipset_tag_t cc = psc->sc_cc;
+	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -187,7 +187,7 @@ fxp_cardbus_setup(struct fxp_softc *sc)
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
 	struct cardbus_softc *psc =
 	    (struct cardbus_softc *) sc->sc_dev.dv_parent;
-	pci_chipset_tag_t cc = psc->sc_cc;
+	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 	pcireg_t command;
 
