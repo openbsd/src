@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.67 2009/03/30 04:52:50 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.68 2010/03/27 13:37:44 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 30 2009 $
+.Dd $Mdocdate: March 27 2010 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@ On the i386 and other architectures, sector 0 of a bootable hard disk
 must contain MBR bootcode, the MBR partition table containing 4 slots,
 and a specific magic number (0xAA55).
 The 4 slots in the MBR partition table allow a disk drive to be
-sub-divided up into chunks known as MBR partitions.
+divided into chunks known as MBR partitions.
 .Pp
 On the i386, the BIOS loads sector 0 of the boot disk into memory,
 verifies the magic number, and begins executing the MBR bootcode
@@ -92,9 +92,9 @@ or values that
 .Em /boot
 has passed to the kernel.
 .It Fl e
-Use the interactive edit of
+Use the
 .Nm
-to modify an MBR partition table.
+interactive editor to modify an MBR partition table.
 The editor permits configuration of the MBR partition, as well as
 extended MBR partitions.
 See
@@ -157,7 +157,7 @@ The first MBR partition is a 1225MB FAT-16 DOS partition
 the second is a 36GB
 .Ox
 MBR partition using the remainder of the disk.
-The fields of the output are thus:
+The fields of the output are:
 .Bl -tag -width "start/size"
 .It Em "#"
 Number identifying each MBR partition table entry.
@@ -269,27 +269,41 @@ This number will be 2 when editing an extended MBR partition,
 and so on.
 .Pp
 The list of commands and their explanations are given below.
+Commands may be abbreviated provided enough characters are given to ensure
+unambiguity.
 .Bl -tag -width Ds
-.It help
+.It Cm ?\&
+A synonym for
+.Cm help .
+.It Cm help
 Display a list of commands that
 .Nm
 understands in the interactive edit mode.
-.It manual
+.It Cm manual
 Display this manual page.
-.It reinit
+.It Cm reinit
 Initialize the currently selected, in-memory copy of the
 boot block.
-.It disk
+.It Cm disk
 Display the current drive geometry that
 .Nm
 probed using kernel provided information and various heuristics.
 The disk geometry may be changed at this point.
-.It edit Ar #
+.It Cm edit Ar #
 Edit a given table entry in the memory copy of
 the current boot block.
-Sizes may be adjusted using either in BIOS geometry mode or
-sector offsets and sizes.
-.It flag Ar #
+Sizes may be adjusted in BIOS geometry mode or using sector offsets and sizes.
+A unit
+.Sq b ,
+.Sq k ,
+.Sq m ,
+or
+.Sq g
+may be appended to indicate bytes, kilobytes, megabytes, or gigabytes.
+The special size value
+.Sq *
+will cause the partition to be sized to use the remainer of the disk.
+.It Cm flag Ar #
 Make the given MBR partition table entry bootable.
 Only one entry can be marked bootable.
 .\" If you wish to boot from an extended
@@ -297,44 +311,43 @@ Only one entry can be marked bootable.
 .\" extended MBR partition as bootable.
 .\" If an optional value is given, the MBR partition is marked with the given
 .\" value, and other MBR partitions are not touched.
-.It update
+.It Cm update
 Update the machine MBR bootcode and 0xAA55 signature in the memory copy
 of the currently selected boot block.
 Note that this option will overwrite an NT disk
 signature, if present.
-.It select Ar #
+.It Cm select Ar #
 Select and load into memory the boot block pointed
 to by the extended MBR partition table entry in the current boot block.
-.It setpid Ar #
+.It Cm setpid Ar #
 Change the MBR partition
 identifier of the given MBR partition table entry.
 This command is particularly useful for reassigning
 an existing MBR partition to
 .Ox .
-.It swap Ar # Ar #
+.It Cm swap Ar # Ar #
 Swap two MBR entries.
-.It print Op unit
+.It Cm print Op Ar unit
 Print the currently selected in-memory copy of the boot
 block and its MBR table to the terminal.
-If
+A
 .Ar unit
-is specified as
 .Sq b ,
 .Sq k ,
 .Sq m ,
 or
-.Sq g ,
-the MBR is printed in units of bytes, kilobytes, megabytes, or gigabytes.
+.Sq g
+may be appended to indicate bytes, kilobytes, megabytes, or gigabytes.
 Otherwise the number of sectors is printed.
-.It write
+.It Cm write
 Write the in-memory copy of the boot block to disk.
-.It exit
+.It Cm exit
 Exit the current level of
 .Nm fdisk ,
 either returning to the
 previously selected in-memory copy of a boot block, or exiting the
 program if there is none.
-.It quit
+.It Cm quit
 Exit the current level of
 .Nm fdisk ,
 either returning to the
@@ -343,7 +356,7 @@ program if there is none.
 Unlike
 .Em exit
 it does write the modified block out.
-.It abort
+.It Cm abort
 Quit program without saving current changes.
 .El
 .Sh FILES
