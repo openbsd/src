@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidaction.1,v 1.9 2008/06/26 05:42:21 ray Exp $
+.\" $OpenBSD: usbhidaction.1,v 1.10 2010/03/27 13:59:19 jakemsr Exp $
 .\" $NetBSD: usbhidaction.1,v 1.6 2002/01/18 14:38:59 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: March 27 2010 $
 .Dt USBHIDACTION 1
 .Os
 .Sh NAME
@@ -99,25 +99,25 @@ of the HID device.
 .Pa /usr/share/misc/usb_hid_usages
 The HID usage table.
 .Sh EXAMPLES
-The following configuration file can be used to control a pair
-of Philips USB speakers with the HID controls on the speakers.
+The following configuration file can be used to control the
+master volume and muting of an
+.Xr azalia 4
+device using the multimedia keys on a Belkin USB keyboard.
 .Bd -literal -offset indent
-# Configuration for various Philips USB speakers
-Consumer:Consumer_Control.Consumer:Volume_Up			   1
-	mixerctl -f $1 -n outputs.master=+1
-Consumer:Consumer_Control.Consumer:Volume_Down			   1
-	mixerctl -f $1 -n outputs.master=-1
-Consumer:Consumer_Control.Consumer:Mute				   1
-	mixerctl -f $1 -n outputs.mute=+1
-Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Up   1
-	mixerctl -f $1 -n outputs.bass=+1
-Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Down 1
-	mixerctl -f $1 -n outputs.bass=-1
+# The volume range is 0..255. Moving 8 volume steps each keypress
+# moves quickly through the volume range but still has decent
+# granularity.
+Consumer:Volume_Up						   1
+	mixerctl -f $1 outputs.master=+8
+Consumer:Volume_Down						   1
+	mixerctl -f $1 outputs.master=-8
+Consumer:Mute							   1
+	mixerctl -f $1 outputs.master.mute=toggle
 .Ed
 .Pp
 A sample invocation using this configuration would be
 .Bd -literal -offset indent
-$ usbhidaction -f /dev/uhid1 -c conf /dev/mixer1
+$ usbhidaction -f /dev/uhid1 -c conf /dev/mixer0
 .Ed
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,
