@@ -2368,7 +2368,7 @@ push_frame_in_operand (insn, orig, push_size, boundary)
      rtx insn, orig;
      HOST_WIDE_INT push_size, boundary;
 {
-  register rtx x = orig;
+  register rtx x = orig, prev_insn;
   register enum rtx_code code;
   int i, j;
   HOST_WIDE_INT offset;
@@ -2460,6 +2460,7 @@ push_frame_in_operand (insn, orig, push_size, boundary)
       
     case PLUS:
       offset = AUTO_OFFSET(x);
+      prev_insn = prev_nonnote_insn (insn);
 
       /* Handle special case of frame register plus constant.  */
       if (CONSTANT_P (XEXP (x, 1))
@@ -2514,18 +2515,17 @@ push_frame_in_operand (insn, orig, push_size, boundary)
       */
       else if (XEXP (x, 0) == frame_pointer_rtx
 	       && GET_CODE (XEXP (x, 1)) == REG
-	       && PREV_INSN (insn)
-	       && !NOTE_P (PREV_INSN (insn))
-	       && PATTERN (PREV_INSN (insn))
-	       && SET_DEST (PATTERN (PREV_INSN (insn))) == XEXP (x, 1)
-	       && CONSTANT_P (SET_SRC (PATTERN (PREV_INSN (insn)))))
+	       && prev_insn
+	       && PATTERN (prev_insn)
+	       && SET_DEST (PATTERN (prev_insn)) == XEXP (x, 1)
+	       && CONSTANT_P (SET_SRC (PATTERN (prev_insn))))
 	{
-	  HOST_WIDE_INT offset = INTVAL (SET_SRC (PATTERN (PREV_INSN (insn))));
+	  HOST_WIDE_INT offset = INTVAL (SET_SRC (PATTERN (prev_insn)));
 
 	  if (x->used || offset < boundary)
 	    return;
 	  
-	  SET_SRC (PATTERN (PREV_INSN (insn)))
+	  SET_SRC (PATTERN (prev_insn))
 	    = gen_rtx_CONST_INT (VOIDmode, offset + push_size);
 	  x->used = 1;
 	  XEXP (x, 1)->used = 1;
