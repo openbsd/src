@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.66 2009/11/23 02:06:38 yuo Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.67 2010/03/27 21:58:30 kettenis Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1285,6 +1285,29 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos 6S PCI 16C650 : 6S
+	 * Shows up as three PCI devices, two with a single serial
+	 * port and one with four serial ports (on a special ISA
+	 * extender chip).
+	 */
+	{   /* "NetMos NM9865 6 UART: 1 UART" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x1000 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+	{   /* "NetMos NM9865 6 UART: 4 UART ISA" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3004 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
