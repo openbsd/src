@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.152 2009/02/12 18:52:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.153 2010/03/27 15:14:34 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -193,8 +193,8 @@ struct pool pvpool;
  */
 static struct pool L1_pool;
 static struct pool L23_pool;
-void *pgt_page_alloc(struct pool *, int, int *);
-void  pgt_page_free(struct pool *, void *);
+void	*pgt_page_alloc(struct pool *, int, int *);
+void	 pgt_page_free(struct pool *, void *);
 
 struct pool_allocator pgt_allocator = {
 	pgt_page_alloc, pgt_page_free, 0,
@@ -218,22 +218,30 @@ pcache_flush(va, pa, n)
 void *
 pgt_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
-        caddr_t p;
+	extern void	*pool_page_alloc(struct pool *, int, int *);
+	void		*pga;
 
-	*slowdown = 0;
-        p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
-                                      PAGE_SIZE, UVM_KMF_NOWAIT);
-        if (p != NULL && ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)) {
-                pcache_flush(p, (caddr_t)VA2PA(p), PAGE_SIZE);
-                kvm_uncache(p, 1);
-        }
-        return (p);
+	if ((pga = pool_page_alloc(pp, flags, slowdown)) != NULL &&
+	     (cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
+		pcache_flush((caddr_t)pga, (caddr_t)VA2PA(pga), PAGE_SIZE);
+		kvm_uncache((caddr_t)pga, 1);
+	}
+
+	return (pga);
 }       
-   
+
 void
-pgt_page_free(struct pool *pp, void *v)
+pgt_page_free(struct pool *pp, void *pga)
 {
-        uvm_km_free(kernel_map, (vaddr_t)v, PAGE_SIZE);
+	extern void	*pool_page_free(struct pool *, void *);
+	/*
+	 * if we marked the page uncached, we must recache it to go back to
+	 * the uvm_km_thread, so other pools don't get uncached pages from us.
+	 */
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
+		kvm_recache((caddr_t)pga, 1);
+	pool_page_free(pp, pga);
+	
 }
 #endif /* SUN4M */
 
