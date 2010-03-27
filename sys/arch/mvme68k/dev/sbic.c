@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.25 2010/03/23 01:57:19 krw Exp $ */
+/*	$OpenBSD: sbic.c,v 1.26 2010/03/27 16:04:24 miod Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ sbic_load_ptrs(dev)
  * so I will too.  I could plug it in, however so could they
  * in scsi_scsi_cmd().
  */
-int
+void
 sbic_scsicmd(xs)
     struct scsi_xfer *xs;
 {
