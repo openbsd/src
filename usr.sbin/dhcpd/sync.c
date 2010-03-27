@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.8 2010/01/03 18:37:06 deraadt Exp $	*/
+/*	$OpenBSD: sync.c,v 1.9 2010/03/27 14:11:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -96,7 +96,8 @@ sync_addhost(const char *name, u_short port)
 		freeaddrinfo(res0);
 		return (ENOMEM);
 	}
-	if ((shost->h_name = strdup(name)) == NULL) {
+	shost->h_name = strdup(name);
+	if (shost->h_name == NULL) {
 		free(shost);
 		freeaddrinfo(res0);
 		return (ENOMEM);

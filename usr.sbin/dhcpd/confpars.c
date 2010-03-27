@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.18 2010/01/02 04:21:16 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.19 2010/03/27 14:11:38 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -175,7 +175,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 	int token;
 	char *val;
 	struct shared_network *share;
-	char *t, *n;
+	char *n;
 	struct tree *tree;
 	struct tree_cache *cache;
 	struct hardware hardware;
@@ -247,11 +247,9 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 
 			/* Make the shared network name from network number. */
 			n = piaddr(share->subnets->net);
-			t = malloc(strlen(n) + 1);
-			if (!t)
+			share->name = strdup(n);
+			if (share->name == NULL)
 				error("no memory for subnet name");
-			strlcpy(t, n, (strlen(n) + 1));
-			share->name = t;
 
 			/* Copy the authoritative parameter from the subnet,
 			   since there is no opportunity to declare it here. */
@@ -637,10 +635,9 @@ void parse_shared_net_declaration(cfile, group)
 			parse_warn("zero-length shared network name");
 			val = "<no-name-given>";
 		}
-		name = malloc(strlen(val) + 1);
-		if (!name)
+		name = strdup(val);
+		if (name == NULL)
 			error("no memory for shared network name");
-		strlcpy(name, val, strlen(val) + 1);
 	} else {
 		name = parse_host_name(cfile);
 		if (!name)
@@ -897,10 +894,9 @@ void parse_option_param(cfile, group)
 			skip_to_semi(cfile);
 		return;
 	}
-	vendor = malloc(strlen(val) + 1);
-	if (!vendor)
+	vendor = strdup(val);
+	if (vendor == NULL)
 		error("no memory for vendor token.");
-	strlcpy(vendor, val, strlen(val) + 1);
 	token = peek_token(&val, cfile);
 	if (token == '.') {
 		/* Go ahead and take the DOT token... */
@@ -1338,5 +1334,3 @@ parse_address_range(FILE *cfile, struct subnet *subnet)
 	/* Create the new address range... */
 	new_address_range(low, high, subnet, dynamic);
 }
-
-

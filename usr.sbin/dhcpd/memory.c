@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.19 2010/01/01 20:30:25 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.20 2010/03/27 14:11:38 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -257,14 +257,10 @@ new_address_range(struct iaddr low, struct iaddr high, struct subnet *subnet,
 			if (!h)
 				warning("No hostname for %s", inet_ntoa(ia));
 			else {
-				int len = strlen(h->h_name) + 1;
-
-				address_range[i].hostname = malloc(len);
-				if (!address_range[i].hostname)
+				address_range[i].hostname = strdup(h->h_name);
+				if (address_range[i].hostname == NULL)
 					error("no memory for hostname %s.",
 					    h->h_name);
-				strlcpy(address_range[i].hostname,
-				    h->h_name, len);
 			}
 		}
 

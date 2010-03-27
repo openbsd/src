@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2009/09/01 08:42:31 reyk Exp $	*/
+/*	$OpenBSD: parse.c,v 1.13 2010/03/27 14:11:38 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -123,10 +123,9 @@ parse_string(FILE *cfile)
 		skip_to_semi(cfile);
 		return (NULL);
 	}
-	s = malloc(strlen(val) + 1);
-	if (!s)
+	s = strdup(val);
+	if (s == NULL)
 		error("no memory for string %s.", val);
-	strlcpy(s, val, strlen(val) + 1);
 
 	if (!parse_semi(cfile)) {
 		free(s);
@@ -155,9 +154,9 @@ parse_host_name(FILE *cfile)
 			return (NULL);
 		}
 		/* Store this identifier... */
-		if (!(s = malloc(strlen(val) + 1)))
+		s = strdup(val);
+		if (s == NULL)
 			error("can't allocate temp space for hostname.");
-		strlcpy(s, val, strlen(val) + 1);
 		c = cons((caddr_t) s, c);
 		len += strlen(s) + 1;
 		/*
@@ -335,10 +334,9 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 			convert_num(s, val, base, size);
 			s += size / 8;
 		} else {
-			t = malloc(strlen(val) + 1);
-			if (!t)
+			t = strdup(val);
+			if (t == NULL)
 				error("no temp space for number.");
-			strlcpy(t, val, strlen(val) + 1);
 			c = cons(t, c);
 		}
 	} while (++count != *max);
