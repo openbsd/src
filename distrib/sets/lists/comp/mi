@@ -534,6 +534,8 @@
 ./usr/include/dev/pci/drm/r128_drm.h
 ./usr/include/dev/pci/drm/r128_drv.h
 ./usr/include/dev/pci/drm/r300_reg.h
+./usr/include/dev/pci/drm/r600_blit_shaders.h
+./usr/include/dev/pci/drm/r600_microcode.h
 ./usr/include/dev/pci/drm/radeon_drm.h
 ./usr/include/dev/pci/drm/radeon_drv.h
 ./usr/include/dev/pci/drm/radeon_microcode.h

@@ -1783,6 +1783,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/limits.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/lock.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/mplock.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/mutex.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/nvm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/param.ph
