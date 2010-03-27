@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.41 2010/02/08 18:46:47 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.42 2010/03/27 16:13:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2505,10 +2505,10 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	for (ridx = 0; ridx < 5; ridx++) {
 		uint32_t reg;
 
-		val = rt2860_eeprom_read(sc, RT2860_EEPROM_RPWR + ridx);
-		reg = (uint32_t)val << 16;
-		val = rt2860_eeprom_read(sc, RT2860_EEPROM_RPWR + ridx + 1);
-		reg |= val;
+		val = rt2860_eeprom_read(sc, RT2860_EEPROM_RPWR + ridx * 2);
+		reg = val;
+		val = rt2860_eeprom_read(sc, RT2860_EEPROM_RPWR + ridx * 2 + 1);
+		reg |= (uint32_t)val << 16;
 
 		sc->txpow20mhz[ridx] = reg;
 		sc->txpow40mhz_2ghz[ridx] = b4inc(reg, delta_2ghz);

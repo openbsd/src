@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.62 2010/02/25 17:46:20 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.63 2010/03/27 16:13:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1313,10 +1313,10 @@ run_read_eeprom(struct run_softc *sc)
 	for (ridx = 0; ridx < 5; ridx++) {
 		uint32_t reg;
 
-		run_srom_read(sc, RT2860_EEPROM_RPWR + ridx, &val);
-		reg = (uint32_t)val << 16;
-		run_srom_read(sc, RT2860_EEPROM_RPWR + ridx + 1, &val);
-		reg |= val;
+		run_srom_read(sc, RT2860_EEPROM_RPWR + ridx * 2, &val);
+		reg = val;
+		run_srom_read(sc, RT2860_EEPROM_RPWR + ridx * 2 + 1, &val);
+		reg |= (uint32_t)val << 16;
 
 		sc->txpow20mhz[ridx] = reg;
 		sc->txpow40mhz_2ghz[ridx] = b4inc(reg, delta_2ghz);
