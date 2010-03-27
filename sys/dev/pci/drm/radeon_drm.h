@@ -303,6 +303,7 @@ typedef union {
 #define RADEON_INDEX_PRIM_OFFSET	20
 
 #define RADEON_SCRATCH_REG_OFFSET	32
+#define R600_SCRATCH_REG_OFFSET		256
 
 #define RADEON_NR_SAREA_CLIPRECTS	12
 
@@ -526,7 +527,8 @@ typedef struct drm_radeon_init {
 		RADEON_INIT_CP = 0x01,
 		RADEON_CLEANUP_CP = 0x02,
 		RADEON_INIT_R200_CP = 0x03,
-		RADEON_INIT_R300_CP = 0x04
+		RADEON_INIT_R300_CP = 0x04,
+		RADEON_INIT_R600_CP = 0x05,
 	} func;
 	unsigned long sarea_priv_offset;
 	int is_pci; /* for overriding only */
@@ -652,6 +654,9 @@ typedef struct drm_radeon_indirect {
 	int discard;
 } drm_radeon_indirect_t;
 
+#define RADEON_INDIRECT_DISCARD	(1 << 0)
+#define RADEON_INDIRECT_NOFLUSH	(1 << 1)
+
 /* enum for card type parameters */
 #define RADEON_CARD_PCI 0
 #define RADEON_CARD_AGP 1
@@ -677,6 +682,8 @@ typedef struct drm_radeon_indirect {
 #define RADEON_PARAM_VBLANK_CRTC           13   /* VBLANK CRTC */
 #define RADEON_PARAM_FB_LOCATION           14   /* FB location */
 #define RADEON_PARAM_NUM_GB_PIPES          15   /* num GB pipes */
+#define RADEON_PARAM_DEVICE_ID             16
+#define RADEON_PARAM_NUM_Z_PIPES           17   /* num Z pipes */
 
 typedef struct drm_radeon_getparam {
 	int param;

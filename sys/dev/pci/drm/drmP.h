@@ -326,6 +326,7 @@ struct drm_mem {
 #define DRM_ATI_GART_PCI  1
 #define DRM_ATI_GART_PCIE 2
 #define DRM_ATI_GART_IGP  3
+#define DRM_ATI_GART_R600 4
 
 #define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) -1)
 #define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))

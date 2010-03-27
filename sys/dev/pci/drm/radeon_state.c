@@ -44,7 +44,6 @@ void	radeon_cp_dispatch_clear(struct drm_device *, drm_radeon_clear_t *,
 	    drm_radeon_clear_rect_t *);
 void	radeon_cp_dispatch_swap(struct drm_device *);
 void	radeon_cp_dispatch_flip(struct drm_device *);
-void	radeon_cp_discard_buffer(struct drm_device *, struct drm_buf *);
 void	radeon_cp_dispatch_indirect(struct drm_device *, struct drm_buf *,
 	    int, int);
 int	radeon_cp_dispatch_texture(struct drm_device *, struct drm_file *,
@@ -55,7 +54,6 @@ void	radeon_apply_surface_regs(int, drm_radeon_private_t *);
 int	alloc_surface(drm_radeon_surface_alloc_t *, drm_radeon_private_t *,
 	    struct drm_file *);
 int	free_surface(struct drm_file *, drm_radeon_private_t *, int);
-void	radeon_surfaces_release(struct drm_file *, drm_radeon_private_t *);
 int	radeon_do_init_pageflip(struct drm_device *);
 int	radeon_emit_packets(drm_radeon_private_t *, struct drm_file *,
 	    drm_radeon_cmd_header_t, drm_radeon_kcmd_buffer_t *);
@@ -1079,6 +1077,64 @@ radeon_cp_dispatch_clear(struct drm_device * dev, drm_radeon_clear_t * clear,
 }
 
 void
+r600_cp_dispatch_swap(struct drm_device *dev, struct drm_file *file_priv)
+{
+	drm_radeon_private_t *dev_priv = dev->dev_private;
+	drm_radeon_sarea_t *sarea_priv = dev_priv->sarea_priv;
+	int nbox = sarea_priv->nbox;
+	struct drm_clip_rect *pbox = sarea_priv->boxes;
+	int i, cpp, src_pitch, dst_pitch;
+	uint64_t src, dst;
+	DRM_DEBUG("\n");
+
+	if (dev_priv->color_fmt == RADEON_COLOR_FORMAT_ARGB8888)
+		cpp = 4;
+	else
+		cpp = 2;
+
+	if (dev_priv->sarea_priv->pfCurrentPage == 0) {
+		src_pitch = dev_priv->back_pitch;
+		dst_pitch = dev_priv->front_pitch;
+		src = dev_priv->back_offset + dev_priv->fb_location;
+		dst = dev_priv->front_offset + dev_priv->fb_location;
+	} else {
+		src_pitch = dev_priv->front_pitch;
+		dst_pitch = dev_priv->back_pitch;
+		src = dev_priv->front_offset + dev_priv->fb_location;
+		dst = dev_priv->back_offset + dev_priv->fb_location;
+	}
+
+	if (r600_prepare_blit_copy(dev, file_priv)) {
+		DRM_ERROR("unable to allocate vertex buffer for swap buffer\n");
+		return;
+	}
+	for (i = 0; i < nbox; i++) {
+		int x = pbox[i].x1;
+		int y = pbox[i].y1;
+		int w = pbox[i].x2 - x;
+		int h = pbox[i].y2 - y;
+
+		DRM_DEBUG("%d,%d-%d,%d\n", x, y, w, h);
+
+		r600_blit_swap(dev,
+			       src, dst,
+			       x, y, x, y, w, h,
+			       src_pitch, dst_pitch, cpp);
+	}
+	r600_done_blit_copy(dev);
+
+	/* Increment the frame counter.  The client-side 3D driver must
+	 * throttle the framerate by waiting for this value before
+	 * performing the swapbuffer ioctl.
+	 */
+	dev_priv->sarea_priv->last_frame++;
+
+	BEGIN_RING(3);
+	R600_FRAME_AGE(dev_priv->sarea_priv->last_frame);
+	ADVANCE_RING();
+}
+
+void
 radeon_cp_dispatch_swap(struct drm_device *dev)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
@@ -1199,12 +1255,55 @@ radeon_cp_discard_buffer(struct drm_device * dev, struct drm_buf * buf)
 	buf_priv->age = ++dev_priv->sarea_priv->last_dispatch;
 
 	/* Emit the vertex buffer age */
-	BEGIN_RING(2);
-	RADEON_DISPATCH_AGE(buf_priv->age);
-	ADVANCE_RING();
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600) {
+		BEGIN_RING(3);
+		R600_DISPATCH_AGE(buf_priv->age);
+		ADVANCE_RING();
+	} else {
+		BEGIN_RING(2);
+		RADEON_DISPATCH_AGE(buf_priv->age);
+		ADVANCE_RING();
+	}
 
 	buf->pending = 1;
 	buf->used = 0;
+}
+
+int
+r600_cp_dispatch_indirect(struct drm_device *dev, struct drm_buf *buf,
+    int start, int end)
+{
+	drm_radeon_private_t *dev_priv = dev->dev_private;
+
+	if (start != end) {
+		unsigned long offset = (dev_priv->gart_buffers_offset
+					+ buf->offset + start);
+		int dwords = (end - start + 3) / sizeof(u32);
+
+		DRM_DEBUG("dwords:%d\n", dwords);
+		DRM_DEBUG("offset 0x%lx\n", offset);
+
+
+		/* Indirect buffer data must be a multiple of 16 dwords.
+		 * pad the data with a Type-2 CP packet.
+		 */
+		while (dwords & 0xf) {
+			u32 *data = (u32 *)
+			    ((char *)dev->agp_buffer_map->handle
+			     + buf->offset + start);
+			data[dwords++] = RADEON_CP_PACKET2;
+		}
+
+		/* Fire off the indirect buffer */
+		BEGIN_RING(4);
+		OUT_RING(CP_PACKET3(R600_IT_INDIRECT_BUFFER, 2));
+		OUT_RING((offset & 0xfffffffc));
+		OUT_RING((upper_32_bits(offset) & 0xff));
+		OUT_RING(dwords);
+		ADVANCE_RING();
+	}
+
+	return 0;
 }
 
 void
@@ -1243,6 +1342,79 @@ radeon_cp_dispatch_indirect(struct drm_device *dev, struct drm_buf *buf,
 }
 
 #define RADEON_MAX_TEXTURE_SIZE RADEON_BUFFER_SIZE
+
+int
+r600_cp_dispatch_texture(struct drm_device *dev, struct drm_file *file_priv,
+    drm_radeon_texture_t *tex, drm_radeon_tex_image_t *image)
+{
+	drm_radeon_private_t *dev_priv = dev->dev_private;
+	struct drm_buf *buf;
+	u32 *buffer;
+	const u8 __user *data;
+	int size, pass_size;
+	u64 src_offset, dst_offset;
+
+	if (!radeon_check_offset(dev_priv, tex->offset)) {
+		DRM_ERROR("Invalid destination offset\n");
+		return -EINVAL;
+	}
+
+	/* this might fail for zero-sized uploads - are those illegal? */
+	if (!radeon_check_offset(dev_priv, tex->offset + tex->height * tex->pitch - 1)) {
+		DRM_ERROR("Invalid final destination offset\n");
+		return -EINVAL;
+	}
+
+	size = tex->height * tex->pitch;
+
+	if (size == 0)
+		return 0;
+
+	dst_offset = tex->offset;
+
+	r600_prepare_blit_copy(dev, file_priv);
+	do {
+		data = (const u8 __user *)image->data;
+		pass_size = size;
+
+		buf = radeon_freelist_get(dev);
+		if (!buf) {
+			DRM_DEBUG("EAGAIN\n");
+			if (DRM_COPY_TO_USER(tex->image, image, sizeof(*image)))
+				return -EFAULT;
+			return -EAGAIN;
+		}
+
+		if (pass_size > buf->total)
+			pass_size = buf->total;
+
+		/* Dispatch the indirect buffer.
+		 */
+		buffer =
+		    (u32 *) ((char *)dev->agp_buffer_map->handle + buf->offset);
+
+		if (DRM_COPY_FROM_USER(buffer, data, pass_size)) {
+			DRM_ERROR("EFAULT on pad, %d bytes\n", pass_size);
+			return -EFAULT;
+		}
+
+		buf->file_priv = file_priv;
+		buf->used = pass_size;
+		src_offset = dev_priv->gart_buffers_offset + buf->offset;
+
+		r600_blit_copy(dev, src_offset, dst_offset, pass_size);
+
+		radeon_cp_discard_buffer(dev, buf);
+
+		/* Update the input parameters for next time */
+		image->data = (const u8 __user *)image->data + pass_size;
+		dst_offset += pass_size;
+		size -= pass_size;
+	} while (size > 0);
+	r600_done_blit_copy(dev);
+
+	return 0;
+}
 
 int
 radeon_cp_dispatch_texture(struct drm_device *dev, struct drm_file *file_priv,
@@ -1795,7 +1967,10 @@ radeon_cp_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (sarea_priv->nbox > RADEON_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = RADEON_NR_SAREA_CLIPRECTS;
 
-	radeon_cp_dispatch_swap(dev);
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600)
+		r600_cp_dispatch_swap(dev, file_priv);
+	else
+		radeon_cp_dispatch_swap(dev);
 	dev_priv->sarea_priv->ctx_owner = 0;
 
 	COMMIT_RING();
@@ -1825,7 +2000,10 @@ radeon_cp_texture(struct drm_device *dev, void *data,
 
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
-	ret = radeon_cp_dispatch_texture(dev, file_priv, tex, &image);
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600)
+		ret = r600_cp_dispatch_texture(dev, file_priv, tex, &image);
+	else 
+		ret = radeon_cp_dispatch_texture(dev, file_priv, tex, &image);
 
 	return ret;
 }
@@ -1897,20 +2075,26 @@ radeon_cp_indirect(struct drm_device *dev, void *data,
 
 	buf->used = indirect->end;
 
-	/* Wait for the 3D stream to idle before the indirect buffer
-	 * containing 2D acceleration commands is processed.
-	 */
-	BEGIN_RING(2);
-
-	RADEON_WAIT_UNTIL_3D_IDLE();
-
-	ADVANCE_RING();
-
-	/* Dispatch the indirect buffer full of commands from the
+	/*
+	 * Dispatch the indirect buffer full of commands from the
 	 * X server.  This is insecure and is thus only available to
 	 * privileged clients.
 	 */
-	radeon_cp_dispatch_indirect(dev, buf, indirect->start, indirect->end);
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600) {
+		r600_cp_dispatch_indirect(dev, buf, indirect->start,
+		    indirect->end);
+	} else {
+		/*
+		 * Wait for the 3D stream to idle before the indirect buffer
+		 * containing 2D acceleration commands is processed.
+		 */
+		BEGIN_RING(2);
+		RADEON_WAIT_UNTIL_3D_IDLE();
+		ADVANCE_RING();
+
+		radeon_cp_dispatch_indirect(dev, buf, indirect->start,
+		    indirect->end);
+	}
 	if (indirect->discard) {
 		radeon_cp_discard_buffer(dev, buf);
 	}
@@ -1978,7 +2162,8 @@ int
 radeon_emit_scalars2(drm_radeon_private_t *dev_priv,
     drm_radeon_cmd_header_t header, drm_radeon_kcmd_buffer_t *cmdbuf)
 {
-	int sz = header.scalars.count; int start = ((unsigned int)header.scalars.offset) + 0x100;
+	int sz = header.scalars.count;
+	int start = ((unsigned int)header.scalars.offset) + 0x100;
 	int stride = header.scalars.stride;
 
 	BEGIN_RING(3 + sz);
@@ -2382,7 +2567,10 @@ radeon_cp_getparam(struct drm_device *dev, void *data,
 	case RADEON_PARAM_SCRATCH_OFFSET:
 		if (!dev_priv->writeback_works)
 			return EINVAL;
-		value = RADEON_SCRATCH_REG_OFFSET;
+		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600)
+			value = R600_SCRATCH_REG_OFFSET;
+		else
+			value = RADEON_SCRATCH_REG_OFFSET;
 		break;
 
 	case RADEON_PARAM_CARD_TYPE:
@@ -2401,6 +2589,9 @@ radeon_cp_getparam(struct drm_device *dev, void *data,
 		break;
 	case RADEON_PARAM_NUM_GB_PIPES:
 		value = dev_priv->num_gb_pipes;
+		break;
+	case RADEON_PARAM_NUM_Z_PIPES:
+		value = dev_priv->num_z_pipes;
 		break;
 	default:
 		DRM_DEBUG( "Invalid parameter %d\n", param->param );

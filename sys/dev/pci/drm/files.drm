@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.17 2009/04/06 20:56:25 oga Exp $
+# $OpenBSD: files.drm,v 1.18 2010/03/27 00:09:50 oga Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -47,6 +47,8 @@ file	dev/pci/drm/r128_state.c	ragedrm
 device	radeondrm: drmbase
 attach	radeondrm at drmdev
 file	dev/pci/drm/r300_cmdbuf.c	radeondrm
+file	dev/pci/drm/r600_blit.c		radeondrm
+file	dev/pci/drm/r600_blit_shaders.c	radeondrm
 file	dev/pci/drm/radeon_cp.c		radeondrm
 file	dev/pci/drm/radeon_drv.c	radeondrm
 file	dev/pci/drm/radeon_irq.c	radeondrm
