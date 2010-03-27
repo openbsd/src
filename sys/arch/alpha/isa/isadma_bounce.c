@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma_bounce.c,v 1.8 2008/06/26 05:42:08 ray Exp $	*/
+/*	$OpenBSD: isadma_bounce.c,v 1.9 2010/03/27 02:09:54 oga Exp $	*/
 /* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -518,15 +518,18 @@ isadma_bounce_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
     bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
     int nsegs, int *rsegs, int flags)
 {
-	paddr_t high;
+	int error;
 
-	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
-		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
-	else
-		high = trunc_page(avail_end);
+	/* Try in ISA addressable region first */
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, ISA_DMA_BOUNCE_THRESHOLD);
+	if (!error)
+		return (error);
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, 0, high));
+	/* Otherwise try anywhere (we'll bounce later) */
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, (paddr_t)0, (paddr_t)-1);
+	return (error);
 }
 
 /**********************************************************************
@@ -541,9 +544,10 @@ isadma_bounce_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	int error = 0;
 
 	cookie->id_bouncebuflen = round_page(size);
-	error = isadma_bounce_dmamem_alloc(t, cookie->id_bouncebuflen,
+	error = _bus_dmamem_alloc_range(t, cookie->id_bouncebuflen,
 	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
-	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
+	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags,
+	    0, ISA_DMA_BOUNCE_THRESHOLD);
 	if (error)
 		goto out;
 	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
