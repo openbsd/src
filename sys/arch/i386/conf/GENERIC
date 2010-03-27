@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.680 2010/03/03 20:57:28 mk Exp $
+#	$OpenBSD: GENERIC,v 1.681 2010/03/27 16:02:19 jakemsr Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -737,7 +737,6 @@ gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis (drq2 is record drq)
 ym*	at isapnp?
 mpu*	at isapnp?
 mpu*	at isa? port 0x300		# generic MPU, Yamaha SW60XG
-#aria0	at isa? port 0x280 irq 10 drq 0 flags 0x1 # Prometheus Aria 16
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
