@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.17 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.18 2010/03/27 09:10:02 jmc Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ usage(int ismkfifo)
 		    __progname);
 	else {
 		(void)fprintf(stderr,
-		    "usage: %s [-m mode] name [b | c] major minor\n",
+		    "usage: %s [-m mode] name b|c major minor\n",
 		    __progname);
 		(void)fprintf(stderr, "       %s [-m mode] name p\n",
 		    __progname);
