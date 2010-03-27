@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.5 2010/03/27 20:16:15 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.6 2010/03/27 20:45:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -135,7 +135,7 @@ _dl_bind_start:
 	move	a0, v1
 	move	a1, t8
 	jal	_dl_bind
-	 nop
+
 	move	sp, s0
 	REG_L	ra, RAOFF(sp)
 	REG_L	s0, S0OFF(sp)
@@ -151,5 +151,4 @@ _dl_bind_start:
 	PTR_ADDU sp, FRAMESZ
 	move	t9, v0
 	jr	t9
-	 nop
 	.end	_dl_bind_start
