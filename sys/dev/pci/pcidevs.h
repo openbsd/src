@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1540 2010/03/25 00:35:57 ckuethe Exp 
+ *	OpenBSD: pcidevs,v 1.1542 2010/03/27 21:56:28 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3575,6 +3575,7 @@
 #define	PCI_PRODUCT_NETMOS_NM9805	0x9805		/* Nm9805 */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Nm9835 */
 #define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Nm9845 */
+#define	PCI_PRODUCT_NETMOS_NM9865	0x9865		/* Nm9865 */
 #define	PCI_PRODUCT_NETMOS_NM9901	0x9901		/* Nm9901 */
 
 /* Network Security Technologies */
