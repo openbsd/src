@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.197 2010/03/26 16:50:59 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.198 2010/03/27 16:20:29 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2297,7 +2297,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	struct sr_metadata	*sm = NULL;
 	struct sr_meta_chunk    *hm;
 	struct sr_chunk_head	*cl;
-	struct sr_chunk		*hotspare, *chunk, *last;
+	struct sr_chunk		*chunk, *last, *hotspare = NULL;
 	struct sr_uuid		uuid;
 	struct disklabel	label;
 	struct vnode		*vn;
