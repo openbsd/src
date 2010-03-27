@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1541 2010/03/25 23:10:25 oga Exp $
+$OpenBSD: pcidevs,v 1.1542 2010/03/27 21:56:28 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3570,6 +3570,7 @@ product NETGEAR GA620T		0x630a	GA620T
 product NETMOS NM9805		0x9805	Nm9805
 product NETMOS NM9835		0x9835	Nm9835
 product NETMOS NM9845		0x9845	Nm9845
+product NETMOS NM9865		0x9865	Nm9865
 product NETMOS NM9901		0x9901	Nm9901
 
 /* Network Security Technologies */
