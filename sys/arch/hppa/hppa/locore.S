@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.164 2009/12/31 12:52:35 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.165 2010/03/27 17:46:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2544,7 +2544,7 @@ LEAF_ENTRY(pdcache)
 	ldw	R%dcache_stride(t1), arg3
 
 	mtsp	arg0, sr1		/* move the space register to sr1 */
-	add	arg1, arg2, arg0	/* get the last byte to flush in arg0 */
+	add	arg1, arg2, arg0	/* get the last byte to purge in arg0 */
 
 	zdep	arg3, 27, 28, t1	/* get size of a 16X loop in t1 */
 	comb,<	arg2, t1, pdc_short	/* check for count < 16 * stride */
@@ -2553,7 +2553,7 @@ LEAF_ENTRY(pdcache)
 	andcm	arg2, t1, t1		/* L = count - (count mod lenbigloop) */
 	add	arg1, t1, t1		/* ub for big loop is lb + L */
 
-	pdc,m	arg3(sr1, arg1)		/* Start flushing first cache line. */
+	pdc,m	arg3(sr1, arg1)		/* Start purging first cache line. */
 pdc_long
 	pdc,m	arg3(sr1, arg1)
 	pdc,m	arg3(sr1, arg1)
@@ -2572,7 +2572,7 @@ pdc_long
 	pdc,m	arg3(sr1, arg1)
 	comb,<<,n arg1, t1, pdc_long
 	pdc,m	arg3(sr1, arg1)
-pdc_short				/* flush one line at a time */
+pdc_short				/* purge one line at a time */
 	comb,<<,n arg1, arg0, pdc_short
 	pdc,m	arg3(sr1, arg1)
 
