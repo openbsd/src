@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.26 2010/03/27 20:04:03 jsg Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.27 2010/03/27 21:40:13 jsg Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ struct fxp_cardbus_softc {
 	pcireg_t base0_reg;
 	pcireg_t base1_reg;
 	bus_size_t size;
+	pci_chipset_tag_t pc;
 };
 
 struct cfattach fxp_cardbus_ca = {
@@ -135,6 +136,7 @@ fxp_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t size;
 
 	csc->ct = ca->ca_ct;
+	csc->pc = ca->ca_pc;
 
 	/*
 	 * Map control/status registers.
@@ -188,20 +190,21 @@ fxp_cardbus_setup(struct fxp_softc *sc)
 	struct cardbus_softc *psc =
 	    (struct cardbus_softc *) sc->sc_dev.dv_parent;
 	cardbus_chipset_tag_t cc = psc->sc_cc;
+	pci_chipset_tag_t pc = csc->pc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 	pcireg_t command;
 
-	csc->ct_tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
+	csc->ct_tag = pci_make_tag(pc, csc->ct->ct_bus,
 	    csc->ct->ct_dev, csc->ct->ct_func);
 
-	command = cardbus_conf_read(cc, cf, csc->ct_tag, PCI_COMMAND_STATUS_REG);
+	command = pci_conf_read(pc, csc->ct_tag, PCI_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
-		cardbus_conf_write(cc, cf, csc->ct_tag, CARDBUS_BASE0_REG, csc->base0_reg);
+		pci_conf_write(pc, csc->ct_tag, CARDBUS_BASE0_REG, csc->base0_reg);
 		(cf->cardbus_ctrl) (cc, CARDBUS_MEM_ENABLE);
 		command |= PCI_COMMAND_MEM_ENABLE |
 		    PCI_COMMAND_MASTER_ENABLE;
 	} else if (csc->base1_reg) {
-		cardbus_conf_write(cc, cf, csc->ct_tag, CARDBUS_BASE1_REG, csc->base1_reg);
+		pci_conf_write(pc, csc->ct_tag, CARDBUS_BASE1_REG, csc->base1_reg);
 		(cf->cardbus_ctrl) (cc, CARDBUS_IO_ENABLE);
 		command |= (PCI_COMMAND_IO_ENABLE |
 		    PCI_COMMAND_MASTER_ENABLE);
@@ -210,7 +213,7 @@ fxp_cardbus_setup(struct fxp_softc *sc)
 	(cf->cardbus_ctrl) (cc, CARDBUS_BM_ENABLE);
 
 	/* enable the card */
-	cardbus_conf_write(cc, cf, csc->ct_tag, PCI_COMMAND_STATUS_REG, command);
+	pci_conf_write(pc, csc->ct_tag, PCI_COMMAND_STATUS_REG, command);
 }
 
 int

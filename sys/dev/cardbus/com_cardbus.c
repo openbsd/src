@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.38 2010/03/27 20:04:03 jsg Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.39 2010/03/27 21:40:13 jsg Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -77,6 +77,7 @@ struct com_cardbus_softc {
 	pcireg_t		cc_reg;
 	int			cc_type;
 	u_char			cc_bug;
+	pci_chipset_tag_t	cc_pc;
 };
 
 #define DEVNAME(CSC) ((CSC)->cc_com.sc_dev.dv_xname)
@@ -178,7 +179,7 @@ com_cardbus_gofigure(struct cardbus_attach_args *ca,
 		return (0);
 	}
 
-	cis_ptr = Cardbus_conf_read(csc->cc_ct, csc->cc_tag, CARDBUS_CIS_REG);
+	cis_ptr = pci_conf_read(ca->ca_pc, csc->cc_tag, CARDBUS_CIS_REG);
 
 	/* otherwise try to deduce which BAR and type to use from CIS.  If
 	   there is only one BAR, it must be the one we should use, if
@@ -236,9 +237,11 @@ com_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct com_softc *sc = (struct com_softc*)self;
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)self;
 	struct cardbus_attach_args *ca = aux;
+	cardbus_devfunc_t ct = csc->cc_ct;
 
 	csc->cc_ct = ca->ca_ct;
-	csc->cc_tag = Cardbus_make_tag(csc->cc_ct);
+	csc->cc_tag = pci_make_tag(ca->ca_pc, ct->ct_bus, ct->ct_dev, ct->ct_func);
+	csc->cc_pc = ca->ca_pc;
 
 	if (com_cardbus_gofigure(ca, csc) != 0)
 		return;
@@ -285,30 +288,31 @@ com_cardbus_setup(struct com_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->cc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t pc = csc->cc_pc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
-	cardbus_conf_write(cc, cf, csc->cc_tag, csc->cc_reg, csc->cc_base);
+	pci_conf_write(pc, csc->cc_tag, csc->cc_reg, csc->cc_base);
 
 	/* enable accesses on cardbus bridge */
 	cf->cardbus_ctrl(cc, csc->cc_cben);
 	cf->cardbus_ctrl(cc, CARDBUS_BM_ENABLE);
 
 	/* and the card itself */
-	reg = cardbus_conf_read(cc, cf, csc->cc_tag, PCI_COMMAND_STATUS_REG);
+	reg = pci_conf_read(pc, csc->cc_tag, PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->cc_csr;
-	cardbus_conf_write(cc, cf, csc->cc_tag, PCI_COMMAND_STATUS_REG, reg);
+	pci_conf_write(pc, csc->cc_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, csc->cc_tag, PCI_BHLC_REG);
+	reg = pci_conf_read(pc, csc->cc_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(reg) < 0x20) {
 			reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 			reg |= (0x20 << PCI_LATTIMER_SHIFT);
-			cardbus_conf_write(cc, cf, csc->cc_tag, PCI_BHLC_REG, reg);
+			pci_conf_write(pc, csc->cc_tag, PCI_BHLC_REG, reg);
 	}
 }
 

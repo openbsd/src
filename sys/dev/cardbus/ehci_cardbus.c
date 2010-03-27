@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.14 2010/03/27 20:04:03 jsg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.15 2010/03/27 21:40:13 jsg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t pc = ca->ca_pc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t csr;
 	usbd_status r;
@@ -121,9 +122,9 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the device. */
-	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
+	csr = pci_conf_read(pc, ca->ca_tag,
 				PCI_COMMAND_STATUS_REG);
-	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG,
+	pci_conf_write(pc, ca->ca_tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE
 			   | PCI_COMMAND_MEM_ENABLE);
 

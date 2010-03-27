@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.17 2010/03/27 20:04:03 jsg Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.18 2010/03/27 21:40:13 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -79,6 +79,7 @@ struct acx_cardbus_softc {
 	bus_size_t		sc_iomapsize;
 
 	int			sc_acx_attached;
+	pci_chipset_tag_t	sc_pc;
 };
 
 int	acx_cardbus_match(struct device *, void *, void *);
@@ -123,6 +124,7 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
+	csc->sc_pc = ca->ca_pc;
 
 	/* power management hooks */
 	sc->sc_enable = acx_cardbus_enable;
@@ -281,12 +283,13 @@ acx_cardbus_setup(struct acx_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t pc = csc->sc_pc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 	int b1 = CARDBUS_BASE0_REG, b2 = CARDBUS_BASE1_REG;
 
 	if (csc->sc_iobar_val) {
-		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BASE0_REG,
+		pci_conf_write(pc, csc->sc_tag, CARDBUS_BASE0_REG,
 		    csc->sc_iobar_val);
 		b1 = CARDBUS_BASE1_REG;
 		b2 = CARDBUS_BASE2_REG;
@@ -294,21 +297,21 @@ acx_cardbus_setup(struct acx_cardbus_softc *csc)
 	}
 
 	/* program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag, b1, csc->sc_bar1_val);
-	cardbus_conf_write(cc, cf, csc->sc_tag, b2, csc->sc_bar2_val);
+	pci_conf_write(pc, csc->sc_tag, b1, csc->sc_bar1_val);
+	pci_conf_write(pc, csc->sc_tag, b2, csc->sc_bar2_val);
 
 	/* make sure the right access type is on the cardbus bridge */
 	(*cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 	(*cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* enable the appropriate bits in the PCI CSR */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+	reg = pci_conf_read(pc, csc->sc_tag,
 	    PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
 #if 0
 	if (csc->sc_iobar_val)
 		reg |= PCI_COMMAND_IO_ENABLE;
 #endif
-	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG,
+	pci_conf_write(pc, csc->sc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.20 2010/03/27 20:04:03 jsg Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.21 2010/03/27 21:40:13 jsg Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ struct rl_cardbus_softc {
 	/* CardBus-specific goo. */
 	void *sc_ih;
 	cardbus_devfunc_t sc_ct;
+	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
 	int sc_csr;
 	int sc_cben;
@@ -158,6 +159,7 @@ rl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
+	csc->sc_pc = ca->ca_pc;
 
 	/*
 	 * Map control/status registers.
@@ -245,25 +247,25 @@ rl_cardbus_setup(struct rl_cardbus_softc *csc)
 	struct rl_softc		*sc = &csc->sc_rl;
 	cardbus_devfunc_t	ct = csc->sc_ct;
 	cardbus_chipset_tag_t	cc = ct->ct_cc;
-	cardbus_function_tag_t	cf = ct->ct_cf;
+	pci_chipset_tag_t	pc = csc->sc_pc;
 	pcireg_t		reg, command;
 	int			pmreg;
 
 	/*
 	 * Handle power management nonsense.
 	 */
-	if (cardbus_get_capability(cc, cf, csc->sc_tag,
+	if (pci_get_capability(pc, csc->sc_tag,
 	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		command = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4);
+		command = pci_conf_read(pc, csc->sc_tag, pmreg + 4);
 		if (command & RL_PSTATE_MASK) {
 			pcireg_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
-			iobase = cardbus_conf_read(cc, cf, csc->sc_tag,
+			iobase = pci_conf_read(pc, csc->sc_tag,
 			    RL_PCI_LOIO);
-			membase = cardbus_conf_read(cc, cf,csc->sc_tag,
+			membase = pci_conf_read(pc, csc->sc_tag,
 			    RL_PCI_LOMEM);
-			irq = cardbus_conf_read(cc, cf,csc->sc_tag,
+			irq = pci_conf_read(pc, csc->sc_tag,
 			    PCI_PRODUCT_DELTA_8139);
 
 			/* Reset the power state. */
@@ -271,15 +273,15 @@ rl_cardbus_setup(struct rl_cardbus_softc *csc)
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    command & RL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
-			cardbus_conf_write(cc, cf, csc->sc_tag,
+			pci_conf_write(pc, csc->sc_tag,
 			    pmreg + 4, command);
 
 			/* Restore PCI config data. */
-			cardbus_conf_write(cc, cf, csc->sc_tag,
+			pci_conf_write(pc, csc->sc_tag,
 			    RL_PCI_LOIO, iobase);
-			cardbus_conf_write(cc, cf, csc->sc_tag,
+			pci_conf_write(pc, csc->sc_tag,
 			    RL_PCI_LOMEM, membase);
-			cardbus_conf_write(cc, cf, csc->sc_tag,
+			pci_conf_write(pc, csc->sc_tag,
 			    PCI_PRODUCT_DELTA_8139, irq);
 		}
 	}
@@ -289,26 +291,26 @@ rl_cardbus_setup(struct rl_cardbus_softc *csc)
 	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag,
+	pci_conf_write(pc, csc->sc_tag,
 		csc->sc_bar_reg, csc->sc_bar_val);
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, 
+	reg = pci_conf_read(pc, csc->sc_tag, 
 	    PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, 
+	pci_conf_write(pc, csc->sc_tag, 
 	    PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_BHLC_REG);
+	reg = pci_conf_read(pc, csc->sc_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(reg) < 0x20) {
 		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		reg |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, PCI_BHLC_REG, reg);
+		pci_conf_write(pc, csc->sc_tag, PCI_BHLC_REG, reg);
 	}
 }
 

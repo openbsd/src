@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.26 2010/03/27 20:04:03 jsg Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.27 2010/03/27 21:40:13 jsg Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 
-	command = cardbus_conf_read(cc, cf, ca->ca_tag,
+	command = pci_conf_read(ca->ca_pc, ca->ca_tag,
 	    PCI_COMMAND_STATUS_REG);
 	command |= ecp->ecp_csr;
 	csc->sc_cardtype = ecp->ecp_cardtype;
@@ -244,20 +244,20 @@ xl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG,
+	pci_conf_write(ca->ca_pc, ca->ca_tag, PCI_COMMAND_STATUS_REG,
 	    command);
   
  	/*
 	 * set latency timer
 	 */
-	bhlc = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_BHLC_REG);
+	bhlc = pci_conf_read(ca->ca_pc, ca->ca_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(bhlc) < 0x20) {
 		/* at least the value of latency timer should 0x20. */
 		DPRINTF(("if_xl_cardbus: lattimer 0x%x -> 0x20\n",
 		    PCI_LATTIMER(bhlc)));
 		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		bhlc |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, bhlc);
+		pci_conf_write(ca->ca_pc, ca->ca_tag, PCI_BHLC_REG, bhlc);
 	}
 
 	csc->sc_ct = ca->ca_ct;

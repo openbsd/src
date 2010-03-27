@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.18 2010/03/27 20:04:03 jsg Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.19 2010/03/27 21:40:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -61,6 +61,7 @@ struct re_cardbus_softc {
 	void *sc_ih;
 	cardbus_devfunc_t ct;
 	pcitag_t sc_tag;
+	pci_chipset_tag_t sc_pc;
 	int sc_csr;
 	int sc_cben;
 	int sc_bar_reg;
@@ -124,6 +125,7 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	csc->ct = ct;
 	csc->sc_tag = ca->ca_tag;
+	csc->sc_pc = ca->ca_pc;
 	csc->sc_intrline = ca->ca_intrline;
 
 	/*
@@ -179,36 +181,36 @@ re_cardbus_setup(struct rl_softc *sc)
 	struct re_cardbus_softc *csc = (struct re_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
+	pci_chipset_tag_t pc = csc->sc_pc;
 	pcireg_t reg, command;
 	int pmreg;
 
 	/* Handle power management nonsense */
-	if (cardbus_get_capability(cc, cf, csc->sc_tag,
+	if (pci_get_capability(pc, csc->sc_tag,
 	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		command = cardbus_conf_read(cc, cf, csc->sc_tag,
+		command = pci_conf_read(pc, csc->sc_tag,
 		    pmreg + PCI_PMCSR);
 
 		if (command & RL_PSTATE_MASK) {
 			pcireg_t iobase, membase, irq;
 
 			/* Save important PCI config data */
-			iobase = cardbus_conf_read(cc, cf, csc->sc_tag, RL_PCI_LOIO);
-			membase = cardbus_conf_read(cc, cf, csc->sc_tag, RL_PCI_LOMEM);
-			irq = cardbus_conf_read(cc, cf, csc->sc_tag, RL_PCI_INTLINE);
+			iobase = pci_conf_read(pc, csc->sc_tag, RL_PCI_LOIO);
+			membase = pci_conf_read(pc, csc->sc_tag, RL_PCI_LOMEM);
+			irq = pci_conf_read(pc, csc->sc_tag, RL_PCI_INTLINE);
 
 			/* Reset the power state */
 			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    command & RL_PSTATE_MASK);
 			command &= RL_PSTATE_MASK;
-			cardbus_conf_write(cc, cf, csc->sc_tag, pmreg + PCI_PMCSR,
+			pci_conf_write(pc, csc->sc_tag, pmreg + PCI_PMCSR,
 			    command);
 
 			/* Restore PCI config data */
-			cardbus_conf_write(cc, cf, csc->sc_tag, RL_PCI_LOIO, iobase);
-			cardbus_conf_write(cc, cf, csc->sc_tag, RL_PCI_LOMEM, membase);
-			cardbus_conf_write(cc, cf, csc->sc_tag, RL_PCI_INTLINE, irq);
+			pci_conf_write(pc, csc->sc_tag, RL_PCI_LOIO, iobase);
+			pci_conf_write(pc, csc->sc_tag, RL_PCI_LOMEM, membase);
+			pci_conf_write(pc, csc->sc_tag, RL_PCI_INTLINE, irq);
 		}
 	}
 
@@ -217,20 +219,20 @@ re_cardbus_setup(struct rl_softc *sc)
 	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg, csc->sc_bar_val);
+	pci_conf_write(pc, csc->sc_tag, csc->sc_bar_reg, csc->sc_bar_val);
 
 	/* Enable proper bits in CARDBUS CSR */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG);
+	reg = pci_conf_read(pc, csc->sc_tag, PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
+	pci_conf_write(pc, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/* Make sure the latency timer is set to some reasonable value */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_BHLC_REG);
+	reg = pci_conf_read(pc, csc->sc_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(reg) < 0x20) {
 		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		reg |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, PCI_BHLC_REG, reg);
+		pci_conf_write(pc, csc->sc_tag, PCI_BHLC_REG, reg);
 	}
 }
 

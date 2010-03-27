@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.11 2010/03/27 20:04:03 jsg Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.12 2010/03/27 21:40:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -58,6 +58,7 @@ struct bwi_cardbus_softc {
 	bus_size_t		 csc_mapsize;
 	pcireg_t		 csc_bar_val;
 	int			 csc_intrline;
+	pci_chipset_tag_t	 csc_pc;
 };
 
 int		bwi_cardbus_match(struct device *, void *, void*);
@@ -107,6 +108,7 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->csc_ct = ct;
 	csc->csc_tag = ca->ca_tag;
 	csc->csc_intrline = ca->ca_intrline;
+	csc->csc_pc = ca->ca_pc;
 
 	/* power management hooks */
 	sc->sc_enable = bwi_cardbus_enable;
@@ -178,11 +180,12 @@ bwi_cardbus_setup(struct bwi_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->csc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
+	pci_chipset_tag_t pc = csc->csc_pc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
 	/* program the BAR */
-	cardbus_conf_write(cc, cf, csc->csc_tag, CARDBUS_BASE0_REG,
+	pci_conf_write(pc, csc->csc_tag, CARDBUS_BASE0_REG,
 	    csc->csc_bar_val);
 
 	/* make sure the right access type is on the cardbus bridge */
@@ -190,10 +193,10 @@ bwi_cardbus_setup(struct bwi_cardbus_softc *csc)
 	(*cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* enable the appropriate bits in the PCI CSR */
-	reg = cardbus_conf_read(cc, cf, csc->csc_tag,
+	reg = pci_conf_read(pc, csc->csc_tag,
 	    PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->csc_tag, PCI_COMMAND_STATUS_REG,
+	pci_conf_write(pc, csc->csc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 }
 
@@ -244,20 +247,16 @@ void
 bwi_cardbus_conf_write(void *self, uint32_t reg, uint32_t val)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
-	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
+	pci_chipset_tag_t pc = csc->csc_pc;
 
-	cardbus_conf_write(cc, cf, csc->csc_tag, reg, val);
+	pci_conf_write(pc, csc->csc_tag, reg, val);
 }
 
 uint32_t
 bwi_cardbus_conf_read(void *self, uint32_t reg)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
-	cardbus_devfunc_t ct = csc->csc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
+	pci_chipset_tag_t pc = csc->csc_pc;
 
-	return (cardbus_conf_read(cc, cf, csc->csc_tag, reg));
+	return (pci_conf_read(pc, csc->csc_tag, reg));
 }

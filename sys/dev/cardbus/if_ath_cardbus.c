@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.14 2010/03/27 20:04:03 jsg Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.15 2010/03/27 21:40:13 jsg Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -92,6 +92,7 @@ struct ath_cardbus_softc {
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
 	int	sc_intrline;		/* interrupt line */
+	pci_chipset_tag_t sc_pc;
 };
 
 int	ath_cardbus_match(struct device *, void *, void *);
@@ -139,6 +140,7 @@ ath_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
+	csc->sc_pc = ca->ca_pc;
 
 	/*
 	 * Power management hooks.
@@ -275,7 +277,7 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
+	pci_chipset_tag_t pc = csc->sc_pc;
 	pcireg_t reg;
 
 #ifdef notyet
@@ -284,7 +286,7 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 #endif
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, csc->sc_tag, ATH_PCI_MMBA,
+	pci_conf_write(pc, csc->sc_tag, ATH_PCI_MMBA,
 	    csc->sc_bar_val);
 
 	/* Make sure the right access type is on the CardBus bridge. */
@@ -292,20 +294,20 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+	reg = pci_conf_read(pc, csc->sc_tag,
 	    PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG,
+	pci_conf_write(pc, csc->sc_tag, PCI_COMMAND_STATUS_REG,
 	    reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_BHLC_REG);
+	reg = pci_conf_read(pc, csc->sc_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(reg) < 0x20) {
 		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		reg |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, PCI_BHLC_REG, reg);
+		pci_conf_write(pc, csc->sc_tag, PCI_BHLC_REG, reg);
 	}
 }

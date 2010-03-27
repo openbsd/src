@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.17 2010/03/27 20:04:03 jsg Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.18 2010/03/27 21:40:13 jsg Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -74,13 +74,6 @@ typedef struct cardbus_functions {
 	void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t, void *);
 	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
-
-	pcitag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int, int);
-	void (*cardbus_free_tag)(cardbus_chipset_tag_t, pcitag_t);
-	pcireg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
-	    pcitag_t, int);
-	void (*cardbus_conf_write)(cardbus_chipset_tag_t, pcitag_t, int,
-	    pcireg_t);
 } cardbus_function_t, *cardbus_function_tag_t;
 
 /*
@@ -95,6 +88,7 @@ struct cbslot_attach_args {
 	int cba_bus;			/* cardbus bus number */
 
 	cardbus_chipset_tag_t cba_cc;	/* cardbus chipset */
+	pci_chipset_tag_t cba_pc;	/* pci chipset */
 	cardbus_function_tag_t cba_cf;	/* cardbus functions */
 	int cba_intrline;		/* interrupt line */
 
@@ -129,6 +123,7 @@ struct cardbus_softc {
 	bus_dma_tag_t sc_dmat;		/* DMA tag */
 
 	cardbus_chipset_tag_t sc_cc;	/* CardBus chipset */
+	pci_chipset_tag_t sc_pc;	/* PCI chipset */
 	cardbus_function_tag_t sc_cf;	/* CardBus function */
 
 	rbus_tag_t sc_rbus_iot;		/* CardBus i/o rbus tag */
@@ -202,6 +197,7 @@ struct cardbus_cis_info {
 struct cardbus_attach_args {
 	int ca_unit;
 	cardbus_devfunc_t ca_ct;
+	pci_chipset_tag_t ca_pc;	/* PCI chipset */
 
 	bus_space_tag_t ca_iot;		/* CardBus I/O space tag */
 	bus_space_tag_t ca_memt;	/* CardBus MEM space tag */
@@ -275,8 +271,7 @@ void   *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
 void	cardbus_intr_disestablish(cardbus_chipset_tag_t,
 	    cardbus_function_tag_t, void *handler);
 
-int	cardbus_mapreg_probe(cardbus_chipset_tag_t, cardbus_function_tag_t,
-	    pcitag_t, int, pcireg_t *);
+int	cardbus_mapreg_probe(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
 int	cardbus_mapreg_map(struct cardbus_softc *, int, int, pcireg_t,
 	    int, bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);
@@ -288,8 +283,6 @@ int	cardbus_function_disable(struct cardbus_softc *, int function);
 
 int	cardbus_matchbyid(struct cardbus_attach_args *,
 	    const struct pci_matchid *, int);
-int	cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
-	    pcitag_t, int, int *, pcireg_t *);
 
 #define Cardbus_function_enable(ct)			\
     cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
@@ -302,25 +295,5 @@ int	cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
 #define Cardbus_mapreg_unmap(ct, reg, tag, handle, size)\
     cardbus_mapreg_unmap((ct)->ct_sc, (ct->ct_func), 	\
     (reg), (tag), (handle), (size))
-
-#define Cardbus_make_tag(ct)				\
-    (*(ct)->ct_cf->cardbus_make_tag)((ct)->ct_cc,	\
-    (ct)->ct_bus, (ct)->ct_dev, (ct)->ct_func)
-#define cardbus_make_tag(cc, cf, bus, device, function)	\
-    ((cf)->cardbus_make_tag)((cc), (bus), (device), (function))
-
-#define Cardbus_free_tag(ct, tag)			\
-    (*(ct)->ct_cf->cardbus_free_tag)((ct)->ct_cc, (tag))
-#define cardbus_free_tag(cc, cf, tag)			\
-    (*(cf)->cardbus_free_tag)(cc, (tag))
-
-#define Cardbus_conf_read(ct, tag, offs)		\
-    (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cc, (tag), (offs))
-#define cardbus_conf_read(cc, cf, tag, offs)		\
-    ((cf)->cardbus_conf_read)((cc), (tag), (offs))
-#define Cardbus_conf_write(ct, tag, offs, val)		\
-    (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cc, (tag), (offs), (val))
-#define cardbus_conf_write(cc, cf, tag, offs, val)	\
-    ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
 
 #endif /* !_DEV_CARDBUS_CARDBUSVAR_H_ */
