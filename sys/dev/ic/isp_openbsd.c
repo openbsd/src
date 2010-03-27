@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.42 2010/03/23 01:57:19 krw Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.43 2010/03/27 02:06:03 krw Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -395,14 +395,14 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 
 	switch (result) {
 	case CMD_QUEUED:
-		return;
+		break;
 	case CMD_RQLATER:
 	case CMD_EAGAIN:
 		xs->error = XS_NO_CCB;
 		/* FALLTHROUGH */
 	case CMD_COMPLETE:
 		scsi_done(xs);
-		break;
+		return;
 	}
 
 	/*
