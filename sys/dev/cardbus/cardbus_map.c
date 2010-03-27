@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.13 2010/03/27 21:40:13 jsg Exp $	*/
+/*	$OpenBSD: cardbus_map.c,v 1.14 2010/03/27 23:36:36 jsg Exp $	*/
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -55,182 +55,6 @@
 #define DPRINTF(a)
 #endif
 
-
-STATIC int cardbus_io_find(pci_chipset_tag_t,
-	       pcitag_t, int, pcireg_t, bus_addr_t *, bus_size_t *,
-	       int *);
-STATIC int cardbus_mem_find(pci_chipset_tag_t,
-	       pcitag_t, int, pcireg_t, bus_addr_t *, bus_size_t *,
-	       int *);
-
-int
-cardbus_mapreg_probe(pci_chipset_tag_t pc,
-    pcitag_t tag, int reg, pcireg_t *typep)
-{
-	pcireg_t address, mask;
-	int s;
-
-	s = splhigh();
-	address = pci_conf_read(pc, tag, reg);
-	pci_conf_write(pc, tag, reg, 0xffffffff);
-	mask = pci_conf_read(pc, tag, reg);
-	pci_conf_write(pc, tag, reg, address);
-	splx(s);
-
-	if (mask == 0) /* unimplemented mapping register */
-		return (0);
-
-	if (typep)
-		*typep = _PCI_MAPREG_TYPEBITS(address);
-	return (1);
-}
-
-/*
- * STATIC int cardbus_io_find(pci_chipset_tag_t pc,
- *			      pcitag_t tag,
- *			      int reg, pcireg_t type, bus_addr_t *basep,
- *			      bus_size_t *sizep, int *flagsp)
- * This code is stolen from sys/dev/pci_map.c.
- */
-STATIC int
-cardbus_io_find(pci_chipset_tag_t pc,
-    pcitag_t tag, int reg, pcireg_t type, bus_addr_t *basep,
-    bus_size_t *sizep, int *flagsp)
-{
-	pcireg_t address, mask;
-	int s;
-
-	/* EXT ROM is able to map on memory space ONLY. */
-	if (reg == CARDBUS_ROM_REG)
-		return (1);
-
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3)) {
-		panic("cardbus_io_find: bad request");
-	}
-
-	/*
-	 * Section 6.2.5.1, `Address Maps', tells us that:
-	 *
-	 * 1) The builtin software should have already mapped the device in a
-	 * reasonable way.
-	 *
-	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
-	 */
-	s = splhigh();
-	address = pci_conf_read(pc, tag, reg);
-	pci_conf_write(pc, tag, reg, 0xffffffff);
-	mask = pci_conf_read(pc, tag, reg);
-	pci_conf_write(pc, tag, reg, address);
-	splx(s);
-
-	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
-		printf("cardbus_io_find: expected type i/o, found mem\n");
-		return (1);
-	}
-
-	if (PCI_MAPREG_IO_SIZE(mask) == 0) {
-		printf("cardbus_io_find: void region\n");
-		return (1);
-	}
-
-	if (basep != 0)
-		*basep = PCI_MAPREG_IO_ADDR(address);
-	if (sizep != 0)
-		*sizep = PCI_MAPREG_IO_SIZE(mask);
-	if (flagsp != 0)
-		*flagsp = 0;
-
-	return (0);
-}
-
-/*
- * STATIC int cardbus_mem_find(pci_chipset_tag_t pc,
- *			       pcitag_t tag,
- *			       int reg, pcireg_t type, bus_addr_t *basep,
- *			       bus_size_t *sizep, int *flagsp)
- * This code is stolen from sys/dev/pci_map.c.
- */
-STATIC int
-cardbus_mem_find(pci_chipset_tag_t pc,
-    pcitag_t tag, int reg, pcireg_t type, bus_addr_t *basep,
-    bus_size_t *sizep, int *flagsp)
-{
-	pcireg_t address, mask;
-	int s;
-
-	if (reg != CARDBUS_ROM_REG &&
-	    (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))) {
-		panic("cardbus_mem_find: bad request");
-	}
-
-	/*
-	 * Section 6.2.5.1, `Address Maps', tells us that:
-	 *
-	 * 1) The builtin software should have already mapped the device in a
-	 * reasonable way.
-	 *
-	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
-	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
-	 */
-	s = splhigh();
-	address = pci_conf_read(pc, tag, reg);
-	pci_conf_write(pc, tag, reg, 0xffffffff);
-	mask = pci_conf_read(pc, tag, reg);
-	pci_conf_write(pc, tag, reg, address);
-	splx(s);
-
-	if (reg != CARDBUS_ROM_REG) {
-		/* memory space BAR */
-
-		if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
-			printf("cardbus_mem_find: expected type mem, "
-			    "found i/o\n");
-			return (1);
-		}
-		if (PCI_MAPREG_MEM_TYPE(address) != PCI_MAPREG_MEM_TYPE(type)) {
-			printf("cardbus_mem_find: expected mem type %08x, "
-			    "found %08x\n", PCI_MAPREG_MEM_TYPE(type),
-			    PCI_MAPREG_MEM_TYPE(address));
-			return (1);
-		}
-	}
-
-	if (PCI_MAPREG_MEM_SIZE(mask) == 0) {
-		printf("cardbus_mem_find: void region\n");
-		return (1);
-	}
-
-	switch (PCI_MAPREG_MEM_TYPE(address)) {
-	case PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
-		break;
-	case PCI_MAPREG_MEM_TYPE_64BIT:
-		printf("cardbus_mem_find: 64-bit memory mapping register\n");
-		return (1);
-	default:
-		printf("cardbus_mem_find: reserved mapping register type\n");
-		return (1);
-	}
-
-	if (basep != 0)
-		*basep = PCI_MAPREG_MEM_ADDR(address);
-	if (sizep != 0)
-		*sizep = PCI_MAPREG_MEM_SIZE(mask);
-	if (flagsp != 0) {
-		*flagsp =
-#ifdef BUS_SPACE_MAP_PREFETCHABLE
-		    PCI_MAPREG_MEM_PREFETCHABLE(address) ?
-		      BUS_SPACE_MAP_PREFETCHABLE :
-#endif
-		0;
-	}
-
-	return (0);
-}
-
 /*
  * int cardbus_mapreg_map(struct cardbus_softc *, int, int, pcireg_t,
  *			  int bus_space_tag_t *, bus_space_handle_t *,
@@ -263,16 +87,13 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg,
 	DPRINTF(("cardbus_mapreg_map called: %s %x\n", sc->sc_dev.dv_xname,
 	   type));
 
+	if (pci_mapreg_info(pc, tag, reg, type, &base, &size, &flags))
+		status = 1;
+
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
-		if (cardbus_io_find(pc, tag, reg, type, &base, &size,
-		    &flags))
-			status = 1;
 		bustag = sc->sc_iot;
 		rbustag = sc->sc_rbus_iot;
 	} else {
-		if (cardbus_mem_find(pc, tag, reg, type, &base, &size,
-		    &flags))
-			status = 1;
 		bustag = sc->sc_memt;
 		rbustag = sc->sc_rbus_memt;
 	}
