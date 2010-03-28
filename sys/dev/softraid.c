@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.200 2010/03/28 09:13:55 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.201 2010/03/28 16:38:57 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -145,6 +145,8 @@ void			sr_meta_chunks_create(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_meta_init(struct sr_discipline *,
 			    struct sr_chunk_head *);
+void			sr_meta_opt_load(struct sr_discipline *,
+			    struct sr_meta_opt *);
 
 /* hotplug magic */
 void			sr_disk_attach(struct disk *, int);
@@ -466,7 +468,6 @@ sr_meta_clear(struct sr_discipline *sd)
 			continue;
 		}
 		bzero(&ch_entry->src_meta, sizeof(ch_entry->src_meta));
-		bzero(&ch_entry->src_opt, sizeof(ch_entry->src_opt));
 	}
 
 	bzero(sd->sd_meta, SR_META_SIZE * 512);
@@ -528,7 +529,6 @@ sr_meta_init(struct sr_discipline *sd, struct sr_chunk_head *cl)
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_metadata	*sm = sd->sd_meta;
 	struct sr_meta_chunk	*im_sc;
-	struct sr_meta_opt	*im_so;
 	int			i, chunk_no;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_init\n", DEVNAME(sc));
@@ -556,26 +556,17 @@ sr_meta_init(struct sr_discipline *sd, struct sr_chunk_head *cl)
 		im_sc->scmi.scm_volid = sm->ssdi.ssd_volid;
 		sr_checksum(sc, im_sc, &im_sc->scm_checksum,
 		    sizeof(struct sr_meta_chunk_invariant));
-
-		/* carry optional meta also in chunk area */
-		im_so = &sd->sd_vol.sv_chunks[i]->src_opt;
-		bzero(im_so, sizeof(*im_so));
-		if (sd->sd_type == SR_MD_CRYPTO) {
-			sm->ssdi.ssd_opt_no = 1;
-			im_so->somi.som_type = SR_OPT_CRYPTO;
-
-			/*
-			 * copy encrypted key / passphrase into optional
-			 * metadata area
-			 */
-			bcopy(&sd->mds.mdd_crypto.scr_meta,
-			    &im_so->somi.som_meta.smm_crypto,
-			    sizeof(im_so->somi.som_meta.smm_crypto));
-
-			sr_checksum(sc, im_so, im_so->som_checksum,
-			    sizeof(struct sr_meta_opt_invariant));
-		}
 	}
+}
+
+void
+sr_meta_opt_load(struct sr_discipline *sd, struct sr_meta_opt *om)
+{
+	if (om->somi.som_type == SR_OPT_BOOT) {
+
+
+	} else
+		panic("unknown optional metadata type");
 }
 
 void
@@ -603,6 +594,7 @@ sr_meta_save(struct sr_discipline *sd, u_int32_t flags)
 	struct sr_chunk		*src;
 	struct sr_meta_chunk	*cm;
 	struct sr_workunit	wu;
+	struct sr_meta_opt_item *omi;
 	struct sr_meta_opt	*om;
 	int			i;
 
@@ -623,27 +615,27 @@ sr_meta_save(struct sr_discipline *sd, u_int32_t flags)
 		goto bad;
 	}
 
-	if (sm->ssdi.ssd_opt_no > 1)
-		panic("not yet save > 1 optional metadata members");
-
 	/* from here on out metadata is updated */
 restart:
 	sm->ssd_ondisk++;
 	sm->ssd_meta_flags = flags;
 	bcopy(sm, m, sizeof(*m));
 
+	/* Chunk metadata. */
+	cm = (struct sr_meta_chunk *)(m + 1);
 	for (i = 0; i < sm->ssdi.ssd_chunk_no; i++) {
 		src = sd->sd_vol.sv_chunks[i];
-		cm = (struct sr_meta_chunk *)(m + 1);
-		bcopy(&src->src_meta, cm + i, sizeof(*cm));
+		bcopy(&src->src_meta, cm, sizeof(*cm));
+		cm++;
 	}
 
-	/* optional metadata */
-	om = (struct sr_meta_opt *)(cm + i);
-	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
-		bcopy(&src->src_opt, om + i, sizeof(*om));
+	/* Optional metadata. */
+	om = (struct sr_meta_opt *)(cm);
+	SLIST_FOREACH(omi, &sd->sd_meta_opt, omi_link) {
+		bcopy(&omi->omi_om, om, sizeof(*om));
 		sr_checksum(sc, om, &om->som_checksum,
 		    sizeof(struct sr_meta_opt_invariant));
+		om++;
 	}
 
 	for (i = 0; i < sm->ssdi.ssd_chunk_no; i++) {
@@ -705,9 +697,10 @@ sr_meta_read(struct sr_discipline *sd)
 	struct sr_chunk		*ch_entry;
 	struct sr_meta_chunk	*cp;
 	struct sr_meta_driver	*s;
+	struct sr_meta_opt_item *omi;
 	struct sr_meta_opt	*om;
 	void			*fm = NULL;
-	int			no_disk = 0, got_meta = 0;
+	int			i, no_disk = 0, got_meta = 0;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_read\n", DEVNAME(sc));
 
@@ -757,22 +750,24 @@ sr_meta_read(struct sr_discipline *sd)
 
 		bcopy(cp, &ch_entry->src_meta, sizeof(ch_entry->src_meta));
 
-		if (sm->ssdi.ssd_opt_no > 1)
-			panic("not yet read > 1 optional metadata members");
+		/* Process optional metadata. */
+		om = (struct sr_meta_opt *) ((u_int8_t *)(sm + 1) +
+		    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
+		for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
 
-		if (sm->ssdi.ssd_opt_no) {
-			om = (struct sr_meta_opt *) ((u_int8_t *)(sm + 1) +
-			    sizeof(struct sr_meta_chunk) *
-			    sm->ssdi.ssd_chunk_no);
-			bcopy(om, &ch_entry->src_opt,
-			    sizeof(ch_entry->src_opt));
+			omi = malloc(sizeof(struct sr_meta_opt_item),
+			    M_DEVBUF, M_WAITOK | M_ZERO);
+			bcopy(om, &omi->omi_om, sizeof(struct sr_meta_opt));
+			SLIST_INSERT_HEAD(&sd->sd_meta_opt, omi, omi_link);
 
-			if (om->somi.som_type == SR_OPT_CRYPTO) {
-				bcopy(
-				    &ch_entry->src_opt.somi.som_meta.smm_crypto,
-				    &sd->mds.mdd_crypto.scr_meta,
-				    sizeof(sd->mds.mdd_crypto.scr_meta));
-			}
+			/* See if discipline wants to handle it. */
+			if (sd->sd_meta_opt_load &&
+			    sd->sd_meta_opt_load(sd, &omi->omi_om) == 0)
+				continue;
+			else
+				sr_meta_opt_load(sd, &omi->omi_om);
+
+			om++;
 		}
 
 		cp++;
@@ -2414,6 +2409,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	sd->sd_meta_type = SR_META_F_NATIVE;
 	sd->sd_vol_status = BIOC_SVONLINE;
 	strlcpy(sd->sd_name, "HOTSPARE", sizeof(sd->sd_name));
+	SLIST_INIT(&sd->sd_meta_opt);
 
 	/* Add chunk to volume. */
 	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *), M_DEVBUF,
@@ -2773,6 +2769,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	/* Initialise discipline. */
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK | M_ZERO);
 	sd->sd_sc = sc;
+	SLIST_INIT(&sd->sd_meta_opt);
 	if (sr_discipline_init(sd, bc->bc_level)) {
 		printf("%s: could not initialize discipline\n", DEVNAME(sc));
 		goto unwind;
@@ -3292,6 +3289,8 @@ void
 sr_discipline_free(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc;
+	struct sr_meta_opt_head *omh;
+	struct sr_meta_opt_item	*omi, *omi_next;
 	int			i;
 
 	if (!sd)
@@ -3310,6 +3309,12 @@ sr_discipline_free(struct sr_discipline *sd)
 		free(sd->sd_meta, M_DEVBUF);
 	if (sd->sd_meta_foreign)
 		free(sd->sd_meta_foreign, M_DEVBUF);
+
+	omh = &sd->sd_meta_opt;
+	for (omi = SLIST_FIRST(omh); omi != SLIST_END(omh); omi = omi_next) {
+		omi_next = SLIST_NEXT(omi, omi_link);
+		free(omi, M_DEVBUF);
+	}
 
 	for (i = 0; i < SR_MAXSCSIBUS; i++)
 		if (sc->sc_dis[i] == sd) {

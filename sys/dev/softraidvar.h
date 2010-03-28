@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.90 2010/03/26 11:20:34 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.91 2010/03/28 16:38:57 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -170,6 +170,13 @@ struct sr_meta_opt {
 	/* MD5 of invariant optional metadata */
 	u_int8_t		som_checksum[MD5_DIGEST_LENGTH];
 } __packed;
+
+struct sr_meta_opt_item {
+	struct sr_meta_opt	omi_om;
+	SLIST_ENTRY(sr_meta_opt_item) omi_link;
+};
+
+SLIST_HEAD(sr_meta_opt_head, sr_meta_opt_item);
 
 /* this is a generic hint for KDF done in userland, not interpreted by the kernel. */
 struct sr_crypto_genkdf {
@@ -355,7 +362,7 @@ struct sr_raid6 {
 /* CRYPTO */
 #define SR_CRYPTO_NOWU		16
 struct sr_crypto {
-	struct sr_meta_crypto	scr_meta;
+	struct sr_meta_crypto	*scr_meta;
 	struct sr_chunk		*key_disk;
 
 	struct pool		sr_uiopl;
@@ -403,7 +410,6 @@ SLIST_HEAD(sr_boot_volume_head, sr_boot_volume);
 
 struct sr_chunk {
 	struct sr_meta_chunk	src_meta;	/* chunk meta data */
-	struct sr_meta_opt	src_opt;	/* optional metadata */
 
 	/* runtime data */
 	dev_t			src_dev_mm;	/* major/minor */
@@ -468,6 +474,7 @@ struct sr_discipline {
 	void			*sd_meta_foreign; /* non native metadata */
 	u_int32_t		sd_meta_flags;
 	int			sd_meta_type;	/* metadata functions */
+	struct sr_meta_opt_head sd_meta_opt; /* optional metadata. */
 
 	int			sd_sync;
 	int			sd_must_flush;
@@ -514,6 +521,8 @@ struct sr_discipline {
 				    int, int);
 	void			(*sd_set_vol_state)(struct sr_discipline *);
 	int			(*sd_openings)(struct sr_discipline *);
+	int			(*sd_meta_opt_load)(struct sr_discipline *,
+				    struct sr_meta_opt *);
 
 	/* SCSI emulation */
 	struct scsi_sense_data	sd_scsi_sense;
