@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2010/02/28 18:01:39 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.28 2010/03/28 17:09:36 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -202,6 +202,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	switch (fptype) {
 	case MIPS_SOFT:
 		printf("Software FP emulation");
+		displayver = 0;
 		break;
 	case MIPS_R4000:
 		printf("R4010 FPC");
@@ -213,7 +214,12 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf("R12000 FPU");
 		break;
 	case MIPS_R14000:
-		printf("R1%d000 FPU", isr16k ? 6 : 4);
+		if (isr16k) {
+			if (ch->c0prid == ch->c1prid)
+				vers_maj -= 2;
+			printf("R16000 FPU");
+		} else
+			printf("R14000 FPU");
 		break;
 	case MIPS_R4200:
 		printf("VR4200 FPC (ICE)");
