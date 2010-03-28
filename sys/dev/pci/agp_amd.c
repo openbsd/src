@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.13 2009/05/10 16:57:44 oga Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.14 2010/03/28 13:22:07 oga Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -133,13 +133,11 @@ agp_amd_alloc_gatt(bus_dma_tag_t dmat, bus_size_t apsize)
 	gatt->ag_entries = entries;
 	gatt->ag_virtual = (u_int32_t *)(vdir + AGP_PAGE_SIZE);
 	gatt->ag_physical = gatt->ag_pdir + AGP_PAGE_SIZE;
-	gatt->ag_size = AGP_PAGE_SIZE + entries * sizeof(u_int32_t);
 
 	/*
 	 * Map the pages of the GATT into the page directory.
 	 */
-	npages = ((entries * sizeof(u_int32_t) + AGP_PAGE_SIZE - 1)
-	    >> AGP_PAGE_SHIFT);
+	npages = ((gatt->ag_size - 1) >> AGP_PAGE_SHIFT);
 
 	for (i = 0; i < npages; i++)
 		gatt->ag_vdir[i] = (gatt->ag_physical + i * AGP_PAGE_SIZE) | 1;
