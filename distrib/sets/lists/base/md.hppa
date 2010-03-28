@@ -1073,7 +1073,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/ad1848var.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/ahareg.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/ariareg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/cs4231var.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/egavar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/isa/elink.ph
