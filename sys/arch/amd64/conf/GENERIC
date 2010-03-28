@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.287 2010/03/03 20:57:28 mk Exp $
+#	$OpenBSD: GENERIC,v 1.288 2010/03/28 17:04:27 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -95,6 +95,7 @@ viaenv*	at pci?			# VIA VT82C686A hardware monitor
 
 wbsio*	at isa? port 0x2e	# Winbond LPC Super I/O
 wbsio*	at isa? port 0x4e
+uguru0	at isa? port 0xe0		# ABIT uGuru
 lm*	at wbsio?
 
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System

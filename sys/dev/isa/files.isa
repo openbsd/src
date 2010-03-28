@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.105 2009/01/23 20:32:22 mk Exp $
+#	$OpenBSD: files.isa,v 1.106 2010/03/28 17:04:29 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -372,6 +372,11 @@ file	dev/isa/it.c			it
 device	viasio
 attach	viasio at isa
 file	dev/isa/viasio.c		viasio
+
+# ABIT uGuru
+device	uguru
+attach	uguru at isa
+file	dev/isa/uguru.c			uguru
 
 # ThinkPad Active Protection System accelerometer
 device	aps
