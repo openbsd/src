@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.67 2010/03/07 13:39:00 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.68 2010/03/28 17:12:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -141,6 +141,7 @@ struct xbpci_softc {
 		pcireg_t	id;
 		uint32_t	devio;
 	} xb_devices[MAX_SLOTS];
+	uint		xb_devio_usemask;
 
 	/*
 	 * ATE management.
@@ -279,7 +280,7 @@ void	xbridge_err_clear(struct xbpci_softc *, uint64_t);
 void	xbridge_err_handle(struct xbpci_softc *, uint64_t);
 
 int	xbridge_allocate_devio(struct xbpci_softc *, int, int);
-void	xbridge_set_devio(struct xbpci_softc *, int, uint32_t);
+void	xbridge_set_devio(struct xbpci_softc *, int, uint32_t, int);
 
 int	xbridge_resource_explore(struct xbpci_softc *, pcitag_t,
 	    struct extent *, struct extent *);
@@ -2530,7 +2531,7 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 			     (24 - BRIDGE_DEVICE_BASE_SHIFT));
 
 		/*
-		 * Enable byte swapping for DMA, except on IOC3 and
+		 * Enable byte swapping for DMA, except on IOC3, IOC4 and
 		 * RAD1 devices.
 		 */
 		if (ISSET(xb->xb_flags, XF_XBRIDGE))
@@ -2557,7 +2558,7 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 		devio |= BRIDGE_DEVICE_COHERENT;
 
 		if (need_setup == 0) {
-			xbridge_set_devio(xb, dev, devio);
+			xbridge_set_devio(xb, dev, devio, 1);
 			continue;
 		}
 
@@ -2566,7 +2567,7 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 		 */
 		devio &= ~BRIDGE_DEVICE_BASE_MASK;
 		devio &= ~BRIDGE_DEVICE_IO_MEM;
-		xbridge_set_devio(xb, dev, devio);
+		xbridge_set_devio(xb, dev, devio, 0);
 
 		/*
 		 * We now need to perform the resource allocation for this
@@ -2698,9 +2699,7 @@ xbridge_extent_setup(struct xbpci_softc *xb)
 		/* make all configured devio ranges available... */
 		for (dev = 0; dev < xb->xb_nslots; dev++) {
 			devio = xb->xb_devices[dev].devio;
-			if (devio == 0)
-				continue;
-			if (ISSET(devio, BRIDGE_DEVICE_IO_MEM))
+			if (devio == 0 || ISSET(devio, BRIDGE_DEVICE_IO_MEM))
 				continue;
 			start = (devio & BRIDGE_DEVICE_BASE_MASK) <<
 			    BRIDGE_DEVICE_BASE_SHIFT;
@@ -2806,6 +2805,9 @@ xbridge_mapping_setup(struct xbpci_softc *xb, int io)
 		 * BRIDGE_PCI_IO_SPACE_BASE onwards, but weren't working
 		 * correctly until Bridge revision 4 (apparently, what
 		 * didn't work was the byteswap logic).
+		 *
+		 * Also, this direct I/O space is not supported on PIC
+		 * widgets.
 		 */
 
 		if (!ISSET(xb->xb_flags, XF_NO_DIRECT_IO)) {
@@ -2985,8 +2987,8 @@ xbridge_resource_explore(struct xbpci_softc *xb, pcitag_t tag,
 			reg += 4;
 			/* FALLTHROUGH */
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+			rc |= XR_MEM;
 			if (memex != NULL) {
-				rc |= XR_MEM;
 				if (size > memex->ex_end - memex->ex_start)
 					rc |= XR_MEM_OFLOW | XR_MEM_OFLOW_S;
 				else if (extent_alloc(memex, size, size,
@@ -2995,11 +2997,11 @@ xbridge_resource_explore(struct xbpci_softc *xb, pcitag_t tag,
 				else if (base >= BRIDGE_DEVIO_SHORT)
 					rc |= XR_MEM_OFLOW_S;
 			} else
-				rc |= XR_MEM | XR_MEM_OFLOW | XR_MEM_OFLOW_S;
+				rc |= XR_MEM_OFLOW | XR_MEM_OFLOW_S;
 			break;
 		case PCI_MAPREG_TYPE_IO:
+			rc |= XR_IO;
 			if (ioex != NULL) {
-				rc |= XR_IO;
 				if (size > ioex->ex_end - ioex->ex_start)
 					rc |= XR_IO_OFLOW | XR_IO_OFLOW_S;
 				else if (extent_alloc(ioex, size, size,
@@ -3008,7 +3010,7 @@ xbridge_resource_explore(struct xbpci_softc *xb, pcitag_t tag,
 				else if (base >= BRIDGE_DEVIO_SHORT)
 					rc |= XR_IO_OFLOW_S;
 			} else
-				rc |= XR_IO | XR_IO_OFLOW | XR_IO_OFLOW_S;
+				rc |= XR_IO_OFLOW | XR_IO_OFLOW_S;
 			break;
 		}
 	}
@@ -3021,8 +3023,8 @@ xbridge_resource_explore(struct xbpci_softc *xb, pcitag_t tag,
 		size = PCI_ROM_SIZE(mask);
 
 		if (size != 0) {
+			rc |= XR_MEM;
 			if (memex != NULL) {
-				rc |= XR_MEM;
 				if (size > memex->ex_end - memex->ex_start)
 					rc |= XR_MEM_OFLOW | XR_MEM_OFLOW_S;
 				else if (extent_alloc(memex, size, size,
@@ -3031,7 +3033,7 @@ xbridge_resource_explore(struct xbpci_softc *xb, pcitag_t tag,
 				else if (base >= BRIDGE_DEVIO_SHORT)
 					rc |= XR_MEM_OFLOW_S;
 			} else
-				rc |= XR_MEM | XR_MEM_OFLOW | XR_MEM_OFLOW_S;
+				rc |= XR_MEM_OFLOW | XR_MEM_OFLOW_S;
 		}
 	}
 
@@ -3179,16 +3181,26 @@ xbridge_device_setup(struct xbpci_softc *xb, int dev, int nfuncs,
 	 */
 	if (xb->xb_ioex != NULL)
 		ioex = NULL;
-	else
+	else {
 		ioex = extent_create("xbridge_io",
 		    0, BRIDGE_DEVIO_LARGE - 1,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
+#ifdef DEBUG
+		if (ioex == NULL)
+			printf("%s: ioex extent_create failed\n");
+#endif
+	}
 	if (xb->xb_memex != NULL)
 		memex = NULL;
-	else
+	else {
 		memex = extent_create("xbridge_mem",
 		    0, BRIDGE_DEVIO_LARGE - 1,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
+#ifdef DEBUG
+		if (memex == NULL)
+			printf("%s: memex extent_create failed\n");
+#endif
+	}
 
 	resources = 0;
 	for (function = 0; function < nfuncs; function++) {
@@ -3205,6 +3217,9 @@ xbridge_device_setup(struct xbpci_softc *xb, int dev, int nfuncs,
 
 		resources |= xbridge_resource_explore(xb, tag, ioex, memex);
 	}
+#ifdef DEBUG
+	printf("resources mask: %02x\n", resources);
+#endif
 
 	if (memex != NULL) {
 		extent_destroy(memex);
@@ -3236,7 +3251,7 @@ xbridge_device_setup(struct xbpci_softc *xb, int dev, int nfuncs,
 			baseio = (xb->xb_devio_skew << 24) |
 			    PIC_DEVIO_OFFS(xb->xb_busno, io_devio);
 			xbridge_set_devio(xb, io_devio, devio |
-			    (baseio >> BRIDGE_DEVICE_BASE_SHIFT));
+			    (baseio >> BRIDGE_DEVICE_BASE_SHIFT), 1);
 
 			ioex = extent_create("xbridge_io", baseio,
 			    baseio + BRIDGE_DEVIO_SIZE(io_devio) - 1,
@@ -3262,7 +3277,7 @@ xbridge_device_setup(struct xbpci_softc *xb, int dev, int nfuncs,
 			    PIC_DEVIO_OFFS(xb->xb_busno, mem_devio);
 			xbridge_set_devio(xb, mem_devio, devio |
 			    BRIDGE_DEVICE_IO_MEM |
-			    (baseio >> BRIDGE_DEVICE_BASE_SHIFT));
+			    (baseio >> BRIDGE_DEVICE_BASE_SHIFT), 1);
 
 			memex = extent_create("xbridge_mem", baseio,
 			    baseio + BRIDGE_DEVIO_SIZE(mem_devio) - 1,
@@ -3321,61 +3336,11 @@ xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 	 * resources we'll need.
 	 */
 
-	exsize = *memend;
-	*memstart = 0xffffffff;
-	*memend = 0;
-	if (exsize++ != 0) {
-		/* try to allocate through a devio slot whenever possible... */
-		if (exsize < BRIDGE_DEVIO_SHORT)
-			devio_idx = xbridge_allocate_devio(xb, dev, 0);
-		else if (exsize < BRIDGE_DEVIO_LARGE)
-			devio_idx = xbridge_allocate_devio(xb, dev, 1);
-		else
-			devio_idx = -1;
-
-		/* ...if it fails, try the large view.... */
-		if (devio_idx < 0 && xb->xb_memex == NULL)
-			xb->xb_memex = xbridge_mapping_setup(xb, 0);
-
-		/* ...if it is not available, try to get a devio slot anyway. */
-		if (devio_idx < 0 && xb->xb_memex == NULL) {
-			if (exsize > BRIDGE_DEVIO_SHORT)
-				devio_idx = xbridge_allocate_devio(xb, dev, 1);
-			if (devio_idx < 0)
-				devio_idx = xbridge_allocate_devio(xb, dev, 0);
-		}
-
-		if (devio_idx >= 0) {
-			base = (xb->xb_devio_skew << 24) |
-			    PIC_DEVIO_OFFS(xb->xb_busno, devio_idx);
-			xbridge_set_devio(xb, devio_idx, devio |
-			    BRIDGE_DEVICE_IO_MEM |
-			    (base >> BRIDGE_DEVICE_BASE_SHIFT));
-			*memstart = base;
-			*memend = base + BRIDGE_DEVIO_SIZE(devio_idx) - 1;
-		} else if (xb->xb_memex != NULL) {
-			/*
-			 * We know that the direct memory resource range fits
-			 * within the 32 bit address space, and is limited to
-			 * 30 bits, so our allocation, if successfull, will
-			 * work as a 32 bit memory range.
-			 */
-			if (exsize < 1UL << 20)
-				exsize = 1UL << 20;
-			for (tries = 0; tries < 5; tries++) {
-				if (extent_alloc(xb->xb_memex, exsize,
-				    1UL << 20, 0, 0, EX_NOWAIT | EX_MALLOCOK,
-				    &exstart) == 0) {
-					*memstart = exstart;
-					*memend = exstart + exsize - 1;
-					break;
-				}
-				exsize >>= 1;
-				if (exsize < 1UL << 20)
-					break;
-			}
-		}
-	}
+	/*
+	 * Try and allocate I/O resources first, as we may not be able
+	 * to use a large I/O mapping, in which case we want to use our
+	 * reserved devio for this purpose.
+	 */
 
 	exsize = *ioend;
 	*iostart = 0xffffffff;
@@ -3405,7 +3370,7 @@ xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 			base = (xb->xb_devio_skew << 24) |
 			    PIC_DEVIO_OFFS(xb->xb_busno, devio_idx);
 			xbridge_set_devio(xb, devio_idx, devio |
-			    (base >> BRIDGE_DEVICE_BASE_SHIFT));
+			    (base >> BRIDGE_DEVICE_BASE_SHIFT), 1);
 			*iostart = base;
 			*ioend = base + BRIDGE_DEVIO_SIZE(devio_idx) - 1;
 		} else if (xb->xb_ioex != NULL) {
@@ -3426,6 +3391,62 @@ xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 				}
 				exsize >>= 1;
 				if (exsize < 1UL << 12)
+					break;
+			}
+		}
+	}
+
+	exsize = *memend;
+	*memstart = 0xffffffff;
+	*memend = 0;
+	if (exsize++ != 0) {
+		/* try to allocate through a devio slot whenever possible... */
+		if (exsize < BRIDGE_DEVIO_SHORT)
+			devio_idx = xbridge_allocate_devio(xb, dev, 0);
+		else if (exsize < BRIDGE_DEVIO_LARGE)
+			devio_idx = xbridge_allocate_devio(xb, dev, 1);
+		else
+			devio_idx = -1;
+
+		/* ...if it fails, try the large view.... */
+		if (devio_idx < 0 && xb->xb_memex == NULL)
+			xb->xb_memex = xbridge_mapping_setup(xb, 0);
+
+		/* ...if it is not available, try to get a devio slot anyway. */
+		if (devio_idx < 0 && xb->xb_memex == NULL) {
+			if (exsize > BRIDGE_DEVIO_SHORT)
+				devio_idx = xbridge_allocate_devio(xb, dev, 1);
+			if (devio_idx < 0)
+				devio_idx = xbridge_allocate_devio(xb, dev, 0);
+		}
+
+		if (devio_idx >= 0) {
+			base = (xb->xb_devio_skew << 24) |
+			    PIC_DEVIO_OFFS(xb->xb_busno, devio_idx);
+			xbridge_set_devio(xb, devio_idx, devio |
+			    BRIDGE_DEVICE_IO_MEM |
+			    (base >> BRIDGE_DEVICE_BASE_SHIFT), 1);
+			*memstart = base;
+			*memend = base + BRIDGE_DEVIO_SIZE(devio_idx) - 1;
+		} else if (xb->xb_memex != NULL) {
+			/*
+			 * We know that the direct memory resource range fits
+			 * within the 32 bit address space, and is limited to
+			 * 30 bits, so our allocation, if successfull, will
+			 * work as a 32 bit memory range.
+			 */
+			if (exsize < 1UL << 20)
+				exsize = 1UL << 20;
+			for (tries = 0; tries < 5; tries++) {
+				if (extent_alloc(xb->xb_memex, exsize,
+				    1UL << 20, 0, 0, EX_NOWAIT | EX_MALLOCOK,
+				    &exstart) == 0) {
+					*memstart = exstart;
+					*memend = exstart + exsize - 1;
+					break;
+				}
+				exsize >>= 1;
+				if (exsize < 1UL << 20)
 					break;
 			}
 		}
@@ -3538,15 +3559,24 @@ xbridge_rbus_parent_mem(struct pci_attach_args *pa)
 int
 xbridge_allocate_devio(struct xbpci_softc *xb, int dev, int wantlarge)
 {
+#ifdef DEBUG
+	int orig_dev = dev;
+#endif
+
 	/*
 	 * If the preferred slot is available and matches the size requested,
 	 * use it.
 	 */
 
-	if (xb->xb_devices[dev].devio == 0) {
+	if (!ISSET(xb->xb_devio_usemask, 1 << dev)) {
 		if (BRIDGE_DEVIO_SIZE(dev) >=
-		    wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT)
+		    wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT) {
+#ifdef DEBUG
+			printf("%s(%d,%d): using reserved entry\n",
+			    __func__, dev, wantlarge);
+#endif
 			return dev;
+		}
 	}
 
 	/*
@@ -3555,27 +3585,39 @@ xbridge_allocate_devio(struct xbpci_softc *xb, int dev, int wantlarge)
 	 */
 
 	for (dev = 0; dev < xb->xb_nslots; dev++) {
-		if (xb->xb_devices[dev].devio != 0)
+		if (ISSET(xb->xb_devio_usemask, 1 << dev))
 			continue;	/* devio in use */
 
 		if (!SLOT_EMPTY(xb, dev))
 			continue;	/* devio to be used soon */
 
 		if (BRIDGE_DEVIO_SIZE(dev) >=
-		    wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT)
+		    wantlarge ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT) {
+#ifdef DEBUG
+			printf("%s(%d,%d): using unused entry %d\n",
+			    __func__, orig_dev, wantlarge, dev);
+#endif
 			return dev;
+		}
 	}
 
+#ifdef DEBUG
+	printf("%s(%d,%d): no entry available\n",
+	    __func__, orig_dev, wantlarge);
+#endif
 	return -1;
 }
 
 void
-xbridge_set_devio(struct xbpci_softc *xb, int dev, uint32_t devio)
+xbridge_set_devio(struct xbpci_softc *xb, int dev, uint32_t devio, int final)
 {
 	xbridge_write_reg(xb, BRIDGE_DEVICE(dev), devio);
 	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 	xb->xb_devices[dev].devio = devio;
+	if (final)
+		SET(xb->xb_devio_usemask, 1 << dev);
 #ifdef DEBUG
-	printf("device %d: new devio %08x\n", dev, devio);
+	printf("device %d: new %sdevio %08x\n",
+	    dev, final ? "final " : "", devio);
 #endif
 }
