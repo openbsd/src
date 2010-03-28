@@ -1,4 +1,4 @@
-/*	$OpenBSD: uguru.c,v 1.1 2010/03/28 17:04:29 deraadt Exp $	*/
+/*	$OpenBSD: uguru.c,v 1.2 2010/03/28 17:07:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Mikko Tolmunen <oskari@sefirosu.org>
@@ -42,6 +42,7 @@ int	uguru_dbg = 0;
 
 #define UGURU_DATA		0x00	/* configuration data register */
 #define UGURU_INDEX		0x04	/* configuration index register */
+#define UGURU_IOSIZE		0x08
 
 #define UGURU_DUMMY		0x00	/* dummy zero bit */
 #define UGURU_ITM_DATA		0x21	/* temp/volt readings */
@@ -83,7 +84,6 @@ int	uguru_dbg = 0;
 #define ABIT_SYSID_IX01		0x051b
 #define ABIT_SYSID_IX02		0x051c
 
-#define UGURU_IOSIZE		0x08
 #define UGURU_INTERVAL		5
 #define UGURU_MAX_SENSORS	27
 
