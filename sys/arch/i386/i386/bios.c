@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.86 2009/11/23 17:57:22 mlarkin Exp $	*/
+/*	$OpenBSD: bios.c,v 1.87 2010/03/28 12:08:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -970,7 +970,7 @@ smbios_info(char * str)
 		 * If the uuid value is all 0xff the uuid is present but not
 		 * set, if its all 0 then the uuid isn't present at all.
 		 */
-		uuidf |= SMBIOS_UUID_NPRESENT|SMBIOS_UUID_NSET;
+		uuidf = SMBIOS_UUID_NPRESENT|SMBIOS_UUID_NSET;
 		for (i = 0; i < sizeof(sys->uuid); i++) {
 			if (sys->uuid[i] != 0xff)
 				uuidf &= ~SMBIOS_UUID_NSET;
