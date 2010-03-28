@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.28 2010/02/24 20:09:19 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.29 2010/03/28 13:02:57 krw Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2567,6 +2567,7 @@ athn_get_pdadcs(struct athn_softc *sc, uint8_t fbin, struct athn_pier *lopier,
 
 		/* Compute Vpd table for this pdGain. */
 		nvpds = DB(maxpwr[i] - minpwr[i]) + 1;
+		memset(vpd, 0, sizeof(vpd));
 		pwr = minpwr[i];
 		for (j = 0; j < nvpds; j++) {
 			/* Get lower and higher Vpd. */

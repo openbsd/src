@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.56 2010/02/17 18:34:37 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.57 2010/03/28 13:02:58 krw Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -522,6 +522,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 * an unnoccupied one.  If that fails, pick a random
 		 * channel from the active set.
 		 */
+		memset(occupied, 0, sizeof(occupied));
 		RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
 			setbit(occupied, ieee80211_chan2ieee(ic, ni->ni_chan));
 		for (i = 0; i < IEEE80211_CHAN_MAX; i++)
