@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.48 2010/03/26 11:20:34 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.49 2010/03/28 10:14:18 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -560,7 +560,7 @@ sr_crypto_change_maskkey(struct sr_discipline *sd,
   struct sr_crypto_kdfinfo *kdfinfo1, struct sr_crypto_kdfinfo *kdfinfo2)
 {
 	u_char			check_digest[SHA1_DIGEST_LENGTH];
-	u_char			*p, *c;
+	u_char			*c, *p = NULL;
 	size_t			ksz;
 	int			rv = 1;
 
@@ -792,7 +792,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	struct sr_meta_opt      *om;
 	struct sr_chunk		*key_disk = NULL;
 	struct disklabel	label;
-	struct vnode		*vn;
+	struct vnode		*vn = NULL;
 	char			devname[32];
 	int			c, part, open = 0;
 
