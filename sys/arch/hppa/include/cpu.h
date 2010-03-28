@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.63 2009/12/31 12:52:35 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.64 2010/03/28 16:26:47 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -190,6 +190,10 @@ int	copy_on_fault(void);
 void	switch_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
+
+#ifdef MULTIPROCESSOR
+void	cpu_boot_secondary_processors(void);
+#endif
 #endif
 
 /*
@@ -216,6 +220,10 @@ int	cpu_dump(void);
 
 #ifdef _KERNEL
 #include <sys/queue.h>
+
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+#endif
 
 struct blink_led {
 	void (*bl_func)(void *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.30 2009/12/29 14:10:29 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.31 2010/03/28 16:26:47 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -156,3 +156,10 @@ cpuattach(parent, self, aux)
 	
 	printf("\n");
 }
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+}
+#endif
