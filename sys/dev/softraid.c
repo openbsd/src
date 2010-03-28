@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.199 2010/03/28 09:08:32 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.200 2010/03/28 09:13:55 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2079,6 +2079,9 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 		if (vol != bv->bv_volid)
 			continue;
 
+		if (sc->sc_dis[i] == NULL)
+			goto done;
+
 		sd = sc->sc_dis[i];
 		bv->bv_status = sd->sd_vol_status;
 		bv->bv_size = sd->sd_meta->ssdi.ssd_size << DEV_BSHIFT;
@@ -2142,6 +2145,9 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 			vol++;
 		if (vol != bd->bd_volid)
 			continue;
+
+		if (sc->sc_dis[i] == NULL)
+			goto done;
 
 		id = bd->bd_diskid;
 
@@ -2271,7 +2277,7 @@ sr_chunk_in_use(struct sr_softc *sc, dev_t dev)
 
 	/* See if chunk is already in use. */
 	for (i = 0; i < SR_MAXSCSIBUS; i++) {
-		if (!sc->sc_dis[i])
+		if (sc->sc_dis[i] == NULL)
 			continue;
 		sd = sc->sc_dis[i];
 		for (c = 0; c < sd->sd_meta->ssdi.ssd_chunk_no; c++) {
