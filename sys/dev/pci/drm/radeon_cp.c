@@ -2373,8 +2373,8 @@ radeon_cp_init_ring_buffer(struct drm_device *dev,
 #if __OS_HAS_AGP
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		RADEON_WRITE(RADEON_CP_RB_RPTR_ADDR,
-			     dev_priv->ring_rptr->offset
-			     - dev->agp->base + dev_priv->gart_vm_start);
+		    dev_priv->ring_rptr->offset - dev->agp->base +
+		    dev_priv->gart_vm_start);
 	} else
 #endif
 	{
