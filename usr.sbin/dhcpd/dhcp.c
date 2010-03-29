@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.30 2010/01/02 04:21:16 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.31 2010/03/29 22:09:25 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -552,7 +552,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	struct dhcp_packet raw;
 	unsigned char nak = DHCPNAK;
 	struct packet outgoing;
-	struct tree_cache *options[256], dhcpnak_tree, dhcpmsg_tree;
+	struct tree_cache *options[256], dhcpnak_tree, dhcpmsg_tree, server_tree;
 
 	memset(options, 0, sizeof options);
 	memset(&outgoing, 0, sizeof outgoing);
@@ -574,6 +574,21 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	options[DHO_DHCP_MESSAGE]->buf_size = strlen(dhcp_message);
 	options[DHO_DHCP_MESSAGE]->timeout = -1;
 	options[DHO_DHCP_MESSAGE]->tree = NULL;
+
+	/* Include server identifier in the NAK. At least one
+	 * router vendor depends on it when using dhcp relay proxy mode.
+	 */
+	if (packet->options[DHO_DHCP_SERVER_IDENTIFIER].len) {
+		options[DHO_DHCP_SERVER_IDENTIFIER] = &server_tree;
+		options[DHO_DHCP_SERVER_IDENTIFIER]->value =
+		    packet->options[DHO_DHCP_SERVER_IDENTIFIER].data,
+		options[DHO_DHCP_SERVER_IDENTIFIER]->len =
+		    packet->options[DHO_DHCP_SERVER_IDENTIFIER].len;
+		options[DHO_DHCP_SERVER_IDENTIFIER]->buf_size =
+		    packet->options[DHO_DHCP_SERVER_IDENTIFIER].len;
+		options[DHO_DHCP_SERVER_IDENTIFIER]->timeout = -1;
+		options[DHO_DHCP_SERVER_IDENTIFIER]->tree = NULL;
+	}
 
 	/* Do not use the client's requested parameter list. */
 	i = DHO_DHCP_PARAMETER_REQUEST_LIST;
