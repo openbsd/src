@@ -1924,6 +1924,8 @@ radeon_do_cp_idle(drm_radeon_private_t *dev_priv)
 {
 	DRM_DEBUG("\n");
 
+	if (dev_priv->cp_running == 0)
+		return (0);
 
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600) {
 		BEGIN_RING(5);
