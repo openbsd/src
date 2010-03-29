@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.82 2010/03/05 15:25:00 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.83 2010/03/29 09:24:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -975,7 +975,6 @@ aspath_match(struct aspath *a, enum as_spec type, u_int32_t as)
  * Functions handling communities and extended communities.
  */
 
-int community_ext_conv(struct filter_extcommunity *, u_int16_t, u_int64_t *);
 int community_ext_matchone(struct filter_extcommunity *, u_int16_t, u_int64_t);
 
 int
