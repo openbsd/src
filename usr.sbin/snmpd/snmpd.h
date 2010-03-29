@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.25 2009/06/06 18:38:01 pyr Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.26 2010/03/29 14:52:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -101,11 +101,21 @@ extern  struct ctl_connlist ctl_conns;
 struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
+	u_long		ticks;
 	u_int16_t	flags;
-	u_int16_t	rtlabel;
 	u_short		if_index;
 	u_int8_t	prefixlen;
+	u_int8_t	priority;
+};
+
+struct kroute6 {
+	struct in6_addr	prefix;
+	struct in6_addr	nexthop;
 	u_long		ticks;
+	u_int16_t	flags;
+	u_short		if_index;
+	u_int8_t	prefixlen;
+	u_int8_t	priority;
 };
 
 struct kif_addr {
@@ -129,14 +139,10 @@ struct kif {
 	struct if_data		 if_data;
 };
 
-#define	F_OSPFD_INSERTED	0x0001
-#define	F_KERNEL		0x0002
-#define	F_BGPD_INSERTED		0x0004
 #define	F_CONNECTED		0x0008
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
 #define	F_DYNAMIC		0x0040
-#define	F_REDISTRIBUTED		0x0100
 
 /*
  * Message Processing Subsystem (mps)
@@ -314,6 +320,7 @@ void		 log_info(const char *, ...);
 void		 log_debug(const char *, ...);
 __dead void	 fatal(const char *);
 __dead void	 fatalx(const char *);
+const char	*log_in6addr(const struct in6_addr *);
 const char	*print_host(struct sockaddr_storage *, char *, size_t);
 
 void		 imsg_event_add(struct imsgev *);
