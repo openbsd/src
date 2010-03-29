@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.288 2010/03/03 13:52:39 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.289 2010/03/29 09:06:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -596,7 +596,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(&rn, imsg.data, sizeof(rn));
 			rid = rib_find(rn.name);
 			if (rid == RIB_FAILED)
-				rib_new(-1, rn.name, rn.flags);
+				rib_new(rn.name, rn.flags);
 			else
 				ribs[rid].state = RECONF_KEEP;
 			break;

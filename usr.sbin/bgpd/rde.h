@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.131 2010/03/05 15:25:00 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.132 2010/03/29 09:06:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -361,7 +361,7 @@ void		 community_ext_delete(struct rde_aspath *,
 extern u_int16_t	 rib_size;
 extern struct rib	*ribs;
 
-u_int16_t	 rib_new(int, char *, u_int16_t);
+u_int16_t	 rib_new(char *, u_int16_t);
 u_int16_t	 rib_find(char *);
 void		 rib_free(struct rib *);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);

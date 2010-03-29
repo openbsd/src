@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.122 2010/03/26 15:38:39 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.123 2010/03/29 09:06:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -50,16 +50,15 @@ RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 
 /* RIB specific functions */
 u_int16_t
-rib_new(int id, char *name, u_int16_t flags)
+rib_new(char *name, u_int16_t flags)
 {
 	struct rib	*xribs;
 	size_t		newsize;
+	u_int16_t	id;
 
-	if (id < 0) {
-		for (id = 0; id < rib_size; id++) {
-			if (*ribs[id].name == '\0')
-				break;
-		}
+	for (id = 0; id < rib_size; id++) {
+		if (*ribs[id].name == '\0')
+			break;
 	}
 
 	if (id == RIB_FAILED)
