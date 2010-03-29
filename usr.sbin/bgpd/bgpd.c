@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.155 2010/03/03 09:40:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.156 2010/03/29 09:09:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ int		main(int, char *[]);
 int		check_child(pid_t, const char *);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
-		    struct peer **, struct filter_head *);
+		    struct peer **);
 int		dispatch_imsg(struct imsgbuf *, int);
 
 int			 rfd = -1;
@@ -103,7 +103,6 @@ main(int argc, char *argv[])
 	struct bgpd_config	 conf;
 	struct mrt_head		 mrt_l;
 	struct peer		*peer_l, *p;
-	struct filter_head	*rules_l;
 	struct mrt		*m;
 	struct listen_addr	*la;
 	struct pollfd		 pfd[POLL_MAX];
@@ -121,11 +120,7 @@ main(int argc, char *argv[])
 
 	log_init(1);		/* log to stderr until daemonized */
 
-	if ((rules_l = calloc(1, sizeof(struct filter_head))) == NULL)
-		err(1, NULL);
-
 	bzero(&conf, sizeof(conf));
-	TAILQ_INIT(rules_l);
 	LIST_INIT(&mrt_l);
 	peer_l = NULL;
 	conf.csock = SOCKET_NAME;
@@ -173,16 +168,15 @@ main(int argc, char *argv[])
 		usage();
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
-		struct network_head	 net_l;
-		TAILQ_INIT(&net_l);
+		struct network_head	net_l;
+		struct filter_head	rules_l;
+
 		if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l,
-		    rules_l)) {
-			free(rules_l);
+		    &rules_l))
 			exit(1);
-		}
 
 		if (conf.opts & BGPD_OPT_VERBOSE)
-			print_config(&conf, &ribnames, &net_l, peer_l, rules_l,
+			print_config(&conf, &ribnames, &net_l, peer_l, &rules_l,
 			    &mrt_l);
 		else
 			fprintf(stderr, "configuration OK\n");
@@ -250,7 +244,7 @@ main(int argc, char *argv[])
 	imsg_init(ibuf_se, pipe_m2s[0]);
 	imsg_init(ibuf_rde, pipe_m2r[0]);
 	mrt_init(ibuf_rde, ibuf_se);
-	quit = reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
+	quit = reconfigure(conffile, &conf, &mrt_l, &peer_l);
 	if ((rfd = kr_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE),
 	    conf.rtableid)) == -1)
 		quit = 1;
@@ -312,8 +306,7 @@ main(int argc, char *argv[])
 
 			reconfig = 0;
 			log_info("rereading config");
-			switch (reconfigure(conffile, &conf, &mrt_l, &peer_l,
-			    rules_l)) {
+			switch (reconfigure(conffile, &conf, &mrt_l, &peer_l)) {
 			case -1:	/* fatal error */
 				quit = 1;
 				break;
@@ -372,7 +365,6 @@ main(int argc, char *argv[])
 			free(la);
 		}
 
-	free(rules_l);
 	control_cleanup(conf.csock);
 	control_cleanup(conf.rcsock);
 	carp_demote_shutdown();
@@ -429,16 +421,17 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 
 int
 reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
-    struct peer **peer_l, struct filter_head *rules_l)
+    struct peer **peer_l)
 {
 	struct network_head	 net_l;
+	struct filter_head	 rules_l;
 	struct network		*n;
 	struct peer		*p;
 	struct filter_rule	*r;
 	struct listen_addr	*la;
 	struct rde_rib		*rr;
 
-	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, rules_l)) {
+	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, &rules_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
 		while ((rr = SIMPLEQ_FIRST(&ribnames))) {
@@ -506,13 +499,13 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		return (-1);
 
 	/* filters for the RDE */
-	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
+	while ((r = TAILQ_FIRST(&rules_l)) != NULL) {
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);
 		if (send_filterset(ibuf_rde, &r->set) == -1)
 			return (-1);
-		TAILQ_REMOVE(rules_l, r, entry);
+		TAILQ_REMOVE(&rules_l, r, entry);
 		filterset_free(&r->set);
 		free(r);
 	}
