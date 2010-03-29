@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.22 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: man.c,v 1.23 2010/03/29 22:56:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -47,6 +47,8 @@ const	char *const __man_merrnames[WERRMAX] = {
 	"literal context already open", /* WOLITERAL */
 	"no literal context open", /* WNLITERAL */
 	"invalid nesting of roff declarations", /* WROFFNEST */
+	"scope in roff instructions broken", /* WROFFSCOPE */
+	"document title should be uppercase", /* WTITLECASE */
 };
 
 const	char *const __man_macronames[MAN_MAX] = {		 
@@ -151,7 +153,7 @@ int
 man_parseln(struct man *m, int ln, char *buf)
 {
 
-	return('.' == *buf ? 
+	return('.' == *buf || '\'' == *buf ? 
 			man_pmacro(m, ln, buf) : 
 			man_ptext(m, ln, buf));
 }
@@ -443,7 +445,7 @@ descope:
 
 	if (MAN_ELINE & m->flags) {
 		m->flags &= ~MAN_ELINE;
-		if ( ! man_unscope(m, m->last->parent))
+		if ( ! man_unscope(m, m->last->parent, WERRMAX))
 			return(0);
 	}
 
@@ -451,7 +453,7 @@ descope:
 		return(1);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent))
+	if ( ! man_unscope(m, m->last->parent, WERRMAX))
 		return(0);
 	return(man_body_alloc(m, line, 0, m->last->tok));
 }
@@ -486,9 +488,13 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 	i = 1;
 
-	if (' ' == buf[i]) {
+	/*
+	 * Skip whitespace between the control character and initial
+	 * text.  "Whitespace" is both spaces and tabs.
+	 */
+	if (' ' == buf[i] || '\t' == buf[i]) {
 		i++;
-		while (buf[i] && ' ' == buf[i])
+		while (buf[i] && (' ' == buf[i] || '\t' == buf[i]))
 			i++;
 		if ('\0' == buf[i])
 			goto out;
@@ -619,7 +625,7 @@ out:
 	assert(MAN_BLINE & m->flags);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent))
+	if ( ! man_unscope(m, m->last->parent, WERRMAX))
 		return(0);
 	return(man_body_alloc(m, ln, 0, m->last->tok));
 

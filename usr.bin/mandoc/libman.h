@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.13 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: libman.h,v 1.14 2010/03/29 22:56:52 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -61,6 +61,8 @@ enum	merr {
 	WOLITERAL,
 	WNLITERAL,
 	WROFFNEST,
+	WROFFSCOPE,
+	WTITLECASE,
 	WERRMAX
 };
 
@@ -111,7 +113,8 @@ int		  man_valid_post(struct man *);
 int		  man_valid_pre(struct man *, const struct man_node *);
 int		  man_action_post(struct man *);
 int		  man_action_pre(struct man *, struct man_node *);
-int		  man_unscope(struct man *, const struct man_node *);
+int		  man_unscope(struct man *, 
+			const struct man_node *, enum merr);
 
 __END_DECLS
 

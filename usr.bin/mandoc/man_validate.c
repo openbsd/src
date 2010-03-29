@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.14 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.15 2010/03/29 22:56:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -46,9 +46,10 @@ static	int	  check_roff(CHKARGS);
 static	int	  check_root(CHKARGS);
 static	int	  check_sec(CHKARGS);
 static	int	  check_text(CHKARGS);
+static	int	  check_title(CHKARGS);
 
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
-static	v_check	  posts_ge2_le5[] = { check_ge2, check_le5, NULL };
+static	v_check	  posts_th[] = { check_ge2, check_le5, check_title, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
@@ -58,7 +59,7 @@ static	v_check	  pres_roff[] = { check_bline, check_roff, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_eq0 }, /* br */
-	{ pres_bline, posts_ge2_le5 }, /* TH */ /* FIXME: make sure capitalised. */
+	{ pres_bline, posts_th }, /* TH */
 	{ pres_bline, posts_sec }, /* SH */
 	{ pres_bline, posts_sec }, /* SS */
 	{ pres_bline, posts_par }, /* TP */
@@ -164,6 +165,24 @@ check_root(CHKARGS)
 		return(man_nerr(m, n, WNODATA));
 	if (NULL == m->meta.title)
 		return(man_nerr(m, n, WNOTITLE));
+
+	return(1);
+}
+
+
+static int
+check_title(CHKARGS) 
+{
+	const char	*p;
+
+	assert(n->child);
+	if ('\0' == *n->child->string)
+		return(man_nerr(m, n, WNOTITLE));
+
+	for (p = n->child->string; '\0' != *p; p++)
+		if (isalpha((u_char)*p) && ! isupper((u_char)*p))
+			if ( ! man_nwarn(m, n, WTITLECASE))
+				return(0);
 
 	return(1);
 }

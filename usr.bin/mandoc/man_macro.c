@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.12 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.13 2010/03/29 22:56:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,7 +24,7 @@
 enum	rew {
 	REW_REWIND,
 	REW_NOHALT,
-	REW_HALT,
+	REW_HALT
 };
 
 static	int		 blk_close(MACRO_PROT_ARGS);
@@ -39,6 +39,8 @@ static	enum rew	 rew_dohalt(enum mant, enum man_type,
 				const struct man_node *);
 static	enum rew	 rew_block(enum mant, enum man_type, 
 				const struct man_node *);
+static	int		 rew_warn(struct man *, 
+				struct man_node *, enum merr);
 
 const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* br */
@@ -87,14 +89,39 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 const	struct man_macro * const man_macros = __man_macros;
 
 
+/*
+ * Warn when "n" is an explicit non-roff macro.
+ */
+static int
+rew_warn(struct man *m, struct man_node *n, enum merr er)
+{
+
+	if (er == WERRMAX || MAN_BLOCK != n->type)
+		return(1);
+	if (MAN_VALID & n->flags)
+		return(1);
+	if ( ! (MAN_EXPLICIT & man_macros[n->tok].flags))
+		return(1);
+	if (MAN_NOCLOSE & man_macros[n->tok].flags)
+		return(1);
+	return(man_nwarn(m, n, er));
+}
+
+
+/*
+ * Rewind scope.  If a code "er" != WERRMAX has been provided, it will
+ * be used if an explicit block scope is being closed out.
+ */
 int
-man_unscope(struct man *m, const struct man_node *n)
+man_unscope(struct man *m, const struct man_node *n, enum merr er)
 {
 
 	assert(n);
 
 	/* LINTED */
 	while (m->last != n) {
+		if ( ! rew_warn(m, m->last, er))
+			return(0);
 		if ( ! man_valid_post(m))
 			return(0);
 		if ( ! man_action_post(m))
@@ -103,6 +130,8 @@ man_unscope(struct man *m, const struct man_node *n)
 		assert(m->last);
 	}
 
+	if ( ! rew_warn(m, m->last, er))
+		return(0);
 	if ( ! man_valid_post(m))
 		return(0);
 	if ( ! man_action_post(m))
@@ -136,17 +165,46 @@ rew_dohalt(enum mant tok, enum man_type type, const struct man_node *n)
 {
 	enum rew	 c;
 
+	/* We cannot progress beyond the root ever. */
 	if (MAN_ROOT == n->type)
 		return(REW_HALT);
+
 	assert(n->parent);
+
+	/* Normal nodes shouldn't go to the level of the root. */
 	if (MAN_ROOT == n->parent->type)
 		return(REW_REWIND);
+
+	/* Already-validated nodes should be closed out. */
 	if (MAN_VALID & n->flags)
 		return(REW_NOHALT);
 
-	/* Rewind to ourselves, first. */
+	/* First: rewind to ourselves. */
 	if (type == n->type && tok == n->tok)
 		return(REW_REWIND);
+
+	/*
+	 * If we're a roff macro, then we can close out anything that
+	 * stands between us and our parent context.
+	 */
+	if (MAN_NOCLOSE & man_macros[tok].flags)
+		return(REW_NOHALT);
+
+	/* 
+	 * Don't clobber roff macros: this is a bit complicated.  If the
+	 * current macro is a roff macro, halt immediately and don't
+	 * rewind.  If it's not, and the parent is, then close out the
+	 * current scope and halt at the parent.
+	 */
+	if (MAN_NOCLOSE & man_macros[n->tok].flags)
+		return(REW_HALT);
+	if (MAN_NOCLOSE & man_macros[n->parent->tok].flags)
+		return(REW_REWIND);
+
+	/* 
+	 * Next follow the implicit scope-smashings as defined by man.7:
+	 * section, sub-section, etc.
+	 */
 
 	switch (tok) {
 	case (MAN_SH):
@@ -206,10 +264,15 @@ rew_scope(enum man_type type, struct man *m, enum mant tok)
 			break;
 	}
 
-	/* Rewind until the current point. */
-
+	/* 
+	 * Rewind until the current point.  Warn if we're a roff
+	 * instruction that's mowing over explicit scopes.
+	 */
 	assert(n);
-	return(man_unscope(m, n));
+	if (MAN_NOCLOSE & man_macros[tok].flags)
+		return(man_unscope(m, n, WROFFSCOPE));
+
+	return(man_unscope(m, n, WERRMAX));
 }
 
 
@@ -224,6 +287,8 @@ blk_dotted(MACRO_PROT_ARGS)
 {
 	enum mant	 ntok;
 	struct man_node	*nn;
+
+	/* Check for any of the following parents... */
 
 	for (nn = m->last->parent; nn; nn = nn->parent)
 		if (nn->tok == MAN_de || nn->tok == MAN_dei ||
@@ -244,6 +309,20 @@ blk_dotted(MACRO_PROT_ARGS)
 		return(0);
 	if ( ! rew_scope(MAN_BLOCK, m, ntok))
 		return(0);
+
+	/* 
+	 * XXX: manually adjust our next-line status.  roff macros are,
+	 * for the moment, ignored, so we don't want to close out bodies
+	 * and so on.
+	 */
+
+	switch (m->last->type) {
+	case (MAN_BODY):
+		m->next = MAN_NEXT_CHILD;
+		break;
+	default:
+		break;
+	}
 
 	return(1);
 }
@@ -476,20 +555,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 int
 man_macroend(struct man *m)
 {
-	struct man_node	*n;
 
-	n = MAN_VALID & m->last->flags ?
-		m->last->parent : m->last;
-
-	for ( ; n; n = n->parent) {
-		if (MAN_BLOCK != n->type)
-			continue;
-		if ( ! (MAN_EXPLICIT & man_macros[n->tok].flags))
-			continue;
-		if ( ! man_nwarn(m, n, WEXITSCOPE))
-			return(0);
-	}
-
-	return(man_unscope(m, m->first));
+	return(man_unscope(m, m->first, WEXITSCOPE));
 }
 

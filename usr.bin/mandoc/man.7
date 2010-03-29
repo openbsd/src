@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.18 2010/03/26 01:22:05 schwarze Exp $
+.\"	$Id: man.7,v 1.19 2010/03/29 22:56:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: March 29 2010 $
 .Dt MAN 7
 .Os
 .
@@ -403,9 +403,11 @@ Documents any security precautions that operators should consider.
 Macros are one to three three characters in length and begin with a
 control character ,
 .Sq \&. ,
-at the beginning of the line.  An arbitrary amount of whitespace may
-sit between the control character and the macro name.  Thus, the
-following are equivalent:
+at the beginning of the line.  The
+.Sq \(aq
+macro control character is also accepted.  An arbitrary amount of
+whitespace (spaces or tabs) may sit between the control character and
+the macro name.  Thus, the following are equivalent:
 .Bd -literal -offset indent
 \&.PP
 \&.\ \ \ PP
@@ -999,22 +1001,33 @@ This section documents areas of questionable portability between
 implementations of the
 .Nm
 language.
+.
 .Pp
 .Bl -dash -compact
 .It
 In quoted literals, GNU troff allowed pair-wise double-quotes to produce
 a standalone double-quote in formatted output.  It is not known whether
 this behaviour is exhibited by other formatters.
+.
 .It
 Blocks of whitespace are stripped from macro and free-form text lines
 (except when in literal mode) in mandoc.  This is not the case for GNU
 troff: for maximum portability, whitespace sensitive blocks should be
 enclosed in literal contexts.
+.
 .It
 The
 .Sx \&sp
 macro does not accept negative values in mandoc.  In GNU troff, this
 would result in strange behaviour.
+.
+.It
+The
+.Sq \(aq
+macro control character, in GNU troff (and prior troffs) suppresses a
+newline before macro output; in mandoc, it is an alias for the standard
+.Sq \&.
+control character.
 .El
 .
 .

@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.23 2010/03/26 01:22:05 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.24 2010/03/29 22:56:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: March 29 2010 $
 .Dt MANDOC 1
 .Os
 .
@@ -510,6 +510,7 @@ CSS2 styling used for
 .Fl m Ns Ar doc
 input lists does not render properly in older browsers, such as Internet
 Explorer 6 and earlier.
+.
 .Pp
 In
 .Fl T Ns Ar html
@@ -520,6 +521,7 @@ the maximum size of an element attribute is determined by
 which is usually 1024 bytes.  Be aware of this when setting long link
 formats, e.g.,
 .Fl O Ns Ar style=really/long/link .
+.
 .Pp
 The
 .Fl T Ns Ar html
@@ -531,6 +533,7 @@ font size escape documented in
 .Xr mdoc 7
 and
 .Xr man 7 .
+.
 .Pp
 Nesting elements within next-line element scopes of
 .Fl m Ns Ar an ,
@@ -543,6 +546,7 @@ will confuse
 and
 .Fl T Ns Ar xhtml
 and cause them to forget the formatting of the prior next-line scope.
+.
 .Pp
 The
 .Sq i
@@ -550,3 +554,8 @@ macro in
 .Fl m Ns Ar an
 should italicise all subsequent text if a line argument is not provided.
 This behaviour is not implemented.
+.
+The
+.Sq \(aq
+control character is an alias for the standard macro control character
+and does not emit a line-break as stipulated in GNU troff.
