@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.127 2009/12/15 15:53:48 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.128 2010/03/29 23:33:39 krw Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1927,7 +1927,7 @@ nfs_readdir(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct uio *uio = ap->a_uio;
-	int tresid, error;
+	int tresid, error = 0;
 	struct vattr vattr;
 	u_long *cookies = NULL;
 	int ncookies = 0, cnt;

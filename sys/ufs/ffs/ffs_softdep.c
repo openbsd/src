@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.101 2009/09/03 07:47:47 jasper Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.102 2010/03/29 23:33:39 krw Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -5417,7 +5417,7 @@ clear_inodedeps(p)
 	struct proc *p;
 {
 	struct inodedep_hashhead *inodedephd;
-	struct inodedep *inodedep;
+	struct inodedep *inodedep = NULL;
 	static int next = 0;
 	struct mount *mp;
 	struct vnode *vp;

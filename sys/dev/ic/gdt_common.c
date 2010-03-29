@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.48 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.49 2010/03/29 23:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -671,7 +671,9 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			 */
 			sc->sc_cmd_off = 0;
 
-			if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+			if (xs->cmd->opcode == SYNCHRONIZE_CACHE) {
+				 blockno = blockcnt = 0;
+			} else {
 				/* A read or write operation. */
 				if (xs->cmdlen == 6) {
 					rw = (struct scsi_rw *)xs->cmd;

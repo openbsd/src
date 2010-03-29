@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.56 2009/12/30 01:24:54 chl Exp $  */
+/*	$OpenBSD: pgt.c,v 1.57 2010/03/29 23:33:39 krw Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -3199,6 +3199,8 @@ pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 		case PGT_QUEUE_MGMT_TX:
 			qsize = PGT_QUEUE_MGMT_SIZE;
 			break;
+		default:
+			return (EINVAL);
 	}
 
 	for (i = 0; i < qsize; i++) {
