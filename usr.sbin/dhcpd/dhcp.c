@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.31 2010/03/29 22:09:25 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.32 2010/03/29 22:22:28 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -566,6 +566,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	options[DHO_DHCP_MESSAGE_TYPE]->buf_size = sizeof nak;
 	options[DHO_DHCP_MESSAGE_TYPE]->timeout = -1;
 	options[DHO_DHCP_MESSAGE_TYPE]->tree = NULL;
+	options[DHO_DHCP_MESSAGE_TYPE]->flags = 0;
 
 	/* Set DHCP_MESSAGE to whatever the message is */
 	options[DHO_DHCP_MESSAGE] = &dhcpmsg_tree;
@@ -574,6 +575,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	options[DHO_DHCP_MESSAGE]->buf_size = strlen(dhcp_message);
 	options[DHO_DHCP_MESSAGE]->timeout = -1;
 	options[DHO_DHCP_MESSAGE]->tree = NULL;
+	options[DHO_DHCP_MESSAGE]->flags = 0;
 
 	/* Include server identifier in the NAK. At least one
 	 * router vendor depends on it when using dhcp relay proxy mode.
@@ -588,6 +590,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 		    packet->options[DHO_DHCP_SERVER_IDENTIFIER].len;
 		options[DHO_DHCP_SERVER_IDENTIFIER]->timeout = -1;
 		options[DHO_DHCP_SERVER_IDENTIFIER]->tree = NULL;
+		options[DHO_DHCP_SERVER_IDENTIFIER]->flags = 0;
 	}
 
 	/* Do not use the client's requested parameter list. */
