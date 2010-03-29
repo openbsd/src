@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.122 2009/12/08 21:23:18 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.123 2010/03/29 19:21:58 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1475,9 +1475,11 @@ _bus_dmamem_map(t, t0, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	struct vm_page *m;
-	vaddr_t va;
+	vaddr_t va, sva;
+	size_t ssize;
 	bus_addr_t addr, cbit;
 	struct pglist *mlist;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (nsegs != 1)
@@ -1495,6 +1497,8 @@ _bus_dmamem_map(t, t0, segs, nsegs, size, kvap, flags)
 	if (flags & BUS_DMA_NOCACHE)
 		cbit |= PMAP_NC;
 
+	sva = va;
+	ssize = size;
 	mlist = segs[0]._ds_mlist;
 	TAILQ_FOREACH(m, mlist, pageq) {
 #ifdef DIAGNOSTIC
@@ -1502,9 +1506,18 @@ _bus_dmamem_map(t, t0, segs, nsegs, size, kvap, flags)
 			panic("_bus_dmamem_map: size botch");
 #endif
 		addr = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		error = pmap_enter(pmap_kernel(), va, addr | cbit,
+		    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
+		    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
+		if (error) {
+			/*
+			 * Clean up after ourselves.
+			 * XXX uvm_wait on WAITOK
+			 */
+			pmap_update(pmap_kernel());
+			uvm_km_free(kernel_map, va, ssize);
+			return (error);
+		}
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

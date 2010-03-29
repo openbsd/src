@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.13 2009/06/07 16:02:41 miod Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.14 2010/03/29 19:21:58 oga Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -519,9 +519,10 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
         caddr_t *kvap;
         int flags;
 {
-        vaddr_t va;
+        vaddr_t va, sva;
+        size_t ssize;
         bus_addr_t addr;
-        int curseg;
+        int curseg, error;
 
         size = round_page(size);
 
@@ -532,15 +533,26 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
         *kvap = (caddr_t)va;
 
+	sva = va;
+	ssize = size;
         for (curseg = 0; curseg < nsegs; curseg++) {
                 for (addr = segs[curseg].ds_addr;
                     addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
                     addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
                         if (size == 0)
                                 panic("bus_dmamem_map: size botch");
-                        pmap_enter(pmap_kernel(), va, addr,
-                            VM_PROT_READ | VM_PROT_WRITE,
-                            VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+                        error = pmap_enter(pmap_kernel(), va, addr,
+                            VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
+                            VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
+                        if (error) {
+                               /*
+                                * Clean up after ourselves.
+                                * XXX uvm_wait on WAITOK
+                                */
+                               pmap_update(pmap_kernel());
+                               uvm_km_free(kernel_map, va, ssize);
+                               return (error);
+                        }
                 }
         }
 	pmap_update(pmap_kernel());
