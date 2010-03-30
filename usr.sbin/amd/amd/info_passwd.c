@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.7 2003/06/02 23:36:51 millert Exp $
+ *	$Id: info_passwd.c,v 1.8 2010/03/30 17:10:37 zinovik Exp $
  */
 
 /*
@@ -136,6 +136,7 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 		snprintf(val, sizeof(val),
 		    "rfs:=%s/%s;rhost:=%s;sublink:=%s;fs:=${autodir}%s",
 		    dir, rhost, rhost, user, pw->pw_dir);
+		free(dir);
 		if (q)
 			*q = '.';
 		*pval = strdup(val);
