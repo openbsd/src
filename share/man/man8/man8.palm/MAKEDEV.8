@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.1 2009/09/24 21:46:47 miod Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.2 2010/03/30 19:20:37 matthieu Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.palm/MAKEDEV.md,v 1.1 2009/09/05 02:19:09 marex Exp 
+.\"	OpenBSD: etc.palm/MAKEDEV.md,v 1.2 2010/03/30 19:16:09 matthieu Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 24 2009 $
+.Dd $Mdocdate: March 30 2010 $
 .Dt MAKEDEV 8 palm
 .Os
 .Sh NAME
@@ -242,6 +242,9 @@ Video V4L2 devices, see
 .It Ar nnpfs*
 NNPFS filesystem node, see
 .Xr mount_nnpfs 8 .
+.It Ar bthub*
+Bluetooth Hubs, see
+.Xr bthub 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

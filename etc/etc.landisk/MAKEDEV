@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.17 2009/08/13 15:12:36 deraadt Exp 
+#	OpenBSD: etc.landisk/MAKEDEV.md,v 1.18 2010/03/30 19:16:09 matthieu Exp 
 #	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -82,6 +82,7 @@
 #	video*	Video V4L2 devices
 #	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
+#	bthub*	Bluetooth Hubs
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -224,6 +225,10 @@ std)
 	M stderr	c 7 2
 	M ksyms		c 8 0 640 kmem
 	M klog		c 6 0 600
+	;;
+
+bthub*)
+	M bthub$U c 100 $U
 	;;
 
 vscsi*)
@@ -471,14 +476,15 @@ local)
 	;;
 
 all)
-	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 vscsi0
-	R nnpfs0 ss0 ss1 ch0 ttya hotplug ptm local wscons pci0 pci1
-	R pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5
-	R rmidi6 rmidi7 radio0 music0 video0 audio0 audio1 audio2 uk0
-	R random lkm crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1
-	R raid2 raid3 std st0 st1 fd
+	R bthub0 bthub1 bthub2 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2
+	R vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0
+	R tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
+	R bpf7 bpf8 bpf9 pty0 vscsi0 nnpfs0 ss0 ss1 ch0 ttya hotplug
+	R ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1
+	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 radio0 music0
+	R video0 audio0 audio1 audio2 uk0 random lkm crypto pf
+	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
+	R fd
 	;;
 
 wd*|sd*|raid*|ccd*)
