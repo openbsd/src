@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.291 2010/01/10 00:07:40 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.292 2010/03/30 14:24:03 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3043,11 +3043,8 @@ doit:
 	    BUS_DMA_NOWAIT))
 		return (ENOBUFS);
 
-	/*
-	 * Sanity check: avoid coming within 16 descriptors
-	 * of the end of the ring.
-	 */
-	if (dmamap->dm_nsegs > (BGE_TX_RING_CNT - sc->bge_txcnt - 16))
+	/* Check if we have enough free send BDs. */
+	if (sc->bge_txcnt + dmamap->dm_nsegs >= BGE_TX_RING_CNT)
 		goto fail_unload;
 
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
@@ -3101,9 +3098,9 @@ void
 bge_start(struct ifnet *ifp)
 {
 	struct bge_softc *sc;
-	struct mbuf *m_head = NULL;
+	struct mbuf *m_head;
 	u_int32_t prodidx;
-	int pkts = 0;
+	int pkts;
 
 	sc = ifp->if_softc;
 
@@ -3111,12 +3108,15 @@ bge_start(struct ifnet *ifp)
 		return;
 	if (!BGE_STS_BIT(sc, BGE_STS_LINK))
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
-		return;
 
 	prodidx = sc->bge_tx_prodidx;
 
-	while (sc->bge_cdata.bge_tx_chain[prodidx] == NULL) {
+	for (pkts = 0; !IFQ_IS_EMPTY(&ifp->if_snd);) {
+		if (sc->bge_txcnt > BGE_TX_RING_CNT - 16) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
