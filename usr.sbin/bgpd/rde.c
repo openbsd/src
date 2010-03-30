@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.289 2010/03/29 09:06:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.290 2010/03/30 15:43:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3007,7 +3007,7 @@ network_add(struct network_config *nc, int flagstatic)
 	if (!flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
 
-	rde_apply_set(asp, &nc->attrset, aid2af(nc->prefix.aid), peerself, peerself);
+	rde_apply_set(asp, &nc->attrset, nc->prefix.aid, peerself, peerself);
 	for (i = 1; i < rib_size; i++)
 		path_update(&ribs[i], peerself, asp, &nc->prefix,
 		    nc->prefixlen);
