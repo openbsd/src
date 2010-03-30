@@ -1,6 +1,6 @@
 define(MACHINE,landisk)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.17 2009/08/13 15:12:36 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.18 2010/03/30 19:16:09 matthieu Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -95,6 +95,7 @@ dnl _DEV(tuner, 75)
 _DEV(vi, 77)
 _DEV(nnpfs, 51)
 _DEV(vscsi, 99)
+_DEV(bthub,100)
 dnl
 divert(__mddivert)dnl
 dnl
@@ -125,3 +126,4 @@ target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
+target(all, bthub, 0, 1, 2)dnl

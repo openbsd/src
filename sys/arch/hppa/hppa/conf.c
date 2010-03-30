@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.48 2009/08/13 15:10:26 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.49 2010/03/30 19:16:09 matthieu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -124,6 +124,8 @@ cdev_decl(pci);
 #include "ucom.h"
 #include "uscanner.h"
 
+#include "bthub.h"
+
 struct cdevsw   cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/*  0: virtual console */
@@ -190,6 +192,7 @@ struct cdevsw   cdevsw[] =
 	cdev_lkm_dummy(),		/* 52: */
 	cdev_lkm_dummy(),		/* 53: */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: vscsi */
+	cdev_bthub_init(NBTHUB,bthub),	/* 55: bthub */
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2010/02/28 08:30:27 otto Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 2010/03/30 19:16:09 matthieu Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,6 +138,8 @@ cdev_decl(pci);
 #include "urio.h"
 #include "ucom.h"
 
+#include "bthub.h"
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -215,7 +217,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
 	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
-	cdev_hotplug_init(NHOTPLUG,hotplug) /* 67: devices hotplugging */
+	cdev_hotplug_init(NHOTPLUG,hotplug), /* 67: devices hotplugging */
+	cdev_bthub_init(NBTHUB,bthub),	/* 68: bluetooth hub */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
