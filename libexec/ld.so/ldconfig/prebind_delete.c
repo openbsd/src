@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.9 2008/06/08 02:40:49 drahn Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.10 2010/03/30 17:42:50 zinovik Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -118,6 +118,7 @@ strip_dir(char *dir)
 			;
 		}
 	}
+	closedir(dirp);
 	return ret;
 }
 

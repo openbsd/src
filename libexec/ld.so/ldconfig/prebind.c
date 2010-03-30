@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.11 2009/05/30 23:37:03 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.12 2010/03/30 17:42:50 zinovik Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -281,6 +281,7 @@ load_dir(char *name)
 			;
 		}
 	}
+	closedir(dirp);
 }
 
 /*
