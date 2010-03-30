@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.80 2010/01/14 18:15:27 ratchov Exp $	*/
+/*	$OpenBSD: auich.c,v 1.81 2010/03/30 09:38:07 dcoppa Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -1857,11 +1857,11 @@ auich_calibrate(struct auich_softc *sc)
 	else
 		ac97rate = actual_48k_rate;
 
-	printf("%s: measured ac97 link rate at %d Hz",
-	       sc->sc_dev.dv_xname, actual_48k_rate);
+	DPRINTF(AUICH_DEBUG_CODECIO, ("%s: measured ac97 link rate at %d Hz",
+	       sc->sc_dev.dv_xname, actual_48k_rate));
 	if (ac97rate != actual_48k_rate)
-		printf(", will use %d Hz", ac97rate);
-	printf("\n");
+		DPRINTF(AUICH_DEBUG_CODECIO, (", will use %d Hz", ac97rate));
+	DPRINTF(AUICH_DEBUG_CODECIO, ("\n"));
 
 	return (ac97rate);
 }
