@@ -2454,7 +2454,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_pdaemon.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_pglist.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_pmap.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_pmemrange.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_swap_encrypt.ph
