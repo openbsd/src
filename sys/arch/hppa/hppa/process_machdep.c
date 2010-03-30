@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.15 2009/07/29 18:31:11 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.16 2010/03/30 14:57:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -95,7 +95,6 @@ process_read_fpregs(p, fpregs)
 		mtctl(0, CR_CCR);
 	}
 	bcopy(p->p_addr->u_pcb.pcb_fpregs, fpregs, 32 * 8);
-	pdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr->u_pcb.pcb_fpregs, 32 * 8);
 
 	return (0);
 }

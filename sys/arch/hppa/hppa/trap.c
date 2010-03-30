@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.105 2010/03/27 14:55:01 jsing Exp $	*/
+/*	$OpenBSD: trap.c,v 1.106 2010/03/30 14:57:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -325,8 +325,6 @@ trap(type, frame)
 		}
 		/* reset the trap flag, as if there was none */
 		fpp[0] &= ~(((u_int64_t)HPPA_FPU_T) << 32);
-		/* flush out, since load is done from phys, only 4 regs */
-		fdcache(HPPA_SID_KERNEL, (vaddr_t)fpp, 8 * 4);
 
 		sv.sival_int = va;
 		KERNEL_PROC_LOCK(p);
