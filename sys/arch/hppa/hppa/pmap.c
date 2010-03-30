@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.149 2010/03/28 18:00:51 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.150 2010/03/30 02:38:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1171,7 +1171,6 @@ pmap_flush_page(struct vm_page *pg, int purge)
 			pdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 		else
 			fdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
-		/* XXX Conditionalize ficache on PTE_PROT(TLB_EXECUTE)? */
 		ficache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 		pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
 		pitlb(pve->pv_pmap->pm_space, pve->pv_va);
