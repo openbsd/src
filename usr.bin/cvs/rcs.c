@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.291 2009/06/07 08:39:13 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.292 2010/03/30 16:56:32 zinovik Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -366,7 +366,7 @@ void
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[CVS_REV_BUFSZ], *fn, tmpdir[MAXPATHLEN];
+	char   numbuf[CVS_REV_BUFSZ], *fn, tmpdir[MAXPATHLEN];
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
@@ -424,11 +424,7 @@ rcs_write(RCSFILE *rfp)
 		if (RCSNUM_ISBRANCH(symp->rs_num))
 			rcsnum_addmagic(symp->rs_num);
 		rcsnum_tostr(symp->rs_num, numbuf, sizeof(numbuf));
-		if (strlcpy(buf, symp->rs_name, sizeof(buf)) >= sizeof(buf) ||
-		    strlcat(buf, ":", sizeof(buf)) >= sizeof(buf) ||
-		    strlcat(buf, numbuf, sizeof(buf)) >= sizeof(buf))
-			fatal("rcs_write: string overflow");
-		fprintf(fp, "\n\t%s", buf);
+		fprintf(fp, "\n\t%s:%s", symp->rs_name, numbuf);
 	}
 	fprintf(fp, ";\n");
 
