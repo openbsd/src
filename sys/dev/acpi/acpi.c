@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.153 2010/03/25 23:00:20 oga Exp $ */
+/* $OpenBSD: acpi.c,v 1.154 2010/03/30 17:40:55 oga Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -38,6 +38,7 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
+#include <dev/wscons/wsdisplayvar.h>
 
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
@@ -47,6 +48,8 @@
 #define APMDEV(dev)	(minor(dev)&0x0f)
 #define APMDEV_NORMAL	0
 #define APMDEV_CTL	8
+
+#include "wsdisplay.h"
 
 #ifdef ACPI_DEBUG
 int acpi_debug = 16;
@@ -1956,6 +1959,10 @@ acpi_resume(struct acpi_softc *sc, int state)
 		env.v_integer = ACPI_SST_WORKING;
 		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 	}
+
+#if NWSDISPLAY > 0
+	wsdisplay_resume();
+#endif /* NWSDISPLAY > 0 */
 }
 #endif /* ! SMALL_KERNEL */
 
@@ -2014,6 +2021,11 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			    DEVNAME(sc));
 			return (ENXIO);
 		}
+
+#if NWSDISPLAY > 0
+	if (state == ACPI_STATE_S3)
+		wsdisplay_suspend();
+#endif /* NWSDISPLAY > 0 */
 
 	acpi_saved_spl = splhigh();
 	disable_intr();

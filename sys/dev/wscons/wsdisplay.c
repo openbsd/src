@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.97 2009/11/09 17:53:39 nicm Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.98 2010/03/30 17:40:55 oga Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -154,6 +154,8 @@ int	wsdisplay_addscreen(struct wsdisplay_softc *, int, const char *,
 	    const char *);
 int	wsdisplay_getscreen(struct wsdisplay_softc *,
 	    struct wsdisplay_addscreendata *);
+void	wsdisplay_resume_device(struct device *);
+void	wsdisplay_suspend_device(struct device *);
 void	wsdisplay_shutdownhook(void *);
 void	wsdisplay_addscreen_print(struct wsdisplay_softc *, int, int);
 void	wsdisplay_closescreen(struct wsdisplay_softc *, struct wsscreen *);
@@ -189,6 +191,7 @@ struct wsdisplay_softc {
 #define SC_SWITCHPENDING	0x01
 #define	SC_PASTE_AVAIL		0x02
 	int sc_screenwanted, sc_oldscreen; /* valid with SC_SWITCHPENDING */
+	int sc_resumescreen; /* if set, can't switch until resume. */
 
 #if NWSKBD > 0
 	struct wsevsrc *sc_input;
@@ -683,6 +686,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 #endif	/* NWSKBD > 0 */
 
 	sc->sc_isconsole = console;
+	sc->sc_resumescreen = WSDISPLAY_NULLSCREEN;
 
 	if (console) {
 		KASSERT(wsdisplay_console_initted);
@@ -1798,6 +1802,13 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 
 	s = spltty();
 
+	while (sc->sc_resumescreen != WSDISPLAY_NULLSCREEN && res == 0)
+		res = tsleep(&sc->sc_resumescreen, PCATCH, "wsrestore", 0);
+	if (res) {
+		splx(s);
+		return (res);
+	}
+
 	if ((sc->sc_focus && no == sc->sc_focusidx) ||
 	    (sc->sc_focus == NULL && no == WSDISPLAY_NULLSCREEN)) {
 		splx(s);
@@ -2149,6 +2160,105 @@ wsdisplay_switchtoconsole()
 			return;
 		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
 		    scr->scr_dconf->emulcookie, 0, NULL, NULL);
+	}
+}
+
+/*
+ * Deal with the xserver doing driver in userland and thus screwing up suspend
+ * and resume by switching away from it at suspend/resume time.
+ *
+ * these functions must be called from the MD suspend callback, since we may
+ * need to sleep if we have a user (probably an X server) on a vt. therefore
+ * this can't be a config_suspend() hook.
+ */
+void
+wsdisplay_suspend(void)
+{
+	int	i;
+
+	for (i = 0; i < wsdisplay_cd.cd_ndevs; i++)
+		if (wsdisplay_cd.cd_devs[i] != NULL)
+			wsdisplay_suspend_device(wsdisplay_cd.cd_devs[i]);
+}
+
+void
+wsdisplay_suspend_device(struct device *dev)
+{
+	struct wsdisplay_softc	*sc = (struct wsdisplay_softc *)dev;
+	struct wsscreen		*scr;
+	int			 active, idx, ret = 0, s;
+	
+	if ((active = wsdisplay_getactivescreen(sc)) == WSDISPLAY_NULLSCREEN)
+		return;
+
+	scr = sc->sc_scr[active];
+	/*
+	 * We want to switch out of graphics mode for the suspend, but
+	 * only if we're in WSDISPLAY_MODE_MAPPED.
+	 */
+retry:
+	idx = WSDISPLAY_MAXSCREEN;
+	if (scr->scr_flags & SCR_GRAPHICS &&
+	    (scr->scr_flags & SCR_DUMBFB) == 0) {
+		for (idx = 0; idx < WSDISPLAY_MAXSCREEN; idx++) {
+			if (sc->sc_scr[idx] == NULL || sc->sc_scr[idx] == scr)
+				continue;
+
+			if ((sc->sc_scr[idx]->scr_flags & SCR_GRAPHICS) == 0)
+				break;
+		}
+	}
+
+	/* if we don't have anything to switch to, we can't do anything */
+	if (idx == WSDISPLAY_MAXSCREEN)
+		return;
+
+	/*
+	 * we do a lot of magic here because we need to know that the
+	 * switch has completed before we return
+	 */
+	ret = wsdisplay_switch((struct device *)sc, idx, 1);
+	if (ret == EBUSY) {
+		/* XXX sleep on what's going on */
+		goto retry;
+	} else if (ret)
+		return;
+
+	s = spltty();
+	sc->sc_resumescreen = active; /* block other vt switches until resume */
+	splx(s);
+	/*
+	 * This will either return ENXIO (invalid (shouldn't happen) or
+	 * wsdisplay disappeared (problem solved)), or EINTR/ERESTART.
+	 * Not much we can do about the latter since we can't return to
+	 * userland.
+	 */
+	(void)wsscreen_switchwait(sc, idx);
+}
+
+void
+wsdisplay_resume(void)
+{
+	int	i;
+
+	for (i = 0; i < wsdisplay_cd.cd_ndevs; i++)
+		if (wsdisplay_cd.cd_devs[i] != NULL)
+			wsdisplay_resume_device(wsdisplay_cd.cd_devs[i]);
+}
+
+void
+wsdisplay_resume_device(struct device *dev)
+{
+	struct wsdisplay_softc	*sc = (struct wsdisplay_softc *)dev;
+	int			 idx, s;
+
+	if (sc->sc_resumescreen != WSDISPLAY_NULLSCREEN) {
+		s = spltty();
+		idx = sc->sc_resumescreen;
+		sc->sc_resumescreen = WSDISPLAY_NULLSCREEN;
+		wakeup(&sc->sc_resumescreen);
+		splx(s);
+		(void)wsdisplay_switch((struct device *)sc, idx, 1);
 	}
 }
 
