@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.55 2009/11/26 23:44:38 mlarkin Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.56 2010/03/31 19:21:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -239,7 +239,13 @@ struct acpi_softc {
 	int			sc_revision;
 
 	int			sc_pse;		/* passive cooling enabled */
+
+	int			sc_flags;
 };
+
+#define	SCFLAG_OREAD	0x0000001
+#define	SCFLAG_OWRITE	0x0000002
+#define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
 #define GPE_NONE  0x00
 #define GPE_LEVEL 0x01
@@ -312,6 +318,8 @@ void	acpi_write_pmreg(struct acpi_softc *, int, int, int);
 void	acpi_poll(void *);
 
 int acpi_matchhids(struct acpi_attach_args *, const char *[], const char *);
+
+int	acpi_record_event(struct acpi_softc *, u_int);
 
 #endif
 

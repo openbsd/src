@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.154 2010/03/30 17:40:55 oga Exp $ */
+/* $OpenBSD: acpi.c,v 1.155 2010/03/31 19:21:19 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -892,23 +892,31 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
+	ACPI_LOCK(sc);
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		if (!(flag & FWRITE)) {
 			error = EINVAL;
 			break;
 		}
+		if (sc->sc_flags & SCFLAG_OWRITE) {
+			error = EBUSY;
+			break;
+		}
+		sc->sc_flags |= SCFLAG_OWRITE;
 		break;
 	case APMDEV_NORMAL:
 		if (!(flag & FREAD) || (flag & FWRITE)) {
 			error = EINVAL;
 			break;
 		}
+		sc->sc_flags |= SCFLAG_OREAD;
 		break;
 	default:
 		error = ENXIO;
 		break;
 	}
+	ACPI_UNLOCK(sc);
 #else
 	error = ENXIO;
 #endif
@@ -926,14 +934,19 @@ acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
+	ACPI_LOCK(sc);
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
+		sc->sc_flags &= ~SCFLAG_OWRITE;
+		break;
 	case APMDEV_NORMAL:
+		sc->sc_flags &= ~SCFLAG_OREAD;
 		break;
 	default:
 		error = ENXIO;
 		break;
 	}
+	ACPI_UNLOCK(sc);
 #else
 	error = ENXIO;
 #endif
@@ -959,8 +972,6 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	ACPI_LOCK(sc);
 	/* fake APM */
 	switch (cmd) {
-	case APM_IOC_STANDBY_REQ:
-	case APM_IOC_SUSPEND_REQ:
 	case APM_IOC_SUSPEND:
 	case APM_IOC_STANDBY:
 		/*
@@ -1960,11 +1971,24 @@ acpi_resume(struct acpi_softc *sc, int state)
 		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 	}
 
+	acpi_record_event(sc, APM_NORMAL_RESUME);
+
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
 }
 #endif /* ! SMALL_KERNEL */
+
+int
+acpi_record_event(struct acpi_softc *sc, u_int type)
+{
+	if ((sc->sc_flags & SCFLAG_OPEN) == 0)
+		return (1);
+
+	acpi_evindex++;
+	KNOTE(sc->sc_note, APM_EVENT_COMPOSE(type, acpi_evindex));
+	return (0);
+}
 
 void
 acpi_handle_suspend_failure(struct acpi_softc *sc)
@@ -2140,20 +2164,14 @@ acpi_isr_thread(void *arg)
 
 			aml_notify_dev(ACPI_DEV_PBD, 0x80);
 
-			acpi_evindex++;
 			dnprintf(1,"power button pressed\n");
-			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN,
-			    acpi_evindex));
 		}
 		if (sc->sc_sleepbtn) {
 			sc->sc_sleepbtn = 0;
 
 			aml_notify_dev(ACPI_DEV_SBD, 0x80);
 
-			acpi_evindex++;
 			dnprintf(1,"sleep button pressed\n");
-			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
-			    acpi_evindex));
 		}
 
 		/* handle polling here to keep code non-concurrent*/
