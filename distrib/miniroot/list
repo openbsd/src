@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.45 2010/01/01 05:47:00 deraadt Exp $
+#	$OpenBSD: list,v 1.46 2010/03/31 17:51:42 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -8,6 +8,7 @@ SRCDIRS bin sbin usr.bin usr.sbin
 COPY	${OBJDIR}/instbin			instbin
 LINK	instbin					bin/arch
 LINK	instbin					bin/cat
+LINK	instbin					bin/date
 LINK	instbin					bin/chmod bin/chgrp sbin/chown
 LINK	instbin					bin/cp
 LINK	instbin					bin/dd
