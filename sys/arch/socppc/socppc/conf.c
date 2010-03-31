@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2010/03/30 19:16:09 matthieu Exp $ */
+/*	$OpenBSD: conf.c,v 1.9 2010/03/31 16:33:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -201,7 +201,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 78: vscsi */
 	cdev_notdef(),			/* 79 */
-	cdev_notdev(),			/* 80 */
+	cdev_notdef(),			/* 80 */
 	cdev_bthub_init(NBTHUB,bthub),	/* 81: bluetooth hub */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
