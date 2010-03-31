@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.249 2010/03/05 15:25:00 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.250 2010/03/31 18:53:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -448,18 +448,6 @@ conf_main	: AS as4number		{
 				YYERROR;
 			}
 			free($4);
-		}
-		| NETWORK STATIC filter_set	{
-			/* keep for compatibility till after next release */
-			conf->flags |= BGPD_FLAG_REDIST_STATIC;
-			move_filterset($3, &conf->staticset);
-			free($3);
-		}
-		| NETWORK CONNECTED filter_set	{
-			/* keep for compatibility till after next release */
-			conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
-			move_filterset($3, &conf->connectset);
-			free($3);
 		}
 		| DUMP STRING STRING optnumber		{
 			int action;
