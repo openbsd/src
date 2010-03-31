@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 2009/12/16 16:54:42 jasper Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 2010/03/31 19:46:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -620,7 +620,7 @@ pmap_create()
 	pmap->pm_ptphint = NULL;
 
 	TAILQ_INIT(&pmap->pm_pglist);
-	if (uvm_pglistalloc(2 * PAGE_SIZE, 0, VM_MIN_KERNEL_ADDRESS,
+	if (uvm_pglistalloc(2 * PAGE_SIZE, 0, VM_MIN_KERNEL_ADDRESS - 1,
 	    PAGE_SIZE, 2 * PAGE_SIZE, &pmap->pm_pglist, 1, UVM_PLA_WAITOK))
 		panic("pmap_create: no pages");
 

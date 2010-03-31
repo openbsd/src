@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc_obio.c,v 1.8 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: if_mc_obio.c,v 1.9 2010/03/31 19:46:27 miod Exp $	*/
 /*	$NetBSD: if_mc_obio.c,v 1.13 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ mc_obio_attach(parent, self, aux)
 
 	/* allocate memory for transmit buffer and mark it non-cacheable */
 	TAILQ_INIT(&txlist);
-	if (uvm_pglistalloc(PAGE_SIZE, 0, -PAGE_SIZE, PAGE_SIZE, 0,
+	if (uvm_pglistalloc(PAGE_SIZE, 0, -1, PAGE_SIZE, 0,
 	    &txlist, 1, UVM_PLA_NOWAIT) != 0) {
 		printf(": could not allocate transmit buffer memory\n");
 		goto out1;
@@ -158,7 +158,7 @@ mc_obio_attach(parent, self, aux)
 	 * allocate memory for receive buffer and mark it non-cacheable
 	 */
 	TAILQ_INIT(&rxlist);
-	if (uvm_pglistalloc(MC_NPAGES * PAGE_SIZE, 0, -PAGE_SIZE, PAGE_SIZE, 0,
+	if (uvm_pglistalloc(MC_NPAGES * PAGE_SIZE, 0, -1, PAGE_SIZE, 0,
 	    &rxlist, 1, UVM_PLA_NOWAIT) != 0) {
 		printf(": could not allocate receive buffer memory\n");
 		goto out3;

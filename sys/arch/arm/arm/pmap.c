@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2009/07/14 13:59:49 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2010/03/31 19:46:26 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4208,7 +4208,8 @@ pmap_postinit(void)
 		TAILQ_INIT(&plist);
 
 		error = uvm_pglistalloc(L1_TABLE_SIZE, physical_start,
-		    physical_end, L1_TABLE_SIZE, 0, &plist, 1, UVM_PLA_WAITOK);
+		    physical_end - 1, L1_TABLE_SIZE, 0, &plist, 1,
+		    UVM_PLA_WAITOK);
 		if (error)
 			panic("Cannot allocate L1 physical pages");
 

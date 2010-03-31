@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.26 2010/02/20 12:39:41 sobrado Exp $ */
+/* $OpenBSD: cpu.c,v 1.27 2010/03/31 19:46:25 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -338,7 +338,7 @@ recognized:
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
 	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(USPACE, avail_start, avail_end, 0, 0,
+	error = uvm_pglistalloc(USPACE, avail_start, avail_end - 1, 0, 0,
 	    &mlist, 1, UVM_PLA_WAITOK);
 	if (error != 0) {
 		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
