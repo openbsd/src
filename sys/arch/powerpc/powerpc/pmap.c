@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2009/07/21 22:34:02 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.109 2010/03/31 21:02:42 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -29,6 +29,50 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  */  
+
+/*
+ * powerpc lazy icache managment.
+ * The icache does not snoop dcache accesses. The icache also will not load
+ * modified data from the dcache, but the unmodified data in ram.
+ * Before the icache is loaded, the dcache must be synced to ram to prevent
+ * the icache from loading stale data.
+ * pg->pg_flags PG_PMAP_EXE bit is used to track if the dcache is clean
+ * and the icache may have valid data in it.
+ * if the PG_PMAP_EXE bit is set (and the page is not currently RWX)
+ * the icache will only have valid code in it. If the bit is clear
+ * memory may not match the dcache contents or the icache may contain
+ * data from a previous page.
+ *
+ * pmap enter
+ * !E  NONE 	-> R	no action
+ * !E  NONE|R 	-> RW	no action
+ * !E  NONE|R 	-> RX	flush dcache, inval icache (that page only), set E
+ * !E  NONE|R 	-> RWX	flush dcache, inval icache (that page only), set E
+ * !E  NONE|RW 	-> RWX	flush dcache, inval icache (that page only), set E
+ *  E  NONE 	-> R	no action
+ *  E  NONE|R 	-> RW	clear PG_PMAP_EXE bit
+ *  E  NONE|R 	-> RX	no action
+ *  E  NONE|R 	-> RWX	no action
+ *  E  NONE|RW 	-> RWX	-invalid source state
+ *
+ * pamp_protect
+ *  E RW -> R	- invalid source state
+ * !E RW -> R	- no action
+ *  * RX -> R	- no action
+ *  * RWX -> R	- sync dcache, inval icache
+ *  * RWX -> RW	- clear PG_PMAP_EXE
+ *  * RWX -> RX	- sync dcache, inval icache
+ *  * * -> NONE	- no action
+ * 
+ * pmap_page_protect (called with arg PROT_NONE if page is to be reused)
+ *  * RW -> R	- as pmap_protect
+ *  * RX -> R	- as pmap_protect
+ *  * RWX -> R	- as pmap_protect
+ *  * RWX -> RW	- as pmap_protect
+ *  * RWX -> RX	- as pmap_protect
+ *  * * -> NONE - clear PG_PMAP_EXE
+ * 
+ */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -89,7 +133,7 @@ void tlbia(void);
 
 void pmap_attr_save(paddr_t pa, u_int32_t bits);
 void pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot);
-void pmap_page_ro32(pmap_t pm, vaddr_t va);
+void pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot);
 
 /*
  * LOCKING structures.
@@ -1996,11 +2040,21 @@ pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot)
 {
 	struct pte_64 *ptp64;
 	struct pte_desc *pted;
+	struct vm_page *pg;
 	int sr, idx;
 
 	pted = pmap_vp_lookup(pm, va);
 	if (pted == NULL || !PTED_VALID(pted))
 		return;
+
+	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte64.pte_lo & PTE_RPGN_64);
+	if (pg->pg_flags & PG_PMAP_EXE) {
+		if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) == VM_PROT_WRITE) {
+			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
+		} else {
+			pmap_syncicache_user_virt(pm, va);
+		}
+	}
 
 	pted->p.pted_pte64.pte_lo &= ~PTE_PP_64;
 	pted->p.pted_pte64.pte_lo |= PTE_RO_64;
@@ -2039,16 +2093,27 @@ pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot)
 		ptp64->pte_hi |= PTE_VALID_64;
 	}
 }
+
 void
-pmap_page_ro32(pmap_t pm, vaddr_t va)
+pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot)
 {
 	struct pte_32 *ptp32;
 	struct pte_desc *pted;
+	struct vm_page *pg = NULL;
 	int sr, idx;
 
 	pted = pmap_vp_lookup(pm, va);
 	if (pted == NULL || !PTED_VALID(pted))
 		return;
+
+	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte32.pte_lo & PTE_RPGN_32);
+	if (pg->pg_flags & PG_PMAP_EXE) {
+		if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) == VM_PROT_WRITE) {
+			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
+		} else {
+			pmap_syncicache_user_virt(pm, va);
+		}
+	}
 
 	pted->p.pted_pte32.pte_lo &= ~PTE_PP_32;
 	pted->p.pted_pte32.pte_lo |= PTE_RO_32;
@@ -2115,7 +2180,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		if (ppc_proc_is_64b)
 			pmap_page_ro64(pted->pted_pmap, pted->pted_va, prot);
 		else
-			pmap_page_ro32(pted->pted_pmap, pted->pted_va);
+			pmap_page_ro32(pted->pted_pmap, pted->pted_va, prot);
 	}
 	splx(s);
 }
@@ -2133,7 +2198,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			}
 		} else {
 			while (sva < eva) {
-				pmap_page_ro32(pm, sva);
+				pmap_page_ro32(pm, sva, prot);
 				sva += PAGE_SIZE;
 			}
 		}
