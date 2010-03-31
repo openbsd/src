@@ -29,14 +29,14 @@
 #
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#16:nt#4:ns#128:\
-	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
-	:ob#0:pb#0:oc#0:pc#8192:
+	:ty=simulated:se#512:nc#20:nt#4:ns#128:\
+	:ta=4.2BSD:oa#0:pa#10240:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#10240:
 
 minicdroot|minicdramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#32:nt#4:ns#128:\
-	:ta=4.2BSD:oa#0:pa#16384:fa#512:ba#4096:\
-	:ob#0:pb#0:oc#0:pc#16384:
+	:ty=simulated:se#512:nc#40:nt#4:ns#128:\
+	:ta=4.2BSD:oa#0:pa#20480:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#20480:
 
 cdroot|cdramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#2048:nc#16:nt#280:ns#32:\

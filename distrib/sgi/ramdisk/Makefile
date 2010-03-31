@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2009/05/30 04:01:29 miod Exp $
+#	$OpenBSD: Makefile,v 1.12 2010/03/31 19:44:35 miod Exp $
 
 REV=		${OSrev}
 
@@ -23,7 +23,7 @@ PID!=		echo $$$$
 
 
 DISKTYPE=       rdroot
-NBLKS=          8192
+NBLKS=          10240
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -i 4096
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2009/05/30 04:01:27 miod Exp $
+#	$OpenBSD: Makefile,v 1.10 2010/03/31 19:44:33 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -7,12 +7,14 @@ TOP=	${.CURDIR}/..
 BSDRD=	bsd.rd
 CDROM=	cd${REV}.iso
 FFS=	ffs.img
+# must match the size of `minicdroot' in disktab
+CDFSMB=	10
 all: ${CDROM}
 
 ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
-	dd if=/dev/zero of=${.OBJDIR}/${FFS} bs=1m count=8
+	dd if=/dev/zero of=${.OBJDIR}/${FFS} bs=1m count=${CDFSMB}
 	vnconfig -v -c svnd0 ${.OBJDIR}/${FFS}
 	disklabel -w svnd0 minicdroot "OpenBSD/sgi     "
 	newfs /dev/rsvnd0a
@@ -38,7 +40,7 @@ ${CDROM}:
 	umount ${.OBJDIR}/cd-dir
 	@df /dev/svnd0a
 	vnconfig -u svnd0
-	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=1m count=10
+	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=1m count=`expr ${CDFSMB} + 2`
 	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
 	# boot32 needs 77, boot64 needs 173, and add some room for growth
 	/usr/mdec/sgivol -i -h 320 svnd0 > ${.OBJDIR}/volhdr

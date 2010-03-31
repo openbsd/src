@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.26 2010/03/31 17:51:42 deraadt Exp $
+#	$OpenBSD: list,v 1.27 2010/03/31 19:44:35 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -81,6 +81,11 @@ TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 # firmwares that might need loading
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
 #COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
+COPY	${DESTDIR}/etc/firmware/bnx-b06		etc/firmware/bnx-b06
+COPY	${DESTDIR}/etc/firmware/bnx-b09		etc/firmware/bnx-b09
+COPY	${DESTDIR}/etc/firmware/bnx-rv2p	etc/firmware/bnx-rv2p
+COPY	${DESTDIR}/etc/firmware/bnx-xi-rv2p	etc/firmware/bnx-xi-rv2p
+COPY	${DESTDIR}/etc/firmware/bnx-xi90-rv2p	etc/firmware/bnx-xi90-rv2p
 
 # dhcp things
 SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.19 2010/03/22 21:28:11 miod Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.20 2010/03/31 19:44:35 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -30,7 +30,7 @@ option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)
 
 # RAMDISK stuff
-option		MINIROOTSIZE=8192
+option		MINIROOTSIZE=10240
 option		RAMDISK_HOOKS
 
 # Define what targets to support
