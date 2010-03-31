@@ -1,4 +1,4 @@
-#	$OpenBSD: files.socppc,v 1.9 2009/09/06 20:09:34 kettenis Exp $
+#	$OpenBSD: files.socppc,v 1.10 2010/03/31 16:33:30 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -104,6 +104,11 @@ include "dev/usb/files.usb"
 # On-board USB
 attach	ehci at obio with ehci_obio
 file	arch/socppc/dev/ehci_obio.c			ehci
+
+#
+# Bluetooth
+#
+include "dev/bluetooth/files.bluetooth"
 
 #
 # Machine-independent I2C drivers
