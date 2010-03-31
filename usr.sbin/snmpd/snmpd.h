@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.26 2010/03/29 14:52:49 claudio Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.27 2010/03/31 09:20:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -98,6 +98,13 @@ extern  struct ctl_connlist ctl_conns;
  * kroute
  */
 
+union kaddr {
+	struct sockaddr		sa;
+	struct sockaddr_in	sin;
+	struct sockaddr_in6	sin6;
+	char			pad[32];
+};
+
 struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
@@ -120,9 +127,9 @@ struct kroute6 {
 
 struct kif_addr {
 	u_short			 if_index;
-	struct in_addr		 addr;
-	struct in_addr		 mask;
-	struct in_addr		 dstbrd;
+	union kaddr		 addr;
+	union kaddr		 mask;
+	union kaddr		 dstbrd;
 
 	TAILQ_ENTRY(kif_addr)	 entry;
 	RB_ENTRY(kif_addr)	 node;
@@ -132,15 +139,13 @@ struct kif {
 	char			 if_name[IF_NAMESIZE];
 	char			 if_descr[IFDESCRSIZE];
 	u_int8_t		 if_lladdr[ETHER_ADDR_LEN];
+	struct if_data		 if_data;
+	u_long			 if_ticks;
 	int			 if_flags;
 	u_short			 if_index;
-	u_int8_t		 if_nhreachable; /* for nexthop verification */
-	u_long			 if_ticks;
-	struct if_data		 if_data;
 };
 
 #define	F_CONNECTED		0x0008
-#define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
 #define	F_DYNAMIC		0x0040
 
@@ -331,13 +336,15 @@ int		 imsg_compose_event(struct imsgev *, enum imsg_type, u_int32_t,
 int		 kr_init(void);
 void		 kr_shutdown(void);
 
-int		 kr_updateif(u_int);
 u_int		 kr_ifnumber(void);
 u_long		 kr_iflastchange(void);
+int		 kr_updateif(u_int);
+u_long		 kr_routenumber(void);
+
 struct kif	*kr_getif(u_short);
 struct kif	*kr_getnextif(u_short);
-struct kif_addr *kr_getaddr(struct in_addr *);
-struct kif_addr *kr_getnextaddr(struct in_addr *);
+struct kif_addr *kr_getaddr(struct sockaddr *);
+struct kif_addr *kr_getnextaddr(struct sockaddr *);
 
 /* snmpe.c */
 pid_t		 snmpe(struct snmpd *, int [2]);

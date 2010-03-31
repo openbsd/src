@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.9 2010/03/29 14:52:49 claudio Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.10 2010/03/31 09:20:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -46,13 +46,12 @@
 #include "snmpd.h"
 
 struct {
-	u_int32_t		 ks_rtseq;
-	pid_t			 ks_pid;
+	struct event		 ks_ev;
+	u_long			 ks_iflastchange;
+	u_long			 ks_nroutes;	/* 4 billions enough? */
 	int			 ks_fd;
 	int			 ks_ifd;
-	struct event		 ks_ev;
 	u_short			 ks_nkif;
-	u_long			 ks_iflastchange;
 } kr_state;
 
 struct kroute_node {
@@ -98,11 +97,10 @@ int			 kif_remove(struct kif_node *);
 void			 kif_clear(void);
 struct kif		*kif_update(u_short, int, struct if_data *,
 			    struct sockaddr_dl *);
-int			 kif_validate(u_short);
 
 int			 ka_compare(struct kif_addr *, struct kif_addr *);
-struct kif_addr		*ka_insert(u_short, struct kif_addr *);
-struct kif_addr		*ka_find(struct in_addr *);
+void			 ka_insert(u_short, struct kif_addr *);
+struct kif_addr		*ka_find(struct sockaddr *);
 int			 ka_remove(struct kif_addr *);
 
 u_int8_t	prefixlen_classful(in_addr_t);
@@ -112,10 +110,10 @@ u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
 struct in6_addr *prefixlen2mask6(u_int8_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
-void		if_newaddr(u_short, struct sockaddr_in *, struct sockaddr_in *,
-		    struct sockaddr_in *);
-void		if_deladdr(u_short, struct sockaddr_in *, struct sockaddr_in *,
-		    struct sockaddr_in *);
+void		if_newaddr(u_short, struct sockaddr *, struct sockaddr *,
+		    struct sockaddr *);
+void		if_deladdr(u_short, struct sockaddr *, struct sockaddr *,
+		    struct sockaddr *);
 void		if_announce(void *);
 
 void		dispatch_rtmsg(int, short, void *);
@@ -174,9 +172,6 @@ kr_init(void)
 		    rcvbuf /= 2)
 			;	/* nothing */
 
-	kr_state.ks_pid = getpid();
-	kr_state.ks_rtseq = 1;
-
 	RB_INIT(&krt);
 	RB_INIT(&krt6);
 	RB_INIT(&kit);
@@ -223,6 +218,12 @@ kr_updateif(u_int if_index)
 
 	/* Do not update the interface address list */
 	return (fetchifs(if_index));
+}
+
+u_long
+kr_routenumber(void)
+{
+	return (kr_state.ks_nroutes);
 }
 
 /* rb-tree compare */
@@ -284,7 +285,11 @@ kif_compare(struct kif_node *a, struct kif_node *b)
 int
 ka_compare(struct kif_addr *a, struct kif_addr *b)
 {
-	return (memcmp(&a->addr, &b->addr, sizeof(struct in_addr)));
+	if (a->addr.sa.sa_family < b->addr.sa.sa_family)
+		return (-1);
+	if (a->addr.sa.sa_family > b->addr.sa.sa_family)
+		return (1);
+	return (memcmp(&a->addr.sa, &b->addr.sa, a->addr.sa.sa_len));
 }
 
 /* tree management */
@@ -345,6 +350,7 @@ kroute_insert(struct kroute_node *kr)
 		kr->next = NULL; /* to be sure */
 	}
 
+	kr_state.ks_nroutes++;
 	return (0);
 }
 
@@ -386,6 +392,7 @@ kroute_remove(struct kroute_node *kr)
 		krm->next = kr->next;
 	}
 
+	kr_state.ks_nroutes--;
 	free(kr);
 	return (0);
 }
@@ -456,6 +463,7 @@ kroute6_insert(struct kroute6_node *kr)
 		kr->next = NULL; /* to be sure */
 	}
 
+	kr_state.ks_nroutes++;
 	return (0);
 }
 
@@ -498,6 +506,7 @@ kroute6_remove(struct kroute6_node *kr)
 		krm->next = kr->next;
 	}
 
+	kr_state.ks_nroutes--;
 	free(kr);
 	return (0);
 }
@@ -644,36 +653,25 @@ kif_update(u_short if_index, int flags, struct if_data *ifd,
 	return (&kif->k);
 }
 
-int
-kif_validate(u_short if_index)
-{
-	struct kif_node		*kif;
-
-	if ((kif = kif_find(if_index)) == NULL) {
-		log_warnx("interface with index %u not found", if_index);
-		return (1);
-	}
-
-	return (kif->k.if_nhreachable);
-}
-
-struct kif_addr *
+void
 ka_insert(u_short if_index, struct kif_addr *ka)
 {
-	if (ka->addr.s_addr == INADDR_ANY)
-		return (ka);
+	if (ka->addr.sa.sa_len == 0)
+		return;
+
 	ka->if_index = if_index;
-	return (RB_INSERT(ka_tree, &kat, ka));
+	RB_INSERT(ka_tree, &kat, ka);
 }
 
 struct kif_addr	*
-ka_find(struct in_addr *in)
+ka_find(struct sockaddr *sa)
 {
 	struct kif_addr		ka;
 
-	if (in == NULL)
+	if (sa == NULL)
 		return (RB_MIN(ka_tree, &kat));
-	ka.addr.s_addr = in->s_addr;
+	bzero(&ka.addr, sizeof(ka.addr));
+	bcopy(sa, &ka.addr.sa, sa->sa_len);
 	return (RB_FIND(ka_tree, &kat, &ka));
 }
 
@@ -686,19 +684,19 @@ ka_remove(struct kif_addr *ka)
 }
 
 struct kif_addr *
-kr_getaddr(struct in_addr *in)
+kr_getaddr(struct sockaddr *sa)
 {
-	return (ka_find(in));
+	return (ka_find(sa));
 }
 
 struct kif_addr *
-kr_getnextaddr(struct in_addr *in)
+kr_getnextaddr(struct sockaddr *sa)
 {
 	struct kif_addr	*ka;
 
-	if ((ka = ka_find(in)) == NULL)
+	if ((ka = ka_find(sa)) == NULL)
 		return (NULL);
-	if (in)
+	if (sa)
 		ka = RB_NEXT(ka_tree, &kat, ka);
 
 	return (ka);
@@ -826,85 +824,60 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 void
 if_change(u_short if_index, int flags, struct if_data *ifd)
 {
-	struct kroute_node	*kr, *tkr;
 	struct kif		*kif;
-	u_int8_t		 reachable;
 
-	if ((kif = kif_update(if_index, flags, ifd, NULL)) == NULL) {
+	if ((kif = kif_update(if_index, flags, ifd, NULL)) == NULL)
 		log_warn("if_change:  kif_update(%u)", if_index);
-		return;
-	}
-
-	reachable = (kif->if_flags & IFF_UP) &&
-	    (LINK_STATE_IS_UP(kif->if_link_state) ||
-	    (kif->if_link_state == LINK_STATE_UNKNOWN &&
-	    kif->if_type != IFT_CARP));
-
-	if (reachable == kif->if_nhreachable)
-		return;		/* nothing changed wrt nexthop validity */
-
-	kif->if_nhreachable = reachable;
-
-	/* update redistribute list */
-	RB_FOREACH(kr, kroute_tree, &krt) {
-		for (tkr = kr; tkr != NULL; tkr = tkr->next) {
-			if (tkr->r.if_index == if_index) {
-				if (reachable)
-					tkr->r.flags &= ~F_DOWN;
-				else
-					tkr->r.flags |= F_DOWN;
-			}
-		}
-	}
 }
 
 void
-if_newaddr(u_short if_index, struct sockaddr_in *ifa, struct sockaddr_in *mask,
-    struct sockaddr_in *brd)
+if_newaddr(u_short if_index, struct sockaddr *ifa, struct sockaddr *mask,
+    struct sockaddr *brd)
 {
 	struct kif_node *kif;
 	struct kif_addr *ka;
 
-	if (ifa == NULL || ifa->sin_family != AF_INET)
+	if (ifa == NULL)
 		return;
 	if ((kif = kif_find(if_index)) == NULL) {
 		log_warnx("if_newaddr: corresponding if %i not found",
 		    if_index);
 		return;
 	}
-	if (ka_find(&ifa->sin_addr) != NULL)
-		return;
-	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
-		fatal("if_newaddr");
-	ka->addr = ifa->sin_addr;
+	if ((ka = ka_find(ifa)) == NULL) {
+		if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
+			fatal("if_newaddr");
+		bcopy(ifa, &ka->addr.sa, ifa->sa_len);
+		TAILQ_INSERT_TAIL(&kif->addrs, ka, entry);
+		ka_insert(if_index, ka);
+	}
+
 	if (mask)
-		ka->mask = mask->sin_addr;
+		bcopy(mask, &ka->mask.sa, mask->sa_len);
 	else
-		ka->mask.s_addr = INADDR_NONE;
+		bzero(&ka->mask, sizeof(ka->mask));
 	if (brd)
-		ka->dstbrd = brd->sin_addr;
+		bcopy(brd, &ka->dstbrd.sa, brd->sa_len);
 	else
-		ka->dstbrd.s_addr = INADDR_NONE;
+		bzero(&ka->mask, sizeof(ka->mask));
 
-	TAILQ_INSERT_TAIL(&kif->addrs, ka, entry);
-	ka_insert(if_index, ka);
 }
 
 void
-if_deladdr(u_short if_index, struct sockaddr_in *ifa, struct sockaddr_in *mask,
-    struct sockaddr_in *brd)
+if_deladdr(u_short if_index, struct sockaddr *ifa, struct sockaddr *mask,
+    struct sockaddr *brd)
 {
 	struct kif_node *kif;
 	struct kif_addr *ka;
 
-	if (ifa == NULL || ifa->sin_family != AF_INET)
+	if (ifa == NULL)
 		return;
 	if ((kif = kif_find(if_index)) == NULL) {
-		log_warnx("if_newaddr: corresponding if %i not found",
+		log_warnx("if_deladdr: corresponding if %i not found",
 		    if_index);
 		return;
 	}
-	if ((ka = ka_find(&ifa->sin_addr)) == NULL)
+	if ((ka = ka_find(ifa)) == NULL)
 		return;
 
 	TAILQ_REMOVE(&kif->addrs, ka, entry);
@@ -1076,12 +1049,6 @@ fetchifs(u_short if_index)
 			    ifm.ifm_flags, &ifm.ifm_data,
 			    (struct sockaddr_dl *)rti_info[RTAX_IFP])) == NULL)
 				fatal("fetchifs");
-
-			kif->if_nhreachable = (kif->if_flags & IFF_UP) &&
-			    (LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state) ||
-			    (ifm.ifm_data.ifi_link_state ==
-			    LINK_STATE_UNKNOWN &&
-			    ifm.ifm_data.ifi_type != IFT_CARP));
 			break;
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;
@@ -1091,10 +1058,8 @@ fetchifs(u_short if_index)
 			sa = (struct sockaddr *)(ifam + 1);
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
-			if_newaddr(ifam->ifam_index,
-			    (struct sockaddr_in *)rti_info[RTAX_IFA],
-			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
-			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
+			if_newaddr(ifam->ifam_index, rti_info[RTAX_IFA],
+			    rti_info[RTAX_NETMASK], rti_info[RTAX_BRD]);
 			break;
 		}
 	}
@@ -1159,10 +1124,8 @@ dispatch_rtmsg(int fd, short event, void *arg)
 			sa = (struct sockaddr *)(ifam + 1);
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
-			if_deladdr(ifam->ifam_index,
-			    (struct sockaddr_in *)rti_info[RTAX_IFA],
-			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
-			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
+			if_deladdr(ifam->ifam_index, rti_info[RTAX_IFA],
+			    rti_info[RTAX_NETMASK], rti_info[RTAX_BRD]);
 			break;
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;
@@ -1172,10 +1135,8 @@ dispatch_rtmsg(int fd, short event, void *arg)
 			sa = (struct sockaddr *)(ifam + 1);
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
-			if_newaddr(ifam->ifam_index,
-			    (struct sockaddr_in *)rti_info[RTAX_IFA],
-			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
-			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
+			if_newaddr(ifam->ifam_index, rti_info[RTAX_IFA],
+			    rti_info[RTAX_NETMASK], rti_info[RTAX_BRD]);
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);

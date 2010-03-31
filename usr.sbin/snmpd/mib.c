@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.34 2010/01/11 11:15:03 deraadt Exp $	*/
+/*	$OpenBSD: mib.c,v 1.35 2010/03/31 09:20:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1674,10 +1674,14 @@ mib_iproutingdiscards(struct oid *oid, struct ber_oid *o,
 struct ber_oid *
 mib_ipaddrtable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 {
+	struct sockaddr_in	 addr;
 	u_int32_t		 col, id;
 	struct oid		 a, b;
-	struct in_addr		 addr;
 	struct kif_addr		*ka;
+
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_len = sizeof(addr);
 
 	bcopy(&oid->o_id, no, sizeof(*no));
 	id = oid->o_oidlen - 1;
@@ -1700,13 +1704,16 @@ mib_ipaddrtable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 		}
 	}
 
-	mps_decodeinaddr(no, &addr, OIDIDX_ipAddr + 1);
-	if (addr.s_addr == INADDR_ANY)
+	mps_decodeinaddr(no, &addr.sin_addr, OIDIDX_ipAddr + 1);
+	if (addr.sin_addr.s_addr == INADDR_ANY)
 		ka = kr_getaddr(NULL);
 	else
-		ka = kr_getnextaddr(&addr);
-	addr.s_addr = ka == NULL ? 0 : ka->addr.s_addr;
-	mps_encodeinaddr(no, &addr, OIDIDX_ipAddr + 1);
+		ka = kr_getnextaddr((struct sockaddr *)&addr);
+	if (ka == NULL || ka->addr.sa.sa_family != AF_INET)
+		addr.sin_addr.s_addr = 0;
+	else
+		addr.sin_addr.s_addr = ka->addr.sin.sin_addr.s_addr;
+	mps_encodeinaddr(no, &addr.sin_addr, OIDIDX_ipAddr + 1);
 	smi_oidlen(o);
 
 	return (no);
@@ -1715,14 +1722,18 @@ mib_ipaddrtable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 int
 mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
+	struct sockaddr_in	 addr;
 	struct ber_element	*ber = *elm;
 	struct kif_addr		*ka;
-	struct in_addr		 addr;
 	u_int32_t		 val;
 
-	mps_decodeinaddr(o, &addr, OIDIDX_ipAddr + 1);
-	ka = kr_getaddr(&addr);
-	if (ka == NULL)
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_len = sizeof(addr);
+
+	mps_decodeinaddr(o, &addr.sin_addr, OIDIDX_ipAddr + 1);
+	ka = kr_getaddr((struct sockaddr *)&addr);
+	if (ka == NULL || ka->addr.sa.sa_family != AF_INET)
 		return (1);
 
 	/* write OID */
@@ -1730,7 +1741,7 @@ mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	switch (o->bo_id[OIDIDX_ipAddr]) {
 	case 1:
-		val = addr.s_addr;
+		val = addr.sin_addr.s_addr;
 		ber = ber_add_nstring(ber, (char *)&val, sizeof(u_int32_t));
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_IPADDR);
 		break;
@@ -1738,12 +1749,12 @@ mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber = ber_add_integer(ber, ka->if_index);
 		break;
 	case 3:
-		val = ka->mask.s_addr;
+		val = ka->mask.sin.sin_addr.s_addr;
 		ber = ber_add_nstring(ber, (char *)&val, sizeof(u_int32_t));
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_IPADDR);
 		break;
 	case 4:
-		ber = ber_add_integer(ber, ka->dstbrd.s_addr ? 1 : 0);
+		ber = ber_add_integer(ber, ka->dstbrd.sa.sa_len ? 1 : 0);
 		break;
 	case 5:
 		ber = ber_add_integer(ber, IP_MAXPACKET);
