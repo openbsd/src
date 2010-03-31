@@ -174,7 +174,9 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_GEM_SW_FINISH	0x20
 #define DRM_I915_GEM_SET_TILING	0x21
 #define DRM_I915_GEM_GET_TILING	0x22
-#define DRM_I915_GEM_GET_APERTURE 0x23
+#define DRM_I915_GEM_GET_APERTURE	0x23
+#define DRM_I915_GEM_EXECBUFFER2	0x24
+#define DRM_I915_GEM_MADVISE	0x25
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
@@ -195,6 +197,7 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_HWS_ADDR		DRM_IOW(DRM_COMMAND_BASE + DRM_I915_HWS_ADDR, drm_i915_hws_addr_t)
 #define DRM_IOCTL_I915_GEM_INIT		DRM_IOW(DRM_COMMAND_BASE + DRM_I915_GEM_INIT, struct drm_i915_gem_init)
 #define DRM_IOCTL_I915_GEM_EXECBUFFER	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_GEM_EXECBUFFER, struct drm_i915_gem_execbuffer)
+#define DRM_IOCTL_I915_GEM_EXECBUFFER2	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_GEM_EXECBUFFER2, struct drm_i915_gem_execbuffer2)
 #define DRM_IOCTL_I915_GEM_PIN		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_PIN, struct drm_i915_gem_pin)
 #define DRM_IOCTL_I915_GEM_UNPIN	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_GEM_UNPIN, struct drm_i915_gem_unpin)
 #define DRM_IOCTL_I915_GEM_BUSY		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_BUSY, struct drm_i915_gem_busy)
@@ -210,6 +213,7 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_GEM_SET_TILING	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_SET_TILING, struct drm_i915_gem_set_tiling)
 #define DRM_IOCTL_I915_GEM_GET_TILING	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_GET_TILING, struct drm_i915_gem_get_tiling)
 #define DRM_IOCTL_I915_GEM_GET_APERTURE	DRM_IOR  (DRM_COMMAND_BASE + DRM_I915_GEM_GET_APERTURE, struct drm_i915_gem_get_aperture)
+#define DRM_IOCTL_I915_GEM_MADVISE	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_MADVISE, struct drm_i915_gem_madvise)
 
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
@@ -253,6 +257,7 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_CHIPSET_ID            4
 #define I915_PARAM_HAS_GEM           	 5
 #define I915_PARAM_NUM_FENCES_AVAIL      6
+#define I915_PARAM_HAS_EXECBUF2          9
 
 typedef struct drm_i915_getparam {
 	int param;
@@ -486,54 +491,50 @@ struct drm_i915_gem_relocation_entry {
 #define I915_GEM_DOMAIN_GTT		0x00000040
 /** @} */
 
-struct drm_i915_gem_exec_object {
+struct drm_i915_gem_exec_object2 {
 	/**
 	 * User's handle for a buffer to be bound into the GTT for this
 	 * operation.
 	 */
-	uint32_t handle;
+	u_int32_t handle;
 
 	/** Number of relocations to be performed on this buffer */
-	uint32_t relocation_count;
+	u_int32_t relocation_count;
 	/**
 	 * Pointer to array of struct drm_i915_gem_relocation_entry containing
 	 * the relocations to be performed in this buffer.
 	 */
-	uint64_t relocs_ptr;
+	u_int64_t relocs_ptr;
 
 	/** Required alignment in graphics aperture */
-	uint64_t alignment;
+	u_int64_t alignment;
 
 	/**
 	 * Returned value of the updated offset of the object, for future
 	 * presumed_offset writes.
 	 */
-	uint64_t offset;
+	u_int64_t offset;
+
+#define EXEC_OBJECT_NEEDS_FENCE (1<<0)
+	u_int64_t flags;
+	u_int64_t rsvd1;
+	u_int64_t rsvd2;
 };
 
-struct drm_i915_gem_execbuffer {
+struct drm_i915_gem_execbuffer2 {
 	/**
-	 * List of buffers to be validated with their relocations to be
-	 * performend on them.
-	 *
-	 * This is a pointer to an array of struct drm_i915_gem_validate_entry.
-	 *
-	 * These buffers must be listed in an order such that all relocations
-	 * a buffer is performing refer to buffers that have already appeared
-	 * in the validate list.
+	 * List of gem_exec_object2 structs
 	 */
-	uint64_t buffers_ptr;
-	uint32_t buffer_count;
+	u_int64_t buffers_ptr;
+	u_int32_t buffer_count;
 
 	/** Offset in the batchbuffer to start execution from. */
-	uint32_t batch_start_offset;
+	u_int32_t batch_start_offset;
 	/** Bytes used in batchbuffer from batch_start_offset */
-	uint32_t batch_len;
-	uint32_t DR1;
-	uint32_t DR4;
-	uint32_t num_cliprects;
-	/** This is a struct drm_clip_rect *cliprects */
-	uint64_t cliprects_ptr;
+	u_int32_t batch_len;
+	u_int64_t flags; /* currently unused */
+	u_int64_t rsvd1;
+	u_int64_t rsvd2;
 };
 
 struct drm_i915_gem_pin {
@@ -573,6 +574,9 @@ struct drm_i915_gem_busy {
 #define I915_BIT_6_SWIZZLE_9_10_11	4
 /* Not seen by userland */
 #define I915_BIT_6_SWIZZLE_UNKNOWN	5
+/* Seen by userland. */
+#define I915_BIT_6_SWIZZLE_9_17		6
+#define I915_BIT_6_SWIZZLE_9_10_17	7
 
 struct drm_i915_gem_set_tiling {
 	/** Handle of the buffer to have its tiling state updated */
@@ -631,6 +635,23 @@ struct drm_i915_gem_get_aperture {
 	 * bytes
 	 */
 	uint64_t aper_available_size;
+};
+
+#define I915_MADV_WILLNEED 0
+#define I915_MADV_DONTNEED 1
+#define __I915_MADV_PURGED 2 /* internal state */
+
+struct drm_i915_gem_madvise {
+	/** Handle of the buffer to change the backing store advice */
+	u_int32_t handle;
+
+	/* Advice: either the buffer will be needed again in the near future,
+	 *         or wont be and could be discarded under memory pressure.
+	 */
+	u_int32_t madv;
+
+	/** Whether the backing store still exists. */
+	u_int32_t retained;
 };
 
 #endif				/* _I915_DRM_H_ */
