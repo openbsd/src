@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.32 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.33 2010/03/31 17:51:21 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -226,12 +226,16 @@ setthetime(char *p)
 			if (adjtime(&tv, NULL) == -1)
 				errx(1, "adjtime");
 		} else {
+#ifndef SMALL
 			logwtmp("|", "date", "");
+#endif
 			tv.tv_sec = tval;
 			tv.tv_usec = 0;
 			if (settimeofday(&tv, NULL))
 				err(1, "settimeofday");
+#ifndef SMALL
 			logwtmp("{", "date", "");
+#endif
 		}
 	}
 
@@ -239,6 +243,14 @@ setthetime(char *p)
 		p = "???";
 	syslog(LOG_AUTH | LOG_NOTICE, "date set by %s", p);
 }
+
+#ifdef SMALL
+int
+netsettime(tval)
+{
+	return (2);
+}
+#endif
 
 static void
 badformat(void)
