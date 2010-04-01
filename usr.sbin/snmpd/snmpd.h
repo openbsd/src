@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.27 2010/03/31 09:20:23 claudio Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.28 2010/04/01 14:42:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -145,9 +145,11 @@ struct kif {
 	u_short			 if_index;
 };
 
-#define	F_CONNECTED		0x0008
-#define	F_STATIC		0x0020
-#define	F_DYNAMIC		0x0040
+#define F_CONNECTED		0x0001
+#define F_STATIC		0x0002
+#define F_BLACKHOLE		0x0004
+#define F_REJECT		0x0008
+#define F_DYNAMIC		0x0010
 
 /*
  * Message Processing Subsystem (mps)

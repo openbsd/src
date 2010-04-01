@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.11 2010/04/01 13:44:42 claudio Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.12 2010/04/01 14:42:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1066,10 +1066,9 @@ rtmsg_process(char *buf, int len)
 int
 dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 {
-	struct sockaddr_storage	 ss;
-	struct sockaddr		*sa;
-	struct sockaddr_in	*sa_in, *p_in = (struct sockaddr_in *)&ss;
-	struct sockaddr_in6	*sa_in6, *p_in6 = (struct sockaddr_in6 *)&ss;
+	struct sockaddr		*sa, *psa;
+	struct sockaddr_in	*sa_in, *psa_in = NULL;
+	struct sockaddr_in6	*sa_in6, *psa_in6 = NULL;
 	struct kroute_node	*kr;
 	struct kroute6_node	*kr6;
 	int			 flags, mpath = 0;
@@ -1080,13 +1079,16 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 	flags = 0;
 	ifindex = 0;
 	prefixlen = 0;
-	bzero(&ss, sizeof(ss));
 
-	if ((sa = rti_info[RTAX_DST]) == NULL)
+	if ((psa = rti_info[RTAX_DST]) == NULL)
 		return (-1);
 
 	if (rtm->rtm_flags & RTF_STATIC)
 		flags |= F_STATIC;
+	if (rtm->rtm_flags & RTF_BLACKHOLE)
+		flags |= F_BLACKHOLE;
+	if (rtm->rtm_flags & RTF_REJECT)
+		flags |= F_REJECT;
 	if (rtm->rtm_flags & RTF_DYNAMIC)
 		flags |= F_DYNAMIC;
 #ifdef RTF_MPATH
@@ -1095,12 +1097,9 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 #endif
 
 	prio = rtm->rtm_priority;
-	switch (sa->sa_family) {
+	switch (psa->sa_family) {
 	case AF_INET:
-		p_in->sin_family = AF_INET;
-		p_in->sin_len = sizeof(struct sockaddr_in);
-		p_in->sin_addr.s_addr =
-		    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+		psa_in = (struct sockaddr_in *)psa;
 		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
 		if (sa_in != NULL) {
 			if (sa_in->sin_len != 0)
@@ -1110,14 +1109,10 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 			prefixlen = 32;
 		else
 			prefixlen =
-			    prefixlen_classful(p_in->sin_addr.s_addr);
+			    prefixlen_classful(psa_in->sin_addr.s_addr);
 		break;
 	case AF_INET6:
-		p_in6->sin6_family = AF_INET6;
-		p_in6->sin6_len = sizeof(struct sockaddr_in6);
-		memcpy(&p_in6->sin6_addr,
-		    &((struct sockaddr_in6 *)sa)->sin6_addr,
-		    sizeof(struct in6_addr));
+		psa_in6 = (struct sockaddr_in6 *)psa;
 		sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 		if (sa_in6 != NULL) {
 			if (sa_in6->sin6_len != 0)
@@ -1142,10 +1137,10 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 		}
 
 	if (rtm->rtm_type == RTM_DELETE) {
-		switch (ss.ss_family) {
+		switch (psa->sa_family) {
 		case AF_INET:
 			sa_in = (struct sockaddr_in *)sa;
-			if ((kr = kroute_find(p_in->sin_addr.s_addr,
+			if ((kr = kroute_find(psa_in->sin_addr.s_addr,
 			    prefixlen, prio)) == NULL)
 				return (0);
 
@@ -1162,7 +1157,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 			break;
 		case AF_INET6:
 			sa_in6 = (struct sockaddr_in6 *)sa;
-			if ((kr6 = kroute6_find(&p_in6->sin6_addr, prefixlen,
+			if ((kr6 = kroute6_find(&psa_in6->sin6_addr, prefixlen,
 			    prio)) == NULL)
 				return (0);
 
@@ -1185,10 +1180,10 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 	if (sa == NULL && !(flags & F_CONNECTED))
 		return (0);
 
-	switch (ss.ss_family) {
+	switch (psa->sa_family) {
 	case AF_INET:
 		sa_in = (struct sockaddr_in *)sa;
-		if ((kr = kroute_find(p_in->sin_addr.s_addr, prefixlen,
+		if ((kr = kroute_find(psa_in->sin_addr.s_addr, prefixlen,
 		    prio)) != NULL) {
 			/* get the correct route */
 			if (mpath && rtm->rtm_type == RTM_CHANGE &&
@@ -1214,7 +1209,7 @@ add4:
 				log_warn("dispatch_rtmsg");
 				return (-1);
 			}
-			kr->r.prefix.s_addr = p_in->sin_addr.s_addr;
+			kr->r.prefix.s_addr = psa_in->sin_addr.s_addr;
 			kr->r.prefixlen = prefixlen;
 			if (sa_in != NULL)
 				kr->r.nexthop.s_addr = sa_in->sin_addr.s_addr;
@@ -1230,7 +1225,7 @@ add4:
 		break;
 	case AF_INET6:
 		sa_in6 = (struct sockaddr_in6 *)sa;
-		if ((kr6 = kroute6_find(&p_in6->sin6_addr, prefixlen,
+		if ((kr6 = kroute6_find(&psa_in6->sin6_addr, prefixlen,
 		    prio)) != NULL) {
 			/* get the correct route */
 			if (mpath && rtm->rtm_type == RTM_CHANGE &&
@@ -1261,7 +1256,7 @@ add6:
 				log_warn("dispatch_rtmsg");
 				return (-1);
 			}
-			memcpy(&kr6->r.prefix, &p_in6->sin6_addr,
+			memcpy(&kr6->r.prefix, &psa_in6->sin6_addr,
 			    sizeof(struct in6_addr));
 			kr6->r.prefixlen = prefixlen;
 			if (sa_in6 != NULL)
