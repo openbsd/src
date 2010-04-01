@@ -48,11 +48,7 @@
  *
  * assumes that spaces do not clash, otherwise we lose
  */
-	.import	curproc, data
-	.import cpu_info_primary, data
 	.import	copy_on_fault, code
-
-#define curproc	(cpu_info_primary + CI_CURPROC)
 
 LEAF_ENTRY(spcopy)
 	ldw	HPPA_FRAME_ARG(4)(sp), ret0
@@ -63,8 +59,8 @@ LEAF_ENTRY(spcopy)
 	ldo	64(sp), sp
 	stw	rp, HPPA_FRAME_CRP(sp)
 	/* setup fault handler */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), t3
+	mfctl	cr29, t1
+	ldw	CI_CURPROC(t1), t3
 	ldil	L%copy_on_fault, t2
 	ldw	P_ADDR(t3), r2
 	ldo	R%copy_on_fault(t2), t2

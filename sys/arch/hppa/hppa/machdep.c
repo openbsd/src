@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.179 2009/12/31 12:52:35 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.180 2010/04/01 12:30:38 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -116,7 +116,7 @@ int dcache_stride, dcache_line_mask;
  */
 volatile u_int8_t *machine_ledaddr;
 int machine_ledword, machine_leds;
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info[HPPA_MAXCPUS];
 
 /*
  * CPU params (should be the same for all cpus in the system)

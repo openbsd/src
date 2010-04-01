@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.64 2010/03/28 16:26:47 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.65 2010/04/01 12:30:38 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -64,10 +64,15 @@
 
 #ifndef _LOCORE
 #ifdef _KERNEL
+#include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/sched.h>
 
 struct cpu_info {
+	struct device	*ci_dev;
+	int		ci_cpuid;
+	hppa_hpa_t	ci_hpa;
+
 	struct proc	*ci_curproc;
 
 	volatile int	ci_cpl;
@@ -78,17 +83,34 @@ struct cpu_info {
 	u_int32_t	ci_randseed;
 };
 
-extern struct cpu_info cpu_info_primary;
+#ifdef MULTIPROCESSOR
+#define        HPPA_MAXCPUS            1
+#else
+#define        HPPA_MAXCPUS            4
+#endif
 
-#define curcpu()	(&cpu_info_primary)
+extern struct cpu_info cpu_info[HPPA_MAXCPUS];
 
-#define CPU_IS_PRIMARY(ci)	1
-#define CPU_INFO_ITERATOR	int
-#define CPU_INFO_FOREACH(cii, ci)	\
-	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
-#define CPU_INFO_UNIT(ci)	0
-#define MAXCPUS	1
-#define cpu_number()	0
+#define MAXCPUS		HPPA_MAXCPUS
+
+static __inline struct cpu_info *
+curcpu(void)
+{
+	struct cpu_info *ci;
+
+	asm volatile ("mfctl    %%cr29, %0" : "=r"(ci));
+
+	return ci;
+}
+
+#define cpu_number()		(curcpu()->ci_cpuid)
+
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define	CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci) \
+	for (cii = 0, ci = &cpu_info[0]; cii < ncpus; cii++, ci++)
+
 #define cpu_unidle(ci)
 
 /* types */
