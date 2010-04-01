@@ -1,4 +1,4 @@
-.\" $OpenBSD: a64l.3,v 1.10 2007/05/31 19:19:31 jmc Exp $
+.\" $OpenBSD: a64l.3,v 1.11 2010/04/01 17:06:55 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 1 2010 $
 .Dt A64L 3
 .Os
 .Sh NAME
@@ -108,7 +108,14 @@ returns a null pointer and sets the global variable
 .Va errno
 to
 .Er EINVAL .
-.Sh WARNINGS
+.Sh STANDARDS
+The
+.Fn a64l
+and
+.Fn l64a
+functions conform to
+.St -xpg4.2 .
+.Sh CAVEATS
 The value returned by
 .Fn l64a
 is a pointer into a static buffer, the contents of which
@@ -124,10 +131,3 @@ should be used to call
 .Pp
 If a long integer is larger than 32 bits, only the low-order
 32 bits are used.
-.Sh STANDARDS
-The
-.Fn a64l
-and
-.Fn l64a
-functions conform to
-.St -xpg4.2 .

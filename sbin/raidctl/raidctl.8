@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.41 2008/06/26 05:42:06 ray Exp $
+.\"	$OpenBSD: raidctl.8,v 1.42 2010/04/01 17:06:55 jmc Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: April 1 2010 $
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -1334,26 +1334,6 @@ where it will automatically be started by the
 .Pa /etc/rc
 scripts.
 .El
-.Sh WARNINGS
-Certain RAID levels (1, 4, 5, 6, and others) can protect against some
-data loss due to component failure.
-However the loss of two components of a RAID 4 or 5 system, or the loss
-of a single component of a RAID 0 system will result in the entire
-filesystem being lost.
-RAID is
-.Em NOT
-a substitute for good backup practices.
-.Pp
-Recomputation of parity
-.Em MUST
-be performed whenever there is a chance that it may have been
-compromised.
-This includes after system crashes, or before a RAID
-device has been used for the first time.
-Failure to keep parity correct will be catastrophic should a component
-ever fail -- it is better to use RAID 0 and get the additional space
-and speed, than it is to use parity, but not keep the parity correct.
-At least with RAID 0 there is no perception of increased data security.
 .Sh FILES
 .Bl -tag -width "/etc/raid[0-3].conf" -compact
 .It Pa /dev/{,r}raid*
@@ -1387,5 +1367,25 @@ is a complete re-write, and first appeared in
 .Nx 1.4
 from where it was ported to
 .Ox 2.5 .
+.Sh CAVEATS
+Certain RAID levels (1, 4, 5, 6, and others) can protect against some
+data loss due to component failure.
+However the loss of two components of a RAID 4 or 5 system, or the loss
+of a single component of a RAID 0 system will result in the entire
+filesystem being lost.
+RAID is
+.Em NOT
+a substitute for good backup practices.
+.Pp
+Recomputation of parity
+.Em MUST
+be performed whenever there is a chance that it may have been
+compromised.
+This includes after system crashes, or before a RAID
+device has been used for the first time.
+Failure to keep parity correct will be catastrophic should a component
+ever fail -- it is better to use RAID 0 and get the additional space
+and speed, than it is to use parity, but not keep the parity correct.
+At least with RAID 0 there is no perception of increased data security.
 .Sh BUGS
 Hot-spare removal is currently not available.

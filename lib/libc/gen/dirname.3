@@ -1,4 +1,4 @@
-.\" $OpenBSD: dirname.3,v 1.17 2007/05/31 19:19:28 jmc Exp $
+.\" $OpenBSD: dirname.3,v 1.18 2010/04/01 17:06:55 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 1 2010 $
 .Dt DIRNAME 3
 .Os
 .Sh NAME
@@ -63,17 +63,6 @@ The following error codes may be set in
 The path component to be returned was larger than
 .Dv MAXPATHLEN .
 .El
-.Sh WARNINGS
-.Fn dirname
-returns a pointer to internal static storage space that will be overwritten
-by subsequent calls (each function has its own separate storage).
-.Pp
-Other vendor implementations of
-.Fn dirname
-may modify the contents of the string passed to
-.Fn dirname ;
-this should be taken into account when writing code which calls this function
-if portability is desired.
 .Sh SEE ALSO
 .Xr basename 1 ,
 .Xr dirname 1 ,
@@ -90,3 +79,14 @@ function first appeared in
 .Ox 2.2 .
 .Sh AUTHORS
 .An Todd C. Miller
+.Sh CAVEATS
+.Fn dirname
+returns a pointer to internal static storage space that will be overwritten
+by subsequent calls (each function has its own separate storage).
+.Pp
+Other vendor implementations of
+.Fn dirname
+may modify the contents of the string passed to
+.Fn dirname ;
+this should be taken into account when writing code which calls this function
+if portability is desired.

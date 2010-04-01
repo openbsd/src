@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.equiv.5,v 1.11 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: hosts.equiv.5,v 1.12 2010/04/01 17:06:55 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Todd Vierling
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 1 2010 $
 .Dt HOSTS.EQUIV 5
 .Os
 .Sh NAME
@@ -87,6 +87,13 @@ local machine.
 If a
 .Ar username
 is not specified, any user may log in with the same user name.
+.Sh FILES
+.Bl -tag -width /etc/hosts.equiv -compact
+.It Pa /etc/hosts.equiv
+global trusted host-user pairs list
+.It Pa ~/.rhosts
+per-user trusted host-user pairs list
+.El
 .Sh EXAMPLES
 .Bl -ohang -compact
 .It Li somehost
@@ -120,7 +127,18 @@ case, allows any user on any machine to log in to the local host (as any
 user, if in
 .Pa /etc/hosts.equiv ) .
 .El
-.Sh WARNINGS
+.Sh SEE ALSO
+.Xr rcp 1 ,
+.Xr rsh 1 ,
+.Xr rcmd 3 ,
+.Xr ruserok 3 ,
+.Xr netgroup 5
+.Sh HISTORY
+The
+.Nm .rhosts
+file format appeared in
+.Bx 4.2 .
+.Sh CAVEATS
 The user name checks provided by this mechanism are
 .Em not
 secure, as the remote user name is received by the server unchecked
@@ -157,24 +175,6 @@ Access permitted through root's
 .Pa .rhosts
 file is typically only for
 .Xr rsh 1 .
-.Sh FILES
-.Bl -tag -width /etc/hosts.equiv -compact
-.It Pa /etc/hosts.equiv
-global trusted host-user pairs list
-.It Pa ~/.rhosts
-per-user trusted host-user pairs list
-.El
-.Sh SEE ALSO
-.Xr rcp 1 ,
-.Xr rsh 1 ,
-.Xr rcmd 3 ,
-.Xr ruserok 3 ,
-.Xr netgroup 5
-.Sh HISTORY
-The
-.Nm .rhosts
-file format appeared in
-.Bx 4.2 .
 .Sh BUGS
 The
 .Xr ruserok 3
