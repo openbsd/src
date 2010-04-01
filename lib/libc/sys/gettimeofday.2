@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettimeofday.2,v 1.16 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: gettimeofday.2,v 1.17 2010/04/01 06:34:41 deraadt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)gettimeofday.2	8.2 (Berkeley) 5/26/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 1 2010 $
 .Dt GETTIMEOFDAY 2
 .Os
 .Sh NAME
@@ -124,6 +124,22 @@ A user other than the superuser attempted to set the time.
 .Xr getitimer 2 ,
 .Xr ctime 3 ,
 .Xr timed 8
+.Sh WARNINGS
+Setting the time with
+.Fn settimeofday
+is dangerous; if possible use
+.Xr adjtime 2
+instead.
+Many daemon programming techniques utilize time-delta techniques
+using the results from
+.Xr gettimeofday 2
+instead of from
+.Xr clock_gettime 2
+on the
+.Dv CLOCK_MONOTONIC
+clock.
+Time jumps can can cause these programs to malfunction in unexpected ways.
+If the time must be set, consider rebooting the machine for safety.
 .Sh HISTORY
 The
 .Fn gettimeofday
