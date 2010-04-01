@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.22 2010/04/01 19:02:25 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.23 2010/04/01 23:19:39 jsg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -74,7 +74,13 @@ static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
 };
 
 static const struct mfi_pci_subtype mfi_gen2_subtypes[] = {
-	{ 0x1f171028,	"Dell PERC H700" },
+	{ 0x1f151028,	"Dell PERC H800 Adapter" },
+	{ 0x1f161028,	"Dell PERC H700 Adapter" },
+	{ 0x1f171028,	"Dell PERC H700 Integrated" },
+	{ 0x1f181028,	"Dell PERC H700 Modular" },
+	{ 0x1f191028,	"Dell PERC H700" },
+	{ 0x1f1a1028,	"Dell PERC H800 Proto Adapter" },
+	{ 0x1f1b1028,	"Dell PERC H800" },
 	{ 0x0,		"" }
 };
 
