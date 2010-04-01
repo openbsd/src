@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.2 2009/06/06 05:02:58 eric Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.3 2010/04/01 18:24:04 zinovik Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -152,7 +152,7 @@ dns_dispatch_imsg(int fd, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("client_dispatch_parent: imsg_read_error");
+			fatal("client_dispatch_imsg: imsg_get error");
 		if (n == 0)
 			break;
 

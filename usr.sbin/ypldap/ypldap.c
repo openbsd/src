@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.8 2009/06/06 05:02:58 eric Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.9 2010/04/01 18:24:04 zinovik Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -145,7 +145,7 @@ main_dispatch_client(int fd, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("main_dispatch_client: imsg_read error");
+			fatal("main_dispatch_client: imsg_get error");
 		if (n == 0)
 			break;
 
