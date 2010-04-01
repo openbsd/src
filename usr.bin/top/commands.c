@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.29 2010/03/23 16:16:09 lum Exp $	 */
+/* $OpenBSD: commands.c,v 1.30 2010/04/01 05:05:19 lum Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -66,16 +66,23 @@ static int      err_compar(const void *, const void *);
 static char *
 next_field(char *str)
 {
-	if ((str = strchr(str, ' ')) == NULL)
+	char *spaces = " \t";
+	size_t span;
+
+	span = strcspn(str, spaces);
+	if (span == strlen(str)) 
 		return (NULL);
 
-	*str = '\0';
-	while (*++str == ' ')	/* loop */
-		;
+	str += span;
+	*str++  = '\0';
 
-	/* if there is nothing left of the string, return NULL */
-	/* This fix is dedicated to Greg Earle */
-	return (*str == '\0' ? NULL : str);
+	while (strcspn(str, spaces) == 0) 
+		str++;
+
+	if (*str == '\0')
+		return (NULL);
+
+	return(str);
 }
 
 /*
@@ -266,7 +273,9 @@ kill_procs(char *str)
 	int signum = SIGTERM, procnum;
 	uid_t uid, puid;
 	char tempbuf[TEMPBUFSIZE];
-	char *nptr;
+	char *nptr, *tmp;
+
+	tmp = tempbuf;
 
 	/* reset error array */
 	ERR_RESET;
@@ -278,19 +287,22 @@ kill_procs(char *str)
 	while (isspace(*str))
 		str++;
 
-	if (str[0] == '-') {
+	if (*str == '-') {
+		str++;
+
 		/* explicit signal specified */
 		if ((nptr = next_field(str)) == NULL)
 			return (" kill: no processes specified");
 
-		if (isdigit(str[1])) {
-			(void) scan_arg(str + 1, &signum, nptr);
+		if (isdigit(*str)) {
+			(void) scan_arg(str, &signum, tmp);
 			if (signum <= 0 || signum >= NSIG)
 				return (" invalid signal number");
 		} else {
 			/* translate the name into a number */
 			for (signum = 0; signum < NSIG; signum++) {
-				if (strcasecmp(sys_signame[signum], str + 1) == 0)
+				if (strcasecmp(sys_signame[signum], 
+				    str) == 0)
 					break;
 			}
 
