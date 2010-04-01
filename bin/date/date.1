@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.50 2010/03/31 17:51:21 deraadt Exp $
+.\"	$OpenBSD: date.1,v 1.51 2010/04/01 06:23:33 jmc Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)date.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: March 31 2010 $
+.Dd $Mdocdate: April 1 2010 $
 .Dt DATE 1
 .Os
 .Sh NAME
@@ -63,9 +63,9 @@ Otherwise, depending on the options specified,
 .Nm
 will set the date and time or print it in a user-defined way.
 .Pp
-Only the superuser may set the date.
-Changing the system date has some risks as described in
+Changing the system date has some risks, as described in
 .Xr settimeofday 2 .
+Only the superuser may change the date.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
