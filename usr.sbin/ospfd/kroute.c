@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.78 2010/02/23 10:59:31 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.79 2010/04/01 14:02:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1210,11 +1210,10 @@ retry:
 int
 fetchtable(void)
 {
-	char			*buf;
 	size_t			 len;
 	int			 mib[7];
-
-	int			 rv = 0;
+	char			*buf;
+	int			 rv;
 
 	mib[0] = CTL_NET;
 	mib[1] = AF_ROUTE;
@@ -1330,6 +1329,12 @@ rtmsg_process(char *buf, int len)
 		mpath = 0;
 		prio = 0;
 
+		if (rtm->rtm_errno)		/* failed attempts... */
+			continue;
+
+		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
+		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
 		case RTM_GET:
@@ -1341,9 +1346,6 @@ rtmsg_process(char *buf, int len)
 			mpath = 0;
 			prio = 0;
 
-			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
-
 			if (rtm->rtm_tableid != kr_state.rdomain)
 				continue;
 
@@ -1353,8 +1355,6 @@ rtmsg_process(char *buf, int len)
 			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 				continue;
 
-			if (rtm->rtm_errno)		/* failed attempts... */
-				continue;
 #ifdef RTF_MPATH
 			if (rtm->rtm_flags & RTF_MPATH)
 				mpath = 1;
@@ -1510,8 +1510,6 @@ add:
 			break;
 		case RTM_IFINFO:
 			memcpy(&ifm, next, sizeof(ifm));
-			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-			get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
 			if_change(ifm.ifm_index, ifm.ifm_flags, &ifm.ifm_data,
 			    (struct sockaddr_dl *)rti_info[RTAX_IFP]);
 			break;
@@ -1520,8 +1518,6 @@ add:
 			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
 			    RTA_BRD)) == 0)
 				break;
-			sa = (struct sockaddr *)(ifam + 1);
-			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
 			if_newaddr(ifam->ifam_index,
 			    (struct sockaddr_in *)rti_info[RTAX_IFA],
@@ -1533,8 +1529,6 @@ add:
 			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
 			    RTA_BRD)) == 0)
 				break;
-			sa = (struct sockaddr *)(ifam + 1);
-			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
 			if_deladdr(ifam->ifam_index,
 			    (struct sockaddr_in *)rti_info[RTAX_IFA],
