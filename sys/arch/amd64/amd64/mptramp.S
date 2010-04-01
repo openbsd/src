@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.5 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.6 2010/04/01 19:47:59 kettenis Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -208,9 +208,15 @@ _TRMP_LABEL(mptramp_longmode)
 
 	
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
-	shrl	$LAPIC_ID_SHIFT,%ecx
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
+	shrl	$LAPIC_ID_SHIFT,%eax
+	xorq	%rcx,%rcx
+1:
 	movq	_C_LABEL(cpu_info)(,%rcx,8),%rdi
+	incq	%rcx
+	movl	CPU_INFO_APICID(%rdi),%edx
+	cmpl	%eax,%edx
+	jne	1b
 
 	movq	CPU_INFO_IDLE_PCB(%rdi),%rsi
 

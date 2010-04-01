@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.26 2009/08/10 17:04:39 deraadt Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.27 2010/04/01 19:48:50 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -90,7 +90,7 @@ lapic_map(paddr_t lapic_base)
 	invlpg(va);
 
 #ifdef MULTIPROCESSOR
-	cpu_init_first();	/* catch up to changed cpu_number() */
+	cpu_init_first();
 #endif
 
 	lapic_tpr = s;

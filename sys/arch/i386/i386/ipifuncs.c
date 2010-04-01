@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.14 2009/11/29 17:11:30 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.15 2010/04/01 19:48:50 kettenis Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -148,7 +148,7 @@ i386_send_ipi(struct cpu_info *ci, int ipimask)
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return ENOENT;
 
-	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
+	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_apicid, LAPIC_DLMODE_FIXED);
 	if (ret != 0) {
 		printf("ipi of %x from %s to %s failed\n",
 		    ipimask, curcpu()->ci_dev.dv_xname, ci->ci_dev.dv_xname);
@@ -163,7 +163,7 @@ i386_fast_ipi(struct cpu_info *ci, int ipi)
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return (ENOENT);
 
-	return (i386_ipi(ipi, ci->ci_cpuid, LAPIC_DLMODE_FIXED));
+	return (i386_ipi(ipi, ci->ci_apicid, LAPIC_DLMODE_FIXED));
 }
 
 void

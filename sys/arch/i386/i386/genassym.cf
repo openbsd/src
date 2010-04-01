@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.29 2009/06/03 00:49:12 art Exp $
+#	$OpenBSD: genassym.cf,v 1.30 2010/04/01 19:48:50 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -191,6 +191,7 @@ define	IP_DST			offsetof(struct ip, ip_dst)
 define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define	CPU_INFO_APICID		offsetof(struct cpu_info, ci_apicid)
 define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_NAME		offsetof(struct cpu_info, ci_dev.dv_xname)

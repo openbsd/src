@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.4 2006/12/11 23:45:13 gwk Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.5 2010/04/01 19:48:50 kettenis Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -78,12 +78,17 @@ ENTRY(kvm86_call)
 	rep
 	movsl				/* copy frame to new stack */
 
-#ifdef MULTIPROCESSOR	
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
-	shrl	$LAPIC_ID_SHIFT,%ecx
-	leal	0(,%ecx,4),%ecx
-	movl	_C_LABEL(cpu_info)(%ecx),%edx
-	movl	%edx,%ecx
+#ifdef MULTIPROCESSOR
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
+	shrl	$LAPIC_ID_SHIFT,%eax
+	xorl	%ebx,%ebx
+1:
+	leal	0(,%ebx,4),%ecx
+	incl	%ebx
+	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+	movl	CPU_INFO_APICID(%ecx),%edx
+	cmpl	%eax,%edx
+	jne 1b
 #else
 	leal	_C_LABEL(cpu_info_primary),%ecx
 #endif
@@ -172,10 +177,16 @@ ENTRY(kvm86_ret)
 
 	
 #ifdef MULTIPROCESSOR
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
-	shrl	$LAPIC_ID_SHIFT,%ecx
-	leal	0(,%ecx,4),%ecx
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
+	shrl	$LAPIC_ID_SHIFT,%eax
+	xorl	%ebx,%ebx
+1:
+	leal	0(,%ebx,4),%ecx
+	incl	%ebx
 	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+	movl	CPU_INFO_APICID(%ecx),%edx
+	cmpl	%eax,%edx
+	jne 1b
 	movl	CPU_INFO_GDT(%ecx),%eax
 #else
 	leal	_C_LABEL(cpu_info_primary),%ecx
@@ -191,10 +202,16 @@ ENTRY(kvm86_ret)
 
 
 #ifdef MULTIPROCESSOR	
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
-	shrl	$LAPIC_ID_SHIFT,%ecx
-	leal	0(,%ecx,4),%ecx
+	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
+	shrl	$LAPIC_ID_SHIFT,%eax
+	xorl	%ebx,%ebx
+1:
+	leal	0(,%ebx,4),%ecx
+	incl	%ebx
 	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+	movl	CPU_INFO_APICID(%ecx),%edx
+	cmpl	%eax,%edx
+	jne 1b
 #else
 	leal	_C_LABEL(cpu_info_primary),%ecx
 #endif
