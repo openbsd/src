@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.228 2010/01/10 03:58:14 guenther Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.229 2010/04/02 21:16:24 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4733,12 +4733,18 @@ sec2str(time_t total)
 void
 setiflladdr(const char *addr, int param)
 {
-	struct ether_addr *eap;
+	struct ether_addr *eap, eabuf;
 
-	eap = ether_aton(addr);
-	if (eap == NULL) {
-		warnx("malformed link-level address");
-		return;
+	if (!strcmp(addr, "random")) {
+		arc4random_buf(&eabuf, sizeof eabuf);
+		eabuf.ether_addr_octet[0] &= 0xfe;	/* Not multicast! */
+		eap = &eabuf;
+	} else {
+		eap = ether_aton(addr);
+		if (eap == NULL) {
+			warnx("malformed link-level address");
+			return;
+		}
 	}
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_addr.sa_len = ETHER_ADDR_LEN;
