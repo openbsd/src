@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.110 2010/04/02 16:35:31 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.111 2010/04/02 18:04:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -118,9 +118,9 @@ struct pte_desc {
 	/* Linked list of phys -> virt entries */
 	LIST_ENTRY(pte_desc) pted_pv_list;
 	union {
-	struct pte_32 pted_pte32;
-	struct pte_64 pted_pte64;
-	}p;
+		struct pte_32 pted_pte32;
+		struct pte_64 pted_pte64;
+	} p;
 	pmap_t pted_pmap;
 	vaddr_t pted_va;
 };
