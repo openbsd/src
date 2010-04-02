@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.13 2010/03/29 22:56:52 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.14 2010/04/02 11:37:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -310,20 +310,14 @@ blk_dotted(MACRO_PROT_ARGS)
 	if ( ! rew_scope(MAN_BLOCK, m, ntok))
 		return(0);
 
-	/* 
-	 * XXX: manually adjust our next-line status.  roff macros are,
-	 * for the moment, ignored, so we don't want to close out bodies
-	 * and so on.
+	/*
+	 * Restore flags set when we got here and also stipulate that we
+	 * don't post-process the line when exiting the macro op
+	 * function in man_pmacro().  See blk_exp().
 	 */
 
-	switch (m->last->type) {
-	case (MAN_BODY):
-		m->next = MAN_NEXT_CHILD;
-		break;
-	default:
-		break;
-	}
-
+	m->flags = m->svflags | MAN_ILINE;
+	m->next = m->svnext;
 	return(1);
 }
 
@@ -381,6 +375,17 @@ blk_exp(MACRO_PROT_ARGS)
 			return(0);
 		if ( ! rew_scope(MAN_BLOCK, m, tok))
 			return(0);
+	} else {
+		/*
+		 * Save our state and next-scope indicator; we restore
+		 * it when exiting from the roff instruction block.  See
+		 * blk_dotted().
+		 */
+		m->svflags = m->flags;
+		m->svnext = m->next;
+		
+		/* Make sure we drop any line modes. */
+		m->flags = 0;
 	}
 
 	if ( ! man_block_alloc(m, line, ppos, tok))

@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.23 2010/03/29 22:56:52 schwarze Exp $ */
+/*	$Id: man.c,v 1.24 2010/04/02 11:37:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -474,14 +474,12 @@ macrowarn(struct man *m, int ln, const char *buf)
 int
 man_pmacro(struct man *m, int ln, char *buf)
 {
-	int		 i, j, ppos, fl;
+	int		 i, j, ppos;
 	enum mant	 tok;
 	char		 mac[5];
 	struct man_node	*n;
 
 	/* Comments and empties are quickly ignored. */
-
-	fl = m->flags;
 
 	if ('\0' == buf[1])
 		return(1);
@@ -550,6 +548,9 @@ man_pmacro(struct man *m, int ln, char *buf)
 	 * Remove prior ELINE macro, as it's being clobbering by a new
 	 * macro.  Note that NSCOPED macros do not close out ELINE
 	 * macros---they don't print text---so we let those slip by.
+	 * NOTE: we don't allow roff blocks (NOCLOSE) to be embedded
+	 * here because that would stipulate blocks as children of
+	 * elements!
 	 */
 
 	if ( ! (MAN_NSCOPED & man_macros[tok].flags) &&
@@ -581,10 +582,18 @@ man_pmacro(struct man *m, int ln, char *buf)
 		m->flags &= ~MAN_ELINE;
 	}
 
-	/* Begin recursive parse sequence. */
+	/*
+	 * Save the fact that we're in the next-line for a block.  In
+	 * this way, embedded roff instructions can "remember" state
+	 * when they exit.
+	 */
+
+	if (MAN_BLINE & m->flags)
+		m->flags |= MAN_BPLINE;
+
+	/* Call to handler... */
 
 	assert(man_macros[tok].fp);
-
 	if ( ! (*man_macros[tok].fp)(m, tok, ln, ppos, &i, buf))
 		goto err;
 
@@ -592,15 +601,13 @@ out:
 	/* 
 	 * We weren't in a block-line scope when entering the
 	 * above-parsed macro, so return.
-	 *
-	 * FIXME: this prohibits the nesting of blocks (e.g., `de' and
-	 * family) within BLINE or ELINE systems.  This is annoying.
 	 */
 
-	if ( ! (MAN_BLINE & fl)) {
+	if ( ! (MAN_BPLINE & m->flags)) {
 		m->flags &= ~MAN_ILINE; 
 		return(1);
 	}
+	m->flags &= ~MAN_BPLINE;
 
 	/*
 	 * If we're in a block scope, then allow this macro to slip by

@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.14 2010/03/29 22:56:52 schwarze Exp $ */
+/*	$Id: libman.h,v 1.15 2010/04/02 11:37:07 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,14 +27,17 @@ enum	man_next {
 struct	man {
 	void		*data;
 	struct man_cb	 cb;
-	int		 pflags;
-	int		 flags;
-#define	MAN_HALT	(1 << 0)
+	int		 pflags; /* parse flags (see man.h) */
+	int		 svflags; /* flags saved during roff blocks */
+	int		 flags; /* parse flags */
+#define	MAN_HALT	(1 << 0) /* badness happened: die */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
 #define	MAN_BLINE	(1 << 2) /* Next-line block scope. */
 #define	MAN_ILINE	(1 << 3) /* Ignored in next-line scope. */
 #define	MAN_LITERAL	(1 << 4) /* Literal input. */
+#define	MAN_BPLINE	(1 << 5)
 	enum man_next	 next;
+	enum man_next	 svnext;
 	struct man_node	*last;
 	struct man_node	*first;
 	struct man_meta	 meta;
