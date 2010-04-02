@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.9 2005/08/05 13:02:16 espie Exp $ */
+/*	$OpenBSD: yp_all.c,v 1.10 2010/04/02 17:35:03 schwarze Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -43,62 +43,53 @@ xdr_ypresp_all_seq(XDR *xdrs, u_long *objp)
 	u_long status;
 	char *key, *val;
 	int size;
-	int r;
+	int done = 0;  /* set to 1 when the user does not want more data */
+	bool_t rc = TRUE;  /* FALSE at the end of loop signals failure */
 
 	memset(&out, 0, sizeof out);
-	while (1) {
+	while (rc && !done) {
+		rc = FALSE;
 		if (!xdr_ypresp_all(xdrs, &out)) {
-			xdr_free(xdr_ypresp_all, (char *)&out);
 			*objp = (u_long)YP_YPERR;
-			return FALSE;
+			goto fail;
 		}
-		if (out.more == 0) {
-			xdr_free(xdr_ypresp_all, (char *)&out);
-			return FALSE;
-		}
+		if (out.more == 0)
+			goto fail;
 		status = out.ypresp_all_u.val.stat;
-		switch (status) {
-		case YP_TRUE:
+		if (status == YP_TRUE) {
 			size = out.ypresp_all_u.val.key.keydat_len;
-			if ((key = malloc(size + 1)) != NULL) {
-				(void)memcpy(key,
-				    out.ypresp_all_u.val.key.keydat_val,
-				    size);
-				key[size] = '\0';
+			if ((key = malloc(size + 1)) == NULL) {
+				*objp = (u_long)YP_YPERR;
+				goto fail;
 			}
+			(void)memcpy(key, out.ypresp_all_u.val.key.keydat_val,
+			    size);
+			key[size] = '\0';
+
 			size = out.ypresp_all_u.val.val.valdat_len;
-			if ((val = malloc(size + 1)) != NULL) {
-				(void)memcpy(val,
-				    out.ypresp_all_u.val.val.valdat_val,
-				    size);
-				val[size] = '\0';
-			} else {
+			if ((val = malloc(size + 1)) == NULL) {
 				free(key);
-				key = NULL;
+				*objp = (u_long)YP_YPERR;
+				goto fail;
 			}
-			xdr_free(xdr_ypresp_all, (char *)&out);
+			(void)memcpy(val, out.ypresp_all_u.val.val.valdat_val,
+			    size);
+			val[size] = '\0';
 
-			if (key == NULL || val == NULL)
-				return FALSE;
-
-			r = (*ypresp_allfn)(status, key,
+			done = (*ypresp_allfn)(status, key,
 			    out.ypresp_all_u.val.key.keydat_len, val,
 			    out.ypresp_all_u.val.val.valdat_len, ypresp_data);
-			*objp = status;
 			free(key);
 			free(val);
-			if (r)
-				return TRUE;
-			break;
-		case YP_NOMORE:
-			xdr_free(xdr_ypresp_all, (char *)&out);
-			return TRUE;
-		default:
-			xdr_free(xdr_ypresp_all, (char *)&out);
+		} else
+			done = 1;
+		if (status != YP_NOMORE)
 			*objp = status;
-			return TRUE;
-		}
+		rc = TRUE;
+fail:
+		xdr_free(xdr_ypresp_all, (char *)&out);
 	}
+	return rc;
 }
 
 int
