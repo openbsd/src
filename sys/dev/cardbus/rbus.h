@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.h,v 1.8 2010/01/13 09:10:33 jsg Exp $ */
+/*	$OpenBSD: rbus.h,v 1.9 2010/04/02 12:11:55 jsg Exp $ */
 /*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
 /*
  * Copyright (c) 1999
@@ -51,14 +51,10 @@
  *
  * Abstraction
  *
- *  rbus can model a bus-to-bus bridge in three ways: dedicated, shared
- *  and slave. 
+ *  rbus can model a bus-to-bus bridge in two ways: dedicated or shared
  *  Dedicated: the bridge has its own bus space.
  *  Shared: the bridge has bus space, but this bus space is
  *  shared with other bus bridges. 
- *  Slave: the bus bridge does not have its own bus space and has to ask
- *  a parent bus bridge for bus space once a client is requesting bus space
- *  to the bridge.
  */
 
 
@@ -71,15 +67,11 @@ struct extent;
 /*
  *     General rule
  *
- * 1) When a rbustag has no space for child (meaning: rb_extent is
- *    NULL), ask bus-space for parent through rb_parent.
- *
- * 2) When a rbustag has its own space (whether shared or dedicated),
+ * 1) When a rbustag has its own space (whether shared or dedicated),
  *    allocate from rb_ext.
  */
 struct rbustag {
 	bus_space_tag_t rb_bt;
-	struct rbustag *rb_parent;
 	struct extent *rb_ext;
 	bus_addr_t rb_start;
 	bus_addr_t rb_end;
@@ -96,7 +88,6 @@ struct rbustag {
 #define RBUS_SPACE_SHARE     0x01
 #define RBUS_SPACE_DEDICATE  0x02
 #define RBUS_SPACE_MASK      0x03
-#define RBUS_SPACE_ASK_PARENT 0x04
 	/* your own data below */
 	void *rb_md;
 };
@@ -124,26 +115,15 @@ int	rbus_space_free(rbus_tag_t, bus_space_handle_t, bus_size_t,
  * These functions create rbus instance.  These functions are
  * so-called-as a constructor of rbus.
  *
- * rbus_new is a constructor which make an rbus instance from a parent
- * rbus.
  */
 
-rbus_tag_t	rbus_new_body(bus_space_tag_t, rbus_tag_t, struct extent *,
+rbus_tag_t	rbus_new_body(bus_space_tag_t, struct extent *,
 		      bus_addr_t, bus_addr_t, bus_addr_t, int);
-
-rbus_tag_t	rbus_new(rbus_tag_t, bus_addr_t, bus_size_t, bus_addr_t, int);
 
 rbus_tag_t	rbus_new_root_delegate(bus_space_tag_t, bus_addr_t, bus_size_t,
 		    bus_addr_t);
 rbus_tag_t	rbus_new_root_share(bus_space_tag_t, struct extent *,
 		    bus_addr_t, bus_size_t, bus_addr_t);
-
-/*
- * This function release bus-space used by the argument.  This
- * function is so-called-as a destructor.
- */
-int	rbus_delete(rbus_tag_t);
-
 
 /*
  * Machine-dependent definitions.
