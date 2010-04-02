@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.109 2010/03/31 21:02:42 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.110 2010/04/02 16:35:31 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -619,7 +619,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		if (pg != NULL) {
 			need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
-			atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
+			if (prot & VM_PROT_WRITE)
+				atomic_clearbits_int(&pg->pg_flags,
+				    PG_PMAP_EXE);
+			else
+				atomic_setbits_int(&pg->pg_flags,
+				    PG_PMAP_EXE);
 		} else
 			need_sync = 1;
 	} else {
@@ -769,6 +774,7 @@ void
 _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 {
 	struct pte_desc *pted;
+	struct vm_page *pg;
 	int s;
 	pmap_t pm;
 
@@ -782,6 +788,11 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		pmap_kremove_pg(va); /* pted is reused */
 
 	pm->pm_stats.resident_count++;
+	if (prot & VM_PROT_WRITE) {
+		pg = PHYS_TO_VM_PAGE(pa);
+		if (pg != NULL)
+			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
+	}
 
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
