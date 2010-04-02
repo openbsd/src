@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bgplg.8,v 1.4 2007/05/31 19:20:07 jmc Exp $
+.\"	$OpenBSD: bgplg.8,v 1.5 2010/04/02 22:44:40 sthen Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 2 2010 $
 .Dt BGPLG 8
 .Os
 .Sh NAME
@@ -72,9 +72,11 @@ will be hidden from looking glass command list):
 .Ed
 .It
 The programs
-.Xr ping 8
-and
+.Xr ping 8 ,
+.Xr ping6 8 ,
 .Xr traceroute 8
+and
+.Xr traceroute6 8
 will require a copy of the resolver configuration file
 .Xr resolv.conf 5
 in the
@@ -139,7 +141,7 @@ To enable the corresponding functionality, use the
 utility to manually set the file permission mode to 0555 or anything
 appropriate.
 .Pp
-.Bl -tag -width "/var/www/bin/tracerouteXX" -compact
+.Bl -tag -width "/var/www/bin/traceroute6XX" -compact
 .It Pa /var/www/cgi-bin/bgplg
 The
 .Nm
@@ -154,10 +156,22 @@ The
 .Xr ping 8
 program used to send ICMP ECHO_REQUEST packets to network hosts.
 Requires the set-user-ID bit, set the permission mode to 4555.
+.It Pa /var/www/bin/ping6
+The
+.Xr ping6 8
+program used to send ICMPv6 ICMP6_ECHO_REQUEST packets to network hosts.
+Requires the set-user-ID bit, set the permission mode to 4555.
 .It Pa /var/www/bin/traceroute
 The
 .Xr traceroute 8
 program used to print the route packets take to network hosts.
+Requires the set-user-ID bit, set the permission mode to 4555.
+.It Pa /var/www/bin/traceroute6
+The
+.Xr traceroute6 8
+program used to print the route packets take to
+.Xr inet6 4
+network hosts.
 Requires the set-user-ID bit, set the permission mode to 4555.
 .El
 .Sh SEE ALSO
