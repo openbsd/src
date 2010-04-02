@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.32 2010/04/02 11:37:07 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.33 2010/04/02 11:39:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -940,6 +940,11 @@ blk_full(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
+/*
+ * XXX Temporarily disable the handling of leading punctuation.
+ *     We must investigate the fallout before enabling this.
+ */
+#if 0
 		/* Don't emit leading punct. for phrases. */
 
 		if (NULL == head && ARGS_PHRASE != c &&
@@ -948,6 +953,7 @@ blk_full(MACRO_PROT_ARGS)
 				return(0);
 			continue;
 		}
+#endif
 
 		/* Always re-open head for phrases. */
 
@@ -1060,11 +1066,17 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if (ARGS_PUNCT == c)
 			break;
 
+/*
+ * XXX Temporarily disable the handling of leading punctuation.
+ *     We must investigate the fallout before enabling this.
+ */
+#if 0
 		if (NULL == body && 1 == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
 		} 
+#endif
 
 		if (NULL == body) {
 		       if ( ! mdoc_body_alloc(m, line, ppos, tok))
@@ -1151,6 +1163,11 @@ blk_part_exp(MACRO_PROT_ARGS)
 
 		assert(ARGS_PHRASE != c);
 
+/*
+ * XXX Temporarily disable the handling of leading punctuation.
+ *     We must investigate the fallout before enabling this.
+ */
+#if 0
 		/* Flush out leading punctuation. */
 
 		if (NULL == head && 1 == mdoc_isdelim(p)) {
@@ -1159,6 +1176,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 				return(0);
 			continue;
 		} 
+#endif
 
 		if (NULL == head) {
 			assert(NULL == body);
@@ -1288,12 +1306,19 @@ in_line_argn(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
+/*
+ * XXX Temporarily disable the handling of leading punctuation.
+ *     We must investigate the fallout before enabling this.
+ */
+#if 0
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) && 
 				0 == j && 1 == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
-		} else if (0 == j)
+		} else
+#endif
+		if (0 == j)
 		       if ( ! mdoc_elem_alloc(m, line, la, tok, arg))
 			       return(0);
 
