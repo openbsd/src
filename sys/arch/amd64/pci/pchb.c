@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.32 2010/02/09 19:36:05 kettenis Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.33 2010/04/02 19:23:05 kettenis Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -222,7 +222,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			bir = pci_conf_read(pa->pa_pc,
 			    pa->pa_tag, PPB_REG_BUSINFO);
 			pbnum = PPB_BUSINFO_PRIMARY(bir);
-			doattach = 1;
+			if (pbnum > 0)
+				doattach = 1;
 
 			/* Switch back to host bridge mode. */
 			bcreg |= 0x00000004; /* XXX Magic */
