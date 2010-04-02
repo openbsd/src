@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.43 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.44 2010/04/02 20:20:23 nicm Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -876,7 +876,15 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			if ((*(unsigned int *)data == SIGINFO) &&
 			    ((tp->t_lflag&NOKERNINFO) == 0))
 				ttyinfo(tp);
-			return(0);
+			return (0);
+
+		case FIONREAD:
+			/*
+			 * FIONREAD on the master side must return the amount
+			 * in the output queue rather than the input.
+			 */
+			*(int *)data = tp->t_outq.c_cc;
+			return (0);
 		}
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error < 0)
