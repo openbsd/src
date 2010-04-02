@@ -342,6 +342,7 @@
 ./usr/bin/make
 ./usr/bin/makeinfo
 ./usr/bin/man
+./usr/bin/mandoc
 ./usr/bin/merge
 ./usr/bin/mesg
 ./usr/bin/mg
