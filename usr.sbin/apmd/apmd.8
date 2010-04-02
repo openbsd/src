@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.41 2009/10/22 15:02:12 sobrado Exp $
+.\"	$OpenBSD: apmd.8,v 1.42 2010/04/02 04:12:46 deraadt Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: April 2 2010 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -71,6 +71,7 @@ Start
 in automatic performance adjustment mode.
 In this mode, when CPU idle time falls below 10%,
 or if the AC power is connected and the battery is more than 15% charged,
+or if the battery is absent,
 .Nm
 raises
 .Va hw.setperf

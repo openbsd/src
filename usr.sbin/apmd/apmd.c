@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.55 2010/03/30 17:42:05 oga Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.56 2010/04/02 04:12:46 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -320,9 +320,11 @@ perf_status(struct apm_power_info *pinfo, int ncpu)
 	case PERF_AUTO:
 		/*
 		 * force setperf towards the max if we are connected to AC
-		 * power and have a battery life greater than 15%
+		 * power and have a battery life greater than 15%, or if
+		 * the battery is absent
 		 */
-		if (pinfo->ac_state == APM_AC_ON && pinfo->battery_life > 15)
+		if (pinfo->ac_state == APM_AC_ON && pinfo->battery_life > 15 ||
+		    pinfo->battery_state == APM_BATTERY_ABSENT)
 			forcehi = 1;		
 		break;
 	case PERF_COOL:
