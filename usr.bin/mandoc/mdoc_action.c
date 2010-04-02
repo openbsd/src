@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.27 2010/03/02 00:38:59 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.28 2010/04/02 12:39:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -644,7 +644,8 @@ static int
 post_bl_width(POST_ARGS)
 {
 	size_t		  width;
-	int		  i, tok;
+	int		  i;
+	enum mdoct	  tok;
 	char		  buf[NUMSIZ];
 	char		 *p;
 

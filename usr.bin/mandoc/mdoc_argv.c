@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.21 2010/03/02 00:38:59 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.22 2010/04/02 12:39:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -40,7 +40,7 @@
 
 #define	MULTI_STEP	 5
 
-static	int		 argv_a2arg(int, const char *);
+static	int		 argv_a2arg(enum mdoct, const char *);
 static	int		 args(struct mdoc *, int, int *, 
 				char *, int, char **);
 static	int		 argv(struct mdoc *, int, 
@@ -215,7 +215,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
  * one mandatory value, an optional single value, or no value.
  */
 int
-mdoc_argv(struct mdoc *m, int line, int tok,
+mdoc_argv(struct mdoc *m, int line, enum mdoct tok,
 		struct mdoc_arg **v, int *pos, char *buf)
 {
 	char		 *p, sv;
@@ -327,13 +327,13 @@ mdoc_zargs(struct mdoc *m, int line, int *pos,
 
 
 int
-mdoc_args(struct mdoc *m, int line, 
-		int *pos, char *buf, int tok, char **v)
+mdoc_args(struct mdoc *m, int line, int *pos, 
+		char *buf, enum mdoct tok, char **v)
 {
 	int		  fl, c, i;
 	struct mdoc_node *n;
 
-	fl = (0 == tok) ? 0 : mdoc_argflags[tok];
+	fl = mdoc_argflags[tok];
 
 	if (MDOC_It != tok)
 		return(args(m, line, pos, buf, fl, v));
@@ -549,7 +549,7 @@ args(struct mdoc *m, int line, int *pos,
 
 
 static int
-argv_a2arg(int tok, const char *p)
+argv_a2arg(enum mdoct tok, const char *p)
 {
 
 	/*

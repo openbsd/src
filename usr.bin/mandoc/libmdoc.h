@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.24 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.25 2010/04/02 12:39:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -96,8 +96,8 @@ enum	merr {
 	MERRMAX
 };
 
-#define	MACRO_PROT_ARGS	struct mdoc *m, int tok, int line, \
-			int ppos, int *pos, char *buf
+#define	MACRO_PROT_ARGS	struct mdoc *m, enum mdoct tok, \
+			int line, int ppos, int *pos, char *buf
 
 struct	mdoc_macro {
 	int		(*fp)(MACRO_PROT_ARGS);
@@ -131,16 +131,16 @@ int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *, 
 			int, int, const char *);
 int		  mdoc_elem_alloc(struct mdoc *, int, int, 
-			int, struct mdoc_arg *);
+			enum mdoct, struct mdoc_arg *);
 int		  mdoc_block_alloc(struct mdoc *, int, int, 
-			int, struct mdoc_arg *);
-int		  mdoc_head_alloc(struct mdoc *, int, int, int);
-int		  mdoc_tail_alloc(struct mdoc *, int, int, int);
-int		  mdoc_body_alloc(struct mdoc *, int, int, int);
+			enum mdoct, struct mdoc_arg *);
+int		  mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
+int		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
+int		  mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
 void		  mdoc_node_free(struct mdoc_node *);
 void		  mdoc_node_freelist(struct mdoc_node *);
 void		  mdoc_hash_init(void);
-int		  mdoc_hash_find(const char *);
+enum mdoct	  mdoc_hash_find(const char *);
 int		  mdoc_iscdelim(char);
 int		  mdoc_isdelim(const char *);
 size_t		  mdoc_isescape(const char *);
@@ -160,7 +160,7 @@ int		  mdoc_valid_post(struct mdoc *);
 int		  mdoc_action_pre(struct mdoc *, 
 			const struct mdoc_node *);
 int		  mdoc_action_post(struct mdoc *);
-int		  mdoc_argv(struct mdoc *, int, int,
+int		  mdoc_argv(struct mdoc *, int, enum mdoct,
 			struct mdoc_arg **, int *, char *);
 #define	ARGV_ERROR	(-1)
 #define	ARGV_EOLN	(0)
@@ -168,7 +168,7 @@ int		  mdoc_argv(struct mdoc *, int, int,
 #define	ARGV_WORD	(2)
 void		  mdoc_argv_free(struct mdoc_arg *);
 int		  mdoc_args(struct mdoc *, int,
-			int *, char *, int, char **);
+			int *, char *, enum mdoct, char **);
 int		  mdoc_zargs(struct mdoc *, int, 
 			int *, char *, int, char **);
 #define	ARGS_DELIM	(1 << 1)	/* See args(). */

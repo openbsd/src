@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.7 2010/03/02 00:38:59 schwarze Exp $ */
+/*	$Id: mdoc_hash.c,v 1.8 2010/04/02 12:39:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -57,7 +57,7 @@ mdoc_hash_init(void)
 	}
 }
 
-int
+enum mdoct
 mdoc_hash_find(const char *p)
 {
 	int		  major, i, j;
@@ -81,7 +81,7 @@ mdoc_hash_find(const char *p)
 		if (UCHAR_MAX == (i = table[major + j]))
 			break;
 		if (0 == strcmp(p, mdoc_macronames[i]))
-			return(i);
+			return((enum mdoct)i);
 	}
 
 	return(MDOC_MAX);

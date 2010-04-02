@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.23 2010/02/26 12:51:25 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.24 2010/04/02 12:39:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2010 $
+.Dd $Mdocdate: April 2 2010 $
 .Dt MDOC 7
 .Os
 .
@@ -1927,7 +1927,14 @@ and
 .Sx \&Va .
 .
 .Ss \&Xc
+Close a scope opened by
+.Sx \&Xo .
+.
 .Ss \&Xo
+Open an extension scope.  This macro originally existed to extend the
+9-argument limit of troff; since this limit has been lifted, the macro
+has been deprecated.
+.
 .Ss \&Xr
 Link to another manual
 .Pq Qq cross-reference .

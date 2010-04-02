@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.33 2010/04/02 11:39:00 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.34 2010/04/02 12:39:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -38,13 +38,13 @@ static	int	  blk_exp_close(MACRO_PROT_ARGS);
 static	int	  blk_part_imp(MACRO_PROT_ARGS);
 
 static	int	  phrase(struct mdoc *, int, int, char *);
-static	int	  rew_dohalt(int, enum mdoc_type, 
+static	int	  rew_dohalt(enum mdoct, enum mdoc_type, 
 			const struct mdoc_node *);
-static	int	  rew_alt(int);
-static	int	  rew_dobreak(int, const struct mdoc_node *);
-static	int	  rew_elem(struct mdoc *, int);
+static	enum mdoct rew_alt(enum mdoct);
+static	int	  rew_dobreak(enum mdoct, const struct mdoc_node *);
+static	int	  rew_elem(struct mdoc *, enum mdoct);
 static	int	  rew_sub(enum mdoc_type, struct mdoc *, 
-			int, int, int);
+			enum mdoct, int, int);
 static	int	  rew_last(struct mdoc *, 
 			const struct mdoc_node *);
 static	int	  append_delims(struct mdoc *, int, int *, char *);
@@ -315,8 +315,8 @@ rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
  * Return the opening macro of a closing one, e.g., `Ec' has `Eo' as its
  * matching pair.
  */
-static int
-rew_alt(int tok)
+static enum mdoct
+rew_alt(enum mdoct tok)
 {
 	switch (tok) {
 	case (MDOC_Ac):
@@ -366,7 +366,8 @@ rew_alt(int tok)
  * The scope-closing and so on occurs in the various rew_* routines.
  */
 static int 
-rew_dohalt(int tok, enum mdoc_type type, const struct mdoc_node *p)
+rew_dohalt(enum mdoct tok, enum mdoc_type type, 
+		const struct mdoc_node *p)
 {
 
 	if (MDOC_ROOT == p->type)
@@ -505,7 +506,7 @@ rew_dohalt(int tok, enum mdoc_type type, const struct mdoc_node *p)
  * REWIND_NOHALT). 
  */
 static int
-rew_dobreak(int tok, const struct mdoc_node *p)
+rew_dobreak(enum mdoct tok, const struct mdoc_node *p)
 {
 
 	assert(MDOC_ROOT != p->type);
@@ -534,7 +535,6 @@ rew_dobreak(int tok, const struct mdoc_node *p)
 			return(1);
 		break;
 	case (MDOC_Oc):
-		/* XXX - experimental! */
 		if (MDOC_Op == p->tok)
 			return(1);
 		break;
@@ -552,7 +552,7 @@ rew_dobreak(int tok, const struct mdoc_node *p)
 
 
 static int
-rew_elem(struct mdoc *mdoc, int tok)
+rew_elem(struct mdoc *mdoc, enum mdoct tok)
 {
 	struct mdoc_node *n;
 
@@ -568,7 +568,7 @@ rew_elem(struct mdoc *mdoc, int tok)
 
 static int
 rew_sub(enum mdoc_type t, struct mdoc *m, 
-		int tok, int line, int ppos)
+		enum mdoct tok, int line, int ppos)
 {
 	struct mdoc_node *n;
 	int		  c;
@@ -596,10 +596,11 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 		return(0);
 
 	/*
-	 * The current block extends an enclosing block beyond a line break.
-	 * Now that the current block ends, close the enclosing block, too.
+	 * The current block extends an enclosing block beyond a line
+	 * break.  Now that the current block ends, close the enclosing
+	 * block, too.
 	 */
-	if ((n = n->pending) != NULL) {
+	if (NULL != (n = n->pending)) {
 		assert(MDOC_HEAD == n->type);
 		if ( ! rew_last(m, n))
 			return(0);
@@ -872,6 +873,7 @@ blk_full(MACRO_PROT_ARGS)
 	int		  c, la;
 	struct mdoc_arg	 *arg;
 	struct mdoc_node *head; /* save of head macro */
+	struct mdoc_node *body; /* save of body macro */
 	struct mdoc_node *n;
 	char		 *p;
 
@@ -914,7 +916,7 @@ blk_full(MACRO_PROT_ARGS)
 	if ( ! mdoc_block_alloc(m, line, ppos, tok, arg))
 		return(0);
 
-	head = NULL;
+	head = body = NULL;
 
 	/*
 	 * The `Nd' macro has all arguments in its body: it's a hybrid
@@ -929,6 +931,7 @@ blk_full(MACRO_PROT_ARGS)
 			return(0);
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
+		body = m->last;
 	} 
 
 	for (;;) {
@@ -991,19 +994,22 @@ blk_full(MACRO_PROT_ARGS)
 	if (1 == ppos && ! append_delims(m, line, pos, buf))
 		return(0);
 
-	/* See notes on `Nd' hybrid, above. */
+	/* If we've already opened our body, exit now. */
 
-	if (MDOC_Nd == tok)
+	if (NULL != body)
 		return(1);
 
 	/*
-	 * If there is an open sub-block requiring explicit close-out,
-	 * postpone switching the current block from head to body
-	 * until the rew_sub() call closing out that sub-block.
+	 * If there is an open (i.e., unvalidated) sub-block requiring
+	 * explicit close-out, postpone switching the current block from
+	 * head to body until the rew_sub() call closing out that
+	 * sub-block.
 	 */
 	for (n = m->last; n && n != head; n = n->parent) {
-		if (MDOC_BLOCK == n->type &&
-		    MDOC_EXPLICIT & mdoc_macros[n->tok].flags) {
+		if (MDOC_BLOCK == n->type && 
+				MDOC_EXPLICIT & mdoc_macros[n->tok].flags &&
+				! (MDOC_VALID & n->flags)) {
+			assert( ! (MDOC_ACTED & n->flags));
 			n->pending = head;
 			return(1);
 		}
@@ -1106,9 +1112,8 @@ blk_part_imp(MACRO_PROT_ARGS)
 	 * If we can't rewind to our body, then our scope has already
 	 * been closed by another macro (like `Oc' closing `Op').  This
 	 * is ugly behaviour nodding its head to OpenBSD's overwhelming
-	 * crufty use of `Op' breakage.  XXX: DEPRECATE.
+	 * crufty use of `Op' breakage.
 	 */
-
 	for (n = m->last; n; n = n->parent)
 		if (body == n)
 			break;

@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.31 2010/04/02 11:37:07 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.32 2010/04/02 12:39:47 schwarze Exp $
 
 .include <bsd.own.mk>
 
-VERSION=1.9.20
+VERSION=1.9.22
 CFLAGS+=-DVERSION=\"${VERSION}\"
 CFLAGS+=-W -Wall -Wstrict-prototypes
 .if ${USE_GCC3:L} != "no"

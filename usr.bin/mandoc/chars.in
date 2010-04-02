@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.6 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: chars.in,v 1.7 2010/04/02 12:39:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -365,7 +365,7 @@ STRING("8",			1,	"B",		1,	"&#946;",	6)
 STRING("o",			1,	"o",		1,	"&#176;",	6)
 STRING("D-",			2,	"D",		1,	"&#208;",	6)
 STRING("d-",			2,	"o",		1,	"&#240;",	6)
-STRING("TH",			2,	"b",		1,	"&#222;",	6)
+STRING("Th",			2,	"b",		1,	"&#222;",	6)
 STRING("th",			2,	"b",		1,	"&#254;",	6)
 
 /* Old style. */
