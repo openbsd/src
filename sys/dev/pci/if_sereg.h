@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_sereg.h,v 1.2 2010/04/02 22:42:55 jsg Exp $	*/
+
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
  * Copyright (c) 2007, 2008 Alexander Pohoyda <alexander.pohoyda@gmx.net>
