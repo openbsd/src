@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.295 2010/03/23 13:31:29 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.296 2010/04/02 09:48:48 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -114,6 +114,7 @@ int		 src_node_killers;
 char		*src_node_kill[2];
 int		 state_killers;
 char		*state_kill[2];
+int		 loadaltq = 1;
 int		 altqsupport;
 
 int		 dev = -1;
@@ -1045,7 +1046,7 @@ pfctl_ruleset_trans(struct pfctl *pf, char *path, struct pf_anchor *a)
 {
 	int osize = pf->trans->pfrb_size;
 
-	if (a == pf->astack[0] && altqsupport) {
+	if (a == pf->astack[0] && (altqsupport && loadaltq)) {
 		if (pfctl_add_trans(pf->trans, PF_TRANS_ALTQ, path))
 			return (2);
 	}
@@ -1226,6 +1227,8 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.optimize = optimize;
+	if (anchorname[0])
+		loadaltq = 0;
 
 	/* non-brace anchor, create without resolving the path */
 	if ((pf.anchor = calloc(1, sizeof(*pf.anchor))) == NULL)
@@ -1255,7 +1258,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 		 */
 		if (pfctl_ruleset_trans(&pf, anchorname, pf.anchor))
 			ERRX("pfctl_rules");
-		if (altqsupport)
+		if (altqsupport && loadaltq)
 			pa.ticket =
 			    pfctl_get_ticket(t, PF_TRANS_ALTQ, anchorname);
 		pf.astack[0]->ruleset.tticket =
@@ -1279,7 +1282,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 
 	free(path);
 
-	if (altqsupport && check_commit_altq(dev, opts) != 0)
+	if (altqsupport && loadaltq && check_commit_altq(dev, opts) != 0)
 		ERRX("errors in altq config");
 
 	/* process "load anchor" directives */
