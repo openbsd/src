@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.12 2010/03/23 00:35:21 dlg Exp $ */
+/* $OpenBSD: if_vether.c,v 1.13 2010/04/02 04:26:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -140,7 +140,9 @@ int
 vetherioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct vether_softc	*sc = (struct vether_softc *)ifp->if_softc;
+#ifdef INET
 	struct ifaddr		*ifa = (struct ifaddr *)data;
+#endif
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			 error = 0, link_state;
 
