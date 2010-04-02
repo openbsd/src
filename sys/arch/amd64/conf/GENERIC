@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.288 2010/03/28 17:04:27 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.289 2010/04/02 20:07:29 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -436,6 +436,7 @@ vr*	at pci?				# VIA Rhine ethernet
 #wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 sis*	at pci?				# SiS 900/7016 ethernet
+se*	at pci?				# SiS 190/191 ethernet
 #ste*	at pci?				# Sundance ST201 ethernet BORKED
 pcn*	at pci?				# AMD PCnet-PCI Ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet

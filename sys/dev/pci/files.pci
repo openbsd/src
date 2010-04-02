@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.270 2010/02/23 18:43:15 jsg Exp $
+#	$OpenBSD: files.pci,v 1.271 2010/04/02 20:07:29 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -466,6 +466,11 @@ file	dev/pci/if_sf_pci.c		sf_pci
 device	sis: ether, ifnet, mii, ifmedia
 attach	sis at pci
 file	dev/pci/if_sis.c		sis
+
+# SiS 190/191 ethernet
+device	se: ether, ifnet, mii, ifmedia
+attach	se at pci
+file	dev/pci/if_se.c			se
 
 # Sundance ST201 ethernet
 device	ste: ether, ifnet, mii, ifmedia
