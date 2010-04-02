@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgsh.c,v 1.2 2006/12/12 11:43:50 reyk Exp $	*/
+/*	$OpenBSD: bgplgsh.c,v 1.3 2010/04/02 21:20:49 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -38,6 +38,8 @@
 #define BGPCTL		"/usr/sbin/bgpctl", "-s", BGPDSOCK
 #define PING		"/sbin/ping"
 #define TRACEROUTE	"/usr/sbin/traceroute"
+#define PING6		"/sbin/ping6"
+#define TRACEROUTE6	"/usr/sbin/traceroute6"
 
 static volatile int quit;
 

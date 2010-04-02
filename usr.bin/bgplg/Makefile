@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2006/12/11 23:10:10 reyk Exp $
+#	$OpenBSD: Makefile,v 1.2 2010/04/02 21:20:49 sthen Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		bgplg bgplgsh bgpctl ping traceroute
+SUBDIR=		bgplg bgplgsh bgpctl ping traceroute ping6 traceroute6
 
 INCFILES=	bgplg.head \
 		bgplg.foot \

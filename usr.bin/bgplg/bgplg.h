@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.h,v 1.5 2009/05/20 09:45:59 sthen Exp $	*/
+/*	$OpenBSD: bgplg.h,v 1.6 2010/04/02 21:20:49 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -64,6 +64,10 @@ struct cmd {
 	    { TRACEROUTE, "-Sl", NULL } },				\
 	{ "ping", 1, 1, "&lt;address&gt;",				\
 	    { PING, "-c4", "-w2", NULL } },				\
+	{ "traceroute6", 1, 1, "&lt;address&gt;",			\
+	    { TRACEROUTE6, "-l", NULL } },				\
+	{ "ping6", 1, 1, "&lt;address&gt;",				\
+	    { PING6, "-c4", "-i2", NULL } },				\
 	{ "help", 0, 0, NULL, { NULL }, lg_help },			\
 	{ NULL }							\
 }
