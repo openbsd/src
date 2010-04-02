@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.14 2010/04/02 21:32:41 stsp Exp $ */
+/* $OpenBSD: if_vether.c,v 1.15 2010/04/02 21:45:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -71,7 +71,7 @@ vetherattach(int nvether)
 int
 vether_clone_create(struct if_clone *ifc, int unit)
 {
-	struct ifnet 		*ifp;
+	struct ifnet		*ifp;
 	struct vether_softc	*sc;
 
 	if ((sc = malloc(sizeof(*sc),
@@ -98,7 +98,6 @@ vether_clone_create(struct if_clone *ifc, int unit)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
 	return (0);
 }
 
@@ -120,7 +119,7 @@ vether_clone_destroy(struct ifnet *ifp)
 void
 vetherstart(struct ifnet *ifp)
 {
-	struct mbuf 		*m;
+	struct mbuf		*m;
 	int			 s;
 
 	for (;;) {
@@ -175,14 +174,13 @@ vetherioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EAFNOSUPPORT;	   /* XXX */
 			break;
 		}
-
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ac) :
 		    ether_delmulti(ifr, &sc->sc_ac);
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
-			 * filter accordingly. The good thing is we do 
+			 * filter accordingly. The good thing is we do
 			 * not have a hardware filter (:
 			 */
 			error = 0;
