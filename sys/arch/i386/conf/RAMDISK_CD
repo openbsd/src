@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.175 2010/02/28 19:39:54 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.176 2010/04/02 20:19:45 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -347,6 +347,7 @@ dc*	at pci?				# 21143, "tulip" clone ethernet
 dc*	at cardbus?			# 21143, "tulip" clone ethernet
 ste*	at pci?				# Sundance ST201 ethernet
 sis*	at pci?				# SiS 900/7016 ethernet
+se*	at pci?				# SiS 190/191 ethernet
 wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 ti*	at pci?				# Alteon Tigon 1Gb ethernet
