@@ -2043,6 +2043,7 @@
 ./usr/share/man/cat4/sdhc.0
 ./usr/share/man/cat4/sdmmc.0
 ./usr/share/man/cat4/sdtemp.0
+./usr/share/man/cat4/se.0
 ./usr/share/man/cat4/sequencer.0
 ./usr/share/man/cat4/ses.0
 ./usr/share/man/cat4/sf.0

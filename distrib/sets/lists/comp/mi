@@ -601,6 +601,7 @@
 ./usr/include/dev/pci/if_san_te1.h
 ./usr/include/dev/pci/if_san_xilinx.h
 ./usr/include/dev/pci/if_sandrv.h
+./usr/include/dev/pci/if_sereg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
 ./usr/include/dev/pci/if_skvar.h
