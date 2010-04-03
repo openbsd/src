@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.74 2010/04/03 09:32:14 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.75 2010/04/03 09:35:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -172,6 +172,7 @@ atascsi_probe(struct scsi_link *link)
 	struct ata_xfer		*xa;
 	int			port, type;
 	int			rv;
+	u_int16_t		cmdset;
 
 	/* revisit this when we do port multipliers */
 	if (link->lun > 0)
@@ -222,8 +223,10 @@ atascsi_probe(struct scsi_link *link)
 	if (type != ATA_PORT_T_DISK)
 		return (0);
 
+	cmdset = letoh16(ap->ap_identify.cmdset82);
+
 	/* Enable write cache if supported */
-	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_WRITECACHE) {
+	if (ISSET(cmdset, ATA_IDENTIFY_WRITECACHE)) {
 		xa = ata_get_xfer(ap);
 		if (xa == NULL)
 			panic("no free xfers on a new port");
@@ -238,7 +241,7 @@ atascsi_probe(struct scsi_link *link)
 	}
 
 	/* Enable read lookahead if supported */
-	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_LOOKAHEAD) {
+	if (ISSET(cmdset, ATA_IDENTIFY_LOOKAHEAD)) {
 		xa = ata_get_xfer(ap);
 		if (xa == NULL)
 			panic("no free xfers on a new port");
