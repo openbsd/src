@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.91 2010/01/08 16:38:22 halex Exp $       */
+/* $OpenBSD: bioctl.c,v 1.92 2010/04/03 15:22:44 nicm Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -32,8 +32,8 @@
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <scsi/scsi_disk.h>
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_disk.h>
 #include <dev/biovar.h>
 #include <dev/softraidvar.h>
 #include <sys/types.h>
