@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.139 2010/01/12 06:47:25 yasuoka Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.140 2010/04/03 00:15:35 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -887,6 +887,7 @@ ether_fakeaddr(struct ifnet *ifp)
 	static int unit;
 	int rng;
 
+	/* Non-multicast; locally administered address */
 	((struct arpcom *)ifp)->ac_enaddr[0] = 0xfe;
 	((struct arpcom *)ifp)->ac_enaddr[1] = 0xe1;
 	((struct arpcom *)ifp)->ac_enaddr[2] = 0xba;
