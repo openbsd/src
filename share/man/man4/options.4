@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.194 2009/10/22 09:22:46 sobrado Exp $
+.\"	$OpenBSD: options.4,v 1.195 2010/04/03 01:49:44 guenther Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: April 3 2010 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -562,6 +562,12 @@ See
 and
 .Xr raidctl 8
 for details.
+.It Cd option RTHREADS
+Enable kernel support for kernel-level threads via the
+.Dv RFTHREAD
+flag to
+.Xr rfork 2 .
+Currently incomplete.
 .It Cd option USER_LDT
 Enable userland manipulation of per-process
 Local Descriptor Table (LDT) entries;

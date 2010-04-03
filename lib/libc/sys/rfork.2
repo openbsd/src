@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.23 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: rfork.2,v 1.24 2010/04/03 01:49:44 guenther Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 3 2010 $
 .Dt RFORK 2
 .Os
 .Sh NAME
@@ -108,6 +108,14 @@ Zero the child's file descriptor table
 .Pq i.e. start with a blank file descriptor table .
 May not be used in conjunction with
 .Dv RFFDG .
+.It Dv RFTHREAD
+Create a kernel thread in the current process instead of a separate
+process.
+Must be combined with
+.Dv RFMEM .
+Automatically enables
+.Dv RFNOWAIT .
+The kernel option RTHREADS must be enabled for this to succeed.
 .El
 .Pp
 .Xr fork 2
@@ -157,6 +165,11 @@ as
 .Dv CHILD_MAX ,
 which is currently defined as 80 in
 .Aq Pa sys/syslimits.h .
+.It Bq Er ENOTSUP
+The
+.Dv RFTHREAD
+flag was set but the kernel was not compiled with the RTHREADS
+kernel option.
 .El
 .Sh SEE ALSO
 .Xr _exit 2 ,
@@ -168,3 +181,6 @@ which is currently defined as 80 in
 The
 .Fn rfork
 function first appeared in Plan 9.
+.Sh BUGS
+.Dv RFTHREAD
+cannot be used from C, as the two threads would return on the same stack.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.12 2009/07/28 12:27:03 jmc Exp $
+.\"	$OpenBSD: fork1.9,v 1.13 2010/04/03 01:49:44 guenther Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 28 2009 $
+.Dd $Mdocdate: April 3 2010 $
 .Dt FORK1 9
 .Os
 .Sh NAME
@@ -105,6 +105,26 @@ See
 The child will share the parent's address space.
 The default behavior is
 that the child gets a copy-on-write copy of the address space.
+.It Dv FORK_SIGHAND
+The child will share the parent's signal actions, including the handler,
+mask, and flags, with sigactsshare().
+The default behavior is to copy the signal actions from the parent with
+sigactsinit().
+.Dv FORK_SHAREVM
+must also be set.
+.It Dv FORK_PTRACE
+The child will start with tracing enabled, as if
+ptrace(PT_TRACE_ME, 0, 0, 0) had been invoked in the child.
+.It Dv FORK_THREAD
+The child will instead be a kernel-level thread in the same process
+as the parent.
+.Dv FORK_NOZOMBIE ,
+.Dv FORK_SHAREVM ,
+and
+.Dv FORK_SIGHAND
+must also be set.
+If the kernel option RTHREADS isn't enabled then the call will return
+.Dv ENOTSUP .
 .El
 .Pp
 If
