@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.169 2010/03/25 03:40:47 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.170 2010/04/03 14:40:09 kettenis Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -147,6 +147,7 @@ typedef struct azalia_t {
 	struct device *audiodev;
 
 	pci_chipset_tag_t pc;
+	pcitag_t tag;
 	void *ih;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -177,7 +178,6 @@ typedef struct azalia_t {
 	int nistreams, nostreams, nbstreams;
 	stream_t pstream;
 	stream_t rstream;
-	struct pci_attach_args *saved_pa;
 } azalia_t;
 #define XNAME(sc)		((sc)->dev.dv_xname)
 #define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
@@ -396,7 +396,6 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc = (azalia_t*)self;
 	pa = aux;
-	sc->saved_pa = pa;
 
 	sc->dmat = pa->pa_dmat;
 
@@ -491,6 +490,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	sc->pc = pa->pa_pc;
+	sc->tag = pa->pa_tag;
 	interrupt_str = pci_intr_string(pa->pa_pc, ih);
 	sc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, azalia_intr,
 	    sc, sc->dev.dv_xname);
@@ -1437,24 +1437,21 @@ azalia_resume_codec(codec_t *this)
 int
 azalia_resume(azalia_t *az)
 {
-	struct pci_attach_args *pa;
 	pcireg_t v;
 	int err;
 
-	pa = az->saved_pa;
-
 	/* enable back-to-back */
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	v = pci_conf_read(az->pc, az->tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(az->pc, az->tag, PCI_COMMAND_STATUS_REG,
 	    v | PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	/* traffic class select */
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL,
+	v = pci_conf_read(az->pc, az->tag, ICH_PCI_HDTCSEL);
+	pci_conf_write(az->pc, az->tag, ICH_PCI_HDTCSEL,
 	    v & ~(ICH_PCI_HDTCSEL_MASK));
 
 	/* is this necessary? */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG, az->subid);
+	pci_conf_write(az->pc, az->tag, PCI_SUBSYS_ID_REG, az->subid);
 
 	err = azalia_init(az, 1);
 	if (err)
