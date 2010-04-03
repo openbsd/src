@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.81 2010/04/03 17:40:33 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.82 2010/04/03 17:59:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,6 +42,9 @@
 #ifdef DEBUG
 #include "dbg.h"
 #endif
+
+#define MODE_PLAY	1
+#define MODE_REC	2
 
 #define PROG_AUCAT	"aucat"
 #define PROG_MIDICAT	"midicat"
@@ -156,33 +159,16 @@ opt_xrun(void)
 	errx(1, "%s: bad underrun/overrun policy", optarg);
 }
 
-unsigned
+int
 opt_mode(void)
 {
-	unsigned mode = 0;
-	char *p = optarg;
-	size_t len;
-
-	for (p = optarg; *p != NULL; p++) {
-		len = strcspn(p, ",");
-		if (strncmp("play", p, len) == 0) {
-			mode |= MODE_PLAY;
-		} else if (strncmp("rec", p, len) == 0) {
-			mode |= MODE_REC;
-		} else if (strncmp("mon", p, len) == 0) {
-			mode |= MODE_MON;
-		} else if (strncmp("duplex", p, len) == 0) {
-			/* XXX: backward compat, remove this */
-			mode |= MODE_REC | MODE_PLAY;
-		} else 
-			errx(1, "%s: bad mode", optarg);
-		p += len;
-		if (*p == '\0')
-			break;
-	}
-	if (mode == 0)
-		errx(1, "empty mode");
-	return mode;
+	if (strcmp("play", optarg) == 0)
+		return MODE_PLAY;
+	if (strcmp("rec", optarg) == 0)
+		return MODE_REC;
+	if (strcmp("duplex", optarg) == 0)
+		return MODE_PLAY | MODE_REC;
+	errx(1, "%s: bad mode", optarg);
 }
 
 /*
@@ -197,7 +183,6 @@ struct farg {
 	int hdr;		/* header format */
 	int xrun;		/* overrun/underrun policy */
 	int mmc;		/* MMC mode */
-	unsigned mode;
 };
 
 SLIST_HEAD(farglist, farg);
@@ -209,7 +194,7 @@ SLIST_HEAD(farglist, farg);
 void
 farg_add(struct farglist *list,
     struct aparams *ipar, struct aparams *opar, unsigned vol,
-    int hdr, int xrun, int mmc, unsigned mode, char *name)
+    int hdr, int xrun, int mmc, char *name)
 {
 	struct farg *fa;
 	size_t namelen;
@@ -227,15 +212,12 @@ farg_add(struct farglist *list,
 		}
 	} else
 		fa->hdr = hdr;
-	if (mmc && xrun == XRUN_IGNORE)
-		xrun = XRUN_SYNC;
 	fa->xrun = xrun;
 	fa->ipar = *ipar;
 	fa->opar = *opar;
 	fa->vol = vol;
 	fa->name = name; 
 	fa->mmc = mmc;
-	fa->mode = mode;
 	SLIST_INSERT_HEAD(list, fa, entry);
 }
 
@@ -305,61 +287,28 @@ getbasepath(char *base, size_t size)
 }
 
 void
-stopall(char *base)
-{
-	struct file *f;
-
-  restart:
-	LIST_FOREACH(f, &file_list, entry) {
-		/*
-		 * skip connected streams (handled by dev_done())
-		 */
-		if (APROC_OK(dev_mix) && f->rproc &&
-		    aproc_depend(dev_mix, f->rproc))
-			continue;
-		if (APROC_OK(dev_sub) && f->wproc &&
-		    aproc_depend(f->wproc, dev_sub))
-			continue;
-		if (APROC_OK(dev_midi)) {
-			if (f->rproc && aproc_depend(dev_midi, f->rproc))
-				continue;
-			if (f->wproc && aproc_depend(f->wproc, dev_midi))
-				continue;
-		}
-		/*
-		 * kill anything else
-		 */
-		file_close(f);
-		goto restart;
-	}
-}
-
-void
 aucat_usage(void)
 {
 	(void)fputs("usage: " PROG_AUCAT " [-dlnu] [-b nframes] "
-	    "[-C min:max] [-c min:max] [-e enc]\n\t"
-	    "[-f device] [-h fmt] [-i file] [-m mode]"
-	    "[-o file] [-q device]\n\t"
-	    "[-r rate] [-s name] [-t mode] [-U unit] "
-	    "[-v volume] [-x policy]\n\t"
-	    "[-z nframes]\n",
+	    "[-C min:max] [-c min:max] [-e enc] [-f device]\n"
+	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s name]\n"
+	    "\t[-t mode] [-U unit] [-v volume] [-x policy] [-z nframes]\n",
 	    stderr);
 }
 
 int
 aucat_main(int argc, char **argv)
 {
-	int c, u_flag, d_flag, l_flag, n_flag, hdr, xrun, unit;
+	int c, u_flag, d_flag, l_flag, n_flag, hdr, xrun, suspend = 0, unit;
 	struct farg *fa;
-	struct farglist ifiles, ofiles, sfiles, qfiles;
+	struct farglist ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
 	char base[PATH_MAX], path[PATH_MAX], *file;
 	unsigned bufsz, round, mode;
 	char *devpath;
 	const char *str;
 	unsigned volctl;
-	int mmc, autostart;
+	int mmc;
 
 	aparams_init(&ipar, 0, 1, 44100);
 	aparams_init(&opar, 0, 1, 44100);
@@ -373,16 +322,14 @@ aucat_main(int argc, char **argv)
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
 	SLIST_INIT(&sfiles);
-	SLIST_INIT(&qfiles);
 	hdr = HDR_AUTO;
 	xrun = XRUN_IGNORE;
 	volctl = MIDI_MAXCTL;
-	mode = MODE_PLAY | MODE_REC;
+	mode = 0;
 	bufsz = 0;
 	round = 0;
-	autostart = 1;
 
-	while ((c = getopt(argc, argv, "dnb:c:C:e:r:h:x:v:i:o:f:m:luq:s:U:t:z:")) != -1) {
+	while ((c = getopt(argc, argv, "dnb:c:C:e:r:h:x:v:i:o:f:m:lus:U:t:z:")) != -1) {
 		switch (c) {
 		case 'd':
 #ifdef DEBUG
@@ -405,8 +352,6 @@ aucat_main(int argc, char **argv)
 			break;
 		case 't':
 			mmc = opt_mmc();
-			if (mmc)
-				autostart = 0;
 			break;
 		case 'c':
 			opt_ch(&ipar);
@@ -434,22 +379,18 @@ aucat_main(int argc, char **argv)
 			if (strcmp(file, "-") == 0)
 				file = NULL;
 			farg_add(&ifiles, &ipar, &opar, volctl,
-			    hdr, xrun, mmc, mode & MODE_PLAY, file);
+			    hdr, xrun, 0, file);
 			break;
 		case 'o':
 			file = optarg;
 			if (strcmp(file, "-") == 0)
 				file = NULL;
 			farg_add(&ofiles, &ipar, &opar, volctl,
-			    hdr, xrun, mmc, mode & MODE_RECMASK, file);
+			    hdr, xrun, 0, file);
 			break;
 		case 's':
 			farg_add(&sfiles, &ipar, &opar, volctl,
-			    hdr, xrun, mmc, mode, optarg);
-			break;
-		case 'q':
-			farg_add(&qfiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, optarg);
+			    hdr, xrun, mmc, optarg);
 			break;
 		case 'f':
 			if (devpath)
@@ -460,7 +401,6 @@ aucat_main(int argc, char **argv)
 			break;
 		case 'l':
 			l_flag = 1;
-			autostart = 0;
 			break;
 		case 'u':
 			u_flag = 1;
@@ -511,12 +451,22 @@ aucat_main(int argc, char **argv)
 
 	if (!l_flag && (!SLIST_EMPTY(&sfiles) || unit >= 0))
 		errx(1, "can't use -s or -U without -l");
-	if (l_flag && (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
-		errx(1, "can't use -l, and -s with -o or -i");
+	if ((l_flag || mode != 0) &&
+	    (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
+		errx(1, "can't use -l, -m and -s with -o or -i");
+	if (!mode) {
+		if (l_flag || !SLIST_EMPTY(&ifiles))
+			mode |= MODE_PLAY;
+		if (l_flag || !SLIST_EMPTY(&ofiles))
+			mode |= MODE_REC;
+		if (!mode) {
+			aucat_usage();
+			exit(1);
+		}
+	}
 	if (n_flag) {
-		if (devpath != NULL || !SLIST_EMPTY(&qfiles) ||
-		    l_flag || !autostart)
-			errx(1, "can't use -n with -f, -q, -t or -l");
+		if (devpath != NULL || l_flag)
+			errx(1, "can't use -n with -f or -l");
 		if (SLIST_EMPTY(&ifiles) || SLIST_EMPTY(&ofiles))
 			errx(1, "both -i and -o are required with -n");
 	}
@@ -526,43 +476,28 @@ aucat_main(int argc, char **argv)
 	 */
 	if (l_flag && SLIST_EMPTY(&sfiles)) {
 		farg_add(&sfiles, &dopar, &dipar,
-		    volctl, HDR_RAW, XRUN_IGNORE, mmc, mode, DEFAULT_OPT);
+		    volctl, HDR_RAW, XRUN_IGNORE, mmc, DEFAULT_OPT);
 	}
 
-	/*
-	 * Check modes and calculate "best" device parameters. Iterate over all
-	 * inputs and outputs and find the maximum sample rate and channel
-	 * number.
-	 */
-	mode = 0;
-	aparams_init(&dipar, dipar.cmin, dipar.cmax, dipar.rate);
-	aparams_init(&dopar, dopar.cmin, dopar.cmax, dopar.rate);
-	SLIST_FOREACH(fa, &ifiles, entry) {
-		if (fa->mode == 0)
-			errx(1, "%s: not in play mode", fa->name);
-		mode |= fa->mode;
-		if (!u_flag)
+	if (!u_flag) {
+		/*
+		 * Calculate "best" device parameters. Iterate over all
+		 * inputs and outputs and find the maximum sample rate
+		 * and channel number.
+		 */
+		aparams_init(&dipar, dipar.cmin, dipar.cmax, dipar.rate);
+		aparams_init(&dopar, dopar.cmin, dopar.cmax, dopar.rate);
+		SLIST_FOREACH(fa, &ifiles, entry) {
 			aparams_grow(&dopar, &fa->ipar);
-	}
-	SLIST_FOREACH(fa, &ofiles, entry) {
-		if (fa->mode == 0)
-			errx(1, "%s: not in rec/mon mode", fa->name);
-		if ((fa->mode & MODE_REC) && (fa->mode & MODE_MON))
-			errx(1, "%s: can't record and monitor", fa->name);
-		mode |= fa->mode;
-		if (!u_flag)
+		}
+		SLIST_FOREACH(fa, &ofiles, entry) {
 			aparams_grow(&dipar, &fa->opar);
-	}
-	SLIST_FOREACH(fa, &sfiles, entry) {
-		if ((fa->mode & MODE_REC) && (fa->mode & MODE_MON))
-			errx(1, "%s: can't record and monitor", fa->name);
-		mode |= fa->mode;
-		if (!u_flag) {
+		}
+		SLIST_FOREACH(fa, &sfiles, entry) {
 			aparams_grow(&dopar, &fa->ipar);
 			aparams_grow(&dipar, &fa->opar);
 		}
 	}
-
 	if (!round)
 		round = ((mode & MODE_REC) ? dipar.rate : dopar.rate) / 15;
 	if (!bufsz)
@@ -581,13 +516,12 @@ aucat_main(int argc, char **argv)
 	 * the other half is for the socket/files.
 	 */
 	if (n_flag) {
-		if (mode & MODE_MON)
-			errx(1, "monitoring not allowed in loopback mode");
 		dev_loopinit(&dipar, &dopar, bufsz);
 	} else {
-		if ((mode & MODE_MON) && !(mode & MODE_PLAY))
-			errx(1, "no playback stream to monitor");
-		if (!dev_init(devpath, mode, &dipar, &dopar, bufsz, round)) {
+		if (!dev_init(devpath,
+			(mode & MODE_REC) ? &dipar : NULL,
+			(mode & MODE_PLAY) ? &dopar : NULL,
+			bufsz, round)) {
 			errx(1, "%s: can't open device", 
 			    devpath ? devpath : "<default>");
 		}
@@ -596,33 +530,26 @@ aucat_main(int argc, char **argv)
 	/*
 	 * Create buffers for all input and output pipes.
 	 */
-	while (!SLIST_EMPTY(&qfiles)) {
-		fa = SLIST_FIRST(&qfiles);
-		SLIST_REMOVE_HEAD(&qfiles, entry);
-		if (!dev_thruadd(fa->name, 1, 1))
-			errx(1, "%s: can't open device", fa->name);
-		free(fa);
-	}
 	while (!SLIST_EMPTY(&ifiles)) {
 		fa = SLIST_FIRST(&ifiles);
 		SLIST_REMOVE_HEAD(&ifiles, entry);
-		if (!wav_new_in(&wav_ops, fa->mode, fa->name,
-			fa->hdr, &fa->ipar, fa->xrun, fa->vol, fa->mmc))
+		if (!wav_new_in(&wav_ops, fa->name,
+			fa->hdr, &fa->ipar, fa->xrun, fa->vol))
 			exit(1);
 		free(fa);
 	}
 	while (!SLIST_EMPTY(&ofiles)) {
 		fa = SLIST_FIRST(&ofiles);
 		SLIST_REMOVE_HEAD(&ofiles, entry);
-		if (!wav_new_out(&wav_ops, fa->mode, fa->name,
-			fa->hdr, &fa->opar, fa->xrun, fa->mmc))
+		if (!wav_new_out(&wav_ops, fa->name,
+			fa->hdr, &fa->opar, fa->xrun))
 		free(fa);
 	}
 	while (!SLIST_EMPTY(&sfiles)) {
 		fa = SLIST_FIRST(&sfiles);
 		SLIST_REMOVE_HEAD(&sfiles, entry);
 		opt_new(fa->name, &fa->opar, &fa->ipar,
-		    MIDI_TO_ADATA(fa->vol), fa->mmc, fa->mode);
+		    MIDI_TO_ADATA(fa->vol), fa->mmc);
 		free(fa);
 	}
 	if (l_flag) {
@@ -632,14 +559,6 @@ aucat_main(int argc, char **argv)
 		if (!d_flag && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
-	if (autostart) {
-		/*
-		 * inject artificial mmc start
-		 */
-		ctl_start(dev_midi);
-	}
-	if (l_flag)
-		dev_prime();
 
 	/*
 	 * Loop, start audio.
@@ -648,48 +567,57 @@ aucat_main(int argc, char **argv)
 		if (quit_flag) {
 			break;
 		}
-		if ((APROC_OK(dev_mix) && LIST_EMPTY(&dev_mix->obuflist)) ||
-		    (APROC_OK(dev_sub) && LIST_EMPTY(&dev_sub->ibuflist))) {
+		if ((dev_mix && LIST_EMPTY(&dev_mix->obuflist)) ||
+		    (dev_sub && LIST_EMPTY(&dev_sub->ibuflist))) {
 			fprintf(stderr, "device disappeared, terminating\n");
 			break;
 		}
-		if (!l_flag && ctl_idle(dev_midi))
-			break;
 		if (!file_poll())
 			break;
-		if ((!APROC_OK(dev_mix)    || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
-		    (!APROC_OK(dev_sub)    || dev_sub->u.sub.idle > 2 * dev_bufsz) &&
-		    (!APROC_OK(dev_submon) || dev_submon->u.sub.idle > 2 * dev_bufsz) &&
-		    (!APROC_OK(dev_midi)   || dev_midi->u.ctl.tstate != CTL_RUN)) {
-		    	if (dev_pstate == DEV_RUN) {
-				dev_pstate = DEV_INIT;
+		if ((!dev_mix || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
+		    (!dev_sub || dev_sub->u.sub.idle > 2 * dev_bufsz) &&
+		    ((dev_mix || dev_sub) && dev_midi->u.ctl.tstate != CTL_RUN)) {
+			if (!l_flag)
+				break;
+			if (!suspend) {
+#ifdef DEBUG
+				if (debug_level >= 2)
+					dbg_puts("suspending\n");
+#endif
+				suspend = 1;
 				dev_stop();
 				dev_clear();
-				/*
-				 * priming buffer in non-server mode is not
-				 * ok, because it will insert silence and
-				 * break synchronization
-				 */
-				if (l_flag)
-					dev_prime();
+				dev_prime();
 			}
 		}
-		/*
-		 * move device state machine
-		 * XXX: move this to dev.c
-		 */
-		if (dev_pstate == DEV_START) {
-			dev_pstate = DEV_RUN;
-			dev_start();
+		if ((dev_mix && dev_mix->u.mix.idle == 0) ||
+		    (dev_sub && dev_sub->u.sub.idle == 0) ||
+		    ((dev_mix || dev_sub) && dev_midi->u.ctl.tstate == CTL_RUN)) {
+			if (suspend) {
+#ifdef DEBUG
+				if (debug_level >= 2)
+					dbg_puts("resuming\n");
+#endif
+				suspend = 0;
+				dev_start();
+			}
 		}
 	}
-	stopall(base);
-	dev_done();
-	filelist_done();
 	if (l_flag) {
-		if (rmdir(base) < 0 && errno != ENOTEMPTY)
+		filelist_unlisten();
+		if (rmdir(base) < 0)
 			warn("rmdir(\"%s\")", base);
 	}
+	if (suspend) {
+#ifdef DEBUG
+		if (debug_level >= 2)
+			dbg_puts("resuming to drain\n");
+#endif
+		suspend = 0;
+		dev_start();
+	}
+	dev_done();
+	filelist_done();
 	unsetsig();
 	return 0;
 }
@@ -697,8 +625,8 @@ aucat_main(int argc, char **argv)
 void
 midicat_usage(void)
 {
-	(void)fputs("usage: " PROG_MIDICAT " [-dl] "
-	    "[-i file] [-o file] [-q device] [-U unit]\n",
+	(void)fputs("usage: " PROG_MIDICAT " [-dl] [-f device] "
+	    "[-i file] [-o file] [-U unit]\n",
 	    stderr);
 }
 int
@@ -720,7 +648,7 @@ midicat_main(int argc, char **argv)
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
 
-	while ((c = getopt(argc, argv, "di:o:lf:q:U:")) != -1) {
+	while ((c = getopt(argc, argv, "di:o:lf:U:")) != -1) {
 		switch (c) {
 		case 'd':
 #ifdef DEBUG
@@ -731,17 +659,15 @@ midicat_main(int argc, char **argv)
 			break;
 		case 'i':
 			farg_add(&ifiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, optarg);
+			    0, HDR_RAW, 0, 0, optarg);
 			break;
 		case 'o':
 			farg_add(&ofiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, optarg);
+			    0, HDR_RAW, 0, 0, optarg);
 			break;
-			/* XXX: backward compat, remove this */
-		case 'f':	
-		case 'q':
+		case 'f':
 			farg_add(&dfiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, optarg);
+			    0, HDR_RAW, 0, 0, optarg);
 			break;
 		case 'l':
 			l_flag = 1;
@@ -777,12 +703,12 @@ midicat_main(int argc, char **argv)
 	filelist_init();
 
 	dev_thruinit();
-	if (!l_flag && APROC_OK(dev_midi))
+	if (!l_flag)
 		dev_midi->flags |= APROC_QUIT;
 	if ((!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles)) && 
 	    SLIST_EMPTY(&dfiles)) {
 		farg_add(&dfiles, &aparams_none, &aparams_none,
-		    0, HDR_RAW, 0, 0, 0, NULL);
+		    0, HDR_RAW, 0, 0, NULL);
 	}
 	while (!SLIST_EMPTY(&dfiles)) {
 		fa = SLIST_FIRST(&dfiles);
@@ -841,6 +767,7 @@ midicat_main(int argc, char **argv)
 		dev_midiattach(NULL, buf);
 		free(fa);
 	}
+
 	/*
 	 * loop, start processing
 	 */
@@ -851,13 +778,13 @@ midicat_main(int argc, char **argv)
 		if (!file_poll())
 			break;
 	}
-	stopall(base);
-	dev_done();
-	filelist_done();
 	if (l_flag) {
-		if (rmdir(base) < 0 && errno != ENOTEMPTY)
+		filelist_unlisten();
+		if (rmdir(base) < 0)
 			warn("rmdir(\"%s\")", base);
 	}
+	dev_done();
+	filelist_done();
 	unsetsig();
 	return 0;
 }

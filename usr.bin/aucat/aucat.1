@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.64 2010/04/03 17:40:33 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.65 2010/04/03 17:59:17 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -33,7 +33,6 @@
 .Op Fl i Ar file
 .Op Fl m Ar mode
 .Op Fl o Ar file
-.Op Fl q Ar device
 .Op Fl r Ar rate
 .Op Fl s Ar name
 .Op Fl t Ar mode
@@ -58,7 +57,7 @@ which does not convert on the fly and supports playback of .au files.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl b Ar nframes
-The buffer size of the audio device in frames.
+The buffer size in frames.
 A frame consists of one sample for each channel in the stream.
 This is the number of frames that will be buffered before being played
 and thus controls the playback latency.
@@ -106,21 +105,15 @@ but other names can be used with the
 .Fl s
 option.
 .It Fl m Ar mode
-Set the stream mode.
+Set the server mode.
 Valid modes are
 .Ar play ,
 .Ar rec ,
 and
-.Ar mon ,
-corresponding to playback, recording and monitoring.
-A monitoring stream is a fake recording stream corresponding to
-the mix of all playback streams.
-Multiple modes can be specified, separated by commas,
-but the same stream cannot be used for both recording and monitoring.
+.Ar duplex ,
+for play-only, record-only, and full-duplex, respectively.
 The default is
-.\" no spaces allowed between modes
-.Ar play,rec
-(i.e., full-duplex).
+.Ar duplex .
 .It Fl n
 Loopback mode.
 Instead of using an audio device, send input streams
@@ -132,11 +125,6 @@ Add this file to the list of files in which to store recorded samples.
 If the option argument is
 .Sq -
 then standard output will be used.
-.It Fl q Ar device
-The
-.Xr sndio 7
-MIDI device to use for controlling stream volumes or
-to start multiple streams synchronously.
 .It Fl r Ar rate
 Sample rate in Hertz of the playback or record stream.
 The default is 44100Hz.
@@ -487,54 +475,6 @@ behave normally, while streams connected to
 wait for the MMC start signal and start synchronously.
 Regardless of which device a stream is connected to,
 its playback volume knob is exposed.
-.Pp
-If
-.Nm
-is used to play and record audio files, it offers
-similar MIDI control.
-.Nm
-can open a
-.Xr sndio 7
-MIDI device allowing MIDI hardware or software
-to control playback and recording in real time.
-.Pp
-A MIDI channel is assigned to each stream, and the volume
-is changed using the standard volume controller (number 7).
-Streams created with
-.Fl t Ar slave
-are controlled by the following MMC (MIDI Machine Control) messages:
-.Bl -tag -width relocateXXX -offset -indent
-.It start
-Start all streams synchronously.
-By default, streams are created in stopped state.
-.It stop
-Playback or recording is stopped, and
-the stream is rewinded back to the starting position.
-.It relocate
-Streams are relocated to the requested time postion
-relative to the beginning of the stream, at which playback
-and recording must start.
-If the requested position is beyond the end of file,
-the stream is temporarly disabled until a valid postion is requested.
-.El
-.Pp
-For instance, the following command will play a file on the
-.Va aucat:0.mmc
-audio device, and let full control to MIDI software or hardware
-connected to the
-.Va midithru:0
-MIDI device:
-.Bd -literal -offset indent
-$ aucat -f aucat:0.mmc -t slave -q midithru:0 -i file.wav
-.Ed
-.Pp
-At this stage,
-.Nm
-will start, stop and relocate automatically following all user
-actions in the MIDI sequencer.
-Note that the sequencer must use
-.Va aucat:0
-as MTC source, i.e., the audio server, not the audio player.
 .Sh LEGACY MODE
 If neither
 .Fl i

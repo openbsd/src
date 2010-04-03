@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.3 2010/04/03 17:40:33 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.4 2010/04/03 17:59:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,18 +28,11 @@ struct opt {
 	struct aparams wpar;	/* template for clients write params */
 	struct aparams rpar;	/* template for clients read params */
 	int mmc;		/* true if MMC control enabled */
-#define MODE_PLAY	0x1	/* allowed to play */
-#define MODE_REC	0x2	/* allowed to rec */
-#define MODE_MIDIIN	0x4	/* allowed to read midi */
-#define MODE_MIDIOUT	0x8	/* allowed to write midi */
-#define MODE_MON	0x10	/* allowed to monitor */
-#define MODE_RECMASK	(MODE_REC | MODE_MON)
-	unsigned mode;		/* bitmap of above */
 };
 
 SLIST_HEAD(optlist,opt);
 
-void opt_new(char *, struct aparams *, struct aparams *, int, int, unsigned);
+void opt_new(char *, struct aparams *, struct aparams *, int, int);
 struct opt *opt_byname(char *);
 
 #endif /* !defined(OPT_H) */

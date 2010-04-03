@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.44 2010/04/03 17:40:33 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.45 2010/04/03 17:59:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,15 +27,13 @@
 #include "miofile.h"
 #include "siofile.h"
 #include "midi.h"
-#include "opt.h"
 #ifdef DEBUG
 #include "dbg.h"
 #endif
 
-unsigned dev_pstate;
 unsigned dev_bufsz, dev_round, dev_rate;
 struct aparams dev_ipar, dev_opar;
-struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play, *dev_submon, *dev_mon;
+struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
 struct aproc *dev_midi;
 
 /*
@@ -103,14 +101,6 @@ dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	struct aparams par;
 	unsigned cmin, cmax, rate;
 
-	/*
-	 * in principle we don't need control, but the start-stop mechanism
-	 * depend on it and it's simpler to reuse this mechanism rather than
-	 * dealing with lots of special cases
-	 */
-	dev_midi = ctl_new("ctl");
-	dev_midi->refs++;
-
 	cmin = (dipar->cmin < dopar->cmin) ? dipar->cmin : dopar->cmin;
 	cmax = (dipar->cmax > dopar->cmax) ? dipar->cmax : dopar->cmax;
 	rate = (dipar->rate > dopar->rate) ? dipar->rate : dopar->rate;
@@ -122,14 +112,11 @@ dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	dev_rate  = rate;
 	dev_rec = NULL;
 	dev_play = NULL;
-	dev_mon = NULL;
-	dev_submon = NULL;
-	dev_pstate = DEV_INIT;
 
 	buf = abuf_new(dev_bufsz, &par);
-	dev_mix = mix_new("mix", dev_bufsz, 1, NULL);
+	dev_mix = mix_new("mix", dev_bufsz, NULL);
 	dev_mix->refs++;
-	dev_sub = sub_new("sub", dev_bufsz, 1, NULL);
+	dev_sub = sub_new("sub", dev_bufsz, NULL);
 	dev_sub->refs++;
 	aproc_setout(dev_mix, buf);
 	aproc_setin(dev_sub, buf);
@@ -153,13 +140,14 @@ dev_roundof(unsigned newrate)
  * setup.
  */
 int
-dev_init(char *devpath, unsigned mode,
+dev_init(char *devpath,
     struct aparams *dipar, struct aparams *dopar, unsigned bufsz, unsigned round)
 {
 	struct file *f;
 	struct aparams ipar, opar;
 	struct aproc *conv;
 	struct abuf *buf;
+	unsigned nfr, ibufsz, obufsz;
 
 	dev_midi = ctl_new("ctl");
 	dev_midi->refs++;
@@ -169,13 +157,13 @@ dev_init(char *devpath, unsigned mode,
 	 * limit the block size to 1/4 of the requested buffer.
 	 */
 	dev_round = round;
-	dev_bufsz = bufsz;
+	dev_bufsz = (bufsz + 3) / 4 + (dev_round - 1);
+	dev_bufsz -= dev_bufsz % dev_round;
 	f = (struct file *)siofile_new(&siofile_ops, devpath,
-	    mode & (MODE_PLAY | MODE_REC), dipar, dopar,
-	    &dev_bufsz, &dev_round);
+	    dipar, dopar, &dev_bufsz, &dev_round);
 	if (f == NULL)
 		return 0;
-	if (mode & MODE_REC) {
+	if (dipar) {
 #ifdef DEBUG
 		if (debug_level >= 2) {
 			dbg_puts("hw recording ");
@@ -185,7 +173,7 @@ dev_init(char *devpath, unsigned mode,
 #endif
 		dev_rate = dipar->rate;
 	}
-	if (mode & MODE_PLAY) {
+	if (dopar) {
 #ifdef DEBUG
 		if (debug_level >= 2) {
 			dbg_puts("hw playing ");
@@ -195,19 +183,33 @@ dev_init(char *devpath, unsigned mode,
 #endif
 		dev_rate = dopar->rate;
 	}
+	ibufsz = obufsz = dev_bufsz;
+	bufsz = (bufsz > dev_bufsz) ? bufsz - dev_bufsz : 0;
+
+	/*
+	 * Use 1/8 of the buffer for the mixer/converters.  Since we
+	 * already consumed 1/4 for the device, bufsz represents the
+	 * remaining 3/4. So 1/8 is 1/6 of 3/4.
+	 */
+	nfr = (bufsz + 5) / 6;
+	nfr += dev_round - 1;
+	nfr -= nfr % dev_round;
+	if (nfr == 0)
+		nfr = dev_round;
 
 	/*
 	 * Create record chain.
 	 */
-	if (mode & MODE_REC) {
+	if (dipar) {
 		aparams_init(&ipar, dipar->cmin, dipar->cmax, dipar->rate);
 		/*
 		 * Create the read end.
 		 */
-		dev_rec = rsio_new(f);
+		dev_rec = rfile_new(f);
 		dev_rec->refs++;
-		buf = abuf_new(dev_bufsz, dipar);
+		buf = abuf_new(nfr, dipar);
 		aproc_setout(dev_rec, buf);
+		ibufsz += nfr;
 
 		/*
 		 * Append a converter, if needed.
@@ -215,8 +217,9 @@ dev_init(char *devpath, unsigned mode,
 		if (!aparams_eqenc(dipar, &ipar)) {
 			conv = dec_new("rec", dipar);
 			aproc_setin(conv, buf);
-			buf = abuf_new(dev_round, &ipar);
+			buf = abuf_new(nfr, &ipar);
 			aproc_setout(conv, buf);
+			ibufsz += nfr;
 		}
 		dev_ipar = ipar;
 
@@ -224,8 +227,7 @@ dev_init(char *devpath, unsigned mode,
 		 * Append a "sub" to which clients will connect.
 		 * Link it to the controller only in record-only mode
 		 */
-		dev_sub = sub_new("rec", dev_bufsz, dev_round,
-		    dopar ? NULL : dev_midi);
+		dev_sub = sub_new("rec", ibufsz, dopar ? NULL : dev_midi);
 		dev_sub->refs++;
 		aproc_setin(dev_sub, buf);
 	} else {
@@ -236,15 +238,16 @@ dev_init(char *devpath, unsigned mode,
 	/*
 	 * Create play chain.
 	 */
-	if (mode & MODE_PLAY) {
+	if (dopar) {
 		aparams_init(&opar, dopar->cmin, dopar->cmax, dopar->rate);
 		/*
 		 * Create the write end.
 		 */
-		dev_play = wsio_new(f);
+		dev_play = wfile_new(f);
 		dev_play->refs++;
-		buf = abuf_new(dev_bufsz, dopar);
+		buf = abuf_new(nfr, dopar);
 		aproc_setin(dev_play, buf);
+		obufsz += nfr;
 
 		/*
 		 * Append a converter, if needed.
@@ -252,50 +255,23 @@ dev_init(char *devpath, unsigned mode,
 		if (!aparams_eqenc(&opar, dopar)) {
 			conv = enc_new("play", dopar);
 			aproc_setout(conv, buf);
-			buf = abuf_new(dev_round, &opar);
+			buf = abuf_new(nfr, &opar);
 			aproc_setin(conv, buf);
+			obufsz += nfr;
 		}
 		dev_opar = opar;
 
 		/*
 		 * Append a "mix" to which clients will connect.
 		 */
-		dev_mix = mix_new("play", dev_bufsz, dev_round, dev_midi);
+		dev_mix = mix_new("play", obufsz, dev_midi);
 		dev_mix->refs++;
 		aproc_setout(dev_mix, buf);
 	} else {
 		dev_play = NULL;
 		dev_mix = NULL;
 	}
-
-	/*
-	 * Create monitoring chain
-	 */
-	if (mode & MODE_MON) {
-		dev_mon = mon_new("mon", dev_bufsz);
-		dev_mon->refs++;
-		buf = abuf_new(dev_bufsz, &dev_opar);
-		aproc_setout(dev_mon, buf);
-
-		/*
-		 * Append a "sub" to which clients will connect.
-		 * Link it to the controller only in record-only mode
-		 */
-		dev_submon = sub_new("mon", dev_bufsz, dev_round, NULL);
-		dev_submon->refs++;
-		aproc_setin(dev_submon, buf);
-
-		/*
-		 * Attack to the mixer
-		 */
-		dev_mix->u.mix.mon = dev_mon;
-		dev_mon->refs++;
-	} else {
-		dev_submon = NULL;
-		if (APROC_OK(dev_mix))
-			dev_mix->u.mix.mon = NULL;
-	}
-
+	dev_bufsz = (dopar) ? obufsz : ibufsz;
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts("device block size is ");
@@ -305,7 +281,7 @@ dev_init(char *devpath, unsigned mode,
 		dbg_puts(" blocks\n");
 	}
 #endif
-	dev_pstate = DEV_INIT;
+	dev_start();
 	return 1;
 }
 
@@ -334,11 +310,6 @@ dev_done(void)
 		 * after each call to file_eof().
 		 */
 		dev_mix->flags |= APROC_QUIT;
-		if (APROC_OK(dev_mix->u.mix.mon)) {
-			dev_mix->u.mix.mon->refs--;
-			aproc_del(dev_mix->u.mix.mon);
-			dev_mix->u.mix.mon = NULL;
-		}
 	restart_mix:
 		LIST_FOREACH(f, &file_list, entry) {
 			if (f->rproc != NULL &&
@@ -347,7 +318,7 @@ dev_done(void)
 				goto restart_mix;
 			}
 		}
-	} else if (dev_sub || dev_submon) {
+	} else if (dev_sub) {
 		/*
 		 * Same as above, but since there's no mixer, 
 		 * we generate EOF on the record-end of the
@@ -356,8 +327,7 @@ dev_done(void)
 	restart_sub:
 		LIST_FOREACH(f, &file_list, entry) {
 			if (f->rproc != NULL &&
-			    (aproc_depend(dev_sub, f->rproc) ||
-			     aproc_depend(dev_submon, f->rproc))) {
+			    aproc_depend(dev_sub, f->rproc)) {
 				file_eof(f);
 				goto restart_sub;
 			}
@@ -377,37 +347,32 @@ dev_done(void)
 		}
 	}
 	if (dev_mix) {
-		if (--dev_mix->refs == 0 && (dev_mix->flags & APROC_ZOMB))
+		dev_mix->refs--;
+		if (dev_mix->flags & APROC_ZOMB)
 			aproc_del(dev_mix);
 		dev_mix = NULL;
 	}
 	if (dev_play) {
-		if (--dev_play->refs == 0 && (dev_play->flags & APROC_ZOMB))
+		dev_play->refs--;
+		if (dev_play->flags & APROC_ZOMB)
 			aproc_del(dev_play);
 		dev_play = NULL;
 	}
 	if (dev_sub) {
-		if (--dev_sub->refs == 0 && (dev_sub->flags & APROC_ZOMB))
+		dev_sub->refs--;
+		if (dev_sub->flags & APROC_ZOMB)
 			aproc_del(dev_sub);
 		dev_sub = NULL;
 	}
 	if (dev_rec) {
-		if (--dev_rec->refs == 0 && (dev_rec->flags & APROC_ZOMB))
+		dev_rec->refs--;
+		if (dev_rec->flags & APROC_ZOMB)
 			aproc_del(dev_rec);
 		dev_rec = NULL;
 	}
-	if (dev_submon) {
-		if (--dev_submon->refs == 0 && (dev_submon->flags & APROC_ZOMB))
-			aproc_del(dev_submon);
-		dev_submon = NULL;
-	}
-	if (dev_mon) {
-		if (--dev_mon->refs == 0 && (dev_mon->flags & APROC_ZOMB))
-			aproc_del(dev_mon);
-		dev_mon = NULL;
-	}
 	if (dev_midi) {
-		if (--dev_midi->refs == 0 && (dev_midi->flags & APROC_ZOMB))
+		dev_midi->refs--;
+		if (dev_midi->flags & APROC_ZOMB)
 			aproc_del(dev_midi);
 		dev_midi = NULL;
 	}
@@ -425,64 +390,49 @@ dev_start(void)
 {
 	struct file *f;
 
-#ifdef DEBUG
-	if (debug_level >= 2)
-		dbg_puts("starting audio device\n");
-#endif
-	if (APROC_OK(dev_mix))
+	if (dev_mix)
 		dev_mix->flags |= APROC_DROP;
-	if (APROC_OK(dev_sub))
+	if (dev_sub)
 		dev_sub->flags |= APROC_DROP;
-	if (APROC_OK(dev_submon))
-		dev_submon->flags |= APROC_DROP;
-	if (APROC_OK(dev_play) && dev_play->u.io.file) {
+	if (dev_play && dev_play->u.io.file) {
 		f = dev_play->u.io.file;
 		f->ops->start(f);
-	} else if (APROC_OK(dev_rec) && dev_rec->u.io.file) {
+	} else if (dev_rec && dev_rec->u.io.file) {
 		f = dev_rec->u.io.file;
 		f->ops->start(f);
 	}
 }
 
 /*
- * Pause the device. This may trigger context switches,
- * so it shouldn't be called from aproc methods
+ * Pause the device.
  */
 void
 dev_stop(void)
 {
 	struct file *f;
 
-	if (APROC_OK(dev_play) && dev_play->u.io.file) {
+	if (dev_play && dev_play->u.io.file) {
 		f = dev_play->u.io.file;
 		f->ops->stop(f);
-	} else if (APROC_OK(dev_rec) && dev_rec->u.io.file) {
+	} else if (dev_rec && dev_rec->u.io.file) {
 		f = dev_rec->u.io.file;
 		f->ops->stop(f);
 	}
-	if (APROC_OK(dev_mix))
+	if (dev_mix)
 		dev_mix->flags &= ~APROC_DROP;
-	if (APROC_OK(dev_sub))
+	if (dev_sub)
 		dev_sub->flags &= ~APROC_DROP;
-	if (APROC_OK(dev_submon))
-		dev_submon->flags &= ~APROC_DROP;
-#ifdef DEBUG
-	if (debug_level >= 2)
-		dbg_puts("audio device stopped\n");
-#endif
 }
 
 /*
  * Find the end points connected to the mix/sub.
  */
 int
-dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
+dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 {
 	struct abuf *ibuf, *obuf;
 
-	if (mode & MODE_PLAY) {
-		if (!APROC_OK(dev_mix))
-			return 0;
+	if (sibuf && *sibuf) {
 		ibuf = *sibuf;
 		for (;;) {
 			if (!ibuf || !ibuf->rproc) {
@@ -500,9 +450,7 @@ dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
 		}
 		*sibuf = ibuf;
 	}
-	if (mode & MODE_REC) {
-		if (!APROC_OK(dev_sub))
-			return 0;
+	if (sobuf && *sobuf) {
 		obuf = *sobuf;
 		for (;;) {
 			if (!obuf || !obuf->wproc) {
@@ -520,26 +468,6 @@ dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
 		}
 		*sobuf = obuf;
 	}
-	if (mode & MODE_MON) {
-		if (!APROC_OK(dev_submon))
-			return 0;
-		obuf = *sobuf;
-		for (;;) {
-			if (!obuf || !obuf->wproc) {
-#ifdef DEBUG
-				if (debug_level >= 3) {
-					abuf_dbg(*sobuf);
-					dbg_puts(": not connected to device\n");
-				}
-#endif
-				return 0;
-			}
-			if (obuf->wproc == dev_submon)
-				break;
-			obuf = LIST_FIRST(&obuf->wproc->ibuflist);
-		}
-		*sobuf = obuf;
-	}
 	return 1;
 }
 
@@ -548,38 +476,45 @@ dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
  * them underruns/overruns).
  */
 void
-dev_sync(unsigned mode, struct abuf *ibuf, struct abuf *obuf)
+dev_sync(struct abuf *ibuf, struct abuf *obuf)
 {
+	struct abuf *pbuf, *rbuf;
 	int delta;
 
-	if (!dev_getep(mode, &ibuf, &obuf))
+	if (!dev_mix || !dev_sub)
 		return;
+	pbuf = LIST_FIRST(&dev_mix->obuflist);
+	if (!pbuf)
+		return;
+	rbuf = LIST_FIRST(&dev_sub->ibuflist);
+	if (!rbuf)
+		return;
+	if (!dev_getep(&ibuf, &obuf))
+		return;
+
 	/*
 	 * Calculate delta, the number of frames the play chain is ahead
 	 * of the record chain. It's necessary to schedule silences (or
 	 * drops) in order to start playback and record in sync.
 	 */
-	if (APROC_OK(dev_mix) && APROC_OK(dev_sub)) {
-		delta = dev_mix->u.mix.abspos - dev_sub->u.sub.abspos;
-	} else if (APROC_OK(dev_mix)) {
-		delta = dev_mix->u.mix.lat;
-	} else
-		delta = 0;
+	delta =
+	    rbuf->bpf * (pbuf->abspos + pbuf->used) -
+	    pbuf->bpf *  rbuf->abspos;
+	delta /= pbuf->bpf * rbuf->bpf;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		dbg_puts("syncing device, delta = ");
 		dbg_putu(delta);
-		dbg_puts(" ");
-		if (APROC_OK(dev_mix)) {
-			aproc_dbg(dev_mix);
-			dbg_puts(": abspos = ");
-			dbg_putu(dev_mix->u.mix.abspos);
-		}
-		if (APROC_OK(dev_sub)) {
-			aproc_dbg(dev_sub);
-			dbg_puts(": abspos = ");
-			dbg_putu(dev_sub->u.sub.abspos);
-		}
+		dbg_puts(": ");
+		abuf_dbg(pbuf);
+		dbg_puts(" abspos = ");
+		dbg_putu(pbuf->abspos);
+		dbg_puts(" used = ");
+		dbg_putu(pbuf->used);
+		dbg_puts(" <---> ");
+		abuf_dbg(rbuf);
+		dbg_puts(" abspos = ");
+		dbg_putu(rbuf->abspos);
 		dbg_puts("\n");
 	}
 #endif
@@ -588,15 +523,19 @@ dev_sync(unsigned mode, struct abuf *ibuf, struct abuf *obuf)
 		 * The play chain is ahead (most cases) drop some of
 		 * the recorded input, to get both in sync.
 		 */
-		if (mode & MODE_RECMASK)
-			sub_silence(obuf, -delta);
+		if (obuf) {
+			obuf->drop += delta * obuf->bpf;
+			abuf_ipos(obuf, -delta);
+		}
 	} else if (delta < 0) {
 		/*
 		 * The record chain is ahead (should never happen,
 		 * right?) then insert silence to play.
 		 */
-		 if (mode & MODE_PLAY)
-		 	mix_drop(ibuf, delta);
+		 if (ibuf) {
+			ibuf->silence += -delta * ibuf->bpf;
+			abuf_opos(ibuf, delta);
+		}
 	}
 }
 
@@ -611,20 +550,23 @@ dev_getpos(void)
 	int plat = 0, rlat = 0;
 	int delta;
 
-	if (APROC_OK(dev_mix)) {
+	if (dev_mix) {
 		pbuf = LIST_FIRST(&dev_mix->obuflist);
 		if (!pbuf)
 			return 0;
 		plat = -dev_mix->u.mix.lat;
 	}
-	if (APROC_OK(dev_sub)) {
+	if (dev_sub) {
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
 		if (!rbuf)
 			return 0;
 		rlat = -dev_sub->u.sub.lat;
 	}
-	if (APROC_OK(dev_mix) && APROC_OK(dev_sub)) {
-		delta = dev_mix->u.mix.abspos - dev_sub->u.sub.abspos;
+	if (dev_mix && dev_sub) {
+		delta =
+		    rbuf->bpf * (pbuf->abspos + pbuf->used) -
+		    pbuf->bpf *  rbuf->abspos;
+		delta /= pbuf->bpf * rbuf->bpf;
 		if (delta > 0)
 			rlat -= delta;
 		else if (delta < 0)
@@ -639,7 +581,7 @@ dev_getpos(void)
 		}
 #endif
 	}
-	return APROC_OK(dev_mix) ? plat : rlat;
+	return dev_mix ? plat : rlat;
 }
 
 /*
@@ -649,25 +591,16 @@ dev_getpos(void)
  * and rec.
  */
 void
-dev_attach(char *name, unsigned mode,
-    struct abuf *ibuf, struct aparams *sipar,
-    struct abuf *obuf, struct aparams *sopar,
-    unsigned xrun, int vol)
+dev_attach(char *name,
+    struct abuf *ibuf, struct aparams *sipar, unsigned underrun,
+    struct abuf *obuf, struct aparams *sopar, unsigned overrun, int vol)
 {
 	struct abuf *pbuf = NULL, *rbuf = NULL;
 	struct aparams ipar, opar;
 	struct aproc *conv;
 	unsigned round, nblk;
 
-#ifdef DEBUG
-	if ((!APROC_OK(dev_mix)    && (mode & MODE_PLAY)) ||
-	    (!APROC_OK(dev_sub)    && (mode & MODE_REC)) ||
-	    (!APROC_OK(dev_submon) && (mode & MODE_MON))) {
-	    	dbg_puts("mode beyond device mode, not attaching\n");
-		return;
-	}
-#endif
-	if (mode & MODE_PLAY) {
+	if (ibuf) {
 		ipar = *sipar;
 		pbuf = LIST_FIRST(&dev_mix->obuflist);
 		nblk = (dev_bufsz / dev_round + 3) / 4;
@@ -700,11 +633,13 @@ dev_attach(char *name, unsigned mode,
 			aproc_setout(conv, ibuf);
 		}
 		aproc_setin(dev_mix, ibuf);
-		ibuf->r.mix.xrun = xrun;
+		if (dev_mix->u.mix.lat > 0)
+			abuf_opos(ibuf, -dev_mix->u.mix.lat);
+		ibuf->r.mix.xrun = underrun;
 		ibuf->r.mix.maxweight = vol;
 		mix_setmaster(dev_mix);
 	}
-	if (mode & MODE_REC) {
+	if (obuf) {
 		opar = *sopar;
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
 		round = dev_roundof(opar.rate);
@@ -737,58 +672,19 @@ dev_attach(char *name, unsigned mode,
 			aproc_setin(conv, obuf);
 		}
 		aproc_setout(dev_sub, obuf);
-		obuf->w.sub.xrun = xrun;
-	}
-	if (mode & MODE_MON) {
-		opar = *sopar;
-		rbuf = LIST_FIRST(&dev_submon->ibuflist);
-		round = dev_roundof(opar.rate);
-		nblk = (dev_bufsz / dev_round + 3) / 4;
-		if (!aparams_eqenc(&opar, &dev_opar)) {
-			conv = enc_new(name, &opar);
-			opar.bps = dev_opar.bps;
-			opar.bits = dev_opar.bits;
-			opar.sig = dev_opar.sig;
-			opar.le = dev_opar.le;
-			opar.msb = dev_opar.msb;
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nblk * round, &opar);
-			aproc_setin(conv, obuf);
-		}
-		if (!aparams_subset(&opar, &dev_opar)) {
-			conv = cmap_new(name, &dev_opar, &opar);
-			opar.cmin = dev_opar.cmin;
-			opar.cmax = dev_opar.cmax;
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nblk * round, &opar);
-			aproc_setin(conv, obuf);
-		}
-		if (!aparams_eqrate(&opar, &dev_opar)) {
-			conv = resamp_new(name, dev_round, round);
-			opar.rate = dev_opar.rate;
-			round = dev_round;
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nblk * round, &opar);
-			aproc_setin(conv, obuf);
-		}
-		aproc_setout(dev_submon, obuf);
-		obuf->w.sub.xrun = xrun;
+		if (dev_sub->u.sub.lat > 0)
+			abuf_ipos(obuf, -dev_sub->u.sub.lat);
+		obuf->w.sub.xrun = overrun;
 	}
 
 	/*
 	 * Sync play to record.
 	 */
-	if ((mode & MODE_PLAY) && (mode & MODE_RECMASK)) {
+	if (ibuf && obuf) {
 		ibuf->duplex = obuf;
 		obuf->duplex = ibuf;
 	}
-	dev_sync(mode, ibuf, obuf);
-
-	/*
-	 * Start device if not already started
-	 */
-	if (dev_pstate == DEV_INIT)
-		dev_pstate = DEV_START;
+	dev_sync(ibuf, obuf);
 }
 
 /*
@@ -805,7 +701,7 @@ dev_setvol(struct abuf *ibuf, int vol)
 		dbg_puts("\n");
 	}
 #endif
-	if (!dev_getep(MODE_PLAY, &ibuf, NULL)) {
+	if (!dev_getep(&ibuf, NULL)) {
 		return;
 	}
 	ibuf->r.mix.vol = vol;
@@ -820,7 +716,7 @@ dev_clear(void)
 {
 	struct abuf *buf;
 
-	if (APROC_OK(dev_mix)) {
+	if (dev_mix) {
 #ifdef DEBUG
 		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
 			dbg_puts("play end not idle, can't clear device\n");
@@ -834,7 +730,7 @@ dev_clear(void)
 		}
 		mix_clear(dev_mix);
 	}
-	if (APROC_OK(dev_sub)) {
+	if (dev_sub) {
 #ifdef DEBUG
 		if (!LIST_EMPTY(&dev_sub->obuflist)) {
 			dbg_puts("record end not idle, can't clear device\n");
@@ -848,22 +744,6 @@ dev_clear(void)
 		}
 		sub_clear(dev_sub);
 	}
-	if (APROC_OK(dev_submon)) {
-#ifdef DEBUG
-		dbg_puts("clearing monitor\n");
-		if (!LIST_EMPTY(&dev_submon->obuflist)) {
-			dbg_puts("monitoring end not idle, can't clear device\n");
-			dbg_panic();
-		}
-#endif
-		buf = LIST_FIRST(&dev_submon->ibuflist);
-		while (buf) {
-			abuf_clear(buf);
-			buf = LIST_FIRST(&buf->wproc->ibuflist);
-		}
-		sub_clear(dev_submon);
-		mon_clear(dev_mon);
-	}
 }
 
 /*
@@ -873,7 +753,7 @@ dev_clear(void)
 void
 dev_prime(void)
 {
-	if (APROC_OK(dev_mix)) {
+	if (dev_mix) {
 #ifdef DEBUG
 		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
 			dbg_puts("play end not idle, can't prime device\n");
