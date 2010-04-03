@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2010/02/19 07:37:17 otto Exp $
+#	$OpenBSD: install.md,v 1.5 2010/04/03 21:41:26 miod Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@ md_installboot() {
 	local _disk=$1
 
 	if mount -t ext2fs /dev/${_disk}i /mnt2 ; then
-		if mkdir -p /mnt2/boot && cp /usr/mdec/boot /mnt2/boot; then
+		if mkdir -p /mnt2/boot && cp /usr/mdec/boot /mnt2/boot &&
+		    [[ $(sysctl -n hw.product) != Gdium ]] ||
+		      cp /mnt/bsd /mnt2/boot/bsd; then
 			umount /mnt2
 			return
 		fi
@@ -48,7 +50,7 @@ md_installboot() {
 }
 
 md_prep_fdisk() {
-	local _disk=$1 _q _d
+	local _disk=$1 _q _d _s _o
 
 	while :; do
 		_d=whole
@@ -64,16 +66,35 @@ md_prep_fdisk() {
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
-			echo -n "Creating a 1MB ext2 partition and an OpenBSD partition for rest of $_disk..."
+			if [ $(sysctl -n hw.product) = Gdium ]; then
+				_s=32
+				_o="-O 1 -b 4096"
+			else
+				_s=1
+				_o=""
+			fi
+			echo -n "Creating a ${_s}MB ext2 partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -e $_disk <<__EOT >/dev/null
-reinit
+re
+e 0
+
+
+1
+$(expr $_s \* 2048)
+e 3
+0
+e 3
+A6
+
+$(expr $_s \* 2048 + 1)
+*
 update
 write
 quit
 __EOT
 			echo "done."
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -qt ext2fs ${_disk}i
+			newfs -qt ext2fs $_o ${_disk}i
 			break ;;
 		e*|E*)
 			# Manually configure the MBR.
