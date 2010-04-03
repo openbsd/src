@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.111 2010/04/02 20:19:45 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.112 2010/04/03 16:06:01 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -265,7 +265,7 @@ pcn*	at pci?			# AMD PCnet-PCI Ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 dc*	at cardbus?		# 21143, "tulip" clone ethernet
 sis*	at pci?			# SiS 900/7016 ethernet
-se*	at pci?			# SiS 190/191 ethernet
+#se*	at pci?			# SiS 190/191 ethernet
 #wb*	at pci?			# Winbond W89C840F ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
 skc*	at pci?			# SysKonnect GEnesis 984x
