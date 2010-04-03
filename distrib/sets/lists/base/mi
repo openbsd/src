@@ -4937,7 +4937,9 @@
 ./var/www/bin
 ./var/www/bin/bgpctl
 ./var/www/bin/ping
+./var/www/bin/ping6
 ./var/www/bin/traceroute
+./var/www/bin/traceroute6
 ./var/www/cgi-bin
 ./var/www/cgi-bin/bgplg
 ./var/www/conf
