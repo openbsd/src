@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.71 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.72 2010/04/03 17:06:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1275,7 +1275,10 @@ termp_xr_pre(DECL_ARGS)
 {
 	const struct mdoc_node *nn;
 
-	assert(n->child && MDOC_TEXT == n->child->type);
+	if (NULL == n->child)
+		return(0);
+
+	assert(MDOC_TEXT == n->child->type);
 	nn = n->child;
 
 	term_word(p, nn->string);
