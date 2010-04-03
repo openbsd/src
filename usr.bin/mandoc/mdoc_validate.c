@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.45 2010/04/03 16:24:17 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.46 2010/04/03 16:30:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -618,8 +618,12 @@ pre_bl(PRE_ARGS)
 		case (MDOC_Inset):
 			/* FALLTHROUGH */
 		case (MDOC_Column):
-			if (type >= 0) 
-				return(mdoc_nerr(mdoc, n, EMULTILIST));
+			if (type >= 0) {
+				if ( ! mdoc_nwarn(mdoc, n, EMULTILIST))
+					return(0);
+				mdoc_argn_free(n->args, pos);
+				break;
+			}
 			type = n->args->argv[pos].arg;
 			break;
 		case (MDOC_Compact):

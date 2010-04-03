@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.22 2010/04/02 12:39:47 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.23 2010/04/03 16:30:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -285,7 +285,7 @@ mdoc_argv(struct mdoc *m, int line, enum mdoct tok,
 void
 mdoc_argv_free(struct mdoc_arg *p)
 {
-	int		 i, j;
+	int		 i;
 
 	if (NULL == p)
 		return;
@@ -297,23 +297,28 @@ mdoc_argv_free(struct mdoc_arg *p)
 	}
 	assert(p->argc);
 
-	/* LINTED */
-	for (i = 0; i < (int)p->argc; i++) {
-		if (0 == p->argv[i].sz)
-			continue;
-		if (NULL == p->argv[i].value)
-			continue;
-
-		/* LINTED */
-		for (j = 0; j < (int)p->argv[i].sz; j++) 
-			if (p->argv[i].value[j])
-				free(p->argv[i].value[j]);
-
-		free(p->argv[i].value);
-	}
+	for (i = p->argc - 1; i >= 0; i--)
+		mdoc_argn_free(p, i);
 
 	free(p->argv);
 	free(p);
+}
+
+
+void
+mdoc_argn_free(struct mdoc_arg *p, int iarg)
+{
+	struct mdoc_argv *arg = &p->argv[iarg];
+	int		  j;
+
+	if (arg->sz && arg->value) {
+		for (j = arg->sz - 1; j >= 0; j--) 
+			free(arg->value[j]);
+		free(arg->value);
+	}
+
+	for (--p->argc; iarg < (int)p->argc; iarg++)
+		p->argv[iarg] = p->argv[iarg+1];
 }
 
 

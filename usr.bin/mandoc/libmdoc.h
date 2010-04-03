@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.25 2010/04/02 12:39:47 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.26 2010/04/03 16:30:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -167,6 +167,7 @@ int		  mdoc_argv(struct mdoc *, int, enum mdoct,
 #define	ARGV_ARG	(1)
 #define	ARGV_WORD	(2)
 void		  mdoc_argv_free(struct mdoc_arg *);
+void		  mdoc_argn_free(struct mdoc_arg *, int);
 int		  mdoc_args(struct mdoc *, int,
 			int *, char *, enum mdoct, char **);
 int		  mdoc_zargs(struct mdoc *, int, 
