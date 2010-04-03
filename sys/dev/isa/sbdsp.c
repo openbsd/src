@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.29 2009/07/31 22:53:04 sthen Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.30 2010/04/03 23:22:42 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -562,6 +562,57 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 			continue;
 
 		p = mode == AUMODE_PLAY ? play : rec;
+
+		switch (model) {
+		case SB_1:
+		case SB_20:
+			if (mode == AUMODE_PLAY) {
+				if (p->sample_rate < 4000)
+					p->sample_rate = 4000;
+				else if (p->sample_rate > 22727)
+					p->sample_rate = 22727; /* 22050 ? */
+			} else {
+				if (p->sample_rate < 4000)
+					p->sample_rate = 4000;
+				else if (p->sample_rate > 12987)
+					p->sample_rate = 12987;
+			}
+			break;
+		case SB_2x:
+			if (mode == AUMODE_PLAY) {
+				if (p->sample_rate < 4000)
+					p->sample_rate = 4000;
+				else if (p->sample_rate > 45454)
+					p->sample_rate = 45454; /* 44100 ? */
+			} else {
+				if (p->sample_rate < 4000)
+					p->sample_rate = 4000;
+				else if (p->sample_rate > 14925)
+					p->sample_rate = 14925; /* ??? */
+			}
+			break;
+		case SB_PRO:
+		case SB_JAZZ:
+			if (p->channels == 2) {
+				if (p->sample_rate < 11025)
+					p->sample_rate = 11025;
+				else if (p->sample_rate > 22727)
+					p->sample_rate = 22727; /* 22050 ? */
+			} else {
+				if (p->sample_rate < 4000)
+					p->sample_rate = 4000;
+				else if (p->sample_rate > 45454)
+					p->sample_rate = 45454; /* 44100 ? */
+			}
+			break;
+		case SB_16:
+			if (p->sample_rate < 5000)
+				p->sample_rate = 5000;
+			else if (p->sample_rate > 45000)
+				p->sample_rate = 45000; /* 44100 ? */
+			break;
+		}
+
 		/* Locate proper commands */
 		for(m = mode == AUMODE_PLAY ? sbpmodes : sbrmodes;
 		    m->model != -1; m++) {
