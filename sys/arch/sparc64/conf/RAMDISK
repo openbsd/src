@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.96 2009/11/15 17:24:06 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.97 2010/04/03 00:53:30 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -109,6 +109,7 @@ epic*	at pci?			# SMC EPIC/100 ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
 #ixgb*	at pci?			# Intel Pro/10Gb ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
+bnx*	at pci?			# Broadcom BCM5706/5708 GigE
 stge*	at pci?			# Sundance TC9021 GigE
 rl*	at pci?			# RealTek 81[23]9 ethernet
 vr*	at pci?			# VIA Rhine ethernet
