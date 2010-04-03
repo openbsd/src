@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.37 2010/04/02 12:39:47 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.38 2010/04/03 16:24:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -596,8 +596,12 @@ parsetext(struct mdoc *m, int line, char *buf)
 	for (i = 0; ' ' == buf[i]; i++)
 		/* Skip leading whitespace. */ ;
 
-	if ('\0' == buf[i])
-		return(mdoc_perr(m, line, 0, ENOBLANK));
+	if ('\0' == buf[i]) {
+		if ( ! mdoc_pwarn(m, line, 0, ENOBLANK))
+			return(0);
+		if ( ! mdoc_elem_alloc(m, line, 0, MDOC_Pp, NULL))
+			return(0);
+	}
 
 	/*
 	 * Break apart a free-form line into tokens.  Spaces are
