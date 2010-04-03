@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.6 2009/10/22 21:14:10 ratchov Exp $
+.\"	$OpenBSD: midicat.1,v 1.7 2010/04/03 17:40:33 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: April 3 2010 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -23,9 +23,9 @@
 .Sh SYNOPSIS
 .Nm midicat
 .Op Fl dl
-.Op Fl f Ar device
 .Op Fl i Ar file
 .Op Fl o Ar file
+.Op Fl q Ar device
 .Op Fl U Ar unit
 .Sh DESCRIPTION
 The
@@ -45,13 +45,6 @@ If this option is specified,
 .Nm
 will run in the foreground and log to
 .Em stderr .
-.It Fl f Ar device
-The
-.Xr midi 4
-device or
-.Nm
-socket to use for MIDI input/output.
-In server mode, devices are subscribed to the MIDI thru box.
 .It Fl i Ar file
 Send contents of this file to the device.
 If the option argument is
@@ -71,6 +64,11 @@ Store received data from the device into this file.
 If the option argument is
 .Sq -
 then standard output will be used.
+.It Fl q Ar device
+The
+.Xr sndio 7
+MIDI device to use for MIDI input/output.
+In server mode, devices are subscribed to the MIDI thru box.
 .It Fl U Ar unit
 Use the given unit number when creating a software MIDI thru box.
 Only one

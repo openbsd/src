@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.12 2010/01/15 22:17:44 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.13 2010/04/03 17:40:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -30,6 +30,8 @@ struct sock {
 	 * to decode/encode messages in the stream.
 	 */
 	struct amsg rmsg, wmsg;		/* messages being sent/received */
+	unsigned wmax;			/* max frames we're allowed to write */
+	unsigned rmax;			/* max frames we're allowed to read */
 	unsigned rtodo;			/* input bytes not read yet */
 	unsigned wtodo;			/* output bytes not written yet */
 #define SOCK_RDATA	0		/* data chunk being read */
@@ -43,14 +45,17 @@ struct sock {
 #define SOCK_HELLO	0		/* waiting for HELLO message */
 #define SOCK_INIT	1		/* parameter negotiation */
 #define SOCK_START	2		/* filling play buffers */
-#define SOCK_RUN	3		/* attached to the mix / sub */
-#define SOCK_MIDI	4		/* raw byte stream (midi) */
+#define SOCK_READY	3		/* play buffers full */
+#define SOCK_RUN	4		/* attached to the mix / sub */
+#define SOCK_STOP	5		/* draining rec buffers */
+#define SOCK_MIDI	6		/* raw byte stream (midi) */
 	unsigned pstate;		/* one of the above */
 	unsigned mode;			/* a set of AMSG_PLAY, AMSG_REC */
 	struct aparams rpar;		/* read (ie play) parameters */
 	struct aparams wpar;		/* write (ie rec) parameters */
 	int delta;			/* pos. change to send */
 	int tickpending;		/* delta waiting to be transmitted */
+	int startpending;		/* initial delta waiting to be transmitted */
 	unsigned walign;		/* align data packets to this */
 	unsigned bufsz;			/* total buffer size */
 	unsigned round;			/* block size */

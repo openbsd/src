@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.1 2010/01/13 10:02:52 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.2 2010/04/03 17:40:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,6 +26,7 @@
 
 #include "aparams.h"
 #include "aproc.h"
+#include "abuf.h"
 #include "conf.h"
 #include "dev.h"
 #include "file.h"
@@ -37,6 +38,9 @@
 struct siofile {
 	struct file file;
 	struct sio_hdl *hdl;
+	unsigned wtickets, wbpf;
+	unsigned rtickets, rbpf;
+	unsigned bufsz;
 	int started;
 };
 
@@ -62,6 +66,95 @@ struct fileops siofile_ops = {
 	siofile_revents
 };
 
+int wsio_out(struct aproc *, struct abuf *);
+int rsio_in(struct aproc *, struct abuf *);
+
+struct aproc_ops rsio_ops = {
+	"rsio",
+	rsio_in,
+	rfile_out,
+	rfile_eof,
+	rfile_hup,
+	NULL, /* newin */
+	NULL, /* newout */
+	aproc_ipos,
+	aproc_opos,
+	rfile_done
+};
+
+struct aproc_ops wsio_ops = {
+	"wsio",
+	wfile_in,
+	wsio_out,
+	wfile_eof,
+	wfile_hup,
+	NULL, /* newin */
+	NULL, /* newout */
+	aproc_ipos,
+	aproc_opos,
+	wfile_done
+};
+
+struct aproc *
+rsio_new(struct file *f)
+{
+	struct aproc *p;
+
+	p = aproc_new(&rsio_ops, f->name);
+	p->u.io.file = f;
+	p->u.io.partial = 0;
+	f->rproc = p;
+	return p;
+}
+
+struct aproc *
+wsio_new(struct file *f)
+{
+	struct aproc *p;
+
+	p = aproc_new(&wsio_ops, f->name);
+	p->u.io.file = f;
+	p->u.io.partial = 0;
+	f->wproc = p;
+	return p;
+}
+
+int
+wsio_out(struct aproc *p, struct abuf *obuf)
+{
+	struct siofile *f = (struct siofile *)p->u.io.file;
+
+	if (f->wtickets == 0) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			file_dbg(&f->file);
+			dbg_puts(": no more write tickets\n");
+		}
+#endif
+		f->file.state &= ~FILE_WOK;
+		return 0;
+	}
+	return wfile_out(p, obuf);
+}
+
+int
+rsio_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct siofile *f = (struct siofile *)p->u.io.file;
+
+	if (f->rtickets == 0) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			file_dbg(&f->file);
+			dbg_puts(": no more read tickets\n");
+		}
+#endif
+		f->file.state &= ~FILE_ROK;
+		return 0;
+	}
+	return rfile_in(p, ibuf);
+}
+
 void
 siofile_cb(void *addr, int delta)
 {
@@ -70,11 +163,17 @@ siofile_cb(void *addr, int delta)
 
 #ifdef DEBUG
 	if (delta < 0 || delta > (60 * RATE_MAX)) {
-		dbg_puts(f->file.name);
+		file_dbg(&f->file);
 		dbg_puts(": ");
 		dbg_puti(delta);
 		dbg_puts(": bogus sndio delta");
 		dbg_panic();
+	}
+	if (debug_level >= 4) {
+		file_dbg(&f->file);
+		dbg_puts(": tick, delta = ");
+		dbg_puti(delta);
+		dbg_puts("\n");
 	}
 #endif
 	if (delta != 0) {
@@ -87,31 +186,27 @@ siofile_cb(void *addr, int delta)
 		if (p && p->ops->ipos)
 			p->ops->ipos(p, NULL, delta);
 	}
+	f->wtickets += delta * f->wbpf;
+	f->rtickets += delta * f->rbpf;
 }
 
 /*
  * Open the device.
  */
 struct siofile *
-siofile_new(struct fileops *ops, char *path,
+siofile_new(struct fileops *ops, char *path, unsigned mode,
     struct aparams *ipar, struct aparams *opar,
     unsigned *bufsz, unsigned *round)
 {
 	struct sio_par par;
 	struct sio_hdl *hdl;
 	struct siofile *f;
-	int mode;
 
-	mode = 0;
-	if (ipar)
-		mode |= SIO_REC;
-	if (opar)
-		mode |= SIO_PLAY;
 	hdl = sio_open(path, mode, 1);
 	if (hdl == NULL)
 		return NULL;
 	sio_initpar(&par);
-	if (ipar) {
+	if (mode & SIO_REC) {
 		par.bits = ipar->bits;
 		par.bps = ipar->bps;
 		par.sig = ipar->sig;
@@ -127,7 +222,7 @@ siofile_new(struct fileops *ops, char *path,
 		par.msb = opar->msb;
 		par.rate = opar->rate;
 	}
-	if (opar)
+	if (mode & SIO_PLAY)
 		par.pchan = opar->cmax - opar->cmin + 1;
 	par.appbufsz = *bufsz;
 	par.round = *round;
@@ -135,7 +230,7 @@ siofile_new(struct fileops *ops, char *path,
 		goto bad_close;
 	if (!sio_getpar(hdl, &par))
 		goto bad_close;
-	if (ipar) {
+	if (mode & SIO_REC) {
 		ipar->bits = par.bits;
 		ipar->bps = par.bps;
 		ipar->sig = par.sig;
@@ -144,7 +239,7 @@ siofile_new(struct fileops *ops, char *path,
 		ipar->rate = par.rate;
 		ipar->cmax = ipar->cmin + par.rchan - 1;
 	}
-	if (opar) {
+	if (mode & SIO_PLAY) {
 		opar->bits = par.bits;
 		opar->bps = par.bps;
 		opar->sig = par.sig;
@@ -162,6 +257,11 @@ siofile_new(struct fileops *ops, char *path,
 		goto bad_close;
 	f->hdl = hdl;
 	f->started = 0;
+	f->wtickets = 0;
+	f->rtickets = 0;
+	f->wbpf = par.pchan * par.bps;
+	f->rbpf = par.rchan * par.bps;
+	f->bufsz = par.bufsz;
 	sio_onmove(f->hdl, siofile_cb, f);
 	return f;
  bad_close:
@@ -183,6 +283,8 @@ siofile_start(struct file *file)
 		return;
 	}
 	f->started = 1;
+	f->wtickets = f->bufsz * f->wbpf;
+	f->rtickets = 0;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		file_dbg(&f->file);
@@ -219,6 +321,14 @@ siofile_read(struct file *file, unsigned char *data, unsigned count)
 	struct siofile *f = (struct siofile *)file;
 	unsigned n;
 
+#ifdef DEBUG
+	if (f->rtickets == 0) {
+		file_dbg(&f->file);
+		dbg_puts(": called with no read tickets\n");
+	}
+#endif
+	if (count > f->rtickets)
+		count = f->rtickets;
 	n = f->started ? sio_read(f->hdl, data, count) : 0;
 	if (n == 0) {
 		f->file.state &= ~FILE_ROK;
@@ -237,6 +347,17 @@ siofile_read(struct file *file, unsigned char *data, unsigned count)
 #endif
 		}
 		return 0;
+	} else {
+		f->rtickets -= n;
+		if (f->rtickets == 0) {
+			f->file.state &= ~FILE_ROK;
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(&f->file);
+				dbg_puts(": read tickets exhausted\n");
+			}
+#endif
+		}
 	}
 	return n;
 
@@ -248,6 +369,14 @@ siofile_write(struct file *file, unsigned char *data, unsigned count)
 	struct siofile *f = (struct siofile *)file;
 	unsigned n;
 
+#ifdef DEBUG
+	if (f->wtickets == 0) {
+		file_dbg(&f->file);
+		dbg_puts(": called with no write tickets\n");
+	}
+#endif
+	if (count > f->wtickets)
+		count = f->wtickets;
 	n = f->started ? sio_write(f->hdl, data, count) : 0;
 	if (n == 0) {
 		f->file.state &= ~FILE_WOK;
@@ -266,6 +395,17 @@ siofile_write(struct file *file, unsigned char *data, unsigned count)
 #endif
 		}
 		return 0;
+	} else {
+		f->wtickets -= n;
+		if (f->wtickets == 0) {
+			f->file.state &= ~FILE_WOK;
+#ifdef DEBUG
+			if (debug_level >= 4) {
+				file_dbg(&f->file);
+				dbg_puts(": write tickets exhausted\n");
+			}
+#endif
+		}
 	}
 	return n;
 }

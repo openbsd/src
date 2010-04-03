@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.19 2009/10/09 16:49:48 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.20 2010/04/03 17:40:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,9 +39,6 @@ struct abuf {
 	unsigned start;		/* offset where data starts */
 	unsigned used;		/* valid data */
 	unsigned len;		/* size of the ring */
-	unsigned abspos;	/* frame number of the start position */
-	unsigned silence;	/* silence to insert on next write */
-	unsigned drop;		/* bytes to drop on next read */
 	struct aproc *rproc;	/* reader */
 	struct aproc *wproc;	/* writer */
 	struct abuf *duplex;	/* link to buffer of the other direction */
@@ -56,8 +53,9 @@ struct abuf {
 			int weight;	/* dynamic range */	
 			int maxweight;	/* max dynamic range allowed */
 			unsigned vol;	/* volume within the dynamic range */
-			unsigned done;	/* bytes ready */
+			unsigned done;	/* frames ready */
 			unsigned xrun;	/* underrun policy */
+			int drop;	/* frames to drop on next read */
 		} mix;
 		struct {
 			unsigned st;	/* MIDI running status */
@@ -73,11 +71,12 @@ struct abuf {
 	 */
 	union {
 		struct {
-			unsigned todo;	/* bytes to process */
+			unsigned todo;	/* frames to process */
 		} mix;
 		struct {
-			unsigned done;	/* bytes copied */
+			unsigned done;	/* frames copied */
 			unsigned xrun;	/* overrun policy */
+			int silence;	/* silence to add on next write */
 		} sub;
 	} w;
 };
@@ -86,12 +85,12 @@ struct abuf {
  * the buffer contains at least one frame. This macro should
  * be used to check if the buffer can be flushed
  */
-#define ABUF_ROK(b) ((b)->used >= (b)->bpf)
+#define ABUF_ROK(b) ((b)->used > 0)
 
 /*
  * there's room for at least one frame
  */
-#define ABUF_WOK(b) ((b)->len - (b)->used >= (b)->bpf)
+#define ABUF_WOK(b) ((b)->len - (b)->used > 0)
 
 /*
  * the buffer is empty and has no writer anymore
@@ -104,18 +103,6 @@ struct abuf {
  * be not yet connected buffer (eg. socket play buffer)
  */
 #define ABUF_HUP(b) (!ABUF_WOK(b) && (b)->rproc == NULL)
-
-/*
- * similar to !ABUF_WOK, but is used for file i/o, where
- * operation may not involve an integer number of frames
- */
-#define ABUF_FULL(b) ((b)->used == (b)->len)
-
-/*
- * same as !ABUF_ROK, but used for files, where
- * operations are byte orientated, not frame-oriented
- */
-#define ABUF_EMPTY(b) ((b)->used == 0)
 
 struct abuf *abuf_new(unsigned, struct aparams *);
 void abuf_del(struct abuf *);

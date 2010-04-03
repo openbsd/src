@@ -1,4 +1,4 @@
-/*	$OpenBSD: legacy.c,v 1.8 2009/07/25 10:54:29 ratchov Exp $	*/
+/*	$OpenBSD: legacy.c,v 1.9 2010/04/03 17:40:33 ratchov Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -64,7 +64,7 @@ legacy_play(char *dev, char *aufile)
 	struct sio_par spar, par;
 	struct aparams apar;
 	ssize_t rd;
-	off_t datasz;
+	off_t datasz, dummy;
 	char buf[5120];
 	size_t readsz;
 	int fd, fmt = FMT_RAW;
@@ -96,7 +96,7 @@ legacy_play(char *dev, char *aufile)
 		if (read(fd, &chan, sizeof(chan)) == sizeof(chan))
 			chan = ntohl(chan);
 	} else if (!strncmp(magic, "RIFF", 4) &&
-		    wav_readhdr(fd, &apar, &datasz, &map)) {
+		    wav_readhdr(fd, &apar, &dummy, &datasz, &map)) {
 			fmt = FMT_WAV;
 	}
 

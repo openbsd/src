@@ -23,7 +23,9 @@
 #include "aproc.h"
 #include "conf.h"
 #include "dev.h"
+#include "midi.h"
 #include "wav.h"
+#include "opt.h"
 #ifdef DEBUG
 #include "dbg.h"
 #endif
@@ -123,19 +125,33 @@ int rwav_out(struct aproc *, struct abuf *);
 void rwav_eof(struct aproc *, struct abuf *);
 void rwav_hup(struct aproc *, struct abuf *);
 void rwav_done(struct aproc *);
+struct aproc *rwav_new(struct file *);
 
 int wwav_in(struct aproc *, struct abuf *);
 int wwav_out(struct aproc *, struct abuf *);
 void wwav_eof(struct aproc *, struct abuf *);
 void wwav_hup(struct aproc *, struct abuf *);
 void wwav_done(struct aproc *);
+struct aproc *wwav_new(struct file *);
+
+void wav_setvol(void *, unsigned);
+void wav_startreq(void *);
+void wav_stopreq(void *);
+void wav_locreq(void *, unsigned);
+
+struct ctl_ops ctl_wavops = {
+	wav_setvol,
+	wav_startreq,
+	wav_stopreq,
+	wav_locreq
+};
 
 struct aproc_ops rwav_ops = {
 	"rwav",
 	rwav_in,
 	rwav_out,
-	rwav_eof,
-	rwav_hup,
+	rfile_eof,
+	rfile_hup,
 	NULL, /* newin */
 	NULL, /* newout */
 	NULL, /* ipos */
@@ -147,8 +163,8 @@ struct aproc_ops wwav_ops = {
 	"wwav",
 	wwav_in,
 	wwav_out,
-	wwav_eof,
-	wwav_hup,
+	wfile_eof,
+	wfile_hup,
 	NULL, /* newin */
 	NULL, /* newout */
 	NULL, /* ipos */
@@ -156,189 +172,466 @@ struct aproc_ops wwav_ops = {
 	wwav_done
 };
 
-struct aproc *
-rwav_new(struct file *f)
-{
-	struct aproc *p;
-
-	p = aproc_new(&rwav_ops, f->name);
-	p->u.io.file = f;
-	f->rproc = p;
-	return p;
-}
-
-int
-rwav_in(struct aproc *p, struct abuf *ibuf_dummy)
-{
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
-	struct file *f = p->u.io.file;
-	unsigned char *data;
-	unsigned count;
-
-	if (ABUF_FULL(obuf) || !(f->state & FILE_ROK))
-		return 0;
-	data = abuf_wgetblk(obuf, &count, 0);
-	count = file_read(f, data, count);
-	if (count == 0)
-		return 0;
-	abuf_wcommit(obuf, count);
-	if (!abuf_flush(obuf))
-		return 0;
-	return 1;
-}
-
-int
-rwav_out(struct aproc *p, struct abuf *obuf)
-{
-	struct file *f = p->u.io.file;
-	unsigned char *data;
-	unsigned count;
-
-	if (f->state & FILE_RINUSE)
-		return 0;
-	if (ABUF_FULL(obuf) || !(f->state & FILE_ROK))
-		return 0;
-	data = abuf_wgetblk(obuf, &count, 0);
-	count = file_read(f, data, count);
-	if (count == 0)
-		return 0;
-	abuf_wcommit(obuf, count);
-	return 1;
-}
-
+#ifdef DEBUG
+/*
+ * print the given wav structure
+ */
 void
-rwav_done(struct aproc *p)
+wav_dbg(struct wav *f)
 {
-	struct file *f = p->u.io.file;
-	struct abuf *obuf;
+	static char *pstates[] = { "ini", "sta", "rdy", "run", "fai" };
 
-	if (f == NULL)
-		return;
-	/*
-	 * all buffers must be detached before deleting f->wproc,
-	 * because otherwise it could trigger this code again
-	 */
-	obuf = LIST_FIRST(&p->obuflist);
-	if (obuf)
-		abuf_eof(obuf);
-	if (f->wproc) {
-		f->rproc = NULL;
-		aproc_del(f->wproc);
+	dbg_puts("wav(");
+	if (f->slot >= 0 && APROC_OK(dev_midi)) {
+		dbg_puts(dev_midi->u.ctl.slot[f->slot].name);
+		dbg_putu(dev_midi->u.ctl.slot[f->slot].unit);
 	} else
-		file_del(f);
-	p->u.io.file = NULL;
+		dbg_puts(f->pipe.file.name);
+	dbg_puts(")/");
+	dbg_puts(pstates[f->pstate]);
 }
+#endif
 
+/*
+ * convert ``count'' samples using the given char->short map
+ */
 void
-rwav_eof(struct aproc *p, struct abuf *ibuf_dummy)
+wav_conv(unsigned char *data, unsigned count, short *map)
 {
-	aproc_del(p);
+	unsigned i;
+	unsigned char *iptr;
+	short *optr;
+
+	iptr = data + count;
+	optr = (short *)data + count;
+	for (i = count; i > 0; i--) {
+		--optr;
+		--iptr;
+		*optr = map[*iptr];
+	}
 }
 
+/*
+ * read method of the file structure
+ */
+unsigned
+wav_read(struct file *file, unsigned char *data, unsigned count)
+{
+	struct wav *f = (struct wav *)file;
+	unsigned n;
+
+	if (f->map)
+		count /= sizeof(short);
+	if (f->rbytes >= 0 && count > f->rbytes) {
+		count = f->rbytes; /* file->rbytes fits in count */
+		if (count == 0) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				wav_dbg(f);
+				dbg_puts(": read complete\n");
+			}
+#endif
+			if (!f->tr)
+				file_eof(&f->pipe.file);
+			return 0;
+		}
+	}
+	n = pipe_read(file, data, count);
+	if (n == 0)
+		return 0;
+	if (f->rbytes >= 0)
+		f->rbytes -= n;
+	if (f->map) {
+		wav_conv(data, n, f->map);
+		n *= sizeof(short);
+	}
+	return n;
+}
+
+/*
+ * write method of the file structure
+ */
+unsigned
+wav_write(struct file *file, unsigned char *data, unsigned count)
+{
+	struct wav *f = (struct wav *)file;
+	unsigned n;
+
+	if (f->wbytes >= 0 && count > f->wbytes) {
+		count = f->wbytes; /* wbytes fits in count */
+		if (count == 0) {
+#ifdef DEBUG
+			if (debug_level >= 3) {
+				wav_dbg(f);
+				dbg_puts(": write complete\n");
+			}
+#endif
+			file_hup(&f->pipe.file);
+			return 0;
+		}
+	}
+	n = pipe_write(file, data, count);
+	if (f->wbytes >= 0)
+		f->wbytes -= n;
+	f->endpos += n;
+	return n;
+}
+
+/*
+ * close method of the file structure
+ */
 void
-rwav_hup(struct aproc *p, struct abuf *obuf)
+wav_close(struct file *file)
 {
-	aproc_del(p);
+	struct wav *f = (struct wav *)file;
+
+	if (f->mode & MODE_RECMASK) {
+		pipe_trunc(&f->pipe.file, f->endpos);
+		if (f->hdr == HDR_WAV) {
+			wav_writehdr(f->pipe.fd,
+			    &f->hpar,
+			    &f->startpos,
+			    f->endpos - f->startpos);
+		}
+	}
+	pipe_close(file);
 }
 
-struct aproc *
-wwav_new(struct file *f)
-{
-	struct aproc *p;
-
-	p = aproc_new(&wwav_ops, f->name);
-	p->u.io.file = f;
-	f->wproc = p;
-	return p;
-}
-
-void
-wwav_done(struct aproc *p)
-{
-	struct file *f = p->u.io.file;
-	struct abuf *ibuf;
-
-	if (f == NULL)
-		return;
-	/*
-	 * all buffers must be detached before deleting f->rproc,
-	 * because otherwise it could trigger this code again
-	 */
-	ibuf = LIST_FIRST(&p->ibuflist);
-	if (ibuf)
-		abuf_hup(ibuf);
-	if (f->rproc) {
-		f->wproc = NULL;
-		aproc_del(f->rproc);
-	} else
-		file_del(f);
-	p->u.io.file = NULL;
-}
-
+/*
+ * attach play (rec) abuf structure to the device and
+ * switch to the ``RUN'' state; the play abug must not be empty
+ */
 int
-wwav_in(struct aproc *p, struct abuf *ibuf)
+wav_attach(struct wav *f, int force)
 {
-	struct file *f = p->u.io.file;
-	unsigned char *data;
-	unsigned count;
+	struct abuf *rbuf = NULL, *wbuf = NULL;
 
-	if (f->state & FILE_WINUSE)
-		return 0;
-	if (ABUF_EMPTY(ibuf) || !(f->state & FILE_WOK))
-		return 0;
-	data = abuf_rgetblk(ibuf, &count, 0);
-	count = file_write(f, data, count);
-	if (count == 0)
-		return 0;
-	abuf_rdiscard(ibuf, count);
+	if (f->mode & MODE_PLAY)
+		rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+	if (f->mode & MODE_RECMASK)
+		wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
+	f->pstate = WAV_RUN;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		wav_dbg(f);
+		dbg_puts(": attaching\n");
+	}
+#endif
+	dev_attach(f->pipe.file.name, f->mode,
+	    rbuf, &f->hpar, wbuf, &f->hpar, f->xrun, f->maxweight);
+	if (f->mode & MODE_PLAY)
+		dev_setvol(rbuf, MIDI_TO_ADATA(f->vol));
 	return 1;
 }
 
-int
-wwav_out(struct aproc *p, struct abuf *obuf_dummy)
+/*
+ * allocate the play (rec) abuf structure; if this is a
+ * file to record, then attach it to the device
+ *
+ * XXX: buffer size should be larger than dev_bufsz, because
+ *	in non-server mode we don't prime play buffers with
+ *	silence
+ */
+void
+wav_allocbuf(struct wav *f)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
-	struct file *f = p->u.io.file;
-	unsigned char *data;
-	unsigned count;
+	struct abuf *buf;
+	unsigned nfr;
 
-	if (!abuf_fill(ibuf))
-		return 0;
-	if (ABUF_EMPTY(ibuf) || !(f->state & FILE_WOK))
-		return 0;
-	data = abuf_rgetblk(ibuf, &count, 0);
-	if (count == 0) {
-		/* XXX: this can't happen, right ? */
+	f->pstate = WAV_START;
+	if (f->mode & MODE_PLAY) {
+		nfr = 2 * dev_bufsz * f->hpar.rate / dev_rate;
+		buf = abuf_new(nfr, &f->hpar);
+		aproc_setout(f->pipe.file.rproc, buf);
+		abuf_fill(buf);
+		if (!ABUF_WOK(buf) || (f->pipe.file.state & FILE_EOF))
+			f->pstate = WAV_READY;
+	}
+	if (f->mode & MODE_RECMASK) {
+		nfr = 2 * dev_bufsz * f->hpar.rate / dev_rate;
+		buf = abuf_new(nfr, &f->hpar);
+		aproc_setin(f->pipe.file.wproc, buf);
+		f->pstate = WAV_READY;
+	}
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		wav_dbg(f);
+		dbg_puts(": allocating buffers\n");
+	}
+#endif
+	if (f->pstate == WAV_READY && ctl_slotstart(dev_midi, f->slot))
+		(void)wav_attach(f, 0);
+}
+
+/*
+ * free abuf structure and switch to the ``INIT'' state
+ */
+void
+wav_freebuf(struct wav *f)
+{
+	struct abuf *rbuf = NULL, *wbuf = NULL;
+
+	if (f->mode & MODE_PLAY)
+		rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+	if (f->mode & MODE_RECMASK)
+		wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
+	f->pstate = WAV_INIT;
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		wav_dbg(f);
+		dbg_puts(": freeing buffers\n");
+	}
+#endif
+	if (rbuf || wbuf)
+		ctl_slotstop(dev_midi, f->slot);
+	if (rbuf)
+		abuf_eof(rbuf);
+	if (wbuf)
+		abuf_hup(wbuf);
+}
+
+/*
+ * switch to the ``INIT'' state performing
+ * necessary actions to reach it
+ */
+void
+wav_reset(struct wav *f)
+{
+	switch (f->pstate) {
+	case WAV_START:
+	case WAV_READY:
+		if (ctl_slotstart(dev_midi, f->slot))
+			(void)wav_attach(f, 1);
+		/* PASSTHROUGH */
+	case WAV_RUN:
+		wav_freebuf(f);
+		f->pstate = WAV_INIT;
+		/* PASSTHROUGH */
+	case WAV_INIT:
+	case WAV_FAILED:
+		/* nothing yet */
+		break;
+	}
+}
+
+/*
+ * terminate the wav reader/writer
+ */
+void
+wav_exit(struct wav *f)
+{
+	if (f->mode & MODE_PLAY) {
+		aproc_del(f->pipe.file.rproc);
+	} else if (f->mode & MODE_RECMASK) {
+		aproc_del(f->pipe.file.wproc);
+	}
+}
+
+/*
+ * seek to f->mmcpos and prepare to start, close
+ * the file on error.
+ */
+int
+wav_seekmmc(struct wav *f)
+{
+	/*
+	 * don't go beyond the end-of-file, if so
+	 * put it in INIT state so it dosn't start
+	 */
+	if (f->mmcpos > f->endpos) {
+		wav_reset(f);
+		f->pstate = WAV_FAILED;
+		/*
+		 * don't make other stream wait for us
+		 */
+		if (f->slot >= 0)
+			ctl_slotstart(dev_midi, f->slot);
 		return 0;
 	}
-	count = file_write(f, data, count);
-	if (count == 0)
+	if (!pipe_seek(&f->pipe.file, f->mmcpos)) {
+		wav_exit(f);
 		return 0;
-	abuf_rdiscard(ibuf, count);
+	}
+	if (f->hdr == HDR_WAV)
+		f->wbytes = WAV_DATAMAX - f->mmcpos;
+	f->rbytes = f->endpos - f->mmcpos;
+	wav_reset(f);
+	wav_allocbuf(f);
 	return 1;
 }
 
-void
-wwav_eof(struct aproc *p, struct abuf *ibuf)
+/*
+ * read samples from the file and possibly start it
+ */
+int
+wav_rdata(struct wav *f)
 {
-	aproc_del(p);
+	struct aproc *p;
+	struct abuf *obuf;
+
+	p = f->pipe.file.rproc;
+	obuf = LIST_FIRST(&p->obuflist);
+	if (obuf == NULL)
+		return 0;
+	if (!ABUF_WOK(obuf) || !(f->pipe.file.state & FILE_ROK))
+		return 0;
+	if (!rfile_do(p, obuf->len, NULL))
+		return 0;
+	switch (f->pstate) {
+	case WAV_START:
+		if (!ABUF_WOK(obuf) || (f->pipe.file.state & FILE_EOF))
+			f->pstate = WAV_READY;
+		/* PASSTHROUGH */
+	case WAV_READY:
+		if (ctl_slotstart(dev_midi, f->slot))
+			(void)wav_attach(f, 0);
+		break;
+#ifdef DEBUG
+	case WAV_RUN:
+		break;
+	default:
+		wav_dbg(f);
+		dbg_puts(": bad state\n");
+		dbg_panic();
+#endif
+	}
+	if (f->rbytes == 0 && f->tr) {
+#ifdef DEBUG
+		if (debug_level >= 3) {
+			wav_dbg(f);
+			dbg_puts(": trying to restart\n");
+		}
+#endif
+		if (!wav_seekmmc(f))
+			return 0;
+	}
+	return 1;
 }
 
-void
-wwav_hup(struct aproc *p, struct abuf *obuf_dummy)
+int
+wav_wdata(struct wav *f)
 {
-	aproc_del(p);
+	struct aproc *p;
+	struct abuf *ibuf;
+
+	if (!(f->pipe.file.state & FILE_WOK))
+		return 0;
+	p = f->pipe.file.wproc;
+	ibuf = LIST_FIRST(&p->ibuflist);
+	if (ibuf == NULL)
+		return 0;
+	if (!ABUF_ROK(ibuf))
+		return 0;
+	if (!wfile_do(p, ibuf->len, NULL))
+		return 0;
+	return 1;
 }
 
+/*
+ * callback to set the volume, invoked by the MIDI control code
+ */
+void
+wav_setvol(void *arg, unsigned vol)
+{
+	struct wav *f = (struct wav *)arg;
+	struct abuf *rbuf;
+
+	f->vol = vol;
+	if ((f->mode & MODE_PLAY) && f->pstate == WAV_RUN) {
+		rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+		dev_setvol(rbuf, MIDI_TO_ADATA(vol));
+	}
+}
+
+/*
+ * callback to start the stream, invoked by the MIDI control code
+ */
+void
+wav_startreq(void *arg)
+{
+	struct wav *f = (struct wav *)arg;
+
+	switch (f->pstate) {
+	case WAV_FAILED:
+#ifdef DEBUG
+		if (debug_level >= 2) {
+			wav_dbg(f);
+			dbg_puts(": skipped (failed to seek)\n");
+		}
+#endif
+		return;
+	case WAV_READY:
+		if (f->mode & MODE_RECMASK)
+			f->endpos = f->startpos;
+		(void)wav_attach(f, 0);
+		break;
+#ifdef DEBUG
+	default:
+		wav_dbg(f);
+		dbg_puts(": not in READY state\n");
+		dbg_panic();
+		break;
+#endif
+	}
+}
+
+/*
+ * callback to stop the stream, invoked by the MIDI control code
+ */
+void
+wav_stopreq(void *arg)
+{
+	struct wav *f = (struct wav *)arg;
+
+#ifdef DEBUG
+	if (debug_level >= 2) {
+		wav_dbg(f);
+		dbg_puts(": stopping");
+		if (f->pstate != WAV_FAILED && (f->mode & MODE_RECMASK)) {
+			dbg_puts(", ");
+			dbg_putu(f->endpos);
+			dbg_puts(" bytes recorded");
+		}
+		dbg_puts("\n");
+	}
+#endif
+	if (!f->tr) {
+		wav_exit(f);
+		return;
+	}
+	(void)wav_seekmmc(f);
+}
+
+/*
+ * callback to relocate the stream, invoked by the MIDI control code
+ * on a stopped stream
+ */
+void
+wav_locreq(void *arg, unsigned mmc)
+{
+	struct wav *f = (struct wav *)arg;
+
+#ifdef DEBUG
+	if (f->pstate == WAV_RUN) {
+		wav_dbg(f);
+		dbg_puts(": in RUN state\n");
+		dbg_panic();
+	}
+#endif
+	f->mmcpos = f->startpos + 
+	    ((off_t)mmc * f->hpar.rate / MTC_SEC) * aparams_bpf(&f->hpar);
+	(void)wav_seekmmc(f);
+}
+
+/*
+ * create a file reader in the ``INIT'' state
+ */
 struct wav *
-wav_new_in(struct fileops *ops, char *name, unsigned hdr, 
-    struct aparams *par, unsigned xrun, unsigned volctl)
+wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr, 
+    struct aparams *par, unsigned xrun, unsigned volctl, int tr)
 {
 	int fd;
 	struct wav *f;
-	struct aproc *p;
-	struct abuf *buf;
-	unsigned nfr;
 
 	if (name != NULL) {
 		fd = open(name, O_RDONLY | O_NONBLOCK, 0666);
@@ -356,43 +649,59 @@ wav_new_in(struct fileops *ops, char *name, unsigned hdr,
 	if (f == NULL)
 		return NULL;
 	if (hdr == HDR_WAV) {
-		if (!wav_readhdr(f->pipe.fd, par, &f->rbytes, &f->map)) {
+		if (!wav_readhdr(f->pipe.fd, par, &f->startpos, &f->rbytes, &f->map)) {
 			file_del((struct file *)f);
 			return NULL;
 		}
-		f->hpar = *par;
+		f->endpos = f->startpos + f->rbytes;
 	} else {
-		f->rbytes = -1;
+		f->startpos = 0;
+		f->endpos = pipe_endpos(&f->pipe.file);
+		if (f->endpos > 0) {
+			if (!pipe_seek(&f->pipe.file, 0)) {
+				file_del((struct file *)f);
+				return NULL;
+			}
+			f->rbytes = f->endpos;
+		} else
+			f->rbytes = -1;
 		f->map = NULL;
 	}
+	f->tr = tr;
+	f->mode = mode;
+	f->hpar = *par;
 	f->hdr = 0;
-	nfr = dev_bufsz * par->rate / dev_rate;
-	buf = abuf_new(nfr, par);
-	p = rwav_new((struct file *)f);
-	aproc_setout(p, buf);
-	abuf_fill(buf); /* XXX: move this in dev_attach() ? */
-	dev_attach(name, buf, par, xrun, NULL, NULL, 0, ADATA_UNIT);
-	dev_setvol(buf, MIDI_TO_ADATA(volctl));
+	f->xrun = xrun;
+	f->maxweight = MIDI_TO_ADATA(volctl);
+	f->slot = ctl_slotnew(dev_midi, "play", &ctl_wavops, f, 1);
+	rwav_new((struct file *)f);
+	wav_allocbuf(f);
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts(name);
 		dbg_puts(": playing ");
+		dbg_putu(f->startpos);
+		dbg_puts("..");
+		dbg_putu(f->endpos);
+		dbg_puts(": playing ");
 		aparams_dbg(par);
+		if (f->tr)
+			dbg_puts(", mmc");
 		dbg_puts("\n");
 	}
 #endif
 	return f;
 }
 
+/*
+ * create a file writer in the ``INIT'' state
+ */
 struct wav *
-wav_new_out(struct fileops *ops, char *name, unsigned hdr,
-    struct aparams *par, unsigned xrun)
+wav_new_out(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
+    struct aparams *par, unsigned xrun, int tr)
 {
 	int fd;
 	struct wav *f;
-	struct aproc *p;
-	struct abuf *buf;
-	unsigned nfr;
 
 	if (name == NULL) {
 		name = "stdout";
@@ -414,20 +723,24 @@ wav_new_out(struct fileops *ops, char *name, unsigned hdr,
 		par->le = 1;
 		par->sig = (par->bits <= 8) ? 0 : 1;
 		par->bps = (par->bits + 7) / 8;
-		if (!wav_writehdr(f->pipe.fd, par)) {
+		if (!wav_writehdr(f->pipe.fd, par, &f->startpos, 0)) {
 			file_del((struct file *)f);
 			return NULL;
 		}
-		f->hpar = *par;
 		f->wbytes = WAV_DATAMAX;
-	} else
+		f->endpos = f->startpos;
+	} else {
 		f->wbytes = -1;
+		f->startpos = f->endpos = 0;
+	}
+	f->tr = tr;
+	f->mode = mode;
+	f->hpar = *par;
 	f->hdr = hdr;
-	nfr = dev_bufsz * par->rate / dev_rate;
-	p = wwav_new((struct file *)f);
-	buf = abuf_new(nfr, par);
-	aproc_setin(p, buf);
-	dev_attach(name, NULL, NULL, 0, buf, par, xrun, 0);
+	f->xrun = xrun;
+	f->slot = ctl_slotnew(dev_midi, "rec", &ctl_wavops, f, 1);
+	wwav_new((struct file *)f);
+	wav_allocbuf(f);
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts(name);
@@ -440,86 +753,107 @@ wav_new_out(struct fileops *ops, char *name, unsigned hdr,
 }
 
 void
-wav_conv(unsigned char *data, unsigned count, short *map)
+rwav_done(struct aproc *p)
 {
-	unsigned i;
-	unsigned char *iptr;
-	short *optr;
+	struct wav *f = (struct wav *)p->u.io.file;
 
-	iptr = data + count;
-	optr = (short *)data + count;
-	for (i = count; i > 0; i--) {
-		--optr;
-		--iptr;
-		*optr = map[*iptr];
-	}
+	if (f->slot >= 0)
+		ctl_slotdel(dev_midi, f->slot);
+	f->slot = -1;
+	rfile_done(p);
 }
 
-unsigned
-wav_read(struct file *file, unsigned char *data, unsigned count)
+int
+rwav_in(struct aproc *p, struct abuf *ibuf_dummy)
 {
-	struct wav *f = (struct wav *)file;
-	unsigned n;
+	struct wav *f = (struct wav *)p->u.io.file;
+	struct abuf *obuf;
 
-	if (f->map)
-		count /= sizeof(short);
-	if (f->rbytes >= 0 && count > f->rbytes) {
-		count = f->rbytes; /* file->rbytes fits in count */
-		if (count == 0) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				file_dbg(&f->pipe.file);
-				dbg_puts(": read complete\n");
-			}
-#endif
-			file_eof(&f->pipe.file);
-			return 0;
-		}
-	}
-	n = pipe_read(file, data, count);
-	if (n == 0)
+	if (!wav_rdata(f))
 		return 0;
-	if (f->rbytes >= 0)
-		f->rbytes -= n;
-	if (f->map) {
-		wav_conv(data, n, f->map);
-		n *= sizeof(short);
+	obuf = LIST_FIRST(&p->obuflist);
+	if (obuf && f->pstate >= WAV_RUN) {
+		if (!abuf_flush(obuf))
+			return 0;
 	}
-	return n;
+	return 1;
 }
 
-unsigned
-wav_write(struct file *file, unsigned char *data, unsigned count)
+int
+rwav_out(struct aproc *p, struct abuf *obuf)
 {
-	struct wav *f = (struct wav *)file;
-	unsigned n;
+	struct wav *f = (struct wav *)p->u.io.file;
 
-	if (f->wbytes >= 0 && count > f->wbytes) {
-		count = f->wbytes; /* wbytes fits in count */
-		if (count == 0) {
-#ifdef DEBUG
-			if (debug_level >= 3) {
-				file_dbg(&f->pipe.file);
-				dbg_puts(": write complete\n");
-			}
-#endif
-			file_hup(&f->pipe.file);
+	if (f->pipe.file.state & FILE_RINUSE)
+		return 0;
+	for (;;) {
+		if (!wav_rdata(f))
 			return 0;
-		}
 	}
-	n = pipe_write(file, data, count);
-	if (f->wbytes >= 0)
-		f->wbytes -= n;
-	return n;
+	return 1;
+}
+
+struct aproc *
+rwav_new(struct file *f)
+{
+	struct aproc *p;
+
+	p = aproc_new(&rwav_ops, f->name);
+	p->u.io.file = f;
+	p->u.io.partial = 0;;
+	f->rproc = p;
+	return p;
 }
 
 void
-wav_close(struct file *file)
+wwav_done(struct aproc *p)
 {
-	struct wav *f = (struct wav *)file;
+	struct wav *f = (struct wav *)p->u.io.file;
 
-	if (f->hdr == HDR_WAV)
-		wav_writehdr(f->pipe.fd, &f->hpar);
-	pipe_close(file);
+	if (f->slot >= 0)
+		ctl_slotdel(dev_midi, f->slot);
+	f->slot = -1;
+	wfile_done(p);
+}
+
+int
+wwav_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct wav *f = (struct wav *)p->u.io.file;
+
+	if (f->pipe.file.state & FILE_WINUSE)
+		return 0;
+	for (;;) {
+		if (!wav_wdata(f))
+			return 0;
+	}
+	return 1;
+}
+
+int
+wwav_out(struct aproc *p, struct abuf *obuf_dummy)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct wav *f = (struct wav *)p->u.io.file;
+
+	if (ibuf && f->pstate == WAV_RUN) {
+		if (!abuf_fill(ibuf))
+			return 0;
+	}
+	if (!wav_wdata(f))
+		return 0;
+	return 1;
+}
+
+struct aproc *
+wwav_new(struct file *f)
+{
+	struct aproc *p;
+
+	p = aproc_new(&wwav_ops, f->name);
+	p->u.io.file = f;
+	p->u.io.partial = 0;;
+	f->wproc = p;
+	return p;
 }
 
