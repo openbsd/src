@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.229 2010/04/02 21:16:24 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.230 2010/04/03 03:13:01 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4737,7 +4737,8 @@ setiflladdr(const char *addr, int param)
 
 	if (!strcmp(addr, "random")) {
 		arc4random_buf(&eabuf, sizeof eabuf);
-		eabuf.ether_addr_octet[0] &= 0xfe;	/* Not multicast! */
+		/* Non-multicast and claim it is a hardware address */
+		eabuf.ether_addr_octet[0] &= 0xfc;
 		eap = &eabuf;
 	} else {
 		eap = ether_aton(addr);
