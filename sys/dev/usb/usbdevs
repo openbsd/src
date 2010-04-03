@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.483 2010/03/27 10:37:26 otto Exp $
+$OpenBSD: usbdevs,v 1.484 2010/04/03 10:52:22 mpf Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -68,6 +68,7 @@ vendor KODAK		0x040a	Eastman Kodak
 vendor MELCO		0x0411	Melco
 vendor LEADTEK		0x0413	Leadtek
 vendor CREATIVE		0x041e	Creative Labs
+vendor NOKIA2		0x0421	Nokia
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
@@ -2702,6 +2703,8 @@ product NHJ CAM2		0x9120	Camera
 
 /* Nokia products */
 product NOKIA CA42		0x1234	CA-42 Serial
+product NOKIA2 CS15UMASS 	0x0610	Internet Stick CS-15 (umass mode)
+product NOKIA2 CS15 		0x0612	Internet Stick CS-15
 
 /* Noritake itron corp products */
 product NORITAKE COMEMO		0x11c0	Noritake COMEMO
