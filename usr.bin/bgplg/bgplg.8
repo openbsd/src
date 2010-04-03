@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bgplg.8,v 1.5 2010/04/02 22:44:40 sthen Exp $
+.\"	$OpenBSD: bgplg.8,v 1.6 2010/04/03 21:40:51 sthen Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2010 $
+.Dd $Mdocdate: April 3 2010 $
 .Dt BGPLG 8
 .Os
 .Sh NAME
@@ -52,24 +52,24 @@ CGI program and the additional statically linked programs that have
 been installed into the
 .Xr chroot 2
 environment.
-See the
-.Sx FILES
-section below for the list of installed programs.
 .Pp
 For example,
 to allow execution of
 .Nm
 and the statically-linked version of
-.Xr bgpctl 8
-(disabled commands like
-.Xr ping 8
-and
-.Xr traceroute 8
-will be hidden from looking glass command list):
+.Xr bgpctl 8 :
 .Bd -literal -offset indent
 # chmod 0555 /var/www/cgi-bin/bgplg
 # chmod 0555 /var/www/bin/bgpctl
 .Ed
+.Pp
+External commands like
+.Xr ping 8
+and others will be hidden from the looking glass command
+list unless given the correct permissions.
+See the
+.Sx FILES
+section below for the list of installed programs.
 .It
 The programs
 .Xr ping 8 ,
