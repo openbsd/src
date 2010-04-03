@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.1 2010/02/14 22:39:33 miod Exp $	*/
+/*	$OpenBSD: exec.c,v 1.2 2010/04/03 19:13:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -71,5 +71,6 @@ run_loadfile(u_long *marks, int howto)
 	    pmon_envp, pmon_callvec,
 	    (uint64_t *)PHYS_TO_CKSEG0(marks[MARK_END]));
 
+	rd_invalidate();
 	_rtt();
 }

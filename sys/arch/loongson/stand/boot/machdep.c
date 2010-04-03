@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2010/02/17 21:25:49 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2010/04/03 19:13:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -53,7 +53,6 @@ int	is_gdium;
 int	boot_rd;
 
 extern int bootprompt;
-extern char *kernelfile;
 
 /*
  * Console
@@ -297,5 +296,6 @@ gdium_abort()
 	    "will need to power cycle.\n"
 	    "We would apologize for this incovenience, but we have "
 	    "no control about the firmware of your machine.\n\n");
+	rd_invalidate();
 	_rtt();
 }

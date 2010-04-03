@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.1 2010/02/17 21:25:49 miod Exp $	*/
+/*	$OpenBSD: rd.c,v 1.2 2010/04/03 19:13:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -62,6 +62,12 @@ rd_isvalid()
 	return 1;
 }
 
+void
+rd_invalidate()
+{
+	bzero((void *)INITRD_BASE, sizeof(Elf64_Ehdr));
+}
+
 /*
  * INITRD filesystem
  */
@@ -69,8 +75,11 @@ int
 rdfs_open(char *path, struct open_file *f)
 {
 	if (f->f_dev->dv_open == rd_ioopen) {
-		rdoffs = 0;
-		return 0;
+		if (strcmp(path, kernelfile) == 0) {
+			rdoffs = 0;
+			return 0;
+		} else
+			return ENOENT;
 	}
 
 	return EINVAL;
@@ -97,13 +106,13 @@ rdfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 int
 rdfs_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
-	return EIO;
+	return EROFS;
 }
 
 off_t
-rdfs_seek(struct open_file *f, off_t offset, int where)
+rdfs_seek(struct open_file *f, off_t offset, int whence)
 {
-	switch (where) {
+	switch (whence) {
 	case 0:	/* SEEK_SET */
 		rdoffs = offset;
 		break;
