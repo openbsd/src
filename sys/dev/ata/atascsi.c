@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.72 2010/03/23 01:57:19 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.73 2010/04/03 07:09:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,8 @@ void		atascsi_disk_inquiry(struct scsi_xfer *);
 void		atascsi_disk_vpd_supported(struct scsi_xfer *);
 void		atascsi_disk_vpd_serial(struct scsi_xfer *);
 void		atascsi_disk_vpd_ident(struct scsi_xfer *);
+void		atascsi_disk_vpd_limits(struct scsi_xfer *);
+void		atascsi_disk_vpd_info(struct scsi_xfer *);
 void		atascsi_disk_capacity(struct scsi_xfer *);
 void		atascsi_disk_sync(struct scsi_xfer *);
 void		atascsi_disk_sync_done(struct ata_xfer *);
@@ -219,6 +221,8 @@ atascsi_probe(struct scsi_link *link)
 
 	if (type != ATA_PORT_T_DISK)
 		return (0);
+
+	printf("106: 0x%04x\n", ap->ap_identify.p2l_sect);
 
 	/* Enable write cache if supported */
 	if (ap->ap_identify.cmdset82 & ATA_IDENTIFY_WRITECACHE) {
@@ -484,6 +488,12 @@ atascsi_disk_inq(struct scsi_xfer *xs)
 		case SI_PG_DEVID:
 			atascsi_disk_vpd_ident(xs);
 			break;
+		case SI_PG_DISK_LIMITS:
+			atascsi_disk_vpd_limits(xs);
+			break;
+		case SI_PG_DISK_INFO:
+			atascsi_disk_vpd_info(xs);
+			break;
 		default:
 			atascsi_done(xs, XS_DRIVER_STUFFUP);
 			break;
@@ -559,7 +569,7 @@ atascsi_disk_vpd_supported(struct scsi_xfer *xs)
 {
 	struct {
 		struct scsi_vpd_hdr	hdr;
-		u_int8_t		list[3];
+		u_int8_t		list[5];
 	}			pg;
 
 	bzero(&pg, sizeof(pg));
@@ -570,6 +580,8 @@ atascsi_disk_vpd_supported(struct scsi_xfer *xs)
 	pg.list[0] = SI_PG_SUPPORTED;
 	pg.list[1] = SI_PG_SERIAL;
 	pg.list[2] = SI_PG_DEVID;
+	pg.list[3] = SI_PG_DISK_LIMITS;
+	pg.list[4] = SI_PG_DISK_INFO;
 
 	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
@@ -644,6 +656,54 @@ atascsi_disk_vpd_ident(struct scsi_xfer *xs)
 	pg_len += sizeof(pg.hdr);
 
 	bcopy(&pg, xs->data, MIN(pg_len, xs->datalen));
+
+	atascsi_done(xs, XS_NOERROR);
+}
+
+void
+atascsi_disk_vpd_limits(struct scsi_xfer *xs)
+{
+	struct scsi_link        *link = xs->sc_link;
+	struct atascsi          *as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	struct scsi_vpd_disk_limits pg;
+	u_int16_t		p2l_sect;
+
+	bzero(&pg, sizeof(pg));
+	pg.hdr.device = T_DIRECT;
+	pg.hdr.page_code = SI_PG_DISK_LIMITS;
+	pg.hdr.page_length = SI_PG_DISK_LIMITS_LEN_THIN;
+
+	p2l_sect = letoh16(ap->ap_identify.p2l_sect);
+	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
+	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SET)) {
+		_lto2b(2 << (p2l_sect & SI_PG_DISK_LIMITS_LEN_THIN),
+		    pg.optimal_xfer_granularity);
+	} else
+		_lto2b(1, pg.optimal_xfer_granularity);
+
+	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
+
+	atascsi_done(xs, XS_NOERROR);
+}
+
+void
+atascsi_disk_vpd_info(struct scsi_xfer *xs)
+{
+	struct scsi_link        *link = xs->sc_link;
+	struct atascsi          *as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	struct scsi_vpd_disk_info pg;
+
+	bzero(&pg, sizeof(pg));
+	pg.hdr.device = T_DIRECT;
+	pg.hdr.page_code = SI_PG_DISK_INFO;
+	pg.hdr.page_length = sizeof(pg) - sizeof(pg.hdr);
+
+	_lto2b(letoh16(ap->ap_identify.rpm), pg.rpm);
+	pg.form_factor = letoh16(ap->ap_identify.form) & ATA_ID_FORM_MASK;
+
+	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
 	atascsi_done(xs, XS_NOERROR);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.24 2010/01/03 11:09:41 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.25 2010/04/03 07:09:29 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -394,5 +394,51 @@ struct page_caching_mode {
 	u_int8_t max_prefetch[2];
 	u_int8_t max_prefetch_ceil[2];
 };
+
+#define SI_PG_DISK_LIMITS	0xb0 /* block limits */
+#define SI_PG_DISK_INFO		0xb1 /* device charateristics */
+
+struct scsi_vpd_disk_limits {
+        struct scsi_vpd_hdr hdr;
+#define SI_PG_DISK_LIMITS_LEN		0x10
+#define SI_PG_DISK_LIMITS_LEN_THIN	0x3c
+
+	u_int8_t		_reserved1[1];
+	u_int8_t		max_comp_wr_len;
+	u_int8_t		optimal_xfer_granularity[2];
+
+	u_int8_t		max_xfer_len[4];
+
+	u_int8_t		optimal_xfer[4];
+
+	u_int8_t		max_xd_prefetch_len[4];
+
+	u_int8_t		max_unmap_lba_count[4];
+
+	u_int8_t		max_unmap_desc_count[4];
+
+	u_int8_t		optimal_unmap_granularity[4];
+
+	u_int8_t		unmap_granularity_align[4];
+
+	u_int8_t		_reserved2[28];
+}; 
+
+struct scsi_vpd_disk_info {
+        struct scsi_vpd_hdr	hdr;
+	u_int8_t		rpm[2];
+#define VPD_DISK_INFO_RPM_UNDEF		0x0000
+#define VPD_DISK_INFO_RPM_NONE		0x0001
+	u_int8_t		_reserved1[1];
+	u_int8_t		form_factor;
+#define VPD_DISK_INFO_FORM_MASK		0xf
+#define VPD_DISK_INFO_FORM_UNDEF	0x0
+#define VPD_DISK_INFO_FORM_5_25		0x1
+#define VPD_DISK_INFO_FORM_3_5		0x2
+#define VPD_DISK_INFO_FORM_2_5		0x3
+#define VPD_DISK_INFO_FORM_1_8		0x4
+#define VPD_DISK_INFO_FORM_LT_1_8	0x5
+	u_int8_t		_reserved2[56];
+}; 
 
 #endif /* _SCSI_SCSI_DISK_H */

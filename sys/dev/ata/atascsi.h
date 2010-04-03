@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.35 2009/12/08 08:07:51 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.36 2010/04/03 07:09:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -110,7 +110,12 @@ struct ata_identify {
 	u_int16_t	addrsecxt[4];	/* 100 */
 	u_int16_t	stream_xfer_p;	/* 104 */
 	u_int16_t	padding1;	/* 105 */
-	u_int16_t	phys_sect_sz;	/* 106 */
+	u_int16_t	p2l_sect;	/* 106 */
+#define ATA_ID_P2L_SECT_MASK	0xc000
+#define ATA_ID_P2L_SECT_VALID	0x4000
+#define ATA_ID_P2L_SECT_SET	0x2000
+#define ATA_ID_P2L_SECT_LARGE	0x1000
+#define ATA_ID_P2L_SECT_SIZE	0x000f
 	u_int16_t	seek_delay;	/* 107 */
 	u_int16_t	naa_ieee_oui;	/* 108 */
 	u_int16_t	ieee_oui_uid;	/* 109 */
@@ -125,10 +130,14 @@ struct ata_identify {
 	u_int16_t	rmsn;		/* 127 */
 	u_int16_t	securestatus;	/* 128 */
 	u_int16_t	vendor[31];	/* 129 */
-	u_int16_t	padding3[16];	/* 160 */
+	u_int16_t	padding3[8];	/* 160 */
+	u_int16_t	form;		/* 168 */
+#define ATA_ID_FORM_MASK	0x000f
+	u_int16_t	padding4[7];	/* 169 */
 	u_int16_t	curmedser[30];	/* 176 */
 	u_int16_t	sctsupport;	/* 206 */
-	u_int16_t	padding4[48];	/* 207 */
+	u_int16_t	rpm;		/* 207 */
+	u_int16_t	padding5[47];	/* 208 */
 	u_int16_t	integrity;	/* 255 */
 } __packed;
 
