@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.205 2009/07/10 02:59:32 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.206 2010/04/04 22:29:08 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -200,6 +200,20 @@ if [[ -z $TZ ]]; then
 	ls -1dF `tar cvf /dev/null [A-Za-y]*` >/tmp/tzlist )
 	echo
 	set_timezone /tmp/tzlist
+fi
+
+# If we got a timestamp from the ftplist server, and that time diffs by more
+# than 120 seconds, ask if the user wants to adjust the time
+if _time=$(ftp_time) && _now=$(date +%s) && \
+	(( _now - _time > 120 || _time - _now > 120 )); then
+	_tz=/mnt/usr/share/zoneinfo/$TZ
+	ask_yn "Set time to '$(TZ=$_tz date -r "$(ftp_time)")'?" yes
+	if [[ $resp == y ]]; then
+		# We do not need to specify TZ below since both date
+		# invocations use the same one
+		date $(date -r "$(ftp_time)" "+%Y%m%d%H%M.%S") >&-
+		# N.B. This will screw up SECONDS
+	fi
 fi
 
 # If we managed to talk to the ftplist server before, tell it what
