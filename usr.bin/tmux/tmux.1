@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.161 2010/04/04 19:02:09 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.162 2010/04/04 21:23:20 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -373,7 +373,6 @@ bind-key F1 set-window-option force-width 81
 .Pp
 Or if using
 .Xr sh 1 :
-.Pp
 .Bd -literal -offset indent
 $ tmux bind-key F1 set-window-option force-width 81
 .Ed
@@ -401,7 +400,6 @@ new-window ; split-window -d
 .Pp
 Or from
 .Xr sh 1 :
-.Pp
 .Bd -literal -offset indent
 $ tmux kill-window -t :1
 
@@ -1748,7 +1746,8 @@ used.
 Shell commands are executed with the
 .Nm
 global environment set (see the
-.Sx ENVIRONMENT section).
+.Sx ENVIRONMENT
+section).
 .Pp
 #[attributes] allows a comma-separated list of attributes to be specified,
 these may be
