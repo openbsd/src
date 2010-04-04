@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1544 2010/04/04 08:10:58 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1545 2010/04/04 08:25:39 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2189,6 +2189,7 @@
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_EESISA	0x0008		/* EES ISA */
 #define	PCI_PRODUCT_INTEL_21145	0x0039		/* 21145 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005_IPA_1	0x0082		/* Centrino Advanced-N 6205 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1	0x0083		/* WiFi Link 1000 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_2	0x0084		/* WiFi Link 1000 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1	0x0087		/* Centrino Advanced-N 6250 */
