@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.4 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.5 2010/04/04 00:43:36 jakemsr Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -670,7 +670,7 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 int
 auacer_round_blocksize(void *v, int blk)
 {
-	return (blk & ~0x3f);		/* keep good alignment */
+	return ((blk + 0x3f) & ~0x3f);		/* keep good alignment */
 }
 
 static void
