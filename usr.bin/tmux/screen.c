@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.14 2010/02/06 17:35:01 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.15 2010/04/04 23:05:15 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,9 +31,14 @@ void	screen_resize_y(struct screen *, u_int);
 void
 screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 {
+	char hn[MAXHOSTNAMELEN];
+
 	s->grid = grid_create(sx, sy, hlimit);
 
-	s->title = xstrdup("");
+	if (gethostname(hn, MAXHOSTNAMELEN) == 0)
+		s->title = xstrdup(hn);
+	else
+		s->title = xstrdup("");
 
 	s->tabs = NULL;
 
