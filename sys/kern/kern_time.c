@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.68 2009/11/27 19:45:53 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.69 2010/04/04 03:47:02 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,16 @@
 
 #include <machine/cpu.h>
 
+#ifdef __HAVE_TIMECOUNTER
+struct timeval adjtimedelta;		/* unapplied time correction */
+#else
+int	tickdelta;			/* current clock skew, us. per tick */
+long	timedelta;			/* unapplied time correction, us. */
+long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
+int64_t	ntp_tick_permanent;
+int64_t	ntp_tick_acc;
+#endif
+
 void	itimerround(struct timeval *);
 
 /* 
@@ -67,6 +77,12 @@ settime(struct timespec *ts)
 {
 	struct timespec now;
 
+	/*
+	 * Adjtime in progress is meaningless or harmful after
+	 * setting the clock. Cancel adjtime and then set new time.
+	 */
+	adjtimedelta.tv_usec = 0;
+	adjtimedelta.tv_sec = 0;
 
 	/*
 	 * Don't allow the time to be set forward so far it will wrap
@@ -149,6 +165,14 @@ settime(struct timespec *ts)
 	timersub(tv, &time, &delta);
 	time = *tv;
 	timeradd(&boottime, &delta, &boottime);
+
+	/*
+	 * Adjtime in progress is meaningless or harmful after
+	 * setting the clock.
+	 */
+	tickdelta = 0;
+	timedelta = 0;
+
 	splx(s);
 	resettodr();
 
@@ -326,16 +350,6 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-#ifdef __HAVE_TIMECOUNTER
-struct timeval adjtimedelta;		/* unapplied time correction */
-#else
-int	tickdelta;			/* current clock skew, us. per tick */
-long	timedelta;			/* unapplied time correction, us. */
-long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
-int64_t	ntp_tick_permanent;
-int64_t	ntp_tick_acc;
-#endif
-
 /* ARGSUSED */
 int
 sys_settimeofday(struct proc *p, void *v, register_t *retval)
@@ -359,20 +373,6 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 		return (error);
 	if (SCARG(uap, tv)) {
 		struct timespec ts;
-
-		/*
-		 * Adjtime in progress is meaningless or harmful after
-		 * setting the clock. Cancel adjtime and then set new time.
-		 */
-#ifdef __HAVE_TIMECOUNTER
-		adjtimedelta.tv_usec = 0;
-		adjtimedelta.tv_sec = 0;
-#else
-		int s = splclock();
-		tickdelta = 0;
-		timedelta = 0;
-		splx(s);
-#endif
 
 		TIMEVAL_TO_TIMESPEC(&atv, &ts);
 		if ((error = settime(&ts)) != 0)
