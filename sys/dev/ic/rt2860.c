@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.42 2010/03/27 16:13:24 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.43 2010/04/04 08:07:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1993,13 +1993,13 @@ rt2860_set_chan(struct rt2860_softc *sc, struct ieee80211_channel *c)
 	txpow2 = sc->txpow2[i];
 	if (IEEE80211_IS_CHAN_5GHZ(c)) {
 		if (txpow1 >= 0)
-			txpow1 = txpow1 << 1;
+			txpow1 = txpow1 << 1 | 1;
 		else
-			txpow1 = (7 + txpow1) << 1 | 1;
+			txpow1 = (7 + txpow1) << 1;
 		if (txpow2 >= 0)
-			txpow2 = txpow2 << 1;
+			txpow2 = txpow2 << 1 | 1;
 		else
-			txpow2 = (7 + txpow2) << 1 | 1;
+			txpow2 = (7 + txpow2) << 1;
 	}
 	r3 = rfprog[i].r3 | txpow1 << 7;
 	r4 = rfprog[i].r4 | sc->freq << 13 | txpow2 << 4;
