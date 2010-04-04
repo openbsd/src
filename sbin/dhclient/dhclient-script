@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.15 2009/06/03 05:12:51 claudio Exp $
+# $OpenBSD: dhclient-script,v 1.16 2010/04/04 22:53:50 jsg Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -28,6 +28,12 @@ delete_old_address() {
 	fi
 }
 
+ip6_delete_old_address() {
+	if [ -n "$old_ip6_address" ]; then
+		ifconfig $interface inet6 $old_ip6_address delete $medium
+	fi
+}
+
 add_new_address() {
 	ifconfig $interface \
 		inet $new_ip_address \
@@ -37,6 +43,13 @@ add_new_address() {
 
 	# XXX Original TIMEOUT code did not do this unless $new_routers was set?
 	route add $new_ip_address 127.0.0.1 >/dev/null 2>&1
+}
+
+ip6_add_new_address() {
+	ifconfig $interface \
+		inet6 $new_ip6_address \
+		prefixlen $new_ip6_prefixlen \
+		$medium
 }
 
 delete_old_alias() {
@@ -135,6 +148,47 @@ add_new_resolv_conf() {
 	return 1
 }
 
+ip6_add_new_resolv_conf() {
+	# Create resolv.conf when either $new_dhcp6_name_servers or
+	# $new_dhcp6_domain_search are provided.
+
+	rm -f /etc/resolv.conf.std6
+
+	if [ -n "$new_dhcp6_domain_search" ]; then
+		echo "search $new_dhcp6_domain_search" >>/etc/resolv.conf.std6
+	fi
+
+	if [ -n "$new_dhcp6_name_servers" ]; then
+		for nameserver in $new_dhcp6_name_servers; do
+			echo "nameserver $nameserver" >>/etc/resolv.conf.std6
+		done
+	fi
+
+	if [ -f /etc/resolv.conf.std6 ]; then
+		if [ -f /etc/resolv.conf.tail ]; then
+			cat /etc/resolv.conf.tail >>/etc/resolv.conf.std6
+		fi
+
+		# In case (e.g. during OpenBSD installs) /etc/resolv.conf
+		# is a symbolic link, take care to preserve the link and write
+		# the new data in the correct location.
+
+		if [ -f /etc/resolv.conf ]; then
+			cat /etc/resolv.conf > /etc/resolv.conf.save
+		fi
+		cat /etc/resolv.conf.std6 > /etc/resolv.conf
+		rm -f /etc/resolv.conf.std6
+
+		# Try to ensure correct ownership and permissions.
+		chown -RL root:wheel /etc/resolv.conf
+		chmod -RL 644 /etc/resolv.conf
+
+		return 0
+	fi
+
+	return 1
+}
+
 #
 # Start of active code.
 #
@@ -147,6 +201,10 @@ MEDIUM)
 
 PREINIT)
 	delete_old_alias
+	ifconfig $interface up
+	;;
+
+PREINIT6)
 	ifconfig $interface up
 	;;
 
@@ -176,6 +234,20 @@ BOUND|RENEW|REBIND|REBOOT)
 	add_new_resolv_conf
 	;;
 
+BOUND6|RENEW6|REBIND6)
+	if [ -n "$old_ip6_address" ]; then
+		if [ "$old_ip6_address" != "$new_ip6_address" ]; then
+			ip6_delete_old_address
+		fi
+	fi
+	if [ "$reason" = BOUND6 ] ||
+	   [ -z "$old_ip6_address" ] ||
+	   [ "$old_ip6_address" != "$new_ip6_address" ]; then
+		ip6_add_new_address
+	fi
+	ip6_add_new_resolv_conf
+	;;
+
 EXPIRE|FAIL)
 	delete_old_alias
 	if [ -n "$old_ip_address" ]; then
@@ -186,6 +258,12 @@ EXPIRE|FAIL)
 	add_new_alias
 	if [ -f /etc/resolv.conf.save ]; then
 		cat /etc/resolv.conf.save > /etc/resolv.conf
+	fi
+	;;
+
+EXPIRE6|RELEASE6|STOP6)
+	if [ -n "$old_ip6_address" ]; then
+		ip6_delete_old_address
 	fi
 	;;
 
