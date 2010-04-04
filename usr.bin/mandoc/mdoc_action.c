@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.28 2010/04/02 12:39:47 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.29 2010/04/04 17:36:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -417,7 +417,7 @@ post_sh(POST_ARGS)
 	if ( ! concat(m, buf, n->child, BUFSIZ))
 		return(0);
 	sec = mdoc_atosec(buf);
-	if (SEC_CUSTOM != sec)
+	if (SEC_NONE == m->lastnamed || SEC_CUSTOM != sec)
 		m->lastnamed = sec;
 
 	/* Some sections only live in certain manual sections. */
