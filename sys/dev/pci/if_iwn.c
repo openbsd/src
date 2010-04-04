@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.86 2010/02/17 18:23:00 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.87 2010/04/04 08:55:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -83,7 +83,8 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2 }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6005_IPA_1 }
 };
 
 int		iwn_match(struct device *, void *, void *);
@@ -613,15 +614,22 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 	case IWN_HW_REV_TYPE_6000:
 		sc->sc_hal = &iwn5000_hal;
 		sc->limits = &iwn6000_sensitivity_limits;
-		sc->fwname = "iwn-6000";
 		switch (pid) {
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1:
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2:
+			sc->fwname = "iwn-6000";
 			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
 			sc->txchainmask = IWN_ANT_BC;
 			sc->rxchainmask = IWN_ANT_BC;
 			break;
+		case PCI_PRODUCT_INTEL_WIFI_LINK_6005_IPA_1:
+			sc->fwname = "iwn-6005";
+			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
+			sc->txchainmask = IWN_ANT_AB;
+			sc->rxchainmask = IWN_ANT_AB;
+			break;
 		default:
+			sc->fwname = "iwn-6000";
 			sc->txchainmask = IWN_ANT_ABC;
 			sc->rxchainmask = IWN_ANT_ABC;
 			break;
@@ -630,7 +638,7 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 	case IWN_HW_REV_TYPE_6050:
 		sc->sc_hal = &iwn5000_hal;
 		sc->limits = &iwn6000_sensitivity_limits;
-		sc->fwname = "iwn-6000";
+		sc->fwname = "iwn-6050";
 		sc->txchainmask = IWN_ANT_AB;
 		sc->rxchainmask = IWN_ANT_AB;
 		break;
@@ -3737,10 +3745,13 @@ iwn_collect_noise(struct iwn_softc *sc,
 	val = MAX(calib->rssi[2], val);
 
 	/* Determine which antennas are connected. */
-	sc->chainmask = 0;
+	sc->chainmask = sc->rxchainmask;
 	for (i = 0; i < 3; i++)
-		if (val - calib->rssi[i] <= 15 * 20)
-			sc->chainmask |= 1 << i;
+		if (val - calib->rssi[i] > 15 * 20)
+			sc->chainmask &= ~(1 << i);
+	DPRINTF(("RX chains mask: theoretical=0x%x, actual=0x%x\n",
+	    sc->rxchainmask, sc->chainmask));
+
 	/* If none of the TX antennas are connected, keep at least one. */
 	if ((sc->chainmask & sc->txchainmask) == 0)
 		sc->chainmask |= IWN_LSB(sc->txchainmask);
