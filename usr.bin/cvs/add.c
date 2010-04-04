@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.107 2009/02/21 14:50:53 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.108 2010/04/04 17:11:11 zinovik Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -37,6 +37,7 @@ static void add_file(struct cvs_file *);
 static void add_entry(struct cvs_file *);
 
 int		kflag = 0;
+static u_int	added_files = 0;
 static char	kbuf[8];
 
 extern char	*logmsg;
@@ -109,6 +110,12 @@ cvs_add(int argc, char **argv)
 	cr.flags = flags;
 
 	cvs_file_run(argc, argv, &cr);
+
+	if (added_files != 0) {
+		cvs_log(LP_NOTICE, "use '%s commit' to add %s "
+		    "permanently", __progname,
+		    (added_files == 1) ? "this file" : "these files");
+	}
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_senddir(".");
@@ -405,7 +412,7 @@ add_directory(struct cvs_file *cf)
 static void
 add_file(struct cvs_file *cf)
 {
-	int added, nb, stop;
+	int nb, stop;
 	char revbuf[CVS_REV_BUFSZ];
 	RCSNUM *head = NULL;
 	char *tag;
@@ -425,7 +432,7 @@ add_file(struct cvs_file *cf)
 		rcsnum_tostr(head, revbuf, sizeof(revbuf));
 	}
 
-	added = stop = 0;
+	stop = 0;
 	switch (cf->file_status) {
 	case FILE_ADDED:
 	case FILE_CHECKOUT:
@@ -468,11 +475,11 @@ add_file(struct cvs_file *cf)
 			cvs_log(LP_NOTICE, "re-adding file %s "
 			    "(instead of dead revision %s)",
 			    cf->file_path, revbuf);
-			added++;
+			added_files++;
 		} else if (cf->file_flags & FILE_ON_DISK) {
 			cvs_log(LP_NOTICE, "scheduling file '%s' for addition",
 			    cf->file_path);
-			added++;
+			added_files++;
 		} else {
 			stop = 1;
 		}
@@ -488,12 +495,6 @@ add_file(struct cvs_file *cf)
 		return;
 
 	add_entry(cf);
-
-	if (added != 0) {
-		cvs_log(LP_NOTICE, "use '%s commit' to add %s "
-		    "permanently", __progname,
-		    (added == 1) ? "this file" : "these files");
-	}
 }
 
 static void
