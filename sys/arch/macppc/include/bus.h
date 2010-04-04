@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.17 2009/07/30 21:39:15 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.18 2010/04/04 12:49:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -431,7 +431,7 @@ void
 bus_space_copy_4(void *v, bus_space_handle_t h1, bus_space_handle_t h2,
     bus_size_t o1, bus_size_t o2, bus_size_t c);
 #define	bus_space_copy_8 \
-    !!! bus_space_write_raw_multi_8 not implemented !!!
+    !!! bus_space_copy_8 not implemented !!!
 
 /*
  * Bus read/write barrier methods.

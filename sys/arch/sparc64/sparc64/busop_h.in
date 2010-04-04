@@ -1,4 +1,4 @@
-ECHO:/*      $OpenBSD: busop_h.in,v 1.1 2003/02/17 01:29:20 henric Exp $   */
+ECHO:/*      $OpenBSD: busop_h.in,v 1.2 2010/04/04 12:49:30 miod Exp $   */
 ECHO:
 ECHO:/*
 ECHO: * Copyright (c) 2003 Henric Jungheim
@@ -56,10 +56,9 @@ void bus_space_set_<RAW>region_<NUM>(bus_space_tag_t, bus_space_handle_t,
     bus_size_t, <TYPE>,
 NRAW:    bus_size_t);
 RAW:    size_t);
-void bus_space_copy_<RAW>region_<NUM>(bus_space_tag_t, bus_space_handle_t,
-    bus_size_t, bus_space_handle_t, bus_size_t,
+NRAW:void bus_space_copy_<RAW><NUM>(bus_space_tag_t, bus_space_handle_t,
+NRAW:    bus_size_t, bus_space_handle_t, bus_size_t,
 NRAW:    bus_size_t);
-RAW:    size_t);
 
 static inline
 <TYPE> bus_space_read_<RAW><NUM>(bus_space_tag_t t, bus_space_handle_t h,

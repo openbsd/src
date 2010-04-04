@@ -1,5 +1,5 @@
 /*	$NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $	*/
-/*	$OpenBSD: bus_mi.h,v 1.11 2009/05/31 17:42:13 miod Exp $	*/
+/*	$OpenBSD: bus_mi.h,v 1.12 2010/04/04 12:49:30 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -839,7 +839,7 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 	!!! bus_space_set_region_stream_8 unimplemented !!!
 
 /*
- *	void bus_space_copy_region_N(bus_space_tag_t tag,
+ *	void bus_space_copy_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
  *	    size_t count);
@@ -848,18 +848,18 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-static __inline void bus_space_copy_region_1(bus_space_tag_t,
+static __inline void bus_space_copy_1(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
-static __inline void bus_space_copy_region_2(bus_space_tag_t,
+static __inline void bus_space_copy_2(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
-static __inline void bus_space_copy_region_4(bus_space_tag_t,
+static __inline void bus_space_copy_4(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
 
 static __inline void
-bus_space_copy_region_1(t, h1, o1, h2, o2, c)
+bus_space_copy_1(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -885,7 +885,7 @@ bus_space_copy_region_1(t, h1, o1, h2, o2, c)
 }
 
 static __inline void
-bus_space_copy_region_2(t, h1, o1, h2, o2, c)
+bus_space_copy_2(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -911,7 +911,7 @@ bus_space_copy_region_2(t, h1, o1, h2, o2, c)
 }
 
 static __inline void
-bus_space_copy_region_4(t, h1, o1, h2, o2, c)
+bus_space_copy_4(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -936,7 +936,7 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 	}
 }
 
-#define bus_space_copy_region_8	!!! bus_space_copy_region_8 unimplemented !!!
+#define bus_space_copy_8	!!! bus_space_copy_8 unimplemented !!!
 
 /*
  * Bus read/write barrier methods.

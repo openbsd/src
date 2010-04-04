@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2010/04/04 12:49:30 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -442,15 +442,15 @@ bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-#define	__LUNA88K_copy_region_N(BYTES)					\
-static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+#define	__LUNA88K_copy_N(BYTES)					\
+static __inline void __CONCAT(bus_space_copy_,BYTES)		\
 	    (bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
 static __inline void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
+__CONCAT(bus_space_copy_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\
 	bus_size_t o1, o2, c;						\
@@ -469,15 +469,15 @@ __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 			    __CONCAT(bus_space_read_,BYTES)(t, h1, o1 + o)); \
 	}								\
 }
-__LUNA88K_copy_region_N(1)
-__LUNA88K_copy_region_N(2)
-__LUNA88K_copy_region_N(4)
+__LUNA88K_copy_N(1)
+__LUNA88K_copy_N(2)
+__LUNA88K_copy_N(4)
 #if 0	/* Cause a link error for bus_space_copy_8 */
 #define	bus_space_copy_8						\
 			!!! bus_space_copy_8 unimplemented !!!
 #endif
 
-#undef __LUNA88K_copy_region_N
+#undef __LUNA88K_copy_N
 
 /*
  * Bus read/write barrier methods.

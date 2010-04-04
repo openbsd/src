@@ -1,4 +1,4 @@
-ECHO:/*      $OpenBSD: busop_c.in,v 1.1 2003/02/17 01:29:20 henric Exp $   */
+ECHO:/*      $OpenBSD: busop_c.in,v 1.2 2010/04/04 12:49:30 miod Exp $   */
 ECHO:
 ECHO:/*
 ECHO: * Copyright (c) 2003 Henric Jungheim
@@ -47,7 +47,7 @@ RAW:    void *a, size_t c)
 	    ("bsrm<NUM>(%llx + %llx, %x, %x) ->", (long long)h.bh_ptr,
 	    (long long)o, t-><ASI>, c));
 RAW:	c /= sizeof(<TYPE>);
-	
+
 	++c;  /* Looping on "--c" is slightly faster than on "c--" */
 	asi_set(t-><ASI>);
 	while (--c > 0) {
@@ -55,7 +55,7 @@ RAW:	c /= sizeof(<TYPE>);
 		BUS_SPACE_TRACE(t, h, (" <FMT>", r));
 		*p++ = r;
 	}
-	
+
 	BUS_SPACE_TRACE(t, h, ("\n"));
 }
 
@@ -171,30 +171,28 @@ RAW:	c /= sizeof(<TYPE>);
 		<STORE>_asi(ptr, v);
 }
 
-void
-bus_space_copy_<RAW>region_<NUM>(bus_space_tag_t t, bus_space_handle_t h1,
-    bus_size_t o1, bus_space_handle_t h2, bus_size_t o2,
+NRAW:void
+NRAW:bus_space_copy_<RAW><NUM>(bus_space_tag_t t, bus_space_handle_t h1,
+NRAW:    bus_size_t o1, bus_space_handle_t h2, bus_size_t o2,
 NRAW:    bus_size_t c)
-RAW:    size_t c)
-{
-	paddr_t ptr1 = h1.bh_ptr + o1;
-	paddr_t ptr2 = h2.bh_ptr + o2;
-
-	BUS_SPACE_ASSERT(t, h1, o2, <NUM>);
-	BUS_SPACE_ASSERT(t, h2, o2, <NUM>);
-	BUS_SPACE_TRACE(t, h1,
-	    ("bscr<NUM>(%llx + %llx, %llx + %llx, %x, %x) <-> \n",
-	    (long long)h1.bh_ptr, (long long)o1,
-	    (long long)h2.bh_ptr, (long long)o2,
-	    t-><ASI>, c));
-RAW:	c /= sizeof(<TYPE>);
-
-	asi_set(t-><ASI>);
-        for (; c; c--, ptr1 += <NUM>, ptr2 += <NUM>) {
-		<TYPE> r = <LOAD>_asi(ptr2);
-		BUS_SPACE_TRACE(t, h1, (" <FMT>", r));
-		<STORE>_asi(ptr1, r);
-	}
-	BUS_SPACE_TRACE(t, h1, ("\n"));
-}
+NRAW:{
+NRAW:	paddr_t ptr1 = h1.bh_ptr + o1;
+NRAW:	paddr_t ptr2 = h2.bh_ptr + o2;
+NRAW:
+NRAW:	BUS_SPACE_ASSERT(t, h1, o2, <NUM>);
+NRAW:	BUS_SPACE_ASSERT(t, h2, o2, <NUM>);
+NRAW:	BUS_SPACE_TRACE(t, h1,
+NRAW:	    ("bscr<NUM>(%llx + %llx, %llx + %llx, %x, %x) <-> \n",
+NRAW:	    (long long)h1.bh_ptr, (long long)o1,
+NRAW:	    (long long)h2.bh_ptr, (long long)o2,
+NRAW:	    t-><ASI>, c));
+NRAW:
+NRAW:	asi_set(t-><ASI>);
+NRAW:	for (; c; c--, ptr1 += <NUM>, ptr2 += <NUM>) {
+NRAW:		<TYPE> r = <LOAD>_asi(ptr2);
+NRAW:		BUS_SPACE_TRACE(t, h1, (" <FMT>", r));
+NRAW:		<STORE>_asi(ptr1, r);
+NRAW:	}
+NRAW:	BUS_SPACE_TRACE(t, h1, ("\n"));
+NRAW:}
 

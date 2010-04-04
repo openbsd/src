@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.10 2009/12/25 20:52:57 miod Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.11 2010/04/04 12:49:30 miod Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -1192,7 +1192,7 @@ shpcic_mem_set_region_4(void *v, bus_space_handle_t bsh,
  * copy region
  */
 void
-shpcic_io_copy_region_1(void *v, bus_space_handle_t bsh1,
+shpcic_io_copy_1(void *v, bus_space_handle_t bsh1,
     bus_size_t off1, bus_space_handle_t bsh2, bus_size_t off2, bus_size_t count)
 {
 	u_long addr1 = bsh1 + off1;
@@ -1219,7 +1219,7 @@ shpcic_io_copy_region_1(void *v, bus_space_handle_t bsh1,
 }
 
 void
-shpcic_io_copy_region_2(void *v, bus_space_handle_t bsh1,
+shpcic_io_copy_2(void *v, bus_space_handle_t bsh1,
     bus_size_t off1, bus_space_handle_t bsh2, bus_size_t off2, bus_size_t count)
 {
 	u_long addr1 = bsh1 + off1;
@@ -1246,7 +1246,7 @@ shpcic_io_copy_region_2(void *v, bus_space_handle_t bsh1,
 }
 
 void
-shpcic_io_copy_region_4(void *v, bus_space_handle_t bsh1,
+shpcic_io_copy_4(void *v, bus_space_handle_t bsh1,
     bus_size_t off1, bus_space_handle_t bsh2, bus_size_t off2, bus_size_t count)
 {
 	u_long addr1 = bsh1 + off1;
@@ -1273,7 +1273,7 @@ shpcic_io_copy_region_4(void *v, bus_space_handle_t bsh1,
 }
 
 void
-shpcic_mem_copy_region_1(void *v, bus_space_handle_t bsh1,
+shpcic_mem_copy_1(void *v, bus_space_handle_t bsh1,
     bus_size_t off1, bus_space_handle_t bsh2, bus_size_t off2, bus_size_t count)
 {
 	u_long addr1 = bsh1 + off1;
@@ -1300,7 +1300,7 @@ shpcic_mem_copy_region_1(void *v, bus_space_handle_t bsh1,
 }
 
 void
-shpcic_mem_copy_region_2(void *v, bus_space_handle_t bsh1,
+shpcic_mem_copy_2(void *v, bus_space_handle_t bsh1,
     bus_size_t off1, bus_space_handle_t bsh2, bus_size_t off2, bus_size_t count)
 {
 	u_long addr1 = bsh1 + off1;
@@ -1327,7 +1327,7 @@ shpcic_mem_copy_region_2(void *v, bus_space_handle_t bsh1,
 }
 
 void
-shpcic_mem_copy_region_4(void *v, bus_space_handle_t bsh1,
+shpcic_mem_copy_4(void *v, bus_space_handle_t bsh1,
     bus_size_t off1, bus_space_handle_t bsh2, bus_size_t off2, bus_size_t count)
 {
 	u_long addr1 = bsh1 + off1;

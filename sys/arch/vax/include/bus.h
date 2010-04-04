@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 2009/12/26 14:45:35 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 2010/04/04 12:49:30 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -638,7 +638,7 @@ vax_mem_set_region_4(t, h, o, v, c)
 #endif
 
 /*
- *	void bus_space_copy_region_N(bus_space_tag_t tag,
+ *	void bus_space_copy_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
  *	    size_t count);
@@ -647,27 +647,27 @@ vax_mem_set_region_4(t, h, o, v, c)
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-static __inline void vax_mem_copy_region_1(bus_space_tag_t,
+static __inline void vax_mem_copy_1(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
-static __inline void vax_mem_copy_region_2(bus_space_tag_t,
+static __inline void vax_mem_copy_2(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
-static __inline void vax_mem_copy_region_4(bus_space_tag_t,
+static __inline void vax_mem_copy_4(bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t);
 
-#define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
-	vax_mem_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
+	vax_mem_copy_1((t), (h1), (o1), (h2), (o2), (c))
 
-#define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
-	vax_mem_copy_region_2((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
+	vax_mem_copy_2((t), (h1), (o1), (h2), (o2), (c))
 
-#define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
-	vax_mem_copy_region_4((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
+	vax_mem_copy_4((t), (h1), (o1), (h2), (o2), (c))
 
 static __inline void
-vax_mem_copy_region_1(t, h1, o1, h2, o2, c)
+vax_mem_copy_1(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -693,7 +693,7 @@ vax_mem_copy_region_1(t, h1, o1, h2, o2, c)
 }
 
 static __inline void
-vax_mem_copy_region_2(t, h1, o1, h2, o2, c)
+vax_mem_copy_2(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -719,7 +719,7 @@ vax_mem_copy_region_2(t, h1, o1, h2, o2, c)
 }
 
 static __inline void
-vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
+vax_mem_copy_4(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -745,7 +745,7 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 }
 
 #if 0	/* Cause a link error for bus_space_copy_8 */
-#define	bus_space_copy_region_8	!!! bus_space_copy_region_8 unimplemented !!!
+#define	bus_space_copy_8	!!! bus_space_copy_8 unimplemented !!!
 #endif
 
 

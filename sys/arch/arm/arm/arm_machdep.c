@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_machdep.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: arm_machdep.c,v 1.2 2010/04/04 12:49:30 miod Exp $	*/
 /*	$NetBSD: arm_machdep.c,v 1.7 2003/10/25 19:44:42 scw Exp $	*/
 
 /*
@@ -205,6 +205,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 #endif
 
 
+#if 0
 #define _CONCAT(A,B) A ## B
 #define __C(A,B)	_CONCAT(A,B)
 
@@ -231,7 +232,6 @@ BUS_SPACE_COPY_N(4,u_int32_t)
 
 
 
-#if 0
 #define BUS_SPACE_READ_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
 void									\
 __C(bus_space_read_raw_multi_,BYTES)(bus_space_tag_t bst,		\

@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_bus_mem.c,v 1.16 2009/12/25 20:52:36 miod Exp $ */
+/* $OpenBSD: tc_bus_mem.c,v 1.17 2010/04/04 12:49:27 miod Exp $ */
 /* $NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*
@@ -142,13 +142,13 @@ void		tc_mem_set_region_8(void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t);
 
 /* copy */
-void		tc_mem_copy_region_1(void *, bus_space_handle_t,
+void		tc_mem_copy_1(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
-void		tc_mem_copy_region_2(void *, bus_space_handle_t,
+void		tc_mem_copy_2(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
-void		tc_mem_copy_region_4(void *, bus_space_handle_t,
+void		tc_mem_copy_4(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
-void		tc_mem_copy_region_8(void *, bus_space_handle_t,
+void		tc_mem_copy_8(void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 struct alpha_bus_space tc_mem_space = {
@@ -219,10 +219,10 @@ struct alpha_bus_space tc_mem_space = {
 	tc_mem_set_region_8,
 
 	/* copy */
-	tc_mem_copy_region_1,
-	tc_mem_copy_region_2,
-	tc_mem_copy_region_4,
-	tc_mem_copy_region_8,
+	tc_mem_copy_1,
+	tc_mem_copy_2,
+	tc_mem_copy_4,
+	tc_mem_copy_8,
 };
 
 bus_space_tag_t
@@ -621,9 +621,9 @@ tc_mem_set_region_N(2,u_int16_t)
 tc_mem_set_region_N(4,u_int32_t)
 tc_mem_set_region_N(8,u_int64_t)
 
-#define	tc_mem_copy_region_N(BYTES)					\
+#define	tc_mem_copy_N(BYTES)						\
 void									\
-__C(tc_mem_copy_region_,BYTES)(v, h1, o1, h2, o2, c)			\
+__C(tc_mem_copy_,BYTES)(v, h1, o1, h2, o2, c)				\
 	void *v;							\
 	bus_space_handle_t h1, h2;					\
 	bus_size_t o1, o2, c;						\
@@ -647,7 +647,7 @@ __C(tc_mem_copy_region_,BYTES)(v, h1, o1, h2, o2, c)			\
 			__C(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
 			    __C(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
 }
-tc_mem_copy_region_N(1)
-tc_mem_copy_region_N(2)
-tc_mem_copy_region_N(4)
-tc_mem_copy_region_N(8)
+tc_mem_copy_N(1)
+tc_mem_copy_N(2)
+tc_mem_copy_N(4)
+tc_mem_copy_N(8)

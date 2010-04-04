@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.21 2009/07/30 21:39:15 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.22 2010/04/04 12:49:30 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -392,16 +392,11 @@ void	bus_space_set_region_4(bus_space_tag_t, bus_space_handle_t,
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-#define bus_space_copy_1 bus_space_copy_region_1
-#define bus_space_copy_2 bus_space_copy_region_2
-#define bus_space_copy_4 bus_space_copy_region_4
-#define bus_space_copy_8 bus_space_copy_region_8
-
-void	bus_space_copy_region_1(bus_space_tag_t, bus_space_handle_t,
+void	bus_space_copy_1(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
-void	bus_space_copy_region_2(bus_space_tag_t, bus_space_handle_t,
+void	bus_space_copy_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
-void	bus_space_copy_region_4(bus_space_tag_t, bus_space_handle_t,
+void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
 
 #if 0	/* Cause a link error for bus_space_copy_8 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 2010/04/04 12:49:30 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -407,13 +407,13 @@ struct _bus_space {
 /*
  * Copy region operations.
  */
-#define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
+#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
 	__bs_copy(1, uint8_t, (t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
+#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
 	__bs_copy(2, uint16_t, (t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
+#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
 	__bs_copy(4, uint32_t, (t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
+#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
 	__bs_copy(8, uint64_t, (t), (h1), (o1), (h2), (o2), (c))
 
 #endif /* _KERNEL */
