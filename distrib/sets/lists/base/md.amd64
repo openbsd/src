@@ -43,6 +43,9 @@
 ./etc/firmware/run-license
 ./etc/firmware/run-rt2870
 ./etc/firmware/run-rt3071
+./etc/firmware/symbol-eprim
+./etc/firmware/symbol-esec
+./etc/firmware/symbol-license
 ./etc/firmware/tht
 ./etc/firmware/tht-license
 ./etc/firmware/tigon-license
