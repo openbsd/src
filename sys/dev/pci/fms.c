@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.20 2008/06/26 05:42:17 ray Exp $ */
+/*	$OpenBSD: fms.c,v 1.21 2010/04/04 00:50:36 jakemsr Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -611,14 +611,14 @@ fms_set_params(addr, setmode, usemode, play, rec)
 			rec->sw_code = ulinear8_to_alaw;
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = swap_bytes;
+			if (rec->precision == 16)
+				rec->sw_code = swap_bytes;
 			else
-				play->sw_code = change_sign8;
+				rec->sw_code = change_sign8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = swap_bytes_change_sign16_le;
+			if (rec->precision == 16)
+				rec->sw_code = swap_bytes_change_sign16_le;
 			break;
 		default:
 			return EINVAL;
