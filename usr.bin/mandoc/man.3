@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.8 2010/03/29 22:56:52 schwarze Exp $
+.\"	$Id: man.3,v 1.9 2010/04/04 13:41:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2010 $
+.Dd $Mdocdate: April 4 2010 $
 .Dt MAN 3
 .Os
 .
@@ -127,6 +127,30 @@ closing
 .Pq part of the standard preamble for Perl documentation .
 Handled as a current-scope line macro.
 .El
+.Pp
+Furthermore, the following escapes are accepted to allow
+.Xr pod2man 1
+documents to be correctly formatted:
+\e*(-- (dash),
+\e*(PI (pi),
+\e*(L" (left double-quote),
+\e*(R" (right double-quote),
+\e*(C+ (C++),
+\e*(C` (left single-quote),
+\e*(C' (right single-quote),
+\e*(Aq (apostrophe),
+\e*^ (hat),
+\e*, (comma),
+\e*~ (tilde),
+\e*/ (forward slash),
+\e*: (umlaut),
+\e*8 (beta),
+\e*o (degree),
+\e*(D- (Eth),
+\e*(d- (eth),
+\e*(Th (Thorn),
+and
+\e*(th (thorn).
 .
 .
 .Sh REFERENCE
