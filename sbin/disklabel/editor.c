@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.230 2010/03/29 13:24:59 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.231 2010/04/04 14:12:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -654,8 +654,10 @@ cylinderalign:
 		DL_SETPSIZE(pp, secs);
 		DL_SETPOFFSET(pp, chunkstart);
 		fragsize = 2048;
-		if (secs > 512ULL * 1024 * 1024 * 1024 / lp->d_secsize)
-			fragsize *= 4;
+		if (secs * lp->d_secsize > 128ULL * 1024 * 1024 * 1024)
+			fragsize *= 2;
+		if (secs * lp->d_secsize > 512ULL * 1024 * 1024 * 1024)
+			fragsize *= 2;
 #if defined (__sparc__) && !defined(__sparc64__)
 		/* can't boot from > 8k boot blocks */
 		pp->p_fragblock =
@@ -870,26 +872,29 @@ editor_add(struct disklabel *lp, char *p)
 	DL_SETPSIZE(pp, new_size);
 	DL_SETPOFFSET(pp, new_offset);
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
-	fragsize = 2048;
-	if (new_size > 512ULL * 1024 * 1024 * 1024 / lp->d_secsize)
-		fragsize *= 4;
-#if defined (__sparc__) && !defined(__sparc64__)
-	/* can't boot from > 8k boot blocks */
-	pp->p_fragblock =
-	    DISKLABELV1_FFS_FRAGBLOCK(partno == 0 ? 1024 : fragsize, 8);
-#else
-	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
-#endif
 	pp->p_cpg = 1;
 
 	if (get_offset(lp, partno) == 0 &&
-	    get_size(lp, partno) == 0   &&
-	    get_fstype(lp, partno) == 0 &&
-	    get_mp(lp, partno) == 0 &&
-	    get_fsize(lp, partno) == 0  &&
-	    get_bsize(lp, partno) == 0)
-		return;
-
+	    get_size(lp, partno) == 0) {
+		fragsize = 2048;
+		new_size = DL_GETPSIZE(pp) * lp->d_secsize;
+		if (new_size > 128ULL * 1024 * 1024 * 1024)
+			fragsize *= 2;
+		if (new_size > 512ULL * 1024 * 1024 * 1024)
+			fragsize *= 2;
+#if defined (__sparc__) && !defined(__sparc64__)
+		/* can't boot from > 8k boot blocks */
+		pp->p_fragblock =
+		    DISKLABELV1_FFS_FRAGBLOCK(partno == 0 ? 1024 : fragsize, 8);
+#else
+		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fragsize, 8);
+#endif
+		if (get_fstype(lp, partno) == 0 &&
+		    get_mp(lp, partno) == 0 &&
+		    get_fsize(lp, partno) == 0  &&
+		    get_bsize(lp, partno) == 0)
+			return;
+	}
 	/* Bailed out at some point, so effectively delete the partition. */
 	DL_SETPSIZE(pp, 0);
 }
