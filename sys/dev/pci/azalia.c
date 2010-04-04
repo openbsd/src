@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.170 2010/04/03 14:40:09 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.171 2010/04/04 20:07:45 kettenis Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1404,19 +1404,8 @@ azalia_resume_codec(codec_t *this)
 			    CORB_PS_D0, &result);
 			DELAY(100);
 		}
-		if ((w->type == COP_AWTYPE_PIN_COMPLEX) &&
-		    (w->d.pin.cap & COP_PINCAP_EAPD)) {
-			err = azalia_comresp(this, w->nid,
-			    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
-			if (err)
-				return err;
-			result &= 0xff;
-			result |= CORB_EAPD_EAPD;
-			err = azalia_comresp(this, w->nid,
-			    CORB_SET_EAPD_BTL_ENABLE, result, &result);
-			if (err)
-				return err;
-		}
+		if (w->type == COP_AWTYPE_PIN_COMPLEX)
+			azalia_widget_init_pin(w, this);
 	}
 
 	if (this->qrks & AZ_QRK_GPIO_MASK) {
