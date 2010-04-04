@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.5 2004/12/22 21:11:12 miod Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.6 2010/04/04 17:40:14 miod Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -211,7 +211,7 @@ void	spc_attach(struct spc_softc *);
 int	spc_intr(void *);
 void	spc_init(struct spc_softc *);
 void	spc_sched(struct spc_softc *);
-int	spc_scsi_cmd(struct scsi_xfer *);
+void	spc_scsi_cmd(struct scsi_xfer *);
 void	spc_reset(struct spc_softc *);
 
 #define	SPC_ADDRESS(o)	(sc->sc_regs + ((o) << 1) + 1)
