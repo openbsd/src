@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.11 2010/03/22 19:13:28 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.12 2010/04/04 19:04:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -44,12 +44,11 @@ int
 cmd_paste_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct cmd_buffer_data	*data = self->data;
-	struct winlink		*wl;
 	struct window_pane	*wp;
 	struct session		*s;
 	struct paste_buffer	*pb;
 
-	if ((wl = cmd_find_pane(ctx, data->target, &s, &wp)) == NULL)
+	if (cmd_find_pane(ctx, data->target, &s, &wp) == NULL)
 		return (-1);
 
 	if (data->buffer == -1)
