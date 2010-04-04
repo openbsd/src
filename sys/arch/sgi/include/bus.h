@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.22 2009/12/25 21:02:18 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.23 2010/04/04 11:24:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -159,7 +159,7 @@ CAT(bus_space_read_raw_region_,n)(bus_space_tag_t bst,			      \
 {									      \
 	cnt >>= ((n) >> 1);						      \
 	while (cnt--) {							      \
-		CAT(bus_space_read_raw_multi_,n)(bst, bsh, ba, x, 1);	      \
+		CAT(bus_space_read_raw_multi_,n)(bst, bsh, ba, x, (n));	      \
 		ba += (n);						      \
 		x += (n);						      \
 	}								      \
@@ -211,7 +211,7 @@ CAT(bus_space_write_raw_region_,n)(bus_space_tag_t bst,			      \
 {									      \
 	cnt >>= ((n) >> 1);						      \
 	while (cnt--) {							      \
-		CAT(bus_space_write_raw_multi_,n)(bst, bsh, ba, x, 1);	      \
+		CAT(bus_space_write_raw_multi_,n)(bst, bsh, ba, x, (n));      \
 		ba += (n);						      \
 		x += (n);						      \
 	}								      \
