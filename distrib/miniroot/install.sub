@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.601 2010/04/04 22:29:08 halex Exp $
+#	$OpenBSD: install.sub,v 1.602 2010/04/05 01:09:45 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -159,7 +159,6 @@ mount_mnt2() {
 			'$(disklabel '$_dev' 2>/dev/null | grep "^  [a-p]: " |
 			egrep -v "swap|unused" |
 			sed '\''s/^  \(.\): .*/\1/'\'')'
-			
 		[[ $resp == done ]] && return 1
 	fi
 
@@ -600,7 +599,7 @@ configure_ifs() {
 			if [[ -z $_vi ]]; then
 				_vi=0
 				while (( (_vi += 1) < 4096 )); do
-					! isin "$_vi" $_tags && break	
+					! isin "$_vi" $_tags && break
 				done
 			fi
 			_ifdevs=$(get_ifdevs)
@@ -1248,7 +1247,7 @@ install_url() {
 	# name. This means the last install from a mirror will not keep
 	# the specific directory info. But an install from a local
 	# server *will* remember the specific directory info.
-	set -- $(eval grep -s "^\$$_server_ip_var" $SERVERLIST | sed '$!d') 
+	set -- $(eval grep -s "^\$$_server_ip_var" $SERVERLIST | sed '$!d')
 	resp=${1#*/}
 	# If there is no directory specified, don't use the server name!
 	[[ $resp == "$1" ]] && resp=
@@ -1502,7 +1501,7 @@ install_sets() {
 	: ${_d:=ftp}
 
 	if ! isin "$_d" $_locs; then
-		for a in ftp http cd nfs tape disk; do 
+		for a in ftp http cd nfs tape disk; do
 			isin $a $_locs && _d=$a && break
 		done
 	fi
