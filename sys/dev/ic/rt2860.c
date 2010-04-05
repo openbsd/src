@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.44 2010/04/05 14:14:02 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.45 2010/04/05 19:00:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3039,8 +3039,11 @@ rt2860_bbp_init(struct rt2860_softc *sc)
 	if (sc->mac_ver == 0x2860 && sc->mac_rev != 0x0101)
 		rt2860_mcu_bbp_write(sc, 84, 0x19);
 
-	/* fix BBP69 and BBP73 for RT2860C */
-	if (sc->mac_ver == 0x2860 && sc->mac_rev != 0x0100) {
+	if (sc->mac_ver >= 0x3090) {
+		rt2860_mcu_bbp_write(sc, 79, 0x13);
+		rt2860_mcu_bbp_write(sc, 80, 0x05);
+		rt2860_mcu_bbp_write(sc, 81, 0x33);
+	} else if (sc->mac_ver == 0x2860 && sc->mac_rev == 0x0100) {
 		rt2860_mcu_bbp_write(sc, 69, 0x16);
 		rt2860_mcu_bbp_write(sc, 73, 0x12);
 	}

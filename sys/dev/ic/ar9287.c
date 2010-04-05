@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.5 2010/03/28 13:02:57 krw Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.6 2010/04/05 19:00:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -590,6 +590,10 @@ ar9287_1_2_setup_async_fifo(struct athn_softc *sc)
 {
 	uint32_t reg;
 
+	/*
+	 * MAC runs at 117MHz (instead of 88/44MHz) when ASYNC FIFO is
+	 * enabled, so the following counters have to be changed.
+	 */
 	AR_WRITE(sc, AR_D_GBL_IFS_SIFS, AR_D_GBL_IFS_SIFS_ASYNC_FIFO_DUR);
 	AR_WRITE(sc, AR_D_GBL_IFS_SLOT, AR_D_GBL_IFS_SLOT_ASYNC_FIFO_DUR);
 	AR_WRITE(sc, AR_D_GBL_IFS_EIFS, AR_D_GBL_IFS_EIFS_ASYNC_FIFO_DUR);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.29 2010/03/28 13:02:57 krw Exp $	*/
+/*	$OpenBSD: athn.c,v 1.30 2010/04/05 19:00:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2084,7 +2084,7 @@ athn_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 }
 
 /*
- * Anti-noise immunity.
+ * Adaptive noise immunity.
  */
 int32_t
 athn_ani_get_rssi(struct athn_softc *sc)
@@ -3920,6 +3920,7 @@ athn_enable_interrupts(struct athn_softc *sc)
 	AR_WRITE(sc, AR_IMR, mask);
 
 	mask2 = AR_READ(sc, AR_IMR_S2);
+printf("%s IMR_S2=0x%08x\n", __func__, mask2);
 	mask2 &= ~(AR_IMR_S2_TIM | AR_IMR_S2_DTIM | AR_IMR_S2_DTIMSYNC |
 	    AR_IMR_S2_CABEND | AR_IMR_S2_CABTO | AR_IMR_S2_TSFOOR);
 	mask2 |= AR_IMR_S2_GTT | AR_IMR_S2_CST;
@@ -3950,9 +3951,18 @@ athn_disable_interrupts(struct athn_softc *sc)
 
 	AR_WRITE(sc, AR_IMR, 0);
 
-	AR_CLRBITS(sc, AR_IMR_S2, AR_IMR_S2_TIM | AR_IMR_S2_DTIM |
+{
+uint32_t tmp;
+tmp = AR_READ(sc, AR_IMR_S2);
+printf("%s IMR_S2=0x%08x\n", __func__, tmp);
+tmp &= ~(AR_IMR_S2_TIM | AR_IMR_S2_DTIM |
 	    AR_IMR_S2_DTIMSYNC | AR_IMR_S2_CABEND | AR_IMR_S2_CABTO |
 	    AR_IMR_S2_TSFOOR | AR_IMR_S2_GTT | AR_IMR_S2_CST);
+AR_WRITE(sc, AR_IMR_S2, tmp);
+/*	AR_CLRBITS(sc, AR_IMR_S2, AR_IMR_S2_TIM | AR_IMR_S2_DTIM |
+	    AR_IMR_S2_DTIMSYNC | AR_IMR_S2_CABEND | AR_IMR_S2_CABTO |
+	    AR_IMR_S2_TSFOOR | AR_IMR_S2_GTT | AR_IMR_S2_CST);*/
+}
 
 	AR_CLRBITS(sc, AR_IMR_S5, AR_IMR_S5_TIM_TIMER);
 }
@@ -4216,7 +4226,11 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 		sc->imask |= AR_IMR_MIB;
 #endif
 	AR_WRITE(sc, AR_IMR, sc->imask);
-	AR_SETBITS(sc, AR_IMR_S2, AR_IMR_S2_GTT);
+reg = AR_READ(sc, AR_IMR_S2);
+printf("%s AR_IMR_S2=0x%08x\n", __func__, reg);
+reg |= AR_IMR_S2_GTT;
+AR_WRITE(sc, AR_IMR_S2, reg);
+//	AR_SETBITS(sc, AR_IMR_S2, AR_IMR_S2_GTT);
 	AR_WRITE(sc, AR_INTR_SYNC_CAUSE, 0xffffffff);
 	sc->isync = AR_INTR_SYNC_DEFAULT;
 	if (sc->flags & ATHN_FLAG_RFSILENT)
