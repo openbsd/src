@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.78 2010/04/05 01:47:54 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.79 2010/04/05 04:11:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -99,6 +99,7 @@ int		ata_polled(struct ata_xfer *);
 u_int64_t	ata_identify_blocks(struct ata_identify *);
 u_int		ata_identify_blocksize(struct ata_identify *);
 u_int		ata_identify_block_l2p_exp(struct ata_identify *);
+u_int		ata_identify_block_logical_align(struct ata_identify *);
 
 struct atascsi *
 atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
@@ -821,6 +822,21 @@ ata_identify_block_l2p_exp(struct ata_identify *id)
 	return (exponent);
 }
 
+u_int
+ata_identify_block_logical_align(struct ata_identify *id)
+{
+	u_int			align = 0;
+	u_int16_t		p2l_sect = letoh16(id->p2l_sect);
+	u_int16_t		logical_align = letoh16(id->logical_align);
+	
+	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
+	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SET) &&
+	    (logical_align & ATA_ID_LALIGN_MASK) == ATA_ID_LALIGN_VALID)
+		align = logical_align & ATA_ID_LALIGN;
+
+	return (align);
+}
+
 void
 atascsi_disk_capacity(struct scsi_xfer *xs)
 {
@@ -850,12 +866,16 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct scsi_read_cap_data_16 rcd;
+	u_int			align;
 
 	bzero(&rcd, sizeof(rcd));
 
 	_lto4b(ata_identify_blocks(&ap->ap_identify), rcd.addr);
 	_lto4b(ata_identify_blocksize(&ap->ap_identify), rcd.length);
 	rcd.logical_per_phys = ata_identify_block_l2p_exp(&ap->ap_identify);
+	align = ata_identify_block_logical_align(&ap->ap_identify);
+	if (align > 0)
+		_lto2b((1 << rcd.logical_per_phys) - align, rcd.lowest_aligned);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
 
