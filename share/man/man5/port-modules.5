@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.47 2010/03/21 11:40:39 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.48 2010/04/05 11:44:19 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2010 $
+.Dd $Mdocdate: April 5 2010 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -415,6 +415,17 @@ Appends to RUN_DEPENDS and CATEGORIES.
 Also appends to BUILD_DEPENDS,
 unless NO_BUILD has been set to Yes.
 .It lang/mono
+Sets ONLY_FOR_ARCHS, CONFIGURE_ENV and MAKE_FLAGS.
+If MODMONO_DEPS is set to Yes,
+.Pa lang/mono
+is appended to BUILD_DEPENDS and RUN_DEPENDS.
+If USE_NANT is defined, NANT and NANT_FLAGS are set,
+.Pa devel/nant
+is appended to BUILD_DEPENDS and the do-build and do-install targets are
+provided to use nant for building
+.Pq can be overridden in the port Makefile .
+DLLMAP_FILES defines in which files the module will substitute hardcoded
+shared library versions using a post-configure target.
 .It lang/ocaml
 Sets OCAML_VERSION, MODOCAML_NATIVE.
 Appends to BUILD_DEPENDS and MAKE_ENV.
