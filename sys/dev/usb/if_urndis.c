@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.19 2010/03/25 19:39:34 mk Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.20 2010/04/05 08:11:34 armani Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1407,8 +1407,6 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: no data interface\n", DEVNAME(sc));
 		return;
 	}
-
-	id = usbd_get_interface_descriptor(sc->sc_iface_ctl);
 
 	id = usbd_get_interface_descriptor(sc->sc_iface_data);
 	cd = usbd_get_config_descriptor(sc->sc_udev);
