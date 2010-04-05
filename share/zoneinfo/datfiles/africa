@@ -1,6 +1,6 @@
-# $OpenBSD: africa,v 1.30 2009/08/17 13:44:10 millert Exp $
+# $OpenBSD: africa,v 1.31 2010/04/05 15:32:20 millert Exp $
 # <pre>
-# @(#)africa	8.23
+# @(#)africa	8.24
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -943,6 +943,24 @@ Zone	Africa/Lome	0:04:52 -	LMT	1893
 # Therefore, the standard time will be kept unchanged the whole year long."
 # So foregoing DST seems to be an exception (albeit one that may be repeated in the  future).
 
+# From Alexander Krivenyshev (2010-03-27):
+# According to some news reports Tunis confirmed not to use DST in 2010
+#
+# (translation):
+# "The Tunisian government has decided to abandon DST, which was scheduled on
+# Sunday...
+# Tunisian authorities had suspended the DST for the first time last year also
+# coincided with the month of Ramadan..."
+#
+# (in Arabic)
+# <a href="http://www.moheet.com/show_news.aspx?nid=358861&pg=1">
+# http://www.moheet.com/show_news.aspx?nid=358861&pg=1
+# <a href="http://www.almadenahnews.com/newss/news.php?c=118&id=38036">
+# http://www.almadenahnews.com/newss/news.php?c=118&id=38036
+# or
+# <a href="http://www.worldtimezone.com/dst_news/dst_news_tunis02.html">
+# http://www.worldtimezone.com/dst_news/dst_news_tunis02.html
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Tunisia	1939	only	-	Apr	15	23:00s	1:00	S
 Rule	Tunisia	1939	only	-	Nov	18	23:00s	0	-
@@ -969,8 +987,7 @@ Rule	Tunisia	2005	only	-	May	 1	 0:00s	1:00	S
 Rule	Tunisia	2005	only	-	Sep	30	 1:00s	0	-
 Rule	Tunisia	2006	2008	-	Mar	lastSun	 2:00s	1:00	S
 Rule	Tunisia	2006	2008	-	Oct	lastSun	 2:00s	0	-
-Rule	Tunisia	2010	max	-	Mar	lastSun	 2:00s	1:00	S
-Rule	Tunisia	2010	max	-	Oct	lastSun	 2:00s	0	-
+
 # Shanks & Pottenger give 0:09:20 for Paris Mean Time; go with Howse's
 # more precise 0:09:21.
 # Shanks & Pottenger say the 1911 switch was on Mar 9; go with Howse's Mar 11.
