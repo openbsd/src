@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.77 2010/04/05 00:59:31 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.78 2010/04/05 01:47:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -98,6 +98,7 @@ int		ata_polled(struct ata_xfer *);
 
 u_int64_t	ata_identify_blocks(struct ata_identify *);
 u_int		ata_identify_blocksize(struct ata_identify *);
+u_int		ata_identify_block_l2p_exp(struct ata_identify *);
 
 struct atascsi *
 atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
@@ -675,20 +676,14 @@ atascsi_disk_vpd_limits(struct scsi_xfer *xs)
 	struct atascsi          *as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
 	struct scsi_vpd_disk_limits pg;
-	u_int16_t		p2l_sect;
 
 	bzero(&pg, sizeof(pg));
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_DISK_LIMITS;
 	pg.hdr.page_length = SI_PG_DISK_LIMITS_LEN_THIN;
 
-	p2l_sect = letoh16(ap->ap_identify.p2l_sect);
-	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
-	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SET)) {
-		_lto2b(2 << (p2l_sect & SI_PG_DISK_LIMITS_LEN_THIN),
-		    pg.optimal_xfer_granularity);
-	} else
-		_lto2b(1, pg.optimal_xfer_granularity);
+	_lto2b(1 << ata_identify_block_l2p_exp(&ap->ap_identify),
+	    pg.optimal_xfer_granularity);
 
 	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
 
@@ -812,6 +807,20 @@ ata_identify_blocksize(struct ata_identify *id)
 	return (blocksize);
 }
 
+u_int
+ata_identify_block_l2p_exp(struct ata_identify *id)
+{
+	u_int			exponent = 0;
+	u_int16_t		p2l_sect = letoh16(id->p2l_sect);
+	
+	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
+	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SET)) {
+		exponent = (p2l_sect & ATA_ID_P2L_SECT_SIZE);
+	}
+
+	return (exponent);
+}
+
 void
 atascsi_disk_capacity(struct scsi_xfer *xs)
 {
@@ -846,6 +855,7 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 
 	_lto4b(ata_identify_blocks(&ap->ap_identify), rcd.addr);
 	_lto4b(ata_identify_blocksize(&ap->ap_identify), rcd.length);
+	rcd.logical_per_phys = ata_identify_block_l2p_exp(&ap->ap_identify);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
 
