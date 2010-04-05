@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.5 2010/04/01 19:48:50 kettenis Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.6 2010/04/05 22:42:43 kettenis Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -89,6 +89,7 @@ ENTRY(kvm86_call)
 	movl	CPU_INFO_APICID(%ecx),%edx
 	cmpl	%eax,%edx
 	jne 1b
+	movl	%ecx,%edx
 #else
 	leal	_C_LABEL(cpu_info_primary),%ecx
 #endif
