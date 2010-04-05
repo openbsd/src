@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.75 2010/04/03 09:35:48 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.76 2010/04/05 00:55:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -94,6 +94,9 @@ void		ata_put_xfer(struct ata_xfer *);
 
 void		ata_polled_complete(struct ata_xfer *);
 int		ata_polled(struct ata_xfer *);
+
+u_int64_t	ata_identify_blocks(struct ata_identify *);
+u_int		ata_identify_blocksize(struct ata_identify *);
 
 struct atascsi *
 atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
@@ -767,35 +770,60 @@ atascsi_disk_sync_done(struct ata_xfer *xa)
 	scsi_done(xs);
 }
 
+u_int64_t
+ata_identify_blocks(struct ata_identify *id)
+{
+	u_int64_t		blocks = 0;
+	int			i;
+
+	if (letoh16(id->cmdset83) & 0x0400) {
+		/* LBA48 feature set supported */
+		for (i = 3; i >= 0; --i) {
+			blocks <<= 16;
+			blocks += letoh16(id->addrsecxt[i]);
+		}
+	} else {
+		blocks = letoh16(id->addrsec[1]);
+		blocks <<= 16;
+		blocks += letoh16(id->addrsec[0]);
+	}
+
+	return (blocks - 1);
+}
+
+u_int
+ata_identify_blocksize(struct ata_identify *id)
+{
+	u_int			blocksize = 512;
+	u_int16_t		p2l_sect = letoh16(id->p2l_sect);
+	
+	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
+	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SIZESET)) {
+		blocksize = letoh16(id->words_lsec[1]);
+		blocksize <<= 16;
+		blocksize += letoh16(id->words_lsec[0]);
+		blocksize <<= 1;
+	}
+
+	return (blocksize);
+}
+
 void
 atascsi_disk_capacity(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct atascsi		*as = link->adapter_softc;
 	struct ata_port		*ap = as->as_ports[link->target];
-	struct ata_identify	*id = &ap->ap_identify;
 	struct scsi_read_cap_data rcd;
-	u_int64_t		capacity = 0;
-	int			i;
+	u_int64_t		capacity;
 
 	bzero(&rcd, sizeof(rcd));
-	if (letoh16(id->cmdset83) & 0x0400) {
-		/* LBA48 feature set supported */
-		for (i = 3; i >= 0; --i) {
-			capacity <<= 16;
-			capacity += letoh16(id->addrsecxt[i]);
-		}
-	} else {
-		capacity = letoh16(id->addrsec[1]);
-		capacity <<= 16;
-		capacity += letoh16(id->addrsec[0]);
-	}
-
+	capacity = ata_identify_blocks(&ap->ap_identify);
 	if (capacity > 0xffffffff)
 		capacity = 0xffffffff;
 
-	_lto4b(capacity - 1, rcd.addr);
-	_lto4b(512, rcd.length);
+	_lto4b(capacity, rcd.addr);
+	_lto4b(ata_identify_blocksize(&ap->ap_identify), rcd.length);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
 

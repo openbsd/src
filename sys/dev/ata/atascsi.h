@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.36 2010/04/03 07:09:29 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.37 2010/04/05 00:55:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -114,7 +114,7 @@ struct ata_identify {
 #define ATA_ID_P2L_SECT_MASK	0xc000
 #define ATA_ID_P2L_SECT_VALID	0x4000
 #define ATA_ID_P2L_SECT_SET	0x2000
-#define ATA_ID_P2L_SECT_LARGE	0x1000
+#define ATA_ID_P2L_SECT_SIZESET	0x1000
 #define ATA_ID_P2L_SECT_SIZE	0x000f
 	u_int16_t	seek_delay;	/* 107 */
 	u_int16_t	naa_ieee_oui;	/* 108 */
