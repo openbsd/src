@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.136 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: pkg_create,v 1.137 2010/04/05 14:47:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -322,6 +322,19 @@ sub makesum_plist
 	}
 }
 
+package OpenBSD::PackingElement::Manpage;
+sub makesum_plist
+{
+	my ($self, $plist, $state) = @_;
+	if ($state->{subst}->empty("USE_GROFF") || !$self->is_source) {
+		return $self->SUPER::makesum_plist($plist, $state);
+	}
+	my $dest = $self->source_to_dest;
+	$self->format($state->{base}, $self->cwd."/".$dest);
+	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
+	$e->compute_checksum($e, $state, $state->{base});
+}
+
 package OpenBSD::PackingElement::Depend;
 sub avert_duplicates_and_other_checks
 {
@@ -396,6 +409,8 @@ my $state = OpenBSD::State->new;
 
 
 my $subst = OpenBSD::Subst->new;
+
+$state->{subst} = $subst;
 
 our ($opt_p, $opt_f, $opt_d, $opt_v,
 	$opt_s, $opt_A, $opt_L,
