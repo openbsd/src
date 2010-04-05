@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.26 2010/02/08 18:46:47 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.27 2010/04/05 14:14:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -204,6 +204,10 @@
 #define RT2860_H2M_BBPAGENT		0x7028
 #define RT2860_BCN_BASE(vap)		(0x7800 + (vap) * 512)
 
+
+/* possible flags for RT2860_PCI_CFG */
+#define RT2860_PCI_CFG_USB	(1 << 17)
+#define RT2860_PCI_CFG_PCI	(1 << 16)
 
 /* possible flags for register RT2860_PCI_EECTRL */
 #define RT2860_C	(1 << 0)
@@ -499,6 +503,14 @@
 #define RT2860_WAKEUP_LEAD_TIME_SHIFT	0
 
 /* possible flags for register TX_PIN_CFG */
+#define RT3593_LNA_PE_G2_POL	(1 << 31)
+#define RT3593_LNA_PE_A2_POL	(1 << 30)
+#define RT3593_LNA_PE_G2_EN	(1 << 29)
+#define RT3593_LNA_PE_A2_EN	(1 << 28)
+#define RT3593_PA_PE_G2_POL	(1 << 27)
+#define RT3593_PA_PE_A2_POL	(1 << 26)
+#define RT3593_PA_PE_G2_EN	(1 << 25)
+#define RT3593_PA_PE_A2_EN	(1 << 24)
 #define RT2860_TRSW_POL		(1 << 19)
 #define RT2860_TRSW_EN		(1 << 18)
 #define RT2860_RFTR_POL		(1 << 17)
@@ -838,6 +850,8 @@ struct rt2860_rxwi {
 #define RT3070_RF_3021	7	/* 1T2R */
 #define RT3070_RF_3022	8	/* 2T2R */
 #define RT3070_RF_3052	9	/* dual-band 2T2R */
+#define RT3070_RF_3320	11	/* 1T1R */
+#define RT3070_RF_3053	13	/* dual-band 3T3R */
 
 /* USB commands for RT2870 only */
 #define RT2870_RESET		1

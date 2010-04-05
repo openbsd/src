@@ -1,8 +1,7 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.17 2010/03/27 21:40:13 jsg Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.18 2010/04/05 14:14:02 damien Exp $  */
 
 /*-
- * Copyright (c) 2005-2007
- *	Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +17,7 @@
  */
 
 /*
- * CardBus front-end for the Ralink RT2560/RT2561/RT2661/RT2860 driver.
+ * CardBus front-end for the Ralink RT2560/RT2561/RT2860/RT3090 driver.
  */
 
 #include "bpfilter.h"
@@ -122,7 +121,14 @@ static const struct pci_matchid ral_cardbus_devices[] = {
 	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_4 },
 	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_5 },
 	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_6 },
-	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_7 }
+	{ PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_7 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3062 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3090 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3091 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3092 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3562 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3592 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3593 }
 };
 
 int	ral_cardbus_enable(struct rt2560_softc *);
@@ -157,10 +163,7 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_RALINK_RT2661:
 			csc->sc_opns = &ral_rt2661_opns;
 			break;
-		case PCI_PRODUCT_RALINK_RT2860:
-		case PCI_PRODUCT_RALINK_RT2890:
-		case PCI_PRODUCT_RALINK_RT2760:
-		case PCI_PRODUCT_RALINK_RT2790:
+		default:
 			csc->sc_opns = &ral_rt2860_opns;
 			break;
 		}
