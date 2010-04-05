@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.24 2009/11/01 22:13:27 kettenis Exp $	*/
+/*	$OpenBSD: vector.S,v 1.25 2010/04/05 19:04:32 kettenis Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -410,8 +410,8 @@ IDTVEC(intr_##name##num)						;\
 	pushq	$0			/* dummy error code */		;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-	movq	CPUVAR(ISOURCES) + (num) * 8, %r14		;\
-	mask(num)		/* mask it in hardware */	;\
+	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
+	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
 	testq	%r14,%r14						;\
 	jz	9f			/* stray */			;\
