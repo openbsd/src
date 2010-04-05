@@ -1,4 +1,4 @@
-.\" $OpenBSD: sppp.4,v 1.19 2010/04/04 20:47:34 sthen Exp $
+.\" $OpenBSD: sppp.4,v 1.20 2010/04/05 06:20:43 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Joerg Wunsch
 .\"
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 4 2010 $
+.Dd $Mdocdate: April 5 2010 $
 .Dt SPPP 4
 .Os
 .Sh NAME
@@ -232,24 +232,21 @@ take place.
 .%O RFC 2472
 .Re
 .Sh AUTHORS
+.An -nosplit
 The original implementation of
 .Nm
-was written in 1994 at Cronyx Ltd., Moscow by
+was written in 1994 at Cronyx Ltd., Moscow, by
 .An Serge Vakulenko Aq vak@cronyx.ru .
-.ie t J\(:org Wunsch
-.el Joerg Wunsch
-.Aq joerg_wunsch@uriah.heep.sax.de
+.An Joerg Wunsch Aq joerg_wunsch@uriah.heep.sax.de
 rewrote a large part in 1997 in order
 to fully implement the state machine as described in RFC 1661, so it
 could also be used for dialup lines.
 He also wrote the initial version of this man page.
 Serge later on wrote a basic implementation for PAP and CHAP, which
 served as the base for the current implementation, done again by
-.ie t J\(:org Wunsch.
-.el Joerg Wunsch.
+Joerg Wunsch.
 .Pp
-.ie t Reyk Fl\(:oter
-.el Reyk Floeter
+.An Reyk Floeter
 implemented
 .Nm
 support for
