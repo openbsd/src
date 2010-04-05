@@ -648,7 +648,7 @@ sub options_processing {
 
     $self->options_sanity;
 
-    $self->opt_n("nroff") unless $self->opt_n;
+    $self->opt_n("mandoc") unless $self->opt_n;
     $self->add_formatter_option( '__nroffer' => $self->opt_n );
 
     # Adjust for using translation packages
