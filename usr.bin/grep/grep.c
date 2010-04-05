@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.39 2007/09/02 15:19:32 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.40 2010/04/05 03:03:55 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -62,11 +62,8 @@ int	 Bflag;		/* -B x: print x lines leading each match */
 int	 Eflag;		/* -E: interpret pattern as extended regexp */
 int	 Fflag;		/* -F: interpret pattern as list of fixed strings */
 int	 Gflag;		/* -G: interpret pattern as basic regexp */
-int	 Hflag;		/* -H: if -R, follow explicitly listed symlinks */
 int	 Lflag;		/* -L: only show names of files with no matches */
-int	 Pflag;		/* -P: if -R, no symlinks are followed */
 int	 Rflag;		/* -R: recursively search directory trees */
-int	 Sflag;		/* -S: if -R, follow all symlinks */
 #ifndef NOZ
 int	 Zflag;		/* -Z: decompress input before processing */
 #endif
@@ -76,7 +73,6 @@ int	 hflag;		/* -h: don't print filename headers */
 int	 iflag;		/* -i: ignore case */
 int	 lflag;		/* -l: only show names of files with matches */
 int	 nflag;		/* -n: show line numbers in front of matching lines */
-int	 oflag;		/* -o: always print file name */
 int	 qflag;		/* -q: quiet mode (don't output anything) */
 int	 sflag;		/* -s: silent mode (ignore errors) */
 int	 vflag;		/* -v: only show non-matching lines */
@@ -110,9 +106,9 @@ usage(void)
 {
 	fprintf(stderr,
 #ifdef NOZ
-	    "usage: %s [-abcEFGHhIiLlnoPqRSsUVvwx] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGhIiLlnqRsUVvwx] [-A num] [-B num] [-C[num]]\n"
 #else
-	    "usage: %s [-abcEFGHhIiLlnoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGhIiLlnqRsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
 #endif
 	    "\t[-e pattern] [-f file] [--binary-files=value] [--context[=num]]\n"
 	    "\t[--line-buffered] [pattern] [file ...]\n", __progname);
@@ -120,9 +116,9 @@ usage(void)
 }
 
 #ifdef NOZ
-static char *optstr = "0123456789A:B:CEFGHILPSRUVabce:f:hilnoqrsuvwxy";
+static char *optstr = "0123456789A:B:CEFGILRUVabce:f:hilnqrsuvwxy";
 #else
-static char *optstr = "0123456789A:B:CEFGHILPSRUVZabce:f:hilnoqrsuvwxy";
+static char *optstr = "0123456789A:B:CEFGILRUVZabce:f:hilnqrsuvwxy";
 #endif
 
 struct option long_options[] =
@@ -317,9 +313,6 @@ main(int argc, char *argv[])
 			Eflag = Fflag = 0;
 			Gflag++;
 			break;
-		case 'H':
-			Hflag++;
-			break;
 		case 'I':
 			binbehave = BIN_FILE_SKIP;
 			break;
@@ -327,16 +320,9 @@ main(int argc, char *argv[])
 			lflag = 0;
 			Lflag = qflag = 1;
 			break;
-		case 'P':
-			Pflag++;
-			break;
-		case 'S':
-			Sflag++;
-			break;
 		case 'R':
 		case 'r':
 			Rflag++;
-			oflag++;
 			break;
 		case 'U':
 			binbehave = BIN_FILE_BIN;
@@ -370,7 +356,6 @@ main(int argc, char *argv[])
 			needpattern = 0;
 			break;
 		case 'h':
-			oflag = 0;
 			hflag = 1;
 			break;
 		case 'i':
@@ -384,10 +369,6 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			nflag = 1;
-			break;
-		case 'o':
-			hflag = 0;
-			oflag = 1;
 			break;
 		case 'q':
 			qflag = 1;
@@ -472,7 +453,7 @@ main(int argc, char *argv[])
 	if (lbflag)
 		setlinebuf(stdout);
 
-	if ((argc == 0 || argc == 1) && !oflag)
+	if ((argc == 0 || argc == 1) && !Rflag)
 		hflag = 1;
 
 	if (argc == 0)
