@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.162 2010/04/04 21:23:20 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.163 2010/04/05 17:46:05 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 4 2010 $
+.Dd $Mdocdate: April 5 2010 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1748,6 +1748,14 @@ Shell commands are executed with the
 global environment set (see the
 .Sx ENVIRONMENT
 section).
+.Pp
+The window title (#T) is the title set by the program running within the window
+using the OSC title setting sequence, for example:
+.Bd -literal -offset indent
+$ printf '\e033]2;My Title\e033\e\e'
+.Ed
+.Pp
+When a window is first created, its title is the hostname.
 .Pp
 #[attributes] allows a comma-separated list of attributes to be specified,
 these may be
