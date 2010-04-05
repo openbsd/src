@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.97 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: Delete.pm,v 1.98 2010/04/05 13:46:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -360,7 +360,12 @@ sub prepare_for_deletion
 	my ($self, $state, $pkgname) = @_;
 
 	my $fname = $state->{destdir}.$self->fullname;
-	my $s = $state->vstat->remove($fname, $self->{size});
+	my $s;
+	if ($state->{delete_first}) {
+		$s = $state->vstat->remove_first($fname, $self->{size});
+	} else {
+		$s = $state->vstat->remove($fname, $self->{size});
+	}
 	return unless defined $s;
 	if ($s->ro) {
 		$s->report_ro($state, $fname);

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.474 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: pkg_add,v 1.475 2010/04/05 13:46:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -572,6 +572,35 @@ sub check_x509_signature
 	}
 }
 
+sub delete_old_packages
+{
+	my ($set, $state) = @_;
+
+	build_before($set->older_to_do);
+	iterate($set->older_to_do, sub {
+		return if $state->{size_only};
+		my $o = shift;
+		$set->setup_header($state, $o, "deleting");
+		my $oldname = $o->pkgname;
+		$state->set_name_from_handle($o, '-');
+		require OpenBSD::Delete;
+		try {
+			OpenBSD::Delete::delete_plist($o->plist, $state);
+		} catchall {
+			$state->errprint($_);
+			Fatal partial_install(
+			    "Deinstallation of $oldname failed", 
+			    $set, $state);
+		};
+
+		if (defined $state->{updatedepends}) {
+			delete $state->{updatedepends}->{$oldname};
+		}
+		OpenBSD::PkgCfl::unregister($o->plist, $state);
+	});
+	# Here there should be code to handle old libs
+}
+
 sub really_add
 {
 	my ($set, $state) = @_;
@@ -615,7 +644,8 @@ sub really_add
 		OpenBSD::OldLibs->save($set, $state);
 	}
 
-	if ($replacing) {
+	if ($replacing && !$state->{delete_first}) {
+		$state->{extracted_first} = 1;
 		for my $handle ($set->newer) {
 			next if $state->{size_only};
 			$set->setup_header($state, $handle, "extracting");
@@ -634,30 +664,12 @@ sub really_add
 				    $handle->pkgname." failed", $set, $state);
 			}
 		}
+	} else {
+		$state->{extracted_first} = 0;
+	}
 
-		build_before($set->older_to_do);
-		iterate($set->older_to_do, sub {
-			return if $state->{size_only};
-			my $o = shift;
-			$set->setup_header($state, $o, "deleting");
-			my $oldname = $o->pkgname;
-			$state->set_name_from_handle($o, '-');
-			require OpenBSD::Delete;
-			try {
-			    OpenBSD::Delete::delete_plist($o->plist, $state);
-			} catchall {
-				$state->errprint($_);
-				Fatal partial_install(
-				    "Deinstallation of $oldname failed", 
-				    $set, $state);
-			};
-
-			if (defined $state->{updatedepends}) {
-				delete $state->{updatedepends}->{$oldname};
-			}
-			OpenBSD::PkgCfl::unregister($o->plist, $state);
-		});
-		# Here there should be code to handle old libs
+	if ($replacing) {
+		delete_old_packages($set, $state);
 	}
 
 	iterate($set->newer, sub {
@@ -713,6 +725,7 @@ sub really_add
 	if ($state->{repairdependencies}) {
 		$set->{solver}->repair_dependencies($state);
 	}
+	delete $state->{delete_first};
 }
 
 sub newer_has_errors

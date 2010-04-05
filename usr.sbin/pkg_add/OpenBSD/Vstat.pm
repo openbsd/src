@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.56 2010/01/14 19:35:55 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.57 2010/04/05 13:46:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -178,6 +178,13 @@ sub remove
 	my ($self, $name, $size) = @_;
 	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object->none;
 	return defined($size) ? $self->account_later($name, -$size) : undef;
+}
+
+sub remove_first
+{
+	my ($self, $name, $size) = @_;
+	$self->{v}[0]->{$name} = OpenBSD::Vstat::Object->none;
+	return defined($size) ? $self->account_for($name, -$size) : undef;
 }
 
 sub tally

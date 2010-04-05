@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.105 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: Add.pm,v 1.106 2010/04/05 13:46:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -368,7 +368,7 @@ sub install
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
-	if ($state->{replacing}) {
+	if ($state->{extracted_first}) {
 		if ($state->{not}) {
 			$state->say("moving tempfile -> $destdir$fullname") if $state->verbose >= 5;
 			return;
