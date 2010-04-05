@@ -1,11 +1,11 @@
-.\"	$OpenBSD: mrouted.8,v 1.21 2010/01/06 07:59:15 jmc Exp $
+.\"	$OpenBSD: mrouted.8,v 1.22 2010/04/05 16:47:01 deraadt Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
 .\"
 .\" The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
 .\" Leland Stanford Junior University.
-.Dd $Mdocdate: January 6 2010 $
+.Dd $Mdocdate: April 5 2010 $
 .Dt MROUTED 8
 .Os
 .Sh NAME
@@ -234,10 +234,10 @@ may be replaced by a host name, if and only if the host name has a single
 IP address associated with it.
 The tunnel must be set up in the mrouted.conf files of both routers before
 it can be used.
-\."For backwards compatibility with older versions of
-\.".Nm ,
-\."the srcrt keyword specifies
-\."encapsulation using IP source routing.
+.\"For backwards compatibility with older versions of
+.\".Nm ,
+.\"the srcrt keyword specifies
+.\"encapsulation using IP source routing.
 .Pp
 .Cm boundary
 allows an interface to be configured as an administrative boundary
