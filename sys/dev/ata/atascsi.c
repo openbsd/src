@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.76 2010/04/05 00:55:03 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.77 2010/04/05 00:59:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -78,6 +78,7 @@ void		atascsi_disk_vpd_ident(struct scsi_xfer *);
 void		atascsi_disk_vpd_limits(struct scsi_xfer *);
 void		atascsi_disk_vpd_info(struct scsi_xfer *);
 void		atascsi_disk_capacity(struct scsi_xfer *);
+void		atascsi_disk_capacity16(struct scsi_xfer *);
 void		atascsi_disk_sync(struct scsi_xfer *);
 void		atascsi_disk_sync_done(struct ata_xfer *);
 void		atascsi_disk_sense(struct scsi_xfer *);
@@ -371,6 +372,9 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		return;
 	case READ_CAPACITY:
 		atascsi_disk_capacity(xs);
+		return;
+	case READ_CAPACITY_16:
+		atascsi_disk_capacity16(xs);
 		return;
 
 	case TEST_UNIT_READY:
@@ -823,6 +827,24 @@ atascsi_disk_capacity(struct scsi_xfer *xs)
 		capacity = 0xffffffff;
 
 	_lto4b(capacity, rcd.addr);
+	_lto4b(ata_identify_blocksize(&ap->ap_identify), rcd.length);
+
+	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
+
+	atascsi_done(xs, XS_NOERROR);
+}
+
+void
+atascsi_disk_capacity16(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_port		*ap = as->as_ports[link->target];
+	struct scsi_read_cap_data_16 rcd;
+
+	bzero(&rcd, sizeof(rcd));
+
+	_lto4b(ata_identify_blocks(&ap->ap_identify), rcd.addr);
 	_lto4b(ata_identify_blocksize(&ap->ap_identify), rcd.length);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
