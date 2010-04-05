@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.66 2010/02/26 23:11:57 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.67 2010/04/05 02:09:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -108,6 +108,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
@@ -134,8 +135,21 @@ bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 {
 	char *tmot = "MOTOROLA", *id = "M68K", *mot;
 	int i;
+	u_short osa_u, osa_l, osl;
+	u_int oss;
 
+	/* preserve existing VID boot code information */
+	osa_u = clp->vid_osa_u;
+	osa_l = clp->vid_osa_l;
+	osl = clp->vid_osl;
+	oss = clp->vid_oss;
 	bzero(clp, sizeof(*clp));
+	clp->vid_osa_u = osa_u;
+	clp->vid_osa_l = osa_l;
+	clp->vid_osl = osl;
+	clp->vid_oss = oss;
+	clp->vid_cas = clp->vid_cal = 1;
+
 	clp->magic1 = lp->d_magic;
 	clp->type = lp->d_type;
 	clp->subtype = lp->d_subtype;

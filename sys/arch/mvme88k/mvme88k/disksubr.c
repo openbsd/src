@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.62 2010/02/26 23:11:57 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.63 2010/04/05 02:09:16 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -135,8 +135,21 @@ bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 {
 	char *tmot = "MOTOROLA", *id = "M88K", *mot;
 	int i;
+	u_short osa_u, osa_l, osl;
+	u_int oss;
 
+	/* preserve existing VID boot code information */
+	osa_u = clp->vid_osa_u;
+	osa_l = clp->vid_osa_l;
+	osl = clp->vid_osl;
+	oss = clp->vid_oss;
 	bzero(clp, sizeof(*clp));
+	clp->vid_osa_u = osa_u;
+	clp->vid_osa_l = osa_l;
+	clp->vid_osl = osl;
+	clp->vid_oss = oss;
+	clp->vid_cas = clp->vid_cal = 1;
+
 	clp->magic1 = lp->d_magic;
 	clp->type = lp->d_type;
 	clp->subtype = lp->d_subtype;
