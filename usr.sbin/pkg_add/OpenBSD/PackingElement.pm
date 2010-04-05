@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.174 2010/04/05 14:08:56 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.175 2010/04/05 16:07:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -977,6 +977,35 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 sub keyword() { "incompatibility" }
 __PACKAGE__->register_with_factory;
 sub category() { "incompatibility" }
+
+package OpenBSD::PackingElement::AskUpdate;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($pattern, $message) = split /\s+/o, $args, 2;
+	bless { pattern => $pattern, message => $message}, $class;
+}
+
+sub stringize
+{
+	my $self = shift;
+	return join(' ', map { $self->{$_}} 
+	    (qw(pattern message)));
+}
+
+sub keyword() { "ask-update" }
+__PACKAGE__->register_with_factory;
+sub category() { "ask-update" }
+
+OpenBSD::Auto::cache(spec,
+    sub {
+	require OpenBSD::PkgSpec;
+
+	my $self = shift;
+	return OpenBSD::PkgSpec->new($self->{pattern})
+    });
 
 package OpenBSD::PackingElement::UpdateSet;
 our @ISA=qw(OpenBSD::PackingElement::Meta);

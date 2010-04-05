@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.102 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.103 2010/04/05 16:07:10 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -450,7 +450,7 @@ our @unique_categories =
     (qw(name url digital-signature no-default-conflict manual-installation always-update explicit-update extrainfo localbase arch));
 
 our @list_categories =
-    (qw(conflict pkgpath incompatibility updateset depend 
+    (qw(conflict pkgpath incompatibility ask-update updateset depend 
     	wantlib define-tag groups users items));
 
 our @cache_categories =
