@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.173 2010/01/19 14:26:24 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.174 2010/04/05 14:08:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -533,6 +533,12 @@ sub format
 	    '-Tascii', '-mandoc', '-Wall', '-mtty-char', @extra, '--', $fname);
 	open STDOUT, '>&', $oldout;
 }
+
+package OpenBSD::PackingElement::Mandoc;
+our @ISA=qw(OpenBSD::PackingElement::Manpage);
+
+sub keyword() { "mandoc" }
+__PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::Lib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
