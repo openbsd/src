@@ -1,4 +1,4 @@
-/*	$OpenBSD: legacy.c,v 1.10 2010/04/03 17:59:17 ratchov Exp $	*/
+/*	$OpenBSD: legacy.c,v 1.11 2010/04/05 19:52:42 jakemsr Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -127,7 +127,7 @@ legacy_play(char *dev, char *aufile)
 		par.pchan = chan;
 		par.sig = 1;
 		par.bits = 16;
-		par.le = 1;
+		par.le = SIO_LE_NATIVE;
 		map = wav_ulawmap;
 		if (snd_fmt == 27)
 			map = wav_alawmap;
