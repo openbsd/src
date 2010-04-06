@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.206 2010/04/04 22:29:08 halex Exp $
+#	$OpenBSD: install.sh,v 1.207 2010/04/06 21:01:20 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -207,7 +207,7 @@ fi
 if _time=$(ftp_time) && _now=$(date +%s) && \
 	(( _now - _time > 120 || _time - _now > 120 )); then
 	_tz=/mnt/usr/share/zoneinfo/$TZ
-	ask_yn "Set time to '$(TZ=$_tz date -r "$(ftp_time)")'?" yes
+	ask_yn "Time appears wrong.  Set to '$(TZ=$_tz date -r "$(ftp_time)")'?" yes
 	if [[ $resp == y ]]; then
 		# We do not need to specify TZ below since both date
 		# invocations use the same one
