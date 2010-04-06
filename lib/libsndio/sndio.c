@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.23 2009/08/28 10:52:14 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.24 2010/04/06 20:07:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -547,7 +547,7 @@ sio_onmove_cb(struct sio_hdl *hdl, int delta)
 	struct timeval tv0, dtv;
 	long long playpos;
 
-	if (sio_debug >= 2 && (hdl->mode & SIO_PLAY)) {
+	if (sio_debug >= 3 && (hdl->mode & SIO_PLAY)) {
 		gettimeofday(&tv0, NULL);
 		timersub(&tv0, &hdl->tv, &dtv);
 		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.34 2010/01/20 13:17:22 jakemsr Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.35 2010/04/06 20:07:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,8 +43,6 @@ struct aucat_hdl {
 	int maxwrite;			/* latency constraint */
 	int events;			/* events the user requested */
 	unsigned curvol, reqvol;	/* current and requested volume */
-	unsigned devbufsz;		/* server side buffer size (in frames) */
-	unsigned attached;		/* stream attached to device */
 	int delta;			/* some of received deltas */
 };
 
@@ -153,14 +151,12 @@ aucat_runmsg(struct aucat_hdl *hdl)
 		hdl->rtodo = hdl->rmsg.u.data.size;
 		break;
 	case AMSG_MOVE:
-		if (!hdl->attached) {
-			DPRINTF("aucat_runmsg: attached\n");
-			hdl->maxwrite += hdl->devbufsz * hdl->wbpf;
-			hdl->attached = 1;
-		}
+		DPRINTF("aucat: tick, delta = %d\n", hdl->rmsg.u.ts.delta);
+		if (hdl->rmsg.u.ts.delta > 0)
+			hdl->maxwrite += hdl->rmsg.u.ts.delta * hdl->wbpf;
 		hdl->delta += hdl->rmsg.u.ts.delta;
 		if (hdl->delta >= 0) {
-			hdl->maxwrite += hdl->delta * hdl->wbpf;
+			DPRINTF("aucat: move: maxwrite = %d\n", hdl->maxwrite);
 			sio_onmove_cb(&hdl->sio, hdl->delta);
 			hdl->delta = 0;
 		}
@@ -316,8 +312,6 @@ aucat_start(struct sio_hdl *sh)
 	hdl->wbpf = par.bps * par.pchan;
 	hdl->rbpf = par.bps * par.rchan;
 	hdl->maxwrite = hdl->wbpf * par.appbufsz;
-	hdl->devbufsz = par.bufsz - par.appbufsz;
-	hdl->attached = 0;
 	hdl->delta = 0;
 
 	AMSG_INIT(&hdl->wmsg);
@@ -463,6 +457,8 @@ static int
 aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
+	unsigned i, bps, le, sig, chan, rindex, rmult;
+	static unsigned rates[] = { 8000, 11025, 12000 };
 
 	AMSG_INIT(&hdl->wmsg);
 	hdl->wmsg.cmd = AMSG_GETCAP;
@@ -477,18 +473,70 @@ aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 		hdl->sio.eof = 1;
 		return 0;
 	}
-	cap->enc[0].bits = hdl->rmsg.u.cap.bits;
-	cap->enc[0].bps = SIO_BPS(hdl->rmsg.u.cap.bits);
-	cap->enc[0].sig = 1;
-	cap->enc[0].le = SIO_LE_NATIVE;
-	cap->enc[0].msb = 1;
-	cap->rchan[0] = hdl->rmsg.u.cap.rchan;
-	cap->pchan[0] = hdl->rmsg.u.cap.pchan;
-	cap->rate[0] = hdl->rmsg.u.cap.rate;
-	cap->confs[0].enc = 1;
-	cap->confs[0].rchan = (hdl->rmsg.u.cap.rchan > 0) ? 1 : 0;
-	cap->confs[0].pchan = (hdl->rmsg.u.cap.pchan > 0) ? 1 : 0;
-	cap->confs[0].rate = 1;
+	bps = 1;
+	sig = le = 0;
+	cap->confs[0].enc = 0;
+	for (i = 0; i < SIO_NENC; i++) {
+		if (bps > 4)
+			break;
+		cap->confs[0].enc |= 1 << i;
+		cap->enc[i].bits = bps == 4 ? 24 : bps * 8;
+		cap->enc[i].bps = bps;
+		cap->enc[i].sig = sig ^ 1;
+		cap->enc[i].le = bps > 1 ? le : SIO_LE_NATIVE;
+		cap->enc[i].msb = 1;
+		le++;
+		if (le > 1 || bps == 1) {
+			le = 0;
+			sig++;
+		}
+		if (sig > 1 || (le == 0 && bps > 1)) {
+			sig = 0;
+			bps++;
+		}
+	}
+	chan = 1;
+	cap->confs[0].rchan = 0;
+	for (i = 0; i < SIO_NCHAN; i++) {
+		if (chan > 16)
+			break;
+		cap->confs[0].rchan |= 1 << i;
+		cap->rchan[i] = chan;
+		if (chan >= 12) {
+			chan += 4;
+		} else if (chan >= 2) {
+			chan += 2;
+		} else
+			chan++;
+	}
+	chan = 1;
+	cap->confs[0].pchan = 0;
+	for (i = 0; i < SIO_NCHAN; i++) {
+		if (chan > 16)
+			break;
+		cap->confs[0].pchan |= 1 << i;
+		cap->pchan[i] = chan;
+		if (chan >= 12) {
+			chan += 4;
+		} else if (chan >= 2) {
+			chan += 2;
+		} else
+			chan++;
+	}
+	rindex = 0;
+	rmult = 1;
+	cap->confs[0].rate = 0;
+	for (i = 0; i < SIO_NRATE; i++) {
+		if (rmult >= 32)
+			break;
+		cap->rate[i] = rates[rindex] * rmult;
+		cap->confs[0].rate |= 1 << i;
+		rindex++;
+		if (rindex == sizeof(rates) / sizeof(unsigned)) {
+			rindex = 0;
+			rmult *= 2;
+		}
+	}
 	cap->nconf = 1;
 	return 1;
 }
@@ -532,6 +580,7 @@ aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 		hdl->rstate = STATE_MSG;
 		hdl->rtodo = sizeof(struct amsg);
 	}
+	DPRINTF("aucat: read: n = %zd\n", n);
 	return n;
 }
 
@@ -611,6 +660,7 @@ aucat_write(struct sio_hdl *sh, const void *buf, size_t len)
 		return 0;
 	}
 	hdl->maxwrite -= n;
+	DPRINTF("aucat: write: n = %zd, maxwrite = %d\n", n, hdl->maxwrite);
 	hdl->wtodo -= n;
 	if (hdl->wtodo == 0) {
 		hdl->wstate = STATE_IDLE;
@@ -631,6 +681,7 @@ aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 		events |= POLLIN;
 	pfd->fd = hdl->fd;
 	pfd->events = events;		
+	DPRINTF("aucat: pollfd: %x -> %x\n", hdl->events, pfd->events);
 	return 1;
 }
 
@@ -654,6 +705,7 @@ aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	}
 	if (hdl->sio.eof)
 		return POLLHUP;
+	DPRINTF("aucat: revents: %x\n", revents & hdl->events);
 	return revents & (hdl->events | POLLHUP);
 }
 

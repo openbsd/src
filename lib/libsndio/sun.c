@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.27 2010/02/10 23:03:53 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.28 2010/04/06 20:07:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -877,7 +877,7 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	hdl->idelta -= dmove;
 	hdl->odelta -= dmove;
 
-	if ((revents & POLLOUT) && !(hdl->sio.mode & SIO_REC)) {
+	if ((revents & POLLOUT) && (hdl->sio.mode & SIO_PLAY)) {
 		if (ioctl(hdl->fd, AUDIO_GETOOFFS, &ao) < 0) {
 			DPERROR("sun_revents: GETOOFFS");
 			hdl->sio.eof = 1;
@@ -890,7 +890,7 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 			hdl->odelta = 0;
 		}
 	}
-	if ((revents & POLLIN) && (hdl->sio.mode & SIO_REC)) {
+	if ((revents & POLLIN) && !(hdl->sio.mode & SIO_PLAY)) {
 		if (ioctl(hdl->fd, AUDIO_GETIOFFS, &ao) < 0) {
 			DPERROR("sun_revents: GETIOFFS");
 			hdl->sio.eof = 1;

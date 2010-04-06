@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.12 2010/04/03 17:59:17 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.13 2010/04/06 20:07:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -129,7 +129,7 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par, short **map)
 }
 
 int
-wav_readhdr(int fd, struct aparams *par, off_t *datasz, short **map)
+wav_readhdr(int fd, struct aparams *par, off_t *startpos, off_t *datasz, short **map)
 {
 	struct wavriff riff;
 	struct wavchunk chunk;
@@ -161,6 +161,7 @@ wav_readhdr(int fd, struct aparams *par, off_t *datasz, short **map)
 				return 0;
 			fmt_done = 1;
 		} else if (memcmp(chunk.id, wav_id_data, 4) == 0) {
+			*startpos = pos;
 			*datasz = csize;
 			break;
 		} else {
@@ -186,10 +187,12 @@ wav_readhdr(int fd, struct aparams *par, off_t *datasz, short **map)
 	return 1;
 }
 
+/*
+ * Write header and seek to start position
+ */
 int
-wav_writehdr(int fd, struct aparams *par)
+wav_writehdr(int fd, struct aparams *par, off_t *startpos, off_t datasz)
 {
-	off_t datasz;
 	unsigned nch = par->cmax - par->cmin + 1;
 	struct {
 		struct wavriff riff;
@@ -197,16 +200,6 @@ wav_writehdr(int fd, struct aparams *par)
 		struct wavfmt fmt;
 		struct wavchunk data_hdr;
 	} hdr;
-
-	datasz = lseek(fd, 0, SEEK_CUR);
-	if (datasz < 0) {
-		warn("wav_writehdr: lseek(end)");
-		return 0;
-	}
-	if (datasz >= sizeof(hdr))
-		datasz -= sizeof(hdr);
-	else
-		datasz = 0;
 
 	/*
 	 * Check that encoding is supported by .wav file format.
@@ -253,5 +246,6 @@ wav_writehdr(int fd, struct aparams *par)
 		warn("wav_writehdr: write");
 		return 0;
 	}
+	*startpos = sizeof(hdr);
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.6 2010/04/03 17:59:17 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.7 2010/04/06 20:07:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,8 +27,8 @@
 struct optlist opt_list = SLIST_HEAD_INITIALIZER(&opt_list);
 
 void
-opt_new(char *name,
-    struct aparams *wpar, struct aparams *rpar, int maxweight, int mmc)
+opt_new(char *name, struct aparams *wpar, struct aparams *rpar,
+    int maxweight, int mmc, unsigned mode)
 {
 	struct opt *o;
 	unsigned len;
@@ -54,21 +54,39 @@ opt_new(char *name,
 		exit(1);
 	}
 	memcpy(o->name, name, len + 1);
-	o->wpar = *wpar;
-	o->rpar = *rpar;
+	if (mode & MODE_RECMASK)
+		o->wpar = (mode & MODE_MON) ? *rpar : *wpar;
+	if (mode & MODE_PLAY)
+		o->rpar = *rpar;
 	o->maxweight = maxweight;
 	o->mmc = mmc;
+	o->mode = mode;
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts(o->name);
-		dbg_puts(": rec ");
-		aparams_dbg(&o->wpar);
-		dbg_puts(", play ");
-		aparams_dbg(&o->rpar);
-		dbg_puts(", vol ");
-		dbg_putu(o->maxweight);
+		dbg_puts(":");
+		if (mode & MODE_REC) {
+			dbg_puts(" rec=");
+			dbg_putu(o->wpar.cmin);
+			dbg_puts(":");
+			dbg_putu(o->wpar.cmax);
+		}
+		if (mode & MODE_PLAY) {
+			dbg_puts(" play=");
+			dbg_putu(o->rpar.cmin);
+			dbg_puts(":");
+			dbg_putu(o->rpar.cmax);
+			dbg_puts(" vol=");
+			dbg_putu(o->maxweight);
+		}
+		if (mode & MODE_MON) {
+			dbg_puts(" mon=");
+			dbg_putu(o->wpar.cmin);
+			dbg_puts(":");
+			dbg_putu(o->wpar.cmax);
+		}
 		if (o->mmc)
-			dbg_puts(", mmc");
+			dbg_puts(" mmc");
 		dbg_puts("\n");
 	}
 #endif

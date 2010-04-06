@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.22 2009/12/30 08:27:12 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.23 2010/04/06 20:07:01 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 30 2009 $
+.Dd $Mdocdate: April 6 2010 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -239,36 +239,26 @@ or
 constants.
 .El
 .Pp
-There are two approaches to negotiate parameters of the stream:
+The following approach is recommended to negotiate parameters of the stream:
 .Bl -bullet
 .It
-Advanced applications may use native parameters of
-the audio subsystem.
-This is the best approach from a performance point of view
-since it involves no extra format conversions.
-The
-.Fn sio_getcap ,
-described below,
-can be used to get the list of native parameter sets and then
-.Fn sio_initpar
-and
-.Fn sio_setpar
-can be used to select a working set.
-.It
-Simpler applications that do not have performance constraints may set up
-the audio subsystem to use their own parameters.
-The
+Initialize a
 .Va sio_par
-structure must be initialized using the
+structure using
 .Fn sio_initpar
-function, filled with the desired parameters and
-the
+and fill it with
+the desired parameters.
+If the application supports any value for a given parameter,
+then the corresponding parameter should be left unset.
+Then call
 .Fn sio_setpar
-function must be called.
-Finally, the
+to request the stream to use them.
+.It
+Call
 .Fn sio_getpar
-function should be used to ensure that parameters were actually
-accepted.
+to retrieve the actual parameters of the stream
+and check that they are usable.
+If they are not, then fail or set up a conversion layer.
 Sometimes the rate set can be slightly different to what was requested.
 A difference of about 0.5% is not audible and should be ignored.
 .El
@@ -297,28 +287,17 @@ Can be used to set the
 .Va le
 parameter when native byte order is required.
 .El
-.Pp
-Note that (once initialized with the
-.Fn sio_initpar
-function), not all fields of the
-.Va sio_par
-structure must be filled; it is recommended to fill only
-the required parameters, as other ones will default to
-reasonable values.
-This approach also ensures that if, in the future, newer parameters
-are added, then older unaware applications will continue to
-behave correctly.
 .Ss Getting stream capabilities
-Advanced applications can fetch the native
-parameters of the audio subsystem and then choose parameters
-optimal for both the application and the audio subsystem.
-In this case applications must be able to do
-the necessary format conversions.
+There's no way to get an exhaustive list of all parameter
+combinations the stream supports.
+Applications that need to have a set of working
+parameter combinations in advance can use the
+.Fn sio_getcap
+function.
+.Pp
 The
 .Va sio_cap
-structure, filled by the
-.Fn sio_getcap
-function, contains the list of parameter configurations.
+structure contains the list of parameter configurations.
 Each configuration contains multiple parameter sets.
 The application must examine all configurations, and
 choose its parameter set from
