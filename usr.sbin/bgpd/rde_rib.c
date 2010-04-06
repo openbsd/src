@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.123 2010/03/29 09:06:56 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.124 2010/04/06 13:25:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1124,21 +1124,9 @@ nexthop_update(struct kroute_nexthop *msg)
 		memcpy(&nh->true_nexthop, &msg->gateway,
 		    sizeof(nh->true_nexthop));
 
-	switch (msg->nexthop.aid) {
-	case AID_INET:
-		nh->nexthop_netlen = msg->kr.kr4.prefixlen;
-		nh->nexthop_net.aid = AID_INET;
-		nh->nexthop_net.v4.s_addr = msg->kr.kr4.prefix.s_addr;
-		break;
-	case AID_INET6:
-		nh->nexthop_netlen = msg->kr.kr6.prefixlen;
-		nh->nexthop_net.aid = AID_INET6;
-		memcpy(&nh->nexthop_net.v6, &msg->kr.kr6.prefix,
-		    sizeof(struct in6_addr));
-		break;
-	default:
-		fatalx("nexthop_update: unknown af");
-	}
+	memcpy(&nh->nexthop_net, &msg->net,
+	    sizeof(nh->nexthop_net));
+	nh->nexthop_netlen = msg->netlen;
 
 	if (rde_noevaluate())
 		/*

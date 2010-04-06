@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.254 2010/03/29 09:04:43 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.255 2010/04/06 13:25:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -454,14 +454,12 @@ struct kroute6 {
 };
 
 struct kroute_nexthop {
-	union {
-		struct kroute		kr4;
-		struct kroute6		kr6;
-	} kr;
 	struct bgpd_addr	nexthop;
 	struct bgpd_addr	gateway;
+	struct bgpd_addr	net;
 	u_int8_t		valid;
 	u_int8_t		connected;
+	u_int8_t		netlen;
 };
 
 struct kif {

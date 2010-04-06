@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.175 2010/02/26 15:50:20 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.176 2010/04/06 13:25:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -471,7 +471,9 @@ kr_nexthop_add(struct bgpd_addr *addr)
 				nh.gateway.v4.s_addr =
 				    k->r.nexthop.s_addr;
 			}
-			memcpy(&nh.kr.kr4, &k->r, sizeof(nh.kr.kr4));
+			nh.net.aid = AID_INET;
+			nh.net.v4.s_addr = k->r.prefix.s_addr;
+			nh.netlen = k->r.prefixlen;
 		} else if (h->kroute != NULL && addr->aid == AID_INET6) {
 			k6 = h->kroute;
 			nh.connected = k6->r.flags & F_CONNECTED;
@@ -481,7 +483,10 @@ kr_nexthop_add(struct bgpd_addr *addr)
 				memcpy(&nh.gateway.v6, &k6->r.nexthop,
 				    sizeof(struct in6_addr));
 			}
-			memcpy(&nh.kr.kr6, &k6->r, sizeof(nh.kr.kr6));
+			nh.net.aid = AID_INET6;
+			memcpy(&nh.net.v6, &k6->r.nexthop,
+			    sizeof(struct in6_addr));
+			nh.netlen = k6->r.prefixlen;
 		}
 
 		send_nexthop_update(&nh);
@@ -1510,7 +1515,9 @@ knexthop_validate(struct knexthop_node *kn)
 				if ((n.gateway.v4.s_addr =
 				    kr->r.nexthop.s_addr) != 0)
 					n.gateway.aid = AID_INET;
-				memcpy(&n.kr.kr4, &kr->r, sizeof(n.kr.kr4));
+				n.net.aid = AID_INET;
+				n.net.v4.s_addr = kr->r.prefix.s_addr;
+				n.netlen = kr->r.prefixlen;
 				send_nexthop_update(&n);
 			} else					/* down */
 				if (was_valid)
@@ -1534,7 +1541,10 @@ knexthop_validate(struct knexthop_node *kn)
 					memcpy(&n.gateway.v6, &kr6->r.nexthop,
 					    sizeof(struct in6_addr));
 				}
-				memcpy(&n.kr.kr6, &kr6->r, sizeof(n.kr.kr6));
+				n.net.aid = AID_INET6;
+				memcpy(&n.net.v6, &kr6->r.nexthop,
+				    sizeof(struct in6_addr));
+				n.netlen = kr6->r.prefixlen;
 				send_nexthop_update(&n);
 			} else					/* down */
 				if (was_valid)
@@ -1568,7 +1578,9 @@ knexthop_track(void *krn)
 				if ((n.gateway.v4.s_addr =
 				    kr->r.nexthop.s_addr) != 0)
 					n.gateway.aid = AID_INET;
-				memcpy(&n.kr.kr4, &kr->r, sizeof(n.kr.kr4));
+				n.net.aid = AID_INET;
+				n.net.v4.s_addr = kr->r.prefix.s_addr;
+				n.netlen = kr->r.prefixlen;
 				break;
 			case AID_INET6:
 				kr6 = krn;
@@ -1580,7 +1592,10 @@ knexthop_track(void *krn)
 					memcpy(&n.gateway.v6, &kr6->r.nexthop,
 					    sizeof(struct in6_addr));
 				}
-				memcpy(&n.kr.kr6, &kr6->r, sizeof(n.kr.kr6));
+				n.net.aid = AID_INET6;
+				memcpy(&n.net.v6, &kr6->r.nexthop,
+				    sizeof(struct in6_addr));
+				n.netlen = kr6->r.prefixlen;
 				break;
 			}
 			send_nexthop_update(&n);
@@ -1860,8 +1875,9 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 					    kkr->kr->r.nexthop.s_addr) != 0)
 						nh.gateway.aid = AID_INET;
 				}
-				memcpy(&nh.kr.kr4, &kkr->kr->r,
-				    sizeof(nh.kr.kr4));
+				nh.net.aid = AID_INET;
+				nh.net.v4.s_addr = kkr->kr->r.prefix.s_addr;
+				nh.netlen = kkr->kr->r.prefixlen;
 				send_nexthop_update(&nh);
 			}
 	}
@@ -1888,8 +1904,10 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 						    sizeof(struct in6_addr));
 					}
 				}
-				memcpy(&nh.kr.kr6, &kkr6->kr->r,
-				    sizeof(nh.kr.kr6));
+				nh.net.aid = AID_INET6;
+				memcpy(&nh.net.v6, &kkr6->kr->r.nexthop,
+				    sizeof(struct in6_addr));
+				nh.netlen = kkr6->kr->r.prefixlen;
 				send_nexthop_update(&nh);
 			}
 	}
