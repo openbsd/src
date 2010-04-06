@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.28 2010/04/06 16:41:54 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.29 2010/04/06 19:40:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -509,6 +509,7 @@
 #define RT3593_LNA_PE_A2_POL	(1 << 30)
 #define RT3593_LNA_PE_G2_EN	(1 << 29)
 #define RT3593_LNA_PE_A2_EN	(1 << 28)
+#define RT3593_LNA_PE2_EN	(RT3593_LNA_PE_A2_EN | RT3593_LNA_PE_G2_EN)
 #define RT3593_PA_PE_G2_POL	(1 << 27)
 #define RT3593_PA_PE_A2_POL	(1 << 26)
 #define RT3593_PA_PE_G2_EN	(1 << 25)
@@ -523,8 +524,10 @@
 #define RT2860_LNA_PE_A0_POL	(1 << 12)
 #define RT2860_LNA_PE_G1_EN	(1 << 11)
 #define RT2860_LNA_PE_A1_EN	(1 << 10)
+#define RT2860_LNA_PE1_EN	(RT2860_LNA_PE_A1_EN | RT2860_LNA_PE_G1_EN)
 #define RT2860_LNA_PE_G0_EN	(1 <<  9)
 #define RT2860_LNA_PE_A0_EN	(1 <<  8)
+#define RT2860_LNA_PE0_EN	(RT2860_LNA_PE_A0_EN | RT2860_LNA_PE_G0_EN)
 #define RT2860_PA_PE_G1_POL	(1 <<  7)
 #define RT2860_PA_PE_A1_POL	(1 <<  6)
 #define RT2860_PA_PE_G0_POL	(1 <<  5)

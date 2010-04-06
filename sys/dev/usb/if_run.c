@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.65 2010/04/06 08:58:51 halex Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.66 2010/04/06 19:40:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2386,19 +2386,17 @@ run_select_chan_group(struct run_softc *sc, int group)
 	run_write(sc, RT2860_TX_BAND_CFG, tmp);
 
 	/* enable appropriate Power Amplifiers and Low Noise Amplifiers */
-	tmp = RT2860_RFTR_EN | RT2860_TRSW_EN;
+	tmp = RT2860_RFTR_EN | RT2860_TRSW_EN | RT2860_LNA_PE0_EN;
+	if (sc->nrxchains > 1)
+		tmp |= RT2860_LNA_PE1_EN;
 	if (group == 0) {	/* 2GHz */
-		tmp |= RT2860_PA_PE_G0_EN | RT2860_LNA_PE_G0_EN;
+		tmp |= RT2860_PA_PE_G0_EN;
 		if (sc->ntxchains > 1)
 			tmp |= RT2860_PA_PE_G1_EN;
-		if (sc->nrxchains > 1)
-			tmp |= RT2860_LNA_PE_G1_EN;
 	} else {		/* 5GHz */
-		tmp |= RT2860_PA_PE_A0_EN | RT2860_LNA_PE_A0_EN;
+		tmp |= RT2860_PA_PE_A0_EN;
 		if (sc->ntxchains > 1)
 			tmp |= RT2860_PA_PE_A1_EN;
-		if (sc->nrxchains > 1)
-			tmp |= RT2860_LNA_PE_A1_EN;
 	}
 	if (sc->mac_ver == 0x3572) {
 		run_rt3070_rf_write(sc, 8, 0x00);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.48 2010/04/06 16:49:08 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.49 2010/04/06 19:40:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2050,27 +2050,23 @@ rt2860_select_chan_group(struct rt2860_softc *sc, int group)
 	RAL_WRITE(sc, RT2860_TX_BAND_CFG, tmp);
 
 	/* enable appropriate Power Amplifiers and Low Noise Amplifiers */
-	tmp = RT2860_RFTR_EN | RT2860_TRSW_EN;
+	tmp = RT2860_RFTR_EN | RT2860_TRSW_EN | RT2860_LNA_PE0_EN;
+	if (sc->nrxchains > 1)
+		tmp |= RT2860_LNA_PE1_EN;
+	if (sc->mac_ver == 0x3593 && sc->nrxchains > 2)
+		tmp |= RT3593_LNA_PE2_EN;
 	if (group == 0) {	/* 2GHz */
-		tmp |= RT2860_PA_PE_G0_EN | RT2860_LNA_PE_G0_EN;
+		tmp |= RT2860_PA_PE_G0_EN;
 		if (sc->ntxchains > 1)
 			tmp |= RT2860_PA_PE_G1_EN;
 		if (sc->mac_ver == 0x3593 && sc->ntxchains > 2)
 			tmp |= RT3593_PA_PE_G2_EN;
-		if (sc->nrxchains > 1)
-			tmp |= RT2860_LNA_PE_G1_EN;
-		if (sc->mac_ver == 0x3593 && sc->nrxchains > 2)
-			tmp |= RT3593_LNA_PE_G2_EN;
 	} else {		/* 5GHz */
-		tmp |= RT2860_PA_PE_A0_EN | RT2860_LNA_PE_A0_EN;
+		tmp |= RT2860_PA_PE_A0_EN;
 		if (sc->ntxchains > 1)
 			tmp |= RT2860_PA_PE_A1_EN;
 		if (sc->mac_ver == 0x3593 && sc->ntxchains > 2)
 			tmp |= RT3593_PA_PE_A2_EN;
-		if (sc->nrxchains > 1)
-			tmp |= RT2860_LNA_PE_A1_EN;
-		if (sc->mac_ver == 0x3593 && sc->nrxchains > 2)
-			tmp |= RT3593_LNA_PE_A2_EN;
 	}
 	RAL_WRITE(sc, RT2860_TX_PIN_CFG, tmp);
 
