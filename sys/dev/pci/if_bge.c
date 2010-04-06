@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.292 2010/03/30 14:24:03 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.293 2010/04/06 15:27:51 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1875,18 +1875,16 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s (0x%x)", br->br_name, sc->bge_chipid);
 
 	/*
-	 * PCI Express check.
+	 * PCI Express or PCI-X controller check.
 	 */
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
-	    NULL, NULL) != 0)
+	    NULL, NULL) != 0) {
 		sc->bge_flags |= BGE_PCIE;
-
-	/*
-	 * PCI-X check.
-	 */
-	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
-	    BGE_PCISTATE_PCI_BUSMODE) == 0)
-		sc->bge_flags |= BGE_PCIX;
+	} else {
+		if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
+		    BGE_PCISTATE_PCI_BUSMODE) == 0)
+			sc->bge_flags |= BGE_PCIX;
+	}
 
 	/*
 	 * SEEPROM check.
