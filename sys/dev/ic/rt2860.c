@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.45 2010/04/05 19:00:50 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.46 2010/04/06 16:14:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -911,6 +911,7 @@ rt3090_efuse_read_2(struct rt2860_softc *sc, uint16_t addr)
 	uint16_t reg;
 	int ntries;
 
+	addr *= 2;
 	/*-
 	 * Read one 16-byte block into registers EFUSE_DATA[0-3]:
 	 * DATA0: F E D C
@@ -927,7 +928,7 @@ rt3090_efuse_read_2(struct rt2860_softc *sc, uint16_t addr)
 			break;
 		DELAY(2);
 	}
-	if (ntries == 100)
+	if (ntries == 500)
 		return 0xffff;
 
 	if ((tmp & RT3070_EFUSE_AOUT_MASK) == RT3070_EFUSE_AOUT_MASK)
