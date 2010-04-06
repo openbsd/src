@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.30 2010/04/06 01:04:24 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.31 2010/04/06 01:24:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -92,10 +92,10 @@ struct mpi_ccb {
 	void			(*ccb_done)(struct mpi_ccb *);
 	struct mpi_rcb		*ccb_rcb;
 
-	TAILQ_ENTRY(mpi_ccb)	ccb_link;
+	SLIST_ENTRY(mpi_ccb)	ccb_link;
 };
 
-TAILQ_HEAD(mpi_ccb_list, mpi_ccb);
+SLIST_HEAD(mpi_ccb_list, mpi_ccb);
 
 struct mpi_softc {
 	struct device		sc_dev;

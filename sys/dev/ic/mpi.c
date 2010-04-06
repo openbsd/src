@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.137 2010/04/06 01:04:22 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.138 2010/04/06 01:24:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -954,7 +954,7 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 	u_int8_t			*cmd;
 	int				i;
 
-	TAILQ_INIT(&sc->sc_ccb_free);
+	SLIST_INIT(&sc->sc_ccb_free);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 
 	sc->sc_ccbs = malloc(sizeof(struct mpi_ccb) * sc->sc_maxcmds,
@@ -1025,9 +1025,9 @@ mpi_get_ccb(struct mpi_softc *sc)
 	struct mpi_ccb			*ccb;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	ccb = TAILQ_FIRST(&sc->sc_ccb_free);
+	ccb = SLIST_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL) {
-		TAILQ_REMOVE(&sc->sc_ccb_free, ccb, ccb_link);
+		SLIST_REMOVE_HEAD(&sc->sc_ccb_free, ccb_link);
 		ccb->ccb_state = MPI_CCB_READY;
 	}
 	mtx_leave(&sc->sc_ccb_mtx);
@@ -1052,7 +1052,7 @@ mpi_put_ccb(struct mpi_softc *sc, struct mpi_ccb *ccb)
 	ccb->ccb_done = NULL;
 	bzero(ccb->ccb_cmd, MPI_REQUEST_SIZE);
 	mtx_enter(&sc->sc_ccb_mtx);
-	TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
+	SLIST_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
 	mtx_leave(&sc->sc_ccb_mtx);
 }
 
