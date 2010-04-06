@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.17 2010/01/09 02:44:17 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.18 2010/04/06 20:33:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -32,7 +32,6 @@
 
 
 void sched_kthreads_create(void *);
-void sched_idle(void *);
 
 int sched_proc_to_cpu_cost(struct cpu_info *ci, struct proc *p);
 struct proc *sched_steal_proc(struct cpu_info *);
@@ -545,6 +544,56 @@ sched_peg_curproc(struct cpu_info *ci)
 	mi_switch();
 	SCHED_UNLOCK(s);
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+sched_start_secondary_cpus(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		atomic_clearbits_int(&spc->spc_schedflags,
+		    SPCF_SHOULDHALT | SPCF_HALTED);
+	}
+}
+
+void
+sched_stop_secondary_cpus(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	/*
+	 * Make sure we stop the secondary CPUs.
+	 */
+	CPU_INFO_FOREACH(cii, ci) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		atomic_setbits_int(&spc->spc_schedflags, SPCF_SHOULDHALT);
+	}
+	CPU_INFO_FOREACH(cii, ci) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+		struct sleep_state sls;
+
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		while ((spc->spc_schedflags & SPCF_HALTED) == 0) {
+			sleep_setup(&sls, spc, PZERO, "schedstate");
+			sleep_finish(&sls,
+			    (spc->spc_schedflags & SPCF_HALTED) == 0);
+		}
+	}
+}
+
+#endif
 
 /*
  * Functions to manipulate cpu sets.

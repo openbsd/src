@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.25 2010/01/09 02:44:17 kettenis Exp $	*/
+/*	$OpenBSD: sched.h,v 1.26 2010/04/06 20:33:28 kettenis Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -138,6 +138,7 @@ struct cpu_info;
 void roundrobin(struct cpu_info *);
 
 void sched_init_cpu(struct cpu_info *);
+void sched_idle(void *);
 void sched_exit(struct proc *);
 void mi_switch(void);
 void cpu_switchto(struct proc *, struct proc *);
@@ -148,6 +149,11 @@ void cpu_idle_enter(void);
 void cpu_idle_cycle(void);
 void cpu_idle_leave(void);
 void sched_peg_curproc(struct cpu_info *ci);
+
+#ifdef MULTIPROCESSOR
+void sched_start_secondary_cpus(void);
+void sched_stop_secondary_cpus(void);
+#endif
 
 #define curcpu_is_idle()	(curcpu()->ci_schedstate.spc_whichqs == 0)
 
