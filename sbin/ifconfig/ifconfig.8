@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.193 2010/04/02 21:16:24 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.194 2010/04/06 14:12:10 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 2 2010 $
+.Dd $Mdocdate: April 6 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1103,6 +1103,7 @@ authentication.
 .Bk -words
 .Ar inet6-interface
 .Op Oo Fl Oc Cm anycast
+.Op Oo Fl Oc Cm autoconfprivacy
 .Op Cm eui64
 .Op Cm pltime Ar n
 .Op Oo Fl Oc Cm tentative
@@ -1115,6 +1116,34 @@ The options are as follows:
 Set the IPv6 anycast address bit.
 .It Fl anycast
 Clear the IPv6 anycast address bit.
+.It Cm autoconfprivacy
+Enable privacy extensions for stateless IPv6 address autoconfiguration
+(RFC 4941) on the interface.
+The purpose of these extensions is to prevent tracking of individual
+devices which connect to the IPv6 internet from different networks
+using stateless autoconfiguration.
+The interface identifier often remains constant and provides the lower
+64 bits of an autoconfigured IPv6 address, facilitating tracking of
+individual devices (and hence, potentially, users of these devices)
+over long periods of time (weeks to months to years).
+When these extensions are active, random interface identifiers are used
+for autoconfigured addresses.
+Autoconfigured addresses are also made temporary, which means that they
+will automatically be replaced regularly.
+Temporary addresses are deprecated after 24 hours.
+Once a temporary address has been deprecated, a new temporary address
+will be configured upon reception of a router advertisement indicating
+that the prefix is still valid.
+Deprecated addresses will not be used for new connections as long as a
+non-deprecated address remains available.
+Temporary addresses become invalid after one week, at which time they
+will be removed from the interface.
+Address lifetime extension through router advertisements is ignored
+for temporary addresses.
+.It Fl autoconfprivacy
+Disable IPv6 autoconf privacy extensions on the interface.
+Currently configured addresses will not be removed until they become
+invalid.
 .It Cm eui64
 Fill the interface index
 .Pq the lowermost 64th bit of an IPv6 address

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.113 2010/01/13 02:26:49 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.114 2010/04/06 14:12:10 stsp Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -323,8 +323,9 @@ struct ifnet {				/* and the entries */
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|\
 	    IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI)
 
-#define IFXF_TXREADY	0x1		/* interface is ready to tx */
-#define	IFXF_NOINET6	0x2		/* don't do inet6 */
+#define IFXF_TXREADY		0x1		/* interface is ready to tx */
+#define	IFXF_NOINET6		0x2		/* don't do inet6 */
+#define	IFXF_INET6_PRIVACY	0x4		/* autoconf privacy extension */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_TXREADY)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.51 2010/02/08 11:56:09 jsing Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.52 2010/04/06 14:12:10 stsp Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -56,6 +56,8 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+
+#include <dev/rndvar.h>
 
 #define SDL(s)	((struct sockaddr_dl *)s)
 
@@ -1044,6 +1046,7 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
+	int tempaddr_preferred = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1210,6 +1213,18 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 		 * with the Subject "StoredLifetime in RFC 2462".
 		 */
 		lt6_tmp = ifa6->ia6_lifetime;
+
+		/* RFC 4941 temporary addresses (privacy extension). */
+		if (ifa6->ia6_flags & IN6_IFF_PRIVACY) {
+			/* Do we still have a non-deprecated address? */
+			if ((ifa6->ia6_flags & IN6_IFF_DEPRECATED) == 0)
+				tempaddr_preferred = 1;
+			/* Don't extend lifetime for temporary addresses. */
+			if (new->ndpr_vltime >= lt6_tmp.ia6t_vltime)
+				continue;
+			if (new->ndpr_pltime >= lt6_tmp.ia6t_pltime)
+				continue;
+		}
 		if (lt6_tmp.ia6t_vltime == ND6_INFINITE_LIFETIME)
 			storedlifetime = ND6_INFINITE_LIFETIME;
 		else if (time_second - ifa6->ia6_updatetime >
@@ -1254,9 +1269,14 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 		ifa6->ia6_lifetime = lt6_tmp;
 		ifa6->ia6_updatetime = time_second;
 	}
-	if (ia6_match == NULL && new->ndpr_vltime) {
+
+	if ((ia6_match == NULL ||
+	    (((ia6_match->ia6_flags & IN6_IFF_PRIVACY) ||
+	    (ifp->if_xflags & IFXF_INET6_PRIVACY)) && !tempaddr_preferred)) &&
+	    new->ndpr_vltime) {
 		/*
-		 * No address matched and the valid lifetime is non-zero.
+		 * No address matched, or there is no preferred RFC 4941
+		 * temporary address. And the valid prefix lifetime is non-zero.
 		 * Create a new address.
 		 */
 		if ((ia6 = in6_ifadd(new)) != NULL) {
@@ -1683,7 +1703,7 @@ in6_ifadd(struct nd_prefix *pr)
 	struct in6_aliasreq ifra;
 	struct in6_ifaddr *ia, *ib;
 	int error, s, plen0;
-	struct in6_addr mask;
+	struct in6_addr mask, rand_ifid;
 	int prefixlen = pr->ndpr_plen;
 
 	in6_prefixlen2mask(&mask, prefixlen);
@@ -1750,14 +1770,29 @@ in6_ifadd(struct nd_prefix *pr)
 	ifra.ifra_addr.sin6_addr.s6_addr32[3] &= mask.s6_addr32[3];
 
 	/* interface ID */
-	ifra.ifra_addr.sin6_addr.s6_addr32[0] |=
-	    (ib->ia_addr.sin6_addr.s6_addr32[0] & ~mask.s6_addr32[0]);
-	ifra.ifra_addr.sin6_addr.s6_addr32[1] |=
-	    (ib->ia_addr.sin6_addr.s6_addr32[1] & ~mask.s6_addr32[1]);
-	ifra.ifra_addr.sin6_addr.s6_addr32[2] |=
-	    (ib->ia_addr.sin6_addr.s6_addr32[2] & ~mask.s6_addr32[2]);
-	ifra.ifra_addr.sin6_addr.s6_addr32[3] |=
-	    (ib->ia_addr.sin6_addr.s6_addr32[3] & ~mask.s6_addr32[3]);
+	if (ifp->if_xflags & IFXF_INET6_PRIVACY) {
+		ifra.ifra_flags |= IN6_IFF_PRIVACY;
+		bcopy(&pr->ndpr_prefix.sin6_addr, &rand_ifid,
+		    sizeof(rand_ifid));
+		in6_get_rand_ifid(ifp, &rand_ifid);
+		ifra.ifra_addr.sin6_addr.s6_addr32[0] |=
+		    (rand_ifid.s6_addr32[0] & ~mask.s6_addr32[0]);
+		ifra.ifra_addr.sin6_addr.s6_addr32[1] |=
+		    (rand_ifid.s6_addr32[1] & ~mask.s6_addr32[1]);
+		ifra.ifra_addr.sin6_addr.s6_addr32[2] |=
+		    (rand_ifid.s6_addr32[2] & ~mask.s6_addr32[2]);
+		ifra.ifra_addr.sin6_addr.s6_addr32[3] |=
+		    (rand_ifid.s6_addr32[3] & ~mask.s6_addr32[3]);
+	} else {
+		ifra.ifra_addr.sin6_addr.s6_addr32[0] |=
+		    (ib->ia_addr.sin6_addr.s6_addr32[0] & ~mask.s6_addr32[0]);
+		ifra.ifra_addr.sin6_addr.s6_addr32[1] |=
+		    (ib->ia_addr.sin6_addr.s6_addr32[1] & ~mask.s6_addr32[1]);
+		ifra.ifra_addr.sin6_addr.s6_addr32[2] |=
+		    (ib->ia_addr.sin6_addr.s6_addr32[2] & ~mask.s6_addr32[2]);
+		ifra.ifra_addr.sin6_addr.s6_addr32[3] |=
+		    (ib->ia_addr.sin6_addr.s6_addr32[3] & ~mask.s6_addr32[3]);
+	}
 
 	/* new prefix mask. */
 	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
@@ -1772,6 +1807,14 @@ in6_ifadd(struct nd_prefix *pr)
 	 */
 	ifra.ifra_lifetime.ia6t_vltime = pr->ndpr_vltime;
 	ifra.ifra_lifetime.ia6t_pltime = pr->ndpr_pltime;
+
+	if (ifp->if_xflags & IFXF_INET6_PRIVACY) {
+	    if (ifra.ifra_lifetime.ia6t_vltime > ND6_PRIV_VALID_LIFETIME)
+		ifra.ifra_lifetime.ia6t_vltime = ND6_PRIV_VALID_LIFETIME;
+	    if (ifra.ifra_lifetime.ia6t_pltime > ND6_PRIV_PREFERRED_LIFETIME)
+		ifra.ifra_lifetime.ia6t_pltime = ND6_PRIV_PREFERRED_LIFETIME
+			- (arc4random() % ND6_PRIV_MAX_DESYNC_FACTOR);
+	}
 
 	/* XXX: scope zone ID? */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.30 2008/10/01 21:17:06 claudio Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.31 2010/04/06 14:12:10 stsp Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -438,6 +438,7 @@ struct	in6_rrenumreq {
 					 * (used only at first SIOC* call)
 					 */
 #define IN6_IFF_AUTOCONF	0x40	/* autoconfigurable address. */
+#define IN6_IFF_PRIVACY		0x80	/* RFC 4941 temporary address */
 
 /* do not input/output */
 #define IN6_IFF_NOTREADY (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)
