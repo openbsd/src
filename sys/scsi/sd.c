@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.182 2010/01/15 05:50:31 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.183 2010/04/06 00:59:50 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ int	sddetach(struct device *, int);
 
 void	sdminphys(struct buf *);
 int	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *, int);
-void	sdstart(void *);
+void	sdstart(struct scsi_xfer *);
 void	sd_shutdown(void *);
 int	sd_interpret_sense(struct scsi_xfer *);
 int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
@@ -112,7 +112,7 @@ struct dkdriver sddkdriver = { sdstrategy };
 
 struct scsi_device sd_switch = {
 	sd_interpret_sense,	/* check out error handler first */
-	sdstart,		/* have a queue, served by this */
+	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* have no done handler */
 };
@@ -167,7 +167,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
 
 	mtx_init(&sc->sc_buf_mtx, IPL_BIO);
-	mtx_init(&sc->sc_start_mtx, IPL_BIO);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -203,7 +202,9 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	printf("\n");
 
-	timeout_set(&sc->sc_timeout, sdstart, sc);
+	scsi_xsh_set(&sc->sc_xsh, sc_link, sdstart);
+	timeout_set(&sc->sc_timeout, (void (*)(void *))scsi_xsh_add,
+	    &sc->sc_xsh);
 
 	/* Spin up non-UMASS devices ready or not. */
 	if ((sc->sc_link->flags & SDEV_UMASS) == 0)
@@ -496,6 +497,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		}
 
 		timeout_del(&sc->sc_timeout);
+		scsi_xsh_del(&sc->sc_xsh);
 	}
 
 	sdunlock(sc);
@@ -568,7 +570,7 @@ sdstrategy(struct buf *bp)
 	 * Tell the device to get going on the transfer if it's
 	 * not doing anything, otherwise just wait for completion
 	 */
-	sdstart(sc);
+	scsi_xsh_add(&sc->sc_xsh);
 
 	device_unref(&sc->sc_dev);
 	return;
@@ -649,105 +651,76 @@ sd_cmd_rw16(struct scsi_xfer *xs, int read, daddr64_t blkno, u_int nblks)
  * continues to be drained.
  */
 void
-sdstart(void *v)
+sdstart(struct scsi_xfer *xs)
 {
-	struct sd_softc *sc = (struct sd_softc *)v;
-	struct scsi_link *link = sc->sc_link;
-	struct scsi_xfer *xs;
+	struct scsi_link *link = xs->sc_link;
+	struct sd_softc *sc = link->device_softc;
 	struct buf *bp;
 	daddr64_t blkno;
 	int nblks;
 	int read;
 	struct partition *p;
-	int s;
 
-	if (sc->flags & SDF_DYING)
-		return;
-
-	SC_DEBUG(link, SDEV_DB2, ("sdstart\n"));
-
-	mtx_enter(&sc->sc_start_mtx);
-	sc->sc_start_count++;
-	if (sc->sc_start_count > 1) {
-		mtx_leave(&sc->sc_start_mtx);
+	if (sc->flags & SDF_DYING) {
+		scsi_xs_put(xs);
 		return;
 	}
-	mtx_leave(&sc->sc_start_mtx);
-	CLR(sc->flags, SDF_WAITING);
-restart:
-	while (!ISSET(sc->flags, SDF_WAITING) &&
-	    (bp = scsi_buf_dequeue(&sc->sc_buf_queue, &sc->sc_buf_mtx)) != NULL) {
-		/*
-		 * If the device has become invalid, abort all the
-		 * reads and writes until all files have been closed and
-		 * re-opened
-		 */
-		if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			s = splbio();
-			biodone(bp);
-			splx(s);
-			continue;
-		}
-
-		xs = scsi_xs_get(link, SCSI_NOSLEEP);
-		if (xs == NULL) {
-			scsi_buf_requeue(&sc->sc_buf_queue, bp, &sc->sc_buf_mtx);
-			break;
-		}
-
-		blkno =
-		    bp->b_blkno / (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-		p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		blkno += DL_GETPOFFSET(p);
-		nblks = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
-		read = bp->b_flags & B_READ;
-
-		/*
-		 *  Fill out the scsi command.  If the transfer will
-		 *  fit in a "small" cdb, use it.
-		 */
-		if (!(link->flags & SDEV_ATAPI) &&
-		    !(link->quirks & SDEV_ONLYBIG) &&
-		    ((blkno & 0x1fffff) == blkno) &&
-		    ((nblks & 0xff) == nblks))
-			sd_cmd_rw6(xs, read, blkno, nblks);
-		else if (((blkno & 0xffffffff) == blkno) &&
-		    ((nblks & 0xffff) == nblks))
-			sd_cmd_rw10(xs, read, blkno, nblks);
-		else if (((blkno & 0xffffffff) == blkno) &&
-		    ((nblks & 0xffffffff) == nblks))
-			sd_cmd_rw12(xs, read, blkno, nblks);
-		else
-			sd_cmd_rw16(xs, read, blkno, nblks);
-
-		xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
-		xs->timeout = 60000;
-		xs->data = bp->b_data;
-		xs->datalen = bp->b_bcount;
-
-		xs->done = sd_buf_done;
-		xs->cookie = bp;
-
-		/* Instrumentation. */
-		disk_busy(&sc->sc_dk);
-
-		/* Mark disk as dirty. */
-		if ((bp->b_flags & B_READ) == 0)
-			sc->flags |= SDF_DIRTY;
-
-		scsi_xs_exec(xs);
+	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
+		scsi_buf_killqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
+		scsi_xs_put(xs);
+		return;
 	}
-	mtx_enter(&sc->sc_start_mtx);
-	sc->sc_start_count--;
-	if (sc->sc_start_count != 0) {
-		sc->sc_start_count = 1;
-		mtx_leave(&sc->sc_start_mtx);
-		goto restart;
+
+	bp = scsi_buf_dequeue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
+	if (bp == NULL) {
+		scsi_xs_put(xs);
+		return;
 	}
-	mtx_leave(&sc->sc_start_mtx);
+
+	blkno = bp->b_blkno / (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
+	blkno += DL_GETPOFFSET(p);
+	nblks = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
+	read = bp->b_flags & B_READ;
+
+	/*
+	 *  Fill out the scsi command.  If the transfer will
+	 *  fit in a "small" cdb, use it.
+	 */
+	if (!(link->flags & SDEV_ATAPI) &&
+	    !(link->quirks & SDEV_ONLYBIG) &&
+	    ((blkno & 0x1fffff) == blkno) &&
+	    ((nblks & 0xff) == nblks))
+		sd_cmd_rw6(xs, read, blkno, nblks);
+	else if (((blkno & 0xffffffff) == blkno) &&
+	    ((nblks & 0xffff) == nblks))
+		sd_cmd_rw10(xs, read, blkno, nblks);
+	else if (((blkno & 0xffffffff) == blkno) &&
+	    ((nblks & 0xffffffff) == nblks))
+		sd_cmd_rw12(xs, read, blkno, nblks);
+	else
+		sd_cmd_rw16(xs, read, blkno, nblks);
+
+	xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
+	xs->timeout = 60000;
+	xs->data = bp->b_data;
+	xs->datalen = bp->b_bcount;
+
+	xs->done = sd_buf_done;
+	xs->cookie = bp;
+
+	/* Instrumentation. */
+	disk_busy(&sc->sc_dk);
+
+	/* Mark disk as dirty. */
+	if (!read)
+		sc->flags |= SDF_DIRTY;
+
+	scsi_xs_exec(xs);
+
+	/* move onto the next io */
+	if (scsi_buf_canqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx))
+		scsi_xsh_add(&sc->sc_xsh);
 }
 
 void
@@ -807,7 +780,6 @@ retry:
 
 	biodone(bp);
 	scsi_xs_put(xs);
-	sdstart(sc); /* restart io */
 }
 
 void
@@ -1104,7 +1076,12 @@ sd_shutdown(void *arg)
 	if ((sc->flags & SDF_DIRTY) != 0)
 		sd_flush(sc, SCSI_AUTOCONF);
 
+	/*
+	 * There should be no outstanding IO at this point, but lets stop
+	 * it just in case.
+	 */
 	timeout_del(&sc->sc_timeout);
+	scsi_xsh_del(&sc->sc_xsh);
 }
 
 /*

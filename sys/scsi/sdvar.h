@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.27 2010/01/11 00:14:52 beck Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.28 2010/04/06 00:59:50 dlg Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -71,11 +71,11 @@ struct sd_softc {
 		daddr64_t	disksize;	/* total number sectors */
 	} params;
 	struct mutex sc_buf_mtx;
-	struct mutex sc_start_mtx;
-	u_int sc_start_count;
 	struct buf sc_buf_queue;
 	void *sc_sdhook;		/* our shutdown hook */
 	struct timeout sc_timeout;
+
+	struct scsi_xshandler sc_xsh;
 };
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */
