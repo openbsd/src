@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.30 2010/04/06 19:06:04 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.31 2010/04/06 19:15:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -88,6 +88,10 @@ void	enaddr_aton(const char *, u_int8_t *);
 u_long	bios_getenvint(const char *);
 
 struct device;
+
+void	arcs_device_register(struct device *, void *);
+void	dksc_device_register(struct device *, void *);
+extern	void (*_device_register)(struct device *, void *);
 
 void	ip27_setup(void);
 void	ip27_autoconf(struct device *);

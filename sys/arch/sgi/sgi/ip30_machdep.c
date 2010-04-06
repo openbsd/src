@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.39 2010/04/06 19:02:47 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.40 2010/04/06 19:15:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -211,6 +211,8 @@ ip30_setup()
 		hw_prod = "Octane2";
 
 	ncpusfound = ip30_get_ncpusfound();
+
+	_device_register = arcs_device_register;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.47 2010/04/06 19:09:50 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.48 2010/04/06 19:15:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -281,6 +281,8 @@ ip27_setup()
 		IP27_RHUB_PI_S(masternasid, 1,
 		    HUBPI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
 	}
+
+	_device_register = dksc_device_register;
 }
 
 /*
