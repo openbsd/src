@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.84 2010/02/08 13:32:50 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.85 2010/04/06 18:16:31 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -653,7 +653,7 @@ in_arpinput(m)
 
 	if (!bcmp((caddr_t)ea->arp_sha, enaddr, sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
-	if (ETHER_IS_MULTICAST (&ea->arp_sha[0]))
+	if (ETHER_IS_MULTICAST(&ea->arp_sha[0]))
 		if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
 		    sizeof (ea->arp_sha))) {
 			log(LOG_ERR, "arp: ether address is broadcast for "
