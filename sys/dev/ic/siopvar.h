@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.13 2005/11/20 22:32:48 krw Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.14 2010/04/06 01:12:17 dlg Exp $ */
 /*	$NetBSD: siopvar.h,v 1.22 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ struct siop_softc {
 	struct cmd_list free_list;	/* cmd descr free list */
 	struct cmd_list urgent_list;	/* high priority cmd descr list */
 	struct cmd_list ready_list;	/* cmd descr ready list */
+	struct scsi_iopool iopool;	/* cmd pool */
 	struct lunsw_list lunsw_list;	/* lunsw free list */
 	u_int32_t script_free_lo;	/* free ram offset from sc_scriptaddr */
 	u_int32_t script_free_hi;	/* free ram offset from sc_scriptaddr */

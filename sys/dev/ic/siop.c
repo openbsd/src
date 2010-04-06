@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.57 2010/03/23 01:57:19 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.58 2010/04/06 01:12:17 dlg Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -90,6 +90,8 @@ void	siop_scsicmd_end(struct siop_cmd *);
 void	siop_start(struct siop_softc *);
 void 	siop_timeout(void *);
 void	siop_scsicmd(struct scsi_xfer *);
+void *	siop_cmd_get(void *);
+void	siop_cmd_put(void *, void *);
 #ifdef DUMP_SCRIPT
 void	siop_dump_script(struct siop_softc *);
 #endif
@@ -196,10 +198,12 @@ siop_attach(sc)
 	TAILQ_INIT(&sc->urgent_list);
 	TAILQ_INIT(&sc->cmds);
 	TAILQ_INIT(&sc->lunsw_list);
+	scsi_iopool_init(&sc->iopool, sc, siop_cmd_get, siop_cmd_put);
 	sc->sc_currschedslot = 0;
 	sc->sc_c.sc_link.adapter = &siop_adapter;
 	sc->sc_c.sc_link.device = &siop_dev;
 	sc->sc_c.sc_link.openings = SIOP_NTAG;
+	sc->sc_c.sc_link.pool = &sc->iopool;
 
 	/* Start with one page worth of commands */
 	siop_morecbd(sc);
@@ -1202,8 +1206,6 @@ siop_scsicmd_end(siop_cmd)
 	}
 out:
 	siop_lun->lun_flags &= ~SIOP_LUNF_FULL;
-	siop_cmd->cmd_c.status = CMDST_FREE;
-	TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 #if 0
 	if (xs->resid != 0)
 		printf("resid %d datalen %d\n", xs->resid, xs->datalen);
@@ -1356,6 +1358,42 @@ siop_handle_reset(sc)
 	}
 }
 
+void *
+siop_cmd_get(void *cookie)
+{
+	struct siop_softc *sc = cookie;
+	struct siop_cmd *siop_cmd;
+	int s;
+
+	/* Look if a ccb is available. */
+	s = splbio();
+	siop_cmd = TAILQ_FIRST(&sc->free_list);
+	if (siop_cmd != NULL) {
+		TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
+#ifdef DIAGNOSTIC
+		if (siop_cmd->cmd_c.status != CMDST_FREE)
+			panic("siop_scsicmd: new cmd not free");
+#endif
+		siop_cmd->cmd_c.status = CMDST_READY;
+	}
+	splx(s);
+
+	return (siop_cmd);
+}
+
+void
+siop_cmd_put(void *cookie, void *io)
+{
+	struct siop_softc *sc = cookie;
+	struct siop_cmd *siop_cmd = io;
+	int s;
+
+	s = splbio();
+	siop_cmd->cmd_c.status = CMDST_FREE;
+	TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
+	splx(s);
+}
+
 void
 siop_scsicmd(xs)
 	struct scsi_xfer *xs;
@@ -1427,19 +1465,7 @@ siop_scsicmd(xs)
 		}
 	}
 
-	/* Looks like we could issue a command, if a ccb is available. */
-	siop_cmd = TAILQ_FIRST(&sc->free_list);
-	if (siop_cmd == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		splx(s);
-		return;
-	}
-	TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
-#ifdef DIAGNOSTIC
-	if (siop_cmd->cmd_c.status != CMDST_FREE)
-		panic("siop_scsicmd: new cmd not free");
-#endif
+	siop_cmd = xs->io;
 
 	/* Always reset xs->stimeout, lest we timeout_del() with trash */
 	timeout_set(&xs->stimeout, siop_timeout, siop_cmd);
@@ -1447,7 +1473,6 @@ siop_scsicmd(xs)
 	siop_cmd->cmd_c.siop_target = sc->sc_c.targets[target];
 	siop_cmd->cmd_c.xs = xs;
 	siop_cmd->cmd_c.flags = 0;
-	siop_cmd->cmd_c.status = CMDST_READY;
 
 	bzero(&siop_cmd->cmd_c.siop_tables->xscmd,
 	    sizeof(siop_cmd->cmd_c.siop_tables->xscmd));
@@ -1465,9 +1490,7 @@ siop_scsicmd(xs)
 		if (error) {
 			printf("%s: unable to load data DMA map: %d\n",
 			    sc->sc_c.sc_dev.dv_xname, error);
-			siop_cmd->cmd_c.status = CMDST_FREE;
-			TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
-			xs->error = XS_NO_CCB;
+			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			splx(s);
 			return;
