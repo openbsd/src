@@ -3329,6 +3329,7 @@
 ./usr/share/zoneinfo/Antarctica/Casey
 ./usr/share/zoneinfo/Antarctica/Davis
 ./usr/share/zoneinfo/Antarctica/DumontDUrville
+./usr/share/zoneinfo/Antarctica/Macquarie
 ./usr/share/zoneinfo/Antarctica/Mawson
 ./usr/share/zoneinfo/Antarctica/McMurdo
 ./usr/share/zoneinfo/Antarctica/Palmer
@@ -3921,6 +3922,7 @@
 ./usr/share/zoneinfo/posix/Antarctica/Casey
 ./usr/share/zoneinfo/posix/Antarctica/Davis
 ./usr/share/zoneinfo/posix/Antarctica/DumontDUrville
+./usr/share/zoneinfo/posix/Antarctica/Macquarie
 ./usr/share/zoneinfo/posix/Antarctica/Mawson
 ./usr/share/zoneinfo/posix/Antarctica/McMurdo
 ./usr/share/zoneinfo/posix/Antarctica/Palmer
@@ -4514,6 +4516,7 @@
 ./usr/share/zoneinfo/right/Antarctica/Casey
 ./usr/share/zoneinfo/right/Antarctica/Davis
 ./usr/share/zoneinfo/right/Antarctica/DumontDUrville
+./usr/share/zoneinfo/right/Antarctica/Macquarie
 ./usr/share/zoneinfo/right/Antarctica/Mawson
 ./usr/share/zoneinfo/right/Antarctica/McMurdo
 ./usr/share/zoneinfo/right/Antarctica/Palmer
