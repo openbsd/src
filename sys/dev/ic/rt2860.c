@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.46 2010/04/06 16:14:47 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.47 2010/04/06 16:41:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -127,6 +127,7 @@ void		rt3090_set_chan(struct rt2860_softc *, u_int);
 int		rt3090_rf_init(struct rt2860_softc *);
 int		rt3090_filter_calib(struct rt2860_softc *, uint8_t, uint8_t,
 		    uint8_t *);
+void		rt3090_rf_setup(struct rt2860_softc *);
 void		rt2860_set_leds(struct rt2860_softc *, uint16_t);
 void		rt2860_set_gp_timer(struct rt2860_softc *, int);
 void		rt2860_set_bssid(struct rt2860_softc *, const uint8_t *);
@@ -2395,6 +2396,36 @@ rt3090_filter_calib(struct rt2860_softc *sc, uint8_t init, uint8_t target,
 }
 
 void
+rt3090_rf_setup(struct rt2860_softc *sc)
+{
+	uint8_t bbp;
+	int i;
+
+	if (sc->mac_rev >= 0x0211) {
+		/* enable DC filter */
+		rt2860_mcu_bbp_write(sc, 103, 0xc0);
+
+		/* improve power consumption */
+		bbp = rt2860_mcu_bbp_read(sc, 31);
+		rt2860_mcu_bbp_write(sc, 31, bbp & ~0x03);
+	}
+
+	RAL_WRITE(sc, RT2860_TX_SW_CFG1, 0);
+	if (sc->mac_rev < 0x0211) {
+		RAL_WRITE(sc, RT2860_TX_SW_CFG2,
+		    sc->patch_dac ? 0x2c : 0x0f);
+	} else
+		RAL_WRITE(sc, RT2860_TX_SW_CFG2, 0);
+
+	/* initialize RF registers from ROM */
+	for (i = 0; i < 10; i++) {
+		if (sc->rf[i].reg == 0 || sc->rf[i].reg == 0xff)
+			continue;
+		rt3090_rf_write(sc, sc->rf[i].reg, sc->rf[i].val);
+	}
+}
+
+void
 rt2860_set_leds(struct rt2860_softc *sc, uint16_t which)
 {
 	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LEDS,
@@ -2749,12 +2780,22 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	val = rt2860_srom_read(sc, RT2860_EEPROM_COUNTRY);
 	DPRINTF(("EEPROM region code=0x%04x\n", val));
 
-	/* read default BBP settings */
+	/* read vendor BBP settings */
 	for (i = 0; i < 8; i++) {
 		val = rt2860_srom_read(sc, RT2860_EEPROM_BBP_BASE + i);
 		sc->bbp[i].val = val & 0xff;
 		sc->bbp[i].reg = val >> 8;
 		DPRINTF(("BBP%d=0x%02x\n", sc->bbp[i].reg, sc->bbp[i].val));
+	}
+	if (sc->mac_ver >= 0x3090) {
+		/* read vendor RF settings */
+		for (i = 0; i < 10; i++) {
+			val = rt2860_srom_read(sc, RT3071_EEPROM_RF_BASE + i);
+			sc->rf[i].val = val & 0xff;
+			sc->rf[i].reg = val >> 8;
+			DPRINTF(("RF%d=0x%02x\n", sc->rf[i].reg,
+			    sc->rf[i].val));
+		}
 	}
 
 	/* read RF frequency offset from EEPROM */
@@ -3287,8 +3328,15 @@ rt2860_init(struct ifnet *ifp)
 	/* disable non-existing Tx chains */
 	bbp1 = rt2860_mcu_bbp_read(sc, 1);
 	if (sc->ntxchains == 1)
-		bbp1 &= ~(1 << 3 | 1 << 4);
+		bbp1 = (bbp1 & ~(1 << 3 | 1 << 4));
+	else if (sc->mac_ver == 0x3593 && sc->ntxchains == 2)
+		bbp1 = (bbp1 & ~(1 << 4)) | 1 << 3;
+	else if (sc->mac_ver == 0x3593 && sc->ntxchains == 3)
+		bbp1 = (bbp1 & ~(1 << 3)) | 1 << 4;
 	rt2860_mcu_bbp_write(sc, 1, bbp1);
+
+	if (sc->mac_ver >= 0x3090)
+		rt3090_rf_setup(sc);
 
 	/* select default channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;

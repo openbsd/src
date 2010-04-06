@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.15 2010/04/05 14:14:02 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.16 2010/04/06 16:41:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -171,7 +171,7 @@ struct rt2860_softc {
 	struct {
 		uint8_t	reg;
 		uint8_t	val;
-	}				bbp[8];
+	}				bbp[8], rf[10];
 	uint8_t				leds;
 	uint16_t			led[3];
 	uint32_t			txpow20mhz[5];

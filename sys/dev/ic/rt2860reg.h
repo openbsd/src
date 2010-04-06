@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.27 2010/04/05 14:14:02 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.28 2010/04/06 16:41:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -23,6 +23,8 @@
 #define RT2860_PCI_MCUCTRL		0x0008
 #define RT2860_PCI_SYSCTRL		0x000c
 #define RT2860_PCIE_JTAG		0x0010
+
+#define RT3090_AUX_CTRL			0x010c
 
 #define RT3070_OPT_14			0x0114
 
