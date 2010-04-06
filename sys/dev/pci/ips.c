@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.95 2010/03/23 01:57:20 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.96 2010/04/06 22:28:07 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/sensors.h>
 #include <sys/timeout.h>
 #include <sys/queue.h>

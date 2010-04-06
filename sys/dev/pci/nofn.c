@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.16 2008/05/22 19:23:04 mk Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.17 2010/04/06 22:28:07 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -37,13 +37,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
