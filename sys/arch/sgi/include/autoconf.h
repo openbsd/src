@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.29 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.30 2010/04/06 19:06:04 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,9 +58,28 @@ struct sys_rec {
 
 extern struct sys_rec sys_config;
 
+/*
+ * Attachment information for mainbus child devices.
+ */
 struct mainbus_attach_args {
 	const char	*maa_name;
 	int16_t		 maa_nasid;
+};
+
+/*
+ * Device physical location information.  Used to match console and boot
+ * devices.
+ */
+struct sgi_device_location {
+	int16_t		nasid;		/* node identifier */
+	uint		widget;		/* widget number */
+
+	int		bus;		/* bus number if connected to PIC */
+	int		device;		/* device number if PCI */
+	int		fn;		/* function number if PCI */
+
+	uint32_t	specific;	/* port on dual-scsibus controllers,
+					   device id on serial controllers */
 };
 
 #include <mips64/autoconf.h>
@@ -79,5 +98,10 @@ void	ip32_setup(void);
 extern char osloadpartition[256];
 extern int16_t masternasid;
 extern int16_t currentnasid;
+
+extern struct sgi_device_location console_output, console_input;
+
+int	location_match(struct sgi_device_location *,
+	    struct sgi_device_location *);
 
 #endif /* _MACHINE_AUTOCONF_H_ */

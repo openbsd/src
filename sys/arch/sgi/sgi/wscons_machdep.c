@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.6 2010/03/07 21:26:24 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.7 2010/04/06 19:06:07 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -91,6 +91,8 @@ cons_decl(ws);
 extern bus_addr_t comconsaddr;
 
 #if defined(TGT_OCTANE) || defined(TGT_ORIGIN)
+struct	sgi_device_location	console_output;
+struct	sgi_device_location	console_input;
 int16_t	output_widget_nasid;
 int	output_widget_id;
 int	(*output_widget_cninit)(int16_t, int) = NULL;

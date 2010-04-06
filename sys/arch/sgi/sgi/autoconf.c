@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.30 2010/01/13 22:57:29 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.31 2010/04/06 19:06:07 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -648,4 +648,35 @@ atoi(const char *s, int b, const char **o)
 	if (o != NULL)
 		*o = s - 1;
 	return val;
+}
+
+/*
+ * Relaxed comparison of two devices' physical location.
+ */
+int
+location_match(struct sgi_device_location *l1, struct sgi_device_location *l2)
+{
+	/* must be on the same widget */
+	if (l1->nasid != l2->nasid || l1->widget != l2->widget)
+		return 0;
+
+	/* must be on the same PCI bus, if applicable */
+	if (l1->bus == -1 || l2->bus == -1)
+		return 1;
+	if (l1->bus != l2->bus)
+		return 0;
+
+	/* must be the same PCI device, if applicable */
+	if (l1->device == -1 || l2->device == -1)
+		return 1;
+	if (l1->device != l2->device)
+		return 0;
+
+	/* must be the same PCI function, if applicable */
+	if (l1->fn == -1 || l2->fn == -1)
+		return 1;
+	if (l1->fn != l2->fn)
+		return 0;
+
+	return 1;
 }
