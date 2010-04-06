@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.18 2010/03/21 13:52:05 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.19 2010/04/06 19:09:50 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -51,9 +51,14 @@
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+
 #include <machine/mnode.h>
 #include <sgi/xbow/hub.h>
+#include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
+#include <sgi/xbow/xbowdevs.h>
 
 void	kl_add_memory_ip27(int16_t, int16_t *, unsigned int);
 void	kl_add_memory_ip35(int16_t, int16_t *, unsigned int);
@@ -77,6 +82,7 @@ kl_init(int ip35)
 	kl_config_hdr_t *cfghdr;
 	uint64_t val;
 	uint64_t nibase = ip35 ? HUBNIBASE_IP35 : HUBNIBASE_IP27;
+	size_t gsz;
 
 	/* will be recomputed when processing memory information */
 	physmem = 0;
@@ -96,12 +102,33 @@ kl_init(int ip35)
         DB_PRF(("Region present %p.\n", val));
 	val = IP27_LHUB_L(HUBPI_CALIAS_SIZE);
         DB_PRF(("Calias size %p.\n", val));
-}
 
-void
-kl_scan_config(int ip35, int16_t nasid)
-{
-	kl_scan_node(nasid, KLBRD_ANY, kl_first_pass_board, &ip35);
+	/*
+	 * Get a grip on the global data area, and figure out how many
+	 * theoretical nodes are available.
+	 */
+
+	gda = IP27_GDA(0);
+	gsz = IP27_GDA_SIZE(0);
+	if (gda->magic != GDA_MAGIC || gda->ver < 2) {
+		masternasid = 0;
+		maxnodes = 0;
+	} else {
+		masternasid = gda->masternasid;
+		maxnodes = (gsz - offsetof(gda_t, nasid)) / sizeof(int16_t);
+		if (maxnodes > GDA_MAXNODES)
+			maxnodes = GDA_MAXNODES;
+		/* in M mode, there can't be more than 64 nodes anyway */
+		if (kl_n_mode == 0 && maxnodes > 64)
+			maxnodes = 64;
+	}
+
+	/*
+	 * Scan all nodes configurations to find out CPU and memory
+	 * information, starting with the master node.
+	 */
+
+	kl_scan_all_nodes(KLBRD_ANY, kl_first_pass_board, &ip35);
 }
 
 /*
@@ -344,6 +371,29 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 }
 
 /*
+ * Enumerate the boards of all nodes, and invoke a callback for those
+ * matching the given class.
+ */
+int
+kl_scan_all_nodes(uint cls, int (*cb)(lboard_t *, void *), void *cbarg)
+{
+	uint node;
+
+	if (kl_scan_node(masternasid, cls, cb, cbarg) != 0)
+		return 1;
+	for (node = 0; node < maxnodes; node++) {
+		if (gda->nasid[node] < 0)
+			continue;
+		if (gda->nasid[node] == masternasid)
+			continue;
+		if (kl_scan_node(gda->nasid[node], cls, cb, cbarg) != 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+/*
  * Enumerate the boards of a node, and invoke a callback for those matching
  * the given class.
  */
@@ -545,5 +595,96 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 		}
 skip:
 		basepa += 1UL << 30;	/* 1 GB */
+	}
+}
+
+/*
+ * Extract unique device location from a klinfo structure.
+ */
+void
+kl_get_location(klinfo_t *cmp, struct sgi_device_location *sdl)
+{
+	uint32_t wid;
+	int device = cmp->physid;
+
+	/*
+	 * If the widget is actually a PIC, we need to compensate
+	 * for PCI device numbering.
+	 */
+	if (xbow_widget_id(cmp->nasid, cmp->widid, &wid) == 0) {
+		if (WIDGET_ID_VENDOR(wid) == XBOW_VENDOR_SGI3 &&
+		    WIDGET_ID_PRODUCT(wid) == XBOW_PRODUCT_SGI3_PIC)
+			device--;
+	}
+
+	sdl->nasid = cmp->nasid;
+	sdl->widget = cmp->widid;
+	if (sys_config.system_type == SGI_IP35) {
+		/*
+		 * IP35: need to be aware of secondary buses on PIC, and
+		 * multifunction PCI cards.
+		 */
+		sdl->bus = cmp->pci_bus_num;
+		sdl->device = device;
+		if (cmp->pci_multifunc)
+			sdl->fn = cmp->pci_func_num;
+		else
+			sdl->fn = -1;
+		sdl->specific = cmp->port;
+	} else {
+		/*
+		 * IP27: secondary buses and multifunction PCI devices are
+		 * not recognized.
+		 */
+		sdl->bus = 0;
+		sdl->device = device;
+		sdl->fn = -1;
+		sdl->specific = 0;
+	}
+}
+
+/*
+ * Similar to the above, but for the input console device, which information
+ * does not come from a klinfo structure.
+ */
+void
+kl_get_console_location(console_t *cons, struct sgi_device_location *sdl)
+{
+	uint32_t wid;
+	int device = cons->npci;
+
+	/*
+	 * If the widget is actually a PIC, we need to compensate
+	 * for PCI device numbering.
+	 */
+	if (xbow_widget_id(cons->nasid, cons->wid, &wid) == 0) {
+		if (WIDGET_ID_VENDOR(wid) == XBOW_VENDOR_SGI3 &&
+		    WIDGET_ID_PRODUCT(wid) == XBOW_PRODUCT_SGI3_PIC)
+			device--;
+	}
+
+	sdl->nasid = cons->nasid;
+	sdl->widget = cons->wid;
+	sdl->fn = -1;
+	sdl->specific = cons->type;
+
+	/*
+	 * This is a disgusting hack. The console structure does not
+	 * contain a precise PCI device identification, and will also
+	 * not point to the relevant klinfo structure.
+	 *
+	 * We assume that if the console `type' is not the IOC3 PCI
+	 * identifier, then it is an IOC4 device connected to a PIC
+	 * bus, therefore we can compute proper PCI location from the
+	 * `npci' field.
+	 */
+
+	if (cons->type == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3) ||
+	    sys_config.system_type != SGI_IP35) {
+		sdl->bus = 0;
+		sdl->device = device;
+	} else {
+		sdl->bus = cons->npci & KLINFO_PHYSID_PIC_BUS1 ? 1 : 0;
+		sdl->device = device & KLINFO_PHYSID_WIDGET_MASK;
 	}
 }

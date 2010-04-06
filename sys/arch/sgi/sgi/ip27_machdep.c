@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.46 2010/03/22 21:22:08 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.47 2010/04/06 19:09:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -66,9 +66,9 @@ void	ip27_halt(int);
 unsigned int xbow_long_shift = 29;
 
 static paddr_t io_base;
-static gda_t *gda;
 static int ip35 = 0;
-static uint maxnodes;
+uint	 maxnodes;
+gda_t	*gda;
 
 int	ip27_hub_intr_register(int, int, int *);
 int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
@@ -112,8 +112,6 @@ struct {
 void
 ip27_setup()
 {
-	size_t gsz;
-	uint node;
 	struct ip27_config *ip27_config;
 	uint64_t synergy0_0;
 	console_t *cons;
@@ -186,40 +184,6 @@ ip27_setup()
 	kl_init(ip35);
 	if (kl_n_mode != 0)
 		xbow_long_shift = 28;
-
-	/*
-	 * Get a grip on the global data area, and figure out how many
-	 * theoretical nodes are available.
-	 */
-
-	gda = IP27_GDA(0);
-	gsz = IP27_GDA_SIZE(0);
-	if (gda->magic != GDA_MAGIC || gda->ver < 2) {
-		masternasid = 0;
-		maxnodes = 0;
-	} else {
-		masternasid = gda->masternasid;
-		maxnodes = (gsz - offsetof(gda_t, nasid)) / sizeof(int16_t);
-		if (maxnodes > GDA_MAXNODES)
-			maxnodes = GDA_MAXNODES;
-		/* in M mode, there can't be more than 64 nodes anyway */
-		if (kl_n_mode == 0 && maxnodes > 64)
-			maxnodes = 64;
-	}
-
-	/*
-	 * Scan all nodes configurations to find out CPU and memory
-	 * information, starting with the master node.
-	 */
-
-	kl_scan_config(ip35, masternasid);
-	for (node = 0; node < maxnodes; node++) {
-		if (gda->nasid[node] < 0)
-			continue;
-		if (gda->nasid[node] == masternasid)
-			continue;
-		kl_scan_config(ip35, gda->nasid[node]);
-	}
 
 	/*
 	 * Initialize the early console parameters.
