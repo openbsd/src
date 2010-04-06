@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.37 2010/03/07 13:38:58 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.38 2010/04/06 19:12:34 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -84,8 +84,8 @@ pcitag_t mace_pcibr_make_tag(void *, int, int, int);
 void	 mace_pcibr_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t mace_pcibr_conf_read(void *, pcitag_t, int);
 void	 mace_pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
-int16_t	 mace_pcibr_get_nasid(void *);
 int	 mace_pcibr_get_widget(void *);
+int	 mace_pcibr_get_dl(void *, pcitag_t, struct sgi_device_location *);
 int	 mace_pcibr_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *mace_pcibr_intr_string(void *, pci_intr_handle_t);
 void	*mace_pcibr_intr_establish(void *, pci_intr_handle_t, int,
@@ -239,8 +239,8 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_bus_maxdevs = mace_pcibr_bus_maxdevs;
 	sc->sc_pc.pc_conf_read = mace_pcibr_conf_read;
 	sc->sc_pc.pc_conf_write = mace_pcibr_conf_write;
-	sc->sc_pc.pc_get_nasid = mace_pcibr_get_nasid;
 	sc->sc_pc.pc_get_widget = mace_pcibr_get_widget;
+	sc->sc_pc.pc_get_dl = mace_pcibr_get_dl;
 	sc->sc_pc.pc_intr_v = NULL;
 	sc->sc_pc.pc_intr_map = mace_pcibr_intr_map;
 	sc->sc_pc.pc_intr_string = mace_pcibr_intr_string;
@@ -418,16 +418,24 @@ mace_pcibr_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	splx(s);
 }
 
-int16_t
-mace_pcibr_get_nasid(void *unused)
+int
+mace_pcibr_get_widget(void *unused)
 {
 	return 0;
 }
 
 int
-mace_pcibr_get_widget(void *unused)
+mace_pcibr_get_dl(void *cpv, pcitag_t tag, struct sgi_device_location *sdl)
 {
-	return 0;
+	int bus, device, fn;
+
+	memset(sdl, 0, sizeof *sdl);
+	mace_pcibr_decompose_tag(cpv, tag, &bus, &device, &fn);
+	if (bus != 0)
+		return 0;
+	sdl->device = device;
+	sdl->fn = fn;
+	return 1;
 }
 
 int

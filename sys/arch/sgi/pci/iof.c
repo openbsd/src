@@ -1,4 +1,4 @@
-/*	$OpenBSD: iof.c,v 1.5 2010/03/07 13:44:26 miod Exp $	*/
+/*	$OpenBSD: iof.c,v 1.6 2010/04/06 19:12:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -56,7 +56,6 @@ struct iof_intr {
 
 struct iof_softc {
 	struct device		 sc_dev;
-	int			 sc_npci;
 
 	struct mips_bus_space	*sc_mem_bus_space;
 
@@ -64,6 +63,7 @@ struct iof_softc {
 	bus_space_handle_t	 sc_memh;
 	bus_dma_tag_t		 sc_dmat;
 	pci_chipset_tag_t	 sc_pc;
+	pcitag_t		 sc_tag;
 
 	uint32_t		 sc_mcr;
 
@@ -127,7 +127,7 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_pc = pa->pa_pc;
-	sc->sc_npci = pa->pa_device;
+	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
 	/*
@@ -212,9 +212,7 @@ iof_attach_child(struct device *iof, const char *name, bus_addr_t base,
 	struct iof_attach_args iaa;
 
 	iaa.iaa_name = name;
-	iaa.iaa_nasid = pci_get_nasid(sc->sc_pc);
-	iaa.iaa_widget = pci_get_widget(sc->sc_pc);
-	iaa.iaa_npci = sc->sc_npci;
+	pci_get_device_location(sc->sc_pc, sc->sc_tag, &iaa.iaa_location);
 	iaa.iaa_memt = sc->sc_memt;
 	iaa.iaa_memh = sc->sc_memh;
 	iaa.iaa_dmat = sc->sc_dmat;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.5 2010/04/06 19:02:57 miod Exp $	*/
+/*	$OpenBSD: impact.c,v 1.6 2010/04/06 19:12:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -776,19 +776,17 @@ impact_eraserows(void *cookie, int row, int num, long attr)
  * Console support.
  */
 
-static int16_t impact_console_nasid;
-static int impact_console_widget;
-
 /* console backing store, worst case font selection */
 static struct wsdisplay_charcell
 	impact_cons_bs[(IMPACT_WIDTH / 8) * (IMPACT_HEIGHT / 16)];
 
 int
-impact_cnprobe(int16_t nasid, int widget)
+impact_cnprobe()
 {
 	u_int32_t wid, vendor, product;
 
-	if (xbow_widget_id(nasid, widget, &wid) != 0)
+	if (xbow_widget_id(console_output.nasid, console_output.widget,
+	    &wid) != 0)
 		return 0;
 
 	vendor = WIDGET_ID_VENDOR(wid);
@@ -804,14 +802,15 @@ impact_cnprobe(int16_t nasid, int widget)
 }
 
 int
-impact_cnattach(int16_t nasid, int widget)
+impact_cnattach()
 {
 	struct impact_screen *scr = &impact_cons;
 	struct rasops_info *ri = &scr->ri;
 	int rc;
 
 	/* Build bus space accessor. */
-	xbow_build_bus_space(&scr->iot_store, nasid, widget);
+	xbow_build_bus_space(&scr->iot_store, console_output.nasid,
+	    console_output.widget);
 	scr->iot = &scr->iot_store;
 
 	rc = bus_space_map(scr->iot, IMPACTSR_REG_OFFSET, IMPACTSR_REG_SIZE,
@@ -830,15 +829,12 @@ impact_cnattach(int16_t nasid, int widget)
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &scr->defattr);
 	wsdisplay_cnattach(&scr->wsd, ri, 0, 0, scr->defattr);
 
-	impact_console_nasid = nasid;
-	impact_console_widget = widget;
-
 	return 0;
 }
 
 int
 impact_is_console(struct xbow_attach_args *xaa)
 {
-	return xaa->xaa_nasid == impact_console_nasid &&
-	    xaa->xaa_widget == impact_console_widget;
+	return xaa->xaa_nasid == console_output.nasid &&
+	    xaa->xaa_widget == console_output.widget;
 }

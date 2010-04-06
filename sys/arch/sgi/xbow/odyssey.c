@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.4 2010/04/06 19:02:57 miod Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.5 2010/04/06 19:12:34 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -1070,16 +1070,14 @@ ieee754_sp(int32_t v)
  * Console support.
  */
 
-static int16_t odyssey_console_nasid;
-static int odyssey_console_widget;
-
 int
-odyssey_cnprobe(int16_t nasid, int widget)
+odyssey_cnprobe()
 {
 	u_int32_t wid, vendor, product;
 
 	/* Probe for Odyssey graphics card. */
-	if (xbow_widget_id(nasid, widget, &wid) != 0)
+	if (xbow_widget_id(console_output.nasid, console_output.widget,
+	    &wid) != 0)
 		return 0;
 
 	vendor = WIDGET_ID_VENDOR(wid);
@@ -1095,7 +1093,7 @@ odyssey_cnprobe(int16_t nasid, int widget)
 }
 
 int
-odyssey_cnattach(int16_t nasid, int widget)
+odyssey_cnattach()
 {
 	struct odyssey_softc *sc;
 	struct odyssey_screen *screen;
@@ -1108,7 +1106,8 @@ odyssey_cnattach(int16_t nasid, int widget)
 	sc->curscr->sc = (void *)sc;
 
 	/* Build bus space accessor. */
-	xbow_build_bus_space(&sc->iot_store, nasid, widget);
+	xbow_build_bus_space(&sc->iot_store, console_output.nasid,
+	    console_output.widget);
 	sc->iot = &sc->iot_store;
 
 	/* Setup bus space mappings. */
@@ -1137,8 +1136,6 @@ odyssey_cnattach(int16_t nasid, int widget)
 	    0, 0, 0, &attr);
 	wsdisplay_cnattach(&odyssey_stdscreen, &odyssey_consdata.ri,
 	    0, 0, attr);
-	odyssey_console_nasid = nasid;
-	odyssey_console_widget = widget;
 
 	return 0;
 }
@@ -1146,6 +1143,6 @@ odyssey_cnattach(int16_t nasid, int widget)
 int
 odyssey_is_console(struct xbow_attach_args *xaa)
 {
-	return xaa->xaa_nasid == odyssey_console_nasid &&
-	    xaa->xaa_widget == odyssey_console_widget;
+	return xaa->xaa_nasid == console_output.nasid &&
+	    xaa->xaa_widget == console_output.widget;
 }

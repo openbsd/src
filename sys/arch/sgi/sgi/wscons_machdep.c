@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.7 2010/04/06 19:06:07 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.8 2010/04/06 19:12:34 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -93,14 +93,7 @@ extern bus_addr_t comconsaddr;
 #if defined(TGT_OCTANE) || defined(TGT_ORIGIN)
 struct	sgi_device_location	console_output;
 struct	sgi_device_location	console_input;
-int16_t	output_widget_nasid;
-int	output_widget_id;
-int	(*output_widget_cninit)(int16_t, int) = NULL;
-
-int16_t	input_widget_nasid;
-int	input_widget_id;
-int	input_widget_npci;
-uint32_t input_widget_type;
+int	(*output_widget_cninit)(void) = NULL;
 
 int	widget_cnprobe(void);
 void	widget_cnattach(void);
@@ -258,27 +251,25 @@ widget_cnprobe()
 		 */
 		if (kl_glass_console == NULL)
 			return 0;
-		output_widget_nasid = kl_glass_console->nasid;
-		output_widget_id = kl_glass_console->widid;
+		kl_get_location(kl_glass_console, &console_output);
 
 		cons = kl_get_console();
-		input_widget_nasid = cons->nasid;
-		input_widget_id = cons->wid;
-		input_widget_npci = cons->npci;
-		input_widget_type = (uint32_t)cons->type;
+		kl_get_console_location(cons, &console_input);
 		break;
 #endif
 #ifdef TGT_OCTANE
 	case SGI_OCTANE:
-		output_widget_nasid = masternasid;
-		output_widget_id = ip30_find_video();
-		if (output_widget_id == 0)
+		console_output.nasid = masternasid;
+		console_output.widget = ip30_find_video();
+		if (console_output.widget == 0)
 			return 0;
 
-		input_widget_nasid = masternasid;
-		input_widget_id = IP30_BRIDGE_WIDGET;
-		input_widget_npci = IP30_IOC_SLOTNO;
-		input_widget_type =
+		console_input.nasid = masternasid;
+		console_input.widget = IP30_BRIDGE_WIDGET;
+		console_input.bus = 0;
+		console_input.device = IP30_IOC_SLOTNO;
+		console_input.fn = -1;
+		console_input.specific =
 		    PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
 		break;
 #endif
@@ -291,13 +282,13 @@ widget_cnprobe()
 	 */
 
 #if NIMPACT > 0
-	if (impact_cnprobe(output_widget_nasid, output_widget_id) != 0) {
+	if (impact_cnprobe() != 0) {
 		output_widget_cninit = impact_cnattach;
 		goto success;
 	}
 #endif
 #if NODYSSEY > 0
-	if (odyssey_cnprobe(output_widget_nasid, output_widget_id) != 0) {
+	if (odyssey_cnprobe() != 0) {
 		output_widget_cninit = odyssey_cnattach;
 		goto success;
 	}
@@ -322,12 +313,11 @@ widget_cnattach()
 	if (output_widget_cninit == NULL)
 		return;
 
-	if ((*output_widget_cninit)(output_widget_nasid, output_widget_id) != 0)
+	if ((*output_widget_cninit)() != 0)
 		return;
 
 #if NIOCKBC > 0
-	if (iockbc_cnattach(input_widget_nasid, input_widget_id,
-	    input_widget_npci, input_widget_type, PCKBC_KBD_SLOT) == 0)
+	if (iockbc_cnattach(PCKBC_KBD_SLOT) == 0)
 		return;	/* console keyboard found */
 #endif
 #if NUKBD > 0

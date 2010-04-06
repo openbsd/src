@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2010/03/07 13:38:58 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.10 2010/04/06 19:12:34 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -30,6 +30,7 @@ typedef u_long pcitag_t;
 typedef u_long pci_intr_handle_t;
 
 struct pci_attach_args;
+struct sgi_device_location;
 
 /*
  * mips-specific PCI structure and type definitions.
@@ -45,8 +46,8 @@ struct mips_pci_chipset {
 		    int *, int *);
     pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
     void	(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
-    int16_t	(*pc_get_nasid)(void *);
     int		(*pc_get_widget)(void *);
+    int		(*pc_get_dl)(void *, pcitag_t, struct sgi_device_location *);
 
     void	*pc_intr_v;
     int		(*pc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
@@ -78,11 +79,11 @@ struct mips_pci_chipset {
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
-#define	pci_get_nasid(c)						\
-    (*(c)->pc_get_nasid)((c)->pc_conf_v)
 #define	pci_get_widget(c)						\
     (*(c)->pc_get_widget)((c)->pc_conf_v)
-#define	pci_intr_map(c, ihp)				\
+#define pci_get_device_location(c,t,l)					\
+    (*(c)->pc_get_dl)((c)->pc_conf_v, (t), (l))
+#define	pci_intr_map(c, ihp)						\
     (*(c)->pa_pc->pc_intr_map)((c), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))

@@ -1,7 +1,7 @@
-/*	$OpenBSD: iofvar.h,v 1.3 2010/03/07 13:44:26 miod Exp $	*/
+/*	$OpenBSD: iofvar.h,v 1.4 2010/04/06 19:12:34 miod Exp $	*/
 
 /*
- * Copyright (c) 2009 Miodrag Vallat.
+ * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,19 +17,17 @@
  */
 
 struct iof_attach_args {
-	const char		*iaa_name;
+	const char			*iaa_name;
 
-	int16_t			 iaa_nasid;
-	int			 iaa_widget;
-	int			 iaa_npci;
+	bus_space_tag_t			 iaa_memt;
+	bus_space_handle_t		 iaa_memh;
+	bus_dma_tag_t			 iaa_dmat;
 
-	bus_space_tag_t		 iaa_memt;
-	bus_space_handle_t	 iaa_memh;
-	bus_dma_tag_t		 iaa_dmat;
+	bus_addr_t			 iaa_base;
+	uint				 iaa_dev;
+	uint				 iaa_clock;
 
-	bus_addr_t		 iaa_base;
-	uint			 iaa_dev;
-	uint			 iaa_clock;
+	struct sgi_device_location	 iaa_location;
 };
 
 void   *iof_intr_establish(void *, uint, int, int (*)(void *), void *, char *);

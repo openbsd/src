@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.69 2010/04/02 12:11:55 jsg Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.70 2010/04/06 19:12:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -215,8 +215,8 @@ int	xbridge_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
 	    bus_addr_t *, bus_addr_t *);
 void	*xbridge_rbus_parent_io(struct pci_attach_args *);
 void	*xbridge_rbus_parent_mem(struct pci_attach_args *);
-int16_t	xbridge_get_nasid(void *);
 int	xbridge_get_widget(void *);
+int	xbridge_get_dl(void *, pcitag_t, struct sgi_device_location *);
 
 int	xbridge_pci_intr_handler(void *);
 int	xbridge_err_intr_handler(void *);
@@ -576,8 +576,8 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	xb->xb_pc.pc_bus_maxdevs = xbridge_bus_maxdevs;
 	xb->xb_pc.pc_conf_read = xbridge_conf_read;
 	xb->xb_pc.pc_conf_write = xbridge_conf_write;
-	xb->xb_pc.pc_get_nasid = xbridge_get_nasid;
 	xb->xb_pc.pc_get_widget = xbridge_get_widget;
+	xb->xb_pc.pc_get_dl = xbridge_get_dl;
 	xb->xb_pc.pc_intr_v = xb;
 	xb->xb_pc.pc_intr_map = xbridge_intr_map;
 	xb->xb_pc.pc_intr_string = xbridge_intr_string;
@@ -845,20 +845,32 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 }
 
-int16_t
-xbridge_get_nasid(void *cookie)
-{
-	struct xbpci_softc *xb = cookie;
-
-	return xb->xb_nasid;
-}
-
 int
 xbridge_get_widget(void *cookie)
 {
 	struct xbpci_softc *xb = cookie;
 
 	return xb->xb_widget;
+}
+
+int
+xbridge_get_dl(void *cookie, pcitag_t tag, struct sgi_device_location *sdl)
+{
+	int bus, device, fn;
+	struct xbpci_softc *xb = cookie;
+
+	xbridge_decompose_tag(cookie, tag, &bus, &device, &fn);
+	if (bus != 0)
+		return 0;
+
+	sdl->nasid = xb->xb_nasid;
+	sdl->widget = xb->xb_widget;
+
+	sdl->bus = xb->xb_busno;
+	sdl->device = device;
+	sdl->fn = fn;
+
+	return 1;
 }
 
 /*

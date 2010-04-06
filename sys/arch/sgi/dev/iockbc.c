@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.5 2010/03/07 13:44:24 miod Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.6 2010/04/06 19:12:26 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -967,22 +967,13 @@ pckbc_set_poll(pckbc_tag_t self, pckbc_slot_t slot, int on)
 
 /*
  * Console support.
- *
- * There might multiple IOC3 and/or IOC4 devices in the system; the kernel
- * will currently only use the one the debug serial console would be attached
- * to as the console input device, regardless of the ConsoleIn variable.
  */
 
-static int16_t iockbc_console_nasid;
-static int iockbc_console_widget;
-static int iockbc_console_npci;
-static uint32_t iockbc_console_type;
-
 static struct pckbc_slotdata iockbc_cons_slotdata;
+static int iockbc_console;
 
 int
-iockbc_cnattach(int16_t nasid, int widget, int npci, uint32_t type,
-    pckbc_slot_t slot)
+iockbc_cnattach(pckbc_slot_t slot)
 {
 	bus_space_tag_t iot = &sys_config.console_io;
 	bus_space_handle_t ioh = (bus_space_handle_t)iot->bus_base;
@@ -992,7 +983,8 @@ iockbc_cnattach(int16_t nasid, int widget, int npci, uint32_t type,
 	int is_ioc;
 	int rc;
 
-	is_ioc = type == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
+	is_ioc = console_input.specific ==
+	    PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
 	if (is_ioc) {
 #if NIOCKBC_IOC > 0
 		if (sys_config.system_type == SGI_IP35)
@@ -1033,17 +1025,8 @@ iockbc_cnattach(int16_t nasid, int widget, int npci, uint32_t type,
 	t->t_slotdata[slot] = &iockbc_cons_slotdata;
 
 	rc = pckbd_cnattach(t, slot);
-
-	/*
-	 * Upon success, remember our configuration to be able to
-	 * recognize the console input device during autoconf.
-	 */
-	if (rc == 0) {
-		iockbc_console_nasid = nasid;
-		iockbc_console_widget = widget;
-		iockbc_console_npci = npci;
-		iockbc_console_type = type;
-	}
+	if (rc == 0)
+		iockbc_console = 1;
 
 	return rc;
 }
@@ -1052,11 +1035,10 @@ iockbc_cnattach(int16_t nasid, int widget, int npci, uint32_t type,
 int
 iockbc_is_ioc_console(struct ioc_attach_args *iaa)
 {
-	return iaa->iaa_nasid == iockbc_console_nasid &&
-	    iaa->iaa_widget == iockbc_console_widget &&
-	    iaa->iaa_npci == iockbc_console_npci &&
-	    iockbc_console_type ==
-	      PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3);
+	if (iockbc_console == 0)
+		return 0;
+
+	return location_match(&iaa->iaa_location, &console_input);
 }
 #endif
 
@@ -1064,10 +1046,9 @@ iockbc_is_ioc_console(struct ioc_attach_args *iaa)
 int
 iockbc_is_iof_console(struct iof_attach_args *iaa)
 {
-	return iaa->iaa_nasid == iockbc_console_nasid &&
-	    iaa->iaa_widget == iockbc_console_widget &&
-	    iaa->iaa_npci == iockbc_console_npci &&
-	    iockbc_console_type ==
-	      PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4);
+	if (iockbc_console == 0)
+		return 0;
+
+	return location_match(&iaa->iaa_location, &console_input);
 }
 #endif

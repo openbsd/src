@@ -1,4 +1,4 @@
-/*	$OpenBSD: odysseyvar.h,v 1.1 2010/03/07 13:44:26 miod Exp $	*/
+/*	$OpenBSD: odysseyvar.h,v 1.2 2010/04/06 19:12:34 miod Exp $	*/
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -15,5 +15,5 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-int	odyssey_cnprobe(int16_t, int);
-int	odyssey_cnattach(int16_t, int);
+int	odyssey_cnprobe(void);
+int	odyssey_cnattach(void);
