@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.90 2010/02/16 09:12:33 sthen Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.91 2010/04/06 20:20:52 naddy Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -187,13 +187,23 @@ void
 brgphy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
+	struct bge_softc *bge_sc = NULL;
 	struct bnx_softc *bnx_sc = NULL;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
 	char *devname;
+	int fast_ether = 0;
 
 	devname = sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name;
+
+	if (strcmp(devname, "bge") == 0) {
+		bge_sc = mii->mii_ifp->if_softc;
+
+		if (bge_sc->bge_flags & BGE_10_100_ONLY)
+			fast_ether = 1;
+	} else if (strcmp(devname, "bnx") == 0)
+		bnx_sc = mii->mii_ifp->if_softc;
 
 	mpd = mii_phy_match(ma, brgphys);
 	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
@@ -204,25 +214,24 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
+
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
-		if (MII_OUI(ma->mii_id1, ma->mii_id2) ==
-		    MII_OUI_xxBROADCOM &&
-		    (sc->mii_model == MII_MODEL_xxBROADCOM_BCM5706 ||
-		     sc->mii_model == MII_MODEL_xxBROADCOM_BCM5714 ||
-		     sc->mii_model == MII_MODEL_xxBROADCOM_BCM5780))
+		if (strcmp(devname, "bnx") == 0) {
+			if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5708)
+				sc->mii_funcs = &brgphy_5708s_funcs;
+			else
+				sc->mii_funcs = &brgphy_fiber_funcs;
+		} else
 			sc->mii_funcs = &brgphy_fiber_funcs;
-		else if (MII_OUI(ma->mii_id1, ma->mii_id2) ==
-		    MII_OUI_xxBROADCOM2 && sc->mii_model ==
-		    MII_MODEL_xxBROADCOM2_BCM5708S)
-			sc->mii_funcs = &brgphy_5708s_funcs;
 	} else
 		sc->mii_funcs = &brgphy_copper_funcs;
-	sc->mii_anegticks = MII_ANEGTICKS;
+
+	if (fast_ether == 1)
+		sc->mii_anegticks = MII_ANEGTICKS;
+	else
+		sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
-
-	if (strcmp(devname, "bnx") == 0)
-		bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
 
 	PHY_RESET(sc);
 
@@ -230,15 +239,46 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
-	mii_phy_add_media(sc);
+#define ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
-	if (sc->mii_flags & MIIF_HAVEFIBER && bnx_sc &&
-	   (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG)) {
-		sc->mii_anegticks = MII_ANEGTICKS_GIGE;
-		ifmedia_add(&mii->mii_media,
-		    IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX, IFM_FDX,
-		    sc->mii_inst), 0, NULL);
+	/* Create an instance of Ethernet media. */
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst), BMCR_ISO);
+
+	/* Add the supported media types */
+	if (sc->mii_flags & MIIF_HAVEFIBER) {
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX, sc->mii_inst),
+		    BRGPHY_S1000 | BRGPHY_BMCR_FDX);
+
+		/*
+		 * 2.5Gb support is a software enabled feature on the
+		 * BCM5708S and BCM5709S controllers.
+		 */
+		if (strcmp(devname, "bnx") == 0) {
+			if (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG)
+				ADD(IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX,
+				    IFM_FDX, sc->mii_inst), 0);
+		}
+	} else {
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
+		    BRGPHY_S10);
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
+		    BRGPHY_S10 | BRGPHY_BMCR_FDX);
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
+		    BRGPHY_S100);
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
+		    BRGPHY_S100 | BRGPHY_BMCR_FDX);
+
+		if (fast_ether == 0) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0,
+			    sc->mii_inst), BRGPHY_S1000);
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,
+			    sc->mii_inst), BRGPHY_S1000 | BRGPHY_BMCR_FDX);
+		}
 	}
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), 0);
+
+#undef ADD
 }
 
 int
@@ -704,8 +744,7 @@ brgphy_reset(struct mii_softc *sc)
 		bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
 
 		if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5708 &&
-		    ISSET(BNX_CHIP_BOND_ID(bnx_sc),
-		     BNX_CHIP_BOND_ID_SERDES_BIT)) {
+		    sc->mii_flags & MIIF_HAVEFIBER) {
 			/* Store autoneg capabilities/results in digital block (Page 0) */
 			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG3_PG2);
 			PHY_WRITE(sc, BRGPHY_5708S_PG2_DIGCTL_3_0, 
