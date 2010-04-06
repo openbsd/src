@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.8 2007/07/27 13:39:00 deraadt Exp $
+#	$OpenBSD: disktab,v 1.9 2010/04/06 03:54:42 deraadt Exp $
 
 # Disk geometry and partition layout tables.
 # Key:
@@ -29,6 +29,12 @@
 # All partition sizes reserve space for bad sector tables.
 # (5 cylinders needed for maintenance + replacement sectors)
 #
+
+floppy576|3in|3.5in High Density Floppy, 5.76MB:\
+	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#160:\
+	:pa#11520:oa#0:ba#4096:fa#512:ta=4.2BSD: \
+	:pb#11520:ob#0:\
+	:pc#11520:oc#0:
 
 floppy288|3in|3.5in High Density Floppy, 2.88MB:\
 	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
