@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.4 2010/03/21 17:05:01 deraadt Exp $	*/
+/*	$OpenBSD: impact.c,v 1.5 2010/04/06 19:02:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -791,8 +791,8 @@ impact_cnprobe(int16_t nasid, int widget)
 	if (xbow_widget_id(nasid, widget, &wid) != 0)
 		return 0;
 
-	vendor = (wid & WIDGET_ID_VENDOR_MASK) >> WIDGET_ID_VENDOR_SHIFT;
-	product = (wid & WIDGET_ID_PRODUCT_MASK) >> WIDGET_ID_PRODUCT_SHIFT;
+	vendor = WIDGET_ID_VENDOR(wid);
+	product = WIDGET_ID_PRODUCT(wid);
 
 	if (vendor != XBOW_VENDOR_SGI5 || product != XBOW_PRODUCT_SGI5_IMPACT)
 		return 0;

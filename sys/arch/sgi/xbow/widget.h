@@ -1,4 +1,4 @@
-/*	$OpenBSD: widget.h,v 1.1 2009/11/18 19:05:53 miod Exp $	*/
+/*	$OpenBSD: widget.h,v 1.2 2010/04/06 19:02:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -31,10 +31,16 @@
 #define	WIDGET_ID			0x0000
 #define	WIDGET_ID_REV_MASK			0xf0000000
 #define	WIDGET_ID_REV_SHIFT			28
+#define	WIDGET_ID_REV(wid) \
+	(((wid) & WIDGET_ID_REV_MASK) >> WIDGET_ID_REV_SHIFT)
 #define	WIDGET_ID_PRODUCT_MASK			0x0ffff000
 #define	WIDGET_ID_PRODUCT_SHIFT			12
+#define	WIDGET_ID_PRODUCT(wid) \
+	(((wid) & WIDGET_ID_PRODUCT_MASK) >> WIDGET_ID_PRODUCT_SHIFT)
 #define	WIDGET_ID_VENDOR_MASK			0x00000ffe
 #define	WIDGET_ID_VENDOR_SHIFT			1
+#define	WIDGET_ID_VENDOR(wid) \
+	(((wid) & WIDGET_ID_VENDOR_MASK) >> WIDGET_ID_VENDOR_SHIFT)
 #define	WIDGET_STATUS			0x0008
 #define	WIDGET_ERR_ADDR_UPPER		0x0010
 #define	WIDGET_ERR_ADDR_LOWER		0x0018

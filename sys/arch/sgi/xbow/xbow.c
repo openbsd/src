@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.28 2010/03/21 13:50:59 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.29 2010/04/06 19:02:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -284,16 +284,15 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (xbow_widget_id(nasid, 0, &wid) != 0)
 		panic("no xbow");
-	vendor = (wid & WIDGET_ID_VENDOR_MASK) >> WIDGET_ID_VENDOR_SHIFT;
-	product = (wid & WIDGET_ID_PRODUCT_MASK) >> WIDGET_ID_PRODUCT_SHIFT;
+	vendor = WIDGET_ID_VENDOR(wid);
+	product = WIDGET_ID_PRODUCT(wid);
 	p = xbow_identify(vendor, product);
 	if (p == NULL)
 		printf(": unknown xbow (vendor %x product %x)",
 		    vendor, product);
 	else
 		printf(": %s", p->productname);
-	printf(" revision %d\n",
-	    (wid & WIDGET_ID_REV_MASK) >> WIDGET_ID_REV_SHIFT);
+	printf(" revision %d\n", WIDGET_ID_REV(wid));
 
 	memset(&cfg, 0, sizeof cfg);
 	switch (sys_config.system_type) {
@@ -383,11 +382,9 @@ xbow_attach_widget(struct device *self, int16_t nasid, int widget,
 
 	xaa.xaa_nasid = nasid;
 	xaa.xaa_widget = widget;
-	xaa.xaa_vendor = (wid & WIDGET_ID_VENDOR_MASK) >>
-	    WIDGET_ID_VENDOR_SHIFT;
-	xaa.xaa_product = (wid & WIDGET_ID_PRODUCT_MASK) >>
-	    WIDGET_ID_PRODUCT_SHIFT;
-	xaa.xaa_revision = (wid & WIDGET_ID_REV_MASK) >> WIDGET_ID_REV_SHIFT;
+	xaa.xaa_vendor = WIDGET_ID_VENDOR(wid);
+	xaa.xaa_product = WIDGET_ID_PRODUCT(wid);
+	xaa.xaa_revision = WIDGET_ID_REV(wid);
 	xaa.xaa_iot = &bs;
 
 	if (config_found_sm(self, &xaa, print, sm) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.38 2010/03/13 21:55:30 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.39 2010/04/06 19:02:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -369,10 +369,8 @@ ip30_find_video()
 		if (ip30_widget_id(0, widid, &id) != 0)
 			continue;
 
-		vendor = (id & WIDGET_ID_VENDOR_MASK) >>
-		    WIDGET_ID_VENDOR_SHIFT;
-		product = (id & WIDGET_ID_PRODUCT_MASK) >>
-		    WIDGET_ID_PRODUCT_SHIFT;
+		vendor = WIDGET_ID_VENDOR(id);
+		product = WIDGET_ID_PRODUCT(id);
 
 		if ((vendor == XBOW_VENDOR_SGI2 &&
 		    product == XBOW_PRODUCT_SGI2_ODYSSEY) ||

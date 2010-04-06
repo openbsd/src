@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.3 2010/03/08 20:54:45 miod Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.4 2010/04/06 19:02:57 miod Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -1082,8 +1082,8 @@ odyssey_cnprobe(int16_t nasid, int widget)
 	if (xbow_widget_id(nasid, widget, &wid) != 0)
 		return 0;
 
-	vendor = (wid & WIDGET_ID_VENDOR_MASK) >> WIDGET_ID_VENDOR_SHIFT;
-	product = (wid & WIDGET_ID_PRODUCT_MASK) >> WIDGET_ID_PRODUCT_SHIFT;
+	vendor = WIDGET_ID_VENDOR(wid);
+	product = WIDGET_ID_PRODUCT(wid);
 
 	if (vendor != XBOW_VENDOR_SGI2 || product != XBOW_PRODUCT_SGI2_ODYSSEY)
 		return 0;
