@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.77 2009/11/04 19:14:09 kettenis Exp $	*/
+/*	$OpenBSD: systm.h,v 1.78 2010/04/06 22:26:59 tedu Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -226,6 +226,23 @@ void	cpu_initclocks(void);
 void	startprofclock(struct proc *);
 void	stopprofclock(struct proc *);
 void	setstatclockrate(int);
+
+struct sleep_state;
+void	sleep_setup(struct sleep_state *, const volatile void *, int,
+	    const char *);
+void	sleep_setup_timeout(struct sleep_state *, int);
+void	sleep_setup_signal(struct sleep_state *, int);
+void	sleep_finish(struct sleep_state *, int);
+int	sleep_finish_timeout(struct sleep_state *);
+int	sleep_finish_signal(struct sleep_state *);
+void	sleep_queue_init(void);
+
+struct mutex;
+void    wakeup_n(const volatile void *, int);
+void    wakeup(const volatile void *);
+#define wakeup_one(c) wakeup_n((c), 1)
+int	tsleep(const volatile void *, int, const char *, int);
+int	msleep(const volatile void *, struct mutex *, int,  const char*, int);
 
 void	wdog_register(void *, int (*)(void *, int));
 
