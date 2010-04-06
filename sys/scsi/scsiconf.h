@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.120 2010/03/23 01:57:20 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.121 2010/04/06 00:58:00 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -327,6 +327,52 @@ struct scsi_device {
 };
 
 /*
+ *
+ */
+
+struct scsi_runq_entry {
+        TAILQ_ENTRY(scsi_runq_entry) e;
+};
+TAILQ_HEAD(scsi_runq, scsi_runq_entry);
+
+struct scsi_iopool;
+
+struct scsi_iohandler {
+	struct scsi_runq_entry entry; /* must be first */
+	u_int onq;
+
+	struct scsi_iopool *pool;
+	void (*handler)(void *, void *);
+	void *cookie;
+};
+
+struct scsi_iopool {
+	/* access to the IOs */
+	void	*iocookie;
+	void	*(*io_get)(void *);
+	void	 (*io_put)(void *, void *);
+	
+	/* the runqueue */
+	struct scsi_runq queue;
+	/* runqueue semaphore */
+	u_int running;
+	/* protection for the runqueue and its semaphore */
+	struct mutex mtx;
+};
+
+/*
+ *
+ */
+
+struct scsi_xshandler {
+	struct scsi_iohandler ioh; /* must be first */
+	u_int onq;
+
+	struct scsi_link *link;
+	void (*handler)(struct scsi_xfer *);
+};
+
+/*
  * This structure describes the connection between an adapter driver and
  * a device driver, and is used by each to call services provided by
  * the other, and to allow generic scsi glue code to call these services
@@ -356,6 +402,7 @@ struct scsi_link {
 #define	SDEV_2NDBUS		0x0400	/* device is a 'second' bus device */
 #define SDEV_UMASS		0x0800	/* device is UMASS SCSI */
 #define SDEV_VIRTUAL		0x1000	/* device is virtualised on the hba */
+#define SDEV_OWN_IOPL		0x2000	/* scsibus */
 	u_int16_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */
@@ -375,6 +422,11 @@ struct scsi_link {
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
 	struct  devid *id;
 	struct	mutex mtx;
+
+	struct	scsi_runq queue;
+	u_int	running;
+
+	struct	scsi_iopool *pool;
 };
 
 int	scsiprint(void *, const char *);
@@ -452,6 +504,8 @@ struct scsi_xfer {
 	struct timeout stimeout;
 	void *cookie;
 	void (*done)(struct scsi_xfer *);
+
+	void *io;			/* adapter io resource */
 };
 
 /*
@@ -551,6 +605,7 @@ int	scsi_interpret_sense(struct scsi_xfer *);
 void		 scsi_buf_enqueue(struct buf *, struct buf *, struct mutex *);
 struct buf	*scsi_buf_dequeue(struct buf *, struct mutex *);
 void		 scsi_buf_requeue(struct buf *, struct buf *, struct mutex *);
+int		 scsi_buf_canqueue(struct buf *, struct mutex *);
 void		 scsi_buf_killqueue(struct buf *, struct mutex *);
 
 void	scsi_xs_show(struct scsi_xfer *);
@@ -579,6 +634,34 @@ struct scsi_xfer *	scsi_xs_get(struct scsi_link *, int);
 void			scsi_xs_exec(struct scsi_xfer *);
 int			scsi_xs_sync(struct scsi_xfer *);
 void			scsi_xs_put(struct scsi_xfer *);
+
+/*
+ * iopool stuff
+ */
+void	scsi_iopool_init(struct scsi_iopool *, void *,
+	    void *(*)(void *), void (*)(void *, void *));
+
+void *	scsi_io_get(struct scsi_iopool *, int);
+void	scsi_io_put(struct scsi_iopool *, void *);
+
+/*
+ * default io allocator.
+ */
+void *	scsi_default_get(void *);
+void	scsi_default_put(void *, void *);
+
+/*
+ * io handler interface
+ */
+void	scsi_ioh_set(struct scsi_iohandler *, struct scsi_iopool *,
+	    void (*)(void *, void *), void *);
+void	scsi_ioh_add(struct scsi_iohandler *);
+void	scsi_ioh_del(struct scsi_iohandler *);
+
+void	scsi_xsh_set(struct scsi_xshandler *, struct scsi_link *,
+	    void (*)(struct scsi_xfer *));
+void	scsi_xsh_add(struct scsi_xshandler *);
+void	scsi_xsh_del(struct scsi_xshandler *);
 
 /*
  * Entrypoints for multipathing

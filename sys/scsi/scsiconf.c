@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.154 2010/01/01 14:28:59 miod Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.155 2010/04/06 00:58:00 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -517,7 +517,7 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	if (((flags & DETACH_FORCE) == 0) && (link->flags & SDEV_OPEN))
 		return (EBUSY);
 
-	/* detaching a device from scsibus is a three step process... */
+	/* detaching a device from scsibus is a four step process... */
 
 	/* 1. detach the device */
 #if NMPATH > 0
@@ -530,11 +530,15 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	if (rv != 0)
 		return (rv);
 
-	/* 2. free up its state in the adapter */
+	/* 2. if its using the openings io allocator, clean it up */
+	if (ISSET(link->flags, SDEV_OWN_IOPL))
+		free(link->pool, M_DEVBUF);
+
+	/* 3. free up its state in the adapter */
 	if (alink->adapter->dev_free != NULL)
 		alink->adapter->dev_free(link);
 
-	/* 3. free up its state in the midlayer */
+	/* 4. free up its state in the midlayer */
 	if (link->id != NULL)
 		devid_free(link->id);
 	free(link, M_DEVBUF);
@@ -859,6 +863,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
 	mtx_init(&sc_link->mtx, IPL_BIO);
+	TAILQ_INIT(&sc_link->queue);
 	inqbuf = &sc_link->inqdata;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_link created.\n"));
@@ -869,6 +874,23 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		if (lun == 0)
 			rslt = EINVAL;
 		goto free;
+	}
+
+	/*
+	 * If we havent been given an io pool by now then fall back to
+	 * using sc_link->openings.
+	 */
+	if (sc_link->pool == NULL) {
+		sc_link->pool = malloc(sizeof(*sc_link->pool),
+		    M_DEVBUF, M_NOWAIT);
+		if (sc_link->pool == NULL) {
+			rslt = ENOMEM;
+			goto bad;
+		}
+		scsi_iopool_init(sc_link->pool, sc_link,
+		    scsi_default_get, scsi_default_put);
+
+		SET(sc_link->flags, SDEV_OWN_IOPL);
 	}
 
 	/*
@@ -1034,6 +1056,9 @@ free_devid:
 	if (sc_link->id)
 		devid_free(sc_link->id);
 bad:
+	if (ISSET(sc_link->flags, SDEV_OWN_IOPL))
+		free(sc_link->pool, M_DEVBUF);
+
 	if (scsi->adapter_link->adapter->dev_free != NULL)
 		scsi->adapter_link->adapter->dev_free(sc_link);
 free:
