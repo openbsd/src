@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.47 2010/04/06 16:41:54 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.48 2010/04/06 16:49:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3159,6 +3159,18 @@ rt2860_init(struct ifnet *ifp)
 
 	rt2860_stop(ifp, 0);
 
+	if (sc->rfswitch) {
+		/* hardware has a radio switch on GPIO pin 2 */
+		if (!(RAL_READ(sc, RT2860_GPIO_CTRL) & (1 << 2))) {
+			printf("%s: radio is disabled by hardware switch\n",
+			    sc->sc_dev.dv_xname);
+#ifdef notyet
+			rt2860_stop(ifp, 1);
+			return EPERM;
+#endif
+		}
+	}
+
 	tmp = RAL_READ(sc, RT2860_WPDMA_GLO_CFG);
 	tmp &= 0xff0;
 	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
@@ -3651,8 +3663,6 @@ rt2860_power(int why, void *arg)
 	struct rt2860_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
-
-	DPRINTF(("%s: rt2860_power(%d)\n", sc->sc_dev.dv_xname, why));
 
 	s = splnet();
 	switch (why) {
