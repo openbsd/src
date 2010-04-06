@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.15 2009/11/11 13:23:01 jsg Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.16 2010/04/06 16:01:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -190,7 +190,7 @@ esp_decrypt (const u_char *bp, u_int len, const u_char *bp2)
 		icmp_print(data, bp2);
 		break;
 	case IPPROTO_ICMPV6:
-		icmp6_print(data, bp2);
+		icmp6_print(data, len, bp2);
 		break;
 	default:
 		printf("ip-proto-%d %d", nh, len);
@@ -302,7 +302,8 @@ ah_print (register const u_char *bp, register u_int len,
 			break;
 
 	        case IPPROTO_ICMPV6:
-		        icmp6_print(bp + pl_len, (const u_char *) ip);
+		        icmp6_print(bp + pl_len, len - pl_len,
+				  (const u_char *) ip);
 			break;
 
 	        case IPPROTO_TCP:

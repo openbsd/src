@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.12 2009/11/27 13:14:35 bluhm Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.13 2010/04/06 16:01:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -161,7 +161,8 @@ ip6_print(register const u_char *bp, register int length)
 				(const u_char *)ip6);
 			goto end;
 		case IPPROTO_ICMPV6:
-			icmp6_print(cp, (const u_char *)ip6);
+			icmp6_print(cp, len + sizeof(struct ip6_hdr) - (cp - bp),
+				(const u_char *)ip6);
 			goto end;
 		case IPPROTO_PIM:
 			(void)printf("PIM");
