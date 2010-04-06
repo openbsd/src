@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.41 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.42 2010/04/06 21:35:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1009,13 +1009,14 @@ screen_write_cell(struct screen_write_ctx *ctx,
 	}
 
 	/* Check this will fit on the current line and wrap if not. */
-	if (s->cx > screen_size_x(s) - width) {
+	if ((s->mode & MODE_WRAP) && s->cx > screen_size_x(s) - width) {
 		screen_write_linefeed(ctx, 1);
 		s->cx = 0;	/* carriage return */
 	}
 
 	/* Sanity checks. */
-	if (s->cx > screen_size_x(s) - 1 || s->cy > screen_size_y(s) - 1)
+	if (((s->mode & MODE_WRAP) && s->cx > screen_size_x(s) - 1)
+	    || s->cy > screen_size_y(s) - 1)
 		return;
 
 	/* Handle overwriting of UTF-8 characters. */

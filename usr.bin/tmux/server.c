@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.84 2010/03/22 19:11:54 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.85 2010/04/06 21:35:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -182,10 +182,11 @@ server_start(char *path)
 	 */
 	if (!ARRAY_EMPTY(&sessions) && !ARRAY_EMPTY(&cfg_causes)) {
 		wp = ARRAY_FIRST(&sessions)->curw->window->active;
-		window_pane_set_mode(wp, &window_more_mode);
+		window_pane_set_mode(wp, &window_copy_mode);
+		window_copy_init_for_output(wp);
 		for (i = 0; i < ARRAY_LENGTH(&cfg_causes); i++) {
 			cause = ARRAY_ITEM(&cfg_causes, i);
-			window_more_add(wp, "%s", cause);
+			window_copy_add(wp, "%s", cause);
 			xfree(cause);
 		}
 		ARRAY_FREE(&cfg_causes);
