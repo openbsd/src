@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.59 2010/03/03 10:19:34 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.60 2010/04/07 20:40:18 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -89,6 +89,8 @@ struct agp_i810_softc {
 };
 
 void	agp_i810_attach(struct device *, struct device *, void *);
+int	agp_i810_activate(struct device *arg, int act);
+void	agp_i810_configure(struct agp_i810_softc *);
 int	agp_i810_probe(struct device *, void *, void *);
 int	agp_i810_get_chiptype(struct pci_attach_args *);
 void	agp_i810_bind_page(void *, bus_size_t, paddr_t, int);
@@ -106,7 +108,8 @@ extern void	intagp_dma_sync(bus_dma_tag_t, bus_dmamap_t,
 		    bus_addr_t, bus_size_t, int);
 
 struct cfattach intagp_ca = {
-	sizeof(struct agp_i810_softc), agp_i810_probe, agp_i810_attach
+	sizeof(struct agp_i810_softc), agp_i810_probe, agp_i810_attach,
+	NULL, agp_i810_activate,
 };
 
 struct cfdriver intagp_cd = {
@@ -464,32 +467,13 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unknown initialisation\n");
 		return;
 	}
-	agp_flush_cache();
-	/* Install the GATT. */
-	WRITE4(AGP_I810_PGTBL_CTL, gatt->ag_physical | 1);
-
 	/* Intel recommends that you have a fake page bound to the gtt always */
 	if (agp_alloc_dmamem(pa->pa_dmat, AGP_PAGE_SIZE, &isc->scrib_dmamap,
 	    &tmp, &isc->scrib_seg) != 0) {
 		printf(": can't get scribble page\n");
 		return;
 	}
-	tmp = isc->isc_apaddr;
-	if (isc->chiptype == CHIP_I810) {
-		tmp += isc->dcache_size;
-	} else {  
-		tmp += isc->stolen << AGP_PAGE_SHIFT;
-	}
-
-	/* initialise all gtt entries to point to scribble page */
-	for (; tmp < (isc->isc_apaddr + isc->isc_apsize);
-	    tmp += AGP_PAGE_SIZE)
-		agp_i810_unbind_page(isc, tmp);
-
-	/*
-	 * Make sure the chipset can see everything.
-	 */
-	agp_flush_cache();
+	agp_i810_configure(isc);
 
 	isc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_i810_methods,
 	    isc->isc_apaddr, isc->isc_apsize, &isc->dev);
@@ -505,6 +489,47 @@ out:
 		vga_pci_bar_unmap(isc->gtt_map);
 	if (isc->map != NULL)
 		vga_pci_bar_unmap(isc->map);
+}
+
+int
+agp_i810_activate(struct device *arg, int act)
+{
+	struct agp_i810_softc *isc = (struct agp_i810_softc *)arg;
+
+	switch(act) {
+	case DVACT_RESUME:
+		agp_i810_configure(isc);
+		break;
+	}
+
+	return (0);
+}
+void
+agp_i810_configure(struct agp_i810_softc *isc)
+{
+	bus_addr_t	tmp;
+
+	tmp = isc->isc_apaddr;
+	if (isc->chiptype == CHIP_I810) {
+		tmp += isc->dcache_size;
+	} else {  
+		tmp += isc->stolen << AGP_PAGE_SHIFT;
+	}
+
+	agp_flush_cache();
+	/* Install the GATT. */
+	WRITE4(AGP_I810_PGTBL_CTL, isc->gatt->ag_physical | 1);
+
+	/* initialise all gtt entries to point to scribble page */
+	for (; tmp < (isc->isc_apaddr + isc->isc_apsize);
+	    tmp += AGP_PAGE_SIZE)
+		agp_i810_unbind_page(isc, tmp);
+	/* XXX we'll need to restore the GTT contents when we go kms */
+
+	/*
+	 * Make sure the chipset can see everything.
+	 */
+	agp_flush_cache();
 }
 
 #if 0
