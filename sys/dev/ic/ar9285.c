@@ -1,8 +1,8 @@
-/*	$OpenBSD: ar9285.c,v 1.5 2010/02/07 12:02:52 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.6 2010/04/07 16:19:33 damien Exp $	*/
 
 /*-
- * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
- * Copyright (c) 2008-2009 Atheros Communications Inc.
+ * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2008-2010 Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -73,7 +73,7 @@ const	struct ar_spur_chan *ar9285_get_spur_chans(struct athn_softc *, int);
 void	ar9285_init_from_rom(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9285_pa_calib(struct athn_softc *);
-int	ar9285_1_2_init_calib(struct athn_softc *, struct ieee80211_channel *,
+int	ar9285_1_2_cl_cal(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9285_get_pdadcs(struct athn_softc *, struct ieee80211_channel *,
 	    int, uint8_t, uint8_t *, uint8_t *);
@@ -113,14 +113,21 @@ ar9285_setup(struct athn_softc *sc)
 	const struct ar9285_eeprom *eep = sc->eep;
 	uint8_t type;
 
-	if (AR_SREV_9285_12(sc)) {
+	if (AR_SREV_9285_12_OR_LATER(sc)) {
 		/* Select initialization values based on ROM. */
 		type = eep->baseEepHeader.txGainType;
 		DPRINTF(("Tx gain type=0x%x\n", type));
-		if (type == AR_EEP_TXGAIN_HIGH_POWER)
-			sc->tx_gain = &ar9285_1_2_tx_gain_high_power;
-		else
-			sc->tx_gain = &ar9285_1_2_tx_gain;
+		if ((AR_READ(sc, AR_AN_SYNTH9) & 0x7) == 0x1) {	/* XE rev. */
+			if (type == AR_EEP_TXGAIN_HIGH_POWER)
+				sc->tx_gain = &ar9285_2_0_tx_gain_high_power;
+			else
+				sc->tx_gain = &ar9285_2_0_tx_gain;
+		} else {
+			if (type == AR_EEP_TXGAIN_HIGH_POWER)
+				sc->tx_gain = &ar9285_1_2_tx_gain_high_power;
+			else
+				sc->tx_gain = &ar9285_1_2_tx_gain;
+		}
 	}
 }
 
@@ -456,10 +463,10 @@ ar9285_pa_calib(struct athn_softc *sc)
 }
 
 /*
- * Carrier Leak Calibration (>= AR9285 1.2 only.)
+ * Carrier Leakage Calibration (>= AR9285 1.2 only.)
  */
 int
-ar9285_1_2_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
+ar9285_1_2_cl_cal(struct athn_softc *sc, struct ieee80211_channel *c,
     struct ieee80211_channel *extc)
 {
 	int ntries;
@@ -502,6 +509,54 @@ ar9285_1_2_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 	AR_CLRBITS(sc, AR_PHY_CL_CAL_CTL, AR_PHY_CL_CAL_ENABLE);
 	AR_CLRBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_FLTR_CAL);
 	return (0);
+}
+
+int
+ar9285_1_2_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
+    struct ieee80211_channel *extc)
+{
+	uint32_t reg, mask, clcgain, rf2g5_svg;
+	int i, maxgain, nclcs, thresh, error;
+
+	/* Do carrier leakage calibration. */
+	if ((error = ar9285_1_2_cl_cal(sc, c, extc)) != 0)
+		return (error);
+
+	mask = 0;
+	nclcs = 0;
+	reg = AR_READ(sc, AR_PHY_TX_PWRCTRL7);
+	maxgain = MS(reg, AR_PHY_TX_PWRCTRL_TX_GAIN_TAB_MAX);
+	for (i = 0; i <= maxgain; i++) {
+		reg = AR_READ(sc, AR_PHY_TX_GAIN_TBL(i));
+		clcgain = MS(reg, AR_PHY_TX_GAIN_CLC);
+		/* NB: clcgain <= 0xf. */
+		if (!(mask & (1 << clcgain))) {
+			mask |= 1 << clcgain;
+			nclcs++;
+		}
+	}
+	thresh = 0;
+	for (i = 0; i < nclcs; i++) {
+		reg = AR_READ(sc, AR_PHY_CLC_TBL(i));
+		if (MS(reg, AR_PHY_CLC_I0) == 0)
+			thresh++;
+		if (MS(reg, AR_PHY_CLC_Q0) == 0)
+			thresh++;
+	}
+	if (thresh <= AR9285_CL_CAL_REDO_THRESH)
+		return (0);	/* No need to redo. */
+
+	/* Threshold reached, redo carrier leakage calibration. */
+	DPRINTFN(2, ("CLC threshold=%d\n", thresh));
+	rf2g5_svg = reg = AR_READ(sc, AR9285_AN_RF2G5);
+	if ((AR_READ(sc, AR_AN_SYNTH9) & 0x7) == 0x1)	/* XE rev. */
+		reg = RW(reg, AR9285_AN_RF2G5_IC50TX, 0x5);
+	else
+		reg = RW(reg, AR9285_AN_RF2G5_IC50TX, 0x4);
+	AR_WRITE(sc, AR9285_AN_RF2G5, reg);
+	error = ar9285_1_2_cl_cal(sc, c, extc);
+	AR_WRITE(sc, AR9285_AN_RF2G5, rf2g5_svg);
+	return (error);
 }
 
 void

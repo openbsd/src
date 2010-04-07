@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.6 2010/02/24 19:39:43 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.7 2010/04/07 16:19:33 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -365,6 +365,7 @@
 #define AR_PHY_PDADC_TBL_BASE		0xa280
 #define AR_PHY_TX_GAIN_TBL(i)		(0xa300 + (i) * 4)
 #define AR_PHY_CL_CAL_CTL		0xa358
+#define AR_PHY_CLC_TBL(i)		(0xa35c + (i) * 4)
 #define AR_PHY_POWER_TX_RATE5		0xa38c
 #define AR_PHY_POWER_TX_RATE6		0xa390
 #define AR_PHY_CH0_TX_PWRCTRL11		0xa398
@@ -842,7 +843,7 @@
 /* Bits for AR_WA. */
 #define AR5416_WA_DEFAULT	0x0000073f
 #define AR9280_WA_DEFAULT	0x0040073b
-#define AR9285_WA_DEFAULT	0x004a05cb
+#define AR9285_WA_DEFAULT	0x004a050b
 #define AR_WA_UNTIE_RESET_EN	0x00008000
 #define AR_WA_RESET_EN		0x00040000
 #define AR_WA_ANALOG_SHIFT	0x00100000
@@ -1785,6 +1786,8 @@
 #define AR_PHY_TX_PWRCTRL_ERR_EST_MODE_S	24
 
 /* Bits for AR_PHY_TX_PWRCTRL7. */
+#define AR_PHY_TX_PWRCTRL_TX_GAIN_TAB_MAX_M	0x0007e000
+#define AR_PHY_TX_PWRCTRL_TX_GAIN_TAB_MAX_S	13
 #define AR_PHY_TX_PWRCTRL_INIT_TX_GAIN_M	0x01f80000
 #define AR_PHY_TX_PWRCTRL_INIT_TX_GAIN_S	19
 
@@ -1794,6 +1797,8 @@
 #define AR_PHY_TX_PWRCTRL9_RES_DC_REMOVAL	0x80000000
 
 /* Bits for AR_PHY_TX_GAIN_TBL. */
+#define AR_PHY_TX_GAIN_CLC_M	0x0000001e
+#define AR_PHY_TX_GAIN_CLC_S	1
 #define AR_PHY_TX_GAIN_M	0x0007f000
 #define AR_PHY_TX_GAIN_S	12
 
@@ -1824,6 +1829,12 @@
 /* Bits for AR_PHY_CL_CAL_CTL. */
 #define AR_PHY_PARALLEL_CAL_ENABLE	0x00000001
 #define AR_PHY_CL_CAL_ENABLE		0x00000002
+
+/* Bits for AR_PHY_CLC_TBL. */
+#define AR_PHY_CLC_Q0_M		0x0000ffd0
+#define AR_PHY_CLC_Q0_S		5
+#define AR_PHY_CLC_I0_M		0x07ff0000
+#define AR_PHY_CLC_I0_S		16
 
 /* Bits for AR_PHY_XPA_CFG. */
 #define AR_PHY_FORCE_XPA_CFG	0x000000001
