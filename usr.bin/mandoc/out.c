@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.3 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: out.c,v 1.4 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -193,14 +193,14 @@ int
 a2roffdeco(enum roffdeco *d,
 		const char **word, size_t *sz)
 {
-	int		 j, type, term, lim;
+	int		 j, term, lim;
+	char		 set;
 	const char	*wp, *sp;
 
 	*d = DECO_NONE;
 	wp = *word;
-	type = 1;
 
-	switch (*wp) {
+	switch ((set = *wp)) {
 	case ('\0'):
 		return(0);
 
@@ -214,6 +214,67 @@ a2roffdeco(enum roffdeco *d,
 		*sz = 2;
 		*word = wp;
 		return(3);
+
+	case ('F'):
+		/* FALLTHROUGH */
+	case ('f'):
+		/*
+		 * FIXME: this needs work and consolidation (it should
+		 * follow the sequence that special characters do, for
+		 * one), but isn't a priority at the moment.  Note, for
+		 * one, that in reality \fB != \FB, although here we let
+		 * these slip by.
+		 */
+		switch (*(++wp)) {
+		case ('\0'):
+			return(1);
+		case ('3'):
+			/* FALLTHROUGH */
+		case ('B'):
+			*d = DECO_BOLD;
+			return(2);
+		case ('2'):
+			/* FALLTHROUGH */
+		case ('I'):
+			*d = DECO_ITALIC;
+			return(2);
+		case ('P'):
+			*d = DECO_PREVIOUS;
+			return(2);
+		case ('1'):
+			/* FALLTHROUGH */
+		case ('R'):
+			*d = DECO_ROMAN;
+			return(2);
+		case ('('):
+			if ('\0' == *(++wp))
+				return(2);
+			if ('\0' == *(wp + 1))
+				return(3);
+
+			*d = 'F' == set ? DECO_FFONT : DECO_FONT;
+			*sz = 2;
+			*word = wp;
+			return(4);
+		case ('['):
+			*word = ++wp;
+			for (j = 0; *wp && ']' != *wp; wp++, j++)
+				/* Loop... */ ;
+
+			if ('\0' == *wp)
+				return(j + 2);
+
+			*d = 'F' == set ? DECO_FFONT : DECO_FONT;
+			*sz = (size_t)j;
+			return(j + 3);
+		default:
+			break;
+		}
+
+		*d = 'F' == set ? DECO_FFONT : DECO_FONT;
+		*sz = 1;
+		*word = wp;
+		return(2);
 
 	case ('*'):
 		switch (*(++wp)) {
@@ -232,16 +293,25 @@ a2roffdeco(enum roffdeco *d,
 			return(4);
 
 		case ('['):
-			type = 0;
-			break;
+			*word = ++wp;
+			for (j = 0; *wp && ']' != *wp; wp++, j++)
+				/* Loop... */ ;
+
+			if ('\0' == *wp)
+				return(j + 2);
+
+			*d = DECO_RESERVED;
+			*sz = (size_t)j;
+			return(j + 3);
 
 		default:
-			*d = DECO_RESERVED;
-			*sz = 1;
-			*word = wp;
-			return(2);
+			break;
 		}
-		break;
+
+		*d = DECO_RESERVED;
+		*sz = 1;
+		*word = wp;
+		return(2);
 
 	case ('s'):
 		sp = wp;
@@ -296,36 +366,18 @@ a2roffdeco(enum roffdeco *d,
 		*d = DECO_SIZE;
 		return((int)(wp - sp));
 
-	case ('f'):
-		switch (*(++wp)) {
-		case ('\0'):
-			return(1);
-		case ('3'):
-			/* FALLTHROUGH */
-		case ('B'):
-			*d = DECO_BOLD;
-			break;
-		case ('2'):
-			/* FALLTHROUGH */
-		case ('I'):
-			*d = DECO_ITALIC;
-			break;
-		case ('P'):
-			*d = DECO_PREVIOUS;
-			break;
-		case ('1'):
-			/* FALLTHROUGH */
-		case ('R'):
-			*d = DECO_ROMAN;
-			break;
-		default:
-			break;
-		}
-
-		return(2);
-
 	case ('['):
-		break;
+		*word = ++wp;
+
+		for (j = 0; *wp && ']' != *wp; wp++, j++)
+			/* Loop... */ ;
+
+		if ('\0' == *wp)
+			return(j + 1);
+
+		*d = DECO_SPECIAL;
+		*sz = (size_t)j;
+		return(j + 2);
 
 	case ('c'):
 		*d = DECO_NOSPACE;
@@ -333,20 +385,11 @@ a2roffdeco(enum roffdeco *d,
 		return(1);
 
 	default:
-		*d = DECO_SPECIAL;
-		*word = wp;
-		*sz = 1;
-		return(1);
+		break;
 	}
 
-	*word = ++wp;
-	for (j = 0; *wp && ']' != *wp; wp++, j++)
-		/* Loop... */ ;
-
-	if ('\0' == *wp)
-		return(j + 1);
-
-	*d = type ? DECO_SPECIAL : DECO_RESERVED;
-	*sz = (size_t)j;
-	return (j + 2);
+	*d = DECO_SPECIAL;
+	*word = wp;
+	*sz = 1;
+	return(1);
 }

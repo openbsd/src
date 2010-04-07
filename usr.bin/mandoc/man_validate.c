@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.17 2010/04/03 16:33:01 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.18 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -166,7 +166,15 @@ check_root(CHKARGS)
 	if (NULL == m->meta.title) {
 		if ( ! man_nwarn(m, n, WNOTITLE))
 			return(0);
+		/*
+		 * If a title hasn't been set, do so now (by
+		 * implication, date and section also aren't set).
+		 * 
+		 * FIXME: this should be in man_action.c.
+		 */
 	        m->meta.title = mandoc_strdup("unknown");
+		m->meta.date = time(NULL);
+		m->meta.msec = 1;
 	}
 
 	return(1);

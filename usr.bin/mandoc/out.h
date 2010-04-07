@@ -1,4 +1,4 @@
-/*	$Id: out.h,v 1.3 2009/12/24 02:08:14 schwarze Exp $ */
+/*	$Id: out.h,v 1.4 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -45,6 +45,8 @@ enum	roffdeco {
 	DECO_PREVIOUS,
 	DECO_SIZE,
 	DECO_NOSPACE,
+	DECO_FONT, /* font */
+	DECO_FFONT, /* font family */
 	DECO_MAX
 };
 

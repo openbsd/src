@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.47 2010/04/03 17:06:19 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.48 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -73,6 +73,7 @@ static	int	 ewarn_ge1(POST_ARGS);
 static	int	 herr_eq0(POST_ARGS);
 static	int	 herr_ge1(POST_ARGS);
 static	int	 hwarn_eq1(POST_ARGS);
+static	int	 hwarn_eq0(POST_ARGS);
 static	int	 hwarn_le1(POST_ARGS);
 
 static	int	 post_an(POST_ARGS);
@@ -97,7 +98,6 @@ static	int	 pre_cd(PRE_ARGS);
 static	int	 pre_dd(PRE_ARGS);
 static	int	 pre_display(PRE_ARGS);
 static	int	 pre_dt(PRE_ARGS);
-static	int	 pre_er(PRE_ARGS);
 static	int	 pre_ex(PRE_ARGS);
 static	int	 pre_fd(PRE_ARGS);
 static	int	 pre_it(PRE_ARGS);
@@ -109,7 +109,7 @@ static	int	 pre_ss(PRE_ARGS);
 
 static	v_post	 posts_an[] = { post_an, NULL };
 static	v_post	 posts_at[] = { post_at, NULL };
-static	v_post	 posts_bd[] = { herr_eq0, bwarn_ge1, NULL };
+static	v_post	 posts_bd[] = { hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
 static	v_post	 posts_bool[] = { eerr_eq1, ebool, NULL };
@@ -137,7 +137,7 @@ static	v_pre	 pres_cd[] = { pre_cd, NULL };
 static	v_pre	 pres_d1[] = { pre_display, NULL };
 static	v_pre	 pres_dd[] = { pre_dd, NULL };
 static	v_pre	 pres_dt[] = { pre_dt, NULL };
-static	v_pre	 pres_er[] = { pre_er, NULL };
+static	v_pre	 pres_er[] = { NULL, NULL };
 static	v_pre	 pres_ex[] = { pre_ex, NULL };
 static	v_pre	 pres_fd[] = { pre_fd, NULL };
 static	v_pre	 pres_it[] = { pre_it, NULL };
@@ -411,6 +411,7 @@ CHECK_HEAD_DEFN(eq0, err, err_child_eq, 0)	/* herr_eq0() */
 CHECK_HEAD_DEFN(le1, warn, warn_child_lt, 2)	/* hwarn_le1() */
 CHECK_HEAD_DEFN(ge1, err, err_child_gt, 0)	/* herr_ge1() */
 CHECK_HEAD_DEFN(eq1, warn, warn_child_eq, 1)	/* hwarn_eq1() */
+CHECK_HEAD_DEFN(eq0, warn, warn_child_eq, 0)	/* hwarn_eq0() */
 
 
 static int
@@ -618,6 +619,15 @@ pre_bl(PRE_ARGS)
 		case (MDOC_Inset):
 			/* FALLTHROUGH */
 		case (MDOC_Column):
+			/*
+			 * Note that if a duplicate is detected, we
+			 * remove the duplicate instead of passing it
+			 * over.  If we don't do this, mdoc_action will
+			 * become confused when it scans over multiple
+			 * types whilst setting its bitmasks.
+			 *
+			 * FIXME: this should occur in mdoc_action.c.
+			 */
 			if (type >= 0) {
 				if ( ! mdoc_nwarn(mdoc, n, EMULTILIST))
 					return(0);
@@ -786,14 +796,6 @@ pre_ex(PRE_ARGS)
 	if ( ! check_msec(mdoc, n, 1, 6, 8, 0))
 		return(0);
 	return(check_stdarg(mdoc, n));
-}
-
-
-static int
-pre_er(PRE_ARGS)
-{
-
-	return(check_msec(mdoc, n, 2, 3, 9, 0));
 }
 
 
@@ -1084,21 +1086,23 @@ post_bl_head(POST_ARGS)
 {
 	int			i;
 	const struct mdoc_node *n;
+	const struct mdoc_argv *a;
 
 	n = mdoc->last->parent;
 	assert(n->args);
 
-	for (i = 0; i < (int)n->args->argc; i++)
-		if (n->args->argv[i].arg == MDOC_Column)
-			break;
+	for (i = 0; i < (int)n->args->argc; i++) {
+		a = &n->args->argv[i];
+		if (a->arg == MDOC_Column) {
+			if (a->sz && mdoc->last->nchild)
+				return(mdoc_nerr(mdoc, n, ECOLMIS));
+			return(1);
+		}
+	}
 
-	if (i == (int)n->args->argc)
+	if (0 == (i = mdoc->last->nchild))
 		return(1);
-
-	if (n->args->argv[i].sz && mdoc->last->child)
-		return(mdoc_nerr(mdoc, n, ECOLMIS));
-
-	return(1);
+	return(warn_count(mdoc, "==", 0, "line arguments", i));
 }
 
 
@@ -1310,8 +1314,8 @@ post_sh_head(POST_ARGS)
 	 * non-CUSTOM has a conventional order to be followed.
 	 */
 
-	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed &&
-	    ! mdoc_nwarn(mdoc, mdoc->last, ESECNAME))
+	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed && 
+			! mdoc_nwarn(mdoc, mdoc->last, ESECNAME))
 		return(0);
 	if (SEC_CUSTOM == sec)
 		return(1);

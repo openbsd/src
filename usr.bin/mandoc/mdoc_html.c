@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.10 2010/04/04 00:00:12 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.11 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -196,7 +196,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Dc */
 	{mdoc_dq_pre, mdoc_dq_post}, /* Do */
 	{mdoc_dq_pre, mdoc_dq_post}, /* Dq */
-	{NULL, NULL}, /* Ec */
+	{NULL, NULL}, /* Ec */ /* FIXME: no space */
 	{NULL, NULL}, /* Ef */
 	{mdoc_em_pre, NULL}, /* Em */ 
 	{NULL, NULL}, /* Eo */
@@ -586,14 +586,9 @@ mdoc_sh_pre(MDOC_ARGS)
 			html_idcat(buf, " ", BUFSIZ);
 	}
 
-	/* 
-	 * TODO: make sure there are no duplicates, as HTML does not
-	 * allow for multiple `id' tags of the same name.
-	 */
-
 	PAIR_CLASS_INIT(&tag[0], "sec-head");
-	tag[1].key = ATTR_ID;
-	tag[1].val = buf;
+	PAIR_ID_INIT(&tag[1], buf);
+
 	print_otag(h, TAG_DIV, 2, tag);
 	return(1);
 }
@@ -645,8 +640,8 @@ mdoc_ss_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag[0], "ssec-head");
 	PAIR_STYLE_INIT(&tag[1], h);
-	tag[2].key = ATTR_ID;
-	tag[2].val = buf;
+	PAIR_ID_INIT(&tag[2], buf);
+
 	print_otag(h, TAG_DIV, 3, tag);
 	return(1);
 }
@@ -668,9 +663,9 @@ mdoc_fl_pre(MDOC_ARGS)
 
 	print_text(h, "\\-");
 
-	/* A blank `Fl' should incur a subsequent space. */
-
 	if (n->child)
+		h->flags |= HTML_NOSPACE;
+	else if (n->next && n->next->line == n->line)
 		h->flags |= HTML_NOSPACE;
 
 	return(1);
@@ -762,8 +757,7 @@ mdoc_xr_pre(MDOC_ARGS)
 		buffmt_man(h, n->child->string, 
 				n->child->next ? 
 				n->child->next->string : NULL);
-		tag[1].key = ATTR_HREF;
-		tag[1].val = h->buf;
+		PAIR_HREF_INIT(&tag[1], h->buf);
 		print_otag(h, TAG_A, 2, tag);
 	} else
 		print_otag(h, TAG_A, 1, tag);
@@ -1119,6 +1113,8 @@ mdoc_bl_pre(MDOC_ARGS)
 {
 	struct ord	*ord;
 
+	if (MDOC_HEAD == n->type)
+		return(0);
 	if (MDOC_BLOCK != n->type)
 		return(1);
 	if (MDOC_Enum != a2list(n))
@@ -1306,8 +1302,6 @@ mdoc_sx_pre(MDOC_ARGS)
 	const struct mdoc_node	*nn;
 	char			 buf[BUFSIZ];
 
-	/* FIXME: duplicates? */
-
 	strlcpy(buf, "#", BUFSIZ);
 	for (nn = n->child; nn; nn = nn->next) {
 		html_idcat(buf, nn->string, BUFSIZ);
@@ -1316,8 +1310,7 @@ mdoc_sx_pre(MDOC_ARGS)
 	}
 
 	PAIR_CLASS_INIT(&tag[0], "link-sec");
-	tag[1].key = ATTR_HREF;
-	tag[1].val = buf;
+	PAIR_HREF_INIT(&tag[1], buf);
 
 	print_otag(h, TAG_A, 2, tag);
 	return(1);
@@ -1392,6 +1385,7 @@ mdoc_bd_pre(MDOC_ARGS)
 		}
 
 	/* FIXME: -centered, etc. formatting. */
+	/* FIXME: does not respect -offset ??? */
 
 	if (MDOC_BLOCK == n->type) {
 		bufcat_su(h, "margin-left", &su);
@@ -1583,15 +1577,15 @@ mdoc_vt_pre(MDOC_ARGS)
 	struct htmlpair	 tag;
 	struct roffsu	 su;
 
-	if (MDOC_BLOCK == n->type) {
-		if (n->prev && MDOC_Vt != n->prev->tok) {
+	if (SEC_SYNOPSIS == n->sec && MDOC_BLOCK == n->type) {
+		if (n->next && MDOC_Vt != n->next->tok) {
 			SCALE_VS_INIT(&su, 1);
-			bufcat_su(h, "margin-top", &su);
+			bufcat_su(h, "margin-bottom", &su);
 			PAIR_STYLE_INIT(&tag, h);
 			print_otag(h, TAG_DIV, 1, &tag);
 		} else
 			print_otag(h, TAG_DIV, 0, NULL);
-
+		
 		return(1);
 	} else if (MDOC_HEAD == n->type)
 		return(0);
@@ -1607,17 +1601,9 @@ static int
 mdoc_ft_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
-	struct roffsu	 su;
 
-	if (SEC_SYNOPSIS == n->sec) {
-		if (n->prev && MDOC_Fo == n->prev->tok) {
-			SCALE_VS_INIT(&su, 1);
-			bufcat_su(h, "margin-top", &su);
-			PAIR_STYLE_INIT(&tag, h);
-			print_otag(h, TAG_DIV, 1, &tag);
-		} else
-			print_otag(h, TAG_DIV, 0, NULL);
-	}
+	if (SEC_SYNOPSIS == n->sec)
+		print_otag(h, TAG_DIV, 0, NULL);
 
 	PAIR_CLASS_INIT(&tag, "ftype");
 	print_otag(h, TAG_SPAN, 1, &tag);
@@ -1671,10 +1657,27 @@ mdoc_fn_pre(MDOC_ARGS)
 	}
 
 	PAIR_CLASS_INIT(&tag[0], "fname");
+
+	/*
+	 * FIXME: only refer to IDs that we know exist.
+	 */
+
+#if 0
+	if (SEC_SYNOPSIS == n->sec) {
+		nbuf[0] = '\0';
+		html_idcat(nbuf, sp, BUFSIZ);
+		PAIR_ID_INIT(&tag[1], nbuf);
+	} else {
+		strlcpy(nbuf, "#", BUFSIZ);
+		html_idcat(nbuf, sp, BUFSIZ);
+		PAIR_HREF_INIT(&tag[1], nbuf);
+	}
+#endif
+
 	t = print_otag(h, TAG_SPAN, 1, tag);
 
 	if (sp) {
-		(void)strlcpy(nbuf, sp, BUFSIZ);
+		strlcpy(nbuf, sp, BUFSIZ);
 		print_text(h, nbuf);
 	}
 
@@ -1775,8 +1778,7 @@ mdoc_lk_pre(MDOC_ARGS)
 	nn = n->child;
 
 	PAIR_CLASS_INIT(&tag[0], "link-ext");
-	tag[1].key = ATTR_HREF;
-	tag[1].val = nn->string;
+	PAIR_HREF_INIT(&tag[1], nn->string);
 	print_otag(h, TAG_A, 2, tag);
 
 	if (NULL == nn->next) 
@@ -1818,14 +1820,20 @@ static int
 mdoc_fo_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
+	struct roffsu	su;
 
 	if (MDOC_BODY == n->type) {
 		h->flags |= HTML_NOSPACE;
 		print_text(h, "(");
 		h->flags |= HTML_NOSPACE;
 		return(1);
-	} else if (MDOC_BLOCK == n->type)
+	} else if (MDOC_BLOCK == n->type && n->next) {
+		SCALE_VS_INIT(&su, 1);
+		bufcat_su(h, "margin-bottom", &su);
+		PAIR_STYLE_INIT(&tag, h);
+		print_otag(h, TAG_DIV, 1, &tag);
 		return(1);
+	}
 
 	PAIR_CLASS_INIT(&tag, "fname");
 	print_otag(h, TAG_SPAN, 1, &tag);
@@ -1885,8 +1893,8 @@ mdoc_in_pre(MDOC_ARGS)
 		bufinit(h);
 		if (h->base_includes) {
 			buffmt_includes(h, nn->string);
-			tag[i].key = ATTR_HREF;
-			tag[i++].val = h->buf;
+			PAIR_HREF_INIT(&tag[i], h->buf);
+			i++;
 		}
 		t = print_otag(h, TAG_A, i, tag);
 		print_mdoc_node(m, nn, h);

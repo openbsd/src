@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.6 2010/02/18 02:11:25 schwarze Exp $ */
+/*	$Id: html.c,v 1.7 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -84,7 +84,6 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"id",
 	"summary",
 };
-
 
 static	void		  print_spec(struct html *, const char *, size_t);
 static	void		  print_res(struct html *, const char *, size_t);
@@ -504,8 +503,6 @@ print_text(struct html *h, const char *p)
 		case(')'):
 			/* FALLTHROUGH */
 		case(']'):
-			/* FALLTHROUGH */
-		case('}'):
 			if ( ! (HTML_IGNDELIM & h->flags))
 				h->flags |= HTML_NOSPACE;
 			break;
@@ -525,8 +522,6 @@ print_text(struct html *h, const char *p)
 		case('('):
 			/* FALLTHROUGH */
 		case('['):
-			/* FALLTHROUGH */
-		case('{'):
 			h->flags |= HTML_NOSPACE;
 			break;
 		default:

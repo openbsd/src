@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.26 2010/03/26 01:22:07 schwarze Exp $ */
+/*	$Id: term.c,v 1.27 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -88,12 +88,10 @@ term_alloc(enum termenc enc)
  * Flush a line of text.  A "line" is loosely defined as being something
  * that should be followed by a newline, regardless of whether it's
  * broken apart by newlines getting there.  A line can also be a
- * fragment of a columnar list.
+ * fragment of a columnar list (`Bl -tag' or `Bl -column'), which does
+ * not have a trailing newline.
  *
- * Specifically, a line is whatever's in p->buf of length p->col, which
- * is zeroed after this function returns.
- *
- * The usage of termp:flags is as follows:
+ * The following flags may be specified:
  *
  *  - TERMP_NOLPAD: when beginning to write the line, don't left-pad the
  *    offset value.  This is useful when doing columnar lists where the
@@ -453,8 +451,6 @@ term_word(struct termp *p, const char *word)
 		case(')'):
 			/* FALLTHROUGH */
 		case(']'):
-			/* FALLTHROUGH */
-		case('}'):
 			if ( ! (TERMP_IGNDELIM & p->flags))
 				p->flags |= TERMP_NOSPACE;
 			break;
@@ -513,8 +509,6 @@ term_word(struct termp *p, const char *word)
 		case('('):
 			/* FALLTHROUGH */
 		case('['):
-			/* FALLTHROUGH */
-		case('{'):
 			p->flags |= TERMP_NOSPACE;
 			break;
 		default:

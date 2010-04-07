@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.34 2010/04/02 12:39:47 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.35 2010/04/07 23:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,9 +23,11 @@
 
 #include "libmdoc.h"
 
-#define	REWIND_REWIND	(1 << 0)
-#define	REWIND_NOHALT	(1 << 1)
-#define	REWIND_HALT	(1 << 2)
+enum	rew {
+	REWIND_REWIND,
+	REWIND_NOHALT,
+	REWIND_HALT
+};
 
 static	int	  ctx_synopsis(MACRO_PROT_ARGS);
 static	int	  obsolete(MACRO_PROT_ARGS);
@@ -38,7 +40,7 @@ static	int	  blk_exp_close(MACRO_PROT_ARGS);
 static	int	  blk_part_imp(MACRO_PROT_ARGS);
 
 static	int	  phrase(struct mdoc *, int, int, char *);
-static	int	  rew_dohalt(enum mdoct, enum mdoc_type, 
+static	enum rew  rew_dohalt(enum mdoct, enum mdoc_type, 
 			const struct mdoc_node *);
 static	enum mdoct rew_alt(enum mdoct);
 static	int	  rew_dobreak(enum mdoct, const struct mdoc_node *);
@@ -133,7 +135,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Nx */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Ox */
 	{ blk_exp_close, MDOC_EXPLICIT | MDOC_CALLABLE | MDOC_PARSED }, /* Pc */
-	{ in_line_argn, MDOC_PARSED | MDOC_IGNDELIM }, /* Pf */
+	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED | MDOC_IGNDELIM }, /* Pf */
 	{ blk_part_exp, MDOC_CALLABLE | MDOC_PARSED | MDOC_EXPLICIT }, /* Po */
 	{ blk_part_imp, MDOC_CALLABLE | MDOC_PARSED }, /* Pq */
 	{ blk_exp_close, MDOC_EXPLICIT | MDOC_CALLABLE | MDOC_PARSED }, /* Qc */
@@ -365,7 +367,7 @@ rew_alt(enum mdoct tok)
  * close our current scope (REWIND_REWIND), or continue (REWIND_NOHALT).
  * The scope-closing and so on occurs in the various rew_* routines.
  */
-static int 
+static enum rew
 rew_dohalt(enum mdoct tok, enum mdoc_type type, 
 		const struct mdoc_node *p)
 {
@@ -571,7 +573,7 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 		enum mdoct tok, int line, int ppos)
 {
 	struct mdoc_node *n;
-	int		  c;
+	enum rew	  c;
 
 	/* LINTED */
 	for (n = m->last; n; n = n->parent) {
@@ -812,7 +814,7 @@ in_line(MACRO_PROT_ARGS)
 		 * the word. 
 		 */
 
-		d = mdoc_isdelim(p);
+		d = ARGS_QWORD == w ? 0 : mdoc_isdelim(p);
 
 		if (ARGS_QWORD != w && d) {
 			if (0 == lastpunct && ! rew_elem(m, tok))
@@ -951,6 +953,7 @@ blk_full(MACRO_PROT_ARGS)
 		/* Don't emit leading punct. for phrases. */
 
 		if (NULL == head && ARGS_PHRASE != c &&
+				ARGS_QWORD != c &&
 				1 == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
@@ -1077,7 +1080,8 @@ blk_part_imp(MACRO_PROT_ARGS)
  *     We must investigate the fallout before enabling this.
  */
 #if 0
-		if (NULL == body && 1 == mdoc_isdelim(p)) {
+		if (NULL == body && ARGS_QWORD != c &&
+				1 == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
@@ -1175,7 +1179,8 @@ blk_part_exp(MACRO_PROT_ARGS)
 #if 0
 		/* Flush out leading punctuation. */
 
-		if (NULL == head && 1 == mdoc_isdelim(p)) {
+		if (NULL == head && ARGS_QWORD != c &&
+				1 == mdoc_isdelim(p)) {
 			assert(NULL == body);
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
@@ -1317,6 +1322,7 @@ in_line_argn(MACRO_PROT_ARGS)
  */
 #if 0
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) && 
+				ARGS_QWORD != c &&
 				0 == j && 1 == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
@@ -1344,6 +1350,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		}
 
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) &&
+				ARGS_QWORD != c &&
 				! flushed && mdoc_isdelim(p)) {
 			if ( ! rew_elem(m, tok))
 				return(0);

@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.24 2010/04/02 12:39:47 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.25 2010/04/07 23:15:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2010 $
+.Dd $Mdocdate: April 7 2010 $
 .Dt MDOC 7
 .Os
 .
@@ -860,7 +860,7 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Ot  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Ox  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Pa  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Pf  Ta    \&No     Ta    Yes      Ta    1
+.It Sx \&Pf  Ta    Yes      Ta    Yes      Ta    1
 .It Sx \&Pp  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Rv  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Sm  Ta    \&No     Ta    \&No     Ta    1
@@ -974,10 +974,8 @@ Address construct: usually in the context of an computational address in
 memory, not a physical (post) address.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Ad [0,$]
-\&.Ad 0x00000000
-.Ed
+.D1 \&.Ad [0,$]
+.D1 \&.Ad 0x00000000
 .
 .Ss \&An
 Author name.  This macro may alternatively accepts the following
@@ -998,11 +996,8 @@ will cause the first listing also to be split.  If not in the AUTHORS
 section, the default is not to split.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.An -nosplit
-\&.An J. E. Hopcraft ,
-\&.An J. D. Ullman .
-.Ed
+.D1 \&.An -nosplit
+.D1 \&.An J. D. Ullman .
 .Pp
 .Em Remarks :
 the effects of
@@ -1019,9 +1014,7 @@ Begins a block enclosed by angled brackets.  Does not have any head
 arguments.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Fl -key= Ns Ao Ar val Ac
-.Ed
+.D1 \&.Fl -key= \&Ns \&Ao \&Ar val \&Ac
 .Pp
 See also
 .Sx \&Aq .
@@ -1038,9 +1031,7 @@ a function:
 Encloses its arguments in angled brackets.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Fl -key= Ns Aq Ar val
-.Ed
+.D1 \&.Fl -key= \&Ns \&Aq \&Ar val
 .Pp
 .Em Remarks :
 this macro is often abused for rendering URIs, which should instead use
@@ -1061,11 +1052,9 @@ Command arguments.  If an argument is not provided, the string
 is used as a default.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Fl o Ns Ar file1
-\&.Ar
-\&.Ar arg1 , arg2 .
-.Ed
+.D1 \&.Fl o \&Ns \&Ar file1
+.D1 \&.Ar
+.D1 \&.Ar arg1 , arg2 .
 .
 .Ss \&At
 Formats an AT&T version.  Accepts at most one parameter:
@@ -1081,10 +1070,8 @@ A system version of
 Note that these parameters do not begin with a hyphen.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.At
-\&.At V.1
-.Ed
+.D1 \&.At
+.D1 \&.At V.1
 .Pp
 See also
 .Sx \&Bsx ,
@@ -1244,7 +1231,7 @@ arguments.
 Examples:
 .Bd -literal -offset indent
 \&.Bo 1 ,
-\&.Dv BUFSIZ Bc
+\&.Dv BUFSIZ \&Bc
 .Ed
 .Pp
 See also
@@ -1254,9 +1241,7 @@ See also
 Encloses its arguments in square brackets.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Bq 1 , Dv BUFSIZ
-.Ed
+.D1 \&.Bq 1 , \&Dv BUFSIZ
 .Pp
 .Em Remarks :
 this macro is sometimes abused to emulate optional arguments for
@@ -1281,7 +1266,7 @@ arguments.
 Examples:
 .Bd -literal -offset indent
 \&.Bro 1 , ... ,
-\&.Va n Brc
+\&.Va n \&Brc
 .Ed
 .Pp
 See also
@@ -1291,9 +1276,7 @@ See also
 Encloses its arguments in curly braces.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Brq 1 , ... , Va n
-.Ed
+.D1 \&.Brq 1 , ... , \&Va n
 .Pp
 See also
 .Sx \&Bro .
@@ -1303,10 +1286,8 @@ Format the BSD/OS version provided as an argument, or a default value if
 no argument is provided.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Bsx 1.0
-\&.Bsx
-.Ed
+.D1 \&.Bsx 1.0
+.D1 \&.Bsx
 .Pp
 See also
 .Sx \&At ,
@@ -1327,10 +1308,8 @@ Format the BSD version provided as an argument, or a default value if no
 argument is provided.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Bx 4.4
-\&.Bx
-.Ed
+.D1 \&.Bx 4.4
+.D1 \&.Bx
 .Pp
 See also
 .Sx \&At ,
@@ -1348,9 +1327,7 @@ manuals).  This denotes strings accepted by
 .Xr config 8 .
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Cd device le0 at scode?
-.Ed
+.D1 \&.Cd device le0 at scode?
 .Pp
 .Em Remarks :
 this macro is commonly abused by using quoted literals to retain
@@ -1363,10 +1340,8 @@ Command modifiers.  Useful when specifying configuration options or
 keys.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Cm ControlPath
-\&.Cm ControlMaster
-.Ed
+.D1 \&.Cm ControlPath
+.D1 \&.Cm ControlMaster
 .Pp
 See also
 .Sx \&Fl .
@@ -1376,9 +1351,7 @@ One-line indented display.  This is formatted by the default rules and
 is useful for simple indented statements.  It is followed by a newline.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.D1 Fl abcdefgh
-.Ed
+.D1 \&.D1 \&Fl abcdefgh
 .Pp
 See also
 .Sx \&Bd
@@ -1409,11 +1382,9 @@ or instead a valid canonical date as specified by
 If a date does not conform, the current date is used instead.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Dd $\&Mdocdate$
-\&.Dd $\&Mdocdate: July 21 2007$
-\&.Dd July 21, 2007
-.Ed
+.D1 \&.Dd $\&Mdocdate$
+.D1 \&.Dd $\&Mdocdate: July 21 2007$
+.D1 \&.Dd July 21, 2007
 .Pp
 See also
 .Sx \&Dt
@@ -1425,9 +1396,7 @@ One-line intended display.  This is formatted as literal text and is
 useful for commands and invocations.  It is followed by a newline.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Dl % mandoc mdoc.7 | less
-.Ed
+.D1 \&.Dl % mandoc mdoc.7 | less
 .Pp
 See also
 .Sx \&Bd
@@ -1439,9 +1408,7 @@ Begins a block enclosed by double quotes.  Does not have any head
 arguments.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.D1 Do April is the cruellest month Dc \e(em T.S. Eliot
-.Ed
+.D1 \&.D1 \&Do April is the cruellest month \&Dc \e(em T.S. Eliot
 .Pp
 See also
 .Sx \&Dq .
@@ -1450,7 +1417,7 @@ See also
 Encloses its arguments in double quotes.
 .Pp
 Examples:
-.Bd -literal -offset indent
+.Bd -literal -offset indent -compact
 \&.Dq April is the cruellest month
 \e(em T.S. Eliot
 .Ed
@@ -1572,12 +1539,10 @@ or
 .El
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Dt FOO 1
-\&.Dt FOO 4 KM
-\&.Dt FOO 9 i386
-\&.Dt FOO 9 KM i386
-.Ed
+.D1 \&.Dt FOO 1
+.D1 \&.Dt FOO 4 KM
+.D1 \&.Dt FOO 9 i386
+.D1 \&.Dt FOO 9 KM i386
 .Pp
 See also
 .Sx \&Dd
@@ -1588,10 +1553,8 @@ and
 Defined variables such as preprocessor constants.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Dv BUFSIZ
-\&.Dv STDOUT_FILENO
-.Ed
+.D1 \&.Dv BUFSIZ
+.D1 \&.Dv STDOUT_FILENO
 .Pp
 See also
 .Sx \&Er .
@@ -1601,10 +1564,8 @@ Format the DragonFly BSD version provided as an argument, or a default
 value if no argument is provided.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Dx 2.4.1
-\&.Dx
-.Ed
+.D1 \&.Dx 2.4.1
+.D1 \&.Dx
 .Pp
 See also
 .Sx \&At ,
@@ -1621,27 +1582,24 @@ and
 .Ss \&Ef
 .Ss \&Ek
 .Ss \&El
+.
 .Ss \&Em
 Denotes text that should be emphasised.  Note that this is a
 presentation term and should not be used for stylistically decorating
 technical terms.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Ed Warnings!
-\&.Ed Remarks :
-.Ed
+.D1 \&.Em Warnings!
+.D1 \&.Em Remarks :
 .
 .Ss \&En
 .Ss \&Eo
 .Ss \&Er
-Error constants (suggested for use only in section two manuals).
+Display error constants.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Er EPERM
-\&.Er ENOENT
-.Ed
+.D1 \&.Er EPERM
+.D1 \&.Er ENOENT
 .Pp
 See also
 .Sx \&Dv .
@@ -1653,10 +1611,8 @@ Environmental variables such as those specified in
 .Xr environ 7 .
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Ev DISPLAY
-\&.Ev PATH
-.Ed
+.D1 \&.Ev DISPLAY
+.D1 \&.Ev PATH
 .
 .Ss \&Ex
 Inserts text regarding a utility's exit values.  This macro must have
@@ -1676,15 +1632,15 @@ is provided.
 Command-line flag.  Used when listing arguments to command-line
 utilities.  Prints a fixed-width hyphen
 .Sq \-
-before each delimited argument.  If no arguments are provided, a hyphen
-is still printed.
+directly followed by each argument.  If no arguments are provided, a hyphen is
+printed followed by a space.  If the argument is a macro, a hyphen is
+prefixed to the subsequent macro output.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Fl a b c
-\&.Fl
-\&.Op Fl o Ns Ar file
-.Ed
+.D1 \&.Fl a b c
+.D1 \&.Fl \&Pf a b
+.D1 \&.Fl
+.D1 \&.Op \&Fl o \&Ns \&Ar file
 .Pp
 See also
 .Sx \&Cm .
@@ -1698,10 +1654,8 @@ Format the FreeBSD version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Fx 7.1
-\&.Fx
-.Ed
+.D1 \&.Fx 7.1
+.D1 \&.Fx
 .Pp
 See also
 .Sx \&At ,
@@ -1725,10 +1679,8 @@ Format a hyperlink.  The calling syntax is as follows:
 .D1 \. Ns Sx \&Lk Cm uri Op Cm name
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Lk http://bsd.lv "The BSD.lv Project"
-\&.Lk http://bsd.lv
-.Ed
+.D1 \&.Lk http://bsd.lv "The BSD.lv Project"
+.D1 \&.Lk http://bsd.lv
 .Pp
 See also
 .Sx \&Mt .
@@ -1745,10 +1697,8 @@ Format the NetBSD version provided as an argument, or a default value if
 no argument is provided.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Nx 5.01
-\&.Nx
-.Ed
+.D1 \&.Nx 5.01
+.D1 \&.Nx
 .Pp
 See also
 .Sx \&At ,
@@ -1778,11 +1728,9 @@ unspecified, it defaults to the local operating system version.  This is
 the suggested form.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Os
-\&.Os KTH/CSC/TCS
-\&.Os BSD 4.3
-.Ed
+.D1 \&.Os
+.D1 \&.Os KTH/CSC/TCS
+.D1 \&.Os BSD 4.3
 .Pp
 See also
 .Sx \&Dd
@@ -1800,10 +1748,8 @@ Format the OpenBSD version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Ox 4.5
-\&.Ox
-.Ed
+.D1 \&.Ox 4.5
+.D1 \&.Ox
 .Pp
 See also
 .Sx \&At ,
@@ -1853,7 +1799,7 @@ and
 child macros (at least one must be specified).
 .Pp
 Examples:
-.Bd -literal -offset indent
+.Bd -literal -offset indent -compact
 \&.Rs
 \&.%A J. E. Hopcroft
 \&.%A J. D. Ullman
@@ -1886,9 +1832,7 @@ line.
 Format the UNIX name.  Accepts no argument.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Ux
-.Ed
+.D1 \&.Ux
 .Pp
 See also
 .Sx \&At ,
@@ -1916,10 +1860,8 @@ Note that this should not be confused with
 which is used for function return types.
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Vt unsigned char
-\&.Vt extern const char * const sys_signame[] ;
-.Ed
+.D1 \&.Vt unsigned char
+.D1 \&.Vt extern const char * const sys_signame[] ;
 .Pp
 See also
 .Sx \&Ft
@@ -1955,11 +1897,9 @@ with
 .Xr groff 1 .
 .Pp
 Examples:
-.Bd -literal -offset indent
-\&.Xr mandoc 1
-\&.Xr mandoc 1 ;
-\&.Xr mandoc 1 s behaviour
-.Ed
+.D1 \&.Xr mandoc 1
+.D1 \&.Xr mandoc 1 ;
+.D1 \&.Xr mandoc 1 \&Ns s behaviour
 .
 .Ss \&br
 .Ss \&sp
