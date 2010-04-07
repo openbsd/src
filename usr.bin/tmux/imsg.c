@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.1 2009/08/11 17:18:35 nicm Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.2 2010/04/07 18:09:39 nicm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,7 +79,7 @@ imsg_read(struct imsgbuf *ibuf)
 		    cmsg->cmsg_type == SCM_RIGHTS) {
 			fd = (*(int *)CMSG_DATA(cmsg));
 			if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL) {
-				/* XXX: this return can leak */
+				close(fd);
 				return (-1);
 			}
 			ifd->fd = fd;
