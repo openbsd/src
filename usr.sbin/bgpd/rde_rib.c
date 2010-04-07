@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.124 2010/04/06 13:25:08 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.125 2010/04/07 09:44:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1106,10 +1106,6 @@ nexthop_update(struct kroute_nexthop *msg)
 		return;
 	}
 
-	if (nexthop_delete(nh))
-		/* nexthop no longer used */
-		return;
-
 	oldstate = nh->state;
 	if (msg->valid)
 		nh->state = NEXTHOP_REACH;
@@ -1127,6 +1123,10 @@ nexthop_update(struct kroute_nexthop *msg)
 	memcpy(&nh->nexthop_net, &msg->net,
 	    sizeof(nh->nexthop_net));
 	nh->nexthop_netlen = msg->netlen;
+
+	if (nexthop_delete(nh))
+		/* nexthop no longer used */
+		return;
 
 	if (rde_noevaluate())
 		/*
