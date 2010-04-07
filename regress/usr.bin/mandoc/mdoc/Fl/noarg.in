@@ -1,4 +1,4 @@
-.Dd $Mdocdate: January 1 2010 $
+.Dd $Mdocdate: April 7 2010 $
 .Dt FL-NOARG 1
 .Os
 .Sh NAME
@@ -11,3 +11,7 @@ a dash.
 .Pp
 This is true even before punctuation
 .Fl .
+.Pp
+Following macros
+.Fl Op flag
+follow without white space.
