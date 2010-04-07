@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.h,v 1.14 2009/10/17 07:10:38 jakemsr Exp $ */
+/*	$OpenBSD: usb_quirks.h,v 1.15 2010/04/07 20:52:56 sthen Exp $ */
 /*	$NetBSD: usb_quirks.h,v 1.20 2001/04/15 09:38:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
@@ -34,40 +34,27 @@
 
 struct usbd_quirks {
 	u_int32_t uq_flags;	/* Device problems: */
-	/* cannot handle SET PROTOCOL. */
-#define UQ_NO_SET_PROTO		0x00000001
-	/* has some Unicode strings swapped. */
-#define UQ_SWAP_UNICODE		0x00000002
-	/* mouse has Z-axis reversed */
-#define UQ_MS_REVZ		0x00000004
-	/* string descriptors are broken. */
-#define UQ_NO_STRINGS		0x00000008
-	/* bad audio spec version number. */
-#define UQ_BAD_ADC		0x00000010
-	/* device is bus powered, despite claim */
-#define UQ_BUS_POWERED		0x00000020
-	/* device claims audio class, but isn't */
-#define UQ_BAD_AUDIO		0x00000040
-	/* spurious mouse button up events */
-#define UQ_SPUR_BUT_UP		0x00000080
-	/* audio device has broken extension unit */
-#define UQ_AU_NO_XU		0x00000100
-	/* hub lies about power status */
-#define UQ_POWER_CLAIM		0x00000200
-	/* don't adjust for fractional samples */
-#define UQ_AU_NO_FRAC		0x00000400
-	/* modem device breaks on cm over data */
-#define UQ_ASSUME_CM_OVER_DATA	0x00001000
-	/* printer has broken bidir mode */
-#define UQ_BROKEN_BIDIR		0x00002000
-	/* device claims uhid, but isn't */
-#define UQ_BAD_HID		0x00004000
-	/* doesn't identify properly */
-#define UQ_MS_BAD_CLASS		0x00008000
-	/* mouse sends an unknown leading byte. */
-#define UQ_MS_LEADING_BYTE	0x00010000
-	/* need to attach as 1.1 device if it is 2.0 */
-#define UQ_EHCI_NEEDTO_DISOWN	0x00020000
+#define UQ_NO_SET_PROTO		0x00000001 /* cannot handle SET PROTOCOL */
+#define UQ_SWAP_UNICODE		0x00000002 /* some Unicode strings swapped */
+#define UQ_MS_REVZ		0x00000004 /* mouse has Z-axis reversed */
+#define UQ_NO_STRINGS		0x00000008 /* string descriptors are broken */
+#define UQ_BAD_ADC		0x00000010 /* bad audio spec version number */
+#define UQ_BUS_POWERED		0x00000020 /* is bus-powered, despite claim */
+#define UQ_BAD_AUDIO		0x00000040 /* claims audio class, but isn't */
+#define UQ_SPUR_BUT_UP		0x00000080 /* spurious mouse button up events */
+#define UQ_AU_NO_XU		0x00000100 /* audio device has broken
+						extension unit */
+#define UQ_POWER_CLAIM		0x00000200 /* hub lies about power status */
+#define UQ_AU_NO_FRAC		0x00000400 /* don't adjust for fractional
+						samples */
+#define UQ_ASSUME_CM_OVER_DATA	0x00001000 /* modem device breaks on cm
+						over data */
+#define UQ_BROKEN_BIDIR		0x00002000 /* printer has broken bidir mode */
+#define UQ_BAD_HID		0x00004000 /* device claims uhid, but isn't */
+#define UQ_MS_BAD_CLASS		0x00008000 /* mouse doesn't identify properly */
+#define UQ_MS_LEADING_BYTE	0x00010000 /* mouse sends unknown leading byte */
+#define UQ_EHCI_NEEDTO_DISOWN	0x00020000 /* must hand device over to USB 1.1
+						if attached to EHCI */
 };
 
 extern const struct usbd_quirks usbd_no_quirk;
