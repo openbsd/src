@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.66 2010/04/06 20:07:01 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.67 2010/04/07 06:47:52 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2010 $
+.Dd $Mdocdate: April 7 2010 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@ the mix of all playback streams.
 Multiple modes can be specified, separated by commas,
 but the same stream cannot be used for both recording and monitoring.
 The default is
-.Ar play , rec
+.Ar play , Ns Ar rec
 (i.e. full-duplex).
 .It Fl n
 Loopback mode.
@@ -153,14 +153,15 @@ part of the
 .Xr sndio 7
 device name string.
 .It Fl t Ar mode
-Select the way sub-devices are controlled by MMC (MIDI Machine Control) messages.
+Select the way sub-devices are controlled by MIDI Machine Control (MMC)
+messages.
 If the mode is
 .Va off
 (the default), then streams are not affected by MMC messages.
 If the mode is
 .Va slave ,
 then streams are started synchronously by MMC start messages;
-additionally, the server clock is exposed as MTC (MIDI Time Code)
+additionally, the server clock is exposed as MIDI Time Code (MTC)
 messages allowing MTC-capable software or hardware to be synchronized
 to audio streams.
 .It Fl U Ar unit
@@ -210,8 +211,9 @@ If the policy is
 .Dq error
 then the stream is closed permanently.
 .Pp
-If a sub-device is created with
-.Fl t ,
+If a sub-device is created with the
+.Fl t
+option,
 the
 .Dq ignore
 action is disabled for any stream connected to it
@@ -220,9 +222,10 @@ to ensure proper synchronization.
 The audio block size in frames.
 This is the number of frames between audio clock ticks,
 i.e. the clock resolution.
-If a sub-device is created with
-.Fl t ,
-and MTC (Midi Time Code) is used for synchronization, the clock
+If a sub-device is created with the
+.Fl t
+option,
+and MTC is used for synchronization, the clock
 resolution must be 96, 100 or 120 ticks per second for maximum
 accuracy.
 For instance, 120 ticks per second at 48000Hz corresponds
@@ -419,16 +422,10 @@ the same MIDI controller message is sent out; it can be used
 for instance for monitoring or as feedback for motorized
 faders.
 .Pp
-Clients connected to sub-devices created with
+Clients connected to sub-devices created with the
 .Fl t
-are controlled by the following MMC (MIDI Machine Control) messages:
+option are controlled by the following MMC messages:
 .Bl -tag -width relocateXXX -offset indent
-.It stop
-Put the sub-device in stopped mode (the default).
-In this mode, any stream attempting to start playback or recording
-is paused.
-Streams that are already started are not affected until they stop
-and try to start again.
 .It relocate
 Gives
 .Nm
@@ -447,11 +444,17 @@ In this mode, the sub-device waits for all streams to become ready
 to start, and then starts them synchronously.
 Once started, new streams can be created, but they will be blocked
 until the next stop-to-start transition.
+.It stop
+Put the sub-device in stopped mode (the default).
+In this mode, any stream attempting to start playback or recording
+is paused.
+Streams that are already started are not affected until they stop
+and try to start again.
 .El
 .Pp
-Sub-devices created with
+Sub-devices created with the
 .Fl t
-will export the server clock using MTC (MIDI Time Code), allowing non-audio
+option export the server clock using MTC, allowing non-audio
 software or hardware to be synchronized to the audio stream.
 The following sample rates
 .Pq Fl r
@@ -499,22 +502,22 @@ to control playback and recording in real time.
 .Pp
 A MIDI channel is assigned to each stream, and the volume
 is changed using the standard volume controller (number 7).
-Streams created with
+Streams created with the
 .Fl t
-option are controlled by the following MIDI Machine Control (MMC) messages:
+option are controlled by the following MMC messages:
 .Bl -tag -width relocateXXX -offset indent
-.It start
-Start all streams synchronously.
-By default, streams are created in a stopped state.
-.It stop
-Playback or recording is stopped, and
-the stream is rewound back to the starting position.
 .It relocate
 Streams are relocated to the requested time postion
 relative to the beginning of the stream, at which playback
 and recording must start.
 If the requested position is beyond the end of file,
 the stream is temporarly disabled until a valid postion is requested.
+.It start
+Start all streams synchronously.
+By default, streams are created in a stopped state.
+.It stop
+Playback or recording is stopped, and
+the stream is rewound back to the starting position.
 .El
 .Pp
 For instance, the following command will play a file on the
