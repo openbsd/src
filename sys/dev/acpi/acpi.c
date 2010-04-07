@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.155 2010/03/31 19:21:19 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.156 2010/04/07 06:33:06 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/workq.h>
+#include <sys/sched.h>
 
 #include <machine/conf.h>
 #include <machine/cpufunc.h>
@@ -1837,10 +1838,6 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 {
 	int ret;
 
-#ifdef MULTIPROCESSOR
-	if (ncpus > 1)	/* cannot suspend MP yet */
-		return (0);
-#endif
 	switch (state) {
 	case ACPI_STATE_S0:
 		return (0);
@@ -1956,6 +1953,8 @@ acpi_resume(struct acpi_softc *sc, int state)
 	enable_intr();
 	splx(acpi_saved_spl);
 
+	acpi_resume_machdep();
+
 	sc->sc_state = ACPI_STATE_S0;
 	if (sc->sc_tts) {
 		env.v_integer = sc->sc_state;
@@ -1970,6 +1969,10 @@ acpi_resume(struct acpi_softc *sc, int state)
 		env.v_integer = ACPI_SST_WORKING;
 		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 	}
+
+#ifdef MULTIPROCESSOR
+	sched_start_secondary_cpus();
+#endif
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 
@@ -2018,6 +2021,10 @@ acpi_handle_suspend_failure(struct acpi_softc *sc)
 		env.v_integer = ACPI_SST_WORKING;
 		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 	}
+
+#ifdef MULTIPROCESSOR
+	sched_start_secondary_cpus();
+#endif
 }
 
 int
@@ -2034,6 +2041,11 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 		    sc->sc_dev.dv_xname, state);
 		return (ENXIO);
 	}
+
+#ifdef MULTIPROCESSOR
+	sched_stop_secondary_cpus();
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
+#endif
 
 	memset(&env, 0, sizeof(env));
 	env.type = AML_OBJTYPE_INTEGER;

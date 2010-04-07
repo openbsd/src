@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.33 2010/02/23 21:54:53 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.34 2010/04/07 06:33:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -21,6 +21,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>
+#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -28,7 +29,9 @@
 #include <machine/biosvar.h>
 #include <machine/isa_machdep.h>
 
+#include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
@@ -224,9 +227,13 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	/* Copy the current cpu registers into a safe place for resume. */
 	if (acpi_savecpu()) {
 		fpusave_cpu(curcpu(), 1);
+#ifdef MULTIPROCESSOR
+		x86_broadcast_ipi(X86_IPI_FLUSH_FPU);
+		x86_broadcast_ipi(X86_IPI_HALT);
+#endif 
 		wbinvd();
-		if (acpi_enter_sleep_state(sc, state) != 0)
-			panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
+		acpi_enter_sleep_state(sc, state);
+		panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
 	}
 #if 0
 	/* Temporarily disabled for debugging purposes */
@@ -260,4 +267,47 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	return (0);
 }
 
+void    	cpu_start_secondary(struct cpu_info *ci);
+
+void
+acpi_resume_machdep(void)
+{
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+	struct proc *p;
+	struct pcb *pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
+	int i;
+
+	/* XXX refactor with matching code in cpu.c */
+
+	for (i = 0; i < MAXCPUS; i++) {
+		ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		if (ci->ci_idle_pcb == NULL)
+			continue;
+		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
+			continue;
+		KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
+		
+		p = ci->ci_schedstate.spc_idleproc;
+		pcb = &p->p_addr->u_pcb;
+
+		tf = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
+		sf = (struct switchframe *)tf - 1;
+		sf->sf_r12 = (u_int64_t)sched_idle;
+		sf->sf_r13 = (u_int64_t)ci;
+		sf->sf_rip = (u_int64_t)proc_trampoline;
+		pcb->pcb_rsp = (u_int64_t)sf;
+		pcb->pcb_rbp = 0;
+
+		ci->ci_flags &= ~CPUF_PRESENT;
+		cpu_start_secondary(ci);
+	}
+
+	cpu_boot_secondary_processors();
+#endif /* MULTIPROCESSOR */
+}
 #endif /* ! SMALL_KERNEL */

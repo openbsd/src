@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.15 2010/04/01 19:48:50 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.16 2010/04/07 06:33:06 kettenis Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -102,6 +102,7 @@ i386_ipi_halt(struct cpu_info *ci)
 {
 	disable_intr();
 	ci->ci_flags &= ~CPUF_RUNNING;
+	wbinvd();
 
 	for(;;) {
 		asm volatile("hlt");

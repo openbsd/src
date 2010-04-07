@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.29 2010/04/01 19:47:59 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.30 2010/04/07 06:33:06 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -145,9 +145,9 @@ u_int32_t cpus_attached = 0;
 struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
 
 void    	cpu_hatch(void *);
-static void    	cpu_boot_secondary(struct cpu_info *ci);
-static void    	cpu_start_secondary(struct cpu_info *ci);
-static void	cpu_copy_trampoline(void);
+void    	cpu_boot_secondary(struct cpu_info *ci);
+void    	cpu_start_secondary(struct cpu_info *ci);
+void		cpu_copy_trampoline(void);
 
 /*
  * Runs once per boot once multiprocessor goo has been detected and
@@ -548,7 +548,7 @@ cpu_debug_dump(void)
 }
 #endif
 
-static void
+void
 cpu_copy_trampoline(void)
 {
 	/*
