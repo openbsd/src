@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.32 2010/04/07 16:19:33 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.33 2010/04/07 16:31:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -3605,7 +3605,7 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			lastds->ds_link = bf->bf_daddr + i * sizeof (*ds);
 		lastds = ds;
 	}
-	if (txq->lastds != NULL)
+	if (!SIMPLEQ_EMPTY(&txq->head))
 		txq->lastds->ds_link = bf->bf_daddr;
 	else
 		AR_WRITE(sc, AR_QTXDP(qid), bf->bf_daddr);
