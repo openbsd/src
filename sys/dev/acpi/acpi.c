@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.156 2010/04/07 06:33:06 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.157 2010/04/07 17:46:30 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2031,6 +2031,7 @@ int
 acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 {
 	struct aml_value env;
+	int error = 0;
 
 	if (sc == NULL || state == ACPI_STATE_S0)
 		return(0);
@@ -2070,7 +2071,8 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	if (state == ACPI_STATE_S3)
 		if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
 			acpi_handle_suspend_failure(sc);
-			return (1);
+			error = ENXIO;
+			goto fail;
 		}
 #endif /* ! SMALL_KERNEL */
 
@@ -2079,7 +2081,8 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 		if (aml_evalnode(sc, sc->sc_pts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _PTS failed.\n",
 			    DEVNAME(sc));
-			return (ENXIO);
+			error = ENXIO;
+			goto fail;
 		}
 
 	sc->sc_state = state;
@@ -2088,13 +2091,19 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 		if (aml_evalnode(sc, sc->sc_gts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _GTS failed.\n",
 			    DEVNAME(sc));
-			return (ENXIO);
+			error = ENXIO;
+			goto fail;
 		}
 
 	/* Enable wake GPEs */
 	acpi_susp_resume_gpewalk(sc, state, 1);
 
-	return (0);
+fail:
+#if NWSDISPLAY > 0
+	if (error)
+		wsdisplay_resume();
+#endif /* NWSDISPLAY > 0 */
+	return (error);
 }
 
 
