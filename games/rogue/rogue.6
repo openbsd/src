@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rogue.6,v 1.15 2010/01/10 10:56:31 jmc Exp $
+.\"	$OpenBSD: rogue.6,v 1.16 2010/04/08 16:53:50 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)rogue.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: January 10 2010 $
+.Dd $Mdocdate: April 8 2010 $
 .Dt ROGUE 6
 .Os
 .Sh NAME
@@ -155,7 +155,7 @@ it will list all the commands,
 otherwise it will explain what the character you typed does.
 .It Ic /
 This is the
-.Sq \What is that on the screen?
+.Sq What is that on the screen?
 command.
 A
 .Sq /
@@ -331,7 +331,7 @@ Leave the game.
 .It Ic S
 Save the current game in a file.
 It will ask you whether you wish to use the default save file.
-.i Caveat :
+.Sy Caveat :
 Rogue won't let you start up a copy of a saved game,
 and it removes the save file as soon as you start up a restored game.
 This is to prevent people from saving a game just before a dangerous
@@ -431,17 +431,17 @@ The higher the armor protection,
 the more protection the armor affords against the blows of monsters.
 Here is a list of the various armor types and their normal armor
 protection:
-.Bl -column "Type" "Protection" -offset indent
-.It Sy "Type" Ta Ta Ta Sy "Protection"
-.It "None" Ta Ta Ta 0
-.It "Leather armor" Ta Ta Ta 2
-.It "Studded leather" Ta Ta Ta 3
-.It "Ring mail" Ta Ta Ta 3
-.It "Scale mail" Ta Ta Ta 4
-.It "Chain mail" Ta Ta Ta 5
-.It "Banded mail" Ta Ta Ta 6
-.It "Splint mail" Ta Ta Ta 6
-.It "Plate mail" Ta Ta Ta 7
+.Bl -column "Studded leather" "Protection" -offset indent
+.It Sy "Type" Ta Sy "Protection"
+.It "None" Ta 0
+.It "Leather armor" Ta 2
+.It "Studded leather" Ta 3
+.It "Ring mail" Ta 3
+.It "Scale mail" Ta 4
+.It "Chain mail" Ta 5
+.It "Banded mail" Ta 6
+.It "Splint mail" Ta 6
+.It "Plate mail" Ta 7
 .El
 .Pp
 If a piece of armor is enchanted,
