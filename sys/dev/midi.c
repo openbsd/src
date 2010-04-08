@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.21 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: midi.c,v 1.22 2010/04/08 01:48:24 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -236,7 +236,7 @@ void
 midi_out_do(struct midi_softc *sc)
 {
 	struct midi_buffer *mb = &sc->outbuf;
-	unsigned 	    i, max;
+	unsigned 	    i;
 	int		    error;
 	
 	/*
@@ -244,8 +244,8 @@ midi_out_do(struct midi_softc *sc)
 	 * bytes instead of 1, and then we wait sc->wait
 	 */
 
-	max = sc->props & MIDI_PROP_OUT_INTR ? 1 : MIDI_MAXWRITE;
-	for (i = max; i != 0;) {
+	i = sc->props & MIDI_PROP_OUT_INTR ? 1 : MIDI_MAXWRITE;
+	while (i != 0) {
 		if (mb->used == 0)
 			break;
 		error = sc->hw_if->output(sc->hw_hdl, mb->data[mb->start]);
