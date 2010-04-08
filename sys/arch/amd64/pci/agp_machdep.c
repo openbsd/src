@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.4 2009/06/06 06:02:44 oga Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.5 2010/04/08 01:26:44 oga Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -54,6 +54,8 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
+#include <uvm/uvm.h>
+
 #include "intagp.h"
 
 /* bus_dma functions */
@@ -67,6 +69,12 @@ void
 agp_flush_cache(void)
 {
 	wbinvd();
+}
+
+void
+agp_flush_cache_range(vaddr_t va, vsize_t sz)
+{
+	pmap_flush_cache(va, sz);
 }
 
 /*
@@ -140,11 +148,20 @@ void
 agp_bus_dma_destroy(struct agp_softc *sc, bus_dma_tag_t dmat)
 {
 	struct sg_cookie	*cookie = dmat->_cookie;
+	bus_addr_t		 offset;
 
 
 	/*
 	 * XXX clear up blocker queue 
 	 */
+
+	/*
+	 * some backends use a dummy page to avoid errors on prefetching, etc.
+	 * make sure that all of them are clean.
+	 */
+	for (offset = cookie->sg_ex->ex_start;
+	    offset < cookie->sg_ex->ex_end; offset += PAGE_SIZE)
+		sc->sc_methods->unbind_page(sc->sc_chipc, offset);
 
 	sg_dmatag_destroy(cookie);
 	free(dmat, M_DEVBUF);
@@ -156,7 +173,6 @@ agp_bus_dma_set_alignment(bus_dma_tag_t tag, bus_dmamap_t dmam,
 {
 	sg_dmamap_set_alignment(tag, dmam, alignment);
 }
-
 
 /*
  * ick ick ick. However, the rest of this driver is supposedly MI (though
@@ -183,6 +199,12 @@ void
 intagp_dma_sync(bus_dma_tag_t tag, bus_dmamap_t dmam,
     bus_addr_t offset, bus_size_t size, int ops)
 {
+	bus_dma_segment_t	*segp;
+	struct sg_page_map	*spm;
+	void			*addr;
+	paddr_t	 		 pa;
+	bus_addr_t		 poff, endoff, soff;
+
 #ifdef DIAGNOSTIC
 	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) != 0)
@@ -213,10 +235,60 @@ intagp_dma_sync(bus_dma_tag_t tag, bus_dmamap_t dmam,
 	 * The chipset also may need flushing, but that fits badly into
 	 * bus_dma and it done in the driver.
 	 */
+	soff = trunc_page(offset);
+	endoff = round_page(offset + size);
 	if (ops & BUS_DMASYNC_POSTREAD || ops & BUS_DMASYNC_PREREAD ||
 	    ops & BUS_DMASYNC_PREWRITE) {
-		/* XXX use clflush */
-		wbinvd();
+		if (curcpu()->ci_cflushsz == 0) {
+			/* save some wbinvd()s. we're MD anyway so it's ok */
+			wbinvd();
+			return;
+		}
+
+		mfence();
+		spm = dmam->_dm_cookie;
+		switch (spm->spm_buftype) {
+		case BUS_BUFTYPE_LINEAR:
+			addr = spm->spm_origbuf + soff;
+			while (soff < endoff) {
+				pmap_flush_cache((vaddr_t)addr, PAGE_SIZE);
+				soff += PAGE_SIZE;
+				addr += PAGE_SIZE;
+			} break;
+		case BUS_BUFTYPE_RAW:
+			segp = (bus_dma_segment_t *)spm->spm_origbuf;
+			poff = 0;
+
+			while (poff < soff) {
+				if (poff + segp->ds_len > soff)
+					break;
+				poff += segp->ds_len;
+				segp++;
+			}
+			/* first time round may not start at seg beginning */
+			pa = segp->ds_addr + (soff - poff);
+			while (poff < endoff) {
+				for (; pa < segp->ds_addr + segp->ds_len &&
+				    poff < endoff; pa += PAGE_SIZE) {
+					pmap_flush_page(pa);
+					poff += PAGE_SIZE;
+				}
+				segp++;
+				if (poff < endoff)
+					pa = segp->ds_addr;
+			}
+			break;
+		/* You do not want to load mbufs or uios onto a graphics card */
+		case BUS_BUFTYPE_MBUF:
+			/* FALLTHROUGH */
+		case BUS_BUFTYPE_UIO:
+			/* FALLTHROUGH */
+		default:
+			panic("intagp_dmamap_sync: bad buftype %d",
+			    spm->spm_buftype);
+			
+		}
+		mfence();
 	}
 }
-#endif
+#endif /* NINTAGP > 0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.20 2009/06/06 06:02:44 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.21 2010/04/08 01:26:44 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -158,6 +158,7 @@ struct agp_gatt *
 	agp_alloc_gatt(bus_dma_tag_t, u_int32_t);
 void	agp_free_gatt(bus_dma_tag_t, struct agp_gatt *);
 void	agp_flush_cache(void);
+void	agp_flush_cache_range(vaddr_t, vsize_t);
 int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *,
 	    bus_size_t);
 int	agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
