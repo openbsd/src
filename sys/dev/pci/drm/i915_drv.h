@@ -37,7 +37,7 @@
 
 #define DRIVER_NAME		"i915"
 #define DRIVER_DESC		"Intel Graphics"
-#define DRIVER_DATE		"20080312"
+#define DRIVER_DATE		"20080730"
 
 enum pipe {
 	PIPE_A = 0,
@@ -59,6 +59,7 @@ enum pipe {
 #define DRIVER_PATCHLEVEL	0
 
 struct inteldrm_ring {
+	struct drm_obj		*ring_obj;
 	bus_space_handle_t	 bsh;
 	bus_size_t		 size;
 	u_int32_t		 head;
@@ -67,11 +68,21 @@ struct inteldrm_ring {
 	u_int32_t		 woffset;
 };
 
+#define I915_FENCE_REG_NONE -1
+
+struct inteldrm_fence {
+	TAILQ_ENTRY(inteldrm_fence)	 list;
+	struct drm_obj			*obj;
+	u_int32_t			 last_rendering_seqno;
+};
+
 typedef struct drm_i915_private {
 	struct device		 dev;
 	struct device		*drmdev;
+	bus_dma_tag_t		 agpdmat; /* tag from intagp for GEM */
 	bus_dma_tag_t		 dmat;
 	bus_space_tag_t		 bst;
+	bus_space_handle_t	 aperture_bsh;
 
 	u_long			 flags;
 	u_int16_t		 pci_device;
@@ -86,8 +97,21 @@ typedef struct drm_i915_private {
 	struct drm_local_map	*sarea;
 	drm_i915_sarea_t	*sarea_priv;
 
+	union flush {
+		struct {
+			bus_space_tag_t		bst;
+			bus_space_handle_t	bsh;
+		} i9xx;
+		struct {
+			bus_dma_segment_t	seg;
+			caddr_t			kva;
+		} i8xx;
+	}	ifp;
 	struct inteldrm_ring	 ring;
+	struct workq		*workq;
+	struct vm_page		*pgs;
 	struct drm_local_map	 hws_map;
+	struct drm_obj		*hws_obj;
 	struct drm_dmamem	*hws_dmamem;
 	void			*hw_status_page;
 	unsigned int		 status_gfx_addr;
@@ -102,6 +126,10 @@ typedef struct drm_i915_private {
 	u_int32_t		 pipestat[2];
 
 	int			 allow_batchbuffer;
+
+	struct inteldrm_fence		fence_regs[16]; /* 965 */
+	int				fence_reg_start; /* 4 by default */
+	int				num_fence_regs; /* 8 pre-965, 16 post */
 
 	/* Register state */
 	u8 saveLBB;
@@ -202,7 +230,106 @@ typedef struct drm_i915_private {
 	u32 saveCURBPOS;
 	u32 saveCURBBASE;
 	u32 saveCURSIZE;
+
+	struct {
+		/**
+		 * List of objects currently involved in rendering from the
+		 * ringbuffer.
+		 *
+		 * Includes buffers having the contents of their GPU caches
+		 * flushed, not necessarily primitives. last_rendering_seqno
+		 * represents when the rendering involved will be completed.
+		 *
+		 * A reference is held on the buffer while on this list.
+		 */
+		TAILQ_HEAD(i915_gem_list, inteldrm_obj) active_list;
+
+		/**
+		 * List of objects which are not in the ringbuffer but which
+		 * still have a write_domain which needs to be flushed before
+		 * unbinding.
+		 *
+		 * last_rendering_seqno is 0 while an object is in this list
+		 *
+		 * A reference is held on the buffer while on this list.
+		 */
+		struct i915_gem_list flushing_list;
+
+		/*
+		 * list of objects currently pending a GPU write flush.
+		 *
+		 * All elements on this list will either be on the active
+		 * or flushing list, last rendiering_seqno differentiates the
+		 * two.
+		 */
+		struct i915_gem_list gpu_write_list;
+		/**
+		 * LRU list of objects which are not in the ringbuffer and
+		 * are ready to unbind, but are still in the GTT.
+		 *
+		 * last_rendering_seqno is 0 while an object is in this list
+		 *
+		 * A reference is not held on the buffer while on this list,
+		 * as merely being GTT-bound shouldn't prevent its being
+		 * freed, and we'll pull it off the list in the free path.
+		 */
+		struct i915_gem_list inactive_list;
+
+		/* Fence LRU */
+		TAILQ_HEAD(i915_fence, inteldrm_fence)	fence_list;
+
+		/**
+		 * List of breadcrumbs associated with GPU requests currently
+		 * outstanding.
+		 */
+		TAILQ_HEAD(i915_request , inteldrm_request) request_list;
+
+		/**
+		 * We leave the user IRQ off as much as possible,
+		 * but this means that requests will finish and never
+		 * be retired once the system goes idle. Set a timer to
+		 * fire periodically while the ring is running. When it
+		 * fires, go retire requests in a workq.
+		 */
+		struct timeout retire_timer;
+		struct timeout hang_timer;
+		/* for hangcheck */
+		int		hang_cnt;
+		u_int32_t	last_acthd;
+
+		uint32_t next_gem_seqno;
+
+		/**
+		 * Flag if the X Server, and thus DRM, is not currently in
+		 * control of the device.
+		 *
+		 * This is set between LeaveVT and EnterVT.  It needs to be
+		 * replaced with a semaphore.  It also needs to be
+		 * transitioned away from for kernel modesetting.
+		 */
+		int suspended;
+
+		/**
+		 * Flag if the hardware appears to be wedged.
+		 *
+		 * This is set when attempts to idle the device timeout.
+		 * It prevents command submission from occuring and makes
+		 * every pending request fail
+		 */
+		int wedged;
+
+		/** Bit 6 swizzling required for X tiling */
+		uint32_t bit_6_swizzle_x;
+		/** Bit 6 swizzling required for Y tiling */
+		uint32_t bit_6_swizzle_y;
+	} mm;
 } drm_i915_private_t;
+
+struct inteldrm_file {
+	struct drm_file	file_priv;
+	struct {
+	} mm;
+};
 
 /* chip type flags */
 #define CHIP_I830	0x0001
@@ -222,18 +349,86 @@ typedef struct drm_i915_private {
 #define CHIP_M		0x4000
 #define CHIP_HWS	0x8000
 
+/** driver private structure attached to each drm_gem_object */
+struct inteldrm_obj {
+	struct drm_obj				 obj;
+
+	/** This object's place on the active/flushing/inactive lists */
+	TAILQ_ENTRY(inteldrm_obj)	 	 list;
+	TAILQ_ENTRY(inteldrm_obj)	 	 write_list;
+	struct i915_gem_list			*current_list;
+	/* GTT binding. */
+	bus_dmamap_t				 dmamap;
+	bus_dma_segment_t			*dma_segs;
+	/* Current offset of the object in GTT space. */
+	bus_addr_t				 gtt_offset;
+	u_int32_t				*bit_17;
+	/*
+	 * This is set if the object is on the active or flushing lists
+	 * (has pending rendering), and is not set if it's on inactive (ready
+	 * to be unbound).
+	 */
+#define I915_ACTIVE		0x0001	/* being used by the gpu. */
+#define I915_IN_EXEC		0x0002	/* being processed in execbuffer */
+#define I915_USER_PINNED	0x0004	/* BO has been pinned from userland */
+#define I915_GPU_WRITE		0x0008	/* BO has been not flushed */
+#define I915_DONTNEED		0x0010	/* BO backing pages purgable */
+#define I915_PURGED		0x0020	/* BO backing pages purged */
+#define I915_DIRTY		0x0040	/* BO written to since last bound */
+#define I915_EXEC_NEEDS_FENCE	0x0080	/* being processed but will need fence*/
+#define I915_FENCED_EXEC	0x0100	/* Most recent exec needs fence */
+	int					 io_flags;
+	/* extra flags to bus_dma */
+	int					 dma_flags; 
+	/* Fence register for this object. needed for tiling. */
+	int					 fence_reg;
+	/** refcount for times pinned this object in GTT space */
+	int					 pin_count;
+	/* number of times pinned by pin ioctl. */
+	u_int					 user_pin_count;
+
+	/** Breadcrumb of last rendering to the buffer. */
+	u_int32_t				 last_rendering_seqno;
+	/** Current tiling mode for the object. */
+	u_int32_t				 tiling_mode;
+	u_int32_t				 stride;
+};
+
+#define inteldrm_is_active(obj_priv)	(obj_priv->io_flags & I915_ACTIVE)
+#define inteldrm_is_dirty(obj_priv)	(obj_priv->io_flags & I915_DIRTY)
+#define inteldrm_exec_needs_fence(obj_priv)		\
+	(obj_priv->io_flags & I915_EXEC_NEEDS_FENCE)
+#define inteldrm_needs_fence(obj_priv)	(obj_priv->io_flags & I915_FENCED_EXEC)
+
+/**
+ * Request queue structure.
+ *
+ * The request queue allows us to note sequence numbers that have been emitted
+ * and may be associated with active buffers to be retired.
+ *
+ * By keeping this list, we can avoid having to do questionable
+ * sequence-number comparisons on buffer last_rendering_seqnos, and associate
+ * an emission time with seqnos for tracking how far ahead of the GPU we are.
+ */
+struct inteldrm_request {
+	TAILQ_ENTRY(inteldrm_request)	list;
+	/** GEM sequence number associated with this request. */
+	uint32_t			seqno;
+};
+
 u_int32_t	inteldrm_read_hws(struct drm_i915_private *, int);
 int		inteldrm_wait_ring(struct drm_i915_private *dev, int n);
 void		inteldrm_begin_ring(struct drm_i915_private *, int);
 void		inteldrm_out_ring(struct drm_i915_private *, u_int32_t);
 void		inteldrm_advance_ring(struct drm_i915_private *);
 void		inteldrm_update_ring(struct drm_i915_private *);
+void		inteldrm_error(struct drm_i915_private *);
 int		inteldrm_pipe_enabled(struct drm_i915_private *, int);
 
 				/* i915_dma.c */
 extern void i915_emit_breadcrumb(struct drm_device *dev);
-extern int i915_dispatch_batchbuffer(struct drm_device * dev,
-				     drm_i915_batchbuffer_t * batch);
+void	i915_emit_box(struct drm_device * dev, struct drm_clip_rect * boxes,
+	    int DR1, int DR4);
 int	i915_dma_cleanup(struct drm_device *);
 
 int	i915_init_phys_hws(drm_i915_private_t *, bus_dma_tag_t);
@@ -250,6 +445,7 @@ extern void i915_driver_irq_uninstall(struct drm_device * dev);
 extern int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
 extern int i915_emit_irq(struct drm_device * dev);
+extern int i915_wait_irq(struct drm_device * dev, int irq_nr);
 extern int i915_enable_vblank(struct drm_device *dev, int crtc);
 extern void i915_disable_vblank(struct drm_device *dev, int crtc);
 extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
@@ -304,6 +500,11 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
 				    dev_priv->regs->bsh, (reg))
 #define I915_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
 				    dev_priv->regs->bsh, (reg), (val))
+
+#define RING_LOCK_TEST_WITH_RETURN(dev, file_priv) do {			\
+	if (((drm_i915_private_t *)dev->dev_private)->ring.ring_obj == NULL) \
+		LOCK_TEST_WITH_RETURN(dev, file_priv);			\
+} while (0)
 
 #define INTELDRM_VERBOSE 0
 #if INTELDRM_VERBOSE > 0
@@ -2121,6 +2322,71 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
 
 #define I915_NEED_GFX_HWS(dev_priv) (dev_priv->flags & CHIP_HWS)
 
+#define HAS_RESET(dev_priv)	IS_I965G(dev_priv)
+
+/*
+ * Interrupts that are always left unmasked.
+ *
+ * Since pipe events are edge-triggered from the PIPESTAT register to IIRC,
+ * we leave them always unmasked in IMR and then control enabling them through
+ * PIPESTAT alone.
+ */
+#define I915_INTERRUPT_ENABLE_FIX		\
+	(I915_DISPLAY_PIPE_A_EVENT_INTERRUPT |	\
+    	I915_DISPLAY_PIPE_B_EVENT_INTERRUPT |	\
+	I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT)
+
+/* Interrupts that we mask and unmask at runtime */
+#define I915_INTERRUPT_ENABLE_VAR	(I915_USER_INTERRUPT)
+
+/* These are all of the interrupts used by the driver */
+#define I915_INTERRUPT_ENABLE_MASK	\
+	(I915_INTERRUPT_ENABLE_FIX |	\
+	I915_INTERRUPT_ENABLE_VAR)
+
+#define	printeir(val)	printf("%s: error reg: %b\n", __func__, val,	\
+	"\20\x10PTEERR\x2REFRESHERR\x1INSTERR")
+	
+
+/*
+ * With the i45 and later, Y tiling got adjusted so that it was 32 128-byte
+ * rows, which changes the alignment requirements and fence programming.
+ */
+#define HAS_128_BYTE_Y_TILING(dev_priv) (IS_I9XX(dev_priv) && 	\
+	!(IS_I915G(dev_priv) || IS_I915GM(dev_priv)))
+
 #define PRIMARY_RINGBUFFER_SIZE         (128*1024)
+
+/* Inlines */
+
+/**
+ * Returns true if seq1 is later than seq2.
+ */
+static __inline int
+i915_seqno_passed(uint32_t seq1, uint32_t seq2)
+{
+	return ((int32_t)(seq1 - seq2) >= 0);
+}
+
+/*
+ * Read seqence number from the Hardware status page.
+ */
+static __inline u_int32_t
+i915_get_gem_seqno(struct drm_i915_private *dev_priv)
+{
+	return (READ_HWSP(dev_priv, I915_GEM_HWS_INDEX));
+}
+
+static __inline int
+i915_obj_purgeable(struct inteldrm_obj *obj_priv)
+{
+	return (obj_priv->io_flags & I915_DONTNEED);
+}
+
+static __inline int
+i915_obj_purged(struct inteldrm_obj *obj_priv)
+{
+	return (obj_priv->io_flags & I915_PURGED);
+}
 
 #endif
