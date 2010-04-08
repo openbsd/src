@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.13 2009/05/10 16:57:44 oga Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.14 2010/04/08 00:23:53 tedu Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/agpio.h>

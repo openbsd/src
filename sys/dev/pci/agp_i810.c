@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.60 2010/04/07 20:40:18 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.61 2010/04/08 00:23:53 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -33,7 +33,6 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/agpio.h>

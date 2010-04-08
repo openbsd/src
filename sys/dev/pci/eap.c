@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.37 2009/02/15 00:11:59 jakemsr Exp $ */
+/*      $OpenBSD: eap.c,v 1.38 2010/04/08 00:23:53 tedu Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

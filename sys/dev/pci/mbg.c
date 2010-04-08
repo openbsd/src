@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.28 2009/04/26 02:20:58 cnst Exp $ */
+/*	$OpenBSD: mbg.c,v 1.29 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -20,7 +20,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/timeout.h>
 #include <sys/systm.h>
 #include <sys/sensors.h>
 #include <sys/syslog.h>

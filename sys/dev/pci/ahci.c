@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.161 2010/04/06 13:59:37 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.162 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -22,7 +22,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 

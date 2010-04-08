@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.14 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.15 2010/04/08 00:23:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -20,7 +20,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <dev/i2c/i2cvar.h>

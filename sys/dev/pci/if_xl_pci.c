@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.28 2010/01/11 23:21:24 kettenis Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.29 2010/04/08 00:23:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -45,7 +45,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>   /* only for declaration of wakeup() used by vm.h */
 #include <sys/device.h>
 
 #include <net/if.h>

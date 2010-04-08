@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.74 2010/03/27 21:40:13 jsg Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.75 2010/04/08 00:23:53 tedu Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

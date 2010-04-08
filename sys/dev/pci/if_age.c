@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.9 2010/02/27 08:19:47 kevlo Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.10 2010/04/08 00:23:53 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -33,7 +33,6 @@
 #include "vlan.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/types.h>

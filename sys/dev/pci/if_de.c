@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.104 2009/10/02 23:11:56 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.105 2010/04/08 00:23:53 tedu Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>	/* only for declaration of wakeup() used by vm.h */
 #include <sys/device.h>
 #include <sys/timeout.h>
 

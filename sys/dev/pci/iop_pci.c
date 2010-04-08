@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop_pci.c,v 1.6 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: iop_pci.c,v 1.7 2010/04/08 00:23:53 tedu Exp $	*/
 /*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <sys/proc.h>
 
 #include <machine/endian.h>
 #include <machine/bus.h>

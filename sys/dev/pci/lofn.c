@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.27 2006/06/29 21:34:51 deraadt Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.28 2010/04/08 00:23:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -37,7 +37,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>

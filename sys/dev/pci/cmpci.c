@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.24 2009/05/06 23:13:29 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.25 2010/04/08 00:23:53 tedu Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -54,7 +54,6 @@ int cmpcidebug = 0;
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.145 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.146 2010/04/08 00:23:53 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/timeout.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.81 2010/03/23 01:57:20 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.82 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.12 2009/06/26 02:46:27 kevlo Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.13 2010/04/08 00:23:54 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -25,7 +25,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

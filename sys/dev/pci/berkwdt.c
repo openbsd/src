@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.5 2009/04/25 07:11:55 mk Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.6 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -25,7 +25,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>

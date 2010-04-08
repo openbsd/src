@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.18 2009/04/25 17:50:48 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.19 2010/04/08 00:23:54 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -31,7 +31,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
