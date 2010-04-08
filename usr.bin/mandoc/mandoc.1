@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.24 2010/03/29 22:56:52 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.25 2010/04/08 16:47:28 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2010 $
+.Dd $Mdocdate: April 8 2010 $
 .Dt MANDOC 1
 .Os
 .
@@ -40,41 +40,50 @@ The
 .Nm
 utility formats
 .Ux
-manual pages for display.  The arguments are as follows:
+manual pages for display.
+The arguments are as follows:
 .
 .Bl -tag -width Ds
 .It Fl f Ns Ar option...
-Comma-separated compiler options.  See
+Comma-separated compiler options.
+See
 .Sx Compiler Options
 for details.
 .
 .It Fl m Ns Ar format
-Input format.  See
+Input format.
+See
 .Sx Input Formats
-for available formats.  Defaults to
+for available formats.
+Defaults to
 .Fl m Ns Ar andoc .
 .
 .It Fl O Ns Ar option...
-Comma-separated output options.  See
+Comma-separated output options.
+See
 .Sx Output Options
 for details.
 .
 .It Fl T Ns Ar output
-Output format.  See
+Output format.
+See
 .Sx Output Formats
-for available formats.  Defaults to
+for available formats.
+Defaults to
 .Fl T Ns Ar ascii .
 .
 .It Fl V
 Print version and exit.
 .
 .It Fl W Ns Ar err...
-Comma-separated warning options.  Use
+Comma-separated warning options.
+Use
 .Fl W Ns Ar all
 to print warnings,
 .Fl W Ns Ar error
 for warnings to be considered errors and cause utility
-termination.  Multiple
+termination.
+Multiple
 .Fl W
 arguments may be comma-separated, such as
 .Fl W Ns Ar error,all .
@@ -82,7 +91,8 @@ arguments may be comma-separated, such as
 .It Ar infile...
 Read input from zero or more
 .Ar infile .
-If unspecified, reads from stdin.  If multiple files are specified,
+If unspecified, reads from stdin.
+If multiple files are specified,
 .Nm
 will halt with the first failed parse.
 .El
@@ -115,7 +125,8 @@ input with
 .Fl m Ns Ar doc
 and
 .Fl m Ns Ar an ,
-respectively.  The
+respectively.
+The
 .Xr mdoc 7
 format is
 .Em strongly
@@ -141,7 +152,8 @@ parser is used.
 If multiple
 files are specified with
 .Fl m Ns Ar andoc ,
-each has its file-type determined this way.  If multiple files are
+each has its file-type determined this way.
+If multiple files are
 specified and
 .Fl m Ns Ar doc
 or
@@ -160,15 +172,19 @@ arguments (see
 .Bl -tag -width Ds
 .It Fl T Ns Ar ascii
 Produce 7-bit ASCII output, backspace-encoded for bold and underline
-styles.  This is the default.  See
+styles.
+This is the default.
+See
 .Sx ASCII Output .
 .
 .It Fl T Ns Ar html
-Produce strict HTML-4.01 output, with a sane default style.  See
+Produce strict HTML-4.01 output, with a sane default style.
+See
 .Sx HTML Output .
 .
 .It Fl T Ns Ar xhtml
-Produce strict XHTML-1.0 output, with a sane default style.  See
+Produce strict XHTML-1.0 output, with a sane default style.
+See
 .Sx XHTML Output .
 .
 .It Fl T Ns Ar tree
@@ -195,7 +211,8 @@ flag.
 .Bl -tag -width Ds
 .It Fl f Ns Ar ign-scope
 When rewinding the scope of a block macro, forces the compiler to ignore
-scope violations.  This can seriously mangle the resulting tree.
+scope violations.
+This can seriously mangle the resulting tree.
 .Pq mdoc only
 .
 .It Fl f Ns Ar ign-escape
@@ -220,7 +237,8 @@ and
 .Fl f Ns Ar no-ign-chars .
 .
 .It Fl f Ns Ar ign-errors
-Don't halt when encountering parse errors.  Useful with
+When parsing multiple files, don't halt when one errors out.
+Useful with
 .Fl T Ns Ar lint
 over a large set of manuals passed on the command line.
 .El
@@ -236,7 +254,8 @@ accepts output options:
 .It Fl O Ns Ar style=style.css
 The file
 .Ar style.css
-is used for an external style-sheet.  This must be a valid absolute or
+is used for an external style-sheet.
+This must be a valid absolute or
 relative URI.
 .It Fl O Ns Ar includes=fmt
 The string
@@ -245,9 +264,11 @@ for example,
 .Ar ../src/%I.html ,
 is used as a template for linked header files (usually via the
 .Sq \&In
-macro).  Instances of
+macro).
+Instances of
 .Sq \&%I
-are replaced with the include filename.  The default is not to present a
+are replaced with the include filename.
+The default is not to present a
 hyperlink.
 .It Fl O Ns Ar man=fmt
 The string
@@ -256,12 +277,14 @@ for example,
 .Ar ../html%S/%N.%S.html ,
 is used as a template for linked manuals (usually via the
 .Sq \&Xr
-macro).  Instances of
+macro).
+Instances of
 .Sq \&%N
 and
 .Sq %S
 are replaced with the linked manual's name and section, respectively.
-If no section is included, section 1 is assumed.  The default is not to
+If no section is included, section 1 is assumed.
+The default is not to
 present a hyperlink.
 .El
 .
@@ -275,7 +298,8 @@ a body composed of sections and sub-sections, and a footer.
 The text style of output characters (non-macro characters, punctuation,
 and white-space) is dictated by context.
 .Pp
-White-space is generally stripped from input.  This can be changed with
+White-space is generally stripped from input.
+This can be changed with
 character escapes (specified in
 .Xr mandoc_char 7 )
 or literal modes (specified in
@@ -329,7 +353,8 @@ is rendered as
 .Sq _ Ns \e[bs] Ns c ,
 where
 .Sq \e[bs]
-is the back-space character number 8.  Emboldened characters are rendered as
+is the back-space character number 8.
+Emboldened characters are rendered as
 .Sq c Ns \e[bs] Ns c .
 .Pp
 The special characters documented in
@@ -345,8 +370,9 @@ Output produced by
 .Fl T Ns Ar html
 conforms to HTML-4.01 strict.
 .Pp
-Font styles and page structure are applied using CSS2.  By default, no
-font style is applied to any text, although CSS2 is hard-coded to format
+Font styles and page structure are applied using CSS2.
+By default, no font style is applied to any text,
+although CSS2 is hard-coded to format
 the basic structure of output.
 .Pp
 The
@@ -373,7 +399,7 @@ output modes are identical.
 To page manuals to the terminal:
 .
 .Pp
-.D1 % mandoc \-Wall,error \-fstrict mandoc.1 2>&1 | less
+.D1 % mandoc \-Wall,error \-fstrict mandoc.1 2\*(Gt&1 | less
 .D1 % mandoc mandoc.1 mdoc.3 mdoc.7 | less
 .
 .Pp
@@ -381,7 +407,7 @@ To produce HTML manuals with
 .Ar style.css
 as the style-sheet:
 .Pp
-.D1 % mandoc \-Thtml -Ostyle=style.css mdoc.7 > mdoc.7.html
+.D1 % mandoc \-Thtml -Ostyle=style.css mdoc.7 \*(Gt mdoc.7.html
 .Pp
 To check over a large set of manuals:
 .
@@ -424,7 +450,8 @@ the
 .Xr mdoc 7
 macro does not underline when scoped under an
 .Sq \&It
-in the FILES section.  This behaves correctly in
+in the FILES section.
+This behaves correctly in
 .Nm .
 .
 .It
@@ -466,8 +493,10 @@ The
 escape will revert the font to the previous
 .Sq \ef
 escape, not to the last rendered decoration, which is now dictated by
-CSS instead of hard-coded.  It also will not span past the current
-scope, for the same reason.  Note that in
+CSS instead of hard-coded.
+It also will not span past the current scope,
+for the same reason.
+Note that in
 .Sx ASCII Output
 mode, this will work fine.
 .It
@@ -490,9 +519,9 @@ lists render similarly.
 .
 .
 .Sh SEE ALSO
+.Xr man 7 ,
 .Xr mandoc_char 7 ,
-.Xr mdoc 7 ,
-.Xr man 7
+.Xr mdoc 7
 .
 .Sh AUTHORS
 The
@@ -518,7 +547,8 @@ and
 .Fl T Ns Ar xhtml ,
 the maximum size of an element attribute is determined by
 .Dv BUFSIZ ,
-which is usually 1024 bytes.  Be aware of this when setting long link
+which is usually 1024 bytes.
+Be aware of this when setting long link
 formats, e.g.,
 .Fl O Ns Ar style=really/long/link .
 .
