@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsleep.9,v 1.5 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: tsleep.9,v 1.6 2010/04/08 00:16:28 tedu Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: April 8 2010 $
 .Dt TSLEEP 9
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd process context sleep and wakeup
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
-.Fd #include <sys/proc.h>
+.Fd #include <sys/systm.h>
 .Ft int
 .Fn "tsleep" "void *ident" "int priority" "const char *wmesg" "int timo"
 .Ft int
