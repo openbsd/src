@@ -1,0 +1,18 @@
+.Dd $Mdocdate: April 8 2010 $
+.Dt LI-PUNCT 1
+.Os
+.Sh NAME
+.Nm Li-punct
+.Nd punctuation following a literal macro
+.Sh DESCRIPTION
+.Li before . after Nm
+.Pp
+.Li "before . after Nm"
+.Pp
+.Li . after Nm
+.Pp
+.Li ". after Nm"
+.Pp
+.Li .
+.Pp
+.Li "."
