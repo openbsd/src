@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.22 2010/04/04 12:49:30 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.23 2010/04/08 00:55:25 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
 #define _X86_BUS_H_
 
 #include <sys/mutex.h>
+#include <sys/tree.h>
 
 #include <machine/pio.h>
 
@@ -571,11 +572,6 @@ struct bus_dmamap {
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 
-	void		*_dm_origbuf;	/* pointer to original data */
-	int		_dm_buftype;	/* type of data */
-	/* XXX do we REALLY need the proc stuff */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
-
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
 	/*
@@ -625,9 +621,34 @@ struct sg_cookie {
 	struct mutex	 sg_mtx;
 	struct extent	*sg_ex;
 	void		*sg_hdl;
+
 	void		(*bind_page)(void *, bus_addr_t, paddr_t, int);
 	void		(*unbind_page)(void *, bus_addr_t);
 	void		(*flush_tlb)(void *);
+};
+
+/* 
+ * per-map DVMA page table
+ */
+struct sg_page_entry {
+	SPLAY_ENTRY(sg_page_entry)	spe_node;
+	paddr_t				spe_pa;
+	bus_addr_t			spe_va;
+};
+
+/* for sg_dma this will be in the map's dm_cookie. */
+struct sg_page_map {
+	SPLAY_HEAD(sg_page_tree, sg_page_entry) spm_tree;
+
+	void			*spm_origbuf;	/* pointer to original data */
+	int			 spm_buftype;	/* type of data */
+	struct proc		*spm_proc;	/* proc that owns the mapping */
+
+	int			 spm_maxpage;	/* Size of allocated page map */
+	int			 spm_pagecnt;	/* Number of entries in use */
+	bus_addr_t		 spm_start;	/* dva when bound */
+	bus_size_t		 spm_size;	/* size of bound map */
+	struct sg_page_entry	 spm_map[1];
 };
 
 struct sg_cookie	*sg_dmatag_init(char *, void *, bus_addr_t, bus_size_t,

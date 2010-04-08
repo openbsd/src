@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.51 2009/07/30 21:39:15 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.52 2010/04/08 00:55:25 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
 #define _I386_BUS_H_
 
 #include <sys/mutex.h>
+#include <sys/tree.h>
 
 #include <machine/pio.h>
 
@@ -456,6 +457,13 @@ void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 #define	BUS_DMA_ZERO		0x1000	/* dmamem_alloc return zeroed mem */
 #define	BUS_DMA_SG		0x2000	/* Internal. memory is for SG map */
 
+/* types for _dm_buftype */
+#define	BUS_BUFTYPE_INVALID	0
+#define	BUS_BUFTYPE_LINEAR	1
+#define	BUS_BUFTYPE_MBUF	2
+#define	BUS_BUFTYPE_UIO		3
+#define	BUS_BUFTYPE_RAW		4
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct proc;
@@ -629,6 +637,30 @@ struct sg_cookie {
 	void		(*bind_page)(void *, bus_addr_t, paddr_t, int);
 	void		(*unbind_page)(void *, bus_addr_t);
 	void		(*flush_tlb)(void *);
+};
+
+/* 
+ * per-map DVMA page table
+ */
+struct sg_page_entry {
+	SPLAY_ENTRY(sg_page_entry)	spe_node;
+	paddr_t				spe_pa;
+	bus_addr_t			spe_va;
+};
+
+/* for sg_dma this will be in the map's dm_cookie. */
+struct sg_page_map {
+	SPLAY_HEAD(sg_page_tree, sg_page_entry) spm_tree;
+
+	void			*spm_origbuf;	/* pointer to original data */
+	int			 spm_buftype;	/* type of data */
+	struct proc		*spm_proc;	/* proc that owns the mapping */
+
+	int			 spm_maxpage;	/* Size of allocated page map */
+	int			 spm_pagecnt;	/* Number of entries in use */
+	bus_addr_t		 spm_start;	/* dva when bound */
+	bus_size_t		 spm_size;	/* size of bound map */
+	struct sg_page_entry	 spm_map[1];
 };
 
 struct sg_cookie	*sg_dmatag_init(char *, void *, bus_addr_t, bus_size_t,
