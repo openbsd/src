@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.242 2010/03/22 22:02:08 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.243 2010/04/08 16:59:49 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2010 $
+.Dd $Mdocdate: April 8 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -922,7 +922,10 @@ Add
 if port is an older autoconf port that does not recognize --sysconfdir.
 Add
 .Sq autoconf
-if autoconf needs to be rerun first.
+if autoconf needs to be rerun first,
+but set
+.Sq no-autoheader
+to prevent autoheader from running.
 Add
 .Sq automake
 if automake may need to be rerun.
