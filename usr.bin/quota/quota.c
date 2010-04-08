@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.29 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.30 2010/04/08 02:43:57 william Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -615,13 +615,13 @@ getnfsquota(struct statfs *fst, struct fstab *fs, struct quotause *qup,
 			/* blocks*/
 		dqp->dqb_bhardlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE;
+		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 		dqp->dqb_bsoftlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE;
+		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 		dqp->dqb_curblocks =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE;
+		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 			/* inodes */
 		dqp->dqb_ihardlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
