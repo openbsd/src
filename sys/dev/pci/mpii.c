@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.14 2010/04/09 15:50:14 marco Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.15 2010/04/09 17:00:55 marco Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -3433,11 +3433,8 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 			break;
 		case MPII_EVENT_SAS_TOPO_PS_RC_MISSING:
 			if (!(dev = mpii_find_dev(sc,
-			    letoh16(pe->dev_handle)))) {
-				printf("%s: nothing known about drive %#x\n",
-				    DEVNAME(sc));
+			    letoh16(pe->dev_handle))))
 				break;
-			}
 			mpii_remove_dev(sc, dev);
 			if (sc->sc_scsibus) {
 				SET(dev->flags, MPII_DF_DETACH);
