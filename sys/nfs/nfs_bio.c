@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.68 2009/10/19 22:24:18 jsg Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.69 2010/04/09 22:08:04 oga Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ again:
 		on = 0;
 		break;
 	    default:
-		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
+		panic("nfsbioread: type %x unexpected\n", vp->v_type);
 		break;
 	    }
 
@@ -235,7 +235,7 @@ again:
 		n = 0;
 		break;
 	    default:
-		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
+		panic("nfsbioread: type %x unexpected\n", vp->v_type);
 	    }
 	    if (got_buf)
 		brelse(bp);
@@ -612,7 +612,7 @@ nfs_doio(struct buf *bp, struct proc *p)
 		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
 		break;
 	    default:
-		printf("nfs_doio:  type %x unexpected\n", vp->v_type);
+		panic("nfs_doio:  type %x unexpected\n", vp->v_type);
 		break;
 	    };
 	    if (error) {
