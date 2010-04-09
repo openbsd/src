@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.111 2010/04/02 18:04:42 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.112 2010/04/09 17:36:08 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -950,6 +950,7 @@ pmap_hash_remove(struct pte_desc *pted)
 	struct pte_64 *ptp64;
 	struct pte_32 *ptp32;
 	int sr, idx;
+	int s;
 
 	sr = ptesr(pm->pm_sr, va);
 	idx = pteidx(sr, va);
@@ -961,6 +962,7 @@ pmap_hash_remove(struct pte_desc *pted)
 		int entry = PTED_PTEGIDX(pted); 
 		ptp64 = pmap_ptable64 + (idx * 8);
 		ptp64 += entry; /* increment by entry into pteg */
+		s = ppc_intr_disable();
 		pmap_hash_lock(entry);
 		/*
 		 * We now have the pointer to where it will be, if it is
@@ -973,10 +975,12 @@ pmap_hash_remove(struct pte_desc *pted)
 			pte_zap((void*)ptp64, pted);
 		}
 		pmap_hash_unlock(entry);
+		ppc_intr_enable(s);
 	} else {
 		int entry = PTED_PTEGIDX(pted); 
 		ptp32 = pmap_ptable32 + (idx * 8);
 		ptp32 += entry; /* increment by entry into pteg */
+		s = ppc_intr_disable();
 		pmap_hash_lock(entry);
 		/*
 		 * We now have the pointer to where it will be, if it is
@@ -989,6 +993,7 @@ pmap_hash_remove(struct pte_desc *pted)
 			pte_zap((void*)ptp32, pted);
 		}
 		pmap_hash_unlock(entry);
+		ppc_intr_enable(s);
 	}
 }
 
@@ -2422,7 +2427,7 @@ pte_insert64(struct pte_desc *pted)
 	int secondary;
 	struct pte_64 *ptp64;
 	int sr, idx;
-	int i;
+	int i, s;
 
 
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
@@ -2449,8 +2454,11 @@ pte_insert64(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
 			continue;
-		if (pmap_hash_lock_try(i) == 0)
+		s = ppc_intr_disable();
+		if (pmap_hash_lock_try(i) == 0) {
+			ppc_intr_enable(s);
 			continue;
+		}
 
 		/* not valid, just load */
 		pted->pted_va |= i;
@@ -2462,6 +2470,7 @@ pte_insert64(struct pte_desc *pted)
 		__asm volatile ("sync");
 
 		pmap_hash_unlock(i);
+		ppc_intr_enable(s);
 		return;
 	}
 	/* try fill of secondary hash */
@@ -2469,8 +2478,11 @@ pte_insert64(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
 			continue;
-		if (pmap_hash_lock_try(i) == 0)
+		s = ppc_intr_disable();
+		if (pmap_hash_lock_try(i) == 0) {
+			ppc_intr_enable(s);
 			continue;
+		}
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
 		ptp64[i].pte_hi =
@@ -2481,6 +2493,7 @@ pte_insert64(struct pte_desc *pted)
 		__asm volatile ("sync");
 
 		pmap_hash_unlock(i);
+		ppc_intr_enable(s);
 		return;
 	}
 
@@ -2489,8 +2502,11 @@ busy:
 	__asm__ volatile ("mftb %0" : "=r"(off));
 	secondary = off & 8;
 
-	if (pmap_hash_lock_try(off & 7) == 0)
+	s = ppc_intr_disable();
+	if (pmap_hash_lock_try(off & 7) == 0) {
+		ppc_intr_enable(s);
 		goto busy;
+	}
 
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
@@ -2533,6 +2549,7 @@ busy:
 	ptp64->pte_hi |= PTE_VALID_64;
 
 	pmap_hash_unlock(off & 7);
+	ppc_intr_enable(s);
 }
 
 void
@@ -2542,7 +2559,7 @@ pte_insert32(struct pte_desc *pted)
 	int secondary;
 	struct pte_32 *ptp32;
 	int sr, idx;
-	int i;
+	int i, s;
 
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
 	idx = pteidx(sr, pted->pted_va);
@@ -2570,8 +2587,11 @@ pte_insert32(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
 			continue;
-		if (pmap_hash_lock_try(i) == 0)
+		s = ppc_intr_disable();
+		if (pmap_hash_lock_try(i) == 0) {
+			ppc_intr_enable(s);
 			continue;
+		}
 
 		/* not valid, just load */
 		pted->pted_va |= i;
@@ -2582,6 +2602,7 @@ pte_insert32(struct pte_desc *pted)
 		__asm volatile ("sync");
 
 		pmap_hash_unlock(i);
+		ppc_intr_enable(s);
 		return;
 	}
 	/* try fill of secondary hash */
@@ -2589,8 +2610,11 @@ pte_insert32(struct pte_desc *pted)
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
 			continue;
-		if (pmap_hash_lock_try(i) == 0)
+		s = ppc_intr_disable();
+		if (pmap_hash_lock_try(i) == 0) {
+			ppc_intr_enable(s);
 			continue;
+		}
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
 		ptp32[i].pte_hi =
@@ -2601,6 +2625,7 @@ pte_insert32(struct pte_desc *pted)
 		__asm volatile ("sync");
 
 		pmap_hash_unlock(i);
+		ppc_intr_enable(s);
 		return;
 	}
 
@@ -2608,8 +2633,11 @@ pte_insert32(struct pte_desc *pted)
 busy:
 	__asm__ volatile ("mftb %0" : "=r"(off));
 	secondary = off & 8;
-	if (pmap_hash_lock_try(off & 7) == 0)
+	s = ppc_intr_disable();
+	if (pmap_hash_lock_try(off & 7) == 0) {
+		ppc_intr_enable(s);
 		goto busy;
+	}
 
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
@@ -2642,6 +2670,7 @@ busy:
 	ptp32->pte_hi |= PTE_VALID_32;
 
 	pmap_hash_unlock(off & 7);
+	ppc_intr_enable(s);
 }
 
 #ifdef DEBUG_PMAP
