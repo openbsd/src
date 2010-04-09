@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.30 2009/03/01 18:59:50 otto Exp $
+.\"	$OpenBSD: bpf.4,v 1.31 2010/04/09 16:25:21 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: March 1 2009 $
+.Dd $Mdocdate: April 9 2010 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -428,9 +428,6 @@ file descriptor.
 .Bl -tag -width Ds -compact
 .It Dv FIONREAD Fa "int *"
 Returns the number of bytes that are immediately available for reading.
-.Pp
-.It Dv SIOCGIFADDR Fa "struct ifreq *"
-Returns the address associated with the interface.
 .Pp
 .It Dv FIONBIO Fa "int *"
 Sets or clears non-blocking I/O.
