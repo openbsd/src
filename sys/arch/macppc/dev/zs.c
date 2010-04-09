@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.18 2009/10/01 20:19:18 kettenis Exp $	*/
+/*	$OpenBSD: zs.c,v 1.19 2010/04/09 17:01:30 jasper Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -1062,14 +1062,14 @@ zscnprobe(cp)
 	if ((pkg = OF_instance_to_package(stdin)) == -1)
 		return;
 
-	memset(name, 0, sizeof(name));
+	bzero(name, sizeof(name));
 	if (OF_getprop(pkg, "device_type", name, sizeof(name)) == -1)
 		return;
 
 	if (strcmp(name, "serial") != 0)
 		return;
 
-	memset(name, 0, sizeof(name));
+	bzero(name, sizeof(name));
 	if (OF_getprop(pkg, "name", name, sizeof(name)) == -1)
 		return;
 
@@ -1099,7 +1099,7 @@ zscninit(cp)
 	if ((escc_ch = OF_instance_to_package(stdin)) == -1)
 		return;
 
-	memset(name, 0, sizeof(name));
+	bzero(name, sizeof(name));
 	if (OF_getprop(escc_ch, "name", name, sizeof(name)) == -1)
 		return;
 

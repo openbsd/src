@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.14 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.15 2010/04/09 17:01:30 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -435,7 +435,7 @@ tpms_enable(void *v)
 	sc->sc_status |= TPMS_ENABLED;
 	sc->sc_status &= ~TPMS_VALID;
 	sc->sc_buttons = 0;
-	memset(sc->sc_sample, 0, sizeof(sc->sc_sample));
+	bzero(sc->sc_sample, sizeof(sc->sc_sample));
 
 	return (uhidev_open(&sc->sc_hdev));
 }
@@ -497,7 +497,7 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 		sc->sc_x = sc->sc_y = -1;
 		sc->sc_x_raw = sc->sc_y_raw = -1;
 		memcpy(sc->sc_prev, sc->sc_sample, sizeof(sc->sc_prev));
-		memset(sc->sc_acc, 0, sizeof(sc->sc_acc));
+		bzero(sc->sc_acc, sizeof(sc->sc_acc));
 		return;
 	}
 	/* Accumulate the sensor change while keeping it nonnegative. */
@@ -540,7 +540,7 @@ reorder_sample(struct tpms_softc *sc, unsigned char *to, unsigned char *from)
 	if (sc->sc_type == GEYSER2) {
 		int j;
 
-		memset(to, 0, TPMS_SENSORS);
+		bzero(to, TPMS_SENSORS);
 		for (i = 0, j = 19; i < 20; i += 2, j += 3) {
 			to[i] = from[j];
 			to[i + 1] = from[j + 1];
@@ -596,7 +596,7 @@ compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz,
 	/* Check the number of fingers and if we have detected a position. */
 	if (x_det == 0 && y_det == 0) {
 		/* No position detected, resetting. */
-		memset(sc->sc_acc, 0, sizeof(sc->sc_acc));
+		bzero(sc->sc_acc, sizeof(sc->sc_acc));
 		sc->sc_x_raw = sc->sc_y_raw = sc->sc_x = sc->sc_y = -1;
 	} else if (x_det > 0 && y_det > 0) {
 		switch (fingers) {

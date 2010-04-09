@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2c.c,v 1.9 2006/02/14 20:54:45 kettenis Exp $	*/
+/*	$OpenBSD: maci2c.c,v 1.10 2010/04/09 17:01:30 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -39,10 +39,10 @@ maciic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 		if (OF_getprop(node, "reg", &reg, sizeof reg) != sizeof reg &&
 		    OF_getprop(node, "i2c-address", &reg, sizeof reg) != sizeof reg)
 			continue;
-		memset(&ia, 0, sizeof ia);
+		bzero(&ia, sizeof ia);
 		ia.ia_tag = iba->iba_tag;
 		ia.ia_addr = (reg >> 1);
-		memset(name, 0, sizeof name);
+		bzero(name, sizeof name);
 		if (OF_getprop(node, "compatible", &name,
 		    sizeof name) && name[0])
 			ia.ia_name = name;

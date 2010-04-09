@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.25 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.26 2010/04/09 17:01:30 jasper Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -283,7 +283,7 @@ mesh_match(struct device *parent, void *vcf, void *aux)
 	if (strcmp(ca->ca_name, "mesh") == 0)
 		return 1;
 
-	memset(compat, 0, sizeof(compat));
+	bzero(compat, sizeof(compat));
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 	if (strcmp(compat, "chrp,mesh0") == 0)
 		return 1;
