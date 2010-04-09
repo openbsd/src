@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.195 2010/03/03 20:57:28 mk Exp $g
+#	$OpenBSD: GENERIC,v 1.196 2010/04/09 19:24:17 jasper Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -154,6 +154,7 @@ wi*		at macobio?	# airport
 macgpio*	at macobio?	# GPIO, PMU interrupt router.
 macgpio*	at macgpio?	# GPIO, PMU interrupt router.
 sysbutton*	at macgpio?	# Xserve system id button.
+pgs*		at macgpio?	# Programmer Switch.
 akbd*		at adb?		# ADB keyboard
 wskbd*		at akbd? mux 1
 ams*		at adb?		# ADB mouse

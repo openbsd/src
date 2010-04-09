@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.61 2009/09/07 19:29:29 miod Exp $
+#	$OpenBSD: files.macppc,v 1.62 2010/04/09 19:24:17 jasper Exp $
 
 #
 # macppc-specific configuration info
@@ -232,6 +232,10 @@ file	arch/macppc/dev/macgpio.c			macgpio
 device	sysbutton {}
 attach	sysbutton at macgpio
 file	arch/macppc/dev/sysbutton.c
+
+device	pgs {}
+attach	pgs at macgpio
+file	arch/macppc/dev/pgs.c
 
 attach	wdc at mediabay, macobio, kauaiata with wdc_obio
 file	arch/macppc/dev/wdc_obio.c			wdc_obio
