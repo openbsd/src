@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.138 2010/04/06 01:24:43 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.139 2010/04/09 14:06:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1278,7 +1278,6 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 
 	if (mpi_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		mpi_put_ccb(sc, ccb);
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
