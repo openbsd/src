@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.49 2010/04/06 19:40:51 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.50 2010/04/10 07:57:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -68,10 +68,12 @@
 
 #include <dev/rndvar.h>
 
+#define RAL_DEBUG
+
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2860_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rt2860_debug >= (n)) printf x; } while (0)
-int rt2860_debug = 1;
+int rt2860_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
@@ -117,7 +119,7 @@ uint8_t		rt2860_mcu_bbp_read(struct rt2860_softc *, uint8_t);
 void		rt2860_rf_write(struct rt2860_softc *, uint8_t, uint32_t);
 uint8_t		rt3090_rf_read(struct rt2860_softc *, uint8_t);
 void		rt3090_rf_write(struct rt2860_softc *, uint8_t, uint8_t);
-int		rt2860_mcu_cmd(struct rt2860_softc *, uint8_t, uint16_t);
+int		rt2860_mcu_cmd(struct rt2860_softc *, uint8_t, uint16_t, int);
 void		rt2860_enable_mrr(struct rt2860_softc *);
 void		rt2860_set_txpreamble(struct rt2860_softc *);
 void		rt2860_set_basicrates(struct rt2860_softc *);
@@ -125,6 +127,7 @@ void		rt2860_select_chan_group(struct rt2860_softc *, int);
 void		rt2860_set_chan(struct rt2860_softc *, u_int);
 void		rt3090_set_chan(struct rt2860_softc *, u_int);
 int		rt3090_rf_init(struct rt2860_softc *);
+void		rt3090_rf_wakeup(struct rt2860_softc *);
 int		rt3090_filter_calib(struct rt2860_softc *, uint8_t, uint8_t,
 		    uint8_t *);
 void		rt3090_rf_setup(struct rt2860_softc *);
@@ -219,7 +222,11 @@ rt2860_attach(void *xsc, int id)
 	}
 	sc->mac_ver = tmp >> 16;
 	sc->mac_rev = tmp & 0xffff;
-
+#ifdef RAL_DEBUG
+	/* temporarily enable debug for >=RT3090 */
+	if (sc->mac_ver >= 0x3090)
+		rt2860_debug = 1;
+#endif
 	if (sc->mac_ver != 0x2860 &&
 	    (id == PCI_PRODUCT_RALINK_RT2890 ||
 	     id == PCI_PRODUCT_RALINK_RT2790 ||
@@ -729,9 +736,11 @@ rt2860_media_change(struct ifnet *ifp)
 		sc->fixed_ridx = ridx;
 	}
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+	    (IFF_UP | IFF_RUNNING)) {
+		rt2860_stop(ifp, 0);
 		rt2860_init(ifp);
-
+	}
 	return 0;
 }
 
@@ -1716,6 +1725,7 @@ rt2860_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+			rt2860_stop(ifp, 0);
 			rt2860_init(ifp);
 			ifp->if_oerrors++;
 			return;
@@ -1789,8 +1799,10 @@ rt2860_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		    (IFF_UP | IFF_RUNNING)) {
+			rt2860_stop(ifp, 0);
 			rt2860_init(ifp);
+		}
 		error = 0;
 	}
 
@@ -1824,7 +1836,7 @@ rt2860_mcu_bbp_write(struct rt2860_softc *sc, uint8_t reg, uint8_t val)
 	    RT2860_BBP_CSR_KICK | reg << 8 | val);
 	RAL_BARRIER_WRITE(sc);
 
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0, 0);
 	DELAY(1000);
 }
 
@@ -1849,7 +1861,7 @@ rt2860_mcu_bbp_read(struct rt2860_softc *sc, uint8_t reg)
 	    RT2860_BBP_CSR_KICK | RT2860_BBP_CSR_READ | reg << 8);
 	RAL_BARRIER_WRITE(sc);
 
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0);
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_BBP, 0, 0);
 	DELAY(1000);
 
 	for (ntries = 0; ntries < 100; ntries++) {
@@ -1945,9 +1957,11 @@ rt3090_rf_write(struct rt2860_softc *sc, uint8_t reg, uint8_t val)
  * Send a command to the 8051 microcontroller unit.
  */
 int
-rt2860_mcu_cmd(struct rt2860_softc *sc, uint8_t cmd, uint16_t arg)
+rt2860_mcu_cmd(struct rt2860_softc *sc, uint8_t cmd, uint16_t arg, int wait)
 {
-	int ntries;
+	int slot, ntries;
+	uint32_t tmp;
+	uint8_t cid;
 
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (!(RAL_READ(sc, RT2860_H2M_MAILBOX) & RT2860_H2M_BUSY))
@@ -1957,12 +1971,39 @@ rt2860_mcu_cmd(struct rt2860_softc *sc, uint8_t cmd, uint16_t arg)
 	if (ntries == 100)
 		return EIO;
 
-	RAL_WRITE(sc, RT2860_H2M_MAILBOX,
-	    RT2860_H2M_BUSY | RT2860_TOKEN_NO_INTR << 16 | arg);
+	cid = wait ? cmd : RT2860_TOKEN_NO_INTR;
+	RAL_WRITE(sc, RT2860_H2M_MAILBOX, RT2860_H2M_BUSY | cid << 16 | arg);
 	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_HOST_CMD, cmd);
 
-	return 0;
+	if (!wait)
+		return 0;
+	/* wait for the command to complete */
+	for (ntries = 0; ntries < 200; ntries++) {
+		tmp = RAL_READ(sc, RT2860_H2M_MAILBOX_CID);
+		/* find the command slot */
+		for (slot = 0; slot < 4; slot++, tmp >>= 8)
+			if ((tmp & 0xff) == cid)
+				break;
+		if (slot < 4)
+			break;
+		DELAY(100);
+	}
+	if (ntries == 200) {
+		/* clear command and status */
+		RAL_WRITE(sc, RT2860_H2M_MAILBOX_STATUS, 0xffffffff);
+		RAL_WRITE(sc, RT2860_H2M_MAILBOX_CID, 0xffffffff);
+		return ETIMEDOUT;
+	}
+	/* get command status (1 means success) */
+	tmp = RAL_READ(sc, RT2860_H2M_MAILBOX_STATUS);
+	tmp = (tmp >> (slot * 8)) & 0xff;
+	DPRINTF(("MCU command=0x%02x slot=%d status=0x%02x\n",
+	    cmd, slot, tmp));
+	/* clear command and status */
+	RAL_WRITE(sc, RT2860_H2M_MAILBOX_STATUS, 0xffffffff);
+	RAL_WRITE(sc, RT2860_H2M_MAILBOX_CID, 0xffffffff);
+	return (tmp == 1) ? 0 : EIO;
 }
 
 void
@@ -2326,6 +2367,59 @@ rt3090_rf_init(struct rt2860_softc *sc)
 	return 0;
 }
 
+void
+rt3090_rf_wakeup(struct rt2860_softc *sc)
+{
+	uint32_t tmp;
+	uint8_t rf;
+
+	if (sc->mac_ver == 0x3593) {
+		/* enable VCO */
+		rf = rt3090_rf_read(sc, 1);
+		rt3090_rf_write(sc, 1, rf | 0x01);
+		/* initiate VCO calibration */
+		rf = rt3090_rf_read(sc, 3);
+		rt3090_rf_write(sc, 3, rf | 0x80);
+		/* enable VCO bias current control */
+		rf = rt3090_rf_read(sc, 6);
+		rt3090_rf_write(sc, 6, rf | 0x40);
+		/* initiate res calibration */
+		rf = rt3090_rf_read(sc, 2);
+		rt3090_rf_write(sc, 2, rf | 0x80);
+		/* set reference current control */
+		rf = rt3090_rf_read(sc, 22);
+		rt3090_rf_write(sc, 22, (rf & ~0xe0) | 0x80);
+		/* enable RX CTB */
+		rf = rt3090_rf_read(sc, 46);
+		rt3090_rf_write(sc, 46, rf | 0x20);
+		rf = rt3090_rf_read(sc, 20);
+		rt3090_rf_write(sc, 20, rf & ~0xee);
+
+		rf = rt3090_rf_read(sc, 27);
+		rf &= ~0x77;
+		if (sc->mac_rev < 0x0211)
+			rf |= 0x03;
+		rt3090_rf_write(sc, 27, rf);
+	} else {
+		/* enable RF block */
+		rf = rt3090_rf_read(sc, 1);
+		rt3090_rf_write(sc, 1, rf | 0x01);
+		/* enable VCO bias current control */
+		rf = rt3090_rf_read(sc, 7);
+		rt3090_rf_write(sc, 7, rf | 0x30);
+		rf = rt3090_rf_read(sc, 9);
+		rt3090_rf_write(sc, 9, rf | 0x0e);
+		/* enable RX CTB */
+		rf = rt3090_rf_read(sc, 21);
+		rt3090_rf_write(sc, 21, rf | 0x80);
+	}
+	if (sc->patch_dac && sc->mac_rev < 0x0211) {
+		tmp = RAL_READ(sc, RT3070_LDO_CFG0);
+		tmp = (tmp & ~0x1f000000) | 0x0d000000;
+		RAL_WRITE(sc, RT3070_LDO_CFG0, tmp);
+	}
+}
+
 int
 rt3090_filter_calib(struct rt2860_softc *sc, uint8_t init, uint8_t target,
     uint8_t *val)
@@ -2424,8 +2518,8 @@ rt3090_rf_setup(struct rt2860_softc *sc)
 void
 rt2860_set_leds(struct rt2860_softc *sc, uint16_t which)
 {
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LEDS,
-	    which | (sc->leds & 0x7f));
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LEDS,
+	    which | (sc->leds & 0x7f), 0);
 }
 
 /*
@@ -3153,8 +3247,6 @@ rt2860_init(struct ifnet *ifp)
 		sc->sc_flags |= RT2860_ENABLED;
 	}
 
-	rt2860_stop(ifp, 0);
-
 	if (sc->rfswitch) {
 		/* hardware has a radio switch on GPIO pin 2 */
 		if (!(RAL_READ(sc, RT2860_GPIO_CTRL) & (1 << 2))) {
@@ -3221,6 +3313,8 @@ rt2860_init(struct ifnet *ifp)
 	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_SYS_CTRL, 0xe00);
 
+	RAL_WRITE(sc, RT2860_PWR_PIN_CFG, RT2860_IO_RA_PE | RT2860_IO_RF_PE);
+
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, RT2860_BBP_HRST | RT2860_MAC_SRST);
 	RAL_BARRIER_WRITE(sc);
 	RAL_WRITE(sc, RT2860_MAC_SYS_CTRL, 0);
@@ -3252,6 +3346,9 @@ rt2860_init(struct ifnet *ifp)
 	/* clear Host to MCU mailbox */
 	RAL_WRITE(sc, RT2860_H2M_BBPAGENT, 0);
 	RAL_WRITE(sc, RT2860_H2M_MAILBOX, 0);
+
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_RFRESET, 0, 0);
+	DELAY(1000);
 
 	if ((error = rt2860_bbp_init(sc)) != 0) {
 		rt2860_stop(ifp, 1);
@@ -3317,12 +3414,18 @@ rt2860_init(struct ifnet *ifp)
 		rt3090_set_rx_antenna(sc, 0);
 
 	/* send LEDs operating mode to microcontroller */
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED1, sc->led[0]);
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED2, sc->led[1]);
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED3, sc->led[2]);
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED1, sc->led[0], 0);
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED2, sc->led[1], 0);
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED3, sc->led[2], 0);
 
 	if (sc->mac_ver >= 0x3090)
 		rt3090_rf_init(sc);
+
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_SLEEP, 0x02ff, 1);
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_WAKEUP, 0, 1);
+
+	if (sc->mac_ver >= 0x3090)
+		rt3090_rf_wakeup(sc);
 
 	/* disable non-existing Rx chains */
 	bbp3 = rt2860_mcu_bbp_read(sc, 3);
@@ -3351,7 +3454,7 @@ rt2860_init(struct ifnet *ifp)
 	rt2860_switch_chan(sc, ic->ic_ibss_chan);
 
 	/* reset RF from MCU */
-	(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_RFRESET, 0);
+	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_RFRESET, 0, 0);
 
 	/* set RTS threshold */
 	tmp = RAL_READ(sc, RT2860_TX_RTS_CFG);
@@ -3378,7 +3481,7 @@ rt2860_init(struct ifnet *ifp)
 	RAL_WRITE(sc, RT2860_INT_MASK, 0x3fffc);
 
 	if (sc->sc_flags & RT2860_ADVANCED_PS)
-		(void)rt2860_mcu_cmd(sc, RT2860_MCU_CMD_PSLEVEL, sc->pslevel);
+		rt2860_mcu_cmd(sc, RT2860_MCU_CMD_PSLEVEL, sc->pslevel, 0);
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
