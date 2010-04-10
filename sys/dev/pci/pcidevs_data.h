@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1546 2010/04/05 14:07:39 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1547 2010/04/10 08:34:48 damien Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6444,7 +6444,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "21145",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6005_IPA_1,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1,
 	    "Centrino Advanced-N 6205",
 	},
 	{
@@ -6454,6 +6454,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_2,
 	    "WiFi Link 1000",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2,
+	    "Centrino Advanced-N 6205",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1,
