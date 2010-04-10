@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.11 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.12 2010/04/10 13:46:12 oga Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -57,6 +57,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	vaddr_t endva, va = (vaddr_t)buf;
 	paddr_t pa;
+	pmap_t pmap;
 	bus_addr_t dmaoffset, sgva;
 	bus_size_t sgvalen, boundary, alignment;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
@@ -79,6 +80,10 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		    dmaoffset, buflen);
 	}
 #endif
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
 
 	/*
 	 * Allocate the necessary virtual address space for the
@@ -157,10 +162,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	for (; va < endva; va += PAGE_SIZE, pteidx++,
 	     pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
 		/* Get the physical address for this segment. */
-		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
-		else
-			pa = vtophys(va);
+		(void)pmap_extract(pmap, va, &pa);
 
 		/* Load the current PTE with this page. */
 		*pte = (pa >> SGPTE_PGADDR_SHIFT) | SGPTE_VALID;

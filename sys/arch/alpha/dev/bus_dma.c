@@ -1,4 +1,4 @@
-/* $OpenBSD: bus_dma.c,v 1.27 2010/03/29 19:21:58 oga Exp $ */
+/* $OpenBSD: bus_dma.c,v 1.28 2010/04/10 13:46:12 oga Exp $ */
 /* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
@@ -137,9 +137,15 @@ _bus_dmamap_load_buffer_direct(t, map, buf, buflen, p, flags,
 	int first;
 {
 	bus_size_t sgsize;
+	pmap_t pmap;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
@@ -148,11 +154,7 @@ _bus_dmamap_load_buffer_direct(t, map, buf, buflen, p, flags,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
-			pmap_extract(p->p_vmspace->vm_map.pmap, vaddr,
-				&curaddr);
-		else
-			curaddr = vtophys(vaddr);
+		pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * If we're beyond the current DMA window, indicate
