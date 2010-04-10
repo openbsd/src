@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.43 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.44 2010/04/10 16:17:38 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2483,12 +2483,6 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 void
 aacminphys(struct buf *bp, struct scsi_link *sl)
 {
-#if 0
-	u_int8_t *buf = bp->b_data;
-	paddr_t pa;
-	long off;
-#endif
-
 	AAC_DPRINTF(AAC_D_MISC, ("aacminphys(0x%x)\n", bp));
 
 #if 0	/* As this is way more than MAXPHYS it's really not necessary. */
@@ -2496,14 +2490,6 @@ aacminphys(struct buf *bp, struct scsi_link *sl)
 		bp->b_bcount = ((AAC_MAXOFFSETS - 1) * PAGE_SIZE);
 #endif
 
-#if 0
-	for (off = PAGE_SIZE, pa = vtophys(buf); off < bp->b_bcount;
-	    off += PAGE_SIZE)
-		if (pa + off != vtophys(buf + off)) {
-			bp->b_bcount = off;
-			break;
-		}
-#endif
 	minphys(bp);
 }
 
