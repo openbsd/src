@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1546 2010/04/05 14:07:39 damien Exp $
+$OpenBSD: pcidevs,v 1.1547 2010/04/10 08:34:48 damien Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2184,9 +2184,10 @@ product IMS TT3D		0x9135	Twin Turbo 3D
 /* Intel products */
 product INTEL EESISA		0x0008	EES ISA
 product INTEL 21145		0x0039	21145
-product INTEL WIFI_LINK_6005_IPA_1	0x0082	Centrino Advanced-N 6205
+product INTEL WIFI_LINK_6005_2X2_1	0x0082	Centrino Advanced-N 6205
 product INTEL WIFI_LINK_1000_1	0x0083	WiFi Link 1000
 product INTEL WIFI_LINK_1000_2	0x0084	WiFi Link 1000
+product INTEL WIFI_LINK_6005_2X2_2	0x0085	Centrino Advanced-N 6205
 product INTEL WIFI_LINK_6050_2X2_1	0x0087	Centrino Advanced-N 6250
 product INTEL WIFI_LINK_6050_2X2_2	0x0089	Centrino Advanced-N 6250
 product INTEL 80303		0x0309	80303 IOP
