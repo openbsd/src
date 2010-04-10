@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.87 2010/04/04 08:55:50 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.88 2010/04/10 08:37:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -84,7 +84,8 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6005_IPA_1 }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2 }
 };
 
 int		iwn_match(struct device *, void *, void *);
@@ -614,22 +615,15 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 	case IWN_HW_REV_TYPE_6000:
 		sc->sc_hal = &iwn5000_hal;
 		sc->limits = &iwn6000_sensitivity_limits;
+		sc->fwname = "iwn-6000";
 		switch (pid) {
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1:
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2:
-			sc->fwname = "iwn-6000";
 			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
 			sc->txchainmask = IWN_ANT_BC;
 			sc->rxchainmask = IWN_ANT_BC;
 			break;
-		case PCI_PRODUCT_INTEL_WIFI_LINK_6005_IPA_1:
-			sc->fwname = "iwn-6005";
-			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
-			sc->txchainmask = IWN_ANT_AB;
-			sc->rxchainmask = IWN_ANT_AB;
-			break;
 		default:
-			sc->fwname = "iwn-6000";
 			sc->txchainmask = IWN_ANT_ABC;
 			sc->rxchainmask = IWN_ANT_ABC;
 			break;
@@ -639,6 +633,13 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		sc->sc_hal = &iwn5000_hal;
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6050";
+		sc->txchainmask = IWN_ANT_AB;
+		sc->rxchainmask = IWN_ANT_AB;
+		break;
+	case IWN_HW_REV_TYPE_6005:
+		sc->sc_hal = &iwn5000_hal;
+		sc->limits = &iwn6000_sensitivity_limits;
+		sc->fwname = "iwn-6005";
 		sc->txchainmask = IWN_ANT_AB;
 		sc->rxchainmask = IWN_ANT_AB;
 		break;
@@ -5277,8 +5278,7 @@ iwn_apm_init(struct iwn_softc *sc)
 		IWN_CLRBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);
 
 	if (sc->hw_type != IWN_HW_REV_TYPE_4965 &&
-	    sc->hw_type != IWN_HW_REV_TYPE_6000 &&
-	    sc->hw_type != IWN_HW_REV_TYPE_6050)
+	    sc->hw_type <= IWN_HW_REV_TYPE_1000)
 		IWN_SETBITS(sc, IWN_ANA_PLL, IWN_ANA_PLL_INIT);
 
 	/* Wait for clock stabilization before accessing prph. */
