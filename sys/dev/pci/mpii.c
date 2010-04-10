@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.15 2010/04/09 17:00:55 marco Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.16 2010/04/10 12:42:17 marco Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -4948,6 +4948,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 	    &hdr, 1, ppg, sizeof(*ppg)) != 0) {
 		printf("%s: unable to fetch raid drive page 0\n",
 		    DEVNAME(sc));
+		free(ppg, M_TEMP);
 		return (EINVAL);
 	}
 
@@ -4955,6 +4956,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 
 	if ((dev = mpii_find_dev(sc, letoh16(ppg->dev_handle))) == NULL) {
 		bd->bd_status = BIOC_SDINVALID;
+		free(ppg, M_TEMP);
 		return (0);
 	}
 
@@ -4998,6 +5000,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 	    sizeof(ppg->product_id));
 	scsi_strvis(bd->bd_serial, ppg->serial, sizeof(ppg->serial));
 
+	free(ppg, M_TEMP);
 	return (0);
 }
 
