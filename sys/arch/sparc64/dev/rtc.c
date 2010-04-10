@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.7 2009/01/07 13:01:39 kettenis Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.8 2010/04/10 12:52:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,7 +157,7 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	model = getpropstring(ea->ea_node, "model");
 	if (*model == '\0')
 		model = getpropstring(ea->ea_node, "compatible");
-	printf(": %s\n", *model != '\0' != 0 ? model : "unknown");
+	printf(": %s\n", *model != '\0' ? model : "unknown");
 
 	/* Setup our todr_handle */
 	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
