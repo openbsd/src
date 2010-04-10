@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.34 2010/04/10 10:59:12 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.35 2010/04/10 19:07:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2872,7 +2872,7 @@ athn_stop_tx_dma(struct athn_softc *sc, int qid)
 			AR_WRITE(sc, AR_QUIET_PERIOD, 100);
 			AR_WRITE(sc, AR_NEXT_QUIET_TIMER, tsflo);
 			AR_SETBITS(sc, AR_TIMER_MODE, AR_QUIET_TIMER_EN);
-			if (AR_READ(sc, AR_TSF_L32) / 1024 != tsflo)
+			if (AR_READ(sc, AR_TSF_L32) / 1024 == tsflo)
 				break;
 		}
 		AR_SETBITS(sc, AR_DIAG_SW, AR_DIAG_FORCE_CH_IDLE_HIGH);
