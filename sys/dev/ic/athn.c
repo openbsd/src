@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.33 2010/04/07 16:31:16 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.34 2010/04/10 10:59:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1281,7 +1281,7 @@ athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 		goto reset;
 
 	/* AR9280 always needs a full reset. */
-	if (AR_SREV_9280(sc))
+/*	if (AR_SREV_9280(sc)) */
 		goto reset;
 
 	/* If band or bandwidth changes, we need to do a full reset. */
