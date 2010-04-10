@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.124 2010/04/10 10:48:57 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.125 2010/04/10 11:04:21 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -340,7 +340,7 @@ sub find_candidate
 sub new
 {
 	my ($class, $set) = @_;
-	bless { set => $set }, $class;
+	bless { set => $set, bad => [] }, $class;
 }
 
 sub check_for_loops
@@ -533,6 +533,7 @@ sub solve_dependency
 		}
 		$v = find_candidate($dep->spec, $self->{set}->older_names);
 		if ($v) {
+			push(@{$self->{bad}}, $dep);
 			return $v;
 		}
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
@@ -601,7 +602,7 @@ sub solve_depends
 sub check_depends
 {
 	my $self = shift;
-	my @bad = ();
+	my @bad = (@{$self->{bad}});
 
 	for my $dep ($self->dependencies) {
 		push(@bad, $dep) 
