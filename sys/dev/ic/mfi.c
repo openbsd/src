@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.101 2010/04/10 17:26:10 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.102 2010/04/10 17:29:59 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -109,10 +109,10 @@ void		mfi_refresh_sensors(void *);
 
 void		mfi_start(struct mfi_softc *, struct mfi_ccb *);
 void		mfi_done(struct mfi_ccb *);
-u_int32_t	mfi_xscale_fw_state(struct mfi_softc *sc);
-void		mfi_xscale_intr_ena(struct mfi_softc *sc);
-int		mfi_xscale_intr(struct mfi_softc *sc);
-void		mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+u_int32_t	mfi_xscale_fw_state(struct mfi_softc *);
+void		mfi_xscale_intr_ena(struct mfi_softc *);
+int		mfi_xscale_intr(struct mfi_softc *);
+void		mfi_xscale_post(struct mfi_softc *, struct mfi_ccb *);
 
 static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_fw_state,
@@ -121,10 +121,10 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_post
 };
 
-u_int32_t	mfi_ppc_fw_state(struct mfi_softc *sc);
-void		mfi_ppc_intr_ena(struct mfi_softc *sc);
-int		mfi_ppc_intr(struct mfi_softc *sc);
-void		mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+u_int32_t	mfi_ppc_fw_state(struct mfi_softc *);
+void		mfi_ppc_intr_ena(struct mfi_softc *);
+int		mfi_ppc_intr(struct mfi_softc *);
+void		mfi_ppc_post(struct mfi_softc *, struct mfi_ccb *);
 
 static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_fw_state,
@@ -133,10 +133,10 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_post
 };
 
-u_int32_t	mfi_gen2_fw_state(struct mfi_softc *sc);
-void		mfi_gen2_intr_ena(struct mfi_softc *sc);
-int		mfi_gen2_intr(struct mfi_softc *sc);
-void		mfi_gen2_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+u_int32_t	mfi_gen2_fw_state(struct mfi_softc *);
+void		mfi_gen2_intr_ena(struct mfi_softc *);
+int		mfi_gen2_intr(struct mfi_softc *);
+void		mfi_gen2_post(struct mfi_softc *, struct mfi_ccb *);
 
 static const struct mfi_iop_ops mfi_iop_gen2 = {
 	mfi_gen2_fw_state,
