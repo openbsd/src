@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.37 2010/01/04 08:04:43 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.38 2010/04/10 17:26:10 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -57,6 +57,7 @@ struct mfi_ccb {
 
 	union mfi_frame		*ccb_frame;
 	paddr_t			ccb_pframe;
+	bus_addr_t		ccb_pframe_offset;
 	uint32_t		ccb_frame_size;
 	uint32_t		ccb_extra_frames;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.100 2010/03/23 01:57:19 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.101 2010/04/10 17:26:10 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -107,6 +107,8 @@ void		mfi_refresh_sensors(void *);
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
 
+void		mfi_start(struct mfi_softc *, struct mfi_ccb *);
+void		mfi_done(struct mfi_ccb *);
 u_int32_t	mfi_xscale_fw_state(struct mfi_softc *sc);
 void		mfi_xscale_intr_ena(struct mfi_softc *sc);
 int		mfi_xscale_intr(struct mfi_softc *sc);
@@ -214,6 +216,7 @@ mfi_init_ccb(struct mfi_softc *sc)
 		    (MFIMEM_KVA(sc->sc_frames) + sc->sc_frames_size * i);
 		ccb->ccb_pframe =
 		    MFIMEM_DVA(sc->sc_frames) + sc->sc_frames_size * i;
+		ccb->ccb_pframe_offset = sc->sc_frames_size * i;
 		ccb->ccb_frame->mfr_header.mfh_context = i;
 
 		/* select i'th sense */
@@ -766,7 +769,7 @@ mfi_poll(struct mfi_ccb *ccb)
 	hdr->mfh_cmd_status = 0xff;
 	hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
 
-	mfi_post(sc, ccb);
+	mfi_start(sc, ccb);
 
 	while (hdr->mfh_cmd_status == 0xff) {
 		delay(1000);
@@ -824,7 +827,7 @@ mfi_intr(void *arg)
 			ccb = &sc->sc_ccb[ctx];
 			DNPRINTF(MFI_D_INTR, "%s: mfi_intr context %#x\n",
 			    DEVNAME(sc), ctx);
-			ccb->ccb_done(ccb);
+			mfi_done(ccb);
 
 			claimed = 1;
 		}
@@ -1095,7 +1098,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	mfi_post(sc, ccb);
+	mfi_start(sc, ccb);
 
 	DNPRINTF(MFI_D_DMA, "%s: mfi_scsi_cmd queued %d\n", DEVNAME(sc),
 	    ccb->ccb_dmamap->dm_nsegs);
@@ -1219,7 +1222,7 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 			goto done;
 	} else {
 		s = splbio();
-		mfi_post(sc, ccb);
+		mfi_start(sc, ccb);
 
 		DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt sleeping\n", DEVNAME(sc));
 		while (ccb->ccb_state != MFI_CCB_DONE)
@@ -1996,6 +1999,27 @@ mfi_refresh_sensors(void *arg)
 }
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
+
+void
+mfi_start(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
+	    ccb->ccb_pframe_offset, sc->sc_frames_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	mfi_post(sc, ccb);
+}
+
+void
+mfi_done(struct mfi_ccb *ccb)
+{
+	struct mfi_softc	*sc = ccb->ccb_sc;
+
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
+	    ccb->ccb_pframe_offset, sc->sc_frames_size, BUS_DMASYNC_PREREAD);
+
+	ccb->ccb_done(ccb);
+}
 
 u_int32_t
 mfi_xscale_fw_state(struct mfi_softc *sc)
