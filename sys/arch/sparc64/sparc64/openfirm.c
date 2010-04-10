@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.13 2007/02/11 20:29:22 miod Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.14 2010/04/10 14:02:49 kettenis Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -505,7 +505,7 @@ OF_read(handle, addr, len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-	for (; len > 0; len -= l, (char *)addr += l) {
+	for (; len > 0; len -= l) {
 		l = min(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -541,20 +541,16 @@ OF_write(handle, addr, len)
 		cell_t actual;
 	} args;
 	int l, act = 0;
-		
+
+	if (len > 1024) {
+		panic("OF_write(len=%d)", len);
+	}
 	args.name = ADR2CELL("write");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-if (len>1024) { prom_printf("OF_write() > 1024\n");
-#ifdef DDB
-Debugger();
-#else
-panic("OF_write");
-#endif
-}
-	for (; len > 0; len -= l, (char *)addr += l) {
+	for (; len > 0; len -= l) {
 		l = min(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
