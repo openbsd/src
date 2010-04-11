@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.194 2010/04/06 14:12:10 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.195 2010/04/11 17:14:37 tedu Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 6 2010 $
+.Dd $Mdocdate: April 11 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -749,25 +749,21 @@ Start the bridge forwarding packets.
 .Op Cm vhid Ar host-id
 .Ek
 .Pp
-The options are as follows:
+The following options are available for a
+.Xr carp 4
+pseudo-device:
 .Bl -tag -width Ds
 .It Cm advbase Ar n
-If the driver is a
-.Xr carp 4
-pseudo-device, set the base advertisement interval to
+Set the base advertisement interval to
 .Ar n
 seconds.
 This is an 8-bit number; the default value is 1 second.
 .It Cm advskew Ar n
-If the driver is a
-.Xr carp 4
-pseudo-device, skew the advertisement interval by
+Skew the advertisement interval by
 .Ar n .
 This is an 8-bit number; the default value is 0.
 .It Cm balancing Ar mode
-If the driver is a
-.Xr carp 4
-pseudo-device, set the load balancing mode to
+Set the load balancing mode to
 .Ar mode .
 Valid modes are
 .Ar arp ,
@@ -776,23 +772,17 @@ Valid modes are
 and
 .Ar ip-unicast .
 .It Cm carpnodes Ar vhid:advskew,vhid:advskew,...
-If the driver is a
-.Xr carp 4
-pseudo-device, create a load balancing group consisting of up to 32 nodes.
+Create a load balancing group consisting of up to 32 nodes.
 Each node is specified as a
 .Ar vhid:advskew
 tuple in a comma separated list.
 .It Cm carpdev Ar iface
-If the driver is a
-.Xr carp 4
-pseudo-device, attach it to
+Attach to
 .Ar iface .
 If not specified, the kernel will attempt to select an interface with
 a subnet matching that of the carp interface.
 .It Cm carppeer Ar peer_address
-If the driver is a
-.Xr carp 4
-pseudo-device, send the carp advertisements to a specified
+Send the carp advertisements to a specified
 point-to-point peer or multicast group instead of sending the messages
 to the default carp multicast group.
 The
@@ -805,29 +795,21 @@ traffic can be protected using
 and it may be desired in networks that do not allow or have problems
 with IPv4 multicast traffic.
 .It Fl carppeer
-If the driver is a
-.Xr carp 4
-pseudo-device, send the advertisements to the default carp multicast
+Send the advertisements to the default carp multicast
 group.
 .It Cm pass Ar passphrase
-If the driver is a
-.Xr carp 4
-pseudo-device, set the authentication key to
+Set the authentication key to
 .Ar passphrase .
 There is no passphrase by default.
 .It Cm state Ar state
-Explicitly force the
-.Xr carp 4
-pseudo-device to enter this state.
+Explicitly force the interface to enter this state.
 Valid states are
 .Ar init ,
 .Ar backup ,
 and
 .Ar master .
 .It Cm vhid Ar n
-If the driver is a
-.Xr carp 4
-pseudo-device, set the virtual host ID to
+Set the virtual host ID to
 .Ar n .
 Acceptable values are 1 to 255.
 .El
@@ -1194,12 +1176,12 @@ is omitted, it is decreased by 1.
 .Ar mpe-interface
 .Op Cm mplslabel Ar mpls-label
 .Pp
-The options are as follows:
+The following options are available for an
+.Xr mpe 4
+pseudo-device:
 .Bl -tag -width Ds
 .It Cm mplslabel Ar mpls-label
-If the interface is a
-.Xr mpe 4
-pseudo-interface, set the MPLS label to
+Set the MPLS label to
 .Ar mpls-label .
 This value is a 20-bit number which will be used as the MPLS header for
 packets entering the MPLS domain.
@@ -1245,7 +1227,9 @@ Unset the source address.
 .Op Oo Fl Oc Cm syncpeer Ar peer_address
 .Ek
 .Pp
-The options are as follows:
+The following options are available for a
+.Xr pfsync 4
+pseudo-device:
 .Bl -tag -width Ds
 .It Cm defer
 Defer transmission of the first packet in a state until a peer has
@@ -1257,25 +1241,16 @@ for more information.
 Do not defer the first packet in a state.
 This is the default.
 .It Cm maxupd Ar n
-If the driver is a
-.Xr pfsync 4
-pseudo-device, indicate the maximum number
+Indicate the maximum number
 of updates for a single state which can be collapsed into one.
 This is an 8-bit number; the default value is 128.
 .It Cm syncdev Ar iface
-If the driver is a
-.Xr pfsync 4
-pseudo-device, use the specified interface
+Use the specified interface
 to send and receive pfsync state synchronisation messages.
 .It Fl syncdev
-If the driver is a
-.Xr pfsync 4
-pseudo-device, stop sending pfsync state
-synchronisation messages over the network.
+Stop sending pfsync state synchronisation messages over the network.
 .It Cm syncpeer Ar peer_address
-If the driver is a
-.Xr pfsync 4
-pseudo-device, make the pfsync link point-to-point rather than using
+Make the pfsync link point-to-point rather than using
 multicast to broadcast the state synchronisation messages.
 The peer_address is the IP address of the other host taking part in
 the pfsync cluster.
@@ -1284,9 +1259,7 @@ With this option,
 traffic can be protected using
 .Xr ipsec 4 .
 .It Fl syncpeer
-If the driver is a
-.Xr pfsync 4
-pseudo-device, broadcast the packets using multicast.
+Broadcast the packets using multicast.
 .El
 .\" PPPOE
 .Sh PPPOE
@@ -1400,28 +1373,22 @@ In the latter case, authentication will be turned off.
 .Op Oo Fl Oc Ns Cm trunkport Ar child-iface
 .Op Cm trunkproto Ar proto
 .Pp
-The options are as follows:
+The following options are available for a
+.Xr trunk 4
+pseudo-device:
 .Bl -tag -width Ds
 .It Cm trunkport Ar child-iface
-If the driver is a
-.Xr trunk 4
-pseudo-device, add the
+Add
 .Ar child-iface
 as a trunk port.
 .It Fl trunkport Ar child-iface
-If the driver is a
-.Xr trunk 4
-pseudo-device, remove the trunk port
+Remove the trunk port
 .Ar child-iface .
 .It Cm trunkproto Ar proto
-If the driver is a
+Set the trunk protocol.
+Refer to
 .Xr trunk 4
-pseudo-device, set the trunk protocol.
-Refer to the interface's driver-specific man page for a complete
-list of the available protocols,
-or use the following for a listing of choices:
-.Pp
-.Dl $ ifconfig interface media
+for a complete list of the available protocols,
 .El
 .\" TUNNEL
 .Sh TUNNEL
@@ -1464,23 +1431,20 @@ the corresponding routing domain is derived from this table.
 .Op Cm vlanprio Ar vlan-priority
 .Ek
 .Pp
-The options are as follows:
+The following options are available for a
+.Xr vlan 4
+pseudo-device:
 .Bl -tag -width Ds
 .It Cm vlan Ar vlan-tag
-If the interface is a
-.Xr vlan 4
-pseudo-interface, set the vlan tag value
+Set the vlan tag value
 to
 .Ar vlan-tag .
 This value is a 12-bit number which is used to create an 802.1Q
 vlan header for packets sent from the vlan interface.
 This value cannot be changed once it is set for an interface.
 .It Cm vlandev Ar parent-interface
-If the interface is a
-.Xr vlan 4
-pseudo-device, associate physical interface
-.Ar iface
-with it.
+Associate with physical interface
+.Ar iface .
 Packets transmitted through the vlan interface will be
 diverted to the specified physical interface
 .Ar iface
@@ -1503,16 +1467,11 @@ a physical interface associated with it, this command will fail.
 To change the association to another physical interface, the existing
 association must be cleared first.
 .It Fl vlandev
-If the driver is a
-.Xr vlan 4
-pseudo-device, disassociate the physical interface
-from it.
+Disassociate from the physical interface.
 This breaks the link between the vlan interface and its parent,
 clears its vlan tag, flags, and link address, and shuts the interface down.
 .It Cm vlanprio Ar vlan-priority
-If the interface is a
-.Xr vlan 4
-pseudo-interface, set the vlan priority value
+Set the vlan priority value
 to
 .Ar vlan-priority .
 This value is a 3-bit number which is used to create an 802.1Q
