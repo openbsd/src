@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.195 2010/04/11 17:14:37 tedu Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.196 2010/04/11 17:51:30 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -466,9 +466,9 @@ and
 .El
 .\" BRIDGE
 .Sh BRIDGE
-Bridges have many configuration options as well as a rudimentary
-filtering language.
-They are as follows:
+The following options are available for a
+.Xr bridge 4
+interface:
 .Bl -tag -width Ds
 .It Cm add Ar interface
 Add
@@ -751,7 +751,7 @@ Start the bridge forwarding packets.
 .Pp
 The following options are available for a
 .Xr carp 4
-pseudo-device:
+interface:
 .Bl -tag -width Ds
 .It Cm advbase Ar n
 Set the base advertisement interval to
@@ -848,7 +848,9 @@ will begin advertising as master.
 .Op Oo Fl Oc Cm wpapsk Ar psk
 .Ek
 .Pp
-The options are as follows:
+The following options are available for a
+wireless
+interface:
 .Bl -tag -width Ds
 .It Cm bssid Ar bssid
 Set the desired BSSID for IEEE 802.11-based wireless network interfaces.
@@ -1092,7 +1094,9 @@ authentication.
 .Op Cm vltime Ar n
 .Ek
 .Pp
-The options are as follows:
+The following options are available for an
+.Xr ip6 4
+interface:
 .Bl -tag -width Ds
 .It Cm anycast
 Set the IPv6 anycast address bit.
@@ -1149,7 +1153,8 @@ Set valid lifetime for the address.
 .Op Ar number
 .Oc
 .Pp
-The options are as follows:
+The following options are available for
+interface groups:
 .Bl -tag -width Ds
 .It Fl g Ar group-name
 Specify the group.
@@ -1178,7 +1183,7 @@ is omitted, it is decreased by 1.
 .Pp
 The following options are available for an
 .Xr mpe 4
-pseudo-device:
+interface:
 .Bl -tag -width Ds
 .It Cm mplslabel Ar mpls-label
 Set the MPLS label to
@@ -1194,7 +1199,9 @@ packets entering the MPLS domain.
 .Ar port Oc
 .Op Oo Fl Oc Cm flowsrc Ar addr
 .Pp
-The options are as follows:
+The following options are available for a
+.Xr pflow 4
+interface:
 .Bl -tag -width Ds
 .It Cm flowdst Ar addr : Ns Ar port
 Set the receiver address and the port for
@@ -1229,7 +1236,7 @@ Unset the source address.
 .Pp
 The following options are available for a
 .Xr pfsync 4
-pseudo-device:
+interface:
 .Bl -tag -width Ds
 .It Cm defer
 Defer transmission of the first packet in a state until a peer has
@@ -1286,7 +1293,10 @@ Any options not described in the section immediately following
 are described in the
 .Sx SPPP
 section, below.
-The options are as follows:
+.Pp
+The following options are available for a
+.Xr pppoe 4
+interface:
 .Bl -tag -width Ds
 .It Cm pppoeac Ar access-concentrator
 Set the name of the access-concentrator for the
@@ -1317,7 +1327,9 @@ Clear a previously set service name.
 .Op Cm peername Ar name
 .Op Cm peerproto Ar proto
 .Pp
-The options are as follows:
+The following options are available for an
+.Xr sppp 4
+interface:
 .Bl -tag -width Ds
 .It Cm authkey Ar key
 Set the client key or password for the PPP authentication protocol.
@@ -1375,7 +1387,7 @@ In the latter case, authentication will be turned off.
 .Pp
 The following options are available for a
 .Xr trunk 4
-pseudo-device:
+interface:
 .Bl -tag -width Ds
 .It Cm trunkport Ar child-iface
 Add
@@ -1400,7 +1412,9 @@ for a complete list of the available protocols,
 .Op Cm tunneldomain Ar route-id
 .Ek
 .Pp
-The options are as follows:
+The following options are available for a
+tunnel
+interface:
 .Bl -tag -width Ds
 .It Cm deletetunnel Ar src_address dest_address
 Remove the source and destination tunnel addresses.
@@ -1433,7 +1447,7 @@ the corresponding routing domain is derived from this table.
 .Pp
 The following options are available for a
 .Xr vlan 4
-pseudo-device:
+interface:
 .Bl -tag -width Ds
 .It Cm vlan Ar vlan-tag
 Set the vlan tag value
