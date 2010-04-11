@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.28 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.29 2010/04/11 16:53:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -349,6 +349,7 @@ struct sio_hdl *
 sio_open_sun(const char *str, unsigned mode, int nbio)
 {
 	int fd, flags, fullduplex;
+	struct audio_info aui;	
 	struct sun_hdl *hdl;
 	struct sio_par par;
 	char path[PATH_MAX];
@@ -376,6 +377,18 @@ sio_open_sun(const char *str, unsigned mode, int nbio)
 	}
 	hdl->fd = fd;
 
+	/*
+	 * pause the device
+	 */
+	AUDIO_INITINFO(&aui);
+	if (hdl->sio.mode & SIO_PLAY)
+		aui.play.pause = 1;
+	if (hdl->sio.mode & SIO_REC)
+		aui.record.pause = 1;
+	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
+		DPERROR("sio_open_sun: setinfo");
+		goto bad_close;
+	}
 	/*
 	 * If both play and record are requested then
 	 * set full duplex mode.
@@ -499,6 +512,10 @@ sun_stop(struct sio_hdl *sh)
 	 */
 	AUDIO_INITINFO(&aui);
 	aui.mode = 0;
+	if (hdl->sio.mode & SIO_PLAY)
+		aui.play.pause = 1;
+	if (hdl->sio.mode & SIO_REC)
+		aui.record.pause = 1;
 	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
 		DPERROR("sun_stop: setinfo1");
 		hdl->sio.eof = 1;
