@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.77 2009/10/13 19:33:16 pirofti Exp $ */
+/*	$OpenBSD: wd.c,v 1.78 2010/04/11 16:58:06 kettenis Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -377,6 +377,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 int
 wdactivate(struct device *self, int act)
 {
+	struct wd_softc *wd = (void *)self;
+	struct wdc_command wdc_c;
 	int rv = 0;
 
 	switch (act) {
@@ -387,6 +389,17 @@ wdactivate(struct device *self, int act)
 		/*
 		* Nothing to do; we key off the device's DVF_ACTIVATE.
 		*/
+		break;
+	case DVACT_SUSPEND:
+		bzero(&wdc_c, sizeof(struct wdc_command));
+
+		wdc_c.r_command = WDCC_STANDBY_IMMED;
+		wdc_c.timeout = 1000;
+		wdc_c.flags = at_poll;
+		if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+			printf("%s: enter standby command didn't complete\n",
+			       wd->sc_dev.dv_xname);
+		}
 		break;
 	}
 	return (rv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.306 2009/11/21 14:34:20 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.307 2010/04/11 16:58:06 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1265,13 +1265,16 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 int	pciide_match(struct device *, void *, void *);
 void	pciide_attach(struct device *, struct device *, void *);
 int	pciide_detach(struct device *, int);
+int	pciide_activate(struct device *, int);
 
 struct cfattach pciide_pci_ca = {
-	sizeof(struct pciide_softc), pciide_match, pciide_attach, pciide_detach,
+	sizeof(struct pciide_softc), pciide_match, pciide_attach,
+	pciide_detach, pciide_activate
 };
 
 struct cfattach pciide_jmb_ca = {
-	sizeof(struct pciide_softc), pciide_match, pciide_attach, pciide_detach,
+	sizeof(struct pciide_softc), pciide_match, pciide_attach,
+	pciide_detach, pciide_activate
 };
 
 struct cfdriver pciide_cd = {
@@ -1400,6 +1403,21 @@ pciide_detach(struct device *self, int flags)
 		sc->chip_unmap(sc, flags);
 
 	return 0;
+}
+
+int
+pciide_activate(struct device *self, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+	case DVACT_RESUME:
+		rv = config_activate_children(self, act);
+		break;
+	}
+
+	return (rv);
 }
 
 int
