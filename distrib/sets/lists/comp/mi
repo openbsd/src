@@ -4950,6 +4950,7 @@
 ./usr/share/man/cat3/longjmp.0
 ./usr/share/man/cat3/longjmperror.0
 ./usr/share/man/cat3/longname.0
+./usr/share/man/cat3/loongson/cacheflush.0
 ./usr/share/man/cat3/lrand48.0
 ./usr/share/man/cat3/lrint.0
 ./usr/share/man/cat3/lrintf.0
@@ -5583,6 +5584,7 @@
 ./usr/share/man/cat3/setusershell.0
 ./usr/share/man/cat3/setvbuf.0
 ./usr/share/man/cat3/sevenbit.0
+./usr/share/man/cat3/sgi/cacheflush.0
 ./usr/share/man/cat3/sha1.0
 ./usr/share/man/cat3/sha2.0
 ./usr/share/man/cat3/show_panel.0
@@ -6480,6 +6482,7 @@
 ./usr/share/man/cat9/mono_time.0
 ./usr/share/man/cat9/mountroothook_disestablish.0
 ./usr/share/man/cat9/mountroothook_establish.0
+./usr/share/man/cat9/msleep.0
 ./usr/share/man/cat9/mtod.0
 ./usr/share/man/cat9/mtx_enter.0
 ./usr/share/man/cat9/mtx_enter_try.0

@@ -862,7 +862,6 @@
 ./usr/share/man/cat3/i386
 ./usr/share/man/cat3/landisk
 ./usr/share/man/cat3/loongson
-./usr/share/man/cat3/loongson/cacheflush.0
 ./usr/share/man/cat3/luna88k
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/macppc
@@ -871,7 +870,6 @@
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/palm
 ./usr/share/man/cat3/sgi
-./usr/share/man/cat3/sgi/cacheflush.0
 ./usr/share/man/cat3/socppc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
@@ -1889,6 +1887,7 @@
 ./usr/share/man/cat4/macppc/onyx.0
 ./usr/share/man/cat4/macppc/openpic.0
 ./usr/share/man/cat4/macppc/openprom.0
+./usr/share/man/cat4/macppc/pgs.0
 ./usr/share/man/cat4/macppc/piic.0
 ./usr/share/man/cat4/macppc/smu.0
 ./usr/share/man/cat4/macppc/snapper.0
@@ -3154,7 +3153,6 @@
 ./usr/share/man/cat9/luna88k
 ./usr/share/man/cat9/mac68k
 ./usr/share/man/cat9/macppc
-./usr/share/man/cat9/msleep.0
 ./usr/share/man/cat9/mvme68k
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
