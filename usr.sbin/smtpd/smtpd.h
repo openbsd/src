@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.170 2010/03/03 11:11:55 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.171 2010/04/11 22:46:28 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -38,7 +38,7 @@
 
 /* sizes include the tailing '\0' */
 #define MAX_LINE_SIZE		 1024
-#define MAX_LOCALPART_SIZE	 65
+#define MAX_LOCALPART_SIZE	 128
 #define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
 #define MAX_ID_SIZE		 64
 #define MAX_TAG_SIZE		 32
