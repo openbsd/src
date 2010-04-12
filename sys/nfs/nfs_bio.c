@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.70 2010/04/09 22:42:10 oga Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.71 2010/04/12 16:37:38 beck Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag, struct ucred *cred)
 				return (EINTR);
 			    if ((rabp->b_flags & (B_DELWRI | B_DONE)) == 0) {
 				rabp->b_flags |= (B_READ | B_ASYNC);
-				if (nfs_asyncio(rabp)) {
+				if (nfs_asyncio(rabp, 1)) {
 				    rabp->b_flags |= B_INVAL;
 				    brelse(rabp);
 				}
@@ -492,13 +492,16 @@ nfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
  * are all hung on a dead server.
  */
 int
-nfs_asyncio(struct buf *bp)
+nfs_asyncio(struct buf *bp, int readahead)
 {
 	if (nfs_numasync == 0)
 		goto out;
 
-	if (nfs_bufqlen > nfs_bufqmax)
-		goto out; /* too many bufs in use, force sync */
+	while (nfs_bufqlen > nfs_bufqmax)
+		if (readahead)
+			goto out;
+		else
+			tsleep(&nfs_bufqlen, PRIBIO, "nfs_bufq", 0);
 
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_flags |= B_WRITEINPROG;

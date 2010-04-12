@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.128 2010/03/29 23:33:39 krw Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.129 2010/04/12 16:37:38 beck Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2715,7 +2715,7 @@ nfs_strategy(void *v)
 	 * queue the request, wake it up and wait for completion
 	 * otherwise just do it ourselves.
 	 */
-	if ((bp->b_flags & B_ASYNC) == 0 || nfs_asyncio(bp))
+	if ((bp->b_flags & B_ASYNC) == 0 || nfs_asyncio(bp, 0))
 		error = nfs_doio(bp, p);
 	return (error);
 }

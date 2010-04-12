@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.58 2009/09/02 18:20:54 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.59 2010/04/12 16:37:38 beck Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ int nfs_bioread(struct vnode *, struct uio *, int, struct ucred *);
 int nfs_write(void *);
 struct buf *nfs_getcacheblk(struct vnode *, daddr64_t, int, struct proc *);
 int nfs_vinvalbuf(struct vnode *, int, struct ucred *, struct proc *);
-int nfs_asyncio(struct buf *);
+int nfs_asyncio(struct buf *, int readahead);
 int nfs_doio(struct buf *, struct proc *);
 
 /* nfs_boot.c */

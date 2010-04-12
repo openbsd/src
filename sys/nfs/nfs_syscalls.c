@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.88 2009/10/19 22:24:18 jsg Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.89 2010/04/12 16:37:38 beck Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -591,6 +591,7 @@ nfssvc_iod(void *arg)
 	}
 
 	nfs_bufqmax += bufcount;
+	wakeup(&nfs_bufqlen); /* wake up anyone waiting for room to enqueue IO */
 
 	/* Just loop around doin our stuff until SIGKILL. */
 	for (;;) {
@@ -635,6 +636,7 @@ nfssvc_iod(void *arg)
 
 		    (void) nfs_doio(bp, NULL);
 		} while ((bp = nbp) != NULL);
+		wakeup_one(&nfs_bufqlen); /* wake up anyone waiting for room to enqueue IO */
 	    }
 	    if (error) {
 		nfs_asyncdaemon[myiod] = NULL;
