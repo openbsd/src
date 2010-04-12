@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.8 2008/09/03 23:24:25 krw Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.9 2010/04/12 01:44:08 tedu Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -49,14 +49,14 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <pwd.h>
+#include <readpassphrase.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
 
-#include "pkcs5_pbkdf2.h"
+#include "pbkdf2.h"
 
 #define DEFAULT_VND	"svnd0"
 
@@ -180,19 +180,20 @@ main(int argc, char **argv)
 char *
 get_pkcs_key(char *arg, char *saltopt)
 {
-	char		 keybuf[128], saltbuf[128], saltfilebuf[PATH_MAX];
-	char		*saltfile;
+	char		 passphrase[128];
+	char		 saltbuf[128], saltfilebuf[PATH_MAX];
 	char		*key = NULL;
+	char		*saltfile;
 	const char	*errstr;
 	int		 rounds;
 
 	rounds = strtonum(arg, 1000, INT_MAX, &errstr);
 	if (errstr)
 		err(1, "rounds: %s", errstr);
-	key = getpass("Encryption key: ");
-	if (!key || strlen(key) == 0)
-		errx(1, "Need an encryption key");
-	strncpy(keybuf, key, sizeof(keybuf));
+	bzero(passphrase, sizeof(passphrase));
+	if (readpassphrase("Encryption key: ", passphrase, sizeof(passphrase),
+	    RPP_REQUIRE_TTY) == NULL)
+		errx(1, "Unable to read passphrase");
 	if (saltopt)
 		saltfile = saltopt;
 	else {
@@ -212,7 +213,8 @@ get_pkcs_key(char *arg, char *saltopt)
 		if (fd == -1) {
 			int *s;
 
-			fprintf(stderr, "Salt file not found, attempting to create one\n");
+			fprintf(stderr, "Salt file not found, attempting to "
+			    "create one\n");
 			fd = open(saltfile, O_RDWR|O_CREAT|O_EXCL, 0600);
 			if (fd == -1)
 				err(1, "Unable to create salt file: '%s'",
@@ -222,18 +224,24 @@ get_pkcs_key(char *arg, char *saltopt)
 				*s = arc4random();
 			if (write(fd, saltbuf, sizeof(saltbuf))
 			    != sizeof(saltbuf))
-				err(1, "Unable to write salt file: '%s'", saltfile);
-			fprintf(stderr, "Salt file created as '%s'\n", saltfile);
+				err(1, "Unable to write salt file: '%s'",
+				    saltfile);
+			fprintf(stderr, "Salt file created as '%s'\n",
+			    saltfile);
 		} else {
 			if (read(fd, saltbuf, sizeof(saltbuf))
 			    != sizeof(saltbuf))
-				err(1, "Unable to read salt file: '%s'", saltfile);
+				err(1, "Unable to read salt file: '%s'",
+				    saltfile);
 		}
 		close(fd);
 	}
-	if (pkcs5_pbkdf2((u_int8_t**)&key, BLF_MAXUTILIZED, keybuf,
-	    sizeof(keybuf), saltbuf, sizeof(saltbuf), rounds, 0))
+	if ((key = calloc(1, BLF_MAXUTILIZED)) == NULL)
+		err(1, NULL);
+	if (pkcs5_pbkdf2(passphrase, sizeof(passphrase), saltbuf,
+	    sizeof (saltbuf), key, BLF_MAXUTILIZED, rounds))
 		errx(1, "pkcs5_pbkdf2 failed");
+	memset(passphrase, 0, sizeof(passphrase));
 
 	return (key);
 }
