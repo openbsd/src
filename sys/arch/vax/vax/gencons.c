@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.c,v 1.21 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.22 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ gencnopen(dev, flag, mode, p)
 	mtpr(GC_RIE, pr_rxcs[unit]); /* Turn on interrupts */
 	mtpr(GC_TIE, pr_txcs[unit]);
 
-        return ((*linesw[tp->t_line].l_open)(dev, tp));
+        return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 int
@@ -123,7 +123,7 @@ gencnclose(dev, flag, mode, p)
 
 	if (minor(dev) == 0)
 		consopened = 0;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	ttyclose(tp);
 	return (0);
 }

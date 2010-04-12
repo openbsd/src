@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.95 2009/11/01 20:14:12 nicm Exp $	*/
+/*	$OpenBSD: conf.h,v 1.96 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -532,8 +532,8 @@ void	randomattach(void);
  * Line discipline switch table
  */
 struct linesw {
-	int	(*l_open)(dev_t dev, struct tty *tp);
-	int	(*l_close)(struct tty *tp, int flags);
+	int	(*l_open)(dev_t dev, struct tty *tp, struct proc *p);
+	int	(*l_close)(struct tty *tp, int flags, struct proc *p);
 	int	(*l_read)(struct tty *tp, struct uio *uio,
 				     int flag);
 	int	(*l_write)(struct tty *tp, struct uio *uio,

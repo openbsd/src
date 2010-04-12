@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.30 2009/11/09 17:53:39 nicm Exp $ */
+/*	$OpenBSD: zs.c,v 1.31 2010/04/12 12:57:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -368,7 +368,7 @@ zsopen(dev, flag, mode, p)
 	} else if (tp->t_state & TS_XCLUDE && suser(p, 0) != 0)
 		return (EBUSY);
 
-	error = ((*linesw[tp->t_line].l_open) (dev, tp));
+	error = ((*linesw[tp->t_line].l_open) (dev, tp, p));
 
 	if (error == 0)
 		++zp->nzs_open;
@@ -392,7 +392,7 @@ zsclose(dev, flag, mode, p)
 	zp = &sc->sc_zs[zsside(dev)];
 	tp = zp->tty;
 
-	(*linesw[tp->t_line].l_close) (tp, flag);
+	(*linesw[tp->t_line].l_close) (tp, flag, p);
 	s = splzs();
 	if ((zp->flags & ZS_CONSOLE) == 0 && (tp->t_cflag & HUPCL) != 0)
 		ZBIC(&zp->scc, 5, 0x82);		  /* drop DTR, RTS */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.6 2009/11/09 17:53:38 nicm Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.7 2010/04/12 12:57:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -221,7 +221,7 @@ pdcopen(dev, flag, mode, p)
 	tp->t_state |= TS_CARR_ON;
 	splx(s);
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*linesw[tp->t_line].l_open)(dev, tp, p);
 	if (error == 0 && setuptimeout)
 		pdctimeout(sc);
 
@@ -243,7 +243,7 @@ pdcclose(dev, flag, mode, p)
 
 	tp = sc->sc_tty;
 	timeout_del(&sc->sc_to);
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	ttyclose(tp);
 	return 0;
 }

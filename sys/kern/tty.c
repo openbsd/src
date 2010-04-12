@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.84 2009/11/27 09:18:01 sobrado Exp $	*/
+/*	$OpenBSD: tty.c,v 1.85 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -172,7 +172,7 @@ int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
  * Initial open of tty, or (re)entry to standard tty line discipline.
  */
 int
-ttyopen(dev_t device, struct tty *tp)
+ttyopen(dev_t device, struct tty *tp, struct proc *p)
 {
 	int s;
 
@@ -945,10 +945,10 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (ENXIO);
 		if (t != tp->t_line) {
 			s = spltty();
-			(*linesw[tp->t_line].l_close)(tp, flag);
-			error = (*linesw[t].l_open)(device, tp);
+			(*linesw[tp->t_line].l_close)(tp, flag, p);
+			error = (*linesw[t].l_open)(device, tp, p);
 			if (error) {
-				(void)(*linesw[tp->t_line].l_open)(device, tp);
+				(*linesw[tp->t_line].l_open)(device, tp, p);
 				splx(s);
 				return (error);
 			}
@@ -1325,7 +1325,7 @@ ttstart(struct tty *tp)
  * "close" a line discipline
  */
 int
-ttylclose(struct tty *tp, int flag)
+ttylclose(struct tty *tp, int flag, struct proc *p)
 {
 
 	if (flag & FNONBLOCK)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.15 2009/11/09 17:53:39 nicm Exp $ */
+/*	$OpenBSD: cz.c,v 1.16 2010/04/12 12:57:52 tedu Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -1041,7 +1041,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*linesw[tp->t_line].l_open)(dev, tp, p);
 	if (error)
 		goto bad;
 
@@ -1074,7 +1074,7 @@ czttyclose(dev_t dev, int flags, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*linesw[tp->t_line].l_close)(tp, flags, p);
 	ttyclose(tp);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {

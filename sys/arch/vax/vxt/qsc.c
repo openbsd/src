@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsc.c,v 1.5 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: qsc.c,v 1.6 2010/04/12 12:57:52 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -613,7 +613,7 @@ qscopen(dev_t dev, int flag, int mode, struct proc *p)
 	 */
 	tp->t_dev = dev;
 	splx(s);
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 int
@@ -627,7 +627,7 @@ qscclose(dev_t dev, int flag, int mode, struct proc *p)
 	sc = (struct qscsoftc *)qsc_cd.cd_devs[0];
 
 	tp = sc->sc_tty[line];
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	ttyclose(tp);
 
 	return (0);

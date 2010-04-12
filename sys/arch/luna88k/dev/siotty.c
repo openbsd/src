@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.10 2009/11/09 17:53:38 nicm Exp $ */
+/* $OpenBSD: siotty.c,v 1.11 2010/04/12 12:57:52 tedu Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -400,7 +400,7 @@ sioopen(dev, flag, mode, p)
 /*
 	return (*tp->t_linesw->l_open)(dev, tp);
 */
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*linesw[tp->t_line].l_open)(dev, tp, p);
 }
  
 int
@@ -416,7 +416,7 @@ sioclose(dev, flag, mode, p)
 /*
 	(*tp->t_linesw->l_close)(tp, flag);
 */
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 
 	s = spltty();
 	siomctl(sc, TIOCM_BREAK, DMBIC);

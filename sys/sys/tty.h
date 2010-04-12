@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.23 2009/07/19 08:16:06 blambert Exp $	*/
+/*	$OpenBSD: tty.h,v 1.24 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -281,9 +281,9 @@ int	 ttyclose(struct tty *tp);
 void	 ttyflush(struct tty *tp, int rw);
 void	 ttyinfo(struct tty *tp);
 int	 ttyinput(int c, struct tty *tp);
-int	 ttylclose(struct tty *tp, int flag);
+int	 ttylclose(struct tty *tp, int flag, struct proc *p);
 int	 ttymodem(struct tty *tp, int flag);
-int	 ttyopen(dev_t device, struct tty *tp);
+int	 ttyopen(dev_t device, struct tty *tp, struct proc *p);
 int	 ttyoutput(int c, struct tty *tp);
 void	 ttypend(struct tty *tp);
 void	 ttyretype(struct tty *tp);

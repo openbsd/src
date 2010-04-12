@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.28 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: cy.c,v 1.29 2010/04/12 12:57:52 tedu Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -400,7 +400,7 @@ cyopen(dev, flag, mode, p)
 
 	splx(s);
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*linesw[tp->t_line].l_open)(dev, tp, p);
 }
 
 /*
@@ -424,7 +424,7 @@ cyclose(dev, flag, mode, p)
 	    port, flag, mode);
 #endif
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	s = spltty();
 
 	if (ISSET(tp->t_cflag, HUPCL) &&

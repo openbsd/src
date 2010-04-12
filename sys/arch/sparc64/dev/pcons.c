@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.16 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.17 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -250,7 +250,7 @@ pconsopen(dev, flag, mode, p)
 		timeout_add(&sc->sc_poll_to, 1);
 	}
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*linesw[tp->t_line].l_open)(dev, tp, p);
 }
 
 int
@@ -264,7 +264,7 @@ pconsclose(dev, flag, mode, p)
 
 	timeout_del(&sc->sc_poll_to);
 	sc->of_flags &= ~OFPOLL;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	ttyclose(tp);
 	return 0;
 }

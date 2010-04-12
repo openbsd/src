@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.50 2009/11/09 17:53:39 nicm Exp $ */
+/*	$OpenBSD: cl.c,v 1.51 2010/04/12 12:57:52 tedu Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -671,7 +671,7 @@ if (channel == 2) { /* test one channel now */
 #ifdef DEBUG
 	cl_dumpport(channel);
 #endif
-	return((*linesw[tp->t_line].l_open)(dev, tp));
+	return((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 int clparam(tp, t)
 	struct tty *tp;
@@ -759,7 +759,7 @@ clclose(dev, flag, mode, p)
 	channel = CL_CHANNEL(dev);
 	cl = &sc->sc_cl[channel];
 	tp = cl->tty;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 
 	s = splcl();
 	

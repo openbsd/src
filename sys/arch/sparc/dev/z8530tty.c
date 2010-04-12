@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.14 2010/03/03 20:13:32 miod Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.15 2010/04/12 12:57:52 tedu Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*-
@@ -678,7 +678,7 @@ zsopen(dev, flags, mode, p)
 	splx(s);
 
 	if (error == 0)
-		error = ((*linesw[tp->t_line].l_open)(dev, tp));
+		error = ((*linesw[tp->t_line].l_open)(dev, tp, p));
 	if (error)
 		goto bad;
 
@@ -719,7 +719,7 @@ zsclose(dev, flags, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*linesw[tp->t_line].l_close)(tp, flags, p);
 
 	s = spltty();
 	cs->cs_cua = 0;

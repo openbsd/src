@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.137 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: com.c,v 1.138 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -466,7 +466,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 	}
 	splx(s);
 
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*linesw[tp->t_line].l_open)(dev, tp, p);
 }
 
 int
@@ -488,7 +488,7 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 	if(sc->sc_swflags & COM_SW_DEAD)
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	s = spltty();
 	if (ISSET(tp->t_state, TS_WOPEN)) {
 		/* tty device is waiting for carrier; drop dtr then re-raise */

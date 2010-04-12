@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.27 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: sab.c,v 1.28 2010/04/12 12:57:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -725,7 +725,7 @@ sabttyopen(dev, flags, mode, p)
 
 	splx(s);
 
-	s = (*linesw[tp->t_line].l_open)(dev, tp);
+	s = (*linesw[tp->t_line].l_open)(dev, tp, p);
 	if (s != 0) {
 		if (tp->t_state & TS_ISOPEN)
 			return (s);
@@ -755,7 +755,7 @@ sabttyclose(dev, flags, mode, p)
 	struct tty *tp = sc->sc_tty;
 	int s;
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*linesw[tp->t_line].l_close)(tp, flags, p);
 
 	s = spltty();
 

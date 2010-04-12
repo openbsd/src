@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.21 2009/11/09 17:53:38 nicm Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.22 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.14 1996/12/17 20:42:43 gwr Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ zsopen(dev, flags, mode, p)
 
 	splx(s);
 	if (error == 0)
-		error = linesw[tp->t_line].l_open(dev, tp);
+		error = linesw[tp->t_line].l_open(dev, tp, p);
 	return (error);
 }
 
@@ -470,7 +470,7 @@ zsclose(dev, flags, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*linesw[tp->t_line].l_close)(tp, flags, p);
 
 	/* Disable interrupts. */
 	s = splzs();

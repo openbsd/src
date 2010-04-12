@@ -1,4 +1,4 @@
-/*	$OpenBSD: promcons.c,v 1.12 2009/11/09 17:53:38 nicm Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.13 2010/04/12 12:57:51 tedu Exp $	*/
 /*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ promopen(dev, flag, mode, p)
 
 	splx(s);
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*linesw[tp->t_line].l_open)(dev, tp, p);
 	if (error == 0 && setuptimeout) {
 		timeout_set(&prom_to, promtimeout, tp);
 		timeout_add(&prom_to, 1);
@@ -118,7 +118,7 @@ promclose(dev, flag, mode, p)
 	struct tty *tp = prom_tty[unit];
 
 	timeout_del(&prom_to);
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	ttyclose(tp);
 	return 0;
 }

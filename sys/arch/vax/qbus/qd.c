@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.16 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: qd.c,v 1.17 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -857,7 +857,7 @@ qdopen(dev, flag, mode, p)
 		* enable intrpts, open line discipline 
 		*/
 		dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
-		return ((*linesw[tp->t_line].l_open)(dev, tp));
+		return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 	}
 	dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
 	return(0);
@@ -1046,7 +1046,7 @@ qdclose(dev, flag, mode, p)
 		* this is the console 
 		*/
 		tp = qd_tty[minor_dev];
-		(*linesw[tp->t_line].l_close)(tp, flag);
+		(*linesw[tp->t_line].l_close)(tp, flag, p);
 		ttyclose(tp);
 		tp->t_state = 0;
 		qdflags[unit].inuse &= ~CONS_DEV;

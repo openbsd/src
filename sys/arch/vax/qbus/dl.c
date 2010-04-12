@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.9 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: dl.c,v 1.10 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: dl.c,v 1.11 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -312,7 +312,7 @@ dlopen(dev, flag, mode, p)
 	} else if ((tp->t_state & TS_XCLUDE) && suser(p, 0) != 0)
 		return EBUSY;
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 /*ARGSUSED*/
@@ -330,7 +330,7 @@ dlclose(dev, flag, mode, p)
 	sc = dl_cd.cd_devs[unit];
       	tp = sc->sc_tty;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 
 	/* Make sure a BREAK state is not left enabled. */
 	dlbrk(sc, 0);

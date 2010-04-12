@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.46 2009/11/09 17:53:39 nicm Exp $ */
+/*	$OpenBSD: ucom.c,v 1.47 2010/04/12 12:57:52 tedu Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -503,11 +503,11 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 	}
 	splx(s);
 
-	error = ttyopen(UCOMUNIT(dev), tp);
+	error = ttyopen(UCOMUNIT(dev), tp, p);
 	if (error)
 		goto bad;
 
-	error = (*LINESW(tp, l_open))(dev, tp);
+	error = (*LINESW(tp, l_open))(dev, tp, p);
 	if (error)
 		goto bad;
 
@@ -554,7 +554,7 @@ ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
 	ucom_lock(sc);
 
-	(*LINESW(tp, l_close))(tp, flag);
+	(*LINESW(tp, l_close))(tp, flag, p);
 	s = spltty();
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	sc->sc_cua = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.44 2010/04/02 20:20:23 nicm Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.45 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 		if (error)
 			return (error);
 	}
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*linesw[tp->t_line].l_open)(dev, tp, p);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);
 }
@@ -277,7 +277,7 @@ ptsclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp = pti->pt_tty;
 	int error;
 
-	error = (*linesw[tp->t_line].l_close)(tp, flag);
+	error = (*linesw[tp->t_line].l_close)(tp, flag, p);
 	error |= ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.21 2009/11/09 17:53:39 nicm Exp $ */
+/*	$OpenBSD: wl.c,v 1.22 2010/04/12 12:57:52 tedu Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -569,7 +569,7 @@ wlopen(dev, flag, mode, p)
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
-	return((*linesw[tp->t_line].l_open)(dev, tp));
+	return((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 int clparam(tp, t)
@@ -656,7 +656,7 @@ wlclose(dev, flag, mode, p)
 	channel = CL_CHANNEL(dev);
 	cl = &sc->sc_cl[channel];
 	tp = cl->tty;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 
 	s = splcl();
 	

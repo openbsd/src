@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.20 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: dz.c,v 1.21 2010/04/12 12:57:52 tedu Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -316,7 +316,7 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 	splx(s);
 	if (error)
 		return (error);
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 /*ARGSUSED*/
@@ -334,7 +334,7 @@ dzclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	tp = sc->sc_dz[line].dz_tty;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 
 	/* Make sure a BREAK state is not left enabled. */
 	(void) dzmctl(sc, line, DML_BRK, DMBIC);

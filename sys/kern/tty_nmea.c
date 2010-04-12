@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.35 2009/06/02 21:17:35 ckuethe Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.36 2010/04/12 12:57:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -35,8 +35,8 @@ int nmeadebug = 0;
 #endif
 #define DPRINTF(x)	DPRINTFN(0, x)
 
-int	nmeaopen(dev_t, struct tty *);
-int	nmeaclose(struct tty *, int);
+int	nmeaopen(dev_t, struct tty *, struct proc *);
+int	nmeaclose(struct tty *, int, struct proc *);
 int	nmeainput(int, struct tty *);
 void	nmeaattach(int);
 
@@ -91,9 +91,8 @@ nmeaattach(int dummy)
 }
 
 int
-nmeaopen(dev_t dev, struct tty *tp)
+nmeaopen(dev_t dev, struct tty *tp, struct proc *p)
 {
-	struct proc *p = curproc;
 	struct nmea *np;
 	int error;
 
@@ -118,7 +117,7 @@ nmeaopen(dev_t dev, struct tty *tp)
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
 
-	error = linesw[TTYDISC].l_open(dev, tp);
+	error = linesw[TTYDISC].l_open(dev, tp, p);
 	if (error) {
 		free(np, M_DEVBUF);
 		tp->t_sc = NULL;
@@ -130,7 +129,7 @@ nmeaopen(dev_t dev, struct tty *tp)
 }
 
 int
-nmeaclose(struct tty *tp, int flags)
+nmeaclose(struct tty *tp, int flags, struct proc *p)
 {
 	struct nmea *np = (struct nmea *)tp->t_sc;
 
@@ -142,7 +141,7 @@ nmeaclose(struct tty *tp, int flags)
 	nmea_count--;
 	if (nmea_count == 0)
 		nmea_nxid = 0;
-	return linesw[TTYDISC].l_close(tp, flags);
+	return linesw[TTYDISC].l_close(tp, flags, p);
 }
 
 /* Collect NMEA sentences from the tty. */

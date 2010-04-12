@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.20 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: magma.c,v 1.21 2010/04/12 12:57:52 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -915,7 +915,7 @@ mttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	splx(s);
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 /*
@@ -929,7 +929,7 @@ mttyclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct tty *tp = mp->mp_tty;
 	int s;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 	s = spltty();
 
 	/* if HUPCL is set, and the tty is no longer open

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.15 2009/06/02 21:17:35 ckuethe Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.16 2010/04/12 12:57:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -38,8 +38,8 @@ int mstsdebug = 0;
 #endif
 #define DPRINTF(x)	DPRINTFN(0, x)
 
-int	mstsopen(dev_t, struct tty *);
-int	mstsclose(struct tty *, int);
+int	mstsopen(dev_t, struct tty *, struct proc *);
+int	mstsclose(struct tty *, int, struct proc *);
 int	mstsinput(int, struct tty *);
 void	mstsattach(int);
 
@@ -85,9 +85,8 @@ mstsattach(int dummy)
 }
 
 int
-mstsopen(dev_t dev, struct tty *tp)
+mstsopen(dev_t dev, struct tty *tp, struct proc *p)
 {
-	struct proc *p = curproc;
 	struct msts *np;
 	int error;
 
@@ -116,7 +115,7 @@ mstsopen(dev_t dev, struct tty *tp)
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
 
-	error = linesw[TTYDISC].l_open(dev, tp);
+	error = linesw[TTYDISC].l_open(dev, tp, p);
 	if (error) {
 		free(np, M_DEVBUF);
 		tp->t_sc = NULL;
@@ -129,7 +128,7 @@ mstsopen(dev_t dev, struct tty *tp)
 }
 
 int
-mstsclose(struct tty *tp, int flags)
+mstsclose(struct tty *tp, int flags, struct proc *p)
 {
 	struct msts *np = (struct msts *)tp->t_sc;
 
@@ -141,7 +140,7 @@ mstsclose(struct tty *tp, int flags)
 	msts_count--;
 	if (msts_count == 0)
 		msts_nxid = 0;
-	return linesw[TTYDISC].l_close(tp, flags);
+	return linesw[TTYDISC].l_close(tp, flags, p);
 }
 
 /* collect MSTS sentence from tty */

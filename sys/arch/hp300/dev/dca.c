@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.38 2009/11/09 17:53:38 nicm Exp $	*/
+/*	$OpenBSD: dca.c,v 1.39 2010/04/12 12:57:51 tedu Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -400,7 +400,7 @@ dcaopen(dev, flag, mode, p)
 	splx(s);
 
 	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+		error = (*linesw[tp->t_line].l_open)(dev, tp, p);
 
 	return (error);
 }
@@ -424,7 +424,7 @@ dcaclose(dev, flag, mode, p)
 
 	dca = sc->sc_dca;
 	tp = sc->sc_tty;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*linesw[tp->t_line].l_close)(tp, flag, p);
 
 	s = spltty();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.24 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: spif.c,v 1.25 2010/04/12 12:57:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -345,7 +345,7 @@ sttyopen(dev, flags, mode, p)
 
 	splx(s);
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*linesw[tp->t_line].l_open)(dev, tp, p));
 }
 
 int
@@ -362,7 +362,7 @@ sttyclose(dev, flags, mode, p)
 	int port = SPIF_PORT(dev);
 	int s;
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*linesw[tp->t_line].l_close)(tp, flags, p);
 	s = spltty();
 
 	if (ISSET(tp->t_cflag, HUPCL) || !ISSET(tp->t_state, TS_ISOPEN)) {

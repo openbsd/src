@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_endrun.c,v 1.2 2009/06/02 21:17:35 ckuethe Exp $ */
+/*	$OpenBSD: tty_endrun.c,v 1.3 2010/04/12 12:57:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -66,8 +66,8 @@ int endrundebug = 0;
 #endif
 #define DPRINTF(x)	DPRINTFN(0, x)
 
-int	endrunopen(dev_t, struct tty *);
-int	endrunclose(struct tty *, int);
+int	endrunopen(dev_t, struct tty *, struct proc *p);
+int	endrunclose(struct tty *, int, struct proc *p);
 int	endruninput(int, struct tty *);
 void	endrunattach(int);
 
@@ -120,9 +120,8 @@ endrunattach(int dummy)
 }
 
 int
-endrunopen(dev_t dev, struct tty *tp)
+endrunopen(dev_t dev, struct tty *tp, struct proc *p)
 {
-	struct proc *p = curproc;
 	struct endrun *np;
 	int error;
 
@@ -154,7 +153,7 @@ endrunopen(dev_t dev, struct tty *tp)
 #endif
 	tp->t_sc = (caddr_t)np;
 
-	error = linesw[TTYDISC].l_open(dev, tp);
+	error = linesw[TTYDISC].l_open(dev, tp, p);
 	if (error) {
 		free(np, M_DEVBUF);
 		tp->t_sc = NULL;
@@ -167,7 +166,7 @@ endrunopen(dev_t dev, struct tty *tp)
 }
 
 int
-endrunclose(struct tty *tp, int flags)
+endrunclose(struct tty *tp, int flags, struct proc *p)
 {
 	struct endrun *np = (struct endrun *)tp->t_sc;
 
@@ -180,7 +179,7 @@ endrunclose(struct tty *tp, int flags)
 	endrun_count--;
 	if (endrun_count == 0)
 		endrun_nxid = 0;
-	return linesw[TTYDISC].l_close(tp, flags);
+	return linesw[TTYDISC].l_close(tp, flags, p);
 }
 
 /* collect EndRun sentence from tty */

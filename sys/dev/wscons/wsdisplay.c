@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.98 2010/03/30 17:40:55 oga Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.99 2010/04/12 12:57:52 tedu Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -857,7 +857,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct proc *p)
 			return (EBUSY);
 		tp->t_state |= TS_CARR_ON;
 
-		error = ((*linesw[tp->t_line].l_open)(dev, tp));
+		error = ((*linesw[tp->t_line].l_open)(dev, tp, p));
 		if (error)
 			return (error);
 
@@ -900,7 +900,7 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct proc *p)
 			splx(s);
 		}
 		tp = scr->scr_tty;
-		(*linesw[tp->t_line].l_close)(tp, flag);
+		(*linesw[tp->t_line].l_close)(tp, flag, p);
 		ttyclose(tp);
 	}
 
