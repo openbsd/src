@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.50 2010/04/10 07:57:21 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.51 2010/04/12 18:02:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1461,7 +1461,8 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* setup TX Wireless Information */
 	txwi = data->txwi;
 	txwi->flags = 0;
-	txwi->xflags = 0;
+	/* let HW generate seq numbers for non-QoS frames */
+	txwi->xflags = hasqos ? 0 : RT2860_TX_NSEQ;
 	txwi->wcid = (type == IEEE80211_FC0_TYPE_DATA) ?
 	    RT2860_AID2WCID(ni->ni_associd) : 0xff;
 	txwi->len = htole16(m->m_pkthdr.len);
@@ -3708,6 +3709,7 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 		txwi.phy |= htole16(RT2860_PHY_OFDM);
 	txwi.txop = RT2860_TX_TXOP_HT;
 	txwi.flags = RT2860_TX_TS;
+	txwi.xflags = RT2860_TX_NSEQ;
 
 	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0),
 	    (uint8_t *)&txwi, sizeof txwi);
