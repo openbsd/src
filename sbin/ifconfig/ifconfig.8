@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.198 2010/04/11 18:03:06 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.199 2010/04/12 01:26:29 tedu Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 11 2010 $
+.Dd $Mdocdate: April 12 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@ If no parameters are provided, a summary of all interfaces is provided.
 .Pp
 Only the superuser may modify the configuration of a network interface.
 .Pp
-The options are as follows:
+The following options are available:
 .Bl -tag -width Ds
 .It Fl A
 Causes full interface alias information for each interface to
@@ -484,9 +484,6 @@ Display the addresses that have been learned by the bridge.
 Add
 .Ar interface
 as a span port on the bridge.
-See
-.Xr bridge 4
-for more details.
 .It Cm autoedge Ar interface
 Automatically detect the spanning tree edge port status on
 .Ar interface .
@@ -848,29 +845,25 @@ will begin advertising as master.
 .Op Oo Fl Oc Cm wpapsk Ar psk
 .Ek
 .Pp
-The following options are available for a
-wireless
-interface:
+The following options are available for a wireless interface:
 .Bl -tag -width Ds
 .It Cm bssid Ar bssid
-Set the desired BSSID for IEEE 802.11-based wireless network interfaces.
+Set the desired BSSID.
 .It Fl bssid
-Unset the desired BSSID for IEEE 802.11-based wireless network interfaces.
+Unset the desired BSSID.
 The interface will automatically select a BSSID in this mode, which is
 the default.
 .It Cm chan Op Ar n
-Set the channel (radio frequency) to be used for IEEE 802.11-based
-wireless network interfaces to
+Set the channel (radio frequency) to
 .Ar n .
 .Pp
 With no channel specified,
 show the list of channels supported by the device.
 .It Fl chan
-Unset the desired channel to be used for IEEE 802.11-based wireless
-network interfaces.
+Unset the desired channel.
 It doesn't affect the channel to be created for IBSS or Host AP mode.
 .It Cm nwflag Ar flag
-Set a specified flag for the wireless network interface.
+Set specified flag.
 The flag name can be either
 .Ql hidenwid
 or
@@ -899,9 +892,9 @@ stations and can be easily discovered with tools like
 and
 .Xr hostapd 8 .
 .It Fl nwflag Ar flag
-Remove a specified flag for the wireless network interface.
+Remove specified flag.
 .It Cm nwid Ar id
-Configure network ID for IEEE 802.11-based wireless network interfaces.
+Configure network ID.
 The
 .Ar id
 can either be any text string up to 32 characters in length,
@@ -913,8 +906,7 @@ Note that network ID is synonymous with Extended Service Set ID (ESSID).
 Set the network ID to the empty string to allow the interface to connect
 to any available access point.
 .It Cm nwkey Ar key
-Enable WEP encryption for IEEE 802.11-based wireless network interfaces
-using the specified
+Enable WEP encryption using the specified
 .Ar key .
 The
 .Ar key
@@ -939,16 +931,14 @@ the network.
 The length of each key must be either 40 bits, i.e. a 5-character string or
 10 hexadecimal digits or 104 bits (13-character).
 .It Fl nwkey
-Disable WEP encryption for IEEE 802.11-based wireless network interfaces.
+Disable WEP encryption.
 .It Cm nwkey Cm persist
-Enable WEP encryption for IEEE 802.11-based wireless network interfaces
-with the persistent key stored in the network card.
+Enable WEP encryption using the persistent key stored in the network card.
 .It Cm nwkey Cm persist : Ns Ar key
 Write
 .Ar key
 to the persistent memory of the network card, and
-enable WEP encryption for IEEE 802.11-based wireless network interfaces
-using that
+enable WEP encryption using that
 .Ar key .
 .It Cm powersave Op Ar duration
 Enable 802.11 power saving mode.
@@ -959,7 +949,7 @@ Disable 802.11 power saving mode.
 Show the results of an access point scan.
 In Host AP mode, this will dump the list of known nodes without scanning.
 .It Cm txpower Ar dBm
-Set the transmit power for IEEE 802.11-based wireless network interfaces.
+Set the transmit power.
 The driver will disable any auto level and transmit power controls in this
 mode.
 .It Fl txpower
@@ -1018,7 +1008,7 @@ encryption will be used.
 Check the driver's manual page to know which ciphers are supported in
 hardware.
 .It Cm wpagroupcipher Ar cipher
-Set the group cipher to be used to encrypt broadcast and multicast traffic.
+Set the group cipher used to encrypt broadcast and multicast traffic.
 .Pp
 The supported values are
 .Dq wep40 ,
@@ -1154,8 +1144,7 @@ Set valid lifetime for the address.
 .Op Ar number
 .Oc
 .Pp
-The following options are available for
-interface groups:
+The following options are available for interface groups:
 .Bl -tag -width Ds
 .It Fl g Ar group-name
 Specify the group.
@@ -1299,19 +1288,14 @@ The following options are available for a
 interface:
 .Bl -tag -width Ds
 .It Cm pppoeac Ar access-concentrator
-Set the name of the access-concentrator for the
-.Xr pppoe 4
-interface.
+Set the name of the access-concentrator.
 .It Fl pppoeac
 Clear a previously set access-concentrator name.
 .It Cm pppoedev Ar parent-interface
 Set the name of the interface through which
-.Xr pppoe 4
 packets will be transmitted and received.
 .It Cm pppoesvc Ar service
-Set the service name of the
-.Xr pppoe 4
-interface.
+Set the service name of the interface.
 .It Fl pppoesvc
 Clear a previously set service name.
 .El
@@ -1327,8 +1311,10 @@ Clear a previously set service name.
 .Op Cm peername Ar name
 .Op Cm peerproto Ar proto
 .Pp
-The following options are available for an
+The following options are availble for an
 .Xr sppp 4
+or
+.Xr pppoe 4
 interface:
 .Bl -tag -width Ds
 .It Cm authkey Ar key
@@ -1412,9 +1398,7 @@ for a complete list of the available protocols,
 .Op Cm tunneldomain Ar route-id
 .Ek
 .Pp
-The following options are available for a
-tunnel
-interface:
+The following options are available for a tunnel interface:
 .Bl -tag -width Ds
 .It Cm deletetunnel Ar src_address dest_address
 Remove the source and destination tunnel addresses.
@@ -1465,7 +1449,7 @@ diverted to the specified physical interface
 with 802.1Q vlan encapsulation.
 Packets with 802.1Q encapsulation received
 by the parent interface with the correct vlan tag will be diverted to
-the associated vlan pseudo-interface.
+the associated vlan pseudo-device.
 The vlan interface is assigned a
 copy of the parent interface's flags and the parent's Ethernet address.
 If
