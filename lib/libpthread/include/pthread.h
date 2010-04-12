@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.29 2008/12/18 09:30:32 guenther Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.30 2010/04/12 01:54:23 tedu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -250,6 +250,10 @@ int		pthread_rwlock_destroy(pthread_rwlock_t *);
 int		pthread_rwlock_init(pthread_rwlock_t *,
 			const pthread_rwlockattr_t *);
 int		pthread_rwlock_rdlock(pthread_rwlock_t *);
+int		pthread_rwlock_timedrdlock(pthread_rwlock_t *,
+			const struct timespec *);
+int		pthread_rwlock_timedwrlock(pthread_rwlock_t *,
+			const struct timespec *);
 int		pthread_rwlock_tryrdlock(pthread_rwlock_t *);
 int		pthread_rwlock_trywrlock(pthread_rwlock_t *);
 int		pthread_rwlock_unlock(pthread_rwlock_t *);

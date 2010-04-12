@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.8 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.9 2010/04/12 01:54:23 tedu Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,17 +25,20 @@
 .\"
 .\" $FreeBSD: pthread_rwlock_rdlock.3,v 1.2 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 12 2010 $
 .Dt PTHREAD_RWLOCK_RDLOCK 3
 .Os
 .Sh NAME
 .Nm pthread_rwlock_rdlock ,
+.Nm pthread_rwlock_timedrdlock ,
 .Nm pthread_rwlock_tryrdlock
 .Nd acquire a read/write lock for reading
 .Sh SYNOPSIS
 .Fd #include <pthread.h>
 .Ft int
 .Fn pthread_rwlock_rdlock "pthread_rwlock_t *lock"
+.Ft int
+.Fn pthread_rwlock_timedrdlock "pthread_rwlock_t *lock" "const struct timespec *abstime"
 .Ft int
 .Fn pthread_rwlock_tryrdlock "pthread_rwlock_t *lock"
 .Sh DESCRIPTION
@@ -51,10 +54,18 @@ If the read lock cannot be immediately acquired,
 the calling thread blocks until it can acquire the lock.
 .Pp
 The
+.Fn pthread_rwlock_timedrdlock
+function performs the same action,
+but will not wait beyond
+.Fa abstime
+to obtain the lock before returning.
+.Pp
+The
 .Fn pthread_rwlock_tryrdlock
-function performs the same action, but does not block if the lock
-cannot be immediately obtained (i.e., the lock is held for writing
-or there are waiting writers).
+function performs the same action as
+.Fn pthread_rwlock_rdlock ,
+but does not block if the lock cannot be immediately obtained
+(i.e., the lock is held for writing or there are writers waiting).
 .Pp
 A thread may hold multiple concurrent read locks.
 If so,
@@ -67,7 +78,8 @@ a write lock are undefined.
 To prevent writer starvation, writers are favored over readers.
 .Sh RETURN VALUES
 If successful, the
-.Fn pthread_rwlock_rdlock
+.Fn pthread_rwlock_rdlock ,
+.Fn pthread_rwlock_timedrdlock ,
 and
 .Fn pthread_rwlock_tryrdlock
 functions will return zero.
@@ -83,7 +95,18 @@ was blocked on it.
 .El
 .Pp
 The
-.Fn pthread_rwlock_rdlock
+.Fn pthread_rwlock_timedrdlock
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er ETIMEDOUT
+The time specified by
+.Fa abstime
+was reached before the lock could be obtained.
+.El
+.Pp
+The
+.Fn pthread_rwlock_rdlock ,
+.Fn pthread_rwlock_timedrdlock ,
 and
 .Fn pthread_rwlock_tryrdlock
 functions may fail if:
@@ -112,7 +135,8 @@ statically initialized locks only).
 .Xr pthread_rwlock_wrlock 3
 .Sh STANDARDS
 The
-.Fn pthread_rwlock_rdlock
+.Fn pthread_rwlock_rdlock ,
+.Fn pthread_rwlock_timedrdlock ,
 and
 .Fn pthread_rwlock_tryrdlock
 functions are expected to conform to

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.23 2008/12/18 09:30:32 guenther Exp $
+# $OpenBSD: Makefile.inc,v 1.24 2010/04/12 01:54:23 tedu Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -74,6 +74,8 @@ MAN+=	pthreads.3 \
 
 MLINKS+=flockfile.3 funlockfile.3 \
 	flockfile.3 ftrylockfile.3 \
+	pthread_rwlock_rdlock.3 pthread_rwlock_timedrdlock.3 \
+	pthread_rwlock_wrlock.3 pthread_rwlock_timedwrlock.3 \
 	pthread_rwlock_rdlock.3 pthread_rwlock_tryrdlock.3 \
 	pthread_rwlock_wrlock.3 pthread_rwlock_trywrlock.3 \
 	getc_unlocked.3 getchar_unlocked.3 \

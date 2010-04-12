@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_rwlock.c,v 1.6 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_rwlock.c,v 1.7 2010/04/12 01:54:23 tedu Exp $	*/
 /*-
  * Copyright (c) 1998 Alex Nash
  * All rights reserved.
@@ -127,8 +127,8 @@ pthread_rwlock_init (pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *attr)
 	return (ret);
 }
 
-int
-pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
+static int
+rwlock_rdlock_common (pthread_rwlock_t *rwlock, const struct timespec *abstime)
 {
 	pthread_rwlock_t prwlock;
 	struct pthread *curthread;
@@ -175,8 +175,13 @@ pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
 	} else {
 		/* give writers priority over readers */
 		while (prwlock->blocked_writers || prwlock->state < 0) {
-			ret = pthread_cond_wait(&prwlock->read_signal,
-			    &prwlock->lock);
+			if (abstime) {
+				ret = pthread_cond_timedwait(&prwlock->read_signal,
+					&prwlock->lock, abstime);
+			} else {
+				ret = pthread_cond_wait(&prwlock->read_signal,
+					&prwlock->lock);
+			}
 
 			if (ret != 0) {
 				/* can't do a whole lot if this fails */
@@ -198,6 +203,19 @@ pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
 	pthread_mutex_unlock(&prwlock->lock);
 
 	return (ret);
+}
+
+int
+pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
+{
+	return rwlock_rdlock_common (rwlock, NULL);
+}
+
+int
+pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
+	 const struct timespec *abstime)
+{
+	return rwlock_rdlock_common(rwlock, abstime);
 }
 
 int
@@ -322,8 +340,8 @@ pthread_rwlock_unlock (pthread_rwlock_t *rwlock)
 	return (ret);
 }
 
-int
-pthread_rwlock_wrlock (pthread_rwlock_t *rwlock)
+static int
+rwlock_wrlock_common (pthread_rwlock_t *rwlock, const struct timespec *abstime)
 {
 	pthread_rwlock_t prwlock;
 	int ret;
@@ -348,8 +366,13 @@ pthread_rwlock_wrlock (pthread_rwlock_t *rwlock)
 	while (prwlock->state != 0) {
 		prwlock->blocked_writers++;
 
-		ret = pthread_cond_wait(&prwlock->write_signal,
-		    &prwlock->lock);
+		if (abstime != NULL) {
+			ret = pthread_cond_timedwait(&prwlock->write_signal,
+				&prwlock->lock, abstime);
+		} else {
+			ret = pthread_cond_wait(&prwlock->write_signal,
+				&prwlock->lock);
+		}
 
 		if (ret != 0) {
 			prwlock->blocked_writers--;
@@ -367,6 +390,19 @@ pthread_rwlock_wrlock (pthread_rwlock_t *rwlock)
 	pthread_mutex_unlock(&prwlock->lock);
 
 	return (ret);
+}
+
+int
+pthread_rwlock_wrlock (pthread_rwlock_t *rwlock)
+{
+	return rwlock_wrlock_common (rwlock, NULL);
+}
+
+int
+pthread_rwlock_timedwrlock (pthread_rwlock_t *rwlock,
+	const struct timespec *abstime)
+{
+	return rwlock_wrlock_common (rwlock, abstime);
 }
 
 #endif /* _THREAD_SAFE */
