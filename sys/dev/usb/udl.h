@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.15 2009/10/11 12:38:23 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.16 2010/04/12 19:42:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -85,6 +85,7 @@ struct udl_softc {
 #define DLMAX	0x0004
 #define	DLUNK	0x00ff				/* unknown */
 	uint8_t			 sc_cur_mode;
+	u_int			*sc_cbs;	/* character backing store */
 
 	/*
 	 * We use function pointers to the framebuffer manipulation

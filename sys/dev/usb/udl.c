@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.55 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: udl.c,v 1.56 2010/04/12 19:42:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -649,6 +649,15 @@ udl_alloc_screen(void *v, const struct wsscreen_descr *type,
 	*curxp = 0;
 	*curyp = 0;
 
+	/* allocate character backing store */
+	sc->sc_cbs = malloc((sc->sc_ri.ri_rows * sc->sc_ri.ri_cols) *
+	    sizeof(*sc->sc_cbs), M_DEVBUF, M_ZERO);
+	if (sc->sc_cbs == NULL) {
+		printf("%s: can't allocate mem for character backing store!\n",
+		    DN(sc));
+		return (ENOMEM);
+	}
+
 	sc->sc_nscreens++;
 
 	font = sc->sc_ri.ri_font;
@@ -666,6 +675,10 @@ udl_free_screen(void *v, void *cookie)
 	sc = v;
 
 	DPRINTF(1, "%s: %s\n", DN(sc), FUNC);
+
+	/* free character backing store */
+	if (sc->sc_cbs != NULL)
+		free(sc->sc_cbs, M_DEVBUF);
 
 	sc->sc_nscreens--;
 }
@@ -745,6 +758,11 @@ fail:
 		return (EAGAIN);
 	}
 
+	/* update character backing store */
+	bcopy(sc->sc_cbs + ((row * sc->sc_ri.ri_cols) + src),
+	    sc->sc_cbs + ((row * sc->sc_ri.ri_cols) + dst),
+	    num * sizeof(*sc->sc_cbs));
+
 	return (0);
 }
 
@@ -787,6 +805,11 @@ fail:
 		return (EAGAIN);
 	}
 
+	/* update character backing store */
+	bcopy(sc->sc_cbs + (src * sc->sc_ri.ri_cols),
+	    sc->sc_cbs + (dst * sc->sc_ri.ri_cols),
+	    (num * sc->sc_ri.ri_cols) * sizeof(*sc->sc_cbs));
+
 	return (0);
 }
 
@@ -826,6 +849,10 @@ fail:
 		return (EAGAIN);
 	}
 
+	/* update character backing store */
+	bzero(sc->sc_cbs + ((row * sc->sc_ri.ri_cols) + col),
+	    num * sizeof(*sc->sc_cbs));
+
 	return (0);
 }
 
@@ -863,6 +890,10 @@ fail:
 		udl_cmd_restore_offset(sc);
 		return (EAGAIN);
 	}
+
+	/* update character backing store */
+	bzero(sc->sc_cbs + (row * sc->sc_ri.ri_cols),
+	    (num * sc->sc_ri.ri_cols) * sizeof(*sc->sc_cbs));
 
 	return (0);
 }
@@ -910,6 +941,9 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	 * the buffer.
 	 */
 
+	/* update character backing store */
+	sc->sc_cbs[(row * sc->sc_ri.ri_cols) + col] = uc;
+
 	return (0);
 
 fail:
@@ -921,18 +955,10 @@ int
 udl_do_cursor(struct rasops_info *ri)
 {
 	struct udl_softc *sc = ri->ri_hw;
-	int r;
+	int r, pos;
 	uint32_t x, y;
 	uint8_t save_cursor;
 	usbd_status error;
-
-	/*
-	 * XXX
-	 * We can't draw a transparent cursor yet because the chip
-	 * doesn't offer an XOR command nor a read command for screen
-	 * regions.  Maybe this gets fixed once when wscons(4) is able
-	 * to remember the on-screen characters.
-	 */
 
 	DPRINTF(2, "%s: %s: ccol=%d, crow=%d\n",
 	    DN(sc), FUNC, ri->ri_ccol, ri->ri_crow);
@@ -951,8 +977,14 @@ udl_do_cursor(struct rasops_info *ri)
 			goto fail;
 
 		/* draw cursor */
-		r = (sc->udl_fb_block_write)(sc, 0xffff, x, y,
-		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
+		pos = (ri->ri_crow * sc->sc_ri.ri_cols) + ri->ri_ccol;
+		if (sc->sc_cbs[pos] == 0 || sc->sc_cbs[pos] == ' ') {
+			r = (sc->udl_fb_block_write)(sc, 0xffff, x, y,
+			    ri->ri_font->fontwidth, ri->ri_font->fontheight);
+		} else {
+			r = udl_draw_char(sc, 0x0000, 0xffff, sc->sc_cbs[pos],
+			    x, y);
+		}
 		if (r != 0)
 			goto fail;
 
