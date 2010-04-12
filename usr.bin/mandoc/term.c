@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.27 2010/04/07 23:15:05 schwarze Exp $ */
+/*	$Id: term.c,v 1.28 2010/04/12 22:52:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -130,7 +130,6 @@ term_flushln(struct termp *p)
 	int		 j;     /* temporary loop index */
 	int		 jhy;	/* last hyphen before line overflow */
 	size_t		 maxvis, mmax;
-	static int	 line_started = 0;
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
@@ -202,7 +201,6 @@ term_flushln(struct termp *p)
 			/* LINTED */
 			for (j = 0; j < (int)p->offset; j++)
 				putchar(' ');
-		line_started = 1;
 
 		/*
 		 * Find out whether we would exceed the right margin.
@@ -251,10 +249,7 @@ term_flushln(struct termp *p)
 	p->overstep = 0;
 
 	if ( ! (TERMP_NOBREAK & p->flags)) {
-		if (line_started) {
-			putchar('\n');
-			line_started = 0;
-		}
+		putchar('\n');
 		return;
 	}
 

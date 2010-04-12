@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.73 2010/04/07 23:15:05 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.74 2010/04/12 22:52:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1020,14 +1020,14 @@ termp_it_post(DECL_ARGS)
 		/* FALLTHROUGH */
 	case (MDOC_Inset):
 		if (MDOC_BODY == n->type)
-			term_flushln(p);
+			term_newln(p);
 		break;
 	case (MDOC_Column):
 		if (MDOC_HEAD == n->type)
 			term_flushln(p);
 		break;
 	default:
-		term_flushln(p);
+		term_newln(p);
 		break;
 	}
 
