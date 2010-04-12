@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.139 2010/04/09 14:06:01 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.140 2010/04/12 09:53:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1207,7 +1207,6 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	struct mpi_ccb			*ccb;
 	struct mpi_ccb_bundle		*mcb;
 	struct mpi_msg_scsi_io		*io;
-	int				s;
 
 	DNPRINTF(MPI_D_CMD, "%s: mpi_scsi_cmd\n", DEVNAME(sc));
 
@@ -1219,9 +1218,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1278,9 +1275,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 
 	if (mpi_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1289,9 +1284,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL) {
 		if (mpi_poll(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 		}
 		return;
 	}
@@ -1307,7 +1300,6 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	struct mpi_ccb_bundle		*mcb = ccb->ccb_cmd;
 	bus_dmamap_t			dmap = ccb->ccb_dmamap;
 	struct mpi_msg_scsi_io_error	*sie;
-	int				s;
 
 	if (xs->datalen != 0) {
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
@@ -1324,9 +1316,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */
 		xs->status = SCSI_OK;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1411,9 +1401,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	    xs->error, xs->status);
 
 	mpi_push_reply(sc, ccb->ccb_rcb);
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 void
