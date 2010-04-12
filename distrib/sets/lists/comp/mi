@@ -5299,6 +5299,8 @@
 ./usr/share/man/cat3/pthread_rwlock_destroy.0
 ./usr/share/man/cat3/pthread_rwlock_init.0
 ./usr/share/man/cat3/pthread_rwlock_rdlock.0
+./usr/share/man/cat3/pthread_rwlock_timedrdlock.0
+./usr/share/man/cat3/pthread_rwlock_timedwrlock.0
 ./usr/share/man/cat3/pthread_rwlock_tryrdlock.0
 ./usr/share/man/cat3/pthread_rwlock_trywrlock.0
 ./usr/share/man/cat3/pthread_rwlock_unlock.0
