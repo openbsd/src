@@ -1,0 +1,17 @@
+.Dd $Mdocdate: April 12 2010 $
+.Dt BD-BLANK 1
+.Os
+.Sh NAME
+.Nm Bd-blank
+.Nd handling of blank lines in literal displays
+.Sh DESCRIPTION
+.Bd -literal
+one completely blank line:
+
+two blank lines:
+
+
+finally, a trailing blank line:
+
+.Ed
+end of test document
