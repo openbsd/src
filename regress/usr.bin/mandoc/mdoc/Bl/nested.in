@@ -1,0 +1,44 @@
+.Dd $Mdocdate: April 12 2010 $
+.Dt BL-NESTED 1
+.Os
+.Sh NAME
+.Nm Bl-nested
+.Nd nested lists
+.Sh DESCRIPTION
+inset:
+.Bl -inset
+.It outer
+list
+.Bl -inset
+.It inner
+list
+.El
+.El
+inset compact:
+.Bl -inset -compact
+.It outer
+list
+.Bl -inset -compact
+.It inner
+list
+.El
+.El
+dash:
+.Bl -dash
+.It
+outer list
+.Bl -dash
+.It
+inner list
+.El
+.El
+dash compact:
+.Bl -dash -compact
+.It
+outer list
+.Bl -dash -compact
+.It
+inner list
+.El
+.El
+final text
