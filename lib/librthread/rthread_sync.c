@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.22 2009/11/27 19:45:54 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.23 2010/04/12 03:34:31 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -527,9 +527,40 @@ pthread_rwlock_rdlock(pthread_rwlock_t *lockp)
 again:
 	_spinlock(&lock->lock);
 	if (lock->writer) {
+		_spinlock(&lock->sem.lock);
 		_spinunlock(&lock->lock);
-		_sem_wait(&lock->sem, 0);
+		_sem_waitl(&lock->sem, 0, 0, NULL);
 		goto again;
+	}
+	lock->readers++;
+	_spinunlock(&lock->lock);
+
+	return (0);
+}
+
+int
+pthread_rwlock_timedrdlock(pthread_rwlock_t *lockp,
+    const struct timespec *abstime)
+{
+	pthread_rwlock_t lock;
+	int do_wait = 1;
+	int error;
+
+	if ((error = _rthread_rwlock_ensure_init(lockp)))
+		return (error);
+
+	lock = *lockp;
+	_spinlock(&lock->lock);
+	while (lock->writer && do_wait) {
+		_spinlock(&lock->sem.lock);
+		_spinunlock(&lock->lock);
+		do_wait = _sem_waitl(&lock->sem, 0, CLOCK_REALTIME, abstime);
+		_spinlock(&lock->lock);
+	}
+	if (lock->writer) {
+		/* do_wait must be 0, so timed out */
+		_spinunlock(&lock->lock);
+		return (ETIMEDOUT);
 	}
 	lock->readers++;
 	_spinunlock(&lock->lock);
@@ -573,9 +604,43 @@ pthread_rwlock_wrlock(pthread_rwlock_t *lockp)
 	_spinlock(&lock->lock);
 	lock->writer++;
 	while (lock->readers) {
+		_spinlock(&lock->sem.lock);
 		_spinunlock(&lock->lock);
-		_sem_wait(&lock->sem, 0);
+		_sem_waitl(&lock->sem, 0, 0, NULL);
 		_spinlock(&lock->lock);
+	}
+	lock->readers = -pthread_self()->tid;
+	_spinunlock(&lock->lock);
+
+	return (0);
+}
+
+int
+pthread_rwlock_timedwrlock(pthread_rwlock_t *lockp,
+    const struct timespec *abstime)
+{
+	pthread_rwlock_t lock;
+	int do_wait = 1;
+	int error;
+
+	if ((error = _rthread_rwlock_ensure_init(lockp)))
+		return (error);
+
+	lock = *lockp;
+
+	_spinlock(&lock->lock);
+	lock->writer++;
+	while (lock->readers && do_wait) {
+		_spinlock(&lock->sem.lock);
+		_spinunlock(&lock->lock);
+		do_wait = _sem_waitl(&lock->sem, 0, CLOCK_REALTIME, abstime);
+		_spinlock(&lock->lock);
+	}
+	if (lock->readers) {
+		/* do_wait must be 0, so timed out */
+		lock->writer--;
+		_spinunlock(&lock->lock);
+		return (ETIMEDOUT);
 	}
 	lock->readers = -pthread_self()->tid;
 	_spinunlock(&lock->lock);
