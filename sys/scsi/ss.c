@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.70 2010/01/15 05:50:31 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.71 2010/04/12 09:51:48 dlg Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -682,8 +682,7 @@ ssdone(struct scsi_xfer *xs)
 {
 	struct ss_softc *ss = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
-
-	splassert(IPL_BIO);
+	int s;
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -727,7 +726,9 @@ retry:
 		break;
 	}
 
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	scsi_xs_put(xs);
 }
 

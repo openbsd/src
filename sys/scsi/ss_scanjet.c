@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.37 2010/01/15 05:50:31 krw Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.38 2010/04/12 09:51:48 dlg Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -309,8 +309,7 @@ scanjet_read_done(struct scsi_xfer *xs)
 {
 	struct ss_softc *ss = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
-
-	splassert(IPL_BIO);
+	int s;
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -359,7 +358,9 @@ retry:
 		break;
 	}
 
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	scsi_xs_put(xs);
 }
 

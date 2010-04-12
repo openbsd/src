@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.168 2010/04/06 00:58:00 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.169 2010/04/12 09:51:48 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1102,8 +1102,6 @@ scsi_xs_exec(struct scsi_xfer *xs)
 void
 scsi_done(struct scsi_xfer *xs)
 {
-	splassert(IPL_BIO);
-
 #ifdef SCSIDEBUG
 	if (xs->sc_link->flags & SDEV_DB1) {
 		if (xs->datalen && (xs->flags & SCSI_DATA_IN))

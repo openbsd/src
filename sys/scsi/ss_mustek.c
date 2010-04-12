@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.20 2010/01/15 05:50:31 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.21 2010/04/12 09:51:48 dlg Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -472,8 +472,7 @@ mustek_read_done(struct scsi_xfer *xs)
 {
 	struct ss_softc *ss = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
-
-	splassert(IPL_BIO);
+	int s;
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -521,7 +520,9 @@ retry:
 		break;
 	}
 
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	scsi_xs_put(xs);
 }
 

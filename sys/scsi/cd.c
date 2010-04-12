@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.164 2010/02/28 21:17:00 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.165 2010/04/12 09:51:48 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -683,9 +683,8 @@ cd_buf_done(struct scsi_xfer *xs)
 {
 	struct cd_softc *sc = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
+	int s;
 
-	splassert(IPL_BIO);
-         
 	switch (xs->error) {
 	case XS_NOERROR:
 		bp->b_error = 0;
@@ -733,7 +732,9 @@ retry:
 	disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
 	    bp->b_flags & B_READ);
 
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	scsi_xs_put(xs);
 	cdstart(sc); /* restart io */
 }
