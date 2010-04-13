@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.8 2010/03/03 10:18:35 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.9 2010/04/13 15:42:09 michele Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -320,6 +320,7 @@ show_lib_msg(struct imsg *imsg)
 {
 	struct ctl_rt	*rt;
 	char		*dstnet, *remote;
+	int             remote_label;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_LIB:
@@ -327,12 +328,19 @@ show_lib_msg(struct imsg *imsg)
 		if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
 		    rt->prefixlen) == -1)
 			err(1, NULL);
-
-		if (rt->connected || !rt->in_use) {
+		remote_label = ntohl(rt->remote_label) >> MPLS_LABEL_OFFSET;
+		if (!rt->in_use) {
 			if (asprintf(&remote, "-") == -1)
 				err(1, NULL);
+		} else if (rt->connected ||
+		    (remote_label == (NO_LABEL >> MPLS_LABEL_OFFSET))) {
+			if (asprintf(&remote, "Untagged") == -1)
+				err(1, NULL);
+		} else if (remote_label == MPLS_LABEL_IMPLNULL) {
+			if (asprintf(&remote, "Pop tag") == -1)
+				err(1, NULL);
 		} else {
-			if (asprintf(&remote, "%u", (ntohl(rt->remote_label) >> MPLS_LABEL_OFFSET)) == -1)
+			if (asprintf(&remote, "%u", remote_label) == -1)
 				err(1, NULL);
 		}
 
@@ -429,17 +437,24 @@ show_lfib_msg(struct imsg *imsg)
 		else if (k->flags & F_CONNECTED)
 			printf("link#%-13u", k->ifindex);
 
-		if (k->local_label != NO_LABEL) {
+		if (k->local_label == NO_LABEL) {
+			printf("%-18s", "-");
+		} else if (ntohl(k->local_label) >> MPLS_LABEL_OFFSET ==
+		    MPLS_LABEL_IMPLNULL) {
+			printf("%-18s", "imp-null");
+		} else
 			printf("%-18u", (ntohl(k->local_label) >>
 			    MPLS_LABEL_OFFSET));
-		} else
-			printf("-                 ");
 
-		if (k->remote_label != NO_LABEL) {
+		if (k->remote_label == NO_LABEL) {
+			printf("-");
+		} else if (htonl(k->remote_label) >> MPLS_LABEL_OFFSET ==
+		    MPLS_LABEL_IMPLNULL) {
+			printf("Pop");
+		} else {
 			printf("%u", (ntohl(k->remote_label) >>
 			    MPLS_LABEL_OFFSET));
-		} else
-			printf("-");
+		}
 
 		printf("\n");
 
