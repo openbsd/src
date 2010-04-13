@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.22 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: main.c,v 1.23 2010/04/13 06:52:12 jmc Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -216,9 +216,9 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-V] [-foption...] "
+	(void)fprintf(stderr, "usage: %s [-V] [-foption] "
 			"[-mformat] [-Ooption] [-Toutput] "
-			"[-Werr...]\n", progname);
+			"[-Werr] [file...]\n", progname);
 	exit(EXIT_FAILURE);
 }
 
