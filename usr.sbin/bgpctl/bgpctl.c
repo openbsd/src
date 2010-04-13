@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.157 2010/03/08 17:02:19 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.158 2010/04/13 09:10:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -804,56 +804,33 @@ show_fib_flags(u_int16_t flags)
 int
 show_fib_msg(struct imsg *imsg)
 {
-	struct kroute		*k;
-	struct kroute6		*k6;
+	struct kroute_full	*kf;
 	char			*p;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
 	case IMSG_CTL_SHOW_NETWORK:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute))
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*kf))
 			errx(1, "wrong imsg len");
-		k = imsg->data;
+		kf = imsg->data;
 
-		show_fib_flags(k->flags);
+		show_fib_flags(kf->flags);
 
-		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
-		    -1)
+		if (asprintf(&p, "%s/%u", log_addr(&kf->prefix),
+		    kf->prefixlen) == -1)
 			err(1, NULL);
-		printf("%4i %-20s ", k->priority, p);
+		printf("%4i %-20s ", kf->priority, p);
 		free(p);
 
-		if (k->nexthop.s_addr)
-			printf("%s", inet_ntoa(k->nexthop));
-		else if (k->flags & F_CONNECTED)
-			printf("link#%u", k->ifindex);
-		printf("\n");
-
-		break;
-	case IMSG_CTL_KROUTE6:
-	case IMSG_CTL_SHOW_NETWORK6:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute6))
-			errx(1, "wrong imsg len");
-		k6 = imsg->data;
-
-		show_fib_flags(k6->flags);
-
-		if (asprintf(&p, "%s/%u", log_in6addr(&k6->prefix),
-		    k6->prefixlen) == -1)
-			err(1, NULL);
-		printf("%4i %-20s ", k6->priority, p);
-		free(p);
-
-		if (!IN6_IS_ADDR_UNSPECIFIED(&k6->nexthop))
-			printf("%s", log_in6addr(&k6->nexthop));
-		else if (k6->flags & F_CONNECTED)
-			printf("link#%u", k6->ifindex);
+		if (kf->flags & F_CONNECTED)
+			printf("link#%u", kf->ifindex);
+		else
+			printf("%s", log_addr(&kf->nexthop));
 		printf("\n");
 
 		break;
 	case IMSG_CTL_END:
 		return (1);
-		break;
 	default:
 		break;
 	}
