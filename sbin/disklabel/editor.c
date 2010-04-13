@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.232 2010/04/13 12:36:31 lum Exp $	*/
+/*	$OpenBSD: editor.c,v 1.233 2010/04/13 22:38:20 lum Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1750,10 +1750,9 @@ editor_help(char *arg)
 		break;
 	case 'M':
 		puts(
-"'M' pipes the entire OpenBSD manual page for disk label through the pager\n"
-"specified by the PAGER environment variable or 'less' if PAGER is not set. It\n"
-"is especially useful during install when the normal system manual is not\n"
-"available\n");
+"'M' pipes the entire OpenBSD man page for disklabel through the pager specified\n"
+"by the PAGER environment variable or 'less' if PAGER is not set. It is\n"
+"especially useful during install when the normal system manual is not available\n");
 		break;
 	case 'e':
 		puts(
@@ -1764,25 +1763,25 @@ editor_help(char *arg)
 		break;
 	case 'a':
 		puts(
-"'a' adds new partitions to the disk.  It takes as an optional argument the\n"
+"'a' adds new partitions to the disk label.  It takes as an optional argument the\n"
 "partition letter to add.  If you do not specify a partition letter, you will be\n"
 "prompted for it; the next available letter will be the default answer\n");
 		break;
 	case 'A':
 		puts(
-"'A' clears the existing partitions and creates a new label based on the size of\n"
-"the disk\n");
+"'A' removes all the existing partitions and creates a new set based on the size\n"
+"of the disk\n");
 		break;
 	case 'b':
 		puts(
 "'b' changes the boundaries of the OpenBSD portion of the disk. This is on a disk\n"
 "with an fdisk partition, the boundaries are set to be the first and last sectors\n"
 "of the OpenBSD fdisk partition.  You should only change these if your fdisk\n"
-"partition table is incorrect or you have a disk larger than 8gig, since 8gig is\n"
-"the maximum size an fdisk partition can be.  You may enter '*' at the 'Size'\n"
-"prompt to indicate the entire size of the disk (minus the starting sector).  Use\n"
-"this option with care; if you extend the boundaries such that they overlap\n"
-"with another operating system you will corrupt the other operating system's data\n");
+"partition table is incorrect or you have a disk larger than the maximum size\n"
+"allowed by fdisk.  You may enter '*' at the 'Size' prompt to indicate the entire\n"
+"size of the disk (minus the starting sector).  Use this option with care; if you\n"
+"extend the boundaries such that they overlap with another operating system you\n"
+"will corrupt the other operating system's data\n");
 		break;
 	case 'c':
 		puts(
@@ -1798,8 +1797,8 @@ editor_help(char *arg)
 		break;
 	case 'D':
 		puts(
-"'D' sets the disk label to the default values as reported by the disk \n"
-"itself.  This similates the case where there is no disk label.\n");
+"'D' sets the disk label to the default values as reported by the disk itself.\n"
+"This simulates the case where there is no disk label.\n");
 		break;
 	case 'd':
 		puts(
@@ -1825,20 +1824,25 @@ editor_help(char *arg)
 		break;
 	case 'n':
 		puts(
-"'n' sets the mount point for a partition (ie: name it).  It takes as an\n"
-"optional argument the partition letter to name.  If you do not specify a \n"
-"partition letter, you will be prompted for one.  This option is only valid \n"
-"if disklabel was invoked with the -f flag.\n");
+"'n' names the mount point for a partition.  It takes as an optional argument\n"
+"the partition letter to name.  If you do not specify a partition letter, you\n"
+"will be prompted for one.  This command is only valid if disklabel was invoked\n"
+"with the -f flag.\n");
 		break;
 	case 'R':
 		puts(
-"'R' resizes a partition, compacting unused space between partitions with a\n"
-"higher offset. The last partition will be shrunk if needed.  Works only for auto\n"
-"allocated labels.\n");
+"'R' resizes a partition. If the partition is reduced in size, subsequent\n"
+"partitions are reallocated to eliminate unnecessary space. If the chosen\n"
+"partition increases in size the last partition will be shrunk if needed.  Works\n"
+"only for auto allocated labels.\n");
 		break;
 	case 'r':
 		puts(
 "'r' recalculates and display details about the available free space.\n");
+		break;
+	case 'U':
+		puts(
+"'U' undoes all changes made since entering the editor.\n");
 		break;
 	case 'u':
 		puts(
@@ -1854,7 +1858,7 @@ editor_help(char *arg)
 		break;
 	case 'w':
 		puts(
-"'w' writes the current label to disk.  This option will commit any changes\n"
+"'w' writes the current label to disk.  This command will commit any changes\n"
 "to the on-disk label.\n");
 		break;
 	case 'q':
@@ -1873,8 +1877,7 @@ editor_help(char *arg)
 		break;
 	case 'z':
 		puts(
-"'z' zeroes out the existing partition table, leaving only the 'c' partition.\n"
-"The drive parameters are not changed.\n");
+"'z' zeroes out the existing partition table, leaving only the 'c' partition.\n");
 		break;
 	default:
 		puts("Available commands:");
