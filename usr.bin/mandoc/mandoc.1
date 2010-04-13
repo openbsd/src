@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.26 2010/04/13 06:52:12 jmc Exp $
+.\"	$OpenBSD: mandoc.1,v 1.27 2010/04/13 08:52:23 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -17,13 +17,9 @@
 .Dd $Mdocdate: April 13 2010 $
 .Dt MANDOC 1
 .Os
-.
-.
 .Sh NAME
 .Nm mandoc
 .Nd format and display UNIX manuals
-.
-.
 .Sh SYNOPSIS
 .Nm mandoc
 .Op Fl V
@@ -33,8 +29,6 @@
 .Op Fl T Ns Ar output
 .Op Fl W Ns Ar err
 .Op Ar file...
-.
-.
 .Sh DESCRIPTION
 The
 .Nm
@@ -42,14 +36,12 @@ utility formats
 .Ux
 manual pages for display.
 The arguments are as follows:
-.
 .Bl -tag -width Ds
 .It Fl f Ns Ar option
 Comma-separated compiler options.
 See
 .Sx Compiler Options
 for details.
-.
 .It Fl m Ns Ar format
 Input format.
 See
@@ -57,13 +49,11 @@ See
 for available formats.
 Defaults to
 .Fl m Ns Cm andoc .
-.
 .It Fl O Ns Ar option
 Comma-separated output options.
 See
 .Sx Output Options
 for details.
-.
 .It Fl T Ns Ar output
 Output format.
 See
@@ -71,10 +61,8 @@ See
 for available formats.
 Defaults to
 .Fl T Ns Cm ascii .
-.
 .It Fl V
 Print version and exit.
-.
 .It Fl W Ns Ar err
 Comma-separated warning options.
 Use
@@ -87,7 +75,6 @@ Multiple
 .Fl W
 arguments may be comma-separated, such as
 .Fl W Ns Cm error , Ns Cm all .
-.
 .It Ar file
 Read input from zero or more files.
 If unspecified, reads from stdin.
@@ -95,7 +82,6 @@ If multiple files are specified,
 .Nm
 will halt with the first failed parse.
 .El
-.
 .Pp
 By default,
 .Nm
@@ -108,11 +94,8 @@ text from stdin, implying
 and produces
 .Fl T Ns Cm ascii
 output.
-.
 .Pp
 .Ex -std mandoc
-.
-.
 .Ss Input Formats
 The
 .Nm
@@ -132,7 +115,6 @@ format is
 recommended;
 .Xr man 7
 should only be used for legacy manuals.
-.
 .Pp
 A third option,
 .Fl m Ns Cm andoc ,
@@ -146,7 +128,6 @@ the
 parser is used; otherwise, the
 .Xr man 7
 parser is used.
-.
 .Pp
 If multiple
 files are specified with
@@ -158,8 +139,6 @@ specified and
 or
 .Fl m Ns Cm an
 is specified, then this format is used exclusively.
-.
-.
 .Ss Output Formats
 The
 .Nm
@@ -167,7 +146,6 @@ utility accepts the following
 .Fl T
 arguments (see
 .Sx OUTPUT ) :
-.
 .Bl -tag -width Ds
 .It Fl T Ns Cm ascii
 Produce 7-bit ASCII output, backspace-encoded for bold and underline
@@ -175,65 +153,51 @@ styles.
 This is the default.
 See
 .Sx ASCII Output .
-.
 .It Fl T Ns Cm html
 Produce strict HTML-4.01 output, with a sane default style.
 See
 .Sx HTML Output .
-.
 .It Fl T Ns Cm lint
 Parse only: produce no output.
 Implies
 .Fl W Ns Cm all
 and
 .Fl f Ns Cm strict .
-.
 .It Fl T Ns Cm tree
 Produce an indented parse tree.
-.
 .It Fl T Ns Cm xhtml
 Produce strict XHTML-1.0 output, with a sane default style.
 See
 .Sx XHTML Output .
 .El
-.
 .Pp
 If multiple input files are specified, these will be processed by the
 corresponding filter in-order.
-.
-.
 .Ss Compiler Options
 Default compiler behaviour may be overridden with the
 .Fl f
 flag.
-.
 .Bl -tag -width Ds
 .It Fl f Ns Cm ign-errors
 When parsing multiple files, don't halt when one errors out.
 Useful with
 .Fl T Ns Cm lint
 over a large set of manuals passed on the command line.
-.
 .It Fl f Ns Cm ign-escape
 Ignore invalid escape sequences.
 This is the default, but the option can be used to override an earlier
 .Fl f Ns Cm strict .
-.
 .It Fl f Ns Cm ign-scope
 When rewinding the scope of a block macro, forces the compiler to ignore
 scope violations.
 This can seriously mangle the resulting tree.
 .Pq mdoc only
-.
 .It Fl f Ns Cm no-ign-chars
 Do not ignore disallowed characters.
-.
 .It Fl f Ns Cm no-ign-escape
 Do not ignore invalid escape sequences.
-.
 .It Fl f Ns Cm no-ign-macro
 Do not ignore unknown macros at the start of input lines.
-.
 .It Fl f Ns Cm strict
 Implies
 .Fl f Ns Cm no-ign-escape ,
@@ -241,8 +205,6 @@ Implies
 and
 .Fl f Ns Cm no-ign-chars .
 .El
-.
-.
 .Ss Output Options
 For the time being, only
 .Fl T Ns Ar html
@@ -286,8 +248,6 @@ is used for an external style-sheet.
 This must be a valid absolute or
 relative URI.
 .El
-.
-.
 .Sh OUTPUT
 This section documents output details of
 .Nm .
@@ -332,13 +292,10 @@ and
 .Sq \&}
 .Pc
 is not preceded by white-space.
-.
 .Pp
 If the input is
 .Xr mdoc 7 ,
 however, these rules are also applied to macro arguments when appropriate.
-.
-.
 .Ss ASCII Output
 Output produced by
 .Fl T Ns Cm ascii ,
@@ -362,8 +319,6 @@ are rendered best-effort in an ASCII equivalent.
 .Pp
 Output width is limited to 78 visible columns unless literal input lines
 exceed this limit.
-.
-.
 .Ss HTML Output
 Output produced by
 .Fl T Ns Cm html
@@ -381,8 +336,6 @@ cause rendered documents to appear as they do in
 .Fl T Ns Cm ascii .
 .Pp
 Special characters are rendered in decimal-encoded UTF-8.
-.
-.
 .Ss XHTML Output
 Output produced by
 .Fl T Ns Cm xhtml
@@ -392,15 +345,11 @@ See
 .Sx HTML Output
 for details; beyond generating XHTML tags instead of HTML tags, these
 output modes are identical.
-.
-.
 .Sh EXAMPLES
 To page manuals to the terminal:
-.
 .Pp
 .D1 $ mandoc \-Wall,error \-fstrict mandoc.1 2\*(Gt&1 | less
 .D1 $ mandoc mandoc.1 mdoc.3 mdoc.7 | less
-.
 .Pp
 To produce HTML manuals with
 .Ar style.css
@@ -409,19 +358,14 @@ as the style-sheet:
 .D1 $ mandoc \-Thtml -Ostyle=style.css mdoc.7 \*(Gt mdoc.7.html
 .Pp
 To check over a large set of manuals:
-.
 .Pp
 .Dl $ mandoc \-Tlint \-fign-errors `find /usr/src -name \e*\e.[1-9]`
-.
-.
 .Sh COMPATIBILITY
 This section summarises
 .Nm
 compatibility with
 .Xr groff 1 .
 Each input and output format is separately noted.
-.
-.
 .Ss ASCII Compatibility
 .Bl -bullet -compact
 .It
@@ -429,7 +373,6 @@ The
 .Sq \e~
 special character doesn't produce expected behaviour in
 .Fl T Ns Cm ascii .
-.
 .It
 The
 .Sq \&Bd \-literal
@@ -440,7 +383,6 @@ macros of
 in
 .Fl T Ns Cm ascii
 are synonyms, as are \-filled and \-ragged.
-.
 .It
 In
 .Xr groff 1 ,
@@ -452,7 +394,6 @@ macro does not underline when scoped under an
 in the FILES section.
 This behaves correctly in
 .Nm .
-.
 .It
 A list or display following the
 .Sq \&Ss
@@ -461,7 +402,6 @@ macro in
 .Fl T Ns Cm ascii
 does not assert a prior vertical break, just as it doesn't with
 .Sq \&Sh .
-.
 .It
 The
 .Sq \&na
@@ -469,21 +409,16 @@ The
 macro in
 .Fl T Ns Cm ascii
 has no effect.
-.
 .It
 Words aren't hyphenated.
-.
 .It
 In normal mode (not a literal block), blocks of spaces aren't preserved,
 so double spaces following sentence closure are reduced to a single space;
 .Xr groff 1
 retains spaces.
-.
 .It
 Sentences are unilaterally monospaced.
 .El
-.
-.
 .Ss HTML/XHTML Compatibility
 .Bl -bullet -compact
 .It
@@ -506,7 +441,6 @@ and
 .Sq \&Bl \-tag
 list types render similarly (no break following overreached left-hand
 side) due to the expressive constraints of HTML.
-.
 .It
 The
 .Xr man 7
@@ -515,20 +449,15 @@ and
 .Sq TP
 lists render similarly.
 .El
-.
-.
 .Sh SEE ALSO
 .Xr man 7 ,
 .Xr mandoc_char 7 ,
 .Xr mdoc 7
-.
 .Sh AUTHORS
 The
 .Nm
 utility was written by
 .An Kristaps Dzonsons Aq kristaps@kth.se .
-.
-.
 .Sh CAVEATS
 The
 .Fl T Ns Cm html
@@ -538,7 +467,6 @@ CSS2 styling used for
 .Fl m Ns Cm doc
 input lists does not render properly in older browsers, such as Internet
 Explorer 6 and earlier.
-.
 .Pp
 In
 .Fl T Ns Cm html
@@ -550,7 +478,6 @@ which is usually 1024 bytes.
 Be aware of this when setting long link
 formats such as
 .Fl O Ns Cm style Ns = Ns Ar really/long/link .
-.
 .Pp
 The
 .Fl T Ns Cm html
@@ -562,7 +489,6 @@ font size escape documented in
 .Xr mdoc 7
 and
 .Xr man 7 .
-.
 .Pp
 Nesting elements within next-line element scopes of
 .Fl m Ns Cm an ,
@@ -575,7 +501,6 @@ will confuse
 and
 .Fl T Ns Cm xhtml
 and cause them to forget the formatting of the prior next-line scope.
-.
 .Pp
 The
 .Sq i
@@ -583,7 +508,6 @@ macro in
 .Fl m Ns Cm an
 should italicise all subsequent text if a line argument is not provided.
 This behaviour is not implemented.
-.
 The
 .Sq \(aq
 control character is an alias for the standard macro control character
