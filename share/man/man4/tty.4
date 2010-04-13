@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.35 2009/01/31 19:37:12 sobrado Exp $
+.\"	$OpenBSD: tty.4,v 1.36 2010/04/13 20:38:26 mk Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 31 2009 $
+.Dd $Mdocdate: April 13 2010 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -444,7 +444,7 @@ in
 is cleared in the terminal.
 .It Dv TIOCGTSTAMP Fa struct timeval *timeval
 Return the (single) timestamp.
-.It Dv TIOCSTSTAMP Fa struct tstamp *tstamps
+.It Dv TIOCSTSTAMP Fa struct tstamps *tstamps
 Chooses the conditions which will cause the current system time to be
 immediately copied to the terminal timestamp storage.
 This is often used to determine exactly the moment at which one or
