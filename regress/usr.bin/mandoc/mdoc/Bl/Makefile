@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.3 2010/04/12 22:57:05 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2010/04/13 22:49:47 schwarze Exp $
 
-REGRESS_TARGETS=tag inset hang diag column nested
-GROFF_TARGETS=tag inset hang diag column nested
+REGRESS_TARGETS=tag inset hang diag column multitag nested
+GROFF_TARGETS=tag inset hang diag column multitag nested
 
 REGRESS_TARGETS+=EMULTILIST ENOTYPE
 REGRESS_SLOW_TARGETS=EMULTILIST

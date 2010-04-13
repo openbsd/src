@@ -1,0 +1,47 @@
+.Dd $Mdocdate: April 13 2010 $
+.Dt BL-MULTITAG 1
+.Os
+.Sh NAME
+.Nm Bl-multitag
+.Nd lists with multiple successive tags
+.Sh DESCRIPTION
+inset:
+.Bl -inset
+.It first
+.It second
+.It third
+some text
+.It fourth
+.It fifth
+more text
+.El
+tag:
+.Bl -tag -width Ds
+.It first
+.It second
+.It third
+some text
+.It fourth
+.It fifth
+more text
+.El
+inset compact:
+.Bl -inset -compact
+.It first
+.It second
+.It third
+some text
+.It fourth
+.It fifth
+more text
+.El
+tag compact:
+.Bl -tag -width Ds -compact
+.It first
+.It second
+.It third
+some text
+.It fourth
+.It fifth
+more text
+.El
