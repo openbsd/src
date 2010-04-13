@@ -1,4 +1,4 @@
-Copyright (c) 1994-1996, 1998-2005, 2007-2009
+Copyright (c) 1994-1996, 1998-2005, 2007-2010
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -711,7 +711,7 @@ by default.
 =item passprompt_override
 
 The password prompt specified by I<passprompt> will normally only
-be used if the passwod prompt provided by systems such as PAM matches
+be used if the password prompt provided by systems such as PAM matches
 the string "Password:".  If I<passprompt_override> is set, I<passprompt>
 will always be used.  This flag is I<off> by default.
 
@@ -808,7 +808,12 @@ system that is mounted on demand (automounted).  The I<fast_glob>
 option causes B<sudo> to use the L<fnmatch(3)> function, which does
 not access the file system to do its matching.  The disadvantage
 of I<fast_glob> is that it is unable to match relative pathnames
-such as F<./ls> or F<../bin/ls>.  This flag is I<off> by default.
+such as F<./ls> or F<../bin/ls>.  This has security implications
+when path names that include globbing characters are used with the
+negation operator, C<'!'>, as such rules can be trivially bypassed.
+As such, this option should not be used when I<sudoers> contains rules
+that contain negated path names which include globbing characters.
+This flag is I<off> by default.
 
 =item stay_setuid
 
@@ -1468,6 +1473,22 @@ I<SU> or I<SHELLS> since he can simply copy those commands to a
 different name, or use a shell escape from an editor or other
 program.  Therefore, these kind of restrictions should be considered
 advisory at best (and reinforced by policy).
+
+Furthermore, if the I<fast_glob> option is in use, it is not possible
+to reliably negate commands where the path name includes globbing
+(aka wildcard) characters.  This is because the C library's
+L<fnmatch(3)> function cannot resolve relative paths.  While this
+is typically only an inconvenience for rules that grant privileges,
+it can result in a security issue for rules that subtract or revoke
+privileges.
+
+For example, given the following I<sudoers> entry:
+
+ john	ALL = /usr/bin/passwd [a-zA-Z0-9]*, /usr/bin/chsh [a-zA-Z0-9]*,
+      /usr/bin/chfn [a-zA-Z0-9]*, !/usr/bin/* root
+
+User B<john> can still run C</usr/bin/passwd root> if I<fast_glob> is
+enabled by changing to F</usr/bin> and running C<./passwd root> instead.
 
 =head1 PREVENTING SHELL ESCAPES
 

@@ -1,3 +1,33 @@
+2010-04-09  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+        * configure, configure.in: Fix installation of sudoers.ldap
+          in "make install" when --with-ldap was specified without a
+          directory. From Prof. Dr. Andreas Mueller
+
+2010-04-09  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+        * find_path.c: Qualify the command even if it is in the
+          current working directory, e.g. "./foo" instead of just
+          returning "foo". This removes an ambiguity between real
+          commands and possible pseudo-commands in command matching.
+
+2010-04-07  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+        * sudoers.cat, sudoers.man.in, sudoers.pod: Add a note about
+          the security implications of the fast_glob option.
+
+	* memrchr.c: Remove duplicate includes
+
+2010-03-10  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+        * sudo.c: Fix a bug introduced with def_closefrom. The value
+          of def_closefrom already includes the +1.
+
+2010-03-09  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+        * match.c: When doing a glob match, short circuit if
+          gl.gl_pathc is 0. From Mark Kettenis.
+
 2010-02-22  Todd C. Miller  <Todd.Miller@courtesan.com>
 
         * match.c: Check for pseudo-command by looking at the first

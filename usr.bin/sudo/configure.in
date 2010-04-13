@@ -3,7 +3,7 @@ dnl Process this file with GNU autoconf to produce a configure script.
 dnl
 dnl Copyright (c) 1994-1996,1998-2010 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT([sudo], [1.7.2p5], [http://www.sudo.ws/bugs/], [sudo])
+AC_INIT([sudo], [1.7.2p6], [http://www.sudo.ws/bugs/], [sudo])
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT
@@ -2444,9 +2444,9 @@ if test ${with_ldap-'no'} != "no"; then
 	SUDO_APPEND_LIBPATH(LDFLAGS, [${with_ldap}/lib])
 	CPPFLAGS="${CPPFLAGS} -I${with_ldap}/include"
 	with_ldap=yes
-	LDAP=""
     fi
     SUDO_OBJS="${SUDO_OBJS} ldap.o"
+    LDAP=""
 
     AC_MSG_CHECKING([for LDAP libraries])
     LDAP_LIBS=""
