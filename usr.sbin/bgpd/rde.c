@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.290 2010/03/30 15:43:30 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.291 2010/04/13 09:09:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2214,8 +2214,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 void
 rde_send_kroute(struct prefix *new, struct prefix *old)
 {
-	struct kroute_label	 kl;
-	struct kroute6_label	 kl6;
+	struct kroute_full	 kr;
 	struct bgpd_addr	 addr;
 	struct prefix		*p;
 	enum imsg_type		 type;
@@ -2237,50 +2236,22 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	}
 
 	pt_getaddr(p->prefix, &addr);
-	switch (addr.aid) {
-	case AID_INET:
-		bzero(&kl, sizeof(kl));
-		kl.kr.prefix.s_addr = addr.v4.s_addr;
-		kl.kr.prefixlen = p->prefix->prefixlen;
-		if (p->aspath->flags & F_NEXTHOP_REJECT)
-			kl.kr.flags |= F_REJECT;
-		if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
-			kl.kr.flags |= F_BLACKHOLE;
-		if (type == IMSG_KROUTE_CHANGE)
-			kl.kr.nexthop.s_addr =
-			    p->aspath->nexthop->true_nexthop.v4.s_addr;
-		strlcpy(kl.label, rtlabel_id2name(p->aspath->rtlabelid),
-		    sizeof(kl.label));
-		if (imsg_compose(ibuf_main, type, 0, 0, -1, &kl,
-		    sizeof(kl)) == -1)
-			fatal("imsg_compose error");
-		break;
-	case AID_INET6:
-		bzero(&kl6, sizeof(kl6));
-		memcpy(&kl6.kr.prefix, &addr.v6, sizeof(struct in6_addr));
-		kl6.kr.prefixlen = p->prefix->prefixlen;
-		if (p->aspath->flags & F_NEXTHOP_REJECT)
-			kl6.kr.flags |= F_REJECT;
-		if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
-			kl6.kr.flags |= F_BLACKHOLE;
-		if (type == IMSG_KROUTE_CHANGE) {
-			type = IMSG_KROUTE6_CHANGE;
-			memcpy(&kl6.kr.nexthop,
-			    &p->aspath->nexthop->true_nexthop.v6,
-			    sizeof(struct in6_addr));
-		} else
-			type = IMSG_KROUTE6_DELETE;
-		strlcpy(kl6.label, rtlabel_id2name(p->aspath->rtlabelid),
-		    sizeof(kl6.label));
-		if (imsg_compose(ibuf_main, type, 0, 0, -1, &kl6,
-		    sizeof(kl6)) == -1)
-			fatal("imsg_compose error");
-		break;
-	case AID_VPN_IPv4:
-		break;
-	default:
-		fatal("rde_send_kroute: unhandled AID");
-	}
+	bzero(&kr, sizeof(kr));
+	memcpy(&kr.prefix, &addr, sizeof(kr.prefix));
+	kr.prefixlen = p->prefix->prefixlen;
+	if (p->aspath->flags & F_NEXTHOP_REJECT)
+		kr.flags |= F_REJECT;
+	if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
+		kr.flags |= F_BLACKHOLE;
+	if (type == IMSG_KROUTE_CHANGE)
+		memcpy(&kr.nexthop, &p->aspath->nexthop->true_nexthop,
+		    sizeof(kr.nexthop));
+	strlcpy(kr.label, rtlabel_id2name(p->aspath->rtlabelid),
+	    sizeof(kr.label));
+
+	if (imsg_compose(ibuf_main, type, 0, 0, -1, &kr,
+	    sizeof(kr)) == -1)
+		fatal("imsg_compose error");
 }
 
 /*
@@ -3034,8 +3005,7 @@ void
 network_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct prefix		*p;
-	struct kroute		 k;
-	struct kroute6		 k6;
+	struct kroute_full	 k;
 	struct bgpd_addr	 addr;
 	struct rde_dump_ctx	*ctx = ptr;
 
@@ -3043,30 +3013,23 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 		if (!(p->aspath->flags & F_PREFIX_ANNOUNCED))
 			continue;
 		pt_getaddr(p->prefix, &addr);
-		switch (addr.aid) {
-		case AID_INET:
-			bzero(&k, sizeof(k));
-			k.prefix.s_addr = addr.v4.s_addr;
-			k.prefixlen = p->prefix->prefixlen;
-			if (p->aspath->peer == peerself)
-				k.flags = F_KERNEL;
-			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
-			    ctx->req.pid, -1, &k, sizeof(k)) == -1)
-				log_warnx("network_dump_upcall: "
-				    "imsg_compose error");
-			break;
-		case AID_INET6:
-			bzero(&k6, sizeof(k6));
-			memcpy(&k6.prefix, &addr.v6, sizeof(k6.prefix));
-			k6.prefixlen = p->prefix->prefixlen;
-			if (p->aspath->peer == peerself)
-				k6.flags = F_KERNEL;
-			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK6, 0,
-			    ctx->req.pid, -1, &k6, sizeof(k6)) == -1)
-				log_warnx("network_dump_upcall: "
-				    "imsg_compose error");
-			break;
-		}
+
+		bzero(&k, sizeof(k));
+		memcpy(&k.prefix, &addr, sizeof(k.prefix));
+		if (p->aspath->nexthop == NULL ||
+		    p->aspath->nexthop->state != NEXTHOP_REACH)
+			k.nexthop.aid = k.prefix.aid;
+		else
+			memcpy(&k.nexthop, &p->aspath->nexthop->true_nexthop,
+			    sizeof(k.nexthop));
+		k.prefixlen = p->prefix->prefixlen;
+		k.flags = F_KERNEL;
+		if ((p->aspath->flags & F_ANN_DYNAMIC) == 0)
+			k.flags = F_STATIC;
+		if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
+		    ctx->req.pid, -1, &k, sizeof(k)) == -1)
+			log_warnx("network_dump_upcall: "
+			    "imsg_compose error");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.156 2010/03/29 09:09:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.157 2010/04/13 09:09:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -547,46 +547,38 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("route request not from RDE");
+			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct kroute_full))
+				log_warnx("wrong imsg len");
 			else if (kr_change(imsg.data))
 				rv = -1;
 			break;
 		case IMSG_KROUTE_DELETE:
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("route request not from RDE");
+			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct kroute_full))
+				log_warnx("wrong imsg len");
 			else if (kr_delete(imsg.data))
-				rv = -1;
-			break;
-		case IMSG_KROUTE6_CHANGE:
-			if (idx != PFD_PIPE_ROUTE)
-				log_warnx("route request not from RDE");
-			else if (kr6_change(imsg.data))
-				rv = -1;
-			break;
-		case IMSG_KROUTE6_DELETE:
-			if (idx != PFD_PIPE_ROUTE)
-				log_warnx("route request not from RDE");
-			else if (kr6_delete(imsg.data))
 				rv = -1;
 			break;
 		case IMSG_NEXTHOP_ADD:
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("nexthop request not from RDE");
-			else
-				if (imsg.hdr.len != IMSG_HEADER_SIZE +
-				    sizeof(struct bgpd_addr))
-					log_warnx("wrong imsg len");
-				else if (kr_nexthop_add(imsg.data) == -1)
-					rv = -1;
+			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct bgpd_addr))
+				log_warnx("wrong imsg len");
+			else if (kr_nexthop_add(imsg.data) == -1)
+				rv = -1;
 			break;
 		case IMSG_NEXTHOP_REMOVE:
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("nexthop request not from RDE");
+			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct bgpd_addr))
+				log_warnx("wrong imsg len");
 			else
-				if (imsg.hdr.len != IMSG_HEADER_SIZE +
-				    sizeof(struct bgpd_addr))
-					log_warnx("wrong imsg len");
-				else
-					kr_nexthop_delete(imsg.data);
+				kr_nexthop_delete(imsg.data);
 			break;
 		case IMSG_PFTABLE_ADD:
 			if (idx != PFD_PIPE_ROUTE)
