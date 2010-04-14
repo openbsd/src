@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.88 2010/03/23 18:43:06 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.89 2010/04/14 15:19:27 lum Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 23 2010 $
+.Dd $Mdocdate: April 14 2010 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -347,7 +347,7 @@ at the
 .Dq Size
 prompt to indicate the entire size of the disk
 .Pq minus the starting sector .
-This is useful for disks larger than 8 gigabytes where the
+This is useful for disks where the
 fdisk partition table is incapable of storing the real size.
 .It Cm c Op Ar part
 Change the size of an existing partition.
