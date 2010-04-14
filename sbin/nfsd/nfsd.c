@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.29 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.30 2010/04/14 23:54:36 krw Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -117,11 +117,8 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'n':
 			nfsdcnt = strtonum(optarg, 1, MAXNFSDCNT, &errstr);
-			if (errstr) {
-				warnx("nfsd count %s %s; reset to %d",
-				    optarg, errstr, DEFNFSDCNT);
-				nfsdcnt = DEFNFSDCNT;
-			}
+			if (errstr)
+				errx(1, "nfsd count is %s: %s", errstr, optarg);
 			break;
 		case 'r':
 			reregister = 1;
@@ -146,11 +143,8 @@ main(int argc, char *argv[])
 		usage();
 	if (argc == 1) {
 		nfsdcnt = strtonum(argv[0], 1, MAXNFSDCNT, &errstr);
-		if (errstr) {
-			warnx("nfsd count %s %s; reset to %d",
-			    argv[0], errstr, DEFNFSDCNT);
-			nfsdcnt = DEFNFSDCNT;
-		}
+		if (errstr)
+			errx(1, "nfsd count is %s: %s", errstr, argv[0]);
 	}
 
 	if (debug == 0) {
