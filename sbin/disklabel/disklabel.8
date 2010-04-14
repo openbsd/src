@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.89 2010/04/14 15:19:27 lum Exp $
+.\"	$OpenBSD: disklabel.8,v 1.90 2010/04/14 20:15:11 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -425,7 +425,7 @@ asked whether or not to save the changes to the on-disk label.
 .It Cm R Op Ar part
 Resize a partition in an automatically allocated label,
 compacting unused space between partitions with a higher offset.
-The last partition will be shrunk if neccessary.
+The last partition will be shrunk if necessary.
 Works only for automatically allocated labels with no spoofed partitions.
 .It Cm r
 Recalculate free space.
