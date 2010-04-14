@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.9 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: prep,v 1.10 2010/04/14 17:13:51 jasper Exp $
 To be able to boot the OpenBSD/MACHINE installation program on the Thecus
 N1200, you will need to learn a bit about Das U-Boot, the low-level process
 that controls the microprocessor after hardware initialization.
@@ -152,7 +152,7 @@ RouterBOARD RB600A setup:
 
 	    Press any key within 2 seconds to enter setup.
 
-	Since board initailization is very fast, it is rather easy to miss
+	Since board initialization is very fast, it is rather easy to miss
 	this message, in which case the board will load its RouterOS (which
 	is just Linux) from flash.
 
