@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.487 2010/04/07 20:56:41 sthen Exp $
+$OpenBSD: usbdevs,v 1.488 2010/04/14 02:47:58 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -63,6 +63,7 @@ vendor ADAPTEC		0x03f3	Adaptec
 vendor NATIONAL		0x0400	National Semiconductor
 vendor ACERLABS		0x0402	Acer Labs
 vendor FTDI		0x0403	Future Technology Devices
+vendor QUANTA2		0x0408	Quanta
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak
 vendor MELCO		0x0411	Melco
@@ -2980,14 +2981,16 @@ product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
 
 /* ZTE products */
-product ZTE CDMA_MSM	0x0001	CDMA Technologies MSM modem
-product ZTE MF637	0x0031	ZTE MF637 HSUPA USB modem
-product ZTE K3565Z	0x0063	ZTE K3565-Z USB MSM modem
-product ZTE UMASS	0x2000	ZTE USB MSM (umass mode)
-product ZTE AC8700	0xfffe	AC8700 CDMA USB modem
+product ZTE CDMA_MSM		0x0001	CDMA Technologies MSM modem
+product ZTE MF637		0x0031	ZTE MF637 HSUPA USB modem
+product ZTE K3565Z		0x0063	ZTE K3565-Z USB MSM modem
+product ZTE UMASS		0x2000	ZTE USB MSM (umass mode)
+product ZTE AC8700		0xfffe	AC8700 CDMA USB modem
 
 /* Quanta products */
 product QUANTA RT3070		0x0304	RT3070
+product QUANTA2 UMASS		0x1000	Quanta USB MSM (umass mode)
+product QUANTA2 Q101		0xea02	Quanta Q101 HSDPA USB modem
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
