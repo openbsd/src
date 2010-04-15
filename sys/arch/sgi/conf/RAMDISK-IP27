@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.20 2010/03/31 19:44:35 miod Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.21 2010/04/15 17:01:49 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -49,7 +49,7 @@ cpu*		at mainbus0
 clock0		at mainbus0
 
 #### Main local buses
-xbow0		at mainbus0
+xbow*		at mainbus0
 
 # XBow devices
 xbridge*	at xbow?
