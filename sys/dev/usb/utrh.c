@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.3 2010/02/18 23:34:05 deraadt Exp $   */
+/*	$OpenBSD: utrh.c,v 1.4 2010/04/15 09:40:46 yuo Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -154,9 +154,9 @@ utrh_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[UTRH_TEMP].type = SENSOR_TEMP;
 	sc->sc_sensor[UTRH_TEMP].flags = SENSOR_FINVALID;
 
-	strlcpy(sc->sc_sensor[UTRH_HUMIDITY].desc, "humidity",
+	strlcpy(sc->sc_sensor[UTRH_HUMIDITY].desc, "RH",
 	    sizeof(sc->sc_sensor[UTRH_HUMIDITY].desc));
-	sc->sc_sensor[UTRH_HUMIDITY].type = SENSOR_PERCENT;
+	sc->sc_sensor[UTRH_HUMIDITY].type = SENSOR_HUMIDITY;
 	sc->sc_sensor[UTRH_HUMIDITY].flags = SENSOR_FINVALID;
 
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[UTRH_TEMP]);
@@ -238,6 +238,15 @@ utrh_refresh(void *arg)
 	struct utrh_softc *sc = arg;
 	unsigned int temp_tick, humidity_tick;
 	int temp, rh;
+	uint8_t ledbuf[7];
+
+	/* turn on LED 1*/
+	bzero(ledbuf, sizeof(ledbuf));
+	ledbuf[0] = 0x3;
+	ledbuf[1] = 0x1;
+	if (uhidev_set_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
+	    ledbuf, sc->sc_flen))
+		printf("LED request failed\n");
 
 	/* issue query */
 	uint8_t cmdbuf[] = {0x31, 0x15, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -247,6 +256,12 @@ utrh_refresh(void *arg)
 
 	/* wait till sensor data are updated, 1s will be enough */
 	tsleep(&sc->sc_sensortask, 0, "utrh", (1*hz));
+
+	/* turn off LED 1 */
+	ledbuf[1] = 0x0;
+	if (uhidev_set_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
+	    ledbuf, sc->sc_flen))
+		printf("LED request failed\n");
 
 	temp_tick = (sc->sc_ibuf[2] * 256 + sc->sc_ibuf[3]) & 0x3fff;
 	humidity_tick = (sc->sc_ibuf[0] * 256 + sc->sc_ibuf[1]) & 0x0fff;
