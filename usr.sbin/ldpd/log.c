@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2010/04/15 15:39:32 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.4 2010/04/15 15:44:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -226,4 +226,68 @@ if_type_name(enum iface_type type)
 	}
 	/* NOTREACHED */
 	return ("UNKNOWN");
+}
+
+const char *
+notification_name(u_int32_t status)
+{
+	static char buf[16];
+
+	switch (status) {
+	case S_SUCCESS:
+		return ("Success");
+	case S_BAD_LDP_ID:
+		return ("Bad LDP Identifier");
+	case S_BAD_PROTO_VER:
+		return ("Bad Protocol Version");
+	case S_BAD_PDU_LEN:
+		return ("Bad PDU Length");
+	case S_UNKNOWN_MSG:
+		return ("Unknown Message Type");
+	case S_BAD_MSG_LEN:
+		return ("Bad Message Length");
+	case S_UNKNOWN_TLV:
+		return ("Unknown TLV");
+	case S_BAD_TLV_LEN:
+		return ("Bad TLV Length");
+	case S_BAD_TLV_VAL:
+		return ("Malformed TLV Value");
+	case S_HOLDTIME_EXP:
+		return ("Hold Timer Expired");
+	case S_SHUTDOWN:
+		return ("Shutdown");
+	case S_LOOP_DETECTED:
+		return ("Loop Detected");
+	case S_UNKNOWN_FEC:
+		return ("Unknown FEC");
+	case S_NO_ROUTE:
+		return ("No Route");
+	case S_NO_LABEL_RES:
+		return ("No Label Resources");
+	case S_AVAILABLE:
+		return ("Label Resources Available");
+	case S_NO_HELLO:
+		return ("Session Rejected, No Hello");
+	case S_PARM_ADV_MODE:
+		return ("Rejected Advertisement Mode Parameter");
+	case S_MAX_PDU_LEN:
+		return ("Rejected Max PDU Length Parameter");
+	case S_PARM_L_RANGE:
+		return ("Rejected Label Range Parameter");
+	case S_KEEPALIVE_TMR:
+		return ("KeepAlive Timer Expired");
+	case S_LAB_REQ_ABRT:
+		return ("Label Request Aborted");
+	case S_MISS_MSG:
+		return ("Missing Message Parameters");
+	case S_UNSUP_ADDR:
+		return ("Unsupported Address Family");
+	case S_KEEPALIVE_BAD:
+		return ("Bad KeepAlive Time");
+	case S_INTERN_ERR:
+		return ("Internal Error");
+	default:
+		snprintf(buf, sizeof(buf), "[%08x]", status);
+		return (buf);
+	}
 }
