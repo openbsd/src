@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.68 2009/02/12 18:53:14 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.69 2010/04/15 21:14:18 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2174,6 +2174,8 @@ pmap_enter(pm, va, pa, prot, flags)
 		if (!pmap_get_page(&pg, NULL, pm)) {
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_enter: no memory");
+			simple_unlock(&pm->pm_lock);
+			splx(s);
 			return (ENOMEM);
 		}
 	}
@@ -2325,6 +2327,8 @@ pmap_protect(pm, sva, eva, prot)
 			sva < roundup(ekdata, 4*MEG)) {
 			prom_printf("pmap_protect: va=%08x in locked TLB\r\n", sva);
 			OF_enter();
+			simple_unlock(&pm->pm_lock);
+			splx(s);
 			return;
 		}
 
@@ -3455,6 +3459,7 @@ pmap_remove_pv(pmap, va, pa)
 		 * Sometimes UVM gets confused and calls pmap_remove() instead
 		 * of pmap_kremove() 
 		 */
+		splx(s);
 		return; 
 #ifdef DIAGNOSTIC
 		printf("pmap_remove_pv(%lx, %x, %x) not found\n", (u_long)pmap, (u_int)va, (u_int)pa);
