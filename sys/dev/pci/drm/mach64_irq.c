@@ -151,7 +151,7 @@ mach64_driver_irq_install(struct drm_device * dev)
 
 	mach64_disable_vblank_local(dev, 0);
 
-	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
+	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_TTY,
 	    machdrm_intr, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);

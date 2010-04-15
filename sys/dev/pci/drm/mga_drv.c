@@ -125,7 +125,7 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s\n", pci_intr_string(pa->pa_pc, dev_priv->ih));
-	mtx_init(&dev_priv->fence_lock, IPL_BIO);
+	mtx_init(&dev_priv->fence_lock, IPL_TTY);
 
 	/* XXX pcie */
 	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,

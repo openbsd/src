@@ -342,7 +342,7 @@ radeon_driver_irq_install(struct drm_device * dev)
 	/* Clear bits if they're already high */
 	radeon_acknowledge_irqs(dev_priv, &dummy);
 
-	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
+	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_TTY,
 	    radeondrm_intr, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);

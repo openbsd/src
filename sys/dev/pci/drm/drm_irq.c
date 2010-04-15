@@ -196,7 +196,7 @@ drm_vblank_init(struct drm_device *dev, int num_crtcs)
 		return (ENOMEM);
 
 	dev->vblank->vb_num = num_crtcs;
-	mtx_init(&dev->vblank->vb_lock, IPL_BIO);
+	mtx_init(&dev->vblank->vb_lock, IPL_TTY);
 	timeout_set(&dev->vblank->vb_disable_timer, vblank_disable, dev);
 
 	return (0);

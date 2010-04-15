@@ -357,7 +357,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	 * set up interrupt handler, note that we don't switch the interrupt
 	 * on until the X server talks to us, kms will change this.
 	 */
-	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
+	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_TTY,
 	    inteldrm_intr, dev_priv, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL) {
 		printf(": couldn't  establish interrupt\n");
@@ -368,7 +368,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev_priv->irq_mask_reg = ~I915_INTERRUPT_ENABLE_FIX;
 
 #ifdef INTELDRM_GEM
-	dev_priv->workq = workq_create("intelrel", 1, IPL_BIO);
+	dev_priv->workq = workq_create("intelrel", 1, IPL_TTY);
 	if (dev_priv->workq == NULL) {
 		printf("couldn't create workq\n");
 		return;
@@ -449,7 +449,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s\n", pci_intr_string(pa->pa_pc, dev_priv->ih));
 
-	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
+	mtx_init(&dev_priv->user_irq_lock, IPL_TTY);
 
 	/* All intel chipsets need to be treated as agp, so just pass one */
 	dev_priv->drmdev = drm_attach_pci(&inteldrm_driver, pa, 1, self);

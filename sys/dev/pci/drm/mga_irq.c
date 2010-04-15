@@ -155,7 +155,7 @@ mga_driver_irq_install(struct drm_device * dev)
 	/* Clear bits if they're already high */
 	MGA_WRITE(MGA_ICLEAR, ~0);
 
-	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
+	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_TTY,
 	    mgadrm_intr, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);
