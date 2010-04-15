@@ -33,6 +33,9 @@ server:
 	# identify the server (CH TXT ID.SERVER entry).
 	# identity: "unidentified server"
 
+	# NSID identity (hex string). default disabled.
+	# nsid: "aabbccdd"
+
 	# log messages to file. Default to stderr and syslog.
 	# logfile: "/var/log/nsd.log"
 

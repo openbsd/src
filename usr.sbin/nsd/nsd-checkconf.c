@@ -243,6 +243,7 @@ config_print_zone(nsd_options_t* opt, const char* k, const char *o, const char *
 		/* str */
 		SERV_GET_STR(database, o);
 		SERV_GET_STR(identity, o);
+		SERV_GET_STR(nsid, o);
 		SERV_GET_STR(logfile, o);
 		SERV_GET_STR(pidfile, o);
 		SERV_GET_STR(chroot, o);
@@ -287,6 +288,7 @@ config_test_print_server(nsd_options_t* opt)
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");
 	print_string_var("database:", opt->database);
 	print_string_var("identity:", opt->identity);
+	print_string_var("nsid:", opt->nsid);
 	print_string_var("logfile:", opt->logfile);
 	printf("\tserver_count: %d\n", opt->server_count);
 	printf("\ttcp_count: %d\n", opt->tcp_count);

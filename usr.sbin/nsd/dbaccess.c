@@ -282,8 +282,13 @@ namedb_open (const char *filename, nsd_options_t* opt, size_t num_children)
 	DEBUG(DEBUG_DBACCESS, 2,
 	      (LOG_INFO, "sizeof(rbnode_t) = %lu\n", (unsigned long) sizeof(rbnode_t)));
 
+#ifdef USE_MMAP_ALLOC
+	db_region = region_create_custom(mmap_alloc, mmap_free, MMAP_ALLOC_CHUNK_SIZE,
+		MMAP_ALLOC_LARGE_OBJECT_SIZE, MMAP_ALLOC_INITIAL_CLEANUP_SIZE, 1);
+#else /* !USE_MMAP_ALLOC */
 	db_region = region_create_custom(xalloc, free, DEFAULT_CHUNK_SIZE,
 		DEFAULT_LARGE_OBJECT_SIZE, DEFAULT_INITIAL_CLEANUP_SIZE, 1);
+#endif /* !USE_MMAP_ALLOC */
 	db = (namedb_type *) region_alloc(db_region, sizeof(struct namedb));
 	db->region = db_region;
 	db->domains = domain_table_create(db->region);
@@ -451,10 +456,17 @@ namedb_open (const char *filename, nsd_options_t* opt, size_t num_children)
 void
 namedb_close (struct namedb *db)
 {
+	namedb_fd_close(db);
 	if (db) {
-		if (db->fd) {
-			fclose(db->fd);
-		}
 		region_destroy(db->region);
 	}
 }
+
+void
+namedb_fd_close (struct namedb *db)
+{
+	if (db && db->fd) {
+		fclose(db->fd);
+	}
+}
+

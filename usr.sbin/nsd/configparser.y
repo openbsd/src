@@ -17,6 +17,7 @@
 #include <assert.h>
 
 #include "options.h"
+#include "util.h"
 #include "configyyrename.h"
 int c_lex(void);
 void c_error(const char *message);
@@ -43,7 +44,7 @@ static int server_settings_seen = 0;
 %token SPACE LETTER NEWLINE COMMENT COLON ANY ZONESTR
 %token <str> STRING
 %token VAR_SERVER VAR_NAME VAR_IP_ADDRESS VAR_DEBUG_MODE
-%token VAR_IP4_ONLY VAR_IP6_ONLY VAR_DATABASE VAR_IDENTITY VAR_LOGFILE
+%token VAR_IP4_ONLY VAR_IP6_ONLY VAR_DATABASE VAR_IDENTITY VAR_NSID VAR_LOGFILE
 %token VAR_SERVER_COUNT VAR_TCP_COUNT VAR_PIDFILE VAR_PORT VAR_STATISTICS
 %token VAR_CHROOT VAR_USERNAME VAR_ZONESDIR VAR_XFRDFILE VAR_DIFFFILE
 %token VAR_XFRD_RELOAD_TIMEOUT VAR_TCP_QUERY_COUNT VAR_TCP_TIMEOUT
@@ -73,7 +74,7 @@ serverstart: VAR_SERVER
 	;
 contents_server: contents_server content_server | ;
 content_server: server_ip_address | server_debug_mode | server_ip4_only | 
-	server_ip6_only | server_database | server_identity | server_logfile | 
+	server_ip6_only | server_database | server_identity | server_nsid | server_logfile | 
 	server_server_count | server_tcp_count | server_pidfile | server_port | 
 	server_statistics | server_chroot | server_username | server_zonesdir |
 	server_difffile | server_xfrdfile | server_xfrd_reload_timeout |
@@ -151,6 +152,26 @@ server_identity: VAR_IDENTITY STRING
 	{ 
 		OUTYY(("P(server_identity:%s)\n", $2)); 
 		cfg_parser->opt->identity = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+server_nsid: VAR_NSID STRING
+	{ 
+		unsigned char* nsid = 0;
+		uint16_t nsid_len = 0;
+
+		OUTYY(("P(server_nsid:%s)\n", $2));
+
+                if (strlen($2) % 2 != 0) {
+			yyerror("the NSID must be a hex string of an even length.");
+		} else {
+			nsid_len = strlen($2) / 2;
+			nsid = xalloc(nsid_len);
+			if (hex_pton($2, nsid, nsid_len) == -1)
+				yyerror("hex string cannot be parsed in NSID.");
+			else
+				cfg_parser->opt->nsid = region_strdup(cfg_parser->opt->region, $2);
+			free(nsid);
+		}
 	}
 	;
 server_logfile: VAR_LOGFILE STRING

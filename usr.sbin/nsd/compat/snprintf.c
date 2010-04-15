@@ -671,14 +671,14 @@ static void fmtfp (char *buffer, size_t *currlen, size_t maxlen,
    */
   dopr_outch (buffer, currlen, maxlen, '.');
 
-  while (fplace > 0) 
-    dopr_outch (buffer, currlen, maxlen, fconvert[--fplace]);
-
   while (zpadlen > 0)
   {
     dopr_outch (buffer, currlen, maxlen, '0');
     --zpadlen;
   }
+
+  while (fplace > 0) 
+    dopr_outch (buffer, currlen, maxlen, fconvert[--fplace]);
 
   while (padlen < 0) 
   {

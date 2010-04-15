@@ -1062,7 +1062,7 @@ mark_and_exit(nsd_options_t* opt, FILE* f, off_t commitpos, const char* desc)
 		fclose(f);
 	} else {
 		uint8_t c = 0;
-		fwrite(&c, sizeof(c), 1, f);
+		(void)write_data(f, &c, sizeof(c));
 		fclose(f);
 		log_msg(LOG_ERR, "marked xfr as failed: %s", desc);
 		log_msg(LOG_ERR, "marked xfr so that next reload can succeed");

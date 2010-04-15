@@ -18,6 +18,23 @@ typedef struct region region_type;
 #define DEFAULT_LARGE_OBJECT_SIZE  (DEFAULT_CHUNK_SIZE / 8)
 #define DEFAULT_INITIAL_CLEANUP_SIZE 16
 
+
+/*
+ * mmap allocator constants
+ *
+ */
+#ifdef USE_MMAP_ALLOC
+
+/* header starts with size_t containing allocated size info and has at least 16 bytes to align the returned memory */
+#define MMAP_ALLOC_HEADER_SIZE (sizeof(size_t) >= 16 ? (sizeof(size_t)) : 16)
+
+/* mmap allocator uses chunks of 32 4kB pages */
+#define MMAP_ALLOC_CHUNK_SIZE		((32 * 4096) - MMAP_ALLOC_HEADER_SIZE)
+#define MMAP_ALLOC_LARGE_OBJECT_SIZE	(MMAP_ALLOC_CHUNK_SIZE / 8)
+#define MMAP_ALLOC_INITIAL_CLEANUP_SIZE	16
+
+#endif /* USE_MMAP_ALLOC */
+
 /*
  * Create a new region.
  */

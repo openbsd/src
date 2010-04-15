@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Jan  6, 2010" "NLnet Labs" "nsd 3.2.4"
+.TH "nsd.conf" "5" "Apr 14, 2010" "NLnet Labs" "nsd 3.2.5"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -134,6 +134,11 @@ Returns the specified identity when asked for CH TXT ID.SERVER.
 Default is the name as returned by gethostname(3). Same as 
 commandline option 
 .BR \-i .
+.TP
+.B nsid:\fR <string>
+Add the specified nsid to the EDNS section of the answer when queried
+with an NSID EDNS enabled packet. Same as commandline option
+.BR \-I .
 .TP
 .B logfile:\fR <filename>
 Log messages to the logfile. The default is to log to stderr and 
@@ -281,7 +286,7 @@ transmitted using TCP.
 .TP
 .B allow\-axfr\-fallback:\fR <yes or no>
 This option should be accompanied by request-xfr. It (dis)allows NSD (as secondary) 
-to fallback to AXFR if the primary name server does not support IXFR.
+to fallback to AXFR if the primary name server does not support IXFR. Default is yes.
 .TP
 .B notify:\fR <ip\-address> <key\-name | NOKEY>
 Access control list. The listed address (a secondary) is notified 

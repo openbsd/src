@@ -60,6 +60,7 @@ struct nsd_options {
 	const char* zonesdir;
 	const char* difffile;
 	const char* xfrdfile;
+	const char* nsid;
 	int xfrd_reload_timeout;
 
 	region_type* region;

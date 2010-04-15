@@ -341,8 +341,8 @@ zoctet(char *text)
 static int
 parse_token(int token, char *yytext, enum lexer_state *lexer_state)
 {
-	char *str = region_strdup(parser->rr_region, yytext);
-	size_t len = zoctet(str);
+	size_t len;
+	char *str;
 
 	if (*lexer_state == EXPECT_OWNER) {
 		*lexer_state = PARSING_OWNER;
@@ -352,7 +352,7 @@ parse_token(int token, char *yytext, enum lexer_state *lexer_state)
 		uint16_t rrclass;
 		
 		/* type */
-		token = rrtype_to_token(str, &yylval.type);
+		token = rrtype_to_token(yytext, &yylval.type);
 		if (token != 0) {
 			*lexer_state = PARSING_RDATA;
 			LEXOUT(("%d[%s] ", token, yytext));
@@ -360,7 +360,7 @@ parse_token(int token, char *yytext, enum lexer_state *lexer_state)
 		}
 
 		/* class */
-		rrclass = rrclass_from_string(str);
+		rrclass = rrclass_from_string(yytext);
 		if (rrclass != 0) {
 			yylval.klass = rrclass;
 			LEXOUT(("CLASS "));
@@ -368,12 +368,15 @@ parse_token(int token, char *yytext, enum lexer_state *lexer_state)
 		}
 
 		/* ttl */
-		yylval.ttl = strtottl(str, &t);
+		yylval.ttl = strtottl(yytext, &t);
 		if (*t == '\0') {
 			LEXOUT(("TTL "));
 			return T_TTL;
 		}
 	}
+
+	str = region_strdup(parser->rr_region, yytext);
+	len = zoctet(str);
 
 	yylval.data.str = str;
 	yylval.data.len = len;
