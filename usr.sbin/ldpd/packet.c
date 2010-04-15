@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.6 2010/04/15 15:04:23 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.7 2010/04/15 15:31:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -287,6 +287,7 @@ session_accept(int fd, short event, void *bula)
 
 	if ((iface = session_find_iface(xconf, src.sin_addr)) == NULL) {
 		log_debug("sess_recv_packet: cannot find a matching interface");
+		close(newfd);
 		return;
 	}
 
