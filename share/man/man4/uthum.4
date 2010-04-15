@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uthum.4,v 1.3 2009/11/23 20:53:18 jmc Exp $
+.\"	$OpenBSD: uthum.4,v 1.4 2010/04/15 15:22:39 yuo Exp $
 .\"
 .\" Copyright (c) 2009 Yojiro UO <yuo@nui.org>
 .\"
@@ -14,24 +14,37 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2009 $
+.Dd $Mdocdate: April 15 2010 $
 .Dt UTHUM 4
 .Os
 .Sh NAME
 .Nm uthum
-.Nd TEMPerHUM USB temperature and humidity sensor
+.Nd TEMPer seriese USB temperature and humidity sensor
 .Sh SYNOPSIS
 .Cd "uthum* at uhidev?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the pcsensors TEMPerHUM HID device.
+driver provides support for the pcsensors TEMPer seriease devices.
+The following devices are supported by the
+.Nm
+driver:
+.Pp
+.Bl -column "Device          " "Sensors" -compact -offset 6n
+.It Em "Device              Sensors"
+.It Li "TEMPerHUM" Ta 1 Temperature and 1 Humidity
+.It Li "TEMPer" Ta 1 Temerature(internal)
+.It Li "TEMPer1" Ta 1 Temerature(external)
+.It Li "TEMPer2" Ta 2 Temerature(internal/external)
+.It Li "TEMPerNTC" Ta 2 Temerature(internal/external)
+.El
+.Pp
 The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
 interface.
-The humidity data unit is "%RH" and the temperature data unit
-is "degC".
+The humidity data unit is "%RH(relative humidity)" and the 
+temperature data unit is "degC".
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhidev 4 ,
@@ -44,6 +57,7 @@ The
 driver was written by
 .An Yojiro UO Aq yuo@nui.org .
 .Sh BUGS
-The TEMperHUM has various versions which have the same VID/PID and
-they need different data processing.
-Currently only one type is supported.
+There is not enough support for tha external temperature sensor
+of the TEMPerNTC. Currently the
+.Nm
+driver supports about 0 degC to 120 degC for the sensor.
