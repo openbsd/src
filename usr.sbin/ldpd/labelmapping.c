@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.7 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.8 2010/04/15 14:47:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -255,7 +255,7 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 
 	nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
-	return (0);
+	return (ntohs(lr->length));
 }
 
 /* Label Withdraw Message */
@@ -325,9 +325,11 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
+	/* XXX XXX */
+
 	nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
-	return (0);
+	return (ntohs(lw->length));
 }
 
 /* Label Release Message */
@@ -397,9 +399,11 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
+	/* XXX XXX XXX */
+
 	nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
-	return (0);
+	return (ntohs(lr->length));
 }
 
 /* Label Abort Req Message */
@@ -448,9 +452,11 @@ recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
+	/* XXX XXX XXX */
+
 	nbr_fsm(nbr, NBR_EVT_PDU_RCVD);
 
-	return (0);
+	return (ntohs(la->length));
 }
 
 /* Other TLV related functions */
