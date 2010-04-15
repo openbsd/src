@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.47 2009/10/26 20:04:06 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.48 2010/04/15 20:38:11 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -695,7 +695,7 @@ console_scan(func, arg)
 	int (*func)(int, caddr_t, void *);
 	void *arg;
 {
-	int size, scode, sctop;
+	int size, scode, sctop, sctmp;
 	caddr_t pa, va;
 
 	/*
@@ -703,13 +703,16 @@ console_scan(func, arg)
 	 * hardware.  If there's something there, call (*func)().
 	 */
 	sctop = DIO_SCMAX(machineid);
-	for (scode = 0; scode < sctop; ++scode) {
+	for (scode = 0; scode < sctop; scode++) {
 		/*
 		 * Skip over the select code hole and
 		 * the internal HP-IB controller.
 		 */
-		if (DIO_INHOLE(scode) ||
-		    ((scode == 7) && internalhpib))
+		if ((sctmp = dio_inhole(scode)) != 0) {
+			scode = sctmp - 1;
+			continue;
+		}
+		if (scode == 7 && internalhpib)
 			continue;
 
 		/* Map current PA. */

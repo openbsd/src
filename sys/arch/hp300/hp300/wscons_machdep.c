@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.9 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.10 2010/04/15 20:38:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -174,7 +174,7 @@ wscnprobe(struct consdev *cp)
 	vaddr_t va;
 #if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
 	paddr_t pa;
-	u_int scode, sctop;
+	u_int scode, sctop, sctmp;
 	struct diofbreg *fbr;
 #endif
 
@@ -211,7 +211,11 @@ wscnprobe(struct consdev *cp)
 		 * Skip over the select code hole and the internal
 		 * HP-IB controller.
 		 */
-		if (DIO_INHOLE(scode) || (scode == 7 && internalhpib))
+		if ((sctmp = dio_inhole(scode)) != 0) {
+			scode = sctmp - 1;
+			continue;
+		}
+		if (scode == 7 && internalhpib)
 			continue;
 
 		/* Map current PA. */

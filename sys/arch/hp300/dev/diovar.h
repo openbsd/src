@@ -1,4 +1,4 @@
-/*	$OpenBSD: diovar.h,v 1.7 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: diovar.h,v 1.8 2010/04/15 20:38:09 miod Exp $	*/
 /*	$NetBSD: diovar.h,v 1.3 1997/05/05 21:01:33 thorpej Exp $	*/
 
 /*-
@@ -72,4 +72,10 @@ struct dio_devdesc {
 void	*dio_scodetopa(int);
 void	dio_intr_establish(struct isr *, const char *);
 void	dio_intr_disestablish(struct isr *);
+
+/*
+ * Return the next select code if the given select code lies within a hole,
+ * zero otherwise.
+ */
+int	dio_inhole(int);
 #endif /* _KERNEL */

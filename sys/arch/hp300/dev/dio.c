@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.13 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: dio.c,v 1.14 2010/04/15 20:38:09 miod Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -92,15 +92,15 @@ dioattach(parent, self, aux)
 {
 	struct dio_attach_args da;
 	caddr_t pa, va;
-	int scode, scmax, didmap, scodesize;
+	int scode, sctmp, scmax, didmap, scodesize;
 
 	scmax = DIO_SCMAX(machineid);
 	printf(": ");
 	dmainit();
 
 	for (scode = 0; scode < scmax; ) {
-		if (DIO_INHOLE(scode)) {
-			scode++;
+		if ((sctmp = dio_inhole(scode)) != 0) {
+			scode = sctmp;
 			continue;
 		}
 
@@ -346,4 +346,28 @@ dio_intr_disestablish(struct isr *isr)
 
 	if (isr->isr_priority == IPL_BIO)
 		dmacomputeipl();
+}
+
+/*
+ * Return the next select code if the given select code lies within a hole,
+ * zero otherwise.
+ */
+int
+dio_inhole(int scode)
+{
+	/* unconditionnaly skip the DIO-II hole */
+	if (scode >= 32 && scode < DIOII_SCBASE)
+		return DIOII_SCBASE;
+
+	/* skip the frame buffer memory on 3x2 systems */
+	switch (machineid) {
+	case HP_362:
+	case HP_382:
+		if (scode >= DIOII_SCBASE && scode < DIOII_SCBASE + 4)
+			return DIOII_SCBASE + 4;
+	default:
+		break;
+	}
+
+	return 0;
 }

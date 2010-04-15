@@ -1,4 +1,4 @@
-/*	$OpenBSD: dioreg.h,v 1.5 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: dioreg.h,v 1.6 2010/04/15 20:38:09 miod Exp $	*/
 /*	$NetBSD: dioreg.h,v 1.3 1997/01/30 09:18:40 thorpej Exp $	*/
 
 /*-
@@ -90,12 +90,6 @@
  * Base of DIO-II select codes.
  */
 #define	DIOII_SCBASE		132
-
-/*
- * Macro that returns true if a select code lies within
- * the select code `hole'.
- */
-#define	DIO_INHOLE(scode)	((scode) >= 32 && (scode) < DIOII_SCBASE)
 
 /*
  * Macros to determine if device is DIO or DIO-II.
