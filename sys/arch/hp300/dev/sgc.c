@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgc.c,v 1.5 2007/01/06 20:10:57 miod Exp $	*/
+/*	$OpenBSD: sgc.c,v 1.6 2010/04/15 20:35:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -64,17 +64,22 @@ static	int sgc_matched = 0;
 
 	/* Allow only one instance. */
 	if (sgc_matched)
-		return (0);
+		return 0;
 
 	/*
 	 * Leave out machines which can not have an SGC bus.
 	 */
 
-	if (machineid != HP_400 && machineid != HP_425 &&
-	    machineid != HP_433)
-		return (0);
-
-	return (sgc_matched = 1);
+	switch (machineid) {
+	case HP_362:
+	case HP_382:
+	case HP_400:
+	case HP_425:
+	case HP_433:
+		return sgc_matched = 1;
+	default:
+		return 0;
+	}
 }
 
 void
