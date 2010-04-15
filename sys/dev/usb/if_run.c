@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.67 2010/04/14 20:20:43 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.68 2010/04/15 17:46:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -173,10 +173,13 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(GIGASET,		RT3070_1),
 	USB_ID(GIGASET,		RT3070_2),
 	USB_ID(GUILLEMOT,	HWNU300),
+	USB_ID(HAWKING,		HWDN2),
 	USB_ID(HAWKING,		HWUN2),
 	USB_ID(HAWKING,		RT2870_1),
 	USB_ID(HAWKING,		RT2870_2),
-	USB_ID(HAWKING,		RT3070),
+	USB_ID(HAWKING,		RT2870_3),
+	USB_ID(HAWKING,		RT2870_4),
+	USB_ID(HAWKING,		RT2870_5),
 	USB_ID(IODATA,		RT3072_1),
 	USB_ID(IODATA,		RT3072_2),
 	USB_ID(IODATA,		RT3072_3),
