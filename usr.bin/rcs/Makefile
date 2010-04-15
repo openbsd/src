@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2009/06/25 14:14:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.39 2010/04/15 15:51:40 sobrado Exp $
 
 PROG=	rcs
 MAN=	ci.1 co.1 ident.1 merge.1 rcs.1 rcsclean.1 rcsdiff.1 rcsmerge.1 rlog.1
@@ -18,7 +18,6 @@ CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=-Wmissing-declarations
 CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=-Wsign-compare
-DEBUG=	-g -ggdb
 YFLAGS=
 
 .include <bsd.prog.mk>
