@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.4 2010/03/22 21:22:08 miod Exp $	*/
+/*	$OpenBSD: l1.c,v 1.5 2010/04/15 20:32:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -524,8 +524,12 @@ l1_receive_response(int16_t nasid, u_char *pkt, size_t *pktlen)
 		if (rc < 0)	/* bad packet */
 			continue;
 
-		if (pkt[0] != (L1PKT_RESPONSE | L1CH_MISC))
+		if (pkt[0] != (L1PKT_RESPONSE | L1CH_MISC)) {
+#ifdef L1_DEBUG
+			printf("unexpected L1 packet: head %02x\n", pkt[0]);
+#endif
 			continue;	/* it's not our response */
+		}
 
 		*pktlen = (size_t)rc;
 		return 0;
@@ -980,14 +984,14 @@ l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
 	 * The L1 address of SPD records differs between Fuel and Origin 350
 	 * systems. This is likely because the Fuel is a single-PIMM system,
 	 * while all other IP35 are dual-PIMM, and thus carry one more PIMM
-	 * record at a lower address.
+	 * record at a lower address (and are interleaving DIMM accesses).
 	 * Since Fuel is also a single-node system, we can safely check for
 	 * the system subtype to decide which address to use.
 	 */
 	if (sys_config.system_subtype == IP35_FUEL)
-		address = L1_EEP_DIMMBASE_SINGLEPIMM + dimm;
+		address = L1_EEP_DIMM_NOINTERLEAVE(dimm);
 	else
-		address = L1_EEP_DIMMBASE_DUALPIMM + dimm;
+		address = L1_EEP_DIMM_INTERLEAVE(dimm);
 
 	/*
 	 * Build a first packet, asking for 0 bytes to be read.

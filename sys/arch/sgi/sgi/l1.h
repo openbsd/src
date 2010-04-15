@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.h,v 1.3 2010/03/22 21:22:08 miod Exp $	*/
+/*	$OpenBSD: l1.h,v 1.4 2010/04/15 20:32:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -72,8 +72,12 @@
 #define	L1_EEP_POWER	0x00		/* power board */
 #define	L1_EEP_LOGIC	0x01		/* logic board */
 /* C-brick component */
-#define	L1_EEP_DIMMBASE_SINGLEPIMM	0x04
-#define	L1_EEP_DIMMBASE_DUALPIMM	0x05
+#define	L1_EEP_DIMM_NOINTERLEAVE_BASE	0x04
+#define	L1_EEP_DIMM_INTERLEAVE_BASE	0x05
+#define	L1_EEP_DIMM_NOINTERLEAVE(d) \
+	(L1_EEP_DIMM_NOINTERLEAVE_BASE + (d))
+#define	L1_EEP_DIMM_INTERLEAVE(d) \
+	(L1_EEP_DIMM_INTERLEAVE_BASE + ((d) >> 1) + ((d) & 0x01 ? 4 : 0))
 /* ia code */
 #define	L1_EEP_CHASSIS	0x01		/* chassis ia */
 #define	L1_EEP_BOARD	0x02		/* board ia */
