@@ -11,6 +11,7 @@
 `m4_traceoff'	`m4_traceoff'
 `m4___file__'	`m4___file__'
 `m4_unix'	`m4_unix'
+`m4_mkstemp'	`m4_mkstemp'
 `m4_changecom'	`m4_changecom'
 `m4_defn'	`m4_defn'
 `m4_decr'	`m4_decr'
