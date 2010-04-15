@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.5 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.6 2010/04/15 15:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -140,8 +140,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	if (if_set_tos(xconf->ldp_session_socket,
 	    IPTOS_PREC_INTERNETCONTROL) == -1)
 		fatal("if_set_tos");
-	if (if_set_nonblock(xconf->ldp_session_socket) == -1)
-		fatal("if_set_nonblock");
+	session_socket_blockmode(xconf->ldp_session_socket, BM_NONBLOCK);
 
 	leconf = xconf;
 	if (leconf->flags & LDPD_FLAG_NO_LFIB_UPDATE)
@@ -293,7 +292,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	}
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
+			fatal("ldpe_dispatch_main: msgbuf_write");
 	}
 
 	for (;;) {
@@ -384,7 +383,7 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 	}
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
+			fatal("ldpe_dispatch_lde: msgbuf_write");
 	}
 
 	for (;;) {

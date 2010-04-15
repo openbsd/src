@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.6 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.7 2010/04/15 15:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -145,7 +145,6 @@ int	 if_set_mcast_loop(int);
 int	 if_set_mcast_ttl(int, u_int8_t);
 int	 if_set_tos(int, int);
 int	 if_set_reuse(int, int);
-int	 if_set_nonblock(int);
 
 /* neighbor.c */
 void		 nbr_init(u_int32_t);

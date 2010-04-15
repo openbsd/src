@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.5 2010/03/26 16:00:09 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.6 2010/04/15 15:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -283,10 +283,7 @@ session_accept(int fd, short event, void *bula)
 		return;
 	}
 
-	if (fcntl(newfd, F_SETFL, O_NONBLOCK) == -1) {
-		log_debug("sess_recv_packet: unable to set non blocking flag");
-		return;
-	}
+	session_socket_blockmode(newfd, BM_NONBLOCK);
 
 	if ((iface = session_find_iface(xconf, src.sin_addr)) == NULL) {
 		log_debug("sess_recv_packet: cannot find a matching interface");

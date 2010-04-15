@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.11 2010/03/03 10:17:05 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.12 2010/04/15 15:04:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -240,6 +240,11 @@ enum {
 	PROC_LDE_ENGINE
 } ldpd_process;
 
+enum blockmodes {
+	BM_NORMAL,
+	BM_NONBLOCK
+};
+
 #define	MODE_DIST_INDEPENDENT	0x01
 #define	MODE_DIST_ORDERED	0x02
 #define	MODE_RET_LIBERAL	0x04
@@ -390,6 +395,9 @@ struct ctl_sum_lspace {
 /* parse.y */
 struct ldpd_conf	*parse_config(char *, int);
 int			 cmdline_symset(char *);
+
+/* control.c */
+void	session_socket_blockmode(int, enum blockmodes);
 
 /* in_cksum.c */
 u_int16_t	 in_cksum(void *, size_t);
