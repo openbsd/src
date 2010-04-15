@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.10 2010/04/15 16:02:11 yuo Exp $   */
+/*	$OpenBSD: uthum.c,v 1.11 2010/04/15 16:20:31 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -59,7 +59,7 @@ int	uthumdebug = 0;
 /* Common */
 #define UTHUM_CAL_OFFSET	0x14
 #define UTHUM_MAX_SENSORS	2
-#define CMD_DEVTYPE		0x52 
+#define CMD_DEVTYPE		0x52
 #define DEVTYPE_EOF		0x53
 
 /* query commands */
@@ -74,7 +74,7 @@ int	uthumdebug = 0;
 
 /* temperntc mode */
 #define TEMPERNTC_MODE_BASE	0x61 /* 0x61 - 0x68 */
-#define TEMPERNTC_MODE_MAX	0x68 
+#define TEMPERNTC_MODE_MAX	0x68
 #define CMD_TEMPERNTC_MODE_DONE	0x69
 #define UTHUM_NTC_MIN_THRESHOLD	0xb300
 #define UTHUM_NTC_MAX_THRESHOLD	0xf200
@@ -95,7 +95,7 @@ enum uthum_sensor_type {
 };
 
 static const char * const uthum_sensor_type_s[UTHUM_SENSOR_MAXTYPES] = {
-        "unknown",
+	"unknown",
 	"sht1x",
 	"ds75/12bit",
 	"NTC"
@@ -229,7 +229,7 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* maybe unsupported device */ 
+	/* maybe unsupported device */
 	if (uthum_check_device_info(sc) < 0) {
 		DPRINTF(("uthum: unknown device\n"));
 		return;
@@ -242,7 +242,7 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach sensors */
 	for (i = 0; i < UTHUM_MAX_SENSORS; i++) {
-		if (sc->sc_sensor[i].dev_type == UTHUM_SENSOR_UNKNOWN) 
+		if (sc->sc_sensor[i].dev_type == UTHUM_SENSOR_UNKNOWN)
 			continue;
 		uthum_print_sensorinfo(sc, i);
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i].sensor);
@@ -276,7 +276,7 @@ uthum_detach(struct device *self, int flags)
 		sensordev_deinstall(&sc->sc_sensordev);
 		for (i = 0; i < UTHUM_MAX_SENSORS; i++) {
 			if (sc->sc_sensor[i].attached)
-				sensor_detach(&sc->sc_sensordev, 
+				sensor_detach(&sc->sc_sensordev,
 					&sc->sc_sensor[i].sensor);
 		}
 		if (sc->sc_sensortask != NULL)
@@ -353,7 +353,7 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 	if ((buf == NULL) || len == 0)
 		return 0;
 
-	if (uthum_issue_cmd(sc, target_cmd, 50)) 
+	if (uthum_issue_cmd(sc, target_cmd, 50))
 		return 0;
 
 	bzero(cmdbuf, sizeof(cmdbuf));
@@ -378,7 +378,7 @@ int
 uthum_check_device_info(struct uthum_softc *sc)
 {
 	struct uthum_dev_info {
-		uint16_t dev_type; 
+		uint16_t dev_type;
 		uint8_t	 cal[2][2];  /* calibration offsets */
 		uint8_t  footer;
 		uint8_t  padding[25];
@@ -388,7 +388,7 @@ uthum_check_device_info(struct uthum_softc *sc)
 
 	/* issue query to device */
 	while (retry) {
-		if (uthum_read_data(sc, CMD_DEVTYPE, (void *)&dinfo, 
+		if (uthum_read_data(sc, CMD_DEVTYPE, (void *)&dinfo,
 		    sizeof(struct uthum_dev_info), 0) != 0) {
 			DPRINTF(("uthum: device information query fail.\n"));
 			retry--;
@@ -426,7 +426,7 @@ uthum_check_device_info(struct uthum_softc *sc)
 		break;
 	default:
 		sc->sc_device_type = UTHUM_TYPE_UNKNOWN;
-		printf("uthum: unknown device (devtype = 0x%.2x)\n", 
+		printf("uthum: unknown device (devtype = 0x%.2x)\n",
 		    dev_type);
 		return EIO;
 	}
@@ -461,29 +461,29 @@ uthum_setup_sensors(struct uthum_softc *sc)
 	case UTHUM_TYPE_TEMPER2:	/* 2 temperature sensors */
 		sc->sc_sensor[UTHUM_TEMPER_OUTER].dev_type =
 		    UTHUM_SENSOR_DS75;
-		sc->sc_sensor[UTHUM_TEMPER_OUTER].sensor.type = 
+		sc->sc_sensor[UTHUM_TEMPER_OUTER].sensor.type =
 		    SENSOR_TEMP;
-		strlcpy(sc->sc_sensor[UTHUM_TEMPER_OUTER].sensor.desc, 
+		strlcpy(sc->sc_sensor[UTHUM_TEMPER_OUTER].sensor.desc,
 		    "outer",
 		    sizeof(sc->sc_sensor[UTHUM_TEMPER_OUTER].sensor.desc));
 		/* fall down */
 	case UTHUM_TYPE_TEMPER1:	/* 1 temperature sensor */
 		sc->sc_sensor[UTHUM_TEMPER_INNER].dev_type =
 		    UTHUM_SENSOR_DS75;
-		sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.type = 
+		sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.type =
 		    SENSOR_TEMP;
-		strlcpy(sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.desc, 
+		strlcpy(sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.desc,
 		    "inner",
 		    sizeof(sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.desc));
 		break;
 	case UTHUM_TYPE_TEMPERHUM:
 		/* 1 temperature sensor and 1 humidity sensor */
-		for (i = 0; i < 2; i++) 
+		for (i = 0; i < 2; i++)
 			sc->sc_sensor[i].dev_type = UTHUM_SENSOR_SHT1X;
 		sc->sc_sensor[UTHUM_TEMPERHUM_TEMP].sensor.type = SENSOR_TEMP;
-		sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.type = 
+		sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.type =
 		    SENSOR_HUMIDITY;
-		strlcpy(sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.desc, 
+		strlcpy(sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.desc,
 		    "RH",
 		    sizeof(sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.desc));
 		break;
@@ -491,20 +491,20 @@ uthum_setup_sensors(struct uthum_softc *sc)
 		/* 2 temperature sensors */
 		for (i = 0; i < 2; i++)
 			sc->sc_sensor[i].sensor.type = SENSOR_TEMP;
-		sc->sc_sensor[UTHUM_TEMPER_INNER].dev_type = 
+		sc->sc_sensor[UTHUM_TEMPER_INNER].dev_type =
 		    UTHUM_SENSOR_DS75;
 		sc->sc_sensor[UTHUM_TEMPER_NTC].dev_type =
 		    UTHUM_SENSOR_NTC;
-		strlcpy(sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.desc, 
+		strlcpy(sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.desc,
 		    "inner",
 		    sizeof(sc->sc_sensor[UTHUM_TEMPER_INNER].sensor.desc));
-		strlcpy(sc->sc_sensor[UTHUM_TEMPER_NTC].sensor.desc, 
+		strlcpy(sc->sc_sensor[UTHUM_TEMPER_NTC].sensor.desc,
 		    "outer/ntc",
 		    sizeof(sc->sc_sensor[UTHUM_TEMPER_NTC].sensor.desc));
 
 		/* sensor state tuning */
 		for (i = 0; i < 4; i++)
-	 		uthum_issue_cmd(sc, TEMPERNTC_MODE_BASE, 50);
+			uthum_issue_cmd(sc, TEMPERNTC_MODE_BASE, 50);
 		sc->sc_sensor[UTHUM_TEMPER_NTC].cur_state = TEMPERNTC_MODE_BASE;
 		if (uthum_ntc_tuning(sc, UTHUM_TEMPER_NTC, NULL))
 			DPRINTF(("uthum: NTC sensor tuning failed\n"));
@@ -528,7 +528,7 @@ uthum_ntc_getdata(struct uthum_softc *sc, int *val)
 	if (uthum_read_data(sc, CMD_GETDATA_NTC, buf, sizeof(buf), 10) != 0) {
 		DPRINTF(("uthum: data read fail\n"));
 		return EIO;
-	} 
+	}
 
 	/* check data integrity */
 	if (buf[2] !=  CMD_GETDATA_EOF2) {
@@ -553,7 +553,7 @@ uthum_ntc_tuning(struct uthum_softc *sc, int sensor, int *val)
 
 	/* get current sensor value */
 	if (val == NULL) {
-		while (retry) {	
+		while (retry) {
 			if (uthum_ntc_getdata(sc, &curval)) {
 				retry--;
 				continue;
@@ -572,14 +572,14 @@ uthum_ntc_tuning(struct uthum_softc *sc, int sensor, int *val)
 		return 0;
 	}
 
-	if (((curval < UTHUM_NTC_MIN_THRESHOLD) && 
+	if (((curval < UTHUM_NTC_MIN_THRESHOLD) &&
 	     (state == TEMPERNTC_MODE_MAX)) ||
-	    ((curval > UTHUM_NTC_MAX_THRESHOLD) && 
+	    ((curval > UTHUM_NTC_MAX_THRESHOLD) &&
 	     (state == TEMPERNTC_MODE_BASE)))
 		return 0;
 
-	DPRINTF(("uthum: ntc tuning start. cur state = 0x%.2x, val = 0x%.4x\n", 
-		state, curval));
+	DPRINTF(("uthum: ntc tuning start. cur state = 0x%.2x, val = 0x%.4x\n",
+	    state, curval));
 
 	/* tuning loop */
 	ostate = state;
@@ -614,7 +614,7 @@ uthum_ntc_tuning(struct uthum_softc *sc, int sensor, int *val)
 	DPRINTF(("uthum: ntc tuning done. state change: 0x%.2x->0x%.2x\n",
 	    s->cur_state, state));
 	s->cur_state = state;
-	if (val != NULL) 
+	if (val != NULL)
 		*val = curval;
 
 	return 0;
@@ -656,7 +656,7 @@ uthum_refresh_temperhum(struct uthum_softc *sc)
 		DPRINTF(("uthum: data read fail\n"));
 		sc->sc_sensor[UTHUM_TEMPERHUM_TEMP].sensor.flags
 		    |= SENSOR_FINVALID;
-		sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.flags 
+		sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.flags
 		    |= SENSOR_FINVALID;
 		return;
 	}
@@ -668,7 +668,7 @@ uthum_refresh_temperhum(struct uthum_softc *sc)
 	temp += sc->sc_sensor[UTHUM_TEMPERHUM_TEMP].cal_offset;
 	rh += sc->sc_sensor[UTHUM_TEMPERHUM_HUM].cal_offset;
 
-	sc->sc_sensor[UTHUM_TEMPERHUM_TEMP].sensor.value =  
+	sc->sc_sensor[UTHUM_TEMPERHUM_TEMP].sensor.value =
 	    (temp * 10000) + 273150000;
 	sc->sc_sensor[UTHUM_TEMPERHUM_TEMP].sensor.flags &= ~SENSOR_FINVALID;
 	sc->sc_sensor[UTHUM_TEMPERHUM_HUM].sensor.value = rh;
@@ -686,7 +686,7 @@ uthum_refresh_temper(struct uthum_softc *sc, int sensor)
 		cmd = CMD_GETDATA_INNER;
 	else if (sensor == UTHUM_TEMPER_OUTER)
 		cmd = CMD_GETDATA_OUTER;
-	else 
+	else
 		return;
 
 	/* get sensor value */
@@ -694,7 +694,7 @@ uthum_refresh_temper(struct uthum_softc *sc, int sensor)
 		DPRINTF(("uthum: data read fail\n"));
 		sc->sc_sensor[sensor].sensor.flags |= SENSOR_FINVALID;
 		return;
-	} 
+	}
 
 	/* check integrity */
 	if (buf[2] !=  CMD_GETDATA_EOF) {
@@ -723,8 +723,8 @@ uthum_refresh_temperntc(struct uthum_softc *sc, int sensor)
 		DPRINTF(("uthum: ntc data read fail\n"));
 		sc->sc_sensor[sensor].sensor.flags |= SENSOR_FINVALID;
 		return;
-	} 
-		
+	}
+
 	/* adjust sensor state */
 	if ((val < UTHUM_NTC_MIN_THRESHOLD) ||
 	    (val > UTHUM_NTC_MAX_THRESHOLD)) {
@@ -732,7 +732,7 @@ uthum_refresh_temperntc(struct uthum_softc *sc, int sensor)
 			DPRINTF(("uthum: NTC sensor tuning failed\n"));
 			sc->sc_sensor[sensor].sensor.flags |= SENSOR_FINVALID;
 			return;
-		} 
+		}
 	}
 
 	temp = uthum_ntc_temp(val, sc->sc_sensor[sensor].cur_state);
@@ -747,7 +747,7 @@ uthum_refresh_temperntc(struct uthum_softc *sc, int sensor)
 	}
 }
 
-/* return C-degree * 100 value */ 
+/* return C-degree * 100 value */
 int
 uthum_ds75_temp(uint8_t msb, uint8_t lsb)
 {
@@ -755,7 +755,7 @@ uthum_ds75_temp(uint8_t msb, uint8_t lsb)
 	return (msb * 100) + ((lsb >> 4) * 25 / 4);
 }
 
-/* return C-degree * 100 value */ 
+/* return C-degree * 100 value */
 int
 uthum_sht1x_temp(uint8_t msb, uint8_t lsb)
 {
@@ -797,7 +797,7 @@ uthum_ntc_temp(int64_t val, int state)
 	case TEMPERNTC_MODE_BASE:	/* 0x61 */
 	case TEMPERNTC_MODE_BASE+1:	/* 0x62 */
 	case TEMPERNTC_MODE_BASE+2:	/* 0x63 */
-	case TEMPERNTC_MODE_BASE+3:	/* 0x64 */	
+	case TEMPERNTC_MODE_BASE+3:	/* 0x64 */
 		/* XXX, no data */
 		temp = -273150000;
 		break;
@@ -814,7 +814,7 @@ uthum_ntc_temp(int64_t val, int state)
 		if (val < UTHUM_NTC_MIN_THRESHOLD)
 			temp = (val * -1700) + 149630000;
 		else
-			temp = ((val * val * 3257) / 100000) - (val * 4900) + 
+			temp = ((val * val * 3257) / 100000) - (val * 4900) +
 			    230470000;
 		break;
 	default:
