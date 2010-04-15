@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.112 2010/04/09 17:36:08 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.113 2010/04/15 21:30:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -573,13 +573,16 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pted == NULL) {
 		pted = pool_get(&pmap_pted_pool, PR_NOWAIT | PR_ZERO);	
 		if (pted == NULL) {
-			if ((flags & PMAP_CANFAIL) == 0)
+			if ((flags & PMAP_CANFAIL) == 0) {
+				splx(s);
 				return ENOMEM;
+			}
 			panic("pmap_enter: failed to allocate pted");
 		}
 		error = pmap_vp_enter(pm, va, pted, flags);
 		if (error) {
 			pool_put(&pmap_pted_pool, pted);
+			splx(s);
 			return error;
 		}
 	}
