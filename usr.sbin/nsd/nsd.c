@@ -486,7 +486,7 @@ main(int argc, char *argv[])
 		case 'N':
 			i = atoi(optarg);
 			if (i <= 0) {
-				error("number of child servers must be greather than zero.");
+				error("number of child servers must be greater than zero.");
 			} else {
 				nsd.child_count = i;
 			}
@@ -650,7 +650,8 @@ main(int argc, char *argv[])
 #ifdef HAVE_CHROOT
 	if(nsd.chrootdir == 0) nsd.chrootdir = nsd.options->chroot;
 #ifdef CHROOTDIR
-	if(nsd.chrootdir == 0) nsd.chrootdir = strdup(CHROOTDIR);
+	/* if still no chrootdir, fallback to default */
+	if(nsd.chrootdir == 0) nsd.chrootdir = CHROOTDIR;
 #endif /* CHROOTDIR */
 #endif /* HAVE_CHROOT */
 	if(nsd.username == 0) {
@@ -679,9 +680,18 @@ main(int argc, char *argv[])
 #endif /* IPV6 MTU) */
 #endif /* defined(INET6) */
 
-
-
 #ifdef NSID
+	if (nsd.nsid_len == 0 && nsd.options->nsid) {
+		if (strlen(nsd.options->nsid) % 2 != 0) {
+			error("the NSID must be a hex string of an even length.");
+		}
+		nsd.nsid = xalloc(strlen(nsd.options->nsid) / 2);
+		nsd.nsid_len = strlen(nsd.options->nsid) / 2;
+		if (hex_pton(nsd.options->nsid, nsd.nsid, nsd.nsid_len) == -1) {
+			error("hex string cannot be parsed '%s' in NSID.", nsd.options->nsid);
+		}
+	}
+
 	edns_init_nsid(&nsd.edns_ipv4, nsd.nsid_len);
 #if defined(INET6)
 	edns_init_nsid(&nsd.edns_ipv6, nsd.nsid_len);
@@ -809,13 +819,6 @@ main(int argc, char *argv[])
 	key_options_tsig_add(nsd.options);
 #endif /* TSIG */
 
-	/* Set up the logging */
-	log_open(LOG_PID, FACILITY, nsd.log_filename);
-	if (!nsd.log_filename)
-		log_set_log_function(log_syslog);
-	else if (nsd.uid && nsd.gid)
-		(void) chown(nsd.log_filename, nsd.uid, nsd.gid);
-
 	/* Relativize the pathnames for chroot... */
 	if (nsd.chrootdir) {
 		int l = strlen(nsd.chrootdir);
@@ -843,6 +846,13 @@ main(int argc, char *argv[])
 				nsd.options->difffile, nsd.chrootdir);
 		}
 	}
+
+	/* Set up the logging */
+	log_open(LOG_PID, FACILITY, nsd.log_filename);
+	if (!nsd.log_filename)
+		log_set_log_function(log_syslog);
+	else if (nsd.uid && nsd.gid)
+		(void) chown(nsd.log_filename, nsd.uid, nsd.gid);
 
 	/* Do we have a running nsd? */
 	if ((oldpid = readpid(nsd.pidfile)) == -1) {

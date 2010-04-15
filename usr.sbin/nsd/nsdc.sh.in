@@ -381,6 +381,7 @@ patch)
 				mv ${difffile}.$$ ${difffile}
 			fi
 			echo "`basename $0`: patch failed."
+			return 1
 		fi
 	else
 		echo "`basename $0`: no patch necessary."

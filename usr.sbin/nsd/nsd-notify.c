@@ -189,8 +189,9 @@ add_key(region_type* region, const char* opt, tsig_algorithm_type** algo)
 	size_t len;
 	int sz;
 
-	if (delim)
+	if (delim) {
 		delim2 = strchr(delim+1, ':');
+	}
 
 	if(!key) {
 		log_msg(LOG_ERR, "region_alloc failed (add_key)");
@@ -270,6 +271,8 @@ main (int argc, char *argv[])
 		exit(1);
 	}
 #endif /* TSIG */
+
+	srandom((unsigned long) getpid() * (unsigned long) time(NULL));
 
 	/* Parse the command line... */
 	while ((c = getopt(argc, argv, "46a:hp:y:z:")) != -1) {

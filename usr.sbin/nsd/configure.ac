@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.4,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.5,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -125,12 +125,11 @@ AC_SUBST(xfrdfile)
 #
 # Determine default chroot directory
 #
-chrootdir="/"
 AC_ARG_WITH([chroot],
 	AC_HELP_STRING([--with-chroot=dir], [NSD default chroot directory]),
 	[
 		chrootdir=$withval
-		AC_DEFINE_UNQUOTED(CHROOTDIR, ["`eval echo $chrootdir`"], [NSD default chroot directory.])
+		AC_DEFINE_UNQUOTED(CHROOTDIR, ["`eval echo $chrootdir`"], [NSD default chroot directory])
 	])
 
 #
@@ -252,6 +251,7 @@ AC_TYPE_OFF_T
 
 AC_CHECK_FORMAT_ATTRIBUTE
 AC_CHECK_UNUSED_ATTRIBUTE
+ACX_CHECK_MEMCMP_SIGNED
 AC_CHECK_CTIME_R
 
 # Checks for libraries.
@@ -301,7 +301,7 @@ AC_DEFUN([CHECK_SSL], [
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h strings.h fcntl.h limits.h netinet/in.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h grp.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h grp.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -477,6 +477,7 @@ AC_REPLACE_FUNCS(inet_aton)
 AC_REPLACE_FUNCS(inet_pton)
 AC_REPLACE_FUNCS(inet_ntop)
 AC_REPLACE_FUNCS(snprintf)
+AC_REPLACE_FUNCS(strlcat)
 AC_REPLACE_FUNCS(strlcpy)
 AC_REPLACE_FUNCS(strptime)
 AC_REPLACE_FUNCS(b64_pton)
@@ -616,11 +617,23 @@ case "$enable_nsec3" in
                 ;;
 esac
 
-AC_ARG_ENABLE(nsid, AC_HELP_STRING([--enable-nsid], [Enable NSID support]))
+AC_ARG_ENABLE(nsid, AC_HELP_STRING([--disable-nsid], [Disable NSID support]))
 case "$enable_nsid" in
+        no)
+                ;;
+        yes|*)
+                AC_DEFINE([NSID], [], [Define this to enable NSID support.])
+                ;;
+esac
+
+AC_ARG_ENABLE(mmap, AC_HELP_STRING([--enable-mmap], [Use mmap instead of malloc. Experimental.]))
+case "$enable_mmap" in
         yes)
-               AC_DEFINE([NSID], [], [Define this to enable NSID support.])
-               ;;
+		AC_CHECK_HEADERS([sys/mman.h])
+		AC_LIBGTOP_CHECK_TYPE(uintptr_t, void*)
+		AC_CHECK_FUNCS([mmap, munmap])
+		AC_DEFINE_UNQUOTED([USE_MMAP_ALLOC], [], [Define this to enable mmap instead of malloc. Experimental.])
+		;;
         no|*)
                 ;;
 esac
@@ -757,6 +770,9 @@ int inet_aton(const char *cp, struct in_addr *addr);
 #ifndef HAVE_MEMMOVE
 void *memmove(void *dest, const void *src, size_t n);
 #endif
+#ifndef HAVE_STRLCAT
+size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
@@ -771,6 +787,11 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 #define STRPTIME_WORKS 1
 #define strptime(a,b,c) nsd_strptime((a),(b),(c))
 #endif
+])
+AH_BOTTOM(
+AHX_MEMCMP_BROKEN(nsd)
+)
+AH_BOTTOM([
 
 /* provide timespec def if not available */
 #ifndef CONFIG_DEFINES
