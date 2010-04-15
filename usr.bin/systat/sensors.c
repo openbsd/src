@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.18 2009/08/14 15:29:19 cnst Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.19 2010/04/15 04:57:29 yuo Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -260,6 +260,9 @@ showsensor(struct sensinfo *s)
 		break;
 	case SENSOR_AMPHOUR:
 		tbprintf("%10.2f Ah", s->sn_value / 1000000.0);
+		break;
+	case SENSOR_HUMIDITY:
+		tbprintf("%3.2f%%", s->sn_value / 1000.0);
 		break;
 	default:
 		tbprintf("%10lld", s->sn_value);
