@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2009/11/02 20:34:58 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.3 2010/04/15 15:39:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -202,10 +202,6 @@ if_state_name(int state)
 		return ("DOWN");
 	case IF_STA_LOOPBACK:
 		return ("LOOP");
-	case IF_STA_POINTTOPOINT:
-		return ("P2P");
-	case IF_STA_DROTHER:
-		return ("OTHER");
 	case IF_STA_ACTIVE:
 		return ("ACTIVE");
 	default:

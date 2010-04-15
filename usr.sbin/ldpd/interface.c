@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.3 2010/04/15 15:04:23 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.4 2010/04/15 15:39:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,7 @@ struct {
 } iface_fsm[] = {
     /* current state	event that happened	action to take	resulting state */
     {IF_STA_DOWN,	IF_EVT_UP,		IF_ACT_STRT,	IF_STA_ACTIVE},
+    {IF_STA_LOOPBACK,	IF_EVT_DOWN,		IF_ACT_NOTHING,	IF_STA_DOWN},
     {IF_STA_ANY,	IF_EVT_DOWN,		IF_ACT_RST,	IF_STA_DOWN},
     {-1,		IF_EVT_NOTHING,		IF_ACT_NOTHING,	0},
 };
@@ -268,20 +269,13 @@ if_act_start(struct iface *iface)
 	iface->uptime = now.tv_sec;
 
 	switch (iface->type) {
-	case IF_TYPE_POINTOPOINT:
-		inet_aton(AllRouters, &addr);
-		if (if_join_group(iface, &addr))
-			return (-1);
-		iface->state = IF_STA_POINTTOPOINT;
-		break;
 	case IF_TYPE_VIRTUALLINK:
-		iface->state = IF_STA_POINTTOPOINT;
-		break;
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_NBMA:
 		log_debug("if_act_start: type %s not supported, interface %s",
 		    if_type_name(iface->type), iface->name);
 		return (-1);
+	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		inet_aton(AllRouters, &addr);
 		if (if_join_group(iface, &addr))
