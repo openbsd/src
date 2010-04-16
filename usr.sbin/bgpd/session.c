@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.306 2010/04/13 09:09:48 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.307 2010/04/16 12:24:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -629,7 +629,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			peer->rbuf = calloc(1, sizeof(struct buf_read));
 			if (peer->rbuf == NULL)
 				fatal(NULL);
-			peer->rbuf->wpos = 0;
 
 			/* init write buffer */
 			msgbuf_init(&peer->wbuf);
