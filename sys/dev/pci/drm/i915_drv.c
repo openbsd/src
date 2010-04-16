@@ -4133,7 +4133,8 @@ inteldrm_teardown_mchbar(struct drm_i915_private *dev_priv,
 			high = pci_conf_read(bpa->pa_pc, bpa->pa_tag, reg + 4);
 		low = pci_conf_read(bpa->pa_pc, bpa->pa_tag, reg);
 		mchbar_addr = ((u_int64_t)high << 32) | low;
-		extent_free(bpa->pa_memex, mchbar_addr, MCHBAR_SIZE, 0);
+		if (bpa->pa_memex)
+			extent_free(bpa->pa_memex, mchbar_addr, MCHBAR_SIZE, 0);
 		/* FALLTHROUGH */
 	case 1:
 		if (IS_I915G(dev_priv) || IS_I915GM(dev_priv)) {
