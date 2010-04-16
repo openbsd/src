@@ -2139,9 +2139,8 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 
 	DRM_LOCK();
 	/*
-	 * XXX is it ok to sleep in fault handlers? If not, we may have some
-	 * problems...  (i can has race plz? -> judicious use of
-	 * uvmfault_unlockall ahoy)
+	 * XXX this locking is wrong, must be fixed. uvm using simple_locks
+	 * saves us for now.
 	 */
 	if (obj_priv->dmamap == NULL) {
 		ret = i915_gem_object_bind_to_gtt(obj, 0, 0);
@@ -2791,7 +2790,6 @@ err:
 	drm_gem_object_unreference(target_obj);
 	i915_gem_object_unpin(obj);
 	return (ret);
-	
 }
 
 /** Dispatch a batchbuffer to the ring
@@ -3440,7 +3438,7 @@ i915_gem_free_object(struct drm_obj *obj)
 	/* XXX dmatag went away? */
 }
 
-/** Unbinds all objects that are on the given buffer list. */
+/* Clear out the inactive list and unbind everything in it. */
 int
 i915_gem_evict_inactive(struct drm_i915_private *dev_priv)
 {
@@ -4430,7 +4428,6 @@ i915_tiling_ok(struct drm_device *dev, int stride, int size, int tiling_mode)
 	/* 965+ just needs multiples of the tile width */
 	if (IS_I965G(dev_priv))
 		return ((stride & (tile_width - 1)) == 0);
-
 
 	/* Pre-965 needs power-of-two */
 	if (stride < tile_width || stride & (stride - 1) ||
