@@ -3727,8 +3727,9 @@ i915_gem_leavevt_ioctl(struct drm_device *dev, void *data,
 	struct drm_i915_private	*dev_priv = dev->dev_private;
 	int			 ret;
 
-	ret = i915_gem_idle(dev_priv);
-	drm_irq_uninstall(dev);
+	/* don't unistall if we fail, repeat calls on failure will screw us */
+	if ((ret = i915_gem_idle(dev_priv)) == 0)
+		drm_irq_uninstall(dev);
 	return (ret);
 }
 
