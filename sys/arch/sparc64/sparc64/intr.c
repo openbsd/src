@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.34 2009/11/25 15:22:44 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.35 2010/04/16 22:35:24 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -163,14 +163,19 @@ setsoftnet() {
 int
 intr_list_handler(void *arg)
 {
+	struct cpu_info *ci = curcpu();
 	struct intrhand *ih = arg;
 	int claimed = 0;
 
 	while (ih) {
+		sparc_wrpr(pil, ih->ih_pil, 0);
+		ci->ci_handled_intr_level = ih->ih_pil;
+
 		if (ih->ih_fun(ih->ih_arg)) {
 			ih->ih_count.ec_count++;
 			claimed = 1;
 		}
+
 		ih = ih->ih_next;
 	}
 
@@ -250,12 +255,15 @@ intr_establish(int level, struct intrhand *ih)
 			nih->ih_fun = intr_list_handler;
 			nih->ih_arg = q;
 			nih->ih_number = q->ih_number;
-			nih->ih_pil = q->ih_pil;
+			nih->ih_pil = min(q->ih_pil, ih->ih_pil);
 			nih->ih_map = q->ih_map;
 			nih->ih_clr = q->ih_clr;
 			nih->ih_ack = q->ih_ack;
 
 			intrlev[ih->ih_number] = q = nih;
+		} else {
+			if (ih->ih_pil < q->ih_pil)
+				q->ih_pil = ih->ih_pil;
 		}
 
 		/* Add the ih to the head of the list */
@@ -266,7 +274,7 @@ intr_establish(int level, struct intrhand *ih)
 	if (ih->ih_clr != NULL)			/* Set interrupt to idle */
 		*ih->ih_clr = INTCLR_IDLE;
 
-	if(ih->ih_map) {
+	if (ih->ih_map) {
 		id = CPU_UPAID;
 		m = *ih->ih_map;
 		if (INTTID(m) != id) {
