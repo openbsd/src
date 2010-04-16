@@ -3170,9 +3170,11 @@ i915_gem_object_pin(struct drm_obj *obj, uint32_t alignment, int needs_fence)
 	 * otherwise, so just fail the pin (with a printf so we can fix a
 	 * wrong userland).
 	 */
-	if ((alignment && obj_priv->dmamap != NULL &&
-	    obj_priv->gtt_offset & (alignment - 1)) || (needs_fence &&
-	    !i915_gem_object_fence_offset_ok(obj, obj_priv->tiling_mode))) {
+	if (obj_priv->dmamap != NULL &&
+	    ((alignment && obj_priv->gtt_offset & (alignment - 1)) ||
+	    obj_priv->gtt_offset & (i915_gem_get_gtt_alignment(obj) - 1) ||
+	    (needs_fence && !i915_gem_object_fence_offset_ok(obj,
+	    obj_priv->tiling_mode)))) {
 		if (obj_priv->pin_count == 0) {
 			ret = i915_gem_object_unbind(obj, 1);
 			if (ret)
