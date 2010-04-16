@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.11 2010/04/15 16:20:31 deraadt Exp $   */
+/*	$OpenBSD: uthum.c,v 1.12 2010/04/16 04:44:26 yuo Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -401,7 +401,7 @@ uthum_check_device_info(struct uthum_softc *sc)
 			break;
 	}
 
-	if (retry < 0)
+	if (retry <= 0)
 		return EIO;
 
 	dev_type = betoh16(dinfo.dev_type);
@@ -560,7 +560,7 @@ uthum_ntc_tuning(struct uthum_softc *sc, int sensor, int *val)
 			} else
 				break;
 		}
-		if (retry < 0)
+		if (retry <= 0)
 			return EIO;
 	} else {
 		curval = *val;
