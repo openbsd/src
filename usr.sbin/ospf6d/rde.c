@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.37 2010/03/01 08:58:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.38 2010/04/16 11:36:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1206,84 +1206,6 @@ rde_summary_update(struct rt_node *rte, struct area *area)
  * Functions for self-originated LSAs
  */
 
-struct lsa *
-orig_intra_lsa_net(struct iface *iface, struct vertex *old)
-{
-	struct lsa		*lsa;
-	struct vertex		*v;
-	struct area		*area;
-	struct prefix_node	*node;
-	struct prefix_tree	 tree;
-	u_int16_t		 len;
-	u_int16_t		 numprefix;
-
-	if ((area = area_find(rdeconf, iface->area_id)) == NULL)
-		fatalx("interface lost area");
-
-	log_debug("orig_intra_lsa_net: area %s, interface %s",
-	    inet_ntoa(area->id), iface->name);
-
-	RB_INIT(&tree);
-
-	if (iface->state & IF_STA_DR) {
-		RB_FOREACH(v, lsa_tree, &iface->lsa_tree) {
-			if (v->type != LSA_TYPE_LINK)
-				continue;
-			if (link_lsa_from_full_nbr(v->lsa, iface))
-				prefix_tree_add(&tree, &v->lsa->data.link);
-		}
-		if (RB_EMPTY(&tree)) {
-			/* There are no adjacent neighbors on link.
-			 * If a copy of this LSA already exists in DB,
-			 * it needs to be flushed. orig_intra_lsa_rtr()
-			 * will take care of prefixes configured on
-			 * this interface. */
-			if (!old)
-				return NULL;
-		} else {
-			/* Add our own prefixes configured for this link. */
-			v = lsa_find(iface, htons(LSA_TYPE_LINK),
-			    htonl(iface->ifindex), rde_router_id());
-			if (v)
-				prefix_tree_add(&tree, &v->lsa->data.link);
-		}
-	/* Continue only if a copy of this LSA already exists in DB.
-	 * It needs to be flushed. */
-	} else if (!old)
-		return NULL;
-
-	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_intra_prefix);
-	if ((lsa = calloc(1, len)) == NULL)
-		fatal("orig_intra_lsa_net");
-
-	lsa->data.pref_intra.ref_type = htons(LSA_TYPE_NETWORK);
-	lsa->data.pref_intra.ref_ls_id = htonl(iface->ifindex);
-	lsa->data.pref_intra.ref_adv_rtr = rde_router_id();
-
-	numprefix = 0;
-	RB_FOREACH(node, prefix_tree, &tree) {
-		append_prefix_lsa(&lsa, &len, node->prefix);
-		numprefix++;
-	}
-
-	lsa->data.pref_intra.numprefix = htons(numprefix);
-
-	while (!RB_EMPTY(&tree))
-		free(RB_REMOVE(prefix_tree, &tree, RB_ROOT(&tree)));
-
-	/* LSA header */
-	/* If numprefix is zero, originate with MAX_AGE to flush LSA. */
-	lsa->hdr.age = numprefix == 0 ? htons(MAX_AGE) : htons(DEFAULT_AGE);
-	lsa->hdr.type = htons(LSA_TYPE_INTRA_A_PREFIX);
-	lsa->hdr.ls_id = htonl(iface->ifindex);
-	lsa->hdr.adv_rtr = rde_router_id();
-	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
-	lsa->hdr.len = htons(len);
-	lsa->hdr.ls_chksum = htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
-
-	return lsa;
-}
-
 /* Prefix LSAs have variable size. We have to be careful to copy the right
  * amount of bytes, and to realloc() the right amount of memory. */
 void
@@ -1398,6 +1320,84 @@ link_lsa_from_full_nbr(struct lsa *lsa, struct iface *iface)
 		return 1;
 	
 	return 0;
+}
+
+struct lsa *
+orig_intra_lsa_net(struct iface *iface, struct vertex *old)
+{
+	struct lsa		*lsa;
+	struct vertex		*v;
+	struct area		*area;
+	struct prefix_node	*node;
+	struct prefix_tree	 tree;
+	u_int16_t		 len;
+	u_int16_t		 numprefix;
+
+	if ((area = area_find(rdeconf, iface->area_id)) == NULL)
+		fatalx("interface lost area");
+
+	log_debug("orig_intra_lsa_net: area %s, interface %s",
+	    inet_ntoa(area->id), iface->name);
+
+	RB_INIT(&tree);
+
+	if (iface->state & IF_STA_DR) {
+		RB_FOREACH(v, lsa_tree, &iface->lsa_tree) {
+			if (v->type != LSA_TYPE_LINK)
+				continue;
+			if (link_lsa_from_full_nbr(v->lsa, iface))
+				prefix_tree_add(&tree, &v->lsa->data.link);
+		}
+		if (RB_EMPTY(&tree)) {
+			/* There are no adjacent neighbors on link.
+			 * If a copy of this LSA already exists in DB,
+			 * it needs to be flushed. orig_intra_lsa_rtr()
+			 * will take care of prefixes configured on
+			 * this interface. */
+			if (!old)
+				return NULL;
+		} else {
+			/* Add our own prefixes configured for this link. */
+			v = lsa_find(iface, htons(LSA_TYPE_LINK),
+			    htonl(iface->ifindex), rde_router_id());
+			if (v)
+				prefix_tree_add(&tree, &v->lsa->data.link);
+		}
+	/* Continue only if a copy of this LSA already exists in DB.
+	 * It needs to be flushed. */
+	} else if (!old)
+		return NULL;
+
+	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_intra_prefix);
+	if ((lsa = calloc(1, len)) == NULL)
+		fatal("orig_intra_lsa_net");
+
+	lsa->data.pref_intra.ref_type = htons(LSA_TYPE_NETWORK);
+	lsa->data.pref_intra.ref_ls_id = htonl(iface->ifindex);
+	lsa->data.pref_intra.ref_adv_rtr = rde_router_id();
+
+	numprefix = 0;
+	RB_FOREACH(node, prefix_tree, &tree) {
+		append_prefix_lsa(&lsa, &len, node->prefix);
+		numprefix++;
+	}
+
+	lsa->data.pref_intra.numprefix = htons(numprefix);
+
+	while (!RB_EMPTY(&tree))
+		free(RB_REMOVE(prefix_tree, &tree, RB_ROOT(&tree)));
+
+	/* LSA header */
+	/* If numprefix is zero, originate with MAX_AGE to flush LSA. */
+	lsa->hdr.age = numprefix == 0 ? htons(MAX_AGE) : htons(DEFAULT_AGE);
+	lsa->hdr.type = htons(LSA_TYPE_INTRA_A_PREFIX);
+	lsa->hdr.ls_id = htonl(iface->ifindex);
+	lsa->hdr.adv_rtr = rde_router_id();
+	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
+	lsa->hdr.len = htons(len);
+	lsa->hdr.ls_chksum = htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
+
+	return lsa;
 }
 
 struct lsa *
