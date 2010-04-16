@@ -4510,7 +4510,7 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 		 * mode. Otherwise we can leave it alone, but must clear any
 		 * fence register.
 		 */
-		if (i915_gem_object_fence_offset_ok(obj, args->tiling_mode)) {
+		if (!i915_gem_object_fence_offset_ok(obj, args->tiling_mode)) {
 			if (obj_priv->pin_count)
 				ret = EINVAL;
 			else
