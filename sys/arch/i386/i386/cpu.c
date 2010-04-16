@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.37 2010/04/08 19:28:31 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.38 2010/04/16 17:44:00 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -321,8 +321,10 @@ cpu_init(struct cpu_info *ci)
 	if (cpu_feature & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 
+#ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
-	tlbflush();
+	tlbflushg();
+#endif
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.

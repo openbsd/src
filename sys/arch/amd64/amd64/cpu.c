@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2010/04/08 19:27:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.32 2010/04/16 17:44:00 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -375,7 +375,7 @@ cpu_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
-	tlbflush();
+	tlbflushg();
 #endif
 }
 
