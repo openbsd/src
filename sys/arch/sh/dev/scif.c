@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.11 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: scif.c,v 1.12 2010/04/16 02:20:25 deraadt Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -767,7 +767,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	splx(s);
 
-	error = ttyopen(dev, tp);
+	error = ttyopen(dev, tp, p);
 	if (error)
 		goto bad;
 
