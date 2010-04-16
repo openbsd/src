@@ -1899,8 +1899,8 @@ i915_write_fence_reg(struct inteldrm_fence *reg)
 
 	if ((obj_priv->gtt_offset & ~I915_FENCE_START_MASK) ||
 	    (obj_priv->gtt_offset & (obj->size - 1))) {
-		DRM_ERROR("%s: object 0x%08x not 1M or size (0x%zx) aligned\n",
-		     __func__, obj_priv->gtt_offset, obj->size);
+		DRM_ERROR("object 0x%lx not 1M or size (0x%zx) aligned\n",
+		     obj_priv->gtt_offset, obj->size);
 		return;
 	}
 
@@ -1940,8 +1940,8 @@ i830_write_fence_reg(struct inteldrm_fence *reg)
 
 	if ((obj_priv->gtt_offset & ~I830_FENCE_START_MASK) ||
 	    (obj_priv->gtt_offset & (obj->size - 1))) {
-		DRM_ERROR("object 0x%08x not 512K or size aligned\n",
-		     obj_priv->gtt_offset);
+		DRM_ERROR("object 0x%08x not 512K or size aligned 0x%lx\n",
+		     obj_priv->gtt_offset, obj->size);
 		return;
 	}
 
