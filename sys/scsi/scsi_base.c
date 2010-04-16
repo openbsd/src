@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.169 2010/04/12 09:51:48 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.170 2010/04/16 09:51:30 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -78,14 +78,12 @@ void	scsi_plug_detach(void *, void *);
 
 struct scsi_xfer *	scsi_xs_io(struct scsi_link *, void *, int);
 
+int			scsi_ioh_pending(struct scsi_iopool *);
 struct scsi_iohandler *	scsi_ioh_deq(struct scsi_iopool *);
-void			scsi_ioh_req(struct scsi_iopool *,
-			    struct scsi_iohandler *);
 void			scsi_ioh_runqueue(struct scsi_iopool *);
 
-void			scsi_xsh_ioh(void *, void *);
 void			scsi_xsh_runqueue(struct scsi_link *);
-struct scsi_xshandler *	scsi_xsh_deq(struct scsi_link *);
+void			scsi_xsh_ioh(void *, void *);
 
 int			scsi_link_open(struct scsi_link *);
 void			scsi_link_close(struct scsi_link *);
@@ -259,7 +257,7 @@ void
 scsi_ioh_set(struct scsi_iohandler *ioh, struct scsi_iopool *iopl,
     void (*handler)(void *, void *), void *cookie)
 {
-	ioh->onq = 0;
+	ioh->entry.state = RUNQ_IDLE;
 	ioh->pool = iopl;
 	ioh->handler = handler;
 	ioh->cookie = cookie;
@@ -271,10 +269,18 @@ scsi_ioh_add(struct scsi_iohandler *ioh)
 	struct scsi_iopool *iopl = ioh->pool;
 
 	mtx_enter(&iopl->mtx);
-	if (!ioh->onq) {
+	switch (ioh->entry.state) {
+	case RUNQ_IDLE:
 		TAILQ_INSERT_TAIL(&iopl->queue, &ioh->entry, e);
-		ioh->onq = 1;
+		ioh->entry.state = RUNQ_POOLQ;
+		break;
+#ifdef DIAGNOSTIC
+	case RUNQ_POOLQ:
+		break;
+	default:
+		panic("scsi_ioh_add: unexpected state %u", ioh->entry.state);
 	}
+#endif
 	mtx_leave(&iopl->mtx);
 
 	/* lets get some io up in the air */
@@ -287,16 +293,26 @@ scsi_ioh_del(struct scsi_iohandler *ioh)
 	struct scsi_iopool *iopl = ioh->pool;
 
 	mtx_enter(&iopl->mtx);
-	if (ioh->onq) {
+	switch (ioh->entry.state) {
+	case RUNQ_POOLQ:
 		TAILQ_REMOVE(&iopl->queue, &ioh->entry, e);
-		ioh->onq = 0;
+		ioh->entry.state = RUNQ_IDLE;
+		break;
+#ifdef DIAGNOSTIC
+	case RUNQ_IDLE:
+		break;
+	default:
+		panic("scsi_ioh_add: unexpected state %u", ioh->entry.state);
 	}
+#endif
 	mtx_leave(&iopl->mtx);
 }
 
 /*
  * internal iopool runqueue handling.
  */
+
+u_int line;
 
 struct scsi_iohandler *
 scsi_ioh_deq(struct scsi_iopool *iopl)
@@ -307,22 +323,23 @@ scsi_ioh_deq(struct scsi_iopool *iopl)
 	ioh = (struct scsi_iohandler *)TAILQ_FIRST(&iopl->queue);
 	if (ioh != NULL) {
 		TAILQ_REMOVE(&iopl->queue, &ioh->entry, e);
-		ioh->onq = 0;
+		ioh->entry.state = RUNQ_IDLE;
 	}
 	mtx_leave(&iopl->mtx);
 
 	return (ioh);
 }
 
-void
-scsi_ioh_req(struct scsi_iopool *iopl, struct scsi_iohandler *ioh)
+int
+scsi_ioh_pending(struct scsi_iopool *iopl)
 {
+	int rv;
+
 	mtx_enter(&iopl->mtx);
-	if (!ioh->onq) {
-		TAILQ_INSERT_HEAD(&iopl->queue, &ioh->entry, e);
-		ioh->onq = 1;
-	}
+	rv = !TAILQ_EMPTY(&iopl->queue);
 	mtx_leave(&iopl->mtx);
+
+	return (rv);
 }
 
 void
@@ -334,14 +351,14 @@ scsi_ioh_runqueue(struct scsi_iopool *iopl)
 	if (!scsi_sem_enter(&iopl->mtx, &iopl->running))
 		return;
 	do {
-		for (;;) {
-			ioh = scsi_ioh_deq(iopl);
-			if (ioh == NULL)
+		while (scsi_ioh_pending(iopl)) {
+			io = iopl->io_get(iopl->iocookie);
+			if (io == NULL)
 				break;
 
-			io = iopl->io_get(iopl->iocookie);
-			if (io == NULL) {
-				scsi_ioh_req(iopl, ioh);
+			ioh = scsi_ioh_deq(iopl);
+			if (ioh == NULL) {
+				iopl->io_put(iopl->iocookie, io);
 				break;
 			}
 
@@ -408,7 +425,6 @@ scsi_xsh_set(struct scsi_xshandler *xsh, struct scsi_link *link,
 {
 	scsi_ioh_set(&xsh->ioh, link->pool, scsi_xsh_ioh, xsh);
 
-	xsh->onq = 0;
 	xsh->link = link;
 	xsh->handler = handler;
 }
@@ -418,12 +434,12 @@ scsi_xsh_add(struct scsi_xshandler *xsh)
 {
 	struct scsi_link *link = xsh->link;
 
-	mtx_enter(&link->mtx);
-	if (!xsh->onq) {
+	mtx_enter(&link->pool->mtx);
+	if (xsh->ioh.entry.state == RUNQ_IDLE) {
 		TAILQ_INSERT_TAIL(&link->queue, &xsh->ioh.entry, e);
-		xsh->onq = 1;
+		xsh->ioh.entry.state = RUNQ_LINKQ;
 	}
-	mtx_leave(&link->mtx);
+	mtx_leave(&link->pool->mtx);
 
 	/* lets get some io up in the air */
 	scsi_xsh_runqueue(link);
@@ -434,53 +450,54 @@ scsi_xsh_del(struct scsi_xshandler *xsh)
 {
 	struct scsi_link *link = xsh->link;
 
-	mtx_enter(&link->mtx);
-	if (xsh->onq) {
+	mtx_enter(&link->pool->mtx);
+	switch (xsh->ioh.entry.state) {
+	case RUNQ_IDLE:
+		break;
+	case RUNQ_LINKQ:
 		TAILQ_REMOVE(&link->queue, &xsh->ioh.entry, e);
-		xsh->onq = 0;
+		break;
+	case RUNQ_POOLQ:
+		TAILQ_REMOVE(&link->pool->queue, &xsh->ioh.entry, e);
+		link->openings++;
+		break;
+	default:
+		panic("unexpected xsh state %u", xsh->ioh.entry.state);
 	}
-	mtx_leave(&link->mtx);
+	xsh->ioh.entry.state = RUNQ_IDLE;
+	mtx_leave(&link->pool->mtx);
 }
 
 /*
  * internal xs runqueue handling.
  */
 
-struct scsi_xshandler *
-scsi_xsh_deq(struct scsi_link *link)
-{
-	struct scsi_runq_entry *entry;
-	struct scsi_xshandler *xsh = NULL;
-
-	mtx_enter(&link->mtx);
-	if (link->openings && ((entry = TAILQ_FIRST(&link->queue)) != NULL)) {
-		TAILQ_REMOVE(&link->queue, entry, e);
-
-		xsh = (struct scsi_xshandler *)entry;
-		xsh->onq = 0;
-
-		link->openings--;
-	}
-	mtx_leave(&link->mtx);
-
-	return (xsh);
-}
-
 void
 scsi_xsh_runqueue(struct scsi_link *link)
 {
-	struct scsi_xshandler *xsh;
+	struct scsi_runq_entry *entry;
+	int runq;
 
 	if (!scsi_sem_enter(&link->mtx, &link->running))
 		return;
 	do {
-		for (;;) {
-			xsh = scsi_xsh_deq(link);
-			if (xsh == NULL)
-				break;
+		runq = 0;
 
-			scsi_ioh_add(&xsh->ioh);
+		mtx_enter(&link->pool->mtx);
+		while (link->openings &&
+		    ((entry = TAILQ_FIRST(&link->queue)) != NULL)) {
+			link->openings--;
+
+			TAILQ_REMOVE(&link->queue, entry, e);
+			TAILQ_INSERT_TAIL(&link->pool->queue, entry, e);
+			entry->state = RUNQ_POOLQ;
+
+			runq = 1;
 		}
+		mtx_leave(&link->pool->mtx);
+
+		if (runq)
+			scsi_ioh_runqueue(link->pool);
 	} while (!scsi_sem_leave(&link->mtx, &link->running));
 }
 
@@ -530,7 +547,6 @@ scsi_xs_get(struct scsi_link *link, int flags)
 
 		/* really custom xs handler to avoid scsi_xsh_ioh */
 		scsi_ioh_set(&xsh.ioh, link->pool, scsi_io_get_done, &m);
-		xsh.onq = 0;
 		xsh.link = link;
 		scsi_xsh_add(&xsh);
 
@@ -550,12 +566,12 @@ scsi_link_open(struct scsi_link *link)
 {
 	int open = 0;
 
-	mtx_enter(&link->mtx);
+	mtx_enter(&link->pool->mtx);
 	if (link->openings) {
 		link->openings--;
 		open = 1;
 	}
-	mtx_leave(&link->mtx);
+	mtx_leave(&link->pool->mtx);
 
 	return (open);
 }
@@ -563,9 +579,9 @@ scsi_link_open(struct scsi_link *link)
 void
 scsi_link_close(struct scsi_link *link)
 {
-	mtx_enter(&link->mtx);
+	mtx_enter(&link->pool->mtx);
 	link->openings++;
-	mtx_leave(&link->mtx);
+	mtx_leave(&link->pool->mtx);
 
 	scsi_xsh_runqueue(link);
 }
