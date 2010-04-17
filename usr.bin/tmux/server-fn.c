@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.35 2010/03/22 19:18:46 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.36 2010/04/17 23:25:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -325,9 +325,11 @@ server_destroy_pane(struct window_pane *wp)
 {
 	struct window	*w = wp->window;
 
-	close(wp->fd);
-	bufferevent_free(wp->event);
-	wp->fd = -1;
+	if (wp->fd != -1) {
+		close(wp->fd);
+		bufferevent_free(wp->event);
+		wp->fd = -1;
+	}
 
 	if (options_get_number(&w->options, "remain-on-exit"))
 		return;
