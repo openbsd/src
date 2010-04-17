@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.19 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: prep,v 1.20 2010/04/17 11:15:29 miod Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -22,9 +22,10 @@ Identifying your system:
 
     IP35 family:
 dnl	Origin 300, Origin 3000, Onyx 300
-	Origin 350, Onyx 350, Onyx 4
+	Origin 350, Onyx 350
 	Fuel
 	Tezro
+	Onyx 4
 
     You should use the kernels (bsd and bsd.rd) with the IP suffix
     matching your family number, except for IP35 systems which use
@@ -103,7 +104,8 @@ Switching from L1 console to serial console and vice versa:
     should never be used on these machines.
 
     Origin 300 and 3000 families can switch between `sc' and `ioc3', while
-    Origin 350 and 3500 families can switch between `sc' and `ioc4'.
+    Origin 350 and 3500 families (including Tezro and Onyx 4) can switch
+    between `sc' and `ioc4'.
 
     The OpenBSD kernel only supports serial console on the regular serial
     ports; if your PROM console is on the L1 port, the kernel console will

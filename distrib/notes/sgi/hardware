@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.12 2010/03/07 21:26:22 miod Exp $
+dnl	$OpenBSD: hardware,v 1.13 2010/04/17 11:15:29 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
 
 	IP27 class machines:
@@ -14,9 +14,10 @@ OpenBSD/MACHINE OSREV runs on the following machines:
 		 are supported)
 	IP35 class machines:
 dnl		Origin 300, Origin 3000, Onyx 300
-		Origin 350, Onyx 350, Onyx 4
+		Origin 350, Onyx 350
 		Fuel
 		Tezro
+		Onyx 4
 
 Supported devices {:-include-:}:
 - Ethernet Adapters
