@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.48 2010/04/06 19:15:29 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.49 2010/04/17 11:05:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -337,9 +337,11 @@ ip27_attach_node(struct device *parent, int16_t nasid)
 	uint dimm;
 	void *match;
 
+	currentnasid = nasid;
 	bzero(&u, sizeof u);
 	if (ip35) {
 		u.maa.maa_name = "spdmem";
+		u.maa.maa_nasid = nasid;
 		for (dimm = 0; dimm < L1_SPD_DIMM_MAX; dimm++) {
 			u.saa.dimm = dimm;
 			/*
@@ -352,7 +354,7 @@ ip27_attach_node(struct device *parent, int16_t nasid)
 		}
 	}
 	u.maa.maa_name = "xbow";
-	u.maa.maa_nasid = currentnasid = nasid;
+	u.maa.maa_nasid = nasid;
 	config_found(parent, &u, ip27_print);
 }
 
