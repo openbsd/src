@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.476 2010/04/10 10:18:12 espie Exp $
+# $OpenBSD: pkg_add,v 1.477 2010/04/17 16:07:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -226,6 +226,7 @@ sub complete
 		$n->complete($state);
 		my $pkgname = $n->pkgname;
 		my $plist = $n->plist;
+		return 1 if !defined $plist;
 		if (is_installed($pkgname) && 
 		    (!$state->{allow_replacing} ||	
 		      !$state->{defines}->{installed} &&
