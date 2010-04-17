@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.212 2010/04/17 17:46:32 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.213 2010/04/17 18:31:41 stsp Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2249,6 +2249,23 @@ ifnewlladdr(struct ifnet *ifp)
 		    ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit((struct arpcom *)ifp, ifa);
 	}
+#ifdef INET6
+	/* Update the link-local address. Don't do it if we're
+	 * a router to avoid confusing hosts on the network. */
+	if (!(ifp->if_xflags & IFXF_NOINET6) && !ip6_forwarding) {
+		ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp, 0);
+		if (ifa) {
+			in6_purgeaddr(ifa);
+			in6_ifattach_linklocal(ifp, NULL);
+			if (in6if_do_dad(ifp)) {
+				ifa = (struct ifaddr *)
+				    in6ifa_ifpforlinklocal(ifp, 0);
+				if (ifa)
+					nd6_dad_start(ifa, NULL);
+			}
+		}
+	}
+#endif
 	if (!up) {
 		/* go back down */
 		ifp->if_flags &= ~IFF_UP;
