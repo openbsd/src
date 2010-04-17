@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.123 2010/04/16 09:52:04 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.124 2010/04/17 00:51:13 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -423,7 +423,6 @@ struct scsi_link {
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
 	struct  devid *id;
-	struct	mutex mtx;
 
 	struct	scsi_runq queue;
 	u_int	running;

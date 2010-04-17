@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.170 2010/04/16 09:51:30 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.171 2010/04/17 00:51:13 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ scsi_xsh_runqueue(struct scsi_link *link)
 	struct scsi_runq_entry *entry;
 	int runq;
 
-	if (!scsi_sem_enter(&link->mtx, &link->running))
+	if (!scsi_sem_enter(&link->pool->mtx, &link->running))
 		return;
 	do {
 		runq = 0;
@@ -498,7 +498,7 @@ scsi_xsh_runqueue(struct scsi_link *link)
 
 		if (runq)
 			scsi_ioh_runqueue(link->pool);
-	} while (!scsi_sem_leave(&link->mtx, &link->running));
+	} while (!scsi_sem_leave(&link->pool->mtx, &link->running));
 }
 
 void

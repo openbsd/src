@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.155 2010/04/06 00:58:00 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.156 2010/04/17 00:51:13 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -862,7 +862,6 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	sc_link->target = target;
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
-	mtx_init(&sc_link->mtx, IPL_BIO);
 	TAILQ_INIT(&sc_link->queue);
 	inqbuf = &sc_link->inqdata;
 
