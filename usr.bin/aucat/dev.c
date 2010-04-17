@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.46 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.47 2010/04/17 09:16:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -683,14 +683,6 @@ dev_attach(char *name, unsigned mode,
 			ibuf = abuf_new(nblk * round, &ipar);
 			aproc_setout(conv, ibuf);
 		}
-		if (!aparams_subset(&ipar, &dev_opar)) {
-			conv = cmap_new(name, &ipar, &dev_opar);
-			ipar.cmin = dev_opar.cmin;
-			ipar.cmax = dev_opar.cmax;
-			aproc_setin(conv, ibuf);
-			ibuf = abuf_new(nblk * round, &ipar);
-			aproc_setout(conv, ibuf);
-		}
 		if (!aparams_eqrate(&ipar, &dev_opar)) {
 			conv = resamp_new(name, round, dev_round);
 			ipar.rate = dev_opar.rate;
@@ -720,14 +712,6 @@ dev_attach(char *name, unsigned mode,
 			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}
-		if (!aparams_subset(&opar, &dev_ipar)) {
-			conv = cmap_new(name, &dev_ipar, &opar);
-			opar.cmin = dev_ipar.cmin;
-			opar.cmax = dev_ipar.cmax;
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nblk * round, &opar);
-			aproc_setin(conv, obuf);
-		}
 		if (!aparams_eqrate(&opar, &dev_ipar)) {
 			conv = resamp_new(name, dev_round, round);
 			opar.rate = dev_ipar.rate;
@@ -751,14 +735,6 @@ dev_attach(char *name, unsigned mode,
 			opar.sig = dev_opar.sig;
 			opar.le = dev_opar.le;
 			opar.msb = dev_opar.msb;
-			aproc_setout(conv, obuf);
-			obuf = abuf_new(nblk * round, &opar);
-			aproc_setin(conv, obuf);
-		}
-		if (!aparams_subset(&opar, &dev_opar)) {
-			conv = cmap_new(name, &dev_opar, &opar);
-			opar.cmin = dev_opar.cmin;
-			opar.cmax = dev_opar.cmax;
 			aproc_setout(conv, obuf);
 			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);

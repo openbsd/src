@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.32 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.33 2010/04/17 09:16:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -163,9 +163,6 @@ struct aproc {
 			int idelta, odelta;	/* remainder of resamp_xpos */
 		} resamp;
 		struct {
-			short ctx[NCHAN_MAX];
-		} cmap;
-		struct {
 			int bfirst;		/* bytes to skip at startup */
 			unsigned bps;		/* bytes per sample */
 			unsigned shift;		/* shift to get 32bit MSB */
@@ -243,7 +240,6 @@ struct aproc *wfile_new(struct file *);
 struct aproc *mix_new(char *, int, unsigned, struct aproc *);
 struct aproc *sub_new(char *, int, unsigned, struct aproc *);
 struct aproc *resamp_new(char *, unsigned, unsigned);
-struct aproc *cmap_new(char *, struct aparams *, struct aparams *);
 struct aproc *enc_new(char *, struct aparams *);
 struct aproc *dec_new(char *, struct aparams *);
 struct aproc *mon_new(char *, unsigned);
