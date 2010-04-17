@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.171 2010/04/17 00:51:13 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.172 2010/04/17 04:14:52 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -279,8 +279,8 @@ scsi_ioh_add(struct scsi_iohandler *ioh)
 		break;
 	default:
 		panic("scsi_ioh_add: unexpected state %u", ioh->entry.state);
-	}
 #endif
+	}
 	mtx_leave(&iopl->mtx);
 
 	/* lets get some io up in the air */
@@ -303,8 +303,9 @@ scsi_ioh_del(struct scsi_iohandler *ioh)
 		break;
 	default:
 		panic("scsi_ioh_add: unexpected state %u", ioh->entry.state);
-	}
 #endif
+	}
+
 	mtx_leave(&iopl->mtx);
 }
 
