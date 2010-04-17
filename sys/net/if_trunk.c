@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.71 2010/01/12 01:36:33 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.72 2010/04/17 17:47:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -285,26 +285,12 @@ void
 trunk_port_lladdr(struct trunk_port *tp, u_int8_t *lladdr)
 {
 	struct ifnet *ifp = tp->tp_if;
-	struct ifaddr *ifa;
-	struct ifreq ifr;
 
 	/* Set the link layer address */
 	trunk_lladdr((struct arpcom *)ifp, lladdr);
 
 	/* Reset the port to update the lladdr */
-	if (ifp->if_flags & IFF_UP) {
-		int s = splnet();
-		ifp->if_flags &= ~IFF_UP;
-		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
-		ifp->if_flags |= IFF_UP;
-		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
-		splx(s);
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr != NULL &&
-			    ifa->ifa_addr->sa_family == AF_INET)
-				arp_ifinit((struct arpcom *)ifp, ifa);
-		}
-	}
+	ifnewlladdr(ifp);
 }
 
 int
