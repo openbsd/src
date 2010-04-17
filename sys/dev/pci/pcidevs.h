@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1547 2010/04/10 08:34:48 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1548 2010/04/17 11:04:57 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1030,6 +1030,7 @@
 #define	PCI_PRODUCT_ATI_RV350_WS	0x4e54		/* Radeon Mobility M10 */
 #define	PCI_PRODUCT_ATI_MOBILITY_9550	0x4e56		/* Radeon Mobility 9550 */
 #define	PCI_PRODUCT_ATI_R300_S	0x4e64		/* Radeon 9500/9700 Sec */
+#define	PCI_PRODUCT_ATI_FIREGL_X1_S	0x4e67		/* FireGL X1 Sec */
 #define	PCI_PRODUCT_ATI_R350_S	0x4e68		/* Radeon 9800 Pro Sec */
 #define	PCI_PRODUCT_ATI_RAGE128_PA	0x5041		/* Rage 128 Pro */
 #define	PCI_PRODUCT_ATI_RAGE128_PB	0x5042		/* Rage 128 Pro */
@@ -4697,6 +4698,7 @@
 #define	PCI_PRODUCT_SGI_RAD1	0x0005		/* Rad1 */
 #define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon */
 #define	PCI_PRODUCT_SGI_IOC4	0x100a		/* IOC4 */
+#define	PCI_PRODUCT_SGI_IS1	0x100c		/* ImageSync 1 */
 
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
