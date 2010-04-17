@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.211 2010/03/08 21:00:27 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.212 2010/04/17 17:46:32 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,8 @@
 #endif
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 #endif
 
 #if NBPFILTER > 0
@@ -1559,22 +1561,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		default:
 			return (ENODEV);
 		}
-		if (ifp->if_flags & IFF_UP) {
-			struct ifreq ifrq;
-			int s = splnet();
-			ifp->if_flags &= ~IFF_UP;
-			ifrq.ifr_flags = ifp->if_flags;
-			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
-			ifp->if_flags |= IFF_UP;
-			ifrq.ifr_flags = ifp->if_flags;
-			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
-			splx(s);
-			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-				if (ifa->ifa_addr != NULL &&
-				    ifa->ifa_addr->sa_family == AF_INET)
-					arp_ifinit((struct arpcom *)ifp, ifa);
-			}
-		}
+
+		ifnewlladdr(ifp);
 		break;
 
 	default:
@@ -2232,4 +2220,40 @@ ifa_item_remove(struct sockaddr *sa, struct ifaddr *ifa, struct ifnet *ifp)
 	} else
 		ifai_last->ifai_next = ifai->ifai_next;
 	pool_put(&ifaddr_item_pl, ifai);
+}
+
+void
+ifnewlladdr(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	struct ifreq ifrq;
+	short up;
+	int s;
+
+	s = splnet();
+	up = ifp->if_flags & IFF_UP;
+
+	if (up) {
+		/* go down for a moment... */
+		ifp->if_flags &= ~IFF_UP;
+		ifrq.ifr_flags = ifp->if_flags;
+		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
+	}
+
+	ifp->if_flags |= IFF_UP;
+	ifrq.ifr_flags = ifp->if_flags;
+	(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
+
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr != NULL &&
+		    ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit((struct arpcom *)ifp, ifa);
+	}
+	if (!up) {
+		/* go back down */
+		ifp->if_flags &= ~IFF_UP;
+		ifrq.ifr_flags = ifp->if_flags;
+		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
+	}
+	splx(s);
 }
