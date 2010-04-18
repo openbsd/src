@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2009/08/11 19:17:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 2010/04/18 18:37:37 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -113,6 +113,9 @@
 
 void	aviion_bootstrap(void);
 int	aviion_identify(void);
+__dead void unconfigured(const char *);
+__dead void unrecognized(void);
+__dead void unsupported(const char *);
 void	consinit(void);
 __dead void doboot(void);
 void	dumpconf(void);
@@ -693,37 +696,42 @@ aviion_bootstrap()
 
 	/* Set up interrupt and fp exception handlers based on the machine. */
 	switch (avtyp) {
-#ifdef AV400
 	case AV_400:
+#ifdef AV400
 		platform = &board_av400;
-		break;
+#else
+		unconfigured("AV400");
 #endif
-#ifdef AV530
+		break;
 	case AV_530:
+#ifdef AV530
 		platform = &board_av530;
-		break;
+#else
+		unsupported("AV530");
 #endif
-#ifdef AV5000
+		break;
 	case AV_5000:
+#ifdef AV5000
 		platform = &board_av5000;
-		break;
+#else
+		unsupported("AV5000");
 #endif
-#ifdef AV6280
+		break;
 	case AV_6280:
+#ifdef AV6280
 		platform = &board_av6280;
-		break;
+#else
+		unsupported("AV6280");
 #endif
+		break;
 	default:
-		scm_printf("Sorry, OpenBSD/" MACHINE
-		    " does not support this model.\n");
-		scm_halt();
+		unrecognized();
 		break;
 	};
 
 	cn_tab = &bootcons;
-	/* we can use printf() from here. */
-
 	platform->bootstrap();
+	/* we can use printf() from here. */
 
 	/* Parse the commandline */
 	cmdline_parse();
@@ -936,13 +944,56 @@ aviion_identify()
 		return (AV_5000);
 
 	/*
-	 * Series 4600/530 have IOFUSEs at 0xfffb0040 and 0xfffb00c0.
+	 * Series 4600/530 have IOFUSEs at 0xfffb0040 and 0xfffb00c0;
+	 * the second one may not be present if the I/O expansion board
+	 * is missing.
 	 */
-	if (badaddr(0xfffb0040, 1) == 0 && badaddr(0xfffb00c0, 1) == 0)
+	if (badaddr(0xfffb0040, 1) == 0 /* && badaddr(0xfffb00c0, 1) == 0 */)
 		return (AV_530);
 
 	/*
 	 * Series 6280/8000-8 fall here.
 	 */
 	return (AV_6280);
+}
+
+__dead void
+unconfigured(const char *model)
+{
+	char excuse[512];
+
+	snprintf(excuse, sizeof excuse, "\n"
+	    "Sorry, support for the %s family is not present\n"
+	    "in this OpenBSD/" MACHINE " kernel.\n"
+	    "Please recompile your kernel with\n"
+	    "\toption\t%s\n"
+	    "in the kernel configuration file.\n", model, model);
+	scm_printf(excuse);
+	scm_halt();
+}
+
+__dead void
+unsupported(const char *model)
+{
+	char excuse[512];
+
+	snprintf(excuse, sizeof excuse, "\n"
+	    "Sorry, OpenBSD/" MACHINE " does not support the %s family "
+	    "(cpuid %04x) yet.\n",
+	    model, scm_cpuid());
+	scm_printf(excuse);
+	scm_halt();
+}
+
+__dead void
+unrecognized(void)
+{
+	char excuse[512];
+
+	snprintf(excuse, sizeof excuse, "\n"
+	    "Sorry, OpenBSD/" MACHINE " does not recognize this system "
+	    "(cpuid %04x) yet.\n",
+	    scm_cpuid());
+	scm_printf(excuse);
+	scm_halt();
 }
