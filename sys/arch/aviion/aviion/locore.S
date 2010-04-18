@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2007/12/22 17:14:36 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2010/04/18 15:04:51 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -109,7 +109,7 @@ ASLOCAL(main_start)
 	or.u	r12, r0,  hi16(SYM_MAGIC)
 	or	r12, r12, lo16(SYM_MAGIC)
 	cmp	r2,  r6,  r12
-	bcnd	ne0, r2,  1f
+	bb1	ne,  r2,  1f
 	or.u	r13, r0,  hi16(_C_LABEL(esym))
 	st	r7,  r13, lo16(_C_LABEL(esym))
 1:
