@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.8 2010/03/31 19:46:27 miod Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.9 2010/04/18 15:06:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,8 +62,8 @@
  * The real stuff is in dev/ic/am7990reg.h
  */
 struct av_lereg {
-	volatile u_int32_t	ler1_rdp;	/* data port */
-	volatile u_int32_t	ler1_rap;	/* register select port */
+	volatile uint32_t	ler1_rdp;	/* data port */
+	volatile uint32_t	ler1_rap;	/* register select port */
 };
 
 /*
@@ -84,48 +84,22 @@ struct cfattach le_syscon_ca = {
 	sizeof(struct le_softc), le_syscon_match, le_syscon_attach
 };
 
-void	le_syscon_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t le_syscon_rdcsr(struct am7990_softc *, u_int16_t);
-
-void
-le_syscon_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
-{
-	struct av_lereg *ler1 = ((struct le_softc *)sc)->sc_r1;
-
-	ler1->ler1_rap = port;
-	ler1->ler1_rdp = val;
-}
-
-u_int16_t
-le_syscon_rdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
-{
-	struct av_lereg *ler1 = ((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
-
-	ler1->ler1_rap = port;
-	val = ler1->ler1_rdp;
-	return (val);
-}
+int	le_syscon_intr(void *);
+uint16_t le_syscon_rdcsr(struct am7990_softc *, uint16_t);
+void	le_syscon_wrcsr(struct am7990_softc *, uint16_t, uint16_t);
+void	le_syscon_wrcsr_interrupt(struct am7990_softc *, uint16_t, uint16_t);
 
 int
-le_syscon_match(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+le_syscon_match(struct device *parent, void *cf, void *aux)
 {
 	if (avtyp != AV_400)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-le_syscon_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_syscon_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
@@ -202,10 +176,68 @@ le_syscon_attach(parent, self, aux)
 
 	am7990_config(sc);
 
-	lesc->sc_ih.ih_fn = am7990_intr;
+	lesc->sc_ih.ih_fn = le_syscon_intr;
 	lesc->sc_ih.ih_arg = sc;
 	lesc->sc_ih.ih_flags = 0;
 	lesc->sc_ih.ih_ipl = ca->ca_ipl;
 
 	sysconintr_establish(INTSRC_ETHERNET1, &lesc->sc_ih, self->dv_xname);
+}
+
+int
+le_syscon_intr(void *v)
+{
+	struct le_softc *lesc = (struct le_softc *)v;
+	struct am7990_softc *sc = &lesc->sc_am7990;
+	int rc;
+
+	/*
+	 * Syscon expects edge interrupts, while the LANCE does level
+	 * interrupts. To avoid missing interrupts while servicing,
+	 * we disable further device interrupts while servicing.
+	 *
+	 * However, am7990_intr() will flip the interrupt enable bit
+	 * itself; we override wrcsr with a specific version during
+	 * servicing, so as not to reenable interrupts accidentally...
+	 */
+	sc->sc_wrcsr = le_syscon_wrcsr_interrupt;
+
+	rc = am7990_intr(v);
+
+	sc->sc_wrcsr = le_syscon_wrcsr;
+	/*
+	 * ...but we should not forget to reenable interrupts at this point!
+	 */
+	le_syscon_wrcsr(sc, LE_CSR0, LE_C0_INEA | le_syscon_rdcsr(sc, LE_CSR0));
+
+	return rc;
+}
+
+uint16_t
+le_syscon_rdcsr(struct am7990_softc *sc, uint16_t port)
+{
+	struct av_lereg *ler1 = ((struct le_softc *)sc)->sc_r1;
+	uint16_t val;
+
+	ler1->ler1_rap = port;
+	val = ler1->ler1_rdp;
+	return val;
+}
+
+void
+le_syscon_wrcsr(struct am7990_softc *sc, uint16_t port, uint16_t val)
+{
+	struct av_lereg *ler1 = ((struct le_softc *)sc)->sc_r1;
+
+	ler1->ler1_rap = port;
+	ler1->ler1_rdp = val;
+}
+
+void
+le_syscon_wrcsr_interrupt(struct am7990_softc *sc, uint16_t port, uint16_t val)
+{
+	if (port == LE_CSR0)
+		val &= ~LE_C0_INEA;
+
+	le_syscon_wrcsr(sc, port, val);
 }
