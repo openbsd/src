@@ -1,6 +1,6 @@
-/*	$OpenBSD: m8820x.c,v 1.6 2009/04/19 17:56:12 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.7 2010/04/18 22:04:37 miod Exp $	*/
 /*
- * Copyright (c) 2004, 2006, Miodrag Vallat.
+ * Copyright (c) 2004, 2006, 2010 Miodrag Vallat.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,8 +36,9 @@
 #include <machine/m8820x.h>
 #include <machine/prom.h>
 
-extern	u_int32_t pfsr_av400_straight[];
-extern	u_int32_t pfsr_av400_double[];
+extern	u_int32_t pfsr_straight[];
+extern	u_int32_t pfsr_double[];
+extern	u_int32_t pfsr_six[];
 
 /*
  * This routine sets up the CPU/CMMU configuration.
@@ -48,7 +49,7 @@ m8820x_setup_board_config()
 	extern u_int32_t pfsr_save[];
 	struct m8820x_cmmu *cmmu;
 	struct scm_cpuconfig scc;
-	int type, cpu_num, cmmu_num;
+	int type, cpu_num, cpu_cmmu_num, cmmu_num, cmmu_per_cpu;
 	volatile u_int *cr;
 	u_int32_t whoami;
 	u_int32_t *m8820x_pfsr;
@@ -57,6 +58,9 @@ m8820x_setup_board_config()
 	 * First, find if any CPU0 CMMU is a 88204. If so, we can
 	 * issue the CPUCONFIG system call to get the configuration
 	 * details.
+	 * NOTE that this relies upon [0] and [1] to always have
+	 * valid CMMU addresses - thankfully this is always the case
+	 * on model 530 regardless of the CMMU configuration.
 	 */
 	if (badaddr((vaddr_t)m8820x_cmmu[0].cmmu_regs, 4) != 0 ||
 	    badaddr((vaddr_t)m8820x_cmmu[1].cmmu_regs, 4) != 0) {
@@ -110,8 +114,11 @@ hardprobe:
 		 * slots we can ignore, and keep using badaddr() to cope
 		 * with unpopulated slots.
 		 */
-		cmmu = m8820x_cmmu + 7;
-		for (max_cmmus = 7; max_cmmus != 0; max_cmmus--, cmmu--) {
+		cmmu = m8820x_cmmu + MAX_CMMUS - 1;
+		for (max_cmmus = MAX_CMMUS - 1; max_cmmus != 0;
+		    max_cmmus--, cmmu--) {
+			if (cmmu->cmmu_regs == NULL)
+				continue;
 			if (badaddr((vaddr_t)cmmu->cmmu_regs, 4) == 0)
 				break;
 		}
@@ -122,8 +129,8 @@ hardprobe:
 		/*
 		 * Deduce our configuration from the WHOAMI register.
 		 */
-		whoami = *(volatile u_int32_t *)AV_WHOAMI;
-		switch ((whoami & 0xf0) >> 4) {
+		whoami = (*(volatile u_int32_t *)AV_WHOAMI & 0xf0) >> 4;
+		switch (whoami) {
 		case 0:		/* 4 CPUs, 8 CMMUs */
 			scc.cpucount = 4;
 			break;
@@ -135,10 +142,16 @@ hardprobe:
 			break;
 		case 3:		/* 2 CPUs, 12 CMMUs */
 		case 7:		/* 1 CPU, 6 CMMU */
-			printf("MAYDAY, 6:1 CMMU configuration (whoami %x)"
-			    " but no CPUCONFIG information\n", whoami);
-			scm_halt();
-			/* NOTREACHED */
+			/*
+			 *
+			 */
+			ncpusfound = whoami == 7 ? 1 : 2;
+			cmmu_per_cpu = 6;
+			cmmu_shift = 3;
+			max_cmmus = ncpusfound << cmmu_shift;
+			scc.isplit = scc.dsplit = 0;	/* XXX unknown */
+			m8820x_pfsr = pfsr_six;
+			goto done;
 			break;
 		default:
 			printf("unrecognized CMMU configuration, whoami %x\n",
@@ -171,13 +184,15 @@ knowledge:
 	ncpusfound = scc.cpucount;
 	if (scc.igang == 1) {
 		cmmu_shift = 1;
-		m8820x_pfsr = pfsr_av400_straight;
+		m8820x_pfsr = pfsr_straight;
 	} else {
 		cmmu_shift = 2;
-		m8820x_pfsr = pfsr_av400_double;
+		m8820x_pfsr = pfsr_double;
 	}
-	max_cmmus = ncpusfound << scc.igang;
+	max_cmmus = ncpusfound << cmmu_shift;
+	cmmu_per_cpu = 1 << cmmu_shift;
 
+done:
 	/*
 	 * Now that we know which CMMUs are there, report every association
 	 */
@@ -189,7 +204,7 @@ knowledge:
 			    cmmu_regs[CMMU_IDR]);
 
 			printf("CPU%d is associated to %d MC8820%c CMMUs\n",
-			    cpu_num, 1 << cmmu_shift,
+			    cpu_num, cmmu_per_cpu,
 			    type == M88204_ID ? '4' : '0');
 		}
 	}
@@ -201,15 +216,17 @@ knowledge:
 	if (cmmu_shift > 1) {
 		for (cmmu_num = 0, cmmu = m8820x_cmmu; cmmu_num < max_cmmus;
 		    cmmu_num++, cmmu++) {
-			cpu_num = cmmu_num >> 1; /* CPU view of the CMMU */
+			cpu_cmmu_num = cmmu_num >> 1; /* CPU view of the CMMU */
 
-			if (cmmu_num & 1) {
+			if (CMMU_MODE(cmmu_num) == INST_CMMU) {
 				/* I0, I1 */
-				cmmu->cmmu_addr = cpu_num < 2 ? 0 : scc.isplit;
+				cmmu->cmmu_addr =
+				    cpu_cmmu_num < 2 ? 0 : scc.isplit;
 				cmmu->cmmu_addr_mask = scc.isplit;
 			} else {
 				/* D0, D1 */
-				cmmu->cmmu_addr = cpu_num < 2 ? 0 : scc.dsplit;
+				cmmu->cmmu_addr =
+				    cpu_cmmu_num < 2 ? 0 : scc.dsplit;
 				cmmu->cmmu_addr_mask = scc.dsplit;
 			}
 		}

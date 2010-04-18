@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.14 2009/02/16 22:54:59 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.15 2010/04/18 22:04:37 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -159,7 +159,7 @@
 #include <aviion/dev/sysconvar.h>
 #include <aviion/dev/vmevar.h>
 
-u_int	safe_level(u_int mask, u_int curlevel);
+u_int	av400_safe_level(u_int, u_int);
 
 const pmap_table_entry
 av400_ptable[] = {
@@ -183,7 +183,16 @@ const struct board board_av400 = {
 	av400_setipl,
 	av400_raiseipl,
 	av400_intsrc,
-	av400_ptable
+
+	av400_ptable,
+
+	AV400_VME16_BASE,
+		AV400_VME16_START,	AV400_VME16_END,
+	AV400_VME24_BASE,
+		AV400_VME24_START,	AV400_VME24_END,
+	AV400_VME32_BASE,
+		AV400_VME32_START1,	AV400_VME32_END1,
+		AV400_VME32_START2,	AV400_VME32_END2
 };
 
 /*
@@ -199,7 +208,7 @@ const struct board board_av400 = {
  * Note that, on the AV400 design, the interrupt enable registers are
  * write-only and read back as 0xffffffff.
  */
-u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
+static u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
 
 u_int av400_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
@@ -275,7 +284,7 @@ av400_bootstrap()
  * while keeping ``mask'' masked.
  */
 u_int
-safe_level(u_int mask, u_int curlevel)
+av400_safe_level(u_int mask, u_int curlevel)
 {
 	int i;
 
@@ -380,7 +389,7 @@ av400_intsrc(int i)
 /*
  * Provide the interrupt source for a given interrupt status bit.
  */
-const u_int obio_vec[32] = {
+static const u_int obio_vec[32] = {
 	0,			/* SWI0 */
 	0,			/* SWI1 */
 	0,
@@ -461,7 +470,7 @@ av400_intr(struct trapframe *eframe)
 	 * priority.
 	 */
 	do {
-		level = safe_level(cur_mask, old_spl);
+		level = av400_safe_level(cur_mask, old_spl);
 		av400_setipl(level);
 
 		if (unmasked == 0) {

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2006/05/20 12:06:51 miod Exp $
+#	$OpenBSD: GENERIC,v 1.3 2010/04/18 22:04:39 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -19,7 +19,7 @@ option		M88100
 
 # Supported models
 option		AV400		# 100, 200, 300, 400, 3000, 4000, 4300
-#option		AV530		# 4600, 530
+option		AV530		# 4600, 530
 #option		AV5000		# 5000, 6000
 #option		AV6280		# 6280, 8000-8
 

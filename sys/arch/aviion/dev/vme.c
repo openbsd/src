@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.4 2007/12/19 22:05:06 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.5 2010/04/18 22:04:39 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -46,7 +46,6 @@
 #include <aviion/dev/vmevar.h>
 
 #include <machine/avcommon.h>
-#include <machine/av400.h>	/* XXX */
 
 struct vmesoftc {
 	struct device	sc_dev;
@@ -139,13 +138,13 @@ vmeattach(struct device *parent, struct device *self, void *aux)
 	 * Display VME ranges.
 	 */
 	printf("%s: A32 %08x-%08x\n", self->dv_xname,
-	    AV400_VME32_START1, AV400_VME32_END1);
+	    platform->vme32_start1, platform->vme32_end1);
 	printf("%s: A32 %08x-%08x\n", self->dv_xname,
-	    AV400_VME32_START2, AV400_VME32_END2);
+	    platform->vme32_start2, platform->vme32_end2);
 	printf("%s: A24 %08x-%08x\n", self->dv_xname,
-	    AV400_VME24_START, AV400_VME24_END);
+	    platform->vme24_start, platform->vme24_end);
 	printf("%s: A16 %08x-%08x\n", self->dv_xname,
-	    AV400_VME16_START, AV400_VME16_END);
+	    platform->vme16_start, platform->vme16_end);
 
 	/* scan for child devices */
 	config_search(vmescan, self, aux);
@@ -341,16 +340,24 @@ vmeintr_disestablish(u_int vec, struct intrhand *ih)
  * bus_space specific functions
  */
 
+#define	ISVMEA32(addr) \
+	(((addr) >= platform->vme32_start1 && (addr) <= platform->vme32_end1) || \
+	 ((addr) >= platform->vme32_start2 && (addr) <= platform->vme32_end2))
+#define	ISVMEA24(addr) \
+	((addr) >= platform->vme24_start && (addr) <= platform->vme24_end)
+#define	ISVMEA16(addr) \
+	((addr) >= platform->vme16_start && (addr) <= platform->vme16_end)
+
 int
 vme16_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 
-	if (AV400_ISVMEA16(addr) && AV400_ISVMEA16(addr + size - 1))
-		return (vme_map(sc->sc_ext_a16, addr + AV400_VME16_BASE, addr,
-		    size, flags, ret));
-	else
-		return (EINVAL);
+	if (ISVMEA16(addr) && ISVMEA16(addr + size - 1))
+		return vme_map(sc->sc_ext_a16, addr + platform->vme16_base,
+		    addr, size, flags, ret);
+
+	return EINVAL;
 }
 
 int
@@ -358,11 +365,11 @@ vme24_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 
-	if (AV400_ISVMEA24(addr) && AV400_ISVMEA24(addr + size - 1))
-		return (vme_map(sc->sc_ext_a24, addr + AV400_VME24_BASE, addr,
-		    size, flags, ret));
-	else
-		return (EINVAL);
+	if (ISVMEA24(addr) && ISVMEA24(addr + size - 1))
+		return vme_map(sc->sc_ext_a24, addr + platform->vme24_base,
+		    addr, size, flags, ret);
+
+	return EINVAL;
 }
 
 int
@@ -370,11 +377,11 @@ vme32_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 
-	if (AV400_ISVMEA32(addr) && AV400_ISVMEA32(addr + size - 1))
-		return (vme_map(sc->sc_ext_a32, addr + AV400_VME32_BASE, addr,
-		    size, flags, ret));
-	else
-		return (EINVAL);
+	if (ISVMEA32(addr) && ISVMEA32(addr + size - 1))
+		return vme_map(sc->sc_ext_a32, addr + platform->vme32_base,
+		    addr, size, flags, ret);
+
+	return EINVAL;
 }
 
 int
@@ -431,7 +438,7 @@ vme16_unmap(bus_space_handle_t handle, bus_size_t size)
 	if (pmap_extract(pmap_kernel(), (vaddr_t)handle, &pa) == FALSE)
 		return;
 
-	pa -= AV400_VME16_BASE;
+	pa -= platform->vme16_base;
 	return (vme_unmap(sc->sc_ext_a16, pa, (vaddr_t)handle, size));
 }
 
@@ -444,7 +451,7 @@ vme24_unmap(bus_space_handle_t handle, bus_size_t size)
 	if (pmap_extract(pmap_kernel(), (vaddr_t)handle, &pa) == FALSE)
 		return;
 
-	pa -= AV400_VME24_BASE;
+	pa -= platform->vme24_base;
 	return (vme_unmap(sc->sc_ext_a24, pa, (vaddr_t)handle, size));
 }
 
@@ -457,7 +464,7 @@ vme32_unmap(bus_space_handle_t handle, bus_size_t size)
 	if (pmap_extract(pmap_kernel(), (vaddr_t)handle, &pa) == FALSE)
 		return;
 
-	pa -= AV400_VME32_BASE;
+	pa -= platform->vme32_base;
 	return (vme_unmap(sc->sc_ext_a32, pa, (vaddr_t)handle, size));
 }
 
@@ -643,19 +650,19 @@ vmemmap(dev_t dev, off_t off, int prot)
 
 	switch (awidth) {
 	case VME_A32:
-		if (!AV400_ISVMEA32(pa))
+		if (!ISVMEA32(pa))
 			return (-1);
-		pa += AV400_VME32_BASE;
+		pa += platform->vme32_base;
 		break;
 	case VME_A24:
-		if (!AV400_ISVMEA24(pa))
+		if (!ISVMEA24(pa))
 			return (-1);
-		pa += AV400_VME24_BASE;
+		pa += platform->vme24_base;
 		break;
 	case VME_A16:
-		if (!AV400_ISVMEA16(pa))
+		if (!ISVMEA16(pa))
 			return (-1);
-		pa += AV400_VME16_BASE;
+		pa += platform->vme16_base;
 		break;
 	}
 

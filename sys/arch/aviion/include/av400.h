@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400.h,v 1.5 2007/12/19 22:05:06 miod Exp $	*/
+/*	$OpenBSD: av400.h,v 1.6 2010/04/18 22:04:39 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -68,14 +68,6 @@
 #define	AV400_VME16_BASE	0xffff0000
 #define	AV400_VME16_START	0x00000000
 #define	AV400_VME16_END		0x0000ffff
-
-#define	AV400_ISVMEA32(addr) \
-	(((addr) >= AV400_VME32_START1 && (addr) < AV400_VME32_END1 + 1U) || \
-	 ((addr) >= AV400_VME32_START2 && (addr) < AV400_VME32_END2 + 1U))
-#define	AV400_ISVMEA24(addr) \
-	((addr) >= AV400_VME24_START && (addr) < AV400_VME24_END + 1U)
-#define	AV400_ISVMEA16(addr) \
-	((addr) >= AV400_VME16_START /* && (addr) <= AV400_VME16_END */)
 
 /*
  * AV400 declarations for hardware level device registers and such.

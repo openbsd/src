@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.4 2009/02/16 22:55:03 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.5 2010/04/18 22:04:39 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -46,6 +46,10 @@ struct board {
 	u_int64_t (*intsrc)(int);
 
 	pmap_table_t ptable;
+
+	vaddr_t	vme16_base, vme16_start, vme16_end;
+	vaddr_t vme24_base, vme24_start, vme24_end;
+	vaddr_t vme32_base, vme32_start1, vme32_end1, vme32_start2, vme32_end2;
 };
 
 #define	md_interrupt_func(f)	platform->intr(f)

@@ -1,6 +1,6 @@
-/*	$OpenBSD: eh.S,v 1.5 2007/12/21 23:56:53 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.6 2010/04/18 22:04:37 miod Exp $	*/
 /*
- * Copyright (c) 2006, Miodrag Vallat
+ * Copyright (c) 2006, 2010 Miodrag Vallat
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
 
 #include <m88k/m88k/eh_common.S>
 
-ENTRY(pfsr_av400_double)
+ENTRY(pfsr_double)
 	/*
 	 * 4 CMMUs per CPU. Almost as simple as the 2 CMMUs per CPU
 	 * situation...
@@ -68,7 +68,7 @@ ENTRY(pfsr_av400_double)
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP3, r31,  EF_DPFSR
 
-ENTRY(pfsr_av400_straight)
+ENTRY(pfsr_straight)
 	/*
 	 * We have the simple 2 CMMUs per CPU mapping. Pick our couple;
 	 * no need to reset fault status registers in this case.
@@ -80,3 +80,47 @@ ENTRY(pfsr_av400_straight)
 	ld	TMP3, TMP2, r0
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP3, r31,  EF_DPFSR
+
+ENTRY(pfsr_six)
+	/*
+	 * 6 CMMU (2D4I) per CPU.
+	 * This is the worst situation. We handle the data CMMU first,
+	 * using the cpu_info pointers; and then the instruction CMMU,
+	 * relying upon them being set up every 0x1000 bytes in the
+	 * address space.
+	 */
+	ld	TMP2, TMP,  CI_PFSR_D0
+	ld	TMP3, TMP2, r0
+	extu	TMP3, TMP3, 3<16>
+	bcnd	ne0,  TMP3, 1f
+	st	r0,   TMP2, r0
+	ld	TMP2, TMP,  CI_PFSR_D1
+1:
+	ld	TMP3, TMP2, r0
+	st	r0,   TMP2, r0
+	st	TMP3, r31,  EF_DPFSR
+
+	ld	TMP2, TMP,  CI_PFSR_I0
+	ld	TMP3, TMP2, r0
+	extu	TMP3, TMP3, 3<16>
+	bcnd	ne0,  TMP3, 2f
+	st	r0,   TMP2, r0
+
+	addu	TMP2, TMP2, 0x1000	/* I1 */
+	ld	TMP3, TMP2, r0
+	extu	TMP3, TMP3, 3<16>
+	bcnd	ne0,  TMP3, 2f
+	st	r0,   TMP2, r0
+
+	addu	TMP2, TMP2, 0x1000	/* I2 */
+	ld	TMP3, TMP2, r0
+	extu	TMP3, TMP3, 3<16>
+	bcnd	ne0,  TMP3, 2f
+	st	r0,   TMP2, r0
+
+	addu	TMP2, TMP2, 0x1000	/* I3 */
+2:
+	ld	TMP3, TMP2, r0
+	st	r0,   TMP2, r0
+	br.n	_ASM_LABEL(pfsr_done)
+	 st	TMP3, r31,  EF_IPFSR
