@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.50 2010/03/28 16:38:57 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.51 2010/04/18 16:57:48 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -767,10 +767,10 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	sm->ssdi.ssd_opt_no = 1;
 	omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
-	omi->omi_om.somi.som_type = SR_OPT_CRYPTO;
+	omi->omi_om.somi.som_type = SR_OPT_KEYDISK;
 	bcopy(sd->mds.mdd_crypto.scr_maskkey,
-	    &omi->omi_om.somi.som_meta.smm_crypto,
-	    sizeof(sd->mds.mdd_crypto.scr_maskkey));
+	    omi->omi_om.somi.som_meta.smm_keydisk.skm_maskkey,
+	    sizeof(omi->omi_om.somi.som_meta.smm_keydisk.skm_maskkey));
 	SLIST_INSERT_HEAD(&fakesd->sd_meta_opt, omi, omi_link);
 
 	/* Save metadata. */
@@ -906,10 +906,16 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 	om = (struct sr_meta_opt *)((u_int8_t *)(sm + 1) +
 	    sizeof(struct sr_meta_chunk) * sm->ssdi.ssd_chunk_no);
 	for (c = 0; c < sm->ssdi.ssd_opt_no; c++) {
-		if (om->somi.som_type == SR_OPT_CRYPTO) {
+		if (om->somi.som_type == SR_OPT_KEYDISK) {
+			bcopy(&om->somi.som_meta.smm_keydisk.skm_maskkey,
+			    sd->mds.mdd_crypto.scr_maskkey,
+			    sizeof(sd->mds.mdd_crypto.scr_maskkey));
+			break;
+		} else if (om->somi.som_type == SR_OPT_CRYPTO) {
 			bcopy(&om->somi.som_meta.smm_crypto,
 			    sd->mds.mdd_crypto.scr_maskkey,
 			    sizeof(sd->mds.mdd_crypto.scr_maskkey));
+			break;
 		}
 		om++;
 	}

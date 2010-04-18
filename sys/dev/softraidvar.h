@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.91 2010/03/28 16:38:57 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.92 2010/04/18 16:57:48 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -152,16 +152,22 @@ struct sr_meta_boot {
 	u_int32_t		sbm_bootldr_size;
 } __packed;
 
+struct sr_meta_keydisk {
+	u_int8_t		skm_maskkey[SR_CRYPTO_MAXKEYBYTES];
+} __packed;
+
 struct sr_meta_opt {
 	struct sr_meta_opt_invariant {
 		u_int32_t	som_type;	/* optional type */
 #define SR_OPT_INVALID		0x00
 #define SR_OPT_CRYPTO		0x01
 #define SR_OPT_BOOT		0x02
+#define SR_OPT_KEYDISK		0x03
 		u_int32_t	som_pad;
 		union {
 			struct sr_meta_crypto smm_crypto;
 			struct sr_meta_boot smm_boot;
+			struct sr_meta_keydisk smm_keydisk;
 		}		som_meta;
 	} _som_invariant;
 #define somi			_som_invariant
