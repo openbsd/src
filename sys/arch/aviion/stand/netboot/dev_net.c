@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.1 2006/05/16 22:48:18 miod Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.2 2010/04/18 15:09:02 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -189,5 +189,8 @@ void
 machdep_common_ether(ether)
 	u_char *ether;
 {
-	scm_getenaddr(ether);
+	if (boothowto & BOOT_ETHERNET_ZERO)
+		bzero(ether, 6);
+	else
+		scm_getenaddr(ether);
 }

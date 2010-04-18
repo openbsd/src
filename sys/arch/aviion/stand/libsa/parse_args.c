@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.1 2006/05/16 22:48:18 miod Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.2 2010/04/18 15:09:00 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -36,14 +36,34 @@
 
 #define KERNEL_NAME "bsd"
 
-int
-parse_args(char *line, char **filep)
-{
-	char *name = NULL, *p;
+int	boothowto = 0;
 
-	/* recognize the special ``halt'' keyword */
-	if (strcmp(line, "halt") == 0)
-		return (1);
+/* skip end of token and whitespace */
+static char *stws(char *);
+static char *
+stws(char *p)
+{
+	while (*p != ' ' && *p != '\0')
+		p++;
+
+	while (*p == ' ')
+		p++;
+
+	return p;
+}
+
+int
+parse_args(char *line, char **filep, int first)
+{
+	char *s = NULL, *p;
+	char *name;
+	size_t namelen;
+
+	if (first == 0) {
+		/* recognize the special ``halt'' keyword */
+		if (strcmp(line, "halt") == 0)
+			return (1);
+	}
 
 	/*
 	 * The command line should be under the form
@@ -62,20 +82,46 @@ parse_args(char *line, char **filep)
 	if (*p != '\0') {
 		for (p = line; *p != '\0' && *p != ')'; p++) ;
 		if (*p != '\0')
-			name = ++p;
+			s = ++p;
 	}
 		
-	if (name == NULL)
-		name = line;
+	if (s == NULL)
+		s = line;
 
-	/* now insert a NUL before any option */
-	for (p = name; *p != '\0' && *p != ' '; p++) ;
-	*p = '\0';
+	/* figure out how long the kernel name is */
+	for (p = s; *p != '\0' && *p != ' '; p++) ;
+	namelen = p - s;
 
-	/* no name, use the default */
-	if (*name == '\0')
+	/* empty, use the default */
+	if (namelen == 0)
 		name = KERNEL_NAME;
-
+	else {
+		name = (char *)alloc(1 + namelen);
+		if (name == NULL)
+			panic("out of memory");
+		bcopy(s, name, namelen);
+		name[namelen] = '\0';
+	}
 	*filep = name;
-	return (0);
+
+	/*
+	 * If this commandline is the one passed by the PROM, then look
+	 * for options specific to the standalone code.
+	 */
+
+	if (first) {
+		p = stws(p);
+		while (*p != '\0') {
+			if (*p++ == '-')
+				while (*p != ' ' && *p != '\0')
+					switch (*p++) {
+					case 'z':
+						boothowto |= BOOT_ETHERNET_ZERO;
+						break;
+					}
+			p = stws(p);
+		}
+	}
+
+	return 0;
 }

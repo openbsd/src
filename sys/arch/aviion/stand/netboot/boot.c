@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 2006/05/16 22:48:18 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.2 2010/04/18 15:09:02 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -74,13 +74,13 @@ netboot(const char *args, int bootdev, int bootunit, int bootpart)
 
 	printf(">> OpenBSD/" MACHINE " netboot %s\n", version);
 
-	ret = parse_args((char *)args, &file);
+	ret = parse_args((char *)args, &file, 1);
 	for (;;) {
 		if (ask) {
 			printf("boot: ");
 			gets(line);
 			if (line[0])
-				ret = parse_args(line, &file);
+				ret = parse_args(line, &file, 0);
 		}
 		if (ret != 0)
 			return;
