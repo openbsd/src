@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.52 2010/04/19 10:12:48 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.53 2010/04/19 14:37:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -273,6 +273,9 @@ tag		: TAG STRING			{
 
 main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
+		}
+	       	| SIZE size {
+       			conf->sc_maxsize = $2;
 		}
 		| LISTEN ON STRING port ssl certname auth tag {
 			char		*cert;
