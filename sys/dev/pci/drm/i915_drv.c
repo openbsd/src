@@ -4301,7 +4301,7 @@ i915_gem_bit_17_swizzle(struct drm_obj *obj)
 	struct vm_page		*pg;
 	bus_dma_segment_t	*segp;
 	int			 page_count = obj->size >> PAGE_SHIFT;
-	int			 i, n, ret;
+	int			 i = 0, n = 0, ret;
 
 	if (dev_priv->mm.bit_6_swizzle_x != I915_BIT_6_SWIZZLE_9_10_17 ||
 	    obj_priv->bit_17 == NULL)
