@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.128 2009/12/31 15:37:55 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.129 2010/04/19 10:12:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -365,6 +365,10 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	session_respond(s, "250-%s Hello %s [%s], pleased to meet you",
 	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
 	session_respond(s, "250-8BITMIME");
+
+	/* XXX - we also want to support reading SIZE from MAIL parameters */
+	if (s->s_env->sc_maxsize < SIZE_MAX)
+		session_respond(s, "250-SIZE %lu", s->s_env->sc_maxsize);
 
 	if (ADVERTISE_TLS(s))
 		session_respond(s, "250-STARTTLS");
@@ -816,6 +820,7 @@ tempfail:
 void
 session_read_data(struct session *s, char *line)
 {
+	size_t datalen;
 	size_t len;
 	size_t i;
 
@@ -852,6 +857,16 @@ session_read_data(struct session *s, char *line)
 		line++;
 
 	len = strlen(line);
+
+	/* If size of data overflows a size_t or exceeds max size allowed
+	 * for a message, set permanent failure.
+	 */
+	datalen = ftell(s->datafp);
+	if (SIZE_MAX - datalen < len + 1 ||
+	    datalen + len + 1 > s->s_env->sc_maxsize) {
+		s->s_msg.status |= S_MESSAGE_PERMFAILURE;
+		return;
+	}
 
 	if (fprintf(s->datafp, "%s\n", line) != (int)len + 1) {
 		s->s_msg.status |= S_MESSAGE_TEMPFAILURE;

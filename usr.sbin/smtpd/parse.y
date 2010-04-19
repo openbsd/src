@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2010/02/26 15:06:39 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.52 2010/04/19 10:12:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -114,7 +114,7 @@ typedef struct {
 
 %}
 
-%token	QUEUE INTERVAL LISTEN ON ALL PORT
+%token	QUEUE INTERVAL SIZE LISTEN ON ALL PORT
 %token	MAP TYPE HASH LIST SINGLE SSL SMTPS CERTIFICATE
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
@@ -123,7 +123,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port from auth ssl
+%type	<v.number>	quantifier decision port from auth ssl size
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
@@ -190,6 +190,33 @@ interval	: NUMBER quantifier		{
 			$$.tv_usec = 0;
 			$$.tv_sec = $1 * $2;
 		}
+
+size		: NUMBER			{
+			if ($1 < 0) {
+				yyerror("invalid size: %lld", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
+		| NUMBER STRING         {
+			if ($1 < 0) {
+				yyerror("invalid size: %lld", $1);
+				YYERROR;
+			}
+
+			if (strcmp("KB", $2) == 0)
+				$$ = 1024;
+			else if (strcmp("MB", $2) == 0)
+				$$ = 1048576;
+			else if (strcmp("GB", $2) == 0)
+				$$ = 1073741824;
+			else {
+				yyerror("invalid quantifier: %s", $2);
+				YYERROR;
+			}
+			$$ *= $1;
+		}
+		;
 
 port		: PORT STRING			{
 			struct servent	*servent;
@@ -1016,6 +1043,7 @@ lookup(char *s)
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
 		{ "single",		SINGLE },
+		{ "size",		SIZE },
 		{ "smtps",		SMTPS },
 		{ "source",		SOURCE },
 		{ "ssl",		SSL },
@@ -1357,6 +1385,9 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 
 	conf = x_conf;
 	bzero(conf, sizeof(*conf));
+
+	conf->sc_maxsize = SIZE_MAX;
+
 	if ((conf->sc_maps = calloc(1, sizeof(*conf->sc_maps))) == NULL) {
 		log_warn("cannot allocate memory");
 		return (-1);

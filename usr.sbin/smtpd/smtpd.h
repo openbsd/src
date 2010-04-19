@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.172 2010/04/19 08:14:07 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.173 2010/04/19 10:12:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -587,6 +587,7 @@ struct session {
 
 struct smtpd {
 	char					 sc_conffile[MAXPATHLEN];
+	size_t					 sc_maxsize;
 
 #define SMTPD_OPT_VERBOSE			 0x00000001
 #define SMTPD_OPT_NOACTION			 0x00000002
