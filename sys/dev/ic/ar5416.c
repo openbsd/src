@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.5 2010/03/28 13:02:57 krw Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.6 2010/04/19 16:41:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -516,7 +516,7 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	uint8_t ht40inc;
 #endif
 	int16_t pwr = 0, pwroff, max_ant_gain, power[ATHN_POWER_COUNT];
-	uint8_t cckinc;
+	int8_t cckinc;
 	int i;
 
 	ar5416_set_power_calib(sc, c);
