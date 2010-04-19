@@ -708,7 +708,7 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
 #define   I830_FENCE_SIZE_BITS(size)	((ffs((size) >> 19) - 1) << 8)
 #define   I830_FENCE_PITCH_SHIFT	4
 #define   I830_FENCE_REG_VALID		(1<<0)
-#define   I915_FENCE_MAX_PITCH_VAL	0x10
+#define   I915_FENCE_MAX_PITCH_VAL	4
 #define   I830_FENCE_MAX_PITCH_VAL	6
 #define   I830_FENCE_MAX_SIZE_VAL	(1<<8)
 
@@ -2323,6 +2323,13 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
 #define I915_NEED_GFX_HWS(dev_priv) (dev_priv->flags & CHIP_HWS)
 
 #define HAS_RESET(dev_priv)	IS_I965G(dev_priv)
+
+#define IS_GEN2(dev_priv)	\
+	(dev_priv->flags & (CHIP_I830 | CHIP_I845G | CHIP_I85X | CHIP_I865G))
+#define IS_GEN3(dev_priv)	\
+	(dev_priv->flags & (CHIP_I915G|CHIP_I915GM|CHIP_I945G|CHIP_I945GM|CHIP_G33))
+#define IS_GEN4(dev_priv)	\
+	(dev_priv->flags & (CHIP_I965G)) /* XXX sandybridge */
 
 /*
  * Interrupts that are always left unmasked.

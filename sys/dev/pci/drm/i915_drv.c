@@ -1914,6 +1914,12 @@ i915_write_fence_reg(struct inteldrm_fence *reg)
 	pitch_val = obj_priv->stride / tile_width;
 	pitch_val = ffs(pitch_val) - 1;
 
+	if ((obj_priv->tiling_mode == I915_TILING_Y &&
+	    HAS_128_BYTE_Y_TILING(dev_priv) &&
+	    pitch_val > I830_FENCE_MAX_PITCH_VAL) ||
+	    pitch_val > I915_FENCE_MAX_PITCH_VAL)
+		printf("%s: invalid pitch provided"); /* XXX print more */
+
 	val = obj_priv->gtt_offset;
 	if (obj_priv->tiling_mode == I915_TILING_Y)
 		val |= 1 << I830_FENCE_TILING_Y_SHIFT;
@@ -4410,20 +4416,13 @@ i915_tiling_ok(struct drm_device *dev, int stride, int size, int tiling_mode)
 		/* fence reg has end address, so size is ok */
 		if (stride / 128 > I965_FENCE_MAX_PITCH_VAL)
 			return (0);
-	} else if (IS_I9XX(dev_priv)) {
-		u_int32_t pitch_val = ffs(stride / tile_width) - 1;
-		/*
-		 * XXX: for Y tiling, max pitch is actually 6 (8k) instead of 4
-		 * (2k) on the 945.
-		 */
-		if (pitch_val > I915_FENCE_MAX_PITCH_VAL ||
-		    size > (I830_FENCE_MAX_SIZE_VAL << 20))
+	} else if (IS_GEN3(dev_priv) || IS_GEN2(dev_priv)) {
+		if (stride > 8192)
 			return (0);
-	} else {
-		u_int32_t pitch_val = ffs(stride / tile_width) - 1;
-
-		if (pitch_val > I830_FENCE_MAX_PITCH_VAL ||
-		    size > (I830_FENCE_MAX_SIZE_VAL << 19))
+		if (IS_GEN3(dev_priv)) {
+			if (size > I830_FENCE_MAX_SIZE_VAL << 20)
+				return (0);
+		} else if (size > I830_FENCE_MAX_SIZE_VAL << 19)
 			return (0);
 	}
 
