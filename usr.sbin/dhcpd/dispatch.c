@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.25 2010/01/02 04:21:16 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.26 2010/04/19 12:22:09 claudio Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -56,6 +56,7 @@ void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 
 static int interface_status(struct interface_info *ifinfo);
+int get_rdomain(char *);
 
 /* Use getifaddrs() to get a list of all the attached interfaces.
    For each interface that's of type INET and not the loopback interface,
@@ -63,14 +64,14 @@ static int interface_status(struct interface_info *ifinfo);
    subnet it's on, and add it to the list of interfaces. */
 
 void
-discover_interfaces(void)
+discover_interfaces(int *rdomain)
 {
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
 	struct subnet *subnet;
 	struct shared_network *share;
 	struct sockaddr_in foo;
-	int ir = 0;
+	int ir = 0, ird;
 	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
 
@@ -83,6 +84,9 @@ discover_interfaces(void)
 	 */
 	if (interfaces != NULL)
 		ir = 1;
+	else
+		/* must specify an interface when rdomains are used */
+		*rdomain = 0;
 
 	/* Cycle through the list of interfaces looking for IP addresses. */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
@@ -104,6 +108,15 @@ discover_interfaces(void)
 
 		/* If we are looking for specific interfaces, ignore others. */
 		if (tmp == NULL && ir)
+			continue;
+
+		ird = get_rdomain(ifa->ifa_name);
+		if (*rdomain == -1)
+			*rdomain = ird;
+		else if (*rdomain != ird && ir)
+			error("Interface %s is not in rdomain %d",
+			    tmp->name, *rdomain);
+		else if (*rdomain != ird && !ir)
 			continue;
 
 		/* If there isn't already an interface by this name,
@@ -607,4 +620,22 @@ remove_protocol(struct protocol *proto)
 			free(p);
 		}
 	}
+}
+
+int
+get_rdomain(char *name)
+{
+	int rv = 0, s;
+	struct  ifreq ifr;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		error("get_rdomain socket: %m");
+
+	bzero(&ifr, sizeof(ifr));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFRTABLEID, (caddr_t)&ifr) != -1)
+		rv = ifr.ifr_rdomainid;
+
+	close(s);
+	return rv;
 }
