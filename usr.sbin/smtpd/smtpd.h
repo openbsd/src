@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.171 2010/04/11 22:46:28 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.172 2010/04/19 08:14:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -137,7 +137,8 @@ enum imsg_type {
 	IMSG_LKA_RCPT,
 	IMSG_LKA_SECRET,
 	IMSG_LKA_RULEMATCH,
-	IMSG_MDA_FINALIZE,
+	IMSG_MDA_SESS_NEW,
+	IMSG_MDA_DONE,
 	IMSG_MFA_RCPT,
 	IMSG_MFA_MAIL,
 
@@ -166,10 +167,7 @@ enum imsg_type {
 
 	IMSG_PARENT_ENQUEUE_OFFLINE,
 	IMSG_PARENT_FORWARD_OPEN,
-	IMSG_PARENT_MAILBOX_OPEN,
-	IMSG_PARENT_MESSAGE_OPEN,
-	IMSG_PARENT_MAILDIR_RENAME,
-	IMSG_PARENT_MAILDIR_FAIL,
+	IMSG_PARENT_FORK_MDA,
 	IMSG_PARENT_STATS,
 
 	IMSG_PARENT_AUTHENTICATE,
@@ -409,7 +407,6 @@ enum message_type {
 };
 
 enum message_status {
-	S_MESSAGE_LOCKFAILURE	= 0x1,
 	S_MESSAGE_PERMFAILURE	= 0x2,
 	S_MESSAGE_TEMPFAILURE	= 0x4,
 	S_MESSAGE_REJECTED	= 0x8,
@@ -467,24 +464,13 @@ enum batch_type {
 
 struct batch {
 	SPLAY_ENTRY(batch)	 b_nodes;
-
 	u_int64_t		 id;
 	enum batch_type		 type;
 	struct rule		 rule;
-
 	struct smtpd		*env;
-
 	char			 message_id[MAX_ID_SIZE];
 	char			 hostname[MAXHOSTNAMELEN];
-
-	struct message		 message;
 	TAILQ_HEAD(, message)	 messages;
-
-	FILE			*mboxfp;
-	FILE			*datafp;
-	struct msgbuf		 w;
-	int			 cleanup_parent;
-	struct event		 ev;
 };
 
 enum child_type {
@@ -496,11 +482,11 @@ enum child_type {
 
 struct child {
 	SPLAY_ENTRY(child)	 entry;
-
 	pid_t			 pid;
 	enum child_type		 type;
 	enum smtp_proc_type	 title;
-	struct batch		 mda_batch;
+	int			 mda_out;
+	u_int32_t		 mda_id;
 };
 
 enum session_state {
@@ -633,6 +619,7 @@ struct smtpd {
 	SPLAY_HEAD(childtree, child)		 children;
 	SPLAY_HEAD(lkatree, lkasession)		 lka_sessions;
 	SPLAY_HEAD(mtatree, mta_session)	 mta_sessions;
+	LIST_HEAD(mdalist, mda_session)		 mda_sessions;
 
 	struct stats				*stats;
 };
@@ -744,6 +731,21 @@ struct secret {
 	u_int64_t		 id;
 	char			 host[MAXHOSTNAMELEN];
 	char			 secret[MAX_LINE_SIZE];
+};
+
+struct mda_session {
+	LIST_ENTRY(mda_session)	 entry;
+	struct message		 msg;
+	struct msgbuf		 w;
+	struct event		 ev;
+	u_int32_t		 id;
+	FILE			*datafp;
+};
+
+struct deliver {
+	char			to[PATH_MAX];
+	char			user[MAXLOGNAME];
+	short			mode;
 };
 
 struct rulematch {

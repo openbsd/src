@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.78 2010/01/10 16:42:35 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.79 2010/04/19 08:14:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,8 +67,6 @@ void		runner_timeout(int, short, void *);
 void		runner_process_queue(struct smtpd *);
 void		runner_process_runqueue(struct smtpd *);
 void		runner_process_batchqueue(struct smtpd *);
-
-void		runner_batch_dispatch(struct smtpd *, struct batch *, time_t);
 
 int		runner_message_schedule(struct message *, time_t);
 
@@ -330,7 +328,7 @@ runner_dispatch_mda(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_BATCH_DONE:
+		case IMSG_MDA_SESS_NEW:
 			env->stats->mda.sessions_active--;
 			break;
 
@@ -781,68 +779,56 @@ runner_process_runqueue(struct smtpd *env)
 void
 runner_process_batchqueue(struct smtpd *env)
 {
-	time_t curtime;
-	struct batch *batchp, *nxt;
+	struct batch	*batchp;
+	struct message	*m;
+	int		 fd;
 
-	curtime = time(NULL);
-	for (batchp = SPLAY_MIN(batchtree, &env->batch_queue);
-	     batchp != NULL;
-	     batchp = nxt) {
-		nxt = SPLAY_NEXT(batchtree, &env->batch_queue, batchp);
+	while ((batchp = SPLAY_MIN(batchtree, &env->batch_queue)) != NULL) {
+		switch (batchp->type) {
+		case T_BOUNCE_BATCH:
+			while ((m = TAILQ_FIRST(&batchp->messages))) {
+				bounce_process(env, m);
+				TAILQ_REMOVE(&batchp->messages, m, entry);
+				free(m);
+			}
+			env->stats->runner.bounces_active++;
+			env->stats->runner.bounces++;
+			break;
 
-		runner_batch_dispatch(env, batchp, curtime);
+		case T_MDA_BATCH:
+			m = TAILQ_FIRST(&batchp->messages);
+			fd = queue_open_message_file(m->message_id);
+			imsg_compose_event(env->sc_ievs[PROC_MDA],
+			    IMSG_MDA_SESS_NEW, 0, 0, fd, m, sizeof *m);
+			TAILQ_REMOVE(&batchp->messages, m, entry);
+			free(m);
+			env->stats->mda.sessions_active++;
+			env->stats->mda.sessions++;
+			break;
+
+		case T_MTA_BATCH:
+			imsg_compose_event(env->sc_ievs[PROC_MTA],
+			    IMSG_BATCH_CREATE, 0, 0, -1, batchp,
+			    sizeof *batchp);
+			while ((m = TAILQ_FIRST(&batchp->messages))) {
+				imsg_compose_event(env->sc_ievs[PROC_MTA],
+				    IMSG_BATCH_APPEND, 0, 0, -1, m, sizeof *m);
+				TAILQ_REMOVE(&batchp->messages, m, entry);
+				free(m);
+			}
+			imsg_compose_event(env->sc_ievs[PROC_MTA],
+			    IMSG_BATCH_CLOSE, 0, 0, -1, batchp, sizeof *batchp);
+			env->stats->mta.sessions_active++;
+			env->stats->mta.sessions++;
+			break;
+
+		default:
+			fatalx("runner_process_batchqueue: unknown type");
+		}
 
 		SPLAY_REMOVE(batchtree, &env->batch_queue, batchp);
-		bzero(batchp, sizeof(struct batch));
 		free(batchp);
 	}
-}
-
-void
-runner_batch_dispatch(struct smtpd *env, struct batch *batchp, time_t curtime)
-{
-	u_int8_t proctype;
-	struct message *messagep;
-
-	if ((batchp->type & (T_BOUNCE_BATCH|T_MDA_BATCH|T_MTA_BATCH)) == 0)
-		fatal("runner_batch_dispatch: unknown batch type");
-
-	log_debug("in batch dispatch");
-	if (batchp->type == T_BOUNCE_BATCH) {
-		while ((messagep = TAILQ_FIRST(&batchp->messages))) {
-			bounce_process(env, messagep);
-			TAILQ_REMOVE(&batchp->messages, messagep, entry);
-			bzero(messagep, sizeof(*messagep));
-			free(messagep);
-		}
-		env->stats->runner.bounces_active++;
-		env->stats->runner.bounces++;
-		return;
-	}
-
-	if (batchp->type & T_MDA_BATCH) {
-		proctype = PROC_MDA;
-		env->stats->mda.sessions_active++;
-		env->stats->mda.sessions++;
-	} else if (batchp->type & T_MTA_BATCH) {
-		proctype = PROC_MTA;
-		env->stats->mta.sessions_active++;
-		env->stats->mta.sessions++;
-	}
-
-	imsg_compose_event(env->sc_ievs[proctype], IMSG_BATCH_CREATE, 0, 0, -1,
-	    batchp, sizeof (struct batch));
-
-	while ((messagep = TAILQ_FIRST(&batchp->messages))) {
-		imsg_compose_event(env->sc_ievs[proctype], IMSG_BATCH_APPEND, 0, 0,
-		    -1, messagep, sizeof (struct message));
-		TAILQ_REMOVE(&batchp->messages, messagep, entry);
-		bzero(messagep, sizeof(struct message));
-		free(messagep);
-	}
-
-	imsg_compose_event(env->sc_ievs[proctype], IMSG_BATCH_CLOSE, 0, 0, -1,
-	    batchp, sizeof(struct batch));
 }
 
 int
@@ -873,19 +859,12 @@ runner_message_schedule(struct message *messagep, time_t tm)
 	// recompute path
 
 	if (messagep->type == T_MDA_MESSAGE ||
-		messagep->type == T_BOUNCE_MESSAGE) {
-		if (messagep->status & S_MESSAGE_LOCKFAILURE) {
-			if (messagep->retry < 128)
-				return 1;
-			delay = (messagep->retry * 60) + arc4random_uniform(60);
-		}
-		else {
-			if (messagep->retry < 5)
-				return 1;
+	    messagep->type == T_BOUNCE_MESSAGE) {
+		if (messagep->retry < 5)
+			return 1;
 			
-			if (messagep->retry < 15)
-				delay = (messagep->retry * 60) + arc4random_uniform(60);
-		}
+		if (messagep->retry < 15)
+			delay = (messagep->retry * 60) + arc4random_uniform(60);
 	}
 
 	if (messagep->type == T_MTA_MESSAGE) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.37 2010/03/03 10:52:31 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.38 2010/04/19 08:14:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -33,20 +33,22 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "smtpd.h"
 
-__dead void	mda_shutdown(void);
-void		mda_sig_handler(int, short, void *);
-void		mda_dispatch_parent(int, short, void *);
-void		mda_dispatch_queue(int, short, void *);
-void		mda_dispatch_runner(int, short, void *);
-void		mda_setup_events(struct smtpd *);
-void		mda_disable_events(struct smtpd *);
-void		mda_store(struct batch *);
-void		mda_event(int, short, void *);
-void		mda_store_done(struct batch *);
-void		mda_done(struct smtpd *, struct batch *);
+__dead void		 mda_shutdown(void);
+void			 mda_sig_handler(int, short, void *);
+void			 mda_dispatch_parent(int, short, void *);
+void			 mda_dispatch_queue(int, short, void *);
+void			 mda_dispatch_runner(int, short, void *);
+void			 mda_setup_events(struct smtpd *);
+void			 mda_disable_events(struct smtpd *);
+void			 mda_store(struct mda_session *);
+void			 mda_store_event(int, short, void *);
+struct mda_session	*mda_lookup(struct smtpd *, u_int32_t);
+
+int mda_id;
 
 void
 mda_sig_handler(int sig, short event, void *p)
@@ -96,74 +98,126 @@ mda_dispatch_parent(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_PARENT_MAILBOX_OPEN: {
-			struct batch		*b = imsg.data;
+		case IMSG_PARENT_FORK_MDA: {
+			struct mda_session	*s;
 
-			IMSG_SIZE_CHECK(b);
+			s = mda_lookup(env, imsg.hdr.peerid);
 
-			if ((b = batch_by_id(env, b->id)) == NULL)
-				fatalx("mda: internal inconsistency");
+			if (imsg.fd < 0)
+				fatalx("mda: fd pass fail");
+			s->w.fd = imsg.fd;
 
-			/* parent ensures mboxfd is valid */
-			if (imsg.fd == -1)
-				fatalx("mda: mboxfd pass failure");
+			/* send message content to the helper process */
+			mda_store(s);
+			break;
+		}
 
-			/* got user's mbox fd */
-			if ((b->mboxfp = fdopen(imsg.fd, "w")) == NULL) {
-				log_warn("mda: fdopen");
-				mda_done(env, b);
-				break;
-			}
+		case IMSG_MDA_DONE: {
+			char			 output[64];
+			struct mda_session	*s;
+			struct path		*path;
+			char			*error, *parent_error;
 
-			/* 
-			 * From now on, delivery session must be deinited in
-			 * the parent process as well as in mda.
+			s = mda_lookup(env, imsg.hdr.peerid);
+
+			/*
+			 * Grab last line of mda stdout/stderr if available.
 			 */
-			b->cleanup_parent = 1;
+			output[0] = '\0';
+			if (imsg.fd != -1) {
+				char *ln, *buf;
+				FILE *fp;
+				size_t len;
 
-			/* get message content fd */
-			imsg_compose_event(env->sc_ievs[PROC_PARENT],
-			    IMSG_PARENT_MESSAGE_OPEN, 0, 0, -1, b,
-			    sizeof(*b));
-			break;
-		}
-
-		case IMSG_PARENT_MESSAGE_OPEN: {
-			struct batch	*b = imsg.data;
-
-			IMSG_SIZE_CHECK(b);
-
-			if ((b = batch_by_id(env, b->id)) == NULL)
-				fatalx("mda: internal inconsistency");
-
-			if (imsg.fd == -1) {
-				mda_done(env, b);
-				break;
+				buf = NULL;
+				if (lseek(imsg.fd, 0, SEEK_SET) < 0)
+					fatalx("lseek");
+				fp = fdopen(imsg.fd, "r");
+				if (fp == NULL)
+					fatal("mda: fdopen");
+				while ((ln = fgetln(fp, &len))) {
+					if (ln[len - 1] == '\n')
+						ln[len - 1] = '\0';
+					else {
+						buf = malloc(len + 1);
+						if (buf == NULL)
+							fatal(NULL);
+						memcpy(buf, ln, len);
+						buf[len] = '\0';
+						ln = buf;
+					}
+					strlcpy(output, "\"", sizeof output);
+					strnvis(output + 1, ln,
+					    sizeof(output) - 2,
+					    VIS_SAFE | VIS_CSTYLE);
+					strlcat(output, "\"", sizeof output);
+					log_debug("mda_out: %s", output);
+				}
+				free(buf);
+				fclose(fp);
 			}
 
-			if ((b->datafp = fdopen(imsg.fd, "r")) == NULL) {
-				log_warn("mda: fdopen");
-				mda_done(env, b);
-				break;
+			/*
+			 * Choose between parent's description of error and
+			 * child's output, the latter having preference over
+			 * the former.
+			 */
+			error = NULL;
+			parent_error = imsg.data;
+			if (strcmp(parent_error, "exited okay") == 0) {
+				if (!feof(s->datafp) || s->w.queued)
+					error = "mda exited prematurely";
+			} else {
+				if (output[0])
+					error = output;
+				else
+					error = parent_error;
 			}
 
-			/* got message content, copy it to mbox */
-			mda_store(b);
-			break;
-		}
+			/* update queue entry */
+			if (error == NULL)
+				s->msg.status = S_MESSAGE_ACCEPTED;
+			else
+				strlcpy(s->msg.session_errorline, error,
+				    sizeof s->msg.session_errorline);
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+			    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, &s->msg,
+			    sizeof s->msg);
 
-		case IMSG_MDA_FINALIZE: {
-			struct batch		*b = imsg.data;
-			enum message_status	 status;
+			/*
+			 * XXX: which struct path gets used for logging depends
+			 * on whether lka did aliases or .forward processing;
+			 * lka may need to be changed to present data in more
+			 * unified way.
+			 */
+			if (s->msg.recipient.rule.r_action == A_MAILDIR ||
+			    s->msg.recipient.rule.r_action == A_MBOX)
+				path = &s->msg.recipient;
+			else
+				path = &s->msg.session_rcpt;
 
-			IMSG_SIZE_CHECK(b);
+			/* log status */
+			if (error && asprintf(&error, "Error (%s)", error) < 0)
+				fatal("mda: asprintf");
+			log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
+			    s->msg.message_id, path->user, path->domain,
+			    time(NULL) - s->msg.creation,
+			    error ? error : "Sent");
+			free(error);
 
-			status = b->message.status;
-			if ((b = batch_by_id(env, b->id)) == NULL)
-				fatalx("mda: internal inconsistency");
-			b->message.status = status;
+			/* destroy session */
+			LIST_REMOVE(s, entry);
+			if (s->w.fd != -1)
+				close(s->w.fd);
+			if (s->datafp)
+				fclose(s->datafp);
+			msgbuf_clear(&s->w);
+			event_del(&s->ev);
+			free(s);
 
-			mda_done(env, b);
+			/* update runner's session count */
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER],
+			    IMSG_MDA_SESS_NEW, 0, 0, -1, NULL, 0);
 			break;
 		}
 
@@ -176,6 +230,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 			log_verbose(verbose);
 			break;
 		}
+
 		default:
 			log_warnx("mda_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
@@ -266,54 +321,69 @@ mda_dispatch_runner(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_BATCH_CREATE: {
-			struct batch	*req = imsg.data;
-			struct batch	*b;
+		case IMSG_MDA_SESS_NEW: {
+			struct deliver		 deliver;
+			struct mda_session	*s;
+			struct path		*path;
 
-			IMSG_SIZE_CHECK(req);
-
-			/* runner opens delivery session */
-			if ((b = malloc(sizeof(*b))) == NULL)
+			/* make new session based on provided args */
+			s = calloc(1, sizeof *s);
+			if (s == NULL)
 				fatal(NULL);
-			*b = *req;
-			msgbuf_init(&b->w);
-			b->env = env;
-			b->mboxfp = NULL;
-			b->datafp = NULL;
-			SPLAY_INSERT(batchtree, &env->batch_queue, b);
-			break;
-		}
+			msgbuf_init(&s->w);
+			s->msg = *(struct message *)imsg.data;
+			s->msg.status = S_MESSAGE_TEMPFAILURE;
+			s->id = mda_id++;
+			s->datafp = fdopen(imsg.fd, "r");
+			if (s->datafp == NULL)
+				fatalx("mda: fdopen");
+			LIST_INSERT_HEAD(&env->mda_sessions, s, entry);
 
-		case IMSG_BATCH_APPEND: {
-			struct message	*append = imsg.data;
-			struct batch	*b;
+			/* request parent to fork a helper process */
+			path = &s->msg.recipient;
+			switch (path->rule.r_action) {
+			case A_EXT:
+				deliver.mode = A_EXT;
+				strlcpy(deliver.user, path->pw_name,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->rule.r_value.path,
+				    sizeof deliver.to);
+				break;
 
-			IMSG_SIZE_CHECK(append);
+			case A_MBOX:
+				deliver.mode = A_EXT;
+				strlcpy(deliver.user, "root",
+				    sizeof deliver.user);
+				snprintf(deliver.to, sizeof deliver.to,
+				    "%s -f %s@%s %s", PATH_MAILLOCAL,
+				    s->msg.sender.user, s->msg.sender.domain,
+				    path->pw_name);
+				break;
 
-			/* runner submits the message to deliver */
-			if ((b = batch_by_id(env, append->batch_id)) == NULL)
-				fatalx("mda: internal inconsistency");
-			if (b->message.message_id[0])
-				fatal("mda: runner submitted extra msg");
-			b->message = *append;
+			case A_MAILDIR:
+				deliver.mode = A_MAILDIR;
+				strlcpy(deliver.user, path->pw_name,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->rule.r_value.path,
+				    sizeof deliver.to);
+				break;
 
-			/* safe default */
-			b->message.status = S_MESSAGE_TEMPFAILURE;
-			break;
-		}
+			case A_FILENAME:
+				deliver.mode = A_FILENAME;
+				/* XXX: unconditional SMTPD_USER is wrong. */
+				strlcpy(deliver.user, SMTPD_USER,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->u.filename,
+				    sizeof deliver.to);
+				break;
 
-		case IMSG_BATCH_CLOSE: {
-			struct batch	*b = imsg.data;
+			default:
+				fatalx("unknown rule action");
+			}
 
-			IMSG_SIZE_CHECK(b);
-
-			/* runner finished opening delivery session;
-			 * request user's mbox fd */
-			if ((b = batch_by_id(env, b->id)) == NULL)
-				fatalx("mda: internal inconsistency");
 			imsg_compose_event(env->sc_ievs[PROC_PARENT],
-			    IMSG_PARENT_MAILBOX_OPEN, 0, 0, -1, b,
-			    sizeof(*b));
+			    IMSG_PARENT_FORK_MDA, s->id, 0, -1, &deliver,
+			    sizeof deliver);
 			break;
 		}
 		default:
@@ -391,7 +461,7 @@ mda(struct smtpd *env)
 		fatal("mda: cannot drop privileges");
 #endif
 
-	SPLAY_INIT(&env->batch_queue);
+	LIST_INIT(&env->mda_sessions);
 
 	event_init();
 
@@ -413,187 +483,80 @@ mda(struct smtpd *env)
 }
 
 void
-mda_store(struct batch *b)
+mda_store(struct mda_session *s)
 {
 	char		*p;
 	struct buf	*buf;
-	int		 ch, len;
+	int		 len;
 
-	if (b->message.sender.user[0] && b->message.sender.domain[0])
+	if (s->msg.sender.user[0] && s->msg.sender.domain[0])
 		/* XXX: remove user provided Return-Path, if any */
 		len = asprintf(&p, "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
-		    b->message.sender.user,
-		    b->message.sender.domain,
-		    b->message.session_rcpt.user,
-		    b->message.session_rcpt.domain);
+		    s->msg.sender.user, s->msg.sender.domain,
+		    s->msg.session_rcpt.user, s->msg.session_rcpt.domain);
 	else
 		len = asprintf(&p, "Delivered-To: %s@%s\n",
-		    b->message.session_rcpt.user,
-		    b->message.session_rcpt.domain);
+		    s->msg.session_rcpt.user, s->msg.session_rcpt.domain);
 
 	if (len == -1)
 		fatal("mda_store: asprintf");
 
-	if (b->message.recipient.rule.r_action == A_MAILDIR) {
-		fprintf(b->mboxfp, "%s", p);
-		while ((ch = fgetc(b->datafp)) != EOF)
-			if (fputc(ch, b->mboxfp) == EOF)
-				break;
-		if (ferror(b->datafp))
-			fatal("mda_store: cannot read message in queue");
-		if (fflush(b->mboxfp) || ferror(b->mboxfp))
-			fatal("mda_store: cannot write to file");
-		mda_store_done(b);
-	} else {
-		b->w.fd = fileno(b->mboxfp);
-		session_socket_blockmode(b->w.fd, BM_NONBLOCK);
-		if ((buf = buf_open(len)) == NULL)
-			fatal(NULL);
-		if (buf_add(buf, p, len) < 0)
-			fatal(NULL);
-		buf_close(&b->w, buf);
-		event_set(&b->ev, b->w.fd, EV_WRITE, mda_event, b);
-		event_add(&b->ev, NULL);
-	}
-
+	session_socket_blockmode(s->w.fd, BM_NONBLOCK);
+	if ((buf = buf_open(len)) == NULL)
+		fatal(NULL);
+	if (buf_add(buf, p, len) < 0)
+		fatal(NULL);
+	buf_close(&s->w, buf);
+	event_set(&s->ev, s->w.fd, EV_WRITE, mda_store_event, s);
+	event_add(&s->ev, NULL);
 	free(p);
 }
 
 void
-mda_event(int fd, short event, void *p)
+mda_store_event(int fd, short event, void *p)
 {
-	char		 tmp[16384];
-	struct batch	*b = p;
-	struct buf	*buf;
-	size_t		 len;
+	char			 tmp[16384];
+	struct mda_session	*s = p;
+	struct buf		*buf;
+	size_t			 len;
 
-	if (b->w.queued == 0) {
-		if ((buf = buf_dynamic(0, sizeof(tmp))) == NULL)
+	if (s->w.queued == 0) {
+		if ((buf = buf_dynamic(0, sizeof tmp)) == NULL)
 			fatal(NULL);
-		len = fread(tmp, 1, sizeof(tmp), b->datafp);
-		if (ferror(b->datafp))
-			fatal("mda_event: fread failed");
-		if (feof(b->datafp) && len == 0) {
-			mda_store_done(b);
+		len = fread(tmp, 1, sizeof tmp, s->datafp);
+		if (ferror(s->datafp))
+			fatal("mda_store_event: fread failed");
+		if (feof(s->datafp) && len == 0) {
+			close(s->w.fd);
+			s->w.fd = -1;
 			return;
 		}
 		if (buf_add(buf, tmp, len) < 0)
 			fatal(NULL);
-		buf_close(&b->w, buf);
+		buf_close(&s->w, buf);
 	}
 
-	if (buf_write(&b->w) < 0) {
-		/* XXX: if $? is zero, message is considered delivered despite
-		 * write error. */
-		log_warn("mda_event: write failed");
-		mda_store_done(b);
+	if (buf_write(&s->w) < 0) {
+		close(s->w.fd);
+		s->w.fd = -1;
 		return;
 	}
 
-	event_set(&b->ev, fd, EV_WRITE, mda_event, b);
-	event_add(&b->ev, NULL);
+	event_set(&s->ev, fd, EV_WRITE, mda_store_event, s);
+	event_add(&s->ev, NULL);
 }
 
-void
-mda_store_done(struct batch *b)
+struct mda_session *
+mda_lookup(struct smtpd *env, u_int32_t id)
 {
-	fclose(b->datafp);
-	b->datafp = NULL;
+	struct mda_session *s;
 
-	/* closing mboxfd will trigger EOF in forked mda */
-	fsync(fileno(b->mboxfp));
-	fclose(b->mboxfp);
-	b->mboxfp = NULL;
+	LIST_FOREACH(s, &env->mda_sessions, entry)
+		if (s->id == id)
+			break;
 
-	/* ... unless it is maildir, in which case we need to
-	 * "trigger EOF" differently */
-	if (b->message.recipient.rule.r_action == A_MAILDIR)
-		imsg_compose_event(b->env->sc_ievs[PROC_PARENT],
-		    IMSG_PARENT_MAILDIR_RENAME, 0, 0, -1, b,
-		    sizeof(*b));
+	if (s == NULL)
+		fatalx("mda: bogus session id");
 
-	/* Waiting for IMSG_MDA_FINALIZE... */
-	b->cleanup_parent = 0;
-}
-
-void
-mda_done(struct smtpd *env, struct batch *b)
-{
-	if (b->cleanup_parent) {
-		/*
-		 * Error has occured while both parent and mda maintain some
-		 * state for this delivery session.  Need to deinit both.
-		 * Deinit parent first.
-		 */
-
-		if (b->message.recipient.rule.r_action == A_MAILDIR) {
-			/*
-			 * In case of maildir, deiniting parent's state consists
-			 * of removing the file in tmp.
-			 */
-			imsg_compose_event(env->sc_ievs[PROC_PARENT],
-			    IMSG_PARENT_MAILDIR_FAIL, 0, 0, -1, b,
-			    sizeof(*b));
-		} else {
-			/*
-			 * In all other cases, ie. mbox and external, deiniting
-			 * parent's state consists of killing its child, and
-			 * freeing associated struct child.
-			 *
-			 * Requesting that parent does this cleanup involves
-			 * racing issues.  The race-free way is to simply wait.
-			 * Eventually, child timeout in parent will be hit.
-			 */
-		}
-
-		/*
-		 * Either way, parent will eventually send IMSG_MDA_FINALIZE.
-		 * Then, the mda deinit will happen.
-		 */
-		b->cleanup_parent = 0;
-	} else {
-		/*
-		 * Deinit mda.
-		 */
-
-		/* update runner (currently: via queue) */
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1,
-		    &b->message, sizeof(b->message));
-
-		imsg_compose_event(env->sc_ievs[PROC_RUNNER],
-		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
-
-		/* log status */
-		if (b->message.recipient.rule.r_action != A_MAILDIR &&
-		    b->message.recipient.rule.r_action != A_MBOX) {
-			log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
-			    b->message.message_id,
-			    b->message.session_rcpt.user,
-			    b->message.session_rcpt.domain,
-			    time(NULL) - b->message.creation,
-			    b->message.status & S_MESSAGE_PERMFAILURE ? "MdaPermError" :
-			    b->message.status & S_MESSAGE_TEMPFAILURE ? "MdaTempError" :
-			    "Sent");
-		}
-		else {
-			log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
-			    b->message.message_id,
-			    b->message.recipient.user,
-			    b->message.recipient.domain,
-			    time(NULL) - b->message.creation,
-			    b->message.status & S_MESSAGE_PERMFAILURE ? "MdaPermError" :
-			    b->message.status & S_MESSAGE_TEMPFAILURE ? "MdaTempError" :
-			    "Sent");
-		}
-
-		/* deallocate resources */
-		SPLAY_REMOVE(batchtree, &env->batch_queue, b);
-		if (b->mboxfp)
-			fclose(b->mboxfp);
-		if (b->datafp)
-			fclose(b->datafp);
-		msgbuf_clear(&b->w);
-		free(b);
-	}
+	return s;
 }
