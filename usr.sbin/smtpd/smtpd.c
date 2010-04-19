@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.97 2010/04/19 08:14:07 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.98 2010/04/19 20:09:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1211,7 +1211,7 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 		return;
 	}
 
-#define error(m) { printf("%s: %s\n", m, strerror(errno)); exit(1); }
+#define error(m) { perror(m); _exit(1); }
 	if (seteuid(0) < 0)
 		fatal("forkmda: cannot restore privileges");
 	if (setgroups(1, &pw->pw_gid) ||
@@ -1288,7 +1288,7 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 		snprintf(new, sizeof new, "new/%s", tmp + 4);
 		if (rename(tmp, new) < 0)
 			error2("cannot rename tmp->new");
-		exit(0);
+		_exit(0);
 	}
 #undef error2
 
@@ -1333,7 +1333,7 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 			error2("fsync");
 		if (fclose(fp) == EOF)
 			error2("fclose");
-		exit(0);
+		_exit(0);
 	}
 
 	fatalx("forkmda: unknown mode");
