@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.38 2010/04/05 04:11:06 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.39 2010/04/19 10:52:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -271,8 +271,6 @@ struct ata_port {
 #define ATA_PORT_T_NONE			0
 #define ATA_PORT_T_DISK			1
 #define ATA_PORT_T_ATAPI		2
-	int			ap_features;
-#define ATA_PORT_F_PROBED		(1 << 0)
 	int			ap_ncqdepth;
 };
 

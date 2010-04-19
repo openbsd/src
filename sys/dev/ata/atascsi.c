@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.79 2010/04/05 04:11:06 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.80 2010/04/19 10:52:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -225,6 +225,36 @@ atascsi_probe(struct scsi_link *link)
 		goto error;
 
 	as->as_ports[port] = ap;
+
+	if (as->as_capability & ASAA_CAP_NCQ &&
+	    (letoh16(ap->ap_identify.satacap) & (1 << 8))) {
+		int host_ncqdepth;
+		/*
+		 * At this point, openings should be the number of commands the
+		 * host controller supports, less any reserved slot the host
+		 * controller needs for recovery.
+		 */
+		host_ncqdepth = link->openings +
+		    ((as->as_capability & ASAA_CAP_NEEDS_RESERVED) ? 1 : 0);
+
+		ap->ap_ncqdepth = (letoh16(ap->ap_identify.qdepth) & 0x1f) + 1;
+
+		/* Limit the number of openings to what the device supports. */
+		if (host_ncqdepth > ap->ap_ncqdepth)
+			link->openings -= (host_ncqdepth - ap->ap_ncqdepth);
+
+		/*
+		 * XXX throw away any xfers that have tag numbers higher than
+		 * what the device supports.
+		 */
+		while (host_ncqdepth--) {
+			xa = ata_get_xfer(ap);
+			if (xa->tag < ap->ap_ncqdepth) {
+				xa->state = ATA_S_COMPLETE;
+				ata_put_xfer(xa);
+			}
+		}
+	}
 
 	if (type != ATA_PORT_T_DISK)
 		return (0);
@@ -535,43 +565,6 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 
 	atascsi_done(xs, XS_NOERROR);
-
-	if (ap->ap_features & ATA_PORT_F_PROBED)
-		return;
-
-	ap->ap_features = ATA_PORT_F_PROBED;
-
-	if (as->as_capability & ASAA_CAP_NCQ &&
-	    (letoh16(ap->ap_identify.satacap) & (1 << 8))) {
-		int host_ncqdepth;
-		/*
-		 * At this point, openings should be the number of commands the
-		 * host controller supports, less any reserved slot the host
-		 * controller needs for recovery.
-		 */
-		host_ncqdepth = link->openings +
-		    ((as->as_capability & ASAA_CAP_NEEDS_RESERVED) ? 1 : 0);
-
-		ap->ap_ncqdepth = (letoh16(ap->ap_identify.qdepth) & 0x1f) + 1;
-
-		/* Limit the number of openings to what the device supports. */
-		if (host_ncqdepth > ap->ap_ncqdepth)
-			link->openings -= (host_ncqdepth - ap->ap_ncqdepth);
-
-		/*
-		 * XXX throw away any xfers that have tag numbers higher than
-		 * what the device supports.
-		 */
-		while (host_ncqdepth--) {
-			struct ata_xfer *xa;
-
-			xa = ata_get_xfer(ap);
-			if (xa->tag < ap->ap_ncqdepth) {
-				xa->state = ATA_S_COMPLETE;
-				ata_put_xfer(xa);
-			}
-		}
-	}
 }
 
 void
