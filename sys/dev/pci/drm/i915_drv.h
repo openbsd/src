@@ -764,6 +764,10 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
 #define INSTDONE	0x02090
 #define NOPID		0x02094
 #define HWSTAM		0x02098
+
+#define MI_MODE		0x0209c
+#define VS_TIMER_DISPATCH	(1 << 6)
+
 #define SCPD0		0x0209c /* 915+ only */
 #define IER		0x020a0
 #define IIR		0x020a4

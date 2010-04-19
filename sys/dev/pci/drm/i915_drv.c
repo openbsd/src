@@ -3676,6 +3676,10 @@ inteldrm_start_ring(struct drm_i915_private *dev_priv)
 	/* Update our cache of the ring state */
 	inteldrm_update_ring(dev_priv);
 
+	if (IS_I9XX(dev_priv) && !IS_GEN3(dev_priv))
+		I915_WRITE(MI_MODE, (VS_TIMER_DISPATCH) << 15 |
+		    VS_TIMER_DISPATCH);
+
 	return (0);
 }
 
