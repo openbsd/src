@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.129 2010/04/19 10:12:48 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.130 2010/04/19 10:26:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -289,7 +289,7 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 	char *body;
 
 	if (s->s_state == S_GREETED) {
-		session_respond(s, "503 Polite people say HELO first");
+		session_respond(s, "503 5.5.1 Polite people say HELO first");
 		return 1;
 	}
 
@@ -311,7 +311,7 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 			}
 
 			else if (strncasecmp("body=8bitmime", body, 13) != 0) {
-				session_respond(s, "503 Invalid BODY");
+				session_respond(s, "503 5.5.4 Unsupported option %s", body);
 				return 1;
 			}
 		}
@@ -364,7 +364,10 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 
 	session_respond(s, "250-%s Hello %s [%s], pleased to meet you",
 	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
+
+	/* unconditionnal extensions go first */
 	session_respond(s, "250-8BITMIME");
+	session_respond(s, "250-ENHANCEDSTATUSCODES");
 
 	/* XXX - we also want to support reading SIZE from MAIL parameters */
 	if (s->s_env->sc_maxsize < SIZE_MAX)
@@ -385,7 +388,7 @@ int
 session_rfc5321_rset_handler(struct session *s, char *args)
 {
 	s->s_state = S_HELO;
-	session_respond(s, "250 Reset state");
+	session_respond(s, "250 2.0.0 Reset state");
 
 	return 1;
 }
@@ -393,7 +396,7 @@ session_rfc5321_rset_handler(struct session *s, char *args)
 int
 session_rfc5321_noop_handler(struct session *s, char *args)
 {
-	session_respond(s, "250 OK");
+	session_respond(s, "250 2.0.0 OK");
 
 	return 1;
 }
@@ -402,18 +405,18 @@ int
 session_rfc5321_mail_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
-		session_respond(s, "503 Polite people say HELO first");
+		session_respond(s, "503 5.5.1 Polite people say HELO first");
 		return 1;
 	}
 
 	if (s->s_state != S_HELO) {
-		session_respond(s, "503 Sender already specified");
+		session_respond(s, "503 5.5.1 Sender already specified");
 		return 1;
 	}
 
 	if (! session_set_path(&s->s_msg.sender, args)) {
 		/* No need to even transmit to MFA, path is invalid */
-		session_respond(s, "553 Sender address syntax error");
+		session_respond(s, "553 5.1.7 Sender address syntax error");
 		return 1;
 	}
 
@@ -434,18 +437,18 @@ int
 session_rfc5321_rcpt_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
-		session_respond(s, "503 Polite people say HELO first");
+		session_respond(s, "503 5.5.1 Polite people say HELO first");
 		return 1;
 	}
 
 	if (s->s_state == S_HELO) {
-		session_respond(s, "503 Need MAIL before RCPT");
+		session_respond(s, "503 5.5.1 Need MAIL before RCPT");
 		return 1;
 	}
 
 	if (! session_set_path(&s->s_msg.session_rcpt, args)) {
 		/* No need to even transmit to MFA, path is invalid */
-		session_respond(s, "553 Recipient address syntax error");
+		session_respond(s, "553 5.1.3 Recipient address syntax error");
 		return 1;
 	}
 
@@ -459,7 +462,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 int
 session_rfc5321_quit_handler(struct session *s, char *args)
 {
-	session_respond(s, "221 %s Closing connection", s->s_env->sc_hostname);
+	session_respond(s, "221 2.0.0 %s Closing connection", s->s_env->sc_hostname);
 
 	s->s_flags |= F_QUIT;
 
@@ -470,17 +473,17 @@ int
 session_rfc5321_data_handler(struct session *s, char *args)
 {
 	if (s->s_state == S_GREETED) {
-		session_respond(s, "503 Polite people say HELO first");
+		session_respond(s, "503 5.5.1 Polite people say HELO first");
 		return 1;
 	}
 
 	if (s->s_state == S_HELO) {
-		session_respond(s, "503 Need MAIL before DATA");
+		session_respond(s, "503 5.5.1 Need MAIL before DATA");
 		return 1;
 	}
 
 	if (s->s_state == S_MAIL) {
-		session_respond(s, "503 Need RCPT before DATA");
+		session_respond(s, "503 5.5.1 Need RCPT before DATA");
 		return 1;
 	}
 
@@ -495,7 +498,7 @@ session_rfc5321_data_handler(struct session *s, char *args)
 int
 session_rfc5321_vrfy_handler(struct session *s, char *args)
 {
-	session_respond(s, "252 Cannot VRFY; try RCPT to attempt delivery");
+	session_respond(s, "252 5.5.1 Cannot VRFY; try RCPT to attempt delivery");
 
 	return 1;
 }
@@ -503,7 +506,7 @@ session_rfc5321_vrfy_handler(struct session *s, char *args)
 int
 session_rfc5321_expn_handler(struct session *s, char *args)
 {
-	session_respond(s, "502 Sorry, we do not allow this operation");
+	session_respond(s, "502 5.5.2 Sorry, we do not allow this operation");
 
 	return 1;
 }
@@ -511,7 +514,7 @@ session_rfc5321_expn_handler(struct session *s, char *args)
 int
 session_rfc5321_turn_handler(struct session *s, char *args)
 {
-	session_respond(s, "502 Sorry, we do not allow this operation");
+	session_respond(s, "502 5.5.2 Sorry, we do not allow this operation");
 
 	return 1;
 }
@@ -653,7 +656,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		if (ss == NULL)
 			fatalx("bad ss at S_MAIL_QUEUE");
 		s->s_state = S_MAIL;
-		session_respond(s, "%d Sender ok", ss->code);
+		session_respond(s, "%d 2.1.0 Sender ok", ss->code);
 		break;
 
 	case S_RCPT_MFA:
@@ -666,7 +669,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 				s->s_state = S_MAIL;
 			else
 				s->s_state = S_RCPT;
-			session_respond(s, "%d Recipient rejected: %s@%s", ss->code,
+			session_respond(s, "%d 5.0.0 Recipient rejected: %s@%s", ss->code,
 			    s->s_msg.session_rcpt.user, s->s_msg.session_rcpt.domain);
 			return;
 		}
@@ -675,7 +678,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->rcptcount++;
 		s->s_msg.recipient = ss->u.path;
 
-		session_respond(s, "%d Recipient ok", ss->code);
+		session_respond(s, "%d 2.0.0 Recipient ok", ss->code);
 		break;
 
 	case S_DATA_QUEUE:
@@ -706,7 +709,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DONE:
-		session_respond(s, "250 %s Message accepted for delivery",
+		session_respond(s, "250 2.0.0 %s Message accepted for delivery",
 		    s->s_msg.message_id);
 		log_info("%s: from=<%s%s%s>, size=%ld, nrcpts=%zd, proto=%s, "
 		    "relay=%s [%s]",
@@ -811,7 +814,7 @@ session_read(struct bufferevent *bev, void *p)
 	return;
 
 tempfail:
-	session_respond(s, "421 Service temporarily unavailable");
+	session_respond(s, "421 4.0.0 Service temporarily unavailable");
 	s->s_env->stats->smtp.tempfail++;
 	s->s_flags |= F_QUIT;
 	free(line);
@@ -831,10 +834,10 @@ session_read_data(struct session *s, char *line)
 		s->datafp = NULL;
 
 		if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
-			session_respond(s, "554 Transaction failed");
+			session_respond(s, "554 5.0.0 Transaction failed");
 			s->s_state = S_HELO;
 		} else if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
-			session_respond(s, "421 Temporary failure");
+			session_respond(s, "421 4.0.0 Temporary failure");
 			s->s_flags |= F_QUIT;
 			s->s_env->stats->smtp.tempfail++;
 		} else {
@@ -1014,7 +1017,7 @@ session_readline(struct session *s)
 	line = evbuffer_readln_crlf(s->s_bev->input);
 	if (line == NULL) {
 		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_LINE_MAX) {
-			session_respond(s, "500 Line too long");
+			session_respond(s, "500 5.0.0 Line too long");
 			s->s_env->stats->smtp.linetoolong++;
 			s->s_flags |= F_QUIT;
 		}
@@ -1026,7 +1029,7 @@ session_readline(struct session *s)
 		fatalx("session_readline: corrupt session");
 
 	if (nr > SMTP_LINE_MAX) {
-		session_respond(s, "500 Line too long");
+		session_respond(s, "500 5.0.0 Line too long");
 		s->s_env->stats->smtp.linetoolong++;
 		s->s_flags |= F_QUIT;
 		return NULL;
@@ -1034,7 +1037,7 @@ session_readline(struct session *s)
 	
 	if ((s->s_state != S_DATACONTENT || strcmp(line, ".") == 0) &&
 	    (line2 = evbuffer_readln_crlf(s->s_bev->input)) != NULL) {
-		session_respond(s, "500 Pipelining unsupported");
+		session_respond(s, "500 5.0.0 Pipelining unsupported");
 		s->s_env->stats->smtp.toofast++;
 		s->s_flags |= F_QUIT;
 		free(line);
