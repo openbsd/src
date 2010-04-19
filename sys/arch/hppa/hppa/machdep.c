@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.180 2010/04/01 12:30:38 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.181 2010/04/19 14:05:04 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -358,6 +358,7 @@ hppa_init(start)
 
 	ci = curcpu();
 	ci->ci_cpl = IPL_NESTED;
+	ci->ci_psw = PSL_Q | PSL_P | PSL_C | PSL_D;
 
 	cpuid();
 	ptlball();
@@ -556,7 +557,7 @@ cpuid()
 
 	/* force strong ordering for now */
 	if (p->features & HPPA_FTRS_W32B) {
-		kpsw |= PSL_O;
+		curcpu()->ci_psw |= PSL_O;
 	}
 
 	{
@@ -1439,7 +1440,7 @@ sys_sigreturn(p, v, retval)
 		tf->tf_iisq_tail = HPPA_SID_KERNEL;
 	else
 		tf->tf_iisq_tail = p->p_addr->u_pcb.pcb_space;
-	tf->tf_ipsw = ksc.sc_ps | (kpsw & PSL_O);
+	tf->tf_ipsw = ksc.sc_ps | (curcpu()->ci_psw & PSL_O);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))

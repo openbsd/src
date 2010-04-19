@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.34 2009/12/31 12:52:35 jsing Exp $
+#	$OpenBSD: genassym.cf,v 1.35 2010/04/19 14:05:04 jsing Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -158,6 +158,7 @@ member	fpswtch
 
 struct	cpu_info
 member	ci_curproc
+member	ci_psw
 member	ci_cpl
 
 # system calls

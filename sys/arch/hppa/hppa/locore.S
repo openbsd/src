@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.166 2010/04/01 12:30:38 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.167 2010/04/19 14:05:04 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -96,7 +96,6 @@
 	.import virtual_avail, data
 	.import	proc0, data
 	.import	proc0paddr, data
-	.import	kpsw, data
 	.import	panic, code
 
 #define	EMRG_STACKSIZE	(1*NBPG)
@@ -252,8 +251,8 @@ $qisnowon
 	mtctl	t1, pcoq
 	ldo	4(t1), t1
 	mtctl	t1, pcoq
-	ldil	L%kpsw, t1
-	ldw	R%kpsw(t1), t2
+	mfctl	r29, t1
+	ldw	CI_PSW(t1), t2
 	mtctl	t2, ipsw
 	rfi
 	nop
@@ -582,8 +581,8 @@ $syscall
 	copy	t3, sp
 	stw,ma	r0, HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(sr1, sp)
 	stw	r0, HPPA_FRAME_CRP(sr1, sp)
-	ldil	L%kpsw, t1
-	ldw	R%kpsw(sr1, t1), t1
+	mfctl	r29, t1
+	ldw	CI_PSW(sr1, t1), t1
 	stw	r1, TF_CR15-TRAPFRAME_SIZEOF(sr1, t3)	/* eiem ,bc */
 	stw	t1, TF_CR22-TRAPFRAME_SIZEOF(sr1, t3)	/* ipsw */
 	mfsp	sr3, t1
@@ -1592,8 +1591,8 @@ ENTRY(TLABEL(all),0)
 	mtsp	r0, sr3
 
 	/* this will enable interrupts after `cold' */
-	ldil	L%kpsw, t1
-	ldw	R%kpsw(t1), t2
+	mfctl	cr29, t1
+	ldw	CI_PSW(t1), t2
 	mtctl	r0, eiem
 	mtctl	t2, ipsw
 
@@ -2007,10 +2006,10 @@ ENTRY(TLABEL(hpmc),0)
 	.import	hpmc_dump, code
 	ldil	L%hpmc_dump, rp
 	ldo	R%hpmc_dump(rp), rp
-	ldil	L%kpsw, %arg2
-	ldw	R%kpsw(%arg2), %arg2
+	mfctl	cr29, %arg2
+	ldw	CI_PSW(%arg2), %arg2
 	depi	0, PSL_I_POS, 1, %arg2
-	stw	%arg2, R%kpsw(t1)
+	stw	%arg2, CI_PSW(t1)
 	ldil	L%emrg_stack, arg1
 	b	$kernel_setup
 	ldw	R%emrg_stack(arg1), arg1
@@ -2039,10 +2038,10 @@ ENTRY(hppa_toc,0)
 	.import	boot, code
 	ldil	L%boot, rp
 	ldo	R%boot(rp), rp
-	ldil	L%kpsw, %arg2
-	ldw	R%kpsw(%arg2), %arg2
+	mfctl	cr29, %arg2
+	ldw	CI_PSW(%arg2), %arg2
 	depi	0, PSL_I_POS, 1, %arg2
-	stw	%arg2, R%kpsw(t1)
+	stw	%arg2, CI_PSW(t1)
 	ldi	0, arg0
 	ldil	L%emrg_stack, arg1
 	b	$kernel_setup
@@ -2067,10 +2066,10 @@ ENTRY(hppa_pfr,0)
 	.import	boot, code
 	ldil	L%boot, rp
 	ldo	R%boot(rp), rp
-	ldil	L%kpsw, %arg2
-	ldw	R%kpsw(%arg2), %arg2
+	mfctl	cr29, %arg2
+	ldw	CI_PSW(%arg2), %arg2
 	depi	0, PSL_I_POS, 1, %arg2
-	stw	%arg2, R%kpsw(t1)
+	stw	%arg2, CI_PSW(t1)
 	ldi	RB_HALT|RB_POWERDOWN, arg0
 	ldil	L%emrg_stack, arg1
 	b	$kernel_setup

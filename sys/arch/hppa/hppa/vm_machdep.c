@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.68 2009/07/29 18:31:11 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.69 2010/04/19 14:05:04 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -149,7 +149,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSL_C | PSL_Q | PSL_P | PSL_D | PSL_I /* | PSL_L */ |
-	    (kpsw & PSL_O);
+	    (curcpu()->ci_psw & PSL_O);
 
 	/*
 	 * If specified, give the child a different stack.
