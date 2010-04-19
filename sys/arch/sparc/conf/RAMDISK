@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.66 2009/07/28 12:47:34 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.67 2010/04/19 10:42:04 dcoppa Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -24,6 +24,7 @@ option		CD9660		# ISO 9660 + Rock Ridge file system
 option		INET		# IP + ICMP + TCP + UDP
 #option		INET6		# IPv6 (needs INET)
 option		BOOT_CONFIG	# add support for boot -c
+option		CRYPTO		# Cryptographic framework
 
 # Options for variants of the Sun SPARC architecture.
 # At least one is required.

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.97 2010/04/03 00:53:30 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.98 2010/04/19 10:44:33 dcoppa Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -30,6 +30,7 @@ option		UDF		# UDF (DVD) file system
 option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)
 option		BOOT_CONFIG	# add support for boot -c
+option		CRYPTO		# Cryptographic framework
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
