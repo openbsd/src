@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.120 2010/04/19 06:32:53 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.121 2010/04/19 06:44:30 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -363,8 +363,8 @@ driver can attach.
 Use the following to get access to the
 .Tn USB
 specific structures and defines:
-.Bd -literal
-.Fd #include <dev/usb/usb.h>
+.Bd -literal -offset indent
+#include <dev/usb/usb.h>
 .Ed
 .Pp
 The
