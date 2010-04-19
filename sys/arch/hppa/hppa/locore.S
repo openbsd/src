@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.167 2010/04/19 14:05:04 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.168 2010/04/19 16:32:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2104,7 +2104,6 @@ intr_ticks
 #define	INTR_PROF_AFT	/* */
 #endif
 
-	.import	ipending, data
 	.import	imask, data
 	.import	intr_table, data
 	.align	32
@@ -2117,9 +2116,9 @@ ENTRY(TLABEL(intr),0)
 
 	ldil	L%intr_table + 32*32, r1
 	ldo	R%intr_table + 32*32(r1), r1
-	ldil	L%ipending, r17
+	mfctl	cr29, r17
 	b	$intr_cont
-	ldw	R%ipending(r17), r24
+	ldw	CI_IPENDING(r17), r24
 
 $intr_ffs
 	addi	-32, r1, r1
@@ -2144,8 +2143,8 @@ $intr_cont
 	comb,<>,n r0, r8, $intr_ffs
 	ldw	-32(r1), r0	/* preload cache */
 
-	ldil	L%ipending, r25
-	stw	r24, R%ipending(r25)
+	mfctl	cr29, r25
+	stw	r24, CI_IPENDING(r25)
 	mfctl	cr29, r17
 	ldw	CI_CPL(r17), r17
 	ldil	L%imask, r16
@@ -2265,8 +2264,8 @@ $ibrk_spllower
 	ldo	4(r9), r9
 	mtctl	r9, pcoq
 
-	ldil	L%ipending, r8
-	ldw	R%ipending(r8), r8
+	mfctl	cr29, r8
+	ldw	CI_IPENDING(r8), r8
 	ldil	L%imask, r9
 	ldo	R%imask(r9), r9
 	mfctl	cr29, r17

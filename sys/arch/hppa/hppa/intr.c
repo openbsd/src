@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.28 2010/04/19 14:05:04 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.29 2010/04/19 16:32:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -69,7 +69,7 @@ struct hppa_iv intr_table[CPU_NINTS] __attribute__ ((aligned(32))) = {
 	{ 0 }, { 0 },
 	{ IPL_SOFTTTY  , 0, HPPA_IV_SOFT, 0, 0, NULL }
 };
-volatile u_long ipending, imask[NIPL] = {
+volatile u_long imask[NIPL] = {
 	0,
 	1 << (IPL_SOFTCLOCK - 1),
 	1 << (IPL_SOFTNET - 1),
@@ -292,11 +292,11 @@ cpu_intr(void *v)
 	if (ci->ci_in_intr++)
 		frame->tf_flags |= TFF_INTR;
 
-	while ((mask = ipending & ~imask[s])) {
+	while ((mask = ci->ci_ipending & ~imask[s])) {
 		int r, bit = fls(mask) - 1;
 		struct hppa_iv *iv = &intr_table[bit];
 
-		ipending &= ~(1L << bit);
+		ci->ci_ipending &= ~(1L << bit);
 		if (iv->flags & HPPA_IV_CALL)
 			continue;
 
