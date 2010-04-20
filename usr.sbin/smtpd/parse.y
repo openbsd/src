@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.54 2010/04/20 11:03:05 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.55 2010/04/20 18:55:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -935,6 +935,12 @@ from		: FROM mapref			{
 			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
 
 			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
+			$$ = m->m_id;
+		}
+		| FROM LOCAL			{
+			struct map	*m;
+
+			m = map_findbyname(conf, "localhost");
 			$$ = m->m_id;
 		}
 		| /* empty */			{
