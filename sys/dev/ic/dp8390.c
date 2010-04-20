@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.41 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.42 2010/04/20 20:42:54 deraadt Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -106,7 +106,8 @@ dp8390_config(struct dp8390_softc *sc)
 	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
 	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
-	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
+	sc->mem_ring = sc->mem_start +
+	    ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 	sc->mem_end = sc->mem_start + sc->mem_size;
 
 	/* Now zero memory and verify that it is clear. */

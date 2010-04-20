@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.24 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.25 2010/04/20 20:42:54 deraadt Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -273,13 +273,6 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 		printf(": setup failed\n");
 		return (1);
 	}
-
-	/*
-	 * We need to compute mem_ring a bit differently; override the
-	 * value set up in dp8390_config().
-	 */
-	dsc->mem_ring =
-	    dsc->mem_start + ((dsc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	return (0);
 }
