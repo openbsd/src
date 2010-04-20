@@ -1074,7 +1074,7 @@ SSL_set_tlsext_status_ids(con, ids);
 
 				if (starttls_proto)
 					{
-					BIO_printf(bio_err,"%s",mbuf);
+					BIO_write(bio_err, mbuf, mbuf_len);
 					/* We don't need to know any more */
 					starttls_proto = PROTO_OFF;
 					}
