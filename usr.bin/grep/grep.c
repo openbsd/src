@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.40 2010/04/05 03:03:55 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.41 2010/04/20 15:58:08 jacekm Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -230,10 +230,10 @@ read_patterns(const char *fn)
 int
 main(int argc, char *argv[])
 {
-	int c, lastc, prevoptind, newarg, i, needpattern;
+	int c, lastc, prevoptind, newarg, i, needpattern, exprs, expr_sz;
 	struct patfile *patfile, *pf_next;
 	long l;
-	char *ep;
+	char *ep, **expr;
 
 	SLIST_INIT(&patfilelh);
 	switch (__progname[0]) {
@@ -268,6 +268,8 @@ main(int argc, char *argv[])
 	newarg = 1;
 	prevoptind = 1;
 	needpattern = 1;
+	expr_sz = exprs = 0;
+	expr = NULL;
 	while ((c = getopt_long(argc, argv, optstr,
 				long_options, NULL)) != -1) {
 		switch (c) {
@@ -346,8 +348,14 @@ main(int argc, char *argv[])
 			cflag = 1;
 			break;
 		case 'e':
-			add_patterns(optarg);
+			/* defer adding of expressions until all arguments are parsed */
+			if (exprs == expr_sz) {
+				expr_sz *= 2;
+				expr = grep_realloc(expr, ++expr_sz * sizeof(*expr));
+			}
 			needpattern = 0;
+			expr[exprs] = optarg;
+			++exprs;
 			break;
 		case 'f':
 			patfile = grep_malloc(sizeof(*patfile));
@@ -412,6 +420,11 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	for (i = 0; i < exprs; i++)
+		add_patterns(expr[i]);
+	free(expr);
+	expr = NULL;
 
 	for (patfile = SLIST_FIRST(&patfilelh); patfile != NULL;
 	    patfile = pf_next) {
