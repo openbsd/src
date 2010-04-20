@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.12 2010/04/16 04:44:26 yuo Exp $   */
+/*	$OpenBSD: uthum.c,v 1.13 2010/04/20 14:37:13 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -245,6 +245,7 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_sensor[i].dev_type == UTHUM_SENSOR_UNKNOWN)
 			continue;
 		uthum_print_sensorinfo(sc, i);
+		sc->sc_sensor[i].sensor.flags |= SENSOR_FINVALID;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i].sensor);
 		sc->sc_sensor[i].attached = 1;
 		sc->sc_num_sensors++;
