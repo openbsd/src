@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.40 2010/04/20 15:34:56 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.41 2010/04/20 18:18:36 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,7 +46,7 @@ void			 mda_store(struct mda_session *);
 void			 mda_store_event(int, short, void *);
 struct mda_session	*mda_lookup(struct smtpd *, u_int32_t);
 
-int mda_id;
+u_int32_t mda_id;
 
 void
 mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
