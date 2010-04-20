@@ -1,4 +1,4 @@
-#	$OpenBSD: files.aviion,v 1.5 2007/12/19 22:05:06 miod Exp $
+#	$OpenBSD: files.aviion,v 1.6 2010/04/20 22:53:23 miod Exp $
 #
 maxpartitions 16
 
@@ -32,6 +32,9 @@ file	arch/aviion/dev/if_ile.c			ile
 attach	ile at syscon with ile_syscon
 file	arch/aviion/dev/if_ile_syscon.c			ile_syscon
 
+attach	oosiop at syscon with oosiop_syscon
+file	arch/aviion/dev/oosiop_syscon.c			oosiop_syscon
+
 include	"../../../scsi/files.scsi"
 
 major	{sd = 4}
@@ -58,7 +61,8 @@ file	arch/aviion/dev/if_ile_vme.c			ile_vme
 file	dev/cninit.c
 
 file	arch/aviion/aviion/autoconf.c
-#file	arch/aviion/aviion/bus_dma.c
+file	arch/aviion/aviion/bus_space.c
+file	arch/aviion/aviion/bus_dma.c
 file	arch/aviion/aviion/conf.c
 file	arch/aviion/aviion/db_machdep.c			ddb
 file	arch/aviion/aviion/disksubr.c

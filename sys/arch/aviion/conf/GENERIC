@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.3 2010/04/18 22:04:39 miod Exp $
+#	$OpenBSD: GENERIC,v 1.4 2010/04/20 22:53:23 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -60,7 +60,7 @@ le0	at syscon? offset 0x8c000 ipl 1		# on-board ethernet
 
 dart1	at syscon? offset 0x82040 ipl 3
 #ssi0	at syscon? offset 0x8d000 ipl 3
-#oosiop0	at syscon? offset 0xb0000 ipl 2
+oosiop0	at syscon? offset 0xb0000 ipl 2
 #ile0	at syscon? offset 0xb00c0 ipl 1
 #ile1	at syscon? offset 0xb0140 ipl 1
 
@@ -80,3 +80,18 @@ le*	at vme? a32 0x55980000 a16 0x5000 ipl 1
 
 # VDA/255 Serial Host Adapter (on-board on model 4300)
 #vda0	at vme? a32 0x60000000
+
+#
+# SCSI devices
+#
+
+scsibus* at oosiop?
+
+sd*	at scsibus?
+st*	at scsibus?
+cd*	at scsibus?
+ch*	at scsibus?
+ss*	at scsibus?
+safte*	at scsibus?
+ses*	at scsibus?
+uk*	at scsibus?

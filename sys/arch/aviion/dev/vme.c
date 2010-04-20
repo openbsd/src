@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.5 2010/04/18 22:04:39 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.6 2010/04/20 22:53:24 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -66,15 +66,41 @@ struct cfdriver vme_cd = {
 	NULL, "vme", DV_DULL
 };
 
-int	vme16_map(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void	vme16_unmap(bus_space_handle_t, bus_size_t);
-int	vme24_map(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void	vme24_unmap(bus_space_handle_t, bus_size_t);
-int	vme32_map(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void	vme32_unmap(bus_space_handle_t, bus_size_t);
-int	vme_subregion(bus_space_handle_t, bus_size_t, bus_size_t,
+uint16_t vme_d8_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	vme_d8_read_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, uint8_t *, bus_size_t);
+void	vme_d8_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    uint16_t);
+void	vme_d8_write_raw_2(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const uint8_t *, bus_size_t);
+uint32_t vme_d8_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	vme_d8_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    uint32_t);
+void	vme_d8_read_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, uint8_t *, bus_size_t);
+void	vme_d8_write_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const uint8_t *, bus_size_t);
+
+uint32_t vme_d16_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	vme_d16_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    uint32_t);
+void	vme_d16_read_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, uint8_t *, bus_size_t);
+void	vme_d16_write_raw_4(bus_space_tag_t, bus_space_handle_t,
+	    bus_addr_t, const uint8_t *, bus_size_t);
+
+int	vme_a16_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
-void *	vme_vaddr(bus_space_handle_t);
+void	vme_a16_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	vme_a24_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+void	vme_a24_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	vme_a32_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+void	vme_a32_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	vme_subregion(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, bus_space_handle_t *);
+void *	vme_vaddr(bus_space_tag_t, bus_space_handle_t);
 
 int	vme_map(struct extent *, paddr_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
@@ -349,7 +375,8 @@ vmeintr_disestablish(u_int vec, struct intrhand *ih)
 	((addr) >= platform->vme16_start && (addr) <= platform->vme16_end)
 
 int
-vme16_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
+vme_a16_map(bus_space_tag_t tag, bus_addr_t addr, bus_size_t size, int flags,
+    bus_space_handle_t *ret)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 
@@ -361,7 +388,8 @@ vme16_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 }
 
 int
-vme24_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
+vme_a24_map(bus_space_tag_t tag, bus_addr_t addr, bus_size_t size, int flags,
+    bus_space_handle_t *ret)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 
@@ -373,7 +401,8 @@ vme24_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 }
 
 int
-vme32_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
+vme_a32_map(bus_space_tag_t tag, bus_addr_t addr, bus_size_t size, int flags,
+    bus_space_handle_t *ret)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 
@@ -430,7 +459,7 @@ fail:
 }
 
 void
-vme16_unmap(bus_space_handle_t handle, bus_size_t size)
+vme_a16_unmap(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 	paddr_t pa;
@@ -443,7 +472,7 @@ vme16_unmap(bus_space_handle_t handle, bus_size_t size)
 }
 
 void
-vme24_unmap(bus_space_handle_t handle, bus_size_t size)
+vme_a24_unmap(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 	paddr_t pa;
@@ -456,7 +485,7 @@ vme24_unmap(bus_space_handle_t handle, bus_size_t size)
 }
 
 void
-vme32_unmap(bus_space_handle_t handle, bus_size_t size)
+vme_a32_unmap(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
 {
 	struct vmesoftc *sc = (void *)vme_cd.cd_devs[0];
 	paddr_t pa;
@@ -487,8 +516,8 @@ vme_unmap(struct extent *ext, vme_addr_t addr, vaddr_t vaddr, bus_size_t size)
 }
 
 int
-vme_subregion(bus_space_handle_t handle, bus_addr_t offset, bus_size_t size,
-    bus_space_handle_t *ret)
+vme_subregion(bus_space_tag_t tag, bus_space_handle_t handle, bus_addr_t offset,
+    bus_size_t size, bus_space_handle_t *ret)
 {
 	/* since vme_map produces linear mappings, this is safe */
 	*ret = handle + offset;
@@ -496,9 +525,133 @@ vme_subregion(bus_space_handle_t handle, bus_addr_t offset, bus_size_t size,
 }
 
 void *
-vme_vaddr(bus_space_handle_t handle)
+vme_vaddr(bus_space_tag_t tag, bus_space_handle_t handle)
 {
 	return ((void *)handle);
+}
+
+/*
+ * D8 routines
+ */
+
+uint16_t
+vme_d8_space_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+{
+	volatile uint8_t *addr = (volatile uint8_t *)(h + o);
+	return ((uint16_t)addr[0] << 8) | ((uint16_t)addr[1]);
+}
+
+uint32_t
+vme_d8_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+{
+	volatile uint8_t *addr = (volatile uint8_t *)(h + o);
+	return ((uint32_t)addr[0] << 24) | ((uint32_t)addr[1] << 16) |
+	    ((uint32_t)addr[2] << 8) | ((uint32_t)addr[3]);
+}
+
+void
+vme_d8_space_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    uint16_t v)
+{
+	volatile uint8_t *addr = (volatile uint8_t *)(h + o);
+	addr[0] = v >> 8;
+	addr[1] = v;
+}
+
+void
+vme_d8_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    uint32_t v)
+{
+	volatile uint8_t *addr = (volatile uint8_t *)(h + o);
+	addr[0] = v >> 24;
+	addr[1] = v >> 16;
+	addr[2] = v >> 8;
+	addr[3] = v;
+}
+
+void
+vme_d8_space_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	len >>= 1;
+	while (len-- != 0) {
+		*(uint16_t *)buf = vme_d8_space_read_2(t, h, o);
+		buf += 2;
+	}
+}
+
+void
+vme_d8_space_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	len >>= 1;
+	while (len-- != 0) {
+		vme_d8_space_write_2(t, h, o, *(uint16_t *)buf);
+		buf += 2;
+	}
+}
+
+void
+vme_d8_space_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	len >>= 2;
+	while (len-- != 0) {
+		*(uint32_t *)buf = vme_d8_space_read_4(t, h, o);
+		buf += 4;
+	}
+}
+
+void
+vme_d8_space_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	len >>= 2;
+	while (len-- != 0) {
+		vme_d8_space_write_4(t, h, o, *(uint32_t *)buf);
+		buf += 4;
+	}
+}
+/*
+ * D16 routines
+ */
+
+uint32_t
+vme_d16_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+{
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
+	return ((uint32_t)addr[0] << 16) | ((uint32_t)addr[1]);
+}
+
+void
+vme_d16_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    uint32_t v)
+{
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
+	addr[0] = v >> 16;
+	addr[1] = v;
+}
+
+void
+vme_d16_space_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	len >>= 2;
+	while (len-- != 0) {
+		*(uint32_t *)buf = vme_d16_space_read_4(t, h, o);
+		buf += 4;
+	}
+}
+
+void
+vme_d16_space_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	len >>= 2;
+	while (len-- != 0) {
+		vme_d16_space_write_4(t, h, o, *(uint32_t *)buf);
+		buf += 4;
+	}
 }
 
 /*
@@ -538,22 +691,54 @@ vmebus_get_bst(struct device *vsc, u_int aspace, u_int dspace,
 	switch (aspace) {
 	default:
 	case VME_A32:
-		tag->bs_map = vme32_map;
-		tag->bs_unmap = vme32_unmap;
-		tag->bs_subregion = vme_subregion;
-		tag->bs_vaddr = vme_vaddr;
+		tag->_space_map = vme_a32_map;
+		tag->_space_unmap = vme_a32_unmap;
 		break;
 	case VME_A24:
-		tag->bs_map = vme24_map;
-		tag->bs_unmap = vme24_unmap;
-		tag->bs_subregion = vme_subregion;
-		tag->bs_vaddr = vme_vaddr;
+		tag->_space_map = vme_a24_map;
+		tag->_space_unmap = vme_a24_unmap;
 		break;
 	case VME_A16:
-		tag->bs_map = vme16_map;
-		tag->bs_unmap = vme16_unmap;
-		tag->bs_subregion = vme_subregion;
-		tag->bs_vaddr = vme_vaddr;
+		tag->_space_map = vme_a16_map;
+		tag->_space_unmap = vme_a16_unmap;
+		break;
+	}
+
+	tag->_space_subregion = vme_subregion;
+	tag->_space_vaddr = vme_vaddr;
+	tag->_space_read_1 = generic_space_read_1;
+	tag->_space_write_1 = generic_space_write_1;
+
+	switch (dspace) {
+	case VME_D32:
+		tag->_space_read_2 = generic_space_read_2;
+		tag->_space_write_2 = generic_space_write_2;
+		tag->_space_read_4 = generic_space_read_4;
+		tag->_space_write_4 = generic_space_write_4;
+		tag->_space_read_raw_2 = generic_space_read_raw_2;
+		tag->_space_write_raw_2 = generic_space_write_raw_2;
+		tag->_space_read_raw_4 = generic_space_read_raw_4;
+		tag->_space_write_raw_4 = generic_space_write_raw_4;
+		break;
+	case VME_D16:
+		tag->_space_read_2 = generic_space_read_2;
+		tag->_space_write_2 = generic_space_write_2;
+		tag->_space_read_4 = vme_d16_space_read_4;
+		tag->_space_write_4 = vme_d16_space_write_4;
+		tag->_space_read_raw_2 = generic_space_read_raw_2;
+		tag->_space_write_raw_2 = generic_space_write_raw_2;
+		tag->_space_read_raw_4 = vme_d16_space_read_raw_4;
+		tag->_space_write_raw_4 = vme_d16_space_write_raw_4;
+		break;
+	case VME_D8:
+		tag->_space_read_2 = vme_d8_space_read_2;
+		tag->_space_write_2 = vme_d8_space_write_2;
+		tag->_space_read_4 = vme_d8_space_read_4;
+		tag->_space_write_4 = vme_d8_space_write_4;
+		tag->_space_read_raw_2 = vme_d8_space_read_raw_2;
+		tag->_space_write_raw_2 = vme_d8_space_write_raw_2;
+		tag->_space_read_raw_4 = vme_d8_space_read_raw_4;
+		tag->_space_write_raw_4 = vme_d8_space_write_raw_4;
 		break;
 	}
 
