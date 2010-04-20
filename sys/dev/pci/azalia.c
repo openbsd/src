@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.171 2010/04/04 20:07:45 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.172 2010/04/20 02:17:24 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -801,7 +801,6 @@ int
 azalia_init(azalia_t *az, int resuming)
 {
 	int err;
-	uint32_t gctl;
 
 	err = azalia_reset(az);
 	if (err)
@@ -832,10 +831,6 @@ azalia_init(azalia_t *az, int resuming)
 
 	AZ_WRITE_4(az, INTCTL,
 	    AZ_READ_4(az, INTCTL) | HDA_INTCTL_CIE | HDA_INTCTL_GIE);
-
-	/* enable unsolicited response */
-	gctl = AZ_READ_4(az, GCTL);
-	AZ_WRITE_4(az, GCTL, gctl | HDA_GCTL_UNSOL);
 
 	return(0);
 }
@@ -903,6 +898,9 @@ azalia_init_codecs(azalia_t *az)
 			azalia_codec_delete(codec);
 		}
 	}
+
+	/* Enable unsolicited responses now that az->codecno is set. */
+	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) | HDA_GCTL_UNSOL);
 
 	return(0);
 }
@@ -1221,21 +1219,22 @@ void
 azalia_rirb_kick_unsol_events(void *v)
 {
 	azalia_t *az = v;
+	int addr, tag;
 
 	if (az->unsolq_kick)
 		return;
 	az->unsolq_kick = TRUE;
 	while (az->unsolq_rp != az->unsolq_wp) {
-		int i;
-		int tag;
-		codec_t *codec;
-		i = RIRB_RESP_CODEC(az->unsolq[az->unsolq_rp].resp_ex);
+		addr = RIRB_RESP_CODEC(az->unsolq[az->unsolq_rp].resp_ex);
 		tag = RIRB_UNSOL_TAG(az->unsolq[az->unsolq_rp].resp);
-		codec = &az->codecs[i];
-		DPRINTF(("%s: codec#=%d tag=%d\n", __func__, i, tag));
+		DPRINTF(("%s: codec address=%d tag=%d\n", __func__, addr, tag));
+
 		az->unsolq_rp++;
 		az->unsolq_rp %= UNSOLQ_SIZE;
-		azalia_unsol_event(codec, tag);
+
+		/* We only care about events on the using codec. */
+		if (az->codecs[az->codecno].address == addr)
+			azalia_unsol_event(&az->codecs[az->codecno], tag);
 	}
 	az->unsolq_kick = FALSE;
 }
