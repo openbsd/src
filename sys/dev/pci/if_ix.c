@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.41 2010/03/22 17:20:27 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.42 2010/04/20 14:54:58 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -1951,7 +1951,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	struct ixgbe_tx_buf        *tx_buffer;
 	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0;
 	struct ip *ip;
+#ifdef notyet
 	struct ip6_hdr *ip6;
+#endif
 	uint8_t ipproto = 0;
 	int  ehdrlen, ip_hlen = 0;
 	uint16_t etype;
@@ -2017,6 +2019,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 			if (mp->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
 			break;
+#ifdef notyet
 		case ETHERTYPE_IPV6:
 			ip6 = (struct ip6_hdr *)(mp->m_data + ehdrlen);
 			ip_hlen = sizeof(struct ip6_hdr);
@@ -2026,6 +2029,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 			if (mp->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
 			break;
+#endif
 		default:
 			offload = FALSE;
 			break;
