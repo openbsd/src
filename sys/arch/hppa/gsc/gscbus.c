@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.27 2005/06/09 18:01:36 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.28 2010/04/20 23:35:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -32,7 +32,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 

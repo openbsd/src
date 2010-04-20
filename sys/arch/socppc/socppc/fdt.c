@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.7 2009/10/01 20:21:05 dms Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.8 2010/04/20 23:35:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -20,7 +20,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/user.h>
 
 #include <machine/fdt.h>
 
