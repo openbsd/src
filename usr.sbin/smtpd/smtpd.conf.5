@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.26 2010/02/25 14:53:37 stevesk Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.27 2010/04/20 19:35:28 jacekm Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 25 2010 $
+.Dd $Mdocdate: April 20 2010 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -166,6 +166,13 @@ maptypes,
 or a domain name for the
 .Dq dns
 maptype.
+.It Ic size Ar bytes
+Specify the size above which a message is rejected by the server.
+The
+.Ar bytes
+argument can be expressed with quantifiers described in
+.Xr scan_scaled 3 ,
+or as bytes if no quantifier is provided.
 .It Ic accept | reject
 .Xr smtpd 8
 accepts and rejects messages
