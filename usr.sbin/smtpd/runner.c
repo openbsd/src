@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.80 2010/04/20 15:34:56 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.81 2010/04/20 20:55:04 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -636,7 +636,7 @@ runner_force_envelope_remove(char *mid)
 	if (! queue_load_envelope(&message, mid))
 		return 0;
 
-	if (! message.flags & (F_MESSAGE_PROCESSING|F_MESSAGE_SCHEDULED))
+	if (message.flags & (F_MESSAGE_PROCESSING|F_MESSAGE_SCHEDULED))
 		return 0;
 
 	if (! queue_remove_envelope(&message))
