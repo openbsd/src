@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.20 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: mii.c,v 1.21 2010/04/20 20:42:16 deraadt Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -144,40 +144,6 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 			mii->mii_instance++;
 		}
 		offset++;
-	}
-}
-
-void
-mii_activate(struct mii_data *mii, int act, int phyloc, int offloc)
-{
-	struct mii_softc *child;
-
-	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
-		panic("mii_activate: phyloc and offloc specified");
-
-	if ((mii->mii_flags & MIIF_INITDONE) == 0)
-		return;
-
-	for (child = LIST_FIRST(&mii->mii_phys);
-	     child != NULL; child = LIST_NEXT(child, mii_list)) {
-		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
-			if (phyloc != MII_PHY_ANY &&
-			    phyloc != child->mii_phy)
-				continue;
-			if (offloc != MII_OFFSET_ANY &&
-			    offloc != child->mii_offset)
-				continue;
-		}
-		switch (act) {
-		case DVACT_ACTIVATE:
-			panic("mii_activate: DVACT_ACTIVATE");
-			break;
-
-		case DVACT_DEACTIVATE:
-			if (config_deactivate(&child->mii_dev) != 0)
-				panic("%s: config_activate(%d) failed",
-				    child->mii_dev.dv_xname, act);
-		}
 	}
 }
 
