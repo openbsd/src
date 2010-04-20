@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.27 2010/04/20 19:35:28 jacekm Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.28 2010/04/20 20:09:40 jacekm Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -203,7 +203,10 @@ Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
 .It Ic for all
 Make the rule match regardless of the domain it is sent to.
-.It Ic for domain Ar domain
+.It Xo
+.Ic for domain Ar domain
+.Op Ic alias Ar map
+.Xc
 This rule applies to mail destined for the specified
 .Ar domain .
 This parameter supports the
@@ -213,7 +216,15 @@ so that a single rule for all sub-domains can be used, for example:
 .Bd -literal -offset indent
 accept for domain "*.example.com" deliver to mbox
 .Ed
-.It Ic for local
+.Pp
+If specified,
+.Ar map
+is used for looking up alternative destinations for addresses in this
+.Ar domain .
+.It Xo
+.Ic for local
+.Op Ic alias Ar map
+.Xc
 This rule applies to mail destined to
 .Dq localhost
 and to the server's fully qualified domain name,
