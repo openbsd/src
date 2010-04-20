@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.55 2007/06/15 11:43:08 sturm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.56 2010/04/20 21:56:52 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include "intercept.h"
 
 void simplify_path(char *);
+char *intercept_realpath(const char *, char *);
 
 struct intercept_syscall {
 	SPLAY_ENTRY(intercept_syscall) node;
@@ -669,7 +670,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 
 		/* If realpath fails then the filename does not exist,
 		 * or we are supposed to not resolve the last component */
-		if (realpath(cwd, rcwd) == NULL) {
+		if (intercept_realpath(cwd, rcwd) == NULL) {
 			char *dir, last_char;
 			struct stat st;
 			int base_is_dir;
@@ -694,7 +695,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 				goto error;
 
 			/* So, try again */
-			if (realpath(dir, rcwd) == NULL) {
+			if (intercept_realpath(dir, rcwd) == NULL) {
 				failed = 1;
 				goto out;
 			}
@@ -1013,4 +1014,144 @@ void
 intercept_policy_free(int policynr)
 {
 	(*intercept_pfreecb)(policynr, intercept_pfreearg);
+}
+
+char *
+intercept_realpath(const char *path, char *resolved)
+{
+	struct stat sb;
+	int idx = 0, n, nlnk = 0, serrno = errno;
+	const char *q;
+	char *p, wbuf[2][MAXPATHLEN];
+	size_t len;
+
+	/*
+	 * Build real path one by one with paying an attention to .,
+	 * .. and symbolic link.
+	 */
+
+	/*
+	 * `p' is where we'll put a new component with prepending
+	 * a delimiter.
+	 */
+	p = resolved;
+
+	if (*path == 0) {
+		*p = 0;
+		errno = ENOENT;
+		return (NULL);
+	}
+
+	/* If relative path, start from current working directory. */
+	if (*path != '/') {
+		if (getcwd(resolved, MAXPATHLEN) == NULL) {
+			p[0] = '.';
+			p[1] = 0;
+			return (NULL);
+		}
+		len = strlen(resolved);
+		if (len > 1)
+			p += len;
+	}
+
+loop:
+	/* Skip any slash. */
+	while (*path == '/')
+		path++;
+
+	if (*path == 0) {
+		if (p == resolved)
+			*p++ = '/';
+		*p = 0;
+		return (resolved);
+	}
+
+	/* Find the end of this component. */
+	q = path;
+	do
+		q++;
+	while (*q != '/' && *q != 0);
+
+	/* Test . or .. */
+	if (path[0] == '.') {
+		if (q - path == 1) {
+			path = q;
+			goto loop;
+		}
+		if (path[1] == '.' && q - path == 2) {
+			/* Trim the last component. */
+			if (p != resolved)
+				while (*--p != '/')
+					;
+			path = q;
+			goto loop;
+		}
+	}
+
+	/* Append this component. */
+	if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
+		errno = ENAMETOOLONG;
+		if (p == resolved)
+			*p++ = '/';
+		*p = 0;
+		return (NULL);
+	}
+	p[0] = '/';
+	memcpy(&p[1], path,
+	    /* LINTED We know q > path. */
+	    q - path);
+	p[1 + q - path] = 0;
+
+	/*
+	 * If this component is a symlink, toss it and prepend link
+	 * target to unresolved path.
+	 */
+	if (lstat(resolved, &sb) == -1) {
+		/* Allow nonexistent component if this is the last one. */
+		while (*q == '/')
+			q++;
+
+		if (*q == 0  && errno == ENOENT) {
+			errno = serrno;
+			return (resolved);
+		}
+
+		return (NULL);
+	}
+	if (S_ISLNK(sb.st_mode)) {
+		if (nlnk++ >= MAXSYMLINKS) {
+			errno = ELOOP;
+			return (NULL);
+		}
+		n = readlink(resolved, wbuf[idx], sizeof(wbuf[0]) - 1);
+		if (n < 0)
+			return (NULL);
+		if (n == 0) {
+			errno = ENOENT;
+			return (NULL);
+		}
+
+		/* Append unresolved path to link target and switch to it. */
+		if (n + (len = strlen(q)) + 1 > sizeof(wbuf[0])) {
+			errno = ENAMETOOLONG;
+			return (NULL);
+		}
+		memcpy(&wbuf[idx][n], q, len + 1);
+		path = wbuf[idx];
+		idx ^= 1;
+
+		/* If absolute symlink, start from root. */
+		if (*path == '/')
+			p = resolved;
+		goto loop;
+	}
+	if (*q == '/' && !S_ISDIR(sb.st_mode)) {
+		errno = ENOTDIR;
+		return (NULL);
+	}
+
+	/* Advance both resolved and unresolved path. */
+	p += 1 + q - path;
+	path = q;
+	goto loop;
 }
