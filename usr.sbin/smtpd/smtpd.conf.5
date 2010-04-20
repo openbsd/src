@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.28 2010/04/20 20:09:40 jacekm Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.29 2010/04/20 20:22:29 jacekm Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -119,8 +119,7 @@ This means that filter rules using "from local" will be matched.
 .It Xo
 .Ic map Ar map
 .No {
-.Op Ic type Ar maptype
-.Ic source Ar mapsource
+.Ic source Ar type Ar source
 .No }
 .Xc
 Maps are used to provide additional configuration information for
@@ -142,7 +141,7 @@ See
 .Xr makemap 8 .
 .El
 .Pp
-.Ar maptype
+.Ar type
 may be one of the following:
 .Pp
 .Bl -tag -width "fileXXX" -compact
@@ -156,16 +155,16 @@ Not implemented yet.
 Not implemented yet.
 .El
 .Pp
-.Ar mapsource
+.Ar source
 specifies the source of the map data.
 It must be an absolute path to a file for the
 .Dq file
 and
 .Dq db
-maptypes,
+map types,
 or a domain name for the
 .Dq dns
-maptype.
+map type.
 .It Ic size Ar bytes
 Specify the size above which a message is rejected by the server.
 The
