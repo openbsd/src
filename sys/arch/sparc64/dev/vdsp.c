@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.1 2009/12/31 11:58:41 kettenis Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.2 2010/04/20 23:26:59 deraadt Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>

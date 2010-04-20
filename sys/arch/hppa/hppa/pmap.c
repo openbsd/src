@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.150 2010/03/30 02:38:03 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.151 2010/04/20 23:27:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -35,8 +35,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lock.h>
-#include <sys/user.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/extent.h>
 

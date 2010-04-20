@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2010/04/15 21:14:18 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.70 2010/04/20 23:27:00 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/msgbuf.h>
 #include <sys/lock.h>
