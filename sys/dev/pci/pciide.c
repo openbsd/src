@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.307 2010/04/11 16:58:06 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.308 2010/04/20 06:59:47 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -8655,7 +8655,6 @@ phison_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
-	u_int32_t conf;
 
 	sc->chip_unmap = default_chip_unmap;
 
@@ -8696,9 +8695,6 @@ phison_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
 	}
-	WDCDEBUG_PRINT(("%s: new conf register 0x%x\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname, conf), DEBUG_PROBE);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, NFORCE_CONF, conf);
 }
 
 void
