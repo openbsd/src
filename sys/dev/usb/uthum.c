@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.13 2010/04/20 14:37:13 deraadt Exp $   */
+/*	$OpenBSD: uthum.c,v 1.14 2010/04/20 14:37:38 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -513,7 +513,7 @@ uthum_setup_sensors(struct uthum_softc *sc)
 		break;
 	default:
 		/* do nothing */
-		;;
+		break;
 	}
 }
 
@@ -820,8 +820,8 @@ uthum_ntc_temp(int64_t val, int state)
 		break;
 	default:
 		DPRINTF(("NTC state error, unknown state 0x%.2x\n", state));
-		;;
-	};
+		break;
+	}
 
 	/* convert muC->muK value */
 	return temp + 273150000;
@@ -833,19 +833,21 @@ uthum_print_sensorinfo(struct uthum_softc *sc, int num)
 	struct uthum_sensor *s;
 	s = &sc->sc_sensor[num];
 
-	printf("%s: sensor%d: ", sc->sc_hdev.sc_dev.dv_xname,  num);
-	switch(s->sensor.type) {
+	printf("%s: ", sc->sc_hdev.sc_dev.dv_xname);
+	switch (s->sensor.type) {
 	case SENSOR_TEMP:
-		printf("Temperature sensor (%s), ",
+		printf("type %s (temperature)",
 		    uthum_sensor_type_s[s->dev_type]);
-		printf("calibration offset = %d.%d deg-C",
-		    s->cal_offset / 100, abs(s->cal_offset % 100));
+		if (s->cal_offset)
+			printf(", calibration offset %d.%d degC",
+			    s->cal_offset / 100, abs(s->cal_offset % 100));
 		break;
 	case SENSOR_HUMIDITY:
-		printf("Humidity sensor (%s), ",
+		printf("type %s (humidity)",
 		    uthum_sensor_type_s[s->dev_type]);
-		printf("calibration offset = %d.%d %%RH",
-		    s->cal_offset / 100, abs(s->cal_offset % 100));
+		if (s->cal_offset)
+			printf("calibration offset %d.%d %%RH",
+			    s->cal_offset / 100, abs(s->cal_offset % 100));
 		break;
 	default:
 		printf("unknown");
