@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.168 2010/04/15 04:57:29 yuo Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.169 2010/04/20 19:44:07 oga Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2467,6 +2467,9 @@ print_sensor(struct sensor *s)
 			break;
 		case SENSOR_HUMIDITY:
 			printf("%.2f%%", s->value / 1000.0);
+			break;
+		case SENSOR_FREQ:
+			printf("%lld Hz", s->value);
 			break;
 		default:
 			printf("unknown");

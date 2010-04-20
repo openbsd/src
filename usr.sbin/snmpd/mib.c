@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.36 2010/04/15 04:57:29 yuo Exp $	*/
+/*	$OpenBSD: mib.c,v 1.37 2010/04/20 19:44:07 oga Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1392,6 +1392,7 @@ mib_sensorvalue(struct sensor *s)
 		/* FALLTHROUGH */
 	case SENSOR_FANRPM:
 	case SENSOR_INTEGER:
+	case SENSOR_FREQ:
 	default:
 		ret = asprintf(&v, "%lld", s->value);
 		break;
