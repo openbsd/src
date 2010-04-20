@@ -2929,7 +2929,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	drm_i915_private_t			*dev_priv = dev->dev_private;
 	struct drm_i915_gem_execbuffer2		*args = data;
 	struct drm_i915_gem_exec_object2	*exec_list = NULL;
-	struct drm_i915_gem_relocation_entry	*relocs;
+	struct drm_i915_gem_relocation_entry	*relocs = NULL;
 	struct inteldrm_obj			*obj_priv, *batch_obj_priv;
 	struct drm_obj				**object_list = NULL;
 	struct drm_obj				*batch_obj, *obj;
@@ -3451,7 +3451,7 @@ int
 i915_gem_evict_inactive(struct drm_i915_private *dev_priv)
 {
 	struct inteldrm_obj	*obj_priv;
-	int			 ret;
+	int			 ret = 0;
 
 	while ((obj_priv = TAILQ_FIRST(&dev_priv->mm.inactive_list)) != NULL) {
 		if (obj_priv->pin_count != 0) {
@@ -4361,6 +4361,7 @@ i915_gem_save_bit_17_swizzle(struct drm_obj *obj)
 
 	segp = &obj_priv->dma_segs[0];
 	n = 0;
+	i = 0;
 	while (i < page_count) {
 		if ((segp->ds_addr + (n * PAGE_SIZE)) & (1 << 17))
 			set_bit(i, obj_priv->bit_17);
