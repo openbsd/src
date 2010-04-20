@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.47 2009/08/14 15:29:19 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.48 2010/04/20 20:49:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -172,12 +172,14 @@ create(void)
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
 
-	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+	for (dev = 0; ; dev++) {
 		mib[2] = dev;
 		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
-			if (errno != ENOENT)
-				warn("sysctl");
-			continue;
+			if (errno == ENXIO)
+				continue;
+			if (errno == ENOENT)
+				break;
+			warn("sysctl");
 		}
 		sdlim = create_sdlim(&sensordev);
 		TAILQ_INSERT_TAIL(&sdlims, sdlim, entries);

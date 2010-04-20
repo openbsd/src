@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.23 2009/08/03 07:08:33 blambert Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.24 2010/04/20 20:49:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -32,7 +32,7 @@
 #include <sys/sensors.h>
 #include "hotplug.h"
 
-int			sensordev_count = 0;
+int			sensordev_count;
 SLIST_HEAD(, ksensordev) sensordev_list =
     SLIST_HEAD_INITIALIZER(sensordev_list);
 
@@ -131,35 +131,42 @@ sensor_detach(struct ksensordev *sensdev, struct ksensor *sens)
 	splx(s);
 }
 
-struct ksensordev *
-sensordev_get(int num)
+int
+sensordev_get(int num, struct ksensordev **sensdev)
 {
 	struct ksensordev *sd;
 
-	SLIST_FOREACH(sd, &sensordev_list, list)
-		if (sd->num == num)
-			return (sd);
-
-	return (NULL);
+	SLIST_FOREACH(sd, &sensordev_list, list) {
+		if (sd->num == num) {
+			*sensdev = sd;
+			return (0);
+		}
+		if (sd->num > num)
+			return (ENXIO);
+	}
+	return (ENOENT);
 }
 
-struct ksensor *
-sensor_find(int dev, enum sensor_type type, int numt)
+int
+sensor_find(int dev, enum sensor_type type, int numt, struct ksensor **ksensorp)
 {
 	struct ksensor *s;
 	struct ksensordev *sensdev;
 	struct ksensors_head *sh;
+	int ret;
 
-	sensdev = sensordev_get(dev);
-	if (sensdev == NULL)
-		return (NULL);
+	ret = sensordev_get(dev, &sensdev);
+	if (ret)
+		return (ret);
 
 	sh = &sensdev->sensors_list;
 	SLIST_FOREACH(s, sh, list)
-		if (s->type == type && s->numt == numt)
-			return (s);
+		if (s->type == type && s->numt == numt) {
+			*ksensorp = s;
+			return (0);
+		}
 
-	return (NULL);
+	return (ENOENT);
 }
 
 struct sensor_task {

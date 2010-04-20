@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.37 2010/04/20 19:44:07 oga Exp $	*/
+/*	$OpenBSD: mib.c,v 1.38 2010/04/20 20:49:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1246,13 +1246,15 @@ mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	int			 mib[] = { CTL_HW, HW_SENSORS, 0 };
 	int			 i, c;
 
-	for (i = c = 0; i < MAXSENSORDEVICES; i++) {
+	for (i = c = 0; ; i++) {
 		mib[2] = i;
 		if (sysctl(mib, sizeofa(mib),
 		    &sensordev, &len, NULL, 0) == -1) {
-			if (errno != ENOENT)
-				return (-1);
-			continue;
+			if (errno = ENOENT)
+				break;
+			if (errno == ENXIO)
+				continue;
+			return (-1);
 		}
 		c += sensordev.sensors_count;
 	}
@@ -1277,12 +1279,14 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_sensorEntry];
 
-	for (i = 0, n = 1; i < MAXSENSORDEVICES; i++) {
+	for (i = 0, n = 1; ; i++) {
 		mib[2] = i;
 		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
-			if (errno != ENOENT)
-				return (-1);
-			continue;
+			if (errno == EINVAL)
+				break;
+			if (errno == ENOENT)
+				continue;
+			return (-1);
 		}
 		for (j = 0; j < SENSOR_MAX_TYPES; j++) {
 			mib[3] = j;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.169 2010/04/20 19:44:07 oga Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.170 2010/04/20 20:49:35 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2244,10 +2244,14 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 		char buf[SYSCTL_BUFSIZ];
 
 		/* scan all sensor devices */
-		for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+		for (dev = 0; ; dev++) {
 			mib[2] = dev;
-			if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1)
-				continue;
+			if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1) {
+				if (errno == ENXIO)
+					continue;
+				if (errno == ENOENT)
+					break;
+			}
 			snprintf(buf, sizeof(buf), "%s.%s",
 			    string, snsrdev.xname);
 			print_sensordev(buf, mib, 3, &snsrdev);
@@ -2265,10 +2269,14 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	}
 	/* convert sensor device string to an integer */
-	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
+	for (dev = 0; ; dev++) {
 		mib[2] = dev;
-		if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1)
-			continue;
+		if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1) {
+			if (errno == ENXIO)
+				continue;
+			if (errno == ENOENT)
+				break;
+		}
 		if (strcmp(devname, snsrdev.xname) == 0)
 			break;
 	}

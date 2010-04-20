@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.181 2010/03/24 23:18:17 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.182 2010/04/20 20:49:33 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2008,9 +2008,9 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	dev = name[0];
 	if (namelen == 1) {
-		ksd = sensordev_get(dev);
-		if (ksd == NULL)
-			return (ENOENT);
+		ret = sensordev_get(dev, &ksd);
+		if (ret)
+			return (ret);
 
 		/* Grab a copy, to clear the kernel pointers */
 		usd = malloc(sizeof(*usd), M_TEMP, M_WAITOK|M_ZERO);
@@ -2029,9 +2029,9 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	type = name[1];
 	numt = name[2];
 
-	ks = sensor_find(dev, type, numt);
-	if (ks == NULL)
-		return (ENOENT);
+	ret = sensor_find(dev, type, numt, &ks);
+	if (ret)
+		return (ret);
 
 	/* Grab a copy, to clear the kernel pointers */
 	us = malloc(sizeof(*us), M_TEMP, M_WAITOK|M_ZERO);

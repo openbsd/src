@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.44 2009/05/13 15:08:10 stevesk Exp $ */
+/*	$OpenBSD: sensors.c,v 1.45 2010/04/20 20:49:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -49,13 +49,17 @@ sensor_init(void)
 int
 sensor_scan(void)
 {
-	int		i, n;
+	int		i, n, err;
 	char		d[MAXDEVNAMLEN];
 	struct sensor	s;
 
 	n = 0;
-	for (i = 0; i < MAXSENSORDEVICES; i++)
-		if (sensor_probe(i, d, &s)) {
+	for (i = 0; ; i++)
+		if ((err = sensor_probe(i, d, &s))) {
+			if (err == 0)
+				continue;
+			if (err == -1)	/* no further sensors */
+				break;
 			sensor_add(i, d);
 			n++;
 		}
@@ -63,6 +67,11 @@ sensor_scan(void)
 	return n;
 }
 
+/*
+ * 1 = time sensor!
+ * 0 = sensor exists... but is not a time sensor
+ * -1: no sensor here, and no further sensors after this
+ */
 int
 sensor_probe(int devid, char *dxname, struct sensor *sensor)
 {
@@ -78,9 +87,11 @@ sensor_probe(int devid, char *dxname, struct sensor *sensor)
 
 	sdlen = sizeof(sensordev);
 	if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
-		if (errno != ENOENT)
-			log_warn("sensor_probe sysctl");
-		return (0);
+		if (errno == ENXIO)
+			return (0);
+		if (errno == ENOENT)
+			return (-1);
+		log_warn("sensor_probe sysctl");
 	}
 
 	if (sensordev.maxnumt[SENSOR_TIMEDELTA] == 0)
