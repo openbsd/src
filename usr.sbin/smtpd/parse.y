@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2010/04/19 14:37:33 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.54 2010/04/20 11:03:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "smtpd.h"
 
@@ -198,23 +199,16 @@ size		: NUMBER			{
 			}
 			$$ = $1;
 		}
-		| NUMBER STRING         {
-			if ($1 < 0) {
-				yyerror("invalid size: %lld", $1);
-				YYERROR;
-			}
+		| STRING			{
+			long long result;
 
-			if (strcmp("KB", $2) == 0)
-				$$ = 1024;
-			else if (strcmp("MB", $2) == 0)
-				$$ = 1048576;
-			else if (strcmp("GB", $2) == 0)
-				$$ = 1073741824;
-			else {
-				yyerror("invalid quantifier: %s", $2);
+			if (scan_scaled($1, &result) == -1 || result < 0) {
+				yyerror("invalid size: %s", $1);
 				YYERROR;
 			}
-			$$ *= $1;
+			free($1);
+
+			$$ = result;
 		}
 		;
 
