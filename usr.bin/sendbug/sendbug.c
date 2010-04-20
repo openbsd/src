@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.65 2010/04/20 19:05:03 sthen Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.66 2010/04/20 21:33:25 sthen Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -246,9 +246,8 @@ usbdevs(FILE *ofp)
 			if (fwrite(buf, 1, len, ofp) != len)
 				break;
 		}
-		pclose(ofp);
+		pclose(ifp);
 	}
-	pclose(ifp);
 }
 
 /*
@@ -621,9 +620,8 @@ hwdump(FILE *ofp)
 			if (fwrite(buf, 1, len, ofp) != len)
 				break;
 		}
-		pclose(ofp);
+		pclose(ifp);
 	}
-	pclose(ifp);
 	free(cmd);
 	free(acpidir);
 }
