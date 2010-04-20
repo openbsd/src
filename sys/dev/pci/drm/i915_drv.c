@@ -1036,7 +1036,6 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
 	if (obj == NULL)
 		return (EBADF);
-	obj_priv = (struct inteldrm_obj *)obj;
 
 	/*
 	 * Bounds check source.
@@ -1107,7 +1106,6 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
 	if (obj == NULL)
 		return (EBADF);
-	obj_priv = (struct inteldrm_obj *)obj;
 
 	DRM_LOCK();
 	/* Bounds check destination. */
@@ -3563,13 +3561,11 @@ void
 i915_gem_cleanup_hws(struct drm_i915_private *dev_priv)
 {
 	struct drm_obj		*obj;
-	struct inteldrm_obj	*obj_priv;
 
 	if (dev_priv->hws_obj == NULL)
 		return;
 
 	obj = dev_priv->hws_obj;
-	obj_priv = (struct inteldrm_obj *)obj;
 
 	uvm_unmap(kernel_map, (vaddr_t)dev_priv->hw_status_page,
 	    (vaddr_t)dev_priv->hw_status_page + PAGE_SIZE);
