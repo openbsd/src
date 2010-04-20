@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.173 2010/04/19 10:12:48 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.174 2010/04/20 15:34:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -202,6 +202,8 @@ struct imsgev {
 	void			(*handler)(int, short, void *);
 	struct event		 ev;
 	void			*data;
+	struct smtpd		*env;
+	int			 proc;
 	short			 events;
 };
 
@@ -817,6 +819,8 @@ struct mta_session {
 	void			*pcb;
 };
 
+extern void (*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
+
 /* aliases.c */
 int aliases_exist(struct smtpd *, objid_t, char *);
 int aliases_get(struct smtpd *, objid_t, struct expandtree *, char *);
@@ -874,6 +878,7 @@ SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
 void	 imsg_event_add(struct imsgev *);
 int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
 	    int, void *, u_int16_t);
+void	 imsg_dispatch(int, short, void *);
 
 /* lka.c */
 pid_t		 lka(struct smtpd *);

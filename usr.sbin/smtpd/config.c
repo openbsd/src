@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.9 2009/11/12 12:35:03 jacekm Exp $	*/
+/*	$OpenBSD: config.c,v 1.10 2010/04/20 15:34:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -218,7 +218,9 @@ config_peers(struct smtpd *env, struct peer *p, u_int peercount)
 			    env->sc_pipes[src][dst][count]);
 			env->sc_ievs[dst][count].handler =  p[i].cb;
 			env->sc_ievs[dst][count].events = EV_READ;
-			env->sc_ievs[dst][count].data = env;
+			env->sc_ievs[dst][count].proc = dst;
+			env->sc_ievs[dst][count].data = &env->sc_ievs[dst][count];
+			env->sc_ievs[dst][count].env = env;
 
 			event_set(&(env->sc_ievs[dst][count].ev),
 			    env->sc_ievs[dst][count].ibuf.fd,

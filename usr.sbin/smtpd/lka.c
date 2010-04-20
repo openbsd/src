@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.101 2010/02/17 17:27:47 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.102 2010/04/20 15:34:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -41,14 +41,9 @@
 
 #include "smtpd.h"
 
+void		lka_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	lka_shutdown(void);
 void		lka_sig_handler(int, short, void *);
-void		lka_dispatch_parent(int, short, void *);
-void		lka_dispatch_mfa(int, short, void *);
-void		lka_dispatch_smtp(int, short, void *);
-void		lka_dispatch_queue(int, short, void *);
-void		lka_dispatch_runner(int, short, void *);
-void		lka_dispatch_mta(int, short, void *);
 void		lka_setup_events(struct smtpd *);
 void		lka_disable_events(struct smtpd *);
 void		lka_expand_pickup(struct smtpd *, struct lkasession *);
@@ -69,6 +64,205 @@ void		lka_expansion_done(struct smtpd *, struct lkasession *);
 void		lka_session_fail(struct smtpd *, struct lkasession *, struct submit_status *);
 
 void
+lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+{
+	struct lkasession	 skey;
+	struct submit_status	*ss;
+	struct forward_req	*fwreq;
+	struct lkasession	*s;
+	struct secret		*secret;
+	struct mapel		*mapel;
+	struct cond		*cond;
+	struct rule		*rule;
+	struct path		*path;
+	struct map		*map;
+	void			*tmp;
+
+	if (imsg->hdr.type == IMSG_DNS_A || imsg->hdr.type == IMSG_DNS_MX ||
+	    imsg->hdr.type == IMSG_DNS_PTR) {
+		dns_async(env, iev, imsg->hdr.type, imsg->data);
+		return;
+	}
+
+	if (iev->proc == PROC_MFA) {
+		switch (imsg->hdr.type) {
+		case IMSG_LKA_MAIL:
+			ss = imsg->data;
+			ss->code = 530;
+			if (ss->u.path.user[0] == '\0' &&
+			    ss->u.path.domain[0] == '\0')
+				ss->code = 250;
+			else
+				if (lka_verify_mail(env, &ss->u.path))
+					ss->code = 250;
+			imsg_compose_event(iev, IMSG_LKA_MAIL, 0, 0, -1, ss,
+			    sizeof *ss);
+			return;
+
+		case IMSG_LKA_RULEMATCH:
+			ss = imsg->data;
+			ss->code = 530;
+			rule = ruleset_match(env, ss->msg.tag, &ss->u.path,
+			    &ss->ss);
+			if (rule) {
+				ss->code = 250;
+				ss->u.path.rule = *rule;
+			}
+			imsg_compose_event(iev, IMSG_LKA_RULEMATCH, 0, 0, -1,
+			    ss, sizeof *ss);
+			return;
+
+		case IMSG_LKA_RCPT:
+			ss = imsg->data;
+			ss->code = 250;
+			path = &ss->u.path;
+			s = lka_session_init(env, ss);
+			if (! lka_resolve_path(env, s, path))
+				lka_session_fail(env, s, ss);
+			else
+				lka_expand_pickup(env, s);
+			return;
+		}
+	}
+
+	if (iev->proc == PROC_MTA) {
+		switch (imsg->hdr.type) {
+		case IMSG_LKA_SECRET:
+			secret = imsg->data;
+			map = map_findbyname(env, "secrets");
+			if (map == NULL)
+				fatalx("lka: secrets map not found");
+			tmp = map_lookup(env, map->m_id, secret->host);
+			log_debug("lka: %s secret lookup (%d)", secret->host,
+			    tmp != NULL);
+			secret->secret[0] = '\0';
+			if (tmp == NULL)
+				log_warnx("%s secret not found", secret->host);
+			else if (lka_encode_credentials(secret->secret,
+				     sizeof secret->secret, tmp) == 0)
+				log_warnx("%s secret parse fail", secret->host);
+			imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0, -1, secret,
+			    sizeof *secret);
+			free(tmp);
+			return;
+		}
+	}
+
+	if (iev->proc == PROC_PARENT) {
+		switch (imsg->hdr.type) {
+		case IMSG_CONF_START:
+			env->sc_rules_reload = calloc(1, sizeof *env->sc_rules);
+			if (env->sc_rules_reload == NULL)
+				fatal(NULL);
+			env->sc_maps_reload = calloc(1, sizeof *env->sc_maps);
+			if (env->sc_maps_reload == NULL)
+				fatal(NULL);
+			TAILQ_INIT(env->sc_rules_reload);
+			TAILQ_INIT(env->sc_maps_reload);
+			return;
+
+		case IMSG_CONF_RULE:
+			rule = calloc(1, sizeof *rule);
+			if (rule == NULL)
+				fatal(NULL);
+			*rule = *(struct rule *)imsg->data;
+			TAILQ_INIT(&rule->r_conditions);
+			TAILQ_INSERT_TAIL(env->sc_rules_reload, rule, r_entry);
+			return;
+
+		case IMSG_CONF_CONDITION:
+			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
+			cond = calloc(1, sizeof *cond);
+			if (cond == NULL)
+				fatal(NULL);
+			*cond = *(struct cond *)imsg->data;
+			TAILQ_INSERT_TAIL(&rule->r_conditions, cond, c_entry);
+			return;
+
+		case IMSG_CONF_MAP:
+			map = calloc(1, sizeof *map);
+			if (map == NULL)
+				fatal(NULL);
+			*map = *(struct map *)imsg->data;
+			TAILQ_INIT(&map->m_contents);
+			TAILQ_INSERT_TAIL(env->sc_maps_reload, map, m_entry);
+			return;
+
+		case IMSG_CONF_RULE_SOURCE:
+			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
+			tmp = env->sc_maps;
+			env->sc_maps = env->sc_maps_reload;
+			rule->r_sources = map_findbyname(env, imsg->data);
+			if (rule->r_sources == NULL)
+				fatalx("lka: maps inconsistency");
+			env->sc_maps = tmp;
+			return;
+
+		case IMSG_CONF_MAP_CONTENT:
+			map = TAILQ_LAST(env->sc_maps_reload, maplist);
+			mapel = calloc(1, sizeof *mapel);
+			if (mapel == NULL)
+				fatal(NULL);
+			*mapel = *(struct mapel *)imsg->data;
+			TAILQ_INSERT_TAIL(&map->m_contents, mapel, me_entry);
+			return;
+
+		case IMSG_CONF_END:
+			if (env->sc_rules)
+				purge_config(env, PURGE_RULES);
+			if (env->sc_maps)
+				purge_config(env, PURGE_MAPS);
+			env->sc_rules = env->sc_rules_reload;
+			env->sc_maps = env->sc_maps_reload;
+			return;
+
+		case IMSG_PARENT_FORWARD_OPEN:
+			fwreq = imsg->data;
+			skey.id = fwreq->id;
+			s = SPLAY_FIND(lkatree, &env->lka_sessions, &skey);
+			if (s == NULL)
+				fatalx("lka: session missing");
+			s->pending--;
+			strlcpy(s->path.pw_name, fwreq->pw_name,
+			    sizeof s->path.pw_name);
+			s->path.flags |= F_PATH_FORWARDED;
+
+			if (imsg->fd != -1) {
+				/* opened .forward okay */
+				if (! forwards_get(imsg->fd, &s->expandtree)) {
+					s->ss.code = 530;
+					s->flags |= F_ERROR;					
+				}
+				close(imsg->fd);
+				s->path.flags |= F_PATH_FORWARDED;
+				lka_expand_pickup(env, s);
+			} else {
+				if (fwreq->status) {
+					/* .forward not present */
+					path = path_dup(&s->path);
+					strlcpy(path->pw_name, fwreq->pw_name,
+					    sizeof path->pw_name);
+					TAILQ_INSERT_TAIL(&s->deliverylist, path, entry);
+					lka_expand_pickup(env, s);
+				} else {
+					/* opening .forward failed */
+					s->ss.code = 530;
+					s->flags |= F_ERROR;
+					lka_expand_pickup(env, s);
+				}
+			}
+			return;
+
+		case IMSG_CTL_VERBOSE:
+			log_verbose(*(int *)imsg->data);
+			return;
+		}
+	}
+
+	fatalx("lka_imsg: unexpected imsg");
+}
+
+void
 lka_sig_handler(int sig, short event, void *p)
 {
 	int status;
@@ -87,525 +281,6 @@ lka_sig_handler(int sig, short event, void *p)
 	default:
 		fatalx("lka_sig_handler: unexpected signal");
 	}
-}
-
-void
-lka_dispatch_parent(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_PARENT];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_parent: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_CONF_START:
-			if ((env->sc_rules_reload = calloc(1, sizeof(*env->sc_rules))) == NULL)
-				fatal("mfa_dispatch_parent: calloc");
-			if ((env->sc_maps_reload = calloc(1, sizeof(*env->sc_maps))) == NULL)
-				fatal("mfa_dispatch_parent: calloc");
-			TAILQ_INIT(env->sc_rules_reload);
-			TAILQ_INIT(env->sc_maps_reload);
-			break;
-		case IMSG_CONF_RULE: {
-			struct rule *rule = imsg.data;
-
-			IMSG_SIZE_CHECK(rule);
-
-			rule = calloc(1, sizeof(*rule));
-			if (rule == NULL)
-				fatal("mfa_dispatch_parent: calloc");
-			*rule = *(struct rule *)imsg.data;
-
-			TAILQ_INIT(&rule->r_conditions);
-			TAILQ_INSERT_TAIL(env->sc_rules_reload, rule, r_entry);
-			break;
-		}
-		case IMSG_CONF_CONDITION: {
-			struct rule *r = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			struct cond *cond = imsg.data;
-
-			IMSG_SIZE_CHECK(cond);
-
-			cond = calloc(1, sizeof(*cond));
-			if (cond == NULL)
-				fatal("mfa_dispatch_parent: calloc");
-			*cond = *(struct cond *)imsg.data;
-
-			TAILQ_INSERT_TAIL(&r->r_conditions, cond, c_entry);
-			break;
-		}
-		case IMSG_CONF_MAP: {
-			struct map *m = imsg.data;
-
-			IMSG_SIZE_CHECK(m);
-
-			m = calloc(1, sizeof(*m));
-			if (m == NULL)
-				fatal("mfa_dispatch_parent: calloc");
-			*m = *(struct map *)imsg.data;
-
-			TAILQ_INIT(&m->m_contents);
-			TAILQ_INSERT_TAIL(env->sc_maps_reload, m, m_entry);
-			break;
-		}
-		case IMSG_CONF_RULE_SOURCE: {
-			struct rule *rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			char *sourcemap = imsg.data;
-			void *temp = env->sc_maps;
-
-			/* map lookup must be done in the reloaded conf */
-			env->sc_maps = env->sc_maps_reload;
-			rule->r_sources = map_findbyname(env, sourcemap);
-			if (rule->r_sources == NULL)
-				fatalx("maps inconsistency");
-			env->sc_maps = temp;
-			break;
-		}
-		case IMSG_CONF_MAP_CONTENT: {
-			struct map *m = TAILQ_LAST(env->sc_maps_reload, maplist);
-			struct mapel *mapel = imsg.data;
-			
-			IMSG_SIZE_CHECK(mapel);
-			
-			mapel = calloc(1, sizeof(*mapel));
-			if (mapel == NULL)
-				fatal("mfa_dispatch_parent: calloc");
-			*mapel = *(struct mapel *)imsg.data;
-
-			TAILQ_INSERT_TAIL(&m->m_contents, mapel, me_entry);
-			break;
-		}
-		case IMSG_CONF_END: {			
-			/* switch and destroy old ruleset */
-			if (env->sc_rules)
-				purge_config(env, PURGE_RULES);
-			if (env->sc_maps)
-				purge_config(env, PURGE_MAPS);
-			env->sc_rules = env->sc_rules_reload;
-			env->sc_maps = env->sc_maps_reload;
-			break;
-		}
-		case IMSG_PARENT_FORWARD_OPEN: {
-			int fd;
-			struct forward_req	*fwreq = imsg.data;
-			struct lkasession	key;
-			struct lkasession	*lkasession;
-			struct path *path;
-
-			IMSG_SIZE_CHECK(fwreq);
-
-			key.id = fwreq->id;
-			lkasession = SPLAY_FIND(lkatree, &env->lka_sessions, &key);
-			if (lkasession == NULL)
-				fatal("lka_dispatch_parent: lka session is gone");
-			fd = imsg.fd;
-			--lkasession->pending;
-
-			strlcpy(lkasession->path.pw_name, fwreq->pw_name,
-			    sizeof(lkasession->path.pw_name));
-			lkasession->path.flags |= F_PATH_FORWARDED;
-
-			/* received a descriptor, we have a forward file ... */
-			if (fd != -1) {
-				if (! forwards_get(fd, &lkasession->expandtree)) {
-					lkasession->ss.code = 530;
-					lkasession->flags |= F_ERROR;					
-				}
-				close(fd);
-				lkasession->path.flags |= F_PATH_FORWARDED;
-				lka_expand_pickup(env, lkasession);
-				break;
-			}
-
-			/* did not receive a descriptor but expected one ... */
-			if (! fwreq->status) {
-				lkasession->ss.code = 530;
-				lkasession->flags |= F_ERROR;
-				lka_expand_pickup(env, lkasession);
-				break;
-			}
-
-			/* no forward file, convert pw_name to a struct path ... */
-			path = path_dup(&lkasession->path);
-			strlcpy(path->pw_name, fwreq->pw_name, sizeof(path->pw_name));
-			TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);			
-			lka_expand_pickup(env, lkasession);
-			break;
-		}
-		case IMSG_CTL_VERBOSE: {
-			int verbose;
-
-			IMSG_SIZE_CHECK(&verbose);
-
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
-			break;
-		}
-		default:
-			log_warnx("lka_dispatch_parent: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("lka_dispatch_parent: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-lka_dispatch_mfa(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_MFA];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_mfa: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_LKA_MAIL: {
-			struct submit_status	 *ss = imsg.data;
-
-			IMSG_SIZE_CHECK(ss);
-
-			ss->code = 530;
-
-			if (ss->u.path.user[0] == '\0' && ss->u.path.domain[0] == '\0')
-				ss->code = 250;
-			else
-				if (lka_verify_mail(env, &ss->u.path))
-					ss->code = 250;
-
-			imsg_compose_event(iev, IMSG_LKA_MAIL, 0, 0, -1,
-				ss, sizeof(*ss));
-
-			break;
-		}
-		case IMSG_LKA_RULEMATCH: {
-			struct submit_status	*ss = imsg.data;
-			struct rule *r;
-
-			IMSG_SIZE_CHECK(ss);
-
-			ss->code = 530;
-
-			r = ruleset_match(env, ss->msg.tag, &ss->u.path, &ss->ss);
-			if (r != NULL) {
-				ss->code = 250;
-				ss->u.path.rule = *r;
-			}
-
-			imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RULEMATCH, 0, 0, -1,
-			    ss, sizeof(*ss));
-
-			break;
-		}
-		case IMSG_LKA_RCPT: {
-			struct submit_status	*ss = imsg.data;
-			struct lkasession	*lkasession;
-			struct path		*path;
-
-			IMSG_SIZE_CHECK(ss);
-
-			ss->code = 250;
-			path = &ss->u.path;
-
-			lkasession = lka_session_init(env, ss);
-
-			if (! lka_resolve_path(env, lkasession, path))
-				lka_session_fail(env, lkasession, ss);
-			else
-				lka_expand_pickup(env, lkasession);
-
-			break;
-		}
-		default:
-			log_warnx("lka_dispatch_mfa: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("lka_dispatch_mfa: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-lka_dispatch_mta(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_MTA];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_mta: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_LKA_SECRET: {
-			struct secret	*query = imsg.data;
-			char		*secret = NULL;
-			struct map	*map = NULL;
-			char		*mapname = "secrets";
-
-			IMSG_SIZE_CHECK(query);
-
-			/* should not happen */
-			map = map_findbyname(env, mapname);
-			if (map == NULL)
-				fatalx("secrets map has  disappeared");
-			secret = map_lookup(env, map->m_id, query->host);
-
-			log_debug("secret for %s %s", query->host,
-			    secret ? "found" : "not found");
-			
-			query->secret[0] = '\0';
-
-			if (secret == NULL) {
-				log_warnx("failed to lookup %s in the %s map",
-				    query->host, mapname);
-			} else if (! lka_encode_credentials(query->secret,
-			    sizeof(query->secret), secret)) {
-				log_warnx("parse error for %s in the %s map",
-				    query->host, mapname);
-			}
-
-			imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0, -1, query,
-			    sizeof(*query));
-			free(secret);
-			break;
-		}
-
-		case IMSG_DNS_MX:
-		case IMSG_DNS_PTR: {
-			struct dns	*query = imsg.data;
-
-			IMSG_SIZE_CHECK(query);
-			dns_async(env, iev, imsg.hdr.type, query);
-			break;
-		}
-
-		default:
-			log_warnx("lka_dispatch_mta: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("lka_dispatch_mta: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-lka_dispatch_smtp(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_SMTP];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_smtp: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_DNS_PTR: {
-			struct dns	*query = imsg.data;
-
-			IMSG_SIZE_CHECK(query);
-			dns_async(env, iev, IMSG_DNS_PTR, query);
-			break;
-		}
-		default:
-			log_warnx("lka_dispatch_smtp: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("lka_dispatch_smtp: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-lka_dispatch_queue(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_QUEUE];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_queue: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_warnx("lka_dispatch_queue: got imsg %d",
-			   imsg.hdr.type);
-			fatalx("lka_dispatch_queue: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-lka_dispatch_runner(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_RUNNER];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_runner: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_warnx("lka_dispatch_runner: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("lka_dispatch_runner: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
 }
 
 void
@@ -636,12 +311,12 @@ lka(struct smtpd *env)
 	struct event	 ev_sigchld;
 
 	struct peer peers[] = {
-		{ PROC_PARENT,	lka_dispatch_parent },
-		{ PROC_MFA,	lka_dispatch_mfa },
-		{ PROC_QUEUE,	lka_dispatch_queue },
-		{ PROC_SMTP,	lka_dispatch_smtp },
-		{ PROC_RUNNER,	lka_dispatch_runner },
-		{ PROC_MTA,	lka_dispatch_mta }
+		{ PROC_PARENT,	imsg_dispatch },
+		{ PROC_MFA,	imsg_dispatch },
+		{ PROC_QUEUE,	imsg_dispatch },
+		{ PROC_SMTP,	imsg_dispatch },
+		{ PROC_RUNNER,	imsg_dispatch },
+		{ PROC_MTA,	imsg_dispatch }
 	};
 
 	switch (pid = fork()) {
@@ -667,6 +342,7 @@ lka(struct smtpd *env)
 		fatal("lka: cannot drop privileges");
 #endif
 
+	imsg_callback = lka_imsg;
 	event_init();
 	SPLAY_INIT(&env->lka_sessions);
 

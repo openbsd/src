@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.39 2010/04/19 20:10:36 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.40 2010/04/20 15:34:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,11 +37,9 @@
 
 #include "smtpd.h"
 
+void			 mda_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void		 mda_shutdown(void);
 void			 mda_sig_handler(int, short, void *);
-void			 mda_dispatch_parent(int, short, void *);
-void			 mda_dispatch_queue(int, short, void *);
-void			 mda_dispatch_runner(int, short, void *);
 void			 mda_setup_events(struct smtpd *);
 void			 mda_disable_events(struct smtpd *);
 void			 mda_store(struct mda_session *);
@@ -51,88 +49,106 @@ struct mda_session	*mda_lookup(struct smtpd *, u_int32_t);
 int mda_id;
 
 void
-mda_sig_handler(int sig, short event, void *p)
+mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
-	switch (sig) {
-	case SIGINT:
-	case SIGTERM:
-		mda_shutdown();
-		break;
-	default:
-		fatalx("mda_sig_handler: unexpected signal");
-	}
-}
+	char			 output[128], *error, *parent_error;
+	struct deliver		 deliver;
+	struct mda_session	*s;
+	struct path		*path;
 
-void
-mda_dispatch_parent(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
+	if (iev->proc == PROC_RUNNER) {
+		switch (imsg->hdr.type) {
+		case IMSG_MDA_SESS_NEW:
+			/* make new session based on provided args */
+			s = calloc(1, sizeof *s);
+			if (s == NULL)
+				fatal(NULL);
+			msgbuf_init(&s->w);
+			s->msg = *(struct message *)imsg->data;
+			s->msg.status = S_MESSAGE_TEMPFAILURE;
+			s->id = mda_id++;
+			s->datafp = fdopen(imsg->fd, "r");
+			if (s->datafp == NULL)
+				fatalx("mda: fdopen");
+			LIST_INSERT_HEAD(&env->mda_sessions, s, entry);
 
-	iev = env->sc_ievs[PROC_PARENT];
-	ibuf = &iev->ibuf;
+			/* request parent to fork a helper process */
+			path = &s->msg.recipient;
+			switch (path->rule.r_action) {
+			case A_EXT:
+				deliver.mode = A_EXT;
+				strlcpy(deliver.user, path->pw_name,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->rule.r_value.path,
+				    sizeof deliver.to);
+				break;
 
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
+			case A_MBOX:
+				deliver.mode = A_EXT;
+				strlcpy(deliver.user, "root",
+				    sizeof deliver.user);
+				snprintf(deliver.to, sizeof deliver.to,
+				    "%s -f %s@%s %s", PATH_MAILLOCAL,
+				    s->msg.sender.user, s->msg.sender.domain,
+				    path->pw_name);
+				break;
+
+			case A_MAILDIR:
+				deliver.mode = A_MAILDIR;
+				strlcpy(deliver.user, path->pw_name,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->rule.r_value.path,
+				    sizeof deliver.to);
+				break;
+
+			case A_FILENAME:
+				deliver.mode = A_FILENAME;
+				/* XXX: unconditional SMTPD_USER is wrong. */
+				strlcpy(deliver.user, SMTPD_USER,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->u.filename,
+				    sizeof deliver.to);
+				break;
+
+			default:
+				fatalx("mda: unknown rule action");
+			}
+
+			imsg_compose_event(env->sc_ievs[PROC_PARENT],
+			    IMSG_PARENT_FORK_MDA, s->id, 0, -1, &deliver,
+			    sizeof deliver);
 			return;
 		}
 	}
 
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
+	if (iev->proc == PROC_PARENT) {
+		switch (imsg->hdr.type) {
+		case IMSG_PARENT_FORK_MDA:
+			s = mda_lookup(env, imsg->hdr.peerid);
 
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("mda_dispatch_parent: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_PARENT_FORK_MDA: {
-			struct mda_session	*s;
-
-			s = mda_lookup(env, imsg.hdr.peerid);
-
-			if (imsg.fd < 0)
+			if (imsg->fd < 0)
 				fatalx("mda: fd pass fail");
-			s->w.fd = imsg.fd;
+			s->w.fd = imsg->fd;
 
-			/* send message content to the helper process */
 			mda_store(s);
-			break;
-		}
+			return;
 
-		case IMSG_MDA_DONE: {
-			char			 output[128];
-			struct mda_session	*s;
-			struct path		*path;
-			char			*error, *parent_error;
-
-			s = mda_lookup(env, imsg.hdr.peerid);
+		case IMSG_MDA_DONE:
+			s = mda_lookup(env, imsg->hdr.peerid);
 
 			/*
 			 * Grab last line of mda stdout/stderr if available.
 			 */
 			output[0] = '\0';
-			if (imsg.fd != -1) {
+			if (imsg->fd != -1) {
 				char *ln, *buf;
 				FILE *fp;
 				size_t len;
 
 				buf = NULL;
-				if (lseek(imsg.fd, 0, SEEK_SET) < 0)
+				if (lseek(imsg->fd, 0, SEEK_SET) < 0)
 					fatalx("lseek");
-				fp = fdopen(imsg.fd, "r");
+				fp = fdopen(imsg->fd, "r");
 				if (fp == NULL)
 					fatal("mda: fdopen");
 				while ((ln = fgetln(fp, &len))) {
@@ -163,7 +179,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 			 * the former.
 			 */
 			error = NULL;
-			parent_error = imsg.data;
+			parent_error = imsg->data;
 			if (strcmp(parent_error, "exited okay") == 0) {
 				if (!feof(s->datafp) || s->w.queued)
 					error = "mda exited prematurely";
@@ -218,184 +234,29 @@ mda_dispatch_parent(int sig, short event, void *p)
 			/* update runner's session count */
 			imsg_compose_event(env->sc_ievs[PROC_RUNNER],
 			    IMSG_MDA_SESS_NEW, 0, 0, -1, NULL, 0);
-			break;
-		}
+			return;
 
-		case IMSG_CTL_VERBOSE: {
-			int verbose;
-
-			IMSG_SIZE_CHECK(&verbose);
-
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
-			break;
-		}
-
-		default:
-			log_warnx("mda_dispatch_parent: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("mda_dispatch_parent: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-mda_dispatch_queue(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_QUEUE];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
+		case IMSG_CTL_VERBOSE:
+			log_verbose(*(int *)imsg->data);
 			return;
 		}
 	}
 
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("mda_dispatch_queue: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_warnx("mda_dispatch_queue: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("mda_dispatch_queue: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
+	fatalx("mda_imsg: unexpected imsg");
 }
 
 void
-mda_dispatch_runner(int sig, short event, void *p)
+mda_sig_handler(int sig, short event, void *p)
 {
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_RUNNER];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
+	switch (sig) {
+	case SIGINT:
+	case SIGTERM:
+		mda_shutdown();
+		break;
+	default:
+		fatalx("mda_sig_handler: unexpected signal");
 	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("mda_dispatch_runner: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_MDA_SESS_NEW: {
-			struct deliver		 deliver;
-			struct mda_session	*s;
-			struct path		*path;
-
-			/* make new session based on provided args */
-			s = calloc(1, sizeof *s);
-			if (s == NULL)
-				fatal(NULL);
-			msgbuf_init(&s->w);
-			s->msg = *(struct message *)imsg.data;
-			s->msg.status = S_MESSAGE_TEMPFAILURE;
-			s->id = mda_id++;
-			s->datafp = fdopen(imsg.fd, "r");
-			if (s->datafp == NULL)
-				fatalx("mda: fdopen");
-			LIST_INSERT_HEAD(&env->mda_sessions, s, entry);
-
-			/* request parent to fork a helper process */
-			path = &s->msg.recipient;
-			switch (path->rule.r_action) {
-			case A_EXT:
-				deliver.mode = A_EXT;
-				strlcpy(deliver.user, path->pw_name,
-				    sizeof deliver.user);
-				strlcpy(deliver.to, path->rule.r_value.path,
-				    sizeof deliver.to);
-				break;
-
-			case A_MBOX:
-				deliver.mode = A_EXT;
-				strlcpy(deliver.user, "root",
-				    sizeof deliver.user);
-				snprintf(deliver.to, sizeof deliver.to,
-				    "%s -f %s@%s %s", PATH_MAILLOCAL,
-				    s->msg.sender.user, s->msg.sender.domain,
-				    path->pw_name);
-				break;
-
-			case A_MAILDIR:
-				deliver.mode = A_MAILDIR;
-				strlcpy(deliver.user, path->pw_name,
-				    sizeof deliver.user);
-				strlcpy(deliver.to, path->rule.r_value.path,
-				    sizeof deliver.to);
-				break;
-
-			case A_FILENAME:
-				deliver.mode = A_FILENAME;
-				/* XXX: unconditional SMTPD_USER is wrong. */
-				strlcpy(deliver.user, SMTPD_USER,
-				    sizeof deliver.user);
-				strlcpy(deliver.to, path->u.filename,
-				    sizeof deliver.to);
-				break;
-
-			default:
-				fatalx("unknown rule action");
-			}
-
-			imsg_compose_event(env->sc_ievs[PROC_PARENT],
-			    IMSG_PARENT_FORK_MDA, s->id, 0, -1, &deliver,
-			    sizeof deliver);
-			break;
-		}
-		default:
-			log_warnx("mda_dispatch_runner: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("mda_dispatch_runner: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
 }
-
 
 void
 mda_shutdown(void)
@@ -424,9 +285,9 @@ mda(struct smtpd *env)
 	struct event	 ev_sigterm;
 
 	struct peer peers[] = {
-		{ PROC_PARENT,	mda_dispatch_parent },
-		{ PROC_QUEUE,	mda_dispatch_queue },
-		{ PROC_RUNNER,	mda_dispatch_runner }
+		{ PROC_PARENT,	imsg_dispatch },
+		{ PROC_QUEUE,	imsg_dispatch },
+		{ PROC_RUNNER,	imsg_dispatch }
 	};
 
 	switch (pid = fork()) {
@@ -463,6 +324,7 @@ mda(struct smtpd *env)
 
 	LIST_INIT(&env->mda_sessions);
 
+	imsg_callback = mda_imsg;
 	event_init();
 
 	signal_set(&ev_sigint, SIGINT, mda_sig_handler, env);

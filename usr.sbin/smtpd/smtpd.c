@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.100 2010/04/20 01:01:43 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.101 2010/04/20 15:34:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,20 +46,13 @@
 
 #include "smtpd.h"
 
+void		 parent_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	 usage(void);
 void		 parent_shutdown(struct smtpd *);
 void		 parent_send_config(int, short, void *);
 void		 parent_send_config_listeners(struct smtpd *);
 void		 parent_send_config_client_certs(struct smtpd *);
 void		 parent_send_config_ruleset(struct smtpd *, int);
-void		 parent_dispatch_lka(int, short, void *);
-void		 parent_dispatch_mda(int, short, void *);
-void		 parent_dispatch_mfa(int, short, void *);
-void		 parent_dispatch_mta(int, short, void *);
-void		 parent_dispatch_smtp(int, short, void *);
-void		 parent_dispatch_runner(int, short, void *);
-void		 parent_dispatch_queue(int, short, void *);
-void		 parent_dispatch_control(int, short, void *);
 void		 parent_sig_handler(int, short, void *);
 
 void		 forkmda(struct smtpd *, struct imsgev *, u_int32_t,
@@ -76,8 +69,120 @@ void		 child_del(struct smtpd *, pid_t);
 struct child	*child_lookup(struct smtpd *, pid_t);
 
 extern char	**environ;
+void		(*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
 
 int __b64_pton(char const *, unsigned char *, size_t);
+
+void
+parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+{
+	struct smtpd		 newenv;
+	struct forward_req	*fwreq;
+	struct reload		*reload;
+	struct auth		*auth;
+	int			 fd;
+
+	if (iev->proc == PROC_SMTP) {
+		switch (imsg->hdr.type) {
+		case IMSG_PARENT_SEND_CONFIG:
+			parent_send_config_listeners(env);
+			return;
+
+		case IMSG_PARENT_AUTHENTICATE:
+			auth = imsg->data;
+			auth->success = authenticate_user(auth->user,
+			    auth->pass);
+			imsg_compose_event(iev, IMSG_PARENT_AUTHENTICATE, 0, 0,
+			    -1, auth, sizeof *auth);
+			return;
+		}
+	}
+
+	if (iev->proc == PROC_LKA) {
+		switch (imsg->hdr.type) {
+		case IMSG_PARENT_FORWARD_OPEN:
+			fwreq = imsg->data;
+			fd = parent_forward_open(fwreq->pw_name);
+			fwreq->status = 0;
+			if (fd == -2) {
+				/* no ~/.forward, however it's optional. */
+				fwreq->status = 1;
+				fd = -1;
+			} else if (fd != -1)
+				fwreq->status = 1;
+			imsg_compose_event(iev, IMSG_PARENT_FORWARD_OPEN, 0, 0,
+			    fd, fwreq, sizeof *fwreq);
+			return;
+		}
+	}
+
+	if (iev->proc == PROC_RUNNER) {
+		switch (imsg->hdr.type) {
+		case IMSG_PARENT_ENQUEUE_OFFLINE:
+			if (! parent_enqueue_offline(env, imsg->data))
+				imsg_compose_event(iev,
+				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
+				    NULL, 0);
+			return;
+		}
+	}
+
+	if (iev->proc == PROC_MDA) {
+		switch (imsg->hdr.type) {
+		case IMSG_PARENT_FORK_MDA:
+			forkmda(env, iev, imsg->hdr.peerid, imsg->data);
+			return;
+		}
+	}
+
+	if (iev->proc == PROC_CONTROL) {
+		switch (imsg->hdr.type) {
+		case IMSG_CONF_RELOAD:
+			reload->ret = 0;
+			if (parse_config(&newenv, env->sc_conffile, 0) == 0) {
+				strlcpy(env->sc_hostname, newenv.sc_hostname,
+				    sizeof env->sc_hostname);
+				env->sc_listeners = newenv.sc_listeners;
+				env->sc_maps = newenv.sc_maps;
+				env->sc_rules = newenv.sc_rules;
+				env->sc_rules = newenv.sc_rules;
+				env->sc_ssl = newenv.sc_ssl;
+				
+				parent_send_config_client_certs(env);
+				parent_send_config_ruleset(env, PROC_MFA);
+				parent_send_config_ruleset(env, PROC_LKA);
+				imsg_compose_event(env->sc_ievs[PROC_SMTP],
+				    IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
+				reload->ret = 1;
+			}
+			imsg_compose_event(iev, IMSG_CONF_RELOAD, 0, 0, -1,
+			    reload, sizeof *reload);
+			return;
+
+		case IMSG_CTL_VERBOSE:
+			log_verbose(*(int *)imsg->data);
+
+			/* forward to other processes */
+			imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_CTL_VERBOSE,
+	    		    0, 0, -1, imsg->data, sizeof(int));
+			imsg_compose_event(env->sc_ievs[PROC_MDA], IMSG_CTL_VERBOSE,
+	    		    0, 0, -1, imsg->data, sizeof(int));
+			imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_CTL_VERBOSE,
+	    		    0, 0, -1, imsg->data, sizeof(int));
+			imsg_compose_event(env->sc_ievs[PROC_MTA], IMSG_CTL_VERBOSE,
+	    		    0, 0, -1, imsg->data, sizeof(int));
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_CTL_VERBOSE,
+	    		    0, 0, -1, imsg->data, sizeof(int));
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_CTL_VERBOSE,
+	    		    0, 0, -1, imsg->data, sizeof(int));
+			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_CTL_VERBOSE,
+	    		    0, 0, -1, imsg->data, sizeof(int));
+			return;
+		}
+	}
+
+	fatalx("parent_imsg: unexpected imsg");
+}
 
 __dead void
 usage(void)
@@ -226,458 +331,6 @@ parent_send_config_ruleset(struct smtpd *env, int proc)
 }
 
 void
-parent_dispatch_lka(int imsgfd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_LKA];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_lka: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_PARENT_FORWARD_OPEN: {
-			struct forward_req *fwreq = imsg.data;
-			int fd;
-
-			IMSG_SIZE_CHECK(fwreq);
-
-			fd = parent_forward_open(fwreq->pw_name);
-			fwreq->status = 0;
-			if (fd == -2) {
-				/* user has no ~/.forward.  it is optional, so
-				 * set status to ok. */
-				fwreq->status = 1;
-				fd = -1;
-			} else if (fd != -1)
-				fwreq->status = 1;
-			imsg_compose_event(iev, IMSG_PARENT_FORWARD_OPEN, 0, 0, fd, fwreq, sizeof(*fwreq));
-			break;
-		}
-		default:
-			log_warnx("parent_dispatch_lka: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_lka: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-parent_dispatch_mfa(int fd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_MFA];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_mfa: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_warnx("parent_dispatch_mfa: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_mfa: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-parent_dispatch_mta(int fd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_MTA];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_mta: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_warnx("parent_dispatch_mta: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_mta: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-parent_dispatch_mda(int imsgfd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_MDA];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_mda: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_PARENT_FORK_MDA:
-			forkmda(env, iev, imsg.hdr.peerid, imsg.data);
-			break;
-
-		default:
-			log_warnx("parent_dispatch_mda: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_mda: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-parent_dispatch_smtp(int fd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_SMTP];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_smtp: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_PARENT_SEND_CONFIG: {
-			parent_send_config_listeners(env);
-			break;
-		}
-		case IMSG_PARENT_AUTHENTICATE: {
-			struct auth	*req = imsg.data;
-
-			IMSG_SIZE_CHECK(req);
-
-			req->success = authenticate_user(req->user, req->pass);
-
-			imsg_compose_event(iev, IMSG_PARENT_AUTHENTICATE, 0, 0,
-			    -1, req, sizeof(*req));
-			break;
-		}
-		default:
-			log_warnx("parent_dispatch_smtp: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_smtp: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-parent_dispatch_queue(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_QUEUE];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_queue: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		default:
-			log_warnx("parent_dispatch_queue: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_queue: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-parent_dispatch_runner(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_RUNNER];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_runner: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_PARENT_ENQUEUE_OFFLINE:
-			if (! parent_enqueue_offline(env, imsg.data))
-				imsg_compose_event(iev, IMSG_PARENT_ENQUEUE_OFFLINE,
-				    0, 0, -1, NULL, 0);
-			break;
-		default:
-			log_warnx("parent_dispatch_runner: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_runner: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
-parent_dispatch_control(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_CONTROL];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_control: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_CONF_RELOAD: {
-			struct reload *r = imsg.data;
-			struct smtpd newenv;
-			
-			r->ret = 0;
-			if (parse_config(&newenv, env->sc_conffile, 0) == 0) {
-				
-				(void)strlcpy(env->sc_hostname, newenv.sc_hostname,
-				    sizeof(env->sc_hostname));
-				env->sc_listeners = newenv.sc_listeners;
-				env->sc_maps = newenv.sc_maps;
-				env->sc_rules = newenv.sc_rules;
-				env->sc_rules = newenv.sc_rules;
-				env->sc_ssl = newenv.sc_ssl;
-				
-				parent_send_config_client_certs(env);
-				parent_send_config_ruleset(env, PROC_MFA);
-				parent_send_config_ruleset(env, PROC_LKA);
-				imsg_compose_event(env->sc_ievs[PROC_SMTP],
-				    IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
-				r->ret = 1;
-			}
-			imsg_compose_event(iev, IMSG_CONF_RELOAD, 0, 0, -1, r, sizeof(*r));
-			break;
-		}
-		case IMSG_CTL_VERBOSE: {
-			int verbose;
-
-			IMSG_SIZE_CHECK(&verbose);
-
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
-
-			/* forward to other processes */
-			imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, &verbose, sizeof(verbose));
-			imsg_compose_event(env->sc_ievs[PROC_MDA], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, &verbose, sizeof(verbose));
-			imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, &verbose, sizeof(verbose));
-			imsg_compose_event(env->sc_ievs[PROC_MTA], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, &verbose, sizeof(verbose));
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, &verbose, sizeof(verbose));
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, &verbose, sizeof(verbose));
-			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, &verbose, sizeof(verbose));
-			break;
-		}
-		default:
-			log_warnx("parent_dispatch_control: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("parent_dispatch_control: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
 parent_sig_handler(int sig, short event, void *p)
 {
 	struct smtpd	*env = p;
@@ -775,14 +428,14 @@ main(int argc, char *argv[])
 	struct event	 ev_sighup;
 	struct timeval	 tv;
 	struct peer	 peers[] = {
-		{ PROC_CONTROL,	parent_dispatch_control },
-		{ PROC_LKA,	parent_dispatch_lka },
-		{ PROC_MDA,	parent_dispatch_mda },
-		{ PROC_MFA,	parent_dispatch_mfa },
-		{ PROC_MTA,	parent_dispatch_mta },
-		{ PROC_SMTP,	parent_dispatch_smtp },
-		{ PROC_QUEUE,	parent_dispatch_queue },
-		{ PROC_RUNNER,	parent_dispatch_runner }
+		{ PROC_CONTROL,	imsg_dispatch },
+		{ PROC_LKA,	imsg_dispatch },
+		{ PROC_MDA,	imsg_dispatch },
+		{ PROC_MFA,	imsg_dispatch },
+		{ PROC_MTA,	imsg_dispatch },
+		{ PROC_SMTP,	imsg_dispatch },
+		{ PROC_QUEUE,	imsg_dispatch },
+		{ PROC_RUNNER,	imsg_dispatch }
 	};
 
 	opts = 0;
@@ -865,6 +518,7 @@ main(int argc, char *argv[])
 
 	fork_peers(&env);
 
+	imsg_callback = parent_imsg;
 	event_init();
 
 	signal_set(&ev_sigint, SIGINT, parent_sig_handler, &env);
@@ -1507,6 +1161,40 @@ child_cmp(struct child *c1, struct child *c2)
 		return (1);
 
 	return (0);
+}
+
+void
+imsg_dispatch(int fd, short event, void *p)
+{
+	struct imsgev		*iev = p;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(&iev->ibuf)) == -1)
+			fatal("imsg_read");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&iev->ev);
+			event_loopexit(NULL);
+			return;
+		}
+	}
+
+	if (event & EV_WRITE) {
+		if (msgbuf_write(&iev->ibuf.w) == -1)
+			fatal("msgbuf_write");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(&iev->ibuf, &imsg)) == -1)
+			fatal("imsg_get");
+		if (n == 0)
+			break;
+		imsg_callback(iev->env, iev, &imsg);
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
 }
 
 SPLAY_GENERATE(childtree, child, entry, child_cmp);
