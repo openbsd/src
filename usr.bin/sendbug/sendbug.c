@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.64 2010/03/23 19:19:53 deraadt Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.65 2010/04/20 19:05:03 sthen Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -42,6 +42,7 @@ int	prompt(void);
 int	send_file(const char *, int);
 int	sendmail(const char *);
 void	template(FILE *);
+void	usbdevs(FILE *);
 
 const char *categories = "system user library documentation kernel "
     "alpha amd64 arm hppa i386 m68k m88k mips64 powerpc sh sparc sparc64 vax";
@@ -228,6 +229,26 @@ dmesg(FILE *fp)
 		}
 	}
 	fclose(dfp);
+}
+
+void
+usbdevs(FILE *ofp)
+{
+	char buf[BUFSIZ];
+	FILE *ifp;
+	size_t len;
+
+	if ((ifp = popen("usbdevs -v", "r")) != NULL) {
+		while (!feof(ifp)) {
+			len = fread(buf, 1, sizeof buf, ifp);
+			if (len == 0)
+				break;
+			if (fwrite(buf, 1, len, ofp) != len)
+				break;
+		}
+		pclose(ofp);
+	}
+	pclose(ifp);
 }
 
 /*
@@ -555,12 +576,14 @@ template(FILE *fp)
 		if (!root)
 			fprintf(fp, "SENDBUG: Run sendbug as root "
 			    "if this is an ACPI report!\n");
-		fprintf(fp, "SENDBUG: dmesg%s attached.\n"
-		    "SENDBUG: Feel free to delete or use the -D flag if it "
-		    "contains sensitive information.\n",
-		    root ? ", pcidump, and acpidump are" : " is");
+		fprintf(fp, "SENDBUG: dmesg%s and usbdevs are attached.\n"
+		    "SENDBUG: Feel free to delete or use the -D flag if they "
+		    "contain sensitive information.\n",
+		    root ? ", pcidump, acpidump" : "");
 		fputs("\ndmesg:\n", fp);
 		dmesg(fp);
+		fputs("\nusbdevs:\n", fp);
+		usbdevs(fp);
 		if (root)
 			hwdump(fp);
 	}

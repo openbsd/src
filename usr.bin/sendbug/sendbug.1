@@ -1,9 +1,9 @@
-.\" $OpenBSD: sendbug.1,v 1.19 2009/06/10 06:46:53 jmc Exp $
+.\" $OpenBSD: sendbug.1,v 1.20 2010/04/20 19:05:03 sthen Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: June 10 2009 $
+.Dd $Mdocdate: April 20 2010 $
 .Dt SENDBUG 1
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@ A template PR is opened in a text editor
 with some system information already filled in,
 such as machine architecture,
 .Xr dmesg 8 ,
+.Xr usbdevs 8 ,
 .Xr pcidump 8 ,
 and
 .Xr acpidump 8 .
@@ -63,6 +64,7 @@ The options are as follows:
 .It Fl D
 Do not attach
 .Xr dmesg 8 ,
+.Xr usbdevs 8 ,
 .Xr pcidump 8 ,
 and
 .Xr acpidump 8
