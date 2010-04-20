@@ -1,4 +1,4 @@
-/*	$OpenBSD: uguru.c,v 1.2 2010/03/28 17:07:09 deraadt Exp $	*/
+/*	$OpenBSD: uguru.c,v 1.3 2010/04/20 06:44:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Mikko Tolmunen <oskari@sefirosu.org>
@@ -1020,7 +1020,7 @@ uguru_write_multi(bus_space_tag_t iot, bus_space_handle_t ioh,
 		 */
 		ntries = 0;
 		while (UGURU_READ(iot, ioh, UGURU_INDEX) >> 1 & 1) {
-			if (++ntries > 20)
+			if (++ntries > 65)
 				goto timeout;
 			DELAY(5);
 		}
