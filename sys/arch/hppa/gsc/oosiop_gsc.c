@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop_gsc.c,v 1.2 2005/12/13 23:13:45 mickey Exp $	*/
+/*	$OpenBSD: oosiop_gsc.c,v 1.3 2010/04/20 20:21:54 miod Exp $	*/
 /*	$NetBSD: oosiop_gsc.c,v 1.2 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*
@@ -124,6 +124,12 @@ oosiop_gsc_attach(parent, self, aux)
 
 	sc->sc_chip = OOSIOP_700;
 	sc->sc_id = 7;	/* XXX */
+
+	/* default values */
+	sc->sc_scntl0 = OOSIOP_SCNTL0_EPG;
+	sc->sc_dmode = OOSIOP_DMODE_BL_8;
+	sc->sc_dwt = 0xff;	/* Enable DMA timeout */
+	sc->sc_ctest7 = 0;
 
 	/*
 	 * Reset the SCSI subsystem.

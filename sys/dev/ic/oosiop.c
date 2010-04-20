@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.14 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.15 2010/04/20 20:21:56 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -1044,13 +1044,13 @@ oosiop_reset(struct oosiop_softc *sc)
 	delay(10000);
 
 	/* Set up various chip parameters */
-	oosiop_write_1(sc, OOSIOP_SCNTL0, OOSIOP_ARB_FULL | OOSIOP_SCNTL0_EPG);
+	oosiop_write_1(sc, OOSIOP_SCNTL0, OOSIOP_ARB_FULL | sc->sc_scntl0);
 	oosiop_write_1(sc, OOSIOP_SCNTL1, OOSIOP_SCNTL1_ESR);
 	oosiop_write_1(sc, OOSIOP_DCNTL, sc->sc_dcntl);
-	oosiop_write_1(sc, OOSIOP_DMODE, OOSIOP_DMODE_BL_8);
+	oosiop_write_1(sc, OOSIOP_DMODE, sc->sc_dmode);
 	oosiop_write_1(sc, OOSIOP_SCID, OOSIOP_SCID_VALUE(sc->sc_id));
-	oosiop_write_1(sc, OOSIOP_DWT, 0xff);	/* Enable DMA timeout */
-	oosiop_write_1(sc, OOSIOP_CTEST7, 0);
+	oosiop_write_1(sc, OOSIOP_DWT, sc->sc_dwt);
+	oosiop_write_1(sc, OOSIOP_CTEST7, sc->sc_ctest7);
 	oosiop_write_1(sc, OOSIOP_SXFER, 0);
 
 	/* Clear all interrupts */

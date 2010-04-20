@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiopreg.h,v 1.1 2004/03/12 00:04:57 miod Exp $	*/
+/*	$OpenBSD: oosiopreg.h,v 1.2 2010/04/20 20:21:56 miod Exp $	*/
 /*	$NetBSD: oosiopreg.h,v 1.3 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -266,6 +266,7 @@
 #define	OOSIOP_CTEST7_STD	0x10	/* Selection timeout disable */
 #define	OOSIOP_CTEST7_DFP	0x08	/* DMA FIFO parity bit */
 #define	OOSIOP_CTEST7_EVP	0x04	/* Even parity (to host bus) */
+#define	OOSIOP_CTEST7_DC	0x02	/* DC output signal low */
 #define	OOSIOP_CTEST7_DIFF	0x01	/* Differential mode */
 
 /* DMA FIFO register (dfifo) */
