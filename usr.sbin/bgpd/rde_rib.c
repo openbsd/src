@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.125 2010/04/07 09:44:11 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.126 2010/04/20 09:02:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -921,16 +921,12 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 void
 prefix_destroy(struct prefix *p)
 {
-	struct rib_entry	*re;
 	struct rde_aspath	*asp;
 
-	re = p->rib;
 	asp = p->aspath;
 	prefix_unlink(p);
 	prefix_free(p);
 
-	if (rib_empty(re))
-		rib_remove(re);
 	if (path_empty(asp))
 		path_destroy(asp);
 }
@@ -943,7 +939,6 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 {
 	struct rde_aspath	*asp, *xasp;
 	struct prefix		*p, *xp;
-	struct pt_entry		*pte;
 
 	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = xasp) {
 		xasp = LIST_NEXT(asp, peer_l);
@@ -952,12 +947,8 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 		for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = xp) {
 			xp = LIST_NEXT(p, path_l);
 			if (reloadtime > p->lastchange) {
-				pte = p->prefix;
 				prefix_unlink(p);
 				prefix_free(p);
-
-				if (pt_empty(pte))
-					pt_remove(pte);
 			}
 		}
 		if (path_empty(asp))
@@ -990,11 +981,11 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
 static void
 prefix_unlink(struct prefix *pref)
 {
-	if (pref->rib) {
-		/* make route decision */
-		LIST_REMOVE(pref, rib_l);
-		prefix_evaluate(NULL, pref->rib);
-	}
+	struct rib_entry	*re = pref->rib;
+
+	/* make route decision */
+	LIST_REMOVE(pref, rib_l);
+	prefix_evaluate(NULL, re);
 
 	LIST_REMOVE(pref, path_l);
 	PREFIX_COUNT(pref->aspath, -1);
@@ -1002,6 +993,8 @@ prefix_unlink(struct prefix *pref)
 	pt_unref(pref->prefix);
 	if (pt_empty(pref->prefix))
 		pt_remove(pref->prefix);
+	if (rib_empty(re))
+		rib_remove(re);
 
 	/* destroy all references to other objects */
 	pref->aspath = NULL;
@@ -1009,8 +1002,8 @@ prefix_unlink(struct prefix *pref)
 	pref->rib = NULL;
 
 	/*
-	 * It's the caller's duty to remove empty aspath respectively pt_entry
-	 * structures. Also freeing the unlinked prefix is the caller's duty.
+	 * It's the caller's duty to remove empty aspath structures.
+	 * Also freeing the unlinked prefix is the caller's duty.
 	 */
 }
 
