@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdpcib.c,v 1.1 2007/10/07 18:41:06 mbalmer Exp $	*/
+/*      $OpenBSD: amdpcib.c,v 1.2 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -24,7 +24,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/timetc.h>
 
 #include <machine/bus.h>

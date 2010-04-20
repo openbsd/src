@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpcib.c,v 1.5 2009/10/31 12:26:36 sobrado Exp $ */
+/*	$OpenBSD: piixpcib.c,v 1.6 2010/04/20 22:05:41 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 Stefan Sperling <stsp@stsp.in-berlin.de>
@@ -55,6 +55,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <machine/bus.h>

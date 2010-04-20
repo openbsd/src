@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.101 2009/05/11 19:24:57 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.102 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

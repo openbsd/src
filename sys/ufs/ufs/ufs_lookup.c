@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.38 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.39 2010/04/20 22:05:44 tedu Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>

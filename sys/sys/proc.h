@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.125 2010/04/06 22:26:59 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.126 2010/04/20 22:05:44 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
 #include <sys/mutex.h>			/* For struct mutex */
 #include <machine/atomic.h>
 
-#define curproc curcpu()->ci_curproc
 #ifdef _KERNEL
 #define __need_process
 #endif
@@ -422,7 +421,6 @@ int	enterpgrp(struct proc *p, pid_t pgid, struct pgrp *newpgrp,
 void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
 int	inferior(struct proc *, struct proc *);
 int	leavepgrp(struct proc *p);
-void	yield(void);
 void	preempt(struct proc *);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);

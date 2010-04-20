@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.82 2010/01/12 01:36:33 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.83 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -57,7 +57,6 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 

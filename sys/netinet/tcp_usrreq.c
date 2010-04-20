@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.100 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.101 2010/04/20 22:05:43 tedu Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -75,6 +75,7 @@
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>

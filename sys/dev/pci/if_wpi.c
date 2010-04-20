@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.99 2009/11/17 20:35:51 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.100 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.16 2010/04/14 20:01:07 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.17 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

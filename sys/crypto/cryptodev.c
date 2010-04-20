@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.70 2009/02/17 19:16:26 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.71 2010/04/20 22:05:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -34,7 +34,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/sysctl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/errno.h>

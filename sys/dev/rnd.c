@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.101 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.102 2010/04/20 22:05:41 tedu Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -247,7 +247,6 @@
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/sysctl.h>
 #include <sys/timeout.h>
 #include <sys/poll.h>
 #include <sys/mutex.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_rssadapt.c,v 1.7 2008/09/01 20:00:19 damien Exp $	*/
+/*	$OpenBSD: ieee80211_rssadapt.c,v 1.8 2010/04/20 22:05:43 tedu Exp $	*/
 /*	$NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 dyoung Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

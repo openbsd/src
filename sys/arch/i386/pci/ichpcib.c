@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.23 2008/01/04 00:23:25 kettenis Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.24 2010/04/20 22:05:41 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 #ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>

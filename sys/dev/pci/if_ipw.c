@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.85 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.86 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/workq.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>

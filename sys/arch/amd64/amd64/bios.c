@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.19 2010/03/28 12:08:49 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.20 2010/04/20 22:05:41 tedu Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -23,6 +23,7 @@
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <machine/conf.h>

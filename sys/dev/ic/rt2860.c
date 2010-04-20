@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.51 2010/04/12 18:02:31 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.52 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.68 2010/04/15 17:46:53 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.69 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.42 2009/08/28 00:40:03 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.43 2010/04/20 22:05:44 tedu Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -338,7 +338,6 @@ void		uvm_unmap_remove(vm_map_t, vaddr_t, vaddr_t, vm_map_entry_t *,
 #ifdef _KERNEL
 /* XXX: clean up later */
 #include <sys/time.h>
-#include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 
 static __inline boolean_t vm_map_lock_try(vm_map_t);

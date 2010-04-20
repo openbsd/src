@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.57 2010/03/29 23:33:39 krw Exp $  */
+/*	$OpenBSD: pgt.c,v 1.58 2010/04/20 22:05:43 tedu Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -55,7 +55,6 @@
 #include <sys/mbuf.h>
 #include <sys/endian.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/kthread.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.36 2009/06/03 14:45:54 jj Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.37 2010/04/20 22:05:43 tedu Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/timeout.h>
 
 #ifdef FFS
 #include <ufs/ufs/quota.h>

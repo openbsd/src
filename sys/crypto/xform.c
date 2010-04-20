@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.37 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: xform.c,v 1.38 2010/04/20 22:05:41 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -44,7 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/sysctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.8 2006/10/17 10:29:50 grange Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.9 2010/04/20 22:05:43 tedu Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 static TAILQ_HEAD(,evcount) evcount_list;

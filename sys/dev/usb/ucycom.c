@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.15 2009/10/13 19:33:17 pirofti Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.16 2010/04/20 22:05:43 tedu Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/vnode.h>

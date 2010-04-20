@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.3 2009/11/17 19:32:22 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.4 2010/04/20 22:05:41 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -26,7 +26,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

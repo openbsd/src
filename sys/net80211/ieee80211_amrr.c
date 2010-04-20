@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.c,v 1.5 2008/07/27 14:21:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.c,v 1.6 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -20,7 +20,6 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

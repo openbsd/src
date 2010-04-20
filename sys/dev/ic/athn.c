@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.35 2010/04/10 19:07:24 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.36 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

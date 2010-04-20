@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_aout.c,v 1.3 2009/03/05 19:52:23 kettenis Exp $ */
+/* 	$OpenBSD: compat_aout.c,v 1.4 2010/04/20 22:05:41 tedu Exp $ */
 
 /*
  * Copyright (c) 2003 Marc Espie
@@ -25,6 +25,7 @@
  *
  */
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>

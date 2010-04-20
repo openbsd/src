@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.45 2010/01/28 23:23:54 chl Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.46 2010/04/20 22:05:43 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>

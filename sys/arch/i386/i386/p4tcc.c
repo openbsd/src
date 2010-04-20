@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.16 2009/11/12 04:13:15 deraadt Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.17 2010/04/20 22:05:41 tedu Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.6 2010/04/07 16:19:33 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.7 2010/04/20 22:05:43 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -26,7 +26,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
