@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.66 2010/02/09 16:31:14 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.67 2010/04/21 11:52:46 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -180,6 +180,14 @@ struct	rtstat {
 	u_int32_t rts_newgateway;	/* routes modified by redirects */
 	u_int32_t rts_unreach;		/* lookups which failed */
 	u_int32_t rts_wildcard;		/* lookups satisfied by a wildcard */
+};
+
+/*
+ * Routing Table Info.
+ */
+struct rt_tableinfo {
+	u_short rti_tableid;	/* routing table id */
+	u_short rti_domainid;	/* routing domain id */
 };
 
 /*

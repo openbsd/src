@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.98 2010/03/23 15:03:25 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.99 2010/04/21 11:52:46 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1237,6 +1237,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	int			 i, s, error = EINVAL;
 	u_char  		 af;
 	struct walkarg		 w;
+	struct rt_tableinfo	 tableinfo;
 	u_int			 tableid = 0;
 
 	if (new)
@@ -1254,7 +1255,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	if (namelen == 4) {
 		tableid = name[3];
 		if (!rtable_exists(tableid))
-			return (EINVAL);
+			return (ENOENT);
 	}
 
 	s = splsoftnet();
@@ -1277,6 +1278,18 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	case NET_RT_STATS:
 		error = sysctl_rdstruct(where, given, new,
 		    &rtstat, sizeof(rtstat));
+		splx(s);
+		return (error);
+	case NET_RT_TABLE:
+		tableid = w.w_arg;
+		if (!rtable_exists(tableid)) {
+			splx(s);
+			return (ENOENT);
+		}
+		tableinfo.rti_tableid = tableid;
+		tableinfo.rti_domainid = rtable_l2(tableid);
+		error = sysctl_rdstruct(where, given, new,
+		    &tableinfo, sizeof(tableinfo));
 		splx(s);
 		return (error);
 	}
