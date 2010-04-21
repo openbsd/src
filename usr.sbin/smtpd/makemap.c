@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.24 2009/11/08 23:08:56 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.25 2010/04/21 21:40:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -254,6 +254,10 @@ parse_mapentry(char *line, size_t len, size_t lineno)
 	valp = keyp;
 	strsep(&valp, " \t:");
 	if (valp == NULL || valp == keyp)
+		goto bad;
+	while (*valp == ':' || isspace((int)*valp))
+		valp++;
+	if (*valp == '\0' || *valp == '#')
 		goto bad;
 
 	/* Check for dups. */
