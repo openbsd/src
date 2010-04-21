@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconvar.h,v 1.1 2007/12/19 22:05:06 miod Exp $	*/
+/*	$OpenBSD: sysconvar.h,v 1.2 2010/04/21 19:33:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-extern intrhand_t sysconintr_handlers[INTSRC_VME];
+extern intrhand_t sysconintr_handlers[NINTSRC_SYSCON];
 
 int	sysconintr_establish(u_int, struct intrhand *, const char *);
 void	sysconintr_disestablish(u_int, struct intrhand *);

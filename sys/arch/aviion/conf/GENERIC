@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2010/04/20 22:53:23 miod Exp $
+#	$OpenBSD: GENERIC,v 1.5 2010/04/21 19:33:47 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -61,6 +61,7 @@ le0	at syscon? offset 0x8c000 ipl 1		# on-board ethernet
 dart1	at syscon? offset 0x82040 ipl 3
 #ssi0	at syscon? offset 0x8d000 ipl 3
 oosiop0	at syscon? offset 0xb0000 ipl 2
+oosiop1	at syscon? offset 0xb0080 ipl 2
 #ile0	at syscon? offset 0xb00c0 ipl 1
 #ile1	at syscon? offset 0xb0140 ipl 1
 

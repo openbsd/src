@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.4 2007/12/19 22:05:06 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.5 2010/04/21 19:33:47 miod Exp $ */
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -95,7 +95,7 @@ sysconattach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Set up interrupt handlers.
 	 */
-	for (i = 0; i < INTSRC_VME; i++)
+	for (i = 0; i < NINTSRC_SYSCON; i++)
 		SLIST_INIT(&sysconintr_handlers[i]);
 
 	/*
@@ -163,7 +163,7 @@ syscon_print(void *args, const char *pnp)
  * Interrupt related code
  */
 
-intrhand_t sysconintr_handlers[INTSRC_VME];
+intrhand_t sysconintr_handlers[NINTSRC_SYSCON];
 
 int
 sysconintr_establish(u_int intsrc, struct intrhand *ih, const char *name)

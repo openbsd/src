@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmevar.h,v 1.3 2007/12/19 22:05:06 miod Exp $	*/
+/*	$OpenBSD: vmevar.h,v 1.4 2010/04/21 19:33:47 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -28,6 +28,28 @@
 #define	_AVIION_VME_H_
 
 typedef	u_int32_t vme_addr_t;
+
+/*
+ * VME address and data widths
+ */
+
+#define	VME_A32			0x04	/* 100..000 */
+#define	VME_A24			0x03	/* 011..000 */
+#define	VME_A16			0x02	/* 010..000 */
+#define	VME_D32			0x04	/* 100..000 */
+#define	VME_D16			0x02	/* 010..000 */
+#define	VME_D8			0x01	/* 001..000 */
+
+/*
+ * VME address range
+ */
+
+struct vme_range {
+	u_int		vr_width;
+	vme_addr_t	vr_start;
+	vme_addr_t	vr_end;
+	paddr_t		vr_base;
+};
 
 /*
  * Attachment information for VME devices.
@@ -71,12 +93,6 @@ int	vmeintr_establish(u_int, struct intrhand *, const char *);
  * when bus accesses are no longer necessary.
  */
 int	vmebus_get_bst(struct device *, u_int, u_int, bus_space_tag_t *);
-#define	VME_A32			0x04	/* 100..000 */
-#define	VME_A24			0x03	/* 011..000 */
-#define	VME_A16			0x02	/* 010..000 */
-#define	VME_D32			0x04	/* 100..000 */
-#define	VME_D16			0x02	/* 010..000 */
-#define	VME_D8			0x01	/* 001..000 */
 void	vmebus_release_bst(struct device *, bus_space_tag_t);
 
 #endif	/* _AVIION_VME_H_ */

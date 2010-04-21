@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 2010/04/20 22:53:24 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.4 2010/04/21 19:33:47 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -36,6 +36,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/bus.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
@@ -128,7 +129,6 @@ void
 mainbus_attach(struct device *parent, struct device *self, void *args)
 {
 	extern char cpu_model[];
-	extern int32_t cpuid, sysid;
 
 	printf(": %s, cpuid 0x%x", cpu_model, cpuid);
 	if (sysid != -1)

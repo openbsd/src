@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop_syscon.c,v 1.1 2010/04/20 22:53:24 miod Exp $	*/
+/*	$OpenBSD: oosiop_syscon.c,v 1.2 2010/04/21 19:33:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -27,6 +27,7 @@
 #include <machine/autoconf.h>
 #include <machine/board.h>
 #include <machine/bus.h>
+#include <machine/av530.h>
 
 #include <aviion/dev/sysconvar.h>
 
@@ -49,11 +50,29 @@ const struct cfattach oosiop_syscon_ca = {
 int
 oosiop_syscon_match(struct device *parent, void *match, void *aux)
 {
+	struct confargs *ca = aux;
+	paddr_t fuse;
+
 	if (avtyp != AV_530)
 		return 0;
 
-	/* XXX check IOFUSE register */
-	return 1;
+	switch (ca->ca_paddr) {
+	case AV530_SCSI1:
+		fuse = AV530_IOFUSE0;
+		break;
+	case AV530_SCSI2:
+		fuse = AV530_IOFUSE1;
+		break;
+	default:
+		return 0;
+	}
+
+	/* check IOFUSE register */
+	if (badaddr(fuse, 1) != 0)
+		return 0;
+
+	/* check fuse status */
+	return ISSET(*(volatile uint8_t *)fuse, AV530_IOFUSE_SCSI);
 }
 
 void
@@ -63,6 +82,7 @@ oosiop_syscon_attach(struct device *parent, struct device *self, void *aux)
 	struct oosiop_softc *sc = (struct oosiop_softc *)self;
 	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
+	int intsrc;
 
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, OOSIOP_NREGS, 0,
 	    &ioh) != 0) {
@@ -88,5 +108,6 @@ oosiop_syscon_attach(struct device *parent, struct device *self, void *aux)
 	ssc->sc_ih.ih_arg = sc;
 	ssc->sc_ih.ih_flags = 0;
 	ssc->sc_ih.ih_ipl = ca->ca_ipl;
-	sysconintr_establish(INTSRC_SCSI1, &ssc->sc_ih, self->dv_xname);
+	intsrc = ca->ca_paddr == AV530_SCSI1 ? INTSRC_SCSI1 : INTSRC_SCSI2;
+	sysconintr_establish(intsrc, &ssc->sc_ih, self->dv_xname);
 }

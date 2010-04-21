@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.1 2010/04/18 22:04:37 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.2 2010/04/21 19:33:45 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -50,15 +50,26 @@
 
 u_int	av530_safe_level(u_int, u_int, u_int);
 
-const pmap_table_entry
-av530_ptable[] = {
+const pmap_table_entry av530_ptable[] = {
 	{ AV530_PROM,	AV530_PROM,	AV530_PROM_SIZE,
 	  UVM_PROT_RW,	CACHE_INH },
 #if 0	/* mapped by the hardcoded BATC entries */
 	{ AV530_UTILITY,AV530_UTILITY,	AV530_UTILITY_SIZE,
-	  UVM_PROT_RW,	CACHE_INHIBIT },
+	  UVM_PROT_RW,	CACHE_INH },
 #endif
 	{ 0, 0, (vsize_t)-1, 0, 0 }
+};
+
+const struct vme_range vme_av530[] = {
+	{ VME_A16,
+	  AV530_VME16_START,	AV530_VME16_END,	AV530_VME16_BASE },
+	{ VME_A24,
+	  AV530_VME24_START,	AV530_VME24_END,	AV530_VME24_BASE },
+	{ VME_A32,
+	  AV530_VME32_START1,	AV530_VME32_END1,	AV530_VME32_BASE },
+	{ VME_A32,
+	  AV530_VME32_START2,	AV530_VME32_END2,	AV530_VME32_BASE },
+	{ 0 }
 };
 
 const struct board board_av530 = {
@@ -67,21 +78,14 @@ const struct board board_av530 = {
 	av530_memsize,
 	av530_startup,
 	av530_intr,
-	NULL,			/* XXX need PIT clock code */
+	rtc_init_clocks,
 	av530_getipl,
 	av530_setipl,
 	av530_raiseipl,
 	av530_intsrc,
 
 	av530_ptable,
-
-	AV530_VME16_BASE,
-		AV530_VME16_START,	AV530_VME16_END,
-	AV530_VME24_BASE,
-		AV530_VME24_START,	AV530_VME24_END,
-	AV530_VME32_BASE,
-		AV530_VME32_START1,	AV530_VME32_END1,
-		AV530_VME32_START2,	AV530_VME32_END2
+	vme_av530
 };
 
 /*
@@ -94,11 +98,9 @@ const struct board board_av530 = {
 
 /*
  * Copy of the interrupt enable registers for each CPU.
- * Note that, on the AV530 design, the interrupt enable registers are
- * write-only and read back as 0xffffffff.
  */
-static u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
-static u_int32_t ext_int_mask_reg[] = { 0, 0, 0, 0 };
+u_int32_t av530_int_mask_reg[] = { 0, 0, 0, 0 };
+u_int32_t av530_ext_int_mask_reg[] = { 0, 0, 0, 0 };
 
 u_int av530_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
@@ -106,7 +108,7 @@ u_int av530_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 /*
  * Interrupts allowed on secondary processors.
  */
-#define	SLAVE_MASK	0	/* IRQ_SWI0 | IRQ_SWI1 */
+#define	SLAVE_MASK	0	/* AV530_IRQ_SWI0 | AV530_IRQ_SWI1 */
 #define	SLAVE_EXMASK	0
 #endif
 
@@ -137,13 +139,13 @@ av530_startup()
 {
 }
 
-int32_t cpuid, sysid;
-
 void
 av530_bootstrap()
 {
 	extern struct cmmu_p cmmu8820x;
+#if 0
 	extern u_char hostaddr[6];
+#endif
 	uint32_t whoami;
 
 	/*
@@ -185,14 +187,16 @@ av530_bootstrap()
 	 * Get all the information we'll need later from the PROM, while
 	 * we can still use it.
 	 */
+#if 0
 	scm_getenaddr(hostaddr);
+#endif
 	cpuid = scm_cpuid();
 	sysid = scm_sysid();
 }
 
 /*
  * Return the next ipl >= ``curlevel'' at which we can reenable interrupts
- * while keeping ``mask'' masked.
+ * while keeping ``mask'' and ``exmask'' masked.
  */
 u_int
 av530_safe_level(u_int mask, u_int exmask, u_int curlevel)
@@ -233,8 +237,8 @@ av530_setipl(u_int level)
 #endif
 
 	av530_curspl[cpu] = level;
-	*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
-	*(u_int32_t *)AV_EXIEN(cpu) = ext_int_mask_reg[cpu] = exmask;
+	*(u_int32_t *)AV_IEN(cpu) = av530_int_mask_reg[cpu] = mask;
+	*(u_int32_t *)AV_EXIEN(cpu) = av530_ext_int_mask_reg[cpu] = exmask;
 	/*
 	 * We do not flush the pipeline here, because interrupts are disabled,
 	 * and set_psr() will synchronize the pipeline.
@@ -264,8 +268,9 @@ av530_raiseipl(u_int level)
 #endif
 
 		av530_curspl[cpu] = level;
-		*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
-		*(u_int32_t *)AV_EXIEN(cpu) = ext_int_mask_reg[cpu] = exmask;
+		*(u_int32_t *)AV_IEN(cpu) = av530_int_mask_reg[cpu] = mask;
+		*(u_int32_t *)AV_EXIEN(cpu) =
+		    av530_ext_int_mask_reg[cpu] = exmask;
 	}
 	/*
 	 * We do not flush the pipeline here, because interrupts are disabled,
@@ -284,35 +289,35 @@ av530_intsrc(int i)
 {
 	static const u_int32_t intsrc[] = {
 		0,
-		IRQ_ABORT,
-		IRQ_ACF,
-		IRQ_SF,
-		0,	/* XXX no clock */
-		IRQ_DI,
+		AV530_IRQ_ABORT,
+		AV530_IRQ_ACF,
+		AV530_IRQ_SF,
+		0,
+		AV530_IRQ_DI,
 		0,
 		0,
 		0,
 		0,
 		0,
-		IRQ_VME1,
-		IRQ_VME2,
-		IRQ_VME3,
-		IRQ_VME4,
-		IRQ_VME5,
-		IRQ_VME6,
-		IRQ_VME7
+		AV530_IRQ_VME1,
+		AV530_IRQ_VME2,
+		AV530_IRQ_VME3,
+		AV530_IRQ_VME4,
+		AV530_IRQ_VME5,
+		AV530_IRQ_VME6,
+		AV530_IRQ_VME7
 	}, ext_intsrc[] = {
 		0,
 		0,
 		0,
 		0,
+		AV530_EXIRQ_PIT0OF,
 		0,
-		0,
-		EXIRQ_DUART2,
-		EXIRQ_LAN0,
-		EXIRQ_LAN1,
-		EXIRQ_SCSI0,
-		EXIRQ_SCSI1,
+		AV530_EXIRQ_DUART2,
+		AV530_EXIRQ_LAN0,
+		AV530_EXIRQ_LAN1,
+		AV530_EXIRQ_SCSI0,
+		AV530_EXIRQ_SCSI1,
 		0,
 		0,
 		0,
@@ -331,31 +336,31 @@ av530_intsrc(int i)
 /*
  * Provide the interrupt source for a given interrupt status bit.
  */
-static const u_int obio_vec[32] = {
+static const u_int av530_obio_vec[32] = {
 	0,			/* SWI0 */
 	0,			/* SWI1 */
 	0,			/* SWI2 */
 	0,			/* SWI3 */
-	INTSRC_VME,		/* VME1 */
+	INTSRC_VME(1),		/* VME1 */
 	0,
-	INTSRC_VME,		/* VME2 */
+	INTSRC_VME(2),		/* VME2 */
 	0,			/* SIGLPI */
 	0,			/* LMI */
 	0,
-	INTSRC_VME,		/* VME3 */
+	INTSRC_VME(3),		/* VME3 */
 	0,
-	INTSRC_VME,		/* VME4 */
+	INTSRC_VME(4),		/* VME4 */
 	0,
-	INTSRC_VME,		/* VME5 */
+	INTSRC_VME(5),		/* VME5 */
 	0,
 	0,			/* HPI */
 	INTSRC_DUART1,		/* DI */
 	0,			/* MEM */
-	INTSRC_VME,		/* VME6 */
+	INTSRC_VME(6),		/* VME6 */
 	INTSRC_SYSFAIL,		/* SF */
 	0,
 	0,			/* KBD */
-	INTSRC_VME,		/* VME7 */
+	INTSRC_VME(7),		/* VME7 */
 	0,			/* SWI4 */
 	0,			/* SWI5 */
 	0,			/* SWI6 */
@@ -365,7 +370,7 @@ static const u_int obio_vec[32] = {
 	INTSRC_ACFAIL,		/* ACF */
 	INTSRC_ABORT		/* ABORT */
 };
-static const u_int obio_exvec[32] = {
+static const u_int av530_obio_exvec[32] = {
 	0,
 	0,
 	0,
@@ -393,7 +398,7 @@ static const u_int obio_exvec[32] = {
 	0,			/* DMA3C */
 	0,			/* DMA4C */
 	0,
-	0,			/* PIT0OF */
+	INTSRC_CLOCK,		/* PIT0OF */
 	0,			/* PIT1OF */
 	0,			/* PIT2OF */
 	0,			/* PIT3OF */
@@ -406,6 +411,11 @@ static const u_int obio_exvec[32] = {
 
 #define VME_VECTOR_MASK		0x1ff 	/* mask into VIACK register */
 #define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
+
+#define ISR_GET_CURRENT_MASK(cpu) \
+	(*(volatile u_int *)AV_IST & av530_int_mask_reg[cpu])
+#define EXISR_GET_CURRENT_MASK(cpu) \
+	(*(volatile u_int *)AV_EXIST & av530_ext_int_mask_reg[cpu])
 
 void
 av530_intr(struct trapframe *eframe)
@@ -467,25 +477,26 @@ av530_intr(struct trapframe *eframe)
 		warn = 0;
 		if (cur_mask != 0) {
 			intbit = ff1(cur_mask);
-			intsrc = obio_vec[intbit];
+			intsrc = av530_obio_vec[intbit];
 
 			if (intsrc == 0)
 				panic("%s: unexpected interrupt source"
 				    " (bit %d), level %d, mask 0x%b",
 				    __func__, intbit, level,
-				    cur_mask, IST_STRING);
+				    cur_mask, AV530_IST_STRING);
 		} else {
 			intbit = ff1(cur_exmask);
-			intsrc = obio_exvec[intbit];
+			intsrc = av530_obio_exvec[intbit];
 
 			if (intsrc == 0)
 				panic("%s: unexpected extended interrupt source"
 				    " (bit %d), level %d, mask 0x%b",
 				    __func__, intbit, level,
-				    cur_exmask, EXIST_STRING);
+				    cur_exmask, AV530_EXIST_STRING);
 		}
 
-		if (intsrc == INTSRC_VME) {
+		if (IS_VME_INTSRC(intsrc)) {
+			level = VME_INTSRC_LEVEL(intsrc);
 			ivec = AV530_VIRQLV + (level << 2);
 			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
@@ -494,7 +505,7 @@ av530_intr(struct trapframe *eframe)
 				    "interrupt vector, "
 				    "level %d, mask 0x%b\n",
 				    __func__, level,
-				    cur_mask, IST_STRING);
+				    cur_mask, AV530_IST_STRING);
 				ign_mask |= 1 << intbit;
 				continue;
 			}
@@ -532,12 +543,12 @@ av530_intr(struct trapframe *eframe)
 			else
 				ign_exmask |= 1 << intbit;
 
-			if (intsrc == INTSRC_VME)
+			if (IS_VME_INTSRC(intsrc))
 				printf("%s: %s VME interrupt, "
 				    "level %d, vec 0x%x, mask 0x%b\n",
 				    __func__,
 				    warn == 1 ? "spurious" : "unclaimed",
-				    level, vec, cur_mask, IST_STRING);
+				    level, vec, cur_mask, AV530_IST_STRING);
 			else {
 				if (cur_mask != 0)
 					printf("%s: %s interrupt, "
@@ -546,7 +557,7 @@ av530_intr(struct trapframe *eframe)
 					    warn == 1 ?
 					      "spurious" : "unclaimed",
 					    level, intbit,
-					    cur_mask, IST_STRING);
+					    cur_mask, AV530_IST_STRING);
 				else
 					printf("%s: %s extended interrupt, "
 					    "level %d, bit %d, mask 0x%b\n",
@@ -554,7 +565,7 @@ av530_intr(struct trapframe *eframe)
 					    warn == 1 ?
 					      "spurious" : "unclaimed",
 					    level, intbit,
-					    cur_exmask, EXIST_STRING);
+					    cur_exmask, AV530_EXIST_STRING);
 			}
 		}
 	}

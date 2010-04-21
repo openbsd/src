@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.15 2010/04/18 22:04:37 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.16 2010/04/21 19:33:45 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -167,9 +167,21 @@ av400_ptable[] = {
 	  UVM_PROT_RW,	CACHE_INH },
 #if 0	/* mapped by the hardcoded BATC entries */
 	{ AV400_UTILITY,AV400_UTILITY,	AV400_UTILITY_SIZE,
-	  UVM_PROT_RW,	CACHE_INHIBIT },
+	  UVM_PROT_RW,	CACHE_INH },
 #endif
 	{ 0, 0, (vsize_t)-1, 0, 0 }
+};
+
+const struct vme_range vme_av400[] = {
+	{ VME_A16,
+	  AV400_VME16_START,	AV400_VME16_END,	AV400_VME16_BASE },
+	{ VME_A24,
+	  AV400_VME24_START,	AV400_VME24_END,	AV400_VME24_BASE },
+	{ VME_A32,
+	  AV400_VME32_START1,	AV400_VME32_END1,	AV400_VME32_BASE },
+	{ VME_A32,
+	  AV400_VME32_START2,	AV400_VME32_END2,	AV400_VME32_BASE },
+	{ 0 }
 };
 
 const struct board board_av400 = {
@@ -185,14 +197,7 @@ const struct board board_av400 = {
 	av400_intsrc,
 
 	av400_ptable,
-
-	AV400_VME16_BASE,
-		AV400_VME16_START,	AV400_VME16_END,
-	AV400_VME24_BASE,
-		AV400_VME24_START,	AV400_VME24_END,
-	AV400_VME32_BASE,
-		AV400_VME32_START1,	AV400_VME32_END1,
-		AV400_VME32_START2,	AV400_VME32_END2
+	vme_av400
 };
 
 /*
@@ -208,7 +213,7 @@ const struct board board_av400 = {
  * Note that, on the AV400 design, the interrupt enable registers are
  * write-only and read back as 0xffffffff.
  */
-static u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
+u_int32_t av400_int_mask_reg[] = { 0, 0, 0, 0 };
 
 u_int av400_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
@@ -216,7 +221,7 @@ u_int av400_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 /*
  * Interrupts allowed on secondary processors.
  */
-#define	SLAVE_MASK	0	/* IRQ_SWI0 | IRQ_SWI1 */
+#define	SLAVE_MASK	0	/* AV400_IRQ_SWI0 | AV400_IRQ_SWI1 */
 #endif
 
 /*
@@ -245,8 +250,6 @@ void
 av400_startup()
 {
 }
-
-int32_t cpuid, sysid;
 
 void
 av400_bootstrap()
@@ -318,7 +321,7 @@ av400_setipl(u_int level)
 #endif
 
 	av400_curspl[cpu] = level;
-	*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
+	*(u_int32_t *)AV_IEN(cpu) = av400_int_mask_reg[cpu] = mask;
 	/*
 	 * We do not flush the pipeline here, because interrupts are disabled,
 	 * and set_psr() will synchronize the pipeline.
@@ -345,7 +348,7 @@ av400_raiseipl(u_int level)
 #endif
 
 		av400_curspl[cpu] = level;
-		*(u_int32_t *)AV_IEN(cpu) = int_mask_reg[cpu] = mask;
+		*(u_int32_t *)AV_IEN(cpu) = av400_int_mask_reg[cpu] = mask;
 	}
 	/*
 	 * We do not flush the pipeline here, because interrupts are disabled,
@@ -364,23 +367,23 @@ av400_intsrc(int i)
 {
 	static const u_int32_t intsrc[] = {
 		0,
-		IRQ_ABORT,
-		IRQ_ACF,
-		IRQ_SF,
-		IRQ_CIOI,
-		IRQ_DI1,
-		IRQ_DI2,
-		IRQ_ECI,
+		AV400_IRQ_ABORT,
+		AV400_IRQ_ACF,
+		AV400_IRQ_SF,
+		AV400_IRQ_CIOI,
+		AV400_IRQ_DI1,
+		AV400_IRQ_DI2,
+		AV400_IRQ_ECI,
 		0,
-		IRQ_SCI,
+		AV400_IRQ_SCI,
 		0,
-		IRQ_VME1,
-		IRQ_VME2,
-		IRQ_VME3,
-		IRQ_VME4,
-		IRQ_VME5,
-		IRQ_VME6,
-		IRQ_VME7
+		AV400_IRQ_VME1,
+		AV400_IRQ_VME2,
+		AV400_IRQ_VME3,
+		AV400_IRQ_VME4,
+		AV400_IRQ_VME5,
+		AV400_IRQ_VME6,
+		AV400_IRQ_VME7
 	};
 
 	return ((u_int64_t)intsrc[i]);
@@ -389,31 +392,31 @@ av400_intsrc(int i)
 /*
  * Provide the interrupt source for a given interrupt status bit.
  */
-static const u_int obio_vec[32] = {
+static const u_int av400_obio_vec[32] = {
 	0,			/* SWI0 */
 	0,			/* SWI1 */
 	0,
 	0,
-	INTSRC_VME,		/* VME1 */
+	INTSRC_VME(1),		/* VME1 */
 	INTSRC_SCSI1,		/* SCI */
-	INTSRC_VME,		/* VME2 */
+	INTSRC_VME(2),		/* VME2 */
 	0,
 	0,
 	0,			/* DVB */
-	INTSRC_VME,		/* VME3 */
+	INTSRC_VME(3),		/* VME3 */
 	0,			/* DWP */
-	INTSRC_VME,		/* VME4 */
+	INTSRC_VME(4),		/* VME4 */
 	0,			/* DTC */
-	INTSRC_VME,		/* VME5 */
+	INTSRC_VME(5),		/* VME5 */
 	INTSRC_ETHERNET1,	/* ECI */
 	INTSRC_DUART2,		/* DI2 */
 	INTSRC_DUART1,		/* DI1 */
 	0,			/* PPI */
-	INTSRC_VME,		/* VME6 */
+	INTSRC_VME(6),		/* VME6 */
 	INTSRC_SYSFAIL,		/* SF */
-	INTSRC_CIO,		/* CIOI */
+	INTSRC_CLOCK,		/* CIOI */
 	0,			/* KBD */
-	INTSRC_VME,		/* VME7 */
+	INTSRC_VME(7),		/* VME7 */
 	0,			/* PAR */
 	0,			/* VID */
 	0,			/* ZBUF */
@@ -430,6 +433,9 @@ static const u_int obio_vec[32] = {
 
 #define VME_VECTOR_MASK		0x1ff 	/* mask into VIACK register */
 #define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
+
+#define ISR_GET_CURRENT_MASK(cpu) \
+	(*(volatile u_int *)AV_IST & av400_int_mask_reg[cpu])
 
 void
 av400_intr(struct trapframe *eframe)
@@ -481,14 +487,16 @@ av400_intr(struct trapframe *eframe)
 		/* find the first bit set in the current mask */
 		warn = 0;
 		intbit = ff1(cur_mask);
-		intsrc = obio_vec[intbit];
+		intsrc = av400_obio_vec[intbit];
 
 		if (intsrc == 0)
 			panic("%s: unexpected interrupt source (bit %d), "
 			    "level %d, mask 0x%b",
-			    __func__, intbit, level, cur_mask, IST_STRING);
+			    __func__, intbit, level,
+			    cur_mask, AV400_IST_STRING);
 
-		if (intsrc == INTSRC_VME) {
+		if (IS_VME_INTSRC(intsrc)) {
+			level = VME_INTSRC_LEVEL(intsrc);
 			ivec = AV400_VIRQLV + (level << 2);
 			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
@@ -496,7 +504,7 @@ av400_intr(struct trapframe *eframe)
 				    "interrupt vector, "
 				    "level %d, mask 0x%b\n",
 				    __func__, level,
-				    cur_mask, IST_STRING);
+				    cur_mask, AV400_IST_STRING);
 				ign_mask |= 1 << intbit;
 				continue;
 			}
@@ -531,18 +539,19 @@ av400_intr(struct trapframe *eframe)
 		if (warn != 0) {
 			ign_mask |= 1 << intbit;
 
-			if (intsrc == INTSRC_VME)
+			if (IS_VME_INTSRC(intsrc))
 				printf("%s: %s VME interrupt, "
 				    "level %d, vec 0x%x, mask 0x%b\n",
 				    __func__,
 				    warn == 1 ? "spurious" : "unclaimed",
-				    level, vec, cur_mask, IST_STRING);
+				    level, vec,
+				    cur_mask, AV400_IST_STRING);
 			else
 				printf("%s: %s interrupt, "
 				    "level %d, bit %d, mask 0x%b\n",
 				    __func__,
 				    warn == 1 ? "spurious" : "unclaimed",
-				    level, intbit, cur_mask, IST_STRING);
+				    level, intbit, cur_mask, AV400_IST_STRING);
 		}
 	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask) != 0);
 

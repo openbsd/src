@@ -1,6 +1,6 @@
-/*	$OpenBSD: cio_clock.c,v 1.1 2007/12/19 22:05:04 miod Exp $	*/
+/*	$OpenBSD: cio_clock.c,v 1.2 2010/04/21 19:33:45 miod Exp $	*/
 /*
- * Copyright (c) 2006, 2007, Miodrag Vallat.
+ * Copyright (c) 2006, 2007, 2009 Miodrag Vallat.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -138,22 +138,16 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
+#include <sys/mutex.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/asm_macro.h>
 #include <machine/board.h>
-#include <machine/cmmu.h>
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/trap.h>
-
-#include <machine/m88100.h>
-#include <machine/m8820x.h>
 #include <machine/avcommon.h>
-#include <machine/prom.h>
 
 #include <aviion/dev/sysconvar.h>
+#include <dev/ic/z8536reg.h>
 
 /*
  * Z8536 (CIO) Clock routines
@@ -163,29 +157,27 @@ void	cio_clock_init(u_int);
 u_int	read_cio(int);
 void	write_cio(int, u_int);
 
-struct intrhand	clock_ih;
+struct intrhand	cio_clock_ih;
 
 int	cio_clockintr(void *);
 int	cio_calibrateintr(void *);
+u_int	cio_get_timecount(struct timecounter *);
 
 volatile int cio_calibrate_phase = 0;
 extern u_int aviion_delay_const;
 
-struct simplelock cio_clock_lock;
+uint32_t	cio_step;
+uint32_t	cio_refcnt;
+uint32_t	cio_lastcnt;
 
-#define	CIO_LOCK	simple_lock(&acio_clock_lock)
-#define	CIO_UNLOCK	simple_unlock(&cio_clock__lock)
+struct mutex cio_mutex = MUTEX_INITIALIZER(IPL_CLOCK);
 
-/*
- * Statistics clock interval and variance, in usec.  Variance must be a
- * power of two.  Since this gives us an even number, not an odd number,
- * we discard one case and compensate.  That is, a variance of 4096 would
- * give us offsets in [0..4095].  Instead, we take offsets in [1..4095].
- * This is symmetric about the point 2048, or statvar/2, and thus averages
- * to that value (assuming uniform random numbers).
- */
-int statvar = 8192;
-int statmin;			/* statclock interval - 1/2*variance */
+struct timecounter cio_timecounter = {
+	.tc_get_timecount = cio_get_timecount,
+	.tc_counter_mask = 0xffffffff,
+	.tc_name = "cio",
+	.tc_quality = 0
+};
 
 /*
  * Notes on the AV400 clock usage:
@@ -211,8 +203,6 @@ cio_init_clocks(void)
 	psr = get_psr();
 	set_psr(psr | PSR_IND);
 
-	simple_lock_init(&cio_clock_lock);
-
 #ifdef DIAGNOSTIC
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
@@ -223,16 +213,16 @@ cio_init_clocks(void)
 
 	cio_clock_init(tick);
 
-	stathz = 0;
+	profhz = stathz = 0;
 
 	/*
 	 * Calibrate delay const.
 	 */
-	clock_ih.ih_fn = cio_calibrateintr;
-	clock_ih.ih_arg = 0;
-	clock_ih.ih_flags = INTR_WANTFRAME;
-	clock_ih.ih_ipl = IPL_CLOCK;
-	sysconintr_establish(INTSRC_CIO, &clock_ih, "clock");
+	cio_clock_ih.ih_fn = cio_calibrateintr;
+	cio_clock_ih.ih_arg = 0;
+	cio_clock_ih.ih_flags = INTR_WANTFRAME;
+	cio_clock_ih.ih_ipl = IPL_CLOCK;
+	sysconintr_establish(INTSRC_CLOCK, &cio_clock_ih, "clock");
 
 	aviion_delay_const = 1;
 	set_psr(psr);
@@ -250,22 +240,21 @@ cio_init_clocks(void)
 
 	set_psr(psr | PSR_IND);
 
-	sysconintr_disestablish(INTSRC_CIO, &clock_ih);
-	clock_ih.ih_fn = cio_clockintr;
-	sysconintr_establish(INTSRC_CIO, &clock_ih, "clock");
+	sysconintr_disestablish(INTSRC_CLOCK, &cio_clock_ih);
+	cio_clock_ih.ih_fn = cio_clockintr;
+	sysconintr_establish(INTSRC_CLOCK, &cio_clock_ih, "clock");
 
 	set_psr(psr);
+
+	tc_init(&cio_timecounter);
 }
 
 int
 cio_calibrateintr(void *eframe)
 {
-	CIO_LOCK;
-	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
-
-	/* restart counter */
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
-	CIO_UNLOCK;
+	/* no need to grab the mutex, only one processor is running for now */
+	/* ack the interrupt */
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_C_IP);
 
 	cio_calibrate_phase++;
 
@@ -275,12 +264,11 @@ cio_calibrateintr(void *eframe)
 int
 cio_clockintr(void *eframe)
 {
-	CIO_LOCK;
-	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
-
-	/* restart counter */
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
-	CIO_UNLOCK;
+	mtx_enter(&cio_mutex);
+	/* ack the interrupt */
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_C_IP);
+	cio_refcnt += cio_step;
+	mtx_leave(&cio_mutex);
 
 	hardclock(eframe);
 
@@ -291,12 +279,8 @@ cio_clockintr(void *eframe)
 void
 write_cio(int reg, u_int val)
 {
-	int s;
 	volatile int i;
 	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
-
-	s = splclock();
-	CIO_LOCK;
 
 	i = *cio_ctrl;				/* goto state 1 */
 	*cio_ctrl = 0;				/* take CIO out of RESET */
@@ -304,21 +288,15 @@ write_cio(int reg, u_int val)
 
 	*cio_ctrl = (reg & 0xff);		/* select register */
 	*cio_ctrl = (val & 0xff);		/* write the value */
-
-	CIO_UNLOCK;
-	splx(s);
 }
 
 /* Read CIO register */
 u_int
 read_cio(int reg)
 {
-	int c, s;
+	int c;
 	volatile int i;
 	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
-
-	s = splclock();
-	CIO_LOCK;
 
 	/* select register */
 	*cio_ctrl = (reg & 0xff);
@@ -327,8 +305,6 @@ read_cio(int reg)
 		;
 	/* read the value */
 	c = *cio_ctrl;
-	CIO_UNLOCK;
-	splx(s);
 	return (c & 0xff);
 }
 
@@ -341,33 +317,71 @@ cio_clock_init(u_int period)
 {
 	volatile int i;
 
-	CIO_LOCK;
-
 	/* Start by forcing chip into known state */
-	read_cio(CIO_MICR);
-	write_cio(CIO_MICR, CIO_MICR_RESET);	/* Reset the CTC */
+	read_cio(ZCIO_MIC);
+	write_cio(ZCIO_MIC, ZCIO_MIC_RESET);	/* Reset the CTC */
 	for (i = 0; i < 1000; i++)	 	/* Loop to delay */
 		;
 
 	/* Clear reset and start init seq. */
-	write_cio(CIO_MICR, 0x00);
+	write_cio(ZCIO_MIC, 0x00);
 
 	/* Wait for chip to come ready */
-	while ((read_cio(CIO_MICR) & CIO_MICR_RJA) == 0)
+	while ((read_cio(ZCIO_MIC) & ZCIO_MIC_RJA) == 0)
 		;
 
 	/* Initialize the 8536 for real */
-	write_cio(CIO_MICR,
-	    CIO_MICR_MIE /* | CIO_MICR_NV */ | CIO_MICR_RJA | CIO_MICR_DLC);
-	write_cio(CIO_CTMS1, CIO_CTMS_CSC);	/* Continuous count */
-	write_cio(CIO_PDCB, 0xff);		/* set port B to input */
+	write_cio(ZCIO_MIC,
+	    ZCIO_MIC_MIE /* | ZCIO_MIC_NV */ | ZCIO_MIC_RJA | ZCIO_MIC_DLC);
+	write_cio(ZCIO_CT1MD, ZCIO_CTMD_CSC);	/* Continuous count */
+	write_cio(ZCIO_PBDIR, 0xff);		/* set port B to input */
 
 	period <<= 1;	/* CT#1 runs at PCLK/2, hence 2MHz */
-	write_cio(CIO_CT1MSB, period >> 8);
-	write_cio(CIO_CT1LSB, period);
+	write_cio(ZCIO_CT1TCM, period >> 8);
+	write_cio(ZCIO_CT1TCL, period);
 	/* enable counter #1 */
-	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	write_cio(ZCIO_MCC, ZCIO_MCC_CT1E | ZCIO_MCC_PBE);
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_TCB | ZCIO_CTCS_S_IE);
 
-	CIO_UNLOCK;
+	cio_step = period;
+	cio_timecounter.tc_frequency = (uint64_t)cio_step * hz;
+}
+
+u_int
+cio_get_timecount(struct timecounter *tc)
+{
+	u_int cmsb, clsb, counter, curcnt;
+
+	/*
+	 * The CIO counter is free running, but by setting the
+	 * RCC bit in its control register, we can read a frozen
+	 * value of the counter.
+	 * The counter will automatically unfreeze after reading
+	 * its LSB.
+	 */
+
+	mtx_enter(&cio_mutex);
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_RCC);
+	cmsb = read_cio(ZCIO_CT1CCM);
+	clsb = read_cio(ZCIO_CT1CCL);
+	curcnt = cio_refcnt;
+
+	counter = (cmsb << 8) | clsb;
+#if 0	/* this will never happen unless the period itself is 65536 */
+	if (counter == 0)
+		counter = 65536;
+#endif
+
+	/*
+	 * The counter counts down from its initialization value to 1.
+	 */
+	counter = cio_step - counter;
+
+	curcnt += counter;
+	if (curcnt < cio_lastcnt)
+		curcnt += cio_step;
+
+	cio_lastcnt = curcnt;
+	mtx_leave(&cio_mutex);
+	return curcnt;
 }

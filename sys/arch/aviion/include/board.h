@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.5 2010/04/18 22:04:39 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.6 2010/04/21 19:33:47 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -31,25 +31,25 @@
 
 #include <machine/pmap_table.h>
 
+struct vme_range;
+
 struct board {
-	const char *descr;
-	void (*bootstrap)(void);
-	vaddr_t (*memsize)(void);
-	void (*startup)(void);
+	const char	*descr;
+	void		(*bootstrap)(void);
+	vaddr_t		(*memsize)(void);
+	void		(*startup)(void);
 
-	void (*intr)(struct trapframe *);
-	void (*init_clocks)(void);
-	u_int (*getipl)(void);
-	u_int (*setipl)(u_int);
-	u_int (*raiseipl)(u_int);
+	void		(*intr)(struct trapframe *);
+	void		(*init_clocks)(void);
+	u_int		(*getipl)(void);
+	u_int		(*setipl)(u_int);
+	u_int		(*raiseipl)(u_int);
 
-	u_int64_t (*intsrc)(int);
+	u_int64_t	(*intsrc)(int);
 
-	pmap_table_t ptable;
+	pmap_table_t	ptable;
 
-	vaddr_t	vme16_base, vme16_start, vme16_end;
-	vaddr_t vme24_base, vme24_start, vme24_end;
-	vaddr_t vme32_base, vme32_start1, vme32_end1, vme32_start2, vme32_end2;
+	const struct vme_range *vme_ranges;
 };
 
 #define	md_interrupt_func(f)	platform->intr(f)
@@ -80,21 +80,27 @@ DECLARE_BOARD(6280);
 #define	INTSRC_ABORT		1	/* abort button */
 #define	INTSRC_ACFAIL		2	/* AC failure */
 #define	INTSRC_SYSFAIL		3	/* system failure */
-#define	INTSRC_CIO		4	/* Z8536 */
+#define	INTSRC_CLOCK		4	/* clock chip */
 #define	INTSRC_DUART1		5	/* console MC68692 */
 #define	INTSRC_DUART2		6	/* secondary MC68692 */
 #define	INTSRC_ETHERNET1	7	/* first on-board Ethernet */
 #define	INTSRC_ETHERNET2	8	/* second on-board Ethernet */
 #define	INTSRC_SCSI1		9	/* first on-board SCSI controller */
 #define	INTSRC_SCSI2		10	/* second on-board SCSI controller */
-#define	INTSRC_VME		11	/* seven VME interrupt levels */
+#define	NINTSRC_SYSCON		11	/* total number of non-VME sources */
+#define	INTSRC_VME(lvl)	(NINTSRC_SYSCON + (lvl) - 1)	/* seven VME levels */
+
+#define	IS_VME_INTSRC(intsrc)		((intsrc) >= NINTSRC_SYSCON)
+#define	VME_INTSRC_LEVEL(intsrc)	((intsrc) - NINTSRC_SYSCON + 1)
 
 void	intsrc_enable(u_int, int);
 void	intsrc_disable(u_int);
 
+extern int32_t cpuid, sysid;
 extern const struct board *platform;/* just to have people confuse both names */
 
 void cio_init_clocks(void);
+void rtc_init_clocks(void);
 
 #endif	/* _LOCORE */
 #endif	/* _MACHINE_BOARD_H_ */

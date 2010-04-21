@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530.h,v 1.1 2010/04/18 22:04:39 miod Exp $	*/
+/*	$OpenBSD: av530.h,v 1.2 2010/04/21 19:33:47 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2010 Miodrag Vallat
  *
@@ -71,35 +71,35 @@
  * 530 series'', section 3 (Interrupts).
  */
 
-#define	IRQ_RESERVED	0x0020aa00	/* all reserved bits */
-#define IRQ_ABORT	0x80000000	/* 31 - Abort */
-#define IRQ_ACF		0x40000000	/* 30 - AC Fail */
-#define IRQ_ARBTO	0x20000000	/* 29 - VME Arbiter Timeout */
-#define	IRQ_DTI		0x10000000	/* 28 - DUART Timer Interrupt */
-#define IRQ_SWI7	0x08000000	/* 27 - SW Interrupt level 7 */
-#define IRQ_SWI6	0x04000000	/* 26 - SW Interrupt level 6 */
-#define IRQ_SWI5	0x02000000	/* 25 - SW Interrupt level 5 */
-#define IRQ_SWI4	0x01000000	/* 24 - SW Interrupt level 4 */
-#define IRQ_VME7	0x00800000	/* 23 - VMEBus level 7 */
-#define IRQ_KBD		0x00400000	/* 22 - Keyboard */
-#define IRQ_SF		0x00100000	/* 20 - System Failure */
-#define IRQ_VME6	0x00080000	/* 19 - VMEBus level 6 */
-#define IRQ_MEM		0x00040000	/* 18 - Memory Error */
-#define IRQ_DI		0x00020000	/* 17 - DUART */
-#define IRQ_SIGHPI	0x00010000	/* 16 - SIGHPI */
-#define IRQ_VME5	0x00004000	/* 14 - VMEBus level 5 */
-#define IRQ_VME4	0x00001000	/* 12 - VMEBus level 4 */
-#define IRQ_VME3	0x00000400	/* 10 - VMEBus level 3 */
-#define	IRQ_LMI		0x00000100	/* 08 - Location Monitor */
-#define	IRQ_SIGLPI	0x00000080	/* 07 - SIGLPI */
-#define IRQ_VME2	0x00000040	/* 06 - VMEBus level 2 */
-#define IRQ_VME1	0x00000010	/* 04 - VMEBus level 1 */
-#define IRQ_SWI3	0x00000008	/* 03 - SW Interrupt level 3 */
-#define IRQ_SWI2	0x00000004	/* 02 - SW Interrupt level 2 */
-#define IRQ_SWI1	0x00000002	/* 01 - SW Interrupt level 1 */
-#define IRQ_SWI0	0x00000001	/* 00 - SW Interrupt level 0 */
+#define	AV530_IRQ_RESERVED	0x0020aa00	/* all reserved bits */
+#define AV530_IRQ_ABORT		0x80000000	/* 31 - Abort */
+#define AV530_IRQ_ACF		0x40000000	/* 30 - AC Fail */
+#define AV530_IRQ_ARBTO		0x20000000	/* 29 - VME Arbiter Timeout */
+#define	AV530_IRQ_DTI		0x10000000	/* 28 - DUART Timer Interrupt */
+#define AV530_IRQ_SWI7		0x08000000	/* 27 - SW Interrupt level 7 */
+#define AV530_IRQ_SWI6		0x04000000	/* 26 - SW Interrupt level 6 */
+#define AV530_IRQ_SWI5		0x02000000	/* 25 - SW Interrupt level 5 */
+#define AV530_IRQ_SWI4		0x01000000	/* 24 - SW Interrupt level 4 */
+#define AV530_IRQ_VME7		0x00800000	/* 23 - VMEBus level 7 */
+#define AV530_IRQ_KBD		0x00400000	/* 22 - Keyboard */
+#define AV530_IRQ_SF		0x00100000	/* 20 - System Failure */
+#define AV530_IRQ_VME6		0x00080000	/* 19 - VMEBus level 6 */
+#define AV530_IRQ_MEM		0x00040000	/* 18 - Memory Error */
+#define AV530_IRQ_DI		0x00020000	/* 17 - DUART */
+#define AV530_IRQ_SIGHPI	0x00010000	/* 16 - SIGHPI */
+#define AV530_IRQ_VME5		0x00004000	/* 14 - VMEBus level 5 */
+#define AV530_IRQ_VME4		0x00001000	/* 12 - VMEBus level 4 */
+#define AV530_IRQ_VME3		0x00000400	/* 10 - VMEBus level 3 */
+#define	AV530_IRQ_LMI		0x00000100	/* 08 - Location Monitor */
+#define	AV530_IRQ_SIGLPI	0x00000080	/* 07 - SIGLPI */
+#define AV530_IRQ_VME2		0x00000040	/* 06 - VMEBus level 2 */
+#define AV530_IRQ_VME1		0x00000010	/* 04 - VMEBus level 1 */
+#define AV530_IRQ_SWI3		0x00000008	/* 03 - SW Interrupt level 3 */
+#define AV530_IRQ_SWI2		0x00000004	/* 02 - SW Interrupt level 2 */
+#define AV530_IRQ_SWI1		0x00000002	/* 01 - SW Interrupt level 1 */
+#define AV530_IRQ_SWI0		0x00000001	/* 00 - SW Interrupt level 0 */
 
-#define IST_STRING	"\20" \
+#define AV530_IST_STRING	"\20" \
 	"\40ABRT\37ACF\36ARBTO\35DTI\34SWI7\33SWI6\32SWI5\31SWI4" \
 	"\30IRQ7\27KBD\25SF\24IRQ6\23MEM\22DI\21SIGHPI" \
 	"\17IRQ5\15IRQ4\13IRQ3\11LMI" \
@@ -119,52 +119,90 @@
 
 #define	AV_EXIST	0xfff8e040
 
-#define EXISR_GET_CURRENT_MASK(cpu) \
-	(*(volatile u_int *)AV_EXIST & ext_int_mask_reg[cpu])
-
 /*
  * EXIEN and EXIST register bits
- * See ``Programming System control and I/O registers for the 4600 and 530
- * series'', section 3 (Interrupts).
+ * See ``Programming System Control and I/O Registers: AViiON 4600 and
+ * 530 series'', section 3 (Interrupts).
  */
 
-#define	EXIRQ_RESERVED	0x04000e9f	/* all reserved bits */
-#define EXIRQ_RTCOF	0x80000000	/* 31 - RTC Overflow */
-#define EXIRQ_PIT3OF	0x40000000	/* 30 - PIT 3 Overflow */
-#define EXIRQ_PIT2OF	0x20000000	/* 29 - PIT 2 Overflow */
-#define EXIRQ_PIT1OF	0x10000000	/* 28 - PIT 1 Overflow */
-#define EXIRQ_PIT0OF	0x08000000	/* 27 - PIT 0 Overflow */
-#define	EXIRQ_DMA4C	0x02000000	/* 25 - DMA4 Channel Complete */
-#define	EXIRQ_DMA3C	0x01000000	/* 24 - DMA3 Channel Complete */
-#define	EXIRQ_DMA2C	0x00800000	/* 23 - DMA2 Channel Complete */
-#define	EXIRQ_DMA1C	0x00400000	/* 22 - DMA1 Channel Complete */
-#define	EXIRQ_DMA0C	0x00200000	/* 21 - DMA0 Channel Complete */
-#define	EXIRQ_SCC	0x00100000	/* 20 - SCC */
-#define	EXIRQ_LAN0	0x00080000	/* 19 - Ethernet 0 */
-#define	EXIRQ_LAN1	0x00040000	/* 18 - Ethernet 1 */
-#define	EXIRQ_SCSI0	0x00020000	/* 17 - SCSI0 */
-#define	EXIRQ_SCSI1	0x00010000	/* 16 - SCSI1 */
-#define	EXIRQ_VIDEO	0x00008000	/* 15 - Video */
-#define	EXIRQ_ZBUF	0x00004000	/* 14 - Z Buffer */
-#define	EXIRQ_DUART2	0x00002000	/* 13 - DUART2 */
-#define	EXIRQ_VDMA	0x00001000	/* 12 - VDMA */
-#define	EXIRQ_IOEXP1	0x00000100	/* 8 - IO Expansion 1 */
-#define	EXIRQ_IOEXP2	0x00000040	/* 6 - IO Expansion 2 */
-#define	EXIRQ_PDMA	0x00000020	/* 5 - Parallel Printer DMA */
+#define	AV530_EXIRQ_RESERVED	0x04000e9f	/* all reserved bits */
+#define AV530_EXIRQ_RTCOF	0x80000000	/* 31 - RTC Overflow */
+#define AV530_EXIRQ_PIT3OF	0x40000000	/* 30 - PIT 3 Overflow */
+#define AV530_EXIRQ_PIT2OF	0x20000000	/* 29 - PIT 2 Overflow */
+#define AV530_EXIRQ_PIT1OF	0x10000000	/* 28 - PIT 1 Overflow */
+#define AV530_EXIRQ_PIT0OF	0x08000000	/* 27 - PIT 0 Overflow */
+#define	AV530_EXIRQ_DMA4C	0x02000000	/* 25 - DMA4 Channel Complete */
+#define	AV530_EXIRQ_DMA3C	0x01000000	/* 24 - DMA3 Channel Complete */
+#define	AV530_EXIRQ_DMA2C	0x00800000	/* 23 - DMA2 Channel Complete */
+#define	AV530_EXIRQ_DMA1C	0x00400000	/* 22 - DMA1 Channel Complete */
+#define	AV530_EXIRQ_DMA0C	0x00200000	/* 21 - DMA0 Channel Complete */
+#define	AV530_EXIRQ_SCC		0x00100000	/* 20 - SCC */
+#define	AV530_EXIRQ_LAN0	0x00080000	/* 19 - Ethernet 0 */
+#define	AV530_EXIRQ_LAN1	0x00040000	/* 18 - Ethernet 1 */
+#define	AV530_EXIRQ_SCSI0	0x00020000	/* 17 - SCSI0 */
+#define	AV530_EXIRQ_SCSI1	0x00010000	/* 16 - SCSI1 */
+#define	AV530_EXIRQ_VIDEO	0x00008000	/* 15 - Video */
+#define	AV530_EXIRQ_ZBUF	0x00004000	/* 14 - Z Buffer */
+#define	AV530_EXIRQ_DUART2	0x00002000	/* 13 - DUART2 */
+#define	AV530_EXIRQ_VDMA	0x00001000	/* 12 - VDMA */
+#define	AV530_EXIRQ_IOEXP1	0x00000100	/* 8 - IO Expansion 1 */
+#define	AV530_EXIRQ_IOEXP2	0x00000040	/* 6 - IO Expansion 2 */
+#define	AV530_EXIRQ_PDMA	0x00000020	/* 5 - Parallel Printer DMA */
 
-#define EXIST_STRING	"\20" \
+#define AV530_EXIST_STRING	"\20" \
 	"\40RTCOF\37PIT3OF\36PIT2OF\35PIT1OF\34PIT0OF\32DMA4\31DMA3" \
 	"\30DMA2\27DMA1\26DMA0\25SCC\24LAN0\23LAN1\22SCSI0\21SCSI1" \
 	"\20VIDEO\17ZBUF\16DUART2\15VDMA\11IOEXP1" \
 	"\7IOEXP2\6PDMA"
 
+/*
+ * Miscellaneous registers
+ */
+
 #define	AV530_SRST		0xfff83100	/* software reset */
 #define	SRST_KBD			0x08
 #define	SRST_DUART2			0x02
 #define	SRST_DUART1			0x01
-#define	AV530_IOBRDID0		0xfffcf000
-#define	AV530_IOBRDID1		0xfffcf004
+#define	AV530_IOBRDID0		0xfffcf000	/* byte access */
+#define	AV530_IOBRDID1		0xfffcf004	/* byte access */
 #define	AV530_CONFIG		0xfff8fffc
+
+#define	AV530_IOFUSE0		0xfffb0040	/* byte access */
+#define	AV530_IOFUSE1		0xfffb00c0	/* byte access */
+#define	AV530_IOFUSE_LAN		0x02
+#define	AV530_IOFUSE_SCSI		0x01
+
+/*
+ * PIT and RTC
+ */
+
+#define	AV530_PIT0_CNT		0xfff8f004
+#define	AV530_PIT1_CNT		0xfff8f008
+#define	AV530_PIT2_CNT		0xfff8f010
+#define	AV530_PIT3_CNT		0xfff8f020
+#define	AV530_PIT0_CS		0xfff8f044
+#define	AV530_PIT1_CS		0xfff8f048
+#define	AV530_PIT2_CS		0xfff8f050
+#define	AV530_PIT3_CS		0xfff8f060
+#define	AV530_PIT_CMD_ALL	0xfff8f07c
+#define	AV530_PIT_CTEN			0x00000008
+#define	AV530_PIT_TEST			0x00000004
+#define	AV530_PIT_IACK			0x00000002
+#define	AV530_PIT_RESET			0x00000001
+
+#define	AV530_RTC_CNT		0xfff8f084
+#define	AV530_RTC_CS		0xfff8f088
+#define	AV530_RTC_IACK			0x00000002
+#define	AV530_RTC_RESET			0x00000001
+
+/*
+ * Onboard device addresses
+ */
+
+#define	AV530_SCSI1	0xfffb0000
+#define	AV530_SCSI2	0xfffb0080
+#define	AV530_LAN1	0xfffb00c0
+#define	AV530_LAN2	0xfffb0140
 
 /*
  * CMMU addresses

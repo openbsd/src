@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400.h,v 1.6 2010/04/18 22:04:39 miod Exp $	*/
+/*	$OpenBSD: av400.h,v 1.7 2010/04/21 19:33:47 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -85,7 +85,6 @@
 #define	AV400_VIACK6V	0xfff85018
 #define	AV400_VIACK7V	0xfff8501c
 #define	AV400_VIRQV	0xfff85020
-#define	AV400_IVEC		0x40	/* vector returned upon AV400 int */
 
 /*
  * IEN and IST register bits
@@ -93,35 +92,35 @@
  * 400, 3000 and 4000 series'', section 3 (Interrupts).
  */
 
-#define	IRQ_RESERVED	0x1800018c	/* all reserved bits */
-#define IRQ_ABORT	0x80000000	/* 31 - Abort */
-#define IRQ_ACF		0x40000000	/* 30 - AC Fail */
-#define IRQ_ARBTO	0x20000000	/* 29 - VME Arbiter Timeout */
-#define IRQ_ZBUF	0x04000000	/* 26 - Z Buffer */
-#define IRQ_VID		0x02000000	/* 25 - Video */
-#define IRQ_PAR		0x01000000	/* 24 - Parity Error */
-#define IRQ_VME7	0x00800000	/* 23 - VMEBus level 7 */
-#define IRQ_KBD		0x00400000	/* 22 - Keyboard */
-#define IRQ_CIOI	0x00200000	/* 21 - CIO */
-#define IRQ_SF		0x00100000	/* 20 - System Failure */
-#define IRQ_VME6	0x00080000	/* 19 - VMEBus level 6 */
-#define IRQ_PPI		0x00040000	/* 18 - Parallel Port */
-#define IRQ_DI1		0x00020000	/* 17 - DUART1 */
-#define IRQ_DI2		0x00010000	/* 16 - DUART2 */
-#define IRQ_ECI		0x00008000	/* 15 - Ethernet Controller */
-#define IRQ_VME5	0x00004000	/* 14 - VMEBus level 5 */
-#define IRQ_DTC		0x00002000	/* 13 - DMA Terminal Count */
-#define IRQ_VME4	0x00001000	/* 12 - VMEBus level 4 */
-#define IRQ_DWP		0x00000800	/* 11 - DMA Write Protect */
-#define IRQ_VME3	0x00000400	/* 10 - VMEBus level 3 */
-#define IRQ_DVB		0x00000200	/* 09 - DMA Valid Bit */
-#define IRQ_VME2	0x00000040	/* 06 - VMEBus level 2 */
-#define IRQ_SCI		0x00000020	/* 05 - SCSI Controller */
-#define IRQ_VME1	0x00000010	/* 04 - VMEBus level 1 */
-#define IRQ_SWI1	0x00000002	/* 01 - SW Interrupt level 1 */
-#define IRQ_SWI0	0x00000001	/* 00 - SW Interrupt level 0 */
+#define	AV400_IRQ_RESERVED	0x1800018c	/* all reserved bits */
+#define AV400_IRQ_ABORT		0x80000000	/* 31 - Abort */
+#define AV400_IRQ_ACF		0x40000000	/* 30 - AC Fail */
+#define AV400_IRQ_ARBTO		0x20000000	/* 29 - VME Arbiter Timeout */
+#define AV400_IRQ_ZBUF		0x04000000	/* 26 - Z Buffer */
+#define AV400_IRQ_VID		0x02000000	/* 25 - Video */
+#define AV400_IRQ_PAR		0x01000000	/* 24 - Parity Error */
+#define AV400_IRQ_VME7		0x00800000	/* 23 - VMEBus level 7 */
+#define AV400_IRQ_KBD		0x00400000	/* 22 - Keyboard */
+#define AV400_IRQ_CIOI		0x00200000	/* 21 - CIO */
+#define AV400_IRQ_SF		0x00100000	/* 20 - System Failure */
+#define AV400_IRQ_VME6		0x00080000	/* 19 - VMEBus level 6 */
+#define AV400_IRQ_PPI		0x00040000	/* 18 - Parallel Port */
+#define AV400_IRQ_DI1		0x00020000	/* 17 - DUART1 */
+#define AV400_IRQ_DI2		0x00010000	/* 16 - DUART2 */
+#define AV400_IRQ_ECI		0x00008000	/* 15 - Ethernet Controller */
+#define AV400_IRQ_VME5		0x00004000	/* 14 - VMEBus level 5 */
+#define AV400_IRQ_DTC		0x00002000	/* 13 - DMA Terminal Count */
+#define AV400_IRQ_VME4		0x00001000	/* 12 - VMEBus level 4 */
+#define AV400_IRQ_DWP		0x00000800	/* 11 - DMA Write Protect */
+#define AV400_IRQ_VME3		0x00000400	/* 10 - VMEBus level 3 */
+#define AV400_IRQ_DVB		0x00000200	/* 09 - DMA Valid Bit */
+#define AV400_IRQ_VME2		0x00000040	/* 06 - VMEBus level 2 */
+#define AV400_IRQ_SCI		0x00000020	/* 05 - SCSI Controller */
+#define AV400_IRQ_VME1		0x00000010	/* 04 - VMEBus level 1 */
+#define AV400_IRQ_SWI1		0x00000002	/* 01 - SW Interrupt level 1 */
+#define AV400_IRQ_SWI0		0x00000001	/* 00 - SW Interrupt level 0 */
 
-#define IST_STRING	"\20" \
+#define AV400_IST_STRING	"\20" \
 	"\40ABRT\37ACF\36ARBTO\33ZBUF\32VID\31PAR" \
 	"\30IRQ7\27KBD\26CIOI\25SF\24IRQ6\23PPI\22DI1\21DI2" \
 	"\20ECI\17IRQ5\16DTC\15IRQ4\14DWP\13IRQ3\12DVB" \
