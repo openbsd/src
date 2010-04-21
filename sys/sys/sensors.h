@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.28 2010/04/20 20:49:35 deraadt Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.29 2010/04/21 04:07:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -48,6 +48,7 @@ enum sensor_type {
 	SENSOR_TIMEDELTA,		/* system time error (nSec) */
 	SENSOR_HUMIDITY,		/* humidity (m%RH) */
 	SENSOR_FREQ,			/* frequency (Hz) */
+	SENSOR_ANGLE,			/* degrees */
 	SENSOR_MAX_TYPES
 };
 
@@ -70,6 +71,7 @@ static const char * const sensor_type_s[SENSOR_MAX_TYPES + 1] = {
 	"timedelta",
 	"humidity",
 	"frequency",
+	"angle",
 	"undefined"
 };
 #endif	/* !_KERNEL */
