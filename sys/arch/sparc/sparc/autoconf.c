@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.83 2009/10/26 20:17:27 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.84 2010/04/21 03:03:26 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 
 #include <net/if.h>

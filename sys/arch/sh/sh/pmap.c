@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2010/01/01 13:17:52 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2010/04/21 03:03:26 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/msgbuf.h>
 

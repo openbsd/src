@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.34 2008/09/30 22:42:55 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.35 2010/04/21 03:03:26 deraadt Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 
 #include <uvm/uvm_extern.h>
 

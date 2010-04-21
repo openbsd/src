@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.3 2007/04/05 17:33:50 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.4 2010/04/21 03:03:26 deraadt Exp $	*/
 
 /* Public Domain */
 
@@ -8,6 +8,7 @@
 #if defined(_KERNEL)
 
 #include <machine/mtpr.h>
+#include <machine/intr.h>
 
 static __inline void
 atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)

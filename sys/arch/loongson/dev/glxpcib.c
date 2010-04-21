@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.4 2010/02/18 22:45:28 miod Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.5 2010/04/21 03:03:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -24,9 +24,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
-#include <sys/sysctl.h>
 #include <sys/timetc.h>
 
 #include <machine/bus.h>

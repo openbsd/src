@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.5 2007/03/17 23:42:06 drahn Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.6 2010/04/21 03:03:25 deraadt Exp $	*/
 
 /* Public Domain */
 
@@ -6,6 +6,9 @@
 #define __ARM_ATOMIC_H__
 
 #if defined(_KERNEL)
+
+#include <arm/armreg.h>
+#include <arm/cpufunc.h>
 
 /*
  * on pre-v6 arm processors, it is necessary to disable interrupts if

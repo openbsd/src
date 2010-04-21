@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.3 2007/04/27 19:22:47 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.4 2010/04/21 03:03:24 deraadt Exp $	*/
 
 /* Public Domain */
 
@@ -6,6 +6,8 @@
 #define __SPARC_ATOMIC_H__
 
 #if defined(_KERNEL)
+
+#include <machine/psl.h>
 
 static __inline void
 atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)

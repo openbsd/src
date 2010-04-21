@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.2 2006/10/06 21:16:57 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 2010/04/21 03:03:26 deraadt Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
 
 /*-
@@ -30,6 +30,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 
 #include <uvm/uvm_extern.h>

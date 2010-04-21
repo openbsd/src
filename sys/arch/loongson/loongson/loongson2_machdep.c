@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.8 2010/02/28 12:36:46 otto Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.9 2010/04/21 03:03:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>

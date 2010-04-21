@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.13 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.14 2010/04/21 03:03:26 deraadt Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

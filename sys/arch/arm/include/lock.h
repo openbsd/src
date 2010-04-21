@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.3 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: lock.h,v 1.4 2010/04/21 03:03:25 deraadt Exp $	*/
 /*	$NetBSD: lock.h,v 1.3 2002/10/07 23:19:49 bjh21 Exp $	*/
 
 /*-
@@ -41,6 +41,8 @@
 
 #ifndef _ARM_LOCK_H_
 #define	_ARM_LOCK_H_
+
+#include <arm/atomic.h>
 
 typedef __volatile int          __cpu_simple_lock_t;
 

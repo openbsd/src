@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.58 2010/02/13 14:04:45 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.59 2010/04/21 03:03:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -29,6 +29,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
