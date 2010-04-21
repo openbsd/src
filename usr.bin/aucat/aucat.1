@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.67 2010/04/07 06:47:52 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.68 2010/04/21 06:13:07 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 7 2010 $
+.Dd $Mdocdate: April 21 2010 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Op Fl f Ar device
 .Op Fl h Ar fmt
 .Op Fl i Ar file
+.Op Fl j Ar flag
 .Op Fl m Ar mode
 .Op Fl o Ar file
 .Op Fl q Ar device
@@ -89,6 +90,21 @@ Add this file to the list of files to play.
 If the option argument is
 .Sq -
 then standard input will be used.
+.It Fl j Ar flag
+Control whether channels are joined or expanded if
+the stream number of channels is not equal to the device number of channels.
+If the flag is
+.Va off
+then stream channels are routed to the corresponding
+device channel, possibly discarding channels not present in the device.
+If the flag is
+.Va on ,
+then a single stream channel may be sent on multiple device channels,
+or multiple stream channels may be sent to a single device channel.
+For instance, this feature could be used to request mono streams to
+be sent on multiple outputs or to record a stereo input into a mono stream.
+The default is
+.Ar on .
 .It Fl l
 Listen for incoming connections on a
 .Ux Ns -domain

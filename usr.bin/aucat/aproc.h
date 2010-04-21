@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.33 2010/04/17 09:16:57 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.34 2010/04/21 06:13:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -242,6 +242,7 @@ struct aproc *sub_new(char *, int, unsigned, struct aproc *);
 struct aproc *resamp_new(char *, unsigned, unsigned);
 struct aproc *enc_new(char *, struct aparams *);
 struct aproc *dec_new(char *, struct aparams *);
+struct aproc *join_new(char *);
 struct aproc *mon_new(char *, unsigned);
 
 int rfile_in(struct aproc *, struct abuf *);

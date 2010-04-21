@@ -318,7 +318,9 @@ wav_attach(struct wav *f, int force)
 	}
 #endif
 	dev_attach(f->pipe.file.name, f->mode,
-	    rbuf, &f->hpar, wbuf, &f->hpar, f->xrun, f->maxweight);
+	    rbuf, &f->hpar, f->join ? dev_opar.cmax - dev_opar.cmin + 1 : 0,
+	    wbuf, &f->hpar, f->join ? dev_ipar.cmax - dev_ipar.cmin + 1 : 0,
+	    f->xrun, f->maxweight);
 	if (f->mode & MODE_PLAY)
 		dev_setvol(rbuf, MIDI_TO_ADATA(f->vol));
 	return 1;
@@ -628,7 +630,7 @@ wav_locreq(void *arg, unsigned mmc)
  */
 struct wav *
 wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr, 
-    struct aparams *par, unsigned xrun, unsigned volctl, int tr)
+    struct aparams *par, unsigned xrun, unsigned volctl, int tr, int join)
 {
 	int fd;
 	struct wav *f;
@@ -668,6 +670,7 @@ wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 		f->map = NULL;
 	}
 	f->tr = tr;
+	f->join = join;
 	f->mode = mode;
 	f->hpar = *par;
 	f->hdr = 0;
@@ -698,7 +701,7 @@ wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
  */
 struct wav *
 wav_new_out(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
-    struct aparams *par, unsigned xrun, int tr)
+    struct aparams *par, unsigned xrun, int tr, int join)
 {
 	int fd;
 	struct wav *f;
@@ -734,6 +737,7 @@ wav_new_out(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 		f->startpos = f->endpos = 0;
 	}
 	f->tr = tr;
+	f->join = join;
 	f->mode = mode;
 	f->hpar = *par;
 	f->hdr = hdr;

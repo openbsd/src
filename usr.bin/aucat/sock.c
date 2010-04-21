@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.42 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.43 2010/04/21 06:13:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -517,7 +517,11 @@ sock_attach(struct sock *f, int force)
 	 * work (i.e., not to crash)
 	 */
 	dev_attach(f->pipe.file.name, f->mode,
-	    rbuf, &f->rpar, wbuf, &f->wpar, f->xrun, f->opt->maxweight);
+	    rbuf, &f->rpar,
+	    f->opt->join ? f->opt->rpar.cmax - f->opt->rpar.cmin + 1 : 0,
+	    wbuf, &f->wpar, 
+	    f->opt->join ? f->opt->wpar.cmax - f->opt->wpar.cmin + 1 : 0,
+	    f->xrun, f->opt->maxweight);
 	if (f->mode & AMSG_PLAY)
 		dev_setvol(rbuf, MIDI_TO_ADATA(f->vol));
 

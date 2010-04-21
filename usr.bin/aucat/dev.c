@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.47 2010/04/17 09:16:57 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.48 2010/04/21 06:13:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -650,14 +650,14 @@ dev_getpos(void)
  */
 void
 dev_attach(char *name, unsigned mode,
-    struct abuf *ibuf, struct aparams *sipar,
-    struct abuf *obuf, struct aparams *sopar,
+    struct abuf *ibuf, struct aparams *sipar, unsigned inch,
+    struct abuf *obuf, struct aparams *sopar, unsigned onch,
     unsigned xrun, int vol)
 {
 	struct abuf *pbuf = NULL, *rbuf = NULL;
 	struct aparams ipar, opar;
 	struct aproc *conv;
-	unsigned round, nblk;
+	unsigned round, nblk, nch;
 
 #ifdef DEBUG
 	if ((!APROC_OK(dev_mix)    && (mode & MODE_PLAY)) ||
@@ -667,11 +667,13 @@ dev_attach(char *name, unsigned mode,
 		return;
 	}
 #endif
+
 	if (mode & MODE_PLAY) {
 		ipar = *sipar;
 		pbuf = LIST_FIRST(&dev_mix->obuflist);
 		nblk = (dev_bufsz / dev_round + 3) / 4;
 		round = dev_roundof(ipar.rate);
+		nch = ipar.cmax - ipar.cmin + 1;
 		if (!aparams_eqenc(&ipar, &dev_opar)) {
 			conv = dec_new(name, &ipar);
 			ipar.bps = dev_opar.bps;
@@ -683,11 +685,25 @@ dev_attach(char *name, unsigned mode,
 			ibuf = abuf_new(nblk * round, &ipar);
 			aproc_setout(conv, ibuf);
 		}
+		if (inch > 0 && nch >= inch * 2) {
+			conv = join_new(name);
+			aproc_setin(conv, ibuf);
+			ipar.cmax = ipar.cmin + inch - 1;
+			ibuf = abuf_new(nblk * round, &ipar);
+			aproc_setout(conv, ibuf);
+		}
 		if (!aparams_eqrate(&ipar, &dev_opar)) {
 			conv = resamp_new(name, round, dev_round);
 			ipar.rate = dev_opar.rate;
 			round = dev_round;
 			aproc_setin(conv, ibuf);
+			ibuf = abuf_new(nblk * round, &ipar);
+			aproc_setout(conv, ibuf);
+		}
+		if (inch > 0 && nch * 2 <= inch) {
+			conv = join_new(name);
+			aproc_setin(conv, ibuf);
+			ipar.cmax = ipar.cmin + inch - 1;
 			ibuf = abuf_new(nblk * round, &ipar);
 			aproc_setout(conv, ibuf);
 		}
@@ -701,6 +717,7 @@ dev_attach(char *name, unsigned mode,
 		rbuf = LIST_FIRST(&dev_sub->ibuflist);
 		round = dev_roundof(opar.rate);
 		nblk = (dev_bufsz / dev_round + 3) / 4;
+		nch = opar.cmax - opar.cmin + 1;
 		if (!aparams_eqenc(&opar, &dev_ipar)) {
 			conv = enc_new(name, &opar);
 			opar.bps = dev_ipar.bps;
@@ -712,11 +729,25 @@ dev_attach(char *name, unsigned mode,
 			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}
+		if (onch > 0 && nch >= onch * 2) {
+			conv = join_new(name);
+			aproc_setout(conv, obuf);
+			opar.cmax = opar.cmin + onch - 1;
+			obuf = abuf_new(nblk * round, &opar);
+			aproc_setin(conv, obuf);
+		}
 		if (!aparams_eqrate(&opar, &dev_ipar)) {
 			conv = resamp_new(name, dev_round, round);
 			opar.rate = dev_ipar.rate;
 			round = dev_round;
 			aproc_setout(conv, obuf);
+			obuf = abuf_new(nblk * round, &opar);
+			aproc_setin(conv, obuf);
+		}
+		if (onch > 0 && nch * 2 <= onch) {
+			conv = join_new(name);
+			aproc_setout(conv, obuf);
+			opar.cmax = opar.cmin + onch - 1;
 			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}
@@ -728,6 +759,7 @@ dev_attach(char *name, unsigned mode,
 		rbuf = LIST_FIRST(&dev_submon->ibuflist);
 		round = dev_roundof(opar.rate);
 		nblk = (dev_bufsz / dev_round + 3) / 4;
+		nch = opar.cmax - opar.cmin + 1;
 		if (!aparams_eqenc(&opar, &dev_opar)) {
 			conv = enc_new(name, &opar);
 			opar.bps = dev_opar.bps;
@@ -739,11 +771,25 @@ dev_attach(char *name, unsigned mode,
 			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}
+		if (onch > 0 && nch >= onch * 2) {
+			conv = join_new(name);
+			aproc_setout(conv, obuf);
+			opar.cmax = opar.cmin + onch - 1;
+			obuf = abuf_new(nblk * round, &opar);
+			aproc_setin(conv, obuf);
+		}
 		if (!aparams_eqrate(&opar, &dev_opar)) {
 			conv = resamp_new(name, dev_round, round);
 			opar.rate = dev_opar.rate;
 			round = dev_round;
 			aproc_setout(conv, obuf);
+			obuf = abuf_new(nblk * round, &opar);
+			aproc_setin(conv, obuf);
+		}
+		if (onch > 0 && nch * 2 <= onch) {
+			conv = join_new(name);
+			aproc_setout(conv, obuf);
+			opar.cmax = opar.cmin + onch - 1;
 			obuf = abuf_new(nblk * round, &opar);
 			aproc_setin(conv, obuf);
 		}

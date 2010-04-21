@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.52 2010/04/17 09:16:57 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.53 2010/04/21 06:13:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1970,6 +1970,151 @@ dec_new(char *name, struct aparams *par)
 		aproc_dbg(p);
 		dbg_puts(": new ");
 		aparams_dbg(par);
+		dbg_puts("\n");
+	}
+#endif
+	return p;
+}
+
+/*
+ * Convert one block.
+ */
+void
+join_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
+{
+	unsigned h, hops;
+	unsigned inch, inext;
+	short *idata;
+	unsigned onch, onext;
+	short *odata;
+	int scale;
+	unsigned c, f, scount, icount, ocount;
+
+	/*
+	 * Calculate max frames readable at once from the input buffer.
+	 */
+	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
+	if (icount == 0)
+		return;
+	odata = (short *)abuf_wgetblk(obuf, &ocount, 0);
+	if (ocount == 0)
+		return;
+	scount = icount < ocount ? icount : ocount;
+	inch = ibuf->cmax - ibuf->cmin + 1;
+	onch = obuf->cmax - obuf->cmin + 1;
+	if (2 * inch <= onch) {
+		hops = onch / inch;
+		inext = inch * hops;
+		onext = onch - inext;
+		for (f = scount; f > 0; f--) {
+			h = hops;
+			for (;;) {
+				for (c = inch; c > 0; c--)
+					*odata++ = *idata++;
+				if (--h == 0)
+					break;
+				idata -= inch;
+			}
+			for (c = onext; c > 0; c--)
+				*odata++ = 0;
+		}
+	} else if (inch >= 2 * onch) {
+		hops = inch / onch;
+		inext = inch - onch * hops;
+		scale = ADATA_UNIT / hops;
+		inch -= onch + inext;
+		hops--;
+		for (f = scount; f > 0; f--) {
+			for (c = onch; c > 0; c--)
+				*odata++ = (*idata++ * scale)
+				    >> ADATA_SHIFT;
+			for (h = hops; h > 0; h--) {
+				odata -= onch;
+				for (c = onch; c > 0; c--)
+					*odata++ += (*idata++ * scale)
+					    >> ADATA_SHIFT;
+			}
+			idata += inext;
+		}
+	} else {
+#ifdef DEBUG
+		aproc_dbg(p);
+		dbg_puts(": nothing to do\n");
+		dbg_panic();
+#endif
+	}
+#ifdef DEBUG
+	if (debug_level >= 4) {
+		aproc_dbg(p);
+		dbg_puts(": bcopy ");
+		dbg_putu(scount);
+		dbg_puts(" fr\n");
+	}
+#endif
+	abuf_rdiscard(ibuf, scount);
+	abuf_wcommit(obuf, scount);
+}
+
+int
+join_in(struct aproc *p, struct abuf *ibuf)
+{
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	join_bcopy(p, ibuf, obuf);
+	if (!abuf_flush(obuf))
+		return 0;
+	return 1;
+}
+
+int
+join_out(struct aproc *p, struct abuf *obuf)
+{
+	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+
+	if (!abuf_fill(ibuf))
+		return 0;
+	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
+		return 0;
+	join_bcopy(p, ibuf, obuf);
+	return 1;
+}
+
+void
+join_eof(struct aproc *p, struct abuf *ibuf)
+{
+	aproc_del(p);
+}
+
+void
+join_hup(struct aproc *p, struct abuf *obuf)
+{
+	aproc_del(p);
+}
+
+struct aproc_ops join_ops = {
+	"join",
+	join_in,
+	join_out,
+	join_eof,
+	join_hup,
+	NULL,
+	NULL,
+	aproc_ipos,
+	aproc_opos,
+	NULL
+};
+
+struct aproc *
+join_new(char *name)
+{
+	struct aproc *p;
+
+	p = aproc_new(&join_ops, name);
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		aproc_dbg(p);
 		dbg_puts("\n");
 	}
 #endif

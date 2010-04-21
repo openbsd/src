@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.20 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.21 2010/04/21 06:13:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,8 +47,9 @@ void dev_sync(unsigned, struct abuf *, struct abuf *);
 unsigned dev_getmode(void);
 int dev_getpos(void);
 void dev_attach(char *, unsigned,
-    struct abuf *, struct aparams *,
-    struct abuf *, struct aparams *, unsigned, int);
+    struct abuf *, struct aparams *, unsigned,
+    struct abuf *, struct aparams *, unsigned,
+    unsigned, int);
 void dev_setvol(struct abuf *, int);
 void dev_clear(void);
 void dev_prime(void);
