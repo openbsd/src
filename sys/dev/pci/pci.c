@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.75 2010/04/21 21:16:43 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.76 2010/04/21 23:12:24 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1044,8 +1044,6 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (error);
 }
 
-#endif
-
 void
 pci_disable_vga(pci_chipset_tag_t pc, pcitag_t tag)
 {
@@ -1097,6 +1095,7 @@ pci_unroute_vga(struct pci_softc *sc)
 
 	pci_unroute_vga((struct pci_softc *)sc->sc_dev.dv_parent->dv_parent);
 }
+#endif /* USER_PCICONF */
 
 int
 pci_count_vga(struct pci_attach_args *pa)
