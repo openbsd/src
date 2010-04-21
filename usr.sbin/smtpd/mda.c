@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.42 2010/04/21 08:29:01 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.43 2010/04/21 18:54:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -56,7 +56,7 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	struct mda_session	*s;
 	struct path		*path;
 
-	if (iev->proc == PROC_RUNNER) {
+	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_MDA_SESS_NEW:
 			/* make new session based on provided args */
@@ -231,8 +231,8 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			event_del(&s->ev);
 			free(s);
 
-			/* update runner's session count */
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER],
+			/* update queue's session count */
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 			    IMSG_MDA_SESS_NEW, 0, 0, -1, NULL, 0);
 			return;
 
@@ -286,8 +286,7 @@ mda(struct smtpd *env)
 
 	struct peer peers[] = {
 		{ PROC_PARENT,	imsg_dispatch },
-		{ PROC_QUEUE,	imsg_dispatch },
-		{ PROC_RUNNER,	imsg_dispatch }
+		{ PROC_QUEUE,	imsg_dispatch }
 	};
 
 	switch (pid = fork()) {

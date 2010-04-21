@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.69 2010/04/21 08:29:01 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.70 2010/04/21 18:54:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -150,6 +150,12 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				return;
 			session_pickup(s, ss);
 			return;
+
+		case IMSG_SMTP_ENQUEUE:
+			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0,
+			    smtp_enqueue(env, NULL), imsg->data,
+			    sizeof(struct message));
+			return;
 		}
 	}
 
@@ -268,16 +274,6 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	if (iev->proc == PROC_RUNNER) {
-		switch (imsg->hdr.type) {
-		case IMSG_SMTP_ENQUEUE:
-			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0,
-			    smtp_enqueue(env, NULL), imsg->data,
-			    sizeof(struct message));
-			return;
-		}
-	}
-
 	fatalx("smtp_imsg: unexpected imsg");
 }
 
@@ -315,8 +311,7 @@ smtp(struct smtpd *env)
 		{ PROC_MFA,	imsg_dispatch },
 		{ PROC_QUEUE,	imsg_dispatch },
 		{ PROC_LKA,	imsg_dispatch },
-		{ PROC_CONTROL,	imsg_dispatch },
-		{ PROC_RUNNER,	imsg_dispatch }
+		{ PROC_CONTROL,	imsg_dispatch }
 	};
 
 	switch (pid = fork()) {

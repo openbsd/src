@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.103 2010/04/21 08:29:01 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.104 2010/04/21 18:54:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -315,7 +315,6 @@ lka(struct smtpd *env)
 		{ PROC_MFA,	imsg_dispatch },
 		{ PROC_QUEUE,	imsg_dispatch },
 		{ PROC_SMTP,	imsg_dispatch },
-		{ PROC_RUNNER,	imsg_dispatch },
 		{ PROC_MTA,	imsg_dispatch }
 	};
 

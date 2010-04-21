@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.101 2010/04/20 15:34:56 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.102 2010/04/21 18:54:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -116,7 +116,7 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
-	if (iev->proc == PROC_RUNNER) {
+	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_PARENT_ENQUEUE_OFFLINE:
 			if (! parent_enqueue_offline(env, imsg->data))
@@ -172,8 +172,6 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			imsg_compose_event(env->sc_ievs[PROC_MTA], IMSG_CTL_VERBOSE,
 	    		    0, 0, -1, imsg->data, sizeof(int));
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_CTL_VERBOSE,
-	    		    0, 0, -1, imsg->data, sizeof(int));
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_CTL_VERBOSE,
 	    		    0, 0, -1, imsg->data, sizeof(int));
 			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_CTL_VERBOSE,
 	    		    0, 0, -1, imsg->data, sizeof(int));
@@ -393,7 +391,7 @@ parent_sig_handler(int sig, short event, void *p)
 					    "message; smtpctl %s", cause);
 				else
 					log_debug("offline message enqueued");
-				imsg_compose_event(env->sc_ievs[PROC_RUNNER],
+				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
 				    NULL, 0);
 				break;
@@ -434,8 +432,7 @@ main(int argc, char *argv[])
 		{ PROC_MFA,	imsg_dispatch },
 		{ PROC_MTA,	imsg_dispatch },
 		{ PROC_SMTP,	imsg_dispatch },
-		{ PROC_QUEUE,	imsg_dispatch },
-		{ PROC_RUNNER,	imsg_dispatch }
+		{ PROC_QUEUE,	imsg_dispatch }
 	};
 
 	opts = 0;

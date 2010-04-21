@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.79 2010/04/21 08:29:01 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.80 2010/04/21 18:54:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -38,6 +38,7 @@
 #include "smtpd.h"
 
 void		queue_imsg(struct smtpd *, struct imsgev *, struct imsg *);
+void		queue_pass_to_runner(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	queue_shutdown(void);
 void		queue_sig_handler(int, short, void *);
 void		queue_setup_events(struct smtpd *);
@@ -57,7 +58,7 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	struct submit_status	 ss;
 	struct message		*m;
 	struct batch		*b;
-	int			 fd, ret, verbose;
+	int			 fd, ret;
 
 	if (iev->proc == PROC_SMTP) {
 		m = imsg->data;
@@ -112,6 +113,10 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			imsg_compose_event(iev, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd,
 			    &ss, sizeof ss);
 			return;
+
+		case IMSG_SMTP_ENQUEUE:
+			queue_pass_to_runner(env, iev, imsg);
+			return;
 		}
 	}
 
@@ -152,6 +157,15 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
+	if (iev->proc == PROC_RUNNER) {
+		/* forward imsgs from runner on its behalf */
+		log_debug("queue: runner sent %d imsg type %d", imsg->hdr.peerid, imsg->hdr.type);
+		imsg_compose_event(env->sc_ievs[imsg->hdr.peerid], imsg->hdr.type,
+		    0, imsg->hdr.pid, imsg->fd, (char *)imsg->data,
+		    imsg->hdr.len - sizeof imsg->hdr);
+		return;
+	}
+
 	if (iev->proc == PROC_MTA) {
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD:
@@ -162,9 +176,8 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			return;
 
 		case IMSG_QUEUE_MESSAGE_UPDATE:
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER],
-			    IMSG_RUNNER_UPDATE_ENVELOPE, 0, 0, -1, imsg->data,
-			    sizeof(struct message));
+		case IMSG_BATCH_DONE:
+			queue_pass_to_runner(env, iev, imsg);
 			return;
 		}
 	}
@@ -172,23 +185,48 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_MDA) {
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_MESSAGE_UPDATE:
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER],
-			    IMSG_RUNNER_UPDATE_ENVELOPE, 0, 0, -1, imsg->data,
-			    sizeof(struct message));
+		case IMSG_MDA_SESS_NEW:
+			queue_pass_to_runner(env, iev, imsg);
+			return;
+		}
+	}
+
+	if (iev->proc == PROC_CONTROL) {
+		switch (imsg->hdr.type) {
+		case IMSG_QUEUE_PAUSE_LOCAL:
+		case IMSG_QUEUE_PAUSE_OUTGOING:
+		case IMSG_QUEUE_RESUME_LOCAL:
+		case IMSG_QUEUE_RESUME_OUTGOING:
+		case IMSG_QUEUE_SCHEDULE:
+		case IMSG_QUEUE_REMOVE:
+			queue_pass_to_runner(env, iev, imsg);
 			return;
 		}
 	}
 
 	if (iev->proc == PROC_PARENT) {
 		switch (imsg->hdr.type) {
+		case IMSG_PARENT_ENQUEUE_OFFLINE:
+			queue_pass_to_runner(env, iev, imsg);
+			return;
+
 		case IMSG_CTL_VERBOSE:
-			memcpy(&verbose, imsg->data, sizeof verbose);
-			log_verbose(verbose);
+			log_verbose(*(int *)imsg->data);
+			queue_pass_to_runner(env, iev, imsg);
 			return;
 		}
 	}
 
 	fatalx("queue_imsg: unexpected imsg");
+}
+
+void
+queue_pass_to_runner(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
+{
+	log_debug("queue_pass_to_runner: from %d type %d", iev->proc, imsg->hdr.type);
+	imsg_compose_event(env->sc_ievs[PROC_RUNNER], imsg->hdr.type,
+	    iev->proc, imsg->hdr.pid, imsg->fd, imsg->data,
+	    imsg->hdr.len - sizeof imsg->hdr);
 }
 
 void

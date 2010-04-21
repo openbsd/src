@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.46 2010/01/10 16:42:35 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.47 2010/04/21 18:54:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -143,19 +143,19 @@ connected:
 		break;
  */
 	case PAUSE_MDA:
-		imsg_compose(ibuf, IMSG_MDA_PAUSE, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_LOCAL, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MTA:
-		imsg_compose(ibuf, IMSG_MTA_PAUSE, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_OUTGOING, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_SMTP:
 		imsg_compose(ibuf, IMSG_SMTP_PAUSE, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_MDA:
-		imsg_compose(ibuf, IMSG_MDA_RESUME, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_RESUME_LOCAL, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_MTA:
-		imsg_compose(ibuf, IMSG_MTA_RESUME, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_RESUME_OUTGOING, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_SMTP:
 		imsg_compose(ibuf, IMSG_SMTP_RESUME, 0, 0, -1, NULL, 0);
@@ -169,7 +169,7 @@ connected:
 		s.fd = -1;
 		bzero(s.mid, sizeof (s.mid));
 		strlcpy(s.mid, res->data, sizeof (s.mid));
-		imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &s, sizeof (s));
+		imsg_compose(ibuf, IMSG_QUEUE_SCHEDULE, 0, 0, -1, &s, sizeof (s));
 		break;
 	}
 	case REMOVE: {
@@ -178,7 +178,7 @@ connected:
 		s.fd = -1;
 		bzero(s.mid, sizeof (s.mid));
 		strlcpy(s.mid, res->data, sizeof (s.mid));
-		imsg_compose(ibuf, IMSG_RUNNER_REMOVE, 0, 0, -1, &s, sizeof (s));
+		imsg_compose(ibuf, IMSG_QUEUE_REMOVE, 0, 0, -1, &s, sizeof (s));
 		break;
 	}
 	case MONITOR:
