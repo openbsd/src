@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.10 2010/04/21 19:37:32 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.11 2010/04/21 19:45:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -35,6 +35,7 @@
 #include "smtpd.h"
 
 struct map_backend *map_backend_lookup(enum map_src);
+struct map_parser *map_parser_lookup(enum map_kind);
 
 /* db(3) backend */
 void *map_db_open(char *);
@@ -60,6 +61,15 @@ struct map_backend {
 	  map_db_open, map_db_close, map_db_get, map_db_put },
 	{ S_FILE,
 	  map_stdio_open, map_stdio_close, map_stdio_get, map_stdio_put },
+};
+
+struct map_parser {
+	enum map_kind kind;
+	void *(*extract)(char *, size_t len);
+} map_parsers[] = {
+	{ K_NONE, NULL },
+	{ K_ALIASES, NULL },
+	{ K_CREDENTIALS, NULL }
 };
 
 struct map *
@@ -127,6 +137,20 @@ map_backend_lookup(enum map_src source)
 	return &map_backends[i];
 }
 
+struct map_parser *
+map_parser_lookup(enum map_kind kind)
+{
+	u_int8_t i;
+
+	for (i = 0; i < nitems(map_parsers); ++i)
+		if (map_parsers[i].kind == kind)
+			break;
+
+	if (i == nitems(map_parsers))
+		fatalx("invalid map kind");
+
+	return &map_parsers[i];
+}
 
 /* db(3) backend */
 void *

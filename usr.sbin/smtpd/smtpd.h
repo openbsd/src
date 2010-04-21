@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.175 2010/04/21 18:54:43 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.176 2010/04/21 19:45:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -248,6 +248,12 @@ enum map_src {
 	S_DB,
 	S_EXT
 };
+
+enum map_kind {
+	K_NONE,
+	K_ALIASES,
+	K_CREDENTIALS
+};	
 
 enum mapel_type {
 	ME_STRING,
