@@ -1,3 +1,4 @@
+/*	$OpenBSD: mainbus.c,v 1.5 2010/04/21 12:39:39 jasper Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
