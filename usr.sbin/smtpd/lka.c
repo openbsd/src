@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.105 2010/04/21 19:53:15 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.106 2010/04/21 21:47:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -56,7 +56,7 @@ struct lkasession *lka_session_init(struct smtpd *, struct submit_status *);
 void		lka_request_forwardfile(struct smtpd *, struct lkasession *, char *);
 void		lka_clear_expandtree(struct expandtree *);
 void		lka_clear_deliverylist(struct deliverylist *);
-int		lka_encode_credentials(char *, size_t, char *);
+int		lka_encode_credentials(char *, size_t, struct map_secret *);
 size_t		lka_expand(char *, size_t, struct path *);
 void		lka_rcpt_action(struct smtpd *, char *, struct path *);
 void		lka_session_destroy(struct smtpd *, struct lkasession *);
@@ -127,24 +127,26 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_MTA) {
 		switch (imsg->hdr.type) {
-		case IMSG_LKA_SECRET:
+		case IMSG_LKA_SECRET: {
+			struct map_secret *map_secret;
 			secret = imsg->data;
 			map = map_findbyname(env, "secrets");
 			if (map == NULL)
 				fatalx("lka: secrets map not found");
-			tmp = map_lookup(env, map->m_id, secret->host, K_SECRETS);
+			map_secret = map_lookup(env, map->m_id, secret->host, K_SECRETS);
 			log_debug("lka: %s secret lookup (%d)", secret->host,
-			    tmp != NULL);
+			    map_secret != NULL);
 			secret->secret[0] = '\0';
-			if (tmp == NULL)
+			if (map_secret == NULL)
 				log_warnx("%s secret not found", secret->host);
 			else if (lka_encode_credentials(secret->secret,
-				     sizeof secret->secret, tmp) == 0)
+				     sizeof secret->secret, map_secret) == 0)
 				log_warnx("%s secret parse fail", secret->host);
 			imsg_compose_event(iev, IMSG_LKA_SECRET, 0, 0, -1, secret,
 			    sizeof *secret);
-			free(tmp);
+			free(map_secret);
 			return;
+		}
 		}
 	}
 
@@ -795,16 +797,13 @@ lka_clear_deliverylist(struct deliverylist *deliverylist)
 }
 
 int
-lka_encode_credentials(char *dst, size_t size, char *user)
+lka_encode_credentials(char *dst, size_t size, struct map_secret *map_secret)
 {
-	char	*pass, *buf;
+	char	*buf;
 	int	 buflen;
 
-	if ((pass = strchr(user, ':')) == NULL)
-		return 0;
-	*pass++ = '\0';
-
-	if ((buflen = asprintf(&buf, "%c%s%c%s", '\0', user, '\0', pass)) == -1)
+	if ((buflen = asprintf(&buf, "%c%s%c%s", '\0', map_secret->username,
+		    '\0', map_secret->password)) == -1)
 		fatal(NULL);
 
 	if (__b64_ntop((unsigned char *)buf, buflen, dst, size) == -1) {

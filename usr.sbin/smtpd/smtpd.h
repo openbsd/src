@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.178 2010/04/21 21:04:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.179 2010/04/21 21:47:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -296,6 +296,11 @@ struct map_backend {
 struct map_parser {
 	enum map_kind kind;
 	void *(*extract)(char *, size_t);
+};
+
+struct map_secret {
+	char username[MAX_LINE_SIZE];
+	char password[MAX_LINE_SIZE];
 };
 
 enum cond_type {
@@ -952,7 +957,7 @@ void		 show_queue(char *, int);
 u_int16_t	queue_hash(char *);
 
 /* map.c */
-char		*map_lookup(struct smtpd *, objid_t, char *, enum map_kind);
+void		*map_lookup(struct smtpd *, objid_t, char *, enum map_kind);
 
 /* mda.c */
 pid_t		 mda(struct smtpd *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.14 2010/04/21 21:04:29 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.15 2010/04/21 21:47:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,7 @@ map_find(struct smtpd *env, objid_t id)
 	return (m);
 }
 
-char *
+void *
 map_lookup(struct smtpd *env, objid_t mapid, char *key, enum map_kind kind)
 {
 	void *hdl = NULL;
