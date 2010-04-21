@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.3 2007/12/29 17:43:12 miod Exp $ */
+/*	$OpenBSD: ieeefp.h,v 1.4 2010/04/21 15:37:32 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -60,6 +60,7 @@ typedef enum {
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #define	float_raise(bits)	curproc->p_md.md_tf->tf_fpsr |= bits
