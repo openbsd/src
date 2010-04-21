@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.12 2010/04/21 19:53:16 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.13 2010/04/21 20:10:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,13 +40,13 @@ struct map_parser *map_parser_lookup(enum map_kind);
 /* db(3) backend */
 void *map_db_open(char *);
 void map_db_close(void *);
-char *map_db_get(void *, char *);
+char *map_db_get(void *, char *, size_t *);
 int map_db_put(void *, char *, char *);
 
 /* stdio(3) backend */
 void *map_stdio_open(char *);
 void map_stdio_close(void *);
-char *map_stdio_get(void *, char *);
+char *map_stdio_get(void *, char *, size_t *);
 int map_stdio_put(void *, char *, char *);
 
 
@@ -54,7 +54,7 @@ struct map_backend {
 	enum map_src source;
 	void *(*open)(char *);
 	void (*close)(void *);
-	char *(*get)(void *, char *);
+	char *(*get)(void *, char *, size_t *);
 	int (*put)(void *, char *, char *);
 } map_backends[] = {
 	{ S_DB,
@@ -102,14 +102,18 @@ map_lookup(struct smtpd *env, objid_t mapid, char *key, enum map_kind kind)
 {
 	void *hdl = NULL;
 	char *result = NULL;
+	char *ret = NULL;
+	size_t len;
 	struct map *map;
 	struct map_backend *backend = NULL;
+	struct map_parser *parser = NULL;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
 		return NULL;
 
 	backend = map_backend_lookup(map->m_src);
+	parser  = map_parser_lookup(kind);
 
 	hdl = backend->open(map->m_config);
 	if (hdl == NULL) {
@@ -117,10 +121,18 @@ map_lookup(struct smtpd *env, objid_t mapid, char *key, enum map_kind kind)
 		return NULL;
 	}
 
-	result = backend->get(hdl, key);
-	backend->close(hdl);
+	ret = result = backend->get(hdl, key, &len);
+	if (ret == NULL)
+		goto end;
 
-	return result;
+	if (parser->extract != NULL) {
+		ret = parser->extract(result, len);
+		free(result);
+	}
+
+end:
+	backend->close(hdl);
+	return ret;
 }
 
 struct map_backend *
@@ -169,7 +181,7 @@ map_db_close(void *hdl)
 }
 
 char *
-map_db_get(void *hdl, char *key)
+map_db_get(void *hdl, char *key, size_t *len)
 {
 	int ret;
 	DBT dbk;
@@ -187,6 +199,8 @@ map_db_get(void *hdl, char *key)
 	if (result == NULL)
 		fatal("calloc");
 	(void)strlcpy(result, dbv.data, dbv.size);
+
+	*len = dbv.size;
 
 	return result;
 }
@@ -214,24 +228,24 @@ map_stdio_close(void *hdl)
 }
 
 char *
-map_stdio_get(void *hdl, char *key)
+map_stdio_get(void *hdl, char *key, size_t *len)
 {
 	char *buf, *lbuf;
-	size_t len;
+	size_t flen;
 	char *keyp;
 	char *valp;
 	FILE *fp = hdl;
 	char *result = NULL;
 
 	lbuf = NULL;
-	while ((buf = fgetln(fp, &len))) {
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
+	while ((buf = fgetln(fp, &flen))) {
+		if (buf[flen - 1] == '\n')
+			buf[flen - 1] = '\0';
 		else {
-			if ((lbuf = malloc(len + 1)) == NULL)
+			if ((lbuf = malloc(flen + 1)) == NULL)
 				err(1, NULL);
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
+			memcpy(lbuf, buf, flen);
+			lbuf[flen] = '\0';
 			buf = lbuf;
 		}
 
@@ -249,9 +263,11 @@ map_stdio_get(void *hdl, char *key)
 		if (strcmp(keyp, key) != 0)
 			continue;
 
-		result = strdup(buf);
+		result = strdup(valp);
 		if (result == NULL)
 			err(1, NULL);
+		*len = strlen(result);
+
 		break;
 	}
 	free(lbuf);
