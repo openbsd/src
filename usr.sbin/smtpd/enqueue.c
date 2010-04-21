@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.32 2010/01/11 21:43:37 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.33 2010/04/21 17:50:28 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -47,7 +47,7 @@ void	 usage(void);
 void	 sighdlr(int);
 int	 main(int, char *[]);
 void	 build_from(char *, struct passwd *);
-int	 parse_message(FILE *, int, int, struct buf *);
+int	 parse_message(FILE *, int, int, FILE *);
 void	 parse_addr(char *, size_t, int);
 void	 parse_addr_terminal(int);
 char	*qualify_addr(char *);
@@ -129,7 +129,7 @@ enqueue(int argc, char *argv[])
 	int			 i, ch, tflag = 0, noheader;
 	char			*fake_from = NULL;
 	struct passwd		*pw;
-	struct buf		*body;
+	FILE			*fp;
 
 	bzero(&msg, sizeof(msg));
 	time(&timestamp);
@@ -191,17 +191,17 @@ enqueue(int argc, char *argv[])
 	signal(SIGALRM, sighdlr);
 	alarm(300);
 
+	fp = tmpfile();
+	if (fp == NULL)
+		err(1, "tmpfile");
+	noheader = parse_message(stdin, fake_from == NULL, tflag, fp);
+
 	if ((msg.fd = open_connection()) == -1)
 		errx(1, "server too busy");
 
 	/* init session */
-	msg.pcb = client_init(msg.fd, open("/dev/null", O_RDONLY), "localhost",
-	    verbose);
-
-	/* parse message */
-	if ((body = buf_dynamic(0, SIZE_T_MAX)) == NULL)
-		err(1, "buf_dynamic failed");
-	noheader = parse_message(stdin, fake_from == NULL, tflag, body);
+	rewind(fp);
+	msg.pcb = client_init(msg.fd, fileno(fp), "localhost", verbose);
 
 	/* set envelope from */
 	client_sender(msg.pcb, "%s", msg.from);
@@ -231,9 +231,6 @@ enqueue(int argc, char *argv[])
 	/* add separating newline */
 	if (noheader)
 		client_printf(msg.pcb, "\n");
-
-	client_printf(msg.pcb, "%.*s", buf_size(body), body->buf);
-	buf_free(body);
 
 	alarm(0);
 	event_init();
@@ -325,7 +322,7 @@ build_from(char *fake_from, struct passwd *pw)
 }
 
 int
-parse_message(FILE *fin, int get_from, int tflag, struct buf *body)
+parse_message(FILE *fin, int get_from, int tflag, FILE *fout)
 {
 	char	*buf;
 	size_t	 len;
@@ -339,6 +336,8 @@ parse_message(FILE *fin, int get_from, int tflag, struct buf *body)
 			err(1, "fgetln");
 		if (buf == NULL && feof(fin))
 			break;
+		if (buf == NULL || len < 1)
+			err(1, "fgetln weird");
 
 		/* account for \r\n linebreaks */
 		if (len >= 2 && buf[len - 2] == '\r' && buf[len - 1] == '\n')
@@ -346,9 +345,6 @@ parse_message(FILE *fin, int get_from, int tflag, struct buf *body)
 
 		if (len == 1 && buf[0] == '\n')		/* end of header */
 			header_done = 1;
-
-		if (buf == NULL || len < 1)
-			err(1, "fgetln weird");
 
 		if (!WSP(buf[0])) {	/* whitespace -> continuation */
 			if (cur == HDR_FROM)
@@ -369,10 +365,11 @@ parse_message(FILE *fin, int get_from, int tflag, struct buf *body)
 			header_seen = 1;
 
 		if (cur != HDR_BCC) {
-			if (buf_add(body, buf, len) < 0)
-				err(1, "buf_add failed");
-			if (buf[len - 1] != '\n' && buf_add(body, "\n", 1) < 0)
-				err(1, "buf_add failed");
+			fprintf(fout, "%.*s", (int)len, buf);
+			if (buf[len - 1] != '\n')
+				fputc('\n', fout);
+			if (ferror(fout))
+				err(1, "write error");
 		}
 
 		/*
