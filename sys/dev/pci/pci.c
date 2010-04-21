@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.74 2010/04/21 18:55:40 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.75 2010/04/21 21:16:43 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -988,6 +988,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case PCIOCSETVGA:
 	{
 		struct pci_vga *vga = (struct pci_vga *)data;
+		int bus, device, function;
 
 		switch (vga->pv_lock) {
 		case PCI_VGA_UNLOCK:
@@ -1016,7 +1017,11 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		pci_vga_proc = p;
 
-		if (tag != pci_vga_tag) {
+		pci_decompose_tag(pci_vga_pci->sc_pc, pci_vga_tag,
+		    &bus, &device, &function);
+		if (bus != vga->pv_sel.pc_bus ||
+		    device != vga->pv_sel.pc_dev ||
+		    function != vga->pv_sel.pc_func) {
 			pci_disable_vga(pci_vga_pci->sc_pc, pci_vga_tag);
 			if (pci != pci_vga_pci) {
 				pci_unroute_vga(pci_vga_pci);
