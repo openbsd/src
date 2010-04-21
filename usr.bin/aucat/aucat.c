@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.84 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.85 2010/04/21 06:15:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -541,8 +541,8 @@ aucat_main(int argc, char **argv)
 	 * If there are no sockets paths provided use the default.
 	 */
 	if (l_flag && SLIST_EMPTY(&sfiles)) {
-		farg_add(&sfiles, &dopar, &dipar,
-		    volctl, HDR_RAW, XRUN_IGNORE, mmc, 0, mode, DEFAULT_OPT);
+		farg_add(&sfiles, &ipar, &opar,
+		    volctl, HDR_RAW, XRUN_IGNORE, mmc, join, mode, DEFAULT_OPT);
 	}
 
 	/*
