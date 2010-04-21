@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.176 2010/04/21 19:45:07 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.177 2010/04/21 19:53:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -252,7 +252,8 @@ enum map_src {
 enum map_kind {
 	K_NONE,
 	K_ALIASES,
-	K_CREDENTIALS
+	K_VIRTUAL,
+	K_SECRETS
 };	
 
 enum mapel_type {
@@ -937,7 +938,7 @@ void		 show_queue(char *, int);
 u_int16_t	queue_hash(char *);
 
 /* map.c */
-char		*map_lookup(struct smtpd *, objid_t, char *);
+char		*map_lookup(struct smtpd *, objid_t, char *, enum map_kind);
 
 /* mda.c */
 pid_t		 mda(struct smtpd *);

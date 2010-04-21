@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.11 2010/02/28 12:23:12 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.12 2010/04/21 19:53:16 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -80,7 +80,7 @@ ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_s
 					}
 					break;
 				case S_DB:
-					if (map_lookup(env, map->m_id, path->domain) != NULL) {
+					if (map_lookup(env, map->m_id, path->domain, K_VIRTUAL) != NULL) {
 						path->cond = cond;
 						return r;
 					}

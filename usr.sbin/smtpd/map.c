@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.11 2010/04/21 19:45:07 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.12 2010/04/21 19:53:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -69,7 +69,8 @@ struct map_parser {
 } map_parsers[] = {
 	{ K_NONE, NULL },
 	{ K_ALIASES, NULL },
-	{ K_CREDENTIALS, NULL }
+	{ K_VIRTUAL, NULL },
+	{ K_SECRETS, NULL }
 };
 
 struct map *
@@ -97,7 +98,7 @@ map_find(struct smtpd *env, objid_t id)
 }
 
 char *
-map_lookup(struct smtpd *env, objid_t mapid, char *key)
+map_lookup(struct smtpd *env, objid_t mapid, char *key, enum map_kind kind)
 {
 	void *hdl = NULL;
 	char *result = NULL;
