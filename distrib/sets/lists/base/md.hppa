@@ -94,7 +94,7 @@
 ./usr/lib/libcurses.so.11.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
-./usr/lib/libevent.so.2.0
+./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
 ./usr/lib/libg2c.so.8.1
@@ -1617,8 +1617,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/eti.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/evdns.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/event.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/expat_external.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/f2c.ph
