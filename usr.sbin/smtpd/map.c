@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.9 2010/02/17 17:37:15 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.10 2010/04/21 19:37:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,6 +34,8 @@
 
 #include "smtpd.h"
 
+struct map_backend *map_backend_lookup(enum map_src);
+
 /* db(3) backend */
 void *map_db_open(char *);
 void map_db_close(void *);
@@ -48,7 +50,7 @@ int map_stdio_put(void *, char *, char *);
 
 
 struct map_backend {
-	enum map_src map_type;
+	enum map_src source;
 	void *(*open)(char *);
 	void (*close)(void *);
 	char *(*get)(void *, char *);
@@ -87,7 +89,6 @@ map_find(struct smtpd *env, objid_t id)
 char *
 map_lookup(struct smtpd *env, objid_t mapid, char *key)
 {
-	u_int8_t i;
 	void *hdl = NULL;
 	char *result = NULL;
 	struct map *map;
@@ -97,14 +98,8 @@ map_lookup(struct smtpd *env, objid_t mapid, char *key)
 	if (map == NULL)
 		return NULL;
 
-	for (i = 0; i < nitems(map_backends); ++i)
-		if (map_backends[i].map_type == map->m_src)
-			break;
+	backend = map_backend_lookup(map->m_src);
 
-	if (i == nitems(map_backends))
-		fatalx("invalid map type");
-
-	backend = &map_backends[i];
 	hdl = backend->open(map->m_config);
 	if (hdl == NULL) {
 		log_warn("map_lookup: can't open %s", map->m_config);
@@ -115,6 +110,21 @@ map_lookup(struct smtpd *env, objid_t mapid, char *key)
 	backend->close(hdl);
 
 	return result;
+}
+
+struct map_backend *
+map_backend_lookup(enum map_src source)
+{
+	u_int8_t i;
+
+	for (i = 0; i < nitems(map_backends); ++i)
+		if (map_backends[i].source == source)
+			break;
+
+	if (i == nitems(map_backends))
+		fatalx("invalid map type");
+
+	return &map_backends[i];
 }
 
 
