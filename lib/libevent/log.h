@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.5 2008/05/02 06:09:11 brad Exp $	*/
+/*	$OpenBSD: log.h,v 1.6 2010/04/21 20:02:40 nicm Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -29,17 +29,25 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
-void event_err(int eval, const char *fmt, ...);
-void event_warn(const char *fmt, ...);
-void event_errx(int eval, const char *fmt, ...);
-void event_warnx(const char *fmt, ...);
-void event_msgx(const char *fmt, ...);
-void _event_debugx(const char *fmt, ...);
+#ifdef __GNUC__
+#define EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))
+#else
+#define EV_CHECK_FMT(a,b)
+#endif
+
+void event_err(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
+void event_warn(const char *fmt, ...) EV_CHECK_FMT(1,2);
+void event_errx(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
+void event_warnx(const char *fmt, ...) EV_CHECK_FMT(1,2);
+void event_msgx(const char *fmt, ...) EV_CHECK_FMT(1,2);
+void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 
 #ifdef USE_DEBUG
 #define event_debug(x) _event_debugx x
 #else
 #define event_debug(x) do {;} while (0)
 #endif
+
+#undef EV_CHECK_FMT
 
 #endif

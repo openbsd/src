@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.39 2008/05/02 18:26:42 brad Exp $
+.\"	$OpenBSD: event.3,v 1.40 2010/04/21 20:02:40 nicm Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 2 2008 $
+.Dd $Mdocdate: April 21 2010 $
 .Dt EVENT 3
 .Os
 .Sh NAME
@@ -31,25 +31,22 @@
 .Nm event_dispatch ,
 .Nm event_loop ,
 .Nm event_loopexit ,
+.Nm event_loopbreak ,
 .Nm event_set ,
-.\".Nm event_set_log_callback ,
 .Nm event_base_dispatch ,
 .Nm event_base_loop ,
 .Nm event_base_loopexit ,
+.Nm event_base_loopbreak ,
 .Nm event_base_set ,
 .Nm event_base_free ,
 .Nm event_add ,
 .Nm event_del ,
 .Nm event_once ,
 .Nm event_base_once ,
-.\".Nm event_active ,
 .Nm event_pending ,
 .Nm event_initialized ,
 .Nm event_priority_init ,
 .Nm event_priority_set ,
-.\".Nm event_base_priority_init ,
-.\".Nm event_get_version ,
-.\".Nm event_get_method ,
 .Nm evtimer_set ,
 .Nm evtimer_add ,
 .Nm evtimer_del ,
@@ -69,66 +66,17 @@
 .Nm bufferevent_disable ,
 .Nm bufferevent_settimeout ,
 .Nm bufferevent_base_set ,
-.\".Nm bufferevent_priority_set ,
 .Nm evbuffer_new ,
 .Nm evbuffer_free ,
 .Nm evbuffer_add ,
 .Nm evbuffer_add_buffer ,
 .Nm evbuffer_add_printf ,
 .Nm evbuffer_add_vprintf ,
-.\".Nm evbuffer_expand ,
-.\".Nm evbuffer_remove ,
-.\".Nm evbuffer_setcb ,
 .Nm evbuffer_drain ,
 .Nm evbuffer_write ,
 .Nm evbuffer_read ,
 .Nm evbuffer_find ,
 .Nm evbuffer_readline
-.\".Nm evhttp_start ,
-.\".Nm evhttp_free
-.\".Nm evtag_init ,
-.\".Nm evtag_marshal ,
-.\".Nm encode_int ,
-.\".Nm evtag_marshal_int ,
-.\".Nm evtag_marshal_string ,
-.\".Nm evtag_marshal_timeval ,
-.\".Nm evtag_test ,
-.\".Nm evtag_unmarshal ,
-.\".Nm evtag_peek ,
-.\".Nm evtag_peek_length ,
-.\".Nm evtag_payload_length ,
-.\".Nm evtag_consume ,
-.\".Nm evtag_unmarshal_int ,
-.\".Nm evtag_unmarshal_fixed ,
-.\".Nm evtag_unmarshal_string ,
-.\".Nm evtag_unmarshal_timeval ,
-.\".Nm evhttp_start ,
-.\".Nm evhttp_free ,
-.\".Nm evhttp_set_cb ,
-.\".Nm evhttp_set_gencb ,
-.\".Nm evhttp_set_timeout ,
-.\".Nm evhttp_send_error ,
-.\".Nm evhttp_send_reply ,
-.\".Nm evhttp_send_reply_start ,
-.\".Nm evhttp_send_reply_chunk ,
-.\".Nm evhttp_send_reply_end ,
-.\".Nm evhttp_request_new ,
-.\".Nm evhttp_request_set_chunked_cb ,
-.\".Nm evhttp_connection_new ,
-.\".Nm evhttp_connection_free ,
-.\".Nm evhttp_connection_set_timeout ,
-.\".Nm evhttp_connection_set_retries ,
-.\".Nm evhttp_connection_set_closecb ,
-.\".Nm evhttp_connection_get_peer ,
-.\".Nm evhttp_make_request ,
-.\".Nm evhttp_request_uri ,
-.\".Nm evhttp_remove_header ,
-.\".Nm evhttp_add_header ,
-.\".Nm evhttp_clear_headers ,
-.\".Nm evhttp_encode_uri ,
-.\".Nm evhttp_decode_uri ,
-.\".Nm evhttp_parse_query ,
-.\".Nm evhttp_htmlescape ,
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
@@ -141,6 +89,8 @@
 .Fn "event_loop" "int flags"
 .Ft int
 .Fn "event_loopexit" "struct timeval *tv"
+.Ft int
+.Fn "event_loopbreak" "void"
 .Ft void
 .Fn "event_set" "struct event *ev" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg"
 .Ft int
@@ -149,6 +99,8 @@
 .Fn "event_base_loop" "struct event_base *base" "int flags"
 .Ft int
 .Fn "event_base_loopexit" "struct event_base *base" "struct timeval *tv"
+.Ft int
+.Fn "event_base_loopbreak" "struct event_base *base"
 .Ft int
 .Fn "event_base_set" "struct event_base *base" "struct event *"
 .Ft void
@@ -229,14 +181,6 @@
 .Fn "evbuffer_find" "struct evbuffer *buf" "const u_char *data" "size_t size"
 .Ft "char *"
 .Fn "evbuffer_readline" "struct evbuffer *buf"
-.\".Ft "struct evhttp *"
-.\".Fn "evhttp_start" "const char *address" "u_short port"
-.\".Ft "void"
-.\".Fn "evhttp_free" "struct evhttp* http"
-.Ft int
-.Fa (*event_sigcb)(void) ;
-.Ft volatile sig_atomic_t
-.Fa event_gotsig ;
 .Sh DESCRIPTION
 The
 .Nm event
@@ -253,51 +197,6 @@ In order to process events, an application needs to call
 .Fn event_dispatch .
 This function only returns on error, and should replace the event core
 of the application program.
-.Pp
-In order to avoid races in signal handlers, the
-.Nm event
-API provides two variables:
-.Va event_sigcb
-and
-.Va event_gotsig .
-A signal handler
-sets
-.Va event_gotsig
-to indicate that a signal has been received.
-The application sets
-.Va event_sigcb
-to a callback function.
-After the signal handler sets
-.Va event_gotsig ,
-.Nm event_dispatch
-will execute the callback function to process received signals.
-The callback returns 1 when no events are registered any more.
-It can return \-1 to indicate an error to the
-.Nm event
-library, causing
-.Fn event_dispatch
-to terminate with
-.Va errno
-set to
-.Er EINTR .
-.Pp
-The
-.Nm event_loop
-function provides an interface for single pass execution of pending
-events.
-The flags
-.Va EVLOOP_ONCE
-and
-.Va EVLOOP_NONBLOCK
-are recognized.
-The
-.Nm event_loopexit
-function allows the loop to be terminated after some amount of time
-has passed.
-The parameter indicates the time after which the loop should terminate.
-.Pp
-It is the responsibility of the caller to provide these functions with
-pre-allocated event structures.
 .Pp
 The function
 .Fn event_set
@@ -337,6 +236,11 @@ the type of event which will be either
 .Va EV_READ ,
 or
 .Va EV_WRITE .
+Additionally, an event which has registered interest in more than one of the
+preceding events, via bitwise-OR to
+.Fn event_set ,
+can provide its callback function with a bitwise-OR of more than one triggered
+event.
 The additional flag
 .Va EV_PERSIST
 makes an
@@ -402,6 +306,32 @@ will cancel the event in the argument
 If the event has already executed or has never been added
 the call will have no effect.
 .Pp
+The functions
+.Fn evtimer_set ,
+.Fn evtimer_add ,
+.Fn evtimer_del ,
+.Fn evtimer_initialized ,
+and
+.Fn evtimer_pending
+are abbreviations for common situations where only a timeout is required.
+The file descriptor passed will be \-1, and the event type will be
+.Va EV_TIMEOUT .
+.Pp
+The functions
+.Fn signal_set ,
+.Fn signal_add ,
+.Fn signal_del ,
+.Fn signal_initialized ,
+and
+.Fn signal_pending
+are abbreviations.
+The event type will be a persistent
+.Va EV_SIGNAL .
+That means
+.Fn signal_set
+adds
+.Va EV_PERSIST .
+.Pp
 The function
 .Fn event_once
 is similar to
@@ -434,45 +364,41 @@ The
 .Fn event_initialized
 macro can be used to check if an event has been initialized.
 .Pp
-The functions
-.Fn evtimer_set ,
-.Fn evtimer_add ,
-.Fn evtimer_del ,
-.Fn evtimer_initialized ,
+The
+.Nm event_loop
+function provides an interface for single pass execution of pending
+events.
+The flags
+.Va EVLOOP_ONCE
 and
-.Fn evtimer_pending
-are abbreviations for common situations where only a timeout is required.
-The file descriptor passed will be \-1, and the event type will be
-.Va EV_TIMEOUT .
+.Va EVLOOP_NONBLOCK
+are recognized.
+The
+.Nm event_loopexit
+function exits from the event loop.
+The next
+.Fn event_loop
+iteration after the
+given timer expires will complete normally (handling all queued events) then
+exit without blocking for events again.
+Subsequent invocations of
+.Fn event_loop
+will proceed normally.
+The
+.Nm event_loopbreak
+function exits from the event loop immediately.
+.Fn event_loop
+will abort after the next event is completed;
+.Fn event_loopbreak
+is typically invoked from this event's callback.
+This behavior is analogous to the "break;" statement.
+Subsequent invocations of
+.Fn event_loop
+will proceed normally.
 .Pp
-The functions
-.Fn signal_set ,
-.Fn signal_add ,
-.Fn signal_del ,
-.Fn signal_initialized ,
-and
-.Fn signal_pending
-are abbreviations.
-The event type will be a persistent
-.Va EV_SIGNAL .
-That means
-.Fn signal_set
-adds
-.Va EV_PERSIST .
+It is the responsibility of the caller to provide these functions with
+pre-allocated event structures.
 .Pp
-It is possible to disable support for
-.Va kqueue , poll ,
-or
-.Va select
-by setting the environment variables
-.Va EVENT_NOKQUEUE , EVENT_NOPOLL ,
-or
-.Va EVENT_NOSELECT ,
-respectively.
-By setting the environment variable
-.Va EVENT_SHOW_METHOD ,
-.Nm libevent
-displays the kernel notification method that it uses.
 .Sh EVENT PRIORITIES
 By default
 .Nm libevent
@@ -583,28 +509,20 @@ returning the amount of data read.
 .Pp
 If multiple bases are in use, bufferevent_base_set() must be called before
 enabling the bufferevent for the first time.
-.\".Sh NON-BLOCKING HTTP SUPPORT
-.\".Nm libevent
-.\"provides a very thin HTTP layer that can be used both to host an HTTP
-.\"server and also to make HTTP requests.
-.\"An HTTP server can be created by calling
-.\".Fn evhttp_start .
-.\"When the HTTP server is no longer used, it can be freed via
-.\".Fn evhttp_free .
-.\".Pp
-.\"To be notified of HTTP requests, a user needs to register callbacks with the
-.\"HTTP server.
-.\"This can be done by calling
-.\".Fn evhttp_set_cb .
-.\"The second argument is the URI for which a callback is being registered.
-.\"The corresponding callback will receive an
-.\".Va struct evhttp_request
-.\"object that contains all information about the request.
-.Pp
-This section does not document all the possible function calls; please
-check
-.Va event.h
-for the public interfaces.
+.Sh ADDITIONAL NOTES
+It is possible to disable support for
+.Va kqueue , poll
+or
+.Va select
+by setting the environment variable
+.Va EVENT_NOKQUEUE , EVENT_NOPOLL
+or
+.Va EVENT_NOSELECT ,
+respectively.
+By setting the environment variable
+.Va EVENT_SHOW_METHOD ,
+.Nm libevent
+displays the kernel notification method that it uses.
 .Sh RETURN VALUES
 Upon successful completion
 .Fn event_add
@@ -617,7 +535,6 @@ set to indicate the error.
 .Xr kqueue 2 ,
 .Xr poll 2 ,
 .Xr select 2 ,
-.Xr evdns 3 ,
 .Xr timeout 9
 .Sh HISTORY
 The
@@ -625,6 +542,9 @@ The
 API manpage is based on the
 .Xr timeout 9
 manpage by Artur Grabowski.
+The port of
+.Nm libevent
+to Windows is due to Michael A. Davis.
 Support for real-time signals is due to Taral.
 .Sh AUTHORS
 The

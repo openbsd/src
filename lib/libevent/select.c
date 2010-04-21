@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.14 2008/05/02 06:09:11 brad Exp $	*/
+/*	$OpenBSD: select.c,v 1.15 2010/04/21 20:02:40 nicm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -34,13 +34,12 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
-#include <sys/_time.h>
+#include <sys/_libevent_time.h>
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 #include <sys/queue.h>
-#include <sys/tree.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,12 +51,20 @@
 #endif
 
 #include "event.h"
+#include "evutil.h"
 #include "event-internal.h"
 #include "evsignal.h"
 #include "log.h"
 
 #ifndef howmany
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
+#endif
+
+#ifndef _EVENT_HAVE_FD_MASK
+/* This type is mandatory, but Android doesn't define it. */
+#undef NFDBITS
+#define NFDBITS (sizeof(long)*8)
+typedef unsigned long fd_mask;
 #endif
 
 struct selectop {
@@ -71,32 +78,31 @@ struct selectop {
 	struct event **event_w_by_fd;
 };
 
-void *select_init	(struct event_base *);
-int select_add		(void *, struct event *);
-int select_del		(void *, struct event *);
-int select_recalc	(struct event_base *, void *, int);
-int select_dispatch	(struct event_base *, void *, struct timeval *);
-void select_dealloc     (struct event_base *, void *);
+static void *select_init	(struct event_base *);
+static int select_add		(void *, struct event *);
+static int select_del		(void *, struct event *);
+static int select_dispatch	(struct event_base *, void *, struct timeval *);
+static void select_dealloc     (struct event_base *, void *);
 
 const struct eventop selectops = {
 	"select",
 	select_init,
 	select_add,
 	select_del,
-	select_recalc,
 	select_dispatch,
-	select_dealloc
+	select_dealloc,
+	0
 };
 
 static int select_resize(struct selectop *sop, int fdsz);
 
-void *
+static void *
 select_init(struct event_base *base)
 {
 	struct selectop *sop;
 
 	/* Disable select when this environment variable is set */
-	if (!issetugid() && getenv("EVENT_NOSELECT"))
+	if (evutil_getenv("EVENT_NOSELECT"))
 		return (NULL);
 
 	if (!(sop = calloc(1, sizeof(struct selectop))))
@@ -136,25 +142,10 @@ check_selectop(struct selectop *sop)
 #define check_selectop(sop) do { (void) sop; } while (0)
 #endif
 
-/*
- * Called with the highest fd that we know about.  If it is 0, completely
- * recalculate everything.
- */
-
-int
-select_recalc(struct event_base *base, void *arg, int max)
-{
-	struct selectop *sop = arg;
-
-	check_selectop(sop);
-
-	return (0);
-}
-
-int
+static int
 select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
-	int res, i;
+	int res, i, j;
 	struct selectop *sop = arg;
 
 	check_selectop(sop);
@@ -184,8 +175,12 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	event_debug(("%s: select reports %d", __func__, res));
 
 	check_selectop(sop);
-	for (i = 0; i <= sop->event_fds; ++i) {
+	i = random() % (sop->event_fds+1);
+	for (j = 0; j <= sop->event_fds; ++j) {
 		struct event *r_ev = NULL, *w_ev = NULL;
+		if (++i >= sop->event_fds+1)
+			i = 0;
+
 		res = 0;
 		if (FD_ISSET(i, sop->event_readset_out)) {
 			r_ev = sop->event_r_by_fd[i];
@@ -196,13 +191,9 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			res |= EV_WRITE;
 		}
 		if (r_ev && (res & r_ev->ev_events)) {
-			if (!(r_ev->ev_events & EV_PERSIST))
-				event_del(r_ev);
 			event_active(r_ev, res & r_ev->ev_events, 1);
 		}
 		if (w_ev && w_ev != r_ev && (res & w_ev->ev_events)) {
-			if (!(w_ev->ev_events & EV_PERSIST))
-				event_del(w_ev);
 			event_active(w_ev, res & w_ev->ev_events, 1);
 		}
 	}
@@ -271,7 +262,7 @@ select_resize(struct selectop *sop, int fdsz)
 }
 
 
-int
+static int
 select_add(void *arg, struct event *ev)
 {
 	struct selectop *sop = arg;
@@ -321,7 +312,7 @@ select_add(void *arg, struct event *ev)
  * Nothing to be done here.
  */
 
-int
+static int
 select_del(void *arg, struct event *ev)
 {
 	struct selectop *sop = arg;
@@ -349,7 +340,7 @@ select_del(void *arg, struct event *ev)
 	return (0);
 }
 
-void
+static void
 select_dealloc(struct event_base *base, void *arg)
 {
 	struct selectop *sop = arg;

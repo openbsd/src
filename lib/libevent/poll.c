@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.14 2008/05/02 06:09:11 brad Exp $	*/
+/*	$OpenBSD: poll.c,v 1.15 2010/04/21 20:02:40 nicm Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -34,10 +34,9 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
-#include <sys/_time.h>
+#include <sys/_libevent_time.h>
 #endif
 #include <sys/queue.h>
-#include <sys/tree.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -66,30 +65,29 @@ struct pollop {
 			      * "no entry." */
 };
 
-void *poll_init	(struct event_base *);
-int poll_add		(void *, struct event *);
-int poll_del		(void *, struct event *);
-int poll_recalc		(struct event_base *, void *, int);
-int poll_dispatch	(struct event_base *, void *, struct timeval *);
-void poll_dealloc	(struct event_base *, void *);
+static void *poll_init	(struct event_base *);
+static int poll_add		(void *, struct event *);
+static int poll_del		(void *, struct event *);
+static int poll_dispatch	(struct event_base *, void *, struct timeval *);
+static void poll_dealloc	(struct event_base *, void *);
 
 const struct eventop pollops = {
 	"poll",
 	poll_init,
 	poll_add,
 	poll_del,
-	poll_recalc,
 	poll_dispatch,
-	poll_dealloc
+	poll_dealloc,
+    0
 };
 
-void *
+static void *
 poll_init(struct event_base *base)
 {
 	struct pollop *pollop;
 
 	/* Disable poll when this environment variable is set */
-	if (!issetugid() && getenv("EVENT_NOPOLL"))
+	if (evutil_getenv("EVENT_NOPOLL"))
 		return (NULL);
 
 	if (!(pollop = calloc(1, sizeof(struct pollop))))
@@ -98,17 +96,6 @@ poll_init(struct event_base *base)
 	evsignal_init(base);
 
 	return (pollop);
-}
-
-/*
- * Called with the highest fd that we know about.  If it is 0, completely
- * recalculate everything.
- */
-
-int
-poll_recalc(struct event_base *base, void *arg, int max)
-{
-	return (0);
 }
 
 #ifdef CHECK_INVARIANTS
@@ -145,10 +132,10 @@ poll_check_ok(struct pollop *pop)
 #define poll_check_ok(pop)
 #endif
 
-int
+static int
 poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
-	int res, i, msec = -1, nfds;
+	int res, i, j, msec = -1, nfds;
 	struct pollop *pop = arg;
 
 	poll_check_ok(pop);
@@ -173,12 +160,16 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 
 	event_debug(("%s: poll reports %d", __func__, res));
 
-	if (res == 0)
+	if (res == 0 || nfds == 0)
 		return (0);
 
-	for (i = 0; i < nfds; i++) {
-		int what = pop->event_set[i].revents;
+	i = random() % nfds;
+	for (j = 0; j < nfds; j++) {
 		struct event *r_ev = NULL, *w_ev = NULL;
+		int what;
+		if (++i == nfds)
+			i = 0;
+		what = pop->event_set[i].revents;
 
 		if (!what)
 			continue;
@@ -200,13 +191,9 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			continue;
 
 		if (r_ev && (res & r_ev->ev_events)) {
-			if (!(r_ev->ev_events & EV_PERSIST))
-				event_del(r_ev);
 			event_active(r_ev, res & r_ev->ev_events, 1);
 		}
 		if (w_ev && w_ev != r_ev && (res & w_ev->ev_events)) {
-			if (!(w_ev->ev_events & EV_PERSIST))
-				event_del(w_ev);
 			event_active(w_ev, res & w_ev->ev_events, 1);
 		}
 	}
@@ -214,7 +201,7 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	return (0);
 }
 
-int
+static int
 poll_add(void *arg, struct event *ev)
 {
 	struct pollop *pop = arg;
@@ -319,7 +306,7 @@ poll_add(void *arg, struct event *ev)
  * Nothing to be done here.
  */
 
-int
+static int
 poll_del(void *arg, struct event *ev)
 {
 	struct pollop *pop = arg;
@@ -357,7 +344,7 @@ poll_del(void *arg, struct event *ev)
 
 	--pop->nfds;
 	if (i != pop->nfds) {
-		/*
+		/* 
 		 * Shift the last pollfd down into the now-unoccupied
 		 * position.
 		 */
@@ -372,7 +359,7 @@ poll_del(void *arg, struct event *ev)
 	return (0);
 }
 
-void
+static void
 poll_dealloc(struct event_base *base, void *arg)
 {
 	struct pollop *pop = arg;
