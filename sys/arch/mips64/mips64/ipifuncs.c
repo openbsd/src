@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.2 2009/12/28 06:55:27 syuu Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.3 2010/04/21 14:57:11 deraadt Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
