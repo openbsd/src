@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.85 2010/04/20 15:34:56 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.86 2010/04/21 08:29:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -286,24 +286,18 @@ mta(struct smtpd *env)
 	purge_config(env, PURGE_EVERYTHING);
 
 	pw = env->sc_pw;
-#ifndef DEBUG
 	if (chroot(pw->pw_dir) == -1)
 		fatal("mta: chroot");
 	if (chdir("/") == -1)
 		fatal("mta: chdir(\"/\")");
-#else
-#warning disabling privilege revocation and chroot in DEBUG MODE
-#endif
 
 	smtpd_process = PROC_MTA;
 	setproctitle("%s", env->sc_title[smtpd_process]);
 
-#ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("mta: cannot drop privileges");
-#endif
 
 	imsg_callback = mta_imsg;
 	event_init();

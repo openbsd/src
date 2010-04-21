@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.82 2010/04/21 00:12:49 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.83 2010/04/21 08:29:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -249,24 +249,18 @@ runner(struct smtpd *env)
 
 	pw = env->sc_pw;
 
-#ifndef DEBUG
 	if (chroot(PATH_SPOOL) == -1)
 		fatal("runner: chroot");
 	if (chdir("/") == -1)
 		fatal("runner: chdir(\"/\")");
-#else
-#warning disabling privilege revocation and chroot in DEBUG MODE
-#endif
 
 	smtpd_process = PROC_RUNNER;
 	setproctitle("%s", env->sc_title[smtpd_process]);
 
-#ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("runner: cannot drop privileges");
-#endif
 
 	SPLAY_INIT(&env->batch_queue);
 

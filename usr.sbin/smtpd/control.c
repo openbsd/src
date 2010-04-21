@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.47 2010/04/20 15:34:56 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.48 2010/04/21 08:29:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -196,24 +196,18 @@ control(struct smtpd *env)
 	session_socket_blockmode(fd, BM_NONBLOCK);
 	control_state.fd = fd;
 
-#ifndef DEBUG
 	if (chroot(pw->pw_dir) == -1)
 		fatal("control: chroot");
 	if (chdir("/") == -1)
 		fatal("control: chdir(\"/\")");
-#else
-#warning disabling privilege revocation and chroot in DEBUG MODE
-#endif
 
 	smtpd_process = PROC_CONTROL;
 	setproctitle("%s", env->sc_title[smtpd_process]);
 
-#ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("control: cannot drop privileges");
-#endif
 
 	imsg_callback = control_imsg;
 	event_init();

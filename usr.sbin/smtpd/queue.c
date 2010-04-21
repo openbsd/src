@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.78 2010/04/20 15:34:56 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.79 2010/04/21 08:29:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -253,24 +253,18 @@ queue(struct smtpd *env)
 
 	pw = env->sc_pw;
 
-#ifndef DEBUG
 	if (chroot(PATH_SPOOL) == -1)
 		fatal("queue: chroot");
 	if (chdir("/") == -1)
 		fatal("queue: chdir(\"/\")");
-#else
-#warning disabling privilege revocation and chroot in DEBUG MODE
-#endif
 
 	smtpd_process = PROC_QUEUE;
 	setproctitle("%s", env->sc_title[smtpd_process]);
 
-#ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("queue: cannot drop privileges");
-#endif
 
 	imsg_callback = queue_imsg;
 	event_init();
