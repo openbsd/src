@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.90 2010/04/14 20:15:11 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.91 2010/04/21 03:35:41 lum Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 14 2010 $
+.Dd $Mdocdate: April 21 2010 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -293,9 +293,13 @@ for cylinders,
 for kilobytes,
 .Sq m
 for megabytes,
-and
 .Sq g
-for gigabytes.
+for gigabytes,
+and
+.Sq t
+for terabytes.
+If no unit is given, the default is to use sectors
+(usually 512 bytes).
 Quantities will be rounded to the nearest
 cylinder when units are specified for sizes
 .Pq or offsets .
@@ -312,11 +316,8 @@ At prompts that request a size,
 may be entered to indicate the rest of the available space.
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
-.It Cm ?\& Op Ar command
+.It Cm \&? \*(Ba h  
 Display help message with all available commands.
-A
-.Em command
-may be specified to get more detailed help.
 There is also
 .Pq simple
 context-sensitive help available at most prompts.
@@ -327,7 +328,7 @@ See
 below.
 .It Cm a Op Ar part
 Add new partition.
-This option adds a new BSD partition.
+This option adds a new partition to the disk label.
 If no partition letter is specified
 .Pq a\-p ,
 the user will be prompted for one.
@@ -349,6 +350,8 @@ prompt to indicate the entire size of the disk
 .Pq minus the starting sector .
 This is useful for disks where the
 fdisk partition table is incapable of storing the real size.
+Note: data may become corrupted if boundaries are extended such 
+that they overlap with other resident operating systems.
 .It Cm c Op Ar part
 Change the size of an existing partition.
 If no partition is specified, the user will be prompted for one.
@@ -389,6 +392,11 @@ made any changes).
 Print the disk label header.
 .It Cm M
 Display this manual page.
+The manual page is piped through the pager specified by the 
+.Ev PAGER
+environment variable or 'less' if
+.Ev PAGER 
+is not set.
 .It Cm m Op Ar part
 Modify parameters for an existing partition.
 If no partition is specified, the user will be prompted for one.
@@ -457,9 +465,10 @@ Toggle
 By default, some settings are reserved for experts only
 (such as the block and fragment size on ffs partitions).
 .It Cm x
-Exit the editor without saving any changes to the label.
+Exit the editor without saving any changes to the on-disk label.
 .It Cm z
-Zero out the existing partition table and mountpoint information.
+Zero out the existing partition table and mountpoint information,
+leaving only the 'c' partition.
 The drive parameters are not changed.
 .El
 .Pp

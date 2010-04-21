@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.233 2010/04/13 22:38:20 lum Exp $	*/
+/*	$OpenBSD: editor.c,v 1.234 2010/04/21 03:35:41 lum Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -118,7 +118,7 @@ void	editor_add(struct disklabel *, char *);
 void	editor_change(struct disklabel *, char *);
 u_int64_t editor_countfree(struct disklabel *);
 void	editor_delete(struct disklabel *, char *);
-void	editor_help(char *);
+void	editor_help(void);
 void	editor_modify(struct disklabel *, char *);
 void	editor_name(struct disklabel *, char *);
 char	*getstring(char *, char *, char *);
@@ -247,7 +247,7 @@ editor(struct disklabel *lp, int f)
 		switch (*cmd) {
 		case '?':
 		case 'h':
-			editor_help(arg ? arg : "");
+			editor_help();
 			break;
 
 		case 'A':
@@ -1729,160 +1729,11 @@ editor_countfree(struct disklabel *lp)
 }
 
 void
-editor_help(char *arg)
+editor_help(void)
 {
-
-	/* XXX - put these strings in a table instead? */
-	switch (*arg) {
-	case 'p':
-		puts(
-"'p' prints the current partitions.  By default, it prints size and offset in\n"
-"sectors (a sector is usually 512 bytes). 'p' takes an optional units argument.\n"
-"Possible values are 'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm'\n"
-"for megabytes, and 'g' for gigabytes\n");
-		break;
-	case 'l':
+	puts("Available commands:");
 	puts(
-"'l' prints the header of the disk label.  By default, it prints size and offset\n"
-"in sectors (a sector is usually 512 bytes). 'l' takes an optional units\n"
-"argument.  Possible values are 'b' for bytes, 'c' for cylinders, 'k' for\n"
-"kilobytes, 'm' for megabytes, and 'g' for gigabytes\n");
-		break;
-	case 'M':
-		puts(
-"'M' pipes the entire OpenBSD man page for disklabel through the pager specified\n"
-"by the PAGER environment variable or 'less' if PAGER is not set. It is\n"
-"especially useful during install when the normal system manual is not available\n");
-		break;
-	case 'e':
-		puts(
-"'e' edits the disk drive parameters.  These include the number of sectors/track,\n"
-"tracks/cylinder, sectors/cylinder, number of cylinders on the disk, total\n"
-"sectors on the disk, rpm, interleave, disk type and a descriptive label string.\n"
-"You should not change these unless you know what you are doing\n");
-		break;
-	case 'a':
-		puts(
-"'a' adds new partitions to the disk label.  It takes as an optional argument the\n"
-"partition letter to add.  If you do not specify a partition letter, you will be\n"
-"prompted for it; the next available letter will be the default answer\n");
-		break;
-	case 'A':
-		puts(
-"'A' removes all the existing partitions and creates a new set based on the size\n"
-"of the disk\n");
-		break;
-	case 'b':
-		puts(
-"'b' changes the boundaries of the OpenBSD portion of the disk. This is on a disk\n"
-"with an fdisk partition, the boundaries are set to be the first and last sectors\n"
-"of the OpenBSD fdisk partition.  You should only change these if your fdisk\n"
-"partition table is incorrect or you have a disk larger than the maximum size\n"
-"allowed by fdisk.  You may enter '*' at the 'Size' prompt to indicate the entire\n"
-"size of the disk (minus the starting sector).  Use this option with care; if you\n"
-"extend the boundaries such that they overlap with another operating system you\n"
-"will corrupt the other operating system's data\n");
-		break;
-	case 'c':
-		puts(
-"'c' changes the size of an existing partition.  It takes as an optional\n"
-"argument the partition letter to change.  If you do not specify a partition\n"
-"letter, you will be prompted for one.  You may add a '+' or '-' prefix to the\n"
-"new size to increase or decrease the existing value instead of entering an\n"
-"absolute value.  You may also use a suffix to indicate the units the values\n"
-"is in terms of.  Possible suffixes are 'b' for bytes, 'c' for cylinders, 'k'\n"
-"for kilobytes, 'm' for megabytes, 'g' for gigabytes or no suffix for sectors\n"
-"(usually 512 bytes).  You may also enter '*' to change the size to be the \n"
-"total number of free sectors remaining\n");
-		break;
-	case 'D':
-		puts(
-"'D' sets the disk label to the default values as reported by the disk itself.\n"
-"This simulates the case where there is no disk label.\n");
-		break;
-	case 'd':
-		puts(
-"'d' deletes an existing partition.  It takes as an optional argument the\n"
-"partition letter to change.  If you do not specify a partition letter, you will\n"
-"be prompted for one.  You may not delete the ``c'' partition as 'c' must always\n"
-"exist and by default is marked as 'unused' (so it does not take up any space).\n");
-		break;
-	case 'g':
-		puts(
-"'g' selects which disk geometry to use, the disk or a user geometry. It takes\n"
-"as an optional argument ``d'' or ``u''.  If you do not specify the type as an\n"
-"argument, you will be prompted for it.\n");
-		break;
-	case 'm':
-		puts(
-"'m' modifys an existing partition.  It takes as an optional argument the\n"
-"partition letter to change.  If you do not specify a partition letter, you will\n"
-"be prompted for one.  This option allows the user to change the filesystem \n"
-"type, starting offset, partition size, block fragment size, block size, and \n"
-"cylinders per group for the specified partition (not all parameters are \n"
-"configurable for non-BSD partitions).\n");
-		break;
-	case 'n':
-		puts(
-"'n' names the mount point for a partition.  It takes as an optional argument\n"
-"the partition letter to name.  If you do not specify a partition letter, you\n"
-"will be prompted for one.  This command is only valid if disklabel was invoked\n"
-"with the -f flag.\n");
-		break;
-	case 'R':
-		puts(
-"'R' resizes a partition. If the partition is reduced in size, subsequent\n"
-"partitions are reallocated to eliminate unnecessary space. If the chosen\n"
-"partition increases in size the last partition will be shrunk if needed.  Works\n"
-"only for auto allocated labels.\n");
-		break;
-	case 'r':
-		puts(
-"'r' recalculates and display details about the available free space.\n");
-		break;
-	case 'U':
-		puts(
-"'U' undoes all changes made since entering the editor.\n");
-		break;
-	case 'u':
-		puts(
-"'u' undoes (or redoes) the last change.  Entering 'u' once will undo your\n"
-"last change.  Entering it again will restore the change.\n");
-		break;
-	case 's':
-		puts(
-"'s' saves a copy of the label to a file in ascii format (suitable for loading\n"
-"via disklabel's [-R] option).  It takes as an optional argument the filename\n"
-"to save the label to.  If you do not specify a filename, you will be prompted\n"
-"for one.\n");
-		break;
-	case 'w':
-		puts(
-"'w' writes the current label to disk.  This command will commit any changes\n"
-"to the on-disk label.\n");
-		break;
-	case 'q':
-		puts(
-"'q' quits the label editor.  If any changes have been made you will be asked\n"
-"whether or not to save the changes to the on-disk label.\n");
-		break;
-	case 'X':
-		puts(
-"'X' toggles disklabel 'expert mode'.  By default, some settings are reserved\n"
-"for experts only (such as the block and fragment size on ffs partitions).\n");
-		break;
-	case 'x':
-		puts(
-"'x' exits the label editor without saving any changes to the on-disk label.\n");
-		break;
-	case 'z':
-		puts(
-"'z' zeroes out the existing partition table, leaving only the 'c' partition.\n");
-		break;
-	default:
-		puts("Available commands:");
-		puts(
-"  ? [cmd]  - show help                  n [part] - set mount point\n"
+"  ? | h    - show help                  n [part] - set mount point\n"
 "  A        - auto partition all space   p [unit] - print partitions\n"
 "  a [part] - add partition              q        - quit & save changes\n"
 "  b        - set OpenBSD boundaries     R [part] - resize a partition\n"
@@ -1899,8 +1750,7 @@ editor_help(char *arg)
 "\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"
 "\t'c' (cylinders), '%' (% of total disk), '&' (% of free space).\n"
 "Values in non-sector units are truncated to the nearest cylinder boundary.");
-		break;
-	}
+
 }
 
 void
