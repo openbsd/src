@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.21 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: event.h,v 1.22 2010/04/21 21:02:47 nicm Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -161,28 +161,15 @@
 extern "C" {
 #endif
 
-#include <event-config.h>
-#ifdef _EVENT_HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-#ifdef _EVENT_HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-#ifdef _EVENT_HAVE_STDINT_H
-#include <stdint.h>
-#endif
+#include <sys/queue.h>
+
 #include <stdarg.h>
+#include <stdint.h>
 
 /* For int types. */
 #include <evutil.h>
-
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-typedef unsigned char u_char;
-typedef unsigned short u_short;
-#endif
 
 #define EVLIST_TIMEOUT	0x01
 #define EVLIST_INSERTED	0x02
@@ -199,16 +186,6 @@ typedef unsigned short u_short;
 #define EV_WRITE	0x04
 #define EV_SIGNAL	0x08
 #define EV_PERSIST	0x10	/* Persistant event */
-
-/* Fix so that ppl dont have to run with <sys/queue.h> */
-#ifndef TAILQ_ENTRY
-#define _EVENT_DEFINED_TQENTRY
-#define TAILQ_ENTRY(type)						\
-struct {								\
-	struct type *tqe_next;	/* next element */			\
-	struct type **tqe_prev;	/* address of previous next element */	\
-}
-#endif /* !TAILQ_ENTRY */
 
 struct event_base;
 #ifndef EVENT_NO_STRUCT
@@ -253,15 +230,8 @@ struct evkeyval {
 	char *value;
 };
 
-#ifdef _EVENT_DEFINED_TQENTRY
-#undef TAILQ_ENTRY
-struct event_list;
-struct evkeyvalq;
-#undef _EVENT_DEFINED_TQENTRY
-#else
 TAILQ_HEAD (event_list, event);
 TAILQ_HEAD (evkeyvalq, evkeyval);
-#endif /* _EVENT_DEFINED_TQENTRY */
 
 /**
   Initialize the event API.

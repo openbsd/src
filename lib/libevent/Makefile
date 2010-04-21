@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.29 2010/04/21 20:02:40 nicm Exp $
+#	$OpenBSD: Makefile,v 1.30 2010/04/21 21:02:46 nicm Exp $
 
 LIB=	event
 WANTLINT=
 SRCS=	buffer.c evbuffer.c event.c event_tagging.c evutil.c kqueue.c \
 	log.c poll.c select.c signal.c
-HDRS=	event.h event-config.h evutil.h
+HDRS=	event.h evutil.h
 MAN=	event.3
 MLINKS=	event.3 bufferevent_base_set.3 \
 	event.3 bufferevent_disable.3 \
@@ -66,6 +66,7 @@ CFLAGS+= -I${.CURDIR} -DNDEBUG \
 	-DHAVE_GETEGID \
 	-DHAVE_GETEUID \
 	-DHAVE_GETNAMEINFO \
+	-DHAVE_GETTIMEOFDAY \
 	-DHAVE_INTTYPES_H \
 	-DHAVE_ISSETUGID \
 	-DHAVE_POLL \

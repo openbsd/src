@@ -1,4 +1,4 @@
-/*	$OpenBSD: evutil.c,v 1.1 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: evutil.c,v 1.2 2010/04/21 21:02:47 nicm Exp $	*/
 
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
@@ -206,7 +206,7 @@ evutil_strtoll(const char *s, char **endptr, int base)
 #endif
 }
 
-#ifndef _EVENT_HAVE_GETTIMEOFDAY
+#ifndef HAVE_GETTIMEOFDAY
 int
 evutil_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
@@ -253,15 +253,15 @@ evutil_vsnprintf(char *buf, size_t buflen, const char *format, va_list ap)
 static int
 evutil_issetugid(void)
 {
-#ifdef _EVENT_HAVE_ISSETUGID
+#ifdef HAVE_ISSETUGID
 	return issetugid();
 #else
 
-#ifdef _EVENT_HAVE_GETEUID
+#ifdef HAVE_GETEUID
 	if (getuid() != geteuid())
 		return 1;
 #endif
-#ifdef _EVENT_HAVE_GETEGID
+#ifdef HAVE_GETEGID
 	if (getgid() != getegid())
 		return 1;
 #endif

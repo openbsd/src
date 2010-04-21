@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.15 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: select.c,v 1.16 2010/04/21 21:02:47 nicm Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -60,7 +60,7 @@
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
 #endif
 
-#ifndef _EVENT_HAVE_FD_MASK
+#ifndef HAVE_FD_MASK
 /* This type is mandatory, but Android doesn't define it. */
 #undef NFDBITS
 #define NFDBITS (sizeof(long)*8)
