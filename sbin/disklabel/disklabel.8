@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.91 2010/04/21 03:35:41 lum Exp $
+.\"	$OpenBSD: disklabel.8,v 1.92 2010/04/21 06:56:57 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -316,7 +316,7 @@ At prompts that request a size,
 may be entered to indicate the rest of the available space.
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
-.It Cm \&? \*(Ba h  
+.It Cm \&? \*(Ba h
 Display help message with all available commands.
 There is also
 .Pq simple
@@ -350,7 +350,7 @@ prompt to indicate the entire size of the disk
 .Pq minus the starting sector .
 This is useful for disks where the
 fdisk partition table is incapable of storing the real size.
-Note: data may become corrupted if boundaries are extended such 
+Note: data may become corrupted if boundaries are extended such
 that they overlap with other resident operating systems.
 .It Cm c Op Ar part
 Change the size of an existing partition.
@@ -392,10 +392,10 @@ made any changes).
 Print the disk label header.
 .It Cm M
 Display this manual page.
-The manual page is piped through the pager specified by the 
+The manual page is piped through the pager specified by the
 .Ev PAGER
 environment variable or 'less' if
-.Ev PAGER 
+.Ev PAGER
 is not set.
 .It Cm m Op Ar part
 Modify parameters for an existing partition.
