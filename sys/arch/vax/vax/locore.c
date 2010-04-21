@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.35 2008/08/30 20:45:31 martin Exp $	*/
+/*	$OpenBSD: locore.c,v 1.36 2010/04/21 03:11:28 deraadt Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -37,6 +37,7 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
