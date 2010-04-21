@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.12 2009/08/09 17:45:02 art Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.13 2010/04/21 03:04:04 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/pool.h>
+#include <sys/proc.h>		/* XXX for atomic */
 #include <sys/mount.h>
 
 #include <uvm/uvm_extern.h>
