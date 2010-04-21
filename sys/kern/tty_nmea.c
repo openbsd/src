@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.36 2010/04/12 12:57:52 tedu Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.37 2010/04/21 23:43:39 sthen Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -54,6 +54,8 @@ struct nmea {
 	char			cbuf[NMEAMAX];	/* receive buffer */
 	struct ksensor		time;		/* the timedelta sensor */
 	struct ksensor		signal;		/* signal status */
+	struct ksensor		latitude;
+	struct ksensor		longitude;
 	struct ksensordev	timedev;
 	struct timespec		ts;		/* current timestamp */
 	struct timespec		lts;		/* timestamp of last '$' seen */
@@ -77,10 +79,8 @@ void	nmea_gprmc(struct nmea *, struct tty *, char *fld[], int fldcnt);
 int	nmea_date_to_nano(char *s, int64_t *nano);
 int	nmea_time_to_nano(char *s, int64_t *nano);
 
-#if NMEA_POS_IN_DESC
-/* longitude and latitude formatting and copying */
-void	nmea_degrees(char *dst, char *src, int neg, size_t len);
-#endif
+/* longitude and latitude conversion */
+int	nmea_degrees(int64_t *dst, char *src, int neg);
 
 /* degrade the timedelta sensor */
 void	nmea_timeout(void *);
@@ -106,13 +106,29 @@ nmeaopen(dev_t dev, struct tty *tp, struct proc *p)
 	nmea_count++;
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
+	np->time.flags = SENSOR_FINVALID;
 	sensor_attach(&np->timedev, &np->time);
 
 	np->signal.type = SENSOR_PERCENT;
 	np->signal.status = SENSOR_S_UNKNOWN;
+	np->signal.flags = SENSOR_FINVALID;
 	np->signal.value = 100000LL;
 	strlcpy(np->signal.desc, "Signal", sizeof(np->signal.desc));
 	sensor_attach(&np->timedev, &np->signal);
+
+	np->latitude.type = SENSOR_ANGLE;
+	np->latitude.status = SENSOR_S_UNKNOWN;
+	np->latitude.flags = SENSOR_FINVALID;
+	np->latitude.value = 0;
+	strlcpy(np->latitude.desc, "Latitude", sizeof(np->latitude.desc));
+	sensor_attach(&np->timedev, &np->latitude);
+
+	np->longitude.type = SENSOR_ANGLE;
+	np->longitude.status = SENSOR_S_UNKNOWN;
+	np->longitude.flags = SENSOR_FINVALID;
+	np->longitude.value = 0;
+	strlcpy(np->longitude.desc, "Longitude", sizeof(np->longitude.desc));
+	sensor_attach(&np->timedev, &np->longitude);
 
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
@@ -353,16 +369,16 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 			DPRINTF(("gprmc: unknown mode '%c'\n", np->mode));
 		}
 	}
-#if NMEA_POS_IN_DESC
-	nmea_degrees(np->time.desc, fld[3], *fld[4] == 'S' ? 1 : 0,
-	    sizeof(np->time.desc));
-	nmea_degrees(np->time.desc, fld[5], *fld[6] == 'W' ? 1 : 0,
-	    sizeof(np->time.desc));
-#endif
 	switch (*fld[2]) {
 	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
 		np->time.status = SENSOR_S_OK;
 		np->signal.status = SENSOR_S_OK;
+		np->latitude.status = SENSOR_S_OK;
+		np->longitude.status = SENSOR_S_OK;
+		np->time.flags &= ~SENSOR_FINVALID;
+		np->signal.flags &= ~SENSOR_FINVALID;
+		np->latitude.flags &= ~SENSOR_FINVALID;
+		np->longitude.flags &= ~SENSOR_FINVALID;
 		break;
 	case 'V':	/*
 			 * The GPS indicates a warning status, do not add to
@@ -371,8 +387,14 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 			 * the signal sensor.
 			 */
 		np->signal.status = SENSOR_S_WARN;
+		np->latitude.status = SENSOR_S_WARN;
+		np->longitude.status = SENSOR_S_WARN;
 		break;
 	}
+	if (nmea_degrees(&np->latitude.value, fld[3], *fld[4] == 'S' ? 1 : 0))
+		np->latitude.status = SENSOR_S_WARN;
+	if (nmea_degrees(&np->longitude.value,fld[5], *fld[6] == 'W' ? 1 : 0))
+		np->longitude.status = SENSOR_S_WARN;
 
 	if (jumped)
 		np->time.status = SENSOR_S_WARN;
@@ -386,17 +408,17 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 		np->time.status = SENSOR_S_CRIT;
 }
 
-#ifdef NMEA_POS_IN_DESC
-/* format a nmea position in the form DDDMM.MMMM to DDDdMM.MMm */
-void
-nmea_degrees(char *dst, char *src, int neg, size_t len)
+/*
+ * Convert a nmea position in the form DDDMM.MMMM to an
+ * angle sensor value (degrees*1000000)
+ */
+int
+nmea_degrees(int64_t *dst, char *src, int neg)
 {
-	size_t dlen, ppos, rlen;
-	int n;
+	size_t ppos;
+	int i, n;
+	int64_t deg = 0, min = 0;
 	char *p;
-
-	for (dlen = 0; *dst; dlen++)
-		dst++;
 
 	while (*src == '0')
 		++src;	/* skip leading zeroes */
@@ -406,42 +428,27 @@ nmea_degrees(char *dst, char *src, int neg, size_t len)
 			break;
 
 	if (*p == '\0')
-		return;	/* no decimal point */
-
-	/*
-	 * we need at least room for a comma, an optional '-', the src data up
-	 * to the decimal point, the decimal point itself, two digits after
-	 * it and some additional characters:  an optional leading '0' in case
-	 * there a no degrees in src, the 'd' degrees indicator, the 'm'
-	 * minutes indicator and the terminating NUL character.
-	 */
-	rlen = dlen + ppos + 7;
-	if (neg)
-		rlen++;
-	if (ppos < 3)
-		rlen++;
-	if (len < rlen)
-		return;		/* not enough room in dst */
-
-	*dst++ = ',';
-	if (neg)
-		*dst++ = '-';
-
-	if (ppos < 3)
-		*dst++ = '0';
+		return -1;	/* no decimal point */
 
 	for (n = 0; *src && n + 2 < ppos; n++)
-		*dst++ = *src++;
-	*dst++ = 'd';
-	if (ppos == 0)
-		*dst++ = '0';
+		deg = deg * 10 + (*src++ - '0');
 
-	for (; *src && n < (ppos + 3); n++)
-		*dst++ = *src++;
-	*dst++ = 'm';
-	*dst = '\0';
+	for (; *src && n < ppos; n++)
+		min = min * 10 + (*src++ - '0');
+
+	*src++;		/* skip decimal point */
+
+	for (; *src && n < (ppos + 4); n++)
+		min = min * 10 + (*src++ - '0');
+
+	for (i=0; i < 6 + ppos - n; i++)
+		min *= 10;
+
+	deg = deg * 1000000 + (min/60);
+
+	*dst = neg ? -deg : deg;
+	return 0;
 }
-#endif
 
 /*
  * Convert a NMEA 0183 formatted date string to seconds since the epoch.
@@ -536,6 +543,8 @@ nmea_timeout(void *xnp)
 
 	if (np->time.status == SENSOR_S_OK) {
 		np->time.status = SENSOR_S_WARN;
+		np->latitude.status = SENSOR_S_WARN;
+		np->longitude.status = SENSOR_S_WARN;
 		/*
 		 * further degrade in TRUSTTIME seconds if no new valid NMEA
 		 * sentences are received.
@@ -543,4 +552,6 @@ nmea_timeout(void *xnp)
 		timeout_add_sec(&np->nmea_tout, TRUSTTIME);
 	} else
 		np->time.status = SENSOR_S_CRIT;
+		np->latitude.status = SENSOR_S_CRIT;
+		np->longitude.status = SENSOR_S_CRIT;
 }

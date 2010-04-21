@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.22 2008/05/06 09:01:08 mbalmer Exp $
+.\"	$OpenBSD: nmea.4,v 1.23 2010/04/21 23:43:39 sthen Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2008 $
+.Dd $Mdocdate: April 21 2010 $
 .Dt NMEA 4
 .Os
 .Sh NAME
@@ -34,10 +34,11 @@ ioctl(fildes, TIOCSETD, &ldisc);
 .Ed
 .Pp
 The byte stream is unaltered by the line discipline which
-maintains a timedelta sensor using the NMEA data.
-The timedelta sensor will appear as nmea* in the list of sensors and the delta
-(in nanoseconds) between the received time information and the local time can
-be accessed through the
+maintains timedelta and position sensors using the NMEA data.
+The sensors will appear as nmea* in the list.
+The timedelta (nanoseconds difference between the received time
+information and the local time), and position (calculated
+latitude and longitude in degrees) can be accessed through the
 .Xr sysctl 8
 interface.
 .Sh NMEA SENTENCES
@@ -47,7 +48,7 @@ line discipline decodes the following NMEA 0183 sentences:
 .Bl -tag -width "GPRMCXX"
 .It GPRMC
 Recommended Minimum Specific GPS/TRANSIT Data.
-Only the time and date information is extracted.
+The time and date information and position are extracted.
 The warning indication is used to provide the sensor status (see below).
 If the attached device sends the GPRMC message in the 13-field format,
 the operation mode of the GPS device is reported in the sensor description.
@@ -60,7 +61,7 @@ a message block is received from the NMEA device.
 The quality of the timedelta is reported as the sensor status:
 .Bl -tag -width "CRITICALXX" -offset indent
 .It OK
-The time information is valid.
+The time information and position are valid.
 The timedelta is safe to use for applications like
 .Xr ntpd 8 .
 .It WARN
