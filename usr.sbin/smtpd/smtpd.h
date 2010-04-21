@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.177 2010/04/21 19:53:16 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.178 2010/04/21 21:04:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -283,6 +283,19 @@ struct map {
 	enum map_src			 m_src;
 	char				 m_config[MAXPATHLEN];
 	TAILQ_HEAD(mapel_list, mapel)	 m_contents;
+};
+
+struct map_backend {
+	enum map_src source;
+	void *(*open)(char *);
+	void (*close)(void *);
+	char *(*get)(void *, char *, size_t *);
+	int (*put)(void *, char *, char *);
+};
+
+struct map_parser {
+	enum map_kind kind;
+	void *(*extract)(char *, size_t);
 };
 
 enum cond_type {
@@ -820,6 +833,7 @@ struct mta_session {
 	char			*cert;
 	void			*pcb;
 };
+
 
 extern void (*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
 
