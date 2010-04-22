@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.39 2010/04/19 10:52:15 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.40 2010/04/22 00:58:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -263,17 +263,6 @@ struct ata_log_page_10h {
  * ATA interface
  */
 
-struct ata_port {
-	struct ata_identify	ap_identify;
-	struct atascsi		*ap_as;
-	int			ap_port;
-	int			ap_type;
-#define ATA_PORT_T_NONE			0
-#define ATA_PORT_T_DISK			1
-#define ATA_PORT_T_ATAPI		2
-	int			ap_ncqdepth;
-};
-
 struct ata_xfer {
 	struct ata_fis_h2d	*fis;
 	struct ata_fis_d2h	rfis;
@@ -339,6 +328,10 @@ struct atascsi_attach_args {
 #define ASAA_CAP_NCQ		(1 << 0)
 #define ASAA_CAP_NEEDS_RESERVED	(1 << 1)
 };
+
+#define ATA_PORT_T_NONE		0
+#define ATA_PORT_T_DISK		1
+#define ATA_PORT_T_ATAPI	2
 
 struct atascsi	*atascsi_attach(struct device *, struct atascsi_attach_args *);
 int		atascsi_detach(struct atascsi *, int);
