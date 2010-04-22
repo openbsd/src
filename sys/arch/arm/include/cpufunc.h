@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.6 2009/05/08 02:57:32 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.7 2010/04/22 21:01:45 drahn Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -516,10 +516,10 @@ __set_cpsr_c(u_int bic, u_int eor)
 	u_int32_t	tmp, ret;
 
 	__asm __volatile(
-		"mrs	%0, cpsr\n"	/* Get the CPSR */
-		"bic	 %1, %0, %2\n"	/* Clear bits */
-		"eor	 %1, %1, %3\n"	/* XOR bits */
-		"msr	cpsr_c, %1\n"	/* Set the control field of CPSR */
+		"mrs	%0, cpsr\n\t"	/* Get the CPSR */
+		"bic	%1, %0, %2\n\t"	/* Clear bits */
+		"eor	%1, %1, %3\n\t"	/* XOR bits */
+		"msr	cpsr_c, %1"	/* Set CPSR control field */
 	: "=&r" (ret), "=&r" (tmp)
 	: "r" (bic), "r" (eor));
 
