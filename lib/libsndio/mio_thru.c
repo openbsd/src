@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_thru.c,v 1.6 2009/10/22 22:26:49 ratchov Exp $	*/
+/*	$OpenBSD: mio_thru.c,v 1.7 2010/04/22 17:43:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -82,8 +82,17 @@ thru_open(const char *str, char *sock, unsigned mode, int nbio)
 		if (errno == EINTR)
 			continue;
 		DPERROR("thru_open: connect");
-		goto bad_connect;
-	}
+		/* try shared server */
+		snprintf(ca.sun_path, sizeof(ca.sun_path),
+		    "/tmp/aucat/%s%s", sock, str);
+		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
+			if (errno == EINTR)
+				continue;
+			DPERROR("thru_open: connect");
+			goto bad_connect;
+		}
+		break;
+ 	}
 	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
 		DPERROR("FD_CLOEXEC");
 		goto bad_connect;

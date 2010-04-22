@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.85 2010/04/21 06:15:02 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.86 2010/04/22 17:43:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,11 +18,13 @@
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +44,16 @@
 #ifdef DEBUG
 #include "dbg.h"
 #endif
+
+/*
+ * unprivileged user name
+ */
+#define SNDIO_USER	"_sndio"
+
+/*
+ * priority when run as root
+ */
+#define SNDIO_PRIO	(-20)
 
 #define PROG_AUCAT	"aucat"
 #define PROG_MIDICAT	"midicat"
@@ -303,17 +315,44 @@ getbasepath(char *base, size_t size)
 {
 	uid_t uid;
 	struct stat sb;
+	mode_t mask;
 
 	uid = geteuid();
-	snprintf(base, PATH_MAX, "/tmp/aucat-%u", uid);
-	if (mkdir(base, 0700) < 0) {
+	if (uid == 0) {
+		mask = 022;
+		snprintf(base, PATH_MAX, "/tmp/aucat");
+	} else {
+		mask = 077;
+		snprintf(base, PATH_MAX, "/tmp/aucat-%u", uid);
+	}
+	if (mkdir(base, 0777 & ~mask) < 0) {
 		if (errno != EEXIST)
 			err(1, "mkdir(\"%s\")", base);
 	}
 	if (stat(base, &sb) < 0)
 		err(1, "stat(\"%s\")", base);
-	if (sb.st_uid != uid || (sb.st_mode & 077) != 0)
+	if (sb.st_uid != uid || (sb.st_mode & mask) != 0)
 		errx(1, "%s has wrong permissions", base);
+}
+
+void
+privdrop(void)
+{
+	struct passwd *pw;
+	struct stat sb;
+
+	if ((pw = getpwnam(SNDIO_USER)) == NULL)
+		err(1, "getpwnam");
+	if (stat(pw->pw_dir, &sb) < 0)
+		err(1, "stat(\"%s\")", pw->pw_dir);
+	if (sb.st_uid != 0 || (sb.st_mode & 022) != 0)
+		errx(1, "%s has wrong permissions", pw->pw_dir);
+	if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
+		err(1, "setpriority");
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		err(1, "cannot drop privileges");
 }
 
 void
@@ -647,6 +686,8 @@ aucat_main(int argc, char **argv)
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_SOFTAUDIO, unit);
 		listen_new(&listen_ops, path);
+		if (geteuid() == 0)
+			privdrop();
 		if (!d_flag && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
@@ -705,7 +746,7 @@ aucat_main(int argc, char **argv)
 	dev_done();
 	filelist_done();
 	if (l_flag) {
-		if (rmdir(base) < 0 && errno != ENOTEMPTY)
+		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)
 			warn("rmdir(\"%s\")", base);
 	}
 	unsetsig();
@@ -817,6 +858,8 @@ midicat_main(int argc, char **argv)
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_MIDITHRU, unit);
 		listen_new(&listen_ops, path);
+		if (geteuid() == 0)
+			privdrop();
 		if (!d_flag && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
@@ -873,7 +916,7 @@ midicat_main(int argc, char **argv)
 	dev_done();
 	filelist_done();
 	if (l_flag) {
-		if (rmdir(base) < 0 && errno != ENOTEMPTY)
+		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)
 			warn("rmdir(\"%s\")", base);
 	}
 	unsetsig();

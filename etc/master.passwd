@@ -45,4 +45,5 @@ _smtpd:*:95:95::0:0:SMTP Daemon:/var/empty:/sbin/nologin
 _rwalld:*:96:96::0:0:rpc.rwalld:/var/empty:/sbin/nologin
 _nsd:*:97:97::0:0:NSD Daemon:/var/empty:/sbin/nologin
 _ldpd:*:98:98::0:0:LDP Daemon:/var/empty:/sbin/nologin
+_sndio:*:99:99::0:0:sndio privsep:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user for NFS:/nonexistent:/sbin/nologin

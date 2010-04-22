@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.43 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.44 2010/04/22 17:43:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -15,6 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,11 +38,12 @@ int sock_read(struct sock *);
 int sock_write(struct sock *);
 int sock_execmsg(struct sock *);
 void sock_reset(struct sock *);
+void sock_close(struct file *);
 
 struct fileops sock_ops = {
 	"sock",
 	sizeof(struct sock),
-       	pipe_close,
+       	sock_close,
 	pipe_read,
 	pipe_write,
 	NULL, /* start */
@@ -82,6 +86,16 @@ struct ctl_ops ctl_sockops = {
 	sock_stopreq,
 	sock_locreq
 };
+
+unsigned sock_sesrefs = 0;	/* connections to the session */
+uid_t sock_sesuid;		/* owner of the session */
+
+void
+sock_close(struct file *f)
+{
+	sock_sesrefs--;
+	pipe_close(f);
+}
 
 void
 rsock_done(struct aproc *p)
@@ -296,6 +310,27 @@ sock_new(struct fileops *ops, int fd)
 {
 	struct aproc *rproc, *wproc;
 	struct sock *f;
+	uid_t uid, gid;
+
+	/*
+	 * ensure that all connections belong to the same user,
+	 * for privacy reasons.
+	 *
+	 * XXX: is there a portable way of doing this ?
+	 */
+	if (getpeereid(fd, &uid, &gid) < 0) {
+		close(fd);
+		return NULL;
+	}
+	if (sock_sesrefs == 0) {
+		/* start a new session */
+		sock_sesuid = uid;
+	} else if (uid != sock_sesuid) {
+		/* session owned by another user, drop connection */
+		close(fd);
+		return NULL;
+	}
+	sock_sesrefs++;
 
 	f = (struct sock *)pipe_new(ops, fd, "sock");
 	if (f == NULL)

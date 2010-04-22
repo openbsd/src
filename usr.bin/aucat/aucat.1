@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.68 2010/04/21 06:13:07 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.69 2010/04/22 17:43:30 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2010 $
+.Dd $Mdocdate: April 22 2010 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -387,6 +387,16 @@ can be used in server mode
 to overcome hardware limitations and allow applications
 to run on fixed sample rate devices or on devices
 supporting only unusual encodings.
+.Pp
+The
+.Nm
+audio server may be started by the super-user,
+in which case any user will be able to connect to it.
+For privacy reasons, only one user may have connections to it
+at a given time.
+.Pp
+Alternatively, each user may run his instance
+of the server.
 It is generally not desirable to have multiple
 instances of
 .Nm

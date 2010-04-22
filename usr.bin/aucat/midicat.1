@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.9 2010/04/06 20:07:01 ratchov Exp $
+.\"	$OpenBSD: midicat.1,v 1.10 2010/04/22 17:43:30 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2010 $
+.Dd $Mdocdate: April 22 2010 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -101,6 +101,16 @@ This feature is provided to allow multiple applications
 acting as sources to keep their connection open while
 idling; it does not replace a fully featured MIDI merger.
 .Pp
+A
+.Nm
+process may be started by the super-user,
+in which case any user will be able to connect to it.
+For privacy reasons, only one user may have connections to 
+it at a given time.
+.Pp
+Alternatively, each user may start its own
+.Nm
+process.
 It is generally not desirable to have multiple instances of
 .Nm
 running in server mode, so it is good practice to start it thus:

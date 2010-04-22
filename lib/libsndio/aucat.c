@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.35 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.36 2010/04/22 17:43:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -225,7 +225,16 @@ sio_open_aucat(const char *str, unsigned mode, int nbio)
 		if (errno == EINTR)
 			continue;
 		DPERROR("sio_open_aucat: connect");
-		goto bad_connect;
+		/* try shared server */
+		snprintf(ca.sun_path, sizeof(ca.sun_path),
+		    "/tmp/aucat/softaudio%s", unit);
+		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
+			if (errno == EINTR)
+				continue;
+			DPERROR("sio_open_aucat: connect");
+			goto bad_connect;
+		}
+		break;
 	}
 	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
 		DPERROR("FD_CLOEXEC");
