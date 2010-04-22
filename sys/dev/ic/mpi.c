@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.143 2010/04/19 09:51:09 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.144 2010/04/22 03:14:35 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2099,8 +2099,8 @@ mpi_cfg_coalescing(struct mpi_softc *sc)
 	}
 
 	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg, sizeof(pg)) != 0) {
-		DNPRINTF(MPI_D_MISC, "%s: mpi_get_raid unable to fetch IOC "
-		    "page 1\n", DEVNAME(sc));
+		DNPRINTF(MPI_D_MISC, "%s: unable to fetch IOC page 1\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
