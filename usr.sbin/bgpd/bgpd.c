@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.157 2010/04/13 09:09:48 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.158 2010/04/22 08:24:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,8 +32,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "mrt.h"
 #include "bgpd.h"
+#include "mrt.h"
 #include "session.h"
 
 void		sighdlr(int);
