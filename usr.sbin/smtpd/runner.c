@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.84 2010/04/21 18:54:43 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.85 2010/04/22 12:13:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -79,19 +79,12 @@ int		runner_force_message_schedule(char *);
 int		runner_force_envelope_remove(char *);
 int		runner_force_message_remove(char *);
 
-void		runner_imsg_compose(struct smtpd *, int, u_int16_t,
-		    u_int32_t, pid_t, int, void *, u_int16_t);
-
 void
 runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct message	*m;
 	struct remove	*rem;
 	struct sched	*sched;
-	int		 proc;
-
-	/* queue stores imsg sender process number in the ``peerid'' field. */
-	proc = imsg->hdr.peerid;
 
 	switch (imsg->hdr.type) {
 	case IMSG_QUEUE_MESSAGE_UPDATE:
@@ -114,8 +107,8 @@ runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			sched->ret = runner_force_envelope_schedule(sched->mid);
 		else if (valid_message_id(sched->mid))
 			sched->ret = runner_force_message_schedule(sched->mid);
-		runner_imsg_compose(env, proc, IMSG_QUEUE_SCHEDULE, 0, 0, -1,
-		    sched, sizeof *sched);
+		imsg_compose_event(iev, IMSG_QUEUE_SCHEDULE, imsg->hdr.peerid,
+		    0, -1, sched, sizeof *sched);
 		return;
 
 	case IMSG_QUEUE_REMOVE:
@@ -125,8 +118,8 @@ runner_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			rem->ret = runner_force_envelope_remove(rem->mid);
 		else if (valid_message_id(rem->mid))
 			rem->ret = runner_force_message_remove(rem->mid);
-		runner_imsg_compose(env, proc, IMSG_QUEUE_REMOVE, 0, 0, -1, rem,
-		    sizeof *rem);
+		imsg_compose_event(iev, IMSG_QUEUE_REMOVE, imsg->hdr.peerid, 0,
+		    -1, rem, sizeof *rem);
 		return;
 
 	case IMSG_PARENT_ENQUEUE_OFFLINE:
@@ -281,8 +274,8 @@ runner_process_offline(struct smtpd *env)
 	q = qwalk_new(PATH_OFFLINE);
 
 	if (qwalk(q, path))
-		runner_imsg_compose(env, PROC_PARENT,
-		    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1, path,
+		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+		    IMSG_PARENT_ENQUEUE_OFFLINE, PROC_PARENT, 0, -1, path,
 		    strlen(path) + 1);
 
 	qwalk_close(q);
@@ -472,8 +465,9 @@ runner_process_batchqueue(struct smtpd *env)
 		case T_MDA_BATCH:
 			m = TAILQ_FIRST(&batchp->messages);
 			fd = queue_open_message_file(m->message_id);
-			runner_imsg_compose(env, PROC_MDA, IMSG_MDA_SESS_NEW,
-			    0, 0, fd, m, sizeof *m);
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+			    IMSG_MDA_SESS_NEW, PROC_MDA, 0, fd, m,
+			    sizeof *m);
 			TAILQ_REMOVE(&batchp->messages, m, entry);
 			free(m);
 			env->stats->mda.sessions_active++;
@@ -481,16 +475,19 @@ runner_process_batchqueue(struct smtpd *env)
 			break;
 
 		case T_MTA_BATCH:
-			runner_imsg_compose(env, PROC_MTA, IMSG_BATCH_CREATE,
-			    0, 0, -1, batchp, sizeof *batchp);
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+			    IMSG_BATCH_CREATE, PROC_MTA, 0, -1, batchp,
+			    sizeof *batchp);
 			while ((m = TAILQ_FIRST(&batchp->messages))) {
-				runner_imsg_compose(env, PROC_MTA,
-				    IMSG_BATCH_APPEND, 0, 0, -1, m, sizeof *m);
+				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+				    IMSG_BATCH_APPEND, PROC_MTA, 0, -1, m,
+				    sizeof *m);
 				TAILQ_REMOVE(&batchp->messages, m, entry);
 				free(m);
 			}
-			runner_imsg_compose(env, PROC_MTA, IMSG_BATCH_CLOSE,
-			    0, 0, -1, batchp, sizeof *batchp);
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+			    IMSG_BATCH_CLOSE, PROC_MTA, 0, -1, batchp,
+			    sizeof *batchp);
 			env->stats->mta.sessions_active++;
 			env->stats->mta.sessions++;
 			break;
@@ -886,16 +883,6 @@ message_reset_flags(struct message *m)
 
 	while (! queue_update_envelope(m))
 		sleep(1);
-}
-
-void
-runner_imsg_compose(struct smtpd *env, int proc, u_int16_t type,
-    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
-{
-	/* forward via the queue process */
-	log_debug("runner: sending %d imsg type %d", proc, type);
-	imsg_compose_event(env->sc_ievs[PROC_QUEUE], type, proc, pid, fd,
-	    data, datalen);
 }
 
 SPLAY_GENERATE(batchtree, batch, b_nodes, batch_cmp);

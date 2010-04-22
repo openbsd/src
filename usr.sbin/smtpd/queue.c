@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.80 2010/04/21 18:54:43 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.81 2010/04/22 12:13:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -159,7 +159,6 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_RUNNER) {
 		/* forward imsgs from runner on its behalf */
-		log_debug("queue: runner sent %d imsg type %d", imsg->hdr.peerid, imsg->hdr.type);
 		imsg_compose_event(env->sc_ievs[imsg->hdr.peerid], imsg->hdr.type,
 		    0, imsg->hdr.pid, imsg->fd, (char *)imsg->data,
 		    imsg->hdr.len - sizeof imsg->hdr);
@@ -223,7 +222,6 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 void
 queue_pass_to_runner(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
-	log_debug("queue_pass_to_runner: from %d type %d", iev->proc, imsg->hdr.type);
 	imsg_compose_event(env->sc_ievs[PROC_RUNNER], imsg->hdr.type,
 	    iev->proc, imsg->hdr.pid, imsg->fd, imsg->data,
 	    imsg->hdr.len - sizeof imsg->hdr);
