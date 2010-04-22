@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.20 2009/08/06 15:28:14 oga Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.21 2010/04/22 19:02:44 oga Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -364,7 +364,7 @@
  * is a void function.
  *
  * [B] new page tables pages (PTP)
- * 	call pae_pagealloc()
+ * 	call uvm_pagealloc()
  * 		=> success: zero page, add to pm_pdir
  * 		=> failure: we are out of free vm_pages, let pmap_enter()
  *		   tell UVM about it.
@@ -551,13 +551,6 @@ extern caddr_t pmap_csrcp, pmap_cdstp, pmap_zerop, pmap_ptpp;
 
 extern int pmap_pg_g;
 extern struct pmap_head pmaps;
-
-/*
- * a towards larger memory prioritised version opf uvm_pagealloc()
- */
-#define	pae_pagealloc(obj, off, anon, flags) \
-    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
-	UVM_PGA_STRAT_FALLBACK, VM_FREELIST_ABOVE4G)
 
 /*
  * local prototypes
@@ -801,7 +794,7 @@ pmap_bootstrap_pae()
 	for (va = KERNBASE, eva = va + (nkpde << 22);
 	    va < eva; va += PAGE_SIZE) {
 		if (!pmap_valid_entry(PDE(kpm, pdei(va)))) {
-			ptp = pae_pagealloc(&kpm->pm_obj, va, NULL,
+			ptp = uvm_pagealloc(&kpm->pm_obj, va, NULL,
 			    UVM_PGA_ZERO);
 			ptaddr = VM_PAGE_TO_PHYS(ptp);
 			PDE(kpm, pdei(va)) = ptaddr | PG_KW | PG_V;
@@ -977,7 +970,7 @@ pmap_alloc_ptp_pae(struct pmap *pmap, int pde_index, boolean_t just_try)
 {
 	struct vm_page *ptp;
 
-	ptp = pae_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
+	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (ptp == NULL)
 		return(NULL);

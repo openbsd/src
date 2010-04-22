@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.486 2010/04/20 22:53:24 miod Exp $
+#	$OpenBSD: files,v 1.487 2010/04/22 19:02:52 oga Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1009,6 +1009,7 @@ file uvm/uvm_page.c
 file uvm/uvm_pager.c
 file uvm/uvm_pdaemon.c
 file uvm/uvm_pglist.c
+file uvm/uvm_pmemrange.c
 file uvm/uvm_stat.c
 file uvm/uvm_swap.c
 file uvm/uvm_swap_encrypt.c		uvm_swap_encrypt

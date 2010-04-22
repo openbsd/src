@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.33 2008/07/22 18:15:48 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.34 2010/04/22 19:02:47 oga Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -129,6 +129,9 @@ struct vm_page_md {
 
 #define VM_NFREELIST		1
 #define VM_FREELIST_DEFAULT	0
+
+/* No UVM_IO_RANGES required: IOMMU takes care of this. */
+#define UVM_IO_RANGES {}
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;

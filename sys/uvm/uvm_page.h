@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.41 2010/03/24 00:36:04 oga Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.42 2010/04/22 19:02:55 oga Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -116,6 +116,7 @@ struct vm_page {
 						 * to read: [O or P]
 						 * to modify: [O _and_ P] */
 	paddr_t			phys_addr;	/* physical address of page */
+	psize_t			fpgsz;		/* free page range size */
 
 #ifdef __HAVE_VM_PAGE_MD
 	struct vm_page_md	mdpage;		/* pmap-specific data */
