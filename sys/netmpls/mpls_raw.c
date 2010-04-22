@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.4 2008/11/01 16:37:55 michele Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.5 2010/04/22 06:46:18 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -39,6 +39,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
