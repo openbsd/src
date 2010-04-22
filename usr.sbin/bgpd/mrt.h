@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.24 2009/10/26 09:27:58 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.25 2010/04/22 08:18:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -75,8 +75,10 @@ enum MRT_BGP4MP_TYPES {
 	BGP4MP_MESSAGE,		/* bgp message */
 	BGP4MP_ENTRY,		/* table dumps (deprecated) */
 	BGP4MP_SNAPSHOT,	/* file name for dump (deprecated) */
+	BGP4MP_MESSAGE_AS4,	/* same as BGP4MP_MESSAGE with 4byte AS */
 	BGP4MP_STATE_CHANGE_AS4,
-	BGP4MP_MESSAGE_AS4	/* same as BGP4MP_MESSAGE with 4byte AS */
+	BGP4MP_MESSAGE_LOCAL,	  /* same as BGP4MP_MESSAGE but for self */
+	BGP4MP_MESSAGE_AS4_LOCAL  /* originated updates. Not implemented */
 };
 
 /* size of the BGP4MP headers without payload */
