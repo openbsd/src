@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.40 2010/04/21 20:02:40 nicm Exp $
+.\"	$OpenBSD: event.3,v 1.41 2010/04/22 16:35:45 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 21 2010 $
+.Dd $Mdocdate: April 22 2010 $
 .Dt EVENT 3
 .Os
 .Sh NAME
@@ -398,7 +398,6 @@ will proceed normally.
 .Pp
 It is the responsibility of the caller to provide these functions with
 pre-allocated event structures.
-.Pp
 .Sh EVENT PRIORITIES
 By default
 .Nm libevent
@@ -482,7 +481,9 @@ Both the read and the write callback may be NULL.
 The error callback has to be always provided.
 .Pp
 Once initialized, the bufferevent structure can be used repeatedly with
-bufferevent_enable() and bufferevent_disable().
+.Fn bufferevent_enable
+and
+.Fn bufferevent_disable .
 The flags parameter can be a combination of
 .Va EV_READ
 and
@@ -507,7 +508,9 @@ The
 function is used to read data from the input buffer,
 returning the amount of data read.
 .Pp
-If multiple bases are in use, bufferevent_base_set() must be called before
+If multiple bases are in use,
+.Fn bufferevent_base_set
+must be called before
 enabling the bufferevent for the first time.
 .Sh ADDITIONAL NOTES
 It is possible to disable support for
@@ -542,14 +545,12 @@ The
 API manpage is based on the
 .Xr timeout 9
 manpage by Artur Grabowski.
-The port of
-.Nm libevent
-to Windows is due to Michael A. Davis.
-Support for real-time signals is due to Taral.
+Support for real-time signals was added by Taral.
 .Sh AUTHORS
 The
 .Nm event
-library was written by Niels Provos.
+library was written by
+.An Niels Provos .
 .Sh BUGS
 This documentation is neither complete nor authoritative.
 If you are in doubt about the usage of this API then
