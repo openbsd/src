@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.29 2010/04/20 20:22:29 jacekm Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.30 2010/04/22 15:37:45 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 20 2010 $
+.Dd $Mdocdate: April 22 2010 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -74,104 +74,6 @@ The syntax of
 .Nm
 is described below.
 .Bl -tag -width Ds
-.It Ic hostname Ar name
-Specify the domain name of the server.
-By default the current host name is used,
-as returned by
-.Xr hostname 1 .
-.It Xo
-.Ic listen on Ar interface
-.Op Ic port Ar port
-.Op Ic tls | smtps
-.Op Ic certificate Ar name
-.Op Ic enable auth
-.Xc
-Specify an
-.Ar interface
-and
-.Ar port
-to listen on.
-An IP address or domain name may be used in place of
-.Ar interface .
-.Pp
-Secured connections are provided either using STARTTLS
-.Pq Ic tls ,
-by default on port 25,
-or SMTPS
-.Pq Ic smtps ,
-by default on port 465.
-Creation of certificates is documented in
-.Xr starttls 8 .
-If no certificate
-.Ar name
-is specified, the
-.Pa /etc/mail/certs
-directory is searched for a file named by joining
-the interface name with a .crt extension, e.g.\&
-.Pa /etc/mail/certs/fxp0.crt .
-.Pp
-If the
-.Ic enable auth
-parameter is used,
-any remote sender that passed SMTPAUTH is treated as if
-it was the server's local user that was sending the mail.
-This means that filter rules using "from local" will be matched.
-.It Xo
-.Ic map Ar map
-.No {
-.Ic source Ar type Ar source
-.No }
-.Xc
-Maps are used to provide additional configuration information for
-.Xr smtpd 8 .
-.Pp
-.Ar map
-may be one of the following:
-.Pp
-.Bl -tag -width "virtualXXX" -compact
-.It aliases
-Map queried for mail aliases.
-See
-.Xr aliases 5
-and
-.Xr newaliases 8 .
-.It secrets
-Map queried for remote host credentials.
-See
-.Xr makemap 8 .
-.El
-.Pp
-.Ar type
-may be one of the following:
-.Pp
-.Bl -tag -width "fileXXX" -compact
-.It db
-Mappings are stored in a file created using
-.Xr makemap 8 .
-This is the default type if none is specified.
-.It dns
-Not implemented yet.
-.It file
-Not implemented yet.
-.El
-.Pp
-.Ar source
-specifies the source of the map data.
-It must be an absolute path to a file for the
-.Dq file
-and
-.Dq db
-map types,
-or a domain name for the
-.Dq dns
-map type.
-.It Ic size Ar bytes
-Specify the size above which a message is rejected by the server.
-The
-.Ar bytes
-argument can be expressed with quantifiers described in
-.Xr scan_scaled 3 ,
-or as bytes if no quantifier is provided.
 .It Ic accept | reject
 .Xr smtpd 8
 accepts and rejects messages
@@ -299,6 +201,103 @@ is desired, use the
 .Ic enable auth
 parameter.
 .El
+.It Ic hostname Ar name
+Specify the domain name of the server.
+By default the current host name is used,
+as returned by
+.Xr hostname 1 .
+.It Xo
+.Ic listen on Ar interface
+.Op Ic port Ar port
+.Op Ic tls | smtps
+.Op Ic certificate Ar name
+.Op Ic enable auth
+.Xc
+Specify an
+.Ar interface
+and
+.Ar port
+to listen on.
+An IP address or domain name may be used in place of
+.Ar interface .
+.Pp
+Secured connections are provided either using STARTTLS
+.Pq Ic tls ,
+by default on port 25,
+or SMTPS
+.Pq Ic smtps ,
+by default on port 465.
+Creation of certificates is documented in
+.Xr starttls 8 .
+If no certificate
+.Ar name
+is specified, the
+.Pa /etc/mail/certs
+directory is searched for a file named by joining
+the interface name with a .crt extension, e.g.\&
+.Pa /etc/mail/certs/fxp0.crt .
+.Pp
+If the
+.Ic enable auth
+parameter is used,
+any remote sender that passed SMTPAUTH is treated as if
+it was the server's local user that was sending the mail.
+This means that filter rules using "from local" will be matched.
+.It Xo
+.Ic map Ar map
+.No {
+.Ic source Ar type Ar source
+.No }
+.Xc
+Maps are used to provide additional configuration information for
+.Xr smtpd 8 .
+.Pp
+.Ar map
+may be one of the following:
+.Pp
+.Bl -tag -width "virtualXXX" -compact
+.It aliases
+Map queried for mail aliases.
+See
+.Xr aliases 5
+and
+.Xr newaliases 8 .
+.It secrets
+Map queried for remote host credentials.
+See
+.Xr makemap 8 .
+.El
+.Pp
+.Ar type
+may be one of the following:
+.Pp
+.Bl -tag -width "fileXXX" -compact
+.It db
+Mappings are stored in a file created using
+.Xr makemap 8 .
+This is the default type if none is specified.
+.It dns
+Not implemented yet.
+.It file
+Not implemented yet.
+.El
+.Pp
+.Ar source
+specifies the source of the map data.
+It must be an absolute path to a file for the
+.Dq file
+and
+.Dq db
+map types,
+or a domain name for the
+.Dq dns
+map type.
+.It Ic size Ar n
+Specify a maximum message size of
+.Ar n
+bytes.
+The argument may contain a multiplier, as documented in
+.Xr scan_scaled 3 .
 .El
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
