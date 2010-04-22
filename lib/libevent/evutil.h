@@ -1,4 +1,4 @@
-/*	$OpenBSD: evutil.h,v 1.2 2010/04/21 21:02:47 nicm Exp $	*/
+/*	$OpenBSD: evutil.h,v 1.3 2010/04/22 08:16:44 nicm Exp $	*/
 
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
@@ -59,6 +59,8 @@ int evutil_make_socket_nonblocking(int sock);
 
 #define EVUTIL_CLOSESOCKET(s) close(s)
 #define EVUTIL_SOCKET_ERROR() (errno)
+#define EVUTIL_SET_SOCKET_ERROR(errcode)	\
+	do { errno = (errcode); } while (0)
 
 /*
  * Manipulation functions for struct timeval
