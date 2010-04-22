@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.66 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.67 2010/04/22 08:21:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -85,12 +85,16 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 {
 	struct buf	*buf;
 	int		 incoming = 0;
+	u_int16_t	 subtype = BGP4MP_MESSAGE;
+
+	if (peer->capa.neg.as4byte)
+		subtype = BGP4MP_MESSAGE_AS4;
 
 	/* get the direction of the message to swap address and AS fields */
 	if (mrt->type == MRT_ALL_IN || mrt->type == MRT_UPDATE_IN)
 		incoming = 1;
 
-	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE,
+	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, subtype,
 	    pkglen, incoming) == -1)
 		return;
 
@@ -108,8 +112,12 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
     struct peer *peer)
 {
 	struct buf	*buf;
+	u_int16_t	 subtype = BGP4MP_STATE_CHANGE;
 
-	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE,
+	if (peer->capa.neg.as4byte)
+		subtype = BGP4MP_STATE_CHANGE_AS4;
+
+	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, subtype,
 	    2 * sizeof(short), 0) == -1)
 		return;
 
