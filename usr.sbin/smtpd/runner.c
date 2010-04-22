@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.85 2010/04/22 12:13:33 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.86 2010/04/22 12:56:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -454,7 +454,9 @@ runner_process_batchqueue(struct smtpd *env)
 		switch (batchp->type) {
 		case T_BOUNCE_BATCH:
 			while ((m = TAILQ_FIRST(&batchp->messages))) {
-				bounce_process(env, m);
+				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+				    IMSG_SMTP_ENQUEUE, PROC_SMTP, 0, -1, m,
+				    sizeof *m);
 				TAILQ_REMOVE(&batchp->messages, m, entry);
 				free(m);
 			}

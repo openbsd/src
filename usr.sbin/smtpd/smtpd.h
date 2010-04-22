@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.179 2010/04/21 21:47:39 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.180 2010/04/22 12:56:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -855,7 +855,6 @@ void alias_to_expand_node(struct expand_node *, struct alias *);
 int authenticate_user(char *, char *);
 
 /* bounce.c */
-void bounce_process(struct smtpd *, struct message *);
 int bounce_session(struct smtpd *, int, struct message *);
 int bounce_session_switch(struct smtpd *, FILE *, enum session_state *, char *,
 	struct message *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.17 2009/12/23 17:16:03 jacekm Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.18 2010/04/22 12:56:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -44,13 +44,6 @@ struct client_ctx {
 };
 
 void		 bounce_event(int, short, void *);
-
-void
-bounce_process(struct smtpd *env, struct message *message)
-{
-	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_ENQUEUE, 0, 0, -1,
-		message, sizeof(*message));
-}
 
 int
 bounce_session(struct smtpd *env, int fd, struct message *messagep)
