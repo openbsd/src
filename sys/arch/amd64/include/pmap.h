@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.30 2009/12/09 18:45:49 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.31 2010/04/22 07:55:02 jasper Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -221,8 +221,6 @@
 #define KERNSPACE		(NKL4_ENTRIES * NBPD_L4)
 
 #define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
-
-#define ptei(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
 
 /*
  * pl*_pi: index in the ptp page for a pde mapping a VA.
