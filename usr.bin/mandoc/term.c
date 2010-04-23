@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.29 2010/04/13 22:41:48 schwarze Exp $ */
+/*	$Id: term.c,v 1.30 2010/04/23 00:23:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -79,6 +79,7 @@ term_alloc(enum termenc enc)
 		perror(NULL);
 		exit(EXIT_FAILURE);
 	}
+	p->tabwidth = 5;
 	p->enc = enc;
 	return(p);
 }
@@ -154,7 +155,7 @@ term_flushln(struct termp *p)
 	 * breaking the line.
 	 */
 
-	vis = vend = i = 0;
+	vis = i = 0;
 	while (i < (int)p->col) {
 
 		/*
@@ -165,6 +166,21 @@ term_flushln(struct termp *p)
 		vbl = (size_t)(ASCII_EOS == p->buf[i] ? 2 :
 				(0 == vis ? 0 : 1));
 		vis += vbl;
+		vend = vis;
+
+		/*
+		 * Handle literal tab characters.
+		 */
+		for (j = i; j < (int)p->col; j++) {
+			if ('\t' != p->buf[j])
+				break;
+			/* Collapse tab with inter-word spacing. */
+			if (vis > 0 && j == i)
+				vend = vis - 1;
+			vend = (vend/p->tabwidth+1)*p->tabwidth;
+			vbl += vend - vis;
+			vis = vend;
+		}
 
 		/*
 		 * Count up visible word characters.  Control sequences
@@ -174,8 +190,8 @@ term_flushln(struct termp *p)
 		 */
 
 		/* LINTED */
-		for (j = i, jhy = 0, vend = vis; j < (int)p->col; j++) {
-			if (j && ' ' == p->buf[j]) 
+		for (jhy = 0; j < (int)p->col; j++) {
+			if ((j && ' ' == p->buf[j]) || '\t' == p->buf[j])
 				break;
 			else if (8 == p->buf[j])
 				vend--;
@@ -233,10 +249,18 @@ term_flushln(struct termp *p)
 		}
 
 		/*
+		 * Skip leading tabs, they were handled above.
+		 */
+		while (i < (int)p->col && '\t' == p->buf[i])
+			i++;
+
+		/*
 		 * Finally, write out the word.
 		 */
 		for ( ; i < (int)p->col; i++) {
 			if (vend > bp && jhy > 0 && i > jhy)
+				break;
+			if ('\t' == p->buf[i])
 				break;
 			if (' ' == p->buf[i]) {
 				i++;

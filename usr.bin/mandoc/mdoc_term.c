@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.74 2010/04/12 22:52:19 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.75 2010/04/23 00:23:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -271,6 +271,7 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 
 	p->overstep = 0;
 	p->maxrmargin = 78;
+	p->tabwidth = 5;
 
 	if (NULL == p->symtab)
 		switch (p->enc) {
@@ -1596,6 +1597,7 @@ termp_fa_pre(DECL_ARGS)
 static int
 termp_bd_pre(DECL_ARGS)
 {
+	size_t			 tabwidth;
 	int	         	 i, type;
 	const struct mdoc_node	*nn;
 
@@ -1640,16 +1642,17 @@ termp_bd_pre(DECL_ARGS)
 	if (MDOC_Literal != type && MDOC_Unfilled != type)
 		return(1);
 
+	tabwidth = p->tabwidth;
+	p->tabwidth = 8;
 	for (nn = n->child; nn; nn = nn->next) {
 		p->flags |= TERMP_NOSPACE;
 		print_mdoc_node(p, pair, m, nn);
-		if (NULL == nn->next)
-			continue;
-		if (nn->prev && nn->prev->line < nn->line)
-			term_flushln(p);
-		else if (NULL == nn->prev)
+		if (NULL == nn->prev ||
+		    nn->prev->line < nn->line ||
+		    NULL == nn->next)
 			term_flushln(p);
 	}
+	p->tabwidth = tabwidth;
 
 	return(0);
 }
@@ -1663,7 +1666,7 @@ termp_bd_post(DECL_ARGS)
 	if (MDOC_BODY != n->type) 
 		return;
 	p->flags |= TERMP_NOSPACE;
-	term_flushln(p);
+	term_newln(p);
 }
 
 
