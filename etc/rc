@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.335 2010/01/04 18:03:30 deraadt Exp $
+#	$OpenBSD: rc,v 1.336 2010/04/23 06:29:36 ratchov Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -763,6 +763,10 @@ fi
 echo '.'
 
 mixerctl_conf
+
+if [ X"${aucat_flags}" != X"NO" ]; then
+	aucat -l ${aucat_flags}
+fi
 
 # KerberosV master KDC
 if [ X"${krb5_master_kdc}" = X"YES" ]; then
