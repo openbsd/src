@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.47 2009/10/12 00:30:15 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.48 2010/04/23 01:39:05 dlg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -452,6 +452,67 @@ struct scsi_report_luns_data {
 	} luns[256];		/* scsi_link->luns is u_int8_t. */
 };
 #define	RPL_LUNDATA_T0LUN	1	/* Type 0 LUN is in lundata[1] */
+
+/*
+ * ATA PASS-THROUGH as per SAT2
+ */
+
+#define ATA_PASSTHRU_12		0xa1
+#define ATA_PASSTHRU_16		0x85
+
+#define ATA_PASSTHRU_PROTO_MASK		0x1e
+#define ATA_PASSTHRU_PROTO_HW_RESET	0x00
+#define ATA_PASSTHRU_PROTO_SW_RESET	0x02
+#define ATA_PASSTHRU_PROTO_NON_DATA	0x06
+#define ATA_PASSTHRU_PROTO_PIO_DATAIN	0x08
+#define ATA_PASSTHRU_PROTO_PIO_DATAOUT	0x0a
+#define ATA_PASSTHRU_PROTO_DMA		0x0c
+#define ATA_PASSTHRU_PROTO_DMA_QUEUED	0x0e
+#define ATA_PASSTHRU_PROTO_EXEC_DIAG	0x10
+#define ATA_PASSTHRU_PROTO_NON_DATA_RST	0x12
+#define ATA_PASSTHRU_PROTO_UDMA_DATAIN	0x14
+#define ATA_PASSTHRU_PROTO_UDMA_DATAOUT	0x16
+#define ATA_PASSTHRU_PROTO_FPDMA	0x18
+#define ATA_PASSTHRU_PROTO_RESPONSE	0x1e
+
+#define ATA_PASSTHRU_T_DIR_MASK		0x08
+#define ATA_PASSTHRU_T_DIR_READ		0x08
+#define ATA_PASSTHRU_T_DIR_WRITE	0x00
+
+#define ATA_PASSTHRU_T_LEN_MASK		0x03
+#define ATA_PASSTHRU_T_LEN_NONE		0x00
+#define ATA_PASSTHRU_T_LEN_FEATURES	0x01
+#define ATA_PASSTHRU_T_LEN_SECTOR_COUNT	0x02
+#define ATA_PASSTHRU_T_LEN_TPSIU	0x03
+
+struct scsi_ata_passthru_12 {
+	u_int8_t opcode;
+	u_int8_t count_proto;
+	u_int8_t flags;
+	u_int8_t features;
+	u_int8_t sector_count;
+	u_int8_t lba_low;
+	u_int8_t lba_mid;
+	u_int8_t lba_high;
+	u_int8_t device;
+	u_int8_t command;
+	u_int8_t _reserved;
+	u_int8_t control;
+};
+
+struct scsi_ata_passthru_16 {
+	u_int8_t opcode;
+	u_int8_t count_proto;
+	u_int8_t flags;
+	u_int8_t features[2];
+	u_int8_t sector_count[2];
+	u_int8_t lba_low[2];
+	u_int8_t lba_mid[2];
+	u_int8_t lba_high[2];
+	u_int8_t device;
+	u_int8_t command;
+	u_int8_t control;
+};
 
 /*
  * SPI status information unit. See section 14.3.5 of SPI-3.

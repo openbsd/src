@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.81 2010/04/22 00:58:32 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.82 2010/04/23 01:39:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -59,8 +59,6 @@ struct atascsi_port {
 };
 
 void		atascsi_cmd(struct scsi_xfer *);
-int		atascsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
-		    struct proc *);
 int		atascsi_probe(struct scsi_link *);
 void		atascsi_free(struct scsi_link *);
 
@@ -70,7 +68,7 @@ struct scsi_adapter atascsi_switch = {
 	scsi_minphys,		/* scsi_minphys */
 	atascsi_probe,		/* dev_probe */
 	atascsi_free,		/* dev_free */
-	atascsi_ioctl		/* ioctl */
+	NULL,			/* ioctl */
 };
 
 struct scsi_device atascsi_device = {
@@ -96,6 +94,11 @@ void		atascsi_disk_sense(struct scsi_xfer *);
 
 void		atascsi_atapi_cmd(struct scsi_xfer *);
 void		atascsi_atapi_cmd_done(struct ata_xfer *);
+
+void		atascsi_passthru_12(struct scsi_xfer *);
+void		atascsi_passthru_16(struct scsi_xfer *);
+int		atascsi_passthru_map(struct scsi_xfer *, u_int8_t, u_int8_t);
+void		atascsi_passthru_done(struct ata_xfer *);
 
 void		atascsi_done(struct scsi_xfer *, int);
 
@@ -425,6 +428,13 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		return;
 	case READ_CAPACITY_16:
 		atascsi_disk_capacity16(xs);
+		return;
+
+	case ATA_PASSTHRU_12:
+		atascsi_passthru_12(xs);
+		return;
+	case ATA_PASSTHRU_16:
+		atascsi_passthru_16(xs);
 		return;
 
 	case TEST_UNIT_READY:
@@ -877,6 +887,134 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 	atascsi_done(xs, XS_NOERROR);
 }
 
+int
+atascsi_passthru_map(struct scsi_xfer *xs, u_int8_t count_proto, u_int8_t flags)
+{
+	struct ata_xfer		*xa = xs->io;
+
+	xa->data = xs->data;
+	xa->datalen = xs->datalen;
+	xa->timeout = xs->timeout;
+	xa->flags = 0;
+	if (xs->flags & SCSI_DATA_IN)
+		xa->flags |= ATA_F_READ;
+	if (xs->flags & SCSI_DATA_OUT)
+		xa->flags |= ATA_F_WRITE;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+
+	switch (count_proto & ATA_PASSTHRU_PROTO_MASK) {
+	case ATA_PASSTHRU_PROTO_NON_DATA:
+	case ATA_PASSTHRU_PROTO_PIO_DATAIN:
+	case ATA_PASSTHRU_PROTO_PIO_DATAOUT:
+		xa->flags |= ATA_F_PIO;
+		break;
+	default:
+		/* we dont support this yet */
+		return (1);
+	}
+
+	xa->atascsi_private = xs;
+	xa->complete = atascsi_passthru_done;
+
+	return (0);
+}
+
+void
+atascsi_passthru_12(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_xfer		*xa = xs->io;
+	struct scsi_ata_passthru_12 *cdb;
+	struct ata_fis_h2d	*fis;
+
+	cdb = (struct scsi_ata_passthru_12 *)xs->cmd;
+	/* validate cdb */
+
+	if (atascsi_passthru_map(xs, cdb->count_proto, cdb->flags) != 0) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
+	fis = xa->fis;
+	fis->flags = ATA_H2D_FLAGS_CMD;
+	fis->command = cdb->command;
+	fis->features = cdb->features;
+	fis->lba_low = cdb->lba_low;
+	fis->lba_mid = cdb->lba_mid;
+	fis->lba_high = cdb->lba_high;
+	fis->device = cdb->device;
+	fis->sector_count = cdb->sector_count;
+
+	ata_exec(as, xa);
+}
+
+void
+atascsi_passthru_16(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_xfer		*xa = xs->io;
+	struct scsi_ata_passthru_16 *cdb;
+	struct ata_fis_h2d	*fis;
+
+	cdb = (struct scsi_ata_passthru_16 *)xs->cmd;
+	/* validate cdb */
+
+	if (atascsi_passthru_map(xs, cdb->count_proto, cdb->flags) != 0) {
+		atascsi_done(xs, XS_DRIVER_STUFFUP);
+		return;
+	}
+
+	fis = xa->fis;
+	fis->flags = ATA_H2D_FLAGS_CMD;
+	fis->command = cdb->command;
+	fis->features = cdb->features[1];
+	fis->lba_low = cdb->lba_low[1];
+	fis->lba_mid = cdb->lba_mid[1];
+	fis->lba_high = cdb->lba_high[1];
+	fis->device = cdb->device;
+	fis->lba_low_exp = cdb->lba_low[0];
+	fis->lba_mid_exp = cdb->lba_mid[0];
+	fis->lba_high_exp = cdb->lba_high[0];
+	fis->features_exp = cdb->features[0];
+	fis->sector_count = cdb->sector_count[1];
+	fis->sector_count_exp = cdb->sector_count[0];
+
+	ata_exec(as, xa);
+}
+
+void
+atascsi_passthru_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+
+	/*
+	 * XXX need to generate sense if cdb wants it
+	 */
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		xs->error = XS_NOERROR;
+		break;
+	case ATA_S_ERROR:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+	case ATA_S_TIMEOUT:
+		printf("atascsi_passthru_done, timeout\n");
+		xs->error = XS_TIMEOUT;
+		break;
+	default:
+		panic("atascsi_atapi_cmd_done: unexpected ata_xfer state (%d)",
+		    xa->state);
+	}
+
+	xs->resid = xa->resid;
+
+	scsi_done(xs);
+}
+
 void
 atascsi_disk_sense(struct scsi_xfer *xs)
 {
@@ -979,96 +1117,6 @@ atascsi_done(struct scsi_xfer *xs, int error)
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-}
-
-int atascsi_ioctl_cmd(struct atascsi *, struct atascsi_port *, atareq_t *);
-void atascsi_ioctl_done(struct ata_xfer *);
-
-int
-atascsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flags,
-    struct proc *p)
-{
-	struct atascsi		*as = link->adapter_softc;
-	struct atascsi_port	*ap = as->as_ports[link->target];
-
-	switch (cmd) {
-	case ATAIOCCOMMAND:
-		return (atascsi_ioctl_cmd(as, ap, (atareq_t *)addr));
-	default:
-		return (ENOTTY);
-	}
-}
-
-int
-atascsi_ioctl_cmd(struct atascsi *as, struct atascsi_port *ap, atareq_t *atareq)
-{
-	struct ata_xfer		*xa;
-	struct ata_fis_h2d	*fis;
-	void			*buf;
-	int			 rc = 0;
-	int			 s;
-
-	xa = scsi_io_get(&ap->ap_iopool, 0);
-
-	fis = xa->fis;
-	fis->flags = ATA_H2D_FLAGS_CMD;
-	fis->command = atareq->command;
-	fis->features = atareq->features;
-	fis->lba_low = atareq->sec_num;
-	fis->lba_mid = atareq->cylinder;
-	fis->lba_high = atareq->cylinder >> 8;
-	fis->device = atareq->head & 0x0f;
-	fis->sector_count = atareq->sec_count;
-
-	buf = malloc(atareq->datalen, M_TEMP, M_WAITOK);
-
-	xa->data = buf;
-	xa->datalen = atareq->datalen;
-	xa->complete = atascsi_ioctl_done;
-	xa->timeout = atareq->timeout;
-	xa->flags = 0;
-	if (atareq->flags & ATACMD_READ)
-		xa->flags |= ATA_F_READ;
-	if (atareq->flags & ATACMD_WRITE) {
-		xa->flags |= ATA_F_WRITE;
-		copyin(atareq->databuf, buf, atareq->datalen);
-	}
-	xa->atascsi_private = NULL;
-
-	as->as_methods->ata_cmd(xa);
-	s = splbio();
-	while (!ISSET(xa->flags, ATA_F_DONE))
-		tsleep(xa, PRIBIO, "atascsi", 0);
-	splx(s);
-
-	switch (xa->state) {
-	case ATA_S_COMPLETE:
-		atareq->retsts = ATACMD_OK;
-		if (atareq->flags & ATACMD_READ)
-			rc = copyout(buf, atareq->databuf, atareq->datalen);
-		break;
-	case ATA_S_ERROR:
-		atareq->retsts = ATACMD_ERROR;
-		break;
-	case ATA_S_TIMEOUT:
-		atareq->retsts = ATACMD_TIMEOUT;
-		break;
-	default:
-		panic("atascsi_ioctl_cmd: unexpected ata_xfer state (%d)",
-		    xa->state);
-	}
-
-	free(buf, M_TEMP);
-
-	scsi_io_put(&ap->ap_iopool, xa);
-
-	return (rc);
-}
-
-void
-atascsi_ioctl_done(struct ata_xfer *xa)
-{
-	wakeup(xa);
 }
 
 void
