@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.10 2010/04/22 19:02:55 oga Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.11 2010/04/23 20:42:22 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1669,11 +1669,12 @@ uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
 			if (found == NULL) {
 				found = RB_ROOT(&pmr->size[memtype]);
 				/* Size tree gives pg[1] instead of pg[0] */
-				if (found != NULL)
+				if (found != NULL) {
 					found--;
 
-				found = uvm_pmr_rootupdate(pmr, found,
-				    start, end, memtype);
+					found = uvm_pmr_rootupdate(pmr, found,
+					    start, end, memtype);
+				}
 			}
 			if (found != NULL) {
 				uvm_pmr_assertvalid(pmr);
