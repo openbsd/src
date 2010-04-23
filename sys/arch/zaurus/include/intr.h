@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2009/04/08 21:19:31 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.9 2010/04/23 03:50:22 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #define	IPL_AUDIO	9	/* audio device */
 #define	IPL_CLOCK	10	/* clock interrupt */
 #define	IPL_STATCLOCK	11	/* statistics clock interrupt */
+#define	IPL_SCHED	12	/* everything */
 #define	IPL_HIGH	12	/* everything */
 
 #define	NIPL		13

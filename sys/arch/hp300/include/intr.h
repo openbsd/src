@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.26 2009/09/18 19:32:39 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.27 2010/04/23 03:50:22 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@ struct isr {
 #define	IPL_VM		5
 #define	IPL_CLOCK	6
 #define	IPL_STATCLOCK	6
+#define	IPL_SCHED	7
 #define	IPL_HIGH	7
 
 /*

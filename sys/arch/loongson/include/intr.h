@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1.1.1 2009/11/24 11:20:50 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.2 2010/04/23 03:50:22 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,6 +54,7 @@
 #define	IPL_TTY		4	/* terminal */
 #define	IPL_VM		5	/* memory allocation */
 #define	IPL_CLOCK	6	/* clock */
+#define	IPL_SCHED	7	/* everything */
 #define	IPL_HIGH	7	/* everything */
 #define	NIPLS		8	/* Number of levels */
 

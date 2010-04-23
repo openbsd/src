@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2009/03/20 18:39:30 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2010/04/23 03:50:22 miod Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #define	IPL_AUDIO	0x15	/* audio */
 #define IPL_CLOCK	0x18	/* clock */
 #define IPL_STATCLOCK	0x18	/* statclock */
+#define	IPL_SCHED	0x1f
 #define	IPL_HIGH	0x1f
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */

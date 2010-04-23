@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.34 2009/09/30 20:16:29 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.35 2010/04/23 03:50:20 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -117,6 +117,7 @@ struct scbvec {
 #define	IPL_AUDIO	ALPHA_PSL_IPL_IO
 #define	IPL_VM		ALPHA_PSL_IPL_IO
 #define	IPL_CLOCK	ALPHA_PSL_IPL_CLOCK
+#define	IPL_SCHED	ALPHA_PSL_IPL_HIGH
 #define	IPL_HIGH	ALPHA_PSL_IPL_HIGH
 
 #define	IPL_SOFTSERIAL	0	/* serial software interrupts */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.26 2010/04/06 20:33:28 kettenis Exp $	*/
+/*	$OpenBSD: sched.h,v 1.27 2010/04/23 03:50:22 miod Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -170,10 +170,6 @@ void remrunqueue(struct proc *);
 #define scheduler_wait_hook(parent, child) do {				\
 	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu + (child)->p_estcpu);\
 } while (0)
-
-#ifndef IPL_SCHED
-#define IPL_SCHED IPL_HIGH
-#endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #include <sys/lock.h>

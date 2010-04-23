@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.29 2010/04/19 16:32:53 jsing Exp $	*/
+/*	$OpenBSD: intr.h,v 1.30 2010/04/23 03:50:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -45,6 +45,7 @@
 #define	IPL_AUDIO	8
 #define	IPL_CLOCK	9
 #define	IPL_STATCLOCK	10
+#define	IPL_SCHED	10
 #define	IPL_HIGH	10
 #define	IPL_NESTED	11	/* pseudo-level for sub-tables */
 
