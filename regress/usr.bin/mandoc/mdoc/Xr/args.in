@@ -1,4 +1,4 @@
-.Dd $Mdocdate: February 17 2010 $
+.Dd $Mdocdate: April 23 2010 $
 .Dt XR-ARGS 1
 .Os
 .Sh NAME
@@ -19,3 +19,7 @@ A call, an
 .Xr echo 1 , and
 another
 .Xr echo 1 .
+.Pp
+Finally, no
+.Xr
+echo at all.
