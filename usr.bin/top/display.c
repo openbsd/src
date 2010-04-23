@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.39 2010/03/24 05:03:15 lum Exp $	 */
+/* $OpenBSD: display.c,v 1.40 2010/04/23 09:26:13 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -237,9 +237,14 @@ i_loadave(pid_t mpid, double *avenrun)
 void
 i_timeofday(time_t * tod)
 {
+	static char buf[30];
+
+	if (buf[0] == '\0')
+		gethostname(buf, sizeof(buf));
+
 	if (screen_length > 1 || !smart_terminal) {
 		if (smart_terminal) {
-			move(0, screen_width - 8);
+			move(0, screen_width - 8 - strlen(buf) - 1);
 		} else {
 			if (fputs("    ", stdout) == EOF)
 				exit(1);
@@ -251,7 +256,7 @@ i_timeofday(time_t * tod)
 			addstrp(foo);
 		}
 #endif
-		printwp("%-8.8s", &(ctime(tod)[11]));
+		printwp("%s %-8.8s", buf, &(ctime(tod)[11]));
 		putn();
 	}
 }
