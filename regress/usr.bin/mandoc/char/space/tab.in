@@ -1,0 +1,104 @@
+.Dd $Mdocdate: April 23 2010 $
+.Dt SPACE-TAB 1
+.Os
+.Sh NAME
+.Nm space-tab
+.Nd handling of literal space characters
+.Sh DESCRIPTION
+plain text
+.br
+1	x
+.br
+22	x
+.br
+333	x
+.br
+4444	x
+.br
+55555	x
+.br
+666666	x
+.br
+7777777	x
+.br
+88888888	x
+.br
+999999999	x
+.br
+aaaaaaaaaa	x
+.br
+bbbbbbbbbbb	x
+.br
+cccccccccccc	x
+.br
+ddddddddddddd	x
+.br
+tab	 space
+.br
+tab		tab
+.br
+space 	tab
+.br
+	tab
+.br
+		tab
+.br
+ragged display
+.Bd -ragged -offset 2n
+1	x
+.br
+22	x
+.br
+333	x
+.br
+4444	x
+.br
+55555	x
+.br
+666666	x
+.br
+7777777	x
+.br
+88888888	x
+.br
+999999999	x
+.br
+aaaaaaaaaa	x
+.br
+bbbbbbbbbbb	x
+.br
+cccccccccccc	x
+.br
+ddddddddddddd	x
+.br
+tab	 space
+.br
+tab		tab
+.br
+space 	tab
+.br
+	tab
+.br
+		tab
+.Ed
+literal display
+.Bd -literal -offset 2n
+1	x
+22	x
+333	x
+4444	x
+55555	x
+666666	x
+7777777	x
+88888888	x
+999999999	x
+aaaaaaaaaa	x
+bbbbbbbbbbb	x
+cccccccccccc	x
+ddddddddddddd	x
+tab	 space
+tab		tab
+space 	tab
+	tab
+		tab
+.Ed
