@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.37 2010/04/21 23:43:39 sthen Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.38 2010/04/23 03:44:44 miod Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -436,7 +436,7 @@ nmea_degrees(int64_t *dst, char *src, int neg)
 	for (; *src && n < ppos; n++)
 		min = min * 10 + (*src++ - '0');
 
-	*src++;		/* skip decimal point */
+	src++;		/* skip decimal point */
 
 	for (; *src && n < (ppos + 4); n++)
 		min = min * 10 + (*src++ - '0');
