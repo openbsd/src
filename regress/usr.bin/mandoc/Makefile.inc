@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile.inc,v 1.1 2009/10/28 03:20:42 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2010/04/23 00:31:00 schwarze Exp $
 
 DIFF=diff -au
 MANDOC?=mandoc
-MANDOCOPTS=-fstrict -Wall
+#MANDOCOPTS=-fstrict -Wall
 NROFF=nroff -mandoc
 SED=sed
 SH=/bin/sh
