@@ -381,6 +381,7 @@ struct inteldrm_obj {
 #define I915_DIRTY		0x0040	/* BO written to since last bound */
 #define I915_EXEC_NEEDS_FENCE	0x0080	/* being processed but will need fence*/
 #define I915_FENCED_EXEC	0x0100	/* Most recent exec needs fence */
+#define I915_FENCE_INVALID	0x0200	/* fence has been lazily invalidated */
 	int					 io_flags;
 	/* extra flags to bus_dma */
 	int					 dma_flags; 

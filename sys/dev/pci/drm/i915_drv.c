@@ -2125,6 +2125,7 @@ i915_gem_object_put_fence_reg(struct drm_obj *obj, int interruptible)
 	reg->obj = NULL;
 	TAILQ_REMOVE(&dev_priv->mm.fence_list, reg, list);
 	obj_priv->fence_reg = I915_FENCE_REG_NONE;
+	atomic_clearbits_int(&obj_priv->io_flags, I915_FENCE_INVALID);
 
 	return (0);
 }
@@ -2146,6 +2147,19 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 	 * XXX this locking is wrong, must be fixed. uvm using simple_locks
 	 * saves us for now.
 	 */
+	if (obj_priv->dmamap != NULL &&
+	    (obj_priv->gtt_offset & (i915_gem_get_gtt_alignment(obj) - 1) ||
+	    (!i915_gem_object_fence_offset_ok(obj, obj_priv->tiling_mode)))) {
+		if (obj_priv->pin_count == 0) {
+			ret = i915_gem_object_unbind(obj, 0);
+			if (ret)
+				goto error;
+		} else {
+			DRM_ERROR("fault on pinned object with bad alignment\n");
+			return (EINVAL);
+		}
+	}
+
 	if (obj_priv->dmamap == NULL) {
 		ret = i915_gem_object_bind_to_gtt(obj, 0, 0);
 		if (ret) {
@@ -2377,6 +2391,11 @@ i915_gem_object_set_to_gtt_domain(struct drm_obj *obj, int write,
 	/* We're accessing through the gpu, so grab a new fence register or
 	 * update the LRU.
 	 */
+	if (obj_priv->io_flags & I915_FENCE_INVALID) {
+		ret = i915_gem_object_put_fence_reg(obj, interruptible);
+		if (ret)
+			return (ret);
+	}
 	if (obj_priv->tiling_mode != I915_TILING_NONE)
 		ret = i915_gem_get_fence_reg(obj, interruptible);
 
@@ -3185,8 +3204,8 @@ i915_gem_object_pin(struct drm_obj *obj, uint32_t alignment, int needs_fence)
 				return (ret);
 		} else {
 			DRM_ERROR("repinning an object with bad alignment\n");
-		}
 			return (EINVAL);
+		}
 	}
 
 	if (obj_priv->dmamap == NULL) {
@@ -3202,6 +3221,12 @@ i915_gem_object_pin(struct drm_obj *obj, uint32_t alignment, int needs_fence)
 	 * With execbuf2 support we don't always need it, but if we do grab
 	 * it.
 	 */
+	/* if we need a fence now, check that the one we may have is correct */
+	if (needs_fence && obj_priv->io_flags & I915_FENCE_INVALID) {
+		ret= i915_gem_object_put_fence_reg(obj, 1);
+		if (ret)
+			return (ret);
+	}
 	if (needs_fence && obj_priv->tiling_mode != I915_TILING_NONE &&
 	    (ret = i915_gem_get_fence_reg(obj, 1)) != 0)
 		return (ret);
@@ -4512,21 +4537,11 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 		 * mode. Otherwise we can leave it alone, but must clear any
 		 * fence register.
 		 */
-		if (!i915_gem_object_fence_offset_ok(obj, args->tiling_mode)) {
-			if (obj_priv->pin_count)
-				ret = EINVAL;
-			else
-				ret = i915_gem_object_unbind(obj, 1);
-		} else if (obj_priv->fence_reg != I915_FENCE_REG_NONE) {
-			ret = i915_gem_object_put_fence_reg(obj, 1);
-		} else {
-			inteldrm_wipe_mappings(obj);
-		}
-		if (ret != 0) {
-			args->tiling_mode = obj_priv->tiling_mode;
-			args->stride = obj_priv->stride;
-			goto out;
-		}
+		/* fence may no longer be correct, wipe it */
+		inteldrm_wipe_mappings(obj);
+		if (obj_priv->fence_reg != I915_FENCE_REG_NONE)
+			atomic_setbits_int(&obj_priv->io_flags,
+			    I915_FENCE_INVALID);
 		obj_priv->tiling_mode = args->tiling_mode;
 		obj_priv->stride = args->stride;
 	}
