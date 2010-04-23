@@ -787,6 +787,7 @@ inteldrm_advance_ring(struct drm_i915_private *dev_priv)
 {
 	INTELDRM_VPRINTF("%s: %x, %x\n", __func__, dev_priv->ring.wspace,
 	    dev_priv->ring.woffset);
+	DRM_MEMORYBARRIER();
 	I915_WRITE(PRB0_TAIL, dev_priv->ring.tail);
 }
 
@@ -1672,6 +1673,7 @@ i915_gem_object_unbind(struct drm_obj *obj, int interruptible)
 	/* if it's purgeable don't bother dirtying the pages */
 	if (i915_obj_purgeable(obj_priv))
 		atomic_clearbits_int(&obj_priv->io_flags, I915_DIRTY);
+
 	/*
 	 * unload the map, then unwire the backing object.
 	 */
@@ -2234,6 +2236,10 @@ inteldrm_wipe_mappings(struct drm_obj *obj)
 	struct drm_i915_private	*dev_priv = dev->dev_private;
 	struct vm_page		*pg;
 
+	/* make sure any writes hit the bus before we do whatever change
+	 * that prompted us to kill the mappings.
+	 */
+	DRM_MEMORYBARRIER();
 	/* nuke all our mappings. XXX optimise. */
 	for (pg = &dev_priv->pgs[atop(obj_priv->gtt_offset)]; pg !=
 	    &dev_priv->pgs[atop(obj_priv->gtt_offset + obj->size)]; pg++)
