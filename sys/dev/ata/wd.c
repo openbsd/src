@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.78 2010/04/11 16:58:06 kettenis Exp $ */
+/*	$OpenBSD: wd.c,v 1.79 2010/04/23 15:25:21 jsing Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -820,8 +820,6 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	}
 	/* XXX - user viscopy() like sd.c */
 	strncpy(lp->d_packname, wd->sc_params.atap_model, sizeof lp->d_packname);
-	lp->d_rpm = 3600;
-	lp->d_interleave = 1;
 	lp->d_flags = 0;
 	lp->d_version = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.95 2009/08/24 08:51:18 jasper Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.96 2010/04/23 15:25:21 jsing Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -316,8 +316,6 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc, struct disklabel *lp,
 	lp->d_type = DTYPE_VND;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	DL_SETDSIZE(lp, sc->sc_size);
-	lp->d_rpm = 3600;
-	lp->d_interleave = 1;
 	lp->d_flags = 0;
 	lp->d_version = 1;
 

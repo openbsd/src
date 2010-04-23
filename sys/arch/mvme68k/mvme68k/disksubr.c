@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.67 2010/04/05 02:09:15 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.68 2010/04/23 15:25:20 jsing Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -162,12 +162,9 @@ bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 
 	clp->secpercyl = lp->d_secpercyl;
 	clp->secperunit = DL_GETDSIZE(lp);
-	clp->sparespertrack = lp->d_sparespertrack;
-	clp->sparespercyl = lp->d_sparespercyl;
 	clp->acylinders = lp->d_acylinders;
-	clp->rpm = lp->d_rpm;
 
-	clp->cfg_ilv = lp->d_interleave;
+	clp->cfg_ilv = 1;
 	clp->cfg_sof = 1;
 	clp->cylskew = 1;
 	clp->headswitch = 0;
@@ -218,11 +215,7 @@ cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 	lp->d_secpercyl = clp->secpercyl;
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, clp->secperunit);
-	lp->d_sparespertrack = clp->sparespertrack;
-	lp->d_sparespercyl = clp->sparespercyl;
 	lp->d_acylinders = clp->acylinders;
-	lp->d_rpm = clp->rpm;
-	lp->d_interleave = clp->cfg_ilv;
 	lp->d_flags = clp->flags;
 	for (i = 0; i < NDDATA; i++)
 		lp->d_drivedata[i] = clp->drivedata[i];

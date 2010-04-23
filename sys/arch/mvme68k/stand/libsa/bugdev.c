@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.5 2009/06/04 21:57:56 miod Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.6 2010/04/23 15:25:20 jsing Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -178,11 +178,7 @@ cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 	lp->d_secperunit = clp->secperunit;
 	lp->d_secpercyl = clp->secpercyl;
 	lp->d_secperunit = clp->secperunit;
-	lp->d_sparespertrack = clp->sparespertrack;
-	lp->d_sparespercyl = clp->sparespercyl;
 	lp->d_acylinders = clp->acylinders;
-	lp->d_rpm = clp->rpm;
-	lp->d_interleave = clp->cfg_ilv;
 	lp->d_flags = clp->flags;
 	for (i = 0; i < NDDATA; i++)
 		lp->d_drivedata[i] = clp->drivedata[i];

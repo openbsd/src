@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.165 2010/04/12 09:51:48 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.166 2010/04/23 15:25:21 jsing Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1198,8 +1198,6 @@ cdgetdisklabel(dev_t dev, struct cd_softc *sc, struct disklabel *lp,
 
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	DL_SETDSIZE(lp, sc->sc_params.disksize);
-	lp->d_rpm = 300;
-	lp->d_interleave = 1;
 	lp->d_version = 1;
 
 	/* XXX - these values for BBSIZE and SBSIZE assume ffs */

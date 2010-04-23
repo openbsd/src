@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.7 2009/05/21 23:45:48 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.8 2010/04/23 15:25:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -253,8 +253,6 @@ cdprobe(void)
 	strncpy(dip->disklabel.d_packname, "fictitious",
 	    sizeof(dip->disklabel.d_packname));
 	dip->disklabel.d_secperunit = 100;
-	dip->disklabel.d_rpm = 300;
-	dip->disklabel.d_interleave = 1;
 
 	dip->disklabel.d_bbsize = 2048;
 	dip->disklabel.d_sbsize = 2048;

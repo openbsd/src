@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.26 2009/09/05 15:37:04 deraadt Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.27 2010/04/23 15:25:21 jsing Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -852,7 +852,6 @@ hdmakelabel(struct disklabel *dl, struct hdgeom *g)
 	dl->d_typename[p++] = n + '0';
 	dl->d_typename[p] = 0;
 	dl->d_type = DTYPE_MSCP; /* XXX - what to use here??? */
-	dl->d_rpm = 3600;
 	dl->d_secsize = DEV_BSIZE;
 
 	DL_SETDSIZE(dl, g->lbn_count);
@@ -867,7 +866,6 @@ hdmakelabel(struct disklabel *dl, struct hdgeom *g)
 	    
 	DL_SETPOFFSET(&dl->d_partitions[0], 0);
 	DL_SETPOFFSET(&dl->d_partitions[2], 0);
-	dl->d_interleave = 1;
 	dl->d_version = 1;
 	dl->d_magic = dl->d_magic2 = DISKMAGIC;
 	dl->d_checksum = dkcksum(dl);

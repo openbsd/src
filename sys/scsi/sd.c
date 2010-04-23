@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.184 2010/04/12 09:51:48 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.185 2010/04/23 15:25:21 jsing Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1044,8 +1044,6 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	bcopy(packname, lp->d_packname, len);
 
 	DL_SETDSIZE(lp, sc->params.disksize);
-	lp->d_rpm = sc->params.rot_rate;
-	lp->d_interleave = 1;
 	lp->d_version = 1;
 	lp->d_flags = 0;
 

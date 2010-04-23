@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.160 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.161 2010/04/23 15:25:21 jsing Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -616,14 +616,6 @@ makedisktab(FILE *f, struct disklabel *lp)
 	(void)fprintf(f, "sc#%u:", lp->d_secpercyl);
 	(void)fprintf(f, "su#%llu:", DL_GETDSIZE(lp));
 
-	if (lp->d_rpm != 3600) {
-		(void)fprintf(f, "%srm#%hu:", did, lp->d_rpm);
-		did = "";
-	}
-	if (lp->d_interleave != 1) {
-		(void)fprintf(f, "%sil#%hu:", did, lp->d_interleave);
-		did = "";
-	}
 	/*
 	 * XXX We do not print have disktab information yet for
 	 * XXX DL_GETBSTART DL_GETBEND
@@ -798,8 +790,6 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 		    d, unit);
 	fprintf(f, "\n");
 
-	fprintf(f, "rpm: %hu\n", lp->d_rpm);
-	fprintf(f, "interleave: %hu\n", lp->d_interleave);
 	fprintf(f, "boundstart: %llu\n", DL_GETBSTART(lp));
 	fprintf(f, "boundend: %llu\n", DL_GETBEND(lp));
 	fprintf(f, "drivedata: ");
@@ -1134,21 +1124,11 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "rpm")) {
-			v = GETNUM(lp->d_rpm, tp, 1, &errstr);
-			if (errstr) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else
-				lp->d_rpm = v;
+			/* ignore */
 			continue;
 		}
 		if (!strcmp(cp, "interleave")) {
-			v = GETNUM(lp->d_interleave, tp, 1, &errstr);
-			if (errstr) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else
-				lp->d_interleave = v;
+			/* ignore */
 			continue;
 		}
 		if (!strcmp(cp, "trackskew")) {
@@ -1299,8 +1279,6 @@ checklabel(struct disklabel *lp)
 		warnx("cylinders/unit %d", lp->d_ncylinders);
 		errors++;
 	}
-	if (lp->d_rpm == 0)
-		warnx("warning, revolutions/minute %d", lp->d_rpm);
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 	if (DL_GETDSIZE(lp) == 0)

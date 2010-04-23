@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.43 2010/02/26 23:11:56 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.44 2010/04/23 15:25:20 jsing Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -264,10 +264,9 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
 	lp->d_version = 1;
 
-	lp->d_sparespercyl = 0;				/* no way to know */
+	lp->d_label_uid = sl->sl_label_uid;
+
 	lp->d_acylinders = sl->sl_acylinders;
-	lp->d_rpm = sl->sl_rpm;				/* UniOS - (empty) */
-	lp->d_interleave = sl->sl_interleave;		/* UniOS - ndisk */
 
 	if (sl->sl_rpm == 0) {
 		/* UniOS label has blkoffset, not cyloffset */
@@ -338,13 +337,14 @@ disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)
 	sl->sl_rpm = 0;					/* UniOS */
 #if 0 /* leave as was */
 	sl->sl_pcyl = lp->d_ncylinders + lp->d_acylinders;	/* XXX */
-	sl->sl_sparespercyl = lp->d_sparespercyl;
 #endif
-	sl->sl_interleave = lp->d_interleave;
+	sl->sl_interleave = 1;
 	sl->sl_ncylinders = lp->d_ncylinders;
 	sl->sl_acylinders = lp->d_acylinders;
 	sl->sl_ntracks = lp->d_ntracks;
 	sl->sl_nsectors = lp->d_nsectors;
+
+	sl->sl_label_uid = lp->d_label_uid;
 
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];

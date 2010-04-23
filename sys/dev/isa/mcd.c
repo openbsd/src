@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.52 2009/08/24 08:51:18 jasper Exp $ */
+/*	$OpenBSD: mcd.c,v 1.53 2010/04/23 15:25:21 jsing Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -753,8 +753,6 @@ mcdgetdisklabel(dev, sc, lp, spoofonly)
 	lp->d_type = DTYPE_SCSI;	/* XXX */
 	strncpy(lp->d_packname, "fictitious", sizeof lp->d_packname);
 	DL_SETDSIZE(lp, sc->disksize);
-	lp->d_rpm = 300;
-	lp->d_interleave = 1;
 	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.26 2009/08/13 15:23:13 deraadt Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.27 2010/04/23 15:25:21 jsing Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -832,10 +832,8 @@ rronline(usc, mp)
 	if (dl->d_secpercyl) {
 		dl->d_ncylinders = DL_GETDSIZE(dl) / dl->d_secpercyl;
 		dl->d_type = DTYPE_MSCP;
-		dl->d_rpm = 3600;
 	} else {
 		dl->d_type = DTYPE_FLOPPY;
-		dl->d_rpm = 300;
 	}
 	rrmakelabel(dl, rx->ra_mediaid);
 
@@ -873,7 +871,6 @@ rrmakelabel(dl, type)
 	DL_SETPSIZE(&dl->d_partitions[2], DL_GETDSIZE(dl));
 	DL_SETPOFFSET(&dl->d_partitions[0], 0);
 	DL_SETPOFFSET(&dl->d_partitions[2], 0);
-	dl->d_interleave = 1;
 	dl->d_version = 1;
 	dl->d_magic = dl->d_magic2 = DISKMAGIC;
 	dl->d_checksum = dkcksum(dl);

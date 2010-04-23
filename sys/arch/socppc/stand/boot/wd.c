@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.3 2009/05/21 23:45:48 krw Exp $	*/
+/*	$OpenBSD: wd.c,v 1.4 2010/04/23 15:25:21 jsing Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -147,8 +147,6 @@ wdgetdefaultlabel(wd, lp)
 		lp->d_secperunit = UINT32_MAX;
 	else
 		lp->d_secperunit = wd->sc_capacity;
-	lp->d_rpm = 3600;
-	lp->d_interleave = 1;
 	lp->d_flags = 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;

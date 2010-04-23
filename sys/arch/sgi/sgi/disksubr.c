@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.18 2009/10/09 04:25:34 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.19 2010/04/23 15:25:20 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -155,7 +155,6 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	lp->d_nsectors = dlp->dp.dp_secs;
 	lp->d_ntracks = dlp->dp.dp_trks0;
 	lp->d_ncylinders = dlp->dp.dp_cyls;
-	lp->d_interleave = dlp->dp.dp_interleave;
 	lp->d_npartitions = MAXPARTITIONS;
 
 	for (i = 0; i < 16; i++) {
