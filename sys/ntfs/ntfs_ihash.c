@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.6 2009/08/13 16:00:53 jasper Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.7 2010/04/23 19:32:57 oga Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/rwlock.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
@@ -57,9 +56,6 @@ MALLOC_DEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
 static LIST_HEAD(nthashhead, ntnode) *ntfs_nthashtbl;
 static u_long	ntfs_nthash;		/* size of hash table - 1 */
 #define	NTNOHASH(device, inum)	((minor(device) + (inum)) & ntfs_nthash)
-#ifndef NULL_SIMPLELOCKS
-static struct simplelock ntfs_nthash_slock;
-#endif
 struct rwlock ntfs_hashlock = RWLOCK_INITIALIZER("ntfs_nthashlock");
 
 /*
@@ -70,7 +66,6 @@ ntfs_nthashinit()
 {
 	ntfs_nthashtbl = HASHINIT(desiredvnodes, M_NTFSNTHASH, M_WAITOK,
 	    &ntfs_nthash);
-	simple_lock_init(&ntfs_nthash_slock);
 }
 
 /*
@@ -85,13 +80,13 @@ ntfs_nthashlookup(dev, inum)
 	struct ntnode *ip;
 	struct nthashhead *ipp;
 
-	simple_lock(&ntfs_nthash_slock);
+	/* XXXLOCKING lock hash list? */
 	ipp = &ntfs_nthashtbl[NTNOHASH(dev, inum)];
 	LIST_FOREACH(ip, ipp, i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev)
 			break;
 	}
-	simple_unlock(&ntfs_nthash_slock);
+	/* XXXLOCKING unlock hash list? */
 
 	return (ip);
 }
@@ -105,11 +100,11 @@ ntfs_nthashins(ip)
 {
 	struct nthashhead *ipp;
 
-	simple_lock(&ntfs_nthash_slock);
+	/* XXXLOCKING lock hash list? */
 	ipp = &ntfs_nthashtbl[NTNOHASH(ip->i_dev, ip->i_number)];
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	ip->i_flag |= IN_HASHED;
-	simple_unlock(&ntfs_nthash_slock);
+	/* XXXLOCKING unlock hash list? */
 }
 
 /*
@@ -119,10 +114,10 @@ void
 ntfs_nthashrem(ip)
 	struct ntnode *ip;
 {
-	simple_lock(&ntfs_nthash_slock);
+	/* XXXLOCKING lock hash list? */
 	if (ip->i_flag & IN_HASHED) {
 		ip->i_flag &= ~IN_HASHED;
 		LIST_REMOVE(ip, i_hash);
 	}
-	simple_unlock(&ntfs_nthash_slock);
+	/* XXXLOCKING unlock hash list? */
 }
