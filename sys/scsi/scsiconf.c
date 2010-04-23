@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.156 2010/04/17 00:51:13 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.157 2010/04/23 21:34:40 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -56,11 +56,10 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/lock.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-#include <machine/atomic.h>
 
 #if NBIO > 0
 #include <sys/ioctl.h>

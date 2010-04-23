@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.18 2010/04/06 20:33:28 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.19 2010/04/23 21:34:38 deraadt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -24,7 +24,6 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/mutex.h>
-#include <machine/atomic.h>
 
 #include <uvm/uvm_extern.h>
 

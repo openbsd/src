@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_mp.c,v 1.5 2007/11/16 16:16:06 deraadt Exp $	*/
+/*	$OpenBSD: db_mp.c,v 1.6 2010/04/23 21:34:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Andreas Gunnarsson <andreas@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/simplelock.h>
+#include <sys/lock.h>
 
 #include <machine/db_machdep.h>
 #include <sys/mutex.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.19 2009/03/25 21:20:26 oga Exp $	*/
+/*	$OpenBSD: lock.h,v 1.20 2010/04/23 21:34:40 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -38,7 +38,44 @@
 #ifndef	_LOCK_H_
 #define	_LOCK_H_
 
-#include <sys/simplelock.h>
+#ifdef _KERNEL
+#include <machine/lock.h>
+#endif /* _KERNEL */
+
+/*
+ * A simple spin lock.
+ *
+ * This structure only sets one bit of data, but is sized based on the
+ * minimum word size that can be operated on by the hardware test-and-set
+ * instruction. It is only needed for multiprocessors, as uniprocessors
+ * will always run to completion or a sleep. It is an error to hold one
+ * of these locks while a process is sleeping.
+ */
+struct simplelock {
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock_t lock_data;
+#else
+	int	lock_data;
+#endif
+};
+
+#ifdef _KERNEL
+
+#define SLOCK_LOCKED 1
+#define SLOCK_UNLOCKED 0
+
+#define	simple_lock(lkp)
+#define	simple_lock_try(lkp)	(1)	/* always succeeds */
+#define	simple_unlock(lkp)
+#define simple_lock_assert(lkp)
+
+static __inline void simple_lock_init(struct simplelock *lkp)
+{
+
+	lkp->lock_data = SLOCK_UNLOCKED;
+}
+
+#endif /* _KERNEL */
 
 typedef struct simplelock       simple_lock_data_t;
 typedef struct simplelock       *simple_lock_t;

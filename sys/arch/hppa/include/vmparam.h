@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.35 2008/09/06 19:49:05 kettenis Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.36 2010/04/23 21:34:40 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -94,6 +94,9 @@
 #define	VM_FREELIST_ARCH	1
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+
+#include <sys/lock.h>
+
 #define __HAVE_VM_PAGE_MD
 struct pv_entry;
 struct vm_page_md {
