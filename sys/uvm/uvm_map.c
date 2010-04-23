@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.124 2010/04/22 19:02:55 oga Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.125 2010/04/23 04:49:46 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -2473,7 +2473,7 @@ int
 uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
     vm_inherit_t new_inheritance)
 {
-	struct vm_map_entry *entry, *temp_entry;
+	struct vm_map_entry *entry;
 	UVMHIST_FUNC("uvm_map_inherit"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_inh=0x%lx)",
 	    map, start, end, new_inheritance);
@@ -2492,11 +2492,10 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	
 	VM_MAP_RANGE_CHECK(map, start, end);
 	
-	if (uvm_map_lookup_entry(map, start, &temp_entry)) {
-		entry = temp_entry;
+	if (uvm_map_lookup_entry(map, start, &entry)) {
 		UVM_MAP_CLIP_START(map, entry, start);
 	} else {
-		entry = temp_entry->next;
+		entry = entry->next;
 	}
 
 	while ((entry != &map->header) && (entry->start < end)) {
@@ -2519,18 +2518,28 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 int
 uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 {
-	struct vm_map_entry *entry, *temp_entry;
+	struct vm_map_entry *entry;
 	UVMHIST_FUNC("uvm_map_advice"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=%p,start=0x%lx,end=0x%lx,new_adv=0x%lx)",
 	    map, start, end, new_advice);
 
+	switch (new_advice) {
+	case MADV_NORMAL:
+	case MADV_RANDOM:
+	case MADV_SEQUENTIAL:
+		/* nothing special here */
+		break;
+
+	default:
+		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
+		return (EINVAL);
+	}
 	vm_map_lock(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
-	if (uvm_map_lookup_entry(map, start, &temp_entry)) {
-		entry = temp_entry;
+	if (uvm_map_lookup_entry(map, start, &entry)) {
 		UVM_MAP_CLIP_START(map, entry, start);
 	} else {
-		entry = temp_entry->next;
+		entry = entry->next;
 	}
 
 	/*
@@ -2540,18 +2549,6 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 	while ((entry != &map->header) && (entry->start < end)) {
 		UVM_MAP_CLIP_END(map, entry, end);
 
-		switch (new_advice) {
-		case MADV_NORMAL:
-		case MADV_RANDOM:
-		case MADV_SEQUENTIAL:
-			/* nothing special here */
-			break;
-
-		default:
-			vm_map_unlock(map);
-			UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
-			return (EINVAL);
-		}
 		entry->advice = new_advice;
 		entry = entry->next;
 	}
