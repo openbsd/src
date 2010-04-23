@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.13 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.14 2010/04/23 19:57:43 oga Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 LIST_HEAD(ihashhead, inode) *ihashtbl;
 u_long	ihash;		/* size of hash table - 1 */
 #define	INOHASH(device, inum)	(&ihashtbl[((device) + (inum)) & ihash])
-struct simplelock ufs_ihash_slock;
 
 /*
  * Initialize inode hash table.
@@ -57,7 +56,6 @@ void
 ufs_ihashinit(void)
 {
 	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, M_WAITOK, &ihash);
-	simple_lock_init(&ufs_ihash_slock);
 }
 
 /*
@@ -69,11 +67,11 @@ ufs_ihashlookup(dev_t dev, ino_t inum)
 {
         struct inode *ip;
 
-	simple_lock(&ufs_ihash_slock);
+	/* XXXLOCKING lock hash list */
 	LIST_FOREACH(ip, INOHASH(dev, inum), i_hash)
 		if (inum == ip->i_number && dev == ip->i_dev)
 			break;
-	simple_unlock(&ufs_ihash_slock);
+	/* XXXLOCKING unlock hash list? */
 
 	if (ip)
 		return (ITOV(ip));
@@ -92,17 +90,17 @@ ufs_ihashget(dev_t dev, ino_t inum)
 	struct inode *ip;
 	struct vnode *vp;
 loop:
-	simple_lock(&ufs_ihash_slock);
+	/* XXXLOCKING lock hash list */
 	LIST_FOREACH(ip, INOHASH(dev, inum), i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			simple_unlock(&ufs_ihash_slock);
+			/* XXXLOCKING unlock hash list? */
 			if (vget(vp, LK_EXCLUSIVE, p))
 				goto loop;
 			return (vp);
  		}
 	}
-	simple_unlock(&ufs_ihash_slock);
+	/* XXXLOCKING unlock hash list? */
 	return (NULL);
 }
 
@@ -120,11 +118,11 @@ ufs_ihashins(struct inode *ip)
 	/* lock the inode, then put it on the appropriate hash list */
 	lockmgr(&ip->i_lock, LK_EXCLUSIVE, NULL);
 
-	simple_lock(&ufs_ihash_slock);
+	/* XXXLOCKING lock hash list */
 
 	LIST_FOREACH(curip, INOHASH(dev, inum), i_hash) {
 		if (inum == curip->i_number && dev == curip->i_dev) {
-		        simple_unlock(&ufs_ihash_slock);
+			/* XXXLOCKING unlock hash list? */
 			lockmgr(&ip->i_lock, LK_RELEASE, NULL);
 			return (EEXIST);
 		}
@@ -132,7 +130,7 @@ ufs_ihashins(struct inode *ip)
 
 	ipp = INOHASH(dev, inum);
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
-	simple_unlock(&ufs_ihash_slock);
+	/* XXXLOCKING unlock hash list? */
 
 	return (0);
 }
@@ -143,7 +141,7 @@ ufs_ihashins(struct inode *ip)
 void
 ufs_ihashrem(struct inode *ip)
 {
-	simple_lock(&ufs_ihash_slock);
+	/* XXXLOCKING lock hash list */
 
 	if (ip->i_hash.le_prev == NULL)
 		return;
@@ -153,6 +151,5 @@ ufs_ihashrem(struct inode *ip)
 	ip->i_hash.le_next = NULL;
 	ip->i_hash.le_prev = NULL;
 #endif
-	simple_unlock(&ufs_ihash_slock);
-
+	/* XXXLOCKING unlock hash list? */
 }
