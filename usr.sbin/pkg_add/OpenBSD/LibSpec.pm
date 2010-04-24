@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.6 2010/04/24 09:29:31 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.7 2010/04/24 14:29:55 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -19,6 +19,7 @@ use strict;
 use warnings;
 
 package OpenBSD::LibObject;
+
 
 sub key
 {
@@ -42,10 +43,15 @@ sub minor
 	return $self->{minor};
 }
 
-sub is_valid
+sub version
 {
-	return 1;
+	my $self = shift;
+	return ".".$self->major.".".$self->minor;
 }
+
+sub is_static { 0 }
+
+sub is_valid { 1 }
 
 sub stem
 {
@@ -75,13 +81,26 @@ sub lookup
 	return $r;
 }
 
+sub findbest
+{
+	my ($spec, $repo, $base) = @_;
+	my $r = $spec->lookup($repo, $base);
+	my $best;
+	for my $candidate (@$r) {
+		if (!defined $best || $candidate->is_better($best)) {
+			$best = $candidate;
+		}
+	}
+	return $best;
+}
+
 package OpenBSD::BadLib;
 our @ISA=qw(OpenBSD::LibObject);
 
 sub to_string
 {
 	my $self = shift;
-	return $$self;
+	return $self;
 }
 
 sub new
@@ -118,8 +137,6 @@ sub register
 	$lib->set_origin($origin);
 	push @{$repo->{$lib->stem}}, $lib;
 }
-
-
 
 package OpenBSD::Library;
 our @ISA = qw(OpenBSD::LibObject);
@@ -158,6 +175,21 @@ sub no_match_dispatch
 {
 	my ($library, $spec, $base) = @_;
 	return $spec->no_match_shared($library, $base);
+}
+
+sub is_better
+{
+	my ($self, $other) = @_;
+	if ($other->is_static) {
+		return 1;
+	}
+	if ($self->major > $other->major) {
+		return 1;
+	}
+	if ($self->major == $other->major && $self->minor > $other->minor) {
+		return 1;
+    	}
+	return 0;
 }
 
 package OpenBSD::LibSpec;
@@ -226,16 +258,10 @@ sub no_match_major
 	return $spec->major != $library->major;
 }
 
-sub no_match_shared
+sub no_match_name
 {
 	my ($spec, $library, $base) = @_;
 
-	if ($spec->no_match_major($library)) {
-		return "bad major";
-	}
-	if ($spec->minor > $library->minor) {
-		return "minor is too small";
-	}
 	if (defined $spec->{dir}) {
 		if ("$base/$spec->{dir}" eq $library->{dir}) {
 			return undef;
@@ -248,6 +274,20 @@ sub no_match_shared
 		}
 	}
 	return "bad directory";
+}
+
+sub no_match_shared
+{
+	my ($spec, $library, $base) = @_;
+
+	if ($spec->no_match_major($library)) {
+		return "bad major";
+	}
+	if ($spec->major == $library->major && 
+	    $spec->minor > $library->minor) {
+		return "minor is too small";
+	}
+	return $spec->no_match_name($library, $base);
 }
 
 # classic double dispatch pattern
