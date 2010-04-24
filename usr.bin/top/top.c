@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.74 2010/04/21 11:29:59 lum Exp $	*/
+/*	$OpenBSD: top.c,v 1.75 2010/04/24 22:02:14 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -232,7 +232,7 @@ parseargs(int ac, char **av)
 
 		case 'g':	/* grep command name */
 			free(ps.command);
-			if((ps.command = strdup(optarg)) == NULL);
+			if ((ps.command = strdup(optarg)) == NULL)
 				err(1, NULL);
 			break;
 
@@ -863,8 +863,8 @@ rundisplay(void)
 				    tempbuf[1] == '\0')
 					ps.command = NULL;
 				else
-					if((ps.command = strdup(tempbuf)) ==
-					    NULL);
+					if ((ps.command = strdup(tempbuf)) ==
+					    NULL)
 						err(1, NULL);
 				putr();
 			} else
