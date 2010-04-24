@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.5 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.6 2010/04/24 09:29:31 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -154,6 +154,12 @@ sub origin
 	return $self->{origin};
 }
 
+sub no_match_dispatch
+{
+	my ($library, $spec, $base) = @_;
+	return $spec->no_match_shared($library, $base);
+}
+
 package OpenBSD::LibSpec;
 our @ISA = qw(OpenBSD::LibObject);
 
@@ -174,15 +180,22 @@ sub from_string
 	return $cached->{$_} //= $class->new_from_string($_);
 }
 
+sub new_with_stem
+{
+	my ($class, $stem, $major, $minor) = @_;
+
+	if ($stem =~ m/^(.*)\/([^\/]+)$/o) {
+		return $class->new($1, $2, $major, $minor);
+	} else {
+		return $class->new(undef, $stem, $major, $minor);
+	}
+}
+
 sub new_from_string
 {
 	my ($class, $string) = @_;
 	if (my ($stem, $major, $minor) = $string =~ m/^(.*)\.(\d+)\.(\d+)$/o) {
-		if ($stem =~ m/^(.*)\/([^\/]+)$/o) {
-			return $class->new($1, $2, $major, $minor);
-		} else {
-			return $class->new(undef, $stem, $major, $minor);
-		}
+		return $class->new_with_stem($stem, $major, $minor);
 	} else {
 		return $class->badclass->new($string);
 	}
@@ -207,10 +220,17 @@ sub lookup_stem
 	}
 }
 
-sub no_match
+sub no_match_major
+{
+	my ($spec, $library) = @_;
+	return $spec->major != $library->major;
+}
+
+sub no_match_shared
 {
 	my ($spec, $library, $base) = @_;
-	if ($spec->major != $library->major) {
+
+	if ($spec->no_match_major($library)) {
 		return "bad major";
 	}
 	if ($spec->minor > $library->minor) {
@@ -229,6 +249,14 @@ sub no_match
 	}
 	return "bad directory";
 }
+
+# classic double dispatch pattern
+sub no_match
+{
+	my ($spec, $library, $base) = @_;
+	return $library->no_match_dispatch($spec, $base);
+}
+
 sub match
 {
 	my ($spec, $library, $base) = @_;
