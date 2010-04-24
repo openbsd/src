@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.23 2010/01/19 14:58:53 espie Exp $
+# $OpenBSD: Error.pm,v 1.24 2010/04/24 09:27:15 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -197,10 +197,7 @@ sub set_pkgname
 {
 	my ($self, $pkgname) = @_;
 	$self->{pkgname} = $pkgname;
-	if (!defined $self->{messages}->{$pkgname}) {
-		$self->{messages}->{$pkgname} = [];
-	}
-	$self->{output} = $self->{messages}->{$pkgname};
+	$self->{output} = $self->{messages}->{$pkgname} //= [];
 }
 
 sub warn
