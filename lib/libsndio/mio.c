@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.7 2009/08/21 16:48:03 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.8 2010/04/24 06:15:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,7 +55,7 @@ mio_open(const char *str, unsigned mode, int nbio)
 		if (!dbg || sscanf(dbg, "%u", &mio_debug) != 1)
 			mio_debug = 0;
 	}
-#endif	
+#endif
 	if ((mode & (MIO_OUT | MIO_IN)) == 0)
 		return NULL;
 	if (str == NULL && !issetugid())
@@ -72,7 +72,7 @@ mio_open(const char *str, unsigned mode, int nbio)
 		 * try legacy "/dev/rmidioxxx" device name
 		 */
 		if (stat(str, &sb) < 0 || !S_ISCHR(sb.st_mode)) {
-			DPRINTF("mio_open: %s: missing ':' separator\n", str); 
+			DPRINTF("mio_open: %s: missing ':' separator\n", str);
 			return NULL;
 		}
 		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev));
@@ -162,7 +162,7 @@ mio_pollfd(struct mio_hdl *hdl, struct pollfd *pfd, int events)
 
 int
 mio_revents(struct mio_hdl *hdl, struct pollfd *pfd)
-{	
+{
 	if (hdl->eof)
 		return POLLHUP;
 	return hdl->ops->revents(hdl, pfd);

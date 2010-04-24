@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.24 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.25 2010/04/24 06:15:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,7 +43,7 @@ void
 sio_initpar(struct sio_par *par)
 {
 	memset(par, 0xff, sizeof(struct sio_par));
-	par->__magic = SIO_PAR_MAGIC;	   
+	par->__magic = SIO_PAR_MAGIC;
 }
 
 /*
@@ -85,7 +85,7 @@ sio_strtoenc(struct sio_par *par, char *istr)
 {
 	char *p = istr;
 	int i, sig, bits, le, bps, msb;
-	
+
 #define IS_SEP(c)			\
 	(((c) < 'a' || (c) > 'z') &&	\
 	 ((c) < 'A' || (c) > 'Z') &&	\
@@ -101,7 +101,7 @@ sio_strtoenc(struct sio_par *par, char *istr)
 	} else
 		return 0;
 	p++;
-	
+
 	/*
 	 * get number of bits per sample
 	 */
@@ -183,7 +183,7 @@ sio_open(const char *str, unsigned mode, int nbio)
 		if (!dbg || sscanf(dbg, "%u", &sio_debug) != 1)
 			sio_debug = 0;
 	}
-#endif	
+#endif
 	if ((mode & (SIO_PLAY | SIO_REC)) == 0)
 		return NULL;
 	if (str == NULL && !issetugid())
@@ -460,7 +460,7 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
 
 		timersub(&tv1, &tv0, &dtv);
-		us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
+		us = dtv.tv_sec * 1000000 + dtv.tv_usec;
 		DPRINTF(
 		    "sio_write: wrote %d bytes of %d in %uus\n",
 		    (int)(len - todo), (int)len, us);
@@ -490,7 +490,7 @@ sio_pollfd(struct sio_hdl *hdl, struct pollfd *pfd, int events)
 
 int
 sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
-{	
+{
 	int revents;
 #ifdef DEBUG
 	struct timeval tv0, tv1, dtv;
@@ -514,7 +514,7 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
 
 		timersub(&tv1, &tv0, &dtv);
-		us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
+		us = dtv.tv_sec * 1000000 + dtv.tv_usec;
 		DPRINTF("sio_revents: revents = 0x%x, complete in %uus\n",
 		    revents, us);
 	}
@@ -595,5 +595,5 @@ void
 sio_onvol_cb(struct sio_hdl *hdl, unsigned ctl)
 {
 	if (hdl->vol_cb)
-		hdl->vol_cb(hdl->vol_addr, ctl);	
+		hdl->vol_cb(hdl->vol_addr, ctl);
 }

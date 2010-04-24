@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.29 2010/04/11 16:53:55 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.30 2010/04/24 06:15:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -150,11 +150,11 @@ sun_enctoinfo(struct sun_hdl *hdl, unsigned *renc, struct sio_par *par)
  * device can use them; return 1 on success, 0 on failure or error
  */
 static int
-sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc, 
+sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc,
     unsigned pchan, unsigned rchan, unsigned rate)
 {
-	struct audio_info aui;	
-	
+	struct audio_info aui;
+
 	AUDIO_INITINFO(&aui);
 	if (enc) {
 		if (enc->le && enc->sig) {
@@ -217,10 +217,10 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 #define NCHANS (sizeof(chans) / sizeof(chans[0]))
 #define NRATES (sizeof(rates) / sizeof(rates[0]))
-	static unsigned chans[] = { 
+	static unsigned chans[] = {
 		1, 2, 4, 6, 8, 10, 12
 	};
-	static unsigned rates[] = { 
+	static unsigned rates[] = {
 		8000, 11025, 12000, 16000, 22050, 24000,
 		32000, 44100, 48000, 64000, 88200, 96000
 	};
@@ -297,7 +297,7 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 				rchan_map |= (1 << i);
 		}
 	}
-	
+
 	/*
 	 * fill rates
 	 *
@@ -349,7 +349,7 @@ struct sio_hdl *
 sio_open_sun(const char *str, unsigned mode, int nbio)
 {
 	int fd, flags, fullduplex;
-	struct audio_info aui;	
+	struct audio_info aui;
 	struct sun_hdl *hdl;
 	struct sio_par par;
 	char path[PATH_MAX];
@@ -362,7 +362,7 @@ sio_open_sun(const char *str, unsigned mode, int nbio)
 	snprintf(path, sizeof(path), "/dev/audio%s", str);
 	if (mode == (SIO_PLAY | SIO_REC))
 		flags = O_RDWR;
-	else 
+	else
 		flags = (mode & SIO_PLAY) ? O_WRONLY : O_RDONLY;
 
 	while ((fd = open(path, flags | O_NONBLOCK)) < 0) {
@@ -442,7 +442,7 @@ sun_start(struct sio_hdl *sh)
 {
 	struct sio_par par;
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	struct audio_info aui;	
+	struct audio_info aui;
 
 	if (!sio_getpar(&hdl->sio, &par))
 		return 0;
@@ -457,7 +457,7 @@ sun_start(struct sio_hdl *sh)
 	hdl->odelta = 0;
 
 	if (hdl->sio.mode & SIO_PLAY) {
-		/* 
+		/*
 		 * pause the device and let sun_write() trigger the
 		 * start later, to avoid buffer underruns
 		 */
@@ -496,7 +496,7 @@ static int
 sun_stop(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	struct audio_info aui;	
+	struct audio_info aui;
 	int mode;
 
 	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
@@ -614,7 +614,7 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 	/*
 	 * if block size and buffer size are not both set then
 	 * set the blocksize to half the buffer size
-	 */ 
+	 */
 	bufsz = par->appbufsz;
 	round = par->round;
 	if (bufsz != ~0U) {
@@ -695,7 +695,7 @@ static int
 sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	struct audio_info aui;	
+	struct audio_info aui;
 
 	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
 		DPERROR("sun_getpar: getinfo");
@@ -775,9 +775,9 @@ sun_read(struct sio_hdl *sh, void *buf, size_t len)
 static size_t
 sun_autostart(struct sun_hdl *hdl)
 {
-	struct audio_info aui;	
+	struct audio_info aui;
 	struct pollfd pfd;
-	
+
 	pfd.fd = hdl->fd;
 	pfd.events = POLLOUT;
 	while (poll(&pfd, 1, 0) < 0) {
@@ -856,7 +856,7 @@ sun_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 
 	pfd->fd = hdl->fd;
-	pfd->events = events;	
+	pfd->events = events;
 	return 1;
 }
 

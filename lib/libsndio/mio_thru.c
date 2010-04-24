@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_thru.c,v 1.7 2010/04/22 17:43:30 ratchov Exp $	*/
+/*	$OpenBSD: mio_thru.c,v 1.8 2010/04/24 06:15:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,7 +59,7 @@ thru_open(const char *str, char *sock, unsigned mode, int nbio)
 	int s, n, todo;
 	unsigned char *data;
 	struct thru_hdl *hdl;
-	struct sockaddr_un ca;	
+	struct sockaddr_un ca;
 	socklen_t len = sizeof(struct sockaddr_un);
 	uid_t uid;
 
@@ -73,7 +73,7 @@ thru_open(const char *str, char *sock, unsigned mode, int nbio)
 	hdl = malloc(sizeof(struct thru_hdl));
 	if (hdl == NULL)
 		return NULL;
-	mio_create(&hdl->mio, &thru_ops, mode, nbio);	
+	mio_create(&hdl->mio, &thru_ops, mode, nbio);
 
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (s < 0)
@@ -225,7 +225,7 @@ thru_pollfd(struct mio_hdl *sh, struct pollfd *pfd, int events)
 	struct thru_hdl *hdl = (struct thru_hdl *)sh;
 
 	pfd->fd = hdl->fd;
-	pfd->events = events;	
+	pfd->events = events;
 	return 1;
 }
 

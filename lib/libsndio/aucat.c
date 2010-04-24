@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.36 2010/04/22 17:43:30 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.37 2010/04/24 06:15:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -189,7 +189,7 @@ sio_open_aucat(const char *str, unsigned mode, int nbio)
 	int s;
 	char unit[4], *sep, *opt;
 	struct aucat_hdl *hdl;
-	struct sockaddr_un ca;	
+	struct sockaddr_un ca;
 	socklen_t len = sizeof(struct sockaddr_un);
 	uid_t uid;
 
@@ -216,7 +216,7 @@ sio_open_aucat(const char *str, unsigned mode, int nbio)
 	hdl = malloc(sizeof(struct aucat_hdl));
 	if (hdl == NULL)
 		return NULL;
-	sio_create(&hdl->sio, &aucat_ops, mode, nbio);	
+	sio_create(&hdl->sio, &aucat_ops, mode, nbio);
 
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (s < 0)
@@ -356,7 +356,7 @@ aucat_stop(struct sio_hdl *sh)
 	 * complete data block in progress
 	 */
 	if (hdl->wstate != STATE_IDLE) {
-		todo = (hdl->wstate == STATE_MSG) ? 
+		todo = (hdl->wstate == STATE_MSG) ?
 		    hdl->wmsg.u.data.size : hdl->wtodo;
 		hdl->maxwrite = todo;
 		memset(zero, 0, ZERO_MAX);
@@ -689,7 +689,7 @@ aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 	if (hdl->rstate == STATE_MSG)
 		events |= POLLIN;
 	pfd->fd = hdl->fd;
-	pfd->events = events;		
+	pfd->events = events;
 	DPRINTF("aucat: pollfd: %x -> %x\n", hdl->events, pfd->events);
 	return 1;
 }
