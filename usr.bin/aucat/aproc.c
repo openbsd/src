@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.54 2010/04/24 06:18:23 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.55 2010/04/24 13:32:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -854,6 +854,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	maxwrite = p->u.mix.maxlat - p->u.mix.lat;
 	mix_bzero(obuf);
 	scount = 0;
+	/* XXX: can obuf->len be larger than obuf->w.mix.todo ? */
 	odone = obuf->len;
 	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
@@ -878,7 +879,6 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		if (!(p->flags & APROC_DROP))
 			return 0;
 		odone = obuf->w.mix.todo;
-		p->u.mix.idle += odone;
 	}
 	if (maxwrite > 0) {
 		if (odone > maxwrite)
@@ -893,6 +893,8 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		if (APROC_OK(p->u.mix.mon))
 			mon_snoop(p->u.mix.mon, obuf, obuf->used - odone, odone);
 	}
+	if (LIST_EMPTY(&p->ins))
+		p->u.mix.idle += odone;
 	if (scount == 0)
 		return 0;
 	return 1;
