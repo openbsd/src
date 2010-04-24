@@ -1571,7 +1571,6 @@
 ./usr/include/sys/siginfo.h
 ./usr/include/sys/signal.h
 ./usr/include/sys/signalvar.h
-./usr/include/sys/simplelock.h
 ./usr/include/sys/socket.h
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h

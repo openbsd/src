@@ -2371,7 +2371,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/signal.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/signalvar.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/simplelock.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/socket.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/sockio.ph

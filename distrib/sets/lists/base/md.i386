@@ -2388,7 +2388,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/signal.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/signalvar.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/simplelock.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/socket.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sockio.ph

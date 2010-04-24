@@ -1718,7 +1718,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/signal.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/signalvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sys/simplelock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/socket.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/sockio.ph

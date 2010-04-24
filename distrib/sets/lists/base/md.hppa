@@ -2354,7 +2354,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/signal.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/signalvar.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/sys/simplelock.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/socket.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sockio.ph

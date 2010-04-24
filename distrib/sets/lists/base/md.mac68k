@@ -2308,7 +2308,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/signalvar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/simplelock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/socket.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sockio.ph
