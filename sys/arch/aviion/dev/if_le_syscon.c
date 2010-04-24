@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_syscon.c,v 1.9 2010/04/18 15:06:39 miod Exp $	*/
+/*	$OpenBSD: if_le_syscon.c,v 1.10 2010/04/24 18:44:27 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,10 +92,20 @@ void	le_syscon_wrcsr_interrupt(struct am7990_softc *, uint16_t, uint16_t);
 int
 le_syscon_match(struct device *parent, void *cf, void *aux)
 {
-	if (avtyp != AV_400)
+	switch (cpuid) {
+	case AVIION_300_310:
+	case AVIION_400_4000:
+	case AVIION_410_4100:
+	case AVIION_300C_310C:
+	case AVIION_300CD_310CD:
+	case AVIION_300D_310D:
+	case AVIION_4300_25:
+	case AVIION_4300_20:
+	case AVIION_4300_16:
+		return 1;
+	default:
 		return 0;
-
-	return 1;
+	}
 }
 
 void

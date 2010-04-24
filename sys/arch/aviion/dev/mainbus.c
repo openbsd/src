@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 2010/04/21 19:33:47 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.5 2010/04/24 18:44:27 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -130,9 +130,7 @@ mainbus_attach(struct device *parent, struct device *self, void *args)
 {
 	extern char cpu_model[];
 
-	printf(": %s, cpuid 0x%x", cpu_model, cpuid);
-	if (sysid != -1)
-		printf(", sysid %x", sysid);
+	printf(": %s, cpuid 0x%04x", cpu_model, cpuid);
 	printf("\n");
 
 	/*

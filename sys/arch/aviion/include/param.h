@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2006/05/20 12:04:54 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.3 2010/04/24 18:44:27 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -48,17 +48,5 @@
 
 #define KERNBASE	0x00000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x00001000	/* start of kernel text */
-
-#if !defined(_LOCORE)
-extern int avtyp;
-#endif
-
-/*
- * Values for the avtyp variable.
- */
-#define	AV_400		1	/* 100/200/300/400/3000/4000/4300 */
-#define	AV_530		2	/* 4600/530 */
-#define	AV_5000		3	/* 5000/6000 */
-#define	AV_6280		4	/* 6280/8000-8 */
 
 #endif /* !_MACHINE_PARAM_H_ */

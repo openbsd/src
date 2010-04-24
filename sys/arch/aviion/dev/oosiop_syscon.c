@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop_syscon.c,v 1.2 2010/04/21 19:33:47 miod Exp $	*/
+/*	$OpenBSD: oosiop_syscon.c,v 1.3 2010/04/24 18:44:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -53,8 +53,12 @@ oosiop_syscon_match(struct device *parent, void *match, void *aux)
 	struct confargs *ca = aux;
 	paddr_t fuse;
 
-	if (avtyp != AV_530)
+	switch (cpuid) {
+	case AVIION_4600_530:
+		break;
+	default:
 		return 0;
+	}
 
 	switch (ca->ca_paddr) {
 	case AV530_SCSI1:

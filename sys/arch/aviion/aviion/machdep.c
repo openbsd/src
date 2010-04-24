@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2010/04/21 19:33:45 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 2010/04/24 18:44:25 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -112,15 +112,11 @@
 #endif /* DDB */
 
 void	aviion_bootstrap(void);
-int	aviion_identify(void);
-__dead void unconfigured(const char *);
-__dead void unrecognized(void);
-__dead void unsupported(const char *);
+void	aviion_identify(void);
 void	consinit(void);
 __dead void doboot(void);
 void	dumpconf(void);
 void	dumpsys(void);
-void	identifycpu(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 vaddr_t	secondary_pre_main(void);
@@ -162,7 +158,7 @@ const char *prom_bootargs;			/* set in locore.S */
 char bootargs[256];				/* local copy */
 u_int bootdev, bootunit, bootpart;		/* set in locore.S */
 
-int32_t cpuid, sysid;
+int32_t cpuid;
 
 int cputyp;					/* set in locore.S */
 int avtyp;
@@ -223,12 +219,6 @@ consinit()
 #endif
 }
 
-void
-identifycpu()
-{
-	strlcpy(cpu_model, platform->descr, sizeof cpu_model);
-}
-
 /*
  * Set up real-time clocks.
  * These function pointers are set in dev/clock.c.
@@ -266,7 +256,6 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	identifycpu();
 	printf("real mem = %u (%uMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
 
@@ -694,42 +683,7 @@ aviion_bootstrap()
 	/* Save a copy of our commandline before it gets overwritten. */
 	strlcpy(bootargs, prom_bootargs, sizeof bootargs);
 
-	avtyp = aviion_identify();
-
-	/* Set up interrupt and fp exception handlers based on the machine. */
-	switch (avtyp) {
-	case AV_400:
-#ifdef AV400
-		platform = &board_av400;
-#else
-		unconfigured("AV400");
-#endif
-		break;
-	case AV_530:
-#ifdef AV530
-		platform = &board_av530;
-#else
-		unsupported("AV530");
-#endif
-		break;
-	case AV_5000:
-#ifdef AV5000
-		platform = &board_av5000;
-#else
-		unsupported("AV5000");
-#endif
-		break;
-	case AV_6280:
-#ifdef AV6280
-		platform = &board_av6280;
-#else
-		unsupported("AV6280");
-#endif
-		break;
-	default:
-		unrecognized();
-		break;
-	};
+	aviion_identify();
 
 	cn_tab = &bootcons;
 	platform->bootstrap();
@@ -920,82 +874,127 @@ myetheraddr(u_char *cp)
  * These heuristics are probably not the best; feel free to come with better
  * ones...
  */
-int
+
+struct aviion_system {
+	int32_t			 cpuid;
+	const char		*model;
+	const struct board	*platform;
+	const char		*kernel_option;
+};
+static const struct aviion_system aviion_systems[] = {
+#define	BOARD_UNSUPPORTED	NULL, NULL
+#ifdef AV400
+#define	BOARD_AV400		&board_av400, NULL
+#else
+#define	BOARD_AV400		NULL, "AV400"
+#endif
+#ifdef AV530
+#define	BOARD_AV530		&board_av530, NULL
+#else
+#define	BOARD_AV530		NULL, "AV530"
+#endif
+#ifdef AV5000
+#define	BOARD_AV5000		&board_av5000, NULL
+#else
+#define	BOARD_AV5000		BOARD_UNSUPPORTED /* NULL, "AV5000" */
+#endif
+#ifdef AV6280
+#define	BOARD_AV6280		&board_av6280, NULL
+#else
+#define	BOARD_AV6280		BOARD_UNSUPPORTED /* NULL, "AV6280" */
+#endif
+	{ AVIION_300_310,		"300/310",	BOARD_AV400 },
+	{ AVIION_5100_6100,		"5100/6100",	BOARD_UNSUPPORTED },
+	{ AVIION_400_4000,		"400/4000",	BOARD_AV400 },
+	{ AVIION_410_4100,		"410/4100",	BOARD_AV400 },
+	{ AVIION_300C_310C,		"300C/310C",	BOARD_AV400 },
+	{ AVIION_5200_6200,		"5200/6200",	BOARD_AV5000 },
+	{ AVIION_5240_6240,		"5240/6240",	BOARD_AV5000 },
+	{ AVIION_300CD_310CD,		"300CD/310CD",	BOARD_AV400 },
+	{ AVIION_300D_310D,		"300D/310D",	BOARD_AV400 },
+	{ AVIION_4600_530,		"4600/530",	BOARD_AV530 },
+	{ AVIION_4300_25,		"4300-25",	BOARD_AV400 },
+	{ AVIION_4300_20,		"4300-20",	BOARD_AV400 },
+	{ AVIION_4300_16,		"4300-16",	BOARD_AV400 },
+	{ AVIION_5255_6255,		"5255/6255",	BOARD_AV5000 },
+	{ AVIION_350,			"350",		BOARD_UNSUPPORTED },
+	{ AVIION_6280,			"6280",		BOARD_AV6280 },
+	{ AVIION_8500_9500,		"8500/9500",	BOARD_UNSUPPORTED },
+	{ AVIION_9500_HA,		"9500HA",	BOARD_UNSUPPORTED },
+	{ AVIION_500,			"500",		BOARD_UNSUPPORTED },
+	{ AVIION_5500,			"5500",		BOARD_UNSUPPORTED },
+	{ AVIION_450,			"450",		BOARD_UNSUPPORTED },
+	{ AVIION_8500_9500_45_1MB,	"8500/9500-45",	BOARD_UNSUPPORTED },
+	{ AVIION_10000,			"10000",	BOARD_UNSUPPORTED },
+	{ AVIION_10000_QT,		"10000QT",	BOARD_UNSUPPORTED },
+	{ AVIION_5500PLUS,		"5500+",	BOARD_UNSUPPORTED },
+	{ AVIION_450PLUS,		"450+",		BOARD_UNSUPPORTED },
+	{ AVIION_8500_9500_50_1MB,	"8500/9500-50",	BOARD_UNSUPPORTED },
+	{ AVIION_8500_9500_50_2MB,	"8500/9500-50d", BOARD_UNSUPPORTED },
+
+	{ AVIION_UNKNOWN1,		"\"Montezuma\"", BOARD_UNSUPPORTED },
+	{ AVIION_UNKNOWN2,		"\"Montezuma\"", BOARD_UNSUPPORTED },
+	{ AVIION_UNKNOWN3,		"\"Flintstone\"", BOARD_UNSUPPORTED },
+	{ AVIION_UNKNOWN1_DIS,		"\"Montezuma-\"", BOARD_UNSUPPORTED },
+	{ AVIION_UNKNOWN2_DIS,		"\"Montezuma-\"", BOARD_UNSUPPORTED },
+
+	{ 0 }
+#undef	BOARD_AV6280
+#undef	BOARD_AV5000
+#undef	BOARD_AV530
+#undef	BOARD_AV400
+};
+
+void
 aviion_identify()
 {
-	/*
-	 * We don't know anything about 88110-based models.
-	 * Note that we can't use CPU_IS81x0 here since these are optimized
-	 * if the kernel you're running is compiled for only one processor
-	 * type, and we want to check against the real hardware.
-	 */
-	if (cputyp == CPU_88110)
-		return (0);
-
-	/*
-	 * Series 100/200/300/400/3000/4000/4300 do not have the VIRQLV
-	 * register at 0xfff85000.
-	 */
-	if (badaddr(0xfff85000, 4) != 0)
-		return (AV_400);
-
-	/*
-	 * Series 5000 and 6000 do not have an RTC counter at 0xfff8f084.
-	 */
-	if (badaddr(0xfff8f084, 4) != 0)
-		return (AV_5000);
-
-	/*
-	 * Series 4600/530 have IOFUSEs at 0xfffb0040 and 0xfffb00c0;
-	 * the second one may not be present if the I/O expansion board
-	 * is missing.
-	 */
-	if (badaddr(0xfffb0040, 1) == 0 /* && badaddr(0xfffb00c0, 1) == 0 */)
-		return (AV_530);
-
-	/*
-	 * Series 6280/8000-8 fall here.
-	 */
-	return (AV_6280);
-}
-
-__dead void
-unconfigured(const char *model)
-{
+	const struct aviion_system *system;
 	char excuse[512];
+	extern char *hw_vendor, *hw_prod;
 
-	snprintf(excuse, sizeof excuse, "\n"
-	    "Sorry, support for the %s family is not present\n"
-	    "in this OpenBSD/" MACHINE " kernel.\n"
-	    "Please recompile your kernel with\n"
-	    "\toption\t%s\n"
-	    "in the kernel configuration file.\n", model, model);
-	scm_printf(excuse);
-	scm_halt();
-}
+	cpuid = scm_cpuid();
+	hostid = scm_sysid();
 
-__dead void
-unsupported(const char *model)
-{
-	char excuse[512];
+	for (system = aviion_systems; ; system++) {
+		if (system->cpuid != 0 && system->cpuid != cpuid)
+			continue;
 
-	snprintf(excuse, sizeof excuse, "\n"
-	    "Sorry, OpenBSD/" MACHINE " does not support the %s family "
-	    "(cpuid %04x) yet.\n",
-	    model, scm_cpuid());
-	scm_printf(excuse);
-	scm_halt();
-}
+		hw_vendor = "Data General";
+		hw_prod = "AViiON";
+		strlcpy(cpu_model, system->model, sizeof cpu_model);
 
-__dead void
-unrecognized(void)
-{
-	char excuse[512];
+		if (system->platform != NULL) {
+			platform = system->platform;
+			return;
+		}
 
-	snprintf(excuse, sizeof excuse, "\n"
-	    "Sorry, OpenBSD/" MACHINE " does not recognize this system "
-	    "(cpuid %04x) yet.\n",
-	    scm_cpuid());
+		if (system->kernel_option != NULL) {
+			/* unconfigured system */
+			snprintf(excuse, sizeof excuse, "\n"
+			    "Sorry, support for the %s system is not present\n"
+			    "in this OpenBSD/" MACHINE " kernel.\n"
+			    "Please recompile your kernel with\n"
+			    "\toption\t%s\n"
+			    "in the kernel configuration file.\n",
+			    system->model, system->kernel_option);
+		} else if (system->cpuid != 0) {
+			/* unsupported system */
+			snprintf(excuse, sizeof excuse, "\n"
+			    "Sorry, OpenBSD/" MACHINE
+			    " does not support the %s system"
+			    " (cpuid %04x) yet.\n\n"
+			    "Please contact <m88k@openbsd.org>\n",
+			    system->model, cpuid);
+		} else {
+			/* unrecgonized system */
+			snprintf(excuse, sizeof excuse, "\n"
+			    "Sorry, OpenBSD/" MACHINE
+			    " does not recognize this system (cpuid %04x).\n\n"
+			    "Please contact <m88k@openbsd.org>\n",
+			    cpuid);
+		}
+	}
+
 	scm_printf(excuse);
 	scm_halt();
 }

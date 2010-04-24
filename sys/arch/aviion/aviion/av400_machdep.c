@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.16 2010/04/21 19:33:45 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.17 2010/04/24 18:44:25 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -185,7 +185,6 @@ const struct vme_range vme_av400[] = {
 };
 
 const struct board board_av400 = {
-	"100/200/300/400/3000/4000/4300 series",
 	av400_bootstrap,
 	av400_memsize,
 	av400_startup,
@@ -195,9 +194,9 @@ const struct board board_av400 = {
 	av400_setipl,
 	av400_raiseipl,
 	av400_intsrc,
+	av400_get_vme_ranges,
 
 	av400_ptable,
-	vme_av400
 };
 
 /*
@@ -278,8 +277,6 @@ av400_bootstrap()
 	 * we can still use it.
 	 */
 	scm_getenaddr(hostaddr);
-	cpuid = scm_cpuid();
-	sysid = scm_sysid();
 }
 
 /*
@@ -576,4 +573,19 @@ out:
 	 * be restored later.
 	 */
 	set_psr(get_psr() | PSR_IND);
+}
+
+const struct vme_range *
+av400_get_vme_ranges(void)
+{
+	/* no VME slots on models 100/200/300 */
+	switch (cpuid) {
+	case AVIION_300_310:
+	case AVIION_300C_310C:
+	case AVIION_300CD_310CD:
+	case AVIION_300D_310D:
+		return NULL;
+	default:
+		return vme_av400;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.7 2010/04/21 19:33:47 miod Exp $	*/
+/*	$OpenBSD: vme.c,v 1.8 2010/04/24 18:44:27 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -120,8 +120,7 @@ int	vmerw(struct vme_softc *, int, int, struct uio *, int);
 int
 vmematch(struct device *parent, void *vcf, void *aux)
 {
-	/* XXX no VME on AV100/AV200/AV300, though */
-	return (platform->vme_ranges != NULL && vme_cd.cd_ndevs == 0);
+	return (platform->get_vme_ranges() != NULL && vme_cd.cd_ndevs == 0);
 }
 
 void
@@ -175,7 +174,7 @@ vmeattach(struct device *parent, struct device *self, void *aux)
 	 */
 	*(volatile u_int32_t *)AV_EXTAM = 0x0d;
 
-	sc->sc_ranges = platform->vme_ranges;
+	sc->sc_ranges = platform->get_vme_ranges();
 	printf("\n");
 
 	/*

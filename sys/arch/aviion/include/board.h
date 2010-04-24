@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.6 2010/04/21 19:33:47 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.7 2010/04/24 18:44:27 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -29,12 +29,52 @@
 
 #if !defined(_LOCORE)
 
-#include <machine/pmap_table.h>
+/*
+ * cpuid values
+ */
 
+#define	AVIION_300_310		0x7904	/* mono Maverick */
+#define	AVIION_5100_6100	0x7906	/* 20MHz Topgun */
+#define	AVIION_400_4000		0x7908	/* 16MHz Mav+ */
+#define	AVIION_410_4100		0x790c	/* 20MHz Mav+ */
+#define	AVIION_300C_310C	0x7910	/* color Maverick */
+#define	AVIION_5200_6200	0x7912	/* 25MHz Topgun */
+#define	AVIION_5240_6240	0x7918	/* 25MHz Shotgun */
+#define	AVIION_300CD_310CD	0x7920	/* dual duart color Maverick */
+#define	AVIION_300D_310D	0x7924	/* dual duart mono Maverick */
+#define	AVIION_4600_530		0x7930	/* Rolling Rock */
+#define	AVIION_4300_25		0x7932	/* 25MHz Terra */
+#define	AVIION_4300_20		0x7934	/* 20MHz Terra */
+#define	AVIION_4300_16		0x7936	/* 16MHz Terra */
+#define	AVIION_5255_6255	0x7942	/* 25MHz Tophat */
+#define	AVIION_350		0x7944	/* KME */
+#define	AVIION_6280		0x7946	/* High Noon */
+#define	AVIION_8500_9500	0x794a	/* Odyssey */
+#define	AVIION_9500_HA		0x794c	/* Oz */
+#define	AVIION_500		0x794e	/* Robin Hood */
+#define	AVIION_5500		0x7950	/* Schooner */
+#define	AVIION_450		0x7958	/* Inner Tube */
+#define	AVIION_8500_9500_45_1MB	0x795a	/* 45MHz Iliad (1MB L2) */
+#define	AVIION_10000		0x7960	/* Sierra */
+#define	AVIION_10000_QT		0x7962	/* Sierra QT */
+#define	AVIION_5500PLUS		0x7964	/* Schooner+ */
+#define	AVIION_450PLUS		0x7966	/* Inner Tube+ */
+#define	AVIION_8500_9500_50_1MB	0x7968	/* 50MHz Iliad (1MB L2) */
+#define	AVIION_8500_9500_50_2MB	0x796a	/* 50MHz Iliad (2MB L2) */
+
+/* did the following ever hit the market? */
+#define	AVIION_UNKNOWN1		0x7926	/* mono Montezuma */
+#define	AVIION_UNKNOWN2		0x7928	/* color Montezuma */
+#define	AVIION_UNKNOWN3		0x7956	/* Flintstone */
+#define	AVIION_UNKNOWN1_DIS	0xfff0	/* mono disabled Montezuma */
+#define	AVIION_UNKNOWN2_DIS	0xfff1	/* color disabled Montezuma */
+
+extern int32_t cpuid;
+
+#include <machine/pmap_table.h>
 struct vme_range;
 
 struct board {
-	const char	*descr;
 	void		(*bootstrap)(void);
 	vaddr_t		(*memsize)(void);
 	void		(*startup)(void);
@@ -46,10 +86,9 @@ struct board {
 	u_int		(*raiseipl)(u_int);
 
 	u_int64_t	(*intsrc)(int);
+	const struct vme_range *(*get_vme_ranges)(void);
 
 	pmap_table_t	ptable;
-
-	const struct vme_range *vme_ranges;
 };
 
 #define	md_interrupt_func(f)	platform->intr(f)
@@ -64,12 +103,15 @@ void	av##b##_init_clocks(void); \
 u_int	av##b##_getipl(void); \
 u_int	av##b##_setipl(u_int); \
 u_int	av##b##_raiseipl(u_int); \
-u_int64_t av##b##_intsrc(int);
+u_int64_t av##b##_intsrc(int); \
+const struct vme_range *av##b##_get_vme_ranges(void);
 
 DECLARE_BOARD(400);
 DECLARE_BOARD(530);
 DECLARE_BOARD(5000);
 DECLARE_BOARD(6280);
+
+extern const struct board *platform;/* just to have people confuse both names */
 
 /*
  * Logical values for interrupt sources.
@@ -95,9 +137,6 @@ DECLARE_BOARD(6280);
 
 void	intsrc_enable(u_int, int);
 void	intsrc_disable(u_int);
-
-extern int32_t cpuid, sysid;
-extern const struct board *platform;/* just to have people confuse both names */
 
 void cio_init_clocks(void);
 void rtc_init_clocks(void);

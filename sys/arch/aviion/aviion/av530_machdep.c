@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.2 2010/04/21 19:33:45 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.3 2010/04/24 18:44:25 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -73,7 +73,6 @@ const struct vme_range vme_av530[] = {
 };
 
 const struct board board_av530 = {
-	"530/4600 series",
 	av530_bootstrap,
 	av530_memsize,
 	av530_startup,
@@ -83,9 +82,9 @@ const struct board board_av530 = {
 	av530_setipl,
 	av530_raiseipl,
 	av530_intsrc,
+	av530_get_vme_ranges,
 
 	av530_ptable,
-	vme_av530
 };
 
 /*
@@ -183,15 +182,13 @@ av530_bootstrap()
 	*(volatile u_int32_t *)AV_IENALL = 0;
 	*(volatile u_int32_t *)AV_EXIENALL = 0;
 
+#if 0
 	/*
 	 * Get all the information we'll need later from the PROM, while
 	 * we can still use it.
 	 */
-#if 0
 	scm_getenaddr(hostaddr);
 #endif
-	cpuid = scm_cpuid();
-	sysid = scm_sysid();
 }
 
 /*
@@ -591,4 +588,10 @@ out:
 	 * be restored later.
 	 */
 	set_psr(get_psr() | PSR_IND);
+}
+
+const struct vme_range *
+av530_get_vme_ranges()
+{
+	return vme_av530;
 }
