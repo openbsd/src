@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.131 2010/04/21 20:32:57 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.132 2010/04/24 19:16:11 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -369,8 +369,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	session_respond(s, "250-ENHANCEDSTATUSCODES");
 
 	/* XXX - we also want to support reading SIZE from MAIL parameters */
-	if (s->s_env->sc_maxsize < SIZE_MAX)
-		session_respond(s, "250-SIZE %lu", s->s_env->sc_maxsize);
+	session_respond(s, "250-SIZE %zu", s->s_env->sc_maxsize);
 
 	if (ADVERTISE_TLS(s))
 		session_respond(s, "250-STARTTLS");
