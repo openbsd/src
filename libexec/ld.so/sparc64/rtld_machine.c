@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.43 2008/07/16 20:33:42 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.44 2010/04/24 18:12:29 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -197,7 +197,8 @@ static long reloc_target_bitmask[] = {
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
-void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela);
+void _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
+	Elf_RelA *rela);
 void _dl_install_plt(Elf_Word *pltgot, Elf_Addr proc);
 
 int
@@ -279,7 +280,7 @@ resolve_failed:
 		}
 
 		if (type == R_TYPE(JMP_SLOT)) {
-			_dl_reloc_plt((Elf_Word *)where, value, relas);
+			_dl_reloc_plt(object, (Elf_Word *)where, value, relas);
 			continue;
 		}
 
@@ -374,7 +375,8 @@ resolve_failed:
 #define LOVAL(v)	((v) & 0x000003ff)
 
 void
-_dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
+_dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
+    Elf_RelA *rela)
 {
 	Elf_Addr offset;
 
@@ -408,9 +410,12 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 	if (rela->r_addend) {
 		Elf_Addr *ptr = (Elf_Addr *)where;
 		/*
-		 * This entry is >32768.  Just replace the pointer.
+		 * This entry is >32768.  The relocation points to a
+		 * PC-relative pointer to the _dl_bind_start_0 stub at
+		 * the top of the PLT section.  Update it to point to
+		 * the target function.
 		 */
-		ptr[0] = value;
+		ptr[0] += value - object->Dyn.info[DT_PLTGOT];
 
 	} else if (offset <= (1L<<20) && offset >= -(1L<<20)) {
 		/*
@@ -645,7 +650,7 @@ _dl_bind(elf_object_t *object, int index)
 		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
 
-	_dl_reloc_plt(addr, ooff + this->st_value, rela);
+	_dl_reloc_plt(object, addr, ooff + this->st_value, rela);
 
 	/* if PLT is (to be protected), change back to RO/X */
 	if (object->plt_size != 0) {
