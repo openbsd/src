@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.9 2010/04/05 14:47:05 espie Exp $
+# $OpenBSD: Paths.pm,v 1.10 2010/04/24 09:28:19 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,7 @@ sub groupadd() { '/usr/sbin/groupadd' }
 sub sysctl() { '/sbin/sysctl' }
 sub openssl() { '/usr/sbin/openssl' }
 sub pkgca() { '/etc/ssl/pkgca.pem' }
+sub pkg_add() { '/usr/sbin/pkg_add' }
 sub chmod() { '/bin/chmod' }	# external command is used for symbolic modes.
 sub gzip() { '/usr/bin/gzip' }
 sub ftp() { $ENV{'FETCH_CMD'} || '/usr/bin/ftp' }
