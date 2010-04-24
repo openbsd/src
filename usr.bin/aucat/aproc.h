@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.34 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.35 2010/04/24 06:18:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -120,8 +120,8 @@ struct aproc_ops {
 struct aproc {
 	char *name;				/* for debug purposes */
 	struct aproc_ops *ops;			/* call-backs */
-	LIST_HEAD(, abuf) ibuflist;		/* list of inputs */
-	LIST_HEAD(, abuf) obuflist;		/* list of outputs */
+	LIST_HEAD(, abuf) ins;			/* list of inputs */
+	LIST_HEAD(, abuf) outs;			/* list of outputs */
 	unsigned refs;				/* extern references */
 #define APROC_ZOMB	1			/* destroyed but not freed */
 #define APROC_QUIT	2			/* try to terminate if unused */

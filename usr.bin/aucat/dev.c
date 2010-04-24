@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.48 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.49 2010/04/24 06:18:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -365,7 +365,7 @@ dev_done(void)
 	}
 	if (dev_midi) {
 		dev_midi->flags |= APROC_QUIT;
-		if (LIST_EMPTY(&dev_midi->ibuflist))
+		if (LIST_EMPTY(&dev_midi->ins))
 			aproc_del(dev_midi);
  	restart_midi:
 		LIST_FOREACH(f, &file_list, entry) {
@@ -496,7 +496,7 @@ dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
 			}
 			if (ibuf->rproc == dev_mix)
 				break;
-			ibuf = LIST_FIRST(&ibuf->rproc->obuflist);
+			ibuf = LIST_FIRST(&ibuf->rproc->outs);
 		}
 		*sibuf = ibuf;
 	}
@@ -516,7 +516,7 @@ dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
 			}
 			if (obuf->wproc == dev_sub)
 				break;
-			obuf = LIST_FIRST(&obuf->wproc->ibuflist);
+			obuf = LIST_FIRST(&obuf->wproc->ins);
 		}
 		*sobuf = obuf;
 	}
@@ -536,7 +536,7 @@ dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
 			}
 			if (obuf->wproc == dev_submon)
 				break;
-			obuf = LIST_FIRST(&obuf->wproc->ibuflist);
+			obuf = LIST_FIRST(&obuf->wproc->ins);
 		}
 		*sobuf = obuf;
 	}
@@ -612,13 +612,13 @@ dev_getpos(void)
 	int delta;
 
 	if (APROC_OK(dev_mix)) {
-		pbuf = LIST_FIRST(&dev_mix->obuflist);
+		pbuf = LIST_FIRST(&dev_mix->outs);
 		if (!pbuf)
 			return 0;
 		plat = -dev_mix->u.mix.lat;
 	}
 	if (APROC_OK(dev_sub)) {
-		rbuf = LIST_FIRST(&dev_sub->ibuflist);
+		rbuf = LIST_FIRST(&dev_sub->ins);
 		if (!rbuf)
 			return 0;
 		rlat = -dev_sub->u.sub.lat;
@@ -670,7 +670,7 @@ dev_attach(char *name, unsigned mode,
 
 	if (mode & MODE_PLAY) {
 		ipar = *sipar;
-		pbuf = LIST_FIRST(&dev_mix->obuflist);
+		pbuf = LIST_FIRST(&dev_mix->outs);
 		nblk = (dev_bufsz / dev_round + 3) / 4;
 		round = dev_roundof(ipar.rate);
 		nch = ipar.cmax - ipar.cmin + 1;
@@ -714,7 +714,7 @@ dev_attach(char *name, unsigned mode,
 	}
 	if (mode & MODE_REC) {
 		opar = *sopar;
-		rbuf = LIST_FIRST(&dev_sub->ibuflist);
+		rbuf = LIST_FIRST(&dev_sub->ins);
 		round = dev_roundof(opar.rate);
 		nblk = (dev_bufsz / dev_round + 3) / 4;
 		nch = opar.cmax - opar.cmin + 1;
@@ -756,7 +756,7 @@ dev_attach(char *name, unsigned mode,
 	}
 	if (mode & MODE_MON) {
 		opar = *sopar;
-		rbuf = LIST_FIRST(&dev_submon->ibuflist);
+		rbuf = LIST_FIRST(&dev_submon->ins);
 		round = dev_roundof(opar.rate);
 		nblk = (dev_bufsz / dev_round + 3) / 4;
 		nch = opar.cmax - opar.cmin + 1;
@@ -844,44 +844,44 @@ dev_clear(void)
 
 	if (APROC_OK(dev_mix)) {
 #ifdef DEBUG
-		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
+		if (!LIST_EMPTY(&dev_mix->ins)) {
 			dbg_puts("play end not idle, can't clear device\n");
 			dbg_panic();	
 		}
 #endif
-		buf = LIST_FIRST(&dev_mix->obuflist);
+		buf = LIST_FIRST(&dev_mix->outs);
 		while (buf) {
 			abuf_clear(buf);
-			buf = LIST_FIRST(&buf->rproc->obuflist);
+			buf = LIST_FIRST(&buf->rproc->outs);
 		}
 		mix_clear(dev_mix);
 	}
 	if (APROC_OK(dev_sub)) {
 #ifdef DEBUG
-		if (!LIST_EMPTY(&dev_sub->obuflist)) {
+		if (!LIST_EMPTY(&dev_sub->outs)) {
 			dbg_puts("record end not idle, can't clear device\n");
 			dbg_panic();	
 		}
 #endif
-		buf = LIST_FIRST(&dev_sub->ibuflist);
+		buf = LIST_FIRST(&dev_sub->ins);
 		while (buf) {
 			abuf_clear(buf);
-			buf = LIST_FIRST(&buf->wproc->ibuflist);
+			buf = LIST_FIRST(&buf->wproc->ins);
 		}
 		sub_clear(dev_sub);
 	}
 	if (APROC_OK(dev_submon)) {
 #ifdef DEBUG
 		dbg_puts("clearing monitor\n");
-		if (!LIST_EMPTY(&dev_submon->obuflist)) {
+		if (!LIST_EMPTY(&dev_submon->outs)) {
 			dbg_puts("monitoring end not idle, can't clear device\n");
 			dbg_panic();
 		}
 #endif
-		buf = LIST_FIRST(&dev_submon->ibuflist);
+		buf = LIST_FIRST(&dev_submon->ins);
 		while (buf) {
 			abuf_clear(buf);
-			buf = LIST_FIRST(&buf->wproc->ibuflist);
+			buf = LIST_FIRST(&buf->wproc->ins);
 		}
 		sub_clear(dev_submon);
 		mon_clear(dev_mon);
@@ -897,7 +897,7 @@ dev_prime(void)
 {
 	if (APROC_OK(dev_mix)) {
 #ifdef DEBUG
-		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
+		if (!LIST_EMPTY(&dev_mix->ins)) {
 			dbg_puts("play end not idle, can't prime device\n");
 			dbg_panic();	
 		}

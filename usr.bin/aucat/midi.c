@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.19 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.20 2010/04/24 06:18:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -249,7 +249,7 @@ thru_in(struct aproc *p, struct abuf *ibuf)
 	if (todo > ibuf->tickets)
 		todo = ibuf->tickets;
 	ibuf->tickets -= todo;
-	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
+	for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		if (ibuf->duplex == i)
 			continue;
@@ -271,7 +271,7 @@ thru_eof(struct aproc *p, struct abuf *ibuf)
 {
 	if (!(p->flags & APROC_QUIT))
 		return;
-	if (LIST_EMPTY(&p->ibuflist))
+	if (LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -323,7 +323,7 @@ thru_cb(void *addr)
 
 	timo_add(&p->u.thru.timo, MIDITHRU_TIMO);
 	
-	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
+	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
 		tickets = i->tickets;
 		i->tickets = MIDITHRU_XFER;
@@ -391,7 +391,7 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 	unsigned char *odata, *idata;
 	struct abuf *i, *inext;
 
-	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
+	for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		if (i->duplex && i->duplex == ibuf)
 			continue;
@@ -751,7 +751,7 @@ ctl_slotdel(struct aproc *p, int index)
 		if (s->ops)
 			return;
 	}
-	if (!LIST_EMPTY(&p->obuflist) || !LIST_EMPTY(&p->ibuflist))
+	if (!LIST_EMPTY(&p->outs) || !LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -1123,7 +1123,7 @@ ctl_eof(struct aproc *p, struct abuf *ibuf)
 		if (s->ops)
 			return;
 	}
-	if (!LIST_EMPTY(&p->obuflist) || !LIST_EMPTY(&p->ibuflist))
+	if (!LIST_EMPTY(&p->outs) || !LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 
@@ -1139,7 +1139,7 @@ ctl_hup(struct aproc *p, struct abuf *obuf)
 		if (s->ops)
 			return;
 	}
-	if (!LIST_EMPTY(&p->obuflist) || !LIST_EMPTY(&p->ibuflist))
+	if (!LIST_EMPTY(&p->outs) || !LIST_EMPTY(&p->ins))
 		aproc_del(p);
 }
 

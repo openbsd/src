@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.44 2010/04/22 17:43:30 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.45 2010/04/24 06:18:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -123,7 +123,7 @@ rsock_in(struct aproc *p, struct abuf *ibuf_dummy)
 
 	if (!sock_read(f))
 		return 0;
-	obuf = LIST_FIRST(&p->obuflist);
+	obuf = LIST_FIRST(&p->outs);
 	if (obuf && f->pstate >= SOCK_RUN) {
 		if (!abuf_flush(obuf))
 			return 0;
@@ -240,7 +240,7 @@ wsock_in(struct aproc *p, struct abuf *ibuf)
 int
 wsock_out(struct aproc *p, struct abuf *obuf_dummy)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 	struct sock *f = (struct sock *)p->u.io.file;
 
 	if (ibuf) {
@@ -384,8 +384,8 @@ sock_freebuf(struct sock *f)
 		dbg_puts(": freeing buffers\n");
 	}
 #endif
-	wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
-	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+	wbuf = LIST_FIRST(&f->pipe.file.wproc->ins);
+	rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 	if (rbuf || wbuf)
 		ctl_slotstop(dev_midi, f->slot);
 	if (rbuf)
@@ -450,7 +450,7 @@ sock_setvol(void *arg, unsigned vol)
 	struct abuf *rbuf;
 
 	f->vol = vol;
-	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+	rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 	if (!rbuf) {
 #ifdef DEBUG
 		if (debug_level >= 3) {
@@ -521,8 +521,8 @@ sock_attach(struct sock *f, int force)
 {
 	struct abuf *rbuf, *wbuf;
 
-	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
-	wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
+	rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
+	wbuf = LIST_FIRST(&f->pipe.file.wproc->ins);
 
 	/*
 	 * If in SOCK_START state, dont attach until
@@ -686,7 +686,7 @@ sock_rdata(struct sock *f)
 	}
 #endif
 	p = f->pipe.file.rproc;
-	obuf = LIST_FIRST(&p->obuflist);
+	obuf = LIST_FIRST(&p->outs);
 	if (obuf == NULL)
 		return 0;
 	if (!ABUF_WOK(obuf) || !(f->pipe.file.state & FILE_ROK))
@@ -727,7 +727,7 @@ sock_wdata(struct sock *f)
 	if (!(f->pipe.file.state & FILE_WOK))
 		return 0;
 	p = f->pipe.file.wproc;
-	ibuf = LIST_FIRST(&p->ibuflist);
+	ibuf = LIST_FIRST(&p->ins);
 #ifdef DEBUG
 	if (f->pstate != SOCK_MIDI && ibuf == NULL) {
 		sock_dbg(f);
@@ -1130,7 +1130,7 @@ sock_execmsg(struct sock *f)
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		obuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+		obuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 		if (f->pstate == SOCK_START && !ABUF_WOK(obuf)) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
@@ -1511,7 +1511,7 @@ sock_buildmsg(struct sock *f)
 	 * If data available, build a DATA message.
 	 */
 	p = f->pipe.file.wproc;
-	ibuf = LIST_FIRST(&p->ibuflist);
+	ibuf = LIST_FIRST(&p->ins);
 	if (ibuf && ABUF_ROK(ibuf)) {
 #ifdef DEBUG
 		if (ibuf->used > f->wmax && debug_level >= 3) {
@@ -1673,7 +1673,7 @@ sock_write(struct sock *f)
 		 */
 		f->wstate = SOCK_WDATA;
 		f->wtodo = f->wmsg.u.data.size /
-		    LIST_FIRST(&f->pipe.file.wproc->ibuflist)->bpf;
+		    LIST_FIRST(&f->pipe.file.wproc->ins)->bpf;
 		/* PASSTHROUGH */
 	case SOCK_WDATA:
 		if (!sock_wdata(f))

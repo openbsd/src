@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.86 2010/04/22 17:43:30 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.87 2010/04/24 06:18:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -707,8 +707,8 @@ aucat_main(int argc, char **argv)
 		if (quit_flag) {
 			break;
 		}
-		if ((APROC_OK(dev_mix) && LIST_EMPTY(&dev_mix->obuflist)) ||
-		    (APROC_OK(dev_sub) && LIST_EMPTY(&dev_sub->ibuflist))) {
+		if ((APROC_OK(dev_mix) && LIST_EMPTY(&dev_mix->outs)) ||
+		    (APROC_OK(dev_sub) && LIST_EMPTY(&dev_sub->ins))) {
 			fprintf(stderr, "device disappeared, terminating\n");
 			break;
 		}

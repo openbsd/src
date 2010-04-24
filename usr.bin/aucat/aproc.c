@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.53 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.54 2010/04/24 06:18:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -159,8 +159,8 @@ aproc_new(struct aproc_ops *ops, char *name)
 	p = malloc(sizeof(struct aproc));
 	if (p == NULL)
 		err(1, name);
-	LIST_INIT(&p->ibuflist);
-	LIST_INIT(&p->obuflist);
+	LIST_INIT(&p->ins);
+	LIST_INIT(&p->outs);
 	p->name = name;
 	p->ops = ops;
 	p->refs = 0;
@@ -189,12 +189,12 @@ aproc_del(struct aproc *p)
 #endif
 			p->ops->done(p);
 		}
-		while (!LIST_EMPTY(&p->ibuflist)) {
-			i = LIST_FIRST(&p->ibuflist);
+		while (!LIST_EMPTY(&p->ins)) {
+			i = LIST_FIRST(&p->ins);
 			abuf_hup(i);
 		}
-		while (!LIST_EMPTY(&p->obuflist)) {
-			i = LIST_FIRST(&p->obuflist);
+		while (!LIST_EMPTY(&p->outs)) {
+			i = LIST_FIRST(&p->outs);
 			abuf_eof(i);
 		}
 		p->flags |= APROC_ZOMB;
@@ -221,7 +221,7 @@ aproc_del(struct aproc *p)
 void
 aproc_setin(struct aproc *p, struct abuf *ibuf)
 {
-	LIST_INSERT_HEAD(&p->ibuflist, ibuf, ient);
+	LIST_INSERT_HEAD(&p->ins, ibuf, ient);
 	ibuf->rproc = p;
 	if (p->ops->newin)
 		p->ops->newin(p, ibuf);
@@ -230,7 +230,7 @@ aproc_setin(struct aproc *p, struct abuf *ibuf)
 void
 aproc_setout(struct aproc *p, struct abuf *obuf)
 {
-	LIST_INSERT_HEAD(&p->obuflist, obuf, oent);
+	LIST_INSERT_HEAD(&p->outs, obuf, oent);
 	obuf->wproc = p;
 	if (p->ops->newout)
 		p->ops->newout(p, obuf);
@@ -241,7 +241,7 @@ aproc_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 {
 	struct abuf *obuf;
 
-	LIST_FOREACH(obuf, &p->obuflist, oent) {
+	LIST_FOREACH(obuf, &p->outs, oent) {
 		abuf_ipos(obuf, delta);
 	}
 }
@@ -251,7 +251,7 @@ aproc_opos(struct aproc *p, struct abuf *obuf, int delta)
 {
 	struct abuf *ibuf;
 
-	LIST_FOREACH(ibuf, &p->ibuflist, ient) {
+	LIST_FOREACH(ibuf, &p->ins, ient) {
 		abuf_opos(ibuf, delta);
 	}
 }
@@ -261,11 +261,11 @@ aproc_inuse(struct aproc *p)
 {
 	struct abuf *i;
 
-	LIST_FOREACH(i, &p->ibuflist, ient) {
+	LIST_FOREACH(i, &p->ins, ient) {
 		if (i->inuse)
 			return 1;
 	}
-	LIST_FOREACH(i, &p->obuflist, oent) {
+	LIST_FOREACH(i, &p->outs, oent) {
 		if (i->inuse)
 			return 1;
 	}
@@ -279,7 +279,7 @@ aproc_depend(struct aproc *p, struct aproc *dep)
 
 	if (p == dep)
 		return 1;
-	LIST_FOREACH(i, &p->ibuflist, ient) {
+	LIST_FOREACH(i, &p->ins, ient) {
 		if (i->wproc && aproc_depend(i->wproc, dep))
 			return 1;
 	}
@@ -289,7 +289,7 @@ aproc_depend(struct aproc *p, struct aproc *dep)
 int
 rfile_do(struct aproc *p, unsigned todo, unsigned *done)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 	struct file *f = p->u.io.file;
 	unsigned char *data;
 	unsigned n, count, off;
@@ -314,7 +314,7 @@ rfile_do(struct aproc *p, unsigned todo, unsigned *done)
 int
 rfile_in(struct aproc *p, struct abuf *ibuf_dummy)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 	struct file *f = p->u.io.file;
 
 	if (!ABUF_WOK(obuf) || !(f->state & FILE_ROK))
@@ -358,7 +358,7 @@ rfile_done(struct aproc *p)
 	 * all buffers must be detached before deleting f->wproc,
 	 * because otherwise it could trigger this code again
 	 */
-	obuf = LIST_FIRST(&p->obuflist);
+	obuf = LIST_FIRST(&p->outs);
 	if (obuf)
 		abuf_eof(obuf);
 	if (f->wproc) {
@@ -431,7 +431,7 @@ wfile_done(struct aproc *p)
 	 * all buffers must be detached before deleting f->rproc,
 	 * because otherwise it could trigger this code again
 	 */
-	ibuf = LIST_FIRST(&p->ibuflist);
+	ibuf = LIST_FIRST(&p->ins);
 	if (ibuf)
 		abuf_hup(ibuf);
 	if (f->rproc) {
@@ -451,7 +451,7 @@ wfile_done(struct aproc *p)
 int
 wfile_do(struct aproc *p, unsigned todo, unsigned *done)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 	struct file *f = p->u.io.file;
 	unsigned char *data;
 	unsigned n, count, off;
@@ -489,7 +489,7 @@ wfile_in(struct aproc *p, struct abuf *ibuf)
 int
 wfile_out(struct aproc *p, struct abuf *obuf_dummy)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 	struct file *f = p->u.io.file;
 
 	if (!abuf_fill(ibuf))
@@ -694,7 +694,7 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 int
 mix_xrun(struct aproc *p, struct abuf *i)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 	unsigned fdrop, remain;
 
 	if (i->r.mix.done > 0)
@@ -749,7 +749,7 @@ mix_xrun(struct aproc *p, struct abuf *i)
 int
 mix_in(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->outs);
 	unsigned odone;
 	unsigned maxwrite;
 	unsigned scount;
@@ -773,7 +773,7 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 	mix_bzero(obuf);
 	scount = 0;
 	odone = obuf->w.mix.todo;
-	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
+	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
 		if (i->r.mix.drop >= 0 && !abuf_fill(i))
 			continue; /* eof */
@@ -782,7 +782,7 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 		if (odone > i->r.mix.done)
 			odone = i->r.mix.done;
 	}
-	if (LIST_EMPTY(&p->ibuflist) || scount == 0)
+	if (LIST_EMPTY(&p->ins) || scount == 0)
 		return 0;
 #ifdef DEBUG
 	if (debug_level >= 4) {
@@ -802,7 +802,7 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 			odone = maxwrite;
 		p->u.mix.lat += odone;
 		p->u.mix.abspos += odone;
-		LIST_FOREACH(i, &p->ibuflist, ient) {
+		LIST_FOREACH(i, &p->ins, ient) {
 			i->r.mix.done -= odone;
 		}
 		abuf_wcommit(obuf, odone);
@@ -855,7 +855,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	mix_bzero(obuf);
 	scount = 0;
 	odone = obuf->len;
-	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
+	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
 		if (i->r.mix.drop >= 0 && !abuf_fill(i))
 			continue; /* eof */
@@ -870,7 +870,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		if (odone > i->r.mix.done)
 			odone = i->r.mix.done;
 	}
-	if (LIST_EMPTY(&p->ibuflist)) {
+	if (LIST_EMPTY(&p->ins)) {
 		if (p->flags & APROC_QUIT) {
 			aproc_del(p);
 			return 0;
@@ -885,7 +885,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 			odone = maxwrite;
 		p->u.mix.lat += odone;
 		p->u.mix.abspos += odone;
-		LIST_FOREACH(i, &p->ibuflist, ient) {
+		LIST_FOREACH(i, &p->ins, ient) {
 			i->r.mix.done -= odone;
 		}
 		abuf_wcommit(obuf, odone);
@@ -901,7 +901,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 void
 mix_eof(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->outs);
 	unsigned odone;
 
 	mix_setmaster(p);
@@ -917,7 +917,7 @@ mix_eof(struct aproc *p, struct abuf *ibuf)
 		 * Find a blocked input.
 		 */
 		odone = obuf->len;
-		for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
+		for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
 			inext = LIST_NEXT(i, ient);
 			if (!abuf_fill(i))
 				continue;
@@ -931,7 +931,7 @@ mix_eof(struct aproc *p, struct abuf *ibuf)
 		/*
 		 * No blocked inputs. Check if output is blocked.
 		 */
-		if (LIST_EMPTY(&p->ibuflist) || odone == obuf->w.mix.todo)
+		if (LIST_EMPTY(&p->ins) || odone == obuf->w.mix.todo)
 			abuf_run(obuf);
 	}
 }
@@ -1034,7 +1034,7 @@ mix_setmaster(struct aproc *p)
 	 * share their volume
 	 */
 	n = 0;
-	LIST_FOREACH(i, &p->ibuflist, ient) {
+	LIST_FOREACH(i, &p->ins, ient) {
 		j = LIST_NEXT(i, ient);
 		for (;;) {
 			if (j == NULL) {
@@ -1046,7 +1046,7 @@ mix_setmaster(struct aproc *p)
 			j = LIST_NEXT(j, ient);
 		}
 	}
-	LIST_FOREACH(i, &p->ibuflist, ient) {
+	LIST_FOREACH(i, &p->ins, ient) {
 		weight = ADATA_UNIT / n;
 		if (weight > i->r.mix.maxweight)
 			weight = i->r.mix.maxweight;
@@ -1067,7 +1067,7 @@ mix_setmaster(struct aproc *p)
 void
 mix_clear(struct aproc *p)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 
 	p->u.mix.lat = 0;
 	p->u.mix.abspos = 0;
@@ -1077,7 +1077,7 @@ mix_clear(struct aproc *p)
 void
 mix_prime(struct aproc *p)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 	unsigned todo, count;
 
 	for (;;) {
@@ -1216,7 +1216,7 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 int
 sub_xrun(struct aproc *p, struct abuf *i)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 	unsigned fdrop, remain;
 
 	if (i->w.sub.done > 0)
@@ -1278,7 +1278,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	if (!ABUF_ROK(ibuf))
 		return 0;
 	idone = ibuf->len;
-	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
+	for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		sub_silence(i, 0);
 		if (!SUB_WOK(i)) {
@@ -1293,7 +1293,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 		if (!abuf_flush(i))
 			continue;
 	}
-	if (LIST_EMPTY(&p->obuflist)) {
+	if (LIST_EMPTY(&p->outs)) {
 		if (p->flags & APROC_QUIT) {
 			aproc_del(p);
 			return 0;
@@ -1305,7 +1305,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	}
 	if (idone == 0)
 		return 0;
-	LIST_FOREACH(i, &p->obuflist, oent) {
+	LIST_FOREACH(i, &p->outs, oent) {
 		i->w.sub.done -= idone;
 	}
 	abuf_rdiscard(ibuf, idone);
@@ -1318,7 +1318,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 int
 sub_out(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 	struct abuf *i, *inext;
 	unsigned idone;
 
@@ -1327,7 +1327,7 @@ sub_out(struct aproc *p, struct abuf *obuf)
 	if (!abuf_fill(ibuf))
 		return 0; /* eof */
 	idone = ibuf->len;
-	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
+	for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		sub_silence(i, 0);
 		sub_bcopy(ibuf, i);
@@ -1336,9 +1336,9 @@ sub_out(struct aproc *p, struct abuf *obuf)
 		if (!abuf_flush(i))
 			continue;
 	}
-	if (LIST_EMPTY(&p->obuflist) || idone == 0)
+	if (LIST_EMPTY(&p->outs) || idone == 0)
 		return 0;
-	LIST_FOREACH(i, &p->obuflist, oent) {
+	LIST_FOREACH(i, &p->outs, oent) {
 		i->w.sub.done -= idone;
 	}
 	abuf_rdiscard(ibuf, idone);
@@ -1357,7 +1357,7 @@ sub_eof(struct aproc *p, struct abuf *ibuf)
 void
 sub_hup(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *i, *inext, *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *i, *inext, *ibuf = LIST_FIRST(&p->ins);
 	unsigned idone;
 
 	if (!aproc_inuse(p)) {
@@ -1371,7 +1371,7 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 		 * Find a blocked output.
 		 */
 		idone = ibuf->len;
-		for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
+		for (i = LIST_FIRST(&p->outs); i != NULL; i = inext) {
 			inext = LIST_NEXT(i, oent);
 			if (!abuf_flush(i))
 				continue;
@@ -1385,7 +1385,7 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 		/*
 		 * No blocked outputs. Check if input is blocked.
 		 */
-		if (LIST_EMPTY(&p->obuflist) || idone == ibuf->used)
+		if (LIST_EMPTY(&p->outs) || idone == ibuf->used)
 			abuf_run(ibuf);
 	}
 }
@@ -1562,7 +1562,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 int
 resamp_in(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 
 	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
 		return 0;
@@ -1575,7 +1575,7 @@ resamp_in(struct aproc *p, struct abuf *ibuf)
 int
 resamp_out(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 
 	if (!abuf_fill(ibuf))
 		return 0;
@@ -1600,7 +1600,7 @@ resamp_hup(struct aproc *p, struct abuf *obuf)
 void
 resamp_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 	long long ipos;
 	
 	ipos = (long long)delta * p->u.resamp.oblksz + p->u.resamp.idelta;
@@ -1611,7 +1611,7 @@ resamp_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 void
 resamp_opos(struct aproc *p, struct abuf *obuf, int delta)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 	long long opos;
 
 	opos = (long long)delta * p->u.resamp.iblksz + p->u.resamp.odelta;
@@ -1737,7 +1737,7 @@ enc_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 int
 enc_in(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 
 	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
 		return 0;
@@ -1750,7 +1750,7 @@ enc_in(struct aproc *p, struct abuf *ibuf)
 int
 enc_out(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 
 	if (!abuf_fill(ibuf))
 		return 0;
@@ -1895,7 +1895,7 @@ dec_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 int
 dec_in(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 
 	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
 		return 0;
@@ -1908,7 +1908,7 @@ dec_in(struct aproc *p, struct abuf *ibuf)
 int
 dec_out(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 
 	if (!abuf_fill(ibuf))
 		return 0;
@@ -2058,7 +2058,7 @@ join_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 int
 join_in(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 
 	if (!ABUF_WOK(obuf) || !ABUF_ROK(ibuf))
 		return 0;
@@ -2071,7 +2071,7 @@ join_in(struct aproc *p, struct abuf *ibuf)
 int
 join_out(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 
 	if (!abuf_fill(ibuf))
 		return 0;
@@ -2127,7 +2127,7 @@ join_new(char *name)
 void
 mon_flush(struct aproc *p)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 	unsigned count;
 
 #ifdef DEBUG
@@ -2159,7 +2159,7 @@ mon_flush(struct aproc *p)
 void
 mon_snoop(struct aproc *p, struct abuf *ibuf, unsigned pos, unsigned todo)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *obuf = LIST_FIRST(&p->outs);
 	unsigned scount, icount, ocount;
 	short *idata, *odata;
 

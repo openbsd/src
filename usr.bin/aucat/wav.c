@@ -307,9 +307,9 @@ wav_attach(struct wav *f, int force)
 	struct abuf *rbuf = NULL, *wbuf = NULL;
 
 	if (f->mode & MODE_PLAY)
-		rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+		rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 	if (f->mode & MODE_RECMASK)
-		wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
+		wbuf = LIST_FIRST(&f->pipe.file.wproc->ins);
 	f->pstate = WAV_RUN;
 #ifdef DEBUG
 	if (debug_level >= 3) {
@@ -374,9 +374,9 @@ wav_freebuf(struct wav *f)
 	struct abuf *rbuf = NULL, *wbuf = NULL;
 
 	if (f->mode & MODE_PLAY)
-		rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+		rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 	if (f->mode & MODE_RECMASK)
-		wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
+		wbuf = LIST_FIRST(&f->pipe.file.wproc->ins);
 	f->pstate = WAV_INIT;
 #ifdef DEBUG
 	if (debug_level >= 3) {
@@ -472,7 +472,7 @@ wav_rdata(struct wav *f)
 	struct abuf *obuf;
 
 	p = f->pipe.file.rproc;
-	obuf = LIST_FIRST(&p->obuflist);
+	obuf = LIST_FIRST(&p->outs);
 	if (obuf == NULL)
 		return 0;
 	if (!ABUF_WOK(obuf) || !(f->pipe.file.state & FILE_ROK))
@@ -519,7 +519,7 @@ wav_wdata(struct wav *f)
 	if (!(f->pipe.file.state & FILE_WOK))
 		return 0;
 	p = f->pipe.file.wproc;
-	ibuf = LIST_FIRST(&p->ibuflist);
+	ibuf = LIST_FIRST(&p->ins);
 	if (ibuf == NULL)
 		return 0;
 	if (!ABUF_ROK(ibuf))
@@ -540,7 +540,7 @@ wav_setvol(void *arg, unsigned vol)
 
 	f->vol = vol;
 	if ((f->mode & MODE_PLAY) && f->pstate == WAV_RUN) {
-		rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+		rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
 		dev_setvol(rbuf, MIDI_TO_ADATA(vol));
 	}
 }
@@ -775,7 +775,7 @@ rwav_in(struct aproc *p, struct abuf *ibuf_dummy)
 
 	if (!wav_rdata(f))
 		return 0;
-	obuf = LIST_FIRST(&p->obuflist);
+	obuf = LIST_FIRST(&p->outs);
 	if (obuf && f->pstate >= WAV_RUN) {
 		if (!abuf_flush(obuf))
 			return 0;
@@ -837,7 +837,7 @@ wwav_in(struct aproc *p, struct abuf *ibuf)
 int
 wwav_out(struct aproc *p, struct abuf *obuf_dummy)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *ibuf = LIST_FIRST(&p->ins);
 	struct wav *f = (struct wav *)p->u.io.file;
 
 	if (ibuf && f->pstate == WAV_RUN) {
