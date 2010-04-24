@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.30 2010/04/24 06:15:54 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.31 2010/04/24 14:13:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -171,6 +171,7 @@ sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc,
 			aui.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
 		}
 		aui.play.precision = enc->bits;
+		aui.record.precision = enc->bits;
 	}
 	if (pchan)
 		aui.play.channels = pchan;
