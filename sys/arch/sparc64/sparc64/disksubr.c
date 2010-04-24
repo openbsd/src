@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.59 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.60 2010/04/24 20:12:23 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -75,7 +75,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	 * On sparc64 we check for a CD label first, because our
 	 * CD install media contains both sparc & sparc64 labels.
 	 * We want the sparc64 machine to find the "CD label", not
-	 * the SunOS label, for loading it's kernel.
+	 * the SunOS label, for loading its kernel.
 	 */
 #if NCD > 0
 	if (strat == cdstrategy) {
