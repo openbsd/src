@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.55 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.56 2010/04/24 08:00:12 stsp Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ pppioctl(sc, cmd, data, flag, p)
 #endif
 
     default:
-	return (-1);
+	return (ENOTTY);
     }
     return (0);
 }
@@ -695,7 +695,7 @@ pppsioctl(ifp, cmd, data)
 #endif /* PPP_COMPRESS */
 
     default:
-	error = EINVAL;
+	error = ENOTTY;
     }
     splx(s);
     return (error);

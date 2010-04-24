@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.39 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.40 2010/04/24 08:00:12 stsp Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ sltioctl(tp, cmd, data, flag)
 		break;
 
 	default:
-		return (-1);
+		return (ENOTTY);
 	}
 	return (0);
 }
