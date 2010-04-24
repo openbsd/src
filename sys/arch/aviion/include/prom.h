@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.2 2006/05/20 11:57:04 miod Exp $	*/
+/*	$OpenBSD: prom.h,v 1.3 2010/04/24 18:46:55 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -39,6 +39,7 @@
 #define	SCM_OCRLF		0x26
 #define	SCM_HALT		0x63
 #define	SCM_STDIO		0x70
+#define	SCM_JPSTART		0x100
 #define	SCM_REBOOT		0x101
 #define	SCM_CPUID		0x102
 #define	SCM_MSIZE		0x103
@@ -50,6 +51,13 @@
 /* 88204 PROMs only system calls */
 #define	SCM_SYSID		0x31
 #define	SCM_CPUCONFIG		0x107
+
+/* SCM_JPSTART return values */
+#define	JPSTART_OK		0
+#define	JPSTART_NO_JP		1
+#define	JPSTART_SINGLE_JP	2
+#define	JPSTART_NOT_IDLE	3
+#define	JPSTART_NO_ANSWER	4
 
 struct	scm_cpuconfig {
 	u_int32_t	version;
@@ -65,6 +73,7 @@ u_int	scm_cpuid(void);
 int	scm_getc(void);
 void	scm_getenaddr(u_char *);
 __dead void scm_halt(void);
+u_int	scm_jpstart(cpuid_t, vaddr_t);
 u_int	scm_memsize(int);
 void	scm_printf(const char *);
 u_int	scm_promver(void);

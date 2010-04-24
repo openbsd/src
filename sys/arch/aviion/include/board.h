@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.7 2010/04/24 18:44:27 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.8 2010/04/24 18:46:55 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -84,6 +84,10 @@ struct board {
 	u_int		(*getipl)(void);
 	u_int		(*setipl)(u_int);
 	u_int		(*raiseipl)(u_int);
+#ifdef	MULTIPROCESSOR
+	void		(*send_ipi)(int, cpuid_t);
+	void		(*smp_setup)(struct cpu_info *);
+#endif
 
 	u_int64_t	(*intsrc)(int);
 	const struct vme_range *(*get_vme_ranges)(void);
@@ -103,6 +107,8 @@ void	av##b##_init_clocks(void); \
 u_int	av##b##_getipl(void); \
 u_int	av##b##_setipl(u_int); \
 u_int	av##b##_raiseipl(u_int); \
+void	av##b##_send_ipi(int, cpuid_t); \
+void	av##b##_smp_setup(struct cpu_info *); \
 u_int64_t av##b##_intsrc(int); \
 const struct vme_range *av##b##_get_vme_ranges(void);
 

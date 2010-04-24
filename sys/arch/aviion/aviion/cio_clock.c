@@ -1,4 +1,4 @@
-/*	$OpenBSD: cio_clock.c,v 1.2 2010/04/21 19:33:45 miod Exp $	*/
+/*	$OpenBSD: cio_clock.c,v 1.3 2010/04/24 18:46:51 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Miodrag Vallat.
  *
@@ -143,6 +143,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/asm_macro.h>
 #include <machine/board.h>
 #include <machine/avcommon.h>
 
@@ -271,6 +272,14 @@ cio_clockintr(void *eframe)
 	mtx_leave(&cio_mutex);
 
 	hardclock(eframe);
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Send an IPI to all other processors, so they can get their
+	 * own ticks.
+	 */
+	m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
+#endif
 
 	return (1);
 }

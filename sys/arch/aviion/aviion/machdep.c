@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2010/04/24 18:44:25 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2010/04/24 18:46:51 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -114,6 +114,8 @@
 void	aviion_bootstrap(void);
 void	aviion_identify(void);
 void	consinit(void);
+void	cpu_hatch_secondary_processors(void);
+void	cpu_setup_secondary_processors(void);
 __dead void doboot(void);
 void	dumpconf(void);
 void	dumpsys(void);
@@ -127,7 +129,9 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #ifdef MULTIPROCESSOR
-__cpu_simple_lock_t cpu_mutex = __SIMPLELOCK_UNLOCKED;
+u_int	hatch_pending_count = 0;
+__cpu_simple_lock_t cpu_hatch_mutex = __SIMPLELOCK_LOCKED;
+__cpu_simple_lock_t cpu_boot_mutex = __SIMPLELOCK_LOCKED;
 #endif
 
 /*
@@ -535,10 +539,12 @@ vaddr_t
 secondary_pre_main()
 {
 	struct cpu_info *ci;
+	vaddr_t init_stack;
 
 	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
 	ci = curcpu();
 	ci->ci_curproc = &proc0;
+	platform->smp_setup(ci);
 
 	splhigh();
 
@@ -554,6 +560,11 @@ secondary_pre_main()
 	if (init_stack == (vaddr_t)NULL) {
 		printf("cpu%d: unable to allocate startup stack\n",
 		    ci->ci_cpuid);
+		/*
+		 * Release cpu_hatch_mutex to let other secondary processors
+		 * have a chance to run.
+		 */
+		__cpu_simple_unlock(&cpu_hatch_mutex);
 		for (;;) ;
 	}
 
@@ -573,17 +584,28 @@ secondary_main()
 	int s;
 
 	cpu_configuration_print(0);
-	sched_init_cpu(ci);
 	ncpus++;
-	__cpu_simple_unlock(&cpu_mutex);
 
+	sched_init_cpu(ci);
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
+	ci->ci_randseed = random();
+	SET(ci->ci_flags, CIF_ALIVE);
 
-	set_psr(get_psr() & ~PSR_IND);
+	/*
+	 * Release cpu_hatch_mutex to let other secondary processors
+	 * have a chance to run.
+	 */
+	hatch_pending_count--;
+	__cpu_simple_unlock(&cpu_hatch_mutex);
+
+	/* wait for cpu_boot_secondary_processors() */
+	__cpu_simple_lock(&cpu_boot_mutex);
+	__cpu_simple_unlock(&cpu_boot_mutex);
+
 	spl0();
-
 	SCHED_LOCK(s);
+	set_psr(get_psr() & ~PSR_IND);
 	cpu_switchto(NULL, sched_chooseproc());
 }
 
@@ -708,12 +730,23 @@ aviion_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
+#ifdef MULTIPROCESSOR
+	platform->smp_setup(curcpu());
+#endif
 	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
 
 #ifdef M88100
 	if (CPU_IS88100) {
 		m88100_apply_patches();
 	}
+#endif
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * We need to start secondary processors while it is still
+	 * possible to invoke SCM functions.
+	 */
+	cpu_hatch_secondary_processors();
 #endif
 
 	/*
@@ -748,20 +781,63 @@ aviion_bootstrap()
 }
 
 #ifdef MULTIPROCESSOR
+/*
+ * Spin processors while we can use the PROM, and have them wait for
+ * cpu_hatch_mutex.
+ */
 void
-cpu_boot_secondary_processors()
+cpu_hatch_secondary_processors()
 {
+	struct cpu_info *ci = curcpu();
 	cpuid_t cpu;
 	int rc;
 	extern void secondary_start(void);
 
+	/* we might not have a working SMP implementation on this system. */
+	if (platform->send_ipi == NULL)
+		return;
+
 	for (cpu = 0; cpu < ncpusfound; cpu++) {
-		if (cpu != curcpu()->ci_cpuid) {
-			rc = scm_spincpu(cpu, (vaddr_t)secondary_start);
-			if (rc != 0)
-				printf("cpu%d: spin_cpu error %d\n", cpu, rc);
+		if (cpu != ci->ci_cpuid) {
+			rc = scm_jpstart(cpu, (vaddr_t)secondary_start);
+			switch (rc) {
+			case JPSTART_OK:
+				hatch_pending_count++;
+				break;
+			case JPSTART_NO_JP:
+				break;
+			case JPSTART_SINGLE_JP:
+				/* this should never happen, but just in case */
+				ncpusfound = 1;
+				return;
+			default:
+				printf("CPU%d failed to start, error %d\n",
+				    cpu, rc);
+				break;
+			}
 		}
 	}
+}
+
+/*
+ * Release cpu_hatch_mutex to let secondary processors initialize.
+ */
+void
+cpu_setup_secondary_processors()
+{
+	__cpu_simple_unlock(&cpu_hatch_mutex);
+	while (hatch_pending_count != 0)
+		delay(100000);
+}
+
+/*
+ * Release cpu_boot_mutex to let secondary processors start running
+ * processes.
+ */
+void
+cpu_boot_secondary_processors()
+{
+	__cpu_simple_unlock(&cpu_boot_mutex);
 }
 #endif
 
@@ -819,6 +895,34 @@ raiseipl(int level)
 {
 	return (int)platform->raiseipl((u_int)level);
 }
+
+#ifdef MULTIPROCESSOR
+void
+m88k_send_ipi(int ipi, cpuid_t cpu)
+{
+	struct cpu_info *ci;
+
+	ci = &m88k_cpus[cpu];
+	if (ISSET(ci->ci_flags, CIF_ALIVE))
+		platform->send_ipi(ipi, cpu);
+}
+
+void
+m88k_broadcast_ipi(int ipi)
+{
+	struct cpu_info *us = curcpu();
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == us)
+			continue;
+
+		if (ISSET(ci->ci_flags, CIF_ALIVE))
+			platform->send_ipi(ipi, ci->ci_cpuid);
+	}
+}
+#endif
 
 void
 intsrc_enable(u_int intsrc, int ipl)

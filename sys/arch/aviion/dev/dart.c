@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.8 2010/04/12 12:57:51 tedu Exp $	*/
+/*	$OpenBSD: dart.c,v 1.9 2010/04/24 18:46:55 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -812,7 +812,7 @@ dartintr(void *arg)
 		 * ready change on a disabled port). This should not happen,
 		 * but we have to claim the interrupt anyway.
 		 */
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(MULTIPROCESSOR)
 		printf("%s: spurious interrupt, isr %x imr %x\n",
 		    sc->sc_dev.dv_xname, isr, imr);
 #endif

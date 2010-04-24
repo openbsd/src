@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.3 2010/04/24 18:44:25 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.4 2010/04/24 18:46:51 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -48,7 +48,13 @@
 #include <aviion/dev/sysconvar.h>
 #include <aviion/dev/vmevar.h>
 
+#ifdef MULTIPROCESSOR
+#include <machine/db_machdep.h>
+#endif
+
 u_int	av530_safe_level(u_int, u_int, u_int);
+void	av530_clock_ipi_handler(struct trapframe *);
+void	av530_ipi_handler(struct trapframe *);
 
 const pmap_table_entry av530_ptable[] = {
 	{ AV530_PROM,	AV530_PROM,	AV530_PROM_SIZE,
@@ -81,6 +87,10 @@ const struct board board_av530 = {
 	av530_getipl,
 	av530_setipl,
 	av530_raiseipl,
+#ifdef MULTIPROCESSOR
+	av530_send_ipi,
+	m88100_smp_setup,
+#endif
 	av530_intsrc,
 	av530_get_vme_ranges,
 
@@ -107,7 +117,7 @@ u_int av530_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 /*
  * Interrupts allowed on secondary processors.
  */
-#define	SLAVE_MASK	0	/* AV530_IRQ_SWI0 | AV530_IRQ_SWI1 */
+#define	SLAVE_MASK	0
 #define	SLAVE_EXMASK	0
 #endif
 
@@ -200,6 +210,11 @@ av530_safe_level(u_int mask, u_int exmask, u_int curlevel)
 {
 	int i;
 
+#ifdef MULTIPROCESSOR
+	if (mask & AV530_CLOCK_IPI_MASK)
+		curlevel = max(IPL_CLOCK, curlevel);
+	mask &= ~(AV530_IPI_MASK | AV530_CLOCK_IPI_MASK);
+#endif
 	for (i = curlevel; i < NIPLS; i++)
 		if ((int_mask_val[i] & mask) == 0 &&
 		    (ext_int_mask_val[i] & exmask) == 0)
@@ -231,6 +246,9 @@ av530_setipl(u_int level)
 		mask &= SLAVE_MASK;
 		exmask &= SLAVE_EXMASK;
 	}
+	mask |= AV530_SWI_IPI_MASK(cpu);
+	if (level < IPL_CLOCK)
+		mask |= AV530_SWI_CLOCK_IPI_MASK(cpu);
 #endif
 
 	av530_curspl[cpu] = level;
@@ -262,6 +280,9 @@ av530_raiseipl(u_int level)
 			mask &= SLAVE_MASK;
 			exmask &= SLAVE_EXMASK;
 		}
+		mask |= AV530_SWI_IPI_MASK(cpu);
+		if (level < IPL_CLOCK)
+			mask |= AV530_SWI_CLOCK_IPI_MASK(cpu);
 #endif
 
 		av530_curspl[cpu] = level;
@@ -277,6 +298,89 @@ av530_raiseipl(u_int level)
 
 	return curspl;
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+av530_send_ipi(int ipi, cpuid_t cpu)
+{
+	struct cpu_info *ci = &m88k_cpus[cpu];
+	uint32_t bits = 0;
+
+	if (ci->ci_ipi & ipi)
+		return;
+
+	atomic_setbits_int(&ci->ci_ipi, ipi);
+	if (ipi & ~(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
+		bits |= AV530_SWI_IPI_BIT(cpu);
+	if (ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
+		bits |= AV530_SWI_CLOCK_IPI_BIT(cpu);
+	*(volatile u_int32_t *)AV530_SETSWI = bits;
+}
+
+/*
+ * Process inter-processor interrupts.
+ */
+
+/*
+ * Unmaskable IPIs - those are processed with interrupts disabled,
+ * and no lock held.
+ */
+void
+av530_ipi_handler(struct trapframe *eframe)
+{
+	struct cpu_info *ci = curcpu();
+	int ipi = ci->ci_ipi & (CI_IPI_DDB | CI_IPI_NOTIFY);
+
+	*(volatile u_int32_t *)AV530_CLRSWI = AV530_SWI_IPI_BIT(ci->ci_cpuid);
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
+
+	if (ipi & CI_IPI_DDB) {
+#ifdef DDB
+		/*
+		 * Another processor has entered DDB. Spin on the ddb lock
+		 * until it is done.
+		 */
+		extern struct __mp_lock ddb_mp_lock;
+
+		__mp_lock(&ddb_mp_lock);
+		__mp_unlock(&ddb_mp_lock);
+
+		/*
+		 * If ddb is hoping to us, it's our turn to enter ddb now.
+		 */
+		if (ci->ci_cpuid == ddb_mp_nextcpu)
+			Debugger();
+#endif
+	}
+	if (ipi & CI_IPI_NOTIFY) {
+		/* nothing to do */
+	}
+}
+
+/*
+ * Maskable IPIs
+ */
+void
+av530_clock_ipi_handler(struct trapframe *eframe)
+{
+	struct cpu_info *ci = curcpu();
+	int ipi = ci->ci_ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
+
+	/* clear clock ipi interrupt */
+	*(volatile u_int32_t *)AV530_CLRSWI =
+	    AV530_SWI_CLOCK_IPI_BIT(ci->ci_cpuid);
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
+
+	if (ipi & CI_IPI_HARDCLOCK)
+		hardclock((struct clockframe *)eframe);
+#if 0	/* no separate statclock yet */
+	if (ipi & CI_IPI_STATCLOCK)
+		statclock((struct clockframe *)eframe);
+#endif
+}
+
+#endif
 
 /*
  * Provide the interrupt masks for a given logical interrupt source.
@@ -443,11 +547,41 @@ av530_intr(struct trapframe *eframe)
 		 * Spurious interrupts - may be caused by debug output clearing
 		 * DUART interrupts.
 		 */
+#ifdef MULTIPROCESSOR
+		if (cpu != master_cpu) {
+			if (++problems >= 10) {
+				printf("cpu%d: interrupt pin won't clear, "
+				    "disabling processor\n", cpu);
+				cpu_emergency_disable();
+				/* NOTREACHED */
+			}
+		}
+#endif
 		flush_pipeline();
 		goto out;
 	}
 
 	uvmexp.intrs++;
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Handle unmaskable IPIs immediately, so that we can reenable
+	 * interrupts before further processing. We rely on the interrupt
+	 * mask to make sure that if we get an IPI, it's really for us
+	 * and no other processor.
+	 */
+	if (cur_mask & AV530_IPI_MASK) {
+		av530_ipi_handler(eframe);
+		cur_mask &= ~AV530_IPI_MASK;
+		if (cur_mask == 0 && cur_exmask == 0)
+			goto out;
+	}
+#endif
+
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+#endif
 
 	/*
 	 * We want to service all interrupts marked in the IST register
@@ -457,6 +591,9 @@ av530_intr(struct trapframe *eframe)
 	 */
 	for (;;) {
 		cur_mask = ISR_GET_CURRENT_MASK(cpu);
+#ifdef MULTIPROCESSOR
+		cur_mask &= ~AV530_IPI_MASK;
+#endif
 		cur_exmask = EXISR_GET_CURRENT_MASK(cpu);
 		if ((cur_mask & ~ign_mask) == 0 &&
 		    (cur_exmask & ~ign_exmask) == 0)
@@ -469,6 +606,19 @@ av530_intr(struct trapframe *eframe)
 			set_psr(get_psr() & ~PSR_IND);
 			unmasked = 1;
 		}
+
+#ifdef MULTIPROCESSOR
+		/*
+		 * Handle pending maskable IPIs first.
+		 */
+		if (cur_mask & AV530_CLOCK_IPI_MASK) {
+			av530_clock_ipi_handler(eframe);
+			cur_mask &= ~AV530_CLOCK_IPI_MASK;
+			if ((cur_mask & ~ign_mask) == 0 &&
+			    (cur_exmask & ~ign_exmask) == 0)
+				break;
+		}
+#endif
 
 		/* find the first bit set in the current mask */
 		warn = 0;
@@ -573,6 +723,11 @@ av530_intr(struct trapframe *eframe)
 			panic("%s: broken interrupt behaviour", __func__);
 	} else
 		problems = 0;
+#endif
+
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
 #endif
 
 out:

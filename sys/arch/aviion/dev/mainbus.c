@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 2010/04/24 18:44:27 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.6 2010/04/24 18:46:55 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -128,6 +128,7 @@ mainbus_match(struct device *parent, void *cf, void *args)
 void
 mainbus_attach(struct device *parent, struct device *self, void *args)
 {
+	extern void cpu_setup_secondary_processors(void);
 	extern char cpu_model[];
 
 	printf(": %s, cpuid 0x%04x", cpu_model, cpuid);
@@ -137,6 +138,14 @@ mainbus_attach(struct device *parent, struct device *self, void *args)
 	 * Display cpu/mmu details for the main processor.
 	 */
 	cpu_configuration_print(1);
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Let secondary processor initialize further and print their
+	 * configuration information now.
+	 */
+	cpu_setup_secondary_processors();
+#endif
 
 	(void)config_search(mainbus_scan, self, args);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc_clock.c,v 1.1 2010/04/21 19:33:45 miod Exp $	*/
+/*	$OpenBSD: rtc_clock.c,v 1.2 2010/04/24 18:46:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -112,6 +112,14 @@ rtc_clockintr(void *frame)
 	*(volatile uint32_t *)AV530_PIT0_CNT = pit_step;
 	*(volatile uint32_t *)AV530_PIT0_CS = AV530_PIT_CTEN;
 	hardclock(frame);
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Send an IPI to all other processors, so they can get their
+	 * own ticks.
+	 */
+	m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
+#endif
 
 	return 1;
 }

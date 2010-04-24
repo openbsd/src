@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2010/04/18 15:04:51 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2010/04/24 18:46:51 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -205,6 +205,35 @@ ASLOCAL(main_panic)
 	 * to the comments there for details.
 	 */
 GLOBAL(secondary_start)
+	/*
+	 * We have been started early, but there is nothing we can do yet.
+	 * We'll just spin until we can get the hatching mutex.
+	 */
+	or.u	r11, r0,  hi16(_C_LABEL(cpu_hatch_mutex))
+	or	r11, r11, lo16(_C_LABEL(cpu_hatch_mutex))
+1:
+	or	r22, r0,  1
+	xmem	r22, r11, r0	/* if r22 becomes zero, we own the lock... */
+	bcnd	eq0, r22, 4f	/* ... but if not, we must wait */
+2:
+	/* just watch the lock until it looks clear */
+	ld	r22, r11, r0
+	bcnd	eq0, r22, 1b
+	/* wait a bit to avoid overloading the bus */
+	or.u	r2,  r0,  1
+3:
+	subu	r2,  r2,  1
+	bcnd	ne0, r2,  3b
+	br	2b
+4:
+
+	/*
+	 * We are now running free with cpu_hatch_mutex held; other
+	 * secondary processors are waiting for the lock, and the main
+	 * processor is waiting for us to decrease the hatch counter,
+	 * which we'll do in secondary_main() later.
+	 */
+
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
 	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
@@ -224,29 +253,6 @@ GLOBAL(secondary_start)
 	stcr	r11, CPU
 
 	/*
-	 * Since there may be more than one secondary MPU, compete with them
-	 * to initialize safely.
-	 */
-	or.u	r11, r0,  hi16(_C_LABEL(cpu_mutex))
-	or	r11, r11, lo16(_C_LABEL(cpu_mutex))
-1:
-	or	r22, r0,  1
-	xmem	r22, r11, r0		/* If r22 gets 0, we have the lock... */
-	bcnd	eq0, r22, 4f		/* ...but if not, we must wait */
-2:
-	/* just watch the lock until it looks clear */
-	ld	r22, r11, r0
-	bcnd	eq0, r22, 1b
-	/* since we can be here with caches off, add a few nops to
-	   keep the bus from getting overloaded */
-	or	r2,  r0,  lo16(1000)
-3:
-	subu	r2,  r2,  1
-	bcnd	ne0, r2,  3b
-	br	1b
-4:
-	
-	/*
 	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
 	 * to call secondary_pre_main() to determine its cpu number.
 	 * After that, however, it should allocate its own stack and switch
@@ -260,6 +266,14 @@ GLOBAL(secondary_start)
 
 	bsr.n	_C_LABEL(secondary_main)
 	 addu	r31, r2, USPACE			/* switch to startup stack */
+
+	/*
+	 * Dummy mp_atomic_begin() and mp_atomic_end() routine, so that
+	 * we can interact with ddb if things go wrong very early during
+	 * bootstrap. Of course this should never happen (-:
+	 */
+ASLOCAL(dummy_mplock)
+	jmp	r1
 
 #endif	/* MULTIPROCESSOR */
 
@@ -317,7 +331,12 @@ ASLOCAL(dummy_cpu)
 	word	3 /* CIF_PRIMARY | CIF_ALIVE */	/* ci_alive */
 	word	0				/* ci_curproc */
 	word	0				/* ci_curpcb */
+	word	0				/* ci_curpmap */
 	word	0				/* ci_cpuid */
+	word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_begin */
+	word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_end */
+
+	space	CPU_INFO_SIZEOF - 7 * 4
 #endif	/* MULTIPROCESSOR */
 
 #if defined(DDB) || NKSYMS > 0

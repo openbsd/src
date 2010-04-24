@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530.h,v 1.2 2010/04/21 19:33:47 miod Exp $	*/
+/*	$OpenBSD: av530.h,v 1.3 2010/04/24 18:46:55 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2010 Miodrag Vallat
  *
@@ -104,6 +104,22 @@
 	"\30IRQ7\27KBD\25SF\24IRQ6\23MEM\22DI\21SIGHPI" \
 	"\17IRQ5\15IRQ4\13IRQ3\11LMI" \
 	"\10SIGLPI\7IRQ2\5IRQ1\4SWI3\3SWI2\2SWI1\1SWI0"
+
+/*
+ * Software interrupts 0 to 3, and 4 to 7, are used to deliver IPIs to
+ * CPU0-3. We use two software interrupts per CPU because we want clock
+ * IPIs to be maskable.
+ */
+#define	AV530_CLOCK_IPI_MASK	(AV530_IRQ_SWI7 | AV530_IRQ_SWI6 | \
+				 AV530_IRQ_SWI5 | AV530_IRQ_SWI4)
+#define	AV530_IPI_MASK		(AV530_IRQ_SWI3 | AV530_IRQ_SWI2 | \
+				 AV530_IRQ_SWI1 | AV530_IRQ_SWI0)
+/* values for SETSWI and CLRSWI registers */
+#define	AV530_SWI_IPI_BIT(cpu)		(0x01 << (cpu))
+#define	AV530_SWI_CLOCK_IPI_BIT(cpu)	(0x10 << (cpu))
+/* values for IEN and IST registers */
+#define	AV530_SWI_IPI_MASK(cpu)		(AV530_IRQ_SWI0 << (cpu))
+#define	AV530_SWI_CLOCK_IPI_MASK(cpu)	(AV530_IRQ_SWI4 << (cpu))
 
 /*
  * Extended interrupts
