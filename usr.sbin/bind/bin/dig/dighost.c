@@ -118,7 +118,7 @@ isc_boolean_t
 	showsearch = ISC_FALSE,
 	qr = ISC_FALSE,
 	is_dst_up = ISC_FALSE;
-in_port_t port = 53;
+in_port_t port = 0;
 unsigned int timeout = 0;
 unsigned int extrabytes;
 isc_mem_t *mctx = NULL;
@@ -2191,7 +2191,14 @@ send_tcp_connect(dig_query_t *query) {
 	l = query->lookup;
 	query->waiting_connect = ISC_TRUE;
 	query->lookup->current_query = query;
-	servport = query->servport > 0 ? query->servport : NAMESERVER_PORT;
+
+	if (port != 0)
+		servport = port;
+	else if (query->servport != 0)
+		servport = query->servport;
+	else
+		servport = NAMESERVER_PORT;
+
 	get_address(query->servname, servport, &query->sockaddr);
 	
 	if (specified_source &&
@@ -2266,8 +2273,14 @@ send_udp(dig_query_t *query) {
 	if (!query->recv_made) {
 		/* XXX Check the sense of this, need assertion? */
 		query->waiting_connect = ISC_FALSE;
-		servport = query->servport > 0 ?
-		    query->servport : NAMESERVER_PORT;
+
+		if (port != 0)
+			servport = port;
+		else if (query->servport != 0)
+			servport = query->servport;
+		else
+			servport = NAMESERVER_PORT;
+
 		get_address(query->servname, servport, &query->sockaddr);
 
 		result = isc_socket_create(socketmgr,
