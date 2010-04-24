@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.113 2010/04/15 21:30:29 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.114 2010/04/24 17:56:06 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -358,15 +358,12 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 {
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
-	int s;
 
 	pmap_simplelock_pm(pm);
 
 	vp1 = pm->pm_vp[VP_SR(va)];
 	if (vp1 == NULL) {
-		s = splvm();
 		vp1 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
-		splx(s);
 		if (vp1 == NULL) {
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_vp_enter: failed to allocate vp1");
@@ -377,9 +374,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 
 	vp2 = vp1->vp[VP_IDX1(va)];
 	if (vp2 == NULL) {
-		s = splvm();
 		vp2 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
-		splx(s);
 		if (vp2 == NULL) {
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_vp_enter: failed to allocate vp2");
@@ -1377,7 +1372,6 @@ void
 pmap_vp_destroy(pmap_t pm)
 {
 	int i, j;
-	int s;
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
 
@@ -1391,14 +1385,10 @@ pmap_vp_destroy(pmap_t pm)
 			if (vp2 == NULL)
 				continue;
 			
-			s = splvm();
 			pool_put(&pmap_vp_pool, vp2);
-			splx(s);
 		}
 		pm->pm_vp[i] = NULL;
-		s = splvm();
 		pool_put(&pmap_vp_pool, vp1);
-		splx(s);
 	}
 }
 
