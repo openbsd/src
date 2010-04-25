@@ -78,8 +78,6 @@ void	 drm_handle_unref(struct drm_obj *);
 
 int	 drm_handle_cmp(struct drm_handle *, struct drm_handle *);
 int	 drm_name_cmp(struct drm_obj *, struct drm_obj *);
-void	 drm_unref(struct uvm_object *);
-void	 drm_ref(struct uvm_object *);
 int	 drm_fault(struct uvm_faultinfo *, vaddr_t, vm_page_t *, int, int,
 	     vm_fault_t, vm_prot_t, int);
 boolean_t	 drm_flush(struct uvm_object *, voff_t, voff_t, int);
@@ -1032,26 +1030,127 @@ struct uvm_pagerops drm_pgops = {
 	drm_flush,
 };
 
+
+void
+drm_hold_object_locked(struct drm_obj *obj)
+{
+	while (obj->do_flags & DRM_BUSY) {
+		atomic_setbits_int(&obj->do_flags, DRM_WANTED);
+		simple_unlock(&uobj->vmobjlock);
+#ifdef DRMLOCKDEBUG
+		{
+		int ret = 0;
+		ret = tsleep(obj, PVM, "drm_hold", 3 * hz); /* XXX msleep */
+		if (ret)
+			printf("still waiting for obj %p, owned by %p\n",
+			    obj, obj->holding_proc);
+		}
+#else
+		tsleep(obj, PVM, "drm_hold", 0); /* XXX msleep */
+#endif
+		simple_lock(&uobj->vmobjlock);
+	}
+#ifdef DRMLOCKDEBUG
+	obj->holding_proc = curproc;
+#endif
+	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
+}
+
+void
+drm_hold_object(struct drm_obj *obj)
+{
+	simple_lock(&obj->uobj->vmobjlock);
+	drm_hold_object_locked(obj);
+	simple_unlock(&obj->uobj->vmobjlock);
+}
+
+int
+drm_try_hold_object(struct drm_obj *obj)
+{
+	simple_lock(&obj->uobj->vmobjlock);
+	/* if the object is free, grab it */
+	if (obj->do_flags & (DRM_BUSY | DRM_WANTED))
+		return (0);
+	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
+#ifdef DRMLOCKDEBUG
+	obj->holding_proc = curproc;
+#endif
+	simple_unlock(&obj->uobj->vmobjlock);
+	return (1);
+}
+
+
+void
+drm_unhold_object_locked(struct drm_obj *obj)
+{
+	if (obj->do_flags & DRM_WANTED)
+		wakeup(obj);
+#ifdef DRMLOCKDEBUG
+	obj->holding_proc = NULL;
+#endif
+	atomic_clearbits_int(&obj->do_flags, DRM_WANTED | DRM_BUSY);	
+}
+
+void
+drm_unhold_object(struct drm_obj *obj)
+{
+	simple_lock(&obj->uobj->vmobjlock);
+	drm_unhold_object_locked(obj);
+	simple_unlock(&obj->uobj->vmobjlock);
+}
+
+void
+drm_ref_locked(struct uvm_object *uobj)
+{
+	uobj->uo_refs++;
+}
+
 void
 drm_ref(struct uvm_object *uobj)
 {
 	simple_lock(&uobj->vmobjlock);
-	uobj->uo_refs++;
+	drm_ref_locked(uobj);
 	simple_unlock(&uobj->vmobjlock);
 }
 
 void
 drm_unref(struct uvm_object *uobj)
 {
+	simple_lock(&uobj->vmobjlock);
+	drm_unref_locked(uobj);
+}
+
+void
+drm_unref_locked(struct uvm_object *uobj)
+{
 	struct drm_obj		*obj = (struct drm_obj *)uobj;
 	struct drm_device	*dev = obj->dev;
 
-	simple_lock(&uobj->vmobjlock);
-	if (--uobj->uo_refs > 0) {
+again:
+	if (uobj->uo_refs > 1) {
+		uobj->uo_refs--;
 		simple_unlock(&uobj->vmobjlock);
 		return;
 	}
 
+	/* inlined version of drm_hold because we want to trylock then sleep */
+	if (obj->do_flags & DRM_BUSY) {
+		atomic_setbits_int(&obj->do_flags, DRM_WANTED);
+		simple_unlock(&uobj->vmobjlock);
+		tsleep(obj, PVM, "drm_unref", 0); /* XXX msleep */
+		simple_lock(&uobj->vmobjlock);
+		goto again;
+	}
+#ifdef DRMLOCKDEBUG
+	obj->holding_proc = curproc;
+#endif
+	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
+	simple_unlock(&obj->vmobjlock);
+	/* We own this thing now. it is on no queues, though it may still
+	 * be bound to the aperture (and on the inactive list, in which case
+	 * idling the buffer is what triggered the free. Since we know no one 
+	 * else can grab it now, we can nuke with impunity.
+	 */
 	if (dev->driver->gem_free_object != NULL)
 		dev->driver->gem_free_object(obj);
 
@@ -1059,8 +1158,20 @@ drm_unref(struct uvm_object *uobj)
 
 	atomic_dec(&dev->obj_count);
 	atomic_sub(obj->size, &dev->obj_memory);
-	simple_unlock(&uobj->vmobjlock);
+	if (obj->do_flags & DRM_WANTED) /* should never happen, not on lists */
+		wakeup(obj);
 	pool_put(&dev->objpl, obj);
+}
+
+/*
+ * convenience function to unreference and unhold an object.
+ */
+void
+drm_unhold_and_unref(struct drm_obj *obj)
+{
+	drm_lock_obj(obj);
+	drm_unhold_object_locked(obj);
+	drm_unref_locked(&obj->uobj);
 }
 
 
@@ -1100,11 +1211,6 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	ret = dev->driver->gem_fault(obj, ufi, entry->offset + (vaddr -
 	    entry->start), vaddr, pps, npages, centeridx,
 	    access_type, flags);
-
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-	pmap_update(ufi->orig_map->pmap);
-	if (ret != VM_PAGER_OK)
-		uvm_wait("drm_fault");
 	return (ret);
 }
 
@@ -1187,7 +1293,7 @@ drm_gem_object_lookup(struct drm_device *dev, struct drm_file *file_priv,
 	}
 
 	obj = han->obj;
-	drm_gem_object_reference(obj);
+	drm_ref(&obj->uobj);
 	mtx_leave(&file_priv->table_lock);
 
 	return (obj);
@@ -1248,15 +1354,13 @@ again:
 		    &dev->name_tree, obj))
 			goto again;
 		/* name holds a reference to the object */
-		drm_gem_object_reference(obj);
+		drm_ref(&obj->uobj);
 	}
 	mtx_leave(&dev->obj_name_lock);
 
 	args->name = (uint64_t)obj->name;
 
-	DRM_LOCK();
-	drm_gem_object_unreference(obj);
-	DRM_UNLOCK();
+	drm_unref(&obj->uobj);
 
 	return (0);
 }
@@ -1276,17 +1380,15 @@ drm_gem_open_ioctl(struct drm_device *dev, void *data,
 	mtx_enter(&dev->obj_name_lock);
 	obj = SPLAY_FIND(drm_name_tree, &dev->name_tree, &search);
 	if (obj != NULL)
-		drm_gem_object_reference(obj);
+		drm_ref(&obj->uobj);
 	mtx_leave(&dev->obj_name_lock);
 	if (obj == NULL)
 		return (ENOENT);
 
+	/* this gives our reference to the handle */
 	ret = drm_handle_create(file_priv, obj, &handle);
-	/* handle has a reference, drop ours. */
-	DRM_LOCK();
-	drm_gem_object_unreference(obj);
-	DRM_UNLOCK();
 	if (ret) {
+		drm_unref(&obj->uobj);
 		return (ret);
 	}
 
@@ -1295,19 +1397,6 @@ drm_gem_open_ioctl(struct drm_device *dev, void *data,
 
         return (0);
 }
-
-void
-drm_gem_object_reference(struct drm_obj *obj)
-{
-	drm_ref(&obj->uobj);
-}
-
-void
-drm_gem_object_unreference(struct drm_obj *obj)
-{
-	drm_unref(&obj->uobj);
-}
-
 
 /*
  * grab a reference for a per-open handle. 
@@ -1318,8 +1407,10 @@ drm_gem_object_unreference(struct drm_obj *obj)
 void
 drm_handle_ref(struct drm_obj *obj)
 {
+	/* we are given the reference from the caller, so just
+	 * crank handlecount.
+	 */
 	obj->handlecount++;
-	drm_gem_object_reference(obj);
 }
 
 /*
@@ -1339,12 +1430,12 @@ drm_handle_unref(struct drm_obj *obj)
 			obj->name = 0;
 			mtx_leave(&dev->obj_name_lock);
 			/* name held a reference to object */
-			drm_gem_object_unreference(obj);
+			drm_unref(&obj->uobj);
 		} else {
 			mtx_leave(&dev->obj_name_lock);
 		}
 	}
-	drm_gem_object_unreference(obj);
+	drm_unref(&obj->uobj);
 }
 
 /*

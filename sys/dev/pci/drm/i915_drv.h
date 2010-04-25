@@ -76,6 +76,14 @@ struct inteldrm_fence {
 	u_int32_t			 last_rendering_seqno;
 };
 
+/*
+ * lock ordering:
+ * exec lock,
+ * request lock
+ * list lock.
+ *
+ * XXX fence lock ,object lock
+ */
 typedef struct drm_i915_private {
 	struct device		 dev;
 	struct device		*drmdev;
@@ -127,9 +135,16 @@ typedef struct drm_i915_private {
 
 	int			 allow_batchbuffer;
 
-	struct inteldrm_fence		fence_regs[16]; /* 965 */
-	int				fence_reg_start; /* 4 by default */
-	int				num_fence_regs; /* 8 pre-965, 16 post */
+	struct mutex		 fence_lock;
+	struct inteldrm_fence	 fence_regs[16]; /* 965 */
+	int			 fence_reg_start; /* 4 by default */
+	int			 num_fence_regs; /* 8 pre-965, 16 post */
+
+	/* protects inactive, flushing, active and exec locks */
+	struct mutex		 list_lock;
+
+	/* protects access to request_list */
+	struct mutex		 request_lock;
 
 	/* Register state */
 	u8 saveLBB;
@@ -353,6 +368,18 @@ struct inteldrm_file {
 #define CHIP_GEN4	0x40000
 #define CHIP_GEN6	0x80000
 
+/* flags we use in drm_obj's do_flags */
+#define I915_ACTIVE		0x0010	/* being used by the gpu. */
+#define I915_IN_EXEC		0x0020	/* being processed in execbuffer */
+#define I915_USER_PINNED	0x0040	/* BO has been pinned from userland */
+#define I915_GPU_WRITE		0x0080	/* BO has been not flushed */
+#define I915_DONTNEED		0x0100	/* BO backing pages purgable */
+#define I915_PURGED		0x0200	/* BO backing pages purged */
+#define I915_DIRTY		0x0400	/* BO written to since last bound */
+#define I915_EXEC_NEEDS_FENCE	0x0800	/* being processed but will need fence*/
+#define I915_FENCED_EXEC	0x1000	/* Most recent exec needs fence */
+#define I915_FENCE_INVALID	0x2000	/* fence has been lazily invalidated */
+
 /** driver private structure attached to each drm_gem_object */
 struct inteldrm_obj {
 	struct drm_obj				 obj;
@@ -367,22 +394,6 @@ struct inteldrm_obj {
 	/* Current offset of the object in GTT space. */
 	bus_addr_t				 gtt_offset;
 	u_int32_t				*bit_17;
-	/*
-	 * This is set if the object is on the active or flushing lists
-	 * (has pending rendering), and is not set if it's on inactive (ready
-	 * to be unbound).
-	 */
-#define I915_ACTIVE		0x0001	/* being used by the gpu. */
-#define I915_IN_EXEC		0x0002	/* being processed in execbuffer */
-#define I915_USER_PINNED	0x0004	/* BO has been pinned from userland */
-#define I915_GPU_WRITE		0x0008	/* BO has been not flushed */
-#define I915_DONTNEED		0x0010	/* BO backing pages purgable */
-#define I915_PURGED		0x0020	/* BO backing pages purged */
-#define I915_DIRTY		0x0040	/* BO written to since last bound */
-#define I915_EXEC_NEEDS_FENCE	0x0080	/* being processed but will need fence*/
-#define I915_FENCED_EXEC	0x0100	/* Most recent exec needs fence */
-#define I915_FENCE_INVALID	0x0200	/* fence has been lazily invalidated */
-	int					 io_flags;
 	/* extra flags to bus_dma */
 	int					 dma_flags; 
 	/* Fence register for this object. needed for tiling. */
@@ -399,11 +410,12 @@ struct inteldrm_obj {
 	u_int32_t				 stride;
 };
 
-#define inteldrm_is_active(obj_priv)	(obj_priv->io_flags & I915_ACTIVE)
-#define inteldrm_is_dirty(obj_priv)	(obj_priv->io_flags & I915_DIRTY)
+#define inteldrm_is_active(obj_priv)	(obj_priv->obj.do_flags & I915_ACTIVE)
+#define inteldrm_is_dirty(obj_priv)	(obj_priv->obj.do_flags & I915_DIRTY)
 #define inteldrm_exec_needs_fence(obj_priv)		\
-	(obj_priv->io_flags & I915_EXEC_NEEDS_FENCE)
-#define inteldrm_needs_fence(obj_priv)	(obj_priv->io_flags & I915_FENCED_EXEC)
+	(obj_priv->obj.do_flags & I915_EXEC_NEEDS_FENCE)
+#define inteldrm_needs_fence(obj_priv)			\
+	(obj_priv->obj.do_flags & I915_FENCED_EXEC)
 
 /**
  * Request queue structure.
@@ -2394,13 +2406,13 @@ i915_get_gem_seqno(struct drm_i915_private *dev_priv)
 static __inline int
 i915_obj_purgeable(struct inteldrm_obj *obj_priv)
 {
-	return (obj_priv->io_flags & I915_DONTNEED);
+	return (obj_priv->obj.do_flags & I915_DONTNEED);
 }
 
 static __inline int
 i915_obj_purged(struct inteldrm_obj *obj_priv)
 {
-	return (obj_priv->io_flags & I915_PURGED);
+	return (obj_priv->obj.do_flags & I915_PURGED);
 }
 
 #endif
