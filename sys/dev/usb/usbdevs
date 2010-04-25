@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.493 2010/04/17 15:05:59 kettenis Exp $
+$OpenBSD: usbdevs,v 1.494 2010/04/25 17:07:20 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2740,7 +2740,9 @@ product NOVATEL U727		0x4100	U727
 product NOVATEL MC950D		0x4400	MC950D HSUPA
 product NOVATEL MERLINX950D	0x5010	X950D
 product NOVATEL ZEROCD2		0x5030	ZeroCD
+product NOVATEL MC760CD		0x5031	MC760 CD
 product NOVATEL U760		0x6000	U760
+product NOVATEL MC760		0x6002	MC760
 
 /* Novatel Wireless(1) products */
 product NOVATEL1 FLEXPACKGPS	0x0100	NovAtel FlexPack GPS
