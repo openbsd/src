@@ -4711,7 +4711,6 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 
 	if (obj_priv->pin_count == 0) {
 		ret = EBUSY;
-		DRM_LOCK(); /* for unref */
 		goto out;
 	}
 	if (i915_tiling_ok(dev, args->stride, obj->size,
