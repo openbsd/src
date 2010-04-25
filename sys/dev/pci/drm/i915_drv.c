@@ -3524,6 +3524,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
 	struct drm_i915_gem_busy	*args = data;
 	struct drm_obj			*obj;
 	struct inteldrm_obj		*obj_priv;
+	int				 ret = 0;
 
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
 	if (obj == NULL) {
@@ -3540,19 +3541,23 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
 	i915_gem_retire_requests(dev_priv);
 
 	obj_priv = (struct inteldrm_obj *)obj;
-	/*
-	 * Don't count being on the flushing list being done. Otherwise, a
-	 * buffer left on the flushing list but not getting flushed (because
-	 * no one is flushing that domain) won't ever return unbusy and get
-	 * reused by libdrm's bo cache. The other expected consumer of this
-	 * interface, OpenGL's occlusion queries, also specs that the object
-	 * get unbusy "eventually" without any interference.
+	/* Count all active objects as busy, even if they are currently not
+	 * used by the gpu. Users of this interface expect objects to eventually
+	 * become non-busy without any further actions, therefore emit any
+	 * necessary flushes here.
 	 */
-	args->busy = inteldrm_is_active(obj_priv) &&
-	    obj_priv->last_rendering_seqno != 0;
+	args->busy = inteldrm_is_active(obj_priv);
+
+	/* Unconditionally flush objects, even when the gpu still uses them.
+	 * Userspace calling this function indicates that it wants to use
+	 * this buffer sooner rather than later, so flushing now helps.
+	 */
+	if (obj->write_domain && i915_gem_flush(dev_priv,
+	    obj->write_domain, obj->write_domain) == 0)
+		ret = ENOMEM;
 
 	drm_unref(&obj->uobj);
-	return 0;
+	return (ret);
 }
 
 int
