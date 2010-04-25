@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.24 2010/04/25 09:11:54 stsp Exp $	*/
+/*	$OpenBSD: complete.c,v 1.25 2010/04/25 14:32:04 tedu Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -358,16 +358,8 @@ ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 {
 	size_t	di, si;
 
-	/* paranoia paranoia everybody's trying to get me */
-	if (dstlen == 0)
-		return;
-	if (srclen == 0) {
-		dst[0] = '\0';
-		return;
-	}
-		
 	di = si = 0;
-	while (src[si] != '\0' && di < dstlen && si < srclen) {
+	while (di + 1 < dstlen && si < srclen && src[si] != '\0') {
 		switch (src[si]) {
 		case '\\':
 		case ' ':
@@ -377,18 +369,15 @@ ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 		case '"':
 			/* Need room for two characters and NUL, avoiding
 			 * incomplete escape sequences at end of dst. */
-			if (di >= dstlen - 3)
+			if (di + 3 >= dstlen)
 				break;
 			dst[di++] = '\\';
 			/* FALLTHROUGH */
 		default:
-			dst[di] = src[si++];
-			if (di < dstlen)
-				di++;
+			dst[di++] = src[si++];
 		}
 	}
-	dst[di] = '\0';
+	if (dstlen != 0)
+		dst[di] = '\0';
 }
-
 #endif /* !SMALL */
-
