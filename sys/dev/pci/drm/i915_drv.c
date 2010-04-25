@@ -4714,7 +4714,7 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 	obj_priv = (struct inteldrm_obj *)obj;
 	drm_hold_object(obj);
 
-	if (obj_priv->pin_count == 0) {
+	if (obj_priv->pin_count != 0) {
 		ret = EBUSY;
 		goto out;
 	}
