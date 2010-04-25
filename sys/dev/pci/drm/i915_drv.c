@@ -1218,15 +1218,6 @@ i915_gem_gtt_map_ioctl(struct drm_device *dev, void *data,
 		goto done;
 	}
 
-	/* bind to the gtt to speed faulting */
-	if (obj_priv->dmamap == NULL) {
-		ret = i915_gem_object_bind_to_gtt(obj, 0, 1);
-		if (ret)
-			goto done;
-		i915_gem_object_move_to_inactive(obj);
-	}
-			
-
 	end = round_page(args->offset + args->size);
 	offset = trunc_page(args->offset);
 	nsize = end - offset;
