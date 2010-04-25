@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.3 2007/02/26 19:34:41 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.4 2010/04/25 18:11:36 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.8 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #define	_SH_PSL_H_
 
 /*
- * SuperH Processer Status Register.
+ * SuperH Processor Status Register.
  */
 #define	PSL_TBIT	0x00000001	/* T bit */
 #define	PSL_SBIT	0x00000002	/* S bit */
@@ -69,8 +69,6 @@ int _cpu_intr_resume(int);
 int _cpu_exception_suspend(void);
 void _cpu_exception_resume(int);
 #endif /* !_LOCORE */
-
-#include <machine/intr.h>
 #endif /* _KERNEL */
 
 #endif /* !_SH_PSL_H_ */
