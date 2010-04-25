@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.23 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: complete.c,v 1.24 2010/04/25 09:11:54 stsp Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@ static unsigned char complete_ambiguous(char *, int, StringList *);
 static unsigned char complete_command(char *, int);
 static unsigned char complete_local(char *, int);
 static unsigned char complete_remote(char *, int);
+static void          ftpvis(char *, size_t, const char *, size_t);
 
 static int
 comparstr(const void *a, const void *b)
@@ -70,7 +71,7 @@ comparstr(const void *a, const void *b)
 static unsigned char
 complete_ambiguous(char *word, int list, StringList *words)
 {
-	char insertstr[MAXPATHLEN];
+	char insertstr[MAXPATHLEN * 2];
 	char *lastmatch;
 	int i, j;
 	size_t matchlen, wordlen;
@@ -80,8 +81,9 @@ complete_ambiguous(char *word, int list, StringList *words)
 		return (CC_ERROR);	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
-		(void)strlcpy(insertstr, words->sl_str[0], sizeof insertstr);
-		if (el_insertstr(el, insertstr + wordlen) == -1)
+		char *p = words->sl_str[0] + wordlen;
+		ftpvis(insertstr, sizeof(insertstr), p, strlen(p));
+		if (el_insertstr(el, insertstr) == -1)
 			return (CC_ERROR);
 		else
 			return (CC_REFRESH);
@@ -99,8 +101,9 @@ complete_ambiguous(char *word, int list, StringList *words)
 				matchlen = j;
 		}
 		if (matchlen > wordlen) {
-			(void)strlcpy(insertstr, lastmatch, matchlen+1);
-			if (el_insertstr(el, insertstr + wordlen) == -1)
+			ftpvis(insertstr, sizeof(insertstr),
+			    lastmatch + wordlen, matchlen);
+			if (el_insertstr(el, insertstr) == -1)
 				return (CC_ERROR);
 			else	
 					/*
@@ -345,6 +348,46 @@ complete(EditLine *el, int ch)
 	}
 
 	return (CC_ERROR);
+}
+
+/*
+ * Copy characters from src into dst, \ quoting characters that require it.
+ */
+static void
+ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
+{
+	size_t	di, si;
+
+	/* paranoia paranoia everybody's trying to get me */
+	if (dstlen == 0)
+		return;
+	if (srclen == 0) {
+		dst[0] = '\0';
+		return;
+	}
+		
+	di = si = 0;
+	while (src[si] != '\0' && di < dstlen && si < srclen) {
+		switch (src[si]) {
+		case '\\':
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+		case '"':
+			/* Need room for two characters and NUL, avoiding
+			 * incomplete escape sequences at end of dst. */
+			if (di >= dstlen - 3)
+				break;
+			dst[di++] = '\\';
+			/* FALLTHROUGH */
+		default:
+			dst[di] = src[si++];
+			if (di < dstlen)
+				di++;
+		}
+	}
+	dst[di] = '\0';
 }
 
 #endif /* !SMALL */
