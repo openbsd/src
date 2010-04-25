@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.32 2010/04/25 18:25:07 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.33 2010/04/25 18:29:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -225,8 +225,8 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	struct sio_par savepar;
 	struct audio_encoding ae;
 	unsigned nenc = 0, nconf = 0;
-	unsigned enc_map = 0, rchan_map = 0, pchan_map = 0, rate_map = 0;
-	unsigned i, j, map;
+	unsigned enc_map = 0, rchan_map = 0, pchan_map = 0, rate_map;
+	unsigned i, j, conf;
 
 	if (!sun_getpar(&hdl->sio, &savepar))
 		return 0;
@@ -304,16 +304,21 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	 */
 	memcpy(&cap->rate, rates, NRATES * sizeof(unsigned));
 	for (j = 0; j < nenc; j++) {
-		if (nconf == SIO_NCONF)
-			break;
-		map = 0;
+		rate_map = 0;
 		for (i = 0; i < NRATES; i++) {
-			if (sun_tryinfo(hdl, NULL, 0, 0, rates[i]))
-				map |= (1 << i);
+			if (sun_tryinfo(hdl, &cap->enc[j], 0, 0, rates[i]))
+				rate_map |= (1 << i);
 		}
-		if (map != rate_map) {
-			rate_map = map;
-			cap->confs[nconf].enc = enc_map;
+		for (conf = 0; conf < nconf; conf++) {
+			if (cap->confs[conf].rate == rate_map) {
+				cap->confs[conf].enc |= (1 << j);
+				break;
+			}
+		}
+		if (conf == nconf) {
+			if (nconf == SIO_NCONF)
+				break;
+			cap->confs[nconf].enc = (1 << j);
 			cap->confs[nconf].pchan = pchan_map;
 			cap->confs[nconf].rchan = rchan_map;
 			cap->confs[nconf].rate = rate_map;
