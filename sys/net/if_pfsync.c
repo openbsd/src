@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.144 2010/03/23 22:34:49 pyr Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.145 2010/04/25 17:38:53 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -353,7 +353,7 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	timeout_del(&sc->sc_tmo);
 #if NCARP > 0
 	if (!pfsync_sync_ok)
-		carp_group_demote_adj(&sc->sc_if, -1);
+		carp_group_demote_adj(&sc->sc_if, -1, "pfsync destroy");
 #endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -1194,7 +1194,8 @@ pfsync_in_bus(struct pfsync_pkt *pkt, caddr_t buf, int len, int count)
 			timeout_del(&sc->sc_bulkfail_tmo);
 #if NCARP > 0
 			if (!pfsync_sync_ok)
-				carp_group_demote_adj(&sc->sc_if, -1);
+				carp_group_demote_adj(&sc->sc_if, -1,
+				    "pfsync bulk done");
 #endif
 			pfsync_sync_ok = 1;
 			DPFPRINTF(LOG_INFO, "received valid bulk update end");
@@ -1888,7 +1889,8 @@ pfsync_request_full_update(struct pfsync_softc *sc)
 		sc->sc_ureq_sent = time_uptime;
 #if NCARP > 0
 		if (pfsync_sync_ok)
-			carp_group_demote_adj(&sc->sc_if, 1);
+			carp_group_demote_adj(&sc->sc_if, 1,
+			    "pfsync bulk start");
 #endif
 		pfsync_sync_ok = 0;
 		DPFPRINTF(LOG_INFO, "requesting bulk update");
@@ -2261,7 +2263,8 @@ pfsync_bulk_fail(void *arg)
 		sc->sc_bulk_tries = 0;
 #if NCARP > 0
 		if (!pfsync_sync_ok)
-			carp_group_demote_adj(&sc->sc_if, -1);
+			carp_group_demote_adj(&sc->sc_if, -1,
+			    "pfsync bulk fail");
 #endif
 		pfsync_sync_ok = 1;
 		DPFPRINTF(LOG_ERR, "failed to receive bulk update");

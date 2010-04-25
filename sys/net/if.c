@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.213 2010/04/17 18:31:41 stsp Exp $	*/
+/*	$OpenBSD: if.c,v 1.214 2010/04/25 17:38:53 mpf Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1512,10 +1512,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCAIFGROUP:
 		if ((error = suser(p, 0)))
 			return (error);
-		(*ifp->if_ioctl)(ifp, cmd, data); /* XXX error check */
 		ifgr = (struct ifgroupreq *)data;
 		if ((error = if_addgroup(ifp, ifgr->ifgr_group)))
 			return (error);
+		(*ifp->if_ioctl)(ifp, cmd, data); /* XXX error check */
 		break;
 
 	case SIOCGIFGROUP:
@@ -2000,7 +2000,7 @@ if_setgroupattribs(caddr_t data)
 	demote = ifgr->ifgr_attrib.ifg_carp_demoted;
 	if (demote + ifg->ifg_carp_demoted > 0xff ||
 	    demote + ifg->ifg_carp_demoted < 0)
-		return (ERANGE);
+		return (EINVAL);
 
 	ifg->ifg_carp_demoted += demote;
 
