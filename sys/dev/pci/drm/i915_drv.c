@@ -178,7 +178,7 @@ int	i915_gem_evict_everything(struct drm_i915_private *, int);
 int	i915_gem_evict_something(struct drm_i915_private *, size_t, int);
 int	i915_gem_object_set_to_gtt_domain(struct drm_obj *, int, int);
 int	i915_gem_object_set_to_cpu_domain(struct drm_obj *, int, int);
-int	i915_gem_object_flush_gpu_write_domain(struct drm_obj *, int, int);
+int	i915_gem_object_flush_gpu_write_domain(struct drm_obj *, int, int, int);
 int	i915_gem_get_fence_reg(struct drm_obj *, int);
 int	i915_gem_object_put_fence_reg(struct drm_obj *, int);
 bus_size_t	i915_gem_get_gtt_alignment(struct drm_obj *);
@@ -1276,6 +1276,8 @@ i915_gem_object_move_to_active(struct drm_obj *obj)
 		reg = &dev_priv->fence_regs[obj_priv->fence_reg];
 		reg->last_rendering_seqno = seqno;
 	}
+	if (obj->write_domain)
+		obj_priv->last_write_seqno = seqno;
 
 	/* Move from whatever list we were on to the tail of execution. */
 	i915_move_to_tail(obj_priv, &dev_priv->mm.active_list);
@@ -1299,6 +1301,8 @@ i915_gem_object_move_off_active(struct drm_obj *obj)
 		reg = &dev_priv->fence_regs[obj_priv->fence_reg];
 		reg->last_rendering_seqno = 0;
 	}
+	if (obj->write_domain == 0)
+		obj_priv->last_write_seqno = 0;
 }
 
 /* If you call this on an object that you have held, you must have your own
@@ -1388,13 +1392,12 @@ inteldrm_process_flushing(struct drm_i915_private *dev_priv,
 		next = TAILQ_NEXT(obj_priv, write_list);
 
 		if ((obj->write_domain & flush_domains)) {
-
-			obj->write_domain = 0;
 			TAILQ_REMOVE(&dev_priv->mm.gpu_write_list,
 			    obj_priv, write_list);
 			atomic_clearbits_int(&obj->do_flags,
 			     I915_GPU_WRITE);
 			i915_gem_object_move_to_active(obj);
+			obj->write_domain = 0;
 			/* if we still need the fence, update LRU */
 			if (inteldrm_needs_fence(obj_priv)) {
 				KASSERT(obj_priv->fence_reg !=
@@ -2190,7 +2193,7 @@ i915_gem_object_put_fence_reg(struct drm_obj *obj, int interruptible)
 	 */
 	if (inteldrm_needs_fence(obj_priv)) {
 		ret = i915_gem_object_flush_gpu_write_domain(obj, 1,
-		    interruptible);
+		    interruptible, 0);
 		if (ret != 0)
 			return (ret);
 	}
@@ -2465,11 +2468,12 @@ error:
  */
 int
 i915_gem_object_flush_gpu_write_domain(struct drm_obj *obj, int pipelined,
-    int interruptible)
+    int interruptible, int write)
 {
 	struct drm_device	*dev = obj->dev;
 	struct drm_i915_private	*dev_priv = dev->dev_private;
 	struct inteldrm_obj	*obj_priv = (struct inteldrm_obj *)obj;
+	u_int32_t		 seqno;
 	int			 ret = 0;
 
 	DRM_ASSERT_HELD(obj);
@@ -2485,6 +2489,11 @@ i915_gem_object_flush_gpu_write_domain(struct drm_obj *obj, int pipelined,
 
 	/* wait for queued rendering so we know it's flushed and bo is idle */
 	if (pipelined == 0 && inteldrm_is_active(obj_priv)) {
+		if (write) {
+			seqno = obj_priv->last_rendering_seqno;
+		} else {
+			seqno = obj_priv->last_write_seqno;
+		}
 		ret =  i915_wait_request(dev_priv,
 		    obj_priv->last_rendering_seqno, interruptible);
 	}
@@ -2512,7 +2521,7 @@ i915_gem_object_set_to_gtt_domain(struct drm_obj *obj, int write,
 		return (EINVAL);
 	/* Wait on any GPU rendering and flushing to occur. */
 	if ((ret = i915_gem_object_flush_gpu_write_domain(obj, 0,
-	    interruptible)) != 0)
+	    interruptible, write)) != 0)
 		return (ret);
 
 	if (obj->write_domain == I915_GEM_DOMAIN_CPU) {
@@ -2569,7 +2578,7 @@ i915_gem_object_set_to_cpu_domain(struct drm_obj *obj, int write,
 	DRM_ASSERT_HELD(obj);
 	/* Wait on any GPU rendering and flushing to occur. */
 	if ((ret = i915_gem_object_flush_gpu_write_domain(obj, 0,
-	    interruptible)) != 0)
+	    interruptible, write)) != 0)
 		return (ret);
 
 	if (obj->write_domain == I915_GEM_DOMAIN_GTT ||
