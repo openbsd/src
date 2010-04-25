@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.33 2010/04/25 18:29:48 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.34 2010/04/25 18:51:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -377,17 +377,16 @@ sio_open_sun(const char *str, unsigned mode, int nbio)
 		DPERROR("FD_CLOEXEC");
 		goto bad_close;
 	}
-	hdl->fd = fd;
 
 	/*
 	 * pause the device
 	 */
 	AUDIO_INITINFO(&aui);
-	if (hdl->sio.mode & SIO_PLAY)
+	if (mode & SIO_PLAY)
 		aui.play.pause = 1;
-	if (hdl->sio.mode & SIO_REC)
+	if (mode & SIO_REC)
 		aui.record.pause = 1;
-	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
+	if (ioctl(fd, AUDIO_SETINFO, &aui) < 0) {
 		DPERROR("sio_open_sun: setinfo");
 		goto bad_close;
 	}
@@ -421,7 +420,7 @@ sio_open_sun(const char *str, unsigned mode, int nbio)
 		goto bad_close;
 	return (struct sio_hdl *)hdl;
  bad_close:
-	while (close(hdl->fd) < 0 && errno == EINTR)
+	while (close(fd) < 0 && errno == EINTR)
 		; /* retry */
  bad_free:
 	free(hdl);
@@ -432,10 +431,9 @@ static void
 sun_close(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	int rc;
-	do {
-		rc = close(hdl->fd);
-	} while (rc < 0 && errno == EINTR);
+
+	while (close(hdl->fd) < 0 && errno == EINTR)
+		; /* retry */
 	free(hdl);
 }
 
@@ -479,8 +477,6 @@ sun_start(struct sio_hdl *sh)
 		 * no play buffers to fill, start now!
 		 */
 		AUDIO_INITINFO(&aui);
-		if (hdl->sio.mode & SIO_PLAY)
-			aui.play.pause = 0;
 		if (hdl->sio.mode & SIO_REC)
 			aui.record.pause = 0;
 		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
