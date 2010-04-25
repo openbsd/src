@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.8 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.9 2010/04/25 20:28:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -58,6 +58,9 @@ cmd_select_layout_init(struct cmd *self, int key)
 		break;
 	case ('4' | KEYC_ESCAPE):
 		data->arg = xstrdup("main-vertical");
+		break;
+	case ('5' | KEYC_ESCAPE):
+		data->arg = xstrdup("tiled");
 		break;
 	}
 }

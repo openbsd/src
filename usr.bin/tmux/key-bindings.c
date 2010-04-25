@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.19 2010/04/06 21:35:44 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.20 2010/04/25 20:28:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -151,6 +151,7 @@ key_bindings_init(void)
 		{ '2' | KEYC_ESCAPE,	  0, &cmd_select_layout_entry },
 		{ '3' | KEYC_ESCAPE,	  0, &cmd_select_layout_entry },
 		{ '4' | KEYC_ESCAPE,	  0, &cmd_select_layout_entry },
+		{ '5' | KEYC_ESCAPE,	  0, &cmd_select_layout_entry },
 		{ KEYC_PPAGE, 		  0, &cmd_copy_mode_entry },
 		{ 'n' | KEYC_ESCAPE, 	  0, &cmd_next_window_entry },
 		{ 'o' | KEYC_ESCAPE,	  0, &cmd_rotate_window_entry },
