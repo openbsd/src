@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.21 2009/08/20 19:18:05 jasper Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.22 2010/04/25 14:43:07 tedu Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -36,7 +36,6 @@ __FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwm
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/rwlock.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -45,6 +44,7 @@ __FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwm
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/hash.h>
+#include <sys/mutex.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -74,10 +74,10 @@ int ufsdirhash_recycle(int wanted);
 
 struct pool		ufsdirhash_pool;
 
-#define	DIRHASHLIST_LOCK()
-#define	DIRHASHLIST_UNLOCK()
-#define	DIRHASH_LOCK(dh)
-#define	DIRHASH_UNLOCK(dh)
+#define	DIRHASHLIST_LOCK()	mtx_enter(&ufsdirhash_mtx)
+#define	DIRHASHLIST_UNLOCK()	mtx_leave(&ufsdirhash_mtx)
+#define	DIRHASH_LOCK(dh)	mtx_enter(&(dh)->dh_mtx)
+#define	DIRHASH_UNLOCK(dh)	mtx_leave(&(dh)->dh_mtx)
 #define	DIRHASH_BLKALLOC()	pool_get(&ufsdirhash_pool, PR_NOWAIT)
 #define	DIRHASH_BLKFREE(v)	pool_put(&ufsdirhash_pool, v)
 
@@ -88,6 +88,7 @@ struct pool		ufsdirhash_pool;
 TAILQ_HEAD(, dirhash) ufsdirhash_list;
 
 /* Protects: ufsdirhash_list, `dh_list' field, ufs_dirhashmem. */
+struct mutex ufsdirhash_mtx;
 
 /*
  * Locking order:
@@ -187,6 +188,7 @@ ufsdirhash_build(struct inode *ip)
 	}
 
 	/* Initialise the hash table and block statistics. */
+	mtx_init(&dh->dh_mtx, IPL_NONE);
 	dh->dh_narrays = narrays;
 	dh->dh_hlen = nslots;
 	dh->dh_nblk = nblocks;
@@ -1058,6 +1060,7 @@ ufsdirhash_init()
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(doff_t), 0, 0, 0,
 	    "dirhash", &pool_allocator_nointr);
 	pool_sethiwat(&ufsdirhash_pool, 512);
+	mtx_init(&ufsdirhash_mtx, IPL_NONE);
 	TAILQ_INIT(&ufsdirhash_list);
 #if defined (__sparc__) && !defined (__sparc64__)
 	if (!CPU_ISSUN4OR4C)

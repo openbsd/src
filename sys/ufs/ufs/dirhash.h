@@ -1,4 +1,4 @@
-/* $OpenBSD: dirhash.h,v 1.4 2006/04/29 23:09:45 tedu Exp $	*/
+/* $OpenBSD: dirhash.h,v 1.5 2010/04/25 14:43:07 tedu Exp $	*/
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
  *
@@ -29,7 +29,7 @@
 #ifndef _UFS_UFS_DIRHASH_H_
 #define _UFS_UFS_DIRHASH_H_
 
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
 
 /*
  * For fast operations on large directories, we maintain a hash
@@ -83,6 +83,7 @@
     ((dh)->dh_hash[(slot) >> DH_BLKOFFSHIFT][(slot) & DH_BLKOFFMASK])
 
 struct dirhash {
+	struct mutex dh_mtx;	/* protects all fields except dh_list */
 	doff_t	**dh_hash;	/* the hash array (2-level) */
 	int	dh_narrays;	/* number of entries in dh_hash */
 	int	dh_hlen;	/* total slots in the 2-level hash array */
