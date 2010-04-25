@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.72 2009/08/16 09:53:43 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.73 2010/04/25 13:59:53 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ CompatMake(void *gnp,	/* The node to make */
 	bool cmdsOk;
 
 	if (DEBUG(MAKE))
-		printf("CompatMake(%s, %s)\n", pgn ? pgn->name : "NULL", 
+		printf("CompatMake(%s, %s)\n", pgn ? pgn->name : "NULL",
 		    gn->name);
 
 	/* XXX some loops are not loops, people write dependencies
@@ -159,7 +159,7 @@ CompatMake(void *gnp,	/* The node to make */
 		do {
 			/* We need to be re-made. We also have to make sure
 			 * we've got a $?  variable. To be nice, we also define
-			 * the $> variable using Make_DoAllVar().  
+			 * the $> variable using Make_DoAllVar().
 			 */
 			Make_DoAllVar(sib);
 			cmdsOk = Job_CheckCommands(sib);
@@ -284,7 +284,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	}
 
 	/* For each entry in the list of targets to create, call CompatMake on
-	 * it to create the thing. CompatMake will leave the 'built_status' 
+	 * it to create the thing. CompatMake will leave the 'built_status'
 	 * field of gn in one of several states:
 	 *	    UPTODATE	    gn was already up-to-date
 	 *	    MADE	    gn was recreated successfully

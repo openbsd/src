@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.59 2009/08/16 09:49:22 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.60 2010/04/25 13:59:53 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ TargPrintNode(GNode *gn, int pass)
 static void
 TargPrintOnlySrc(GNode *gn)
 {
-	if (OP_NOP(gn->type) && gn->special == SPECIAL_NONE && 
+	if (OP_NOP(gn->type) && gn->special == SPECIAL_NONE &&
 	    !(gn->type & OP_DUMMY))
 		printf("#\t%s [%s]\n", gn->name,
 		    gn->path != NULL ? gn->path : gn->name);

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2008/11/04 07:22:35 espie Exp $
+#	$OpenBSD: Makefile,v 1.51 2010/04/25 13:59:53 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -50,7 +50,7 @@ check: regress.o str.o memory.o buf.o
 	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
 
 regress: check
-	${.OBJDIR}/check 
+	${.OBJDIR}/check
 
 # kludge for people who forget to make depend
 var.o: varhashconsts.h

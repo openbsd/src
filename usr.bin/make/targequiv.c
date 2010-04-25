@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.1 2008/11/04 07:22:36 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.2 2010/04/25 13:59:53 espie Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -53,7 +53,7 @@ struct equiv_list {
 };
 
 static struct ohash_info equiv_info = {
-	offsetof(struct equiv_list, name), NULL, hash_alloc, hash_free, 
+	offsetof(struct equiv_list, name), NULL, hash_alloc, hash_free,
 	element_alloc
 };
 
@@ -61,9 +61,9 @@ static void attach_node(GNode *, GNode *);
 static void build_equivalence(void);
 static void add_to_equiv_list(struct ohash *, GNode *);
 static char *names_match(GNode *, GNode *);
-static char *names_match_with_dir(const char *, const char *, char *, 
+static char *names_match_with_dir(const char *, const char *, char *,
     char *,  const char *);
-static char *names_match_with_dirs(const char *, const char *, char *, 
+static char *names_match_with_dirs(const char *, const char *, char *,
     char *,  const char *, const char *);
 static char *relative_reduce(const char *, const char *);
 static char *relative_reduce2(const char *, const char *, const char *);
@@ -76,7 +76,7 @@ static void find_siblings(GNode *);
  * to insert same-basename targets in a simply linked list. Then they make
  * those lists circular, to the exception of lone elements, since they can't
  * alias to anything.
- * 
+ *
  * This structure is used to simplify alias-lookup to a great extent: two
  * nodes can only alias each other if they're part of the same equivalence
  * set. Most nodes either don't belong to an alias set, or to a very simple
@@ -184,7 +184,7 @@ static void
 attach_node(GNode *gn, GNode *extra)
 {
 	/* XXX normally extra->sibling == extra, but this is not
-	 * always the case yet, so we merge the two lists 
+	 * always the case yet, so we merge the two lists
 	 */
 	GNode *tmp;
 
@@ -240,14 +240,14 @@ absolute_reduce(const char *src)
 
 	buffer[i++] = '/';
 	i = parse_reduce(i, src);
-	return estrdup(buffer); 
+	return estrdup(buffer);
 }
 
 static char *
 relative_reduce(const char *dir, const char *src)
 {
 	size_t i = 0;
-	
+
 	if (buffer == NULL)
 		buffer = emalloc(bufsize);
 
@@ -258,14 +258,14 @@ relative_reduce(const char *dir, const char *src)
 	if (buffer[i-1] != '/')
 		buffer[i++] = '/';
 	i = parse_reduce(i, src);
-	return estrdup(buffer); 
+	return estrdup(buffer);
 }
 
 static char *
 relative_reduce2(const char *dir1, const char *dir2, const char *src)
 {
 	size_t i = 0;
-	
+
 	if (buffer == NULL)
 		buffer = emalloc(bufsize);
 
@@ -281,16 +281,16 @@ relative_reduce2(const char *dir1, const char *dir2, const char *src)
 		buffer[i++] = '/';
 
 	i = parse_reduce(i, src);
-	return estrdup(buffer); 
+	return estrdup(buffer);
 }
 
 static char *
-names_match_with_dir(const char *a, const char *b, char *ra, 
+names_match_with_dir(const char *a, const char *b, char *ra,
     char *rb,  const char *dir)
 {
 	bool r;
 	bool free_a, free_b;
-	
+
 	if (ra == NULL) {
 		ra = relative_reduce(dir, a);
 		free_a = true;
@@ -317,12 +317,12 @@ names_match_with_dir(const char *a, const char *b, char *ra,
 }
 
 static char *
-names_match_with_dirs(const char *a, const char *b, char *ra, 
+names_match_with_dirs(const char *a, const char *b, char *ra,
     char *rb,  const char *dir1, const char *dir2)
 {
 	bool r;
 	bool free_a, free_b;
-	
+
 	if (ra == NULL) {
 		ra = relative_reduce2(dir1, dir2, a);
 		free_a = true;
@@ -366,7 +366,7 @@ names_match(GNode *a, GNode *b)
 	} else {
 		r = names_match_with_dir(a->name, b->name, ra, rb, objdir);
 		if (!r)
-			r = names_match_with_dir(a->name, b->name, ra, rb, 
+			r = names_match_with_dir(a->name, b->name, ra, rb,
 			    curdir);
 		if (!r) {
 			/* b has necessarily the same one */
@@ -376,7 +376,7 @@ names_match(GNode *a, GNode *b)
 			for (ln = Lst_First(l); ln != NULL; ln = Lst_Adv(ln)) {
 				const char *p = PathEntry_name(Lst_Datum(ln));
 				if (p[0] == '/') {
-					r = names_match_with_dir(a->name, 
+					r = names_match_with_dir(a->name,
 					    b->name, ra, rb, p);
 					if (r)
 						break;
@@ -449,7 +449,7 @@ bool
 is_sibling(GNode *gn, GNode *gn2)
 {
 	GNode *sibling;
-	
+
 	sibling = gn;
 	do {
 		if (sibling == gn2)

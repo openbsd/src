@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.77 2007/11/24 15:41:01 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.78 2010/04/25 13:59:53 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@
 static struct ohash suffixes;
 
 /* We remember the longest suffix, so we don't need to look beyond that.  */
-size_t maxLen;	
+size_t maxLen;
 static LIST srclist;
 
 /* Transforms (.c.o) are stored in another hash, independently from suffixes.
@@ -141,7 +141,7 @@ typedef struct Suff_ {
 #define SUFF_PATH	  0x10	/* False suffix: actually, the path keyword */
 	LIST searchPath;	/* The path along which files of this suffix
 			     	 * may be found */
-	int order;		/* order of declaration for conflict 
+	int order;		/* order of declaration for conflict
 				 * resolution. */
 	LIST parents;		/* List of Suff we have a transformation to */
 	LIST children;		/* List of Suff we have a transformation from */
@@ -149,7 +149,7 @@ typedef struct Suff_ {
 } Suff;
 
 static struct ohash_info suff_info = {
-	offsetof(struct Suff_, name), NULL, 
+	offsetof(struct Suff_, name), NULL,
 	hash_alloc, hash_free, element_alloc
 };
 
@@ -1288,7 +1288,7 @@ SuffApplyTransform(
 	if ((sGn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 		/* When a :: node is used as the implied source of a node, we
 		 * have to link all its cohorts in as sources as well. There's
-		 * only one implied src, as that will be sufficient to get 
+		 * only one implied src, as that will be sufficient to get
 		 * the .IMPSRC variable set for tGn.	*/
 		for (ln=Lst_First(&sGn->cohorts); ln != NULL; ln=Lst_Adv(ln)) {
 			gn = (GNode *)Lst_Datum(ln);

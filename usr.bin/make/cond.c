@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.41 2009/11/11 00:12:10 fgsch Exp $	*/
+/*	$OpenBSD: cond.c,v 1.42 2010/04/25 13:59:53 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ CondGetArg(const char **linePtr, struct Name *arg, const char *func,
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
 	if (parens && *cp != ')') {
-		Parse_Error(PARSE_WARNING, 
+		Parse_Error(PARSE_WARNING,
 		    "Missing closing parenthesis for %s()", func);
 	    return false;
 	} else if (parens)
@@ -487,7 +487,7 @@ do_string_compare:
 			if (*cp == '$') {
 				size_t len;
 
-				if (Var_ParseBuffer(&buf, cp, NULL, doEval, 
+				if (Var_ParseBuffer(&buf, cp, NULL, doEval,
 				    &len)) {
 					cp += len;
 					continue;
@@ -625,7 +625,7 @@ CondHandleDefault(bool doEval)
 
 		condExpr += 5;
 
-		for (arglen = 0; condExpr[arglen] != '(' && 
+		for (arglen = 0; condExpr[arglen] != '(' &&
 		    condExpr[arglen] != '\0';)
 			arglen++;
 
@@ -1065,7 +1065,7 @@ Cond_Eval(const char *line)
 	if (condTop < 0) {
 		/* This is the one case where we can definitely proclaim a fatal
 		 * error. If we don't, we're hosed.  */
-		Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", 
+		Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.",
 		    MAXIF);
 		condTop = 0;
 		return COND_INVALID;
@@ -1124,7 +1124,7 @@ Cond_End(void)
 		    condTop == 0 ? "at least ": "", MAXIF-condTop,
 		    MAXIF-condTop == 1 ? "" : "s");
 		for (i = MAXIF-1; i >= condTop; i--) {
-			fprintf(stderr, "\t at line %lu of %s\n", 
+			fprintf(stderr, "\t at line %lu of %s\n",
 			    condStack[i].lineno, condStack[i].filename);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.27 2009/08/16 09:49:22 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.28 2010/04/25 13:59:53 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -92,7 +92,7 @@ Job_CheckCommands(GNode *gn)
 		 * No commands. Look for .DEFAULT rule from which we might infer
 		 * commands
 		 */
-		if ((gn->type & OP_NODEFAULT) == 0 && 
+		if ((gn->type & OP_NODEFAULT) == 0 &&
 		    (DEFAULT->type & OP_DUMMY) == 0 &&
 		    !Lst_IsEmpty(&DEFAULT->commands)) {
 			/*
@@ -111,7 +111,7 @@ Job_CheckCommands(GNode *gn)
 			 * The node wasn't the target of an operator we have no
 			 * .DEFAULT rule to go on and the target doesn't
 			 * already exist. There's nothing more we can do for
-			 * this branch. 
+			 * this branch.
 			 */
 			 return false;
 	    	}
@@ -312,7 +312,7 @@ Make_DoAllVar(GNode *gn)
 			else {
 				if (oodate_count == 2) {
 					Buf_Init(&oodate, 0);
-					Buf_AddString(&oodate, 
+					Buf_AddString(&oodate,
 					    Var(OODATE_INDEX, gn));
 				}
 				Buf_AddSpace(&oodate);
@@ -325,7 +325,7 @@ Make_DoAllVar(GNode *gn)
 		else {
 			if (allsrc_count == 2) {
 				Buf_Init(&allsrc, 0);
-				Buf_AddString(&allsrc, 
+				Buf_AddString(&allsrc,
 				    Var(ALLSRC_INDEX, gn));
 			}
 			Buf_AddSpace(&allsrc);
@@ -340,7 +340,7 @@ Make_DoAllVar(GNode *gn)
 
 	if (gn->impliedsrc)
 		Var(IMPSRC_INDEX, gn) = Var(TARGET_INDEX, gn->impliedsrc);
-			
+
 	if (gn->type & OP_JOIN)
 		Var(TARGET_INDEX, gn) = Var(ALLSRC_INDEX, gn);
 }
@@ -621,7 +621,7 @@ setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 	if (*cmd == '\0') {
 		Error("%s expands to empty string", cmd);
 		return 1;
-	} 
+	}
 
 	for (;; cmd++) {
 		if (*cmd == '@')
@@ -712,7 +712,7 @@ setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 	return 0;
 }
 
-static void 
+static void
 handle_compat_interrupts(GNode *gn)
 {
 	if (!Targ_Precious(gn)) {
@@ -782,7 +782,7 @@ run_gnode_parallel(GNode *gn)
 	gn->built_status = MADE;
 	/* XXX don't bother freeing cmd, we're dead anyways ! */
 	while ((cmd = Lst_DeQueue(&gn->expanded)) != NULL) {
-		if (setup_and_run_command(cmd, gn, 
+		if (setup_and_run_command(cmd, gn,
 		    Lst_IsEmpty(&gn->expanded)) == 0)
 			break;
 	}
@@ -795,7 +795,7 @@ run_gnode_parallel(GNode *gn)
 	case ERROR:
 		exit(1);
 	default:
-		fprintf(stderr, "Could not run gnode, returned %d\n", 
+		fprintf(stderr, "Could not run gnode, returned %d\n",
 		    gn->built_status);
 		exit(1);
 	}
