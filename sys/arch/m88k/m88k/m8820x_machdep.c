@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.39 2010/04/18 22:04:39 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.40 2010/04/25 21:03:53 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -451,12 +451,13 @@ m8820x_initialize_cpu(cpuid_t cpu)
 
 		/*
 		 * Set the SCTR, SAPR, and UAPR to some known state.
-		 * Snooping is enabled on multiprocessor systems; for
-		 * instruction CMMUs as well so that we can share breakpoints.
-		 * XXX Investigate why enabling parity at this point
-		 * doesn't work.
+		 * Snooping is enabled as soon as the system uses more than
+		 * two CMMUs; for instruction CMMUs as well so that we can
+		 * share breakpoints.
 		 */
 		sctr = 0;
+		if (cmmu_shift > 1)
+			sctr |= CMMU_SCTR_SE;
 #ifdef MULTIPROCESSOR
 		if (ncpusfound > 1)
 			sctr |= CMMU_SCTR_SE;
@@ -490,7 +491,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 void
 m8820x_shutdown()
 {
-	unsigned cmmu_num;
+	u_int cmmu_num;
 	struct m8820x_cmmu *cmmu;
 
 	CMMU_LOCK;
@@ -545,7 +546,7 @@ m8820x_set_uapr(apr_t ap)
  *	flush any tlb
  */
 void
-m8820x_flush_tlb(cpuid_t cpu, unsigned kernel, vaddr_t vaddr, u_int count)
+m8820x_flush_tlb(cpuid_t cpu, u_int kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 
@@ -593,8 +594,9 @@ m8820x_flush_tlb(cpuid_t cpu, unsigned kernel, vaddr_t vaddr, u_int count)
  * snooped and never modified (I guess it doesn't matter then which form
  * of the command we use then).
  *
- * XXX On systems with more than two CMMUs per CPU, we do not honor the
- * address split - this does not seem to work...
+ * Note that on systems with more than two CMMUs per CPU, we can not benefit
+ * from the address split - the split is done on virtual (not translated yet)
+ * addresses, but caches are physically indexed.
  */
 
 #define	trunc_cache_line(a)	((a) & ~(MC88200_CACHE_LINE - 1))
@@ -622,10 +624,10 @@ m8820x_flush_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 
 		if (count <= MC88200_CACHE_LINE)
 			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_LINE,
-			    0 /* ADDR_VAL */, cpu, 0, pa);
+			    0, cpu, 0, pa);
 		else
 			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_PAGE,
-			    0 /* ADDR_VAL */, cpu, 0, pa);
+			    0, cpu, 0, pa);
 
 		pa += count;
 		size -= count;
@@ -658,10 +660,10 @@ m8820x_flush_inst_cache(cpuid_t cpu, paddr_t pa, psize_t size)
 
 		if (count <= MC88200_CACHE_LINE)
 			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE,
-			    MODE_VAL /* | ADDR_VAL */, cpu, INST_CMMU, pa);
+			    MODE_VAL, cpu, INST_CMMU, pa);
 		else
 			m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_PAGE,
-			    MODE_VAL /* | ADDR_VAL */, cpu, INST_CMMU, pa);
+			    MODE_VAL, cpu, INST_CMMU, pa);
 
 		pa += count;
 		size -= count;
@@ -680,10 +682,10 @@ m8820x_cmmu_sync_cache(int cpu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CB_LINE,
-		    MODE_VAL /* | ADDR_VAL */, cpu, DATA_CMMU, pa);
+		    MODE_VAL, cpu, DATA_CMMU, pa);
 	} else {
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CB_PAGE,
-		    MODE_VAL /* | ADDR_VAL */, cpu, DATA_CMMU, pa);
+		    MODE_VAL, cpu, DATA_CMMU, pa);
 	}
 	m8820x_cmmu_wait(cpu);
 }
@@ -693,14 +695,14 @@ m8820x_cmmu_sync_inval_cache(int cpu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE) {
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE,
-		    MODE_VAL /* | ADDR_VAL */, cpu, INST_CMMU, pa);
+		    MODE_VAL, cpu, INST_CMMU, pa);
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_LINE,
-		    MODE_VAL /* | ADDR_VAL */, cpu, DATA_CMMU, pa);
+		    MODE_VAL, cpu, DATA_CMMU, pa);
 	} else {
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_PAGE,
-		    MODE_VAL /* | ADDR_VAL */, cpu, INST_CMMU, pa);
+		    MODE_VAL, cpu, INST_CMMU, pa);
 		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_CBI_PAGE,
-		    MODE_VAL /* | ADDR_VAL */, cpu, DATA_CMMU, pa);
+		    MODE_VAL, cpu, DATA_CMMU, pa);
 	}
 	m8820x_cmmu_wait(cpu);
 }
@@ -709,11 +711,9 @@ void
 m8820x_cmmu_inval_cache(int cpu, paddr_t pa, psize_t size)
 {
 	if (size <= MC88200_CACHE_LINE) {
-		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE,
-		    0 /* ADDR_VAL */, cpu, 0, pa);
+		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_LINE, 0, cpu, 0, pa);
 	} else {
-		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_PAGE,
-		    0 /* ADDR_VAL */, cpu, 0, pa);
+		m8820x_cmmu_set_cmd(CMMU_FLUSH_CACHE_INV_PAGE, 0, cpu, 0, pa);
 	}
 	m8820x_cmmu_wait(cpu);
 }
@@ -749,10 +749,16 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 		flusher = m8820x_cmmu_sync_inval_cache;
 		break;
 	default:
-		if (pa != _pa || size != _size)
-			flusher = m8820x_cmmu_sync_inval_cache;
-		else
-			flusher = m8820x_cmmu_inval_cache;
+		if (pa != _pa || size != _size) {
+			/*
+			 * Theoretically, we should preserve the data from
+			 * the two incomplete cache lines.
+			 * However, callers are expected to have asked
+			 * for a cache sync before, so we do not risk too
+			 * much by not doing this.
+			 */
+		}
+		flusher = m8820x_cmmu_inval_cache;
 		break;
 	}
 
