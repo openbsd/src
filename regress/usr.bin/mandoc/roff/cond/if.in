@@ -1,0 +1,44 @@
+.TH IF 1
+.SH NAME
+if \- the roff conditional instruction
+.SH DESCRIPTION
+.if n One-line true condition.
+.if t One-line false condition.
+.br
+.if n \{Two-line true condition
+without continuation and macros.\}
+.if t \{Two-line false condition
+without continuation and macros.\}
+.br
+.if n \{\
+Two-line true condition
+with continuation and macros.
+.\}
+.if t \{\
+Two-line false condition
+with continuation and macros.
+.\}
+.br
+.if n \{Outer true condition.
+.br
+.if n Inner one-line true condition.
+.if t Inner one-line false condition.
+.br
+.if n \{Inner two-line true condition
+without continuation and macros.\}
+.if t \{Inner two-line false condition
+without continuation and macros.\}
+.br
+Back to the outer true condition.\}
+.br
+.if t \{Outer false condition.
+.br
+.if n Inner one-line true condition.
+.if t Inner one-line false condition.
+.br
+.if n \{Inner two-line true condition
+without continuation and macros.\}
+.if t \{Inner two-line false condition
+without continuation and macros.\}
+.br
+Back to the outer false condition.\}

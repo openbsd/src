@@ -1,0 +1,18 @@
+.TH IE 1
+.SH NAME
+if \- the roff conditional instruction with else-clause
+.SH DESCRIPTION
+.el Initially, else is ignored.
+.ie n One-line true condition.
+.br
+Text following the true condition.
+.el One-line else after true.
+.el Another else after true.
+.br
+.ie t One-line false condition.
+Text following the false condition.
+.br
+.el \{Two-line else
+after false.\}
+.br
+.el Another else after false.
