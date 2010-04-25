@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.31 2010/04/24 14:13:34 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.32 2010/04/25 18:25:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -154,35 +154,31 @@ sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc,
     unsigned pchan, unsigned rchan, unsigned rate)
 {
 	struct audio_info aui;
+	struct audio_prinfo *pr;
+
+	pr = (hdl->sio.mode & SIO_PLAY) ? &aui.play : &aui.record;
 
 	AUDIO_INITINFO(&aui);
 	if (enc) {
 		if (enc->le && enc->sig) {
-			aui.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			aui.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			pr->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		} else if (!enc->le && enc->sig) {
-			aui.play.encoding = AUDIO_ENCODING_SLINEAR_BE;
-			aui.record.encoding = AUDIO_ENCODING_SLINEAR_BE;
+			pr->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		} else if (enc->le && !enc->sig) {
-			aui.play.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			aui.record.encoding = AUDIO_ENCODING_ULINEAR_LE;
+			pr->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		} else {
-			aui.play.encoding = AUDIO_ENCODING_ULINEAR_BE;
-			aui.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
+			pr->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		}
-		aui.play.precision = enc->bits;
-		aui.record.precision = enc->bits;
+		pr->precision = enc->bits;
 	}
-	if (pchan)
+	if (rate)
+		pr->sample_rate = rate;
+	if ((hdl->sio.mode & (SIO_PLAY | SIO_REC)) == (SIO_PLAY | SIO_REC))
+		aui.record = aui.play;
+	if (pchan && (hdl->sio.mode & SIO_PLAY))
 		aui.play.channels = pchan;
-	if (rchan)
+	if (rchan && (hdl->sio.mode & SIO_REC))
 		aui.record.channels = rchan;
-	if (rate) {
-		if (hdl->sio.mode & SIO_PLAY)
-			aui.play.sample_rate = rate;
-		if (hdl->sio.mode & SIO_REC)
-			aui.record.sample_rate = rate;
-	}
 	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
 		if (errno == EINVAL)
 			return 0;
