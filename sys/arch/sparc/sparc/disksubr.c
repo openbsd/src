@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.85 2010/04/24 20:12:22 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.86 2010/04/25 06:15:17 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -267,7 +267,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
 	lp->d_version = 1;
 
-	lp->d_label_uid = sl->sl_label_uid;
+	memcpy(&lp->d_uid, &sl->sl_uid, sizeof(sl->sl_uid));
 
 	lp->d_acylinders = sl->sl_acylinders;
 
@@ -413,7 +413,7 @@ disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 	sl->sl_ntracks = lp->d_ntracks;
 	sl->sl_nsectors = lp->d_nsectors;
 
-	sl->sl_label_uid = lp->d_label_uid;
+	memcpy(&sl->sl_uid, &lp->d_uid, sizeof(lp->d_uid));
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	for (i = 0; i < 8; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.100 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.101 2010/04/25 06:15:17 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ checkdisklabel(void *rlp, struct disklabel *lp,
 		dlp->d_secpercyl = swap32(dlp->d_secpercyl);
 		dlp->d_secperunit = swap32(dlp->d_secperunit);
 
-		dlp->d_label_uid = swap64(dlp->d_label_uid);
+		/* d_uid is a string */
 
 		dlp->d_acylinders = swap32(dlp->d_acylinders);
 
