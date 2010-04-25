@@ -2152,14 +2152,13 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 	if (obj_priv->dmamap != NULL &&
 	    (obj_priv->gtt_offset & (i915_gem_get_gtt_alignment(obj) - 1) ||
 	    (!i915_gem_object_fence_offset_ok(obj, obj_priv->tiling_mode)))) {
-		if (obj_priv->pin_count == 0) {
-			ret = i915_gem_object_unbind(obj, 0);
-			if (ret)
-				goto error;
-		} else {
-			DRM_ERROR("fault on pinned object with bad alignment\n");
-			return (EINVAL);
-		}
+		/*
+		 * pinned objects are defined to have a sane alignment which can
+		 * not change.
+		 */
+		KASSERT(obj_priv->pin_count == 0);
+		if ((ret = i915_gem_object_unbind(obj, 0)))
+			goto error;
 	}
 
 	if (obj_priv->dmamap == NULL) {
@@ -3204,14 +3203,10 @@ i915_gem_object_pin(struct drm_obj *obj, uint32_t alignment, int needs_fence)
 	    obj_priv->gtt_offset & (i915_gem_get_gtt_alignment(obj) - 1) ||
 	    (needs_fence && !i915_gem_object_fence_offset_ok(obj,
 	    obj_priv->tiling_mode)))) {
-		if (obj_priv->pin_count == 0) {
-			ret = i915_gem_object_unbind(obj, 1);
-			if (ret)
-				return (ret);
-		} else {
-			DRM_ERROR("repinning an object with bad alignment\n");
-			return (EINVAL);
-		}
+		/* if it is already pinned we sanitised the alignment then */
+		KASSERT(obj_priv->pin_count == 0);
+		if ((ret = i915_gem_object_unbind(obj, 1)))
+			return (ret);
 	}
 
 	if (obj_priv->dmamap == NULL) {
@@ -4511,6 +4506,11 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 		return (EBADF);
 	obj_priv = (struct inteldrm_obj *)obj;
 
+	if (obj_priv->pin_count == 0) {
+		ret = EBUSY;
+		DRM_LOCK(); /* for unref */
+		goto out;
+	}
 	if (i915_tiling_ok(dev, args->stride, obj->size,
 	    args->tiling_mode) == 0) {
 		ret = EINVAL;
