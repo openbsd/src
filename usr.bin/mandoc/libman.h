@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.15 2010/04/02 11:37:07 schwarze Exp $ */
+/*	$Id: libman.h,v 1.16 2010/04/25 16:32:19 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -36,6 +36,7 @@ struct	man {
 #define	MAN_ILINE	(1 << 3) /* Ignored in next-line scope. */
 #define	MAN_LITERAL	(1 << 4) /* Literal input. */
 #define	MAN_BPLINE	(1 << 5)
+#define	MAN_EL_USE	(1 << 6) /* Following .el will be used. */
 	enum man_next	 next;
 	enum man_next	 svnext;
 	struct man_node	*last;
@@ -118,6 +119,7 @@ int		  man_action_post(struct man *);
 int		  man_action_pre(struct man *, struct man_node *);
 int		  man_unscope(struct man *, 
 			const struct man_node *, enum merr);
+int		  man_brace_close(struct man *, int, int);
 
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.24 2010/04/02 11:37:07 schwarze Exp $ */
+/*	$Id: man.c,v 1.25 2010/04/25 16:32:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -62,7 +62,7 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"RS",		"DT",		"UC",		"PD",
 	"Sp",		"Vb",		"Ve",		"de",
 	"dei",		"am",		"ami",		"ig",
-	".",
+	".",		"if",		"ie",		"el",
 	};
 
 const	char * const *man_macronames = __man_macronames;
@@ -152,10 +152,27 @@ man_endparse(struct man *m)
 int
 man_parseln(struct man *m, int ln, char *buf)
 {
+	char		*p;
+	size_t		 len;
+	int		 brace_close = 0;
 
-	return('.' == *buf || '\'' == *buf ? 
-			man_pmacro(m, ln, buf) : 
-			man_ptext(m, ln, buf));
+	if ((len = strlen(buf)) > 1) {
+		p = buf + (len - 2);
+		if (p[0] == '\\' && p[1] == '}') {
+			brace_close = 1;
+			*p = '\0';
+		}
+	}
+
+	if ('.' == *buf || '\'' == *buf) {
+		if ( ! man_pmacro(m, ln, buf))
+			return(0);
+	} else {
+		if ( ! man_ptext(m, ln, buf))
+			return(0);
+	}
+
+	return(brace_close ? man_brace_close(m, ln, len-2) : 1);
 }
 
 
