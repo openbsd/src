@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.2 2009/11/17 18:53:43 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2010/04/25 21:04:27 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ clean: _SUBDIRUSE
 depend:
 	# Nothing here so far...
 
-.if ${TARGET_ARCH} != "sparc64"
+.if ${TARGET_ARCH} != "hppa" && ${TARGET_ARCH} != "sparc64"
 install: ${INCS}
 	${INSTALL} -C -o ${BINOWN} -g ${LOCALEGRP} -m ${NONBINMODE} ${.ALLSRC} \
 		${DESTDIR}/usr/include

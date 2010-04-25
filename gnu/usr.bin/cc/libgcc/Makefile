@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.2 2009/11/17 18:53:43 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2010/04/25 21:04:27 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -114,6 +114,13 @@ LIB2FUNCS_EXTRA = floatunsidf.c floatunsisf.c
 #	_negdf2 _addsubdf3 _muldivdf3 _cmpdf2 _unorddf2 _fixdfsi _fixunsdfsi \
 #	_truncdfsf2 _negsf2 _addsubsf3 _muldivsf3 _cmpsf2 _unordsf2 \
 #	_fixsfsi _fixunssfsi _floatdidf _floatdisf
+.endif
+
+.if ${TARGET_ARCH} == "hppa"
+CFLAGS+=	-DELF=1 -DLINUX=1
+LIB1ASMFUNCS =	_divI _divU _remI _remU _div_const _mulI _dyncall
+LIB1ASMSRC =	pa/milli64.S
+LIB2FUNCS_EXTRA = fptr.c
 .endif
 
 .if ${TARGET_ARCH} == "powerpc"

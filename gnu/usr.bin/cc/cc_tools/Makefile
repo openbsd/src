@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.3 2009/11/17 18:53:43 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2010/04/25 21:04:27 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -49,8 +49,10 @@ TARGET_INC+=	${GCC_CPU}/x86-64.h
 TARGET_INC+=	${GCC_CPU}/openbsd64.h
 .elif ${TARGET_ARCH} == "sparc64"
 TARGET_INC+=	${GCC_CPU}/openbsd64.h
-.else
+.elif ${TARGET_ARCH} == "i386"
 TARGET_INC+=	${GCC_CPU}/openbsdelf.h
+.else
+TARGET_INC+=	${GCC_CPU}/openbsd.h
 .endif
 TARGET_INC+=	defaults.h
 
