@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.47 2010/04/26 22:11:37 deraadt Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.48 2010/04/26 22:21:15 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,9 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		mac68k
-_machdir?=	$S/arch/mac68k
 _arch?=		m68k
-_archdir?=	$S/arch/m68k
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \

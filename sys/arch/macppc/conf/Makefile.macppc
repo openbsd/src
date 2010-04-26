@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.36 2010/04/26 22:11:37 deraadt Exp $
+#	$OpenBSD: Makefile.macppc,v 1.37 2010/04/26 22:21:15 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -33,9 +33,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		macppc
-_machdir?=	$S/arch/macppc
 _arch?=		powerpc
-_archdir?=	$S/arch/powerpc
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \

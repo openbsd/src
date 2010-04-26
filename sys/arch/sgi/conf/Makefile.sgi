@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.29 2010/04/26 22:11:38 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.30 2010/04/26 22:21:15 deraadt Exp $
 
 # Makefile for OpenBSD
 #
@@ -43,9 +43,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		sgi
-_machdir?=	$S/arch/sgi
 _arch?=		mips64
-_archdir?=	$S/arch/mips64
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__

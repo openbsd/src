@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.50 2010/04/26 22:11:37 deraadt Exp $
+#	$OpenBSD: Makefile.hp300,v 1.51 2010/04/26 22:21:14 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,9 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		hp300
-_machdir?=	$S/arch/hp300
 _arch?=		m68k
-_archdir?=	$S/arch/m68k
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \

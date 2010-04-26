@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.50 2010/04/26 22:11:36 deraadt Exp $
+#	$OpenBSD: Makefile.alpha,v 1.51 2010/04/26 22:21:14 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,9 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		alpha
-_machdir?=	$S/arch/alpha
 _arch?=		alpha
-_archdir?=	$S/arch/alpha
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha

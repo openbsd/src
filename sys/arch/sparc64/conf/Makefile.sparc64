@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.37 2010/04/26 22:11:38 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.38 2010/04/26 22:21:15 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,9 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		sparc64
-_machdir?=	$S/arch/sparc64
 _arch?=		sparc64
-_archdir?=	$S/arch/sparc64
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL

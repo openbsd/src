@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.25 2010/04/26 22:11:37 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.26 2010/04/26 22:21:14 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,9 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		amd64
-_machdir?=	$S/arch/amd64
 _arch?=		amd64
-_archdir?=	$S/arch/amd64
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Damd64 -Dx86_64

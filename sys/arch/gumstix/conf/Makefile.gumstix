@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.gumstix,v 1.8 2010/04/26 22:11:37 deraadt Exp $
+#	$OpenBSD: Makefile.gumstix,v 1.9 2010/04/26 22:21:14 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,12 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		gumstix
-_machdir?=	$S/arch/gumstix
 _arch?=		arm
-_archdir?=	$S/arch/arm
-
-_machdir=	$S/arch/gumstix
-ARM=	$S/arch/arm
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__gumstix__

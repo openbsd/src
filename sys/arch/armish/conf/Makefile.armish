@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armish,v 1.15 2010/04/26 22:11:37 deraadt Exp $
+#	$OpenBSD: Makefile.armish,v 1.16 2010/04/26 22:21:14 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,9 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		armish
-_machdir?=	$S/arch/armish
 _arch?=		arm
-_archdir?=	$S/arch/arm
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__

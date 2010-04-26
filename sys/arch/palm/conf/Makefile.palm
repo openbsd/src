@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.palm,v 1.5 2010/04/26 22:11:38 deraadt Exp $
+#	$OpenBSD: Makefile.palm,v 1.6 2010/04/26 22:21:15 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,9 +31,9 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		palm
-_machdir?=	$S/arch/palm
 _arch?=		arm
-_archdir?=	$S/arch/arm
+_machdir?=	$S/arch/${_mach}
+_archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__
