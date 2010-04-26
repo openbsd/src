@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.48 2010/04/26 18:58:29 deraadt Exp $
+#	$OpenBSD: Makefile.alpha,v 1.49 2010/04/26 20:50:15 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,7 +29,11 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-ALPHA=	$S/arch/alpha
+
+_mach?=		alpha
+_machdir?=	$S/arch/alpha
+_arch?=		alpha
+_archdir?=	$S/arch/alpha
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
@@ -46,7 +50,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-traditional -D_LOCORE
-LINKFLAGS=	-T ${ALPHA}/conf/ld.script -X -N -G 4
+LINKFLAGS=	-T ${_machdir}/conf/ld.script -X -N -G 4
 STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB_STRUCT}
@@ -99,9 +103,9 @@ LINKFLAGS+=	-S -x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${ALPHA}/alpha/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${_machdir}/alpha/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${ALPHA}/alpha/genassym.cf > assym.h.tmp && \
+	    ${PARAM} < ${_machdir}/alpha/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -142,15 +146,15 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${ALPHA}/alpha/locore.s param.c ioconf.c ${CFILES} ${SFILES}
+SRCS=	${_machdir}/alpha/locore.s param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${ALPHA}/alpha/cpuconf.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/cpuconf.c \
+.depend: ${SRCS} assym.h param.c ${_machdir}/alpha/cpuconf.c ${DB_STRUCTINFO}
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/alpha/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${_machdir}/alpha/cpuconf.c \
 	    param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${ALPHA}/alpha/genassym.cf
+	    ${CPPFLAGS} < ${_machdir}/alpha/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -174,7 +178,7 @@ machdep.o: Makefile
 clock.o machdep.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
 
 
-locore.o: ${ALPHA}/alpha/locore.s assym.h
+locore.o: ${_machdir}/alpha/locore.s assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

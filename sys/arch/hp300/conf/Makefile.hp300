@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.48 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.hp300,v 1.49 2010/04/26 20:50:16 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,8 +29,11 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-HP300=	$S/arch/hp300
-M68K=	$S/arch/m68k
+
+_mach?=		hp300
+_machdir?=	$S/arch/hp300
+_arch?=		m68k
+_archdir?=	$S/arch/m68k
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
@@ -96,7 +99,7 @@ CPPFLAGS+=	-DM68K_MMU_MOTOROLA
 .endif
 
 ### for the Motorola 68040 Floating Point Software Product
-.include "${M68K}/fpsp/Makefile.inc"
+.include "${_archdir}/fpsp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
@@ -138,8 +141,8 @@ LINKFLAGS+=	-S
 %LOAD
 
 assym.h: $S/kern/genassym.sh \
-	 ${M68K}/m68k/genassym.cf ${HP300}/hp300/genassym.cf Makefile
-	cat ${M68K}/m68k/genassym.cf ${HP300}/hp300/genassym.cf | \
+	 ${_archdir}/m68k/genassym.cf ${_machdir}/hp300/genassym.cf Makefile
+	cat ${_archdir}/m68k/genassym.cf ${_machdir}/hp300/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
@@ -182,17 +185,17 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${HP300}/hp300/locore.s \
+SRCS=	${_machdir}/hp300/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${HP300}/hp300/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/hp300/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${HP300}/hp300/genassym.cf
+	    ${CPPFLAGS} < ${_machdir}/hp300/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -215,7 +218,7 @@ assym.h machdep.o: Makefile
 dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
 
 
-locore.o: ${HP300}/hp300/locore.s assym.h
+locore.o: ${_machdir}/hp300/locore.s assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

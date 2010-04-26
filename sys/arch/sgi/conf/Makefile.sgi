@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.27 2010/04/26 18:58:31 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.28 2010/04/26 20:50:17 deraadt Exp $
 
 # Makefile for OpenBSD
 #
@@ -41,11 +41,14 @@ LD+=${ENDIAN}
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-SGI=$S/arch/sgi
-MIPS64=	$S/arch/mips64
+
+_mach?=		sgi
+_machdir?=	$S/arch/sgi
+_arch?=		mips64
+_archdir?=	$S/arch/mips64
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__sgi__
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__
 CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
@@ -89,9 +92,9 @@ SYSTEM_LD=	@if [ X${DEBUG} = X-g ]; \
 		then strip=-X; \
 		else strip=-x; \
 		fi; \
-		echo ${LD} $$strip -o $@ -e start -T ${SGI}/conf/ld.script \
+		echo ${LD} $$strip -o $@ -e start -T ${_machdir}/conf/ld.script \
 			-Ttext=${LINK_ADDRESS} '$${SYSTEM_OBJ}' vers.o; \
-		${LD} $$strip -o $@ -e start -T ${SGI}/conf/ld.script \
+		${LD} $$strip -o $@ -e start -T ${_machdir}/conf/ld.script \
 			-Ttext=${LINK_ADDRESS} ${SYSTEM_OBJ} vers.o
 #
 SYSTEM_LD_TAIL=	chmod 755 $@; \
@@ -115,11 +118,11 @@ lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
 	    ${CFILES} ioconf.c param.c
 
-symbols.sort: ${SGI}/sgi/symbols.raw
-	grep -v '^#' ${SGI}/sgi/symbols.raw \
+symbols.sort: ${_machdir}/sgi/symbols.raw
+	grep -v '^#' ${_machdir}/sgi/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${SGI}/sgi/locore.S assym.h
+locore.o: ${_machdir}/sgi/locore.S assym.h
 	${NORMAL_S}
 
 # the following are necessary because the files depend on the types of
@@ -134,8 +137,8 @@ ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
 tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 
 assym.h: $S/kern/genassym.sh \
-	 ${MIPS64}/mips64/genassym.cf ${SGI}/sgi/genassym.cf Makefile
-	cat ${MIPS64}/mips64/genassym.cf ${SGI}/sgi/genassym.cf | \
+	 ${_archdir}/mips64/genassym.cf ${_machdir}/sgi/genassym.cf Makefile
+	cat ${_archdir}/mips64/genassym.cf ${_machdir}/sgi/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} \
 	    > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
@@ -168,14 +171,14 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-SRCS=   ${SGI}/sgi/locore.S \
+SRCS=   ${_machdir}/sgi/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SGI}/sgi/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/sgi/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	cat ${MIPS64}/mips64/genassym.cf ${SGI}/sgi/genassym.cf | \
+	cat ${_archdir}/mips64/genassym.cf ${_machdir}/sgi/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend

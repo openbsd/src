@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.4 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.5 2010/04/26 20:50:16 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config ``machineid''
@@ -39,11 +39,14 @@ LD+=${ENDIAN}
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-LOONGSON=$S/arch/loongson
-MIPS64=	$S/arch/mips64
+
+_mach?=		loongson
+_machdir?=	$S/arch/loongson
+_arch?=		mips64
+_archdir?=	$S/arch/mips64
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__loongson__
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__
 CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
@@ -82,9 +85,9 @@ SYSTEM_LD=	@if [ X${DEBUG} = X-g ]; \
 		then strip=-X; \
 		else strip=-x; \
 		fi; \
-		echo ${LD} $$strip -o $@ -e start -T ${LOONGSON}/conf/ld.script \
+		echo ${LD} $$strip -o $@ -e start -T ${_machdir}/conf/ld.script \
 			-Ttext=${LINK_ADDRESS} '$${SYSTEM_OBJ}' vers.o; \
-		${LD} $$strip -o $@ -e start -T ${LOONGSON}/conf/ld.script \
+		${LD} $$strip -o $@ -e start -T ${_machdir}/conf/ld.script \
 			-Ttext=${LINK_ADDRESS} ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	chmod 755 $@; \
 		${SIZE} $@
@@ -107,11 +110,11 @@ lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
 	    ${CFILES} ioconf.c param.c
 
-symbols.sort: ${LOONGSON}/loongson/symbols.raw
-	grep -v '^#' ${LOONGSON}/loongson/symbols.raw \
+symbols.sort: ${_machdir}/loongson/symbols.raw
+	grep -v '^#' ${_machdir}/loongson/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${LOONGSON}/loongson/locore.S assym.h
+locore.o: ${_machdir}/loongson/locore.S assym.h
 	${NORMAL_S}
 
 # the following are necessary because the files depend on the types of
@@ -126,8 +129,8 @@ ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
 tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 
 assym.h: $S/kern/genassym.sh \
-	 ${MIPS64}/mips64/genassym.cf ${LOONGSON}/loongson/genassym.cf Makefile
-	cat ${MIPS64}/mips64/genassym.cf ${LOONGSON}/loongson/genassym.cf | \
+	 ${_archdir}/mips64/genassym.cf ${_machdir}/loongson/genassym.cf Makefile
+	cat ${_archdir}/mips64/genassym.cf ${_machdir}/loongson/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} \
 	    > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
@@ -160,14 +163,14 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-SRCS=   ${LOONGSON}/loongson/locore.S \
+SRCS=   ${_machdir}/loongson/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${LOONGSON}/loongson/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/loongson/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	cat ${MIPS64}/mips64/genassym.cf ${LOONGSON}/loongson/genassym.cf | \
+	cat ${_archdir}/mips64/genassym.cf ${_machdir}/loongson/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend

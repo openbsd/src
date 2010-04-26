@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.48 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.49 2010/04/26 20:50:17 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,8 +29,11 @@ STRIP?= strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-MVME88K=	$S/arch/mvme88k
-M88K=		$S/arch/m88k
+
+_mach?=		mvme88k
+_machdir?=	$S/arch/mvme88k
+_arch?=		m88k
+_archdir?=	$S/arch/m88k
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme88k -Dm88k
@@ -107,9 +110,9 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${M88K}/m88k/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${_archdir}/m88k/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${M88K}/m88k/genassym.cf > assym.h.tmp && \
+	    ${PARAM} < ${_archdir}/m88k/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -159,7 +162,7 @@ depend:: .depend
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${M88K}/m88k/genassym.cf
+	    ${CPPFLAGS} < ${_archdir}/m88k/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -183,7 +186,7 @@ assym.h machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-locore.o: ${MVME88K}/mvme88k/locore.S assym.h
+locore.o: ${_machdir}/mvme88k/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

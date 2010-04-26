@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.36 2010/04/26 18:58:31 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.37 2010/04/26 20:50:17 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -57,7 +57,11 @@ COPTS?= -O2
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-VAX=	$S/arch/vax
+
+_mach?=		vax
+_machdir?=	$S/arch/vax
+_arch?=		vax
+_archdir?=	$S/arch/vax
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
@@ -119,9 +123,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${VAX}/vax/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${_machdir}/vax/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${VAX}/vax/genassym.cf > assym.h.tmp && \
+	    < ${_machdir}/vax/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -148,7 +152,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${VAX}/vax/Locore.c ${CFILES} \
+	    ${_machdir}/vax/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
@@ -163,16 +167,16 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s \
+SRCS=	${_machdir}/vax/intvec.s ${_machdir}/vax/subr.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/vax/intvec.s ${_machdir}/vax/subr.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${VAX}/vax/genassym.cf
+	    ${CPPFLAGS} < ${_machdir}/vax/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -197,10 +201,10 @@ tmscp.o ts.o uba.o uda.o autoconf.o clock.o conf.o emulate.o intvec.o: Makefile
 machdep.o sbi.o subr.o: Makefile
 
 
-intvec.o: ${VAX}/vax/intvec.s assym.h
+intvec.o: ${_machdir}/vax/intvec.s assym.h
 	${NORMAL_S}
 
-subr.o: ${VAX}/vax/subr.s assym.h
+subr.o: ${_machdir}/vax/subr.s assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

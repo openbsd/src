@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.zaurus,v 1.16 2010/04/26 18:58:31 deraadt Exp $
+#	$OpenBSD: Makefile.zaurus,v 1.17 2010/04/26 20:50:17 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,11 +29,14 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-THISARM=	$S/arch/zaurus
-ARM=	$S/arch/arm
+
+_mach?=		zaurus
+_machdir?=	$S/arch/zaurus
+_arch?=		arm
+_archdir?=	$S/arch/arm
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__zaurus__
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
@@ -49,7 +52,7 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
 #LINKFLAGS=	-Ttext 0xF0000020 -e start --warn-common
-#LINKFLAGS=	-T ${THISARM}/conf/kern.ldscript
+#LINKFLAGS=	-T ${_machdir}/conf/kern.ldscript
 LINKFLAGS=	-T ldscript
 LINKFLAGS+=	--warn-common
 STRIPFLAGS=	-g -X -x
@@ -92,11 +95,11 @@ HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	${BOARDTYPE}_start.o locore.o param.o ioconf.o ${OBJS}
+SYSTEM_OBJ=	${_mach}_start.o locore.o param.o ioconf.o ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD_HEAD+=; \
-    cat ${ARM}/conf/ldscript.head ${ARM}/conf/ldscript.tail |  \
+    cat ${_archdir}/conf/ldscript.head ${_archdir}/conf/ldscript.tail |  \
 	sed -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
 	-e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
      > ldscript
@@ -118,8 +121,8 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${ARM}/arm/genassym.cf Makefile
-	cat ${ARM}/arm/genassym.cf | \
+assym.h: $S/kern/genassym.sh ${_archdir}/arm/genassym.cf Makefile
+	cat ${_archdir}/arm/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} \
 	    ${CPPFLAGS} ${PARAM} > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
@@ -162,16 +165,16 @@ links:
 	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink makelinks
 
-SRCS=	${ARM}/arm/locore.S \
+SRCS=	${_archdir}/arm/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${APMINC} ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM}/arm/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/arm/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	cat ${ARM}/arm/genassym.cf | \
+	cat ${_archdir}/arm/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS}
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
@@ -200,10 +203,10 @@ machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-${BOARDTYPE}_start.o: ${THISARM}/zaurus/${BOARDTYPE}_start.S assym.h
+${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S assym.h
 	${NORMAL_S}
 
-locore.o: ${ARM}/arm/locore.S assym.h
+locore.o: ${_archdir}/arm/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

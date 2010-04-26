@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.37 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.38 2010/04/26 20:50:16 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,8 +29,11 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-MVME68K=$S/arch/mvme68k
-M68K=	$S/arch/m68k
+
+_mach?=		mvme68k
+_machdir?=	$S/arch/mvme68k
+_arch?=		m68k
+_archdir?=	$S/arch/m68k
 
 INCLUDES=	 -I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
@@ -61,10 +64,10 @@ HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
 ### for the Motorola 68040 Floating Point Software Product
-.include "${M68K}/fpsp/Makefile.inc"
+.include "${_archdir}/fpsp/Makefile.inc"
 
 ### for the Motorola 68060 Support Package
-.include "${M68K}/060sp/Makefile.inc"
+.include "${_archdir}/060sp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
@@ -106,8 +109,8 @@ LINKFLAGS+=	-S
 %LOAD
 
 assym.h: $S/kern/genassym.sh \
-	 ${M68K}/m68k/genassym.cf ${MVME68K}/mvme68k/genassym.cf Makefile
-	cat ${M68K}/m68k/genassym.cf ${MVME68K}/mvme68k/genassym.cf | \
+	 ${_archdir}/m68k/genassym.cf ${_machdir}/mvme68k/genassym.cf Makefile
+	cat ${_archdir}/m68k/genassym.cf ${_machdir}/mvme68k/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
@@ -151,15 +154,15 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${MVME68K}/mvme68k/locore.s \
+SRCS=	${_machdir}/mvme68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/mvme68k/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${MVME68K}/mvme68k/genassym.cf
+	    ${CPPFLAGS} < ${_machdir}/mvme68k/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -184,7 +187,7 @@ assym.h machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-locore.o: ${MVME68K}/mvme68k/locore.s assym.h
+locore.o: ${_machdir}/mvme68k/locore.s assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

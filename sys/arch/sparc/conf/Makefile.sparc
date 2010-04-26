@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.49 2010/04/26 18:58:31 deraadt Exp $
+#	$OpenBSD: Makefile.sparc,v 1.50 2010/04/26 20:50:17 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,7 +29,11 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-SPARC=	$S/arch/sparc
+
+_mach?=		sparc
+_machdir?=	$S/arch/sparc
+_arch?=		sparc
+_archdir?=	$S/arch/sparc
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dsparc
@@ -113,9 +117,9 @@ LINKFLAGS+=	-S -x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${SPARC}/sparc/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${_machdir}/sparc/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${SPARC}/sparc/genassym.cf > assym.h.tmp && \
+	    ${PARAM} < ${_machdir}/sparc/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -156,17 +160,17 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${SPARC}/sparc/locore.s \
+SRCS=	${_machdir}/sparc/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/sparc/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${SPARC}/sparc/genassym.cf
+	    ${CPPFLAGS} < ${_machdir}/sparc/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -191,7 +195,7 @@ bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
 ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o locore.o: Makefile
 machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 
-locore.o: ${SPARC}/sparc/locore.s assym.h
+locore.o: ${_machdir}/sparc/locore.s assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

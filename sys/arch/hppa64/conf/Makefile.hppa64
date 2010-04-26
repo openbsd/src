@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa64,v 1.12 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.hppa64,v 1.13 2010/04/26 20:50:16 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,7 +29,11 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-HPPA=	$S/arch/hppa64
+
+_mach?=		hppa64
+_machdir?=	$S/arch/hppa64
+_arch?=		hppa64
+_archdir?=	$S/arch/hppa64
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
@@ -42,7 +46,7 @@ CMACHFLAGS=	-fno-stack-protector -fno-builtin-log -fno-builtin-printf \
 COPTS?=		-Os -mpa-risc-2-0 -mno-space-regs -mdisable-fpregs
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-X -T ${HPPA}/conf/ld.script -Ttext 80000 --warn-common
+LINKFLAGS=	-X -T ${_machdir}/conf/ld.script -Ttext 80000 --warn-common
 STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB} != ""
@@ -100,9 +104,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${HPPA}/hppa64/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${_machdir}/hppa64/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${HPPA}/hppa64/genassym.cf > assym.h.tmp && \
+	    < ${_machdir}/hppa64/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -143,16 +147,16 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${HPPA}/hppa64/locore.S \
+SRCS=	${_machdir}/hppa64/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${HPPA}/hppa64/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/hppa64/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${HPPA}/hppa64/genassym.cf
+	    ${CPPFLAGS} < ${_machdir}/hppa64/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -174,7 +178,7 @@ assym.h machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o trap.o: Makefile
 
-locore.o: ${HPPA}/hppa64/locore.S assym.h
+locore.o: ${_machdir}/hppa64/locore.S assym.h
 	${NORMAL_S}
 
 fpemu.o: assym.h

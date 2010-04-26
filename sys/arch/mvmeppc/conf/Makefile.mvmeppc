@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.32 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.33 2010/04/26 20:50:17 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -32,7 +32,11 @@ SIZE?=	size
 .ifndef	S
 S!=	cd ../../../..; pwd
 .endif
-MVMEPPC=	$S/arch/mvmeppc
+
+_mach?=		mvmeppc
+_machdir?=	$S/arch/mvmeppc
+_arch?=		powerpc
+_archdir?=	$S/arch/powerpc
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
@@ -107,9 +111,9 @@ LINKFLAGS+=	-S -x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${MVMEPPC}/mvmeppc/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${_machdir}/mvmeppc/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    < ${MVMEPPC}/mvmeppc/genassym.cf > assym.h.tmp && \
+	    < ${_machdir}/mvmeppc/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -149,17 +153,17 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${MVMEPPC}/mvmeppc/locore.S \
+SRCS=	${_machdir}/mvmeppc/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MVMEPPC}/mvmeppc/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/mvmeppc/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${MVMEPPC}/mvmeppc/genassym.cf
+	    ${CPPFLAGS} < ${_machdir}/mvmeppc/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -182,7 +186,7 @@ genassym.o machdep.o: Makefile
 locore.o machdep.o: Makefile
 
 
-locore.o: ${MVMEPPC}/mvmeppc/locore.S assym.h
+locore.o: ${_machdir}/mvmeppc/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

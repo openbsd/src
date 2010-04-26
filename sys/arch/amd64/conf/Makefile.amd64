@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.22 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.23 2010/04/26 20:50:16 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,7 +29,11 @@ STRIP?=	strip
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
-AMD64=	$S/arch/amd64
+
+_mach?=		amd64
+_machdir?=	$S/arch/amd64
+_arch?=		amd64
+_archdir?=	$S/arch/amd46
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Damd64 -Dx86_64
@@ -108,9 +112,9 @@ LINKFLAGS+=	-S -x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${AMD64}/amd64/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${_machdir}/amd64/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${AMD64}/amd64/genassym.cf > assym.h.tmp && \
+	    ${PARAM} < ${_machdir}/amd64/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -151,8 +155,8 @@ links:
 	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink makelinks
 
-AFILES=	${AMD64}/amd64/locore.S ${AMD64}/amd64/vector.S ${AMD64}/amd64/copy.S \
-	${AMD64}/amd64/spl.S
+AFILES=	${_machdir}/amd64/locore.S ${_machdir}/amd64/vector.S ${_machdir}/amd64/copy.S \
+	${_machdir}/amd64/spl.S
 SRCS=	param.c ioconf.c ${AFILES} ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${APMINC} ${DB_STRUCTINFO}
@@ -160,7 +164,7 @@ depend:: .depend
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} ${PARAM} < ${AMD64}/amd64/genassym.cf
+	    ${CPPFLAGS} ${PARAM} < ${_machdir}/amd64/genassym.cf
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
@@ -188,16 +192,16 @@ machdep.o: Makefile
 locore.o machdep.o: Makefile
 
 
-locore.o: ${AMD64}/amd64/locore.S assym.h
+locore.o: ${_machdir}/amd64/locore.S assym.h
 	${NORMAL_S}
 
-vector.o: ${AMD64}/amd64/vector.S assym.h
+vector.o: ${_machdir}/amd64/vector.S assym.h
 	${NORMAL_S}
 
-copy.o: ${AMD64}/amd64/copy.S assym.h
+copy.o: ${_machdir}/amd64/copy.S assym.h
 	${NORMAL_S}
 
-spl.o: ${AMD64}/amd64/spl.S assym.h
+spl.o: ${_machdir}/amd64/spl.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

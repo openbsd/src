@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.13 2010/04/26 18:58:30 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.14 2010/04/26 20:50:16 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -31,8 +31,11 @@ SIZE?=	size
 .ifndef	S
 S!=	cd ../../../..; pwd
 .endif
-LANDISK=	$S/arch/landisk
-SH=		$S/arch/sh
+
+_mach?=		landisk
+_machdir?=	$S/arch/landisk
+_arch?=		sh
+_archdir?=	$S/arch/sh
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dlandisk
@@ -108,8 +111,8 @@ LINKFLAGS+=	-S -x
 %LOAD
 
 assym.h: $S/kern/genassym.sh \
-	 ${SH}/sh/genassym.cf Makefile
-	cat ${SH}/sh/genassym.cf | \
+	 ${_archdir}/sh/genassym.cf Makefile
+	cat ${_archdir}/sh/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
@@ -151,16 +154,16 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${LANDISK}/landisk/locore.S \
+SRCS=	${_machdir}/landisk/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${LANDISK}/landisk/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/landisk/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	cat ${SH}/sh/genassym.cf | \
+	cat ${_archdir}/sh/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
@@ -183,7 +186,7 @@ assym.h machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-locore.o: ${LANDISK}/landisk/locore.S assym.h
+locore.o: ${_machdir}/landisk/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
