@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.23 2010/04/06 20:07:01 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.24 2010/04/26 07:11:10 jakemsr Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2010 $
+.Dd $Mdocdate: April 26 2010 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -262,6 +262,13 @@ If they are not, then fail or set up a conversion layer.
 Sometimes the rate set can be slightly different to what was requested.
 A difference of about 0.5% is not audible and should be ignored.
 .El
+.Pp
+Parameters cannot be changed while the stream is in a waiting state;
+if
+.Fn sio_start
+has been called,
+.Fn sio_stop
+must be called before parameters can be changed.
 .Pp
 If
 .Nm libsndio
