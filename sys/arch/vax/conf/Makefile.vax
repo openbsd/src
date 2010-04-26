@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.37 2010/04/26 20:50:17 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.38 2010/04/26 22:11:38 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -123,9 +123,11 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${_machdir}/vax/genassym.cf Makefile
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${_machdir}/vax/genassym.cf > assym.h.tmp && \
+assym.h: $S/kern/genassym.sh Makefile \
+	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} | \
+	    sort -u > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -145,8 +147,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-clean::	cleankernel
-cleankernel:
+clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
@@ -175,8 +176,9 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/vax/intvec.s ${_machdir}/vax/subr.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${_machdir}/vax/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${MKDEP} ${CFLAGS} ${CPPFLAGS} | \
+	    sort -u > assym.dep
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep

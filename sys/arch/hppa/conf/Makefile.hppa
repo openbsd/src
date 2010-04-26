@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.39 2010/04/26 20:50:16 deraadt Exp $
+#	$OpenBSD: Makefile.hppa,v 1.40 2010/04/26 22:11:37 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -124,9 +124,11 @@ LINKFLAGS+=	-S -x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${_machdir}/hppa/genassym.cf Makefile
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${_machdir}/hppa/genassym.cf > assym.h.tmp && \
+assym.h: $S/kern/genassym.sh Makefile \
+	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} | \
+	    sort -u > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -175,8 +177,9 @@ SRCS=	${_machdir}/hppa/locore.S \
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
-	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${_machdir}/hppa/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${MKDEP} ${CFLAGS} ${CPPFLAGS} | \
+	    sort -u > assym.dep
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep

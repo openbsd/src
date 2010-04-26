@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.5 2010/04/26 20:50:16 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.6 2010/04/26 22:11:37 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config ``machineid''
@@ -128,11 +128,11 @@ if_arp.o if_ether.o: Makefile
 ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
 tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 
-assym.h: $S/kern/genassym.sh \
-	 ${_archdir}/mips64/genassym.cf ${_machdir}/loongson/genassym.cf Makefile
-	cat ${_archdir}/mips64/genassym.cf ${_machdir}/loongson/genassym.cf | \
-	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} \
-	    > assym.h.tmp && \
+assym.h: $S/kern/genassym.sh Makefile \
+	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} | \
+	    sort -u > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 links:
@@ -170,8 +170,9 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/loongson/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	cat ${_archdir}/mips64/genassym.cf ${_machdir}/loongson/genassym.cf | \
-	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${MKDEP} ${CFLAGS} ${CPPFLAGS} | \
+	    sort -u > assym.dep
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep

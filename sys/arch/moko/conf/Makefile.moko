@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.moko,v 1.7 2010/04/26 20:52:50 deraadt Exp $
+#	$OpenBSD: Makefile.moko,v 1.8 2010/04/26 22:11:37 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -121,10 +121,11 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${_archdir}/arm/genassym.cf Makefile
-	cat ${_archdir}/arm/genassym.cf | \
-	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} \
-	    ${CPPFLAGS} ${PARAM} > assym.h.tmp && \
+assym.h: $S/kern/genassym.sh Makefile \
+	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} | \
+	    sort -u > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -174,9 +175,9 @@ depend:: .depend
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	cat ${_archdir}/arm/genassym.cf | \
-	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS}
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${MKDEP} ${CFLAGS} ${CPPFLAGS} | \
+	    sort -u > assym.dep
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep

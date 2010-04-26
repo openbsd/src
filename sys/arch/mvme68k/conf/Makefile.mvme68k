@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.38 2010/04/26 20:50:16 deraadt Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.39 2010/04/26 22:11:37 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
 #	/sys/arch/mvme68k/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
 #	/sys/arch/mvme68k/conf/Makefile.mvme68k
 # after which config should be rerun for all machines of that type.
@@ -108,12 +108,12 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh \
-	 ${_archdir}/m68k/genassym.cf ${_machdir}/mvme68k/genassym.cf Makefile
-	cat ${_archdir}/m68k/genassym.cf ${_machdir}/mvme68k/genassym.cf | \
-	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    > assym.h.tmp && \
-	mv -f assym.h.tmp assym.h
+assym.h: $S/kern/genassym.sh Makefile \
+	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} | \
+	    sort -u > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -161,8 +161,9 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/mvme68k/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${_machdir}/mvme68k/genassym.cf
+	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
+	    sh $S/kern/genassym.sh ${MKDEP} ${CFLAGS} ${CPPFLAGS} | \
+	    sort -u > assym.dep
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
