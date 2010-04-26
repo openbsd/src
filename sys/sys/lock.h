@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.20 2010/04/23 21:34:40 deraadt Exp $	*/
+/*	$OpenBSD: lock.h,v 1.21 2010/04/26 05:48:19 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -40,30 +40,15 @@
 
 #ifdef _KERNEL
 #include <machine/lock.h>
-#endif /* _KERNEL */
-
-/*
- * A simple spin lock.
- *
- * This structure only sets one bit of data, but is sized based on the
- * minimum word size that can be operated on by the hardware test-and-set
- * instruction. It is only needed for multiprocessors, as uniprocessors
- * will always run to completion or a sleep. It is an error to hold one
- * of these locks while a process is sleeping.
- */
-struct simplelock {
-#ifdef MULTIPROCESSOR
-	__cpu_simple_lock_t lock_data;
-#else
-	int	lock_data;
 #endif
+
+struct simplelock {
 };
 
+typedef struct simplelock       simple_lock_data_t;
+typedef struct simplelock       *simple_lock_t;
+
 #ifdef _KERNEL
-
-#define SLOCK_LOCKED 1
-#define SLOCK_UNLOCKED 0
-
 #define	simple_lock(lkp)
 #define	simple_lock_try(lkp)	(1)	/* always succeeds */
 #define	simple_unlock(lkp)
@@ -71,14 +56,10 @@ struct simplelock {
 
 static __inline void simple_lock_init(struct simplelock *lkp)
 {
-
-	lkp->lock_data = SLOCK_UNLOCKED;
 }
 
 #endif /* _KERNEL */
 
-typedef struct simplelock       simple_lock_data_t;
-typedef struct simplelock       *simple_lock_t;
 typedef struct lock             lock_data_t;
 typedef struct lock             *lock_t;
 
@@ -107,13 +88,6 @@ struct lock {
 
 	/* maximum sleep time (for tsleep) */
 	int lk_timo;
-
-#if defined(LOCKDEBUG)
-	const char *lk_lock_file;
-	const char *lk_unlock_file;
-	int lk_lock_line;
-	int lk_unlock_line;
-#endif
 };
 
 /*
@@ -187,41 +161,15 @@ struct lock {
 #define LK_NOPROC ((pid_t) -1)
 #define LK_NOCPU ((cpuid_t) -1)
 
-struct proc;
-
 void	lockinit(struct lock *, int prio, char *wmesg, int timo,
 			int flags);
-int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
+int	lockmgr(__volatile struct lock *, u_int flags, void *);
 void	lockmgr_printinfo(__volatile struct lock *);
 int	lockstatus(struct lock *);
 
-#if defined(LOCKDEBUG)
-int	_spinlock_release_all(__volatile struct lock *, const char *, int);
-void	_spinlock_acquire_count(__volatile struct lock *, int, const char *,
-	    int);
-
-#define	spinlock_release_all(l)	_spinlock_release_all((l), __FILE__, __LINE__)
-#define	spinlock_acquire_count(l, c) _spinlock_acquire_count((l), (c),	\
-					__FILE__, __LINE__)
-#else
 int	spinlock_release_all(__volatile struct lock *);
 void	spinlock_acquire_count(__volatile struct lock *, int);
-#endif
 
-#ifdef LOCKDEBUG
-#define LOCK_ASSERT(x)	KASSERT(x)
-#else
 #define LOCK_ASSERT(x)	/* nothing */
-#endif
-
-#if !defined(MULTIPROCESSOR)
-/*
- * XXX Simplelock macros used at "trusted" places.
- */
-#define	SIMPLELOCK		simplelock
-#define	SIMPLE_LOCK_INIT	simple_lock_init
-#define	SIMPLE_LOCK		simple_lock
-#define	SIMPLE_UNLOCK		simple_unlock
-#endif
 
 #endif /* !_LOCK_H_ */

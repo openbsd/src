@@ -1,9 +1,11 @@
-/*	$OpenBSD: lock.h,v 1.1 2007/05/01 18:56:30 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.2 2010/04/26 05:48:19 deraadt Exp $	*/
 
 /* public domain */
 
 #ifndef	_M68K_LOCK_H_
 #define	_M68K_LOCK_H_
+
+#include <machine/atomic.h>
 
 typedef volatile u_int __cpu_simple_lock_t;
 
