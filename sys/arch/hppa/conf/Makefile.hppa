@@ -1,7 +1,5 @@
-#	$OpenBSD: Makefile.hppa,v 1.37 2009/10/19 19:46:56 guenther Exp $
+#	$OpenBSD: Makefile.hppa,v 1.38 2010/04/26 18:58:30 deraadt Exp $
 
-# Makefile for OpenBSD
-#
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
@@ -18,8 +16,8 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
-# DEBUG is set to -g if debugging.
-# PROF is set to -pg if profiling.
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
 
@@ -185,14 +183,14 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 assym.h machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 locore.o machdep.o trap.o: Makefile
 
 locore.o: ${HPPA}/hppa/locore.S assym.h

@@ -1,13 +1,11 @@
-#	$OpenBSD: Makefile.aviion,v 1.10 2009/10/19 19:46:56 guenther Exp $
-#
-# Makefile for OpenBSD
-#
+#	$OpenBSD: Makefile.aviion,v 1.11 2010/04/26 18:58:30 deraadt Exp $
+
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
 #	/sys/arch/aviion/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
 #	/sys/arch/aviion/conf/Makefile.aviion
 # after which config should be rerun for all machines of that type.

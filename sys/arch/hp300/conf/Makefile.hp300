@@ -1,8 +1,5 @@
-#	$OpenBSD: Makefile.hp300,v 1.47 2009/10/19 19:46:56 guenther Exp $
-#	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
+#	$OpenBSD: Makefile.hp300,v 1.48 2010/04/26 18:58:30 deraadt Exp $
 
-# Makefile for OpenBSD
-#
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
@@ -19,8 +16,8 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
-# DEBUG is set to -g if debugging.
-# PROF is set to -pg if profiling.
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
 

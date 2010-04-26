@@ -1,13 +1,11 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.47 2009/10/19 19:46:56 guenther Exp $
-#
-# Makefile for OpenBSD
-#
+#	$OpenBSD: Makefile.mvme88k,v 1.48 2010/04/26 18:58:30 deraadt Exp $
+
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
 #	/sys/arch/mvme88k/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
 #	/sys/arch/mvme88k/conf/Makefile.mvme88k
 # after which config should be rerun for all machines of that type.

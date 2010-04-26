@@ -1,7 +1,5 @@
-#	$OpenBSD: Makefile.beagle,v 1.6 2010/02/12 17:37:06 mk Exp $
+#	$OpenBSD: Makefile.beagle,v 1.7 2010/04/26 18:58:30 deraadt Exp $
 
-# Makefile for OpenBSD
-#
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
@@ -18,8 +16,8 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
-# DEBUG is set to -g if debugging.
-# PROF is set to -pg if profiling.
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
 
@@ -48,7 +46,7 @@ CMACHFLAGS+=	-msoft-float -fno-builtin-printf -fno-builtin-log
 
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS} 
+AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
 #LINKFLAGS=	-Ttext 0xF0000020 -e start --warn-common
 #LINKFLAGS=	-T ${THISARM}/conf/kern.ldscript
 LINKFLAGS=	-T ldscript
@@ -174,7 +172,7 @@ depend:: .depend
 .endif
 	cat ${ARM}/arm/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} 
+	    ${CPPFLAGS}
 	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -196,9 +194,9 @@ bsd.img: bsd.rd
 
 bsd.umg: bsd.img
 	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd.img bsd.umg
- 
-# depend on network or filesystem configuration 
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
 if.o if_tun.o if_loop.o if_ethersubr.o: Makefile
 if_arp.o if_ether.o: Makefile
 ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
@@ -207,7 +205,7 @@ tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 locore.o machdep.o: Makefile
 
 ${BOARDTYPE}_start.o: ${THISARM}/${BOARDTYPE}/${BOARDTYPE}_start.S assym.h

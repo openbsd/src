@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.26 2010/01/03 14:17:27 miod Exp $
+#	$OpenBSD: Makefile.sgi,v 1.27 2010/04/26 18:58:31 deraadt Exp $
 
 # Makefile for OpenBSD
 #
@@ -7,7 +7,7 @@
 # Most changes should be made in the machine description
 #	/sys/arch/sgi/conf/``machineid''
 # after which you should do
-#	 config ``machineid''
+#	config ``machineid''
 # Machine generic makefile changes should be made in
 #	/sys/arch/sgi/conf/Makefile.``machinetype''
 # after which config should be rerun for all machines of that type.
@@ -18,9 +18,8 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
-
-# DEBUG is set to -g if debugging
-# PROF is set to -pg if profiling
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
 

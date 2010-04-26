@@ -1,8 +1,5 @@
-#	$OpenBSD: Makefile.alpha,v 1.47 2009/10/19 19:46:56 guenther Exp $
-#	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
+#	$OpenBSD: Makefile.alpha,v 1.48 2010/04/26 18:58:29 deraadt Exp $
 
-# Makefile for OpenBSD
-#
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
@@ -13,8 +10,14 @@
 #	/sys/arch/alpha/conf/Makefile.alpha
 # after which config should be rerun for all machines of that type.
 #
-# DEBUG is set to -g if debugging.
-# PROF is set to -pg if profiling.
+# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
+#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
+#
+# -DTRACE	compile in kernel tracing hooks
+# -DQUOTA	compile in file system quotas
+
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
 
@@ -40,7 +43,7 @@ CMACHFLAGS=	-mno-fp-regs -fno-builtin-printf -fno-builtin-log \
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-COPTS?= 	-O2
+COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-traditional -D_LOCORE
 LINKFLAGS=	-T ${ALPHA}/conf/ld.script -X -N -G 4
@@ -160,14 +163,14 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 clock.o machdep.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
 
 

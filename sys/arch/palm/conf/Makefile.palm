@@ -1,8 +1,5 @@
-#	$OpenBSD: Makefile.palm,v 1.2 2009/10/19 19:46:56 guenther Exp $
-#	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
+#	$OpenBSD: Makefile.palm,v 1.3 2010/04/26 18:58:31 deraadt Exp $
 
-# Makefile for OpenBSD
-#
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
@@ -19,8 +16,8 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
-# DEBUG is set to -g if debugging.
-# PROF is set to -pg if profiling.
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
 
