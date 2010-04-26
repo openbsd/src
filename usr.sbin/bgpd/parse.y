@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.250 2010/03/31 18:53:23 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.251 2010/04/26 08:46:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2335,6 +2335,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct listen_addr	*la;
 	struct network		*n;
 	struct filter_rule	*r;
+	struct rde_rib		*rr;
 	int			 errors = 0;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
@@ -2411,22 +2412,30 @@ parse_config(char *filename, struct bgpd_config *xconf,
 
 		while ((n = TAILQ_FIRST(netconf)) != NULL) {
 			TAILQ_REMOVE(netconf, n, entry);
+			filterset_free(&n->net.attrset);
 			free(n);
 		}
 
 		while ((r = TAILQ_FIRST(filter_l)) != NULL) {
 			TAILQ_REMOVE(filter_l, r, entry);
+			filterset_free(&r->set);
 			free(r);
 		}
 
 		while ((r = TAILQ_FIRST(peerfilter_l)) != NULL) {
 			TAILQ_REMOVE(peerfilter_l, r, entry);
+			filterset_free(&r->set);
 			free(r);
 		}
 
 		while ((r = TAILQ_FIRST(groupfilter_l)) != NULL) {
 			TAILQ_REMOVE(groupfilter_l, r, entry);
+			filterset_free(&r->set);
 			free(r);
+		}
+		while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
+			free(rr);
 		}
 	} else {
 		errors += merge_config(xconf, conf, peer_l, listen_addrs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.158 2010/04/22 08:24:58 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.159 2010/04/26 08:46:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -434,10 +434,6 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, &rules_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
-		while ((rr = SIMPLEQ_FIRST(&ribnames))) {
-			SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
-			free(rr);
-		}
 		return (1);
 	}
 
