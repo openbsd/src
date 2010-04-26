@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.25 2010/04/25 14:32:04 tedu Exp $	*/
+/*	$OpenBSD: complete.c,v 1.26 2010/04/26 16:51:59 stsp Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ complete_ambiguous(char *word, int list, StringList *words)
 		}
 		if (matchlen > wordlen) {
 			ftpvis(insertstr, sizeof(insertstr),
-			    lastmatch + wordlen, matchlen);
+			    lastmatch + wordlen, matchlen - wordlen);
 			if (el_insertstr(el, insertstr) == -1)
 				return (CC_ERROR);
 			else	
