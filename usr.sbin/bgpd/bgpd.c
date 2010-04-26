@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.159 2010/04/26 08:46:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.160 2010/04/26 12:25:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -454,10 +454,11 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		return (-1);
 
 	/* send peer list and listeners to the SE */
-	for (p = *peer_l; p != NULL; p = p->next)
+	for (p = *peer_l; p != NULL; p = p->next) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
+	}
 
 	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_LISTENER, 0, 0, la->fd,
