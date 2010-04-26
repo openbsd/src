@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.66 2010/03/26 05:10:50 lum Exp $	 */
+/* $OpenBSD: machine.c,v 1.67 2010/04/26 00:30:58 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -214,9 +214,11 @@ get_system_info(struct system_info *si)
 	int64_t *tmpstate;
 
 	if (ncpu > 1) {
+		int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, /*fillme*/0};
+
 		size = CPUSTATES * sizeof(int64_t);
 		for (i = 0; i < ncpu; i++) {
-			int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, i};
+			cp_time_mib[2] = i;
 			tmpstate = cpu_states + (CPUSTATES * i);
 			if (sysctl(cp_time_mib, 3, cp_time[i], &size, NULL, 0) < 0)
 				warn("sysctl kern.cp_time2 failed");
