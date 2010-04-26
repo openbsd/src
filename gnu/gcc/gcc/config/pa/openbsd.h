@@ -120,6 +120,30 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_GAS
 #define TARGET_GAS 1
 
+/* XXX OpenBSD/hppa has a non-standard .comm */
+
+#undef ASM_OUTPUT_ALIGNED_COMMON
+#define ASM_OUTPUT_ALIGNED_COMMON(FILE, NAME, SIZE, ALIGN)  		\
+  do									\
+    {									\
+      switch_to_section (bss_section);					\
+      assemble_name((FILE), (NAME));					\
+      fprintf ((FILE), "\t.comm %d\n",					\
+	       MAX ((SIZE), ((ALIGN) / BITS_PER_UNIT)));		\
+    }									\
+  while (0)
+
+#undef ASM_OUTPUT_ALIGNED_LOCAL
+#define ASM_OUTPUT_ALIGNED_LOCAL(FILE, NAME, SIZE, ALIGN)  		\
+  do									\
+    {									\
+      switch_to_section (bss_section);					\
+      fprintf((FILE), "\t.align %d\n", ((ALIGN) / BITS_PER_UNIT));	\
+      assemble_name((FILE), (NAME));					\
+      fprintf ((FILE), "\t.block %d\n",	(SIZE));			\
+    }									\
+  while (0)
+
 #undef TARGET_SCHED_DEFAULT
 #define TARGET_SCHED_DEFAULT PROCESSOR_700
 
