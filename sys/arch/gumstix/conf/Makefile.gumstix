@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.gumstix,v 1.6 2010/04/26 20:50:16 deraadt Exp $
+#	$OpenBSD: Makefile.gumstix,v 1.7 2010/04/26 20:52:50 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -212,15 +212,6 @@ ${_mach}_start.o: ${_machdir}/gumstix/${_mach}_start.S assym.h
 locore.o: ${_archdir}/arm/locore.S assym.h
 	${NORMAL_S}
 
-
-bsd.rd: bsd
-	cp bsd bsd.rd
-	$S/../distrib/${BOARDTYPE}/ramdisk/rdsetroot < $S/../distrib/${BOARDTYPE}/ramdisk/mr.fs bsd.rd
-
-bsd.img: bsd.rd
-	${OBJCOPY} -O binary bsd.rd bsd.img
-	mkimage -C none -A arm -O OpenBSD -e 0xa0200000 -a 0xa0200000 -d bsd.img bsd.umg
-	sudo mount /dev/sd0i /mnt && sudo cp bsd.umg /mnt && sudo umount /mnt
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf

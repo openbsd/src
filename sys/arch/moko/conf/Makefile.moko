@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.moko,v 1.6 2010/04/26 20:50:16 deraadt Exp $
+#	$OpenBSD: Makefile.moko,v 1.7 2010/04/26 20:52:50 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -208,15 +208,6 @@ ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S assym.h
 
 locore.o: ${_archdir}/arm/locore.S assym.h
 	${NORMAL_S}
-
-bsd.rd: bsd
-	cp bsd bsd.rd
-	$S/../distrib/${_mach}/ramdisk/rdsetroot < $S/../distrib/${_mach}/ramdisk/mr.fs bsd.rd
-
-bsd.img: bsd.rd
-	${OBJCOPY} -O binary bsd.rd bsd.i
-	gzip < bsd.i > bsd.rdi.gz
-	mkimage -A arm -O openbsd -T kernel -C gzip -a ${KERNEL_BASE_PHYS} -e ${KERNEL_BASE_PHYS} -n "OpenBSD" -d bsd.rdi.gz bsd.img
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf

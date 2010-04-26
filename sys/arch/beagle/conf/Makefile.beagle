@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.8 2010/04/26 20:50:16 deraadt Exp $
+#	$OpenBSD: Makefile.beagle,v 1.9 2010/04/26 20:52:50 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -187,16 +187,6 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
-
-bsd.rd: bsd
-		cp bsd bsd.rd
-		$S/../distrib/${_mach}/ramdisk/rdsetroot < $S/../distrib/${_mach}/ramdisk/mr.fs bsd.rd
-
-bsd.img: bsd.rd
-	${OBJCOPY} -O binary bsd.rd bsd.img
-
-bsd.umg: bsd.img
-	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd.img bsd.umg
 
 # depend on network or filesystem configuration
 uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
