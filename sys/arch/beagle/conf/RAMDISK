@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.5 2010/02/12 05:36:10 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.6 2010/04/26 20:51:51 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -37,7 +37,6 @@ options		CACHE_CLEAN_BLOCK_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0x80300000"
 makeoptions	KERNEL_BASE_VIRT="0xc0300000"
-makeoptions	BOARDTYPE="beagle"
 options	BUILD_STARTUP_PAGETABLE
 options	STARTUP_PAGETABLE_ADDR=0x80200000
 options	SDRAM_START="0x80000000"

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.3 2009/01/02 06:38:24 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.4 2010/04/26 20:51:51 deraadt Exp $
 
 machine	moko	arm
 
@@ -22,7 +22,6 @@ options		S3C2XX0_XTAL_CLK=12000000
 
 makeoptions	KERNEL_BASE_PHYS="0x30300000"
 makeoptions	KERNEL_BASE_VIRT="0xc0300000"
-makeoptions	BOARDTYPE="moko"
 
 # estimated number of users
 

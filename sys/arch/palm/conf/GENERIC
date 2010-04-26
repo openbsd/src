@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2010/03/03 20:57:28 mk Exp $
+#	$OpenBSD: GENERIC,v 1.5 2010/04/26 20:51:51 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -20,7 +20,6 @@ options		CACHE_CLEAN_BLOCK_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"
-makeoptions	BOARDTYPE="palm"
 
 # CPU options
 options		CPU_XSCALE_PXA2X0	# Support the XScale core

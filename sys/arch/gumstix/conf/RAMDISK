@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2008/11/26 14:18:11 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2010/04/26 20:51:51 deraadt Exp $
 
 machine	gumstix	arm
 
@@ -19,7 +19,6 @@ options		CACHE_CLEAN_BLOCK_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"
-makeoptions	BOARDTYPE="gumstix"
 
 # estimated number of users
 

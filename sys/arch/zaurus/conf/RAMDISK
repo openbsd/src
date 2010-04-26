@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.39 2009/06/02 06:33:24 todd Exp $
+#	$OpenBSD: RAMDISK,v 1.40 2010/04/26 20:51:51 deraadt Exp $
 
 machine	zaurus	arm
 
@@ -20,7 +20,6 @@ options		CACHE_CLEAN_BLOCK_INTR
 
 makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"
-makeoptions	BOARDTYPE="zaurus"
 
 # estimated number of users
 
