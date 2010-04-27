@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.12 2010/04/27 06:46:26 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.13 2010/04/27 15:40:23 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -98,7 +98,7 @@ SYSTEM_LD_TAIL+=; \
 %LOAD
 
 clean::
-	rm -f eddep bsd bsd.gdb bsd.ecoff tags *.o locore.i [a-z]*.s \
+	rm -f eddep bsd bsd.gdb bsd.ecoff tags *.o [a-z]*.s \
 	    Errs errs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint: /tmp param.c
