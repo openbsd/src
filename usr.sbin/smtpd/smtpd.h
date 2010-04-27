@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.180 2010/04/22 12:56:33 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.181 2010/04/27 09:49:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -251,9 +251,9 @@ enum map_src {
 
 enum map_kind {
 	K_NONE,
-	K_ALIASES,
+	K_ALIAS,
 	K_VIRTUAL,
-	K_SECRETS
+	K_SECRET
 };	
 
 enum mapel_type {
@@ -295,12 +295,7 @@ struct map_backend {
 
 struct map_parser {
 	enum map_kind kind;
-	void *(*extract)(char *, size_t);
-};
-
-struct map_secret {
-	char username[MAX_LINE_SIZE];
-	char password[MAX_LINE_SIZE];
+	void *(*extract)(char *, char *, size_t);
 };
 
 enum cond_type {
@@ -409,18 +404,15 @@ enum expand_flags {
 	F_EXPAND_DONE
 };
 
-struct expand_node {
-	RB_ENTRY(expand_node)	entry;
+struct expandnode {
+	RB_ENTRY(expandnode)	entry;
 	size_t			refcnt;
 	enum expand_flags      	flags;
 	enum expand_type       	type;
 	union path_data		u;
 };
 
-struct alias {
-	enum expand_type type;
-	union path_data		u;
-};
+RB_HEAD(expandtree, expandnode);
 
 enum message_type {
 	T_MDA_MESSAGE		= 0x1,
@@ -787,7 +779,7 @@ struct lkasession {
 	struct path			 path;
 	struct deliverylist    		 deliverylist;
 
-	RB_HEAD(expandtree, expand_node)	expandtree;
+	struct expandtree		 expandtree;
 
 	u_int8_t			 iterations;
 	u_int32_t			 pending;
@@ -840,6 +832,24 @@ struct mta_session {
 };
 
 
+/* maps return structures */
+struct map_secret {
+	char username[MAX_LINE_SIZE];
+	char password[MAX_LINE_SIZE];
+};
+
+struct map_alias {
+	size_t			nbnodes;
+	struct expandtree	expandtree;
+};
+
+struct map_virtual {
+	size_t			nbnodes;
+	struct expandtree	expandtree;
+};
+
+
+
 extern void (*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
 
 /* aliases.c */
@@ -848,8 +858,7 @@ int aliases_get(struct smtpd *, objid_t, struct expandtree *, char *);
 int aliases_vdomain_exists(struct smtpd *, objid_t, char *);
 int aliases_virtual_exist(struct smtpd *, objid_t, struct path *);
 int aliases_virtual_get(struct smtpd *, objid_t, struct expandtree *, struct path *);
-int alias_parse(struct alias *, char *);
-void alias_to_expand_node(struct expand_node *, struct alias *);
+int alias_parse(struct expandnode *, char *);
 
 /* authenticate.c */
 int authenticate_user(char *, char *);
@@ -882,12 +891,13 @@ void		 dns_query_ptr(struct smtpd *, struct sockaddr_storage *,
 void		 dns_async(struct smtpd *, struct imsgev *, int,
 		     struct dns *);
 /* expand.c */
-int expand_cmp(struct expand_node *, struct expand_node *);
-void expandtree_increment_node(struct expandtree *, struct expand_node *);
-void expandtree_decrement_node(struct expandtree *, struct expand_node *);
-void expandtree_remove_node(struct expandtree *, struct expand_node *);
-struct expand_node *expandtree_lookup(struct expandtree *, struct expand_node *);
-RB_PROTOTYPE(expandtree, expand_node, nodes, expand_cmp);
+int expand_cmp(struct expandnode *, struct expandnode *);
+void expandtree_increment_node(struct expandtree *, struct expandnode *);
+void expandtree_decrement_node(struct expandtree *, struct expandnode *);
+void expandtree_remove_node(struct expandtree *, struct expandnode *);
+struct expandnode *expandtree_lookup(struct expandtree *, struct expandnode *);
+void expandtree_free_nodes(struct expandtree *);
+RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
 /* forward.c */
 int forwards_get(int, struct expandtree *);

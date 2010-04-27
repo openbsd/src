@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.3 2009/11/09 23:49:34 gilles Exp $	*/
+/*	$OpenBSD: expand.c,v 1.4 2010/04/27 09:49:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -33,23 +33,23 @@
 
 #include "smtpd.h"
 
-struct expand_node *
-expandtree_lookup(struct expandtree *expandtree, struct expand_node *node)
+struct expandnode *
+expandtree_lookup(struct expandtree *expandtree, struct expandnode *node)
 {
-	struct expand_node key;
+	struct expandnode key;
 
 	key = *node;
 	return RB_FIND(expandtree, expandtree, &key);
 }
 
 void
-expandtree_increment_node(struct expandtree *expandtree, struct expand_node *node)
+expandtree_increment_node(struct expandtree *expandtree, struct expandnode *node)
 {
-	struct expand_node *p;
+	struct expandnode *p;
 
 	p = expandtree_lookup(expandtree, node);
 	if (p == NULL) {
-		p = calloc(1, sizeof(struct expand_node));
+		p = calloc(1, sizeof(struct expandnode));
 		if (p == NULL)
 			fatal("calloc");
 		*p = *node;
@@ -60,9 +60,9 @@ expandtree_increment_node(struct expandtree *expandtree, struct expand_node *nod
 }
 
 void
-expandtree_decrement_node(struct expandtree *expandtree, struct expand_node *node)
+expandtree_decrement_node(struct expandtree *expandtree, struct expandnode *node)
 {
-	struct expand_node *p;
+	struct expandnode *p;
 
 	p = expandtree_lookup(expandtree, node);
 	if (p == NULL)
@@ -72,9 +72,9 @@ expandtree_decrement_node(struct expandtree *expandtree, struct expand_node *nod
 }
 
 void
-expandtree_remove_node(struct expandtree *expandtree, struct expand_node *node)
+expandtree_remove_node(struct expandtree *expandtree, struct expandnode *node)
 {
-	struct expand_node *p;
+	struct expandnode *p;
 
 	p = expandtree_lookup(expandtree, node);
 	if (p == NULL)
@@ -83,8 +83,21 @@ expandtree_remove_node(struct expandtree *expandtree, struct expand_node *node)
 	RB_REMOVE(expandtree, expandtree, p);
 }
 
+void
+expandtree_free_nodes(struct expandtree *expandtree)
+{
+	struct expandnode *p;
+	struct expandnode *nxt;
+
+	for (p = RB_MIN(expandtree, expandtree); p != NULL; p = nxt) {
+		nxt = RB_NEXT(expandtree, expandtree, p);
+		RB_REMOVE(expandtree, expandtree, p);
+		free(p);
+	}
+}
+
 int
-expand_cmp(struct expand_node *e1, struct expand_node *e2)
+expand_cmp(struct expandnode *e1, struct expandnode *e2)
 {
 	if (e1->type < e2->type)
 		return -1;
@@ -95,4 +108,4 @@ expand_cmp(struct expand_node *e1, struct expand_node *e2)
 	return memcmp(&e1->u, &e2->u, sizeof(e1->u));
 }
 
-RB_GENERATE(expandtree, expand_node, entry, expand_cmp);
+RB_GENERATE(expandtree, expandnode, entry, expand_cmp);

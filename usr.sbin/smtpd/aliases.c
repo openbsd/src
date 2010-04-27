@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.31 2009/11/09 23:54:08 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.32 2010/04/27 09:49:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -35,275 +35,175 @@
 #include "smtpd.h"
 
 int aliases_expand_include(struct expandtree *, char *);
-int alias_is_filter(struct alias *, char *, size_t);
-int alias_is_username(struct alias *, char *, size_t);
-int alias_is_address(struct alias *, char *, size_t);
-int alias_is_filename(struct alias *, char *, size_t);
-int alias_is_include(struct alias *, char *, size_t);
+int alias_is_filter(struct expandnode *, char *, size_t);
+int alias_is_username(struct expandnode *, char *, size_t);
+int alias_is_address(struct expandnode *, char *, size_t);
+int alias_is_filename(struct expandnode *, char *, size_t);
+int alias_is_include(struct expandnode *, char *, size_t);
 
 int
 aliases_exist(struct smtpd *env, objid_t mapid, char *username)
 {
-	char buf[MAXLOGNAME];
-	int ret;
-	DBT key;
-	DBT val;
-	DB *aliasesdb;
 	struct map *map;
+	struct map_alias *map_alias;
+	char buf[MAXLOGNAME];
 
 	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 
-	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL) {
-		log_warn("aliases_exist: dbopen: %s", map->m_config);
-		return 0;
-	}
-
 	lowercase(buf, username, sizeof(buf));
+	map_alias = map_lookup(env, mapid, buf, K_ALIAS);
+	if (map_alias == NULL)
+		return 0;
 
-	key.data = buf;
-	key.size = strlen(key.data) + 1;
+	/* XXX - for now the map API always allocate */
+	log_debug("aliases_exist: '%s' exists with %zd expansion nodes",
+	    username, map_alias->nbnodes);
 
-	ret = aliasesdb->get(aliasesdb, &key, &val, 0);
-	if (ret == -1)
-		log_warn("aliases_exist");
-	aliasesdb->close(aliasesdb);
+	expandtree_free_nodes(&map_alias->expandtree);
+	free(map_alias);
 
-	return (ret == 0);
+	return 1;
 }
 
 int
 aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, char *username)
 {
-	char buf[MAXLOGNAME];
-	int ret;
-	DBT key;
-	DBT val;
-	DB *aliasesdb;
-	size_t nbaliases, nbsave;
-	struct alias alias;
-	struct alias *nextalias;
 	struct map *map;
-	struct expand_node expnode;
+	struct map_alias *map_alias;
+	struct expandnode *expnode;
+	char buf[MAXLOGNAME];
+	size_t nbaliases;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 
-	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL) {
-		log_warn("aliases_get: dbopen: %s", map->m_config);
-		return 0;
-	}
-
 	lowercase(buf, username, sizeof(buf));
-
-	key.data = buf;
-	key.size = strlen(key.data) + 1;
-
-	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
-		if (ret == -1)
-			log_warn("aliases_get");
-		aliasesdb->close(aliasesdb);
+	map_alias = map_lookup(env, mapid, buf, K_ALIAS);
+	if (map_alias == NULL)
 		return 0;
-	}
 
-	nbsave = nbaliases = val.size / sizeof(struct alias);
-	if (nbaliases == 0) {
-		aliasesdb->close(aliasesdb);
-		return 0;
-	}
-
-	nextalias = (struct alias *)val.data;
-	do {
-		alias = *nextalias;
-		++nextalias;
-		if (alias.type == EXPAND_INCLUDE) {
-			aliases_expand_include(expandtree, alias.u.filename);
-		}
+	/* foreach node in map_alias expandtree, we merge */
+	nbaliases = 0;
+	RB_FOREACH(expnode, expandtree, &map_alias->expandtree) {
+		if (expnode->type == EXPAND_INCLUDE)
+			nbaliases += aliases_expand_include(expandtree, expnode->u.filename);
 		else {
-			bzero(&expnode, sizeof(struct expand_node));
-			alias_to_expand_node(&expnode, &alias);
-			expandtree_increment_node(expandtree, &expnode);
+			expandtree_increment_node(expandtree, expnode);
+			nbaliases++;
 		}
-	} while (--nbaliases);
-	aliasesdb->close(aliasesdb);
-	return nbsave;
+	}
+
+	expandtree_free_nodes(&map_alias->expandtree);
+	free(map_alias);
+
+	log_debug("aliases_get: returned %zd aliases", nbaliases);
+	return nbaliases;
 }
 
 int
 aliases_vdomain_exists(struct smtpd *env, objid_t mapid, char *hostname)
 {
-	int	ret;
-	DBT	key;
-	DBT	val;
-	DB     *vtable;
 	struct map *map;
-	char	strkey[MAX_LINE_SIZE];
+	struct map_virtual *map_virtual;
+	char buf[MAXHOSTNAMELEN];
 
 	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 
-	vtable = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (vtable == NULL) {
-		log_warn("aliases_vdomain_exists: dbopen: %s", map->m_config);
+	lowercase(buf, hostname, sizeof(buf));
+	map_virtual = map_lookup(env, mapid, buf, K_VIRTUAL);
+	if (map_virtual == NULL)
 		return 0;
-	}
 
-	if (! bsnprintf(strkey, sizeof(strkey), "%s", hostname)) {
-		vtable->close(vtable);
-		return 0;
-	}
-	lowercase(strkey, strkey, sizeof(strkey));
+	/* XXX - for now the map API always allocate */
+	log_debug("aliases_vdomain_exist: '%s' exists", hostname);
+	expandtree_free_nodes(&map_virtual->expandtree);
+	free(map_virtual);
 
-	key.data = strkey;
-	key.size = strlen(key.data) + 1;
 
-	ret = vtable->get(vtable, &key, &val, 0);
-	if (ret == -1)
-		log_warn("aliases_vdomain_exists");
-
-	vtable->close(vtable);
-
-	return (ret == 0);
+	return 1;
 }
 
 int
 aliases_virtual_exist(struct smtpd *env, objid_t mapid, struct path *path)
 {
-	int ret;
-	DBT key;
-	DBT val;
-	DB *aliasesdb;
 	struct map *map;
-	char	strkey[MAX_LINE_SIZE];
+	struct map_virtual *map_virtual;
+	char buf[MAX_LINE_SIZE];
+	char *pbuf = buf;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 
-	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL) {
-		log_warn("aliases_virtual_exist: dbopen: %s", map->m_config);
+	if (! bsnprintf(buf, sizeof(buf), "%s@%s", path->user,
+		path->domain))
 		return 0;
-	}
+	lowercase(buf, buf, sizeof(buf));
 
-	if (! bsnprintf(strkey, sizeof(strkey), "%s@%s", path->user,
-		path->domain)) {
-		aliasesdb->close(aliasesdb);
+	map_virtual = map_lookup(env, mapid, buf, K_VIRTUAL);
+	if (map_virtual == NULL) {
+		pbuf = strchr(buf, '@');
+		map_virtual = map_lookup(env, mapid, pbuf, K_VIRTUAL);
+	}
+	if (map_virtual == NULL)
 		return 0;
-	}
 
-	lowercase(strkey, strkey, sizeof(strkey));
+	log_debug("aliases_virtual_exist: '%s' exists", pbuf);
+	expandtree_free_nodes(&map_virtual->expandtree);
+	free(map_virtual);
 
-	key.data = strkey;
-	key.size = strlen(key.data) + 1;
-
-	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
-		if (ret == -1)
-			log_warn("aliases_virtual_exist");
-
-		if (! bsnprintf(strkey, sizeof(strkey), "@%s", path->domain)) {
-			aliasesdb->close(aliasesdb);
-			return 0;
-		}
-
-		lowercase(strkey, strkey, sizeof(strkey));
-
-		key.data = strkey;
-		key.size = strlen(key.data) + 1;
-
-		ret = aliasesdb->get(aliasesdb, &key, &val, 0);
-	}
-	if (ret == -1)
-		log_warn("aliases_virtual_exist");
-	aliasesdb->close(aliasesdb);
-
-	return (ret == 0);
+	return 1;
 }
 
 int
 aliases_virtual_get(struct smtpd *env, objid_t mapid,
     struct expandtree *expandtree, struct path *path)
 {
-	int ret;
-	DBT key;
-	DBT val;
-	DB *aliasesdb;
-	size_t nbaliases, nbsave;
-	struct alias alias;
-	struct alias *nextalias;
 	struct map *map;
-	char	strkey[MAX_LINE_SIZE];
-	struct expand_node expnode;
+	struct map_virtual *map_virtual;
+	struct expandnode *expnode;
+	char buf[MAX_LINE_SIZE];
+	char *pbuf = buf;
+	int nbaliases;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 
-	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL) {
-		log_warn("aliases_virtual_get: dbopen: %s", map->m_config);
+	if (! bsnprintf(buf, sizeof(buf), "%s@%s", path->user,
+		path->domain))
 		return 0;
-	}
+	lowercase(buf, buf, sizeof(buf));
 
-	if (! bsnprintf(strkey, sizeof(strkey), "%s@%s", path->user,
-		path->domain)) {
-		aliasesdb->close(aliasesdb);
+	map_virtual = map_lookup(env, mapid, buf, K_VIRTUAL);
+	if (map_virtual == NULL) {
+		pbuf = strchr(buf, '@');
+		map_virtual = map_lookup(env, mapid, pbuf, K_VIRTUAL);
+	}
+	if (map_virtual == NULL)
 		return 0;
-	}
 
-	lowercase(strkey, strkey, sizeof(strkey));
-
-	key.data = strkey;
-	key.size = strlen(key.data) + 1;
-
-	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
-		if (ret == -1)
-			log_warn("aliases_virtual_get");
-
-		if (! bsnprintf(strkey, sizeof(strkey), "@%s", path->domain)) {
-			aliasesdb->close(aliasesdb);
-			return 0;
-		}
-
-		lowercase(strkey, strkey, sizeof(strkey));
-
-		key.data = strkey;
-		key.size = strlen(key.data) + 1;
-
-		if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
-			if (ret == -1)
-				log_warn("aliases_virtual_get");
-			aliasesdb->close(aliasesdb);
-			return 0;
-		}
-	}
-
-	nbsave = nbaliases = val.size / sizeof(struct alias);
-	if (nbaliases == 0) {
-		aliasesdb->close(aliasesdb);
-		return 0;
-	}
-
-	nextalias = (struct alias *)val.data;
-	do {
-		alias = *nextalias;
-		++nextalias;
-		if (alias.type == EXPAND_INCLUDE) {
-			aliases_expand_include(expandtree, alias.u.filename);
-		}
+	/* foreach node in map_virtual expandtree, we merge */
+	nbaliases = 0;
+	RB_FOREACH(expnode, expandtree, &map_virtual->expandtree) {
+		if (expnode->type == EXPAND_INCLUDE)
+			nbaliases += aliases_expand_include(expandtree, expnode->u.filename);
 		else {
-			bzero(&expnode, sizeof(struct expand_node));
-			alias_to_expand_node(&expnode, &alias);
-			expandtree_increment_node(expandtree, &expnode);
+			expandtree_increment_node(expandtree, expnode);
+			nbaliases++;
 		}
-	} while (--nbaliases);
-	aliasesdb->close(aliasesdb);
-	return nbsave;
+	}
+
+	expandtree_free_nodes(&map_virtual->expandtree);
+	free(map_virtual);
+	log_debug("aliases_virtual_get: '%s' resolved to %d nodes", pbuf, nbaliases);
+
+	return nbaliases;
 }
 
 int
@@ -314,8 +214,7 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 	size_t len;
 	size_t lineno = 0;
 	char delim[] = { '\\', '#' };
-	struct alias alias;
-	struct expand_node expnode;
+	struct expandnode expnode;
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
@@ -328,18 +227,16 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 			free(line);
 			continue;
 		}
-		if (! alias_parse(&alias, line)) {
+
+		bzero(&expnode, sizeof(struct expandnode));
+		if (! alias_parse(&expnode, line)) {
 			log_warnx("could not parse include entry \"%s\".", line);
 		}
 
-		if (alias.type == EXPAND_INCLUDE) {
+		if (expnode.type == EXPAND_INCLUDE)
 			log_warnx("nested inclusion is not supported.");
-		}
-		else {
-			bzero(&expnode, sizeof(struct expand_node));
-			alias_to_expand_node(&expnode, &alias);
+		else
 			expandtree_increment_node(expandtree, &expnode);
-		}
 
 		free(line);
 	}
@@ -349,10 +246,10 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 }
 
 int
-alias_parse(struct alias *alias, char *line)
+alias_parse(struct expandnode *alias, char *line)
 {
 	size_t i;
-	int (*f[])(struct alias *, char *, size_t) = {
+	int (*f[])(struct expandnode *, char *, size_t) = {
 		alias_is_include,
 		alias_is_filter,
 		alias_is_filename,
@@ -370,7 +267,7 @@ alias_parse(struct alias *alias, char *line)
 	}
 
 	for (i = 0; i < sizeof(f) / sizeof(void *); ++i) {
-		bzero(alias, sizeof(struct alias));
+		bzero(alias, sizeof(struct expandnode));
 		if (f[i](alias, line, strlen(line)))
 			break;
 	}
@@ -382,7 +279,7 @@ alias_parse(struct alias *alias, char *line)
 
 
 int
-alias_is_filter(struct alias *alias, char *line, size_t len)
+alias_is_filter(struct expandnode *alias, char *line, size_t len)
 {
 	if (strncmp(line, "\"|", 2) == 0 &&
 	    line[len - 1] == '"') {
@@ -396,7 +293,7 @@ alias_is_filter(struct alias *alias, char *line, size_t len)
 }
 
 int
-alias_is_username(struct alias *alias, char *line, size_t len)
+alias_is_username(struct expandnode *alias, char *line, size_t len)
 {
 	if (strlcpy(alias->u.username, line,
 	    sizeof(alias->u.username)) >= sizeof(alias->u.username))
@@ -414,7 +311,7 @@ alias_is_username(struct alias *alias, char *line, size_t len)
 }
 
 int
-alias_is_address(struct alias *alias, char *line, size_t len)
+alias_is_address(struct expandnode *alias, char *line, size_t len)
 {
 	char *domain;
 
@@ -455,7 +352,7 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 }
 
 int
-alias_is_filename(struct alias *alias, char *line, size_t len)
+alias_is_filename(struct expandnode *alias, char *line, size_t len)
 {
 	if (*line != '/')
 		return 0;
@@ -468,7 +365,7 @@ alias_is_filename(struct alias *alias, char *line, size_t len)
 }
 
 int
-alias_is_include(struct alias *alias, char *line, size_t len)
+alias_is_include(struct expandnode *alias, char *line, size_t len)
 {
 	if (strncasecmp(":include:", line, 9) != 0)
 		return 0;
@@ -478,11 +375,4 @@ alias_is_include(struct alias *alias, char *line, size_t len)
 
 	alias->type = EXPAND_INCLUDE;
 	return 1;
-}
-
-void
-alias_to_expand_node(struct expand_node *expnode, struct alias *alias)
-{
-	expnode->type = alias->type;
-	expnode->u = alias->u;
 }

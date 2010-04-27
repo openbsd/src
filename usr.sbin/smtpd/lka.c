@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.106 2010/04/21 21:47:38 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.107 2010/04/27 09:49:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,7 +48,7 @@ void		lka_setup_events(struct smtpd *);
 void		lka_disable_events(struct smtpd *);
 void		lka_expand_pickup(struct smtpd *, struct lkasession *);
 int		lka_expand_resume(struct smtpd *, struct lkasession *);
-int		lka_resolve_node(struct smtpd *, char *tag, struct path *, struct expand_node *);
+int		lka_resolve_node(struct smtpd *, char *tag, struct path *, struct expandnode *);
 int		lka_verify_mail(struct smtpd *, struct path *);
 struct rule    *ruleset_match(struct smtpd *, char *, struct path *, struct sockaddr_storage *);
 int		lka_resolve_path(struct smtpd *, struct lkasession *, struct path *);
@@ -133,7 +133,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			map = map_findbyname(env, "secrets");
 			if (map == NULL)
 				fatalx("lka: secrets map not found");
-			map_secret = map_lookup(env, map->m_id, secret->host, K_SECRETS);
+			map_secret = map_lookup(env, map->m_id, secret->host, K_SECRET);
 			log_debug("lka: %s secret lookup (%d)", secret->host,
 			    map_secret != NULL);
 			secret->secret[0] = '\0';
@@ -494,7 +494,7 @@ lka_expand(char *buf, size_t len, struct path *path)
 }
 
 int
-lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expand_node *expnode)
+lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expandnode *expnode)
 {
 	struct path psave = *path;
 
@@ -600,7 +600,7 @@ int
 lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 {
 	u_int8_t done = 1;
-	struct expand_node *expnode = NULL;
+	struct expandnode *expnode = NULL;
 	struct path *lkasessionpath = NULL;
 	struct path path, *pathp = NULL;
 
@@ -777,7 +777,7 @@ lkasession_cmp(struct lkasession *s1, struct lkasession *s2)
 void
 lka_clear_expandtree(struct expandtree *expandtree)
 {
-	struct expand_node *expnode;
+	struct expandnode *expnode;
 
 	while ((expnode = RB_ROOT(expandtree)) != NULL) {
 		expandtree_remove_node(expandtree, expnode);
