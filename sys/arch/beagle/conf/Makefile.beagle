@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.19 2010/04/27 16:54:53 deraadt Exp $
+#	$OpenBSD: Makefile.beagle,v 1.20 2010/04/27 17:25:19 drahn Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -24,10 +24,11 @@ _arch?=		arm
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main
+		-Wno-uninitialized -Wno-format -Wno-main \
+		-Wstack-larger-than-2047 -Wvariable-decl
 
 CMACHFLAGS= -ffreestanding
 #CMACHFLAGS=	-march=armv4 -mtune=strongarm -ffreestanding
@@ -40,8 +41,6 @@ CMACHFLAGS+=	-msoft-float -fno-builtin-printf -fno-builtin-log \
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
-#LINKFLAGS=	-Ttext 0xF0000020 -e start --warn-common
-#LINKFLAGS=	-T ${_machdir}/conf/kern.ldscript
 LINKFLAGS=	-T ldscript
 LINKFLAGS+=	--warn-common
 STRIPFLAGS=	-g -X -x
@@ -100,8 +99,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-x
 .endif
@@ -164,7 +164,8 @@ depend:: .depend
 .endif
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk

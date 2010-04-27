@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.46 2010/04/27 16:54:54 deraadt Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.47 2010/04/27 17:25:19 drahn Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -24,7 +24,7 @@ _arch?=		m68k
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	 -I. -I$S -I$S/arch -nostdinc
+INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${_mach} -Dmc68020
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \

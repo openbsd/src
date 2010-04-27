@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armish,v 1.24 2010/04/27 16:50:14 jsg Exp $
+#	$OpenBSD: Makefile.armish,v 1.25 2010/04/27 17:25:19 drahn Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -41,8 +41,6 @@ CMACHFLAGS+=	-msoft-float -fno-builtin-printf -fno-builtin-log \
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
-#LINKFLAGS=	-Ttext 0xF0000020 -e start --warn-common
-#LINKFLAGS=	-T ${_machdir}/conf/kern.ldscript
 LINKFLAGS=	-T ldscript
 LINKFLAGS+=	--warn-common
 STRIPFLAGS=	-g -X -x
