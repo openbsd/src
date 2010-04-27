@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.palm,v 1.11 2010/04/27 06:46:26 deraadt Exp $
+#	$OpenBSD: Makefile.palm,v 1.12 2010/04/27 15:33:08 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -88,10 +88,9 @@ SYSTEM_OBJ=	${_mach}_start.o locore.o param.o ioconf.o ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD_HEAD+=; \
-    cat ${_archdir}/conf/ldscript.head ${_archdir}/conf/ldscript.tail |  \
-	sed -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
-	-e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
-     > ldscript
+		cat ${_archdir}/conf/ldscript.head ${_archdir}/conf/ldscript.tail | \
+		    sed -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
+		    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' > ldscript
 
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
