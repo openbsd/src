@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.4 2008/05/02 19:52:27 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 2010/04/27 21:15:01 kettenis Exp $	*/
 
 /* public domain */
 
@@ -27,7 +27,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *l)
 	do {
 		old = __SIMPLELOCK_LOCKED;
 		__asm__ __volatile__
-		    ("ldstub %0, %1" : "=m" (*l), "=r" (old) : "0" (*l));
+		    ("ldstub [%0], %1" : "=r" (l), "=r" (old) : "0" (l));
 		membar(LoadLoad | LoadStore);
 	} while (old != __SIMPLELOCK_UNLOCKED);
 }
@@ -38,7 +38,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *l)
 	__cpu_simple_lock_t old = __SIMPLELOCK_LOCKED;
 
 	__asm__ __volatile__
-	    ("ldstub %0, %1" : "=m" (*l), "=r" (old) : "0" (*l));
+	    ("ldstub [%0], %1" : "=r" (l), "=r" (old) : "0" (l));
 	membar(LoadLoad | LoadStore);
 
 	return (old == __SIMPLELOCK_UNLOCKED);
