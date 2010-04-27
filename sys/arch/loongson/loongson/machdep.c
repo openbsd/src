@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2010/03/02 20:54:51 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.18 2010/04/27 04:26:20 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -160,7 +160,7 @@ extern const struct platform yeeloong_platform;
 
 const struct bonito_flavour bonito_flavours[] = {
 	/* Lemote Fuloong 2F mini-PC */
-	/* how different is LM6003 ? */
+	{ "LM6003",	&fuloong_platform },
 	{ "LM6004",	&fuloong_platform },
 	/* EMTEC Gdium Liberty 1000 */
 	{ "Gdium",	&gdium_platform },
