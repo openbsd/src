@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.130 2009/11/24 19:08:33 deraadt Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.131 2010/04/27 03:38:34 marco Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1024,7 +1024,8 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 		case UDESCSUB_VS_FRAME_UNCOMPRESSED:
 			/* XXX do correct length calculation */
 			if (desc->bLength > 25) {
-				error = uvideo_vs_parse_desc_frame_uncompressed(				    sc, desc);
+				error =uvideo_vs_parse_desc_frame_uncompressed(
+				    sc, desc);
 				if (error != USBD_NORMAL_COMPLETION)
 					return (error);
 			}
