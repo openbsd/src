@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.38 2010/04/20 20:49:36 deraadt Exp $	*/
+/*	$OpenBSD: mib.c,v 1.39 2010/04/27 15:37:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1250,10 +1250,10 @@ mib_sensornum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		mib[2] = i;
 		if (sysctl(mib, sizeofa(mib),
 		    &sensordev, &len, NULL, 0) == -1) {
-			if (errno = ENOENT)
-				break;
 			if (errno == ENXIO)
 				continue;
+			if (errno == ENOENT)
+				break;
 			return (-1);
 		}
 		c += sensordev.sensors_count;
@@ -1282,10 +1282,10 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	for (i = 0, n = 1; ; i++) {
 		mib[2] = i;
 		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
-			if (errno == EINVAL)
-				break;
-			if (errno == ENOENT)
+			if (errno == ENXIO)
 				continue;
+			if (errno == ENOENT)
+				break;
 			return (-1);
 		}
 		for (j = 0; j < SENSOR_MAX_TYPES; j++) {
@@ -1294,9 +1294,11 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 				mib[4] = k;
 				if (sysctl(mib, 5,
 				    &sensor, &slen, NULL, 0) == -1) {
-					if (errno != ENOENT)
-						return (-1);
-					continue;
+					if (errno == ENXIO)
+						continue;
+					if (errno == ENOENT)
+						break;
+					return (-1);
 				}
 				if (n == idx)
 					goto found;
