@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armish,v 1.22 2010/04/27 15:33:08 deraadt Exp $
+#	$OpenBSD: Makefile.armish,v 1.23 2010/04/27 16:43:42 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -94,10 +94,11 @@ SYSTEM_LD_HEAD+=; \
 
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@dd if=/dev/zero of=bsd bs=1 count=1 seek=95 conv=notrunc 2>/dev/null; \
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
+SYSTEM_LD_TAIL+=; \
+		dd if=/dev/zero of=bsd bs=1 count=1 seek=95 conv=notrunc 2>/dev/null; \
 		dd if=/dev/zero of=bsd bs=1 count=1 seek=127 conv=notrunc 2>/dev/null; \
-		dd if=/dev/zero of=bsd bs=1 count=1 seek=159 conv=notrunc 2>/dev/null; \
-		${SIZE} $@; chmod 755 $@
+		dd if=/dev/zero of=bsd bs=1 count=1 seek=159 conv=notrunc 2>/dev/null
 
 DEBUG?=
 .if ${DEBUG} == "-g"
@@ -156,11 +157,11 @@ links:
 	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink makelinks
 
-SRCS=	${_archdir}/arm/locore.S \
+SRCS=	${_archdir}/${_arch}/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/arm/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/${_arch}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -179,7 +180,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S assym.h
 	${NORMAL_S}
 
-locore.o: ${_archdir}/arm/locore.S assym.h
+locore.o: ${_archdir}/${_arch}/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
