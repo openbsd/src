@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2010/04/01 14:42:32 claudio Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.13 2010/04/27 15:36:46 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1011,8 +1011,6 @@ rtmsg_process(char *buf, int len)
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
-		if (rtm->rtm_errno)		 /* failed attempts */
-			continue;
 
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
@@ -1022,6 +1020,8 @@ rtmsg_process(char *buf, int len)
 		case RTM_GET:
 		case RTM_CHANGE:
 		case RTM_DELETE:
+			if (rtm->rtm_errno)		 /* failed attempts */
+				continue;
 			if (rtm->rtm_flags & RTF_LLINFO) /* arp cache */
 				continue;
 
