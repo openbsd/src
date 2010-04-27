@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.68 2010/04/21 01:09:13 beck Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.69 2010/04/27 16:32:53 sthen Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -871,7 +871,7 @@ const struct puc_device_description puc_devices[] = {
 	 * Boards with an Oxford Semiconductor chip.
 	 *
 	 * Oxford Semiconductor provides documentation for their chip at:
-	 * <URL:http://www.oxsemi.com/products/uarts/index.html>
+	 * <URL:http://www.plxtech.com/products/uart/>
 	 *
 	 * As sold by Kouwell <URL:http://www.kouwell.com/>.
 	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
