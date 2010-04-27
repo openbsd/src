@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.20 2010/04/27 05:07:29 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.21 2010/04/27 05:08:30 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -16,8 +16,6 @@
 # PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
-
-.SUFFIXES:	.S .c .o
 
 MKDEP?=	mkdep
 STRIP?=	strip
