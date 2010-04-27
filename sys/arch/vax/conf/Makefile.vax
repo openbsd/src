@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.42 2010/04/27 05:05:22 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.43 2010/04/27 05:07:29 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -12,10 +12,6 @@
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
 #	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
-
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
 
