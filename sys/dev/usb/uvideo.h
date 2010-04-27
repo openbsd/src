@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.45 2009/02/19 21:17:35 deraadt Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.46 2010/04/27 11:58:14 marco Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -480,7 +480,7 @@ struct uvideo_format_group {
 	uint8_t					 format_dfidx;
 	struct uvideo_format_desc		*format;
 	/* frame descriptors for mjpeg and uncompressed are identical */
-#define UVIDEO_MAX_FRAME			 16
+#define UVIDEO_MAX_FRAME			 24
 	struct usb_video_frame_mjpeg_desc	*frame_cur;
 	struct usb_video_frame_mjpeg_desc	*frame[UVIDEO_MAX_FRAME];
 	int					 frame_num;
