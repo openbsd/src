@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.52 2010/04/26 22:21:15 deraadt Exp $
+#	$OpenBSD: Makefile.sparc,v 1.53 2010/04/27 03:37:38 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -183,20 +183,6 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
 
-
-# depend on root or device configuration
-autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o: Makefile
-
-# depend on maxusers
-machdep.o: Makefile
-
-# depend on CPU configuration
-bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
-ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o locore.o: Makefile
-machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 
 locore.o: ${_machdir}/sparc/locore.s assym.h
 	${NORMAL_S}

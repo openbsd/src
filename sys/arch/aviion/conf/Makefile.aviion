@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.14 2010/04/26 22:21:14 deraadt Exp $
+#	$OpenBSD: Makefile.aviion,v 1.15 2010/04/27 03:37:37 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -175,20 +175,6 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
-
-# depend on root or device configuration
-autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
-if_tun.o if_loop.o if_ethersubr.o: Makefile
-in_proto.o: Makefile
-
-# depend on maxusers
-assym.h machdep.o: Makefile
-
-# depend on CPU configuration
-locore.o machdep.o: Makefile
 
 locore.o: ${_machdir}/aviion/locore.S assym.h
 	${NORMAL_S}

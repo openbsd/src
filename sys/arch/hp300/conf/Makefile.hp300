@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.51 2010/04/26 22:21:14 deraadt Exp $
+#	$OpenBSD: Makefile.hp300,v 1.52 2010/04/27 03:37:37 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -205,19 +205,6 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
-
-# depend on root or device configuration
-autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o: Makefile
-
-# depend on maxusers
-assym.h machdep.o: Makefile
-
-# depend on CPU configuration
-dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
-
 
 locore.o: ${_machdir}/hp300/locore.s assym.h
 	${NORMAL_S}

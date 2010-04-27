@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.39 2010/04/26 22:21:15 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.40 2010/04/27 03:37:38 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -187,20 +187,6 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
-
-
-# depend on root or device configuration
-autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o: Makefile
-
-# depend on maxusers
-machdep.o: Makefile
-
-# depend on CPU configuration
-tmscp.o ts.o uba.o uda.o autoconf.o clock.o conf.o emulate.o intvec.o: Makefile
-machdep.o sbi.o subr.o: Makefile
 
 
 intvec.o: ${_machdir}/vax/intvec.s assym.h

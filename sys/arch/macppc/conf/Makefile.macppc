@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.37 2010/04/26 22:21:15 deraadt Exp $
+#	$OpenBSD: Makefile.macppc,v 1.38 2010/04/27 03:37:38 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -174,19 +174,6 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
-
-# depend on root or device configuration
-autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o: Makefile
-
-# depend on maxusers
-genassym.o machdep.o: Makefile
-
-# depend on CPU configuration
-locore.o machdep.o: Makefile
-
 
 locore.o: ${_machdir}/macppc/locore.S assym.h
 	${NORMAL_S}

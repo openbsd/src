@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.gumstix,v 1.9 2010/04/26 22:21:14 deraadt Exp $
+#	$OpenBSD: Makefile.gumstix,v 1.10 2010/04/27 03:37:37 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -186,23 +186,6 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
-
-
-# depend on root or device configuration
-autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
-if.o if_tun.o if_loop.o if_ethersubr.o: Makefile
-if_arp.o if_ether.o: Makefile
-ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
-tcp_subr.o tcp_timer.o tcp_output.o: Makefile
-
-# depend on maxusers
-machdep.o: Makefile
-
-# depend on CPU configuration
-locore.o machdep.o: Makefile
 
 ${_mach}_start.o: ${_machdir}/gumstix/${_mach}_start.S assym.h
 	${NORMAL_S}

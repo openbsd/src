@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.palm,v 1.6 2010/04/26 22:21:15 deraadt Exp $
+#	$OpenBSD: Makefile.palm,v 1.7 2010/04/27 03:37:38 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -176,22 +176,6 @@ depend:: .depend
 	    < assym.dep >> .depend
 	@rm -f assym.dep
 
-
-# depend on root or device configuration
-autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
-if.o if_tun.o if_loop.o if_ethersubr.o: Makefile
-if_arp.o if_ether.o: Makefile
-ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
-tcp_subr.o tcp_timer.o tcp_output.o: Makefile
-
-# depend on maxusers
-machdep.o: Makefile
-
-# depend on CPU configuration
-locore.o machdep.o: Makefile
 
 ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S assym.h
 	${NORMAL_S}

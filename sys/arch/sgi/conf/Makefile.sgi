@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.30 2010/04/26 22:21:15 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.31 2010/04/27 03:37:38 deraadt Exp $
 
 # Makefile for OpenBSD
 #
@@ -124,17 +124,6 @@ symbols.sort: ${_machdir}/sgi/symbols.raw
 
 locore.o: ${_machdir}/sgi/locore.S assym.h
 	${NORMAL_S}
-
-# the following are necessary because the files depend on the types of
-# cpu's included in the system configuration
-clock.o machdep.o autoconf.o conf.o locore.o: Makefile
-
-# depend on network configuration
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
-if_tun.o if_loop.o if_ethersubr.o: Makefile
-if_arp.o if_ether.o: Makefile
-ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
-tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 
 assym.h: $S/kern/genassym.sh Makefile \
 	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
