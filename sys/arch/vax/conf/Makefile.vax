@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.44 2010/04/27 06:46:26 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.45 2010/04/27 16:40:55 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -10,37 +10,9 @@
 
 .include <bsd.own.mk>
 
-%OBJS
-
-%CFILES
-
-%SFILES
-
 MKDEP?=	mkdep
-
-# check for cross-compilation
-.if ${MACHINE} != "vax"
-CROSSDIR?=  /usr/cross/vax
-
-CBIN=${CROSSDIR}/usr/bin
-MACHINE=vax
-MACHINE_ARCH=vax
-AS=${CBIN}/as
-CC=${CBIN}/cc
-CPP=${CBIN}/cpp
-HOSTCC=cc
-LD=${CBIN}/ld
-STRIP=${CBIN}/strip
-SIZE=${CBIN}/size
-
-.else
-
-STRIP?=	strip
 SIZE?=	size
-
-.endif
-
-COPTS?= -O2
+STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -53,15 +25,17 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-D_VAX_INLINE_
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_VAX_INLINE_
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-main -Wno-format -Wno-uninitialized \
 		-Wstack-larger-than-2047 -Wvariable-decl
+
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-log
+
+COPTS?=		-O2
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80000000 -e start
@@ -73,7 +47,7 @@ DB_STRUCTINFO=	db_structinfo.h
 DB_STRUCTINFO=
 .endif
 
-HOSTED_CC=	${CC}
+HOSTED_CC= ${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
@@ -86,6 +60,12 @@ NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+
+%OBJS
+
+%CFILES
+
+%SFILES
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
