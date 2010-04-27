@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.52 2010/04/27 03:41:54 deraadt Exp $
+#	$OpenBSD: Makefile.alpha,v 1.53 2010/04/27 04:31:45 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -156,8 +156,7 @@ depend:: .depend
 	    param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
-	    sh $S/kern/genassym.sh ${MKDEP} ${CFLAGS} ${CPPFLAGS} | \
-	    sort -u > assym.dep
+	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
