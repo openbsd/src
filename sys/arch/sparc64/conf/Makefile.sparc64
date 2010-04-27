@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.42 2010/04/27 06:46:26 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.43 2010/04/27 16:50:15 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -31,7 +31,8 @@ CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
 
-CMACHFLAGS=	-Wa,-Av9b, -mno-fpu -fno-builtin-printf -fno-builtin-log
+CMACHFLAGS=	-Wa,-Av9b, -mno-fpu -fno-builtin-printf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif

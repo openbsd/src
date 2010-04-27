@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.35 2010/04/27 06:46:26 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.36 2010/04/27 16:50:15 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -40,7 +40,8 @@ CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
 CMACHFLAGS+=	-mno-abicalls ${ABI} -msoft-float \
-		-fno-builtin-printf -fno-builtin-log
+		-fno-builtin-printf -fno-builtin-log -fno-builtin-log2 \
+		-fno-builtin-malloc
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif

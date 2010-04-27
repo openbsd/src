@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.23 2010/04/27 15:33:46 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.24 2010/04/27 16:50:15 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -30,7 +30,8 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
 CMACHFLAGS=	-m4-nofpu \
-		-fno-builtin-printf -fno-builtin-log -fno-builtin-main
+		-fno-builtin-printf -fno-builtin-log -fno-builtin-log2 \
+		-fno-builtin-main -fno-builtin-malloc
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.17 2010/04/27 15:33:08 deraadt Exp $
+#	$OpenBSD: Makefile.beagle,v 1.18 2010/04/27 16:50:14 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -34,7 +34,8 @@ CMACHFLAGS= -ffreestanding
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-CMACHFLAGS+=	-msoft-float -fno-builtin-printf -fno-builtin-log
+CMACHFLAGS+=	-msoft-float -fno-builtin-printf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc
 
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}

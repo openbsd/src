@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.46 2010/04/27 06:46:25 deraadt Exp $
+#	$OpenBSD: Makefile.hppa,v 1.47 2010/04/27 16:50:15 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -31,7 +31,8 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
 CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs \
-		-fno-stack-protector -fno-builtin-printf -fno-builtin-log
+		-fno-stack-protector -fno-builtin-printf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc
 COPTS?=		-Os
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE

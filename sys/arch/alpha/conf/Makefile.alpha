@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.56 2010/04/27 06:46:25 deraadt Exp $
+#	$OpenBSD: Makefile.alpha,v 1.57 2010/04/27 16:50:14 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -32,7 +32,7 @@ CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wstack-larger-than-2047 -Wvariable-decl
 
 CMACHFLAGS=	-mno-fp-regs -fno-builtin-printf -fno-builtin-log \
-		-Wa,-mev56
+		-fno-builtin-log2 -fno-builtin-malloc -Wa,-mev56
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif

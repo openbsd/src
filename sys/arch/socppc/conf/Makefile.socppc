@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.socppc,v 1.15 2010/04/27 06:46:26 deraadt Exp $
+#	$OpenBSD: Makefile.socppc,v 1.16 2010/04/27 16:50:15 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -30,7 +30,8 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
-CMACHFLAGS=	-msoft-float -Wa,-many -fno-builtin-printf -fno-builtin-log
+CMACHFLAGS=	-msoft-float -Wa,-many -fno-builtin-printf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
