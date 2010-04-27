@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.41 2010/04/22 21:42:08 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.42 2010/04/27 21:53:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -655,7 +655,10 @@ parsetext(struct mdoc *m, int line, char *buf)
 		 * allowed, but enough manuals assume this behaviour
 		 * that we want to work around it.
 		 */
-		return(mdoc_elem_alloc(m, line, 0, MDOC_Pp, NULL));
+		if ( ! mdoc_elem_alloc(m, line, 0, MDOC_Pp, NULL))
+			return(0);
+		m->next = MDOC_NEXT_SIBLING;
+		return(1);
 	}
 
 	/*
