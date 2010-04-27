@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.20 2010/04/27 18:29:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -304,63 +304,69 @@ mg_isa_sm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_
 void
 mg_isa_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
 {
-	register u_int16_t r;
-	h += o;
+	volatile u_int16_t *p = (u_int16_t *)(h + o);
+	u_int32_t r;
+
 	while (c--) {
-		r = *((volatile u_int16_t *)h)++;
-		*(a++) = letoh16(r);
+		r = *p++;
+		*a++ = letoh16(r);
 	}
 }
 
 void
 mg_isa_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
 {
-	register u_int32_t r;
-	h += o;
+	volatile u_int32_t *p = (u_int32_t *)(h + o);
+	u_int32_t r;
+
 	while (c--) {
-		r = *((volatile u_int32_t *)h)++;
-		*(a++) = letoh32(r);
+		r = *p++;
+		*a++ = letoh32(r);
 	}
 }
 
 void
 mg_isa_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
 {
-	register u_int16_t r;
-	h += o;
+	volatile u_int16_t *p = (u_int16_t *)(h + o);
+	u_int32_t r;
+
 	while (c--) {
-		r = *(a++);
-		*((volatile u_int16_t *)h)++ = htole16(r);
+		r = *a++;
+		*p++ = htole16(r);
 	}
 }
 
 void
 mg_isa_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
 {
-	register u_int32_t r;
-	h += o;
+	volatile u_int32_t *p = (u_int32_t *)(h + o);
+	u_int32_t r;
+
 	while (c--) {
-		r = *(a++);
-		*((volatile u_int32_t *)h)++ = htole32(r);
+		r = *a++;
+		*p++ = htole32(r);
 	}
 }
 
 void
 mg_isa_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
 {
+	volatile u_int16_t *p = (u_int16_t *)(h + o);
+
 	vv = htole16(vv);
-	h += o;
 	while (c--)
-		*((volatile u_int16_t *)h)++ = vv;
+		*p++ = vv;
 }
 
 void
 mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
 {
+	volatile u_int32_t *p = (u_int32_t *)(h + o);
+
 	vv = htole32(vv);
-	h += o;
 	while (c--)
-		*((volatile u_int32_t *)h)++ = vv;
+		*p++ = vv;
 }
 
 int
