@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.24 2010/04/27 16:50:15 jsg Exp $
+#	$OpenBSD: Makefile.landisk,v 1.25 2010/04/27 16:54:53 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dlandisk
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D${_mach}
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl

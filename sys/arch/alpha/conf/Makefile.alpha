@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.57 2010/04/27 16:50:14 jsg Exp $
+#	$OpenBSD: Makefile.alpha,v 1.58 2010/04/27 16:54:52 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,8 +25,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-I. -I$S -I$S/arch -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
-
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${_mach}
 CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
@@ -137,7 +136,8 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${_machdir}/${_mach}/locore.s param.c ioconf.c ${CFILES} ${SFILES}
+SRCS=	${_machdir}/${_mach}/locore.s \
+	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${_machdir}/${_mach}/cpuconf.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.s

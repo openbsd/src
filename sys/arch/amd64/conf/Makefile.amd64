@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.32 2010/04/27 16:50:14 jsg Exp $
+#	$OpenBSD: Makefile.amd64,v 1.33 2010/04/27 16:54:53 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Damd64 -Dx86_64
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D${_mach} -Dx86_64
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main -Wno-sign-compare \
 		-Wstack-larger-than-2047
@@ -147,9 +147,10 @@ links:
 	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink makelinks
 
-AFILES=	${_machdir}/${_mach}/locore.S ${_machdir}/${_mach}/vector.S ${_machdir}/${_mach}/copy.S \
-	${_machdir}/${_mach}/spl.S
-SRCS=	param.c ioconf.c ${AFILES} ${CFILES} ${SFILES}
+AFILES=	${_machdir}/${_mach}/locore.S ${_machdir}/${_mach}/vector.S \
+	${_machdir}/${_mach}/copy.S ${_machdir}/${_mach}/spl.S
+SRCS=	${AFILES} \
+	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}

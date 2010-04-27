@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.36 2010/04/27 16:50:15 jsg Exp $
+#	$OpenBSD: Makefile.sgi,v 1.37 2010/04/27 16:54:54 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -84,9 +84,7 @@ SYSTEM_LD=	@if [ X${DEBUG} = X-g ]; \
 			-Ttext=${LINK_ADDRESS} '$${SYSTEM_OBJ}' vers.o; \
 		${LD} $$strip -o $@ -e start -T ${_machdir}/conf/ld.script \
 			-Ttext=${LINK_ADDRESS} ${SYSTEM_OBJ} vers.o
-#
-SYSTEM_LD_TAIL=	chmod 755 $@; \
-		${SIZE} $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"

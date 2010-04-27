@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.19 2010/04/27 06:46:25 deraadt Exp $
+#	$OpenBSD: Makefile.aviion,v 1.20 2010/04/27 16:54:53 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Daviion -Dm88k
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${_mach} -Dm88k
 CWARNFLAGS=	-Wall -Werror -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main -Wstrict-prototypes \
 		-Wstack-larger-than-2047 -Wvariable-decl
@@ -86,7 +86,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@;
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
@@ -145,7 +145,8 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	param.c ioconf.c ${CFILES} ${SFILES}
+SRCS=	\
+	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}

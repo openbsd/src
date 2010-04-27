@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.43 2010/04/27 16:50:15 jsg Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.44 2010/04/27 16:54:54 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -26,7 +26,6 @@ _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
-
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl

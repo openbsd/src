@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.18 2010/04/27 16:50:14 jsg Exp $
+#	$OpenBSD: Makefile.beagle,v 1.19 2010/04/27 16:54:53 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -153,11 +153,11 @@ links:
 	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink makelinks
 
-SRCS=	${_archdir}/arm/locore.S \
+SRCS=	${_archdir}/${_arch}/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/arm/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/${_arch}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -175,7 +175,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S assym.h
 	${NORMAL_S}
 
-locore.o: ${_archdir}/arm/locore.S assym.h
+locore.o: ${_archdir}/${_arch}/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
