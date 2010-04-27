@@ -1,14 +1,7 @@
-#	$OpenBSD: Makefile.socppc,v 1.14 2010/04/27 05:08:30 deraadt Exp $
+#	$OpenBSD: Makefile.socppc,v 1.15 2010/04/27 06:46:26 deraadt Exp $
 
-# This makefile is constructed from a machine description:
-#	config machineid
-# Most changes should be made in the machine description
-#	/sys/arch/socppc/conf/``machineid''
-# after which you should do
-#	config machineid
-# Machine generic makefile changes should be made in
-#	/sys/arch/socppc/conf/Makefile.socppc
-# after which config should be rerun for all machines of that type.
+# For instructions on building kernels consult the config(8) and options(4)
+# manual pages.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
 #	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
