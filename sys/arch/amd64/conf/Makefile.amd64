@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.28 2010/04/27 04:31:45 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.29 2010/04/27 05:05:21 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -157,11 +157,11 @@ links:
 	  sed 's,.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink makelinks
 
-AFILES=	${_machdir}/amd64/locore.S ${_machdir}/amd64/vector.S ${_machdir}/amd64/copy.S \
-	${_machdir}/amd64/spl.S
+AFILES=	${_machdir}/${_mach}/locore.S ${_machdir}/${_mach}/vector.S ${_machdir}/${_mach}/copy.S \
+	${_machdir}/${_mach}/spl.S
 SRCS=	param.c ioconf.c ${AFILES} ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${APMINC} ${DB_STRUCTINFO}
+.depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -176,16 +176,16 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
 
-locore.o: ${_machdir}/amd64/locore.S assym.h
+locore.o: ${_machdir}/${_mach}/locore.S assym.h
 	${NORMAL_S}
 
-vector.o: ${_machdir}/amd64/vector.S assym.h
+vector.o: ${_machdir}/${_mach}/vector.S assym.h
 	${NORMAL_S}
 
-copy.o: ${_machdir}/amd64/copy.S assym.h
+copy.o: ${_machdir}/${_mach}/copy.S assym.h
 	${NORMAL_S}
 
-spl.o: ${_machdir}/amd64/spl.S assym.h
+spl.o: ${_machdir}/${_mach}/spl.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

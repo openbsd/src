@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.palm,v 1.8 2010/04/27 04:31:47 deraadt Exp $
+#	$OpenBSD: Makefile.palm,v 1.9 2010/04/27 05:05:21 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -56,6 +56,12 @@ AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-T ldscript
 LINKFLAGS+=	--warn-common
 STRIPFLAGS=	-g -X -x
+
+.if ${IDENT:M-DDDB_STRUCT}
+DB_STRUCTINFO=	db_structinfo.h
+.else
+DB_STRUCTINFO=
+.endif
 
 HOSTCC= ${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -142,7 +148,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h
+	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
@@ -163,7 +169,7 @@ links:
 SRCS=	${_archdir}/arm/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${APMINC}
+.depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/arm/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
@@ -175,6 +181,10 @@ depend:: .depend
 	    < assym.dep >> .depend
 	@rm -f assym.dep
 
+db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
+	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
+	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
+	rm -f db_structinfo.o
 
 ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S assym.h
 	${NORMAL_S}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.41 2010/04/27 04:31:48 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.42 2010/04/27 05:05:22 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -153,7 +153,7 @@ clean::
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${_machdir}/vax/Locore.c ${CFILES} \
+	    ${_machdir}/${_mach}/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
@@ -168,12 +168,12 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${_machdir}/vax/intvec.s ${_machdir}/vax/subr.s \
+SRCS=	${_machdir}/${_mach}/intvec.s ${_machdir}/${_mach}/subr.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/vax/intvec.s ${_machdir}/vax/subr.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/intvec.s ${_machdir}/${_mach}/subr.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
@@ -188,10 +188,10 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	rm -f db_structinfo.o
 
 
-intvec.o: ${_machdir}/vax/intvec.s assym.h
+intvec.o: ${_machdir}/${_mach}/intvec.s assym.h
 	${NORMAL_S}
 
-subr.o: ${_machdir}/vax/subr.s assym.h
+subr.o: ${_machdir}/${_mach}/subr.s assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

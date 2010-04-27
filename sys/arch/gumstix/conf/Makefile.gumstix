@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.gumstix,v 1.11 2010/04/27 04:31:46 deraadt Exp $
+#	$OpenBSD: Makefile.gumstix,v 1.12 2010/04/27 05:05:21 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -169,7 +169,7 @@ links:
 SRCS=	${_archdir}/arm/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${APMINC} ${DB_STRUCTINFO}
+.depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/arm/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
@@ -186,12 +186,11 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
 
-${_mach}_start.o: ${_machdir}/gumstix/${_mach}_start.S assym.h
+${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S assym.h
 	${NORMAL_S}
 
 locore.o: ${_archdir}/arm/locore.S assym.h
 	${NORMAL_S}
-
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf

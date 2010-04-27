@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.32 2010/04/27 04:31:47 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.33 2010/04/27 05:05:21 deraadt Exp $
 
 # Makefile for OpenBSD
 #
@@ -118,11 +118,11 @@ lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
 	    ${CFILES} ioconf.c param.c
 
-symbols.sort: ${_machdir}/sgi/symbols.raw
-	grep -v '^#' ${_machdir}/sgi/symbols.raw \
+symbols.sort: ${_machdir}/${_mach}/symbols.raw
+	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${_machdir}/sgi/locore.S assym.h
+locore.o: ${_machdir}/${_mach}/locore.S assym.h
 	${NORMAL_S}
 
 assym.h: $S/kern/genassym.sh Makefile \
@@ -160,11 +160,11 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-SRCS=   ${_machdir}/sgi/locore.S \
+SRCS=   ${_machdir}/${_mach}/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/sgi/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.13 2010/04/27 04:31:46 deraadt Exp $
+#	$OpenBSD: Makefile.beagle,v 1.14 2010/04/27 05:05:21 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -168,7 +168,7 @@ links:
 SRCS=	${_archdir}/arm/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${APMINC} ${DB_STRUCTINFO}
+.depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/arm/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""

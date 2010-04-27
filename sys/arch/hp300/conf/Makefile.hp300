@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.53 2010/04/27 04:31:46 deraadt Exp $
+#	$OpenBSD: Makefile.hp300,v 1.54 2010/04/27 05:05:21 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -185,11 +185,11 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${_machdir}/hp300/locore.s \
+SRCS=	${_machdir}/${_mach}/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/hp300/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
@@ -205,7 +205,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
 
-locore.o: ${_machdir}/hp300/locore.s assym.h
+locore.o: ${_machdir}/${_mach}/locore.s assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

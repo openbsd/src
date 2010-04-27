@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa64,v 1.17 2010/04/27 04:31:46 deraadt Exp $
+#	$OpenBSD: Makefile.hppa64,v 1.18 2010/04/27 05:05:21 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -62,9 +62,6 @@ DB_STRUCTINFO=
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
-
-# this line must be there because libkern needs assym.h generated early
-depend:: .NOTMAIN .depend
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
@@ -149,10 +146,11 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${_machdir}/hppa64/locore.S \
+SRCS=	${_machdir}/${_mach}/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
+depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/hppa64/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
@@ -168,7 +166,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
 
-locore.o: ${_machdir}/hppa64/locore.S assym.h
+locore.o: ${_machdir}/${_mach}/locore.S assym.h
 	${NORMAL_S}
 
 fpemu.o: assym.h

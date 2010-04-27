@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.9 2010/04/27 04:31:47 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.10 2010/04/27 05:05:21 deraadt Exp $
 
 # This makefile is constructed from a machine description:
 #	config ``machineid''
@@ -61,6 +61,12 @@ CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
 STRIPFLAGS=	-g -X -x
 
+.if ${IDENT:M-DDDB_STRUCT}
+DB_STRUCTINFO=	db_structinfo.h
+.else
+DB_STRUCTINFO=
+.endif
+
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
@@ -104,17 +110,17 @@ SYSTEM_LD_TAIL+=; \
 
 clean::
 	rm -f eddep bsd bsd.gdb bsd.ecoff tags *.o locore.i [a-z]*.s \
-	    Errs errs linterrs makelinks
+	    Errs errs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
 	    ${CFILES} ioconf.c param.c
 
-symbols.sort: ${_machdir}/loongson/symbols.raw
-	grep -v '^#' ${_machdir}/loongson/symbols.raw \
+symbols.sort: ${_machdir}/${_mach}/symbols.raw
+	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${_machdir}/loongson/locore.S assym.h
+locore.o: ${_machdir}/${_mach}/locore.S assym.h
 	${NORMAL_S}
 
 assym.h: $S/kern/genassym.sh Makefile \
@@ -152,11 +158,11 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-SRCS=   ${_machdir}/loongson/locore.S \
+SRCS=   ${_machdir}/${_mach}/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/loongson/locore.S
+.depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
@@ -164,6 +170,11 @@ depend:: .depend
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
+
+db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
+	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
+	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
+	rm -f db_structinfo.o
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
