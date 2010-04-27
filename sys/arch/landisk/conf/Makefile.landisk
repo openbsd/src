@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.22 2010/04/27 06:46:26 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.23 2010/04/27 15:33:46 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -126,9 +126,9 @@ clean::
 	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB ${CFILES} \
-		ioconf.c param.c | \
-		grep -v 'static function .* unused'
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
+	    ${CFILES} ioconf.c param.c | \
+	    grep -v 'static function .* unused'
 
 tags:
 	@echo "see $S/kern/Makefile for tags"
