@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.30 2010/04/22 15:37:45 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.31 2010/04/27 10:17:53 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 22 2010 $
+.Dd $Mdocdate: April 27 2010 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -253,15 +253,9 @@ Maps are used to provide additional configuration information for
 .Xr smtpd 8 .
 .Pp
 .Ar map
-may be one of the following:
+may be named freely except for the following:
 .Pp
 .Bl -tag -width "virtualXXX" -compact
-.It aliases
-Map queried for mail aliases.
-See
-.Xr aliases 5
-and
-.Xr newaliases 8 .
 .It secrets
 Map queried for remote host credentials.
 See
@@ -276,9 +270,12 @@ may be one of the following:
 Mappings are stored in a file created using
 .Xr makemap 8 .
 This is the default type if none is specified.
+.It plain
+Mappings are stored in a plain text file using the
+same format as used to generate
+.Xr makemap 8
+mappings.
 .It dns
-Not implemented yet.
-.It file
 Not implemented yet.
 .El
 .Pp

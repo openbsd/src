@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2010/04/20 18:55:01 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.56 2010/04/27 10:17:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -117,7 +117,7 @@ typedef struct {
 
 %token	QUEUE INTERVAL SIZE LISTEN ON ALL PORT
 %token	MAP TYPE HASH LIST SINGLE SSL SMTPS CERTIFICATE
-%token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
+%token	DNS DB PLAIN EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
 %token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL USER TAG ALIAS
@@ -350,7 +350,12 @@ maptype		: SINGLE			{ map->m_type = T_SINGLE; }
 		;
 
 mapsource	: DNS				{ map->m_src = S_DNS; }
-		| TFILE				{ map->m_src = S_FILE; }
+		| PLAIN STRING			{
+			map->m_src = S_PLAIN;
+			if (strlcpy(map->m_config, $2, sizeof(map->m_config))
+			    >= sizeof(map->m_config))
+				err(1, "pathname too long");
+		}
 		| DB STRING			{
 			map->m_src = S_DB;
 			if (strlcpy(map->m_config, $2, sizeof(map->m_config))
@@ -1025,7 +1030,6 @@ lookup(char *s)
 		{ "domain",		DOMAIN },
 		{ "enable",		ENABLE },
 		{ "external",		EXTERNAL },
-		{ "file",		TFILE },
 		{ "for",		FOR },
 		{ "from",		FROM },
 		{ "hash",		HASH },
@@ -1041,6 +1045,7 @@ lookup(char *s)
 		{ "mda",		MDA },
 		{ "network",		NETWORK },
 		{ "on",			ON },
+		{ "plain",		PLAIN },
 		{ "port",		PORT },
 		{ "queue",		QUEUE },
 		{ "reject",		REJECT },
