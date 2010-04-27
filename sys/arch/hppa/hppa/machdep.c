@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.181 2010/04/19 14:05:04 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.182 2010/04/27 21:09:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -162,6 +162,7 @@ struct user *proc0paddr;
 long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 struct extent *hppa_ex;
 struct pool hppa_fppl;
+struct fpreg proc0fpregs;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -407,6 +408,7 @@ hppa_init(start)
 	ficacheall();
 	fdcacheall();
 
+	proc0paddr->u_pcb.pcb_fpregs = &proc0fpregs;
 	pool_init(&hppa_fppl, sizeof(struct fpreg), 16, 0, 0, "hppafp", NULL);
 }
 
