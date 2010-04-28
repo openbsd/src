@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.162 2010/04/28 12:55:55 jsing Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.163 2010/04/28 16:56:01 jsing Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -270,6 +270,7 @@ main(int argc, char *argv[])
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
 		error = getasciilabel(t, lp);
+		bzero(lp->d_uid, sizeof(lp->d_uid));
 		if (error == 0)
 			error = writelabel(f, bootarea, lp);
 		fclose(t);
