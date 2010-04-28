@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.22 2010/02/07 13:04:25 blambert Exp $ */
-/*	$OpenBSD: aldap.c,v 1.22 2010/02/07 13:04:25 blambert Exp $ */
+/*	$Id: aldap.c,v 1.23 2010/04/28 10:05:28 jasper Exp $ */
+/*	$OpenBSD: aldap.c,v 1.23 2010/04/28 10:05:28 jasper Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -546,6 +546,7 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 	if (p)
 		lu->filter = p;
 done:
+	free(url);
 	return (1);
 fail:
 	free(lu->buffer);
