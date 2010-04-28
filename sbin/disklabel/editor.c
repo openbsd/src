@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.235 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: editor.c,v 1.236 2010/04/28 17:26:46 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -129,6 +129,7 @@ struct partition **sort_partitions(struct disklabel *);
 void	getdisktype(struct disklabel *, char *, char *);
 void	find_bounds(struct disklabel *);
 void	set_bounds(struct disklabel *);
+void	set_uid(struct disklabel *);
 struct diskchunk *free_chunks(struct disklabel *);
 void	mpcopy(char **, char **);
 int	micmp(const void *, const void *);
@@ -286,6 +287,10 @@ editor(struct disklabel *lp, int f)
 
 		case 'g':
 			set_geometry(&label, disk_geop, lp, arg);
+			break;
+
+		case 'i':
+			set_uid(&label);
 			break;
 
 		case 'm':
@@ -1596,6 +1601,33 @@ set_bounds(struct disklabel *lp)
 }
 
 /*
+ * Allow user to interactively change disklabel UID.
+ */
+void
+set_uid(struct disklabel *lp)
+{
+	u_int uid[8];
+	char *s;
+	int i;
+
+	printf("The disklabel UID is currently: ");
+	uid_print(stdout, lp);
+	printf("\n");
+
+	do {
+		s = getstring("uid", "The disklabel UID, given as a 16 "
+		    "character hexadecimal string.", NULL);
+		if (strlen(s) == 0) {
+			fputs("Command aborted\n", stderr);
+			return;
+		}
+		i = uid_parse(lp, s);
+		if (i != 0)
+			fputs("Invalid UID entered.\n", stderr);
+	} while (i != 0);
+}
+
+/*
  * Return a list of the "chunks" of free space available
  */
 struct diskchunk *
@@ -1706,9 +1738,10 @@ editor_help(void)
 "  d [part] - delete partition           U        - undo all changes\n"
 "  e        - edit drive parameters      u        - undo last change\n"
 "  g [d|u]  - [d]isk or [u]ser geometry  w        - write label to disk\n"
-"  l [unit] - print disk label header    X        - toggle expert mode\n"
-"  M        - disklabel(8) man page      x        - exit & lose changes\n"
-"  m [part] - modify partition           z        - delete all partitions\n"
+"  i        - modify disklabel UID       X        - toggle expert mode\n"
+"  l [unit] - print disk label header    x        - exit & lose changes\n"
+"  M        - disklabel(8) man page      z        - delete all partitions\n"
+"  m [part] - modify partition\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 "\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.92 2010/04/21 06:56:57 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.93 2010/04/28 17:26:46 jsing Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 21 2010 $
+.Dd $Mdocdate: April 28 2010 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -388,6 +388,10 @@ thinks (the
 geometry is simply what the label said before
 .Nm
 made any changes).
+.It Cm i
+Change the disklabel UID, specified as a 16 character hexadecimal string.
+If set to all zeros, a new UID will automatically be allocated when the
+disklabel is written to disk.
 .It Cm l Op Ar unit
 Print the disk label header.
 .It Cm M
