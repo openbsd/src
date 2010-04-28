@@ -1088,7 +1088,7 @@ Common Report Var(flag_whole_program) Init(0)
 Perform whole program optimizations
 
 fwrapv
-Common Report Var(flag_wrapv)
+Common Report Var(flag_wrapv) Init(1)
 Assume signed arithmetic overflow wraps around
 
 fzero-initialized-in-bss
