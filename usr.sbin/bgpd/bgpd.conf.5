@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.104 2010/03/05 15:25:00 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.105 2010/04/28 13:07:48 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 5 2010 $
+.Dd $Mdocdate: April 28 2010 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -883,6 +883,10 @@ is matched against a part of the
 .Em AS path
 specified by the
 .Ar as-type .
+.Ar as-number
+may be set to
+.Ic neighbor-as ,
+which is expanded to the current neighbor remote AS number.
 .Ar as-type
 is one of the following operators:
 .Pp

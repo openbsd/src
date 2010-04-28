@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.256 2010/04/13 09:09:48 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.257 2010/04/28 13:07:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -551,9 +551,12 @@ enum as_spec {
 };
 
 struct filter_as {
-	enum as_spec	type;
 	u_int32_t	as;
+	u_int16_t	flags;
+	enum as_spec	type;
 };
+
+#define AS_FLAG_NEIGHBORAS	0x01
 
 struct filter_community {
 	int			as;

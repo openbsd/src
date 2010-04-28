@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.251 2010/04/26 08:46:31 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.252 2010/04/28 13:07:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1401,6 +1401,12 @@ filter_as	: as4number		{
 			    NULL)
 				fatal(NULL);
 			$$->a.as = $1;
+		}
+		| NEIGHBORAS		{
+			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->a.flags = AS_FLAG_NEIGHBORAS;
 		}
 		;
 
