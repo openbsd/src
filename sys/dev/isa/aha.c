@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.67 2010/03/23 01:57:20 krw Exp $	*/
+/*	$OpenBSD: aha.c,v 1.68 2010/04/28 21:23:18 kettenis Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -77,7 +77,7 @@
  * on i386 at least, xfers to/from user memory
  * cannot be serviced at interrupt time.
  */
-#ifdef i386
+#ifdef __i386__
 #define VOLATILE_XS(xs) \
 	((xs)->datalen > 0 && (xs)->bp == NULL && \
 	((xs)->flags & SCSI_POLL) == 0)
