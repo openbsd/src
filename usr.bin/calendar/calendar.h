@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.12 2005/08/09 12:32:58 mickey Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.13 2010/04/28 18:20:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -34,7 +34,6 @@ extern struct passwd *pw;
 extern int doall;
 extern int bodun_always;
 extern time_t f_time;
-extern struct iovec header[];
 extern struct tm *tp;
 extern char *calendarFile;
 extern char *calendarHome;

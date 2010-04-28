@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.22 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: day.c,v 1.23 2010/04/28 18:20:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,6 +43,8 @@
 
 #include "pathnames.h"
 #include "calendar.h"
+
+extern struct iovec header[];
 
 #define WEEKLY 1
 #define MONTHLY 2
