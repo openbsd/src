@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.30 2010/01/14 00:47:30 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.31 2010/04/28 18:15:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1629,14 +1629,14 @@ again:
 	return (ch);
 }
 
-static char BS = '\b';
+static char BS1 = '\b';
 static char BSB[] = "\b \b";
 static char CARAT = '^';
 #define	ERASEONECHAR	do {					\
 	if (docrterase)						\
 		write(STDERR_FILENO, BSB, sizeof(BSB) - 1);	\
 	else							\
-		write(STDERR_FILENO, &BS, 1);			\
+		write(STDERR_FILENO, &BS1, 1);			\
 } while (0)
 
 int
