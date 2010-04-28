@@ -4540,7 +4540,7 @@ i915_gem_bit_17_swizzle(struct drm_obj *obj)
 	    obj_priv->bit_17 == NULL)
 		return;
 
-	while (i < page_count) {
+	for (i = 0; i < page_count; i++) {
 		/* compare bit 17 with previous one (in case we swapped).
 		 * if they don't match we'll have to swizzle the page
 		 */
