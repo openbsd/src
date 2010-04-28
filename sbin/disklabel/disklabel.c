@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.161 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.162 2010/04/28 12:55:55 jsing Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -769,8 +769,13 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 		fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
 	else
 		fprintf(f, "type: %d\n", lp->d_type);
-	fprintf(f, "disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
-	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
+	fprintf(f, "disk: %.*s\n", (int)sizeof(lp->d_typename),
+	    lp->d_typename);
+	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname),
+	    lp->d_packname);
+	fprintf(f, "uid: %02x%02x%02x%02x%02x%02x%02x%02x\n",
+	    lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
+	    lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 	fprintf(f, "flags:");
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
@@ -984,6 +989,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	int lineno = 0, errors = 0;
 	u_int32_t v, fsize;
 	u_int64_t lv;
+	u_char uid[8];
 
 	lp->d_version = 1;
 	lp->d_bbsize = BBSIZE;				/* XXX */
@@ -1066,6 +1072,16 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		}
 		if (!strcmp(cp, "label")) {
 			strncpy(lp->d_packname, tp, sizeof (lp->d_packname));
+			continue;
+		}
+		if (!strcmp(cp, "uid")) {
+			if (sscanf(tp, "%02x%02x%02x%02x%02x%02x%02x%02x",
+			    &uid[0], &uid[1], &uid[2], &uid[3],
+			    &uid[4], &uid[5], &uid[6], &uid[7]) != 8) {
+				warnx("line %d: bad %s: %s", lineno, cp, tp);
+				errors++;
+			} else
+				memcpy(lp->d_uid, &uid, sizeof(lp->d_uid));
 			continue;
 		}
 		if (!strcmp(cp, "bytes/sector")) {
