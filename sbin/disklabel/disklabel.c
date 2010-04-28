@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.163 2010/04/28 16:56:01 jsing Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.164 2010/04/28 17:12:52 jsing Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -114,6 +114,8 @@ int	getasciilabel(FILE *, struct disklabel *);
 int	cmplabel(struct disklabel *, struct disklabel *);
 void	usage(void);
 u_int64_t getnum(char *, u_int64_t, u_int64_t, const char **);
+void	uid_print(FILE *, struct disklabel *);
+int	uid_parse(struct disklabel *, char *);
 
 int
 main(int argc, char *argv[])
@@ -774,9 +776,9 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 	    lp->d_typename);
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname),
 	    lp->d_packname);
-	fprintf(f, "uid: %02x%02x%02x%02x%02x%02x%02x%02x\n",
-	    lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
-	    lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
+	fprintf(f, "uid: ");
+	uid_print(f, lp);
+	fprintf(f, "\n");
 	fprintf(f, "flags:");
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
@@ -975,6 +977,43 @@ getnum(char *nptr, u_int64_t min, u_int64_t max, const char **errstr)
 	return (ret);
 }
 
+void
+uid_print(FILE *f, struct disklabel *lp)
+{
+	char hex[] = "0123456789abcdef";
+	int i;
+
+	for (i = 0; i < sizeof(lp->d_uid); i++)
+		fprintf(f, "%c%c", hex[(lp->d_uid[i] >> 4) & 0xf],
+		    hex[lp->d_uid[i] & 0xf]);
+}
+
+int
+uid_parse(struct disklabel *lp, char *s)
+{
+	u_char uid[8];
+	char c;
+	int i;
+
+	if (strlen(s) != 16)
+		return -1;
+
+	for (i = 0; i < 16; i++) {
+		c = s[i];
+		if (c >= '0' && c <= '9')
+			c -= '0';
+		else if (c >= 'a' && c <= 'f')
+			c -= ('a' - 10);
+		else
+			return -1;
+		uid[i / 2] <<= 4;
+		uid[i / 2] |= c & 0xf;
+	}
+
+	memcpy(lp->d_uid, &uid, sizeof(lp->d_uid));
+	return 0;
+}
+
 /*
  * Read an ascii label in from FILE f,
  * in the same format as that put out by display(),
@@ -990,7 +1029,6 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	int lineno = 0, errors = 0;
 	u_int32_t v, fsize;
 	u_int64_t lv;
-	u_char uid[8];
 
 	lp->d_version = 1;
 	lp->d_bbsize = BBSIZE;				/* XXX */
@@ -1076,13 +1114,10 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "uid")) {
-			if (sscanf(tp, "%02x%02x%02x%02x%02x%02x%02x%02x",
-			    &uid[0], &uid[1], &uid[2], &uid[3],
-			    &uid[4], &uid[5], &uid[6], &uid[7]) != 8) {
+			if (uid_parse(lp, tp) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
-			} else
-				memcpy(lp->d_uid, &uid, sizeof(lp->d_uid));
+			}
 			continue;
 		}
 		if (!strcmp(cp, "bytes/sector")) {
