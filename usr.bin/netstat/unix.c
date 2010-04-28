@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.13 2007/12/19 01:47:00 deraadt Exp $	*/
+/*	$OpenBSD: unix.c,v 1.14 2010/04/28 18:22:11 jsg Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ struct proc;
 static	void unixdomainpr(struct socket *, caddr_t);
 
 static struct	file *file, *fileNFILE;
-static int	nfiles;
+static int	fcnt;
 extern	kvm_t *kvmd;
 
 void
@@ -68,13 +68,13 @@ unixpr(u_long off)
 	char *filebuf;
 	struct protosw *unixsw = (struct protosw *)off;
 
-	filebuf = kvm_getfiles(kvmd, KERN_FILE, 0, &nfiles);
+	filebuf = kvm_getfiles(kvmd, KERN_FILE, 0, &fcnt);
 	if (filebuf == NULL) {
 		printf("Out of memory (file table).\n");
 		return;
 	}
 	file = (struct file *)(filebuf + sizeof(fp));
-	fileNFILE = file + nfiles;
+	fileNFILE = file + fcnt;
 	for (fp = file; fp < fileNFILE; fp++) {
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET)
 			continue;
