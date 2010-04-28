@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.29 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: eso.c,v 1.30 2010/04/28 21:24:06 kettenis Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  * XXX Work around the 24-bit implementation limit of the Audio 1 DMA
  * XXX engine by allocating through the ISA DMA tag.
  */
-#if defined(amd64) || defined(i386)
+#if defined(__amd64__) || defined(__i386__)
 #include "isa.h"
 #if NISA > 0
 #include <dev/isa/isavar.h>
