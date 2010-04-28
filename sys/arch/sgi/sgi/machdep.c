@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 2010/03/03 12:25:09 jsing Exp $ */
+/*	$OpenBSD: machdep.c,v 1.101 2010/04/28 16:20:28 syuu Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -148,6 +148,11 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	extern char start[], edata[], end[];
 	extern char exception[], e_exception[];
 	extern char *hw_vendor;
+
+	/*
+	 * Set curcpu address on primary processor.
+	 */
+	setcurcpu(&cpu_info_primary);
 
 	/*
 	 * Make sure we can access the extended address space.

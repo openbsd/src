@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.41 2010/04/21 14:57:11 deraadt Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.42 2010/04/28 16:20:28 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -531,10 +531,9 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
 	    scachesz, fanloads, launch, rndvz,
 	    stackaddr, lparam, rparam, idleflag);
 #endif
-	kstack = smp_malloc(USPACE);
+	kstack = alloc_contiguous_pages(USPACE);
 	if (kstack == NULL)
 		panic("unable to allocate idle stack\n");
-	bzero((char *)kstack, USPACE);
 	ci->ci_curprocpaddr = (void *)kstack;
 
 	*(volatile uint64_t *)(mpconf + MPCONF_STACKADDR(cpuid)) =
@@ -552,6 +551,11 @@ void
 hw_cpu_hatch(struct cpu_info *ci)
 {
 	int s;
+
+	/*
+	 * Set curcpu address on this processor.
+	 */
+	setcurcpu(ci);
 
 	/*
 	 * Make sure we can access the extended address space.

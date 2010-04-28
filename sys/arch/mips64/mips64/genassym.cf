@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2010/01/09 23:43:43 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2010/04/28 16:20:28 syuu Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -58,6 +58,7 @@ member	pcb_onfault
 member	pcb_segtab
 
 struct	cpu_info
+member	ci_cpuid
 member	ci_curproc
 member	ci_curprocpaddr
 member	ci_fpuproc

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.57 2010/02/28 18:01:36 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.58 2010/04/28 16:20:28 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -428,18 +428,22 @@ extern struct cpu_info *cpu_info_list;
 
 #ifdef MULTIPROCESSOR
 #define MAXCPUS				4
-#define curcpu()			(cpu_info[cpu_number()])
+extern struct cpu_info *getcurcpu(void);
+extern void setcurcpu(struct cpu_info *);
+#ifdef DEBUG
+extern struct cpu_info *get_cpu_info(int);
+#endif
+#define curcpu() getcurcpu()
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
-#define cpu_number()			hw_cpu_number()
+#define cpu_number()			(curcpu()->ci_cpuid)
 
 extern struct cpuset cpus_running;
-extern struct cpu_info *cpu_info[];
 void cpu_unidle(struct cpu_info *);
 void cpu_boot_secondary_processors(void);
 #define cpu_boot_secondary(ci)          hw_cpu_boot_secondary(ci)
 #define cpu_hatch(ci)                   hw_cpu_hatch(ci)
 
-vaddr_t smp_malloc(size_t);
+vaddr_t alloc_contiguous_pages(size_t);
 
 #define MIPS64_IPI_NOP		0x00000001
 #define MIPS64_IPI_RENDEZVOUS	0x00000002

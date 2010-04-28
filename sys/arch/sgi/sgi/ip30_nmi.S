@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_nmi.S,v 1.2 2010/01/13 23:24:27 miod Exp $	*/
+/*	$OpenBSD: ip30_nmi.S,v 1.3 2010/04/28 16:20:28 syuu Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -23,9 +23,7 @@
 
 #include <arch/sgi/sgi/ip30.h>
 
-#ifndef MULTIPROCESSOR
 #define	HW_CPU_NUMBER_REG	0x900000000ff50000	/* HEART_PRID */
-#endif
 
 #include "assym.h"
 

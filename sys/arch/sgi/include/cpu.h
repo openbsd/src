@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.9 2010/04/28 16:20:28 syuu Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,16 +45,7 @@
 #define _SGI_CPU_H_
 
 #ifdef _KERNEL
-
-#ifdef MULTIPROCESSOR
-
-#if defined(TGT_OCTANE)
-#define HW_CPU_NUMBER_REG 0x900000000ff50000 /* HEART_PRID */
-#else
-#error MULTIPROCESSOR kernel not supported on this configuration
-#endif
-
-#if !defined(_LOCORE)
+#if defined(MULTIPROCESSOR) && !defined(_LOCORE)
 struct cpu_info;
 void hw_cpu_boot_secondary(struct cpu_info *);
 void hw_cpu_hatch(struct cpu_info *);
@@ -62,15 +53,7 @@ void hw_cpu_spinup_trampoline(struct cpu_info *);
 int  hw_ipi_intr_establish(int (*)(void *), u_long);
 void hw_ipi_intr_set(u_long);
 void hw_ipi_intr_clear(u_long);
-#endif
-
-#define hw_cpu_number() (*(uint64_t *)HW_CPU_NUMBER_REG)
-
-#else	/* MULTIPROCESSOR */
-
-#define hw_cpu_number() 0
-
-#endif	/* MULTIPROCESSOR */
+#endif	/* MULTIPROCESSOR && !_LOCORE */
 
 /*
  * Define soft selected cache functions.

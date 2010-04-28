@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.10 2010/01/09 23:34:29 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.11 2010/04/28 16:20:28 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -299,11 +299,9 @@ x: ;				\
 
 #ifdef MULTIPROCESSOR
 #define GET_CPU_INFO(ci, tmp)		\
-	HW_CPU_NUMBER(tmp);		\
-	PTR_SLL	 tmp, tmp, LOGREGSZ;	\
-	LA	 ci, cpu_info;		\
-	PTR_ADDU ci, ci, tmp;		\
-	PTR_L	 ci, 0(ci)
+	LOAD_XKPHYS(ci, CCA_CACHED);	\
+	mfc0	tmp, COP_0_LLADDR;	\
+	or	ci, ci, tmp
 #else  /* MULTIPROCESSOR */
 #define GET_CPU_INFO(ci, tmp)		\
 	LA	ci, cpu_info_primary

@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.44 2010/02/13 14:04:45 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.45 2010/04/28 16:20:28 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -145,7 +145,8 @@ NON_LEAF(cpu_switchto_asm, FRAMESZ(CF_SZ), ra)
 	PTR_L	t0, P_VMSPACE(s0)		# p->p_vmspace
 	PTR_L	t1, VMSPACE_PMAP(t0)		# ->vm_map.pmap
 #ifdef MULTIPROCESSOR
-	HW_CPU_NUMBER(v0)			# cpuid
+	GET_CPU_INFO(v0, t2)
+	PTR_L	v0, CI_CPUID(v0)
 	PTR_SLL	v0, v0, 0x3			# size of pmap_asid_info
 	PTR_ADDU t1, t1, v0
 #endif
