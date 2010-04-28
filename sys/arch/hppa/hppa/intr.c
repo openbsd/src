@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.29 2010/04/19 16:32:53 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.30 2010/04/28 16:46:48 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -66,14 +66,16 @@ struct hppa_iv intr_store[8*2*CPU_NINTS] __attribute__ ((aligned(32))),
 struct hppa_iv intr_table[CPU_NINTS] __attribute__ ((aligned(32))) = {
 	{ IPL_SOFTCLOCK, 0, HPPA_IV_SOFT, 0, 0, NULL },
 	{ IPL_SOFTNET  , 0, HPPA_IV_SOFT, 0, 0, (int (*)(void *))&softnet },
-	{ 0 }, { 0 },
+	{ 0 },
+	{ 0 },
 	{ IPL_SOFTTTY  , 0, HPPA_IV_SOFT, 0, 0, NULL }
 };
 volatile u_long imask[NIPL] = {
 	0,
 	1 << (IPL_SOFTCLOCK - 1),
 	1 << (IPL_SOFTNET - 1),
-	0, 0,
+	0,
+	0,
 	1 << (IPL_SOFTTTY - 1)
 };
 
@@ -212,6 +214,9 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	if (irq < 0 || irq >= CPU_NINTS || intr_table[irq].handler)
 		return (NULL);
 
+	if ((intr_table[irq].flags & HPPA_IV_SOFT) != 0)
+		return (NULL);
+
 	cnt = (struct evcount *)malloc(sizeof *cnt, M_DEVBUF, M_NOWAIT);
 	if (!cnt)
 		return (NULL);
@@ -346,10 +351,8 @@ softintr_establish(int pri, void (*handler)(void *), void *arg)
 	if (iv->handler) {
 		iv->next = malloc(sizeof *iv, M_DEVBUF, M_NOWAIT);
 		iv = iv->next;
-	} else {
-		cpu_mask |= (1 << irq);
+	} else
 		imask[pri] |= (1 << irq);
-	}
 
 	if (iv != NULL) {
 		iv->pri = pri;
