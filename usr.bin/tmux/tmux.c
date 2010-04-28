@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.74 2010/04/18 13:41:29 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.75 2010/04/28 18:22:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -355,8 +355,8 @@ main(int argc, char **argv)
 	options_set_number(so, "message-fg", 0);
 	options_set_number(so, "message-limit", 20);
 	options_set_number(so, "mouse-select-pane", 0);
-	options_set_number(so, "pane-active-border-bg", 2);
-	options_set_number(so, "pane-active-border-fg", 8);
+	options_set_number(so, "pane-active-border-bg", 8);
+	options_set_number(so, "pane-active-border-fg", 2);
 	options_set_number(so, "pane-border-bg", 8);
 	options_set_number(so, "pane-border-fg", 8);
 	options_set_number(so, "repeat-time", 500);
