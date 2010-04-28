@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.5 2008/09/13 05:37:12 jmc Exp $
+.\" $OpenBSD: video.4,v 1.6 2010/04/28 05:16:17 mglocker Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2008 $
+.Dd $Mdocdate: April 28 2010 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -100,7 +100,7 @@ struct v4l2_input {
 	u_int32_t	reserved[32];
 };
 .Ed
-.It VIDIOC_S_INPUT (int)
+.It VIDIOC_S_INPUT (int *)
 Select the current video input.
 .It VIDIOC_REQBUFS (struct v4l2_requestbuffers *)
 Initiate memory mapping or user pointer I/O.
@@ -124,9 +124,9 @@ Same structure as for VIDIOC_REQBUFS.
 Remove a buffer from the queue.
 .Pp
 Same structure as for VIDIOC_REQBUFS.
-.It VIDIOC_STREAMON (int)
+.It VIDIOC_STREAMON (int *)
 Start video stream.
-.It Dv VIDIOC_STREAMOFF (int)
+.It Dv VIDIOC_STREAMOFF (int *)
 Stop video stream.
 .It VIDIOC_TRY_FMT (struct v4l2_format *)
 Try a data format.
