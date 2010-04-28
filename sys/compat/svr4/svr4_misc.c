@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.51 2009/12/20 23:36:04 guenther Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.52 2010/04/28 21:31:59 kettenis Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1414,7 +1414,7 @@ svr4_sys_setegid(p, v, retval)
 		syscallarg(gid_t) egid;
         } */ *uap = v;
 
-#if defined(COMPAT_LINUX) && defined(i386)
+#if defined(COMPAT_LINUX) && defined(__i386__)
 	if (SCARG(uap, egid) > 60000) {
 		/*
 		 * One great fuckup deserves another.  The Linux people
