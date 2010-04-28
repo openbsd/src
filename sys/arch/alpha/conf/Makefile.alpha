@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.60 2010/04/28 15:31:31 deraadt Exp $
+#	$OpenBSD: Makefile.alpha,v 1.61 2010/04/28 15:47:41 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -115,7 +115,6 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
@@ -139,10 +138,9 @@ links:
 SRCS=	${_machdir}/${_mach}/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${_machdir}/${_mach}/cpuconf.c ${DB_STRUCTINFO}
+.depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.s
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/cpuconf.c \
-	    param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
