@@ -4591,7 +4591,7 @@ i915_gem_save_bit_17_swizzle(struct drm_obj *obj)
 	segp = &obj_priv->dma_segs[0];
 	n = 0;
 	i = 0;
-	while (i < page_count) {
+	for (i = 0; i < page_count; i++) {
 		if ((segp->ds_addr + (n * PAGE_SIZE)) & (1 << 17))
 			set_bit(i, obj_priv->bit_17);
 		else
