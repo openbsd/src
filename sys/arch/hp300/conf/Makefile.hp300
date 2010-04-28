@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.58 2010/04/27 17:25:19 drahn Exp $
+#	$OpenBSD: Makefile.hp300,v 1.59 2010/04/28 15:31:33 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -171,7 +171,7 @@ links:
 	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
 	  sort -u | comm -23 - dontlink | \
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink
+	sh makelinks && rm -f dontlink makelinks
 
 SRCS=	${_machdir}/${_mach}/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}

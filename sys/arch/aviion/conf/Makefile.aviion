@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.20 2010/04/27 16:54:53 deraadt Exp $
+#	$OpenBSD: Makefile.aviion,v 1.21 2010/04/28 15:31:32 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -55,7 +55,7 @@ HOSTED_CFLAGS?=	${CFLAGS}
 ### CPU configuration
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# where TYPE is NORMAL, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
@@ -142,8 +142,8 @@ links:
 	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
 	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
 	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink makelinks
 
 SRCS=	\
 	param.c ioconf.c ${CFILES} ${SFILES}

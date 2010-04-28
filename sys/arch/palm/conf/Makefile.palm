@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.palm,v 1.15 2010/04/27 17:25:19 drahn Exp $
+#	$OpenBSD: Makefile.palm,v 1.16 2010/04/28 15:31:33 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -56,16 +56,13 @@ HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE; SUFFIX is the file suffix,
+# where TYPE is NORMAL, or PROFILE; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
