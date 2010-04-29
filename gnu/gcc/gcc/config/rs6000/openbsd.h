@@ -75,6 +75,9 @@ Boston, MA 02111-1307, USA.  */
 #undef	STARTFILE_DEFAULT_SPEC
 #define STARTFILE_DEFAULT_SPEC "%(startfile_openbsd)"
 
+#undef CRTSAVRES_DEFAULT_SPEC 
+#define CRTSAVRES_DEFAULT_SPEC ""
+
 #undef	ENDFILE_DEFAULT_SPEC
 #define ENDFILE_DEFAULT_SPEC "%(endfile_openbsd)"
 

@@ -787,7 +787,7 @@ extern int fixuplabelno;
   mcall-linux  : crtsavres.o%s        %(endfile_linux)       ; \
   mcall-gnu    : crtsavres.o%s        %(endfile_gnu)         ; \
   mcall-netbsd : crtsavres.o%s        %(endfile_netbsd)      ; \
-  mcall-openbsd: crtsavres.o%s        %(endfile_openbsd)     ; \
+  mcall-openbsd: %(endfile_openbsd)     		     ; \
                : %(crtsavres_default) %(endfile_default)     }"
 
 #define CRTSAVRES_DEFAULT_SPEC "crtsavres.o%s"
