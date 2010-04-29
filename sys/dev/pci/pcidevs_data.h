@@ -3636,6 +3636,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 2600 Pro AGP",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_XT,
+	    "Radeon HD 2600 XT",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_PRO,
 	    "Radeon HD 2600 Pro",
 	},
