@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2009/02/08 18:33:28 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.24 2010/04/29 12:35:14 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -48,7 +48,7 @@
 #include <ddb/db_extern.h>
 #endif
 
-u_long	cpu_itmr, cpu_hzticks;
+u_long	cpu_hzticks;
 
 int	cpu_hardclock(void *);
 u_int	itmr_get_timecount(struct timecounter *);
@@ -60,13 +60,14 @@ struct timecounter itmr_timecounter = {
 void
 cpu_initclocks()
 {
+	struct cpu_info *ci = curcpu();
 	u_long __itmr;
 
 	itmr_timecounter.tc_frequency = PAGE0->mem_10msec * 100;
 	tc_init(&itmr_timecounter);
 
 	mfctl(CR_ITMR, __itmr);
-	cpu_itmr = __itmr;
+	ci->ci_itmr = __itmr;
 	__itmr += cpu_hzticks;
 	mtctl(__itmr, CR_ITMR);
 }
@@ -74,6 +75,7 @@ cpu_initclocks()
 int
 cpu_hardclock(void *v)
 {
+	struct cpu_info *ci = curcpu();
 	u_long __itmr, delta, eta;
 	int wrap;
 	register_t eiem;
@@ -84,10 +86,10 @@ cpu_hardclock(void *v)
 	 */
 	for (;;) {
 		mfctl(CR_ITMR, __itmr);
-		delta = __itmr - cpu_itmr;
+		delta = __itmr - ci->ci_itmr;
 		if (delta >= cpu_hzticks) {
 			hardclock(v);
-			cpu_itmr += cpu_hzticks;
+			ci->ci_itmr += cpu_hzticks;
 		} else
 			break;
 	}
@@ -97,8 +99,8 @@ cpu_hardclock(void *v)
 	 * indeed happen in the future. This is done with interrupts
 	 * disabled to avoid a possible race.
 	 */
-	eta = cpu_itmr + cpu_hzticks;
-	wrap = eta < cpu_itmr;	/* watch out for a wraparound */
+	eta = ci->ci_itmr + cpu_hzticks;
+	wrap = eta < ci->ci_itmr;	/* watch out for a wraparound */
 	__asm __volatile("mfctl	%%cr15, %0": "=r" (eiem));
 	__asm __volatile("mtctl	%r0, %cr15");
 	mtctl(eta, CR_ITMR);
@@ -120,8 +122,8 @@ cpu_hardclock(void *v)
 	 *   to keep the >= cpu_itmr test because itmr might wrap
 	 *   before eta does).
 	 */
-	if ((wrap && !(eta > __itmr || __itmr >= cpu_itmr)) ||
-	    (!wrap && !(eta > __itmr && __itmr >= cpu_itmr))) {
+	if ((wrap && !(eta > __itmr || __itmr >= ci->ci_itmr)) ||
+	    (!wrap && !(eta > __itmr && __itmr >= ci->ci_itmr))) {
 		eta += cpu_hzticks;
 		mtctl(eta, CR_ITMR);
 	}
