@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.4 2010/04/15 15:39:32 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.5 2010/04/29 12:09:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,8 +56,6 @@ struct {
     {IF_STA_ANY,	IF_EVT_DOWN,		IF_ACT_RST,	IF_STA_DOWN},
     {-1,		IF_EVT_NOTHING,		IF_ACT_NOTHING,	0},
 };
-
-static int vlink_cnt = 0;
 
 const char * const if_event_names[] = {
 	"NOTHING",
@@ -137,15 +135,6 @@ if_new(struct kif *kif, struct kif_addr *ka)
 
 	LIST_INIT(&iface->nbr_list);
 	LIST_INIT(&iface->lde_nbr_list);
-
-	if (kif == NULL) {
-		iface->type = IF_TYPE_VIRTUALLINK;
-		snprintf(iface->name, sizeof(iface->name), "vlink%d",
-		    vlink_cnt++);
-		iface->flags |= IFF_UP;
-		iface->mtu = IP_MSS;
-		return (iface);
-	}
 
 	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
 
@@ -268,23 +257,10 @@ if_act_start(struct iface *iface)
 	gettimeofday(&now, NULL);
 	iface->uptime = now.tv_sec;
 
-	switch (iface->type) {
-	case IF_TYPE_VIRTUALLINK:
-	case IF_TYPE_POINTOMULTIPOINT:
-	case IF_TYPE_NBMA:
-		log_debug("if_act_start: type %s not supported, interface %s",
-		    if_type_name(iface->type), iface->name);
+	inet_aton(AllRouters, &addr);
+	if (if_join_group(iface, &addr))
 		return (-1);
-	case IF_TYPE_POINTOPOINT:
-	case IF_TYPE_BROADCAST:
-		inet_aton(AllRouters, &addr);
-		if (if_join_group(iface, &addr))
-			return (-1);
-		iface->state = IF_STA_DOWN;
-		break;
-	default:
-		fatalx("if_act_start: unknown interface type");
-	}
+	iface->state = IF_STA_DOWN;
 
 	/* hello timer needs to be started in any case */
 	if_start_hello_timer(iface);
@@ -297,25 +273,10 @@ if_act_reset(struct iface *iface)
 /*	struct nbr		*nbr = NULL; */
 	struct in_addr		 addr;
 
-	switch (iface->type) {
-	case IF_TYPE_POINTOPOINT:
-	case IF_TYPE_BROADCAST:
-		inet_aton(AllRouters, &addr);
-		if (if_leave_group(iface, &addr)) {
-			log_warnx("if_act_reset: error leaving group %s, "
-			    "interface %s", inet_ntoa(addr), iface->name);
-		}
-		break;
-	case IF_TYPE_VIRTUALLINK:
-		/* nothing */
-		break;
-	case IF_TYPE_NBMA:
-	case IF_TYPE_POINTOMULTIPOINT:
-		log_debug("if_act_reset: type %s not supported, interface %s",
-		    if_type_name(iface->type), iface->name);
-		return (-1);
-	default:
-		fatalx("if_act_reset: unknown interface type");
+	inet_aton(AllRouters, &addr);
+	if (if_leave_group(iface, &addr)) {
+		log_warnx("if_act_reset: error leaving group %s, "
+		    "interface %s", inet_ntoa(addr), iface->name);
 	}
 /*
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
@@ -453,46 +414,32 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 	struct ip_mreq		 mreq;
 	struct if_group_count	*ifg;
 
-	switch (iface->type) {
-	case IF_TYPE_POINTOPOINT:
-	case IF_TYPE_BROADCAST:
-		LIST_FOREACH(ifg, &ifglist, entry)
-			if (iface->ifindex == ifg->ifindex &&
-			    addr->s_addr == ifg->addr.s_addr)
-				break;
-		if (ifg == NULL) {
-			if ((ifg = calloc(1, sizeof(*ifg))) == NULL)
-				fatal("if_join_group");
-			ifg->addr.s_addr = addr->s_addr;
-			ifg->ifindex = iface->ifindex;
-			LIST_INSERT_HEAD(&ifglist, ifg, entry);
-		}
-
-		if (ifg->count++ != 0)
-			/* already joined */
-			return (0);
-
-		mreq.imr_multiaddr.s_addr = addr->s_addr;
-		mreq.imr_interface.s_addr = iface->addr.s_addr;
-
-		if (setsockopt(iface->discovery_fd, IPPROTO_IP,
-		    IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
-			log_warn("if_join_group: error IP_ADD_MEMBERSHIP, "
-			    "interface %s address %s", iface->name,
-			    inet_ntoa(*addr));
-			return (-1);
-		}
-		break;
-	case IF_TYPE_POINTOMULTIPOINT:
-	case IF_TYPE_VIRTUALLINK:
-	case IF_TYPE_NBMA:
-		log_debug("if_join_group: type %s not supported, interface %s",
-		    if_type_name(iface->type), iface->name);
-		return (-1);
-	default:
-		fatalx("if_join_group: unknown interface type");
+	LIST_FOREACH(ifg, &ifglist, entry)
+		if (iface->ifindex == ifg->ifindex &&
+		    addr->s_addr == ifg->addr.s_addr)
+			break;
+	if (ifg == NULL) {
+		if ((ifg = calloc(1, sizeof(*ifg))) == NULL)
+			fatal("if_join_group");
+		ifg->addr.s_addr = addr->s_addr;
+		ifg->ifindex = iface->ifindex;
+		LIST_INSERT_HEAD(&ifglist, ifg, entry);
 	}
 
+	if (ifg->count++ != 0)
+		/* already joined */
+		return (0);
+
+	mreq.imr_multiaddr.s_addr = addr->s_addr;
+	mreq.imr_interface.s_addr = iface->addr.s_addr;
+
+	if (setsockopt(iface->discovery_fd, IPPROTO_IP,
+	    IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
+		log_warn("if_join_group: error IP_ADD_MEMBERSHIP, "
+		    "interface %s address %s", iface->name,
+		    inet_ntoa(*addr));
+		return (-1);
+	}
 	return (0);
 }
 
@@ -502,69 +449,42 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 	struct ip_mreq		 mreq;
 	struct if_group_count	*ifg;
 
-	switch (iface->type) {
-	case IF_TYPE_POINTOPOINT:
-	case IF_TYPE_BROADCAST:
-		LIST_FOREACH(ifg, &ifglist, entry)
-			if (iface->ifindex == ifg->ifindex &&
-			    addr->s_addr == ifg->addr.s_addr)
-				break;
+	LIST_FOREACH(ifg, &ifglist, entry)
+		if (iface->ifindex == ifg->ifindex &&
+		    addr->s_addr == ifg->addr.s_addr)
+			break;
 
-		/* if interface is not found just try to drop membership */
-		if (ifg && --ifg->count != 0)
-			/* others still joined */
-			return (0);
+	/* if interface is not found just try to drop membership */
+	if (ifg && --ifg->count != 0)
+		/* others still joined */
+		return (0);
 
-		mreq.imr_multiaddr.s_addr = addr->s_addr;
-		mreq.imr_interface.s_addr = iface->addr.s_addr;
+	mreq.imr_multiaddr.s_addr = addr->s_addr;
+	mreq.imr_interface.s_addr = iface->addr.s_addr;
 
-		if (setsockopt(iface->discovery_fd, IPPROTO_IP,
-		    IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
-			log_warn("if_leave_group: error IP_DROP_MEMBERSHIP, "
-			    "interface %s address %s", iface->name,
-			    inet_ntoa(*addr));
-			return (-1);
-		}
-
-		if (ifg) {
-			LIST_REMOVE(ifg, entry);
-			free(ifg);
-		}
-		break;
-	case IF_TYPE_POINTOMULTIPOINT:
-	case IF_TYPE_VIRTUALLINK:
-	case IF_TYPE_NBMA:
-		log_debug("if_leave_group: type %s not supported, interface %s",
-		    if_type_name(iface->type), iface->name);
+	if (setsockopt(iface->discovery_fd, IPPROTO_IP,
+	    IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
+		log_warn("if_leave_group: error IP_DROP_MEMBERSHIP, "
+		    "interface %s address %s", iface->name,
+		    inet_ntoa(*addr));
 		return (-1);
-	default:
-		fatalx("if_leave_group: unknown interface type");
 	}
 
+	if (ifg) {
+		LIST_REMOVE(ifg, entry);
+		free(ifg);
+	}
 	return (0);
 }
 
 int
 if_set_mcast(struct iface *iface)
 {
-	switch (iface->type) {
-	case IF_TYPE_POINTOPOINT:
-	case IF_TYPE_BROADCAST:
-		if (setsockopt(iface->discovery_fd, IPPROTO_IP, IP_MULTICAST_IF,
-		    &iface->addr.s_addr, sizeof(iface->addr.s_addr)) < 0) {
-			log_debug("if_set_mcast: error setting "
-			    "IP_MULTICAST_IF, interface %s", iface->name);
-			return (-1);
-		}
-		break;
-	case IF_TYPE_POINTOMULTIPOINT:
-	case IF_TYPE_VIRTUALLINK:
-	case IF_TYPE_NBMA:
-		log_debug("if_set_mcast: type %s not supported, interface %s",
-		    if_type_name(iface->type), iface->name);
+	if (setsockopt(iface->discovery_fd, IPPROTO_IP, IP_MULTICAST_IF,
+	    &iface->addr.s_addr, sizeof(iface->addr.s_addr)) < 0) {
+		log_debug("if_set_mcast: error setting "
+		    "IP_MULTICAST_IF, interface %s", iface->name);
 		return (-1);
-	default:
-		fatalx("if_set_mcast: unknown interface type");
 	}
 
 	return (0);

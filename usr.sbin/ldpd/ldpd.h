@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.14 2010/04/15 15:44:37 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.15 2010/04/29 12:09:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -135,10 +135,7 @@ enum iface_action {
 /* interface types */
 enum iface_type {
 	IF_TYPE_POINTOPOINT,
-	IF_TYPE_BROADCAST,
-	IF_TYPE_NBMA,
-	IF_TYPE_POINTOMULTIPOINT,
-	IF_TYPE_VIRTUALLINK
+	IF_TYPE_BROADCAST
 };
 
 /* neighbor states */

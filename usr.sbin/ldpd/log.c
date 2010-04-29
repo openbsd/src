@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2010/04/15 15:44:37 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.5 2010/04/29 12:09:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -217,12 +217,6 @@ if_type_name(enum iface_type type)
 		return ("POINTOPOINT");
 	case IF_TYPE_BROADCAST:
 		return ("BROADCAST");
-	case IF_TYPE_NBMA:
-		return ("NBMA");
-	case IF_TYPE_POINTOMULTIPOINT:
-		return ("POINTOMULTIPOINT");
-	case IF_TYPE_VIRTUALLINK:
-		return ("VIRTUALLINK");
 	}
 	/* NOTREACHED */
 	return ("UNKNOWN");

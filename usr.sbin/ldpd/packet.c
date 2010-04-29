@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.8 2010/04/15 15:37:51 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.9 2010/04/29 12:09:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -210,22 +210,12 @@ ldp_hdr_sanity_check(struct ldp_hdr *ldp_hdr, u_int16_t len,
 {
 	struct in_addr		 addr;
 
-	if (iface->type != IF_TYPE_VIRTUALLINK) {
-		if (ldp_hdr->lspace_id != iface->lspace_id) {
-			addr.s_addr = ldp_hdr->lspace_id;
-			log_debug("ldp_hdr_sanity_check: invalid label space "
-			    "ID %s, interface %s", inet_ntoa(addr),
-			    iface->name);
-			return (-1);
-		}
-	} else {
-		if (ldp_hdr->lspace_id != 0) {
-			addr.s_addr = ldp_hdr->lspace_id;
-			log_debug("ldp_hdr_sanity_check: invalid label space "
-			    "ID %s, interface %s", inet_ntoa(addr),
-			    iface->name);
-			return (-1);
-		}
+	if (ldp_hdr->lspace_id != iface->lspace_id) {
+		addr.s_addr = ldp_hdr->lspace_id;
+		log_debug("ldp_hdr_sanity_check: invalid label space "
+		    "ID %s, interface %s", inet_ntoa(addr),
+		    iface->name);
+		return (-1);
 	}
 
 	return (ntohs(ldp_hdr->length));
@@ -239,11 +229,6 @@ find_iface(struct ldpd_conf *xconf, unsigned int ifindex, struct in_addr src)
 	/* returned interface needs to be active */
 	LIST_FOREACH(iface, &xconf->iface_list, entry) {
 		switch (iface->type) {
-		case IF_TYPE_VIRTUALLINK:
-			if ((src.s_addr == iface->dst.s_addr) &&
-			    !iface->passive)
-				return (iface);
-			break;
 		case IF_TYPE_POINTOPOINT:
 			if (ifindex == iface->ifindex &&
 			    iface->dst.s_addr == src.s_addr &&
@@ -482,11 +467,6 @@ session_find_iface(struct ldpd_conf *xconf, struct in_addr src)
 	/* returned interface needs to be active */
 	LIST_FOREACH(iface, &xconf->iface_list, entry) {
 		switch (iface->type) {
-		case IF_TYPE_VIRTUALLINK:
-			if ((src.s_addr == iface->dst.s_addr) &&
-			    !iface->passive)
-				return (iface);
-			break;
 		case IF_TYPE_POINTOPOINT:
 			if (iface->dst.s_addr == src.s_addr &&
 			    !iface->passive)
