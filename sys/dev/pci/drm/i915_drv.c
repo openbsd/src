@@ -469,10 +469,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	/* array of vm pages that physload introduced. */
 	dev_priv->pgs = PHYS_TO_VM_PAGE(dev->agp->base);
 	KASSERT(dev_priv->pgs != NULL);
-	/* XXX wc and do earlier */
 	if (bus_space_map(dev_priv->bst, dev->agp->base,
-	    dev->agp->info.ai_aperture_size, BUS_SPACE_MAP_LINEAR,
-	    &dev_priv->aperture_bsh) != 0)
+	    dev->agp->info.ai_aperture_size, BUS_SPACE_MAP_LINEAR |
+	    BUS_SPACE_MAP_PREFETCHABLE, &dev_priv->aperture_bsh) != 0)
 		panic("can't map aperture");
 #endif /* INTELDRM_GEM */
 }
@@ -2326,8 +2325,7 @@ inteldrm_fault(struct drm_obj *obj, struct uvm_faultinfo *ufi, off_t offset,
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=%p, va=0x%lx, pa=0x%lx, at=%ld",
 		    ufi->orig_map->pmap, vaddr, (u_long)paddr, mapprot);
-		/* XXX writecombining */
-		if (pmap_enter(ufi->orig_map->pmap, vaddr, paddr | PMAP_NOCACHE,
+		if (pmap_enter(ufi->orig_map->pmap, vaddr, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			drm_unhold_object(obj);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
@@ -3833,7 +3831,6 @@ i915_gem_init_ringbuffer(struct drm_i915_private *dev_priv)
 	/* Set up the kernel mapping for the ring. */
 	dev_priv->ring.size = obj->size;
 
-	/* XXX WC */
 	if ((ret = bus_space_subregion(dev_priv->bst, dev_priv->aperture_bsh, 
 	    obj_priv->gtt_offset, obj->size, &dev_priv->ring.bsh)) != 0) {
 		DRM_INFO("can't map ringbuffer\n");

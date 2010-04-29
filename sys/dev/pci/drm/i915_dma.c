@@ -131,7 +131,8 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 		dev_priv->ring.size = init->ring_size;
 
 		if ((ret = bus_space_map(dev_priv->bst, init->ring_start,
-		    init->ring_size, 0, &dev_priv->ring.bsh)) != 0) {
+		    init->ring_size, BUS_SPACE_MAP_PREFETCHABLE,
+		    &dev_priv->ring.bsh)) != 0) {
 			DRM_INFO("can't map ringbuffer\n");
 			i915_dma_cleanup(dev);
 			return (ret);
@@ -678,8 +679,8 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 	dev_priv->hws_map.size = 4*1024;
 
 	if ((ret = bus_space_map(dev_priv->bst, dev_priv->hws_map.offset,
-	    dev_priv->hws_map.size, BUS_SPACE_MAP_LINEAR,
-	    &dev_priv->hws_map.bsh)) != 0) {
+	    dev_priv->hws_map.size, BUS_SPACE_MAP_LINEAR |
+	    BUS_SPACE_MAP_PREFETCHABLE, &dev_priv->hws_map.bsh)) != 0) {
 		DRM_INFO("can't hws page\n");
 		i915_dma_cleanup(dev);
 		dev_priv->status_gfx_addr = 0;
