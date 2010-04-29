@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1549 2010/04/29 08:49:06 jasper Exp $
+$OpenBSD: pcidevs,v 1.1550 2010/04/29 19:11:39 robert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1313,6 +1313,7 @@ product ATI RADEON_HD4350	0x954f	Radeon HD 4350
 product ATI RADEON_HD4500_M	0x9553	Mobility Radeon HD 4500
 product ATI RADEON_HD2600_M76	0x9581	Mobility Radeon HD 2600
 product ATI RADEON_HD2600PROAGP	0x9587	Radeon HD 2600 Pro AGP
+product ATI RADEON_HD2600_XT	0x9588	Radeon HD 2600 XT
 product ATI RADEON_HD2600_PRO	0x9589	Radeon HD 2600 Pro
 product ATI RADEON_HD3650_M	0x9591	Mobility Radeon HD 3650
 product ATI RADEON_HD3670_M	0x9593	Mobility Radeon HD 3670
