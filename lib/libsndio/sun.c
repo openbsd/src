@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.34 2010/04/25 18:51:05 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.35 2010/04/29 21:09:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -461,16 +461,6 @@ sun_start(struct sio_hdl *sh)
 		 * pause the device and let sun_write() trigger the
 		 * start later, to avoid buffer underruns
 		 */
-		AUDIO_INITINFO(&aui);
-		if (hdl->sio.mode & SIO_PLAY)
-			aui.play.pause = 1;
-		if (hdl->sio.mode & SIO_REC)
-			aui.record.pause = 1;
-		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-			DPERROR("sun_start: setinfo2");
-			hdl->sio.eof = 1;
-			return 0;
-		}
 		hdl->filling = 1;
 	} else {
 		/*
