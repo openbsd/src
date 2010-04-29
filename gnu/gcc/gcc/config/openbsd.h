@@ -209,7 +209,6 @@ along with GCC; see the file COPYING.  If not see
 #define TYPE_ASM_OP	"\t.type\t"
 #define SIZE_ASM_OP	"\t.size\t"
 #define SET_ASM_OP	"\t.set\t"
-#define GLOBAL_ASM_OP	"\t.globl\t"
 
 /* The following macro defines the format used to output the second
    operand of the .type assembler directive.  */
