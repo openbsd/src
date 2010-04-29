@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.30 2010/04/28 16:46:48 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.31 2010/04/29 13:14:44 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -60,7 +60,6 @@ struct hppa_iv {
 	struct evcount *cnt;
 } __packed;
 
-u_long cpu_mask;
 struct hppa_iv intr_store[8*2*CPU_NINTS] __attribute__ ((aligned(32))),
     *intr_more = intr_store, *intr_list;
 struct hppa_iv intr_table[CPU_NINTS] __attribute__ ((aligned(32))) = {
@@ -105,9 +104,12 @@ softnet(void)
 void
 cpu_intr_init(void)
 {
-	u_long mask = cpu_mask | SOFTINT_MASK;
+	struct cpu_info *ci = curcpu();
 	struct hppa_iv *iv;
 	int level, bit;
+	u_long mask;
+
+	mask = ci->ci_mask | SOFTINT_MASK;
 
 	/* map the shared ints */
 	while (intr_list) {
@@ -141,13 +143,13 @@ cpu_intr_init(void)
 	mfctl(CR_ITMR, mask);
 	mtctl(mask - 1, CR_ITMR);
 
-	mtctl(cpu_mask, CR_EIEM);
+	mtctl(ci->ci_mask, CR_EIEM);
 	/* ack the unwanted interrupts */
 	mfctl(CR_EIRR, mask);
 	mtctl(mask & (1 << 31), CR_EIRR);
 
 	/* in spl*() we trust, clock is started in initclocks() */
-	curcpu()->ci_psw |= PSL_I;
+	ci->ci_psw |= PSL_I;
 	ssm(PSL_I, mask);
 }
 
@@ -208,6 +210,7 @@ void *
 cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
     const char *name)
 {
+	struct cpu_info *ci = curcpu();
 	struct hppa_iv *iv, *ev;
 	struct evcount *cnt;
 
@@ -221,7 +224,7 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	if (!cnt)
 		return (NULL);
 
-	cpu_mask |= (1 << irq);
+	ci->ci_mask |= (1 << irq);
 	imask[pri] |= (1 << irq);
 
 	iv = &intr_table[irq];
