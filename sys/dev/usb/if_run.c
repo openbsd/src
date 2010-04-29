@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.69 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.70 2010/04/29 07:42:52 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -127,6 +127,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(BELKIN,		F5D8055),
 	USB_ID(BELKIN,		F5D8055V2),
 	USB_ID(BELKIN,		F6D4050V1),
+	USB_ID(BELKIN,		F6D4050V2),
 	USB_ID(BELKIN,		RT2870_1),
 	USB_ID(BELKIN,		RT2870_2),
 	USB_ID(CISCOLINKSYS2,	RT3070),
