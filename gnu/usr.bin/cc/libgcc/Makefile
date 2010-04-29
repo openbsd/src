@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.4 2010/04/29 03:41:51 marco Exp $
+# $OpenBSD: Makefile,v 1.5 2010/04/29 14:26:46 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -248,7 +248,7 @@ ${ASM_V}: ${LIB1ASMSRC}
 	${CC} -x assembler-with-cpp -c ${CFLAGS} -DL${.PREFIX} \
 	    -o ${.PREFIX}.vo ${.ALLSRC:N*.h}
 	( nm -pg ${.PREFIX}.vo | \
-		awk 'NF == 3 && $$2 !~ /^[UN]$$/ { print "\t.hidden ", $$3 }'\
+		awk 'NF == 3 && $$2 !~ /^[FUN]$$/ { print "\t.hidden ", $$3 }'\
 	) > ${.TARGET}
 
 CLEANFILES += ${ASM_V} ${ASM_V:R:S/$/.vo/}
