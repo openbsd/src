@@ -88,7 +88,7 @@ atomic_cmpset_int(volatile u_int *dst, u_int exp, u_int src)
 }
 #else /* __i386__ */
 static __inline int
-atomic_cmpset_int(__volatile__ int *dst, int old, int new)
+atomic_cmpset_int(__volatile__ u_int *dst, u_int old, u_int new)
 {
 	int s = splhigh();
 	if (*dst==old) {
@@ -103,7 +103,7 @@ atomic_cmpset_int(__volatile__ int *dst, int old, int new)
 #endif /* !__FreeBSD_version || __FreeBSD_version < 500000 */
 
 static __inline atomic_t
-test_and_set_bit(int b, volatile void *p)
+test_and_set_bit(u_int b, volatile void *p)
 {
 	int s = splhigh();
 	unsigned int m = 1<<b;
@@ -114,28 +114,28 @@ test_and_set_bit(int b, volatile void *p)
 }
 
 static __inline void
-clear_bit(int b, volatile void *p)
+clear_bit(u_int b, volatile void *p)
 {
-	atomic_clear_int(((volatile int *)p) + (b >> 5), 1 << (b & 0x1f));
+	atomic_clear_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
 }
 
 static __inline void
-set_bit(int b, volatile void *p)
+set_bit(u_int b, volatile void *p)
 {
-	atomic_set_int(((volatile int *)p) + (b >> 5), 1 << (b & 0x1f));
+	atomic_set_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
 }
 
 static __inline int
-test_bit(int b, volatile void *p)
+test_bit(u_int b, volatile void *p)
 {
-	return ((volatile int *)p)[b >> 5] & (1 << (b & 0x1f));
+	return ((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f));
 }
 
 static __inline int
 find_first_zero_bit(volatile void *p, int max)
 {
 	int b;
-	volatile int *ptr = (volatile int *)p;
+	volatile int *ptr = (volatile u_int *)p;
 
 	for (b = 0; b < max; b += 32) {
 		if (ptr[b >> 5] != ~0) {
