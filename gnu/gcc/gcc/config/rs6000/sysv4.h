@@ -423,6 +423,7 @@ extern int rs6000_pic_labelno;
   asm_fprintf (FILE, "%L%s", PREFIX)
 
 /* Globalizing directive for a label.  */
+#undef GLOBAL_ASM_OP
 #define GLOBAL_ASM_OP "\t.globl "
 
 /* This says how to output assembler code to declare an
