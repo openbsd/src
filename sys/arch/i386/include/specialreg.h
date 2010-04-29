@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.38 2010/03/21 23:00:57 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.39 2010/04/29 17:00:48 oga Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -236,6 +236,7 @@
 #define	MSR_MTRRfix4K_E8000	0x26d
 #define	MSR_MTRRfix4K_F0000	0x26e
 #define	MSR_MTRRfix4K_F8000	0x26f
+#define MSR_CR_PAT		0x277
 #define MSR_MTRRdefType		0x2ff
 #define MSR_MC0_CTL		0x400
 #define MSR_MC0_STATUS		0x401
