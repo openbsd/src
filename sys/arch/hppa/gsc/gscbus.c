@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.28 2010/04/20 23:35:16 deraadt Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.29 2010/04/29 13:48:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -122,7 +122,7 @@ gscattach(parent, self, aux)
 	sc->sc_dmatag._dmamem_unmap = gsc_dmamem_unmap;
 	sc->sc_dmatag._dmamem_mmap = gsc_dmamem_mmap;
 
-	pdc_scanbus(self, &ga->ga_ca, MAXMODBUS, 0);
+	pdc_scanbus(self, &ga->ga_ca, MAXMODBUS, 0, 0);
 }
 
 int

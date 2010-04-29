@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.9 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: astro.c,v 1.10 2010/04/29 13:48:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -322,7 +322,7 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 	nca = *ca;	/* clone from us */
 	nca.ca_hpamask = HPPA_IOBEGIN;
 	nca.ca_dmatag = &sc->sc_dmatag;
-	pdc_scanbus(self, &nca, MAXMODBUS, 0);
+	pdc_scanbus(self, &nca, MAXMODBUS, 0, 0);
 }
 
 int

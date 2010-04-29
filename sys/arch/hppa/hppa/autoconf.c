@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.53 2008/07/21 04:35:54 todd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.54 2010/04/29 13:48:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -197,15 +197,23 @@ struct pdc_sysmap_addrs pdc_addr PDC_ALIGNMENT;
 struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 
 void
-pdc_scanbus(self, ca, maxmod, hpa)
-	struct device *self;
-	struct confargs *ca;
-	int maxmod;
-	hppa_hpa_t hpa;
+pdc_scanbus(struct device *self, struct confargs *ca, int maxmod,
+    hppa_hpa_t hpa, int cpu_scan)
 {
-	int i;
+	int start, end, incr, i;
 
-	for (i = maxmod; i--; ) {
+	/* Scan forwards for CPUs, backwards for everything else. */
+	if (cpu_scan) {
+		start = 0;
+		incr = 1;
+		end = maxmod;
+	} else {
+		start = maxmod - 1;
+		incr = -1;
+		end = -1;
+	}
+
+	for (i = start; i != end; i += incr) {
 		struct confargs nca;
 		int error;
 
@@ -302,6 +310,20 @@ pdc_scanbus(self, ca, maxmod, hpa)
 			    nca.ca_dp.dp_mod, nca.ca_hpa,
 			    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 		}
+
+		if (cpu_scan &&
+		    ((nca.ca_type.iodc_type != HPPA_TYPE_NPROC ||
+	            nca.ca_type.iodc_sv_model != HPPA_NPROC_HPPA) &&
+		    (nca.ca_type.iodc_type != HPPA_TYPE_MEMORY ||
+		    nca.ca_type.iodc_sv_model != HPPA_MEMORY_PDEP)))
+			continue;
+
+		if (!cpu_scan &&
+		    ((nca.ca_type.iodc_type == HPPA_TYPE_NPROC &&
+		    nca.ca_type.iodc_sv_model == HPPA_NPROC_HPPA) ||
+		    (nca.ca_type.iodc_type == HPPA_TYPE_MEMORY &&
+		    nca.ca_type.iodc_sv_model == HPPA_MEMORY_PDEP)))
+			continue;
 
 		config_found_sm(self, &nca, mbprint, mbsubmatch);
 	}
