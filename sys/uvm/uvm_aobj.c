@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.48 2010/04/25 23:02:22 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.49 2010/04/30 20:50:53 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -196,6 +196,11 @@ struct uvm_pagerops aobj_pager = {
 
 /*
  * uao_list: global list of active aobjs, locked by uao_list_lock
+ *
+ * Lock ordering: generally the locking order is object lock, then list lock.
+ * in the case of swap off we have to iterate over the list, and thus the
+ * ordering is reversed. In that case we must use trylocking to prevent
+ * deadlock.
  */
 
 static LIST_HEAD(aobjlist, uvm_aobj) uao_list = LIST_HEAD_INITIALIZER(uao_list);
@@ -1157,7 +1162,7 @@ uao_dropswap(struct uvm_object *uobj, int pageidx)
 boolean_t
 uao_swap_off(int startslot, int endslot)
 {
-	struct uvm_aobj *aobj, *nextaobj;
+	struct uvm_aobj *aobj, *nextaobj, *prevaobj = NULL;
 
 	/*
 	 * walk the list of all aobjs.
@@ -1179,6 +1184,10 @@ restart:
 		 */
 		if (!simple_lock_try(&aobj->u_obj.vmobjlock)) {
 			mtx_leave(&uao_list_lock);
+			if (prevaobj) {
+				uao_detach_locked(&prevaobj->u_obj);
+				prevaobj = NULL;
+			}
 			goto restart;
 		}
 
@@ -1193,6 +1202,11 @@ restart:
 		 * note that lock interleaving is alright with IPL_NONE mutexes.
 		 */
 		mtx_leave(&uao_list_lock);
+
+		if (prevaobj) {
+			uao_detach_locked(&prevaobj->u_obj);
+			prevaobj = NULL;
+		}
 
 		/*
 		 * page in any pages in the swslot range.
@@ -1210,13 +1224,23 @@ restart:
 		 */
 		mtx_enter(&uao_list_lock);
 		nextaobj = LIST_NEXT(aobj, u_list);
-		uao_detach_locked(&aobj->u_obj);
+		/*
+		 * prevaobj means that we have an object that we need
+		 * to drop a reference for. We can't just drop it now with
+		 * the list locked since that could cause lock recursion in
+		 * the case where we reduce the refcount to 0. It will be
+		 * released the next time we drop the list lock.
+		 */
+		prevaobj = aobj;
 	}
 
 	/*
 	 * done with traversal, unlock the list
 	 */
 	mtx_leave(&uao_list_lock);
+	if (prevaobj) {
+		uao_detach_locked(&prevaobj->u_obj);
+	}
 	return FALSE;
 }
 
