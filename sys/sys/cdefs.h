@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.28 2009/01/14 21:26:48 guenther Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.29 2010/04/30 20:09:35 kettenis Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -127,6 +127,18 @@
 #elif !defined(__STRICT_ANSI__)
 #define __dead		__attribute__((__noreturn__))
 #define __pure		__attribute__((__const__))
+#endif
+
+#if __GNUC_PREREQ__(2, 7)
+#define	__unused	__attribute__((__unused__))
+#else
+#define	__unused	/* delete */
+#endif
+
+#if __GNUC_PREREQ__(3, 1)
+#define	__used		__attribute__((__used__))
+#else
+#define	__used		__unused	/* suppress -Wunused warnings */
 #endif
 
 /*
