@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.151 2010/04/20 23:27:01 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.152 2010/04/30 21:56:39 oga Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -466,11 +466,7 @@ pmap_bootstrap(vstart)
 	 */
 	kpm = &kernel_pmap_store;
 	bzero(kpm, sizeof(*kpm));
-	simple_lock_init(&kpm->pm_lock);
-	kpm->pm_obj.pgops = NULL;
-	RB_INIT(&kpm->pm_obj.memt);
-	kpm->pm_obj.uo_npages = 0;
-	kpm->pm_obj.uo_refs = 1;
+	uvm_objinit(&kpm->pm_obj, NULL, 1);
 	kpm->pm_space = HPPA_SID_KERNEL;
 	kpm->pm_pid = HPPA_PID_KERNEL;
 	kpm->pm_pdir_pg = NULL;
@@ -652,11 +648,7 @@ pmap_create()
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
-	simple_lock_init(&pmap->pm_lock);
-	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
-	RB_INIT(&pmap->pm_obj.memt);
-	pmap->pm_obj.uo_npages = 0;
-	pmap->pm_obj.uo_refs = 1;
+	uvm_objinit(&pmap->pm_obj, NULL, 1);
 
 	for (space = 1 + arc4random_uniform(hppa_sid_max);
 	    pmap_sdir_get(space); space = (space + 1) % hppa_sid_max);

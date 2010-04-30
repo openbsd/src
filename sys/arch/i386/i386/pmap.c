@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.146 2009/12/09 14:31:57 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.147 2010/04/30 21:56:39 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -805,11 +805,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	kpm = pmap_kernel();
-	simple_lock_init(&kpm->pm_obj.vmobjlock);
-	kpm->pm_obj.pgops = NULL;
-	RB_INIT(&kpm->pm_obj.memt);
-	kpm->pm_obj.uo_npages = 0;
-	kpm->pm_obj.uo_refs = 1;
+	uvm_objinit(&kpm->pm_obj, NULL, 1);
 	bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
 	kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
@@ -1466,11 +1462,7 @@ void
 pmap_pinit(struct pmap *pmap)
 {
 	/* init uvm_object */
-	simple_lock_init(&pmap->pm_obj.vmobjlock);
-	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
-	RB_INIT(&pmap->pm_obj.memt);
-	pmap->pm_obj.uo_npages = 0;
-	pmap->pm_obj.uo_refs = 1;
+	uvm_objinit(&pmap->pm_obj, NULL, 1);
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
 	pmap->pm_ptphint = NULL;

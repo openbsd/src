@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.49 2010/04/30 20:50:53 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.50 2010/04/30 21:56:39 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -466,6 +466,7 @@ uao_create(vsize_t size, int flags)
 	static struct uvm_aobj kernel_object_store; /* home of kernel_object */
 	static int kobj_alloced = 0;			/* not allocated yet */
 	int pages = round_page(size) >> PAGE_SHIFT;
+	int refs = UVM_OBJ_KERN;
 	struct uvm_aobj *aobj;
 
 	/*
@@ -479,7 +480,6 @@ uao_create(vsize_t size, int flags)
 		aobj->u_pages = pages;
 		aobj->u_flags = UAO_FLAG_NOSWAP;	/* no swap to start */
 		/* we are special, we never die */
-		aobj->u_obj.uo_refs = UVM_OBJ_KERN;
 		kobj_alloced = UAO_FLAG_KERNOBJ;
 	} else if (flags & UAO_FLAG_KERNSWAP) {
 		aobj = &kernel_object_store;
@@ -490,7 +490,7 @@ uao_create(vsize_t size, int flags)
 		aobj = pool_get(&uvm_aobj_pool, PR_WAITOK);
 		aobj->u_pages = pages;
 		aobj->u_flags = 0;		/* normal object */
-		aobj->u_obj.uo_refs = 1;	/* start with 1 reference */
+		refs = 1;			/* normal object so 1 ref */
 	}
 
 	/*
@@ -523,13 +523,7 @@ uao_create(vsize_t size, int flags)
 		}
 	}
 
-	/*
- 	 * init aobj fields
- 	 */
-	simple_lock_init(&aobj->u_obj.vmobjlock);
-	aobj->u_obj.pgops = &aobj_pager;
-	RB_INIT(&aobj->u_obj.memt);
-	aobj->u_obj.uo_npages = 0;
+	uvm_objinit(&aobj->u_obj, &aobj_pager, refs);
 
 	/*
  	 * now that aobj is ready, add it to the global list

@@ -1233,11 +1233,7 @@ drm_gem_object_alloc(struct drm_device *dev, size_t size)
 	/* uao create can't fail in the 0 case, it just sleeps */
 	obj->uao = uao_create(size, 0);
 	obj->size = size;
-	simple_lock_init(&obj->uobj.vmobjlock);
-	obj->uobj.pgops = &drm_pgops;
-	RB_INIT(&obj->uobj.memt);
-	obj->uobj.uo_npages = 0;
-	obj->uobj.uo_refs = 1;
+	uvm_objinit(&obj->uobj, &drm_pgops, 1);
 
 	if (dev->driver->gem_init_object != NULL &&
 	    dev->driver->gem_init_object(obj) != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.37 2009/08/14 16:27:34 oga Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.38 2010/04/30 21:56:39 oga Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -230,11 +230,7 @@ udv_attach(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
 		 * and return.
 		 */
 
-		simple_lock_init(&udv->u_obj.vmobjlock);
-		udv->u_obj.pgops = &uvm_deviceops;
-		RB_INIT(&udv->u_obj.memt);
-		udv->u_obj.uo_npages = 0;
-		udv->u_obj.uo_refs = 1;
+		uvm_objinit(&udv->u_obj, &uvm_deviceops, 1);
 		udv->u_flags = 0;
 		udv->u_device = device;
 		LIST_INSERT_HEAD(&udv_list, udv, u_list);
