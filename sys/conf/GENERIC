@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.154 2010/03/22 21:02:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.155 2010/04/30 11:06:16 claudio Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -68,6 +68,7 @@ option		PPP_DEFLATE
 #option		PIPEX		# Pppac IP EXtension, for npppd
 option		MROUTING	# Multicast router
 #option		PIM		# Protocol Independent Multicast
+#option		MPLS		# Multi-Protocol Label Switching
 
 #mpath0		at root		# SCSI Multipathing
 #scsibus*	at mpath?
@@ -107,6 +108,7 @@ pseudo-device	tun		# network tunneling over tty
 pseudo-device	vlan 		# IEEE 802.1Q VLAN 
 pseudo-device	trunk		# Trunking support
 pseudo-device	vether		# Virtual ethernet
+#pseudo-device	mpe		# MPLS PE interface
 
 # for IPv6
 #pseudo-device	faith	1	# IPv[46] tcp relay translation i/f
