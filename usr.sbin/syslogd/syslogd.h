@@ -16,6 +16,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 
 /* Privilege separation */
 int   priv_init(char *, int, int, int, char **);

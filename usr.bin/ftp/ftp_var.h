@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.29 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.30 2010/04/30 19:29:01 jsg Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -226,3 +226,5 @@ char macbuf[4096];
 #endif /* !SMALL */
 
 FILE	*ttyout;		/* stdout or stderr, depending on interactive */
+
+extern struct cmd cmdtab[];

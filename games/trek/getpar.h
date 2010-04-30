@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.h,v 1.6 2003/11/08 19:17:27 jmc Exp $	*/
+/*	$OpenBSD: getpar.h,v 1.7 2010/04/30 19:29:01 jsg Exp $	*/
 /*	$NetBSD: getpar.h,v 1.3 1995/04/22 10:58:59 cgd Exp $	*/
 
 /*
@@ -52,3 +52,6 @@ void getstrpar(const char *, char *, int, const char *);
 int testnl(void);
 void skiptonl(int);
 int readdelim(int);
+
+extern const struct cvntab	Skitab[];
+extern const struct cvntab	Lentab[];
