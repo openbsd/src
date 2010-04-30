@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.89 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.90 2010/04/30 16:06:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -237,6 +237,10 @@ int		iwn4965_load_firmware(struct iwn_softc *);
 int		iwn5000_load_firmware_section(struct iwn_softc *, uint32_t,
 		    const uint8_t *, int);
 int		iwn5000_load_firmware(struct iwn_softc *);
+int		iwn_read_firmware_leg(struct iwn_softc *,
+		    struct iwn_fw_info *);
+int		iwn_read_firmware_tlv(struct iwn_softc *,
+		    struct iwn_fw_info *);
 int		iwn_read_firmware(struct iwn_softc *);
 int		iwn_clock_wait(struct iwn_softc *);
 int		iwn_apm_init(struct iwn_softc *);
@@ -5155,69 +5159,46 @@ iwn5000_load_firmware(struct iwn_softc *sc)
 	return 0;
 }
 
+/*
+ * Extract text and data sections from a legacy firmware image.
+ */
 int
-iwn_read_firmware(struct iwn_softc *sc)
+iwn_read_firmware_leg(struct iwn_softc *sc, struct iwn_fw_info *fw)
 {
-	const struct iwn_hal *hal = sc->sc_hal;
-	struct iwn_fw_info *fw = &sc->fw;
 	const uint32_t *ptr;
+	size_t hdrlen = 24;
 	uint32_t rev;
-	size_t size;
-	int error;
 
-	/* Read firmware image from filesystem. */
-	if ((error = loadfirmware(sc->fwname, &fw->data, &size)) != 0) {
-		printf("%s: error, %d, could not read firmware %s\n",
-		    sc->sc_dev.dv_xname, error, sc->fwname);
-		return error;
-	}
-	if (size < 28) {
-		printf("%s: truncated firmware header: %d bytes\n",
-		    sc->sc_dev.dv_xname, size);
-		free(fw->data, M_DEVBUF);
-		return EINVAL;
-	}
-
-	/* Process firmware header. */
 	ptr = (const uint32_t *)fw->data;
 	rev = letoh32(*ptr++);
+
 	/* Check firmware API version. */
 	if (IWN_FW_API(rev) <= 1) {
 		printf("%s: bad firmware, need API version >=2\n",
 		    sc->sc_dev.dv_xname);
-		free(fw->data, M_DEVBUF);
 		return EINVAL;
 	}
 	if (IWN_FW_API(rev) >= 3) {
 		/* Skip build number (version 2 header). */
-		size -= 4;
+		hdrlen += 4;
 		ptr++;
+	}
+	if (fw->size < hdrlen) {
+		printf("%s: firmware too short: %d bytes\n",
+		    sc->sc_dev.dv_xname, fw->size);
+		return EINVAL;
 	}
 	fw->main.textsz = letoh32(*ptr++);
 	fw->main.datasz = letoh32(*ptr++);
 	fw->init.textsz = letoh32(*ptr++);
 	fw->init.datasz = letoh32(*ptr++);
 	fw->boot.textsz = letoh32(*ptr++);
-	size -= 24;
-
-	/* Sanity-check firmware header. */
-	if (fw->main.textsz > hal->fw_text_maxsz ||
-	    fw->main.datasz > hal->fw_data_maxsz ||
-	    fw->init.textsz > hal->fw_text_maxsz ||
-	    fw->init.datasz > hal->fw_data_maxsz ||
-	    fw->boot.textsz > IWN_FW_BOOT_TEXT_MAXSZ ||
-	    (fw->boot.textsz & 3) != 0) {
-		printf("%s: invalid firmware header\n", sc->sc_dev.dv_xname);
-		free(fw->data, M_DEVBUF);
-		return EINVAL;
-	}
 
 	/* Check that all firmware sections fit. */
-	if (fw->main.textsz + fw->main.datasz + fw->init.textsz +
-	    fw->init.datasz + fw->boot.textsz > size) {
-		printf("%s: firmware file too short: %d bytes\n",
-		    sc->sc_dev.dv_xname, size);
-		free(fw->data, M_DEVBUF);
+	if (fw->size < hdrlen + fw->main.textsz + fw->main.datasz +
+	    fw->init.textsz + fw->init.datasz + fw->boot.textsz) {
+		printf("%s: firmware too short: %d bytes\n",
+		    sc->sc_dev.dv_xname, fw->size);
 		return EINVAL;
 	}
 
@@ -5227,7 +5208,124 @@ iwn_read_firmware(struct iwn_softc *sc)
 	fw->init.text = fw->main.data + fw->main.datasz;
 	fw->init.data = fw->init.text + fw->init.textsz;
 	fw->boot.text = fw->init.data + fw->init.datasz;
+	return 0;
+}
 
+/*
+ * Extract text and data sections from a TLV firmware image.
+ */
+int
+iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw)
+{
+	const struct iwn_fw_tlv_hdr *hdr;
+	const uint32_t *ptr, *end;
+	uint32_t type, len;
+
+	if (fw->size < sizeof (*hdr)) {
+		printf("%s: firmware too short: %d bytes\n",
+		    sc->sc_dev.dv_xname, fw->size);
+		return EINVAL;
+	}
+	hdr = (const struct iwn_fw_tlv_hdr *)fw->data;
+	if (hdr->signature != htole32(IWN_FW_SIGNATURE)) {
+		printf("%s: bad firmware signature 0x%08x\n",
+		    sc->sc_dev.dv_xname, letoh32(hdr->signature));
+		return EINVAL;
+	}
+	DPRINTF(("FW: \"%.64s\", build 0x%x\n", hdr->descr,
+	    letoh32(hdr->build)));
+
+	ptr = (const uint32_t *)(hdr + 1);
+	end = (const uint32_t *)(fw->data + fw->size);
+
+	/* Parse type-length-value fields. */
+	while (ptr + 2 <= end) {
+		type = letoh32(*ptr++);
+		len  = letoh32(*ptr++);
+		if (ptr + (len + 3) / 4 > end) {
+			printf("%s: firmware too short: %d bytes\n",
+			    sc->sc_dev.dv_xname, fw->size);
+			return EINVAL;
+		}
+		switch (type) {
+		case IWN_FW_TLV_MAIN_TEXT:
+			fw->main.text = (const uint8_t *)ptr;
+			fw->main.textsz = len;
+			break;
+		case IWN_FW_TLV_MAIN_DATA:
+			fw->main.data = (const uint8_t *)ptr;
+			fw->main.datasz = len;
+			break;
+		case IWN_FW_TLV_INIT_TEXT:
+			fw->init.text = (const uint8_t *)ptr;
+			fw->init.textsz = len;
+			break;
+		case IWN_FW_TLV_INIT_DATA:
+			fw->init.data = (const uint8_t *)ptr;
+			fw->init.datasz = len;
+			break;
+		case IWN_FW_TLV_BOOT_TEXT:
+			fw->boot.text = (const uint8_t *)ptr;
+			fw->boot.textsz = len;
+			break;
+		default:
+			DPRINTF(("TLV type %d not handled\n", type));
+			break;
+		}
+		/* TLV fields are 32-bit aligned. */
+		ptr += (len + 3) / 4;
+	}
+	return 0;
+}
+
+int
+iwn_read_firmware(struct iwn_softc *sc)
+{
+	const struct iwn_hal *hal = sc->sc_hal;
+	struct iwn_fw_info *fw = &sc->fw;
+	int error;
+
+	memset(fw, 0, sizeof (*fw));
+
+	/* Read firmware image from filesystem. */
+	if ((error = loadfirmware(sc->fwname, &fw->data, &fw->size)) != 0) {
+		printf("%s: error, %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, sc->fwname);
+		return error;
+	}
+	if (fw->size < sizeof (uint32_t)) {
+		printf("%s: firmware too short: %d bytes\n",
+		    sc->sc_dev.dv_xname, fw->size);
+		free(fw->data, M_DEVBUF);
+		return EINVAL;
+	}
+
+	/* Retrieve text and data sections. */
+	if (*(const uint32_t *)fw->data != 0)	/* Legacy image. */
+		error = iwn_read_firmware_leg(sc, fw);
+	else
+		error = iwn_read_firmware_tlv(sc, fw);
+	if (error != 0) {
+		printf("%s: could not read firmware sections\n",
+		    sc->sc_dev.dv_xname);
+		free(fw->data, M_DEVBUF);
+		return error;
+	}
+
+	/* Make sure text and data sections fit in hardware memory. */
+	if (fw->main.textsz > hal->fw_text_maxsz ||
+	    fw->main.datasz > hal->fw_data_maxsz ||
+	    fw->init.textsz > hal->fw_text_maxsz ||
+	    fw->init.datasz > hal->fw_data_maxsz ||
+	    fw->boot.textsz > IWN_FW_BOOT_TEXT_MAXSZ ||
+	    (fw->boot.textsz & 3) != 0) {
+		printf("%s: firmware sections too large\n",
+		    sc->sc_dev.dv_xname);
+		free(fw->data, M_DEVBUF);
+		return EINVAL;
+	}
+
+	/* We can proceed with loading the firmware. */
 	return 0;
 }
 
