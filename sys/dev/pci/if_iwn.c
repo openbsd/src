@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.91 2010/04/30 16:08:36 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.92 2010/04/30 16:31:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4293,6 +4293,10 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
+#ifndef IEEE80211_NO_HT
+	if (ic->ic_flags & IEEE80211_F_HTON)
+		frm = ieee80211_add_htcaps(frm, ic);
+#endif
 
 	/* Set length of probe request. */
 	tx->len = htole16(frm - (uint8_t *)wh);
