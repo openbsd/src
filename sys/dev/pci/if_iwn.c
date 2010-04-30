@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.90 2010/04/30 16:06:46 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.91 2010/04/30 16:08:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4253,7 +4253,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
 
 	if (flags & IEEE80211_CHAN_5GHZ) {
-		hdr->crc_threshold = htole16(1);
+		hdr->crc_threshold = 0xffff;
 		/* Send probe requests at 6Mbps. */
 		tx->plcp = iwn_rates[IWN_RIDX_OFDM6].plcp;
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_11A];
