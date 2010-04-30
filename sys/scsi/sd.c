@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.185 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: sd.c,v 1.186 2010/04/30 02:17:06 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1186,6 +1186,7 @@ sddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 	int	totwrt;		/* total number of sectors left to write */
 	int	nwrt;		/* current number of sectors to write */
 	struct scsi_xfer *xs;	/* ... convenience */
+	int rv;
 
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
@@ -1239,16 +1240,16 @@ sddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 			return (ENOMEM);
 
 		xs->timeout = 10000;
-		xs->flags = SCSI_POLL | SCSI_NOSLEEP | SCSI_DATA_OUT;
+		xs->flags = SCSI_POLL | SCSI_DATA_OUT;
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
 
 		sd_cmd_rw10(xs, 0, blkno, nwrt); /* XXX */
 
-		scsi_xs_exec(xs);
-		if (xs->error != XS_NOERROR)
-			return (ENXIO);
+		rv = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
+		if (rv != 0)
+			return (ENXIO);
 #else	/* SD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
 		printf("sd%d: dump addr 0x%x, blk %d\n", unit, va, blkno);
