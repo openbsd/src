@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.40 2010/04/24 08:00:12 stsp Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.41 2010/05/01 08:14:26 mk Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -752,7 +752,7 @@ slinput(c, tp)
 	}
 	c &= TTY_CHARMASK;
 
-	/* mark incomming routing domain */
+	/* mark incoming routing domain */
 	m->m_pkthdr.rdomain = sc->sc_if.if_rdomain;
 
 	++sc->sc_if.if_ibytes;

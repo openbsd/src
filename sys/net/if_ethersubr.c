@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.140 2010/04/03 00:15:35 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.141 2010/05/01 08:14:26 mk Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -547,7 +547,7 @@ ether_input(ifp0, eh, m)
 
 	m_cluncount(m, 1);
 
-	/* mark incomming routing domain */
+	/* mark incoming routing domain */
 	m->m_pkthdr.rdomain = ifp->if_rdomain;
 
 	if (eh == NULL) {

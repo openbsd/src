@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.10 2007/11/24 12:59:28 jmc Exp $	*/
+/*	$OpenBSD: svc.h,v 1.11 2010/05/01 08:14:26 mk Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ typedef struct __rpc_svcxprt {
 	int		xp_sock;
 	unsigned short	xp_port;	 /* associated port number */
 	struct xp_ops {
-		/* receive incomming requests */
+		/* receive incoming requests */
 		bool_t	(*xp_recv)(struct __rpc_svcxprt *,
 			    struct rpc_msg *);
 		/* get transport status */

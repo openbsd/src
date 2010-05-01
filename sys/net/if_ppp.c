@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.56 2010/04/24 08:00:12 stsp Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.57 2010/05/01 08:14:26 mk Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1474,7 +1474,7 @@ ppp_inproc(sc, m)
     m->m_pkthdr.len = ilen;
     m->m_pkthdr.rcvif = ifp;
 
-    /* mark incomming routing domain */
+    /* mark incoming routing domain */
     m->m_pkthdr.rdomain = ifp->if_rdomain;
 
     if ((proto & 0x8000) == 0) {

@@ -1,5 +1,5 @@
 #
-# $OpenBSD: ilsp.s,v 1.2 1996/05/30 22:14:39 niklas Exp $
+# $OpenBSD: ilsp.s,v 1.3 2010/05/01 08:14:26 mk Exp $
 # $NetBSD: ilsp.s,v 1.2 1996/05/15 19:48:37 is Exp $
 #
 
@@ -525,7 +525,7 @@ _060LSP__imulu64_:
 #	fmovm.l		&0x0,-(%sp)		# save no fpregs
 # PROLOGUE END ##########################################################
 
-	mov.w		%cc,MUL64_CC(%a6)	# save incomming ccodes
+	mov.w		%cc,MUL64_CC(%a6)	# save incoming ccodes
 
 	mov.l		0x8(%a6),%d0		# store multiplier in d0
 	beq.w		mulu64_zero		# handle zero separately
@@ -636,7 +636,7 @@ _060LSP__imuls64_:
 #	fmovm.l		&0x0,-(%sp)		# save no fpregs
 # PROLOGUE END ##########################################################
 
-	mov.w		%cc,MUL64_CC(%a6)	# save incomming ccodes
+	mov.w		%cc,MUL64_CC(%a6)	# save incoming ccodes
 
 	mov.l		0x8(%a6),%d0		# store multiplier in d0
 	beq.b		mulu64_zero		# handle zero separately

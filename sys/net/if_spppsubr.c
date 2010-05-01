@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.79 2010/02/08 13:37:02 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.80 2010/05/01 08:14:26 mk Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -521,7 +521,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	/* mark incomming routing domain */
+	/* mark incoming routing domain */
 	m->m_pkthdr.rdomain = ifp->if_rdomain;
 
 	if (sp->pp_flags & PP_NOFRAMING) {

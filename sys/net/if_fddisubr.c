@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.57 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.58 2010/05/01 08:14:26 mk Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ fddi_input(ifp, fh, m)
 		m_freem(m);
 		return;
 	}
-	/* mark incomming routing domain */
+	/* mark incoming routing domain */
 	m->m_pkthdr.rdomain = ifp->if_rdomain;
 
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*fh);
