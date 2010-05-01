@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.28 2008/04/11 15:30:16 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.29 2010/05/01 07:46:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <dirent.h>
+#include <string.h>
 
 #include "archdep.h"
 #include "resolve.h"
@@ -159,6 +160,7 @@ nohints:
 		else
 			searchpath = DEFAULT_PATH;
 	}
+	bzero(&bsod, sizeof(bsod));
 	pp = searchpath;
 	while (pp) {
 		path = lp;
