@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.37 2010/01/24 15:33:38 espie Exp $
+# $OpenBSD: Makefile,v 1.38 2010/05/01 09:03:05 espie Exp $
 
 REGRESS_TARGETS=pkgnames signatures depends-check longnames update-check1 \
 	collision-check3 collision-check5 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
-	lib-report4 lib-report5 lib-report6 lib-report7
+	lib-report4 lib-report5 lib-report6 lib-report7 \
+	qttest
 
 
 
@@ -23,6 +24,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
+# current maxes: D25, SRC17, plist14
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -172,6 +174,11 @@ loop1: rep0/ocaml-3.11.1.tgz rep0/tcl-8.5.7.tgz rep0/tk-8.5.7.tgz
 	@-rm -rf ${D20}
 	-@ROOT=${D20} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} -z ocaml-3.11.1p0 tcl-8.5.8 tk-8.5.8
 
+qttest: rep0/qt-0.tgz rep1/qt-1.tgz
+	@-rm -rf ${D26}
+	-@ROOT=${D26} PKG_PATH=${.OBJDIR}/rep0 ${PKG_ADD} qt
+	-@ROOT=${D26} PKG_PATH=${.OBJDIR}/rep1 ${PKG_ADD} -u qt
+
 plist1:
 	@echo "@owner "`id -un` >$@
 	@echo "@group "`id -gn` >>$@
@@ -233,6 +240,17 @@ plist12:
 	@echo "@group "`id -gn` >>$@
 	@echo '@lib lib/liba.so.$${LIBa_VERSION}' >>$@
 
+plist13:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo phonon/ >>$@
+	@echo phonon/a >>$@
+
+plist14:
+	@echo "@owner "`id -un` >>$@
+	@echo "@group "`id -gn` >>$@
+	@echo phonon >>$@
+
 rep0/a-0.tgz:
 	@${PKG_CREATE} -P't/b:b-*:b-0' -f ${.CURDIR}/empty $@
 
@@ -290,6 +308,16 @@ rep0/o7-0.tgz:
 
 rep1/b-1.tgz:
 	@${PKG_CREATE} -P't/a:a-*:a-1' -f ${.CURDIR}/empty $@
+
+rep0/qt-0.tgz: plist13
+	@mkdir -p ${SRC17}/phonon
+	touch ${SRC17}/phonon/a
+	@${PKG_CREATE} -B src17 -f plist13 $@
+
+rep1/qt-1.tgz: plist14
+	@mkdir -p ${SRC16}
+	touch ${SRC16}/phonon
+	@${PKG_CREATE} -B src16 -f plist14 $@
 
 rep1/c-0.tgz: plist1
 	@mkdir -p ${SRC1}
