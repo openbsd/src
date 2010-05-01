@@ -53,7 +53,7 @@ struct create_entry {
 #define DYNROOT_ROOTDIR 1
 #define DYNROOT_UNIQUE 1
 
-static Bool dynroot_enable  = 0;		/* is dynroot enabled ? */
+static Bool dynroot_enabled  = 0;		/* is dynroot enabled ? */
 static unsigned long last_celldb_version = 0;	/* last version of celldb */
 
 /*
@@ -381,7 +381,7 @@ dynroot_is_dynrootp (FCacheEntry *entry)
 {
     assert (entry);
 
-    if (dynroot_enable &&
+    if (dynroot_enabled &&
 	entry->fid.Cell == DYNROOT_CELLID &&
 	entry->fid.fid.Volume == DYNROOT_ROOTVOLUME)
 	return TRUE;
@@ -396,7 +396,7 @@ dynroot_is_dynrootp (FCacheEntry *entry)
 Bool
 dynroot_enablep (void)
 {
-    return dynroot_enable;
+    return dynroot_enabled;
 }
 
 /*
@@ -406,8 +406,8 @@ dynroot_enablep (void)
 Bool
 dynroot_setenable (Bool enable)
 {
-    Bool was = dynroot_enable;
-    dynroot_enable = enable;
+    Bool was = dynroot_enabled;
+    dynroot_enabled = enable;
     return was;
 }
 
