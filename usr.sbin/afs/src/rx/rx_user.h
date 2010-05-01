@@ -46,8 +46,6 @@ extern FILE *rx_debugFile;
 #define ISAFS_GLOCK()
 #endif
 
-extern PROCESS rx_listenerPid;	       /* LWP process id of socket listener
-				        * process */
 void rxi_StartListener(void);
 void rxi_StartServerProcs(int);
 void rxi_ReScheduleEvents(void);
