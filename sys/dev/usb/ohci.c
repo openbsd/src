@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.94 2009/11/26 12:27:48 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.95 2010/05/01 19:43:57 jsg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -196,9 +196,27 @@ void		ohci_dump_itds(ohci_soft_itd_t *);
  do { OBARR(sc); bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
 #define OWRITE4(sc, r, x) \
  do { OBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
-#define OREAD1(sc, r) (OBARR(sc), bus_space_read_1((sc)->iot, (sc)->ioh, (r)))
-#define OREAD2(sc, r) (OBARR(sc), bus_space_read_2((sc)->iot, (sc)->ioh, (r)))
-#define OREAD4(sc, r) (OBARR(sc), bus_space_read_4((sc)->iot, (sc)->ioh, (r)))
+
+static __inline u_int8_t
+OREAD1(ohci_softc_t *sc, bus_size_t r)
+{
+	OBARR(sc);
+	return bus_space_read_1(sc->iot, sc->ioh, r);
+}
+
+static __inline u_int16_t
+OREAD2(ohci_softc_t *sc, bus_size_t r)
+{
+	OBARR(sc);
+	return bus_space_read_2(sc->iot, sc->ioh, r);
+}
+
+static __inline u_int32_t
+OREAD4(ohci_softc_t *sc, bus_size_t r)
+{
+	OBARR(sc);
+	return bus_space_read_4(sc->iot, sc->ioh, r);
+}
 
 /* Reverse the bits in a value 0 .. 31 */
 u_int8_t revbits[OHCI_NO_INTRS] =

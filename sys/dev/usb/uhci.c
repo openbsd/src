@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.74 2009/11/26 12:27:48 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.75 2010/05/01 19:43:57 jsg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -249,9 +249,27 @@ void			uhci_dump(void);
 #define UWRITE4(sc, r, x) \
  do { UBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); \
  } while (/*CONSTCOND*/0)
-#define UREAD1(sc, r) (UBARR(sc), bus_space_read_1((sc)->iot, (sc)->ioh, (r)))
-#define UREAD2(sc, r) (UBARR(sc), bus_space_read_2((sc)->iot, (sc)->ioh, (r)))
-#define UREAD4(sc, r) (UBARR(sc), bus_space_read_4((sc)->iot, (sc)->ioh, (r)))
+
+static __inline u_int8_t
+UREAD1(uhci_softc_t *sc, bus_size_t r)
+{
+	UBARR(sc);
+	return bus_space_read_1(sc->iot, sc->ioh, r);
+}
+
+static __inline u_int16_t
+UREAD2(uhci_softc_t *sc, bus_size_t r)
+{
+	UBARR(sc);
+	return bus_space_read_2(sc->iot, sc->ioh, r);
+}
+
+static __inline u_int32_t
+UREAD4(uhci_softc_t *sc, bus_size_t r)
+{
+	UBARR(sc);
+	return bus_space_read_4(sc->iot, sc->ioh, r);
+}
 
 #define UHCICMD(sc, cmd) UWRITE2(sc, UHCI_CMD, cmd)
 #define UHCISTS(sc) UREAD2(sc, UHCI_STS)
