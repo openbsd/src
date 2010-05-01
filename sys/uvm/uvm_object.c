@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.5 2010/04/30 21:56:39 oga Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.6 2010/05/01 13:13:10 oga Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ uvm_objinit(struct uvm_object *uobj, struct uvm_pagerops *pgops, int refs)
 	uobj->uo_refs = refs;
 }
 
+#ifndef SMALL_KERNEL
 /*
  * uvm_objwire: wire the pages of entire uobj
  *
@@ -168,3 +169,4 @@ uvm_objunwire(struct uvm_object *uobj, off_t start, off_t end)
 	uvm_unlock_pageq();
 	simple_unlock(&uobj->vmobjlock);
 }
+#endif /* !SMALL_KERNEL */
