@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.13 2009/04/13 20:15:24 kurt Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.14 2010/05/01 11:32:43 kettenis Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -89,8 +89,8 @@ static const init_f __CTOR_LIST__[1]
 static const init_f __DTOR_LIST__[1]
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
-static void	__dtors(void);
-static void	__ctors(void);
+static void	__dtors(void) __used;
+static void	__ctors(void) __used;
 
 static void
 __dtors()
@@ -119,8 +119,8 @@ __ctors()
 
 void __init(void);
 void __fini(void);
-static void __do_init(void);
-static void __do_fini(void);
+static void __do_init(void) __used;
+static void __do_fini(void) __used;
 
 MD_SECTION_PROLOGUE(".init", __init);
 
