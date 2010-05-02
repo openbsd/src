@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.101 2010/01/10 03:37:50 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.102 2010/05/02 00:51:10 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -626,7 +626,7 @@ do {									\
 
 /*
  * kern.file2 returns an array of these structures, which are designed
- * both to be immune to be immune to 32/64 bit emulation issues and to
+ * both to be immune to 32/64 bit emulation issues and to
  * provide backwards compatibility.  The order differs slightly from
  * that of the real struct file, and some fields are taken from other
  * structures (struct vnode, struct proc) in order to make the file
