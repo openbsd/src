@@ -21,6 +21,8 @@
 
 #include <stdlib.h>
 
+#include <arpa/nameser.h>
+
 #include <isc/app.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
@@ -441,13 +443,16 @@ show_settings(isc_boolean_t full, isc_boolean_t serv_only) {
 	dig_server_t *srv;
 	isc_sockaddr_t sockaddr;
 	dig_searchlist_t *listent;
+	in_port_t servport;
+
+	servport = (port != 0) ? port : NAMESERVER_PORT;
 
 	srv = ISC_LIST_HEAD(server_list);
 
 	while (srv != NULL) {
 		char sockstr[ISC_SOCKADDR_FORMATSIZE];
 
-		get_address(srv->servername, port, &sockaddr);
+		get_address(srv->servername, servport, &sockaddr);
 		isc_sockaddr_format(&sockaddr, sockstr, sizeof(sockstr));
 		printf("Default server: %s\nAddress: %s\n",
 			srv->userarg, sockstr);
@@ -466,7 +471,7 @@ show_settings(isc_boolean_t full, isc_boolean_t serv_only) {
 	       usesearch ? "search" : "nosearch",
 	       recurse ? "recurse" : "norecurse");
 	printf("  timeout = %d\t\tretry = %d\tport = %d\n",
-	       timeout, tries, port);
+	       timeout, tries, servport);
 	printf("  querytype = %-8s\tclass = %s\n", deftype, defclass);
 	printf("  srchlist = ");
 	for (listent = ISC_LIST_HEAD(search_list);
