@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.57 2010/05/01 08:14:26 mk Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.58 2010/05/02 22:34:31 stsp Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ pppioctl(sc, cmd, data, flag, p)
 #endif
 
     default:
-	return (ENOTTY);
+	return (-1);
     }
     return (0);
 }
