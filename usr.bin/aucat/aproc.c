@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.56 2010/05/02 10:40:48 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.57 2010/05/02 11:12:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -577,16 +577,21 @@ mix_drop(struct abuf *buf, int extra)
 }
 
 /*
- * Append the given amount of silence (or less if there's not enough
- * space), and crank w.mix.todo accordingly.
+ * Append the necessary amount of silence, in a way
+ * obuf->w.mix.todo doesn't exceed the given value
  */
 void
-mix_bzero(struct abuf *obuf)
+mix_bzero(struct abuf *obuf, unsigned maxtodo)
 {
 	short *odata;
-	unsigned ocount;
+	unsigned ocount, todo;
 
+	if (obuf->w.mix.todo >= maxtodo)
+		return;
+	todo = maxtodo - obuf->w.mix.todo;
 	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->w.mix.todo);
+	if (ocount > todo)
+		ocount = todo;
 	if (ocount == 0)
 		return;
 	memset(odata, 0, ocount * obuf->bpf);
@@ -628,11 +633,12 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	/*
 	 * Insert silence for xrun correction
 	 */
-	if (ibuf->r.mix.drop < 0) {
+	while (ibuf->r.mix.drop < 0) {
 		icount = -ibuf->r.mix.drop;
-		ocount = obuf->len - obuf->used;
-		if (ocount > obuf->w.mix.todo)
-			ocount = obuf->w.mix.todo;
+		mix_bzero(obuf, ibuf->r.mix.done + icount);
+		ocount = obuf->w.mix.todo - ibuf->r.mix.done;
+		if (ocount == 0)
+			return 0;
 		scount = (icount < ocount) ? icount : ocount;
 		ibuf->r.mix.done += scount;
 		ibuf->r.mix.drop += scount;
@@ -652,6 +658,9 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	if (ocount == 0)
 		return 0;
 
+	scount = (icount < ocount) ? icount : ocount;
+	mix_bzero(obuf, scount + ibuf->r.mix.done);
+
 	vol = (ibuf->r.mix.weight * ibuf->r.mix.vol) >> ADATA_SHIFT;
 	cmin = obuf->cmin > ibuf->cmin ? obuf->cmin : ibuf->cmin;
 	cmax = obuf->cmax < ibuf->cmax ? obuf->cmax : ibuf->cmax;
@@ -662,7 +671,6 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	cc = cmax - cmin + 1;
 	odata += ostart;
 	idata += istart;
-	scount = (icount < ocount) ? icount : ocount;
 	for (i = scount; i > 0; i--) {
 		for (j = cc; j > 0; j--) {
 			*odata += (*idata * vol) >> ADATA_SHIFT;
@@ -770,7 +778,6 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 #endif
 	if (!MIX_ROK(ibuf))
 		return 0;
-	mix_bzero(obuf);
 	scount = 0;
 	odone = obuf->w.mix.todo;
 	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
@@ -852,9 +859,11 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	}
 #endif
 	maxwrite = p->u.mix.maxlat - p->u.mix.lat;
-	mix_bzero(obuf);
+	if (maxwrite > obuf->w.mix.todo) {
+		if ((p->flags & (APROC_QUIT | APROC_DROP)) == APROC_DROP)
+			mix_bzero(obuf, maxwrite);
+	}
 	scount = 0;
-	/* XXX: can obuf->len be larger than obuf->w.mix.todo ? */
 	odone = obuf->len;
 	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
@@ -871,18 +880,19 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		if (odone > i->r.mix.done)
 			odone = i->r.mix.done;
 	}
-	if (LIST_EMPTY(&p->ins)) {
+	if (LIST_EMPTY(&p->ins) && obuf->w.mix.todo == 0) {
 		if (p->flags & APROC_QUIT) {
 			aproc_del(p);
 			return 0;
 		}
 		if (!(p->flags & APROC_DROP))
 			return 0;
-		odone = obuf->w.mix.todo;
 	}
-	if (maxwrite > 0) {
-		if (odone > maxwrite)
-			odone = maxwrite;
+	if (odone > obuf->w.mix.todo)
+		odone = obuf->w.mix.todo;
+	if (odone > maxwrite)
+		odone = maxwrite;
+	if (odone > 0) {
 		p->u.mix.lat += odone;
 		p->u.mix.abspos += odone;
 		LIST_FOREACH(i, &p->ins, ient) {
@@ -1005,7 +1015,7 @@ struct aproc_ops mix_ops = {
 };
 
 struct aproc *
-mix_new(char *name, int maxlat, unsigned round, struct aproc *ctl)
+mix_new(char *name, int maxlat, unsigned round)
 {
 	struct aproc *p;
 
@@ -1015,7 +1025,8 @@ mix_new(char *name, int maxlat, unsigned round, struct aproc *ctl)
 	p->u.mix.round = round;
 	p->u.mix.maxlat = maxlat;
 	p->u.mix.abspos = 0;
-	p->u.mix.ctl = ctl;
+	p->u.mix.ctl = NULL;
+	p->u.mix.mon = NULL;
 	return p;
 }
 
@@ -1086,12 +1097,12 @@ mix_prime(struct aproc *p)
 		if (!ABUF_WOK(obuf))
 			break;
 		todo = p->u.mix.maxlat - p->u.mix.lat;
-		if (todo == 0)
-			break;
-		mix_bzero(obuf);
+		mix_bzero(obuf, todo);
 		count = obuf->w.mix.todo;
 		if (count > todo)
 			count = todo;
+		if (count == 0)
+			break;
 		obuf->w.mix.todo -= count;
 		p->u.mix.lat += count;
 		p->u.mix.abspos += count;
@@ -1110,6 +1121,26 @@ mix_prime(struct aproc *p)
 		dbg_puts("\n");
 	}
 #endif
+}
+
+/*
+ * Gracefully terminate the mixer: raise the APROC_QUIT flag
+ * and let the rest of the code do the job. If there are neither
+ * inputs nor uncommited data, then terminate right away
+ */
+void
+mix_quit(struct aproc *p)
+{
+	struct abuf *obuf = LIST_FIRST(&p->outs);
+
+	p->flags |= APROC_QUIT;
+
+	/*
+	 * eof the last input will trigger aproc_del()
+	 */
+	if (!LIST_EMPTY(&p->ins) || obuf->w.mix.todo > 0)
+		return;
+	aproc_del(p);	
 }
 
 /*
@@ -1434,7 +1465,7 @@ struct aproc_ops sub_ops = {
 };
 
 struct aproc *
-sub_new(char *name, int maxlat, unsigned round, struct aproc *ctl)
+sub_new(char *name, int maxlat, unsigned round)
 {
 	struct aproc *p;
 
@@ -1444,7 +1475,7 @@ sub_new(char *name, int maxlat, unsigned round, struct aproc *ctl)
 	p->u.sub.round = round;
 	p->u.sub.maxlat = maxlat;
 	p->u.sub.abspos = 0;
-	p->u.sub.ctl = ctl;
+	p->u.sub.ctl = NULL;
 	return p;
 }
 

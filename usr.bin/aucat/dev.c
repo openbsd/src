@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.49 2010/04/24 06:18:23 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.50 2010/05/02 11:12:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -127,9 +127,9 @@ dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	dev_pstate = DEV_INIT;
 
 	buf = abuf_new(dev_bufsz, &par);
-	dev_mix = mix_new("mix", dev_bufsz, 1, NULL);
+	dev_mix = mix_new("mix", dev_bufsz, 1);
 	dev_mix->refs++;
-	dev_sub = sub_new("sub", dev_bufsz, 1, NULL);
+	dev_sub = sub_new("sub", dev_bufsz, 1);
 	dev_sub->refs++;
 	aproc_setout(dev_mix, buf);
 	aproc_setin(dev_sub, buf);
@@ -224,9 +224,10 @@ dev_init(char *devpath, unsigned mode,
 		 * Append a "sub" to which clients will connect.
 		 * Link it to the controller only in record-only mode
 		 */
-		dev_sub = sub_new("rec", dev_bufsz, dev_round,
-		    dopar ? NULL : dev_midi);
+		dev_sub = sub_new("rec", dev_bufsz, dev_round);
 		dev_sub->refs++;
+		if (!(mode & MODE_PLAY))
+			dev_sub->u.sub.ctl = dev_midi;
 		aproc_setin(dev_sub, buf);
 	} else {
 		dev_rec = NULL;
@@ -260,8 +261,9 @@ dev_init(char *devpath, unsigned mode,
 		/*
 		 * Append a "mix" to which clients will connect.
 		 */
-		dev_mix = mix_new("play", dev_bufsz, dev_round, dev_midi);
+		dev_mix = mix_new("play", dev_bufsz, dev_round);
 		dev_mix->refs++;
+		dev_mix->u.mix.ctl = dev_midi;
 		aproc_setout(dev_mix, buf);
 	} else {
 		dev_play = NULL;
@@ -281,7 +283,7 @@ dev_init(char *devpath, unsigned mode,
 		 * Append a "sub" to which clients will connect.
 		 * Link it to the controller only in record-only mode
 		 */
-		dev_submon = sub_new("mon", dev_bufsz, dev_round, NULL);
+		dev_submon = sub_new("mon", dev_bufsz, dev_round);
 		dev_submon->refs++;
 		aproc_setin(dev_submon, buf);
 
@@ -318,6 +320,26 @@ dev_done(void)
 {
 	struct file *f;
 
+	/*
+	 * if the device is starting, ensure it actually starts
+	 * so buffers are drained, else clear any buffers
+	 */
+	switch (dev_pstate) {
+	case DEV_START:
+#ifdef DEBUG
+		if (debug_level >= 3) 
+			dbg_puts("draining device\n");
+#endif
+		dev_start();
+		break;
+	case DEV_INIT:
+#ifdef DEBUG
+		if (debug_level >= 3) 
+			dbg_puts("flushing device\n");
+#endif
+		dev_clear();
+		break;
+	}
 #ifdef DEBUG
 	if (debug_level >= 2) 
 		dbg_puts("closing audio device\n");
@@ -333,7 +355,8 @@ dev_done(void)
 		 * reorder the file_list, we have to restart the loop
 		 * after each call to file_eof().
 		 */
-		dev_mix->flags |= APROC_QUIT;
+		if (APROC_OK(dev_mix))
+			mix_quit(dev_mix);
 		if (APROC_OK(dev_mix->u.mix.mon)) {
 			dev_mix->u.mix.mon->refs--;
 			aproc_del(dev_mix->u.mix.mon);

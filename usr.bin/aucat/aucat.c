@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.88 2010/04/24 14:33:46 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.89 2010/05/02 11:12:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -356,21 +356,33 @@ privdrop(void)
 }
 
 void
-stopall(char *base)
+stopall(void)
 {
 	struct file *f;
 
   restart:
 	LIST_FOREACH(f, &file_list, entry) {
 		/*
-		 * skip connected streams (handled by dev_done())
+		 * skip connected streams (handled by dev_close())
 		 */
-		if (APROC_OK(dev_mix) && f->rproc &&
-		    aproc_depend(dev_mix, f->rproc))
-			continue;
-		if (APROC_OK(dev_sub) && f->wproc &&
-		    aproc_depend(f->wproc, dev_sub))
-			continue;
+		if (APROC_OK(dev_mix)) {
+			if (f->rproc && aproc_depend(dev_mix, f->rproc))
+				continue;
+			if (f->wproc && aproc_depend(f->wproc, dev_mix))
+				continue;
+		}
+		if (APROC_OK(dev_sub)) {
+			if (f->rproc && aproc_depend(dev_sub, f->rproc))
+				continue;
+			if (f->wproc && aproc_depend(f->wproc, dev_sub))
+				continue;
+		}
+		if (APROC_OK(dev_submon)) {
+			if (f->rproc && aproc_depend(dev_submon, f->rproc))
+				continue;
+			if (f->wproc && aproc_depend(f->wproc, dev_submon))
+				continue;
+		}
 		if (APROC_OK(dev_midi)) {
 			if (f->rproc && aproc_depend(dev_midi, f->rproc))
 				continue;
@@ -743,7 +755,7 @@ aucat_main(int argc, char **argv)
 			dev_start();
 		}
 	}
-	stopall(base);
+	stopall();
 	dev_done();
 	filelist_done();
 	if (l_flag) {
@@ -913,7 +925,7 @@ midicat_main(int argc, char **argv)
 		if (!file_poll())
 			break;
 	}
-	stopall(base);
+	stopall();
 	dev_done();
 	filelist_done();
 	if (l_flag) {

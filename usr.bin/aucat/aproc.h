@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.35 2010/04/24 06:18:23 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.36 2010/05/02 11:12:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -237,8 +237,8 @@ void aproc_opos(struct aproc *, struct abuf *, int);
 
 struct aproc *rfile_new(struct file *);
 struct aproc *wfile_new(struct file *);
-struct aproc *mix_new(char *, int, unsigned, struct aproc *);
-struct aproc *sub_new(char *, int, unsigned, struct aproc *);
+struct aproc *mix_new(char *, int, unsigned);
+struct aproc *sub_new(char *, int, unsigned);
 struct aproc *resamp_new(char *, unsigned, unsigned);
 struct aproc *enc_new(char *, struct aparams *);
 struct aproc *dec_new(char *, struct aparams *);
@@ -262,6 +262,7 @@ int wfile_do(struct aproc *, unsigned, unsigned *);
 void mix_setmaster(struct aproc *);
 void mix_clear(struct aproc *);
 void mix_prime(struct aproc *);
+void mix_quit(struct aproc *);
 void mix_drop(struct abuf *, int);
 void sub_silence(struct abuf *, int);
 void sub_clear(struct aproc *);
