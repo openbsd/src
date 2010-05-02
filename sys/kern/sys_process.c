@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.44 2010/01/28 19:23:06 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.45 2010/05/02 11:15:29 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -261,7 +261,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		iov.iov_len = sizeof(int);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(long)SCARG(uap, addr);
+		uio.uio_offset = (off_t)(vaddr_t)SCARG(uap, addr);
 		uio.uio_resid = sizeof(int);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
@@ -279,7 +279,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		iov.iov_len = piod.piod_len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(long)piod.piod_offs;
+		uio.uio_offset = (off_t)(vaddr_t)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_procp = p;
@@ -641,7 +641,7 @@ process_auxv_offset(struct proc *curp, struct proc *p, struct uio *uiop)
 	iov.iov_len = sizeof(pss);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;	
-	uio.uio_offset = (off_t)PS_STRINGS;
+	uio.uio_offset = (off_t)(vaddr_t)PS_STRINGS;
 	uio.uio_resid = sizeof(pss);
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
@@ -653,15 +653,15 @@ process_auxv_offset(struct proc *curp, struct proc *p, struct uio *uiop)
 	if (pss.ps_envstr == NULL)
 		return (EIO);
 
-	uiop->uio_offset += (off_t)(long)(pss.ps_envstr + pss.ps_nenvstr + 1);
+	uiop->uio_offset += (off_t)(vaddr_t)(pss.ps_envstr + pss.ps_nenvstr + 1);
 #ifdef MACHINE_STACK_GROWS_UP
-	if (uiop->uio_offset < (off_t)PS_STRINGS)
+	if (uiop->uio_offset < (off_t)(vaddr_t)PS_STRINGS)
 		return (EIO);
 #else
-	if (uiop->uio_offset > (off_t)PS_STRINGS)
+	if (uiop->uio_offset > (off_t)(vaddr_t)PS_STRINGS)
 		return (EIO);
-	if ((uiop->uio_offset + uiop->uio_resid) > (off_t)PS_STRINGS)
-		uiop->uio_resid = (off_t)PS_STRINGS - uiop->uio_offset;
+	if ((uiop->uio_offset + uiop->uio_resid) > (off_t)(vaddr_t)PS_STRINGS)
+		uiop->uio_resid = (off_t)(vaddr_t)PS_STRINGS - uiop->uio_offset;
 #endif
 
 	return (0);

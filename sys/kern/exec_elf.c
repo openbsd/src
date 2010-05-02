@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.72 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.73 2010/05/02 11:15:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1198,7 +1198,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 		iov.iov_len = sizeof(pss);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)PS_STRINGS;
+		uio.uio_offset = (off_t)(vaddr_t)PS_STRINGS;
 		uio.uio_resid = sizeof(pss);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
