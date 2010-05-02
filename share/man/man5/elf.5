@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.15 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.16 2010/05/02 01:01:46 guenther Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 2 2010 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -390,47 +390,6 @@ with the section name string table.
 If the file has no section name string
 table, this member holds the value
 .Sy SHN_UNDEF .
-.Bl -tag -width "SHN_LORESERVE"
-.It Dv SHN_UNDEF
-This value marks an undefined, missing, irrelevant, or otherwise meaningless
-section reference.
-For example, a symbol
-.Dq defined
-relative to section number
-.Sy SHN_UNDEF
-is an undefined symbol.
-.It Dv SHN_LORESERVE
-This value specifies the lower bound of the range of reserved indices.
-.It Dv SHN_LOPROC
-This value up to and including
-.Sy SHN_HIPROC
-is reserved for processor-specific semantics.
-.It Dv SHN_HIPROC
-This value down to and including
-.Sy SHN_LOPROC
-is reserved for processor-specific semantics.
-.It Dv SHN_ABS
-This value specifies absolute values for the corresponding reference.
-For
-example, symbols defined relative to section number
-.Sy SHN_ABS
-have absolute values and are not affected by relocation.
-.It Dv SHN_COMMON
-Symbols defined relative to this section are common symbols, such as Fortran
-COMMON or unallocated C external variables.
-.It Dv SHN_HIRESERVE
-This value specifies the upper bound of the range of reserved
-indices between
-.Sy SHN_LORESERVE
-and
-.Sy SHN_HIRESERVE ,
-inclusive; the values do
-not reference the section header table.
-That is, the section header table
-does
-.Em not
-contain entries for the reserved indices.
-.El
 .El
 .Pp
 An executable or shared object file's program header table is an array of
@@ -528,6 +487,17 @@ Moreover, it may
 only occur if the program header table is part of the memory image of the
 program.
 If it is present, it must precede any loadable segment entry.
+.It Dv PT_TLS
+The array element, if present, specifies the location and size of the
+thread-local storage for this file.
+Each thread in a process loading this file will have the segment's
+memory size
+.Pq Sy p_memsz
+allocated for it, where the bytes up to the segment's file size
+.Pq Sy p_filesz
+will be initialized with the data in this segment and the remaining
+.Dq extra
+bytes will be set to zero.
 .It Dv PT_LOOS
 This value up to and including
 .Sy PT_HIOS
@@ -720,7 +690,7 @@ As a complete symbol table, it may contain
 many symbols unnecessary for dynamic linking.
 An object file can
 also contain a
-.Sy SHN_DYNSYM
+.Sy SHT_DYNSYM
 section.
 .It Dv SHT_STRTAB
 This section holds a string table.
@@ -748,7 +718,7 @@ This section holds information that marks the file in some way.
 .It Dv SHT_NOBITS
 A section of this type occupies no space in the file but otherwise
 resembles
-.Sy SHN_PROGBITS .
+.Sy SHT_PROGBITS .
 Although this section contains no bytes, the
 .Sy sh_offset
 member contains the conceptual file offset.
@@ -765,7 +735,7 @@ This section is reserved but has unspecified semantics.
 This section holds a minimal set of dynamic linking symbols.
 An
 object file can also contain a
-.Sy SHN_SYMTAB
+.Sy SHT_SYMTAB
 section.
 .It Dv SHT_LOPROC
 This value up to and including
@@ -813,6 +783,8 @@ This
 attribute is off for those sections.
 .It Dv SHF_EXECINSTR
 This section contains executable machine instructions.
+.It Dv SHF_TLS
+This section is for thread-local storage.
 .It Dv SHF_MASKPROC
 All bits included in this mask are reserved for processor-specific
 semantics.
@@ -869,7 +841,7 @@ fixed-size entries.
 Various sections hold program and control information:
 .Bl -tag -width ".shstrtab"
 .It .bss
-This section holds uninitialized data that contributes to the program's
+This section holds uninitialized data that contribute to the program's
 memory image.
 By definition, the system initializes the data with zeros
 when the program begins to run.
@@ -1054,14 +1026,14 @@ normally would have the name
 This section is of type
 .Sy SHT_RELA .
 .It .rodata
-This section holds read-only data that typically contributes to a
+This section holds read-only data that typically contribute to a
 non-writable segment in the process image.
 This section is of type
 .Sy SHT_PROGBITS .
 The attribute used is
 .Sy SHF_ALLOC .
 .It .rodata1
-This section holds read-only data that typically contributes to a
+This section holds read-only data that typically contribute to a
 non-writable segment in the process image.
 This section is of type
 .Sy SHT_PROGBITS .
@@ -1093,6 +1065,34 @@ bit.
 Otherwise the bit will be off.
 This section is of type
 .Sy SHT_SYMTAB .
+.It .tbss
+This section is the thread-local storage version of
+.Sy .bss ,
+holding uninitialized data that contribute to the program's memory
+image on a per-thread basis.
+By definition, the system allocates and initializes the data with
+zeros for each thread before it first accesses it.
+This section is of type
+.Sy SHT_NOBITS .
+The attribute types are
+.Sy SHF_ALLOC ,
+.Sy SHF_WRITE ,
+and
+.Sy SHF_TLS .
+.It .tdata
+This section is the thread-local storage version of
+.Sy .data ,
+holding initialized data that contribute to the program's memory
+image on a per-thread basis.
+The system allocates and initializes the data for each thread before
+it first accesses it.
+This section is of type
+.Sy SHT_PROGBITS .
+The attribute types are
+.Sy SHF_ALLOC ,
+.Sy SHF_WRITE ,
+and
+.Sy SHF_TLS .
 .It .text
 This section holds the
 .Dq text ,
@@ -1179,6 +1179,9 @@ bindings, its section index is
 and it precedes the other
 .Sy STB_LOCAL
 symbols of the file, if it is present.
+.It Dv STT_TLS
+The symbol is associated with an object in thread-local storage.
+The symbol's value is its offset in the TLS storage for this file.
 .It Dv STT_LOPROC
 This value up to and including
 .Sy STT_HIPROC
