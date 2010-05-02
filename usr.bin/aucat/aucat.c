@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.89 2010/05/02 11:12:31 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.90 2010/05/02 11:54:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -157,7 +157,7 @@ opt_mmc(void)
 }
 
 int
-opt_join(void)
+opt_onoff(void)
 {
 	if (strcmp("off", optarg) == 0)
 		return 0;
@@ -468,7 +468,7 @@ aucat_main(int argc, char **argv)
 			xrun = opt_xrun();
 			break;
 		case 'j':
-			join = opt_join();
+			join = opt_onoff();
 			break;
 		case 't':
 			mmc = opt_mmc();
@@ -645,20 +645,20 @@ aucat_main(int argc, char **argv)
 	filelist_init();
 
 	/*
-	 * Open the device. Give half of the buffer to the device,
-	 * the other half is for the socket/files.
+	 * Open the device
 	 */
 	if (n_flag) {
 		if (mode & MODE_MON)
 			errx(1, "monitoring not allowed in loopback mode");
-		dev_loopinit(&dipar, &dopar, bufsz);
+		dev_init_loop(&dipar, &dopar, bufsz);
 	} else {
 		if ((mode & MODE_MON) && !(mode & MODE_PLAY))
 			errx(1, "no playback stream to monitor");
-		if (!dev_init(devpath, mode, &dipar, &dopar, bufsz, round)) {
-			errx(1, "%s: can't open device", 
-			    devpath ? devpath : "<default>");
-		}
+		dev_init_sio(devpath, mode, &dipar, &dopar, bufsz, round);
+	}
+	if (!dev_ref()) {
+		errx(1, "%s: can't open device",
+		    devpath ? devpath : "<default>");
 	}
 
 	/*
@@ -710,53 +710,28 @@ aucat_main(int argc, char **argv)
 		 */
 		ctl_start(dev_midi);
 	}
-	if (l_flag)
-		dev_prime();
 
 	/*
 	 * Loop, start audio.
 	 */
 	for (;;) {
-		if (quit_flag) {
+		if (quit_flag)
 			break;
-		}
-		if ((APROC_OK(dev_mix) && LIST_EMPTY(&dev_mix->outs)) ||
-		    (APROC_OK(dev_sub) && LIST_EMPTY(&dev_sub->ins))) {
-			fprintf(stderr, "device disappeared, terminating\n");
+		if (!dev_run())
 			break;
-		}
 		if (!l_flag && ctl_idle(dev_midi))
 			break;
 		if (!file_poll())
 			break;
-		if ((!APROC_OK(dev_mix)    || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
-		    (!APROC_OK(dev_sub)    || dev_sub->u.sub.idle > 2 * dev_bufsz) &&
-		    (!APROC_OK(dev_submon) || dev_submon->u.sub.idle > 2 * dev_bufsz) &&
-		    (!APROC_OK(dev_midi)   || dev_midi->u.ctl.tstate != CTL_RUN)) {
-		    	if (dev_pstate == DEV_RUN) {
-				dev_pstate = DEV_INIT;
-				dev_stop();
-				dev_clear();
-				/*
-				 * priming buffer in non-server mode is not
-				 * ok, because it will insert silence and
-				 * break synchronization
-				 */
-				if (l_flag)
-					dev_prime();
-			}
-		}
-		/*
-		 * move device state machine
-		 * XXX: move this to dev.c
-		 */
-		if (dev_pstate == DEV_START) {
-			dev_pstate = DEV_RUN;
-			dev_start();
-		}
 	}
+	dev_unref();
 	stopall();
 	dev_done();
+	/*
+	 * give a chance to drain
+	 */
+	while (file_poll())
+		; /* nothing */
 	filelist_done();
 	if (l_flag) {
 		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)
@@ -848,7 +823,9 @@ midicat_main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
-	dev_thruinit();
+	dev_init_thru();
+	if (0 && !dev_ref())
+		errx(1, "couldn't opem midi thru box");
 	if (!l_flag && APROC_OK(dev_midi))
 		dev_midi->flags |= APROC_QUIT;
 	if ((!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles)) && 
@@ -919,14 +896,22 @@ midicat_main(int argc, char **argv)
 	 * loop, start processing
 	 */
 	for (;;) {
-		if (quit_flag) {
+		if (quit_flag)
 			break;
-		}
+		if (!dev_run())
+			break;
 		if (!file_poll())
 			break;
 	}
 	stopall();
+	if (0)
+		dev_unref();
 	dev_done();
+	/*
+	 * drain
+	 */
+	while (file_poll())
+		; /* nothing */
 	filelist_done();
 	if (l_flag) {
 		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)
@@ -942,6 +927,9 @@ main(int argc, char **argv)
 {
 	char *prog;
 
+#ifdef DEBUG
+	atexit(dbg_flush);
+#endif
 	prog = strrchr(argv[0], '/');
 	if (prog == NULL)
 		prog = argv[0];

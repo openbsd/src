@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.50 2010/05/02 11:12:31 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.51 2010/05/02 11:54:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,7 +14,75 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+/*
+ * Device abstraction module
+ *
+ * This module exposes a ``enhanced device'' that uses aproc
+ * structures framework; it does conversions on the fly and can
+ * handle multiple streams.  The enhanced device starts and stops
+ * automatically, when streams are attached, and provides
+ * primitives for MIDI control
+ *
+ * From the main loop, the device is used as follows:
+ *
+ *   1. create the device using dev_init_xxx()
+ *   2. call dev_run() in the event loop
+ *   3. destroy the device using dev_done()
+ *   4. continue running the event loop to drain
+ *
+ * The device is used as follows from aproc context:
+ *
+ *   1. open the device with dev_ref()
+ *   2. negociate parameters (mode, rate, ...)
+ *   3. create your stream (ie allocate and fill abufs)
+ *   4. attach your stream atomically:
+ * 	  - first call dev_wakeup() to ensure device is not suspended
+ *	  - possibly fetch dynamic parameters (eg. dev_getpos())
+ *	  - attach your buffers with dev_attach()
+ *   5. close your stream, ie abuf_eof() or abuf_hup()
+ *   6. close the device with dev_unref()
+ *
+ * The device has the following states:
+ *
+ * CLOSED	sio_open() is not called, it's not ready and
+ *		no streams can be attached; dev_ref() must
+ *		be called to open the device
+ *
+ * INIT		device is opened, processing chain is ready, but
+ *		DMA is not started yet. Streams can attach,
+ *		in which case device will automatically switch
+ *		to the START state
+ *
+ * START	at least one stream is attached, play buffers
+ *		are primed (if necessary) DMA is ready and
+ *		will start immeadiately (next cycle)
+ *
+ * RUN		DMA is started. New streams can attach. If the
+ *		device is idle (all streams are closed and
+ *		finished draining), then the device
+ *		automatically switches to INIT or CLOSED
+ */
+/*
+ * TODO:
+ *
+ * priming buffer is not ok, because it will insert silence and
+ * break synchronization to other programs.
+ *
+ * priming buffer in server mode is required, because f->bufsz may
+ * be smaller than the server buffer and may cause underrun in the
+ * dev_bufsz part of the buffer, in turn causing apps to break. It
+ * doesn't hurt because we care only in synchronization between
+ * clients.
+ *
+ * Priming is not required in non-server mode, because streams
+ * actually start when they are in the READY state, and their
+ * buffer is large enough to never cause underruns of dev_bufsz.
+ *
+ * Fix sock.c to allocate dev_bufsz, but to use only appbufsz --
+ * or whatever -- but to avoid underruns in dev_bufsz. Then remove
+ * this ugly hack.
+ *
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,248 +100,252 @@
 #include "dbg.h"
 #endif
 
-unsigned dev_pstate;
+/*
+ * state of the device
+ */
+#define DEV_CLOSED	0		/* closed */
+#define DEV_INIT	1		/* stopped */
+#define DEV_START	2		/* ready to start */
+#define DEV_RUN		3		/* started */
+
+/*
+ * desired parameters
+ */
+unsigned dev_reqmode;				/* mode */
+struct aparams dev_reqipar, dev_reqopar;	/* parameters */
+unsigned dev_reqbufsz;				/* buffer size */
+unsigned dev_reqround;				/* block size */
+
+/*
+ * actual parameters and runtime state
+ */
+char *dev_path;					/* sio path */
+unsigned dev_refcnt = 0;			/* number of openers */
+unsigned dev_pstate;				/* on of DEV_xxx */
+unsigned dev_mode;				/* bitmap of MODE_xxx */
 unsigned dev_bufsz, dev_round, dev_rate;
 struct aparams dev_ipar, dev_opar;
 struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play, *dev_submon, *dev_mon;
 struct aproc *dev_midi;
 
+void dev_start(void);
+void dev_stop(void);
+void dev_clear(void);
+void dev_prime(void);
+
 /*
- * Create a MIDI thru box as the MIDI end of the device
+ * Create a sndio device
  */
 void
-dev_thruinit(void)
+dev_init_sio(char *path, unsigned mode, 
+    struct aparams *dipar, struct aparams *dopar,
+    unsigned bufsz, unsigned round)
 {
-	dev_midi = thru_new("thru");
-	dev_midi->refs++;
+	dev_path = path;
+	dev_reqmode = mode;
+	if (mode & MODE_PLAY)
+		dev_reqopar = *dopar;
+	if (mode & MODE_RECMASK)
+		dev_reqipar = *dipar;
+	dev_reqbufsz = bufsz;
+	dev_reqround = round;
+	dev_pstate = DEV_CLOSED;
 }
 
 /*
- * Open a MIDI device and connect it to the thru box
- */
-int
-dev_thruadd(char *name, int in, int out)
-{
-	struct file *f;
-	struct abuf *rbuf = NULL, *wbuf = NULL;
-	struct aproc *rproc, *wproc;
-
-	f = (struct file *)miofile_new(&miofile_ops, name, in, out);
-	if (f == NULL)
-		return 0;
-	if (in) {
-		rproc = rfile_new(f);
-		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
-		aproc_setout(rproc, rbuf);
-	}
-	if (out) {
-		wproc = wfile_new(f);
-		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
-		aproc_setin(wproc, wbuf);
-	}
-	dev_midiattach(rbuf, wbuf);
-	return 1;
-}
-
-/*
- * Attach a bi-directional MIDI stream to the MIDI device
+ * Create a loopback synchronous device
  */
 void
-dev_midiattach(struct abuf *ibuf, struct abuf *obuf)
+dev_init_loop(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 {
-	if (ibuf)
-		aproc_setin(dev_midi, ibuf);
-	if (obuf) {
-		aproc_setout(dev_midi, obuf);
-		if (ibuf) {
-			ibuf->duplex = obuf;
-			obuf->duplex = ibuf;
-		}
-	}
-}
-
-/*
- * Same as dev_init(), but create a fake device that records what is
- * played.
- */
-void
-dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
-{
-	struct abuf *buf;
 	struct aparams par;
 	unsigned cmin, cmax, rate;
-
-	/*
-	 * in principle we don't need control, but the start-stop mechanism
-	 * depend on it and it's simpler to reuse this mechanism rather than
-	 * dealing with lots of special cases
-	 */
-	dev_midi = ctl_new("ctl");
-	dev_midi->refs++;
 
 	cmin = (dipar->cmin < dopar->cmin) ? dipar->cmin : dopar->cmin;
 	cmax = (dipar->cmax > dopar->cmax) ? dipar->cmax : dopar->cmax;
 	rate = (dipar->rate > dopar->rate) ? dipar->rate : dopar->rate;
 	aparams_init(&par, cmin, cmax, rate);
-	dev_ipar = par;
-	dev_opar = par;
-	dev_round = (bufsz + 1) / 2;
-	dev_bufsz = dev_round * 2;
-	dev_rate  = rate;
+	dev_reqipar = par;
+	dev_reqopar = par;
+	dev_rate = rate;
+	dev_reqround = (bufsz + 1) / 2;
+	dev_reqbufsz = dev_reqround * 2;
+	dev_reqmode = MODE_PLAY | MODE_REC | MODE_LOOP;
+	dev_pstate = DEV_CLOSED;
+}
+
+/*
+ * Create a MIDI thru box device
+ */
+void
+dev_init_thru(void)
+{
+	dev_reqmode = 0;
+	dev_pstate = DEV_CLOSED;
+}
+
+/*
+ * Open the device with the dev_reqxxx capabilities. Setup a mixer, demuxer,
+ * monitor, midi control, and any necessary conversions.
+ */
+int
+dev_open(void)
+{
+	struct file *f;
+	struct aparams par;
+	struct aproc *conv;
+	struct abuf *buf;
+	unsigned siomode;
+	
+	dev_mode = dev_reqmode;
+	dev_round = dev_reqround;
+	dev_bufsz = dev_reqbufsz;
+	dev_ipar = dev_reqipar;
+	dev_opar = dev_reqopar;
 	dev_rec = NULL;
 	dev_play = NULL;
 	dev_mon = NULL;
 	dev_submon = NULL;
-	dev_pstate = DEV_INIT;
+	dev_rate = 0;
 
-	buf = abuf_new(dev_bufsz, &par);
-	dev_mix = mix_new("mix", dev_bufsz, 1);
-	dev_mix->refs++;
-	dev_sub = sub_new("sub", dev_bufsz, 1);
-	dev_sub->refs++;
-	aproc_setout(dev_mix, buf);
-	aproc_setin(dev_sub, buf);
+	/*
+	 * If needed, open the device (ie create dev_rec and dev_play)
+	 */
+	if ((dev_mode & (MODE_PLAY | MODE_REC)) && !(dev_mode & MODE_LOOP)) {
+		siomode = dev_mode & (MODE_PLAY | MODE_REC);
+		f = (struct file *)siofile_new(&siofile_ops,
+		    dev_path,
+		    &siomode,
+		    &dev_ipar,
+		    &dev_opar,
+		    &dev_bufsz,
+		    &dev_round);
+		if (f == NULL) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				dbg_puts(dev_path ? dev_path : "default");
+				dbg_puts(": failed to open audio device\n");
+			}
+#endif
+			return 0;
+		}
+		if (!(siomode & MODE_PLAY))
+			dev_mode &= ~(MODE_PLAY | MODE_MON);
+		if (!(siomode & MODE_REC))
+			dev_mode &= ~MODE_REC;
+		if ((dev_mode & (MODE_PLAY | MODE_REC)) == 0) {
+#ifdef DEBUG
+			if (debug_level >= 1) {
+				dbg_puts(dev_path ? dev_path : "default");
+				dbg_puts(": mode not supported by device\n");
+			}
+#endif
+			return 0;
+		}
+		dev_rate = dev_mode & MODE_REC ? dev_ipar.rate : dev_opar.rate;
+#ifdef DEBUG
+		if (debug_level >= 2) {
+			if (dev_mode & MODE_REC) {
+				dbg_puts("hw recording ");
+				aparams_dbg(&dev_ipar);
+				dbg_puts("\n");
+			}
+			if (dev_mode & MODE_PLAY) {
+				dbg_puts("hw playing ");
+				aparams_dbg(&dev_opar);
+				dbg_puts("\n");
+			}
+		}
+#endif
+		if (dev_mode & MODE_REC) {
+			dev_rec = rsio_new(f);
+			dev_rec->refs++;
+		}
+		if (dev_mode & MODE_PLAY) {
+			dev_play = wsio_new(f);
+			dev_play->refs++;
+		}
+	}
 
-	dev_mix->flags |= APROC_QUIT;
-	dev_sub->flags |= APROC_QUIT;
-
-	*dipar = dev_ipar;
-	*dopar = dev_opar;
-}
-
-unsigned
-dev_roundof(unsigned newrate)
-{
-	return (dev_round * newrate + dev_rate / 2) / dev_rate;
-}
-
-/*
- * Open the device with the given hardware parameters and create a mixer
- * and a multiplexer connected to it with all necessary conversions
- * setup.
- */
-int
-dev_init(char *devpath, unsigned mode,
-    struct aparams *dipar, struct aparams *dopar, unsigned bufsz, unsigned round)
-{
-	struct file *f;
-	struct aparams ipar, opar;
-	struct aproc *conv;
-	struct abuf *buf;
-
-	dev_midi = ctl_new("ctl");
+	/*
+	 * Create the midi control end, or a simple thru box
+	 * if there's no device
+	 */
+	dev_midi = (dev_mode == 0) ? thru_new("thru") : ctl_new("ctl");
 	dev_midi->refs++;
 
 	/*
-	 * Ask for 1/4 of the buffer for the kernel ring and
-	 * limit the block size to 1/4 of the requested buffer.
+	 * Create mixer, demuxer and monitor
 	 */
-	dev_round = round;
-	dev_bufsz = bufsz;
-	f = (struct file *)siofile_new(&siofile_ops, devpath,
-	    mode & (MODE_PLAY | MODE_REC), dipar, dopar,
-	    &dev_bufsz, &dev_round);
-	if (f == NULL)
-		return 0;
-	if (mode & MODE_REC) {
-#ifdef DEBUG
-		if (debug_level >= 2) {
-			dbg_puts("hw recording ");
-			aparams_dbg(dipar);
-			dbg_puts("\n");
-		}
-#endif
-		dev_rate = dipar->rate;
+	if (dev_mode & MODE_PLAY) {
+		dev_mix = mix_new("play", dev_bufsz, dev_round);
+		dev_mix->refs++;
+		dev_mix->u.mix.ctl = dev_midi;
 	}
-	if (mode & MODE_PLAY) {
-#ifdef DEBUG
-		if (debug_level >= 2) {
-			dbg_puts("hw playing ");
-			aparams_dbg(dopar);
-			dbg_puts("\n");
-		}
-#endif
-		dev_rate = dopar->rate;
-	}
-
-	/*
-	 * Create record chain.
-	 */
-	if (mode & MODE_REC) {
-		aparams_init(&ipar, dipar->cmin, dipar->cmax, dipar->rate);
+	if (dev_mode & MODE_REC) {
+		dev_sub = sub_new("rec", dev_bufsz, dev_round);
+		dev_sub->refs++;
 		/*
-		 * Create the read end.
+		 * If not playing, use the record end as clock source
 		 */
-		dev_rec = rsio_new(f);
-		dev_rec->refs++;
-		buf = abuf_new(dev_bufsz, dipar);
+		if (!(dev_mode & MODE_PLAY))
+			dev_sub->u.sub.ctl = dev_midi;
+	}
+	if (dev_mode & MODE_LOOP) {
+		/*
+		 * connect mixer out to demuxer in
+		 */
+		buf = abuf_new(dev_bufsz, &dev_opar);
+		aproc_setout(dev_mix, buf);
+		aproc_setin(dev_sub, buf);
+
+		dev_mix->flags |= APROC_QUIT;
+		dev_sub->flags |= APROC_QUIT;
+		dev_rate = dev_opar.rate;
+	}
+	if (dev_rec) {
+		aparams_init(&par, dev_ipar.cmin, dev_ipar.cmax, dev_rate);
+
+		/*
+		 * Create device <-> demuxer buffer
+		 */
+		buf = abuf_new(dev_bufsz, &dev_ipar);
 		aproc_setout(dev_rec, buf);
 
 		/*
-		 * Append a converter, if needed.
+		 * Insert a converter, if needed.
 		 */
-		if (!aparams_eqenc(dipar, &ipar)) {
-			conv = dec_new("rec", dipar);
+		if (!aparams_eqenc(&dev_ipar, &par)) {
+			conv = dec_new("rec", &dev_ipar);
 			aproc_setin(conv, buf);
-			buf = abuf_new(dev_round, &ipar);
+			buf = abuf_new(dev_round, &par);
 			aproc_setout(conv, buf);
 		}
-		dev_ipar = ipar;
-
-		/*
-		 * Append a "sub" to which clients will connect.
-		 * Link it to the controller only in record-only mode
-		 */
-		dev_sub = sub_new("rec", dev_bufsz, dev_round);
-		dev_sub->refs++;
-		if (!(mode & MODE_PLAY))
-			dev_sub->u.sub.ctl = dev_midi;
+		dev_ipar = par;
 		aproc_setin(dev_sub, buf);
-	} else {
-		dev_rec = NULL;
-		dev_sub = NULL;
 	}
+	if (dev_play) {
+		aparams_init(&par, dev_opar.cmin, dev_opar.cmax, dev_rate);
 
-	/*
-	 * Create play chain.
-	 */
-	if (mode & MODE_PLAY) {
-		aparams_init(&opar, dopar->cmin, dopar->cmax, dopar->rate);
 		/*
-		 * Create the write end.
+		 * Create device <-> mixer buffer
 		 */
-		dev_play = wsio_new(f);
-		dev_play->refs++;
-		buf = abuf_new(dev_bufsz, dopar);
+		buf = abuf_new(dev_bufsz, &dev_opar);
 		aproc_setin(dev_play, buf);
 
 		/*
 		 * Append a converter, if needed.
 		 */
-		if (!aparams_eqenc(&opar, dopar)) {
-			conv = enc_new("play", dopar);
+		if (!aparams_eqenc(&par, &dev_opar)) {
+			conv = enc_new("play", &dev_opar);
 			aproc_setout(conv, buf);
-			buf = abuf_new(dev_round, &opar);
+			buf = abuf_new(dev_round, &par);
 			aproc_setin(conv, buf);
 		}
-		dev_opar = opar;
-
-		/*
-		 * Append a "mix" to which clients will connect.
-		 */
-		dev_mix = mix_new("play", dev_bufsz, dev_round);
-		dev_mix->refs++;
-		dev_mix->u.mix.ctl = dev_midi;
+		dev_opar = par;
 		aproc_setout(dev_mix, buf);
-	} else {
-		dev_play = NULL;
-		dev_mix = NULL;
 	}
-
-	/*
-	 * Create monitoring chain
-	 */
-	if (mode & MODE_MON) {
+	if (dev_mode & MODE_MON) {
 		dev_mon = mon_new("mon", dev_bufsz);
 		dev_mon->refs++;
 		buf = abuf_new(dev_bufsz, &dev_opar);
@@ -281,30 +353,26 @@ dev_init(char *devpath, unsigned mode,
 
 		/*
 		 * Append a "sub" to which clients will connect.
-		 * Link it to the controller only in record-only mode
 		 */
 		dev_submon = sub_new("mon", dev_bufsz, dev_round);
 		dev_submon->refs++;
 		aproc_setin(dev_submon, buf);
 
 		/*
-		 * Attack to the mixer
+		 * Attach to the mixer
 		 */
 		dev_mix->u.mix.mon = dev_mon;
 		dev_mon->refs++;
-	} else {
-		dev_submon = NULL;
-		if (APROC_OK(dev_mix))
-			dev_mix->u.mix.mon = NULL;
 	}
-
 #ifdef DEBUG
-	if (debug_level >= 2) {
-		dbg_puts("device block size is ");
-		dbg_putu(dev_round);
-		dbg_puts(" frames, using ");
-		dbg_putu(dev_bufsz / dev_round);
-		dbg_puts(" blocks\n");
+	if (debug_level >= 2) { 
+		if (dev_mode & (MODE_PLAY | MODE_RECMASK)) {
+			dbg_puts("device block size is ");
+			dbg_putu(dev_round);
+			dbg_puts(" frames, using ");
+			dbg_putu(dev_bufsz / dev_round);
+			dbg_puts(" blocks\n");
+		}
 	}
 #endif
 	dev_pstate = DEV_INIT;
@@ -316,7 +384,7 @@ dev_init(char *devpath, unsigned mode,
  * once both play chain and record chain are gone.
  */
 void
-dev_done(void)
+dev_close(void)
 {
 	struct file *f;
 
@@ -342,8 +410,9 @@ dev_done(void)
 	}
 #ifdef DEBUG
 	if (debug_level >= 2) 
-		dbg_puts("closing audio device\n");
+		dbg_puts("closing device\n");
 #endif
+
 	if (dev_mix) {
 		/*
 		 * Put the mixer in ``autoquit'' state and generate
@@ -357,6 +426,10 @@ dev_done(void)
 		 */
 		if (APROC_OK(dev_mix))
 			mix_quit(dev_mix);
+
+		/*
+		 * XXX: handle this in mix_done()
+		 */
 		if (APROC_OK(dev_mix->u.mix.mon)) {
 			dev_mix->u.mix.mon->refs--;
 			aproc_del(dev_mix->u.mix.mon);
@@ -434,10 +507,69 @@ dev_done(void)
 			aproc_del(dev_midi);
 		dev_midi = NULL;
 	}
-	for (;;) {
-		if (!file_poll())
-			break;
+	dev_pstate = DEV_CLOSED;
+}
+
+/*
+ * Free the device
+ */
+void
+dev_done(void)
+{
+	if (dev_pstate != DEV_CLOSED)
+		dev_close();
+}
+
+/*
+ * Open a MIDI device and connect it to the thru box
+ */
+int
+dev_thruadd(char *name, int in, int out)
+{
+	struct file *f;
+	struct abuf *rbuf = NULL, *wbuf = NULL;
+	struct aproc *rproc, *wproc;
+
+	if (!dev_ref())
+		return 0;
+	f = (struct file *)miofile_new(&miofile_ops, name, in, out);
+	if (f == NULL)
+		return 0;
+	if (in) {
+		rproc = rfile_new(f);
+		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
+		aproc_setout(rproc, rbuf);
 	}
+	if (out) {
+		wproc = wfile_new(f);
+		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
+		aproc_setin(wproc, wbuf);
+	}
+	dev_midiattach(rbuf, wbuf);
+	return 1;
+}
+
+/*
+ * Attach a bi-directional MIDI stream to the MIDI device
+ */
+void
+dev_midiattach(struct abuf *ibuf, struct abuf *obuf)
+{
+	if (ibuf)
+		aproc_setin(dev_midi, ibuf);
+	if (obuf) {
+		aproc_setout(dev_midi, obuf);
+		if (ibuf) {
+			ibuf->duplex = obuf;
+			obuf->duplex = ibuf;
+		}
+	}
+}
+
+unsigned
+dev_roundof(unsigned newrate)
+{
+	return (dev_round * newrate + dev_rate / 2) / dev_rate;
 }
 
 /*
@@ -450,8 +582,9 @@ dev_start(void)
 
 #ifdef DEBUG
 	if (debug_level >= 2)
-		dbg_puts("starting audio device\n");
+		dbg_puts("starting device\n");
 #endif
+	dev_pstate = DEV_RUN;
 	if (APROC_OK(dev_mix))
 		dev_mix->flags |= APROC_DROP;
 	if (APROC_OK(dev_sub))
@@ -476,6 +609,7 @@ dev_stop(void)
 {
 	struct file *f;
 
+	dev_pstate = DEV_INIT;
 	if (APROC_OK(dev_play) && dev_play->u.io.file) {
 		f = dev_play->u.io.file;
 		f->ops->stop(f);
@@ -491,8 +625,112 @@ dev_stop(void)
 		dev_submon->flags &= ~APROC_DROP;
 #ifdef DEBUG
 	if (debug_level >= 2)
-		dbg_puts("audio device stopped\n");
+		dbg_puts("device stopped\n");
 #endif
+}
+
+int
+dev_ref(void)
+{
+#ifdef DEBUG
+	if (debug_level >= 3)
+		dbg_puts("device requested\n");
+#endif
+	if (dev_pstate == DEV_CLOSED && !dev_open())
+		return 0;
+	dev_refcnt++;
+	return 1;
+}
+
+void
+dev_unref(void)
+{
+#ifdef DEBUG
+	if (debug_level >= 3)
+		dbg_puts("device released\n");
+#endif
+	dev_refcnt--;
+	if (dev_refcnt == 0 && dev_pstate == DEV_INIT)
+		dev_close();
+}
+
+/*
+ * There are actions (like start/stop/close ... ) that may trigger aproc
+ * operations, a thus cannot be started from aproc context.
+ * To avoid problems, aprocs only change the s!tate of the device,
+ * and actual operations are triggered from the main loop,
+ * outside the aproc code path.
+ *
+ * The following routine invokes pending actions, returns 0
+ * on fatal error
+ */
+int
+dev_run(void)
+{
+	if (dev_pstate == DEV_CLOSED)
+		return 1;
+	/*
+	 * check if device isn't gone
+	 */
+	if (((dev_mode & MODE_PLAY) && !APROC_OK(dev_mix)) ||
+	    ((dev_mode & MODE_REC)  && !APROC_OK(dev_sub)) ||
+	    ((dev_mode & MODE_MON)  && !APROC_OK(dev_submon))) {
+#ifdef DEBUG
+		if (debug_level >= 1)
+			dbg_puts("device disappeared\n");
+#endif
+		dev_close();
+		return 0;
+	}
+	switch (dev_pstate) {
+	case DEV_INIT:
+		/* nothing */
+		break;
+	case DEV_START:
+		dev_start();
+		/* PASSTHROUGH */
+	case DEV_RUN:
+		/*
+		 * if the device is not used, then stop it
+		 */
+		if ((!APROC_OK(dev_mix) ||
+			dev_mix->u.mix.idle > 2 * dev_bufsz) &&
+		    (!APROC_OK(dev_sub) ||
+			dev_sub->u.sub.idle > 2 * dev_bufsz) &&
+		    (!APROC_OK(dev_submon) ||
+			dev_submon->u.sub.idle > 2 * dev_bufsz) &&
+		    (!APROC_OK(dev_midi) ||
+			dev_midi->u.ctl.tstate != CTL_RUN)) {
+#ifdef DEBUG
+			if (debug_level >= 3)
+				dbg_puts("device idle, suspending\n");
+#endif
+			dev_stop();
+			if (dev_refcnt == 0)
+				dev_close();
+			else
+				dev_clear();
+		}
+		break;
+	}
+	return 1;
+}
+
+/*
+ * If the device is paused, then resume it. If the caller is using
+ * full-duplex and its buffers are small, the ``prime'' flag
+ * could be set to initialize device buffers with silence
+ *
+ * This routine can be called from aproc context.
+ */
+void
+dev_wakeup(int prime)
+{
+	if (dev_pstate == DEV_INIT) {
+		if (prime)
+			dev_prime();
+		dev_pstate = DEV_START;
+	 }
 }
 
 /*
@@ -592,13 +830,14 @@ dev_sync(unsigned mode, struct abuf *ibuf, struct abuf *obuf)
 	if (debug_level >= 3) {
 		dbg_puts("syncing device, delta = ");
 		dbg_putu(delta);
-		dbg_puts(" ");
 		if (APROC_OK(dev_mix)) {
+			dbg_puts(", ");
 			aproc_dbg(dev_mix);
 			dbg_puts(": abspos = ");
 			dbg_putu(dev_mix->u.mix.abspos);
 		}
 		if (APROC_OK(dev_sub)) {
+			dbg_puts(", ");
 			aproc_dbg(dev_sub);
 			dbg_puts(": abspos = ");
 			dbg_putu(dev_sub->u.sub.abspos);
@@ -690,7 +929,6 @@ dev_attach(char *name, unsigned mode,
 		return;
 	}
 #endif
-
 	if (mode & MODE_PLAY) {
 		ipar = *sipar;
 		pbuf = LIST_FIRST(&dev_mix->outs);
@@ -828,12 +1066,6 @@ dev_attach(char *name, unsigned mode,
 		obuf->duplex = ibuf;
 	}
 	dev_sync(mode, ibuf, obuf);
-
-	/*
-	 * Start device if not already started
-	 */
-	if (dev_pstate == DEV_INIT)
-		dev_pstate = DEV_START;
 }
 
 /*
@@ -918,6 +1150,11 @@ dev_clear(void)
 void
 dev_prime(void)
 {
+
+#ifdef DEBUG
+	if (debug_level >= 3)
+		dbg_puts("priming device\n");
+#endif
 	if (APROC_OK(dev_mix)) {
 #ifdef DEBUG
 		if (!LIST_EMPTY(&dev_mix->ins)) {

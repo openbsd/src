@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.6 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.7 2010/05/02 11:54:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,6 +34,7 @@ struct opt {
 #define MODE_MIDIIN	0x4	/* allowed to read midi */
 #define MODE_MIDIOUT	0x8	/* allowed to write midi */
 #define MODE_MON	0x10	/* allowed to monitor */
+#define MODE_LOOP	0x20	/* deviceless mode */
 #define MODE_RECMASK	(MODE_REC | MODE_MON)
 	unsigned mode;		/* bitmap of above */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.45 2010/04/24 06:18:23 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.46 2010/05/02 11:54:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -95,6 +95,7 @@ sock_close(struct file *f)
 {
 	sock_sesrefs--;
 	pipe_close(f);
+	dev_unref();
 }
 
 void
@@ -333,8 +334,14 @@ sock_new(struct fileops *ops, int fd)
 	sock_sesrefs++;
 
 	f = (struct sock *)pipe_new(ops, fd, "sock");
-	if (f == NULL)
+	if (f == NULL) {
+		close(fd);
 		return NULL;
+	}
+	if (!dev_ref()) {
+		close(fd);
+		return NULL;
+	}
 	f->pstate = SOCK_HELLO;
 	f->mode = 0;
 	f->opt = opt_byname("default");
@@ -530,6 +537,12 @@ sock_attach(struct sock *f, int force)
 	 */
 	if (!force && rbuf && ABUF_WOK(rbuf))
 		return;
+
+	/*
+	 * start the device (dev_getpos() and dev_attach() must
+	 * be called on a started device
+	 */
+	dev_wakeup(1);
 
 	/*
 	 * get the current position, the origin is when
@@ -1516,7 +1529,11 @@ sock_buildmsg(struct sock *f)
 #ifdef DEBUG
 		if (ibuf->used > f->wmax && debug_level >= 3) {
 			sock_dbg(f);
-			dbg_puts(": attempt to send past current position\n");
+			dbg_puts(": attempt to send past current position: used = ");
+			dbg_putu(ibuf->used);
+			dbg_puts(" wmax = ");
+			dbg_putu(f->wmax);
+			dbg_puts("\n");
 		}
 #endif
 		max = AMSG_DATAMAX / ibuf->bpf;

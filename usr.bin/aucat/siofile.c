@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.4 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.5 2010/05/02 11:54:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -194,17 +194,38 @@ siofile_cb(void *addr, int delta)
  * Open the device.
  */
 struct siofile *
-siofile_new(struct fileops *ops, char *path, unsigned mode,
+siofile_new(struct fileops *ops, char *path, unsigned *rmode,
     struct aparams *ipar, struct aparams *opar,
     unsigned *bufsz, unsigned *round)
 {
 	struct sio_par par;
 	struct sio_hdl *hdl;
 	struct siofile *f;
+	unsigned mode = *rmode;
 
 	hdl = sio_open(path, mode, 1);
-	if (hdl == NULL)
-		return NULL;
+	if (hdl == NULL) {
+		if (mode != (SIO_PLAY | SIO_REC))
+			return NULL;
+		hdl = sio_open(path, SIO_PLAY, 1);
+		if (hdl != NULL)
+			mode = SIO_PLAY;
+		else {
+			hdl = sio_open(path, SIO_REC, 1);
+			if (hdl != NULL)
+				mode = SIO_REC;
+			else
+				return NULL;
+		}
+#ifdef DEBUG
+		if (debug_level >= 1) {
+			dbg_puts("warning, device opened in ");
+			dbg_puts(mode == SIO_PLAY ? "play-only" : "rec-only");
+			dbg_puts(" mode\n");
+		}
+#endif
+	}
+
 	sio_initpar(&par);
 	if (mode & SIO_REC) {
 		par.bits = ipar->bits;
@@ -248,6 +269,7 @@ siofile_new(struct fileops *ops, char *path, unsigned mode,
 		opar->rate = par.rate;
 		opar->cmax = opar->cmin + par.pchan - 1;
 	}
+	*rmode = mode;
 	*bufsz = par.bufsz;
 	*round = par.round;
 	if (path == NULL)

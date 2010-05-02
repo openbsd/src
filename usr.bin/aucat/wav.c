@@ -295,6 +295,7 @@ wav_close(struct file *file)
 		}
 	}
 	pipe_close(file);
+	dev_unref();
 }
 
 /*
@@ -317,6 +318,13 @@ wav_attach(struct wav *f, int force)
 		dbg_puts(": attaching\n");
 	}
 #endif
+
+	/*
+	 * start the device (dev_getpos() and dev_attach() must
+	 * be called on a started device
+	 */
+	dev_wakeup(0);
+
 	dev_attach(f->pipe.file.name, f->mode,
 	    rbuf, &f->hpar, f->join ? dev_opar.cmax - dev_opar.cmin + 1 : 0,
 	    wbuf, &f->hpar, f->join ? dev_ipar.cmax - dev_ipar.cmin + 1 : 0,
@@ -648,8 +656,14 @@ wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 			perror(name);
 	}
 	f = (struct wav *)pipe_new(ops, fd, name);
-	if (f == NULL)
+	if (f == NULL) {
+		close(fd);
 		return NULL;
+	}
+	if (!dev_ref()) {
+		close(fd);
+		return NULL;
+	}
 	if (hdr == HDR_WAV) {
 		if (!wav_readhdr(f->pipe.fd, par, &f->startpos, &f->rbytes, &f->map)) {
 			file_del((struct file *)f);
@@ -720,8 +734,14 @@ wav_new_out(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 		}
 	}
 	f = (struct wav *)pipe_new(ops, fd, name);
-	if (f == NULL)
+	if (f == NULL) {
+		close(fd);
 		return NULL;
+	}
+	if (!dev_ref()) {
+		close(fd);
+		return NULL;
+	}
 	if (hdr == HDR_WAV) {
 		par->le = 1;
 		par->sig = (par->bits <= 8) ? 0 : 1;
