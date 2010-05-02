@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.44 2010/04/24 18:12:29 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.45 2010/05/02 04:57:01 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -600,7 +600,7 @@ _dl_bind(elf_object_t *object, int index)
 	Elf_Addr ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
-	sigset_t omask, nmask;
+	sigset_t savedmask;
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 	if (ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT)) {
@@ -643,9 +643,7 @@ _dl_bind(elf_object_t *object, int index)
 
 	/* if PLT is protected, allow the write */
 	if (object->plt_size != 0)  {
-		sigfillset(&nmask);
-		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
-		_dl_thread_bind_lock(0);
+		_dl_thread_bind_lock(0, &savedmask);
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
@@ -656,8 +654,7 @@ _dl_bind(elf_object_t *object, int index)
 	if (object->plt_size != 0) {
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC);
-		_dl_thread_bind_lock(1);
-		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+		_dl_thread_bind_lock(1, &savedmask);
 	}
 
 	return ooff + this->st_value;

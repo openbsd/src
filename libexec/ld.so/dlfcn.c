@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.80 2008/06/13 23:14:47 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.81 2010/05/02 04:57:01 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -516,10 +516,18 @@ _dl_show_objects(void)
 }
 
 void
-_dl_thread_bind_lock(int what)
+_dl_thread_bind_lock(int what, sigset_t *omask)
 {
+	if (! what) {
+		sigset_t nmask;
+
+		sigfillset(&nmask);
+		_dl_sigprocmask(SIG_BLOCK, &nmask, omask);
+	}
 	if (_dl_bind_lock_f != NULL)
 		(*_dl_bind_lock_f)(what);
+	if (what)
+		_dl_sigprocmask(SIG_SETMASK, omask, NULL);
 }
 
 void

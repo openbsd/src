@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.45 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.46 2010/05/02 04:57:01 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -548,7 +548,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf32_Addr *pltcall;
 	Elf32_Addr *pltinfo;
 	Elf32_Addr *plttable;
-	sigset_t omask, nmask;
+	sigset_t savedmask;
 
 	relas = ((Elf_RelA *)object->Dyn.info[DT_JMPREL]) + (reloff>>2);
 
@@ -568,9 +568,7 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	/* if PLT is protected, allow the write */
 	if (object->plt_size != 0)  {
-		sigfillset(&nmask);
-		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
-		_dl_thread_bind_lock(0);
+		_dl_thread_bind_lock(0, &savedmask);
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_WRITE|PROT_EXEC);
 	}
@@ -622,8 +620,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	if (object->plt_size != 0) {
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
-		_dl_thread_bind_lock(1);
-		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+		_dl_thread_bind_lock(1, &savedmask);
 	}
 	return (value);
 }

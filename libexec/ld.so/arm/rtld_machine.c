@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.14 2008/04/09 21:45:26 kurt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.15 2010/05/02 04:57:01 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -390,7 +390,7 @@ _dl_bind(elf_object_t *object, int relidx)
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	Elf_Addr ooff, newval;
-	sigset_t omask, nmask;
+	sigset_t savedmask;
 
 	rel = ((Elf_Rel *)object->Dyn.info[DT_JMPREL]) + (relidx);
 
@@ -412,9 +412,7 @@ _dl_bind(elf_object_t *object, int relidx)
 
 	/* if GOT is protected, allow the write */
 	if (object->got_size != 0) {
-		sigfillset(&nmask);
-		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
-		_dl_thread_bind_lock(0);
+		_dl_thread_bind_lock(0, &savedmask);
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ|PROT_WRITE);
 	}
@@ -426,8 +424,7 @@ _dl_bind(elf_object_t *object, int relidx)
 	if (object->got_size != 0) {
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
-		_dl_thread_bind_lock(1);
-		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+		_dl_thread_bind_lock(1, &savedmask);
 	}
 	return newval;
 }
