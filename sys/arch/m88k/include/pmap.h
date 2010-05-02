@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.14 2009/05/02 14:32:27 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.15 2010/05/02 22:01:46 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -48,6 +48,7 @@ typedef struct pv_entry *pv_entry_t;
 extern	pmap_t		kernel_pmap;
 extern	struct pmap	kernel_pmap_store;
 extern	caddr_t		vmmap;
+extern	apr_t		default_apr;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)

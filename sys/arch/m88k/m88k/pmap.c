@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2009/09/27 19:16:10 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.50 2010/05/02 22:01:47 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -114,6 +114,8 @@ pt_entry_t *vmpte, *msgbufmap;
 
 struct pmap kernel_pmap_store;
 pmap_t kernel_pmap = &kernel_pmap_store;
+
+apr_t	default_apr = CACHE_GLOBAL | APR_V;
 
 typedef struct kpdt_entry *kpdt_entry_t;
 struct kpdt_entry {
@@ -751,12 +753,12 @@ pmap_bootstrap(vaddr_t load_start)
 	 * Switch to using new page tables
 	 */
 
-	kernel_pmap->pm_apr = (atop((paddr_t)kmap) << PG_SHIFT) |
-	    CACHE_GLOBAL | CACHE_WT | APR_V;
 #if !defined(MULTIPROCESSOR) && defined(M88110)
 	if (CPU_IS88110)
-		kernel_pmap->pm_apr &= ~CACHE_GLOBAL;
+		default_apr &= ~CACHE_GLOBAL;
 #endif
+	kernel_pmap->pm_apr = (atop((paddr_t)kmap) << PG_SHIFT) | default_apr |
+	    CACHE_WT;
 
 	pmap_bootstrap_cpu(cpu_number());
 }
@@ -894,7 +896,7 @@ pmap_create(void)
 	if (pmap_extract(kernel_pmap, (vaddr_t)segdt,
 	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
-	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | CACHE_GLOBAL | APR_V;
+	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | default_apr;
 #if !defined(MULTIPROCESSOR) && defined(M88110)
 	if (CPU_IS88110)
 		pmap->pm_apr &= ~CACHE_GLOBAL;
