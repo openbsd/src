@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.18 2010/05/02 04:57:01 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.19 2010/05/02 12:03:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -454,8 +454,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
 		    PROT_READ|PROT_EXEC);
-		_dl_thread_bind_lock(1);
-		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+		_dl_thread_bind_lock(1, &savedmask);
 	}
 
 	return ((Elf_Addr)addr);
