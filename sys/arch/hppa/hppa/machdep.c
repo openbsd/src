@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.182 2010/04/27 21:09:49 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.183 2010/05/02 22:59:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1213,6 +1213,8 @@ setregs(p, pack, stack, retval)
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
 	pcb->pcb_fpregs->fpr_regs[2] = 0;
 	pcb->pcb_fpregs->fpr_regs[3] = 0;
+
+	p->p_md.md_bpva = 0;
 
 	retval[1] = 0;
 }

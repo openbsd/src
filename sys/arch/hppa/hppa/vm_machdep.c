@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.69 2010/04/19 14:05:04 jsing Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.70 2010/05/02 22:59:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -128,6 +128,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcbp->pcb_fpregs->fpr_regs[1] = 0;
 	pcbp->pcb_fpregs->fpr_regs[2] = 0;
 	pcbp->pcb_fpregs->fpr_regs[3] = 0;
+
+	p2->p_md.md_bpva = p1->p_md.md_bpva;
+	p2->p_md.md_bpsave[0] = p1->p_md.md_bpsave[0];
+	p2->p_md.md_bpsave[1] = p1->p_md.md_bpsave[1];
 
 	sp = (register_t)p2->p_addr + NBPG;
 	p2->p_md.md_regs = tf = (struct trapframe *)sp;
