@@ -53,5 +53,12 @@ and understand the consequences of your actions before using it.  In some
 cases, defragmenting your disk and running fips may be much faster than
 reinstalling your DOS partition from the backup.
 
+Windows 7 (and possibly Vista) can resize their own system partition, which
+is usually NTFS. In the control panel, search for "partition": this will lead
+you to the system administration tool. Then right click on the partition you
+wish to shrink.  You may have to fiddle with the swap file, because it's
+unmoveable, and you might not be able to shrink the partition as much as you
+would wish.
+
 Your hard disk is now prepared to have OpenBSD installed on it, and
 you should proceed with the installation instructions.

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.46 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.47 2010/05/02 19:09:35 espie Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with DOS or another operating
@@ -16,7 +16,8 @@ should your computer support it, is to boot off the OpenBSD CD-ROM, or
 off one of the bootable CD-ROM mini images.  Otherwise, you can boot
 from a 3.5" 1.44MB floppy disk if your machine has a floppy drive.
 If your machine supports PXE network boots, you could try to configure a
-server for a network install.
+server for a network install.  If your machine can boot from a USB device, 
+having a USB key with a minimal install is another possibility.
 
 OpenBSDInstallPart2
 
