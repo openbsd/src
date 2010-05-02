@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.5 2010/04/29 14:26:46 drahn Exp $
+# $OpenBSD: Makefile,v 1.6 2010/05/02 10:05:22 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -117,7 +117,7 @@ LIB2FUNCS_EXTRA = floatunsidf.c floatunsisf.c
 .endif
 
 .if ${TARGET_ARCH} == "hppa"
-CFLAGS+=	-DELF=1 -DLINUX=1
+CFLAGS+=	-fPIC -DELF=1 -DLINUX=1
 LIB1ASMFUNCS =	_divI _divU _remI _remU _div_const _mulI _dyncall
 LIB1ASMSRC =	pa/milli64.S
 LIB2FUNCS_EXTRA = fptr.c
