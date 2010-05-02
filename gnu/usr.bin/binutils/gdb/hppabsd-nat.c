@@ -37,6 +37,12 @@ hppabsd_gregset_supplies_p (int regnum)
   return (regnum >= HPPA_R0_REGNUM && regnum <= HPPA_PCOQ_TAIL_REGNUM);
 }
 
+static int
+hppabsd_fpregset_supplies_p (int regnum)
+{
+  return (regnum >= HPPA_FP0_REGNUM && regnum < HPPA_FP0_REGNUM + 32 * 2);
+}
+
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 
 static void
@@ -51,6 +57,19 @@ hppabsd_supply_gregset (struct regcache *regcache, const void *gregs)
   regcache_raw_supply (regcache, HPPA_SAR_REGNUM, regs);
   regcache_raw_supply (regcache, HPPA_PCOQ_HEAD_REGNUM, regs + 32 * 4);
   regcache_raw_supply (regcache, HPPA_PCOQ_TAIL_REGNUM, regs + 33 * 4);
+}
+
+/* Supply the floating-point registers stored in FPREGS to REGCACHE.  */
+
+static void
+hppabsd_supply_fpregset (struct regcache *regcache, const void *fpregs)
+{
+  const char *regs = fpregs;
+  int regnum;
+
+  for (regnum = HPPA_FP0_REGNUM; regnum < HPPA_FP0_REGNUM + 32 * 2; regnum++)
+    regcache_raw_supply (regcache, regnum,
+			 regs + (regnum - HPPA_FP0_REGNUM) * 4);
 }
 
 /* Collect the general-purpose registers from REGCACHE and store them
@@ -76,6 +95,23 @@ hppabsd_collect_gregset (const struct regcache *regcache,
   if (regnum == -1 || regnum == HPPA_PCOQ_TAIL_REGNUM)
     regcache_raw_collect (regcache, HPPA_PCOQ_TAIL_REGNUM, regs + 33 * 4);
 }
+
+/* Collect the floating-point registers from REGCACHE and store them
+   in FPREGS.  */
+
+static void
+hppabsd_collect_fpregset (struct regcache *regcache,
+			  void *fpregs, int regnum)
+{
+  char *regs = fpregs;
+  int i;
+
+  for (i = HPPA_FP0_REGNUM; i < HPPA_FP0_REGNUM + 32 * 2; i++)
+    {
+      if (regnum == -1 || regnum == i)
+	regcache_raw_collect (regcache, i, regs + (i - HPPA_FP0_REGNUM) * 4);
+    }
+}
 
 
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
@@ -95,6 +131,17 @@ hppabsd_fetch_registers (int regnum)
 	perror_with_name (_("Couldn't get registers"));
 
       hppabsd_supply_gregset (regcache, &regs);
+    }
+
+  if (regnum == -1 || hppabsd_fpregset_supplies_p (regnum))
+    {
+      struct fpreg fpregs;
+
+      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+	perror_with_name (_("Couldn't get floating point status"));
+
+      hppabsd_supply_fpregset (current_regcache, &fpregs);
     }
 }
 
@@ -117,6 +164,21 @@ hppabsd_store_registers (int regnum)
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
 	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
         perror_with_name (_("Couldn't write registers"));
+    }
+
+  if (regnum == -1 || hppabsd_fpregset_supplies_p (regnum))
+    {
+      struct fpreg fpregs;
+
+      if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+	perror_with_name (_("Couldn't get floating point status"));
+
+      hppabsd_collect_fpregset (current_regcache, &fpregs, regnum);
+
+      if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+	perror_with_name (_("Couldn't write floating point status"));
     }
 }
 
