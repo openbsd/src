@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.18 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.19 2010/05/02 10:43:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,7 +24,10 @@
  * the module also provides trivial timeout implementation,
  * derived from:
  *
- * 	anoncvs@moule.caoua.org:/cvs/midish/timo.c rev 1.16
+ * 	anoncvs@moule.caoua.org:/cvs
+ *
+ *		midish/timo.c rev 1.16
+ * 		midish/mdep.c rev 1.69
  *
  * A timeout is used to schedule the call of a routine (the callback)
  * there is a global list of timeouts that is processed inside the
@@ -62,8 +65,9 @@
 #endif
 
 #define MAXFDS 100
+#define TIMER_USEC 10000
 
-struct timeval file_tv;
+struct timespec file_ts;
 struct filelist file_list;
 struct timo *timo_queue;
 unsigned timo_abstime;
@@ -93,11 +97,11 @@ timo_add(struct timo *o, unsigned delta)
 
 #ifdef DEBUG
 	if (o->set) {
-		dbg_puts("timo_set: already set\n");
+		dbg_puts("timo_add: already set\n");
 		dbg_panic();
 	}
 	if (delta == 0) {
-		dbg_puts("timo_set: zero timeout is evil\n");
+		dbg_puts("timo_add: zero timeout is evil\n");
 		dbg_panic();
 	}
 #endif
@@ -287,10 +291,16 @@ file_poll(void)
 	struct pollfd pfds[MAXFDS];
 	struct file *f, *fnext;
 	struct aproc *p;
-	struct timeval tv;
-	long delta_usec;
-	int timo;
+	struct timespec ts;
+	long delta_nsec;
 
+	if (LIST_EMPTY(&file_list)) {
+#ifdef DEBUG
+		if (debug_level >= 3)
+			dbg_puts("nothing to do...\n");
+#endif
+		return 0;
+	}
 	/*
 	 * Fill the pfds[] array with files that are blocked on reading
 	 * and/or writing, skipping those that are just waiting.
@@ -331,31 +341,18 @@ file_poll(void)
 		dbg_puts("\n");
 	}
 #endif
-	if (LIST_EMPTY(&file_list)) {
-#ifdef DEBUG
-		if (debug_level >= 3)
-			dbg_puts("nothing to do...\n");
-#endif
-		return 0;
-	}
 	if (nfds > 0) {
-		if (timo_queue) {
-			timo = (timo_queue->val - timo_abstime) / (2 * 1000);
-			if (timo == 0)
-				timo = 1;
-		} else
-			timo = -1;
-		if (poll(pfds, nfds, timo) < 0) {
+		if (poll(pfds, nfds, -1) < 0) {
 			if (errno == EINTR)
 				return 1;
 			err(1, "file_poll: poll failed");
 		}
-		gettimeofday(&tv, NULL);
-		delta_usec = 1000000L * (tv.tv_sec - file_tv.tv_sec);
-		delta_usec += tv.tv_usec - file_tv.tv_usec;
-		if (delta_usec > 0) {
-			file_tv = tv;
-			timo_update(delta_usec);
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		delta_nsec = 1000000000L * (ts.tv_sec - file_ts.tv_sec);
+		delta_nsec += ts.tv_nsec - file_ts.tv_nsec;
+		if (delta_nsec > 0) {
+			file_ts = ts;
+			timo_update(delta_nsec / 1000);
 		}
 	}
 	f = LIST_FIRST(&file_list);
@@ -481,9 +478,21 @@ file_poll(void)
 	return 1;
 }
 
+/*
+ * handler for SIGALRM, invoked periodically
+ */
+void
+file_sigalrm(int i)
+{
+	/* nothing to do, we only want poll() to return EINTR */
+}
+
+
 void
 filelist_init(void)
 {
+	static struct sigaction sa;
+	struct itimerval it;
 	sigset_t set;
 
 	sigemptyset(&set);
@@ -491,8 +500,26 @@ filelist_init(void)
 	if (sigprocmask(SIG_BLOCK, &set, NULL))
 		err(1, "sigprocmask");
 	LIST_INIT(&file_list);
+	if (clock_gettime(CLOCK_MONOTONIC, &file_ts) < 0) {
+		perror("clock_gettime");
+		exit(1);
+	}
+        sa.sa_flags = SA_RESTART;
+        sa.sa_handler = file_sigalrm;
+        sigfillset(&sa.sa_mask);
+        if (sigaction(SIGALRM, &sa, NULL) < 0) {
+		perror("sigaction");
+		exit(1);
+	}
+	it.it_interval.tv_sec = 0;
+	it.it_interval.tv_usec = TIMER_USEC;
+	it.it_value.tv_sec = 0;
+	it.it_value.tv_usec = TIMER_USEC;
+	if (setitimer(ITIMER_REAL, &it, NULL) < 0) {
+		perror("setitimer");
+		exit(1);
+	}
 	timo_init();
-	gettimeofday(&file_tv, NULL);
 #ifdef DEBUG
 	dbg_sync = 0;
 #endif
@@ -501,20 +528,28 @@ filelist_init(void)
 void
 filelist_done(void)
 {
+	struct itimerval it;
 #ifdef DEBUG
 	struct file *f;
 
 	if (!LIST_EMPTY(&file_list)) {
 		LIST_FOREACH(f, &file_list, entry) {
-			dbg_puts("\t");
 			file_dbg(f);
-			dbg_puts("\n");
+			dbg_puts(" not closed\n");
 		}
 		dbg_panic();
 	}
 	dbg_sync = 1;
 	dbg_flush();
 #endif
+	it.it_value.tv_sec = 0;
+	it.it_value.tv_usec = 0;
+	it.it_interval.tv_sec = 0;
+	it.it_interval.tv_usec = 0;
+	if (setitimer(ITIMER_REAL, &it, NULL) < 0) {
+		perror("setitimer");
+		exit(1);
+	}
 	timo_done();
 }
 
@@ -523,22 +558,22 @@ file_read(struct file *f, unsigned char *data, unsigned count)
 {
 	unsigned n;
 #ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
-	unsigned us;
+	struct timespec ts0, ts1;
+	long us;
 
-	gettimeofday(&tv0, NULL);
 	if (!(f->state & FILE_ROK)) {
 		file_dbg(f);
 		dbg_puts(": read: bad state\n");
 		dbg_panic();
 	}
+	clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
 	n = f->ops->read(f, data, count);
 #ifdef DEBUG
-	gettimeofday(&tv1, NULL);
-	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
-	if (debug_level >= 4 || (debug_level >= 1 && us >= 5000)) {
+	clock_gettime(CLOCK_MONOTONIC, &ts1);
+	us = 1000000L * (ts1.tv_sec - ts0.tv_sec);
+	us += (ts1.tv_nsec - ts0.tv_nsec) / 1000;
+	if (debug_level >= 4 || (debug_level >= 2 && us >= 5000)) {
 		dbg_puts(f->name);
 		dbg_puts(": read ");
 		dbg_putu(n);
@@ -555,22 +590,22 @@ file_write(struct file *f, unsigned char *data, unsigned count)
 {
 	unsigned n;
 #ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
-	unsigned us;
+	struct timespec ts0, ts1;
+	long us;
 
 	if (!(f->state & FILE_WOK)) {
 		file_dbg(f);
 		dbg_puts(": write: bad state\n");
 		dbg_panic();
 	}
-	gettimeofday(&tv0, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
 	n = f->ops->write(f, data, count);
 #ifdef DEBUG
-	gettimeofday(&tv1, NULL);
-	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
-	if (debug_level >= 4 || (debug_level >= 1 && us >= 5000)) {
+	clock_gettime(CLOCK_MONOTONIC, &ts1);
+	us = 1000000L * (ts1.tv_sec - ts0.tv_sec);
+	us += (ts1.tv_nsec - ts0.tv_nsec) / 1000;
+	if (debug_level >= 4 || (debug_level >= 2 && us >= 5000)) {
 		dbg_puts(f->name);
 		dbg_puts(": wrote ");
 		dbg_putu(n);
