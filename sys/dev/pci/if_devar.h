@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.30 2009/06/19 14:13:41 naddy Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.31 2010/05/02 22:19:27 miod Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -441,7 +441,7 @@ struct _tulip_softc_t {
     bus_dmamap_t tulip_free_rxmaps[TULIP_RXDESCS];
     unsigned tulip_num_free_rxmaps;
     struct arpcom tulip_ac;
-    struct timeout tulip_ftmo, tulip_stmo;
+    struct timeout tulip_stmo;
     tulip_regfile_t tulip_csrs;
     u_int32_t tulip_flags;
 #define	TULIP_WANTSETUP		0x00000001
