@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.126 2010/04/20 09:02:12 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.127 2010/05/03 13:09:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@ RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 
 /* RIB specific functions */
 u_int16_t
-rib_new(char *name, u_int16_t flags)
+rib_new(char *name, u_int rtableid, u_int16_t flags)
 {
 	struct rib	*xribs;
 	size_t		newsize;
@@ -80,6 +80,7 @@ rib_new(char *name, u_int16_t flags)
 	ribs[id].state = RECONF_REINIT;
 	ribs[id].id = id;
 	ribs[id].flags = flags;
+	ribs[id].rtableid = rtableid;
 
 	return (id);
 }
@@ -897,7 +898,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 			 */
 			if ((p->rib->flags & F_RIB_NOFIB) == 0 &&
 			    p == p->rib->active)
-				rde_send_kroute(p, NULL);
+				rde_send_kroute(p, NULL, p->rib->ribid);
 			continue;
 		}
 

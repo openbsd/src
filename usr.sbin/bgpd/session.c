@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.307 2010/04/16 12:24:25 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.308 2010/05/03 13:09:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2361,7 +2361,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				fatalx("got IMSG_RECONF_DONE but no config");
 			conf->flags = nconf->flags;
 			conf->log = nconf->log;
-			conf->rtableid = nconf->rtableid;
 			conf->bgpid = nconf->bgpid;
 			conf->clusterid = nconf->clusterid;
 			conf->as = nconf->as;
@@ -2488,6 +2487,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_SHOW_NEXTHOP:
 		case IMSG_CTL_SHOW_INTERFACE:
+		case IMSG_CTL_SHOW_FIB_TABLES:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("ctl kroute request not from parent");
 			control_imsg_relay(&imsg);
@@ -2765,9 +2765,10 @@ session_up(struct peer *p)
 }
 
 int
-imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
+imsg_compose_parent(int type, u_int32_t peerid, pid_t pid, void *data,
+    u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_main, type, 0, pid, -1, data, datalen));
+	return (imsg_compose(ibuf_main, type, peerid, pid, -1, data, datalen));
 }
 
 int

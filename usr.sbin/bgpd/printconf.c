@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.79 2010/03/05 15:25:00 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.80 2010/05/03 13:09:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,11 +241,6 @@ print_mainconf(struct bgpd_config *conf)
 		printf("holdtime min %u\n", conf->min_holdtime);
 	if (conf->connectretry)
 		printf("connect-retry %u\n", conf->connectretry);
-
-	if (conf->flags & BGPD_FLAG_NO_FIB_UPDATE)
-		printf("fib-update no\n");
-	else
-		printf("fib-update yes\n");
 
 	if (conf->flags & BGPD_FLAG_NO_EVALUATE)
 		printf("route-collector yes\n");
@@ -684,8 +679,12 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	SIMPLEQ_FOREACH(rr, rib_l, entry) {
 		if (rr->flags & F_RIB_NOEVALUATE)
 			printf("rde rib %s no evaluate\n", rr->name);
-		else
+		else if (rr->flags & F_RIB_NOFIB)
 			printf("rde rib %s\n", rr->name);
+		else
+			printf("rde rib %s rtable %u fib-update %s\n", rr->name,
+			    rr->rtableid, rr->flags & F_RIB_NOFIBSYNC ?
+			    "no" : "yes");
 	}
 	printf("\n");
 	TAILQ_FOREACH(n, net_l, entry)

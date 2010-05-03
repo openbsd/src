@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.252 2010/04/28 13:07:48 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.253 2010/05/03 13:09:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,8 +113,8 @@ struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *,
 		    char *);
-int		 add_rib(char *, u_int16_t);
-int		 find_rib(char *);
+int		 add_rib(char *, u_int, u_int16_t);
+struct rde_rib	*find_rib(char *);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
 		    struct filter_match_l *, struct filter_set_head *);
@@ -364,10 +364,15 @@ conf_main	: AS as4number		{
 			TAILQ_INSERT_TAIL(listen_addrs, la, entry);
 		}
 		| FIBUPDATE yesno		{
+			struct rde_rib *rr;
+			rr = find_rib("Loc-RIB");
+			if (rr == NULL)
+				fatalx("RTABLE can not find the main RIB!");
+
 			if ($2 == 0)
-				conf->flags |= BGPD_FLAG_NO_FIB_UPDATE;
+				rr->flags |= F_RIB_NOFIBSYNC;
 			else
-				conf->flags &= ~BGPD_FLAG_NO_FIB_UPDATE;
+				rr->flags &= ~F_RIB_NOFIBSYNC;
 		}
 		| ROUTECOLL yesno	{
 			if ($2 == 1)
@@ -376,7 +381,7 @@ conf_main	: AS as4number		{
 				conf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 		}
 		| RDE RIB STRING {
-			if (add_rib($3, F_RIB_NOFIB)) {
+			if (add_rib($3, 0, F_RIB_NOFIB)) {
 				free($3);
 				YYERROR;
 			}
@@ -385,9 +390,27 @@ conf_main	: AS as4number		{
 		| RDE RIB STRING yesno EVALUATE {
 			if ($4) {
 				free($3);
+				yyerror("bad rde rib definition");
 				YYERROR;
 			}
-			if (!add_rib($3, F_RIB_NOFIB | F_RIB_NOEVALUATE)) {
+			if (add_rib($3, 0, F_RIB_NOFIB | F_RIB_NOEVALUATE)) {
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
+		| RDE RIB STRING RTABLE NUMBER {
+			if (add_rib($3, $5, 0)) {
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
+		| RDE RIB STRING RTABLE NUMBER FIBUPDATE yesno {
+			int	flags = 0;
+			if ($7 == 0)
+				flags = F_RIB_NOFIBSYNC;
+			if (add_rib($3, $5, flags)) {
 				free($3);
 				YYERROR;
 			}
@@ -553,11 +576,15 @@ conf_main	: AS as4number		{
 			free($4);
 		}
 		| RTABLE NUMBER {
-			if ($2 > RT_TABLEID_MAX || $2 < 0) {
-				yyerror("invalid rtable id");
+			struct rde_rib *rr;
+			if (ktable_exists($2, NULL) != 1) {
+				yyerror("rtable id %lld does not exist", $2);
 				YYERROR;
 			}
-			conf->rtableid = $2;
+			rr = find_rib("Loc-RIB");
+			if (rr == NULL)
+				fatalx("RTABLE can not find the main RIB!");
+			rr->rtableid = $2;
 		}
 		| CONNECTRETRY NUMBER {
 			if ($2 > USHRT_MAX || $2 < 1) {
@@ -2382,8 +2409,8 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	/* init the empty filter list for later */
 	TAILQ_INIT(xfilter_l);
 
-	add_rib("Adj-RIB-In", F_RIB_NOEVALUATE);
-	add_rib("Loc-RIB", 0);
+	add_rib("Adj-RIB-In", 0, F_RIB_NOEVALUATE);
+	add_rib("Loc-RIB", 0, 0);
 
 	yyparse();
 	errors = file->errors;
@@ -2896,39 +2923,52 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p,
 }
 
 int
-add_rib(char *name, u_int16_t flags)
+add_rib(char *name, u_int rtableid, u_int16_t flags)
 {
 	struct rde_rib	*rr;
+	u_int		 rdom;
 
-	if (find_rib(name)) {
-		yyerror("rib \"%s\" allready exists.", name);
-		return (-1);
-	}
-
-	if ((rr = calloc(1, sizeof(*rr))) == NULL) {
-		log_warn("add_rib");
-		return (-1);
+	if ((rr = find_rib(name)) == NULL) {
+		if ((rr = calloc(1, sizeof(*rr))) == NULL) {
+			log_warn("add_rib");
+			return (-1);
+		}
 	}
 	if (strlcpy(rr->name, name, sizeof(rr->name)) >= sizeof(rr->name)) {
 		yyerror("rib name \"%s\" too long: max %u",
 		   name, sizeof(rr->name) - 1);
+		free(rr);
 		return (-1);
 	}
 	rr->flags |= flags;
+	if ((rr->flags & F_RIB_HASNOFIB) == 0) {
+		if (ktable_exists(rtableid, &rdom) != 1) {
+			yyerror("rtable id %lld does not exist", rtableid);
+			free(rr);
+			return (-1);
+		}
+		if (rdom != 0) {
+			yyerror("rtable %lld does not belong to rdomain 0",
+			    rtableid);
+			free(rr);
+			return (-1);
+		}
+		rr->rtableid = rtableid;
+	}
 	SIMPLEQ_INSERT_TAIL(&ribnames, rr, entry);
 	return (0);
 }
 
-int
+struct rde_rib *
 find_rib(char *name)
 {
 	struct rde_rib	*rr;
 
 	SIMPLEQ_FOREACH(rr, &ribnames, entry) {
 		if (!strcmp(rr->name, name))
-			return (1);
+			return (rr);
 	}
-	return (0);
+	return (NULL);
 }
 
 int

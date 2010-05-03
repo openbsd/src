@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.257 2010/04/28 13:07:48 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.258 2010/05/03 13:09:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,7 +53,6 @@
 #define	BGPD_OPT_NOACTION		0x0004
 #define	BGPD_OPT_FORCE_DEMOTE		0x0008
 
-#define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
 #define	BGPD_FLAG_NO_EVALUATE		0x0002
 #define	BGPD_FLAG_REFLECTOR		0x0004
 #define	BGPD_FLAG_REDIST_STATIC		0x0008
@@ -344,6 +343,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_TERSE,
 	IMSG_CTL_SHOW_TIMER,
 	IMSG_CTL_LOG_VERBOSE,
+	IMSG_CTL_SHOW_FIB_TABLES,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_REMOVE,
 	IMSG_NETWORK_FLUSH,
@@ -429,6 +429,31 @@ enum suberr_cease {
 	ERR_CEASE_RSRC_EXHAUST
 };
 
+struct kroute_node;
+struct kroute6_node;
+struct knexthop_node;
+struct redist_node;
+RB_HEAD(kroute_tree, kroute_node);
+RB_HEAD(kroute6_tree, kroute6_node);
+RB_HEAD(knexthop_tree, knexthop_node);
+
+struct ktable {
+	char			 descr[PEER_DESCR_LEN];
+	char			 ifmpe[IFNAMSIZ];
+	struct kroute_tree	 krt;
+	struct kroute6_tree	 krt6;
+	struct knexthop_tree	 knt;
+	struct network_head	 krn;
+	LIST_HEAD(, redist_node) redistlist;
+	u_int			 rtableid;
+	u_int			 nhtableid; /* rdomain id for nexthop lookup */
+	u_int			 ifindex;   /* ifindex of ifmpe */
+	int			 nhrefcnt;  /* refcnt for nexthop table */
+	enum reconf_action	 state;
+	u_int8_t		 fib_conf;  /* configured FIB sync flag */
+	u_int8_t		 fib_sync;  /* is FIB synced with kernel? */
+};
+
 struct kroute_full {
 	struct bgpd_addr	prefix;
 	struct bgpd_addr	nexthop;
@@ -509,10 +534,10 @@ struct ctl_neighbor {
 	int			show_timers;
 };
 
-#define	F_RIB_ELIGIBLE	0x01
-#define	F_RIB_ACTIVE	0x02
-#define	F_RIB_INTERNAL	0x04
-#define	F_RIB_ANNOUNCE	0x08
+#define	F_PREF_ELIGIBLE	0x01
+#define	F_PREF_ACTIVE	0x02
+#define	F_PREF_INTERNAL	0x04
+#define	F_PREF_ANNOUNCE	0x08
 
 struct ctl_show_rib {
 	struct bgpd_addr	true_nexthop;
@@ -764,11 +789,19 @@ struct filter_set {
 struct rde_rib {
 	SIMPLEQ_ENTRY(rde_rib)	entry;
 	char			name[PEER_DESCR_LEN];
+	u_int			rtableid;
 	u_int16_t		id;
 	u_int16_t		flags;
 };
 SIMPLEQ_HEAD(rib_names, rde_rib);
 extern struct rib_names ribnames;
+
+/* rde_rib flags */
+#define F_RIB_ENTRYLOCK		0x0001
+#define F_RIB_NOEVALUATE	0x0002
+#define F_RIB_NOFIB		0x0004
+#define F_RIB_NOFIBSYNC		0x0008
+#define F_RIB_HASNOFIB		(F_RIB_NOFIB | F_RIB_NOEVALUATE)
 
 /* 4-byte magic AS number */
 #define AS_TRANS	23456
@@ -815,17 +848,22 @@ int	 cmdline_symset(char *);
 int	 host(const char *, struct bgpd_addr *, u_int8_t *);
 
 /* kroute.c */
-int		 kr_init(int, u_int);
-int		 kr_change(struct kroute_full *);
-int		 kr_delete(struct kroute_full *);
+int		 kr_init(void);
+int		 ktable_update(struct rde_rib *);
+void		 ktable_preload(void);
+void		 ktable_postload(void);
+int		 ktable_exists(u_int, u_int *);
+int		 kr_change(u_int, struct kroute_full *);
+int		 kr_delete(u_int, struct kroute_full *);
 void		 kr_shutdown(void);
-void		 kr_fib_couple(void);
-void		 kr_fib_decouple(void);
+void		 kr_fib_couple(u_int);
+void		 kr_fib_decouple(u_int);
 int		 kr_dispatch_msg(void);
-int		 kr_nexthop_add(struct bgpd_addr *);
-void		 kr_nexthop_delete(struct bgpd_addr *);
+int		 kr_nexthop_add(u_int32_t, struct bgpd_addr *);
+void		 kr_nexthop_delete(u_int32_t, struct bgpd_addr *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
+int		 kr_net_reload(u_int, struct network_head *);
 int		 kr_reload(void);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 

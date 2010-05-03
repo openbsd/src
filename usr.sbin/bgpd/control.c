@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.68 2010/01/13 06:02:37 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.69 2010/05/03 13:09:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -306,7 +306,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			break;
 		case IMSG_CTL_FIB_COUPLE:
 		case IMSG_CTL_FIB_DECOUPLE:
-			imsg_compose_parent(imsg.hdr.type, 0, NULL, 0);
+			imsg_compose_parent(imsg.hdr.type, imsg.hdr.peerid,
+			    0, NULL, 0);
 			break;
 		case IMSG_CTL_NEIGHBOR_UP:
 		case IMSG_CTL_NEIGHBOR_DOWN:
@@ -359,13 +360,19 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				    "wrong length");
 			break;
 		case IMSG_CTL_RELOAD:
+		case IMSG_CTL_SHOW_INTERFACE:
+		case IMSG_CTL_SHOW_FIB_TABLES:
+			c->ibuf.pid = imsg.hdr.pid;
+			imsg_compose_parent(imsg.hdr.type, 0, imsg.hdr.pid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_SHOW_NEXTHOP:
-		case IMSG_CTL_SHOW_INTERFACE:
 			c->ibuf.pid = imsg.hdr.pid;
-			imsg_compose_parent(imsg.hdr.type, imsg.hdr.pid,
-			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			imsg_compose_parent(imsg.hdr.type, imsg.hdr.peerid,
+			    imsg.hdr.pid, imsg.data, imsg.hdr.len -
+			    IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_RIB_AS:
@@ -437,7 +444,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				break;
 
 			/* forward to other processes */
-			imsg_compose_parent(imsg.hdr.type, imsg.hdr.pid,
+			imsg_compose_parent(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			imsg_compose_rde(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);

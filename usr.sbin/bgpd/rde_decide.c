@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.59 2009/08/06 08:53:11 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.60 2010/05/03 13:09:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -269,7 +269,7 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 		 */
 		rde_generate_updates(re->ribid, xp, re->active);
 		if ((re->flags & F_RIB_NOFIB) == 0)
-			rde_send_kroute(xp, re->active);
+			rde_send_kroute(xp, re->active, re->ribid);
 
 		re->active = xp;
 		if (xp != NULL)
