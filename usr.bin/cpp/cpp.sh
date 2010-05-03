@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: cpp.sh,v 1.7 2004/02/10 02:02:22 espie Exp $
+#	$OpenBSD: cpp.sh,v 1.8 2010/05/03 18:34:01 drahn Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #
 PATH=/usr/bin:/bin
 TRAD=-traditional
-DGNUC="-D__GNUC__"
+DGNUC="@GNUC@"
 STDINC="-I/usr/include"
 DOLLAR="@dollaropt@"
 OPTS=""
