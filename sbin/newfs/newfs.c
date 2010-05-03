@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.83 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.84 2010/05/03 14:28:08 jsing Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -129,7 +129,6 @@ u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
 char	*disktype;
 int	unlabeled;
-char	device[MAXPATHLEN];
 
 extern	char *__progname;
 struct disklabel *getdisklabel(char *, int);
@@ -153,7 +152,7 @@ main(int argc, char *argv[])
 	struct statfs *mp;
 	struct rlimit rl;
 	int fsi = -1, oflagset = 0, fso, len, n, maxpartitions;
-	char *cp = NULL, *s1, *s2, *special, *opstring;
+	char *cp = NULL, *s1, *s2, *special, *opstring, *realdev;
 #ifdef MFS
 	char mountfromname[BUFSIZ];
 	char *pop = NULL, node[MAXPATHLEN];
@@ -345,24 +344,13 @@ main(int argc, char *argv[])
 
 		goto havelabel;
 	}
-	cp = strrchr(special, '/');
-	if (cp == NULL) {
-		/*
-		 * No path prefix; try /dev/r%s then /dev/%s.
-		 */
-		(void)snprintf(device, sizeof(device), "%sr%s",
-			       _PATH_DEV, special);
-		if (stat(device, &st) == -1)
-			(void)snprintf(device, sizeof(device), "%s%s",
-				       _PATH_DEV, special);
-		special = device;
-	}
 	if (Nflag) {
 		fso = -1;
 	} else {
-		fso = open(special, O_WRONLY);
+		fso = opendev(special, O_WRONLY, 0, &realdev);
 		if (fso < 0)
 			fatal("%s: %s", special, strerror(errno));
+		special = realdev;
 
 		/* Bail if target special is mounted */
 		n = getmntinfo(&mp, MNT_NOWAIT);
@@ -392,7 +380,7 @@ main(int argc, char *argv[])
 			fatal("%s: unknown disk type", disktype);
 		pp = &lp->d_partitions[1];
 	} else {
-		fsi = open(special, O_RDONLY);
+		fsi = opendev(special, O_RDONLY, 0, NULL);
 		if (fsi < 0)
 			fatal("%s: %s", special, strerror(errno));
 		if (fstat(fsi, &st) < 0)
@@ -405,7 +393,8 @@ main(int argc, char *argv[])
 				    special);
 		}
 		cp = strchr(argv[0], '\0') - 1;
-		if (cp == NULL || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+		if (cp == NULL ||
+		    ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
 		    && !isdigit(*cp)))
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
