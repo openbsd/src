@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.20 2009/06/17 01:30:32 thib Exp $	*/
+/*	$OpenBSD: disk.h,v 1.21 2010/05/03 15:27:28 jsing Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -132,6 +132,10 @@ struct dkdriver {
 #define	DK_OPEN		4		/* label read, drive open */
 #define	DK_OPENRAW	5		/* open without label */
 
+/* Disk map flags. */
+#define	DM_OPENPART	0x1		/* Open raw partition. */
+#define	DM_OPENBLCK	0x2		/* Open block device. */
+
 #ifdef DISKSORT_STATS
 /*
  * Stats from disksort().
@@ -165,4 +169,6 @@ void	disk_unbusy(struct disk *, long, int);
 
 int	disk_lock(struct disk *);
 void    disk_unlock(struct disk *);
+
+int	disk_map(char *, char *, int, int);
 #endif

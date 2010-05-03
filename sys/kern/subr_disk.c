@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.102 2010/04/28 12:54:04 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.103 2010/05/03 15:27:28 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -602,14 +602,13 @@ notfat:
 }
 
 /*
- * Check new disk label for sensibility
- * before setting it.
+ * Check new disk label for sensibility before setting it.
  */
 int
 setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 {
 	struct partition *opp, *npp;
-	struct disk *dk = NULL;
+	struct disk *dk;
 	u_int64_t uid;
 	int i;
 
@@ -1282,4 +1281,75 @@ findblkname(int maj)
 		if (nam2blk[i].maj == maj)
 			return (nam2blk[i].name);
 	return (NULL);
+}
+
+int
+disk_map(char *path, char *mappath, int size, int flags)
+{
+	struct disk *dk, *mdk;
+	u_char uid[8];
+	char c, part;
+	int i;
+
+	/*
+	 * Attempt to map a request for a disklabel UID to the correct device.
+	 * We should be supplied with a disklabel UID which has the following
+	 * format:
+	 *
+	 * [disklabel uid] . [partition]
+	 *
+	 * Alternatively, if the DM_OPENPART flag is set the disklabel UID can
+	 * based passed on its own.
+	 */
+
+	if (strchr(path, '/') != NULL)
+		return -1;
+
+	/* Verify that the device name is properly formed. */
+	if (!((strlen(path) == 16 && (flags & DM_OPENPART)) ||
+	    (strlen(path) == 18 && path[16] == '.')))
+		return -1;
+
+	/* Get partition. */
+	if (flags & DM_OPENPART)
+		part = 'a' + RAW_PART;
+	else
+		part = path[17];
+
+	if (part < 'a' || part >= 'a' + MAXPARTITIONS)
+		return -1;
+
+	/* Derive label UID. */
+	bzero(uid, sizeof(uid));
+	for (i = 0; i < 16; i++) {
+		c = path[i];
+		if (c >= '0' && c <= '9')
+			c -= '0';
+		else if (c >= 'a' && c <= 'f')
+			c -= ('a' - 10);
+                else
+			return -1;
+
+		uid[i / 2] <<= 4;
+		uid[i / 2] |= c & 0xf;
+	}
+
+	mdk = NULL;
+	TAILQ_FOREACH(dk, &disklist, dk_link) {
+		if (dk->dk_label && bcmp(dk->dk_label->d_uid, uid,
+		    sizeof(dk->dk_label->d_uid)) == 0) {
+			/* Fail if there are duplicate UIDs! */
+			if (mdk != NULL)
+				return -1;
+			mdk = dk;
+		}
+	}
+
+	if (mdk == NULL || mdk->dk_name == NULL)
+		return -1;
+
+	snprintf(mappath, size, "/dev/%s%s%c",
+	    (flags & DM_OPENBLCK) ? "" : "r", mdk->dk_name, part);
+
+	return 0;
 }
