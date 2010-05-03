@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.52 2009/11/03 08:09:15 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.53 2010/05/03 13:11:41 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2009 $
+.Dd $Mdocdate: May 3 2010 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -53,11 +53,19 @@ to communicate with
 .Pp
 The commands are as follows:
 .Bl -tag -width xxxxxx
-.It Cm fib couple
-Insert the learned routes into the Forwarding Information Base
+.It Xo
+.Cm fib
+.Op Cm table Ar number
+.Cm couple
+.Xc
+Insert the learned routes into the specified Forwarding Information Base
 a.k.a. the kernel routing table.
-.It Cm fib decouple
-Remove the learned routes from the Forwarding Information Base
+.It Xo
+.Cm fib
+.Op Cm table Ar number
+.Cm decouple
+.Xc
+Remove the learned routes from the specified Forwarding Information Base
 a.k.a. the kernel routing table.
 .It Xo
 .Cm irrfilter
@@ -106,8 +114,10 @@ Note that the neighbor is not obliged to re-send all routes, or any routes at
 all, even if it announced the route refresh capability.
 .Ar peer
 may be the neighbor's address or description.
-.It Cm network add Ar prefix
+.It Cm network add Ar prefix Op Ar arguments
 Add the specified prefix to the list of announced networks.
+It is possible to set various path attributes with additional
+.Ar arguments .
 .It Cm network delete Ar prefix
 Remove the specified prefix from the list of announced networks.
 .It Cm network flush
@@ -130,7 +140,7 @@ view of the Forwarding Information Base.
 can be an IP address, in which case the route to this address is shown,
 or a flag:
 .Pp
-.Bl -tag -width connected -compact
+.Bl -tag -width tableXnumber -compact
 .It Cm connected
 Show only connected routes.
 .It Cm static
@@ -141,6 +151,14 @@ Show only routes originating from
 itself.
 .It Cm nexthop
 Show only routes required to reach a BGP nexthop.
+.It Cm inet
+Show only IPv4 routes.
+.It Cm inet6
+Show only IPv6 routes.
+.It Cm table Ar number
+Show the routing table with ID
+.Ar number
+instead of the default routing table with ID 0.
 .El
 .It Cm show interfaces
 Show the interface states.
@@ -251,6 +269,8 @@ and message counters.
 .It Cm show summary terse
 Show a list of all neighbors, including information about the session state,
 in a terse format.
+.It Cm show tables
+Show a list of all currently loaded fib routing tables.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/bgpd.sockXXX" -compact

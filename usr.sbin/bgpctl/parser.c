@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.61 2010/03/08 17:02:19 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.62 2010/05/03 13:11:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,7 +52,8 @@ enum token_type {
 	PREPSELF,
 	WEIGHT,
 	FAMILY,
-	GETOPT
+	GETOPT,
+	RTABLE
 };
 
 enum getopts {
@@ -98,6 +99,8 @@ static const struct token t_weight[];
 static const struct token t_irrfilter[];
 static const struct token t_irrfilter_opts[];
 static const struct token t_log[];
+static const struct token t_fib_table[];
+static const struct token t_show_fib_table[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"reload",	RELOAD,		NULL},
@@ -118,6 +121,7 @@ static const struct token t_show[] = {
 	{ KEYWORD,	"network",	NETWORK_SHOW,	t_network_show},
 	{ KEYWORD,	"nexthop",	SHOW_NEXTHOP,	NULL},
 	{ KEYWORD,	"rib",		SHOW_RIB,	t_show_rib},
+	{ KEYWORD,	"tables",	SHOW_FIB_TABLES, NULL},
 	{ KEYWORD,	"ip",		NONE,		t_show_ip},
 	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
 	{ ENDTOKEN,	"",		NONE,		NULL}
@@ -130,14 +134,15 @@ static const struct token t_show_summary[] = {
 };
 
 static const struct token t_show_fib[] = {
-	{ NOTOKEN,	"",		NONE,			NULL},
-	{ FLAG,		"connected",	F_CONNECTED,		t_show_fib},
-	{ FLAG,		"static",	F_STATIC,		t_show_fib},
-	{ FLAG,		"bgp",		F_BGPD_INSERTED,	t_show_fib},
-	{ FLAG,		"nexthop",	F_NEXTHOP,		t_show_fib},
-	{ FAMILY,	"",		NONE,			t_show_fib},
-	{ ADDRESS,	"",		NONE,			NULL},
-	{ ENDTOKEN,	"",		NONE,			NULL}
+	{ NOTOKEN,	"",		NONE,		 NULL},
+	{ FLAG,		"connected",	F_CONNECTED,	 t_show_fib},
+	{ FLAG,		"static",	F_STATIC,	 t_show_fib},
+	{ FLAG,		"bgp",		F_BGPD_INSERTED, t_show_fib},
+	{ FLAG,		"nexthop",	F_NEXTHOP,	 t_show_fib},
+	{ KEYWORD,	"table",	NONE,		 t_show_fib_table},
+	{ FAMILY,	"",		NONE,		 t_show_fib},
+	{ ADDRESS,	"",		NONE,		 NULL},
+	{ ENDTOKEN,	"",		NONE,		 NULL}
 };
 
 static const struct token t_show_rib[] = {
@@ -189,6 +194,7 @@ static const struct token t_show_neighbor_modifiers[] = {
 static const struct token t_fib[] = {
 	{ KEYWORD,	"couple",	FIB_COUPLE,	NULL},
 	{ KEYWORD,	"decouple",	FIB_DECOUPLE,	NULL},
+	{ KEYWORD,	"table",	NONE,		t_fib_table},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -317,6 +323,16 @@ static const struct token t_log[] = {
 	{ KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
 	{ KEYWORD,	"brief",	LOG_BRIEF,	NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_fib_table[] = {
+	{ RTABLE,	"",			NONE,	t_fib},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_show_fib_table[] = {
+	{ RTABLE,	"",			NONE,	t_show_fib},
+	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
 static struct parse_result	res;
@@ -500,6 +516,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 		case PREPNBR:
 		case PREPSELF:
 		case WEIGHT:
+		case RTABLE:
 			if (word != NULL && strlen(word) > 0 &&
 			    parse_number(word, &res, table[i].type)) {
 				match++;
@@ -591,6 +608,9 @@ show_valid_args(const struct token table[])
 		case PREPSELF:
 		case WEIGHT:
 			fprintf(stderr, "  <number>\n");
+			break;
+		case RTABLE:
+			fprintf(stderr, "  <rtableid>\n");
 			break;
 		case NEXTHOP:
 			fprintf(stderr, "  <address>\n");
@@ -739,6 +759,11 @@ parse_number(const char *word, struct parse_result *r, enum token_type type)
 		errx(1, "number is %s: %s", errstr, word);
 
 	/* number was parseable */
+	if (type == RTABLE) {
+		r->rtableid = uval;
+		return (1);
+	}
+
 	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
 		err(1, NULL);
 	switch (type) {
