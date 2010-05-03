@@ -623,7 +623,7 @@ viac3_xcrypt_cbc(int *cw, const void *src, void *dst, void *key, int rep,
 	 * -pic mode uses that register; so instead we must dance a little.
 	 */
 	__asm __volatile("pushl %%ebx; movl %0, %%ebx; rep xcrypt-cbc; popl %%ebx" :
-	    : "mr" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+	    : "m" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
 }
 
