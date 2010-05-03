@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.9 2010/04/12 01:54:23 tedu Exp $
+.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.10 2010/05/03 20:43:24 jmc Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD: pthread_rwlock_rdlock.3,v 1.2 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: April 12 2010 $
+.Dd $Mdocdate: May 3 2010 $
 .Dt PTHREAD_RWLOCK_RDLOCK 3
 .Os
 .Sh NAME
@@ -148,3 +148,7 @@ function first appeared in
 .Fx 3.0
 and
 .Ox 2.5 .
+The
+.Fn pthread_rwlock_timedrdlock
+function first appeared in
+.Ox 4.8 .
