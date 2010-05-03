@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2010/03/27 20:16:15 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2010/05/03 04:19:42 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -282,7 +282,7 @@ _dl_bind(elf_object_t *object, int symidx)
 	Elf_Addr *addr, ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
-	sigset_t omask, nmask;
+	sigset_t savedmask;
 	int n;
 
 	sym = object->dyn.symtab;
@@ -302,9 +302,7 @@ _dl_bind(elf_object_t *object, int symidx)
 
 	/* if GOT is protected, allow the write */
 	if (object->got_size != 0) {
-		sigfillset(&nmask);
-		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
-		_dl_thread_bind_lock(0);
+		_dl_thread_bind_lock(0, &savedmask);
 		_dl_mprotect(addr, sizeof(Elf_Addr), PROT_READ|PROT_WRITE);
 	}
 
@@ -313,8 +311,7 @@ _dl_bind(elf_object_t *object, int symidx)
 	/* if GOT is (to be protected, change back to RO */
 	if (object->got_size != 0) {
 		_dl_mprotect(addr, sizeof (Elf_Addr), PROT_READ);
-		_dl_thread_bind_lock(1);
-		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
+		_dl_thread_bind_lock(1, &savedmask);
 	}
 
 	return *addr;
