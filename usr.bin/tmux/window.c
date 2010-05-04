@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.49 2010/05/04 08:48:06 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.50 2010/05/04 17:28:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -529,7 +529,7 @@ window_pane_spawn(struct window_pane *wp, const char *cmd, const char *shell,
 
 		environ_push(env);
 
-		server_signal_clear();
+		clear_signals();
 		log_close();
 
 		if (*wp->cmd != '\0') {
