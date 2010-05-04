@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.8 2010/05/04 18:37:00 naddy Exp $
+# $OpenBSD: Makefile,v 1.9 2010/05/04 19:15:03 naddy Exp $
 
 .include <bsd.own.mk>
 
@@ -305,11 +305,7 @@ beforeinstall:
 
 .SUFFIXES: .vis .vo .asm
 
-.if ${TARGET_ARCH} == "alpha"
+.if ${TARGET_ARCH} == "alpha" || ${TARGET_ARCH} == "powerpc"
 .asm.o:
 	${CC_T} ${CFLAGS} -xassembler-with-cpp -o ${.TARGET} ${.IMPSRC}
-.endif
-.if ${TARGET_ARCH} == "powerpc"
-.asm.o:
-	${CC_T} ${${T}_CFLAGS} -xassembler-with-cpp -o ${.TARGET}  ${.ALLSRC:M*.asm}
 .endif
