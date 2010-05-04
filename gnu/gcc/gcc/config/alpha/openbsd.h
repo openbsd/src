@@ -18,33 +18,51 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
-/* We settle for little endian for now.  */
-#define TARGET_ENDIAN_DEFAULT 0
-
 /* Controlling the compilation driver.  */
+
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT \
+	(MASK_FPREGS | MASK_IEEE | MASK_IEEE_CONFORMANT | MASK_GAS)
 
 /* alpha needs __start.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp %{assert*}"
+  "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
+   %{shared:-shared} %{R*} \
+   %{static:-Bstatic} \
+   %{!static:-Bdynamic} \
+   %{assert*} \
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+
+/* As an elf system, we need crtbegin/crtend stuff.  */
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC "\
+	%{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} %{!p:crt0%O%s}} \
+	crtbegin%O%s} %{shared:crtbeginS%O%s}"
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
 
 /* run-time target specifications */
 #define TARGET_OS_CPP_BUILTINS()		\
     do {					\
-	builtin_define ("__OpenBSD__");		\
-	builtin_define ("__ANSI_COMPAT");	\
-	builtin_define ("__unix__");		\
-	builtin_assert ("system=unix");		\
+	OPENBSD_OS_CPP_BUILTINS_ELF();		\
+	OPENBSD_OS_CPP_BUILTINS_LP64();		\
     } while (0)
 
 /* Layout of source language data types.  */
 
-/* This must agree with <machine/ansi.h> */
+/* This must agree with <machine/_types.h> */
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
 
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
+
+#undef INTMAX_TYPE
+#define INTMAX_TYPE "long long int"
+
+#undef UINTMAX_TYPE
+#define UINTMAX_TYPE "long long unsigned int"
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
@@ -52,48 +70,12 @@ Boston, MA 02110-1301, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-
-#undef PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-
+/* Output and generation of labels.  */
 #define LOCAL_LABEL_PREFIX	"."
 
-/* We don't have an init section yet.  */
-#undef HAS_INIT_SECTION
+/* .set on alpha is not used to output labels.  */
+#undef SET_ASM_OP
 
-/* collect2 support (assembler format: macros for initialization).  */
-
-/* Don't tell collect2 we use COFF as we don't have (yet ?) a dynamic ld
-   library with the proper functions to handle this -> collect2 will
-   default to using nm.  */
-#undef OBJECT_FORMAT_COFF
-#undef EXTENDED_COFF
-
-/* Assembler format: exception region output.  */
-
-/* All configurations that don't use elf must be explicit about not using
-   dwarf unwind information.  */
-#ifdef INCOMING_RETURN_ADDR_RTX
-#undef DWARF2_UNWIND_INFO
-#define DWARF2_UNWIND_INFO 0
-#endif
-
-/* Assembler format: label output.  */
-
-/* alpha ecoff supports only weak aliases.  */
-#undef ASM_WEAKEN_LABEL
-#define ASM_WEAKEN_LABEL(FILE,NAME) ASM_OUTPUT_WEAK_ALIAS (FILE,NAME,0)
-
-#define ASM_OUTPUT_WEAK_ALIAS(FILE,NAME,VALUE)	\
- do {						\
-  fputs ("\t.weakext\t", FILE);			\
-  assemble_name (FILE, NAME);			\
-  if (VALUE)					\
-    {						\
-      fputs (" , ", FILE);			\
-      assemble_name (FILE, VALUE);		\
-    }						\
-  fputc ('\n', FILE);				\
- } while (0)
-
-
+/* don't want no friggin' stack checks.  */
+#undef STACK_CHECK_BUILTIN
+#define STACK_CHECK_BUILTIN 0

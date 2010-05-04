@@ -43,8 +43,13 @@ mieee
 Target Report RejectNegative Mask(IEEE)
 Emit IEEE-conformant code, without inexact exceptions
 
+mno-ieee
+Target Report RejectNegative InverseMask(IEEE)
+Emit non-IEEE-conformant code
+
 mieee-with-inexact
 Target Report RejectNegative Mask(IEEE_WITH_INEXACT)
+Emit IEEE-conformant code, with inexact exceptions
 
 mbuild-constants
 Target Report Mask(BUILD_CONSTANTS)

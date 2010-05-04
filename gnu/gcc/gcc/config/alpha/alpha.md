@@ -6718,7 +6718,8 @@
   if (GET_CODE (operands[1]) == CONST_INT
       && INTVAL (operands[1]) < 32768)
     {
-      if (INTVAL (operands[1]) >= 4096)
+      if (INTVAL (operands[1]) >= 4096
+	  && (flag_stack_check || STACK_CHECK_BUILTIN))
 	{
 	  /* We do this the same way as in the prologue and generate explicit
 	     probes.  Then we update the stack by the constant.  */
