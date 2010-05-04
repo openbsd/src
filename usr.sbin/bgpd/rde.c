@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.292 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.293 2010/05/04 10:25:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2121,6 +2121,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	struct rib_entry	*re;
 	u_int			 error;
 	u_int16_t		 id;
+	u_int8_t		 hostplen;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_warn("rde_dump_ctx_new");
@@ -2157,7 +2158,18 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			ctx->ribctx.ctx_upcall = rde_dump_prefix_upcall;
 			break;
 		}
-		if (req->prefixlen == 32)
+		switch (req->prefix.aid) {
+		case AID_INET:
+		case AID_VPN_IPv4:
+			hostplen = 32;
+			break;
+		case AID_INET6:
+			hostplen = 128;
+			break;
+		default:
+			fatalx("rde_dump_ctx_new: unknown af");
+		}
+		if (req->prefixlen == hostplen)
 			re = rib_lookup(&ribs[id], &req->prefix);
 		else
 			re = rib_get(&ribs[id], &req->prefix, req->prefixlen);
