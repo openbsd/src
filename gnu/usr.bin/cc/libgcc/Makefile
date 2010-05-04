@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.7 2010/05/02 23:34:21 drahn Exp $
+# $OpenBSD: Makefile,v 1.8 2010/05/04 18:37:00 naddy Exp $
 
 .include <bsd.own.mk>
 
@@ -110,6 +110,11 @@ LIB2_DIVMOD_FUNCS = _divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
 #	Platform specific bits.
 #	When upgrading GCC, get the following definitions from config/<cpu>/t-*
 #
+.if ${TARGET_ARCH} == "alpha"
+CFLAGS+=	-mieee
+LIB2FUNCS_EXTRA = qrnnd.asm
+.endif
+
 .if ${TARGET_ARCH} == "arm"
 #	from config/arm/t-strongarm-elf
 CFLAGS+=	-Dinhibit_libc -fno-inline
@@ -300,6 +305,10 @@ beforeinstall:
 
 .SUFFIXES: .vis .vo .asm
 
+.if ${TARGET_ARCH} == "alpha"
+.asm.o:
+	${CC_T} ${CFLAGS} -xassembler-with-cpp -o ${.TARGET} ${.IMPSRC}
+.endif
 .if ${TARGET_ARCH} == "powerpc"
 .asm.o:
 	${CC_T} ${${T}_CFLAGS} -xassembler-with-cpp -o ${.TARGET}  ${.ALLSRC:M*.asm}

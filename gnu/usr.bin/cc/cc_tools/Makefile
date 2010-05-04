@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.5 2010/04/29 03:41:51 marco Exp $
+# $OpenBSD: Makefile,v 1.6 2010/05/04 18:37:00 naddy Exp $
 
 .include <bsd.own.mk>
 
@@ -35,7 +35,12 @@ TARGET_INC+=	${GCC_CPU}/unix.h
 TARGET_INC+=	${GCC_CPU}/att.h
 .endif
 TARGET_INC+=	dbxelf.h
+.if ${TARGET_ARCH} == "alpha"
+TARGET_INC+=	alpha/elf.h
+TARGET_INC+=	alpha/openbsd1.h
+.else
 TARGET_INC+=	elfos.h
+.endif
 TARGET_INC+=	openbsd.h
 TARGET_INC+=	openbsd-libpthread.h
 TARGET_INC+=	openbsd-native.h
