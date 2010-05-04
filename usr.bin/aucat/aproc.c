@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.57 2010/05/02 11:12:31 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.58 2010/05/04 19:40:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -779,7 +779,7 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 	if (!MIX_ROK(ibuf))
 		return 0;
 	scount = 0;
-	odone = obuf->w.mix.todo;
+	odone = obuf->len;
 	for (i = LIST_FIRST(&p->ins); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
 		if (i->r.mix.drop >= 0 && !abuf_fill(i))
