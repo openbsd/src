@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.105 2010/04/28 13:07:48 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.106 2010/05/04 07:37:56 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2010 $
+.Dd $Mdocdate: May 4 2010 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -313,11 +313,22 @@ is only compared between peers belonging to the same AS.
 .Ic rib Ar name
 .Op Ic no Ic evaluate
 .Xc
+.It Xo
+.Ic rde
+.Ic rib Ar name
+.Op Ic rtable Ar number
+.Xc
 Create an additional RIB named
 .Ar name .
 It is possible to disable the decision process per RIB with the
 .Ic no Ic evaluate
 flag.
+If a
+.Ic rtable
+is specified, routes will be exported to the given kernel routing table.
+Currently the routing table must belong to the default routing domain and
+nexthop verification happens on table 0.
+Routes in the specified table will not be considered for nexthop verification.
 .Ic Adj-RIB-In
 and
 .Ic Loc-RIB
@@ -361,9 +372,12 @@ to the local machine.
 Work with the given kernel routing table
 instead of the default table,
 .Ar 0 .
-Note that this table is used for nexthop verification as well.
-Directly connected networks are always taken into account, even though
-their routes live in table 0.
+Note that table 0 is used for nexthop verification.
+Routes in the specified table will not be considered for nexthop verification.
+This is the same as using the following syntax:
+.Bd -literal -offset indent
+rde rib Loc-RIB rtable number
+.Ed
 .Pp
 .It Xo
 .Ic transparent-as
