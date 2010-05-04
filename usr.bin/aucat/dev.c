@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.51 2010/05/02 11:54:26 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.52 2010/05/04 19:35:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -585,6 +585,8 @@ dev_start(void)
 		dbg_puts("starting device\n");
 #endif
 	dev_pstate = DEV_RUN;
+	if (dev_mode & MODE_LOOP)
+		return;
 	if (APROC_OK(dev_mix))
 		dev_mix->flags |= APROC_DROP;
 	if (APROC_OK(dev_sub))
@@ -609,7 +611,13 @@ dev_stop(void)
 {
 	struct file *f;
 
+#ifdef DEBUG
+	if (debug_level >= 2)
+		dbg_puts("stopping stopped\n");
+#endif
 	dev_pstate = DEV_INIT;
+	if (dev_mode & MODE_LOOP)
+		return;
 	if (APROC_OK(dev_play) && dev_play->u.io.file) {
 		f = dev_play->u.io.file;
 		f->ops->stop(f);
@@ -623,10 +631,6 @@ dev_stop(void)
 		dev_sub->flags &= ~APROC_DROP;
 	if (APROC_OK(dev_submon))
 		dev_submon->flags &= ~APROC_DROP;
-#ifdef DEBUG
-	if (debug_level >= 2)
-		dbg_puts("device stopped\n");
-#endif
 }
 
 int
