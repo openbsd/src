@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.42 2010/04/27 21:53:27 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.43 2010/05/04 23:13:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -810,14 +810,17 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 
 	/*
 	 * Mark the end of a sentence, but be careful not to insert
-	 * markers into reference blocks.
+	 * markers into reference blocks and after ellipses in
+	 * function definitions.
 	 */
 	n = m->last;
 	if (n->child)
 		n = n->child;
 	while (n->next)
 		n = n->next;
-	if (MDOC_TEXT == n->type && m->last->parent->tok != MDOC_Rs) {
+	if (MDOC_TEXT == n->type &&
+	    MDOC_Fn != n->parent->tok &&
+	    MDOC_Rs != m->last->parent->tok) {
 		t = n->string;
 		while (t[0] && t[1])
 			t++;
