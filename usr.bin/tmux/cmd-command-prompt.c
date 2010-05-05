@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.12 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.13 2010/05/05 23:24:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -80,6 +80,10 @@ cmd_command_prompt_init(struct cmd *self, int key)
 		break;
 	case 'f':
 		data->template = xstrdup("find-window '%%'");
+		break;
+	case '\'':
+		data->template = xstrdup("select-window -t ':%%'");
+		data->prompts = xstrdup("index");
 		break;
 	}
 }
