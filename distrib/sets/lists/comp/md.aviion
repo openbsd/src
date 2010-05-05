@@ -5,6 +5,7 @@
 ./usr/include/aviion/atomic.h
 ./usr/include/aviion/autoconf.h
 ./usr/include/aviion/av400.h
+./usr/include/aviion/av530.h
 ./usr/include/aviion/avcommon.h
 ./usr/include/aviion/board.h
 ./usr/include/aviion/bus.h
