@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.152 2010/04/30 21:56:39 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.153 2010/05/05 19:34:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1180,9 +1180,7 @@ pmap_zero_page(struct vm_page *pg)
 	pmap_flush_page(pg, 1);
 	bzero((void *)pa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
-	ficache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
 	pdtlb(HPPA_SID_KERNEL, pa);
-	pitlb(HPPA_SID_KERNEL, pa);
 }
 
 void
@@ -1197,12 +1195,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	bcopy((void *)spa, (void *)dpa, PAGE_SIZE);
 	pdcache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
-	ficache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
-	ficache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
 	pdtlb(HPPA_SID_KERNEL, spa);
 	pdtlb(HPPA_SID_KERNEL, dpa);
-	pitlb(HPPA_SID_KERNEL, spa);
-	pitlb(HPPA_SID_KERNEL, dpa);
 }
 
 void
@@ -1321,8 +1315,6 @@ struct vm_page *
 pmap_unmap_direct(vaddr_t va)
 {
 	fdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
-	ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
 	pdtlb(HPPA_SID_KERNEL, va);
-	pitlb(HPPA_SID_KERNEL, va);
 	return (PHYS_TO_VM_PAGE(va));
 }
