@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.9 2010/05/04 19:15:03 naddy Exp $
+# $OpenBSD: Makefile,v 1.10 2010/05/05 21:10:27 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -69,7 +69,7 @@ LIB2ADD_ST = $(LIB2FUNCS_STATIC_EXTRA)
 
 # Additional sources to handle exceptions; overridden by targets as needed.
 LIB2ADDEH = unwind-dw2.c unwind-sjlj.c gthr-gnat.c \
-	unwind-c.c
+	unwind-c.c unwind-dw2-fde.c
 LIB2ADDEHSTATIC = $(LIB2ADDEH)
 LIB2ADDEHSHARED = $(LIB2ADDEH)
 
@@ -277,7 +277,8 @@ EH_OBJS_T = ${LIB2ADDEHSTATIC:R:S/$/.o/}
 EH_OBJS_P = ${LIB2ADDEHSTATIC:R:S/$/.po/}
 EH_OBJS_S = ${LIB2ADDEHSHARED:R:S/$/.So/}
 EH_CFLAGS = -fexceptions -D__GLIBC__=3 -DElfW=__ElfN
-SOBJS    += ${EH_OBJS_S}
+SOBJS   += ${EH_OBJS_S}
+OBJS    += ${EH_OBJS_T}
 
 .for _src in ${LIB2ADDEHSTATIC}
 ${_src:R:S/$/.o/}: ${_src} ${COMMONHDRS}
