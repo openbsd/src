@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.20 2009/01/28 12:22:48 stsp Exp $
+.\"	$OpenBSD: tree.3,v 1.21 2010/05/05 18:17:41 nicm Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -23,7 +23,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.Dd $Mdocdate: January 28 2009 $
+.Dd $Mdocdate: May 5 2010 $
 .Dt TREE 3
 .Os
 .Sh NAME
@@ -258,6 +258,11 @@ The
 macro inserts the new element
 .Fa elm
 into the tree.
+Upon success,
+.Va NULL
+is returned.
+If a matching element already exists in the tree, the insertion is
+aborted, and a pointer to the existing element is returned.
 .Pp
 The
 .Fn SPLAY_REMOVE
@@ -265,6 +270,11 @@ macro removes the element
 .Fa elm
 from the tree pointed by
 .Fa head .
+Upon success, a pointer to the removed element is returned.
+.Va NULL
+is returned if
+.Fa elm
+is not present in the tree.
 .Pp
 The
 .Fn SPLAY_FIND
@@ -405,6 +415,9 @@ macro removes the element
 .Fa elm
 from the tree pointed by
 .Fa head .
+.Fn RB_REMOVE
+returns
+.Fa elm .
 .Pp
 The
 .Fn RB_FIND
@@ -543,22 +556,5 @@ for (var = SPLAY_MIN(NAME, &head); var != NULL; var = nxt) {
 	free(var);
 }
 .Ed
-.Pp
-Both
-.Fn RB_INSERT
-and
-.Fn SPLAY_INSERT
-return
-.Va NULL
-if the element was inserted in the tree successfully, otherwise they
-return a pointer to the element with the colliding key.
-.Pp
-Accordingly,
-.Fn RB_REMOVE
-and
-.Fn SPLAY_REMOVE
-return the pointer to the removed element, otherwise they return
-.Va NULL
-to indicate an error.
 .Sh AUTHORS
 The author of the tree macros is Niels Provos.
