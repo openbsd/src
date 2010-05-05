@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.28 2008/05/09 08:06:27 mbalmer Exp $
+# $OpenBSD: Configure,v 1.29 2010/05/05 11:58:27 kettenis Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -2356,38 +2356,17 @@ fi
 ##
 ## Check for availability of isinf() and isnan()
 ##
-if ${SHELL} ./helpers/TestCompile func isinf ; then
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: isinf() found in libc */ " >>$AP_CONFIG_AUTO_H
-    echo "#ifndef HAVE_ISINF" >>$AP_CONFIG_AUTO_H
-    echo "#define HAVE_ISINF 1" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-elif ${SHELL} ./helpers/TestCompile lib m isinf ; then
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: isinf() found in libm */ " >>$AP_CONFIG_AUTO_H
-    echo "#ifndef HAVE_ISINF" >>$AP_CONFIG_AUTO_H
-    echo "#define HAVE_ISINF 1" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-    LIBS="$LIBS -lm"
-    ADDED_LM="yes"
-fi
+echo "" >>$AP_CONFIG_AUTO_H
+echo "/* determine: isinf() found in libc */ " >>$AP_CONFIG_AUTO_H
+echo "#ifndef HAVE_ISINF" >>$AP_CONFIG_AUTO_H
+echo "#define HAVE_ISINF 1" >>$AP_CONFIG_AUTO_H
+echo "#endif" >>$AP_CONFIG_AUTO_H
 
-if ${SHELL} ./helpers/TestCompile func isnan ; then
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: isnan() found in libc */ " >>$AP_CONFIG_AUTO_H
-    echo "#ifndef HAVE_ISNAN" >>$AP_CONFIG_AUTO_H
-    echo "#define HAVE_ISNAN 1" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-elif ${SHELL} ./helpers/TestCompile lib m isnan ; then
-    echo "" >>$AP_CONFIG_AUTO_H
-    echo "/* determine: isnan() found in libm */ " >>$AP_CONFIG_AUTO_H
-    echo "#ifndef HAVE_ISNAN" >>$AP_CONFIG_AUTO_H
-    echo "#define HAVE_ISNAN 1" >>$AP_CONFIG_AUTO_H
-    echo "#endif" >>$AP_CONFIG_AUTO_H
-    if [ "x$ADDED_LM" != "xyes" ]; then
-        LIBS="$LIBS -lm"
-    fi
-fi
+echo "" >>$AP_CONFIG_AUTO_H
+echo "/* determine: isnan() found in libc */ " >>$AP_CONFIG_AUTO_H
+echo "#ifndef HAVE_ISNAN" >>$AP_CONFIG_AUTO_H
+echo "#define HAVE_ISNAN 1" >>$AP_CONFIG_AUTO_H
+echo "#endif" >>$AP_CONFIG_AUTO_H
 
 ##
 ## Now compare the sizes of off_t to long
