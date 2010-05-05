@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.93 2010/05/05 19:41:57 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.94 2010/05/05 19:47:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3068,6 +3068,13 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s, error = 0;
 
 	s = splnet();
+	/*
+	 * Prevent processes from entering this function while another
+	 * process is tsleep'ing in it.
+	 */
+	if (sc->sc_flags & IWN_FLAG_BUSY)
+		return EBUSY;
+	sc->sc_flags |= IWN_FLAG_BUSY;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -3127,6 +3134,8 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = iwn_init(ifp);
 		}
 	}
+
+	sc->sc_flags &= ~IWN_FLAG_BUSY;
 	splx(s);
 	return error;
 }

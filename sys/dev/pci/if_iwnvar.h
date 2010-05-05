@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.18 2010/04/30 16:06:46 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.19 2010/05/05 19:47:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -207,6 +207,7 @@ struct iwn_softc {
 #define IWN_FLAG_CALIB_DONE	(1 << 2)
 #define IWN_FLAG_USE_ICT	(1 << 3)
 #define IWN_FLAG_INTERNAL_PA	(1 << 4)
+#define IWN_FLAG_BUSY		(1 << 5)
 
 	uint8_t 		hw_type;
 	const struct iwn_hal	*sc_hal;
