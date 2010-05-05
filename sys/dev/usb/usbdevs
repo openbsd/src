@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.496 2010/04/29 07:41:38 jasper Exp $
+$OpenBSD: usbdevs,v 1.497 2010/05/05 19:32:49 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -925,6 +925,7 @@ product ATHEROS2 TG121N		0x1001	TG121N
 product ATHEROS2 WN821NV2	0x1002	WN821NV2
 product ATHEROS2 3CRUSBN275	0x1010	3CRUSBN275
 product ATHEROS2 WN612		0x1011	WN612
+product ATHEROS2 AR3011		0x3000	AR3011
 product ATHEROS2 AR9170		0x9170	AR9170
 
 /* ATI products */
