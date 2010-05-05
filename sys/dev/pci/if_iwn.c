@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.92 2010/04/30 16:31:47 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.93 2010/05/05 19:41:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -240,7 +240,7 @@ int		iwn5000_load_firmware(struct iwn_softc *);
 int		iwn_read_firmware_leg(struct iwn_softc *,
 		    struct iwn_fw_info *);
 int		iwn_read_firmware_tlv(struct iwn_softc *,
-		    struct iwn_fw_info *);
+		    struct iwn_fw_info *, uint16_t);
 int		iwn_read_firmware(struct iwn_softc *);
 int		iwn_clock_wait(struct iwn_softc *);
 int		iwn_apm_init(struct iwn_softc *);
@@ -5219,11 +5219,14 @@ iwn_read_firmware_leg(struct iwn_softc *sc, struct iwn_fw_info *fw)
  * Extract text and data sections from a TLV firmware image.
  */
 int
-iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw)
+iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw,
+    uint16_t alt)
 {
 	const struct iwn_fw_tlv_hdr *hdr;
-	const uint32_t *ptr, *end;
-	uint32_t type, len;
+	const struct iwn_fw_tlv *tlv;
+	const uint8_t *ptr, *end;
+	uint64_t altmask;
+	uint32_t len;
 
 	if (fw->size < sizeof (*hdr)) {
 		printf("%s: firmware too short: %d bytes\n",
@@ -5239,45 +5242,61 @@ iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw)
 	DPRINTF(("FW: \"%.64s\", build 0x%x\n", hdr->descr,
 	    letoh32(hdr->build)));
 
-	ptr = (const uint32_t *)(hdr + 1);
-	end = (const uint32_t *)(fw->data + fw->size);
+	/*
+	 * Select the closest supported alternative that is less than
+	 * or equal to the specified one.
+	 */
+	altmask = letoh64(hdr->altmask);
+	while (alt > 0 && !(altmask & (1ULL << alt)))
+		alt--;	/* Downgrade. */
+	DPRINTF(("using alternative %d\n", alt));
+
+	ptr = (const uint8_t *)(hdr + 1);
+	end = (const uint8_t *)(fw->data + fw->size);
 
 	/* Parse type-length-value fields. */
-	while (ptr + 2 <= end) {
-		type = letoh32(*ptr++);
-		len  = letoh32(*ptr++);
-		if (ptr + (len + 3) / 4 > end) {
+	while (ptr + sizeof (*tlv) <= end) {
+		tlv = (const struct iwn_fw_tlv *)ptr;
+		len = letoh32(tlv->len);
+
+		ptr += sizeof (*tlv);
+		if (ptr + len > end) {
 			printf("%s: firmware too short: %d bytes\n",
 			    sc->sc_dev.dv_xname, fw->size);
 			return EINVAL;
 		}
-		switch (type) {
+		/* Skip other alternatives. */
+		if (tlv->alt != 0 && tlv->alt != htole16(alt))
+			goto next;
+
+		switch (letoh16(tlv->type)) {
 		case IWN_FW_TLV_MAIN_TEXT:
-			fw->main.text = (const uint8_t *)ptr;
+			fw->main.text = ptr;
 			fw->main.textsz = len;
 			break;
 		case IWN_FW_TLV_MAIN_DATA:
-			fw->main.data = (const uint8_t *)ptr;
+			fw->main.data = ptr;
 			fw->main.datasz = len;
 			break;
 		case IWN_FW_TLV_INIT_TEXT:
-			fw->init.text = (const uint8_t *)ptr;
+			fw->init.text = ptr;
 			fw->init.textsz = len;
 			break;
 		case IWN_FW_TLV_INIT_DATA:
-			fw->init.data = (const uint8_t *)ptr;
+			fw->init.data = ptr;
 			fw->init.datasz = len;
 			break;
 		case IWN_FW_TLV_BOOT_TEXT:
-			fw->boot.text = (const uint8_t *)ptr;
+			fw->boot.text = ptr;
 			fw->boot.textsz = len;
 			break;
 		default:
-			DPRINTF(("TLV type %d not handled\n", type));
+			DPRINTF(("TLV type %d not handled\n",
+			    letoh16(tlv->type)));
 			break;
 		}
-		/* TLV fields are 32-bit aligned. */
-		ptr += (len + 3) / 4;
+ next:		/* TLV fields are 32-bit aligned. */
+		ptr += (len + 3) & ~3;
 	}
 	return 0;
 }
@@ -5308,7 +5327,7 @@ iwn_read_firmware(struct iwn_softc *sc)
 	if (*(const uint32_t *)fw->data != 0)	/* Legacy image. */
 		error = iwn_read_firmware_leg(sc, fw);
 	else
-		error = iwn_read_firmware_tlv(sc, fw);
+		error = iwn_read_firmware_tlv(sc, fw, 1);
 	if (error != 0) {
 		printf("%s: could not read firmware sections\n",
 		    sc->sc_dev.dv_xname);

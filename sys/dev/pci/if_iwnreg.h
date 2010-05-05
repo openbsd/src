@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.39 2010/04/30 16:06:46 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.40 2010/05/05 19:41:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1259,15 +1259,22 @@ struct iwn_fw_tlv_hdr {
 #define IWN_FW_API(x)	(((x) >> 8) & 0xff)
 
 	uint32_t	build;
+	uint64_t	altmask;
 } __packed;
 
-/* Firmware TLV fields types. */
+/* TLV header. */
+struct iwn_fw_tlv {
+	uint16_t	type;
 #define IWN_FW_TLV_MAIN_TEXT		1
 #define IWN_FW_TLV_MAIN_DATA		2
 #define IWN_FW_TLV_INIT_TEXT		3
 #define IWN_FW_TLV_INIT_DATA		4
 #define IWN_FW_TLV_BOOT_TEXT		5
 #define IWN_FW_TLV_PBREQ_MAXLEN		6
+
+	uint16_t	alt;
+	uint32_t	len;
+} __packed;
 
 #define IWN4965_FW_TEXT_MAXSZ	( 96 * 1024)
 #define IWN4965_FW_DATA_MAXSZ	( 40 * 1024)
