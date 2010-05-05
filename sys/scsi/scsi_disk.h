@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.25 2010/04/03 07:09:29 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.26 2010/05/05 11:33:26 dlg Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -266,6 +266,8 @@ struct scsi_read_cap_data_16 {
 	u_int8_t p_type_prot;
 	u_int8_t logical_per_phys;
 	u_int8_t lowest_aligned[2];
+#define READ_CAP_16_TPE		0x8000
+#define READ_CAP_16_TPRZ	0x4000
 	u_int8_t reserved[16];
 };
 

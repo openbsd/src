@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.83 2010/04/29 22:28:39 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.84 2010/05/05 11:33:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -880,6 +880,7 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 	struct atascsi_port	*ap = as->as_ports[link->target];
 	struct scsi_read_cap_data_16 rcd;
 	u_int			align;
+	u_int16_t		lowest_aligned = 0;
 
 	bzero(&rcd, sizeof(rcd));
 
@@ -888,7 +889,17 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 	rcd.logical_per_phys = ata_identify_block_l2p_exp(&ap->ap_identify);
 	align = ata_identify_block_logical_align(&ap->ap_identify);
 	if (align > 0)
-		_lto2b((1 << rcd.logical_per_phys) - align, rcd.lowest_aligned);
+		lowest_aligned = (1 << rcd.logical_per_phys) - align;
+
+	if (ISSET(letoh16(ap->ap_identify.data_set_mgmt), 
+	    ATA_ID_DATA_SET_MGMT_TRIM)) {
+		SET(lowest_aligned, READ_CAP_16_TPE);
+
+		if (ISSET(letoh16(ap->ap_identify.add_support), 
+		    ATA_ID_ADD_SUPPORT_DRT))
+			SET(lowest_aligned, READ_CAP_16_TPRZ);
+	}
+	_lto2b(lowest_aligned, rcd.lowest_aligned);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
 
