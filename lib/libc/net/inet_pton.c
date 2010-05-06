@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_pton.c,v 1.7 2006/12/30 23:37:37 itojun Exp $	*/
+/*	$OpenBSD: inet_pton.c,v 1.8 2010/05/06 15:47:14 claudio Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -114,8 +114,7 @@ inet_pton4(const char *src, u_char *dst)
  * return:
  *	1 if `src' is a valid [RFC1884 2.2] address, else 0.
  * notice:
- *	(1) does not touch `dst' unless it's returning 1.
- *	(2) :: in a full address is silently ignored.
+ *	does not touch `dst' unless it's returning 1.
  * credit:
  *	inspired by Mark Andrews.
  * author:
@@ -199,6 +198,8 @@ inet_pton6(const char *src, u_char *dst)
 		const int n = tp - colonp;
 		int i;
 
+		if (tp == endp)
+			return (0);
 		for (i = 1; i <= n; i++) {
 			endp[- i] = colonp[n - i];
 			colonp[n - i] = 0;
