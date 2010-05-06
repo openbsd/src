@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.184 2009/12/17 16:44:12 oga Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.185 2010/05/06 06:53:09 mpf Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2243,7 +2243,7 @@ vfs_mount_print(struct mount *mp, int full, int (*pr)(const char *, ...))
 	    mp->mnt_stat.f_bsize, mp->mnt_stat.f_iosize, mp->mnt_stat.f_blocks,
 	    mp->mnt_stat.f_bfree, mp->mnt_stat.f_bavail);
 
-	(*pr)("  files %llu ffiles %llu favail $lld\n", mp->mnt_stat.f_files,
+	(*pr)("  files %llu ffiles %llu favail %lld\n", mp->mnt_stat.f_files,
 	    mp->mnt_stat.f_ffree, mp->mnt_stat.f_favail);
 
 	(*pr)("  f_fsidx {0x%x, 0x%x} owner %u ctime 0x%x\n",
