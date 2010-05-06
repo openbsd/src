@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.4 2009/10/10 23:51:56 robert Exp $ */
+/*	$OpenBSD: yp.c,v 1.5 2010/05/06 11:55:01 ajacoutot Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -588,7 +588,7 @@ yp_make_val(struct ypresp_val *res, char *line)
 void
 yp_make_keyval(struct ypresp_key_val *res, char *key, char *line)
 {
-	static char	keybuf[_PW_NAME_LEN+1];
+	static char	keybuf[YPMAXRECORD+1];
 	static char	buf[LINE_WIDTH];
 
 	bzero(keybuf, sizeof(keybuf));
