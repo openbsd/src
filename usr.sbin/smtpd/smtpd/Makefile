@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2010/04/21 21:04:29 gilles Exp $
+#	$OpenBSD: Makefile,v 1.16 2010/05/06 15:31:09 naddy Exp $
 
 PROG=		smtpd
 SRCS=		aliases.c authenticate.c bounce.c buffer.c client.c	\
@@ -13,7 +13,7 @@ BINDIR=		/usr/sbin
 
 LDADD+=		-levent -lutil -lssl -lcrypto -lm
 DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM}
-CFLAGS=		-g3 -ggdb -I${.CURDIR}/..
+CFLAGS+=	-g3 -ggdb -I${.CURDIR}/..
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
