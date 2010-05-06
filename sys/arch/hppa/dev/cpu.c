@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.32 2010/04/01 12:30:38 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.33 2010/05/06 14:51:30 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -43,7 +43,6 @@ struct cpu_softc {
 	struct  device sc_dev;
 
 	hppa_hpa_t sc_hpa;
-	void *sc_ih;
 };
 
 int	cpumatch(struct device *, void *, void *);
@@ -58,10 +57,7 @@ struct cfdriver cpu_cd = {
 };
 
 int
-cpumatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+cpumatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
@@ -78,10 +74,7 @@ cpumatch(parent, cfdata, aux)
 }
 
 void
-cpuattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	/* machdep.c */
 	extern struct pdc_model pdc_model;
@@ -92,7 +85,6 @@ cpuattach(parent, self, aux)
 	/* clock.c */
 	extern int cpu_hardclock(void *);
 
-	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct confargs *ca = (struct confargs *)aux;
 	struct cpu_info *ci;
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
@@ -159,8 +151,7 @@ cpuattach(parent, self, aux)
 		printf(", %u/%u D/I BTLBs",
 		    pdc_btlb.finfo.num_i, pdc_btlb.finfo.num_d);
 
-	sc->sc_ih = cpu_intr_establish(IPL_CLOCK, 31,
-	    cpu_hardclock, NULL /*frame*/, sc->sc_dev.dv_xname);
+	cpu_intr_establish(IPL_CLOCK, 31, cpu_hardclock, NULL, "clock");
 	
 	printf("\n");
 }
