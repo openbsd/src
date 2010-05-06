@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.78 2010/04/29 13:48:29 jsing Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.79 2010/05/06 14:39:52 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1141,11 +1141,13 @@ mbattach(parent, self, aux)
 	case HPPA_BOARD_HP780_C240:
 	case HPPA_BOARD_HP785_C360:
 		/* Attach CPUs first, then everything else... */
+		ncpusfound = 0;
 		pdc_scanbus(self, &nca, MAXMODBUS, HPPA_FPA, 1);
 		pdc_scanbus(self, &nca, MAXMODBUS, HPPA_FPA, 0);
 	break;
 	default:
 		/* Attach CPUs first, then everything else... */
+		ncpusfound = 0;
 		pdc_scanbus(self, &nca, MAXMODBUS, 0, 1);
 		pdc_scanbus(self, &nca, MAXMODBUS, 0, 0);
 	}

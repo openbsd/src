@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.54 2010/04/29 13:48:29 jsing Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.55 2010/05/06 14:39:52 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -310,6 +310,10 @@ pdc_scanbus(struct device *self, struct confargs *ca, int maxmod,
 			    nca.ca_dp.dp_mod, nca.ca_hpa,
 			    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 		}
+
+		if (cpu_scan && nca.ca_type.iodc_type == HPPA_TYPE_NPROC &&
+		    nca.ca_type.iodc_sv_model == HPPA_NPROC_HPPA)
+			ncpusfound++;
 
 		if (cpu_scan &&
 		    ((nca.ca_type.iodc_type != HPPA_TYPE_NPROC ||
