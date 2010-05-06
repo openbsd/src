@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc1plus/Makefile,v 1.39.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.1.1.1 2009/10/15 20:50:20 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2010/05/06 20:58:10 naddy Exp $
 
 .include <bsd.own.mk>
 
@@ -34,11 +34,5 @@ CLEANFILES+=	${PROG}-dummy
 ${PROG}-checksum.c:	${PROG}-dummy
 	../cc_tools/genchecksum ${PROG}-dummy > ${.TARGET}
 CLEANFILES+=	${PROG}-checksum.c
-
-beforeinstall:
-.if !exist(${DESTDIR}${BINDIR})
-	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} \
-		${DESTDIR}${BINDIR}
-.endif
 
 .include <bsd.prog.mk>
