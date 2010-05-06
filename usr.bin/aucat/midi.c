@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.21 2010/05/02 11:54:26 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.22 2010/05/06 06:18:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -611,10 +611,11 @@ ctl_getidx(struct aproc *p, char *who)
 	if (bestidx == CTL_NSLOT)
 		return -1;
 	slot = p->u.ctl.slot + bestidx;
+	if (slot->name[0] != '\0')
+		slot->vol = MIDI_MAXCTL;
 	strlcpy(slot->name, name, CTL_NAMEMAX);
 	slot->serial = p->u.ctl.serial++;
 	slot->unit = unit;
-	slot->vol = MIDI_MAXCTL;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		aproc_dbg(p);
@@ -996,9 +997,9 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		if (chan >= CTL_NSLOT)
 			return;
 		slot = p->u.ctl.slot + chan;
+		slot->vol = ibuf->r.midi.msg[2];
 		if (slot->ops == NULL)
 			return;
-		slot->vol = ibuf->r.midi.msg[2];
 		slot->ops->vol(slot->arg, slot->vol);
 		ctl_sendmsg(p, ibuf, ibuf->r.midi.msg, ibuf->r.midi.len);
 	}
@@ -1199,7 +1200,7 @@ ctl_new(char *name)
 		p->u.ctl.slot[i].vol = MIDI_MAXCTL;
 		p->u.ctl.slot[i].tstate = CTL_OFF;
 		p->u.ctl.slot[i].serial = p->u.ctl.serial++;
-		strlcpy(p->u.ctl.slot[i].name, "unknown", CTL_NAMEMAX);
+		p->u.ctl.slot[i].name[0] = '\0';
 	}
 	return p;
 }
