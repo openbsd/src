@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.231 2010/04/06 14:12:10 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.232 2010/05/06 12:58:40 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -478,7 +478,8 @@ void	setgroupattribs(char *, int, char *[]);
 void	printif(char *, int);
 void	printb(char *, unsigned short, char *);
 void	printb_status(unsigned short, char *);
-void	status(int, struct sockaddr_dl *);
+const char *get_linkstate(int, int);
+void	status(int, struct sockaddr_dl *, int);
 void	usage(int);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
 void	print_string(const u_int8_t *, int);
@@ -893,6 +894,7 @@ void
 printif(char *ifname, int ifaliases)
 {
 	struct ifaddrs *ifap, *ifa;
+	struct if_data *ifdata;
 	const char *namep;
 	char *oname = NULL;
 	struct ifreq *ifrp;
@@ -949,7 +951,9 @@ printif(char *ifname, int ifaliases)
 			namep = ifa->ifa_name;
 			if (getinfo(ifrp, 0) < 0)
 				continue;
-			status(1, (struct sockaddr_dl *)ifa->ifa_addr);
+			ifdata = ifa->ifa_data;
+			status(1, (struct sockaddr_dl *)ifa->ifa_addr,
+			    ifdata->ifi_link_state);
 			count++;
 			noinet = 1;
 			continue;
@@ -2676,12 +2680,29 @@ const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 const struct ifmedia_status_description ifm_status_descriptions[] =
 	IFM_STATUS_DESCRIPTIONS;
 
+const struct if_status_description if_status_descriptions[] =
+	LINK_STATE_DESCRIPTIONS;
+
+const char *
+get_linkstate(int mt, int link_state)
+{
+	const struct if_status_description *p;
+	static char buf[8];
+
+	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
+		if (LINK_STATE_DESC_MATCH(p, mt, link_state))
+			return (p->ifs_string);
+	}
+	snprintf(buf, sizeof(buf), "[#%d]", link_state);
+	return buf;
+}
+
 /*
  * Print the status of the interface.  If an address family was
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status(int link, struct sockaddr_dl *sdl)
+status(int link, struct sockaddr_dl *sdl, int ls)
 {
 	const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
@@ -2734,6 +2755,9 @@ status(int link, struct sockaddr_dl *sdl)
 		/*
 		 * Interface doesn't support SIOC{G,S}IFMEDIA.
 		 */
+		if (ls != LINK_STATE_UNKNOWN)
+			printf("\tstatus: %s\n",
+			    get_linkstate(sdl->sdl_type, ls));
 		goto proto_status;
 	}
 
