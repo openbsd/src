@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.40 2010/02/16 18:13:52 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.41 2010/05/07 22:32:34 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -431,8 +431,8 @@ nbr_adj_timer(int fd, short event, void *arg)
 		return ;
 
 	if (nbr->state & NBR_STA_ACTIVE && nbr->state != NBR_STA_FULL) {
-		log_warnx("nbr_adj_timer: failed to form adjacency with %s",
-		    inet_ntoa(nbr->id));
+		log_warnx("nbr_adj_timer: failed to form adjacency with %s "
+		    "on interface %s", inet_ntoa(nbr->id), nbr->iface->name);
 		nbr_fsm(nbr, NBR_EVT_ADJTMOUT);
 	}
 }
