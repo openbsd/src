@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.155 2010/04/30 11:06:16 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.156 2010/05/07 13:16:18 claudio Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -83,7 +83,6 @@ pseudo-device	pf		# packet filter
 pseudo-device	pflog		# pf log if
 pseudo-device	pfsync		# pf sync if
 pseudo-device	pflow		# pflow export if
-pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
 
 pseudo-device	pty	16	# initial number of pseudo-terminals
@@ -102,18 +101,19 @@ pseudo-device	carp		# CARP protocol support
 pseudo-device	gif		# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	gre		# GRE encapsulation interface
 pseudo-device	loop		# network loopback
-pseudo-device	ppp		# PPP
-pseudo-device	sl		# CSLIP
-pseudo-device	tun		# network tunneling over tty
-pseudo-device	vlan 		# IEEE 802.1Q VLAN 
-pseudo-device	trunk		# Trunking support
-pseudo-device	vether		# Virtual ethernet
 #pseudo-device	mpe		# MPLS PE interface
+pseudo-device	ppp		# PPP
+pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
+pseudo-device	sl		# CSLIP
+pseudo-device	sppp	1	# Sync PPP/HDLC
+pseudo-device	trunk		# Trunking support
+pseudo-device	tun		# network tunneling over tty
+pseudo-device	vether		# Virtual ethernet
+pseudo-device	vlan 		# IEEE 802.1Q VLAN 
 
 # for IPv6
 #pseudo-device	faith	1	# IPv[46] tcp relay translation i/f
 
-pseudo-device	pppoe	1	# PPP over Ethernet (RFC 2516)
 pseudo-device	bio	1	# ioctl multiplexing device
 
 option		BOOT_CONFIG	# add support for boot -c
