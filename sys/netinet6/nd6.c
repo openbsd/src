@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.83 2010/02/08 11:56:09 jsing Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.84 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1528,7 +1528,7 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 			return NULL;
 #endif
 
-		rt = nd6_lookup(from, 1, ifp);
+		rt = nd6_lookup(from, RT_REPORT, ifp);
 		is_newentry = 1;
 	} else {
 		/* do nothing if static ndp is set */
@@ -1772,7 +1772,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst,
-			    1, 0)) != NULL)
+			    RT_REPORT, 0)) != NULL)
 			{
 				rt->rt_refcnt--;
 				if (rt->rt_ifp != ifp)
@@ -1810,7 +1810,8 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
 			lookup:
-				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1, 0);
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway,
+				    RT_REPORT, 0);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}
@@ -1834,7 +1835,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		 * it is tolerable, because this should be a rare case.
 		 */
 		if (nd6_is_addr_neighbor(dst, ifp) &&
-		    (rt = nd6_lookup(&dst->sin6_addr, 1, ifp)) != NULL)
+		    (rt = nd6_lookup(&dst->sin6_addr, RT_REPORT, ifp)) != NULL)
 			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	}
 	if (!ln || !rt) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.49 2010/04/06 14:12:10 stsp Exp $	*/
+/*	$OpenBSD: in6.h,v 1.50 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -390,6 +390,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #if __BSD_VISIBLE
 struct route_in6 {
 	struct	rtentry *ro_rt;
+	u_long		 ro_tableid;	/* padded to long for alignment */
 	struct	sockaddr_in6 ro_dst;
 };
 #endif

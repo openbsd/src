@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.67 2010/04/21 11:52:46 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.68 2010/05/07 13:33:16 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
  */
 struct route {
 	struct	rtentry *ro_rt;
+	u_long		 ro_tableid;	/* u_long because of alignment */
 	struct	sockaddr ro_dst;
 };
 
@@ -340,11 +341,10 @@ void		 rtlabel_unref(u_int16_t);
 } while (/* CONSTCOND */0)
 
 /*
- * Values for additional argument to rtalloc_noclone() and rtalloc2()
+ * Values for additional argument to rtalloc1()
  */
-#define	ALL_CLONING 0
-#define	ONNET_CLONING 1
-#define	NO_CLONING 2
+#define	RT_REPORT	0x1
+#define	RT_NOCLONING	0x2
 
 extern struct route_cb route_cb;
 extern struct rtstat rtstat;
@@ -381,15 +381,13 @@ void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
 void	 rt_timer_remove_all(struct rtentry *);
 unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
+void	 rtalloc_noclone(struct route *);
 void	 rtalloc(struct route *);
 #ifdef SMALL_KERNEL
-#define	rtalloc_mpath(r, s, t)	rtalloc(r)
+#define	rtalloc_mpath(r, s)	rtalloc(r)
 #endif
 struct rtentry *
 	 rtalloc1(struct sockaddr *, int, u_int);
-void	 rtalloc_noclone(struct route *, int);
-struct rtentry *
-	 rtalloc2(struct sockaddr *, int, int);
 void	 rtfree(struct rtentry *);
 int	 rt_getifa(struct rt_addrinfo *, u_int);
 int	 rtinit(struct ifaddr *, int, int);

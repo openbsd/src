@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.17 2009/03/02 14:39:24 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.18 2010/05/07 13:33:16 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
  * allocate a route, potentially using multipath to select the peer.
  */
 void
-rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp, u_int tableid)
+rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp)
 {
 #if defined(INET) || defined(INET6)
 	struct radix_node *rn;
@@ -394,7 +394,7 @@ rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp, u_int tableid)
 	 */
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 1, tableid);
+	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT, ro->ro_tableid);
 
 	/* if the route does not exist or it is not multipath, don't care */
 	if (!ro->ro_rt || !(ro->ro_rt->rt_flags & RTF_MPATH))

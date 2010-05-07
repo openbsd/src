@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.45 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.46 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #endif
 
 struct	route_in6 ip6_forward_rt;
-u_int	ip6_forward_rtableid;
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -244,15 +243,15 @@ reroute:
 		 */
 		if (ip6_forward_rt.ro_rt == 0 ||
 		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
-		    ip6_forward_rtableid != rtableid) {
+		    ip6_forward_rt.ro_tableid != rtableid) {
 			if (ip6_forward_rt.ro_rt) {
 				RTFREE(ip6_forward_rt.ro_rt);
 				ip6_forward_rt.ro_rt = 0;
 			}
 			/* this probably fails but give it a try again */
+			ip6_forward_rt.ro_tableid = rtableid;
 			rtalloc_mpath((struct route *)&ip6_forward_rt,
-			    &ip6->ip6_src.s6_addr32[0], rtableid);
-			ip6_forward_rtableid = rtableid;
+			    &ip6->ip6_src.s6_addr32[0]);
 		}
 
 		if (ip6_forward_rt.ro_rt == 0) {
@@ -268,7 +267,7 @@ reroute:
 	} else if (ip6_forward_rt.ro_rt == 0 ||
 	   (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
 	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
-	   ip6_forward_rtableid != rtableid) {
+	   ip6_forward_rt.ro_tableid != rtableid) {
 		if (ip6_forward_rt.ro_rt) {
 			RTFREE(ip6_forward_rt.ro_rt);
 			ip6_forward_rt.ro_rt = 0;
@@ -277,10 +276,10 @@ reroute:
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_family = AF_INET6;
 		dst->sin6_addr = ip6->ip6_dst;
+		ip6_forward_rt.ro_tableid = rtableid;
 
 		rtalloc_mpath((struct route *)&ip6_forward_rt,
-		    &ip6->ip6_src.s6_addr32[0], rtableid);
-		ip6_forward_rtableid = rtableid;
+		    &ip6->ip6_src.s6_addr32[0]);
 
 		if (ip6_forward_rt.ro_rt == 0) {
 			ip6stat.ip6s_noroute++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.111 2010/02/08 12:16:02 jsing Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.112 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1218,7 +1218,7 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 			ro_pmtu->ro_rt = (struct rtentry *)NULL;
 		}
 		if (ro_pmtu->ro_rt == 0) {
-			bzero(sa6_dst, sizeof(*sa6_dst));
+			bzero(ro_pmtu, sizeof(*ro_pmtu));
 			sa6_dst->sin6_family = AF_INET6;
 			sa6_dst->sin6_len = sizeof(struct sockaddr_in6);
 			sa6_dst->sin6_addr = *dst;
@@ -2437,9 +2437,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			 * address, and choose the outgoing interface.
 			 *   XXX: is it a good approach?
 			 */
-			ro.ro_rt = NULL;
+			bzero(&ro, sizeof(ro));
 			dst = (struct sockaddr_in6 *)&ro.ro_dst;
-			bzero(dst, sizeof(*dst));
 			dst->sin6_len = sizeof(struct sockaddr_in6);
 			dst->sin6_family = AF_INET6;
 			dst->sin6_addr = mreq->ipv6mr_multiaddr;

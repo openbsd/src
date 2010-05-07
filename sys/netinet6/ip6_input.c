@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.95 2010/02/08 12:16:02 jsing Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.96 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -197,7 +197,6 @@ ip6intr(void)
 }
 
 extern struct	route_in6 ip6_forward_rt;
-extern u_int	ip6_forward_rtableid;
 
 void
 ip6_input(struct mbuf *m)
@@ -449,7 +448,7 @@ ip6_input(struct mbuf *m)
 	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 && 
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 			       &ip6_forward_rt.ro_dst.sin6_addr) &&
-	    rtableid == ip6_forward_rtableid)
+	    rtableid == ip6_forward_rt.ro_tableid)
 		ip6stat.ip6s_forward_cachehit++;
 	else {
 		if (ip6_forward_rt.ro_rt) {
@@ -463,10 +462,10 @@ ip6_input(struct mbuf *m)
 		ip6_forward_rt.ro_dst.sin6_len = sizeof(struct sockaddr_in6);
 		ip6_forward_rt.ro_dst.sin6_family = AF_INET6;
 		ip6_forward_rt.ro_dst.sin6_addr = ip6->ip6_dst;
-		ip6_forward_rtableid = rtableid;
+		ip6_forward_rt.ro_tableid = rtableid;
 
 		rtalloc_mpath((struct route *)&ip6_forward_rt,
-		    &ip6->ip6_src.s6_addr32[0], rtableid);
+		    &ip6->ip6_src.s6_addr32[0]);
 	}
 
 #define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))

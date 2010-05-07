@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.308 2010/04/28 12:46:18 robert Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.309 2010/05/07 13:33:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -354,14 +354,14 @@ struct pfi_dynaddr {
 #endif /* PF_INET6_ONLY */
 #endif /* PF_INET_INET6 */
 
-#define	PF_MISMATCHAW(aw, x, af, neg, ifp)				\
+#define	PF_MISMATCHAW(aw, x, af, neg, ifp, rtid)			\
 	(								\
 		(((aw)->type == PF_ADDR_NOROUTE &&			\
-		    pf_routable((x), (af), NULL)) ||			\
+		    pf_routable((x), (af), NULL, (rtid))) ||		\
 		(((aw)->type == PF_ADDR_URPFFAILED && (ifp) != NULL &&	\
-		    pf_routable((x), (af), (ifp))) ||			\
+		    pf_routable((x), (af), (ifp), (rtid))) ||		\
 		((aw)->type == PF_ADDR_RTLABEL &&			\
-		    !pf_rtlabel_match((x), (af), (aw))) ||		\
+		    !pf_rtlabel_match((x), (af), (aw), (rtid))) ||	\
 		((aw)->type == PF_ADDR_TABLE &&				\
 		    !pfr_match_addr((aw)->p.tbl, (x), (af))) ||		\
 		((aw)->type == PF_ADDR_DYNIFTL &&			\
@@ -1781,8 +1781,10 @@ void	pf_scrub_ip6(struct mbuf **, u_int8_t);
 u_int32_t
 	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);
-int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *);
-int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *);
+int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *,
+	    int);
+int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *,
+	    int);
 int	pf_socket_lookup(int, struct pf_pdesc *);
 struct pf_state_key *pf_alloc_state_key(int);
 void	pf_pkt_addr_changed(struct mbuf *);

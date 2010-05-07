@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.24 2010/02/08 12:04:35 jsing Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.25 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -239,10 +239,9 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			sa6->sin6_addr = *dst;
 			sa6->sin6_scope_id = dstsock->sin6_scope_id;
 			if (IN6_IS_ADDR_MULTICAST(dst)) {
-				ro->ro_rt = rtalloc1(&((struct route *)ro)
-						     ->ro_dst, 0, 0);
+				rtalloc((struct route *)ro);
 			} else {
-				rtalloc_mpath((struct route *)ro, NULL, 0);
+				rtalloc_mpath((struct route *)ro, NULL);
 			}
 		}
 
@@ -371,6 +370,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				ron->ro_rt = NULL;
 			}
 			*satosin6(&ron->ro_dst) = *sin6_next;
+			ron->ro_tableid = 0;	/* XXX rtableid */
 		}
 		if (ron->ro_rt == NULL) {
 			rtalloc((struct route *)ron); /* multi path case? */
@@ -423,7 +423,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
 			*sa6 = *dstsock;
 			sa6->sin6_scope_id = 0;
-			rtalloc_mpath((struct route *)ro, NULL, 0);
+			rtalloc_mpath((struct route *)ro, NULL);
 		}
 
 		/*

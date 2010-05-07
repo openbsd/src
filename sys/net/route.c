@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.116 2010/03/20 10:43:11 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.117 2010/05/07 13:33:16 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -280,83 +280,28 @@ rtable_exists(u_int id)	/* verify table with that ID exists */
 	return (1);
 }
 
-#include "pf.h"
-#if NPF > 0
-void
-rtalloc_noclone(struct route *ro, int howstrict)
-{
-	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;		/* XXX */
-	ro->ro_rt = rtalloc2(&ro->ro_dst, 1, howstrict);
-}
-
-int
-okaytoclone(u_int flags, int howstrict)
-{
-	if (howstrict == ALL_CLONING)
-		return (1);
-	if (howstrict == ONNET_CLONING && !(flags & RTF_GATEWAY))
-		return (1);
-	return (0);
-}
-
-struct rtentry *
-rtalloc2(struct sockaddr *dst, int report, int howstrict)
-{
-	struct radix_node_head	*rnh;
-	struct rtentry		*rt;
-	struct radix_node	*rn;
-	struct rtentry		*newrt = 0;
-	struct rt_addrinfo	 info;
-	int			 s = splnet(), err = 0, msgtype = RTM_MISS;
-
-	bzero(&info, sizeof(info));
-	info.rti_info[RTAX_DST] = dst;
-
-	rnh = rt_gettable(dst->sa_family, 0);
-	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
-	    ((rn->rn_flags & RNF_ROOT) == 0)) {
-		newrt = rt = (struct rtentry *)rn;
-		if (report && (rt->rt_flags & RTF_CLONING) &&
-		    okaytoclone(rt->rt_flags, howstrict)) {
-			err = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
-			    &newrt, 0);
-			if (err) {
-				newrt = rt;
-				rt->rt_refcnt++;
-				goto miss;
-			}
-			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
-				msgtype = RTM_RESOLVE;
-				goto miss;
-			}
-		} else
-			rt->rt_refcnt++;
-	} else {
-		rtstat.rts_unreach++;
-miss:
-		if (report) {
-			rt_missmsg(msgtype, &info, 0, NULL, err, 0);
-		}
-	}
-	splx(s);
-	return (newrt);
-}
-#endif /* NPF > 0 */
-
 /*
  * Packet routing routines.
  */
+void
+rtalloc_noclone(struct route *ro)
+{
+	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
+		return;				 /* XXX */
+	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT | RT_NOCLONING,
+	    ro->ro_tableid);
+}
+
 void
 rtalloc(struct route *ro)
 {
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;				 /* XXX */
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 1, 0);
+	ro->ro_rt = rtalloc1(&ro->ro_dst, RT_REPORT, ro->ro_tableid);
 }
 
 struct rtentry *
-rtalloc1(struct sockaddr *dst, int report, u_int tableid)
+rtalloc1(struct sockaddr *dst, int flags, u_int tableid)
 {
 	struct radix_node_head	*rnh;
 	struct rtentry		*rt;
@@ -372,7 +317,8 @@ rtalloc1(struct sockaddr *dst, int report, u_int tableid)
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
-		if (report && (rt->rt_flags & RTF_CLONING)) {
+		if ((rt->rt_flags & RTF_CLONING) &&
+		    ISSET(flags,  RT_REPORT | RT_NOCLONING) == RT_REPORT) {
 			err = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &newrt, tableid);
 			if (err) {
@@ -407,7 +353,7 @@ rtalloc1(struct sockaddr *dst, int report, u_int tableid)
 	 * sent upward breaking user-level routing queries.
 	 */
 miss:
-		if (report && dst->sa_family != PF_KEY) {
+		if (ISSET(flags, RT_REPORT) && dst->sa_family != PF_KEY) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, NULL, err, tableid);
@@ -1032,7 +978,7 @@ rt_setgate(struct rtentry *rt0, struct sockaddr *dst, struct sockaddr *gate,
 	}
 	if (rt->rt_flags & RTF_GATEWAY) {
 		/* XXX is this actually valid to cross tables here? */
-		rt->rt_gwroute = rtalloc1(gate, 1, rtable_l2(tableid));
+		rt->rt_gwroute = rtalloc1(gate, RT_REPORT, rtable_l2(tableid));
 		/*
 		 * If we switched gateways, grab the MTU from the new
 		 * gateway route if the current MTU is 0 or greater

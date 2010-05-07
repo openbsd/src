@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.88 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.89 2010/05/07 13:33:16 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -688,7 +688,7 @@ icmp_reflect(struct mbuf *m)
 		dst->sin_addr = ip->ip_src;
 
 		/* keep packet in the original virtual instance */
-		ro.ro_rt = rtalloc1(&ro.ro_dst, 1,
+		ro.ro_rt = rtalloc1(&ro.ro_dst, RT_REPORT,
 		     m->m_pkthdr.rdomain);
 		if (ro.ro_rt == 0) {
 			ipstat.ips_noroute++;
@@ -878,7 +878,7 @@ icmp_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
 	struct rtentry *rt;
 	int error;
 
-	rt = rtalloc1(dst, 1, rtableid);
+	rt = rtalloc1(dst, RT_REPORT, rtableid);
 	if (rt == 0)
 		return (NULL);
 

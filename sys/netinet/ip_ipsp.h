@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.140 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.141 2010/05/07 13:33:17 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -262,6 +262,7 @@ struct ipsec_policy {
 
 struct route_enc {
 	struct rtentry		*re_rt;
+	u_long			re_tableid; /* u_long because of alignment */
 	struct sockaddr_encap	re_dst;
 };
 

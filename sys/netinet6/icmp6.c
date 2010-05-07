@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.111 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.112 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2755,7 +2755,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 	struct rtentry *rt;
 	int    error;
 
-	rt = rtalloc1(dst, 1, 0);
+	rt = rtalloc1(dst, RT_REPORT, 0);
 	if (rt == 0)
 		return NULL;
 

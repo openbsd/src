@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.178 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.179 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -224,7 +224,6 @@ ip_init()
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 struct	route ipforward_rt;
-u_int	ipforward_rtableid;
 
 void
 ipintr()
@@ -1213,7 +1212,7 @@ ip_rtaddr(struct in_addr dst, u_int rtableid)
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = dst;
 
-		ipforward_rt.ro_rt = rtalloc1(&ipforward_rt.ro_dst, 1,
+		ipforward_rt.ro_rt = rtalloc1(&ipforward_rt.ro_dst, RT_REPORT,
 		    rtableid);
 	}
 	if (ipforward_rt.ro_rt == 0)
@@ -1444,7 +1443,7 @@ ip_forward(m, srcrt)
 	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
 	    ip->ip_dst.s_addr != sin->sin_addr.s_addr ||
-	    rtableid != ipforward_rtableid) {
+	    rtableid != ipforward_rt.ro_tableid) {
 		if (ipforward_rt.ro_rt) {
 			RTFREE(ipforward_rt.ro_rt);
 			ipforward_rt.ro_rt = 0;
@@ -1452,13 +1451,13 @@ ip_forward(m, srcrt)
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = ip->ip_dst;
+		ipforward_rt.ro_tableid = rtableid;
 
-		rtalloc_mpath(&ipforward_rt, &ip->ip_src.s_addr, rtableid);
+		rtalloc_mpath(&ipforward_rt, &ip->ip_src.s_addr);
 		if (ipforward_rt.ro_rt == 0) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
 			return;
 		}
-		ipforward_rtableid = rtableid;
 		rt = ipforward_rt.ro_rt;
 	}
 

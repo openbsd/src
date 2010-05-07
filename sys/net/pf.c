@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.690 2010/02/04 14:10:12 sthen Exp $ */
+/*	$OpenBSD: pf.c,v 1.691 2010/05/07 13:33:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -213,7 +213,7 @@ u_int8_t		 pf_get_wscale(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
 u_int16_t		 pf_get_mss(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
-u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t,
+u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t, int,
 				u_int16_t);
 void			 pf_set_rt_ifp(struct pf_state *,
 			    struct pf_addr *);
@@ -2600,7 +2600,7 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 }
 
 u_int16_t
-pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
+pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtabelid, u_int16_t offer)
 {
 #ifdef INET
 	struct sockaddr_in	*dst;
@@ -2614,7 +2614,6 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
-	/* XXX needs to know about routing domain or actually rtableid */
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -2624,7 +2623,8 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
-		rtalloc_noclone(&ro, NO_CLONING);
+		ro.ro_tableid = rtabelid;
+		rtalloc_noclone(&ro);
 		rt = ro.ro_rt;
 		break;
 #endif /* INET */
@@ -2636,7 +2636,8 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
-		rtalloc_noclone((struct route *)&ro6, NO_CLONING);
+		ro6.ro_tableid = rtabelid;
+		rtalloc_noclone((struct route *)&ro6);
 		rt = ro6.ro_rt;
 		break;
 #endif /* INET6 */
@@ -2760,7 +2761,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	bzero(&act, sizeof(act));
 	bzero(sns, sizeof(sns));
-	act.rtableid = -1;
+	act.rtableid = pd->rdomain;
 	SLIST_INIT(&rules);
 
 	if (direction == PF_IN && pf_check_congestion(ifq)) {
@@ -2835,14 +2836,14 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (PF_MISMATCHAW(&r->src.addr, &saddr, af,
-		    r->src.neg, kif))
+		    r->src.neg, kif, act.rtableid))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		/* tcp/udp only. port_op always 0 in other cases */
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], sport))
 			r = r->skip[PF_SKIP_SRC_PORT].ptr;
 		else if (PF_MISMATCHAW(&r->dst.addr, &daddr, af,
-		    r->dst.neg, NULL))
+		    r->dst.neg, NULL, act.rtableid))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		/* tcp/udp only. port_op always 0 in other cases */
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
@@ -3238,12 +3239,15 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 	}
 	if (pd->proto == IPPROTO_TCP && (th->th_flags & (TH_SYN|TH_ACK)) ==
 	    TH_SYN && r->keep_state == PF_STATE_SYNPROXY) {
+		int rtid = pd->rdomain;
+		if (act->rtableid >= 0)
+			rtid = act->rtableid;
 		s->src.state = PF_TCPS_PROXY_SRC;
 		s->src.seqhi = htonl(arc4random());
 		/* Find mss option */
 		mss = pf_get_mss(m, off, th->th_off, pd->af);
-		mss = pf_calc_mss(pd->src, pd->af, mss);
-		mss = pf_calc_mss(pd->dst, pd->af, mss);
+		mss = pf_calc_mss(pd->src, pd->af, rtid, mss);
+		mss = pf_calc_mss(pd->dst, pd->af, rtid, mss);
 		s->src.mss = mss;
 		pf_send_tcp(r, pd->af, pd->dst, pd->src, th->th_dport,
 		    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
@@ -3380,10 +3384,10 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af,
-		    r->src.neg, kif))
+		    r->src.neg, kif, /* XXX rdomain */ 0))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af,
-		    r->dst.neg, NULL))
+		    r->dst.neg, NULL, /* XXX rdomain */ 0))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
@@ -4913,7 +4917,8 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 }
 
 int
-pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
+pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
+    int rtableid)
 {
 	struct sockaddr_in	*dst;
 	int			 ret = 1;
@@ -4930,9 +4935,9 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 	struct rtentry		*rt;
 	struct ifnet		*ifp;
 
-	/* XXX needs to know about routing domain or actually rtableid */
 	check_mpath = 0;
 	bzero(&ro, sizeof(ro));
+	ro.ro_tableid = rtableid;
 	switch (af) {
 	case AF_INET:
 		dst = satosin(&ro.ro_dst);
@@ -4966,7 +4971,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 	if (kif != NULL && kif->pfik_ifp->if_type == IFT_ENC)
 		goto out;
 
-	rtalloc_noclone((struct route *)&ro, NO_CLONING);
+	rtalloc_noclone((struct route *)&ro);
 
 	if (ro.ro_rt != NULL) {
 		/* No interface given, this is a no-route check */
@@ -5001,7 +5006,8 @@ out:
 }
 
 int
-pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw)
+pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
+    int rtableid)
 {
 	struct sockaddr_in	*dst;
 #ifdef INET6
@@ -5012,8 +5018,8 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw)
 #endif
 	int			 ret = 0;
 
-	/* XXX needs to know about routing domain or actually rtableid */
 	bzero(&ro, sizeof(ro));
+	ro.ro_tableid = rtableid;
 	switch (af) {
 	case AF_INET:
 		dst = satosin(&ro.ro_dst);
@@ -5033,7 +5039,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw)
 		return (0);
 	}
 
-	rtalloc_noclone((struct route *)&ro, NO_CLONING);
+	rtalloc_noclone((struct route *)&ro);
 
 	if (ro.ro_rt != NULL) {
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
@@ -5095,6 +5101,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin_family = AF_INET;
 	dst->sin_len = sizeof(*dst);
 	dst->sin_addr = ip->ip_dst;
+	ro->ro_tableid = m0->m_pkthdr.rdomain;
 
 	if (r->rt == PF_FASTROUTE) {
 		rtalloc(ro);

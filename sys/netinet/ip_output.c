@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.204 2010/01/13 12:09:36 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.205 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -186,7 +186,8 @@ ip_output(struct mbuf *m0, ...)
 		 * destination and is still up.  If not, free it and try again.
 		 */
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
+		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
+		    ro->ro_tableid != m->m_pkthdr.rdomain)) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}
@@ -195,6 +196,7 @@ ip_output(struct mbuf *m0, ...)
 			dst->sin_family = AF_INET;
 			dst->sin_len = sizeof(*dst);
 			dst->sin_addr = ip->ip_dst;
+			ro->ro_tableid = m->m_pkthdr.rdomain;
 		}
 
 		/*
@@ -221,8 +223,7 @@ ip_output(struct mbuf *m0, ...)
 			IFP_TO_IA(ifp, ia);
 		} else {
 			if (ro->ro_rt == 0)
-				rtalloc_mpath(ro, NULL,
-				    m->m_pkthdr.rdomain);
+				rtalloc_mpath(ro, NULL);
 
 			if (ro->ro_rt == 0) {
 				ipstat.ips_noroute++;
@@ -363,7 +364,8 @@ reroute:
 		 * destination and is still up.  If not, free it and try again.
 		 */
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
+		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
+		    ro->ro_tableid != m->m_pkthdr.rdomain)) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}
@@ -372,6 +374,7 @@ reroute:
 			dst->sin_family = AF_INET;
 			dst->sin_len = sizeof(*dst);
 			dst->sin_addr = ip->ip_dst;
+			ro->ro_tableid = m->m_pkthdr.rdomain;
 		}
 
 		/*
@@ -398,8 +401,7 @@ reroute:
 			IFP_TO_IA(ifp, ia);
 		} else {
 			if (ro->ro_rt == 0)
-				rtalloc_mpath(ro, &ip->ip_src.s_addr,
-				    m->m_pkthdr.rdomain);
+				rtalloc_mpath(ro, &ip->ip_src.s_addr);
 
 			if (ro->ro_rt == 0) {
 				ipstat.ips_noroute++;
@@ -651,7 +653,7 @@ sendit:
 				if (ro && ro->ro_rt != NULL) {
 					RTFREE(ro->ro_rt);
 					ro->ro_rt = NULL;
-					rtalloc1(&ro->ro_dst, 1,
+					rtalloc1(&ro->ro_dst, RT_REPORT,
 					    m->m_pkthdr.rdomain);
 				}
 				if (rt_mtucloned)
@@ -1875,7 +1877,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			dst->sin_addr = mreq->imr_multiaddr;
 			if (!(ro.ro_rt && ro.ro_rt->rt_ifp &&
 			    (ro.ro_rt->rt_flags & RTF_UP)))
-				ro.ro_rt = rtalloc1(&ro.ro_dst, 1, rdomain);
+				ro.ro_rt = rtalloc1(&ro.ro_dst, RT_REPORT,
+				    rdomain);
 			if (ro.ro_rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;

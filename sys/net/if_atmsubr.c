@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.30 2010/05/01 08:14:26 mk Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.31 2010/05/07 13:33:16 claudio Exp $       */
 
 /*
  *
@@ -160,7 +160,8 @@ atm_output(ifp, m0, dst, rt0)
 	if ((rt = rt0) != NULL) {
 
 		if ((rt->rt_flags & RTF_UP) == 0) { /* route went down! */
-			if ((rt0 = rt = RTALLOC1(dst, 0)) != NULL)
+			if ((rt0 = rt = rtalloc1(dst, RT_REPORT,
+			     m->m_pkthdr.rdomain)) != NULL)
 				rt->rt_refcnt--;
 			else 
 				senderr(EHOSTUNREACH);
@@ -171,7 +172,8 @@ atm_output(ifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = RTALLOC1(rt->rt_gateway, 0);
+			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway,
+			    RT_REPORT, ifp->if_rdomain);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}

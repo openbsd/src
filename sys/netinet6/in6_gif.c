@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.27 2008/09/28 15:25:32 jsing Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.28 2010/05/07 13:33:17 claudio Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -153,6 +153,8 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		dst->sin6_family = sin6_dst->sin6_family;
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_addr = sin6_dst->sin6_addr;
+		/* XXX rdomain */
+		sc->gif_ro6.ro_tableid = 0;
 		if (sc->gif_ro6.ro_rt) {
 			RTFREE(sc->gif_ro6.ro_rt);
 			sc->gif_ro6.ro_rt = NULL;
