@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.52 2010/05/04 19:35:20 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.53 2010/05/07 07:13:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -815,7 +815,8 @@ dev_getep(unsigned mode, struct abuf **sibuf, struct abuf **sobuf)
 void
 dev_sync(unsigned mode, struct abuf *ibuf, struct abuf *obuf)
 {
-	int delta;
+	int delta, offs;
+	struct abuf *mbuf;
 
 	if (!dev_getep(mode, &ibuf, &obuf))
 		return;
@@ -824,46 +825,39 @@ dev_sync(unsigned mode, struct abuf *ibuf, struct abuf *obuf)
 	 * of the record chain. It's necessary to schedule silences (or
 	 * drops) in order to start playback and record in sync.
 	 */
-	if (APROC_OK(dev_mix) && APROC_OK(dev_sub)) {
-		delta = dev_mix->u.mix.abspos - dev_sub->u.sub.abspos;
-	} else if (APROC_OK(dev_mix)) {
-		delta = dev_mix->u.mix.lat;
-	} else
-		delta = 0;
+	offs = 0;
+	delta = 0;
+	if (APROC_OK(dev_mix)) {
+		mbuf = LIST_FIRST(&dev_mix->outs);
+		offs += mbuf->w.mix.todo;
+		delta += dev_mix->u.mix.lat;
+	}
+	if (APROC_OK(dev_sub))
+		delta += dev_sub->u.sub.lat;
 #ifdef DEBUG
 	if (debug_level >= 3) {
-		dbg_puts("syncing device, delta = ");
-		dbg_putu(delta);
+		dbg_puts("syncing device");
 		if (APROC_OK(dev_mix)) {
 			dbg_puts(", ");
 			aproc_dbg(dev_mix);
-			dbg_puts(": abspos = ");
-			dbg_putu(dev_mix->u.mix.abspos);
+			dbg_puts(": todo = ");
+			dbg_putu(mbuf->w.mix.todo);
+			dbg_puts(": lat = ");
+			dbg_putu(dev_mix->u.mix.lat);
 		}
 		if (APROC_OK(dev_sub)) {
 			dbg_puts(", ");
 			aproc_dbg(dev_sub);
-			dbg_puts(": abspos = ");
-			dbg_putu(dev_sub->u.sub.abspos);
+			dbg_puts(": lat = ");
+			dbg_putu(dev_sub->u.sub.lat);
 		}
 		dbg_puts("\n");
 	}
 #endif
-	if (delta > 0) {
-		/*
-		 * The play chain is ahead (most cases) drop some of
-		 * the recorded input, to get both in sync.
-		 */
-		if (mode & MODE_RECMASK)
-			sub_silence(obuf, -delta);
-	} else if (delta < 0) {
-		/*
-		 * The record chain is ahead (should never happen,
-		 * right?) then insert silence to play.
-		 */
-		 if (mode & MODE_PLAY)
-		 	mix_drop(ibuf, delta);
-	}
+	if (mode & MODE_PLAY)
+	 	mix_drop(ibuf, -offs);
+	if (mode & MODE_RECMASK)
+		sub_silence(obuf, -(offs + delta));
 }
 
 /*
@@ -873,39 +867,17 @@ dev_sync(unsigned mode, struct abuf *ibuf, struct abuf *obuf)
 int
 dev_getpos(void)
 {
-	struct abuf *pbuf = NULL, *rbuf = NULL;
-	int plat = 0, rlat = 0;
-	int delta;
+	struct abuf *mbuf = NULL;
+	int lat;
 
+	lat = 0;
 	if (APROC_OK(dev_mix)) {
-		pbuf = LIST_FIRST(&dev_mix->outs);
-		if (!pbuf)
-			return 0;
-		plat = -dev_mix->u.mix.lat;
+		mbuf = LIST_FIRST(&dev_mix->outs);
+		lat -= mbuf->w.mix.todo + dev_mix->u.mix.lat;
 	}
-	if (APROC_OK(dev_sub)) {
-		rbuf = LIST_FIRST(&dev_sub->ins);
-		if (!rbuf)
-			return 0;
-		rlat = -dev_sub->u.sub.lat;
-	}
-	if (APROC_OK(dev_mix) && APROC_OK(dev_sub)) {
-		delta = dev_mix->u.mix.abspos - dev_sub->u.sub.abspos;
-		if (delta > 0)
-			rlat -= delta;
-		else if (delta < 0)
-			plat += delta;
-#ifdef DEBUG
-		if (rlat != plat) {
-			dbg_puts("dev_getpos: play/rec out of sync: plat = ");
-			dbg_puti(plat);
-			dbg_puts(", rlat = ");
-			dbg_puti(rlat);
-			dbg_puts("\n");
-		}
-#endif
-	}
-	return APROC_OK(dev_mix) ? plat : rlat;
+	if (APROC_OK(dev_sub))
+		lat -= dev_sub->u.sub.lat;
+	return lat;
 }
 
 /*
