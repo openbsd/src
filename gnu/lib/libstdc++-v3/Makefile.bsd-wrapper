@@ -1,0 +1,3 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2010/05/07 16:08:07 robert Exp $
+
+.include "Makefile"
