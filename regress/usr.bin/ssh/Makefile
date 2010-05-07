@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2010/02/26 20:33:21 djm Exp $
+#	$OpenBSD: Makefile,v 1.53 2010/05/07 11:31:26 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -60,7 +60,8 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		ls.copy banner.in banner.out empty.in \
 		scp-ssh-wrapper.exe ssh_proxy_envpass remote_pid \
 		sshd_proxy_bak rsa_ssh2_cr.prv rsa_ssh2_crnl.prv \
-		known_hosts-cert host_ca_key* cert_host_key*
+		known_hosts-cert host_ca_key* cert_host_key* \
+		authorized_principals_${USER}
 
 # Enable all malloc(3) randomisations and checks
 TEST_ENV=      "MALLOC_OPTIONS=AFGJPRX"
