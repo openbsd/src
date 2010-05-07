@@ -150,6 +150,25 @@ _Unwind_IsExtendedContext (struct _Unwind_Context *context)
 {
   return context->flags & EXTENDED_CONTEXT_BIT;
 }
+
+#ifdef __sparc64__
+
+/* Figure out StackGhost cookie.  */
+_Unwind_Word uw_get_wcookie(void);
+
+asm(".text\n"
+    "uw_get_wcookie:\n"
+    "	add  %o7, %g0, %g4\n"
+    "	save %sp, -176, %sp\n"
+    "	save %sp, -176, %sp\n"
+    "	flushw\n"
+    "	restore\n"
+    "	ldx [%sp + 2047 + 120], %g5\n"
+    "	xor %g4, %g5, %i0\n"
+    "	ret\n"
+    "	 restore\n");
+#endif
+
 
 /* Get the value of register INDEX as saved in CONTEXT.  */
 
@@ -172,6 +191,13 @@ _Unwind_GetGR (struct _Unwind_Context *context, int index)
   if (_Unwind_IsExtendedContext (context) && context->by_value[index])
     return (_Unwind_Word) (_Unwind_Internal_Ptr) ptr;
 
+#ifdef __sparc64__
+  /* _Unwind_Word and _Unwind_Ptr are the same size on sparc64 */
+  _Unwind_Word reg = * (_Unwind_Word *) ptr;
+  if (index == 15 || index == 31)
+    reg ^= uw_get_wcookie ();
+  return reg;
+#else
   /* This will segfault if the register hasn't been saved.  */
   if (size == sizeof(_Unwind_Ptr))
     return * (_Unwind_Ptr *) ptr;
@@ -180,6 +206,7 @@ _Unwind_GetGR (struct _Unwind_Context *context, int index)
       gcc_assert (size == sizeof(_Unwind_Word));
       return * (_Unwind_Word *) ptr;
     }
+#endif
 }
 
 static inline void *
