@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.58 2010/05/04 19:40:08 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.59 2010/05/07 07:15:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -808,7 +808,6 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 		if (odone > maxwrite)
 			odone = maxwrite;
 		p->u.mix.lat += odone;
-		p->u.mix.abspos += odone;
 		LIST_FOREACH(i, &p->ins, ient) {
 			i->r.mix.done -= odone;
 		}
@@ -894,7 +893,6 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		odone = maxwrite;
 	if (odone > 0) {
 		p->u.mix.lat += odone;
-		p->u.mix.abspos += odone;
 		LIST_FOREACH(i, &p->ins, ient) {
 			i->r.mix.done -= odone;
 		}
@@ -1024,7 +1022,6 @@ mix_new(char *name, int maxlat, unsigned round)
 	p->u.mix.lat = 0;
 	p->u.mix.round = round;
 	p->u.mix.maxlat = maxlat;
-	p->u.mix.abspos = 0;
 	p->u.mix.ctl = NULL;
 	p->u.mix.mon = NULL;
 	return p;
@@ -1083,7 +1080,6 @@ mix_clear(struct aproc *p)
 	struct abuf *obuf = LIST_FIRST(&p->outs);
 
 	p->u.mix.lat = 0;
-	p->u.mix.abspos = 0;
 	obuf->w.mix.todo = 0;
 }
 
@@ -1105,7 +1101,6 @@ mix_prime(struct aproc *p)
 			break;
 		obuf->w.mix.todo -= count;
 		p->u.mix.lat += count;
-		p->u.mix.abspos += count;
 		abuf_wcommit(obuf, count);
 		if (APROC_OK(p->u.mix.mon))
 			mon_snoop(p->u.mix.mon, obuf, 0, count);
@@ -1344,7 +1339,6 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	abuf_rdiscard(ibuf, idone);
 	abuf_opos(ibuf, idone);
 	p->u.sub.lat -= idone;
-	p->u.sub.abspos += idone;
 	return 1;
 }
 
@@ -1377,7 +1371,6 @@ sub_out(struct aproc *p, struct abuf *obuf)
 	abuf_rdiscard(ibuf, idone);
 	abuf_opos(ibuf, idone);
 	p->u.sub.lat -= idone;
-	p->u.sub.abspos += idone;
 	return 1;
 }
 
@@ -1474,7 +1467,6 @@ sub_new(char *name, int maxlat, unsigned round)
 	p->u.sub.lat = 0;
 	p->u.sub.round = round;
 	p->u.sub.maxlat = maxlat;
-	p->u.sub.abspos = 0;
 	p->u.sub.ctl = NULL;
 	return p;
 }
@@ -1483,7 +1475,6 @@ void
 sub_clear(struct aproc *p)
 {
 	p->u.sub.lat = 0;
-	p->u.sub.abspos = 0;
 }
 
 /*
