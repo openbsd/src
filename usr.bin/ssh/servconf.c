@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.207 2010/03/25 23:38:28 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.208 2010/05/07 11:30:29 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -124,6 +124,7 @@ initialize_server_options(ServerOptions *options)
 	options->zero_knowledge_password_authentication = -1;
 	options->revoked_keys_file = NULL;
 	options->trusted_user_ca_keys = NULL;
+	options->authorized_principals_file = NULL;
 }
 
 void
@@ -285,7 +286,7 @@ typedef enum {
 	sMatch, sPermitOpen, sForceCommand, sChrootDirectory,
 	sUsePrivilegeSeparation, sAllowAgentForwarding,
 	sZeroKnowledgePasswordAuthentication, sHostCertificate,
-	sRevokedKeys, sTrustedUserCAKeys,
+	sRevokedKeys, sTrustedUserCAKeys, sAuthorizedPrincipalsFile,
 	sDeprecated, sUnsupported
 } ServerOpCodes;
 
@@ -395,6 +396,7 @@ static struct {
 	{ "hostcertificate", sHostCertificate, SSHCFG_GLOBAL },
 	{ "revokedkeys", sRevokedKeys, SSHCFG_ALL },
 	{ "trustedusercakeys", sTrustedUserCAKeys, SSHCFG_ALL },
+	{ "authorizedprincipalsfile", sAuthorizedPrincipalsFile, SSHCFG_GLOBAL },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -1175,10 +1177,14 @@ process_server_config_line(ServerOptions *options, char *line,
 	 * AuthorizedKeysFile	/etc/ssh_keys/%u
 	 */
 	case sAuthorizedKeysFile:
+		charptr = &options->authorized_keys_file;
+		goto parse_tilde_filename;
 	case sAuthorizedKeysFile2:
-		charptr = (opcode == sAuthorizedKeysFile) ?
-		    &options->authorized_keys_file :
-		    &options->authorized_keys_file2;
+		charptr = &options->authorized_keys_file2;
+		goto parse_tilde_filename;
+	case sAuthorizedPrincipalsFile:
+		charptr = &options->authorized_principals_file;
+ parse_tilde_filename:
 		arg = strdelim(&cp);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing file name.",
@@ -1634,6 +1640,8 @@ dump_config(ServerOptions *o)
 	dump_cfg_string(sChrootDirectory, o->chroot_directory);
 	dump_cfg_string(sTrustedUserCAKeys, o->trusted_user_ca_keys);
 	dump_cfg_string(sRevokedKeys, o->revoked_keys_file);
+	dump_cfg_string(sAuthorizedPrincipalsFile,
+	    o->authorized_principals_file);
 
 	/* string arguments requiring a lookup */
 	dump_cfg_string(sLogLevel, log_level_name(o->log_level));
