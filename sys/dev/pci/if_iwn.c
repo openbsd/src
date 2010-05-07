@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.94 2010/05/05 19:47:43 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.95 2010/05/07 11:16:04 dhill Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3072,8 +3072,10 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	 * Prevent processes from entering this function while another
 	 * process is tsleep'ing in it.
 	 */
-	if (sc->sc_flags & IWN_FLAG_BUSY)
+	if (sc->sc_flags & IWN_FLAG_BUSY) {
+		splx(s);
 		return EBUSY;
+	}
 	sc->sc_flags |= IWN_FLAG_BUSY;
 
 	switch (cmd) {
