@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.6 2010/04/20 19:22:06 oga Exp $	*/
+/*	$OpenBSD: pte.h,v 1.7 2010/05/08 16:54:07 oga Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -110,15 +110,23 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define	PG_N		0x0000000000000010UL	/* non-cacheable */
 #define	PG_U		0x0000000000000020UL	/* used */
 #define	PG_M		0x0000000000000040UL	/* modified */
-#define PG_PS		0x0000000000000080UL	/* 2MB page size */
-#define PG_G		0x0000000000000100UL	/* not flushed */
-#define PG_AVAIL1	0x0000000000000200UL
-#define PG_AVAIL2	0x0000000000000400UL
-#define PG_AVAIL3	0x0000000000000800UL
-#define PG_NX		0x8000000000000000UL	/* non-executable */
+#define	PG_PAT		0x0000000000000080UL	/* PAT bit. (on pte) */
+#define	PG_PS		0x0000000000000080UL	/* 2MB page size (on pde) */
+#define	PG_G		0x0000000000000100UL	/* not flushed */
+#define	PG_AVAIL1	0x0000000000000200UL
+#define	PG_AVAIL2	0x0000000000000400UL
+#define	PG_AVAIL3	0x0000000000000800UL
+#define	PG_PATLG	0x0000000000001000UL	/* PAT on large pages */
+#define	PG_NX		0x8000000000000000UL	/* non-executable */
 #define	PG_FRAME	0x000ffffffffff000UL
 
 #define	PG_LGFRAME	0x000fffffffc00000UL	/* large (2M) page frame mask */
+
+/* Cacheability bits when we are using PAT */
+#define	PG_WB		(0)		/* The default */
+#define	PG_WC		(PG_WT)		/* WT and CD is WC */
+#define	PG_UCMINUS	(PG_N)		/* UC but mtrr can override */
+#define	PG_UC		(PG_WT | PG_N)	/* hard UC */
 
 /*
  * short forms of protection codes

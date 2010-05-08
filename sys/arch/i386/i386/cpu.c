@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.38 2010/04/16 17:44:00 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.39 2010/05/08 16:54:07 oga Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -105,6 +105,7 @@
 
 int     cpu_match(struct device *, void *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
+void	patinit(struct cpu_info *ci);
 
 #ifdef MULTIPROCESSOR
 int mp_cpu_start(struct cpu_info *);
@@ -313,6 +314,12 @@ cpu_init(struct cpu_info *ci)
 		(*ci->cpu_setup)(ci);
 
 	/*
+	 * We do this here after identifycpu() because errata may affect
+	 * what we do.
+	 */
+	patinit(ci);
+ 
+	/*
 	 * Enable ring 0 write protection (486 or above, but 386
 	 * no longer supported).
 	 */
@@ -339,6 +346,40 @@ cpu_init(struct cpu_info *ci)
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
 }
+
+void
+patinit(struct cpu_info *ci)
+{
+	extern int	pmap_pg_wc;
+	u_int64_t	reg;
+
+	if ((ci->ci_feature_flags & CPUID_PAT) == 0)
+		return;
+
+#define PATENTRY(n, type)	((u_int64_t)type << ((n) * 8))
+#define	PAT_UC		0x0UL
+#define	PAT_WC		0x1UL
+#define	PAT_WT		0x4UL
+#define	PAT_WP		0x5UL
+#define	PAT_WB		0x6UL
+#define	PAT_UCMINUS	0x7UL
+	/* 
+	 * Set up PAT bits.
+	 * The default pat table is the following:
+	 * WB, WT, UC- UC, WB, WT, UC-, UC
+	 * We change it to:
+	 * WB, WC, UC-, UC, WB, WC, UC-, UC.
+	 * i.e change the WT bit to be WC.
+	 */
+	reg = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WC) |
+	    PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
+	    PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WC) |
+	    PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
+
+	wrmsr(MSR_CR_PAT, reg);
+	pmap_pg_wc = PG_WC;
+}
+
 
 #ifdef MULTIPROCESSOR
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 2010/04/30 21:56:39 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.54 2010/05/08 16:54:07 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -241,6 +241,13 @@ struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 int pmap_pg_g = 0;
 
 /*
+ * pmap_pg_wc: if our processor supports PAT then we set this
+ * to be the pte bits for Write Combining. Else we fall back to
+ * UC- so mtrrs can override the cacheability;
+ */
+int pmap_pg_wc = PG_UCMINUS;
+
+/*
  * i386 physical memory comes in a big contig chunk with a small
  * hole toward the front of it...  the following 4 paddr_t's
  * (shared with machdep.c) describe the physical address space
@@ -448,7 +455,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pte = kvtopte(va);
 
 	npte = (pa & PMAP_PA_MASK) | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
-	    ((pa & PMAP_NOCACHE) ? PG_N : 0) | PG_V;
+	    ((pa & PMAP_NOCACHE) ? PG_N : 0) |
+	    ((pa & PMAP_WC) ? pmap_pg_wc : 0) | PG_V;
 
 	/* special 1:1 mappings in the first 2MB must not be global */
 	if (va >= (vaddr_t)NBPD_L2)
@@ -534,7 +542,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	paddr_t dmpd, dmpdp;
 
 	/*
-	 * define the voundaries of the managed kernel virtual address
+	 * define the boundaries of the managed kernel virtual address
 	 * space.
 	 */
 
@@ -1981,8 +1989,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	int ptpdelta, wireddelta, resdelta;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
+	boolean_t wc = (pa & PMAP_WC) != 0;
 	int error;
 
+	KASSERT(!(wc && nocache));
 	pa &= PMAP_PA_MASK;
 
 #ifdef DIAGNOSTIC
@@ -2143,8 +2153,19 @@ enter_now:
 		panic("wtf?");
 
 	npte = pa | protection_codes[prot] | PG_V;
-	if (pg != NULL)
+	if (pg != NULL) {
 		npte |= PG_PVLIST;
+		/*
+		 * make sure that if the page is write combined all 
+		 * instances of pmap_enter make it so.
+		 */
+		if (pg->pg_flags & PG_PMAP_WC) {
+			KASSERT(nocache == 0);
+			wc = TRUE;
+		}
+	}
+	if (wc)
+		npte |= pmap_pg_wc;
 	if (wired)
 		npte |= PG_W;
 	if (nocache)

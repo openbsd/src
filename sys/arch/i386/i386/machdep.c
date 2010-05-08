@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.470 2010/05/02 22:26:58 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.471 2010/05/08 16:54:07 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1734,13 +1734,27 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
-	if (vendor == CPUVENDOR_INTEL &&
-	    curcpu()->ci_feature_flags & CPUID_CFLUSH) {
-		/* to get the cachline size you must do cpuid with eax 0x01 */
-		u_int regs[4];
+	if (vendor == CPUVENDOR_INTEL) {
+		/*
+		 * PIII, Core Solo and Core Duo CPUs have known
+		 * errata stating:
+		 * "Page with PAT set to WC while associated MTRR is UC
+		 * may consolidate to UC".
+		 * Because of this it is best we just fallback to mtrrs
+		 * in this case.
+		 */
+		if (ci->ci_family == 6 && ci->ci_model < 15)
+		    ci->ci_feature_flags &= ~CPUID_PAT;
 
-		cpuid(0x01, regs); 
-		ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
+		if (ci->ci_feature_flags & CPUID_CFLUSH) {
+			/* to get the cacheline size you must do cpuid
+			 * with eax 0x01
+			 */
+			u_int regs[4];
+
+			cpuid(0x01, regs); 
+			ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
+		}
 	}
 
 	/* Remove leading and duplicated spaces from cpu_brandstr */
@@ -3543,9 +3557,10 @@ int
 bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	u_long pa, endpa;
+	paddr_t pa, endpa;
 	vaddr_t va;
 	bus_size_t map_size;
+	int pmap_flags = PMAP_NOCACHE;
 
 	pa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
@@ -3563,10 +3578,15 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		pmap_flags = 0;
+	else if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pmap_flags = PMAP_WC;
+
 	for (; map_size > 0;
 	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE)
-		pmap_kenter_pa(va, pa | ((flags & BUS_SPACE_MAP_CACHEABLE) ?
-		    0 : PMAP_NOCACHE), VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa | pmap_flags,
+		    VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	return 0;

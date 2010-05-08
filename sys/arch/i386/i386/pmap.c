@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.147 2010/04/30 21:56:39 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.148 2010/05/08 16:54:08 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -238,6 +238,13 @@ int nkpde = NKPTP;
 int pmap_pg_g = 0;
 
 /*
+ * pmap_pg_wc: if our processor supports PAT then we set this
+ * to be the pte bits for Write Combining. Else we fall back to
+ * UC- so mtrrs can override the cacheability;
+ */
+int pmap_pg_wc = PG_UCMINUS;
+
+/*
  * i386 physical memory comes in a big contig chunk with a small
  * hole toward the front of it...  the following 4 paddr_t's
  * (shared with machdep.c) describe the physical address space
@@ -315,7 +322,6 @@ caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
-
 
 /*
  * local prototypes
@@ -687,7 +693,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pte = vtopte(va);
 	npte = (pa & PMAP_PA_MASK) | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
-	    PG_V | PG_U | PG_M | ((pa & PMAP_NOCACHE) ? PG_N : 0);
+	    PG_V | PG_U | PG_M | ((pa & PMAP_NOCACHE) ? PG_N : 0) |
+	    ((pa & PMAP_WC) ? pmap_pg_wc : 0);
 
 	/* special 1:1 mappings in the first 4MB must not be global */
 	if (va >= (vaddr_t)NBPD)
@@ -2412,9 +2419,11 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 	struct pv_entry *pve = NULL, *freepve;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
+	boolean_t wc = (pa & PMAP_WC) != 0;
 	struct vm_page *pg = NULL;
 	int error, wired_count, resident_count, ptp_count;
 
+	KASSERT(!(wc && nocache));
 	pa &= PMAP_PA_MASK;	/* nuke flags from pa */
 
 #ifdef DIAGNOSTIC
@@ -2582,8 +2591,14 @@ enter_now:
 		npte |= PG_M;
 	if (pg) {
 		npte |= PG_PVLIST;
+		if (pg->pg_flags & PG_PMAP_WC) {
+			KASSERT(nocache == 0);
+			wc = TRUE;
+		}
 		pmap_sync_flags_pte(pg, npte);
 	}
+	if (wc)
+		npte |= pmap_pg_wc;
 
 	opte = i386_atomic_testset_ul(&ptes[atop(va)], npte);
 	if (ptp)

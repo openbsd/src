@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.31 2010/04/22 07:55:02 jasper Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.32 2010/05/08 16:54:07 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -331,12 +331,14 @@ struct pmap {
  */
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
 #define	PMAP_NOCACHE	0x1 /* set the non-cacheable bit. */
+#define	PMAP_WC		0x2 /* set page write combining. */
 
 /*
  * We keep mod/ref flags in struct vm_page->pg_flags.
  */
-#define PG_PMAP_MOD	PG_PMAP0
-#define PG_PMAP_REF	PG_PMAP1
+#define	PG_PMAP_MOD	PG_PMAP0
+#define	PG_PMAP_REF	PG_PMAP1
+#define	PG_PMAP_WC      PG_PMAP2
 
 /*
  * for each managed physical page we maintain a list of <PMAP,VA>'s

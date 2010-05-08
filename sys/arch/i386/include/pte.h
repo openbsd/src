@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.10 2010/04/20 19:22:06 oga Exp $	*/
+/*	$OpenBSD: pte.h,v 1.11 2010/05/08 16:54:08 oga Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -169,13 +169,21 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define	PG_N		0x00000010	/* non-cacheable */
 #define	PG_U		0x00000020	/* has been used */
 #define	PG_M		0x00000040	/* has been modified */
-#define PG_PS		0x00000080	/* 4MB page size */
+#define	PG_PAT		0x00000080	/* PAT bit. (on pte) */
+#define PG_PS		0x00000080	/* 4MB page size (on pde) */
 #define PG_G		0x00000100	/* global, don't TLB flush */
 #define PG_AVAIL1	0x00000200	/* ignored by hardware */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
+#define	PG_PATLG	0x00001000	/* PAT on large pages */
 #define PG_FRAME	0xfffff000	/* page frame mask */
 #define PG_LGFRAME	0xffc00000	/* large (4M) page frame mask */
+
+/* Cacheability bits when we are using PAT */
+#define	PG_WB		(0)		/* The default */
+#define	PG_WC		(PG_WT)		/* WT and CD is WC */
+#define	PG_UCMINUS	(PG_N)		/* UC but mtrr can override */
+#define	PG_UC		(PG_WT | PG_N)	/* hard UC */
 
 /*
  * various short-hand protection codes

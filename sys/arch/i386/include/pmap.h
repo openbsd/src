@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.54 2009/12/09 14:31:57 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.55 2010/05/08 16:54:08 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -298,12 +298,14 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 /* to get just the pa from params to pmap_enter */
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
 #define	PMAP_NOCACHE	0x1		/* map uncached */
+#define	PMAP_WC		0x2		/* map write combining. */
 
 /*
  * We keep mod/ref flags in struct vm_page->pg_flags.
  */
-#define PG_PMAP_MOD	PG_PMAP0
+#define	PG_PMAP_MOD	PG_PMAP0
 #define	PG_PMAP_REF	PG_PMAP1
+#define	PG_PMAP_WC	PG_PMAP2
 
 /*
  * pv_entrys are dynamically allocated in chunks from a single page.
