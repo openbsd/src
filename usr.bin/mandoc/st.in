@@ -1,4 +1,4 @@
-/*	$Id: st.in,v 1.5 2009/10/19 20:39:58 schwarze Exp $ */
+/*	$Id: st.in,v 1.6 2010/05/08 00:48:07 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -37,6 +37,7 @@ LINE("-p1003.1c-95",	"IEEE Std 1003.1c-1995 (\\(lqPOSIX\\(rq)")
 LINE("-p1003.1g-2000",	"IEEE Std 1003.1g-2000 (\\(lqPOSIX\\(rq)")
 LINE("-p1003.1i-95",	"IEEE Std 1003.1i-1995 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.2-92",	"IEEE Std 1003.2-1992 (\\(lqPOSIX.2\\(rq)")
+LINE("-p1003.2a-92",	"IEEE Std 1003.2a-1992 (\\(lqPOSIX.2\\(rq)")
 LINE("-p1387.2-95",	"IEEE Std 1387.2-1995 (\\(lqPOSIX.7.2\\(rq)")
 LINE("-p1003.2",	"IEEE Std 1003.2 (\\(lqPOSIX.2\\(rq)")
 LINE("-p1387.2",	"IEEE Std 1387.2 (\\(lqPOSIX.7.2\\(rq)")
@@ -46,6 +47,9 @@ LINE("-isoC-amd1",	"ISO/IEC 9899/AMD1:1995 (\\(lqISO C90\\(rq)")
 LINE("-isoC-tcor1",	"ISO/IEC 9899/TCOR1:1994 (\\(lqISO C90\\(rq)")
 LINE("-isoC-tcor2",	"ISO/IEC 9899/TCOR2:1995 (\\(lqISO C90\\(rq)")
 LINE("-isoC-99",	"ISO/IEC 9899:1999 (\\(lqISO C99\\(rq)")
+LINE("-iso9945-1-90",	"ISO/IEC 9945-1:1990 (\\(lqPOSIX.1\\(rq)")
+LINE("-iso9945-1-96",	"ISO/IEC 9945-1:1996 (\\(lqPOSIX.1\\(rq)")
+LINE("-iso9945-2-93",	"ISO/IEC 9945-2:1993 (\\(lqPOSIX.2\\(rq)")
 LINE("-ansiC",		"ANSI X3.159-1989 (\\(lqANSI C\\(rq)")
 LINE("-ansiC-89",	"ANSI X3.159-1989 (\\(lqANSI C\\(rq)")
 LINE("-ansiC-99",	"ANSI/ISO/IEC 9899-1999 (\\(lqANSI C99\\(rq)")
