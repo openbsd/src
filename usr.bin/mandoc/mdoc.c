@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.44 2010/05/08 01:52:07 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.45 2010/05/08 01:57:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -147,8 +147,8 @@ static	struct mdoc_node *node_alloc(struct mdoc *, int, int,
 				enum mdoct, enum mdoc_type);
 static	int		  node_append(struct mdoc *, 
 				struct mdoc_node *);
-static	int		  parsetext(struct mdoc *, int, char *);
-static	int		  parsemacro(struct mdoc *, int, char *);
+static	int		  mdoc_ptext(struct mdoc *, int, char *);
+static	int		  mdoc_pmacro(struct mdoc *, int, char *);
 static	int		  macrowarn(struct mdoc *, int, const char *);
 static	int		  pstring(struct mdoc *, int, int, 
 				const char *, size_t);
@@ -277,7 +277,7 @@ mdoc_endparse(struct mdoc *m)
 
 /*
  * Main parse routine.  Parses a single line -- really just hands off to
- * the macro (parsemacro()) or text parser (parsetext()).
+ * the macro (mdoc_pmacro()) or text parser (mdoc_ptext()).
  */
 int
 mdoc_parseln(struct mdoc *m, int ln, char *buf)
@@ -286,8 +286,8 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf)
 	if (MDOC_HALT & m->flags)
 		return(0);
 
-	return('.' == *buf ? parsemacro(m, ln, buf) :
-			parsetext(m, ln, buf));
+	return('.' == *buf ? mdoc_pmacro(m, ln, buf) :
+			mdoc_ptext(m, ln, buf));
 }
 
 
@@ -626,7 +626,7 @@ mdoc_node_delete(struct mdoc *m, struct mdoc_node *p)
  * control character.
  */
 static int
-parsetext(struct mdoc *m, int line, char *buf)
+mdoc_ptext(struct mdoc *m, int line, char *buf)
 {
 	int		 i, j;
 	char		 sv;
@@ -743,7 +743,7 @@ macrowarn(struct mdoc *m, int ln, const char *buf)
  * character.
  */
 int
-parsemacro(struct mdoc *m, int ln, char *buf)
+mdoc_pmacro(struct mdoc *m, int ln, char *buf)
 {
 	int		  i, j, c;
 	char		  mac[5];
