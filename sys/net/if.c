@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.214 2010/04/25 17:38:53 mpf Exp $	*/
+/*	$OpenBSD: if.c,v 1.215 2010/05/08 11:07:20 stsp Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1557,6 +1557,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			    ETHER_ADDR_LEN);
 			bcopy((caddr_t)ifr->ifr_addr.sa_data,
 			    LLADDR(sdl), ETHER_ADDR_LEN);
+			error = (*ifp->if_ioctl)(ifp, cmd, data);
+			if (error == ENOTTY)
+				error = 0;
 			break;
 		default:
 			return (ENODEV);
