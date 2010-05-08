@@ -79,6 +79,7 @@ int	inteldrm_fault(struct drm_obj *, struct uvm_faultinfo *, off_t,
 	    vaddr_t, vm_page_t *, int, int, vm_prot_t, int );
 void	inteldrm_wipe_mappings(struct drm_obj *);
 void	inteldrm_purge_obj(struct drm_obj *);
+void	inteldrm_set_max_obj_size(struct drm_i915_private *);
 
 /* For reset and suspend */
 int	inteldrm_save_state(struct drm_i915_private *);
@@ -976,10 +977,25 @@ i915_gem_init_ioctl(struct drm_device *dev, void *data,
 	}
 
 	dev->gtt_total = (uint32_t)(args->gtt_end - args->gtt_start);
+	inteldrm_set_max_obj_size(dev_priv);
 
 	DRM_UNLOCK();
 
 	return 0;
+}
+
+void
+inteldrm_set_max_obj_size(struct drm_i915_private *dev_priv)
+{
+	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
+
+	/*
+	 * Allow max obj size up to the size where ony 2 would fit the
+	 * aperture, but some slop exists due to alignment etc
+	 */
+	dev_priv->max_gem_obj_size = (dev->gtt_total -
+	    atomic_read(&dev->pin_memory)) * 3 / 4 / 2;
+
 }
 
 int
@@ -1005,11 +1021,20 @@ int
 i915_gem_create_ioctl(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
+	struct drm_i915_private		*dev_priv = dev->dev_private;
 	struct drm_i915_gem_create	*args = data;
 	struct drm_obj			*obj;
 	int				 handle, ret;
 
 	args->size = round_page(args->size);
+	/*
+	 * XXX to avoid copying between 2 objs more than half the aperture size
+	 * we don't allow allocations that are that big. This will be fixed
+	 * eventually by intelligently falling back to cpu reads/writes in
+	 * such cases. (linux allows this but does cpu maps in the ddx instead).
+	 */
+	if (args->size > dev_priv->max_gem_obj_size)
+		return (EFBIG);
 
 	/* Allocate the new object */
 	obj = drm_gem_object_alloc(dev, args->size);
@@ -3453,6 +3478,7 @@ int
 i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 		   struct drm_file *file_priv)
 {
+	struct drm_i915_private	*dev_priv = dev->dev_private;
 	struct drm_i915_gem_pin	*args = data;
 	struct drm_obj		*obj;
 	struct inteldrm_obj	*obj_priv;
@@ -3475,6 +3501,7 @@ i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 		ret = i915_gem_object_pin(obj, args->alignment, 1);
 		if (ret != 0)
 			goto out;
+		inteldrm_set_max_obj_size(dev_priv);
 	}
 
 	/* XXX - flush the CPU caches for pinned objects
@@ -3494,6 +3521,7 @@ int
 i915_gem_unpin_ioctl(struct drm_device *dev, void *data,
 		     struct drm_file *file_priv)
 {
+	struct drm_i915_private	*dev_priv = dev->dev_private;
 	struct drm_i915_gem_pin	*args = data;
 	struct inteldrm_obj	*obj_priv;
 	struct drm_obj		*obj;
@@ -3512,8 +3540,10 @@ i915_gem_unpin_ioctl(struct drm_device *dev, void *data,
 		goto out;
 	}
 
-	if (--obj_priv->user_pin_count == 0)
+	if (--obj_priv->user_pin_count == 0) {
 		i915_gem_object_unpin(obj);
+		inteldrm_set_max_obj_size(dev_priv);
+	}
 
 out:
 	drm_unhold_and_unref(obj);

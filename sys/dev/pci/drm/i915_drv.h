@@ -124,6 +124,7 @@ typedef struct drm_i915_private {
 	void			*hw_status_page;
 	unsigned int		 status_gfx_addr;
 	u_int32_t		 counter;
+	size_t			 max_gem_obj_size; /* XXX */
 
 	/* Protects user_irq_refcount and irq_mask reg */
 	struct mutex		 user_irq_lock;
