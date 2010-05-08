@@ -1,4 +1,4 @@
-/*	$OpenBSD: kb3310.c,v 1.9 2010/03/02 17:49:38 otto Exp $	*/
+/*	$OpenBSD: kb3310.c,v 1.10 2010/05/08 21:59:56 miod Exp $	*/
 /*
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
  *
@@ -22,7 +22,9 @@
 #include <sys/sensors.h>
 #include <sys/timeout.h>
 
+#include <mips64/archtype.h>
 #include <machine/apmvar.h>
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <dev/isa/isavar.h>
 
@@ -113,6 +115,9 @@ ykbec_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
+
+	if (sys_platform->system_type != LOONGSON_YEELOONG)
+		return (0);
 
 	if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != IO_YKBEC) ||
 	    /* (ia->ia_iosize != 0 && ia->ia_iosize != IO_YKBECSIZE) || XXX isa.c */

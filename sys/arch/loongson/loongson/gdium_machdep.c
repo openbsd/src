@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdium_machdep.c,v 1.5 2010/02/16 21:31:36 miod Exp $	*/
+/*	$OpenBSD: gdium_machdep.c,v 1.6 2010/05/08 21:59:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -28,6 +28,7 @@
 #include <machine/autoconf.h>
 
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <loongson/dev/bonitoreg.h>
@@ -52,8 +53,6 @@ const struct bonito_config gdium_bonito = {
 	.bc_intPol = LOONGSON_INTRMASK_DRAM_PARERR |
 	    LOONGSON_INTRMASK_PCI_SYSERR | LOONGSON_INTRMASK_PCI_PARERR,
 
-	.bc_legacy_pic = 0,
-
 	.bc_attach_hook = gdium_attach_hook,
 	.bc_intr_map = gdium_intr_map
 };
@@ -64,6 +63,7 @@ const struct platform gdium_platform = {
 	.product = "Gdium",
 
 	.bonito_config = &gdium_bonito,
+	.isa_chipset = NULL,
 	.legacy_io_ranges = NULL,
 
 	.setup = NULL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.6 2010/02/28 22:32:50 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.7 2010/05/08 21:59:56 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -58,6 +58,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/vga_pcivar.h>
 
 #include "wsdisplay.h"
 #if NWSDISPLAY > 0
@@ -67,6 +68,7 @@
 extern int sisfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
 #include "smfb.h"
 extern int smfb_cnattach(bus_space_tag_t, bus_space_tag_t, pcitag_t, pcireg_t);
+#include "vga.h"
 
 #include "pckbc.h"
 #if NPCKBC > 0
@@ -88,7 +90,11 @@ cons_decl(ws);
 void
 wscnprobe(struct consdev *cp)
 {
-	int maj;
+	pcitag_t tag;
+	pcireg_t id, class;
+	int maj, dev;
+
+	cp->cn_pri = CN_DEAD;
 
 	/* Locate the major number. */
 	for (maj = 0; maj < nchrdev; maj++) {
@@ -98,27 +104,8 @@ wscnprobe(struct consdev *cp)
 
 	if (maj == nchrdev) {
 		/* We are not in cdevsw[], give up. */
-		panic("wsdisplay is not in cdevsw[]");
-	}
-
-	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_MIDPRI;
-}
-
-void
-wscninit(struct consdev *cp)
-{
-static	int initted;
-	pcitag_t tag;
-	pcireg_t id, class;
-	int dev, rc;
-	extern struct mips_bus_space bonito_pci_io_space_tag;
-	extern struct mips_bus_space bonito_pci_mem_space_tag;
-
-	if (initted)
 		return;
-
-	initted = 1;
+	}
 
 	/*
 	 * Look for a suitable video device.
@@ -131,7 +118,45 @@ static	int initted;
 			continue;
 
 		class = pci_conf_read_early(tag, PCI_CLASS_REG);
-		if (PCI_CLASS(class) != PCI_CLASS_DISPLAY)
+		if (!DEVICE_IS_VGA_PCI(class))
+			continue;
+
+		cp->cn_dev = makedev(maj, 0);
+		cp->cn_pri = CN_MIDPRI;
+		break;
+	}
+}
+
+void
+wscninit(struct consdev *cp)
+{
+static	int initted;
+	pcitag_t tag;
+	pcireg_t id, class;
+	int dev, rc;
+	extern struct mips_bus_space bonito_pci_io_space_tag;
+	extern struct mips_bus_space bonito_pci_mem_space_tag;
+	extern struct consdev pmoncons;
+
+	if (initted)
+		return;
+
+	initted = 1;
+
+	cn_tab = &pmoncons;	/* to be able to panic */
+
+	/*
+	 * Look for a suitable video device.
+	 */
+
+	for (dev = 0; dev < 32; dev++) {
+		tag = pci_make_tag_early(0, dev, 0);
+		id = pci_conf_read_early(tag, PCI_ID_REG);
+		if (id == 0 || PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+
+		class = pci_conf_read_early(tag, PCI_CLASS_REG);
+		if (!DEVICE_IS_VGA_PCI(class))
 			continue;
 
 		/*
@@ -139,19 +164,32 @@ static	int initted;
 		 */
 
 		rc = ENXIO;
+
+		/* bitmapped frame buffer won't be of PREHISTORIC class */
+		if (PCI_CLASS(class) == PCI_CLASS_DISPLAY) {
 #if NSISFB > 0
-		if (rc != 0)
-			rc = sisfb_cnattach(&bonito_pci_mem_space_tag,
-			    &bonito_pci_io_space_tag, tag, id);
+			if (rc != 0)
+				rc = sisfb_cnattach(&bonito_pci_mem_space_tag,
+				    &bonito_pci_io_space_tag, tag, id);
 #endif
 #if NSMFB > 0
-		if (rc != 0)
-			rc = smfb_cnattach(&bonito_pci_mem_space_tag,
-			    &bonito_pci_io_space_tag, tag, id);
+			if (rc != 0)
+				rc = smfb_cnattach(&bonito_pci_mem_space_tag,
+				    &bonito_pci_io_space_tag, tag, id);
+#endif
+		}
+#if NVGA > 0
+		if (rc != 0) {
+			/* thanks $DEITY the pci_chipset_tag_t arg is ignored */
+			rc = vga_pci_cnattach(&bonito_pci_io_space_tag,
+			    &bonito_pci_mem_space_tag, NULL, 0, dev, 0);
+		}
 #endif
 		if (rc == 0)
 			goto setup_kbd;
 	}
+
+	cn_tab = cp;
 
 	/* no glass console... */
 	return;
@@ -165,21 +203,16 @@ setup_kbd:
 	rc = ENXIO;
 
 #if NPCKBC > 0
-	switch (sys_platform->system_type) {
-	default:
-		/* no pckbc or no legacy hardware */
-		break;
-	case LOONGSON_YEELOONG:
-		if (rc != 0)
-			rc = pckbc_cnattach(&bonito_pci_io_space_tag, IO_KBD,
-			    KBCMDP, PCKBC_KBD_SLOT, 0);
-		break;
-	}
+	if (rc != 0)
+		rc = pckbc_cnattach(&bonito_pci_io_space_tag, IO_KBD,
+		    KBCMDP, PCKBC_KBD_SLOT, 0);
 #endif
 #if NUKBD > 0
 	if (rc != 0)
 		rc = ukbd_cnattach();
 #endif
+
+	cn_tab = cp;
 }
 
 void
@@ -193,7 +226,7 @@ wscnputc(dev_t dev, int i)
 int
 wscngetc(dev_t dev)
 {
-#if NPCKBD > 0
+#if NPCKBD > 0 || NUKBD > 0
 	int c;
 
 	wskbd_cnpollc(dev, 1);
@@ -209,7 +242,7 @@ wscngetc(dev_t dev)
 void
 wscnpollc(dev_t dev, int on)
 {
-#if NPCKBD > 0
+#if NPCKBD > 0 || NUKBD > 0
 	wskbd_cnpollc(dev, on);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.11 2010/03/02 20:54:51 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.12 2010/05/08 21:59:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -30,8 +30,10 @@
 #include <machine/pmon.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
 
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <loongson/dev/bonitoreg.h>
@@ -48,15 +50,26 @@
 extern struct mips_bus_space bonito_pci_io_space_tag;
 #endif
 
-void	lemote_attach_hook(pci_chipset_tag_t);
-void	lemote_device_register(struct device *, void *);
-int	lemote_intr_map(int, int, int);
-void	lemote_reset(void);
+void	 lemote_device_register(struct device *, void *);
+void	 lemote_reset(void);
 
-void	fuloong_powerdown(void);
-void	fuloong_setup(void);
+void	 fuloong_powerdown(void);
+void	 fuloong_setup(void);
 
-void	yeeloong_powerdown(void);
+void	 yeeloong_powerdown(void);
+
+void	 lemote_pci_attach_hook(pci_chipset_tag_t);
+int	 lemote_intr_map(int, int, int);
+
+void	 lemote_isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+void	*lemote_isa_intr_establish(void *, int, int, int, int (*)(void *),
+	    void *, char *);
+void	 lemote_isa_intr_disestablish(void *, void *);
+
+uint	 lemote_get_isa_imr(void);
+uint	 lemote_get_isa_isr(void);
+uint32_t lemote_isa_intr(uint32_t, struct trap_frame *);
 
 const struct bonito_config lemote_bonito = {
 	.bc_adbase = 11,
@@ -69,9 +82,7 @@ const struct bonito_config lemote_bonito = {
 	    LOONGSON_INTRMASK_PCI_SYSERR | LOONGSON_INTRMASK_PCI_PARERR |
 	    LOONGSON_INTRMASK_INT0 | LOONGSON_INTRMASK_INT1,
 
-	.bc_legacy_pic = 1,
-
-	.bc_attach_hook = lemote_attach_hook,
+	.bc_attach_hook = lemote_pci_attach_hook,
 	.bc_intr_map = lemote_intr_map
 };
 
@@ -129,12 +140,21 @@ const struct legacy_io_range yeeloong_legacy_ranges[] = {
 	{ 0 }
 };
 
+struct mips_isa_chipset lemote_isa_chipset = {
+	.ic_v = NULL,
+
+	.ic_attach_hook = lemote_isa_attach_hook,
+	.ic_intr_establish = lemote_isa_intr_establish,
+	.ic_intr_disestablish = lemote_isa_intr_disestablish
+};
+
 const struct platform fuloong_platform = {
 	.system_type = LOONGSON_FULOONG,
 	.vendor = "Lemote",
 	.product = "Fuloong",
 
 	.bonito_config = &lemote_bonito,
+	.isa_chipset = &lemote_isa_chipset,
 	.legacy_io_ranges = fuloong_legacy_ranges,
 
 	.setup = fuloong_setup,
@@ -150,6 +170,7 @@ const struct platform lynloong_platform = {
 	.product = "Lynloong",
 
 	.bonito_config = &lemote_bonito,
+	.isa_chipset = &lemote_isa_chipset,
 	.legacy_io_ranges = lynloong_legacy_ranges,
 
 	.setup = fuloong_setup,
@@ -165,6 +186,7 @@ const struct platform yeeloong_platform = {
 	.product = "Yeeloong",
 
 	.bonito_config = &lemote_bonito,
+	.isa_chipset = &lemote_isa_chipset,
 	.legacy_io_ranges = yeeloong_legacy_ranges,
 
 	.setup = NULL,
@@ -174,8 +196,12 @@ const struct platform yeeloong_platform = {
 	.reset = lemote_reset
 };
 
+/*
+ * PCI model specific routines
+ */
+
 void
-lemote_attach_hook(pci_chipset_tag_t pc)
+lemote_pci_attach_hook(pci_chipset_tag_t pc)
 {
 	pcireg_t id;
 	pcitag_t tag;
@@ -232,6 +258,163 @@ lemote_intr_map(int dev, int fn, int pin)
 
 	return -1;
 }
+
+/*
+ * ISA model specific routines
+ */
+
+void
+lemote_isa_attach_hook(struct device *parent, struct device *self,
+    struct isabus_attach_args *iba)
+{
+	set_intr(INTPRI_ISA, CR_INT_0, lemote_isa_intr);
+
+	/* disable all isa interrupt sources */
+	REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 1) = 0xff;
+	REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 2) = 0xff;
+
+	loongson_generic_isa_attach_hook(parent, self, iba);
+}
+
+void *
+lemote_isa_intr_establish(void *v, int irq, int type, int level,
+    int (*handler)(void *), void *arg, char *name)
+{
+	return bonito_intr_establish(BONITO_ISA_IRQ(irq), type, level,
+	    handler, arg, name);
+}
+
+void
+lemote_isa_intr_disestablish(void *v, void *ih)
+{
+	bonito_intr_disestablish(ih);
+}
+
+/*
+ * Legacy (ISA) interrupt handling
+ */
+
+/*
+ * Process legacy interrupts.
+ *
+ * XXX On 2F, ISA interrupts only occur on LOONGSON_INTR_INT0, but since
+ * XXX the other LOONGSON_INTR_INT# are unmaskable, bad things will happen
+ * XXX if they ever are triggered...
+ */
+uint32_t
+lemote_isa_intr(uint32_t hwpend, struct trap_frame *frame)
+{
+	uint64_t imr, isr, mask;
+	int bit;
+	struct intrhand *ih;
+	int rc;
+
+	isr = lemote_get_isa_isr();
+	imr = lemote_get_isa_imr();
+
+	isr &= imr;
+	isr &= ~(1 << 2);	/* cascade */
+#ifdef DEBUG
+	printf("isa interrupt: imr %04x isr %04x\n", imr, isr);
+#endif
+	if (isr == 0)
+		return 0;	/* not for us */
+
+	/*
+	 * Mask all pending interrupts.
+	 */
+
+	loongson_set_isa_imr(imr & ~isr);
+
+	/*
+	 * If interrupts are spl-masked, mask them and wait for splx()
+	 * to reenable them when necessary.
+	 */
+	if ((mask = isr & (BONITO_ISA_MASK(bonito_imask[frame->ipl]))) != 0) {
+		isr &= ~mask;
+		imr &= ~mask;
+	}
+
+	/*
+	 * Now process allowed interrupts.
+	 */
+	if (isr != 0) {
+		int lvl, bitno;
+		uint64_t tmpisr;
+
+		/* Service higher level interrupts first */
+		bit = BONITO_NISA - 1;
+		for (lvl = IPL_HIGH - 1; lvl != IPL_NONE; lvl--) {
+			tmpisr = isr & BONITO_ISA_MASK(bonito_imask[lvl] ^
+			    bonito_imask[lvl - 1]);
+			if (tmpisr == 0)
+				continue;
+			for (bitno = bit, mask = 1UL << bitno; mask != 0;
+			    bitno--, mask >>= 1) {
+				if ((tmpisr & mask) == 0)
+					continue;
+
+				rc = 0;
+				for (ih = bonito_intrhand[BONITO_ISA_IRQ(bitno)];
+				    ih != NULL; ih = ih->ih_next) {
+					splraise(ih->ih_level);
+					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+						rc = 1;
+						ih->ih_count.ec_count++;
+					}
+					__asm__ (".set noreorder\n");
+					curcpu()->ci_ipl = frame->ipl;
+					__asm__ ("sync\n\t.set reorder\n");
+				}
+				if (rc == 0)
+					printf("spurious isa interrupt %d\n",
+					    bitno);
+
+				loongson_isa_specific_eoi(bitno);
+
+				if ((isr ^= mask) == 0)
+					goto done;
+				if ((tmpisr ^= mask) == 0)
+					break;
+			}
+		}
+done:
+
+		/*
+		 * Reenable interrupts which have been serviced.
+		 */
+		loongson_set_isa_imr(imr);
+	}
+
+	return hwpend;
+}
+
+uint
+lemote_get_isa_imr()
+{
+	uint imr1, imr2;
+
+	imr1 = 0xff & ~REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 1);
+	imr1 &= ~(1 << 2);	/* hide cascade */
+	imr2 = 0xff & ~REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 1);
+
+	return (imr2 << 8) | imr1;
+}
+
+uint
+lemote_get_isa_isr()
+{
+	uint isr1, isr2;
+
+	isr1 = 0xff & REGVAL8(BONITO_PCIIO_BASE + IO_ICU1);
+	isr2 = 0xff & REGVAL8(BONITO_PCIIO_BASE + IO_ICU2);
+
+	return (isr2 << 8) | isr1;
+}
+
+/*
+ * Other model specific routines
+ */
 
 void
 fuloong_powerdown()

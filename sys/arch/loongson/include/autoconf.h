@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.6 2010/02/16 21:31:35 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.7 2010/05/08 21:59:56 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,6 +36,7 @@
 #include <machine/bus.h>
 
 struct bonito_config;
+struct mips_isa_chipset;
 
 /*
  * List of legacy I/O ranges.
@@ -54,6 +55,7 @@ struct platform {
 	char				*product;
 
 	const struct bonito_config	*bonito_config;
+	struct mips_isa_chipset		*isa_chipset;
 	const struct legacy_io_range	*legacy_io_ranges;
 
 	void				(*setup)(void);
@@ -65,6 +67,7 @@ struct platform {
 };
 
 extern const struct platform *sys_platform;
+extern uint loongson_ver;
 
 struct mainbus_attach_args {
 	const char	*maa_name;

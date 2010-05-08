@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonitovar.h,v 1.4 2010/02/12 08:14:02 miod Exp $	*/
+/*	$OpenBSD: bonitovar.h,v 1.5 2010/05/08 21:59:56 miod Exp $	*/
 /*	$NetBSD: bonitovar.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
 
 /*-
@@ -33,8 +33,6 @@
 #ifndef _LOONGSON_DEV_BONITOVAR_H_
 #define	_LOONGSON_DEV_BONITOVAR_H_
 
-#include <dev/pci/pcivar.h>
-
 struct bonito_cfg_hook;
 struct extent;
 
@@ -46,8 +44,6 @@ struct bonito_config {
 	uint32_t	bc_intEdge;
 	uint32_t	bc_intSteer;
 	uint32_t	bc_intPol;
-
-	int		bc_legacy_pic;	/* nonzero if legacy PIC */
 
 	/* PCI Attach hook for the first bus */
 	void		(*bc_attach_hook)(pci_chipset_tag_t);
@@ -76,6 +72,7 @@ int	 bonito_pci_hook(pci_chipset_tag_t, void *,
 int	 bonito_print(void *, const char *);
 struct extent
 	*bonito_get_resource_extent(pci_chipset_tag_t, int);
+void	 bonito_setintrmask(int);
 #endif /* _KERNEL */
 
 #endif /* _LOONGSON_DEV_BONITOVAR_H_ */

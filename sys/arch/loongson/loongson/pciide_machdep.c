@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.1.1.1 2009/11/25 18:56:34 miod Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.2 2010/05/08 21:59:56 miod Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
+#include <machine/autoconf.h>
+
 #include <dev/isa/isavar.h>
 
 void *
@@ -59,9 +61,12 @@ pciide_machdep_compat_intr_establish(struct device *dev,
 	int irq;
 	void *cookie;
 
-	irq = PCIIDE_COMPAT_IRQ(chan);
-	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg,
-	    dev->dv_xname);
+	if (sys_platform->isa_chipset != NULL) {
+		irq = PCIIDE_COMPAT_IRQ(chan);
+		cookie = isa_intr_establish(sys_platform->isa_chipset,
+		    irq, IST_EDGE, IPL_BIO, func, arg, dev->dv_xname);
+	} else
+		cookie = NULL;
 
 	return (cookie);
 }
@@ -69,5 +74,6 @@ pciide_machdep_compat_intr_establish(struct device *dev,
 void
 pciide_machdep_compat_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
-	isa_intr_disestablish(NULL, cookie);
+	if (sys_platform->isa_chipset != NULL)
+		isa_intr_disestablish(sys_platform->isa_chipset, cookie);
 }

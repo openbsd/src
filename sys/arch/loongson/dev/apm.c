@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.2 2010/02/28 09:37:28 otto Exp $	*/
+/*	$OpenBSD: apm.c,v 1.3 2010/05/08 21:59:56 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -111,7 +111,12 @@ apmmatch(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
-	if (strcmp(maa->maa_name, apm_cd.cd_name) == 0)
+	/*
+	 * It only makes sense to attach on a 2F system, since 2E do not
+	 * feature speed throttling, and we do not support 2E-based
+	 * notebooks yet (assuming there are any).
+	 */
+	if (strcmp(maa->maa_name, apm_cd.cd_name) == 0 && loongson_ver == 0x2f)
 		return (1);
 	return (0);
 }

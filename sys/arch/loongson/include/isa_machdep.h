@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.1.1.1 2009/11/25 19:44:27 miod Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.2 2010/05/08 21:59:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -24,12 +24,28 @@
 
 #define	__NO_ISA_INTR_CHECK
 
-typedef	void *isa_chipset_tag_t;
+typedef	struct mips_isa_chipset *isa_chipset_tag_t;
 
-void	 isa_attach_hook(struct device *, struct device *,
+struct mips_isa_chipset {
+	void	*ic_v;
+
+	void	(*ic_attach_hook)(struct device *, struct device *,
+		    struct isabus_attach_args *);
+	void	*(*ic_intr_establish)(void *, int, int, int, int (*)(void *),
+		    void *, char *);
+	void	(*ic_intr_disestablish)(void *, void *);
+};
+
+#define	isa_attach_hook(p, s, iba)					\
+    (*(iba)->iba_ic->ic_attach_hook)((p), (s), (iba))
+#define	isa_intr_establish(c, i, t, l, f, a, n)				\
+    (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a), (n))
+#define	isa_intr_disestablish(c, h)					\
+    (*(c)->ic_intr_disestablish)((c)->ic_v, (h))
+
+void	loongson_generic_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
-void	*isa_intr_establish(void *, int, int, int, int (*)(void *), void *,
-	    char *);
-void	 isa_intr_disestablish(void *, void *);
+void	loongson_isa_specific_eoi(int);
+void	loongson_set_isa_imr(uint);
 
 #endif

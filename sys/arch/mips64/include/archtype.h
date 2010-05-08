@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.11 2010/03/02 20:54:51 miod Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.12 2010/05/08 21:59:56 miod Exp $	*/
 /*
  * Copyright (c) 1997-2004 Opsycon AB, Sweden (www.opsycon.se)
  *
@@ -78,6 +78,7 @@
 #define	WG8232			0x005a	/* Willowglen CPU-8232 */
 
 #define	LOONGSON_CLASS		0x0060	/* Loongson + PMON2000 class */
+#define	LOONGSON_2E		0x0060	/* Generic Loongson 2E system */
 #define	LOONGSON_YEELOONG	0x0061	/* Lemote Yeeloong */
 #define	LOONGSON_GDIUM		0x0062	/* EMTEC Gdium Liberty */
 #define	LOONGSON_FULOONG	0x0063	/* Lemote Fuloong */

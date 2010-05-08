@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonitoreg.h,v 1.6 2010/02/28 21:35:41 miod Exp $	*/
+/*	$OpenBSD: bonitoreg.h,v 1.7 2010/05/08 21:59:56 miod Exp $	*/
 /*	$NetBSD: bonitoreg.h,v 1.6 2005/12/24 20:07:19 perry Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #define BONITO(x)	(BONITO_REG_BASE + (x))
 
 #define	REGVAL(x)	*((volatile u_int32_t *)PHYS_TO_XKPHYS(x, CCA_NC))
+#define	REGVAL8(x)	*((volatile u_int8_t *)PHYS_TO_XKPHYS(x, CCA_NC))
 
 #define BONITO_FLASH_BASE		0x1c000000UL
 #define BONITO_FLASH_SIZE		0x02000000UL
@@ -139,7 +140,9 @@
 
 /* gencfg */
 
-#define BONITO_GENCFG_OV_EN		0x00000001	/* video accel enable */
+#define LOONGSON_GENCFG_OV_EN		0x00000001	/* video accel enable */
+
+#define	BONITO_GENCFG_CPUSELFRESET	0x00000004	/* reset system */
 
 /* pcimap */
 

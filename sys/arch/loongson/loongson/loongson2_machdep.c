@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.9 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.10 2010/05/08 21:59:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -74,19 +74,25 @@ paddr_t loongson_dma_base = 0;
 void
 loongson2e_setup(u_long memlo, u_long memhi)
 {
+	if (memhi > ((DDR_PHYSICAL_SIZE - BONITO_PCIHI_BASE) >> 20)) {
+		pmon_printf("WARNING! %d MB of memory will not be used",
+		    memhi - ((DDR_PHYSICAL_SIZE - BONITO_PCIHI_BASE) >> 20));
+		memhi = (DDR_PHYSICAL_SIZE - BONITO_PCIHI_BASE) >> 20;
+	}
+
 	memlo = atop(memlo << 20);
 	memhi = atop(memhi << 20);
 	physmem = memlo + memhi;
 
-	/*
-	 * Only register the first 256MB of memory.
-	 * This will be hopefully be revisited once we get our hands
-	 * on Loongson 2E-based hardware...
-	 */
-
 	/* do NOT stomp on exception area */
 	mem_layout[0].mem_first_page = atop(DDR_PHYSICAL_BASE) + 1;
 	mem_layout[0].mem_last_page = atop(DDR_PHYSICAL_BASE) + memlo;
+
+	if (memhi != 0) {
+		mem_layout[1].mem_first_page = atop(BONITO_PCIHI_BASE);
+		mem_layout[1].mem_last_page = atop(BONITO_PCIHI_BASE) +
+		    memhi;
+	}
 
 	loongson_dma_base = PCI_DDR_BASE ^ DDR_PHYSICAL_BASE;
 }
@@ -124,7 +130,7 @@ loongson2f_setup(u_long memlo, u_long memhi)
 
 	memlo = atop(memlo << 20);
 	memhi = atop(memhi << 20);
-	physmem = atop((vsize_t)physmem << 20);
+	physmem = memlo + memhi;
 
 	/*
 	 * PMON configures the system with only the low 256MB of memory
@@ -251,7 +257,7 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 	 * Allow access to the low 256MB aliased region on 2F systems,
 	 * if we are accessing memory at 2GB onwards.
 	 */
-	if (pa < 0x10000000) {
+	if (pa < 0x10000000 && loongson_ver == 0x2f) {
 		fp += mem_layout[0].mem_first_page - 1;
 		lp += mem_layout[0].mem_first_page - 1;
 	}

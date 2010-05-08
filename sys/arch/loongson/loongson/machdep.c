@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2010/04/27 04:26:20 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.19 2010/05/08 21:59:56 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -77,9 +77,6 @@
 
 #include <mips64/archtype.h>
 
-#include <loongson/dev/bonitoreg.h>
-#include <loongson/dev/bonitovar.h>
-
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
 char	cpu_model[30];
@@ -110,6 +107,7 @@ int	kbd_reset;
 
 const struct platform *sys_platform;
 struct cpu_hwinfo bootcpu_hwinfo;
+uint loongson_ver;
 
 /* Pointers to the start and end of the symbol table. */
 caddr_t	ssym;
@@ -155,6 +153,7 @@ struct bonito_flavour {
 
 extern const struct platform fuloong_platform;
 extern const struct platform gdium_platform;
+extern const struct platform generic2e_platform;
 extern const struct platform lynloong_platform;
 extern const struct platform yeeloong_platform;
 
@@ -183,7 +182,7 @@ vaddr_t
 mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
     char *boot_esym)
 {
-	uint prid, loongson_ver;
+	uint prid;
 	u_long memlo, memhi, cpuspeed;
 	vaddr_t xtlb_handler;
 	const char *envvar;
@@ -280,20 +279,29 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 
 	envvar = pmon_getenv("Version");
 	if (envvar == NULL) {
-		pmon_printf("Unable to figure out model!\n");
-		goto unsupported;
-	}
-
-	for (f = bonito_flavours; f->prefix != NULL; f++)
-		if (strncmp(envvar, f->prefix, strlen(f->prefix)) == 0) {
-			sys_platform = f->platform;
-			break;
+		/*
+		 * If this is a 2E system, use the generic code and hope
+		 * for the best.
+		 */
+		if (loongson_ver == 0x2e) {
+			sys_platform = &generic2e_platform;
+		} else {
+			pmon_printf("Unable to figure out model!\n");
+			goto unsupported;
 		}
+	} else {
+		for (f = bonito_flavours; f->prefix != NULL; f++)
+			if (strncmp(envvar, f->prefix, strlen(f->prefix)) ==
+			    0) {
+				sys_platform = f->platform;
+				break;
+			}
 
-	if (sys_platform == NULL) {
-		pmon_printf("This kernel doesn't support model \"%s\".\n",
-		    envvar);
-		goto unsupported;
+		if (sys_platform == NULL) {
+			pmon_printf("This kernel doesn't support model \"%s\"."
+			    "\n", envvar);
+			goto unsupported;
+		}
 	}
 
 	hw_vendor = sys_platform->vendor;

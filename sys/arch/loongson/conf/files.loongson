@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.10 2010/03/03 13:33:27 jasper Exp $
+#	$OpenBSD: files.loongson,v 1.11 2010/05/08 21:59:53 miod Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -18,6 +18,8 @@ file	arch/loongson/loongson/bus_space.c
 file	arch/loongson/loongson/conf.c
 file	arch/loongson/loongson/disksubr.c		disk
 file	arch/loongson/loongson/gdium_machdep.c
+file	arch/loongson/loongson/generic2e_machdep.c
+file	arch/loongson/loongson/isa_machdep.c		isa
 file	arch/loongson/loongson/loongson2_machdep.c
 file	arch/loongson/loongson/machdep.c
 file	arch/loongson/loongson/mutex.c
@@ -36,6 +38,7 @@ include	"dev/isa/files.isa"
 include	"dev/isa/files.isapnp"
 include	"dev/mii/files.mii"
 include	"dev/pci/files.pci"
+include	"dev/pci/files.agp"
 include	"dev/pckbc/files.pckbc"
 include	"dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
@@ -66,7 +69,11 @@ file	arch/loongson/dev/glx.c				bonito & pci
 device	glxpcib: isabus, gpiobus
 attach	glxpcib at pci
 file	arch/loongson/dev/glxpcib.c			glxpcib
-file	arch/loongson/dev/pcib.c			glxpcib
+
+# Other PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/loongson/dev/pcib.c			pcib | glxpcib
 
 # Lemote Yeeloong RTC
 device	mcclock
