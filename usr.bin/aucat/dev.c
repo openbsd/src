@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.54 2010/05/08 12:29:08 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.55 2010/05/08 13:08:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -871,7 +871,7 @@ dev_getpos(void)
 
 	if (APROC_OK(dev_mix)) {
 		mbuf = LIST_FIRST(&dev_mix->outs);
-		return mbuf->w.mix.todo + dev_mix->u.mix.lat;
+		return -(mbuf->w.mix.todo + dev_mix->u.mix.lat);
 	} else
 		return 0;
 }
