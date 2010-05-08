@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.43 2010/05/04 23:13:54 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.44 2010/05/08 01:52:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -80,6 +80,7 @@ const	char *const __mdoc_merrnames[MERRMAX] = {
 	"no description found for library", /* ELIB */
 	"bad child for parent context", /* EBADCHILD */
 	"list arguments preceding type", /* ENOTYPE */
+	"deprecated comment style", /* EBADCOMMENT */
 };
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 
@@ -629,6 +630,11 @@ parsetext(struct mdoc *m, int line, char *buf)
 {
 	int		 i, j;
 	char		 sv;
+
+	/* Ignore bogus comments. */
+
+	if ('\\' == buf[0] && '.' == buf[1] && '\"' == buf[2])
+		return(mdoc_pwarn(m, line, 0, EBADCOMMENT));
 
 	if (SEC_NONE == m->lastnamed)
 		return(mdoc_perr(m, line, 0, ETEXTPROL));
