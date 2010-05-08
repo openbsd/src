@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.86 2010/02/08 12:04:35 jsing Exp $	*/
+/*	$OpenBSD: in6.c,v 1.87 2010/05/08 10:55:06 stsp Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2330,6 +2330,22 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst)
 			     IN6_IFF_DEPRECATED) == 0)
 				goto replace;
 
+			if (oifp == ifp) {
+				/* Do not replace temporary autoconf addresses
+				 * with non-temporary addresses. */
+				if ((ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
+			            !(((struct in6_ifaddr *)ifa)->ia6_flags &
+				    IN6_IFF_PRIVACY))
+					continue;
+
+				/* Replace non-temporary autoconf addresses
+				 * with temporary addresses. */
+				if (!(ifa_best->ia6_flags & IN6_IFF_PRIVACY) &&
+			            (((struct in6_ifaddr *)ifa)->ia6_flags &
+				    IN6_IFF_PRIVACY))
+					goto replace;
+			}
+
 			/*
 			 * At this point, we have two cases:
 			 * 1. we are looking at a non-deprecated address,
@@ -2375,7 +2391,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst)
 			 *     equal     equal   larger    N/A |      Yes (8)
 			 *     equal     equal  smaller    N/A |       No (9)
 			 *     equal     equal    equal    Yes |      Yes (a)
-			 *     eaual     eqaul    equal     No |       No (b)
+			 *     equal     equal    equal     No |       No (b)
 			 */
 			dscopecmp = IN6_ARE_SCOPE_CMP(src_scope, dst_scope);
 			bscopecmp = IN6_ARE_SCOPE_CMP(src_scope, best_scope);
