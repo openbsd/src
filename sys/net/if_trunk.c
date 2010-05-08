@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.74 2010/04/23 13:51:31 stsp Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.75 2010/05/08 11:26:06 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -356,7 +356,8 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	}
 
 	/* Update link layer address for this port */
-	trunk_port_lladdr(tp, tr->tr_primary->tp_lladdr);
+	trunk_port_lladdr(tp,
+	    ((struct arpcom *)(tr->tr_primary->tp_if))->ac_enaddr);
 
 	/* Insert into the list of ports */
 	SLIST_INSERT_HEAD(&tr->tr_ports, tp, tp_entries);
