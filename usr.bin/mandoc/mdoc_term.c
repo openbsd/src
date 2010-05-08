@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.75 2010/04/23 00:23:46 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.76 2010/05/08 02:10:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -89,7 +89,6 @@ static	void	  termp_sq_post(DECL_ARGS);
 static	void	  termp_ss_post(DECL_ARGS);
 static	void	  termp_vt_post(DECL_ARGS);
 
-static	int	  termp__t_pre(DECL_ARGS);
 static	int	  termp_an_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_aq_pre(DECL_ARGS);
@@ -185,7 +184,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, termp____post }, /* %O */
 	{ NULL, termp____post }, /* %P */
 	{ NULL, termp____post }, /* %R */
-	{ termp__t_pre, termp____post }, /* %T */
+	{ termp_under_pre, termp____post }, /* %T */
 	{ NULL, termp____post }, /* %V */
 	{ NULL, NULL }, /* Ac */
 	{ termp_aq_pre, termp_aq_post }, /* Ao */
@@ -2081,14 +2080,6 @@ termp____post(DECL_ARGS)
 	/* TODO: %U. */
 
 	p->flags |= TERMP_NOSPACE;
-	switch (n->tok) {
-	case (MDOC__T):
-		term_word(p, "\\(rq");
-		p->flags |= TERMP_NOSPACE;
-		break;
-	default:
-		break;
-	}
 	term_word(p, n->next ? "," : ".");
 }
 
@@ -2136,17 +2127,6 @@ termp_under_pre(DECL_ARGS)
 {
 
 	term_fontpush(p, TERMFONT_UNDER);
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp__t_pre(DECL_ARGS)
-{
-
-	term_word(p, "\\(lq");
-	p->flags |= TERMP_NOSPACE;
 	return(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.11 2010/04/07 23:15:05 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.12 2010/05/08 02:10:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -2219,8 +2219,6 @@ mdoc__x_pre(MDOC_ARGS)
 		break;
 	case(MDOC__T):
 		PAIR_CLASS_INIT(&tag[0], "ref-title");
-		print_text(h, "\\(lq");
-		h->flags |= HTML_NOSPACE;
 		break;
 	case(MDOC__U):
 		PAIR_CLASS_INIT(&tag[0], "link-ref");
@@ -2249,14 +2247,8 @@ static void
 mdoc__x_post(MDOC_ARGS)
 {
 
+	/* TODO: %U */
+
 	h->flags |= HTML_NOSPACE;
-	switch (n->tok) {
-	case (MDOC__T):
-		print_text(h, "\\(rq");
-		h->flags |= HTML_NOSPACE;
-		break;
-	default:
-		break;
-	}
 	print_text(h, n->next ? "," : ".");
 }
