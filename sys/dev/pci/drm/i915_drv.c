@@ -469,6 +469,13 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	/* array of vm pages that physload introduced. */
 	dev_priv->pgs = PHYS_TO_VM_PAGE(dev->agp->base);
 	KASSERT(dev_priv->pgs != NULL);
+	/*
+	 * XXX mark all pages write combining so user mmaps get the right
+	 * bits. We really need a proper MI api for doing this, but for now
+	 * this allows us to use PAT where available.
+	 */
+	for (i = 0; i < atop(dev->agp->info.ai_aperture_size); i++)
+		atomic_setbits_int(&(dev_priv->pgs[i].pg_flags), PG_PMAP_WC);
 	if (bus_space_map(dev_priv->bst, dev->agp->base,
 	    dev->agp->info.ai_aperture_size, BUS_SPACE_MAP_LINEAR |
 	    BUS_SPACE_MAP_PREFETCHABLE, &dev_priv->aperture_bsh) != 0)
