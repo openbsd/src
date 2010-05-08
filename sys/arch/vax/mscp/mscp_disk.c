@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.27 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.28 2010/05/08 22:19:46 miod Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -302,6 +302,9 @@ rastrategy(bp)
 	 * If drive is open `raw' or reading label, let it at it.
 	 */
 	if (ra->ra_state == DK_RDLABEL) {
+		s = splbio();
+		disk_busy(&ra->ra_disk);
+		splx(s);
 		mscp_strategy(bp, ra->ra_dev.dv_parent);
 		return;
 	}
@@ -798,8 +801,21 @@ rriodone(usc, bp)
 	struct buf *bp;
 {
 	int s;
+	struct rx_softc *rx = NULL; /* Wall */
+
+	int unit = DISKUNIT(bp->b_dev);
+#if NRA
+	if (major(bp->b_dev) == RAMAJOR)
+		rx = ra_cd.cd_devs[unit];
+#endif
+#if NRX
+	if (major(bp->b_dev) != RAMAJOR)
+		rx = rx_cd.cd_devs[unit];
+#endif
 
 	s = splbio();
+	disk_unbusy(&rx->ra_disk, bp->b_bcount - bp->b_resid,
+	    bp->b_flags & B_READ);
 	biodone(bp);
 	splx(s);
 }
