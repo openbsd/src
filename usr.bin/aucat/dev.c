@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.53 2010/05/07 07:13:21 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.54 2010/05/08 12:29:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -868,16 +868,12 @@ int
 dev_getpos(void)
 {
 	struct abuf *mbuf = NULL;
-	int lat;
 
-	lat = 0;
 	if (APROC_OK(dev_mix)) {
 		mbuf = LIST_FIRST(&dev_mix->outs);
-		lat -= mbuf->w.mix.todo + dev_mix->u.mix.lat;
-	}
-	if (APROC_OK(dev_sub))
-		lat -= dev_sub->u.sub.lat;
-	return lat;
+		return mbuf->w.mix.todo + dev_mix->u.mix.lat;
+	} else
+		return 0;
 }
 
 /*
