@@ -1,6 +1,7 @@
 /* This translates ps fonts in .pfb format to ASCII ps files. */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Binary bytes per output line. */
 #define BYTES_PER_LINE (64/2)

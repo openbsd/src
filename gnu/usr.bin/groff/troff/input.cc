@@ -75,6 +75,9 @@ void vjustify();
 #endif /* COLUMN */
 void transparent();
 void transparent_file();
+void process_input_stack();
+void end_diversions();
+void title();
 
 const char *program_name = 0;
 token tok;
