@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.55 2010/05/08 13:08:24 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.56 2010/05/08 15:35:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -115,6 +115,7 @@ unsigned dev_reqmode;				/* mode */
 struct aparams dev_reqipar, dev_reqopar;	/* parameters */
 unsigned dev_reqbufsz;				/* buffer size */
 unsigned dev_reqround;				/* block size */
+unsigned dev_reqprime;				/* prime play buffer? */
 
 /*
  * actual parameters and runtime state
@@ -376,6 +377,8 @@ dev_open(void)
 	}
 #endif
 	dev_pstate = DEV_INIT;
+	if (dev_reqprime)
+		dev_prime();
 	return 1;
 }
 
@@ -712,8 +715,11 @@ dev_run(void)
 			dev_stop();
 			if (dev_refcnt == 0)
 				dev_close();
-			else
+			else {
 				dev_clear();
+				if (dev_reqprime)
+					dev_prime();
+			}
 		}
 		break;
 	}
@@ -728,13 +734,10 @@ dev_run(void)
  * This routine can be called from aproc context.
  */
 void
-dev_wakeup(int prime)
+dev_wakeup(void)
 {
-	if (dev_pstate == DEV_INIT) {
-		if (prime)
-			dev_prime();
+	if (dev_pstate == DEV_INIT)
 		dev_pstate = DEV_START;
-	 }
 }
 
 /*

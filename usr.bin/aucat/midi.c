@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.23 2010/05/07 07:07:51 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.24 2010/05/08 15:35:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -697,7 +697,7 @@ ctl_trystart(struct aproc *p, int caller)
 		dbg_puts(" mtc fps\n");
 	}
 #endif
-	dev_wakeup(0);
+	dev_wakeup();
 	ctl_full(p);
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.90 2010/05/02 11:54:26 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.91 2010/05/08 15:35:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -652,6 +652,8 @@ aucat_main(int argc, char **argv)
 			errx(1, "monitoring not allowed in loopback mode");
 		dev_init_loop(&dipar, &dopar, bufsz);
 	} else {
+		if (l_flag)
+			dev_reqprime = 1;
 		if ((mode & MODE_MON) && !(mode & MODE_PLAY))
 			errx(1, "no playback stream to monitor");
 		dev_init_sio(devpath, mode, &dipar, &dopar, bufsz, round);

@@ -323,7 +323,7 @@ wav_attach(struct wav *f, int force)
 	 * start the device (dev_getpos() and dev_attach() must
 	 * be called on a started device
 	 */
-	dev_wakeup(0);
+	dev_wakeup();
 
 	dev_attach(f->pipe.file.name, f->mode,
 	    rbuf, &f->hpar, f->join ? dev_opar.cmax - dev_opar.cmin + 1 : 0,

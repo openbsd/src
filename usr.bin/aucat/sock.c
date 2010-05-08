@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.46 2010/05/02 11:54:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.47 2010/05/08 15:35:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -542,7 +542,7 @@ sock_attach(struct sock *f, int force)
 	 * start the device (dev_getpos() and dev_attach() must
 	 * be called on a started device
 	 */
-	dev_wakeup(1);
+	dev_wakeup();
 
 	/*
 	 * get the current position, the origin is when
