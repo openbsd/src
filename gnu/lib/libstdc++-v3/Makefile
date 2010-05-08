@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libstdc++/Makefile,v 1.63.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.1 2010/05/07 16:08:07 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2010/05/08 10:09:42 kettenis Exp $
 
 GCCDIR= ${.CURDIR}/../../gcc/gcc
 GCCLIB= ${GCCDIR}/gcc
@@ -93,9 +93,13 @@ atomicity.cc:	${ATOMICITY_H}
 	ln -sf ${.ALLSRC} ${.TARGET}
 CLEANFILES+=	atomicity.cc
 
-INCSGROUPS=	BITSHDRS BKWHDRS EXTHDRS BASEHDRS BASEXHDRS STDHDRS \
+INCSGROUPS=	BITSHDRS BKWHDRS EXTHDRS BASEHDRS BASEXHDRS STDHDRS SUPHDRS \
 		TARGETHDRS THRHDRS DEBUGHDRS TR1HDRS PBHDRS0 PBHDRS1
 CXXINCLUDEDIR=	${DESTDIR}/usr/include/g++
+
+SUPHDRS=	cxxabi.h exception exception_defines.h new typeinfo
+SUPHDRS:=	${SUPHDRS:S;^;${SRCDIR}/libsupc++/;}
+SUPHDRSDIR=	${CXXINCLUDEDIR}
 
 STDHDRS=	std_algorithm.h std_bitset.h std_complex.h std_deque.h \
 		std_fstream.h std_functional.h std_iomanip.h std_ios.h \
