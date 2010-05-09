@@ -3941,6 +3941,9 @@ sparc_expand_prologue (void)
   actual_fsize
     = sparc_compute_frame_size (get_frame_size(), sparc_leaf_function_p);
 
+  if (warn_stack_larger_than && actual_fsize > stack_larger_than_size)
+    warning (0, "stack usage is %d bytes", actual_fsize);
+
   /* Advertise that the data calculated just above are now valid.  */
   sparc_prologue_data_valid_p = true;
 
