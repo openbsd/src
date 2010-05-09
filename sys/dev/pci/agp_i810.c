@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.61 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.62 2010/05/09 19:40:37 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -68,7 +68,8 @@ enum {
 	CHIP_I915	= 4,	/* i915G/i915GM */
 	CHIP_I965	= 5,	/* i965/i965GM */
 	CHIP_G33	= 6,	/* G33/Q33/Q35 */
-	CHIP_G4X	= 7	/* G4X */
+	CHIP_G4X	= 7,	/* G4X */
+	CHIP_PINEVIEW	= 8	/* Pineview/Pineview M */
 };
 
 struct agp_i810_softc {
@@ -181,6 +182,8 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82G45_IGD_1:
 	case PCI_PRODUCT_INTEL_82G41_IGD_1:
 		return (CHIP_G4X);
+	case PCI_PRODUCT_INTEL_PINEVIEW_IGC_1:
+		return (CHIP_PINEVIEW);
 		break;
 	}
 	return (CHIP_NONE);
@@ -230,6 +233,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	switch (isc->chiptype) {
 	case CHIP_I915:
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 		gmaddr = AGP_I915_GMADR;
 		mmaddr = AGP_I915_MMADR;
 		memtype = PCI_MAPREG_TYPE_MEM;
@@ -259,7 +263,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33) {
+	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33 ||
+	    isc->chiptype == CHIP_PINEVIEW) {
 		isc->gtt_map = vga_pci_bar_map(vga, AGP_I915_GTTADR, 0,
 		    BUS_SPACE_MAP_LINEAR);
 		if (isc->gtt_map == NULL) {
@@ -348,6 +353,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	case CHIP_G33:
 		/* FALLTHROUGH */
 	case CHIP_G4X:
+	case CHIP_PINEVIEW:
 
 		/* Stolen memory is set up at the beginning of the aperture by
 		 * the BIOS, consisting of the GATT followed by 4kb for the
@@ -392,6 +398,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			}
 			break;
 		case CHIP_G4X:
+		case CHIP_PINEVIEW:
 			/*
 			 * GTT stolen is separate from graphics stolen on
 			 * 4 series hardware. so ignore it in stolen gtt entries
@@ -787,7 +794,8 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 	if (v != 0) {
 		pte = v | INTEL_ENABLED;
 		/* 965+ can do 36-bit addressing, add in the extra bits */
-		if (isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G4X)
+		if (isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G4X ||
+		    isc->chiptype == CHIP_PINEVIEW || isc->chiptype == CHIP_G33)
 			pte |= (v & 0x0000000f00000000ULL) >> 28;
 	}
 
@@ -797,6 +805,7 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 	case CHIP_I915:
 		/* FALLTHROUGH */
 	case CHIP_G33:
+	case CHIP_PINEVIEW:
 		bus_space_write_4(isc->gtt_map->bst, isc->gtt_map->bsh,
 		    wroff, pte);
 		return;
