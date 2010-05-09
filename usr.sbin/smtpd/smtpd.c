@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.102 2010/04/21 18:54:43 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.103 2010/05/09 15:24:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -138,6 +138,7 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_CONTROL) {
 		switch (imsg->hdr.type) {
 		case IMSG_CONF_RELOAD:
+			reload = imsg->data;
 			reload->ret = 0;
 			if (parse_config(&newenv, env->sc_conffile, 0) == 0) {
 				strlcpy(env->sc_hostname, newenv.sc_hostname,
