@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.35 2010/04/29 21:09:50 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.36 2010/05/09 18:24:24 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -527,7 +527,7 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 	struct audio_info aui;
 	unsigned i, infr, ibpf, onfr, obpf;
 	unsigned bufsz, round;
-	unsigned rate, prec, enc;
+	unsigned rate, req_rate, prec, enc;
 
 	/*
 	 * try to set parameters until the device accepts
@@ -600,17 +600,33 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 	}
 
 	/*
+	 * If the rate that the hardware is using is different than
+	 * the requested rate, scale buffer sizes so they will be the
+	 * same time duration as what was requested.  This just gets
+	 * the rates to use for scaling, that actual scaling is done
+	 * later.
+	 */
+	rate = (hdl->sio.mode & SIO_REC) ? aui.record.sample_rate :
+	    aui.play.sample_rate;
+	req_rate = rate;
+	if (par->rate && par->rate != ~0U)
+		req_rate = par->rate;
+
+	/*
 	 * if block size and buffer size are not both set then
 	 * set the blocksize to half the buffer size
 	 */
 	bufsz = par->appbufsz;
 	round = par->round;
 	if (bufsz != ~0U) {
+		bufsz = bufsz * rate / req_rate;
 		if (round == ~0U)
 			round = (bufsz + 1) / 2;
+		else
+			round = round * rate / req_rate;
 	} else if (round != ~0U) {
-		if (bufsz == ~0U)
-			bufsz = round * 2;
+		round = round * rate / req_rate;
+		bufsz = round * 2;
 	} else
 		return 1;
 
