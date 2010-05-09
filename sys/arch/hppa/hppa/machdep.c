@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.183 2010/05/02 22:59:11 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.184 2010/05/09 17:37:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1326,7 +1326,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_arg2 = tf->tf_r4 = scp;
 	tf->tf_arg3 = (register_t)catcher;
 	tf->tf_sp = scp + sss;
-	tf->tf_ipsw &= ~(PSL_N|PSL_B);
+	tf->tf_ipsw &= ~(PSL_N|PSL_B|PSL_T);
 	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_sigcode;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
 	tf->tf_iisq_tail = tf->tf_iisq_head = pcb->pcb_space;
