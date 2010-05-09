@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.25 2010/04/24 18:12:29 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.26 2010/05/09 09:34:42 kettenis Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
  */
 
 /* Offset of ARGC from bottom of stack */
-#define	ARGC	(16*8)
+#define	ARGC	CC64FSZ
 /* XXX - DL_DATA_SIZE should be (9*8), but I can't think right now. */
 #define DL_DATA_SIZE (16*8)
 
@@ -96,7 +96,7 @@
 _ENTRY(_dl_start)
 	sub	%g0, %g0, %fp		! clear frame
 	mov	%g1, %l1		! save ps_strings
-	sub	%sp, DL_DATA_SIZE, %sp	! make room for dl_data
+	sub	%sp, 48 + DL_DATA_SIZE, %sp	! make room for dl_data
 	add	%sp, BIAS + ARGC, %l3
 
 	add	%l3, DL_DATA_SIZE, %o0
@@ -131,7 +131,7 @@ _ENTRY(_dl_start)
 	call	_dl_boot		! _dl_boot(argv,envp,loff,dl_data)
 	 nop
 
-	add	%sp, DL_DATA_SIZE, %sp		! restore stack
+	add	%sp, 48 + DL_DATA_SIZE, %sp	! restore stack
 	mov	%l1, %g1		! restore ps_strings
 
 	jmp	%o0
