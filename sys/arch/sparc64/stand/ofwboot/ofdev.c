@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.13 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.14 2010/05/09 19:45:51 kettenis Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ devclose(struct open_file *of)
 	op->handle = -1;
 }
 
-static struct devsw devsw[1] = {
+struct devsw devsw[1] = {
 	"OpenFirmware",
 	strategy,
 	(int (*)(struct open_file *, ...))nodev,
