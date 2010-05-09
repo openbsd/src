@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.100 2008/09/07 19:22:03 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.101 2010/05/09 12:31:41 espie Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -35,8 +35,12 @@ ELF_TOOLCHAIN?=	yes
 .if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
     ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "vax"
 USE_GCC3?=no
+COMPILER_VERSION?=gcc2
+.elif ${MACHINE_ARCH} == "GCC4_ARCH_GOES_HERE_eg_powerpc"
+COMPILER_VERSION?=gcc4
 .else
 USE_GCC3?=yes
+COMPILER_VERSION?=gcc3
 .endif
 
 # where the system object and source trees are kept; can be configurable
