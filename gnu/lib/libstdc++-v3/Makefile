@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libstdc++/Makefile,v 1.63.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.4 2010/05/08 13:33:48 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2010/05/09 11:39:59 espie Exp $
 
 GCCDIR= ${.CURDIR}/../../gcc/gcc
 GCCLIB= ${GCCDIR}/gcc
@@ -83,7 +83,7 @@ ATOMICITY_H=	${SRCDIR}/config/cpu/${MARCHDIR}/atomicity.h
 ATOMICITY_H=	${SRCDIR}/config/cpu/generic/atomicity_mutex/atomicity.h
 .endif
 
-.if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "sparc64" || \\
+.if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "i386"
 .if exists(${SRCDIR}/config/cpu/generic/atomicity_builtins/atomicity.h)
 ATOMICITY_H=	${SRCDIR}/config/cpu/generic/atomicity_builtins/atomicity.h
