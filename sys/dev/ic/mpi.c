@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.146 2010/04/28 11:46:23 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.147 2010/05/09 22:03:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -293,7 +293,7 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_target;
 	sc->sc_link.adapter_buswidth = sc->sc_buswidth;
-	sc->sc_link.openings = sc->sc_maxcmds;
+	sc->sc_link.openings = sc->sc_maxcmds / sc->sc_buswidth;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
