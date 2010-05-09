@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.7 2010/05/09 19:50:07 kettenis Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.8 2010/05/09 19:55:43 kettenis Exp $	*/
 /*	$NetBSD: fpu_implode.c,v 1.7 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -207,7 +207,7 @@ fpu_ftoi(fe, fp)
 		 * into last mantissa word (this will not exceed 0xffffffff),
 		 * shifting any guard and round bits out into the sticky
 		 * bit.  Then ``round'' towards zero, i.e., just set an
-		 * inexact exception if sticky is set (see round()).
+		 * inexact exception if sticky is set (see fpu_round()).
 		 * If the result is > 0x80000000, or is positive and equals
 		 * 0x80000000, overflow; otherwise the last fraction word
 		 * is the result.
@@ -258,7 +258,7 @@ fpu_ftox(fe, fp, res)
 		 * into last mantissa word (this will not exceed 0xffffffffffffffff),
 		 * shifting any guard and round bits out into the sticky
 		 * bit.  Then ``round'' towards zero, i.e., just set an
-		 * inexact exception if sticky is set (see round()).
+		 * inexact exception if sticky is set (see fpu_round()).
 		 * If the result is > 0x8000000000000000, or is positive and equals
 		 * 0x8000000000000000, overflow; otherwise the last fraction word
 		 * is the result.
