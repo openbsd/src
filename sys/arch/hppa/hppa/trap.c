@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.106 2010/03/30 14:57:02 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.107 2010/05/09 17:14:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -716,14 +716,19 @@ process_sstep(struct proc *p, int sstep)
 
 	ss_clear_breakpoints(p);
 
-	/* Don't touch the syscall gateway page. */
-	if (sstep == 0 ||
-	    (p->p_md.md_regs->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE) {
+	if (sstep == 0) {
 		p->p_md.md_regs->tf_ipsw &= ~PSL_T;
 		return (0);
 	}
 
-	p->p_md.md_bpva = p->p_md.md_regs->tf_iioq_tail & ~HPPA_PC_PRIV_MASK;
+	/*
+	 * Don't touch the syscall gateway page.  Instead, insert a
+	 * breakpoint where we're supposed to return.
+	 */
+	if ((p->p_md.md_regs->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE)
+		p->p_md.md_bpva = p->p_md.md_regs->tf_r31 & ~HPPA_PC_PRIV_MASK;
+	else
+		p->p_md.md_bpva = p->p_md.md_regs->tf_iioq_tail & ~HPPA_PC_PRIV_MASK;
 
 	/*
 	 * Insert two breakpoint instructions; the first one might be
@@ -745,7 +750,11 @@ process_sstep(struct proc *p, int sstep)
 	if (error)
 		return (error);
 
-	p->p_md.md_regs->tf_ipsw |= PSL_T;
+	if ((p->p_md.md_regs->tf_iioq_tail & ~PAGE_MASK) != SYSCALLGATE)
+		p->p_md.md_regs->tf_ipsw |= PSL_T;
+	else
+		p->p_md.md_regs->tf_ipsw &= ~PSL_T;
+
 	return (0);
 }
 
