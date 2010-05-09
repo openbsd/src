@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.3 2002/02/02 21:28:07 mickey Exp $	*/
+/*	$OpenBSD: ld.script,v 1.4 2010/05/09 13:27:30 kettenis Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
@@ -13,6 +13,7 @@ SECTIONS {
 		*(.text.*)
 		*(.rodata)
 		*(.rodata1)
+		*(.rodata.*)
 		*($CODE$)
 		etext = .;
 	} = 0x08000240
