@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.88 2009/10/03 21:51:00 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.89 2010/05/09 12:03:16 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -98,8 +98,8 @@ extern struct emul emul_aout;
 #include "npx.h"
 
 static __inline void userret(struct proc *);
-void trap(struct trapframe);
-void syscall(struct trapframe);
+void trap(struct trapframe *);
+void syscall(struct trapframe *);
 
 /*
  * Define the code needed before returning to user mode, for
@@ -151,15 +151,14 @@ int	trapdebug = 0;
  *	Exception, fault, and trap interface to BSD kernel. This
  * common code is called from assembly language IDT gate entry
  * routines that prepare a suitable stack frame, and restore this
- * frame after the exception has been processed. Note that the
- * effect is as if the arguments were passed call by reference.
+ * frame after the exception has been processed.
  */
 /*ARGSUSED*/
 void
-trap(struct trapframe frame)
+trap(struct trapframe *frame)
 {
 	struct proc *p = curproc;
-	int type = frame.tf_trapno;
+	int type = frame->tf_trapno;
 	struct pcb *pcb = NULL;
 	extern char resume_iret[], resume_pop_ds[], resume_pop_es[],
 	    resume_pop_fs[], resume_pop_gs[];
@@ -173,7 +172,7 @@ trap(struct trapframe frame)
 	uvmexp.traps++;
 
 	/* SIGSEGV and SIGBUS need this */
-	if (frame.tf_err & PGEX_W) {
+	if (frame->tf_err & PGEX_W) {
 		vftype = VM_PROT_WRITE;
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
 	} else
@@ -182,15 +181,15 @@ trap(struct trapframe frame)
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
-		    frame.tf_eflags, rcr2(), lapic_tpr);
+		    frame->tf_trapno, frame->tf_err, frame.->f_eip,
+		    frame->tf_cs, frame->tf_eflags, rcr2(), lapic_tpr);
 		printf("curproc %p\n", curproc);
 	}
 #endif
 
-	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
+	if (!KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
-		p->p_md.md_regs = &frame;
+		p->p_md.md_regs = frame;
 	}
 
 	switch (type) {
@@ -206,8 +205,8 @@ trap(struct trapframe frame)
 		 */
 		extern int Xosyscall, Xosyscall_end;
 
-		if (frame.tf_eip >= (int)&Xosyscall &&
-		    frame.tf_eip <= (int)&Xosyscall_end)
+		if (frame->tf_eip >= (int)&Xosyscall &&
+		    frame->tf_eip <= (int)&Xosyscall_end)
 			return;
 #else
 		return; /* Just return if no DDB */
@@ -218,7 +217,7 @@ trap(struct trapframe frame)
 	default:
 	we_re_toast:
 #ifdef KGDB
-		if (kgdb_trap(type, &frame))
+		if (kgdb_trap(type, frame))
 			return;
 		else {
 			/*
@@ -233,26 +232,26 @@ trap(struct trapframe frame)
 #endif
 
 #ifdef DDB
-		if (kdb_trap(type, 0, &frame))
+		if (kdb_trap(type, 0, frame))
 			return;
 #endif
-		if (frame.tf_trapno < trap_types)
-			printf("fatal %s (%d)", trap_type[frame.tf_trapno],
-				frame.tf_trapno);
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s (%d)", trap_type[frame->tf_trapno],
+				frame->tf_trapno);
 		else
-			printf("unknown trap %d", frame.tf_trapno);
+			printf("unknown trap %d", frame->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    type, frame.tf_err, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), lapic_tpr);
+		    type, frame->tf_err, frame->tf_eip, frame->tf_cs, frame->tf_eflags, rcr2(), lapic_tpr);
 
 		panic("trap type %d, code=%x, pc=%x",
-		    type, frame.tf_err, frame.tf_eip);
+		    type, frame->tf_err, frame->tf_eip);
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
 #ifdef KVM86
 		if (KVM86MODE) {
-			kvm86_gpfault(&frame);
+			kvm86_gpfault(frame);
 			return;
 		}
 #endif
@@ -263,7 +262,7 @@ trap(struct trapframe frame)
 			pcb = &p->p_addr->u_pcb;
 			if (pcb->pcb_onfault != 0) {
 			copyfault:
-				frame.tf_eip = (int)pcb->pcb_onfault;
+				frame->tf_eip = (int)pcb->pcb_onfault;
 				return;
 			}
 		}
@@ -283,31 +282,31 @@ trap(struct trapframe frame)
 		 * at this point is the same as on exit from a `slow'
 		 * interrupt.
 		 */
-		switch (*(u_char *)frame.tf_eip) {
+		switch (*(u_char *)frame->tf_eip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame.tf_esp -
+			vframe = (void *)((int)&frame->tf_esp -
 			    offsetof(struct trapframe, tf_eip));
 			resume = (int)resume_iret;
 			break;
 		case 0x1f:	/* popl %ds */
-			vframe = (void *)((int)&frame.tf_esp -
+			vframe = (void *)((int)&frame->tf_esp -
 			    offsetof(struct trapframe, tf_ds));
 			resume = (int)resume_pop_ds;
 			break;
 		case 0x07:	/* popl %es */
-			vframe = (void *)((int)&frame.tf_esp -
+			vframe = (void *)((int)&frame->tf_esp -
 			    offsetof(struct trapframe, tf_es));
 			resume = (int)resume_pop_es;
 			break;
 		case 0x0f:	/* 0x0f prefix */
-			switch (*(u_char *)(frame.tf_eip+1)) {
+			switch (*(u_char *)(frame->tf_eip + 1)) {
 			case 0xa1:		/* popl %fs */
-				vframe = (void *)((int)&frame.tf_esp -
+				vframe = (void *)((int)&frame->tf_esp -
 				    offsetof(struct trapframe, tf_fs));
 				resume = (int)resume_pop_fs;
 				break;
 			case 0xa9:		/* popl %gs */
-				vframe = (void *)((int)&frame.tf_esp -
+				vframe = (void *)((int)&frame->tf_esp -
 				    offsetof(struct trapframe, tf_gs));
 				resume = (int)resume_pop_gs;
 				break;
@@ -321,32 +320,32 @@ trap(struct trapframe frame)
 		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
 			goto we_re_toast;
 
-		frame.tf_eip = resume;
+		frame->tf_eip = resume;
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 		KERNEL_PROC_LOCK(p);
 #ifdef VM86
-		if (frame.tf_eflags & PSL_VM) {
+		if (frame->tf_eflags & PSL_VM) {
 			vm86_gpfault(p, type & ~T_USER);
 			KERNEL_PROC_UNLOCK(p);
 			goto out;
 		}
 #endif
 		/* If pmap_exec_fixup does something, let's retry the trap. */
-		if (pmap_exec_fixup(&p->p_vmspace->vm_map, &frame,
+		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
 		    &p->p_addr->u_pcb)) {
 			KERNEL_PROC_UNLOCK(p);
 			goto out;
 		}
 
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_TSSFLT|T_USER:
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGBUS, vftype, BUS_OBJERR, sv);
 		KERNEL_PROC_UNLOCK(p);
@@ -354,28 +353,28 @@ trap(struct trapframe frame)
 
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, sv);
 		KERNEL_PROC_UNLOCK(p);
@@ -395,7 +394,7 @@ trap(struct trapframe frame)
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGKILL, type &~ T_USER, FPE_FLTINV, sv);
 		KERNEL_PROC_UNLOCK(p);
@@ -403,33 +402,33 @@ trap(struct trapframe frame)
 	}
 
 	case T_BOUND|T_USER:
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 	case T_OFLOW|T_USER:
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 	case T_DIVIDE|T_USER:
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		sv.sival_int = frame.tf_eip;
+		sv.sival_int = frame->tf_eip;
 		KERNEL_PROC_LOCK(p);
-		trapsignal(p, SIGFPE, frame.tf_err, FPE_INTOVF, sv);
+		trapsignal(p, SIGFPE, frame->tf_err, FPE_INTOVF, sv);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_XFTRAP|T_USER:
-		npxtrap(&frame);
+		npxtrap(frame);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
@@ -448,7 +447,7 @@ trap(struct trapframe frame)
 		pcb = &p->p_addr->u_pcb;
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
-		if (frame.tf_err & PGEX_P)
+		if (frame->tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
 		cr2 = rcr2();
@@ -549,11 +548,11 @@ trap(struct trapframe frame)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
 #ifdef KGDB
-		if (kgdb_trap(type, &frame))
+		if (kgdb_trap(type, frame))
 			return;
 #endif
 #ifdef DDB
-		if (kdb_trap(type, 0, &frame))
+		if (kdb_trap(type, 0, frame))
 			return;
 #endif
 			return;
@@ -575,11 +574,10 @@ out:
 /*
  * syscall(frame):
  *	System call request from POSIX system call gate interface to kernel.
- * Like trap(), argument is call by reference.
  */
 /*ARGSUSED*/
 void
-syscall(struct trapframe frame)
+syscall(struct trapframe *frame)
 {
 	caddr_t params;
 	struct sysent *callp;
@@ -593,13 +591,13 @@ syscall(struct trapframe frame)
 
 	uvmexp.syscalls++;
 #ifdef DIAGNOSTIC
-	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
+	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
 		panic("syscall");
 #endif
 	p = curproc;
-	p->p_md.md_regs = &frame;
-	opc = frame.tf_eip;
-	code = frame.tf_eax;
+	p->p_md.md_regs = frame;
+	opc = frame->tf_eip;
+	code = frame->tf_eax;
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
@@ -609,7 +607,7 @@ syscall(struct trapframe frame)
 		if (IBCS2_HIGH_SYSCALL(code))
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
 #endif
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 #ifdef VM86
 	/*
@@ -617,7 +615,7 @@ syscall(struct trapframe frame)
 	 * it get a SIGSYS and have the VM86 handler in the process take care
 	 * of it.
 	 */
-	if (frame.tf_eflags & PSL_VM)
+	if (frame->tf_eflags & PSL_VM)
 		code = -1;
 	else
 #endif
@@ -674,17 +672,17 @@ syscall(struct trapframe frame)
 		 */
 		switch (argsize) {
 		case 24:
-			args[5] = frame.tf_ebp;
+			args[5] = frame->tf_ebp;
 		case 20:
-			args[4] = frame.tf_edi;
+			args[4] = frame->tf_edi;
 		case 16:
-			args[3] = frame.tf_esi;
+			args[3] = frame->tf_esi;
 		case 12:
-			args[2] = frame.tf_edx;
+			args[2] = frame->tf_edx;
 		case 8:
-			args[1] = frame.tf_ecx;
+			args[1] = frame->tf_ecx;
 		case 4:
-			args[0] = frame.tf_ebx;
+			args[0] = frame->tf_ebx;
 		case 0:
 			break;
 		default:
@@ -722,7 +720,7 @@ syscall(struct trapframe frame)
 		goto bad;
 	}
 	rval[0] = 0;
-	rval[1] = frame.tf_edx;
+	rval[1] = frame->tf_edx;
 
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
@@ -741,9 +739,9 @@ syscall(struct trapframe frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -751,7 +749,7 @@ syscall(struct trapframe frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip = opc - frame.tf_err;
+		frame->tf_eip = opc - frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -760,8 +758,8 @@ syscall(struct trapframe frame)
 	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

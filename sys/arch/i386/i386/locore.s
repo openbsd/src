@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.128 2009/07/10 13:51:47 jsg Exp $	*/
+/*	$OpenBSD: locore.s,v 1.129 2010/05/09 12:03:16 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1532,7 +1532,9 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPL,%ebx
 #endif /* DIAGNOSTIC */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%ecx)
@@ -1546,7 +1548,9 @@ calltrap:
 5:	CLEAR_ASTPENDING(%ecx)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	jmp	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
@@ -1589,7 +1593,9 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	pushl	%esp
 	call	_C_LABEL(syscall)
+	addl	$4,%esp
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%ecx)
@@ -1598,7 +1604,9 @@ syscall1:
 	CLEAR_ASTPENDING(%ecx)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	jmp	2b
 1:	INTRFASTEXIT
 

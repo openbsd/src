@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.29 2008/05/21 18:49:47 kettenis Exp $	*/
+/*	$OpenBSD: icu.s,v 1.30 2010/05/09 12:03:16 kettenis Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -109,7 +109,9 @@ IDTVEC(doreti)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	cli
 	jmp	2b
 3:	INTRFASTEXIT
