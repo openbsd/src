@@ -368,6 +368,7 @@ struct inteldrm_file {
 #define CHIP_GEN3	0x20000
 #define CHIP_GEN4	0x40000
 #define CHIP_GEN6	0x80000
+#define	CHIP_PINEVIEW	0x100000
 
 /* flags we use in drm_obj's do_flags */
 #define I915_ACTIVE		0x0010	/* being used by the gpu. */
