@@ -3584,6 +3584,9 @@ hppa_expand_prologue (void)
 
   actual_fsize = compute_frame_size (size, &save_fregs);
 
+  if (warn_stack_larger_than && actual_fsize > stack_larger_than_size)
+    warning (0, "stack usage is %d bytes", actual_fsize);
+
   /* Compute a few things we will use often.  */
   tmpreg = gen_rtx_REG (word_mode, 1);
 
