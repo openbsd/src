@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.10 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: mcount.c,v 1.11 2010/05/09 15:56:08 kettenis Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
  * both frompcindex and frompc.  Any reasonable, modern compiler will
  * perform this optimization.
  */
-_MCOUNT_DECL(u_long frompc, u_long selfpc);
+_MCOUNT_DECL(u_long frompc, u_long selfpc) __used;
 /* _mcount; may be static, inline, etc */
 _MCOUNT_DECL(u_long frompc, u_long selfpc)
 {
