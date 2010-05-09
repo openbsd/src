@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.h,v 1.4 2010/04/15 20:32:50 miod Exp $	*/
+/*	$OpenBSD: l1.h,v 1.5 2010/05/09 18:37:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -73,11 +73,12 @@
 #define	L1_EEP_LOGIC	0x01		/* logic board */
 /* C-brick component */
 #define	L1_EEP_DIMM_NOINTERLEAVE_BASE	0x04
-#define	L1_EEP_DIMM_INTERLEAVE_BASE	0x05
-#define	L1_EEP_DIMM_NOINTERLEAVE(d) \
-	(L1_EEP_DIMM_NOINTERLEAVE_BASE + (d))
-#define	L1_EEP_DIMM_INTERLEAVE(d) \
-	(L1_EEP_DIMM_INTERLEAVE_BASE + ((d) >> 1) + ((d) & 0x01 ? 4 : 0))
+#define	L1_EEP_DIMM_BASE_CBRICK		0x03
+#define	L1_EEP_DIMM_BASE_CHIMERA	0x05
+#define	L1_EEP_DIMM_NOINTERLEAVE(dimm) \
+	(L1_EEP_DIMM_NOINTERLEAVE_BASE + (dimm))
+#define	L1_EEP_DIMM_INTERLEAVE(base, dimm) \
+	((base) + ((dimm) >> 1) + ((dimm) & 0x01 ? 4 : 0))
 /* ia code */
 #define	L1_EEP_CHASSIS	0x01		/* chassis ia */
 #define	L1_EEP_BOARD	0x02		/* board ia */
@@ -94,4 +95,3 @@ struct spdmem_attach_args {
 int	l1_exec_command(int16_t, const char *);
 int	l1_get_brick_ethernet_address(int16_t, uint8_t *);
 int	l1_get_brick_spd_record(int16_t, int, u_char **, size_t *);
-int	l1_read_board_ia(int16_t, u_char **, size_t *);

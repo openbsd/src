@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.34 2010/04/06 19:12:34 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.35 2010/05/09 18:37:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -335,10 +335,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 			if (!ISSET(ioc_nodemask, 1UL << currentnasid)) {
 				SET(ioc_nodemask, 1UL << currentnasid);
 
-				subdevice_mask = (1 << IOCDEV_SERIAL_A) |
-				    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
-				    (1 << IOCDEV_KBC) | (1 << IOCDEV_RTC) |
-				    (1 << IOCDEV_EF);
+				switch (sys_config.system_subtype) {
 				/*
 				 * Origin 300 onboard IOC3 do not have PS/2
 				 * ports; since they can only be connected to
@@ -347,8 +344,34 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 				 * regardless of the current nasid.
 				 * XXX What about Onyx 300 though???
 				 */
-				if (sys_config.system_subtype == IP35_O300)
-					subdevice_mask &= ~(1 << IOCDEV_KBC);
+				case IP35_O300:
+					subdevice_mask =
+					    (1 << IOCDEV_SERIAL_A) |
+					    (1 << IOCDEV_SERIAL_B) |
+					    (1 << IOCDEV_LPT) |
+					    (1 << IOCDEV_RTC) |
+					    (1 << IOCDEV_EF);
+					break;
+				/*
+				 * Origin 3000 I-Bricks have only one serial
+				 * port, and no keyboard or parallel ports.
+				 */
+				case IP35_CBRICK:
+					subdevice_mask =
+					    (1 << IOCDEV_SERIAL_A) |
+					    (1 << IOCDEV_RTC) |
+					    (1 << IOCDEV_EF);
+					break;
+				default:
+					subdevice_mask =
+					    (1 << IOCDEV_SERIAL_A) |
+					    (1 << IOCDEV_SERIAL_B) |
+					    (1 << IOCDEV_LPT) |
+					    (1 << IOCDEV_KBC) |
+					    (1 << IOCDEV_RTC) |
+					    (1 << IOCDEV_EF);
+					break;
+				}
 			}
 			break;
 		default:
@@ -479,7 +502,9 @@ unknown:
 		    IOC3_UARTB_SHADOW, 0);
 
 		ioc_attach_child(sc, "com", IOC3_UARTA_BASE, IOCDEV_SERIAL_A);
-		ioc_attach_child(sc, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
+		if (ISSET(subdevice_mask, 1 << IOCDEV_SERIAL_B))
+			ioc_attach_child(sc, "com", IOC3_UARTB_BASE,
+			    IOCDEV_SERIAL_B);
 	}
 	if (ISSET(subdevice_mask, 1 << IOCDEV_KBC))
 		ioc_attach_child(sc, "iockbc", 0, IOCDEV_KBC);

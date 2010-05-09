@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27.h,v 1.3 2010/03/20 16:22:55 miod Exp $	*/
+/*	$OpenBSD: ip27.h,v 1.4 2010/05/09 18:37:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -40,6 +40,7 @@
 
 /* IP35 Brick types */
 
+#define	IP35_CBRICK	0x00
 #define	IP35_O350	0x02
 #define	IP35_FUEL	0x04
 #define	IP35_O300	0x08

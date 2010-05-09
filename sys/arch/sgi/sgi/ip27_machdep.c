@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.50 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.51 2010/05/09 18:37:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -142,6 +142,10 @@ ip27_setup()
 			break;
 		case IP35_O300:	/* Speedo2 */
 			hw_prod = "Origin 300";
+			break;
+		case IP35_CBRICK:
+			/* regular C-Brick, must be an Origin 3000 system */
+			hw_prod = "Origin 3000";
 			break;
 		default:
 			snprintf(unknown_model, sizeof unknown_model,

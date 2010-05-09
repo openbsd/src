@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.5 2010/04/15 20:32:50 miod Exp $	*/
+/*	$OpenBSD: l1.c,v 1.6 2010/05/09 18:37:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -80,6 +80,7 @@ int	l1_packet_get_binary(u_char **, size_t *, u_char **, size_t *);
 size_t	l1_command_build(u_char *, size_t, uint32_t, uint16_t, int, ...);
 int	l1_receive_response(int16_t, u_char *, size_t *);
 int	l1_response_to_errno(uint32_t);
+int	l1_read_board_ia(int16_t, int, u_char **, size_t *);
 
 static inline
 size_t	ia_skip(u_char *, size_t);
@@ -572,7 +573,7 @@ l1_response_to_errno(uint32_t response)
 #define	EEPROM_CHUNK	0x40
 
 int
-l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
+l1_read_board_ia(int16_t nasid, int type, u_char **ria, size_t *rialen)
 {
 	u_char pkt[64 + EEPROM_CHUNK];	/* command and response packet buffer */
 	u_char *pktbuf, *chunk, *ia = NULL;
@@ -584,7 +585,7 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 	 * Build a first packet, asking for 0 bytes to be read.
 	 */
 	pktlen = l1_command_build(pkt, sizeof pkt,
-	    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
+	    L1_ADDRESS(type, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
 	    L1_REQ_EEPROM, 4,
 	    L1_ARG_INT, (uint32_t)L1_EEP_LOGIC,
 	    L1_ARG_INT, (uint32_t)L1_EEP_BOARD,
@@ -666,7 +667,7 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 		 * Build a command packet, this time actually reading data.
 		 */
 		pktlen = l1_command_build(pkt, sizeof pkt,
-		    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
+		    L1_ADDRESS(type, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
 		    L1_REQ_EEPROM, 4,
 		    L1_ARG_INT, (uint32_t)L1_EEP_LOGIC,
 		    L1_ARG_INT, (uint32_t)L1_EEP_BOARD,
@@ -850,10 +851,20 @@ l1_get_brick_ethernet_address(int16_t nasid, uint8_t *enaddr)
 	u_char *ia;
 	size_t iapos, ialen;
 	char hexaddr[18], *d, *s;
+	int type;
 	int rc;
 
+	/*
+	 * If we are running on a C-Brick, the Ethernet address is stored
+	 * in the matching I-Brick.
+	 */
+	if (sys_config.system_subtype == IP35_CBRICK)
+		type = L1_TYPE_IOBRICK;
+	else
+		type = L1_TYPE_L1;
+
 	/* read the Board IA of this node */
-	rc = l1_read_board_ia(nasid, &ia, &ialen);
+	rc = l1_read_board_ia(nasid, type, &ia, &ialen);
 	if (rc != 0)
 		return rc;
 
@@ -988,10 +999,18 @@ l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
 	 * Since Fuel is also a single-node system, we can safely check for
 	 * the system subtype to decide which address to use.
 	 */
-	if (sys_config.system_subtype == IP35_FUEL)
+	switch (sys_config.system_subtype) {
+	case IP35_FUEL:
 		address = L1_EEP_DIMM_NOINTERLEAVE(dimm);
-	else
-		address = L1_EEP_DIMM_INTERLEAVE(dimm);
+		break;
+	case IP35_CBRICK:
+		address = L1_EEP_DIMM_INTERLEAVE(L1_EEP_DIMM_BASE_CBRICK, dimm);
+		break;
+	default:
+		address =
+		    L1_EEP_DIMM_INTERLEAVE(L1_EEP_DIMM_BASE_CHIMERA, dimm);
+		break;
+	}
 
 	/*
 	 * Build a first packet, asking for 0 bytes to be read.
