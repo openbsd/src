@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/* $OpenBSD: omgpio.c,v 1.2 2010/05/09 15:46:17 jasper Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -388,7 +388,7 @@ omgpio_irq(void *v)
 				ih->ih_count.ec_count++;
 			omgpio_clear_intr(ih->ih_gpio);
 		} else {
-			panic("omgpio: irq fired no hander, gpio %x %x %x\n",
+			panic("omgpio: irq fired no handler, gpio %x %x %x\n",
 				sc->sc_dev.dv_unit * 32 + bit, pending,
 	bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_IRQENABLE1)
 

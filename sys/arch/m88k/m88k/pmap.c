@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2010/05/02 22:01:47 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.51 2010/05/09 15:46:17 jasper Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1142,9 +1142,9 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, boolean_t flush)
 
 	if (prev == NULL) {
 		/*
-		 * Hander is the pv_entry. Copy the next one
-		 * to hander and free the next one (we can't
-		 * free the hander)
+		 * Handler is the pv_entry. Copy the next one
+		 * to handler and free the next one (we can't
+		 * free the handler)
 		 */
 		cur = cur->pv_next;
 		if (cur != NULL) {

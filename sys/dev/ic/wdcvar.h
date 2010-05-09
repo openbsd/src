@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.44 2009/10/13 19:33:16 pirofti Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.45 2010/05/09 15:46:17 jasper Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -225,7 +225,7 @@ struct wdc_xfer {
 #define C_DMA		0x0040 /* cmd uses DMA */
 #define C_SENSE		0x0080 /* cmd is a internal command */
 #define C_MEDIA_ACCESS	0x0100 /* is a media access command */
-#define C_POLL_MACHINE	0x0200 /* machine has a poll hander */
+#define C_POLL_MACHINE	0x0200 /* machine has a poll handler */
 
 	/* Informations about our location */
 	struct channel_softc *chp;
