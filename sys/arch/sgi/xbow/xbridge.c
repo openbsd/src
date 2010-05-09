@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.71 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.72 2010/05/09 18:36:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -2248,6 +2248,25 @@ xbridge_setup(struct xbpci_softc *xb)
 		xbridge_write_reg(xb, BRIDGE_BUS_TIMEOUT,
 		    xbridge_read_reg(xb, BRIDGE_BUS_TIMEOUT) &
 		    ~BRIDGE_BUS_PCI_RETRY_CNT_MASK);
+	}
+
+	/*
+	 * AT&T/Lucent USS-302 and USS-312 USB controllers require
+	 * a larger PCI retry hold interval for proper operation.
+	 */
+
+	for (dev = 0; dev < xb->xb_nslots; dev++) {
+		if (xb->xb_devices[dev].id ==
+		    PCI_ID_CODE(PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC) ||
+		    xb->xb_devices[dev].id ==
+		    PCI_ID_CODE(PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC2)) {
+			ctrl = xbridge_read_reg(xb, BRIDGE_BUS_TIMEOUT);
+			ctrl &= ~BRIDGE_BUS_PCI_RETRY_HOLD_MASK;
+			ctrl |= (4 << BRIDGE_BUS_PCI_RETRY_HOLD_SHIFT);
+			xbridge_write_reg(xb, BRIDGE_BUS_TIMEOUT, ctrl);
+
+			break;
+		}
 	}
 
 	/*
