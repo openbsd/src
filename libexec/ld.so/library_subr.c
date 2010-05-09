@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.29 2010/05/01 07:46:30 jsg Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.30 2010/05/09 09:53:28 matthieu Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -160,7 +160,7 @@ nohints:
 		else
 			searchpath = DEFAULT_PATH;
 	}
-	bzero(&bsod, sizeof(bsod));
+	_dl_memset(&bsod, 0, sizeof(bsod));
 	pp = searchpath;
 	while (pp) {
 		path = lp;
