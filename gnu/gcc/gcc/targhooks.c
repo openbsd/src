@@ -372,8 +372,7 @@ default_stack_protect_guard (void)
 
   if (t == NULL)
     {
-      t = build_decl (VAR_DECL, get_identifier ("__stack_chk_guard"),
-		      ptr_type_node);
+      t = build_decl (VAR_DECL, get_identifier ("__guard"), ptr_type_node);
       TREE_STATIC (t) = 1;
       TREE_PUBLIC (t) = 1;
       DECL_EXTERNAL (t) = 1;
@@ -388,66 +387,63 @@ default_stack_protect_guard (void)
   return t;
 }
 
-static GTY(()) tree stack_chk_fail_decl;
+static GTY(()) int stack_protect_labelno;
+
+#include "c-common.h"
 
 tree 
 default_external_stack_protect_fail (void)
 {
-  tree t = stack_chk_fail_decl;
+  tree t, func, type, init, stack_smash_handler;
+  const char *name = fname_as_string (0);
+  size_t length = strlen (name);
+  char name_buf[32];
 
-  if (t == NULL_TREE)
-    {
-      t = build_function_type_list (void_type_node, NULL_TREE);
-      t = build_decl (FUNCTION_DECL, get_identifier ("__stack_chk_fail"), t);
-      TREE_STATIC (t) = 1;
-      TREE_PUBLIC (t) = 1;
-      DECL_EXTERNAL (t) = 1;
-      TREE_USED (t) = 1;
-      TREE_THIS_VOLATILE (t) = 1;
-      TREE_NOTHROW (t) = 1;
-      DECL_ARTIFICIAL (t) = 1;
-      DECL_IGNORED_P (t) = 1;
-      DECL_VISIBILITY (t) = VISIBILITY_DEFAULT;
-      DECL_VISIBILITY_SPECIFIED (t) = 1;
+  /* Build a decl for __func__.  */
+  type = build_array_type (char_type_node,
+			   build_index_type (size_int (length)));
+  type = build_qualified_type (type, TYPE_QUAL_CONST);
 
-      stack_chk_fail_decl = t;
-    }
+  init = build_string (length + 1, name);
+  free ((char *) name);
+  TREE_TYPE (init) = type;
 
-  return build_function_call_expr (t, NULL_TREE);
+  func = build_decl (VAR_DECL, NULL_TREE, type);
+  TREE_STATIC (func) = 1;
+  TREE_READONLY (func) = 1;
+  DECL_ARTIFICIAL (func) = 1;
+  ASM_GENERATE_INTERNAL_LABEL (name_buf, "LSSH", stack_protect_labelno++);
+  DECL_NAME (func) = get_identifier (name_buf);
+  DECL_INITIAL (func) = init;
+
+  assemble_variable (func, 0, 0, 0);
+
+  /* Build a decl for __stack_smash_handler.  */
+  t = build_pointer_type (TREE_TYPE (func));
+  t = build_function_type_list (void_type_node, t, NULL);
+  t = build_decl (FUNCTION_DECL, get_identifier ("__stack_smash_handler"), t);
+  TREE_STATIC (t) = 1;
+  TREE_PUBLIC (t) = 1;
+  DECL_EXTERNAL (t) = 1;
+  TREE_USED (t) = 1;
+  TREE_THIS_VOLATILE (t) = 1;
+  TREE_NOTHROW (t) = 1;
+  DECL_ARTIFICIAL (t) = 1;
+  DECL_IGNORED_P (t) = 1;
+  DECL_VISIBILITY (t) = VISIBILITY_DEFAULT;
+  DECL_VISIBILITY_SPECIFIED (t) = 1;
+  stack_smash_handler = t;
+
+  /* Generate a call to __stack_smash_handler(__func__).  */
+  t = build_fold_addr_expr (func);
+  t = tree_cons (NULL, t, NULL);
+  return build_function_call_expr (stack_smash_handler, t);
 }
 
 tree
 default_hidden_stack_protect_fail (void)
 {
-#ifndef HAVE_GAS_HIDDEN
   return default_external_stack_protect_fail ();
-#else
-  tree t = stack_chk_fail_decl;
-
-  if (!flag_pic)
-    return default_external_stack_protect_fail ();
-
-  if (t == NULL_TREE)
-    {
-      t = build_function_type_list (void_type_node, NULL_TREE);
-      t = build_decl (FUNCTION_DECL,
-		      get_identifier ("__stack_chk_fail_local"), t);
-      TREE_STATIC (t) = 1;
-      TREE_PUBLIC (t) = 1;
-      DECL_EXTERNAL (t) = 1;
-      TREE_USED (t) = 1;
-      TREE_THIS_VOLATILE (t) = 1;
-      TREE_NOTHROW (t) = 1;
-      DECL_ARTIFICIAL (t) = 1;
-      DECL_IGNORED_P (t) = 1;
-      DECL_VISIBILITY_SPECIFIED (t) = 1;
-      DECL_VISIBILITY (t) = VISIBILITY_HIDDEN;
-
-      stack_chk_fail_decl = t;
-    }
-
-  return build_function_call_expr (t, NULL_TREE);
-#endif
 }
 
 bool
