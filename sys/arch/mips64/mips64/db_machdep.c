@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.27 2010/01/21 17:50:44 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.28 2010/05/10 22:14:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -156,13 +156,15 @@ db_read_bytes(addr, size, data)
 	char       *data;
 {
 	while (size >= sizeof(uint32_t)) {
-		*((uint32_t *)data)++ = kdbpeek(addr);
+		*(uint32_t *)data = kdbpeek(addr);
+		data += sizeof(uint32_t);
 		addr += sizeof(uint32_t);
 		size -= sizeof(uint32_t);
 	}
 
 	if (size >= sizeof(uint16_t)) {
-		*((uint16_t *)data)++ = kdbpeekw(addr);
+		*(uint16_t *)data = kdbpeekw(addr);
+		data += sizeof(uint16_t);
 		addr += sizeof(uint16_t);
 		size -= sizeof(uint16_t);
 	}
@@ -181,13 +183,15 @@ db_write_bytes(addr, size, data)
 	size_t len = size;
 
 	while (len >= sizeof(uint32_t)) {
-		kdbpoke(ptr, *((uint32_t *)data)++);
+		kdbpoke(ptr, *(uint32_t *)data);
+		data += sizeof(uint32_t);
 		ptr += sizeof(uint32_t);
 		len -= sizeof(uint32_t);
 	}
 
 	if (len >= sizeof(uint16_t)) {
-		kdbpokew(ptr, *((uint16_t *)data)++);
+		kdbpokew(ptr, *(uint16_t *)data);
+		data += sizeof(uint16_t);
 		ptr += sizeof(uint16_t);
 		len -= sizeof(uint16_t);
 	}
