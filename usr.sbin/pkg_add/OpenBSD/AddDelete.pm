@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.19 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.20 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -43,8 +43,8 @@ sub handle_options
 	set_usage(@usage);
 	$state = OpenBSD::State->new;
 	$hash->{h} = sub { Usage(); };
-	$hash->{F} = sub { 
-		for my $o (split /\,/o, shift) { 
+	$hash->{F} = sub {
+		for my $o (split /\,/o, shift) {
 			$defines{$o} = 1;
 		}
 	};
@@ -97,7 +97,7 @@ sub do_the_main_work
 
 	if ($state->{defines}->{debug}) {
 		&$code;
-	} else { 
+	} else {
 		eval { &$code; };
 	}
 	my $dielater = $@;
@@ -120,7 +120,7 @@ sub framework
 		$state->progress->clear;
 		$state->log->dump;
 		finish_display();
-		if ($state->verbose >= 2 || $opt_s || 
+		if ($state->verbose >= 2 || $opt_s ||
 		    $state->{defines}->{tally}) {
 			$state->vstat->tally;
 		}

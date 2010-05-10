@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.7 2010/04/24 14:29:55 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.8 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -145,7 +145,7 @@ sub from_string
 {
 	my ($class, $filename) = @_;
 	if (my ($dir, $stem, $major, $minor) = $filename =~ m/^(.*)\/lib([^\/]+)\.so\.(\d+)\.(\d+)$/o) {
-		bless { dir => $dir, stem => $stem, major => $major, 
+		bless { dir => $dir, stem => $stem, major => $major,
 		    minor => $minor }, $class;
 	} else {
 		return $class->badclass->new($filename);
@@ -198,9 +198,9 @@ our @ISA = qw(OpenBSD::LibObject);
 sub new
 {
 	my ($class, $dir, $stem, $major, $minor) = @_;
-	bless { 
-		dir => $dir, stem => $stem, 
-		major => $major, minor => $minor 
+	bless {
+		dir => $dir, stem => $stem,
+		major => $major, minor => $minor
 	    }, $class;
 }
 
@@ -283,7 +283,7 @@ sub no_match_shared
 	if ($spec->no_match_major($library)) {
 		return "bad major";
 	}
-	if ($spec->major == $library->major && 
+	if ($spec->major == $library->major &&
 	    $spec->minor > $library->minor) {
 		return "minor is too small";
 	}

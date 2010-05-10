@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.27 2010/01/07 13:11:21 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.28 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -194,7 +194,7 @@ sub add_version_constraints
 		# non constraint
 	} else {
 		for my $c (split /\,/, $vspec) {
-			push(@$constraints, 
+			push(@$constraints,
 			    OpenBSD::PkgSpec::versionspec->new($c));
 		}
 	}
@@ -207,7 +207,7 @@ sub add_flavor_constraints
 	if ($flavorspec eq '') {
 		# non constraint
 	} else {
-		push(@$constraints, 
+		push(@$constraints,
 		    OpenBSD::PkgSpec::flavorspec->new($flavorspec));
 	}
 }
@@ -223,10 +223,10 @@ sub new
 		$class->add_version_constraints($constraints, $r->{vspec});
 		$class->add_flavor_constraints($constraints, $r->{flavorspec});
 
-		my $o = bless { 
-			exactstem => qr{^$stemspec$}, 
-			fuzzystem => qr{^$stemspec\-\d.*$}, 
-			constraints => $constraints, 
+		my $o = bless {
+			exactstem => qr{^$stemspec$},
+			fuzzystem => qr{^$stemspec\-\d.*$},
+			constraints => $constraints,
 		    }, $class;
 		if (defined $r->{e}) {
 			$o->{e} = 1;
@@ -251,7 +251,7 @@ LOOP1:
 		}
 		push(@result, $s);
 	}
-		
+
 	return @result;
 }
 
@@ -269,7 +269,7 @@ LOOP2:
 		}
 		push(@$result, $s);
 	}
-		
+
 	return $result;
 }
 
@@ -284,7 +284,7 @@ sub subpattern_class
 sub new
 {
 	my ($class, $pattern) = @_;
-	my @l = map { $class->subpattern_class->new($_) } 
+	my @l = map { $class->subpattern_class->new($_) }
 		(split /\|/o, $pattern);
 	if (@l == 1) {
 		return $l[0];

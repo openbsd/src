@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.32 2010/01/17 11:56:46 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.33 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -41,7 +41,7 @@ sub find_collisions
 	}
 	for my $pkg (installed_packages()) {
 		$state->say("Looking for collisions in $pkg") if $verbose;
-		my $plist = OpenBSD::PackingList->from_installation($pkg, 
+		my $plist = OpenBSD::PackingList->from_installation($pkg,
 		    \&OpenBSD::PackingList::FilesOnly);
 		next if !defined $plist;
 		for my $item (@{$plist->{items}}) {
@@ -73,7 +73,7 @@ sub collision_report($$)
 	my $clueless_bat;
 	my $clueless_bat2;
 	my $found = 0;
-	
+
 	$state->errsay("Collision: the following files already exist");
 	if (!$state->{defines}->{dontfindcollisions}) {
 		my $bypkg = find_collisions(\%todo, $state);
@@ -133,7 +133,7 @@ sub collision_report($$)
 	if ($dorepair == 1) {
 		for my $f (@$list) {
 
-			if ($state->unlink($state->verbose >= 2, 
+			if ($state->unlink($state->verbose >= 2,
 			    $destdir.$f->fullname)) {
 				$state->{problems}--;
 			} else {

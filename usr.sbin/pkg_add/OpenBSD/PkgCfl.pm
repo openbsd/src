@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.29 2009/12/12 17:18:11 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.30 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -71,7 +71,7 @@ sub fill_conflict_lists($)
 {
 	my $state = shift;
 	for my $pkg (installed_packages()) {
-		my $plist = OpenBSD::PackingList->from_installation($pkg, 
+		my $plist = OpenBSD::PackingList->from_installation($pkg,
 		    \&OpenBSD::PackingList::ConflictOnly);
 		next unless defined $plist;
 		if (!defined $plist->pkgname) {

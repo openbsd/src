@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.21 2009/12/24 14:37:28 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.22 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -36,7 +36,7 @@ sub find_items_in_installed_packages
 	my $done = 0;
 	for my $e (@list) {
 		$state->progress->show($done, $total);
-		my $plist = OpenBSD::PackingList->from_installation($e, 
+		my $plist = OpenBSD::PackingList->from_installation($e,
 		    \&OpenBSD::PackingList::SharedItemsOnly) or next;
 		next if !defined $plist;
 		$plist->record_shared($db, $e);
@@ -90,7 +90,7 @@ sub cleanup
 			$state->progress->show($done, $total);
 			next if $remaining->{users}->{$user};
 			if ($state->{extra}) {
-				$state->system(OpenBSD::Paths->userdel, '--', 
+				$state->system(OpenBSD::Paths->userdel, '--',
 				    $user);
 			} else {
 				$state->log->set_context($pkgname);

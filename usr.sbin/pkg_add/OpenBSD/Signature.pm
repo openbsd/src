@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.5 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: Signature.pm,v 1.6 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -175,7 +175,7 @@ package OpenBSD::LibSpec;
 sub compare
 {
 	my ($a, $b) = @_;
-	
+
 	if ($a->key ne $b->key) {
 		return undef;
 	}

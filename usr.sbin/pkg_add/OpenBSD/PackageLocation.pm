@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.18 2010/01/12 10:14:37 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.19 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -80,7 +80,7 @@ sub _opened
 	}
 	my $fh = $self->{repository}->open($self);
 	if (!defined $fh) {
-		$self->{repository}->parse_problems($self->{errors}) 
+		$self->{repository}->parse_problems($self->{errors})
 		    if defined $self->{errors};
 		undef $self->{errors};
 		return;
@@ -128,7 +128,7 @@ sub find_fat_contents
 		my $contents = $e->contents;
 		require OpenBSD::PackingList;
 
-		my $plist = OpenBSD::PackingList->fromfile(\$contents, 
+		my $plist = OpenBSD::PackingList->fromfile(\$contents,
 		    \&OpenBSD::PackingList::FatOnly);
 		if (defined $self->name) {
 			next if $plist->pkgname ne $self->name;
@@ -149,7 +149,7 @@ sub contents
 		if (!$self->_opened) {
 			return;
 		}
-		$self->{contents} = $self->find_contents || 
+		$self->{contents} = $self->find_contents ||
 		    $self->find_fat_contents;
 	}
 
@@ -226,8 +226,8 @@ sub plist
 	require OpenBSD::PackingList;
 
 	if (defined $self->{dir} && -f $self->{dir}.CONTENTS) {
-		my $plist = 
-		    OpenBSD::PackingList->fromfile($self->{dir}.CONTENTS, 
+		my $plist =
+		    OpenBSD::PackingList->fromfile($self->{dir}.CONTENTS,
 		    $code);
 		$plist->set_infodir($self->{dir});
 		return $plist;
@@ -307,7 +307,7 @@ sub _next
 }
 
 sub unput
-{ 	
+{
 	my $self = shift;
 	$self->{_unput} = 1;
 }

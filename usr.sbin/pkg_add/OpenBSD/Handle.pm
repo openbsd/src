@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.18 2010/03/20 09:55:05 espie Exp $
+# $OpenBSD: Handle.pm,v 1.19 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub pkgname
 		} elsif (defined $self->{name}) {
 			require OpenBSD::PackageName;
 
-			$self->{pkgname} = 
+			$self->{pkgname} =
 			    OpenBSD::PackageName::url2pkgname($self->{name});
 		}
 	}
@@ -229,8 +229,8 @@ sub get_location
 	if (!$location) {
 		$state->print($state->deptree_header($name));
 		$handle->set_error(NOT_FOUND);
-		$handle->{tweaked} = 
-		    OpenBSD::Add::tweak_package_status($handle->pkgname, 
+		$handle->{tweaked} =
+		    OpenBSD::Add::tweak_package_status($handle->pkgname,
 			$state);
 		if (!$handle->{tweaked}) {
 			$state->say("Can't find $name");

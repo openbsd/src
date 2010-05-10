@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: x509.pm,v 1.4 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: x509.pm,v 1.5 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -33,8 +33,8 @@ sub compute_signature
 	open my $fh, ">", $plist->infodir.CONTENTS;
 	$plist->write_no_sig($fh);
 	close $fh;
-	open(my $sighandle, "-|", OpenBSD::Paths->openssl, "smime", "-sign", 
-	    "-binary", "-signer", $cert ,"-in", $plist->infodir.CONTENTS, 
+	open(my $sighandle, "-|", OpenBSD::Paths->openssl, "smime", "-sign",
+	    "-binary", "-signer", $cert ,"-in", $plist->infodir.CONTENTS,
 	    "-inkey", $key, "-outform", "DEM") or die;
 	my $sig;
 	sysread($sighandle, $sig, 16384);
@@ -47,10 +47,10 @@ sub dump_certificate_info
 {
 	my $fname2 = shift;
 
-	open my $fh, "-|", OpenBSD::Paths->openssl, "asn1parse", 
+	open my $fh, "-|", OpenBSD::Paths->openssl, "asn1parse",
 	    "-inform", "DEM", "-in", $fname2;
-	my %want = map {($_, 1)} 
-	    qw(countryName localityName organizationName 
+	my %want = map {($_, 1)}
+	    qw(countryName localityName organizationName
 	    organizationalUnitName commonName emailAddress);
 	while (<$fh>) {
 		if (m/\sprim\:\s+OBJECT\s*\:(.*)\s*$/) {
@@ -105,7 +105,7 @@ sub check_signature
 	print $fh2 decode_base64($sig->{b64sig});
 	close $fh;
 	close $fh2;
-	if (system_quiet (OpenBSD::Paths->openssl, "smime", "-verify", 
+	if (system_quiet (OpenBSD::Paths->openssl, "smime", "-verify",
 	    "-binary", "-inform", "DEM", "-in", $fname2, "-content", $fname,
 	    "-CAfile", OpenBSD::Paths->pkgca, "-out", "/dev/null") != 0) {
 	    	$state->log->warn("Bad signature");

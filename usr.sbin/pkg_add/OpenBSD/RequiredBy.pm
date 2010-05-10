@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.20 2010/01/17 12:01:00 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.21 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -29,8 +29,8 @@ sub fill_entries
 		my $l = $self->{entries} = {};
 
 		if (-f $self->{filename}) {
-			open(my $fh, '<', $self->{filename}) or 
-			    croak ref($self), 
+			open(my $fh, '<', $self->{filename}) or
+			    croak ref($self),
 			    	": reading $self->{filename}: $!";
 			my $_;
 			while(<$fh>) {
@@ -70,7 +70,7 @@ sub synch
 		$self->{nonempty} = 0;
 	}
 	return $self;
-} 
+}
 
 sub list
 {

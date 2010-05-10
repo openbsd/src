@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.19 2009/12/30 17:37:36 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.20 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,7 @@
 #   - otherwise, in update mode, put a request to update the package (e.g.,
 #   create a new UpdateSet.
 
-# the Tracker object does maintain that information globally so that 
+# the Tracker object does maintain that information globally so that
 # Update/Dependencies can do its job.
 
 use strict;

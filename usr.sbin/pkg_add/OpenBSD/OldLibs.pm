@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: OldLibs.pm,v 1.2 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: OldLibs.pm,v 1.3 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -145,7 +145,7 @@ sub adjust_depends_closure
 {
 	my ($oldname, $plist, $state) = @_;
 
-	$state->say("Packages that depend on those shared libraries:") 
+	$state->say("Packages that depend on those shared libraries:")
 	    if $state->verbose >= 3;
 
 	my $write = OpenBSD::RequiredBy->new($plist->pkgname);
@@ -168,7 +168,7 @@ sub do_save_libs
 	($o->{plist}, my $stub_list) = split_libs($o->plist, $libs);
 	my $stub_name = $stub_list->pkgname;
 	my $dest = installed_info($stub_name);
-	$state->say("Keeping them in $stub_name") 
+	$state->say("Keeping them in $stub_name")
 	    if $state->verbose >= 2;
 
 
@@ -203,7 +203,7 @@ sub save_libs_from_handle
 	my $libs = {};
 	my $p = {};
 
-	$state->say("Looking for changes in shared libraries") 
+	$state->say("Looking for changes in shared libraries")
 	    if $state->verbose >= 2;
 	$o->plist->mark_lib($libs, $p);
 	for my $n ($set->newer) {
@@ -214,7 +214,7 @@ sub save_libs_from_handle
 	}
 
 	if (%$libs) {
-		$state->say("Libraries to keep: ", 
+		$state->say("Libraries to keep: ",
 		    join(",", sort(keys %$libs))) if $state->verbose >= 2;
 		do_save_libs($o, $libs, $state);
 	} else {

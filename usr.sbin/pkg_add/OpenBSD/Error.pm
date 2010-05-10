@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.24 2010/04/24 09:27:15 espie Exp $
+# $OpenBSD: Error.pm,v 1.25 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ my $handler = sub {
 	kill $sig, $$;
 };
 
-sub reset 
+sub reset
 {
 	$SIG{'INT'} = $handler;
 	$SIG{'QUIT'} = $handler;
@@ -63,7 +63,7 @@ __PACKAGE__->reset;
 package OpenBSD::Error;
 require Exporter;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(System VSystem Copy Unlink Fatal Warn Usage set_usage 
+our @EXPORT=qw(System VSystem Copy Unlink Fatal Warn Usage set_usage
     try throw catch catchall rethrow);
 
 our ($FileName, $Line, $FullMessage);
@@ -120,7 +120,7 @@ sub child_error
 
 	if ($error & 128) {
 		$extra = " (core dumped)";
-	} 
+	}
 	if ($error & 127) {
 		return "killed by signal ". find_signal($error & 127).$extra;
 	} else {
@@ -132,7 +132,7 @@ sub System
 {
 	my $r = system(@_);
 	if ($r != 0) {
-		print "system(", join(", ", @_), ") failed: ", child_error(), 
+		print "system(", join(", ", @_), ") failed: ", child_error(),
 		    "\n";
 	}
 	return $r;
@@ -210,7 +210,7 @@ sub fatal
 	my $self = shift;
 	if (defined $self->{pkgname}) {
 		unshift @_, $self->{pkgname}, ':';
-	} 
+	}
 	croak @_;
 }
 
@@ -242,12 +242,12 @@ sub system
 			$self->print($_);
 		}
 		if (!close $grab) {
-		    $self->print("system(", join(", ", @_), ") failed: $! ", 
+		    $self->print("system(", join(", ", @_), ") failed: $! ",
 		    	child_error(), "\n");
 		}
 		return $?;
 	} else {
-		    $self->print("system(", join(", ", @_), 
+		    $self->print("system(", join(", ", @_),
 		    	") was not run: $!", child_error(), "\n");
 	}
 }
@@ -290,14 +290,14 @@ sub dienow
 	}
 }
 
-sub try(&@) 
+sub try(&@)
 {
 	my ($try, $catch) = @_;
 	eval { &$try };
 	dienow($@, $catch);
 }
 
-sub throw 
+sub throw
 {
 	croak @_;
 

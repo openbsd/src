@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.54 2010/04/05 16:07:10 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.55 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -65,14 +65,14 @@ package OpenBSD::UpdateSet;
 sub new
 {
 	my $class = shift;
-	return bless {newer => {}, older => {}, kept => {}, hints => [], updates => 0}, 
+	return bless {newer => {}, older => {}, kept => {}, hints => [], updates => 0},
 	    $class;
 }
 
 sub path
 {
 	my $set = shift;
-	
+
 	return $set->{path};
 }
 
@@ -241,8 +241,8 @@ sub hint_names
 sub older_to_do
 {
 	my $self = shift;
-	# XXX in `combined' updates, some dependencies may remove extra 
-	# packages, so we do a double-take on the list of packages we 
+	# XXX in `combined' updates, some dependencies may remove extra
+	# packages, so we do a double-take on the list of packages we
 	# are actually replacing... for now, until we merge update sets.
 	require OpenBSD::PackageInfo;
 	my @l = ();
@@ -307,7 +307,7 @@ sub validate_plists
 		$state->vstat->tally;
 		# okay, let's retry the other way around if we haven't yet
 		if (!defined $state->{delete_first}) {
-			if ($state->{defines}->{deletefirst} || 
+			if ($state->{defines}->{deletefirst} ||
 			    $state->confirm("Delete older packages first", 0)) {
 				$state->{delete_first} = 1;
 				$state->vstat->drop_changes;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.78 2010/01/10 11:32:41 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.79 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -169,7 +169,7 @@ sub close
 		waitpid($object->{pid2}, 0);
 		alarm(0);
 	}
-	$self->parse_problems($object->{errors}, $hint, $object) 
+	$self->parse_problems($object->{errors}, $hint, $object)
 	    if defined $object->{errors};
 	undef $object->{errors};
 	$object->deref;
@@ -321,12 +321,12 @@ sub open_pipe
 		return $fh;
 	} else {
 		open STDERR, ">/dev/null";
-		exec {OpenBSD::Paths->gzip} 
-		    "gzip", 
-		    "-d", 
-		    "-c", 
-		    "-q", 
-		    "-f", 
+		exec {OpenBSD::Paths->gzip}
+		    "gzip",
+		    "-d",
+		    "-c",
+		    "-q",
+		    "-f",
 		    $self->relative_url($object->{name})
 		or die "Can't run gzip";
 	}
@@ -389,12 +389,12 @@ sub open_pipe
 		return $fh;
 	} else {
 		open STDERR, ">/dev/null";
-		exec {OpenBSD::Paths->gzip} 
-		    "gzip", 
-		    "-d", 
-		    "-c", 
-		    "-q", 
-		    "-f", 
+		exec {OpenBSD::Paths->gzip}
+		    "gzip",
+		    "-d",
+		    "-c",
+		    "-q",
+		    "-f",
 		    "-"
 		or die "can't run gzip";
 	}
@@ -416,7 +416,7 @@ sub parse_url
 	# same heuristics as ftp(1):
 	# find host part, rest is parsed as a local url
 	if (my ($host, $path) = $$r =~ m/^\/\/(.*?)(\/.*)$/) {
-		
+
 		$$r = $path;
 		my $o = $class->SUPER::parse_url($r);
 		$o->{host} = $host;
@@ -509,12 +509,12 @@ sub open_pipe
 		open(STDIN, '<&', $rdfh) or die "Bad dup";
 		close($rdfh);
 		close($wrfh);
-		exec {OpenBSD::Paths->gzip} 
-		    "gzip", 
-		    "-d", 
-		    "-c", 
-		    "-q", 
-		    "-" 
+		exec {OpenBSD::Paths->gzip}
+		    "gzip",
+		    "-d",
+		    "-c",
+		    "-q",
+		    "-"
 		or die "can't run gzip";
 	}
 	my $pid2 = fork();
@@ -570,10 +570,10 @@ sub grab_object
 {
 	my ($self, $object) = @_;
 	my ($ftp, @extra) = split(/\s+/, OpenBSD::Paths->ftp);
-	exec {$ftp} 
+	exec {$ftp}
 	    $ftp,
 	    @extra,
-	    "-o", 
+	    "-o",
 	    "-", $self->url($object->{name})
 	or die "can't run ".OpenBSD::Paths->ftp;
 }
@@ -629,8 +629,8 @@ sub find
 {
 	my ($self, $pkgname, @extra) = @_;
 
-	return $self->try_until_success($pkgname, 
-	    sub { 
+	return $self->try_until_success($pkgname,
+	    sub {
 	    	return $self->SUPER::find($pkgname, @extra); });
 
 }
@@ -639,8 +639,8 @@ sub grabPlist
 {
 	my ($self, $pkgname, @extra) = @_;
 
-	return $self->try_until_success($pkgname, 
-	    sub { 
+	return $self->try_until_success($pkgname,
+	    sub {
 	    	return $self->SUPER::grabPlist($pkgname, @extra); });
 }
 
@@ -702,8 +702,8 @@ sub list
 		$self->{list} = $self->obtain_list($error);
 		$self->parse_problems($error);
 		if ($self->{no_such_dir}) {
-			print STDERR $self->{path}, 
-			    ": Directory does not exist on ", $self->{host}, 
+			print STDERR $self->{path},
+			    ": Directory does not exist on ", $self->{host},
 			    "\n";
 		    	$self->{lasterror} = 404;
 		}

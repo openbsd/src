@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.55 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.56 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -146,7 +146,7 @@ sub next
 	$prefix =~ s/\0*$//o;
 	$name = "$prefix/$name";
     }
-    
+
     $size = oct($size);
     my $result= $self->new_object({
 	name => $name,
@@ -182,7 +182,7 @@ sub split_name
 
 	my $l = length $name;
 	if ($l > MAXFILENAME && $l <= MAXFILENAME+MAXPREFIX+1) {
-		while (length($name) > MAXFILENAME && 
+		while (length($name) > MAXFILENAME &&
 		    $name =~ m/^(.*?\/)(.*)$/o) {
 			$prefix .= $1;
 			$name = $2;
@@ -247,7 +247,7 @@ sub mkheader
 	my $header;
 	my $cksum = ' 'x8;
 	for (1 .. 2) {
-		$header = pack(USTAR_HEADER, 
+		$header = pack(USTAR_HEADER,
 		    $name,
 		    sprintf("%07o", $entry->{mode}),
 		    sprintf("%07o", $entry->{uid}),
@@ -274,11 +274,11 @@ sub prepare
 
 	my $realname = "$self->{destdir}/$filename";
 
-	my ($dev, $ino, $mode, $uid, $gid, $rdev, $size, $mtime) = 
+	my ($dev, $ino, $mode, $uid, $gid, $rdev, $size, $mtime) =
 	    (lstat $realname)[0,1,2,4,5,6, 7,9];
 
 	my $entry = $self->new_object({
-		key => "$dev/$ino", 
+		key => "$dev/$ino",
 		name => $filename,
 		realname => $realname,
 		mode => $mode,
@@ -448,7 +448,7 @@ sub isFifo() { 0 }
 sub isLink() { 0 }
 sub isSymLink() { 0 }
 sub isHardLink() { 0 }
-	
+
 package OpenBSD::Ustar::Dir;
 our @ISA=qw(OpenBSD::Ustar::Object);
 
@@ -504,7 +504,7 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->name);
-	symlink $self->{linkname}, $self->{destdir}.$self->name or 
+	symlink $self->{linkname}, $self->{destdir}.$self->name or
 	    die "Can't symlink $self->{linkname} to $self->{destdir}",
 	    	$self->name, ": $!";
 }
@@ -537,8 +537,8 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->name);
-	system(OpenBSD::Paths->mknod, 
-	    '-m', $self->{mode}, '--', $self->{destdir}.$self->name, 
+	system(OpenBSD::Paths->mknod,
+	    '-m', $self->{mode}, '--', $self->{destdir}.$self->name,
 	    $self->devicetype, $self->{major}, $self->{minor});
 	$self->set_modes;
 }
@@ -599,7 +599,7 @@ START:
 					$i += $bs;
 					$seek_forward += $bs;
 				}
-				defined(sysseek($fh, $seek_forward, 1)) 
+				defined(sysseek($fh, $seek_forward, 1))
 				    or return 0;
 				$buffer = substr($buffer, $i);
 				if (length $buffer == 0) {
@@ -663,11 +663,11 @@ sub create
 			die "Error writing to $self->{destdir}", $self->name,
 			    ": $!";
 		}
-			
+
 		$toread -= $actual;
 		$self->todo($toread);
 	}
-	$out->close or die "Error closing $self->{destdir}", $self->name, 
+	$out->close or die "Error closing $self->{destdir}", $self->name,
 	    ": $!";
 	$self->set_modes;
 }
@@ -712,12 +712,12 @@ sub write_contents
 		unless (print $out $buffer) {
 			die "Error writing to archive: $!";
 		}
-			
+
 		$toread -= $actual;
 		$self->todo($toread);
 	}
 	if ($size % 512) {
-		print $out "\0" x (512 - $size % 512) or 
+		print $out "\0" x (512 - $size % 512) or
 		    die "Error writing to archive: $!";
 	}
 }
@@ -743,11 +743,11 @@ sub copy_contents
 		unless (print $out $buffer) {
 			die "Error writing to archive $!";
 		}
-			
+
 		$toread -= $actual;
 	}
 	if ($size % 512) {
-		print $out "\0" x (512 - $size % 512) or 
+		print $out "\0" x (512 - $size % 512) or
 		    die "Error writing to archive: $!";
 	}
 	$self->alias($arc, $self->name);

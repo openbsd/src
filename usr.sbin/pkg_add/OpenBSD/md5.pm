@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.8 2009/12/31 11:31:03 espie Exp $
+# $OpenBSD: md5.pm,v 1.9 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #

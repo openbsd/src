@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.99 2010/05/10 09:05:27 espie Exp $
+# $OpenBSD: Delete.pm,v 1.100 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -126,10 +126,10 @@ sub unregister_dependencies
 	my $l = OpenBSD::Requiring->new($pkgname);
 
 	for my $name ($l->list) {
-		$state->say("remove dependency on $name") 
+		$state->say("remove dependency on $name")
 		    if $state->verbose >= 3;
 		local $@;
-		try { 
+		try {
 			OpenBSD::RequiredBy->new($name)->delete($pkgname);
 		} catchall {
 			$state->errsay($_);
@@ -137,7 +137,7 @@ sub unregister_dependencies
 	}
 	$l->erase;
 }
-		
+
 sub delete_plist
 {
 	my ($plist, $state) = @_;
@@ -153,7 +153,7 @@ sub delete_plist
 			$plist->get(UNDISPLAY)->prepare($state);
 		}
 	}
- 
+
 	unregister_dependencies($plist, $state);
 	return if $state->{not};
 	if ($state->{baddelete}) {
@@ -161,7 +161,7 @@ sub delete_plist
 	    $state->log("Files kept as $borked package\n");
 	    delete $state->{baddelete};
 	}
-			
+
 
 	remove_packing_info($plist);
 	delete_installed($pkgname);
@@ -339,15 +339,15 @@ sub delete
 sub should_run() { 1 }
 
 package OpenBSD::PackingElement::UnexecDelete;
-sub should_run 
-{ 
+sub should_run
+{
 	my ($self, $state) = @_;
 	return !$state->{replacing};
 }
 
 package OpenBSD::PackingElement::UnexecUpdate;
-sub should_run 
-{ 
+sub should_run
+{
 	my ($self, $state) = @_;
 	return $state->{replacing};
 }
@@ -401,14 +401,14 @@ sub delete
 			}
 			unless (defined($self->{link}) or $self->{nochecksum} or $state->{quick}) {
 				if (!defined $self->{d}) {
-					$state->say("Problem: ", 
+					$state->say("Problem: ",
 					    $self->fullname,
 					    " does not have a checksum\n",
 					    "NOT deleting: $realname");
 					$state->log("Couldn't delete $realname (no checksum)\n");
 					return;
 				}
-				my $d = $self->compute_digest($realname, 
+				my $d = $self->compute_digest($realname,
 				    $self->{d});
 				if (!$d->equals($self->{d})) {
 					$state->say("Problem: checksum doesn't match for ",
@@ -546,7 +546,7 @@ sub delete
 		$state->log("deleting $realname failed: $!\n");
 	}
 }
-		
+
 
 package OpenBSD::PackingElement::InfoFile;
 use File::Basename;
@@ -556,7 +556,7 @@ sub delete
 	my ($self, $state) = @_;
 	unless ($state->{not}) {
 	    my $fullname = $state->{destdir}.$self->fullname;
-	    $state->vsystem(OpenBSD::Paths->install_info, 
+	    $state->vsystem(OpenBSD::Paths->install_info,
 		"--delete", "--info-dir=".dirname($fullname), '--', $fullname);
 	}
 	$self->SUPER::delete($state);
@@ -606,7 +606,7 @@ sub delete
 		$state->log("Remember to update $realname\n");
 		$self->mark_dir($state);
 	} elsif ($state->{extra}) {
-		unlink($realname) or 
+		unlink($realname) or
 		    $state->say("problem deleting extra file $realname");
 	} else {
 		$state->log("You should also remove $realname\n");

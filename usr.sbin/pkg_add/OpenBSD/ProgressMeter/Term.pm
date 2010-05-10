@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.2 2010/03/23 08:11:04 espie Exp $
+# $OpenBSD: Term.pm,v 1.3 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub init
 	return unless defined $ENV{TERM} || defined $ENV{TERMCAP};
 	my $termios = POSIX::Termios->new;
 	$termios->getattr(0);
-	$self->{terminal} = Term::Cap->Tgetent({ OSPEED => 
+	$self->{terminal} = Term::Cap->Tgetent({ OSPEED =>
 	    $termios->getospeed});
 	$self->{glitch} = $self->{terminal}->Tputs("xn", 1);
 	$self->{cleareol} = $self->{terminal}->Tputs("ce", 1);
@@ -86,7 +86,7 @@ sub find_window_size
 	$sizeof{'struct winsize'} = 8;
 	require 'sys/ttycom.ph';
 	if (ioctl(STDOUT, &TIOCGWINSZ, $r)) {
-		my ($rows, $cols, $xpix, $ypix) = 
+		my ($rows, $cols, $xpix, $ypix) =
 		    unpack($wsz_format, $r);
 		$self->{width} = $cols;
 	} else {
@@ -156,7 +156,7 @@ sub _show
 	}
 	my $prefix;
 	if (!$self->{continued} && defined $self->{hpa}) {
-		if (defined $stars && defined $self->{stars}) { 
+		if (defined $stars && defined $self->{stars}) {
 			$prefix = length($self->{header})+1+$self->{stars};
 		} else {
 			$prefix = length($self->{header});
@@ -262,7 +262,7 @@ sub visit_with_size
 		    $progress->show($donesize + $done, $plist->{totsize});
 		};
 	}
-	$plist->size_and($progress, \$donesize, $plist->{totsize}, 
+	$plist->size_and($progress, \$donesize, $plist->{totsize},
 	    $method, $state, @r);
 }
 
@@ -272,7 +272,7 @@ sub visit_with_count
 	$plist->{total} //= compute_count($plist);
 	my $count = 0;
 	$progress->show($count, $plist->{total});
-	$plist->count_and($progress, \$count, $plist->{total}, 
+	$plist->count_and($progress, \$count, $plist->{total},
 	    $method, $state, @r);
 }
 1;

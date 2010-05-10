@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.70 2010/03/22 20:38:44 espie Exp $
+# $OpenBSD: Replace.pm,v 1.71 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,7 @@ sub can_update
 	my ($self, $installing, $state) = @_;
 
 	my $issue = $self->update_issue($installing);
-	
+
 	if (defined $issue) {
 	    	push(@{$state->{journal}}, $issue);
 	}
@@ -55,7 +55,7 @@ sub extract
 		$state->{archive}->skip;
 		return;
 	}
-	
+
 	$self->SUPER::extract($state);
 
 	# figure out a safe directory where to put the temp file
@@ -66,7 +66,7 @@ sub extract
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
-		$state->say("extracting tempfile under $d") 
+		$state->say("extracting tempfile under $d")
 		    if $state->verbose >= 3;
 		$state->{archive}->skip;
 	} else {
@@ -95,7 +95,7 @@ sub extract
 
 	return if -e $destdir.$fullname;
 	$self->SUPER::extract($state);
-	$state->say("new directory ", $destdir, $fullname) 
+	$state->say("new directory ", $destdir, $fullname)
 	    if $state->verbose >= 3;
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
@@ -114,14 +114,14 @@ sub extract
 
 package OpenBSD::PackingElement::ScriptFile;
 sub update_issue
-{ 
+{
 	my ($self, $installing) = @_;
 	return $self->name." script";
 }
 
 package OpenBSD::PackingElement::FINSTALL;
 sub update_issue
-{ 
+{
 	my ($self, $installing) = @_;
 	return if !$installing;
 	return $self->SUPER::update_issue($installing);
@@ -129,7 +129,7 @@ sub update_issue
 
 package OpenBSD::PackingElement::FDEINSTALL;
 sub update_issue
-{ 
+{
 	my ($self, $installing) = @_;
 	return if $installing;
 	return $self->SUPER::update_issue($installing);
@@ -137,7 +137,7 @@ sub update_issue
 
 package OpenBSD::PackingElement::Exec;
 sub update_issue
-{ 
+{
 	my ($self, $installing) = @_;
 	return if !$installing;
 	return '@'.$self->keyword.' '.$self->{expanded};
@@ -148,7 +148,7 @@ sub update_issue { undef }
 
 package OpenBSD::PackingElement::Unexec;
 sub update_issue
-{ 
+{
 	my ($self, $installing) = @_;
 
 	return if $installing;
@@ -179,7 +179,7 @@ sub check_plist_exec
 	$plist->can_update($new, $state);
 	return 1 if @{$state->{journal}} == 0;
 
-	$state->errsay($new ? "New": "Old", " package ", $plist->pkgname, 
+	$state->errsay($new ? "New": "Old", " package ", $plist->pkgname,
 	    " contains potentially unsafe operations");
 	for my $i (@{$state->{journal}}) {
 		$state->errsay("| ", $i);
@@ -228,7 +228,7 @@ sub is_set_safe
 			return 0;
 		}
 	} else {
-		$state->errsay("Cannot install ", $set->print, 
+		$state->errsay("Cannot install ", $set->print,
 		    " (use -D update)");
 		return 0;
     	}

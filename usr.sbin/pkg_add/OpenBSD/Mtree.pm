@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Mtree.pm,v 1.6 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: Mtree.pm,v 1.7 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2004-2005 Marc Espie <espie@openbsd.org>
 #
@@ -47,7 +47,7 @@ sub parse_fh
 	}
 }
 
-sub parse 
+sub parse
 {
 	my ($mtree, $basedir, $filename) = @_;
 	open my $file, '<', $filename or die "can't open $filename: $!";

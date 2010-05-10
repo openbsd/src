@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.477 2010/04/17 16:07:18 espie Exp $
+# $OpenBSD: pkg_add,v 1.478 2010/05/10 09:17:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -43,7 +43,7 @@ sub uses_old_libs
 	my $plist = shift;
 	require OpenBSD::RequiredBy;
 
-	return  grep {/^\.libs\d*\-/o} 
+	return  grep {/^\.libs\d*\-/o}
 	    OpenBSD::Requiring->new($plist->pkgname)->list;
 }
 
@@ -54,7 +54,7 @@ sub has_different_sig
 		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
 		my $o = $plist->signature;
 		my $r = $n->compare($o);
-		$state->print("Comparing full signature for ", 
+		$state->print("Comparing full signature for ",
 		    $plist->pkgname, " \"", $o->string, "\" vs. \"",
 		    $n->string,"\": ")
 			if $state->verbose >= 3;
@@ -204,7 +204,7 @@ sub setup_header
 		if (!defined $info) {
 			$header = "Adding $header";
 		}
-		if (defined $state->{lastheader} && 
+		if (defined $state->{lastheader} &&
 		    $header eq $state->{lastheader}) {
 			return;
 		}
@@ -227,10 +227,10 @@ sub complete
 		my $pkgname = $n->pkgname;
 		my $plist = $n->plist;
 		return 1 if !defined $plist;
-		if (is_installed($pkgname) && 
-		    (!$state->{allow_replacing} ||	
+		if (is_installed($pkgname) &&
+		    (!$state->{allow_replacing} ||
 		      !$state->{defines}->{installed} &&
-		      !$plist->has_different_sig($state) && 
+		      !$plist->has_different_sig($state) &&
 		      !$plist->uses_old_libs)) {
 		      	my $o = $set->{older}->{$pkgname};
 			if (!defined $o) {
@@ -239,12 +239,12 @@ sub complete
 			}
 			$o->{update_found} = $o;
 			$set->move_kept($o);
-			$o->{tweaked} = 
+			$o->{tweaked} =
 			    OpenBSD::Add::tweak_package_status($pkgname, $state);
 			$state->updater->progress_message($state, "No change in $pkgname");
 			delete $set->{newer}->{$pkgname};
 			$n->cleanup;
-		} 
+		}
 		return 1 if $n->has_error;
 	}
 	for my $o ($set->older) {
@@ -337,7 +337,7 @@ sub install_issues
 	if (!$state->{allow_replacing}) {
 		if (grep { !/^.libs\d*\-/ && !/^partial\-/ } @conflicts) {
 			if (!$set->is_an_update_from(@conflicts)) {
-				$state->errsay("Can't install ", $set->print, 
+				$state->errsay("Can't install ", $set->print,
 				    " because of conflicts (",
 				    join(',', @conflicts), ")");
 				return "conflicts";
@@ -348,7 +348,7 @@ sub install_issues
 	my $later = 0;
 	for my $toreplace (@conflicts) {
 		if ($state->tracker->is_installed($toreplace)) {
-			$state->errsay("Cannot replace $toreplace in ", 
+			$state->errsay("Cannot replace $toreplace in ",
 			    $set->print, ": just got installed");
 			return "replacing just installed";
 		}
@@ -361,7 +361,7 @@ sub install_issues
 		if (defined $s && $s ne $set) {
 			$set->merge($state->tracker, $s);
 		} else {
-			$set->add_older(OpenBSD::Handle->create_old($toreplace, 
+			$set->add_older(OpenBSD::Handle->create_old($toreplace,
 			    $state));
 		}
 	}
@@ -373,7 +373,7 @@ sub install_issues
 
 	for my $old ($set->older) {
 		my $name = $old->pkgname;
-		
+
 		if ($old->has_error(OpenBSD::Handle::NOT_FOUND)) {
 			Fatal "Can't find $name as an installed package\n";
 		}
@@ -450,7 +450,7 @@ sub check_forward_dependencies
 sub recheck_conflicts
 {
 	my ($set, $state) = @_;
-	
+
 	# no conflicts between newer sets nor kept sets
 	for my $h ($set->newer, $set->kept) {
 		for my $h2 ($set->newer, $set->kept) {
@@ -559,7 +559,7 @@ sub check_x509_signature
 			} else {
 				require OpenBSD::x509;
 
-				if (!OpenBSD::x509::check_signature($plist, 
+				if (!OpenBSD::x509::check_signature($plist,
 				    $state)) {
 					Fatal "fatal issues in ", $set->print;
 				}
@@ -590,7 +590,7 @@ sub delete_old_packages
 		} catchall {
 			$state->errprint($_);
 			Fatal partial_install(
-			    "Deinstallation of $oldname failed", 
+			    "Deinstallation of $oldname failed",
 			    $set, $state);
 		};
 
@@ -617,13 +617,13 @@ sub really_add
 	}
 	$set->setup_header($state);
 
-	# XXX in `combined' updates, some dependencies may remove extra 
-	# packages, so we do a double-take on the list of packages we 
+	# XXX in `combined' updates, some dependencies may remove extra
+	# packages, so we do a double-take on the list of packages we
 	# are actually replacing.
 	my $replacing = 0;
 	if ($set->older_to_do) {
 		$replacing = 1;
-	} 
+	}
 #	if (defined $plist->{old_libs}) {
 #		$replacing = 1;
 #	}
@@ -652,7 +652,7 @@ sub really_add
 			$set->setup_header($state, $handle, "extracting");
 
 			try {
-				OpenBSD::Replace::perform_extraction($handle, 
+				OpenBSD::Replace::perform_extraction($handle,
 				    $state);
 			} catchall {
 				unless ($state->{interrupted}) {
@@ -741,7 +741,7 @@ sub newer_has_errors
 		if ($handle->has_error) {
 			$state->set_name_from_handle($handle);
 			$state->log("Can't install ", $handle->pkgname, ": ",
-				$handle->error_message, "\n"); 
+				$handle->error_message, "\n");
 			$bad++;
 			$set->cleanup($handle->has_error);
 			$state->tracker->cant($set);
@@ -809,7 +809,7 @@ sub install_set
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 			$state->tracker->cant($set);
 			return ();
-		} 
+		}
 		if ($r == 0) {
 			return $set;
 		}
@@ -861,7 +861,7 @@ sub install_set
 
 		if (!$set->validate_plists($state)) {
 			$bad++;
-			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, 
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL,
 			    "file issues");
 			$state->tracker->cant($set);
 			return ();
@@ -896,7 +896,7 @@ if ($opt_P) {
 	if ($opt_P eq 'cdrom') {
 		$state->{cdrom_only} = 1;
 	}
-	elsif ($opt_P eq 'ftp') { 
+	elsif ($opt_P eq 'ftp') {
 		$state->{ftp_only} = 1;
 	}
 	else {
@@ -1020,7 +1020,7 @@ sub process_parameters
 	# actual names
 		for my $pkgname (@ARGV) {
 			next if $pkgname =~ m/^quirks\-\d/;
-			push(@todo2, 
+			push(@todo2,
 			    OpenBSD::UpdateSet->new->$add_hints($pkgname));
 		}
 	}
@@ -1033,16 +1033,16 @@ sub finish_display
 
 	# and display delayed thingies.
 	if ($state->{packages_with_sig}) {
-		$state->print("Packages with signatures: ", 
+		$state->print("Packages with signatures: ",
 		    $state->{packages_with_sig});
 		if ($state->{packages_without_sig}) {
-			print ". UNSIGNED PACKAGES: ", 
+			print ". UNSIGNED PACKAGES: ",
 			    join(', ', keys %{$state->{packages_without_sig}});
 		}
 		print "\n";
 	}
 	if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
-		print "Forced updates, bogus dependencies for ", 
+		print "Forced updates, bogus dependencies for ",
 		    join(' ', sort(keys %{$state->{updatedepends}})),
 		    " may remain\n";
 	}

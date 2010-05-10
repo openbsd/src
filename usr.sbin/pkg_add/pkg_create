@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.138 2010/04/05 16:07:10 espie Exp $
+# $OpenBSD: pkg_create,v 1.139 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,7 @@ package OpenBSD::State;
 sub new
 {
 	my $class = shift;
-	bless {progress => OpenBSD::ProgressMeter->new, 
+	bless {progress => OpenBSD::ProgressMeter->new,
 	    errors => 0, stash => {}}, $class;
 }
 
@@ -60,7 +60,7 @@ sub error
 
 # Extra stuff needed to archive files
 package OpenBSD::PackingElement;
-sub create_package 
+sub create_package
 {
 	my ($self, $state) = @_;
 
@@ -145,14 +145,14 @@ sub verify_checksum_with_base
 		if ((defined $check->{$field} && defined $self->{$field} &&
 		    $check->{$field} ne $self->{$field}) ||
 		    (defined $check->{$field} xor defined $self->{$field})) {
-		    	$state->error("Error: $field inconsistency for ", 
+		    	$state->error("Error: $field inconsistency for ",
 			    $self->fullname);
 		}
 	}
 	if ((defined $check->{d} && defined $self->{d} &&
 	    !$check->{d}->equals($self->{d})) ||
 	    (defined $check->{d} xor defined $self->{d})) {
-	    	$state->error("Error: checksum inconsistency for ", 
+	    	$state->error("Error: checksum inconsistency for ",
 		    $self->fullname);
 	}
 }
@@ -340,7 +340,7 @@ sub avert_duplicates_and_other_checks
 {
 	my ($self, $state) = @_;
 	if (!$self->spec->is_valid) {
-		$state->error("Error in packing-list: invalid \@", 
+		$state->error("Error in packing-list: invalid \@",
 		    $self->keyword, " ", $self->stringize);
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
@@ -359,7 +359,7 @@ sub avert_duplicates_and_other_checks
 
 	my @issues = OpenBSD::PackageName->from_string($self->{def})->has_issues;
 	if (@issues > 0) {
-		$state->error("Error in packing-list: invalid \@", 
+		$state->error("Error in packing-list: invalid \@",
 		    $self->keyword, " ", $self->stringize, "\n",
 		    "$self->{def}: , ", join(' ', @issues));
 	}
@@ -374,7 +374,7 @@ sub avert_duplicates_and_other_checks
 
 	my @issues = OpenBSD::PackageName->from_string($self->name)->has_issues;
 	if (@issues > 0) {
-		$state->error("Bad packagename ", $self->name, ":", 
+		$state->error("Bad packagename ", $self->name, ":",
 		    join(' ', @issues));
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
@@ -483,7 +483,7 @@ sub read_fragments
 				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
-				if (m/^\@lib\s+(.*)$/o && 
+				if (m/^\@lib\s+(.*)$/o &&
 				    OpenBSD::PackingElement::Lib->parse($1)) {
 				    	$state->error("Shared library without SHARED_LIBS: $_");
 				}
@@ -559,10 +559,10 @@ set_usage(
 '-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
 
 my $plist = new OpenBSD::PackingList;
-try { 
-	getopts('p:f:d:vM:U:hs:A:L:B:D:P:W:nqQx', 
-	{'D' => 
-		sub { 
+try {
+	getopts('p:f:d:vM:U:hs:A:L:B:D:P:W:nqQx',
+	{'D' =>
+		sub {
 			$subst->parse_option(shift);
 		},
 	 'f' =>
@@ -581,7 +581,7 @@ try {
 	 's' => sub {
 	 		push(@signature_params, shift);
 		}
-	}); 
+	});
 } catchall {
 	Usage($_);
 };
@@ -593,7 +593,7 @@ if (@ARGV == 0) {
 	$regen_package = 1;
 } elsif (@ARGV != 1) {
 	if (@contents || @signature_params == 0) {
-		Usage "Exactly one single package name is required: ", 
+		Usage "Exactly one single package name is required: ",
 		    join(' ', @ARGV);
 	}
 }
@@ -601,7 +601,7 @@ if (@ARGV == 0) {
 try {
 
 if (@signature_params > 0) {
-	if (@signature_params != 3 || $signature_params[0] ne 'x509' || 
+	if (@signature_params != 3 || $signature_params[0] ne 'x509' ||
 	    !-f $signature_params[1] || !-f $signature_params[2]) {
 		Usage "Signature only works as -s x509 -s cert -s privkey";
 	}
@@ -632,7 +632,7 @@ if ($regen_package) {
 	} else {
 		$plist->set_infodir(dirname($contents[0]));
 	}
-	$plist->fromfile($contents[0]) or 
+	$plist->fromfile($contents[0]) or
 	    Fatal "Can't read packing list $contents[0]";
 } elsif ($sign_only) {
 	if ($opt_n) {
@@ -649,7 +649,7 @@ if ($regen_package) {
 		$plist->set_infodir($dir);
 		my $sig = OpenBSD::PackingElement::DigitalSignature->new_x509;
 		$sig->add_object($plist);
-		$sig->{b64sig} = OpenBSD::x509::compute_signature($plist, 
+		$sig->{b64sig} = OpenBSD::x509::compute_signature($plist,
 		    $cert, $privkey);
 		$plist->save;
 		my $tmp = OpenBSD::Temp::permanent_file(".", "pkg");
@@ -660,7 +660,7 @@ if ($regen_package) {
 		$wrarc->close;
 		$true_package->wipe_info;
 		unlink($plist->pkgname.".tgz");
-		rename($tmp, $plist->pkgname.".tgz") or 
+		rename($tmp, $plist->pkgname.".tgz") or
 		    die "Can't create final signed package $!";
 	}
 	exit(0);
@@ -698,7 +698,7 @@ if ($regen_package) {
 		$plist->set_pkgname($pkgname);
 	}
 	my $fullpkgpath = $subst->value('FULLPKGPATH');
-	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') || 
+	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') ||
 	    $subst->value('CDROM');;
 	my $ftp = $subst->value('PERMIT_PACKAGE_FTP') ||
 	    $subst->value('FTP');
@@ -709,7 +709,7 @@ if ($regen_package) {
 		$cdrom = 'yes' if $cdrom =~ m/^yes$/io;
 		$ftp = 'yes' if $ftp =~ m/^yes$/io;
 
-		OpenBSD::PackingElement::ExtraInfo->add($plist, 
+		OpenBSD::PackingElement::ExtraInfo->add($plist,
 		    $fullpkgpath, $cdrom, $ftp);
 	} else {
 		Warn "Package without FULLPKGPATH\n";
@@ -724,10 +724,10 @@ if ($regen_package) {
 		}
 	}
 	for my $contentsfile (@contents) {
-		read_fragments($plist, $contentsfile) or 
+		read_fragments($plist, $contentsfile) or
 		    Fatal "Can't read packing list $contentsfile";
 	}
-} 
+}
 
 
 my $base = '/';
@@ -792,7 +792,7 @@ if (defined $cert) {
 	$sig->{b64sig} = OpenBSD::x509::compute_signature($plist, $cert, $privkey);
 	$plist->save if $regen_package;
 }
-	
+
 my $wname;
 if ($regen_package) {
 	$wname = $plist->pkgname.".tgz";
@@ -806,8 +806,8 @@ if ($opt_n) {
 	$plist->pretend_to_archive($state);
 } else {
 	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
-	my $h = sub { 
-		unlink $wname; 
+	my $h = sub {
+		unlink $wname;
 		my $caught = shift;
 		$SIG{$caught} = 'DEFAULT';
 		kill $caught, $$;

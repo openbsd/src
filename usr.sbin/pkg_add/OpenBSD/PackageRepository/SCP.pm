@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.20 2010/01/05 11:31:07 espie Exp $
+# $OpenBSD: SCP.pm,v 1.21 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -40,7 +40,7 @@ sub initiate
 
 	my ($rdfh, $wrfh);
 
-	$self->{controller} = open2($rdfh, $wrfh, OpenBSD::Paths->ssh, 
+	$self->{controller} = open2($rdfh, $wrfh, OpenBSD::Paths->ssh,
 	    $self->{host}, 'perl', '-x');
 	$self->{cmdfh} = $wrfh;
 	$self->{getfh} = $rdfh;
@@ -56,8 +56,8 @@ sub initiate
 	}
 	seek(DATA, 0, 0);
 }
-	
-	
+
+
 sub may_exist
 {
 	my ($self, $name) = @_;
@@ -92,7 +92,7 @@ sub grab_object
 		my $n;
 
 		do {
-			$n = read($getfh, $buffer, 
+			$n = read($getfh, $buffer,
 				$remaining < $buffsize ? $remaining :$buffsize);
 			if (!defined $n) {
 				die "Error reading\n";

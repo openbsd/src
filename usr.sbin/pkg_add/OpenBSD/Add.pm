@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.107 2010/04/05 16:07:10 espie Exp $
+# $OpenBSD: Add.pm,v 1.108 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -37,8 +37,8 @@ sub manpages_index
 		if ($state->{not}) {
 			$state->say("Merging manpages in $destdir$k: ", join(@l)) if $state->verbose >= 2;
 		} else {
-			try { 
-				OpenBSD::Makewhatis::merge($destdir.$k, \@l); 
+			try {
+				OpenBSD::Makewhatis::merge($destdir.$k, \@l);
 			} catchall {
 				$state->errsay("Error in makewhatis: $_");
 			};
@@ -73,7 +73,7 @@ sub record_partial_installation
 	my $n = $plist->make_shallow_copy($h);
 	my $borked = borked_package($plist->pkgname);
 	$n->set_pkgname($borked);
-	
+
 	# last file may have not copied correctly
 	my $last = $n->{state}->{lastfile};
 	if (defined $last && defined($last->{d})) {
@@ -82,8 +82,8 @@ sub record_partial_installation
 	    my $lastname = $last->realname($state);
 	    $last->{d} = $last->compute_digest($lastname, $old);
 	    if (!$old->equals($last->{d})) {
-		$state->say("Adjusting ", $old->keyword, 
-		    " for $lastname from ", $old->stringize, 
+		$state->say("Adjusting ", $old->keyword,
+		    " for $lastname from ", $old->stringize,
 		    " to ", $last->{d}->stringize);
 	    }
 	}
@@ -253,7 +253,7 @@ sub prepare_for_addition
 	my $ok = $self->check;
 	if (defined $ok) {
 		if ($ok == 0) {
-			$state->errsay($self->type, " ",  $self->name, 
+			$state->errsay($self->type, " ",  $self->name,
 			    " does not match");
 			$state->{problems}++;
 		}
@@ -283,7 +283,7 @@ sub build_args
 {
 	my ($self, $l) = @_;
 
-	$self->add_entry($l, 
+	$self->add_entry($l,
 	    '-u', $self->{uid},
 	    '-g', $self->{group},
 	    '-L', $self->{class},
@@ -327,7 +327,7 @@ sub install
 	}
 	$state->vsystem(OpenBSD::Paths->sysctl, '--', $name.'='.$self->{value});
 }
-			
+
 package OpenBSD::PackingElement::DirBase;
 sub prepare_for_addition
 {
@@ -379,7 +379,7 @@ sub install
 		} elsif (defined $self->{symlink}) {
 			symlink($self->{symlink}, $destdir.$fullname);
 		} else {
-			rename($self->{tempname}, $destdir.$fullname) or 
+			rename($self->{tempname}, $destdir.$fullname) or
 			    Fatal "Can't move ", $self->{tempname}, " to $fullname: $!";
 			$state->say("moving ", $self->{tempname}, " -> $destdir$fullname") if $state->verbose >= 5;
 			undef $self->{tempname};
@@ -462,7 +462,7 @@ sub prepare_for_addition
 {
 	my ($self, $state, $pkgname) = @_;
 	if (!defined $self->{copyfrom}) {
-		$state->errsay("\@sample element ",$self->fullname, 
+		$state->errsay("\@sample element ",$self->fullname,
 		    " does not reference a valid file");
 		$state->{problems}++;
 	}
@@ -613,15 +613,15 @@ sub install
 sub should_run() { 1 }
 
 package OpenBSD::PackingElement::ExecAdd;
-sub should_run 
-{ 
+sub should_run
+{
 	my ($self, $state) = @_;
 	return !$state->{replacing};
 }
 
 package OpenBSD::PackingElement::ExecUpdate;
-sub should_run 
-{ 
+sub should_run
+{
 	my ($self, $state) = @_;
 	return $state->{replacing};
 }

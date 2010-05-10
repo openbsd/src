@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.5 2009/12/31 12:36:57 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.6 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -74,7 +74,7 @@ sub check
 	my $result = {};
 
 	return $result if @r == 0;
-	$state->say("Verifying dependencies still match for ", 
+	$state->say("Verifying dependencies still match for ",
 	    join(', ', @r)) if $state->verbose >= 2;
 
 	my @new = ($set->newer_names, $set->kept_names);

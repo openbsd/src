@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_audit,v 1.7 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: pkg_audit,v 1.8 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -27,7 +27,7 @@ my %found;
 
 print "Scanning packages\n";
 for my $pkg (installed_packages()) {
-	my $plist = OpenBSD::PackingList->from_installation($pkg, 
+	my $plist = OpenBSD::PackingList->from_installation($pkg,
 	    \&OpenBSD::PackingList::FilesOnly);
 	print "$pkg...\n";
 	for my $item (@{$plist->{items}}) {
@@ -42,7 +42,7 @@ find(sub {
 	if ($found{$File::Find::name}) {
 		delete $found{$File::Find::name};
 	} else {
-		print $File::Find::name, "\n" 
+		print $File::Find::name, "\n"
 	}
 }, '/usr/local');
 

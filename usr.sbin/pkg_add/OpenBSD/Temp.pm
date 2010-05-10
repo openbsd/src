@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.17 2010/01/09 16:37:03 espie Exp $
+# $OpenBSD: Temp.pm,v 1.18 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -50,7 +50,7 @@ sub dir
 	my $caught;
 	my $h = sub { $caught = shift; };
 	my $dir;
-		
+
 	{
 	    local $SIG{'INT'} = $h;
 	    local $SIG{'QUIT'} = $h;
@@ -71,7 +71,7 @@ sub file
 	my $caught;
 	my $h = sub { $caught = shift; };
 	my ($fh, $file);
-		
+
 	{
 	    local $SIG{'INT'} = $h;
 	    local $SIG{'QUIT'} = $h;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.21 2010/03/06 11:55:31 espie Exp $
+# $OpenBSD: Installed.pm,v 1.22 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -39,7 +39,7 @@ sub parse_url
 		$path = $$r;
 		$$r = '';
 	}
-		
+
 	$path .= '/' unless $path =~ m/\/$/;
 	bless { path => $path }, $class;
 }
@@ -150,7 +150,7 @@ sub urlscheme
 	return 'inst';
 }
 
-use OpenBSD::PackageInfo (qw(is_installed installed_info 
+use OpenBSD::PackageInfo (qw(is_installed installed_info
     installed_packages installed_stems installed_name));
 
 my $singleton = bless {}, __PACKAGE__;

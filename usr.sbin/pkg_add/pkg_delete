@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.133 2010/01/10 21:27:59 espie Exp $
+# $OpenBSD: pkg_delete,v 1.134 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -69,7 +69,7 @@ my @todo;
 
 sub process_parameters
 {
-	OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames, 
+	OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames,
 	    "(removing them all)", $state);
 
 	@todo = OpenBSD::RequiredBy->compute_closure(@realnames);
@@ -78,7 +78,7 @@ sub process_parameters
 		my $details = $state->verbose >= 2 || $defines{verbosedeps};
 		my $show    = sub {
 			my ($p, $d) = @_;
-			$state->say("Can't remove ", join(' ', @$p), 
+			$state->say("Can't remove ", join(' ', @$p),
 			    " without also removing:\n",
 			    join(' ', @$d));
 		};
@@ -88,7 +88,7 @@ sub process_parameters
 				delete $deps{$p};
 			}
 			&$show([@realnames], [keys %deps]);
-			if (@realnames > 1 && (keys %deps) > 1 && 
+			if (@realnames > 1 && (keys %deps) > 1 &&
 			    $state->confirm("Do you want details", 1)) {
 				$details = 1;
 			}
@@ -102,7 +102,7 @@ sub process_parameters
 			}
 		}
 		my $them = @todo > 1 ? 'them' : 'it';
-		if ($defines{dependencies} or 
+		if ($defines{dependencies} or
 		    $state->confirm("Do you want to remove $them as well", 0)) {
 			$state->say("(removing $them as well)");
 		} else {
@@ -153,9 +153,9 @@ sub {
 
 			$state->status->object($pkgname);
 			if (!$state->progress->set_header($pkgname)) {
-				$state->say($state->{not} ? 
-				    "Pretending to delete " : 
-				    "Deleting ", 
+				$state->say($state->{not} ?
+				    "Pretending to delete " :
+				    "Deleting ",
 				    $pkgname) if $state->verbose;
 			}
 			$state->log->set_context('-'.$pkgname);

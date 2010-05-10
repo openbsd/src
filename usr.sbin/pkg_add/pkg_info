@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.93 2010/01/11 10:16:20 jmc Exp $
+# $OpenBSD: pkg_info,v 1.94 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -119,7 +119,7 @@ sub find_pkg
 	my ($pkgname, $code) = @_;
 	require OpenBSD::PackageRepository::Installed;
 
-	if (find_pkg_in(OpenBSD::PackageRepository::Installed->new, $pkgname, 
+	if (find_pkg_in(OpenBSD::PackageRepository::Installed->new, $pkgname,
 	    $code)) {
 		return;
 	}
@@ -128,7 +128,7 @@ sub find_pkg
 	my $repo;
 
 	if ($pkgname =~ m/[\/\:]/o) {
-		($repo, $pkgname) = 
+		($repo, $pkgname) =
 		    OpenBSD::PackageLocator->path_parse($pkgname);
 	} else {
 		$repo = 'OpenBSD::PackageLocator';
@@ -202,12 +202,12 @@ sub filter_files
 	my $search = shift;
 	my @result = ();
 	for my $arg (@_) {
-		find_pkg($arg, 
+		find_pkg($arg,
 		    sub {
 		    	my ($pkgname, $handle) = @_;
 
 			my $plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
-				
+
 			$plist->hunt_file($search, $pkgname, \@result);
 		    });
 	}
@@ -220,12 +220,12 @@ sub manual_filter
 
 	my @result = ();
 	for my $arg (@_) {
-		find_pkg($arg, 
+		find_pkg($arg,
 		    sub {
 		    	my ($pkgname, $handle) = @_;
 
 			my $plist = $handle->plist(\&OpenBSD::PackingList::ConflictOnly);
-				
+
 			push(@result, $pkgname) if $plist->has('manual-installation');
 		    });
 	}
@@ -238,7 +238,7 @@ sub add_to_path_info
 {
 	my ($path, $pkgname) = @_;
 
-	$path_info->{$path} = [] unless 
+	$path_info->{$path} = [] unless
 	    defined $path_info->{$path};
 	push(@{$path_info->{$path}}, $pkgname);
 }
@@ -262,7 +262,7 @@ sub find_by_path
 			}
 			if ($plist->has('pkgpath')) {
 				for my $p (@{$plist->{pkgpath}}) {
-					add_to_path_info($p->name, 
+					add_to_path_info($p->name,
 					    $plist->pkgname);
 				}
 			}
@@ -275,7 +275,7 @@ sub find_by_path
 	}
 }
 
-our ($opt_c, $opt_C, $opt_d, $opt_f, $opt_I, $opt_K, 
+our ($opt_c, $opt_C, $opt_d, $opt_f, $opt_I, $opt_K,
     $opt_L, $opt_Q, $opt_q, $opt_R, $opt_s, $opt_v, $opt_h,
     $opt_l, $opt_a, $opt_m, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
 my $terse = 0;
@@ -346,7 +346,7 @@ sub print_info
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
-			Fatal "Bad packing list for", $handle->url 
+			Fatal "Bad packing list for", $handle->url
 			    unless defined $plist;
 		}
 		if ($opt_L) {
@@ -390,7 +390,7 @@ sub print_info
 			if (defined $plist->fullpkgpath) {
 				print $plist->fullpkgpath;
 			} else {
-				print STDERR $plist->pkgname, 
+				print STDERR $plist->pkgname,
 				    " has no FULLPKGPATH\n";
 			}
 			print "\n";
@@ -411,7 +411,7 @@ set_usage('pkg_info [-AaCcdfIKLMmPqRSstUv] [-E filename] [-e pkg-name] [-l str] 
 
 my %defines;
 my $locked;
-try { 
+try {
 	getopts('cCdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
 	    {'e' =>
 		    sub {
@@ -431,8 +431,8 @@ try {
 			    push(@ARGV, @list);
 			    $terse = 1;
 		    },
-	     'F' => sub { 
-			    for my $o (split /\,/o, shift) { 
+	     'F' => sub {
+			    for my $o (split /\,/o, shift) {
 				    $defines{$o} = 1;
 			    }
 		    },
@@ -444,15 +444,15 @@ try {
 			    push(@sought_files, File::Spec->rel2abs(shift));
 
 		    }
-	}); 
+	});
 } catchall {
 	Usage($_);
 };
 
 lock_db(1, $opt_q) unless $locked or $defines{nolock};
 
-unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || 
-	$opt_L || $opt_R || $opt_s || 
+unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I ||
+	$opt_L || $opt_R || $opt_s ||
 	$opt_S || $opt_P || $terse) {
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;

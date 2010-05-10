@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.57 2010/04/05 13:46:24 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.58 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -358,7 +358,7 @@ sub noexec
 sub new
 {
 	my ($class, $dev, $opts) = @_;
-	my $n = bless { commited_use => 0, used => 0, delayed => 0, 
+	my $n = bless { commited_use => 0, used => 0, delayed => 0,
 	    hw => 0, dev => $dev }, $class;
 	if (defined $opts) {
 		$n->parse_opts($opts);
@@ -384,7 +384,7 @@ sub report_ro
 	my ($s, $state, $fname) = @_;
 
 	if ($state->verbose >= 3 or ++($s->{problems}) < 4) {
-		$state->errsay("Error: ", $s->name, 
+		$state->errsay("Error: ", $s->name,
 		    " is read-only ($fname)");
 	} elsif ($s->{problems} == 4) {
 		$state->errsay("Error: ... more files on ", $s->name);
@@ -400,7 +400,7 @@ sub report_overflow
 		$state->errsay("Error: ", $s->name,
 		    " is not large enough ($fname)");
 	} elsif ($s->{problems} == 4) {
-		$state->errsay("Error: ... more files do not fit on ", 
+		$state->errsay("Error: ... more files do not fit on ",
 		    $s->name);
 	}
 	$state->{problems}++;
@@ -440,7 +440,7 @@ sub tally
 
 	return  if $data->{used} == 0;
 	$state->print($data->name, ": ", $data->{used}, " bytes");
-	my $avail = $data->avail; 
+	my $avail = $data->avail;
 	if ($avail < 0) {
 		$state->print(" (missing ", int(-$avail+1), " blocks)");
 	} elsif ($data->{hw} >0 && $data->{hw} > $data->{used}) {

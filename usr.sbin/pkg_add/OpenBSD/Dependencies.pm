@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.125 2010/04/10 11:04:21 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.126 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -53,7 +53,7 @@ sub lookup
 		$dependencies->{$r} = 1;
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -71,7 +71,7 @@ sub dump
 	my $self = shift;
 
 	return unless %{$self->{done}};
-	print "Full dependency tree is ", join(' ', keys %{$self->{done}}), 
+	print "Full dependency tree is ", join(' ', keys %{$self->{done}}),
 	    "\n";
 }
 
@@ -91,7 +91,7 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 
 
-	my $r = $solver->check_lib_spec($solver->{localbase}, $obj, 
+	my $r = $solver->check_lib_spec($solver->{localbase}, $obj,
 	    $self->{known});
 	if ($r) {
 		$self->say_found($state, $obj, "in package $r");
@@ -125,11 +125,11 @@ sub find_in_new_source
 	} else {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
 	}
-	if ($solver->check_lib_spec($solver->{localbase}, $obj, 
+	if ($solver->check_lib_spec($solver->{localbase}, $obj,
 	    {$dep => 1})) {
 	    	$self->say_found($state, $obj, "in package $dep");
 		return $dep;
-	} 
+	}
 	return undef;
 }
 
@@ -139,7 +139,7 @@ sub find_elsewhere
 
 	for my $n ($solver->{set}->newer) {
 		for my $dep (@{$n->{plist}->{depend}}) {
-			my $r = $solver->find_old_lib($state, 
+			my $r = $solver->find_old_lib($state,
 			    $solver->{localbase}, $dep->{pattern}, $obj);
 			if ($r) {
 				$self->say_found($state, $obj,
@@ -455,7 +455,7 @@ sub find_dep_in_stuff_to_install
 			$self->add_dep($set);
 		}
 		if (@candidates == 1) {
-			$self->set_cache($dep, 
+			$self->set_cache($dep,
 			    _cache::to_update->new($candidates[0]));
 		}
 		return $candidates[0];
@@ -513,7 +513,7 @@ sub solve_dependency
 			if (defined $global_cache->{$dep->{pattern}}) {
 				$state->print("Global ");
 			}
-			$state->say("Cache hit on $dep->{pattern}: ", 
+			$state->say("Cache hit on $dep->{pattern}: ",
 			    $self->cached($dep)->pretty);
 		}
 		$v = $self->cached($dep)->do($self, $state, $dep, $package);
@@ -524,7 +524,7 @@ sub solve_dependency
 	}
 
 	if ($state->{allow_replacing}) {
-		
+
 		$v = $self->find_dep_in_self($state, $dep);
 		if ($v) {
 			$self->set_cache($dep, _cache::self->new($v));
@@ -605,8 +605,8 @@ sub check_depends
 	my @bad = (@{$self->{bad}});
 
 	for my $dep ($self->dependencies) {
-		push(@bad, $dep) 
-		    unless is_installed($dep) or 
+		push(@bad, $dep)
+		    unless is_installed($dep) or
 		    	defined $self->{set}->{newer}->{$dep};
 	}
 	return @bad;
@@ -616,11 +616,11 @@ sub dump
 {
 	my $self = shift;
 	if ($self->dependencies) {
-	    print "Direct dependencies for ", $self->{set}->print, 
+	    print "Direct dependencies for ", $self->{set}->print,
 	    	" resolve to: ", join(' ',  $self->dependencies);
-	    print " (todo: ", 
-	    	join(' ', (map {$_->print} values %{$self->{deplist}})), 
-		")" 
+	    print " (todo: ",
+	    	join(' ', (map {$_->print} values %{$self->{deplist}})),
+		")"
 	    	if %{$self->{deplist}};
 	    print "\n";
 	}
@@ -696,15 +696,15 @@ sub solve_wantlibs
 	for my $h ($solver->{set}->newer) {
 		for my $lib (@{$h->{plist}->{wantlib}}) {
 			$solver->{localbase} = $h->{plist}->localbase;
-			next if $lib_finder->lookup($solver, 
-			    $solver->{to_register}->{$h}, $state, 
+			next if $lib_finder->lookup($solver,
+			    $solver->{to_register}->{$h}, $state,
 			    $lib->spec);
 			if ($okay) {
-				$state->errsay("Can't install ", 
+				$state->errsay("Can't install ",
 				    $h->pkgname, " because of libraries");
 			}
 			$okay = 0;
-			OpenBSD::SharedLibs::report_problem($state, 
+			OpenBSD::SharedLibs::report_problem($state,
 			    $lib->spec);
 		}
 	}
@@ -723,10 +723,10 @@ sub solve_tags
 	my $tag_finder = OpenBSD::lookup::tag->new($solver);
 	for my $h ($solver->{set}->newer) {
 		for my $tag (keys %{$h->{plist}->{tags}}) {
-			next if $tag_finder->lookup($solver, 
+			next if $tag_finder->lookup($solver,
 			    $solver->{to_register}->{$h}, $state, $tag);
-			$state->errsay("Can't install ", 
-			    $h->pkgname, ": tag definition not found ", 
+			$state->errsay("Can't install ",
+			    $h->pkgname, ": tag definition not found ",
 			    $tag);
 			if ($okay) {
 				$solver->dump;

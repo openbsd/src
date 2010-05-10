@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.134 2010/01/26 15:03:39 espie Exp $
+# $OpenBSD: Update.pm,v 1.135 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -64,7 +64,7 @@ sub add_location
 {
 	my ($self, $set, $handle, $location) = @_;
 
-	$self->add_handle($set, $handle, 
+	$self->add_handle($set, $handle,
 	    OpenBSD::Handle->from_location($location));
 }
 
@@ -94,7 +94,7 @@ sub process_handle
 	};
 	return 1 if $h->{update_found};
 
-	my $plist = OpenBSD::PackingList->from_installation($pkgname, 
+	my $plist = OpenBSD::PackingList->from_installation($pkgname,
 	    \&OpenBSD::PackingList::UpdateInfoOnly);
 	if (!defined $plist) {
 		Fatal("Can't locate $pkgname");
@@ -124,11 +124,11 @@ sub process_handle
 	};
 	my $oldfound = 0;
 
-	# XXX this is nasty: maybe we added an old set to update 
-	# because of conflicts, in which case the pkgpath + 
+	# XXX this is nasty: maybe we added an old set to update
+	# because of conflicts, in which case the pkgpath +
 	# conflict should be enough  to "match".
 	for my $n ($set->newer) {
-		if (($state->{hard_replace} || 
+		if (($state->{hard_replace} ||
 		    $n->location->update_info->match_pkgpath($plist)) &&
 			$n->plist->conflict_list->conflicts_with($sname)) {
 				$self->add_handle($set, $h, $n);
@@ -186,16 +186,16 @@ sub process_handle
 			$h->{update_found} = $h;
 			$set->move_kept($h);
 
-			$self->progress_message($state, 
+			$self->progress_message($state,
 			    "No need to update $pkgname");
-			
+
 			return 0;
 		}
 		return undef;
 	}
-	$state->say("Update candidates: $pkgname -> ", 
+	$state->say("Update candidates: $pkgname -> ",
 	    join(' ', map {$_->name} @$l), $state->ntogo) if $state->verbose;
-		
+
 	my $r = $state->choose_location($pkgname, $l);
 	if (defined $r) {
 		$self->add_location($set, $h, $r);
@@ -267,7 +267,7 @@ sub process_hint2
 			($repo, $pkgname) = OpenBSD::PackageLocator->path_parse($pkgname);
 			$set->add_repositories($repo);
 		};
-		my $l = $state->updater->stem2location($set, $pkgname, $state, 
+		my $l = $state->updater->stem2location($set, $pkgname, $state,
 		    $set->{quirks});
 		if (defined $l) {
 			$self->add_location($set, $hint, $l);
@@ -297,15 +297,15 @@ sub process_set
 	if (@problems > 0) {
 		$state->tracker->cant($set) if !$set->{quirks};
 		if ($set->{updates} != 0) {
-			$state->say("Can't update ", $set->print, 
-			    ": no update found for ", 
+			$state->say("Can't update ", $set->print,
+			    ": no update found for ",
 			    join(',', @problems));
 		}
 		return 0;
 	} elsif ($set->{updates} == 0) {
 		$state->tracker->uptodate($set);
 		return 0;
-	} 
+	}
 	$state->tracker->add_set($set);
 	return 1;
 }
@@ -319,5 +319,5 @@ sub stem2location
 	}
 	return $state->choose_location($name, $l, $is_quirks);
 }
- 
+
 1;

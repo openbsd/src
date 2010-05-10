@@ -1,11 +1,11 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_merge,v 1.13 2009/11/10 11:36:56 espie Exp $
-# 
+# $OpenBSD: pkg_merge,v 1.14 2010/05/10 09:17:55 espie Exp $
+#
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
 # WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
 # MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR

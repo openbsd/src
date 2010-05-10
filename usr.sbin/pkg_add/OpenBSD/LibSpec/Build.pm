@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Build.pm,v 1.1 2010/04/24 14:33:12 espie Exp $
+# $OpenBSD: Build.pm,v 1.2 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -41,7 +41,7 @@ sub to_string
 }
 
 sub version { ".a" }
-	
+
 sub is_static { 1 }
 
 sub is_better { 0 }

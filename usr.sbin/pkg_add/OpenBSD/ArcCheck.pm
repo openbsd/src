@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.14 2009/11/11 12:59:34 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.15 2010/05/10 09:17:55 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -77,7 +77,7 @@ sub verify_modes
 	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
 		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWGRP)) != 0) {
 		    print STDERR "Error: no \@group for ",
-			$item->fullname, " (", $o->{uname}, 
+			$item->fullname, " (", $o->{uname},
 			"), which has mode ",
 			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
 	    		$result = 0;
@@ -89,8 +89,8 @@ sub verify_modes
 	}
 	if (!defined $item->{mode} && $o->isFile) {
 	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
-		    print STDERR "Error: weird mode for ", 
-			$item->fullname, ": ", 
+		    print STDERR "Error: weird mode for ",
+			$item->fullname, ": ",
 			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
 	    		$result = 0;
 	    }
@@ -105,7 +105,7 @@ sub copy_long
 	if ($self->name =~ m/^LongName(\d+)$/o) {
 		$wrarc->{name_index} = $1 + 1;
 	}
-	if (length($self->name) > 
+	if (length($self->name) >
 	    OpenBSD::Ustar::MAXFILENAME + OpenBSD::Ustar::MAXPREFIX + 1) {
 		$wrarc->{name_index} = 0 if !defined $wrarc->{name_index};
 		$self->set_name('LongName'.$wrarc->{name_index}++);
@@ -132,7 +132,7 @@ sub prepare_long
 		$self->{name_index} = 0 if !defined $self->{name_index};
 		$entry->set_name('LongName'.$self->{name_index}++);
 	}
-	if ((defined $entry->{linkname}) && 
+	if ((defined $entry->{linkname}) &&
 	    length($entry->{linkname}) > MAXLINKNAME) {
 		$self->{linkname_index} = 0 if !defined $self->{linkname_index};
 		$entry->{linkname} = 'LongLink'.$self->{linkname_index}++;
