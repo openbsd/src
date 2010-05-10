@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.5 2010/05/06 16:49:47 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2010/05/10 14:17:52 marco Exp $
 
 .include <bsd.own.mk>
 
@@ -40,5 +40,8 @@ install: ${INCS}
 install:
 	# Nothing here so far...
 .endif
+
+tags:
+	# Nothing here so far...
 
 .include <bsd.obj.mk>
