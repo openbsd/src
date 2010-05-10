@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.132 2010/03/27 09:10:01 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.133 2010/05/10 18:28:21 kili Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 27 2010 $
+.Dd $Mdocdate: May 10 2010 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4406,8 +4406,8 @@ the default
 .Pc
 or functions
 .Pq Fl f .
-The exit status is non-zero if any of the parameters were already unset, zero
-otherwise.
+The exit status is non-zero if any of the parameters has the read-only
+attribute set, zero otherwise.
 .Pp
 .It Ic wait Op Ar job ...
 Wait for the specified job(s) to finish.
