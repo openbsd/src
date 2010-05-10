@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.7 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.8 2010/05/10 17:44:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -62,19 +62,25 @@
 #include <dev/ic/athnreg.h>
 #include <dev/ic/athnvar.h>
 
+#include <dev/ic/ar5008reg.h>
 #include <dev/ic/ar5416reg.h>
 
 int	ar5416_attach(struct athn_softc *);
 void	ar5416_setup(struct athn_softc *);
+void	ar5416_swap_rom(struct athn_softc *);
+const struct ar_spur_chan *
+	ar5416_get_spur_chans(struct athn_softc *, int);
 int	ar5416_set_synth(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
+uint8_t	ar5416_reverse_bits(uint8_t, int);
+uint8_t	ar5416_get_rf_rev(struct athn_softc *);
 void	ar5416_init_from_rom(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 int	ar5416_init_calib(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
-void	ar5416_get_pdadcs(struct athn_softc *, struct ieee80211_channel *,
-	    int, int, uint8_t, uint8_t *, uint8_t *);
 void	ar5416_set_power_calib(struct athn_softc *,
+	    struct ieee80211_channel *);
+void	ar5416_set_txpower(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar5416_spur_mitigate(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
@@ -87,12 +93,30 @@ void	ar5416_force_bias(struct athn_softc *, struct ieee80211_channel *);
 void	ar9160_rw_addac(struct athn_softc *, struct ieee80211_channel *,
 	    uint32_t *);
 void	ar5416_reset_addac(struct athn_softc *, struct ieee80211_channel *);
+void	ar5416_get_pdadcs(struct athn_softc *, struct ieee80211_channel *,
+	    int, int, uint8_t, uint8_t *, uint8_t *);
+
+/* Extern functions. */
+uint8_t	athn_chan2fbin(struct ieee80211_channel *);
+void	athn_get_pier_ival(uint8_t, const uint8_t *, int, int *, int *);
+int	ar5008_attach(struct athn_softc *);
+void	ar5008_write_txpower(struct athn_softc *, int16_t power[]);
+void	ar5008_get_pdadcs(struct athn_softc *, uint8_t, struct athn_pier *,
+	    struct athn_pier *, int, int, uint8_t, uint8_t *, uint8_t *);
+void	ar5008_set_viterbi_mask(struct athn_softc *, int);
+void	ar5008_get_lg_tpow(struct athn_softc *, struct ieee80211_channel *,
+	    uint8_t, const struct ar_cal_target_power_leg *, int, uint8_t[]);
+void	ar5008_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
+	    uint8_t, const struct ar_cal_target_power_ht *, int, uint8_t[]);
+void	ar9280_2_0_olpc_get_pdadcs(struct athn_softc *,
+	    struct ieee80211_channel *, int, uint8_t *, uint8_t *, uint8_t *);
+
 
 int
 ar5416_attach(struct athn_softc *sc)
 {
 	sc->eep_base = AR5416_EEP_START_LOC;
-	sc->eep_size = sizeof (struct ar5416_eeprom);
+	sc->eep_size = sizeof(struct ar5416_eeprom);
 	sc->def_nf = AR5416_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = 14;
 	sc->led_pin = 1;
@@ -110,7 +134,8 @@ ar5416_attach(struct athn_softc *sc)
 	else
 		sc->ini = &ar5416_ini;
 	sc->serdes = ar5416_serdes;
-	return (0);
+
+	return (ar5008_attach(sc));
 }
 
 void
@@ -154,7 +179,7 @@ ar5416_get_spur_chans(struct athn_softc *sc, int is2ghz)
 {
 	const struct ar5416_eeprom *eep = sc->eep;
 
-	return eep->modalHeader[is2ghz].spurChans;
+	return (eep->modalHeader[is2ghz].spurChans);
 }
 
 int
@@ -204,7 +229,7 @@ ar5416_set_synth(struct athn_softc *sc, struct ieee80211_channel *c,
 		} else
 			return (EINVAL);
 	}
-	chansel = athn_reverse_bits(chansel, 8);
+	chansel = ar5416_reverse_bits(chansel, 8);
 	phy |= chansel << 8 | 1 << 5 | 1;
 	DPRINTFN(4, ("AR_PHY(0x37)=0x%08x\n", phy));
 	AR_WRITE(sc, AR_PHY(0x37), phy);
@@ -376,7 +401,7 @@ ar5416_get_pdadcs(struct athn_softc *sc, struct ieee80211_channel *c,
 		hipier.pwr[i] = pierdata[lo].pwrPdg[i];
 		hipier.vpd[i] = pierdata[lo].vpdPdg[i];
 	}
-	athn_get_pdadcs(sc, fbin, &lopier, &hipier, nxpdgains,
+	ar5008_get_pdadcs(sc, fbin, &lopier, &hipier, nxpdgains,
 	    AR5416_PD_GAIN_ICEPTS, overlap, boundaries, pdadcs);
 
 	if (!AR_SREV_9280_20_OR_LATER(sc))
@@ -432,7 +457,7 @@ ar5416_set_power_calib(struct athn_softc *sc, struct ieee80211_channel *c)
 	}
 
 	nxpdgains = 0;
-	memset(xpdgains, 0, sizeof xpdgains);
+	memset(xpdgains, 0, sizeof(xpdgains));
 	for (i = AR5416_PD_GAINS_IN_MASK - 1; i >= 0; i--) {
 		if (nxpdgains >= AR5416_NUM_PD_GAINS)
 			break;	/* Can't happen. */
@@ -515,7 +540,7 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	uint8_t ht40inc;
 #endif
 	int16_t pwr = 0, pwroff, max_ant_gain, power[ATHN_POWER_COUNT];
-	int8_t cckinc;
+	uint8_t cckinc;
 	int i;
 
 	ar5416_set_power_calib(sc, c);
@@ -540,55 +565,55 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	if (IEEE80211_IS_CHAN_2GHZ(c)) {
 		/* Get CCK target powers. */
-		athn_get_lg_tpow(sc, c, AR_CTL_11B, eep->calTargetPowerCck,
+		ar5008_get_lg_tpow(sc, c, AR_CTL_11B, eep->calTargetPowerCck,
 		    AR5416_NUM_2G_CCK_TARGET_POWERS, tpow_cck);
 
 		/* Get OFDM target powers. */
-		athn_get_lg_tpow(sc, c, AR_CTL_11G, eep->calTargetPower2G,
+		ar5008_get_lg_tpow(sc, c, AR_CTL_11G, eep->calTargetPower2G,
 		    AR5416_NUM_2G_20_TARGET_POWERS, tpow_ofdm);
 
 #ifndef IEEE80211_NO_HT
 		/* Get HT-20 target powers. */
-		athn_get_ht_tpow(sc, c, AR_CTL_2GHT20,
+		ar5008_get_ht_tpow(sc, c, AR_CTL_2GHT20,
 		    eep->calTargetPower2GHT20, AR5416_NUM_2G_20_TARGET_POWERS,
 		    tpow_ht20);
 
 		if (extc != NULL) {
 			/* Get HT-40 target powers. */
-			athn_get_ht_tpow(sc, c, AR_CTL_2GHT40,
+			ar5008_get_ht_tpow(sc, c, AR_CTL_2GHT40,
 			    eep->calTargetPower2GHT40,
 			    AR5416_NUM_2G_40_TARGET_POWERS, tpow_ht40);
 
 			/* Get secondary channel CCK target powers. */
-			athn_get_lg_tpow(sc, extc, AR_CTL_11B,
+			ar5008_get_lg_tpow(sc, extc, AR_CTL_11B,
 			    eep->calTargetPowerCck,
 			    AR5416_NUM_2G_CCK_TARGET_POWERS, tpow_cck_ext);
 
 			/* Get secondary channel OFDM target powers. */
-			athn_get_lg_tpow(sc, extc, AR_CTL_11G,
+			ar5008_get_lg_tpow(sc, extc, AR_CTL_11G,
 			    eep->calTargetPower2G,
 			    AR5416_NUM_2G_20_TARGET_POWERS, tpow_ofdm_ext);
 		}
 #endif
 	} else {
 		/* Get OFDM target powers. */
-		athn_get_lg_tpow(sc, c, AR_CTL_11A, eep->calTargetPower5G,
+		ar5008_get_lg_tpow(sc, c, AR_CTL_11A, eep->calTargetPower5G,
 		    AR5416_NUM_5G_20_TARGET_POWERS, tpow_ofdm);
 
 #ifndef IEEE80211_NO_HT
 		/* Get HT-20 target powers. */
-		athn_get_ht_tpow(sc, c, AR_CTL_5GHT20,
+		ar5008_get_ht_tpow(sc, c, AR_CTL_5GHT20,
 		    eep->calTargetPower5GHT20, AR5416_NUM_5G_20_TARGET_POWERS,
 		    tpow_ht20);
 
 		if (extc != NULL) {
 			/* Get HT-40 target powers. */
-			athn_get_ht_tpow(sc, c, AR_CTL_5GHT40,
+			ar5008_get_ht_tpow(sc, c, AR_CTL_5GHT40,
 			    eep->calTargetPower5GHT40,
 			    AR5416_NUM_5G_40_TARGET_POWERS, tpow_ht40);
 
 			/* Get secondary channel OFDM target powers. */
-			athn_get_lg_tpow(sc, extc, AR_CTL_11A,
+			ar5008_get_lg_tpow(sc, extc, AR_CTL_11A,
 			    eep->calTargetPower5G,
 			    AR5416_NUM_5G_20_TARGET_POWERS, tpow_ofdm_ext);
 		}
@@ -598,7 +623,7 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	/* Compute CCK/OFDM delta. */
 	cckinc = (sc->flags & ATHN_FLAG_OLPC) ? -2 : 0;
 
-	memset(power, 0, sizeof power);
+	memset(power, 0, sizeof(power));
 	/* Shuffle target powers accross transmit rates. */
 	power[ATHN_POWER_OFDM6 ] =
 	power[ATHN_POWER_OFDM9 ] =
@@ -651,7 +676,7 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 
 	/* Write transmit power values to hardware. */
-	athn_write_txpower(sc, power);
+	ar5008_write_txpower(sc, power);
 
 	/*
 	 * Write transmit power substraction for dynamic chain changing
@@ -708,7 +733,38 @@ ar5416_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 	    SM(AR_PHY_TIMING11_SPUR_DELTA_PHASE, spur_delta_phase));
 
 	bin = spur * 32;
-	athn_set_viterbi_mask(sc, bin);
+	ar5008_set_viterbi_mask(sc, bin);
+}
+
+uint8_t
+ar5416_reverse_bits(uint8_t v, int nbits)
+{
+	KASSERT(nbits <= 8);
+	v = ((v >> 1) & 0x55) | ((v & 0x55) << 1);
+	v = ((v >> 2) & 0x33) | ((v & 0x33) << 2);
+	v = ((v >> 4) & 0x0f) | ((v & 0x0f) << 4);
+	return (v >> (8 - nbits));
+}
+
+uint8_t
+ar5416_get_rf_rev(struct athn_softc *sc)
+{
+	uint8_t rev, reg;
+	int i;
+
+	/* Allow access to analog chips. */
+	AR_WRITE(sc, AR_PHY(0), 0x00000007);
+
+	AR_WRITE(sc, AR_PHY(0x36), 0x00007058);
+	for (i = 0; i < 8; i++)
+		AR_WRITE(sc, AR_PHY(0x20), 0x00010000);
+	reg = (AR_READ(sc, AR_PHY(256)) >> 24) & 0xff;
+	reg = (reg & 0xf0) >> 4 | (reg & 0x0f) << 4;
+
+	rev = ar5416_reverse_bits(reg, 8);
+	if ((rev & AR_RADIO_SREV_MAJOR) == 0)
+		rev = AR_RAD5133_SREV_MAJOR;
+	return (rev);
 }
 
 /*
@@ -744,13 +800,13 @@ ar5416_rw_bank6tpc(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	if (IEEE80211_IS_CHAN_5GHZ(c)) {
 		modal = &eep->modalHeader[0];
-		/* 5GHz db in column 0, bits [200-202] */
+		/* 5GHz db in column 0, bits [200-202]. */
 		ar5416_rw_rfbits(rwbank6tpc, 0, 200, modal->db, 3);
 		/* 5GHz ob in column 0, bits [203-205]. */
 		ar5416_rw_rfbits(rwbank6tpc, 0, 203, modal->ob, 3);
 	} else {
 		modal = &eep->modalHeader[1];
-		/* 2GHz db in column 0, bits [194-196] */
+		/* 2GHz db in column 0, bits [194-196]. */
 		ar5416_rw_rfbits(rwbank6tpc, 0, 194, modal->db, 3);
 		/* 2GHz ob in column 0, bits [197-199]. */
 		ar5416_rw_rfbits(rwbank6tpc, 0, 197, modal->ob, 3);
@@ -793,7 +849,7 @@ ar5416_rf_reset(struct athn_softc *sc, struct ieee80211_channel *c)
 		uint32_t *rwbank6tpc = sc->rwbuf;
 
 		/* Copy values from .rodata to writable buffer. */
-		memcpy(rwbank6tpc, bank6tpc, 32 * sizeof (uint32_t));
+		memcpy(rwbank6tpc, bank6tpc, 32 * sizeof(uint32_t));
 		ar5416_rw_bank6tpc(sc, c, rwbank6tpc);
 		bank6tpc = rwbank6tpc;
 	}
@@ -839,7 +895,7 @@ ar5416_force_bias(struct athn_softc *sc, struct ieee80211_channel *c)
 	KASSERT(IEEE80211_IS_CHAN_2GHZ(c));
 
 	/* Copy values from .rodata to writable buffer. */
-	memcpy(rwbank6, ar5416_bank6_vals, sizeof ar5416_bank6_vals);
+	memcpy(rwbank6, ar5416_bank6_vals, sizeof(ar5416_bank6_vals));
 
 	if (c->ic_freq < 2412)
 		bias = 0;
@@ -847,7 +903,7 @@ ar5416_force_bias(struct athn_softc *sc, struct ieee80211_channel *c)
 		bias = 1;
 	else
 		bias = 2;
-	athn_reverse_bits(bias, 3);
+	ar5416_reverse_bits(bias, 3);
 
 	/* Overwrite "rf_pwd_icsyndiv" (column 3, bits [181-183].) */
 	ar5416_rw_rfbits(rwbank6, 3, 181, bias, 3);
@@ -887,7 +943,7 @@ ar9160_rw_addac(struct athn_softc *sc, struct ieee80211_channel *c,
 	} else
 		bias = modal->xpaBiasLvl & 0x3;
 
-	bias = athn_reverse_bits(bias, 2);	/* Put in host bit-order. */
+	bias = ar5416_reverse_bits(bias, 2);	/* Put in host bit-order. */
 	DPRINTFN(4, ("bias level=%d\n", bias));
 	if (IEEE80211_IS_CHAN_2GHZ(c))
 		ar5416_rw_rfbits(addac, 0, 60, bias, 2);
@@ -906,7 +962,7 @@ ar5416_reset_addac(struct athn_softc *sc, struct ieee80211_channel *c)
 		uint32_t *rwaddac = sc->rwbuf;
 
 		/* Copy values from .rodata to writable buffer. */
-		memcpy(rwaddac, addac->vals, addac->nvals * sizeof (uint32_t));
+		memcpy(rwaddac, addac->vals, addac->nvals * sizeof(uint32_t));
 		ar9160_rw_addac(sc, c, rwaddac);
 		pvals = rwaddac;
 	} else

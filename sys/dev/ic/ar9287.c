@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.9 2010/04/23 16:05:39 damien Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.10 2010/05/10 17:44:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -62,6 +62,7 @@
 #include <dev/ic/athnreg.h>
 #include <dev/ic/athnvar.h>
 
+#include <dev/ic/ar5008reg.h>
 #include <dev/ic/ar9280reg.h>
 #include <dev/ic/ar9287reg.h>
 
@@ -81,12 +82,31 @@ void	ar9287_set_txpower(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9287_olpc_init(struct athn_softc *);
 void	ar9287_olpc_temp_compensation(struct athn_softc *);
+void	ar9287_1_2_enable_async_fifo(struct athn_softc *);
+void	ar9287_1_2_setup_async_fifo(struct athn_softc *);
+
+/* Extern functions. */
+uint8_t	athn_chan2fbin(struct ieee80211_channel *);
+void	athn_get_pier_ival(uint8_t, const uint8_t *, int, int *, int *);
+int	ar5008_attach(struct athn_softc *);
+void	ar5008_write_txpower(struct athn_softc *, int16_t power[]);
+void	ar5008_get_pdadcs(struct athn_softc *, uint8_t, struct athn_pier *,
+	    struct athn_pier *, int, int, uint8_t, uint8_t *, uint8_t *);
+void	ar5008_get_lg_tpow(struct athn_softc *, struct ieee80211_channel *,
+	    uint8_t, const struct ar_cal_target_power_leg *, int, uint8_t[]);
+void	ar5008_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
+	    uint8_t, const struct ar_cal_target_power_ht *, int, uint8_t[]);
+int	ar9280_set_synth(struct athn_softc *, struct ieee80211_channel *,
+	    struct ieee80211_channel *);
+void	ar9280_spur_mitigate(struct athn_softc *, struct ieee80211_channel *,
+	    struct ieee80211_channel *);
+
 
 int
 ar9287_attach(struct athn_softc *sc)
 {
 	sc->eep_base = AR9287_EEP_START_LOC;
-	sc->eep_size = sizeof (struct ar9287_eeprom);
+	sc->eep_size = sizeof(struct ar9287_eeprom);
 	sc->def_nf = AR9287_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = 11;
 	sc->led_pin = 8;
@@ -104,7 +124,8 @@ ar9287_attach(struct athn_softc *sc)
 	else
 		sc->ini = &ar9287_1_0_ini;
 	sc->serdes = ar9280_2_0_serdes;
-	return (0);
+
+	return (ar5008_attach(sc));
 }
 
 void
@@ -150,7 +171,7 @@ ar9287_get_spur_chans(struct athn_softc *sc, int is2ghz)
 	const struct ar9287_eeprom *eep = sc->eep;
 
 	KASSERT(is2ghz);
-	return eep->modalHeader.spurChans;
+	return (eep->modalHeader.spurChans);
 }
 
 void
@@ -284,7 +305,7 @@ ar9287_get_pdadcs(struct athn_softc *sc, struct ieee80211_channel *c,
 		hipier.pwr[i] = pierdata[lo].pwrPdg[i];
 		hipier.vpd[i] = pierdata[lo].vpdPdg[i];
 	}
-	athn_get_pdadcs(sc, fbin, &lopier, &hipier, nxpdgains,
+	ar5008_get_pdadcs(sc, fbin, &lopier, &hipier, nxpdgains,
 	    AR9287_PD_GAIN_ICEPTS, overlap, boundaries, pdadcs);
 
 	delta = (eep->baseEepHeader.pwrTableOffset -
@@ -352,7 +373,7 @@ ar9287_set_power_calib(struct athn_softc *sc, struct ieee80211_channel *c)
 	}
 
 	nxpdgains = 0;
-	memset(xpdgains, 0, sizeof xpdgains);
+	memset(xpdgains, 0, sizeof(xpdgains));
 	for (i = AR9287_PD_GAINS_IN_MASK - 1; i >= 0; i--) {
 		if (nxpdgains >= AR9287_NUM_PD_GAINS)
 			break;		/* Can't happen. */
@@ -450,35 +471,37 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		pwr = 0;
 
 	/* Get CCK target powers. */
-	athn_get_lg_tpow(sc, c, AR_CTL_11B, eep->calTargetPowerCck,
+	ar5008_get_lg_tpow(sc, c, AR_CTL_11B, eep->calTargetPowerCck,
 	    AR9287_NUM_2G_CCK_TARGET_POWERS, tpow_cck);
 
 	/* Get OFDM target powers. */
-	athn_get_lg_tpow(sc, c, AR_CTL_11G, eep->calTargetPower2G,
+	ar5008_get_lg_tpow(sc, c, AR_CTL_11G, eep->calTargetPower2G,
 	    AR9287_NUM_2G_20_TARGET_POWERS, tpow_ofdm);
 
 #ifndef IEEE80211_NO_HT
 	/* Get HT-20 target powers. */
-	athn_get_ht_tpow(sc, c, AR_CTL_2GHT20, eep->calTargetPower2GHT20,
+	ar5008_get_ht_tpow(sc, c, AR_CTL_2GHT20, eep->calTargetPower2GHT20,
 	    AR9287_NUM_2G_20_TARGET_POWERS, tpow_ht20);
 
 	if (extc != NULL) {
 		/* Get HT-40 target powers. */
-		athn_get_ht_tpow(sc, c, AR_CTL_2GHT40,
+		ar5008_get_ht_tpow(sc, c, AR_CTL_2GHT40,
 		    eep->calTargetPower2GHT40, AR9287_NUM_2G_40_TARGET_POWERS,
 		    tpow_ht40);
 
 		/* Get secondary channel CCK target powers. */
-		athn_get_lg_tpow(sc, extc, AR_CTL_11B, eep->calTargetPowerCck,
-		    AR9287_NUM_2G_CCK_TARGET_POWERS, tpow_cck_ext);
+		ar5008_get_lg_tpow(sc, extc, AR_CTL_11B,
+		    eep->calTargetPowerCck, AR9287_NUM_2G_CCK_TARGET_POWERS,
+		    tpow_cck_ext);
 
 		/* Get secondary channel OFDM target powers. */
-		athn_get_lg_tpow(sc, extc, AR_CTL_11G, eep->calTargetPower2G,
-		    AR9287_NUM_2G_20_TARGET_POWERS, tpow_ofdm_ext);
+		ar5008_get_lg_tpow(sc, extc, AR_CTL_11G,
+		    eep->calTargetPower2G, AR9287_NUM_2G_20_TARGET_POWERS,
+		    tpow_ofdm_ext);
 	}
 #endif
 
-	memset(power, 0, sizeof power);
+	memset(power, 0, sizeof(power));
 	/* Shuffle target powers accross transmit rates. */
 	power[ATHN_POWER_OFDM6   ] =
 	power[ATHN_POWER_OFDM9   ] =
@@ -521,7 +544,7 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 			power[i] = AR_MAX_RATE_POWER;
 	}
 	/* Commit transmit power values to hardware. */
-	athn_write_txpower(sc, power);
+	ar5008_write_txpower(sc, power);
 }
 
 void

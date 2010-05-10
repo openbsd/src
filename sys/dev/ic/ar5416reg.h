@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416reg.h,v 1.1 2009/11/14 16:55:11 damien Exp $	*/
+/*	$OpenBSD: ar5416reg.h,v 1.2 2010/05/10 17:44:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -20,11 +20,6 @@
 #define AR5416_MAX_CHAINS	3
 
 #define AR5416_PHY_CCA_MAX_GOOD_VALUE	( -85)
-
-/* Bits for AR_PHY(0x37). */
-#define AR5416_BMODE_SYNTH	0x00000002
-#define AR5416_AMODE_REFSEL_M	0x0000000c
-#define AR5416_AMODE_REFSEL_S	2
 
 /*
  * ROM layout used by AR5416, AR9160 and AR9280.
@@ -60,7 +55,8 @@ struct ar5416_base_eep_header {
 	uint8_t		deviceType;
 	/* End of common header. */
 	uint8_t		pwdclkind;
-	uint8_t		futureBase_1[2];
+	uint8_t		fastClk5g;
+	uint8_t		divChain;
 	uint8_t		rxGainType;
 #define AR5416_EEP_RXGAIN_23DB_BACKOFF	0
 #define AR5416_EEP_RXGAIN_13DB_BACKOFF	1
@@ -74,7 +70,7 @@ struct ar5416_base_eep_header {
 	uint8_t		desiredScaleCCK;
 	uint8_t		pwrTableOffset;
 	uint8_t		frac_n_5g;
-	uint8_t		futureBase_2[21];
+	uint8_t		futureBase[21];
 } __packed;
 
 struct ar5416_modal_eep_header {

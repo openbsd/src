@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.4 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.5 2010/05/10 17:44:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -62,23 +62,42 @@
 #include <dev/ic/athnreg.h>
 #include <dev/ic/athnvar.h>
 
+#include <dev/ic/ar5008reg.h>
 #include <dev/ic/ar5416reg.h>	/* We share the ROM layout. */
 #include <dev/ic/ar9280reg.h>
 
 int	ar9280_attach(struct athn_softc *);
 void	ar9280_setup(struct athn_softc *);
+int	ar9280_set_synth(struct athn_softc *, struct ieee80211_channel *,
+	    struct ieee80211_channel *);
 void	ar9280_init_from_rom(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
+void	ar9280_spur_mitigate(struct athn_softc *, struct ieee80211_channel *,
+	    struct ieee80211_channel *);
+void	ar9280_2_0_olpc_get_pdadcs(struct athn_softc *,
+	    struct ieee80211_channel *, int, uint8_t *, uint8_t *, uint8_t *);
 void	ar9280_reset_rx_gain(struct athn_softc *, struct ieee80211_channel *);
 void	ar9280_reset_tx_gain(struct athn_softc *, struct ieee80211_channel *);
 void	ar9280_2_0_olpc_init(struct athn_softc *);
 void	ar9280_2_0_olpc_temp_compensation(struct athn_softc *);
 
+/* Extern functions. */
+uint8_t	athn_chan2fbin(struct ieee80211_channel *);
+void	athn_get_pier_ival(uint8_t, const uint8_t *, int, int *, int *);
+int	ar5008_attach(struct athn_softc *);
+void	ar5008_set_viterbi_mask(struct athn_softc *, int);
+void	ar5416_swap_rom(struct athn_softc *);
+void	ar5416_set_txpower(struct athn_softc *, struct ieee80211_channel *,
+	    struct ieee80211_channel *);
+const struct ar_spur_chan *
+	ar5416_get_spur_chans(struct athn_softc *, int);
+
+
 int
 ar9280_attach(struct athn_softc *sc)
 {
 	sc->eep_base = AR5416_EEP_START_LOC;
-	sc->eep_size = sizeof (struct ar5416_eeprom);
+	sc->eep_size = sizeof(struct ar5416_eeprom);
 	sc->def_nf = AR9280_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = 10;
 	sc->led_pin = 1;
@@ -99,7 +118,8 @@ ar9280_attach(struct athn_softc *sc)
 		sc->serdes = ar9280_2_0_serdes;
 	else
 		sc->serdes = ar9280_1_0_serdes;
-	return (0);
+
+	return (ar5008_attach(sc));
 }
 
 void
@@ -113,6 +133,12 @@ ar9280_setup(struct athn_softc *sc)
 	    sc->eep_rev >= AR_EEP_MINOR_VER_19 &&
 	    eep->baseEepHeader.openLoopPwrCntl)
 		sc->flags |= ATHN_FLAG_OLPC;
+
+	/* Determine if fast PLL clock is supported. */
+	if (AR_SREV_9280_20(sc) &&
+	    (sc->eep_rev <= AR_EEP_MINOR_VER_16 ||
+	     eep->baseEepHeader.fastClk5g))
+		sc->flags |= ATHN_FLAG_FAST_PLL_CLOCK;
 
 	if (AR_SREV_9280_20(sc)) {
 		/* Check if we have a valid rxGainType field in ROM. */
@@ -157,7 +183,7 @@ ar9280_set_synth(struct athn_softc *sc, struct ieee80211_channel *c,
 		phy |= AR9280_BMODE | AR9280_FRACMODE;
 
 		if (AR_SREV_9287_11_OR_LATER(sc)) {
-			/* XXX Magic from the Linux driver. */
+			/* NB: Magic values from the Linux driver. */
 			if (freq == 2484) {	/* Channel 14. */
 				/* Japanese regulatory requirements. */
 				AR_WRITE(sc, AR_PHY(637), 0x00000000);
@@ -429,12 +455,12 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 {
 	const struct ar_spur_chan *spurchans;
 	int spur, bin, spur_delta_phase, spur_freq_sd, spur_subchannel_sd;
-	int spur_off, bound, i;
+	int spur_off, range, i;
 
 	/* NB: Always clear. */
 	AR_CLRBITS(sc, AR_PHY_FORCE_CLKEN_CCK, AR_PHY_FORCE_CLKEN_CCK_MRC_MUX);
 
-	bound = (extc != NULL) ? 19 : 10;
+	range = (extc != NULL) ? 19 : 10;
 
 	spurchans = sc->ops.get_spur_chans(sc, IEEE80211_IS_CHAN_2GHZ(c));
 	for (i = 0; i < AR_EEPROM_MODAL_SPURS; i++) {
@@ -448,7 +474,7 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 		else
 			spur += AR_BASE_FREQ_5GHZ;
 		spur -= c->ic_freq;
-		if (abs(spur) < bound)
+		if (abs(spur) < range)
 			break;
 	}
 	if (i == AR_EEPROM_MODAL_SPURS)
@@ -496,7 +522,7 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 	    SM(AR_PHY_SFCORR_SPUR_SUBCHNL_SD, spur_subchannel_sd));
 
 	bin = spur * 320;
-	athn_set_viterbi_mask(sc, bin);
+	ar5008_set_viterbi_mask(sc, bin);
 }
 
 void
