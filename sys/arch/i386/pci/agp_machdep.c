@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.11 2010/04/08 01:26:44 oga Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.12 2010/05/10 22:06:04 oga Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -172,6 +172,100 @@ agp_bus_dma_set_alignment(bus_dma_tag_t tag, bus_dmamap_t dmam,
     u_long alignment)
 {
 	sg_dmamap_set_alignment(tag, dmam, alignment);
+}
+
+struct agp_map {
+	bus_space_tag_t	bst;
+	bus_addr_t	addr;
+	bus_size_t	size;
+	int		flags;
+};
+
+extern struct extent	*ioport_ex;
+extern struct extent	*iomem_ex;
+
+int
+agp_init_map(bus_space_tag_t tag, bus_addr_t address, bus_size_t size,
+    int flags, struct agp_map **mapp)
+{
+	struct extent	*ex;
+	struct agp_map	*map;
+	int		 error;
+
+	switch (tag) {
+	case I386_BUS_SPACE_IO:
+		ex = ioport_ex;
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EINVAL);
+		break;
+
+	case I386_BUS_SPACE_MEM:
+		ex = iomem_ex;
+		break;
+
+	default:
+		panic("agp_init_map: bad bus space tag");
+	}
+	/*
+	 * We grab the extent out of the bus region ourselves
+	 * so we don't need to do these allocations every time.
+	 */
+	error = extent_alloc_region(ex, address, size,
+	    EX_NOWAIT | EX_MALLOCOK);
+	if (error)
+		return (error);
+
+	map = malloc(sizeof(*map), M_AGP, M_WAITOK | M_CANFAIL);
+	if (map == NULL)
+		return (ENOMEM);
+
+	map->bst = tag;
+	map->addr = address;
+	map->size = size;
+	map->flags = flags;
+
+	*mapp = map;
+	return (0);
+}
+
+void
+agp_destroy_map(struct agp_map *map)
+{
+	struct extent	*ex;
+
+	switch (map->bst) {
+	case I386_BUS_SPACE_IO:
+		ex = ioport_ex;
+		break;
+
+	case I386_BUS_SPACE_MEM:
+		ex = iomem_ex;
+		break;
+
+	default:
+		panic("agp_destroy_map: bad bus space tag");
+	}
+
+	if (extent_free(ex, map->addr, map->size,
+	    EX_NOWAIT | EX_MALLOCOK ))
+		printf("agp_destroy_map: can't free region\n");
+	free(map, M_AGP);
+}
+
+
+int
+agp_map_subregion(struct agp_map *map, bus_size_t offset, bus_size_t size,
+    bus_space_handle_t *bshp)
+{
+	return (_bus_space_map(map->bst, map->addr + offset, size,
+	    map->flags, bshp));
+}
+
+void
+agp_unmap_subregion(struct agp_map *map, bus_space_handle_t bsh,
+    bus_size_t size)
+{
+	return (_bus_space_unmap(map->bst, bsh, size, NULL));
 }
 
 /*

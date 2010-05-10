@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.21 2010/04/08 01:26:44 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.22 2010/05/10 22:06:04 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -148,6 +148,8 @@ struct agp_gatt {
 	size_t		ag_size;
 };
 
+struct agp_map;
+
 /*
  * Functions private to the AGP code.
  */
@@ -162,6 +164,13 @@ void	agp_flush_cache_range(vaddr_t, vsize_t);
 int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *,
 	    bus_size_t);
 int	agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
+int	agp_init_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, struct
+	    agp_map **);
+void	agp_destroy_map(struct agp_map *);
+int	agp_map_subregion(struct agp_map *, bus_size_t, bus_size_t,
+	    bus_space_handle_t *);
+void	agp_unmap_subregion(struct agp_map *, bus_space_handle_t,
+	    bus_size_t);
 
 int	agp_alloc_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t *,
 	    bus_addr_t *, bus_dma_segment_t *);

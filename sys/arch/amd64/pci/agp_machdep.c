@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.5 2010/04/08 01:26:44 oga Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.6 2010/05/10 22:06:04 oga Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -172,6 +172,59 @@ agp_bus_dma_set_alignment(bus_dma_tag_t tag, bus_dmamap_t dmam,
     u_long alignment)
 {
 	sg_dmamap_set_alignment(tag, dmam, alignment);
+}
+
+struct agp_map {
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
+	bus_size_t		size;
+};
+
+int
+agp_init_map(bus_space_tag_t tag, bus_addr_t address, bus_size_t size,
+    int flags, struct agp_map **mapp)
+{
+	struct agp_map	*map;
+	int		 err;
+
+	map = malloc(sizeof(*map), M_AGP, M_WAITOK | M_CANFAIL);
+	if (map == NULL)
+		return (ENOMEM);
+
+	map->bst = tag;
+	map->size = size;
+	
+	if ((err = bus_space_map(tag, address, size, flags, &map->bsh)) != 0) {
+		free(map, M_AGP);
+		return (err);
+	}
+	*mapp = map;
+	return (0);
+}
+
+void
+agp_destroy_map(struct agp_map *map)
+{
+	bus_space_unmap(map->bst, map->bsh, map->size);
+	free(map, M_AGP);
+}
+
+
+int
+agp_map_subregion(struct agp_map *map, bus_size_t offset, bus_size_t size,
+    bus_space_handle_t *bshp)
+{
+	if (offset > map->size || size > map->size || offset + size > map->size)
+		return (EINVAL);
+	return (bus_space_subregion(map->bst, map->bsh, offset, size, bshp));
+	
+}
+
+void
+agp_unmap_subregion(struct agp_map *map, bus_space_handle_t bsh,
+    bus_size_t size)
+{
+	/* subregion doesn't need unmapping, do nothing */
 }
 
 /*
