@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.9 2009/11/04 19:14:10 kettenis Exp $	*/
+/*	$OpenBSD: _types.h,v 1.10 2010/05/10 21:41:08 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,16 +48,10 @@ typedef	short			__int16_t;
 typedef	unsigned short		__uint16_t;
 typedef	int			__int32_t;
 typedef	unsigned int		__uint32_t;
-/* XXX - we don't use __COMPILER_INT64__ */
-#ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__	__int64_t;
-typedef	__COMPILER_UINT64__	__uint64_t;
-#else
 /* LONGLONG */
 typedef	long long		__int64_t;
 /* LONGLONG */
 typedef	unsigned long long	__uint64_t;
-#endif
 
 /* 7.18.1.2 Minimum-width integer types */
 typedef	__int8_t		__int_least8_t;
