@@ -274,12 +274,10 @@ static const struct drm_driver_info inteldrm_driver = {
 	.irq_install		= i915_driver_irq_install,
 	.irq_uninstall		= i915_driver_irq_uninstall,
 
-#ifdef INTELDRM_GEM
 	.gem_init_object	= i915_gem_init_object,
 	.gem_free_object	= i915_gem_free_object,
 	.gem_fault		= inteldrm_fault,
 	.gem_size		= sizeof(struct inteldrm_obj),
-#endif /* INTELDRM_GEM */
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
@@ -290,9 +288,7 @@ static const struct drm_driver_info inteldrm_driver = {
 
 	.flags			= DRIVER_AGP | DRIVER_AGP_REQUIRE |
 				    DRIVER_MTRR | DRIVER_IRQ
-#ifdef INTELDRM_GEM
 				    | DRIVER_GEM,
-#endif /* INTELDRM_GEM */
 };
 
 int
@@ -371,7 +367,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	/* Unmask the interrupts that we always want on. */
 	dev_priv->irq_mask_reg = ~I915_INTERRUPT_ENABLE_FIX;
 
-#ifdef INTELDRM_GEM
 	dev_priv->workq = workq_create("intelrel", 1, IPL_TTY);
 	if (dev_priv->workq == NULL) {
 		printf("couldn't create workq\n");
@@ -389,7 +384,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&dev_priv->mm.hang_timer, inteldrm_hangcheck, dev_priv);
 	dev_priv->mm.next_gem_seqno = 1;
 	dev_priv->mm.suspended = 1;
-#endif /* INTELDRM_GEM */
 
 	/* For the X server, in kms mode this will not be needed */
 	dev_priv->fence_reg_start = 3;
@@ -440,9 +434,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-#ifdef INTELDRM_GEM
 	inteldrm_detect_bit_6_swizzle(dev_priv, &bpa);
-#endif /* INTELDRM_GEM */
 	/* Init HWS */
 	if (!I915_NEED_GFX_HWS(dev_priv)) {
 		if (i915_init_phys_hws(dev_priv, pa->pa_dmat) != 0) {
@@ -463,7 +455,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	dev = (struct drm_device *)dev_priv->drmdev;
 
-#ifdef INTELDRM_GEM
 	/* XXX would be a lot nicer to get agp info before now */
 	uvm_page_physload_flags(atop(dev->agp->base), atop(dev->agp->base +
 	    dev->agp->info.ai_aperture_size), atop(dev->agp->base),
@@ -483,7 +474,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    dev->agp->info.ai_aperture_size, BUS_SPACE_MAP_LINEAR |
 	    BUS_SPACE_MAP_PREFETCHABLE, &dev_priv->agph))
 		panic("can't map aperture");
-#endif /* INTELDRM_GEM */
 }
 
 int
@@ -563,7 +553,6 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (i915_cmdbuffer(dev, data, file_priv));
 		case DRM_IOCTL_I915_GET_VBLANK_PIPE:
 			return (i915_vblank_pipe_get(dev, data, file_priv));
-#ifdef INTELDRM_GEM
 		case DRM_IOCTL_I915_GEM_EXECBUFFER2:
 			return (i915_gem_execbuffer2(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_BUSY:
@@ -590,7 +579,6 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			    file_priv));
 		case DRM_IOCTL_I915_GEM_MADVISE:
 			return (i915_gem_madvise_ioctl(dev, data, file_priv));
-#endif /* INTELDRM_GEM */
 		default:
 			break;
 		}
@@ -609,7 +597,6 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 		case DRM_IOCTL_I915_DESTROY_HEAP:
 		case DRM_IOCTL_I915_SET_VBLANK_PIPE:
 			return (0);
-#ifdef INTELDRM_GEM
 		case DRM_IOCTL_I915_GEM_INIT:
 			return (i915_gem_init_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_ENTERVT:
@@ -620,7 +607,6 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (i915_gem_pin_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_UNPIN:
 			return (i915_gem_unpin_ioctl(dev, data, file_priv));
-#endif /* INTELDRM_GEM */
 		}
 	}
 	return (EINVAL);
@@ -657,10 +643,8 @@ inteldrm_intr(void *arg)
 		pipeb_stats = I915_READ(PIPEBSTAT);
 		I915_WRITE(PIPEBSTAT, pipeb_stats);
 	}
-#ifdef INTELDRM_GEM
 	if (iir & I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT)
 		inteldrm_error(dev_priv);
-#endif /* INTELDRM_GEM */
 
 	I915_WRITE(IIR, iir);
 	(void)I915_READ(IIR); /* Flush posted writes */
@@ -670,10 +654,8 @@ inteldrm_intr(void *arg)
 
 	if (iir & I915_USER_INTERRUPT) {
 		wakeup(dev_priv);
-#ifdef INTELDRM_GEM
 		dev_priv->mm.hang_cnt = 0;
 		timeout_add_msec(&dev_priv->mm.hang_timer, 750);
-#endif /* INTELDRM_GEM */
 	}
 
 	mtx_leave(&dev_priv->user_irq_lock);
@@ -914,7 +896,6 @@ void
 inteldrm_lastclose(struct drm_device *dev)
 {
 	drm_i915_private_t	*dev_priv = dev->dev_private;
-#ifdef INTELDRM_GEM
 	struct vm_page		*p;
 	int			 ret;
 
@@ -935,7 +916,6 @@ inteldrm_lastclose(struct drm_device *dev)
 		agp_bus_dma_destroy((struct agp_softc *)dev->agp->agpdev,
 		    dev_priv->agpdmat);
 	}
-#endif /* INTELDRM_GEM */
 	dev_priv->agpdmat = NULL;
 
 
@@ -944,7 +924,6 @@ inteldrm_lastclose(struct drm_device *dev)
 	i915_dma_cleanup(dev);
 }
 
-#ifdef INTELDRM_GEM
 
 int
 i915_gem_init_ioctl(struct drm_device *dev, void *data,
@@ -4833,7 +4812,6 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 	return 0;
 }
 
-#endif /* INTELDRM_GEM */
 
 /**
  * inteldrm_pipe_enabled - check if a pipe is enabled
@@ -5504,7 +5482,6 @@ inteldrm_restore_state(struct drm_i915_private *dev_priv)
 	return 0;
 }
 
-#ifdef INTELDRM_GEM
 /* 
  * Reset the chip after a hang (965 only)
  *
@@ -5579,7 +5556,6 @@ inteldrm_965_reset(struct drm_i915_private *dev_priv, u_int8_t flags)
 	 if (flags == GDRST_FULL)
 		inteldrm_restore_display(dev_priv);
 }
-#endif /* INTELDRM_GEM */
 
 /*
  * Debug code from here. 

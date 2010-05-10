@@ -592,11 +592,7 @@ int i915_getparam(struct drm_device *dev, void *data,
 		value = dev_priv->pci_device;
 		break;
 	case I915_PARAM_HAS_GEM:
-#ifdef INTELDRM_GEM
 		value = 1;
-#else
-		value = 0;
-#endif /* INTELDRM_GEM */
 		break;
 	case I915_PARAM_NUM_FENCES_AVAIL:
 		value = dev_priv->num_fence_regs - dev_priv->fence_reg_start;

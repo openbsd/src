@@ -282,7 +282,6 @@ i915_driver_irq_install(struct drm_device *dev)
 	if (IS_G4X(dev_priv))
 		dev->vblank->vb_max = 0xffffffff;
 
-#ifdef INTELDRM_GEM
 	/*
 	 * Enable some error detection, note the instruction error mask
 	 * bit is reserved, so we leave it masked.
@@ -291,7 +290,6 @@ i915_driver_irq_install(struct drm_device *dev)
 	    ~(GM45_ERROR_PAGE_TABLE | GM45_ERROR_MEM_PRIV |
 	    GM45_ERROR_CP_PRIV | I915_ERROR_MEMORY_REFRESH) :
 	    ~(I915_ERROR_PAGE_TABLE | I915_ERROR_MEMORY_REFRESH));
-#endif /* INTELDRM_GEM */
 
 	/*
 	 * Disable pipe interrupt enables, clear pending pipe status
