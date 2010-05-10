@@ -2956,35 +2956,18 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 		reloc_offset = obj_priv->gtt_offset + reloc->offset;
 		reloc_val = target_obj_priv->gtt_offset + reloc->delta;
 
-		if ((ret = agp_map_subregion(dev_priv->agph,
-		    trunc_page(reloc_offset), PAGE_SIZE, &bsh)) != 0) {
-			DRM_ERROR("map failed...\n");
-			goto err;
-		}
-		/*
-		 * we do this differently to linux, in the case where the
-		 * presumed offset matches we actually read to check it's
-		 * correct, but at least it won't involve idling the gpu if
-		 * it was reading from it before, only if writing (which would
-		 * be bad anyway since we're now using it as a command buffer).
-		 */
 		if (target_obj_priv->gtt_offset == reloc->presumed_offset) {
-			ret = i915_gem_object_set_to_gtt_domain(obj, 0, 1);
-			if (ret != 0)
-				goto err;
-			if (bus_space_read_4(dev_priv->bst, bsh,
-			    reloc_offset & PAGE_MASK) == reloc_val) {
-				agp_unmap_subregion(dev_priv->agph, bsh,
-				    PAGE_SIZE);
-				drm_gem_object_unreference(target_obj);
-				continue;
-			}
-			DRM_DEBUG("reloc tested and found incorrect\n");
+			drm_gem_object_unreference(target_obj);
+			 continue;
 		}
 
 		ret = i915_gem_object_set_to_gtt_domain(obj, 1, 1);
-		if (ret != 0) {
-			agp_unmap_subregion(dev_priv->agph, bsh, PAGE_SIZE);
+		if (ret != 0)
+			goto err;
+
+		if ((ret = agp_map_subregion(dev_priv->agph,
+		    trunc_page(reloc_offset), PAGE_SIZE, &bsh)) != 0) {
+			DRM_ERROR("map failed...\n");
 			goto err;
 		}
 
