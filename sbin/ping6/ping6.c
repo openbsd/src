@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.78 2010/02/21 19:00:11 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.79 2010/05/10 02:00:50 krw Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -939,7 +939,7 @@ main(int argc, char *argv[])
 
 			/*
 			 * receive control messages only. Process the
-			 * exceptions (currently the only possiblity is
+			 * exceptions (currently the only possibility is
 			 * a path MTU notification.)
 			 */
 			if ((mtu = get_pathmtu(&m)) > 0) {
@@ -1582,7 +1582,7 @@ pr_ip6opt(void *extbuf)
 		switch (type) {
 		/*
 		 * Note that inet6_opt_next automatically skips any padding
-		 * optins.
+		 * options.
 		 */
 		case IP6OPT_JUMBO:
 			offset = 0;
@@ -1780,7 +1780,7 @@ pr_nodeaddr(struct icmp6_nodeinfo *ni, int nilen)
 
 	/*
 	 * In icmp-name-lookups 05 and later, TTL of each returned address
-	 * is contained in the resposne. We try to detect the version
+	 * is contained in the response. We try to detect the version
 	 * by the length of the data, but note that the detection algorithm
 	 * is incomplete. We assume the latest draft by default.
 	 */

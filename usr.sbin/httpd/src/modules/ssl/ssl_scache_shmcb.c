@@ -1092,7 +1092,7 @@ static BOOL shmcb_insert_encoded_session(
         }
     }
 
-    /* probably unecessary checks, but I'll leave them until this code
+    /* probably unnecessary checks, but I'll leave them until this code
      * is verified. */
     if (shmcb_get_safe_uint(cache->pos_count) + encoded_len >
         header->cache_data_size) {

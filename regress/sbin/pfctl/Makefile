@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile,v 1.209 2010/01/13 00:52:14 mcbride Exp $
+# $OpenBSD: Makefile,v 1.210 2010/05/10 02:00:50 krw Exp $
 
 # TARGETS
-# pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
+# pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
 # selfpf: feed pfctl output through pfctl again and verify it stays the same
 # pfail: invalid rulesets pfctl must reject; pfailNN.in and pfailNN.ok
 # pfsetup: set up lo1 and perform more tests
 # pfr: table tests
-# pfsimple: just check wether pfctl accepts a given ruleset, not checking output
+# pfsimple: just check whether pfctl accepts a given ruleset, not checking output
 # pfload: load ruleset into anchor regress and verify pfctl -vvsr
 # pfoptimize: as pfload, with -o flag to pfctl
 # pfopt: as target pf, but supply extra command line options

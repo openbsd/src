@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.26 2010/02/23 08:15:27 pyr Exp $ */
+/* $OpenBSD: http_core.c,v 1.27 2010/05/10 02:00:50 krw Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1934,7 +1934,7 @@ static const char *set_server_root(cmd_parms *cmd, void *dummy, char *arg)
      * On restarts (graceful or not) we are (unless we're in unsecure mode).
      * if we would strip off the chroot prefix, nothing (not even "/")
      * would last.
-     * it's pointless to test wether ServerRoot is a directory if we are
+     * it's pointless to test whether ServerRoot is a directory if we are
      * already chrooted into that. 
      * Of course it's impossible to change ServerRoot without a full restart.
      * should we abort with an error if ap_server_root != arg?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_int.c,v 1.4 2006/06/11 20:43:28 miod Exp $	*/
+/*	$OpenBSD: fpu_int.c,v 1.5 2010/05/10 02:00:50 krw Exp $	*/
 /*	$NetBSD: fpu_int.c,v 1.6 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ fpu_int(fe)
   if (x->fp_class != FPC_NUM) {
     return x;
   }
-  /* even if we have exponent == -1, we still have possiblity
+  /* even if we have exponent == -1, we still have possibility
      that the result >= 1.0 when mantissa ~= 1.0 and rounded up */
   if (x->fp_exp < -1) {
     x->fp_class = FPC_ZERO;
