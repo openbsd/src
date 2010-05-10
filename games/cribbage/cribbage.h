@@ -1,4 +1,4 @@
-/*	$OpenBSD: cribbage.h,v 1.8 2004/07/10 07:26:23 deraadt Exp $	*/
+/*	$OpenBSD: cribbage.h,v 1.9 2010/05/10 08:53:12 nicm Exp $	*/
 /*	$NetBSD: cribbage.h,v 1.3 1995/03/21 15:08:46 cgd Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ void	 printcard(WINDOW *, int, CARD, bool);
 void	 prpeg(int, int, bool);
 void	 prtable(int);
 int	 readchar(void);
-void	 rint(int);
+void	 rintsig(int);
 int	 score(bool);
 int	 scorehand(CARD [], CARD, int, bool, bool);
 void	 shuffle(CARD []);

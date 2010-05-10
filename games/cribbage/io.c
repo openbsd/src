@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.12 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.13 2010/05/10 08:53:12 nicm Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -559,7 +559,7 @@ getline(void)
 }
 
 void
-rint(int signo)
+rintsig(int signo)
 {
 	bye();
 	exit(1);
