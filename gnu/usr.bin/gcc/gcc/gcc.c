@@ -2370,7 +2370,7 @@ find_a_file (pprefix, name, mode, multilib)
     {
       if (access (name, mode) == 0)
 	{
-	  strcpy (temp, name);
+	  strlcpy (temp, name, len);
 	  return temp;
 	}
     }
@@ -2386,10 +2386,10 @@ find_a_file (pprefix, name, mode, multilib)
 	       So try appending that first.  */
 	    if (file_suffix[0] != 0)
 	      {
-		strcpy (temp, pl->prefix);
-		strcat (temp, machine_suffix);
-		strcat (temp, multilib_name);
-		strcat (temp, file_suffix);
+		strlcpy (temp, pl->prefix, len);
+		strlcat (temp, machine_suffix, len);
+		strlcat (temp, multilib_name, len);
+		strlcat (temp, file_suffix, len);
 		if (access_check (temp, mode) == 0)
 		  {
 		    if (pl->used_flag_ptr != 0)
@@ -2399,9 +2399,9 @@ find_a_file (pprefix, name, mode, multilib)
 	      }
 
 	    /* Now try just the multilib_name.  */
-	    strcpy (temp, pl->prefix);
-	    strcat (temp, machine_suffix);
-	    strcat (temp, multilib_name);
+	    strlcpy (temp, pl->prefix, len);
+	    strlcat (temp, machine_suffix, len);
+	    strlcat (temp, multilib_name, len);
 	    if (access_check (temp, mode) == 0)
 	      {
 		if (pl->used_flag_ptr != 0)
@@ -2418,10 +2418,10 @@ find_a_file (pprefix, name, mode, multilib)
 	       So try appending that first.  */
 	    if (file_suffix[0] != 0)
 	      {
-		strcpy (temp, pl->prefix);
-		strcat (temp, just_machine_suffix);
-		strcat (temp, multilib_name);
-		strcat (temp, file_suffix);
+		strlcpy (temp, pl->prefix, len);
+		strlcat (temp, just_machine_suffix, len);
+		strlcat (temp, multilib_name, len);
+		strlcat (temp, file_suffix, len);
 		if (access_check (temp, mode) == 0)
 		  {
 		    if (pl->used_flag_ptr != 0)
@@ -2430,9 +2430,9 @@ find_a_file (pprefix, name, mode, multilib)
 		  }
 	      }
 
-	    strcpy (temp, pl->prefix);
-	    strcat (temp, just_machine_suffix);
-	    strcat (temp, multilib_name);
+	    strlcpy (temp, pl->prefix, len);
+	    strlcat (temp, just_machine_suffix, len);
+	    strlcat (temp, multilib_name, len);
 	    if (access_check (temp, mode) == 0)
 	      {
 		if (pl->used_flag_ptr != 0)
@@ -2449,9 +2449,9 @@ find_a_file (pprefix, name, mode, multilib)
 	       So try appending that first.  */
 	    if (file_suffix[0] != 0)
 	      {
-		strcpy (temp, pl->prefix);
-		strcat (temp, this_name);
-		strcat (temp, file_suffix);
+		strlcpy (temp, pl->prefix, len);
+		strlcat (temp, this_name, len);
+		strlcat (temp, file_suffix, len);
 		if (access_check (temp, mode) == 0)
 		  {
 		    if (pl->used_flag_ptr != 0)
@@ -2460,8 +2460,8 @@ find_a_file (pprefix, name, mode, multilib)
 		  }
 	      }
 
-	    strcpy (temp, pl->prefix);
-	    strcat (temp, this_name);
+	    strlcpy (temp, pl->prefix, len);
+	    strlcat (temp, this_name, len);
 	    if (access_check (temp, mode) == 0)
 	      {
 		if (pl->used_flag_ptr != 0)

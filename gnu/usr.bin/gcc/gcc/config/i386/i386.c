@@ -7504,14 +7504,14 @@ output_387_binary_op (insn, operands)
 
   if (is_sse)
    {
-      strcpy (buf, ssep);
+      strlcpy (buf, ssep, sizeof buf);
       if (GET_MODE (operands[0]) == SFmode)
-	strcat (buf, "ss\t{%2, %0|%0, %2}");
+	strlcat (buf, "ss\t{%2, %0|%0, %2}", sizeof buf);
       else
-	strcat (buf, "sd\t{%2, %0|%0, %2}");
+	strlcat (buf, "sd\t{%2, %0|%0, %2}", sizeof buf);
       return buf;
    }
-  strcpy (buf, p);
+  strlcpy (buf, p, sizeof buf);
 
   switch (GET_CODE (operands[3]))
     {
