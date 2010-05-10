@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.52 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.53 2010/05/10 18:17:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -222,9 +222,9 @@ rt2860_attach(void *xsc, int id)
 	sc->mac_ver = tmp >> 16;
 	sc->mac_rev = tmp & 0xffff;
 #ifdef RAL_DEBUG
-	/* temporarily enable debug for >=RT3090 */
-	if (sc->mac_ver >= 0x3090)
-		rt2860_debug = 1;
+	/* temporarily enable debug for >=RT3071 */
+	if (sc->mac_ver >= 0x3071)
+		rt2860_debug = 10;
 #endif
 	if (sc->mac_ver != 0x2860 &&
 	    (id == PCI_PRODUCT_RALINK_RT2890 ||
@@ -912,7 +912,7 @@ rt2860_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return sc->sc_newstate(ic, nstate, arg);
 }
 
-/* Read 16-bit from eFUSE ROM (>=RT3090 only.) */
+/* Read 16-bit from eFUSE ROM (>=RT3071 only.) */
 uint16_t
 rt3090_efuse_read_2(struct rt2860_softc *sc, uint16_t addr)
 {
@@ -2128,7 +2128,7 @@ rt2860_select_chan_group(struct rt2860_softc *sc, int group)
 
 	/* set initial AGC value */
 	if (group == 0) {	/* 2GHz band */
-		if (sc->mac_rev >= 0x3090)
+		if (sc->mac_ver >= 0x3071)
 			agc = 0x1c + sc->lna[0] * 2;
 		else
 			agc = 0x2e + sc->lna[0];
@@ -2232,13 +2232,13 @@ rt3090_set_chan(struct rt2860_softc *sc, u_int chan)
 	rf = rt3090_rf_read(sc, 1);
 	rf &= ~0xfc;
 	if (sc->ntxchains == 1)
-		rf |= 1 << 7 | 1 << 5;	/* 1T: disable Tx chains 2 & 3 */
+		rf |= RT3070_TX1_PD | RT3070_TX2_PD;
 	else if (sc->ntxchains == 2)
-		rf |= 1 << 7;		/* 2T: disable Tx chain 3 */
+		rf |= RT3070_TX2_PD;
 	if (sc->nrxchains == 1)
-		rf |= 1 << 6 | 1 << 4;	/* 1R: disable Rx chains 2 & 3 */
+		rf |= RT3070_RX1_PD | RT3070_RX2_PD;
 	else if (sc->nrxchains == 2)
-		rf |= 1 << 6;		/* 2R: disable Rx chain 3 */
+		rf |= RT3070_RX2_PD;
 	rt3090_rf_write(sc, 1, rf);
 
 	/* set RF offset */
@@ -2256,7 +2256,7 @@ rt3090_set_chan(struct rt2860_softc *sc, u_int chan)
 
 	/* enable RF tuning */
 	rf = rt3090_rf_read(sc, 7);
-	rt3090_rf_write(sc, 7, rf | 0x01);
+	rt3090_rf_write(sc, 7, rf | RT3070_TUNE);
 }
 
 int
@@ -2376,42 +2376,55 @@ rt3090_rf_wakeup(struct rt2860_softc *sc)
 	if (sc->mac_ver == 0x3593) {
 		/* enable VCO */
 		rf = rt3090_rf_read(sc, 1);
-		rt3090_rf_write(sc, 1, rf | 0x01);
+		rt3090_rf_write(sc, 1, rf | RT3593_VCO);
+
 		/* initiate VCO calibration */
 		rf = rt3090_rf_read(sc, 3);
-		rt3090_rf_write(sc, 3, rf | 0x80);
+		rt3090_rf_write(sc, 3, rf | RT3593_VCOCAL);
+
 		/* enable VCO bias current control */
 		rf = rt3090_rf_read(sc, 6);
-		rt3090_rf_write(sc, 6, rf | 0x40);
+		rt3090_rf_write(sc, 6, rf | RT3593_VCO_IC);
+
 		/* initiate res calibration */
 		rf = rt3090_rf_read(sc, 2);
-		rt3090_rf_write(sc, 2, rf | 0x80);
-		/* set reference current control */
+		rt3090_rf_write(sc, 2, rf | RT3593_RESCAL);
+
+		/* set reference current control to 0.33 mA */
 		rf = rt3090_rf_read(sc, 22);
-		rt3090_rf_write(sc, 22, (rf & ~0xe0) | 0x80);
+		rf &= ~RT3593_CP_IC_MASK;
+		rf |= 1 << RT3593_CP_IC_SHIFT;
+		rt3090_rf_write(sc, 22, rf);
+
 		/* enable RX CTB */
 		rf = rt3090_rf_read(sc, 46);
-		rt3090_rf_write(sc, 46, rf | 0x20);
-		rf = rt3090_rf_read(sc, 20);
-		rt3090_rf_write(sc, 20, rf & ~0xee);
+		rt3090_rf_write(sc, 46, rf | RT3593_RX_CTB);
 
+		rf = rt3090_rf_read(sc, 20);
+		rf &= ~(RT3593_LDO_RF_VC_MASK | RT3593_LDO_PLL_VC_MASK);
+		rt3090_rf_write(sc, 20, rf);
+	} else {
+		/* enable RF block */
+		rf = rt3090_rf_read(sc, 1);
+		rt3090_rf_write(sc, 1, rf | RT3070_RF_BLOCK);
+
+		/* enable VCO bias current control */
+		rf = rt3090_rf_read(sc, 7);
+		rt3090_rf_write(sc, 7, rf | 0x30);
+
+		rf = rt3090_rf_read(sc, 9);
+		rt3090_rf_write(sc, 9, rf | 0x0e);
+
+		/* enable RX CTB */
+		rf = rt3090_rf_read(sc, 21);
+		rt3090_rf_write(sc, 21, rf | RT3070_RX_CTB);
+
+		/* fix Tx to Rx IQ glitch by raising RF voltage */
 		rf = rt3090_rf_read(sc, 27);
 		rf &= ~0x77;
 		if (sc->mac_rev < 0x0211)
 			rf |= 0x03;
 		rt3090_rf_write(sc, 27, rf);
-	} else {
-		/* enable RF block */
-		rf = rt3090_rf_read(sc, 1);
-		rt3090_rf_write(sc, 1, rf | 0x01);
-		/* enable VCO bias current control */
-		rf = rt3090_rf_read(sc, 7);
-		rt3090_rf_write(sc, 7, rf | 0x30);
-		rf = rt3090_rf_read(sc, 9);
-		rt3090_rf_write(sc, 9, rf | 0x0e);
-		/* enable RX CTB */
-		rf = rt3090_rf_read(sc, 21);
-		rt3090_rf_write(sc, 21, rf | 0x80);
 	}
 	if (sc->patch_dac && sc->mac_rev < 0x0211) {
 		tmp = RAL_READ(sc, RT3070_LDO_CFG0);
@@ -2435,7 +2448,7 @@ rt3090_filter_calib(struct rt2860_softc *sc, uint8_t init, uint8_t target,
 
 	/* enable baseband loopback mode */
 	rf22 = rt3090_rf_read(sc, 22);
-	rt3090_rf_write(sc, 22, rf22 | 0x01);
+	rt3090_rf_write(sc, 22, rf22 | RT3070_BB_LOOPBACK);
 
 	/* set power and frequency of passband test tone */
 	rt2860_mcu_bbp_write(sc, 24, 0x00);
@@ -2480,7 +2493,7 @@ rt3090_filter_calib(struct rt2860_softc *sc, uint8_t init, uint8_t target,
 
 	/* disable baseband loopback mode */
 	rf22 = rt3090_rf_read(sc, 22);
-	rt3090_rf_write(sc, 22, rf22 & ~0x01);
+	rt3090_rf_write(sc, 22, rf22 & ~RT3070_BB_LOOPBACK);
 
 	return 0;
 }
@@ -2844,7 +2857,7 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 
 	/* check whether the ROM is eFUSE ROM or EEPROM */
 	sc->sc_srom_read = rt2860_eeprom_read_2;
-	if (sc->mac_ver >= 0x3090) {
+	if (sc->mac_ver >= 0x3071) {
 		tmp = RAL_READ(sc, RT3070_EFUSE_CTRL);
 		DPRINTF(("EFUSE_CTRL=0x%08x\n", tmp));
 		if (tmp & RT3070_SEL_EFUSE)
@@ -2877,7 +2890,7 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 		sc->bbp[i].reg = val >> 8;
 		DPRINTF(("BBP%d=0x%02x\n", sc->bbp[i].reg, sc->bbp[i].val));
 	}
-	if (sc->mac_ver >= 0x3090) {
+	if (sc->mac_ver >= 0x3071) {
 		/* read vendor RF settings */
 		for (i = 0; i < 10; i++) {
 			val = rt2860_srom_read(sc, RT3071_EEPROM_RF_BASE + i);
@@ -2917,7 +2930,7 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 			sc->rf_rev = RT3070_RF_3053;
 			sc->ntxchains = 3;
 			sc->nrxchains = 3;
-		} else if (sc->mac_ver >= 0x3090) {
+		} else if (sc->mac_ver >= 0x3071) {
 			/* default to RF3020 1T1R */
 			sc->rf_rev = RT3070_RF_3020;
 			sc->ntxchains = 1;
@@ -2950,18 +2963,18 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 		/* check if we have a hardware radio switch */
 		sc->rfswitch = val & 1;
 	}
-
 	if (sc->sc_flags & RT2860_ADVANCED_PS) {
 		/* read PCIe power save level */
 		val = rt2860_srom_read(sc, RT2860_EEPROM_PCIE_PSLEVEL);
 		if ((val & 0xff) != 0xff) {
 			sc->pslevel = val & 0x3;
 			val = rt2860_srom_read(sc, RT2860_EEPROM_REV);
-			if (val >> 8 != 0x92 || !(val & 0x80))
+			if ((val & 0xff80) != 0x9280)
 				sc->pslevel = MIN(sc->pslevel, 1);
 			DPRINTF(("EEPROM PCIe PS Level=%d\n", sc->pslevel));
 		}
 	}
+
 	/* read power settings for 2GHz channels */
 	for (i = 0; i < 14; i += 2) {
 		val = rt2860_srom_read(sc,
@@ -3094,7 +3107,7 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	sc->rssi_2ghz[0] = val & 0xff;	/* Ant A */
 	sc->rssi_2ghz[1] = val >> 8;	/* Ant B */
 	val = rt2860_srom_read(sc, RT2860_EEPROM_RSSI2_2GHZ);
-	if (sc->mac_ver >= 0x3090) {
+	if (sc->mac_ver >= 0x3071) {
 		/*
 		 * On RT3090 chips (limited to 2 Rx chains), this ROM
 		 * field contains the Tx mixer gain for the 2GHz band.
@@ -3114,7 +3127,10 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	sc->lna[3] = val >> 8;		/* channel group 3 */
 
 	val = rt2860_srom_read(sc, RT2860_EEPROM_LNA);
-	sc->lna[0] = val & 0xff;	/* channel group 0 */
+	if (sc->mac_ver >= 0x3071)
+		sc->lna[0] = RT3090_DEF_LNA;
+	else				/* channel group 0 */
+		sc->lna[0] = val & 0xff;
 	sc->lna[1] = val >> 8;		/* channel group 1 */
 
 	/* fix broken 5GHz LNA entries */
@@ -3171,7 +3187,7 @@ rt2860_bbp_init(struct rt2860_softc *sc)
 	if (sc->mac_ver == 0x2860 && sc->mac_rev != 0x0101)
 		rt2860_mcu_bbp_write(sc, 84, 0x19);
 
-	if (sc->mac_ver >= 0x3090) {
+	if (sc->mac_ver >= 0x3071) {
 		rt2860_mcu_bbp_write(sc, 79, 0x13);
 		rt2860_mcu_bbp_write(sc, 80, 0x05);
 		rt2860_mcu_bbp_write(sc, 81, 0x33);
@@ -3258,12 +3274,12 @@ rt2860_init(struct ifnet *ifp)
 #endif
 		}
 	}
+	RAL_WRITE(sc, RT2860_PWR_PIN_CFG, RT2860_IO_RA_PE);
 
+	/* disable DMA */
 	tmp = RAL_READ(sc, RT2860_WPDMA_GLO_CFG);
 	tmp &= 0xff0;
 	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
-
-	RAL_WRITE(sc, RT2860_WPDMA_RST_IDX, 0xffffffff);
 
 	/* PBF hardware reset */
 	RAL_WRITE(sc, RT2860_SYS_CTRL, 0xe1f);
@@ -3321,6 +3337,19 @@ rt2860_init(struct ifnet *ifp)
 
 	for (i = 0; i < nitems(rt2860_def_mac); i++)
 		RAL_WRITE(sc, rt2860_def_mac[i].reg, rt2860_def_mac[i].val);
+	if (sc->mac_ver >= 0x3071) {
+		/* set delay of PA_PE assertion to 1us (unit of 0.25us) */
+		RAL_WRITE(sc, RT2860_TX_SW_CFG0,
+		    4 << RT2860_DLY_PAPE_EN_SHIFT);
+	}
+
+	if (!(RAL_READ(sc, RT2860_PCI_CFG) & RT2860_PCI_CFG_PCI)) {
+		sc->sc_flags |= RT2860_PCIE;
+		/* PCIe has different clock cycle count than PCI */
+		tmp = RAL_READ(sc, RT2860_US_CYC_CNT);
+		tmp = (tmp & ~0xff) | 0x7d;
+		RAL_WRITE(sc, RT2860_US_CYC_CNT, tmp);
+	}
 
 	/* wait while MAC is busy */
 	for (ntries = 0; ntries < 100; ntries++) {
@@ -3333,14 +3362,6 @@ rt2860_init(struct ifnet *ifp)
 		printf("%s: timeout waiting for MAC\n", sc->sc_dev.dv_xname);
 		rt2860_stop(ifp, 1);
 		return ETIMEDOUT;
-	}
-
-	if (!(RAL_READ(sc, RT2860_PCI_CFG) & RT2860_PCI_CFG_PCI)) {
-		sc->sc_flags |= RT2860_PCIE;
-		/* PCIe has different clock cycle count than PCI */
-		tmp = RAL_READ(sc, RT2860_US_CYC_CNT);
-		tmp = (tmp & ~0xff) | 0x7d;
-		RAL_WRITE(sc, RT2860_US_CYC_CNT, tmp);
 	}
 
 	/* clear Host to MCU mailbox */
@@ -3410,7 +3431,9 @@ rt2860_init(struct ifnet *ifp)
 	}
 
 	/* select Main antenna for 1T1R devices */
-	if (sc->rf_rev == RT3070_RF_3020)
+	if (sc->rf_rev == RT3070_RF_2020 ||
+	    sc->rf_rev == RT3070_RF_3020 ||
+	    sc->rf_rev == RT3070_RF_3320)
 		rt3090_set_rx_antenna(sc, 0);
 
 	/* send LEDs operating mode to microcontroller */
@@ -3418,13 +3441,13 @@ rt2860_init(struct ifnet *ifp)
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED2, sc->led[1], 0);
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED3, sc->led[2], 0);
 
-	if (sc->mac_ver >= 0x3090)
+	if (sc->mac_ver >= 0x3071)
 		rt3090_rf_init(sc);
 
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_SLEEP, 0x02ff, 1);
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_WAKEUP, 0, 1);
 
-	if (sc->mac_ver >= 0x3090)
+	if (sc->mac_ver >= 0x3071)
 		rt3090_rf_wakeup(sc);
 
 	/* disable non-existing Rx chains */
@@ -3446,7 +3469,7 @@ rt2860_init(struct ifnet *ifp)
 		bbp1 = (bbp1 & ~(1 << 3)) | 1 << 4;
 	rt2860_mcu_bbp_write(sc, 1, bbp1);
 
-	if (sc->mac_ver >= 0x3090)
+	if (sc->mac_ver >= 0x3071)
 		rt3090_rf_setup(sc);
 
 	/* select default channel */
@@ -3664,7 +3687,7 @@ rt2860_switch_chan(struct rt2860_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return;
 
-	if (sc->mac_ver >= 0x3090)
+	if (sc->mac_ver >= 0x3071)
 		rt3090_set_chan(sc, chan);
 	else
 		rt2860_set_chan(sc, chan);

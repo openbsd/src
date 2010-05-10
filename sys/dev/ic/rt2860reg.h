@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.29 2010/04/06 19:40:51 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.30 2010/05/10 18:17:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -76,6 +76,7 @@
 #define RT3070_EFUSE_DATA1		0x0594
 #define RT3070_EFUSE_DATA2		0x0598
 #define RT3070_EFUSE_DATA3		0x059c
+#define RT3090_OSC_CTRL			0x05a4
 #define RT3070_LDO_CFG0			0x05d4
 #define RT3070_GPIO_SWITCH		0x05dc
 
@@ -699,6 +700,11 @@
 #define RT3070_TX0_PD	(1 << 3)
 #define RT3070_RX1_PD	(1 << 4)
 #define RT3070_TX1_PD	(1 << 5)
+#define RT3070_RX2_PD	(1 << 6)
+#define RT3070_TX2_PD	(1 << 7)
+
+/* possible flags for RT3020 RF register 7 */
+#define RT3070_TUNE	(1 << 0)
 
 /* possible flags for RT3020 RF register 15 */
 #define RT3070_TX_LO2	(1 << 3)
@@ -711,7 +717,35 @@
 
 /* possible flags for RT3020 RF register 21 */
 #define RT3070_RX_LO2	(1 << 3)
+#define RT3070_RX_CTB	(1 << 7)
 
+/* possible flags for RT3020 RF register 22 */
+#define RT3070_BB_LOOPBACK	(1 << 0)
+
+/* possible flags for RT3053 RF register 1 */
+#define RT3593_VCO	(1 << 0)
+
+/* possible flags for RT3053 RF register 2 */
+#define RT3593_RESCAL	(1 << 7)
+
+/* possible flags for RT3053 RF register 3 */
+#define RT3593_VCOCAL	(1 << 7)
+
+/* possible flags for RT3053 RF register 6 */
+#define RT3593_VCO_IC	(1 << 6)
+
+/* possible flags for RT3053 RF register 20 */
+#define RT3593_LDO_PLL_VC_MASK	0x0e
+#define RT3593_LDO_RF_VC_MASK	0xe0
+
+/* possible flags for RT3053 RF register 22 */
+#define RT3593_CP_IC_MASK	0xe0
+#define RT3593_CP_IC_SHIFT	5
+
+/* possible flags for RT3053 RF register 46 */
+#define RT3593_RX_CTB	(1 << 5)
+
+#define RT3090_DEF_LNA	10
 
 /* RT2860 TX descriptor */
 struct rt2860_txd {
