@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpctl.8,v 1.4 2009/11/03 08:09:15 jmc Exp $
+.\"	$OpenBSD: ldpctl.8,v 1.5 2010/05/10 18:46:07 sthen Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2009 $
+.Dd $Mdocdate: May 10 2010 $
 .Dt LDPCTL 8
 .Os
 .Sh NAME
@@ -31,6 +31,10 @@ The
 program controls the
 .Xr ldpd 8
 daemon.
+Commands may be abbreviated to the minimum unambiguous prefix; for example,
+.Cm s i
+for
+.Cm show interfaces .
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
