@@ -1,17 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2005/04/28 21:33:25 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2010/05/10 18:20:31 drahn Exp $
 
 .include <bsd.own.mk>
-USE_GCC3?=No
 
-.if make(obj)
+# Note that this Makefile is only used for make obj and GCC2 architectures.
 SUBDIR+= libio libf2c libstdc++
-.else
-.  if ${USE_GCC3:L} == "no"
-SUBDIR+= libio libf2c libstdc++
-.  else
-SUBDIR+=
-.  endif
-.endif
 
 # just so that the main directory will have a subdir, which simplifies
 # libf2c build 

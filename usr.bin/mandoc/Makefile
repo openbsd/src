@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.33 2010/04/07 23:15:05 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.34 2010/05/10 18:20:31 drahn Exp $
 
 .include <bsd.own.mk>
 
 VERSION=1.9.23
 CFLAGS+=-DVERSION=\"${VERSION}\"
 CFLAGS+=-W -Wall -Wstrict-prototypes
-.if ${USE_GCC3:L} != "no"
+
+.if ${COMPILER_VERSION:L} == "gcc3" || ${COMPILER_VERSION:L} == "gcc4" 
 CFLAGS+=-Wno-unused-parameter
 .endif
 

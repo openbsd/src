@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.153 2010/02/03 20:49:58 miod Exp $
+#	$OpenBSD: Makefile,v 1.154 2010/05/10 18:20:31 drahn Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -8,7 +8,6 @@
 
 
 .include <bsd.own.mk>
-USE_GCC3?=No
 
 # Missing: mp.h
 FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h cast.h \
@@ -58,10 +57,14 @@ WDIRS=	../usr.sbin/httpd
 # before includes
 PWDIRS=
 
-.if ${USE_GCC3:L} == "yes"
+.if ${COMPILER_VERSION:L} == "gcc3" 
 WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc \
 	../gnu/lib/libf2c
 PWDIRS+= ../gnu/lib/libstdc++ ../gnu/lib/libf2c
+.elif ${COMPILER_VERSION:L} == "gcc4"
+RDIRS+= ../gnu/lib/libstdc++-v3 ../gnu/usr.bin/cc/libobjc
+PRDIRS+= ../gnu/lib/libstdc++-v3
+RDIRS+= ../gnu/usr.bin/cc/include
 .else
 WDIRS+= ../gnu/egcs/libio ../gnu/egcs/libstdc++ \
 	../gnu/egcs/libf2c ../gnu/lib/libobjc ../gnu/egcs/gcc

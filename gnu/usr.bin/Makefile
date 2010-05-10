@@ -1,14 +1,15 @@
-#	$OpenBSD: Makefile,v 1.45 2007/03/23 02:17:52 ray Exp $
+#	$OpenBSD: Makefile,v 1.46 2010/05/10 18:20:31 drahn Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
-USE_GCC3?=No
 
 .if make(obj)
-SUBDIR+=	gcc ../egcs/gcc
+SUBDIR+=	cc gcc ../egcs/gcc
 .else
-.  if ${USE_GCC3:L} == "yes"
+.  if ${COMPILER_VERSION:L} == "gcc3"
 SUBDIR+=	gcc
+.  elif ${COMPILER_VERSION:L} == "gcc4"
+SUBDIR+=	cc
 .  else
 SUBDIR+=	../egcs/gcc
 .  endif

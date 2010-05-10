@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2006/07/11 11:59:53 avsm Exp $
+# $OpenBSD: Makefile,v 1.11 2010/05/10 18:20:31 drahn Exp $
 
 C_MODULES?=	strlcpy strlcat getcwd memcpy fread memcpy declare \
 		sscanf vararray md builtins
@@ -53,8 +53,10 @@ generate:
 NOOBJ= Yes
 
 .include <bsd.regress.mk>
-.if ${USE_GCC3:L:Myes}
+.if ${COMPILER_VERSION:L} == "gcc3" 
 EXP=		.exp.gcc3
+.elif ${COMPILER_VERSION:L} == "gcc4" 
+EXP=		.exp.gcc4
 .else
 EXP=		.exp
 .endif

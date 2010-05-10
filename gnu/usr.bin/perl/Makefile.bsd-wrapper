@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.81 2010/02/03 20:49:00 miod Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.82 2010/05/10 18:20:31 drahn Exp $
 #
 # Build wrapper for Perl 5.10.0
 #
 
-# For ``NOMAN'' and ``USE_GCC3''
+# For ``NOMAN'' and ``COMPILER_VERSION''
 .include <bsd.own.mk>
 
 # There is no point in building a profiled libperl that is never used.
@@ -15,7 +15,7 @@ TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 
 # Perl builds with -fno-strict-aliasing, we want libperl to do the same
 CFLAGS+= -fno-strict-aliasing
-.if ${USE_GCC3:L} == "yes"
+.if ${COMPILER_VERSION:L} == "gcc3" || ${COMPILER_VERSION:L} == "gcc4"
 CFLAGS+= -fno-delete-null-pointer-checks
 .endif
 

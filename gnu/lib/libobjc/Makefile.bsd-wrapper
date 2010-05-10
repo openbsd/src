@@ -1,16 +1,23 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2007/07/23 17:24:06 kurt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2010/05/10 18:20:31 drahn Exp $
 
 LIB=		objc
 
 
 LIBIBERTY_INCLUDES=${.CURDIR}/../libiberty/include
 .include <bsd.own.mk>
-.if ${USE_GCC3:L} == "yes"
+.if make(obj)
+.else
+. if ${COMPILER_VERSION:L} == "gcc3"
 GCCDIR= $(.CURDIR)/../../usr.bin/gcc
 GCCSRCDIR=${GCCDIR}/gcc
-.else
+. elif ${COMPILER_VERSION:L} == "gcc2"
 GCCDIR= $(.CURDIR)/../../egcs/gcc
 GCCSRCDIR=${GCCDIR}
+. elif ${COMPILER_VERSION:L} == "gcc4" 
+error GCC4 should not build gnu/lib/libobjc
+. else
+error unknown compiler
+. endif
 .endif
 
 .if defined(MAKEOBJDIR)

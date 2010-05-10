@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.6 2010/05/10 14:17:52 marco Exp $
+# $OpenBSD: Makefile,v 1.7 2010/05/10 18:20:31 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -33,7 +33,7 @@ depend:
 	# Nothing here so far...
 
 .if !empty(INCS)
-install: ${INCS}
+install includes: ${INCS}
 	${INSTALL} -C -o ${BINOWN} -g ${LOCALEGRP} -m ${NONBINMODE} ${.ALLSRC} \
 		${DESTDIR}/usr/include
 .else
