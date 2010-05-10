@@ -479,9 +479,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (i = 0; i < atop(dev->agp->info.ai_aperture_size); i++)
 		atomic_setbits_int(&(dev_priv->pgs[i].pg_flags), PG_PMAP_WC);
-	if (bus_space_map(dev_priv->bst, dev->agp->base,
+	if (agp_init_map(dev_priv->bst, dev->agp->base,
 	    dev->agp->info.ai_aperture_size, BUS_SPACE_MAP_LINEAR |
-	    BUS_SPACE_MAP_PREFETCHABLE, &dev_priv->aperture_bsh) != 0)
+	    BUS_SPACE_MAP_PREFETCHABLE, &dev_priv->agph))
 		panic("can't map aperture");
 #endif /* INTELDRM_GEM */
 }
@@ -1101,21 +1101,20 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 
 	bsize = round_page(offset + args->size) - trunc_page(offset);
 
-	if ((ret = bus_space_subregion(dev_priv->bst, dev_priv->aperture_bsh,
+	if ((ret = agp_map_subregion(dev_priv->agph,
 	    trunc_page(offset), bsize, &bsh)) != 0)
 		goto unpin;
 	vaddr = bus_space_vaddr(dev->bst, bsh);
 	if (vaddr == NULL) {
 		ret = EFAULT;
-		goto unpin;
+		goto unmap;
 	}
 
 	ret = copyout(vaddr + (offset & PAGE_MASK),
 	    (char *)(uintptr_t)args->data_ptr, args->size);
 
-	if (ret)
-		goto unpin;
-
+unmap:
+	agp_unmap_subregion(dev_priv->agph, bsh, bsize);
 unpin:
 	i915_gem_object_unpin(obj);
 out:
@@ -1164,26 +1163,28 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 	}
 	ret = i915_gem_object_set_to_gtt_domain(obj, 1, 1);
 	if (ret)
-		goto done;
+		goto unpin;
 
 	obj_priv = (struct inteldrm_obj *)obj;
 	offset = obj_priv->gtt_offset + args->offset;
 	bsize = round_page(offset + args->size) - trunc_page(offset);
 
-	if ((ret = bus_space_subregion(dev_priv->bst, dev_priv->aperture_bsh,
+	if ((ret = agp_map_subregion(dev_priv->agph,
 	    trunc_page(offset), bsize, &bsh)) != 0)
-		goto done;
+		goto unpin;
 	vaddr = bus_space_vaddr(dev_priv->bst, bsh);
 	if (vaddr == NULL) {
 		ret = EFAULT;
-		goto done;
+		goto unmap;
 	}
 
 	ret = copyin((char *)(uintptr_t)args->data_ptr,
 	    vaddr + (offset & PAGE_MASK), args->size);
 
 
-done:
+unmap:
+	agp_unmap_subregion(dev_priv->agph, bsh, bsize);
+unpin:
 	i915_gem_object_unpin(obj);
 out:
 	drm_unhold_and_unref(obj);
@@ -2955,9 +2956,8 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 		reloc_offset = obj_priv->gtt_offset + reloc->offset;
 		reloc_val = target_obj_priv->gtt_offset + reloc->delta;
 
-		if ((ret = bus_space_subregion(dev_priv->bst,
-		    dev_priv->aperture_bsh, trunc_page(reloc_offset),
-		    PAGE_SIZE, &bsh)) != 0) {
+		if ((ret = agp_map_subregion(dev_priv->agph,
+		    trunc_page(reloc_offset), PAGE_SIZE, &bsh)) != 0) {
 			DRM_ERROR("map failed...\n");
 			goto err;
 		}
@@ -2974,6 +2974,8 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 				goto err;
 			if (bus_space_read_4(dev_priv->bst, bsh,
 			    reloc_offset & PAGE_MASK) == reloc_val) {
+				agp_unmap_subregion(dev_priv->agph, bsh,
+				    PAGE_SIZE);
 				drm_gem_object_unreference(target_obj);
 				continue;
 			}
@@ -2981,14 +2983,17 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 		}
 
 		ret = i915_gem_object_set_to_gtt_domain(obj, 1, 1);
-		if (ret != 0)
+		if (ret != 0) {
+			agp_unmap_subregion(dev_priv->agph, bsh, PAGE_SIZE);
 			goto err;
+		}
 
 		bus_space_write_4(dev_priv->bst, bsh, reloc_offset & PAGE_MASK,
 		     reloc_val);
 
 		reloc->presumed_offset = target_obj_priv->gtt_offset;
 
+		agp_unmap_subregion(dev_priv->agph, bsh, PAGE_SIZE);
 		drm_gem_object_unreference(target_obj);
 	}
 
@@ -3870,8 +3875,8 @@ i915_gem_init_ringbuffer(struct drm_i915_private *dev_priv)
 	/* Set up the kernel mapping for the ring. */
 	dev_priv->ring.size = obj->size;
 
-	if ((ret = bus_space_subregion(dev_priv->bst, dev_priv->aperture_bsh, 
-	    obj_priv->gtt_offset, obj->size, &dev_priv->ring.bsh)) != 0) {
+	if ((ret = agp_map_subregion(dev_priv->agph, obj_priv->gtt_offset,
+	    obj->size, &dev_priv->ring.bsh)) != 0) {
 		DRM_INFO("can't map ringbuffer\n");
 		goto unpin;
 	}
@@ -3884,6 +3889,7 @@ i915_gem_init_ringbuffer(struct drm_i915_private *dev_priv)
 	return (0);
 
 unmap:
+	agp_unmap_subregion(dev_priv->agph, dev_priv->ring.bsh, obj->size);
 unpin:
 	memset(&dev_priv->ring, 0, sizeof(dev_priv->ring));
 	i915_gem_object_unpin(obj);
@@ -3947,6 +3953,8 @@ i915_gem_cleanup_ringbuffer(struct drm_i915_private *dev_priv)
 {
 	if (dev_priv->ring.ring_obj == NULL)
 		return;
+	agp_unmap_subregion(dev_priv->agph, dev_priv->ring.bsh,
+	    dev_priv->ring.ring_obj->size);
 	drm_hold_object(dev_priv->ring.ring_obj);
 	i915_gem_object_unpin(dev_priv->ring.ring_obj);
 	drm_unhold_and_unref(dev_priv->ring.ring_obj);
@@ -5756,15 +5764,16 @@ i915_batchbuffer_info(int kdev)
 	TAILQ_FOREACH(obj_priv, &dev_priv->mm.active_list, list) {
 		obj = &obj_priv->obj;
 		if (obj->read_domains & I915_GEM_DOMAIN_COMMAND) {
-			if ((ret = bus_space_subregion(dev_priv->bst,
-			    dev_priv->aperture_bsh, obj_priv->gtt_offset,
-			    obj->size, &bsh)) != 0) {
+			if ((ret = agp_map_subregion(dev_priv->agph,
+			    obj_priv->gtt_offset, obj->size, &bsh)) != 0) {
 				DRM_ERROR("Failed to map pages: %d\n", ret);
 				return;
 			}
 			printf("--- gtt_offset = 0x%08x\n",
 			    obj_priv->gtt_offset);
 			i915_dump_pages(dev_priv->bst, bsh, obj->size);
+			agp_unmap_subregion(dev_priv->agph, dev_priv->ring.bsh,
+			    obj->size);
 		}
 	}
 }

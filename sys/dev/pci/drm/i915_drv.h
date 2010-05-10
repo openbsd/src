@@ -90,7 +90,7 @@ typedef struct drm_i915_private {
 	bus_dma_tag_t		 agpdmat; /* tag from intagp for GEM */
 	bus_dma_tag_t		 dmat;
 	bus_space_tag_t		 bst;
-	bus_space_handle_t	 aperture_bsh;
+	struct agp_map		*agph;
 
 	u_long			 flags;
 	u_int16_t		 pci_device;
