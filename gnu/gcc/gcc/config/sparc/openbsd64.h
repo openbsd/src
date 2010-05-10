@@ -34,10 +34,7 @@ Boston, MA 02110-1301, USA.  */
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-	builtin_define ("__unix__");		\
-	builtin_define ("__OpenBSD__");		\
-	builtin_assert ("system=unix");		\
-	builtin_assert ("system=OpenBSD");	\
+	OPENBSD_OS_CPP_BUILTINS();		\
 	builtin_define ("__sparc64__");		\
 	builtin_define ("__sparcv9__");		\
 	builtin_define ("__sparc_v9__");	\
@@ -67,6 +64,15 @@ Boston, MA 02110-1301, USA.  */
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
+
+#undef WINT_TYPE
+#define WINT_TYPE "int"
+
+#undef INTMAX_TYPE
+#define INTMAX_TYPE "long long int"
+
+#undef UINTMAX_TYPE
+#define UINTMAX_TYPE "long long unsigned int"
 
 #undef LONG_DOUBLE_TYPE_SIZE
 #define LONG_DOUBLE_TYPE_SIZE 128
