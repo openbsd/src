@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.1 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.2 2010/05/10 17:53:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -382,6 +382,7 @@ static const uint32_t ar9380_2_0_vals_2g40[] = {
 	0x0000019c, 0x000001ce, 0x00000150, 0x0000019c, 0x00800000,
 	0x00000000, 0x0000019c, 0x000001ce, 0x00000150
 };
+#endif
 
 static const uint32_t ar9380_2_0_vals_2g20[] = {
 	0x00000023, 0x00000160, 0x0000018c, 0x00003e38, 0x08400b00,
@@ -398,7 +399,6 @@ static const uint32_t ar9380_2_0_vals_2g20[] = {
 	0x0000019c, 0x000001ce, 0x00000150, 0x0000019c, 0x00800000,
 	0x00000000, 0x0000019c, 0x000001ce, 0x00000150
 };
-#endif
 
 static const uint16_t ar9380_2_0_cm_regs[] = {
 	P(0x040a4), P(0x07008), P(0x07020), P(0x07034), P(0x07038),
