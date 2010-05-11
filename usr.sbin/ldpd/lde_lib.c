@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.15 2010/04/13 15:39:29 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.16 2010/05/11 14:54:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -291,7 +291,6 @@ lde_kernel_remove(struct kroute *kr)
 	struct rt_label		*rl;
 	struct lde_nbr		*ln;
 
-	rn = rt_find(kr->prefix.s_addr, kr->prefixlen);
 	rn = rt_find(kr->prefix.s_addr, kr->prefixlen);
 	if (rn == NULL)
 		return;
