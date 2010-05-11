@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.36 2010/04/20 22:05:43 tedu Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.37 2010/05/11 09:22:56 claudio Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -70,6 +70,10 @@
 #include <netatalk/at.h>
 #include <netatalk/at_var.h>
 #include <netatalk/at_extern.h>
+#endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
 #endif
 
 #include "bpfilter.h"
@@ -182,7 +186,15 @@ gre_input2(m , hlen, proto)
 			schednetisr(NETISR_IPV6);
 			af = AF_INET6;
 			break;
-#endif /* INET6 */
+#endif
+#ifdef MPLS
+		case ETHERTYPE_MPLS:
+		case ETHERTYPE_MPLS_MCAST:
+			ifq = &mplsintrq;
+			schednetisr(NETISR_MPLS);
+			af = AF_MPLS;
+			break;
+#endif
 		default:	   /* others not yet supported */
 			return (0);
 		}

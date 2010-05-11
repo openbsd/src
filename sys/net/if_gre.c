@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.47 2010/05/07 13:33:16 claudio Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.48 2010/05/11 09:22:56 claudio Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -375,6 +375,14 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 #ifdef INET6
 		case AF_INET6:
 			etype = ETHERTYPE_IPV6;
+			break;
+#endif
+#ifdef MPLS
+		case AF_MPLS:
+			if (m->m_flags & (M_BCAST | M_MCAST))
+				etype = ETHERTYPE_MPLS_MCAST;
+			else
+				etype = ETHERTYPE_MPLS;
 			break;
 #endif
 		default:
