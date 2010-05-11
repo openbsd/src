@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.6 2010/02/19 12:49:21 claudio Exp $ */
+/*	$OpenBSD: lde.h,v 1.7 2010/05/11 15:02:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -37,8 +37,8 @@ struct lde_req_entry {
 struct lde_map_entry {
 	TAILQ_ENTRY(lde_map_entry)	entry;
 	struct in_addr			prefix;
-	u_int8_t			prefixlen;
 	u_int32_t			label;
+	u_int8_t			prefixlen;
 };
 
 /* Addresses belonging to neighbor */
@@ -93,20 +93,19 @@ struct rt_node {
 };
 
 /* lde.c */
-pid_t		 lde(struct ldpd_conf *, int [2], int [2], int [2]);
-int		 lde_imsg_compose_ldpe(int, u_int32_t, pid_t, void *,
-		     u_int16_t);
-u_int32_t	 lde_router_id(void);
-void		 lde_send_insert_klabel(struct rt_node *);
-void		 lde_send_change_klabel(struct rt_node *);
-void		 lde_send_delete_klabel(struct rt_node *);
-void		 lde_send_labelmapping(u_int32_t, struct map *);
-void		 lde_send_labelrequest(u_int32_t, struct map *);
-void		 lde_send_labelrelease(u_int32_t, struct map *);
-void		 lde_send_notification(u_int32_t, u_int32_t, u_int32_t,
-		    u_int32_t);
+pid_t		lde(struct ldpd_conf *, int [2], int [2], int [2]);
+int		lde_imsg_compose_ldpe(int, u_int32_t, pid_t, void *, u_int16_t);
+u_int32_t	lde_router_id(void);
+void		lde_send_insert_klabel(struct rt_node *);
+void		lde_send_change_klabel(struct rt_node *);
+void		lde_send_delete_klabel(struct rt_node *);
+void		lde_send_labelmapping(u_int32_t, struct map *);
+void		lde_send_labelrequest(u_int32_t, struct map *);
+void		lde_send_labelrelease(u_int32_t, struct map *);
+void		lde_send_notification(u_int32_t, u_int32_t, u_int32_t,
+		   u_int32_t);
 
-void		 lde_nbr_del(struct lde_nbr *);
+void		lde_nbr_del(struct lde_nbr *);
 struct lde_nbr *lde_find_address(struct in_addr);
 
 
