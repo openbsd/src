@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.5 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.6 2010/05/11 18:04:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -494,6 +494,7 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 	    AR_PHY_SPUR_REG_ENABLE_VIT_SPUR_RSSI |
 	    SM(AR_PHY_SPUR_REG_SPUR_RSSI_THRESH, AR_SPUR_RSSI_THRESH));
 
+#ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
 		spur_delta_phase = (spur * 262144) / 10;
 		if (spur < 0) {
@@ -503,7 +504,9 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 			spur_subchannel_sd = 0;
 			spur_off = spur - 10;
 		}
-	} else {
+	} else
+#endif
+	{
 		spur_delta_phase = (spur * 524288) / 10;
 		spur_subchannel_sd = 0;
 		spur_off = spur;
