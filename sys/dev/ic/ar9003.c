@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.3 2010/05/11 18:13:37 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.4 2010/05/11 19:34:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1464,10 +1464,15 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 void
 ar9003_set_rf_mode(struct athn_softc *sc, struct ieee80211_channel *c)
 {
-	if (IEEE80211_IS_CHAN_2GHZ(c))
-		AR_WRITE(sc, AR_PHY_MODE, AR_PHY_MODE_DYNAMIC);
-	else
-		AR_WRITE(sc, AR_PHY_MODE, AR_PHY_MODE_OFDM);
+	uint32_t reg;
+
+	reg = IEEE80211_IS_CHAN_2GHZ(c) ?
+	    AR_PHY_MODE_DYNAMIC : AR_PHY_MODE_OFDM;
+	if (IEEE80211_IS_CHAN_5GHZ(c) &&
+	    (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)) {
+		reg |= AR_PHY_MODE_DYNAMIC | AR_PHY_MODE_DYN_CCK_DISABLE;
+	}
+	AR_WRITE(sc, AR_PHY_MODE, reg);
 }
 
 static __inline uint32_t
@@ -2215,6 +2220,25 @@ ar9003_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 		ar9003_reset_rx_gain(sc, c);
 	if (sc->tx_gain != NULL)
 		ar9003_reset_tx_gain(sc, c);
+
+	if (IEEE80211_IS_CHAN_5GHZ(c) &&
+	    (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)) {
+		/* Update modal values for fast PLL clock. */
+#ifndef IEEE80211_NO_HT
+		if (extc != NULL)
+			pvals = ini->fastvals_5g40;
+		else
+#endif
+			pvals = ini->fastvals_5g20;
+		DPRINTFN(4, ("writing fast pll clock init vals\n"));
+		for (i = 0; i < ini->nfastregs; i++) {
+			AR_WRITE(sc, X(ini->fastregs[i]), pvals[i]);
+			if (AR_IS_ANALOG_REG(X(ini->fastregs[i])))
+				DELAY(100);
+			if ((i & 0x1f) == 0)
+				DELAY(1);
+		}
+	}
 
 	/*
 	 * Set the RX_ABORT and RX_DIS bits to prevent frames with corrupted

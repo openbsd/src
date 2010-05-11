@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.2 2010/05/11 17:59:39 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.3 2010/05/11 19:34:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -147,6 +147,9 @@ ar9380_setup(struct athn_softc *sc)
 
 	sc->txchainmask = MS(base->txrxMask, AR_EEP_TX_MASK);
 	sc->rxchainmask = MS(base->txrxMask, AR_EEP_RX_MASK);
+
+	/* Fast PLL clock is always supported. */
+	sc->flags |= ATHN_FLAG_FAST_PLL_CLOCK;
 
 	/* Select initialization values based on ROM. */
 	type = MS(eep->baseEepHeader.txrxgain, AR_EEP_RX_GAIN);

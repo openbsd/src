@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.37 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.38 2010/05/11 19:34:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -705,14 +705,11 @@ athn_init_pll(struct athn_softc *sc, const struct ieee80211_channel *c)
 	} else if (AR_SREV_9280_10_OR_LATER(sc)) {
 		pll = SM(AR_RTC_9160_PLL_REFDIV, 0x05);
 		if (c != NULL && IEEE80211_IS_CHAN_5GHZ(c)) {
-			if (AR_SREV_9280_20(sc)) {
-		 		/* Workaround for AR9280 2.0/5GHz. */
-				if ((c->ic_freq % 20) == 0 ||
-				    (c->ic_freq % 10) == 0)
-					pll = 0x2850;
-				else
-					pll = 0x142c;
-			} else
+			if (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)
+				pll = 0x142c;
+			else if (AR_SREV_9280_20(sc))
+		 		pll = 0x2850;
+			else
 				pll |= SM(AR_RTC_9160_PLL_DIV, 0x28);
 		} else
 			pll |= SM(AR_RTC_9160_PLL_DIV, 0x2c);
@@ -2107,10 +2104,10 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	athn_init_dma(sc);
 
-	/* Program OBS bus to see MAC interrupts. */
+	/* Program observation bus to see MAC interrupts. */
 	AR_WRITE(sc, sc->obs_off, 8);
 
-	/* Setup interrupt mitigation. */
+	/* Setup Rx interrupt mitigation. */
 	AR_WRITE(sc, AR_RIMT, SM(AR_RIMT_FIRST, 2000) | SM(AR_RIMT_LAST, 500));
 
 	ops->init_baseband(sc);

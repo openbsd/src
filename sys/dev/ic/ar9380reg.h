@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.4 2010/05/11 17:59:39 damien Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.5 2010/05/11 19:34:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -606,6 +606,23 @@ static const uint32_t ar9380_2_0_cm_vals[] = {
 	0x000c0000, 0x14021402, 0x00001402, 0x00000000, 0x00000000
 };
 
+static const uint16_t ar9380_2_0_fast_clock_regs[] = {
+	P(0x01030), P(0x01070), P(0x010b0), P(0x08014), P(0x0801c),
+	P(0x08318), P(0x09e00), P(0x0a230), P(0x0a254)
+};
+
+static const uint32_t ar9380_2_0_fast_clock_vals_5g20[] = {
+	0x00000268, 0x0000018c, 0x00000fd0, 0x044c044c, 0x148ec02b,
+	0x000044c0, 0x03721821, 0x0000000b, 0x00000898
+};
+
+#ifndef IEEE80211_NO_HT
+static const uint32_t ar9380_2_0_fast_clock_vals_5g40[] = {
+	0x000004d0, 0x00000318, 0x00001fa0, 0x08980898, 0x148ec057,
+	0x00008980, 0x03721821, 0x00000016, 0x00001130
+};
+#endif
+
 static const struct athn_ini ar9380_2_0_ini = {
 	nitems(ar9380_2_0_regs),
 	ar9380_2_0_regs,
@@ -617,7 +634,13 @@ static const struct athn_ini ar9380_2_0_ini = {
 	ar9380_2_0_vals_2g20,
 	nitems(ar9380_2_0_cm_regs),
 	ar9380_2_0_cm_regs,
-	ar9380_2_0_cm_vals
+	ar9380_2_0_cm_vals,
+	nitems(ar9380_2_0_fast_clock_regs),
+	ar9380_2_0_fast_clock_regs,
+	ar9380_2_0_fast_clock_vals_5g20,
+#ifndef IEEE80211_NO_HT
+	ar9380_2_0_fast_clock_vals_5g40
+#endif
 };
 
 /*
