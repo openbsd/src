@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.2 2010/05/11 17:59:39 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.3 2010/05/11 18:13:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -957,17 +957,19 @@ ar9003_tx_process(struct athn_softc *sc)
 
 	/* Check that it is a valid Tx status descriptor. */
 	if ((ds->ds_info & (AR_TXI_DESC_ID_M | AR_TXI_DESC_TX)) !=
-	    (SM(AR_TXI_DESC_ID, AR_VENDOR_ATHEROS) | AR_TXI_DESC_TX))
+	    (SM(AR_TXI_DESC_ID, AR_VENDOR_ATHEROS) | AR_TXI_DESC_TX)) {
+		memset(ds, 0, sizeof(*ds));
 		return (0);
-
+	}
 	/* Retrieve the queue that was used to send this PDU. */
 	qid = MS(ds->ds_info, AR_TXI_QCU_NUM);
 	txq = &sc->txq[qid];
 
 	bf = SIMPLEQ_FIRST(&txq->head);
-	if (__predict_false(bf == NULL))
+	if (__predict_false(bf == NULL)) {
+		memset(ds, 0, sizeof(*ds));
 		return (0);
-
+	}
 	SIMPLEQ_REMOVE_HEAD(&txq->head, bf_list);
 	ifp->if_opackets++;
 
