@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.52 2010/01/12 23:33:24 yasuoka Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.53 2010/05/11 09:36:07 claudio Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -210,13 +210,25 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,		ipip_sysctl
 },
+{ SOCK_RAW,   &inetdomain,    IPPROTO_ETHERIP, PR_ATOMIC|PR_ADDR,
+  etherip_input,  rip_output, 0,              rip_ctloutput,
+  rip_usrreq,
+  0,          0,              0,              0,		etherip_sysctl
+},
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
   in_gif_input,	rip_output,	 0,		0,
   rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
-#endif /* INET6 */
+#endif
+#ifdef MPLS
+{ SOCK_RAW,	&inetdomain,	IPPROTO_MPLS,	PR_ATOMIC|PR_ADDR,
+  etherip_input,  rip_output,	 0,		0,
+  rip_usrreq,
+  0,		0,		0,		0,
+},
+#endif
 #else /* NGIF */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output,	0,		rip_ctloutput,
@@ -229,7 +241,7 @@ struct protosw inetsw[] = {
   rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
-#endif /* INET6 */
+#endif
 #endif /*NGIF*/
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
@@ -253,11 +265,6 @@ struct protosw inetsw[] = {
   esp4_input,  rip_output,    esp4_ctlinput,  rip_ctloutput,
   rip_usrreq,
   0,          0,              0,              0,		esp_sysctl
-},
-{ SOCK_RAW,   &inetdomain,    IPPROTO_ETHERIP, PR_ATOMIC|PR_ADDR,
-  etherip_input,  rip_output, 0,              rip_ctloutput,
-  rip_usrreq,
-  0,          0,              0,              0,		etherip_sysctl
 },
 { SOCK_RAW,   &inetdomain,    IPPROTO_IPCOMP, PR_ATOMIC|PR_ADDR,
   ipcomp4_input,  rip_output, 0,              rip_ctloutput,

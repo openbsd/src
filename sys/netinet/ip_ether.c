@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.53 2010/04/20 22:05:43 tedu Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.54 2010/05/11 09:36:07 claudio Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -35,9 +35,10 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
-#include <net/if.h>
-#include <net/route.h>
 #include <net/bpf.h>
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -49,10 +50,16 @@
 
 #include <netinet/ip_ether.h>
 #include <netinet/if_ether.h>
-#include <net/if_bridge.h>
+
 #include <net/if_gif.h>
 
-#include "gif.h"
+#if NBRIDGE > 0
+#include <net/if_bridge.h>
+#endif
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#endif
+
 #include "bpfilter.h"
 
 #ifdef ENCDEBUG
@@ -60,6 +67,14 @@
 #else
 #define DPRINTF(x)
 #endif
+
+#if NBRIDGE > 0
+void	etherip_decap(struct mbuf *, int);
+#endif
+#ifdef MPLS
+void	mplsip_decap(struct mbuf *, int);
+#endif
+struct gif_softc	*etherip_getgif(struct mbuf *);
 
 /*
  * We can control the acceptance of EtherIP packets by altering the sysctl
@@ -69,43 +84,93 @@ int etherip_allow = 0;
 
 struct etheripstat etheripstat;
 
+#ifdef INET
 /*
- * etherip_input gets called when we receive an encapsulated packet,
- * either because we got it at a real interface, or because AH or ESP
- * were being used in tunnel mode (in which case the rcvif element will
- * contain the address of the encX interface associated with the tunnel.
+ * etherip_input gets called when we receive an encapsulated packet.
+ * Only a wrapper for the IPv4 case.
  */
-
 void
 etherip_input(struct mbuf *m, ...)
 {
-	union sockaddr_union ssrc, sdst;
-	struct ether_header eh;
-	int iphlen;
-	struct etherip_header eip;
-	u_int8_t v;
+	struct ip *ip;
 	va_list ap;
+	int iphlen;
 
-#if NGIF > 0
-	struct gif_softc *sc;
-#if NBRIDGE > 0
-	int s;
-#endif /* NBRIDGE */
-#endif /* NGIF */
+	ip = mtod(m, struct ip *);
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
 	va_end(ap);
 
-	etheripstat.etherip_ipackets++;
-
-	/* If we do not accept EtherIP explicitly, drop. */
-	if (!etherip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
-		DPRINTF(("etherip_input(): dropped due to policy\n"));
+	switch (ip->ip_p) {
+#if NBRIDGE > 0
+	case IPPROTO_ETHERIP:
+		/* If we do not accept EtherIP explicitly, drop. */
+		if (!etherip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
+			DPRINTF(("etherip_input(): dropped due to policy\n"));
+			etheripstat.etherip_pdrops++;
+			m_freem(m);
+			return;
+		}
+		etherip_decap(m, iphlen);
+		return;
+#endif
+#ifdef MPLS
+	case IPPROTO_MPLS:
+		mplsip_decap(m, iphlen);
+		return;
+#endif
+	default:
+		DPRINTF(("etherip_input(): dropped, unhandled protcol \n"));
 		etheripstat.etherip_pdrops++;
 		m_freem(m);
 		return;
 	}
+}
+#endif
+
+#ifdef INET6
+int
+etherip_input6(struct mbuf **m, int *offp, int proto)
+{
+	switch (proto) {
+#if NBRIDGE > 0
+	case IPPROTO_ETHERIP:
+		/* If we do not accept EtherIP explicitly, drop. */
+		if (proto == IPPROTO_ETHERIP && !etherip_allow &&
+		    ((*m)->m_flags & (M_AUTH|M_CONF)) == 0) {
+			DPRINTF(("etherip_input6(): dropped due to policy\n"));
+			etheripstat.etherip_pdrops++;
+			m_freem(*m);
+			return IPPROTO_DONE;
+		}
+		etherip_decap(*m, *offp);
+		return IPPROTO_DONE;
+#endif
+#ifdef MPLS
+	case IPPROTO_MPLS:
+		mplsip_decap(*m, *offp);
+		return IPPROTO_DONE;
+#endif
+	default:
+		DPRINTF(("etherip_input6(): dropped, unhandled protcol \n"));
+		etheripstat.etherip_pdrops++;
+		m_freem(*m);
+		return IPPROTO_DONE;
+	}
+}
+#endif
+
+#if NBRIDGE > 0
+void
+etherip_decap(struct mbuf *m, int iphlen)
+{
+	struct ether_header eh;
+	struct etherip_header eip;
+	struct gif_softc *sc;
+	int s;
+
+	etheripstat.etherip_ipackets++;
 
 	/*
 	 * Make sure there's at least an ethernet header's and an EtherIP
@@ -123,7 +188,7 @@ etherip_input(struct mbuf *m, ...)
 	m_copydata(m, iphlen, sizeof(struct etherip_header), (caddr_t)&eip);
 	if ((eip.eip_ver & ETHERIP_VER_VERS_MASK) != ETHERIP_VERSION) {
 		DPRINTF(("etherip_input(): received EtherIP version number "
-		    "%d not suppoorted\n", (v >> 4) & 0xff));
+		    "%d not suppoorted\n", eip.eip_ver));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return;
@@ -162,6 +227,149 @@ etherip_input(struct mbuf *m, ...)
 		}
 	}
 
+	sc = etherip_getgif(m);
+	if (sc == NULL)
+		return;
+	if (sc->gif_if.if_bridge == NULL) {
+		DPRINTF(("etherip_input(): interface not part of bridge\n"));
+		etheripstat.etherip_noifdrops++;
+		m_freem(m);
+		return;
+	}
+
+	/* Chop off the `outer' IP and EtherIP headers and reschedule. */
+	m_adj(m, iphlen + sizeof(struct etherip_header));
+
+	/* Statistics */
+	etheripstat.etherip_ibytes += m->m_pkthdr.len;
+
+	/* Copy ethernet header */
+	m_copydata(m, 0, sizeof(eh), (void *) &eh);
+
+	/* Reset the flags based on the inner packet */
+	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF|M_AUTH_AH);
+	if (eh.ether_dhost[0] & 1) {
+		if (bcmp((caddr_t) etherbroadcastaddr,
+		    (caddr_t)eh.ether_dhost, sizeof(etherbroadcastaddr)) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
+	}
+
+#if NBPFILTER > 0
+	if (sc->gif_if.if_bpf)
+		bpf_mtap_af(sc->gif_if.if_bpf, AF_LINK, m, BPF_DIRECTION_IN);
+#endif
+
+	/* Trim the beginning of the mbuf, to remove the ethernet header. */
+	m_adj(m, sizeof(struct ether_header));
+
+	/*
+	 * Tap the packet off here for a bridge. bridge_input() returns
+	 * NULL if it has consumed the packet.  In the case of gif's,
+	 * bridge_input() returns non-NULL when an error occurs.
+	 */
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+	m->m_pkthdr.rcvif = &sc->gif_if;
+	m->m_pkthdr.rdomain = sc->gif_if.if_rdomain;
+	if (m->m_flags & (M_BCAST|M_MCAST))
+		sc->gif_if.if_imcasts++;
+
+	s = splnet();
+	m = bridge_input(&sc->gif_if, &eh, m);
+	splx(s);
+	if (m == NULL)
+		return;
+
+	etheripstat.etherip_noifdrops++;
+	m_freem(m);
+	return;
+}
+#endif
+
+#ifdef MPLS
+void
+mplsip_decap(struct mbuf *m, int iphlen)
+{
+	struct gif_softc *sc;
+	struct ifqueue *ifq;
+	int s;
+
+	etheripstat.etherip_ipackets++;
+
+	/*
+	 * Make sure there's at least one MPLS label worth of data after
+	 * the outer IP header.
+	 */
+	if (m->m_pkthdr.len < iphlen + sizeof(struct shim_hdr)) {
+		DPRINTF(("mplsip_input(): encapsulated packet too short\n"));
+		etheripstat.etherip_hdrops++;
+		m_freem(m);
+		return;
+	}
+
+	/* Make sure the mpls label at least is in the first mbuf. */
+	if (m->m_len < iphlen + sizeof(struct shim_hdr)) {
+		if ((m = m_pullup(m, iphlen + sizeof(struct shim_hdr))) ==
+		    NULL) {
+			DPRINTF(("mplsip_input(): m_pullup() failed\n"));
+			etheripstat.etherip_adrops++;
+			return;
+		}
+	}
+
+	sc = etherip_getgif(m);
+	if (sc == NULL)
+		return;
+
+	/* Chop off the `outer' IP header and reschedule. */
+	m_adj(m, iphlen);
+
+	/* Statistics */
+	etheripstat.etherip_ibytes += m->m_pkthdr.len;
+
+	/* Reset the flags based */
+	m->m_flags &= ~(M_BCAST|M_MCAST);
+
+#if NBPFILTER > 0
+	if (sc->gif_if.if_bpf)
+		bpf_mtap_af(sc->gif_if.if_bpf, AF_MPLS, m, BPF_DIRECTION_IN);
+#endif
+
+	m->m_pkthdr.rcvif = &sc->gif_if;
+	m->m_pkthdr.rdomain = sc->gif_if.if_rdomain;
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
+	ifq = &mplsintrq;
+	s = splnet();
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
+		m_freem(m);
+		etheripstat.etherip_qfull++;
+		splx(s);
+
+		DPRINTF(("mplsip_input(): packet dropped because of full "
+		    "queue\n"));
+		return;
+	}
+	IF_ENQUEUE(ifq, m);
+	schednetisr(NETISR_MPLS);
+	splx(s);
+	return;
+}
+#endif
+
+struct gif_softc *
+etherip_getgif(struct mbuf *m)
+{
+	union sockaddr_union ssrc, sdst;
+	struct gif_softc *sc;
+	u_int8_t v;
+
 	/* Copy the addresses for use later. */
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&sdst, sizeof(sdst));
@@ -196,29 +404,9 @@ etherip_input(struct mbuf *m, ...)
 		DPRINTF(("etherip_input(): invalid protocol %d\n", v));
 		m_freem(m);
 		etheripstat.etherip_hdrops++;
-		return /* EAFNOSUPPORT */;
+		return NULL;
 	}
 
-	/* Chop off the `outer' IP and EtherIP headers and reschedule. */
-	m_adj(m, iphlen + sizeof(struct etherip_header));
-
-	/* Statistics */
-	etheripstat.etherip_ibytes += m->m_pkthdr.len;
-
-	/* Copy ethernet header */
-	m_copydata(m, 0, sizeof(eh), (void *) &eh);
-
-	/* Reset the flags based on the inner packet */
-	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF|M_AUTH_AH);
-	if (eh.ether_dhost[0] & 1) {
-		if (bcmp((caddr_t) etherbroadcastaddr,
-		    (caddr_t)eh.ether_dhost, sizeof(etherbroadcastaddr)) == 0)
-			m->m_flags |= M_BCAST;
-		else
-			m->m_flags |= M_MCAST;
-	}
-
-#if NGIF > 0
 	/* Find appropriate gif(4) interface */
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if ((sc->gif_psrc == NULL) ||
@@ -227,8 +415,7 @@ etherip_input(struct mbuf *m, ...)
 			continue;
 
 		if (!bcmp(sc->gif_psrc, &sdst, sc->gif_psrc->sa_len) &&
-		    !bcmp(sc->gif_pdst, &ssrc, sc->gif_pdst->sa_len) &&
-		    sc->gif_if.if_bridge != NULL)
+		    !bcmp(sc->gif_pdst, &ssrc, sc->gif_pdst->sa_len))
 			break;
 	}
 
@@ -237,54 +424,22 @@ etherip_input(struct mbuf *m, ...)
 		DPRINTF(("etherip_input(): no interface found\n"));
 		etheripstat.etherip_noifdrops++;
 		m_freem(m);
-		return;
+		return NULL;
 	}
-#if NBPFILTER > 0
-	if (sc->gif_if.if_bpf)
-		bpf_mtap_af(sc->gif_if.if_bpf, AF_LINK, m, BPF_DIRECTION_IN);
-#endif
 
-	/* Trim the beginning of the mbuf, to remove the ethernet header. */
-	m_adj(m, sizeof(struct ether_header));
-
-#if NBRIDGE > 0
-	/*
-	 * Tap the packet off here for a bridge. bridge_input() returns
-	 * NULL if it has consumed the packet.  In the case of gif's,
-	 * bridge_input() returns non-NULL when an error occurs.
-	 */
-	m->m_pkthdr.rcvif = &sc->gif_if;
-	m->m_pkthdr.rdomain = sc->gif_if.if_rdomain;
-	if (m->m_flags & (M_BCAST|M_MCAST))
-		sc->gif_if.if_imcasts++;
-
-	s = splnet();
-	m = bridge_input(&sc->gif_if, &eh, m);
-	splx(s);
-	if (m == NULL)
-		return;
-#endif /* NBRIDGE */
-#endif /* NGIF */
-
-	etheripstat.etherip_noifdrops++;
-	m_freem(m);
-	return;
+	return sc;
 }
 
 int
-etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
-	       int protoff)
+etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 {
 #ifdef INET
 	struct ip *ipo;
 #endif /* INET */
-
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
-
 	struct etherip_header eip;
-	struct mbuf *m0;
 	ushort hlen;
 
 	/* Some address family sanity checks. */
@@ -335,27 +490,16 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		return EINVAL;
 	}
 
-	/* Don't forget the EtherIP header. */
-	hlen += sizeof(struct etherip_header);
+	if (proto == IPPROTO_ETHERIP)
+		/* Don't forget the EtherIP header. */
+		hlen += sizeof(struct etherip_header);
 
-	if (!(m->m_flags & M_PKTHDR)) {
-		DPRINTF(("etherip_output(): mbuf is not a header\n"));
-		m_freem(m);
-		return (ENOBUFS);
-	}
-
-	MGETHDR(m0, M_DONTWAIT, MT_DATA);
-	if (m0 == NULL) {
-		DPRINTF(("etherip_output(): M_GETHDR failed\n"));
+	M_PREPEND(m, hlen, M_DONTWAIT);
+	if (m == NULL) {
+		DPRINTF(("etherip_output(): M_PREPEND failed\n"));
 		etheripstat.etherip_adrops++;
-		m_freem(m);
 		return ENOBUFS;
 	}
-	M_MOVE_PKTHDR(m0, m);
-	m0->m_next = m;
-	m0->m_len = hlen;
-	m0->m_pkthdr.len += hlen;
-	m = m0;
 
 	/* Statistics */
 	etheripstat.etherip_opackets++;
@@ -370,7 +514,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ipo->ip_hl = 5;
 		ipo->ip_len = htons(m->m_pkthdr.len);
 		ipo->ip_ttl = ip_defttl;
-		ipo->ip_p = IPPROTO_ETHERIP;
+		ipo->ip_p = proto;
 		ipo->ip_tos = 0;
 		ipo->ip_off = 0;
 		ipo->ip_sum = 0;
@@ -390,7 +534,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ip6 = mtod(m, struct ip6_hdr *);
 
 		ip6->ip6_flow = 0;
-		ip6->ip6_nxt = IPPROTO_ETHERIP;
+		ip6->ip6_nxt = proto;
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc |= IPV6_VERSION;
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
@@ -401,11 +545,13 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #endif /* INET6 */
 	}
 
-	/* Set the version number */
-	eip.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
-	eip.eip_pad = 0;
-	m_copyback(m, hlen - sizeof(struct etherip_header),
-	    sizeof(struct etherip_header), &eip);
+	if (proto == IPPROTO_ETHERIP) {
+		/* Set the version number */
+		eip.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
+		eip.eip_pad = 0;
+		m_copyback(m, hlen - sizeof(struct etherip_header),
+		    sizeof(struct etherip_header), &eip);
+	}
 
 	*mp = m;
 

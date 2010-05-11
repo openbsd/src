@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.46 2010/04/20 22:05:43 tedu Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.47 2010/05/11 09:36:07 claudio Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -103,7 +103,7 @@ ip4_input6(struct mbuf **m, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	ipip_input(*m, *offp, NULL);
+	ipip_input(*m, *offp, NULL, proto);
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */
@@ -115,6 +115,7 @@ ip4_input6(struct mbuf **m, int *offp, int proto)
 void
 ip4_input(struct mbuf *m, ...)
 {
+	struct ip *ip;
 	va_list ap;
 	int iphlen;
 
@@ -130,7 +131,9 @@ ip4_input(struct mbuf *m, ...)
 	iphlen = va_arg(ap, int);
 	va_end(ap);
 
-	ipip_input(m, iphlen, NULL);
+	ip = mtod(m, struct ip *);
+
+	ipip_input(m, iphlen, NULL, ip->ip_p);
 }
 #endif /* INET */
 
@@ -142,7 +145,7 @@ ip4_input(struct mbuf *m, ...)
  */
 
 void
-ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
+ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 {
 	struct sockaddr_in *sin;
 	struct ifnet *ifp;
@@ -152,13 +155,14 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	u_int rdomain;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
-	struct ip6_hdr *ip6 = NULL;
+	struct ip6_hdr *ip6;
 	u_int8_t itos;
 #endif
 	int isr;
+	int hlen, s;
 	u_int8_t otos;
 	u_int8_t v;
-	int hlen, s;
+	sa_family_t af;
 
 	ipipstat.ipips_ipackets++;
 
@@ -166,16 +170,16 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 
 	switch (v >> 4) {
 #ifdef INET
-        case 4:
+	case 4:
 		hlen = sizeof(struct ip);
 		break;
 #endif /* INET */
 #ifdef INET6
-        case 6:
+	case 6:
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
-        default:
+	default:
 		ipipstat.ipips_family++;
 		m_freem(m);
 		return /* EAFNOSUPPORT */;
@@ -190,18 +194,19 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		}
 	}
 
-	ipo = mtod(m, struct ip *);
 
 	/* Keep outer ecn field. */
 	switch (v >> 4) {
 #ifdef INET
 	case 4:
+		ipo = mtod(m, struct ip *);
 		otos = ipo->ip_tos;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case 6:
-		otos = (ntohl(mtod(m, struct ip6_hdr *)->ip6_flow) >> 20) & 0xff;
+		ip6 = mtod(m, struct ip6_hdr *);
+		otos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 #endif
 	default:
@@ -218,17 +223,15 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		return;
 	}
 
-	m_copydata(m, 0, 1, &v);
-
-	switch (v >> 4) {
+	switch (proto) {
 #ifdef INET
-        case 4:
+	case IPPROTO_IPV4:
 		hlen = sizeof(struct ip);
 		break;
 #endif /* INET */
 
 #ifdef INET6
-        case 6:
+	case IPPROTO_IPV6:
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
@@ -239,7 +242,7 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	}
 
 	/*
-	 * Bring the inner IP header in the first mbuf, if not there already.
+	 * Bring the inner header into the first mbuf, if not there already.
 	 */
 	if (m->m_len < hlen) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
@@ -256,19 +259,25 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	 */
 
 	/* Some sanity checks in the inner IP header */
-	switch (v >> 4) {
+	switch (proto) {
 #ifdef INET
-    	case 4:
-                ipo = mtod(m, struct ip *);
+    	case IPPROTO_IPV4:
+		ipo = mtod(m, struct ip *);
+#ifdef INET6
+		ip6 = NULL;
+#endif
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &ipo->ip_tos)) {
 			m_freem(m);
 			return;
 		}
-                break;
+		break;
 #endif /* INET */
 #ifdef INET6
-    	case 6:
-                ip6 = (struct ip6_hdr *) ipo;
+    	case IPPROTO_IPV6:
+#ifdef INET
+		ipo = NULL;
+#endif
+		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
 			m_freem(m);
@@ -276,10 +285,15 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		}
 		ip6->ip6_flow &= ~htonl(0xff << 20);
 		ip6->ip6_flow |= htonl((u_int32_t) itos << 20);
-                break;
+		break;
 #endif
 	default:
-		panic("ipip_input: should never reach here");
+#ifdef INET
+		ipo = NULL;
+#endif
+#ifdef INET6
+		ip6 = NULL;
+#endif
 	}
 
 	/* Check for local address spoofing. */
@@ -297,8 +311,8 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 					    AF_INET)
 						continue;
 
-					sin = (struct sockaddr_in *) ifa->ifa_addr;
-
+					sin = (struct sockaddr_in *)
+					    ifa->ifa_addr;
 					if (sin->sin_addr.s_addr ==
 					    ipo->ip_src.s_addr)	{
 						ipipstat.ipips_spoof++;
@@ -307,16 +321,16 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 					}
 				}
 #endif /* INET */
-
 #ifdef INET6
 				if (ip6) {
 					if (ifa->ifa_addr->sa_family !=
 					    AF_INET6)
 						continue;
 
-					sin6 = (struct sockaddr_in6 *) ifa->ifa_addr;
-
-					if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &ip6->ip6_src)) {
+					sin6 = (struct sockaddr_in6 *)
+					    ifa->ifa_addr;
+					if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr,
+					    &ip6->ip6_src)) {
 						ipipstat.ipips_spoof++;
 						m_freem(m);
 						return;
@@ -339,17 +353,19 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	 * untrusted packets.
 	 */
 
-	switch (v >> 4) {
+	switch (proto) {
 #ifdef INET
-	case 4:
+	case IPPROTO_IPV4:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
+		af = AF_INET;
 		break;
 #endif
 #ifdef INET6
-	case 6:
+	case IPPROTO_IPV6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
+		af = AF_INET6;
 		break;
 #endif
 	default:
@@ -358,8 +374,7 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 
 #if NBPFILTER > 0
 	if (gifp && gifp->if_bpf)
-		bpf_mtap_af(gifp->if_bpf, ifq == &ipintrq ? AF_INET : AF_INET6,
-		    m, BPF_DIRECTION_IN);
+		bpf_mtap_af(gifp->if_bpf, af, m, BPF_DIRECTION_IN);
 #endif
 #if NPF > 0
 	pf_pkt_addr_changed(m);

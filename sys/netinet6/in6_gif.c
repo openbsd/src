@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.28 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.29 2010/05/11 09:36:07 claudio Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -60,15 +60,14 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>
 
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
-
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
 
 #include "bridge.h"
+#if NBRIDGE > 0
+#include <netinet/ip_ether.h>
+#endif
 
 #ifndef offsetof
 #define offsetof(s, e) ((int)&((s *)0)->e)
@@ -78,16 +77,15 @@
  * family - family of the packet to be encapsulate.
  */
 int
-in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
+in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-	struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct tdb tdb;
 	struct xformsw xfs;
 	int error;
-	struct mbuf *mp;
+	struct mbuf *m = *m0;
 
 	if (sin6_src == NULL || sin6_dst == NULL ||
 	    sin6_src->sin6_family != AF_INET6 ||
@@ -120,7 +118,11 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 #if NBRIDGE > 0
 	case AF_LINK:
 		break;
-#endif /* NBRIDGE */
+#endif
+#ifdef MPLS
+	case AF_MPLS:
+		break;
+#endif
 	default:
 #ifdef DEBUG
 		printf("in6_gif_output: warning: unknown family %d passed\n",
@@ -131,55 +133,29 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	}
 	
 	/* encapsulate into IPv6 packet */
-	mp = NULL;
+	*m0 = NULL;
 #if NBRIDGE > 0
 	if (family == AF_LINK)
-		error = etherip_output(m, &tdb, &mp, 0, 0);
+		error = etherip_output(m, &tdb, m0, IPPROTO_ETHERIP);
 	else
 #endif /* NBRIDGE */
-	error = ipip_output(m, &tdb, &mp, 0, 0);
+#if MPLS
+	if (family == AF_MPLS)
+		error = etherip_output(m, &tdb, m0, IPPROTO_MPLS);
+	else
+#endif
+	error = ipip_output(m, &tdb, m0, 0, 0);
 	if (error)
 	        return error;
-	else if (mp == NULL)
+	else if (*m0 == NULL)
 	        return EFAULT;
 
-	m = mp;
+	m = *m0;
 
-	/* See if out cached route remains the same */
-	if (dst->sin6_family != sin6_dst->sin6_family ||
-	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
-		/* cache route doesn't match */
-		bzero(dst, sizeof(*dst));
-		dst->sin6_family = sin6_dst->sin6_family;
-		dst->sin6_len = sizeof(struct sockaddr_in6);
-		dst->sin6_addr = sin6_dst->sin6_addr;
-		/* XXX rdomain */
-		sc->gif_ro6.ro_tableid = 0;
-		if (sc->gif_ro6.ro_rt) {
-			RTFREE(sc->gif_ro6.ro_rt);
-			sc->gif_ro6.ro_rt = NULL;
-		}
-	}
-
-	if (sc->gif_ro6.ro_rt == NULL) {
-		rtalloc((struct route *)&sc->gif_ro6);
-		if (sc->gif_ro6.ro_rt == NULL) {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-	}
-	
-	/*
-	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
-	 * it is too painful to ask for resend of inner packet, to achieve
-	 * path MTU discovery for encapsulated packets.
-	 */
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL, NULL);
-
-	return error;
+	return 0;
 }
 
 int in6_gif_input(struct mbuf **mp, int *offp, int proto)
@@ -217,12 +193,12 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 	        m->m_pkthdr.rcvif = gifp;
 		gifp->if_ipackets++;
 		gifp->if_ibytes += m->m_pkthdr.len;
-		ipip_input(m, *offp, gifp);
+		ipip_input(m, *offp, gifp, proto);
 		return IPPROTO_DONE;
 	}
 
 inject:
 	/* No GIF tunnel configured */
-	ip4_input6(&m, offp, 0); /* XXX last argument ignored */
+	ip4_input6(&m, offp, proto);
 	return IPPROTO_DONE;
 }
