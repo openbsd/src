@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380reg.h,v 1.3 2010/05/11 17:45:54 damien Exp $	*/
+/*	$OpenBSD: ar9380reg.h,v 1.4 2010/05/11 17:59:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -80,9 +80,6 @@ struct ar9380_base_eep_hdr {
 
 	uint8_t		blueToothOptions;
 	uint8_t		deviceCap;
-#define AR_EEP_DEVCAP_KC_ENTRIES_M	0xf000
-#define AR_EEP_DEVCAP_KC_ENTRIES_S	12
-
 	uint8_t		deviceType;
 	int8_t		pwrTableOffset;
 	uint8_t		params_for_tuning_caps[2];

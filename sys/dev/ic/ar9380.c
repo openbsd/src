@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.1 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.2 2010/05/11 17:59:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -123,7 +123,7 @@ ar9380_setup(struct athn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ar9380_eeprom *eep = sc->eep;
 	struct ar9380_base_eep_hdr *base = &eep->baseEepHeader;
-	uint8_t kc_entries_log, type;
+	uint8_t type;
 
 	if (base->opFlags & AR_OPFLAGS_11A)
 		sc->flags |= ATHN_FLAG_11A;
@@ -142,10 +142,8 @@ ar9380_setup(struct athn_softc *sc)
 		sc->rfsilent_pin = base->wlanDisableGpio;
 	}
 
-	/* Get the number of HW key cache entries. */
-	kc_entries_log = MS(base->deviceCap, AR_EEP_DEVCAP_KC_ENTRIES);
-	sc->kc_entries = (kc_entries_log != 0) ?
-	    1 << kc_entries_log : AR_KEYTABLE_SIZE;
+	/* Set the number of HW key cache entries. */
+	sc->kc_entries = AR_KEYTABLE_SIZE;
 
 	sc->txchainmask = MS(base->txrxMask, AR_EEP_TX_MASK);
 	sc->rxchainmask = MS(base->txrxMask, AR_EEP_RX_MASK);
@@ -515,7 +513,7 @@ ar9380_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	} else {
 		/* Get OFDM target powers. */
 		ar9003_get_lg_tpow(sc, c, AR_CTL_11A,
-		    eep->calTargetFbin2G, eep->calTargetPower5G,
+		    eep->calTargetFbin5G, eep->calTargetPower5G,
 		    AR9380_NUM_5G_20_TARGET_POWERS, tpow_ofdm);
 
 #ifndef IEEE80211_NO_HT

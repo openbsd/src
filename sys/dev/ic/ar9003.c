@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.1 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.2 2010/05/11 17:59:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -723,7 +723,7 @@ ar9003_rx_enable(struct athn_softc *sc)
 		}
 	}
 	/* Enable Rx. */
-	AR_WRITE(sc, AR_CR, AR_CR_RXE);
+	AR_WRITE(sc, AR_CR, 0);
 }
 
 #if NBPFILTER > 0
@@ -816,14 +816,14 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0,
 	    bf->bf_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-	ds = mtod(m, struct ar_rx_status *);
+	ds = mtod(bf->bf_m, struct ar_rx_status *);
 	if (!(ds->ds_status1 & AR_RXS1_DONE))
 		return (EBUSY);
 
 	/* Check that it is a valid Rx status descriptor. */
 	if ((ds->ds_info & (AR_RXI_DESC_ID_M | AR_RXI_DESC_TX |
 	    AR_RXI_CTRL_STAT)) != SM(AR_RXI_DESC_ID, AR_VENDOR_ATHEROS))
-		return (0);
+		goto skip;
 
 	if (!(ds->ds_status11 & AR_RXS11_FRAME_OK)) {
 		if (ds->ds_status11 & AR_RXS11_CRC_ERR)
@@ -881,6 +881,8 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 		ifp->if_ierrors++;
 		goto skip;
 	}
+	bf->bf_desc = mtod(m1, struct ar_rx_status *);
+	bf->bf_daddr = bf->bf_map->dm_segs[0].ds_addr;
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, bf->bf_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
