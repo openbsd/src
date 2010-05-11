@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.10 2010/03/03 10:17:05 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.11 2010/05/11 15:01:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -403,8 +403,6 @@ lde_dispatch_parent(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct ldpd_conf));
 
-			break;
-		case IMSG_RECONF_AREA:
 			break;
 		case IMSG_RECONF_IFACE:
 			break;
