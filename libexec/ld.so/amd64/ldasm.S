@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2006/05/03 16:10:52 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.7 2010/05/11 16:27:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -106,14 +106,14 @@ DL_SYSCALL2(sysctl,__sysctl)
 	.global _dl_sigprocmask
 	.type _dl_sigprocmask,@function
 _dl_sigprocmask:
-	movq	(%rsi),%rsi		# fetch indirect...
+	movl	(%rsi),%esi		# fetch indirect...
 	movl	$SYS_sigprocmask, %eax
 	movq	%rcx, %r10
 	syscall
 	jc	1b		 /* error: result = -errno */
 	testq	%rdx,%rdx		# test if old mask requested
 	jz	2f
-	movq	%rax,(%rdx)		# store old mask
+	movl	%eax,(%rdx)		# store old mask
 	xorq	%rax,%rax
 2:	ret
 
