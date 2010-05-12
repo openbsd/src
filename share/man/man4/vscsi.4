@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vscsi.4,v 1.5 2010/03/13 14:33:09 dlg Exp $
+.\"	$OpenBSD: vscsi.4,v 1.6 2010/05/12 08:17:31 claudio Exp $
 .\"
 .\" Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2010 $
+.Dd $Mdocdate: May 12 2010 $
 .Dt VSCSI 4
 .Os
 .Sh NAME
@@ -26,8 +26,8 @@
 .Pp
 .Fd #include <sys/types.h>
 .Fd #include <sys/ioctl.h>
-.Fd #include <sys/scsi/scsi_all.h>
-.Fd #include <sys/dev/vscsivar.h>
+.Fd #include <scsi/scsi_all.h>
+.Fd #include <dev/vscsivar.h>
 .Sh DESCRIPTION
 The
 .Nm
