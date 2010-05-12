@@ -1622,6 +1622,15 @@ convert_tramp_reference (tree *tp, int *walk_subtrees, void *data)
       if (DECL_NO_STATIC_CHAIN (decl))
 	break;
 
+      if (!flag_trampolines) 
+        {
+      	error ("trampoline code generation is not allowed without -ftrampolines");
+	return NULL_TREE;
+        }
+      if (warn_trampolines) 
+        {
+      	warning(0, "local function address taken needing trampoline generation");
+        }
       /* Lookup the immediate parent of the callee, as that's where
 	 we need to insert the trampoline.  */
       for (i = info; i->context != target_context; i = i->outer)
