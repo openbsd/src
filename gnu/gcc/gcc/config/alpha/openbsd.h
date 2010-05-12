@@ -70,6 +70,9 @@ Boston, MA 02110-1301, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
+#undef WINT_TYPE
+#define WINT_TYPE "int"
+
 /* Output and generation of labels.  */
 #define LOCAL_LABEL_PREFIX	"."
 
