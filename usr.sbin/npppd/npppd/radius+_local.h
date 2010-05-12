@@ -30,8 +30,6 @@
 #ifndef RADIUSPLUS_LOCAL_H
 #define RADIUSPLUS_LOCAL_H
 
-#include "nint.h"
-
 #ifndef countof
 #define countof(x) (sizeof(x)/sizeof((x)[0]))
 #endif
@@ -41,7 +39,7 @@ typedef struct _RADIUS_PACKET_DATA
 {
 	u_int8_t  code;
 	u_int8_t  id;
-	nuint16   length;
+	u_int16_t length;
 	char      authenticator[16];
 	char      attributes[0];
 } RADIUS_PACKET_DATA;
@@ -51,7 +49,7 @@ typedef struct _RADIUS_ATTRIBUTE
 	u_int8_t  type;
 	u_int8_t  length;
 	char      data[0];
-	nuint32   vendor;
+	u_int32_t vendor;
 	u_int8_t  vtype;
 	u_int8_t  vlength;
 	char      vdata[0];
@@ -70,35 +68,12 @@ struct _RADIUS_PACKET
 
 extern u_int8_t radius_id_counter;
 
-inline void ADVANCE(RADIUS_ATTRIBUTE*& rp)
-{
-	rp = (RADIUS_ATTRIBUTE*)(((char*)rp) + rp->length);
-}
+#define ADVANCE(rp) (rp = (RADIUS_ATTRIBUTE*)(((char*)rp) + rp->length))
 
-inline void ADVANCE(const RADIUS_ATTRIBUTE*& rp)
-{
-	rp = (const RADIUS_ATTRIBUTE*)(((const char*)rp) + rp->length);
-}
+#define ATTRS_BEGIN(pdata) ((RADIUS_ATTRIBUTE*)pdata->attributes)
 
-inline RADIUS_ATTRIBUTE* ATTRS_BEGIN(RADIUS_PACKET_DATA* pdata)
-{
-	return (RADIUS_ATTRIBUTE*)pdata->attributes;
-}
-
-inline const RADIUS_ATTRIBUTE* ATTRS_BEGIN(const RADIUS_PACKET_DATA* pdata)
-{
-	return (const RADIUS_ATTRIBUTE*)pdata->attributes;
-}
-
-inline RADIUS_ATTRIBUTE* ATTRS_END(RADIUS_PACKET_DATA* pdata)
-{
-	return (RADIUS_ATTRIBUTE*)(((char*)pdata) + pdata->length);
-}
-
-inline const RADIUS_ATTRIBUTE* ATTRS_END(const RADIUS_PACKET_DATA* pdata)
-{
-	return (const RADIUS_ATTRIBUTE*)(((const char*)pdata) + pdata->length);
-}
+#define ATTRS_END(pdata)		\
+    ((RADIUS_ATTRIBUTE*)(((char*)pdata) + ntohs(pdata->length)))
 
 #ifndef	MIN
 #define	MIN(m,n)	(((m) < (n))? (m) : (n))

@@ -53,7 +53,7 @@ static int radius_check_packet_data(const RADIUS_PACKET_DATA* pdata,
 		return 1;
 	if(length > 0xffff)
 		return 1;
-	if(length != (size_t)(pdata->length))
+	if(length != (size_t)ntohs(pdata->length))
 		return 1;
 
 	attr = ATTRS_BEGIN(pdata);
@@ -66,7 +66,7 @@ static int radius_check_packet_data(const RADIUS_PACKET_DATA* pdata,
 		{
 			if(attr->length < 8)
 				return 1;
-			if((attr->vendor & 0xff000000U) != 0)
+			if((attr->vendor & htonl(0xff000000U)) != 0)
 				return 1;
 			if(attr->length != attr->vlength + 6)
 				return 1;
@@ -86,12 +86,12 @@ static int radius_ensure_add_capacity(RADIUS_PACKET* packet, size_t capacity)
 
 	// 最大サイズは 64KB
 	// 安全のため(?)、少し小さい値をリミットにしている。
-	if(packet->pdata->length + capacity > 0xfe00)
+	if(ntohs(packet->pdata->length) + capacity > 0xfe00)
 		return 1;
 
-	if(packet->pdata->length + capacity > packet->capacity)
+	if(ntohs(packet->pdata->length) + capacity > packet->capacity)
 	{
-		newsize = packet->pdata->length + capacity +
+		newsize = ntohs(packet->pdata->length) + capacity +
 			RADIUS_PACKET_CAPACITY_INCREMENT;
 		newptr = realloc(packet->pdata, newsize);
 		if(newptr == NULL)
@@ -121,7 +121,7 @@ RADIUS_PACKET* radius_new_request_packet(u_int8_t code)
 	packet->request = NULL;
 	packet->pdata->code = code;
 	packet->pdata->id = radius_id_counter++;
-	packet->pdata->length = sizeof(RADIUS_PACKET_DATA);
+	packet->pdata->length = htons(sizeof(RADIUS_PACKET_DATA));
 	for(i=0; i<countof(packet->pdata->authenticator); i++)
 		packet->pdata->authenticator[i] = rand()&0xff;
 
@@ -213,7 +213,7 @@ int radius_check_response_authenticator(const RADIUS_PACKET* packet,
 	    	  16);
 	MD5Update(&ctx,
 		  (unsigned char*)packet->pdata->attributes,
-		  packet->pdata->length-20);
+		  radius_get_length(packet) - 20);
 	MD5Update(&ctx, (unsigned char*)secret, strlen(secret));
 	MD5Final((unsigned char *)authenticator0, &ctx);
 
@@ -231,14 +231,14 @@ void radius_set_response_authenticator(RADIUS_PACKET* packet,
 		  (unsigned char*)packet->request->pdata->authenticator, 16);
 	MD5Update(&ctx,
 		  (unsigned char*)packet->pdata->attributes,
-		  packet->pdata->length-20);
+		  radius_get_length(packet) - 20);
 	MD5Update(&ctx, (unsigned char*)secret, strlen(secret));
 	MD5Final((unsigned char*)packet->pdata->authenticator ,&ctx);
 }
 
 u_int16_t radius_get_length(const RADIUS_PACKET* packet)
 {
-	return packet->pdata->length;
+	return ntohs(packet->pdata->length);
 }
 
 
@@ -313,7 +313,7 @@ int radius_put_raw_attr(RADIUS_PACKET* packet, u_int8_t type,
 	newattr->type = type;
 	newattr->length = length + 2;
 	memcpy(newattr->data, buf, length);
-	packet->pdata->length += length + 2;
+	packet->pdata->length = htons(radius_get_length(packet) + length + 2);
 
 	return 0;
 }
@@ -335,7 +335,8 @@ int radius_put_raw_attr_all(RADIUS_PACKET* packet, u_int8_t type,
 		newattr->type = type;
 		newattr->length = len0 + 2;
 		memcpy(newattr->data, buf, len0);
-		packet->pdata->length += len0 + 2;
+		packet->pdata->length = htons(radius_get_length(packet) +
+		    len0 + 2);
 
 		off += len0;
 	}
@@ -356,7 +357,7 @@ int radius_get_vs_raw_attr(const RADIUS_PACKET* packet, u_int32_t vendor,
 	{
 		if(attr->type != RADIUS_TYPE_VENDOR_SPECIFIC)
 			continue;
-		if(attr->vendor != vendor)
+		if(attr->vendor != htonl(vendor))
 			continue;
 		if(attr->vtype != vtype)
 			continue;
@@ -387,7 +388,7 @@ int radius_get_vs_raw_attr_all(const RADIUS_PACKET* packet, u_int32_t vendor,
 	{
 		if(attr->type != RADIUS_TYPE_VENDOR_SPECIFIC)
 			continue;
-		if(attr->vendor != vendor)
+		if(attr->vendor != htonl(vendor))
 			continue;
 		if(attr->vtype != vtype)
 			continue;
@@ -419,7 +420,7 @@ int radius_get_vs_raw_attr_ptr(const RADIUS_PACKET* packet, u_int32_t vendor,
 	{
 		if(attr->type != RADIUS_TYPE_VENDOR_SPECIFIC)
 			continue;
-		if(attr->vendor != vendor)
+		if(attr->vendor != htonl(vendor))
 			continue;
 		if(attr->vtype != vtype)
 			continue;
@@ -446,11 +447,11 @@ int radius_put_vs_raw_attr(RADIUS_PACKET* packet, u_int32_t vendor,
 	newattr = ATTRS_END(packet->pdata);
 	newattr->type = RADIUS_TYPE_VENDOR_SPECIFIC;
 	newattr->length = length + 8;
-	newattr->vendor = vendor;
+	newattr->vendor = htonl(vendor);
 	newattr->vtype = vtype;
 	newattr->vlength = length + 2;
 	memcpy(newattr->vdata, buf, length);
-	packet->pdata->length += length + 8;
+	packet->pdata->length = htons(radius_get_length(packet) + length + 8);
 
 	return 0;
 }
@@ -471,11 +472,12 @@ int radius_put_vs_raw_attr_all(RADIUS_PACKET* packet, u_int32_t vendor,
 		newattr = ATTRS_END(packet->pdata);
 		newattr->type = RADIUS_TYPE_VENDOR_SPECIFIC;
 		newattr->length = len0 + 8;
-		newattr->vendor = vendor;
+		newattr->vendor = htonl(vendor);
 		newattr->vtype = vtype;
 		newattr->vlength = len0 + 2;
 		memcpy(newattr->vdata, buf, len0);
-		packet->pdata->length += len0 + 8;
+		packet->pdata->length = htons(radius_get_length(packet) +
+		    len0 + 8);
 
 		off += len0;
 	}
@@ -553,38 +555,38 @@ int radius_put_vs_string_attr(RADIUS_PACKET* packet, u_int32_t vendor,
 }
 
 int radius_get_ipv4_attr(const RADIUS_PACKET* packet, u_int8_t type,
-                         in_addr* addr)
+                         struct in_addr* addr)
 {
-	in_addr tmp;
+	struct in_addr tmp;
 	u_int8_t len;
 
 	if(radius_get_raw_attr(packet, type, &tmp, &len) != 0)
 		return 1;
-	if(len != sizeof(in_addr))
+	if(len != sizeof(struct in_addr))
 		return 1;
 	*addr = tmp;
 	return 0;
 }
 
-in_addr radius_get_ipv4_attr_retval(const RADIUS_PACKET* packet,
+struct in_addr radius_get_ipv4_attr_retval(const RADIUS_PACKET* packet,
                                     u_int8_t type)
 {
-	in_addr addr;
+	struct in_addr addr;
 	u_int8_t len;
 
 	if(radius_get_raw_attr(packet, type, &addr, &len) != 0)
 		addr.s_addr = htonl(INADDR_ANY);
-	if(len != sizeof(in_addr))
+	if(len != sizeof(struct in_addr))
 		addr.s_addr = htonl(INADDR_ANY);
 	return addr;
 }
 	
-int radius_put_ipv4_attr(RADIUS_PACKET* packet, u_int8_t type, in_addr addr)
+int radius_put_ipv4_attr(RADIUS_PACKET* packet, u_int8_t type, struct in_addr addr)
 {
-	return radius_put_raw_attr(packet, type, &addr, sizeof(in_addr));
+	return radius_put_raw_attr(packet, type, &addr, sizeof(struct in_addr));
 }
 
-RADIUS_PACKET* radius_recvfrom(int s, int flags, sockaddr* addr, socklen_t* len)
+RADIUS_PACKET* radius_recvfrom(int s, int flags, struct sockaddr* addr, socklen_t* len)
 {
 	char buf[0x10000];
 	ssize_t n;
@@ -597,12 +599,12 @@ RADIUS_PACKET* radius_recvfrom(int s, int flags, sockaddr* addr, socklen_t* len)
 }
 
 int radius_sendto(int s, const RADIUS_PACKET* packet,
-                  int flags, const sockaddr* addr, socklen_t len)
+                  int flags, const struct sockaddr* addr, socklen_t len)
 {
 	ssize_t n;
 
-	n = sendto(s, packet->pdata, packet->pdata->length, flags, addr, len);
-	if(n != packet->pdata->length)
+	n = sendto(s, packet->pdata, radius_get_length(packet), flags, addr, len);
+	if(n != radius_get_length(packet))
 		return 1;
 	return 0;
 }

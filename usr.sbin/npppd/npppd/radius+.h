@@ -79,10 +79,10 @@ int radius_get_vs_raw_attr_ptr(const RADIUS_PACKET* packet, u_int32_t vendor,
                            u_int8_t vtype, void** ptr, u_int8_t* length);
 int radius_put_vs_raw_attr(RADIUS_PACKET* packet, u_int32_t vendor,
                            u_int8_t vtype, const void* buf, u_int8_t length);
-int radius_get_vs_raw_attr_all(const RADIUS_PACKET* packet, u_int8_t type,
-                               caddr_t buf, int* length);
-int radius_put_vs_raw_attr_all(RADIUS_PACKET* packet, u_int8_t type,
-                               const caddr_t buf, int length);
+int radius_get_vs_raw_attr_all(const RADIUS_PACKET*, u_int32_t, u_int8_t,
+                               caddr_t, int*);
+int radius_put_vs_raw_attr_all(RADIUS_PACKET*, u_int32_t, u_int8_t,
+                               const void *, int);
 
 /* accessors - typed attributes */
 int radius_get_uint32_attr(const RADIUS_PACKET* packet, u_int8_t type,
