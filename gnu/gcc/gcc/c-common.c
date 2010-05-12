@@ -295,9 +295,6 @@ int flag_zero_link = 0;
    contained are to replace one(s) previously loaded.  */
 int flag_replace_objc_classes = 0;
 
-/* Warn about buffer size mismatches.  */
-int warn_bounded;
-
 /* C/ObjC language option variables.  */
 
 
