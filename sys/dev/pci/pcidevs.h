@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1551 2010/04/30 08:37:44 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1552 2010/05/12 16:18:12 oga Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3169,6 +3169,9 @@
 #define	PCI_PRODUCT_INTEL_PINEVIEW_DMI	0xa000		/* Pineview DMI Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_1	0xa001		/* Pineview Integrated Graphics Controller */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_2	0xa002		/* Pineview Integrated Graphics Controller */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_DMI	0xa010		/* Pineview DMI Bridge */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_1	0xa011		/* Pineview Integrated Graphics Controller */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_2	0xa012		/* Pineview Integrated Graphics Controller */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE PCI-PCI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */
