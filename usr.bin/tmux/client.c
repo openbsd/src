@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.38 2010/05/04 17:28:16 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.39 2010/05/12 15:05:39 jsing Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -206,6 +206,11 @@ client_signal(int sig, unused short events, unused void *data)
 	struct sigaction	sigact;
 
 	switch (sig) {
+	case SIGHUP:
+		client_exitmsg = "lost tty";
+		client_exitval = 1;
+		client_write_server(MSG_EXITING, NULL, 0);
+		break;
 	case SIGTERM:
 		client_exitmsg = "terminated";
 		client_exitval = 1;
