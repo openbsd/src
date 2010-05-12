@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.4 2010/05/11 19:34:20 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.5 2010/05/12 16:28:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -813,8 +813,8 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 		printf("%s: Rx queue is empty!\n", sc->sc_dev.dv_xname);
 		return (ENOENT);
 	}
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0,
-	    bf->bf_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
+	    BUS_DMASYNC_POSTREAD);
 
 	ds = mtod(bf->bf_m, struct ar_rx_status *);
 	if (!(ds->ds_status1 & AR_RXS1_DONE))
@@ -862,9 +862,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 		goto skip;
 	}
 
-	/* Sync and unmap the old Rx buffer. */
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
-	    BUS_DMASYNC_POSTREAD);
+	/* Unmap the old Rx buffer. */
 	bus_dmamap_unload(sc->sc_dmat, bf->bf_map);
 
 	/* Map the new Rx buffer. */
@@ -878,12 +876,13 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 		    mtod(bf->bf_m, void *), ATHN_RXBUFSZ, NULL,
 		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		KASSERT(error != 0);
+		bf->bf_daddr = bf->bf_map->dm_segs[0].ds_addr;
 		ifp->if_ierrors++;
 		goto skip;
 	}
 	bf->bf_desc = mtod(m1, struct ar_rx_status *);
 	bf->bf_daddr = bf->bf_map->dm_segs[0].ds_addr;
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, bf->bf_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
 	    BUS_DMASYNC_PREREAD);
 
 	m = bf->bf_m;
@@ -1121,7 +1120,6 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* Grab a Tx buffer from our global free list. */
 	bf = SIMPLEQ_FIRST(&sc->txbufs);
 	KASSERT(bf != NULL);
-	SIMPLEQ_REMOVE_HEAD(&sc->txbufs, bf_list);
 
 	/* Map 802.11 frame type to hardware frame type. */
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1450,6 +1448,7 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	else
 		AR_WRITE(sc, AR_QTXDP(qid), bf->bf_daddr);
 	txq->lastds = ds;
+	SIMPLEQ_REMOVE_HEAD(&sc->txbufs, bf_list);
 	SIMPLEQ_INSERT_TAIL(&txq->head, bf, bf_list);
 
 	DPRINTFN(6, ("Tx qid=%d nsegs=%d ctl11=0x%x ctl12=0x%x ctl14=0x%x\n",

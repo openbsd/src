@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.2 2010/05/11 19:34:20 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.3 2010/05/12 16:28:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -847,7 +847,7 @@ ar5008_rx_process(struct athn_softc *sc)
 		goto skip;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, bf->bf_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
 	    BUS_DMASYNC_PREREAD);
 
 	/* Write physical address of new Rx buffer. */
@@ -1109,7 +1109,6 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* Grab a Tx buffer from our global free list. */
 	bf = SIMPLEQ_FIRST(&sc->txbufs);
 	KASSERT(bf != NULL);
-	SIMPLEQ_REMOVE_HEAD(&sc->txbufs, bf_list);
 
 	/* Map 802.11 frame type to hardware frame type. */
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1434,6 +1433,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	else
 		AR_WRITE(sc, AR_QTXDP(qid), bf->bf_daddr);
 	txq->lastds = lastds;
+	SIMPLEQ_REMOVE_HEAD(&sc->txbufs, bf_list);
 	SIMPLEQ_INSERT_TAIL(&txq->head, bf, bf_list);
 
 	ds = bf->bf_descs;
