@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.8 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.9 2010/05/13 09:03:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1374,6 +1374,9 @@
 	((sc)->mac_ver == AR_SREV_VERSION_9380)
 #define AR_SREV_9380_10_OR_LATER(sc) \
 	((sc)->mac_ver >= AR_SREV_VERSION_9380)
+#define AR_SREV_9380_20(sc) \
+	(AR_SREV_9380(sc) && \
+	 (sc)->mac_rev == AR_SREV_REVISION_9380_20)
 #define AR_SREV_9380_20_OR_LATER(sc) \
 	((sc)->mac_ver > AR_SREV_VERSION_9380 || \
 	 (AR_SREV_9380(sc) && (sc)->mac_rev >= AR_SREV_REVISION_9380_20))

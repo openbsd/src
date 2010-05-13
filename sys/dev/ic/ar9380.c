@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.3 2010/05/11 19:34:20 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.4 2010/05/13 09:03:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -112,7 +112,10 @@ ar9380_attach(struct athn_softc *sc)
 	sc->cca_max_2g = AR9380_PHY_CCA_MAX_GOOD_VAL_2GHZ;
 	sc->cca_min_5g = AR9380_PHY_CCA_MIN_GOOD_VAL_5GHZ;
 	sc->cca_max_5g = AR9380_PHY_CCA_MAX_GOOD_VAL_5GHZ;
-	sc->ini = &ar9380_2_0_ini;
+	if (AR_SREV_9380_20(sc))
+		sc->ini = &ar9380_2_0_ini;
+	else
+		sc->ini = &ar9380_2_2_ini;
 
 	return (ar9003_attach(sc));
 }
@@ -153,19 +156,34 @@ ar9380_setup(struct athn_softc *sc)
 
 	/* Select initialization values based on ROM. */
 	type = MS(eep->baseEepHeader.txrxgain, AR_EEP_RX_GAIN);
-	if (type == AR_EEP_RX_GAIN_WO_XLNA)
-		sc->rx_gain = &ar9380_2_0_rx_gain_wo_xlna;
-	else
-		sc->rx_gain = &ar9380_2_0_rx_gain;
-
+	if (AR_SREV_9380_20(sc)) {
+		if (type == AR_EEP_RX_GAIN_WO_XLNA)
+			sc->rx_gain = &ar9380_2_0_rx_gain_wo_xlna;
+		else
+			sc->rx_gain = &ar9380_2_0_rx_gain;
+	} else {
+		if (type == AR_EEP_RX_GAIN_WO_XLNA)
+			sc->rx_gain = &ar9380_2_2_rx_gain_wo_xlna;
+		else
+			sc->rx_gain = &ar9380_2_2_rx_gain;
+	}
 	/* Select initialization values based on ROM. */
 	type = MS(eep->baseEepHeader.txrxgain, AR_EEP_TX_GAIN);
-	if (type == AR_EEP_TX_GAIN_HIGH_OB_DB)
-		sc->tx_gain = &ar9380_2_0_tx_gain_high_ob_db;
-	else if (type == AR_EEP_TX_GAIN_LOW_OB_DB)
-		sc->tx_gain = &ar9380_2_0_tx_gain_low_ob_db;
-	else
-		sc->tx_gain = &ar9380_2_0_tx_gain;
+	if (AR_SREV_9380_20(sc)) {
+		if (type == AR_EEP_TX_GAIN_HIGH_OB_DB)
+			sc->tx_gain = &ar9380_2_0_tx_gain_high_ob_db;
+		else if (type == AR_EEP_TX_GAIN_LOW_OB_DB)
+			sc->tx_gain = &ar9380_2_0_tx_gain_low_ob_db;
+		else
+			sc->tx_gain = &ar9380_2_0_tx_gain;
+	} else {
+		if (type == AR_EEP_TX_GAIN_HIGH_OB_DB)
+			sc->tx_gain = &ar9380_2_2_tx_gain_high_ob_db;
+		else if (type == AR_EEP_TX_GAIN_LOW_OB_DB)
+			sc->tx_gain = &ar9380_2_2_tx_gain_low_ob_db;
+		else
+			sc->tx_gain = &ar9380_2_2_tx_gain;
+	}
 }
 
 void
