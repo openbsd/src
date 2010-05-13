@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.106 2010/03/24 00:36:04 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.107 2010/05/13 19:27:24 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -860,15 +860,6 @@ dumpconf(void)
  * the auto-restart code.
  */
 #define BYTES_PER_DUMP  PAGE_SIZE /* must be a multiple of pagesize XXX small */
-static vaddr_t dumpspace;
-
-vaddr_t
-reserve_dumppages(vaddr_t p)
-{
-
-	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
-}
 
 void
 dumpsys(void)
@@ -932,10 +923,8 @@ dumpsys(void)
 			if (n > BYTES_PER_DUMP)
 				n = BYTES_PER_DUMP;
 
-			(void) pmap_map(dumpspace, maddr, maddr + n,
-			    VM_PROT_READ);
-
-			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			error = (*dump)(dumpdev, blkno,
+			    (caddr_t)PMAP_DIRECT_MAP(maddr), n);
 			if (error)
 				goto err;
 			maddr += n;

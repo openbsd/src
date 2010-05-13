@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.32 2010/05/08 16:54:07 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.33 2010/05/13 19:27:24 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -567,8 +567,6 @@ kvtopte(vaddr_t va)
 #define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
 #define pmap_cpu_has_pg_n()		(1)
 #define pmap_cpu_has_invlpg		(1)
-
-vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + pa)
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)

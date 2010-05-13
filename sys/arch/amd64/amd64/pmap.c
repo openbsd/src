@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 2010/05/08 16:54:07 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2010/05/13 19:27:24 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -203,10 +203,6 @@
  * [C] pv_entry structures
  *	- try to allocate one from the pool.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
- */
-
-/*
- * XXX: would be nice to have per-CPU VAs for the above 4
  */
 
 vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
@@ -671,13 +667,6 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	lo32_paddr = first_avail;
 	first_avail += PAGE_SIZE;
 #endif
-
-	/*
-	 * now we reserve some VM for mapping pages when doing a crash dump
-	 */
-
-	virtual_avail = reserve_dumppages(virtual_avail);
-
 	/*
 	 * init the global lists.
 	 */
@@ -1232,26 +1221,6 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 	return FALSE;
 }
-
-/*
- * pmap_map: map a range of PAs into kvm
- *
- * => used during crash dump
- * => XXX: pmap_map() should be phased out?
- */
-
-vaddr_t
-pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
-{
-	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
-		va += PAGE_SIZE;
-		spa += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-	return va;
-}
-
 
 /*
  * pmap_zero_page: zero a page
