@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1553 2010/05/12 21:30:25 oga Exp 
+ *	OpenBSD: pcidevs,v 1.1554 2010/05/13 09:22:29 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2197,12 +2197,17 @@
 #define	PCI_PRODUCT_INTEL_21145	0x0039		/* 21145 */
 #define	PCI_PRODUCT_INTEL_CLARKDALE_IGD	0x0042		/* Intel HD graphics */
 #define	PCI_PRODUCT_INTEL_ARRANDALE_IGD	0x0046		/* Intel HD graphics */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1	0x0082		/* Centrino Advanced-N 6205 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_1	0x0082		/* Centrino Advanced-N 6205a */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1	0x0083		/* WiFi Link 1000 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_2	0x0084		/* WiFi Link 1000 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2	0x0085		/* Centrino Advanced-N 6205 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_2	0x0085		/* Centrino Advanced-N 6205a */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1	0x0087		/* Centrino Advanced-N 6250 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2	0x0089		/* Centrino Advanced-N 6250 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_1X1_1	0x008a		/* Centrino Advanced-N 6205b */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_1X1_2	0x008b		/* Centrino Advanced-N 6205b */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_1	0x008f		/* Centrino Advanced-N 6205b */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_2	0x0090		/* Centrino Advanced-N 6205b */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_3	0x0091		/* Centrino Advanced-N 6205b */
 #define	PCI_PRODUCT_INTEL_80303	0x0309		/* 80303 IOP */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion */
 #define	PCI_PRODUCT_INTEL_IOXAPIC_A	0x0326		/* IOxAPIC */
