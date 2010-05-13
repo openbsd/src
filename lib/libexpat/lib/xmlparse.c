@@ -1517,15 +1517,11 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
                 : (char *)REALLOC(buffer, len * 2));
         if (temp == NULL) {
           errorCode = XML_ERROR_NO_MEMORY;
-          return XML_STATUS_ERROR;
-        }
-        buffer = temp;
-        if (!buffer) {
-          errorCode = XML_ERROR_NO_MEMORY;
           eventPtr = eventEndPtr = NULL;
           processor = errorProcessor;
           return XML_STATUS_ERROR;
         }
+        buffer = temp;
         bufferLim = buffer + len * 2;
       }
       memcpy(buffer, end, nLeftOver);
@@ -1678,6 +1674,8 @@ XML_GetBuffer(XML_Parser parser, int len)
       bufferPtr = buffer = newBuf;
 #endif  /* not defined XML_CONTEXT_BYTES */
     }
+    eventPtr = eventEndPtr = NULL;
+    positionPtr = NULL;
   }
   return bufferEnd;
 }
@@ -3709,6 +3707,9 @@ doProlog(XML_Parser parser,
         return XML_ERROR_UNCLOSED_TOKEN;
       case XML_TOK_PARTIAL_CHAR:
         return XML_ERROR_PARTIAL_CHAR;
+      case -XML_TOK_PROLOG_S:
+        tok = -tok;
+        break;
       case XML_TOK_NONE:
 #ifdef XML_DTD
         /* for internal PE NOT referenced between declarations */
@@ -3731,6 +3732,7 @@ doProlog(XML_Parser parser,
         return XML_ERROR_NO_ELEMENTS;
       default:
         tok = -tok;
+        next = end;
         break;
       }
     }
@@ -3787,15 +3789,17 @@ doProlog(XML_Parser parser,
 #endif /* XML_DTD */
       dtd->hasParamEntityRefs = XML_TRUE;
       if (startDoctypeDeclHandler) {
+        XML_Char *pubId;
         if (!XmlIsPublicId(enc, s, next, eventPP))
           return XML_ERROR_PUBLICID;
-        doctypePubid = poolStoreString(&tempPool, enc,
-                                       s + enc->minBytesPerChar,
-                                       next - enc->minBytesPerChar);
-        if (!doctypePubid)
+        pubId = poolStoreString(&tempPool, enc,
+                                s + enc->minBytesPerChar,
+                                next - enc->minBytesPerChar);
+        if (!pubId)
           return XML_ERROR_NO_MEMORY;
-        normalizePublicId((XML_Char *)doctypePubid);
+        normalizePublicId(pubId);
         poolFinish(&tempPool);
+        doctypePubid = pubId;
         handleDefault = XML_FALSE;
         goto alreadyChecked;
       }
@@ -6124,12 +6128,13 @@ poolGrow(STRING_POOL *pool)
   }
   if (pool->blocks && pool->start == pool->blocks->s) {
     int blockSize = (int)(pool->end - pool->start)*2;
-    pool->blocks = (BLOCK *)
+    BLOCK *temp = (BLOCK *)
       pool->mem->realloc_fcn(pool->blocks,
                              (offsetof(BLOCK, s)
                               + blockSize * sizeof(XML_Char)));
-    if (pool->blocks == NULL)
+    if (temp == NULL)
       return XML_FALSE;
+    pool->blocks = temp;
     pool->blocks->size = blockSize;
     pool->ptr = pool->blocks->s + (pool->ptr - pool->start);
     pool->start = pool->blocks->s;
