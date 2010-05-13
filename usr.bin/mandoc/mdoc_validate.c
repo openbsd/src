@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.48 2010/04/07 23:15:05 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.49 2010/05/13 20:34:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -56,7 +56,6 @@ static	int	 err_child_gt(struct mdoc *, const char *, int);
 static	int	 warn_child_gt(struct mdoc *, const char *, int);
 static	int	 err_child_eq(struct mdoc *, const char *, int);
 static	int	 warn_child_eq(struct mdoc *, const char *, int);
-static	int	 warn_print(struct mdoc *, int, int);
 static	int	 warn_count(struct mdoc *, const char *, 
 			int, const char *, int);
 static	int	 err_count(struct mdoc *, const char *, 
@@ -322,16 +321,6 @@ mdoc_valid_post(struct mdoc *mdoc)
 }
 
 
-static int
-warn_print(struct mdoc *m, int ln, int pos)
-{
-
-	if (MDOC_IGN_CHARS & m->pflags)
-		return(mdoc_pwarn(m, ln, pos, EPRINT));
-	return(mdoc_perr(m, ln, pos, EPRINT));
-}
-
-
 static inline int
 warn_count(struct mdoc *m, const char *k, 
 		int want, const char *v, int has)
@@ -517,10 +506,10 @@ check_text(struct mdoc *mdoc, int line, int pos, const char *p)
 	for ( ; *p; p++, pos++) {
 		if ('\t' == *p) {
 			if ( ! (MDOC_LITERAL & mdoc->flags))
-				if ( ! warn_print(mdoc, line, pos))
+				if ( ! mdoc_pwarn(mdoc, line, pos, EPRINT))
 					return(0);
 		} else if ( ! isprint((u_char)*p))
-			if ( ! warn_print(mdoc, line, pos))
+			if ( ! mdoc_pwarn(mdoc, line, pos, EPRINT))
 				return(0);
 
 		if ('\\' != *p)

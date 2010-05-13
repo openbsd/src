@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.27 2010/04/13 08:52:23 jmc Exp $
+.\"	$OpenBSD: mandoc.1,v 1.28 2010/05/13 20:34:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2010 $
+.Dd $Mdocdate: May 13 2010 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -192,18 +192,15 @@ When rewinding the scope of a block macro, forces the compiler to ignore
 scope violations.
 This can seriously mangle the resulting tree.
 .Pq mdoc only
-.It Fl f Ns Cm no-ign-chars
-Do not ignore disallowed characters.
 .It Fl f Ns Cm no-ign-escape
 Do not ignore invalid escape sequences.
 .It Fl f Ns Cm no-ign-macro
 Do not ignore unknown macros at the start of input lines.
 .It Fl f Ns Cm strict
 Implies
-.Fl f Ns Cm no-ign-escape ,
-.Fl f Ns Cm no-ign-macro ,
+.Fl f Ns Cm no-ign-escape
 and
-.Fl f Ns Cm no-ign-chars .
+.Fl f Ns Cm no-ign-macro .
 .El
 .Ss Output Options
 For the time being, only

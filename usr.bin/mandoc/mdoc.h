@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.19 2010/04/02 12:39:47 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.20 2010/05/13 20:34:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -274,7 +274,6 @@ struct	mdoc_node {
 #define	MDOC_IGN_SCOPE	 (1 << 0) /* Ignore scope violations. */
 #define	MDOC_IGN_ESCAPE	 (1 << 1) /* Ignore bad escape sequences. */
 #define	MDOC_IGN_MACRO	 (1 << 2) /* Ignore unknown macros. */
-#define	MDOC_IGN_CHARS	 (1 << 3) /* Ignore disallowed chars. */
 
 /* Call-backs for parse messages. */
 
