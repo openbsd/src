@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.55 2009/04/06 20:37:52 oga Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.56 2010/05/13 20:37:00 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -258,10 +258,11 @@ pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
+#ifndef __HAVE_PMAP_DIRECT
 extern caddr_t	CADDR1, CADDR2;
-
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
 pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
+#endif
 
 struct pmap	kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
@@ -402,12 +403,14 @@ pmap_init()
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_init()\n"));
 
+#ifndef __HAVE_PMAP_DIRECT
 	/*
 	 * Before we do anything else, initialize the PTE pointers
 	 * used by pmap_zero_page() and pmap_copy_page().
 	 */
 	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
 	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
+#endif
 
 	/*
 	 * Now that kernel map has been allocated, we can mark as
@@ -1055,13 +1058,15 @@ pmap_enter_cache(pmap, va, pa, prot, flags, template)
 	    ("pmap_enter_cache(%p, %lx, %lx, %x, %x, %x)\n",
 	    pmap, va, pa, prot, wired, template));
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
+#ifndef __HAVE_PMAP_DIRECT
 	/*
 	 * pmap_enter() should never be used for CADDR1 and CADDR2.
 	 */
 	if (pmap == pmap_kernel() &&
 	    (va == (vaddr_t)CADDR1 || va == (vaddr_t)CADDR2))
 		panic("pmap_enter: used for CADDR1 or CADDR2");
+#endif
 #endif
 
 	/*
@@ -1810,6 +1815,10 @@ ok:
 void
 pmap_zero_page(struct vm_page *pg)
 {
+#ifdef __HAVE_PMAP_DIRECT
+	vaddr_t va = pmap_map_direct(pg);
+	zeropage((void *)va);
+#else
 	paddr_t phys = VM_PAGE_TO_PHYS(pg);
 	int npte;
 
@@ -1846,6 +1855,7 @@ pmap_zero_page(struct vm_page *pg)
 	*caddr1_pte = PG_NV;
 	TBIS((vaddr_t)CADDR1);
 #endif
+#endif	/* __HAVE_PMAP_DIRECT */
 }
 
 /*
@@ -1860,6 +1870,11 @@ pmap_zero_page(struct vm_page *pg)
 void
 pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+#ifdef __HAVE_PMAP_DIRECT
+	vaddr_t srcva = pmap_map_direct(srcpg);
+	vaddr_t dstva = pmap_map_direct(dstpg);
+	copypage((void *)srcva, (void *)dstva);
+#else
 	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
 	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 
@@ -1907,6 +1922,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	*caddr2_pte = PG_NV;
 	TBIS((vaddr_t)CADDR2);
 #endif
+#endif	/* __HAVE_PMAP_DIRECT */
 }
 
 /*

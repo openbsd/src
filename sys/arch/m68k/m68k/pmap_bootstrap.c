@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.17 2006/07/09 19:39:53 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.18 2010/05/13 20:37:00 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -96,7 +96,10 @@ void  pmap_bootstrap(paddr_t, paddr_t);
  *	CADDR1, CADDR2:	pmap zero/copy operations
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  */
-caddr_t		CADDR1, CADDR2, vmmap;
+#ifndef __HAVE_PMAP_DIRECT
+caddr_t		CADDR1, CADDR2;
+#endif
+caddr_t		vmmap;
 
 /*
  * Bootstrap the VM system.
@@ -539,10 +542,12 @@ pmap_bootstrap(nextpa, firstpa)
 	{
 		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
+#ifndef __HAVE_PMAP_DIRECT
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
 		va += NBPG;
 		RELOC(CADDR2, caddr_t) = (caddr_t)va;
 		va += NBPG;
+#endif
 		RELOC(vmmap, caddr_t) = (caddr_t)va;
 		va += NBPG;
 
