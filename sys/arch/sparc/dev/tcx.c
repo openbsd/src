@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.44 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.45 2010/05/13 20:35:43 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -580,7 +580,7 @@ tcx_s24_reset(struct tcx_softc *sc, int depth)
 void
 tcx_accel_init(struct tcx_softc *sc, struct confargs *ca)
 {
-	int regno;
+	int stipple_align, regno;
 
 	/*
 	 * On S24, try and map raw blit and raw stipple spaces.
@@ -597,7 +597,7 @@ tcx_accel_init(struct tcx_softc *sc, struct confargs *ca)
 	 * on an SS4 with the resolution extender VSIMM).
 	 */
 
-	sc->sc_blit_width = getpropint(ca->ca_ra.ra_node, "blit-width", 5);
+	sc->sc_blit_width = getpropint(ca->ca_ra.ra_node, "blit-width", 0);
 	if (sc->sc_blit_width > 5)
 		sc->sc_blit_width = 5;	/* paranoia */
 	if (sc->sc_blit_width <= 3)	/* not worth until more than 8 pixels */
@@ -611,9 +611,20 @@ tcx_accel_init(struct tcx_softc *sc, struct confargs *ca)
 			sc->sc_blit = (paddr_t)ca->ca_ra.ra_reg[regno].rr_paddr;
 	}
 
-	regno = sc->sc_cplane == 0 ? TCX_REG_STIP : TCX_REG_RSTIP;
-	if (ca->ca_ra.ra_reg[regno].rr_len >= sc->sc_sunfb.sf_fbsize * 8)
-		sc->sc_stipple = (paddr_t)ca->ca_ra.ra_reg[regno].rr_paddr;
+	/*
+	 * Do not assume the stipple space is usable unless there is a
+	 * `stipple-align' property.  Also, don't try to use it if the
+	 * alignment is not 32 - our code may not behave correctly.
+	 */
+
+	stipple_align = getpropint(ca->ca_ra.ra_node, "stipple-align", 0);
+	if (stipple_align == 5) {
+		regno = sc->sc_cplane == 0 ? TCX_REG_STIP : TCX_REG_RSTIP;
+		if (ca->ca_ra.ra_reg[regno].rr_len >=
+		    sc->sc_sunfb.sf_fbsize * 8)
+			sc->sc_stipple =
+			    (paddr_t)ca->ca_ra.ra_reg[regno].rr_paddr;
+	}
 }
 
 /*
