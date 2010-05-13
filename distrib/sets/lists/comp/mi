@@ -201,6 +201,7 @@
 ./usr/include/dev/ic/anreg.h
 ./usr/include/dev/ic/anvar.h
 ./usr/include/dev/ic/apcdmareg.h
+./usr/include/dev/ic/ar5008reg.h
 ./usr/include/dev/ic/ar5210reg.h
 ./usr/include/dev/ic/ar5210var.h
 ./usr/include/dev/ic/ar5211reg.h
@@ -209,9 +210,11 @@
 ./usr/include/dev/ic/ar5212var.h
 ./usr/include/dev/ic/ar5416reg.h
 ./usr/include/dev/ic/ar5xxx.h
+./usr/include/dev/ic/ar9003reg.h
 ./usr/include/dev/ic/ar9280reg.h
 ./usr/include/dev/ic/ar9285reg.h
 ./usr/include/dev/ic/ar9287reg.h
+./usr/include/dev/ic/ar9380reg.h
 ./usr/include/dev/ic/athnreg.h
 ./usr/include/dev/ic/athnvar.h
 ./usr/include/dev/ic/athvar.h
@@ -272,6 +275,7 @@
 ./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/i82596reg.h
 ./usr/include/dev/ic/i82596var.h
+./usr/include/dev/ic/i8259reg.h
 ./usr/include/dev/ic/i82802reg.h
 ./usr/include/dev/ic/i82810reg.h
 ./usr/include/dev/ic/ibm525reg.h

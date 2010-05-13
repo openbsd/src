@@ -182,6 +182,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/anreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/anvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/apcdmareg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar5008reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar5210reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar5210var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar5211reg.ph
@@ -190,9 +191,11 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar5212var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar5416reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar5xxx.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar9003reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar9280reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar9285reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar9287reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ar9380reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/athnreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/athnvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/athvar.ph
@@ -253,6 +256,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82595reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82596reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82596var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i8259reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82802reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82810reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ibm525reg.ph
