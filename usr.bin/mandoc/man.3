@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.9 2010/04/04 13:41:23 schwarze Exp $
+.\"	$Id: man.3,v 1.10 2010/05/14 01:54:37 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,11 +14,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 4 2010 $
+.Dd $Mdocdate: May 14 2010 $
 .Dt MAN 3
 .Os
-.
-.
 .Sh NAME
 .Nm man ,
 .Nm man_alloc ,
@@ -29,8 +27,6 @@
 .Nm man_free ,
 .Nm man_reset
 .Nd man macro compiler library
-.
-.
 .Sh SYNOPSIS
 .In man.h
 .Vt extern const char * const * man_macronames;
@@ -48,8 +44,6 @@
 .Fn man_meta "const struct man *man"
 .Ft int
 .Fn man_endparse "struct man *man"
-.
-.
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,7 +52,6 @@ library parses lines of
 input (and
 .Em only
 man) into an abstract syntax tree (AST).
-.
 .Pp
 In general, applications initiate a parsing sequence with
 .Fn man_alloc ,
@@ -78,14 +71,12 @@ function may be used in order to reset the parser for another input
 sequence.  See the
 .Sx EXAMPLES
 section for a full example.
-.
 .Pp
 Beyond the full set of macros defined in
 .Xr man 7 ,
 the
 .Nm
 library also accepts the following macros:
-.
 .Pp
 .Bl -tag -width Ds -compact
 .It am
@@ -100,25 +91,20 @@ and may begin anywhere, although they may not break the next-line
 scoping rules specified in
 .Xr man 7 .
 These blocks are discarded.
-.
 .It PD
 Has no effect.  Handled as a current-scope line macro.
-.
 .It Sp
 A synonym for
 .Sq sp 0.5v
 .Pq part of the standard preamble for Perl documentation .
 Handled as a line macro.
-.
 .It UC
 Has no effect.  Handled as a current-scope line macro.
-.
 .It Vb
 A synonym for
 .Sq nf
 .Pq part of the standard preamble for Perl documentation .
 Handled as a current-scope line macro.
-.
 .It Ve
 A synonym for
 .Sq fi ,
@@ -151,8 +137,6 @@ documents to be correctly formatted:
 \e*(Th (Thorn),
 and
 \e*(th (thorn).
-.
-.
 .Sh REFERENCE
 This section further defines the
 .Sx Types ,
@@ -162,8 +146,6 @@ and
 available to programmers.  Following that, the
 .Sx Abstract Syntax Tree
 section documents the output tree.
-.
-.
 .Ss Types
 Both functions (see
 .Sx Functions )
@@ -171,16 +153,13 @@ and variables (see
 .Sx Variables )
 may use the following types:
 .Bl -ohang
-.
 .It Vt struct man
 An opaque type defined in
 .Pa man.c .
 Its values are only used privately within the library.
-.
 .It Vt struct man_cb
 A set of message callbacks defined in
 .Pa man.h .
-.
 .It Vt struct man_node
 A parsed node.  Defined in
 .Pa man.h .
@@ -188,12 +167,9 @@ See
 .Sx Abstract Syntax Tree
 for details.
 .El
-.
-.
 .Ss Functions
 Function descriptions follow:
 .Bl -ohang
-.
 .It Fn man_alloc
 Allocates a parsing structure.  The
 .Fa data
@@ -206,29 +182,24 @@ arguments are defined in
 .Pa man.h .
 Returns NULL on failure.  If non-NULL, the pointer must be freed with
 .Fn man_free .
-.
 .It Fn man_reset
 Reset the parser for another parse routine.  After its use,
 .Fn man_parseln
 behaves as if invoked for the first time.
-.
 .It Fn man_free
 Free all resources of a parser.  The pointer is no longer valid after
 invocation.
-.
 .It Fn man_parseln
 Parse a nil-terminated line of input.  This line should not contain the
 trailing newline.  Returns 0 on failure, 1 on success.  The input buffer
 .Fa buf
 is modified by this function.
-.
 .It Fn man_endparse
 Signals that the parse is complete.  Note that if
 .Fn man_endparse
 is called subsequent to
 .Fn man_node ,
 the resulting tree is incomplete.  Returns 0 on failure, 1 on success.
-.
 .It Fn man_node
 Returns the first node of the parse.  Note that if
 .Fn man_parseln
@@ -243,17 +214,12 @@ or
 .Fn man_endparse
 return 0, the data will be incomplete.
 .El
-.
-.
 .Ss Variables
 The following variables are also defined:
 .Bl -ohang
-.
 .It Va man_macronames
 An array of string-ified token names.
 .El
-.
-.
 .Ss Abstract Syntax Tree
 The
 .Nm
@@ -267,13 +233,11 @@ or after
 or
 .Fn man_parseln
 fail, it may be incomplete.
-.
 .Pp
 This AST is governed by the ontological
 rules dictated in
 .Xr man 7
 and derives its terminology accordingly.
-.
 .Pp
 The AST is composed of
 .Vt struct man_node
@@ -292,7 +256,6 @@ fields), its position in the tree (the
 and
 .Va prev
 fields) and some type-specific data.
-.
 .Pp
 The tree itself is arranged according to the following normal form,
 where capitalised non-terminals represent nodes.
@@ -313,13 +276,10 @@ where capitalised non-terminals represent nodes.
 .It TEXT
 \(<- [[:alpha:]]*
 .El
-.
 .Pp
 The only elements capable of nesting other elements are those with
 next-lint scope as documented in
 .Xr man 7 .
-.
-.
 .Sh EXAMPLES
 The following example reads lines from stdin and parses them, operating
 on the finished parse tree with
@@ -355,13 +315,9 @@ if (NULL == (node = man_node(man)))
 parsed(man, node);
 man_free(man);
 .Ed
-.
-.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr man 7
-.
-.
 .Sh AUTHORS
 The
 .Nm

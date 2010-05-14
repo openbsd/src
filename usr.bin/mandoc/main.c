@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.24 2010/05/13 20:34:29 schwarze Exp $ */
+/*	$Id: main.c,v 1.25 2010/05/14 01:54:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -362,6 +362,12 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 
 				comment = 1;
 				pos -= 2;
+				for (; pos > 0; --pos) {
+					if (ln->buf[pos] != ' ')
+						break;
+					if (ln->buf[pos - 1] == '\\')
+						break;
+				}
 				continue;
 			} 
 

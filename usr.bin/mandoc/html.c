@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.7 2010/04/07 23:15:05 schwarze Exp $ */
+/*	$Id: html.c,v 1.8 2010/05/14 01:54:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -50,7 +50,7 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"h1",		0}, /* TAG_H1 */
 	{"h2",		0}, /* TAG_H2 */
 	{"span",	0}, /* TAG_SPAN */
-	{"link",	HTML_CLRLINE | HTML_NOSTACK}, /* TAG_LINK */
+	{"link",	HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_LINK */
 	{"br",		HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_BR */
 	{"a",		0}, /* TAG_A */
 	{"table",	HTML_CLRLINE}, /* TAG_TABLE */
@@ -517,6 +517,10 @@ print_text(struct html *h, const char *p)
 	if ( ! print_encode(h, p, 0))
 		h->flags &= ~HTML_NOSPACE;
 
+	/* 
+	 * Note that we don't process the pipe: the parser sees it as
+	 * punctuation, but we don't in terms of typography.
+	 */
 	if (*p && 0 == *(p + 1))
 		switch (*p) {
 		case('('):

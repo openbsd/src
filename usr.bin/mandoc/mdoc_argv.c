@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.23 2010/04/03 16:30:42 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.24 2010/05/14 01:54:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -41,7 +41,7 @@
 #define	MULTI_STEP	 5
 
 static	int		 argv_a2arg(enum mdoct, const char *);
-static	int		 args(struct mdoc *, int, int *, 
+static	enum margserr	 args(struct mdoc *, int, int *, 
 				char *, int, char **);
 static	int		 argv(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
@@ -214,7 +214,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
  * [value0...], which may either have a single mandatory value, at least
  * one mandatory value, an optional single value, or no value.
  */
-int
+enum margverr
 mdoc_argv(struct mdoc *m, int line, enum mdoct tok,
 		struct mdoc_arg **v, int *pos, char *buf)
 {
@@ -297,7 +297,7 @@ mdoc_argv_free(struct mdoc_arg *p)
 	}
 	assert(p->argc);
 
-	for (i = p->argc - 1; i >= 0; i--)
+	for (i = (int)p->argc - 1; i >= 0; i--)
 		mdoc_argn_free(p, i);
 
 	free(p->argv);
@@ -312,7 +312,7 @@ mdoc_argn_free(struct mdoc_arg *p, int iarg)
 	int		  j;
 
 	if (arg->sz && arg->value) {
-		for (j = arg->sz - 1; j >= 0; j--) 
+		for (j = (int)arg->sz - 1; j >= 0; j--) 
 			free(arg->value[j]);
 		free(arg->value);
 	}
@@ -322,7 +322,7 @@ mdoc_argn_free(struct mdoc_arg *p, int iarg)
 }
 
 
-int
+enum margserr
 mdoc_zargs(struct mdoc *m, int line, int *pos, 
 		char *buf, int flags, char **v)
 {
@@ -331,7 +331,7 @@ mdoc_zargs(struct mdoc *m, int line, int *pos,
 }
 
 
-int
+enum margserr
 mdoc_args(struct mdoc *m, int line, int *pos, 
 		char *buf, enum mdoct tok, char **v)
 {
@@ -369,12 +369,13 @@ mdoc_args(struct mdoc *m, int line, int *pos,
 }
 
 
-static int
+static enum margserr
 args(struct mdoc *m, int line, int *pos, 
 		char *buf, int fl, char **v)
 {
 	int		  i;
 	char		 *p, *pp;
+	enum margserr	  rc;
 
 	/*
 	 * Parse out the terms (like `val' in `.Xx -arg val' or simply
@@ -394,7 +395,7 @@ args(struct mdoc *m, int line, int *pos,
 	assert(*pos);
 	assert(' ' != buf[*pos]);
 
-	if (0 == buf[*pos])
+	if ('\0' == buf[*pos])
 		return(ARGS_EOLN);
 
 	/* 
@@ -450,14 +451,19 @@ args(struct mdoc *m, int line, int *pos,
 				break;
 		}
 
+		/* By default, assume a phrase. */
+		rc = ARGS_PHRASE;
+
 		/* 
 		 * Adjust new-buffer position to be beyond delimiter
 		 * mark (e.g., Ta -> end + 2).
 		 */
 		if (p && pp) {
 			*pos += pp < p ? 2 : 1;
+			rc = pp < p ? ARGS_PHRASE : ARGS_PPHRASE;
 			p = pp < p ? pp : p;
 		} else if (p && ! pp) {
+			rc = ARGS_PPHRASE;
 			*pos += 1;
 		} else if (pp && ! p) {
 			p = pp;
@@ -485,7 +491,7 @@ args(struct mdoc *m, int line, int *pos,
 		for (pp = &buf[*pos]; ' ' == *pp; pp++, (*pos)++)
 			/* Skip ahead. */ ;
 
-		return(ARGS_PHRASE);
+		return(rc);
 	} 
 
 	/* 
@@ -657,16 +663,16 @@ static int
 argv_multi(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
 {
-	int		 c;
+	enum margserr	 ac;
 	char		*p;
 
 	for (v->sz = 0; ; v->sz++) {
 		if ('-' == buf[*pos])
 			break;
-		c = args(m, line, pos, buf, 0, &p);
-		if (ARGS_ERROR == c)
+		ac = args(m, line, pos, buf, 0, &p);
+		if (ARGS_ERROR == ac)
 			return(0);
-		else if (ARGS_EOLN == c)
+		else if (ARGS_EOLN == ac)
 			break;
 
 		if (0 == v->sz % MULTI_STEP)
@@ -684,16 +690,16 @@ static int
 argv_opt_single(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
 {
-	int		 c;
+	enum margserr	 ac;
 	char		*p;
 
 	if ('-' == buf[*pos])
 		return(1);
 
-	c = args(m, line, pos, buf, 0, &p);
-	if (ARGS_ERROR == c)
+	ac = args(m, line, pos, buf, 0, &p);
+	if (ARGS_ERROR == ac)
 		return(0);
-	if (ARGS_EOLN == c)
+	if (ARGS_EOLN == ac)
 		return(1);
 
 	v->sz = 1;
@@ -711,15 +717,16 @@ static int
 argv_single(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
 {
-	int		 c, ppos;
+	int		 ppos;
+	enum margserr	 ac;
 	char		*p;
 
 	ppos = *pos;
 
-	c = args(m, line, pos, buf, 0, &p);
-	if (ARGS_ERROR == c)
+	ac = args(m, line, pos, buf, 0, &p);
+	if (ARGS_ERROR == ac)
 		return(0);
-	if (ARGS_EOLN == c)
+	if (ARGS_EOLN == ac)
 		return(mdoc_perr(m, line, ppos, EARGVAL));
 
 	v->sz = 1;

@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.28 2010/05/08 01:52:07 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.29 2010/05/14 01:54:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -111,6 +111,23 @@ struct	mdoc_macro {
 	/* Reserved words in arguments treated as text. */
 };
 
+enum	margserr {
+	ARGS_ERROR,
+	ARGS_EOLN,
+	ARGS_WORD,
+	ARGS_PUNCT,
+	ARGS_QWORD,
+	ARGS_PHRASE,
+	ARGS_PPHRASE
+};
+
+enum	margverr {
+	ARGV_ERROR,
+	ARGV_EOLN,
+	ARGV_ARG,
+	ARGV_WORD
+};
+
 extern	const struct mdoc_macro *const mdoc_macros;
 
 __BEGIN_DECLS
@@ -146,8 +163,7 @@ int		  mdoc_isdelim(const char *);
 size_t		  mdoc_isescape(const char *);
 enum	mdoc_sec  mdoc_atosec(const char *);
 time_t		  mdoc_atotime(const char *);
-
-size_t		  mdoc_macro2len(int);
+size_t		  mdoc_macro2len(enum mdoct);
 const char	 *mdoc_a2att(const char *);
 const char	 *mdoc_a2lib(const char *);
 const char	 *mdoc_a2st(const char *);
@@ -160,27 +176,18 @@ int		  mdoc_valid_post(struct mdoc *);
 int		  mdoc_action_pre(struct mdoc *, 
 			const struct mdoc_node *);
 int		  mdoc_action_post(struct mdoc *);
-int		  mdoc_argv(struct mdoc *, int, enum mdoct,
+enum margverr	  mdoc_argv(struct mdoc *, int, enum mdoct,
 			struct mdoc_arg **, int *, char *);
-#define	ARGV_ERROR	(-1)
-#define	ARGV_EOLN	(0)
-#define	ARGV_ARG	(1)
-#define	ARGV_WORD	(2)
 void		  mdoc_argv_free(struct mdoc_arg *);
 void		  mdoc_argn_free(struct mdoc_arg *, int);
-int		  mdoc_args(struct mdoc *, int,
+enum margserr	  mdoc_args(struct mdoc *, int,
 			int *, char *, enum mdoct, char **);
-int		  mdoc_zargs(struct mdoc *, int, 
+enum margserr	  mdoc_zargs(struct mdoc *, int, 
 			int *, char *, int, char **);
 #define	ARGS_DELIM	(1 << 1)	/* See args(). */
 #define	ARGS_TABSEP	(1 << 2)	/* See args(). */
 #define	ARGS_NOWARN	(1 << 3)	/* See args(). */
-#define	ARGS_ERROR	(-1)
-#define	ARGS_EOLN	(0)
-#define	ARGS_WORD	(1)
-#define	ARGS_PUNCT	(2)
-#define	ARGS_QWORD	(3)
-#define	ARGS_PHRASE	(4)
+
 int		  mdoc_macroend(struct mdoc *);
 
 __END_DECLS

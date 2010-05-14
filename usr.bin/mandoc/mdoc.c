@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.45 2010/05/08 01:57:33 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.46 2010/05/14 01:54:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -150,8 +150,7 @@ static	int		  node_append(struct mdoc *,
 static	int		  mdoc_ptext(struct mdoc *, int, char *);
 static	int		  mdoc_pmacro(struct mdoc *, int, char *);
 static	int		  macrowarn(struct mdoc *, int, const char *);
-static	int		  pstring(struct mdoc *, int, int, 
-				const char *, size_t);
+
 
 const struct mdoc_node *
 mdoc_node(const struct mdoc *m)
@@ -345,15 +344,16 @@ int
 mdoc_macro(struct mdoc *m, enum mdoct tok, 
 		int ln, int pp, int *pos, char *buf)
 {
-
 	assert(tok < MDOC_MAX);
-	/*
-	 * If we're in the prologue, deny "body" macros.  Similarly, if
-	 * we're in the body, deny prologue calls.
-	 */
+
+	/* If we're in the body, deny prologue calls. */
+
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
 			MDOC_PBODY & m->flags)
 		return(mdoc_perr(m, ln, pp, EPROLBODY));
+
+	/* If we're in the prologue, deny "body" macros.  */
+
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
 			! (MDOC_PBODY & m->flags)) {
 		if ( ! mdoc_pwarn(m, ln, pp, EBODYPROL))
@@ -530,13 +530,15 @@ mdoc_elem_alloc(struct mdoc *m, int line, int pos,
 }
 
 
-static int
-pstring(struct mdoc *m, int line, int pos, const char *p, size_t len)
+int
+mdoc_word_alloc(struct mdoc *m, int line, int pos, const char *p)
 {
 	struct mdoc_node *n;
-	size_t		  sv;
+	size_t		  sv, len;
 
-	n = node_alloc(m, line, pos, -1, MDOC_TEXT);
+	len = strlen(p);
+
+	n = node_alloc(m, line, pos, MDOC_MAX, MDOC_TEXT);
 	n->string = mandoc_malloc(len + 1);
 	sv = strlcpy(n->string, p, len + 1);
 
@@ -545,16 +547,9 @@ pstring(struct mdoc *m, int line, int pos, const char *p, size_t len)
 
 	if ( ! node_append(m, n))
 		return(0);
+
 	m->next = MDOC_NEXT_SIBLING;
 	return(1);
-}
-
-
-int
-mdoc_word_alloc(struct mdoc *m, int line, int pos, const char *p)
-{
-
-	return(pstring(m, line, pos, p, strlen(p)));
 }
 
 
@@ -628,86 +623,68 @@ mdoc_node_delete(struct mdoc *m, struct mdoc_node *p)
 static int
 mdoc_ptext(struct mdoc *m, int line, char *buf)
 {
-	int		 i, j;
-	char		 sv;
+	int		 i;
 
 	/* Ignore bogus comments. */
 
 	if ('\\' == buf[0] && '.' == buf[1] && '\"' == buf[2])
 		return(mdoc_pwarn(m, line, 0, EBADCOMMENT));
 
+	/* No text before an initial macro. */
+
 	if (SEC_NONE == m->lastnamed)
 		return(mdoc_perr(m, line, 0, ETEXTPROL));
-	
-	/*
-	 * If in literal mode, then pass the buffer directly to the
-	 * back-end, as it should be preserved as a single term.
-	 */
 
+	/* Literal just gets pulled in as-is. */
+	
 	if (MDOC_LITERAL & m->flags)
 		return(mdoc_word_alloc(m, line, 0, buf));
 
-	/* Disallow blank/white-space lines in non-literal mode. */
+	/* Check for a blank line, which may also consist of spaces. */
 
 	for (i = 0; ' ' == buf[i]; i++)
-		/* Skip leading whitespace. */ ;
+		/* Skip to first non-space. */ ;
 
 	if ('\0' == buf[i]) {
 		if ( ! mdoc_pwarn(m, line, 0, ENOBLANK))
 			return(0);
+
 		/*
-		 * Assume that a `Pp' should be inserted in the case of
-		 * a blank line.  Technically, blank lines aren't
-		 * allowed, but enough manuals assume this behaviour
-		 * that we want to work around it.
+		 * Insert a `Pp' in the case of a blank line.  Technically,
+		 * blank lines aren't allowed, but enough manuals assume this
+		 * behaviour that we want to work around it.
 		 */
 		if ( ! mdoc_elem_alloc(m, line, 0, MDOC_Pp, NULL))
 			return(0);
+
 		m->next = MDOC_NEXT_SIBLING;
 		return(1);
 	}
 
-	/*
-	 * Break apart a free-form line into tokens.  Spaces are
-	 * stripped out of the input.
+	/* 
+	 * Warn if the last un-escaped character is whitespace. Then
+	 * strip away the remaining spaces (tabs stay!).   
 	 */
 
-	for (j = i; buf[i]; i++) {
-		if (' ' != buf[i])
-			continue;
+	i = (int)strlen(buf);
+	assert(i);
 
-		/* Escaped whitespace. */
-		if (i && ' ' == buf[i] && '\\' == buf[i - 1])
-			continue;
-
-		sv = buf[i];
-		buf[i++] = '\0';
-
-		if ( ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
-			return(0);
-
-		/* Trailing whitespace?  Check at overwritten byte. */
-
-		if (' ' == sv && '\0' == buf[i])
+	if (' ' == buf[i - 1] || '\t' == buf[i - 1]) {
+		if (i > 1 && '\\' != buf[i - 2])
 			if ( ! mdoc_pwarn(m, line, i - 1, ETAILWS))
 				return(0);
 
-		for ( ; ' ' == buf[i]; i++)
-			/* Skip trailing whitespace. */ ;
+		for (--i; i && ' ' == buf[i]; i--)
+			/* Spin back to non-space. */ ;
 
-		j = i;
+		/* Jump ahead of escaped whitespace. */
+		i += '\\' == buf[i] ? 2 : 1;
 
-		/* Trailing whitespace? */
-
-		if (' ' == buf[i - 1] && '\0' == buf[i])
-			if ( ! mdoc_pwarn(m, line, i - 1, ETAILWS))
-				return(0);
-
-		if ('\0' == buf[i])
-			break;
+		buf[i] = '\0';
 	}
 
-	if (j != i && ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
+	/* Allocate the whole word. */
+	if ( ! mdoc_word_alloc(m, line, 0, buf))
 		return(0);
 
 	/*
@@ -725,13 +702,11 @@ mdoc_ptext(struct mdoc *m, int line, char *buf)
 }
 
 
-
 static int
 macrowarn(struct mdoc *m, int ln, const char *buf)
 {
 	if ( ! (MDOC_IGN_MACRO & m->pflags))
-		return(mdoc_verr(m, ln, 0, 
-				"unknown macro: %s%s", 
+		return(mdoc_verr(m, ln, 0, "unknown macro: %s%s", 
 				buf, strlen(buf) > 3 ? "..." : ""));
 	return(mdoc_vwarn(m, ln, 0, "unknown macro: %s%s",
 				buf, strlen(buf) > 3 ? "..." : ""));
@@ -745,8 +720,9 @@ macrowarn(struct mdoc *m, int ln, const char *buf)
 int
 mdoc_pmacro(struct mdoc *m, int ln, char *buf)
 {
-	int		  i, j, c;
-	char		  mac[5];
+	enum mdoct	tok;
+	int		i, j;
+	char		mac[5];
 	struct mdoc_node *n;
 	char		 *t;
 
@@ -790,7 +766,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf)
 		return(1);
 	} 
 	
-	if (MDOC_MAX == (c = mdoc_hash_find(mac))) {
+	if (MDOC_MAX == (tok = mdoc_hash_find(mac))) {
 		if ( ! macrowarn(m, ln, mac))
 			goto err;
 		return(1);
@@ -801,7 +777,10 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf)
 	while (buf[i] && ' ' == buf[i])
 		i++;
 
-	/* Trailing whitespace? */
+	/* 
+	 * Trailing whitespace.  Note that tabs are allowed to be passed
+	 * into the parser as "text", so we only warn about spaces here.
+	 */
 
 	if ('\0' == buf[i] && ' ' == buf[i - 1])
 		if ( ! mdoc_pwarn(m, ln, i - 1, ETAILWS))
@@ -811,7 +790,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf)
 	 * Begin recursive parse sequence.  Since we're at the start of
 	 * the line, we don't need to do callable/parseable checks.
 	 */
-	if ( ! mdoc_macro(m, c, ln, 1, &i, buf)) 
+	if ( ! mdoc_macro(m, tok, ln, 1, &i, buf)) 
 		goto err;
 
 	/*

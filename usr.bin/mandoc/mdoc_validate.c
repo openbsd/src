@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.49 2010/05/13 20:34:29 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.50 2010/05/14 01:54:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -93,7 +93,6 @@ static	int	 post_vt(POST_ARGS);
 static	int	 pre_an(PRE_ARGS);
 static	int	 pre_bd(PRE_ARGS);
 static	int	 pre_bl(PRE_ARGS);
-static	int	 pre_cd(PRE_ARGS);
 static	int	 pre_dd(PRE_ARGS);
 static	int	 pre_display(PRE_ARGS);
 static	int	 pre_dt(PRE_ARGS);
@@ -132,7 +131,6 @@ static	v_post	 posts_xr[] = { ewarn_ge1, NULL };
 static	v_pre	 pres_an[] = { pre_an, NULL };
 static	v_pre	 pres_bd[] = { pre_display, pre_bd, NULL };
 static	v_pre	 pres_bl[] = { pre_bl, NULL };
-static	v_pre	 pres_cd[] = { pre_cd, NULL };
 static	v_pre	 pres_d1[] = { pre_display, NULL };
 static	v_pre	 pres_dd[] = { pre_dd, NULL };
 static	v_pre	 pres_dt[] = { pre_dt, NULL };
@@ -164,7 +162,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* Ad */ 
 	{ pres_an, posts_an },			/* An */ 
 	{ NULL, NULL },				/* Ar */
-	{ pres_cd, posts_text },		/* Cd */ 
+	{ NULL, posts_text },			/* Cd */ 
 	{ NULL, NULL },				/* Cm */
 	{ NULL, NULL },				/* Dv */ 
 	{ pres_er, posts_text },		/* Er */ 
@@ -735,7 +733,7 @@ pre_sh(PRE_ARGS)
 
 	if (MDOC_BLOCK != n->type)
 		return(1);
-	return(check_parent(mdoc, n, -1, MDOC_ROOT));
+	return(check_parent(mdoc, n, MDOC_MAX, MDOC_ROOT));
 }
 
 
@@ -772,8 +770,6 @@ static int
 pre_rv(PRE_ARGS)
 {
 
-	if ( ! check_msec(mdoc, n, 2, 3, 0))
-		return(0);
 	return(check_stdarg(mdoc, n));
 }
 
@@ -785,14 +781,6 @@ pre_ex(PRE_ARGS)
 	if ( ! check_msec(mdoc, n, 1, 6, 8, 0))
 		return(0);
 	return(check_stdarg(mdoc, n));
-}
-
-
-static int
-pre_cd(PRE_ARGS)
-{
-
-	return(check_msec(mdoc, n, 4, 0));
 }
 
 
