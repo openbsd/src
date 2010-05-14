@@ -439,14 +439,17 @@ check_bounded_info (status, info, params)
       type_size /= 8;
 
       /* Both the size of the static buffer and the length should be
-       * integer constants by now */
-      if (TREE_CODE (array_size_expr) != INTEGER_CST
+       * integer constants by now, unless the array size is 0 */
+      if ((array_size_expr && TREE_CODE (array_size_expr) != INTEGER_CST)
           || TREE_CODE (length_expr) != INTEGER_CST
           || TREE_CODE (size_expr) != INTEGER_CST)
         return;
 
       /* array_size_expr contains maximum array index, so add one for size */
-      array_size = (TREE_INT_CST_LOW (array_size_expr) + 1) * type_size;
+      if (array_size_expr)
+        array_size = (TREE_INT_CST_LOW (array_size_expr) + 1) * type_size;
+      else
+        array_size = 0;
       length = TREE_INT_CST_LOW (length_expr);
 
       /* XXX - warn about a too-small buffer? */
