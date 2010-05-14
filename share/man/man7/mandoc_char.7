@@ -1,6 +1,6 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.4 2010/04/04 13:41:23 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.5 2010/05/14 15:03:01 schwarze Exp $
 .\"
-.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,16 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 4 2010 $
+.Dd $Mdocdate: May 14 2010 $
 .Dt MANDOC_CHAR 7
 .Os
-.
-.
 .Sh NAME
 .Nm mandoc_char
 .Nd mandoc special characters
-.
-.
 .Sh DESCRIPTION
 This page documents the special characters and predefined strings accepted by
 .Xr mandoc 1
@@ -32,7 +28,6 @@ to format
 and
 .Xr man 7
 documents.
-.
 .Pp
 Both
 .Xr mdoc 7
@@ -70,17 +65,13 @@ and
 .Sq \e*X
 as
 .Sq \e*[X] .
-.
 .Pp
 Note that each output mode will have a different rendering of the
 characters.
 It's guaranteed that each input symbol will correspond to a
 (more or less) meaningful output rendering, regardless the mode.
-.
-.
 .Sh SPECIAL CHARACTERS
 These are the preferred input symbols for producing special characters.
-.
 .Pp
 Spacing:
 .Bl -column -compact -offset indent "Input" "Description"
@@ -94,7 +85,6 @@ Spacing:
 .It \e0      Ta breaking, non-collapsing digit-width space
 .It \ec      Ta removes any trailing space (if applicable)
 .El
-.
 .Pp
 Lines:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -107,7 +97,6 @@ Lines:
 .It \e(sl    Ta \(sl        Ta forward slash
 .It \e(rs    Ta \(rs        Ta backward slash
 .El
-.
 .Pp
 Text markers:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -127,7 +116,6 @@ Text markers:
 .It \e(CR    Ta \(CR        Ta carriage return
 .It \e(OK    Ta \(OK        Ta check mark
 .El
-.
 .Pp
 Legal symbols:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -136,7 +124,6 @@ Legal symbols:
 .It \e(rg    Ta \(rg        Ta registered
 .It \e(tm    Ta \(tm        Ta trademarked
 .El
-.
 .Pp
 Punctuation:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -149,7 +136,6 @@ Punctuation:
 .It \e(r!    Ta \(r!        Ta upside-down exclamation
 .It \e(r?    Ta \(r?        Ta upside-down question
 .El
-.
 .Pp
 Quotes:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -167,10 +153,9 @@ Quotes:
 .It \e(fo    Ta \(fo        Ta left single guillemet
 .It \e(fc    Ta \(fc        Ta right single guillemet
 .El
-.
 .Pp
 Brackets:
-.Bl -column -compact -offset indent "x[bracketrightbp]" Rendered Description
+.Bl -column -compact -offset indent "xxbracketrightbpx" Rendered Description
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(lB    Ta \(lB        Ta left bracket
 .It \e(rB    Ta \(rB        Ta right bracket
@@ -207,7 +192,6 @@ Brackets:
 .It \e[parenrightbp] Ta \[parenrightbp] Ta bottom-right hooked parenthesis
 .It \e[parenrightex] Ta \[parenrightex] Ta right hooked parenthesis extension
 .El
-.
 .Pp
 Arrows:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -225,7 +209,6 @@ Arrows:
 .It \e(dA    Ta \(dA        Ta down double-arrow
 .It \e(vA    Ta \(vA        Ta up-down double-arrow
 .El
-.
 .Pp
 Logical:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -241,10 +224,9 @@ Logical:
 .It \e(3d    Ta \(3d        Ta therefore
 .It \e(or    Ta \(or        Ta bitwise or
 .El
-.
 .Pp
 Mathematical:
-.Bl -column -compact -offset indent "Input" "Rendered" "Description"
+.Bl -column -compact -offset indent "xxcoproductxx" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
 .It \e(pl    Ta \(pl        Ta plus
 .It \e(mi    Ta \(mi        Ta minus
@@ -307,7 +289,6 @@ Mathematical:
 .It \e(pd    Ta \(pd        Ta partial differential
 .It \e(-h    Ta \(-h        Ta Planck constant over 2\(*p
 .El
-.
 .Pp
 Ligatures:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -325,7 +306,6 @@ Ligatures:
 .It \e(IJ    Ta \(IJ        Ta IJ ligature
 .It \e(ij    Ta \(ij        Ta ij ligature
 .El
-.
 .Pp
 Accents:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -348,7 +328,6 @@ Accents:
 .It \e(ha    Ta \(ha        Ta hat (text)
 .It \e(ti    Ta \(ti        Ta tilde (text)
 .El
-.
 .Pp
 Accented letters:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -409,7 +388,6 @@ Accented letters:
 .It \e(oA    Ta \(oA        Ta ring A
 .It \e(oa    Ta \(oa        Ta ring a
 .El
-.
 .Pp
 Special letters:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -421,7 +399,6 @@ Special letters:
 .It \e(.i    Ta \(.i        Ta dotless i
 .It \e(.j    Ta \(.j        Ta dotless j
 .El
-.
 .Pp
 Currency:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -435,7 +412,6 @@ Currency:
 .It \e(Cs    Ta \(Cs        Ta Scandinavian
 .It \e(Fn    Ta \(Fn        Ta florin
 .El
-.
 .Pp
 Units:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -446,7 +422,6 @@ Units:
 .It \e(sd    Ta \(sd        Ta second
 .It \e(mc    Ta \(mc        Ta micro
 .El
-.
 .Pp
 Greek letters:
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
@@ -505,12 +480,9 @@ Greek letters:
 .It \e(+e    Ta \(+e        Ta epsilon variant
 .It \e(ts    Ta \(ts        Ta sigma terminal
 .El
-.
-.
 .Sh PREDEFINED STRINGS
 These are not recommended for use, as they differ across
 implementations:
-.
 .Pp
 .Bl -column -compact -offset indent "Input" "Rendered" "Description"
 .It Em Input Ta Em Rendered Ta Em Description
@@ -541,14 +513,11 @@ implementations:
 .It \e*(aa   Ta \*(aa       Ta acute
 .It \e*(ga   Ta \*(ga       Ta grave
 .El
-.
-.
 .Sh COMPATIBILITY
 This section documents compatibility of
 .Nm
 with older or existing versions of
 .Xr groff 1 .
-.
 .Pp
 The following render differently in
 .Fl T Ns Ar ascii
@@ -557,7 +526,6 @@ output mode:
 \e(ss, \e(nm, \e(nb, \e(nc, \e(ib, \e(ip, \e(pp, \e[sum], \e[product],
 \e[coproduct], \e(gr, \e(-h, \e(a.
 .Ed
-.
 .Pp
 The following render differently in
 .Fl T Ns Ar html
@@ -565,21 +533,27 @@ output mode:
 .Bd -ragged -offset indent
 \e(~=, \e(nb, \e(nc
 .Ed
-.
 .Pp
 Finally, the following have been omitted by being poorly documented or
 having no known representation:
 .Bd -ragged -offset indent
 \e[radicalex], \e[sqrtex], \e(ru
 .Ed
-.
-.
 .Sh SEE ALSO
 .Xr mandoc 1
-.
-.
 .Sh AUTHORS
 The
 .Nm
 manual page was written by
-.An Kristaps Dzonsons Aq kristaps@kth.se .
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.Sh CAVEATS
+The
+.Sq \e*(Ba
+escape mimics the behaviour of the
+.Sq \&|
+character in
+.Xr mdoc 7 ;
+thus, if you wish to render a vertical bar with no side effects, use
+the
+.Sq \e(ba
+escape.
