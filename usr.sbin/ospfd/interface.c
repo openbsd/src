@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.68 2010/02/16 18:20:37 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.69 2010/05/14 08:30:18 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -190,6 +190,7 @@ if_new(struct kif *kif, struct kif_addr *ka)
 	if (kif->flags & IFF_LOOPBACK) {
 		iface->type = IF_TYPE_POINTOPOINT;
 		iface->state = IF_STA_LOOPBACK;
+		iface->passive = 1;
 	}
 
 	/* get mtu, index and flags */
