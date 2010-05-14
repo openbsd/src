@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.14 2010/05/14 01:54:37 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.15 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,38 +24,30 @@
 
 #include "libmdoc.h"
 
-/* FIXME: this file is poorly named. */
-
-struct mdoc_secname {
-	const char	*name;	/* Name of section. */
-	enum mdoc_sec	 sec;	/* Corresponding section. */
+static	const char * const secnames[SEC__MAX] = {
+	NULL,
+	"NAME",
+	"LIBRARY",
+	"SYNOPSIS",
+	"DESCRIPTION",
+	"IMPLEMENTATION NOTES",
+	"RETURN VALUES",
+	"ENVIRONMENT",
+	"FILES",
+	"EXIT STATUS",
+	"EXAMPLES",
+	"DIAGNOSTICS",
+	"COMPATIBILITY",
+	"ERRORS",
+	"SEE ALSO",
+	"STANDARDS",
+	"HISTORY",
+	"AUTHORS",
+	"CAVEATS",
+	"BUGS",
+	"SECURITY CONSIDERATIONS",
+	NULL
 };
-
-#define	SECNAME_MAX	(20)
-
-static	const struct mdoc_secname secnames[SECNAME_MAX] = {
-	{ "NAME", SEC_NAME },
-	{ "LIBRARY", SEC_LIBRARY },
-	{ "SYNOPSIS", SEC_SYNOPSIS },
-	{ "DESCRIPTION", SEC_DESCRIPTION },
-	{ "IMPLEMENTATION NOTES", SEC_IMPLEMENTATION },
-	{ "EXIT STATUS", SEC_EXIT_STATUS },
-	{ "RETURN VALUES", SEC_RETURN_VALUES },
-	{ "ENVIRONMENT", SEC_ENVIRONMENT },
-	{ "FILES", SEC_FILES },
-	{ "EXAMPLES", SEC_EXAMPLES },
-	{ "DIAGNOSTICS", SEC_DIAGNOSTICS },
-	{ "COMPATIBILITY", SEC_COMPATIBILITY },
-	{ "ERRORS", SEC_ERRORS },
-	{ "SEE ALSO", SEC_SEE_ALSO },
-	{ "STANDARDS", SEC_STANDARDS },
-	{ "HISTORY", SEC_HISTORY },
-	{ "AUTHORS", SEC_AUTHORS },
-	{ "CAVEATS", SEC_CAVEATS },
-	{ "BUGS", SEC_BUGS },
-	{ "SECURITY CONSIDERATIONS", SEC_SECURITY }
-};
-
 
 /* 
  * FIXME: this is repeated in print_text() (html.c) and term_word()
@@ -66,7 +58,7 @@ mdoc_iscdelim(char p)
 {
 
 	switch (p) {
-	case('|'): /* FIXME! */
+	case('|'):
 		/* FALLTHROUGH */
 	case('('):
 		/* FALLTHROUGH */
@@ -100,22 +92,28 @@ int
 mdoc_isdelim(const char *p)
 {
 
-	if (0 == *p)
+	if ('\0' == p[0])
 		return(0);
-	if (0 != *(p + 1))
-		return(0);
-	return(mdoc_iscdelim(*p));
+	if ('\0' == p[1])
+		return(mdoc_iscdelim(p[0]));
+
+	/*
+	 * XXX; account for groff bubu where the \*(Ba reserved string
+	 * is treated in exactly the same way as the vertical bar.  This
+	 * is the only function that checks for this.
+	 */
+	return(0 == strcmp(p, "\\*(Ba"));
 }
 
 
 enum mdoc_sec 
-mdoc_atosec(const char *p)
+mdoc_str2sec(const char *p)
 {
 	int		 i;
 
-	for (i = 0; i < SECNAME_MAX; i++) 
-		if (0 == strcmp(p, secnames[i].name))
-			return(secnames[i].sec);
+	for (i = 0; i < (int)SEC__MAX; i++) 
+		if (secnames[i] && 0 == strcmp(p, secnames[i]))
+			return((enum mdoc_sec)i);
 
 	return(SEC_CUSTOM);
 }

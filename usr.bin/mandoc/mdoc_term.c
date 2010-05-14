@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.76 2010/05/08 02:10:09 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.77 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,6 +55,7 @@ static	int	  arg_hasattr(int, const struct mdoc_node *);
 static	int	  arg_getattrs(const int *, int *, size_t,
 			const struct mdoc_node *);
 static	int	  arg_getattr(int, const struct mdoc_node *);
+static	int	  arg_disptype(const struct mdoc_node *);
 static	int	  arg_listtype(const struct mdoc_node *);
 static	void	  print_bvspace(struct termp *,
 			const struct mdoc_node *,
@@ -473,6 +475,35 @@ a2width(const struct mdoc_argv *arg, int pos)
 		SCALE_HS_INIT(&su, strlen(arg->value[pos]));
 
 	return(term_hspan(&su));
+}
+
+
+static int
+arg_disptype(const struct mdoc_node *n)
+{
+	int		 i, len;
+
+	assert(MDOC_BLOCK == n->type);
+
+	len = (int)(n->args ? n->args->argc : 0);
+
+	for (i = 0; i < len; i++)
+		switch (n->args->argv[i].arg) {
+		case (MDOC_Centred):
+			/* FALLTHROUGH */
+		case (MDOC_Ragged):
+			/* FALLTHROUGH */
+		case (MDOC_Filled):
+			/* FALLTHROUGH */
+		case (MDOC_Unfilled):
+			/* FALLTHROUGH */
+		case (MDOC_Literal):
+			return(n->args->argv[i].arg);
+		default:
+			break;
+		}
+
+	return(-1);
 }
 
 
@@ -1050,7 +1081,7 @@ static int
 termp_nm_pre(DECL_ARGS)
 {
 
-	if (SEC_SYNOPSIS == n->sec)
+	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
 		term_newln(p);
 
 	term_fontpush(p, TERMFONT_BOLD);
@@ -1125,7 +1156,7 @@ termp_an_post(DECL_ARGS)
 		return;
 	}
 
-	if (arg_getattr(MDOC_Split, n) > -1) {
+	if (arg_hasattr(MDOC_Split, n)) {
 		p->flags &= ~TERMP_NOSPLIT;
 		p->flags |= TERMP_SPLIT;
 	} else {
@@ -1349,7 +1380,7 @@ static void
 termp_fd_post(DECL_ARGS)
 {
 
-	if (n->sec != SEC_SYNOPSIS)
+	if (n->sec != SEC_SYNOPSIS || ! (MDOC_LINE & n->flags))
 		return;
 
 	term_newln(p);
@@ -1436,7 +1467,7 @@ static void
 termp_lb_post(DECL_ARGS)
 {
 
-	if (SEC_LIBRARY == n->sec)
+	if (SEC_LIBRARY == n->sec && MDOC_LINE & n->flags)
 		term_newln(p);
 }
 
@@ -1505,7 +1536,7 @@ static int
 termp_ft_pre(DECL_ARGS)
 {
 
-	if (SEC_SYNOPSIS == n->sec)
+	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
 		if (n->prev && MDOC_Fo == n->prev->tok)
 			term_vspace(p);
 
@@ -1519,7 +1550,7 @@ static void
 termp_ft_post(DECL_ARGS)
 {
 
-	if (SEC_SYNOPSIS == n->sec)
+	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
 		term_newln(p);
 }
 
@@ -1560,7 +1591,7 @@ static void
 termp_fn_post(DECL_ARGS)
 {
 
-	if (n->sec == SEC_SYNOPSIS && n->next)
+	if (n->sec == SEC_SYNOPSIS && n->next && MDOC_LINE & n->flags)
 		term_vspace(p);
 }
 
@@ -1598,6 +1629,7 @@ termp_bd_pre(DECL_ARGS)
 {
 	size_t			 tabwidth;
 	int	         	 i, type;
+	size_t			 rm, rmax;
 	const struct mdoc_node	*nn;
 
 	if (MDOC_BLOCK == n->type) {
@@ -1608,26 +1640,11 @@ termp_bd_pre(DECL_ARGS)
 
 	nn = n->parent;
 
-	for (type = -1, i = 0; i < (int)nn->args->argc; i++) {
-		switch (nn->args->argv[i].arg) {
-		case (MDOC_Centred):
-			/* FALLTHROUGH */
-		case (MDOC_Ragged):
-			/* FALLTHROUGH */
-		case (MDOC_Filled):
-			/* FALLTHROUGH */
-		case (MDOC_Unfilled):
-			/* FALLTHROUGH */
-		case (MDOC_Literal):
-			type = nn->args->argv[i].arg;
-			break;
-		case (MDOC_Offset):
-			p->offset += a2offs(&nn->args->argv[i]);
-			break;
-		default:
-			break;
-		}
-	}
+	type = arg_disptype(nn);
+	assert(-1 != type);
+
+	if (-1 != (i = arg_getattr(MDOC_Offset, nn)))
+		p->offset += a2offs(&nn->args->argv[i]);
 
 	/*
 	 * If -ragged or -filled are specified, the block does nothing
@@ -1637,12 +1654,15 @@ termp_bd_pre(DECL_ARGS)
 	 * lines are allowed.
 	 */
 	
-	assert(type > -1);
 	if (MDOC_Literal != type && MDOC_Unfilled != type)
 		return(1);
 
 	tabwidth = p->tabwidth;
 	p->tabwidth = 8;
+	rm = p->rmargin;
+	rmax = p->maxrmargin;
+	p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
+
 	for (nn = n->child; nn; nn = nn->next) {
 		p->flags |= TERMP_NOSPACE;
 		print_mdoc_node(p, pair, m, nn);
@@ -1653,6 +1673,8 @@ termp_bd_pre(DECL_ARGS)
 	}
 	p->tabwidth = tabwidth;
 
+	p->rmargin = rm;
+	p->maxrmargin = rmax;
 	return(0);
 }
 
@@ -1661,11 +1683,26 @@ termp_bd_pre(DECL_ARGS)
 static void
 termp_bd_post(DECL_ARGS)
 {
+	int		 type;
+	size_t		 rm, rmax;
 
 	if (MDOC_BODY != n->type) 
 		return;
+
+	type = arg_disptype(n->parent);
+	assert(-1 != type);
+
+	rm = p->rmargin;
+	rmax = p->maxrmargin;
+
+	if (MDOC_Literal == type || MDOC_Unfilled == type)
+		p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
+
 	p->flags |= TERMP_NOSPACE;
 	term_newln(p);
+
+	p->rmargin = rm;
+	p->maxrmargin = rmax;
 }
 
 
@@ -1855,7 +1892,7 @@ termp_in_post(DECL_ARGS)
 	term_word(p, ">");
 	term_fontpop(p);
 
-	if (SEC_SYNOPSIS != n->sec)
+	if (SEC_SYNOPSIS != n->sec && ! (MDOC_LINE & n->flags))
 		return;
 
 	term_newln(p);

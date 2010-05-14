@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.50 2010/05/14 01:54:37 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.51 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1284,21 +1284,24 @@ post_sh_head(POST_ARGS)
 			return(mdoc_nerr(mdoc, n, ETOOLONG));
 	}
 
-	sec = mdoc_atosec(buf);
+	sec = mdoc_str2sec(buf);
 
 	/* 
 	 * Check: NAME should always be first, CUSTOM has no roles,
 	 * non-CUSTOM has a conventional order to be followed.
 	 */
 
-	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed && 
-			! mdoc_nwarn(mdoc, mdoc->last, ESECNAME))
-		return(0);
+	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed)
+		if ( ! mdoc_nwarn(mdoc, mdoc->last, ESECNAME))
+			return(0);
+
 	if (SEC_CUSTOM == sec)
 		return(1);
+
 	if (sec == mdoc->lastnamed)
 		if ( ! mdoc_nwarn(mdoc, mdoc->last, ESECREP))
 			return(0);
+
 	if (sec < mdoc->lastnamed)
 		if ( ! mdoc_nwarn(mdoc, mdoc->last, ESECOOO))
 			return(0);

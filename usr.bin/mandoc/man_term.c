@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.28 2010/04/25 16:32:19 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.29 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -259,7 +259,6 @@ static int
 pre_fi(DECL_ARGS)
 {
 
-	p->rmargin = p->maxrmargin = 65;
 	mt->fl &= ~MANT_LITERAL;
 	return(1);
 }
@@ -270,10 +269,7 @@ static int
 pre_nf(DECL_ARGS)
 {
 
-	p->rmargin = p->maxrmargin = 78;
-	term_newln(p);
 	mt->fl |= MANT_LITERAL;
-
 	return(MAN_Vb != n->tok);
 }
 
@@ -372,7 +368,7 @@ pre_sp(DECL_ARGS)
 
 	if (0 == len)
 		term_newln(p);
-	for (i = 0; i < len; i++)
+	for (i = 0; i <= len; i++)
 		term_vspace(p);
 
 	return(0);
@@ -713,6 +709,9 @@ pre_SH(DECL_ARGS)
 		if (n->prev && MAN_SH == n->prev->tok)
 			if (NULL == n->prev->body->child)
 				break;
+		/* If the first macro, no vspae. */
+		if (NULL == n->prev)
+			break;
 		term_vspace(p);
 		break;
 	case (MAN_HEAD):
@@ -819,8 +818,10 @@ print_man_node(DECL_ARGS)
 		/* FIXME: this means that macro lines are munged!  */
 
 		if (MANT_LITERAL & mt->fl) {
+			p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
 			p->flags |= TERMP_NOSPACE;
 			term_flushln(p);
+			p->rmargin = p->maxrmargin = 65;
 		}
 		break;
 	default:
@@ -891,6 +892,12 @@ print_man_head(struct termp *p, const struct man_meta *m)
 	char		buf[BUFSIZ], title[BUFSIZ];
 	size_t		buflen, titlen;
 
+	/*
+	 * Note that old groff would spit out some spaces before the
+	 * header.  We discontinue this strange behaviour, but at one
+	 * point we did so here.
+	 */
+
 	p->rmargin = p->maxrmargin;
 
 	p->offset = 0;
@@ -932,4 +939,13 @@ print_man_head(struct termp *p, const struct man_meta *m)
 	p->rmargin = p->maxrmargin;
 	p->offset = 0;
 	p->flags &= ~TERMP_NOSPACE;
+
+	/* 
+	 * Groff likes to have some leading spaces before content.  Well
+	 * that's fine by me.
+	 */
+
+	term_vspace(p);
+	term_vspace(p);
+	term_vspace(p);
 }

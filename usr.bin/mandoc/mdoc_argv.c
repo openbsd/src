@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.24 2010/05/14 01:54:37 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.25 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -399,9 +399,10 @@ args(struct mdoc *m, int line, int *pos,
 		return(ARGS_EOLN);
 
 	/* 
-	 * If the first character is a delimiter and we're to look for
-	 * delimited strings, then pass down the buffer seeing if it
-	 * follows the pattern of [[::delim::][ ]+]+.
+	 * If the first character is a closing delimiter and we're to
+	 * look for delimited strings, then pass down the buffer seeing
+	 * if it follows the pattern of [[::delim::][ ]+]+.  Note that
+	 * we ONLY care about closing delimiters.
 	 */
 
 	if ((fl & ARGS_DELIM) && mdoc_iscdelim(buf[*pos]) > 1) {
@@ -409,14 +410,14 @@ args(struct mdoc *m, int line, int *pos,
 			if ( mdoc_iscdelim(buf[i]) < 2)
 				break;
 			i++;
-			if (0 == buf[i] || ' ' != buf[i])
+			if ('\0' == buf[i] || ' ' != buf[i])
 				break;
 			i++;
 			while (buf[i] && ' ' == buf[i])
 				i++;
 		}
 
-		if (0 == buf[i]) {
+		if ('\0' == buf[i]) {
 			*v = &buf[*pos];
 			if (' ' != buf[i - 1])
 				return(ARGS_PUNCT);
@@ -468,8 +469,10 @@ args(struct mdoc *m, int line, int *pos,
 		} else if (pp && ! p) {
 			p = pp;
 			*pos += 2;
-		} else
+		} else {
+			rc = ARGS_PEND;
 			p = strchr(*v, 0);
+		}
 
 		/* Whitespace check for eoln case... */
 		if (0 == *p && ' ' == *(p - 1) && ! (ARGS_NOWARN & fl))

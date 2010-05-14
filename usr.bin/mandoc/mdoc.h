@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.20 2010/05/13 20:34:29 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.21 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -203,10 +203,10 @@ enum	mdoc_sec {
 	SEC_SYNOPSIS,
 	SEC_DESCRIPTION,
 	SEC_IMPLEMENTATION,
-	SEC_EXIT_STATUS,
 	SEC_RETURN_VALUES,
 	SEC_ENVIRONMENT, 
 	SEC_FILES,
+	SEC_EXIT_STATUS,
 	SEC_EXAMPLES,
 	SEC_DIAGNOSTICS,
 	SEC_COMPATIBILITY,
@@ -218,7 +218,8 @@ enum	mdoc_sec {
 	SEC_CAVEATS,
 	SEC_BUGS,
 	SEC_SECURITY,
-	SEC_CUSTOM		/* User-defined. */
+	SEC_CUSTOM,		/* User-defined. */
+	SEC__MAX
 };
 
 /* Information from prologue. */
@@ -249,20 +250,21 @@ struct 	mdoc_arg {
 
 /* Node in AST. */
 struct	mdoc_node {
-	struct mdoc_node *parent;
-	struct mdoc_node *child;
-	struct mdoc_node *next;
-	struct mdoc_node *prev;
-	int		  nchild;
-	int		  line;
-	int		  pos;
-	enum mdoct	  tok;
+	struct mdoc_node *parent; /* parent AST node */
+	struct mdoc_node *child; /* first child AST node */
+	struct mdoc_node *next; /* sibling AST node */
+	struct mdoc_node *prev; /* prior sibling AST node */
+	int		  nchild; /* number children */
+	int		  line; /* parse line */
+	int		  pos; /* parse column */
+	enum mdoct	  tok; /* tok or MDOC__MAX if none */
 	int		  flags;
-#define	MDOC_VALID	 (1 << 0)
-#define	MDOC_ACTED	 (1 << 1)
-	enum mdoc_type	  type;
-	enum mdoc_sec	  sec;
-
+#define	MDOC_VALID	 (1 << 0) /* has been validated */
+#define	MDOC_ACTED	 (1 << 1) /* has been acted upon */
+#define	MDOC_EOS	 (1 << 2) /* at sentence boundary */
+#define	MDOC_LINE	 (1 << 3) /* first macro/text on line */
+	enum mdoc_type	  type; /* AST node type */
+	enum mdoc_sec	  sec; /* current named section */
 	struct mdoc_arg	 *args; 	/* BLOCK/ELEM */
 	struct mdoc_node *pending;	/* BLOCK */
 	struct mdoc_node *head;		/* BLOCK */

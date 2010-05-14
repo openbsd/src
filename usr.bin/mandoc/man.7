@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.21 2010/05/14 01:54:37 schwarze Exp $
+.\"	$Id: man.7,v 1.22 2010/05/14 14:47:44 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -25,8 +25,8 @@ The
 .Nm man
 language was historically used to format
 .Ux
-manuals.  This reference document describes its syntax, structure, and
-usage.
+manuals.
+This reference document describes its syntax, structure, and usage.
 .Pp
 .Bf -emphasis
 Do not use
@@ -42,7 +42,8 @@ An
 document follows simple rules:  lines beginning with the control
 character
 .Sq \&.
-are parsed for macros.  Other lines are interpreted within the scope of
+are parsed for macros.
+Other lines are interpreted within the scope of
 prior macros:
 .Bd -literal -offset indent
 \&.SH Macro lines change control state.
@@ -51,7 +52,8 @@ Other lines are interpreted within the current state.
 .Sh INPUT ENCODING
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the
-space character, and the tabs character.  All manuals must have
+space character, and the tabs character.
+All manuals must have
 .Ux
 line termination.
 .Pp
@@ -61,10 +63,12 @@ vertical space.
 Text following a
 .Sq \e\*" ,
 whether in a macro or free-form text line, is ignored to the end of
-line.  A macro line with only a control character and comment escape,
+line.
+A macro line with only a control character and comment escape,
 .Sq \&.\e" ,
-is also ignored.  Macro lines with only a control character and
-optionally whitespace are stripped from input.
+is also ignored.
+Macro lines with only a control character and optionally whitespace are
+stripped from input.
 .Ss Special Characters
 Special characters may occur in both macro and free-form lines.
 Sequences begin with the escape character
@@ -75,9 +79,11 @@ for two-character sequences; an open-bracket
 .Sq \&[
 for n-character sequences (terminated at a close-bracket
 .Sq \&] ) ;
-or a single one-character sequence.  See
+or a single one-character sequence.
+See
 .Xr mandoc_char 7
-for a complete list.  Examples include
+for a complete list.
+Examples include
 .Sq \e(em
 .Pq em-dash
 and
@@ -92,9 +98,10 @@ escape followed by an indicator: B (bold), I, (italic), R (Roman), or P
 .D1 \efBbold\efR \efIitalic\efP
 .Pp
 A numerical representation 3, 2, or 1 (bold, italic, and Roman,
-respectively) may be used instead.  A text decoration is only valid, if
-specified in free-form text, until the next macro invocation; if
-specified within a macro, it's only valid until the macro closes scope.
+respectively) may be used instead.
+A text decoration is only valid, if specified in free-form text, until
+the next macro invocation; if specified within a macro, it's only valid
+until the macro closes scope.
 Note that macros like
 .Sx \&BR
 open and close a font scope with each argument.
@@ -132,14 +139,15 @@ trailing spaces are stripped from input (unless in a literal context).
 Blank free-form lines, which may include spaces, are permitted and
 rendered as an empty line.
 .Pp
-In macro lines, whitespace delimits arguments and is discarded.  If
-arguments are quoted, whitespace within the quotes is retained.
+In macro lines, whitespace delimits arguments and is discarded.
+If arguments are quoted, whitespace within the quotes is retained.
 .Ss Dates
 The
 .Sx \&TH
 macro is the only
 .Nm
-macro that requires a date.  The form for this date is the ISO-8601
+macro that requires a date.
+The form for this date is the ISO-8601
 standard
 .Cm YYYY-MM-DD .
 .Ss Scaling Widths
@@ -152,8 +160,8 @@ stipulating a two-inch paragraph indentation with the following:
 The syntax for scaled widths is
 .Sq Li [+-]?[0-9]*.[0-9]*[:unit:]? ,
 where a decimal must be preceded or proceeded by at least one digit.
-Negative numbers, while accepted, are truncated to zero.  The following
-scaling units are accepted:
+Negative numbers, while accepted, are truncated to zero.
+The following scaling units are accepted:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It c
@@ -209,14 +217,14 @@ Each
 .Nm
 document must contain contains at least the
 .Sx \&TH
-macro describing the document's section and title.  It may occur
-anywhere in the document, although conventionally, it appears as the
-first macro.
+macro describing the document's section and title.
+It may occur anywhere in the document, although conventionally, it
+appears as the first macro.
 .Pp
 Beyond
 .Sx \&TH ,
-at least one macro or text node must appear in the document.  Documents
-are generally structured as follows:
+at least one macro or text node must appear in the document.
+Documents are generally structured as follows:
 .Bd -literal -offset indent
 \&.TH FOO 1 2009-10-10
 \&.
@@ -232,13 +240,13 @@ are generally structured as follows:
 The \efBfoo\efR utility processes files...
 \&.
 \&.\e\*q .SH IMPLEMENTATION NOTES
-\&.\e\*q The next is for sections 1 & 8 only.
-\&.\e\*q .SH EXIT STATUS
 \&.\e\*q The next is for sections 2, 3, & 9 only.
 \&.\e\*q .SH RETURN VALUES
 \&.\e\*q The next is for sections 1, 6, 7, & 8 only.
 \&.\e\*q .SH ENVIRONMENT
 \&.\e\*q .SH FILES
+\&.\e\*q The next is for sections 1 & 8 only.
+\&.\e\*q .SH EXIT STATUS
 \&.\e\*q .SH EXAMPLES
 \&.\e\*q The next is for sections 1, 4, 6, 7, & 8 only.
 \&.\e\*q .SH DIAGNOSTICS
@@ -256,18 +264,18 @@ The \efBfoo\efR utility processes files...
 .Pp
 The sections in a
 .Nm
-document are conventionally ordered as they appear above.  Sections
-should be composed as follows:
+document are conventionally ordered as they appear above.
+Sections should be composed as follows:
 .Bl -ohang -offset indent
 .It Em NAME
-The name(s) and a short description of the documented material.  The
-syntax for this is generally as follows:
+The name(s) and a short description of the documented material.
+The syntax for this is generally as follows:
 .Pp
 .D1 \efBname\efR \e(en description
 .It Em LIBRARY
 The name of the library containing the documented material, which is
-assumed to be a function in a section 2 or 3 manual.  For functions in
-the C library, this may be as follows:
+assumed to be a function in a section 2 or 3 manual.
+For functions in the C library, this may be as follows:
 .Pp
 .D1 Standard C Library (libc, -lc)
 .It Em SYNOPSIS
@@ -295,34 +303,37 @@ This expands upon the brief, one-line description in
 It usually contains a break-down of the options (if documenting a
 command).
 .It Em IMPLEMENTATION NOTES
-Implementation-specific notes should be kept here.  This is useful when
-implementing standard functions that may have side effects or notable
-algorithmic implications.
-.It Em EXIT STATUS
-Command exit status for section 1, 6, and 8 manuals.  This section is
-the dual of
-.Em RETURN VALUES ,
-which is used for functions.  Historically, this information was
-described in
-.Em DIAGNOSTICS ,
-a practise that is now discouraged.
+Implementation-specific notes should be kept here.
+This is useful when implementing standard functions that may have side
+effects or notable algorithmic implications.
 .It Em RETURN VALUES
 This section is the dual of
 .Em EXIT STATUS ,
-which is used for commands.  It documents the return values of functions
-in sections 2, 3, and 9.
+which is used for commands.
+It documents the return values of functions in sections 2, 3, and 9.
 .It Em ENVIRONMENT
 Documents any usages of environment variables, e.g.,
 .Xr environ 7 .
 .It Em FILES
-Documents files used.  It's helpful to document both the file and a
-short description of how the file is used (created, modified, etc.).
+Documents files used.
+It's helpful to document both the file and a short description of how
+the file is used (created, modified, etc.).
+.It Em EXIT STATUS
+Command exit status for section 1, 6, and 8 manuals.
+This section is the dual of
+.Em RETURN VALUES ,
+which is used for functions.
+Historically, this information was described in
+.Em DIAGNOSTICS ,
+a practise that is now discouraged.
 .It Em EXAMPLES
-Example usages.  This often contains snippets of well-formed,
-well-tested invocations.  Make doubly sure that your examples work
-properly!
+Example usages.
+This often contains snippets of well-formed,
+well-tested invocations.
+Make doubly sure that your examples work properly!
 .It Em DIAGNOSTICS
-Documents error conditions.  This is most useful in section 4 manuals.
+Documents error conditions.
+This is most useful in section 4 manuals.
 Historically, this section was used in place of
 .Em EXIT STATUS
 for manuals in sections 1, 6, and 8; however, this practise is
@@ -330,8 +341,8 @@ discouraged.
 .It Em ERRORS
 Documents error handling in sections 2, 3, and 9.
 .It Em SEE ALSO
-References other manuals with related topics.  This section should exist
-for most manuals.
+References other manuals with related topics.
+This section should exist for most manuals.
 .Pp
 .D1 \&.BR bar \&( 1 \&),
 .Pp
@@ -364,11 +375,13 @@ Documents any security precautions that operators should consider.
 Macros are one to three three characters in length and begin with a
 control character ,
 .Sq \&. ,
-at the beginning of the line.  The
+at the beginning of the line.
+The
 .Sq \(aq
-macro control character is also accepted.  An arbitrary amount of
-whitespace (spaces or tabs) may sit between the control character and
-the macro name.  Thus, the following are equivalent:
+macro control character is also accepted.
+An arbitrary amount of whitespace (spaces or tabs) may sit between the
+control character and the macro name.
+Thus, the following are equivalent:
 .Bd -literal -offset indent
 \&.PP
 \&.\ \ \ PP
@@ -376,15 +389,17 @@ the macro name.  Thus, the following are equivalent:
 .Pp
 The
 .Nm
-macros are classified by scope: line scope or block scope.  Line
-macros are only scoped to the current line (and, in some situations,
-the subsequent line).  Block macros are scoped to the current line and
-subsequent lines until closed by another block macro.
+macros are classified by scope: line scope or block scope.
+Line macros are only scoped to the current line (and, in some
+situations, the subsequent line).
+Block macros are scoped to the current line and subsequent lines until
+closed by another block macro.
 .Ss Line Macros
 Line macros are generally scoped to the current line, with the body
-consisting of zero or more arguments.  If a macro is scoped to the next
-line and the line arguments are empty, the next line, which must be
-text, is used instead.  Thus:
+consisting of zero or more arguments.
+If a macro is scoped to the next line and the line arguments are empty,
+the next line, which must be text, is used instead.
+Thus:
 .Bd -literal -offset indent
 \&.I
 foo
@@ -438,14 +453,14 @@ The syntax is as follows:
 Macros marked as
 .Qq compat
 are included for compatibility with the significant corpus of existing
-manuals that mix dialects of roff.  These macros should not be used for
-portable
+manuals that mix dialects of roff.
+These macros should not be used for portable
 .Nm
 manuals.
 .Ss Block Macros
-Block macros are comprised of a head and body.  Like for in-line macros,
-the head is scoped to the current line and, in one circumstance, the
-next line (the next-line stipulations as in
+Block macros are comprised of a head and body.
+Like for in-line macros, the head is scoped to the current line and, in
+one circumstance, the next line (the next-line stipulations as in
 .Sx Line Macros
 apply here as well).
 .Pp
@@ -500,7 +515,8 @@ If a block macro is next-line scoped, it may only be followed by in-line
 macros for decorating text.
 .Sh REFERENCE
 This section is a canonical reference to all macros, arranged
-alphabetically.  For the scoping of individual macros, see
+alphabetically.
+For the scoping of individual macros, see
 .Sx MACRO SYNTAX .
 .Ss \&B
 Text is rendered in bold face.
@@ -513,7 +529,8 @@ See also
 and
 .Sx \&r .
 .Ss \&BI
-Text is rendered alternately in bold face and italic.  Thus,
+Text is rendered alternately in bold face and italic.
+Thus,
 .Sq .BI this word and that
 causes
 .Sq this
@@ -523,7 +540,8 @@ to render in bold face, while
 .Sq word
 and
 .Sq that
-render in italics.  Whitespace between arguments is omitted in output.
+render in italics.
+Whitespace between arguments is omitted in output.
 .Pp
 Examples:
 .Pp
@@ -558,7 +576,8 @@ See also
 and
 .Sx \&IR .
 .Ss \&DT
-Has no effect.  Included for compatibility.
+Has no effect.
+Included for compatibility.
 .Ss \&HP
 Begin a paragraph whose initial output line is left-justified, but
 subsequent output lines are indented, with the following syntax:
@@ -622,8 +641,8 @@ default width is used.
 .Pp
 The
 .Cm head
-argument is used as a leading term, flushed to the left margin.  This is
-useful for bulleted paragraphs and so on.
+argument is used as a leading term, flushed to the left margin.
+This is useful for bulleted paragraphs and so on.
 .Pp
 See also
 .Sx \&HP ,
@@ -648,9 +667,10 @@ See also
 and
 .Sx \&RI .
 .Ss \&LP
-Begin an undecorated paragraph.  The scope of a paragraph is closed by a
-subsequent paragraph, sub-section, section, or end of file.  The saved
-paragraph left-margin width is re-set to the default.
+Begin an undecorated paragraph.
+The scope of a paragraph is closed by a subsequent paragraph,
+sub-section, section, or end of file.
+The saved paragraph left-margin width is re-set to the default.
 .Pp
 See also
 .Sx \&HP ,
@@ -725,9 +745,9 @@ See also
 and
 .Sx \&IR .
 .Ss \&RS
-Begin a part setting the left margin.  The left margin controls the
-offset, following an initial indentation, to un-indented text such as
-that of
+Begin a part setting the left margin.
+The left margin controls the offset, following an initial indentation,
+to un-indented text such as that of
 .Sx \&PP .
 This has the following syntax:
 .Bd -filled -offset indent
@@ -744,16 +764,18 @@ If not specified, the saved or default width is used.
 Text is rendered in small size (one point smaller than the default font)
 bold face.
 .Ss \&SH
-Begin a section.  The scope of a section is only closed by another
-section or the end of file.  The paragraph left-margin width is re-set
-to the default.
+Begin a section.
+The scope of a section is only closed by another section or the end of
+file.
+The paragraph left-margin width is re-set to the default.
 .Ss \&SM
 Text is rendered in small size (one point smaller than the default
 font).
 .Ss \&SS
-Begin a sub-section.  The scope of a sub-section is closed by a
-subsequent sub-section, section, or end of file.  The paragraph
-left-margin width is re-set to the default.
+Begin a sub-section.
+The scope of a sub-section is closed by a subsequent sub-section,
+section, or end of file.
+The paragraph left-margin width is re-set to the default.
 .Ss \&TH
 Sets the title of the manual page with the following syntax:
 .Bd -filled -offset indent
@@ -766,13 +788,16 @@ At least the upper-case document title
 .Cm title
 and numeric manual section
 .Cm section
-arguments must be provided.  The
+arguments must be provided.
+The
 .Cm date
 argument should be formatted as described in
 .Sx Dates :
-if it does not conform, the current date is used instead.  The
+if it does not conform, the current date is used instead.
+The
 .Cm source
-string specifies the organisation providing the utility.  The
+string specifies the organisation providing the utility.
+The
 .Cm volume
 string replaces the default rendered volume, which is dictated by the
 manual section.
@@ -783,7 +808,8 @@ Examples:
 .Ss \&TP
 Begin a paragraph where the head, if exceeding the indentation width, is
 followed by a newline; if not, the body follows on the same line after a
-buffer to the indentation width.  Subsequent output lines are indented.
+buffer to the indentation width.
+Subsequent output lines are indented.
 The syntax is as follows:
 .Bd -filled -offset indent
 .Pf \. Sx \&TP
@@ -813,7 +839,8 @@ and
 .\" .Ss \&UC
 .\" Has no effect.  Included for compatibility.
 .Ss \&br
-Breaks the current line.  Consecutive invocations have no further effect.
+Breaks the current line.
+Consecutive invocations have no further effect.
 .Pp
 See also
 .Sx \&sp .
@@ -821,7 +848,8 @@ See also
 End literal mode begun by
 .Sx \&nf .
 .Ss \&i
-Italicise arguments.  Synonym for
+Italicise arguments.
+Synonym for
 .Sx \&I .
 .Pp
 See also
@@ -835,7 +863,8 @@ and
 Don't align to the right margin.
 .Ss \&nf
 Begin literal mode: all subsequent free-form lines have their end of
-line boundaries preserved.  May be ended by
+line boundaries preserved.
+May be ended by
 .Sx \&fi .
 .Ss \&r
 Fonts and styles (bold face, italics) reset to roman (default font).
@@ -860,7 +889,8 @@ spaces, which must conform to
 .Sx Scaling Widths .
 If 0, this is equivalent to the
 .Sx \&br
-macro.  Defaults to 1, if unspecified.
+macro.
+Defaults to 1, if unspecified.
 .Pp
 See also
 .Sx \&br .
@@ -888,13 +918,13 @@ language.
 .Bl -dash -compact
 .It
 In quoted literals, GNU troff allowed pair-wise double-quotes to produce
-a standalone double-quote in formatted output.  It is not known whether
-this behaviour is exhibited by other formatters.
+a standalone double-quote in formatted output.
+It is not known whether this behaviour is exhibited by other formatters.
 .It
 The
 .Sx \&sp
-macro does not accept negative values in mandoc.  In GNU troff, this
-would result in strange behaviour.
+macro does not accept negative values in mandoc.
+In GNU troff, this would result in strange behaviour.
 .It
 The
 .Sq \(aq
@@ -912,6 +942,7 @@ The
 reference was written by
 .An Kristaps Dzonsons Aq kristaps@bsd.lv .
 .Sh CAVEATS
-Do not use this language.  Use
+Do not use this language.
+Use
 .Xr mdoc 7 ,
 instead.

@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.16 2010/04/23 00:23:47 schwarze Exp $ */
+/*	$Id: term.h,v 1.17 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,6 +28,8 @@ enum	termfont {
 	TERMFONT_BOLD,
 	TERMFONT_UNDER
 };
+
+#define	TERM_MAXMARGIN	  100000 /* FIXME */
 
 struct	termp {
 	size_t		  rmargin;	/* Current right margin. */

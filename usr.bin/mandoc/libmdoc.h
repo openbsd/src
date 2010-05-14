@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.29 2010/05/14 01:54:37 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.30 2010/05/14 14:47:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,9 +28,10 @@ struct	mdoc {
 	void		 *data;
 	struct mdoc_cb	  cb;
 	int		  flags;
-#define	MDOC_HALT	 (1 << 0)	/* Error in parse. Halt. */
-#define	MDOC_LITERAL	 (1 << 1)	/* In a literal scope. */
-#define	MDOC_PBODY	 (1 << 2)	/* In the document body. */
+#define	MDOC_HALT	 (1 << 0) /* error in parse: halt */
+#define	MDOC_LITERAL	 (1 << 1) /* in a literal scope */
+#define	MDOC_PBODY	 (1 << 2) /* in the document body */
+#define	MDOC_NEWLINE	 (1 << 3) /* first macro/text in a line */
 	int		  pflags;
 	enum mdoc_next	  next;
 	struct mdoc_node *last;
@@ -118,7 +119,8 @@ enum	margserr {
 	ARGS_PUNCT,
 	ARGS_QWORD,
 	ARGS_PHRASE,
-	ARGS_PPHRASE
+	ARGS_PPHRASE,
+	ARGS_PEND
 };
 
 enum	margverr {
@@ -161,7 +163,7 @@ enum mdoct	  mdoc_hash_find(const char *);
 int		  mdoc_iscdelim(char);
 int		  mdoc_isdelim(const char *);
 size_t		  mdoc_isescape(const char *);
-enum	mdoc_sec  mdoc_atosec(const char *);
+enum	mdoc_sec  mdoc_str2sec(const char *);
 time_t		  mdoc_atotime(const char *);
 size_t		  mdoc_macro2len(enum mdoct);
 const char	 *mdoc_a2att(const char *);
