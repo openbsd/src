@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.27 2010/04/23 03:50:22 miod Exp $	*/
+/*	$OpenBSD: sched.h,v 1.28 2010/05/14 18:47:56 kettenis Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -185,6 +185,8 @@ extern struct __mp_lock sched_lock;
 #define	SCHED_ASSERT_LOCKED()	KASSERT(__mp_lock_held(&sched_lock))
 #define	SCHED_ASSERT_UNLOCKED()	KASSERT(__mp_lock_held(&sched_lock) == 0)
 
+#define	SCHED_LOCK_INIT()	__mp_lock_init(&sched_lock)
+
 #define	SCHED_LOCK(s)							\
 do {									\
 	s = splsched();							\
@@ -201,6 +203,8 @@ do {									\
 
 #define	SCHED_ASSERT_LOCKED()		splassert(IPL_SCHED);
 #define	SCHED_ASSERT_UNLOCKED()		/* nothing */
+
+#define	SCHED_LOCK_INIT()		/* nothing */
 
 #define	SCHED_LOCK(s)			s = splsched()
 #define	SCHED_UNLOCK(s)			splx(s)

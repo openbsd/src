@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.19 2010/04/23 21:34:38 deraadt Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.20 2010/05/14 18:47:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -200,9 +200,6 @@ sched_exit(struct proc *p)
 void
 sched_init_runqueues(void)
 {
-#ifdef MULTIPROCESSOR
-	__mp_lock_init(&sched_lock);
-#endif
 }
 
 void
