@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.63 2009/08/17 11:36:01 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.64 2010/05/14 11:13:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -59,6 +59,11 @@ pfe_sig_handler(int sig, short event, void *arg)
 	case SIGTERM:
 		pfe_shutdown();
 		break;
+	case SIGCHLD:
+	case SIGHUP:
+	case SIGPIPE:
+		/* ignore */
+		break;
 	default:
 		fatalx("pfe_sig_handler: unexpected signal");
 	}
@@ -71,8 +76,6 @@ pfe(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 {
 	pid_t		 pid;
 	struct passwd	*pw;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
 	int		 i;
 	size_t		 size;
 
@@ -118,12 +121,17 @@ pfe(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, pfe_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, pfe_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
+	signal_set(&env->sc_evsigint, SIGINT, pfe_sig_handler, env);
+	signal_set(&env->sc_evsigterm, SIGTERM, pfe_sig_handler, env);
+	signal_set(&env->sc_evsigchld, SIGCHLD, pfe_sig_handler, env);
+	signal_set(&env->sc_evsighup, SIGHUP, pfe_sig_handler, env);
+	signal_set(&env->sc_evsigpipe, SIGPIPE, pfe_sig_handler, env);
+
+	signal_add(&env->sc_evsigint, NULL);
+	signal_add(&env->sc_evsigterm, NULL);
+	signal_add(&env->sc_evsigchld, NULL);
+	signal_add(&env->sc_evsighup, NULL);
+	signal_add(&env->sc_evsigpipe, NULL);
 
 	/* setup pipes */
 	close(pipe_pfe2hce[0]);

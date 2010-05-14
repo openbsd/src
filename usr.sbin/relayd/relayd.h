@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.134 2010/05/14 07:57:07 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.135 2010/05/14 11:13:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -671,6 +671,13 @@ struct relayd {
 	struct ctl_icmp_event	 sc_icmp_recv;
 	struct ctl_icmp_event	 sc_icmp6_send;
 	struct ctl_icmp_event	 sc_icmp6_recv;
+
+	/* Event and signal handlers */
+	struct event		 sc_evsigint;
+	struct event		 sc_evsigterm;
+	struct event		 sc_evsigchld;
+	struct event		 sc_evsighup;
+	struct event		 sc_evsigpipe;
 };
 
 #define RELAYD_OPT_VERBOSE		0x01
