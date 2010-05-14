@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.133 2010/01/11 06:40:14 jsg Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.134 2010/05/14 07:57:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -837,7 +837,6 @@ int	 relay_from_table(struct rsession *);
 int	 relay_socket_af(struct sockaddr_storage *, in_port_t);
 int	 relay_cmp_af(struct sockaddr_storage *,
 		 struct sockaddr_storage *);
-
 
 RB_PROTOTYPE(proto_tree, protonode, se_nodes, relay_proto_cmp);
 SPLAY_PROTOTYPE(session_tree, rsession, se_nodes, relay_session_cmp);
