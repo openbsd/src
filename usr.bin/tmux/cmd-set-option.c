@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.35 2010/02/22 20:41:16 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.36 2010/05/14 19:03:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -157,6 +157,9 @@ const struct set_option_entry set_window_option_table[] = {
 	{ "remain-on-exit", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "synchronize-panes", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "utf8", SET_OPTION_FLAG, 0, 0, NULL },
+	{ "window-status-alert-attr", SET_OPTION_ATTRIBUTES, 0, 0, NULL },
+	{ "window-status-alert-bg", SET_OPTION_COLOUR, 0, 0, NULL },
+	{ "window-status-alert-fg", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "window-status-attr", SET_OPTION_ATTRIBUTES, 0, 0, NULL },
 	{ "window-status-bg", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "window-status-current-attr", SET_OPTION_ATTRIBUTES, 0, 0, NULL },

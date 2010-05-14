@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.78 2010/05/04 17:28:16 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.79 2010/05/14 19:03:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -416,6 +416,9 @@ main(int argc, char **argv)
 	options_set_number(wo, "window-status-current-bg", 8);
 	options_set_number(wo, "window-status-current-fg", 8);
 	options_set_number(wo, "window-status-fg", 8);
+	options_set_number(wo, "window-status-alert-attr", GRID_ATTR_REVERSE);
+	options_set_number(wo, "window-status-alert-bg", 8);
+	options_set_number(wo, "window-status-alert-fg", 8);
 	options_set_string(wo, "window-status-format", "#I:#W#F");
 	options_set_string(wo, "window-status-current-format", "#I:#W#F");
 	options_set_string(wo, "word-separators", " -_@");
