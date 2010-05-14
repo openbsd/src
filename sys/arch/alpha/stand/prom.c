@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.7 2009/09/30 19:43:44 miod Exp $	*/
+/*	$OpenBSD: prom.c,v 1.8 2010/05/14 21:08:28 naddy Exp $	*/
 /*	$NetBSD: prom.c,v 1.2 1996/11/25 16:18:16 cgd Exp $	*/
 
 /*  
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
+#include <lib/libsa/stand.h>
 
 #include <sys/types.h>
 
