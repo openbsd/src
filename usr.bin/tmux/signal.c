@@ -1,4 +1,4 @@
-/* $Id: signal.c,v 1.4 2010/05/12 15:05:39 jsing Exp $ */
+/* $OpenBSD: signal.c,v 1.5 2010/05/14 14:41:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
