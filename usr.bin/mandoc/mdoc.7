@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.27 2010/05/14 14:47:44 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.28 2010/05/14 19:52:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -296,6 +296,12 @@ or
 is necessarily non-portable across output media.
 See
 .Sx COMPATIBILITY .
+.Ss Sentence Spacing
+When composing a manual, make sure that your sentences end at the end of
+a line.
+By doing so, front-ends will be able to apply the proper amount of
+spacing after the end of sentence (unescaped) period, exclamation mark,
+or question mark.
 .Sh MANUAL STRUCTURE
 A well-formed
 .Nm

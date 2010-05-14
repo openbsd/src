@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.47 2010/05/14 14:47:44 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.48 2010/05/14 19:52:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -120,7 +120,7 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	/* LINTED */
 	"Dx",		"%Q",		"br",		"sp",
 	/* LINTED */
-	"%U",		"eos"
+	"%U"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -688,20 +688,21 @@ mdoc_ptext(struct mdoc *m, int line, char *buf)
 	}
 
 	/* Allocate the whole word. */
+
 	if ( ! mdoc_word_alloc(m, line, 0, buf))
 		return(0);
 
 	/*
-	 * Mark the end of a sentence.  Only works when you respect
-	 * Jason's rule: "new sentence, new line".
+	 * End-of-sentence check.  If the last character is an unescaped
+	 * EOS character, then flag the node as being the end of a
+	 * sentence.  The front-end will know how to interpret this.
 	 */
-	if ('.' == buf[i-1] || '!' == buf[i-1] || '?' == buf[i-1]) {
-		m->next = MDOC_NEXT_SIBLING;
-		if ( ! mdoc_elem_alloc(m, line, i, MDOC_eos, NULL))
-			return(0);
-	}
 
-	m->next = MDOC_NEXT_SIBLING;
+	assert(i);
+
+	if (mandoc_eos(buf, (size_t)i))
+		m->last->flags |= MDOC_EOS;
+
 	return(1);
 }
 
@@ -727,8 +728,6 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf)
 	enum mdoct	tok;
 	int		i, j, sv;
 	char		mac[5];
-	struct mdoc_node *n;
-	char		 *t;
 
 	/* Empty lines are ignored. */
 
@@ -798,29 +797,6 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf)
 	 */
 	if ( ! mdoc_macro(m, tok, ln, sv, &i, buf)) 
 		goto err;
-
-	/*
-	 * Mark the end of a sentence, but be careful not to insert
-	 * markers into reference blocks and after ellipses in
-	 * function definitions.
-	 */
-	n = m->last;
-	if (n->child)
-		n = n->child;
-	while (n->next)
-		n = n->next;
-	if (MDOC_TEXT == n->type &&
-	    MDOC_Fn != n->parent->tok &&
-	    MDOC_Rs != m->last->parent->tok) {
-		t = n->string;
-		while (t[0] && t[1])
-			t++;
-		if ('.' == *t || '!' == *t || '?' == *t) {
-			if ( ! mdoc_elem_alloc(m, ln, i, MDOC_eos, NULL))
-				return(0);
-			m->next = MDOC_NEXT_SIBLING;
-		}
-	}
 
 	return(1);
 

@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.16 2010/05/13 20:34:29 schwarze Exp $ */
+/*	$Id: man.h,v 1.17 2010/05/14 19:52:43 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -96,7 +96,8 @@ struct	man_node {
 	int		 flags;
 #define	MAN_VALID	(1 << 0)
 #define	MAN_ACTED	(1 << 1)
-#define	MAN_USE 	(1 << 2)
+#define	MAN_EOS		(1 << 2)
+#define	MAN_USE 	(1 << 3)
 	enum man_type	 type;
 	char		*string;
 	struct man_node	*head;

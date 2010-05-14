@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.32 2010/05/14 14:47:44 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.33 2010/05/14 19:52:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -188,7 +188,6 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* br */
 	{ NULL, NULL }, /* sp */
 	{ NULL, NULL }, /* %U */
-	{ NULL, NULL }, /* eos */
 };
 
 #define	RSORD_MAX 14

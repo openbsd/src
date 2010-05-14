@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.13 2010/05/14 14:47:44 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.14 2010/05/14 19:52:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -251,7 +251,6 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_sp_pre, NULL}, /* br */
 	{mdoc_sp_pre, NULL}, /* sp */ 
 	{mdoc__x_pre, mdoc__x_post}, /* %U */ 
-	{NULL, NULL}, /* eos */
 };
 
 

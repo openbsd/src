@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.30 2010/04/23 00:23:47 schwarze Exp $ */
+/*	$Id: term.c,v 1.31 2010/05/14 19:52:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -163,8 +163,7 @@ term_flushln(struct termp *p)
 		 * beginning of a line, one between words -- but do not
 		 * actually write them yet.
 		 */
-		vbl = (size_t)(ASCII_EOS == p->buf[i] ? 2 :
-				(0 == vis ? 0 : 1));
+		vbl = (size_t)(0 == vis ? 0 : 1);
 		vis += vbl;
 		vend = vis;
 
@@ -195,20 +194,13 @@ term_flushln(struct termp *p)
 				break;
 			else if (8 == p->buf[j])
 				vend--;
-			else if (ASCII_EOS != p->buf[j]) {
+			else {
 				if (vend > vis && vend < bp &&
 				    '-' == p->buf[j])
 					jhy = j;
 				vend++;
 			}
 		}
-
-		/*
-		 * Skip empty words.  This happens due to the ASCII_EOS
-		 * after the end of the final sentence of a paragraph.
-		 */
-		if (vend == vis && j == (int)p->col)
-			break;
 
 		/*
 		 * Usually, indent the first line of each paragraph.
@@ -268,7 +260,7 @@ term_flushln(struct termp *p)
 			}
 			if (ASCII_NBRSP == p->buf[i])
 				putchar(' ');
-			else if (ASCII_EOS != p->buf[i])
+			else
 				putchar(p->buf[i]);
 		}
 		p->viscol += vend - vis;
@@ -487,11 +479,16 @@ term_word(struct termp *p, const char *word)
 			break;
 		}
 
-	if ( ! (TERMP_NOSPACE & p->flags))
+	if ( ! (TERMP_NOSPACE & p->flags)) {
 		bufferc(p, ' ');
+		if (TERMP_SENTENCE & p->flags)
+			bufferc(p, ' ');
+	}
 
 	if ( ! (p->flags & TERMP_NONOSPACE))
 		p->flags &= ~TERMP_NOSPACE;
+
+	p->flags &= ~TERMP_SENTENCE;
 
 	/* FIXME: use strcspn. */
 
@@ -533,6 +530,10 @@ term_word(struct termp *p, const char *word)
 			p->flags |= TERMP_NOSPACE;
 	}
 
+	/* 
+	 * Note that we don't process the pipe: the parser sees it as
+	 * punctuation, but we don't in terms of typography.
+	 */
 	if (sv[0] && 0 == sv[1])
 		switch (sv[0]) {
 		case('('):

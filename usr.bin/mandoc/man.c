@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.27 2010/05/14 01:54:37 schwarze Exp $ */
+/*	$Id: man.c,v 1.28 2010/05/14 19:52:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -432,6 +432,17 @@ man_ptext(struct man *m, int line, char *buf)
 
 	if ( ! man_word_alloc(m, line, 0, buf))
 		return(0);
+
+	/*
+	 * End-of-sentence check.  If the last character is an unescaped
+	 * EOS character, then flag the node as being the end of a
+	 * sentence.  The front-end will know how to interpret this.
+	 */
+
+	assert(i);
+
+	if (mandoc_eos(buf, (size_t)i))
+		m->last->flags |= MAN_EOS;
 
 descope:
 	/*
