@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.5 2010/05/12 13:31:35 claudio Exp $ */
+/*	$OpenBSD: notification.c,v 1.6 2010/05/14 13:49:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -43,17 +43,18 @@ void
 send_notification_nbr(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
     u_int32_t type)
 {
+	struct buf	*buf;
+
 	if (nbr->iface->passive)
 		return;
 
-	log_debug("send_notification: neighbor ID %s", inet_ntoa(nbr->id));
-
-	send_notification(status, nbr->iface, nbr->fd, msgid, type);
+	buf = send_notification(status, nbr->iface, msgid, type);
+	evbuf_enqueue(&nbr->wbuf, buf);
 }
 
-void
-send_notification(u_int32_t status, struct iface *iface, int fd,
-    u_int32_t msgid, u_int32_t type)
+struct buf *
+send_notification(u_int32_t status, struct iface *iface, u_int32_t msgid,
+    u_int32_t type)
 {
 	struct buf	*buf;
 	u_int16_t	 size;
@@ -73,8 +74,7 @@ send_notification(u_int32_t status, struct iface *iface, int fd,
 
 	gen_status_tlv(buf, status, msgid, type);
 
-	write(fd, buf->buf, buf->wpos);
-	buf_free(buf);
+	return (buf);
 }
 
 int

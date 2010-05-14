@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.10 2010/05/01 12:22:33 jsg Exp $ */
+/*	$OpenBSD: packet.c,v 1.11 2010/05/14 13:49:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -276,12 +276,14 @@ session_accept(int fd, short event, void *bula)
 		return;
 	}
 
-	/* XXX */
 	nbr = nbr_find_ip(iface, src.sin_addr.s_addr);
 	if (nbr == NULL) {
+		struct buf	*buf;
 		/* If there is no neighbor matching there is no
-		   Hello adjacency: send notification */
-		send_notification(S_NO_HELLO, iface, newfd, 0, 0);
+		   Hello adjacency: try to send notification */
+		buf = send_notification(S_NO_HELLO, iface, 0, 0);
+		write(newfd, buf->buf, buf->wpos);
+		buf_free(buf);
 		close(newfd);
 		return;
 	}
@@ -437,8 +439,9 @@ session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 	    inet_ntoa(nbr->id), status);
 
 	send_notification_nbr(nbr, status, msgid, type);
-	if (status != S_SHUTDOWN)
-		send_notification_nbr(nbr, S_SHUTDOWN, msgid, type);
+
+	/* try to flush write buffer, if it fails tough shit */
+	msgbuf_write(&nbr->wbuf.wbuf);
 
 	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 }
