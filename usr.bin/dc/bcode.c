@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.40 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.41 2010/05/15 10:59:29 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -410,7 +410,7 @@ split_number(const struct number *n, BIGNUM *i, BIGNUM *f)
 	}
 }
 
-__inline void
+void
 normalize(struct number *n, u_int s)
 {
 	scale_number(n->number, s - n->scale);
