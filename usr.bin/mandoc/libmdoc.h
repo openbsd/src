@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.30 2010/05/14 14:47:44 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.31 2010/05/15 12:30:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -130,6 +130,13 @@ enum	margverr {
 	ARGV_WORD
 };
 
+enum	mdelim {
+	DELIM_NONE = 0,
+	DELIM_OPEN,
+	DELIM_MIDDLE,
+	DELIM_CLOSE
+};
+
 extern	const struct mdoc_macro *const mdoc_macros;
 
 __BEGIN_DECLS
@@ -160,8 +167,8 @@ int		  mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
 void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
 void		  mdoc_hash_init(void);
 enum mdoct	  mdoc_hash_find(const char *);
-int		  mdoc_iscdelim(char);
-int		  mdoc_isdelim(const char *);
+enum mdelim	  mdoc_iscdelim(char);
+enum mdelim	  mdoc_isdelim(const char *);
 size_t		  mdoc_isescape(const char *);
 enum	mdoc_sec  mdoc_str2sec(const char *);
 time_t		  mdoc_atotime(const char *);

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.26 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.27 2010/05/15 12:30:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -404,9 +404,10 @@ args(struct mdoc *m, int line, int *pos,
 	 * we ONLY care about closing delimiters.
 	 */
 
-	if ((fl & ARGS_DELIM) && mdoc_iscdelim(buf[*pos]) > 1) {
+	if ((fl & ARGS_DELIM) && DELIM_CLOSE == mdoc_iscdelim(buf[*pos])) {
 		for (i = *pos; buf[i]; ) {
-			if ( mdoc_iscdelim(buf[i]) < 2)
+			enum mdelim d = mdoc_iscdelim(buf[i]);
+			if (DELIM_NONE == d || DELIM_OPEN == d)
 				break;
 			i++;
 			if ('\0' == buf[i] || ' ' != buf[i])

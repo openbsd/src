@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.39 2010/05/15 09:20:01 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.40 2010/05/15 12:30:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -632,7 +632,7 @@ append_delims(struct mdoc *mdoc, int line, int *pos, char *buf)
 			return(0);
 		else if (ARGS_EOLN == ac)
 			break;
-		assert(mdoc_isdelim(p));
+		assert(DELIM_NONE != mdoc_isdelim(p));
 		if ( ! mdoc_word_alloc(mdoc, line, lastarg, p))
 			return(0);
 	}
@@ -728,10 +728,11 @@ blk_exp_close(MACRO_PROT_ARGS)
 static int
 in_line(MACRO_PROT_ARGS)
 {
-	int		 la, lastpunct, cnt, d, nc, nl;
+	int		 la, lastpunct, cnt, nc, nl;
 	enum margverr	 av;
 	enum mdoct	 ntok;
 	enum margserr	 ac;
+	enum mdelim	 d;
 	struct mdoc_arg	*arg;
 	char		*p;
 
@@ -824,9 +825,9 @@ in_line(MACRO_PROT_ARGS)
 		 * the word. 
 		 */
 
-		d = ARGS_QWORD == ac ? 0 : mdoc_isdelim(p);
+		d = ARGS_QWORD == ac ? DELIM_NONE : mdoc_isdelim(p);
 
-		if (ARGS_QWORD != ac && d) {
+		if (ARGS_QWORD != ac && DELIM_NONE != d) {
 			if (0 == lastpunct && ! rew_elem(m, tok))
 				return(0);
 			lastpunct = 1;
@@ -836,7 +837,7 @@ in_line(MACRO_PROT_ARGS)
 			lastpunct = 0;
 		}
 
-		if ( ! d)
+		if (DELIM_NONE == d)
 			cnt++;
 		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
@@ -961,11 +962,6 @@ blk_full(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == ac)
 			break;
 
-/*
- * XXX Temporarily disable the handling of leading punctuation.
- *     We must investigate the fallout before enabling this.
- */
-#if 0
 		/* Don't emit leading punct. for phrases. */
 
 		if (NULL == head && 
@@ -973,12 +969,11 @@ blk_full(MACRO_PROT_ARGS)
 				ARGS_PPHRASE != ac &&
 				ARGS_PEND != ac &&
 				ARGS_QWORD != ac &&
-				1 == mdoc_isdelim(p)) {
+				DELIM_OPEN == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
 		}
-#endif
 
 		/* Always re-open head for phrases. */
 
@@ -1112,18 +1107,12 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if (ARGS_PUNCT == ac)
 			break;
 
-/*
- * XXX Temporarily disable the handling of leading punctuation.
- *     We must investigate the fallout before enabling this.
- */
-#if 0
 		if (NULL == body && ARGS_QWORD != ac &&
-				1 == mdoc_isdelim(p)) {
+		    DELIM_OPEN == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
 		} 
-#endif
 
 		if (NULL == body) {
 		       if ( ! mdoc_body_alloc(m, line, ppos, tok))
@@ -1233,21 +1222,15 @@ blk_part_exp(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == ac)
 			break;
 
-/*
- * XXX Temporarily disable the handling of leading punctuation.
- *     We must investigate the fallout before enabling this.
- */
-#if 0
 		/* Flush out leading punctuation. */
 
 		if (NULL == head && ARGS_QWORD != ac &&
-				1 == mdoc_isdelim(p)) {
+		    DELIM_OPEN == mdoc_isdelim(p)) {
 			assert(NULL == body);
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
 		} 
-#endif
 
 		if (NULL == head) {
 			assert(NULL == body);
@@ -1385,20 +1368,13 @@ in_line_argn(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == ac)
 			break;
 
-/*
- * XXX Temporarily disable the handling of leading punctuation.
- *     We must investigate the fallout before enabling this.
- */
-#if 0
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) && 
 				ARGS_QWORD != ac &&
-				0 == j && 1 == mdoc_isdelim(p)) {
+				0 == j && DELIM_OPEN == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
-		} else
-#endif
-		if (0 == j)
+		} else if (0 == j)
 		       if ( ! mdoc_elem_alloc(m, line, la, tok, arg))
 			       return(0);
 
@@ -1422,7 +1398,8 @@ in_line_argn(MACRO_PROT_ARGS)
 
 		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) &&
 				ARGS_QWORD != ac &&
-				! flushed && mdoc_isdelim(p)) {
+				! flushed &&
+				DELIM_NONE != mdoc_isdelim(p)) {
 			if ( ! rew_elem(m, tok))
 				return(0);
 			flushed = 1;

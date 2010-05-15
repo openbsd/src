@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.15 2010/05/14 14:47:44 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.16 2010/05/15 12:30:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -53,17 +53,17 @@ static	const char * const secnames[SEC__MAX] = {
  * FIXME: this is repeated in print_text() (html.c) and term_word()
  * (term.c).
  */
-int
+enum mdelim
 mdoc_iscdelim(char p)
 {
 
 	switch (p) {
-	case('|'):
-		/* FALLTHROUGH */
 	case('('):
 		/* FALLTHROUGH */
 	case('['):
-		return(1);
+		return(DELIM_OPEN);
+	case('|'):
+		return(DELIM_MIDDLE);
 	case('.'):
 		/* FALLTHROUGH */
 	case(','):
@@ -79,16 +79,16 @@ mdoc_iscdelim(char p)
 	case(')'):
 		/* FALLTHROUGH */
 	case(']'):
-		return(2);
+		return(DELIM_CLOSE);
 	default:
 		break;
 	}
 
-	return(0);
+	return(DELIM_NONE);
 }
 
 
-int
+enum mdelim
 mdoc_isdelim(const char *p)
 {
 
@@ -102,7 +102,7 @@ mdoc_isdelim(const char *p)
 	 * is treated in exactly the same way as the vertical bar.  This
 	 * is the only function that checks for this.
 	 */
-	return(0 == strcmp(p, "\\*(Ba"));
+	return(strcmp(p, "\\*(Ba") ? DELIM_NONE : DELIM_MIDDLE);
 }
 
 
