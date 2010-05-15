@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.42 2010/05/15 15:37:53 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.43 2010/05/15 15:53:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -636,6 +636,7 @@ append_delims(struct mdoc *m, int line, int *pos, char *buf)
 		assert(DELIM_NONE != mdoc_isdelim(p));
 		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
+
 		/*
 		 * If we encounter end-of-sentence symbols, then trigger
 		 * the double-space.
@@ -897,7 +898,7 @@ in_line(MACRO_PROT_ARGS)
 static int
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  la;
+	int		  la, nl;
 	struct mdoc_arg	 *arg;
 	struct mdoc_node *head; /* save of head macro */
 	struct mdoc_node *body; /* save of body macro */
@@ -906,6 +907,8 @@ blk_full(MACRO_PROT_ARGS)
 	enum margserr	  ac, lac;
 	enum margverr	  av;
 	char		 *p;
+
+	nl = MDOC_NEWLINE & m->flags;
 
 	/* Close out prior implicit scope. */
 
@@ -1035,7 +1038,7 @@ blk_full(MACRO_PROT_ARGS)
 		head = m->last;
 	}
 	
-	if (1 == ppos && ! append_delims(m, line, pos, buf))
+	if (nl && ! append_delims(m, line, pos, buf))
 		return(0);
 
 	/* If we've already opened our body, exit now. */
@@ -1072,13 +1075,15 @@ blk_full(MACRO_PROT_ARGS)
 static int
 blk_part_imp(MACRO_PROT_ARGS)
 {
-	int		  la;
+	int		  la, nl;
 	enum mdoct	  ntok;
 	enum margserr	  ac;
 	char		 *p;
 	struct mdoc_node *blk; /* saved block context */
 	struct mdoc_node *body; /* saved body context */
 	struct mdoc_node *n;
+
+	nl = MDOC_NEWLINE & m->flags;
 
 	/*
 	 * A macro that spans to the end of the line.  This is generally
@@ -1187,7 +1192,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 
 	/* Standard appending of delimiters. */
 
-	if (1 == ppos && ! append_delims(m, line, pos, buf))
+	if (nl && ! append_delims(m, line, pos, buf))
 		return(0);
 
 	/* Rewind scope, if applicable. */
