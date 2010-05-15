@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.38 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.39 2010/05/15 09:20:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,6 +22,7 @@
 #include <time.h>
 
 #include "libmdoc.h"
+#include "libmandoc.h"
 
 enum	rew {
 	REWIND_REWIND,
@@ -1149,6 +1150,25 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
 		body = m->last;
+	}
+
+	for (n = body->child; n && n->next; n = n->next)
+		/* Do nothing. */ ;
+	
+	/* 
+	 * End of sentence spacing: if the last node is a text node and
+	 * has a trailing period, then mark it as being end-of-sentence.
+	 */
+
+	if (n && MDOC_TEXT == n->type && n->string)
+		if (mandoc_eos(n->string, strlen(n->string)))
+			n->flags |= MDOC_EOS;
+
+	/* Up-propogate the end-of-space flag. */
+
+	if (n && (MDOC_EOS & n->flags)) {
+		body->flags |= MDOC_EOS;
+		body->parent->flags |= MDOC_EOS;
 	}
 
 	/* 
