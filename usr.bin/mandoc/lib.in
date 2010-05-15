@@ -1,4 +1,4 @@
-/*	$Id: lib.in,v 1.3 2009/12/23 22:30:17 schwarze Exp $ */
+/*	$Id: lib.in,v 1.4 2010/05/15 22:04:31 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -33,6 +33,7 @@ LINE("libcompat",	"Compatibility Library (libcompat, \\-lcompat)")
 LINE("libcrypt",	"Crypt Library (libcrypt, \\-lcrypt)")
 LINE("libcurses",	"Curses Library (libcurses, \\-lcurses)")
 LINE("libedit",		"Command Line Editor Library (libedit, \\-ledit)")
+LINE("libelf",		"ELF Parsing Library (libelf, \\-lelf)")
 LINE("libevent",	"Event Notification Library (libevent, \\-levent)")
 LINE("libfetch",	"File Transfer Library for URLs (libfetch, \\-lfetch)")
 LINE("libform",		"Curses Form Library (libform, \\-lform)")
@@ -60,6 +61,7 @@ LINE("libresolv",	"DNS Resolver Library (libresolv, \\-lresolv)")
 LINE("librt",		"POSIX Real\\-time Library (librt, -lrt)")
 LINE("libssp",		"Buffer Overflow Protection Library (libssp, \\-lssp)")
 LINE("libtermcap",	"Termcap Access Library (libtermcap, \\-ltermcap)")
+LINE("libterminfo",	"Terminal Information Library (libterminfo, \\-lterminfo)")
 LINE("libusbhid",	"USB Human Interface Devices Library (libusbhid, \\-lusbhid)")
 LINE("libutil",		"System Utilities Library (libutil, \\-lutil)")
 LINE("libx86_64",	"x86_64 Architecture Library (libx86_64, \\-lx86_64)")
