@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.52 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.53 2010/05/15 16:48:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,8 +40,6 @@ struct	valids {
 };
 
 static	int	 check_parent(PRE_ARGS, enum mdoct, enum mdoc_type);
-static	int	 check_msec(PRE_ARGS, ...);
-static	int	 check_sec(PRE_ARGS, ...);
 static	int	 check_stdarg(PRE_ARGS);
 static	int	 check_text(struct mdoc *, int, int, const char *);
 static	int	 check_argv(struct mdoc *, 
@@ -96,10 +93,7 @@ static	int	 pre_bl(PRE_ARGS);
 static	int	 pre_dd(PRE_ARGS);
 static	int	 pre_display(PRE_ARGS);
 static	int	 pre_dt(PRE_ARGS);
-static	int	 pre_ex(PRE_ARGS);
-static	int	 pre_fd(PRE_ARGS);
 static	int	 pre_it(PRE_ARGS);
-static	int	 pre_lb(PRE_ARGS);
 static	int	 pre_os(PRE_ARGS);
 static	int	 pre_rv(PRE_ARGS);
 static	int	 pre_sh(PRE_ARGS);
@@ -135,10 +129,10 @@ static	v_pre	 pres_d1[] = { pre_display, NULL };
 static	v_pre	 pres_dd[] = { pre_dd, NULL };
 static	v_pre	 pres_dt[] = { pre_dt, NULL };
 static	v_pre	 pres_er[] = { NULL, NULL };
-static	v_pre	 pres_ex[] = { pre_ex, NULL };
-static	v_pre	 pres_fd[] = { pre_fd, NULL };
+static	v_pre	 pres_ex[] = { NULL, NULL };
+static	v_pre	 pres_fd[] = { NULL, NULL };
 static	v_pre	 pres_it[] = { pre_it, NULL };
-static	v_pre	 pres_lb[] = { pre_lb, NULL };
+static	v_pre	 pres_lb[] = { NULL, NULL };
 static	v_pre	 pres_os[] = { pre_os, NULL };
 static	v_pre	 pres_rv[] = { pre_rv, NULL };
 static	v_pre	 pres_sh[] = { pre_sh, NULL };
@@ -408,52 +402,6 @@ check_stdarg(PRE_ARGS)
 		if (MDOC_Std == n->args->argv[0].arg)
 			return(1);
 	return(mdoc_nwarn(mdoc, n, EARGVAL));
-}
-
-
-static int
-check_sec(PRE_ARGS, ...)
-{
-	enum mdoc_sec	 sec;
-	va_list		 ap;
-
-	va_start(ap, n);
-
-	for (;;) {
-		/* LINTED */
-		sec = (enum mdoc_sec)va_arg(ap, int);
-		if (SEC_CUSTOM == sec)
-			break;
-		if (sec != mdoc->lastsec)
-			continue;
-		va_end(ap);
-		return(1);
-	}
-
-	va_end(ap);
-	return(mdoc_nwarn(mdoc, n, EBADSEC));
-}
-
-
-static int
-check_msec(PRE_ARGS, ...)
-{
-	va_list		 ap;
-	int		 msec;
-
-	va_start(ap, n);
-	for (;;) {
-		/* LINTED */
-		if (0 == (msec = va_arg(ap, int)))
-			break;
-		if (msec != mdoc->meta.msec)
-			continue;
-		va_end(ap);
-		return(1);
-	}
-
-	va_end(ap);
-	return(mdoc_nwarn(mdoc, n, EBADMSEC));
 }
 
 
@@ -758,27 +706,9 @@ pre_an(PRE_ARGS)
 
 
 static int
-pre_lb(PRE_ARGS)
-{
-
-	return(check_sec(mdoc, n, SEC_LIBRARY, SEC_CUSTOM));
-}
-
-
-static int
 pre_rv(PRE_ARGS)
 {
 
-	return(check_stdarg(mdoc, n));
-}
-
-
-static int
-pre_ex(PRE_ARGS)
-{
-
-	if ( ! check_msec(mdoc, n, 1, 6, 8, 0))
-		return(0);
 	return(check_stdarg(mdoc, n));
 }
 
@@ -917,7 +847,7 @@ post_at(POST_ARGS)
 		return(mdoc_nerr(mdoc, mdoc->last, EATT));
 	if (mdoc_a2att(mdoc->last->child->string))
 		return(1);
-	return(mdoc_nerr(mdoc, mdoc->last, EATT));
+	return(mdoc_nwarn(mdoc, mdoc->last, EATT));
 }
 
 
@@ -1035,14 +965,14 @@ post_it(POST_ARGS)
 		for (i = 0; c && MDOC_HEAD == c->type; c = c->next)
 			i++;
 
-		if (i < cols || i == (cols + 1)) {
+		if (i < cols) {
 			if ( ! mdoc_vwarn(mdoc, mdoc->last->line, 
 					mdoc->last->pos, "column "
 					"mismatch: have %d, want %d", 
 					i, cols))
 				return(0);
 			break;
-		} else if (i == cols)
+		} else if (i == cols || i == cols + 1)
 			break;
 
 		return(mdoc_verr(mdoc, mdoc->last->line, 
@@ -1158,7 +1088,7 @@ post_st(POST_ARGS)
 
 	if (mdoc_a2st(mdoc->last->child->string))
 		return(1);
-	return(mdoc_nerr(mdoc, mdoc->last, EBADSTAND));
+	return(mdoc_nwarn(mdoc, mdoc->last, EBADSTAND));
 }
 
 
@@ -1325,12 +1255,4 @@ post_sh_head(POST_ARGS)
 	}
 
 	return(1);
-}
-
-
-static int
-pre_fd(PRE_ARGS)
-{
-
-	return(check_sec(mdoc, n, SEC_SYNOPSIS, SEC_CUSTOM));
 }

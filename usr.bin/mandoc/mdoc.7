@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.29 2010/05/15 15:37:53 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.30 2010/05/15 16:48:12 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -1911,10 +1911,17 @@ This is not the case in mandoc.
 In groff, the
 .Sx \&Cd ,
 .Sx \&Er ,
+.Sx \&Ex ,
 and
-.Sx \&Ex
+.Sx \&Rv
 macros were stipulated only to occur in certain manual sections.
 mandoc does not have these restrictions.
+.It
+Newer groff and mandoc print
+.Qq AT&T UNIX
+prior to unknown arguments of
+.Sx \&At ;
+older groff did nothing.
 .El
 .Sh SEE ALSO
 .Xr mandoc 1 ,
