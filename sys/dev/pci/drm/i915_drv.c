@@ -3376,8 +3376,7 @@ i915_gem_object_pin(struct drm_obj *obj, uint32_t alignment, int needs_fence)
 	if (obj_priv->dmamap != NULL &&
 	    ((alignment && obj_priv->gtt_offset & (alignment - 1)) ||
 	    obj_priv->gtt_offset & (i915_gem_get_gtt_alignment(obj) - 1) ||
-	    (needs_fence && !i915_gem_object_fence_offset_ok(obj,
-	    obj_priv->tiling_mode)))) {
+	    !i915_gem_object_fence_offset_ok(obj, obj_priv->tiling_mode))) {
 		/* if it is already pinned we sanitised the alignment then */
 		KASSERT(obj_priv->pin_count == 0);
 		if ((ret = i915_gem_object_unbind(obj, 1)))
