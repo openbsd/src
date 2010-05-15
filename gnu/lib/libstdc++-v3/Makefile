@@ -1,16 +1,9 @@
 # $FreeBSD: src/gnu/lib/libstdc++/Makefile,v 1.63.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.5 2010/05/09 11:39:59 espie Exp $
+# $OpenBSD: Makefile,v 1.6 2010/05/15 08:21:03 robert Exp $
 
-GCCDIR= ${.CURDIR}/../../gcc/gcc
-GCCLIB= ${GCCDIR}/gcc
-SRCDIR=	${.CURDIR}/../../gcc/libstdc++-v3
-SUPDIR=	${SRCDIR}/libsupc++
+.include "${.CURDIR}/Makefile.common"
 
 GCC_TARGET=	${MACHINE_ARCH}-unknown-openbsd${OSREV}
-
-.PATH: ${SRCDIR}/src ${SRCDIR}/libmath ${SRCDIR}/config/io \
-       ${SRCDIR}/config/locale/generic \
-       ${SRCDIR}/include ${SUPDIR} ${.CURDIR}/../libiberty/src
 
 LIB=		stdc++
 
@@ -56,15 +49,7 @@ SRCS+=  basic_file_stdio.cc c_locale.cc
 SRCS+=	stubs.c
 
 # Embedded copy of libsupc++
-SRCS+=	del_op.cc del_opnt.cc del_opv.cc del_opvnt.cc eh_alloc.cc eh_arm.cc \
-	eh_aux_runtime.cc eh_call.cc eh_catch.cc eh_exception.cc eh_globals.cc \
-	eh_personality.cc eh_term_handler.cc eh_terminate.cc eh_throw.cc \
-	eh_type.cc eh_unex_handler.cc guard.cc new_handler.cc new_op.cc \
-	new_opnt.cc new_opv.cc new_opvnt.cc pure.cc tinfo.cc tinfo2.cc \
-	vec.cc vterminate.cc
-
-# from libiberty:
-SRCS+=	cp-demangle.c
+SRCS+=	${SUPSRCS}
 
 # MD headers location
 .if ${MACHINE_ARCH} == "sparc64"
@@ -598,12 +583,6 @@ gthr-default.h: ${GCCDIR}/gthr-posix.h
 	    < ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	${THRHDRS}
-
-unwind.h: ${GCCDIR}/unwind-generic.h
-	ln -sf ${.ALLSRC} ${.TARGET}
-
-SRCS+=		unwind.h
-CLEANFILES+=	unwind.h
 
 DATESTAMP!=	cat ${GCCDIR}/DATESTAMP
 
