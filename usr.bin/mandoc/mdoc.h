@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.22 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.23 2010/05/15 18:25:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -223,7 +223,7 @@ enum	mdoc_sec {
 
 /* Information from prologue. */
 struct	mdoc_meta {
-	int		  msec;
+	char		 *msec;
 	char		 *vol;
 	char		 *arch;
 	time_t		  date;

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.49 2010/05/15 16:48:12 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.50 2010/05/15 18:25:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -64,7 +64,7 @@ const	char *const __mdoc_merrnames[MERRMAX] = {
 	"line arguments discouraged", /* ENOLINE */
 	"prologue macro out of conventional order", /* EPROLOOO */
 	"prologue macro repeated", /* EPROLREP */
-	"invalid section", /* EBADSEC */
+	"invalid manual section", /* EBADMSEC */
 	"invalid font mode", /* EFONT */
 	"invalid date syntax", /* EBADDATE */
 	"invalid number format", /* ENUMFMT */
@@ -186,6 +186,8 @@ mdoc_free1(struct mdoc *mdoc)
 		free(mdoc->meta.arch);
 	if (mdoc->meta.vol)
 		free(mdoc->meta.vol);
+	if (mdoc->meta.msec)
+		free(mdoc->meta.msec);
 }
 
 

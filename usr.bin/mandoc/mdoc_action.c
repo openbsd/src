@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.34 2010/05/15 16:48:12 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.35 2010/05/15 18:25:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -442,17 +442,14 @@ post_sh(POST_ARGS)
 	case (SEC_RETURN_VALUES):
 		/* FALLTHROUGH */
 	case (SEC_ERRORS):
-		switch (m->meta.msec) {
-		case (2):
-			/* FALLTHROUGH */
-		case (3):
-			/* FALLTHROUGH */
-		case (9):
+		assert(m->meta.msec);
+		if (*m->meta.msec == '2')
 			break;
-		default:
-			return(mdoc_nwarn(m, n, EBADSEC));
-		}
-		break;
+		if (*m->meta.msec == '3')
+			break;
+		if (*m->meta.msec == '9')
+			break;
+		return(mdoc_nwarn(m, n, EWRONGMSEC));
 	default:
 		break;
 	}
@@ -469,8 +466,6 @@ post_dt(POST_ARGS)
 {
 	struct mdoc_node *nn;
 	const char	 *cp;
-	char		 *ep;
-	long		  lval;
 
 	if (m->meta.title)
 		free(m->meta.title);
@@ -480,16 +475,16 @@ post_dt(POST_ARGS)
 		free(m->meta.arch);
 
 	m->meta.title = m->meta.vol = m->meta.arch = NULL;
-	m->meta.msec = 0;
-
 	/* Handles: `.Dt' 
 	 *   --> title = unknown, volume = local, msec = 0, arch = NULL
 	 */
 
 	if (NULL == (nn = n->child)) {
 		/* XXX: make these macro values. */
+		/* FIXME: warn about missing values. */
 		m->meta.title = mandoc_strdup("unknown");
 		m->meta.vol = mandoc_strdup("local");
+		m->meta.msec = mandoc_strdup("1");
 		return(post_prol(m, n));
 	}
 
@@ -500,8 +495,10 @@ post_dt(POST_ARGS)
 	m->meta.title = mandoc_strdup(nn->string);
 
 	if (NULL == (nn = nn->next)) {
+		/* FIXME: warn about missing msec. */
 		/* XXX: make this a macro value. */
 		m->meta.vol = mandoc_strdup("local");
+		m->meta.msec = mandoc_strdup("1");
 		return(post_prol(m, n));
 	}
 
@@ -514,13 +511,13 @@ post_dt(POST_ARGS)
 
 	cp = mdoc_a2msec(nn->string);
 	if (cp) {
-		/* FIXME: where is strtonum!? */
 		m->meta.vol = mandoc_strdup(cp);
-		lval = strtol(nn->string, &ep, 10);
-		if (nn->string[0] != '\0' && *ep == '\0')
-			m->meta.msec = (int)lval;
-	} else 
+		m->meta.msec = mandoc_strdup(nn->string);
+	} else if (mdoc_nwarn(m, n, EBADMSEC)) {
 		m->meta.vol = mandoc_strdup(nn->string);
+		m->meta.msec = mandoc_strdup(nn->string);
+	} else
+		return(0);
 
 	if (NULL == (nn = nn->next))
 		return(post_prol(m, n));
@@ -537,6 +534,7 @@ post_dt(POST_ARGS)
 		free(m->meta.vol);
 		m->meta.vol = mandoc_strdup(cp);
 	} else {
+		/* FIXME: warn about bad arch. */
 		cp = mdoc_a2arch(nn->string);
 		if (NULL == cp) {
 			free(m->meta.vol);

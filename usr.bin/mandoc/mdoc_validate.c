@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.53 2010/05/15 16:48:12 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.54 2010/05/15 18:25:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1236,20 +1236,19 @@ post_sh_head(POST_ARGS)
 
 	/* 
 	 * Check particular section/manual conventions.  LIBRARY can
-	 * only occur in msec 2, 3 (TODO: are there more of these?).
+	 * only occur in manual section 2, 3, and 9.
 	 */
 
 	switch (sec) {
 	case (SEC_LIBRARY):
-		switch (mdoc->meta.msec) {
-		case (2):
-			/* FALLTHROUGH */
-		case (3):
+		assert(mdoc->meta.msec);
+		if (*mdoc->meta.msec == '2')
 			break;
-		default:
-			return(mdoc_nwarn(mdoc, mdoc->last, EWRONGMSEC));
-		}
-		break;
+		if (*mdoc->meta.msec == '3')
+			break;
+		if (*mdoc->meta.msec == '9')
+			break;
+		return(mdoc_nwarn(mdoc, mdoc->last, EWRONGMSEC));
 	default:
 		break;
 	}
