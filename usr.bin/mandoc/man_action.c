@@ -1,6 +1,6 @@
-/*	$Id: man_action.c,v 1.15 2010/04/25 16:32:19 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.16 2010/05/15 18:06:02 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -124,7 +124,6 @@ post_de(struct man *m)
 	 */
 	if (MAN_BLOCK == m->last->type)
 		man_node_delete(m, m->last);
-
 	return(1);
 }
 
@@ -145,8 +144,6 @@ static int
 post_TH(struct man *m)
 {
 	struct man_node	*n;
-	char		*ep;
-	long		 lval;
 
 	if (m->meta.title)
 		free(m->meta.title);
@@ -154,9 +151,11 @@ post_TH(struct man *m)
 		free(m->meta.vol);
 	if (m->meta.source)
 		free(m->meta.source);
+	if (m->meta.msec)
+		free(m->meta.msec);
 
-	m->meta.title = m->meta.vol = m->meta.source = NULL;
-	m->meta.msec = 0;
+	m->meta.title = m->meta.vol = 
+		m->meta.msec = m->meta.source = NULL;
 	m->meta.date = 0;
 
 	/* ->TITLE<- MSEC DATE SOURCE VOL */
@@ -169,12 +168,7 @@ post_TH(struct man *m)
 
 	n = n->next;
 	assert(n);
-
-	lval = strtol(n->string, &ep, 10);
-	if (n->string[0] != '\0' && *ep == '\0')
-		m->meta.msec = (int)lval;
-	else if ( ! man_nwarn(m, n, WMSEC))
-		return(0);
+	m->meta.msec = mandoc_strdup(n->string);
 
 	/* TITLE MSEC ->DATE<- SOURCE VOL */
 
@@ -182,7 +176,6 @@ post_TH(struct man *m)
 	if (n) {
 		m->meta.date = mandoc_a2time
 			(MTIME_ISO_8601, n->string);
-
 		if (0 == m->meta.date) {
 			if ( ! man_nwarn(m, n, WDATE))
 				return(0);

@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.20 2010/05/13 20:34:29 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.21 2010/05/15 18:06:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -177,7 +177,7 @@ check_root(CHKARGS)
 		 */
 	        m->meta.title = mandoc_strdup("unknown");
 		m->meta.date = time(NULL);
-		m->meta.msec = 1;
+		m->meta.msec = mandoc_strdup("1");
 	}
 
 	return(1);

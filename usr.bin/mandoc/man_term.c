@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.30 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.31 2010/05/15 18:06:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -910,7 +910,7 @@ print_man_head(struct termp *p, const struct man_meta *m)
 		strlcpy(buf, m->vol, BUFSIZ);
 	buflen = strlen(buf);
 
-	snprintf(title, BUFSIZ, "%s(%d)", m->title, m->msec);
+	snprintf(title, BUFSIZ, "%s(%s)", m->title, m->msec);
 	titlen = strlen(title);
 
 	p->offset = 0;

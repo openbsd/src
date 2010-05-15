@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.28 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: man.c,v 1.29 2010/05/15 18:06:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,7 +28,6 @@
 
 const	char *const __man_merrnames[WERRMAX] = {		 
 	"invalid character", /* WNPRINT */
-	"invalid manual section", /* WMSEC */
 	"invalid date format", /* WDATE */
 	"scope of prior line violated", /* WLNSCOPE */
 	"over-zealous prior line scope violation", /* WLNSCOPE2 */
@@ -187,6 +186,8 @@ man_free1(struct man *man)
 		free(man->meta.source);
 	if (man->meta.vol)
 		free(man->meta.vol);
+	if (man->meta.msec)
+		free(man->meta.msec);
 }
 
 
