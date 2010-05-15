@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.27 2010/05/15 12:30:59 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.28 2010/05/15 13:12:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -394,8 +394,21 @@ args(struct mdoc *m, int line, int *pos,
 	assert(*pos);
 	assert(' ' != buf[*pos]);
 
-	if ('\0' == buf[*pos])
+	if ('\0' == buf[*pos]) {
+		if (MDOC_PPHRASE & m->flags)
+			return(ARGS_EOLN);
+		/*
+		 * If we're not in a partial phrase and the flag for
+		 * being a phrase literal is still set, the punctuation
+		 * is unterminated.
+		 */
+		if (MDOC_PHRASELIT & m->flags)
+			if ( ! mdoc_pwarn(m, line, *pos, EQUOTTERM))
+				return(ARGS_ERROR);
+
+		m->flags &= ~MDOC_PHRASELIT;
 		return(ARGS_EOLN);
+	}
 
 	/* 
 	 * If the first character is a closing delimiter and we're to
@@ -441,16 +454,18 @@ args(struct mdoc *m, int line, int *pos,
 	if (ARGS_TABSEP & fl) {
 		/* Scan ahead to tab (can't be escaped). */
 		p = strchr(*v, '\t');
+		pp = NULL;
 
 		/* Scan ahead to unescaped `Ta'. */
-		for (pp = *v; ; pp++) {
-			if (NULL == (pp = strstr(pp, "Ta")))
-				break;
-			if (pp > *v && ' ' != *(pp - 1))
-				continue;
-			if (' ' == *(pp + 2) || 0 == *(pp + 2))
-				break;
-		}
+		if ( ! (MDOC_PHRASELIT & m->flags)) 
+			for (pp = *v; ; pp++) {
+				if (NULL == (pp = strstr(pp, "Ta")))
+					break;
+				if (pp > *v && ' ' != *(pp - 1))
+					continue;
+				if (' ' == *(pp + 2) || 0 == *(pp + 2))
+					break;
+			}
 
 		/* By default, assume a phrase. */
 		rc = ARGS_PHRASE;
@@ -503,8 +518,12 @@ args(struct mdoc *m, int line, int *pos,
 	 * Whitespace is NOT involved in literal termination.
 	 */
 
-	if ('\"' == buf[*pos]) {
-		*v = &buf[++(*pos)];
+	if (MDOC_PHRASELIT & m->flags || '\"' == buf[*pos]) {
+		if ( ! (MDOC_PHRASELIT & m->flags))
+			*v = &buf[++(*pos)];
+
+		if (MDOC_PPHRASE & m->flags)
+			m->flags |= MDOC_PHRASELIT;
 
 		for ( ; buf[*pos]; (*pos)++) {
 			if ('\"' != buf[*pos])
@@ -514,17 +533,18 @@ args(struct mdoc *m, int line, int *pos,
 			(*pos)++;
 		}
 
-		if (0 == buf[*pos]) {
-			if (ARGS_NOWARN & fl)
+		if ('\0' == buf[*pos]) {
+			if (ARGS_NOWARN & fl || MDOC_PPHRASE & m->flags)
 				return(ARGS_QWORD);
 			if ( ! mdoc_pwarn(m, line, *pos, EQUOTTERM))
 				return(ARGS_ERROR);
 			return(ARGS_QWORD);
 		}
 
-		buf[(*pos)++] = 0;
+		m->flags &= ~MDOC_PHRASELIT;
+		buf[(*pos)++] = '\0';
 
-		if (0 == buf[*pos])
+		if ('\0' == buf[*pos])
 			return(ARGS_QWORD);
 
 		while (' ' == buf[*pos])
@@ -546,15 +566,15 @@ args(struct mdoc *m, int line, int *pos,
 		if (' ' == buf[*pos] && '\\' != buf[*pos - 1])
 			break;
 
-	if (0 == buf[*pos])
+	if ('\0' == buf[*pos])
 		return(ARGS_WORD);
 
-	buf[(*pos)++] = 0;
+	buf[(*pos)++] = '\0';
 
 	while (' ' == buf[*pos])
 		(*pos)++;
 
-	if (0 == buf[*pos] && ! (ARGS_NOWARN & fl))
+	if ('\0' == buf[*pos] && ! (ARGS_NOWARN & fl))
 		if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
 			return(ARGS_ERROR);
 

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.40 2010/05/15 12:30:59 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.41 2010/05/15 13:12:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -45,7 +45,7 @@ static	int	  	append_delims(struct mdoc *,
 static	enum mdoct	lookup(enum mdoct, const char *);
 static	enum mdoct	lookup_raw(const char *);
 static	int	  	phrase(struct mdoc *, int, int, 
-				char *, enum margserr, int);
+				char *, enum margserr);
 static	enum mdoct 	rew_alt(enum mdoct);
 static	int	  	rew_dobreak(enum mdoct, 
 				const struct mdoc_node *);
@@ -883,7 +883,7 @@ in_line(MACRO_PROT_ARGS)
 static int
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  la, pcnt;
+	int		  la;
 	struct mdoc_arg	 *arg;
 	struct mdoc_node *head; /* save of head macro */
 	struct mdoc_node *body; /* save of body macro */
@@ -952,7 +952,7 @@ blk_full(MACRO_PROT_ARGS)
 
 	ac = ARGS_ERROR;
 
-	for (pcnt = 0; ; ) {
+	for ( ; ; ) {
 		la = *pos;
 		lac = ac;
 		ac = mdoc_args(m, line, pos, buf, tok, &p);
@@ -962,12 +962,18 @@ blk_full(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == ac)
 			break;
 
+		if (ARGS_PEND == ac) {
+			if (ARGS_PPHRASE == lac)
+				ac = ARGS_PPHRASE;
+			else
+				ac = ARGS_PHRASE;
+		}
+
 		/* Don't emit leading punct. for phrases. */
 
 		if (NULL == head && 
 				ARGS_PHRASE != ac &&
 				ARGS_PPHRASE != ac &&
-				ARGS_PEND != ac &&
 				ARGS_QWORD != ac &&
 				DELIM_OPEN == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
@@ -979,29 +985,18 @@ blk_full(MACRO_PROT_ARGS)
 
 		if (NULL == head || 
 				ARGS_PHRASE == ac || 
-				ARGS_PEND == ac || 
 				ARGS_PPHRASE == ac) {
 			if ( ! mdoc_head_alloc(m, line, ppos, tok))
 				return(0);
 			head = m->last;
 		}
 
-		if (ARGS_PHRASE == ac || 
-				ARGS_PEND == ac ||
-				ARGS_PPHRASE == ac) {
-			/*
-			 * Special treatment for the last phrase.  A
-			 * prior ARGS_PHRASE gets is handled as a
-			 * regular ARGS_PHRASE, but a prior ARGS_PPHRASE
-			 * has special handling.
-			 */
-			if (ARGS_PEND == ac && ARGS_ERROR == lac)
-				ac = ARGS_PHRASE;
-			else if (ARGS_PEND == ac && ARGS_PHRASE == lac)
-				ac = ARGS_PHRASE;
-
-			if ( ! phrase(m, line, la, buf, ac, pcnt++))
+		if (ARGS_PHRASE == ac || ARGS_PPHRASE == ac) {
+			if (ARGS_PPHRASE == ac)
+				m->flags |= MDOC_PPHRASE;
+			if ( ! phrase(m, line, la, buf, ac))
 				return(0);
+			m->flags &= ~MDOC_PPHRASE;
 			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 				return(0);
 			continue;
@@ -1543,25 +1538,18 @@ obsolete(MACRO_PROT_ARGS)
  * macro is encountered.
  */
 static int
-phrase(struct mdoc *m, int line, int ppos, char *buf, 
-		enum margserr ac, int count)
+phrase(struct mdoc *m, int line, int ppos, char *buf, enum margserr ac)
 {
 	int		 la, pos;
 	enum margserr	 aac;
 	enum mdoct	 ntok;
 	char		*p;
 
-	assert(ARGS_PHRASE == ac || 
-			ARGS_PEND == ac ||
-			ARGS_PPHRASE == ac);
-
-	if (count && ARGS_PPHRASE == ac)
-		return(mdoc_word_alloc(m, line, ppos, &buf[ppos]));
+	assert(ARGS_PHRASE == ac || ARGS_PPHRASE == ac);
 
 	for (pos = ppos; ; ) {
 		la = pos;
 
-		/* Note: no calling context! */
 		aac = mdoc_zargs(m, line, &pos, buf, 0, &p);
 
 		if (ARGS_ERROR == aac)
@@ -1569,8 +1557,7 @@ phrase(struct mdoc *m, int line, int ppos, char *buf,
 		if (ARGS_EOLN == aac)
 			break;
 
-		ntok = ARGS_QWORD == aac || ARGS_PEND == ac ? 
-			MDOC_MAX : lookup_raw(p);
+		ntok = ARGS_QWORD == aac ? MDOC_MAX : lookup_raw(p);
 
 		if (MDOC_MAX == ntok) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
