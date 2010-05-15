@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.35 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.36 2010/05/15 15:28:09 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -186,15 +186,27 @@ bwtwoattach(struct device *parent, struct device *self, void *args)
 	printf(": ");
 
 	/*
-	 * Map the control register.
+	 * Check if this is a P4 attachment, and map the P4 control
+	 * register if necessary.
 	 */
 #if defined(SUN4)
-	if (CPU_ISSUN4 && ca->ca_bustype == BUS_OBIO &&
-	    fb_pfour_id(ca->ca_ra.ra_vaddr) != PFOUR_NOTPFOUR) {
-		SET(sc->sc_sunfb.sf_flags, FB_PFOUR);
+	if (CPU_ISSUN4 && ca->ca_bustype == BUS_OBIO) {
 		sc->sc_sunfb.sf_pfour = (volatile u_int32_t *)
 		    mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
-	} else
+		if (fb_pfour_id(sc->sc_sunfb.sf_pfour) != PFOUR_NOTPFOUR)
+			SET(sc->sc_sunfb.sf_flags, FB_PFOUR);
+		else {
+			/* XXX unmapiodev */
+			sc->sc_sunfb.sf_pfour = NULL;
+		}
+	}
+#endif
+
+	/*
+	 * Map the control register (unless done above for a P4 device).
+	 */
+#if defined(SUN4)
+	if (!CPU_ISSUN4 || !ISSET(sc->sc_sunfb.sf_flags, FB_PFOUR))
 #endif
 	{
 		sc->sc_reg = (volatile struct fbcontrol *)
