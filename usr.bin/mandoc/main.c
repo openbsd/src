@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.28 2010/05/15 21:09:53 schwarze Exp $ */
+/*	$Id: main.c,v 1.29 2010/05/15 22:00:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -354,7 +354,7 @@ static void
 fdesc(struct curparse *curp)
 {
 	struct buf	 ln, blk;
-	int		 j, i, pos, lnn, comment, with_mmap;
+	int		 i, pos, lnn, lnn_start, with_mmap;
 	struct man	*man;
 	struct mdoc	*mdoc;
 
@@ -363,72 +363,74 @@ fdesc(struct curparse *curp)
 	memset(&ln, 0, sizeof(struct buf));
 
 	/*
-	 * Two buffers: ln and buf.  buf is the input buffer optimised
-	 * here for each file's block size.  ln is a line buffer.  Both
-	 * growable, hence passed in by ptr-ptr.
+	 * Two buffers: ln and buf.  buf is the input file and may be
+	 * memory mapped.  ln is a line buffer and grows on-demand.
 	 */
 
 	if (!read_whole_file(curp, &blk, &with_mmap))
 		return;
 
-	/* Fill buf with file blocksize. */
+	for (i = 0, lnn = 1; i < (int)blk.sz;) {
+		pos = 0;
+		lnn_start = lnn;
+		while (i < (int)blk.sz) {
+			if ('\n' == blk.buf[i]) {
+				++i;
+				++lnn;
+				break;
+			}
+			/* Trailing backslash is like a plain character. */
+			if ('\\' != blk.buf[i] || i + 1 == (int)blk.sz) {
+				if (pos >= (int)ln.sz)
+					if (! resize_buf(&ln, 256))
+						goto bailout;
+				ln.buf[pos++] = blk.buf[i++];
+				continue;
+			}
+			/* Found an escape and at least one other character. */
+			if ('\n' == blk.buf[i + 1]) {
+				/* Escaped newlines are skipped over */
+				i += 2;
+				++lnn;
+				continue;
+			}
+			if ('"' == blk.buf[i + 1]) {
+				i += 2;
+				/* Comment, skip to end of line */
+				for (; i < (int)blk.sz; ++i) {
+					if ('\n' == blk.buf[i]) {
+						++i;
+						++lnn;
+						break;
+					}
+				}
+				/* Backout trailing whitespaces */
+				for (; pos > 0; --pos) {
+					if (ln.buf[pos - 1] != ' ')
+						break;
+					if (pos > 2 && ln.buf[pos - 2] == '\\')
+						break;
+				}
+				break;
+			}
+			/* Some other escape sequence, copy and continue. */
+			if (pos + 1 >= (int)ln.sz)
+				if (! resize_buf(&ln, 256))
+					goto bailout;
 
-	for (i = lnn = pos = comment = 0; i < (int)blk.sz; ++i) {
-		if (pos >= (int)ln.sz) {
+			ln.buf[pos++] = blk.buf[i++];
+			ln.buf[pos++] = blk.buf[i++];
+		}
+
+ 		if (pos >= (int)ln.sz)
 			if (! resize_buf(&ln, 256))
 				goto bailout;
-		}
-
-		if ('\n' != blk.buf[i]) {
-			if (comment)
-				continue;
-			ln.buf[pos++] = blk.buf[i];
-
-			/* Handle in-line `\"' comments. */
-
-			if (1 == pos || '\"' != ln.buf[pos - 1])
-				continue;
-
-			for (j = pos - 2; j >= 0; j--)
-				if ('\\' != ln.buf[j])
-					break;
-
-			if ( ! ((pos - 2 - j) % 2))
-				continue;
-
-			comment = 1;
-			pos -= 2;
-			for (; pos > 0; --pos) {
-				if (ln.buf[pos - 1] != ' ')
-					break;
-				if (pos > 2 && ln.buf[pos - 2] == '\\')
-					break;
-			}
-			continue;
-		} 
-
-		/* Handle escaped `\\n' newlines. */
-
-		if (pos > 0 && 0 == comment && '\\' == ln.buf[pos - 1]) {
-			for (j = pos - 1; j >= 0; j--)
-				if ('\\' != ln.buf[j])
-					break;
-			if ( ! ((pos - j) % 2)) {
-				pos--;
-				lnn++;
-				continue;
-			}
-		}
-
 		ln.buf[pos] = 0;
-		lnn++;
 
 		/* If unset, assign parser in pset(). */
 
 		if ( ! (man || mdoc) && ! pset(ln.buf, pos, curp, &man, &mdoc))
 			goto bailout;
-
-		pos = comment = 0;
 
 		/* Pass down into parsers. */
 
