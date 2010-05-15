@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.41 2010/05/15 13:12:55 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.42 2010/05/15 15:37:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -615,26 +615,40 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 
 
 static int
-append_delims(struct mdoc *mdoc, int line, int *pos, char *buf)
+append_delims(struct mdoc *m, int line, int *pos, char *buf)
 {
-	int		 lastarg;
+	int		 la;
 	enum margserr	 ac;
 	char		*p;
 
-	if (0 == buf[*pos])
+	if ('\0' == buf[*pos])
 		return(1);
 
 	for (;;) {
-		lastarg = *pos;
-		ac = mdoc_zargs(mdoc, line, pos, buf, ARGS_NOWARN, &p);
+		la = *pos;
+		ac = mdoc_zargs(m, line, pos, buf, ARGS_NOWARN, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
 		else if (ARGS_EOLN == ac)
 			break;
+
 		assert(DELIM_NONE != mdoc_isdelim(p));
-		if ( ! mdoc_word_alloc(mdoc, line, lastarg, p))
+		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
+		/*
+		 * If we encounter end-of-sentence symbols, then trigger
+		 * the double-space.
+		 *
+		 * XXX: it's easy to allow this to propogate outward to
+		 * the last symbol, such that `. )' will cause the
+		 * correct double-spacing.  However, (1) groff isn't
+		 * smart enough to do this and (2) it would require
+		 * knowing which symbols break this behaviour, for
+		 * example, `.  ;' shouldn't propogate the double-space.
+		 */
+		if (mandoc_eos(p, strlen(p)))
+			m->last->flags |= MDOC_EOS;
 	}
 
 	return(1);
