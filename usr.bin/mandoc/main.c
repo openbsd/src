@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.27 2010/05/15 17:32:25 schwarze Exp $ */
+/*	$Id: main.c,v 1.28 2010/05/15 21:09:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -473,7 +473,7 @@ fdesc(struct curparse *curp)
 		case (OUTT_LINT):
 			break;
 		default:
-			curp->outdata = ascii_alloc();
+			curp->outdata = ascii_alloc(80);
 			curp->outman = terminal_man;
 			curp->outmdoc = terminal_mdoc;
 			curp->outfree = terminal_free;

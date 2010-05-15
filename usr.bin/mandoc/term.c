@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.31 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: term.c,v 1.32 2010/05/15 21:09:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,7 +30,7 @@
 #include "mdoc.h"
 #include "main.h"
 
-static	struct termp	 *term_alloc(enum termenc);
+static	struct termp	 *term_alloc(enum termenc, size_t);
 static	void		  term_free(struct termp *);
 static	void		  spec(struct termp *, const char *, size_t);
 static	void		  res(struct termp *, const char *, size_t);
@@ -41,10 +41,10 @@ static	void		  encode(struct termp *, const char *, size_t);
 
 
 void *
-ascii_alloc(void)
+ascii_alloc(size_t width)
 {
 
-	return(term_alloc(TERMENC_ASCII));
+	return(term_alloc(TERMENC_ASCII, width));
 }
 
 
@@ -70,7 +70,7 @@ term_free(struct termp *p)
 
 
 static struct termp *
-term_alloc(enum termenc enc)
+term_alloc(enum termenc enc, size_t width)
 {
 	struct termp *p;
 
@@ -81,6 +81,10 @@ term_alloc(enum termenc enc)
 	}
 	p->tabwidth = 5;
 	p->enc = enc;
+	/* Enforce some lower boundary. */
+	if (width < 60)
+		width = 60;
+	p->defrmargin = width - 2;
 	return(p);
 }
 

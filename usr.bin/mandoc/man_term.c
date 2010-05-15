@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.31 2010/05/15 18:06:03 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.32 2010/05/15 21:09:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -161,8 +161,14 @@ terminal_man(void *arg, const struct man *man)
 
 	p = (struct termp *)arg;
 
+	/*
+	 * XXX
+	 * Hardcode the -man output width for now;
+	 * it is not yet externally configurable, anyway.
+	 */
+	p->defrmargin = 65;
+	p->maxrmargin = p->defrmargin;
 	p->overstep = 0;
-	p->maxrmargin = 65;
 
 	if (NULL == p->symtab)
 		switch (p->enc) {
@@ -802,6 +808,7 @@ post_RS(DECL_ARGS)
 static void
 print_man_node(DECL_ARGS)
 {
+	size_t		 rm, rmax;
 	int		 c;
 
 	c = 1;
@@ -818,10 +825,13 @@ print_man_node(DECL_ARGS)
 		/* FIXME: this means that macro lines are munged!  */
 
 		if (MANT_LITERAL & mt->fl) {
+			rm = p->rmargin;
+			rmax = p->maxrmargin;
 			p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
 			p->flags |= TERMP_NOSPACE;
 			term_flushln(p);
-			p->rmargin = p->maxrmargin = 65;
+			p->rmargin = rm;
+			p->maxrmargin = rmax;
 		}
 		break;
 	default:
