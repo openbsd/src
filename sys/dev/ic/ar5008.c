@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.5 2010/05/16 09:19:48 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.6 2010/05/16 09:42:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1824,37 +1824,42 @@ ar5008_do_noisefloor_calib(struct athn_softc *sc)
 void
 ar5008_do_calib(struct athn_softc *sc)
 {
-	int log = AR_MAX_LOG_CAL;	/* XXX */
-	uint32_t mode = 0, reg;
+	uint32_t mode, reg;
+	int log;
 
 	reg = AR_READ(sc, AR_PHY_TIMING_CTRL4_0);
+	log = AR_SREV_9280_10_OR_LATER(sc) ? 10 : 2;
 	reg = RW(reg, AR_PHY_TIMING_CTRL4_IQCAL_LOG_COUNT_MAX, log);
 	AR_WRITE(sc, AR_PHY_TIMING_CTRL4_0, reg);
 
-	if (sc->calib_mask & ATHN_CAL_ADC_GAIN)
+	if (sc->cur_calib_mask & ATHN_CAL_ADC_GAIN)
 		mode = AR_PHY_CALMODE_ADC_GAIN;
-	else if (sc->calib_mask & ATHN_CAL_ADC_DC)
+	else if (sc->cur_calib_mask & ATHN_CAL_ADC_DC)
 		mode = AR_PHY_CALMODE_ADC_DC_PER;
-	else if (sc->calib_mask & ATHN_CAL_IQ)
+	else	/* ATHN_CAL_IQ */
 		mode = AR_PHY_CALMODE_IQ;
 	AR_WRITE(sc, AR_PHY_CALMODE, mode);
 
+	DPRINTF(("starting calibration mode=0x%x\n", mode));
 	AR_SETBITS(sc, AR_PHY_TIMING_CTRL4_0, AR_PHY_TIMING_CTRL4_DO_CAL);
 }
 
 void
 ar5008_next_calib(struct athn_softc *sc)
 {
-	if (AR_READ(sc, AR_PHY_TIMING_CTRL4_0) & AR_PHY_TIMING_CTRL4_DO_CAL) {
-		/* Calibration in progress, come back later. */
-		return;
+	/* Check if we have any calibration in progress. */
+	if (sc->cur_calib_mask != 0) {
+		if (!(AR_READ(sc, AR_PHY_TIMING_CTRL4_0) &
+		    AR_PHY_TIMING_CTRL4_DO_CAL)) {
+			/* Calibration completed for current sample. */
+			if (sc->cur_calib_mask & ATHN_CAL_ADC_GAIN)
+				ar5008_calib_adc_gain(sc);
+			else if (sc->cur_calib_mask & ATHN_CAL_ADC_DC)
+				ar5008_calib_adc_dc_off(sc);
+			else	/* ATHN_CAL_IQ */
+				ar5008_calib_iq(sc);
+		}
 	}
-	if (sc->calib_mask & ATHN_CAL_ADC_GAIN)
-		ar5008_calib_iq(sc);
-	else if (sc->calib_mask & ATHN_CAL_ADC_DC)
-		ar5008_calib_adc_gain(sc);
-	else if (sc->calib_mask & ATHN_CAL_IQ)
-		ar5008_calib_adc_dc_off(sc);
 }
 
 void
@@ -1874,7 +1879,8 @@ ar5008_calib_iq(struct athn_softc *sc)
 		cal->iq_corr_meas +=
 		    (int32_t)AR_READ(sc, AR_PHY_CAL_MEAS_2(i));
 	}
-	if (++sc->calib.nsamples < AR_CAL_SAMPLES) {
+	if (!AR_SREV_9280_10_OR_LATER(sc) &&
+	    ++sc->calib.nsamples < AR_CAL_SAMPLES) {
 		/* Not enough samples accumulated, continue. */
 		ar5008_do_calib(sc);
 		return;
@@ -1914,8 +1920,13 @@ ar5008_calib_iq(struct athn_softc *sc)
 		AR_WRITE(sc, AR_PHY_TIMING_CTRL4(i), reg);
 	}
 
+	/* Apply new settings. */
 	AR_SETBITS(sc, AR_PHY_TIMING_CTRL4_0,
 	    AR_PHY_TIMING_CTRL4_IQCORR_ENABLE);
+
+	/* IQ calibration done. */
+	sc->cur_calib_mask &= ~ATHN_CAL_IQ;
+	memset(&sc->calib, 0, sizeof(sc->calib));
 }
 
 void
@@ -1934,7 +1945,8 @@ ar5008_calib_adc_gain(struct athn_softc *sc)
 		cal->pwr_meas_odd_q  += AR_READ(sc, AR_PHY_CAL_MEAS_2(i));
 		cal->pwr_meas_even_q += AR_READ(sc, AR_PHY_CAL_MEAS_3(i));
 	}
-	if (++sc->calib.nsamples < AR_CAL_SAMPLES) {
+	if (!AR_SREV_9280_10_OR_LATER(sc) &&
+	    ++sc->calib.nsamples < AR_CAL_SAMPLES) {
 		/* Not enough samples accumulated, continue. */
 		ar5008_do_calib(sc);
 		return;
@@ -1958,8 +1970,13 @@ ar5008_calib_adc_gain(struct athn_softc *sc)
 		AR_WRITE(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(i), reg);
 	}
 
+	/* Apply new settings. */
 	AR_SETBITS(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(0),
 	    AR_PHY_NEW_ADC_GAIN_CORR_ENABLE);
+
+	/* ADC gain calibration done. */
+	sc->cur_calib_mask &= ~ATHN_CAL_ADC_GAIN;
+	memset(&sc->calib, 0, sizeof(sc->calib));
 }
 
 void
@@ -1979,14 +1996,17 @@ ar5008_calib_adc_dc_off(struct athn_softc *sc)
 		cal->pwr_meas_odd_q  += AR_READ(sc, AR_PHY_CAL_MEAS_2(i));
 		cal->pwr_meas_even_q += AR_READ(sc, AR_PHY_CAL_MEAS_3(i));
 	}
-	if (++sc->calib.nsamples < AR_CAL_SAMPLES) {
+	if (!AR_SREV_9280_10_OR_LATER(sc) &&
+	    ++sc->calib.nsamples < AR_CAL_SAMPLES) {
 		/* Not enough samples accumulated, continue. */
 		ar5008_do_calib(sc);
 		return;
 	}
 
-	count = (1 << (AR_MAX_LOG_CAL + 5)) * sc->calib.nsamples;
-
+	if (AR_SREV_9280_10_OR_LATER(sc))
+		count = (1 << (10 + 5));
+	else
+		count = (1 << ( 2 + 5)) * AR_CAL_SAMPLES;
 	for (i = 0; i < sc->nrxchains; i++) {
 		cal = &sc->calib.adc_dc_offset[i];
 
@@ -2004,8 +2024,13 @@ ar5008_calib_adc_dc_off(struct athn_softc *sc)
 		AR_WRITE(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(i), reg);
 	}
 
+	/* Apply new settings. */
 	AR_SETBITS(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(0),
 	    AR_PHY_NEW_ADC_DC_OFFSET_CORR_ENABLE);
+
+	/* ADC DC offset calibration done. */
+	sc->cur_calib_mask &= ~ATHN_CAL_ADC_DC;
+	memset(&sc->calib, 0, sizeof(sc->calib));
 }
 
 void

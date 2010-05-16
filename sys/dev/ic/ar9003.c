@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.8 2010/05/16 09:19:48 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.9 2010/05/16 09:42:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1878,7 +1878,7 @@ ar9003_init_calib(struct athn_softc *sc)
 		return (ETIMEDOUT);
 
 #ifdef notyet
-	/* Perform Tx I/Q calibration. */
+	/* Perform Tx IQ calibration. */
 	ar9003_calib_tx_iq(sc);
 #endif
 
@@ -1895,14 +1895,14 @@ ar9003_do_calib(struct athn_softc *sc)
 {
 	uint32_t reg;
 
-	if (sc->calib_mask & ATHN_CAL_IQ) {
+	if (sc->cur_calib_mask & ATHN_CAL_IQ) {
 		reg = AR_READ(sc, AR_PHY_TIMING4);
 		reg = RW(reg, AR_PHY_TIMING4_IQCAL_LOG_COUNT_MAX,
 		    AR_MAX_LOG_CAL);
 		AR_WRITE(sc, AR_PHY_TIMING4, reg);
 		AR_WRITE(sc, AR_PHY_CALMODE, AR_PHY_CALMODE_IQ);
 		AR_SETBITS(sc, AR_PHY_TIMING4, AR_PHY_TIMING4_DO_CAL);
-	} else if (sc->calib_mask & ATHN_CAL_TEMP) {
+	} else if (sc->cur_calib_mask & ATHN_CAL_TEMP) {
 		AR_SETBITS(sc, AR_PHY_65NM_CH0_THERM,
 		    AR_PHY_65NM_CH0_THERM_LOCAL);
 		AR_SETBITS(sc, AR_PHY_65NM_CH0_THERM,
@@ -1913,12 +1913,13 @@ ar9003_do_calib(struct athn_softc *sc)
 void
 ar9003_next_calib(struct athn_softc *sc)
 {
-	if (AR_READ(sc, AR_PHY_TIMING4) & AR_PHY_TIMING4_DO_CAL) {
-		/* Calibration in progress, come back later. */
-		return;
+	/* Check if we have any calibration in progress. */
+	if (sc->cur_calib_mask != 0) {
+		if (!(AR_READ(sc, AR_PHY_TIMING4) & AR_PHY_TIMING4_DO_CAL)) {
+			/* Calibration completed for current sample. */
+			ar9003_calib_iq(sc);
+		}
 	}
-	if (sc->calib_mask & ATHN_CAL_IQ)
-		ar9003_calib_iq(sc);
 }
 
 void
@@ -1982,8 +1983,13 @@ ar9003_calib_iq(struct athn_softc *sc)
 		AR_WRITE(sc, AR_PHY_RX_IQCAL_CORR_B(i), reg);
 	}
 
+	/* Apply new settings. */
 	AR_SETBITS(sc, AR_PHY_RX_IQCAL_CORR_B(0),
 	    AR_PHY_RX_IQCAL_CORR_IQCORR_ENABLE);
+
+	/* IQ calibration done. */
+	sc->cur_calib_mask &= ~ATHN_CAL_IQ;
+	memset(&sc->calib, 0, sizeof(sc->calib));
 }
 
 #define DELPT	32
@@ -2045,7 +2051,7 @@ ar9003_get_iq_corr(struct athn_softc *sc, int32_t res[6], int32_t coeff[2])
 		cos[i] = (cos[i] * SCALE) / div;
 	}
 
-	/* Compute I/Q mismatch (solve 4x4 linear equation.) */
+	/* Compute IQ mismatch (solve 4x4 linear equation.) */
 	f1 = cos[0] - cos[1];
 	f3 = sin[0] - sin[1];
 	f2 = (f1 * f1 + f3 * f3) / SCALE;
@@ -2117,7 +2123,7 @@ ar9003_calib_tx_iq(struct athn_softc *sc)
 	reg = RW(reg, AR_PHY_TX_IQCAQL_CONTROL_1_IQCORR_I_Q_COFF_DELPT, DELPT);
 	AR_WRITE(sc, AR_PHY_TX_IQCAL_CONTROL_1, reg);
 
-	/* Start Tx I/Q calibration. */
+	/* Start Tx IQ calibration. */
 	AR_SETBITS(sc, AR_PHY_TX_IQCAL_START, AR_PHY_TX_IQCAL_START_DO_CAL);
 	/* Wait for completion. */
 	for (ntries = 0; ntries < 10000; ntries++) {
@@ -2130,12 +2136,12 @@ ar9003_calib_tx_iq(struct athn_softc *sc)
 		return (ETIMEDOUT);
 
 	for (i = 0; i < sc->ntxchains; i++) {
-		/* Read Tx I/Q calibration status for this chain. */
+		/* Read Tx IQ calibration status for this chain. */
 		reg = AR_READ(sc, AR_PHY_TX_IQCAL_STATUS_B(i));
 		if (reg & AR_PHY_TX_IQCAL_STATUS_FAILED)
 			return (EIO);
 		/*
-		 * Read Tx I/Q calibration results for this chain.
+		 * Read Tx IQ calibration results for this chain.
 		 * This consists in twelve signed 12-bit values.
 		 */
 		for (j = 0; j < 3; j++) {
@@ -2150,11 +2156,11 @@ ar9003_calib_tx_iq(struct athn_softc *sc)
 			res[j * 2 + 1] = reg & 0xffff;
 		}
 
-		/* Compute Tx I/Q correction. */
+		/* Compute Tx IQ correction. */
 		if (ar9003_get_iq_corr(sc, res, coeff) != 0)
 			return (EIO);
 
-		/* Write Tx I/Q correction coefficients. */
+		/* Write Tx IQ correction coefficients. */
 		reg = AR_READ(sc, AR_PHY_TX_IQCAL_CORR_COEFF_01_B(i));
 		reg = RW(reg, AR_PHY_TX_IQCAL_CORR_COEFF_01_COEFF_TABLE,
 		    coeff[0]);
@@ -2168,7 +2174,7 @@ ar9003_calib_tx_iq(struct athn_softc *sc)
 		AR_WRITE(sc, AR_PHY_RX_IQCAL_CORR_B(i), reg);
 	}
 
-	/* Enable Tx I/Q correction. */
+	/* Enable Tx IQ correction. */
 	AR_SETBITS(sc, AR_PHY_TX_IQCAL_CONTROL_3,
 	    AR_PHY_TX_IQCAL_CONTROL_3_IQCORR_EN);
 	AR_SETBITS(sc, AR_PHY_RX_IQCAL_CORR_B(0),

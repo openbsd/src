@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.42 2010/05/16 09:19:48 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.43 2010/05/16 09:42:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1182,26 +1182,27 @@ athn_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 	if (error != 0)
 		return (error);
 
-	/* Do PA calibration. */
-	if (AR_SREV_9285_11_OR_LATER(sc))
-		ar9285_pa_calib(sc);
+	if (!AR_SREV_9380_10_OR_LATER(sc)) {
+		/* Do PA calibration. */
+		if (AR_SREV_9285_11_OR_LATER(sc))
+			ar9285_pa_calib(sc);
 
-	/* Do noisefloor calibration. */
-	ops->noisefloor_calib(sc);
-
-	if (!AR_SREV_9160_10_OR_LATER(sc))
-		return (0);
-
-	/* Enable IQ calibration. */
-	sc->calib_mask = ATHN_CAL_IQ;
-
-	if (!AR_SREV_9380_10_OR_LATER(sc) &&
-	    (IEEE80211_IS_CHAN_5GHZ(c) || extc != NULL)) {
-		/* Enable ADC gain and ADC DC offset calibrations. */
-		sc->calib_mask |= ATHN_CAL_ADC_GAIN | ATHN_CAL_ADC_DC;
+		/* Do noisefloor calibration. */
+		ops->noisefloor_calib(sc);
 	}
-
-	ops->do_calib(sc);
+	if (AR_SREV_9160_10_OR_LATER(sc)) {
+		/* Support IQ calibration. */
+		sc->sup_calib_mask = ATHN_CAL_IQ;
+		if (AR_SREV_9380_10_OR_LATER(sc)) {
+			/* Support temperature compensation calibration. */
+			sc->sup_calib_mask |= ATHN_CAL_TEMP;
+		} else if (IEEE80211_IS_CHAN_5GHZ(c) || extc != NULL) {
+			/* Support ADC gain calibration. */
+			sc->sup_calib_mask |= ATHN_CAL_ADC_GAIN;
+			/* Support ADC DC offset calibration. */
+			sc->sup_calib_mask |= ATHN_CAL_ADC_DC;
+		}
+	}
 	return (0);
 }
 
@@ -2297,6 +2298,12 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			sc->imask |= AR_IMR_BMISS;
 		}
 		athn_enable_interrupts(sc);
+
+		if (sc->sup_calib_mask != 0) {
+			memset(&sc->calib, 0, sizeof(sc->calib));
+			sc->cur_calib_mask = sc->sup_calib_mask;
+			/* ops->do_calib(sc); */
+		}
 		/* XXX Start ANI. */
 
 		timeout_add_msec(&sc->calib_to, 500);
