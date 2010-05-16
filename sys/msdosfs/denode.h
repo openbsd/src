@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.21 2007/06/02 02:04:21 deraadt Exp $	*/
+/*	$OpenBSD: denode.h,v 1.22 2010/05/16 20:26:39 nicm Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -189,7 +189,8 @@ struct denode {
 #define DE_INTERNALIZE32(dep, dp)                      \
         ((dep)->de_StartCluster |= getushort((dp)->deHighClust) << 16)
 #define DE_INTERNALIZE(dep, dp)			\
-	(bcopy((dp)->deName, (dep)->de_Name, 11),	\
+	(bcopy((dp)->deName, (dep)->de_Name, 8),	\
+	 bcopy((dp)->deExtension, (dep)->de_Name + 8, 3), \
 	 (dep)->de_Attributes = (dp)->deAttributes,	\
 	 (dep)->de_CTimeHundredth = (dp)->deCTimeHundredth, \
 	 (dep)->de_CTime = getushort((dp)->deCTime),	\
@@ -202,7 +203,8 @@ struct denode {
 	 (FAT32((dep)->de_pmp) ? DE_INTERNALIZE32((dep), (dp)) : 0))
 
 #define DE_EXTERNALIZE(dp, dep)				\
-	(bcopy((dep)->de_Name, (dp)->deName, 11),	\
+	(bcopy((dep)->de_Name, (dp)->deName, 8),	\
+	 bcopy((dep)->de_Name + 8, (dp)->deExtension, 3), \
 	 (dp)->deAttributes = (dep)->de_Attributes,	\
 	 (dp)->deLowerCase = CASE_LOWER_BASE | CASE_LOWER_EXT,	\
 	 (dp)->deCTimeHundredth = (dep)->de_CTimeHundredth, \
