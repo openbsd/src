@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/include/Makefile,v 1.9.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.7 2010/05/10 18:20:31 drahn Exp $
+# $OpenBSD: Makefile,v 1.8 2010/05/16 07:28:15 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -16,11 +16,17 @@ INCS=	mmintrin.h
 .elif ${TARGET_ARCH} == "powerpc"
 INCS=	ppc-asm.h altivec.h spe.h
 .endif
+INCS += unwind.h
 
 mm_malloc.h: pmm_malloc.h
 	@rm -rf ${.TARGET}
 	@cp ${.ALLSRC} ${.TARGET}
 CLEANFILES+=	mm_malloc.h
+
+unwind.h: ${GCCDIR}/unwind-generic.h
+	@rm -rf ${.TARGET}
+	@cp ${.ALLSRC} ${.TARGET}
+CLEANFILES+=	unwind.h
 
 all:	${INCS}
 

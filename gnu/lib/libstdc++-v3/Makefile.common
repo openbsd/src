@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.common,v 1.1 2010/05/15 08:21:03 robert Exp $
+# $OpenBSD: Makefile.common,v 1.2 2010/05/16 07:28:15 espie Exp $
 
 GCCDIR= ${.CURDIR}/../../gcc/gcc
 GCCLIB= ${GCCDIR}/gcc
@@ -26,9 +26,3 @@ SUPSRCS=del_op.cc del_opnt.cc del_opv.cc del_opvnt.cc eh_alloc.cc eh_arm.cc \
 
 # from libiberty:
 SRCS+=	cp-demangle.c
-
-unwind.h: ${GCCDIR}/unwind-generic.h
-	ln -sf ${.ALLSRC} ${.TARGET}
-
-SRCS+=		unwind.h
-CLEANFILES+= 	unwind.h
