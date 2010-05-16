@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.45 2010/05/16 14:50:28 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.46 2010/05/16 17:46:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -220,11 +220,11 @@ athn_attach(struct athn_softc *sc)
 	 * limited by the number of entries in the HW key cache.
 	 * TKIP keys consume 2 or 4 entries in the cache.
 	 */
-	ic->ic_max_nnodes = sc->kc_entries - IEEE80211_WEP_NKID;
 	if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC)
-		ic->ic_max_nnodes /= 4;
+		ic->ic_max_nnodes = sc->kc_entries / 4;
 	else
-		ic->ic_max_nnodes /= 2;
+		ic->ic_max_nnodes = sc->kc_entries / 2;
+	ic->ic_max_nnodes -= IEEE80211_WEP_NKID;
 	if (ic->ic_max_nnodes > IEEE80211_CACHE_SIZE)
 		ic->ic_max_nnodes = IEEE80211_CACHE_SIZE;
 
@@ -965,8 +965,6 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    micbuf[2]);
 			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
 			    micbuf[3] | micbuf[4] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
-			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), 0);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
 
@@ -979,8 +977,6 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    micbuf[2]);
 			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
 			    micbuf[3] | micbuf[4] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
-			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), 0);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
 		} else {
