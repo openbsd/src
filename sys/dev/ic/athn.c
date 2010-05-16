@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.38 2010/05/11 19:34:20 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.39 2010/05/16 08:45:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1862,17 +1862,11 @@ athn_set_bss(struct athn_softc *sc, struct ieee80211_node *ni)
 void
 athn_enable_interrupts(struct athn_softc *sc)
 {
-	uint32_t mask, mask2;
+	uint32_t mask2;
 
 	athn_disable_interrupts(sc);	/* XXX */
 
-	/* XXX cleanup, use sc->imask */
-	mask = AR_IMR_TXDESC | AR_IMR_TXEOL | AR_IMR_RXERR | AR_IMR_RXEOL |
-	    AR_IMR_RXORN | AR_IMR_GENTMR | AR_IMR_BCNMISC | AR_IMR_RXMINTR |
-	    AR_IMR_RXINTM;
-	if (AR_SREV_9380_10_OR_LATER(sc))
-		mask |= AR_IMR_RXERR | AR_IMR_HP_RXOK;
-	AR_WRITE(sc, AR_IMR, mask);
+	AR_WRITE(sc, AR_IMR, sc->imask);
 
 	mask2 = AR_READ(sc, AR_IMR_S2);
 	mask2 &= ~(AR_IMR_S2_TIM | AR_IMR_S2_DTIM | AR_IMR_S2_DTIMSYNC |
@@ -2069,11 +2063,15 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	athn_init_tx_queues(sc);
 
 	/* Initialize interrupt mask. */
-	sc->imask = AR_IMR_DEFAULT;
+	sc->imask =
+	    AR_IMR_TXDESC | AR_IMR_TXEOL |
+	    AR_IMR_RXERR | AR_IMR_RXEOL | AR_IMR_RXORN |
+	    AR_IMR_RXMINTR | AR_IMR_RXINTM |
+	    AR_IMR_GENTMR | AR_IMR_BCNMISC;
 	if (AR_SREV_9380_10_OR_LATER(sc))
-		sc->imask |= AR_IMR_HP_RXOK;
+		sc->imask |= AR_IMR_RXERR | AR_IMR_HP_RXOK;
 #ifndef IEEE80211_STA_ONLY
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+	if (0 && ic->ic_opmode == IEEE80211_M_HOSTAP)
 		sc->imask |= AR_IMR_MIB;
 #endif
 	AR_WRITE(sc, AR_IMR, sc->imask);
@@ -2257,7 +2255,8 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		athn_set_bss(sc, ic->ic_bss);
 		athn_disable_interrupts(sc);
 		athn_set_beacon_timers(sc);
-		/* XXX Enable BMISS interrupts. */
+		/* Enable beacon miss interrupts. */
+		sc->imask |= AR_IMR_BMISS;
 		athn_enable_interrupts(sc);
 		/* XXX Start ANI. */
 
