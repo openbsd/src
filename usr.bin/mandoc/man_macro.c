@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.15 2010/04/25 16:32:19 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.16 2010/05/16 00:54:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,7 +28,6 @@ enum	rew {
 };
 
 static	int		 blk_close(MACRO_PROT_ARGS);
-static	int		 blk_dotted(MACRO_PROT_ARGS);
 static	int		 blk_exp(MACRO_PROT_ARGS);
 static	int		 blk_imp(MACRO_PROT_ARGS);
 static	int		 blk_cond(MACRO_PROT_ARGS);
@@ -79,12 +78,6 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* Sp */
 	{ in_line_eoln, 0 }, /* Vb */
 	{ in_line_eoln, 0 }, /* Ve */
-	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* de */
-	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* dei */
-	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* am */
-	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* ami */
-	{ blk_exp, MAN_EXPLICIT | MAN_NOCLOSE}, /* ig */
-	{ blk_dotted, 0 }, /* . */
 	{ blk_cond, 0 }, /* if */
 	{ blk_cond, 0 }, /* ie */
 	{ blk_cond, 0 }, /* el */
@@ -105,8 +98,6 @@ rew_warn(struct man *m, struct man_node *n, enum merr er)
 	if (MAN_VALID & n->flags)
 		return(1);
 	if ( ! (MAN_EXPLICIT & man_macros[n->tok].flags))
-		return(1);
-	if (MAN_NOCLOSE & man_macros[n->tok].flags)
 		return(1);
 	return(man_nwarn(m, n, er));
 }
@@ -187,24 +178,6 @@ rew_dohalt(enum mant tok, enum man_type type, const struct man_node *n)
 	if (type == n->type && tok == n->tok)
 		return(REW_REWIND);
 
-	/*
-	 * If we're a roff macro, then we can close out anything that
-	 * stands between us and our parent context.
-	 */
-	if (MAN_NOCLOSE & man_macros[tok].flags)
-		return(REW_NOHALT);
-
-	/* 
-	 * Don't clobber roff macros: this is a bit complicated.  If the
-	 * current macro is a roff macro, halt immediately and don't
-	 * rewind.  If it's not, and the parent is, then close out the
-	 * current scope and halt at the parent.
-	 */
-	if (MAN_NOCLOSE & man_macros[n->tok].flags)
-		return(REW_HALT);
-	if (MAN_NOCLOSE & man_macros[n->parent->tok].flags)
-		return(REW_REWIND);
-
 	/* 
 	 * Next follow the implicit scope-smashings as defined by man.7:
 	 * section, sub-section, etc.
@@ -273,8 +246,6 @@ rew_scope(enum man_type type, struct man *m, enum mant tok)
 	 * instruction that's mowing over explicit scopes.
 	 */
 	assert(n);
-	if (MAN_NOCLOSE & man_macros[tok].flags)
-		return(man_unscope(m, n, WROFFSCOPE));
 
 	return(man_unscope(m, n, WERRMAX));
 }
@@ -320,52 +291,6 @@ man_brace_close(struct man *m, int line, int ppos)
 		nif->parent = NULL;
 	}
 	man_node_delete(m, nif);
-	return(1);
-}
-
-
-/*
- * Closure for dotted macros (de, dei, am, ami, ign).  This must handle
- * any of these as the parent node, so it needs special handling.
- * Beyond this, it's the same as blk_close().
- */
-/* ARGSUSED */
-int
-blk_dotted(MACRO_PROT_ARGS)
-{
-	enum mant	 ntok;
-	struct man_node	*nn;
-
-	/* Check for any of the following parents... */
-
-	for (nn = m->last->parent; nn; nn = nn->parent)
-		if (nn->tok == MAN_de || nn->tok == MAN_dei ||
-				nn->tok == MAN_am ||
-				nn->tok == MAN_ami ||
-				nn->tok == MAN_ig) {
-			ntok = nn->tok;
-			break;
-		}
-
-	if (NULL == nn) {
-		if ( ! man_pwarn(m, line, ppos, WNOSCOPE))
-			return(0);
-		return(1);
-	}
-
-	if ( ! rew_scope(MAN_BODY, m, ntok))
-		return(0);
-	if ( ! rew_scope(MAN_BLOCK, m, ntok))
-		return(0);
-
-	/*
-	 * Restore flags set when we got here and also stipulate that we
-	 * don't post-process the line when exiting the macro op
-	 * function in man_pmacro().  See blk_exp().
-	 */
-
-	m->flags = m->svflags | MAN_ILINE;
-	m->next = m->svnext;
 	return(1);
 }
 
@@ -418,23 +343,10 @@ blk_exp(MACRO_PROT_ARGS)
 	 * anywhere.
 	 */
 
-	if ( ! (MAN_NOCLOSE & man_macros[tok].flags)) {
-		if ( ! rew_scope(MAN_BODY, m, tok))
-			return(0);
-		if ( ! rew_scope(MAN_BLOCK, m, tok))
-			return(0);
-	} else {
-		/*
-		 * Save our state and next-scope indicator; we restore
-		 * it when exiting from the roff instruction block.  See
-		 * blk_dotted().
-		 */
-		m->svflags = m->flags;
-		m->svnext = m->next;
-		
-		/* Make sure we drop any line modes. */
-		m->flags = 0;
-	}
+	if ( ! rew_scope(MAN_BODY, m, tok))
+		return(0);
+	if ( ! rew_scope(MAN_BLOCK, m, tok))
+		return(0);
 
 	if ( ! man_block_alloc(m, line, ppos, tok))
 		return(0);

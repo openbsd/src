@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.18 2010/05/15 18:06:02 schwarze Exp $ */
+/*	$Id: libman.h,v 1.19 2010/05/16 00:54:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,7 +28,6 @@ struct	man {
 	void		*data;
 	struct man_cb	 cb;
 	int		 pflags; /* parse flags (see man.h) */
-	int		 svflags; /* flags saved during roff blocks */
 	int		 flags; /* parse flags */
 #define	MAN_HALT	(1 << 0) /* badness happened: die */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
@@ -38,7 +37,6 @@ struct	man {
 #define	MAN_BPLINE	(1 << 5)
 #define	MAN_EL_USE	(1 << 6) /* Following .el will be used. */
 	enum man_next	 next;
-	enum man_next	 svnext;
 	struct man_node	*last;
 	struct man_node	*first;
 	struct man_meta	 meta;
@@ -63,8 +61,6 @@ enum	merr {
 	WNOSCOPE,
 	WOLITERAL,
 	WNLITERAL,
-	WROFFNEST,
-	WROFFSCOPE,
 	WTITLECASE,
 	WBADCOMMENT,
 	WERRMAX

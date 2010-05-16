@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.29 2010/05/15 18:06:02 schwarze Exp $ */
+/*	$Id: man.c,v 1.30 2010/05/16 00:54:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -45,8 +45,6 @@ const	char *const __man_merrnames[WERRMAX] = {
 	"no scope context", /* WNOSCOPE */
 	"literal context already open", /* WOLITERAL */
 	"no literal context open", /* WNLITERAL */
-	"invalid nesting of roff declarations", /* WROFFNEST */
-	"scope in roff instructions broken", /* WROFFSCOPE */
 	"document title should be uppercase", /* WTITLECASE */
 	"deprecated comment style", /* WBADCOMMENT */
 };
@@ -60,9 +58,8 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"RI",		"na",		"i",		"sp",
 	"nf",		"fi",		"r",		"RE",
 	"RS",		"DT",		"UC",		"PD",
-	"Sp",		"Vb",		"Ve",		"de",
-	"dei",		"am",		"ami",		"ig",
-	".",		"if",		"ie",		"el",
+	"Sp",		"Vb",		"Ve",
+	"if",		"ie",		"el",
 	};
 
 const	char * const *man_macronames = __man_macronames;
@@ -560,9 +557,6 @@ man_pmacro(struct man *m, int ln, char *buf)
 	 * Remove prior ELINE macro, as it's being clobbering by a new
 	 * macro.  Note that NSCOPED macros do not close out ELINE
 	 * macros---they don't print text---so we let those slip by.
-	 * NOTE: we don't allow roff blocks (NOCLOSE) to be embedded
-	 * here because that would stipulate blocks as children of
-	 * elements!
 	 */
 
 	if ( ! (MAN_NSCOPED & man_macros[tok].flags) &&
