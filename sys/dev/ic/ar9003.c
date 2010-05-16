@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.5 2010/05/12 16:28:40 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.6 2010/05/16 08:55:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -665,6 +665,8 @@ ar9003_rx_free(struct athn_softc *sc, int qid)
 	struct athn_rx_buf *bf;
 	int i;
 
+	if (rxq->bf == NULL)
+		return;
 	for (i = 0; i < rxq->count; i++) {
 		bf = &rxq->bf[i];
 
@@ -673,8 +675,7 @@ ar9003_rx_free(struct athn_softc *sc, int qid)
 		if (bf->bf_m != NULL)
 			m_freem(bf->bf_m);
 	}
-	if (rxq->bf != NULL)
-		free(rxq->bf, M_DEVBUF);
+	free(rxq->bf, M_DEVBUF);
 }
 
 void

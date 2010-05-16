@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.3 2010/05/12 16:28:40 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.4 2010/05/16 08:55:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -614,6 +614,8 @@ ar5008_rx_free(struct athn_softc *sc)
 	struct athn_rx_buf *bf;
 	int i;
 
+	if (rxq->bf == NULL)
+		return;
 	for (i = 0; i < ATHN_NRXBUFS; i++) {
 		bf = &rxq->bf[i];
 
@@ -622,8 +624,8 @@ ar5008_rx_free(struct athn_softc *sc)
 		if (bf->bf_m != NULL)
 			m_freem(bf->bf_m);
 	}
-	if (rxq->bf != NULL)
-		free(rxq->bf, M_DEVBUF);
+	free(rxq->bf, M_DEVBUF);
+
 	/* Free Rx descriptors. */
 	if (rxq->descs != NULL) {
 		if (rxq->descs != NULL) {
