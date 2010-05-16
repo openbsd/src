@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.11 2010/05/11 19:34:20 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.12 2010/05/16 09:19:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -474,6 +474,7 @@ struct athn_softc {
 	bus_dmamap_t			map;
 	bus_dma_segment_t		seg;
 	SIMPLEQ_HEAD(, athn_tx_buf)	txbufs;
+	struct athn_tx_buf		*bcnbuf;
 	struct athn_tx_buf		txpool[ATHN_NTXBUFS];
 
 	bus_dmamap_t			txsmap;

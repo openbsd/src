@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.41 2010/05/16 09:02:13 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.42 2010/05/16 09:19:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -112,7 +112,8 @@ void		athn_tx_reclaim(struct athn_softc *, int);
 int		athn_tx_pending(struct athn_softc *, int);
 void		athn_stop_tx_dma(struct athn_softc *, int);
 int		athn_txtime(struct athn_softc *, int, int, u_int);
-void		athn_set_beacon_timers(struct athn_softc *);
+void		athn_set_sta_timers(struct athn_softc *);
+void		athn_set_hostap_timers(struct athn_softc *);
 void		athn_set_opmode(struct athn_softc *);
 void		athn_set_bss(struct athn_softc *, struct ieee80211_node *);
 void		athn_enable_interrupts(struct athn_softc *);
@@ -194,6 +195,7 @@ athn_attach(struct athn_softc *sc)
 		printf(": could not attach chip\n");
 		return (error);
 	}
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* We can put the chip in sleep state now. */
 	athn_set_power_sleep(sc);
@@ -204,8 +206,9 @@ athn_attach(struct athn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
-
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
+	/* Steal one Tx buffer for beacons. */
+	sc->bcnbuf = SIMPLEQ_FIRST(&sc->txbufs);
+	SIMPLEQ_REMOVE_HEAD(&sc->txbufs, bf_list);
 
 	if (sc->flags & ATHN_FLAG_RFSILENT) {
 		DPRINTF(("found RF switch connected to GPIO pin %d\n",
@@ -258,12 +261,15 @@ athn_attach(struct athn_softc *sc)
 
 	/* Set device capabilities. */
 	ic->ic_caps =
-	    IEEE80211_C_WEP |		/* WEP */
-	    IEEE80211_C_RSN |		/* WPA/RSN */
-	    IEEE80211_C_MONITOR |	/* monitor mode supported */
-	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
-	    IEEE80211_C_PMGT;		/* power saving supported */
+	    IEEE80211_C_WEP |		/* WEP. */
+	    IEEE80211_C_RSN |		/* WPA/RSN. */
+#ifndef IEEE80211_STA_ONLY
+	    IEEE80211_C_HOSTAP |	/* Host Ap mode supported. */
+#endif
+	    IEEE80211_C_MONITOR |	/* Monitor mode supported. */
+	    IEEE80211_C_SHSLOT |	/* Short slot time supported. */
+	    IEEE80211_C_SHPREAMBLE |	/* Short preamble supported. */
+	    IEEE80211_C_PMGT;		/* Power saving supported. */
 
 #ifndef IEEE80211_NO_HT
 	if (sc->flags & ATHN_FLAG_11N) {
@@ -1688,7 +1694,6 @@ athn_txtime(struct athn_softc *sc, int len, int ridx, u_int flags)
 void
 athn_init_tx_queues(struct athn_softc *sc)
 {
-	uint32_t reg;
 	int qid;
 
 	for (qid = 0; qid < ATHN_QID_COUNT; qid++) {
@@ -1715,13 +1720,10 @@ athn_init_tx_queues(struct athn_softc *sc)
 	       AR_D_MISC_ARB_LOCKOUT_CNTRL_GLOBAL) |
 	    AR_D_MISC_BEACON_USE |
 	    AR_D_MISC_POST_FR_BKOFF_DIS);
-	if (AR_SREV_9380_10_OR_LATER(sc)) {
-		/* CWmin and CWmax should be 0 for beacon queue. */
-		reg = AR_READ(sc, AR_DLCL_IFS(ATHN_QID_BEACON));
-		reg = RW(reg, AR_D_LCL_IFS_CWMIN, 0);
-		reg = RW(reg, AR_D_LCL_IFS_CWMAX, 0);
-		AR_WRITE(sc, AR_DLCL_IFS(ATHN_QID_BEACON), reg);
-	}
+	AR_WRITE(sc, AR_DLCL_IFS(ATHN_QID_BEACON),
+	    SM(AR_D_LCL_IFS_CWMIN, 0) |
+	    SM(AR_D_LCL_IFS_CWMAX, 0) |
+	    SM(AR_D_LCL_IFS_AIFS,  1));
 
 	/* Init CAB (Content After Beacon) queue. */
 	AR_SETBITS(sc, AR_QMISC(ATHN_QID_CAB),
@@ -1750,10 +1752,9 @@ athn_init_tx_queues(struct athn_softc *sc)
 }
 
 void
-athn_set_beacon_timers(struct athn_softc *sc)
+athn_set_sta_timers(struct athn_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = ic->ic_bss;
 	uint32_t tsfhi, tsflo, tsftu, reg;
 	uint32_t intval, next_tbtt, next_dtim;
 	int dtim_period, dtim_count, rem_dtim_count;
@@ -1763,7 +1764,7 @@ athn_set_beacon_timers(struct athn_softc *sc)
 	tsftu = AR_TSF_TO_TU(tsfhi, tsflo) + AR_FUDGE;
 
 	/* Beacon interval in TU. */
-	intval = ni->ni_intval;
+	intval = ic->ic_bss->ni_intval;
 
 	next_tbtt = roundup(tsftu, intval);
 #ifdef notyet
@@ -1815,6 +1816,33 @@ athn_set_beacon_timers(struct athn_softc *sc)
 	/* Set TSF out-of-range threshold (fixed at 16k us). */
 	AR_WRITE(sc, AR_TSFOOR_THRESHOLD, 0x4240);
 }
+
+#ifndef IEEE80211_STA_ONLY
+void
+athn_set_hostap_timers(struct athn_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t intval, next_tbtt;
+
+	/* Beacon interval in TU. */
+	intval = ic->ic_bss->ni_intval;
+	next_tbtt = intval;
+
+	AR_WRITE(sc, AR_NEXT_TBTT_TIMER, next_tbtt * IEEE80211_DUR_TU);
+	AR_WRITE(sc, AR_NEXT_DMA_BEACON_ALERT,
+	    (next_tbtt - AR_BEACON_DMA_DELAY) * IEEE80211_DUR_TU);
+	AR_WRITE(sc, AR_NEXT_CFP,
+	    (next_tbtt - AR_SWBA_DELAY) * IEEE80211_DUR_TU);
+
+	AR_WRITE(sc, AR_BEACON_PERIOD, intval * IEEE80211_DUR_TU);
+	AR_WRITE(sc, AR_DMA_BEACON_PERIOD, intval * IEEE80211_DUR_TU);
+	AR_WRITE(sc, AR_SWBA_PERIOD, intval * IEEE80211_DUR_TU);
+	AR_WRITE(sc, AR_NDP_PERIOD, intval * IEEE80211_DUR_TU);
+
+	AR_WRITE(sc, AR_TIMER_MODE,
+	    AR_TBTT_TIMER_EN | AR_DBA_TIMER_EN | AR_SWBA_TIMER_EN);
+}
+#endif
 
 void
 athn_set_opmode(struct athn_softc *sc)
@@ -2256,9 +2284,18 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		athn_set_bss(sc, ic->ic_bss);
 		athn_disable_interrupts(sc);
-		athn_set_beacon_timers(sc);
-		/* Enable beacon miss interrupts. */
-		sc->imask |= AR_IMR_BMISS;
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			athn_set_hostap_timers(sc);
+			/* Enable sotfware beacon alert interrupts. */
+			sc->imask |= AR_IMR_SWBA;
+		} else
+#endif
+		{
+			athn_set_sta_timers(sc);
+			/* Enable beacon miss interrupts. */
+			sc->imask |= AR_IMR_BMISS;
+		}
 		athn_enable_interrupts(sc);
 		/* XXX Start ANI. */
 

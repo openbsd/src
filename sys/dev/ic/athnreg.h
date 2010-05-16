@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.10 2010/05/16 08:50:58 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.11 2010/05/16 09:19:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1280,6 +1280,8 @@
 
 #define AR_MIN_BEACON_TIMEOUT_VAL	1
 #define AR_FUDGE			2
+#define AR_BEACON_DMA_DELAY		2
+#define AR_SWBA_DELAY			10
 /* Divides by 1024 (usecs to TU) without doing 64-bit arithmetic. */
 #define AR_TSF_TO_TU(hi, lo)	((hi) << 22 | (lo) >> 10)
 

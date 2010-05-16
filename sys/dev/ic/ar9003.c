@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.7 2010/05/16 09:01:05 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.8 2010/05/16 09:19:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -90,6 +90,7 @@ int	ar9003_rx_process(struct athn_softc *, int);
 void	ar9003_rx_intr(struct athn_softc *, int);
 int	ar9003_tx_process(struct athn_softc *);
 void	ar9003_tx_intr(struct athn_softc *);
+int	ar9003_swba_intr(struct athn_softc *);
 int	ar9003_intr(struct athn_softc *);
 int	ar9003_tx(struct athn_softc *, struct mbuf *, struct ieee80211_node *);
 void	ar9003_set_rf_mode(struct athn_softc *, struct ieee80211_channel *);
@@ -139,6 +140,8 @@ void	athn_stop(struct ifnet *, int);
 int	athn_interpolate(int, int, int, int, int);
 int	athn_txtime(struct athn_softc *, int, int, u_int);
 void	athn_inc_tx_trigger_level(struct athn_softc *);
+int	athn_tx_pending(struct athn_softc *, int);
+void	athn_stop_tx_dma(struct athn_softc *, int);
 void	athn_get_delta_slope(uint32_t, uint32_t *, uint32_t *);
 void	athn_config_pcie(struct athn_softc *);
 void	athn_config_nonpcie(struct athn_softc *);
@@ -1024,6 +1027,113 @@ ar9003_tx_intr(struct athn_softc *sc)
 	while (ar9003_tx_process(sc) == 0);
 }
 
+#ifndef IEEE80211_STA_ONLY
+/*
+ * Process Software Beacon Alert interrupts.
+ */
+int
+ar9003_swba_intr(struct athn_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct athn_tx_buf *bf = sc->bcnbuf;
+	struct ieee80211_frame *wh;
+	struct ar_tx_desc *ds;
+	struct mbuf *m;
+	uint32_t sum;
+	uint8_t ridx, hwrate;
+	int error, totlen;
+
+	if (ic->ic_dtim_count == 0)
+		ic->ic_dtim_count = ic->ic_dtim_period - 1;
+	else
+		ic->ic_dtim_count--;
+
+	/* Make sure previous beacon has been sent. */
+	if (athn_tx_pending(sc, ATHN_QID_BEACON)) {
+		DPRINTF(("beacon stuck problem\n"));
+		return (EBUSY);
+	}
+	/* Get new beacon. */
+	m = ieee80211_beacon_alloc(ic, ic->ic_bss);
+	if (__predict_false(m == NULL))
+		return (ENOBUFS);
+	/* Assign sequence number. */
+	wh = mtod(m, struct ieee80211_frame *);
+	*(uint16_t *)&wh->i_seq[0] =
+	    htole16(ic->ic_bss->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
+	ic->ic_bss->ni_txseq++;
+
+	/* Unmap and free old beacon if any. */
+	if (__predict_true(bf->bf_m != NULL)) {
+		bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0,
+		    bf->bf_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, bf->bf_map);
+		m_freem(bf->bf_m);
+		bf->bf_m = NULL;
+	}
+	/* DMA map new beacon. */
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_map, m,
+	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+	if (__predict_false(error != 0)) {
+		m_freem(m);
+		return (error);
+	}
+	bf->bf_m = m;
+
+	/* Setup Tx descriptor (simplified ar9003_tx()). */
+	ds = bf->bf_descs;
+	memset(ds, 0, sizeof(*ds));
+
+	ds->ds_info =
+	    SM(AR_TXI_DESC_ID, AR_VENDOR_ATHEROS) |
+	    SM(AR_TXI_DESC_NDWORDS, 23) |
+	    SM(AR_TXI_QCU_NUM, ATHN_QID_BEACON) |
+	    AR_TXI_DESC_TX | AR_TXI_CTRL_STAT;
+
+	totlen = m->m_pkthdr.len + IEEE80211_CRC_LEN;
+	ds->ds_ctl11 = SM(AR_TXC11_FRAME_LEN, totlen);
+	ds->ds_ctl11 |= SM(AR_TXC11_XMIT_POWER, AR_MAX_RATE_POWER);
+	ds->ds_ctl12 = SM(AR_TXC12_FRAME_TYPE, AR_FRAME_TYPE_BEACON);
+	ds->ds_ctl12 |= AR_TXC12_NO_ACK;
+	ds->ds_ctl17 = SM(AR_TXC17_ENCR_TYPE, AR_ENCR_TYPE_CLEAR);
+
+	/* Write number of tries. */
+	ds->ds_ctl13 = SM(AR_TXC13_XMIT_DATA_TRIES0, 1);
+
+	/* Write Tx rate. */
+	ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+	    ATHN_RIDX_OFDM6 : ATHN_RIDX_CCK1;
+	hwrate = athn_rates[ridx].hwrate;
+	ds->ds_ctl14 = SM(AR_TXC14_XMIT_RATE0, hwrate);
+
+	/* Write Tx chains. */
+	ds->ds_ctl18 = SM(AR_TXC18_CHAIN_SEL0, sc->txchainmask);
+
+	ds->ds_segs[0].ds_data = bf->bf_map->dm_segs[0].ds_addr;
+	/* Segment length must be a multiple of 4. */
+	ds->ds_segs[0].ds_ctl |= SM(AR_TXC_BUF_LEN,
+	    (bf->bf_map->dm_segs[0].ds_len + 3) & ~3);
+	/* Compute Tx descriptor checksum. */
+	sum = ds->ds_info;
+	sum += ds->ds_segs[0].ds_data;
+	sum += ds->ds_segs[0].ds_ctl;
+	sum = (sum >> 16) + (sum & 0xffff);
+	ds->ds_ctl10 = SM(AR_TXC10_PTR_CHK_SUM, sum);
+
+	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, bf->bf_map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	/* Stop Tx DMA before putting the new beacon on the queue. */
+	athn_stop_tx_dma(sc, ATHN_QID_BEACON);
+
+	AR_WRITE(sc, AR_QTXDP(ATHN_QID_BEACON), bf->bf_daddr);
+
+	/* Kick Tx. */
+	AR_WRITE(sc, AR_Q_TXE, 1 << ATHN_QID_BEACON);
+	return (0);
+}
+#endif
+
 int
 ar9003_intr(struct athn_softc *sc)
 {
@@ -1058,6 +1168,10 @@ ar9003_intr(struct athn_softc *sc)
 		if (intr == AR_INTR_SPURIOUS)
 			return (1);
 
+#ifndef IEEE80211_STA_ONLY
+		if (intr & AR_ISR_SWBA)
+			ar9003_swba_intr(sc);
+#endif
 		if (intr & (AR_ISR_RXMINTR | AR_ISR_RXINTM))
 			ar9003_rx_intr(sc, ATHN_QID_LP);
 		if (intr & (AR_ISR_LP_RXOK | AR_ISR_RXERR))
@@ -1127,10 +1241,8 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	wh = mtod(m, struct ieee80211_frame *);
 	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 	    IEEE80211_FC0_TYPE_MGT) {
+		/* NB: Beacons do not use ar9003_tx(). */
 		if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-		    IEEE80211_FC0_SUBTYPE_BEACON)
-			type = AR_FRAME_TYPE_BEACON;
-		else if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 			type = AR_FRAME_TYPE_PROBE_RESP;
 		else if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
@@ -1159,8 +1271,6 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		qos = ieee80211_get_qos(wh);
 		tid = qos & IEEE80211_QOS_TID;
 		qid = athn_ac2qid[ieee80211_up_to_ac(ic, tid)];
-	} else if (type == AR_FRAME_TYPE_BEACON) {
-		qid = ATHN_QID_BEACON;
 	} else if (type == AR_FRAME_TYPE_PSPOLL) {
 		qid = ATHN_QID_PSPOLL;
 	} else
