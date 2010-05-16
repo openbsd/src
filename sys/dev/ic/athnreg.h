@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.9 2010/05/13 09:03:12 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.10 2010/05/16 08:50:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1268,9 +1268,10 @@
 
 #define AR_BASE_PHY_ACTIVE_DELAY	100
 
-#define AR_CLOCK_RATE_CCK	22
-#define AR_CLOCK_RATE_5GHZ_OFDM	40
-#define AR_CLOCK_RATE_2GHZ_OFDM	44
+#define AR_CLOCK_RATE_CCK		22
+#define AR_CLOCK_RATE_5GHZ_OFDM		40
+#define AR_CLOCK_RATE_FAST_5GHZ_OFDM	44
+#define AR_CLOCK_RATE_2GHZ_OFDM		44
 
 #define AR_PWR_DECREASE_FOR_2_CHAIN	6	/* 10 * log10(2) * 2 */
 #define AR_PWR_DECREASE_FOR_3_CHAIN	9	/* 10 * log10(3) * 2 */

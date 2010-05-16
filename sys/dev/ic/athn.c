@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.39 2010/05/16 08:45:25 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.40 2010/05/16 08:50:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2300,15 +2300,20 @@ athn_updateslot(struct ieee80211com *ic)
 	struct athn_softc *sc = ic->ic_softc;
 	uint32_t clks;
 
-	if (ic->ic_curmode == IEEE80211_MODE_11B)
+	if (ic->ic_curmode == IEEE80211_MODE_11A) {
+		if (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)
+			clks = AR_CLOCK_RATE_FAST_5GHZ_OFDM;
+		else
+			clks = AR_CLOCK_RATE_5GHZ_OFDM;
+	} else if (ic->ic_curmode == IEEE80211_MODE_11B) {
 		clks = AR_CLOCK_RATE_CCK;
-	else if (ic->ic_curmode == IEEE80211_MODE_11A)
-		clks = AR_CLOCK_RATE_5GHZ_OFDM;
-	else
+	} else
 		clks = AR_CLOCK_RATE_2GHZ_OFDM;
+#ifndef IEEE80211_NO_HT
+	if (sc->curchanext != NULL)
+		clks *= 2;
+#endif
 	clks *= (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
-
-	/* XXX 40MHz. */
 
 	AR_WRITE(sc, AR_D_GBL_IFS_SLOT, clks);
 }
