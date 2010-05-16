@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.44 2010/05/16 14:34:19 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.45 2010/05/16 14:50:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -969,9 +969,6 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), 0);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
-			/* MAC address is reserved for the MIC entry. */
-			AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
-			AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
 
 			/* Rx MIC is at entry + 64 + 32. */
 			micentry = entry + 64 + 32;
@@ -986,9 +983,6 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), 0);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
-			/* MAC address is reserved for the MIC entry. */
-			AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
-			AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
 		} else {
 			/* Tx+Rx MIC is at entry + 64. */
 			micentry = entry + 64;
@@ -1005,9 +999,6 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    micbuf[6] | micbuf[7] << 16);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
-			/* MAC address is reserved for the MIC entry. */
-			AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
-			AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
 		}
 	}
 	AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), keybuf[0] | keybuf[1] << 16);
