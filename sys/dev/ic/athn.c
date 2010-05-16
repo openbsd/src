@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.40 2010/05/16 08:50:58 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.41 2010/05/16 09:02:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -275,6 +275,8 @@ athn_attach(struct athn_softc *sc)
 		    IEEE80211_HTCAP_CBW20_40 |
 		    IEEE80211_HTCAP_SGI40 |
 		    IEEE80211_HTCAP_DSSSCCK40;
+		if (AR_SREV_9287_10_OR_LATER(sc))
+			ic->ic_htcaps |= IEEE80211_HTCAP_SGI20;
 		if (AR_SREV_9380_10_OR_LATER(sc))
 			ic->ic_htcaps |= IEEE80211_HTCAP_LDPC;
 		if (AR_SREV_9280_10_OR_LATER(sc)) {
