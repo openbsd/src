@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.168 2010/04/19 16:32:53 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.169 2010/05/16 14:54:43 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -102,10 +102,6 @@
 #define	FPEMU_STACKSIZE	(1*NBPG)
 
 	.data
-	.align	64
-$trap_tmp_save
-	.block	TF_PHYS
-	.size	$trap_tmp_save, .-$trap_tmp_save
 
 	.export netisr, data
 	.align 16
@@ -721,8 +717,8 @@ $syscall_return
 	 *	hopefully no page fault would happen on or after the copy,
 	 *	and interrupts are disabled.
 	 */
-	ldil	L%$trap_tmp_save, t2
-	ldo	R%$trap_tmp_save(t2), t2
+	mfctl	cr29, t2
+	ldo	CI_TRAP_SAVE(t2), t2
 	/* use ,bc each cache line */
 	ldw  0(t3), r1 ! ldw  4(t3), t1 ! stw r1,  0(t2) ! stw t1,  4(t2)
 	ldw  8(t3), r1 ! ldw 12(t3), t1 ! stw r1,  8(t2) ! stw t1, 12(t2)
@@ -809,8 +805,8 @@ $syscall_return
 	 * since we don't use it anyway.
 	 */
 	ssm	0, r0
-	ldil	L%$trap_tmp_save, t3
-	ldo	R%$trap_tmp_save(t3), t3
+	mfctl	cr29, t3
+	ldo	CI_TRAP_SAVE(t3), t3
 	nop ! nop ! nop ! nop ! nop
 	rsm	RESET_PSL, r0
 $syscall_return_phys
@@ -1557,8 +1553,8 @@ ENTRY(TLABEL(all),0)
 	/* do not overwrite tr4(cr28) */
 	mtctl	t3, tr2
 
-	ldil	L%$trap_tmp_save, t3
-	ldo	R%$trap_tmp_save(t3), t3
+	mfctl	cr29, t3
+	ldo	CI_TRAP_SAVE(t3), t3
 	stw	t1, TF_R22(t3)		/* use ,bc */
 	stw	t2, TF_R21(t3)
 
@@ -1721,8 +1717,8 @@ $trapnowvirt
 	/*
 	 * Copy partially saved state from the store into the frame
 	 */
-	ldil	L%$trap_tmp_save, t2
-	ldo	R%$trap_tmp_save(t2), t2
+	mfctl	cr29, t2
+	ldo	CI_TRAP_SAVE(t2), t2
 	/* use ,bc each cache line */
 	ldw  0(t2), r1 ! ldw  4(t2), t1 ! stw r1,  0(t3) ! stw t1,  4(t3)
 	ldw  8(t2), r1 ! ldw 12(t2), t1 ! stw r1,  8(t3) ! stw t1, 12(t3)
