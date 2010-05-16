@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.50 2010/05/15 18:25:51 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.51 2010/05/16 01:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -287,7 +287,7 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf)
 		return(0);
 
 	m->flags |= MDOC_NEWLINE;
-	return('.' == *buf ? 
+	return(('.' == *buf || '\'' == *buf) ? 
 			mdoc_pmacro(m, ln, buf) :
 			mdoc_ptext(m, ln, buf));
 }
