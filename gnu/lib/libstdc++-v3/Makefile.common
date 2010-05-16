@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.common,v 1.2 2010/05/16 07:28:15 espie Exp $
+# $OpenBSD: Makefile.common,v 1.3 2010/05/16 13:22:58 espie Exp $
 
 GCCDIR= ${.CURDIR}/../../gcc/gcc
 GCCLIB= ${GCCDIR}/gcc
@@ -25,4 +25,4 @@ SUPSRCS=del_op.cc del_opnt.cc del_opv.cc del_opvnt.cc eh_alloc.cc eh_arm.cc \
 	vec.cc vterminate.cc
 
 # from libiberty:
-SRCS+=	cp-demangle.c
+SUPSRCS+=	cp-demangle.c
