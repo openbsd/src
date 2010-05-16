@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.6 2010/05/16 09:42:04 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.7 2010/05/16 14:34:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1363,29 +1363,27 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	     IEEE80211_QOS_ACK_POLICY_NOACK))
 		ds->ds_ctl1 |= AR_TXC1_NO_ACK;
 
-	if (0 && wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-		/* Retrieve key for encryption. */
-		k = ieee80211_get_txkey(ic, wh, ni);
+	if (0 && k != NULL) {
 		/*
 		 * Map 802.11 cipher to hardware encryption type and
-		 * compute crypto overhead.
+		 * compute MIC+ICV overhead.
 		 */
 		switch (k->k_cipher) {
 		case IEEE80211_CIPHER_WEP40:
 		case IEEE80211_CIPHER_WEP104:
 			encrtype = AR_ENCR_TYPE_WEP;
-			totlen += 8;
+			totlen += 4;
 			break;
 		case IEEE80211_CIPHER_TKIP:
 			encrtype = AR_ENCR_TYPE_TKIP;
-			totlen += 20;
+			totlen += 12;
 			break;
 		case IEEE80211_CIPHER_CCMP:
 			encrtype = AR_ENCR_TYPE_AES;
-			totlen += 16;
+			totlen += 8;
 			break;
 		default:
-			panic("unsupported cipher");	/* XXX BIP? */
+			panic("unsupported cipher");
 		}
 		/*
 		 * NB: The key cache entry index is stored in the key

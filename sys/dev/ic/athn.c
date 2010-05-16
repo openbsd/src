@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.43 2010/05/16 09:42:04 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.44 2010/05/16 14:34:19 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -215,13 +215,18 @@ athn_attach(struct athn_softc *sc)
 		    sc->rfsilent_pin));
 	}
 	DPRINTF(("%d key cache entries\n", sc->kc_entries));
-
 	/*
 	 * In HostAP mode, the number of STAs that we can handle is
 	 * limited by the number of entries in the HW key cache.
-	 * XXX TKIP MMIC
+	 * TKIP keys consume 2 or 4 entries in the cache.
 	 */
-	ic->ic_max_nnodes = sc->kc_entries - IEEE80211_GROUP_NKID;
+	ic->ic_max_nnodes = sc->kc_entries - IEEE80211_WEP_NKID;
+	if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC)
+		ic->ic_max_nnodes /= 4;
+	else
+		ic->ic_max_nnodes /= 2;
+	if (ic->ic_max_nnodes > IEEE80211_CACHE_SIZE)
+		ic->ic_max_nnodes = IEEE80211_CACHE_SIZE;
 
 	DPRINTF(("using %s loop power control\n",
 	    (sc->flags & ATHN_FLAG_OLPC) ? "open" : "closed"));
@@ -389,13 +394,13 @@ void
 athn_radiotap_attach(struct athn_softc *sc)
 {
 	bpfattach(&sc->sc_drvbpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
 
-	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
 	sc->sc_rxtap.wr_ihdr.it_present = htole32(ATHN_RX_RADIOTAP_PRESENT);
 
-	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(ATHN_TX_RADIOTAP_PRESENT);
 }
@@ -939,52 +944,82 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return (ieee80211_set_key(ic, ni, k));
 	}
 
-	memset(keybuf, 0, sizeof keybuf);
+	memset(keybuf, 0, sizeof(keybuf));
 	memcpy(keybuf, k->k_key, MIN(k->k_len, 16));
 
 	if (!(k->k_flags & IEEE80211_KEY_GROUP))
-		entry = IEEE80211_GROUP_NKID + IEEE80211_AID(ni->ni_associd);
+		entry = IEEE80211_WEP_NKID + IEEE80211_AID(ni->ni_associd);
 	else
 		entry = k->k_id;
 	k->k_priv = (void *)entry;
 
 	/* NB: See note about key cache registers access above. */
 	if (type == AR_KEYTABLE_TYPE_TKIP) {
-		micentry = entry + 64;
+		if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC) {
+			/* Tx MIC is at entry + 64. */
+			micentry = entry + 64;
+			memcpy(micbuf, &k->k_key[16], 8);
+			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
+			    micbuf[0] | micbuf[1] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
+			    micbuf[2]);
+			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
+			    micbuf[3] | micbuf[4] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
+			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), 0);
+			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
+			    AR_KEYTABLE_TYPE_CLR);
+			/* MAC address is reserved for the MIC entry. */
+			AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
+			AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
 
-		/* XXX Split MIC. */
-		AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
-		    micbuf[0] | micbuf[1] << 16);
-		AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), micbuf[2]);
-
-		AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-		    micbuf[3] | micbuf[4] << 16);
-		AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), micbuf[5]);
-
-		AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry),
-		    micbuf[6] | micbuf[7] << 16);
-		AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry), AR_KEYTABLE_TYPE_CLR);
-
-		/* MAC address registers are reserved for the MIC entry. */
-		AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
-		AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
-	} else {
-		AR_WRITE(sc, AR_KEYTABLE_KEY0(entry),
-		    keybuf[0] | keybuf[1] << 16);
-		AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), keybuf[2]);
-
-		AR_WRITE(sc, AR_KEYTABLE_KEY2(entry),
-		    keybuf[3] | keybuf[4] << 16);
-		AR_WRITE(sc, AR_KEYTABLE_KEY3(entry), keybuf[5]);
-
-		AR_WRITE(sc, AR_KEYTABLE_KEY4(entry),
-		    keybuf[6] | keybuf[7] << 16);
-		AR_WRITE(sc, AR_KEYTABLE_TYPE(entry), type);
+			/* Rx MIC is at entry + 64 + 32. */
+			micentry = entry + 64 + 32;
+			memcpy(micbuf, &k->k_key[24], 8);
+			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
+			    micbuf[0] | micbuf[1] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
+			    micbuf[2]);
+			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
+			    micbuf[3] | micbuf[4] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
+			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), 0);
+			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
+			    AR_KEYTABLE_TYPE_CLR);
+			/* MAC address is reserved for the MIC entry. */
+			AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
+			AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
+		} else {
+			/* Tx+Rx MIC is at entry + 64. */
+			micentry = entry + 64;
+			memcpy(micbuf, &k->k_key[16], 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
+			    micbuf[0] | micbuf[1] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
+			    micbuf[2]);
+			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
+			    micbuf[3] | micbuf[4] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry),
+			    micbuf[5]);
+			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry),
+			    micbuf[6] | micbuf[7] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
+			    AR_KEYTABLE_TYPE_CLR);
+			/* MAC address is reserved for the MIC entry. */
+			AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
+			AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
+		}
 	}
+	AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), keybuf[0] | keybuf[1] << 16);
+	AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), keybuf[2]);
+	AR_WRITE(sc, AR_KEYTABLE_KEY2(entry), keybuf[3] | keybuf[4] << 16);
+	AR_WRITE(sc, AR_KEYTABLE_KEY3(entry), keybuf[5]);
+	AR_WRITE(sc, AR_KEYTABLE_KEY4(entry), keybuf[6] | keybuf[7] << 16);
+	AR_WRITE(sc, AR_KEYTABLE_TYPE(entry), type);
 
 	/* Clear keys from the stack. */
-	memset(keybuf, 0, sizeof keybuf);
-	memset(micbuf, 0, sizeof micbuf);
+	memset(keybuf, 0, sizeof(keybuf));
+	memset(micbuf, 0, sizeof(micbuf));
 
 	if (!(k->k_flags & IEEE80211_KEY_GROUP)) {
 		addr = ni->ni_macaddr;
@@ -1009,10 +1044,16 @@ athn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
 	case IEEE80211_CIPHER_WEP104:
-	case IEEE80211_CIPHER_TKIP:
 	case IEEE80211_CIPHER_CCMP:
 		entry = (uintptr_t)k->k_priv;
 		athn_reset_key(sc, entry);
+		break;
+	case IEEE80211_CIPHER_TKIP:
+		entry = (uintptr_t)k->k_priv;
+		athn_reset_key(sc, entry);
+		athn_reset_key(sc, entry + 64);
+		if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC)
+			athn_reset_key(sc, entry + 64 + 32);
 		break;
 	default:
 		/* Fallback to software crypto for other ciphers. */
@@ -2122,7 +2163,7 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	athn_init_qos(sc);
 
-	if (!AR_SREV_9280_10(sc))
+	if (!(sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC))
 		AR_SETBITS(sc, AR_PCU_MISC, AR_PCU_MIC_NEW_LOC_ENA);
 
 	if (AR_SREV_9287_12_OR_LATER(sc))
@@ -2161,8 +2202,7 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 struct ieee80211_node *
 athn_node_alloc(struct ieee80211com *ic)
 {
-	return (malloc(sizeof (struct athn_node), M_DEVBUF,
-	    M_NOWAIT | M_ZERO));
+	return (malloc(sizeof(struct athn_node), M_DEVBUF, M_NOWAIT | M_ZERO));
 }
 
 void
