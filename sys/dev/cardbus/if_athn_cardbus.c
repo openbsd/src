@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.8 2010/03/27 21:40:13 jsg Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.9 2010/05/16 15:06:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -92,7 +92,8 @@ static const struct pci_matchid athn_cardbus_devices[] = {
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9285 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR2427 },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9227 },
-	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9287 }
+	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9287 },
+	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9300 }
 };
 
 int
