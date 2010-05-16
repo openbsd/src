@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.9 2010/05/16 09:42:04 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.10 2010/05/16 09:49:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1050,7 +1050,7 @@ ar9003_swba_intr(struct athn_softc *sc)
 
 	/* Make sure previous beacon has been sent. */
 	if (athn_tx_pending(sc, ATHN_QID_BEACON)) {
-		DPRINTF(("beacon stuck problem\n"));
+		DPRINTF(("beacon stuck\n"));
 		return (EBUSY);
 	}
 	/* Get new beacon. */
