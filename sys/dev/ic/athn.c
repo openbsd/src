@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.46 2010/05/16 17:46:38 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.47 2010/05/16 18:01:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -961,10 +961,8 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			memcpy(micbuf, &k->k_key[16], 8);
 			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
 			    micbuf[0] | micbuf[1] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
-			    micbuf[2]);
 			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    micbuf[3] | micbuf[4] << 16);
+			    micbuf[2] | micbuf[3] << 16);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
 
@@ -973,10 +971,8 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			memcpy(micbuf, &k->k_key[24], 8);
 			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
 			    micbuf[0] | micbuf[1] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
-			    micbuf[2]);
 			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    micbuf[3] | micbuf[4] << 16);
+			    micbuf[2] | micbuf[3] << 16);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
 		} else {
@@ -986,11 +982,11 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
 			    micbuf[0] | micbuf[1] << 16);
 			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
-			    micbuf[2]);
-			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    micbuf[3] | micbuf[4] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry),
 			    micbuf[5]);
+			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
+			    micbuf[2] | micbuf[3] << 16);
+			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry),
+			    micbuf[4]);
 			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry),
 			    micbuf[6] | micbuf[7] << 16);
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
