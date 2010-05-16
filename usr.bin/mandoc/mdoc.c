@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.51 2010/05/16 01:16:25 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.52 2010/05/16 20:46:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -628,7 +628,7 @@ mdoc_node_delete(struct mdoc *m, struct mdoc_node *p)
 static int
 mdoc_ptext(struct mdoc *m, int line, char *buf)
 {
-	int		 i;
+	char		*c, *ws, *end;
 
 	/* Ignore bogus comments. */
 
@@ -640,18 +640,51 @@ mdoc_ptext(struct mdoc *m, int line, char *buf)
 	if (SEC_NONE == m->lastnamed)
 		return(mdoc_perr(m, line, 0, ETEXTPROL));
 
-	/* Literal just gets pulled in as-is. */
-	
-	if (MDOC_LITERAL & m->flags)
-		return(mdoc_word_alloc(m, line, 0, buf));
+	/*
+	 * Search for the beginning of unescaped trailing whitespace (ws)
+	 * and for the first character not to be output (end).
+	 */
+	ws = NULL;
+	for (c = end = buf; *c; c++) {
+		switch (*c) {
+		case ' ':
+			if (NULL == ws)
+				ws = c;
+			continue;
+		case '\t':
+			/*
+			 * Always warn about trailing tabs,
+			 * even outside literal context,
+			 * where they should be put on the next line.
+			 */
+			if (NULL == ws)
+				ws = c;
+			/*
+			 * Strip trailing tabs in literal context only;
+			 * outside, they affect the next line.
+			 */
+			if (MDOC_LITERAL & m->flags)
+				continue;
+			break;
+		case '\\':
+			/* Skip the escaped character, too, if any. */
+			if (c[1])
+				c++;
+			/* FALLTHROUGH */
+		default:
+			ws = NULL;
+			break;
+		}
+		end = c + 1;
+	}
+	*end = '\0';
 
-	/* Check for a blank line, which may also consist of spaces. */
+	if (ws)
+		if ( ! mdoc_pwarn(m, line, (int)(ws-buf), ETAILWS))
+			return(0);
 
-	for (i = 0; ' ' == buf[i]; i++)
-		/* Skip to first non-space. */ ;
-
-	if ('\0' == buf[i]) {
-		if ( ! mdoc_pwarn(m, line, 0, ENOBLANK))
+	if ('\0' == *buf && ! (MDOC_LITERAL & m->flags)) {
+		if ( ! mdoc_pwarn(m, line, (int)(c-buf), ENOBLANK))
 			return(0);
 
 		/*
@@ -666,32 +699,11 @@ mdoc_ptext(struct mdoc *m, int line, char *buf)
 		return(1);
 	}
 
-	/* 
-	 * Warn if the last un-escaped character is whitespace. Then
-	 * strip away the remaining spaces (tabs stay!).   
-	 */
-
-	i = (int)strlen(buf);
-	assert(i);
-
-	if (' ' == buf[i - 1] || '\t' == buf[i - 1]) {
-		if (i > 1 && '\\' != buf[i - 2])
-			if ( ! mdoc_pwarn(m, line, i - 1, ETAILWS))
-				return(0);
-
-		for (--i; i && ' ' == buf[i]; i--)
-			/* Spin back to non-space. */ ;
-
-		/* Jump ahead of escaped whitespace. */
-		i += '\\' == buf[i] ? 2 : 1;
-
-		buf[i] = '\0';
-	}
-
-	/* Allocate the whole word. */
-
 	if ( ! mdoc_word_alloc(m, line, 0, buf))
 		return(0);
+
+	if (MDOC_LITERAL & m->flags)
+		return(1);
 
 	/*
 	 * End-of-sentence check.  If the last character is an unescaped
@@ -699,9 +711,9 @@ mdoc_ptext(struct mdoc *m, int line, char *buf)
 	 * sentence.  The front-end will know how to interpret this.
 	 */
 
-	assert(i);
+	assert(buf < end);
 
-	if (mandoc_eos(buf, (size_t)i))
+	if (mandoc_eos(buf, (size_t)(end-buf)))
 		m->last->flags |= MDOC_EOS;
 
 	return(1);
