@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.201 2010/05/01 08:14:26 mk Exp $	*/
+/*	$OpenBSD: ami.c,v 1.202 2010/05/16 20:33:59 nicm Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2137,7 +2137,7 @@ int
 ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
     struct ami_big_diskarray *p)
 {
-	char vend[8+16+4+1];
+	char vend[8+16+4+1], *vendp;
 	char ser[32 + 1];
 	struct scsi_inquiry_data inqbuf;
 	struct scsi_vpd_serial vpdbuf;
@@ -2161,7 +2161,8 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 		if (ami_drv_inq(sc, ch, tg, 0, &inqbuf)) 
 			goto bail;
 		
-		bcopy(inqbuf.vendor, vend, sizeof vend - 1);
+		vendp = inqbuf.vendor;
+		bcopy(vendp, vend, sizeof vend - 1);
 
 		vend[sizeof vend - 1] = '\0';
 		strlcpy(bd->bd_vendor, vend, sizeof(bd->bd_vendor));
@@ -2331,7 +2332,7 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 	int off;
 	int error = EINVAL;
 	u_int16_t ch, tg;
-	char vend[8+16+4+1];
+	char vend[8+16+4+1], *vendp;
 	char ser[32 + 1];
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
@@ -2405,7 +2406,8 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 			}
 
 			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
-				bcopy(inqbuf.vendor, vend, sizeof vend - 1);
+				vendp = inqbuf.vendor;
+				bcopy(vendp, vend, sizeof vend - 1);
 				vend[sizeof vend - 1] = '\0';
 				strlcpy(bd->bd_vendor, vend,
 				    sizeof(bd->bd_vendor));

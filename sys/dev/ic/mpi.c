@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.147 2010/05/09 22:03:56 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.148 2010/05/16 20:33:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2832,6 +2832,7 @@ mpi_ioctl_vol(struct mpi_softc *sc, struct bioc_vol *bv)
 	struct device		*dev;
 	struct scsi_link	*link;
 	struct mpi_cfg_raid_vol_pg0 *rpg0;
+	char			*vendp;
 
 	id = bv->bv_volid;
 	if (mpi_bio_get_pg0_raid(sc, id))
@@ -2905,8 +2906,8 @@ mpi_ioctl_vol(struct mpi_softc *sc, struct bioc_vol *bv)
 		/* are we it? */
 		if (vol == bv->bv_volid) {
 			dev = link->device_softc;
-			memcpy(bv->bv_vendor, link->inqdata.vendor,
-			    sizeof bv->bv_vendor);
+			vendp = link->inqdata.vendor;
+			memcpy(bv->bv_vendor, vendp, sizeof bv->bv_vendor);
 			bv->bv_vendor[sizeof(bv->bv_vendor) - 1] = '\0';
 			strlcpy(bv->bv_dev, dev->dv_xname, sizeof bv->bv_dev);
 			break;
