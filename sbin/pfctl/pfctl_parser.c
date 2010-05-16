@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.264 2010/03/22 17:04:02 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.265 2010/05/16 12:23:30 zinovik Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1449,6 +1449,7 @@ host(const char *s)
 		mask = strtol(p+1, &q, 0);
 		if (!q || *q || mask > 128 || q == (p+1)) {
 			free(r);
+			free(ps);
 			fprintf(stderr, "invalid netmask '%s'\n", p);
 			return (NULL);
 		}
