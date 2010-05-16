@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.6 2010/05/16 08:55:39 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.7 2010/05/16 09:01:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -682,7 +682,7 @@ void
 ar9003_reset_txsring(struct athn_softc *sc)
 {
 	sc->txscur = 0;
-	memset(sc->txsring, 0, sc->txsmap->dm_mapsize);
+	memset(sc->txsring, 0, AR9003_NTXSTATUS * sizeof(struct ar_tx_status));
 	AR_WRITE(sc, AR_Q_STATUS_RING_START,
 	    sc->txsmap->dm_segs[0].ds_addr);
 	AR_WRITE(sc, AR_Q_STATUS_RING_END,
@@ -883,8 +883,6 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	}
 	bf->bf_desc = mtod(m1, struct ar_rx_status *);
 	bf->bf_daddr = bf->bf_map->dm_segs[0].ds_addr;
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
-	    BUS_DMASYNC_PREREAD);
 
 	m = bf->bf_m;
 	bf->bf_m = m1;
@@ -918,9 +916,12 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
  skip:
 	/* Unlink this descriptor from head. */
 	SIMPLEQ_REMOVE_HEAD(&rxq->head, bf_list);
-	memset(ds, 0, sizeof(*ds));
+	memset(bf->bf_desc, 0, sizeof(*ds));
 
 	/* Re-use this descriptor and link it to tail. */
+	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
+	    BUS_DMASYNC_PREREAD);
+
 	if (qid == ATHN_QID_LP)
 		AR_WRITE(sc, AR_LP_RXDP, bf->bf_daddr);
 	else
