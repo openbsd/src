@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.107 2010/05/17 15:49:29 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.108 2010/05/17 16:08:20 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1139,6 +1139,24 @@ The address family needs to be set only in rules that use
 without specifying a
 .Ic prefix
 beforehand.
+.Pp
+.It Ic max-as-len Ar len
+This rule applies only to
+.Em UPDATES
+where the
+.Em AS path
+has more then
+.Ar len
+elements.
+.Pp
+.It Ic max-as-seq Ar len
+This rule applies only to
+.Em UPDATES
+where a single
+.Em AS number
+is repeated more then
+.Ar len
+times.
 .Pp
 .It Xo
 .Ic prefix

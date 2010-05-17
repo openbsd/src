@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.63 2010/04/28 13:07:48 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.64 2010/05/17 16:08:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -280,6 +280,11 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		if (aspath_match(asp->aspath, f->match.as.type, pas) == 0)
 			return (0);
 	}
+
+	if (asp != NULL && f->match.aslen.type != ASLEN_NONE)
+		if (aspath_lenmatch(asp->aspath, f->match.aslen.type,
+		    f->match.aslen.aslen) == 0)
+			return (0);
 
 	if (asp != NULL && f->match.community.as != COMMUNITY_UNSET) {
 		switch (f->match.community.as) {

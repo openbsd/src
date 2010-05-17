@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.81 2010/05/17 15:49:29 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.82 2010/05/17 16:08:20 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -567,6 +567,11 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 			printf("peer-as %s ", log_as(r->match.as.as));
 		else
 			printf("unfluffy-as %s ", log_as(r->match.as.as));
+	}
+
+	if (r->match.aslen.type) {
+		printf("%s %u ", r->match.aslen.type == ASLEN_MAX ?
+		    "max-as-len" : "max-as-seq", r->match.aslen.aslen);
 	}
 
 	if (r->match.community.as != COMMUNITY_UNSET) {

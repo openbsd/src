@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.259 2010/05/17 15:49:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.260 2010/05/17 16:08:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -580,17 +580,28 @@ enum as_spec {
 	AS_EMPTY
 };
 
+enum aslen_spec {
+	ASLEN_NONE,
+	ASLEN_MAX,
+	ASLEN_SEQ
+};
+
 struct filter_as {
 	u_int32_t	as;
 	u_int16_t	flags;
 	enum as_spec	type;
 };
 
+struct filter_aslen {
+	u_int		aslen;
+	enum aslen_spec	type;
+};
+
 #define AS_FLAG_NEIGHBORAS	0x01
 
 struct filter_community {
-	int			as;
-	int			type;
+	int		as;
+	int		type;
 };
 
 struct filter_extcommunity {
@@ -732,6 +743,7 @@ struct filter_match {
 	struct filter_prefix		prefix;
 	struct filter_prefixlen		prefixlen;
 	struct filter_as		as;
+	struct filter_aslen		aslen;
 	struct filter_community		community;
 	struct filter_extcommunity	ext_community;
 };

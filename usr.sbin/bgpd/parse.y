@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.254 2010/05/17 15:49:29 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.255 2010/05/17 16:08:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -180,7 +180,7 @@ typedef struct {
 %token	FROM TO ANY
 %token	CONNECTED STATIC
 %token	COMMUNITY EXTCOMMUNITY
-%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS PEERAS DELETE
+%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS PEERAS DELETE MAXASLEN MAXASSEQ
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN
 %token	ERROR INCLUDE
@@ -1616,6 +1616,30 @@ filter_elm	: filter_prefix_h	{
 			}
 			fmopts.as_l = $1;
 		}
+		| MAXASLEN NUMBER	{
+			if (fmopts.m.aslen.type != ASLEN_NONE) {
+				yyerror("AS length filters already specified");
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("bad max-as-len %lld", $2);
+				YYERROR;
+			}
+			fmopts.m.aslen.type = ASLEN_MAX;
+			fmopts.m.aslen.aslen = $2;
+		}
+		| MAXASSEQ NUMBER	{
+			if (fmopts.m.aslen.type != ASLEN_NONE) {
+				yyerror("AS length filters already specified");
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("bad max-as-seq %lld", $2);
+				YYERROR;
+			}
+			fmopts.m.aslen.type = ASLEN_SEQ;
+			fmopts.m.aslen.aslen = $2;
+		}
 		| COMMUNITY STRING	{
 			if (fmopts.m.community.as != COMMUNITY_UNSET) {
 				yyerror("\"community\" already specified");
@@ -2107,6 +2131,8 @@ lookup(char *s)
 		{ "localpref",		LOCALPREF},
 		{ "log",		LOG},
 		{ "match",		MATCH},
+		{ "max-as-len",		MAXASLEN},
+		{ "max-as-seq",		MAXASSEQ},
 		{ "max-prefix",		MAXPREFIX},
 		{ "md5sig",		MD5SIG},
 		{ "med",		MED},
