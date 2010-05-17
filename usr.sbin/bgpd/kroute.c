@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.178 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.179 2010/05/17 15:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <netmpls/mpls.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -91,8 +92,10 @@ struct ktable	*ktable_get(u_int);
 
 int	kr4_change(struct ktable *, struct kroute_full *);
 int	kr6_change(struct ktable *, struct kroute_full *);
+int	krVPN4_change(struct ktable *, struct kroute_full *);
 int	kr4_delete(struct ktable *, struct kroute_full *);
 int	kr6_delete(struct ktable *, struct kroute_full *);
+int	krVPN4_delete(struct ktable *, struct kroute_full *);
 void	kr_net_delete(struct network *);
 struct network *kr_net_match(struct ktable *, struct kroute *);
 struct network *kr_net_match6(struct ktable *, struct kroute6 *);
@@ -262,7 +265,6 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs)
 	RB_INIT(&kt->krt6);
 	RB_INIT(&kt->knt);
 	TAILQ_INIT(&kt->krn);
-	LIST_INIT(&kt->redistlist);
 	kt->fib_conf = kt->fib_sync = fs;
 	kt->rtableid = rtableid;
 	kt->nhtableid = rdomid;
@@ -338,15 +340,15 @@ ktable_get(u_int rtableid)
 }
 
 int
-ktable_update(struct rde_rib *rr)
+ktable_update(u_int rtableid, char *name, char *ifname, int flags)
 {
 	struct ktable	*kt, *rkt;
 	u_int		 rdomid;
 
-	if (!ktable_exists(rr->rtableid, &rdomid))
+	if (!ktable_exists(rtableid, &rdomid))
 		fatalx("King Bula lost a table");	/* may not happen */
 
-	if (rdomid != rr->rtableid || rr->flags & F_RIB_NOFIB) {
+	if (rdomid != rtableid || flags & F_RIB_NOFIB) {
 		rkt = ktable_get(rdomid);
 		if (rkt == NULL) {
 			char buf[32];
@@ -363,21 +365,21 @@ ktable_update(struct rde_rib *rr)
 		}
 	}
 
-	if (rr->flags & (F_RIB_NOEVALUATE | F_RIB_NOFIB))
+	if (flags & (F_RIB_NOEVALUATE | F_RIB_NOFIB))
 		/* only rdomain table must exist */
 		return (0);
 
-	kt = ktable_get(rr->rtableid);
+	kt = ktable_get(rtableid);
 	if (kt == NULL) {
-		if (ktable_new(rr->rtableid, rdomid, rr->name, NULL,
-		    !(rr->flags & F_RIB_NOFIBSYNC)))
+		if (ktable_new(rtableid, rdomid, name, ifname,
+		    !(flags & F_RIB_NOFIBSYNC)))
 			return (-1);
 	} else {
 		/* fib sync has higher preference then no sync */
 		if (kt->state == RECONF_DELETE)
-			kt->fib_conf = !(rr->flags & F_RIB_NOFIBSYNC);
+			kt->fib_conf = !(flags & F_RIB_NOFIBSYNC);
 		else if (!kt->fib_conf)
-			kt->fib_conf = !(rr->flags & F_RIB_NOFIBSYNC);
+			kt->fib_conf = !(flags & F_RIB_NOFIBSYNC);
 
 		kt->state = RECONF_KEEP;
 	}
@@ -452,6 +454,8 @@ kr_change(u_int rtableid, struct kroute_full *kl)
 		return (kr4_change(kt, kl));
 	case AID_INET6:
 		return (kr6_change(kt, kl));
+	case AID_VPN_IPv4:
+		return (krVPN4_change(kt, kl));
 	}
 	log_warnx("kr_change: not handled AID");
 	return (-1);
@@ -572,6 +576,76 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 }
 
 int
+krVPN4_change(struct ktable *kt, struct kroute_full *kl)
+{
+	struct kroute_node	*kr;
+	int			 action = RTM_ADD;
+	u_int32_t		 mplslabel = 0;
+	u_int16_t		 labelid;
+
+	if ((kr = kroute_find(kt, kl->prefix.vpn4.addr.s_addr, kl->prefixlen,
+	    RTP_BGP)) != NULL)
+		action = RTM_CHANGE;
+
+	/* nexthop within 127/8 -> ignore silently */
+	if ((kl->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
+	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
+		return (0);
+
+	/* only single MPLS label are supported for now */
+	if (kl->prefix.vpn4.labellen != 3) {
+		log_warnx("krVPN4_change: %s/%u has not a single label",
+		    log_addr(&kl->prefix), kl->prefixlen);
+		return (0);
+	}
+	mplslabel = (kl->prefix.vpn4.labelstack[0] << 24) |
+	    (kl->prefix.vpn4.labelstack[1] << 16) |
+	    (kl->prefix.vpn4.labelstack[2] << 8);
+	mplslabel = htonl(mplslabel);
+
+	labelid = rtlabel_name2id(kl->label);
+
+	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
+	if (kl->flags & (F_BLACKHOLE|F_REJECT))
+		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
+
+	if (action == RTM_ADD) {
+		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
+			log_warn("kr_change");
+			return (-1);
+		}
+		kr->r.prefix.s_addr = kl->prefix.vpn4.addr.s_addr;
+		kr->r.prefixlen = kl->prefixlen;
+		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
+		kr->r.flags = kl->flags | F_BGPD_INSERTED | F_MPLS;
+		kr->r.priority = RTP_BGP;
+		kr->r.labelid = labelid;
+		kr->r.mplslabel = mplslabel;
+
+		if (kroute_insert(kt, kr) == -1)
+			free(kr);
+	} else {
+		kr->r.mplslabel = mplslabel;
+		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
+		rtlabel_unref(kr->r.labelid);
+		kr->r.labelid = labelid;
+		if (kl->flags & F_BLACKHOLE)
+			kr->r.flags |= F_BLACKHOLE;
+		else
+			kr->r.flags &= ~F_BLACKHOLE;
+		if (kl->flags & F_REJECT)
+			kr->r.flags |= F_REJECT;
+		else
+			kr->r.flags &= ~F_REJECT;
+	}
+
+	if (send_rtmsg(kr_state.fd, action, kt, &kr->r) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
 kr_delete(u_int rtableid, struct kroute_full *kl)
 {
 	struct ktable		*kt;
@@ -585,6 +659,8 @@ kr_delete(u_int rtableid, struct kroute_full *kl)
 		return (kr4_delete(kt, kl));
 	case AID_INET6:
 		return (kr6_delete(kt, kl));
+	case AID_VPN_IPv4:
+		return (krVPN4_delete(kt, kl));
 	}
 	log_warnx("kr_change: not handled AID");
 	return (-1);
@@ -631,6 +707,29 @@ kr6_delete(struct ktable *kt, struct kroute_full *kl)
 	rtlabel_unref(kr6->r.labelid);
 
 	if (kroute6_remove(kt, kr6) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
+krVPN4_delete(struct ktable *kt, struct kroute_full *kl)
+{
+	struct kroute_node	*kr;
+
+	if ((kr = kroute_find(kt, kl->prefix.vpn4.addr.s_addr, kl->prefixlen,
+	    RTP_BGP)) == NULL)
+		return (0);
+
+	if (!(kr->r.flags & F_BGPD_INSERTED))
+		return (0);
+
+	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r) == -1)
+		return (-1);
+
+	rtlabel_unref(kr->r.labelid);
+
+	if (kroute_remove(kt, kr) == -1)
 		return (-1);
 
 	return (0);
@@ -919,7 +1018,6 @@ kr_show_route(struct imsg *imsg)
 			RB_INIT(&ktab.krt6);
 			RB_INIT(&ktab.knt);
 			TAILQ_INIT(&ktab.krn);
-			LIST_INIT(&ktab.redistlist);
 
 			send_imsg_session(IMSG_CTL_SHOW_FIB_TABLES,
 			    imsg->hdr.pid, &ktab, sizeof(ktab));
@@ -945,18 +1043,143 @@ kr_ifinfo(char *ifname)
 		}
 }
 
-struct redist_node {
-	LIST_ENTRY(redist_node)	 entry;
-	struct kroute		*kr;
-	struct kroute6		*kr6;
-};
+void
+kr_net_delete(struct network *n)
+{
+	filterset_free(&n->net.attrset);
+	free(n);
+}
 
+struct network *
+kr_net_match(struct ktable *kt, struct kroute *kr)
+{
+	struct network		*xn;
+
+	TAILQ_FOREACH(xn, &kt->krn, entry) {
+		if (xn->net.prefix.aid != AID_INET)
+			continue;
+		switch (xn->net.type) {
+		case NETWORK_DEFAULT:
+			if (xn->net.prefixlen == kr->prefixlen &&
+			    xn->net.prefix.v4.s_addr == kr->prefix.s_addr)
+				/* static match already redistributed */
+				return (NULL);
+			break;
+		case NETWORK_STATIC:
+			if (kr->flags & F_STATIC)
+				return (xn);
+			break;
+		case NETWORK_CONNECTED:
+			if (kr->flags & F_CONNECTED)
+				return (xn);
+			break;
+		}
+	}
+	return (NULL);
+}
+
+struct network *
+kr_net_match6(struct ktable *kt, struct kroute6 *kr6)
+{
+	struct network		*xn;
+
+	TAILQ_FOREACH(xn, &kt->krn, entry) {
+		if (xn->net.prefix.aid != AID_INET6)
+			continue;
+		switch (xn->net.type) {
+		case NETWORK_DEFAULT:
+			if (xn->net.prefixlen == kr6->prefixlen &&
+			    memcmp(&xn->net.prefix.v6, &kr6->prefix,
+			    sizeof(struct in6_addr)) == 0)
+				/* static match already redistributed */
+				return (NULL);
+			break;
+		case NETWORK_STATIC:
+			if (kr6->flags & F_STATIC)
+				return (xn);
+			break;
+		case NETWORK_CONNECTED:
+			if (kr6->flags & F_CONNECTED)
+				return (xn);
+			break;
+		}
+	}
+	return (NULL);
+}
+
+struct network *
+kr_net_find(struct ktable *kt, struct network *n)
+{
+	struct network		*xn;
+
+	TAILQ_FOREACH(xn, &kt->krn, entry) {
+		if (n->net.type != xn->net.type ||
+		    n->net.prefixlen != xn->net.prefixlen ||
+		    n->net.rtableid != xn->net.rtableid)
+			continue;
+		if (memcmp(&n->net.prefix, &xn->net.prefix,
+		    sizeof(n->net.prefix)) == 0)
+			return (xn);
+	}
+	return (NULL);
+}
+
+int
+kr_net_reload(u_int rtableid, struct network_head *nh)
+{
+	struct network		*n, *xn;
+	struct ktable		*kt;
+
+	if ((kt = ktable_get(rtableid)) == NULL) {
+		log_warnx("kr_net_reload: non-existent rtableid %d", rtableid);
+		return (-1);
+	}
+
+	TAILQ_FOREACH(n, &kt->krn, entry)
+		n->net.old = 1;
+
+	while ((n = TAILQ_FIRST(nh)) != NULL) {
+		TAILQ_REMOVE(nh, n, entry);
+		n->net.old = 0;
+		n->net.rtableid = rtableid;
+		xn = kr_net_find(kt, n);
+		if (xn) {
+			xn->net.old = 0;
+			kr_net_delete(n);
+		} else
+			TAILQ_INSERT_TAIL(&kt->krn, n, entry);
+	}
+	
+	for (n = TAILQ_FIRST(&kt->krn); n != NULL; n = xn) {
+		xn = TAILQ_NEXT(n, entry);
+		if (n->net.old) {
+			if (n->net.type == NETWORK_DEFAULT)
+				if (send_network(IMSG_NETWORK_REMOVE, &n->net,
+				    NULL))
+					return (-1);
+			TAILQ_REMOVE(&kt->krn, n, entry);
+			kr_net_delete(n);
+		}
+	}
+
+	return (0);
+}
 
 int
 kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 {
-	struct redist_node	*rn;
+	struct network		*match;
+	struct network_config	 net;
 	u_int32_t		 a;
+
+	/* shortcut for removals */
+	if (type == IMSG_NETWORK_REMOVE) {
+		if (!(kr->flags & F_REDISTRIBUTED))
+			return (0);	/* no match, don't redistribute */
+		kr->flags &= ~F_REDISTRIBUTED;
+		match = NULL;
+		goto sendit;
+	}
 
 	if (!(kr->flags & F_KERNEL))
 		return (0);
@@ -985,41 +1208,40 @@ kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
 		return (0);
 
-	/* Add or delete kr from list ... */
-	LIST_FOREACH(rn, &kt->redistlist, entry)
-	    if (rn->kr == kr)
-		    break;
+	match = kr_net_match(kt, kr);
+	if (match == NULL) {
+		if (!(kr->flags & F_REDISTRIBUTED))
+			return (0);	/* no match, don't redistribute */
+		/* route no longer matches but is redistributed, so remove */
+		kr->flags &= ~F_REDISTRIBUTED;
+		type = IMSG_NETWORK_REMOVE;
+	} else
+		kr->flags |= F_REDISTRIBUTED;
 
-	switch (type) {
-	case IMSG_NETWORK_ADD:
-		if (rn == NULL) {
-			if ((rn = calloc(1, sizeof(struct redist_node))) ==
-			    NULL) {
-				log_warn("kr_redistribute");
-				return (-1);
-			}
-			rn->kr = kr;
-			LIST_INSERT_HEAD(&kt->redistlist, rn, entry);
-		}
-		break;
-	case IMSG_NETWORK_REMOVE:
-		if (rn != NULL) {
-			LIST_REMOVE(rn, entry);
-			free(rn);
-		}
-		break;
-	default:
-		errno = EINVAL;
-		return (-1);
-	}
+sendit:
+	bzero(&net, sizeof(net));
+	net.prefix.aid = AID_INET;
+	net.prefix.v4.s_addr = kr->prefix.s_addr;
+	net.prefixlen = kr->prefixlen;
+	net.rtableid = kt->rtableid;
 
-	return (bgpd_redistribute(type, kr, NULL));
+	return (send_network(type, &net, match ? &match->net.attrset : NULL));
 }
 
 int
 kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 {
-	struct redist_node	*rn;
+	struct network		*match;
+	struct network_config	 net;
+
+	/* shortcut for removals */
+	if (type == IMSG_NETWORK_REMOVE) {
+		if (!(kr6->flags & F_REDISTRIBUTED))
+			return (0);	/* no match, don't redistribute */
+		kr6->flags &= ~F_REDISTRIBUTED;
+		match = NULL;
+		goto sendit;
+	}
 
 	if (!(kr6->flags & F_KERNEL))
 		return (0);
@@ -1051,63 +1273,62 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	 * never allow ::/0 the default route can only be redistributed
 	 * with announce default.
 	 */
-	if (memcmp(&kr6->prefix, &in6addr_any, sizeof(struct in6_addr)) == 0 &&
-	    kr6->prefixlen == 0)
+	if (kr6->prefixlen == 0 &&
+	    memcmp(&kr6->prefix, &in6addr_any, sizeof(struct in6_addr)) == 0)
 		return (0);
 
-	/* Add or delete kr from list ...
-	 * using a linear list to store the redistributed networks will hurt
-	 * as soon as redistribute ospf comes but until then keep it simple.
-	 */
-	LIST_FOREACH(rn, &kt->redistlist, entry)
-	    if (rn->kr6 == kr6)
-		    break;
+	match = kr_net_match6(kt, kr6);
+	if (match == NULL) {
+		if (!(kr6->flags & F_REDISTRIBUTED))
+			return (0);	/* no match, don't redistribute */
+		/* route no longer matches but is redistributed, so remove */
+		kr6->flags &= ~F_REDISTRIBUTED;
+		type = IMSG_NETWORK_REMOVE;
+	} else
+		kr6->flags |= F_REDISTRIBUTED;
+sendit:
+	bzero(&net, sizeof(net));
+	net.prefix.aid = AID_INET6;
+	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	net.prefixlen = kr6->prefixlen;
+	net.rtableid = kt->rtableid;
 
-	switch (type) {
-	case IMSG_NETWORK_ADD:
-		if (rn == NULL) {
-			if ((rn = calloc(1, sizeof(struct redist_node))) ==
-			    NULL) {
-				log_warn("kr_redistribute");
-				return (-1);
-			}
-			rn->kr6 = kr6;
-			LIST_INSERT_HEAD(&kt->redistlist, rn, entry);
-		}
-		break;
-	case IMSG_NETWORK_REMOVE:
-		if (rn != NULL) {
-			LIST_REMOVE(rn, entry);
-			free(rn);
-		}
-		break;
-	default:
-		errno = EINVAL;
-		return (-1);
-	}
-
-	return (bgpd_redistribute(type, NULL, kr6));
+	return (send_network(type, &net, match ? &match->net.attrset : NULL));
 }
 
 int
 kr_reload(void)
 {
 	struct ktable		*kt;
-	struct redist_node	*rn;
+	struct kroute_node	*kr;
+	struct kroute6_node	*kr6;
 	struct knexthop_node	*nh;
+	struct network		*n;
 	u_int			 rid;
+	int			 hasdyn = 0;
 
 	for (rid = 0; rid < krt_size; rid++) {
 		if ((kt = ktable_get(rid)) == NULL)
 			continue;
 
-		LIST_FOREACH(rn, &kt->redistlist, entry)
-			if (bgpd_redistribute(IMSG_NETWORK_ADD, rn->kr,
-			    rn->kr6) == -1)
-				return (-1);
-
 		RB_FOREACH(nh, knexthop_tree, KT2KNT(kt))
 			knexthop_validate(kt, nh);
+
+		TAILQ_FOREACH(n, &kt->krn, entry)
+			if (n->net.type == NETWORK_DEFAULT) {
+				if (send_network(IMSG_NETWORK_ADD, &n->net,
+				    &n->net.attrset))
+					return (-1);
+			} else
+				hasdyn = 1;
+
+		if (hasdyn) {
+			/* only evaluate the full tree if we need */
+			RB_FOREACH(kr, kroute_tree, &kt->krt)
+				kr_redistribute(IMSG_NETWORK_ADD, kt, &kr->r);
+			RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
+				kr_redistribute6(IMSG_NETWORK_ADD, kt, &kr6->r);
+		}
 	}
 
 	return (0);
@@ -2314,11 +2535,16 @@ if_announce(void *msg)
 int
 send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 {
-	struct iovec		iov[5];
+	struct iovec		iov[7];
 	struct rt_msghdr	hdr;
 	struct sockaddr_in	prefix;
 	struct sockaddr_in	nexthop;
 	struct sockaddr_in	mask;
+	struct {
+		struct sockaddr_dl	dl;
+		char			pad[sizeof(long)];
+	}			ifp;
+	struct sockaddr_mpls	mpls;
 	struct sockaddr_rtlabel	label;
 	int			iovcnt = 0;
 
@@ -2378,6 +2604,33 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 	/* adjust iovec */
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = sizeof(mask);
+
+	if (kt->ifindex) {
+		bzero(&ifp, sizeof(ifp));
+		ifp.dl.sdl_len = sizeof(struct sockaddr_dl);
+		ifp.dl.sdl_family = AF_LINK;
+		ifp.dl.sdl_index = kt->ifindex;
+		/* adjust header */
+		hdr.rtm_addrs |= RTA_IFP;
+		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_dl));
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &ifp;
+		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_dl));
+	}
+
+	if (kroute->flags & F_MPLS) {
+		bzero(&mpls, sizeof(mpls));
+		mpls.smpls_len = sizeof(mpls);
+		mpls.smpls_family = AF_MPLS;
+		mpls.smpls_label = kroute->mplslabel;
+		/* adjust header */
+		hdr.rtm_mpls = MPLS_OP_PUSH;
+		hdr.rtm_addrs |= RTA_SRC;
+		hdr.rtm_msglen += sizeof(mpls);
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &mpls;
+		iov[iovcnt++].iov_len = sizeof(mpls);
+	}
 
 	if (kroute->labelid) {
 		bzero(&label, sizeof(label));

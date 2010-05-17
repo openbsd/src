@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.52 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.53 2010/05/17 15:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,9 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/ioctl.h>
+
+#include <netmpls/mpls.h>
 
 #include <errno.h>
 #include <ifaddrs.h>
@@ -310,4 +313,29 @@ prepare_listeners(struct bgpd_config *conf)
 			continue;
 		}
 	}
+}
+
+int
+get_mpe_label(struct rdomain *r)
+{
+	struct  ifreq	ifr;
+	struct shim_hdr	shim;
+	int		s;
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s == -1)
+		return (-1);
+
+	bzero(&shim, sizeof(shim));
+	bzero(&ifr, sizeof(ifr));
+	strlcpy(ifr.ifr_name, r->ifmpe, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t)&shim;
+
+	if (ioctl(s, SIOCGETLABEL , (caddr_t)&ifr) == -1) {
+		close(s);
+		return (-1);
+	}
+	close(s);
+	r->label = shim.shim_label;
+	return (0);
 }

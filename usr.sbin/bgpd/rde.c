@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.293 2010/05/04 10:25:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.294 2010/05/17 15:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -82,6 +82,7 @@ void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
 void		 rde_dump_done(void *);
 
+int		 rde_rdomain_import(struct rde_aspath *, struct rdomain *);
 void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_softreconfig_out(struct rib_entry *, void *);
 void		 rde_softreconfig_in(struct rib_entry *, void *);
@@ -99,7 +100,6 @@ void		 peer_down(u_int32_t);
 void		 peer_dump(u_int32_t, u_int8_t);
 void		 peer_send_eor(struct rde_peer *, u_int8_t);
 
-void		 network_init(struct network_head *);
 void		 network_add(struct network_config *, int);
 void		 network_delete(struct network_config *, int);
 void		 network_dump_upcall(struct rib_entry *, void *);
@@ -113,6 +113,7 @@ time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
 struct filter_head	*rules_l, *newrules;
+struct rdomain_head	*rdomains_l, *newdomains;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_se_ctl;
 struct imsgbuf		*ibuf_main;
@@ -220,6 +221,10 @@ rde_main(int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2],
 	if (rules_l == NULL)
 		fatal(NULL);
 	TAILQ_INIT(rules_l);
+	rdomains_l = calloc(1, sizeof(struct rdomain_head));
+	if (rdomains_l == NULL)
+		fatal(NULL);
+	SIMPLEQ_INIT(rdomains_l);
 	if ((conf = malloc(sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
 	log_info("route decision engine ready");
@@ -535,6 +540,7 @@ badnet:
 void
 rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
+	static struct rdomain	*rd;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
 	struct rde_rib		 rn;
@@ -557,20 +563,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_RECONF_CONF:
-			reloadtime = time(NULL);
-			newrules = calloc(1, sizeof(struct filter_head));
-			if (newrules == NULL)
-				fatal(NULL);
-			TAILQ_INIT(newrules);
-			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
-			    NULL)
-				fatal(NULL);
-			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
-			for (rid = 0; rid < rib_size; rid++)
-				ribs[rid].state = RECONF_DELETE;
-			break;
 		case IMSG_NETWORK_ADD:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct network_config)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
 			parent_set = &netconf_p.attrset;
@@ -588,6 +586,26 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
 			network_delete(&netconf_p, 1);
+			break;
+		case IMSG_RECONF_CONF:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct bgpd_config))
+				fatalx("IMSG_RECONF_CONF bad len");
+			reloadtime = time(NULL);
+			newrules = calloc(1, sizeof(struct filter_head));
+			if (newrules == NULL)
+				fatal(NULL);
+			TAILQ_INIT(newrules);
+			newdomains = calloc(1, sizeof(struct rdomain_head));
+			if (newdomains == NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT(newdomains);
+			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
+			    NULL)
+				fatal(NULL);
+			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
+			for (rid = 0; rid < rib_size; rid++)
+				ribs[rid].state = RECONF_DELETE;
 			break;
 		case IMSG_RECONF_RIB:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -619,12 +637,42 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			parent_set = &r->set;
 			TAILQ_INSERT_TAIL(newrules, r, entry);
 			break;
+		case IMSG_RECONF_RDOMAIN:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct rdomain))
+				fatalx("IMSG_RECONF_RDOMAIN bad len");
+			if ((rd = malloc(sizeof(struct rdomain))) == NULL)
+				fatal(NULL);
+			memcpy(rd, imsg.data, sizeof(struct rdomain));
+			TAILQ_INIT(&rd->import);
+			TAILQ_INIT(&rd->export);
+			SIMPLEQ_INSERT_TAIL(newdomains, rd, entry);
+			break;
+		case IMSG_RECONF_RDOMAIN_EXPORT:
+			if (rd == NULL) {
+				log_warnx("rde_dispatch_imsg_parent: "
+				    "IMSG_RECONF_RDOMAIN_EXPORT unexpected");
+				break;
+			}
+			parent_set = &rd->export;
+			break;
+		case IMSG_RECONF_RDOMAIN_IMPORT:
+			if (rd == NULL) {
+				log_warnx("rde_dispatch_imsg_parent: "
+				    "IMSG_RECONF_RDOMAIN_IMPORT unexpected");
+				break;
+			}
+			parent_set = &rd->import;
+			break;
+		case IMSG_RECONF_RDOMAIN_DONE:
+			parent_set = NULL;
+			break;
 		case IMSG_RECONF_DONE:
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
 			if ((nconf->flags & BGPD_FLAG_NO_EVALUATE)
 			    != (conf->flags & BGPD_FLAG_NO_EVALUATE)) {
-				log_warnx( "change to/from route-collector "
+				log_warnx("change to/from route-collector "
 				    "mode ignored");
 				if (conf->flags & BGPD_FLAG_NO_EVALUATE)
 					nconf->flags |= BGPD_FLAG_NO_EVALUATE;
@@ -643,7 +691,16 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			peerself->conf.local_as = conf->as;
 			peerself->conf.remote_as = conf->as;
 			peerself->short_as = conf->short_as;
-			prefix_network_clean(peerself, reloadtime, 0);
+
+			/* apply new set of rdomain, sync will be done later */
+			while ((rd = SIMPLEQ_FIRST(rdomains_l)) != NULL) {
+				SIMPLEQ_REMOVE_HEAD(rdomains_l, entry);
+				filterset_free(&rd->import);
+				filterset_free(&rd->export);
+				free(rd);
+			}
+			free(rdomains_l);
+			rdomains_l = newdomains;
 
 			/* check if filter changed */
 			LIST_FOREACH(peer, &peerlist, peer_l) {
@@ -696,12 +753,16 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			}
 			free(rules_l);
 			rules_l = newrules;
+
 			log_info("RDE reconfigured");
 			break;
 		case IMSG_NEXTHOP_UPDATE:
 			nexthop_update(imsg.data);
 			break;
 		case IMSG_FILTER_SET:
+			if (imsg.hdr.len > IMSG_HEADER_SIZE +
+			    sizeof(struct filter_set))
+				fatalx("IMSG_RECONF_CONF bad len");
 			if (parent_set == NULL) {
 				log_warnx("rde_dispatch_imsg_parent: "
 				    "IMSG_FILTER_SET unexpected");
@@ -2230,12 +2291,25 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 /*
  * kroute specific functions
  */
+int
+rde_rdomain_import(struct rde_aspath *asp, struct rdomain *rd)
+{
+	struct filter_set	*s;
+
+	TAILQ_FOREACH(s, &rd->import, entry) {
+		if (community_ext_match(asp, &s->action.ext_community, 0))
+			return (1);
+	}
+	return (0);
+}
+
 void
 rde_send_kroute(struct prefix *new, struct prefix *old, u_int16_t ribid)
 {
 	struct kroute_full	 kr;
 	struct bgpd_addr	 addr;
 	struct prefix		*p;
+	struct rdomain		*rd;
 	enum imsg_type		 type;
 
 	/*
@@ -2268,9 +2342,35 @@ rde_send_kroute(struct prefix *new, struct prefix *old, u_int16_t ribid)
 	strlcpy(kr.label, rtlabel_id2name(p->aspath->rtlabelid),
 	    sizeof(kr.label));
 
-	if (imsg_compose(ibuf_main, type, ribs[ribid].rtableid, 0, -1, &kr,
-	    sizeof(kr)) == -1)
-		fatal("imsg_compose error");
+	switch (addr.aid) {
+	case AID_VPN_IPv4:
+		if (ribid != 1)
+			/* not Loc-RIB, no update for VPNs */
+			break;
+
+		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
+			if (addr.vpn4.rd != rd->rd)
+				continue;
+			if (!rde_rdomain_import(p->aspath, rd))
+				continue;
+			/* must send exit_nexthop so that correct MPLS tunnel
+			 * is chosen
+			 */
+			if (type == IMSG_KROUTE_CHANGE)
+				memcpy(&kr.nexthop,
+				    &p->aspath->nexthop->exit_nexthop,
+				    sizeof(kr.nexthop));
+			if (imsg_compose(ibuf_main, type, rd->rtableid, 0, -1,
+			    &kr, sizeof(kr)) == -1)
+				fatal("imsg_compose error");
+		}
+		break;
+	default:
+		if (imsg_compose(ibuf_main, type, ribs[ribid].rtableid, 0, -1,
+		    &kr, sizeof(kr)) == -1)
+			fatal("imsg_compose error");
+		break;
+	}
 }
 
 /*
@@ -2969,24 +3069,42 @@ peer_send_eor(struct rde_peer *peer, u_int8_t aid)
  * network announcement stuff
  */
 void
-network_init(struct network_head *net_l)
-{
-	struct network	*n;
-
-	reloadtime = time(NULL);
-
-	while ((n = TAILQ_FIRST(net_l)) != NULL) {
-		TAILQ_REMOVE(net_l, n, entry);
-		network_add(&n->net, 1);
-		free(n);
-	}
-}
-
-void
 network_add(struct network_config *nc, int flagstatic)
 {
+	struct rdomain		*rd;
 	struct rde_aspath	*asp;
+	struct filter_set_head	*vpnset = NULL;
+	in_addr_t		 prefix4;
 	u_int16_t		 i;
+
+	if (nc->rtableid) {
+		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
+			if (rd->rtableid != nc->rtableid)
+				continue;
+			switch (nc->prefix.aid) {
+			case AID_INET:
+				prefix4 = nc->prefix.v4.s_addr;
+				bzero(&nc->prefix, sizeof(nc->prefix));
+				nc->prefix.aid = AID_VPN_IPv4;
+				nc->prefix.vpn4.rd = rd->rd;
+				nc->prefix.vpn4.addr.s_addr = prefix4;
+				nc->prefix.vpn4.labellen = 3;
+				nc->prefix.vpn4.labelstack[0] =
+				    (rd->label >> 12) & 0xff;
+				nc->prefix.vpn4.labelstack[1] =
+				    (rd->label >> 4) & 0xff;
+				nc->prefix.vpn4.labelstack[2] =
+				    (rd->label << 4) & 0xf0;
+				nc->prefix.vpn4.labelstack[2] |= BGP_MPLS_BOS;
+				vpnset = &rd->export;
+				break;
+			default:
+				log_warnx("unable to VPNize prefix");
+				filterset_free(&nc->attrset);
+				return;
+			}
+		}
+	}
 
 	asp = path_get();
 	asp->aspath = aspath_get(NULL, 0);
@@ -2998,6 +3116,8 @@ network_add(struct network_config *nc, int flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
 
 	rde_apply_set(asp, &nc->attrset, nc->prefix.aid, peerself, peerself);
+	if (vpnset)
+		rde_apply_set(asp, vpnset, nc->prefix.aid, peerself, peerself);
 	for (i = 1; i < rib_size; i++)
 		path_update(&ribs[i], peerself, asp, &nc->prefix,
 		    nc->prefixlen);
@@ -3009,11 +3129,40 @@ network_add(struct network_config *nc, int flagstatic)
 void
 network_delete(struct network_config *nc, int flagstatic)
 {
-	u_int32_t	flags = F_PREFIX_ANNOUNCED;
-	u_int32_t	i;
+	struct rdomain	*rd;
+	in_addr_t	 prefix4;
+	u_int32_t	 flags = F_PREFIX_ANNOUNCED;
+	u_int32_t	 i;
 
 	if (!flagstatic)
 		flags |= F_ANN_DYNAMIC;
+
+	if (nc->rtableid) {
+		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
+			if (rd->rtableid != nc->rtableid)
+				continue;
+			switch (nc->prefix.aid) {
+			case AID_INET:
+				prefix4 = nc->prefix.v4.s_addr;
+				bzero(&nc->prefix, sizeof(nc->prefix));
+				nc->prefix.aid = AID_VPN_IPv4;
+				nc->prefix.vpn4.rd = rd->rd;
+				nc->prefix.vpn4.addr.s_addr = prefix4;
+				nc->prefix.vpn4.labellen = 3;
+				nc->prefix.vpn4.labelstack[0] =
+				    (rd->label >> 12) & 0xff;
+				nc->prefix.vpn4.labelstack[1] =
+				    (rd->label >> 4) & 0xff;
+				nc->prefix.vpn4.labelstack[2] =
+				    (rd->label << 4) & 0xf0;
+				nc->prefix.vpn4.labelstack[2] |= BGP_MPLS_BOS;
+				break;
+			default:
+				log_warnx("unable to VPNize prefix");
+				return;
+			}
+		}
+	}
 
 	for (i = rib_size - 1; i > 0; i--)
 		prefix_remove(&ribs[i], peerself, &nc->prefix, nc->prefixlen,

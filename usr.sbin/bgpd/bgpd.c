@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.161 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.162 2010/05/17 15:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,16 +46,12 @@ int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 int		dispatch_imsg(struct imsgbuf *, int);
 
 int			 rfd = -1;
-int			 cflags = 0;
-struct filter_set_head	*connectset;
-struct filter_set_head	*connectset6;
-struct filter_set_head	*staticset;
-struct filter_set_head	*staticset6;
-volatile sig_atomic_t	 mrtdump = 0;
-volatile sig_atomic_t	 quit = 0;
-volatile sig_atomic_t	 sigchld = 0;
-volatile sig_atomic_t	 reconfig = 0;
-pid_t			 reconfpid = 0;
+int			 cflags;
+volatile sig_atomic_t	 mrtdump;
+volatile sig_atomic_t	 quit;
+volatile sig_atomic_t	 sigchld;
+volatile sig_atomic_t	 reconfig;
+pid_t			 reconfpid;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_rde;
 struct rib_names	 ribnames = SIMPLEQ_HEAD_INITIALIZER(ribnames);
@@ -169,24 +165,20 @@ main(int argc, char *argv[])
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
 		struct network_head	net_l;
+		struct rdomain_head	rdom_l;
 		struct filter_head	rules_l;
 
 		if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l,
-		    &rules_l))
+		    &rules_l, &rdom_l))
 			exit(1);
 
 		if (conf.opts & BGPD_OPT_VERBOSE)
 			print_config(&conf, &ribnames, &net_l, peer_l, &rules_l,
-			    &mrt_l);
+			    &mrt_l, &rdom_l);
 		else
 			fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
-	cflags = conf.flags;
-	connectset = &conf.connectset;
-	staticset = &conf.staticset;
-	connectset6 = &conf.connectset6;
-	staticset6 = &conf.staticset6;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -423,25 +415,22 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
     struct peer **peer_l)
 {
 	struct network_head	 net_l;
+	struct rdomain_head	 rdom_l;
 	struct filter_head	 rules_l;
-	struct network		*n;
 	struct peer		*p;
 	struct filter_rule	*r;
 	struct listen_addr	*la;
 	struct rde_rib		*rr;
+	struct rdomain		*rd;
 
-	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, &rules_l)) {
+	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, &rules_l,
+	    &rdom_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
 		return (1);
 	}
 
 	cflags = conf->flags;
-	connectset = &conf->connectset;
-	staticset = &conf->staticset;
-	connectset6 = &conf->connectset6;
-	staticset6 = &conf->staticset6;
-
 	prepare_listeners(conf);
 
 	/* start reconfiguration */
@@ -472,7 +461,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	/* RIBs for the RDE */
 	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
 		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
-		if (ktable_update(rr) == -1) {
+		if (ktable_update(rr->rtableid, rr->name, NULL,
+		    rr->flags) == -1) {
 			log_warnx("failed to load rdomain %d",
 			    rr->rtableid);
 			return (-1);
@@ -483,31 +473,59 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		free(rr);
 	}
 
-	/* networks for the RDE */
-	while ((n = TAILQ_FIRST(&net_l)) != NULL) {
-		if (imsg_compose(ibuf_rde, IMSG_NETWORK_ADD, 0, 0, -1,
-		    &n->net, sizeof(struct network_config)) == -1)
-			return (-1);
-		if (send_filterset(ibuf_rde, &n->net.attrset) == -1)
-			return (-1);
-		if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1,
-		    NULL, 0) == -1)
-			return (-1);
-		TAILQ_REMOVE(&net_l, n, entry);
-		filterset_free(&n->net.attrset);
-		free(n);
-	}
+	/* networks go via kroute to the RDE */
+	if (kr_net_reload(0, &net_l))
+		return (-1);
 
 	/* filters for the RDE */
 	while ((r = TAILQ_FIRST(&rules_l)) != NULL) {
+		TAILQ_REMOVE(&rules_l, r, entry);
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);
 		if (send_filterset(ibuf_rde, &r->set) == -1)
 			return (-1);
-		TAILQ_REMOVE(&rules_l, r, entry);
 		filterset_free(&r->set);
 		free(r);
+	}
+
+	while ((rd = SIMPLEQ_FIRST(&rdom_l)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&rdom_l, entry);
+		if (ktable_update(rd->rtableid, rd->descr, rd->ifmpe,
+		    rd->flags) == -1) {
+			log_warnx("failed to load rdomain %d",
+			    rd->rtableid);
+			return (-1);
+		}
+		/* networks go via kroute to the RDE */
+		if (kr_net_reload(rd->rtableid, &rd->net_l))
+			return (-1);
+
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN, 0, 0, -1,
+		    rd, sizeof(*rd)) == -1)
+			return (-1);
+		
+		/* export targets */
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN_EXPORT, 0, 0,
+		    -1, NULL, 0) == -1)
+			return (-1);
+		if (send_filterset(ibuf_rde, &rd->export) == -1)
+			return (-1);
+		filterset_free(&rd->export);
+
+		/* import targets */
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN_IMPORT, 0, 0,
+		    -1, NULL, 0) == -1)
+			return (-1);
+		if (send_filterset(ibuf_rde, &rd->import) == -1)
+			return (-1);
+		filterset_free(&rd->import);
+
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN_DONE, 0, 0,
+		    -1, NULL, 0) == -1)
+			return (-1);
+
+		free(rd);
 	}
 
 	/* signal both childs to replace their config */
@@ -713,55 +731,20 @@ send_imsg_session(int type, pid_t pid, void *data, u_int16_t datalen)
 }
 
 int
-bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
+send_network(int type, struct network_config *net, struct filter_set_head *h)
 {
-	struct network_config	 net;
-	struct filter_set_head	*h;
-
-	if ((cflags & BGPD_FLAG_REDIST_CONNECTED) && kr &&
-	    (kr->flags & F_CONNECTED))
-		h = connectset;
-	else if ((cflags & BGPD_FLAG_REDIST_STATIC) && kr &&
-	    (kr->flags & F_STATIC))
-		h = staticset;
-	else if ((cflags & BGPD_FLAG_REDIST6_CONNECTED) && kr6 &&
-	    (kr6->flags & F_CONNECTED))
-		h = connectset6;
-	else if ((cflags & BGPD_FLAG_REDIST6_STATIC) && kr6 &&
-	    (kr6->flags & F_STATIC))
-		h = staticset6;
-	else
-		return (0);
-
-	bzero(&net, sizeof(net));
-	if (kr && kr6)
-		fatalx("bgpd_redistribute: unable to redistribute v4 and v6"
-		    "together");
-	if (kr != NULL) {
-		net.prefix.aid = AID_INET;
-		net.prefix.v4.s_addr = kr->prefix.s_addr;
-		net.prefixlen = kr->prefixlen;
-	}
-	if (kr6 != NULL) {
-		net.prefix.aid = AID_INET6;
-		memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
-		net.prefixlen = kr6->prefixlen;
-	}
-
-	if (imsg_compose(ibuf_rde, type, 0, 0, -1, &net,
+	if (imsg_compose(ibuf_rde, type, 0, 0, -1, net,
 	    sizeof(struct network_config)) == -1)
 		return (-1);
-
 	/* networks that get deleted don't need to send the filter set */
 	if (type == IMSG_NETWORK_REMOVE)
-		return (1);
-
+		return (0);
 	if (send_filterset(ibuf_rde, h) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0) == -1)
 		return (-1);
 
-	return (1);
+	return (0);
 }
 
 int

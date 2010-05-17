@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.105 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.106 2010/05/17 15:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -246,12 +246,14 @@ void		 log_conn_attempt(const struct peer *, struct sockaddr *);
 
 /* parse.y */
 int	 parse_config(char *, struct bgpd_config *, struct mrt_head *,
-	    struct peer **, struct network_head *, struct filter_head *);
+	    struct peer **, struct network_head *, struct filter_head *,
+	    struct rdomain_head *);
 
 /* config.c */
 int	 merge_config(struct bgpd_config *, struct bgpd_config *,
 	    struct peer *, struct listen_addrs *);
 void	 prepare_listeners(struct bgpd_config *);
+int	 get_mpe_label(struct rdomain *);
 
 /* rde.c */
 pid_t	 rde_main(int[2], int[2], int[2], int[2], int);
@@ -271,7 +273,7 @@ int	pfkey_init(struct bgpd_sysdep *);
 /* printconf.c */
 void	print_config(struct bgpd_config *, struct rib_names *,
 	    struct network_head *, struct peer *, struct filter_head *,
-	    struct mrt_head *);
+	    struct mrt_head *, struct rdomain_head *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

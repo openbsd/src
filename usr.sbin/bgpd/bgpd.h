@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.258 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.259 2010/05/17 15:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,10 +55,6 @@
 
 #define	BGPD_FLAG_NO_EVALUATE		0x0002
 #define	BGPD_FLAG_REFLECTOR		0x0004
-#define	BGPD_FLAG_REDIST_STATIC		0x0008
-#define	BGPD_FLAG_REDIST_CONNECTED	0x0010
-#define	BGPD_FLAG_REDIST6_STATIC	0x0020
-#define	BGPD_FLAG_REDIST6_CONNECTED	0x0040
 #define	BGPD_FLAG_NEXTHOP_BGP		0x0080
 #define	BGPD_FLAG_NEXTHOP_DEFAULT	0x1000
 #define	BGPD_FLAG_DECISION_MASK		0x0f00
@@ -80,6 +76,8 @@
 #define	F_REJECT		0x0080
 #define	F_BLACKHOLE		0x0100
 #define	F_LONGER		0x0200
+#define	F_MPLS			0x0400
+#define	F_REDISTRIBUTED		0x0800
 #define	F_CTL_DETAIL		0x1000	/* only used by bgpctl */
 #define	F_CTL_ADJ_IN		0x2000
 #define	F_CTL_ADJ_OUT		0x4000
@@ -194,17 +192,12 @@ TAILQ_HEAD(listen_addrs, listen_addr);
 TAILQ_HEAD(filter_set_head, filter_set);
 
 struct bgpd_config {
-	struct filter_set_head			 connectset;
-	struct filter_set_head			 connectset6;
-	struct filter_set_head			 staticset;
-	struct filter_set_head			 staticset6;
 	struct listen_addrs			*listen_addrs;
 	char					*csock;
 	char					*rcsock;
 	int					 opts;
 	int					 flags;
 	int					 log;
-	u_int					 rtableid;
 	u_int32_t				 bgpid;
 	u_int32_t				 clusterid;
 	u_int32_t				 as;
@@ -304,17 +297,26 @@ struct peer_config {
 
 #define PEERFLAG_TRANS_AS	0x01
 
+enum network_type {
+	NETWORK_DEFAULT,
+	NETWORK_STATIC,
+	NETWORK_CONNECTED
+};
+
 struct network_config {
 	struct bgpd_addr	prefix;
 	struct filter_set_head	attrset;
+	u_int			rtableid;
+	enum network_type	type;
 	u_int8_t		prefixlen;
+	u_int8_t		old;	/* used for reloading */
 };
 
 TAILQ_HEAD(network_head, network);
 
 struct network {
-	struct network_config	net;
-	TAILQ_ENTRY(network)	entry;
+	struct network_config		net;
+	TAILQ_ENTRY(network)		entry;
 };
 
 enum imsg_type {
@@ -354,6 +356,10 @@ enum imsg_type {
 	IMSG_RECONF_PEER,
 	IMSG_RECONF_FILTER,
 	IMSG_RECONF_LISTENER,
+	IMSG_RECONF_RDOMAIN,
+	IMSG_RECONF_RDOMAIN_EXPORT,
+	IMSG_RECONF_RDOMAIN_IMPORT,
+	IMSG_RECONF_RDOMAIN_DONE,
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
 	IMSG_UPDATE_ERR,
@@ -432,7 +438,6 @@ enum suberr_cease {
 struct kroute_node;
 struct kroute6_node;
 struct knexthop_node;
-struct redist_node;
 RB_HEAD(kroute_tree, kroute_node);
 RB_HEAD(kroute6_tree, kroute6_node);
 RB_HEAD(knexthop_tree, knexthop_node);
@@ -444,7 +449,6 @@ struct ktable {
 	struct kroute6_tree	 krt6;
 	struct knexthop_tree	 knt;
 	struct network_head	 krn;
-	LIST_HEAD(, redist_node) redistlist;
 	u_int			 rtableid;
 	u_int			 nhtableid; /* rdomain id for nexthop lookup */
 	u_int			 ifindex;   /* ifindex of ifmpe */
@@ -467,6 +471,7 @@ struct kroute_full {
 struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
+	u_int32_t	mplslabel;
 	u_int16_t	flags;
 	u_int16_t	labelid;
 	u_short		ifindex;
@@ -786,6 +791,20 @@ struct filter_set {
 	enum action_types		type;
 };
 
+struct rdomain {
+	SIMPLEQ_ENTRY(rdomain)		entry;
+	char				descr[PEER_DESCR_LEN];
+	char				ifmpe[IFNAMSIZ];
+	struct filter_set_head		import;
+	struct filter_set_head		export;
+	struct network_head		net_l;
+	u_int64_t			rd;
+	u_int				rtableid;
+	u_int				label;
+	int				flags;
+};
+SIMPLEQ_HEAD(rdomain_head, rdomain);
+
 struct rde_rib {
 	SIMPLEQ_ENTRY(rde_rib)	entry;
 	char			name[PEER_DESCR_LEN];
@@ -825,7 +844,8 @@ struct rde_memstats {
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
 void		 send_imsg_session(int, pid_t, void *, u_int16_t);
-int		 bgpd_redistribute(int, struct kroute *, struct kroute6 *);
+int		 send_network(int, struct network_config *,
+		     struct filter_set_head *);
 int		 bgpd_filternexthop(struct kroute *, struct kroute6 *);
 
 /* log.c */
@@ -849,7 +869,7 @@ int	 host(const char *, struct bgpd_addr *, u_int8_t *);
 
 /* kroute.c */
 int		 kr_init(void);
-int		 ktable_update(struct rde_rib *);
+int		 ktable_update(u_int, char *, char *, int);
 void		 ktable_preload(void);
 void		 ktable_postload(void);
 int		 ktable_exists(u_int, u_int *);

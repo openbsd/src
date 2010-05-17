@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.106 2010/05/04 07:37:56 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.107 2010/05/17 15:49:29 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2010 $
+.Dd $Mdocdate: May 17 2010 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 The
 .Xr bgpd 8
 daemon implements the Border Gateway Protocol version 4 as described
-in RFC 1771.
+in RFC 4271.
 .Sh SECTIONS
 The
 .Nm
@@ -38,6 +38,8 @@ configuration file.
 .It Sy Global Configuration
 Global settings for
 .Xr bgpd 8 .
+.It Sy Routing Domain Configuration
+The definition and properties for BGP MPLS VPNs are set in this section.
 .It Sy Neighbors and Groups
 .Xr bgpd 8
 establishes sessions with
@@ -390,6 +392,111 @@ to EBGP neighbors are not prepended with their own AS.
 The default is
 .Ic no .
 .El
+.Sh ROUTING DOMAIN CONFIGURATION
+.Xr bgpd 8
+supports the setup and distribution of Virtual Private Networks.
+It is possible to import and export prefixes between routing domains.
+Each routing domain is specified by a
+.Ic rdomain
+section, which allows properties to be set specifically for that rdomain:
+.Bd -literal -offset indent
+rdomain 1 {
+	descr "a rdomain"
+	rd 65002:1
+	import-target rt 65002:42
+	export-target rt 65002:42
+	network 192.168.1/24
+	depend on mpe0
+}
+.Ed
+.Pp
+There are several routing domain properties:
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic depend on Ar interface
+Routes added to the rdomain will use this this interface as outgoing interface.
+Normaly this will be a MPLS Provider Edge,
+.Xr mpe 4 ,
+interface that is part of the rdomain.
+Local networks will be announced with the MPLS label specified on the interface.
+.Pp
+.It Ic descr Ar description
+Add a description.
+The description is used when logging but has no further meaning to
+.Xr bgpd 8 .
+.Pp
+.It Ic export-target Ar subtype Ar as-number Ns Li : Ns Ar local
+.It Ic export-target Ar subtype Ar IP Ns Li : Ns Ar local
+Specify an extended community which will be attached to announced networks.
+More than one
+.Ic export-target
+can be specified.
+See also the
+.Sx ATTRIBUTE SET
+section for further information about the encoding.
+The
+.Ar subtype
+should be set to
+.Ar rt
+for best compatibility with other implementations.
+.Pp
+.It Xo
+.Ic fib-update
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic no ,
+do not update the Forwarding Information Base, a.k.a. the kernel
+routing table.
+The default is
+.Ic yes .
+.Pp
+.It Ic import-target Ar subtype Ar as-number Ns Li : Ns Ar local
+.It Ic import-target Ar subtype Ar IP Ns Li : Ns Ar local
+Only prefixes matching one of the specified
+.Ic import-targets
+will be imported into the rdomain.
+More than one
+.Ic import-target
+can be specified.
+See also the
+.Sx ATTRIBUTE SET
+section for further information about the encoding of extended communities.
+The
+.Ar subtype
+should be set to
+.Ar rt
+for best compatibility with other implementations.
+.Pp
+.It Ic network Ar arguments ...
+Define which networks should be exported into this VPN.
+See also the
+.Ic nexthop
+section in
+.Sx GLOBAL CONFIGURATION
+for further information about the arguments.
+.Pp
+.It Ic rd Ar as-number Ns Li : Ns Ar local
+.It Ic rd Ar IP Ns Li : Ns Ar local
+The Route Distinguishers uniquely identifies a set of VPN prefixes.
+Only prefixes matching the
+.Ic rd
+will be imported into the routing domain.
+The purpose of the
+.Ic rd
+is solely to allow one to create distinct routes to a common address prefix.
+The
+.Ar as-number
+or
+.Ar IP
+of a
+.Ic rd
+should be set to a number or IP that was assigned by an appropriate authority.
+Whereas
+.Ar local
+can be chosen by the local operator.
+.Pp
+.El
 .Sh NEIGHBORS AND GROUPS
 .Xr bgpd 8
 establishes TCP connections to other BGP speakers called
@@ -485,14 +592,17 @@ The default for IBGP peers is
 .It Xo
 .Ic announce
 .Pq Ic IPv4 Ns \&| Ns Ic IPv6
-.Pq Ic none Ns \&| Ns Ic unicast
+.Pq Ic none Ns \&| Ns Ic unicast Ns \&| Ns Ic vpn
 .Xc
 For the given address family, control which subsequent address families
 (at the moment, only
 .Em none ,
-which disables the announcement of that address family, and
-.Em unicast
-are supported) are announced during the capabilities negotiation.
+which disables the announcement of that address family,
+.Em unicast ,
+and
+.Em vpn ,
+which allows the distribution of BGP MPLS VPNs, are supported) are announced
+during the capabilities negotiation.
 Only routes for that address family and subsequent address family will be
 announced and processed.
 .Pp

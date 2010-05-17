@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.80 2010/05/03 13:09:38 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.81 2010/05/17 15:49:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,6 +31,9 @@ void		 print_extcommunity(struct filter_extcommunity *);
 void		 print_origin(u_int8_t);
 void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
+void		 print_rdomain_targets(struct filter_set_head *, const char *);
+void		 print_rdomain(struct rdomain *);
+const char	*print_af(u_int8_t);
 void		 print_network(struct network_config *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
@@ -262,43 +265,67 @@ print_mainconf(struct bgpd_config *conf)
 		printf("nexthop qualify via bgp\n");
 	if (conf->flags & BGPD_FLAG_NEXTHOP_DEFAULT)
 		printf("nexthop qualify via default\n");
+}
 
-	if (conf->flags & BGPD_FLAG_REDIST_CONNECTED) {
-		printf("network inet connected");
-		if (!TAILQ_EMPTY(&conf->connectset))
-			printf(" ");
-		print_set(&conf->connectset);
+void
+print_rdomain_targets(struct filter_set_head *set, const char *tgt)
+{
+	struct filter_set	*s;
+	TAILQ_FOREACH(s, set, entry) {
+		printf("\t%s ", tgt);
+		print_extcommunity(&s->action.ext_community);
 		printf("\n");
 	}
-	if (conf->flags & BGPD_FLAG_REDIST_STATIC) {
-		printf("network inet static");
-		if (!TAILQ_EMPTY(&conf->staticset))
-			printf(" ");
-		print_set(&conf->staticset);
-		printf("\n");
-	}
-	if (conf->flags & BGPD_FLAG_REDIST6_CONNECTED) {
-		printf("network inet6 connected");
-		if (!TAILQ_EMPTY(&conf->connectset6))
-			printf(" ");
-		print_set(&conf->connectset6);
-		printf("\n");
-	}
-	if (conf->flags & BGPD_FLAG_REDIST6_STATIC) {
-		printf("network inet6 static");
-		if (!TAILQ_EMPTY(&conf->staticset6))
-			printf(" ");
-		print_set(&conf->staticset6);
-		printf("\n");
-	}
-	if (conf->rtableid)
-		printf("rtable %u\n", conf->rtableid);
+}
+
+void
+print_rdomain(struct rdomain *r)
+{
+	printf("rdomain %u {\n", r->rtableid);
+	printf("\tdescr \"%s\"\n", r->descr);
+	if (r->flags & F_RIB_NOFIBSYNC)
+		printf("\tfib-update no\n");
+	else
+		printf("\tfib-update yes\n");
+	printf("\tdepend on %s\n", r->ifmpe);
+
+	printf("\n\t%s\n", log_rd(r->rd));
+
+	print_rdomain_targets(&r->export, "export-target");
+	print_rdomain_targets(&r->import, "import-target");
+
+	printf("}\n");
+}
+
+const char *
+print_af(u_int8_t aid)
+{
+	/*
+	 * Hack around the fact that aid2str() will return "IPv4 unicast"
+	 * for AID_INET. AID_INET and AID_INET6 need special handling and
+	 * the other AID should never end up here (at least for now).
+	 */
+	if (aid == AID_INET)
+		return ("inet");
+	if (aid == AID_INET6);
+		return ("inet6");
+	return (aid2str(aid));
 }
 
 void
 print_network(struct network_config *n)
 {
-	printf("network %s/%u", log_addr(&n->prefix), n->prefixlen);
+	switch (n->type) {
+	case NETWORK_STATIC:
+		printf("network %s static", print_af(n->prefix.aid));
+		break;
+	case NETWORK_CONNECTED:
+		printf("network %s connected", print_af(n->prefix.aid));
+		break;
+	default:
+		printf("network %s/%u", log_addr(&n->prefix), n->prefixlen);
+		break;
+	}
 	if (!TAILQ_EMPTY(&n->attrset))
 		printf(" ");
 	print_set(&n->attrset);
@@ -666,15 +693,22 @@ peer_compare(const void *aa, const void *bb)
 void
 print_config(struct bgpd_config *conf, struct rib_names *rib_l,
     struct network_head *net_l, struct peer *peer_l,
-    struct filter_head *rules_l, struct mrt_head *mrt_l)
+    struct filter_head *rules_l, struct mrt_head *mrt_l,
+    struct rdomain_head *rdom_l)
 {
 	struct filter_rule	*r;
 	struct network		*n;
 	struct rde_rib		*rr;
+	struct rdomain		*rd;
 
 	xmrt_l = mrt_l;
-	printf("\n");
 	print_mainconf(conf);
+	printf("\n");
+	TAILQ_FOREACH(n, net_l, entry)
+		print_network(&n->net);
+	printf("\n");
+	SIMPLEQ_FOREACH(rd, rdom_l, entry)
+		print_rdomain(rd);
 	printf("\n");
 	SIMPLEQ_FOREACH(rr, rib_l, entry) {
 		if (rr->flags & F_RIB_NOEVALUATE)
@@ -686,9 +720,6 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 			    rr->rtableid, rr->flags & F_RIB_NOFIBSYNC ?
 			    "no" : "yes");
 	}
-	printf("\n");
-	TAILQ_FOREACH(n, net_l, entry)
-		print_network(&n->net);
 	printf("\n");
 	print_mrt(0, 0, "", "");
 	printf("\n");

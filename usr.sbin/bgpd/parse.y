@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.253 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.254 2010/05/17 15:49:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netmpls/mpls.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -74,10 +75,12 @@ char		*symget(const char *);
 
 static struct bgpd_config	*conf;
 static struct mrt_head		*mrtconf;
-static struct network_head	*netconf;
+static struct network_head	*netconf, *gnetconf;
 static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
+static struct rdomain		*currdom;
+static struct rdomain_head	*rdom_l;
 static struct filter_head	*filter_l;
 static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
@@ -163,6 +166,7 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE RTABLE
+%token	RDOMAIN RD EXPORTTRGT IMPORTTRGT
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
@@ -187,7 +191,7 @@ typedef struct {
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number optnumber yesno inout
-%type	<v.number>		espah family restart origincode
+%type	<v.number>		espah family restart origincode nettype
 %type	<v.string>		string filter_rib
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -210,6 +214,7 @@ grammar		: /* empty */
 		| grammar include '\n'
 		| grammar conf_main '\n'
 		| grammar varset '\n'
+		| grammar rdomain '\n'
 		| grammar neighbor '\n'
 		| grammar group '\n'
 		| grammar filterrule '\n'
@@ -431,47 +436,7 @@ conf_main	: AS as4number		{
 			}
 			free($2);
 		}
-		| NETWORK prefix filter_set	{
-			struct network	*n;
-
-			if ((n = calloc(1, sizeof(struct network))) == NULL)
-				fatal("new_network");
-			memcpy(&n->net.prefix, &$2.prefix,
-			    sizeof(n->net.prefix));
-			n->net.prefixlen = $2.len;
-			move_filterset($3, &n->net.attrset);
-			free($3);
-
-			TAILQ_INSERT_TAIL(netconf, n, entry);
-		}
-		| NETWORK family STATIC filter_set	{
-			if ($2 == AFI_IPv4) {
-				conf->flags |= BGPD_FLAG_REDIST_STATIC;
-				move_filterset($4, &conf->staticset);
-			} else if ($2 == AFI_IPv6) {
-				conf->flags |= BGPD_FLAG_REDIST6_STATIC;
-				move_filterset($4, &conf->staticset6);
-			} else {
-				yyerror("unknown family");
-				free($4);
-				YYERROR;
-			}
-			free($4);
-		}
-		| NETWORK family CONNECTED filter_set	{
-			if ($2 == AFI_IPv4) {
-				conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
-				move_filterset($4, &conf->connectset);
-			} else if ($2 == AFI_IPv6) {
-				conf->flags |= BGPD_FLAG_REDIST6_CONNECTED;
-				move_filterset($4, &conf->connectset6);
-			} else {
-				yyerror("unknown family");
-				free($4);
-				YYERROR;
-			}
-			free($4);
-		}
+		| network
 		| DUMP STRING STRING optnumber		{
 			int action;
 
@@ -625,6 +590,39 @@ mrtdump		: DUMP STRING inout STRING optnumber	{
 		}
 		;
 
+network		: NETWORK prefix filter_set	{
+			struct network	*n;
+
+			if ((n = calloc(1, sizeof(struct network))) == NULL)
+				fatal("new_network");
+			memcpy(&n->net.prefix, &$2.prefix,
+			    sizeof(n->net.prefix));
+			n->net.prefixlen = $2.len;
+			move_filterset($3, &n->net.attrset);
+			free($3);
+
+			TAILQ_INSERT_TAIL(netconf, n, entry);
+		}
+		| NETWORK family nettype filter_set	{
+			struct network	*n;
+
+			if ((n = calloc(1, sizeof(struct network))) == NULL)
+				fatal("new_network");
+			if (afi2aid($2, SAFI_UNICAST, &n->net.prefix.aid) ==
+			    -1) {
+				yyerror("unknown family");
+				filterset_free($4);
+				free($4);
+				YYERROR;
+			}
+			n->net.type = $3 ? NETWORK_STATIC : NETWORK_CONNECTED;
+			move_filterset($4, &n->net.attrset);
+			free($4);
+
+			TAILQ_INSERT_TAIL(netconf, n, entry);
+		}
+		;
+
 inout		: IN		{ $$ = 1; }
 		| OUT		{ $$ = 0; }
 		;
@@ -708,6 +706,138 @@ nl		: '\n' optnl		/* one newline or more */
 
 optnumber	: /* empty */		{ $$ = 0; }
 		| NUMBER
+		;
+
+rdomain		: RDOMAIN NUMBER optnl '{' optnl	{
+			if (ktable_exists($2, NULL) != 1) {
+				yyerror("rdomain %lld does not exist", $2);
+				YYERROR;
+			}
+			if (!(currdom = calloc(1, sizeof(struct rdomain))))
+				fatal(NULL);
+			currdom->rtableid = $2;
+			TAILQ_INIT(&currdom->import);
+			TAILQ_INIT(&currdom->export);
+			TAILQ_INIT(&currdom->net_l);
+			netconf = &currdom->net_l;
+		}
+		    rdomainopts_l '}' {
+			/* insert into list */
+			SIMPLEQ_INSERT_TAIL(rdom_l, currdom, entry);
+			currdom = NULL;
+			netconf = gnetconf;
+		}
+
+rdomainopts_l	: rdomainopts_l rdomainoptsl
+		| rdomainoptsl
+		;
+
+rdomainoptsl	: rdomainopts nl
+		;
+
+rdomainopts	: RD STRING {
+			struct filter_extcommunity	ext;
+			u_int64_t			rd;
+
+			if (parseextcommunity(&ext, "rt", $2) == -1) {
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			/*
+			 * RD is almost encode like an ext-community,
+			 * but only almost so convert here.
+			 */
+			if (community_ext_conv(&ext, 0, &rd)) {
+				yyerror("bad encoding of rd");
+				YYERROR;
+			}
+			rd = betoh64(rd) & 0xffffffffffffULL;
+			switch (ext.type) {
+			case EXT_COMMUNITY_TWO_AS:
+				rd |= (0ULL << 48);
+				break;
+			case EXT_COMMUNITY_IPV4:
+				rd |= (1ULL << 48);
+				break;
+			case EXT_COMMUNITY_FOUR_AS:
+				rd |= (2ULL << 48);
+				break;
+			default:
+				yyerror("bad encoding of rd");
+				YYERROR;
+			}
+			currdom->rd = htobe64(rd);
+		}
+		| EXPORTTRGT STRING STRING	{
+			struct filter_set	*set;
+
+			if ((set = calloc(1, sizeof(struct filter_set))) ==
+			    NULL)
+				fatal(NULL);
+			set->type = ACTION_SET_EXT_COMMUNITY;
+			if (parseextcommunity(&set->action.ext_community,
+			    $2, $3) == -1) {
+				free($3);
+				free($2);
+				free(set);
+				YYERROR;
+			}
+			free($3);
+			free($2);
+			TAILQ_INSERT_TAIL(&currdom->export, set, entry);
+		}
+		| IMPORTTRGT STRING STRING	{
+			struct filter_set	*set;
+
+			if ((set = calloc(1, sizeof(struct filter_set))) ==
+			    NULL)
+				fatal(NULL);
+			set->type = ACTION_SET_EXT_COMMUNITY;
+			if (parseextcommunity(&set->action.ext_community,
+			    $2, $3) == -1) {
+				free($3);
+				free($2);
+				free(set);
+				YYERROR;
+			}
+			free($3);
+			free($2);
+			TAILQ_INSERT_TAIL(&currdom->import, set, entry);
+		}
+		| DESCR string		{
+			if (strlcpy(currdom->descr, $2,
+			    sizeof(currdom->descr)) >=
+			    sizeof(currdom->descr)) {
+				yyerror("descr \"%s\" too long: max %u",
+				    $2, sizeof(currdom->descr) - 1);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| FIBUPDATE yesno		{
+			if ($2 == 0)
+				currdom->flags |= F_RIB_NOFIBSYNC;
+			else
+				currdom->flags &= ~F_RIB_NOFIBSYNC;
+		}
+		| network
+		| DEPEND ON STRING	{
+			/* XXX this is a hack */
+			if (if_nametoindex($3) == 0) {
+				yyerror("interface %s does not exist", $3);
+				free($3);
+				YYERROR;
+			}
+			strlcpy(currdom->ifmpe, $3, IFNAMSIZ);
+			free($3);
+			if (get_mpe_label(currdom)) {
+				yyerror("failed to get mpls label from %s",
+				    currdom->ifmpe);
+				YYERROR;
+			}
+		}
 		;
 
 neighbor	: {	curpeer = new_peer(); }
@@ -1174,6 +1304,10 @@ restart		: /* nada */		{ $$ = 0; }
 
 family		: IPV4	{ $$ = AFI_IPv4; }
 		| IPV6	{ $$ = AFI_IPv6; }
+		;
+
+nettype		: STATIC { $$ = 1; },
+		| CONNECTED { $$ = 0; }
 		;
 
 espah		: ESP		{ $$ = 1; }
@@ -1953,6 +2087,7 @@ lookup(char *s)
 		{ "enforce",		ENFORCE},
 		{ "esp",		ESP},
 		{ "evaluate",		EVALUATE},
+		{ "export-target",	EXPORTTRGT},
 		{ "ext-community",	EXTCOMMUNITY},
 		{ "fib-update",		FIBUPDATE},
 		{ "from",		FROM},
@@ -1960,6 +2095,7 @@ lookup(char *s)
 		{ "holdtime",		HOLDTIME},
 		{ "ignore",		IGNORE},
 		{ "ike",		IKE},
+		{ "import-target",	IMPORTTRGT},
 		{ "in",			IN},
 		{ "include",		INCLUDE},
 		{ "inet",		IPV4},
@@ -1995,7 +2131,9 @@ lookup(char *s)
 		{ "prepend-self",	PREPEND_SELF},
 		{ "qualify",		QUALIFY},
 		{ "quick",		QUICK},
+		{ "rd",			RD},
 		{ "rde",		RDE},
+		{ "rdomain",		RDOMAIN},
 		{ "refresh",		REFRESH },
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
@@ -2361,7 +2499,7 @@ popfile(void)
 int
 parse_config(char *filename, struct bgpd_config *xconf,
     struct mrt_head *xmconf, struct peer **xpeers, struct network_head *nc,
-    struct filter_head *xfilter_l)
+    struct filter_head *xfilter_l, struct rdomain_head *xrdom_l)
 {
 	struct sym		*sym, *next;
 	struct peer		*p, *pnext;
@@ -2369,6 +2507,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct network		*n;
 	struct filter_rule	*r;
 	struct rde_rib		*rr;
+	struct rdomain		*rd;
 	int			 errors = 0;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
@@ -2404,12 +2543,14 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	id = 1;
 
 	/* network list is always empty in the parent */
-	netconf = nc;
+	gnetconf = netconf = nc;
 	TAILQ_INIT(netconf);
 	/* init the empty filter list for later */
 	TAILQ_INIT(xfilter_l);
+	SIMPLEQ_INIT(xrdom_l);
+	rdom_l = xrdom_l;
 
-	add_rib("Adj-RIB-In", 0, F_RIB_NOEVALUATE);
+	add_rib("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
 	add_rib("Loc-RIB", 0, 0);
 
 	yyparse();
@@ -2469,6 +2610,19 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
 			free(rr);
+		}
+		while ((rd = SIMPLEQ_FIRST(rdom_l)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(rdom_l, entry);
+			filterset_free(&rd->export);
+			filterset_free(&rd->import);
+
+			while ((n = TAILQ_FIRST(&rd->net_l)) != NULL) {
+				TAILQ_REMOVE(&rd->net_l, n, entry);
+				filterset_free(&n->net.attrset);
+				free(n);
+			}
+
+			free(rd);
 		}
 	} else {
 		errors += merge_config(xconf, conf, peer_l, listen_addrs);
