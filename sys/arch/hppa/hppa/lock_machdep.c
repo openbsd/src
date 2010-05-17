@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.1 2010/03/25 14:26:21 jsing Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.2 2010/05/17 11:25:08 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -32,17 +32,17 @@ __cpu_cas(struct __mp_lock *mpl, volatile unsigned long *addr,
     unsigned long old, unsigned long new)
 {
 	volatile int *lock = (int *)(((vaddr_t)mpl->mpl_lock + 0xf) & ~0xf);
-	volatile register_t locked = 0;
+	volatile register_t old_lock = 0;
 	int ret = 1;
 
 	/* Note: lock must be 16-byte aligned. */
 	asm volatile (
 		"ldcws      0(%2), %0"
-		: "=&r" (locked), "+m" (lock)
+		: "=&r" (old_lock), "+m" (lock)
 		: "r" (lock)
 	);
 
-	if (locked == MPL_LOCKED) {
+	if (old_lock == MPL_UNLOCKED) {
 		if (*addr == old) {
 			*addr = new;
 			asm("sync" ::: "memory");
@@ -136,7 +136,8 @@ __mp_unlock(struct __mp_lock *mpl)
 
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__mp_unlock(%p): not held lock\n", mpl);
+		db_printf("__mp_unlock(%p): lock not held - %p != %p\n",
+		    mpl, mpl->mpl_cpu, curcpu());
 		Debugger();
 	}
 #endif
@@ -158,7 +159,8 @@ __mp_release_all(struct __mp_lock *mpl)
 
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__mp_release_all(%p): not held lock\n", mpl);
+		db_printf("__mp_release_all(%p): lock not held - %p != %p\n",
+		    mpl, mpl->mpl_cpu, curcpu());
 		Debugger();
 	}
 #endif
@@ -179,7 +181,8 @@ __mp_release_all_but_one(struct __mp_lock *mpl)
 
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__mp_release_all_but_one(%p): not held lock\n", mpl);
+		db_printf("__mp_release_all_but_one(%p): lock not held - "
+		    "%p != %p\n", mpl, mpl->mpl_cpu, curcpu());
 		Debugger();
 	}
 #endif
