@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.3 2010/02/26 17:24:11 deraadt Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.4 2010/05/17 21:59:45 nicm Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -131,7 +131,7 @@ aibs_attach_sif(struct aibs_softc *sc, enum sensor_type st)
 	struct aml_value	res;
 	struct aml_value	**v;
 	int			i, n;
-	char			*name = "?SIF";
+	char			name[] = "?SIF";
 	struct aibs_sensor	*as;
 
 	switch (st) {
