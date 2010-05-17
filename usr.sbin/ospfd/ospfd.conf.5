@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.42 2010/02/16 08:39:05 dlg Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.43 2010/05/17 17:47:46 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2010 $
+.Dd $Mdocdate: May 17 2010 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -163,7 +163,7 @@ The default value for
 is 1 and for
 .Ic metric
 is 100.
-Setting more then one option needs curly brackets:
+Setting more than one option needs curly brackets:
 .Bd -literal -offset indent
 redistribute static set { metric 300 type 2 }
 .Ed
