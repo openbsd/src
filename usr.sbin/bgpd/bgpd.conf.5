@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.108 2010/05/17 16:08:20 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.109 2010/05/17 17:46:22 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -396,7 +396,7 @@ The default is
 .Xr bgpd 8
 supports the setup and distribution of Virtual Private Networks.
 It is possible to import and export prefixes between routing domains.
-Each routing domain is specified by a
+Each routing domain is specified by an
 .Ic rdomain
 section, which allows properties to be set specifically for that rdomain:
 .Bd -literal -offset indent
@@ -414,8 +414,8 @@ There are several routing domain properties:
 .Pp
 .Bl -tag -width Ds -compact
 .It Ic depend on Ar interface
-Routes added to the rdomain will use this this interface as outgoing interface.
-Normaly this will be a MPLS Provider Edge,
+Routes added to the rdomain will use this interface as the outgoing interface.
+Normally this will be an MPLS Provider Edge,
 .Xr mpe 4 ,
 interface that is part of the rdomain.
 Local networks will be announced with the MPLS label specified on the interface.
@@ -1145,7 +1145,7 @@ This rule applies only to
 .Em UPDATES
 where the
 .Em AS path
-has more then
+has more than
 .Ar len
 elements.
 .Pp
@@ -1154,7 +1154,7 @@ This rule applies only to
 .Em UPDATES
 where a single
 .Em AS number
-is repeated more then
+is repeated more than
 .Ar len
 times.
 .Pp
