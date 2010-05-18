@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1555 2010/05/17 17:31:06 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1556 2010/05/18 21:23:28 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -248,6 +248,7 @@
 #define	PCI_VENDOR_CHELSIO	0x1425		/* Chelsio */
 #define	PCI_VENDOR_EDIMAX	0x1432		/* Edimax */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack */
+#define	PCI_VENDOR_WORKBIT	0x1145		/* Workbit */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
 #define	PCI_VENDOR_MSI	0x1462		/* Micro Star International */
@@ -2418,7 +2419,9 @@
 #define	PCI_PRODUCT_INTEL_82599_SFP_EM	0x1507		/* 10GbE SFP EM (82599) */
 #define	PCI_PRODUCT_INTEL_82598_BX	0x1508		/* 10GbE BX (82598) */
 #define	PCI_PRODUCT_INTEL_82576_NS	0x150a		/* PRO/1000 (82576NS) */
+#define	PCI_PRODUCT_INTEL_82583V	0x150c		/* PRO/1000 (82583V) */
 #define	PCI_PRODUCT_INTEL_82599_KX4_MEZZ	0x1514		/* 10GbE KX4 (82599) */
+#define	PCI_PRODUCT_INTEL_82576_QUAD_CU_ET2	0x1526		/* PRO/1000 QP (82576) */
 #define	PCI_PRODUCT_INTEL_80960RP_ATU	0x1960		/* 80960RP ATU */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
 #define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
@@ -5508,6 +5511,10 @@
 
 /* Winbond Electronics products (PCI products set 2) */
 #define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI */
+
+/* Workbit products */
+#define	PCI_PRODUCT_WORKBIT_CF32A_1	0xf021		/* CF32A */
+#define	PCI_PRODUCT_WORKBIT_CF32A_2	0xf024		/* CF32A */
 
 /* XenSource products */
 #define	PCI_PRODUCT_XENSOURCE_PLATFORMDEV	0x0001		/* Platform Device */
