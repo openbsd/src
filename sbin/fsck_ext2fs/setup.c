@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.16 2010/03/08 11:19:04 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.17 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <sys/file.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioctl.h,v 1.8 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: ioctl.h,v 1.9 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: ioctl.h,v 1.20 1996/01/30 18:21:47 thorpej Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@ struct ttysize {
 
 #include <sys/ioccom.h>
 
-#include <sys/dkio.h>
 #include <sys/filio.h>
 #include <sys/sockio.h>
 

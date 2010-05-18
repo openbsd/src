@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.186 2010/04/30 02:17:06 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.187 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/scsiio.h>
+#include <sys/dkio.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>

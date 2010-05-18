@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.79 2010/04/23 15:25:21 jsing Exp $ */
+/*	$OpenBSD: wd.c,v 1.80 2010/05/18 04:41:14 dlg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/dkio.h>
 
 #include <uvm/uvm_extern.h>
 

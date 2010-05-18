@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_blkio.c,v 1.7 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: linux_blkio.c,v 1.8 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: linux_blkio.c,v 1.3 2001/01/18 17:48:04 tv Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/disklabel.h>
+#include <sys/dkio.h>
 
 #include <sys/syscallargs.h>
 

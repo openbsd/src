@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.70 2010/04/30 21:56:39 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.71 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/rwlock.h>
+#include <sys/dkio.h>
 
 #include <miscfs/specfs/specdev.h>
 

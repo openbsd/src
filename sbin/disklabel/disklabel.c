@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.164 2010/04/28 17:12:52 jsing Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.165 2010/05/18 04:41:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #define DKTYPENAMES

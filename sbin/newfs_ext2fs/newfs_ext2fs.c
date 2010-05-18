@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.5 2010/02/18 07:58:14 otto Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.6 2010/05/18 04:41:14 dlg Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/file.h>

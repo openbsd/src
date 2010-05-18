@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.28 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.29 2010/05/18 04:41:14 dlg Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/stat.h>
 
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.84 2010/05/03 14:28:08 jsing Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.85 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/disklabel.h>
 #include <sys/mount.h>
 #include <sys/resource.h>

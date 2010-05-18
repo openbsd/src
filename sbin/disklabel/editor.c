@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.238 2010/05/15 10:54:29 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.239 2010/05/18 04:41:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -20,6 +20,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/sysctl.h>
 #define	DKTYPENAMES
 #include <sys/disklabel.h>

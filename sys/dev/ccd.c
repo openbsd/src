@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.89 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.90 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/rwlock.h>
+#include <sys/dkio.h>
 
 #include <dev/ccdvar.h>
 

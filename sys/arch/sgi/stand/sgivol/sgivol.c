@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.16 2010/04/23 15:25:20 jsing Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.17 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/dkio.h>
 
 /*
  * Some IRIX man pages refer to the size being a multiple of whole cylinders.

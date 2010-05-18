@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_hdio.c,v 1.6 2007/06/05 00:38:20 deraadt Exp $	*/
+/*	$OpenBSD: linux_hdio.c,v 1.7 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: linux_hdio.c,v 1.1 2000/12/10 14:12:17 fvdl Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/disklabel.h>
+#include <sys/dkio.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>

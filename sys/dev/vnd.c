@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.96 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.97 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/rwlock.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/dkio.h>
 
 #include <crypto/blf.h>
 

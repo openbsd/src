@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.56 2009/08/13 15:00:14 jasper Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.57 2010/05/18 04:41:14 dlg Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
 #include <sys/poll.h>
+#include <sys/dkio.h>
 
 #include <miscfs/specfs/specdev.h>
 
