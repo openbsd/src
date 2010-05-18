@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.179 2010/05/17 15:49:29 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.180 2010/05/18 12:21:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -274,7 +274,6 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs)
 		strlcpy(kt->ifmpe, ifname, IFNAMSIZ);
 		kt->ifindex = if_nametoindex(ifname);
 	}
-	kt->state = RECONF_REINIT;
 
 	/* ... and load it */
 	if (fetchtable(kt) == -1)
@@ -283,8 +282,8 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs)
 		return (-1);
 
 	/* everything is up and running */
+	kt->state = RECONF_REINIT;
 	log_debug("new ktable %s for rtableid %d", name, rtableid);
-	kt->state = RECONF_KEEP;
 	return (0);
 }
 
@@ -359,9 +358,10 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags)
 			/* there is no need for full fib synchronisation if
 			 * the table is only used for nexthop lookups.
 			 */
-			if (rkt->state == RECONF_DELETE)
+			if (rkt->state == RECONF_DELETE) {
 				rkt->fib_conf = 0;
-			rkt->state = RECONF_KEEP;
+				rkt->state = RECONF_KEEP;
+			}
 		}
 	}
 
@@ -376,12 +376,13 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags)
 			return (-1);
 	} else {
 		/* fib sync has higher preference then no sync */
-		if (kt->state == RECONF_DELETE)
+		if (kt->state == RECONF_DELETE) {
 			kt->fib_conf = !(flags & F_RIB_NOFIBSYNC);
-		else if (!kt->fib_conf)
+			kt->state = RECONF_KEEP;
+		} else if (!kt->fib_conf)
 			kt->fib_conf = !(flags & F_RIB_NOFIBSYNC);
 
-		kt->state = RECONF_KEEP;
+		strlcpy(kt->descr, name, sizeof(kt->descr));
 	}
 	return (0);
 }
@@ -410,6 +411,8 @@ ktable_postload(void)
 			continue;
 		if (kt->state == RECONF_DELETE)
 			ktable_free(i - 1);
+		else if (kt->state == RECONF_REINIT)
+			kt->fib_sync = kt->fib_conf;
 	}
 }
 
