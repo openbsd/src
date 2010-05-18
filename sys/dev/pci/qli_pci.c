@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.16 2010/03/23 01:57:20 krw Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.17 2010/05/18 20:54:34 oga Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -313,7 +313,7 @@ qli_allocmem(struct qli_softc *sc, size_t size)
 		goto amfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &mm->am_seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT) != 0)
+	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &mm->am_seg, nsegs, size, &mm->am_kva,
@@ -327,7 +327,6 @@ qli_allocmem(struct qli_softc *sc, size_t size)
 	DNPRINTF(QLI_D_MEM, "  kva: %p  dva: %p  map: %p\n",
 	    mm->am_kva, mm->am_map->dm_segs[0].ds_addr, mm->am_map);
 
-	memset(mm->am_kva, 0, size);
 	return (mm);
 
 unmap:

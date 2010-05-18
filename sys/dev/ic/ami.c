@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.202 2010/05/16 20:33:59 nicm Exp $	*/
+/*	$OpenBSD: ami.c,v 1.203 2010/05/18 20:54:34 oga Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -272,7 +272,7 @@ ami_allocmem(struct ami_softc *sc, size_t size)
 		goto amfree; 
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &am->am_seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT) != 0)
+	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &am->am_seg, nsegs, size, &am->am_kva,
@@ -283,7 +283,6 @@ ami_allocmem(struct ami_softc *sc, size_t size)
 	    BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 
-	memset(am->am_kva, 0, size);
 	return (am);
 
 unmap:
