@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.107 2010/05/13 19:27:24 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.108 2010/05/18 07:05:18 halex Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -915,7 +915,7 @@ dumpsys(void)
 
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 			/* Print out how many MBs we have left to go. */
-			if ((totalbytesleft % (1024*1024)) == 0)
+			if ((totalbytesleft % (1024*1024)) < BYTES_PER_DUMP)
 				printf("%ld ", totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
