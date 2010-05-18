@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.18 2003/07/21 22:52:19 tedu Exp $	*/
+/*	$OpenBSD: mman.h,v 1.19 2010/05/18 22:24:54 tedu Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -31,6 +31,10 @@
  *
  *	@(#)mman.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _KERNEL
+#include <sys/cdefs.h>
+#endif
 
 /*
  * Protections are chosen from these bits, or-ed together
@@ -72,15 +76,28 @@
 #define	MAP_FLAGMASK	0x17f7
 
 /*
- * Advice to madvise
+ * POSIX memory advisory values.
+ * Note: keep consistent with the original defintions below.
  */
-#define	MADV_NORMAL	0	/* no further special treatment */
-#define	MADV_RANDOM	1	/* expect random page references */
-#define	MADV_SEQUENTIAL	2	/* expect sequential page references */
-#define	MADV_WILLNEED	3	/* will need these pages */
-#define	MADV_DONTNEED	4	/* dont need these pages */
-#define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
-#define	MADV_FREE	6	/* pages are empty, free them */
+#define	POSIX_MADV_NORMAL	0	/* no further special treatment */
+#define	POSIX_MADV_RANDOM	1	/* expect random page references */
+#define	POSIX_MADV_SEQUENTIAL	2	/* expect sequential page references */
+#define	POSIX_MADV_WILLNEED	3	/* will need these pages */
+#define	POSIX_MADV_DONTNEED	4	/* don't need these pages */
+
+#if __BSD_VISIBLE
+/*
+ * Original advice values, equivalent to POSIX defintions,
+ * and few implementation-specific ones.
+ */
+#define	MADV_NORMAL		POSIX_MADV_NORMAL
+#define	MADV_RANDOM		POSIX_MADV_RANDOM
+#define	MADV_SEQUENTIAL		POSIX_MADV_SEQUENTIAL
+#define	MADV_WILLNEED		POSIX_MADV_WILLNEED
+#define	MADV_DONTNEED		POSIX_MADV_DONTNEED
+#define	MADV_SPACEAVAIL		5	/* insure that resources are reserved */
+#define	MADV_FREE		6	/* pages are empty, free them */
+#endif
 
 /*
  * Flags to minherit
@@ -105,8 +122,17 @@
 #define	MCL_FUTURE	0x02	/* lock all pages mapped in the future */
 
 #ifndef _KERNEL
+#include <sys/_types.h>
 
-#include <sys/cdefs.h>
+#ifndef _SIZE_T_DEFINED_
+#define _SIZE_T_DEFINED_
+typedef __size_t	size_t;
+#endif
+
+#ifndef _OFF_T_DEFINED_
+#define _OFF_T_DEFINED_
+typedef __off_t		off_t;
+#endif
 
 __BEGIN_DECLS
 /* Some of these int's should probably be size_t's */
@@ -118,10 +144,13 @@ int	mlock(const void *, size_t);
 int	munlock(const void *, size_t);
 int	mlockall(int);
 int	munlockall(void);
+#if __BSD_VISIBLE
 int	madvise(void *, size_t, int);
 int	mincore(void *, size_t, char *);
 int	minherit(void *, size_t, int);
 void *	mquery(void *, size_t, int, int, int, off_t);
+#endif
+int	posix_madvise(void *, size_t, int);
 __END_DECLS
 
 #endif /* !_KERNEL */

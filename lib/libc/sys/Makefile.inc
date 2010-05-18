@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.89 2010/02/03 20:49:00 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.90 2010/05/18 22:24:55 tedu Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -22,6 +22,9 @@ DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_sigsuspend.c Lint_syscall.c Lint_crt.c Lint_environ.c \
 	Lint_setjmp.c Lint_longjmp.c \
 	Lint_sigsetjmp.c Lint_siglongjmp.c
+
+# glue to offer userland wrappers for some syscalls
+SRCS+=	posix_madvise.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -264,6 +267,7 @@ MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=kqueue.2 kevent.2 kqueue.2 EV_SET.2
 MLINKS+=intro.2 errno.2
+MLINKS+=madvise.2 posix_madvise.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2

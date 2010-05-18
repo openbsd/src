@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.124 2010/01/13 12:40:11 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.125 2010/05/18 22:24:55 tedu Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -1486,5 +1486,30 @@ calloc(size_t nmemb, size_t size)
 	if (r != NULL)
 		errno = saved_errno;
 	return r;
+}
+
+int
+posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	void *result;
+
+	/* Make sure that alignment is a large enough power of 2. */
+	if (((alignment - 1) & alignment) != 0 || alignment < sizeof(void *) ||
+	    alignment > MALLOC_PAGESIZE)
+		return EINVAL;
+
+	/* 
+	 * max(size, alignment) is enough to assure the requested alignment,
+	 * since the allocator always allocates power-of-two blocks.
+	 */
+	if (size < alignment)
+		size = alignment;
+	result = malloc(size);
+
+	if (result == NULL)
+		return ENOMEM;
+
+	*memptr = result;
+	return 0;
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.43 2010/02/03 20:49:00 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.44 2010/05/18 22:24:55 tedu Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -42,9 +42,9 @@ SRCS+=	insque.c remque.c
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	bsearch.3 div.3 ecvt.3 exit.3 getenv.3 getopt.3 getopt_long.3 \
 	getsubopt.3 hcreate.3 imaxabs.3 imaxdiv.3 insque.3 labs.3 ldiv.3 \
-	lldiv.3 lsearch.3 malloc.3 qabs.3 qdiv.3 qsort.3 radixsort.3 rand48.3 \
-	rand.3 random.3 realpath.3 strtod.3 strtonum.3 strtol.3 strtoul.3 \
-	system.3 tsearch.3
+	lldiv.3 lsearch.3 malloc.3 posix_memalign.3 qabs.3 qdiv.3 qsort.3 \
+	radixsort.3 rand48.3 rand.3 random.3 realpath.3 strtod.3 strtonum.3 \
+	strtol.3 strtoul.3 system.3 tsearch.3
 
 MLINKS+=exit.3 _Exit.3
 MLINKS+=ecvt.3 fcvt.3 ecvt.3 gcvt.3

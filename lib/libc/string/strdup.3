@@ -1,4 +1,4 @@
-.\" $OpenBSD: strdup.3,v 1.15 2010/03/24 14:47:46 kettenis Exp $
+.\" $OpenBSD: strdup.3,v 1.16 2010/05/18 22:24:55 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,16 +29,19 @@
 .\"
 .\"     @(#)strdup.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 24 2010 $
+.Dd $Mdocdate: May 18 2010 $
 .Dt STRDUP 3
 .Os
 .Sh NAME
-.Nm strdup
+.Nm strdup ,
+.Nm strndup
 .Nd save a copy of a string
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
 .Fn strdup "const char *s"
+.Ft char *
+.Fn strndup "const char *s" "size_t maxlen"
 .Sh DESCRIPTION
 The
 .Fn strdup
@@ -47,6 +50,16 @@ function allocates sufficient memory for a copy of the string
 does the copy, and returns a pointer to it.
 The pointer may subsequently be used as an argument to the function
 .Xr free 3 .
+.Pp
+The
+.Fn strndup
+function behaves similarly to
+.Nm strdup
+but only copies up to
+.Fa maxlen
+characters from
+.Fa s .
+The resulting string is always NUL-terminated.
 .Pp
 If insufficient memory is available,
 .Dv NULL
@@ -83,3 +96,15 @@ The
 .Fn strdup
 function first appeared in
 .Bx 4.4 .
+.Pp
+The
+.Fn strndup
+function first appeared in
+.Ox 4.8 .
+.Sh STANDARDS
+The
+.Fn strdup
+and
+.Fn strndup
+functions conform to
+.St -p1003.1-2008 .

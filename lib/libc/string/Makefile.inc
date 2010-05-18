@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2010/02/03 20:49:00 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2010/05/18 22:24:55 tedu Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
 SRCS+=	bm.c memccpy.c memrchr.c strcasecmp.c strcasestr.c strcoll.c strdup.c \
-	strerror.c strerror_r.c strlcat.c strmode.c strsignal.c strtok.c \
-	strxfrm.c \
+	strerror.c strerror_r.c strlcat.c strmode.c strndup.c strnlen.c \
+	strsignal.c strtok.c strxfrm.c \
 	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c \
 	wcsstr.c wcstok.c wcswcs.c wcswidth.c wmemchr.c wmemcmp.c wmemcpy.c \
@@ -153,7 +153,9 @@ MLINKS+=strcasecmp.3 strncasecmp.3
 MLINKS+=strcat.3 strncat.3
 MLINKS+=strcmp.3 strncmp.3
 MLINKS+=strcpy.3 strncpy.3
+MLINKS+=strdup.3 strndup.3
 MLINKS+=strlcpy.3 strlcat.3
+MLINKS+=strlen.3 strnlen.3
 MLINKS+=strstr.3 strcasestr.3
 MLINKS+=strtok.3 strtok_r.3
 MLINKS+=strerror.3 strerror_r.3

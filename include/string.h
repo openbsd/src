@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.18 2007/09/03 14:36:40 millert Exp $	*/
+/*	$OpenBSD: string.h,v 1.19 2010/05/18 22:24:55 tedu Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -108,6 +108,11 @@ char	*strdup(const char *);
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 600
 int	 strerror_r(int, char *, size_t)
 	    __attribute__ ((__bounded__(__string__,2,3)));
+#endif
+
+#if __POSIX_VISIBLE >= 200809
+char	*strndup(const char *, size_t);
+size_t	 strnlen(const char *, size_t);
 #endif
 
 #if __BSD_VISIBLE

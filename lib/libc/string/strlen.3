@@ -29,29 +29,55 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strlen.3,v 1.6 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: strlen.3,v 1.7 2010/05/18 22:24:55 tedu Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 18 2010 $
 .Dt STRLEN 3
 .Os
 .Sh NAME
-.Nm strlen
+.Nm strlen ,
+.Nm strnlen
 .Nd find length of a string
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft size_t
 .Fn strlen "const char *s"
+.Ft size_t
+.Fn strnlen "const char *s" "size_t maxlen"
 .Sh DESCRIPTION
 The
 .Fn strlen
 function computes the length of the string
 .Fa s .
+.Pp
+The
+.Fn strnlen
+function computes the length of the string
+.Fa s ,
+up to
+.Fa maxlen
+characters.
+The
+.Fn strnlen
+function will never attempt to address more than
+.Fa maxlen
+characters, making it suitable for use with character arrays that are
+not guaranteed to be NUL-terminated.
+.Pp
 .Sh RETURN VALUES
 The
 .Fn strlen
 function returns the number of characters that precede the terminating
 .Tn NUL
 character.
+.Pp
+The
+.Fn strnlen
+function returns the number of characters that precede the terminating
+.Tn NUL
+or
+.Fa maxlen ,
+whichever is smaller.
 .Sh SEE ALSO
 .Xr string 3
 .Sh STANDARDS
@@ -59,3 +85,10 @@ The
 .Fn strlen
 function conforms to
 .St -ansiC .
+.Pp
+The
+.Fn strlen
+and
+.Fn strnlen
+functions conform to
+.St -p1003.1-2008 .
