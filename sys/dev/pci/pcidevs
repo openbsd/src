@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1555 2010/05/17 17:31:06 jsg Exp $
+$OpenBSD: pcidevs,v 1.1556 2010/05/18 21:23:28 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -243,6 +243,7 @@ vendor	OXFORD2		0x1415	Oxford
 vendor	CHELSIO		0x1425	Chelsio
 vendor	EDIMAX		0x1432	Edimax
 vendor	TAMARACK	0x143d	Tamarack
+vendor	WORKBIT		0x1145	Workbit
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
 vendor	MSI		0x1462	Micro Star International
@@ -2413,7 +2414,9 @@ product INTEL 82870P2_HPLUG	0x1462	82870P2 Hot Plug
 product INTEL 82599_SFP_EM	0x1507	10GbE SFP EM (82599)
 product INTEL 82598_BX		0x1508	10GbE BX (82598)
 product INTEL 82576_NS		0x150a	PRO/1000 (82576NS)
+product INTEL 82583V		0x150c	PRO/1000 (82583V)
 product INTEL 82599_KX4_MEZZ	0x1514	10GbE KX4 (82599)
+product INTEL 82576_QUAD_CU_ET2	0x1526	PRO/1000 QP (82576)
 product INTEL 80960RP_ATU	0x1960	80960RP ATU
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
@@ -5503,6 +5506,10 @@ product WINBOND W6692		0x6692	W6692 ISDN
 
 /* Winbond Electronics products (PCI products set 2) */
 product WINBOND2 W89C940	0x1980	Linksys EtherPCI
+
+/* Workbit products */
+product WORKBIT CF32A_1		0xf021	CF32A
+product WORKBIT CF32A_2		0xf024	CF32A
 
 /* XenSource products */
 product XENSOURCE PLATFORMDEV	0x0001	Platform Device
