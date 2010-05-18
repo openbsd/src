@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.80 2010/04/02 23:55:37 sthen Exp $ */
+/*	$OpenBSD: kroute.c,v 1.81 2010/05/18 15:19:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -641,7 +641,7 @@ kroute_find(in_addr_t prefix, u_int8_t prefixlen, u_int8_t prio)
 		while (tmp) {
 			if (kroute_compare(&s, tmp) == 0)
 				kn = tmp;
-			else 
+			else
 				break;
 			tmp = RB_PREV(kroute_tree, &krt, kn);
 		}
@@ -664,7 +664,6 @@ kroute_matchgw(struct kroute_node *kr, struct in_addr nh)
 
 	return (NULL);
 }
-
 
 int
 kroute_insert(struct kroute_node *kr)
