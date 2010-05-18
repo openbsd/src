@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.44 2010/04/10 16:17:38 oga Exp $	*/
+/*	$OpenBSD: aac.c,v 1.45 2010/05/18 20:57:20 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1216,7 +1216,7 @@ aac_alloc_commands(struct aac_softc *sc)
 
 	/* allocate the FIBs in DMAable memory and load them */
 	if (bus_dmamem_alloc(sc->aac_dmat, AAC_FIBMAP_SIZE, PAGE_SIZE, 0,
-	    &fm->aac_seg, 1, &fm->aac_nsegs, BUS_DMA_NOWAIT)) {
+	    &fm->aac_seg, 1, &fm->aac_nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf("%s: can't alloc FIBs\n", sc->aac_dev.dv_xname);
 		error = ENOBUFS;
 		goto exit_alloc;
@@ -1245,7 +1245,6 @@ aac_alloc_commands(struct aac_softc *sc)
 
 	/* initialise constant fields in the command structure */
 	AAC_LOCK_ACQUIRE(&sc->aac_io_lock);
-	bzero(fm->aac_fibs, AAC_FIB_COUNT * sizeof(struct aac_fib));
 	for (i = 0; i < AAC_FIB_COUNT; i++) {
 		cm = sc->aac_commands + sc->total_fibs;
 		fm->aac_commands = cm;
@@ -1518,7 +1517,7 @@ aac_init(struct aac_softc *sc)
 	 * of ignored?
 	 */
 	if (bus_dmamem_alloc(sc->aac_dmat, AAC_COMMON_ALLOCSIZE, PAGE_SIZE, 0,
-			     &seg, 1, &nsegs, BUS_DMA_NOWAIT)) {
+			     &seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf("%s: can't allocate common structure\n",
 		    sc->aac_dev.dv_xname);
 		return (ENOMEM);
@@ -1556,7 +1555,6 @@ aac_init(struct aac_softc *sc)
 		(uint8_t *)sc->aac_common += 8192;
 		sc->aac_common_busaddr += 8192;
 	}
-	bzero(sc->aac_common, sizeof *sc->aac_common);
     
 	/* Allocate some FIBs and associated command structs */
 	TAILQ_INIT(&sc->aac_fibmap_tqh);
