@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.107 2009/11/27 19:43:55 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.108 2010/05/18 22:26:10 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -834,7 +834,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 #endif
 
 	if (type != SPROPAGATED)
-		KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
+		KNOTE(&p->p_p->ps_klist, NOTE_SIGNAL | signum);
 
 	prop = sigprop[signum];
 
@@ -1654,7 +1654,7 @@ filt_sigattach(struct knote *kn)
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
 
 	/* XXX lock the proc here while adding to the list? */
-	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+	SLIST_INSERT_HEAD(&p->p_p->ps_klist, kn, kn_selnext);
 
 	return (0);
 }
@@ -1664,7 +1664,7 @@ filt_sigdetach(struct knote *kn)
 {
 	struct proc *p = kn->kn_ptr.p_proc;
 
-	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&p->p_p->ps_klist, kn, knote, kn_selnext);
 }
 
 /*

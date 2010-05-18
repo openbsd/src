@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.126 2010/04/20 22:05:44 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.127 2010/05/18 22:26:10 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -146,6 +146,7 @@ struct process {
 	int	ps_refcnt;		/* Number of references. */
 
 	u_int	ps_rdomain;		/* Process routing domain. */
+	struct	klist ps_klist;		/* knotes attached to this process */
 };
 #else
 struct process;
@@ -223,8 +224,6 @@ struct proc {
 
 	void	*p_emuldata;		/* Per-process emulation data, or */
 					/* NULL. Malloc type M_EMULDATA */
-	struct	klist p_klist;		/* knotes attached to this process */
-					/* pad to 256, avoid shifting eproc. */
 
 	sigset_t p_sigdivert;		/* Signals to be diverted to thread. */
 

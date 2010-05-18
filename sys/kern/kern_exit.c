@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.90 2010/03/24 23:18:17 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.91 2010/05/18 22:26:10 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -292,7 +292,8 @@ exit1(struct proc *p, int rv, int flags)
 	/*
 	 * notify interested parties of our demise.
 	 */
-	KNOTE(&p->p_klist, NOTE_EXIT);
+	if (p == p->p_p->ps_mainproc)
+		KNOTE(&p->p_p->ps_klist, NOTE_EXIT);
 
 	/*
 	 * Notify parent that we're gone.  If we have P_NOZOMBIE or parent has

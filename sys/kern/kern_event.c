@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.35 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.36 2010/05/18 22:26:09 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -219,7 +219,7 @@ filt_procattach(struct knote *kn)
 	}
 
 	/* XXX lock the proc here while adding to the list? */
-	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+	SLIST_INSERT_HEAD(&p->p_p->ps_klist, kn, kn_selnext);
 
 	return (0);
 }
@@ -241,7 +241,7 @@ filt_procdetach(struct knote *kn)
 		return;
 
 	/* XXX locking?  this might modify another process. */
-	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&p->p_p->ps_klist, kn, knote, kn_selnext);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.109 2010/03/24 23:18:17 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.110 2010/05/18 22:26:10 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ process_new(struct proc *newproc, struct proc *parentproc)
 {
 	struct process *pr, *parent;
 
-	pr = pool_get(&process_pool, PR_WAITOK);
+	pr = pool_get(&process_pool, PR_WAITOK | PR_ZERO);
 	pr->ps_mainproc = newproc;
 	TAILQ_INIT(&pr->ps_threads);
 	TAILQ_INSERT_TAIL(&pr->ps_threads, newproc, p_thr_link);
@@ -460,7 +460,8 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	/*
 	 * Notify any interested parties about the new process.
 	 */
-	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
+	if ((flags & FORK_THREAD) == 0)
+		KNOTE(&p1->p_p->ps_klist, NOTE_FORK | p2->p_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.

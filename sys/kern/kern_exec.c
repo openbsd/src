@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.111 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.112 2010/05/18 22:26:10 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -599,7 +599,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/*
 	 * notify others that we exec'd
 	 */
-	KNOTE(&p->p_klist, NOTE_EXEC);
+	KNOTE(&p->p_p->ps_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
 	if (pack.ep_emul->e_fixup != NULL) {
