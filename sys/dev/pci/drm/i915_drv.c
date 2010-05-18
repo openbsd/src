@@ -2828,7 +2828,8 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 	int					 i, ret, needs_fence;
 
 	DRM_ASSERT_HELD(obj);
-	needs_fence = (entry->flags & EXEC_OBJECT_NEEDS_FENCE);
+	needs_fence = ((entry->flags & EXEC_OBJECT_NEEDS_FENCE) &&
+	    obj_priv->tiling_mode != I915_TILING_NONE);
 	if (needs_fence)
 		atomic_setbits_int(&obj->do_flags, I915_EXEC_NEEDS_FENCE);
 
