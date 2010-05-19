@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.30 2010/03/23 09:52:35 nicm Exp $ */
+/*	$OpenBSD: glob.c,v 1.31 2010/05/19 14:53:06 chl Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -198,7 +198,6 @@ static int
 globexp1(const Char *pattern, glob_t *pglob)
 {
 	const Char* ptr = pattern;
-	int rv;
 
 	/* Protect a single {}, for find(1), like csh */
 	if (pattern[0] == LBRACE && pattern[1] == RBRACE && pattern[2] == EOS)
