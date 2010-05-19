@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.16 2010/01/14 23:12:11 schwarze Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.17 2010/05/19 08:31:23 thib Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -88,7 +88,6 @@ vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	cn.cn_pnbuf = NULL;
 	cn.cn_nameptr = "..";
 	cn.cn_namelen = 2;
-	cn.cn_hash = 0;
 	cn.cn_consume = 0;
 
 	/* Get parent vnode using lookup of '..' */

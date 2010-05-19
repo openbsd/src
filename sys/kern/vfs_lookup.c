@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.40 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.41 2010/05/19 08:31:23 thib Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -360,20 +360,24 @@ dirloop:
 	/*
 	 * Search a new directory.
 	 *
-	 * The cn_hash value is for use by vfs_cache.
 	 * The last component of the filename is left accessible via
 	 * cnp->cn_nameptr for callers that need the name. Callers needing
 	 * the name set the SAVENAME flag. When done, they assume
 	 * responsibility for freeing the pathname buffer.
 	 */
-	cp = NULL;
 	cnp->cn_consume = 0;
-	cnp->cn_hash = hash32_stre(cnp->cn_nameptr, '/', &cp, HASHINIT);
+
+	/* XXX: Figure out the length of the last component. */
+	cp = cnp->cn_nameptr;
+	while (*cp && (*cp != '/')) {
+		*cp++;
+	}
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
 		error = ENAMETOOLONG;
 		goto bad;
 	}
+
 #ifdef NAMEI_DIAGNOSTIC
 	{ char c = *cp;
 	*cp = '\0';
@@ -618,7 +622,6 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
 #ifdef NAMEI_DIAGNOSTIC
-	u_int32_t newhash;		/* DEBUG: check name hash */
 	char *cp;			/* DEBUG: check name ptr/len */
 #endif
 
@@ -635,19 +638,20 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	/*
 	 * Search a new directory.
 	 *
-	 * The cn_hash value is for use by vfs_cache.
 	 * The last component of the filename is left accessible via
 	 * cnp->cn_nameptr for callers that need the name. Callers needing
 	 * the name set the SAVENAME flag. When done, they assume
 	 * responsibility for freeing the pathname buffer.
 	 */
+
 #ifdef NAMEI_DIAGNOSTIC
-	cp = NULL;
-	newhash = hash32_stre(cnp->cn_nameptr, '/', &cp, HASHINIT);
-	if (newhash != cnp->cn_hash)
-		panic("relookup: bad hash");
+	/* XXX: Figure out the length of the last component. */
+	cp = cnp->cn_nameptr;
+	while (*cp && (*cp != '/')) {
+		*cp++;
+	}
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
-		panic ("relookup: bad len");
+		panic("relookup: bad len");
 	if (*cp != 0)
 		panic("relookup: not last component");
 	printf("{%s}: ", cnp->cn_nameptr);

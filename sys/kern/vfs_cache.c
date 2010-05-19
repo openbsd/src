@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.32 2009/08/24 15:51:40 thib Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.33 2010/05/19 08:31:23 thib Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -41,21 +41,12 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/hash.h>
 
 /*
  * TODO: namecache access should really be locked.
  */
 
 /*
- * Name caching works as follows:
- *
- * Names found by directory scans are retained in a cache
- * for future reference.  It is managed LRU, so frequently
- * used names will hang around.  Cache is indexed by hash value
- * obtained from (vp, name) where vp refers to the directory
- * containing name.
- *
  * For simplicity (and economy of storage), names longer than
  * a maximum length of NCHNAMLEN are not cached; they occur
  * infrequently in any case, and are almost never of interest.
@@ -68,11 +59,11 @@
 /*
  * Structures associated with name caching.
  */
-long	numcache;			/* total number of cache entries allocated */
-long	numneg;				/* number of negative cache entries */
+long	numcache;	/* total number of cache entries allocated */
+long	numneg;		/* number of negative cache entries */
 
-TAILQ_HEAD(, namecache) nclruhead;		/* Regular Entry LRU chain */
-TAILQ_HEAD(, namecache) nclruneghead;		/* Negative Entry LRU chain */
+TAILQ_HEAD(, namecache) nclruhead;	/* Regular Entry LRU chain */
+TAILQ_HEAD(, namecache) nclruneghead;	/* Negative Entry LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
 int doingcache = 1;			/* 1 => enable the cache */
@@ -133,16 +124,12 @@ cache_zap(struct namecache *ncp)
  * Look for a name in the cache. We don't do this if the segment name is
  * long, simply so the cache can avoid holding long names (which would
  * either waste space, or add greatly to the complexity).
- *
- * Lookup is called with ni_dvp pointing to the directory to search,
- * ni_ptr pointing to the name of the entry being sought, ni_namelen
- * tells the length of the name, and ni_hash contains a hash of
- * the name. If the lookup succeeds, the vnode is returned in ni_vp
- * and a status of 0 is returned. If the locking fails for whatever
- * reason, the vnode is unlocked and the error is returned to caller.
- * If the lookup determines that the name does not exist (negative caching),
- * a status of ENOENT is returned. If the lookup fails, a status of -1
- * is returned.
+ * dvp points to the directory to search. The componentname cnp holds
+ * the information on the entry being sought, such as its length
+ * and its name. If the lookup succeeds, vpp is set to point to the vnode
+ * and an error of 0 is returned. If the lookup determines the name does
+ * not exist (negative caching) an error of ENOENT is returned. If the 
+ * lookup fails, an error of -1 is returned.
  */
 int
 cache_lookup(struct vnode *dvp, struct vnode **vpp,

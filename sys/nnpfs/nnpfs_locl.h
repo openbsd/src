@@ -82,7 +82,6 @@ typedef struct nameidata nnpfs_componentname;
 
 #define cn_nameptr	ni_ptr
 #define cn_namelen	ni_namelen
-#define cn_hash		ni_hash
 #define cn_cred		ni_cred
 #define cn_nameiop	ni_nameiop
 #define cn_flags	ni_flags

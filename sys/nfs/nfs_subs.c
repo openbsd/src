@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.107 2009/10/19 22:24:18 jsg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.108 2010/05/19 08:31:23 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1200,7 +1200,6 @@ nfs_namei(struct nameidata *ndp, fhandle_t *fhp, int len,
 	tocp = cnp->cn_pnbuf;
 	md = *mdp;
 	rem = mtod(md, caddr_t) + md->m_len - fromcp;
-	cnp->cn_hash = 0;
 	for (i = 0; i < len; i++) {
 		while (rem == 0) {
 			md = md->m_next;
@@ -1215,7 +1214,6 @@ nfs_namei(struct nameidata *ndp, fhandle_t *fhp, int len,
 			error = EACCES;
 			goto out;
 		}
-		cnp->cn_hash += (u_char)*fromcp;
 		*tocp++ = *fromcp++;
 		rem--;
 	}

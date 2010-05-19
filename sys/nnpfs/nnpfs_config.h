@@ -953,7 +953,7 @@
 /* #undef HAVE_STRUCT_CDEVSW_D_STOP */
 
 /* Define if struct componentname has field cn_hash */
-#define HAVE_STRUCT_COMPONENTNAME_CN_HASH 1
+/* #undef HAVE_STRUCT_COMPONENTNAME_CN_HASH */ 
 
 /* Define if struct dirent has field d_type. */
 #define HAVE_STRUCT_DIRENT_D_TYPE 1

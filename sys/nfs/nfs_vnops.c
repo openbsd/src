@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.129 2010/04/12 16:37:38 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.130 2010/05/19 08:31:23 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2427,9 +2427,6 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 				    IFTODT(VTTOIF(np->n_vattr.va_type));
 				if (cnp->cn_namelen <= NCHNAMLEN) {
 					ndp->ni_vp = newvp;
-					cnp->cn_hash =
-					    hash32_str(cnp->cn_nameptr,
-					        HASHINIT);
 					cache_purge(ndp->ni_dvp);
 					nfs_cache_enter(ndp->ni_dvp, ndp->ni_vp,
 					    cnp);
