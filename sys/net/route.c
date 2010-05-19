@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.117 2010/05/07 13:33:16 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.118 2010/05/19 13:09:09 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -847,8 +847,9 @@ makeroute:
 
 #ifdef MPLS
 		/* We have to allocate additional space for MPLS infos */ 
-		if (info->rti_info[RTAX_SRC] != NULL ||
-		    info->rti_info[RTAX_DST]->sa_family == AF_MPLS) {
+		if (info->rti_flags & RTF_MPLS &&
+		    (info->rti_info[RTAX_SRC] != NULL ||
+		    info->rti_info[RTAX_DST]->sa_family == AF_MPLS)) {
 			struct rt_mpls *rt_mpls;
 
 			sa_mpls = (struct sockaddr_mpls *)
@@ -875,7 +876,8 @@ makeroute:
 			/* XXX: set experimental bits */
 
 			rt->rt_flags |= RTF_MPLS;
-		}
+		} else
+			rt->rt_flags &= ~RTF_MPLS;
 #endif
 
 		ifa->ifa_refcnt++;
