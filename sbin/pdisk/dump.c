@@ -124,7 +124,6 @@ void dump_partition_entry(partition_map *entry, int type_length, int name_length
 int get_max_base_or_length(partition_map_header *map);
 int get_max_name_string_length(partition_map_header *map);
 int get_max_type_string_length(partition_map_header *map);
-int strnlen(char *s, int n);
 
 
 //
@@ -731,20 +730,6 @@ display_patches(partition_map *entry)
 	}
 	q = (PatchDescriptorPtr)next;
     }
-}
-
-int
-strnlen(char *s, int n)
-{
-    int i;
-
-    for (i = 0; i < n; i++) {
-	if (*s == 0) {
-	    break;
-	}
-	s++;
-    }
-    return i;
 }
 
 int
