@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.143 2010/05/19 10:30:27 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.144 2010/05/19 13:11:25 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -423,6 +423,7 @@ newroute(int argc, char **argv)
 			case K_MPLS:
 				af = AF_MPLS;
 				aflen = sizeof(struct sockaddr_mpls);
+				fmask |= RTF_MPLS;
 				break;
 			case K_MPLSLABEL:
 				if (!--argc)
@@ -432,6 +433,7 @@ newroute(int argc, char **argv)
 					    "-inet or -inet6");
 				getmplslabel(*++argv, 0);
 				mpls_flags = MPLS_OP_PUSH;
+				flags |= RTF_MPLS;
 				break;
 			case K_IN:
 				if (!--argc)
@@ -449,6 +451,7 @@ newroute(int argc, char **argv)
 					errx(1, "-out requires -push, -pop, "
 					    "-swap");
 				getmplslabel(*++argv, 0);
+				flags |= RTF_MPLS;
 				break;
 			case K_POP:
 				if (af != AF_MPLS)
