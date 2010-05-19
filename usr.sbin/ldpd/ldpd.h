@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.17 2010/05/14 13:53:51 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.18 2010/05/19 15:28:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -204,7 +204,6 @@ struct iface {
 	struct in_addr		 addr;
 	struct in_addr		 dst;
 	struct in_addr		 mask;
-	struct nbr		*self;
 
 	u_int16_t		 lspace_id;
 

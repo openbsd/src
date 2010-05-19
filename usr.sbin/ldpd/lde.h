@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.7 2010/05/11 15:02:36 claudio Exp $ */
+/*	$OpenBSD: lde.h,v 1.8 2010/05/19 15:28:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -60,7 +60,6 @@ struct lde_nbr {
 
 	u_int32_t			 peerid;
 	unsigned int			 ifindex;
-	int				 self;
 	int				 state;
 
 	u_int16_t			 lspace;

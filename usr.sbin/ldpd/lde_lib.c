@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.16 2010/05/11 14:54:52 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.17 2010/05/19 15:28:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -265,9 +265,6 @@ lde_kernel_insert(struct kroute *kr)
 
 	LIST_FOREACH(iface, &ldeconf->iface_list, entry) {
 		LIST_FOREACH(ln, &iface->lde_nbr_list, entry) {
-			if (ln->self)
-				continue;
-
 			if (ldeconf->mode & MODE_ADV_UNSOLICITED &&
 			    ldeconf->mode & MODE_DIST_INDEPENDENT)
 				lde_send_labelmapping(ln->peerid, &localmap);

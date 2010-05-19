@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.11 2010/05/11 15:01:46 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.12 2010/05/19 15:28:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,6 @@ void		 lde_map_list_free(struct lde_nbr *);
 struct ldpd_conf	*ldeconf = NULL, *nconf = NULL;
 struct imsgev		*iev_ldpe;
 struct imsgev		*iev_main;
-struct lde_nbr		*nbrself;
 
 /* ARGSUSED */
 void
@@ -534,7 +533,6 @@ struct nbr_table {
 void
 lde_nbr_init(u_int32_t hashsize)
 {
-	struct lde_nbr_head	*head;
 	u_int32_t		 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
@@ -547,22 +545,11 @@ lde_nbr_init(u_int32_t hashsize)
 		LIST_INIT(&ldenbrtable.hashtbl[i]);
 
 	ldenbrtable.hashmask = hs - 1;
-
-	if ((nbrself = calloc(1, sizeof(*nbrself))) == NULL)
-		fatal("lde_nbr_init");
-
-	nbrself->id.s_addr = lde_router_id();
-	nbrself->peerid = NBR_IDSELF;
-	nbrself->state = NBR_STA_DOWN;
-	nbrself->self = 1;
-	head = LDE_NBR_HASH(NBR_IDSELF);
-	LIST_INSERT_HEAD(head, nbrself, hash);
 }
 
 void
 lde_nbr_free(void)
 {
-	free(nbrself);
 	free(ldenbrtable.hashtbl);
 }
 

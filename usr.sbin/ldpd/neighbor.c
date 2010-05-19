@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.12 2010/03/26 16:02:18 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.13 2010/05/19 15:28:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -115,9 +115,6 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	int		new_state = 0;
 	int		i, ret = 0;
 
-	if (nbr == nbr->iface->self)
-		return (0);
-
 	old_state = nbr->state;
 	for (i = 0; nbr_fsm_tbl[i].state != -1; i++)
 		if ((nbr_fsm_tbl[i].state & old_state) &&
@@ -224,7 +221,7 @@ nbr_init(u_int32_t hashsize)
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface, int self)
+nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 {
 	struct nbr_head	*head;
 	struct nbr	*nbr;
@@ -232,10 +229,6 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface, int self)
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("nbr_new");
-
-	if (!self)
-		if ((nbr->rbuf = calloc(1, sizeof(struct buf_read))) == NULL)
-			fatal("nbr_new");
 
 	nbr->state = NBR_STA_DOWN;
 	nbr->id.s_addr = nbr_id;
@@ -251,11 +244,6 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface, int self)
 	/* add to peer list */
 	nbr->iface = iface;
 	LIST_INSERT_HEAD(&iface->nbr_list, nbr, entry);
-
-	if (self) {
-		nbr->addr.s_addr = iface->addr.s_addr;
-		nbr->priority = iface->priority;
-	}
 
 	TAILQ_INIT(&nbr->mapping_list);
 	TAILQ_INIT(&nbr->withdraw_list);
@@ -273,7 +261,6 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface, int self)
 	rn.id.s_addr = nbr->id.s_addr;
 	rn.lspace = nbr->lspace;
 	rn.ifindex = nbr->iface->ifindex;
-	rn.self = self;
 	ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
 	    sizeof(rn));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.8 2010/05/14 13:49:09 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.9 2010/05/19 15:28:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -148,7 +148,7 @@ int	 if_set_reuse(int, int);
 
 /* neighbor.c */
 void		 nbr_init(u_int32_t);
-struct nbr	*nbr_new(u_int32_t, u_int16_t, struct iface *, int);
+struct nbr	*nbr_new(u_int32_t, u_int16_t, struct iface *);
 void		 nbr_del(struct nbr *);
 
 struct nbr	*nbr_find_ip(struct iface *, u_int32_t);
