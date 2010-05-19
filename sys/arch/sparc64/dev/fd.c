@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.30 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: fd.c,v 1.31 2010/05/19 04:10:34 dlg Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@
 #include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/dkio.h>
 
 #include <dev/cons.h>
 
