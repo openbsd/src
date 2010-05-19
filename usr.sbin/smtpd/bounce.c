@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.18 2010/04/22 12:56:33 jacekm Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.19 2010/05/19 20:57:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -116,7 +116,7 @@ void
 bounce_event(int fd, short event, void *p)
 {
 	struct client_ctx	*cc = p;
-	char			*ep;
+	char			*ep = NULL;
 
 	if (event & EV_TIMEOUT) {
 		ep = "150 timeout";

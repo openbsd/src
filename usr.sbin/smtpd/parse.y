@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2010/04/27 10:17:53 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.57 2010/05/19 20:57:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -23,7 +23,6 @@
 
 %{
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/param.h>
@@ -44,6 +43,7 @@
 #include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

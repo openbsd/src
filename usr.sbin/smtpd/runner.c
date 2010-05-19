@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.86 2010/04/22 12:56:33 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.87 2010/05/19 20:57:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>

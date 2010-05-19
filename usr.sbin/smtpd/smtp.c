@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.70 2010/04/21 18:54:43 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.71 2010/05/19 20:57:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -23,6 +23,8 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <errno.h>

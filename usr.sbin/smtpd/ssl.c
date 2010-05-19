@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.23 2009/11/11 15:36:10 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.24 2010/05/19 20:57:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <ctype.h>
 #include <event.h>
