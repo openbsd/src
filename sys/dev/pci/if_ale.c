@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.12 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.13 2010/05/19 14:39:07 oga Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -622,7 +622,7 @@ ale_dma_alloc(struct ale_softc *sc)
 	/* Allocate DMA'able memory for TX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_RING_SZ, 
 	    ETHER_ALIGN, 0, &sc->ale_cdata.ale_tx_ring_seg, 1,
-	    &nsegs, BUS_DMA_WAITOK);
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring.\n",
 		    sc->sc_dev.dv_xname);
@@ -634,8 +634,6 @@ ale_dma_alloc(struct ale_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (ENOBUFS);
-
-	bzero(sc->ale_cdata.ale_tx_ring, ALE_TX_RING_SZ);
 
 	/* Load the DMA map for Tx ring. */
 	error = bus_dmamap_load(sc->sc_dmat, sc->ale_cdata.ale_tx_ring_map, 
@@ -663,7 +661,7 @@ ale_dma_alloc(struct ale_softc *sc)
 		/* Allocate DMA'able memory for RX pages */
 		error = bus_dmamem_alloc(sc->sc_dmat, sc->ale_pagesize,
 		    ETHER_ALIGN, 0, &sc->ale_cdata.ale_rx_page[i].page_seg,
-		    1, &nsegs, BUS_DMA_WAITOK);
+		    1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 		if (error) {
 			printf("%s: could not allocate DMA'able memory for "
 			    "Rx ring.\n", sc->sc_dev.dv_xname);
@@ -676,8 +674,6 @@ ale_dma_alloc(struct ale_softc *sc)
 		    BUS_DMA_NOWAIT);
 		if (error)
 			return (ENOBUFS);
-
-		bzero(sc->ale_cdata.ale_rx_page[i].page_addr, sc->ale_pagesize);
 
 		/* Load the DMA map for Rx pages. */
 		error = bus_dmamap_load(sc->sc_dmat,
@@ -705,7 +701,8 @@ ale_dma_alloc(struct ale_softc *sc)
 
 	/* Allocate DMA'able memory for Tx CMB. */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_CMB_SZ, ETHER_ALIGN, 0,
-	    &sc->ale_cdata.ale_tx_cmb_seg, 1, &nsegs, BUS_DMA_WAITOK);
+	    &sc->ale_cdata.ale_tx_cmb_seg, 1, &nsegs,
+	    BUS_DMA_WAITOK |BUS_DMA_ZERO);
 
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx CMB.\n",
@@ -718,8 +715,6 @@ ale_dma_alloc(struct ale_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error) 
 		return (ENOBUFS);
-
-	bzero(sc->ale_cdata.ale_tx_cmb, ALE_TX_CMB_SZ);
 
 	/* Load the DMA map for Tx CMB. */
 	error = bus_dmamap_load(sc->sc_dmat, sc->ale_cdata.ale_tx_cmb_map, 
@@ -748,7 +743,7 @@ ale_dma_alloc(struct ale_softc *sc)
 		/* Allocate DMA'able memory for Rx CMB */
 		error = bus_dmamem_alloc(sc->sc_dmat, ALE_RX_CMB_SZ,
 		    ETHER_ALIGN, 0, &sc->ale_cdata.ale_rx_page[i].cmb_seg, 1,
-		    &nsegs, BUS_DMA_WAITOK);
+		    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 		if (error) {
 			printf("%s: could not allocate DMA'able memory for "
 			    "Rx CMB\n", sc->sc_dev.dv_xname);
@@ -761,8 +756,6 @@ ale_dma_alloc(struct ale_softc *sc)
 		    BUS_DMA_NOWAIT);
 		if (error)
 			return (ENOBUFS);
-
-		bzero(sc->ale_cdata.ale_rx_page[i].cmb_addr, ALE_RX_CMB_SZ);
 
 		/* Load the DMA map for Rx CMB */
 		error = bus_dmamap_load(sc->sc_dmat,

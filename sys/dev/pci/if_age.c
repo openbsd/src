@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.10 2010/04/08 00:23:53 tedu Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.11 2010/05/19 14:39:07 oga Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -666,7 +666,7 @@ age_dma_alloc(struct age_softc *sc)
 	/* Allocate DMA'able memory for TX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_TX_RING_SZ, 
 	    ETHER_ALIGN, 0, &sc->age_rdata.age_tx_ring_seg, 1, 
-	    &nsegs, BUS_DMA_WAITOK);
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring.\n",
 		    sc->sc_dev.dv_xname);
@@ -678,8 +678,6 @@ age_dma_alloc(struct age_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error) 
 		return (ENOBUFS);
-
-	bzero(sc->age_rdata.age_tx_ring, AGE_TX_RING_SZ);
 
 	/*  Load the DMA map for Tx ring. */
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_tx_ring_map,
@@ -706,7 +704,7 @@ age_dma_alloc(struct age_softc *sc)
 	/* Allocate DMA'able memory for RX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_RX_RING_SZ, 
 	    ETHER_ALIGN, 0, &sc->age_rdata.age_rx_ring_seg, 1, 
-	    &nsegs, BUS_DMA_WAITOK);
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx ring.\n",
 		    sc->sc_dev.dv_xname);
@@ -718,8 +716,6 @@ age_dma_alloc(struct age_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (ENOBUFS);
-
-	bzero(sc->age_rdata.age_rx_ring, AGE_RX_RING_SZ);
 
 	/* Load the DMA map for Rx ring. */
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_rx_ring_map,
@@ -746,7 +742,7 @@ age_dma_alloc(struct age_softc *sc)
 	/* Allocate DMA'able memory for RX return ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_RR_RING_SZ, 
 	    ETHER_ALIGN, 0, &sc->age_rdata.age_rr_ring_seg, 1, 
-	    &nsegs, BUS_DMA_WAITOK);
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx "
 		    "return ring.\n", sc->sc_dev.dv_xname);
@@ -758,8 +754,6 @@ age_dma_alloc(struct age_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (ENOBUFS);
-
-	bzero(sc->age_rdata.age_rr_ring, AGE_RR_RING_SZ);
 
 	/*  Load the DMA map for Rx return ring. */
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_rr_ring_map,
@@ -787,7 +781,7 @@ age_dma_alloc(struct age_softc *sc)
 	/* Allocate DMA'able memory for CMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_CMB_BLOCK_SZ, 
 	    ETHER_ALIGN, 0, &sc->age_rdata.age_cmb_block_seg, 1, 
-	    &nsegs, BUS_DMA_WAITOK);
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
 		    "CMB block\n", sc->sc_dev.dv_xname);
@@ -799,8 +793,6 @@ age_dma_alloc(struct age_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (ENOBUFS);
-
-	bzero(sc->age_rdata.age_cmb_block, AGE_CMB_BLOCK_SZ);
 
 	/*  Load the DMA map for CMB block. */
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_cmb_block_map,
@@ -829,7 +821,7 @@ age_dma_alloc(struct age_softc *sc)
 	/* Allocate DMA'able memory for SMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, AGE_SMB_BLOCK_SZ, 
 	    ETHER_ALIGN, 0, &sc->age_rdata.age_smb_block_seg, 1, 
-	    &nsegs, BUS_DMA_WAITOK);
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
 		    "SMB block\n", sc->sc_dev.dv_xname);
@@ -841,8 +833,6 @@ age_dma_alloc(struct age_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (ENOBUFS);
-
-	bzero(sc->age_rdata.age_smb_block, AGE_SMB_BLOCK_SZ);
 
 	/*  Load the DMA map for SMB block */
 	error = bus_dmamap_load(sc->sc_dmat, sc->age_cdata.age_smb_block_map,
