@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.30 2010/03/23 16:26:01 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.31 2010/05/19 13:07:15 chl Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -554,8 +554,6 @@ static char domain[MAXHOSTNAMELEN];
 void
 p_sockaddr_mpls(struct sockaddr *in, struct sockaddr *out, int flags, int width)
 {
-	char buf[MAXHOSTNAMELEN], *cp;
-
 	if (in->sa_family != AF_MPLS)
 		return;
 
