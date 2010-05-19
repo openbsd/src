@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.78 2010/03/12 20:08:02 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.79 2010/05/19 13:35:02 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -88,6 +88,7 @@ France:
 Germany:
     ftp://openbsd.ftp.fu-berlin.de/pub/OpenBSD (Berlin)
     ftp://ftp.spline.de/pub/OpenBSD (Berlin)
+    http://ftp.spline.de/pub/OpenBSD (Berlin)
     ftp://ftp.freenet.de/pub/ftp.openbsd.org/pub/OpenBSD (Dusseldorf)
     ftp://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
     http://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
@@ -154,7 +155,7 @@ South Africa:
 
 Spain:
     ftp://ftp.rediris.es/pub/OpenBSD (Madrid)
-    http://sunsite.rediris.es/pub/OpenBSD (Madrid)
+    http://sunsite.rediris.es/mirror/OpenBSD (Madrid)
     ftp://ftp.udc.es/pub/OpenBSD (A Coruna)
     http://ftp.udc.es/OpenBSD (A Coruna)
     ftp://mirror.cdmon.com/pub/OpenBSD (Barcelona)
@@ -188,9 +189,8 @@ United Kingdom:
 
 USA:
     http://openbsd.berkeley.edu/pub/OpenBSD (Berkeley, CA)
-    ftp://mirror.planetunix.net/pub/OpenBSD (Los Angeles, CA)
-    http://mirror.planetunix.net/pub/OpenBSD (Los Angeles, CA)
-    ftp://mirror.iawnet.sandia.gov/pub/OpenBSD (Albuquerque, NM)
+    ftp://mirror.planetunix.net/pub/OpenBSD (Chicago, IL)
+    http://mirror.planetunix.net/pub/OpenBSD (Chicago, IL)
     ftp://ftp.cse.buffalo.edu/pub/OpenBSD (Buffalo, NY)
     ftp://mirrors.24-7-solutions.net/pub/OpenBSD (New York, NY)
     http://mirrors.24-7-solutions.net/pub/OpenBSD (New York, NY)
