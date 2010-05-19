@@ -790,10 +790,10 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_STRNCASECMP 1
 
 /* Define if you have the function `strndup'. */
-/* #undef HAVE_STRNDUP */
+#define HAVE_STRNDUP 1
 
 /* Define if you have the function `strnlen'. */
-/* #undef HAVE_STRNLEN */
+#define HAVE_STRNLEN 1
 
 /* Define to 1 if you have the <stropts.h> header file. */
 /* #undef HAVE_STROPTS_H */
