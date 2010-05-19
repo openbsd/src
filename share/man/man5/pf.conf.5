@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.475 2010/04/01 19:09:36 jsg Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.476 2010/05/19 13:51:37 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 1 2010 $
+.Dd $Mdocdate: May 19 2010 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -187,15 +187,13 @@ For the following parameters,
 this means that the parameter effectively becomes
 .Dq sticky
 until explicitly overridden:
-.Ar max-mss ,
-.Ar min-ttl ,
-.Ar no-df ,
+.Ar nat-to ,
+.Ar binat-to ,
+.Ar rdr-to ,
 .Ar queue ,
-.Ar random-id ,
-.Ar reassemble tcp ,
 .Ar rtable ,
 and
-.Ar set-tos .
+.Ar scrub .
 .Pp
 .Ar log
 is different still,
