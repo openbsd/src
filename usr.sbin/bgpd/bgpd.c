@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.162 2010/05/17 15:49:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.163 2010/05/19 12:44:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -441,13 +441,6 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
 
-	/* send peer list and listeners to the SE */
-	for (p = *peer_l; p != NULL; p = p->next) {
-		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
-		    &p->conf, sizeof(struct peer_config)) == -1)
-			return (-1);
-	}
-
 	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_LISTENER, 0, 0, la->fd,
 		    la, sizeof(struct listen_addr)) == -1)
@@ -471,6 +464,16 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		    rr, sizeof(struct rde_rib)) == -1)
 			return (-1);
 		free(rr);
+	}
+
+	/* send peer list and listeners to the SE and RDE */
+	for (p = *peer_l; p != NULL; p = p->next) {
+		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
+		    &p->conf, sizeof(struct peer_config)) == -1)
+			return (-1);
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_PEER, p->conf.id, 0, -1,
+		    &p->conf, sizeof(struct peer_config)) == -1)
+			return (-1);
 	}
 
 	/* networks go via kroute to the RDE */

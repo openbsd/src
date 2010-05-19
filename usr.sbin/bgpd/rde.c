@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.294 2010/05/17 15:49:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.295 2010/05/19 12:44:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -87,6 +87,8 @@ void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_softreconfig_out(struct rib_entry *, void *);
 void		 rde_softreconfig_in(struct rib_entry *, void *);
 void		 rde_softreconfig_load(struct rib_entry *, void *);
+void		 rde_softreconfig_load_peer(struct rib_entry *, void *);
+void		 rde_softreconfig_unload_peer(struct rib_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
 
@@ -545,10 +547,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct mrt		 xmrt;
 	struct rde_rib		 rn;
 	struct rde_peer		*peer;
+	struct peer_config	*pconf;
 	struct filter_rule	*r;
 	struct filter_set	*s;
 	struct nexthop		*nh;
-	int			 n, fd, reconf_in = 0, reconf_out = 0;
+	int			 n, fd, reconf_in = 0, reconf_out = 0,
+				 reconf_rib = 0;
 	u_int16_t		 rid;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -624,6 +628,16 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				rib_new(rn.name, rn.rtableid, rn.flags);
 			} else
 				ribs[rid].state = RECONF_KEEP;
+			break;
+		case IMSG_RECONF_PEER:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct peer_config))
+				fatalx("IMSG_RECONF_PEER bad len");
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL)
+				break;
+			pconf = imsg.data;
+			strlcpy(peer->conf.rib, pconf->rib,
+			    sizeof(peer->conf.rib));
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -708,17 +722,27 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					continue;
 				peer->reconf_out = 0;
 				peer->reconf_in = 0;
-				if (peer->conf.softreconfig_out &&
-				    !rde_filter_equal(rules_l, newrules, peer,
-				    DIR_OUT)) {
-					peer->reconf_out = 1;
-					reconf_out = 1;
-				}
+				peer->reconf_rib = 0;
 				if (peer->conf.softreconfig_in &&
 				    !rde_filter_equal(rules_l, newrules, peer,
 				    DIR_IN)) {
 					peer->reconf_in = 1;
 					reconf_in = 1;
+				}
+				if (peer->ribid != rib_find(peer->conf.rib)) {
+					rib_dump(&ribs[peer->ribid],
+					    rde_softreconfig_unload_peer, peer,
+					    AID_UNSPEC);
+					peer->ribid = rib_find(peer->conf.rib);
+					peer->reconf_rib = 1;
+					reconf_rib = 1;
+					continue;
+				}
+				if (peer->conf.softreconfig_out &&
+				    !rde_filter_equal(rules_l, newrules, peer,
+				    DIR_OUT)) {
+					peer->reconf_out = 1;
+					reconf_out = 1;
 				}
 			}
 			/* bring ribs in sync before softreconfig dance */
@@ -743,6 +767,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 						continue;
 					rib_dump(&ribs[i], rde_softreconfig_out,
 					    NULL, AID_UNSPEC);
+				}
+			}
+			if (reconf_rib) {
+				LIST_FOREACH(peer, &peerlist, peer_l) {
+					rib_dump(&ribs[peer->ribid],
+						rde_softreconfig_load_peer,
+						peer, AID_UNSPEC);
 				}
 			}
 
@@ -2594,6 +2625,70 @@ rde_softreconfig_load(struct rib_entry *re, void *ptr)
 		if (nasp != asp)
 			path_put(nasp);
 	}
+}
+
+void
+rde_softreconfig_load_peer(struct rib_entry *re, void *ptr)
+{
+	struct rde_peer		*peer = ptr;
+	struct prefix		*p = re->active;
+	struct pt_entry		*pt;
+	struct rde_aspath	*nasp;
+	enum filter_actions	 na;
+	struct bgpd_addr	 addr;
+
+	pt = re->prefix;
+	pt_getaddr(pt, &addr);
+
+	/* check if prefix was announced */
+	if (up_test_update(peer, p) != 1)
+		return;
+
+	na = rde_filter(re->ribid, &nasp, newrules, peer, p->aspath,
+	    &addr, pt->prefixlen, p->aspath->peer, DIR_OUT);
+	nasp = nasp != NULL ? nasp : p->aspath;
+
+	if (na == ACTION_DENY)
+		/* nothing todo */
+		goto done;
+
+	/* send update */
+	up_generate(peer, nasp, &addr, pt->prefixlen);
+done:
+	if (nasp != p->aspath)
+		path_put(nasp);
+}
+
+void
+rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
+{
+	struct rde_peer		*peer = ptr;
+	struct prefix		*p = re->active;
+	struct pt_entry		*pt;
+	struct rde_aspath	*oasp;
+	enum filter_actions	 oa;
+	struct bgpd_addr	 addr;
+
+	pt = re->prefix;
+	pt_getaddr(pt, &addr);
+
+	/* check if prefix was announced */
+	if (up_test_update(peer, p) != 1)
+		return;
+
+	oa = rde_filter(re->ribid, &oasp, rules_l, peer, p->aspath,
+	    &addr, pt->prefixlen, p->aspath->peer, DIR_OUT);
+	oasp = oasp != NULL ? oasp : p->aspath;
+
+	if (oa == ACTION_DENY)
+		/* nothing todo */
+		goto done;
+
+	/* send withdraw */
+	up_generate(peer, NULL, &addr, pt->prefixlen);
+done:
+	if (oasp != p->aspath)
+		path_put(oasp);
 }
 
 /*

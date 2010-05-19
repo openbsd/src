@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.135 2010/05/17 16:08:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.136 2010/05/19 12:44:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -74,6 +74,7 @@ struct rde_peer {
 	u_int16_t			 short_as;
 	u_int8_t			 reconf_in;	/* in filter changed */
 	u_int8_t			 reconf_out;	/* out filter changed */
+	u_int8_t			 reconf_rib;	/* rib changed */
 };
 
 #define AS_SET			1
