@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.102 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.103 2010/05/19 15:27:35 oga Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -378,7 +378,7 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
 
 	error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_COUNT, PAGE_SIZE, 0,
-	    &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	    &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error != 0) {
 		printf("%s: could not allocate cmd ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -403,7 +403,6 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
 		goto fail;
 	}
 
-	bzero(ring->desc, sizeof (struct iwi_cmd_desc) * IWI_CMD_RING_COUNT);
 	return 0;
 
 fail:	iwi_free_cmd_ring(sc, ring);
@@ -454,7 +453,7 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring, int ac)
 
 	error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof (struct iwi_tx_desc) * IWI_TX_RING_COUNT, PAGE_SIZE, 0,
-	    &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	    &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error != 0) {
 		printf("%s: could not allocate tx ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -478,8 +477,6 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring, int ac)
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
-
-	bzero(ring->desc, sizeof (struct iwi_tx_desc) * IWI_TX_RING_COUNT);
 
 	for (i = 0; i < IWI_TX_RING_COUNT; i++) {
 		data = &ring->data[i];

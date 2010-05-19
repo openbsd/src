@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.21 2010/01/07 12:26:06 sthen Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.22 2010/05/19 15:27:35 oga Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -748,7 +748,7 @@ jme_dma_alloc(struct jme_softc *sc)
 	/* Allocate DMA'able memory for RX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, JME_RX_RING_SIZE, ETHER_ALIGN, 0,
 	    &sc->jme_rdata.jme_rx_ring_seg, 1, &nsegs,
-	    BUS_DMA_WAITOK);
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO);
 /* XXX zero */
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx ring.\n",
@@ -761,8 +761,6 @@ jme_dma_alloc(struct jme_softc *sc)
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (ENOBUFS);
-
-	bzero(sc->jme_rdata.jme_rx_ring, JME_RX_RING_SIZE);
 
 	/* Load the DMA map for Rx ring. */
 	error = bus_dmamap_load(sc->sc_dmat,

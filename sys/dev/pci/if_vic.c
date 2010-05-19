@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.75 2009/11/17 03:21:36 sthen Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.76 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1389,7 +1389,7 @@ vic_alloc_dmamem(struct vic_softc *sc)
 		goto err;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma_size, 16, 0,
-	    &sc->sc_dma_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0)
+	    &sc->sc_dma_seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_seg, nsegs,
@@ -1399,8 +1399,6 @@ vic_alloc_dmamem(struct vic_softc *sc)
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma_map, sc->sc_dma_kva,
 	    sc->sc_dma_size, NULL, BUS_DMA_NOWAIT) != 0)
 		goto unmap;
-
-	bzero(sc->sc_dma_kva, sc->sc_dma_size);
 
 	return (0);
 

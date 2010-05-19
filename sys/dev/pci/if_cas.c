@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.30 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  *
@@ -386,7 +386,7 @@ cas_config(struct cas_softc *sc)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmatag,
 	    sizeof(struct cas_control_data), CAS_PAGE_SIZE, 0, &sc->sc_cdseg,
-	    1, &sc->sc_cdnseg, 0)) != 0) {
+	    1, &sc->sc_cdnseg, BUS_DMA_ZERO)) != 0) {
 		printf("\n%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
@@ -416,8 +416,6 @@ cas_config(struct cas_softc *sc)
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
-
-	bzero(sc->sc_control_data, sizeof(struct cas_control_data));
 
 	/*
 	 * Create the receive buffer DMA maps.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.42 2010/03/23 01:57:19 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.43 2010/05/19 15:27:35 oga Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -113,7 +113,7 @@ adw_alloc_controls(sc)
          * Allocate the control structure.
          */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adw_control),
-			   NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) != 0) {
 		printf("%s: unable to allocate control structures,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
@@ -473,8 +473,6 @@ adw_attach(sc)
 	error = adw_alloc_controls(sc);
 	if (error)
 		return; /* (error) */ ;
-
-	bzero(sc->sc_control, sizeof(struct adw_control));
 
 	/*
 	 * Create and initialize the Control Blocks.

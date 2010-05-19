@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.16 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.17 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -99,7 +99,7 @@ mtd_attach(struct mtd_softc *sc)
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct mtd_list_data),
 	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,
-	    BUS_DMA_NOWAIT) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0) {
 		printf(": can't alloc list mem\n");
 		return;
 	}
@@ -121,7 +121,6 @@ mtd_attach(struct mtd_softc *sc)
 		return;
 	}
 	sc->mtd_ldata = (struct mtd_list_data *)sc->sc_listkva;
-	bzero(sc->mtd_ldata, sizeof(struct mtd_list_data));
 
 	for (i = 0; i < MTD_RX_LIST_CNT; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,

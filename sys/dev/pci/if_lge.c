@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.52 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.53 2010/05/19 15:27:35 oga Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -504,7 +504,7 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmatag = pa->pa_dmat;
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct lge_list_data),
-			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
 		goto fail_2;
 	}
@@ -532,7 +532,6 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(5, ("bzero\n"));
 	sc->lge_ldata = (struct lge_list_data *)kva;
-	bzero(sc->lge_ldata, sizeof(struct lge_list_data));
 
 	/* Try to allocate memory for jumbo buffers. */
 	DPRINTFN(5, ("lge_alloc_jumbo_mem\n"));

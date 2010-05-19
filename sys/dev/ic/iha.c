@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.36 2010/03/23 01:57:19 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.37 2010/05/19 15:27:35 oga Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -2681,7 +2681,7 @@ iha_alloc_scbs(sc)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 		 sizeof(struct iha_scb)*IHA_MAX_SCB,
-		 NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT))
+		 NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO))
 	    != 0) {
 		printf("%s: unable to allocate SCBs,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
@@ -2695,7 +2695,6 @@ iha_alloc_scbs(sc)
 		       sc->sc_dev.dv_xname, error);
 		return (error);
 	}
-	bzero(sc->HCS_Scb, sizeof(struct iha_scb)*IHA_MAX_SCB);
 
 	return (0);
 }

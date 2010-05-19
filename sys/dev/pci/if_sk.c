@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.156 2009/10/17 21:40:43 martynas Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.157 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1134,7 +1134,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct sk_ring_data),
 	    PAGE_SIZE, 0, &sc_if->sk_ring_seg, 1, &sc_if->sk_ring_nseg,
-	    BUS_DMA_NOWAIT)) {
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": can't alloc rx buffers\n");
 		goto fail;
 	}
@@ -1156,7 +1156,6 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
-	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
 
 	/* Try to allocate memory for jumbo buffers. */
 	if (sk_alloc_jumbo_mem(sc_if)) {

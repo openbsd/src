@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.19 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.20 2010/05/19 15:27:35 oga Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -850,7 +850,7 @@ et_dma_mem_create(struct et_softc *sc, bus_size_t size,
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, size, ET_ALIGN, 0, seg,
-	    1, &nsegs, BUS_DMA_WAITOK);
+	    1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: can't allocate DMA mem\n", sc->sc_dev.dv_xname);
 		return error;
@@ -870,8 +870,6 @@ et_dma_mem_create(struct et_softc *sc, bus_size_t size,
 		bus_dmamem_free(sc->sc_dmat, (bus_dma_segment_t *)addr, 1);
 		return error;
 	}
-
-	memset(*addr, 0, size);
 
 	*paddr = (*dmap)->dm_segs[0].ds_addr;
 

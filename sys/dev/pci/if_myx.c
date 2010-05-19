@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.11 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.12 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -508,7 +508,7 @@ myx_dmamem_alloc(struct myx_softc *sc, struct myx_dmamem *mxm,
 		return (1);
 	if (bus_dmamem_alloc(sc->sc_dmat, mxm->mxm_size,
 	    align, 0, &mxm->mxm_seg, 1, &mxm->mxm_nsegs,
-	    BUS_DMA_WAITOK) != 0)
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
 		goto destroy;
 	if (bus_dmamem_map(sc->sc_dmat, &mxm->mxm_seg, mxm->mxm_nsegs,
 	    mxm->mxm_size, &mxm->mxm_kva, BUS_DMA_WAITOK) != 0)
@@ -517,7 +517,6 @@ myx_dmamem_alloc(struct myx_softc *sc, struct myx_dmamem *mxm,
 	    mxm->mxm_size, NULL, BUS_DMA_WAITOK) != 0)
 		goto unmap;
 
-	bzero(mxm->mxm_kva, mxm->mxm_size);
 	mxm->mxm_name = mname;
 
 	return (0);

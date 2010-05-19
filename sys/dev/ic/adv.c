@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.28 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.29 2010/05/19 15:27:34 oga Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -124,7 +124,8 @@ adv_alloc_ccbs(sc)
          * Allocate the control blocks.
          */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adv_control),
-			   NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+			   NBPG, 0, &seg, 1, &rseg,
+			   BUS_DMA_NOWAIT | BUS_DMA_ZERO)) != 0) {
 		printf("%s: unable to allocate control structures,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
@@ -160,6 +161,7 @@ adv_alloc_ccbs(sc)
 /*
  * Create a set of ccbs and add them to the free list.  Called once
  * by adv_init().  We return the number of CCBs successfully created.
+ * CCB data is already zeroed on allocation.
  */
 static int
 adv_create_ccbs(sc, ccbstore, count)
@@ -170,7 +172,6 @@ adv_create_ccbs(sc, ccbstore, count)
 	ADV_CCB        *ccb;
 	int             i, error;
 
-	bzero(ccbstore, sizeof(ADV_CCB) * count);
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = adv_init_ccb(sc, ccb)) != 0) {

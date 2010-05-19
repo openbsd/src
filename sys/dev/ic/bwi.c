@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.91 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.92 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7720,7 +7720,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_RING_ALIGN, 0,
-	     &st->stats_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	     &st->stats_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: can't allocate txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
@@ -7744,7 +7744,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	bzero(st->stats_ring, dma_size);
 	st->stats_ring_paddr = st->stats_ring_dmap->dm_segs[0].ds_addr;
 
 	/*
@@ -7761,7 +7760,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_ALIGN, 0,
-	    &st->stats_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	    &st->stats_seg, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error) {
 		printf("%s: can't allocate txstats DMA mem\n",
 		    sc->sc_dev.dv_xname);
@@ -7783,7 +7782,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	bzero(st->stats, dma_size);
 	st->stats_paddr = st->stats_dmap->dm_segs[0].ds_addr;
 	st->stats_ctrl_base = ctrl_base;
 

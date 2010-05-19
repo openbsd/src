@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.118 2010/04/03 22:24:05 sthen Exp $	*/
+/*	$OpenBSD: re.c,v 1.119 2010/05/19 15:27:35 oga Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -994,7 +994,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	/* Allocate DMA'able memory for the TX ring */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_TX_LIST_SZ(sc),
 		    RL_RING_ALIGN, 0, &sc->rl_ldata.rl_tx_listseg, 1,
-		    &sc->rl_ldata.rl_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
+		    &sc->rl_ldata.rl_tx_listnseg, BUS_DMA_NOWAIT |
+		    BUS_DMA_ZERO)) != 0) {
 		printf("%s: can't allocate tx listseg, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
@@ -1009,7 +1010,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
-	memset(sc->rl_ldata.rl_tx_list, 0, RL_TX_LIST_SZ(sc));
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, RL_TX_LIST_SZ(sc), 1,
 		    RL_TX_LIST_SZ(sc), 0, 0,
@@ -1043,7 +1043,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
         /* Allocate DMA'able memory for the RX ring */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, RL_RX_DMAMEM_SZ,
 		    RL_RING_ALIGN, 0, &sc->rl_ldata.rl_rx_listseg, 1,
-		    &sc->rl_ldata.rl_rx_listnseg, BUS_DMA_NOWAIT)) != 0) {
+		    &sc->rl_ldata.rl_rx_listnseg, BUS_DMA_NOWAIT |
+		    BUS_DMA_ZERO)) != 0) {
 		printf("%s: can't allocate rx listnseg, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_4;
@@ -1059,7 +1060,6 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		goto fail_5;
 
 	}
-	memset(sc->rl_ldata.rl_rx_list, 0, RL_RX_DMAMEM_SZ);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, RL_RX_DMAMEM_SZ, 1,
 		    RL_RX_DMAMEM_SZ, 0, 0,

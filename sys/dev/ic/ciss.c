@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.41 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.42 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -238,7 +238,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	total = sc->ccblen * sc->maxcmd;
 	if ((error = bus_dmamem_alloc(sc->dmat, total, PAGE_SIZE, 0,
-	    sc->cmdseg, 1, &rseg, BUS_DMA_NOWAIT))) {
+	    sc->cmdseg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO))) {
 		printf(": cannot allocate CCBs (%d)\n", error);
 		return -1;
 	}
@@ -248,7 +248,6 @@ ciss_attach(struct ciss_softc *sc)
 		printf(": cannot map CCBs (%d)\n", error);
 		return -1;
 	}
-	bzero(sc->ccbs, total);
 
 	if ((error = bus_dmamap_create(sc->dmat, total, 1,
 	    total, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->cmdmap))) {
@@ -306,7 +305,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	if ((error = bus_dmamem_alloc(sc->dmat, PAGE_SIZE, PAGE_SIZE, 0,
-	    seg, 1, &rseg, BUS_DMA_NOWAIT))) {
+	    seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO))) {
 		printf(": cannot allocate scratch buffer (%d)\n", error);
 		return -1;
 	}
@@ -316,7 +315,6 @@ ciss_attach(struct ciss_softc *sc)
 		printf(": cannot map scratch buffer (%d)\n", error);
 		return -1;
 	}
-	bzero(sc->scratch, PAGE_SIZE);
 
 	lock = CISS_LOCK_SCRATCH(sc);
 	inq = sc->scratch;

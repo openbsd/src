@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.68 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.69 2010/05/19 15:27:35 oga Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -834,7 +834,8 @@ nge_attach(parent, self, aux)
 	sc->sc_dmatag = pa->pa_dmat;
 	DPRINTFN(5, ("%s: bus_dmamem_alloc\n", sc->sc_dv.dv_xname));
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct nge_list_data),
-			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT |
+			     BUS_DMA_ZERO)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
 		goto fail_2;
 	}
@@ -862,7 +863,6 @@ nge_attach(parent, self, aux)
 
 	DPRINTFN(5, ("%s: bzero\n", sc->sc_dv.dv_xname));
 	sc->nge_ldata = (struct nge_list_data *)kva;
-	bzero(sc->nge_ldata, sizeof(struct nge_list_data));
 
 	/* Try to allocate memory for jumbo buffers. */
 	DPRINTFN(5, ("%s: nge_alloc_jumbo_mem\n", sc->sc_dv.dv_xname));

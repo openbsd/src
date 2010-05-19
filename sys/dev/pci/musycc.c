@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.20 2010/04/08 00:23:53 tedu Exp $ */
+/*	$OpenBSD: musycc.c,v 1.21 2010/05/19 15:27:35 oga Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -262,7 +262,7 @@ musycc_alloc_group(struct musycc_group *mg)
 	/* Allocate per group dma memory */
 	if (bus_dmamem_alloc(mg->mg_dmat, MUSYCC_DMA_MAPSIZE,
 	    PAGE_SIZE, 0, mg->mg_listseg, 1, &mg->mg_listnseg,
-	    BUS_DMA_NOWAIT))
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO))
 		return (-1);
 	if (bus_dmamem_map(mg->mg_dmat, mg->mg_listseg, mg->mg_listnseg,
 	    MUSYCC_DMA_MAPSIZE, &mg->mg_listkva, BUS_DMA_NOWAIT)) {
@@ -302,8 +302,6 @@ musycc_alloc_group(struct musycc_group *mg)
 	}
 
 	mg->mg_dma_pool = (struct dma_desc *)mg->mg_listkva;
-	bzero(mg->mg_dma_pool,
-	    MUSYCC_DMA_CNT * sizeof(struct dma_desc));
 
 	/* add all descriptors to the freelist */
 	for (j = 0; j < MUSYCC_DMA_CNT; j++) {

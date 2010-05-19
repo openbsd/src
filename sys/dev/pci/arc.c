@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.82 2010/04/08 00:23:53 tedu Exp $ */
+/*	$OpenBSD: arc.c,v 1.83 2010/05/19 15:27:35 oga Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1866,7 +1866,7 @@ arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 		goto admfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &adm->adm_seg,
-	    1, &nsegs, BUS_DMA_NOWAIT) != 0)
+	    1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &adm->adm_seg, nsegs, size,
@@ -1876,8 +1876,6 @@ arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 	if (bus_dmamap_load(sc->sc_dmat, adm->adm_map, adm->adm_kva, size,
 	    NULL, BUS_DMA_NOWAIT) != 0)
 		goto unmap;
-
-	bzero(adm->adm_kva, size);
 
 	return (adm);
 

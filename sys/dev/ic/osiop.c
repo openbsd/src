@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.41 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.42 2010/05/19 15:27:35 oga Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ osiop_attach(sc)
 	 * Allocate and map DMA-safe memory for the script.
 	 */
 	err = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
-	    &seg, 1, &nseg, BUS_DMA_NOWAIT);
+	    &seg, 1, &nseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (err) {
 		printf(": failed to allocate script memory, err=%d\n", err);
 		return;
@@ -229,7 +229,6 @@ osiop_attach(sc)
 		printf(": failed to load script map, err=%d\n", err);
 		return;
 	}
-	bzero(sc->sc_script, PAGE_SIZE);
 
 	/*
 	 * Copy and sync script
@@ -243,7 +242,7 @@ osiop_attach(sc)
 	 */
 	err = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct osiop_ds) * OSIOP_NACB, PAGE_SIZE, 0,
-	    &seg, 1, &nseg, BUS_DMA_NOWAIT);
+	    &seg, 1, &nseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (err) {
 		printf(": failed to allocate ds memory, err=%d\n", err);
 		return;
@@ -269,7 +268,6 @@ osiop_attach(sc)
 		printf(": failed to load ds map, err=%d\n", err);
 		return;
 	}
-	bzero(sc->sc_ds, sizeof(struct osiop_ds) * OSIOP_NACB);
 
 	/*
 	 * Allocate (malloc) memory for acb's.

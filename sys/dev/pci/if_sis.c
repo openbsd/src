@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.97 2009/08/13 14:24:47 jasper Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.98 2010/05/19 15:27:35 oga Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1062,7 +1062,7 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sis_list_data),
 	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,
-	    BUS_DMA_NOWAIT) != 0) {
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0) {
 		printf(": can't alloc list mem\n");
 		goto fail_2;
 	}
@@ -1084,7 +1084,6 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_2;
 	}
 	sc->sis_ldata = (struct sis_list_data *)sc->sc_listkva;
-	bzero(sc->sis_ldata, sizeof(struct sis_list_data));
 
 	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,

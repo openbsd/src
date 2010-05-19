@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.86 2009/11/23 10:54:43 claudio Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.87 2010/05/19 15:27:35 oga Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -2357,7 +2357,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 
 	if (bus_dmamem_alloc(sc->bnx_dmatag, BNX_STATUS_BLK_SZ,
 	    BNX_DMA_ALIGN, BNX_DMA_BOUNDARY, &sc->status_seg, 1,
-	    &sc->status_rseg, BUS_DMA_NOWAIT)) {
+	    &sc->status_rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": Could not allocate status block DMA memory!\n");
 		rc = ENOMEM;
 		goto bnx_dma_alloc_exit;
@@ -2378,7 +2378,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	sc->status_block_paddr = sc->status_map->dm_segs[0].ds_addr;
-	bzero(sc->status_block, BNX_STATUS_BLK_SZ);
 
 	/* DRC - Fix for 64 bit addresses. */
 	DBPRINT(sc, BNX_INFO, "status_block_paddr = 0x%08X\n",
@@ -2445,7 +2444,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 
 	if (bus_dmamem_alloc(sc->bnx_dmatag, BNX_STATS_BLK_SZ,
 	    BNX_DMA_ALIGN, BNX_DMA_BOUNDARY, &sc->stats_seg, 1,
-	    &sc->stats_rseg, BUS_DMA_NOWAIT)) {
+	    &sc->stats_rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": Could not allocate stats block DMA memory!\n");
 		rc = ENOMEM;
 		goto bnx_dma_alloc_exit;
@@ -2466,7 +2465,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	sc->stats_block_paddr = sc->stats_map->dm_segs[0].ds_addr;
-	bzero(sc->stats_block, BNX_STATS_BLK_SZ);
 
 	/* DRC - Fix for 64 bit address. */
 	DBPRINT(sc,BNX_INFO, "stats_block_paddr = 0x%08X\n", 
@@ -2541,7 +2539,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 
 		if (bus_dmamem_alloc(sc->bnx_dmatag, BNX_RX_CHAIN_PAGE_SZ,
 		    BCM_PAGE_SIZE, BNX_DMA_BOUNDARY, &sc->rx_bd_chain_seg[i], 1,
-		    &sc->rx_bd_chain_rseg[i], BUS_DMA_NOWAIT)) {
+		    &sc->rx_bd_chain_rseg[i], BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 			printf(": Could not allocate Rx desc %d DMA memory!\n", 
 			    i);
 			rc = ENOMEM;
@@ -2564,7 +2562,6 @@ bnx_dma_alloc(struct bnx_softc *sc)
 			goto bnx_dma_alloc_exit;
 		}
 
-		bzero(sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
 		sc->rx_bd_chain_paddr[i] =
 		    sc->rx_bd_chain_map[i]->dm_segs[0].ds_addr;
 

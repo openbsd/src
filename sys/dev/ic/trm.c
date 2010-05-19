@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.18 2010/03/23 01:57:19 krw Exp $
+/*	$OpenBSD: trm.c,v 1.19 2010/05/19 15:27:35 oga Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -2878,7 +2878,7 @@ trm_init(struct trm_softc *sc, int unit)
 	all_srbs_size = TRM_MAX_SRB_CNT * sizeof(struct trm_scsi_req_q);
 
 	error = bus_dmamem_alloc(sc->sc_dmatag, all_srbs_size, NBPG, 0, &seg,
-	    1, &rseg, BUS_DMA_NOWAIT);
+	    1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error != 0) {
 		printf("%s: unable to allocate SCSI REQUEST BLOCKS, error = %d\n",
 		    sc->sc_device.dv_xname, error);
@@ -2917,7 +2917,6 @@ trm_init(struct trm_softc *sc, int unit)
 	printf("\n\n%s: all_srbs_size=%x\n", 
 	    sc->sc_device.dv_xname, all_srbs_size);
 #endif
-	bzero(sc->SRB, all_srbs_size);
 	trm_initACB(sc, unit);
 	trm_initAdapter(sc);
 

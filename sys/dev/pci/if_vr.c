@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.104 2009/11/25 13:14:47 claudio Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.105 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -604,7 +604,8 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vr_list_data),
-	    PAGE_SIZE, 0, &sc->sc_listseg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    PAGE_SIZE, 0, &sc->sc_listseg, 1, &rseg,
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": can't alloc list\n");
 		goto fail_2;
 	}
@@ -625,7 +626,6 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_5;
 	}
 	sc->vr_ldata = (struct vr_list_data *)kva;
-	bzero(sc->vr_ldata, sizeof(struct vr_list_data));
 	sc->vr_quirks = vr_quirks(pa);
 
 	ifp = &sc->arpcom.ac_if;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.58 2010/04/20 22:05:43 tedu Exp $  */
+/*	$OpenBSD: pgt.c,v 1.59 2010/05/19 15:27:35 oga Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -3074,7 +3074,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE,
-	    0, &sc->sc_cbdmas, 1, &nsegs, BUS_DMA_NOWAIT);
+	    0, &sc->sc_cbdmas, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error != 0) {
 		printf("%s: can not allocate DMA memory for control block\n",
 		    sc->sc_dev.dv_xname);
@@ -3088,7 +3088,6 @@ pgt_dma_alloc(struct pgt_softc *sc)
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
-	bzero(sc->sc_cb, size);
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cbdmam,
 	    sc->sc_cb, size, NULL, BUS_DMA_NOWAIT);
@@ -3112,7 +3111,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE,
-	   0, &sc->sc_psmdmas, 1, &nsegs, BUS_DMA_NOWAIT);
+	   0, &sc->sc_psmdmas, 1, &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (error != 0) {
 		printf("%s: can not allocate DMA memory for powersave\n",
 		    sc->sc_dev.dv_xname);
@@ -3126,7 +3125,6 @@ pgt_dma_alloc(struct pgt_softc *sc)
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
-	bzero(sc->sc_psmbuf, size);
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_psmdmam,
 	    sc->sc_psmbuf, size, NULL, BUS_DMA_WAITOK);

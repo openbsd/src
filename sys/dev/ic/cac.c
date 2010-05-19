@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.36 2010/03/29 23:33:39 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.37 2010/05/19 15:27:35 oga Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ cac_init(struct cac_softc *sc, int startfw)
         size = sizeof(struct cac_ccb) * CAC_MAX_CCBS;
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, seg, 1,
-	    &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) != 0) {
 		printf("%s: unable to allocate CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return (-1);
@@ -192,7 +192,6 @@ cac_init(struct cac_softc *sc, int startfw)
 	}
 
 	sc->sc_ccbs_paddr = sc->sc_dmamap->dm_segs[0].ds_addr;
-	memset(sc->sc_ccbs, 0, size);
 	ccb = (struct cac_ccb *)sc->sc_ccbs;
 
 	for (i = 0; i < CAC_MAX_CCBS; i++, ccb++) {

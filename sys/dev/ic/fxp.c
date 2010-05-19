@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.100 2009/10/15 17:54:54 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.101 2010/05/19 15:27:35 oga Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -338,7 +338,8 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	DELAY(10);
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct fxp_ctrl),
-	    PAGE_SIZE, 0, &sc->sc_cb_seg, 1, &sc->sc_cb_nseg, BUS_DMA_NOWAIT))
+	    PAGE_SIZE, 0, &sc->sc_cb_seg, 1, &sc->sc_cb_nseg,
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO))
 		goto fail;
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg,
 	    sizeof(struct fxp_ctrl), (caddr_t *)&sc->sc_ctrl,
@@ -375,7 +376,6 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 		sc->txs[i].tx_off = offsetof(struct fxp_ctrl, tx_cb[i]);
 		sc->txs[i].tx_next = &sc->txs[(i + 1) & FXP_TXCB_MASK];
 	}
-	bzero(sc->sc_ctrl, sizeof(struct fxp_ctrl));
 
 	/*
 	 * Pre-allocate some receive buffers.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.69 2009/12/21 18:14:51 naddy Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.70 2010/05/19 15:27:35 oga Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1162,7 +1162,7 @@ rl_attach(struct rl_softc *sc)
 		sc->rl_type = RL_UNKNOWN;	/* could be 8138 or other */
 
 	if (bus_dmamem_alloc(sc->sc_dmat, RL_RXBUFLEN + 32, PAGE_SIZE, 0,
-	    &sc->sc_rx_seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    &sc->sc_rx_seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf("\n%s: can't alloc rx buffers\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
@@ -1190,8 +1190,6 @@ rl_attach(struct rl_softc *sc)
 	}
 	sc->rl_cdata.rl_rx_buf = kva;
 	sc->rl_cdata.rl_rx_buf_pa = sc->sc_rx_dmamap->dm_segs[0].ds_addr;
-
-	bzero(sc->rl_cdata.rl_rx_buf, RL_RXBUFLEN + 32);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
 	    0, sc->sc_rx_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);

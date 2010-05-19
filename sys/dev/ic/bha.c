@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.21 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.22 2010/05/19 15:27:35 oga Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -536,7 +536,6 @@ bha_create_ccbs(sc, ccbstore, count)
 	struct bha_ccb *ccb;
 	int i, error;
 
-	bzero(ccbstore, sizeof(struct bha_ccb) * count);
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = bha_init_ccb(sc, ccb)) != 0) {
@@ -1119,7 +1118,7 @@ bha_init(sc)
 	 * Allocate the mailbox and control blocks.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct bha_control),
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) != 0) {
 		printf("%s: unable to allocate control structures, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);

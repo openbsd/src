@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.86 2010/01/09 02:40:18 sthen Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.87 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -890,7 +890,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct msk_ring_data),
 	    PAGE_SIZE, 0, &sc_if->sk_ring_seg, 1, &sc_if->sk_ring_nseg,
-	    BUS_DMA_NOWAIT)) {
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": can't alloc rx buffers\n");
 		goto fail;
 	}
@@ -913,7 +913,6 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
         sc_if->sk_rdata = (struct msk_ring_data *)kva;
-	bzero(sc_if->sk_rdata, sizeof(struct msk_ring_data));
 
 	if (sc->sk_type != SK_YUKON_FE &&
 	    sc->sk_type != SK_YUKON_FE_P)
@@ -1170,7 +1169,8 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamem_alloc(sc->sc_dmatag,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
-	    0, &sc->sk_status_seg, 1, &sc->sk_status_nseg, BUS_DMA_NOWAIT)) {
+	    0, &sc->sk_status_seg, 1, &sc->sk_status_nseg,
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": can't alloc status buffers\n");
 		goto fail_2;
 	}
@@ -1197,8 +1197,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_5;
 	}
 	sc->sk_status_ring = (struct msk_status_desc *)kva;
-	bzero(sc->sk_status_ring,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
 
 	/* Reset the adapter. */
 	mskc_reset(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.45 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.46 2010/05/19 15:27:35 oga Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -797,7 +797,7 @@ wb_attach(parent, self, aux)
 	printf(", address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	if (bus_dmamem_alloc(pa->pa_dmat, sizeof(struct wb_list_data),
-	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": can't alloc list data\n");
 		goto fail_2;
 	}
@@ -818,7 +818,6 @@ wb_attach(parent, self, aux)
 		goto fail_5;
 	}
 	sc->wb_ldata = (struct wb_list_data *)kva;
-	bzero(sc->wb_ldata, sizeof(struct wb_list_data));
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;

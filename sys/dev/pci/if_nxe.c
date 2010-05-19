@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.60 2009/06/02 12:33:42 reyk Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.61 2010/05/19 15:27:35 oga Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -2001,7 +2001,7 @@ nxe_dmamem_alloc(struct nxe_softc *sc, bus_size_t size, bus_size_t align)
 		goto ndmfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, align, 0, &ndm->ndm_seg, 1,
-	    &nsegs, BUS_DMA_WAITOK) != 0)
+	    &nsegs, BUS_DMA_WAITOK |BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &ndm->ndm_seg, nsegs, size,
@@ -2011,8 +2011,6 @@ nxe_dmamem_alloc(struct nxe_softc *sc, bus_size_t size, bus_size_t align)
 	if (bus_dmamap_load(sc->sc_dmat, ndm->ndm_map, ndm->ndm_kva, size,
 	    NULL, BUS_DMA_WAITOK) != 0)
 		goto unmap;
-
-	bzero(ndm->ndm_kva, size);
 
 	return (ndm);
 
