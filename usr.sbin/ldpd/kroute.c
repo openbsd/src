@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.10 2010/04/13 15:39:29 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.11 2010/05/19 13:13:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1047,6 +1047,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 
 	hdr.rtm_type = action;
 	hdr.rtm_flags = RTF_UP;
+	hdr.rtm_fmask = RTF_MPLS;
 	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	hdr.rtm_msglen = sizeof(hdr);
 	hdr.rtm_hdrlen = sizeof(struct rt_msghdr);
@@ -1060,6 +1061,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		label_in.smpls_family = AF_MPLS;
 		label_in.smpls_label = kroute->local_label;
 		/* adjust header */
+		hdr.rtm_flags |= RTF_MPLS;
 		hdr.rtm_priority = RTP_DEFAULT;
 		hdr.rtm_addrs |= RTA_DST;
 		hdr.rtm_msglen += sizeof(label_in);
@@ -1113,6 +1115,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		label_out.smpls_label = kroute->remote_label;
 		/* adjust header */
 		hdr.rtm_addrs |= RTA_SRC;
+		hdr.rtm_flags |= RTF_MPLS;
 		hdr.rtm_msglen += sizeof(label_out);
 		/* adjust iovec */
 		iov[iovcnt].iov_base = &label_out;
