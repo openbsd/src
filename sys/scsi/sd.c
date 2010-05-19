@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.188 2010/05/19 05:29:14 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.189 2010/05/19 05:50:50 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -744,7 +744,6 @@ sd_buf_done(struct scsi_xfer *xs)
 		    bp->b_flags & B_READ);
 		scsi_buf_requeue(&sc->sc_buf_queue, bp, &sc->sc_buf_mtx);
 		scsi_xs_put(xs);
-		SET(sc->flags, SDF_WAITING); /* break out of sdstart loop */
 		timeout_add(&sc->sc_timeout, 1);
 		return;
 
