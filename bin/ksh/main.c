@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2009/01/29 23:27:26 jaredy Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2010/05/19 17:36:08 jasper Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -460,13 +460,18 @@ include(const char *name, int argc, char **argv, int intr_ok)
 	return i & 0xff;	/* & 0xff to ensure value not -1 */
 }
 
+/*
+ * spawn a command into a shell optionally keeping track of line
+ * number.
+ */
 int
-command(const char *comm)
+command(const char *comm, int line)
 {
 	Source *s;
 
 	s = pushs(SSTRING, ATEMP);
 	s->start = s->str = comm;
+	s->line = line;
 	return shell(s, false);
 }
 
