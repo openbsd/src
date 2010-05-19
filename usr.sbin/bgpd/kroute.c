@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.180 2010/05/18 12:21:33 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.181 2010/05/19 13:15:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2627,6 +2627,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 		mpls.smpls_family = AF_MPLS;
 		mpls.smpls_label = kroute->mplslabel;
 		/* adjust header */
+		hdr.rtm_flags |= RTF_MPLS;
 		hdr.rtm_mpls = MPLS_OP_PUSH;
 		hdr.rtm_addrs |= RTA_SRC;
 		hdr.rtm_msglen += sizeof(mpls);
