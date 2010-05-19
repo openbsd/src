@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.148 2010/05/16 20:33:59 nicm Exp $ */
+/*	$OpenBSD: mpi.c,v 1.149 2010/05/19 07:26:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
+#include <sys/dkio.h>
 
 #include <machine/bus.h>
 
@@ -151,6 +152,9 @@ int			mpi_req_cfg_header(struct mpi_softc *, u_int8_t,
 			    u_int8_t, u_int32_t, int, void *);
 int			mpi_req_cfg_page(struct mpi_softc *, u_int32_t, int,
 			    void *, int, void *, size_t);
+
+int			mpi_ioctl_cache(struct scsi_link *, u_long,
+			    struct dk_cache *);
 
 #if NBIO > 0
 int		mpi_bio_get_pg0_raid(struct mpi_softc *, int);
@@ -2685,10 +2689,120 @@ mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
 
 	DNPRINTF(MPI_D_IOCTL, "%s: mpi_scsi_ioctl\n", DEVNAME(sc));
 
-	if (sc->sc_ioctl)
-		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
-	else
-		return (ENOTTY);
+	switch (cmd) {
+	case DIOCGCACHE:
+	case DIOCSCACHE:
+		if (ISSET(link->flags, SDEV_VIRTUAL)) {
+			return (mpi_ioctl_cache(link, cmd,
+			    (struct dk_cache *)addr));
+		}
+		break;
+
+	default:
+		if (sc->sc_ioctl)
+			return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+
+		break;
+	}
+
+	return (ENOTTY);
+}
+
+int
+mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
+{
+	struct mpi_softc	*sc = (struct mpi_softc *)link->adapter_softc;
+	struct mpi_ccb		*ccb;
+	int			len, rv;
+	u_int32_t		address;
+	struct mpi_cfg_hdr	hdr;
+	struct mpi_cfg_raid_vol_pg0 *rpg0;
+	int			enabled;
+	struct mpi_msg_raid_action_request *req;
+	struct mpi_msg_raid_action_reply *rep;
+	struct mpi_raid_settings settings;
+
+	address = link->target;
+
+	rv = mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
+	    address, 0, &hdr);
+	if (rv != 0)
+		return (EIO);
+
+	len = sizeof *rpg0 + sc->sc_vol_page->max_physdisks *
+	    sizeof(struct mpi_cfg_raid_vol_pg0_physdisk);
+	rpg0 = malloc(len, M_TEMP, M_WAITOK);
+
+	if (mpi_req_cfg_page(sc, address, 0, &hdr, 1, rpg0, len) != 0) {
+		DNPRINTF(MPI_D_RAID, "%s: can't get RAID vol cfg page 0\n",
+		    DEVNAME(sc));
+		rv = EIO;
+		goto done;
+	}
+
+	enabled = ISSET(letoh16(rpg0->settings.volume_settings),
+	    MPI_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN) ? 1 : 0;
+
+	if (cmd == DIOCGCACHE) {
+		dc->wrcache = enabled;
+		dc->rdcache = 0;
+		goto done;
+	} /* else DIOCSCACHE */
+
+	if (dc->rdcache) {
+		rv = EOPNOTSUPP;
+		goto done;
+	}
+
+	if (((dc->wrcache) ? 1 : 0) == enabled)
+		goto done;
+
+	settings = rpg0->settings;
+	if (dc->wrcache) {
+		SET(settings.volume_settings,
+		    htole16(MPI_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN));
+	} else {
+		CLR(settings.volume_settings,
+		    htole16(MPI_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN));
+	}
+
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	if (ccb == NULL) {
+		rv = ENOMEM;
+		goto done;
+	}
+
+	req = ccb->ccb_cmd;
+	req->function = MPI_FUNCTION_RAID_ACTION;
+	req->action = MPI_MSG_RAID_ACTION_CH_VOL_SETTINGS;
+	req->vol_id = rpg0->volume_id;
+	req->vol_bus = rpg0->volume_bus;
+	req->msg_context = htole32(ccb->ccb_id);
+
+	memcpy(&req->data_word, &settings, sizeof(req->data_word));
+
+	ccb->ccb_done = mpi_empty_done;
+	mpi_wait(sc, ccb);
+
+	rep = (struct mpi_msg_raid_action_reply *)ccb->ccb_rcb;
+	if (rep == NULL)
+		panic("%s: raid volume settings change failed", DEVNAME(sc));
+
+	switch (letoh16(rep->action_status)) {
+	case MPI_RAID_ACTION_STATUS_OK:
+		rv = 0;
+		break;
+	default:
+		rv = EIO;
+		break;
+	}
+
+	mpi_push_reply(sc, ccb->ccb_rcb);
+	scsi_io_put(&sc->sc_iopool, ccb);
+
+done:
+	free(rpg0, M_TEMP);
+	return (rv);
 }
 
 #if NBIO > 0

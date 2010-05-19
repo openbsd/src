@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.37 2009/10/23 00:52:55 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.38 2010/05/19 07:26:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -934,6 +934,73 @@ struct mpi_msg_scsi_task_reply {
 	u_int32_t		termination_count;
 } __packed;
 
+struct mpi_msg_raid_action_request {
+	u_int8_t		action;
+#define MPI_MSG_RAID_ACTION_STATUS			(0x00)
+#define MPI_MSG_RAID_ACTION_INDICATOR_STRUCT		(0x01)
+#define MPI_MSG_RAID_ACTION_CREATE_VOLUME		(0x02)
+#define MPI_MSG_RAID_ACTION_DELETE_VOLUME		(0x03)
+#define MPI_MSG_RAID_ACTION_DISABLE_VOLUME		(0x04)
+#define MPI_MSG_RAID_ACTION_ENABLE_VOLUME		(0x05)
+#define MPI_MSG_RAID_ACTION_QUIESCE_PHYSIO		(0x06)
+#define MPI_MSG_RAID_ACTION_ENABLE_PHYSIO		(0x07)
+#define MPI_MSG_RAID_ACTION_CH_VOL_SETTINGS		(0x08)
+#define MPI_MSG_RAID_ACTION_PHYSDISK_OFFLINE		(0x0a)
+#define MPI_MSG_RAID_ACTION_PHYSDISK_ONLINE		(0x0b)
+#define MPI_MSG_RAID_ACTION_CH_PHYSDISK_SETTINGS	(0x0c)
+#define MPI_MSG_RAID_ACTION_CREATE_PHYSDISK		(0x0d)
+#define MPI_MSG_RAID_ACTION_DELETE_PHYSDISK		(0x0e)
+#define MPI_MSG_RAID_ACTION_PHYSDISK_FAIL		(0x0f)
+#define MPI_MSG_RAID_ACTION_ACTIVATE_VOLUME		(0x11)
+#define MPI_MSG_RAID_ACTION_DEACTIVATE_VOLUME		(0x12)
+#define MPI_MSG_RAID_ACTION_SET_RESYNC_RATE		(0x13)
+#define MPI_MSG_RAID_ACTION_SET_SCRUB_RATE		(0x14)
+#define MPI_MSG_RAID_ACTION_DEVICE_FW_UPDATE_MODE	(0x15)
+#define MPI_MSG_RAID_ACTION_SET_VOL_NAME		(0x16)
+	u_int8_t		_reserved1;
+	u_int8_t		chain_offset;
+	u_int8_t		function;
+
+	u_int8_t		vol_id;
+	u_int8_t		vol_bus;
+	u_int8_t		phys_disk_num;
+	u_int8_t		message_flags;
+
+	u_int32_t		msg_context;
+
+	u_int32_t		_reserved2;
+
+	u_int32_t		data_word;
+	u_int32_t		data_sge;
+} __packed;
+
+struct mpi_msg_raid_action_reply {
+	u_int8_t		action;
+	u_int8_t		_reserved1;
+	u_int8_t		message_length;
+	u_int8_t		function;
+
+	u_int8_t		vol_id;
+	u_int8_t		vol_bus;
+	u_int8_t		phys_disk_num;
+	u_int8_t		message_flags;
+
+	u_int32_t		message_context;
+
+	u_int16_t		action_status;
+#define MPI_RAID_ACTION_STATUS_OK			(0x0000)
+#define MPI_RAID_ACTION_STATUS_INVALID			(0x0001)
+#define MPI_RAID_ACTION_STATUS_FAILURE			(0x0002)
+#define MPI_RAID_ACTION_STATUS_IN_PROGRESS		(0x0004)
+	u_int16_t		ioc_status;
+
+	u_int32_t		ioc_log_info;
+
+	u_int32_t		volume_status;
+
+	u_int32_t		action_data;
+} __packed;
+
 struct mpi_cfg_hdr {
 	u_int8_t		page_version;
 	u_int8_t		page_length;
@@ -1355,6 +1422,20 @@ struct mpi_cfg_fc_device_pg0 {
 	u_int8_t		current_bus;
 } __packed;
 
+struct mpi_raid_settings {
+	u_int16_t		volume_settings;
+#define MPI_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN	(1<<0)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART_ERR	(1<<1)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART	(1<<2)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_AUTO_SWAP		(1<<3)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_HI_PRI_RESYNC	(1<<4)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_PROD_SUFFIX		(1<<5)
+#define MPI_CFG_RAID_VOL_0_SETTINGS_FAST_SCRUB		(1<<6) /* obsolete */
+#define MPI_CFG_RAID_VOL_0_SETTINGS_DEFAULTS		(1<<15)
+	u_int8_t		hot_spare_pool;
+	u_int8_t		reserved2;
+} __packed;
+
 struct mpi_cfg_raid_vol_pg0 {
 	struct mpi_cfg_hdr	config_header;
 
@@ -1374,29 +1455,19 @@ struct mpi_cfg_raid_vol_pg0 {
 #define MPI_CFG_RAID_VOL_0_STATE_DEGRADED		(0x01)
 #define MPI_CFG_RAID_VOL_0_STATE_FAILED			(0x02)
 #define MPI_CFG_RAID_VOL_0_STATE_MISSING		(0x03)
-	u_int16_t		reserved1;
+	u_int16_t		_reserved1;
 
-	u_int16_t		volume_settings;
-#define MPI_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN	(1<<0)
-#define MPI_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART_ERR	(1<<1)
-#define MPI_CFG_RAID_VOL_0_SETTINGS_OFFLINE_SMART	(1<<2)
-#define MPI_CFG_RAID_VOL_0_SETTINGS_AUTO_SWAP		(1<<3)
-#define MPI_CFG_RAID_VOL_0_SETTINGS_HI_PRI_RESYNC	(1<<4)
-#define MPI_CFG_RAID_VOL_0_SETTINGS_PROD_SUFFIX		(1<<5)
-#define MPI_CFG_RAID_VOL_0_SETTINGS_FAST_SCRUB		(1<<6) /* obsolete */
-#define MPI_CFG_RAID_VOL_0_SETTINGS_DEFAULTS		(1<<15)
-	u_int8_t		hot_spare_pool;
-	u_int8_t		reserved2;
+	struct mpi_raid_settings settings;
 
 	u_int32_t		max_lba;
 
-	u_int32_t		reserved3;
+	u_int32_t		_reserved2;
 
 	u_int32_t		stripe_size;
 
-	u_int32_t		reserved4;
+	u_int32_t		_reserved3;
 
-	u_int32_t		reserved5;
+	u_int32_t		_reserved4;
 
 	u_int8_t		num_phys_disks;
 	u_int8_t		data_scrub_rate;
