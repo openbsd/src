@@ -91,7 +91,7 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/3.3.5/include
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/3.3.5/specs
 ./usr/lib/libasn1.so.17.0
-./usr/lib/libc.so.53.1
+./usr/lib/libc.so.53.2
 ./usr/lib/libcom_err.so.17.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.11.0
