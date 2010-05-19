@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strlen.3,v 1.7 2010/05/18 22:24:55 tedu Exp $
+.\"	$OpenBSD: strlen.3,v 1.8 2010/05/19 06:32:43 jmc Exp $
 .\"
-.Dd $Mdocdate: May 18 2010 $
+.Dd $Mdocdate: May 19 2010 $
 .Dt STRLEN 3
 .Os
 .Sh NAME
@@ -63,7 +63,6 @@ function will never attempt to address more than
 .Fa maxlen
 characters, making it suitable for use with character arrays that are
 not guaranteed to be NUL-terminated.
-.Pp
 .Sh RETURN VALUES
 The
 .Fn strlen

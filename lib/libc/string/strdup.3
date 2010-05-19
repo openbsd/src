@@ -1,4 +1,4 @@
-.\" $OpenBSD: strdup.3,v 1.16 2010/05/18 22:24:55 tedu Exp $
+.\" $OpenBSD: strdup.3,v 1.17 2010/05/19 06:32:43 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)strdup.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 18 2010 $
+.Dd $Mdocdate: May 19 2010 $
 .Dt STRDUP 3
 .Os
 .Sh NAME
@@ -91,16 +91,6 @@ for any of the errors specified for the library function
 .Xr strcpy 3 ,
 .Xr strlcpy 3 ,
 .Xr strlen 3
-.Sh HISTORY
-The
-.Fn strdup
-function first appeared in
-.Bx 4.4 .
-.Pp
-The
-.Fn strndup
-function first appeared in
-.Ox 4.8 .
 .Sh STANDARDS
 The
 .Fn strdup
@@ -108,3 +98,12 @@ and
 .Fn strndup
 functions conform to
 .St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn strdup
+function first appeared in
+.Bx 4.4 .
+The
+.Fn strndup
+function first appeared in
+.Ox 4.8 .
