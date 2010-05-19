@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2010/05/06 14:51:30 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.34 2010/05/19 13:10:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -31,6 +31,8 @@
 #include <sys/device.h>
 #include <sys/reboot.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpufunc.h>
 #include <machine/pdc.h>
 #include <machine/reg.h>
@@ -41,9 +43,12 @@
 
 struct cpu_softc {
 	struct  device sc_dev;
-
-	hppa_hpa_t sc_hpa;
 };
+
+#ifdef MULTIPROCESSOR
+struct cpu_info *cpu_hatch_info;
+static volatile int start_secondary_cpu;
+#endif
 
 int	cpumatch(struct device *, void *, void *);
 void	cpuattach(struct device *, struct device *, void *);
@@ -160,5 +165,105 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 void
 cpu_boot_secondary_processors(void)
 {
+	struct cpu_info *ci;
+	struct iomod *cpu;
+	struct pglist mlist;
+	struct vm_page *m;
+	int error, i, j;
+
+	/* Initialise primary CPU. */
+	ci = curcpu();
+	ci->ci_flags |= CPUF_RUNNING;
+
+	for (i = 0; i < HPPA_MAXCPUS; i++) {
+
+		ci = &cpu_info[i];
+		if (ci->ci_cpuid == 0)
+			continue;
+
+		ci->ci_randseed = random();
+
+#ifdef notyet
+		sched_init_cpu(ci);
+#endif
+
+		/* Allocate spinup stack. */
+		TAILQ_INIT(&mlist);
+		error = uvm_pglistalloc(PAGE_SIZE, 0, -1L, 0, 0, &mlist, 1,
+		    UVM_PLA_NOWAIT);
+		if (error) {
+			printf("unable to allocate spinup stack!\n");
+			return;
+		}
+		m = TAILQ_FIRST(&mlist);
+		ci->ci_spinup_stack = VM_PAGE_TO_PHYS(m);
+
+		/* Release the specified CPU by triggering an EIR{0}. */
+		cpu_hatch_info = ci;
+		cpu = (struct iomod *)(ci->ci_hpa);
+		cpu->io_eir = 0;
+		asm volatile ("sync" ::: "memory");
+
+		/* Wait for CPU to wake up... */
+		j = 0;
+		while (!(ci->ci_flags & CPUF_RUNNING) && j++ < 10000)
+			delay(1000);
+		if (!(ci->ci_flags & CPUF_RUNNING))
+			printf("failed to hatch cpu %i!\n", ci->ci_cpuid);
+	}
+
+	/* Release secondary CPUs. */
+	start_secondary_cpu = 1;
+	asm volatile ("sync" ::: "memory");
+}
+
+void
+cpu_hw_init(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	/* Purge TLB and flush caches. */
+	ptlball();
+	ficacheall();
+	fdcacheall();
+
+	/* Enable address translations. */
+	ci->ci_psw = PSL_I | PSL_Q | PSL_P | PSL_C | PSL_D;
+	ci->ci_psw |= (cpu_info[0].ci_psw & PSL_O);
+}
+
+void
+cpu_hatch(void)
+{
+	struct cpu_info *ci = curcpu();
+	extern u_long cpu_hzticks;
+	u_long itmr;
+
+	/* Initialise clock. */
+	mtctl((1 << 31), CR_EIRR);
+	mfctl(CR_ITMR, itmr);
+	ci->ci_itmr = itmr;
+	itmr += cpu_hzticks;
+	mtctl(itmr, CR_ITMR);
+	ci->ci_mask |= (1 << 31);
+
+	/* Enable interrupts. */
+	mtctl(ci->ci_mask, CR_EIEM);
+
+#ifdef notyet
+	ncpus++;
+#endif
+	ci->ci_flags |= CPUF_RUNNING;
+
+	/* Wait for additional CPUs to spinup. */
+	while (!start_secondary_cpu)
+		;
+
+	for (;;) ;
+
+#ifdef notyet
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+#endif
 }
 #endif

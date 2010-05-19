@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.70 2010/05/16 14:54:43 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.71 2010/05/19 13:10:24 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -79,8 +79,10 @@ struct cpu_info {
 	struct device	*ci_dev;
 	int		ci_cpuid;
 	hppa_hpa_t	ci_hpa;
+	volatile int	ci_flags;
 
 	struct proc	*ci_curproc;
+	paddr_t		ci_spinup_stack;
 
 	register_t	ci_psw;			/* Processor Status Word. */
 	volatile int	ci_cpl;
@@ -94,10 +96,12 @@ struct cpu_info {
 	u_int32_t	ci_randseed;
 } __attribute__((__aligned__(64)));
 
+#define		CPUF_RUNNING	0x0001		/* CPU is running. */
+
 #ifdef MULTIPROCESSOR
-#define        HPPA_MAXCPUS            1
+#define		HPPA_MAXCPUS	4
 #else
-#define        HPPA_MAXCPUS            4
+#define		HPPA_MAXCPUS	1
 #endif
 
 extern struct cpu_info cpu_info[HPPA_MAXCPUS];
