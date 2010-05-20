@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.62 2010/04/25 17:09:52 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.63 2010/05/20 11:31:34 yuo Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -113,8 +113,9 @@ struct umsm_type {
 #define	DEV_UMASS3	0x0040
 #define	DEV_UMASS4	0x0080
 #define	DEV_UMASS5	0x0100
+#define	DEV_UMASS6	0x0200
 #define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2 | DEV_UMASS3 | DEV_UMASS4 | \
-    DEV_UMASS5)
+    DEV_UMASS5 | DEV_UMASS6)
 };
  
 static const struct umsm_type umsm_devs[] = {
@@ -151,8 +152,10 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_QUANTA2, USB_PRODUCT_QUANTA2_UMASS }, DEV_UMASS4},
 	{{ USB_VENDOR_QUANTA2, USB_PRODUCT_QUANTA2_Q101 }, 0},
 
-	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS }, DEV_UMASS4},
+	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS_INSTALLER2 }, DEV_UMASS6},
+	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_UMASS_INSTALLER }, DEV_UMASS4},
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_K3565Z }, 0},
+	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF633 }, 0},
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF637 }, 0},
 
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_EXPRESSCARD }, 0},
@@ -685,6 +688,21 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		cbw.bCBWFlags = CBWFLAGS_OUT;
 		cbw.CBWCDB[0] = 0x11;
 		cbw.CBWCDB[1] = 0x06;
+		break;
+	case DEV_UMASS6:	/* ZTE */
+		USETDW(cbw.dCBWDataTransferLength, 0x20); 
+		cbw.bCBWFlags = CBWFLAGS_IN;
+		cbw.bCDBLength= 12; 
+		cbw.CBWCDB[0] = 0x85;
+		cbw.CBWCDB[1] = 0x01;
+		cbw.CBWCDB[2] = 0x01;
+		cbw.CBWCDB[3] = 0x01;
+		cbw.CBWCDB[4] = 0x18;
+		cbw.CBWCDB[5] = 0x01;
+		cbw.CBWCDB[6] = 0x01;
+		cbw.CBWCDB[7] = 0x01;
+		cbw.CBWCDB[8] = 0x01;
+		cbw.CBWCDB[9] = 0x01;
 		break;
 	default:
 		DPRINTF(("%s: unknown device type.\n", sc->sc_dev.dv_xname));
