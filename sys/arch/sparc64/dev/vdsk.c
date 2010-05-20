@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.20 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.21 2010/05/20 16:31:03 thib Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -1117,7 +1117,6 @@ vdsk_scsi_capacity(struct scsi_xfer *xs)
 void
 vdsk_scsi_done(struct scsi_xfer *xs, int error)
 {
-	int s;
 
 	xs->error = error;
 
