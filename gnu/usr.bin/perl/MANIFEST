@@ -1592,6 +1592,7 @@ fakethr.h			Fake threads header
 form.h				Public declarations for formats
 generate_uudmap.c		Generate uudmap.h, the uuencode decoding map
 genpacksizetables.pl		Generate the size tables for pack/unpack
+git_version.h			Pre-generated git_version.h for OpenBSD
 globals.c			File to declare global symbols (for shared library)
 global.sym			Symbols that need hiding when embedded
 globvar.sym			Global variables that need hiding when embedded
@@ -1962,6 +1963,7 @@ lib/complete.pl			A command completion subroutine
 lib/Config/Extensions.pm	Convenient hash lookup for built extensions
 lib/Config/Extensions.t		See if Config::Extensions works
 lib/Config.t			See if Config works
+lib/Config_git.pl		Pre-generated git_version.h for OpenBSD
 lib/constant.pm			For "use constant"
 lib/constant.t			See if compile-time constants work
 lib/CORE.pod			document the CORE namespace

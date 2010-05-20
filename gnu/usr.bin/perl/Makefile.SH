@@ -381,7 +381,7 @@ CCCMD    = `sh $(shellflags) cflags "optimize='$(OPTIMIZE)'" $@`
 CCCMDSRC = `sh $(shellflags) cflags "optimize='$(OPTIMIZE)'" $<`
 
 CONFIGPM_FROM_CONFIG_SH = lib/Config.pm lib/Config_heavy.pl
-CONFIGPM = $(CONFIGPM_FROM_CONFIG_SH) lib/Config_git.pl
+CONFIGPM = $(CONFIGPM_FROM_CONFIG_SH)
 
 CONFIGPOD = lib/Config.pod
 
@@ -413,7 +413,7 @@ esac
 ## In the following dollars and backticks do not need the extra backslash.
 $spitshell >>$Makefile <<'!NO!SUBS!'
 
-private = preplibrary $(CONFIGPM) $(CONFIGPOD) lib/ExtUtils/Miniperl.pm git_version.h
+private = preplibrary $(CONFIGPM) $(CONFIGPOD) lib/ExtUtils/Miniperl.pm
 
 # Files to be built with variable substitution before miniperl
 # is available.
@@ -552,8 +552,9 @@ sperl.i: perl.c $(h)
 
 .PHONY: all translators utilities
 
-lib/Config_git.pl git_version.h: miniperl$(EXE_EXT) make_patchnum.pl
-	$(LDLIBPTH) $(RUN) ./miniperl$(EXE_EXT) -Ilib make_patchnum.pl
+# We use pre-generated lib/Config_git.pl and git_version.h files
+#lib/Config_git.pl git_version.h: miniperl$(EXE_EXT) make_patchnum.pl
+#	$(LDLIBPTH) $(RUN) ./miniperl$(EXE_EXT) -Ilib make_patchnum.pl
 
 # make sure that we recompile perl.c if the git version changes
 perl$(OBJ_EXT): git_version.h
@@ -1245,7 +1246,6 @@ _tidy:
 	-cd pod; $(LDLIBPTH) $(MAKE) clean
 	-cd utils; $(LDLIBPTH) $(MAKE) clean
 	-cd x2p; $(LDLIBPTH) $(MAKE) clean
-	-rm -f lib/Config_git.pl
 	-@for x in $(DYNALOADER) $(dynamic_ext) $(static_ext) $(nonxs_ext) ; do \
 	$(LDLIBPTH) $(RUN) ./miniperl$(EXE_EXT) -Ilib make_ext.pl --target=clean $$x MAKE=$(MAKE) ; \
 	done
