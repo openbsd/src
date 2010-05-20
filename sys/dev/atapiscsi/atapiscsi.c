@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.88 2010/03/23 01:57:19 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.89 2010/05/20 00:55:17 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -335,9 +335,7 @@ wdc_atapi_send_cmd(sc_xfer)
 
 	if (sc_xfer->sc_link->target != 0) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(sc_xfer);
-		splx(s);
 		return;
 	}
 
@@ -345,9 +343,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	    ? WDC_NOSLEEP : WDC_CANSLEEP);
 	if (xfer == NULL) {
 		sc_xfer->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(sc_xfer);
-		splx(s);
 		return;
 	}
 	if (sc_xfer->flags & SCSI_POLL)
@@ -1563,7 +1559,6 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 	struct atapi_return_args *ret;
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
-	int s;
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x error 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -1573,9 +1568,7 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 	if (xfer->c_flags & C_POLL)
 		wdc_enable_intr(chp);
 
-	s = splbio();
 	scsi_done(sc_xfer);
-	splx(s);
 
 	xfer->next = NULL;
 	return;

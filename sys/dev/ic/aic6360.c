@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.22 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.23 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -519,9 +519,7 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 	flags = xs->flags;
 	if ((acb = aic_get_acb(sc, flags)) == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -818,7 +816,6 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct aic_tinfo *ti = &sc->sc_tinfo[sc_link->target];
-	int s;
 
 	AIC_TRACE(("aic_done  "));
 
@@ -871,9 +868,7 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 
 	aic_free_acb(sc, acb, xs->flags);
 	ti->cmds++;
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 void

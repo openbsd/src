@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.17 2010/04/15 20:18:11 marco Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.18 2010/05/20 00:55:18 krw Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -4367,18 +4367,14 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
 	if ((dev = sc->sc_devs[link->target]) == NULL) {
 		/* device no longer exists */
 		xs->error = XS_SELTIMEOUT;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -4387,9 +4383,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 

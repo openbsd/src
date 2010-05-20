@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.33 2010/03/23 01:57:20 krw Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.34 2010/05/20 00:55:17 krw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -546,9 +546,7 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 	flags = xs->flags;
 	if ((scb = sea_get_scb(sea, flags)) == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 	scb->flags = SCB_ACTIVE;
@@ -562,9 +560,7 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 		 */
 		printf("%s: resetting\n", sea->sc_dev.dv_xname);
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1152,7 +1148,6 @@ void
 sea_done(struct sea_softc *sea, struct sea_scb *scb)
 {
 	struct scsi_xfer *xs = scb->xs;
-	int s;
 
 	timeout_del(&scb->xs->stimeout);
 
@@ -1168,9 +1163,7 @@ sea_done(struct sea_softc *sea, struct sea_scb *scb)
 			xs->error = XS_DRIVER_STUFFUP;
 	}
 	sea_free_scb(sea, scb, xs->flags);
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 /*

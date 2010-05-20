@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.96 2010/04/06 22:28:07 tedu Exp $	*/
+/*	$OpenBSD: ips.c,v 1.97 2010/05/20 00:55:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -871,9 +871,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		    "target %d, lun %d\n", sc->sc_dev.dv_xname,
 		    target, link->lun));
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -918,9 +916,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: no ccb\n",
 			    sc->sc_dev.dv_xname));
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 
@@ -979,9 +975,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: no ccb\n",
 			    sc->sc_dev.dv_xname));
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 
@@ -1001,9 +995,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 void
@@ -1036,9 +1028,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1051,9 +1041,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		DPRINTF(IPS_D_ERR, ("%s: ips_scsi_pt_cmd: no ccb\n",
 		    sc->sc_dev.dv_xname));
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1098,9 +1086,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		ips_ccb_put(sc, ccb);
 		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 	if (cmd->sgcnt > 0)

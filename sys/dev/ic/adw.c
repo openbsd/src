@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.43 2010/05/19 15:27:35 oga Exp $ */
+/*	$OpenBSD: adw.c,v 1.44 2010/05/20 00:55:17 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -632,9 +632,7 @@ retryagain:
 
 		case ADW_ERROR:
 			xs->error = XS_DRIVER_STUFFUP;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 
@@ -654,9 +652,7 @@ retryagain:
 		}
 	} else {
 		/* adw_build_req() has set xs->error already */
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 	}
 }
 

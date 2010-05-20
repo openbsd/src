@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.16 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.17 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -419,9 +419,7 @@ iopsp_scsi_cmd(xs)
 	tid = IOPSP_TIDMAP(sc->sc_tidmap, link->target, link->lun);
 	if (tid == IOPSP_TID_ABSENT || tid == IOPSP_TID_INUSE) {
 		xs->error = XS_SELTIMEOUT;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -439,9 +437,7 @@ iopsp_scsi_cmd(xs)
 		} else
 			xs->error = XS_NOERROR;
 
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -486,9 +482,7 @@ iopsp_scsi_cmd(xs)
 		if (error) {
 			xs->error = XS_DRIVER_STUFFUP;
 			iop_msg_free(iop, im);
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 		if ((xs->flags & SCSI_DATA_IN) == 0)
@@ -509,9 +503,7 @@ iopsp_scsi_cmd(xs)
 			iop_msg_unmap(iop, im);
 		iop_msg_free(iop, im);
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 	}
 }
 

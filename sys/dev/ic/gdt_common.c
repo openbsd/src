@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.49 2010/03/29 23:33:39 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.50 2010/05/20 00:55:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -1011,18 +1011,14 @@ gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
 	if ((ccb = gdt_get_ccb(sc, xs->flags)) == NULL) {
 		GDT_DPRINTF(GDT_D_CMD, ("no ccb available for %p ", xs));
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 

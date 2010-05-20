@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.203 2010/05/18 20:54:34 oga Exp $	*/
+/*	$OpenBSD: ami.c,v 1.204 2010/05/20 00:55:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1339,9 +1339,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1352,9 +1350,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1380,8 +1376,8 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
 		ami_put_ccb(ccb);
-		scsi_done(xs);
 		splx(s);
+		scsi_done(xs);
 		return;
 	}
 
@@ -1463,9 +1459,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		AMI_DPRINTF(AMI_D_CMD, ("no target %d ", target));
 		/* XXX should be XS_SENSE and sense filled out */
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1486,9 +1480,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		splx(s);
 		if (ccb == NULL) {
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 
@@ -1515,9 +1507,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		AMI_DPRINTF(AMI_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
 		    target));
 		xs->error = XS_NOERROR;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 
 	case REQUEST_SENSE:
@@ -1531,9 +1521,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ami_copy_internal_data(xs, &sd, sizeof(sd));
 
 		xs->error = XS_NOERROR;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 
 	case INQUIRY:
@@ -1551,9 +1539,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ami_copy_internal_data(xs, &inq, sizeof(inq));
 
 		xs->error = XS_NOERROR;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 
 	case READ_CAPACITY:
@@ -1564,9 +1550,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ami_copy_internal_data(xs, &rcd, sizeof(rcd));
 
 		xs->error = XS_NOERROR;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 
 	default:
@@ -1574,9 +1558,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		    xs->cmd->opcode, target));
 
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1596,9 +1578,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		printf("%s: out of bounds %u-%u >= %u\n", DEVNAME(sc),
 		    blockno, blockcnt, sc->sc_hdr[target].hd_size);
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1607,9 +1587,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1634,8 +1612,8 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
 		ami_put_ccb(ccb);
-		scsi_done(xs);
 		splx(s);
+		scsi_done(xs);
 		return;
 	}
 

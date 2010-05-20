@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.22 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: bha.c,v 1.23 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -1406,9 +1406,7 @@ bha_scsi_cmd(xs)
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
 	bha_free_ccb(sc, ccb);
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 /*

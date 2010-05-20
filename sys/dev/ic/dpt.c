@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.24 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.25 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -1004,9 +1004,7 @@ dpt_scsi_cmd(xs)
 		
 			xs->error = XS_DRIVER_STUFFUP;
 			dpt_free_ccb(sc, ccb);
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 
@@ -1061,9 +1059,7 @@ dpt_scsi_cmd(xs)
 		printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
 		dpt_free_ccb(sc, ccb);
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 

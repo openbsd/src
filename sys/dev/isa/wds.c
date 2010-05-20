@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.33 2010/03/23 01:57:20 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.34 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -1058,9 +1058,7 @@ wds_scsi_cmd(xs)
 		/* XXX Fix me! */
 		printf("%s: reset!\n", sc->sc_dev.dv_xname);
 		wds_init(sc);
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1073,9 +1071,7 @@ wds_scsi_cmd(xs)
 #endif
 	if ((scb = wds_get_scb(sc, flags, NEEDBUFFER(sc))) == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 	scb->xs = xs;

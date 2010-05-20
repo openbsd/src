@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.8 2010/03/23 01:57:19 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.9 2010/05/20 00:55:17 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -207,12 +207,8 @@ vscsi_cmd(struct scsi_xfer *xs)
 void
 vscsi_xs_stuffup(struct scsi_xfer *xs)
 {
-	int				s;
-
 	xs->error = XS_DRIVER_STUFFUP;
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 int
@@ -392,7 +388,6 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 	struct scsi_link		*link;
 	int				rv = 0;
 	int				polled;
-	int				s;
 
 	TAILQ_FOREACH(ccb, &sc->sc_ccb_t2i, ccb_entry) {
 		if (ccb->ccb_tag == t2i->tag)
@@ -426,9 +421,7 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 
 	polled = ISSET(xs->flags, SCSI_POLL);
 
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 
 	if (polled) {
 		ccb->ccb_xs = NULL;

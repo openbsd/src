@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.37 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: cac.c,v 1.38 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -597,9 +597,7 @@ cac_scsi_cmd(xs)
 
 	if (target >= sc->sc_nunits || link->lun != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 

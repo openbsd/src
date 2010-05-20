@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.45 2010/05/18 20:57:20 oga Exp $	*/
+/*	$OpenBSD: aac.c,v 1.46 2010/05/20 00:55:17 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2092,8 +2092,8 @@ aac_command_timeout(struct aac_command *cm)
 		struct scsi_xfer *xs = cm->cm_private;
 		int s = splbio();
 		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
 		splx(s);
+		scsi_done(xs);
 
 		aac_remove_bio(cm);
 		aac_unmap_command(cm);
@@ -2505,9 +2505,7 @@ aac_raw_scsi_cmd(struct scsi_xfer *xs)
 
 	/* XXX Not yet implemented */
 	xs->error = XS_DRIVER_STUFFUP;
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 #endif
 

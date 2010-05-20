@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.38 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.39 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -953,9 +953,7 @@ ahb_scsi_cmd(xs)
 	flags = xs->flags;
 	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 	ecb->xs = xs;
@@ -971,9 +969,7 @@ ahb_scsi_cmd(xs)
 		ecb->flags |= ECB_IMMED;
 		if (sc->immed_ecb) {
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 		sc->immed_ecb = ecb;
@@ -1077,9 +1073,7 @@ ahb_scsi_cmd(xs)
 			    sc->sc_dev.dv_xname, AHB_NSEG);
 			xs->error = XS_DRIVER_STUFFUP;
 			ahb_free_ecb(sc, ecb, flags);
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 	} else {	/* No data xfer, use non S/G values */

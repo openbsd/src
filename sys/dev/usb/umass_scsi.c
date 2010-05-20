@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.28 2010/03/23 01:57:20 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.29 2010/05/20 00:55:18 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_link *sc_link = xs->sc_link;
 	struct umass_softc *sc = sc_link->adapter_softc;
 	struct scsi_generic *cmd;
-	int cmdlen, dir, s;
+	int cmdlen, dir;
 
 #ifdef UMASS_DEBUG
 	microtime(&sc->tv);
@@ -249,9 +249,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 
 	/* Return if command finishes early. */
  done:
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 void
@@ -270,7 +268,6 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	struct scsi_xfer *xs = priv;
 	struct scsi_link *link = xs->sc_link;
 	int cmdlen;
-	int s;
 #ifdef UMASS_DEBUG
 	struct timeval tv;
 	u_int delta;
@@ -375,9 +372,7 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		}
 	}
 
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 /*
@@ -388,7 +383,6 @@ umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		    int status)
 {
 	struct scsi_xfer *xs = priv;
-	int s;
 
 	DPRINTF(UDMASS_CMD,("umass_scsi_sense_cb: xs=%p residue=%d "
 		"status=%d\n", xs, residue, status));
@@ -428,8 +422,6 @@ umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		}
 	}
 
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.45 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.46 2010/05/20 00:55:17 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -812,9 +812,7 @@ ncr53c9x_scsi_cmd(xs)
 		/* Initialize LUN info and add to list. */
 		if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT)) == NULL) {
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 		bzero(li, sizeof(*li));
@@ -829,9 +827,7 @@ ncr53c9x_scsi_cmd(xs)
 
 	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1097,7 +1093,7 @@ ncr53c9x_done(sc, ecb)
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
-	int s, lun = sc_link->lun;
+	int lun = sc_link->lun;
 	struct ncr53c9x_linfo *li = TINFO_LUN(ti, lun);
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
@@ -1173,9 +1169,7 @@ ncr53c9x_done(sc, ecb)
 
 	ncr53c9x_free_ecb(sc, ecb, xs->flags);
 	ti->cmds++;
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 void

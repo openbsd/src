@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.79 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.80 2010/05/20 00:55:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -432,9 +432,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 			printf("%s: master command not idle\n",
 			    sc->sc_dev.dv_xname);
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 #endif
@@ -449,9 +447,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 			    sc->sc_dev.dv_xname, slp->target);
 #endif
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 		if (vs_getcqe(sc, &cqep, &iopb)) {

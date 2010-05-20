@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.8 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: sii.c,v 1.9 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -269,9 +269,7 @@ sii_scsi_cmd(xs)
 	if ((xs->flags & ITSDONE) != 0)
 		return;
 	xs->error = XS_TIMEOUT;
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.68 2010/04/28 21:23:18 kettenis Exp $	*/
+/*	$OpenBSD: aha.c,v 1.69 2010/05/20 00:55:17 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1258,9 +1258,7 @@ aha_scsi_cmd(xs)
 	flags = xs->flags;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
 		xs->error = XS_NO_CCB;
-		s = splbio();
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 	ccb->xs = xs;
@@ -1291,9 +1289,7 @@ aha_scsi_cmd(xs)
 		    xs->datalen, NULL, BUS_DMA_NOWAIT) != 0) {
 			aha_free_ccb(sc, ccb);
 			xs->error = XS_NO_CCB;
-			s = splbio();
 			scsi_done(xs);
-			splx(s);
 			return;
 		}
 		for (seg = 0; seg < ccb->dmam->dm_nsegs; seg++) {

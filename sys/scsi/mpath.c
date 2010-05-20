@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.13 2010/03/23 01:57:20 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.14 2010/05/20 00:55:18 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -126,12 +126,8 @@ mpath_attach(struct device *parent, struct device *self, void *aux)
 void
 mpath_xs_stuffup(struct scsi_xfer *xs)
 {
-	int s;
-
 	xs->error = XS_DRIVER_STUFFUP;
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 int
@@ -195,9 +191,7 @@ mpath_done(struct scsi_xfer *mxs)
 
 	scsi_xs_put(mxs);
 
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 void
