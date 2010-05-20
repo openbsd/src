@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.33 2007/08/02 10:50:25 fgsch Exp $	*/
+/*	$OpenBSD: edit.c,v 1.34 2010/05/20 01:13:07 fgsch Exp $	*/
 
 /*
  * Command line editing - common code
@@ -290,32 +290,6 @@ static char	*add_glob(const char *str, int slen);
 static void	glob_table(const char *pat, XPtrV *wp, struct table *tp);
 static void	glob_path(int flags, const char *pat, XPtrV *wp,
 				const char *path);
-
-#if 0 /* not used... */
-int	x_complete_word(const char *str, int slen, int is_command,
-	    int *multiple, char **ret);
-int
-x_complete_word(const char *str, int slen, int is_command, int *multiple,
-    char **ret)
-{
-	int nwords;
-	int prefix_len;
-	char **words;
-
-	nwords = (is_command ? x_command_glob : x_file_glob)(XCF_FULLPATH,
-	    str, slen, &words);
-	*nwordsp = nwords;
-	if (nwords == 0) {
-		*ret = (char *) 0;
-		return -1;
-	}
-
-	prefix_len = x_longest_prefix(nwords, words);
-	*ret = str_nsave(words[0], prefix_len, ATEMP);
-	x_free_words(nwords, words);
-	return prefix_len;
-}
-#endif /* 0 */
 
 void
 x_print_expansions(int nwords, char *const *words, int is_command)
@@ -672,8 +646,8 @@ add_glob(const char *str, int slen)
 	for (s = toglob; *s; s++) {
 		if (*s == '\\' && s[1])
 			s++;
-		else if (*s == '*' || *s == '[' || *s == '?' || *s == '$'
-			 || (s[1] == '(' /*)*/ && strchr("*+?@!", *s)))
+		else if (*s == '*' || *s == '[' || *s == '?' || *s == '$' ||
+		    (s[1] == '(' /*)*/ && strchr("+@!", *s)))
 			break;
 		else if (*s == '/')
 			saw_slash = true;
@@ -844,10 +818,11 @@ x_escape(const char *s, size_t len, int (*putbuf_func) (const char *, size_t))
 {
 	size_t add, wlen;
 	const char *ifs = str_val(local("IFS", 0));
-	int rval=0;
+	int rval = 0;
 
 	for (add = 0, wlen = len; wlen - add > 0; add++) {
-		if (strchr("\\$(){}[]?*&;#|<>\"'`", s[add]) || strchr(ifs, s[add])) {
+		if (strchr("\"#$&'()*;<=>?[\\]`{|}", s[add]) ||
+		    strchr(ifs, s[add])) {
 			if (putbuf_func(s, add) != 0) {
 				rval = -1;
 				break;
