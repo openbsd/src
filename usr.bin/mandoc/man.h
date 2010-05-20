@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.19 2010/05/16 00:54:03 schwarze Exp $ */
+/*	$Id: man.h,v 1.20 2010/05/20 00:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -55,9 +55,6 @@ enum	mant {
 	MAN_Sp,
 	MAN_Vb,
 	MAN_Ve,
-	MAN_if,
-	MAN_ie,
-	MAN_el,
 	MAN_MAX,
 };
 
@@ -91,7 +88,6 @@ struct	man_node {
 #define	MAN_VALID	(1 << 0)
 #define	MAN_ACTED	(1 << 1)
 #define	MAN_EOS		(1 << 2)
-#define	MAN_USE 	(1 << 3)
 	enum man_type	 type;
 	char		*string;
 	struct man_node	*head;
@@ -115,7 +111,7 @@ struct	man;
 void	 	  man_free(struct man *);
 struct	man	 *man_alloc(void *, int, const struct man_cb *);
 void		  man_reset(struct man *);
-int	 	  man_parseln(struct man *, int, char *buf);
+int	 	  man_parseln(struct man *, int, char *, int);
 int		  man_endparse(struct man *);
 
 const struct man_node *man_node(const struct man *);

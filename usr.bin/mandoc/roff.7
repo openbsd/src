@@ -1,0 +1,265 @@
+.\"	$Id: roff.7,v 1.1 2010/05/20 00:58:02 schwarze Exp $
+.\"
+.\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 20 2010 $
+.Dt ROFF 7
+.Os
+.Sh NAME
+.Nm roff
+.Nd roff language reference
+.Sh DESCRIPTION
+The
+.Nm roff
+language is a general-purpose text-formatting language.  The purpose of
+this document is to consistently describe those language constructs
+accepted by the
+.Xr mandoc 1
+utility.  It is a work in progress.
+.Pp
+An
+.Nm
+document follows simple rules:  lines beginning with the control
+characters
+.Sq \.
+or
+.Sq \(aq
+are parsed for macros.  Other lines are interpreted within the scope of
+prior macros:
+.Bd -literal -offset indent
+\&.xx Macro lines change control state.
+Other lines are interpreted within the current state.
+.Ed
+.Sh LANGUAGE SYNTAX
+.Nm
+documents may contain only graphable 7-bit ASCII characters, the space
+character, and, in certain circumstances, the tab character.  All
+manuals must have
+.Ux
+line terminators.
+.Sh MACRO SYNTAX
+Macros are arbitrary in length and begin with a control character ,
+.Sq \.
+or
+.Sq \(aq ,
+at the beginning of the line.
+An arbitrary amount of whitespace may sit between the control character
+and the macro name.
+Thus, the following are equivalent:
+.Bd -literal -offset indent
+\&.if
+\&.\ \ \ \&if
+.Ed
+.Sh REFERENCE
+This section is a canonical reference of all macros, arranged
+alphabetically.
+.Ss \&am
+The syntax of this macro is the same as that of
+.Sx \&ig ,
+except that a leading argument must be specified.
+It is ignored, as are its children.
+.Ss \&ami
+The syntax of this macro is the same as that of
+.Sx \&ig ,
+except that a leading argument must be specified.
+It is ignored, as are its children.
+.Ss \&am1
+The syntax of this macro is the same as that of
+.Sx \&ig ,
+except that a leading argument must be specified.
+It is ignored, as are its children.
+.Ss \&de
+The syntax of this macro is the same as that of
+.Sx \&ig ,
+except that a leading argument must be specified.
+It is ignored, as are its children.
+.Ss \&dei
+The syntax of this macro is the same as that of
+.Sx \&ig ,
+except that a leading argument must be specified.
+It is ignored, as are its children.
+.Ss \&de1
+The syntax of this macro is the same as that of
+.Sx \&ig ,
+except that a leading argument must be specified.
+It is ignored, as are its children.
+.Ss \&el
+The
+.Qq else
+half of an if/else conditional.
+Pops a result off the stack of conditional evaluations pushed by
+.Sx \&ie
+and uses it as its conditional.
+If no stack entries are present (e.g., due to no prior
+.Sx \&ie
+calls)
+then false is assumed.
+The syntax of this macro is similar to
+.Sx \&if
+except that the conditional is missing.
+.Ss \&ie
+The
+.Qq if
+half of an if/else conditional.
+The result of the conditional is pushed into a stack used by subsequent
+invocations of
+.Sx \&el ,
+which may be separated by any intervening input (or not exist at all).
+Its syntax is equivalent to
+.Sx \&if .
+.Ss \&if
+Begins a conditional that always evaluates to false.
+If a conditional is false, its children are not processed, but are
+syntactically interpreted to preserve the integrity of the input
+document.
+Thus,
+.Pp
+.D1 \&.if t \e .ig
+.Pp
+will discard the
+.Sq \&.ig ,
+which may lead to interesting results, but
+.Pp
+.D1 \&.if t \e .if t \e{\e
+.Pp
+will continue to syntactically interpret to the block close of the final
+conditional.
+Sub-conditionals, in this case, obviously inherit the truth value of
+the parent.
+This macro has the following syntax:
+.Pp
+.Bd -literal -offset indent -compact
+\&.if COND \e{\e
+BODY...
+\&.\e}
+.Ed
+.Bd -literal -offset indent -compact
+\&.if COND \e{ BODY
+BODY... \e}
+.Ed
+.Bd -literal -offset indent -compact
+\&.if COND \e{ BODY
+BODY...
+\&.\e}
+.Ed
+.Bd -literal -offset indent -compact
+\&.if COND \e
+BODY
+.Ed
+.Pp
+COND is a conditional (for the time being, this always evaluates to
+false).
+.Pp
+If the BODY section is begun by an escaped brace
+.Sq \e{ ,
+scope continues until a closing-brace macro
+.Sq \.\e} .
+If the BODY is not enclosed in braces, scope continues until the next
+macro or word.
+If the COND is followed by a BODY on the same line, whether after a
+brace or not, then macros
+.Em must
+begin with a control character.
+It is generally more intuitive, in this case, to write
+.Bd -literal -offset indent
+\&.if COND \e{\e
+\&.foo
+bar
+\&.\e}
+.Ed
+.Pp
+than having the macro follow as
+.Pp
+.D1 \&.if COND \e{ .foo
+.Pp
+The scope of a conditional is always parsed, but only executed if the
+conditional evaluates to true.
+.Pp
+Note that text subsequent a
+.Sq \&.\e}
+macro is discarded.
+Furthermore, if an explicit closing sequence
+.Sq \e}
+is specified in a free-form line, the entire line is accepted within the
+scope of the prior macro, not only the text preceding the close.
+.Ss \&ig
+Ignore input.
+Accepts the following syntax:
+.Pp
+.Bd -literal -offset indent -compact
+\&.ig
+BODY...
+\&..
+.Ed
+.Bd -literal -offset indent -compact
+\&.ig END
+BODY...
+\&.END
+.Ed
+.Pp
+In the first case, input is ignored until a
+.Sq \&..
+macro is encountered on its own line.
+In the second case, input is ignored until a
+.Sq \&.END
+is encountered.
+Text subsequent the
+.Sq \&.END
+or
+.Sq \&..
+is discarded.
+.Pp
+Do not use the escape
+.Sq \e
+anywhere in the definition of END.
+It causes very strange behaviour.
+Furthermore, if you redefine a
+.Nm
+macro, such as
+.Pp
+.D1 \&.ig if
+.Pp
+the subsequent invocation of
+.Sx \&if
+will first signify the end of comment, then be invoked as a macro.
+This behaviour really shouldn't be counted upon.
+.Sh COMPATIBILITY
+This section documents compatibility between mandoc and other other
+troff implementations, at this time limited to GNU troff
+.Pq Qq groff .
+The term
+.Qq historic groff
+refers to groff versions before the
+.Pa doc.tmac
+file re-write
+.Pq somewhere between 1.15 and 1.19 .
+.Pp
+.Bl -dash -compact
+.It
+Historic groff did not accept white-space buffering the custom END tag
+for the
+.Sx \&ig
+macro.
+.It
+The
+.Sx \&if
+and family would print funny white-spaces with historic groff when
+depending on next-line syntax.
+.El
+.Sh AUTHORS
+The
+.Nm
+reference was written by
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .

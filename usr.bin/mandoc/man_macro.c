@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.16 2010/05/16 00:54:03 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.17 2010/05/20 00:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,7 +30,6 @@ enum	rew {
 static	int		 blk_close(MACRO_PROT_ARGS);
 static	int		 blk_exp(MACRO_PROT_ARGS);
 static	int		 blk_imp(MACRO_PROT_ARGS);
-static	int		 blk_cond(MACRO_PROT_ARGS);
 static	int		 in_line_eoln(MACRO_PROT_ARGS);
 
 static	int		 rew_scope(enum man_type, 
@@ -78,9 +77,6 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* Sp */
 	{ in_line_eoln, 0 }, /* Vb */
 	{ in_line_eoln, 0 }, /* Ve */
-	{ blk_cond, 0 }, /* if */
-	{ blk_cond, 0 }, /* ie */
-	{ blk_cond, 0 }, /* el */
 };
 
 const	struct man_macro * const man_macros = __man_macros;
@@ -252,50 +248,6 @@ rew_scope(enum man_type type, struct man *m, enum mant tok)
 
 
 /*
- * Closure for brace blocks (if, ie, el).
- */
-int
-man_brace_close(struct man *m, int line, int ppos)
-{
-	struct man_node	*nif;
-
-	nif = m->last->parent;
-	while (nif &&
-	    MAN_if != nif->tok &&
-	    MAN_ie != nif->tok &&
-	    MAN_el != nif->tok)
-		nif = nif->parent;
-
-	if (NULL == nif)
-		return(man_pwarn(m, line, ppos, WNOSCOPE));
-
-	if (MAN_ie != nif->tok || MAN_USE & nif->flags)
-		m->flags &= ~MAN_EL_USE;
-	else
-		m->flags |= MAN_EL_USE;
-
-	if (MAN_USE & nif->flags) {
-		if (nif->prev) {
-			nif->prev->next = nif->child;
-			nif->child->prev = nif->prev;
-			nif->prev = NULL;
-		} else {
-			nif->parent->child = nif->child;
-		}
-		nif->parent->nchild += nif->nchild - 1;
-		while (nif->child) {
-			nif->child->parent = nif->parent;
-			nif->child = nif->child->next;
-		}
-		nif->nchild = 0;
-		nif->parent = NULL;
-	}
-	man_node_delete(m, nif);
-	return(1);
-}
-
-
-/*
  * Close out a generic explicit macro.
  */
 /* ARGSUSED */
@@ -436,50 +388,6 @@ blk_imp(MACRO_PROT_ARGS)
 	if ( ! rew_scope(MAN_HEAD, m, tok))
 		return(0);
 	return(man_body_alloc(m, line, ppos, tok));
-}
-
-
-/*
- * Parse a conditional roff instruction.
- */
-int
-blk_cond(MACRO_PROT_ARGS)
-{ 
-	char		*p = buf + *pos;
-	int		 use;
-
-	if (MAN_el == tok)
-		use = m->flags & MAN_EL_USE;
-	else {
-		use = 'n' == *p++;
-		/* XXX skip the rest of the condition for now */
-		while (*p && !isblank(*p))
-			p++;
-	}
-	m->flags &= ~MAN_EL_USE;
-
-	/* advance to the code controlled by the condition */
-	while (*p && isblank(*p))
-		p++;
-	if ('\0' == *p)
-		return(1);
-
-	/* single-line body */
-	if (strncmp("\\{", p, 2)) {
-		if (use && ! man_parseln(m, line, p))
-			return(0);
-	        if (MAN_ie == tok && !use)
-                        m->flags |= MAN_EL_USE;
-		return(1);
-        }
-
-	/* multi-line body */
-	if ( ! man_block_alloc(m, line, ppos, tok))
-		return(0);
-	if (use)
-		m->last->flags |= MAN_USE;
-	p += 2;
-	return(*p ? man_parseln(m, line, p) : 1);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.31 2010/05/16 01:16:25 schwarze Exp $ */
+/*	$Id: main.c,v 1.32 2010/05/20 00:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -375,7 +375,7 @@ static void
 fdesc(struct curparse *curp)
 {
 	struct buf	 ln, blk;
-	int		 i, pos, lnn, lnn_start, with_mmap;
+	int		 i, pos, lnn, lnn_start, with_mmap, of;
 	enum rofferr	 re;
 	struct man	*man;
 	struct mdoc	*mdoc;
@@ -456,22 +456,42 @@ fdesc(struct curparse *curp)
 				goto bailout;
 		ln.buf[pos] = '\0';
 
-		re = roff_parseln(roff, lnn_start, &ln.buf, &ln.sz);
+		/*
+		 * A significant amount of complexity is contained by
+		 * the roff preprocessor.  It's line-oriented but can be
+		 * expressed on one line, so we need at times to
+		 * readjust our starting point and re-run it.  The roff
+		 * preprocessor can also readjust the buffers with new
+		 * data, so we pass them in wholesale.
+		 */
+
+		of = 0;
+		do {
+			re = roff_parseln(roff, lnn_start, 
+					&ln.buf, &ln.sz, of, &of);
+		} while (ROFF_RERUN == re);
+
 		if (ROFF_IGN == re)
 			continue;
 		else if (ROFF_ERR == re)
 			goto bailout;
 
-		/* If unset, assign parser in pset(). */
+		/*
+		 * If input parsers have not been allocated, do so now.
+		 * We keep these instanced betwen parsers, but set them
+		 * locally per parse routine since we can use different
+		 * parsers with each one.
+		 */
 
-		if ( ! (man || mdoc) && ! pset(ln.buf, pos, curp, &man, &mdoc))
+		if ( ! (man || mdoc))
+			if ( ! pset(ln.buf + of, pos - of, curp, &man, &mdoc))
+				goto bailout;
+
+		/* Lastly, push down into the parsers themselves. */
+
+		if (man && ! man_parseln(man, lnn_start, ln.buf, of))
 			goto bailout;
-
-		/* Pass down into parsers. */
-
-		if (man && ! man_parseln(man, lnn_start, ln.buf))
-			goto bailout;
-		if (mdoc && ! mdoc_parseln(mdoc, lnn_start, ln.buf))
+		if (mdoc && ! mdoc_parseln(mdoc, lnn_start, ln.buf, of))
 			goto bailout;
 	}
 
@@ -481,6 +501,8 @@ fdesc(struct curparse *curp)
 		fprintf(stderr, "%s: Not a manual\n", curp->file);
 		goto bailout;
 	}
+
+	/* Clean up the parse routine ASTs. */
 
 	if (mdoc && ! mdoc_endparse(mdoc))
 		goto bailout;
@@ -765,7 +787,8 @@ mwarn(void *arg, int line, int col, const char *msg)
 static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"ok",
 	"multi-line scope open on exit",
-	"request for scope closure when no matching scope is open",
+	"request for scope closure when no matching scope is open: ignored",
+	"macro requires line argument(s): ignored",
 	"line arguments will be lost",
 	"memory exhausted"
 };

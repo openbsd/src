@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.1 2010/05/16 01:46:39 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.2 2010/05/20 00:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,9 +22,10 @@ __BEGIN_DECLS
 enum	mandocerr {
 	MANDOCERR_OK,
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
-	MANDOCERR_NOSCOPE, /* request scope close w/none open */
 #define	MANDOCERR_WARNING	MANDOCERR_SCOPEEXIT
 
+	MANDOCERR_NOSCOPE, /* request scope close w/none open */
+	MANDOCERR_NOARGS, /* macro requires argument(s) */
 	MANDOCERR_ARGSLOST, /* line arguments will be lost */
 #define	MANDOCERR_ERROR		MANDOCERR_ARGSLOST
 

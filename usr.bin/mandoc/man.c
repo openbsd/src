@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.30 2010/05/16 00:54:03 schwarze Exp $ */
+/*	$Id: man.c,v 1.31 2010/05/20 00:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -59,7 +59,6 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"nf",		"fi",		"r",		"RE",
 	"RS",		"DT",		"UC",		"PD",
 	"Sp",		"Vb",		"Ve",
-	"if",		"ie",		"el",
 	};
 
 const	char * const *man_macronames = __man_macronames;
@@ -71,11 +70,11 @@ static	int		 man_node_append(struct man *,
 static	void		 man_node_free(struct man_node *);
 static	void		 man_node_unlink(struct man *, 
 				struct man_node *);
-static	int		 man_ptext(struct man *, int, char *);
-static	int		 man_pmacro(struct man *, int, char *);
+static	int		 man_ptext(struct man *, int, char *, int);
+static	int		 man_pmacro(struct man *, int, char *, int);
 static	void		 man_free1(struct man *);
 static	void		 man_alloc1(struct man *);
-static	int		 macrowarn(struct man *, int, const char *);
+static	int		 macrowarn(struct man *, int, const char *, int);
 
 
 const struct man_node *
@@ -145,29 +144,15 @@ man_endparse(struct man *m)
 
 
 int
-man_parseln(struct man *m, int ln, char *buf)
+man_parseln(struct man *m, int ln, char *buf, int offs)
 {
-	char		*p;
-	size_t		 len;
-	int		 brace_close = 0;
 
-	if ((len = strlen(buf)) > 1) {
-		p = buf + (len - 2);
-		if (p[0] == '\\' && p[1] == '}') {
-			brace_close = 1;
-			*p = '\0';
-		}
-	}
+	if (MAN_HALT & m->flags)
+		return(0);
 
-	if ('.' == *buf || '\'' == *buf) {
-		if ( ! man_pmacro(m, ln, buf))
-			return(0);
-	} else {
-		if ( ! man_ptext(m, ln, buf))
-			return(0);
-	}
-
-	return(brace_close ? man_brace_close(m, ln, len-2) : 1);
+	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
+			man_pmacro(m, ln, buf, offs) : 
+			man_ptext(m, ln, buf, offs));
 }
 
 
@@ -377,31 +362,33 @@ man_node_delete(struct man *m, struct man_node *p)
 
 
 static int
-man_ptext(struct man *m, int line, char *buf)
+man_ptext(struct man *m, int line, char *buf, int offs)
 {
 	int		 i;
 
 	/* Ignore bogus comments. */
 
-	if ('\\' == buf[0] && '.' == buf[1] && '\"' == buf[2])
-		return(man_pwarn(m, line, 0, WBADCOMMENT));
+	if ('\\' == buf[offs] && 
+			'.' == buf[offs + 1] && 
+			'"' == buf[offs + 2])
+		return(man_pwarn(m, line, offs, WBADCOMMENT));
 
 	/* Literal free-form text whitespace is preserved. */
 
 	if (MAN_LITERAL & m->flags) {
-		if ( ! man_word_alloc(m, line, 0, buf))
+		if ( ! man_word_alloc(m, line, offs, buf + offs))
 			return(0);
 		goto descope;
 	}
 
 	/* Pump blank lines directly into the backend. */
 
-	for (i = 0; ' ' == buf[i]; i++)
+	for (i = offs; ' ' == buf[i]; i++)
 		/* Skip leading whitespace. */ ;
 
 	if ('\0' == buf[i]) {
 		/* Allocate a blank entry. */
-		if ( ! man_word_alloc(m, line, 0, ""))
+		if ( ! man_word_alloc(m, line, offs, ""))
 			return(0);
 		goto descope;
 	}
@@ -428,7 +415,7 @@ man_ptext(struct man *m, int line, char *buf)
 		buf[i] = '\0';
 	}
 
-	if ( ! man_word_alloc(m, line, 0, buf))
+	if ( ! man_word_alloc(m, line, offs, buf + offs))
 		return(0);
 
 	/*
@@ -438,7 +425,6 @@ man_ptext(struct man *m, int line, char *buf)
 	 */
 
 	assert(i);
-
 	if (mandoc_eos(buf, (size_t)i))
 		m->last->flags |= MAN_EOS;
 
@@ -461,23 +447,23 @@ descope:
 
 	if ( ! man_unscope(m, m->last->parent, WERRMAX))
 		return(0);
-	return(man_body_alloc(m, line, 0, m->last->tok));
+	return(man_body_alloc(m, line, offs, m->last->tok));
 }
 
 
 static int
-macrowarn(struct man *m, int ln, const char *buf)
+macrowarn(struct man *m, int ln, const char *buf, int offs)
 {
 	if ( ! (MAN_IGN_MACRO & m->pflags))
-		return(man_verr(m, ln, 0, "unknown macro: %s%s", 
+		return(man_verr(m, ln, offs, "unknown macro: %s%s", 
 				buf, strlen(buf) > 3 ? "..." : ""));
-	return(man_vwarn(m, ln, 0, "unknown macro: %s%s",
+	return(man_vwarn(m, ln, offs, "unknown macro: %s%s",
 				buf, strlen(buf) > 3 ? "..." : ""));
 }
 
 
 int
-man_pmacro(struct man *m, int ln, char *buf)
+man_pmacro(struct man *m, int ln, char *buf, int offs)
 {
 	int		 i, j, ppos;
 	enum mant	 tok;
@@ -486,10 +472,12 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 	/* Comments and empties are quickly ignored. */
 
-	if ('\0' == buf[1])
+	offs++;
+
+	if ('\0' == buf[offs])
 		return(1);
 
-	i = 1;
+	i = offs;
 
 	/*
 	 * Skip whitespace between the control character and initial
@@ -534,7 +522,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 	}
 	
 	if (MAN_MAX == (tok = man_hash_find(mac))) {
-		if ( ! macrowarn(m, ln, mac))
+		if ( ! macrowarn(m, ln, mac, ppos))
 			goto err;
 		return(1);
 	}
@@ -640,7 +628,7 @@ out:
 
 	if ( ! man_unscope(m, m->last->parent, WERRMAX))
 		return(0);
-	return(man_body_alloc(m, ln, 0, m->last->tok));
+	return(man_body_alloc(m, ln, offs, m->last->tok));
 
 err:	/* Error out. */
 

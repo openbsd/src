@@ -1,4 +1,4 @@
-/*	$Id: roff.h,v 1.1 2010/05/16 00:54:03 schwarze Exp $ */
+/*	$Id: roff.h,v 1.2 2010/05/20 00:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,9 +18,10 @@
 #define ROFF_H
 
 enum	rofferr {
-	ROFF_CONT, /* re-process line with libmdoc or libman */
-	ROFF_IGN, /* ignore line */
-	ROFF_ERR, /* badness */
+	ROFF_CONT, /* continue processing line */
+	ROFF_RERUN, /* re-run roff interpreter with offset */
+	ROFF_IGN, /* ignore current line */
+	ROFF_ERR /* badness: puke and stop */
 };
 
 __BEGIN_DECLS
@@ -30,7 +31,8 @@ struct	roff;
 void	 	  roff_free(struct roff *);
 struct	roff	 *roff_alloc(mandocmsg, void *);
 void		  roff_reset(struct roff *);
-enum	rofferr	  roff_parseln(struct roff *, int, char **, size_t *);
+enum	rofferr	  roff_parseln(struct roff *, int, 
+			char **, size_t *, int, int *);
 int		  roff_endparse(struct roff *);
 
 __END_DECLS
