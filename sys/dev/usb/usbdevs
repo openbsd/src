@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.497 2010/05/05 19:32:49 damien Exp $
+$OpenBSD: usbdevs,v 1.498 2010/05/20 11:00:11 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1917,6 +1917,7 @@ product INSIDEOUT EDGEPORT4DIN	0x0011	Edgeport/4 RS232/DIN
 product INSIDEOUT EDGEPORT16DC	0x0012	1/2 Edgeport/16
 product INSIDEOUT EDGEPORTCOMP	0x0013	Edgeport Compatible
 product INSIDEOUT EDGEPORT8I	0x0014	Edgeport/8 RS422
+product	INSIDEOUT WATCHPORTH	0x0305	WatchPort/H
 product INSIDEOUT MT4X56USB	0x1403	OEM device
 
 /* In-System products */
@@ -2993,9 +2994,11 @@ product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
 
 /* ZTE products */
 product ZTE CDMA_MSM		0x0001	CDMA Technologies MSM modem
+product ZTE MF633		0x0016	ZTE MF633 USUPA USB modem
 product ZTE MF637		0x0031	ZTE MF637 HSUPA USB modem
 product ZTE K3565Z		0x0063	ZTE K3565-Z USB MSM modem
-product ZTE UMASS		0x2000	ZTE USB MSM (umass mode)
+product	ZTE UMASS_INSTALLER2	0x0103	ZTE USB MSM installer 
+product ZTE UMASS_INSTALLER	0x2000	ZTE USB MSM installer
 product ZTE AC8700		0xfffe	AC8700 CDMA USB modem
 
 /* Quanta products */
