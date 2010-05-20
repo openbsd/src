@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.41 2010/05/19 08:31:23 thib Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.42 2010/05/20 02:32:02 marco Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -369,9 +369,8 @@ dirloop:
 
 	/* XXX: Figure out the length of the last component. */
 	cp = cnp->cn_nameptr;
-	while (*cp && (*cp != '/')) {
-		*cp++;
-	}
+	while (*cp && (*cp != '/'))
+		cp++;
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
 		error = ENAMETOOLONG;
