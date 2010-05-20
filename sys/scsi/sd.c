@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.189 2010/05/19 05:50:50 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.190 2010/05/20 00:04:38 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1006,7 +1006,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 {
 	union scsi_mode_sense_buf *buf;
 	struct page_caching_mode *mode = NULL;
-	int set = 0;
+	u_int wrcache, rdcache;
 	int big;
 	int rv;
 
@@ -1025,35 +1025,28 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 		goto done;
 	}
 
+	wrcache = (ISSET(mode->flags, PG_CACHE_FL_WCE) ? 1 : 0);
+	rdcache = (ISSET(mode->flags, PG_CACHE_FL_RCD) ? 0 : 1);
+
 	switch (cmd) {
 	case DIOCGCACHE:
-		dkc->wrcache = (ISSET(mode->flags, PG_CACHE_FL_WCE) ? 1 : 0);
-		dkc->rdcache = (ISSET(mode->flags, PG_CACHE_FL_RCD) ? 0 : 1);
+		dkc->wrcache = wrcache;
+		dkc->rdcache = rdcache;
 		break;
 
 	case DIOCSCACHE:
-		if ((dkc->wrcache ? 1 : 0) != 
-		    (ISSET(mode->flags, PG_CACHE_FL_WCE) ? 1 : 0)) {
-			if (dkc->wrcache)
-				SET(mode->flags, PG_CACHE_FL_WCE);
-			else
-				CLR(mode->flags, PG_CACHE_FL_WCE);
-
-			set = 1;
-		}
-
-		if ((dkc->rdcache ? 1 : 0) != 
-		    (ISSET(mode->flags, PG_CACHE_FL_RCD) ? 0 : 1)) {
-			if (dkc->rdcache)
-				CLR(mode->flags, PG_CACHE_FL_RCD);
-			else
-				SET(mode->flags, PG_CACHE_FL_RCD);
-
-			set = 1;
-		}
-
-		if (!set)
+		if (dkc->wrcache == wrcache && dkc->rdcache == rdcache)
 			break;
+
+		if (dkc->wrcache)
+			SET(mode->flags, PG_CACHE_FL_WCE);
+		else
+			CLR(mode->flags, PG_CACHE_FL_WCE);
+
+		if (dkc->rdcache)
+			CLR(mode->flags, PG_CACHE_FL_RCD);
+		else
+			SET(mode->flags, PG_CACHE_FL_RCD);
 
 		if (big) {
 			rv = scsi_mode_select_big(sc->sc_link, SMS_PF,
