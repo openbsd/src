@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.67 2009/10/13 19:33:16 pirofti Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.68 2010/05/20 14:03:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -998,7 +998,9 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	/* prepare TX descriptor */
 	txdesc->pkgoffset = htole32(sizeof(*txdesc));
 	txdesc->pkglen = htole16(m->m_pkthdr.len);
-	bcopy(data, txdesc->dstaddrhigh, ETHER_ADDR_LEN);
+	bcopy(data, txdesc->dstaddrhigh, sizeof(txdesc->dstaddrhigh));
+	bcopy(data + sizeof(txdesc->dstaddrhigh), txdesc->dstaddrlow,
+	    sizeof(txdesc->dstaddrlow));
 
 	/* copy mbuf data to the buffer */
 	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_data + sizeof(*txdesc));
