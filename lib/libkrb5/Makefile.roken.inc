@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.roken.inc,v 1.4 2006/04/29 12:35:56 biorn Exp $
+# $OpenBSD: Makefile.roken.inc,v 1.5 2010/05/21 17:21:54 millert Exp $
 
 .PATH:	${KRB5SRC}/lib/roken
 
@@ -20,8 +20,6 @@ SRCS+=	base64.c \
 	simple_exec.c \
 	strcollect.c \
 	strlwr.c \
-	strndup.c \
-	strnlen.c \
 	strsep_copy.c \
 	strupr.c
 
