@@ -1249,7 +1249,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define NEED_SNPRINTF_PROTO 1
 
 /* define if the system is missing a prototype for strndup() */
-#define NEED_STRNDUP_PROTO 1
+#undef NEED_STRNDUP_PROTO
 
 /* define if the system is missing a prototype for strsep() */
 /* #undef NEED_STRSEP_PROTO */
