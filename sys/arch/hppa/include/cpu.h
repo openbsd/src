@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.71 2010/05/19 13:10:24 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.72 2010/05/21 15:24:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -68,6 +68,8 @@
 #include <sys/queue.h>
 #include <sys/sched.h>
 
+#include <machine/mutex.h>
+
 /*
  * Note that the alignment of ci_trap_save is important since we want to keep
  * it within a single cache line. As a result, it must be kept as the first
@@ -91,6 +93,9 @@ struct cpu_info {
 	volatile int	ci_in_intr;
 	int		ci_want_resched;
 	u_long		ci_itmr;
+
+	volatile u_long	ci_ipi;			/* IPIs pending. */
+	struct mutex	ci_ipi_mtx;
 
 	struct schedstate_percpu ci_schedstate;
 	u_int32_t	ci_randseed;

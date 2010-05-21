@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.34 2010/05/19 13:10:24 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.35 2010/05/21 15:24:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -89,6 +89,8 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	extern u_int fpu_enable;
 	/* clock.c */
 	extern int cpu_hardclock(void *);
+	/* ipi.c */
+	extern int hppa_ipi_intr(void *);
 
 	struct confargs *ca = (struct confargs *)aux;
 	struct cpu_info *ci;
@@ -157,7 +159,10 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 		    pdc_btlb.finfo.num_i, pdc_btlb.finfo.num_d);
 
 	cpu_intr_establish(IPL_CLOCK, 31, cpu_hardclock, NULL, "clock");
-	
+#ifdef MULTIPROCESSOR
+	cpu_intr_establish(IPL_IPI, 30, hppa_ipi_intr, NULL, "ipi");
+#endif
+
 	printf("\n");
 }
 
@@ -174,6 +179,7 @@ cpu_boot_secondary_processors(void)
 	/* Initialise primary CPU. */
 	ci = curcpu();
 	ci->ci_flags |= CPUF_RUNNING;
+	hppa_ipi_init(ci);
 
 	for (i = 0; i < HPPA_MAXCPUS; i++) {
 
@@ -238,6 +244,9 @@ cpu_hatch(void)
 	struct cpu_info *ci = curcpu();
 	extern u_long cpu_hzticks;
 	u_long itmr;
+
+	/* Initialise IPIs. */
+	hppa_ipi_init(ci);
 
 	/* Initialise clock. */
 	mtctl((1 << 31), CR_EIRR);

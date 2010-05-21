@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.31 2010/04/29 13:14:44 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.32 2010/05/21 15:24:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -292,6 +292,9 @@ cpu_intr(void *v)
 	struct cpu_info *ci = curcpu();
 	struct trapframe *frame = v;
 	u_long mask;
+#ifdef MULTIPROCESSOR
+	int pri;
+#endif
 	int s;
 
 	mtctl(0, CR_EIEM);
@@ -314,6 +317,13 @@ cpu_intr(void *v)
 
 		ci->ci_cpl = iv->pri;
 		mtctl(frame->tf_eiem, CR_EIEM);
+
+#ifdef MULTIPROCESSOR
+		pri = iv->pri;
+		if (pri < IPL_IPI && s < IPL_SCHED)
+			__mp_lock(&kernel_lock);
+#endif
+
 		for (r = iv->flags & HPPA_IV_SOFT;
 		    iv && iv->handler; iv = iv->next)
 			/* no arg means pass the frame */
@@ -328,6 +338,11 @@ cpu_intr(void *v)
 			printf("stray interrupt %d\n", bit);
 		}
 #endif
+
+#ifdef MULTIPROCESSOR
+		if (pri < IPL_IPI && s < IPL_SCHED)
+			__mp_unlock(&kernel_lock);
+#endif
 		mtctl(0, CR_EIEM);
 	}
 	ci->ci_in_intr--;
@@ -335,7 +350,6 @@ cpu_intr(void *v)
 
 	mtctl(frame->tf_eiem, CR_EIEM);
 }
-
 
 void *
 softintr_establish(int pri, void (*handler)(void *), void *arg)
