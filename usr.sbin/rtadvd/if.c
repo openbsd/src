@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.22 2009/07/11 09:51:53 rainer Exp $	*/
+/*	$OpenBSD: if.c,v 1.23 2010/05/21 13:41:23 chl Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -208,19 +208,6 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 	}
 
 	return;
-}
-
-int
-rtbuf_len()
-{
-	size_t len;
-
-	int mib[6] = {CTL_NET, AF_ROUTE, 0, AF_INET6, NET_RT_DUMP, 0};
-
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
-		return(-1);
-
-	return(len);
 }
 
 #define FILTER_MATCH(type, filter) ((0x1 << type) & filter)
@@ -434,14 +421,6 @@ rtmsg_len(char *buf)
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 
 	return(rtm->rtm_msglen);
-}
-
-int
-ifmsg_len(char *buf)
-{
-	struct if_msghdr *ifm = (struct if_msghdr *)buf;
-
-	return(ifm->ifm_msglen);
 }
 
 /*

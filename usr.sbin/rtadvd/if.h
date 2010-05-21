@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.8 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: if.h,v 1.9 2010/05/21 13:41:23 chl Exp $	*/
 /*	$KAME: if.h,v 1.6 2001/01/21 15:37:14 itojun Exp $	*/
 
 /*
@@ -42,7 +42,6 @@ int if_getmtu(char *);
 int if_getflags(int, int);
 int lladdropt_length(struct sockaddr_dl *);
 void lladdropt_fill(struct sockaddr_dl *, struct nd_opt_hdr *);
-int rtbuf_len(void);
 char *get_next_msg(char *, char *, int, size_t *, int);
 struct in6_addr *get_addr(char *);
 int get_rtm_ifindex(char *);
@@ -54,5 +53,4 @@ int prefixlen(u_char *, u_char *);
 int rtmsg_type(char *);
 int ifmsg_type(char *);
 int rtmsg_len(char *);
-int ifmsg_len(char *);
 void init_iflist(void);
