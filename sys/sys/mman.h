@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.19 2010/05/18 22:24:54 tedu Exp $	*/
+/*	$OpenBSD: mman.h,v 1.20 2010/05/21 21:17:43 miod Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@
 
 /*
  * POSIX memory advisory values.
- * Note: keep consistent with the original defintions below.
+ * Note: keep consistent with the original definitions below.
  */
 #define	POSIX_MADV_NORMAL	0	/* no further special treatment */
 #define	POSIX_MADV_RANDOM	1	/* expect random page references */
@@ -87,7 +87,7 @@
 
 #if __BSD_VISIBLE
 /*
- * Original advice values, equivalent to POSIX defintions,
+ * Original advice values, equivalent to POSIX definitions,
  * and few implementation-specific ones.
  */
 #define	MADV_NORMAL		POSIX_MADV_NORMAL
