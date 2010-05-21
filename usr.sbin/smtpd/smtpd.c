@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.104 2010/05/20 18:35:33 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.105 2010/05/21 08:45:02 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -991,7 +991,7 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 		_exit(0);
 	}
 
-	fatalx("forkmda: unknown mode");
+	error("forkmda: unknown mode");
 }
 #undef error
 #undef error2
