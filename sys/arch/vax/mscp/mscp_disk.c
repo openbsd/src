@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.28 2010/05/08 22:19:46 miod Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.29 2010/05/22 17:10:23 deraadt Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -53,6 +53,7 @@
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <sys/reboot.h>

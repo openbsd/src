@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.27 2010/04/23 15:25:21 jsing Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.28 2010/05/22 17:10:23 deraadt Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -58,6 +58,7 @@
 #include <sys/file.h>
 #include <sys/stat.h> 
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
