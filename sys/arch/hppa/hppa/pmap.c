@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.153 2010/05/05 19:34:27 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.154 2010/05/22 22:12:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -244,7 +244,6 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		pa = VM_PAGE_TO_PHYS(ptp);
 		pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
 		pdtlb(HPPA_SID_KERNEL, pa);
-		pitlb(HPPA_SID_KERNEL, pa);
 		uvm_pagefree(ptp);
 	}
 }
@@ -733,7 +732,6 @@ pmap_destroy(pmap)
 	pa = VM_PAGE_TO_PHYS(pmap->pm_pdir_pg);
 	pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
 	pdtlb(HPPA_SID_KERNEL, pa);
-	pitlb(HPPA_SID_KERNEL, pa);
 	uvm_pagefree(pmap->pm_pdir_pg);
 
 	pmap->pm_pdir_pg = NULL;
