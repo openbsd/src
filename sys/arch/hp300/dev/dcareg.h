@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcareg.h,v 1.7 2005/12/28 21:13:40 miod Exp $	*/
+/*	$OpenBSD: dcareg.h,v 1.8 2010/05/22 13:04:25 deraadt Exp $	*/
 /*	$NetBSD: dcareg.h,v 1.6 1996/02/24 00:55:02 thorpej Exp $	*/
 
 /*
@@ -34,21 +34,6 @@
 
 #include <hp300/dev/iotypes.h>			/* XXX */
 
-#ifdef hp700
-struct dcadevice {
-	vu_char	dca_reset;
-	vu_char dca_pad[0x800-1];
-	vu_char	dca_data;			/* receive buf or xmit hold */
-	vu_char	dca_ier;			/* interrupt enable */
-	vu_char	dca_iir;			/* (RO) interrupt identify */
-#define		dca_fifo	dca_iir		/* (WO) FIFO control */
-	vu_char	dca_cfcr;			/* line control */
-	vu_char	dca_mcr;			/* modem control */
-	vu_char	dca_lsr;			/* line status */
-	vu_char	dca_msr;			/* modem status */
-	vu_char	dca_scr;			/* scratch pad */
-};
-#else
 struct dcadevice {
 	/* card registers */
 	u_char	dca_pad0;
@@ -78,7 +63,6 @@ struct dcadevice {
 	u_char	dca_padB;
 	vu_char	dca_msr;			/* 0x1D */
 };
-#endif
 
 /* interface reset/id (300 only) */
 #define	DCAID0		0x02
@@ -95,12 +79,7 @@ struct dcadevice {
  * NB: This constant is for a 7.3728 clock frequency. The 300 clock
  *     frequency is 2.4576, giving a constant of 153600.
  */
-#ifdef hp300
 #define	DCABRD(x)	(153600 / (x))
-#endif
-#ifdef hp700
-#define	DCABRD(x)	(460800 / (x))
-#endif
 
 /* interrupt enable register */
 #define	IER_ERXRDY	0x1	/* Enable receiver interrupt */
