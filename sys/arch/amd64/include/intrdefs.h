@@ -1,8 +1,8 @@
-/*	$OpenBSD: intrdefs.h,v 1.6 2008/04/28 18:09:00 kettenis Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.7 2010/05/22 21:31:05 deraadt Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
-#ifndef _i386_INTRDEFS_H
-#define _i386_INTRDEFS_H
+#ifndef _AMD64_INTRDEFS_H
+#define _AMD64_INTRDEFS_H
 
 /*
  * Interrupt priority levels.
@@ -88,4 +88,4 @@
 
 #define IREENT_MAGIC	0x18041969
 
-#endif /* _X86_INTRDEFS_H */
+#endif /* _AMD64_INTRDEFS_H */
