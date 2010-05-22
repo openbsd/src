@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.20 2009/03/01 10:48:54 kettenis Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.21 2010/05/22 21:30:26 deraadt Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -34,9 +34,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#ifndef i386
 #include <machine/autoconf.h>
-#endif
 #include <machine/pte.h>
 
 #include <dev/cons.h>
