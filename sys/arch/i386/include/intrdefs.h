@@ -1,8 +1,8 @@
-/*	$OpenBSD: intrdefs.h,v 1.11 2008/04/26 14:33:27 kettenis Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.12 2010/05/22 21:29:55 deraadt Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
-#ifndef _i386_INTRDEFS_H
-#define _i386_INTRDEFS_H
+#ifndef _I386_INTRDEFS_H
+#define _I386_INTRDEFS_H
 
 /*
  * Intel APICs (advanced programmable interrupt controllers) have
