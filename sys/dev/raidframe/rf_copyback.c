@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_copyback.c,v 1.8 2007/06/05 00:38:22 deraadt Exp $	*/
+/*	$OpenBSD: rf_copyback.c,v 1.9 2010/05/23 13:49:35 naddy Exp $	*/
 /*	$NetBSD: rf_copyback.c,v 1.14 2000/03/07 02:59:50 oster Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ rf_ConfigureCopyback(RF_ShutdownList_t **listp)
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
+#include <sys/dkio.h>
 #include <sys/fcntl.h>
 #ifdef	__NETBSD__
 #include <sys/vnode.h>
