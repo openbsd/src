@@ -135,7 +135,7 @@ static __inline int
 find_first_zero_bit(volatile void *p, int max)
 {
 	int b;
-	volatile int *ptr = (volatile u_int *)p;
+	volatile u_int *ptr = (volatile u_int *)p;
 
 	for (b = 0; b < max; b += 32) {
 		if (ptr[b >> 5] != ~0) {
