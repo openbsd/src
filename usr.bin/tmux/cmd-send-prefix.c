@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-prefix.c,v 1.6 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-send-prefix.c,v 1.7 2010/05/23 19:42:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,7 @@ cmd_send_prefix_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (-1);
 
 	keylist = options_get_data(&s->options, "prefix");
-	window_pane_key(wp, ctx->curclient, ARRAY_FIRST(keylist));
+	window_pane_key(wp, s, ARRAY_FIRST(keylist));
 
 	return (0);
 }
