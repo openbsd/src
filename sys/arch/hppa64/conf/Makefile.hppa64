@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa64,v 1.24 2010/04/28 15:31:33 deraadt Exp $
+#	$OpenBSD: Makefile.hppa64,v 1.25 2010/05/23 16:43:54 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${_mach}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
