@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.7 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.8 2010/05/23 15:09:38 deraadt Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -425,7 +425,7 @@ akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 #endif
 
-#ifdef mac68k	/* XXX not worth creating akbd_machdep_ioctl() */
+#if defined(__mac68k__)	/* XXX not worth creating akbd_machdep_ioctl() */
 	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
