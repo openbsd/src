@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.24 2009/02/15 17:13:05 chl Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.25 2010/05/23 15:04:19 deraadt Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@
 #define HAVE_FONT 1
 
 #define	FONT_BOLD8x16_ISO1
-#if defined(__sparc__) || defined(__sparc64__) || defined(luna88k) || !defined(SMALL_KERNEL)
+#if defined(__sparc__) || defined(__sparc64__) || defined(__luna88k__) || !defined(SMALL_KERNEL)
 #define	FONT_GALLANT12x22
 #endif
 
