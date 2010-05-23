@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.80 2010/05/18 04:41:14 dlg Exp $ */
+/*	$OpenBSD: wd.c,v 1.81 2010/05/23 09:58:57 kettenis Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -177,6 +177,7 @@ void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 void  wd_flushcache(struct wd_softc *, int);
+void  wd_standby(struct wd_softc *, int);
 void  wd_shutdown(void *);
 
 struct dkdriver wddkdriver = { wdstrategy };
@@ -379,7 +380,6 @@ int
 wdactivate(struct device *self, int act)
 {
 	struct wd_softc *wd = (void *)self;
-	struct wdc_command wdc_c;
 	int rv = 0;
 
 	switch (act) {
@@ -392,15 +392,7 @@ wdactivate(struct device *self, int act)
 		*/
 		break;
 	case DVACT_SUSPEND:
-		bzero(&wdc_c, sizeof(struct wdc_command));
-
-		wdc_c.r_command = WDCC_STANDBY_IMMED;
-		wdc_c.timeout = 1000;
-		wdc_c.flags = at_poll;
-		if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
-			printf("%s: enter standby command didn't complete\n",
-			       wd->sc_dev.dv_xname);
-		}
+		wd_standby(wd, AT_POLL);
 		break;
 	}
 	return (rv);
@@ -1211,8 +1203,44 @@ wd_flushcache(struct wd_softc *wd, int flags)
 }
 
 void
+wd_standby(struct wd_softc *wd, int flags)
+{
+	struct wdc_command wdc_c;
+
+	bzero(&wdc_c, sizeof(struct wdc_command));
+	wdc_c.r_command = WDCC_STANDBY_IMMED;
+	wdc_c.r_st_bmask = WDCS_DRDY;
+	wdc_c.r_st_pmask = WDCS_DRDY;
+	if (flags != 0) {
+		wdc_c.flags = AT_POLL;
+	} else {
+		wdc_c.flags = AT_WAIT;
+	}
+	wdc_c.timeout = 1000; /* 1s timeout */
+	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+		printf("%s: standby command didn't complete\n",
+		    wd->sc_dev.dv_xname);
+	}
+	if (wdc_c.flags & AT_TIMEOU) {
+		printf("%s: standby command timeout\n",
+		    wd->sc_dev.dv_xname);
+	}
+	if (wdc_c.flags & AT_DF) {
+		printf("%s: standby command: drive fault\n",
+		    wd->sc_dev.dv_xname);
+	}
+	/*
+	 * Ignore error register, it shouldn't report anything else
+	 * than COMMAND ABORTED, which means the device doesn't support
+	 * standby
+	 */
+}
+
+void
 wd_shutdown(void *arg)
 {
 	struct wd_softc *wd = arg;
+
 	wd_flushcache(wd, AT_POLL);
+	wd_standby(wd, AT_POLL);
 }
