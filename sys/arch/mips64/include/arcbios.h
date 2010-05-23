@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.15 2010/03/07 13:36:47 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.16 2010/05/23 21:29:05 deraadt Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -291,7 +291,7 @@ typedef struct arc_calls
 	arc_mem_t *(*get_memory_descriptor)( /* GetMemoryDescriptor 19 */
 		arc_mem_t *);		/* MemoryDescriptor */
 
-#ifdef arc
+#ifdef __arc__
 	void (*signal)(			/* Signal 20 */
 		u_int32_t,		/* Signal number */
 /**/		caddr_t);		/* Handler */
@@ -354,7 +354,7 @@ typedef struct arc_calls
 
 	void (*flush_all_caches)(void);	/* FlushAllCaches 35 */
 
-#ifdef arc
+#ifdef __arc__
 	arc_status_t (*test_unicode)(	/* TestUnicodeCharacter 36 */
 		u_int32_t,		/* FileId */
 		u_int16_t);		/* UnicodeCharacter */
