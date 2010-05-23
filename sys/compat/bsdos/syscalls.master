@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.18 2008/01/05 00:36:11 miod Exp $
+	$OpenBSD: syscalls.master,v 1.19 2010/05/23 11:35:18 deraadt Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -304,7 +304,7 @@
 169	UNIMPL
 170	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
-#if defined(SYSVSHM) && !defined(alpha)
+#if defined(SYSVSHM) && !defined(__alpha__)
 171	NOARGS		{ int compat_10_sys_shmsys(int which, int a2, int a3, \
 			    int a4); }
 #else
