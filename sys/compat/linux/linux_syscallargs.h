@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscallargs.h,v 1.54 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: linux_syscallargs.h,v 1.55 2010/05/23 11:37:30 deraadt Exp $	*/
 
 /*
  * System call argument lists.

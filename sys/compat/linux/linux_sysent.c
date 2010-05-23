@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sysent.c,v 1.53 2007/11/27 18:05:59 art Exp $	*/
+/*	$OpenBSD: linux_sysent.c,v 1.54 2010/05/23 11:37:30 deraadt Exp $	*/
 
 /*
  * System call switch table.
