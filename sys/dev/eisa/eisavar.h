@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisavar.h,v 1.12 2003/12/12 22:56:46 hshoexer Exp $	*/
+/*	$OpenBSD: eisavar.h,v 1.13 2010/05/23 14:50:31 deraadt Exp $	*/
 /*	$NetBSD: eisavar.h,v 1.11 1997/06/06 23:30:07 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct eisabus_attach_args;
 /*
  * Machine-dependent definitions.
  */
-#if (__alpha__ + __i386__ + __arc__ + __hppa__ != 1)
+#if (__alpha__ + __i386__ + __hppa__ != 1)
 #error COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if __alpha__
@@ -62,9 +62,6 @@ struct eisabus_attach_args;
 #endif
 #if __i386__
 #include <i386/eisa/eisa_machdep.h>
-#endif
-#if __arc__
-#include <arc/eisa/eisa_machdep.h>
 #endif
 #if __hppa__
 #include <hppa/include/eisa_machdep.h>
