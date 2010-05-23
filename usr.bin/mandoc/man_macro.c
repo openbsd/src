@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.18 2010/05/23 20:57:16 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.19 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "libman.h"
 
 enum	rew {
@@ -39,7 +40,7 @@ static	enum rew	 rew_dohalt(enum mant, enum man_type,
 static	enum rew	 rew_block(enum mant, enum man_type, 
 				const struct man_node *);
 static	int		 rew_warn(struct man *, 
-				struct man_node *, enum merr);
+				struct man_node *, enum mandocerr);
 
 const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* br */
@@ -87,25 +88,26 @@ const	struct man_macro * const man_macros = __man_macros;
  * Warn when "n" is an explicit non-roff macro.
  */
 static int
-rew_warn(struct man *m, struct man_node *n, enum merr er)
+rew_warn(struct man *m, struct man_node *n, enum mandocerr er)
 {
 
-	if (er == WERRMAX || MAN_BLOCK != n->type)
+	if (er == MANDOCERR_MAX || MAN_BLOCK != n->type)
 		return(1);
 	if (MAN_VALID & n->flags)
 		return(1);
 	if ( ! (MAN_EXPLICIT & man_macros[n->tok].flags))
 		return(1);
-	return(man_nwarn(m, n, er));
+	return(man_nmsg(m, n, er));
 }
 
 
 /*
- * Rewind scope.  If a code "er" != WERRMAX has been provided, it will
- * be used if an explicit block scope is being closed out.
+ * Rewind scope.  If a code "er" != MANDOCERR_MAX has been provided, it
+ * will be used if an explicit block scope is being closed out.
  */
 int
-man_unscope(struct man *m, const struct man_node *n, enum merr er)
+man_unscope(struct man *m, const struct man_node *n, 
+		enum mandocerr er)
 {
 
 	assert(n);
@@ -244,7 +246,7 @@ rew_scope(enum man_type type, struct man *m, enum mant tok)
 	 */
 	assert(n);
 
-	return(man_unscope(m, n, WERRMAX));
+	return(man_unscope(m, n, MANDOCERR_MAX));
 }
 
 
@@ -272,7 +274,7 @@ blk_close(MACRO_PROT_ARGS)
 			break;
 
 	if (NULL == nn)
-		if ( ! man_pwarn(m, line, ppos, WNOSCOPE))
+		if ( ! man_pmsg(m, line, ppos, MANDOCERR_NOSCOPE))
 			return(0);
 
 	if ( ! rew_scope(MAN_BODY, m, ntok))
@@ -474,6 +476,6 @@ int
 man_macroend(struct man *m)
 {
 
-	return(man_unscope(m, m->first, WEXITSCOPE));
+	return(man_unscope(m, m->first, MANDOCERR_SCOPEEXIT));
 }
 

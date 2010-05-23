@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.2 2010/05/20 00:58:02 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.3 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,14 +21,76 @@ __BEGIN_DECLS
 
 enum	mandocerr {
 	MANDOCERR_OK,
+	MANDOCERR_UPPERCASE, /* text should be uppercase */
+	MANDOCERR_SECOOO, /* sections out of conentional order */
+	MANDOCERR_SECREP, /* section name repeats */
+	MANDOCERR_PROLOGOOO, /* out of order prologue */
+	MANDOCERR_PROLOGREP, /* repeated prologue entry */
+	MANDOCERR_LISTFIRST, /* list type must come first */
+	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
+	MANDOCERR_BADSTANDARD, /* bad standard */
+	MANDOCERR_BADLIB, /* bad library */
+	MANDOCERR_BADESCAPE, /* bad escape sequence */
+	MANDOCERR_BADQUOTE, /* unterminated quoted string */
+	MANDOCERR_NOWIDTHARG, /* argument requires the width argument */
+	MANDOCERR_WIDTHARG, /* superfluous width argument */
+	MANDOCERR_BADDATE, /* bad date argument */
+	MANDOCERR_BADWIDTH, /* bad width argument */
+	MANDOCERR_BADMSEC, /* unknown manual sction */
+	MANDOCERR_SECMSEC, /* section not in conventional manual section */
+	MANDOCERR_EOLNSPACE, /* end of line whitespace */
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
 #define	MANDOCERR_WARNING	MANDOCERR_SCOPEEXIT
 
+	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
+	MANDOCERR_BADBOOL, /* bad Boolean value */
+	MANDOCERR_CHILD, /* child violates parent syntax */
+	MANDOCERR_BADATT, /* bad AT&T symbol */
+	MANDOCERR_LISTREP, /* list type repeated */
+	MANDOCERR_DISPREP, /* display type repeated */
+	MANDOCERR_ARGVREP, /* argument repeated */
+	MANDOCERR_NONAME, /* manual name not yet set */
+	MANDOCERR_MACROOBS, /* obsolete macro ignored */
+	MANDOCERR_MACROEMPTY, /* empty macro ignored */
+	MANDOCERR_BADBODY, /* macro not allowed in body */
+	MANDOCERR_BADPROLOG, /* macro not allowed in prologue */
+	MANDOCERR_BADCHAR, /* bad character */
+	MANDOCERR_BADNAMESEC, /* bad NAME section contents */
+	MANDOCERR_NOBLANKLN, /* no blank lines */
+	MANDOCERR_NOTEXT, /* no text in this context */
+	MANDOCERR_BADCOMMENT, /* bad comment style */
+	MANDOCERR_MACRO, /* unknown macro will be lost */
+	MANDOCERR_LINESCOPE, /* line scope broken */
+	MANDOCERR_SCOPE, /* scope broken */
+	MANDOCERR_ARGCOUNT, /* argument count wrong */
 	MANDOCERR_NOSCOPE, /* request scope close w/none open */
-	MANDOCERR_NOARGS, /* macro requires argument(s) */
-	MANDOCERR_ARGSLOST, /* line arguments will be lost */
+	MANDOCERR_SCOPEREP, /* scope already open */
+	/* FIXME: merge following with MANDOCERR_ARGCOUNT */
+	MANDOCERR_NOARGS, /* macro requires line argument(s) */
+	MANDOCERR_NOBODY, /* macro requires body argument(s) */
+	MANDOCERR_NOARGV, /* macro requires argument(s) */
+	MANDOCERR_NOTITLE, /* no title in document */
+	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
+	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
 #define	MANDOCERR_ERROR		MANDOCERR_ARGSLOST
 
+	/* FIXME: this should be a MANDOCERR_ERROR */
+	MANDOCERR_FONTTYPE, /* missing font type */
+	/* FIXME: this should be a MANDOCERR_ERROR */
+	MANDOCERR_DISPTYPE, /* missing display type */
+	/* FIXME: this should be a MANDOCERR_ERROR */
+	MANDOCERR_LISTTYPE, /* missing list type */
+	/* FIXME: this should be a MANDOCERR_ERROR */
+	MANDOCERR_NESTEDDISP, /* displays may not be nested */
+	MANDOCERR_SYNTNOSCOPE, /* request scope close w/none open */
+	MANDOCERR_SYNTSCOPE, /* scope broken, syntax violated */
+	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
+	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
+	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
+	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
+	MANDOCERR_NODOCBODY, /* no document body */
+	MANDOCERR_NODOCPROLOG, /* no document prologue */
+	MANDOCERR_UTSNAME, /* utsname() system call failed */
 	MANDOCERR_MEM, /* memory exhausted */
 #define	MANDOCERR_FATAL		MANDOCERR_MEM
 

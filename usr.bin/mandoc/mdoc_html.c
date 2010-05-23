@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.16 2010/05/23 20:05:43 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.17 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "mandoc.h"
 #include "out.h"
 #include "html.h"
 #include "mdoc.h"
@@ -725,6 +726,9 @@ mdoc_nm_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
 
+	if (NULL == n->child && NULL == m->name)
+		return(1);
+
 	if (SEC_SYNOPSIS == n->sec && 
 			n->prev && MDOC_LINE & n->flags) {
 		bufcat_style(h, "clear", "both");
@@ -1177,7 +1181,7 @@ mdoc_ex_pre(MDOC_ARGS)
 			h->flags &= ~HTML_NOSPACE;
 	}
 
-	if (n->child->next)
+	if (n->child && n->child->next)
 		print_text(h, "utilities exit");
 	else
 		print_text(h, "utility exits");
@@ -1947,7 +1951,7 @@ mdoc_rv_pre(MDOC_ARGS)
 			print_text(h, "()");
 	}
 
-	if (n->child->next)
+	if (n->child && n->child->next)
 		print_text(h, "functions return");
 	else
 		print_text(h, "function returns");

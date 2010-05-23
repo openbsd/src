@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.34 2010/05/15 18:25:50 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.35 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -26,7 +26,7 @@ enum	mdoc_next {
 
 struct	mdoc {
 	void		 *data;
-	struct mdoc_cb	  cb;
+	mandocmsg	  msg;
 	int		  flags;
 #define	MDOC_HALT	 (1 << 0) /* error in parse: halt */
 #define	MDOC_LITERAL	 (1 << 1) /* in a literal scope */
@@ -41,62 +41,6 @@ struct	mdoc {
 	struct mdoc_meta  meta;
 	enum mdoc_sec	  lastnamed;
 	enum mdoc_sec	  lastsec;
-};
-
-enum	merr {
-	ETAILWS = 0,
-	EQUOTPARM,
-	EQUOTTERM,
-	EARGVAL,	
-	EBODYPROL,
-	EPROLBODY,
-	ETEXTPROL,
-	ENOBLANK,
-	ETOOLONG,
-	EESCAPE,
-	EPRINT,
-	ENODAT,
-	ENOPROLOGUE,
-	ELINE,
-	EATT,
-	ENAME,
-	ELISTTYPE,
-	EDISPTYPE,
-	EMULTIDISP,
-	EMULTILIST,
-	ESECNAME,
-	ENAMESECINC,
-	EARGREP,
-	EBOOL,
-	ECOLMIS,
-	ENESTDISP,
-	EMISSWIDTH,
-	EWRONGMSEC,
-	ESECOOO,
-	ESECREP,
-	EBADSTAND,
-	ENOMULTILINE,
-	EMULTILINE,
-	ENOLINE,
-	EPROLOOO,
-	EPROLREP,
-	EBADMSEC,
-	EFONT,
-	EBADDATE,
-	ENUMFMT,
-	ENOWIDTH,
-	EUTSNAME,
-	EOBS,
-	EIMPBRK,
-	EIGNE,
-	EOPEN,
-	EQUOTPHR,
-	ENOCTX,
-	ELIB,
-	EBADCHILD,
-	ENOTYPE,
-	EBADCOMMENT,
-	MERRMAX
 };
 
 #define	MACRO_PROT_ARGS	struct mdoc *m, enum mdoct tok, \
@@ -142,19 +86,12 @@ extern	const struct mdoc_macro *const mdoc_macros;
 
 __BEGIN_DECLS
 
-#define		  mdoc_perr(m, l, p, t) \
-		  mdoc_err((m), (l), (p), 1, (t))
-#define		  mdoc_pwarn(m, l, p, t) \
-		  mdoc_err((m), (l), (p), 0, (t))
-#define		  mdoc_nerr(m, n, t) \
-		  mdoc_err((m), (n)->line, (n)->pos, 1, (t))
-#define		  mdoc_nwarn(m, n, t) \
-		  mdoc_err((m), (n)->line, (n)->pos, 0, (t))
-
-int		  mdoc_err(struct mdoc *, int, int, int, enum merr);
-int		  mdoc_verr(struct mdoc *, int, int, const char *, ...);
-int		  mdoc_vwarn(struct mdoc *, int, int, const char *, ...);
-
+#define		  mdoc_pmsg(m, l, p, t) \
+		  (*(m)->msg)((t), (m)->data, (l), (p), NULL)
+#define		  mdoc_nmsg(m, n, t) \
+		  (*(m)->msg)((t), (m)->data, (n)->line, (n)->pos, NULL)
+int		  mdoc_vmsg(struct mdoc *, enum mandocerr, 
+			int, int, const char *, ...);
 int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *, 
 			int, int, const char *);

@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.36 2010/05/23 20:57:16 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.37 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "out.h"
 #include "man.h"
 #include "term.h"

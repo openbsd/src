@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.32 2010/05/20 00:58:02 schwarze Exp $ */
+/*	$Id: main.c,v 1.33 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -70,17 +70,83 @@ struct	curparse {
 #define	FL_NIGN_MACRO	 (1 << 2) 	/* Don't ignore bad macros. */
 #define	FL_IGN_ERRORS	 (1 << 4)	/* Ignore failed parse. */
 #define	FL_STRICT	  FL_NIGN_ESCAPE | \
-			  FL_NIGN_MACRO
-	enum intt	  inttype;	/* Input parsers... */
-	struct man	 *man;
-	struct mdoc	 *mdoc;
-	struct roff	 *roff;
-	enum outt	  outtype;	/* Output devices... */
-	out_mdoc	  outmdoc;
-	out_man	  	  outman;
-	out_free	  outfree;
-	void		 *outdata;
-	char		  outopts[BUFSIZ];
+			  FL_NIGN_MACRO /* ignore nothing */
+	enum intt	  inttype;	/* which parser to use */
+	struct man	 *man;		/* man parser */
+	struct mdoc	 *mdoc;		/* mdoc parser */
+	struct roff	 *roff;		/* roff parser (!NULL) */
+	enum outt	  outtype; 	/* which output to use */
+	out_mdoc	  outmdoc;	/* mdoc output ptr */
+	out_man	  	  outman;	/* man output ptr */
+	out_free	  outfree;	/* free output ptr */
+	void		 *outdata;	/* data for output */
+	char		  outopts[BUFSIZ]; /* buf of output opts */
+};
+
+static	const char * const	mandocerrs[MANDOCERR_MAX] = {
+	"ok",
+	"text should be uppercase",
+	"sections out of conentional order",
+	"section name repeats",
+	"out of order prologue",
+	"repeated prologue entry",
+	"list type must come first",
+	"column syntax is inconsistent",
+	"bad standard",
+	"bad library",
+	"bad escape sequence",
+	"unterminated quoted string",
+	"argument requires the width argument",
+	"superfluous width argument",
+	"bad date argument",
+	"bad width argument",
+	"unknown manual sction",
+	"section not in conventional manual section",
+	"end of line whitespace",
+	"scope open on exit",
+	"NAME section must come first",
+	"bad Boolean value",
+	"child violates parent syntax",
+	"bad AT&T symbol",
+	"list type repeated",
+	"display type repeated",
+	"argument repeated",
+	"manual name not yet set",
+	"obsolete macro ignored",
+	"empty macro ignored",
+	"macro not allowed in body",
+	"macro not allowed in prologue",
+	"bad character",
+	"bad NAME section contents",
+	"no blank lines",
+	"no text in this context",
+	"bad comment style",
+	"unknown macro will be lost",
+	"line scope broken",
+	"scope broken",
+	"argument count wrong",
+	"request scope close w/none open",
+	"scope already open",
+	"macro requires line argument(s)",
+	"macro requires body argument(s)",
+	"macro requires argument(s)",
+	"no title in document",
+	"line argument(s) will be lost",
+	"body argument(s) will be lost",
+	"missing font type",
+	"missing display type",
+	"missing list type",
+	"displays may not be nested",
+	"no scope to rewind: syntax violated",
+	"scope broken, syntax violated",
+	"line scope broken, syntax violated",
+	"argument count wrong, violates syntax",
+	"child violates parent syntax",
+	"argument count wrong, violates syntax",
+	"no document body",
+	"no document prologue",
+	"utsname system call failed",
+	"memory exhausted",
 };
 
 static	void		  fdesc(struct curparse *);
@@ -89,9 +155,7 @@ static	int		  foptions(int *, char *);
 static	struct man	 *man_init(struct curparse *);
 static	struct mdoc	 *mdoc_init(struct curparse *);
 static	struct roff	 *roff_init(struct curparse *);
-static	int		  merr(void *, int, int, const char *); /* DEPRECATED */
 static	int		  moptions(enum intt *, char *);
-static	int		  mwarn(void *, int, int, const char *); /* DEPRECATED */
 static	int		  mmsg(enum mandocerr, void *, 
 				int, int, const char *);
 static	int		  pset(const char *, int, struct curparse *,
@@ -209,10 +273,6 @@ static struct man *
 man_init(struct curparse *curp)
 {
 	int		 pflags;
-	struct man_cb	 mancb;
-
-	mancb.man_err = merr;
-	mancb.man_warn = mwarn;
 
 	/* Defaults from mandoc.1. */
 
@@ -223,7 +283,7 @@ man_init(struct curparse *curp)
 	if (curp->fflags & FL_NIGN_ESCAPE)
 		pflags &= ~MAN_IGN_ESCAPE;
 
-	return(man_alloc(curp, pflags, &mancb));
+	return(man_alloc(curp, pflags, mmsg));
 }
 
 
@@ -239,10 +299,6 @@ static struct mdoc *
 mdoc_init(struct curparse *curp)
 {
 	int		 pflags;
-	struct mdoc_cb	 mdoccb;
-
-	mdoccb.mdoc_err = merr;
-	mdoccb.mdoc_warn = mwarn;
 
 	/* Defaults from mandoc.1. */
 
@@ -255,7 +311,7 @@ mdoc_init(struct curparse *curp)
 	if (curp->fflags & FL_NIGN_MACRO)
 		pflags &= ~MDOC_IGN_MACRO;
 
-	return(mdoc_alloc(curp, pflags, &mdoccb));
+	return(mdoc_alloc(curp, pflags, mmsg));
 }
 
 
@@ -745,66 +801,19 @@ woptions(int *wflags, char *arg)
 }
 
 
-/* ARGSUSED */
-static int
-merr(void *arg, int line, int col, const char *msg)
-{
-	struct curparse *curp;
-
-	curp = (struct curparse *)arg;
-
-	(void)fprintf(stderr, "%s:%d:%d: error: %s\n", 
-			curp->file, line, col + 1, msg);
-
-	with_error = 1;
-
-	return(0);
-}
-
-
-static int
-mwarn(void *arg, int line, int col, const char *msg)
-{
-	struct curparse *curp;
-
-	curp = (struct curparse *)arg;
-
-	if ( ! (curp->wflags & WARN_WALL))
-		return(1);
-
-	(void)fprintf(stderr, "%s:%d:%d: warning: %s\n", 
-			curp->file, line, col + 1, msg);
-
-	with_warning = 1;
-	if (curp->wflags & WARN_WERR) {
-		with_error = 1;
-		return(0);
-	}
-
-	return(1);
-}
-
-static	const char * const	mandocerrs[MANDOCERR_MAX] = {
-	"ok",
-	"multi-line scope open on exit",
-	"request for scope closure when no matching scope is open: ignored",
-	"macro requires line argument(s): ignored",
-	"line arguments will be lost",
-	"memory exhausted"
-};
-
-/*
- * XXX: this is experimental code that will eventually become the
- * generic means of covering all warnings and errors!
- */
-/* ARGSUSED */
 static int
 mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 {
-#if 0
 	struct curparse *cp;
 
 	cp = (struct curparse *)arg;
+
+	if (t <= MANDOCERR_ERROR) {
+		if ( ! (cp->wflags & WARN_WALL))
+			return(1);
+		with_warning = 1;
+	} else
+		with_error = 1;
 
 	fprintf(stderr, "%s:%d:%d: %s", cp->file, 
 			ln, col + 1, mandocerrs[t]);
@@ -813,6 +822,13 @@ mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 		fprintf(stderr, ": %s", msg);
 
 	fputc('\n', stderr);
-#endif
+
+	/* This is superfluous, but whatever. */
+	if (t > MANDOCERR_ERROR)
+		return(0);
+	if (cp->wflags & WARN_WERR) {
+		with_error = 1;
+		return(0);
+	}
 	return(1);
 }

@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.32 2010/05/23 20:57:16 schwarze Exp $ */
+/*	$Id: man.c,v 1.33 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,31 +23,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "libman.h"
 #include "libmandoc.h"
-
-const	char *const __man_merrnames[WERRMAX] = {		 
-	"invalid character", /* WNPRINT */
-	"invalid date format", /* WDATE */
-	"scope of prior line violated", /* WLNSCOPE */
-	"over-zealous prior line scope violation", /* WLNSCOPE2 */
-	"trailing whitespace", /* WTSPACE */
-	"unterminated quoted parameter", /* WTQUOTE */
-	"document has no body", /* WNODATA */
-	"document has no title/section", /* WNOTITLE */
-	"invalid escape sequence", /* WESCAPE */
-	"invalid number format", /* WNUMFMT */
-	"expected block head arguments", /* WHEADARGS */
-	"expected block body arguments", /* WBODYARGS */
-	"expected empty block head", /* WNHEADARGS */
-	"ill-formed macro", /* WMACROFORM */
-	"scope open on exit", /* WEXITSCOPE */
-	"no scope context", /* WNOSCOPE */
-	"literal context already open", /* WOLITERAL */
-	"no literal context open", /* WNLITERAL */
-	"document title should be uppercase", /* WTITLECASE */
-	"deprecated comment style", /* WBADCOMMENT */
-};
 
 const	char *const __man_macronames[MAN_MAX] = {		 
 	"br",		"TH",		"SH",		"SS",
@@ -112,18 +90,16 @@ man_free(struct man *man)
 
 
 struct man *
-man_alloc(void *data, int pflags, const struct man_cb *cb)
+man_alloc(void *data, int pflags, mandocmsg msg)
 {
 	struct man	*p;
 
 	p = mandoc_calloc(1, sizeof(struct man));
 
-	if (cb)
-		memcpy(&p->cb, cb, sizeof(struct man_cb));
-
 	man_hash_init();
 	p->data = data;
 	p->pflags = pflags;
+	p->msg = msg;
 
 	man_alloc1(p);
 	return(p);
@@ -371,7 +347,7 @@ man_ptext(struct man *m, int line, char *buf, int offs)
 	if ('\\' == buf[offs] && 
 			'.' == buf[offs + 1] && 
 			'"' == buf[offs + 2])
-		return(man_pwarn(m, line, offs, WBADCOMMENT));
+		return(man_pmsg(m, line, offs, MANDOCERR_BADCOMMENT));
 
 	/* Literal free-form text whitespace is preserved. */
 
@@ -403,7 +379,7 @@ man_ptext(struct man *m, int line, char *buf, int offs)
 
 	if (' ' == buf[i - 1] || '\t' == buf[i - 1]) {
 		if (i > 1 && '\\' != buf[i - 2])
-			if ( ! man_pwarn(m, line, i - 1, WTSPACE))
+			if ( ! man_pmsg(m, line, i - 1, MANDOCERR_EOLNSPACE))
 				return(0);
 
 		for (--i; i && ' ' == buf[i]; i--)
@@ -437,7 +413,7 @@ descope:
 
 	if (MAN_ELINE & m->flags) {
 		m->flags &= ~MAN_ELINE;
-		if ( ! man_unscope(m, m->last->parent, WERRMAX))
+		if ( ! man_unscope(m, m->last->parent, MANDOCERR_MAX))
 			return(0);
 	}
 
@@ -445,7 +421,7 @@ descope:
 		return(1);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent, WERRMAX))
+	if ( ! man_unscope(m, m->last->parent, MANDOCERR_MAX))
 		return(0);
 	return(man_body_alloc(m, line, offs, m->last->tok));
 }
@@ -454,11 +430,13 @@ descope:
 static int
 macrowarn(struct man *m, int ln, const char *buf, int offs)
 {
-	if ( ! (MAN_IGN_MACRO & m->pflags))
-		return(man_verr(m, ln, offs, "unknown macro: %s%s", 
-				buf, strlen(buf) > 3 ? "..." : ""));
-	return(man_vwarn(m, ln, offs, "unknown macro: %s%s",
-				buf, strlen(buf) > 3 ? "..." : ""));
+	int		 rc;
+
+	rc = man_vmsg(m, MANDOCERR_MACRO, ln, offs, 
+			"unknown macro: %s%s",
+			buf, strlen(buf) > 3 ? "..." : "");
+
+	return(MAN_IGN_MACRO & m->pflags ? rc : 0);
 }
 
 
@@ -506,17 +484,15 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 
 		if (isgraph((u_char)buf[i]))
 			continue;
-		return(man_perr(m, ln, i, WNPRINT));
+		if ( ! man_pmsg(m, ln, i, MANDOCERR_BADCHAR))
+			return(0);
+		i--;
 	}
 
 	mac[j] = '\0';
 
 	if (j == 4 || j < 1) {
-		if ( ! (MAN_IGN_MACRO & m->pflags)) {
-			(void)man_perr(m, ln, ppos, WMACROFORM);
-			goto err;
-		} 
-		if ( ! man_pwarn(m, ln, ppos, WMACROFORM))
+		if ( ! macrowarn(m, ln, mac, ppos))
 			goto err;
 		return(1);
 	}
@@ -538,7 +514,7 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 	 */
 
 	if ('\0' == buf[i] && ' ' == buf[i - 1])
-		if ( ! man_pwarn(m, ln, i - 1, WTSPACE))
+		if ( ! man_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE))
 			goto err;
 
 	/* 
@@ -560,8 +536,10 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 		 *   I hate man macros.
 		 * Flat-out disallow this madness.
 		 */
-		if (MAN_NSCOPED & man_macros[m->last->tok].flags)
-			return(man_perr(m, ln, ppos, WLNSCOPE));
+		if (MAN_NSCOPED & man_macros[m->last->tok].flags) {
+			man_pmsg(m, ln, ppos, MANDOCERR_SYNTLINESCOPE);
+			return(0);
+		}
 
 		n = m->last;
 
@@ -569,7 +547,7 @@ man_pmacro(struct man *m, int ln, char *buf, int offs)
 		assert(NULL == n->child);
 		assert(0 == n->nchild);
 
-		if ( ! man_nwarn(m, n, WLNSCOPE))
+		if ( ! man_nmsg(m, n, MANDOCERR_LINESCOPE))
 			return(0);
 
 		man_node_delete(m, n);
@@ -626,7 +604,7 @@ out:
 	assert(MAN_BLINE & m->flags);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent, WERRMAX))
+	if ( ! man_unscope(m, m->last->parent, MANDOCERR_MAX))
 		return(0);
 	return(man_body_alloc(m, ln, offs, m->last->tok));
 
@@ -638,49 +616,16 @@ err:	/* Error out. */
 
 
 int
-man_verr(struct man *man, int ln, int pos, const char *fmt, ...)
+man_vmsg(struct man *man, enum mandocerr t, 
+		int ln, int pos, const char *fmt, ...)
 {
 	char		 buf[256];
 	va_list		 ap;
 
-	if (NULL == man->cb.man_err)
-		return(0);
-
 	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
+	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
-	return((*man->cb.man_err)(man->data, ln, pos, buf));
-}
-
-
-int
-man_vwarn(struct man *man, int ln, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == man->cb.man_warn)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*man->cb.man_warn)(man->data, ln, pos, buf));
-}
-
-
-int
-man_err(struct man *m, int line, int pos, int iserr, enum merr type)
-{
-	const char	 *p;
-	
-	p = __man_merrnames[(int)type];
-	assert(p);
-
-	if (iserr)
-		return(man_verr(m, line, pos, p));
-
-	return(man_vwarn(m, line, pos, p));
+	return((*man->msg)(t, man->data, ln, pos, buf));
 }
 
 

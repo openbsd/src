@@ -1,4 +1,4 @@
-/*	$Id: arch.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: arch.c,v 1.4 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,6 +18,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "libmdoc.h"
 
 #define LINE(x, y) \

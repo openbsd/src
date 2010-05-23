@@ -1,4 +1,4 @@
-/*	$Id: man_hash.c,v 1.11 2010/05/16 00:54:03 schwarze Exp $ */
+/*	$Id: man_hash.c,v 1.12 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "libman.h"
 
 #define	HASH_DEPTH	 8

@@ -1,4 +1,4 @@
-/*	$Id: man_argv.c,v 1.1 2009/08/23 11:22:19 schwarze Exp $ */
+/*	$Id: man_argv.c,v 1.2 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "libman.h"
 
 
@@ -53,7 +54,7 @@ man_args(struct man *m, int line, int *pos, char *buf, char **v)
 		}
 
 		if (0 == buf[*pos]) {
-			if ( ! man_pwarn(m, line, *pos, WTQUOTE))
+			if ( ! man_pmsg(m, line, *pos, MANDOCERR_BADQUOTE))
 				return(ARGS_ERROR);
 			return(ARGS_QWORD);
 		}
@@ -67,7 +68,7 @@ man_args(struct man *m, int line, int *pos, char *buf, char **v)
 			(*pos)++;
 
 		if (0 == buf[*pos])
-			if ( ! man_pwarn(m, line, *pos, WTSPACE))
+			if ( ! man_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE))
 				return(ARGS_ERROR);
 
 		return(ARGS_QWORD);
@@ -91,7 +92,7 @@ man_args(struct man *m, int line, int *pos, char *buf, char **v)
 		(*pos)++;
 
 	if (0 == buf[*pos])
-		if ( ! man_pwarn(m, line, *pos, WTSPACE))
+		if ( ! man_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE))
 			return(ARGS_ERROR);
 
 	return(ARGS_WORD);

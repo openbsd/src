@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.53 2010/05/20 00:58:02 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.54 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,63 +24,9 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
-
-const	char *const __mdoc_merrnames[MERRMAX] = {		 
-	"trailing whitespace", /* ETAILWS */
-	"unexpected quoted parameter", /* EQUOTPARM */
-	"unterminated quoted parameter", /* EQUOTTERM */
-	"argument parameter suggested", /* EARGVAL */
-	"macro disallowed in prologue", /* EBODYPROL */
-	"macro disallowed in body", /* EPROLBODY */
-	"text disallowed in prologue", /* ETEXTPROL */
-	"blank line disallowed", /* ENOBLANK */
-	"text parameter too long", /* ETOOLONG */
-	"invalid escape sequence", /* EESCAPE */
-	"invalid character", /* EPRINT */
-	"document has no body", /* ENODAT */
-	"document has no prologue", /* ENOPROLOGUE */
-	"expected line arguments", /* ELINE */
-	"invalid AT&T argument", /* EATT */
-	"default name not yet set", /* ENAME */
-	"missing list type", /* ELISTTYPE */
-	"missing display type", /* EDISPTYPE */
-	"too many display types", /* EMULTIDISP */
-	"too many list types", /* EMULTILIST */
-	"NAME section must be first", /* ESECNAME */
-	"badly-formed NAME section", /* ENAMESECINC */
-	"argument repeated", /* EARGREP */
-	"expected boolean parameter", /* EBOOL */
-	"inconsistent column syntax", /* ECOLMIS */
-	"nested display invalid", /* ENESTDISP */
-	"width argument missing", /* EMISSWIDTH */
-	"invalid section for this manual section", /* EWRONGMSEC */
-	"section out of conventional order", /* ESECOOO */
-	"section repeated", /* ESECREP */
-	"invalid standard argument", /* EBADSTAND */
-	"multi-line arguments discouraged", /* ENOMULTILINE */
-	"multi-line arguments suggested", /* EMULTILINE */
-	"line arguments discouraged", /* ENOLINE */
-	"prologue macro out of conventional order", /* EPROLOOO */
-	"prologue macro repeated", /* EPROLREP */
-	"invalid manual section", /* EBADMSEC */
-	"invalid font mode", /* EFONT */
-	"invalid date syntax", /* EBADDATE */
-	"invalid number format", /* ENUMFMT */
-	"superfluous width argument", /* ENOWIDTH */
-	"system: utsname error", /* EUTSNAME */
-	"obsolete macro", /* EOBS */
-	"end-of-line scope violation", /* EIMPBRK */
-	"empty macro ignored", /* EIGNE */
-	"unclosed explicit scope", /* EOPEN */
-	"unterminated quoted phrase", /* EQUOTPHR */
-	"closure macro without prior context", /* ENOCTX */
-	"no description found for library", /* ELIB */
-	"bad child for parent context", /* EBADCHILD */
-	"list arguments preceding type", /* ENOTYPE */
-	"deprecated comment style", /* EBADCOMMENT */
-};
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 
 	"Ap",		"Dd",		"Dt",		"Os",
@@ -241,15 +187,13 @@ mdoc_free(struct mdoc *mdoc)
  * Allocate volatile and non-volatile parse resources.  
  */
 struct mdoc *
-mdoc_alloc(void *data, int pflags, const struct mdoc_cb *cb)
+mdoc_alloc(void *data, int pflags, mandocmsg msg)
 {
 	struct mdoc	*p;
 
 	p = mandoc_calloc(1, sizeof(struct mdoc));
 
-	if (cb)
-		memcpy(&p->cb, cb, sizeof(struct mdoc_cb));
-
+	p->msg = msg;
 	p->data = data;
 	p->pflags = pflags;
 
@@ -295,52 +239,17 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 
 
 int
-mdoc_verr(struct mdoc *mdoc, int ln, int pos, 
-		const char *fmt, ...)
+mdoc_vmsg(struct mdoc *mdoc, enum mandocerr t, 
+		int ln, int pos, const char *fmt, ...)
 {
 	char		 buf[256];
 	va_list		 ap;
 
-	if (NULL == mdoc->cb.mdoc_err)
-		return(0);
-
 	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
+	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
 
-	return((*mdoc->cb.mdoc_err)(mdoc->data, ln, pos, buf));
-}
-
-
-int
-mdoc_vwarn(struct mdoc *mdoc, int ln, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_warn)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, ln, pos, buf));
-}
-
-
-int
-mdoc_err(struct mdoc *m, int line, int pos, int iserr, enum merr type)
-{
-	const char	*p;
-
-	p = __mdoc_merrnames[(int)type];
-	assert(p);
-
-	if (iserr)
-		return(mdoc_verr(m, line, pos, p));
-
-	return(mdoc_vwarn(m, line, pos, p));
+	return((*mdoc->msg)(t, mdoc->data, ln, pos, buf));
 }
 
 
@@ -354,13 +263,13 @@ mdoc_macro(struct mdoc *m, enum mdoct tok,
 
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
 			MDOC_PBODY & m->flags)
-		return(mdoc_perr(m, ln, pp, EPROLBODY));
+		return(mdoc_pmsg(m, ln, pp, MANDOCERR_BADBODY));
 
 	/* If we're in the prologue, deny "body" macros.  */
 
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
 			! (MDOC_PBODY & m->flags)) {
-		if ( ! mdoc_pwarn(m, ln, pp, EBODYPROL))
+		if ( ! mdoc_pmsg(m, ln, pp, MANDOCERR_BADPROLOG))
 			return(0);
 		if (NULL == m->meta.title)
 			m->meta.title = mandoc_strdup("unknown");
@@ -636,12 +545,12 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	if ('\\' == buf[offs] && 
 			'.' == buf[offs + 1] && 
 			'"' == buf[offs + 2])
-		return(mdoc_pwarn(m, line, offs, EBADCOMMENT));
+		return(mdoc_pmsg(m, line, offs, MANDOCERR_BADCOMMENT));
 
 	/* No text before an initial macro. */
 
 	if (SEC_NONE == m->lastnamed)
-		return(mdoc_perr(m, line, offs, ETEXTPROL));
+		return(mdoc_pmsg(m, line, offs, MANDOCERR_NOTEXT));
 
 	/*
 	 * Search for the beginning of unescaped trailing whitespace (ws)
@@ -683,11 +592,11 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	*end = '\0';
 
 	if (ws)
-		if ( ! mdoc_pwarn(m, line, (int)(ws-buf), ETAILWS))
+		if ( ! mdoc_pmsg(m, line, (int)(ws-buf), MANDOCERR_EOLNSPACE))
 			return(0);
 
 	if ('\0' == buf[offs] && ! (MDOC_LITERAL & m->flags)) {
-		if ( ! mdoc_pwarn(m, line, (int)(c-buf), ENOBLANK))
+		if ( ! mdoc_pmsg(m, line, (int)(c-buf), MANDOCERR_NOBLANKLN))
 			return(0);
 
 		/*
@@ -726,11 +635,14 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 static int
 macrowarn(struct mdoc *m, int ln, const char *buf, int offs)
 {
-	if ( ! (MDOC_IGN_MACRO & m->pflags))
-		return(mdoc_verr(m, ln, offs, "unknown macro: %s%s", 
-				buf, strlen(buf) > 3 ? "..." : ""));
-	return(mdoc_vwarn(m, ln, offs, "unknown macro: %s%s",
-				buf, strlen(buf) > 3 ? "..." : ""));
+	int		 rc;
+
+	rc = mdoc_vmsg(m, MANDOCERR_MACRO, ln, offs, 
+			"unknown macro: %s%s", 
+			buf, strlen(buf) > 3 ? "..." : "");
+
+	/* FIXME: logic should be in driver. */
+	return(MDOC_IGN_MACRO & m->pflags ? rc : 0);
 }
 
 
@@ -778,7 +690,9 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 
 		if (isgraph((u_char)buf[i]))
 			continue;
-		return(mdoc_perr(m, ln, i, EPRINT));
+		if ( ! mdoc_pmsg(m, ln, i, MANDOCERR_BADCHAR))
+			return(0);
+		i--;
 	}
 
 	mac[j] = '\0';
@@ -806,7 +720,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	 */
 
 	if ('\0' == buf[i] && ' ' == buf[i - 1])
-		if ( ! mdoc_pwarn(m, ln, i - 1, ETAILWS))
+		if ( ! mdoc_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE))
 			goto err;
 
 	/* 

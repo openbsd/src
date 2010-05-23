@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.43 2010/05/15 15:53:29 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.44 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -21,6 +21,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
 
@@ -191,6 +192,7 @@ swarn(struct mdoc *mdoc, enum mdoc_type type,
 		int line, int pos, const struct mdoc_node *p)
 {
 	const char	*n, *t, *tt;
+	int		 rc;
 
 	n = t = "<root>";
 	tt = "block";
@@ -223,13 +225,11 @@ swarn(struct mdoc *mdoc, enum mdoc_type type,
 		break;
 	}
 
-	if ( ! (MDOC_IGN_SCOPE & mdoc->pflags))
-		return(mdoc_verr(mdoc, line, pos, 
-				"%s scope breaks %s scope of %s", 
-				tt, t, n));
-	return(mdoc_vwarn(mdoc, line, pos, 
-				"%s scope breaks %s scope of %s", 
-				tt, t, n));
+	rc = mdoc_vmsg(mdoc, MANDOCERR_SCOPE, line, pos,
+			"%s scope breaks %s of %s", tt, t, n);
+
+	/* FIXME: logic should be in driver. */
+	return(MDOC_IGN_SCOPE & mdoc->pflags ? rc : 0);
 }
 
 
@@ -252,7 +252,8 @@ mdoc_macroend(struct mdoc *m)
 			continue;
 		if ( ! (MDOC_EXPLICIT & mdoc_macros[n->tok].flags))
 			continue;
-		return(mdoc_nerr(m, n, EOPEN));
+		mdoc_nmsg(m, n, MANDOCERR_SYNTSCOPE);
+		return(0);
 	}
 
 	/* Rewind to the first. */
@@ -584,7 +585,9 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 				return(1);
 			if ( ! (MDOC_EXPLICIT & mdoc_macros[tok].flags))
 				return(1);
-			return(mdoc_perr(m, line, ppos, ENOCTX));
+			/* FIXME: shouldn't raise an error */
+			mdoc_pmsg(m, line, ppos, MANDOCERR_SYNTNOSCOPE);
+			return(0);
 		}
 		if (REWIND_REWIND == c)
 			break;
@@ -679,8 +682,9 @@ blk_exp_close(MACRO_PROT_ARGS)
 	}
 
 	if ( ! (MDOC_CALLABLE & mdoc_macros[tok].flags)) {
+		/* FIXME: do this in validate */
 		if (buf[*pos]) 
-			if ( ! mdoc_pwarn(m, line, ppos, ENOLINE))
+			if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_ARGSLOST))
 				return(0);
 
 		if ( ! rew_sub(MDOC_BODY, m, tok, line, ppos))
@@ -824,7 +828,7 @@ in_line(MACRO_PROT_ARGS)
 					return(0);
 			} else if ( ! nc && 0 == cnt) {
 				mdoc_argv_free(arg);
-				if ( ! mdoc_pwarn(m, line, ppos, EIGNE))
+				if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY))
 					return(0);
 			}
 			if ( ! mdoc_macro(m, ntok, line, la, pos, buf))
@@ -885,7 +889,7 @@ in_line(MACRO_PROT_ARGS)
 			return(0);
 	} else if ( ! nc && 0 == cnt) {
 		mdoc_argv_free(arg);
-		if ( ! mdoc_pwarn(m, line, ppos, EIGNE))
+		if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_MACROEMPTY))
 			return(0);
 	}
 
@@ -1184,7 +1188,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if (body == n)
 			break;
 
-	if (NULL == n && ! mdoc_nwarn(m, body, EIMPBRK))
+	if (NULL == n && ! mdoc_nmsg(m, body, MANDOCERR_SCOPE))
 		return(0);
 
 	if (n && ! rew_last(m, body))
@@ -1547,7 +1551,7 @@ static int
 obsolete(MACRO_PROT_ARGS)
 {
 
-	return(mdoc_pwarn(m, line, ppos, EOBS));
+	return(mdoc_pmsg(m, line, ppos, MANDOCERR_MACROOBS));
 }
 
 

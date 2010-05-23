@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.33 2010/05/17 02:25:42 schwarze Exp $ */
+/*	$Id: term.c,v 1.34 2010/05/23 22:45:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,6 +23,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "chars.h"
 #include "out.h"
 #include "term.h"

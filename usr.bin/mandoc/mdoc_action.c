@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.35 2010/05/15 18:25:51 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.36 2010/05/23 22:45:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
 
@@ -265,12 +266,21 @@ concat(struct mdoc *m, char *p, const struct mdoc_node *n, size_t sz)
 	p[0] = '\0';
 	for ( ; n; n = n->next) {
 		assert(MDOC_TEXT == n->type);
-		if (strlcat(p, n->string, sz) >= sz)
-			return(mdoc_nerr(m, n, ETOOLONG));
+		/*
+		 * XXX: yes, these can technically be resized, but it's
+		 * highly unlikely that we're going to get here, so let
+		 * it slip for now.
+		 */
+		if (strlcat(p, n->string, sz) >= sz) {
+			mdoc_nmsg(m, n, MANDOCERR_MEM);
+			return(0);
+		}
 		if (NULL == n->next)
 			continue;
-		if (strlcat(p, " ", sz) >= sz)
-			return(mdoc_nerr(m, n, ETOOLONG));
+		if (strlcat(p, " ", sz) >= sz) {
+			mdoc_nmsg(m, n, MANDOCERR_MEM);
+			return(0);
+		}
 	}
 
 	return(1);
@@ -284,14 +294,16 @@ concat(struct mdoc *m, char *p, const struct mdoc_node *n, size_t sz)
 static int
 post_std(POST_ARGS)
 {
-	struct mdoc_node	*nn;
+	struct mdoc_node *nn;
 
 	if (n->child)
+		return(1);
+	if (NULL == m->meta.name)
 		return(1);
 	
 	nn = n;
 	m->next = MDOC_NEXT_CHILD;
-	assert(m->meta.name);
+
 	if ( ! mdoc_word_alloc(m, n->line, n->pos, m->meta.name))
 		return(0);
 	m->last = nn;
@@ -449,7 +461,7 @@ post_sh(POST_ARGS)
 			break;
 		if (*m->meta.msec == '9')
 			break;
-		return(mdoc_nwarn(m, n, EWRONGMSEC));
+		return(mdoc_nmsg(m, n, MANDOCERR_SECMSEC));
 	default:
 		break;
 	}
@@ -513,7 +525,7 @@ post_dt(POST_ARGS)
 	if (cp) {
 		m->meta.vol = mandoc_strdup(cp);
 		m->meta.msec = mandoc_strdup(nn->string);
-	} else if (mdoc_nwarn(m, n, EBADMSEC)) {
+	} else if (mdoc_nmsg(m, n, MANDOCERR_BADMSEC)) {
 		m->meta.vol = mandoc_strdup(nn->string);
 		m->meta.msec = mandoc_strdup(nn->string);
 	} else
@@ -570,19 +582,32 @@ post_os(POST_ARGS)
 	if ( ! concat(m, buf, n->child, BUFSIZ))
 		return(0);
 
+	/* XXX: yes, these can all be dynamically-adjusted buffers, but
+	 * it's really not worth the extra hackery.
+	 */
+
 	if ('\0' == buf[0]) {
 #ifdef OSNAME
-		if (strlcat(buf, OSNAME, BUFSIZ) >= BUFSIZ)
-			return(mdoc_nerr(m, n, EUTSNAME));
+		if (strlcat(buf, OSNAME, BUFSIZ) >= BUFSIZ) {
+			mdoc_nmsg(m, n, MANDOCERR_MEM);
+			return(0);
+		}
 #else /*!OSNAME */
 		if (-1 == uname(&utsname))
-			return(mdoc_nerr(m, n, EUTSNAME));
-		if (strlcat(buf, utsname.sysname, BUFSIZ) >= BUFSIZ)
-			return(mdoc_nerr(m, n, ETOOLONG));
-		if (strlcat(buf, " ", 64) >= BUFSIZ)
-			return(mdoc_nerr(m, n, ETOOLONG));
-		if (strlcat(buf, utsname.release, BUFSIZ) >= BUFSIZ)
-			return(mdoc_nerr(m, n, ETOOLONG));
+			return(mdoc_nmsg(m, n, MANDOCERR_UTSNAME));
+
+		if (strlcat(buf, utsname.sysname, BUFSIZ) >= BUFSIZ) {
+			mdoc_nmsg(m, n, MANDOCERR_MEM);
+			return(0);
+		}
+		if (strlcat(buf, " ", 64) >= BUFSIZ) {
+			mdoc_nmsg(m, n, MANDOCERR_MEM);
+			return(0);
+		}
+		if (strlcat(buf, utsname.release, BUFSIZ) >= BUFSIZ) {
+			mdoc_nmsg(m, n, MANDOCERR_MEM);
+			return(0);
+		}
 #endif /*!OSNAME*/
 	}
 
@@ -617,7 +642,7 @@ post_bl_tagwidth(POST_ARGS)
 		if (MDOC_TEXT != nn->type) {
 			sz = mdoc_macro2len(nn->tok);
 			if (sz == 0) {
-				if ( ! mdoc_nwarn(m, n, ENOWIDTH))
+				if ( ! mdoc_nmsg(m, n, MANDOCERR_NOWIDTHARG))
 					return(0);
 				sz = 10;
 			}
@@ -680,12 +705,11 @@ post_bl_width(POST_ARGS)
 	 */
 
 	if (0 == strcmp(p, "Ds"))
-		/* XXX: make into a macro. */
 		width = 6;
 	else if (MDOC_MAX == (tok = mdoc_hash_find(p)))
 		return(1);
 	else if (0 == (width = mdoc_macro2len(tok))) 
-		return(mdoc_nwarn(m, n, ENOWIDTH));
+		return(mdoc_nmsg(m, n, MANDOCERR_BADWIDTH));
 
 	/* The value already exists: free and reallocate it. */
 
@@ -844,7 +868,7 @@ post_dd(POST_ARGS)
 		(MTIME_MDOCDATE | MTIME_CANONICAL, buf);
 
 	if (0 == m->meta.date) {
-		if ( ! mdoc_nwarn(m, n, EBADDATE))
+		if ( ! mdoc_nmsg(m, n, MANDOCERR_BADDATE))
 			return(0);
 		m->meta.date = time(NULL);
 	}
