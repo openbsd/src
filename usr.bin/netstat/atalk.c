@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.17 2009/02/07 15:06:04 chl Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.18 2010/05/23 10:12:42 chl Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -193,46 +193,6 @@ atalk_print(const struct sockaddr *sa, int what)
 		    at_pr_port(sat));
 	}
 	return mybuf;
-}
-
-char *
-atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
-{
-	size_t		n, l;
-	static char	buf[100];
-	struct sockaddr_at *sat1, *sat2;
-	struct sockaddr_at thesockaddr;
-	struct sockaddr *sa2;
-
-	sat1 = (struct sockaddr_at *) sa;
-	sat2 = (struct sockaddr_at *) mask;
-	sa2 = (struct sockaddr *) & thesockaddr;
-
-	thesockaddr.sat_addr.s_net = sat1->sat_addr.s_net &
-	    sat2->sat_addr.s_net;
-	if ((n = snprintf(buf, sizeof(buf), "%s",
-	    atalk_print(sa2, 1 | (what & 8)))) >= sizeof(buf))
-		n = sizeof(buf) - 1;
-	else if (n < 0)
-		n = 0;	/* What else can be done ? */
-	if (sat2->sat_addr.s_net != 0xFFFF) {
-		thesockaddr.sat_addr.s_net = sat1->sat_addr.s_net |
-		    ~sat2->sat_addr.s_net;
-		if ((l = snprintf(buf + n, sizeof(buf) - n,
-		    "-%s", atalk_print(sa2, 1 | (what & 8)))) >= sizeof(buf) - n)
-			l = sizeof(buf) - n - 1;
-		if (l > 0)
-			n += l;
-	}
-	if (what & 2) {
-		l = snprintf(buf + n, sizeof(buf) - n, ".%s",
-		    atalk_print(sa, what & (~1)));
-		if (l >= sizeof(buf) - n)
-			l = sizeof(buf) - n - 1;
-		if (l > 0)
-			n += l;
-	}
-	return (buf);
 }
 
 void
