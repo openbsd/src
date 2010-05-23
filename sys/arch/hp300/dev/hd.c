@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.60 2010/04/23 15:25:20 jsing Exp $	*/
+/*	$OpenBSD: hd.c,v 1.61 2010/05/23 10:49:19 dlg Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
+#include <sys/dkio.h>
 
 #include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
