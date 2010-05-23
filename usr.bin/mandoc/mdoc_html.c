@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.15 2010/05/15 18:25:51 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.16 2010/05/23 20:05:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1285,7 +1285,7 @@ mdoc_d1_pre(MDOC_ARGS)
 
 	/* FIXME: D1 shouldn't be literal. */
 
-	SCALE_VS_INIT(&su, INDENT - 2);
+	SCALE_VS_INIT(&su, INDENT - 1);
 	bufcat_su(h, "margin-left", &su);
 	PAIR_CLASS_INIT(&tag[0], "lit");
 	PAIR_STYLE_INIT(&tag[1], h);
@@ -1398,7 +1398,8 @@ mdoc_bd_pre(MDOC_ARGS)
 				break;
 		}
 		if (comp) {
-			print_otag(h, TAG_DIV, 0, tag);
+			PAIR_STYLE_INIT(&tag[0], h);
+			print_otag(h, TAG_DIV, 1, tag);
 			return(1);
 		}
 		SCALE_VS_INIT(&su, 1);
