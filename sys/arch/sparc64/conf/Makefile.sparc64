@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.45 2010/04/28 15:31:34 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.46 2010/05/23 16:50:44 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \
 		-Wstack-larger-than-2047 -Wvariable-decl
@@ -58,7 +58,6 @@ HOSTED_CFLAGS=	${CFLAGS}
 
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
@@ -108,7 +107,7 @@ param.c: $S/conf/param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 mcount.o: $S/lib/libkern/mcount.c Makefile
 	${NORMAL_C_NOP}
