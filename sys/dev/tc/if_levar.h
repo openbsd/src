@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_levar.h,v 1.7 2003/06/02 23:28:04 millert Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.8 2010/05/23 11:41:22 deraadt Exp $	*/
 /*	$NetBSD: if_levar.h,v 1.4 1997/03/15 18:12:07 is Exp $	*/
 
 /*-
@@ -39,12 +39,12 @@
 struct lereg1 {
 	volatile u_int16_t	ler1_rdp;	/* data port */
 	int16_t	pad0;
-#ifdef alpha
+#if defined(__alpha__)
 	int32_t	pad1;
 #endif
 	volatile u_int16_t	ler1_rap;	/* register select port */
 	int16_t	pad2;
-#ifdef alpha
+#if defined(__alpha__)
 	int32_t	pad3;
 #endif
 };
