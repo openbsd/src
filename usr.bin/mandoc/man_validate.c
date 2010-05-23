@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.23 2010/05/20 00:58:02 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.24 2010/05/23 20:57:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -91,6 +91,7 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL, posts_le1 }, /* Sp */
 	{ pres_bline, posts_le1 }, /* Vb */
 	{ pres_bline, posts_eq0 }, /* Ve */
+	{ NULL, NULL }, /* AT */
 };
 
 

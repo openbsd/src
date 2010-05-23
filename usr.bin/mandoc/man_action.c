@@ -1,4 +1,4 @@
-/*	$Id: man_action.c,v 1.18 2010/05/20 00:58:02 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.19 2010/05/23 20:57:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,6 +29,8 @@ struct	actions {
 static	int	  post_TH(struct man *);
 static	int	  post_fi(struct man *);
 static	int	  post_nf(struct man *);
+static	int	  post_AT(struct man *);
+static	int	  post_UC(struct man *);
 
 const	struct actions man_actions[MAN_MAX] = {
 	{ NULL }, /* br */
@@ -61,11 +63,12 @@ const	struct actions man_actions[MAN_MAX] = {
 	{ NULL }, /* RE */
 	{ NULL }, /* RS */
 	{ NULL }, /* DT */
-	{ NULL }, /* UC */
+	{ post_UC }, /* UC */
 	{ NULL }, /* PD */
 	{ NULL }, /* Sp */
 	{ post_nf }, /* Vb */
 	{ post_fi }, /* Ve */
+	{ post_AT }, /* AT */
 };
 
 
@@ -175,5 +178,84 @@ post_TH(struct man *m)
 	 * meta-data.
 	 */
 	man_node_delete(m, m->last);
+	return(1);
+}
+
+
+static int
+post_AT(struct man *m)
+{
+	static const char * const unix_versions[] = {
+	    "7th Edition",
+	    "System III",
+	    "System V",
+	    "System V Release 2",
+	};
+
+	const char	*p, *s;
+	struct man_node	*n, *nn;
+
+	n = m->last->child;
+
+	if (NULL == n || MAN_TEXT != n->type)
+		p = unix_versions[0];
+	else {
+		s = n->string;
+		if (0 == strcmp(s, "3"))
+			p = unix_versions[0];
+		else if (0 == strcmp(s, "4"))
+			p = unix_versions[1];
+		else if (0 == strcmp(s, "5")) {
+			nn = n->next;
+			if (nn && MAN_TEXT == nn->type && nn->string[0])
+				p = unix_versions[3];
+			else
+				p = unix_versions[2];
+		} else
+			p = unix_versions[0];
+	}
+
+	m->meta.source = mandoc_strdup(p);
+
+	return(1);
+}
+
+
+static int
+post_UC(struct man *m)
+{
+	static const char * const bsd_versions[] = {
+	    "3rd Berkeley Distribution",
+	    "4th Berkeley Distribution",
+	    "4.2 Berkeley Distribution",
+	    "4.3 Berkeley Distribution",
+	    "4.4 Berkeley Distribution",
+	};
+
+	const char	*p, *s;
+	struct man_node	*n;
+
+	n = m->last->child;
+
+	if (NULL == n || MAN_TEXT != n->type)
+		p = bsd_versions[0];
+	else {
+		s = n->string;
+		if (0 == strcmp(s, "3"))
+			p = bsd_versions[0];
+		else if (0 == strcmp(s, "4"))
+			p = bsd_versions[1];
+		else if (0 == strcmp(s, "5"))
+			p = bsd_versions[2];
+		else if (0 == strcmp(s, "6"))
+			p = bsd_versions[3];
+		else if (0 == strcmp(s, "7"))
+			p = bsd_versions[4];
+		else
+			p = bsd_versions[0];
+	}
+
+	m->meta.source = mandoc_strdup(p);
+
 	return(1);
 }

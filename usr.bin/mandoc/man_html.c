@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.12 2010/05/20 00:58:02 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.13 2010/05/23 20:57:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -102,6 +102,7 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_br_pre, NULL }, /* Sp */
 	{ man_ign_pre, NULL }, /* Vb */
 	{ NULL, NULL }, /* Ve */
+	{ man_ign_pre, NULL }, /* AT */
 };
 
 

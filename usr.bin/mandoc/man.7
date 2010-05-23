@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.24 2010/05/15 15:37:53 schwarze Exp $
+.\"	$Id: man.7,v 1.25 2010/05/23 20:57:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 15 2010 $
+.Dd $Mdocdate: May 23 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -456,7 +456,7 @@ The syntax is as follows:
 .It Sx \&nf  Ta    0         Ta    current   Ta    compat
 .It Sx \&r   Ta    0         Ta    current   Ta    compat
 .It Sx \&sp  Ta    1         Ta    current   Ta    compat
-.\" .It Sx \&Sp  Ta    0         Ta    current   Ta    compat
+.\" .It Sx \&Sp  Ta    <1        Ta    current   Ta    compat
 .\" .It Sx \&Vb  Ta    <1        Ta    current   Ta    compat
 .\" .It Sx \&Ve  Ta    0         Ta    current   Ta    compat
 .El
@@ -529,6 +529,11 @@ This section is a canonical reference to all macros, arranged
 alphabetically.
 For the scoping of individual macros, see
 .Sx MACRO SYNTAX .
+.Ss \&AT
+Sets the volume for the footer for compatibility with man pages from
+.Tn AT&T UNIX
+releases.
+The optional arguments specify which release it is from.
 .Ss \&B
 Text is rendered in bold face.
 .Pp
@@ -847,8 +852,10 @@ and
 .\" Has no effect.  Included for compatibility.
 .\" .
 .\" .
-.\" .Ss \&UC
-.\" Has no effect.  Included for compatibility.
+.Ss \&UC
+Sets the volume for the footer for compatibility with man pages from
+BSD releases.
+The optional first argument specifies which release it is from.
 .Ss \&br
 Breaks the current line.
 Consecutive invocations have no further effect.
