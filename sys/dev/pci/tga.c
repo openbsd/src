@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.33 2009/09/05 14:09:35 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.34 2010/05/23 15:30:25 deraadt Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -232,9 +232,6 @@ tga_getdevconfig(memt, pc, tag, dc)
 #ifdef __alpha__
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 #endif
-#ifdef arc
-	bus_space_paddr(memt, dc->dc_memh, &dc->dc_paddr);
-#endif
 	DPRINTF("tga_getdevconfig: allocating subregion\n");
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, 
 			    TGA_MEM_CREGS, TGA_CREGS_SIZE,
@@ -417,7 +414,7 @@ tgaattach(parent, self, aux)
 	u_int8_t rev;
 	int console;
 
-#if defined(__alpha__) || defined(arc)
+#if defined(__alpha__)
 	console = (pa->pa_tag == tga_console_dc.dc_pcitag);
 #else
 	console = 0;
