@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.172 2010/04/17 04:14:52 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.173 2010/05/24 21:51:49 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ scsi_ioh_del(struct scsi_iohandler *ioh)
 	case RUNQ_IDLE:
 		break;
 	default:
-		panic("scsi_ioh_add: unexpected state %u", ioh->entry.state);
+		panic("scsi_ioh_del: unexpected state %u", ioh->entry.state);
 #endif
 	}
 
