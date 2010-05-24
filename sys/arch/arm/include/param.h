@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.12 2008/05/04 09:57:47 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.13 2010/05/24 02:00:35 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ void	delay (unsigned);
 #define	BLKDEV_IOSIZE	2048
 
 #ifndef MAXPHYS
-#define	MAXPHYS		65536		/* max I/O transfer size */
+#define	MAXPHYS		(64 * 1024)		/* max I/O transfer size */
 #endif
 
 /* pages ("clicks") to disk blocks */
