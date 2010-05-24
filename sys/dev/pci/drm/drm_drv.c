@@ -485,40 +485,11 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 		DRM_DEBUG("Process %d dead, freeing lock for context %d\n",
 		    DRM_CURRENTPID,
 		    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock));
-		if (dev->driver->reclaim_buffers_locked != NULL)
-			dev->driver->reclaim_buffers_locked(dev, file_priv);
 
 		drm_lock_free(&dev->lock,
 		    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock));
-	} else if (dev->driver->reclaim_buffers_locked != NULL &&
-	    dev->lock.hw_lock != NULL) {
-		mtx_enter(&dev->lock.spinlock);
-		/* The lock is required to reclaim buffers */
-		for (;;) {
-			if (dev->lock.hw_lock == NULL) {
-				/* Device has been unregistered */
-				retcode = EINTR;
-				break;
-			}
-			if (drm_lock_take(&dev->lock, DRM_KERNEL_CONTEXT)) {
-				dev->lock.file_priv = file_priv;
-				break;	/* Got lock */
-			}
-				/* Contention */
-			retcode = msleep(&dev->lock,
-			    &dev->lock.spinlock, PZERO | PCATCH, "drmlk2", 0);
-			if (retcode)
-				break;
-		}
-		mtx_leave(&dev->lock.spinlock);
-		if (retcode == 0) {
-			dev->driver->reclaim_buffers_locked(dev, file_priv);
-			drm_lock_free(&dev->lock, DRM_KERNEL_CONTEXT);
-		}
 	}
-
-	if (dev->driver->flags & DRIVER_DMA &&
-	    !dev->driver->reclaim_buffers_locked)
+	if (dev->driver->flags & DRIVER_DMA)
 		drm_reclaim_buffers(dev, file_priv);
 
 	DRM_LOCK();

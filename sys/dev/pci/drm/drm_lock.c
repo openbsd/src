@@ -132,10 +132,6 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	/* XXX: Add signal blocking here */
 
-	if (dev->driver->dma_quiescent != NULL &&
-	    (lock->flags & _DRM_LOCK_QUIESCENT))
-		dev->driver->dma_quiescent(dev);
-
 	return 0;
 }
 

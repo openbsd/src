@@ -70,7 +70,6 @@
 #include <machine/bus.h>
 
 #include "drm.h"
-#include "drm_linux_list.h"
 #include "drm_atomic.h"
 
 #define DRM_KERNEL_CONTEXT    0	 /* Change drm_resctx if changed	  */
@@ -407,11 +406,8 @@ struct drm_driver_info {
 		    struct drm_file *);
 	void	(*close)(struct drm_device *, struct drm_file *);
 	void	(*lastclose)(struct drm_device *);
-	void	(*reclaim_buffers_locked)(struct drm_device *,
-		    struct drm_file *);
 	int	(*dma_ioctl)(struct drm_device *, struct drm_dma *,
 		    struct drm_file *);
-	int	(*dma_quiescent)(struct drm_device *);
 	int	(*irq_install)(struct drm_device *);
 	void	(*irq_uninstall)(struct drm_device *);
 	int	vblank_pipes;

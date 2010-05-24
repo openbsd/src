@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.18 2010/03/27 00:09:50 oga Exp $
+# $OpenBSD: files.drm,v 1.19 2010/05/24 01:19:19 oga Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -9,7 +9,6 @@ file   dev/pci/drm/drm_agpsupport.c    drm
 file   dev/pci/drm/drm_bufs.c          drm
 file   dev/pci/drm/drm_context.c       drm
 file   dev/pci/drm/drm_drv.c           drm	needs-flag
-file   dev/pci/drm/drm_heap.c          radeondrm | sisdrm
 file   dev/pci/drm/drm_irq.c           drm
 file   dev/pci/drm/drm_lock.c          drm
 file   dev/pci/drm/drm_memory.c        drm
@@ -21,31 +20,9 @@ file	dev/pci/drm/i915_drv.c		inteldrm
 file	dev/pci/drm/i915_dma.c		inteldrm
 file	dev/pci/drm/i915_irq.c		inteldrm
 
-device	machdrm: drmbase
-attach	machdrm at drmdev
-file	dev/pci/drm/mach64_dma.c	machdrm
-file	dev/pci/drm/mach64_drv.c	machdrm
-file	dev/pci/drm/mach64_irq.c	machdrm
-file	dev/pci/drm/mach64_state.c	machdrm
-
-device	mgadrm: drmbase
-attach	mgadrm at drmdev
-file	dev/pci/drm/mga_dma.c		mgadrm
-file	dev/pci/drm/mga_drv.c		mgadrm
-file	dev/pci/drm/mga_irq.c		mgadrm
-file	dev/pci/drm/mga_state.c		mgadrm
-file	dev/pci/drm/mga_warp.c		mgadrm
-
-device	ragedrm: drmbase
-attach	ragedrm at drmdev
-file	dev/pci/drm/ati_pcigart.c	ragedrm | radeondrm
-file	dev/pci/drm/r128_cce.c		ragedrm
-file	dev/pci/drm/r128_drv.c		ragedrm
-file	dev/pci/drm/r128_irq.c		ragedrm
-file	dev/pci/drm/r128_state.c	ragedrm
-
 device	radeondrm: drmbase
 attach	radeondrm at drmdev
+file	dev/pci/drm/ati_pcigart.c	radeondrm
 file	dev/pci/drm/r300_cmdbuf.c	radeondrm
 file	dev/pci/drm/r600_blit.c		radeondrm
 file	dev/pci/drm/r600_blit_shaders.c	radeondrm
@@ -54,17 +31,4 @@ file	dev/pci/drm/radeon_drv.c	radeondrm
 file	dev/pci/drm/radeon_irq.c	radeondrm
 file	dev/pci/drm/radeon_mem.c	radeondrm
 file	dev/pci/drm/radeon_state.c	radeondrm
-
-device	savagedrm: drmbase
-attach	savagedrm at drmdev
-file	dev/pci/drm/savage_bci.c	savagedrm
-file	dev/pci/drm/savage_drv.c	savagedrm
-file	dev/pci/drm/savage_state.c	savagedrm
-
-device	sisdrm: drmbase
-attach	sisdrm at drmdev
-file	dev/pci/drm/sis_drv.c		sisdrm
-
-device	tdfxdrm: drmbase
-attach	tdfxdrm at drmdev
-file	dev/pci/drm/tdfx_drv.c		tdfxdrm
+file	dev/pci/drm/drm_heap.c          radeondrm
