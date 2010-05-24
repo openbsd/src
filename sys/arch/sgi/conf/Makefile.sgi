@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.39 2010/04/28 15:31:33 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.40 2010/05/24 14:59:16 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -10,13 +10,13 @@
 
 .include <bsd.own.mk>
 
-AS?=	as
-CC?=	cc
 MKDEP?=	mkdep
 SIZE?=	size
+STRIP?=	strip
+AS?=	as
+CC?=	cc
 CPP?=	cpp
 LD?=	ld ${ENDIAN}
-STRIP?=	strip
 TOUCH?=	touch
 
 CPP+=${ENDIAN}
@@ -35,19 +35,23 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__
-CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main \
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-main -Wno-uninitialized -Wno-format \
 		-Wstack-larger-than-2047 -Wvariable-decl
-CMACHFLAGS+=	-mno-abicalls ${ABI} -msoft-float \
-		-fno-builtin-printf -fno-builtin-log -fno-builtin-log2 \
-		-fno-builtin-malloc
+
+CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float
+CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
+		-fno-builtin-vsnprintf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc 
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
+
 COPTS?=		-O2
-CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-x assembler-with-cpp -mno-abicalls ${ABI} -D_LOCORE
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
+LINKFLAGS=	-e start -T ${_machdir}/conf/ld.script -Ttext=${LINK_ADDRESS}
 STRIPFLAGS=	-g -X -x
 
 .if ${IDENT:M-DDDB_STRUCT}
@@ -56,11 +60,14 @@ DB_STRUCTINFO=	db_structinfo.h
 DB_STRUCTINFO=
 .endif
 
+HOSTCC?=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${AS}  ${COPTS} ${PARAM} $< -o $@
 
 %OBJS
 
@@ -75,34 +82,32 @@ NORMAL_S_C=	${AS}  ${COPTS} ${PARAM} $< -o $@
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	rm -f $@
-SYSTEM_LD=	@if [ X${DEBUG} = X-g ]; \
-		then strip=-X; \
-		else strip=-x; \
-		fi; \
-		echo ${LD} $$strip -o $@ -e start -T ${_machdir}/conf/ld.script \
-			-Ttext=${LINK_ADDRESS} '$${SYSTEM_OBJ}' vers.o; \
-		${LD} $$strip -o $@ -e start -T ${_machdir}/conf/ld.script \
-			-Ttext=${LINK_ADDRESS} ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
+LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
+.else
+LINKFLAGS+=	-x
 .endif
 
 %LOAD
 
 clean::
-	rm -f eddep bsd bsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint:
-	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
-	    ${CFILES} ioconf.c param.c
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
+	    ${CFILES} ioconf.c param.c | \
+	    grep -v 'static function .* unused'
 
 symbols.sort: ${_machdir}/${_mach}/symbols.raw
 	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
@@ -134,7 +139,7 @@ param.c: $S/conf/param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 mcount.o: $S/lib/libkern/mcount.c Makefile
 	${NORMAL_C_NOP}

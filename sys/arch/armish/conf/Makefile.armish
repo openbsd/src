@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armish,v 1.26 2010/04/28 15:31:32 deraadt Exp $
+#	$OpenBSD: Makefile.armish,v 1.27 2010/05/24 14:59:15 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,22 +25,22 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__${_mach}__
-CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main \
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-main -Wno-uninitialized -Wno-format \
 		-Wstack-larger-than-2047 -Wvariable-decl
 
-CMACHFLAGS= -ffreestanding
-#CMACHFLAGS=	-march=armv4 -mtune=strongarm -ffreestanding
+CMACHFLAGS=	-ffreestanding -msoft-float # -march=armv4 -mtune=strongarm
+CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
+		-fno-builtin-vsnprintf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc 
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-CMACHFLAGS+=	-msoft-float -fno-builtin-printf -fno-builtin-log \
-		-fno-builtin-log2 -fno-builtin-malloc
 
 COPTS?=		-O2
-CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
 LINKFLAGS=	-T ldscript
 LINKFLAGS+=	--warn-common
 STRIPFLAGS=	-g -X -x
@@ -51,23 +51,14 @@ DB_STRUCTINFO=	db_structinfo.h
 DB_STRUCTINFO=
 .endif
 
-HOSTCC= ${CC}
+HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
-
-# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, or PROFILE; SUFFIX is the file suffix,
-# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
-# is marked as config-dependent.
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
-
-HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -82,7 +73,7 @@ HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ=	${_mach}_start.o locore.o param.o ioconf.o ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	rm -f $@
+SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD_HEAD+=; \
 		cat ${_archdir}/conf/ldscript.head ${_archdir}/conf/ldscript.tail | \
 		    sed -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
@@ -120,7 +111,7 @@ param.c: $S/conf/param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 mcount.o: $S/lib/libkern/mcount.c Makefile
 	${NORMAL_C_NOP}
@@ -134,11 +125,11 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint:
-	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

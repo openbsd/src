@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.61 2010/05/23 15:10:38 deraadt Exp $
+#	$OpenBSD: Makefile.hp300,v 1.62 2010/05/24 14:59:15 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -27,15 +27,20 @@ _archdir?=	$S/arch/${_arch}
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main \
+		-Wno-main -Wno-uninitialized -Wno-format \
 		-Wstack-larger-than-2047 -Wvariable-decl
-CMACHFLAGS=	-msoft-float -fno-builtin-printf -fno-builtin-log
+
+CMACHFLAGS=	-msoft-float
+CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
+		-fno-builtin-vsnprintf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc 
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
+
 COPTS?=		-O2
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
 
@@ -44,12 +49,6 @@ DB_STRUCTINFO=	db_structinfo.h
 .else
 DB_STRUCTINFO=
 .endif
-
-HOSTCC?=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
-
-### CPU and MMU configuration
 
 .if (${IDENT:M-DHP320} != "" || ${IDENT:M-DHP350} != "")
 _OPTIONS+=	-DM68020 -DM68K_MMU_HP
@@ -86,23 +85,22 @@ CPPFLAGS+=	-DM68K_MMU_HP
 CPPFLAGS+=	-DM68K_MMU_MOTOROLA
 .endif
 
-### for the Motorola 68040 Floating Point Software Product
 .include "${_archdir}/fpsp/Makefile.inc"
 
-# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
-# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
+HOSTCC?=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
-HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
-
 %OBJS
 
 %CFILES
 
-#%SFILES
+%SFILES
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
@@ -154,11 +152,11 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.46 2010/05/23 16:50:44 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.47 2010/05/24 14:59:16 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -26,18 +26,21 @@ _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
-CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main \
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-main -Wno-uninitialized -Wno-format \
 		-Wstack-larger-than-2047 -Wvariable-decl
 
-CMACHFLAGS=	-Wa,-Av9b, -mno-fpu -fno-builtin-printf -fno-builtin-log \
-		-fno-builtin-log2 -fno-builtin-malloc
+CMACHFLAGS=	-Wa,-Av9b, -mno-fpu
+CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
+		-fno-builtin-vsnprintf -fno-builtin-log \
+		-fno-builtin-log2 -fno-builtin-malloc 
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
 
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-x assembler-with-cpp -D_LOCORE -Wa,-Av9b
+COPTS?=		-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
 LINKFLAGS=	-n -Ttext 01000000 -Tdata 01800000 -e start -N
 STRIPFLAGS=	-g -X -x
 
@@ -47,22 +50,14 @@ DB_STRUCTINFO=	db_structinfo.h
 DB_STRUCTINFO=
 .endif
 
-HOSTCC=	${CC}
+HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
-
-# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, or PROFILE}; SUFFIX is the file suffix,
-# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
-# is marked as config-dependent.
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
-
-HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -125,7 +120,7 @@ clean::
 	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
