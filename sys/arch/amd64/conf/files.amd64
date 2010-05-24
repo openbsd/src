@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.55 2009/12/28 14:22:09 dlg Exp $
+#	$OpenBSD: files.amd64,v 1.56 2010/05/24 23:19:21 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -24,6 +24,9 @@ file	arch/amd64/amd64/softintr.c
 file	arch/amd64/amd64/i8259.c
 file	arch/amd64/amd64/cacheinfo.c
 file	arch/amd64/amd64/mutex.S
+file	arch/amd64/amd64/vector.S
+file	arch/amd64/amd64/copy.S
+file	arch/amd64/amd64/spl.S
 file	arch/amd64/amd64/lock_machdep.c		multiprocessor
 
 file	arch/amd64/amd64/intr.c

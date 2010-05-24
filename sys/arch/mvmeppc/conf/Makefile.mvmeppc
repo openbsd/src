@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.47 2010/05/24 17:49:37 deraadt Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.48 2010/05/24 23:19:22 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -28,7 +28,7 @@ INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-main -Wno-uninitialized -Wno-format \
-		-Wstack-larger-than-2047 -Wvariable-decl
+		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-msoft-float -Wa,-m7400
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
@@ -42,7 +42,7 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 100114 -e start --warn-common
-STRIPFLAGS=	-g -X -x
+STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -116,7 +116,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
+	    [Ee]rrs linterrs assym.h ${DB_STRUCTINFO}
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -126,19 +126,11 @@ lint:
 tags:
 	@echo "see $S/kern/Makefile for tags"
 
-links:
-	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
-	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink makelinks
-
-SRCS=	${_machdir}/${_mach}/locore.S \
-	param.c ioconf.c ${CFILES} ${SFILES}
+AFILES=	${_machdir}/${_mach}/locore.S
+SRCS=	${AFILES} param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}

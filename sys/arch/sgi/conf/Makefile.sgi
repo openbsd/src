@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.42 2010/05/24 17:49:37 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.43 2010/05/24 23:19:22 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -35,7 +35,7 @@ INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-main -Wno-uninitialized -Wno-format \
-		-Wstack-larger-than-2047 -Wvariable-decl
+		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
@@ -49,7 +49,7 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
 LINKFLAGS=	-e start -T ${_machdir}/conf/ld.script -Ttext=${LINK_ADDRESS}
-STRIPFLAGS=	-g -X -x
+STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -97,39 +97,12 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-clean::
-	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
-
-lint:
-	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${CFILES} ioconf.c param.c | \
-	    grep -v 'static function .* unused'
-
-symbols.sort: ${_machdir}/${_mach}/symbols.raw
-	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
-	    | sed 's/^	//' | sort -u > symbols.sort
-
-locore.o: ${_machdir}/${_mach}/locore.S assym.h
-	${NORMAL_S}
-
 assym.h: $S/kern/genassym.sh Makefile \
 	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PARAM} | \
 	    sort -u > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
-
-links:
-	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
-	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink makelinks
-
-tags:
-	@echo "see $S/kern/Makefile for tags"
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -148,11 +121,27 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-SRCS=   ${_machdir}/${_mach}/locore.S \
-	param.c ioconf.c ${CFILES} ${SFILES}
+clean::
+	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs assym.h ${DB_STRUCTINFO}
+
+lint:
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
+	    ${CFILES} ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+symbols.sort: ${_machdir}/${_mach}/symbols.raw
+	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
+	    | sed 's/^	//' | sort -u > symbols.sort
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+AFILES=	${_machdir}/${_mach}/locore.S
+SRCS=	${AFILES} param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -167,6 +156,9 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
 	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
 	rm -f db_structinfo.o
+
+locore.o: ${_machdir}/${_mach}/locore.S assym.h
+	${NORMAL_S}
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
