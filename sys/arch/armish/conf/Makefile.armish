@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armish,v 1.27 2010/05/24 14:59:15 deraadt Exp $
+#	$OpenBSD: Makefile.armish,v 1.28 2010/05/24 17:49:37 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -150,7 +150,7 @@ depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_archdir}/${_arch}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-.if ${SFILES} != ""
+.if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
