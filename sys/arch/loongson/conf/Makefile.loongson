@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.19 2010/05/24 14:59:15 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.20 2010/05/24 17:40:33 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -15,13 +15,10 @@ SIZE?=	size
 STRIP?=	strip
 AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld ${ENDIAN}
-TOUCH?=	touch
 
-CPP+=${ENDIAN}
-CC+=${ENDIAN}
 AS+=${ENDIAN}
+CC+=${ENDIAN}
 LD+=${ENDIAN}
 
 # source tree is located via $S relative to the compilation directory
@@ -157,7 +154,9 @@ depend:: .depend
 .depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${_machdir}/${_mach}/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+.if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+.endif
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
