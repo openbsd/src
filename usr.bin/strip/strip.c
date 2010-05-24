@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.27 2010/05/24 20:07:07 deraadt Exp $	*/
+/*	$OpenBSD: strip.c,v 1.28 2010/05/24 23:42:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -427,7 +427,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dx] [-o ofile] file ...\n", __progname);
+	fprintf(stderr, "usage: %s [-dx] [-o outfile] file ...\n", __progname);
 	exit(1);
 }
 
