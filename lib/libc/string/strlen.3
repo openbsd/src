@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strlen.3,v 1.8 2010/05/19 06:32:43 jmc Exp $
+.\"	$OpenBSD: strlen.3,v 1.9 2010/05/24 21:27:25 millert Exp $
 .\"
-.Dd $Mdocdate: May 19 2010 $
+.Dd $Mdocdate: May 24 2010 $
 .Dt STRLEN 3
 .Os
 .Sh NAME
@@ -91,3 +91,12 @@ and
 .Fn strnlen
 functions conform to
 .St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn strlen
+function first appeared in
+.At v7 .
+The
+.Fn strnlen
+function first appeared in
+.Ox 4.8 .
