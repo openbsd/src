@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.64 2008/06/11 23:22:07 cnst Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.65 2010/05/24 14:25:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1090,7 +1090,7 @@ int
 get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
     u_int8_t offset, u_int8_t length, void *buffer, u_int16_t *nxtRecordId)
 {
-	u_int8_t	cmd[8 + length];
+	u_int8_t	cmd[8 + 255];	/* 8 + max of length */
 	int		len;
 
 	((u_int16_t *) cmd)[0] = reserveId;
