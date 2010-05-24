@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.184 2010/05/09 17:37:33 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.185 2010/05/24 15:04:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -272,6 +272,8 @@ const struct hppa_cpu_typed {
 #endif
 	{ "", 0 }
 };
+
+int	hppa_cpuspeed(int *mhz);
 
 int
 hppa_cpuspeed(int *mhz)

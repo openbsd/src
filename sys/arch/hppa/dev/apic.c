@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.9 2010/04/01 22:53:49 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.10 2010/05/24 15:04:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -76,6 +76,10 @@ u_int32_t apic_get_int_ent0(struct elroy_softc *, int);
 #ifdef DEBUG
 void	apic_dump(struct elroy_softc *);
 #endif
+
+void		apic_write(volatile struct elroy_regs *r, u_int32_t reg,
+		    u_int32_t val);
+u_int32_t	apic_read(volatile struct elroy_regs *r, u_int32_t reg);
 
 void
 apic_write(volatile struct elroy_regs *r, u_int32_t reg, u_int32_t val)

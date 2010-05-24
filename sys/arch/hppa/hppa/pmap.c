@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.154 2010/05/22 22:12:42 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.155 2010/05/24 15:04:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -106,6 +106,15 @@ u_int	hppa_prot[8];
 
 #define	pmap_pvh_attrs(a) \
 	(((a) & PTE_PROT(TLB_DIRTY)) | ((a) ^ PTE_PROT(TLB_REFTRAP)))
+
+struct vm_page	*pmap_pagealloc(struct uvm_object *obj, voff_t off);
+void		 pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte);
+#ifdef DDB
+void		 pmap_dump_table(pa_space_t space, vaddr_t sva);
+void		 pmap_dump_pv(paddr_t pa);
+#endif
+int		 pmap_check_alias(struct pv_entry *pve, vaddr_t va,
+		    pt_entry_t pte);
 
 struct vm_page *
 pmap_pagealloc(struct uvm_object *obj, voff_t off)

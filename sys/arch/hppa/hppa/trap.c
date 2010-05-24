@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.107 2010/05/09 17:14:20 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.108 2010/05/24 15:04:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -128,6 +128,8 @@ u_char hppa_regmap[32] = {
 	offsetof(struct trapframe, tf_sp) / 4,
 	offsetof(struct trapframe, tf_r31) / 4,
 };
+
+void	userret(struct proc *p);
 
 void
 userret(struct proc *p)
@@ -662,6 +664,9 @@ child_return(void *arg)
 
 #include <sys/ptrace.h>
 
+int	ss_get_value(struct proc *p, vaddr_t addr, u_int *value);
+int	ss_put_value(struct proc *p, vaddr_t addr, u_int value);
+
 int
 ss_get_value(struct proc *p, vaddr_t addr, u_int *value)
 {
@@ -759,6 +764,8 @@ process_sstep(struct proc *p, int sstep)
 }
 
 #endif	/* PTRACE */
+
+void	syscall(struct trapframe *frame);
 
 /*
  * call actual syscall routine

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.3 2009/07/29 18:31:11 kettenis Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.4 2010/05/24 15:04:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -37,6 +37,7 @@
 #include <compat/hpux/hpux_util.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
+#include <machine/hpux_machdep.h>
 #include <machine/cpufunc.h>
 #include <machine/frame.h>
 

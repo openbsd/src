@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.32 2010/05/21 15:24:29 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.33 2010/05/24 15:04:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -251,6 +251,8 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 
 	return (iv);
 }
+
+int	fls(u_int mask);
 
 int
 fls(u_int mask)

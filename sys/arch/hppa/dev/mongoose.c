@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.20 2010/04/27 18:29:39 kettenis Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.21 2010/05/24 15:04:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -57,6 +57,57 @@ struct cfattach mg_gedoens_ca = {
 struct cfdriver mongoose_cd = {
 	NULL, "mongoose", DV_DULL
 };
+
+void		 mg_eisa_attach_hook(struct device *parent,
+		    struct device *self,
+		    struct eisabus_attach_args *mg);
+int		 mg_intr_map(void *v, u_int irq, eisa_intr_handle_t *ehp);
+const char	*mg_intr_string(void *v, int irq);
+void		 mg_isa_attach_hook(struct device *parent,
+		    struct device *self,
+		    struct isabus_attach_args *iba);
+void		*mg_intr_establish(void *v, int irq, int type, int pri,
+		    int (*handler)(void *), void *arg, const char *name);
+void		 mg_intr_disestablish(void *v, void *cookie);
+int		 mg_intr_check(void *v, int irq, int type);
+int		 mg_eisa_iomap(void *v, bus_addr_t addr, bus_size_t size,
+		    int flags, bus_space_handle_t *bshp);
+int		 mg_eisa_memmap(void *v, bus_addr_t addr, bus_size_t size,
+		    int flags, bus_space_handle_t *bshp);
+void		 mg_eisa_memunmap(void *v, bus_space_handle_t bsh,
+		    bus_size_t size);
+void		 mg_isa_barrier(void *v, bus_space_handle_t h, bus_size_t o,
+		    bus_size_t l, int op);
+u_int16_t	 mg_isa_r2(void *v, bus_space_handle_t h, bus_size_t o);
+u_int32_t	 mg_isa_r4(void *v, bus_space_handle_t h, bus_size_t o);
+void		 mg_isa_w2(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int16_t vv);
+void		 mg_isa_w4(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int32_t vv);
+void		 mg_isa_rm_2(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int16_t *a, bus_size_t c);
+void		 mg_isa_rm_4(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int32_t *a, bus_size_t c);
+void		 mg_isa_wm_2(void *v, bus_space_handle_t h, bus_size_t o,
+		    const u_int16_t *a, bus_size_t c);
+void		 mg_isa_wm_4(void *v, bus_space_handle_t h, bus_size_t o,
+		    const u_int32_t *a, bus_size_t c);
+void		 mg_isa_sm_2(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int16_t vv, bus_size_t c);
+void		 mg_isa_sm_4(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int32_t vv, bus_size_t c);
+void		 mg_isa_rr_2(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int16_t *a, bus_size_t c);
+void		 mg_isa_rr_4(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int32_t *a, bus_size_t c);
+void		 mg_isa_wr_2(void *v, bus_space_handle_t h, bus_size_t o,
+		    const u_int16_t *a, bus_size_t c);
+void		 mg_isa_wr_4(void *v, bus_space_handle_t h, bus_size_t o,
+		    const u_int32_t *a, bus_size_t c);
+void		 mg_isa_sr_2(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int16_t vv, bus_size_t c);
+void		 mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o,
+		    u_int32_t vv, bus_size_t c);
 
 /* TODO: DMA guts */
 
