@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2010/03/31 19:46:27 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2010/05/24 15:06:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -97,6 +97,15 @@ pt_entry_t	kernel_ptes[] = {
 
 #define	pmap_pvh_attrs(a) \
 	(((a) & PTE_DIRTY) | ((a) ^ PTE_REFTRAP))
+
+struct vm_page	*pmap_pagealloc(struct uvm_object *obj, voff_t off);
+void		 pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte);
+#ifdef DDB
+void		 pmap_dump_table(pa_space_t space, vaddr_t sva);
+void		 pmap_dump_pv(paddr_t pa);
+#endif
+int		 pmap_check_alias(struct pv_entry *pve, vaddr_t va,
+		    pt_entry_t pte);
 
 struct vm_page *
 pmap_pagealloc(int wait)

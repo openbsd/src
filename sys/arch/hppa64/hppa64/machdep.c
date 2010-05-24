@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2009/11/25 23:20:59 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2010/05/24 15:06:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -161,6 +161,8 @@ int sigdebug = 0;
 pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #endif
+
+int	hppa_cpuspeed(int *mhz);
 
 int
 hppa_cpuspeed(int *mhz)
