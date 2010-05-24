@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.36 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.37 2010/05/24 00:00:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -29,7 +29,7 @@
 #include "libmandoc.h"
 
 #define	POST_ARGS struct mdoc *m, struct mdoc_node *n
-#define	PRE_ARGS  struct mdoc *m, const struct mdoc_node *n
+#define	PRE_ARGS  struct mdoc *m, struct mdoc_node *n
 
 #define	NUMSIZ	  32
 #define	DATESIZ	  32
@@ -212,7 +212,7 @@ static	const enum mdoct rsord[RSORD_MAX] = {
 
 
 int
-mdoc_action_pre(struct mdoc *m, const struct mdoc_node *n)
+mdoc_action_pre(struct mdoc *m, struct mdoc_node *n)
 {
 
 	switch (n->type) {
@@ -938,8 +938,63 @@ pre_offset(PRE_ARGS)
 static int
 pre_bl(PRE_ARGS)
 {
+	int		 pos;
 
-	return(MDOC_BLOCK == n->type ? pre_offset(m, n) : 1);
+	if (MDOC_BLOCK != n->type) {
+		assert(n->parent);
+		assert(MDOC_BLOCK == n->parent->type);
+		assert(MDOC_Bl == n->parent->tok);
+		assert(LIST__NONE != n->parent->data.list);
+		n->data.list = n->parent->data.list;
+		return(1);
+	}
+
+	assert(LIST__NONE == n->data.list);
+
+	for (pos = 0; pos < (int)n->args->argc; pos++) {
+		switch (n->args->argv[pos].arg) {
+		case (MDOC_Bullet):
+			n->data.list = LIST_bullet;
+			break;
+		case (MDOC_Dash):
+			n->data.list = LIST_dash;
+			break;
+		case (MDOC_Enum):
+			n->data.list = LIST_enum;
+			break;
+		case (MDOC_Hyphen):
+			n->data.list = LIST_hyphen;
+			break;
+		case (MDOC_Item):
+			n->data.list = LIST_item;
+			break;
+		case (MDOC_Tag):
+			n->data.list = LIST_tag;
+			break;
+		case (MDOC_Diag):
+			n->data.list = LIST_diag;
+			break;
+		case (MDOC_Hang):
+			n->data.list = LIST_hang;
+			break;
+		case (MDOC_Ohang):
+			n->data.list = LIST_ohang;
+			break;
+		case (MDOC_Inset):
+			n->data.list = LIST_inset;
+			break;
+		case (MDOC_Column):
+			n->data.list = LIST_column;
+			break;
+		default:
+			break;
+		}
+		if (LIST__NONE != n->data.list)
+			break;
+	}
+
+	assert(LIST__NONE != n->data.list);
+	return(pre_offset(m, n));
 }
 
 

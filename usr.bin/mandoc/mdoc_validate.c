@@ -1,6 +1,6 @@
-/*	$Id: mdoc_validate.c,v 1.55 2010/05/23 22:45:01 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.56 2010/05/24 00:00:10 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -564,27 +564,19 @@ pre_bl(PRE_ARGS)
 		case (MDOC_Inset):
 			/* FALLTHROUGH */
 		case (MDOC_Column):
-			/*
-			 * Note that if a duplicate is detected, we
-			 * remove the duplicate instead of passing it
-			 * over.  If we don't do this, mdoc_action will
-			 * become confused when it scans over multiple
-			 * types whilst setting its bitmasks.
-			 *
-			 * FIXME: this should occur in mdoc_action.c.
-			 */
-			if (type >= 0) {
-				if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_LISTREP))
-					return(0);
-				mdoc_argn_free(n->args, pos);
+			if (type < 0) {
+				type = n->args->argv[pos].arg;
 				break;
 			}
-			type = n->args->argv[pos].arg;
-			break;
+			if (mdoc_nmsg(mdoc, n, MANDOCERR_LISTREP))
+				break;
+			return(0);
 		case (MDOC_Compact):
-			if (type < 0 && ! mdoc_nmsg(mdoc, n, MANDOCERR_LISTFIRST))
-				return(0);
-			break;
+			if (type >= 0)
+				break;
+			if (mdoc_nmsg(mdoc, n, MANDOCERR_LISTFIRST))
+				break;
+			return(0);
 		case (MDOC_Width):
 			if (width >= 0)
 				if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_ARGVREP))

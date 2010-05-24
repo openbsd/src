@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.25 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.26 2010/05/24 00:00:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -247,6 +247,21 @@ struct 	mdoc_arg {
 	unsigned int	  refcnt;
 };
 
+enum	mdoc_list {
+	LIST__NONE = 0,
+	LIST_bullet,
+	LIST_column,
+	LIST_dash,
+	LIST_diag,
+	LIST_enum,
+	LIST_hang,
+	LIST_hyphen,
+	LIST_inset,
+	LIST_item,
+	LIST_ohang,
+	LIST_tag
+};
+
 /* Node in AST. */
 struct	mdoc_node {
 	struct mdoc_node *parent; /* parent AST node */
@@ -270,6 +285,10 @@ struct	mdoc_node {
 	struct mdoc_node *body;		/* BLOCK */
 	struct mdoc_node *tail;		/* BLOCK */
 	char		 *string;	/* TEXT */
+
+	union {
+		enum mdoc_list list; /* for `Bl' nodes */
+	} data;
 };
 
 #define	MDOC_IGN_SCOPE	 (1 << 0) /* Ignore scope violations. */
