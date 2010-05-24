@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.124 2010/04/17 00:51:13 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.125 2010/05/24 06:57:09 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -567,10 +567,6 @@ const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 
 void	scsi_init(void);
 void	scsi_deinit(void);
-struct scsi_xfer *
-	scsi_get_xs(struct scsi_link *, int);
-void	scsi_free_xs(struct scsi_xfer *, int);
-int	scsi_execute_xs(struct scsi_xfer *);
 daddr64_t scsi_size(struct scsi_link *, int, u_int32_t *);
 int	scsi_test_unit_ready(struct scsi_link *, int, int);
 int	scsi_inquire(struct scsi_link *, struct scsi_inquiry_data *, int);
@@ -591,7 +587,6 @@ int	scsi_mode_select(struct scsi_link *, int, struct scsi_mode_header *,
 int	scsi_mode_select_big(struct scsi_link *, int,
 	    struct scsi_mode_header_big *, int, int);
 void	scsi_done(struct scsi_xfer *);
-void	scsi_user_done(struct scsi_xfer *);
 int	scsi_scsi_cmd(struct scsi_link *, struct scsi_generic *,
 	    int cmdlen, u_char *data_addr, int datalen, int retries,
 	    int timeout, struct buf *bp, int flags);
