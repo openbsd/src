@@ -1,4 +1,4 @@
-/*	$Id: man_action.c,v 1.21 2010/05/24 12:38:08 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.22 2010/05/24 13:42:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -258,6 +258,9 @@ post_UC(struct man *m)
 		else
 			p = bsd_versions[0];
 	}
+
+	if (m->meta.source)
+		free(m->meta.source);
 
 	m->meta.source = mandoc_strdup(p);
 
