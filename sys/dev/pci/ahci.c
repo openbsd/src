@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.164 2010/05/19 15:27:35 oga Exp $ */
+/*	$OpenBSD: ahci.c,v 1.165 2010/05/24 04:40:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1564,8 +1564,6 @@ ahci_start(struct ahci_ccb *ccb)
 	struct ahci_port		*ap = ccb->ccb_port;
 	struct ahci_softc		*sc = ap->ap_sc;
 
-	KASSERT(ccb->ccb_xa.state == ATA_S_PENDING);
-
 	/* Zero transferred byte count before transfer */
 	ccb->ccb_cmd_hdr->prdbc = 0;
 
@@ -2348,8 +2346,6 @@ ahci_ata_cmd(struct ata_xfer *xa)
 	struct ahci_ccb			*ccb = (struct ahci_ccb *)xa;
 	struct ahci_cmd_hdr		*cmd_slot;
 	int				s;
-
-	KASSERT(xa->state == ATA_S_SETUP);
 
 	if (ccb->ccb_port->ap_state == AP_S_FATAL_ERROR)
 		goto failcmd;
