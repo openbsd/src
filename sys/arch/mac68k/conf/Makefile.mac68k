@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.58 2010/05/24 14:59:16 deraadt Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.59 2010/05/24 17:36:52 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,7 @@ _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I. -I$S -I$S/arch
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_-${_mach}__
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-main -Wno-uninitialized -Wno-format \
 		-Wstack-larger-than-2047 -Wvariable-decl
