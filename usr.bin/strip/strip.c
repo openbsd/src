@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.26 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: strip.c,v 1.27 2010/05/24 20:07:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -70,7 +70,7 @@ int s_sym(const char *, int, EXEC *, struct stat *, off_t *);
 void usage(void);
 
 int xflag = 0;
-        
+
 int
 main(int argc, char *argv[])
 {
@@ -79,17 +79,20 @@ main(int argc, char *argv[])
 	struct stat sb;
 	int (*sfcn)(const char *, int, EXEC *, struct stat *, off_t *);
 	int ch, errors;
-	char *fn;
+	char *fn, *ofile = NULL;
 	off_t newsize;
 
 	sfcn = s_sym;
-	while ((ch = getopt(argc, argv, "dx")) != -1)
+	while ((ch = getopt(argc, argv, "dxo:")) != -1)
 		switch(ch) {
-                case 'x':
-                        xflag = 1;
-                        /*FALLTHROUGH*/
+		case 'x':
+			xflag = 1;
+			/*FALLTHROUGH*/
 		case 'd':
 			sfcn = s_stab;
+			break;
+		case 'o':
+			ofile = optarg;
 			break;
 		case '?':
 		default:
@@ -98,13 +101,59 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (ofile != NULL && argc > 1)
+		usage();
 	errors = 0;
 #define	ERROR(x) errors |= 1; warnx("%s: %s", fn, strerror(x)); continue;
 	while ((fn = *argv++)) {
-		if ((fd = open(fn, O_RDWR)) < 0) {
+		if (ofile) {
+			char buf[8192];
+			ssize_t wn;
+			size_t rn;
+			off_t off;
+			int wfd;
+
+			if ((fd = open(fn, O_RDONLY)) < 0) {
+				ERROR(errno);
+				break;
+			}
+			if ((wfd = open(ofile, O_RDWR|O_CREAT)) < 0) {
+				ERROR(errno);
+				break;
+			}
+			do {
+				rn = read(fd, buf, sizeof buf);
+				if (rn == (ssize_t)-1) {
+					int save_errno = errno;
+
+					unlink(ofile);
+					ERROR(save_errno);
+					exit(errors);
+				}
+				if (rn == 0)
+					break;
+
+				off = 0;
+				while (rn - off > 0) {
+					wn = write(wfd, buf + off, rn - off);
+					if (wn == (ssize_t)-1) {
+						int save_errno = errno;
+
+						unlink(ofile);
+						ERROR(save_errno);
+						exit(errors);
+					}
+					off += wn;
+				}
+			} while (rn > 0);
+
+			fn = ofile;
+			close(fd);
+			fd = wfd;
+		} else if ((fd = open(fn, O_RDWR)) < 0) {
 			ERROR(errno);
 		}
-        	if (fstat(fd, &sb)) {
+		if (fstat(fd, &sb)) {
 			(void)close(fd);
 			ERROR(errno);
 		}
@@ -313,14 +362,14 @@ s_stab(const char *fn, int fd, EXEC *ep, struct stat *sp, off_t *sz)
 			*nsym = *sym;
 			nsym->strx = nstr - nstrbase;
 			p = strbase + sym->strx;
-                        if (xflag && !used[i] &&
-                            (!(sym->n_type & N_EXT) ||
-                             (sym->n_type & ~N_EXT) == N_FN ||
-                             strcmp(p, "gcc_compiled.") == 0 ||
-                             strcmp(p, "gcc2_compiled.") == 0 ||
-                             strncmp(p, "___gnu_compiled_", 16) == 0)) {
-                                continue;
-                        }
+			if (xflag && !used[i] &&
+			    (!(sym->n_type & N_EXT) ||
+			     (sym->n_type & ~N_EXT) == N_FN ||
+			     strcmp(p, "gcc_compiled.") == 0 ||
+			     strcmp(p, "gcc2_compiled.") == 0 ||
+			     strncmp(p, "___gnu_compiled_", 16) == 0)) {
+				continue;
+			}
 			len = strlen(p) + 1;
 			mapping[i] = j++;
 			if (N_STROFF(*ep) + sym->strx + len > sp->st_size) {
@@ -378,7 +427,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dx] file ...\n", __progname);
+	fprintf(stderr, "usage: %s [-dx] [-o ofile] file ...\n", __progname);
 	exit(1);
 }
 
