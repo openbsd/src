@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.32 2009/10/19 19:46:57 guenther Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.33 2010/05/24 20:02:08 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -261,6 +261,10 @@ emitdefs(FILE *fp)
 	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
 		return (1);
 	if (fprintf(fp, "S=\t%s\n", srcdir) < 0)
+		return (1);
+	if (fprintf(fp, "_mach=%s\n", machine) < 0)
+		return (1);
+	if (fprintf(fp, "_arch=%s\n", machinearch ? machinearch : machine) < 0)
 		return (1);
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
 		if (fprintf(fp, "%s=%s\n", nv->nv_name, nv->nv_str) < 0)
