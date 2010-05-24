@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1556 2010/05/18 21:23:28 jsg Exp $
+$OpenBSD: pcidevs,v 1.1557 2010/05/24 20:36:29 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ vendor	PROMISE		0x105a	Promise
 vendor	FOXCONN		0x105b	Foxconn
 vendor	NUMBER9		0x105d	Number 9
 vendor	UMC		0x1060	UMC
-vendor	ITT		0x1061	I. T. T.
+vendor	ITT		0x1061	ITT
 vendor	PICOPOWER	0x1066	Picopower
 vendor	MYLEX		0x1069	Mylex
 vendor	APPLE		0x106b	Apple
@@ -105,7 +105,7 @@ vendor	YAMAHA		0x1073	Yamaha
 vendor	NEXGEN		0x1074	NexGen Microsystems
 vendor	QLOGIC		0x1077	QLogic
 vendor	CYRIX		0x1078	Cyrix
-vendor	LEADTEK		0x107d	LeadTek Research
+vendor	LEADTEK		0x107d	LeadTek
 vendor	INTERPHASE	0x107e	Interphase
 vendor	CONTAQ		0x1080	Contaq Microsystems
 vendor	BIT3		0x108a	Bit3
@@ -162,7 +162,7 @@ vendor	PHILIPS		0x1131	Philips
 vendor	ZIATECH		0x1138	Ziatech
 vendor	CYCLONE		0x113c	Cyclone
 vendor	EQUINOX		0x113f	Equinox
-vendor	ALLIANCE	0x1142	Alliance Semiconductor
+vendor	ALLIANCE	0x1142	Alliance
 vendor	SCHNEIDERKOCH	0x1148	Schneider & Koch
 vendor	DIGI		0x114f	Digi
 vendor	MUTECH		0x1159	Mutech
@@ -172,7 +172,7 @@ vendor	RCC		0x1166	ServerWorks
 vendor	ALTERA		0x1172	Altera
 vendor	TOSHIBA2	0x1179	Toshiba
 vendor	RICOH		0x1180	Ricoh
-vendor	DLINK		0x1186	D-Link Systems
+vendor	DLINK		0x1186	D-Link
 vendor	COROLLARY	0x118c	Corollary
 vendor	ACARD		0x1191	Acard
 vendor	ZEINET		0x1193	Zeinet
@@ -191,11 +191,11 @@ vendor	COMPEX		0x11f6	Compex
 vendor	CYCLADES	0x120e	Cyclades
 vendor	ESSENTIAL	0x120f	Essential Communications
 vendor	O2MICRO		0x1217	O2 Micro
-vendor	3DFX		0x121a	3DFX Interactive
+vendor	3DFX		0x121a	3DFX
 vendor	ATML		0x121b	ATML
 vendor	CCUBE		0x123f	C-Cube
 vendor	AVM		0x1244	AVM
-vendor	STALLION	0x124d	Stallion Technologies
+vendor	STALLION	0x124d	Stallion
 vendor	COREGA		0x1259	Corega
 vendor	ASIX		0x125b	ASIX
 vendor	ESSTECH		0x125d	ESS
@@ -209,7 +209,7 @@ vendor	DAVICOM		0x1282	Davicom
 vendor	ITEXPRESS	0x1283	ITExpress
 vendor	PLATFORM	0x1285	Platform
 vendor	LUXSONOR	0x1287	LuxSonor
-vendor	TRITECH		0x1292	TriTech Microelectronics
+vendor	TRITECH		0x1292	TriTech
 vendor	ALTEON		0x12ae	Alteon
 vendor	USR		0x12b9	US Robotics
 vendor	STB2		0x12d2	NVIDIA/SGS-Thomson
@@ -246,7 +246,7 @@ vendor	TAMARACK	0x143d	Tamarack
 vendor	WORKBIT		0x1145	Workbit
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
-vendor	MSI		0x1462	Micro Star International
+vendor	MSI		0x1462	MSI
 vendor	AIRONET		0x14b9	Aironet
 vendor	GLOBESPAN	0x14bc	Globespan
 vendor	MYRICOM		0x14c1	Myricom
@@ -274,7 +274,7 @@ vendor	NDC		0x15e8	National Datacomm
 vendor	PDC		0x15e9	Pacific Data
 vendor	EUMITCOM	0x1638	Eumitcom
 vendor	NETSEC		0x1660	NetSec
-vendor	ZYDAS		0x167b	ZyDAS Technology
+vendor	ZYDAS		0x167b	ZyDAS
 vendor	SAMSUNG		0x167d	Samsung
 vendor	ATHEROS		0x168c	Atheros
 vendor	GLOBALSUN	0x16ab	Global Sun
@@ -2061,7 +2061,7 @@ product HP J2585B		0x1031	J2585B
 product HP DIVA			0x1048	Diva Serial Multiport
 product HP ELROY		0x1054	Elroy Ropes-PCI
 product HP VISUALIZE_FXE	0x108b	Visualize FXe
-product HP TOPTOOLS		0x10c1	TopTools Communications Port
+product HP TOPTOOLS		0x10c1	TopTools
 product HP NETRAID_4M		0x10c2	NetRaid-4M
 product HP SMARTIRQ		0x10ed	NetServer SmartIRQ
 product HP 82557B		0x1200	82557B 10/100 NIC
@@ -2663,7 +2663,7 @@ product INTEL 82945GME_IGD_1 	0x27ae	82945GME Video
 product INTEL 82801GH_LPC	0x27b0	82801GH LPC
 product INTEL 82801GB_LPC	0x27b8	82801GB LPC
 product INTEL 82801GBM_LPC	0x27b9	82801GBM LPC
-product INTEL TIGER_LPC		0x27bc	Tigerpoint LPC Controller
+product INTEL TIGER_LPC		0x27bc	Tigerpoint LPC
 product INTEL 82801GHM_LPC	0x27bd	82801GHM LPC
 product INTEL 82801GB_SATA	0x27c0	82801GB SATA
 product INTEL 82801GR_AHCI	0x27c1	82801GR AHCI
@@ -3177,12 +3177,12 @@ product INTEL RCU21		0x9621	RCU21 I2O RAID
 product INTEL RCUxx		0x9622	RCUxx I2O RAID
 product INTEL RCU31		0x9641	RCU31 I2O RAID
 product INTEL RCU31L		0x96a1	RCU31L I2O RAID
-product INTEL PINEVIEW_DMI	0xa000  Pineview DMI Bridge
-product INTEL PINEVIEW_IGC_1	0xa001	Pineview Integrated Graphics Controller
-product INTEL PINEVIEW_IGC_2	0xa002	Pineview Integrated Graphics Controller
-product INTEL PINEVIEW_M_DMI	0xa010	Pineview DMI Bridge
-product INTEL PINEVIEW_M_IGC_1	0xa011	Pineview Integrated Graphics Controller
-product INTEL PINEVIEW_M_IGC_2	0xa012	Pineview Integrated Graphics Controller
+product INTEL PINEVIEW_DMI	0xa000  Pineview DMI
+product INTEL PINEVIEW_IGC_1	0xa001	Pineview Video
+product INTEL PINEVIEW_IGC_2	0xa002	Pineview Video
+product INTEL PINEVIEW_M_DMI	0xa010	Pineview DMI
+product INTEL PINEVIEW_M_IGC_1	0xa011	Pineview Video
+product INTEL PINEVIEW_M_IGC_2	0xa012	Pineview Video
 product INTEL 21152		0xb152	S21152BB PCI-PCI
 product INTEL 21154		0xb154	21154AE/BE PCI-PCI
 product INTEL CORE_DMI_0	0xd130	Core DMI
@@ -4903,7 +4903,7 @@ product SUNDANCE ST201_2	0x0201	ST201
 product SUNDANCE TC9021		0x1021	TC9021
 product SUNDANCE ST1023		0x1023	ST1023
 product SUNDANCE ST2021		0x2021	ST2021
-product SUNDANCE TC9021_ALT	0x9021	TC9021 (alt ID)
+product SUNDANCE TC9021_ALT	0x9021	TC9021
 
 /* Sunix */
 product SUNIX 40XX		0x7168	40XX
@@ -4931,7 +4931,7 @@ product TTTECH MC322		0x000a	MC322
 
 /* Tamarack Microelectronics */
 product TAMARACK TC9021		0x1021	TC9021 GigE
-product TAMARACK TC9021_ALT	0x9021	TC9021 GigE (alt ID)
+product TAMARACK TC9021_ALT	0x9021	TC9021 GigE
 
 /* Techsan Electronics */
 product TECHSAN B2C2_SKY2PC	0x2104	B2C2 Sky2PC
