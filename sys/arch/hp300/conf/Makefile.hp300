@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.63 2010/05/24 17:49:37 deraadt Exp $
+#	$OpenBSD: Makefile.hp300,v 1.64 2010/05/24 19:58:51 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -118,8 +118,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

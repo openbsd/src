@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armish,v 1.28 2010/05/24 17:49:37 deraadt Exp $
+#	$OpenBSD: Makefile.armish,v 1.29 2010/05/24 19:58:50 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -91,8 +91,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-x
 .endif

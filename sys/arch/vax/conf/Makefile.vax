@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.49 2010/05/24 17:49:37 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.50 2010/05/24 19:58:51 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -81,7 +81,7 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
