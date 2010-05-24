@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.25 2009/04/17 15:59:48 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 2010/05/24 19:10:26 jsg Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -52,6 +52,11 @@ NBLKS?=          3800
 # minfree, opt, b/i, blks/cyl
 NEWFSARGS= -m 0 -o space -i 4096
 
+COPTS= -Os
+.if ${COMPILER_VERSION:L} == "gcc4"
+COPTS+= -mtune=i486
+.endif
+
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
@@ -66,7 +71,7 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/i386/conf && config ${RAMDISK}
 	cd ${.CURDIR}/../../../sys/arch/i386/compile/${RAMDISK} && \
-	    ${MAKE} clean && ${MAKE} depend && COPTS=-Os ${MAKE}
+	    ${MAKE} clean && ${MAKE} depend && COPTS="${COPTS}" ${MAKE}
 	cp ${.CURDIR}/../../../sys/arch/i386/compile/${RAMDISK}/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
