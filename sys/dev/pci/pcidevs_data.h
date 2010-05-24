@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1556 2010/05/18 21:23:28 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1557 2010/05/24 20:36:29 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6045,7 +6045,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TOPTOOLS,
-	    "TopTools Communications Port",
+	    "TopTools",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,
@@ -8357,7 +8357,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TIGER_LPC,
-	    "Tigerpoint LPC Controller",
+	    "Tigerpoint LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_LPC,
@@ -10413,27 +10413,27 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_DMI,
-	    "Pineview DMI Bridge",
+	    "Pineview DMI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_IGC_1,
-	    "Pineview Integrated Graphics Controller",
+	    "Pineview Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_IGC_2,
-	    "Pineview Integrated Graphics Controller",
+	    "Pineview Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_M_DMI,
-	    "Pineview DMI Bridge",
+	    "Pineview DMI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_1,
-	    "Pineview Integrated Graphics Controller",
+	    "Pineview Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_2,
-	    "Pineview Integrated Graphics Controller",
+	    "Pineview Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21152,
@@ -16397,7 +16397,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_TC9021_ALT,
-	    "TC9021 (alt ID)",
+	    "TC9021",
 	},
 	{
 	    PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX,
@@ -16453,7 +16453,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT,
-	    "TC9021 GigE (alt ID)",
+	    "TC9021 GigE",
 	},
 	{
 	    PCI_VENDOR_TECHSAN, PCI_PRODUCT_TECHSAN_B2C2_SKY2PC,
@@ -18857,7 +18857,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ITT,
-	    "I. T. T.",
+	    "ITT",
 	},
 	{
 	    PCI_VENDOR_PICOPOWER,
@@ -18893,7 +18893,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_LEADTEK,
-	    "LeadTek Research",
+	    "LeadTek",
 	},
 	{
 	    PCI_VENDOR_INTERPHASE,
@@ -19121,7 +19121,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ALLIANCE,
-	    "Alliance Semiconductor",
+	    "Alliance",
 	},
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH,
@@ -19161,7 +19161,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_DLINK,
-	    "D-Link Systems",
+	    "D-Link",
 	},
 	{
 	    PCI_VENDOR_COROLLARY,
@@ -19237,7 +19237,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_3DFX,
-	    "3DFX Interactive",
+	    "3DFX",
 	},
 	{
 	    PCI_VENDOR_ATML,
@@ -19253,7 +19253,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_STALLION,
-	    "Stallion Technologies",
+	    "Stallion",
 	},
 	{
 	    PCI_VENDOR_COREGA,
@@ -19309,7 +19309,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_TRITECH,
-	    "TriTech Microelectronics",
+	    "TriTech",
 	},
 	{
 	    PCI_VENDOR_ALTEON,
@@ -19457,7 +19457,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MSI,
-	    "Micro Star International",
+	    "MSI",
 	},
 	{
 	    PCI_VENDOR_AIRONET,
@@ -19569,7 +19569,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ZYDAS,
-	    "ZyDAS Technology",
+	    "ZyDAS",
 	},
 	{
 	    PCI_VENDOR_SAMSUNG,

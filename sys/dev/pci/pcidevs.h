@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1556 2010/05/18 21:23:28 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1557 2010/05/24 20:36:29 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -101,7 +101,7 @@
 #define	PCI_VENDOR_FOXCONN	0x105b		/* Foxconn */
 #define	PCI_VENDOR_NUMBER9	0x105d		/* Number 9 */
 #define	PCI_VENDOR_UMC	0x1060		/* UMC */
-#define	PCI_VENDOR_ITT	0x1061		/* I. T. T. */
+#define	PCI_VENDOR_ITT	0x1061		/* ITT */
 #define	PCI_VENDOR_PICOPOWER	0x1066		/* Picopower */
 #define	PCI_VENDOR_MYLEX	0x1069		/* Mylex */
 #define	PCI_VENDOR_APPLE	0x106b		/* Apple */
@@ -110,7 +110,7 @@
 #define	PCI_VENDOR_NEXGEN	0x1074		/* NexGen Microsystems */
 #define	PCI_VENDOR_QLOGIC	0x1077		/* QLogic */
 #define	PCI_VENDOR_CYRIX	0x1078		/* Cyrix */
-#define	PCI_VENDOR_LEADTEK	0x107d		/* LeadTek Research */
+#define	PCI_VENDOR_LEADTEK	0x107d		/* LeadTek */
 #define	PCI_VENDOR_INTERPHASE	0x107e		/* Interphase */
 #define	PCI_VENDOR_CONTAQ	0x1080		/* Contaq Microsystems */
 #define	PCI_VENDOR_BIT3	0x108a		/* Bit3 */
@@ -167,7 +167,7 @@
 #define	PCI_VENDOR_ZIATECH	0x1138		/* Ziatech */
 #define	PCI_VENDOR_CYCLONE	0x113c		/* Cyclone */
 #define	PCI_VENDOR_EQUINOX	0x113f		/* Equinox */
-#define	PCI_VENDOR_ALLIANCE	0x1142		/* Alliance Semiconductor */
+#define	PCI_VENDOR_ALLIANCE	0x1142		/* Alliance */
 #define	PCI_VENDOR_SCHNEIDERKOCH	0x1148		/* Schneider & Koch */
 #define	PCI_VENDOR_DIGI	0x114f		/* Digi */
 #define	PCI_VENDOR_MUTECH	0x1159		/* Mutech */
@@ -177,7 +177,7 @@
 #define	PCI_VENDOR_ALTERA	0x1172		/* Altera */
 #define	PCI_VENDOR_TOSHIBA2	0x1179		/* Toshiba */
 #define	PCI_VENDOR_RICOH	0x1180		/* Ricoh */
-#define	PCI_VENDOR_DLINK	0x1186		/* D-Link Systems */
+#define	PCI_VENDOR_DLINK	0x1186		/* D-Link */
 #define	PCI_VENDOR_COROLLARY	0x118c		/* Corollary */
 #define	PCI_VENDOR_ACARD	0x1191		/* Acard */
 #define	PCI_VENDOR_ZEINET	0x1193		/* Zeinet */
@@ -196,11 +196,11 @@
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
 #define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro */
-#define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
+#define	PCI_VENDOR_3DFX	0x121a		/* 3DFX */
 #define	PCI_VENDOR_ATML	0x121b		/* ATML */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube */
 #define	PCI_VENDOR_AVM	0x1244		/* AVM */
-#define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
+#define	PCI_VENDOR_STALLION	0x124d		/* Stallion */
 #define	PCI_VENDOR_COREGA	0x1259		/* Corega */
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS */
@@ -214,7 +214,7 @@
 #define	PCI_VENDOR_ITEXPRESS	0x1283		/* ITExpress */
 #define	PCI_VENDOR_PLATFORM	0x1285		/* Platform */
 #define	PCI_VENDOR_LUXSONOR	0x1287		/* LuxSonor */
-#define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
+#define	PCI_VENDOR_TRITECH	0x1292		/* TriTech */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_USR	0x12b9		/* US Robotics */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVIDIA/SGS-Thomson */
@@ -251,7 +251,7 @@
 #define	PCI_VENDOR_WORKBIT	0x1145		/* Workbit */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
-#define	PCI_VENDOR_MSI	0x1462		/* Micro Star International */
+#define	PCI_VENDOR_MSI	0x1462		/* MSI */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_GLOBESPAN	0x14bc		/* Globespan */
 #define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
@@ -279,7 +279,7 @@
 #define	PCI_VENDOR_PDC	0x15e9		/* Pacific Data */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
-#define	PCI_VENDOR_ZYDAS	0x167b		/* ZyDAS Technology */
+#define	PCI_VENDOR_ZYDAS	0x167b		/* ZyDAS */
 #define	PCI_VENDOR_SAMSUNG	0x167d		/* Samsung */
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
@@ -2066,7 +2066,7 @@
 #define	PCI_PRODUCT_HP_DIVA	0x1048		/* Diva Serial Multiport */
 #define	PCI_PRODUCT_HP_ELROY	0x1054		/* Elroy Ropes-PCI */
 #define	PCI_PRODUCT_HP_VISUALIZE_FXE	0x108b		/* Visualize FXe */
-#define	PCI_PRODUCT_HP_TOPTOOLS	0x10c1		/* TopTools Communications Port */
+#define	PCI_PRODUCT_HP_TOPTOOLS	0x10c1		/* TopTools */
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
 #define	PCI_PRODUCT_HP_SMARTIRQ	0x10ed		/* NetServer SmartIRQ */
 #define	PCI_PRODUCT_HP_82557B	0x1200		/* 82557B 10/100 NIC */
@@ -2668,7 +2668,7 @@
 #define	PCI_PRODUCT_INTEL_82801GH_LPC	0x27b0		/* 82801GH LPC */
 #define	PCI_PRODUCT_INTEL_82801GB_LPC	0x27b8		/* 82801GB LPC */
 #define	PCI_PRODUCT_INTEL_82801GBM_LPC	0x27b9		/* 82801GBM LPC */
-#define	PCI_PRODUCT_INTEL_TIGER_LPC	0x27bc		/* Tigerpoint LPC Controller */
+#define	PCI_PRODUCT_INTEL_TIGER_LPC	0x27bc		/* Tigerpoint LPC */
 #define	PCI_PRODUCT_INTEL_82801GHM_LPC	0x27bd		/* 82801GHM LPC */
 #define	PCI_PRODUCT_INTEL_82801GB_SATA	0x27c0		/* 82801GB SATA */
 #define	PCI_PRODUCT_INTEL_82801GR_AHCI	0x27c1		/* 82801GR AHCI */
@@ -3182,12 +3182,12 @@
 #define	PCI_PRODUCT_INTEL_RCUxx	0x9622		/* RCUxx I2O RAID */
 #define	PCI_PRODUCT_INTEL_RCU31	0x9641		/* RCU31 I2O RAID */
 #define	PCI_PRODUCT_INTEL_RCU31L	0x96a1		/* RCU31L I2O RAID */
-#define	PCI_PRODUCT_INTEL_PINEVIEW_DMI	0xa000		/* Pineview DMI Bridge */
-#define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_1	0xa001		/* Pineview Integrated Graphics Controller */
-#define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_2	0xa002		/* Pineview Integrated Graphics Controller */
-#define	PCI_PRODUCT_INTEL_PINEVIEW_M_DMI	0xa010		/* Pineview DMI Bridge */
-#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_1	0xa011		/* Pineview Integrated Graphics Controller */
-#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_2	0xa012		/* Pineview Integrated Graphics Controller */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_DMI	0xa000		/* Pineview DMI */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_1	0xa001		/* Pineview Video */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_2	0xa002		/* Pineview Video */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_DMI	0xa010		/* Pineview DMI */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_1	0xa011		/* Pineview Video */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_2	0xa012		/* Pineview Video */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE PCI-PCI */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */
@@ -4908,7 +4908,7 @@
 #define	PCI_PRODUCT_SUNDANCE_TC9021	0x1021		/* TC9021 */
 #define	PCI_PRODUCT_SUNDANCE_ST1023	0x1023		/* ST1023 */
 #define	PCI_PRODUCT_SUNDANCE_ST2021	0x2021		/* ST2021 */
-#define	PCI_PRODUCT_SUNDANCE_TC9021_ALT	0x9021		/* TC9021 (alt ID) */
+#define	PCI_PRODUCT_SUNDANCE_TC9021_ALT	0x9021		/* TC9021 */
 
 /* Sunix */
 #define	PCI_PRODUCT_SUNIX_40XX	0x7168		/* 40XX */
@@ -4936,7 +4936,7 @@
 
 /* Tamarack Microelectronics */
 #define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 GigE */
-#define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* TC9021 GigE (alt ID) */
+#define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* TC9021 GigE */
 
 /* Techsan Electronics */
 #define	PCI_PRODUCT_TECHSAN_B2C2_SKY2PC	0x2104		/* B2C2 Sky2PC */
