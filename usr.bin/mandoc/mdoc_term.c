@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.82 2010/05/24 00:00:10 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.83 2010/05/24 00:37:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1041,6 +1041,7 @@ termp_nm_pre(DECL_ARGS)
 {
 
 	if (NULL == n->child && NULL == m->name)
+		return(1);
 
 	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
 		term_newln(p);
