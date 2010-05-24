@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.81 2010/05/23 09:58:57 kettenis Exp $ */
+/*	$OpenBSD: wd.c,v 1.82 2010/05/24 11:18:50 kettenis Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -392,6 +392,7 @@ wdactivate(struct device *self, int act)
 		*/
 		break;
 	case DVACT_SUSPEND:
+		wd_flushcache(wd, AT_POLL);
 		wd_standby(wd, AT_POLL);
 		break;
 	}
