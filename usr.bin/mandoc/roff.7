@@ -1,4 +1,4 @@
-.\"	$Id: roff.7,v 1.1 2010/05/20 00:58:02 schwarze Exp $
+.\"	$Id: roff.7,v 1.2 2010/05/24 23:01:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 20 2010 $
+.Dd $Mdocdate: May 24 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -90,6 +90,12 @@ The syntax of this macro is the same as that of
 .Sx \&ig ,
 except that a leading argument must be specified.
 It is ignored, as are its children.
+.Ss \&ds
+Define a string.
+This macro is intended to have two arguments,
+the name of the string to define and its content.
+Currently, it is ignored including its arguments,
+and the number of arguments is not checked.
 .Ss \&de1
 The syntax of this macro is the same as that of
 .Sx \&ig ,
@@ -235,6 +241,18 @@ the subsequent invocation of
 .Sx \&if
 will first signify the end of comment, then be invoked as a macro.
 This behaviour really shouldn't be counted upon.
+.Ss \&rm
+Remove a request, macro or string.
+This macro is intended to have one argument,
+the name of the request, macro or string to be undefined.
+Currently, it is ignored including its arguments,
+and the number of arguments is not checked.
+.Ss \&tr
+Output character translation.
+This macro is intended to have one argument,
+consisting of an even number of characters.
+Currently, it is ignored including its arguments,
+and the number of arguments is not checked.
 .Sh COMPATIBILITY
 This section documents compatibility between mandoc and other other
 troff implementations, at this time limited to GNU troff
