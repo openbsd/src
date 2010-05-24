@@ -1,6 +1,6 @@
-/*	$Id: msec.c,v 1.4 2010/05/23 22:45:01 schwarze Exp $ */
+/*	$Id: msec.c,v 1.5 2010/05/24 02:29:02 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,6 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "mandoc.h"
 #include "libmdoc.h"
