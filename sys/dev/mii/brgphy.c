@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.92 2010/04/09 22:01:37 sthen Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.93 2010/05/24 21:23:23 sthen Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -81,6 +81,7 @@ int	brgphy_service(struct mii_softc *, struct mii_data *, int);
 void	brgphy_copper_status(struct mii_softc *);
 void	brgphy_fiber_status(struct mii_softc *);
 void	brgphy_5708s_status(struct mii_softc *);
+void	brgphy_5709s_status(struct mii_softc *);
 int	brgphy_mii_phy_auto(struct mii_softc *);
 void	brgphy_loop(struct mii_softc *);
 void	brgphy_reset(struct mii_softc *);
@@ -106,6 +107,10 @@ const struct mii_phy_funcs brgphy_fiber_funcs = {
 
 const struct mii_phy_funcs brgphy_5708s_funcs = {
 	brgphy_service, brgphy_5708s_status, brgphy_reset,
+};
+
+const struct mii_phy_funcs brgphy_5709s_funcs = {
+	brgphy_service, brgphy_5709s_status, brgphy_reset,
 };
 
 static const struct mii_phydesc brgphys[] = {
@@ -165,6 +170,8 @@ static const struct mii_phydesc brgphys[] = {
 	  MII_STR_xxBROADCOM2_BCM5708S },
 	{ MII_OUI_xxBROADCOM2,		MII_MODEL_xxBROADCOM2_BCM5709C,
 	  MII_STR_xxBROADCOM2_BCM5709C },
+	{ MII_OUI_xxBROADCOM2,		MII_MODEL_xxBROADCOM2_BCM5709S,
+	  MII_STR_xxBROADCOM2_BCM5709S },
 	{ MII_OUI_xxBROADCOM2,		MII_MODEL_xxBROADCOM2_BCM5709CAX,
 	  MII_STR_xxBROADCOM2_BCM5709CAX },
 	{ MII_OUI_xxBROADCOM3,		MII_MODEL_xxBROADCOM3_BCM57780,
@@ -223,6 +230,8 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 		if (strcmp(devname, "bnx") == 0) {
 			if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5708)
 				sc->mii_funcs = &brgphy_5708s_funcs;
+			else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709)
+				sc->mii_funcs = &brgphy_5709s_funcs;
 			else
 				sc->mii_funcs = &brgphy_fiber_funcs;
 		} else
@@ -613,6 +622,64 @@ brgphy_5708s_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
+void
+brgphy_5709s_status(struct mii_softc *sc)
+{
+	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmcr, bmsr;
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+        bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
+        if (bmsr & BRGPHY_BMSR_LINK)
+                mii->mii_media_status |= IFM_ACTIVE;
+
+        bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
+        if (bmcr & BRGPHY_BMCR_LOOP)
+                mii->mii_media_active |= IFM_LOOP;
+
+        if (bmcr & BRGPHY_BMCR_AUTOEN) {
+                int xstat;
+
+                if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
+                        /* Erg, still trying, I guess... */
+                        mii->mii_media_active |= IFM_NONE;
+                        return;
+                }
+
+                PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+                    BRGPHY_BLOCK_ADDR_GP_STATUS);
+
+                xstat = PHY_READ(sc, BRGPHY_GP_STATUS_TOP_ANEG_STATUS);
+
+                PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+                    BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
+
+                switch (xstat & BRGPHY_GP_STATUS_TOP_ANEG_SPEED_MASK) {
+                case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_10:
+                        mii->mii_media_active |= IFM_10_FL;
+                        break;
+                case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_100:
+                        mii->mii_media_active |= IFM_100_FX;
+                        break;
+                case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_1G:
+                        mii->mii_media_active |= IFM_1000_SX;
+                        break;
+                case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_25G:
+                        mii->mii_media_active |= IFM_2500_SX;
+                        break;
+                }
+
+                if (xstat & BRGPHY_GP_STATUS_TOP_ANEG_FDX)
+                        mii->mii_media_active |= IFM_FDX;
+                else
+                        mii->mii_media_active |= IFM_HDX;
+	} else
+		mii->mii_media_active = ife->ifm_media;
+}
+
 int
 brgphy_mii_phy_auto(struct mii_softc *sc)
 {
@@ -796,6 +863,56 @@ brgphy_reset(struct mii_softc *sc)
 					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 						BRGPHY_5708S_DIG_PG0);
 			}
+		} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709 &&
+		    sc->mii_flags & MIIF_HAVEFIBER) {
+			/* Select the SerDes Digital block of the AN MMD. */
+			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+			    BRGPHY_BLOCK_ADDR_SERDES_DIG);
+
+			PHY_WRITE(sc, BRGPHY_SERDES_DIG_1000X_CTL1,
+			    (PHY_READ(sc, BRGPHY_SERDES_DIG_1000X_CTL1) &
+			    ~BRGPHY_SD_DIG_1000X_CTL1_AUTODET) |
+			    BRGPHY_SD_DIG_1000X_CTL1_FIBER);
+
+			if (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG) {
+				/* Select the Over 1G block of the AN MMD. */
+				PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+				    BRGPHY_BLOCK_ADDR_OVER_1G);
+
+				/*
+				 * Enable autoneg "Next Page" to advertise
+				 * 2.5G support.
+				 */
+				PHY_WRITE(sc, BRGPHY_OVER_1G_UNFORMAT_PG1,
+				    PHY_READ(sc, BRGPHY_OVER_1G_UNFORMAT_PG1) |
+				    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
+			}
+
+                        /*
+                         * Select the Multi-Rate Backplane Ethernet block of
+                         * the AN MMD.
+                         */
+                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+                            BRGPHY_BLOCK_ADDR_MRBE);
+
+                        /* Enable MRBE speed autoneg. */
+                        PHY_WRITE(sc, BRGPHY_MRBE_MSG_PG5_NP,
+                            PHY_READ(sc, BRGPHY_MRBE_MSG_PG5_NP) |
+                            BRGPHY_MRBE_MSG_PG5_NP_MBRE |
+                            BRGPHY_MRBE_MSG_PG5_NP_T2);
+
+                        /* Select the Clause 73 User B0 block of the AN MMD. */
+                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+                            BRGPHY_BLOCK_ADDR_CL73_USER_B0);
+
+                        /* Enable MRBE speed autoneg. */
+                        PHY_WRITE(sc, BRGPHY_CL73_USER_B0_MBRE_CTL1,
+                            BRGPHY_CL73_USER_B0_MBRE_CTL1_NP_AFT_BP |
+                            BRGPHY_CL73_USER_B0_MBRE_CTL1_STA_MGR |
+                            BRGPHY_CL73_USER_B0_MBRE_CTL1_ANEG);
+
+                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+                            BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
 		} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709) {
 			if (BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Ax ||
 			    BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Bx)
