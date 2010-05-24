@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.168 2009/10/28 04:12:29 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.169 2010/05/24 21:48:08 jsg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -267,7 +267,7 @@ icsphy*	at mii?				# ICS 1890 PHYs
 #lxtphy*	at mii?			# Level1 LXT970 PHYs
 nsphy*	at mii?				# NS and compatible PHYs
 nsphyter*	at mii?			# NS and compatible PHYs
-qsphy*	at mii?				# Quality Semi QS6612 PHYs
+#qsphy*	at mii?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii?				# Seeq 8x220 PHYs
 rlphy* at mii?				# RealTek 8139 internal PHYs
 mtdphy*	at mii?				# Myson MTD972 PHYs
