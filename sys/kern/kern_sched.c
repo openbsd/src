@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.20 2010/05/14 18:47:56 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.21 2010/05/25 19:59:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -42,6 +42,7 @@ struct proc *sched_steal_proc(struct cpu_info *);
  */
 struct cpuset sched_idle_cpus;
 struct cpuset sched_queued_cpus;
+struct cpuset sched_all_cpus;
 
 /*
  * A few notes about cpu_switchto that is implemented in MD code.
@@ -84,6 +85,7 @@ sched_init_cpu(struct cpu_info *ci)
 	 * structures.
 	 */
 	cpuset_init_cpu(ci);
+	cpuset_add(&sched_all_cpus, ci);
 }
 
 void
@@ -147,9 +149,13 @@ sched_idle(void *v)
 		cpuset_add(&sched_idle_cpus, ci);
 		cpu_idle_enter();
 		while (spc->spc_whichqs == 0) {
-			if (spc->spc_schedflags & SPCF_SHOULDHALT) {
+			if (spc->spc_schedflags & SPCF_SHOULDHALT &&
+			    (spc->spc_schedflags & SPCF_HALTED) == 0) {
+				cpuset_del(&sched_idle_cpus, ci);
+				SCHED_LOCK(s);
 				atomic_setbits_int(&spc->spc_schedflags,
-				    SPCF_HALTED);
+				    spc->spc_whichqs ? 0 : SPCF_HALTED);
+				SCHED_UNLOCK(s);
 				wakeup(spc);
 			}
 			cpu_idle_cycle();
@@ -248,6 +254,15 @@ sched_chooseproc(void)
 	SCHED_ASSERT_LOCKED();
 
 	if (spc->spc_schedflags & SPCF_SHOULDHALT) {
+		if (spc->spc_whichqs) {
+			for (queue = 0; queue < SCHED_NQS; queue++) {
+				TAILQ_FOREACH(p, &spc->spc_qs[queue], p_runq) {
+					remrunqueue(p);
+					p->p_cpu = sched_choosecpu(p);
+					setrunqueue(p);
+				}
+			}
+		}
 		p = spc->spc_idleproc;
 		KASSERT(p);
 		p->p_stat = SRUN;
@@ -323,7 +338,7 @@ sched_choosecpu_fork(struct proc *parent, int flags)
 	 */
 	cpuset_complement(&set, &sched_queued_cpus, &sched_idle_cpus);
 	if (cpuset_first(&set) == NULL)
-		cpuset_add_all(&set);
+		cpuset_copy(&set, &sched_all_cpus);
 
 	while ((ci = cpuset_first(&set)) != NULL) {
 		cpuset_del(&set, ci);
@@ -380,7 +395,7 @@ sched_choosecpu(struct proc *p)
 	}
 
 	if (cpuset_first(&set) == NULL)
-		cpuset_add_all(&set);
+		cpuset_copy(&set, &sched_all_cpus);
 
 	while ((ci = cpuset_first(&set)) != NULL) {
 		int cost = sched_proc_to_cpu_cost(ci, p);
@@ -554,6 +569,7 @@ sched_start_secondary_cpus(void)
 
 		if (CPU_IS_PRIMARY(ci))
 			continue;
+		cpuset_add(&sched_all_cpus, ci);
 		atomic_clearbits_int(&spc->spc_schedflags,
 		    SPCF_SHOULDHALT | SPCF_HALTED);
 	}
@@ -573,6 +589,7 @@ sched_stop_secondary_cpus(void)
 
 		if (CPU_IS_PRIMARY(ci))
 			continue;
+		cpuset_del(&sched_all_cpus, ci);
 		atomic_setbits_int(&spc->spc_schedflags, SPCF_SHOULDHALT);
 	}
 	CPU_INFO_FOREACH(cii, ci) {
