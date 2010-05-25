@@ -2229,6 +2229,16 @@ again:
 		goto again;
 	}
 
+	/*
+	 * Here we will either have found a register in the first
+	 * loop, or we will have waited for one and in the second case
+	 * and thus have grabbed the object in question, freed the register
+	 * then redone the second loop (having relocked the fence list).
+	 * Therefore at this point it is impossible to have a null value
+	 * in reg.
+	 */
+	KASSERT(reg != NULL);
+
 	obj_priv->fence_reg = i;
 	reg->obj = obj;
 	TAILQ_INSERT_TAIL(&dev_priv->mm.fence_list, reg, list);
