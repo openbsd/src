@@ -102,9 +102,6 @@ typedef struct drm_i915_private {
 
 	struct vga_pci_bar	*regs;
 
-	struct drm_local_map	*sarea;
-	drm_i915_sarea_t	*sarea_priv;
-
 	union flush {
 		struct {
 			bus_space_tag_t		bst;
@@ -114,16 +111,17 @@ typedef struct drm_i915_private {
 			bus_dma_segment_t	seg;
 			caddr_t			kva;
 		} i8xx;
-	}	ifp;
+	}			 ifp;
 	struct inteldrm_ring	 ring;
 	struct workq		*workq;
 	struct vm_page		*pgs;
-	struct drm_local_map	 hws_map;
-	struct drm_obj		*hws_obj;
-	struct drm_dmamem	*hws_dmamem;
+	union hws {
+		struct drm_obj		*obj;
+		struct drm_dmamem	*dmamem;
+	}	hws;
+#define				 hws_obj	hws.obj
+#define				 hws_dmamem	hws.dmamem
 	void			*hw_status_page;
-	unsigned int		 status_gfx_addr;
-	u_int32_t		 counter;
 	size_t			 max_gem_obj_size; /* XXX */
 
 	/* Protects user_irq_refcount and irq_mask reg */
@@ -133,8 +131,6 @@ typedef struct drm_i915_private {
 	/* Cached value of IMR to avoid reads in updating the bitfield */
 	u_int32_t		 irq_mask_reg;
 	u_int32_t		 pipestat[2];
-
-	int			 allow_batchbuffer;
 
 	struct mutex		 fence_lock;
 	struct inteldrm_fence	 fence_regs[16]; /* 965 */
@@ -413,13 +409,6 @@ struct inteldrm_obj {
 	u_int32_t				 stride;
 };
 
-#define inteldrm_is_active(obj_priv)	(obj_priv->obj.do_flags & I915_ACTIVE)
-#define inteldrm_is_dirty(obj_priv)	(obj_priv->obj.do_flags & I915_DIRTY)
-#define inteldrm_exec_needs_fence(obj_priv)		\
-	(obj_priv->obj.do_flags & I915_EXEC_NEEDS_FENCE)
-#define inteldrm_needs_fence(obj_priv)			\
-	(obj_priv->obj.do_flags & I915_FENCED_EXEC)
-
 /**
  * Request queue structure.
  *
@@ -444,42 +433,17 @@ void		inteldrm_advance_ring(struct drm_i915_private *);
 void		inteldrm_update_ring(struct drm_i915_private *);
 void		inteldrm_error(struct drm_i915_private *);
 int		inteldrm_pipe_enabled(struct drm_i915_private *, int);
-
-				/* i915_dma.c */
-extern void i915_emit_breadcrumb(struct drm_device *dev);
-void	i915_emit_box(struct drm_device * dev, struct drm_clip_rect * boxes,
-	    int DR1, int DR4);
-int	i915_dma_cleanup(struct drm_device *);
-
-int	i915_init_phys_hws(drm_i915_private_t *, bus_dma_tag_t);
-void	i915_free_hws(drm_i915_private_t *, bus_dma_tag_t);
+int		i915_init_phys_hws(drm_i915_private_t *, bus_dma_tag_t);
 
 /* i915_irq.c */
-extern int i915_irq_emit(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv);
-extern int i915_irq_wait(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv);
 
 extern int i915_driver_irq_install(struct drm_device * dev);
 extern void i915_driver_irq_uninstall(struct drm_device * dev);
-extern int i915_vblank_pipe_get(struct drm_device *dev, void *data,
-				struct drm_file *file_priv);
-extern int i915_emit_irq(struct drm_device * dev);
-extern int i915_wait_irq(struct drm_device * dev, int irq_nr);
 extern int i915_enable_vblank(struct drm_device *dev, int crtc);
 extern void i915_disable_vblank(struct drm_device *dev, int crtc);
 extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
 extern void i915_user_irq_get(struct drm_i915_private *);
 extern void i915_user_irq_put(struct drm_i915_private *);
-
-/* ioctls */
-extern int i915_dma_init(struct drm_device *, void *, struct drm_file *);
-extern int i915_flush_ioctl(struct drm_device *, void *, struct drm_file *);
-extern int i915_batchbuffer(struct drm_device *, void *, struct drm_file *);
-extern int i915_getparam(struct drm_device *, void *, struct drm_file *);
-extern int i915_setparam(struct drm_device *, void *, struct drm_file *);
-extern int i915_cmdbuffer(struct drm_device *, void *, struct drm_file *);
-extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 
 /* XXX need bus_space_write_8, this evaluated arguments twice */
 static __inline void
@@ -520,12 +484,6 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
 				    dev_priv->regs->bsh, (reg))
 #define I915_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
 				    dev_priv->regs->bsh, (reg), (val))
-
-#define RING_LOCK_TEST_WITH_RETURN(dev, file_priv) do {			\
-	if (((drm_i915_private_t *)dev->dev_private)->ring.ring_obj == NULL) \
-		LOCK_TEST_WITH_RETURN(dev, file_priv);			\
-} while (0)
-
 #define INTELDRM_VERBOSE 0
 #if INTELDRM_VERBOSE > 0
 #define	INTELDRM_VPRINTF(fmt, args...) DRM_INFO(fmt, ##args)
@@ -653,9 +611,6 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
 #define   MI_BATCH_NON_SECURE_I965 (1<<8)
 #define MI_BATCH_BUFFER_START	MI_INSTR(0x31, 0)
 
-#define BREADCRUMB_BITS 31
-#define BREADCRUMB_MASK ((1U << BREADCRUMB_BITS) - 1)
-
 /**
  * Reads a dword out of the status page, which is written to from the command
  * queue by automatic updates, MI_REPORT_HEAD, MI_STORE_DATA_INDEX, or
@@ -672,9 +627,7 @@ read64(struct drm_i915_private *dev_priv, bus_size_t off)
  * The area from dword 0x20 to 0x3ff is available for driver usage.
  */
 #define READ_HWSP(dev_priv, reg)  inteldrm_read_hws(dev_priv, reg)
-#define READ_BREADCRUMB(dev_priv) READ_HWSP(dev_priv, I915_BREADCRUMB_INDEX)
 #define I915_GEM_HWS_INDEX		0x20
-#define	I915_BREADCRUMB_INDEX		0x21
 
 /*
  * 3D instructions used by the kernel
@@ -2416,6 +2369,30 @@ static __inline int
 i915_obj_purged(struct inteldrm_obj *obj_priv)
 {
 	return (obj_priv->obj.do_flags & I915_PURGED);
+}
+
+static __inline int
+inteldrm_is_active(struct inteldrm_obj *obj_priv)
+{
+	return (obj_priv->obj.do_flags & I915_ACTIVE);
+}
+
+static __inline int
+inteldrm_is_dirty(struct inteldrm_obj *obj_priv)	
+{
+	return (obj_priv->obj.do_flags & I915_DIRTY);
+}
+
+static __inline int
+inteldrm_exec_needs_fence(struct inteldrm_obj *obj_priv)
+{
+	return (obj_priv->obj.do_flags & I915_EXEC_NEEDS_FENCE);
+}
+
+static __inline int
+inteldrm_needs_fence(struct inteldrm_obj *obj_priv)
+{
+	return (obj_priv->obj.do_flags & I915_FENCED_EXEC);
 }
 
 #endif

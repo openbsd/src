@@ -36,7 +36,6 @@ void	i915_enable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_disable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_enable_pipestat(drm_i915_private_t *, int, u_int32_t);
 void	i915_disable_pipestat(drm_i915_private_t *, int, u_int32_t);
-int	i915_wait_irq(struct drm_device *, int);
 
 inline void
 i915_enable_irq(drm_i915_private_t *dev_priv, u_int32_t mask)
@@ -122,25 +121,6 @@ i915_get_vblank_counter(struct drm_device *dev, int pipe)
 	return ((high1 << 8) | low);
 }
 
-int
-i915_emit_irq(struct drm_device *dev)
-{
-	drm_i915_private_t	*dev_priv = dev->dev_private;
-
-	inteldrm_update_ring(dev_priv);
-
-	DRM_DEBUG("\n");
-
-	i915_emit_breadcrumb(dev);
-
-	BEGIN_LP_RING(2);
-	OUT_RING(0);
-	OUT_RING(MI_USER_INTERRUPT);
-	ADVANCE_LP_RING();
-
-	return (dev_priv->counter);
-}
-
 void
 i915_user_irq_get(struct drm_i915_private *dev_priv)
 {
@@ -153,71 +133,6 @@ i915_user_irq_put(struct drm_i915_private *dev_priv)
 {
 	if (--dev_priv->user_irq_refcount == 0)
 		i915_disable_irq(dev_priv, I915_USER_INTERRUPT);
-}
-
-
-int
-i915_wait_irq(struct drm_device *dev, int irq_nr)
-{
-	drm_i915_private_t	*dev_priv =  dev->dev_private;
-	int			 ret = 0;
-
-	DRM_DEBUG("irq_nr=%d breadcrumb=%d\n", irq_nr,
-		  READ_BREADCRUMB(dev_priv));
-
-	mtx_enter(&dev_priv->user_irq_lock);
-	i915_user_irq_get(dev_priv);
-	while (ret == 0) {
-		if (READ_BREADCRUMB(dev_priv) >= irq_nr)
-			break;
-		ret = msleep(dev_priv, &dev_priv->user_irq_lock,
-		    PZERO | PCATCH, "i915wt", 3 * hz);
-	}
-	i915_user_irq_put(dev_priv);
-	mtx_leave(&dev_priv->user_irq_lock);
-
-	if (dev_priv->sarea_priv != NULL)
-		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
-	return (ret);
-}
-
-/* Needs the lock as it touches the ring.
- */
-int
-i915_irq_emit(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_i915_private_t	*dev_priv = dev->dev_private;
-	drm_i915_irq_emit_t	*emit = data;
-	int			 result;
-
-	RING_LOCK_TEST_WITH_RETURN(dev, file_priv);
-
-	if (!dev_priv) {
-		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
-	}
-
-	DRM_LOCK();
-	result = i915_emit_irq(dev);
-	DRM_UNLOCK();
-
-	return (copyout(&result, emit->irq_seq, sizeof(result)));
-}
-
-/* Doesn't need the hardware lock.
- */
-int
-i915_irq_wait(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_i915_private_t	*dev_priv = dev->dev_private;
-	drm_i915_irq_wait_t	*irqwait = data;
-
-	if (!dev_priv) {
-		DRM_ERROR("called with no initialization\n");
-		return (EINVAL);
-	}
-
-	return (i915_wait_irq(dev, irqwait->irq_seq));
 }
 
 int
@@ -245,23 +160,6 @@ i915_disable_vblank(struct drm_device *dev, int pipe)
 	i915_disable_pipestat(dev_priv, pipe, 
 	    PIPE_START_VBLANK_INTERRUPT_ENABLE | PIPE_VBLANK_INTERRUPT_ENABLE);
 	mtx_leave(&dev_priv->user_irq_lock);
-}
-
-int
-i915_vblank_pipe_get(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	drm_i915_private_t	*dev_priv = dev->dev_private;
-	drm_i915_vblank_pipe_t	*pipe = data;
-
-	if (!dev_priv) {
-		DRM_ERROR("called with no initialization\n");
-		return (EINVAL);
-	}
-
-	pipe->pipe = DRM_I915_VBLANK_PIPE_A | DRM_I915_VBLANK_PIPE_B;
-
-	return (0);
 }
 
 /* drm_dma.h hooks

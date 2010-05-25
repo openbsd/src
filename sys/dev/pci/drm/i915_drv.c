@@ -113,6 +113,8 @@ void	inteldrm_teardown_mchbar(struct drm_i915_private *,
 	    struct pci_attach_args *, int);
 
 /* Ioctls */
+int	inteldrm_getparam(struct drm_i915_private *dev_priv, void *data);
+int	inteldrm_setparam(struct drm_i915_private *dev_priv, void *data);
 int	i915_gem_init_ioctl(struct drm_device *, void *, struct drm_file *);
 int	i915_gem_create_ioctl(struct drm_device *, void *, struct drm_file *);
 int	i915_gem_pread_ioctl(struct drm_device *, void *, struct drm_file *);
@@ -489,7 +491,14 @@ inteldrm_detach(struct device *self, int flags)
 		dev_priv->drmdev = NULL;
 	}
 
-	i915_free_hws(dev_priv, dev_priv->dmat);
+	if (!I915_NEED_GFX_HWS(dev_priv) && dev_priv->hws_dmamem) {
+		drm_dmamem_free(dev_priv->dmat, dev_priv->hws_dmamem);
+		dev_priv->hws_dmamem = NULL;
+		/* Need to rewrite hardware status page */
+		I915_WRITE(HWS_PGA, 0x1ffff000);
+		dev_priv->hw_status_page = NULL;
+	}
+
 
 	if (IS_I9XX(dev_priv) && dev_priv->ifp.i9xx.bsh != NULL) {
 		bus_space_unmap(dev_priv->ifp.i9xx.bst, dev_priv->ifp.i9xx.bsh,
@@ -539,22 +548,12 @@ int
 inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
     struct drm_file *file_priv)
 {
+	struct drm_i915_private	*dev_priv = dev->dev_private;
+
 	if (file_priv->authenticated == 1) {
 		switch (cmd) {
-		case DRM_IOCTL_I915_FLUSH:
-			return (i915_flush_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_BATCHBUFFER:
-			return (i915_batchbuffer(dev, data, file_priv));
-		case DRM_IOCTL_I915_IRQ_EMIT:
-			return (i915_irq_emit(dev, data, file_priv));
-		case DRM_IOCTL_I915_IRQ_WAIT:
-			return (i915_irq_wait(dev, data, file_priv));
 		case DRM_IOCTL_I915_GETPARAM:
-			return (i915_getparam(dev, data, file_priv));
-		case DRM_IOCTL_I915_CMDBUFFER:
-			return (i915_cmdbuffer(dev, data, file_priv));
-		case DRM_IOCTL_I915_GET_VBLANK_PIPE:
-			return (i915_vblank_pipe_get(dev, data, file_priv));
+			return (inteldrm_getparam(dev_priv, data));
 		case DRM_IOCTL_I915_GEM_EXECBUFFER2:
 			return (i915_gem_execbuffer2(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_BUSY:
@@ -589,16 +588,7 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 	if (file_priv->master == 1) {
 		switch (cmd) {
 		case DRM_IOCTL_I915_SETPARAM:
-			return (i915_setparam(dev, data, file_priv));
-		case DRM_IOCTL_I915_INIT:
-			return (i915_dma_init(dev, data, file_priv));
-		case DRM_IOCTL_I915_HWS_ADDR:
-			return (i915_set_status_page(dev, data, file_priv));
-		/* Removed, but still used by userland, so just say `fine' */
-		case DRM_IOCTL_I915_INIT_HEAP:
-		case DRM_IOCTL_I915_DESTROY_HEAP:
-		case DRM_IOCTL_I915_SET_VBLANK_PIPE:
-			return (0);
+			return (inteldrm_setparam(dev_priv, data));
 		case DRM_IOCTL_I915_GEM_INIT:
 			return (i915_gem_init_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_ENTERVT:
@@ -651,9 +641,6 @@ inteldrm_intr(void *arg)
 	I915_WRITE(IIR, iir);
 	(void)I915_READ(IIR); /* Flush posted writes */
 
-	if (dev_priv->sarea_priv != NULL)
-		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
-
 	if (iir & I915_USER_INTERRUPT) {
 		wakeup(dev_priv);
 		dev_priv->mm.hang_cnt = 0;
@@ -675,21 +662,25 @@ u_int32_t
 inteldrm_read_hws(struct drm_i915_private *dev_priv, int reg)
 {
 	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
+	struct inteldrm_obj	*obj_priv;
+	bus_dma_tag_t		 tag;
+	bus_dmamap_t		 map;
 	u_int32_t		 val;
 
-	/*
-	 * When we eventually go GEM only we'll always have a dmamap, so this
-	 * madness won't be for long.
-	 */
-	if (dev_priv->hws_dmamem)
-		bus_dmamap_sync(dev->dmat, dev_priv->hws_dmamem->map, 0,
-		    PAGE_SIZE, BUS_DMASYNC_POSTREAD);
+	if (I915_NEED_GFX_HWS(dev_priv)) {
+		obj_priv = (struct inteldrm_obj *)dev_priv->hws_obj;
+		map = obj_priv->dmamap;
+		tag = dev_priv->agpdmat;
+	} else {
+		map = dev_priv->hws_dmamem->map;
+		tag = dev->dmat;
+	}
+
+	bus_dmamap_sync(tag, map, 0, PAGE_SIZE, BUS_DMASYNC_POSTREAD);
 	
 	val = ((volatile u_int32_t *)(dev_priv->hw_status_page))[reg];
+	bus_dmamap_sync(tag, map, 0, PAGE_SIZE, BUS_DMASYNC_PREREAD);
 
-	if (dev_priv->hws_dmamem)
-		bus_dmamap_sync(dev->dmat, dev_priv->hws_dmamem->map, 0,
-		    PAGE_SIZE, BUS_DMASYNC_PREREAD);
 	return (val);
 }
 
@@ -800,6 +791,30 @@ inteldrm_update_ring(struct drm_i915_private *dev_priv)
 		ring->space += ring->size;
 	INTELDRM_VPRINTF("%s: head: %x tail: %x space: %x\n", __func__,
 		ring->head, ring->tail, ring->space);
+}
+
+/*
+ * Sets up the hardware status page for devices that need a physical address
+ * in the register.
+ */
+int
+i915_init_phys_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
+{
+	/* Program Hardware Status Page */
+	if ((dev_priv->hws_dmamem = drm_dmamem_alloc(dmat, PAGE_SIZE,
+	    PAGE_SIZE, 1, PAGE_SIZE, 0, BUS_DMA_READ)) == NULL) {
+		return (ENOMEM);
+	}
+
+	dev_priv->hw_status_page = dev_priv->hws_dmamem->kva;
+
+	memset(dev_priv->hw_status_page, 0, PAGE_SIZE);
+
+	bus_dmamap_sync(dmat, dev_priv->hws_dmamem->map, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREREAD);
+	I915_WRITE(HWS_PGA, dev_priv->hws_dmamem->map->dm_segs[0].ds_addr);
+	DRM_DEBUG("Enabled hardware status page\n");
+	return (0);
 }
 
 void
@@ -919,11 +934,53 @@ inteldrm_lastclose(struct drm_device *dev)
 		    dev_priv->agpdmat);
 	}
 	dev_priv->agpdmat = NULL;
+}
 
+int
+inteldrm_getparam(struct drm_i915_private *dev_priv, void *data)
+{
+	drm_i915_getparam_t	*param = data;
+	int			 value;
 
-	dev_priv->sarea_priv = NULL;
+	switch (param->param) {
+	case I915_PARAM_CHIPSET_ID:
+		value = dev_priv->pci_device;
+		break;
+	case I915_PARAM_HAS_GEM:
+		value = 1;
+		break;
+	case I915_PARAM_NUM_FENCES_AVAIL:
+		value = dev_priv->num_fence_regs - dev_priv->fence_reg_start;
+		break;
+	case I915_PARAM_HAS_EXECBUF2:
+		value = 1;
+		break;
+	default:
+		DRM_DEBUG("Unknown parameter %d\n", param->param);
+		return (EINVAL);
+	}
+	return (copyout(&value, param->value, sizeof(int)));
+}
 
-	i915_dma_cleanup(dev);
+int
+inteldrm_setparam(struct drm_i915_private *dev_priv, void *data)
+{
+	drm_i915_setparam_t	*param = data;
+
+	switch (param->param) {
+	case I915_SETPARAM_NUM_USED_FENCES:
+		if (param->value > dev_priv->num_fence_regs ||
+		    param->value < 0)
+			return EINVAL;
+		/* Userspace can use first N regs */
+		dev_priv->fence_reg_start = param->value;
+		break;
+	default:
+		DRM_DEBUG("unknown parameter %d\n", param->param);
+		return (EINVAL);
+	}
+
+	return 0;
 }
 
 
@@ -3775,7 +3832,6 @@ i915_gem_init_hws(struct drm_i915_private *dev_priv)
 	if (ret != 0) {
 		DRM_ERROR("Failed to map status page.\n");
 		obj->uao->pgops->pgo_detach(obj->uao);
-		memset(&dev_priv->hws_map, 0, sizeof(dev_priv->hws_map));
 		i915_gem_object_unpin(obj);
 		drm_unhold_and_unref(obj);
 		return (EINVAL);
@@ -3795,20 +3851,18 @@ i915_gem_cleanup_hws(struct drm_i915_private *dev_priv)
 {
 	struct drm_obj		*obj;
 
-	if (dev_priv->hws_obj == NULL)
+	if (!I915_NEED_GFX_HWS(dev_priv) || dev_priv->hws_obj == NULL)
 		return;
 
 	obj = dev_priv->hws_obj;
 
 	uvm_unmap(kernel_map, (vaddr_t)dev_priv->hw_status_page,
 	    (vaddr_t)dev_priv->hw_status_page + PAGE_SIZE);
+	dev_priv->hw_status_page = NULL;
 	drm_hold_object(obj);
 	i915_gem_object_unpin(obj);
 	drm_unhold_and_unref(obj);
 	dev_priv->hws_obj = NULL;
-
-	memset(&dev_priv->hws_map, 0, sizeof(dev_priv->hws_map));
-	dev_priv->hw_status_page = NULL;
 
 	/* Write high address into HWS_PGA when disabling. */
 	I915_WRITE(HWS_PGA, 0x1ffff000);
