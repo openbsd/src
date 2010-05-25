@@ -37,7 +37,6 @@
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
-./usr/lib/libg2c.so.8.0
 ./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.10.0
 ./usr/lib/libkafs.so.18.0
@@ -1553,7 +1552,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/expat_external.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/fnmatch.ph
@@ -1666,7 +1664,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g++/tree.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g++/type_traits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g++/vector.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/grp.ph

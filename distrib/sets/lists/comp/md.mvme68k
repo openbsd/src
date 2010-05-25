@@ -192,7 +192,6 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.7/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.7/2.95.3/cc1obj
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.7/2.95.3/cc1plus
-./usr/lib/gcc-lib/m68k-unknown-openbsd4.7/2.95.3/f771
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.7/2.95.3/fPIC
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.7/2.95.3/fPIC/libgcc.a
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.7/2.95.3/fpic
@@ -216,8 +215,6 @@
 ./usr/lib/libevent_pic.a
 ./usr/lib/libexpat_pic.a
 ./usr/lib/libform_pic.a
-./usr/lib/libfrtbegin_pic.a
-./usr/lib/libg2c_pic.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libiberty_pic.a
 ./usr/lib/libkadm5clnt_pic.a

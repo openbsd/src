@@ -265,7 +265,6 @@
 ./usr/share/info/cvs.info
 ./usr/share/info/cvsclient.info
 ./usr/share/info/dir
-./usr/share/info/g77.info
 ./usr/share/info/gcc.info
 ./usr/share/info/gccint.info
 ./usr/share/info/gdb.info
@@ -389,7 +388,6 @@
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
 ./usr/share/man/cat1/fuser.0
-./usr/share/man/cat1/g77.0
 ./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat1/getcap.0
 ./usr/share/man/cat1/getconf.0

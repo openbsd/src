@@ -102,7 +102,6 @@
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
-./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.10.0
 ./usr/lib/libkafs.so.18.0
@@ -1693,7 +1692,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/expat_external.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/fnmatch.ph
@@ -1821,7 +1819,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/g++/ext/stl_hash_fun.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/g++/ext/stl_hashtable.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/g++/ext/stl_rope.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/grp.ph

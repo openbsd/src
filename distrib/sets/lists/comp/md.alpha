@@ -210,7 +210,6 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd4.7/3.3.5/SYSCALLS.c.X
 ./usr/lib/gcc-lib/alpha-unknown-openbsd4.7/3.3.5/cc1obj
 ./usr/lib/gcc-lib/alpha-unknown-openbsd4.7/3.3.5/cc1plus
-./usr/lib/gcc-lib/alpha-unknown-openbsd4.7/3.3.5/f771
 ./usr/lib/gcc-lib/alpha-unknown-openbsd4.7/3.3.5/include/unwind.h
 ./usr/lib/gcc-lib/alpha-unknown-openbsd4.7/3.3.5/libgcc.a
 ./usr/lib/libalpha.a
@@ -225,8 +224,6 @@
 ./usr/lib/libevent_pic.a
 ./usr/lib/libexpat_pic.a
 ./usr/lib/libform_pic.a
-./usr/lib/libfrtbegin_pic.a
-./usr/lib/libg2c_pic.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libiberty_pic.a
 ./usr/lib/libkadm5clnt_pic.a

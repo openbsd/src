@@ -212,7 +212,6 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/cc1obj
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/cc1plus
-./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/f771
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/include/README
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/include/exception
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/include/float.h

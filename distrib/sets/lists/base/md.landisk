@@ -60,7 +60,6 @@
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
-./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.10.0
 ./usr/lib/libkafs.so.18.0
@@ -1576,7 +1575,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/expat_external.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/fnmatch.ph
@@ -1704,7 +1702,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/g++/sh-unknown-openbsd4.7/bits/messages_members.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/g++/sh-unknown-openbsd4.7/bits/os_defines.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/g++/sh-unknown-openbsd4.7/bits/time_members.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/grp.ph

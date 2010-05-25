@@ -100,7 +100,6 @@
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
-./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.10.0
 ./usr/lib/libkafs.so.18.0
@@ -1617,7 +1616,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/expat_external.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/fnmatch.ph
@@ -1745,7 +1743,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/powerpc-unknown-openbsd4.7/bits/messages_members.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/powerpc-unknown-openbsd4.7/bits/os_defines.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/powerpc-unknown-openbsd4.7/bits/time_members.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/grp.ph

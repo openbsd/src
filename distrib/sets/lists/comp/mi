@@ -5,12 +5,10 @@
 ./usr/bin/c++
 ./usr/bin/c++filt
 ./usr/bin/cc
-./usr/bin/f77
 ./usr/bin/flex
 ./usr/bin/flex++
 ./usr/bin/fpr
 ./usr/bin/g++
-./usr/bin/g77
 ./usr/bin/gcc
 ./usr/bin/gcov
 ./usr/bin/gdb
@@ -941,7 +939,6 @@
 ./usr/include/evutil.h
 ./usr/include/expat.h
 ./usr/include/expat_external.h
-./usr/include/f2c.h
 ./usr/include/fcntl.h
 ./usr/include/float.h
 ./usr/include/fnmatch.h
@@ -997,7 +994,6 @@
 ./usr/include/g++/utility
 ./usr/include/g++/valarray
 ./usr/include/g++/vector
-./usr/include/g2c.h
 ./usr/include/getopt.h
 ./usr/include/glob.h
 ./usr/include/grp.h
@@ -1751,10 +1747,6 @@
 ./usr/lib/libfl_p.a
 ./usr/lib/libform.a
 ./usr/lib/libform_p.a
-./usr/lib/libfrtbegin.a
-./usr/lib/libfrtbegin_p.a
-./usr/lib/libg2c.a
-./usr/lib/libg2c_p.a
 ./usr/lib/libgssapi.a
 ./usr/lib/libgssapi_p.a
 ./usr/lib/libhdb.a
@@ -1883,7 +1875,6 @@
 ./usr/share/man/cat1/c++.0
 ./usr/share/man/cat1/c++filt.0
 ./usr/share/man/cat1/cc.0
-./usr/share/man/cat1/f77.0
 ./usr/share/man/cat1/flex.0
 ./usr/share/man/cat1/fpr.0
 ./usr/share/man/cat1/g++.0

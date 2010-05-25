@@ -237,7 +237,6 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/SYSCALLS.c.X
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/cc1obj
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/cc1plus
-./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/f771
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/fpic
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/fpic/libgcc.a
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/include/emmintrin.h
@@ -256,8 +255,6 @@
 ./usr/lib/libevent_pic.a
 ./usr/lib/libexpat_pic.a
 ./usr/lib/libform_pic.a
-./usr/lib/libfrtbegin_pic.a
-./usr/lib/libg2c_pic.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libi386.a
 ./usr/lib/libi386_p.a

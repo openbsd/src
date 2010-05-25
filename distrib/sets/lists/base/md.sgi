@@ -87,7 +87,6 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd4.7/3.3.5
 ./usr/lib/gcc-lib/mips64-unknown-openbsd4.7/3.3.5/cc1
 ./usr/lib/gcc-lib/mips64-unknown-openbsd4.7/3.3.5/collect2
-./usr/lib/gcc-lib/mips64-unknown-openbsd4.7/3.3.5/f771
 ./usr/lib/gcc-lib/mips64-unknown-openbsd4.7/3.3.5/include
 ./usr/lib/gcc-lib/mips64-unknown-openbsd4.7/3.3.5/specs
 ./usr/lib/libasn1.so.18.0
@@ -100,7 +99,6 @@
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
-./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.10.0
 ./usr/lib/libkafs.so.18.0
@@ -1617,7 +1615,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/expat_external.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/fnmatch.ph
@@ -1745,7 +1742,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/g++/mips64-unknown-openbsd4.7/bits/messages_members.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/g++/mips64-unknown-openbsd4.7/bits/os_defines.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/g++/mips64-unknown-openbsd4.7/bits/time_members.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/grp.ph

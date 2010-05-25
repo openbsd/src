@@ -60,7 +60,6 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.7/3.3.5/cc1obj
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.7/3.3.5/cc1plus
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.7/3.3.5/collect2
-./usr/lib/gcc-lib/arm-unknown-openbsd4.7/3.3.5/f771
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.7/3.3.5/specs
 ./usr/lib/libasn1.so.18.0
 ./usr/lib/libc.so.53.2
@@ -72,7 +71,6 @@
 ./usr/lib/libevent.so.3.0
 ./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.4.0
-./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.10.0
 ./usr/lib/libkafs.so.18.0
@@ -1639,7 +1637,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/expat_external.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/fnmatch.ph
@@ -1767,7 +1764,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext/stl_hash_fun.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext/stl_hashtable.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext/stl_rope.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/grp.ph

@@ -1404,7 +1404,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/evutil.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/expat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/expat_external.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/fnmatch.ph
@@ -1517,7 +1516,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/tree.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/type_traits.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/vector.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/grp.ph

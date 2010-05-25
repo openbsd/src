@@ -164,7 +164,6 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/2.95.3/cc1obj
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/2.95.3/cc1plus
-./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/2.95.3/f771
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/2.95.3/include/README
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/2.95.3/include/exception
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd4.7/2.95.3/include/float.h
@@ -185,8 +184,6 @@
 ./usr/lib/libevent_pic.a
 ./usr/lib/libexpat_pic.a
 ./usr/lib/libform_pic.a
-./usr/lib/libfrtbegin_pic.a
-./usr/lib/libg2c_pic.a
 ./usr/lib/libiberty_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
