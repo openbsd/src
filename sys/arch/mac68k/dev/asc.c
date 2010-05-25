@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.26 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: asc.c,v 1.27 2010/05/25 01:59:12 deraadt Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -64,12 +64,11 @@
  * ASC driver code and console bell support
  */
 
-#include <sys/types.h>
-#include <sys/cdefs.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/time.h>
-#include <sys/systm.h>
-#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
