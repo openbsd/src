@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.socppc,v 1.22 2010/05/24 23:19:22 deraadt Exp $
+#	$OpenBSD: Makefile.socppc,v 1.23 2010/05/25 02:35:03 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -127,9 +127,8 @@ tags:
 	@echo "see $S/kern/Makefile for tags"
 
 AFILES=	${_machdir}/${_mach}/locore.S
-SRCS=	${AFILES} param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${DB_STRUCTINFO}
+.depend: ${AFILES} param.c ioconf.c ${CFILES} ${SFILES} assym.h ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if !empty(SFILES)
