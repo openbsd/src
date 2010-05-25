@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.8 2004/02/02 10:05:55 brad Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.9 2010/05/25 20:05:48 kettenis Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -81,7 +81,7 @@ ENTRY(_thread_machdep_fpsave)
 	std	%f62, [%o0 + 31 * 8]
 
 	/* disable fpu and mark both sides clean */
-	wr	%o1, FPRS_ENA|FPRS_DL|FPRS_DU, %fprs
+	wr	%g0, 0, %fprs
 
 1:
 	retl
