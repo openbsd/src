@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.solbourne,v 1.25 2010/05/25 02:35:03 deraadt Exp $
+#	$OpenBSD: Makefile.solbourne,v 1.26 2010/05/25 14:33:26 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -20,7 +20,7 @@ S!=	cd ../../../..; pwd
 .endif
 
 _mach?=		solbourne
-_arch?=		solbourne
+_arch?=		sparc
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
