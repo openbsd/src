@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.37 2010/04/24 06:15:54 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.38 2010/05/25 06:51:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -344,7 +344,7 @@ aucat_stop(struct sio_hdl *sh)
 #define ZERO_MAX 0x400
 	static unsigned char zero[ZERO_MAX];
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
-	unsigned n, count, todo;
+	unsigned n, count;
 
 	if (fcntl(hdl->fd, F_SETFL, 0) < 0) {
 		DPERROR("aucat_stop: fcntl(0)");
@@ -353,21 +353,26 @@ aucat_stop(struct sio_hdl *sh)
 	}
 
 	/*
-	 * complete data block in progress
+	 * complete message or data block in progress
 	 */
-	if (hdl->wstate != STATE_IDLE) {
-		todo = (hdl->wstate == STATE_MSG) ?
-		    hdl->wmsg.u.data.size : hdl->wtodo;
-		hdl->maxwrite = todo;
-		memset(zero, 0, ZERO_MAX);
-		while (todo > 0) {
-			count = todo;
+	if (hdl->wstate == STATE_MSG) {
+		if (!aucat_wmsg(hdl))
+			return 0;
+		if (hdl->wmsg.cmd == AMSG_DATA) {
+			hdl->wstate = STATE_DATA;
+			hdl->wtodo = hdl->wmsg.u.data.size;
+		} else
+			hdl->wstate = STATE_IDLE;
+	}
+	if (hdl->wstate == STATE_DATA) {
+		hdl->maxwrite = hdl->wtodo;
+		while (hdl->wstate != STATE_IDLE) {
+			count = hdl->wtodo;
 			if (count > ZERO_MAX)
 				count = ZERO_MAX;
 			n = aucat_write(&hdl->sio, zero, count);
 			if (n == 0)
 				return 0;
-			todo -= n;
 		}
 	}
 
