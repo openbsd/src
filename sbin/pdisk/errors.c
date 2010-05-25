@@ -83,12 +83,7 @@ init_program_name(char **argv)
 void
 do_help()
 {
-    printf("\t%s [-h]\n", program_name);
-    printf("\t%s [-v]\n", program_name);
-    printf("\t%s [-l] name [...]\n", program_name);
-    printf("\t%s [-r] name ...\n", program_name);
-    printf("\t%s [-i]\n", program_name);
-    printf("\t%s name [...]\n", program_name);
+    printf("usage: %s [-hilrv] disk\n", program_name);
 /*
 	{"debug",	no_argument,		0,	'd'},
 	{"abbr",	no_argument,		0,	'a'},

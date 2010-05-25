@@ -40,6 +40,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <util.h>
 
 #include "file_media.h"
 #include "errors.h"
@@ -193,7 +194,7 @@ open_file_as_media(char *file, int oflag)
     }
 
     a = 0;
-    fd = open(file, oflag);
+    fd = opendev(file, oflag, OPENDEV_PART, NULL);
     if (fd >= 0) {
 	a = new_file_media();
 	if (a != 0) {

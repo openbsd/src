@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pdisk.8,v 1.14 2007/05/31 19:19:46 jmc Exp $
+.\"	$OpenBSD: pdisk.8,v 1.15 2010/05/25 19:01:32 deraadt Exp $
 .\"
 .\" Copyright 1996,1997,1998 by Apple Computer, Inc.
 .\"              All Rights Reserved
@@ -19,7 +19,7 @@
 .\" NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 25 2010 $
 .Dt PDISK 8
 .Os
 .Sh NAME
@@ -27,33 +27,14 @@
 .Nd HFS(DPME) partition maintenance program
 .Sh SYNOPSIS
 .Nm pdisk
-.Op Fl h
-.Op Fl i
-.Op Fl l
-.Op Fl r
-.Op Fl v
-.Ar device
+.Op Fl hilrv
+.Ar disk
 .Sh DESCRIPTION
 .Nm
 is a menu driven program which partitions disks using the standard Apple
 disk partitioning scheme described in "Inside Macintosh: Devices".
 It does not support the Intel/DOS partitioning scheme supported by
 .Em fdisk .
-The
-.Ar device
-is usually one of the following:
-.Pp
-.Pa /dev/sd0c
-.Pa /dev/sd1c
-.Pa /dev/sd2c
-.Pa /dev/sd3c
-.Pa /dev/sd4c
-.Pa /dev/sd5c
-.Pa /dev/sd6c
-.Pa /dev/wd0c
-.Pa /dev/wd1c
-.Pa /dev/wd2c
-.Pa /dev/wd3c
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -67,20 +48,30 @@ Causes
 to go into an interactive mode similar to the Mac OS version of the program.
 .It Fl l
 List the partition tables for the specified
-.Ar devices .
+.Ar disk .
 .It Fl r
 Prevents
 .Nm
-from writing to the device.
+from writing to the disk.
 .It Fl v
 Prints version number of the program.
+.It Ar disk
+Specify the
+.Ar disk
+to operate on.
+It can be specified either by its full pathname or an abbreviated disk form.
+In its abbreviated form, the path to the device, the
+.Sq r
+denoting
+.Qq raw device ,
+and the partition letter, can all be omitted.
+For example, the first IDE disk can be specified as either
+.Pa /dev/rwd0c ,
+.Pa /dev/wd0c ,
+or
+.Ar wd0 .
 .El
 .Pp
-An argument which is simply the name of a
-.Ar device
-indicates that
-.Nm
-should edit the partition table of that device.
 .Sh COMMAND MODE
 The list of commands and their explanations are given below.
 .Bl -tag -width "update"
@@ -181,9 +172,9 @@ Examples of valid partition types are: Apple_Free, Apple_HFS, and
 .Pp
 The
 .Em i
-(initialize) command prompts for the size of the device.
+(initialize) command prompts for the size of the disk.
 This was done to get around a bug in the kernel where it reports the wrong
-size for the device.
+size for the disk.
 .Pp
 The
 .Em w
@@ -192,7 +183,7 @@ but there is currently a bug in the interaction between the
 disk and the kernel where
 .Nm disklabel
 .Fl c
-.Ar device
+.Ar disk
 must be issued to cause the kernel to reinterpret the new label.
 .Sh SEE ALSO
 .Xr disklabel 8 ,

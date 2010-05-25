@@ -172,7 +172,6 @@ main(int argc, char **argv)
 		dump(argv[name_index++]);
 	    }
 	} else {
-	    usage("no device argument");
 	    do_help();
 	}
     } else if (name_index < argc) {
@@ -180,7 +179,6 @@ main(int argc, char **argv)
 	    edit(argv[name_index++], 0);
 	}
     } else if (!vflag) {
-	usage("no device argument");
  	do_help();
     }
     return 0;
