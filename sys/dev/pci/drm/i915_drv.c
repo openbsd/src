@@ -2563,8 +2563,7 @@ i915_gem_object_flush_gpu_write_domain(struct drm_obj *obj, int pipelined,
 		} else {
 			seqno = obj_priv->last_write_seqno;
 		}
-		ret =  i915_wait_request(dev_priv,
-		    obj_priv->last_rendering_seqno, interruptible);
+		ret =  i915_wait_request(dev_priv, seqno, interruptible);
 	}
 	return (ret);
 }
