@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.73 2010/05/25 15:05:01 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.74 2010/05/25 17:27:55 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -19,8 +19,6 @@ STRIP?=	strip
 S!=	cd ../../../..; pwd
 .endif
 
-_mach?=		i386
-_arch?=		i386
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 

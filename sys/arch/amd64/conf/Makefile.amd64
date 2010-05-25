@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.40 2010/05/25 15:05:00 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.41 2010/05/25 17:27:55 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -19,8 +19,6 @@ STRIP?=	strip
 S!=	cd ../../../..; pwd
 .endif
 
-_mach?=		amd64
-_arch?=		amd64
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.67 2010/05/25 15:04:59 deraadt Exp $
+#	$OpenBSD: Makefile.alpha,v 1.68 2010/05/25 17:27:54 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -19,8 +19,6 @@ STRIP?=	strip
 S!=	cd ../../../..; pwd
 .endif
 
-_mach?=		alpha
-_arch?=		alpha
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 

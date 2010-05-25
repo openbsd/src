@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.palm,v 1.21 2010/05/25 15:05:01 deraadt Exp $
+#	$OpenBSD: Makefile.palm,v 1.22 2010/05/25 17:27:55 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -19,8 +19,6 @@ STRIP?=	strip
 S!=	cd ../../../..; pwd
 .endif
 
-_mach?=		palm
-_arch?=		arm
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 

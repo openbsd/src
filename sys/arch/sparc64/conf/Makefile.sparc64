@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.50 2010/05/25 15:05:02 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.51 2010/05/25 17:27:56 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -19,8 +19,6 @@ STRIP?=	strip
 S!=	cd ../../../..; pwd
 .endif
 
-_mach?=		sparc64
-_arch?=		sparc64
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 

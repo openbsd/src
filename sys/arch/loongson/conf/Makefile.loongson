@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.23 2010/05/25 15:05:01 deraadt Exp $
+#	$OpenBSD: Makefile.loongson,v 1.24 2010/05/25 17:27:55 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -26,8 +26,6 @@ LD+=${ENDIAN}
 S!=	cd ../../../..; pwd
 .endif
 
-_mach?=		loongson
-_arch?=		mips64
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
