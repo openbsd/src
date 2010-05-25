@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2010/02/18 15:27:31 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.3 2010/05/25 13:29:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -29,7 +29,6 @@
 #include "ldpe.h"
 
 void	print_mainconf(struct ldpd_conf *);
-void	print_rtlabel(struct ldpd_conf *);
 void	print_iface(struct iface *);
 
 void
@@ -51,17 +50,6 @@ print_mainconf(struct ldpd_conf *conf)
 		printf("advertisement ondemand\n");
 	else
 		printf("advertisement unsolicited\n");
-}
-
-void
-print_rtlabel(struct ldpd_conf *conf)
-{
-	struct n2id_label	*label;
-
-	TAILQ_FOREACH(label, &rt_labels, entry)
-		if (label->ext_tag)
-			printf("rtlabel \"%s\" external-tag %u\n",
-			    label->name, label->ext_tag);
 }
 
 void

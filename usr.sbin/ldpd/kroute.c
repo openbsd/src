@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.11 2010/05/19 13:13:36 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.12 2010/05/25 13:29:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -199,9 +199,6 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 	kr->r.remote_label = kroute->remote_label;
 	kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
 	kr->r.flags = kroute->flags | F_LDPD_INSERTED;
-	kr->r.ext_tag = kroute->ext_tag;
-	rtlabel_unref(kr->r.rtlabel);	/* for RTM_CHANGE */
-	kr->r.rtlabel = kroute->rtlabel;
 
 	/* send update */
 	if (send_rtmsg(kr_state.fd, action, &kr->r, AF_MPLS) == -1)
@@ -221,8 +218,6 @@ kr_change(struct kroute *kroute)
 {
 	struct kroute_node	*kr;
 	int			 action = RTM_ADD;
-
-	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
 
 	kr = kroute_find_fec(kroute->prefix.s_addr, kroute->prefixlen,
 	    kroute->nexthop.s_addr);
@@ -701,7 +696,6 @@ kroute_remove(struct kroute_node *kr)
 	}
 
 	kr_redist_remove(kr);
-	rtlabel_unref(kr->r.rtlabel);
 
 	free(kr);
 	return (0);
@@ -1185,7 +1179,6 @@ fetchtable(void)
 	struct rt_msghdr	*rtm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
-	struct sockaddr_rtlabel	*label;
 	struct sockaddr_mpls	*sa_mpls;
 	struct kroute_node	*kr;
 
@@ -1277,13 +1270,6 @@ fetchtable(void)
 		    != NULL)
 			kr->r.local_label = sa_mpls->smpls_label;
 
-		if ((label = (struct sockaddr_rtlabel *)
-		    rti_info[RTAX_LABEL]) != NULL) {
-			kr->r.rtlabel =
-			    rtlabel_name2id(label->sr_label);
-			kr->r.ext_tag =
-			    rtlabel_id2tag(kr->r.rtlabel);
-		}
 		kroute_insert(kr);
 
 	}
@@ -1376,7 +1362,6 @@ dispatch_rtmsg(void)
 	struct ifa_msghdr	*ifam;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
-	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr;
 	struct in_addr		 prefix, nexthop;
 	u_int8_t		 prefixlen;
@@ -1485,17 +1470,6 @@ dispatch_rtmsg(void)
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
 
-				rtlabel_unref(kr->r.rtlabel);
-				kr->r.rtlabel = 0;
-				kr->r.ext_tag = 0;
-				if ((label = (struct sockaddr_rtlabel *)
-				    rti_info[RTAX_LABEL]) != NULL) {
-					kr->r.rtlabel =
-					    rtlabel_name2id(label->sr_label);
-					kr->r.ext_tag =
-					    rtlabel_id2tag(kr->r.rtlabel);
-				}
-
 				if (kif_validate(kr->r.ifindex))
 					kr->r.flags &= ~F_DOWN;
 				else
@@ -1517,14 +1491,6 @@ dispatch_rtmsg(void)
 				kr->r.priority = prio;
 				kr->r.local_label = NO_LABEL;
 				kr->r.remote_label = NO_LABEL;
-
-				if ((label = (struct sockaddr_rtlabel *)
-				    rti_info[RTAX_LABEL]) != NULL) {
-					kr->r.rtlabel =
-					    rtlabel_name2id(label->sr_label);
-					kr->r.ext_tag =
-					    rtlabel_id2tag(kr->r.rtlabel);
-				}
 
 				kroute_insert(kr);
 			}
