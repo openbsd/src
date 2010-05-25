@@ -32,13 +32,13 @@
 #include "i915_drv.h"
 
 int	inteldrm_intr(void *);
-void	i915_enable_irq(drm_i915_private_t *, u_int32_t);
-void	i915_disable_irq(drm_i915_private_t *, u_int32_t);
-void	i915_enable_pipestat(drm_i915_private_t *, int, u_int32_t);
-void	i915_disable_pipestat(drm_i915_private_t *, int, u_int32_t);
+void	i915_enable_irq(struct inteldrm_softc *, u_int32_t);
+void	i915_disable_irq(struct inteldrm_softc *, u_int32_t);
+void	i915_enable_pipestat(struct inteldrm_softc *, int, u_int32_t);
+void	i915_disable_pipestat(struct inteldrm_softc *, int, u_int32_t);
 
-inline void
-i915_enable_irq(drm_i915_private_t *dev_priv, u_int32_t mask)
+void
+i915_enable_irq(struct inteldrm_softc *dev_priv, u_int32_t mask)
 {
 	if ((dev_priv->irq_mask_reg & mask) != 0) {
 		dev_priv->irq_mask_reg &= ~mask;
@@ -47,8 +47,8 @@ i915_enable_irq(drm_i915_private_t *dev_priv, u_int32_t mask)
 	}
 }
 
-inline void
-i915_disable_irq(drm_i915_private_t *dev_priv, u_int32_t mask)
+void
+i915_disable_irq(struct inteldrm_softc *dev_priv, u_int32_t mask)
 {
 	if ((dev_priv->irq_mask_reg & mask) != mask) {
 		dev_priv->irq_mask_reg |= mask;
@@ -58,7 +58,7 @@ i915_disable_irq(drm_i915_private_t *dev_priv, u_int32_t mask)
 }
 
 void
-i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
+i915_enable_pipestat(struct inteldrm_softc *dev_priv, int pipe, u_int32_t mask)
 {
 	if ((dev_priv->pipestat[pipe] & mask) != mask) {
 		bus_size_t reg = pipe == 0 ? PIPEASTAT : PIPEBSTAT;
@@ -71,7 +71,7 @@ i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
 }
 
 void
-i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
+i915_disable_pipestat(struct inteldrm_softc *dev_priv, int pipe, u_int32_t mask)
 {
 	if ((dev_priv->pipestat[pipe] & mask) != 0) {
 		bus_size_t reg = pipe == 0 ? PIPEASTAT : PIPEBSTAT;
@@ -85,7 +85,7 @@ i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
 u_int32_t
 i915_get_vblank_counter(struct drm_device *dev, int pipe)
 {
-	drm_i915_private_t	*dev_priv = dev->dev_private;
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
 	bus_size_t		 high_frame, low_frame;
 	u_int32_t		 high1, high2, low;
 
@@ -122,14 +122,14 @@ i915_get_vblank_counter(struct drm_device *dev, int pipe)
 }
 
 void
-i915_user_irq_get(struct drm_i915_private *dev_priv)
+i915_user_irq_get(struct inteldrm_softc *dev_priv)
 {
 	if (++dev_priv->user_irq_refcount == 1)
 		i915_enable_irq(dev_priv, I915_USER_INTERRUPT);
 }
 
 void
-i915_user_irq_put(struct drm_i915_private *dev_priv)
+i915_user_irq_put(struct inteldrm_softc *dev_priv)
 {
 	if (--dev_priv->user_irq_refcount == 0)
 		i915_disable_irq(dev_priv, I915_USER_INTERRUPT);
@@ -138,7 +138,7 @@ i915_user_irq_put(struct drm_i915_private *dev_priv)
 int
 i915_enable_vblank(struct drm_device *dev, int pipe)
 {
-	drm_i915_private_t	*dev_priv = dev->dev_private;
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
 
 	if (inteldrm_pipe_enabled(dev_priv, pipe) == 0)
 		return (EINVAL);
@@ -154,7 +154,7 @@ i915_enable_vblank(struct drm_device *dev, int pipe)
 void
 i915_disable_vblank(struct drm_device *dev, int pipe)
 {
-	drm_i915_private_t	*dev_priv = dev->dev_private;
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
 
 	mtx_enter(&dev_priv->user_irq_lock);
 	i915_disable_pipestat(dev_priv, pipe, 
@@ -167,7 +167,7 @@ i915_disable_vblank(struct drm_device *dev, int pipe)
 int
 i915_driver_irq_install(struct drm_device *dev)
 {
-	drm_i915_private_t	*dev_priv = dev->dev_private;
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
 
 	I915_WRITE(HWSTAM, 0xeffe);
 	I915_WRITE(PIPEASTAT, 0);
@@ -212,7 +212,7 @@ i915_driver_irq_install(struct drm_device *dev)
 void
 i915_driver_irq_uninstall(struct drm_device *dev)
 {
-	drm_i915_private_t	*dev_priv = dev->dev_private;
+	struct inteldrm_softc	*dev_priv = dev->dev_private;
 
 	I915_WRITE(HWSTAM, 0xffffffff);
 	I915_WRITE(PIPEASTAT, 0);

@@ -84,7 +84,7 @@ struct inteldrm_fence {
  *
  * XXX fence lock ,object lock
  */
-typedef struct drm_i915_private {
+struct inteldrm_softc {
 	struct device		 dev;
 	struct device		*drmdev;
 	bus_dma_tag_t		 agpdmat; /* tag from intagp for GEM */
@@ -335,7 +335,7 @@ typedef struct drm_i915_private {
 		/** Bit 6 swizzling required for Y tiling */
 		uint32_t bit_6_swizzle_y;
 	} mm;
-} drm_i915_private_t;
+};
 
 struct inteldrm_file {
 	struct drm_file	file_priv;
@@ -425,15 +425,15 @@ struct inteldrm_request {
 	uint32_t			seqno;
 };
 
-u_int32_t	inteldrm_read_hws(struct drm_i915_private *, int);
-int		inteldrm_wait_ring(struct drm_i915_private *dev, int n);
-void		inteldrm_begin_ring(struct drm_i915_private *, int);
-void		inteldrm_out_ring(struct drm_i915_private *, u_int32_t);
-void		inteldrm_advance_ring(struct drm_i915_private *);
-void		inteldrm_update_ring(struct drm_i915_private *);
-void		inteldrm_error(struct drm_i915_private *);
-int		inteldrm_pipe_enabled(struct drm_i915_private *, int);
-int		i915_init_phys_hws(drm_i915_private_t *, bus_dma_tag_t);
+u_int32_t	inteldrm_read_hws(struct inteldrm_softc *, int);
+int		inteldrm_wait_ring(struct inteldrm_softc *dev, int n);
+void		inteldrm_begin_ring(struct inteldrm_softc *, int);
+void		inteldrm_out_ring(struct inteldrm_softc *, u_int32_t);
+void		inteldrm_advance_ring(struct inteldrm_softc *);
+void		inteldrm_update_ring(struct inteldrm_softc *);
+void		inteldrm_error(struct inteldrm_softc *);
+int		inteldrm_pipe_enabled(struct inteldrm_softc *, int);
+int		i915_init_phys_hws(struct inteldrm_softc *, bus_dma_tag_t);
 
 /* i915_irq.c */
 
@@ -442,12 +442,12 @@ extern void i915_driver_irq_uninstall(struct drm_device * dev);
 extern int i915_enable_vblank(struct drm_device *dev, int crtc);
 extern void i915_disable_vblank(struct drm_device *dev, int crtc);
 extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
-extern void i915_user_irq_get(struct drm_i915_private *);
-extern void i915_user_irq_put(struct drm_i915_private *);
+extern void i915_user_irq_get(struct inteldrm_softc *);
+extern void i915_user_irq_put(struct inteldrm_softc *);
 
 /* XXX need bus_space_write_8, this evaluated arguments twice */
 static __inline void
-write64(struct drm_i915_private *dev_priv, bus_size_t off, u_int64_t reg)
+write64(struct inteldrm_softc *dev_priv, bus_size_t off, u_int64_t reg)
 {
 	bus_space_write_4(dev_priv->regs->bst, dev_priv->regs->bsh,
 	    off, (u_int32_t)reg);
@@ -456,7 +456,7 @@ write64(struct drm_i915_private *dev_priv, bus_size_t off, u_int64_t reg)
 }
 
 static __inline u_int64_t
-read64(struct drm_i915_private *dev_priv, bus_size_t off)
+read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 {
 	u_int32_t low, high;
 
@@ -2354,7 +2354,7 @@ i915_seqno_passed(uint32_t seq1, uint32_t seq2)
  * Read seqence number from the Hardware status page.
  */
 static __inline u_int32_t
-i915_get_gem_seqno(struct drm_i915_private *dev_priv)
+i915_get_gem_seqno(struct inteldrm_softc *dev_priv)
 {
 	return (READ_HWSP(dev_priv, I915_GEM_HWS_INDEX));
 }
