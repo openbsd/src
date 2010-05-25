@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.52 2010/04/28 21:31:59 kettenis Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.53 2010/05/25 15:25:17 millert Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1121,6 +1121,7 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 	const struct statfs *bfs;
 	struct svr4_statvfs *sfs;
 {
+	bzero(sfs, sizeof(*sfs));
 	sfs->f_bsize = bfs->f_iosize; /* XXX */
 	sfs->f_frsize = bfs->f_bsize;
 	sfs->f_blocks = bfs->f_blocks;
@@ -1131,14 +1132,13 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 	sfs->f_favail = bfs->f_ffree;
 	sfs->f_fsid = bfs->f_fsid.val[0];
 	bcopy(bfs->f_fstypename, sfs->f_basetype, sizeof(sfs->f_basetype));
-	sfs->f_flag = 0;
 	if (bfs->f_flags & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
 	if (bfs->f_flags & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
-	bcopy(bfs->f_fstypename, sfs->f_fstr, sizeof(sfs->f_fstr)); /* XXX */
-	bzero(sfs->f_filler, sizeof(sfs->f_filler));
+	bcopy(bfs->f_fstypename, sfs->f_fstr,
+	    MIN(sizeof(sfs->f_fstypename), sizeof(sfs->f_fstr));
 }
 
 
@@ -1147,6 +1147,7 @@ bsd_statfs_to_svr4_statvfs64(bfs, sfs)
 	const struct statfs *bfs;
 	struct svr4_statvfs64 *sfs; 
 {
+	bzero(sfs, sizeof(*sfs));
 	sfs->f_bsize = bfs->f_iosize; /* XXX */
 	sfs->f_frsize = bfs->f_bsize;
 	sfs->f_blocks = bfs->f_blocks;
@@ -1157,14 +1158,13 @@ bsd_statfs_to_svr4_statvfs64(bfs, sfs)
 	sfs->f_favail = bfs->f_ffree;
 	sfs->f_fsid = bfs->f_fsid.val[0];
 	bcopy(bfs->f_fstypename, sfs->f_basetype, sizeof(sfs->f_basetype));
-	sfs->f_flag = 0;
 	if (bfs->f_flags & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
 	if (bfs->f_flags & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;   
-	bcopy(bfs->f_fstypename, sfs->f_fstr, sizeof(sfs->f_fstr)); /* XXX */
-	bzero(sfs->f_filler, sizeof(sfs->f_filler));
+	bcopy(bfs->f_fstypename, sfs->f_fstr,
+	    MIN(sizeof(sfs->f_fstypename), sizeof(sfs->f_fstr));
 }
 
 
