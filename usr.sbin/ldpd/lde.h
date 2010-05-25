@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.8 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: lde.h,v 1.9 2010/05/25 09:31:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -128,6 +128,7 @@ void		 lde_kernel_insert(struct kroute *);
 void		 lde_kernel_remove(struct kroute *);
 void		 lde_check_mapping(struct map *, struct lde_nbr *);
 void		 lde_check_request(struct map *, struct lde_nbr *);
+void		 lde_check_release(struct map *, struct lde_nbr *);
 void		 lde_label_list_free(struct lde_nbr *);
 
 #endif	/* _LDE_H_ */
