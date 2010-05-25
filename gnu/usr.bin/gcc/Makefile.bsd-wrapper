@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.59 2009/07/26 22:51:28 kurt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.60 2010/05/25 00:24:58 espie Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -8,10 +8,8 @@ BINDIR=/usr/bin
 .if defined(BOOTSTRAP)
 LANGUAGES=--enable-languages=c
 .else
-LANGUAGES=--enable-languages='c,c++,objc,f77' 
-MAN+=		f/g77.1
+LANGUAGES=--enable-languages='c,c++,objc' 
 MLINKS+=	gcc.1 g++.1 gcc.1 c++.1
-MLINKS+=	g77.1 f77.1
 .endif
 V=3.3.5
 
@@ -152,11 +150,6 @@ install:	maninstall target_path
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xgcc \
 	   ${DESTDIR}/usr/bin/gcc
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
-	if [ -f ${DESTDIR}/usr/bin/g77 ]; then \
-		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77; \
-	fi
-#	ln -fs `cat target-path`/cpp \
-#		${DESTDIR}/usr/libexec
 
 clean cleandir: 
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi

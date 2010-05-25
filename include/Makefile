@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.154 2010/05/10 18:20:31 drahn Exp $
+#	$OpenBSD: Makefile,v 1.155 2010/05/25 00:24:58 espie Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -58,17 +58,15 @@ WDIRS=	../usr.sbin/httpd
 PWDIRS=
 
 .if ${COMPILER_VERSION:L} == "gcc3" 
-WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc \
-	../gnu/lib/libf2c
-PWDIRS+= ../gnu/lib/libstdc++ ../gnu/lib/libf2c
+WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc
+PWDIRS+= ../gnu/lib/libstdc++
 .elif ${COMPILER_VERSION:L} == "gcc4"
 RDIRS+= ../gnu/lib/libstdc++-v3 ../gnu/usr.bin/cc/libobjc
 PRDIRS+= ../gnu/lib/libstdc++-v3
 RDIRS+= ../gnu/usr.bin/cc/include
 .else
 WDIRS+= ../gnu/egcs/libio ../gnu/egcs/libstdc++ \
-	../gnu/egcs/libf2c ../gnu/lib/libobjc ../gnu/egcs/gcc
-PWDIRS+= ../gnu/egcs/libf2c
+	../gnu/lib/libobjc ../gnu/egcs/gcc
 .endif
 
 NOOBJ=	noobj

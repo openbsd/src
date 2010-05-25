@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 2009/03/09 21:07:06 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 2010/05/25 00:24:58 espie Exp $
 
 MAN=		cpp.1 gcc.1 protoize.1 gcov.1
 MLINKS+=	gcc.1 cc.1
@@ -7,10 +7,9 @@ MLINKS+=	protoize.1 unprotoize.1
 .if defined(BOOTSTRAP)
 LANGUAGES=--enable-languages=c
 .else
-LANGUAGES=--enable-languages='c,c++,objc,f77' 
-MAN+=		cp/g++.1 f/g77.1
+LANGUAGES=--enable-languages='c,c++,objc' 
+MAN+=		cp/g++.1
 MLINKS+=	g++.1 c++.1
-MLINKS+=	g77.1 f77.1
 BEFOREMAN=	config.status
 .endif
 
@@ -121,23 +120,11 @@ install:	maninstall target_path
 		install
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
 	chmod -R a+rX ${DESTDIR}/usr/lib/gcc-lib
-#	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
-#		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
-#		chmod 444 ${DESTDIR}/usr/lib/libf2c.a; \
-#	fi
-	if [ -e ${DESTDIR}/usr/include/f2c.h ]; then \
-		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include/f2c.h; \
-		chmod 444 ${DESTDIR}/usr/include/f2c.h; \
-	fi
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 cpp \
 	   ${DESTDIR}/usr/libexec/cpp
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xgcc \
 	   ${DESTDIR}/usr/bin/gcc
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
-	[ -f ${DESTDIR}/usr/bin/g77 ] && \
-		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77
-#	ln -fs `cat target-path`/cpp \
-#		${DESTDIR}/usr/libexec
 	for i in ${FAKE_FILES}; do \
 	    touch ${DESTDIR}$$i; \
 	done
