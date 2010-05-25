@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.39 2009/08/16 11:07:20 sobrado Exp $
+.\"	$OpenBSD: intro.3,v 1.40 2010/05/25 11:42:17 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: May 25 2010 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -161,14 +161,6 @@ library, i.e.\&
 .Fl lform lcurses .
 See
 .Xr form 3 .
-.Pp
-.It libfrtbegin Pq Fl lfrtbegin
-.It libg2c Pq Fl lg2c
-Support routines for Fortran functions.
-These two libraries were separated to allow linking Fortran code
-with other languages on ELF platforms.
-See
-.Xr g77 1 .
 .Pp
 .It libgcc Pq Fl lgcc
 GCC runtime support,
@@ -600,8 +592,6 @@ for more details.
 .It Pa /usr/lib/libexpat.a
 .It Pa /usr/lib/libfl.a
 .It Pa /usr/lib/libform.a
-.It Pa /usr/lib/libfrtbegin.a
-.It Pa /usr/lib/libg2c.a
 .It Pa /usr/lib/gcc-lib/${ARCH}-unknown-openbsd${OSREV}/${GCCREV}/fpic/libgcc.a
 .It Pa /usr/lib/libgssapi.a
 .It Pa /usr/lib/libhdb.a
