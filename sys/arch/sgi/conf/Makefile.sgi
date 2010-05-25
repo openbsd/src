@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.44 2010/05/25 02:35:03 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.45 2010/05/25 15:05:01 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -157,7 +157,8 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
-	${NORMAL_S}
+cache_r10k.o context.o cp0access.o exception.o fp.o: assym.h
+lcore_access.o lcore_float.o tlbhandler.o lcore_ddb.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf

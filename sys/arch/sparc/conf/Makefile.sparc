@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.62 2010/05/25 02:35:03 deraadt Exp $
+#	$OpenBSD: Makefile.sparc,v 1.63 2010/05/25 15:05:02 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -149,7 +149,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.s assym.h
-	${NORMAL_S}
+bsd_fdintr.o amd7930intr.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
