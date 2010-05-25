@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.13 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.14 2010/05/25 09:26:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -228,6 +228,8 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 	struct lde_nbr	 rn;
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
+		fatal("nbr_new");
+	if ((nbr->rbuf = calloc(1, sizeof(struct buf_read))) == NULL)
 		fatal("nbr_new");
 
 	nbr->state = NBR_STA_DOWN;
