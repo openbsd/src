@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.70 2010/05/20 13:29:50 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.71 2010/05/25 18:51:02 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 20 2010 $
+.Dd $Mdocdate: May 25 2010 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Fl s Ar sectors
 .Oc
 .Op Fl f Ar mbrfile
-.Ar device
+.Ar disk
 .Sh DESCRIPTION
 On the i386 and other architectures, sector 0 of a bootable hard disk
 must contain MBR bootcode, the MBR partition table containing 4 slots,
@@ -132,11 +132,26 @@ equivalent to the DOS command
 Note that this option will overwrite the NT disk signature, if present.
 .It Fl y
 Avoid asking yes/no questions when not desirable.
+.It Ar disk
+Specify the
+.Ar disk
+to operate on.
+It can be specified either by its full pathname or an abbreviated disk form.
+In its abbreviated form, the path to the device, the
+.Sq r
+denoting
+.Qq raw device ,
+and the partition letter, can all be omitted.
+For example, the first IDE disk can be specified as either
+.Pa /dev/rwd0c ,
+.Pa /dev/wd0c ,
+or
+.Ar wd0 .
 .El
 .Sh TYPICAL LAYOUT
 When called with no special flags,
 .Nm
-prints the MBR partition table of the specified device:
+prints the MBR partition table of the specified disk:
 .Bd -literal -offset 1n
 # fdisk wd0
 Disk: wd0       geometry: 5168/240/63 [78140160 Sectors]
