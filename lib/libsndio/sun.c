@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.36 2010/05/09 18:24:24 jakemsr Exp $	*/
+/*	$OpenBSD: sun.c,v 1.37 2010/05/25 06:49:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -458,7 +458,7 @@ sun_start(struct sio_hdl *sh)
 
 	if (hdl->sio.mode & SIO_PLAY) {
 		/*
-		 * pause the device and let sun_write() trigger the
+		 * keep the device paused and let sun_write() trigger the
 		 * start later, to avoid buffer underruns
 		 */
 		hdl->filling = 1;
@@ -728,12 +728,14 @@ sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 	return 1;
 }
 
-static size_t
-sun_read(struct sio_hdl *sh, void *buf, size_t len)
+/*
+ * drop recorded samples to compensate xruns
+ */
+static int
+sun_rdrop(struct sun_hdl *hdl)
 {
 #define DROP_NMAX 0x1000
 	static char dropbuf[DROP_NMAX];
-	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 	ssize_t n, todo;
 
 	while (hdl->offset > 0) {
@@ -744,21 +746,30 @@ sun_read(struct sio_hdl *sh, void *buf, size_t len)
 			if (errno == EINTR)
 				continue;
 			if (errno != EAGAIN) {
-				DPERROR("sun_read: read");
+				DPERROR("sun_rdrop: read");
 				hdl->sio.eof = 1;
 			}
 			return 0;
 		}
 		if (n == 0) {
-			DPRINTF("sun_read: eof\n");
+			DPRINTF("sun_rdrop: eof\n");
 			hdl->sio.eof = 1;
 			return 0;
 		}
 		hdl->offset -= (int)n / (int)hdl->ibpf;
-		DPRINTF("sun_read: dropped %ld/%ld bytes "
-		    "to resync\n", n, todo);
+		DPRINTF("sun_rdrop: dropped %ld/%ld bytes\n", n, todo);
 	}
+	return 1;
+}
 
+static size_t
+sun_read(struct sio_hdl *sh, void *buf, size_t len)
+{
+	struct sun_hdl *hdl = (struct sun_hdl *)sh;
+	ssize_t n;
+
+	if (!sun_rdrop(hdl))
+		return 0;
 	while ((n = read(hdl->fd, buf, len)) < 0) {
 		if (errno == EINTR)
 			continue;
@@ -808,13 +819,14 @@ sun_autostart(struct sun_hdl *hdl)
 	return 1;
 }
 
-static size_t
-sun_write(struct sio_hdl *sh, const void *buf, size_t len)
+/*
+ * insert silence to play to compensate xruns
+ */
+static int
+sun_wsil(struct sun_hdl *hdl)
 {
 #define ZERO_NMAX 0x1000
 	static char zero[ZERO_NMAX];
-	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	const unsigned char *data = buf;
 	ssize_t n, todo;
 
 	while (hdl->offset < 0) {
@@ -825,17 +837,28 @@ sun_write(struct sio_hdl *sh, const void *buf, size_t len)
 			if (errno == EINTR)
 				continue;
 			if (errno != EAGAIN) {
-				DPERROR("sun_write: sil");
+				DPERROR("sun_wsil: write");
 				hdl->sio.eof = 1;
 				return 0;
 			}
 			return 0;
 		}
 		hdl->offset += (int)n / (int)hdl->obpf;
-		DPRINTF("sun_write: inserted %ld/%ld bytes "
-		    "of silence to resync\n", n, todo);
+		DPRINTF("sun_wsil: inserted %ld/%ld bytes\n", n, todo);
 	}
+	return 1;
+}
 
+
+static size_t
+sun_write(struct sio_hdl *sh, const void *buf, size_t len)
+{
+	struct sun_hdl *hdl = (struct sun_hdl *)sh;
+	const unsigned char *data = buf;
+	ssize_t n, todo;
+
+	if (!sun_wsil(hdl))
+		return 0;
 	todo = len;
 	while ((n = write(hdl->fd, data, todo)) < 0) {
 		if (errno == EINTR)
@@ -885,6 +908,7 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	}
 	if (hdl->sio.mode & SIO_REC) {
 		if (ioctl(hdl->fd, AUDIO_RERROR, &xrun) < 0) {
+			DPERROR("sun_revents: RERROR");
 			hdl->sio.eof = 1;
 			return POLLHUP;
 		}
@@ -924,7 +948,19 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 			hdl->idelta = 0;
 		}
 	}
-	if (hdl->filling)
-		revents |= POLLOUT;
+
+	/*
+	 * drop recorded samples or insert silence to play
+	 * right now to adjust revents, and avoid busy loops
+	 * programs
+	 */
+	if (hdl->sio.started) {
+		if (hdl->filling)
+			revents |= POLLOUT;
+		if ((hdl->sio.mode & SIO_PLAY) && !sun_wsil(hdl))
+			revents &= ~POLLOUT;
+		if ((hdl->sio.mode & SIO_REC) && !sun_rdrop(hdl))
+			revents &= ~POLLIN;
+	}
 	return revents;
 }
