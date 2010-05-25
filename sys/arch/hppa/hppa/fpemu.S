@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.12 2004/06/02 18:31:14 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.13 2010/05/25 15:57:48 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -39,11 +39,11 @@
 	bv	r0(t2)					! \
 	copy	r0, ret0				! \
 	.label $fpemu_tbl$name				! \
-	.import	__CONCAT(__CONCAT(ep0,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep1,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep2,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep3,_),name), code	! \
-	.word	__CONCAT(__CONCAT(ep0,_),name),	__CONCAT(__CONCAT(ep1,_),name),	__CONCAT(__CONCAT(ep2,_),name),	__CONCAT(__CONCAT(ep3,_),name)
+	.import	ep0##_##name, code			! \
+	.import	ep1##_##name, code			! \
+	.import	ep2##_##name, code			! \
+	.import	ep3##_##name, code			! \
+	.word	ep0##_##name, ep1##_##name, ep2##_##name, ep3##_##name
 
 #define	FP_TABLE3(name,ep0,ep1,ep2,ep3,ep4,ep5,ep6,ep7,ep8,ep9,epa,epb,epc,epd,epe,epf) \
 	ldil	L%$fpemu_tbl$name, t1			! \
@@ -52,23 +52,26 @@
 	bv	r0(t2)					! \
 	nop						! \
 	.label	$fpemu_tbl$name				! \
-	.import	__CONCAT(__CONCAT(ep0,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep1,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep2,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep3,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep4,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep5,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep6,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep7,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep8,_),name), code	! \
-	.import	__CONCAT(__CONCAT(ep9,_),name), code	! \
-	.import	__CONCAT(__CONCAT(epa,_),name), code	! \
-	.import	__CONCAT(__CONCAT(epb,_),name), code	! \
-	.import	__CONCAT(__CONCAT(epc,_),name), code	! \
-	.import	__CONCAT(__CONCAT(epd,_),name), code	! \
-	.import	__CONCAT(__CONCAT(epe,_),name), code	! \
-	.import	__CONCAT(__CONCAT(epf,_),name), code	! \
-	.word	__CONCAT(__CONCAT(ep0,_),name),	__CONCAT(__CONCAT(ep1,_),name),	__CONCAT(__CONCAT(ep2,_),name), __CONCAT(__CONCAT(ep3,_),name), __CONCAT(__CONCAT(ep4,_),name), __CONCAT(__CONCAT(ep5,_),name), __CONCAT(__CONCAT(ep6,_),name), __CONCAT(__CONCAT(ep7,_),name), __CONCAT(__CONCAT(ep8,_),name), __CONCAT(__CONCAT(ep9,_),name), __CONCAT(__CONCAT(epa,_),name), __CONCAT(__CONCAT(epb,_),name), __CONCAT(__CONCAT(epc,_),name), __CONCAT(__CONCAT(epd,_),name), __CONCAT(__CONCAT(epe,_),name), __CONCAT(__CONCAT(epf,_),name)
+	.import	ep0##_##name, code			! \
+	.import	ep1##_##name, code			! \
+	.import	ep2##_##name, code			! \
+	.import	ep3##_##name, code			! \
+	.import	ep4##_##name, code			! \
+	.import	ep5##_##name, code			! \
+	.import	ep6##_##name, code			! \
+	.import	ep7##_##name, code			! \
+	.import	ep8##_##name, code			! \
+	.import	ep9##_##name, code			! \
+	.import	epa##_##name, code			! \
+	.import	epb##_##name, code			! \
+	.import	epc##_##name, code			! \
+	.import	epd##_##name, code			! \
+	.import	epe##_##name, code			! \
+	.import	epf##_##name, code			! \
+	.word	ep0##_##name, ep1##_##name, ep2##_##name, ep3##_##name, \
+		ep4##_##name, ep5##_##name, ep6##_##name, ep7##_##name, \
+		ep8##_##name, ep9##_##name, epa##_##name, epb##_##name, \
+		epc##_##name, epe##_##name, epf##_##name 
 
 	.text
 /*
