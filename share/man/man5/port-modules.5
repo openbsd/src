@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.51 2010/05/25 07:55:13 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.52 2010/05/25 08:09:43 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -107,12 +107,11 @@ as appropriate.
 .Pp
 As an exception to the naming mechanism, some ports have several distinct
 versions in the ports tree, say
-.Pa x11/qt2 ,
 .Pa x11/qt3 ,
 and
 .Pa x11/qt4 .
 Instead of using the namespace
-.Ev MODQT2* ,
+.Ev MODQT3* ,
 variables will usually drop the version suffix and be simply called
 .Ev MODQT_*
 so that a port using the module can be switched from version to version
@@ -509,7 +508,6 @@ MASTER_SITES and DISTNAME are built using GNOME_PROJECT and
 GNOME_VERSION.
 .It x11/gnustep
 .It x11/kde
-.It x11/qt2
 .It x11/qt3
 .It x11/qt4
 .It x11/tk
