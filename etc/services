@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.73 2010/01/17 05:50:06 dlg Exp $
+#	$OpenBSD: services,v 1.74 2010/05/25 13:00:00 claudio Exp $
 #
 # Network services, Internet style
 #
@@ -151,6 +151,8 @@ ipp		631/tcp				# Internet Printing Protocol
 ipp		631/udp				# Internet Printing Protocol
 ldaps		636/tcp				# LDAP over SSL
 ldaps		636/udp
+ldp		646/tcp
+ldp		646/udp
 rsync		873/tcp				# rsync server
 cddb		888/tcp		cddbp		# Audio CD Database
 imaps		993/tcp				# imap4 protocol over TLS/SSL
