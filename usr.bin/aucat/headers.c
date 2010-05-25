@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.14 2010/05/02 11:54:26 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.15 2010/05/25 06:27:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,6 +33,7 @@
 #define WAV_ENC_PCM	1
 #define WAV_ENC_ALAW	6
 #define WAV_ENC_ULAW	7
+#define WAV_ENC_EXT	0xfffe
 
 struct wavriff {
 	char magic[4];
@@ -52,28 +53,59 @@ struct wavfmt {
 	uint32_t byterate;
 	uint16_t blkalign;
 	uint16_t bits;
+#define WAV_FMT_SIZE		 16
+#define WAV_FMT_SIZE2		(16 + 2)
+#define WAV_FMT_EXT_SIZE	(16 + 24)
+	uint16_t extsize;
+	uint16_t valbits;
+	uint32_t chanmask;
+	uint16_t extfmt;
+	char	 guid[14];
 } __packed;
 
 char wav_id_riff[4] = { 'R', 'I', 'F', 'F' };
 char wav_id_wave[4] = { 'W', 'A', 'V', 'E' };
 char wav_id_data[4] = { 'd', 'a', 't', 'a' };
 char wav_id_fmt[4] = { 'f', 'm', 't', ' ' };
+char wav_guid[14] = {
+	0x00, 0x00, 0x00, 0x00,
+	0x10, 0x00, 0x80, 0x00,
+	0x00, 0xAA, 0x00, 0x38,
+	0x9B, 0x71
+};
 
 int
 wav_readfmt(int fd, unsigned csize, struct aparams *par, short **map)
 {
 	struct wavfmt fmt;
-	unsigned nch, cmax, rate, bits, enc;
+	unsigned nch, cmax, rate, bits, bps, enc;
 
-	if (csize < sizeof(fmt)) {
-		warnx("bogus format chunk");
+	if (csize < WAV_FMT_SIZE) {
+		warnx("%u: bugus format chunk size", csize);
 		return 0;
 	}
-	if (read(fd, &fmt, sizeof(fmt)) != sizeof(fmt)) {
+	if (csize > WAV_FMT_EXT_SIZE)
+		csize = WAV_FMT_EXT_SIZE;
+	if (read(fd, &fmt, csize) != csize) {
 		warn("riff_read: chunk");
 		return 0;
 	}
 	enc = letoh16(fmt.fmt);
+	bits = letoh16(fmt.bits);
+	if (enc == WAV_ENC_EXT) {
+		if (csize != WAV_FMT_EXT_SIZE) {
+			warnx("missing extended format chunk in .wav file");
+			return 0;
+		}
+		if (memcmp(fmt.guid, wav_guid, sizeof(wav_guid)) != 0) {
+			warnx("unknown format (GUID) in .wav file");
+			return 0;
+		}
+		bps = (bits + 7) / 8;
+		bits = letoh16(fmt.valbits);
+		enc = letoh16(fmt.extfmt);
+	} else
+		bps = (bits + 7) / 8;
 	switch (enc) {
 	case WAV_ENC_PCM:
 		*map = NULL;
@@ -102,13 +134,16 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par, short **map)
 		warnx("%u: bad sample rate", rate);
 		return 0;
 	}
-	bits = letoh16(fmt.bits);
 	if (bits == 0 || bits > 32) {
 		warnx("%u: bad number of bits", bits);
 		return 0;
 	}
+	if (bits > bps * 8) {
+		warnx("%u: bits larger than bytes-per-sample", bps);
+		return 0;
+	}
 	if (enc == WAV_ENC_PCM) {
-		par->bps = (bits + 7) / 8;
+		par->bps = bps;
 		par->bits = bits;
 		par->le = 1;
 		par->sig = (bits <= 8) ? 0 : 1;	/* ask microsoft why... */
@@ -233,7 +268,7 @@ wav_writehdr(int fd, struct aparams *par, off_t *startpos, off_t datasz)
 	hdr.fmt.rate = htole32(par->rate);
 	hdr.fmt.byterate = htole32(par->rate * par->bps * nch);
 	hdr.fmt.bits = htole16(par->bits);
-	hdr.fmt.blkalign = 0;
+	hdr.fmt.blkalign = par->bps * nch;
 
 	memcpy(hdr.data_hdr.id, wav_id_data, 4);
 	hdr.data_hdr.size = htole32(datasz);
