@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.53 2010/05/25 15:25:17 millert Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.54 2010/05/25 16:39:15 thib Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1138,7 +1138,7 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
 	bcopy(bfs->f_fstypename, sfs->f_fstr,
-	    MIN(sizeof(sfs->f_fstypename), sizeof(sfs->f_fstr));
+	    MIN(sizeof(bfs->f_fstypename), sizeof(sfs->f_fstr)));
 }
 
 
@@ -1164,7 +1164,7 @@ bsd_statfs_to_svr4_statvfs64(bfs, sfs)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;   
 	bcopy(bfs->f_fstypename, sfs->f_fstr,
-	    MIN(sizeof(sfs->f_fstypename), sizeof(sfs->f_fstr));
+	    MIN(sizeof(bfs->f_fstypename), sizeof(sfs->f_fstr)));
 }
 
 
