@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.18 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.19 2010/05/25 09:35:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -91,6 +91,9 @@ enum imsg_type {
 	IMSG_LABEL_MAPPING,
 	IMSG_LABEL_MAPPING_FULL,
 	IMSG_LABEL_REQUEST,
+	IMSG_LABEL_RELEASE,
+	IMSG_LABEL_WITHDRAW,
+	IMSG_LABEL_ABORT,
 	IMSG_REQUEST_ADD,
 	IMSG_REQUEST_ADD_END,
 	IMSG_MAPPING_ADD,
@@ -184,8 +187,13 @@ struct map {
 	u_int32_t	prefix;
 	u_int32_t	label;
 	u_int32_t	messageid;
+	u_int32_t	requestid;
 	u_int8_t	prefixlen;
+	u_int8_t	flags;
 };
+#define F_MAP_WILDCARD	0x01	/* wildcard FEC */
+#define F_MAP_OPTLABEL	0x02	/* optional label present */
+#define F_MAP_REQ_ID	0x04	/* optional request message id present */
 
 struct notify_msg {
 	u_int32_t	messageid;

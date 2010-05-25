@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.12 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.13 2010/05/25 09:35:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -223,28 +223,17 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LABEL_MAPPING:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))
-				fatalx("invalid size of OE request");
-			memcpy(&map, imsg.data, sizeof(map));
-
-			nbr = lde_nbr_find(imsg.hdr.peerid);
-			if (nbr == NULL) {
-				log_debug("lde_dispatch_imsg: cannot find "
-				    "lde neighbor");
-				return;
-			}
-
-			lde_check_mapping(&map, nbr);
-			break;
 		case IMSG_LABEL_MAPPING_FULL:
 			rt_snap(imsg.hdr.peerid);
 
 			lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END,
 			    imsg.hdr.peerid, 0, NULL, 0);
-
 			break;
+		case IMSG_LABEL_MAPPING:
 		case IMSG_LABEL_REQUEST:
+		case IMSG_LABEL_RELEASE:
+		case IMSG_LABEL_WITHDRAW:
+		case IMSG_LABEL_ABORT:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))
 				fatalx("invalid size of OE request");
 			memcpy(&map, imsg.data, sizeof(map));
@@ -256,7 +245,19 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				return;
 			}
 
-			lde_check_request(&map, nbr);
+			switch (imsg.hdr.type) {
+			case IMSG_LABEL_MAPPING:
+				lde_check_mapping(&map, nbr);
+				break;
+			case IMSG_LABEL_REQUEST:
+				lde_check_request(&map, nbr);
+				break;
+			case IMSG_LABEL_RELEASE:
+				lde_check_release(&map, nbr);
+				break;
+			default:
+				log_warnx("not yet");
+			}
 			break;
 		case IMSG_ADDRESS_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
