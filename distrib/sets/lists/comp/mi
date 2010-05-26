@@ -20,11 +20,9 @@
 ./usr/bin/mkstr
 ./usr/bin/objdump
 ./usr/bin/pmdb
-./usr/bin/protoize
 ./usr/bin/ranlib
 ./usr/bin/rpcgen
 ./usr/bin/strip
-./usr/bin/unprotoize
 ./usr/bin/xstr
 ./usr/bin/yacc
 ./usr/include/a.out.h
@@ -1891,11 +1889,9 @@
 ./usr/share/man/cat1/mkstr.0
 ./usr/share/man/cat1/objdump.0
 ./usr/share/man/cat1/pmdb.0
-./usr/share/man/cat1/protoize.0
 ./usr/share/man/cat1/ranlib.0
 ./usr/share/man/cat1/rpcgen.0
 ./usr/share/man/cat1/strip.0
-./usr/share/man/cat1/unprotoize.0
 ./usr/share/man/cat1/xstr.0
 ./usr/share/man/cat1/yacc.0
 ./usr/share/man/cat2/EV_SET.0

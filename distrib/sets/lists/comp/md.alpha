@@ -1,6 +1,8 @@
 ./usr/bin/addr2line
 ./usr/bin/objcopy
+./usr/bin/protoize
 ./usr/bin/readelf
+./usr/bin/unprotoize
 ./usr/include/alpha
 ./usr/include/alpha/_types.h
 ./usr/include/alpha/alpha_cpu.h
@@ -273,4 +275,6 @@
 ./usr/libdata/lint/llib-lalpha.ln
 ./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/protoize.0
 ./usr/share/man/cat1/readelf.0
+./usr/share/man/cat1/unprotoize.0

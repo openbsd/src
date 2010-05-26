@@ -1,7 +1,9 @@
 ./usr/bin/addr2line
 ./usr/bin/gccbug
 ./usr/bin/objcopy
+./usr/bin/protoize
 ./usr/bin/readelf
+./usr/bin/unprotoize
 ./usr/include/arm
 ./usr/include/arm/_types.h
 ./usr/include/arm/apmvar.h
@@ -318,4 +320,6 @@
 ./usr/libdata/lint/llib-larm.ln
 ./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/protoize.0
 ./usr/share/man/cat1/readelf.0
+./usr/share/man/cat1/unprotoize.0

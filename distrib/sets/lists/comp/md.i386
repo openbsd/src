@@ -1,6 +1,8 @@
 ./usr/bin/addr2line
 ./usr/bin/objcopy
+./usr/bin/protoize
 ./usr/bin/readelf
+./usr/bin/unprotoize
 ./usr/include/emmintrin.h
 ./usr/include/g++/backward
 ./usr/include/g++/backward/algo.h
@@ -306,4 +308,6 @@
 ./usr/libdata/lint/llib-li386.ln
 ./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/protoize.0
 ./usr/share/man/cat1/readelf.0
+./usr/share/man/cat1/unprotoize.0

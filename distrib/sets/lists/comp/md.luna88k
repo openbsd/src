@@ -1,3 +1,5 @@
+./usr/bin/protoize
+./usr/bin/unprotoize
 ./usr/include/g++/PlotFile.h
 ./usr/include/g++/SFile.h
 ./usr/include/g++/_G_config.h
@@ -212,3 +214,5 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/libgcc.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/scrt0.o
+./usr/share/man/cat1/protoize.0
+./usr/share/man/cat1/unprotoize.0

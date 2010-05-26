@@ -1,3 +1,5 @@
+./usr/bin/protoize
+./usr/bin/unprotoize
 ./usr/include/aviion
 ./usr/include/aviion/_types.h
 ./usr/include/aviion/asm.h
@@ -219,3 +221,5 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd4.7/2.95.3/libgcc.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/scrt0.o
+./usr/share/man/cat1/protoize.0
+./usr/share/man/cat1/unprotoize.0

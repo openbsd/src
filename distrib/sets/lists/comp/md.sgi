@@ -1,6 +1,8 @@
 ./usr/bin/addr2line
 ./usr/bin/objcopy
+./usr/bin/protoize
 ./usr/bin/readelf
+./usr/bin/unprotoize
 ./usr/include/g++/backward
 ./usr/include/g++/backward/algo.h
 ./usr/include/g++/backward/algobase.h
@@ -309,4 +311,6 @@
 ./usr/libdata/ldscripts/elf64ltsmip.xz
 ./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/protoize.0
 ./usr/share/man/cat1/readelf.0
+./usr/share/man/cat1/unprotoize.0
