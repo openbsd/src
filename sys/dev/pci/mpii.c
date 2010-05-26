@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.18 2010/05/20 00:55:18 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.19 2010/05/26 17:46:31 marco Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1960,14 +1960,13 @@ struct cfdriver mpii_cd = {
 
 void		mpii_scsi_cmd(struct scsi_xfer *);
 void		mpii_scsi_cmd_done(struct mpii_ccb *);
-void		mpii_minphys(struct buf *bp, struct scsi_link *sl);
 int		mpii_scsi_probe(struct scsi_link *);
 int		mpii_scsi_ioctl(struct scsi_link *, u_long, caddr_t,
 		    int, struct proc *);
 
 struct scsi_adapter mpii_switch = {
 	mpii_scsi_cmd,
-	mpii_minphys,
+	scsi_minphys,
 	mpii_scsi_probe,
 	NULL,
 	mpii_scsi_ioctl
@@ -2209,6 +2208,7 @@ mpii_attach(struct mpii_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = -1;
 	sc->sc_link.adapter_buswidth = sc->sc_max_devices;
+	sc->sc_link.luns = 1;
 	sc->sc_link.openings = sc->sc_request_depth - 1;
 
 	bzero(&saa, sizeof(saa));
@@ -2417,12 +2417,6 @@ mpii_load_xs(struct mpii_ccb *ccb)
 	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
-}
-
-void
-mpii_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	minphys(bp);
 }
 
 int
@@ -3910,8 +3904,7 @@ mpii_reply(struct mpii_softc *sc, struct mpii_reply_descr *rdp)
 
 	if (smid)  {
 		ccb = &sc->sc_ccbs[smid - 1];
-		if (ccb->ccb_state == MPII_CCB_QUEUED)
-			ccb->ccb_state = MPII_CCB_READY;
+		ccb->ccb_state = MPII_CCB_READY;
 		ccb->ccb_rcb = rcb;
 		ccb->ccb_done(ccb);
 	} else {
