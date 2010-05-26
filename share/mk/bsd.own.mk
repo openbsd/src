@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.101 2010/05/09 12:31:41 espie Exp $
+#	$OpenBSD: bsd.own.mk,v 1.102 2010/05/26 14:39:38 kettenis Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -36,7 +36,7 @@ ELF_TOOLCHAIN?=	yes
     ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "vax"
 USE_GCC3?=no
 COMPILER_VERSION?=gcc2
-.elif ${MACHINE_ARCH} == "GCC4_ARCH_GOES_HERE_eg_powerpc"
+.elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "sparc64"
 COMPILER_VERSION?=gcc4
 .else
 USE_GCC3?=yes
