@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.84 2010/05/05 11:33:26 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.85 2010/05/26 12:17:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -884,7 +884,7 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 
 	bzero(&rcd, sizeof(rcd));
 
-	_lto4b(ata_identify_blocks(&ap->ap_identify), rcd.addr);
+	_lto8b(ata_identify_blocks(&ap->ap_identify), rcd.addr);
 	_lto4b(ata_identify_blocksize(&ap->ap_identify), rcd.length);
 	rcd.logical_per_phys = ata_identify_block_l2p_exp(&ap->ap_identify);
 	align = ata_identify_block_logical_align(&ap->ap_identify);
