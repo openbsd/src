@@ -102,8 +102,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
      { 
        if (this->_M_name_messages != locale::facet::_S_get_c_name())
 	 delete [] this->_M_name_messages;
-       char* __tmp = new char[std::strlen(__s) + 1];
-       std::strcpy(__tmp, __s);
+       size_t __sz = std::strlen(__s) + 1;
+       char* __tmp = new char[__sz];
+       std::memcpy(__tmp, __s, __sz);
        this->_M_name_messages = __tmp;
 
        if (std::strcmp(__s, "C") != 0 && std::strcmp(__s, "POSIX") != 0)

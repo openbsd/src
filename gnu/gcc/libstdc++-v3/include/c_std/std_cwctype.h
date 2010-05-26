@@ -81,7 +81,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   using ::wint_t;	  // cwchar
 
-#if !defined(__OpenBSD__)
   using ::wctype_t;
   using ::wctrans_t;
 
@@ -105,7 +104,6 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   using ::towupper;
   using ::wctrans;
   using ::wctype;
-#endif
 
 _GLIBCXX_END_NAMESPACE
 

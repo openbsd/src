@@ -3797,17 +3797,18 @@ d_demangle (const char* mangled, int options, size_t *palc)
 	   && mangled[10] == '_')
     {
       char *r;
+      size_t sz = 40 + len - 11;
 
-      r = (char *) malloc (40 + len - 11);
+      r = (char *) malloc (sz);
       if (r == NULL)
 	*palc = 1;
       else
 	{
 	  if (mangled[9] == 'I')
-	    strcpy (r, "global constructors keyed to ");
+	    strlcpy (r, "global constructors keyed to ", sz);
 	  else
-	    strcpy (r, "global destructors keyed to ");
-	  strcat (r, mangled + 11);
+	    strlcpy (r, "global destructors keyed to ", sz);
+	  strlcat (r, mangled + 11, sz);
 	}
       return r;
     }
@@ -3972,7 +3973,7 @@ __cxa_demangle (const char *mangled_name, char *output_buffer,
     {
       if (strlen (demangled) < *length)
 	{
-	  strcpy (output_buffer, demangled);
+	  strlcpy (output_buffer, demangled, *length);
 	  free (demangled);
 	  demangled = output_buffer;
 	}

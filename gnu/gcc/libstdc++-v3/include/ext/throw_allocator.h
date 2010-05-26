@@ -419,15 +419,15 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
     char buf[40];
     const char tab('\t');
     s += "address: ";
-    sprintf(buf, "%p", ref.first);
+    snprintf(buf, sizeof buf, "%p", ref.first);
     s += buf;
     s += tab;
     s += "label: ";
-    sprintf(buf, "%u", ref.second.first);
+    snprintf(buf, sizeof buf, "%u", ref.second.first);
     s += buf;
     s += tab;
     s += "size: ";
-    sprintf(buf, "%u", ref.second.second);
+    snprintf(buf, sizeof buf, "%u", ref.second.second);
     s += buf;
     s += '\n';
   }

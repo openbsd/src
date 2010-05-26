@@ -44,14 +44,14 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   bool
   ctype<char>::
   is(mask __m, char __c) const
-  { return _M_table[(unsigned char)(__c)] & __m; }
+  { return (_M_table ? _M_table : _ctype_ + 1)[(unsigned char)(__c)] & __m; }
 
   const char*
   ctype<char>::
   is(const char* __low, const char* __high, mask* __vec) const
   {
     while (__low < __high)
-      *__vec++ = _M_table[*__low++];
+      *__vec++ = (_M_table ? _M_table : _ctype_ + 1)[*__low++];
     return __high;
   }
 

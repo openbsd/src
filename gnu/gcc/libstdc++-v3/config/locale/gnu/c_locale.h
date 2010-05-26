@@ -82,8 +82,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     __c_locale __old = __gnu_cxx::__uselocale(__cloc);
 #else
     char* __old = std::setlocale(LC_ALL, NULL);
-    char* __sav = new char[std::strlen(__old) + 1];
-    std::strcpy(__sav, __old);
+    size_t __sz = std::strlen(__old) + 1;
+    char* __sav = new char[__sz];
+    std::memcpy(__sav, __old, __sz);
     std::setlocale(LC_ALL, "C");
 #endif
 
