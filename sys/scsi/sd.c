@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.190 2010/05/20 00:04:38 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.191 2010/05/26 16:38:20 thib Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+#include <sys/mutex.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -168,8 +169,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
 
-	mtx_init(&sc->sc_buf_mtx, IPL_BIO);
-
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -182,6 +181,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_dk.dk_driver = &sddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
+	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
 	disk_attach(&sc->sc_dk);
 
 	if ((sc_link->flags & SDEV_ATAPI) && (sc_link->flags & SDEV_REMOVABLE))
@@ -277,7 +277,7 @@ sdactivate(struct device *self, int act)
 
 	case DVACT_DEACTIVATE:
 		sc->flags |= SDF_DYING;
-		scsi_buf_killqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
+		bufq_drain(sc->sc_bufq);
 		break;
 	}
 
@@ -291,7 +291,7 @@ sddetach(struct device *self, int flags)
 	struct sd_softc *sc = (struct sd_softc *)self;
 	int bmaj, cmaj, mn;
 
-	scsi_buf_killqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
+	bufq_drain(sc->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
@@ -308,6 +308,7 @@ sddetach(struct device *self, int flags)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
 	/* Detach disk. */
+	bufq_destroy(sc->sc_bufq);
 	disk_detach(&sc->sc_dk);
 
 	return (0);
@@ -561,12 +562,8 @@ sdstrategy(struct buf *bp)
 	    (sc->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 
-	/*
-	 * Place it in the queue of disk activities for this disk
-	 */
-	mtx_enter(&sc->sc_buf_mtx);
-	disksort(&sc->sc_buf_queue, bp);
-	mtx_leave(&sc->sc_buf_mtx);
+	/* Place it in the queue of disk activities for this disk. */
+	BUFQ_QUEUE(sc->sc_bufq, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -668,12 +665,12 @@ sdstart(struct scsi_xfer *xs)
 		return;
 	}
 	if ((link->flags & SDEV_MEDIA_LOADED) == 0) {
-		scsi_buf_killqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
+		bufq_drain(sc->sc_bufq);
 		scsi_xs_put(xs);
 		return;
 	}
 
-	bp = scsi_buf_dequeue(&sc->sc_buf_queue, &sc->sc_buf_mtx);
+	bp = BUFQ_DEQUEUE(sc->sc_bufq);
 	if (bp == NULL) {
 		scsi_xs_put(xs);
 		return;
@@ -721,7 +718,7 @@ sdstart(struct scsi_xfer *xs)
 	scsi_xs_exec(xs);
 
 	/* move onto the next io */
-	if (scsi_buf_canqueue(&sc->sc_buf_queue, &sc->sc_buf_mtx))
+	if (BUFQ_PEEK(sc->sc_bufq) != NULL)
 		scsi_xsh_add(&sc->sc_xsh);
 }
 
@@ -742,7 +739,7 @@ sd_buf_done(struct scsi_xfer *xs)
 		/* The adapter is busy, requeue the buf and try it later. */
 		disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
 		    bp->b_flags & B_READ);
-		scsi_buf_requeue(&sc->sc_buf_queue, bp, &sc->sc_buf_mtx);
+		BUFQ_REQUEUE(sc->sc_bufq, bp);
 		scsi_xs_put(xs);
 		timeout_add(&sc->sc_timeout, 1);
 		return;

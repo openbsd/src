@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.29 2010/05/19 05:50:50 dlg Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.30 2010/05/26 16:38:20 thib Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 struct sd_softc {
 	struct device		sc_dev;
 	struct disk		sc_dk;
+	struct bufq		*sc_bufq;
 
 	int			flags;
 #define	SDF_LOCKED	0x01
@@ -69,8 +70,6 @@ struct sd_softc {
 		u_long	rot_rate;	/* rotational rate, in RPM */
 		daddr64_t	disksize;	/* total number sectors */
 	} params;
-	struct mutex sc_buf_mtx;
-	struct buf sc_buf_queue;
 	void *sc_sdhook;		/* our shutdown hook */
 	struct timeout sc_timeout;
 
