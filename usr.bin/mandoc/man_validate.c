@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.25 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.26 2010/05/26 02:39:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -219,7 +219,7 @@ check_text(CHKARGS)
 				return(c);
 		}
 
-		if ('\t' == *p || isprint((u_char)*p)) 
+		if ('\t' == *p || isprint((u_char)*p) || ASCII_HYPH == *p) 
 			continue;
 		if ( ! man_pmsg(m, n->line, pos, MANDOCERR_BADCHAR))
 			return(0);

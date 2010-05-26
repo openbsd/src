@@ -1,4 +1,4 @@
-/*	$Id: chars.c,v 1.6 2010/03/26 01:22:05 schwarze Exp $ */
+/*	$Id: chars.c,v 1.7 2010/05/26 02:39:58 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "chars.h"
 
 #define	PRINT_HI	 126

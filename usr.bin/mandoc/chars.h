@@ -1,4 +1,4 @@
-/*	$Id: chars.h,v 1.3 2010/05/14 19:52:43 schwarze Exp $ */
+/*	$Id: chars.h,v 1.4 2010/05/26 02:39:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -16,8 +16,6 @@
  */
 #ifndef CHARS_H
 #define CHARS_H
-
-#define ASCII_NBRSP	 31  /* non-breaking space */
 
 __BEGIN_DECLS
 

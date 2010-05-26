@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.34 2010/05/23 22:45:01 schwarze Exp $ */
+/*	$Id: term.c,v 1.35 2010/05/26 02:39:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -190,14 +190,13 @@ term_flushln(struct termp *p)
 		for (jhy = 0; j < (int)p->col; j++) {
 			if ((j && ' ' == p->buf[j]) || '\t' == p->buf[j])
 				break;
-			if (8 == p->buf[j])
-				vend--;
-			else {
+			if (8 != p->buf[j]) {
 				if (vend > vis && vend < bp &&
-				    '-' == p->buf[j])
+				    ASCII_HYPH == p->buf[j])
 					jhy = j;
 				vend++;
-			}
+			} else
+				vend--;
 		}
 
 		/*
@@ -259,7 +258,12 @@ term_flushln(struct termp *p)
 				p->viscol += vbl;
 				vbl = 0;
 			}
-			putchar(p->buf[i]);
+
+			if (ASCII_HYPH == p->buf[i])
+				putchar('-');
+			else
+				putchar(p->buf[i]);
+
 			p->viscol += 1;
 		}
 		vend += vbl;
