@@ -96,7 +96,7 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/include
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.7/3.3.5/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.53.2
+./usr/lib/libc.so.54.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.11.0
@@ -132,7 +132,7 @@
 ./usr/lib/libtermcap.so.11.0
 ./usr/lib/libtermlib.so.11.0
 ./usr/lib/libusbhid.so.3.0
-./usr/lib/libutil.so.11.0
+./usr/lib/libutil.so.11.1
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
 ./usr/libdata/perl5/i386-openbsd
@@ -1830,6 +1830,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/vmparam.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ifaddrs.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/imsg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/inttypes.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/iso646.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/isofs

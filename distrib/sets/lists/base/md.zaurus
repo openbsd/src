@@ -62,7 +62,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.7/3.3.5/collect2
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.7/3.3.5/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.53.2
+./usr/lib/libc.so.54.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.11.0
@@ -98,7 +98,7 @@
 ./usr/lib/libtermcap.so.11.0
 ./usr/lib/libtermlib.so.11.0
 ./usr/lib/libusbhid.so.3.0
-./usr/lib/libutil.so.11.0
+./usr/lib/libutil.so.11.1
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
 ./usr/libdata/perl5/arm-openbsd
@@ -1770,6 +1770,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ifaddrs.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/imsg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/inttypes.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/iso646.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/isofs

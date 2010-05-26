@@ -1522,6 +1522,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ifaddrs.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/imsg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/inttypes.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/iso646.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/isofs
