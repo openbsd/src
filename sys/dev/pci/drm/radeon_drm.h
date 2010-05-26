@@ -684,6 +684,7 @@ typedef struct drm_radeon_indirect {
 #define RADEON_PARAM_NUM_GB_PIPES          15   /* num GB pipes */
 #define RADEON_PARAM_DEVICE_ID             16
 #define RADEON_PARAM_NUM_Z_PIPES           17   /* num Z pipes */
+#define RADEON_PARAM_LAST_SWI              18   /* num Z pipes */
 
 typedef struct drm_radeon_getparam {
 	int param;
