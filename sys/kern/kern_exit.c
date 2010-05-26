@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.91 2010/05/18 22:26:10 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.92 2010/05/26 15:16:57 oga Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -236,11 +236,6 @@ exit1(struct proc *p, int rv, int flags)
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		systrace_exit(p);
 #endif
-	/*
-	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
-	 */
-	p->p_stat = SDEAD;
-
         /*
          * Remove proc from pidhash chain so looking it up won't
          * work.  Move it from allproc to zombproc, but do not yet
@@ -249,6 +244,11 @@ exit1(struct proc *p, int rv, int flags)
          * wake up the reaper when we do.
          */
 	rw_enter_write(&allproclk);
+	/*
+	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
+	 */
+	p->p_stat = SDEAD;
+
 	LIST_REMOVE(p, p_hash);
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
