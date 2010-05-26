@@ -1,0 +1,156 @@
+.\"	$Id: roff.3,v 1.1 2010/05/26 02:55:16 schwarze Exp $
+.\"
+.\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 26 2010 $
+.Dt ROFF 3
+.Os
+.Sh NAME
+.Nm roff ,
+.Nm roff_alloc ,
+.Nm roff_endparse ,
+.Nm roff_free ,
+.Nm roff_parseln ,
+.Nm roff_reset
+.Nd roff macro compiler library
+.Sh SYNOPSIS
+.In mandoc.h
+.In roff.h
+.Ft "struct roff *"
+.Fn roff_alloc "mandocmsg msgs" "void *data"
+.Ft int
+.Fn roff_endparse "struct roff *roff"
+.Ft void
+.Fn roff_free "struct roff *roff"
+.Ft "enum rofferr"
+.Fo roff_parseln
+.Fa "struct roff *roff"
+.Fa "int line"
+.Fa "char **bufp"
+.Fa "size_t *bufsz"
+.Fa "int pos"
+.Fa "int *offs"
+.Fc
+.Ft void
+.Fn roff_reset "struct roff *roff"
+.Sh DESCRIPTION
+The
+.Nm
+library processes lines of
+.Xr roff 7
+input.
+.Pp
+In general, applications initiate a parsing sequence with
+.Fn roff_alloc ,
+parse each line in a document with
+.Fn roff_parseln ,
+close the parsing session with
+.Fn roff_endparse ,
+and finally free all allocated memory with
+.Fn roff_free .
+The
+.Fn roff_reset
+function may be used in order to reset the parser for another input
+sequence.
+.Pp
+The
+.Fn roff_parseln
+function should be invoked before passing a line into the
+.Xr mdoc 3
+or
+.Xr man 3
+libraries.
+.Pp
+See the
+.Sx EXAMPLES
+section for a full example.
+.Sh REFERENCE
+This section further defines the
+.Sx Types
+and
+.Sx Functions
+available to programmers.
+.Ss Types
+Functions (see
+.Sx Functions )
+may use the following types:
+.Bl -ohang
+.It Vt "enum rofferr"
+Instructions for further processing to the caller of
+.Fn roff_parseln .
+.It Vt struct roff
+An opaque type defined in
+.Pa roff.c .
+Its values are only used privately within the library.
+.It Vt mandocmsg
+A function callback type defined in
+.Pa mandoc.h .
+.El
+.Ss Functions
+Function descriptions follow:
+.Bl -ohang
+.It Fn roff_alloc
+Allocates a parsing structure.
+The
+.Fa data
+pointer is passed to
+.Fa msgs .
+The
+.Fa pflags
+arguments are defined in
+.Pa roff.h .
+Returns NULL on failure.
+If non-NULL, the pointer must be freed with
+.Fn roff_free .
+.It Fn roff_reset
+Reset the parser for another parse routine.
+After its use,
+.Fn roff_parseln
+behaves as if invoked for the first time.
+.It Fn roff_free
+Free all resources of a parser.
+The pointer is no longer valid after invocation.
+.It Fn roff_parseln
+Parse a nil-terminated line of input.
+The character array
+.Fa bufp
+may be modified or reallocated within this function.
+In the latter case,
+.Fa bufsz
+will be modified accordingly.
+The
+.Fa offs
+pointer will be modified if the line start during subsequent processing
+of the line is not at the zeroth index.
+This line should not contain the trailing newline.
+Returns 0 on failure, 1 on success.
+.It Fn roff_endparse
+Signals that the parse is complete.
+Returns 0 on failure, 1 on success.
+.El
+.Sh EXAMPLES
+See
+.Pa main.c
+in the source distribution for an example of usage.
+.Sh SEE ALSO
+.Xr mandoc 1 ,
+.Xr man 3 ,
+.Xr mdoc 3 ,
+.Xr roff 7
+.Sh AUTHORS
+The
+.Nm
+library was written by
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .

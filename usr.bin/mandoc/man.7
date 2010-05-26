@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.25 2010/05/23 20:57:16 schwarze Exp $
+.\"	$Id: man.7,v 1.26 2010/05/26 02:55:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2010 $
+.Dd $Mdocdate: May 26 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -434,6 +434,7 @@ The syntax is as follows:
 .Pp
 .Bl -column -compact -offset indent "MacroX" "ArgumentsX" "ScopeXXXXX" "CompatX"
 .It Em Macro Ta Em Arguments Ta Em Scope     Ta Em Notes
+.It Sx \&AT  Ta    <=1       Ta    current   Ta    \&
 .It Sx \&B   Ta    n         Ta    next-line Ta    \&
 .It Sx \&BI  Ta    n         Ta    current   Ta    \&
 .It Sx \&BR  Ta    n         Ta    current   Ta    \&
@@ -448,7 +449,7 @@ The syntax is as follows:
 .It Sx \&SB  Ta    n         Ta    next-line Ta    \&
 .It Sx \&SM  Ta    n         Ta    next-line Ta    \&
 .It Sx \&TH  Ta    >1, <6    Ta    current   Ta    \&
-.\" .It Sx \&UC  Ta    n         Ta    current   Ta    compat
+.It Sx \&UC  Ta    <=1       Ta    current   Ta    \&
 .It Sx \&br  Ta    0         Ta    current   Ta    compat
 .It Sx \&fi  Ta    0         Ta    current   Ta    compat
 .It Sx \&i   Ta    n         Ta    current   Ta    compat

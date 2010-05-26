@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.10 2010/05/14 01:54:37 schwarze Exp $
+.\"	$Id: man.3,v 1.11 2010/05/26 02:55:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,44 +14,43 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2010 $
+.Dd $Mdocdate: May 26 2010 $
 .Dt MAN 3
 .Os
 .Sh NAME
 .Nm man ,
 .Nm man_alloc ,
-.Nm man_parseln ,
 .Nm man_endparse ,
-.Nm man_node ,
-.Nm man_meta ,
 .Nm man_free ,
+.Nm man_meta ,
+.Nm man_node ,
+.Nm man_parseln ,
 .Nm man_reset
 .Nd man macro compiler library
 .Sh SYNOPSIS
+.In mandoc.h
 .In man.h
 .Vt extern const char * const * man_macronames;
 .Ft "struct man *"
-.Fn man_alloc "void *data" "int pflags" "const struct man_cb *cb"
-.Ft void
-.Fn man_reset "struct man *man"
-.Ft void
-.Fn man_free "struct man *man"
-.Ft int
-.Fn man_parseln "struct man *man" "int line" "char *buf"
-.Ft "const struct man_node *"
-.Fn man_node "const struct man *man"
-.Ft "const struct man_meta *"
-.Fn man_meta "const struct man *man"
+.Fn man_alloc "void *data" "int pflags" "mandocmsg msgs"
 .Ft int
 .Fn man_endparse "struct man *man"
+.Ft void
+.Fn man_free "struct man *man"
+.Ft "const struct man_meta *"
+.Fn man_meta "const struct man *man"
+.Ft "const struct man_node *"
+.Fn man_node "const struct man *man"
+.Ft int
+.Fn man_parseln "struct man *man" "int line" "char *buf"
+.Ft void
+.Fn man_reset "struct man *man"
 .Sh DESCRIPTION
 The
 .Nm
 library parses lines of
 .Xr man 7
-input (and
-.Em only
-man) into an abstract syntax tree (AST).
+input into an abstract syntax tree (AST).
 .Pp
 In general, applications initiate a parsing sequence with
 .Fn man_alloc ,
@@ -68,7 +67,8 @@ then free all allocated memory with
 The
 .Fn man_reset
 function may be used in order to reset the parser for another input
-sequence.  See the
+sequence.
+See the
 .Sx EXAMPLES
 section for a full example.
 .Pp
@@ -79,18 +79,6 @@ the
 library also accepts the following macros:
 .Pp
 .Bl -tag -width Ds -compact
-.It am
-.It ami
-.It de
-.It dei
-.It ig
-Instructional macros in the original roff language.  Blocks begun by
-these macros end with
-.Sq ..
-and may begin anywhere, although they may not break the next-line
-scoping rules specified in
-.Xr man 7 .
-These blocks are discarded.
 .It PD
 Has no effect.  Handled as a current-scope line macro.
 .It Sp
@@ -98,8 +86,6 @@ A synonym for
 .Sq sp 0.5v
 .Pq part of the standard preamble for Perl documentation .
 Handled as a line macro.
-.It UC
-Has no effect.  Handled as a current-scope line macro.
 .It Vb
 A synonym for
 .Sq nf
@@ -143,7 +129,8 @@ This section further defines the
 .Sx Functions
 and
 .Sx Variables
-available to programmers.  Following that, the
+available to programmers.
+Following that, the
 .Sx Abstract Syntax Tree
 section documents the output tree.
 .Ss Types
@@ -157,11 +144,12 @@ may use the following types:
 An opaque type defined in
 .Pa man.c .
 Its values are only used privately within the library.
-.It Vt struct man_cb
-A set of message callbacks defined in
-.Pa man.h .
+.It Vt mandocmsg
+A function callback type defined in
+.Pa mandoc.h .
 .It Vt struct man_node
-A parsed node.  Defined in
+A parsed node.
+Defined in
 .Pa man.h .
 See
 .Sx Abstract Syntax Tree
@@ -171,44 +159,51 @@ for details.
 Function descriptions follow:
 .Bl -ohang
 .It Fn man_alloc
-Allocates a parsing structure.  The
+Allocates a parsing structure.
+The
 .Fa data
-pointer is passed to callbacks in
-.Fa cb ,
-which are documented further in the header file.
+pointer is passed to
+.Fa msgs .
 The
 .Fa pflags
 arguments are defined in
 .Pa man.h .
-Returns NULL on failure.  If non-NULL, the pointer must be freed with
+Returns NULL on failure.
+If non-NULL, the pointer must be freed with
 .Fn man_free .
 .It Fn man_reset
-Reset the parser for another parse routine.  After its use,
+Reset the parser for another parse routine.
+After its use,
 .Fn man_parseln
 behaves as if invoked for the first time.
 .It Fn man_free
-Free all resources of a parser.  The pointer is no longer valid after
-invocation.
+Free all resources of a parser.
+The pointer is no longer valid after invocation.
 .It Fn man_parseln
-Parse a nil-terminated line of input.  This line should not contain the
-trailing newline.  Returns 0 on failure, 1 on success.  The input buffer
+Parse a nil-terminated line of input.
+This line should not contain the trailing newline.
+Returns 0 on failure, 1 on success.
+The input buffer
 .Fa buf
 is modified by this function.
 .It Fn man_endparse
-Signals that the parse is complete.  Note that if
+Signals that the parse is complete.
+Note that if
 .Fn man_endparse
 is called subsequent to
 .Fn man_node ,
-the resulting tree is incomplete.  Returns 0 on failure, 1 on success.
+the resulting tree is incomplete.
+Returns 0 on failure, 1 on success.
 .It Fn man_node
-Returns the first node of the parse.  Note that if
+Returns the first node of the parse.
+Note that if
 .Fn man_parseln
 or
 .Fn man_endparse
 return 0, the tree will be incomplete.
 .It Fn man_meta
-Returns the document's parsed meta-data.  If this information has not
-yet been supplied or
+Returns the document's parsed meta-data.
+If this information has not yet been supplied or
 .Fn man_parseln
 or
 .Fn man_endparse
@@ -224,7 +219,8 @@ An array of string-ified token names.
 The
 .Nm
 functions produce an abstract syntax tree (AST) describing input in a
-regular form.  It may be reviewed at any time with
+regular form.
+It may be reviewed at any time with
 .Fn man_nodes ;
 however, if called before
 .Fn man_endparse ,
@@ -234,17 +230,16 @@ or
 .Fn man_parseln
 fail, it may be incomplete.
 .Pp
-This AST is governed by the ontological
-rules dictated in
+This AST is governed by the ontological rules dictated in
 .Xr man 7
 and derives its terminology accordingly.
 .Pp
 The AST is composed of
 .Vt struct man_node
-nodes with element, root and text types as declared
-by the
+nodes with element, root and text types as declared by the
 .Va type
-field.  Each node also provides its parse point (the
+field.
+Each node also provides its parse point (the
 .Va line ,
 .Va sec ,
 and
@@ -315,11 +310,15 @@ if (NULL == (node = man_node(man)))
 parsed(man, node);
 man_free(man);
 .Ed
+.Pp
+Please see
+.Pa main.c
+in the source archive for a rigorous reference.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr man 7
 .Sh AUTHORS
 The
 .Nm
-utility was written by
+library was written by
 .An Kristaps Dzonsons Aq kristaps@bsd.lv .

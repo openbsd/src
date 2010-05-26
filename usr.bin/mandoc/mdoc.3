@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.3,v 1.6 2010/02/18 02:11:26 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.7 2010/05/26 02:55:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,48 +14,45 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: May 26 2010 $
 .Dt MDOC 3
 .Os
-.\" SECTION
 .Sh NAME
+.Nm mdoc ,
 .Nm mdoc_alloc ,
-.Nm mdoc_parseln ,
 .Nm mdoc_endparse ,
-.Nm mdoc_node ,
-.Nm mdoc_meta ,
 .Nm mdoc_free ,
+.Nm mdoc_meta ,
+.Nm mdoc_node ,
+.Nm mdoc_parseln ,
 .Nm mdoc_reset
 .Nd mdoc macro compiler library
-.\" SECTION
 .Sh SYNOPSIS
+.In mandoc.h
 .In mdoc.h
 .Vt extern const char * const * mdoc_macronames;
 .Vt extern const char * const * mdoc_argnames;
 .Ft "struct mdoc *"
-.Fn mdoc_alloc "void *data" "int pflags" "const struct mdoc_cb *cb"
-.Ft int
-.Fn mdoc_reset "struct mdoc *mdoc"
-.Ft void
-.Fn mdoc_free "struct mdoc *mdoc"
-.Ft int
-.Fn mdoc_parseln "struct mdoc *mdoc" "int line" "char *buf"
-.Ft "const struct mdoc_node *"
-.Fn mdoc_node "const struct mdoc *mdoc"
-.Ft "const struct mdoc_meta *"
-.Fn mdoc_meta "const struct mdoc *mdoc"
+.Fn mdoc_alloc "void *data" "int pflags" "mandocmsg msgs"
 .Ft int
 .Fn mdoc_endparse "struct mdoc *mdoc"
-.\" SECTION
+.Ft void
+.Fn mdoc_free "struct mdoc *mdoc"
+.Ft "const struct mdoc_meta *"
+.Fn mdoc_meta "const struct mdoc *mdoc"
+.Ft "const struct mdoc_node *"
+.Fn mdoc_node "const struct mdoc *mdoc"
+.Ft int
+.Fn mdoc_parseln "struct mdoc *mdoc" "int line" "char *buf"
+.Ft int
+.Fn mdoc_reset "struct mdoc *mdoc"
 .Sh DESCRIPTION
 The
 .Nm mdoc
 library parses lines of
 .Xr mdoc 7
-input (and
-.Em only
-mdoc) into an abstract syntax tree (AST).
-.\" PARAGRAPH
+input
+into an abstract syntax tree (AST).
 .Pp
 In general, applications initiate a parsing sequence with
 .Fn mdoc_alloc ,
@@ -72,20 +69,20 @@ then free all allocated memory with
 The
 .Fn mdoc_reset
 function may be used in order to reset the parser for another input
-sequence.  See the
+sequence.
+See the
 .Sx EXAMPLES
-section for a full example.
-.\" PARAGRAPH
+section for a simple example.
 .Pp
 This section further defines the
 .Sx Types ,
 .Sx Functions
 and
 .Sx Variables
-available to programmers.  Following that, the
+available to programmers.
+Following that, the
 .Sx Abstract Syntax Tree
 section documents the output tree.
-.\" SUBSECTION
 .Ss Types
 Both functions (see
 .Sx Functions )
@@ -93,95 +90,90 @@ and variables (see
 .Sx Variables )
 may use the following types:
 .Bl -ohang
-.\" LIST-ITEM
 .It Vt struct mdoc
 An opaque type defined in
 .Pa mdoc.c .
 Its values are only used privately within the library.
-.\" LIST-ITEM
-.It Vt struct mdoc_cb
-A set of message callbacks defined in
-.Pa mdoc.h .
-.\" LIST-ITEM
 .It Vt struct mdoc_node
-A parsed node.  Defined in
+A parsed node.
+Defined in
 .Pa mdoc.h .
 See
 .Sx Abstract Syntax Tree
 for details.
+.It Vt mandocmsg
+A function callback type defined in
+.Pa mandoc.h .
 .El
-.\" SUBSECTION
 .Ss Functions
 Function descriptions follow:
 .Bl -ohang
-.\" LIST-ITEM
 .It Fn mdoc_alloc
-Allocates a parsing structure.  The
+Allocates a parsing structure.
+The
 .Fa data
-pointer is passed to callbacks in
-.Fa cb ,
-which are documented further in the header file.
+pointer is passed to
+.Fa msgs .
 The
 .Fa pflags
 arguments are defined in
 .Pa mdoc.h .
-Returns NULL on failure.  If non-NULL, the pointer must be freed with
+Returns NULL on failure.
+If non-NULL, the pointer must be freed with
 .Fn mdoc_free .
-.\" LIST-ITEM
 .It Fn mdoc_reset
-Reset the parser for another parse routine.  After its use,
+Reset the parser for another parse routine.
+After its use,
 .Fn mdoc_parseln
-behaves as if invoked for the first time.  If it returns 0, memory could
-not be allocated.
-.\" LIST-ITEM
+behaves as if invoked for the first time.
+If it returns 0, memory could not be allocated.
 .It Fn mdoc_free
-Free all resources of a parser.  The pointer is no longer valid after
-invocation.
-.\" LIST-ITEM
+Free all resources of a parser.
+The pointer is no longer valid after invocation.
 .It Fn mdoc_parseln
-Parse a nil-terminated line of input.  This line should not contain the
-trailing newline.  Returns 0 on failure, 1 on success.  The input buffer
+Parse a nil-terminated line of input.
+This line should not contain the trailing newline.
+Returns 0 on failure, 1 on success.
+The input buffer
 .Fa buf
 is modified by this function.
-.\" LIST-ITEM
 .It Fn mdoc_endparse
-Signals that the parse is complete.  Note that if
+Signals that the parse is complete.
+Note that if
 .Fn mdoc_endparse
 is called subsequent to
 .Fn mdoc_node ,
-the resulting tree is incomplete.  Returns 0 on failure, 1 on success.
-.\" LIST-ITEM
+the resulting tree is incomplete.
+Returns 0 on failure, 1 on success.
 .It Fn mdoc_node
-Returns the first node of the parse.  Note that if
+Returns the first node of the parse.
+Note that if
 .Fn mdoc_parseln
 or
 .Fn mdoc_endparse
 return 0, the tree will be incomplete.
 .It Fn mdoc_meta
-Returns the document's parsed meta-data.  If this information has not
-yet been supplied or
+Returns the document's parsed meta-data.
+If this information has not yet been supplied or
 .Fn mdoc_parseln
 or
 .Fn mdoc_endparse
 return 0, the data will be incomplete.
 .El
-.\" SUBSECTION
 .Ss Variables
 The following variables are also defined:
 .Bl -ohang
-.\" LIST-ITEM
 .It Va mdoc_macronames
 An array of string-ified token names.
-.\" LIST-ITEM
 .It Va mdoc_argnames
 An array of string-ified token argument names.
 .El
-.\" SUBSECTION
 .Ss Abstract Syntax Tree
 The
 .Nm
 functions produce an abstract syntax tree (AST) describing input in a
-regular form.  It may be reviewed at any time with
+regular form.
+It may be reviewed at any time with
 .Fn mdoc_nodes ;
 however, if called before
 .Fn mdoc_endparse ,
@@ -190,7 +182,6 @@ or after
 or
 .Fn mdoc_parseln
 fail, it may be incomplete.
-.\" PARAGRAPH
 .Pp
 This AST is governed by the ontological
 rules dictated in
@@ -201,14 +192,14 @@ elements described in
 .Xr mdoc 7
 are described simply as
 .Qq elements .
-.\" PARAGRAPH
 .Pp
 The AST is composed of
 .Vt struct mdoc_node
 nodes with block, head, body, element, root and text types as declared
 by the
 .Va type
-field.  Each node also provides its parse point (the
+field.
+Each node also provides its parse point (the
 .Va line ,
 .Va sec ,
 and
@@ -220,13 +211,11 @@ fields), its position in the tree (the
 and
 .Va prev
 fields) and some type-specific data.
-.\" PARAGRAPH
 .Pp
 The tree itself is arranged according to the following normal form,
 where capitalised non-terminals represent nodes.
 .Pp
 .Bl -tag -width "ELEMENTXX" -compact
-.\" LIST-ITEM
 .It ROOT
 \(<- mnode+
 .It mnode
@@ -244,17 +233,16 @@ where capitalised non-terminals represent nodes.
 .It TAIL
 \(<- mnode+
 .It TEXT
-\(<- [[:alpha:]]*
+\(<- [[:printable:],0x1e]*
 .El
-.\" PARAGRAPH
 .Pp
 Of note are the TEXT nodes following the HEAD, BODY and TAIL nodes of
-the BLOCK production.  These refer to punctuation marks.  Furthermore,
-although a TEXT node will generally have a non-zero-length string, in
-the specific case of
+the BLOCK production.
+These refer to punctuation marks.
+Furthermore, although a TEXT node will generally have a non-zero-length
+string, in the specific case of
 .Sq \&.Bd \-literal ,
 an empty line will produce a zero-length string.
-.\" SECTION
 .Sh EXAMPLES
 The following example reads lines from stdin and parses them, operating
 on the finished parse tree with
@@ -288,49 +276,15 @@ if (NULL == (node = mdoc_node(mdoc)))
 parsed(mdoc, node);
 mdoc_free(mdoc);
 .Ed
-.\" SECTION
+.Pp
+Please see
+.Pa main.c
+in the source archive for a rigorous reference.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr mdoc 7
-.\" SECTION
 .Sh AUTHORS
 The
 .Nm
-utility was written by
+library was written by
 .An Kristaps Dzonsons Aq kristaps@bsd.lv .
-.\" SECTION
-.Sh CAVEATS
-.Bl -dash -compact
-.\" LIST-ITEM
-.It
-The
-.Sq \&.Xc
-and
-.Sq \&.Xo
-macros aren't handled when used to span lines for the
-.Sq \&.It
-macro.
-.\" LIST-ITEM
-.It
-The
-.Sq \&.Bsx
-macro family doesn't yet understand version arguments.
-.\" LIST-ITEM
-.It
-If not given a value, the \-offset argument to
-.Sq \&.Bd
-and
-.Sq \&.Bl
-should be the width of
-.Qq <string> ;
-instead, a value of
-.Li 10n
-is provided.
-.\" LIST-ITEM
-.It
-Columns widths in
-.Sq \&.Bl \-column
-should default to width
-.Qq <stringx>
-if not included.
-.El
