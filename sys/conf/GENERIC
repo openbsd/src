@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.156 2010/05/07 13:16:18 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.157 2010/05/26 03:26:59 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -16,7 +16,7 @@ option		ACCOUNTING	# acct(2) process accounting
 option		KMEMSTATS	# collect malloc(9) statistics
 option		PTRACE		# ptrace(2) system call
 
-option		PAGEFASTRECYCLE	# fast physical page recycling
+#option		PAGEFASTRECYCLE	# fast physical page recycling
 #option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
 option		POOL_DEBUG	# pool corruption detection 
 #option		VFSDEBUG	# VFS locking checks
