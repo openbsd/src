@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.20 2010/05/25 13:29:45 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.21 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -422,7 +422,7 @@ void	merge_config(struct ldpd_conf *, struct ldpd_conf *);
 int	imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
 	    int, void *, u_int16_t);
 void	imsg_event_add(struct imsgev *);
-void	evbuf_enqueue(struct evbuf *, struct buf *);
+void	evbuf_enqueue(struct evbuf *, struct ibuf *);
 void	evbuf_event_add(struct evbuf *);
 void	evbuf_init(struct evbuf *, int, void (*)(int, short, void *), void *);
 void	evbuf_clear(struct evbuf *);

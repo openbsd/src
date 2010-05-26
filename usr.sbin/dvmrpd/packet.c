@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.2 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -45,7 +45,7 @@ struct iface	*find_iface(struct dvmrpd_conf *, struct in_addr);
 extern struct dvmrpd_conf	*deconf;
 
 int
-gen_dvmrp_hdr(struct buf *buf, struct iface *iface, u_int8_t code)
+gen_dvmrp_hdr(struct ibuf *buf, struct iface *iface, u_int8_t code)
 {
 	struct dvmrp_hdr	dvmrp_hdr;
 
@@ -57,7 +57,7 @@ gen_dvmrp_hdr(struct buf *buf, struct iface *iface, u_int8_t code)
 	dvmrp_hdr.minor_version = DVMRP_MINOR_VERSION;
 	dvmrp_hdr.major_version = DVMRP_MAJOR_VERSION;
 
-	return (buf_add(buf, &dvmrp_hdr, sizeof(dvmrp_hdr)));
+	return (ibuf_add(buf, &dvmrp_hdr, sizeof(dvmrp_hdr)));
 }
 
 /* send and receive packets */
@@ -108,7 +108,7 @@ recv_packet(int fd, short event, void *bula)
 	/* setup buffer */
 	buf = pkt_ptr;
 
-	if ((r = recvfrom(fd, buf, READ_BUF_SIZE, 0, NULL, NULL)) == -1) {
+	if ((r = recvfrom(fd, buf, IBUF_READ_SIZE, 0, NULL, NULL)) == -1) {
 		if (errno != EAGAIN && errno != EINTR)
 			log_debug("recv_packet: error receiving packet");
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.15 2009/06/04 13:46:07 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.16 2010/05/26 13:56:08 nicm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -91,7 +91,7 @@ ssl_read(int s, short event, void *arg)
 		}
 		return;
 	}
-	if (buf_add(cte->buf, rbuf, ret) == -1)
+	if (ibuf_add(cte->buf, rbuf, ret) == -1)
 		fatal("ssl_read: buf_add error");
 	if (cte->validate_read != NULL) {
 		if (cte->validate_read(cte) != 0)
@@ -145,7 +145,7 @@ ssl_write(int s, short event, void *arg)
 			return;
 		}
 	}
-	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
+	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("ssl_write: cannot create dynamic buffer");
 
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, ssl_read,
@@ -204,7 +204,7 @@ ssl_connect(int s, short event, void *arg)
 		return;
 	}
 
-	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
+	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("ssl_connect: cannot create dynamic buffer");
 	event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_READ, ssl_read,
 	    &cte->tv_start, &cte->table->conf.timeout, cte);
@@ -224,7 +224,7 @@ ssl_cleanup(struct ctl_tcp_event *cte)
 		SSL_clear(cte->ssl);
 	}
 	if (cte->buf != NULL)
-		buf_free(cte->buf);
+		ibuf_free(cte->buf);
 }
 
 void

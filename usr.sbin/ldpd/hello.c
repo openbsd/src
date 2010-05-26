@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.5 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.6 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,14 +39,14 @@
 struct hello_prms_tlv	*tlv_decode_hello_prms(char *, u_int16_t);
 int			 tlv_decode_opt_hello_prms(char *, u_int16_t,
 			    struct in_addr *, u_int32_t *);
-int			 gen_hello_prms_tlv(struct iface *, struct buf *,
+int			 gen_hello_prms_tlv(struct iface *, struct ibuf *,
 			    u_int16_t);
 
 int
 send_hello(struct iface *iface)
 {
 	struct sockaddr_in	 dst;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	u_int16_t		 size;
 
 	dst.sin_port = htons(LDP_PORT);
@@ -57,7 +57,7 @@ send_hello(struct iface *iface)
 	if (iface->passive)
 		return (0);
 
-	if ((buf = buf_open(LDP_MAX_LEN)) == NULL)
+	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_hello");
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
@@ -74,7 +74,7 @@ send_hello(struct iface *iface)
 	gen_hello_prms_tlv(iface, buf, size);
 
 	send_packet(iface, buf->buf, buf->wpos, &dst);
-	buf_free(buf);
+	ibuf_free(buf);
 
 	return (0);
 }
@@ -151,7 +151,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 }
 
 int
-gen_hello_prms_tlv(struct iface *iface, struct buf *buf, u_int16_t size)
+gen_hello_prms_tlv(struct iface *iface, struct ibuf *buf, u_int16_t size)
 {
 	struct hello_prms_tlv	parms;
 
@@ -165,7 +165,7 @@ gen_hello_prms_tlv(struct iface *iface, struct buf *buf, u_int16_t size)
 	parms.holdtime = htons(iface->holdtime);
 	parms.reserved = 0;
 
-	return (buf_add(buf, &parms, sizeof(parms)));
+	return (ibuf_add(buf, &parms, sizeof(parms)));
 }
 
 struct hello_prms_tlv *

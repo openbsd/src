@@ -1,4 +1,4 @@
-/*	$OpenBSD: keepalive.c,v 1.5 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: keepalive.c,v 1.6 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -40,13 +40,13 @@
 void
 send_keepalive(struct nbr *nbr)
 {
-	struct buf	*buf;
+	struct ibuf	*buf;
 	u_int16_t	 size;
 
 	if (nbr->iface->passive)
 		return;
 
-	if ((buf = buf_open(LDP_MAX_LEN)) == NULL)
+	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_keepalive");
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.38 2009/06/06 07:31:26 eric Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.39 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -35,10 +35,10 @@
 extern struct ospfd_conf	*oeconf;
 extern struct imsgev		*iev_rde;
 
-struct buf *prepare_ls_update(struct iface *);
-int	add_ls_update(struct buf *, struct iface *, void *, u_int16_t,
+struct ibuf *prepare_ls_update(struct iface *);
+int	add_ls_update(struct ibuf *, struct iface *, void *, u_int16_t,
 	    u_int16_t);
-int	send_ls_update(struct buf *, struct iface *, struct in_addr, u_int32_t);
+int	send_ls_update(struct ibuf *, struct iface *, struct in_addr, u_int32_t);
 
 void	ls_retrans_list_insert(struct nbr *, struct lsa_entry *);
 void	ls_retrans_list_remove(struct nbr *, struct lsa_entry *);
@@ -147,12 +147,12 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 	return (dont_ack == 2);
 }
 
-struct buf *
+struct ibuf *
 prepare_ls_update(struct iface *iface)
 {
-	struct buf		*buf;
+	struct ibuf		*buf;
 
-	if ((buf = buf_open(iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("prepare_ls_update");
 
 	/* OSPF header */
@@ -160,28 +160,28 @@ prepare_ls_update(struct iface *iface)
 		goto fail;
 
 	/* reserve space for number of lsa field */
-	if (buf_reserve(buf, sizeof(u_int32_t)) == NULL)
+	if (ibuf_reserve(buf, sizeof(u_int32_t)) == NULL)
 		goto fail;
 
 	return (buf);
 fail:
 	log_warn("prepare_ls_update");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (NULL);
 }
 
 int
-add_ls_update(struct buf *buf, struct iface *iface, void *data, u_int16_t len,
+add_ls_update(struct ibuf *buf, struct iface *iface, void *data, u_int16_t len,
     u_int16_t older)
 {
 	void		*lsage;
 	u_int16_t	 age;
 
-	if (buf_left(buf) < (size_t)len + MD5_DIGEST_LENGTH)
+	if (ibuf_left(buf) < (size_t)len + MD5_DIGEST_LENGTH)
 		return (0);
 
-	lsage = buf_reserve(buf, 0);
-	if (buf_add(buf, data, len)) {
+	lsage = ibuf_reserve(buf, 0);
+	if (ibuf_add(buf, data, len)) {
 		log_warn("add_ls_update");
 		return (0);
 	}
@@ -200,14 +200,14 @@ add_ls_update(struct buf *buf, struct iface *iface, void *data, u_int16_t len,
 
 
 int
-send_ls_update(struct buf *buf, struct iface *iface, struct in_addr addr,
+send_ls_update(struct ibuf *buf, struct iface *iface, struct in_addr addr,
     u_int32_t nlsa)
 {
 	struct sockaddr_in	 dst;
 	int			 ret;
 
 	nlsa = htonl(nlsa);
-	memcpy(buf_seek(buf, sizeof(struct ospf_hdr), sizeof(nlsa)),
+	memcpy(ibuf_seek(buf, sizeof(struct ospf_hdr), sizeof(nlsa)),
 	    &nlsa, sizeof(nlsa));
 	/* update authentication and calculate checksum */
 	if (auth_gen(buf, iface))
@@ -220,11 +220,11 @@ send_ls_update(struct buf *buf, struct iface *iface, struct in_addr addr,
 
 	ret = send_packet(iface, buf, &dst);
 
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 fail:
 	log_warn("send_ls_update");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 
@@ -425,7 +425,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 	struct in_addr		 addr;
 	struct nbr		*nbr = bula;
 	struct lsa_entry	*le;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	time_t			 now;
 	int			 d;
 	u_int32_t		 nlsa = 0;

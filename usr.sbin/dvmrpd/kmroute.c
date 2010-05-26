@@ -1,4 +1,4 @@
-/*	$OpenBSD: kmroute.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: kmroute.c,v 1.2 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -57,7 +57,7 @@ kmr_init(int fd)
 		mrt_add_vif(conf->mroute_socket, iface);
 	}
 
-	if ((mroute_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
+	if ((mroute_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
 		fatal("kmr_init");
 
 	return (0);
@@ -94,7 +94,7 @@ kmr_recv_msg(int fd, short event, void *bula)
 	/* setup buffer */
 	buf = mroute_ptr;
 
-	if ((r = recvfrom(fd, buf, READ_BUF_SIZE, 0, NULL, NULL)) == -1) {
+	if ((r = recvfrom(fd, buf, IBUF_READ_SIZE, 0, NULL, NULL)) == -1) {
 		if (errno != EAGAIN && errno != EINTR)
 			log_debug("kmr_recv_msg: error receiving packet");
 		return;

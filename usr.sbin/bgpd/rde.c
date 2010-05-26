@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.295 2010/05/19 12:44:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.296 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1876,7 +1876,7 @@ void
 rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
     void *data, u_int16_t size)
 {
-	struct buf	*wbuf;
+	struct ibuf	*wbuf;
 
 	if ((wbuf = imsg_create(ibuf_se, IMSG_UPDATE_ERR, peer->conf.id, 0,
 	    size + sizeof(error) + sizeof(suberr))) == NULL)
@@ -2048,7 +2048,7 @@ void
 rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
-	struct buf		*wbuf;
+	struct ibuf		*wbuf;
 	struct attr		*a;
 	void			*bp;
 	u_int8_t		 l;
@@ -2108,13 +2108,13 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 			    IMSG_CTL_SHOW_RIB_ATTR, 0, pid,
 			    attr_optlen(a))) == NULL)
 				return;
-			if ((bp = buf_reserve(wbuf, attr_optlen(a))) == NULL) {
-				buf_free(wbuf);
+			if ((bp = ibuf_reserve(wbuf, attr_optlen(a))) == NULL) {
+				ibuf_free(wbuf);
 				return;
 			}
 			if (attr_write(bp, attr_optlen(a), a->flags,
 			    a->type, a->data, a->len) == -1) {
-				buf_free(wbuf);
+				ibuf_free(wbuf);
 				return;
 			}
 			imsg_close(ibuf_se_ctl, wbuf);

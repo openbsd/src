@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.106 2010/05/17 15:49:29 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.107 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,7 +109,7 @@ enum capa_codes {
 };
 
 struct bgp_msg {
-	struct buf	*buf;
+	struct ibuf	*buf;
 	enum msg_type	 type;
 	u_int16_t	 len;
 };
@@ -202,7 +202,7 @@ struct peer {
 	struct sockaddr_storage	 sa_remote;
 	struct peer_timer_head	 timers;
 	struct msgbuf		 wbuf;
-	struct buf_read		*rbuf;
+	struct ibuf_read	*rbuf;
 	struct peer		*next;
 	int			 fd;
 	int			 lasterr;

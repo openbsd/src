@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.120 2010/05/14 11:13:36 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.121 2010/05/26 13:56:08 nicm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -928,7 +928,7 @@ relay_resolve(struct ctl_relay_event *cre,
     struct protonode *proot, struct protonode *pn)
 {
 	struct rsession		*con = (struct rsession *)cre->con;
-	char			 buf[READ_BUF_SIZE], *ptr;
+	char			 buf[IBUF_READ_SIZE], *ptr;
 	int			 id;
 
 	if (pn->mark && (pn->mark != con->se_mark))
@@ -1072,7 +1072,7 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *proot,
     struct protonode *pn, struct protonode *pk, int header)
 {
 	struct rsession		*con = (struct rsession *)cre->con;
-	char			 buf[READ_BUF_SIZE], *ptr;
+	char			 buf[IBUF_READ_SIZE], *ptr;
 	int			 ret = PN_DROP, mark = 0;
 	struct protonode	*next;
 
@@ -2878,8 +2878,8 @@ relay_ssl_readcb(int fd, short event, void *arg)
 	int ret = 0, ssl_err = 0;
 	short what = EVBUFFER_READ;
 	size_t len;
-	char rbuf[READ_BUF_SIZE];
-	int howmuch = READ_BUF_SIZE;
+	char rbuf[IBUF_READ_SIZE];
+	int howmuch = IBUF_READ_SIZE;
 
 	if (event == EV_TIMEOUT) {
 		what |= EVBUFFER_TIMEOUT;

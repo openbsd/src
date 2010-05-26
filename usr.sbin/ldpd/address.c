@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.4 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.5 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,12 +39,12 @@
 
 extern struct ldpd_conf        *leconf;
 
-void	gen_address_list_tlv(struct buf *, struct iface *, u_int16_t);
+void	gen_address_list_tlv(struct ibuf *, struct iface *, u_int16_t);
 
 void
 send_address(struct nbr *nbr, struct iface *iface)
 {
-	struct buf	*buf;
+	struct ibuf	*buf;
 	struct iface	*niface;
 	u_int16_t	 size, iface_count = 0;
 
@@ -53,7 +53,7 @@ send_address(struct nbr *nbr, struct iface *iface)
 
 	log_debug("send_address: neighbor ID %s", inet_ntoa(nbr->id));
 
-	if ((buf = buf_open(LDP_MAX_LEN)) == NULL)
+	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_address");
 
 	/* XXX: multiple address on the same iface? */
@@ -141,7 +141,7 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 void
-gen_address_list_tlv(struct buf *buf, struct iface *iface, u_int16_t size)
+gen_address_list_tlv(struct ibuf *buf, struct iface *iface, u_int16_t size)
 {
 	struct address_list_tlv	 alt;
 	struct iface		*niface;
@@ -155,19 +155,19 @@ gen_address_list_tlv(struct buf *buf, struct iface *iface, u_int16_t size)
 	/* XXX: just ipv4 for now */
 	alt.family = htons(ADDR_IPV4);
 
-	buf_add(buf, &alt, sizeof(alt));
+	ibuf_add(buf, &alt, sizeof(alt));
 
 	if (iface == NULL)
 		LIST_FOREACH(niface, &leconf->iface_list, entry)
-			buf_add(buf, &niface->addr, sizeof(niface->addr));
+			ibuf_add(buf, &niface->addr, sizeof(niface->addr));
 	else
-		buf_add(buf, &iface->addr, sizeof(iface->addr));
+		ibuf_add(buf, &iface->addr, sizeof(iface->addr));
 }
 
 void
 send_address_withdraw(struct nbr *nbr, struct iface *iface)
 {
-	struct buf	*buf;
+	struct ibuf	*buf;
 	u_int16_t	 size;
 
 	if (nbr->iface->passive)
@@ -175,7 +175,7 @@ send_address_withdraw(struct nbr *nbr, struct iface *iface)
 
 	log_debug("send_address_withdraw: neighbor ID %s", inet_ntoa(nbr->id));
 
-	if ((buf = buf_open(LDP_MAX_LEN)) == NULL)
+	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_address_withdraw");
 
 	/* XXX: multiple address on the same iface? */

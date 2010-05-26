@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.9 2008/12/28 20:08:31 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.10 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -43,11 +43,11 @@ send_db_description(struct nbr *nbr)
 	struct in6_addr		 dst;
 	struct db_dscrp_hdr	 dd_hdr;
 	struct lsa_entry	*le, *nle;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	int			 ret = 0;
 	u_int8_t		 bits = 0;
 
-	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_db_description");
 
 	/* OSPF header */
@@ -55,7 +55,7 @@ send_db_description(struct nbr *nbr)
 		goto fail;
 
 	/* reserve space for database description header */
-	if (buf_reserve(buf, sizeof(dd_hdr)) == NULL)
+	if (ibuf_reserve(buf, sizeof(dd_hdr)) == NULL)
 		goto fail;
 
 	switch (nbr->state) {
@@ -94,7 +94,7 @@ send_db_description(struct nbr *nbr)
 		    buf->wpos + sizeof(struct lsa_hdr) < buf->max -
 		    MD5_DIGEST_LENGTH; le = nle) {
 			nbr->dd_end = nle = TAILQ_NEXT(le, entry);
-			if (buf_add(buf, le->le_lsa, sizeof(struct lsa_hdr)))
+			if (ibuf_add(buf, le->le_lsa, sizeof(struct lsa_hdr)))
 				goto fail;
 		}
 		break;
@@ -141,7 +141,7 @@ send_db_description(struct nbr *nbr)
 	dd_hdr.bits = bits;
 	dd_hdr.dd_seq_num = htonl(nbr->dd_seq_num);
 
-	memcpy(buf_seek(buf, sizeof(struct ospf_hdr), sizeof(dd_hdr)),
+	memcpy(ibuf_seek(buf, sizeof(struct ospf_hdr), sizeof(dd_hdr)),
 	    &dd_hdr, sizeof(dd_hdr));
 
 	/* calculate checksum */
@@ -151,11 +151,11 @@ send_db_description(struct nbr *nbr)
 	/* transmit packet */
 	ret = send_packet(nbr->iface, buf->buf, buf->wpos, &dst);
 done:
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 fail:
 	log_warn("send_db_description");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 

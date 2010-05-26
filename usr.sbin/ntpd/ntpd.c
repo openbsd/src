@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.66 2009/06/06 18:14:25 pyr Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.67 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -266,7 +266,7 @@ dispatch_imsg(struct ntpd_conf *lconf)
 	double			 d;
 	char			*name;
 	struct ntp_addr		*h, *hn;
-	struct buf		*buf;
+	struct ibuf		*buf;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		return (-1);

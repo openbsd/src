@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.4 2009/06/06 09:02:46 eric Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.5 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -36,10 +36,10 @@ send_ls_req(struct nbr *nbr)
 	struct in6_addr		 dst;
 	struct ls_req_hdr	 ls_req_hdr;
 	struct lsa_entry	*le, *nle;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	int			 ret;
 
-	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_ls_req");
 
 	switch (nbr->iface->type) {
@@ -69,7 +69,7 @@ send_ls_req(struct nbr *nbr)
 		ls_req_hdr.type = le->le_lsa->type;
 		ls_req_hdr.ls_id = le->le_lsa->ls_id;
 		ls_req_hdr.adv_rtr = le->le_lsa->adv_rtr;
-		if (buf_add(buf, &ls_req_hdr, sizeof(ls_req_hdr)))
+		if (ibuf_add(buf, &ls_req_hdr, sizeof(ls_req_hdr)))
 			goto fail;
 	}
 
@@ -79,11 +79,11 @@ send_ls_req(struct nbr *nbr)
 
 	ret = send_packet(nbr->iface, buf->buf, buf->wpos, &dst);
 
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 fail:
 	log_warn("send_ls_req");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 

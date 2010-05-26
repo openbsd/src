@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.84 2010/05/17 16:08:20 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.85 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,7 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 }
 
 int
-attr_writebuf(struct buf *buf, u_int8_t flags, u_int8_t type, void *data,
+attr_writebuf(struct ibuf *buf, u_int8_t flags, u_int8_t type, void *data,
     u_int16_t data_len)
 {
 	u_char	hdr[4];
@@ -80,9 +80,9 @@ attr_writebuf(struct buf *buf, u_int8_t flags, u_int8_t type, void *data,
 	hdr[0] = flags;
 	hdr[1] = type;
 
-	if (buf_add(buf, hdr, flags & ATTR_EXTLEN ? 4 : 3) == -1)
+	if (ibuf_add(buf, hdr, flags & ATTR_EXTLEN ? 4 : 3) == -1)
 		return (-1);
-	if (buf_add(buf, data, data_len) == -1)
+	if (ibuf_add(buf, data, data_len) == -1)
 		return (-1);
 	return (0);
 }

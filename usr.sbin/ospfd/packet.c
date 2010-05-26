@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.29 2010/02/16 18:04:39 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.30 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -42,7 +42,7 @@ int		 ospf_hdr_sanity_check(const struct ip *,
 struct iface	*find_iface(struct ospfd_conf *, unsigned int, struct in_addr);
 
 int
-gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
+gen_ospf_hdr(struct ibuf *buf, struct iface *iface, u_int8_t type)
 {
 	struct ospf_hdr	ospf_hdr;
 
@@ -54,12 +54,12 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 		ospf_hdr.area_id = iface->area->id.s_addr;
 	ospf_hdr.auth_type = htons(iface->auth_type);
 
-	return (buf_add(buf, &ospf_hdr, sizeof(ospf_hdr)));
+	return (ibuf_add(buf, &ospf_hdr, sizeof(ospf_hdr)));
 }
 
 /* send and receive packets */
 int
-send_packet(struct iface *iface, struct buf *buf, struct sockaddr_in *dst)
+send_packet(struct iface *iface, struct ibuf *buf, struct sockaddr_in *dst)
 {
 	struct msghdr		 msg;
 	struct iovec		 iov[2];
@@ -70,7 +70,7 @@ send_packet(struct iface *iface, struct buf *buf, struct sockaddr_in *dst)
 	ip_hdr.ip_v = IPVERSION;
 	ip_hdr.ip_hl = sizeof(ip_hdr) >> 2;
 	ip_hdr.ip_tos = IPTOS_PREC_INTERNETCONTROL;
-	ip_hdr.ip_len = htons(buf_size(buf) + sizeof(ip_hdr));
+	ip_hdr.ip_len = htons(ibuf_size(buf) + sizeof(ip_hdr));
 	ip_hdr.ip_id = 0;  /* 0 means kernel set appropriate value */
 	ip_hdr.ip_off = 0;
 	ip_hdr.ip_ttl = iface->type != IF_TYPE_VIRTUALLINK ?
@@ -85,7 +85,7 @@ send_packet(struct iface *iface, struct buf *buf, struct sockaddr_in *dst)
 	iov[0].iov_base = &ip_hdr;
 	iov[0].iov_len = sizeof(ip_hdr);
 	iov[1].iov_base = buf->buf;
-	iov[1].iov_len = buf_size(buf);
+	iov[1].iov_len = ibuf_size(buf);
 	msg.msg_name = dst;
 	msg.msg_namelen = sizeof(*dst);
 	msg.msg_iov = iov;

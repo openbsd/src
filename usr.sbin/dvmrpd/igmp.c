@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: igmp.c,v 1.2 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -40,7 +40,7 @@ send_igmp_query(struct iface *iface, struct group *group)
 {
 	struct igmp_hdr		 igmp_hdr;
 	struct sockaddr_in	 dst;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	int			 ret = 0;
 
 	log_debug("send_igmp_query: interface %s", iface->name);
@@ -48,7 +48,7 @@ send_igmp_query(struct iface *iface, struct group *group)
 	if (iface->passive)
 		return (0);
 
-	if ((buf = buf_open(iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_igmp_query");
 
 	/* IGMP header */
@@ -77,7 +77,7 @@ send_igmp_query(struct iface *iface, struct group *group)
 	/* update chksum */
 	igmp_hdr.chksum = in_cksum(&igmp_hdr, sizeof(igmp_hdr));
 
-	buf_add(buf, &igmp_hdr, sizeof(igmp_hdr));
+	ibuf_add(buf, &igmp_hdr, sizeof(igmp_hdr));
 
 	/* set destination address */
 	dst.sin_family = AF_INET;
@@ -85,7 +85,7 @@ send_igmp_query(struct iface *iface, struct group *group)
 	inet_aton(AllSystems, &dst.sin_addr);
 
 	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 }
 

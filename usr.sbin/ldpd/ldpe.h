@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.9 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.10 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -54,7 +54,7 @@ struct nbr {
 	struct in_addr		 addr;
 	struct in_addr		 id;
 
-	struct buf_read		*rbuf;
+	struct ibuf_read	*rbuf;
 	struct iface		*iface;
 
 	time_t			 uptime;
@@ -89,7 +89,7 @@ int	 recv_keepalive(struct nbr *, char *, u_int16_t);
 
 /* notification.c */
 void	 send_notification_nbr(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
-struct buf	*send_notification(u_int32_t, struct iface *, u_int32_t,
+struct ibuf	*send_notification(u_int32_t, struct iface *, u_int32_t,
 	    u_int32_t);
 int	 recv_notification(struct nbr *, char *, u_int16_t);
 
@@ -189,8 +189,8 @@ void			 nbr_mapping_list_clr(struct nbr *,
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
 
 /* packet.c */
-int	 gen_ldp_hdr(struct buf *, struct iface *, u_int16_t);
-int	 gen_msg_tlv(struct buf *, u_int32_t, u_int16_t);
+int	 gen_ldp_hdr(struct ibuf *, struct iface *, u_int16_t);
+int	 gen_msg_tlv(struct ibuf *, u_int32_t, u_int16_t);
 int	 send_packet(struct iface *, void *, size_t, struct sockaddr_in *);
 void	 disc_recv_packet(int, short, void *);
 void	 session_accept(int, short, void *);

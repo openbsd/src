@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.36 2010/02/18 14:02:16 jsg Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.37 2010/05/26 13:56:08 nicm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -176,7 +176,7 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		return;
 	}
 
-	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
+	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("tcp_host_up: cannot create dynamic buffer");
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
 	    &cte->tv_start, &cte->table->conf.timeout, cte);
@@ -211,7 +211,7 @@ tcp_send_req(int s, short event, void *arg)
 		len -= bs;
 	} while (len > 0);
 
-	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
+	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("tcp_send_req: cannot create dynamic buffer");
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
 	    &cte->tv_start, &cte->table->conf.timeout, cte);
@@ -231,7 +231,7 @@ tcp_read_buf(int s, short event, void *arg)
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
-		buf_free(cte->buf);
+		ibuf_free(cte->buf);
 		close(s);
 		hce_notify_done(cte->host, HCE_TCP_READ_TIMEOUT);
 		return;
@@ -244,7 +244,7 @@ tcp_read_buf(int s, short event, void *arg)
 		if (errno == EAGAIN || errno == EINTR)
 			goto retry;
 		cte->host->up = HOST_DOWN;
-		buf_free(cte->buf);
+		ibuf_free(cte->buf);
 		close(cte->s);
 		hce_notify_done(cte->host, HCE_TCP_READ_FAIL);
 		return;
@@ -252,18 +252,18 @@ tcp_read_buf(int s, short event, void *arg)
 		cte->host->up = HOST_DOWN;
 		(void)cte->validate_close(cte);
 		close(cte->s);
-		buf_free(cte->buf);
+		ibuf_free(cte->buf);
 		hce_notify_done(cte->host, cte->host->he);
 		return;
 	default:
-		if (buf_add(cte->buf, rbuf, br) == -1)
+		if (ibuf_add(cte->buf, rbuf, br) == -1)
 			fatal("tcp_read_buf: buf_add error");
 		if (cte->validate_read != NULL) {
 			if (cte->validate_read(cte) != 0)
 				goto retry;
 
 			close(cte->s);
-			buf_free(cte->buf);
+			ibuf_free(cte->buf);
 			hce_notify_done(cte->host, cte->host->he);
 			return;
 		}
@@ -282,7 +282,7 @@ check_send_expect(struct ctl_tcp_event *cte)
 	/*
 	 * ensure string is nul-terminated.
 	 */
-	b = buf_reserve(cte->buf, 1);
+	b = ibuf_reserve(cte->buf, 1);
 	if (b == NULL)
 		fatal("out of memory");
 	*b = '\0';
@@ -314,7 +314,7 @@ check_http_code(struct ctl_tcp_event *cte)
 	/*
 	 * ensure string is nul-terminated.
 	 */
-	b = buf_reserve(cte->buf, 1);
+	b = ibuf_reserve(cte->buf, 1);
 	if (b == NULL)
 		fatal("out of memory");
 	*b = '\0';
@@ -366,7 +366,7 @@ check_http_digest(struct ctl_tcp_event *cte)
 	/*
 	 * ensure string is nul-terminated.
 	 */
-	b = buf_reserve(cte->buf, 1);
+	b = ibuf_reserve(cte->buf, 1);
 	if (b == NULL)
 		fatal("out of memory");
 	*b = '\0';

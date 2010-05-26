@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.2 2009/02/10 16:41:39 stevesk Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.3 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -121,7 +121,7 @@ dns_dispatch_imsg(void)
 	int			 n, cnt;
 	char			*name;
 	struct ntp_addr		*h, *hn;
-	struct buf		*buf;
+	struct ibuf		*buf;
 
 	if ((n = imsg_read(ibuf_dns)) == -1)
 		return (-1);

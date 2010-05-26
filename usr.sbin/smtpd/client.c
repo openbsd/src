@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.26 2010/01/02 16:41:19 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.27 2010/05/26 13:56:08 nicm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -48,7 +48,7 @@ int		 client_use_extensions(struct smtp_client *);
 void		 client_status(struct smtp_client *, char *, ...);
 int		 client_getln(struct smtp_client *, int);
 void		 client_putln(struct smtp_client *, char *, ...);
-struct buf	*client_content_read(FILE *, size_t);
+struct ibuf	*client_content_read(FILE *, size_t);
 int		 client_poll(struct smtp_client *);
 void		 client_quit(struct smtp_client *);
 
@@ -58,12 +58,12 @@ int		 client_socket_write(struct smtp_client *);
 #ifndef CLIENT_NO_SSL
 int		 client_ssl_connect(struct smtp_client *);
 SSL		*ssl_client_init(int, char *, size_t, char *, size_t);
-int		 ssl_buf_read(SSL *, struct buf_read *);
+int		 ssl_buf_read(SSL *, struct ibuf_read *);
 int		 ssl_buf_write(SSL *, struct msgbuf *);
 #endif
 
-char		*buf_getln(struct buf_read *);
-int		 buf_read(int, struct buf_read *);
+char		*buf_getln(struct ibuf_read *);
+int		 buf_read(int, struct ibuf_read *);
 
 void		 log_debug(const char *, ...);	/* XXX */
 void		 fatal(const char *);	/* XXX */
@@ -265,7 +265,7 @@ client_printf(struct smtp_client *sp, char *fmt, ...)
 	int	 len;
 
 	if (sp->head == NULL)
-		sp->head = buf_dynamic(0, SIZE_T_MAX);
+		sp->head = ibuf_dynamic(0, SIZE_T_MAX);
 	if (sp->head == NULL)
 		fatal(NULL);
 
@@ -282,11 +282,11 @@ client_printf(struct smtp_client *sp, char *fmt, ...)
 	/* split into lines, deal with dot escaping etc. */
 	tmp = p;
 	while ((ln = strsep(&tmp, "\n"))) {
-		if (*ln == '.' && buf_add(sp->head, ".", 1))
+		if (*ln == '.' && ibuf_add(sp->head, ".", 1))
 			fatal(NULL);
-		if (buf_add(sp->head, ln, strlen(ln)))
+		if (ibuf_add(sp->head, ln, strlen(ln)))
 			fatal(NULL);
-		if (buf_add(sp->head, "\r\n", 2))
+		if (ibuf_add(sp->head, "\r\n", 2))
 			fatal(NULL);
 	}
 
@@ -475,7 +475,7 @@ client_write(struct smtp_client *sp)
 	int			 ret;
 
 	if (sp->content) {
-		buf_close(&sp->w, sp->content);
+		ibuf_close(&sp->w, sp->content);
 		sp->content = client_content_read(sp->body, sp->sndlowat);
 	} else {
 		while (sp->cmdi < sp->cmdw) {
@@ -579,9 +579,9 @@ client_close(struct smtp_client *sp)
 	free(sp->auth.cert);
 	free(sp->auth.key);
 	if (sp->head)
-		buf_free(sp->head);
+		ibuf_free(sp->head);
 	if (sp->content)
-		buf_free(sp->content);
+		ibuf_free(sp->content);
 	msgbuf_clear(&sp->w);
 	while ((cmd = TAILQ_FIRST(&sp->cmdsendq))) {
 		TAILQ_REMOVE(&sp->cmdsendq, cmd, entry);
@@ -745,7 +745,7 @@ done:
 void
 client_putln(struct smtp_client *sp, char *fmt, ...)
 {
-	struct buf	*cmd = NULL;
+	struct ibuf	*cmd = NULL;
 	char		*p = NULL;
 	int		 len;
 	va_list		 ap;
@@ -757,13 +757,13 @@ client_putln(struct smtp_client *sp, char *fmt, ...)
 
 	fprintf(sp->verbose, ">>> %s\n", p);
 
-	if ((cmd = buf_open(len + 2)) == NULL)
+	if ((cmd = ibuf_open(len + 2)) == NULL)
 		fatal(NULL);
-	if (buf_add(cmd, p, len))
+	if (ibuf_add(cmd, p, len))
 		fatal(NULL);
-	if (buf_add(cmd, "\r\n", 2))
+	if (ibuf_add(cmd, "\r\n", 2))
 		fatal(NULL);
-	buf_close(&sp->w, cmd);
+	ibuf_close(&sp->w, cmd);
 
 	free(p);
 }
@@ -771,32 +771,32 @@ client_putln(struct smtp_client *sp, char *fmt, ...)
 /*
  * Put chunk of message content to output buffer.
  */
-struct buf *
+struct ibuf *
 client_content_read(FILE *fp, size_t max)
 {
-	struct buf	*b;
+	struct ibuf	*b;
 	char		*ln;
 	size_t		 len;
 
-	if ((b = buf_dynamic(0, SIZE_T_MAX)) == NULL)
+	if ((b = ibuf_dynamic(0, SIZE_T_MAX)) == NULL)
 		fatal(NULL);
 
-	while (buf_size(b) < max) {
+	while (ibuf_size(b) < max) {
 		if ((ln = fgetln(fp, &len)) == NULL)
 			break;
 		if (ln[len - 1] == '\n')
 			len--;
-		if (*ln == '.' && buf_add(b, ".", 1))
+		if (*ln == '.' && ibuf_add(b, ".", 1))
 			fatal(NULL);
-		if (buf_add(b, ln, len))
+		if (ibuf_add(b, ln, len))
 			fatal(NULL);
-		if (buf_add(b, "\r\n", 2))
+		if (ibuf_add(b, "\r\n", 2))
 			fatal(NULL);
 	}
 	if (ferror(fp))
 		fatal("client_body: fgetln");
-	if (feof(fp) && buf_size(b) == 0) {
-		buf_free(b);
+	if (feof(fp) && ibuf_size(b) == 0) {
+		ibuf_free(b);
 		b = NULL;
 	}
 
@@ -890,7 +890,7 @@ client_socket_write(struct smtp_client *sp)
 	}
 #endif
 	if (sp->ssl == NULL) {
-		if (buf_write(&sp->w) < 0) {
+		if (ibuf_write(&sp->w) < 0) {
 			client_status(sp, "130 buf_write error");
 			return (CLIENT_DONE);
 		}
@@ -903,7 +903,7 @@ client_socket_write(struct smtp_client *sp)
  * Read a full line from the read buffer.
  */
 char *
-buf_getln(struct buf_read *r)
+buf_getln(struct ibuf_read *r)
 {
 	char	*buf = r->buf, *line;
 	size_t	 bufsz = r->wpos, i;
@@ -935,7 +935,7 @@ buf_getln(struct buf_read *r)
  * I/O routine for reading UNIX socket.
  */
 int
-buf_read(int fd, struct buf_read *r)
+buf_read(int fd, struct ibuf_read *r)
 {
 	char		*buf = r->buf + r->wpos;
 	size_t		 bufsz = sizeof(r->buf) - r->wpos;

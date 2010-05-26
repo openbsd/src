@@ -1,4 +1,4 @@
-/*	$OpenBSD: prune.c,v 1.2 2009/03/14 15:32:55 michele Exp $ */
+/*	$OpenBSD: prune.c,v 1.3 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -37,7 +37,7 @@ int
 send_prune(struct nbr *nbr, struct prune *p)
 {
 	struct sockaddr_in	 dst;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	struct dvmrp_hdr	*dvmrp_hdr;
 	struct prune_hdr	 prune;
 	int			 ret = 0;
@@ -54,7 +54,7 @@ send_prune(struct nbr *nbr, struct prune *p)
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr = nbr->addr;
 
-	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_prune");
 
 	/* DVMRP header */
@@ -68,19 +68,19 @@ send_prune(struct nbr *nbr, struct prune *p)
 	prune.lifetime = htonl(MAX_PRUNE_LIFETIME);
 	prune.src_netmask = p->netmask.s_addr;
 
-	buf_add(buf, &prune, sizeof(prune));
+	ibuf_add(buf, &prune, sizeof(prune));
 
 	/* update chksum */
-	dvmrp_hdr = buf_seek(buf, 0, sizeof(dvmrp_hdr));
+	dvmrp_hdr = ibuf_seek(buf, 0, sizeof(dvmrp_hdr));
 	dvmrp_hdr->chksum = in_cksum(buf->buf, buf->wpos);
 
 	ret = send_packet(nbr->iface, buf->buf, buf->wpos, &dst);
-	buf_free(buf);
+	ibuf_free(buf);
 
 	return (ret);
 fail:
 	log_warn("send_prune");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 

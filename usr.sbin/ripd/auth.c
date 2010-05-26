@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.10 2009/09/26 11:12:50 michele Exp $ */
+/*	$OpenBSD: auth.c,v 1.11 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -31,7 +31,7 @@
 
 u_int32_t	 auth_calc_modulator(struct auth_md *md);
 struct auth_md	*md_list_find(struct auth_md_head *, u_int8_t);
-void		 auth_trailer_header_gen(struct buf *);
+void		 auth_trailer_header_gen(struct ibuf *);
 u_int32_t	 auth_get_seq_num(struct auth_md*);
 
 u_int32_t
@@ -58,13 +58,13 @@ auth_get_seq_num(struct auth_md *md)
 }
 
 void
-auth_trailer_header_gen(struct buf *buf)
+auth_trailer_header_gen(struct ibuf *buf)
 {
 	u_int16_t	 field1 = 0xFFFF;
 	u_int16_t	 field2 = htons(0x01);
 
-	buf_add(buf, &field1, sizeof(field1));
-	buf_add(buf, &field2, sizeof(field2));
+	ibuf_add(buf, &field1, sizeof(field1));
+	ibuf_add(buf, &field2, sizeof(field2));
 }
 
 /* XXX add the support for key lifetime and rollover */
@@ -184,7 +184,7 @@ auth_validate(u_int8_t **buf, u_int16_t *len, struct iface *iface,
 }
 
 int
-auth_gen(struct buf *buf, struct iface *iface)
+auth_gen(struct ibuf *buf, struct iface *iface)
 {
 	struct rip_auth		 auth_head;
 	struct md5_auth		 a;
@@ -193,11 +193,11 @@ auth_gen(struct buf *buf, struct iface *iface)
 	auth_head.auth_fixed = AUTH;
 	auth_head.auth_type = htons(iface->auth_type);
 
-	buf_add(buf, &auth_head, sizeof(auth_head));
+	ibuf_add(buf, &auth_head, sizeof(auth_head));
 
 	switch (iface->auth_type) {
 	case AUTH_SIMPLE:
-		buf_add(buf, &iface->auth_key, MAX_SIMPLE_AUTH_LEN);
+		ibuf_add(buf, &iface->auth_key, MAX_SIMPLE_AUTH_LEN);
 		break;
 	case AUTH_CRYPT:
 		if ((md = md_list_find(&iface->auth_md_list,
@@ -211,7 +211,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 		a.auth_seq = htonl(auth_get_seq_num(md));
 		a.auth_length = MD5_DIGEST_LENGTH + AUTH_TRLR_HDR_LEN;
 
-		buf_add(buf, &a, sizeof(a));
+		ibuf_add(buf, &a, sizeof(a));
 		break;
 	default:
 		log_debug("auth_gen: unknown auth type, interface %s",
@@ -223,7 +223,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 }
 
 int
-auth_add_trailer(struct buf *buf, struct iface *iface)
+auth_add_trailer(struct ibuf *buf, struct iface *iface)
 {
 	MD5_CTX			 hash;
 	u_int8_t		 digest[MD5_DIGEST_LENGTH];
@@ -234,7 +234,7 @@ auth_add_trailer(struct buf *buf, struct iface *iface)
 	pos = sizeof(struct rip_hdr) + sizeof(struct rip_auth);
 
 	/* add offset to header */
-	a = buf_seek(buf, pos, sizeof(*a));
+	a = ibuf_seek(buf, pos, sizeof(*a));
 	a->auth_offset = htons(buf->wpos);
 
 	/* insert plaintext key */
@@ -255,7 +255,7 @@ auth_add_trailer(struct buf *buf, struct iface *iface)
 	MD5Update(&hash, digest, MD5_DIGEST_LENGTH);
 	MD5Final(digest, &hash);
 
-	return (buf_add(buf, digest, MD5_DIGEST_LENGTH));
+	return (ibuf_add(buf, digest, MD5_DIGEST_LENGTH));
 }
 
 /* md list */

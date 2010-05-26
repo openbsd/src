@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.8 2009/09/22 16:38:31 michele Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.9 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -169,7 +169,7 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
-	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
+	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
 		fatal("dvmrpe");
 
 	/* start interfaces */

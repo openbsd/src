@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.11 2010/05/14 13:49:09 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.12 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -43,12 +43,12 @@ int		 ldp_hdr_sanity_check(struct ldp_hdr *, u_int16_t,
 		    const struct iface *);
 struct iface	*find_iface(struct ldpd_conf *, unsigned int, struct in_addr);
 struct iface	*session_find_iface(struct ldpd_conf *, struct in_addr);
-ssize_t		 session_get_pdu(struct buf_read *, char **);
+ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 
 static int	 msgcnt = 0;
 
 int
-gen_ldp_hdr(struct buf *buf, struct iface *iface, u_int16_t size)
+gen_ldp_hdr(struct ibuf *buf, struct iface *iface, u_int16_t size)
 {
 	struct ldp_hdr	ldp_hdr;
 
@@ -62,11 +62,11 @@ gen_ldp_hdr(struct buf *buf, struct iface *iface, u_int16_t size)
 	ldp_hdr.lsr_id = ldpe_router_id();
 	ldp_hdr.lspace_id = iface->lspace_id;
 
-	return (buf_add(buf, &ldp_hdr, LDP_HDR_SIZE));
+	return (ibuf_add(buf, &ldp_hdr, LDP_HDR_SIZE));
 }
 
 int
-gen_msg_tlv(struct buf *buf, u_int32_t type, u_int16_t size)
+gen_msg_tlv(struct ibuf *buf, u_int32_t type, u_int16_t size)
 {
 	struct ldp_msg	msg;
 
@@ -78,7 +78,7 @@ gen_msg_tlv(struct buf *buf, u_int32_t type, u_int16_t size)
 	msg.length = htons(size);
 	msg.msgid = htonl(++msgcnt);
 
-	return (buf_add(buf, &msg, sizeof(msg)));
+	return (ibuf_add(buf, &msg, sizeof(msg)));
 }
 
 /* send and receive packets */
@@ -131,7 +131,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	/* setup buffer */
 	bzero(&msg, sizeof(msg));
 	iov.iov_base = buf = pkt_ptr;
-	iov.iov_len = READ_BUF_SIZE;
+	iov.iov_len = IBUF_READ_SIZE;
 	msg.msg_name = &src;
 	msg.msg_namelen = sizeof(src);
 	msg.msg_iov = &iov;
@@ -278,12 +278,12 @@ session_accept(int fd, short event, void *bula)
 
 	nbr = nbr_find_ip(iface, src.sin_addr.s_addr);
 	if (nbr == NULL) {
-		struct buf	*buf;
+		struct ibuf	*buf;
 		/* If there is no neighbor matching there is no
 		   Hello adjacency: try to send notification */
 		buf = send_notification(S_NO_HELLO, iface, 0, 0);
 		write(newfd, buf->buf, buf->wpos);
-		buf_free(buf);
+		ibuf_free(buf);
 		close(newfd);
 		return;
 	}
@@ -489,7 +489,7 @@ session_find_iface(struct ldpd_conf *xconf, struct in_addr src)
 }
 
 ssize_t
-session_get_pdu(struct buf_read *r, char **b)
+session_get_pdu(struct ibuf_read *r, char **b)
 {
 	struct ldp_hdr	l;
 	size_t		av, dlen, left;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.43 2010/04/21 18:54:43 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.44 2010/05/26 13:56:08 nicm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -341,7 +341,7 @@ void
 mda_store(struct mda_session *s)
 {
 	char		*p;
-	struct buf	*buf;
+	struct ibuf	*buf;
 	int		 len;
 
 	if (s->msg.sender.user[0] && s->msg.sender.domain[0])
@@ -357,11 +357,11 @@ mda_store(struct mda_session *s)
 		fatal("mda_store: asprintf");
 
 	session_socket_blockmode(s->w.fd, BM_NONBLOCK);
-	if ((buf = buf_open(len)) == NULL)
+	if ((buf = ibuf_open(len)) == NULL)
 		fatal(NULL);
-	if (buf_add(buf, p, len) < 0)
+	if (ibuf_add(buf, p, len) < 0)
 		fatal(NULL);
-	buf_close(&s->w, buf);
+	ibuf_close(&s->w, buf);
 	event_set(&s->ev, s->w.fd, EV_WRITE, mda_store_event, s);
 	event_add(&s->ev, NULL);
 	free(p);
@@ -372,11 +372,11 @@ mda_store_event(int fd, short event, void *p)
 {
 	char			 tmp[16384];
 	struct mda_session	*s = p;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	size_t			 len;
 
 	if (s->w.queued == 0) {
-		if ((buf = buf_dynamic(0, sizeof tmp)) == NULL)
+		if ((buf = ibuf_dynamic(0, sizeof tmp)) == NULL)
 			fatal(NULL);
 		len = fread(tmp, 1, sizeof tmp, s->datafp);
 		if (ferror(s->datafp))
@@ -386,12 +386,12 @@ mda_store_event(int fd, short event, void *p)
 			s->w.fd = -1;
 			return;
 		}
-		if (buf_add(buf, tmp, len) < 0)
+		if (ibuf_add(buf, tmp, len) < 0)
 			fatal(NULL);
-		buf_close(&s->w, buf);
+		ibuf_close(&s->w, buf);
 	}
 
-	if (buf_write(&s->w) < 0) {
+	if (ibuf_write(&s->w) < 0) {
 		close(s->w.fd);
 		s->w.fd = -1;
 		return;

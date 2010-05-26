@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.12 2009/06/06 08:20:55 eric Exp $ */
+/*	$OpenBSD: ripe.c,v 1.13 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -184,7 +184,7 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
-	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
+	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
 		fatal("ripe");
 
 	/* start interfaces */

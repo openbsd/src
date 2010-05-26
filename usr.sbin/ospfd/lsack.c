@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.18 2009/01/31 08:55:00 claudio Exp $ */
+/*	$OpenBSD: lsack.c,v 1.19 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -38,11 +38,11 @@ int
 send_ls_ack(struct iface *iface, struct in_addr addr, void *data, size_t len)
 {
 	struct sockaddr_in	 dst;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	int			 ret;
 
-	/* XXX READ_BUF_SIZE */
-	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
+	/* XXX IBUF_READ_SIZE */
+	if ((buf = ibuf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
 		fatal("send_ls_ack");
 
 	dst.sin_family = AF_INET;
@@ -54,7 +54,7 @@ send_ls_ack(struct iface *iface, struct in_addr addr, void *data, size_t len)
 		goto fail;
 
 	/* LS ack(s) */
-	if (buf_add(buf, data, len))
+	if (ibuf_add(buf, data, len))
 		goto fail;
 
 	/* update authentication and calculate checksum */
@@ -63,11 +63,11 @@ send_ls_ack(struct iface *iface, struct in_addr addr, void *data, size_t len)
 
 	ret = send_packet(iface, buf, &dst);
 
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 fail:
 	log_warn("send_ls_ack");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.18 2010/05/13 22:51:56 sthen Exp $ */
+/*	$OpenBSD: hello.c,v 1.19 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -41,7 +41,7 @@ send_hello(struct iface *iface)
 	struct sockaddr_in	 dst;
 	struct hello_hdr	 hello;
 	struct nbr		*nbr;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	int			 ret;
 
 	dst.sin_family = AF_INET;
@@ -64,8 +64,8 @@ send_hello(struct iface *iface)
 		fatalx("send_hello: unknown interface type");
 	}
 
-	/* XXX READ_BUF_SIZE */
-	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
+	/* XXX IBUF_READ_SIZE */
+	if ((buf = ibuf_dynamic(PKG_DEF_SIZE, IBUF_READ_SIZE)) == NULL)
 		fatal("send_hello");
 
 	/* OSPF header */
@@ -90,13 +90,13 @@ send_hello(struct iface *iface)
 	} else
 		hello.bd_rtr = 0;
 
-	if (buf_add(buf, &hello, sizeof(hello)))
+	if (ibuf_add(buf, &hello, sizeof(hello)))
 		goto fail;
 
 	/* active neighbor(s) */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if ((nbr->state >= NBR_STA_INIT) && (nbr != iface->self))
-			if (buf_add(buf, &nbr->id, sizeof(nbr->id)))
+			if (ibuf_add(buf, &nbr->id, sizeof(nbr->id)))
 				goto fail;
 	}
 
@@ -105,11 +105,11 @@ send_hello(struct iface *iface)
 		goto fail;
 
 	ret = send_packet(iface, buf, &dst);
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 fail:
 	log_warn("send_hello");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 

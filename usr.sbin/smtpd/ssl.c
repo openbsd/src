@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.24 2010/05/19 20:57:10 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.25 2010/05/26 13:56:08 nicm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -52,7 +52,7 @@ void	 ssl_connect(int, short, void *);
 
 SSL	*ssl_client_init(int, char *, size_t, char *, size_t);
 
-int	 ssl_buf_read(SSL *, struct buf_read *);
+int	 ssl_buf_read(SSL *, struct ibuf_read *);
 int	 ssl_buf_write(SSL *, struct msgbuf *);
 
 DH	*get_dh512(void);
@@ -151,8 +151,8 @@ ssl_read(int fd, short event, void *p)
 	int			 ssl_err;
 	short			 what;
 	size_t			 len;
-	char			 rbuf[READ_BUF_SIZE];
-	int			 howmuch = READ_BUF_SIZE;
+	char			 rbuf[IBUF_READ_SIZE];
+	int			 howmuch = IBUF_READ_SIZE;
 
 	what = EVBUFFER_READ;
 	ret = ssl_err = 0;
@@ -653,7 +653,7 @@ ssl_session_destroy(struct session *s)
 }
 
 int
-ssl_buf_read(SSL *s, struct buf_read *r)
+ssl_buf_read(SSL *s, struct ibuf_read *r)
 {
 	char	*buf = r->buf + r->wpos;
 	ssize_t	 bufsz = sizeof(r->buf) - r->wpos;
@@ -673,7 +673,7 @@ ssl_buf_read(SSL *s, struct buf_read *r)
 int
 ssl_buf_write(SSL *s, struct msgbuf *msgbuf)
 {
-	struct buf	*buf;
+	struct ibuf	*buf;
 	int		 ret;
 	
 	buf = TAILQ_FIRST(&msgbuf->bufs);

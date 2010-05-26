@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.3 2010/04/01 18:24:04 zinovik Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.4 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -128,7 +128,7 @@ dns_dispatch_imsg(int fd, short event, void *p)
 	int			 n, cnt;
 	char			*name;
 	struct ypldap_addr	*h, *hn;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	struct env		*env = p;
 	struct imsgev		*iev = env->sc_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;

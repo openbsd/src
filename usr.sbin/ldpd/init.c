@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2010/02/25 17:40:46 claudio Exp $ */
+/*	$OpenBSD: init.c,v 1.5 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -37,12 +37,12 @@
 #include "log.h"
 #include "ldpe.h"
 
-int	gen_init_prms_tlv(struct buf *, struct nbr *, u_int16_t);
+int	gen_init_prms_tlv(struct ibuf *, struct nbr *, u_int16_t);
 
 void
 send_init(struct nbr *nbr)
 {
-	struct buf		*buf;
+	struct ibuf		*buf;
 	u_int16_t		 size;
 
 	if (nbr->iface->passive)
@@ -50,7 +50,7 @@ send_init(struct nbr *nbr)
 
 	log_debug("send_init: neighbor ID %s", inet_ntoa(nbr->id));
 
-	if ((buf = buf_open(LDP_MAX_LEN)) == NULL)
+	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_init");
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) + SESS_PRMS_SIZE;
@@ -105,7 +105,7 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 int
-gen_init_prms_tlv(struct buf *buf, struct nbr *nbr, u_int16_t size)
+gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr, u_int16_t size)
 {
 	struct sess_prms_tlv	parms;
 
@@ -124,5 +124,5 @@ gen_init_prms_tlv(struct buf *buf, struct nbr *nbr, u_int16_t size)
 	/* XXX: nbr lspace */
 	parms.lspace_id = 0;
 
-	return (buf_add(buf, &parms, SESS_PRMS_SIZE));
+	return (ibuf_add(buf, &parms, SESS_PRMS_SIZE));
 }

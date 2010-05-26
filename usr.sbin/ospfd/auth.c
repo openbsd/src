@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.17 2009/06/06 07:31:26 eric Exp $ */
+/*	$OpenBSD: auth.c,v 1.18 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -137,29 +137,29 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 }
 
 int
-auth_gen(struct buf *buf, struct iface *iface)
+auth_gen(struct ibuf *buf, struct iface *iface)
 {
 	MD5_CTX		 hash;
 	u_int8_t	 digest[MD5_DIGEST_LENGTH];
 	struct ospf_hdr	*ospf_hdr;
 	struct auth_md	*md;
 
-	if ((ospf_hdr = buf_seek(buf, 0, sizeof(ospf_hdr))) == NULL)
+	if ((ospf_hdr = ibuf_seek(buf, 0, sizeof(ospf_hdr))) == NULL)
 		fatalx("auth_gen: buf_seek failed");
 
 	/* update length */
-	if (buf_size(buf) > USHRT_MAX)
+	if (ibuf_size(buf) > USHRT_MAX)
 		fatalx("auth_gen: resulting ospf packet too big");
-	ospf_hdr->len = htons(buf_size(buf));
+	ospf_hdr->len = htons(ibuf_size(buf));
 	/* clear auth_key field */
 	bzero(ospf_hdr->auth_key.simple, sizeof(ospf_hdr->auth_key.simple));
 
 	switch (iface->auth_type) {
 	case AUTH_NONE:
-		ospf_hdr->chksum = in_cksum(buf->buf, buf_size(buf));
+		ospf_hdr->chksum = in_cksum(buf->buf, ibuf_size(buf));
 		break;
 	case AUTH_SIMPLE:
-		ospf_hdr->chksum = in_cksum(buf->buf, buf_size(buf));
+		ospf_hdr->chksum = in_cksum(buf->buf, ibuf_size(buf));
 
 		strncpy(ospf_hdr->auth_key.simple, iface->auth_key,
 		    sizeof(ospf_hdr->auth_key.simple));
@@ -184,11 +184,11 @@ auth_gen(struct buf *buf, struct iface *iface)
 
 		/* calculate MD5 digest */
 		MD5Init(&hash);
-		MD5Update(&hash, buf->buf, buf_size(buf));
+		MD5Update(&hash, buf->buf, ibuf_size(buf));
 		MD5Update(&hash, digest, MD5_DIGEST_LENGTH);
 		MD5Final(digest, &hash);
 
-		return (buf_add(buf, digest, MD5_DIGEST_LENGTH));
+		return (ibuf_add(buf, digest, MD5_DIGEST_LENGTH));
 	default:
 		log_debug("auth_gen: unknown auth type, interface %s",
 		    iface->name);

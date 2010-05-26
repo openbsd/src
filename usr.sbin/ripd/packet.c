@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.10 2008/03/24 16:11:05 deraadt Exp $ */
+/*	$OpenBSD: packet.c,v 1.11 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -43,7 +43,7 @@ int		 rip_hdr_sanity_check(struct rip_hdr *);
 struct iface	*find_iface(struct ripd_conf *, unsigned int, struct in_addr);
 
 int
-gen_rip_hdr(struct buf *buf, u_int8_t command)
+gen_rip_hdr(struct ibuf *buf, u_int8_t command)
 {
 	struct rip_hdr	rip_hdr;
 
@@ -51,7 +51,7 @@ gen_rip_hdr(struct buf *buf, u_int8_t command)
 	rip_hdr.version = RIP_VERSION;
 	rip_hdr.command = command;
 
-	return (buf_add(buf, &rip_hdr, sizeof(rip_hdr)));
+	return (ibuf_add(buf, &rip_hdr, sizeof(rip_hdr)));
 }
 
 /* send and receive packets */
@@ -107,7 +107,7 @@ recv_packet(int fd, short event, void *bula)
 	bzero(&msg, sizeof(msg));
 
 	iov.iov_base = buf;
-	iov.iov_len = READ_BUF_SIZE;
+	iov.iov_len = IBUF_READ_SIZE;
 	msg.msg_name = &src;
 	msg.msg_namelen = sizeof(src);
 	msg.msg_iov = &iov;

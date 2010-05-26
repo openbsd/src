@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.9 2008/12/17 14:19:39 michele Exp $ */
+/*	$OpenBSD: ripe.h,v 1.10 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -76,7 +76,7 @@ struct nbr {
 /* packet.c */
 int	 send_packet(struct iface *, void *, size_t, struct sockaddr_in *);
 void	 recv_packet(int, short, void *);
-int	 gen_rip_hdr(struct buf *, u_int8_t);
+int	 gen_rip_hdr(struct ibuf *, u_int8_t);
 
 /* interface.c */
 void			 if_init(struct ripd_conf *, struct iface *);
@@ -120,8 +120,8 @@ void	 ripe_demote_iface(struct iface *, int);
 /* auth.c */
 int	 auth_validate(u_int8_t **, u_int16_t *, struct iface *, struct nbr *,
 	    struct nbr_failed *, u_int32_t *);
-int	 auth_gen(struct buf *, struct iface *);
-int	 auth_add_trailer(struct buf *, struct iface *);
+int	 auth_gen(struct ibuf *, struct iface *);
+int	 auth_add_trailer(struct ibuf *, struct iface *);
 int	 md_list_add(struct auth_md_head *, u_int8_t, char *);
 void	 md_list_copy(struct auth_md_head *, struct auth_md_head *);
 void	 md_list_clr(struct auth_md_head *);

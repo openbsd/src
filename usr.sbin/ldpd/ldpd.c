@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.7 2010/03/03 10:17:05 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.8 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -528,9 +528,9 @@ imsg_compose_event(struct imsgev *iev, u_int16_t type,
 }
 
 void
-evbuf_enqueue(struct evbuf *eb, struct buf *buf)
+evbuf_enqueue(struct evbuf *eb, struct ibuf *buf)
 {
-	buf_close(&eb->wbuf, buf);
+	ibuf_close(&eb->wbuf, buf);
 	evbuf_event_add(eb);
 }
 

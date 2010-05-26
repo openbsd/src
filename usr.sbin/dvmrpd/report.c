@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.7 2007/04/10 09:37:25 michele Exp $ */
+/*	$OpenBSD: report.c,v 1.8 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -41,7 +41,7 @@ int
 send_report(struct iface *iface, struct in_addr addr, void *data, int len)
 {
 	struct sockaddr_in	 dst;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	struct dvmrp_hdr	*dvmrp_hdr;
 	int			 ret = 0;
 
@@ -51,29 +51,29 @@ send_report(struct iface *iface, struct in_addr addr, void *data, int len)
 	if (iface->passive)
 		return (0);
 
-	if ((buf = buf_open(iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_report");
 
 	/* DVMRP header */
 	if (gen_dvmrp_hdr(buf, iface, DVMRP_CODE_REPORT))
 		goto fail;
 
-	buf_add(buf, data, len);
+	ibuf_add(buf, data, len);
 
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr.s_addr = addr.s_addr;
 
 	/* update chksum */
-	dvmrp_hdr = buf_seek(buf, 0, sizeof(dvmrp_hdr));
+	dvmrp_hdr = ibuf_seek(buf, 0, sizeof(dvmrp_hdr));
 	dvmrp_hdr->chksum = in_cksum(buf->buf, buf->wpos);
 
 	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 fail:
 	log_warn("send_report");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 
@@ -225,7 +225,7 @@ void
 rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 {
 	struct rr_entry		*le, *le2;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	struct iface		*iface;
 	struct in_addr		 addr;
 	u_int32_t		 netid, netmask;
@@ -243,7 +243,7 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 	}
 
 	while (!TAILQ_EMPTY(rr_list)) {
-		if ((buf = buf_open(iface->mtu - sizeof(struct ip))) == NULL)
+		if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL)
 			fatal("rr_list_send");
 
 		prefixlen = 0;
@@ -255,13 +255,13 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 				prefixlen = mask2prefixlen(netmask);
 				netmask = ntohl(netmask) << 8;
 				netmask = htonl(netmask);
-				buf_add(buf, &netmask, 3);
+				ibuf_add(buf, &netmask, 3);
 			}
 			netid_len = PREFIX_SIZE(prefixlen);
 
 			/* netid */
 			netid = le->re->net.s_addr;
-			buf_add(buf, &netid, netid_len);
+			ibuf_add(buf, &netid, netid_len);
 
 			/* metric */
 			if (iface->ifindex == le->re->ifindex)
@@ -283,13 +283,13 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 				metric = metric | LAST_MASK;
 			}
 
-			buf_add(buf, &metric, sizeof(metric));
+			ibuf_add(buf, &metric, sizeof(metric));
 
 			TAILQ_REMOVE(rr_list, le, entry);
 			rr_list_remove(le->re);
 			free(le);
 		}
 		send_report(iface, addr, buf->buf, buf->wpos);
-		buf_free(buf);
+		ibuf_free(buf);
 	}
 }

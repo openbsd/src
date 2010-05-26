@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.10 2008/04/13 00:22:17 djm Exp $ */
+/*	$OpenBSD: message.c,v 1.11 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -102,7 +102,7 @@ int
 send_triggered_update(struct iface *iface, struct rip_route *rr)
 {
 	struct sockaddr_in	 dst;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	u_int16_t		 afi, route_tag;
 	u_int32_t		 address, netmask, nexthop, metric;
 
@@ -115,7 +115,7 @@ send_triggered_update(struct iface *iface, struct rip_route *rr)
 	if (iface->passive)
 		return (0);
 
-	if ((buf = buf_open(iface->mtu - sizeof(struct ip) -
+	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip) -
 	    sizeof(struct udphdr))) == NULL)
 		fatal("send_triggered_update");
 
@@ -129,15 +129,15 @@ send_triggered_update(struct iface *iface, struct rip_route *rr)
 	nexthop = rr->nexthop.s_addr;
 	metric = htonl(rr->metric);
 
-	buf_add(buf, &afi, sizeof(afi));
-	buf_add(buf, &route_tag, sizeof(route_tag));
-	buf_add(buf, &address, sizeof(address));
-	buf_add(buf, &netmask, sizeof(netmask));
-	buf_add(buf, &nexthop, sizeof(nexthop));
-	buf_add(buf, &metric, sizeof(metric));
+	ibuf_add(buf, &afi, sizeof(afi));
+	ibuf_add(buf, &route_tag, sizeof(route_tag));
+	ibuf_add(buf, &address, sizeof(address));
+	ibuf_add(buf, &netmask, sizeof(netmask));
+	ibuf_add(buf, &nexthop, sizeof(nexthop));
+	ibuf_add(buf, &metric, sizeof(metric));
 
 	send_packet(iface, buf->buf, buf->wpos, &dst);
-	buf_free(buf);
+	ibuf_free(buf);
 
 	return (0);
 }
@@ -145,7 +145,7 @@ send_triggered_update(struct iface *iface, struct rip_route *rr)
 int
 send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 {
-	struct buf		*buf;
+	struct ibuf		*buf;
 	struct iface		*iface;
 	struct packet_entry	*entry;
 	struct sockaddr_in	 dst;
@@ -175,7 +175,7 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 		return (0);
 
 	while (!TAILQ_EMPTY(r_list)) {
-		if ((buf = buf_open(iface->mtu - sizeof(struct ip) -
+		if ((buf = ibuf_open(iface->mtu - sizeof(struct ip) -
 		    sizeof(struct udphdr))) == NULL)
 			fatal("send_request");
 
@@ -198,12 +198,12 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 			if (metric == htonl(INFINITY) && single_entry)
 				afi = AF_UNSPEC;
 
-			buf_add(buf, &afi, sizeof(afi));
-			buf_add(buf, &route_tag, sizeof(route_tag));
-			buf_add(buf, &address, sizeof(address));
-			buf_add(buf, &netmask, sizeof(netmask));
-			buf_add(buf, &nexthop, sizeof(nexthop));
-			buf_add(buf, &metric, sizeof(metric));
+			ibuf_add(buf, &afi, sizeof(afi));
+			ibuf_add(buf, &route_tag, sizeof(route_tag));
+			ibuf_add(buf, &address, sizeof(address));
+			ibuf_add(buf, &netmask, sizeof(netmask));
+			ibuf_add(buf, &nexthop, sizeof(nexthop));
+			ibuf_add(buf, &metric, sizeof(metric));
 
 			TAILQ_REMOVE(r_list, entry, entry);
 			delete_entry(entry->rr);
@@ -211,7 +211,7 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 			nentries++;
 		}
 		send_packet(iface, buf->buf, buf->wpos, &dst);
-		buf_free(buf);
+		ibuf_free(buf);
 	}
 
 	return (0);
@@ -220,7 +220,7 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 int
 send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 {
-	struct buf		*buf;
+	struct ibuf		*buf;
 	struct iface		*iface;
 	struct packet_entry	*entry;
 	struct sockaddr_in	 dst;
@@ -249,7 +249,7 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 		return (0);
 
 	while (!TAILQ_EMPTY(r_list)) {
-		if ((buf = buf_open(iface->mtu - sizeof(struct ip) -
+		if ((buf = ibuf_open(iface->mtu - sizeof(struct ip) -
 		    sizeof(struct udphdr))) == NULL)
 			fatal("send_response");
 
@@ -261,7 +261,7 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 
 		if (iface->auth_type != AUTH_NONE) {
 			if (auth_gen(buf, iface) == -1) {
-				buf_free(buf);
+				ibuf_free(buf);
 				return (-1);
 			}
 			nentries++;
@@ -287,12 +287,12 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 			    (iface->addr.s_addr & iface->mask.s_addr))
 				nexthop = INADDR_ANY;
 
-			buf_add(buf, &afi, sizeof(afi));
-			buf_add(buf, &route_tag, sizeof(route_tag));
-			buf_add(buf, &address, sizeof(address));
-			buf_add(buf, &netmask, sizeof(netmask));
-			buf_add(buf, &nexthop, sizeof(nexthop));
-			buf_add(buf, &metric, sizeof(metric));
+			ibuf_add(buf, &afi, sizeof(afi));
+			ibuf_add(buf, &route_tag, sizeof(route_tag));
+			ibuf_add(buf, &address, sizeof(address));
+			ibuf_add(buf, &netmask, sizeof(netmask));
+			ibuf_add(buf, &nexthop, sizeof(nexthop));
+			ibuf_add(buf, &metric, sizeof(metric));
 free:
 			TAILQ_REMOVE(r_list, entry, entry);
 			delete_entry(entry->rr);
@@ -304,7 +304,7 @@ free:
 			auth_add_trailer(buf, iface);
 
 		send_packet(iface, buf->buf, buf->wpos, &dst);
-		buf_free(buf);
+		ibuf_free(buf);
 	}
 
 	return (0);

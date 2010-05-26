@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.308 2010/05/03 13:09:38 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.309 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -65,8 +65,8 @@ void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
-int	session_capa_add(struct buf *, u_int8_t, u_int8_t);
-int	session_capa_add_mp(struct buf *, u_int8_t);
+int	session_capa_add(struct ibuf *, u_int8_t, u_int8_t);
+int	session_capa_add_mp(struct ibuf *, u_int8_t);
 struct bgp_msg	*session_newmsg(enum msg_type, u_int16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
@@ -626,7 +626,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			timer_stop(peer, Timer_IdleHold);
 
 			/* allocate read buffer */
-			peer->rbuf = calloc(1, sizeof(struct buf_read));
+			peer->rbuf = calloc(1, sizeof(struct ibuf_read));
 			if (peer->rbuf == NULL)
 				fatal(NULL);
 
@@ -1227,17 +1227,17 @@ session_capa_ann_none(struct peer *peer)
 }
 
 int
-session_capa_add(struct buf *opb, u_int8_t capa_code, u_int8_t capa_len)
+session_capa_add(struct ibuf *opb, u_int8_t capa_code, u_int8_t capa_len)
 {
 	int errs = 0;
 
-	errs += buf_add(opb, &capa_code, sizeof(capa_code));
-	errs += buf_add(opb, &capa_len, sizeof(capa_len));
+	errs += ibuf_add(opb, &capa_code, sizeof(capa_code));
+	errs += ibuf_add(opb, &capa_len, sizeof(capa_len));
 	return (errs);
 }
 
 int
-session_capa_add_mp(struct buf *buf, u_int8_t aid)
+session_capa_add_mp(struct ibuf *buf, u_int8_t aid)
 {
 	u_int8_t		 safi, pad = 0;
 	u_int16_t		 afi;
@@ -1246,9 +1246,9 @@ session_capa_add_mp(struct buf *buf, u_int8_t aid)
 	if (aid2afi(aid, &afi, &safi) == -1)
 		fatalx("session_capa_add_mp: bad afi/safi pair");
 	afi = htons(afi);
-	errs += buf_add(buf, &afi, sizeof(afi));
-	errs += buf_add(buf, &pad, sizeof(pad));
-	errs += buf_add(buf, &safi, sizeof(safi));
+	errs += ibuf_add(buf, &afi, sizeof(afi));
+	errs += ibuf_add(buf, &pad, sizeof(pad));
+	errs += ibuf_add(buf, &safi, sizeof(safi));
 
 	return (errs);
 }
@@ -1258,23 +1258,23 @@ session_newmsg(enum msg_type msgtype, u_int16_t len)
 {
 	struct bgp_msg		*msg;
 	struct msg_header	 hdr;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	int			 errs = 0;
 
 	memset(&hdr.marker, 0xff, sizeof(hdr.marker));
 	hdr.len = htons(len);
 	hdr.type = msgtype;
 
-	if ((buf = buf_open(len)) == NULL)
+	if ((buf = ibuf_open(len)) == NULL)
 		return (NULL);
 
-	errs += buf_add(buf, &hdr.marker, sizeof(hdr.marker));
-	errs += buf_add(buf, &hdr.len, sizeof(hdr.len));
-	errs += buf_add(buf, &hdr.type, sizeof(hdr.type));
+	errs += ibuf_add(buf, &hdr.marker, sizeof(hdr.marker));
+	errs += ibuf_add(buf, &hdr.len, sizeof(hdr.len));
+	errs += ibuf_add(buf, &hdr.type, sizeof(hdr.type));
 
 	if (errs > 0 ||
 	    (msg = calloc(1, sizeof(*msg))) == NULL) {
-		buf_free(buf);
+		ibuf_free(buf);
 		return (NULL);
 	}
 
@@ -1300,7 +1300,7 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p);
 	}
 
-	buf_close(&p->wbuf, msg->buf);
+	ibuf_close(&p->wbuf, msg->buf);
 	free(msg);
 	return (0);
 }
@@ -1309,14 +1309,14 @@ void
 session_open(struct peer *p)
 {
 	struct bgp_msg		*buf;
-	struct buf		*opb;
+	struct ibuf		*opb;
 	struct msg_open		 msg;
 	u_int16_t		 len;
 	u_int8_t		 i, op_type, optparamlen = 0;
 	u_int			 errs = 0;
 
 
-	if ((opb = buf_dynamic(0, UCHAR_MAX - sizeof(op_type) -
+	if ((opb = ibuf_dynamic(0, UCHAR_MAX - sizeof(op_type) -
 	    sizeof(optparamlen))) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
@@ -1340,7 +1340,7 @@ session_open(struct peer *p)
 		c[0] = 0x80; /* we're always restarting */
 		c[1] = 0;
 		errs += session_capa_add(opb, CAPA_RESTART, 2);
-		errs += buf_add(opb, &c, 2);
+		errs += ibuf_add(opb, &c, 2);
 	}
 
 	/* 4-bytes AS numbers, draft-ietf-idr-as4bytes-13 */
@@ -1349,16 +1349,16 @@ session_open(struct peer *p)
 
 		nas = htonl(conf->as);
 		errs += session_capa_add(opb, CAPA_AS4BYTE, sizeof(nas));
-		errs += buf_add(opb, &nas, sizeof(nas));
+		errs += ibuf_add(opb, &nas, sizeof(nas));
 	}
 
-	if (buf_size(opb))
-		optparamlen = buf_size(opb) + sizeof(op_type) +
+	if (ibuf_size(opb))
+		optparamlen = ibuf_size(opb) + sizeof(op_type) +
 		    sizeof(optparamlen);
 
 	len = MSGSIZE_OPEN_MIN + optparamlen;
 	if (errs || (buf = session_newmsg(OPEN, len)) == NULL) {
-		buf_free(opb);
+		ibuf_free(opb);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
@@ -1372,24 +1372,24 @@ session_open(struct peer *p)
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
 	msg.optparamlen = optparamlen;
 
-	errs += buf_add(buf->buf, &msg.version, sizeof(msg.version));
-	errs += buf_add(buf->buf, &msg.myas, sizeof(msg.myas));
-	errs += buf_add(buf->buf, &msg.holdtime, sizeof(msg.holdtime));
-	errs += buf_add(buf->buf, &msg.bgpid, sizeof(msg.bgpid));
-	errs += buf_add(buf->buf, &msg.optparamlen, sizeof(msg.optparamlen));
+	errs += ibuf_add(buf->buf, &msg.version, sizeof(msg.version));
+	errs += ibuf_add(buf->buf, &msg.myas, sizeof(msg.myas));
+	errs += ibuf_add(buf->buf, &msg.holdtime, sizeof(msg.holdtime));
+	errs += ibuf_add(buf->buf, &msg.bgpid, sizeof(msg.bgpid));
+	errs += ibuf_add(buf->buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
 	if (optparamlen) {
 		op_type = OPT_PARAM_CAPABILITIES;
-		optparamlen = buf_size(opb);
-		errs += buf_add(buf->buf, &op_type, sizeof(op_type));
-		errs += buf_add(buf->buf, &optparamlen, sizeof(optparamlen));
-		errs += buf_add(buf->buf, opb->buf, buf_size(opb));
+		optparamlen = ibuf_size(opb);
+		errs += ibuf_add(buf->buf, &op_type, sizeof(op_type));
+		errs += ibuf_add(buf->buf, &optparamlen, sizeof(optparamlen));
+		errs += ibuf_add(buf->buf, opb->buf, ibuf_size(opb));
 	}
 
-	buf_free(opb);
+	ibuf_free(opb);
 
 	if (errs > 0) {
-		buf_free(buf->buf);
+		ibuf_free(buf->buf);
 		free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
@@ -1437,8 +1437,8 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 		return;
 	}
 
-	if (buf_add(buf->buf, data, datalen)) {
-		buf_free(buf->buf);
+	if (ibuf_add(buf->buf, data, datalen)) {
+		ibuf_free(buf->buf);
 		free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
@@ -1469,14 +1469,14 @@ session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
 		return;
 	}
 
-	errs += buf_add(buf->buf, &errcode, sizeof(errcode));
-	errs += buf_add(buf->buf, &subcode, sizeof(subcode));
+	errs += ibuf_add(buf->buf, &errcode, sizeof(errcode));
+	errs += ibuf_add(buf->buf, &subcode, sizeof(subcode));
 
 	if (datalen > 0)
-		errs += buf_add(buf->buf, data, datalen);
+		errs += ibuf_add(buf->buf, data, datalen);
 
 	if (errs > 0) {
-		buf_free(buf->buf);
+		ibuf_free(buf->buf);
 		free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
@@ -1525,12 +1525,12 @@ session_rrefresh(struct peer *p, u_int8_t aid)
 	}
 
 	afi = htons(afi);
-	errs += buf_add(buf->buf, &afi, sizeof(afi));
-	errs += buf_add(buf->buf, &null8, sizeof(null8));
-	errs += buf_add(buf->buf, &safi, sizeof(safi));
+	errs += ibuf_add(buf->buf, &afi, sizeof(afi));
+	errs += ibuf_add(buf->buf, &null8, sizeof(null8));
+	errs += ibuf_add(buf->buf, &safi, sizeof(safi));
 
 	if (errs > 0) {
-		buf_free(buf->buf);
+		ibuf_free(buf->buf);
 		free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;

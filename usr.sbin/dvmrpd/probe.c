@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: probe.c,v 1.2 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -39,7 +39,7 @@ int
 send_probe(struct iface *iface)
 {
 	struct sockaddr_in	 dst;
-	struct buf		*buf;
+	struct ibuf		*buf;
 	struct dvmrp_hdr	*dvmrp_hdr;
 	struct nbr		*nbr;
 	int			 ret = 0;
@@ -47,7 +47,7 @@ send_probe(struct iface *iface)
 	if (iface->passive)
 		return (0);
 
-	if ((buf = buf_open(iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_probe");
 
 	/* DVMRP header */
@@ -55,12 +55,12 @@ send_probe(struct iface *iface)
 		goto fail;
 
 	/* generation ID */
-	buf_add(buf, &iface->gen_id, sizeof(iface->gen_id));
+	ibuf_add(buf, &iface->gen_id, sizeof(iface->gen_id));
 
 	/* generate neighbor list */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr->state > NBR_STA_DOWN)
-			buf_add(buf, &nbr->id, sizeof(nbr->id));
+			ibuf_add(buf, &nbr->id, sizeof(nbr->id));
 	}
 
 	/* set destination address */
@@ -69,15 +69,15 @@ send_probe(struct iface *iface)
 	inet_aton(AllDVMRPRouters, &dst.sin_addr);
 
 	/* update chksum */
-	dvmrp_hdr = buf_seek(buf, 0, sizeof(dvmrp_hdr));
+	dvmrp_hdr = ibuf_seek(buf, 0, sizeof(dvmrp_hdr));
 	dvmrp_hdr->chksum = in_cksum(buf->buf, buf->wpos);
 
 	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
-	buf_free(buf);
+	ibuf_free(buf);
 	return (ret);
 fail:
 	log_warn("send_probe");
-	buf_free(buf);
+	ibuf_free(buf);
 	return (-1);
 }
 

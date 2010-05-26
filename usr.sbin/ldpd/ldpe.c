@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.9 2010/05/19 15:28:51 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.10 2010/05/26 13:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -210,7 +210,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
-	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
+	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
 		fatal("ldpe");
 
 	/* start interfaces */

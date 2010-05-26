@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.9 2008/03/24 16:11:04 deraadt Exp $ */
+/*	$OpenBSD: packet.c,v 1.10 2010/05/26 13:56:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -44,7 +44,7 @@ struct iface	*find_iface(struct ospfd_conf *, unsigned int,
 		    struct in6_addr *);
 
 int
-gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
+gen_ospf_hdr(struct ibuf *buf, struct iface *iface, u_int8_t type)
 {
 	struct ospf_hdr	ospf_hdr;
 
@@ -57,15 +57,15 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 	ospf_hdr.instance = DEFAULT_INSTANCE_ID;
 	ospf_hdr.zero = 0;		/* must be zero */
 
-	return (buf_add(buf, &ospf_hdr, sizeof(ospf_hdr)));
+	return (ibuf_add(buf, &ospf_hdr, sizeof(ospf_hdr)));
 }
 
 int
-upd_ospf_hdr(struct buf *buf, struct iface *iface)
+upd_ospf_hdr(struct ibuf *buf, struct iface *iface)
 {
 	struct ospf_hdr	*ospf_hdr;
 
-	if ((ospf_hdr = buf_seek(buf, 0, sizeof(ospf_hdr))) == NULL)
+	if ((ospf_hdr = ibuf_seek(buf, 0, sizeof(ospf_hdr))) == NULL)
 		fatalx("upd_ospf_hdr: buf_seek failed");
 
 	/* update length */
