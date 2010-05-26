@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.19 2009/06/02 22:05:54 guenther Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.20 2010/05/26 17:50:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -71,6 +71,7 @@ struct timeout {
 #define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
 #define TIMEOUT_TRIGGERED	8	/* timeout is running or ran */
 
+#ifdef _KERNEL
 /*
  * special macros
  *
@@ -81,7 +82,6 @@ struct timeout {
 #define timeout_initialized(to) ((to)->to_flags & TIMEOUT_INITIALIZED)
 #define timeout_triggered(to) ((to)->to_flags & TIMEOUT_TRIGGERED)
 
-#ifdef _KERNEL
 void timeout_set(struct timeout *, void (*)(void *), void *);
 void timeout_add(struct timeout *, int);
 void timeout_add_tv(struct timeout *, const struct timeval *);

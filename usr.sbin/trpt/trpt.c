@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.25 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.26 2010/05/26 17:49:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 #include <sys/socketvar.h>
 #define PRUREQUESTS
 #include <sys/protosw.h>
+#define _KERNEL
+#include <sys/timeout.h>		/* to get timeout_pending() and such */
+#undef _KERNEL
 #include <sys/file.h>
 
 #include <net/route.h>
