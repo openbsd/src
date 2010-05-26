@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.11 2010/05/26 13:56:08 nicm Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.1 2010/05/26 16:44:32 nicm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>

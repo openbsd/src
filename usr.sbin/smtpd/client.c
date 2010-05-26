@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.27 2010/05/26 13:56:08 nicm Exp $	*/
+/*	$OpenBSD: client.c,v 1.28 2010/05/26 16:44:32 nicm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -25,6 +25,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <imsg.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdarg.h>
@@ -35,7 +36,6 @@
 
 #include <openssl/ssl.h>
 
-#include "imsg.h"
 #include "client.h"
 
 struct client_cmd *cmd_new(int, char *, ...);

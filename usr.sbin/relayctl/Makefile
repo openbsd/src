@@ -1,12 +1,14 @@
-#	$OpenBSD: Makefile,v 1.3 2007/12/07 17:17:01 reyk Exp $
+#	$OpenBSD: Makefile,v 1.4 2010/05/26 16:44:32 nicm Exp $
 
 .PATH:		${.CURDIR}/../relayd
 
 PROG=		relayctl
-SRCS=		buffer.c imsg.c log.c relayctl.c parser.c
+SRCS=		log.c relayctl.c parser.c
 
 MAN=		relayctl.8
 
+LDADD=		-lutil
+DPADD=		${LIBUTIL}
 CFLAGS+=	-Wall -Werror -I${.CURDIR} -I${.CURDIR}/../relayd
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.221 2010/05/23 19:42:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.222 2010/05/26 16:44:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,6 +30,7 @@
 #include <bitstring.h>
 #include <event.h>
 #include <getopt.h>
+#include <imsg.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -38,7 +39,6 @@
 #include <termios.h>
 
 #include "array.h"
-#include "imsg.h"
 
 extern char    *__progname;
 extern char   **environ;

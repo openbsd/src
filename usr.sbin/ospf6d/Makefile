@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2007/10/09 06:28:45 claudio Exp $
-
+#	$OpenBSD: Makefile,v 1.3 2010/05/26 16:44:32 nicm Exp $
 
 PROG=	ospf6d
-SRCS=	area.c buffer.c carp.c control.c database.c hello.c \
-	imsg.c interface.c iso_cksum.c kroute.c lsack.c \
+SRCS=	area.c carp.c control.c database.c hello.c \
+	interface.c iso_cksum.c kroute.c lsack.c \
 	lsreq.c lsupdate.c log.c neighbor.c ospf6d.c ospfe.c packet.c \
 	parse.y printconf.c rde.c rde_lsdb.c rde_spf.c name2id.c
 
@@ -15,7 +14,7 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 YFLAGS=
-LDADD+=	-levent
-DPADD+= ${LIBEVENT}
+LDADD+=	-levent -lutil
+DPADD+= ${LIBEVENT} ${LIBUTIL}
 
 .include <bsd.prog.mk>

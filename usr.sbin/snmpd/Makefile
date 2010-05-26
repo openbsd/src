@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.5 2008/12/08 11:34:55 reyk Exp $
+#	$OpenBSD: Makefile,v 1.6 2010/05/26 16:44:33 nicm Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
-SRCS=		parse.y ber.c log.c control.c buffer.c imsg.c snmpe.c \
+SRCS=		parse.y ber.c log.c control.c snmpe.c \
 		    mps.c trap.c mib.c smi.c kroute.c snmpd.c timer.c
 
-LDADD=		-levent
-DPADD=		${LIBEVENT}
+LDADD=		-levent -lutil
+DPADD=		${LIBEVENT} ${LIBUTIL}
 CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
