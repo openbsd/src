@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.38 2010/04/23 03:44:44 miod Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.39 2010/05/27 17:18:23 sthen Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -109,10 +109,9 @@ nmeaopen(dev_t dev, struct tty *tp, struct proc *p)
 	np->time.flags = SENSOR_FINVALID;
 	sensor_attach(&np->timedev, &np->time);
 
-	np->signal.type = SENSOR_PERCENT;
+	np->signal.type = SENSOR_INDICATOR;
 	np->signal.status = SENSOR_S_UNKNOWN;
-	np->signal.flags = SENSOR_FINVALID;
-	np->signal.value = 100000LL;
+	np->signal.value = 0;
 	strlcpy(np->signal.desc, "Signal", sizeof(np->signal.desc));
 	sensor_attach(&np->timedev, &np->signal);
 
@@ -371,12 +370,13 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	}
 	switch (*fld[2]) {
 	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
+			/* XXX is 'D' also a valid state? */
 		np->time.status = SENSOR_S_OK;
+		np->signal.value = 1;
 		np->signal.status = SENSOR_S_OK;
 		np->latitude.status = SENSOR_S_OK;
 		np->longitude.status = SENSOR_S_OK;
 		np->time.flags &= ~SENSOR_FINVALID;
-		np->signal.flags &= ~SENSOR_FINVALID;
 		np->latitude.flags &= ~SENSOR_FINVALID;
 		np->longitude.flags &= ~SENSOR_FINVALID;
 		break;
@@ -386,7 +386,8 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 			 * will be degraded.  Signal the condition through
 			 * the signal sensor.
 			 */
-		np->signal.status = SENSOR_S_WARN;
+		np->signal.value = 0;
+		np->signal.status = SENSOR_S_CRIT;
 		np->latitude.status = SENSOR_S_WARN;
 		np->longitude.status = SENSOR_S_WARN;
 		break;
@@ -541,6 +542,8 @@ nmea_timeout(void *xnp)
 {
 	struct nmea *np = xnp;
 
+	np->signal.value = 0;
+	np->signal.status = SENSOR_S_CRIT;
 	if (np->time.status == SENSOR_S_OK) {
 		np->time.status = SENSOR_S_WARN;
 		np->latitude.status = SENSOR_S_WARN;
