@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.15 2010/05/25 06:27:41 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.16 2010/05/27 06:17:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,6 +19,7 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
