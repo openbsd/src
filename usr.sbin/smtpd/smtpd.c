@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.106 2010/05/23 18:44:14 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.107 2010/05/27 15:36:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -297,7 +297,6 @@ void
 parent_send_config_ruleset(struct smtpd *env, int proc)
 {
 	struct rule		*r;
-	struct cond		*cond;
 	struct map		*m;
 	struct mapel		*mapel;
 	
@@ -319,10 +318,6 @@ parent_send_config_ruleset(struct smtpd *env, int proc)
 		    0, 0, -1, r, sizeof(*r));
 		imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_RULE_SOURCE,
 		    0, 0, -1, &r->r_sources->m_name, sizeof(r->r_sources->m_name));
-		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
-			imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_CONDITION,
-			    0, 0, -1, cond, sizeof(*cond));
-		}
 	}
 	
 	imsg_compose_event(env->sc_ievs[proc], IMSG_CONF_END,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.12 2010/04/21 19:53:16 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.13 2010/05/27 15:36:04 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -45,7 +45,6 @@ struct rule *
 ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_storage *ss)
 {
 	struct rule *r;
-	struct cond *cond;
 	struct map *map;
 	struct mapel *me;
 
@@ -59,45 +58,34 @@ ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_s
 			! ruleset_check_source(r->r_sources, ss)))
 			continue;
 
-		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
-			if (cond->c_type == C_ALL) {
-				path->cond = cond;
-				return r;
-			}
+		if (r->r_condition.c_type == C_ALL)
+			return r;
 
-			if (cond->c_type == C_DOM) {
-				map = map_find(env, cond->c_map);
-				if (map == NULL)
-					fatal("failed to lookup map.");
+		if (r->r_condition.c_type == C_DOM) {
+			map = map_find(env, r->r_condition.c_map);
+			if (map == NULL)
+				fatal("failed to lookup map.");
 
-				switch (map->m_src) {
-				case S_NONE:
-					TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-						if (hostname_match(path->domain, me->me_key.med_string)) {
-							path->cond = cond;
-							return r;
-						}
-					}
-					break;
-				case S_DB:
-					if (map_lookup(env, map->m_id, path->domain, K_VIRTUAL) != NULL) {
-						path->cond = cond;
+			switch (map->m_src) {
+			case S_NONE:
+				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+					if (hostname_match(path->domain, me->me_key.med_string))
 						return r;
-					}
-					break;
-				default:
-					log_info("unsupported map source for domain map");
-					continue;
 				}
-			}
-
-			if (cond->c_type == C_VDOM) {
-				if (aliases_vdomain_exists(env, cond->c_map, path->domain)) {
-					path->cond = cond;
+				break;
+			case S_DB:
+				if (map_lookup(env, map->m_id, path->domain, K_VIRTUAL) != NULL)
 					return r;
-				}
+				break;
+			default:
+				log_info("unsupported map source for domain map");
+				continue;
 			}
 		}
+
+		if (r->r_condition.c_type == C_VDOM)
+			if (aliases_vdomain_exists(env, r->r_condition.c_map, path->domain))
+				return r;
 	}
 
 	return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.107 2010/04/27 09:49:23 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.108 2010/05/27 15:36:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -72,7 +72,6 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	struct lkasession	*s;
 	struct secret		*secret;
 	struct mapel		*mapel;
-	struct cond		*cond;
 	struct rule		*rule;
 	struct path		*path;
 	struct map		*map;
@@ -168,17 +167,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			if (rule == NULL)
 				fatal(NULL);
 			*rule = *(struct rule *)imsg->data;
-			TAILQ_INIT(&rule->r_conditions);
 			TAILQ_INSERT_TAIL(env->sc_rules_reload, rule, r_entry);
-			return;
-
-		case IMSG_CONF_CONDITION:
-			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
-			cond = calloc(1, sizeof *cond);
-			if (cond == NULL)
-				fatal(NULL);
-			*cond = *(struct cond *)imsg->data;
-			TAILQ_INSERT_TAIL(&rule->r_conditions, cond, c_entry);
 			return;
 
 		case IMSG_CONF_MAP:
@@ -677,14 +666,14 @@ done:
 int
 lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *path)
 {
-	if (IS_RELAY(*path) || path->cond == NULL) {
+	if (IS_RELAY(*path)) {
 		path = path_dup(path);
 		path->flags |= F_PATH_RELAY;
 		TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
 		return 1;
 	}
 
-	switch (path->cond->c_type) {
+	switch (path->rule.r_condition.c_type) {
 	case C_ALL:
 	case C_NET:
 	case C_DOM: {
@@ -725,9 +714,9 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 		return 1;
 	}
 	case C_VDOM: {
-		if (aliases_virtual_exist(env, path->cond->c_map, path)) {
+		if (aliases_virtual_exist(env, path->rule.r_condition.c_map, path)) {
 			path->flags |= F_PATH_VIRTUAL;
-			if (! aliases_virtual_get(env, path->cond->c_map,
+			if (! aliases_virtual_get(env, path->rule.r_condition.c_map,
 				&lkasession->expandtree, path))
 				return 0;
 			return 1;
