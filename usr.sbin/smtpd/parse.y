@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.57 2010/05/19 20:57:10 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.58 2010/05/27 11:17:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -980,7 +980,6 @@ rule		: decision on from			{
 			free($2);
 
 			TAILQ_INIT(&rule->r_conditions);
-			TAILQ_INIT(&rule->r_options);
 
 		} FOR conditions action	tag {
 			TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
