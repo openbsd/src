@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2010/05/02 12:03:24 kettenis Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.20 2010/05/27 08:26:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -380,6 +380,18 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		got[1] = (Elf_Addr)object;
 		got[-2] = (Elf_Addr)&_dl_bind_start;
 		got[-1] = ltp;
+		/*
+		 * Even though we didn't modify any instructions it
+		 * seems we still need to syncronize the caches.
+		 * There may be instructions in the same cache line
+		 * and they end up being corrupted otherwise.
+		 */
+		__asm __volatile("fdc 0(%0)" :: "r" (&got[-2]));
+		__asm __volatile("fdc 0(%0)" :: "r" (&got[-1]));
+		__asm __volatile("sync");
+		__asm __volatile("fic 0(%0)" :: "r" (&got[-2]));
+		__asm __volatile("fic 0(%0)" :: "r" (&got[-1]));
+		__asm __volatile("sync");
 		for (i = 0; i < numrela; i++, rela++) {
 			Elf_Addr *r_addr = (Elf_Addr *)(ooff + rela->r_offset);
 
