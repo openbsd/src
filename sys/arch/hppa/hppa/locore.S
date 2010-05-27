@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.170 2010/05/19 13:10:24 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.171 2010/05/27 11:52:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -856,7 +856,6 @@ $syscall_end
  * interrupt vector table
  */
 #define	TLABEL(name)	$trap$name
-#define	TELABEL(num)	__CONCAT(trap_ep_,num)
 #define TRAP(name,num) \
 	mtctl	r1, tr7			! \
 	.call				! \
@@ -883,8 +882,8 @@ $syscall_end
 	.label	TLABEL(name)$num	! \
 	pre				! \
 	mtctl	r1, tr7			! \
-	.export	TELABEL(num), entry	! \
-	.label	TELABEL(num)		! \
+	.export	trap_ep_##num, entry	! \
+	.label	trap_ep_##num		! \
 	.call				! \
 	b	__CONCAT($name,_l)	! \
 	ldi	num, r1			! \
