@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.115 2010/04/17 17:46:32 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.116 2010/05/28 12:09:09 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -266,6 +266,10 @@ struct ifnet {				/* and the entries */
 					/* output routine (enqueue) */
 	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
+
+					/* link level output function */
+	int	(*if_ll_output)(struct ifnet *, struct mbuf *,
+		    struct sockaddr *, struct rtentry *);
 					/* initiate output routine */
 	void	(*if_start)(struct ifnet *);
 					/* ioctl routine */
@@ -326,6 +330,7 @@ struct ifnet {				/* and the entries */
 #define IFXF_TXREADY		0x1		/* interface is ready to tx */
 #define	IFXF_NOINET6		0x2		/* don't do inet6 */
 #define	IFXF_INET6_PRIVACY	0x4		/* autoconf privacy extension */
+#define	IFXF_MPLS		0x8		/* supports MPLS */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_TXREADY)

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.18 2010/01/09 20:29:42 claudio Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.19 2010/05/28 12:09:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -64,6 +64,7 @@ int	mpeioctl(struct ifnet *, u_long, caddr_t);
 void	mpestart(struct ifnet *);
 int	mpe_clone_create(struct if_clone *, int);
 int	mpe_clone_destroy(struct ifnet *);
+int	mpe_newlabel(struct ifnet *, int, struct shim_hdr *);
 
 LIST_HEAD(, mpe_softc)	mpeif_list;
 struct if_clone	mpe_cloner =
@@ -90,7 +91,7 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	mpeif->sc_shim.shim_label = MPLS_BOS_MASK | htonl(mpls_defttl);
+	mpeif->sc_shim.shim_label = 0;
 	mpeif->sc_unit = unit;
 	ifp = &mpeif->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "mpe%d", unit);
@@ -107,7 +108,7 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, MPE_HDRLEN);
+	bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
 #endif
 
 	s = splnet();
@@ -132,6 +133,7 @@ mpe_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
+struct sockaddr_storage	 mpedst;
 /*
  * Start output on the mpe interface.
  */
@@ -139,9 +141,10 @@ void
 mpestart(struct ifnet *ifp)
 {
 	struct mbuf 		*m;
-	struct mpe_softc	*ifm;
-	struct shim_hdr		 shim;
+	struct sockaddr		*sa = (struct sockaddr *)&mpedst;
 	int			 s;
+	sa_family_t		 af;
+	struct rtentry		*rt;
 
 	for (;;) {
 		s = splnet();
@@ -151,30 +154,46 @@ mpestart(struct ifnet *ifp)
 		if (m == NULL)
 			return;
 
-#ifdef DIAGNOSTIC
-		if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
-			printf("%s: trying to send packet on wrong domain. "
-			    "if %d vs. mbuf %d\n", ifp->if_xname,
-			    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain));
-		}
-#endif
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_OUT);
-#endif
-		ifm = ifp->if_softc;
-		shim.shim_label = ifm->sc_shim.shim_label;
-		M_PREPEND(m, sizeof(shim), M_DONTWAIT);
-		m_copyback(m, 0, sizeof(shim), (caddr_t)&shim);
-		if (m == NULL) {
-			ifp->if_ierrors++;
+		af = *mtod(m, sa_family_t *);
+		m_adj(m, sizeof(af));
+		switch (af) {
+		case AF_INET:
+			bzero(sa, sizeof(struct sockaddr_in));
+			satosin(sa)->sin_family = af;
+			satosin(sa)->sin_len = sizeof(struct sockaddr_in);
+			bcopy(mtod(m, caddr_t), &satosin(sa)->sin_addr,
+			    sizeof(in_addr_t));
+			m_adj(m, sizeof(in_addr_t));
+			break;
+		default:
+			m_freem(m);
 			continue;
 		}
-		m->m_pkthdr.rcvif = ifp;
-		/* XXX assumes MPLS is always in rdomain 0 */
-		m->m_pkthdr.rdomain = 0;
-		mpls_output(m, NULL);
+
+		rt = rtalloc1(sa, RT_REPORT, 0);
+		if (rt == NULL) {
+			/* no route give up */
+			m_freem(m);
+			continue;
+		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf) {
+			/* remove MPLS label before passing packet to bpf */
+			m->m_data += sizeof(struct shim_hdr);
+			m->m_len -= sizeof(struct shim_hdr);
+			m->m_pkthdr.len -= sizeof(struct shim_hdr);
+			bpf_mtap_af(ifp->if_bpf, af, m, BPF_DIRECTION_OUT);
+			m->m_data -= sizeof(struct shim_hdr);
+			m->m_len += sizeof(struct shim_hdr);
+			m->m_pkthdr.len += sizeof(struct shim_hdr);
+		}
+#endif
+		/* XXX lie, but mpls_output will only look at sa_family */
+		sa->sa_family = AF_MPLS;
+
+		mpls_output(rt->rt_ifp, m, sa, rt);
+		RTFREE(rt);
 	}
 }
 
@@ -182,25 +201,64 @@ int
 mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt)
 {
-	int	s;
-	int	error;
+	struct shim_hdr	shim;
+	int		s;
+	int		error;
+	int		off;
+	u_int8_t	op = 0;
+
+#ifdef DIAGNOSTIC
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
+		printf("%s: trying to send packet on wrong domain. "
+		    "if %d vs. mbuf %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain));
+	}
+#endif
+	m->m_pkthdr.rcvif = ifp;
+	/* XXX assumes MPLS is always in rdomain 0 */
+	m->m_pkthdr.rdomain = 0;
 
 	error = 0;
 	switch (dst->sa_family) {
+#ifdef INET
 	case AF_INET:
+		if (rt && rt->rt_flags & RTF_MPLS) {
+			shim.shim_label =
+			    ((struct rt_mpls *)rt->rt_llinfo)->mpls_label;
+			shim.shim_label |= MPLS_BOS_MASK;
+			op =  ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
+		}
+		if (op != MPLS_OP_PUSH) {
+			m_freem(m);
+			error = ENETUNREACH;
+			goto out;
+		}
+		if (mpls_mapttl_ip) {
+			struct ip	*ip;
+			ip = mtod(m, struct ip *);
+			shim.shim_label |= htonl(ip->ip_ttl) & MPLS_TTL_MASK;
+		} else
+			shim.shim_label |= htonl(mpls_defttl) & MPLS_TTL_MASK;
+		off = sizeof(sa_family_t) + sizeof(in_addr_t);
+		M_PREPEND(m, sizeof(shim) + off, M_DONTWAIT);
+		if (m == NULL) {
+			m_freem(m);
+			error = ENOBUFS;
+			goto out;
+		}
+		*mtod(m, sa_family_t *) = AF_INET;
+		m_copyback(m, sizeof(sa_family_t), sizeof(in_addr_t),
+		    (caddr_t)&((satosin(dst)->sin_addr)));
 		break;
-	case AF_MPLS:
-		/*
-		 * drop MPLS packets entering here. This is a hack to prevent
-		 * loops because of misconfiguration.
-		 */
-		m_freem(m);
-		error = ENETUNREACH;
-		return (error);
+#endif
 	default:
+		m_freem(m);
 		error = ENETDOWN;
 		goto out;
 	}
+
+	m_copyback(m, off, sizeof(shim), (caddr_t)&shim);
+
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error) {
@@ -210,6 +268,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 	if_start(ifp);
 	splx(s);
+
 out:
 	if (error)
 		ifp->if_oerrors++;
@@ -224,13 +283,13 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct mpe_softc	*ifm;
 	struct ifreq		*ifr;
 	struct shim_hdr		 shim;
-	u_int32_t		 ttl = htonl(mpls_defttl);
 
 	ifr = (struct ifreq *)data;
 	error = 0;
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
+		if (!ISSET(ifp->if_flags, IFF_UP))
+			if_up(ifp);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP)
@@ -261,8 +320,7 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		shim.shim_label = (htonl(shim.shim_label << MPLS_LABEL_OFFSET))
-		    | MPLS_BOS_MASK | ttl;
+		shim.shim_label = htonl(shim.shim_label << MPLS_LABEL_OFFSET);
 		if (ifm->sc_shim.shim_label == shim.shim_label)
 			break;
 		LIST_FOREACH(ifm, &mpeif_list, sc_list) {
@@ -275,6 +333,14 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error)
 			break;
 		ifm = ifp->if_softc;
+		if (ifm->sc_shim.shim_label) {
+			/* remove old MPLS route */
+			mpe_newlabel(ifp, RTM_DELETE, &ifm->sc_shim);
+		}
+		/* add new MPLS route */
+		error = mpe_newlabel(ifp, RTM_ADD, &shim);
+		if (error)
+			break;
 		ifm->sc_shim.shim_label = shim.shim_label;
 		break;
 	default:
@@ -324,7 +390,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 
 #if NBPFILTER > 0
 	if (ifp && ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_IN);
 #endif
 	s = splnet();
 	IF_ENQUEUE(&ipintrq, m);
@@ -358,10 +424,45 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 
 #if NBPFILTER > 0
 	if (ifp && ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+		bpf_mtap_af(ifp->if_bpf, AF_INET6, m, BPF_DIRECTION_IN);
 #endif
 	s = splnet();
 	IF_ENQUEUE(&ip6intrq, m);
 	schednetisr(NETISR_IPV6);
 	splx(s);
+}
+
+int
+mpe_newlabel(struct ifnet *ifp, int cmd, struct shim_hdr *shim)
+{
+	struct rtentry *nrt;
+	struct sockaddr_mpls dst;
+	struct rt_addrinfo info;
+	int error;
+
+	bzero(&dst, sizeof(dst));
+	dst.smpls_len = sizeof(dst);
+	dst.smpls_family = AF_MPLS;
+	dst.smpls_label = shim->shim_label;
+
+	bzero(&info, sizeof(info));
+	info.rti_flags = RTF_UP | RTF_MPLS;
+	info.rti_mpls = MPLS_OP_POP;
+	info.rti_info[RTAX_DST] = smplstosa(&dst);
+	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)ifp->if_sadl;
+
+	error = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt, 0);
+	rt_missmsg(cmd, &info, error ? 0 : nrt->rt_flags, ifp, error, 0);
+	if (cmd == RTM_DELETE) {
+		if (error == 0 && nrt != NULL) {
+			if (nrt->rt_refcnt <= 0) {
+				nrt->rt_refcnt++;
+				rtfree(nrt);
+			}
+		}
+	}
+	if (cmd == RTM_ADD && error == 0 && nrt != NULL) {
+		nrt->rt_refcnt--;
+	}
+	return (error);
 }

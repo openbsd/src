@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.142 2010/05/07 13:33:16 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.143 2010/05/28 12:09:09 claudio Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -277,12 +277,7 @@ ether_output(ifp0, m0, dst, rt0)
 			else
 				senderr(EHOSTUNREACH);
 		}
-#ifdef MPLS
-		if (rt->rt_flags & RTF_MPLS) {
-			if ((m = mpls_output(m, rt)) == NULL)
-				senderr(EHOSTUNREACH);
-		}
-#endif
+
 		if (rt->rt_flags & RTF_GATEWAY) {
 			if (rt->rt_gwroute == 0)
 				goto lookup;
@@ -299,7 +294,6 @@ ether_output(ifp0, m0, dst, rt0)
 			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
-
 	switch (dst->sa_family) {
 
 #ifdef INET
@@ -310,12 +304,7 @@ ether_output(ifp0, m0, dst, rt0)
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
 		    !m->m_pkthdr.pf.routed)
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
-#ifdef MPLS
-		if (rt0 != NULL && rt0->rt_flags & RTF_MPLS)
-			etype = htons(ETHERTYPE_MPLS);
-		else
-#endif
-			etype = htons(ETHERTYPE_IP);
+		etype = htons(ETHERTYPE_IP);
 		break;
 #endif
 #ifdef INET6
@@ -381,6 +370,9 @@ ether_output(ifp0, m0, dst, rt0)
 			dst = rt_key(rt);
 		else
 			senderr(EHOSTUNREACH);
+
+		if (!ISSET(ifp->if_xflags, IFXF_MPLS))
+			senderr(ENETUNREACH);
 
 		switch (dst->sa_family) {
 			case AF_LINK:
@@ -490,7 +482,6 @@ ether_output(ifp0, m0, dst, rt0)
 		}
 	}
 #endif
-
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
 	s = splnet();

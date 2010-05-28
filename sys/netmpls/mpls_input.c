@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.22 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.23 2010/05/28 12:09:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -95,7 +95,7 @@ mpls_input(struct mbuf *m)
 	u_int8_t ttl;
 	int i, hasbos;
 
-	if (!mpls_enable) {
+	if (!mpls_enable || !ISSET(ifp->if_xflags, IFXF_MPLS)) {
 		m_freem(m);
 		return;
 	}
@@ -132,11 +132,11 @@ mpls_input(struct mbuf *m)
 	}
 	ttl--;
 
+	bzero(&sa_mpls, sizeof(sa_mpls));
+	smpls = &sa_mpls;
+	smpls->smpls_family = AF_MPLS;
+	smpls->smpls_len = sizeof(*smpls);
 	for (i = 0; i < mpls_inkloop; i++) {
-		bzero(&sa_mpls, sizeof(sa_mpls));
-		smpls = &sa_mpls;
-		smpls->smpls_family = AF_MPLS;
-		smpls->smpls_len = sizeof(*smpls);
 		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 
 #ifdef MPLS_DEBUG
@@ -151,15 +151,13 @@ mpls_input(struct mbuf *m)
 			m = mpls_shim_pop(m);
 			shim = mtod(m, struct shim_hdr *);
 
-			switch (ntohl(smpls->smpls_label)) { 
-
+			switch (ntohl(smpls->smpls_label)) {
 			case MPLS_LABEL_IPV4NULL:
 				if (hasbos) {
 					mpls_ip_input(m, ttl);
 					goto done;
 				} else
 					continue;
-
 			case MPLS_LABEL_IPV6NULL:
 				if (hasbos) {
 					mpls_ip6_input(m, ttl);
@@ -184,7 +182,6 @@ mpls_input(struct mbuf *m)
 		}
 
 		rt->rt_use++;
-		smpls = satosmpls(rt_key(rt));
 		rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
 
 		if (rt_mpls == NULL || (rt->rt_flags & RTF_MPLS) == 0) {
@@ -196,17 +193,14 @@ mpls_input(struct mbuf *m)
 			goto done;
 		}
 
-		if (rt_mpls->mpls_operation == MPLS_OP_LOCAL) {
+		hasbos = MPLS_BOS_ISSET(shim->shim_label);
+		switch (rt_mpls->mpls_operation) {
+		case MPLS_OP_LOCAL:
 			/* Packet is for us */
-			hasbos = MPLS_BOS_ISSET(shim->shim_label);
-			if (!hasbos) {
-#ifdef MPLS_DEBUG
-				printf("MPLS_DEBUG: packet malformed\n");
-#endif
-				m_freem(m);
-				goto done;
-			}
 			m = mpls_shim_pop(m);
+			if (!hasbos)
+				/* redo lookup with next label */
+				break;
 
 			if (!rt->rt_gateway) {
 #ifdef MPLS_DEBUG
@@ -227,16 +221,13 @@ mpls_input(struct mbuf *m)
 			default:
 				m_freem(m);
 			}
-
 			goto done;
-		}
-
-		if (rt_mpls->mpls_operation & MPLS_OP_POP) {
-			hasbos = MPLS_BOS_ISSET(shim->shim_label);
+		case MPLS_OP_POP:
+			m = mpls_shim_pop(m);
 			if (hasbos) {
-				m = mpls_shim_pop(m);
 #if NMPE > 0
 				if (rt->rt_ifp->if_type == IFT_MPLS) {
+					smpls = satosmpls(rt_key(rt));
 					mpe_input(m, rt->rt_ifp, smpls, ttl);
 					goto done;
 				}
@@ -245,13 +236,23 @@ mpls_input(struct mbuf *m)
 				m_freem(m);
 				goto done;
 			}
+			break;
+		case MPLS_OP_PUSH:
+			m = mpls_shim_push(m, rt_mpls);
+			break;
+		case MPLS_OP_SWAP:
+			m = mpls_shim_swap(m, rt_mpls);
+			break;
 		}
+
+		if (m == NULL)
+			goto done;
 
 		/* refetch label */
 		shim = mtod(m, struct shim_hdr *);
-		ifp = rt->rt_ifp;
 
-		if (ifp != NULL)  
+		ifp = rt->rt_ifp;
+		if (ifp != NULL && rt_mpls->mpls_operation != MPLS_OP_LOCAL)
 			break;
 
 		RTFREE(rt);
@@ -273,14 +274,22 @@ mpls_input(struct mbuf *m)
 	    MPLS_LABEL_GET(rt_mpls->mpls_label));
 #endif
 
-	(*ifp->if_output)(ifp, m, smplstosa(smpls), rt);
+	/* Output iface is not MPLS-enabled */
+	if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
+#ifdef MPLS_DEBUG
+		printf("MPLS_DEBUG: interface not mpls enabled\n");
+#endif
+		goto done;
+	}
+
+	(*ifp->if_ll_output)(ifp, m, smplstosa(smpls), rt);
 done:
 	if (rt)
 		RTFREE(rt);
 }
 
 void
-mpls_ip_input(struct mbuf *m, u_int8_t ttl) 
+mpls_ip_input(struct mbuf *m, u_int8_t ttl)
 {
 	struct ip	*ip;
 	int		 s, hlen;

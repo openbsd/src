@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.215 2010/05/08 11:07:20 stsp Exp $	*/
+/*	$OpenBSD: if.c,v 1.216 2010/05/28 12:09:09 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -105,6 +105,10 @@
 #include <netinet6/nd6.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
 #endif
 
 #if NBPFILTER > 0
@@ -1345,6 +1349,26 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			}
 		}
 #endif
+
+#ifdef MPLS
+		if (ISSET(ifr->ifr_flags, IFXF_MPLS) &&
+		    !ISSET(ifp->if_xflags, IFXF_MPLS)) {
+			int s = splnet();
+			ifp->if_xflags |= IFXF_MPLS;
+			ifp->if_ll_output = ifp->if_output; 
+			ifp->if_output = mpls_output;
+			splx(s);
+		}
+		if (ISSET(ifp->if_xflags, IFXF_MPLS) &&
+		    !ISSET(ifr->ifr_flags, IFXF_MPLS)) {
+			int s = splnet();
+			ifp->if_xflags &= ~IFXF_MPLS;
+			ifp->if_output = ifp->if_ll_output; 
+			ifp->if_ll_output = NULL;
+			splx(s);
+		}
+#endif
+
 
 		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
 			(ifr->ifr_flags &~ IFXF_CANTCHANGE);
