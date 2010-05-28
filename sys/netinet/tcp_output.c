@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.87 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.88 2010/05/28 08:32:41 kettenis Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -212,7 +212,8 @@ tcp_output(struct tcpcb *tp)
 	int off, flags, error;
 	struct mbuf *m;
 	struct tcphdr *th;
-	u_char opt[MAX_TCPOPTLEN];
+	u_int32_t optbuf[howmany(MAX_TCPOPTLEN, sizeof(u_int32_t))];
+	u_char *opt = (u_char *)optbuf;
 	unsigned int optlen, hdrlen, packetlen;
 	int idle, sendalot = 0;
 #ifdef TCP_SACK
