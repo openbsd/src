@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.15 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.16 2010/05/28 12:27:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,6 +42,7 @@
 
 int	nbr_establish_connection(struct nbr *);
 void	nbr_send_labelmappings(struct nbr *);
+int	nbr_act_session_operational(struct nbr *);
 
 LIST_HEAD(nbr_head, nbr);
 
@@ -148,6 +149,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr_reset_ktimer(nbr);
 		break;
 	case NBR_ACT_STRT_KTIMER:
+		nbr_act_session_operational(nbr);
 		nbr_start_ktimer(nbr);
 		nbr_start_ktimeout(nbr);
 		send_address(nbr, NULL);
@@ -161,6 +163,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		send_keepalive(nbr);
 		break;
 	case NBR_ACT_KEEPALIVE_SEND:
+		nbr_act_session_operational(nbr);
 		nbr_start_ktimer(nbr);
 		nbr_start_ktimeout(nbr);
 		send_keepalive(nbr);
@@ -225,7 +228,6 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 {
 	struct nbr_head	*head;
 	struct nbr	*nbr;
-	struct lde_nbr	 rn;
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("nbr_new");
@@ -258,13 +260,6 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 	evtimer_set(&nbr->keepalive_timeout, nbr_ktimeout, nbr);
 	evtimer_set(&nbr->keepalive_timer, nbr_ktimer, nbr);
 	evtimer_set(&nbr->initdelay_timer, nbr_idtimer, nbr);
-
-	bzero(&rn, sizeof(rn));
-	rn.id.s_addr = nbr->id.s_addr;
-	rn.lspace = nbr->lspace;
-	rn.ifindex = nbr->iface->ifindex;
-	ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
-	    sizeof(rn));
 
 	return (nbr);
 }
@@ -580,6 +575,19 @@ nbr_act_session_establish(struct nbr *nbr, int active)
 
 
 	return (0);
+}
+
+int
+nbr_act_session_operational(struct nbr *nbr)
+{
+	struct lde_nbr	 rn;
+
+	bzero(&rn, sizeof(rn));
+	rn.id.s_addr = nbr->id.s_addr;
+	rn.lspace = nbr->lspace;
+
+	return (ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
+	    sizeof(rn)));
 }
 
 void
