@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.1 2010/05/26 16:44:32 nicm Exp $
+.\" $OpenBSD: imsg_init.3,v 1.2 2010/05/28 01:04:14 sthen Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2010 $
+.Dd $Mdocdate: May 28 2010 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -248,7 +248,7 @@ It returns the total size of the message, 0 if no messages are ready, or \-1
 for an error.
 Received messages are returned as a
 .Em struct imsg ,
-which much be freed by
+which must be freed by
 .Fn imsg_free
 when no longer required.
 .Em struct imsg
