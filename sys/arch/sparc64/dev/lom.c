@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.22 2010/05/28 10:02:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -981,7 +981,7 @@ lom2_write_hostname(struct lom_softc *sc)
 void
 lom_wdog_pat(void *arg)
 {
-	struct lom_softc *sc;
+	struct lom_softc *sc = arg;
 
 	/* Pat the dog. */
 	sc->sc_wdog_pat.lc_cmd = LOM_IDX_WDOG_CTL | LOM_IDX_WRITE;
