@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.200 2010/05/07 06:17:34 claudio Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.201 2010/05/28 12:20:06 claudio Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 7 2010 $
+.Dd $Mdocdate: May 28 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -347,6 +347,11 @@ this directive is used to select between 802.11a
 and 802.11g
 .Pq Dq 11g
 operating modes.
+.It Cm mpls
+Enable Multiprotocol Label Switching (MPLS) on the interface. It will be
+able to send and receive MPLS traffic.
+.It Fl mpls
+Disable MPLS on the interface.
 .It Cm mtu Ar value
 Set the MTU for this device to the given
 .Ar value .

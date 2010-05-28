@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.232 2010/05/06 12:58:40 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.233 2010/05/28 12:20:06 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -191,6 +191,7 @@ void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
 void	settimeslot(const char *, int);
 void	timeslot_status(void);
+void	setifmpls(const char *, int);
 void	setmpelabel(const char *, int);
 void	setvlantag(const char *, int);
 void	setvlanprio(const char *, int);
@@ -346,6 +347,8 @@ const struct	cmd {
 	{ "-rtlabel",	-1,		0,		setifrtlabel },
 	{ "range",	NEXTARG,	0,		setatrange },
 	{ "phase",	NEXTARG,	0,		setatphase },
+	{ "mpls",	IFXF_MPLS,	0,		setifxflags },
+	{ "-mpls",	-IFXF_MPLS,	0,		setifxflags },
 	{ "mplslabel",	NEXTARG,	0,		setmpelabel },
 	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
 	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
@@ -3252,6 +3255,7 @@ mpe_status(void)
 	printf("\tmpls label: %d\n", shim.shim_label);
 }
 
+/* ARGSUSED */
 void
 setmpelabel(const char *val, int d)
 {
