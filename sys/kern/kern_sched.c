@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.21 2010/05/25 19:59:35 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.22 2010/05/28 14:23:37 guenther Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -626,13 +626,6 @@ cpuset_clear(struct cpuset *cs)
 {
 	memset(cs, 0, sizeof(*cs));
 }
-
-/*
- * XXX - implement it on SP architectures too
- */
-#ifndef CPU_INFO_UNIT
-#define CPU_INFO_UNIT 0
-#endif
 
 void
 cpuset_add(struct cpuset *cs, struct cpu_info *ci)
