@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.110 2010/05/18 22:26:10 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.111 2010/05/29 02:47:48 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -409,15 +409,15 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 #endif
 
 	/* Find an unused pid satisfying 1 <= lastpid <= PID_MAX */
+	rw_enter_write(&allproclk);
 	do {
 		lastpid = 1 + (randompid ? arc4random() : lastpid) % PID_MAX;
 	} while (pidtaken(lastpid));
 	p2->p_pid = lastpid;
 
-	rw_enter_write(&allproclk);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
-	rw_exit_write(&allproclk);
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+	rw_exit_write(&allproclk);
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	if (p2->p_flag & P_TRACED) {
