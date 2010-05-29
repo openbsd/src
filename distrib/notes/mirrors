@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.79 2010/05/19 13:35:02 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.80 2010/05/29 17:20:50 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -96,6 +96,8 @@ Germany:
     http://mirror.roothell.org/pub/OpenBSD (Nurnberg)
     ftp://ftp.bytemine.net/pub/OpenBSD (Oldenburg)
     http://artfiles.org/openbsd (Hamburg)
+    ftp://ftp.halifax.rwth-aachen.de/pub/OpenBSD (Aachen)
+    http://ftp.halifax.rwth-aachen.de/openbsd (Aachen)
 
 Greece:
     ftp://ftp.cc.uoc.gr/mirrors/OpenBSD (Heraklion)
