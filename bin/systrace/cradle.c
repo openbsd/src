@@ -1,4 +1,4 @@
-/*	$OpenBSD: cradle.c,v 1.4 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: cradle.c,v 1.5 2010/05/29 10:29:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Marius Aamodt Eriksen <marius@monkey.org>
@@ -70,7 +70,6 @@ static void  gensig_cb(int, short, void *);
 static FILE *ui_fl = NULL;
 static struct event ui_ev, sigterm_ev, sigint_ev;
 static char buffer[4096];
-static char title[4096];
 static char *xuipath, *xpath;
 static volatile int got_sigusr1 = 0;
 
@@ -180,8 +179,7 @@ cradle_server(char *path, char *uipath, char *guipath)
 	}
 
 	setsid();
-	snprintf(title, sizeof(title), "cradle server for UID %d", getuid());
-	setproctitle(title);
+	setproctitle("cradle server for UID %d", getuid());
 
 	TAILQ_INIT(&clientq);
 
