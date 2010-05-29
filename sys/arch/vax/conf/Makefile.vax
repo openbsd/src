@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.56 2010/05/28 14:27:08 guenther Exp $
+#	$OpenBSD: Makefile.vax,v 1.57 2010/05/29 14:08:20 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -68,7 +68,7 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o subr.o param.o ioconf.o ${OBJS}
+SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
@@ -124,7 +124,7 @@ lint:
 tags:
 	@echo "see $S/kern/Makefile for tags"
 
-AFILES=	${_machdir}/${_mach}/locore.S ${_machdir}/${_mach}/subr.s
+AFILES=	${_machdir}/${_mach}/locore.S
 depend:: .depend
 .depend: ${AFILES} param.c ioconf.c ${CFILES} ${SFILES} assym.h ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
@@ -144,7 +144,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 	rm -f db_structinfo.o
 
 locore.o: ${_machdir}/${_mach}/locore.S assym.h
-subr.o unimpl_emul.o: assym.h
+unimpl_emul.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf

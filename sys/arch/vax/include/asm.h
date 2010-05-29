@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.9 2008/05/21 20:33:39 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.10 2010/05/29 14:08:21 deraadt Exp $ */
 /*	$NetBSD: asm.h,v 1.9 1999/01/15 13:31:28 bouyer Exp $ */
 /*
  * Copyright (c) 1982, 1993
@@ -93,9 +93,11 @@
 # define _PROF_PROLOGUE
 #endif
 
-#define ENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs); _PROF_PROLOGUE
-#define NENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs)
-#define ASENTRY(x, regs)	_ENTRY(_ASM_LABEL(x), regs); _PROF_PROLOGUE
+#define ENTRY(x, regs)			_ENTRY(_C_LABEL(x), regs); _PROF_PROLOGUE
+#define ENTRY_NOPROFILE(x, regs)	_ENTRY(_C_LABEL(x), regs)
+#define NENTRY(x, regs)			_ENTRY(_C_LABEL(x), regs)
+#define ASENTRY(x, regs)		_ENTRY(_ASM_LABEL(x), regs); _PROF_PROLOGUE
+#define ASENTRY_NOPROFILE(x, regs)	_ENTRY(_ASM_LABEL(x), regs)
 
 #define ALTENTRY(x)		_ALTENTRY(_C_LABEL(x))
 #define RCSID(x)		.text; .asciz x
