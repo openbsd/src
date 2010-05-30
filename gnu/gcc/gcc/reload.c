@@ -4575,7 +4575,7 @@ find_reloads_toplev (rtx x, int opnum, enum reload_type type,
 	      x = mem;
 	      i = find_reloads_address (GET_MODE (x), &x, XEXP (x, 0), &XEXP (x, 0),
 					opnum, type, ind_levels, insn);
-	      if (x != mem)
+	      if (!rtx_equal_p (mem, x))
 		push_reg_equiv_alt_mem (regno, x);
 	      if (address_reloaded)
 		*address_reloaded = i;
