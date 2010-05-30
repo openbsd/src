@@ -143,6 +143,7 @@ bufq_disksort_requeue(struct bufq *bq, struct buf *bp)
 
 	mtx_enter(&bq->bufq_mtx);
 	bp->b_actf = bufq->b_actf;
+	bufq->b_actf = bp;
 	if (bp->b_actf == NULL)
 		bufq->b_actb = &bp->b_actf;
 	mtx_leave(&bq->bufq_mtx);
@@ -156,12 +157,12 @@ bufq_disksort_dequeue(struct bufq *bq, int peeking)
 	mtx_enter(&bq->bufq_mtx);
 	bufq = (struct buf *)bq->bufq_data;
 	bp = bufq->b_actf;
-	if (bp == NULL) {
-		mtx_leave(&bq->bufq_mtx);
-		return (NULL);
+	if (!peeking) {
+		if (bp != NULL)
+			bufq->b_actf = bp->b_actf;
+		if (bufq->b_actf == NULL)
+			bufq->b_actb = &bufq->b_actf;
 	}
-	if (!peeking)
-		bufq->b_actf = bp->b_actf;
 	mtx_leave(&bq->bufq_mtx);
 
 	DNPRINTF(BUFQDBG_DISKSORT, "%s: %s buf %p from bufq %p\n", __func__, 
