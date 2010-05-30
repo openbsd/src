@@ -863,7 +863,7 @@ Common RejectNegative Joined
 -fstack-limit-symbol=<name>	Trap if the stack goes past symbol <name>
 
 fstack-protector
-Common Report Var(flag_stack_protect, 1) Init(1)
+Common Report Var(flag_stack_protect, 1) Init(-1)
 Use propolice as a stack protection method
 
 fstack-protector-all
