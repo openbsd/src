@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.187 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.188 2010/05/31 23:50:28 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -49,7 +49,7 @@
 #define SMTPD_BACKLOG		 5
 
 #define	PATH_SMTPCTL		"/usr/sbin/smtpctl"
-#define PATH_SPOOL		"/usr/obj/smtpd"
+#define PATH_SPOOL		"/var/spool/smtpd"
 #define PATH_OFFLINE		"/offline"
 
 /* number of MX records to lookup */
