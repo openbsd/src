@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: intr.h,v 1.19 2010/05/31 21:39:56 deraadt Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -134,10 +134,6 @@ void softintr(int);
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splclock()
 #define splipi()	splraise(IPL_IPI)
-
-#define spllpt()	spltty()
-
-#define	spllpt()	spltty()
 
 /*
  * Software interrupt masks
