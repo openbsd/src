@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -323,8 +323,8 @@ memnrcmp(const void *s1, size_t n1, const void *s2, size_t n2)
 	if (n2 == 0)
 		return n1 == 0 ? 0 : 1;
 
- 	p1 = (const unsigned char *)s1 + n1 - 1;
- 	p2 = (const unsigned char *)s2 + n2 - 1;
+	p1 = (const unsigned char *)s1 + n1 - 1;
+	p2 = (const unsigned char *)s2 + n2 - 1;
 
 	while (*p1 == *p2) {
 		if (p1 == s1)
@@ -374,7 +374,7 @@ common_prefix(struct btree *bt, struct btkey *min, struct btkey *max,
 	} else {
 		p1 = min->str;
 		p2 = max->str;
- 
+
 		while (*p1 == *p2) {
 			if (n == min->len || n == max->len)
 				break;
@@ -689,7 +689,7 @@ btree_txn_commit(struct btree_txn *txn)
 	assert(txn != NULL);
 	assert(txn->bt != NULL);
 
- 	bt = txn->bt;
+	bt = txn->bt;
 
 	if (F_ISSET(txn->flags, BT_TXN_RDONLY)) {
 		DPRINTF("attempt to commit read-only transaction");
@@ -2430,7 +2430,7 @@ bt_reduce_separator(struct btree *bt, struct node *min, struct btval *sep)
 
 		p1 = (char *)NODEKEY(min) + min->ksize - 1;
 		p2 = (char *)sep->data + sep->size - 1;
- 
+
 		while (p1 >= (char *)NODEKEY(min) && *p1 == *p2) {
 			assert(p2 > (char *)sep->data);
 			p1--;
@@ -2447,7 +2447,7 @@ bt_reduce_separator(struct btree *bt, struct node *min, struct btval *sep)
 
 		p1 = (char *)NODEKEY(min);
 		p2 = (char *)sep->data;
- 
+
 		while (*p1 == *p2) {
 			p1++;
 			p2++;

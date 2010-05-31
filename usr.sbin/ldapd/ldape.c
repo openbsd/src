@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -163,7 +163,7 @@ ldap_extended(struct request *req)
 	char			*oid = NULL;
 	struct ber_element	*ext_val = NULL;
 	struct {
-		const char 	*oid;
+		const char	*oid;
 		int (*fn)(struct request *);
 	} extended_ops[] = {
 		{ "1.3.6.1.4.1.1466.20037", ldap_starttls },

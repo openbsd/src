@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: index.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -67,7 +67,7 @@
  * @ou=people,cn=chunky bacon
  * @ou=people,cn=chunky beans
  * @ou=people,cn=crispy bacon
- * 
+ *
  */
 
 #include <sys/types.h>

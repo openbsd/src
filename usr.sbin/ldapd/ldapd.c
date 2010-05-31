@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -229,7 +229,7 @@ void
 imsg_event_add(struct imsgev *iev)
 {
 	iev->events = EV_READ;
-	if (iev->ibuf.w.queued) 
+	if (iev->ibuf.w.queued)
 		iev->events |= EV_WRITE;
 
 	if (event_initialized(&iev->ev))

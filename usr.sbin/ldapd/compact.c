@@ -1,4 +1,4 @@
-/*	$OpenBSD: compact.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: compact.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -115,7 +115,7 @@ again:
 		namespace_queue_schedule(c->ns);
 
 		if (c->all) {
-			/* Proceed with the next namespace that isn't 
+			/* Proceed with the next namespace that isn't
 			 * already being compacted or indexed.
 			 */
 			while ((c->ns = TAILQ_NEXT(c->ns, next)) != NULL) {

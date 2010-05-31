@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: uuid.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
 /*
  * Copyright (c) 2002, Stockholms Universitet
  * (Stockholm University, Stockholm Sweden)
@@ -35,7 +35,7 @@
 /*
  * NCS/DCE/AFS/GUID generator
  *
- *  for more information about DCE UUID, see 
+ *  for more information about DCE UUID, see
  *  <http://www.opengroup.org/onlinepubs/9629399/apdxa.htm>
  *
  *  Note, the Microsoft GUID is a DCE UUID, but it seems like they
@@ -116,7 +116,7 @@ get_node_addr(char *addr)
 		    found_mac = 1;
 		}
 	    }
-	    
+
 	}
 #endif
 	default:
@@ -153,7 +153,7 @@ uuid_compare(const afsUUID *uuid1, const afsUUID *uuid2)
 /*
  *    Creates a new UUID.
  */
-	
+
 int
 uuid_create(afsUUID *uuid)
 {
@@ -193,13 +193,13 @@ uuid_create(afsUUID *uuid)
 	    got_time = 1;
 	} else {
 #define UUID_MAX_HZ (1) /* make this bigger fix you have larger tickrate */
-#define MULTIPLIER_100_NANO_SEC 10	    
-	    if (++counter < UUID_MAX_HZ * MULTIPLIER_100_NANO_SEC) 
+#define MULTIPLIER_100_NANO_SEC 10
+	    if (++counter < UUID_MAX_HZ * MULTIPLIER_100_NANO_SEC)
 		got_time = 1;
 	}
     } while(!got_time);
 
-    /* 
+    /*
      * now shift time to dce_time, epoch 00:00:00:00, 15 October 1582
      * dce time ends year ~3400, so start to worry now
      */
@@ -207,7 +207,7 @@ uuid_create(afsUUID *uuid)
     dce_time = tv.tv_usec * MULTIPLIER_100_NANO_SEC + counter;
     dce_time += ((uint64_t)tv.tv_sec) * 10000000;
     dce_time += (((uint64_t)0x01b21dd2) << 32) + 0x13814000;
-    
+
     uuid->time_low = dce_time & 0xffffffff;
     uuid->time_mid = 0xffff & (dce_time >> 32);
     uuid->time_hi_and_version = 0x0fff & (dce_time >> 48);
@@ -267,7 +267,7 @@ uuid_from_string(const char *str, afsUUID *uuid)
 	       &node[0], &node[1], &node[2], &node[3], &node[4], &node[5]);
     if (i != 11)
 	return -1;
-    
+
     uuid->time_low = time_low;
     uuid->time_mid = time_mid;
     uuid->time_hi_and_version = time_hi_and_version;
