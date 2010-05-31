@@ -1,9 +1,12 @@
-#	$OpenBSD: Makefile,v 1.18 2008/04/23 10:55:14 norby Exp $
+#	$OpenBSD: Makefile,v 1.19 2010/05/31 22:17:43 deraadt Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
-ARCH=	alpha aviion hp300 hppa i386 m68k mac68k mvme68k mvme88k \
-	mvmeppc powerpc sparc sparc64 vax
+ARCH=	alpha amd64 armish aviion hp300 \
+	hppa hppa64 i386 landisk loongson \
+	luna88k mac68k macppc mvme68k \
+	mvme88k mvmeppc palm sgi socppc \
+	solbourne sparc sparc64 vax zaurus
 
 all:	init_sysent.c vnode_if.c
 
@@ -16,10 +19,9 @@ vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
 	sh vnode_if.sh vnode_if.src
 
 # Kernel tags:
-# Tags files are built in the top-level directory for each architecture,
-# with a makefile listing the architecture-dependent files, etc.  The list
-# of common files is in ./Make.tags.inc.  Links to the correct tags file
-# are placed in each source directory.  We need to have links to tags files
+# tags files are built in the top-level directory for each architecture.
+# Links to the correct tags file are placed in each source directory.
+# We need to have links to tags files
 # from the generic directories that are relative to the machine type, even
 # via remote mounts; therefore we use symlinks to $SYSTAGS, which points at
 # ${SYSDIR}/${MACHINE}/tags.
@@ -32,12 +34,12 @@ DGEN=	compat compat/common compat/freebsd compat/hpux compat/ibcs2 \
 	compat/linux compat/osf1 compat/sunos compat/svr4 compat/ultrix \
 	conf \
 	ddb \
-	dev dev/eisa dev/ic dev/isa dev/pci dev/pcmcia dev/cardbus dev/rcons \
+	dev dev/eisa dev/ic dev/isa dev/pci dev/pcmcia dev/cardbus \
 	dev/sun dev/tc \
-	gnu \
 	isofs isofs/cd9660 \
 	kern \
-	lib libkern \
+	lib/libkern lib/libkern/arch/${MACHINE} \
+	lib/libkern/arch/${MACHINE_ARCH} \
 	miscfs miscfs/deadfs miscfs/fifofs \
 	miscfs/portal miscfs/procfs miscfs/specfs \
 	msdosfs \
@@ -45,8 +47,8 @@ DGEN=	compat compat/common compat/freebsd compat/hpux compat/ibcs2 \
 	nfs \
 	scsi \
 	sys \
-	ufs ufs/ffs ufs/lfs ufs/mfs ufs/ufs \
-	vm
+	ufs ufs/ffs ufs/mfs ufs/ufs \
+	uvm
 
 tags::
 	-for i in ${ARCH}; do \
