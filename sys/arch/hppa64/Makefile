@@ -1,34 +1,43 @@
-#	$OpenBSD: Makefile,v 1.3 2005/05/06 11:16:47 pedro Exp $
+#	$OpenBSD: Makefile,v 1.4 2010/05/31 22:21:43 deraadt Exp $
 
-# Makefile for hppa64 tags file and boot blocks
+S=	${.CURDIR}/../..
+KFILE=	GENERIC
+.if exists(conf/GENERIC.MP)
+KFILE=	GENERIC.MP
+.endif
+TDIRS=	${_arch} include pci isa eisa
+TAGS=	${.CURDIR}/tags
 
-S=${.CURDIR}/../..
-.include "$S/kern/Make.tags.inc"
-
-NOPROG=	noprog
-NOMAN=	noman
-
+NOPROG=
+NOMAN=
 SUBDIR=	stand
 
-THPPA=	$S/arch/hppa64/tags
-SHPPA=	$S/arch/hppa64/hppa64/*.[ch] $S/arch/hppa64/include/*.h \
-	$S/arch/hppa64/dev/*.[ch]
-AHPPA=	$S/arch/hppa64/hppa64/*.S $S/lib/libkern/arch/hppa64/*.[sS]
-
-# Directories in which to place hppa64 tags links
-DHPPA=	conf dev hppa64 include
-
-tags:
-	-ctags -wdtf ${THPPA} ${COMM} ${SHPPA}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AHPPA} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
-		>> ${THPPA}
-	sort -o ${THPPA} ${THPPA}
+# config the fattest kernel we can find into a temporary dir
+# to create a Makefile.  Then use make to pull some variables
+# out and push them into the sub-shell to expand the paths,
+# and finally run ctags.
+tags::
+	TDIR=`mktemp -d /tmp/_tagXXXXXXXXXX` || exit 1; \
+	eval "S=${S}" && \
+	config -s ${S} -b $${TDIR} ${.CURDIR}/conf/${KFILE} && \
+	eval "_arch=\"`make -V _arch -f $${TDIR}/Makefile`\"" && \
+	eval "_mach=\"`make -V _mach -f $${TDIR}/Makefile`\"" && \
+	eval "_machdir=\$S/arch/$${_mach}" && \
+	eval "_archdir=\$S/arch/$${_arch}" && \
+	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
+	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
+	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
+	ctags -wdt -f ${TAGS} $${CFILES} && \
+	egrep "^[_A-Z]*ENTRY[_A-Z]*\(.*\)" $${SFILES} $${AFILES} | \
+	    sed "s;\\([^:]*\\):\\([^(]*\\)(\\([^, )]*\\)\\(.*\\);\\3	\\1	/^\\2(\\3\\4$$/;" \
+	    >> ${TAGS} && \
+	sort -o ${TAGS} ${TAGS} && \
+	rm -rf $${TDIR}
 
 links:
-	-for i in ${DHPPA}; do \
-	    (cd $$i && rm -f tags; ln -s ${THPPA} tags); done
+	-for i in conf ${TDIRS}; do \
+	    (cd $$i && rm -f tags; ln -s tags tags); done
 
-obj: _SUBDIRUSE
+obj:	_SUBDIRUSE
 
 .include <bsd.prog.mk>

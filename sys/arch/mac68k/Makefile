@@ -1,38 +1,42 @@
-#	$OpenBSD: Makefile,v 1.6 2005/05/06 11:16:47 pedro Exp $
-#	$NetBSD: Makefile,v 1.3 1996/03/27 03:56:22 scottr Exp $
+#	$OpenBSD: Makefile,v 1.7 2010/05/31 22:21:43 deraadt Exp $
 
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
+S=	${.CURDIR}/../..
+KFILE=	GENERIC
+.if exists(conf/GENERIC.MP)
+KFILE=	GENERIC.MP
+.endif
+TDIRS=	${_arch} include pci isa eisa
+TAGS=	${.CURDIR}/tags
 
-# Makefile for mac68k tags file
+NOPROG=
+NOMAN=
+SUBDIR=
 
-S=${.CURDIR}/../..
-.include "$S/kern/Make.tags.inc"
-
-NOPROG=	noprog
-NOMAN=	noman
-
-TMAC68K=$S/arch/mac68k/tags
-SMAC68K=$S/arch/m68k/m68k/*.c $S/arch/m68k/include/*.h \
-	$S/arch/mac68k/mac68k/*.[ch] $S/arch/mac68k/include/*.h \
-	$S/arch/mac68k/dev/*.[ch]
-AMAC68K=$S/arch/m68k/m68k/*.s $S/arch/mac68k/mac68k/*.s \
-	$S/lib/libkern/arch/m68k/*.[sS]
-
-SUBDIR=../m68k
-
-# Directories in which to place mac68k tags links
-DMAC68K=	mac68k dev include
-
-tags:
-	-ctags -wdtf ${TMAC68K} ${COMM} ${SMAC68K}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AMAC68K} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
-	    >> ${TMAC68K}
-	sort -o ${TMAC68K} ${TMAC68K}
+# config the fattest kernel we can find into a temporary dir
+# to create a Makefile.  Then use make to pull some variables
+# out and push them into the sub-shell to expand the paths,
+# and finally run ctags.
+tags::
+	TDIR=`mktemp -d /tmp/_tagXXXXXXXXXX` || exit 1; \
+	eval "S=${S}" && \
+	config -s ${S} -b $${TDIR} ${.CURDIR}/conf/${KFILE} && \
+	eval "_arch=\"`make -V _arch -f $${TDIR}/Makefile`\"" && \
+	eval "_mach=\"`make -V _mach -f $${TDIR}/Makefile`\"" && \
+	eval "_machdir=\$S/arch/$${_mach}" && \
+	eval "_archdir=\$S/arch/$${_arch}" && \
+	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
+	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
+	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
+	ctags -wdt -f ${TAGS} $${CFILES} && \
+	egrep "^[_A-Z]*ENTRY[_A-Z]*\(.*\)" $${SFILES} $${AFILES} | \
+	    sed "s;\\([^:]*\\):\\([^(]*\\)(\\([^, )]*\\)\\(.*\\);\\3	\\1	/^\\2(\\3\\4$$/;" \
+	    >> ${TAGS} && \
+	sort -o ${TAGS} ${TAGS} && \
+	rm -rf $${TDIR}
 
 links:
-	-for i in ${DMAC68K}; do \
-	    cd $$i && rm -f tags; ln -s ${TMAC68K} tags; done
+	-for i in conf ${TDIRS}; do \
+	    (cd $$i && rm -f tags; ln -s tags tags); done
 
 obj:	_SUBDIRUSE
 

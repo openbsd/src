@@ -1,35 +1,43 @@
-#	$OpenBSD: Makefile,v 1.17 2007/10/22 01:26:31 deraadt Exp $
-#	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
+#	$OpenBSD: Makefile,v 1.18 2010/05/31 22:21:43 deraadt Exp $
 
-# Makefile for i386 tags file and boot blocks
+S=	${.CURDIR}/../..
+KFILE=	GENERIC
+.if exists(conf/GENERIC.MP)
+KFILE=	GENERIC.MP
+.endif
+TDIRS=	${_arch} include pci isa eisa
+TAGS=	${.CURDIR}/tags
 
-S=${.CURDIR}/../..
-.include "$S/kern/Make.tags.inc"
-
+NOPROG=
+NOMAN=
 SUBDIR=	stand
 
-TI386=	$S/arch/i386/tags
-SI386=	$S/arch/i386/eisa/*.[ch] $S/arch/i386/i386/*.[ch] \
-	$S/arch/i386/include/*.h $S/arch/i386/include/pc/*.h \
-	$S/arch/i386/isa/*.[ch] $S/arch/i386/pci/*.[ch]
-AI386=	$S/arch/i386/i386/*.[sS] $S/arch/i386/isa/*.[sS] \
-	$S/lib/libkern/arch/i386/*.[sS]
-
-# Directories in which to place i386 tags links
-DI386=	conf eisa i386 include isa pci
-
-tags:
-	-ctags -wdtf ${TI386} ${COMM} ${SI386}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
-		>> ${TI386}
-	sort -o ${TI386} ${TI386}
+# config the fattest kernel we can find into a temporary dir
+# to create a Makefile.  Then use make to pull some variables
+# out and push them into the sub-shell to expand the paths,
+# and finally run ctags.
+tags::
+	TDIR=`mktemp -d /tmp/_tagXXXXXXXXXX` || exit 1; \
+	eval "S=${S}" && \
+	config -s ${S} -b $${TDIR} ${.CURDIR}/conf/${KFILE} && \
+	eval "_arch=\"`make -V _arch -f $${TDIR}/Makefile`\"" && \
+	eval "_mach=\"`make -V _mach -f $${TDIR}/Makefile`\"" && \
+	eval "_machdir=\$S/arch/$${_mach}" && \
+	eval "_archdir=\$S/arch/$${_arch}" && \
+	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
+	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
+	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
+	ctags -wdt -f ${TAGS} $${CFILES} && \
+	egrep "^[_A-Z]*ENTRY[_A-Z]*\(.*\)" $${SFILES} $${AFILES} | \
+	    sed "s;\\([^:]*\\):\\([^(]*\\)(\\([^, )]*\\)\\(.*\\);\\3	\\1	/^\\2(\\3\\4$$/;" \
+	    >> ${TAGS} && \
+	sort -o ${TAGS} ${TAGS} && \
+	rm -rf $${TDIR}
 
 links:
-	-for i in ${DI386}; do \
-	    (cd $$i && rm -f tags; ln -s ${TI386} tags); done
+	-for i in conf ${TDIRS}; do \
+	    (cd $$i && rm -f tags; ln -s tags tags); done
 
 obj:	_SUBDIRUSE
 
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>

@@ -1,32 +1,42 @@
-#	$OpenBSD: Makefile,v 1.5 2006/09/27 09:13:31 grange Exp $
+#	$OpenBSD: Makefile,v 1.6 2010/05/31 22:21:43 deraadt Exp $
 
-S=${.CURDIR}/../..
-.include "$S/kern/Make.tags.inc"
+S=	${.CURDIR}/../..
+KFILE=	GENERIC
+.if exists(conf/GENERIC.MP)
+KFILE=	GENERIC.MP
+.endif
+TDIRS=	${_arch} include pci isa eisa
+TAGS=	${.CURDIR}/tags
 
-NOPROG=	noprog
-NOMAN=	noman
-
+NOPROG=
+NOMAN=
 SUBDIR=	stand
 
-TAMD64=	$S/arch/amd64/tags
-SAMD64=	$S/arch/amd64/amd64/*.[ch] \
-	$S/arch/amd64/include/*.h  \
-	$S/arch/amd64/isa/*.[ch] $S/arch/amd64/pci/*.[ch]
-AAMD64=	$S/arch/amd64/amd64/*.[sS] $S/lib/libkern/arch/amd64/*.[sS]
-
-# Directories in which to place amd64 tags links
-DAMD64=	conf amd64 include isa pci
-
-tags:
-	-ctags -wdtf ${TAMD64} ${COMM} ${SAMD64}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AAMD64} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
-		>> ${TAMD64}
-	sort -o ${TAMD64} ${TAMD64}
+# config the fattest kernel we can find into a temporary dir
+# to create a Makefile.  Then use make to pull some variables
+# out and push them into the sub-shell to expand the paths,
+# and finally run ctags.
+tags::
+	TDIR=`mktemp -d /tmp/_tagXXXXXXXXXX` || exit 1; \
+	eval "S=${S}" && \
+	config -s ${S} -b $${TDIR} ${.CURDIR}/conf/${KFILE} && \
+	eval "_arch=\"`make -V _arch -f $${TDIR}/Makefile`\"" && \
+	eval "_mach=\"`make -V _mach -f $${TDIR}/Makefile`\"" && \
+	eval "_machdir=\$S/arch/$${_mach}" && \
+	eval "_archdir=\$S/arch/$${_arch}" && \
+	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
+	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
+	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
+	ctags -wdt -f ${TAGS} $${CFILES} && \
+	egrep "^[_A-Z]*ENTRY[_A-Z]*\(.*\)" $${SFILES} $${AFILES} | \
+	    sed "s;\\([^:]*\\):\\([^(]*\\)(\\([^, )]*\\)\\(.*\\);\\3	\\1	/^\\2(\\3\\4$$/;" \
+	    >> ${TAGS} && \
+	sort -o ${TAGS} ${TAGS} && \
+	rm -rf $${TDIR}
 
 links:
-	-for i in ${DAMD64}; do \
-	    (cd $$i && rm -f tags; ln -s ${TAMD64} tags); done
+	-for i in conf ${TDIRS}; do \
+	    (cd $$i && rm -f tags; ln -s tags tags); done
 
 obj:	_SUBDIRUSE
 

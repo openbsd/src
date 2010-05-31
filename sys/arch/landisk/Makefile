@@ -1,29 +1,43 @@
-#	$OpenBSD: Makefile,v 1.2 2007/10/22 01:26:17 deraadt Exp $
-#	$NetBSD: Makefile,v 1.1 2006/09/01 21:26:18 uwe Exp $
+#	$OpenBSD: Makefile,v 1.3 2010/05/31 22:21:43 deraadt Exp $
 
-# Makefile for landisk tags file and boot blocks
+S=	${.CURDIR}/../..
+KFILE=	GENERIC
+.if exists(conf/GENERIC.MP)
+KFILE=	GENERIC.MP
+.endif
+TDIRS=	${_arch} include pci isa eisa
+TAGS=	${.CURDIR}/tags
 
-S=${.CURDIR}/../..
-.include "../../kern/Make.tags.inc"
-
+NOPROG=
+NOMAN=
 SUBDIR=	stand
 
-TLANDISK=	../landisk/tags
-SLANDISK=	../landisk/landisk/*.[ch] ../landisk/include/*.h
-ALANDISK=	../landisk/landisk/*.[sS]
-
-# Directories in which to place tags links
-DLANDISK=	landisk include
-
-tags:
-	-ctags -wdtf ${TLANDISK} ${SLANDISK} ${COMM}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ALANDISK} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-		>> ${TLANDISK}
-	sort -o ${TLANDISK} ${TLANDISK}
+# config the fattest kernel we can find into a temporary dir
+# to create a Makefile.  Then use make to pull some variables
+# out and push them into the sub-shell to expand the paths,
+# and finally run ctags.
+tags::
+	TDIR=`mktemp -d /tmp/_tagXXXXXXXXXX` || exit 1; \
+	eval "S=${S}" && \
+	config -s ${S} -b $${TDIR} ${.CURDIR}/conf/${KFILE} && \
+	eval "_arch=\"`make -V _arch -f $${TDIR}/Makefile`\"" && \
+	eval "_mach=\"`make -V _mach -f $${TDIR}/Makefile`\"" && \
+	eval "_machdir=\$S/arch/$${_mach}" && \
+	eval "_archdir=\$S/arch/$${_arch}" && \
+	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
+	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
+	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
+	ctags -wdt -f ${TAGS} $${CFILES} && \
+	egrep "^[_A-Z]*ENTRY[_A-Z]*\(.*\)" $${SFILES} $${AFILES} | \
+	    sed "s;\\([^:]*\\):\\([^(]*\\)(\\([^, )]*\\)\\(.*\\);\\3	\\1	/^\\2(\\3\\4$$/;" \
+	    >> ${TAGS} && \
+	sort -o ${TAGS} ${TAGS} && \
+	rm -rf $${TDIR}
 
 links:
-	-for i in ${DLANDISK}; do \
-	    (cd $$i && rm -f tags; ln -s ../tags tags); done
+	-for i in conf ${TDIRS}; do \
+	    (cd $$i && rm -f tags; ln -s tags tags); done
 
-.include <bsd.subdir.mk>
+obj:	_SUBDIRUSE
+
+.include <bsd.prog.mk>

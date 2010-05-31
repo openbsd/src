@@ -1,36 +1,43 @@
-#	$OpenBSD: Makefile,v 1.3 2006/04/15 17:35:11 miod Exp $
-#	$NetBSD: Makefile,v 1.4 1996/03/25 22:48:09 mrg Exp $
+#	$OpenBSD: Makefile,v 1.4 2010/05/31 22:21:44 deraadt Exp $
 
-#
-# Makefile for solbourne links, tags file
+S=	${.CURDIR}/../..
+KFILE=	GENERIC
+.if exists(conf/GENERIC.MP)
+KFILE=	GENERIC.MP
+.endif
+TDIRS=	${_arch} include pci isa eisa
+TAGS=	${.CURDIR}/tags
 
-S=${.CURDIR}/../..
-.include "$S/kern/Make.tags.inc"
-
+NOPROG=
+NOMAN=
 SUBDIR=
 
-NOPROG=	noprog
-NOMAN=	noman
+# config the fattest kernel we can find into a temporary dir
+# to create a Makefile.  Then use make to pull some variables
+# out and push them into the sub-shell to expand the paths,
+# and finally run ctags.
+tags::
+	TDIR=`mktemp -d /tmp/_tagXXXXXXXXXX` || exit 1; \
+	eval "S=${S}" && \
+	config -s ${S} -b $${TDIR} ${.CURDIR}/conf/${KFILE} && \
+	eval "_arch=\"`make -V _arch -f $${TDIR}/Makefile`\"" && \
+	eval "_mach=\"`make -V _mach -f $${TDIR}/Makefile`\"" && \
+	eval "_machdir=\$S/arch/$${_mach}" && \
+	eval "_archdir=\$S/arch/$${_arch}" && \
+	eval "SFILES=\"`make -V SFILES -f $${TDIR}/Makefile`\"" && \
+	eval "CFILES=\"`make -V CFILES -f $${TDIR}/Makefile`\"" && \
+	eval "AFILES=\"`make -V AFILES -f $${TDIR}/Makefile`\"" && \
+	ctags -wdt -f ${TAGS} $${CFILES} && \
+	egrep "^[_A-Z]*ENTRY[_A-Z]*\(.*\)" $${SFILES} $${AFILES} | \
+	    sed "s;\\([^:]*\\):\\([^(]*\\)(\\([^, )]*\\)\\(.*\\);\\3	\\1	/^\\2(\\3\\4$$/;" \
+	    >> ${TAGS} && \
+	sort -o ${TAGS} ${TAGS} && \
+	rm -rf $${TDIR}
 
-TSOLBOURNE=	$S/arch/solbourne/tags
-DIRS=	conf include dev solourne
+links:
+	-for i in conf ${TDIRS}; do \
+	    (cd $$i && rm -f tags; ln -s tags tags); done
 
-links::
-	-for i in ${DIRS}; do \
-	    (cd $$i && { rm -f tags; ln -s ${TSOLBOURNE} tags; }) done
-
-SOLBOURNE=	$S/arch/solbourne/dev/*.[ch] \
-	$S/arch/solbourne/include/*.[ch] $S/arch/solbourne/solbourne/*.[ch]
-ASOLBOURNE=	$S/arch/solbourne/solbourne/*.[sS]
-
-tags:
-	-ctags -wdtf ${TSOLBOURNE} ${COMM} ${SOLBOURNE}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASOLBOURNE} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
-		>> ${TSOLBOURNE}
-	sort -o ${TSOLBOURNE} ${TSOLBOURNE}
-
-obj:   _SUBDIRUSE
+obj:	_SUBDIRUSE
 
 .include <bsd.prog.mk>
-.include <bsd.subdir.mk>
