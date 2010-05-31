@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.70 2010/03/25 21:27:13 schwarze Exp $
+.\"	$OpenBSD: pf.4,v 1.71 2010/05/31 18:33:54 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 25 2010 $
+.Dd $Mdocdate: May 31 2010 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -98,7 +98,6 @@ Stop the ALTQ bandwidth control system.
 struct pfioc_rule {
 	u_int32_t	action;
 	u_int32_t	ticket;
-	u_int32_t	pool_ticket;
 	u_int32_t	nr;
 	char		anchor[MAXPATHLEN];
 	char		anchor_call[MAXPATHLEN];
@@ -278,7 +277,7 @@ Get the internal packet filter statistics.
 .Bd -literal
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
-	u_int64_t	lcounters[LCNT_MAX];
+	u_int64_t	lcounters[LCNT_MAX];	/* limit counters */
 	u_int64_t	fcounters[FCNT_MAX];
 	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
@@ -290,6 +289,7 @@ struct pf_status {
 	u_int32_t	since;
 	u_int32_t	debug;
 	u_int32_t	hostid;
+	u_int32_t	reass;			/* reassembly */
 	char		ifname[IFNAMSIZ];
 	u_int8_t	pf_chksum[MD5_DIGEST_LENGTH];
 };
@@ -326,8 +326,8 @@ Get state table entries.
 struct pfioc_states {
 	int	ps_len;
 	union {
-		caddr_t		 psu_buf;
-		struct pf_state *psu_states;
+		caddr_t		     psu_buf;
+		struct pfsync_state *psu_states;
 	} ps_u;
 #define ps_buf		ps_u.psu_buf
 #define ps_states	ps_u.psu_states
@@ -343,7 +343,7 @@ On exit,
 .Va ps_len
 is always set to the total size required to hold all state table entries
 (i.e., it is set to
-.Li sizeof(struct pf_state) * nr ) .
+.Li sizeof(struct pfsync_state) * nr ) .
 .It Dv DIOCCHANGERULE Fa "struct pfioc_rule *pcr"
 Add or remove the
 .Va rule
@@ -564,10 +564,13 @@ struct pfr_addr {
 		struct in_addr	 _pfra_ip4addr;
 		struct in6_addr	 _pfra_ip6addr;
 	}		 pfra_u;
+	char		 pfra_ifname[IFNAMSIZ];
 	u_int8_t	 pfra_af;
 	u_int8_t	 pfra_net;
 	u_int8_t	 pfra_not;
 	u_int8_t	 pfra_fback;
+	u_int8_t	 pfra_type;
+	u_int8_t	 pad[7];
 };
 #define pfra_ip4addr    pfra_u._pfra_ip4addr
 #define pfra_ip6addr    pfra_u._pfra_ip6addr
@@ -741,7 +744,7 @@ struct pfioc_trans {
 	int		 size;	/* number of elements */
 	int		 esize;	/* size of each element in bytes */
 	struct pfioc_trans_e {
-		int		rs_num;
+		int		type;
 		char		anchor[MAXPATHLEN];
 		u_int32_t	ticket;
 	}		*array;
@@ -759,7 +762,7 @@ and
 calls.
 .Pp
 Ruleset types, identified by
-.Va rs_num ,
+.Va type ,
 include the following:
 .Pp
 .Bl -tag -width PF_RULESET_FILTER -offset ind -compact
@@ -793,22 +796,30 @@ Flush the passive OS fingerprint table.
 .It Dv DIOCOSFPADD Fa "struct pf_osfp_ioctl *io"
 .Bd -literal
 struct pf_osfp_ioctl {
-	struct pf_osfp_entry {
-		SLIST_ENTRY(pf_osfp_entry) fp_entry;
-		pf_osfp_t		fp_os;
-		char			fp_class_nm[PF_OSFP_LEN];
-		char			fp_version_nm[PF_OSFP_LEN];
-		char			fp_subtype_nm[PF_OSFP_LEN];
-	} 			fp_os;
-	pf_tcpopts_t		fp_tcpopts;
-	u_int16_t		fp_wsize;
-	u_int16_t		fp_psize;
-	u_int16_t		fp_mss;
+	struct pf_osfp_entry	fp_os;
+	pf_tcpopts_t		fp_tcpopts;	/* packed TCP options */
+	u_int16_t		fp_wsize;	/* TCP window size */
+	u_int16_t		fp_psize;	/* ip->ip_len */
+	u_int16_t		fp_mss;		/* TCP MSS */
 	u_int16_t		fp_flags;
-	u_int8_t		fp_optcnt;
-	u_int8_t		fp_wscale;
-	u_int8_t		fp_ttl;
-	int			fp_getnum;
+	u_int8_t		fp_optcnt;	/* TCP option count */
+	u_int8_t		fp_wscale;	/* TCP window scaling */
+	u_int8_t		fp_ttl;		/* IPv4 TTL */
+
+	int			fp_getnum;	/* DIOCOSFPGET number */
+};
+
+struct pf_osfp_entry {
+	SLIST_ENTRY(pf_osfp_entry) fp_entry;
+	pf_osfp_t		fp_os;
+	int			fp_enflags;
+#define PF_OSFP_EXPANDED	0x001		/* expanded entry */
+#define PF_OSFP_GENERIC		0x002		/* generic signature */
+#define PF_OSFP_NODETAIL	0x004		/* no p0f details */
+#define PF_OSFP_LEN	32
+	char			fp_class_nm[PF_OSFP_LEN];
+	char			fp_version_nm[PF_OSFP_LEN];
+	char			fp_subtype_nm[PF_OSFP_LEN];
 };
 .Ed
 .Pp
@@ -941,20 +952,19 @@ The data is returned in the
 structure described below:
 .Bd -literal
 struct pfi_kif {
-	RB_ENTRY(pfi_kif)		 pfik_tree;
 	char				 pfik_name[IFNAMSIZ];
+	RB_ENTRY(pfi_kif)		 pfik_tree;
 	u_int64_t			 pfik_packets[2][2][2];
 	u_int64_t			 pfik_bytes[2][2][2];
 	u_int32_t			 pfik_tzero;
 	int				 pfik_flags;
-	struct pf_state_tree_lan_ext	 pfik_lan_ext;
-	struct pf_state_tree_ext_gwy	 pfik_ext_gwy;
-	TAILQ_ENTRY(pfi_kif)		 pfik_w_states;
+	int				 pfik_flags_new;
 	void				*pfik_ah_cookie;
 	struct ifnet			*pfik_ifp;
 	struct ifg_group		*pfik_group;
 	int				 pfik_states;
 	int				 pfik_rules;
+	int				 pfik_routes;
 	TAILQ_HEAD(, pfi_dynaddr)	 pfik_dynaddrs;
 };
 .Ed
