@@ -1,0 +1,94 @@
+.\"	$OpenBSD: ldapd.8,v 1.1 2010/05/31 17:36:31 martinh Exp $
+.\"
+.\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 31 2010 $
+.Dt LDAPD 8
+.Os
+.Sh NAME
+.Nm ldapd
+.Nd Lightweight Directory Access Protocol daemon
+.Sh SYNOPSIS
+.Nm ldapd
+.Op Fl dnv
+.Oo
+.Fl D Ar macro Ns = Ns value
+.Oc
+.Op Fl f Ar file
+.Sh DESCRIPTION
+.Nm
+is a daemon which implements the LDAP protocol.
+.Pp
+A running
+.Nm
+process can be controlled using the
+.Xr ldapctl 8
+utility.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D Ar macro Ns = Ns Ar value
+Define
+.Ar macro
+to be set to
+.Ar value
+on the command line.
+Overrides the definition of
+.Ar macro
+in the configuration file.
+.It Fl d
+Do not daemonize and log to
+.Em stderr .
+.It Fl f Ar file
+Use
+.Ar file
+as the configuration file, instead of the default
+.Pa /etc/ldapd.conf .
+.It Fl n
+Configtest mode.
+Only check the configuration file for validity.
+.It Fl v
+Produce more verbose output.
+.El
+.Sh FILES
+.Bl -tag -width "/var/run/ldapd.sockXXXXXXX" -compact
+.It Pa /etc/ldapd.conf
+default
+.Nm
+configuration file
+.It Pa /var/run/ldapd.sock
+default
+.Nm
+control socket
+.It Pa /var/db/ldap/*.db
+.Nm
+database files
+.El
+.Sh SEE ALSO
+.Xr ldapd.conf 5 ,
+.Xr ldapctl 8
+.Rs
+.%R RFC 4511
+.%T Lightweight Directory Access Protocol (LDAP): The Protocol
+.%D June 2006
+.Re
+.Rs
+.%R RFC 4512
+.%T Lightweight Directory Access Protocol (LDAP): Directory Information Models
+.%D June 2006
+.Re
+.Sh CAVEATS
+.Nm
+does not fully work yet.

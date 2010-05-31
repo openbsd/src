@@ -1,0 +1,230 @@
+.\"	$OpenBSD: ldapd.conf.5,v 1.1 2010/05/31 17:36:31 martinh Exp $
+.\"
+.\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
+.\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
+.\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"
+.Dd $Mdocdate: May 31 2010 $
+.Dt LDAPD.CONF 5
+.Os
+.Sh NAME
+.Nm ldapd.conf
+.Nd Lightweight Directory Access Protocol daemon configuration file
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the LDAP daemon
+.Xr ldapd 8 .
+.Pp
+Comments can be put anywhere in the file using a hash mark
+.Pq # ,
+and extend to the end of the current line.
+Arguments containing whitespace should be surrounded by double quotes
+.Pq \&" .
+.Pp
+Macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits
+and underscores.
+Macro names may not be reserved words (for example
+.Ar listen ,
+.Ar namespace ,
+.Ar port ) .
+Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+wan_if = "fxp0"
+listen on $wan_if
+listen on $wan_if tls
+.Ed
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/ldap/inetorgperson.schema"
+.Ed
+.Pp
+The syntax of
+.Nm
+is described below.
+.Sh GLOBAL CONFIGURATION
+.Bl -tag -width Ds
+.It Xo
+.Ic listen on Ar interface
+.Op Ic port Ar port
+.Op Ic tls | ldaps | secure
+.Op Ic certificate Ar name
+.Xc
+Specify an
+.Ar interface
+and
+.Ar port
+to listen on.
+An IP address, domain name or absolute path may be used in place of
+.Ar interface .
+An absolute path is used to listen on a unix domain socket.
+.Pp
+Secured connections are provided either using STARTTLS
+.Pq Ic tls ,
+by default on port 389,
+or LDAPS
+.Pq Ic ldaps ,
+by default on port 636.
+Creation of certificates is documented in
+.Xr starttls 8 .
+If no certificate
+.Ar name
+is specified, the
+.Pa /etc/ldap/certs
+directory is searched for a file named by joining
+the interface name with a .crt extension, e.g.\&
+.Pa /etc/ldap/certs/fxp0.crt .
+.Pp
+If the certificate name is an absolute path, a .crt and .key extension
+is appended to form the certificate path and key path respectively.
+.Pp
+Only secured connections accept plain text password authentication.
+Connections using TLS or unix domain sockets are always considered secured.
+The secure keyword can be used to mark an otherwise insecure connection
+secured, e.g. if IPsec is used.
+.El
+.Sh NAMESPACES
+A namespace is a subtree of the global X.500 DIT (Directory Information Tree),
+also known as a naming context.
+All entries' distinguished names (DN) has the same suffix, which is used to
+identify the namespace.
+The suffix should consist of the domain components, in reverse order, of your
+domain name, as recommended by RFC2247.
+.Bd -literal -offset indent
+namespace "dc=example,dc=com" {
+	rootdn "cn=admin,dc=example,dc=com"
+	rootpw "secret"
+}
+.Ed
+.Pp
+A namespace has the following configuration properties:
+.Bl -tag -width Ds
+.It rootdn Ar dn
+Specify the distinguished name of the root user for the namespace.
+The root user is always allowed to read and write entries in the namespace.
+The distinguished name must have the same suffix as the namespace.
+.It rootpw Ar password
+Password for the root user.
+Specified either in plain text, or in hashed format.
+.It index Ar attribute
+Maintain an index on the specified attribute.
+This index can be used for equality, prefix substring and range searches.
+.Xr ldapd 8
+will update the index on each modification.
+If you add an index to an existing namespace, you need to run
+.Xr ldapctl 8
+to index the existing entries.
+.It fsync Ar on | off
+If
+.Ar off ,
+data will not be forced to disk after each commit.
+Disabling fsync can increase write speed substantially, but may lead to data
+loss.
+The default value is on.
+.It cache-size Ar size
+Set the cache size for data entries.
+The
+.Ar size
+is specified in number of pages.
+Note that more than the configured number of pages may exist in the cache, as
+dirty pages and pages referenced by cursors are excluded from cache expiration.
+.Pp
+Cached pages are expired in a least recently used (LRU) order.
+.It index-cache-size Ar size
+Set the cache size for the index database.
+.It relax schema
+Disables checking of required and optional object attributes against schema.
+All attributes and values are matched as case-insensitive strings.
+All attributes are considered multi-valued.
+.It strict schema
+Enables checking of required and optional object attributes against schema.
+This is the default.
+.It Ic allow | deny
+Allow or deny access to parts of the namespace.
+.Pp
+Each request to the
+.Xr ldapd 8
+daemon evaluates the filter rules in sequential order, from first to last.
+The last matching rule decides what action is taken.
+If no rule matches the request, the default action is to allow the request.
+The root DN is always allowed to perform any request.
+.Pp
+The allow/deny statement operates on all access types by default.
+This can be restricted by an access type specification:
+.Bl -tag -width Ds
+.It read access
+Restricts the filter rule to search operations.
+.It write access
+Restricts the filter rule to add, delete and modify operations.
+.It bind access
+Restricts the filter rule to bind operations.
+.El
+.Pp
+The scope of the filter rule can be restricted by the
+.Em to
+keyword:
+.Bl -tag -width Ds
+.It to subtree Ar DN
+The filter rule applies to the distinguished name,
+as well as for all its descendants.
+.It to children of Ar DN
+The filter rule applies to all the direct children of the distinguished name.
+.It to Ar DN
+The filter rule applies to the distinguished name only.
+.It to any
+The filter rule applies to any distinguished name in the namespace.
+This is the default if no scope is specified.
+.It to root
+The filter rule applies to the root DSE.
+.El
+.Pp
+Finally, the filter rule can match a bind DN:
+.Bl -tag -width Ds
+.It by any
+The filter rule matches by any bind dn, including anonymous binds.
+.It by Ar DN
+The filter rule matches only if the requestor has previously performed
+a bind as the specified distinguished name.
+.It by self
+The filter rule matches only if the requestor has previously performed
+a bind as the distinguished name that is being requested.
+Typically used to allow users to modify their own data.
+.El
+.It use compression Op level Ar level
+Enable compression of entries and optionally specify compression level (0 - 9).
+By default, no compression is used.
+.El
+.Sh ATTRIBUTE TYPES
+.Pp
+As defined in RFC4512...
+.Sh OBJECTCLASSES
+.Pp
+As defined in RFC4512...
+.Sh FILES
+.Bl -tag -width "/etc/ldap/ldapd.confXXX" -compact
+.It Pa /etc/ldapd.conf
+Default
+.Xr ldapd 8
+configuration file.
+.El
+.Sh SEE ALSO
+.Xr ldapd 8 ,
+.Xr ldapctl 8

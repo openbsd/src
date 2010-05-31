@@ -1,0 +1,73 @@
+.\"	$OpenBSD: ldapctl.8,v 1.1 2010/05/31 17:36:31 martinh Exp $
+.\"
+.\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 31 2010 $
+.Dt LDAPCTL 8
+.Os
+.Sh NAME
+.Nm ldapctl
+.Nd LDAP daemon control program
+.Sh SYNOPSIS
+.Nm ldapctl
+.Op Fl s Ar socket
+.Ar command
+.Op Ar argument ...
+.Sh DESCRIPTION
+The
+.Nm
+program controls the
+.Xr ldapd 8
+daemon.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/ldapd.sock
+to communicate with
+.Xr ldapd 8 .
+.El
+.Pp
+The commands are as follows:
+.Bl -tag -width xxxxxx
+.It Cm stats
+Show statistics counters.
+.It Cm compact
+Initiate compaction of all databases.
+Compaction is performed online against a running
+.Xr ldapd 8 .
+When compaction of a database file is complete,
+.Xr ldapd 8
+reopens the file and new requests are performed against the new database.
+Write requests are buffered until the compaction is complete.
+Read requests are handled without disruption.
+.It Cm index
+Initiate re-indexing of all databases.
+Indexing is performed online against a running
+.Xr ldapd 8 .
+.El
+.Sh FILES
+.Bl -tag -width "/var/run/ldapd.sockXXXXXXX" -compact
+.It Pa /var/run/ldapd.sock
+default
+.Nm
+control socket
+.El
+.Sh SEE ALSO
+.Xr ldapd.conf 5 ,
+.Xr ldapd 8
