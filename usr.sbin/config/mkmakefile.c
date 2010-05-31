@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.33 2010/05/24 20:02:08 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.34 2010/05/31 21:56:43 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -396,32 +396,6 @@ emitfiles(FILE *fp, int suffix)
 			return (1);
 		lpos += len + 1;
 		sp = ' ';
-	}
-	/*
-	 * The allfiles list does not include the configuration-specific
-	 * C source files.  These files should be eliminated someday, but
-	 * for now, we have to add them to ${CFILES} (and only ${CFILES}).
-	 */
-	if (suffix == 'c') {
-		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
-			if (cf->cf_root == NULL)
-				(void)snprintf(swapname, sizeof swapname,
-				    "$S/conf/swapgeneric.c");
-			else
-				(void)snprintf(swapname, sizeof swapname,
-				    "./swap%s.c", cf->cf_name);
-			len = strlen(swapname);
-			if (lpos + len > 72) {
-				if (fputs(" \\\n", fp) < 0)
-					return (1);
-				sp = '\t';
-				lpos = 7;
-			}
-			if (fprintf(fp, "%c%s", sp, swapname) < 0)
-				return (1);
-			lpos += len + 1;
-			sp = ' ';
-		}
 	}
 	if (putc('\n', fp) < 0)
 		return (1);
