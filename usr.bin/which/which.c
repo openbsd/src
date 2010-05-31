@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.15 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: which.c,v 1.16 2010/05/31 14:01:49 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -120,13 +120,13 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 			(void)puts(prog);
 			return (1);
 		} else {
-			(void)printf("%s: Command not found.\n", prog);
+			warnx("%s: Command not found.", prog);
 			return (0);
 		}
 	}
 
 	if ((path = strdup(path)) == NULL)
-		errx(1, "Can't allocate memory.");
+		err(1, "strdup");
 	pathcpy = path;
 
 	proglen = strlen(prog);
@@ -159,7 +159,7 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 
 	/* whereis(1) is silent on failure. */
 	if (!rval && progmode != PROG_WHEREIS)
-		(void)printf("%s: Command not found.\n", prog);
+		warnx("%s: Command not found.", prog);
 	return (rval);
 }
 
