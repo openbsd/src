@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.42 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.43 2010/05/31 19:35:03 halex Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -1034,10 +1034,23 @@ ciss_heartbeat(void *v)
 
 	hb = bus_space_read_4(sc->iot, sc->cfg_ioh,
 	    sc->cfgoff + offsetof(struct ciss_config, heartbeat));
-	if (hb == sc->heartbeat)
-		panic("%s: dead", sc->sc_dev.dv_xname);	/* XXX reset! */
-	else
+	if (hb == sc->heartbeat) {
+		sc->fibrillation++;
+		CISS_DPRINTF(CISS_D_ERR, ("%s: fibrillation #%d (value=%d)\n",
+		    sc->sc_dev.dv_xname, sc->fibrillation, hb));
+		if (sc->fibrillation >= 11) {
+			/* No heartbeat for 33 seconds */
+			panic("%s: dead", sc->sc_dev.dv_xname);	/* XXX reset! */
+		}
+	} else {
 		sc->heartbeat = hb;
+		if (sc->fibrillation) {
+			CISS_DPRINTF(CISS_D_ERR, ("%s: "
+			    "fibrillation ended (value=%d)\n",
+			    sc->sc_dev.dv_xname, hb));
+		}
+		sc->fibrillation = 0;
+	}
 
 	timeout_add_sec(&sc->sc_hb, 3);
 }
