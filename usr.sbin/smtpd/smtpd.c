@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.107 2010/05/27 15:36:04 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.108 2010/05/31 22:25:26 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -777,16 +777,14 @@ imsg_event_add(struct imsgev *iev)
 	event_add(&iev->ev, NULL);
 }
 
-int
+void
 imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
     pid_t pid, int fd, void *data, u_int16_t datalen)
 {
-	int	ret;
+	if (imsg_compose(&iev->ibuf, type, peerid, pid, fd, data, datalen) == -1)
+		fatal("imsg_compose_event");
 
-	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
-	    pid, fd, data, datalen)) != -1)
-		imsg_event_add(iev);
-	return (ret);
+	imsg_event_add(iev);
 }
 
 void
