@@ -1,9 +1,9 @@
-/*	$OpenBSD: smtpd.c,v 1.108 2010/05/31 22:25:26 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.109 2010/05/31 23:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
- * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
+ * Copyright (c) 2009-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@
 #include <sys/uio.h>
 #include <sys/mman.h>
 
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -45,6 +46,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "queue_backend.h"
 
 void		 parent_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	 usage(void);
@@ -57,10 +59,8 @@ void		 parent_sig_handler(int, short, void *);
 
 void		 forkmda(struct smtpd *, struct imsgev *, u_int32_t,
 		     struct deliver *);
-int		 parent_enqueue_offline(struct smtpd *, char *);
+void		 parent_enqueue_offline(struct smtpd *);
 int		 parent_forward_open(char *);
-int		 setup_spool(uid_t, gid_t);
-int		 path_starts_with(char *, char *);
 
 void		 fork_peers(struct smtpd *);
 
@@ -68,10 +68,10 @@ struct child	*child_add(struct smtpd *, pid_t, int, int);
 void		 child_del(struct smtpd *, pid_t);
 struct child	*child_lookup(struct smtpd *, pid_t);
 
+void		 setup_spool(struct passwd *);
+
 extern char	**environ;
 void		(*imsg_callback)(struct smtpd *, struct imsgev *, struct imsg *);
-
-int __b64_pton(char const *, unsigned char *, size_t);
 
 void
 parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
@@ -112,17 +112,6 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				fwreq->status = 1;
 			imsg_compose_event(iev, IMSG_PARENT_FORWARD_OPEN, 0, 0,
 			    fd, fwreq, sizeof *fwreq);
-			return;
-		}
-	}
-
-	if (iev->proc == PROC_QUEUE) {
-		switch (imsg->hdr.type) {
-		case IMSG_PARENT_ENQUEUE_OFFLINE:
-			if (! parent_enqueue_offline(env, imsg->data))
-				imsg_compose_event(iev,
-				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
-				    NULL, 0);
 			return;
 		}
 	}
@@ -180,6 +169,7 @@ parent_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 		}
 	}
 
+	log_warnx("parent got imsg %d from %d", imsg->hdr.type, iev->proc);
 	fatalx("parent_imsg: unexpected imsg");
 }
 
@@ -384,12 +374,10 @@ parent_sig_handler(int sig, short event, void *p)
 			case CHILD_ENQUEUE_OFFLINE:
 				if (fail)
 					log_warnx("couldn't enqueue offline "
-					    "message; smtpctl %s", cause);
+					    "message; child %s", cause);
 				else
 					log_debug("offline message enqueued");
-				imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
-				    NULL, 0);
+				parent_enqueue_offline(env);
 				break;
 
 			default:
@@ -483,12 +471,11 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
-	if ((env.sc_pw =  getpwnam(SMTPD_USER)) == NULL)
+	if ((env.sc_pw = getpwnam(SMTPD_USER)) == NULL)
 		errx(1, "unknown user %s", SMTPD_USER);
 
-	if (!setup_spool(env.sc_pw->pw_uid, 0))
-		errx(1, "invalid directory permissions");
-
+	setup_spool(env.sc_pw);
+	
 	log_init(debug);
 	log_verbose(verbose);
 
@@ -531,6 +518,8 @@ main(int argc, char *argv[])
 	bzero(&tv, sizeof(tv));
 	evtimer_add(&env.sc_ev, &tv);
 
+	parent_enqueue_offline(&env);
+
 	event_dispatch();
 
 	return (0);
@@ -563,7 +552,6 @@ fork_peers(struct smtpd *env)
 	env->sc_instances[PROC_MTA] = 1;
 	env->sc_instances[PROC_PARENT] = 1;
 	env->sc_instances[PROC_QUEUE] = 1;
-	env->sc_instances[PROC_RUNNER] = 1;
 	env->sc_instances[PROC_SMTP] = 1;
 
 	init_pipes(env);
@@ -574,7 +562,6 @@ fork_peers(struct smtpd *env)
 	env->sc_title[PROC_MFA] = "mail filter agent";
 	env->sc_title[PROC_MTA] = "mail transfer agent";
 	env->sc_title[PROC_QUEUE] = "queue";
-	env->sc_title[PROC_RUNNER] = "runner";
 	env->sc_title[PROC_SMTP] = "smtp server";
 
 	child_add(env, control(env), CHILD_DAEMON, PROC_CONTROL);
@@ -583,7 +570,6 @@ fork_peers(struct smtpd *env)
 	child_add(env, mfa(env), CHILD_DAEMON, PROC_MFA);
 	child_add(env, mta(env), CHILD_DAEMON, PROC_MTA);
 	child_add(env, queue(env), CHILD_DAEMON, PROC_QUEUE);
-	child_add(env, runner(env), CHILD_DAEMON, PROC_RUNNER);
 	child_add(env, smtp(env), CHILD_DAEMON, PROC_SMTP);
 
 	setproctitle("[priv]");
@@ -630,136 +616,6 @@ child_lookup(struct smtpd *env, pid_t pid)
 	return SPLAY_FIND(childtree, &env->children, &key);
 }
 
-int
-setup_spool(uid_t uid, gid_t gid)
-{
-	unsigned int	 n;
-	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
-				     PATH_RUNQUEUE, PATH_PURGE,
-				     PATH_OFFLINE, PATH_BOUNCE };
-	char		 pathname[MAXPATHLEN];
-	struct stat	 sb;
-	int		 ret;
-
-	if (! bsnprintf(pathname, sizeof(pathname), "%s", PATH_SPOOL))
-		fatal("snprintf");
-
-	if (stat(pathname, &sb) == -1) {
-		if (errno != ENOENT) {
-			warn("stat: %s", pathname);
-			return 0;
-		}
-
-		if (mkdir(pathname, 0711) == -1) {
-			warn("mkdir: %s", pathname);
-			return 0;
-		}
-
-		if (chown(pathname, 0, 0) == -1) {
-			warn("chown: %s", pathname);
-			return 0;
-		}
-
-		if (stat(pathname, &sb) == -1)
-			err(1, "stat: %s", pathname);
-	}
-
-	/* check if it's a directory */
-	if (!S_ISDIR(sb.st_mode)) {
-		warnx("%s is not a directory", pathname);
-		return 0;
-	}
-
-	/* check that it is owned by uid/gid */
-	if (sb.st_uid != 0 || sb.st_gid != 0) {
-		warnx("%s must be owned by root:wheel", pathname);
-		return 0;
-	}
-
-	/* check permission */
-	if ((sb.st_mode & (S_IRUSR|S_IWUSR|S_IXUSR)) != (S_IRUSR|S_IWUSR|S_IXUSR) ||
-	    (sb.st_mode & (S_IRGRP|S_IWGRP|S_IXGRP)) != S_IXGRP ||
-	    (sb.st_mode & (S_IROTH|S_IWOTH|S_IXOTH)) != S_IXOTH) {
-		warnx("%s must be rwx--x--x (0711)", pathname);
-		return 0;
-	}
-
-	ret = 1;
-	for (n = 0; n < nitems(paths); n++) {
-		mode_t	mode;
-		uid_t	owner;
-		gid_t	group;
-
-		if (!strcmp(paths[n], PATH_OFFLINE)) {
-			mode = 01777;
-			owner = 0;
-			group = 0;
-		} else {
-			mode = 0700;
-			owner = uid;
-			group = gid;
-		}
-
-		if (! bsnprintf(pathname, sizeof(pathname), "%s%s", PATH_SPOOL,
-			paths[n]))
-			fatal("snprintf");
-
-		if (stat(pathname, &sb) == -1) {
-			if (errno != ENOENT) {
-				warn("stat: %s", pathname);
-				ret = 0;
-				continue;
-			}
-
-			/* chmod is deffered to avoid umask effect */
-			if (mkdir(pathname, 0) == -1) {
-				ret = 0;
-				warn("mkdir: %s", pathname);
-			}
-
-			if (chown(pathname, owner, group) == -1) {
-				ret = 0;
-				warn("chown: %s", pathname);
-			}
-
-			if (chmod(pathname, mode) == -1) {
-				ret = 0;
-				warn("chmod: %s", pathname);
-			}
-
-			if (stat(pathname, &sb) == -1)
-				err(1, "stat: %s", pathname);
-		}
-
-		/* check if it's a directory */
-		if (!S_ISDIR(sb.st_mode)) {
-			ret = 0;
-			warnx("%s is not a directory", pathname);
-		}
-
-		/* check that it is owned by owner/group */
-		if (sb.st_uid != owner) {
-			ret = 0;
-			warnx("%s is not owned by uid %d", pathname, owner);
-		}
-		if (sb.st_gid != group) {
-			ret = 0;
-			warnx("%s is not owned by gid %d", pathname, group);
-		}
-
-		/* check permission */
-		if ((sb.st_mode & 07777) != mode) {
-			char mode_str[12];
-
-			ret = 0;
-			strmode(mode, mode_str);
-			mode_str[10] = '\0';
-			warnx("%s must be %s (%o)", pathname, mode_str + 1, mode);
-		}
-	}
-	return ret;
-}
-
 void
 imsg_event_add(struct imsgev *iev)
 {
@@ -802,8 +658,11 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 	errno = 0;
 	pw = getpwnam(deliver->user);
 	if (pw == NULL) {
-		n = snprintf(ebuf, sizeof ebuf, "getpwnam: %s",
-		    errno ? strerror(errno) : "no such user");
+		if (errno)
+			n = snprintf(ebuf, sizeof ebuf, "getpwnam: %s",
+			    strerror(errno));
+		else
+			n = snprintf(ebuf, sizeof ebuf, "user not found");
 		imsg_compose_event(iev, IMSG_MDA_DONE, id, 0, -1, ebuf, n + 1);
 		return;
 	}
@@ -886,7 +745,8 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 	/* avoid hangs by setting 5m timeout */
 	alarm(300);
 
-	if (deliver->mode == A_EXT) {
+	/* external mda */
+	if (deliver->mode == 'P') {
 		char	*environ_new[2];
 
 		environ_new[0] = "PATH=" _PATH_DEFPATH;
@@ -897,7 +757,8 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 		error("execle");
 	}
 
-	if (deliver->mode == A_MAILDIR) {
+	/* internal mda: maildir */
+	if (deliver->mode == 'D') {
 		char	 tmp[PATH_MAX], new[PATH_MAX];
 		int	 ch, fd;
 		FILE	*fp;
@@ -927,10 +788,6 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 				break;
 		if (ferror(stdin))
 			error2("read error");
-		if (fflush(fp) == EOF || ferror(fp))
-			error2("write error");
-		if (fsync(fd) < 0)
-			error2("fsync");
 		if (fclose(fp) == EOF)
 			error2("fclose");
 		snprintf(new, sizeof new, "new/%s", tmp + 4);
@@ -940,7 +797,8 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 	}
 #undef error2
 
-	if (deliver->mode == A_FILENAME) {
+	/* internal mda: file */
+	if (deliver->mode == 'F') {
 		struct stat 	 sb;
 		time_t		 now;
 		size_t		 len;
@@ -975,10 +833,6 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 		if (ferror(stdin))
 			error2("read error");
 		putc('\n', fp);
-		if (fflush(fp) == EOF || ferror(fp))
-			error2("write error");
-		if (fsync(fd) < 0)
-			error2("fsync");
 		if (fclose(fp) == EOF)
 			error2("fclose");
 		_exit(0);
@@ -989,114 +843,103 @@ forkmda(struct smtpd *env, struct imsgev *iev, u_int32_t id,
 #undef error
 #undef error2
 
-int
-parent_enqueue_offline(struct smtpd *env, char *runner_path)
+void
+parent_enqueue_offline(struct smtpd *env)
 {
-	char		 path[MAXPATHLEN];
-	struct passwd	*pw;
+	char		 path[MAXPATHLEN], *line, charstr[2], *envp[2], *tmp;
 	struct stat	 sb;
+	struct dirent	*de;
+	struct passwd	*pw;
+	DIR		*dir;
 	pid_t		 pid;
+	arglist		 args;
+	int		 fd, line_sz;
 
-	log_debug("parent_enqueue_offline: path %s", runner_path);
+	fd = -1;
+	pw = NULL;
 
-	if (! bsnprintf(path, sizeof(path), "%s%s", PATH_SPOOL, runner_path))
-		fatalx("parent_enqueue_offline: filename too long");
+	dir = opendir(PATH_SPOOL PATH_OFFLINE);
+	if (dir == NULL)
+		fatal("opendir");
 
-	if (! path_starts_with(path, PATH_SPOOL PATH_OFFLINE))
-		fatalx("parent_enqueue_offline: path outside offline dir");
-
-	if (lstat(path, &sb) == -1) {
-		if (errno == ENOENT) {
-			log_warn("parent_enqueue_offline: %s", path);
-			return (0);
+	while ((de = readdir(dir))) {
+		if (de->d_name[0] == '.')
+			continue;
+		snprintf(path, sizeof path, "%s%s/%s", PATH_SPOOL,
+		    PATH_OFFLINE, de->d_name);
+		log_debug("%s: file %s", __func__, path);
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+			continue;
+		if (fchflags(fd, 0) < 0 || fstat(fd, &sb) < 0 ||
+		    unlink(path) < 0 || !S_ISREG(sb.st_mode) ||
+		    (pw = getpwuid(sb.st_uid)) == NULL) {
+			close(fd);
+			continue;
 		}
-		fatal("parent_enqueue_offline: lstat");
+		break;
 	}
 
-	if (chflags(path, 0) == -1) {
-		if (errno == ENOENT) {
-			log_warn("parent_enqueue_offline: %s", path);
-			return (0);
-		}
-		fatal("parent_enqueue_offline: chflags");
+	closedir(dir);
+
+	if (de == NULL)
+		return;
+
+	pid = fork();
+	if (pid < 0)
+		fatal("fork");
+
+	if (pid) {
+		child_add(env, pid, CHILD_ENQUEUE_OFFLINE, -1);
+		return;
 	}
 
-	errno = 0;
-	if ((pw = getpwuid(sb.st_uid)) == NULL) {
-		log_warn("parent_enqueue_offline: getpwuid for uid %d failed",
-		    sb.st_uid);
-		unlink(path);
-		return (0);
-	}
-
-	if (! S_ISREG(sb.st_mode)) {
-		log_warnx("file %s (uid %d) not regular, removing", path, sb.st_uid);
-		if (S_ISDIR(sb.st_mode))
-			rmdir(path);
-		else
-			unlink(path);
-		return (0);
-	}
-
-	if ((pid = fork()) == -1)
-		fatal("parent_enqueue_offline: fork");
-
-	if (pid == 0) {
-		char	*envp[2], *p, *tmp;
-		FILE	*fp;
-		size_t	 len;
-		arglist	 args;
-
-		bzero(&args, sizeof(args));
-
-		if (setgroups(1, &pw->pw_gid) ||
-		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) ||
-		    closefrom(STDERR_FILENO + 1) == -1) {
-			unlink(path);
-			_exit(1);
-		}
-
-		if ((fp = fopen(path, "r")) == NULL) {
-			unlink(path);
-			_exit(1);
-		}
-		unlink(path);
-
-		if (chdir(pw->pw_dir) == -1 && chdir("/") == -1)
-			_exit(1);
-
-		if (setsid() == -1 ||
-		    signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
-		    dup2(fileno(fp), STDIN_FILENO) == -1)
-			_exit(1);
-
-		if ((p = fgetln(fp, &len)) == NULL)
-			_exit(1);
-
-		if (p[len - 1] != '\n')
-			_exit(1);
-		p[len - 1] = '\0';
-
-		addargs(&args, "%s", "sendmail");
-
-		while ((tmp = strsep(&p, "|")) != NULL)
-			addargs(&args, "%s", tmp);
-
-		if (lseek(fileno(fp), len, SEEK_SET) == -1)
-			_exit(1);
-
-		envp[0] = "PATH=" _PATH_DEFPATH;
-		envp[1] = (char *)NULL;
-		environ = envp;
-
-		execvp(PATH_SMTPCTL, args.list);
+	if (chdir(pw->pw_dir) < 0 && chdir("/") < 0)
 		_exit(1);
+	if (dup2(fd, STDIN_FILENO) < 0)
+		_exit(1);
+	if (closefrom(STDERR_FILENO + 1) < 0)
+		_exit(1);
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		_exit(1);
+	if (setsid() < 0)
+		_exit(1);
+	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
+	    signal(SIGINT, SIG_DFL) == SIG_ERR ||
+	    signal(SIGTERM, SIG_DFL) == SIG_ERR ||
+	    signal(SIGCHLD, SIG_DFL) == SIG_ERR ||
+	    signal(SIGHUP, SIG_DFL) == SIG_ERR)
+		_exit(1);
+
+	line = malloc(1);
+	if (line == NULL)
+		_exit(1);
+	line_sz = 1;
+	line[0] = '\0';
+	do {
+		if (read(STDIN_FILENO, charstr, 1) <= 0)
+			_exit(1);
+		charstr[1] = '\0';
+		line = realloc(line, ++line_sz);
+		if (line == NULL)
+			_exit(1);
+		strlcat(line, charstr, line_sz);
+	} while (charstr[0] != '\n');
+	line[strcspn(line, "\n")] = '\0';
+
+	bzero(&args, sizeof args);
+	addargs(&args, "%s", "sendmail");
+	while ((tmp = strsep(&line, "|"))) {
+		log_debug("%s: arg %s", __func__, tmp);
+		addargs(&args, "%s", tmp);
 	}
-
-	child_add(env, pid, CHILD_ENQUEUE_OFFLINE, -1);
-
-	return (1);
+	envp[0] = "PATH=" _PATH_DEFPATH;
+	envp[1] = (char *)NULL;
+	environ = envp;
+	execvp(PATH_SMTPCTL, args.list);
+	_exit(1);
 }
 
 int
@@ -1128,18 +971,6 @@ parent_forward_open(char *username)
 	}
 
 	return fd;
-}
-
-int
-path_starts_with(char *file, char *prefix)
-{
-	char	 rprefix[MAXPATHLEN];
-	char	 rfile[MAXPATHLEN];
-
-	if (realpath(file, rfile) == NULL || realpath(prefix, rprefix) == NULL)
-		return (-1);
-
-	return (strncmp(rfile, rprefix, strlen(rprefix)) == 0);
 }
 
 int
@@ -1186,6 +1017,27 @@ imsg_dispatch(int fd, short event, void *p)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);
+}
+
+void
+setup_spool(struct passwd *pw)
+{
+	if (mkdir(PATH_SPOOL, 0711) < 0 && errno != EEXIST)
+		err(1, "mkdir: %s", PATH_SPOOL);
+	if (chmod(PATH_SPOOL, 0711) < 0)
+		err(1, "chmod: %s", PATH_SPOOL);
+	if (chown(PATH_SPOOL, 0, 0) < 0)
+		err(1, "chown: %s", PATH_SPOOL);
+
+	if (queue_be_init(PATH_SPOOL, pw->pw_uid, pw->pw_gid) < 0)
+		err(1, "backend init failed");
+
+	if (mkdir(PATH_SPOOL PATH_OFFLINE, 01777) < 0 && errno != EEXIST)
+		err(1, "mkdir: %s", PATH_SPOOL PATH_OFFLINE);
+	if (chmod(PATH_SPOOL PATH_OFFLINE, 01777) < 0)
+		err(1, "chmod: %s", PATH_SPOOL PATH_OFFLINE);
+	if (chown(PATH_SPOOL PATH_OFFLINE, 0, 0) < 0)
+		err(1, "chmod: %s", PATH_SPOOL PATH_OFFLINE);
 }
 
 SPLAY_GENERATE(childtree, child, entry, child_cmp);

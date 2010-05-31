@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.47 2010/04/21 18:54:43 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.48 2010/05/31 23:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -43,9 +43,11 @@
 
 #include "smtpd.h"
 #include "parser.h"
+#include "queue_backend.h"
 
 __dead void	usage(void);
 int		show_command_output(struct imsg*);
+void		show_queue(int);
 int		show_stats_output(struct imsg *);
 
 int proctype;
@@ -73,6 +75,7 @@ main(int argc, char *argv[])
 	struct sockaddr_un	sun;
 	struct parse_result	*res = NULL;
 	struct imsg		imsg;
+	u_int64_t		content_id;
 	int			ctl_sock;
 	int			done = 0;
 	int			n, verbose = 0;
@@ -83,7 +86,7 @@ main(int argc, char *argv[])
 	else if (strcmp(__progname, "mailq") == 0) {
 		if (geteuid())
 			errx(1, "need root privileges");
-		show_queue(PATH_QUEUE, 0);
+		show_queue(0);
 		return 0;
 	} else if (strcmp(__progname, "smtpctl") == 0) {
 		/* check for root privileges */
@@ -96,10 +99,12 @@ main(int argc, char *argv[])
 		/* handle "disconnected" commands */
 		switch (res->action) {
 		case SHOW_QUEUE:
-			show_queue(PATH_QUEUE, 0);
+			show_queue(0);
+			break;
+		case SHOW_QUEUE_RAW:
+			show_queue(1);
 			break;
 		case SHOW_RUNQUEUE:
-			show_queue(PATH_RUNQUEUE, 0);
 			break;
 		default:
 			goto connected;
@@ -146,7 +151,7 @@ connected:
 		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_LOCAL, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MTA:
-		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_OUTGOING, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_PAUSE_RELAY, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_SMTP:
 		imsg_compose(ibuf, IMSG_SMTP_PAUSE, 0, 0, -1, NULL, 0);
@@ -155,7 +160,7 @@ connected:
 		imsg_compose(ibuf, IMSG_QUEUE_RESUME_LOCAL, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_MTA:
-		imsg_compose(ibuf, IMSG_QUEUE_RESUME_OUTGOING, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_QUEUE_RESUME_RELAY, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_SMTP:
 		imsg_compose(ibuf, IMSG_SMTP_RESUME, 0, 0, -1, NULL, 0);
@@ -163,24 +168,26 @@ connected:
 	case SHOW_STATS:
 		imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, NULL, 0);
 		break;
-	case SCHEDULE: {
-		struct sched s;
-
-		s.fd = -1;
-		bzero(s.mid, sizeof (s.mid));
-		strlcpy(s.mid, res->data, sizeof (s.mid));
-		imsg_compose(ibuf, IMSG_QUEUE_SCHEDULE, 0, 0, -1, &s, sizeof (s));
+	case SCHEDULE:
+		if (strcmp(res->data, "all") == 0)
+			content_id = 0;
+		else
+			content_id = queue_be_encode(res->data);
+		if (content_id == INVALID_ID)
+			errx(1, "invalid id: %s", res->data);
+		imsg_compose(ibuf, IMSG_QUEUE_SCHEDULE, 0, 0, -1, &content_id,
+		    sizeof content_id);
 		break;
-	}
-	case REMOVE: {
-		struct remove s;
-
-		s.fd = -1;
-		bzero(s.mid, sizeof (s.mid));
-		strlcpy(s.mid, res->data, sizeof (s.mid));
-		imsg_compose(ibuf, IMSG_QUEUE_REMOVE, 0, 0, -1, &s, sizeof (s));
+	case REMOVE:
+		if (strcmp(res->data, "all") == 0)
+			content_id = 0;
+		else
+			content_id = queue_be_encode(res->data);
+		if (content_id == INVALID_ID)
+			errx(1, "invalid id: %s", res->data);
+		imsg_compose(ibuf, IMSG_QUEUE_REMOVE, 0, 0, -1, &content_id,
+		    sizeof content_id);
 		break;
-	}
 	case MONITOR:
 		/* XXX */
 		break;
@@ -264,6 +271,75 @@ show_command_output(struct imsg *imsg)
 	return (1);
 }
 
+void
+show_queue(int raw)
+{
+	struct action_be a;
+	struct aux	 aux;
+	int		 ret, title;
+
+	if (chdir(PATH_SPOOL) < 0)
+		err(1, "chdir");
+
+	title = 0;
+	for (;;) {
+		ret = queue_be_getnext(&a);
+		if (ret == -1)
+			err(1, "getnext error");
+		if (ret == -2)
+			continue;	/* unlinked during scan */
+		if (a.content_id == 0)
+			break;		/* end of queue */
+		if (a.birth == 0)
+			continue;	/* uncommitted */
+		auxsplit(&aux, a.aux);
+
+		if (raw) {
+			printf("%s|", queue_be_decode(a.content_id));
+			printf("%s|%s|", aux.mode, aux.mail_from);
+			if (aux.mode[0] == 'R')
+				printf("%s", aux.rcpt);
+			else
+				printf("%s", aux.rcpt_to);
+			printf("\n");
+			continue;
+		}
+
+		if (title == 0) {
+			printf("Message  Envelope\n");
+			title = 1;
+		}
+		printf("%s ", queue_be_decode(a.content_id));
+		if (aux.user_from[0])
+			printf("%s (", aux.user_from);
+		if (aux.mail_from[0])
+			printf("%s", aux.mail_from);
+		else
+			printf("BOUNCE");
+		if (aux.user_from[0])
+			printf(")");
+		printf(" -> ");
+		if (aux.mode[0] == 'R') {
+			printf("%s", aux.rcpt);
+			if (strcmp(aux.rcpt, aux.rcpt_to) != 0)
+				printf(" (%s)", aux.rcpt_to);
+		} else {
+			if (aux.user_to[0])
+				printf("%s (", aux.user_to);
+			printf("%s", aux.rcpt_to);
+			if (aux.user_to[0])
+				printf(")");
+		}
+		if (a.status[0]) {
+			if (a.status[0] == '1' || a.status[0] == '6')
+				printf(" [%s]", a.status + 4);
+			else
+				printf(" [\"%s\"]", a.status + 4);
+		}
+		printf("\n");
+	}
+}
+
 int
 show_stats_output(struct imsg *imsg)
 {
@@ -288,12 +364,8 @@ show_stats_output(struct imsg *imsg)
 
 	printf("parent.uptime=%d\n", time(NULL) - stats->parent.start);
 
-	printf("queue.inserts.local=%zd\n", stats->queue.inserts_local);
-	printf("queue.inserts.remote=%zd\n", stats->queue.inserts_remote);
-
-	printf("runner.active=%zd\n", stats->runner.active);
-	printf("runner.bounces=%zd\n", stats->runner.bounces);
-	printf("runner.bounces.active=%zd\n", stats->runner.bounces_active);
+	printf("queue.inserts=%zd\n", stats->queue.inserts);
+	printf("queue.length=%zd\n", stats->queue.length);
 
 	printf("smtp.errors.delays=%zd\n", stats->smtp.delays);
 	printf("smtp.errors.linetoolong=%zd\n", stats->smtp.linetoolong);

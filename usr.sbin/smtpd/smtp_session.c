@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.132 2010/04/24 19:16:11 chl Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.133 2010/05/31 23:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "queue_backend.h"
 
 int	 	 session_rfc5321_helo_handler(struct session *, char *);
 int		 session_rfc5321_ehlo_handler(struct session *, char *);
@@ -424,8 +425,6 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	s->s_msg.session_id = s->s_id;
 	s->s_msg.session_ss = s->s_ss;
 
-	log_debug("session_rfc5321_mail_handler: sending notification to mfa");
-
 	session_imsg(s, PROC_MFA, IMSG_MFA_MAIL, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
 	return 1;
@@ -449,6 +448,8 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 		session_respond(s, "553 5.1.3 Recipient address syntax error");
 		return 1;
 	}
+
+	s->s_msg.queue_id = s->queue_id;
 
 	s->s_state = S_RCPT_MFA;
 
@@ -487,8 +488,8 @@ session_rfc5321_data_handler(struct session *s, char *args)
 
 	s->s_state = S_DATA_QUEUE;
 
-	session_imsg(s, PROC_QUEUE, IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
-	    &s->s_msg, sizeof(s->s_msg));
+	session_imsg(s, PROC_QUEUE, IMSG_QUEUE_OPEN, s->s_id, 0, -1,
+	    &s->queue_id, sizeof s->queue_id);
 
 	return 1;
 }
@@ -599,13 +600,12 @@ rfc5321:
 }
 
 void
-session_pickup(struct session *s, struct submit_status *ss)
+session_pickup(struct session *s)
 {
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
-	if ((ss != NULL && ss->code == 421) ||
-	    (s->s_msg.status & S_MESSAGE_TEMPFAILURE)) {
+	if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
 		session_respond(s, "421 Service temporarily unavailable");
 		s->s_env->stats->smtp.tempfail++;
 		s->s_flags |= F_QUIT;
@@ -635,48 +635,36 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_MAIL_MFA:
-		if (ss == NULL)
-			fatalx("bad ss at S_MAIL_MFA");
-		if (ss->code != 250) {
+		if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
 			s->s_state = S_HELO;
-			session_respond(s, "%d Sender rejected", ss->code);
+			session_respond(s, "530 Sender rejected");
 			return;
 		}
-
 		s->s_state = S_MAIL_QUEUE;
-		s->s_msg.sender = ss->u.path;
-
-		session_imsg(s, PROC_QUEUE, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
-		    &s->s_msg, sizeof(s->s_msg));
+		session_imsg(s, PROC_QUEUE, IMSG_QUEUE_CREATE, s->s_id, 0, -1,
+		    NULL, 0);
 		break;
 
 	case S_MAIL_QUEUE:
-		if (ss == NULL)
-			fatalx("bad ss at S_MAIL_QUEUE");
 		s->s_state = S_MAIL;
-		session_respond(s, "%d 2.1.0 Sender ok", ss->code);
+		session_respond(s, "250 2.1.0 Sender ok");
 		break;
 
 	case S_RCPT_MFA:
-		if (ss == NULL)
-			fatalx("bad ss at S_RCPT_MFA");
 		/* recipient was not accepted */
-		if (ss->code != 250) {
+		if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
 			/* We do not have a valid recipient, downgrade state */
 			if (s->rcptcount == 0)
 				s->s_state = S_MAIL;
 			else
 				s->s_state = S_RCPT;
-			session_respond(s, "%d 5.0.0 Recipient rejected: %s@%s", ss->code,
+			session_respond(s, "530 5.0.0 Recipient rejected: %s@%s",
 			    s->s_msg.session_rcpt.user, s->s_msg.session_rcpt.domain);
 			return;
 		}
-
-		s->s_state = S_RCPT;
 		s->rcptcount++;
-		s->s_msg.recipient = ss->u.path;
-
-		session_respond(s, "%d 2.0.0 Recipient ok", ss->code);
+		s->s_state = S_RCPT;
+		session_respond(s, "250 2.0.0 Recipient ok");
 		break;
 
 	case S_DATA_QUEUE:
@@ -688,7 +676,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		    s->s_msg.session_helo, s->s_hostname, ss_to_text(&s->s_ss));
 		fprintf(s->datafp, "\tby %s (OpenSMTPD) with %sSMTP id %s",
 		    s->s_env->sc_hostname, s->s_flags & F_EHLO ? "E" : "",
-		    s->s_msg.message_id);
+		    queue_be_decode(s->content_id));
 
 		if (s->s_flags & F_SECURE) {
 			fprintf(s->datafp, "\n\t(version=%s cipher=%s bits=%d)",
@@ -707,23 +695,24 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DONE:
-		session_respond(s, "250 2.0.0 %s Message accepted for delivery",
-		    s->s_msg.message_id);
-		log_info("%s: from=<%s%s%s>, size=%ld, nrcpts=%zd, proto=%s, "
-		    "relay=%s [%s]",
-		    s->s_msg.message_id,
-		    s->s_msg.sender.user,
-		    s->s_msg.sender.user[0] == '\0' ? "" : "@",
-		    s->s_msg.sender.domain,
-		    s->s_datalen,
-		    s->rcptcount,
-		    s->s_flags & F_EHLO ? "ESMTP" : "SMTP",
-		    s->s_hostname,
-		    ss_to_text(&s->s_ss));
-
+		if (s->s_msg.status & S_MESSAGE_PERMFAILURE)
+			session_respond(s, "554 5.4.6 Routing loop detected");
+		else {
+			session_respond(s, "250 2.0.0 %s Message accepted for delivery",
+			    queue_be_decode(s->content_id));
+			log_info("%s: from=%s%s%s, size=%ld, nrcpts=%zd, "
+			    "relay=%s [%s]",
+			    queue_be_decode(s->content_id),
+			    s->s_msg.sender.user,
+			    s->s_msg.sender.user[0] == '\0' ? "" : "@",
+			    s->s_msg.sender.domain,
+			    s->s_datalen,
+			    s->rcptcount,
+			    s->s_hostname,
+			    ss_to_text(&s->s_ss));
+		}
 		s->s_state = S_HELO;
-		s->s_msg.message_id[0] = '\0';
-		s->s_msg.message_uid[0] = '\0';
+		s->content_id = 0;
 		bzero(&s->s_nresp, sizeof(s->s_nresp));
 		break;
 
@@ -743,7 +732,7 @@ session_init(struct listener *l, struct session *s)
 	}
 
 	session_bufferevent_new(s);
-	session_pickup(s, NULL);
+	session_pickup(s);
 }
 
 void
@@ -827,7 +816,7 @@ session_read_data(struct session *s, char *line)
 
 	if (strcmp(line, ".") == 0) {
 		s->s_datalen = ftell(s->datafp);
-		if (! safe_fclose(s->datafp))
+		if (fclose(s->datafp) == EOF)
 			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 		s->datafp = NULL;
 
@@ -839,8 +828,8 @@ session_read_data(struct session *s, char *line)
 			s->s_flags |= F_QUIT;
 			s->s_env->stats->smtp.tempfail++;
 		} else {
-			session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE,
-			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
+			session_imsg(s, PROC_QUEUE, IMSG_QUEUE_CLOSE,
+			    s->s_id, 0, -1, &s->queue_id, sizeof s->queue_id);
 			s->s_state = S_DONE;
 		}
 
@@ -978,10 +967,12 @@ session_destroy(struct session *s)
 	if (s->datafp != NULL)
 		fclose(s->datafp);
 
-	if (s->s_msg.message_id[0] != '\0' && s->s_state != S_DONE)
+	if (s->content_id && s->s_state != S_DONE) {
+		log_debug("%s: deleting queue session", __func__);
 		imsg_compose_event(s->s_env->sc_ievs[PROC_QUEUE],
-		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
+		    IMSG_QUEUE_DELETE, 0, 0, -1, &s->queue_id,
+		    sizeof s->queue_id);
+	}
 
 	ssl_session_destroy(s);
 
@@ -1001,7 +992,6 @@ session_destroy(struct session *s)
 	}
 
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
-	bzero(s, sizeof(*s));
 	free(s);
 }
 
@@ -1099,9 +1089,10 @@ session_respond(struct session *s, char *fmt, ...)
 	switch (EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev))[n]) {
 	case '5':
 	case '4':
-		log_info("%s: from=<%s@%s>, relay=%s [%s], stat=LocalError (%.*s)",
-		    s->s_msg.message_id[0] ? s->s_msg.message_id : "(none)",
-		    s->s_msg.sender.user, s->s_msg.sender.domain,
+		log_info("(none): from=<%s%s%s>, relay=%s [%s], stat=LocalError (%.*s)",
+		    s->s_msg.sender.user,
+		    s->s_msg.sender.user[0] == '\0' ? "" : "@",
+		    s->s_msg.sender.domain,
 		    s->s_hostname, ss_to_text(&s->s_ss),
 		    (int)EVBUFFER_LENGTH(EVBUFFER_OUTPUT(s->s_bev)) - n - 2,
 		    EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev)));
