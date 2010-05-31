@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.22 2010/04/21 21:02:47 nicm Exp $	*/
+/*	$OpenBSD: event.h,v 1.23 2010/05/31 20:56:42 nicm Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -453,6 +453,14 @@ int event_base_loopbreak(struct event_base *);
 #define evtimer_pending(ev, tv)		event_pending(ev, EV_TIMEOUT, tv)
 #define evtimer_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
 
+#ifdef EVENT_DEPRECATED
+/*
+ * timeout_* are collision-prone names for macros, and they are
+ * deprecated. Define EVENT_DEPRECATED to expose them anyway.
+ *
+ * It is recommended evtimer_* be used instead.
+ */
+
 /**
  * Add a timeout event.
  *
@@ -481,6 +489,8 @@ int event_base_loopbreak(struct event_base *);
 
 #define timeout_pending(ev, tv)		event_pending(ev, EV_TIMEOUT, tv)
 #define timeout_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
+
+#endif /* EVENT_DEPRECATED */
 
 #define signal_add(ev, tv)		event_add(ev, tv)
 #define signal_set(ev, x, cb, arg)	\
