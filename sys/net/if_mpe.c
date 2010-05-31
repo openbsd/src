@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.19 2010/05/28 12:09:09 claudio Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.20 2010/05/31 11:46:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -393,7 +393,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_IN);
 #endif
 	s = splnet();
-	IF_ENQUEUE(&ipintrq, m);
+	IF_INPUT_ENQUEUE(&ipintrq, m);
 	schednetisr(NETISR_IP);
 	splx(s);
 }
@@ -427,7 +427,7 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m, BPF_DIRECTION_IN);
 #endif
 	s = splnet();
-	IF_ENQUEUE(&ip6intrq, m);
+	IF_INPUT_ENQUEUE(&ip6intrq, m);
 	schednetisr(NETISR_IPV6);
 	splx(s);
 }

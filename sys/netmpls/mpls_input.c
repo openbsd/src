@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.23 2010/05/28 12:09:10 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.24 2010/05/31 11:46:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -320,7 +320,7 @@ mpls_ip_input(struct mbuf *m, u_int8_t ttl)
 	}
 
 	s = splnet();
-	IF_ENQUEUE(&ipintrq, m);
+	IF_INPUT_ENQUEUE(&ipintrq, m);
 	schednetisr(NETISR_IP);
 	splx(s);
 }
@@ -343,7 +343,7 @@ mpls_ip6_input(struct mbuf *m, u_int8_t ttl)
 	}
 
 	s = splnet();
-	IF_ENQUEUE(&ip6intrq, m);
+	IF_INPUT_ENQUEUE(&ip6intrq, m);
 	schednetisr(NETISR_IPV6);
 	splx(s);
 }
