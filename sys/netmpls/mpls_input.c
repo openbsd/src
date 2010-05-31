@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.24 2010/05/31 11:46:02 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.25 2010/05/31 15:31:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -153,6 +153,11 @@ mpls_input(struct mbuf *m)
 
 			switch (ntohl(smpls->smpls_label)) {
 			case MPLS_LABEL_IPV4NULL:
+				/*
+				 * RFC 4182 relaxes the position of the
+				 * explicit NULL labels. The no longer need
+				 * to be at the beginning of the stack.
+				 */
 				if (hasbos) {
 					mpls_ip_input(m, ttl);
 					goto done;
