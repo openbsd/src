@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.18 2010/04/02 05:46:21 ckuethe Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.19 2010/05/31 21:33:04 deraadt Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -267,13 +267,16 @@ main(int argc, char **argv)
 	int ch, i, f;
 	char buf[50];
 	char *dev = 0;
+	const char *errstr;
 	int addr = 0;
 	int ncont;
 
 	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
 		switch (ch) {
 		case 'a':
-			addr = atoi(optarg);
+			addr = strtonum(optarg, 1, USB_MAX_DEVICES, &errstr);
+			if (errstr)
+				errx(1, "addr %s", errstr);
 			break;
 		case 'd':
 			showdevs++;
