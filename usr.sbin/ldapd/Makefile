@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2010/05/31 17:36:31 martinh Exp $
+#	$OpenBSD: Makefile,v 1.2 2010/05/31 17:47:12 martinh Exp $
 
 PROG=		ldapd
 MAN=		ldapd.8 ldapd.conf.5
@@ -10,6 +10,7 @@ SRCS=		ber.c log.c control.c \
 
 LDADD=		-levent -lcrypto -lssl -lz -lutil
 DPADD=		${LIBEVENT} ${LIBCRYPTO} ${LIBSSL} ${LIBZ} ${LIBUTIL}
+CFLAGS+=	-I${.CURDIR}
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
