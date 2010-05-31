@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.85 2010/03/01 22:44:31 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.86 2010/05/31 19:51:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -402,11 +402,18 @@ tty_update_mode(struct tty *tty, int mode)
 		else
 			tty_putcode(tty, TTYC_CIVIS);
 	}
-	if (changed & MODE_MOUSE) {
-		if (mode & MODE_MOUSE)
-			tty_puts(tty, "\033[?1000h");
-		else
-			tty_puts(tty, "\033[?1000l");
+	if (changed & (MODE_MOUSE|MODE_MOUSEMOTION)) {
+		if (mode & MODE_MOUSE) {
+			if (mode & MODE_MOUSEMOTION)
+				tty_puts(tty, "\033[?1003h");
+			else
+				tty_puts(tty, "\033[?1000h");
+		} else {
+			if (mode & MODE_MOUSEMOTION)
+				tty_puts(tty, "\033[?1003l");
+			else
+				tty_puts(tty, "\033[?1000l");
+		}
 	}
 	if (changed & MODE_KKEYPAD) {
 		if (mode & MODE_KKEYPAD)
