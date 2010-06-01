@@ -228,6 +228,7 @@ fprio_readin(char *file)
 	fid.Cell = cellnum;
 	fprio_set(fid, prio ? TRUE : FALSE);
     }
+    fclose(f);
     return 0;
 }
 
