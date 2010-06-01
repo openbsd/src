@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.110 2010/06/01 02:08:56 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.111 2010/06/01 02:19:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -506,7 +506,7 @@ lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expandn
 			sizeof(path->user)) >= sizeof(path->user))
 			return 0;
 
-		if (psave.domain[0] == '\0') {
+		if (1 || psave.domain[0] == '\0') {
 			if (strlcpy(path->domain, env->sc_hostname,
 				sizeof(path->domain)) >= sizeof(path->domain))
 				return 0;
