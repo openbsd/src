@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/* $OpenBSD: intc.c,v 1.2 2010/06/01 03:11:43 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -499,3 +499,21 @@ void intc_test(void)
 	printf("done\n");
 }
 #endif
+
+#ifdef DIAGNOSTIC
+void
+intc_splassert_check(int wantipl, const char *func)
+{
+        int oldipl = current_ipl_level;
+
+        if (oldipl < wantipl) {
+                splassert_fail(wantipl, oldipl, func);
+                /*
+                 * If the splassert_ctl is set to not panic, raise the ipl
+                 * in a feeble attempt to reduce damage.
+                 */
+                intc_setipl(wantipl);
+        }
+}
+#endif
+

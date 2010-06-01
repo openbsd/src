@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_intr.h,v 1.1 2009/05/08 03:13:26 drahn Exp $	*/
+/*	$OpenBSD: beagle_intr.h,v 1.2 2010/06/01 03:11:43 drahn Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -100,10 +100,10 @@ void	_setsoftintr(int);
  */
 void splassert_fail(int, int, const char *);
 extern int splassert_ctl;
-void i80321_splassert_check(int, const char *);
+void intc_splassert_check(int, const char *);
 #define splassert(__wantipl) do {                               \
 	if (splassert_ctl > 0) {                                \
-		i80321_splassert_check(__wantipl, __func__);    \
+		intc_splassert_check(__wantipl, __func__);    \
 	}                                                       \
 } while (0)
 #define splsoftassert(wantipl) splassert(wantipl)
