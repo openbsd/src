@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.39 2010/06/01 11:22:28 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.40 2010/06/01 11:29:29 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1270,7 +1270,8 @@ prefix_tree_add(struct prefix_tree *tree, struct lsa_link *lsa)
 	cur_prefix = (char *)(lsa + 1);
 
 	for (i = 0; i < ntohl(lsa->numprefix); i++) {
-		new = calloc(sizeof(*new), 1);
+		if ((new = calloc(1, sizeof(*new))) == NULL)
+			fatal("prefix_tree_add");
 		new->prefix = (struct lsa_prefix *)cur_prefix;
 
 		len = sizeof(*new->prefix) 
