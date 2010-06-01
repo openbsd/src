@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.30 2010/05/31 17:38:03 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.31 2010/06/01 04:33:40 drahn Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -73,6 +73,19 @@ CROSSBINUTILS=	${CROSSDIR}/.binutils_done
 CROSSGCC=	${CROSSDIR}/.gcc_done
 #NO_CROSS=	isakmpd tn3270 keynote sectok ssh
 
+# bsd.own.mk can't do it for us
+.if ${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
+    ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "vax"
+TARGET_USE_GCC3=No
+COMPILER_VERSION=gcc2
+.elif ${TARGET_ARCH} == "amd64" || ${TARGET_ARCH} == "sparc64"
+TARGET_USE_GCC4=Yes
+COMPILER_VERSION=gcc4
+.else
+TARGET_USE_GCC3=Yes
+COMPILER_VERSION=gcc3
+.endif
+
 # no libcrypto.... these won't build
 #NO_CROSS+=	dc login_krb5 login_krb5-or-pwd passwd ppp tcpdump telnet \
 #		ftp gzsig sasyncd vnconfig
@@ -121,6 +134,7 @@ ${CROSSOBJ}:	${CROSSDIRS}
 	@-mkdir -p ${CROSSDIR}/usr/obj
 	@(cd ${.CURDIR} && \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    COMPILER_VERSION=${COMPILER_VERSION} \
 	    MACHINE=${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -130,11 +144,13 @@ ${CROSSOBJ}:	${CROSSDIRS}
 ${CROSSINCLUDES}:	${CROSSOBJ}
 	@-mkdir -p ${CROSSDIR}/usr/include
 	@(cd ${.CURDIR}/include && \
+	    COMPILER_VERSION=${COMPILER_VERSION} \
 	    MACHINE=${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} prereq && \
+	    COMPILER_VERSION=${COMPILER_VERSION} \
 	    MACHINE=${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
@@ -164,6 +180,7 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    COMPILER_VERSION=${COMPILER_VERSION} \
 	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
@@ -195,7 +212,7 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/ar \
 	    ${CROSSDIR}/usr/${TARGET_CANON}/bin/ar
-	(cd ${.CURDIR}/usr.bin/ranlib; \
+	@(cd ${.CURDIR}/usr.bin/ranlib; \
 	    ELF_TOOLCHAIN=no \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN= depend all; \
 	    ELF_TOOLCHAIN=no \
@@ -233,16 +250,40 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	done
 	@touch ${CROSSBINUTILS}
 
-# bsd.own.mk can't do it for us
-.if ${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
-    ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "vax"
-TARGET_USE_GCC3=No
-.else
-TARGET_USE_GCC3=Yes
-.endif
 
 ${CROSSGCC}:		${CROSSBINUTILS}
-.if ${TARGET_USE_GCC3:L} == "yes"
+.if ${COMPILER_VERSION:L} == "gcc4"
+	(cd ${.CURDIR}/gnu/usr.bin/cc; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
+	    CROSSDIR=${CROSSDIR} \
+	    MACHINE=${TARGET} \
+	    PATH=${CROSSPATH} ${MAKE} depend  )
+	(cd ${.CURDIR}/gnu/usr.bin/cc; \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
+	    CROSSDIR=${CROSSDIR} \
+	    MACHINE=${TARGET} \
+	    ${MAKE} all )
+	(cd ${.CURDIR}/gnu/usr.bin/cc; \
+	    env CROSSDIR=${CROSSDIR} DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
+	    MACHINE=${TARGET} \
+	    PATH=${CROSSPATH} ${MAKE} install)
+	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-g++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-c++
+	cp -f ${CROSSDIR}/usr/libexec/cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp
+	rm -f ${CROSSDIR}/usr/bin/gcc  ${CROSSDIR}/usr/bin/cc ${CROSSDIR}/usr/libexec/cpp 
+	ln -sf ${TARGET_CANON}-cc ${CROSSDIR}/usr/${TARGET_CANON}/bin/cc
+	ln -sf ${TARGET_CANON}-c++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/c++
+	rm -f ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
+	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-libexeccpp#' \
+	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
+	    -e 's/@dollaropt@//' \
+	    ${.CURDIR}/usr.bin/cpp/cpp.sh > ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
+	chmod ${BINMODE} ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
+	chown ${BINOWN}:${BINGRP} ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cpp 
+	ln -sf ${TARGET_CANON}-cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/cpp
+.elif ${COMPILER_VERSION:L} == "gcc3"
 	(cd ${.CURDIR}/gnu/usr.bin/gcc; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
