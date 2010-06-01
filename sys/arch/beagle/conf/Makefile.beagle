@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.28 2010/05/28 14:27:08 guenther Exp $
+#	$OpenBSD: Makefile.beagle,v 1.29 2010/06/01 23:49:22 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -39,9 +39,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CMACHFLAGS}
-LINKFLAGS=	-T ldscript
-LINKFLAGS+=	--warn-common
-STRIPFLAGS=	-g -x
+LINKFLAGS=	-T ldscript --warn-common
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -84,6 +82,7 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
+STRIPFLAGS=	-g -x
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \

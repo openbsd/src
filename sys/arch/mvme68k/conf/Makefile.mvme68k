@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.57 2010/05/28 14:27:08 guenther Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.58 2010/06/01 23:49:23 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -40,7 +40,6 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
 LINKFLAGS=	-Ttext 0x10000 -z -e start
-STRIPFLAGS=	-d
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -81,6 +80,7 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
+STRIPFLAGS=	-g
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
