@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.38 2010/04/16 11:36:10 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.39 2010/06/01 11:22:28 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1416,7 +1416,7 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 
 	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_intra_prefix);
 	if ((lsa = calloc(1, len)) == NULL)
-		fatal("orig_intra_lsa_net");
+		fatal("orig_intra_lsa_rtr");
 
 	lsa->data.pref_intra.ref_type = htons(LSA_TYPE_ROUTER);
 	lsa->data.pref_intra.ref_ls_id = 0;
