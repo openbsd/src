@@ -1,4 +1,4 @@
-#	$OpenBSD: BSD.x11.dist,v 1.12 2010/04/25 18:10:01 matthieu Exp $
+#	$OpenBSD: BSD.x11.dist,v 1.13 2010/06/01 19:59:37 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -358,10 +358,14 @@
                     ..
 		    dri2proto
 		    ..
+		    fixesproto
+		    ..
                     fontconfig
                         fontconfig-devel
                         ..
                     ..
+		    inputproto
+		    ..
 		    libXaw
 		    ..
 		    libXrender
@@ -372,6 +376,8 @@
                     ..
                     renderproto
                     ..
+		    xextproto
+		    ..
 		    xtrans
 		    ..
                 ..
