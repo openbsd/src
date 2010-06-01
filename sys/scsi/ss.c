@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.71 2010/04/12 09:51:48 dlg Exp $	*/
+/*	$OpenBSD: ss.c,v 1.72 2010/06/01 15:27:16 thib Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -354,17 +354,12 @@ ssattach(parent, self, aux)
 	/* XXX fill in the rest of the scan_io struct by calling the
 	   compute_sizes routine */
 
-	mtx_init(&ss->sc_buf_mtx, IPL_BIO);
 	mtx_init(&ss->sc_start_mtx, IPL_BIO);
 
 	timeout_set(&ss->timeout, ssstart, ss);
 
-	/*
-	 * Set up the buf queue for this device
-	 */
-	ss->sc_buf_queue.b_active = 0;
-	ss->sc_buf_queue.b_actf = 0;
-	ss->sc_buf_queue.b_actb = &ss->sc_buf_queue.b_actf;
+	/* Set up the buf queue for this device. */
+	ss->sc_bufq = bufq_init(BUFQ_DEFAULT);
 }
 
 void
@@ -584,7 +579,7 @@ ssstrategy(bp)
 	 * at the end (a bit silly because we only have on user..)
 	 * (but it could fork() or dup())
 	 */
-	scsi_buf_enqueue(&ss->sc_buf_queue, bp, &ss->sc_buf_mtx);
+	BUFQ_QUEUE(ss->sc_bufq, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -641,8 +636,7 @@ ssstart(v)
 	CLR(ss->flags, SSF_WAITING);
 restart:
 	while (!ISSET(ss->flags, SSF_WAITING) &&
-	    (bp = scsi_buf_dequeue(&ss->sc_buf_queue, &ss->sc_buf_mtx)) != NULL) {
-
+	    (bp = BUFQ_DEQUEUE(ss->sc_bufq)) != NULL) {
 		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
 		if (xs == NULL)
 			break;
@@ -692,7 +686,7 @@ ssdone(struct scsi_xfer *xs)
 
 	case XS_NO_CCB:
 		/* The adapter is busy, requeue the buf and try it later. */
-		scsi_buf_requeue(&ss->sc_buf_queue, bp, &ss->sc_buf_mtx);
+		BUFQ_REQUEUE(ss->sc_bufq, bp);
 		scsi_xs_put(xs);
 		SET(ss->flags, SSF_WAITING); /* break out of cdstart loop */
 		timeout_add(&ss->timeout, 1);

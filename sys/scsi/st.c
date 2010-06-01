@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.94 2010/04/12 09:51:48 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.95 2010/06/01 15:27:16 thib Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -216,9 +216,8 @@ struct st_softc {
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
 
-	struct buf sc_buf_queue;	/* the queue of pending IO operations */
+	struct bufq *sc_bufq;
 	struct timeout sc_timeout;
-	struct mutex sc_buf_mtx;
 	struct mutex sc_start_mtx;
 	u_int sc_start_count;
 };
@@ -336,17 +335,12 @@ stattach(struct device *parent, struct device *self, void *aux)
 	st_identify_drive(st, sa->sa_inqbuf);
 	printf("\n");
 
-	mtx_init(&st->sc_buf_mtx, IPL_BIO);
 	mtx_init(&st->sc_start_mtx, IPL_BIO);
 
 	timeout_set(&st->sc_timeout, ststart, st);
 	
-	/*
-	 * Set up the buf queue for this device
-	 */
-	st->sc_buf_queue.b_active = 0;
-	st->sc_buf_queue.b_actf = 0;
-	st->sc_buf_queue.b_actb = &st->sc_buf_queue.b_actf;
+	/* Set up the buf queue for this device. */
+	st->sc_bufq = bufq_init(BUFQ_DEFAULT);
 
 	/* Start up with media position unknown. */
 	st->media_fileno = -1;
@@ -372,7 +366,7 @@ stactivate(struct device *self, int act)
 
 	case DVACT_DEACTIVATE:
 		st->flags |= ST_DYING;
-		scsi_buf_killqueue(&st->sc_buf_queue, &st->sc_buf_mtx);
+		bufq_drain(st->sc_bufq);
 		break;
 	}
 
@@ -385,7 +379,7 @@ stdetach(struct device *self, int flags)
 	struct st_softc *st = (struct st_softc *)self;
 	int bmaj, cmaj, mn;
 
-	scsi_buf_killqueue(&st->sc_buf_queue, &st->sc_buf_mtx);
+	bufq_drain(st->sc_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = STUNIT(self->dv_unit);
@@ -404,6 +398,8 @@ stdetach(struct device *self, int flags)
 			vdevgone(cmaj, mn, mn + 2, VCHR);
 			vdevgone(cmaj, mn, mn + 3, VCHR);
 		}
+
+	bufq_destroy(st->sc_bufq);
 
 	return (0);
 }
@@ -887,7 +883,7 @@ ststrategy(struct buf *bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	scsi_buf_enqueue(&st->sc_buf_queue, bp, &st->sc_buf_mtx);
+	BUFQ_QUEUE(st->sc_bufq, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -950,8 +946,7 @@ ststart(void *v)
 	CLR(st->flags, ST_WAITING);
 restart:
 	while (!ISSET(st->flags, ST_WAITING) &&
-	    (bp = scsi_buf_dequeue(&st->sc_buf_queue, &st->sc_buf_mtx)) != NULL) {
-
+	    (bp = BUFQ_DEQUEUE(st->sc_bufq)) != NULL) {
 		/*
 		 * if the device has been unmounted by the user
 		 * then throw away all requests until done
@@ -971,7 +966,7 @@ restart:
 
 		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
 		if (xs == NULL) {
-			scsi_buf_requeue(&st->sc_buf_queue, bp, &st->sc_buf_mtx);
+			BUFQ_REQUEUE(st->sc_bufq, bp);
 			break;
 		}
 
@@ -1098,7 +1093,7 @@ st_buf_done(struct scsi_xfer *xs)
 
 	case XS_NO_CCB:
 		/* The adapter is busy, requeue the buf and try it later. */
-		scsi_buf_requeue(&st->sc_buf_queue, bp, &st->sc_buf_mtx);
+		BUFQ_REQUEUE(st->sc_bufq, bp);
 		scsi_xs_put(xs);
 		SET(st->flags, ST_WAITING); /* break out of cdstart loop */
 		timeout_add(&st->sc_timeout, 1);
