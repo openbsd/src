@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.82 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.83 2010/06/01 11:27:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -752,7 +752,7 @@ queue_mem_init(struct smtpd *env)
 			else
 				rq = Q_LOCAL;
 
-			b->retry = queue_retry(rq, a.birth, a.birth + 1);
+			b->retry = queue_retry(rq, a.birth, a.birth);
 			while (b->retry < time(NULL))
 				b->retry = queue_retry(rq, a.birth, b->retry);
 
