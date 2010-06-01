@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.88 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.89 2010/06/01 11:05:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -380,7 +380,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 
 			if (connect(s->fd, sa, sa->sa_len) == -1) {
 				if (errno != EINPROGRESS) {
-					mta_status(s, "110 connect error: %s",
+					mta_status(s, "110 connect: %s",
 					    strerror(errno));
 					close(s->fd);
 					continue;
@@ -530,7 +530,7 @@ mta_pickup(struct mta_session *s, void *p)
 		/* Remote accepted/rejected connection. */
 		error = session_socket_error(s->fd);
 		if (error) {
-			mta_status(s, "110 connect error: %s", strerror(error));
+			mta_status(s, "110 connect: %s", strerror(error));
 			close(s->fd);
 			mta_enter_state(s, MTA_CONNECT, NULL);
 		} else
