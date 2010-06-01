@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.83 2010/06/01 11:27:07 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.84 2010/06/01 14:21:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -180,7 +180,7 @@ queue_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 					batch = realloc(batch, sizeof *batch);
 					if (batch == NULL)
 						fatal(NULL);
-					batch->retry = now;
+					batch->retry = RETRY_NOW;
 					queue_schedule(rq, batch);
 				}
 			}
@@ -491,7 +491,6 @@ batch_it(struct incoming *s, char *sortkey)
 		if (batch == NULL)
 			return NULL;
 		SLIST_INIT(&batch->actions);
-		batch->retry = 0;
 		batch->content = s->content;
 		strlcpy(batch->sortkey, sortkey, batch_sz - sizeof *batch);
 		SLIST_INSERT_HEAD(&s->batches[rq], batch, entry);

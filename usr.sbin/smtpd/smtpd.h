@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.188 2010/05/31 23:50:28 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.189 2010/06/01 14:21:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -385,6 +385,7 @@ struct content {
 };
 
 #define NO_RETRY_EXPIRED	 0
+#define RETRY_NOW		 1
 
 struct batch {
 	SLIST_ENTRY(batch)	 entry;
