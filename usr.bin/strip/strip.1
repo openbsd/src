@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.1,v 1.12 2010/05/24 23:42:39 jmc Exp $
+.\"	$OpenBSD: strip.1,v 1.13 2010/06/01 21:44:39 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)strip.1	6.6 (Berkeley) 5/26/91
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: June 1 2010 $
 .Dt STRIP 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd remove unnecessary information from executable files
 .Sh SYNOPSIS
 .Nm strip
-.Op Fl dx
+.Op Fl dgsx
 .Op Fl o Ar outfile
 .Ar
 .Sh DESCRIPTION
@@ -51,18 +51,22 @@ decreases the size of the installed binaries and saves disk space.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl d
+.It Fl d | g
 Delete only debugging and empty symbols.
 .It Fl o Ar outfile
 Place the stripped output into the specified file instead of modifying
 the input file.
 This option requires that only one input file be supplied.
+.It Fl s
+Delete all symbols.
 .It Fl x
 Delete only debugging, compiler identification, and local symbols.
 .El
 .Pp
 .Nm
 exits 0 on success or 1 if an error occurred.
+.Pp
+When conflicting options are combined, the later options win.
 .Sh SEE ALSO
 .Xr cc 1 ,
 .Xr ld 1 ,
@@ -76,7 +80,7 @@ specification,
 though its presence is optional.
 .Pp
 The flags
-.Op Fl dox
+.Op Fl dgosx
 are extensions to that specification.
 .Sh HISTORY
 A

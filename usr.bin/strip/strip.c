@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.28 2010/05/24 23:42:39 jmc Exp $	*/
+/*	$OpenBSD: strip.c,v 1.29 2010/06/01 21:44:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -83,13 +83,19 @@ main(int argc, char *argv[])
 	off_t newsize;
 
 	sfcn = s_sym;
-	while ((ch = getopt(argc, argv, "dxo:")) != -1)
+	while ((ch = getopt(argc, argv, "dgsxo:")) != -1)
 		switch(ch) {
 		case 'x':
 			xflag = 1;
 			/*FALLTHROUGH*/
+		case 'g':
 		case 'd':
 			sfcn = s_stab;
+			break;
+		case 's':
+			/* reset back to the defaults */
+			xflag = 0;
+			sfcn = s_sym;
 			break;
 		case 'o':
 			ofile = optarg;
@@ -427,7 +433,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dx] [-o outfile] file ...\n", __progname);
+	fprintf(stderr, "usage: %s [-dgsx] [-o outfile] file ...\n",
+	    __progname);
 	exit(1);
 }
 
