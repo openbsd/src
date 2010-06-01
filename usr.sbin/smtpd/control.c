@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.51 2010/06/01 19:47:08 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.52 2010/06/01 23:06:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "queue_backend.h"
 
 #define CONTROL_BACKLOG 5
 
@@ -63,8 +64,7 @@ control_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	struct ctl_conn	*c;
 	struct reload	*reload;
-	struct remove	*rem;
-	struct sched	*sched;
+	int		 error;
 
 	if (iev->proc == PROC_SMTP) {
 		switch (imsg->hdr.type) {
@@ -81,23 +81,17 @@ control_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
 		case IMSG_QUEUE_SCHEDULE:
-			sched = imsg->data;
-			c = control_connbyfd(sched->fd);
-			if (c == NULL)
-				return;
-			imsg_compose_event(&c->iev,
-			    sched->ret ? IMSG_CTL_OK : IMSG_CTL_FAIL, 0, 0, -1,
-			    NULL, 0);
-			return;
-
 		case IMSG_QUEUE_REMOVE:
-			rem = imsg->data;
-			c = control_connbyfd(rem->fd);
+			c = control_connbyfd(imsg->hdr.peerid);
 			if (c == NULL)
 				return;
-			imsg_compose_event(&c->iev,
-			    rem->ret ? IMSG_CTL_OK : IMSG_CTL_FAIL, 0, 0,
-			    -1, NULL, 0);
+			memcpy(&error, imsg->data, sizeof error);
+			if (error)
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0,
+				    -1, NULL, 0);
+			else
+				imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0,
+				    -1, NULL, 0);
 			return;
 		}
 	}
@@ -394,47 +388,14 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose_event(&c->iev, IMSG_STATS, 0, 0, -1,
 			    env->stats, sizeof(struct stats));
 			break;
-		case IMSG_QUEUE_SCHEDULE: {
-			struct sched *s = imsg.data;
-
-			if (euid)
+		case IMSG_QUEUE_SCHEDULE:
+		case IMSG_QUEUE_REMOVE:
+			if (euid || IMSG_DATA_SIZE(&imsg) != sizeof(u_int64_t))
 				goto badcred;
-	
-			if (IMSG_DATA_SIZE(&imsg) != sizeof(*s))
-				goto badcred;
-
-			s->fd = fd;
-
-			if (! valid_message_id(s->mid) && ! valid_message_uid(s->mid)) {
-				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
-				    NULL, 0);
-				break;
-			}
-
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_SCHEDULE, 0, 0, -1, s, sizeof(*s));
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+			    imsg.hdr.type, fd, 0, -1, imsg.data,
+			    sizeof(u_int64_t));
 			break;
-		}
-
-		case IMSG_QUEUE_REMOVE: {
-			struct remove *s = imsg.data;
-
-			if (euid)
-				goto badcred;
-	
-			if (IMSG_DATA_SIZE(&imsg) != sizeof(*s))
-				goto badcred;
-
-			s->fd = fd;
-
-			if (! valid_message_id(s->mid) && ! valid_message_uid(s->mid)) {
-				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
-				    NULL, 0);
-				break;
-			}
-
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_REMOVE, 0, 0, -1, s, sizeof(*s));
-			break;
-		}
 /*
 		case IMSG_CONF_RELOAD: {
 			struct reload r;
@@ -501,7 +462,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    IMSG_QUEUE_PAUSE_LOCAL, 0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_QUEUE_PAUSE_OUTGOING:
+		case IMSG_QUEUE_PAUSE_RELAY:
 			if (euid)
 				goto badcred;
 
@@ -512,7 +473,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			}
 			env->sc_flags |= SMTPD_MTA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_QUEUE_PAUSE_OUTGOING, 0, 0, -1, NULL, 0);
+			    IMSG_QUEUE_PAUSE_RELAY, 0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_PAUSE:
@@ -543,7 +504,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    IMSG_QUEUE_RESUME_LOCAL, 0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_QUEUE_RESUME_OUTGOING:
+		case IMSG_QUEUE_RESUME_RELAY:
 			if (euid)
 				goto badcred;
 
@@ -554,7 +515,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 			}
 			env->sc_flags &= ~SMTPD_MTA_PAUSED;
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_QUEUE_RESUME_OUTGOING, 0, 0, -1, NULL, 0);
+			    IMSG_QUEUE_RESUME_RELAY, 0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_RESUME:

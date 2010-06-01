@@ -1,9 +1,9 @@
-/*	$OpenBSD: util.c,v 1.34 2010/06/01 19:47:09 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.35 2010/06/01 23:06:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
- * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
+ * Copyright (c) 2009-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -54,28 +54,6 @@ bsnprintf(char *str, size_t size, const char *format, ...)
 	va_end(ap);
 	if (ret == -1 || ret >= (int)size)
 		return 0;
-
-	return 1;
-}
-
-/* Close file, signifying temporary error condition (if any) to the caller. */
-int
-safe_fclose(FILE *fp)
-{
-	if (ferror(fp)) {
-		fclose(fp);
-		return 0;
-	}
-	if (fflush(fp)) {
-		fclose(fp);
-		if (errno == ENOSPC)
-			return 0;
-		fatal("safe_fclose: fflush");
-	}
-	if (fsync(fileno(fp)))
-		fatal("safe_fclose: fsync");
-	if (fclose(fp))
-		fatal("safe_fclose: fclose");
 
 	return 1;
 }
@@ -198,53 +176,6 @@ ss_to_text(struct sockaddr_storage *ss)
 		fatalx("ss_to_text: getnameinfo");
 
 	return (buf);
-}
-
-int
-valid_message_id(char *mid)
-{
-	u_int8_t cnt;
-
-	/* [0-9]{10}\.[a-zA-Z0-9]{16} */
-	for (cnt = 0; cnt < 10; ++cnt, ++mid)
-		if (! isdigit((int)*mid))
-			return 0;
-
-	if (*mid++ != '.')
-		return 0;
-
-	for (cnt = 0; cnt < 16; ++cnt, ++mid)
-		if (! isalnum((int)*mid))
-			return 0;
-
-	return (*mid == '\0');
-}
-
-int
-valid_message_uid(char *muid)
-{
-	u_int8_t cnt;
-
-	/* [0-9]{10}\.[a-zA-Z0-9]{16}\.[0-9]{0,} */
-	for (cnt = 0; cnt < 10; ++cnt, ++muid)
-		if (! isdigit((int)*muid))
-			return 0;
-
-	if (*muid++ != '.')
-		return 0;
-
-	for (cnt = 0; cnt < 16; ++cnt, ++muid)
-		if (! isalnum((int)*muid))
-			return 0;
-
-	if (*muid++ != '.')
-		return 0;
-
-	for (cnt = 0; *muid != '\0'; ++cnt, ++muid)
-		if (! isdigit((int)*muid))
-			return 0;
-
-	return (cnt != 0);
 }
 
 char *
@@ -371,49 +302,22 @@ lowercase(char *buf, char *s, size_t len)
 }
 
 void
-message_set_errormsg(struct message *messagep, char *fmt, ...)
+sa_set_port(struct sockaddr *sa, char *port)
 {
-	int ret;
-	va_list ap;
-
-	va_start(ap, fmt);
-
-	ret = vsnprintf(messagep->session_errorline, MAX_LINE_SIZE, fmt, ap);
-	if (ret >= MAX_LINE_SIZE)
-		strlcpy(messagep->session_errorline + (MAX_LINE_SIZE - 4), "...", 4);
-
-	/* this should not happen */
-	if (ret == -1)
-		err(1, "vsnprintf");
-
-	va_end(ap);
-}
-
-char *
-message_get_errormsg(struct message *messagep)
-{
-	return messagep->session_errorline;
-}
-
-void
-sa_set_port(struct sockaddr *sa, int port)
-{
-	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+	char hbuf[NI_MAXHOST];
 	struct addrinfo hints, *res;
 	int error;
 
-	error = getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+	error = getnameinfo(sa, sa->sa_len, hbuf, sizeof hbuf, NULL, 0, NI_NUMERICHOST);
 	if (error)
 		fatalx("sa_set_port: getnameinfo failed");
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_NUMERICHOST|AI_NUMERICSERV;
+	hints.ai_flags = AI_NUMERICHOST;
 
-	snprintf(sbuf, sizeof(sbuf), "%d", port);
-
-	error = getaddrinfo(hbuf, sbuf, &hints, &res);
+	error = getaddrinfo(hbuf, port, &hints, &res);
 	if (error)
 		fatalx("sa_set_port: getaddrinfo failed");
 
@@ -426,7 +330,7 @@ path_dup(struct path *path)
 {
 	struct path *pathp;
 
-	pathp = calloc(sizeof(struct path), 1);
+	pathp = calloc(1, sizeof(struct path));
 	if (pathp == NULL)
 		fatal("calloc");
 
@@ -509,11 +413,113 @@ session_socket_no_linger(int fd)
 int
 session_socket_error(int fd)
 {
-	int	 error, len;
+	socklen_t len;
+	int error;
 
 	len = sizeof(error);
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
 		fatal("session_socket_error: getsockopt");
 
 	return (error);
+}
+
+/*
+ * Find unused slot in a pointer table.
+ */
+int
+table_alloc(void ***p, int *szp)
+{
+	void	**array;
+	int	  array_sz, i, new;
+
+	array = *p;
+	array_sz = *szp;
+
+	for (i = 0; i < array_sz; i++)
+		if (array[i] == NULL)
+			break;
+
+	/* array full? */
+	if (i == array_sz) {
+		if (array_sz * 2 < array_sz)
+			fatalx("table_alloc: overflow");
+		array_sz *= 2;
+		array = realloc(array, ++array_sz * sizeof *array);
+		if (array == NULL)
+			fatal("array_alloc");
+		for (new = i; new < array_sz; new++)
+			array[new] = NULL;
+		*p = array;
+		*szp = array_sz;
+	}
+
+	return i;
+}
+
+/*
+ * Retrieve table entry residing at given index.
+ */
+void *
+table_lookup(void **p, int sz, int i)
+{
+	if (i < 0 || i >= sz)
+		return (NULL);
+	return p[i];
+}
+
+void
+auxsplit(struct aux *a, char *aux)
+{
+	int col;
+	char *val;
+
+	bzero(a, sizeof *a);
+	col = 0;
+	for (;;) {
+		val = strsep(&aux, "|");
+		if (val == NULL)
+			break;
+		col++;
+		if (col == 1)
+			a->mode = val;
+		else if (col == 2)
+			a->mail_from = val;
+		else if (col == 3)
+			a->rcpt_to = val;
+		else if (col == 4)
+			a->user_from = val;
+		else if (a->mode[0] == 'R') {
+			if (col == 5)
+				a->rcpt = val;
+			else if (col == 6)
+				a->relay_via = val;
+			else if (col == 7)
+				a->port = val;
+			else if (col == 8)
+				a->ssl = val;
+			else if (col == 9)
+				a->cert = val;
+			else if (col == 10)
+				a->auth = val;
+		} else if (col == 5)
+			a->user_to = val;
+		else if (col == 6)
+			a->path = val;
+	}
+}
+
+char *
+rcpt_pretty(struct aux *aux)
+{
+	switch (aux->mode[0]) {
+	case 'M':
+	case 'D':
+	case 'P':
+		return aux->user_to;
+	case 'F':
+		return aux->path;
+	case 'R':
+		return aux->rcpt;
+	}
+	return NULL;
 }
