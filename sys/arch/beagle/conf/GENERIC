@@ -1,0 +1,188 @@
+# $OpenBSD: GENERIC,v 1.1 2010/06/01 03:12:28 drahn Exp $
+#
+# GENERIC machine description file
+#
+# This machine description file is used to generate the default OpenBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine	beagle	arm
+include "../../../conf/GENERIC"
+options	TIMEZONE=0	# time zone to adjust RTC time by
+options	DST=0		# daylight saving time used by RTC
+#options	NFSCLIENT	# NFS 
+
+options		ARM11_AVIC_INTR
+
+options		CACHE_CLEAN_BLOCK_INTR
+
+makeoptions	KERNEL_BASE_PHYS="0x80300000"
+makeoptions	KERNEL_BASE_VIRT="0xc0300000"
+options	BUILD_STARTUP_PAGETABLE
+options	STARTUP_PAGETABLE_ADDR=0x80200000
+options	SDRAM_START="0x80000000"
+
+#options		APERTURE
+
+#options BOOT_CONFIG	# boot-time kernel config
+
+# estimated number of users
+
+maxusers	32
+
+# CPU options
+options	CPU_ARMv7	# Support the ARMv7
+makeoptions	CPUFLAGS="-mcpu=armv5"	# dont have gcc v7 support yet.
+
+#option WSDISPLAY_COMPAT_USL		# VT handling
+#option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+option WSDISPLAY_DEFAULTSCREENS=1
+#option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+
+config		bsd	root on sd0a swap on sd0b
+
+# The main bus device
+mainbus0	at root
+cpu0		at mainbus?
+ahb0		at mainbus?
+
+prcm0		at ahb? addr 0x48004000	# power/clock controller
+intc0		at ahb? addr 0x48200000	# interrupt controller
+gptimer0	at ahb? addr 0x49032000	intr 38 # timer GPTIMER2
+gptimer1	at ahb? addr 0x48318000	intr 37 # timer GPTIMER1
+
+#sm0		at ahb?	addr 0x0C000300 intr 188 #ethernet
+
+omgpio0		at ahb? addr 0x48310000 intr 29
+omgpio1		at ahb? addr 0x49050000 intr 30
+omgpio2		at ahb? addr 0x49052000 intr 31
+omgpio3		at ahb? addr 0x49054000 intr 32
+omgpio4		at ahb? addr 0x49056000 intr 33
+omgpio5		at ahb? addr 0x49058000 intr 34
+
+omdog0		at ahb? addr 0x48314000 		# watchdog timer
+
+ommmc0		at ahb? addr 0x4809c000 intr 83
+#ommmc1		at ahb? addr 0x480b4000 intr 86
+#ommmc2		at ahb? addr 0x480ad000 intr 94
+
+#omkbd0		at ahb? addr 0x48022000 		
+#wskbd*		at omkbd? mux 1
+
+#ohci0		at ahb? addr 0x4805E000 size 0x400 intr 78	# ohci (shim)
+ehci0          at ahb? addr 0x48064800 size 0x400 intr 77      # ehci (shim)
+usb*           at ehci?
+
+
+#mcspi0		at ahb? addr 0x48098000 intr 65
+#mcspi1		at ahb? addr 0x4809A000 intr 66
+
+#atlas0		at ahb? intr 85	# really a spi device, not ahb
+#wskbd*		at atlas? mux 1 
+
+#usbotg0	at ahb? addr 0x4c000000 size 0x70 intr 3
+#usb*		at ohci?
+
+## USB bus support
+usb*		at ehci?	flags 0x1
+uhub*		at usb?
+uhub*		at uhub?
+
+uhub*		at usb?			# USB Hubs
+uhub*		at uhub?		# USB Hubs
+umodem*		at uhub?		# USB Modems/Serial
+ucom*		at umodem?
+uvisor*		at uhub?		# Handspring Visor
+ucom*		at uvisor?
+uvscom*		at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*		at uvscom?
+ubsa*		at uhub?		# Belkin serial adapter
+ucom*		at ubsa?
+uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
+ucom*		at uftdi?
+uplcom* 	at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*		at uplcom?
+umct*		at uhub?		# MCT USB-RS232 serial adapter
+ucom*		at umct?
+uaudio* 	at uhub?		# USB Audio
+audio*		at uaudio?
+umidi*		at uhub?		# USB MIDI
+midi*		at umidi?
+ulpt*		at uhub?		# USB Printers
+umass*		at uhub?		# USB Mass Storage devices
+scsibus*	at umass?
+uhidev*		at uhub?		# Human Interface Devices
+ums*		at uhidev?		# USB mouse
+wsmouse*	at ums? mux 0
+ukbd*		at uhidev?		# USB keyboard
+wskbd*		at ukbd? mux 1
+uhid*		at uhidev?		# USB generic HID support
+aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*		at uhub?		# Atmel AT76c50x based 802.11b
+axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+cue*		at uhub?		# CATC USB-EL1201A based Ethernet
+kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+cdce*		at uhub?		# CDC Ethernet
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+udav*		at uhub?		# Davicom DM9601 based Ethernet
+url*		at uhub?		# Realtek RTL8150L based adapters
+wi*		at uhub?		# WaveLAN IEEE 802.11DS
+urio*		at uhub?		# Diamond Multimedia Rio 500
+uscanner*	at uhub?		# USB Scanners
+usscanner*	at uhub?		# USB SCSI scanners, e.g., HP5300
+scsibus*	at usscanner?
+#uyap*		at uhub?		# Y@P firmware loader
+udsbr*		at uhub?		# D-Link DSB-R100 radio
+radio*		at udsbr?		# USB radio
+#ubt*		at uhub?		# USB Bluetooth
+ugen*		at uhub?		# USB Generic driver
+
+ukphy*	at mii?				# "unknown" PHYs
+
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+ss*		at scsibus?
+uk*		at scsibus?
+
+
+# onboard uarts
+com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
+
+#com1	at ahb?	addr	0xXXXXXX00	size 0x400 intr 73
+#com2	at ahb?	addr	0xXXXXXX00	size 0x400 intr 74
+
+# LCD
+#omdisplay0	at ahb? addr 0x48050000 intr 25 # LCD DISPLAY
+#wsdisplay*	at omdisplay? console ?
+
+sdmmc*	at ommmc?		# SD/MMC bus
+scsibus* at sdmmc?		# SCSI emulation
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+ss*		at scsibus?
+uk*		at scsibus?
+
+# Bluetooth controllers
+#sbt*	at sdmmc?		# SDIO Bluetooth
+
+# APM emulation
+#apm0		at pxaip?
+
+# Pseudo-Devices
+pseudo-device hotplug         1       # devices hot plugging
