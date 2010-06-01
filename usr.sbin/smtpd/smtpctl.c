@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.48 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.49 2010/06/01 11:37:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -296,6 +296,7 @@ show_queue(int raw)
 
 		if (raw) {
 			printf("%s|", queue_be_decode(a.content_id));
+			printf("%d|", a.birth);
 			printf("%s|%s|", aux.mode, aux.mail_from);
 			if (aux.mode[0] == 'R')
 				printf("%s", aux.rcpt);
