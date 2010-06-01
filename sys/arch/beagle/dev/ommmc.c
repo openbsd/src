@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.5 2010/02/14 09:08:32 mk Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.6 2010/06/01 03:09:41 drahn Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -746,7 +746,7 @@ ommmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 
 #ifdef DIAGNOSTIC
 	/* Must not stop the clock if commands are in progress. */
-	if (ISSET(HREAD4(sc, SDMMCH_PSTATE), MMCHS_PSTATE_CMDI|MMCHS_PSTATE_DAT)
+	if (ISSET(HREAD4(sc, MMCHS_PSTATE), MMCHS_PSTATE_CMDI|MMCHS_PSTATE_DATI)
 	    && ommmc_card_detect(sc))
 		printf("ommmc_sdclk_frequency_select: command in progress\n");
 #endif
