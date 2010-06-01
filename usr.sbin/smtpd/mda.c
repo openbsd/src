@@ -1,9 +1,9 @@
-/*	$OpenBSD: mda.c,v 1.45 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.46 2010/06/01 19:47:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
- * Copyright (c) 2009-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
+ * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,7 +36,6 @@
 #include <vis.h>
 
 #include "smtpd.h"
-#include "queue_backend.h"
 
 void			 mda_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void		 mda_shutdown(void);
@@ -47,65 +46,74 @@ void			 mda_store(struct mda_session *);
 void			 mda_store_event(int, short, void *);
 struct mda_session	*mda_lookup(struct smtpd *, u_int32_t);
 
+u_int32_t mda_id;
+
 void
 mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
 	char			 output[128], *error, *parent_error;
 	struct deliver		 deliver;
 	struct mda_session	*s;
-	struct action		*action;
-	size_t			 action_sz;
+	struct path		*path;
 
 	if (iev->proc == PROC_QUEUE) {
 		switch (imsg->hdr.type) {
-		case IMSG_BATCH_CREATE:
-			s = malloc(sizeof *s);
+		case IMSG_MDA_SESS_NEW:
+			/* make new session based on provided args */
+			s = calloc(1, sizeof *s);
 			if (s == NULL)
 				fatal(NULL);
 			msgbuf_init(&s->w);
-			bzero(&s->ev, sizeof s->ev);
-			s->id = imsg->hdr.peerid;
-			s->content_id = *(u_int64_t *)imsg->data;
+			s->msg = *(struct message *)imsg->data;
+			s->msg.status = S_MESSAGE_TEMPFAILURE;
+			s->id = mda_id++;
 			s->datafp = fdopen(imsg->fd, "r");
 			if (s->datafp == NULL)
 				fatalx("mda: fdopen");
 			LIST_INSERT_HEAD(&env->mda_sessions, s, entry);
-			return;
 
-		case IMSG_BATCH_APPEND:
-			LIST_FOREACH(s, &env->mda_sessions, entry)
-				if (s->id == imsg->hdr.peerid)
-					break;
-			if (s == NULL)
-				fatalx("mda: bogus append");
-			action = imsg->data;
-			s->action_id = action->id;
-			s->auxraw = strdup(action->arg);
-			if (s->auxraw == NULL)
-				fatal(NULL);
-			auxsplit(&s->aux, s->auxraw);
-			return;
+			/* request parent to fork a helper process */
+			path = &s->msg.recipient;
+			switch (path->rule.r_action) {
+			case A_EXT:
+				deliver.mode = A_EXT;
+				strlcpy(deliver.user, path->pw_name,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->rule.r_value.path,
+				    sizeof deliver.to);
+				break;
 
-		case IMSG_BATCH_CLOSE:
-			LIST_FOREACH(s, &env->mda_sessions, entry)
-				if (s->id == imsg->hdr.peerid)
-					break;
-			if (s == NULL)
-				fatalx("mda: bogus close");
-			memcpy(&s->birth, imsg->data, sizeof s->birth);
-
-			/* request helper process from parent */
-			if (s->aux.mode[0] == 'M') {
-				deliver.mode = 'P';
-				strlcpy(deliver.user, "root", sizeof deliver.user);
+			case A_MBOX:
+				deliver.mode = A_EXT;
+				strlcpy(deliver.user, "root",
+				    sizeof deliver.user);
 				snprintf(deliver.to, sizeof deliver.to,
-				    "exec /usr/libexec/mail.local %s",
-				    s->aux.user_to);
-			} else {
-				deliver.mode = s->aux.mode[0];
-				strlcpy(deliver.user, s->aux.user_to, sizeof deliver.user);
-				strlcpy(deliver.to, s->aux.path, sizeof deliver.to);
+				    "%s -f %s@%s %s", PATH_MAILLOCAL,
+				    s->msg.sender.user, s->msg.sender.domain,
+				    path->pw_name);
+				break;
+
+			case A_MAILDIR:
+				deliver.mode = A_MAILDIR;
+				strlcpy(deliver.user, path->pw_name,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->rule.r_value.path,
+				    sizeof deliver.to);
+				break;
+
+			case A_FILENAME:
+				deliver.mode = A_FILENAME;
+				/* XXX: unconditional SMTPD_USER is wrong. */
+				strlcpy(deliver.user, SMTPD_USER,
+				    sizeof deliver.user);
+				strlcpy(deliver.to, path->u.filename,
+				    sizeof deliver.to);
+				break;
+
+			default:
+				fatalx("mda: unknown rule action");
 			}
+
 			imsg_compose_event(env->sc_ievs[PROC_PARENT],
 			    IMSG_PARENT_FORK_MDA, s->id, 0, -1, &deliver,
 			    sizeof deliver);
@@ -127,10 +135,6 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 		case IMSG_MDA_DONE:
 			s = mda_lookup(env, imsg->hdr.peerid);
-
-			/* all parent errors are temporary */
-			if (asprintf(&parent_error, "100 %s", (char *)imsg->data) < 0)
-				fatal("mda: asprintf");
 
 			/*
 			 * Grab last line of mda stdout/stderr if available.
@@ -158,11 +162,12 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 						buf[len] = '\0';
 						ln = buf;
 					}
-					strlcpy(output, "100 \"", sizeof output);
-					strnvis(output + 5, ln,
-					    sizeof(output) - 6,
+					strlcpy(output, "\"", sizeof output);
+					strnvis(output + 1, ln,
+					    sizeof(output) - 2,
 					    VIS_SAFE | VIS_CSTYLE);
 					strlcat(output, "\"", sizeof output);
+					log_debug("mda_out: %s", output);
 				}
 				free(buf);
 				fclose(fp);
@@ -173,11 +178,11 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			 * child's output, the latter having preference over
 			 * the former.
 			 */
-			if (strcmp(parent_error + 4, "exited okay") == 0) {
+			error = NULL;
+			parent_error = imsg->data;
+			if (strcmp(parent_error, "exited okay") == 0) {
 				if (!feof(s->datafp) || s->w.queued)
-					error = "100 mda exited prematurely";
-				else
-					error = "200 ok";
+					error = "mda exited prematurely";
 			} else {
 				if (output[0])
 					error = output;
@@ -186,24 +191,35 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			}
 
 			/* update queue entry */
-			action_sz = sizeof *action + strlen(error) + 1;
-			action = malloc(action_sz);
-			if (action == NULL)
-				fatal(NULL);
-			action->id = s->action_id;
-			strlcpy(action->arg, error, action_sz - sizeof *action);
+			if (error == NULL)
+				s->msg.status = S_MESSAGE_ACCEPTED;
+			else
+				strlcpy(s->msg.session_errorline, error,
+				    sizeof s->msg.session_errorline);
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_BATCH_UPDATE, s->id, 0, -1, action, action_sz);
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_BATCH_DONE, s->id, 0, -1, NULL, 0);
+			    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, &s->msg,
+			    sizeof s->msg);
+
+			/*
+			 * XXX: which struct path gets used for logging depends
+			 * on whether lka did aliases or .forward processing;
+			 * lka may need to be changed to present data in more
+			 * unified way.
+			 */
+			if (s->msg.recipient.rule.r_action == A_MAILDIR ||
+			    s->msg.recipient.rule.r_action == A_MBOX)
+				path = &s->msg.recipient;
+			else
+				path = &s->msg.session_rcpt;
 
 			/* log status */
-			log_info("%s: to=%s, delay=%d, stat=%s%s%s",
-			    queue_be_decode(s->content_id), rcpt_pretty(&s->aux),
-			    time(NULL) - s->birth,
-			    *error == '2' ? "Sent" : "Error (",
-			    *error == '2' ? "" : error + 4,
-			    *error == '2' ? "" : ")");
+			if (error && asprintf(&error, "Error (%s)", error) < 0)
+				fatal("mda: asprintf");
+			log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
+			    s->msg.message_id, path->user, path->domain,
+			    time(NULL) - s->msg.creation,
+			    error ? error : "Sent");
+			free(error);
 
 			/* destroy session */
 			LIST_REMOVE(s, entry);
@@ -213,9 +229,11 @@ mda_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				fclose(s->datafp);
 			msgbuf_clear(&s->w);
 			event_del(&s->ev);
-			free(s->auxraw);
 			free(s);
-			free(parent_error);
+
+			/* update queue's session count */
+			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+			    IMSG_MDA_SESS_NEW, 0, 0, -1, NULL, 0);
 			return;
 
 		case IMSG_CTL_VERBOSE:
@@ -307,13 +325,13 @@ mda(struct smtpd *env)
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));
 
 	mda_setup_events(env);
-	if (event_dispatch() < 0)
-		log_warn("event_dispatch");
+	event_dispatch();
 	mda_shutdown();
 
 	return (0);
@@ -326,12 +344,14 @@ mda_store(struct mda_session *s)
 	struct ibuf	*buf;
 	int		 len;
 
-	/* XXX: remove user provided Return-Path, if any */
-	if (s->aux.mail_from[0])
-		len = asprintf(&p, "Return-Path: %s\nDelivered-To: %s\n",
-		    s->aux.mail_from, s->aux.rcpt_to);
+	if (s->msg.sender.user[0] && s->msg.sender.domain[0])
+		/* XXX: remove user provided Return-Path, if any */
+		len = asprintf(&p, "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
+		    s->msg.sender.user, s->msg.sender.domain,
+		    s->msg.session_rcpt.user, s->msg.session_rcpt.domain);
 	else
-		len = asprintf(&p, "Delivered-To: %s\n", s->aux.rcpt_to);
+		len = asprintf(&p, "Delivered-To: %s@%s\n",
+		    s->msg.session_rcpt.user, s->msg.session_rcpt.domain);
 
 	if (len == -1)
 		fatal("mda_store: asprintf");

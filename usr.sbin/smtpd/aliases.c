@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.34 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.35 2010/06/01 19:47:08 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,13 +67,20 @@ aliases_exist(struct smtpd *env, objid_t mapid, char *username)
 }
 
 int
-aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *tree, char *username)
+aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, char *username)
 {
+	struct map *map;
 	struct map_alias *map_alias;
 	struct expandnode *expnode;
+	char buf[MAXLOGNAME];
 	size_t nbaliases;
 
-	map_alias = map_lookup(env, mapid, username, K_ALIAS);
+	map = map_find(env, mapid);
+	if (map == NULL)
+		return 0;
+
+	lowercase(buf, username, sizeof(buf));
+	map_alias = map_lookup(env, mapid, buf, K_ALIAS);
 	if (map_alias == NULL)
 		return 0;
 
@@ -81,9 +88,9 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *tree, char *use
 	nbaliases = 0;
 	RB_FOREACH(expnode, expandtree, &map_alias->expandtree) {
 		if (expnode->type == EXPAND_INCLUDE)
-			nbaliases += aliases_expand_include(tree, expnode->u.filename);
+			nbaliases += aliases_expand_include(expandtree, expnode->u.filename);
 		else {
-			expandtree_increment_node(tree, expnode);
+			expandtree_increment_node(expandtree, expnode);
 			nbaliases++;
 		}
 	}

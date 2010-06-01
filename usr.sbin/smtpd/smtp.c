@@ -1,9 +1,9 @@
-/*	$OpenBSD: smtp.c,v 1.72 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.73 2010/06/01 19:47:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
- * Copyright (c) 2009-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
+ * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,7 +39,6 @@
 #include <unistd.h>
 
 #include "smtpd.h"
-#include "queue_backend.h"
 
 void		smtp_imsg(struct smtpd *, struct imsgev *, struct imsg *);
 __dead void	smtp_shutdown(void);
@@ -47,22 +46,21 @@ void		smtp_sig_handler(int, short, void *);
 void		smtp_setup_events(struct smtpd *);
 void		smtp_disable_events(struct smtpd *);
 void		smtp_pause(struct smtpd *);
-int		smtp_enqueue(struct smtpd *, uid_t);
+int		smtp_enqueue(struct smtpd *, uid_t *);
 void		smtp_accept(int, short, void *);
 struct session *smtp_new(struct listener *);
-struct session *session_lookup(struct smtpd *, u_int32_t);
-
-u_int32_t smtp_id;
+struct session *session_lookup(struct smtpd *, u_int64_t);
 
 void
 smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 {
+	struct session		 skey;
+	struct submit_status	*ss;
 	struct listener		*l;
 	struct session		*s;
 	struct auth		*auth;
 	struct ssl		*ssl;
 	struct dns		*dns;
-	int			 status, fd;
 
 	if (iev->proc == PROC_LKA) {
 		switch (imsg->hdr.type) {
@@ -83,56 +81,82 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 
 	if (iev->proc == PROC_MFA) {
 		switch (imsg->hdr.type) {
-		case IMSG_MFA_MAIL:
 		case IMSG_MFA_RCPT:
-			s = session_lookup(env, imsg->hdr.peerid);
+		case IMSG_MFA_MAIL:
+			log_debug("smtp: got imsg_mfa_mail/rcpt");
+			ss = imsg->data;
+			s = session_lookup(env, ss->id);
 			if (s == NULL)
 				return;
-			memcpy(&status, imsg->data, sizeof status);
-			s->s_msg.status |= status;
-			session_pickup(s);
+			session_pickup(s, ss);
 			return;
 		}
 	}
 
 	if (iev->proc == PROC_QUEUE) {
+		ss = imsg->data;
+
 		switch (imsg->hdr.type) {
-		case IMSG_QUEUE_CREATE:
-			s = session_lookup(env, imsg->hdr.peerid);
+		case IMSG_QUEUE_CREATE_MESSAGE:
+			log_debug("smtp: imsg_queue_create_message returned");
+			s = session_lookup(env, ss->id);
 			if (s == NULL)
 				return;
-			memcpy(&s->content_id, imsg->data, sizeof s->content_id);
-			memcpy(&s->queue_id, (u_int64_t *)imsg->data + 1,
-			    sizeof s->queue_id);
-			if (s->content_id == INVALID_ID)
-				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
-			session_pickup(s);
+			strlcpy(s->s_msg.message_id, ss->u.msgid,
+			    sizeof s->s_msg.message_id);
+			session_pickup(s, ss);
 			return;
 
-		case IMSG_QUEUE_OPEN:
-			s = session_lookup(env, imsg->hdr.peerid);
+		case IMSG_QUEUE_MESSAGE_FILE:
+			log_debug("smtp: imsg_queue_message_file returned");
+			s = session_lookup(env, ss->id);
 			if (s == NULL) {
 				close(imsg->fd);
 				return;
 			}
-			s->datafp = fdopen(imsg->fd, "a");
-			if (s->datafp == NULL)
-				fatal("smtp: fdopen");
-			session_pickup(s);
+			s->datafp = fdopen(imsg->fd, "w");
+			if (s->datafp == NULL) {
+				/* queue may have experienced tempfail. */
+				if (ss->code != 421)
+					fatalx("smtp: fdopen");
+				close(imsg->fd);
+			}
+			session_pickup(s, ss);
 			return;
 
-		case IMSG_QUEUE_CLOSE:
-			s = session_lookup(env, imsg->hdr.peerid);
+		case IMSG_QUEUE_TEMPFAIL:
+			log_debug("smtp: got imsg_queue_tempfail");
+			skey.s_id = ss->id;
+			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &skey);
+			if (s == NULL)
+				fatalx("smtp: session is gone");
+			if (s->s_flags & F_WRITEONLY)
+				/* session is write-only, must not destroy it. */
+				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+			else
+				fatalx("smtp: corrupt session");
+			return;
+
+		case IMSG_QUEUE_COMMIT_ENVELOPES:
+			log_debug("smtp: got imsg_queue_commit_envelopes");
+			s = session_lookup(env, ss->id);
 			if (s == NULL)
 				return;
-			memcpy(&status, imsg->data, sizeof status);
-			s->s_msg.status |= status;
-			session_pickup(s);
+			session_pickup(s, ss);
+			return;
+
+		case IMSG_QUEUE_COMMIT_MESSAGE:
+			log_debug("smtp: got imsg_queue_commit_message");
+			s = session_lookup(env, ss->id);
+			if (s == NULL)
+				return;
+			session_pickup(s, ss);
 			return;
 
 		case IMSG_SMTP_ENQUEUE:
-			fd = smtp_enqueue(env, getuid());
-			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, imsg->hdr.peerid, 0, fd, NULL, 0);
+			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0,
+			    smtp_enqueue(env, NULL), imsg->data,
+			    sizeof(struct message));
 			return;
 		}
 	}
@@ -225,7 +249,7 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 				s->s_flags &= ~F_AUTHENTICATED;
 				s->s_msg.flags &= ~F_MESSAGE_AUTHENTICATED;
 			}
-			session_pickup(s);
+			session_pickup(s, NULL);
 			return;
 
 		case IMSG_CTL_VERBOSE:
@@ -237,9 +261,9 @@ smtp_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 	if (iev->proc == PROC_CONTROL) {
 		switch (imsg->hdr.type) {
 		case IMSG_SMTP_ENQUEUE:
-			fd = smtp_enqueue(env, *(uid_t *)imsg->data);
 			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE,
-			    imsg->hdr.peerid, 0, fd, NULL, 0);
+			    imsg->hdr.peerid, 0, smtp_enqueue(env, imsg->data),
+			    NULL, 0);
 			return;
 
 		case IMSG_SMTP_PAUSE:
@@ -412,7 +436,7 @@ smtp_resume(struct smtpd *env)
 }
 
 int
-smtp_enqueue(struct smtpd *env, uid_t uid)
+smtp_enqueue(struct smtpd *env, uid_t *euid)
 {
 	static struct listener		 local, *l;
 	static struct sockaddr_storage	 sa;
@@ -452,8 +476,16 @@ smtp_enqueue(struct smtpd *env, uid_t uid)
 
 	s->s_fd = fd[0];
 	s->s_ss = sa;
+	s->s_msg.flags |= F_MESSAGE_ENQUEUED;
 
-	bsnprintf(s->s_hostname, sizeof(s->s_hostname), "%d@localhost", uid);
+	if (euid)
+		bsnprintf(s->s_hostname, sizeof(s->s_hostname), "%d@localhost",
+		    *euid);
+	else {
+		strlcpy(s->s_hostname, "localhost", sizeof(s->s_hostname));
+		s->s_msg.flags |= F_MESSAGE_BOUNCE;
+	}
+
 	strlcpy(s->s_msg.session_hostname, s->s_hostname,
 	    sizeof(s->s_msg.session_hostname));
 
@@ -483,6 +515,7 @@ smtp_accept(int fd, short event, void *p)
 	dns_query_ptr(l->env, &s->s_ss, s->s_id);
 }
 
+
 struct session *
 smtp_new(struct listener *l)
 {
@@ -502,7 +535,7 @@ smtp_new(struct listener *l)
 	
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		fatal(NULL);
-	s->s_id = smtp_id++;
+	s->s_id = generate_uid();
 	s->s_env = env;
 	s->s_l = l;
 	strlcpy(s->s_msg.tag, l->tag, sizeof(s->s_msg.tag));
@@ -518,7 +551,7 @@ smtp_new(struct listener *l)
  * Helper function for handling IMSG replies.
  */
 struct session *
-session_lookup(struct smtpd *env, u_int32_t id)
+session_lookup(struct smtpd *env, u_int64_t id)
 {
 	struct session	 key;
 	struct session	*s;

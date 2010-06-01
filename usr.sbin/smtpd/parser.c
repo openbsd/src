@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.12 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: parser.c,v 1.13 2010/06/01 19:47:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -58,7 +58,6 @@ struct token {
 
 static const struct token t_main[];
 static const struct token t_show[];
-static const struct token t_show_queue[];
 static const struct token t_pause[];
 static const struct token t_resume[];
 static const struct token t_schedule[];
@@ -79,15 +78,9 @@ static const struct token t_main[] = {
 };
 
 static const struct token t_show[] = {
-	{KEYWORD,	"queue",	SHOW_QUEUE,	t_show_queue},
+	{KEYWORD,	"queue",	SHOW_QUEUE,	NULL},
 	{KEYWORD,	"runqueue",	SHOW_RUNQUEUE,	NULL},
 	{KEYWORD,	"stats",	SHOW_STATS,	NULL},
-	{ENDTOKEN,	"",		NONE,		NULL}
-};
-
-static const struct token t_show_queue[] = {
-	{NOTOKEN,	"",		NONE,		NULL},
-	{KEYWORD,	"raw",		SHOW_QUEUE_RAW,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -106,12 +99,12 @@ static const struct token t_resume[] = {
 };
 
 static const struct token t_schedule[] = {
-	{VARIABLE,	"message",      	SCHEDULE,	NULL},
+	{VARIABLE,	"message id/uid",      	SCHEDULE,	NULL},
 	{ENDTOKEN,	"",			NONE,      	NULL}
 };
 
 static const struct token t_remove[] = {
-	{VARIABLE,	"message",      	REMOVE,		NULL},
+	{VARIABLE,	"message id/uid",      	REMOVE,		NULL},
 	{ENDTOKEN,	"",			NONE,      	NULL}
 };
 

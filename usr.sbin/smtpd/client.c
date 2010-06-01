@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.29 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.30 2010/06/01 19:47:08 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -954,8 +954,6 @@ buf_read(int fd, struct ibuf_read *r)
 		return (-1);
 
 	r->wpos += n;
-
-	//log_debug("%s: '%.*s'", __func__, sizeof(r->buf) - r->wpos, r->buf);
 
 	return (0);
 }

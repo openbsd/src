@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.26 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.27 2010/06/01 19:47:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -550,7 +550,7 @@ ssl_session_accept(int fd, short event, void *p)
 	session_bufferevent_new(s);
 	event_set(&s->s_bev->ev_read, s->s_fd, EV_READ, ssl_read, s->s_bev);
 	event_set(&s->s_bev->ev_write, s->s_fd, EV_WRITE, ssl_write, s->s_bev);
-	session_pickup(s);
+	session_pickup(s, NULL);
 
 	return;
 retry:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.61 2010/06/01 19:47:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -116,7 +116,7 @@ typedef struct {
 
 %}
 
-%token	SIZE LISTEN ON ALL PORT
+%token	QUEUE INTERVAL SIZE LISTEN ON ALL PORT
 %token	MAP TYPE HASH LIST SINGLE SSL SMTPS CERTIFICATE
 %token	DNS DB PLAIN EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
@@ -266,7 +266,10 @@ tag		: TAG STRING			{
 		| /* empty */			{ $$ = NULL; }
 		;
 
-main		: SIZE size {
+main		: QUEUE INTERVAL interval	{
+			conf->sc_qintval = $3;
+		}
+	       	| SIZE size {
        			conf->sc_maxsize = $2;
 		}
 		| LISTEN ON STRING port ssl certname auth tag {
@@ -1056,6 +1059,7 @@ lookup(char *s)
 		{ "hash",		HASH },
 		{ "hostname",		HOSTNAME },
 		{ "include",		INCLUDE },
+		{ "interval",		INTERVAL },
 		{ "list",		LIST },
 		{ "listen",		LISTEN },
 		{ "local",		LOCAL },
@@ -1067,6 +1071,7 @@ lookup(char *s)
 		{ "on",			ON },
 		{ "plain",		PLAIN },
 		{ "port",		PORT },
+		{ "queue",		QUEUE },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
 		{ "single",		SINGLE },
@@ -1458,6 +1463,8 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	SPLAY_INIT(conf->sc_ssl);
 	SPLAY_INIT(&conf->sc_sessions);
 
+	conf->sc_qintval.tv_sec = SMTPD_QUEUE_INTERVAL;
+	conf->sc_qintval.tv_usec = 0;
 	conf->sc_opts = opts;
 
 	if ((file = pushfile(filename, 0)) == NULL) {

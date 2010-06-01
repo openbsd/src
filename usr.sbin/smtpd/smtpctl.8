@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.14 2010/05/31 23:38:56 jacekm Exp $
+.\" $OpenBSD: smtpctl.8,v 1.15 2010/06/01 19:47:09 jacekm Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2010 $
+.Dd $Mdocdate: June 1 2010 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -43,19 +43,20 @@ Temporarily stop deliveries to local users.
 .It Cm pause outgoing
 Temporarily stop relaying and deliveries to
 remote users.
-.It Cm remove Ar message-id | Cm all
-Removes messages with the same message ID, or all messages.
+.It Cm remove Ar message-uid | message-id
+Removes a single message, or all messages with the same message ID.
 .It Cm resume incoming
 Resume accepting incoming sessions.
 .It Cm resume local
 Resume deliveries to local users.
 .It Cm resume outgoing
 Resume relaying and deliveries to remote users.
-.It Cm schedule Ar message-id | Cm all
-Marks messages with the same message ID, or all messages,
+.It Cm schedule Ar message-uid | message-id
+Marks a single message, or all messages with the same message ID,
 as ready for immediate delivery.
-.It Cm show queue Op Ic raw
-Displays undelivered messages.
+.It Cm show queue
+Displays information concerning envelopes
+that are currently in a queue.
 .It Cm show runqueue
 Displays information concerning envelopes
 that are scheduled for delivery.
