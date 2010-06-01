@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.3 2010/02/12 05:36:10 drahn Exp $
+#	$OpenBSD: files.beagle,v 1.4 2010/06/01 03:01:02 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -127,6 +127,9 @@ include "dev/pckbc/files.pckbc"
 
 # Include USB stuff
 include "dev/usb/files.usb"
+
+# Bluetooth
+include "dev/bluetooth/files.bluetooth"
 
 # Media Independent Interface (mii)
 include "dev/mii/files.mii"
