@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.2 2010/06/01 15:10:04 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -46,6 +46,7 @@ namespace_new(const char *suffix)
 	ns->sync = 1;
 	if (ns->suffix == NULL) {
 		free(ns->suffix);
+		free(ns);
 		return NULL;
 	}
 	TAILQ_INIT(&ns->indices);
