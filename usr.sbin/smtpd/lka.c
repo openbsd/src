@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.109 2010/05/31 23:38:56 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.110 2010/06/01 02:08:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -859,8 +859,8 @@ lka_session_fail(struct smtpd *env, struct lkasession *s)
 
 	log_debug("lka: initina lka_resolve_path failed");
 	status = S_MESSAGE_PERMFAILURE;
-	imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT, 0, 0, -1,
-	    &status, sizeof status);
+	imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT,
+	    s->message.id, 0, -1, &status, sizeof status);
 	lka_session_destroy(env, s);
 }
 
