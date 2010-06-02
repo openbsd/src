@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.9 2010/05/28 12:09:10 claudio Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.10 2010/06/02 15:41:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -53,7 +53,7 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	struct rt_mpls		*rt_mpls;
 	int			 i, error;
 
-	if (!mpls_enable || rt0 == NULL || (dst->sa_family != AF_INET &&
+	if (rt0 == NULL || (dst->sa_family != AF_INET &&
 	    dst->sa_family != AF_INET6 && dst->sa_family != AF_MPLS)) {
 		if (!ISSET(ifp->if_xflags, IFXF_MPLS))
 			return (ifp->if_output(ifp, m, dst, rt));

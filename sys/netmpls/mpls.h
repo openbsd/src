@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.22 2010/05/28 12:09:10 claudio Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.23 2010/06/02 15:41:06 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -122,23 +122,23 @@ struct rt_mpls {
 #define MPLSCTL_MAXID			7	
 
 #define MPLSCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "enable", CTLTYPE_INT }, \
+	{ NULL, 0 }, \
+	{ NULL, 0 }, \
 	{ "ttl", CTLTYPE_INT }, \
 	{ "ifq", CTLTYPE_NODE },\
 	{ "maxloop_inkernel", CTLTYPE_INT }, \
 	{ "mapttl_ip", CTLTYPE_INT }, \
-	{ "mapttl_ip6", CTLTYPE_INT }, \
+	{ "mapttl_ip6", CTLTYPE_INT } \
 }
 
 #define MPLSCTL_VARS { \
-	0, \
-	&mpls_enable, \
+	NULL, \
+	NULL, \
 	&mpls_defttl, \
-	0, \
+	NULL, \
 	&mpls_inkloop, \
 	&mpls_mapttl_ip, \
-	&mpls_mapttl_ip6, \
+	&mpls_mapttl_ip6 \
 }
 
 #endif
@@ -167,7 +167,6 @@ extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
 
 extern struct ifqueue	mplsintrq;	/* MPLS input queue */
 extern int		mplsqmaxlen;	/* MPLS input queue length */
-extern int		mpls_enable;
 extern int		mpls_defttl;
 
 void	mpls_init(void);
