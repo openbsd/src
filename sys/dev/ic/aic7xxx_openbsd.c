@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.46 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.47 2010/06/02 08:19:35 dlg Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -310,13 +310,13 @@ ahc_action(struct scsi_xfer *xs)
 	 * get an scb to use.
 	 */
 	s = splbio();
-	if ((scb = ahc_get_scb(ahc)) == NULL) {
+	scb = ahc_get_scb(ahc);
+	splx(s);
+	if (scb == NULL) {
 		xs->error = XS_NO_CCB;
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
-	splx(s);
 
 	hscb = scb->hscb;
 
@@ -414,19 +414,6 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	scb->sg_count = nsegments;
 
 	s = splbio();
-
-	/*
-	 * Last time we need to check if this SCB needs to
-	 * be aborted.
-	 */
-	if (xs->flags & ITSDONE) {
-		if (nsegments != 0)
-			bus_dmamap_unload(ahc->parent_dmat, scb->dmamap);
-
-		ahc_free_scb(ahc, scb);
-		splx(s);
-		return;
-	}
 
 	tinfo = ahc_fetch_transinfo(ahc, SCSIID_CHANNEL(ahc, scb->hscb->scsiid),
 				    SCSIID_OUR_ID(scb->hscb->scsiid),
@@ -568,9 +555,9 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 	if (hscb->cdb_len > sizeof(hscb->cdb32)) {
 		s = splbio();
 		ahc_free_scb(ahc, scb);
+		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -598,11 +585,11 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 #endif
 			s = splbio();
 			ahc_free_scb(ahc, scb);
-			xs->error = XS_NO_CCB;
-			scsi_done(xs);
 			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
 			return;
-}
+		}
 		ahc_execute_scb(scb, scb->dmamap->dm_segs,
 		    scb->dmamap->dm_nsegs);
 	} else {
