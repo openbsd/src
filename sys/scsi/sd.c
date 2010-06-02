@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.191 2010/05/26 16:38:20 thib Exp $	*/
+/*	$OpenBSD: sd.c,v 1.192 2010/06/02 13:32:13 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -718,7 +718,9 @@ sdstart(struct scsi_xfer *xs)
 	scsi_xs_exec(xs);
 
 	/* move onto the next io */
-	if (BUFQ_PEEK(sc->sc_bufq) != NULL)
+	if (ISSET(sc->flags, SDF_WAITING))
+		CLR(sc->flags, SDF_WAITING);
+	else if (BUFQ_PEEK(sc->sc_bufq) != NULL)
 		scsi_xsh_add(&sc->sc_xsh);
 }
 
@@ -741,6 +743,7 @@ sd_buf_done(struct scsi_xfer *xs)
 		    bp->b_flags & B_READ);
 		BUFQ_REQUEUE(sc->sc_bufq, bp);
 		scsi_xs_put(xs);
+		SET(sc->flags, SDF_WAITING);
 		timeout_add(&sc->sc_timeout, 1);
 		return;
 
