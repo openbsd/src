@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.c,v 1.3 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: mmu.c,v 1.4 2010/06/02 05:35:17 jasper Exp $	*/
 /*	$NetBSD: mmu.c,v 1.15 2006/02/12 02:30:55 uwe Exp $	*/
 
 /*-
@@ -86,13 +86,15 @@ sh_mmu_information(void)
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4) {
+		unsigned int urb;
 		printf("cpu0: fully-associative 4 ITLB, 64 UTLB entries\n");
 		r = _reg_read_4(SH4_MMUCR);
+		urb = (r & SH4_MMUCR_URB_MASK) >> SH4_MMUCR_URB_SHIFT;
 		printf("cpu0: %s virtual storage mode, SQ access: kernel%s, ",
 		    r & SH3_MMUCR_SV ? "single" : "multiple",
 		    r & SH4_MMUCR_SQMD ? "" : "/user");
 		printf("wired %d\n",
-		    (r & SH4_MMUCR_URB_MASK) >> SH4_MMUCR_URB_SHIFT);
+		    urb ? 64 - urb : 0);
 	}
 #endif
 #endif /* DEBUG */
