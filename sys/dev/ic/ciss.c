@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.44 2010/06/02 01:16:12 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.45 2010/06/02 01:18:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -79,16 +79,6 @@ struct scsi_adapter ciss_switch = {
 };
 
 struct scsi_device ciss_dev = {
-	NULL, NULL, NULL, NULL
-};
-
-void	ciss_scsi_raw_cmd(struct scsi_xfer *xs);
-
-struct scsi_adapter ciss_raw_switch = {
-	ciss_scsi_raw_cmd, cissminphys, NULL, NULL,
-};
-
-struct scsi_device ciss_raw_dev = {
 	NULL, NULL, NULL, NULL
 };
 
@@ -396,19 +386,6 @@ ciss_attach(struct ciss_softc *sc)
 	saa.saa_sc_link = &sc->sc_link;
 	scsibus = (struct scsibus_softc *)config_found_sm(&sc->sc_dev,
 	    &saa, scsiprint, NULL);
-
-#if 0
-	sc->sc_link_raw.device = &ciss_raw_dev;
-	sc->sc_link_raw.adapter_softc = sc;
-	sc->sc_link.openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
-	sc->sc_link_raw.adapter = &ciss_raw_switch;
-	sc->sc_link_raw.adapter_target = sc->ndrives;
-	sc->sc_link_raw.adapter_buswidth = sc->ndrives;
-	bzero(&saa, sizeof(saa));
-	saa.saa_sc_link = &sc->sc_link_raw;
-	rawbus = (struct scsibus_softc *)config_found_sm(&sc->sc_dev,
-	    &saa, scsiprint, NULL);
-#endif
 
 #if NBIO > 0
 	/* XXX for now we can only deal w/ one volume. */
@@ -862,63 +839,6 @@ ciss_sync(struct ciss_softc *sc)
 	CISS_UNLOCK_SCRATCH(sc, lock);
 
 	return rv;
-}
-
-void
-ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
-{
-	struct scsi_link *link = xs->sc_link;
-	struct ciss_rawsoftc *rsc = link->adapter_softc;
-	struct ciss_softc *sc = rsc->sc_softc;
-	struct ciss_ccb *ccb;
-	struct ciss_cmd *cmd;
-	ciss_lock_t lock;
-
-	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_raw_cmd "));
-
-	lock = CISS_LOCK(sc);
-	if (xs->cmdlen > CISS_MAX_CDB) {
-		CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
-		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
-		xs->error = XS_SENSE;
-		scsi_done(xs);
-		CISS_UNLOCK(sc, lock);
-		return;
-	}
-
-	xs->error = XS_NOERROR;
-
-	/* TODO check this target has not yet employed w/ any volume */
-
-	ccb = ciss_get_ccb(sc);
-	if (ccb == NULL) {
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		CISS_UNLOCK(sc, lock);
-		return;
-	}
-
-	cmd = &ccb->ccb_cmd;
-	ccb->ccb_len = xs->datalen;
-	ccb->ccb_data = xs->data;
-	ccb->ccb_xs = xs;
-
-	cmd->cdblen = xs->cmdlen;
-	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL;
-	if (xs->flags & SCSI_DATA_IN)
-		cmd->flags |= CISS_CDB_IN;
-	else if (xs->flags & SCSI_DATA_OUT)
-		cmd->flags |= CISS_CDB_OUT;
-	cmd->tmo = htole16(xs->timeout < 1000? 1 : xs->timeout / 1000);
-	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
-	bcopy(xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
-
-	ciss_cmd(ccb, BUS_DMA_WAITOK, xs->flags & (SCSI_POLL|SCSI_NOSLEEP));
-
-	CISS_UNLOCK(sc, lock);
 }
 
 void

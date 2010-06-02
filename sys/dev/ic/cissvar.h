@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.8 2010/05/31 19:35:03 halex Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.9 2010/06/02 01:18:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -29,7 +29,6 @@ struct ciss_ld {
 struct ciss_softc {
 	struct device	sc_dev;
 	struct scsi_link sc_link;
-	struct scsi_link *sc_link_raw;
 	struct timeout	sc_hb;
 	void		*sc_ih;
 	void		*sc_sh;
@@ -57,12 +56,6 @@ struct ciss_softc {
 	u_int32_t heartbeat;
 	int       fibrillation;
 	struct ciss_ld **sc_lds;
-};
-
-struct ciss_rawsoftc {
-	struct scsi_link sc_link;
-	struct ciss_softc *sc_softc;
-	u_int8_t	sc_channel;
 };
 
 /* XXX These have to become spinlocks in case of fine SMP */
