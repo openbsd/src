@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.16 2010/04/04 22:53:50 jsg Exp $
+# $OpenBSD: dhclient-script,v 1.17 2010/06/02 09:57:16 phessler Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -24,7 +24,7 @@
 delete_old_address() {
 	if [ -n "$old_ip_address" ]; then
 		ifconfig $interface inet $old_ip_address delete $medium
-		route delete "$old_ip_address" 127.0.0.1 >/dev/null 2>&1
+		route $rdomain delete "$old_ip_address" 127.0.0.1 >/dev/null 2>&1
 	fi
 }
 
@@ -42,7 +42,7 @@ add_new_address() {
 		$medium
 
 	# XXX Original TIMEOUT code did not do this unless $new_routers was set?
-	route add $new_ip_address 127.0.0.1 >/dev/null 2>&1
+	route $rdomain add $new_ip_address 127.0.0.1 >/dev/null 2>&1
 }
 
 ip6_add_new_address() {
@@ -56,7 +56,7 @@ delete_old_alias() {
 	if [ -n "$alias_ip_address" ]; then
 		ifconfig $interface \
 			inet $alias_ip_address delete > /dev/null 2>&1
-		route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
+		route $rdomain delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
 	fi
 }
 
@@ -64,19 +64,19 @@ add_new_alias() {
 	if [ -n "$alias_ip_address" ]; then
 		ifconfig $interface inet $alias_ip_address alias netmask \
 			$alias_subnet_mask
-		route add $alias_ip_address 127.0.0.1
+		route $rdomain add $alias_ip_address 127.0.0.1
 	fi
 }
 
 delete_old_routes() {
 	# Delete existing default route. We only allow one, so no need to
 	# process $old_routers list.
-	route -n flush -inet -iface $interface >/dev/null 2>&1
+	route $rdomain -n flush -inet -iface $interface >/dev/null 2>&1
 
 	if [ -n "$old_static_routes" ]; then
 		set $old_static_routes
 		while [ $# -gt 1 ]; do
-			route delete "$1" "$2"
+			route $rdomain delete "$1" "$2"
 			shift; shift
 		done
 	fi
@@ -85,12 +85,12 @@ delete_old_routes() {
 }
 
 add_new_routes() {
-	route -n flush -inet -iface $interface >/dev/null 2>&1
+	route $rdomain -n flush -inet -iface $interface >/dev/null 2>&1
 	for router in $new_routers; do
 		if [ "$new_ip_address" = "$router" ]; then
-			route add default -iface $router >/dev/null 2>&1
+			route $rdomain add default -iface $router >/dev/null 2>&1
 		else
-			route add default $router >/dev/null 2>&1
+			route $rdomain add default $router >/dev/null 2>&1
 		fi
 		# 2nd and subsequent default routers error out, so explicitly
 		# stop processing the list after the first one.
@@ -100,7 +100,7 @@ add_new_routes() {
 	if [ -n "$new_static_routes" ]; then
 		set $new_static_routes
 		while [ $# -gt 1 ]; do
-			route add $1 $2
+			route $rdomain add $1 $2
 			shift; shift
 		done
 	fi

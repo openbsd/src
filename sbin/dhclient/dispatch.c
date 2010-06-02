@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.45 2009/11/26 23:14:29 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.46 2010/06/02 09:57:16 phessler Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -133,6 +133,11 @@ dispatch(void)
 another:
 		if (!ifi->linkstat)
 			interfaces_invalidated = 0;
+
+		if (ifi->rdomain != get_rdomain(ifi->name))
+			error("Interface %s:"
+			    " rdomain changed out from under us",
+			    ifi->name);
 
 		if (timeouts) {
 			struct timeout *t;
@@ -447,4 +452,22 @@ interface_link_status(char *ifname)
 			return (0);
 	}
 	return (1);
+}
+
+int
+get_rdomain(char *name)
+{
+	int rv = 0, s;
+	struct  ifreq ifr;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+	    error("get_rdomain socket: %m");
+
+	bzero(&ifr, sizeof(ifr));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFRTABLEID, (caddr_t)&ifr) != -1)
+	    rv = ifr.ifr_rdomainid;
+
+	close(s);
+	return rv;
 }

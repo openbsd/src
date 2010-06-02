@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.133 2010/03/25 18:37:36 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.134 2010/06/02 09:57:16 phessler Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -335,6 +335,9 @@ main(int argc, char *argv[])
 	sockaddr_broadcast.sin_addr.s_addr = INADDR_BROADCAST;
 	sockaddr_broadcast.sin_len = sizeof(sockaddr_broadcast);
 	inaddr_any.s_addr = INADDR_ANY;
+
+	/* Put us into the correct rdomain */
+	ifi->rdomain = get_rdomain(ifi->name);
 
 	read_client_conf();
 
@@ -1589,6 +1592,8 @@ script_init(char *reason, struct string_list *medium)
 void
 priv_script_init(char *reason, char *medium)
 {
+	char *rdomain;
+
 	client->scriptEnvsize = 100;
 	if (client->scriptEnv == NULL)
 		client->scriptEnv =
@@ -1603,6 +1608,12 @@ priv_script_init(char *reason, char *medium)
 	client->scriptEnv[1] = NULL;
 
 	script_set_env("", "interface", ifi->name);
+
+	if (asprintf(&rdomain, "-T %d", ifi->rdomain) == -1)
+		error("script_init: no memory for environment");
+
+	script_set_env("", "rdomain", rdomain);
+	free(rdomain);
 
 	if (medium)
 		script_set_env("", "medium", medium);
