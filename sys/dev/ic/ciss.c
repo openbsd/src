@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.43 2010/05/31 19:35:03 halex Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.44 2010/06/02 01:16:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -984,7 +984,6 @@ ciss_intr(void *v)
 {
 	struct ciss_softc *sc = v;
 	struct ciss_ccb *ccb;
-	ciss_lock_t lock;
 	bus_size_t reg;
 	u_int32_t id;
 	int hit = 0;
@@ -993,8 +992,6 @@ ciss_intr(void *v)
 
 	if (!(bus_space_read_4(sc->iot, sc->ioh, CISS_ISR) & sc->iem))
 		return 0;
-
-	lock = CISS_LOCK(sc);
 
 	if (sc->cfg.methods & CISS_METH_FIFO64)
 		reg = CISS_OUTQ64_HI;
@@ -1020,8 +1017,6 @@ ciss_intr(void *v)
 
 		hit = 1;
 	}
-	CISS_UNLOCK(sc, lock);
-
 	CISS_DPRINTF(CISS_D_INTR, ("exit "));
 	return hit;
 }
