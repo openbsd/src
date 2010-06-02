@@ -3,7 +3,7 @@ dnl Process this file with GNU autoconf to produce a configure script.
 dnl
 dnl Copyright (c) 1994-1996,1998-2010 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT([sudo], [1.7.2p6], [http://www.sudo.ws/bugs/], [sudo])
+AC_INIT([sudo], [1.7.2p7], [http://www.sudo.ws/bugs/], [sudo])
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT
@@ -13,6 +13,7 @@ dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
 AC_SUBST(HAVE_BSM_AUDIT)
+AC_SUBST(SHELL)
 AC_SUBST(LIBTOOL)
 AC_SUBST(CFLAGS)
 AC_SUBST(PROGS)
@@ -1044,7 +1045,7 @@ AC_ARG_WITH(libvas, [AS_HELP_STRING([--with-libvas=NAME], [Name of the libvas sh
     yes)	with_libvas=libvas.so
 		;;
     no)		;;
-    *)		AC_DEFINE_UNQUOTED([LIBVAS_SO], ["$with_with_libvas"], [The name of libvas.so])
+    *)		AC_DEFINE_UNQUOTED([LIBVAS_SO], ["$with_libvas"], [The name of libvas.so])
 		;;
 esac
 if test X"$with_libvas" != X"no"; then
@@ -1056,6 +1057,10 @@ if test X"$with_libvas" != X"no"; then
 		       [Path to look for libvas in [default=/opt/quest/lib]])],
        [LIBVAS_RPATH=$withval],
        [LIBVAS_RPATH=/opt/quest/lib])
+    dnl
+    dnl Some platforms require libdl for dlopen()
+    dnl
+    AC_CHECK_LIB([dl], [main])
 fi
 ])
 
@@ -1976,10 +1981,15 @@ dnl and we do the actual tests here.
 dnl
 if test ${with_pam-"no"} != "no"; then
     dnl
-    dnl Linux may need this
+    dnl Some platforms need libdl for dlopen
     dnl
-    AC_CHECK_LIB([dl], [main], [SUDO_LIBS="${SUDO_LIBS} -lpam -ldl"], [SUDO_LIBS="${SUDO_LIBS} -lpam"])
-    ac_cv_lib_dl=ac_cv_lib_dl_main
+    case "$LIBS" in
+	*-ldl*)	SUDO_LIBS="${SUDO_LIBS} -lpam"
+		;;
+	*)	AC_CHECK_LIB([dl], [main], [SUDO_LIBS="${SUDO_LIBS} -lpam -ldl"], [SUDO_LIBS="${SUDO_LIBS} -lpam"])
+		ac_cv_lib_dl=ac_cv_lib_dl_main
+		;;
+    esac
 
     dnl
     dnl Some PAM implementations (MacOS X for example) put the PAM headers
@@ -2524,7 +2534,12 @@ if test X"$LIBVAS_RPATH" != X""; then
     if test -n "$blibpath"; then
 	blibpath_add="${blibpath_add}:$LIBVAS_RPATH"
     else
-	LDFLAGS="$LDFLAGS -R$LIBVAS_RPATH"
+	case "$host" in
+	    *-*-hpux*)	LDFLAGS="$LDFLAGS -Wl,+b,$LIBVAS_RPATH"
+			;;
+	    *)		LDFLAGS="$LDFLAGS -Wl,-R$LIBVAS_RPATH"
+			;;
+	esac
     fi
 fi
 
@@ -2636,6 +2651,7 @@ AH_TEMPLATE(CLASSIC_INSULTS, [Define to 1 if you want the insults from the "clas
 AH_TEMPLATE(CSOPS_INSULTS, [Define to 1 if you want insults culled from the twisted minds of CSOps.])
 AH_TEMPLATE(DONT_LEAK_PATH_INFO, [Define to 1 if you want sudo to display "command not allowed" instead of "command not found" when a command cannot be found.])
 AH_TEMPLATE(ENV_EDITOR, [Define to 1 if you want visudo to honor the EDITOR and VISUAL env variables.])
+AH_TEMPLATE(ENV_DEBUG, [Whether to enable environment debugging.])
 AH_TEMPLATE(FQDN, [Define to 1 if you want to require fully qualified hosts in sudoers.])
 AH_TEMPLATE(GOONS_INSULTS, [Define to 1 if you want insults from the "Goon Show".])
 AH_TEMPLATE(HAL_INSULTS, [Define to 1 if you want 2001-like insults.])

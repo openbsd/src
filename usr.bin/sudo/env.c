@@ -317,7 +317,7 @@ int
 unsetenv(var)
     const char *var;
 {
-    char **ep;
+    char **ep = env.envp;
     size_t len;
 
     if (strchr(var, '=') != NULL) {
@@ -355,13 +355,15 @@ unsetenv(var)
     }
 
     len = strlen(var);
-    for (ep = env.envp; *ep; ep++) {
+    while (*ep != NULL) {
 	if (strncmp(var, *ep, len) == 0 && (*ep)[len] == '=') {
 	    /* Found it; shift remainder + NULL over by one and update len. */
 	    memmove(ep, ep + 1,
 		(env.env_len - (ep - env.envp)) * sizeof(char *));
 	    env.env_len--;
-	    break;
+	    /* Keep going, could be multiple instances of the var. */
+	} else {
+	    ep++;
 	}
     }
 #ifndef UNSETENV_VOID
@@ -429,6 +431,7 @@ sudo_putenv(str, dupcheck, overwrite)
 {
     char **ep;
     size_t len;
+    int found = FALSE;
 
     /* Make sure there is room for the new entry plus a NULL. */
     if (env.env_len + 2 > env.env_size) {
@@ -447,20 +450,34 @@ sudo_putenv(str, dupcheck, overwrite)
 #endif
 
     if (dupcheck) {
-	    len = (strchr(str, '=') - str) + 1;
-	    for (ep = env.envp; *ep; ep++) {
+	len = (strchr(str, '=') - str) + 1;
+	for (ep = env.envp; !found && *ep != NULL; ep++) {
+	    if (strncmp(str, *ep, len) == 0) {
+		if (overwrite)
+		    *ep = str;
+		found = TRUE;
+	    }
+	}
+	/* Prune out duplicate variables. */
+	if (found && overwrite) {
+	    while (*ep != NULL) {
 		if (strncmp(str, *ep, len) == 0) {
-		    if (overwrite)
-			*ep = str;
-		    return;
+		    memmove(ep, ep + 1,
+			(env.env_len - (ep - env.envp)) * sizeof(char *));
+		    env.env_len--;
+		} else {
+		    ep++;
 		}
 	    }
-    } else
-	ep = env.envp + env.env_len;
+	}
+    }
 
-    env.env_len++;
-    *ep++ = str;
-    *ep = NULL;
+    if (!found) {
+	ep = env.envp + env.env_len;
+	env.env_len++;
+	*ep++ = str;
+	*ep = NULL;
+    }
 }
 
 /*

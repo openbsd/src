@@ -43,8 +43,8 @@
 #include "compat.h"
 #include "logging.h"
 #include "nonunix.h"
-#include "parse.h"
 #include "sudo.h"
+#include "parse.h"
 
 
 /* Pseudo-boolean types */
@@ -153,8 +153,8 @@ sudo_nonunix_groupcheck( const char* group, const char* user, const struct passw
 
 
 FINISHED: /* cleanups */
-    if (vaserr != VAS_ERR_SUCCESS) {
-	int error_flags = NO_MAIL | MSG_ONLY | (uses_inversion ? 0 : NO_EXIT);
+    if (vaserr != VAS_ERR_SUCCESS && vaserr != VAS_ERR_NOT_FOUND ) {
+	int error_flags = NO_MAIL | MSG_ONLY | NO_EXIT;
 
 	log_error(error_flags, "Error while checking group membership "
 		"for user \"%s\", group \"%s\", error: %s%s.", user, group,

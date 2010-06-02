@@ -35,7 +35,7 @@ They are one and the same.
 
 Build instructions
 ==================
-The most simplest way to build sudo with LDAP support is to include the
+The simplest way to build sudo with LDAP support is to include the
 '--with-ldap' option.
 
   $ ./configure --with-ldap
@@ -48,7 +48,7 @@ to specify them at configure time.  E.g.
 Sudo is developed using OpenLDAP but Netscape-based LDAP libraries
 (such as those present in Solaris) are also known to work.
 
-Your Mileage may vary.  Please let the sudo workers mailing list
+Your mileage may vary.  Please let the sudo workers mailing list
 <sudo-workers@sudo.ws> know if special configuration was required
 to build an LDAP-enabled sudo so we can improve sudo.
 

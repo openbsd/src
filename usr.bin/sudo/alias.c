@@ -121,8 +121,8 @@ alias_add(name, type, members)
     a->seqno = 0;
     list2tq(&a->members, members);
     if (rbinsert(aliases, a)) {
-	alias_free(a);
 	snprintf(errbuf, sizeof(errbuf), "Alias `%s' already defined", name);
+	alias_free(a);
 	return(errbuf);
     }
     return(NULL);

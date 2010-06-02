@@ -994,13 +994,6 @@ two consecutive C<%> characters are collapsed into a single C<%> character
 
 The default value is C<@passprompt@>.
 
-=item role
-
-The default SELinux role to use when constructing a new security
-context to run the command.  The default role may be overridden on
-a per-command basis in I<sudoers> or via command line options.
-This option is only available whe B<sudo> is built with SELinux support.
-
 =item runas_default
 
 The default user to run commands as if the B<-u> option is not specified
@@ -1033,13 +1026,6 @@ The default is F<@timedir@>.
 
 The owner of the timestamp directory and the timestamps stored therein.
 The default is C<root>.
-
-=item type
-
-The default SELinux type to use when constructing a new security
-context to run the command.  The default type may be overridden on
-a per-command basis in I<sudoers> or via command line options.
-This option is only available whe B<sudo> is built with SELinux support.
 
 =back
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.18 2010/04/13 23:22:01 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.19 2010/06/02 19:30:10 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -10,9 +10,9 @@
 
 #define PACKAGE_BUGREPORT "http://www.sudo.ws/bugs/"
 #define PACKAGE_NAME "sudo"
-#define PACKAGE_STRING "sudo 1.7.2p6"
+#define PACKAGE_STRING "sudo 1.7.2p7"
 #define PACKAGE_TARNAME "sudo"
-#define PACKAGE_VERSION "1.7.2p6"
+#define PACKAGE_VERSION "1.7.2p7"
 
 #define HAVE_ASPRINTF 1
 #define HAVE_BSD_AUTH_H 1

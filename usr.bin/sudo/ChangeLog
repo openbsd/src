@@ -1,38 +1,79 @@
+2010-06-02  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* auth/pam.c: Fix OpenPAM detection for newer versions.
+
+	* vasgroups.c: Sync with Quest sudo git repo
+
+	* aclocal.m4, configure, configure.in: Adapted from Quest sudo.
+	  HP-UX ld uses +b instead of -R or -rpath.
+	  Fix typo in libvas check.
+	  libvas may need libdl for dlopen().
+	  Add missing template for ENV_DEBUG.
+
+	* README.LDAP:
+	  Fix typos; from Quest Sudo
+
+	* Makefile.in, configure.in:
+	  Use value of SHELL from configure in Makefile
+
+2010-05-28  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* env.c: Handle duplicate variables in the environment.
+	  For unsetenv(), keep looking even after remove the first instance.
+	  For sudo_putenv(), check for and remove dupes after we replace an
+	  existing value.
+
+2010-04-29  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* visudo.c: Fix a crash when checking a sudoers file that has aliases
+	  that reference themselves. Based on a diff from David Wood.
+
+2010-04-15  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* alias.c: Fix use after free in error message when a duplicate
+	  alias exists.
+
+2010-04-14  Todd C. Miller  <Todd.Miller@courtesan.com>
+
+	* visudo.c: Set errorfile to the sudoers path if we set parse_error
+	  manually.  This prevents a NULL dereference in printf() when
+	  checking a sudoers file in strict mode when alias errors are present.
+
 2010-04-09  Todd C. Miller  <Todd.Miller@courtesan.com>
 
-        * configure, configure.in: Fix installation of sudoers.ldap
-          in "make install" when --with-ldap was specified without a
-          directory. From Prof. Dr. Andreas Mueller
+	* configure, configure.in: Fix installation of sudoers.ldap
+	  in "make install" when --with-ldap was specified without a
+	  directory. From Prof. Dr. Andreas Mueller
 
 2010-04-09  Todd C. Miller  <Todd.Miller@courtesan.com>
 
-        * find_path.c: Qualify the command even if it is in the
-          current working directory, e.g. "./foo" instead of just
-          returning "foo". This removes an ambiguity between real
-          commands and possible pseudo-commands in command matching.
+	* find_path.c: Qualify the command even if it is in the
+	  current working directory, e.g. "./foo" instead of just
+	  returning "foo". This removes an ambiguity between real
+	  commands and possible pseudo-commands in command matching.
 
 2010-04-07  Todd C. Miller  <Todd.Miller@courtesan.com>
 
-        * sudoers.cat, sudoers.man.in, sudoers.pod: Add a note about
-          the security implications of the fast_glob option.
+	* sudoers.cat, sudoers.man.in, sudoers.pod: Add a note about
+	  the security implications of the fast_glob option.
 
 	* memrchr.c: Remove duplicate includes
 
 2010-03-10  Todd C. Miller  <Todd.Miller@courtesan.com>
 
-        * sudo.c: Fix a bug introduced with def_closefrom. The value
-          of def_closefrom already includes the +1.
+	* sudo.c: Fix a bug introduced with def_closefrom. The value
+	  of def_closefrom already includes the +1.
 
 2010-03-09  Todd C. Miller  <Todd.Miller@courtesan.com>
 
-        * match.c: When doing a glob match, short circuit if
-          gl.gl_pathc is 0. From Mark Kettenis.
+	* match.c: When doing a glob match, short circuit if
+	  gl.gl_pathc is 0. From Mark Kettenis.
 
 2010-02-22  Todd C. Miller  <Todd.Miller@courtesan.com>
 
-        * match.c: Check for pseudo-command by looking at the first
-          character of the command in sudoers instead of checking the
-          user-supplied command for a slash.
+	* match.c: Check for pseudo-command by looking at the first
+	  character of the command in sudoers instead of checking the
+	  user-supplied command for a slash.
 
 2010-02-09  Todd C. Miller  <Todd.Miller@courtesan.com>
 
