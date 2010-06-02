@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.47 2010/06/02 01:33:57 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.48 2010/06/02 01:45:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -856,7 +856,6 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 
 	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_cmd "));
 
-	lock = CISS_LOCK(sc);
 	if (xs->cmdlen > CISS_MAX_CDB) {
 		CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
 		bzero(&xs->sense, sizeof(xs->sense));
@@ -865,7 +864,6 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
 		scsi_done(xs);
-		CISS_UNLOCK(sc, lock);
 		return;
 	}
 
@@ -877,7 +875,6 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 	if (ccb == NULL) {
 		xs->error = XS_NO_CCB;
 		scsi_done(xs);
-		CISS_UNLOCK(sc, lock);
 		return;
 	}
 
@@ -897,8 +894,8 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
 	bcopy(xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
 
+	lock = CISS_LOCK(sc);
 	ciss_cmd(ccb, BUS_DMA_WAITOK, xs->flags & (SCSI_POLL|SCSI_NOSLEEP));
-
 	CISS_UNLOCK(sc, lock);
 }
 
