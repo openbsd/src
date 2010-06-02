@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.8 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.9 2010/06/02 16:01:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -25,7 +25,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/param.h>
-#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -130,9 +129,6 @@ main(int argc, char *argv[])
 	struct event		 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
 	int			 ch, opts = 0;
 	int			 debug = 0;
-	int			 ipforwarding, mplsenable;
-	int			 mib[4];
-	size_t			 len;
 
 	conffile = CONF_FILE;
 	ldpd_process = PROC_MAIN;
@@ -166,27 +162,6 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-
-	mib[0] = CTL_NET;
-	mib[1] = PF_INET;
-	mib[2] = IPPROTO_IP;
-	mib[3] = IPCTL_FORWARDING;
-	len = sizeof(ipforwarding);
-	if (sysctl(mib, 4, &ipforwarding, &len, NULL, 0) == -1)
-		err(1, "sysctl");
-
-	if (ipforwarding != 1)
-		log_warnx("WARNING: IP forwarding NOT enabled");
-
-	mib[0] = CTL_NET;
-	mib[1] = PF_MPLS;
-	mib[2] = MPLSCTL_ENABLE;
-	len = sizeof(mplsenable);
-	if (sysctl(mib, 3, &mplsenable, &len, NULL, 0) == -1)
-		err(1, "sysctl");
-
-	if (mplsenable != 1)
-		log_warnx("WARNING: MPLS NOT enabled");
 
 	/* fetch interfaces early */
 	kif_init();
