@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.48 2010/06/02 01:45:14 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.49 2010/06/02 05:07:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -127,11 +127,6 @@ void
 ciss_put_ccb(struct ciss_ccb *ccb)
 {
 	struct ciss_softc *sc = ccb->ccb_sc;
-
-	if (ccb->ccb_xs) {
-		CISS_DPRINTF(CISS_D_CMD, ("scsi_done(%p) ", ccb->ccb_xs));
-		scsi_done(ccb->ccb_xs);
-	}
 
 	ccb->ccb_state = CISS_CCB_FREE;
 	ccb->ccb_xs = NULL;
@@ -489,8 +484,10 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 				printf("more than %d dma segs\n", sc->maxsg);
 			else
 				printf("error %d loading dma map\n", error);
-			if (ccb->ccb_xs)
+			if (ccb->ccb_xs) {
 				ccb->ccb_xs->error = XS_DRIVER_STUFFUP;
+				scsi_done(ccb->ccb_xs);
+			}
 			ciss_put_ccb(ccb);
 			return (error);
 		}
@@ -662,8 +659,10 @@ ciss_done(struct ciss_ccb *ccb)
 		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 	}
 
-	if (xs)
+	if (xs) {
 		xs->resid = 0;
+		scsi_done(ccb->ccb_xs);
+	}
 
 	ciss_put_ccb(ccb);
 
