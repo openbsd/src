@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnlen.c,v 1.2 2010/05/21 06:57:45 chl Exp $	*/
+/*	$OpenBSD: strnlen.c,v 1.3 2010/06/02 12:58:12 millert Exp $	*/
 
 /*
  * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,10 +23,9 @@
 size_t
 strnlen(const char *str, size_t maxlen)
 {
-	const char *cp, *ep;
+	const char *cp;
 
-	ep = str + maxlen;
-	for (cp = str; cp < ep && *cp != '\0'; cp++)
+	for (cp = str; maxlen != 0 && *cp != '\0'; cp++, maxlen--)
 		;
 
 	return (size_t)(cp - str);
