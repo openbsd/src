@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.45 2010/06/02 01:18:36 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.46 2010/06/02 01:27:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -254,8 +254,6 @@ ciss_attach(struct ciss_softc *sc)
 		return -1;
 	}
 
-	TAILQ_INIT(&sc->sc_ccbq);
-	TAILQ_INIT(&sc->sc_ccbdone);
 	TAILQ_INIT(&sc->sc_free_ccb);
 
 	maxfer = sc->maxsg * PAGE_SIZE;
@@ -522,7 +520,6 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 		bus_space_write_4(sc->iot, sc->ioh, CISS_IMR,
 		    bus_space_read_4(sc->iot, sc->ioh, CISS_IMR) | sc->iem);
 
-	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
 	ccb->ccb_state = CISS_CCB_ONQ;
 	CISS_DPRINTF(CISS_D_CMD, ("submit=0x%x ", cmd->id));
 	if (sc->cfg.methods & (CISS_METH_FIFO64|CISS_METH_FIFO64_RRO)) {
@@ -647,7 +644,6 @@ ciss_done(struct ciss_ccb *ccb)
 
 	lock = CISS_LOCK(sc);
 	ccb->ccb_state = CISS_CCB_READY;
-	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 
 	if (ccb->ccb_cmd.id & CISS_CMD_ERR)
 		error = ciss_error(ccb);

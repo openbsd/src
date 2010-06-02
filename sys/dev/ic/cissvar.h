@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.9 2010/06/02 01:18:36 dlg Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.10 2010/06/02 01:27:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -40,7 +40,7 @@ struct ciss_softc {
 	u_int	sc_flags;
 #define	CISS_BIO	0x0001
 	int ccblen, maxcmd, maxsg, nbus, ndrives, maxunits;
-	ciss_queue_head	sc_free_ccb, sc_ccbq, sc_ccbdone;
+	ciss_queue_head	sc_free_ccb;
 
 	bus_space_tag_t	iot;
 	bus_space_handle_t ioh, cfg_ioh;
