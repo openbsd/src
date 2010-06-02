@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.49 2010/06/02 05:07:58 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.50 2010/06/02 05:38:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -469,6 +469,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	u_int32_t id;
 	int i, tohz, error = 0;
 
+	splassert(IPL_BIO);
+
 	if (ccb->ccb_state != CISS_CCB_READY) {
 		printf("%s: ccb %d not ready state=%b\n", sc->sc_dev.dv_xname,
 		    cmd->id, ccb->ccb_state, CISS_CCB_BITS);
@@ -740,6 +742,8 @@ ciss_inq(struct ciss_softc *sc, struct ciss_inquiry *inq)
 {
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
+	int rv;
+	int s;
 
 	ccb = ciss_get_ccb(sc);
 	if (ccb == NULL)
@@ -759,7 +763,11 @@ ciss_inq(struct ciss_softc *sc, struct ciss_inquiry *inq)
 	cmd->cdb[7] = sizeof(*inq) >> 8;	/* biiiig endian */
 	cmd->cdb[8] = sizeof(*inq) & 0xff;
 
-	return ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL|SCSI_NOSLEEP);
+	s = splbio();
+	rv = ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL|SCSI_NOSLEEP);
+	splx(s);
+
+	return (rv);
 }
 
 int
@@ -1220,6 +1228,8 @@ ciss_ldid(struct ciss_softc *sc, int target, struct ciss_ldid *id)
 {
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
+	int rv;
+	int s;
 
 	ccb = ciss_get_ccb(sc);
 	if (ccb == NULL)
@@ -1240,7 +1250,11 @@ ciss_ldid(struct ciss_softc *sc, int target, struct ciss_ldid *id)
 	cmd->cdb[7] = sizeof(*id) >> 8;	/* biiiig endian */
 	cmd->cdb[8] = sizeof(*id) & 0xff;
 
-	return ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL);
+	s = splbio();
+	rv = ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL);
+	splx(s);
+
+	return (rv);
 }
 
 int
@@ -1248,6 +1262,8 @@ ciss_ldstat(struct ciss_softc *sc, int target, struct ciss_ldstat *stat)
 {
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
+	int rv;
+	int s;
 
 	ccb = ciss_get_ccb(sc);
 	if (ccb == NULL)
@@ -1268,7 +1284,11 @@ ciss_ldstat(struct ciss_softc *sc, int target, struct ciss_ldstat *stat)
 	cmd->cdb[7] = sizeof(*stat) >> 8;	/* biiiig endian */
 	cmd->cdb[8] = sizeof(*stat) & 0xff;
 
-	return ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL);
+	s = splbio();
+	rv = ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL);
+	splx(s);
+
+	return (rv);
 }
 
 int
@@ -1276,6 +1296,8 @@ ciss_pdid(struct ciss_softc *sc, u_int8_t drv, struct ciss_pdid *id, int wait)
 {
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
+	int rv;
+	int s;
 
 	ccb = ciss_get_ccb(sc);
 	if (ccb == NULL)
@@ -1296,7 +1318,11 @@ ciss_pdid(struct ciss_softc *sc, u_int8_t drv, struct ciss_pdid *id, int wait)
 	cmd->cdb[7] = sizeof(*id) >> 8;	/* biiiig endian */
 	cmd->cdb[8] = sizeof(*id) & 0xff;
 
-	return ciss_cmd(ccb, BUS_DMA_NOWAIT, wait);
+	s = splbio();
+	rv = ciss_cmd(ccb, BUS_DMA_NOWAIT, wait);
+	splx(s);
+
+	return (rv);
 }
 
 
@@ -1343,6 +1369,8 @@ ciss_blink(struct ciss_softc *sc, int ld, int pd, int stat,
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
 	struct ciss_ld *ldp;
+	int rv;
+	int s;
 
 	if (ld > sc->maxunits)
 		return EINVAL;
@@ -1373,6 +1401,10 @@ ciss_blink(struct ciss_softc *sc, int ld, int pd, int stat,
 	cmd->cdb[7] = sizeof(*blink) >> 8;	/* biiiig endian */
 	cmd->cdb[8] = sizeof(*blink) & 0xff;
 
-	return ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL);
+	s = splbio();
+	rv = ciss_cmd(ccb, BUS_DMA_NOWAIT, SCSI_POLL);
+	splx(s);
+
+	return (rv);
 }
 #endif
