@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.46 2010/06/02 01:27:20 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.47 2010/06/02 01:33:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -112,12 +112,15 @@ ciss_get_ccb(struct ciss_softc *sc)
 {
 	struct ciss_ccb *ccb;
 
+	mtx_enter(&sc->sc_free_ccb_mtx);
 	if ((ccb = TAILQ_LAST(&sc->sc_free_ccb, ciss_queue_head))) {
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
 		ccb->ccb_state = CISS_CCB_READY;
 		ccb->ccb_xs = NULL;
 	}
-	return ccb;
+	mtx_leave(&sc->sc_free_ccb_mtx);
+
+	return (ccb);
 }
 
 void
@@ -133,7 +136,10 @@ ciss_put_ccb(struct ciss_ccb *ccb)
 	ccb->ccb_state = CISS_CCB_FREE;
 	ccb->ccb_xs = NULL;
 	ccb->ccb_data = NULL;
+
+	mtx_enter(&sc->sc_free_ccb_mtx);
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
+	mtx_leave(&sc->sc_free_ccb_mtx);
 }
 
 int
@@ -255,6 +261,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	TAILQ_INIT(&sc->sc_free_ccb);
+	mtx_init(&sc->sc_free_ccb_mtx, IPL_BIO);
 
 	maxfer = sc->maxsg * PAGE_SIZE;
 	for (i = 0; total; i++, total -= sc->ccblen) {
