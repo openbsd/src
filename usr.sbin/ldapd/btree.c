@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.3 2010/06/02 09:12:13 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -2093,7 +2093,6 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 
 		DPRINTF("update separator for source page %u to [%.*s]",
 		    src->pgno, (int)key.size, (char *)key.data);
-// ?		bt_reduce_separator(bt, node, &key);
 		if (btree_update_key(bt, src->parent, src->parent_index,
 		    &key) != BT_SUCCESS)
 			return BT_FAIL;
@@ -2118,7 +2117,6 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 
 		DPRINTF("update separator for destination page %u to [%.*s]",
 		    dst->pgno, (int)key.size, (char *)key.data);
-// ?		bt_reduce_separator(bt, node, &key);
 		if (btree_update_key(bt, dst->parent, dst->parent_index,
 		    &key) != BT_SUCCESS)
 			return BT_FAIL;
@@ -2840,7 +2838,7 @@ btree_compact(struct btree *bt)
 	if (rename(compact_path, bt->path) != 0)
 		goto failed;
 
-	// XXX: write a "reopen me" meta page for other processes to see
+	/* XXX: write a "reopen me" meta page for other processes to see */
 	btree_txn_abort(txn);
 	close(old_fd);
 
