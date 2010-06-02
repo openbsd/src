@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.16 2008/03/22 22:35:15 deraadt Exp $	*/
+/*	$OpenBSD: files.c,v 1.17 2010/06/02 20:42:17 chl Exp $	*/
 /*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ addfile(struct nvlist *nvpath, struct nvlist *optx, int flags, const char *rule,
 		goto bad;
 	}
 	if (optx == NULL && (needc || needf)) {
-		error("nothing to %s for %s", needc ? "count" : "flag", path);
+		error("nothing to %s", needc ? "count" : "flag");
 		goto bad;
 	}
 
