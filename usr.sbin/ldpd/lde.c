@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.14 2010/05/25 13:29:45 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.15 2010/06/02 11:56:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
+#include <netmpls/mpls.h>
 #include <arpa/inet.h>
 #include <err.h>
 #include <errno.h>
@@ -43,15 +44,13 @@ void		 lde_shutdown(void);
 void		 lde_dispatch_imsg(int, short, void *);
 void		 lde_dispatch_parent(int, short, void *);
 
-void		 lde_nbr_init(u_int32_t);
-void		 lde_nbr_free(void);
 struct lde_nbr	*lde_nbr_find(u_int32_t);
 struct lde_nbr	*lde_nbr_new(u_int32_t, struct lde_nbr *);
 void		 lde_nbr_del(struct lde_nbr *);
+void		 lde_nbr_clear(void);
 
+void		 lde_map_free(void *);
 void		 lde_address_list_free(struct lde_nbr *);
-void		 lde_req_list_free(struct lde_nbr *);
-void		 lde_map_list_free(struct lde_nbr *);
 
 struct ldpd_conf	*ldeconf = NULL, *nconf = NULL;
 struct imsgev		*iev_ldpe;
@@ -114,7 +113,6 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 		fatal("can't drop privileges");
 
 	event_init();
-	lde_nbr_init(NBR_HASHSIZE);
 
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, lde_sig_handler, NULL);
@@ -149,8 +147,6 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	    iev_main->handler, iev_main);
 	event_add(&iev_main->ev, NULL);
 
-	rt_init();
-
 	gettimeofday(&now, NULL);
 	ldeconf->uptime = now.tv_sec;
 
@@ -165,9 +161,8 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 void
 lde_shutdown(void)
 {
+	lde_nbr_clear();
 	rt_clear();
-
-	lde_nbr_free();
 
 	msgbuf_clear(&iev_ldpe->ibuf.w);
 	free(iev_ldpe);
@@ -425,9 +420,13 @@ lde_dispatch_parent(int fd, short event, void *bula)
 }
 
 u_int32_t
-lde_router_id(void)
+lde_assign_label(void)
 {
-	return (ldeconf->rtr_id.s_addr);
+	static u_int32_t label = MPLS_LABEL_RESERVED_MAX;
+
+	/* XXX some checks needed */
+	label++;
+	return (htonl(label << MPLS_LABEL_OFFSET));
 }
 
 void
@@ -436,11 +435,11 @@ lde_send_insert_klabel(struct rt_node *r)
 	struct kroute	kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->prefix.s_addr;
+	kr.prefix.s_addr = r->fec.prefix.s_addr;
+	kr.prefixlen = r->fec.prefixlen;
 	kr.nexthop.s_addr = r->nexthop.s_addr;
 	kr.local_label = r->local_label;
 	kr.remote_label = r->remote_label;
-	kr.prefixlen = r->prefixlen;
 
 	imsg_compose_event(iev_main, IMSG_KLABEL_INSERT, 0, 0, -1,
 	     &kr, sizeof(kr));
@@ -452,11 +451,11 @@ lde_send_change_klabel(struct rt_node *r)
 	struct kroute	kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->prefix.s_addr;
+	kr.prefix.s_addr = r->fec.prefix.s_addr;
+	kr.prefixlen = r->fec.prefixlen;
 	kr.nexthop.s_addr = r->nexthop.s_addr;
 	kr.local_label = r->local_label;
 	kr.remote_label = r->remote_label;
-	kr.prefixlen = r->prefixlen;
 
 	imsg_compose_event(iev_main, IMSG_KLABEL_CHANGE, 0, 0, -1,
 	     &kr, sizeof(kr));
@@ -468,8 +467,8 @@ lde_send_delete_klabel(struct rt_node *r)
 	struct kroute	 kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->prefix.s_addr;
-	kr.prefixlen = r->prefixlen;
+	kr.prefix.s_addr = r->fec.prefix.s_addr;
+	kr.prefixlen = r->fec.prefixlen;
 
 	imsg_compose_event(iev_main, IMSG_KLABEL_DELETE, 0, 0, -1,
 	     &kr, sizeof(kr));
@@ -519,61 +518,34 @@ lde_send_notification(u_int32_t peerid, u_int32_t code, u_int32_t msgid,
 	    -1, &nm, sizeof(nm));
 }
 
-LIST_HEAD(lde_nbr_head, lde_nbr);
+static __inline int lde_nbr_compare(struct lde_nbr *, struct lde_nbr *);
 
-struct nbr_table {
-	struct lde_nbr_head	*hashtbl;
-	u_int32_t		 hashmask;
-} ldenbrtable;
+RB_HEAD(nbr_tree, lde_nbr);
+RB_PROTOTYPE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
+RB_GENERATE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
 
-#define LDE_NBR_HASH(x)		\
-	&ldenbrtable.hashtbl[(x) & ldenbrtable.hashmask]
+struct nbr_tree lde_nbrs = RB_INITIALIZER(&lde_nbrs);
 
-void
-lde_nbr_init(u_int32_t hashsize)
+static __inline int
+lde_nbr_compare(struct lde_nbr *a, struct lde_nbr *b)
 {
-	u_int32_t		 hs, i;
-
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	ldenbrtable.hashtbl = calloc(hs, sizeof(struct lde_nbr_head));
-	if (ldenbrtable.hashtbl == NULL)
-		fatal("lde_nbr_init");
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&ldenbrtable.hashtbl[i]);
-
-	ldenbrtable.hashmask = hs - 1;
-}
-
-void
-lde_nbr_free(void)
-{
-	free(ldenbrtable.hashtbl);
+	return (a->peerid - b->peerid);
 }
 
 struct lde_nbr *
 lde_nbr_find(u_int32_t peerid)
 {
-	struct lde_nbr_head	*head;
-	struct lde_nbr		*nbr;
+	struct lde_nbr	n;
 
-	head = LDE_NBR_HASH(peerid);
+	n.peerid = peerid;
 
-	LIST_FOREACH(nbr, head, hash) {
-		if (nbr->peerid == peerid)
-			return (nbr);
-	}
-
-	return (NULL);
+	return (RB_FIND(nbr_tree, &lde_nbrs, &n));
 }
 
 struct lde_nbr *
 lde_nbr_new(u_int32_t peerid, struct lde_nbr *new)
 {
-	struct lde_nbr_head	*head;
-	struct lde_nbr		*nbr;
-	struct iface		*iface;
+	struct lde_nbr	*nbr;
 
 	if (lde_nbr_find(peerid))
 		return (NULL);
@@ -583,22 +555,16 @@ lde_nbr_new(u_int32_t peerid, struct lde_nbr *new)
 
 	memcpy(nbr, new, sizeof(*nbr));
 	nbr->peerid = peerid;
+	fec_init(&nbr->recv_map);
+	fec_init(&nbr->sent_map);
+	fec_init(&nbr->recv_req);
+	fec_init(&nbr->sent_req);
+	fec_init(&nbr->sent_wdraw);
 
 	TAILQ_INIT(&nbr->addr_list);
-	TAILQ_INIT(&nbr->req_list);
-	TAILQ_INIT(&nbr->sent_map_list);
-	TAILQ_INIT(&nbr->recv_map_list);
-	TAILQ_INIT(&nbr->labels_list);
 
-	head = LDE_NBR_HASH(peerid);
-	LIST_INSERT_HEAD(head, nbr, hash);
-
-	LIST_FOREACH(iface, &ldeconf->iface_list, entry) {
-		if (iface->ifindex == new->ifindex) {
-			LIST_INSERT_HEAD(&iface->lde_nbr_list, nbr, entry);
-			break;
-		}
-	}
+	if (RB_INSERT(nbr_tree, &lde_nbrs, nbr) != NULL)
+		fatalx("lde_nbr_new: RB_INSERT failed");
 
 	return (nbr);
 }
@@ -609,15 +575,96 @@ lde_nbr_del(struct lde_nbr *nbr)
 	if (nbr == NULL)
 		return;
 
-	lde_req_list_free(nbr);
-	lde_map_list_free(nbr);
 	lde_address_list_free(nbr);
-	lde_label_list_free(nbr);
 
-	LIST_REMOVE(nbr, hash);
-	LIST_REMOVE(nbr, entry);
+	fec_clear(&nbr->recv_map, lde_map_free);
+	fec_clear(&nbr->sent_map, lde_map_free);
+	fec_clear(&nbr->recv_req, free);
+	fec_clear(&nbr->sent_req, free);
+	fec_clear(&nbr->sent_wdraw, free);
+
+	RB_REMOVE(nbr_tree, &lde_nbrs, nbr);
 
 	free(nbr);
+}
+
+void
+lde_nbr_clear(void)
+{
+	struct lde_nbr	*nbr;
+
+	 while ((nbr = RB_ROOT(&lde_nbrs)) != NULL)
+		lde_nbr_del(nbr);
+}
+
+void
+lde_nbr_do_mappings(struct rt_node *rn)
+{
+	struct lde_nbr	*ln;
+	struct lde_map	*lm;
+	struct lde_req	*lr;
+	struct map	 map;
+
+	map.label = (ntohl(rn->local_label) & MPLS_LABEL_MASK) >>
+	    MPLS_LABEL_OFFSET;
+	map.prefix = rn->fec.prefix.s_addr;
+	map.prefixlen = rn->fec.prefixlen;
+
+	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
+		/* Did we already send a mapping to this peer? */
+		lm = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
+		if (lm && lm->label == map.label)
+			/* same mapping already sent, skip */
+			continue;
+
+		/* Is this from a pending request? */
+		lr = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
+		if (ldeconf->mode & MODE_ADV_ONDEMAND && lr == NULL)
+			/* adv. on demand but no req pending, skip */
+			continue;
+
+		if (ldeconf->mode & MODE_DIST_ORDERED) {
+			/* ordered mode needs the downstream path to be
+			 * ready before we can send the mapping upstream */
+			if (rn->nexthop.s_addr != INADDR_ANY &&
+			    rn->remote_label == NO_LABEL)
+				/* not local FEC but no remote-label, skip */
+				continue;
+		}
+
+		if (lr) {
+			/* set label request msg id in the mapping response. */
+			map.requestid = lr->msgid;
+			map.flags = F_MAP_REQ_ID;
+			fec_remove(&ln->sent_req, &lr->fec);
+		}
+
+		if (lm == NULL) {
+			lm = calloc(1, sizeof(*lm));
+			if (lm == NULL)
+				fatal("lde_nbr_do_mappings");
+			lm->fec = rn->fec;
+			lm->nexthop = ln;
+
+			LIST_INSERT_HEAD(&rn->upstream, lm, entry);
+			if (fec_insert(&ln->sent_map, &lm->fec))
+				log_warnx("failed to add %s/%u to sent map",
+				    inet_ntoa(lm->fec.prefix),
+				    lm->fec.prefixlen);
+		}
+		lm->label = map.label;
+
+		lde_send_labelmapping(ln->peerid, &map);
+	}
+}
+
+void
+lde_map_free(void *ptr)
+{
+	struct lde_map	*map = ptr;
+
+	LIST_REMOVE(map, entry);
+	free(map);
 }
 
 int
@@ -682,44 +729,14 @@ lde_address_list_free(struct lde_nbr *nbr)
 	}
 }
 
-void
-lde_req_list_free(struct lde_nbr *nbr)
-{
-	struct lde_req_entry	*req;
-
-	while ((req = TAILQ_FIRST(&nbr->req_list)) != NULL) {
-		TAILQ_REMOVE(&nbr->req_list, req, entry);
-		free(req);
-	}
-}
-
-void
-lde_map_list_free(struct lde_nbr *nbr)
-{
-	struct lde_map_entry	*map;
-
-	while ((map = TAILQ_FIRST(&nbr->recv_map_list)) != NULL) {
-		TAILQ_REMOVE(&nbr->recv_map_list, map, entry);
-		free(map);
-	}
-
-	while ((map = TAILQ_FIRST(&nbr->sent_map_list)) != NULL) {
-		TAILQ_REMOVE(&nbr->sent_map_list, map, entry);
-		free(map);
-	}
-}
-
 struct lde_nbr *
 lde_find_address(struct in_addr address)
 {
-	struct iface	*iface;
 	struct lde_nbr	*ln;
 
-	LIST_FOREACH(iface, &ldeconf->iface_list, entry) {
-		LIST_FOREACH(ln, &iface->lde_nbr_list, entry) {
-			if (lde_address_find(ln, &address) != NULL)
-				return (ln);
-		}
+	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
+		if (lde_address_find(ln, &address) != NULL)
+			return (ln);
 	}
 
 	return (NULL);
