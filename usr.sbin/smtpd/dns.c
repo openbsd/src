@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.20 2009/11/14 18:49:25 chl Exp $	*/
+/*	$OpenBSD: dns.c,v 1.21 2010/06/02 19:16:53 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -226,7 +226,8 @@ dns(void)
 	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
 	event_add(&iev->ev, NULL);
 
-	event_dispatch();
+	if (event_dispatch() < 0)
+		fatal("event_dispatch");
 	_exit(0);
 }
 

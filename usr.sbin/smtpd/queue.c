@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.86 2010/06/01 23:06:23 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.87 2010/06/02 19:16:53 chl Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -656,7 +656,8 @@ queue(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	event_dispatch();
+	if (event_dispatch() <  0)
+		fatal("event_dispatch");
 	queue_shutdown();
 
 	return (0);

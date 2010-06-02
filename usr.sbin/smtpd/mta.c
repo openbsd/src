@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.91 2010/06/01 23:06:23 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.92 2010/06/02 19:16:53 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -275,7 +275,8 @@ mta(struct smtpd *env)
 
 	SPLAY_INIT(&env->mta_sessions);
 
-	event_dispatch();
+	if (event_dispatch() < 0)
+		fatal("event_dispatch");
 	mta_shutdown();
 
 	return (0);

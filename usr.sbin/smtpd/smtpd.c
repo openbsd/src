@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.111 2010/06/01 23:06:25 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.112 2010/06/02 19:16:53 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -520,7 +520,8 @@ main(int argc, char *argv[])
 
 	parent_enqueue_offline(&env);
 
-	event_dispatch();
+	if (event_dispatch() < 0)
+		fatal("event_dispatch");
 
 	return (0);
 }
