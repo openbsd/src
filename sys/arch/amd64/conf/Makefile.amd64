@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.43 2010/06/01 23:49:22 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.44 2010/06/02 14:40:04 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -29,7 +29,7 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wstack-larger-than-2047
 
 CMACHFLAGS=	-mcmodel=kernel -mno-red-zone -mno-sse2 -mno-sse -mno-3dnow \
-		-mno-mmx -msoft-float
+		-mno-mmx -msoft-float -fno-omit-frame-pointer
 CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-vsnprintf -fno-builtin-log \
 		-fno-builtin-log2 -fno-builtin-malloc 
