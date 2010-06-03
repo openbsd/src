@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.98 2010/06/03 07:39:53 phessler Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.99 2010/06/03 07:50:02 halex Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -592,7 +592,7 @@ again:
 #endif /* !SMALL */
 		ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", epath,
 #ifndef SMALL
-			restart_point ? "HTTP/1.1" :
+			restart_point ? "HTTP/1.1\r\nConnection: close" :
 #endif /* !SMALL */
 			"HTTP/1.0");
 		if (strchr(host, ':')) {
