@@ -1,4 +1,4 @@
-/*	$OpenBSD: uguru.c,v 1.3 2010/04/20 06:44:49 deraadt Exp $	*/
+/*	$OpenBSD: uguru.c,v 1.4 2010/06/03 17:48:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Mikko Tolmunen <oskari@sefirosu.org>
@@ -1024,6 +1024,10 @@ uguru_write_multi(bus_space_tag_t iot, bus_space_handle_t ioh,
 				goto timeout;
 			DELAY(5);
 		}
+		/* dummy read to flush the internal buffer */
+		if (i == 0)
+			UGURU_READ(iot, ioh, UGURU_DATA);
+
 		UGURU_WRITE(iot, ioh, UGURU_DATA, *inbuf++);
 	}
 	return 0;
