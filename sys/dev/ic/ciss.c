@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.52 2010/06/03 00:56:42 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.53 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -114,8 +114,9 @@ ciss_get_ccb(void *xsc)
 	struct ciss_ccb *ccb;
 
 	mtx_enter(&sc->sc_free_ccb_mtx);
-	if ((ccb = TAILQ_LAST(&sc->sc_free_ccb, ciss_ccb_list))) {
-		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
+	ccb = SLIST_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL) {
+		SLIST_REMOVE_HEAD(&sc->sc_free_ccb, ccb_link);
 		ccb->ccb_state = CISS_CCB_READY;
 		ccb->ccb_xs = NULL;
 	}
@@ -135,7 +136,7 @@ ciss_put_ccb(void *xsc, void *xccb)
 	ccb->ccb_data = NULL;
 
 	mtx_enter(&sc->sc_free_ccb_mtx);
-	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
+	SLIST_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_link);
 	mtx_leave(&sc->sc_free_ccb_mtx);
 }
 
@@ -257,7 +258,7 @@ ciss_attach(struct ciss_softc *sc)
 		return -1;
 	}
 
-	TAILQ_INIT(&sc->sc_free_ccb);
+	SLIST_INIT(&sc->sc_free_ccb);
 	mtx_init(&sc->sc_free_ccb_mtx, IPL_BIO);
 
 	maxfer = sc->maxsg * PAGE_SIZE;
@@ -283,7 +284,7 @@ ciss_attach(struct ciss_softc *sc)
 		    &ccb->ccb_dmamap)))
 			break;
 
-		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
+		SLIST_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_link);
 	}
 
 	scsi_iopool_init(&sc->sc_iopool, sc, ciss_get_ccb, ciss_put_ccb);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.10 2009/04/29 08:24:26 reyk Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -474,7 +474,7 @@ struct ciss_error {
 } __packed;
 
 struct ciss_ccb {
-	TAILQ_ENTRY(ciss_ccb)	ccb_link;
+	SLIST_ENTRY(ciss_ccb)	ccb_link;
 	struct ciss_softc	*ccb_sc;
 	u_int64_t		ccb_cmdpa;
 	enum {
@@ -496,5 +496,5 @@ struct ciss_ccb {
 	struct ciss_cmd		ccb_cmd;	/* followed by sgl */
 };
 
-typedef TAILQ_HEAD(ciss_queue_head, ciss_ccb)     ciss_queue_head;
+SLIST_HEAD(ciss_ccb_list, ciss_ccb);
 
