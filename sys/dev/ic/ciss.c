@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.53 2010/06/03 01:02:13 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.54 2010/06/03 01:03:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -29,7 +29,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/kthread.h>
 
 #include <machine/bus.h>
 
@@ -88,7 +87,6 @@ int	ciss_ioctl(struct device *, u_long, caddr_t);
 int	ciss_sync(struct ciss_softc *sc);
 void	ciss_heartbeat(void *v);
 void	ciss_shutdown(void *v);
-void	ciss_kthread(void *v);
 #ifndef SMALL_KERNEL
 void	ciss_sensors(void *);
 #endif
@@ -369,16 +367,6 @@ ciss_attach(struct ciss_softc *sc)
 		bus_dmamap_destroy(sc->dmat, sc->cmdmap);
 		return -1;
 	}
-
-#if 0
-	if (kthread_create(ciss_kthread, sc, NULL, "%s", sc->sc_dev.dv_xname)) {
-		printf(": unable to create kernel thread\n");
-		shutdownhook_disestablish(sc->sc_sh);
-		bus_dmamem_free(sc->dmat, sc->cmdseg, 1);
-		bus_dmamap_destroy(sc->dmat, sc->cmdmap);
-		return -1;
-	}
-#endif
 
 	sc->sc_link.device = &ciss_dev;
 	sc->sc_link.adapter_softc = sc;
@@ -966,23 +954,6 @@ ciss_heartbeat(void *v)
 	}
 
 	timeout_add_sec(&sc->sc_hb, 3);
-}
-
-void
-ciss_kthread(void *v)
-{
-	struct ciss_softc *sc = v;
-	ciss_lock_t lock;
-
-	for (;;) {
-		tsleep(sc, PRIBIO, sc->sc_dev.dv_xname, 0);
-
-		lock = CISS_LOCK(sc);
-
-
-
-		CISS_UNLOCK(sc, lock);
-	}
 }
 
 int

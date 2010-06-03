@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.13 2010/06/03 00:56:42 dlg Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.14 2010/06/03 01:03:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -32,7 +32,6 @@ struct ciss_softc {
 	struct timeout	sc_hb;
 	void		*sc_ih;
 	void		*sc_sh;
-	struct proc	*sc_thread;
 	int		sc_flush;
 	struct ksensor	*sensors;
 	struct ksensordev sensordev;
