@@ -1,0 +1,140 @@
+.\" $OpenBSD: ikectl.8,v 1.1 2010/06/03 16:49:00 reyk Exp $
+.\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
+.\"
+.\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 3 2010 $
+.Dt IKECTL 8
+.Os
+.Sh NAME
+.Nm ikectl
+.Nd control the IKEv2 daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl s Ar socket
+.Ar command
+.Op Ar arg ...
+.Sh DESCRIPTION
+The
+.Nm
+program controls the
+.Xr iked 8
+daemon and provides commands to maintain a simple X.509 certificate
+authority (CA) for IKEv2 peers.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/iked.sock
+to communicate with
+.Xr iked 8 .
+.El
+.Sh IKED CONTROL COMMANDS
+The following commands are available to control
+.Xr iked 8 :
+.Bl -tag -width Ds
+.It Cm load Ar filename
+Reload the configuration from the specified file.
+.It Cm log brief
+Disable verbose logging.
+.It Cm log verbose
+Enable verbose logging.
+.It Cm monitor
+Monitor internal messages of the
+.Xr iked 8
+subsystems.
+.It Cm reload
+Reload the configuration from the default configuration file.
+.It Cm reset all
+Reset the the running state.
+.It Cm reset ca
+Reset the X.509 CA and certificate state.
+.It Cm reset policy
+Flush the configured policies.
+.It Cm reset sa
+Flush the running SAs.
+.It Cm reset user
+Flush the local user database.
+.El
+.Sh PKI AND CERTIFICATE AUTHORITY COMMANDS
+In order to use public key based authentication with IKEv2,
+a public key infrastructure (PKI) has to be set up to create and sign
+the peer certificates.
+.Nm
+includes commands to simplify maintenance of the PKI
+and to set up a simple certificate authority (CA) for
+.Xr iked 8
+and its peers.
+.Pp
+The following commands are available to control the CA:
+.Bl -tag -width Ds
+.It Cm ca Ar name Cm create
+Create a new certificate authority with the specified
+.Ar name .
+.It Cm ca Ar name Cm delete
+Delete the certificate authority with the specified
+.Ar name .
+.It Cm ca Ar name Cm install
+Install the certificate for CA
+.Ar name
+as the currently active CA.
+.It Cm ca Ar name Cm certificate Ar host Cm create
+Create a private key and certificate for
+.Ar host
+and sign then with the key of certificate authority with the speicified
+.Ar name .
+.It Cm ca Ar name Cm certificate Ar host Cm delete
+Deletes the private key and and certificates associated with
+.Ar host .
+.It Cm ca Ar name Cm certificate Ar host Cm export
+Export key files for
+.Ar host
+of the certificate authority with the specified
+.Ar name
+into the current directory for transport to other systems.
+.It Cm ca Ar name Cm certificate Ar host Cm install
+Install the private and public key for
+.Ar host
+into the active configuration.
+.It Cm show Cm ca Ar name Cm certificates
+Display a listing of certificates associated with CA
+.Ar name .
+.El
+.Sh FILES
+.Bl -tag -width "/var/run/iked.sockXX" -compact
+.It /etc/ssl/
+Directory to store the CA files.
+.It /var/run/iked.sock
+default
+.Ux Ns -domain
+socket used for communication with
+.Xr iked 8
+.El
+.Sh SEE ALSO
+.Xr iked 8 ,
+.Xr ssl 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.8 .
+.Sh AUTHORS
+The
+.Nm
+program was written by
+.An Reyk Floeter Aq reyk@vantronix.net .
