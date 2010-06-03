@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.233 2010/05/28 12:20:06 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.234 2010/06/03 21:57:12 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1197,12 +1197,6 @@ void
 setifxflags(const char *vname, int value)
 {
 	struct ifreq my_ifr;
-
-	if ((value == IFXF_INET6_PRIVACY || value == -IFXF_INET6_PRIVACY)
-	    && afp->af_af != AF_INET6) {
-		errx(1, "autoconfprivacy needs AF inet6, current AF is `%s'",
-		    afp->af_name);
-	}
 
 	bcopy((char *)&ifr, (char *)&my_ifr, sizeof(struct ifreq));
 
