@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.2 2010/06/03 20:28:22 reyk Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -20,9 +20,7 @@
 #ifndef _IKED_TYPES_H
 #define _IKED_TYPES_H
 
-#ifndef IKED_USER
-#define IKED_USER	"_isakmpd"
-#endif
+#define IKED_USER	"_iked"
 
 #ifndef IKED_CONFIG
 #define IKED_CONFIG	"/etc/iked.conf"
