@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.1 2010/06/03 16:41:12 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.2 2010/06/03 21:57:15 reyk Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -235,11 +235,6 @@ the
 .Ar srcnat
 parameter can be used to specify the actual source address.
 This can be used in outgoing NAT/BINAT scenarios as described below.
-Host addresses are parsed as type
-.Dq IPV4_ADDR ;
-adding the suffix /32 will change the type to
-.Dq IPV4_ADDR_SUBNET ,
-which can improve interoperability with some IKE implementations.
 .Pp
 The optional
 .Ic port
@@ -258,7 +253,7 @@ see the file
 The
 .Ic local
 parameter specifies the address or FQDN of the local endpoint.
-Unless we are multi-homed or have aliases,
+Unless the gateway is multi-homed or uses address aliases,
 this option is generally not needed.
 .Pp
 The
@@ -372,7 +367,7 @@ Use EAP to authenticate the initiator.
 The only supported EAP
 .Ar type
 is currently
-.Ar MSCHAP_V2 .
+.Ar MSCHAP-V2 .
 The responder will use RSA public key authentication.
 .It Ic psk Ar string
 Use a pre-shared key
@@ -447,11 +442,11 @@ The grammar for the packet filter is described in
 The following components are relevant to filtering IPsec traffic:
 .Bl -ohang -offset indent
 .It external interface
-Interface for ISAKMP traffic and encapsulated IPsec traffic.
+Interface for IKE traffic and encapsulated IPsec traffic.
 .It proto udp port 500
-ISAKMP traffic on the external interface.
+IKE traffic on the external interface.
 .It proto udp port 4500
-ISAKMP NAT-Traversal traffic on the external interface.
+IKE NAT-Traversal traffic on the external interface.
 .It proto ah \*(Ba esp
 Encapsulated IPsec traffic
 on the external interface.
