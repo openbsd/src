@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.105 2010/01/03 16:43:45 schwarze Exp $
+.\" $OpenBSD: isakmpd.8,v 1.106 2010/06/03 16:57:40 reyk Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,12 +30,12 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: June 3 2010 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
 .Nm isakmpd
-.Nd ISAKMP/Oakley a.k.a. IKE key management daemon
+.Nd ISAKMP/Oakley a.k.a. IKEv1 key management daemon
 .Sh SYNOPSIS
 .Nm isakmpd
 .Bk -words
@@ -68,6 +68,17 @@ file format.
 A newer, much simpler format is now available:
 .Xr ipsec.conf 5 .
 .Pp
+.Nm
+implements the IKEv1 protocol which is defined in the standards
+ISAKMP/Oakley (RFC 2408), IKE (RFC 2409), and the Internet DOI (RFC 2407).
+The IKEv2 protocol,
+as defined in RFC 4306,
+is not supported by
+.Nm ;
+but by
+.Xr iked 8
+instead.
+.Pp
 The way
 .Nm
 goes about its work is by maintaining an internal configuration
@@ -87,7 +98,7 @@ The ability to provide redundancy is made available through
 .Xr carp 4
 and
 .Xr sasyncd 8 .
-For other uses, some more knowledge of IKE as a protocol is required.
+For other uses, some more knowledge of IKEv1 as a protocol is required.
 The RFCs mentioned below are a possible starting point.
 .Pp
 On startup
@@ -816,3 +827,9 @@ For redundant setups,
 must be manually restarted every time
 .Nm
 is restarted.
+.Pp
+The IKEv2 protocol is not supported by
+.Nm ;
+but by
+.Xr iked 8
+instead.
