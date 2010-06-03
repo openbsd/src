@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.3 2010/06/03 17:32:25 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -195,6 +195,7 @@ static int
 check_search_entry(struct btval *key, struct btval *val, struct search *search)
 {
 	int			 rc;
+	char			*dn0;
 	struct ber_element	*elm;
 
 	/* verify entry is a direct subordinate of basedn */
@@ -204,7 +205,10 @@ check_search_entry(struct btval *key, struct btval *val, struct search *search)
 		return 0;
 	}
 
-	char *dn0 = malloc(key->size + 1);
+	if ((dn0 = malloc(key->size + 1)) == NULL) {
+		log_warn("malloc");
+		return 0;
+	}
 	strncpy(dn0, key->data, key->size);
 	dn0[key->size] = 0;
 	if (!authorized(search->conn, search->ns, ACI_READ, dn0,

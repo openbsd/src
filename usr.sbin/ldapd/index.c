@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
+/*	$OpenBSD: index.c,v 1.3 2010/06/03 17:32:25 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -375,7 +375,7 @@ continue_indexer(int fd, short why, void *arg)
 	struct ber_element	*elm;
 	struct btval		 key, val;
 	struct timeval		 tv;
-	int			 i, rc;
+	int			 i, rc = BT_FAIL;
 
 	if (c->cursor == NULL) {
 		log_info("begin indexing namespace %s", c->ns->suffix);
