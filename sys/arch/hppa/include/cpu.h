@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.72 2010/05/21 15:24:29 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.73 2010/06/03 15:05:52 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -234,6 +234,8 @@ int	cpu_dump(void);
 
 #ifdef MULTIPROCESSOR
 void	cpu_boot_secondary_processors(void);
+void	cpu_hw_init(void);
+void	cpu_hatch(void);
 #endif
 #endif
 
