@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.47 2010/05/16 18:01:15 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.48 2010/06/03 18:02:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -156,8 +156,8 @@ int		ar9285_1_2_init_calib(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
 int		ar9003_init_calib(struct athn_softc *);
 void		ar9285_pa_calib(struct athn_softc *);
-void		ar9287_1_2_enable_async_fifo(struct athn_softc *);
-void		ar9287_1_2_setup_async_fifo(struct athn_softc *);
+void		ar9287_1_3_enable_async_fifo(struct athn_softc *);
+void		ar9287_1_3_setup_async_fifo(struct athn_softc *);
 void		ar9003_reset_txsring(struct athn_softc *);
 
 struct cfdriver athn_cd = {
@@ -2050,8 +2050,8 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	if (AR_SREV_9280_10_OR_LATER(sc))
 		AR_SETBITS(sc, sc->gpio_input_en_off, AR_GPIO_JTAG_DISABLE);
 
-	if (AR_SREV_9287_12_OR_LATER(sc) && !AR_SREV_9380_10_OR_LATER(sc))
-		ar9287_1_2_enable_async_fifo(sc);
+	if (AR_SREV_9287_13_OR_LATER(sc) && !AR_SREV_9380_10_OR_LATER(sc))
+		ar9287_1_3_enable_async_fifo(sc);
 
 	/* Write init values to hardware. */
 	ops->hw_init(sc, c, extc);
@@ -2149,8 +2149,8 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	if (!(sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC))
 		AR_SETBITS(sc, AR_PCU_MISC, AR_PCU_MIC_NEW_LOC_ENA);
 
-	if (AR_SREV_9287_12_OR_LATER(sc))
-		ar9287_1_2_setup_async_fifo(sc);
+	if (AR_SREV_9287_13_OR_LATER(sc) && !AR_SREV_9380_10_OR_LATER(sc))
+		ar9287_1_3_setup_async_fifo(sc);
 
 	/* Disable sequence number generation in hardware. */
 	AR_SETBITS(sc, AR_STA_ID1, AR_STA_ID1_PRESERVE_SEQNUM);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.10 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.11 2010/06/03 18:02:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -82,8 +82,8 @@ void	ar9287_set_txpower(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9287_olpc_init(struct athn_softc *);
 void	ar9287_olpc_temp_compensation(struct athn_softc *);
-void	ar9287_1_2_enable_async_fifo(struct athn_softc *);
-void	ar9287_1_2_setup_async_fifo(struct athn_softc *);
+void	ar9287_1_3_enable_async_fifo(struct athn_softc *);
+void	ar9287_1_3_setup_async_fifo(struct athn_softc *);
 
 /* Extern functions. */
 uint8_t	athn_chan2fbin(struct ieee80211_channel *);
@@ -597,7 +597,7 @@ ar9287_olpc_temp_compensation(struct athn_softc *sc)
 }
 
 void
-ar9287_1_2_enable_async_fifo(struct athn_softc *sc)
+ar9287_1_3_enable_async_fifo(struct athn_softc *sc)
 {
 	/* Enable ASYNC FIFO. */
 	AR_SETBITS(sc, AR_MAC_PCU_ASYNC_FIFO_REG3,
@@ -610,7 +610,7 @@ ar9287_1_2_enable_async_fifo(struct athn_softc *sc)
 }
 
 void
-ar9287_1_2_setup_async_fifo(struct athn_softc *sc)
+ar9287_1_3_setup_async_fifo(struct athn_softc *sc)
 {
 	uint32_t reg;
 

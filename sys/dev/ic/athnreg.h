@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.11 2010/05/16 09:19:48 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.12 2010/06/03 18:02:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -779,6 +779,7 @@
 #define AR_SREV_REVISION_9287_10	0
 #define AR_SREV_REVISION_9287_11	1
 #define AR_SREV_REVISION_9287_12	2
+#define AR_SREV_REVISION_9287_13	3
 #define AR_SREV_VERSION_9380		0x1c0
 #define AR_SREV_REVISION_9380_10	0
 #define AR_SREV_REVISION_9380_20	2
@@ -1372,6 +1373,9 @@
 #define AR_SREV_9287_12_OR_LATER(sc) \
 	((sc)->mac_ver > AR_SREV_VERSION_9287 || \
 	 (AR_SREV_9287(sc) && (sc)->mac_rev >= AR_SREV_REVISION_9287_12))
+#define AR_SREV_9287_13_OR_LATER(sc) \
+	((sc)->mac_ver > AR_SREV_VERSION_9287 || \
+	 (AR_SREV_9287(sc) && (sc)->mac_rev >= AR_SREV_REVISION_9287_13))
 
 #define AR_SREV_9380(sc) \
 	((sc)->mac_ver == AR_SREV_VERSION_9380)
