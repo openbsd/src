@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2010/06/03 16:41:12 reyk Exp $
+# $OpenBSD: Makefile,v 1.2 2010/06/03 17:05:01 reyk Exp $
 # $vantronix: Makefile,v 1.22 2010/06/02 12:22:58 reyk Exp $
 
 PROG=		iked
@@ -9,8 +9,6 @@ SRCS+=		parse.y
 SRCS+=		${.OBJDIR}/ikev2_map.c ${.OBJDIR}/eap_map.c
 MAN=		iked.conf.5 iked.8
 #NOMAN=		yes
-
-BINDIR=		/sbin
 
 LDADD=		-lutil -levent -lssl -lcrypto
 DPADD=		${LIBUTIL} ${LIBEVENT} ${LIBSSL} ${LIBCRYPTO}
