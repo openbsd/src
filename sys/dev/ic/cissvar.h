@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.12 2010/06/02 13:34:21 dlg Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.13 2010/06/03 00:56:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -40,7 +40,7 @@ struct ciss_softc {
 	u_int	sc_flags;
 #define	CISS_BIO	0x0001
 	int ccblen, maxcmd, maxsg, nbus, ndrives, maxunits;
-	ciss_queue_head	sc_free_ccb;
+	struct ciss_ccb_list sc_free_ccb;
 	struct mutex	sc_free_ccb_mtx;
 	struct scsi_iopool sc_iopool;
 
