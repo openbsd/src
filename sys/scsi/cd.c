@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.168 2010/06/01 15:27:16 thib Exp $	*/
+/*	$OpenBSD: cd.c,v 1.169 2010/06/03 11:58:20 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -111,13 +111,12 @@ struct cd_softc {
 		daddr64_t disksize;	/* total number sectors */
 	} sc_params;
 	struct bufq	*sc_bufq;
-	struct mutex sc_start_mtx;
-	u_int sc_start_count;
+	struct scsi_xshandler sc_xsh;
 	struct timeout sc_timeout;
 	void *sc_cdpwrhook;		/* our power hook */
 };
 
-void	cdstart(void *);
+void	cdstart(struct scsi_xfer *);
 void	cd_buf_done(struct scsi_xfer *);
 void	cdminphys(struct buf *);
 int	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
@@ -165,7 +164,7 @@ struct dkdriver cddkdriver = { cdstrategy };
 
 struct scsi_device cd_switch = {
 	cd_interpret_sense,
-	cdstart,		/* we have a queue, which is started by this */
+	NULL,			/* we have a queue, which is started by this */
 	NULL,			/* we do not have an async handler */
 	NULL,			/* no per driver cddone */
 };
@@ -212,8 +211,6 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach:\n"));
 
-	mtx_init(&sc->sc_start_mtx, IPL_BIO);
-
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -240,7 +237,9 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	timeout_set(&sc->sc_timeout, cdstart, sc);
+	scsi_xsh_set(&sc->sc_xsh, sc_link, cdstart);
+	timeout_set(&sc->sc_timeout, (void (*)(void *))scsi_xsh_add,
+	    &sc->sc_xsh);
 
 	if ((sc->sc_cdpwrhook = powerhook_establish(cd_powerhook, sc)) == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -465,6 +464,7 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		}
 
 		timeout_del(&sc->sc_timeout);
+		scsi_xsh_del(&sc->sc_xsh);
 	}
 
 	cdunlock(sc);
@@ -527,7 +527,7 @@ cdstrategy(struct buf *bp)
 	 * Tell the device to get going on the transfer if it's
 	 * not doing anything, otherwise just wait for completion
 	 */
-	cdstart(sc);
+	scsi_xsh_add(&sc->sc_xsh);
 
 	device_unref(&sc->sc_dev);
 	return;
@@ -563,116 +563,95 @@ done:
  * cdstart() is called at splbio from cdstrategy and scsi_done
  */
 void
-cdstart(void *v)
+cdstart(struct scsi_xfer *xs)
 {
-	struct cd_softc *sc = v;
-	struct scsi_link *sc_link = sc->sc_link;
+	struct scsi_link *sc_link = xs->sc_link;
+	struct cd_softc *sc = sc_link->device_softc;
 	struct buf *bp;
 	struct scsi_rw_big *cmd_big;
 	struct scsi_rw *cmd_small;
 	int blkno, nblks;
 	struct partition *p;
-	struct scsi_xfer *xs;
 	int read;
-	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart\n"));
 
-	mtx_enter(&sc->sc_start_mtx);
-	sc->sc_start_count++;
-	if (sc->sc_start_count > 1) {
-		mtx_leave(&sc->sc_start_mtx);
+	/*
+	 * If the device has become invalid, abort all the
+	 * reads and writes until all files have been closed and
+	 * re-opened
+	 */
+	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		bufq_drain(sc->sc_bufq);
+		scsi_xs_put(xs);
 		return;
 	}
-	mtx_leave(&sc->sc_start_mtx);
-	CLR(sc->sc_flags, CDF_WAITING);
-restart:
-	while (!ISSET(sc->sc_flags, CDF_WAITING) &&
-	    (bp = BUFQ_DEQUEUE(sc->sc_bufq)) != NULL) {
+
+	bp = BUFQ_DEQUEUE(sc->sc_bufq);
+	if (bp == NULL) {
+		scsi_xs_put(xs);
+ 		return;
+ 	}
+
+	/*
+	 * We have a buf, now we should make a command
+	 *
+	 * First, translate the block to absolute and put it in terms
+	 * of the logical blocksize of the device.
+	 */
+	blkno =
+	    bp->b_blkno / (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
+	blkno += DL_GETPOFFSET(p);
+	nblks = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
+
+	read = (bp->b_flags & B_READ);
+
+	/*
+	 *  Fill out the scsi command.  If the transfer will
+	 *  fit in a "small" cdb, use it.
+	 */
+	if (!(sc_link->flags & SDEV_ATAPI) &&
+	    !(sc_link->quirks & SDEV_ONLYBIG) && 
+	    ((blkno & 0x1fffff) == blkno) &&
+	    ((nblks & 0xff) == nblks)) {
 		/*
-		 * If the device has become invalid, abort all the
-		 * reads and writes until all files have been closed and
-		 * re-opened
+		 * We can fit in a small cdb.
 		 */
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			s = splbio();
-			biodone(bp);
-			splx(s);
-			continue;
-		}
-
-		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
-		if (xs == NULL) {
-			BUFQ_REQUEUE(sc->sc_bufq, bp);
-			break;
-		}
-
+		cmd_small = (struct scsi_rw *)xs->cmd;
+		cmd_small->opcode = read ?
+		    READ_COMMAND : WRITE_COMMAND;
+		_lto3b(blkno, cmd_small->addr);
+		cmd_small->length = nblks & 0xff;
+		xs->cmdlen = sizeof(*cmd_small);
+	} else {
 		/*
-		 * We have a buf, now we should make a command
-		 *
-		 * First, translate the block to absolute and put it in terms
-		 * of the logical blocksize of the device.
+		 * Need a large cdb.
 		 */
-		blkno =
-		    bp->b_blkno / (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-		p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		blkno += DL_GETPOFFSET(p);
-		nblks = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
-
-		read = (bp->b_flags & B_READ);
-
-		/*
-		 *  Fill out the scsi command.  If the transfer will
-		 *  fit in a "small" cdb, use it.
-		 */
-		if (!(sc_link->flags & SDEV_ATAPI) &&
-		    !(sc_link->quirks & SDEV_ONLYBIG) && 
-		    ((blkno & 0x1fffff) == blkno) &&
-		    ((nblks & 0xff) == nblks)) {
-			/*
-			 * We can fit in a small cdb.
-			 */
-			cmd_small = (struct scsi_rw *)xs->cmd;
-			cmd_small->opcode = read ?
-			    READ_COMMAND : WRITE_COMMAND;
-			_lto3b(blkno, cmd_small->addr);
-			cmd_small->length = nblks & 0xff;
-			xs->cmdlen = sizeof(*cmd_small);
-		} else {
-			/*
-			 * Need a large cdb.
-			 */
-			cmd_big = (struct scsi_rw_big *)xs->cmd;
-			cmd_big->opcode = read ?
-			    READ_BIG : WRITE_BIG;
-			_lto4b(blkno, cmd_big->addr);
-			_lto2b(nblks, cmd_big->length);
-			xs->cmdlen = sizeof(*cmd_big);
-		}
-
-		xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
-		xs->timeout = 30000;
-		xs->data = bp->b_data;
-		xs->datalen = bp->b_bcount;
-		xs->done = cd_buf_done;
-		xs->cookie = bp;
-
-		/* Instrumentation. */
-		disk_busy(&sc->sc_dk);
-
-		scsi_xs_exec(xs);
+		cmd_big = (struct scsi_rw_big *)xs->cmd;
+		cmd_big->opcode = read ?
+		    READ_BIG : WRITE_BIG;
+		_lto4b(blkno, cmd_big->addr);
+		_lto2b(nblks, cmd_big->length);
+		xs->cmdlen = sizeof(*cmd_big);
 	}
-	mtx_enter(&sc->sc_start_mtx);
-	sc->sc_start_count--;
-	if (sc->sc_start_count != 0) {
-		sc->sc_start_count = 1;
-		mtx_leave(&sc->sc_start_mtx);
-		goto restart;
-	}
-	mtx_leave(&sc->sc_start_mtx);
+
+	xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
+	xs->timeout = 30000;
+	xs->data = bp->b_data;
+	xs->datalen = bp->b_bcount;
+	xs->done = cd_buf_done;
+	xs->cookie = bp;
+
+	/* Instrumentation. */
+	disk_busy(&sc->sc_dk);
+
+	scsi_xs_exec(xs);
+
+	if (ISSET(sc->sc_flags, CDF_WAITING))
+		CLR(sc->sc_flags, CDF_WAITING);
+	else if (BUFQ_PEEK(sc->sc_bufq))
+		scsi_xsh_add(&sc->sc_xsh);
 }
 
 void
@@ -694,7 +673,7 @@ cd_buf_done(struct scsi_xfer *xs)
 		    bp->b_flags & B_READ);
 		BUFQ_REQUEUE(sc->sc_bufq, bp);
 		scsi_xs_put(xs);
-		SET(sc->sc_flags, CDF_WAITING); /* break out of cdstart loop */
+		SET(sc->sc_flags, CDF_WAITING);
 		timeout_add(&sc->sc_timeout, 1);
 		return;
 
@@ -733,7 +712,6 @@ retry:
 	biodone(bp);
 	splx(s);
 	scsi_xs_put(xs);
-	cdstart(sc); /* restart io */
 }
 
 void
