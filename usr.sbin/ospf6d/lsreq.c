@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.5 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.6 2010/06/03 10:00:34 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -60,10 +60,9 @@ send_ls_req(struct nbr *nbr)
 	if (gen_ospf_hdr(buf, nbr->iface, PACKET_TYPE_LS_REQUEST))
 		goto fail;
 
-	/* LSA header(s), keep space for a possible md5 sum */
+	/* LSA header(s) */
 	for (le = TAILQ_FIRST(&nbr->ls_req_list); le != NULL &&
-	    buf->wpos + sizeof(struct ls_req_hdr) < buf->max -
-	    MD5_DIGEST_LENGTH; le = nle) {
+	    buf->wpos + sizeof(struct ls_req_hdr) < buf->max; le = nle) {
 		nbr->ls_req = nle = TAILQ_NEXT(le, entry);
 		ls_req_hdr.zero = 0;
 		ls_req_hdr.type = le->le_lsa->type;

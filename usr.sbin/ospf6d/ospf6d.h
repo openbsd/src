@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.19 2009/12/22 19:32:36 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.20 2010/06/03 10:00:34 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/tree.h>
-#include <md5.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <event.h>

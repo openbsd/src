@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.6 2010/06/01 14:39:52 bluhm Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.7 2010/06/03 10:00:34 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -176,7 +176,7 @@ add_ls_update(struct ibuf *buf, struct iface *iface, void *data, int len,
 	size_t		pos;
 	u_int16_t	age;
 
-	if (buf->wpos + len >= buf->max - MD5_DIGEST_LENGTH)
+	if (buf->wpos + len >= buf->max)
 		return (0);
 
 	pos = buf->wpos;
