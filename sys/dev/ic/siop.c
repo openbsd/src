@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.58 2010/04/06 01:12:17 dlg Exp $ */
+/*	$OpenBSD: siop.c,v 1.59 2010/06/03 11:37:45 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1466,6 +1466,12 @@ siop_scsicmd(xs)
 	}
 
 	siop_cmd = xs->io;
+
+	/*
+	 * The xs may have been restarted by the scsi layer, so ensure the ccb
+	 * starts in the proper state.
+	 */
+	siop_cmd->cmd_c.status = CMDST_READY;
 
 	/* Always reset xs->stimeout, lest we timeout_del() with trash */
 	timeout_set(&xs->stimeout, siop_timeout, siop_cmd);
