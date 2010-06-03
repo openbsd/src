@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.97 2009/10/16 12:28:04 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.98 2010/06/03 07:39:53 phessler Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -671,6 +671,17 @@ again:
 	switch (status) {
 	case 200:	/* OK */
 #ifndef SMALL
+		/*              
+		 * When we request a partial file, and we receive an HTTP 200
+		 * it is a good indication that the server doesn't support
+		 * range requests, and is about to send us the entire file.
+		 * If the restart_point == 0, then we are not actually
+		 * requesting a partial file, and an HTTP 200 is appropriate.
+		 */
+		if (resume && restart_point != 0) {
+			warnx("Server does not support resume.");
+			restart_point = resume = 0;
+		}
 	case 206:	/* Partial Content */
 #endif /* !SMALL */
 		break;
