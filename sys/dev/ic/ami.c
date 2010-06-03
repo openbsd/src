@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.204 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.205 2010/06/03 12:04:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -186,11 +186,8 @@ ami_remove_runq(struct ami_ccb *ccb)
 	splassert(IPL_BIO);
 
 	TAILQ_REMOVE(&ccb->ccb_sc->sc_ccb_runq, ccb, ccb_link);
-	if (TAILQ_EMPTY(&ccb->ccb_sc->sc_ccb_runq)) {
-		ccb->ccb_sc->sc_drained = 1;
-		if (ccb->ccb_sc->sc_drainio)
-			wakeup(ccb->ccb_sc);
-	}
+	if (ccb->ccb_sc->sc_drainio && TAILQ_EMPTY(&ccb->ccb_sc->sc_ccb_runq))
+		wakeup(ccb->ccb_sc);
 }
 
 void
@@ -198,7 +195,6 @@ ami_insert_runq(struct ami_ccb *ccb)
 {
 	splassert(IPL_BIO);
 
-	ccb->ccb_sc->sc_drained = 0;
 	TAILQ_INSERT_TAIL(&ccb->ccb_sc->sc_ccb_runq, ccb, ccb_link);
 }
 
@@ -539,7 +535,6 @@ ami_attach(struct ami_softc *sc)
 		/* error already printed */
 		goto free_mbox;
 	}
-	sc->sc_drained = 1;
 
 	/* hack for hp netraid version encoding */
 	if ('A' <= sc->sc_fwver[2] && sc->sc_fwver[2] <= 'Z' &&
@@ -1016,7 +1011,6 @@ ami_runqueue(struct ami_softc *sc)
 
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccb_preq)) != NULL) {
 		if (sc->sc_exec(sc, &ccb->ccb_cmd) != 0) {
-			/* this is now raceable too with other incoming io */
 			timeout_add(&sc->sc_run_tmo, 1);
 			break;
 		}
@@ -1895,10 +1889,8 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 			goto err;
 		}
 		ccb->ccb_done = ami_done_ioctl;
-	} else {
+	} else
 		ccb = sc->sc_mgmtccb;
-		ccb->ccb_done = ami_done_dummy;
-	}
 
 	if (size) {
 		if ((am = ami_allocmem(sc, size)) == NULL) {
@@ -1930,22 +1922,29 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 
 	if (opcode != AMI_CHSTATE) {
 		ami_start(sc, ccb);
+		s = splbio();
 		while (ccb->ccb_state != AMI_CCB_READY)
 			tsleep(ccb, PRIBIO,"ami_mgmt", 0);
+		splx(s);
 	} else {
 		/* change state must be run with id 0xfe and MUST be polled */
+		s = splbio();
 		sc->sc_drainio = 1;
-		while (sc->sc_drained != 1)
+		while (!TAILQ_EMPTY(&sc->sc_ccb_runq)) {
 			if (tsleep(sc, PRIBIO, "ami_mgmt_drain", hz * 60) ==
 			    EWOULDBLOCK) {
 				printf("%s: drain io timeout\n", DEVNAME(sc));
 				ccb->ccb_flags |= AMI_CCB_F_ERR;
 				goto restartio;
 			}
-		ami_poll(sc, ccb);
+		}
+
+		error = sc->sc_poll(sc, &ccb->ccb_cmd);
+		if (error == -1)
+			ccb->ccb_flags |= AMI_CCB_F_ERR;
+
 restartio:
 		/* restart io */
-		s = splbio();
 		sc->sc_drainio = 0;
 		ami_runqueue(sc);
 		splx(s);
@@ -1966,7 +1965,6 @@ memerr:
 	} else {
 		ccb->ccb_flags = 0;
 		ccb->ccb_state = AMI_CCB_FREE;
-		ccb->ccb_done = NULL;
 	}
 
 err:
