@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.3 2010/06/03 17:29:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -285,6 +285,11 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 		ssl_setup(conf, l);
 	}
 
+	TAILQ_FOREACH(ns, &conf->namespaces, next) {
+		if (namespace_open(ns) != 0)
+			fatal(ns->suffix);
+	}
+
 	if (pw != NULL) {
 		if (chroot(pw->pw_dir) == -1)
 			fatal("chroot");
@@ -295,11 +300,6 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 			fatal("cannot drop privileges");
-	}
-
-	TAILQ_FOREACH(ns, &conf->namespaces, next) {
-		if (namespace_open(ns) != 0)
-			fatal(ns->suffix);
 	}
 
 	log_debug("ldape: entering event loop");

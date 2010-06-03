@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.2 2010/06/03 17:29:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -37,6 +37,7 @@
 #define CONFFILE		 "/etc/ldapd.conf"
 #define LDAPD_USER		 "_ldapd"
 #define LDAPD_SOCKET		 "/var/run/ldapd.sock"
+#define DATADIR			 "/var/db/ldap"
 #define LDAP_PORT		 389
 #define LDAPS_PORT		 636
 #define LDAPD_SESSION_TIMEOUT	 30
