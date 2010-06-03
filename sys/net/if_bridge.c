@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.177 2010/01/13 05:25:06 claudio Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.178 2010/06/03 16:15:00 naddy Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2704,7 +2704,8 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 #else
 	etype = ntohs(eh->ether_type);
 #if NVLAN > 0
-	if ((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN) {
+	if ((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN ||
+	    etype == ETHERTYPE_QINQ) {
 		int len = m->m_pkthdr.len;
 
 		if (m->m_flags & M_VLANTAG)

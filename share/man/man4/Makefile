@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.507 2010/04/02 20:07:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.508 2010/06/03 16:15:00 naddy Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -89,6 +89,7 @@ MLINKS+=speaker.4 spkr.4
 MLINKS+=tht.4 thtc.4
 MLINKS+=tty.4 cua.4
 MLINKS+=usb.4 uhub.4
+MLINKS+=vlan.4 svlan.4
 MLINKS+=vnd.4 svnd.4
 
 # man4.hppa64

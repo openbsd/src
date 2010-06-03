@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.19 2008/11/07 00:52:40 brad Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.20 2010/06/03 16:15:00 naddy Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -53,6 +53,7 @@ struct	ifvlan {
 		u_int16_t ifvm_proto; /* encapsulation ethertype */
 		u_int16_t ifvm_tag; /* tag to apply on packets leaving if */
 		u_int16_t ifvm_prio; /* prio to apply on packet leaving if */
+		u_int16_t ifvm_type; /* non-standard ethertype or 0x8100 */
 	}	ifv_mib;
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
 	LIST_ENTRY(ifvlan) ifv_list;
@@ -64,6 +65,7 @@ struct	ifvlan {
 #define	ifv_if		ifv_ac.ac_if
 #define	ifv_tag		ifv_mib.ifvm_tag
 #define	ifv_prio	ifv_mib.ifvm_prio
+#define	ifv_type	ifv_mib.ifvm_type
 #define	IFVF_PROMISC	0x01
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.143 2010/05/28 12:09:09 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.144 2010/06/03 16:15:00 naddy Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -613,8 +613,8 @@ ether_input(ifp0, eh, m)
 	}
 
 #if NVLAN > 0
-	if (((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN)
-	    && (vlan_input(eh, m) == 0))
+	if (((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN ||
+	    etype == ETHERTYPE_QINQ) && (vlan_input(eh, m) == 0))
 		return;
 #endif
 
@@ -639,7 +639,8 @@ ether_input(ifp0, eh, m)
 #endif
 
 #if NVLAN > 0
-	if ((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN) {
+	if ((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN ||
+	    etype == ETHERTYPE_QINQ) {
 		/* The bridge did not want the vlan frame either, drop it. */
 		ifp->if_noproto++;
 		m_freem(m);

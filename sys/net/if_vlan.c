@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.83 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.84 2010/06/03 16:15:00 naddy Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -77,19 +77,19 @@
 #include <net/if_vlan_var.h>
 
 extern struct	ifaddr	**ifnet_addrs;
-u_long vlan_tagmask;
+u_long vlan_tagmask, svlan_tagmask;
 
-#define TAG_HASH_SIZE	32
-#define TAG_HASH(tag)	(tag & vlan_tagmask)
-LIST_HEAD(, ifvlan)	*vlan_tagh;
+#define TAG_HASH_SIZE		32
+#define TAG_HASH(tag)		(tag & vlan_tagmask)
+LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
-void	vlan_start (struct ifnet *ifp);
-int	vlan_ioctl (struct ifnet *ifp, u_long cmd, caddr_t addr);
-int	vlan_unconfig (struct ifnet *ifp);
-int	vlan_config (struct ifvlan *, struct ifnet *, u_int16_t);
+void	vlan_start(struct ifnet *ifp);
+int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
+int	vlan_unconfig(struct ifnet *ifp);
+int	vlan_config(struct ifvlan *, struct ifnet *, u_int16_t);
 void	vlan_vlandev_state(void *);
-void	vlanattach (int count);
-int	vlan_set_promisc (struct ifnet *ifp);
+void	vlanattach(int count);
+int	vlan_set_promisc(struct ifnet *ifp);
 int	vlan_ether_addmulti(struct ifvlan *, struct ifreq *);
 int	vlan_ether_delmulti(struct ifvlan *, struct ifreq *);
 void	vlan_ether_purgemulti(struct ifvlan *);
@@ -99,16 +99,26 @@ void	vlan_ifdetach(void *);
 
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
+struct if_clone svlan_cloner =
+    IF_CLONE_INITIALIZER("svlan", vlan_clone_create, vlan_clone_destroy);
 
 /* ARGSUSED */
 void
 vlanattach(int count)
 {
-	vlan_tagh = hashinit(TAG_HASH_SIZE, M_DEVBUF, M_NOWAIT, &vlan_tagmask);
+	/* Normal VLAN */
+	vlan_tagh = hashinit(TAG_HASH_SIZE, M_DEVBUF, M_NOWAIT,
+	    &vlan_tagmask);
 	if (vlan_tagh == NULL)
 		panic("vlanattach: hashinit");
-
 	if_clone_attach(&vlan_cloner);
+
+	/* Service-VLAN for QinQ/802.1ad provider bridges */
+	svlan_tagh = hashinit(TAG_HASH_SIZE, M_DEVBUF, M_NOWAIT,
+	    &svlan_tagmask);
+	if (svlan_tagh == NULL)
+		panic("vlanattach: hashinit");
+	if_clone_attach(&svlan_cloner);
 }
 
 int
@@ -128,6 +138,12 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	    unit);
 	/* NB: flags are not set here */
 	/* NB: mtu is not set here */
+
+	/* Special handling for the IEEE 802.1ad QinQ variant */
+	if (strcmp("svlan", ifc->ifc_name) == 0)
+		ifv->ifv_type = ETHERTYPE_QINQ;
+	else
+		ifv->ifv_type = ETHERTYPE_VLAN;
 
 	ifp->if_start = vlan_start;
 	ifp->if_ioctl = vlan_ioctl;
@@ -206,7 +222,8 @@ vlan_start(struct ifnet *ifp)
 	 	 * to create a special header for it. In this case, we just pass
 		 * the packet along.
 		 */
-		if (p->if_capabilities & IFCAP_VLAN_HWTAGGING) {
+		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
 			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
 			    (ifv->ifv_prio << EVL_PRIO_BITS);
 			m->m_flags |= M_VLANTAG;
@@ -215,7 +232,7 @@ vlan_start(struct ifnet *ifp)
 
 			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
 			evh.evl_proto = evh.evl_encap_proto;
-			evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
+			evh.evl_encap_proto = htons(ifv->ifv_type);
 			evh.evl_tag = htons(ifv->ifv_tag +
 			    (ifv->ifv_prio << EVL_PRIO_BITS));
 
@@ -255,15 +272,17 @@ vlan_start(struct ifnet *ifp)
  * vlan_input() returns 0 if it has consumed the packet, 1 otherwise.
  */
 int
-vlan_input(eh, m)
-	struct ether_header *eh;
-	struct mbuf *m;
+vlan_input(struct ether_header *eh, struct mbuf *m)
 {
 	struct ifvlan *ifv;
-	u_int tag;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct vlan_taghash *tagh;
+	u_int tag;
+	u_int16_t etype;
 
 	if (m->m_flags & M_VLANTAG) {
+		etype = ETHERTYPE_VLAN;
+		tagh = vlan_tagh;
 		tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
 	} else {
 		if (m->m_len < EVL_ENCAPLEN &&
@@ -272,11 +291,14 @@ vlan_input(eh, m)
 			return (0);
 		}
 
+		etype = ntohs(eh->ether_type);
+		tagh = etype == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 		tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
 	}
 
-	LIST_FOREACH(ifv, &vlan_tagh[TAG_HASH(tag)], ifv_list) {
-		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag)
+	LIST_FOREACH(ifv, &tagh[TAG_HASH(tag)], ifv_list) {
+		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag &&
+		    etype == ifv->ifv_type)
 			break;
 	}
 	if (ifv == NULL)
@@ -336,6 +358,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 {
 	struct ifaddr *ifa1, *ifa2;
 	struct sockaddr_dl *sdl1, *sdl2;
+	struct vlan_taghash *tagh;
 	int s;
 
 	if (p->if_type != IFT_ETHER)
@@ -395,6 +418,13 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 		/* (IFCAP_CSUM_TCPv6|IFCAP_CSUM_UDPv6); */
 
 	/*
+	 * Hardware VLAN tagging only works with the default VLAN
+	 * ethernet type (0x8100).
+	 */
+	if (ifv->ifv_type != ETHERTYPE_VLAN)
+		ifv->ifv_if.if_capabilities &= ~IFCAP_VLAN_HWTAGGING;
+
+	/*
 	 * Set up our ``Ethernet address'' to reflect the underlying
 	 * physical interface's.
 	 */
@@ -409,7 +439,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 
 	ifv->ifv_tag = tag;
 	s = splnet();
-	LIST_INSERT_HEAD(&vlan_tagh[TAG_HASH(tag)], ifv, ifv_list);
+	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
+	LIST_INSERT_HEAD(&tagh[TAG_HASH(tag)], ifv, ifv_list);
 
 	/* Register callback for physical link state changes */
 	ifv->lh_cookie = hook_establish(p->if_linkstatehooks, 1,
