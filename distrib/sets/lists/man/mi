@@ -2249,6 +2249,7 @@
 ./usr/share/man/cat4/sti.0
 ./usr/share/man/cat4/stp.0
 ./usr/share/man/cat4/sv.0
+./usr/share/man/cat4/svlan.0
 ./usr/share/man/cat4/svnd.0
 ./usr/share/man/cat4/systrace.0
 ./usr/share/man/cat4/tcic.0
@@ -2510,6 +2511,7 @@
 ./usr/share/man/cat5/landisk
 ./usr/share/man/cat5/landisk/boot.conf.0
 ./usr/share/man/cat5/lastlog.0
+./usr/share/man/cat5/ldapd.conf.0
 ./usr/share/man/cat5/ldpd.conf.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/login.conf.0
@@ -2813,6 +2815,8 @@
 ./usr/share/man/cat8/landisk/kbd.0
 ./usr/share/man/cat8/landisk/mbr.0
 ./usr/share/man/cat8/landisk/xxboot.0
+./usr/share/man/cat8/ldapctl.0
+./usr/share/man/cat8/ldapd.0
 ./usr/share/man/cat8/ldattach.0
 ./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/ldpctl.0

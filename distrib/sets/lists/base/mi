@@ -2158,6 +2158,8 @@
 ./usr/sbin/kstash
 ./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
+./usr/sbin/ldapctl
+./usr/sbin/ldapd
 ./usr/sbin/ldpctl
 ./usr/sbin/ldpd
 ./usr/sbin/logresolve
