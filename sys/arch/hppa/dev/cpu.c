@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.35 2010/05/21 15:24:29 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.36 2010/06/03 15:48:58 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -96,12 +96,26 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	struct cpu_info *ci;
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
 	int cpuno = self->dv_unit;
+	struct pglist mlist;
+	struct vm_page *m;
 	const char *p;
+	int error;
 
 	ci = &cpu_info[cpuno];
 	ci->ci_dev = self;
 	ci->ci_cpuid = cpuno;
 	ci->ci_hpa = ca->ca_hpa;
+
+	/* Allocate stack for spin up and FPU emulation. */
+	TAILQ_INIT(&mlist);
+	error = uvm_pglistalloc(PAGE_SIZE, 0, -1L, 0, 0, &mlist, 1,
+	    UVM_PLA_NOWAIT);
+	if (error) {
+		printf(": unable to allocate CPU stack!\n");
+		return;
+	}
+	m = TAILQ_FIRST(&mlist);
+	ci->ci_stack = VM_PAGE_TO_PHYS(m);
 
 	printf (": %s ", cpu_typename);
 	if (pdc_model.hvers) {
@@ -172,9 +186,7 @@ cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	struct iomod *cpu;
-	struct pglist mlist;
-	struct vm_page *m;
-	int error, i, j;
+	int i, j;
 
 	/* Initialise primary CPU. */
 	ci = curcpu();
@@ -192,17 +204,6 @@ cpu_boot_secondary_processors(void)
 #ifdef notyet
 		sched_init_cpu(ci);
 #endif
-
-		/* Allocate spinup stack. */
-		TAILQ_INIT(&mlist);
-		error = uvm_pglistalloc(PAGE_SIZE, 0, -1L, 0, 0, &mlist, 1,
-		    UVM_PLA_NOWAIT);
-		if (error) {
-			printf("unable to allocate spinup stack!\n");
-			return;
-		}
-		m = TAILQ_FIRST(&mlist);
-		ci->ci_spinup_stack = VM_PAGE_TO_PHYS(m);
 
 		/* Release the specified CPU by triggering an EIR{0}. */
 		cpu_hatch_info = ci;

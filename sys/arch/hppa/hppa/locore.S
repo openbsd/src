@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.171 2010/05/27 11:52:23 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.172 2010/06/03 15:48:58 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -112,7 +112,6 @@ netisr
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */
-	BSS(fpemu_stack, 4)	/* stack for FPU emulation */
 
 	.export	kernelmapped, data
 	BSS(kernelmapped, 4)	/* set when kernel is mapped */
@@ -169,7 +168,6 @@ ENTRY($start,0)
 
 	STACK_ALLOC(pdc_stack, PDC_STACKSIZE)
 	STACK_ALLOC(emrg_stack, EMRG_STACKSIZE)
-	STACK_ALLOC(fpemu_stack, FPEMU_STACKSIZE)
 
 #undef	STACK_ALLOC
 
@@ -2366,8 +2364,8 @@ EXIT(fpu_save)
 ENTRY($fpu_emulate,320)
 	copy	r31, r9
 
-	ldil	L%fpemu_stack, r31
-	ldw	R%fpemu_stack(r31), r31
+	mfctl	cr29, r31
+	ldw	CI_STACK(r31), r31
 
 	/* stw	r1 , TF_R1 (r31) shadowed */
 	stw	r2 , TF_R2 (r31)
@@ -2439,8 +2437,8 @@ ENTRY($fpu_emulate,320)
 	fdc	r0(r25)
 	sync
 
-	ldil	L%fpemu_stack, r31
-	ldw	R%fpemu_stack(r31), r31
+	mfctl	cr29, r31
+	ldw	CI_STACK(r31), r31
 
 	ldw	TF_CR11(r31), r1
 	ldw	TF_R2 (r31), r2
@@ -2988,7 +2986,7 @@ ENTRY(hw_cpu_spinup_trampoline, 0)
 	 * Setup the stack frame for us to call C with and mark this as the
 	 * first frame on the stack.
 	 */
-	ldw	CI_SPINUP_STACK(r3), sp
+	ldw	CI_STACK(r3), sp
 	stw,ma	r0, HPPA_FRAME_SIZE(sp)
 	stw	r0, HPPA_FRAME_CRP(sp)
 	stw	r0, HPPA_FRAME_PSP(sp)
