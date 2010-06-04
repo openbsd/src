@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.114 2010/06/02 19:16:53 chl Exp $	*/
+/*	$OpenBSD: lka.c,v 1.115 2010/06/04 11:15:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -106,7 +106,7 @@ lka_imsg(struct smtpd *env, struct imsgev *iev, struct imsg *imsg)
 			if (rule == NULL) {
 				log_debug("lka: rule not found");
 				status = S_MESSAGE_PERMFAILURE;
-				imsg_compose_event(iev, IMSG_LKA_RULEMATCH, m->id, 0, -1,
+				imsg_compose_event(iev, IMSG_LKA_RCPT, m->id, 0, -1,
 				    &status, sizeof status);
 				return;
 			}
