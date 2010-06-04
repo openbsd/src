@@ -692,6 +692,14 @@ wav_new_in(struct fileops *ops,
 		close(fd);
 		return NULL;
 	}
+	if (!(dev->mode & MODE_PLAY)) {
+#ifdef DEBUG
+		dbg_puts(name);
+		dbg_puts(": device can't play\n");
+#endif
+		close(fd);
+		dev_unref(dev);
+	}
 	f->dev = dev;
 	if (hdr == HDR_WAV) {
 		if (!wav_readhdr(f->pipe.fd, par, &f->startpos, &f->rbytes, &f->map)) {
@@ -771,6 +779,14 @@ wav_new_out(struct fileops *ops,
 	if (!dev_ref(dev)) {
 		close(fd);
 		return NULL;
+	}
+	if (!(dev->mode & MODE_RECMASK)) {
+#ifdef DEBUG
+		dbg_puts(name);
+		dbg_puts(": device can't record\n");
+#endif
+		close(fd);
+		dev_unref(dev);
 	}
 	f->dev = dev;
 	if (hdr == HDR_WAV) {
