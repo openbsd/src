@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.234 2010/06/03 21:57:12 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.235 2010/06/04 08:53:24 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ struct  netrange	at_nr;		/* AppleTalk net range */
 #endif /* SMALL */
 
 char	name[IFNAMSIZ];
-int	flags, setaddr, setipdst, doalias;
+int	flags, xflags, setaddr, setipdst, doalias;
 u_long	metric, mtu;
 int	rdomainid;
 int	clearaddr, s;
@@ -479,7 +479,6 @@ int	printgroup(char *, int);
 void	printgroupattribs(char *);
 void	setgroupattribs(char *, int, char *[]);
 void	printif(char *, int);
-void	printb(char *, unsigned short, char *);
 void	printb_status(unsigned short, char *);
 const char *get_linkstate(int, int);
 void	status(int, struct sockaddr_dl *, int);
@@ -790,7 +789,10 @@ getinfo(struct ifreq *ifr, int create)
 		if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0)
 			return (-1);
 	}
-	flags = ifr->ifr_flags;
+	flags = ifr->ifr_flags & 0xffff;
+	if (ioctl(s, SIOCGIFXFLAGS, (caddr_t)ifr) < 0)
+		ifr->ifr_flags = 0;
+	xflags = ifr->ifr_flags;
 	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0)
 		metric = 0;
 	else
@@ -1203,14 +1205,14 @@ setifxflags(const char *vname, int value)
 	if (ioctl(s, SIOCGIFXFLAGS, (caddr_t)&my_ifr) < 0)
 		warn("SIOCGIFXFLAGS");
 	(void) strlcpy(my_ifr.ifr_name, name, sizeof(my_ifr.ifr_name));
-	flags = my_ifr.ifr_flags;
+	xflags = my_ifr.ifr_flags;
 
 	if (value < 0) {
 		value = -value;
-		flags &= ~value;
+		xflags &= ~value;
 	} else
-		flags |= value;
-	my_ifr.ifr_flags = flags;
+		xflags |= value;
+	my_ifr.ifr_flags = xflags;
 	if (ioctl(s, SIOCSIFXFLAGS, (caddr_t)&my_ifr) < 0)
 		warn("SIOCSIFXFLAGS");
 }
@@ -2708,7 +2710,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	char ifdescr[IFDESCRSIZE];
 
 	printf("%s: ", name);
-	printb("flags", flags, IFFBITS);
+	printb("flags", flags | (xflags << 16), IFFBITS);
 	if (rdomainid)
 		printf(" rdomain %i", rdomainid);
 	if (metric)
@@ -4512,7 +4514,7 @@ in_getprefix(const char *plen, int which)
  * Print a value a la the %b format of the kernel's printf
  */
 void
-printb(char *s, unsigned short v, char *bits)
+printb(char *s, unsigned int v, char *bits)
 {
 	int i, any = 0;
 	char c;
