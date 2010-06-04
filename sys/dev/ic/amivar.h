@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.54 2008/10/28 11:43:10 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.55 2010/06/04 06:52:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -149,7 +149,6 @@ struct ami_softc {
 	char			sc_plist[AMI_BIG_MAX_PDRIVES];
 
 	struct ami_ccb		*sc_mgmtccb;
-	int			sc_drained;
 	int			sc_drainio;
 	u_int8_t		sc_drvinscnt;
 };
