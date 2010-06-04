@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.68 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: mrt.c,v 1.69 2010/06/04 10:13:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -138,8 +138,8 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 	u_char		*pdata;
 	u_int32_t	 tmp;
 	int		 neednewpath = 0;
-	u_int16_t	 plen;
-	u_int8_t	 l;
+	u_int16_t	 plen, afi;
+	u_int8_t	 l, mpattr[21];
 
 	/* origin */
 	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_ORIGIN,
@@ -149,11 +149,14 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 	/* aspath */
 	pdata = aspath_prepend(a->aspath, rde_local_as(), 0, &plen);
 	pdata = aspath_deflate(pdata, &plen, &neednewpath);
-	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_ASPATH, pdata, plen) == -1)
+	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_ASPATH, pdata,
+	    plen) == -1) {
+		free(pdata);
 		return (-1);
+	}
 	free(pdata);
 
-	if (nexthop) {
+	if (nexthop && nexthop->aid == AID_INET) {
 		/* nexthop, already network byte order */
 		if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_NEXTHOP,
 		    &nexthop->v4.s_addr, 4) ==	-1)
@@ -181,12 +184,27 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 			return (-1);
 	}
 
+	if (nexthop && nexthop->aid != AID_INET) {
+		if (aid2afi(nexthop->aid, &afi, &mpattr[2]))
+			return (-1);
+		afi = htons(afi);
+		memcpy(mpattr, &afi, sizeof(afi));
+		mpattr[3] = sizeof(struct in6_addr);
+		memcpy(&mpattr[4], &nexthop->v6, sizeof(struct in6_addr));
+		mpattr[20] = 0; /* Reserved must be 0 */
+		if (attr_writebuf(buf, ATTR_OPTIONAL, ATTR_MP_REACH_NLRI,
+		    mpattr, sizeof(mpattr)) == -1)
+			return (-1);
+	}
+
 	if (neednewpath) {
 		pdata = aspath_prepend(a->aspath, rde_local_as(), 0, &plen);
 		if (plen != 0)
 			if (attr_writebuf(buf, ATTR_OPTIONAL|ATTR_TRANSITIVE,
-			    ATTR_AS4_PATH, pdata, plen) == -1)
+			    ATTR_AS4_PATH, pdata, plen) == -1) {
+				free(pdata);
 				return (-1);
+			}
 		free(pdata);
 	}
 
@@ -322,10 +340,12 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	struct ibuf	*buf, *hbuf;
 	struct bgpd_addr addr, *nh;
 	size_t		 len;
+	u_int16_t	 subtype;
+	u_int8_t	 dummy;
 
-	if (p->prefix->aid != AID_INET &&
-	    peer->remote_addr.aid == AID_INET)
-		/* only able to dump IPv4 */
+	if (p->prefix->aid != peer->remote_addr.aid &&
+	    p->prefix->aid != AID_INET && p->prefix->aid != AID_INET6)
+		/* only able to dump pure IPv4/IPv6 */
 		return (0);
 
 	if ((buf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
@@ -335,7 +355,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 
 	if (p->aspath->nexthop == NULL) {
 		bzero(&addr, sizeof(struct bgpd_addr));
-		addr.aid = AID_INET;
+		addr.aid = p->prefix->aid;
 		nh = &addr;
 	} else
 		nh = &p->aspath->nexthop->exit_nexthop;
@@ -345,8 +365,8 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 	len = ibuf_size(buf);
-
-	if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP, AFI_IPv4, len) == -1) {
+	aid2afi(p->prefix->aid, &subtype, &dummy);
+	if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP, subtype, len) == -1) {
 		ibuf_free(buf);
 		return (-1);
 	}
@@ -355,12 +375,33 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(hbuf, snum);
 
 	pt_getaddr(p->prefix, &addr);
-	DUMP_NLONG(hbuf, addr.v4.s_addr);
+	switch (p->prefix->aid) {
+	case AID_INET:
+		DUMP_NLONG(hbuf, addr.v4.s_addr);
+		break;
+	case AID_INET6:
+		if (ibuf_add(hbuf, &addr.v6, sizeof(struct in6_addr)) == -1) {
+			log_warnx("mrt_dump_entry: buf_add error");
+			goto fail;
+		}
+		break;
+	}
 	DUMP_BYTE(hbuf, p->prefix->prefixlen);
 
 	DUMP_BYTE(hbuf, 1);		/* state */
 	DUMP_LONG(hbuf, p->lastchange);	/* originated */
-	DUMP_NLONG(hbuf, peer->remote_addr.v4.s_addr);
+	switch (p->prefix->aid) {
+	case AID_INET:
+		DUMP_NLONG(hbuf, peer->remote_addr.v4.s_addr);
+		break;
+	case AID_INET6:
+		if (ibuf_add(hbuf, &peer->remote_addr.v6,
+		    sizeof(struct in6_addr)) == -1) {
+			log_warnx("mrt_dump_entry: buf_add error");
+			goto fail;
+		}
+		break;
+	}
 	DUMP_SHORT(hbuf, peer->short_as);
 	DUMP_SHORT(hbuf, len);
 
@@ -527,7 +568,15 @@ mrt_dump_hdr_rde(struct ibuf **bp, u_int16_t type, u_int16_t subtype,
 
 	switch (type) {
 	case MSG_TABLE_DUMP:
-		DUMP_LONG(*bp, MRT_DUMP_HEADER_SIZE + len);
+		switch (subtype) {
+		case AFI_IPv4:
+			len += MRT_DUMP_HEADER_SIZE;
+			break;
+		case AFI_IPv6:
+			len += MRT_DUMP_HEADER_SIZE_V6;
+			break;
+		}
+		DUMP_LONG(*bp, len);
 		break;
 	case MSG_PROTOCOL_BGP4MP:
 		DUMP_LONG(*bp, len);

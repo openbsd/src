@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.26 2010/04/22 08:24:58 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.27 2010/06/04 10:13:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -21,7 +21,7 @@
 /*
  * MRT binary packet format
  * For more info see:
- * draft-ietf-grow-mrt-04.txt, "MRT routing information export format"
+ * draft-ietf-grow-mrt-11.txt, "MRT routing information export format"
  * http://www.quagga.net/docs/docs-multi/Packet-Binary-Dump-Format.html
  */
 
@@ -184,6 +184,7 @@ enum MRT_BGP4MP_TYPES {
 
 /* size of the dump header until attr_len */
 #define MRT_DUMP_HEADER_SIZE	22
+#define MRT_DUMP_HEADER_SIZE_V6	46
 
 /*
  * OLD MRT message headers. These structs are here for completion but
@@ -235,7 +236,7 @@ enum MRT_BGP_TYPES {
  * |    new_state    |
  * +--------+--------+
  *
- * State are defined in RFC 1771.
+ * State are defined in RFC 1771/4271.
  */
 
 /*
