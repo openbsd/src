@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.79 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.80 2010/06/04 17:51:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -253,6 +253,14 @@ sub relative_url
 	}
 }
 
+sub add_to_list
+{
+	my ($self, $list, $filename) = @_;
+	if ($filename =~ m/^(.*\-\d.*)\.tgz$/o) {
+		push(@$list, $1);
+	}
+}
+
 package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
 use OpenBSD::Error;
@@ -345,9 +353,8 @@ sub list
 	my $dname = $self->baseurl;
 	opendir(my $dir, $dname) or return $l;
 	while (my $e = readdir $dir) {
-		next unless $e =~ m/^(.*)\.tgz$/o;
 		next unless -f "$dname/$e";
-		push(@$l, $1);
+		$self->add_to_list($l, $e);
 	}
 	close($dir);
 	return $l;
@@ -722,11 +729,11 @@ sub get_http_list
 	    or return;
 	while(<$fh>) {
 		chomp;
-		for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gio) {
+		for my $pkg (m/\<A\s+HREF=\"(.*?\.tgz)\"\>/gio) {
 			$pkg = $1 if $pkg =~ m|^.*/(.*)$|;
 			# decode uri-encoding; from URI::Escape
 			$pkg =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
-			push(@$l, $pkg);
+			$self->add_to_list($l, $pkg);
 		}
 	}
 	close($fh);
@@ -775,8 +782,8 @@ sub _list
 		if (m/No such file or directory|Failed to change directory/i) {
 			$self->{no_such_dir} = 1;
 		}
-		next unless m/^(?:\.\/)?(\S+)\.tgz\s*$/;
-		push(@$l, $1);
+		next unless m/^(?:\.\/)?(\S+\.tgz)\s*$/;
+		$self->add_to_list($l, $1);
 	}
 	close($fh);
 	return $l;
