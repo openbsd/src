@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.179 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.180 2010/06/04 11:35:43 blambert Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1619,7 +1619,6 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			    rt_timer_queue_create(ip_mtudisc_timeout);
 		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
 			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
-			Free(ip_mtudisc_timeout_q);
 			ip_mtudisc_timeout_q = NULL;
 		}
 		return error;
