@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.118 2010/05/19 13:09:09 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.119 2010/06/04 11:05:13 blambert Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1160,10 +1160,8 @@ rt_timer_queue_create(u_int timeout)
 	if (rt_init_done == 0)
 		rt_timer_init();
 
-	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
-	if (rtq == NULL)
+	if ((rtq = malloc(sizeof(*rtq), M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
 		return (NULL);
-	Bzero(rtq, sizeof *rtq);
 
 	rtq->rtq_timeout = timeout;
 	rtq->rtq_count = 0;
@@ -1197,10 +1195,7 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq, int destroy)
 	}
 
 	LIST_REMOVE(rtq, rtq_link);
-
-	/*
-	 * Caller is responsible for freeing the rttimer_queue structure.
-	 */
+	free(rtq, M_RTABLE);
 }
 
 unsigned long
