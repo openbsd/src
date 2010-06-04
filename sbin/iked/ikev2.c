@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.2 2010/06/04 09:51:45 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -3132,10 +3132,9 @@ ikev2_parse_notify(struct iked *env, struct ikev2_payload *pld,
 
 			/*
 			 * Enable UDP encapsulation of ESP packages if
-			 * the check detected NAT and and if we received
-			 * the IKE message on the NAT-T port.
+			 * the check detected NAT.
 			 */
-			if (msg->msg_sa != NULL && msg->msg_sa->sa_natt)
+			if (msg->msg_sa != NULL)
 				msg->msg_sa->sa_udpencap = 1;
 		}
 		print_hex(md, 0, sizeof(md));

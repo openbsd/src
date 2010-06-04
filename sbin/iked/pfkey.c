@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.2 2010/06/04 09:51:45 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		return (-1);
 	}
 
-	if (sa->csa_ikesa->sa_udpencap) {
+	if (sa->csa_ikesa->sa_udpencap && sa->csa_ikesa->sa_natt) {
 		sadb.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
 		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
 		udpencap.sadb_x_udpencap_len = sizeof(udpencap) / 8;
