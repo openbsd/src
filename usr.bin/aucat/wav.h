@@ -1,4 +1,4 @@
-/*	$OpenBSD: wav.h,v 1.9 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: wav.h,v 1.10 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -37,7 +37,7 @@ struct wav {
 	off_t mmcpos;		/* play/rec start point set by MMC */
 	short *map;		/* mulaw/alaw -> s16 conversion table */
 	int slot;		/* mixer ctl slot number */
-	int tr;			/* use MMC control */
+	int mmc;		/* use MMC control */
 	int join;		/* join/expand channels */
 	unsigned vol;		/* current volume */
 	unsigned maxweight;	/* dynamic range when vol == 127 */
@@ -48,14 +48,15 @@ struct wav {
 #define WAV_FAILED	4	/* failed to seek */
 	unsigned pstate;	/* one of above */
 	unsigned mode;		/* bitmap of MODE_* */
+	struct dev *dev;	/* device playing or recording */
 };
 
 extern struct fileops wav_ops;
 
-struct wav *wav_new_in(struct fileops *, unsigned, char *, unsigned,
-    struct aparams *, unsigned, unsigned, int, int);
-struct wav *wav_new_out(struct fileops *, unsigned, char *, unsigned,
-    struct aparams *, unsigned, int, int);
+struct wav *wav_new_in(struct fileops *, struct dev *,
+    unsigned, char *, unsigned, struct aparams *, unsigned, unsigned, int, int);
+struct wav *wav_new_out(struct fileops *, struct dev *,
+    unsigned, char *, unsigned, struct aparams *, unsigned, int, int);
 unsigned wav_read(struct file *, unsigned char *, unsigned);
 unsigned wav_write(struct file *, unsigned char *, unsigned);
 void wav_close(struct file *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.91 2010/05/08 15:35:45 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.92 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -108,12 +108,8 @@ opt_ch(struct aparams *par)
 	cmin = strtol(optarg, &next, 10);
 	if (next == optarg || *next != ':')
 		goto failed;
-	if (errno == ERANGE && (cmin == LONG_MIN || cmin == LONG_MAX))
-		goto failed;
 	cmax = strtol(++next, &end, 10);
 	if (end == next || *end != '\0')
-		goto failed;
-	if (errno == ERANGE && (cmax == LONG_MIN || cmax == LONG_MAX))
 		goto failed;
 	if (cmin < 0 || cmax < cmin || cmax > NCHAN_MAX)
 		goto failed;
@@ -208,59 +204,113 @@ opt_mode(void)
 }
 
 /*
- * Arguments of -i, -o and -s options are stored in a list.
+ * stream configuration
  */
-struct farg {
-	SLIST_ENTRY(farg) entry;
-	struct aparams ipar;	/* input (read) parameters */
-	struct aparams opar;	/* output (write) parameters */
-	unsigned vol;		/* last requested volume */
-	char *name;		/* optarg pointer (no need to copy it */
-	int hdr;		/* header format */
-	int xrun;		/* overrun/underrun policy */
-	int mmc;		/* MMC mode */
-	int join;		/* join/expand enabled */
-	unsigned mode;
+struct cfstr {
+	SLIST_ENTRY(cfstr) entry;
+	unsigned mode;			/* bitmap of MODE_XXX */
+	struct aparams ipar;		/* input (read) parameters */
+	struct aparams opar;		/* output (write) parameters */
+	unsigned vol;			/* last requested volume */
+	int hdr;			/* header format */
+	int xrun;			/* overrun/underrun policy */
+	int mmc;			/* MMC mode */
+	int join;			/* join/expand enabled */
+	char *path;			/* static path (no need to copy it) */
 };
 
-SLIST_HEAD(farglist, farg);
+SLIST_HEAD(cfstrlist, cfstr);
 
 /*
- * Add a farg entry to the given list, corresponding
- * to the given file name.
+ * midi device (control stream)
  */
+struct cfmid {
+	SLIST_ENTRY(cfmid) entry;
+	char *path;			/* static path (no need to copy it) */
+};
+
+SLIST_HEAD(cfmidlist, cfmid);
+
+/*
+ * audio device configuration
+ */
+struct cfdev {
+	SLIST_ENTRY(cfdev) entry;
+	struct cfstrlist ins;		/* files to play */
+	struct cfstrlist outs;		/* files to record */
+	struct cfstrlist opts;		/* subdevices to expose */
+	struct cfmidlist mids;		/* midi ports to subscribe */
+	struct aparams ipar;		/* input (read) parameters */
+	struct aparams opar;		/* output (write) parameters */
+	unsigned hold;		/* open immediately */
+	unsigned bufsz;			/* par.bufsz for sio device */
+	unsigned round;			/* par.round for sio device */
+	unsigned mode;			/* bitmap of MODE_XXX */
+	char *path;			/* static path (no need to copy it) */
+};
+
+SLIST_HEAD(cfdevlist, cfdev);
+
 void
-farg_add(struct farglist *list,
-    struct aparams *ipar, struct aparams *opar, unsigned vol,
-    int hdr, int xrun, int mmc, int join, unsigned mode, char *name)
+cfdev_add(struct cfdevlist *list, struct cfdev *templ, char *path)
 {
-	struct farg *fa;
-	size_t namelen;
+	struct cfdev *cd;
 
-	fa = malloc(sizeof(struct farg));
-	if (fa == NULL)
-		err(1, "%s", name);
+	cd = malloc(sizeof(struct cfdev));
+	if (cd == NULL) {
+		perror("malloc");
+		abort();
+	}
+	*cd = *templ;
+	cd->path = path;
+	SLIST_INSERT_HEAD(list, cd, entry);
+	SLIST_INIT(&templ->ins);
+	SLIST_INIT(&templ->outs);
+	SLIST_INIT(&templ->opts);
+	SLIST_INIT(&templ->mids);
+}
 
-	if (hdr == HDR_AUTO) {
-		if (name != NULL && (namelen = strlen(name)) >= 4 &&
-		    strcasecmp(name + namelen - 4, ".wav") == 0) {
-			fa->hdr = HDR_WAV;
-		} else {
-			fa->hdr = HDR_RAW;
-		}
+void
+cfstr_add(struct cfstrlist *list, struct cfstr *templ, char *path)
+{
+	size_t len;
+	struct cfstr *cs;
+	unsigned hdr;
+
+	if (strcmp(path, "-") == 0) {
+		path = NULL;
+		hdr = HDR_RAW;
+	} else if (templ->hdr == HDR_AUTO) {
+		len = strlen(path);
+		if (len >= 4 && strcasecmp(path + len - 4, ".wav") == 0)
+			hdr = HDR_WAV;
+		else
+			hdr = HDR_RAW;
 	} else
-		fa->hdr = hdr;
-	if (mmc && xrun == XRUN_IGNORE)
-		xrun = XRUN_SYNC;
-	fa->xrun = xrun;
-	fa->ipar = *ipar;
-	fa->opar = *opar;
-	fa->vol = vol;
-	fa->name = name; 
-	fa->mmc = mmc;
-	fa->join = join;
-	fa->mode = mode;
-	SLIST_INSERT_HEAD(list, fa, entry);
+		hdr = templ->hdr;
+	cs = malloc(sizeof(struct cfstr));
+	if (cs == NULL) {
+		perror("malloc");
+		abort();
+	}
+	*cs = *templ;
+	cs->path = path;
+	cs->hdr = hdr;
+	SLIST_INSERT_HEAD(list, cs, entry);
+}
+
+void
+cfmid_add(struct cfmidlist *list, char *path)
+{
+	struct cfmid *cm;
+	
+	cm = malloc(sizeof(struct cfmid));
+	if (cm == NULL) {
+		perror("malloc");
+		abort();
+	}
+	cm->path = path;
+	SLIST_INSERT_HEAD(list, cm, entry);
 }
 
 void
@@ -356,51 +406,9 @@ privdrop(void)
 }
 
 void
-stopall(void)
-{
-	struct file *f;
-
-  restart:
-	LIST_FOREACH(f, &file_list, entry) {
-		/*
-		 * skip connected streams (handled by dev_close())
-		 */
-		if (APROC_OK(dev_mix)) {
-			if (f->rproc && aproc_depend(dev_mix, f->rproc))
-				continue;
-			if (f->wproc && aproc_depend(f->wproc, dev_mix))
-				continue;
-		}
-		if (APROC_OK(dev_sub)) {
-			if (f->rproc && aproc_depend(dev_sub, f->rproc))
-				continue;
-			if (f->wproc && aproc_depend(f->wproc, dev_sub))
-				continue;
-		}
-		if (APROC_OK(dev_submon)) {
-			if (f->rproc && aproc_depend(dev_submon, f->rproc))
-				continue;
-			if (f->wproc && aproc_depend(f->wproc, dev_submon))
-				continue;
-		}
-		if (APROC_OK(dev_midi)) {
-			if (f->rproc && aproc_depend(dev_midi, f->rproc))
-				continue;
-			if (f->wproc && aproc_depend(f->wproc, dev_midi))
-				continue;
-		}
-		/*
-		 * kill anything else
-		 */
-		file_close(f);
-		goto restart;
-	}
-}
-
-void
 aucat_usage(void)
 {
-	(void)fputs("usage: " PROG_AUCAT " [-dlnu] [-b nframes] "
+	(void)fputs("usage: " PROG_AUCAT " [-dlnu] [-a flag] [-b nframes] "
 	    "[-C min:max] [-c min:max] [-e enc]\n\t"
 	    "[-f device] [-h fmt] [-i file] [-j flag] [-m mode]"
 	    "[-o file] [-q device]\n\t"
@@ -413,40 +421,69 @@ aucat_usage(void)
 int
 aucat_main(int argc, char **argv)
 {
-	int c, u_flag, d_flag, l_flag, n_flag, hdr, xrun, unit;
-	struct farg *fa;
-	struct farglist ifiles, ofiles, sfiles, qfiles;
-	struct aparams ipar, opar, dipar, dopar;
-	char base[PATH_MAX], path[PATH_MAX], *file;
-	unsigned bufsz, round, mode;
-	char *devpath;
+	struct cfdevlist cfdevs;
+	struct cfmid *cm;
+	struct cfstr *cs;
+	struct cfdev *cd;
+	struct listen *listen = NULL;
+	int c, u_flag, d_flag, l_flag, n_flag, unit;
+	char base[PATH_MAX], path[PATH_MAX];
+	unsigned mode, rate;
 	const char *str;
-	unsigned volctl;
-	int mmc, autostart, join;
+	char *legacy_path;
+	int autostart, legacy;
+	struct dev *d, *dnext;
+	unsigned active;
 
-	aparams_init(&ipar, 0, 1, 44100);
-	aparams_init(&opar, 0, 1, 44100);
+	/*
+	 * global options defaults
+	 */
+	unit = -1;
 	u_flag = 0;
 	d_flag = 0;
 	l_flag = 0;
 	n_flag = 0;
-	unit = -1;
-	mmc = 0;
-	devpath = NULL;
-	SLIST_INIT(&ifiles);
-	SLIST_INIT(&ofiles);
-	SLIST_INIT(&sfiles);
-	SLIST_INIT(&qfiles);
-	hdr = HDR_AUTO;
-	xrun = XRUN_IGNORE;
-	volctl = MIDI_MAXCTL;
-	mode = MODE_PLAY | MODE_REC;
-	bufsz = 0;
-	round = 0;
-	autostart = 1;
-	join = 1;
+	legacy = 1;
+	legacy_path = NULL;
+	SLIST_INIT(&cfdevs);
 
-	while ((c = getopt(argc, argv, "dnb:c:C:e:r:h:x:v:i:o:f:m:luq:s:U:t:j:z:")) != -1) {
+	/*
+	 * default stream params
+	 */
+	cs = malloc(sizeof(struct cfstr));
+	if (cs == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+	aparams_init(&cs->ipar, 0, 1, 44100);
+	aparams_init(&cs->opar, 0, 1, 44100);
+	cs->mmc = 0;
+	cs->hdr = HDR_AUTO;
+	cs->xrun = XRUN_IGNORE;
+	cs->vol = MIDI_MAXCTL;
+	cs->mode = MODE_PLAY | MODE_REC;
+	cs->join = 1;
+
+	/*
+	 * default device
+	 */
+	cd = malloc(sizeof(struct cfdev));
+	if (cd == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+	aparams_init(&cd->ipar, 0, 1, 44100);
+	aparams_init(&cd->opar, 0, 1, 44100);
+	SLIST_INIT(&cd->ins);
+	SLIST_INIT(&cd->outs);
+	SLIST_INIT(&cd->opts);
+	SLIST_INIT(&cd->mids);
+	cd->path = NULL;
+	cd->bufsz = 0;
+	cd->round = 0;
+	cd->hold = 1;
+
+	while ((c = getopt(argc, argv, "a:dnb:c:C:e:r:h:x:v:i:o:f:m:luq:s:U:t:j:z:")) != -1) {
 		switch (c) {
 		case 'd':
 #ifdef DEBUG
@@ -456,96 +493,112 @@ aucat_main(int argc, char **argv)
 			d_flag = 1;
 			break;
 		case 'n':
+			legacy = 0;
 			n_flag = 1;
 			break;
+		case 'u':
+			legacy = 0;
+			u_flag = 1;
+			break;
+		case 'U':
+			legacy = 0;
+			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
+			if (str)
+				errx(1, "%s: unit number is %s", optarg, str);
+			break;
 		case 'm':
-			mode = opt_mode();
+			legacy = 0;
+			cs->mode = opt_mode();
+			cd->mode = cs->mode;
 			break;
 		case 'h':
-			hdr = opt_hdr();
+			legacy = 0;
+			cs->hdr = opt_hdr();
 			break;
 		case 'x':
-			xrun = opt_xrun();
+			legacy = 0;
+			cs->xrun = opt_xrun();
 			break;
 		case 'j':
-			join = opt_onoff();
+			legacy = 0;
+			cs->join = opt_onoff();
 			break;
 		case 't':
-			mmc = opt_mmc();
-			if (mmc)
-				autostart = 0;
+			legacy = 0;
+			cs->mmc = opt_mmc();
 			break;
 		case 'c':
-			opt_ch(&ipar);
+			legacy = 0;
+			opt_ch(&cs->ipar);
+			cd->opar.cmin = cs->ipar.cmin;
+			cd->opar.cmax = cs->ipar.cmax;
 			break;
 		case 'C':
-			opt_ch(&opar);
+			legacy = 0;
+			opt_ch(&cs->opar);
+			cd->ipar.cmin = cs->opar.cmin;
+			cd->ipar.cmax = cs->opar.cmax;
 			break;
 		case 'e':
-			opt_enc(&ipar);
-			aparams_copyenc(&opar, &ipar);
+			legacy = 0;
+			opt_enc(&cs->ipar);
+			aparams_copyenc(&cs->opar, &cs->ipar);
 			break;
 		case 'r':
-			ipar.rate = strtonum(optarg, RATE_MIN, RATE_MAX, &str);
+			legacy = 0;
+			rate = strtonum(optarg, RATE_MIN, RATE_MAX, &str);
 			if (str)
 				errx(1, "%s: rate is %s", optarg, str);
-			opar.rate = ipar.rate;
+			cs->opar.rate = cs->ipar.rate = rate;
+			cd->ipar.rate = cd->opar.rate = rate;
 			break;
 		case 'v':
-			volctl = strtonum(optarg, 0, MIDI_MAXCTL, &str);
+			legacy = 0;
+			cs->vol = strtonum(optarg, 0, MIDI_MAXCTL, &str);
 			if (str)
 				errx(1, "%s: volume is %s", optarg, str);
 			break;
 		case 'i':
-			file = optarg;
-			if (strcmp(file, "-") == 0)
-				file = NULL;
-			farg_add(&ifiles, &ipar, &opar, volctl,
-			    hdr, xrun, mmc, join, mode & MODE_PLAY, file);
+			legacy = 0;
+			cfstr_add(&cd->ins, cs, optarg);
 			break;
 		case 'o':
-			file = optarg;
-			if (strcmp(file, "-") == 0)
-				file = NULL;
-			farg_add(&ofiles, &ipar, &opar, volctl,
-			    hdr, xrun, mmc, join, mode & MODE_RECMASK, file);
+			legacy = 0;
+			cfstr_add(&cd->outs, cs, optarg);
 			break;
 		case 's':
-			farg_add(&sfiles, &ipar, &opar, volctl,
-			    hdr, xrun, mmc, join, mode, optarg);
+			legacy = 0;
+			cfstr_add(&cd->opts, cs, optarg);
+			break;
+		case 'a':
+			legacy = 0;
+			cd->hold = opt_onoff();
 			break;
 		case 'q':
-			farg_add(&qfiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, 0, optarg);
-			break;
-		case 'f':
-			if (devpath)
-				err(1, "only one -f allowed");
-			devpath = optarg;
-			dipar = opar;
-			dopar = ipar;
-			break;
-		case 'l':
-			l_flag = 1;
-			autostart = 0;
-			break;
-		case 'u':
-			u_flag = 1;
+			legacy = 0;
+			cfmid_add(&cd->mids, optarg);
 			break;
 		case 'b':
-			bufsz = strtonum(optarg, 1, RATE_MAX * 5, &str);
+			legacy = 0;
+			cd->bufsz = strtonum(optarg, 1, RATE_MAX * 5, &str);
 			if (str)
 				errx(1, "%s: buffer size is %s", optarg, str);
 			break;
-		case 'U':
-			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
-			if (str)
-				errx(1, "%s: device number is %s", optarg, str);
-			break;
 		case 'z':
-			round = strtonum(optarg, 1, SHRT_MAX, &str);
+			legacy = 0;
+			cd->round = strtonum(optarg, 1, SHRT_MAX, &str);
 			if (str)
 				errx(1, "%s: block size is %s", optarg, str);
+			break;
+		case 'f':
+			legacy = 0;
+			legacy_path = optarg;
+			cfdev_add(&cfdevs, cd, optarg);
+			break;
+		case 'l':
+			legacy = 0;
+			l_flag = 1;
+			autostart = 0;
 			break;
 		default:
 			aucat_usage();
@@ -555,46 +608,51 @@ aucat_main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!devpath) {
-		dopar = ipar;
-		dipar = opar;
-	}
-	if (!l_flag && SLIST_EMPTY(&ifiles) && SLIST_EMPTY(&ofiles)) {
-		if (argc > 0) {
-			/*
-			 * Legacy mode: if no -i or -o options are provided, and
-			 * there are arguments then assume the arguments are files
-			 * to play.
-			 */
-			for (c = 0; c < argc; c++)
-				if (legacy_play(devpath, argv[c]) != 0) {
-					errx(1, "%s: could not play\n", argv[c]);
-				}
-			exit(0);
-		} else {
+#ifdef DEBUG
+	if (debug_level == 0)
+		debug_level = 1;
+#endif
+	if (argc > 0) {
+		if (!legacy) {
 			aucat_usage();
 			exit(1);
 		}
+		for (c = 0; c < argc; c++)
+			if (legacy_play(legacy_path, argv[c]) != 0) {
+				errx(1, "%s: could not play\n", argv[c]);
+			}
+		exit(0);
 	}
 
-	if (!l_flag && (!SLIST_EMPTY(&sfiles) || unit >= 0))
-		errx(1, "can't use -s or -U without -l");
-	if (l_flag && (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
-		errx(1, "can't use -l, and -s with -o or -i");
+	if (!l_flag && unit >= 0)
+		errx(1, "can't use -U without -l");
 	if (n_flag) {
-		if (devpath != NULL || !SLIST_EMPTY(&qfiles) ||
-		    l_flag || !autostart)
-			errx(1, "can't use -n with -f, -q, -t or -l");
-		if (SLIST_EMPTY(&ifiles) || SLIST_EMPTY(&ofiles))
+		if (!SLIST_EMPTY(&cfdevs) || l_flag ||
+		    !SLIST_EMPTY(&cd->opts) || !SLIST_EMPTY(&cd->mids))
+			errx(1, "can't use -n with -l, -f, -q or -s");
+		if (SLIST_EMPTY(&cd->ins) || SLIST_EMPTY(&cd->outs))
 			errx(1, "both -i and -o are required with -n");
+	}
+
+	/*
+	 * if no device is given, add the default one
+	 */
+	if (SLIST_EMPTY(&cfdevs)) {
+		if (!cd->hold)
+			errx(1, "-a not compatible with default device");
+		cfdev_add(&cfdevs, cd, "default");
 	}
 
 	/*
 	 * If there are no sockets paths provided use the default.
 	 */
-	if (l_flag && SLIST_EMPTY(&sfiles)) {
-		farg_add(&sfiles, &ipar, &opar,
-		    volctl, HDR_RAW, XRUN_IGNORE, mmc, join, mode, DEFAULT_OPT);
+	if (l_flag) {
+		SLIST_FOREACH(cd, &cfdevs, entry) {
+			if (!SLIST_EMPTY(&cd->opts))
+				continue;
+			cfstr_add(&cd->opts, cs, DEFAULT_OPT);
+			break;
+		}
 	}
 
 	/*
@@ -602,39 +660,48 @@ aucat_main(int argc, char **argv)
 	 * inputs and outputs and find the maximum sample rate and channel
 	 * number.
 	 */
-	mode = 0;
-	aparams_init(&dipar, dipar.cmin, dipar.cmax, dipar.rate);
-	aparams_init(&dopar, dopar.cmin, dopar.cmax, dopar.rate);
-	SLIST_FOREACH(fa, &ifiles, entry) {
-		if (fa->mode == 0)
-			errx(1, "%s: not in play mode", fa->name);
-		mode |= fa->mode;
-		if (!u_flag)
-			aparams_grow(&dopar, &fa->ipar);
-	}
-	SLIST_FOREACH(fa, &ofiles, entry) {
-		if (fa->mode == 0)
-			errx(1, "%s: not in rec/mon mode", fa->name);
-		if ((fa->mode & MODE_REC) && (fa->mode & MODE_MON))
-			errx(1, "%s: can't record and monitor", fa->name);
-		mode |= fa->mode;
-		if (!u_flag)
-			aparams_grow(&dipar, &fa->opar);
-	}
-	SLIST_FOREACH(fa, &sfiles, entry) {
-		if ((fa->mode & MODE_REC) && (fa->mode & MODE_MON))
-			errx(1, "%s: can't record and monitor", fa->name);
-		mode |= fa->mode;
-		if (!u_flag) {
-			aparams_grow(&dopar, &fa->ipar);
-			aparams_grow(&dipar, &fa->opar);
+	SLIST_FOREACH(cd, &cfdevs, entry) {
+		mode = 0;
+		SLIST_FOREACH(cs, &cd->ins, entry) {
+			if (cs->mode == 0)
+				errx(1, "%s: not in play mode", cs->path);
+			mode |= (cs->mode & MODE_PLAY);
+			if (!u_flag)
+				aparams_grow(&cd->opar, &cs->ipar);
 		}
+		SLIST_FOREACH(cs, &cd->outs, entry) {
+			if (cs->mode == 0)
+				errx(1, "%s: not in rec/mon mode", cs->path);
+			if ((cs->mode & MODE_REC) && (cs->mode & MODE_MON))
+				errx(1, "%s: can't rec and mon", cs->path);
+			mode |= (cs->mode & MODE_RECMASK);
+			if (!u_flag)
+				aparams_grow(&cd->ipar, &cs->opar);
+		}
+		SLIST_FOREACH(cs, &cd->opts, entry) {
+			if ((cs->mode & MODE_REC) && (cs->mode & MODE_MON))
+				errx(1, "%s: can't rec and mon", cs->path);
+			mode |= (cs->mode & (MODE_RECMASK | MODE_PLAY));
+			if (!u_flag) {
+				aparams_grow(&cd->opar, &cs->ipar);
+				aparams_grow(&cd->ipar, &cs->opar);
+			}
+		}
+		if (l_flag && SLIST_EMPTY(&cd->opts))
+			errx(1, "%s: no subdevs for this device", cd->path);
+		if (!l_flag && SLIST_EMPTY(&cd->ins) && SLIST_EMPTY(&cd->outs))
+			errx(1, "%s: no files for this device", cd->path);
+		if (n_flag && (mode & MODE_MON))
+			errx(1, "monitoring not allowed in loopback mode");
+		if ((mode & MODE_MON) && !(mode & MODE_PLAY))
+			errx(1, "no playback stream to monitor");
+		rate = (mode & MODE_REC) ? cd->ipar.rate : cd->opar.rate;
+		if (!cd->round)
+			cd->round = rate / 15;
+		if (!cd->bufsz)
+			cd->bufsz = rate / 15 * 4;
+		cd->mode = mode;
 	}
-
-	if (!round)
-		round = ((mode & MODE_REC) ? dipar.rate : dopar.rate) / 15;
-	if (!bufsz)
-		bufsz = ((mode & MODE_REC) ? dipar.rate : dopar.rate) * 4 / 15;
 
 	if (l_flag) {
 		getbasepath(base, sizeof(base));
@@ -645,72 +712,85 @@ aucat_main(int argc, char **argv)
 	filelist_init();
 
 	/*
-	 * Open the device
+	 * Open devices
 	 */
-	if (n_flag) {
-		if (mode & MODE_MON)
-			errx(1, "monitoring not allowed in loopback mode");
-		dev_init_loop(&dipar, &dopar, bufsz);
-	} else {
-		if (l_flag)
-			dev_reqprime = 1;
-		if ((mode & MODE_MON) && !(mode & MODE_PLAY))
-			errx(1, "no playback stream to monitor");
-		dev_init_sio(devpath, mode, &dipar, &dopar, bufsz, round);
-	}
-	if (!dev_ref()) {
-		errx(1, "%s: can't open device",
-		    devpath ? devpath : "<default>");
-	}
+	while (!SLIST_EMPTY(&cfdevs)) {
+		cd = SLIST_FIRST(&cfdevs);
+		SLIST_REMOVE_HEAD(&cfdevs, entry);
 
-	/*
-	 * Create buffers for all input and output pipes.
-	 */
-	while (!SLIST_EMPTY(&qfiles)) {
-		fa = SLIST_FIRST(&qfiles);
-		SLIST_REMOVE_HEAD(&qfiles, entry);
-		if (!dev_thruadd(fa->name, 1, 1))
-			errx(1, "%s: can't open device", fa->name);
-		free(fa);
-	}
-	while (!SLIST_EMPTY(&ifiles)) {
-		fa = SLIST_FIRST(&ifiles);
-		SLIST_REMOVE_HEAD(&ifiles, entry);
-		if (!wav_new_in(&wav_ops, fa->mode, fa->name,
-			fa->hdr, &fa->ipar, fa->xrun, fa->vol, fa->mmc,
-			fa->join))
-			exit(1);
-		free(fa);
-	}
-	while (!SLIST_EMPTY(&ofiles)) {
-		fa = SLIST_FIRST(&ofiles);
-		SLIST_REMOVE_HEAD(&ofiles, entry);
-		if (!wav_new_out(&wav_ops, fa->mode, fa->name,
-			fa->hdr, &fa->opar, fa->xrun, fa->mmc,
-			fa->join))
-		free(fa);
-	}
-	while (!SLIST_EMPTY(&sfiles)) {
-		fa = SLIST_FIRST(&sfiles);
-		SLIST_REMOVE_HEAD(&sfiles, entry);
-		opt_new(fa->name, &fa->opar, &fa->ipar,
-		    MIDI_TO_ADATA(fa->vol), fa->mmc, fa->join, fa->mode);
-		free(fa);
+		if (n_flag) {
+			d = dev_new_loop(&cd->ipar, &cd->opar, cd->bufsz);
+		} else {
+			d = dev_new_sio(cd->path, cd->mode,
+			    &cd->ipar, &cd->opar, cd->bufsz, cd->round,
+			    cd->hold, l_flag);
+		}
+		if (d == NULL)
+			errx(1, "%s: can't open device", cd->path);
+
+		/*
+		 * register midi devices
+		 */
+		while (!SLIST_EMPTY(&cd->mids)) {
+			cm = SLIST_FIRST(&cd->mids);
+			SLIST_REMOVE_HEAD(&cd->mids, entry);
+			if (!dev_thruadd(d, cm->path, 1, 1))
+				errx(1, "%s: can't open device", cm->path);
+			free(cm);
+		}
+
+		/*
+		 * register files
+		 */
+		autostart = 0;
+		while (!SLIST_EMPTY(&cd->ins)) {
+			cs = SLIST_FIRST(&cd->ins);
+			SLIST_REMOVE_HEAD(&cd->ins, entry);
+			if (!cs->mmc)
+				autostart = 1;
+			if (!wav_new_in(&wav_ops, d, cs->mode & MODE_PLAY,
+				cs->path, cs->hdr, &cs->ipar, cs->xrun,
+				cs->vol, cs->mmc, cs->join))
+				exit(1);
+			free(cs);
+		}
+		while (!SLIST_EMPTY(&cd->outs)) {
+			cs = SLIST_FIRST(&cd->outs);
+			SLIST_REMOVE_HEAD(&cd->outs, entry);
+			if (!cs->mmc)
+				autostart = 1;
+			if (!wav_new_out(&wav_ops, d, cs->mode & MODE_RECMASK,
+				cs->path, cs->hdr, &cs->opar, cs->xrun,
+				cs->mmc, cs->join))
+				exit(1);
+			free(cs);
+		}
+		while (!SLIST_EMPTY(&cd->opts)) {
+			cs = SLIST_FIRST(&cd->opts);
+			SLIST_REMOVE_HEAD(&cd->opts, entry);
+			opt_new(cs->path, d, &cs->opar, &cs->ipar,
+			    MIDI_TO_ADATA(cs->vol), cs->mmc,
+			    cs->join, cs->mode);
+			free(cs);
+		}
+		free(cd);
+		if (autostart) {
+			/*
+			 * inject artificial mmc start
+			 */
+			ctl_start(d->midi);
+		}
 	}
 	if (l_flag) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_SOFTAUDIO, unit);
-		listen_new(&listen_ops, path);
+		listen = listen_new(&listen_ops, path);
+		if (listen == 0)
+			exit(1);
 		if (geteuid() == 0)
 			privdrop();
 		if (!d_flag && daemon(0, 0) < 0)
 			err(1, "daemon");
-	}
-	if (autostart) {
-		/*
-		 * inject artificial mmc start
-		 */
-		ctl_start(dev_midi);
 	}
 
 	/*
@@ -719,16 +799,27 @@ aucat_main(int argc, char **argv)
 	for (;;) {
 		if (quit_flag)
 			break;
-		if (!dev_run())
+		active = 0;
+		for (d = dev_list; d != NULL; d = dnext) {
+			dnext = d->next;
+			if (!dev_run(d))
+				goto fatal;
+			if (!ctl_idle(d->midi))
+				active = 1;
+		}
+		if (dev_list == NULL)
 			break;
-		if (!l_flag && ctl_idle(dev_midi))
+		if (!l_flag && !active)
 			break;
 		if (!file_poll())
 			break;
 	}
-	dev_unref();
-	stopall();
-	dev_done();
+  fatal:
+	if (l_flag)
+		file_close(&listen->file);
+	while (dev_list)
+		dev_del(dev_list);
+
 	/*
 	 * give a chance to drain
 	 */
@@ -750,24 +841,30 @@ midicat_usage(void)
 	    "[-i file] [-o file] [-q device] [-U unit]\n",
 	    stderr);
 }
+
 int
 midicat_main(int argc, char **argv)
 {
+	struct cfmidlist mids, ins, outs;
+	struct cfmid *cm;
+	struct listen *listen = NULL;
 	int c, d_flag, l_flag, unit, fd;
-	struct farglist dfiles, ifiles, ofiles;
 	char base[PATH_MAX], path[PATH_MAX];
-	struct farg *fa;
 	struct file *stdx;
 	struct aproc *p;
 	struct abuf *buf;
 	const char *str;
+	struct dev *d;
 
+	/*
+	 * global options defaults
+	 */
+	unit = -1;
 	d_flag = 0;
 	l_flag = 0;
-	unit = -1;
-	SLIST_INIT(&dfiles);
-	SLIST_INIT(&ifiles);
-	SLIST_INIT(&ofiles);
+	SLIST_INIT(&mids);
+	SLIST_INIT(&ins);
+	SLIST_INIT(&outs);
 
 	while ((c = getopt(argc, argv, "di:o:lf:q:U:")) != -1) {
 		switch (c) {
@@ -779,18 +876,15 @@ midicat_main(int argc, char **argv)
 			d_flag = 1;
 			break;
 		case 'i':
-			farg_add(&ifiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, 0, optarg);
+			cfmid_add(&ins, optarg);
 			break;
 		case 'o':
-			farg_add(&ofiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, 0, optarg);
+			cfmid_add(&outs, optarg);
 			break;
 			/* XXX: backward compat, remove this */
 		case 'f':	
 		case 'q':
-			farg_add(&dfiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, 0, 0, 0, optarg);
+			cfmid_add(&mids, optarg);
 			break;
 		case 'l':
 			l_flag = 1;
@@ -798,7 +892,7 @@ midicat_main(int argc, char **argv)
 		case 'U':
 			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
 			if (str)
-				errx(1, "%s: device number is %s", optarg, str);
+				errx(1, "%s: unit number is %s", optarg, str);
 			break;
 		default:
 			midicat_usage();
@@ -808,15 +902,14 @@ midicat_main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0 || (SLIST_EMPTY(&ifiles) && SLIST_EMPTY(&ofiles) &&
-	    !l_flag)) {
+	if (argc > 0 || (SLIST_EMPTY(&ins) && SLIST_EMPTY(&outs) && !l_flag)) {
 		midicat_usage();
 		exit(1);
 	}
 	if (!l_flag && unit >= 0)
 		errx(1, "can't use -U without -l");
 	if (l_flag) {
-		if (!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles))
+		if (!SLIST_EMPTY(&ins) || !SLIST_EMPTY(&outs))
 			errx(1, "can't use -i or -o with -l");
 		getbasepath(base, sizeof(path));
 		if (unit < 0)
@@ -825,74 +918,72 @@ midicat_main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
-	dev_init_thru();
-	if (0 && !dev_ref())
-		errx(1, "couldn't opem midi thru box");
-	if (!l_flag && APROC_OK(dev_midi))
-		dev_midi->flags |= APROC_QUIT;
-	if ((!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles)) && 
-	    SLIST_EMPTY(&dfiles)) {
-		farg_add(&dfiles, &aparams_none, &aparams_none,
-		    0, HDR_RAW, 0, 0, 0, 0, NULL);
+	d = dev_new_thru();
+	if (!dev_ref(d))
+		errx(1, "couldn't open midi thru box");
+	if (!l_flag && APROC_OK(d->midi))
+		d->midi->flags |= APROC_QUIT;
+	if ((!SLIST_EMPTY(&ins) || !SLIST_EMPTY(&outs)) && SLIST_EMPTY(&mids)) {
+	    	cfmid_add(&mids, "default");
 	}
-	while (!SLIST_EMPTY(&dfiles)) {
-		fa = SLIST_FIRST(&dfiles);
-		SLIST_REMOVE_HEAD(&dfiles, entry);
-		if (!dev_thruadd(fa->name, 
-			!SLIST_EMPTY(&ofiles) || l_flag,
-			!SLIST_EMPTY(&ifiles) || l_flag)) {
-			errx(1, "%s: can't open device", 
-			    fa->name ? fa->name : "<default>");
+	while (!SLIST_EMPTY(&mids)) {
+		cm = SLIST_FIRST(&mids);
+		SLIST_REMOVE_HEAD(&mids, entry);
+		if (!dev_thruadd(d, cm->path,
+			!SLIST_EMPTY(&ins) || l_flag,
+			!SLIST_EMPTY(&outs) || l_flag)) {
+			errx(1, "%s: can't open device", cm->path);
 		}
-		free(fa);
+		free(cm);
 	}
 	if (l_flag) {
+		opt_new(DEFAULT_OPT, d, NULL, NULL, 0, 0, 0, 0);
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_MIDITHRU, unit);
-		listen_new(&listen_ops, path);
+		listen = listen_new(&listen_ops, path);
 		if (geteuid() == 0)
 			privdrop();
 		if (!d_flag && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
-	while (!SLIST_EMPTY(&ifiles)) {
-		fa = SLIST_FIRST(&ifiles);
-		SLIST_REMOVE_HEAD(&ifiles, entry);
-		if (strcmp(fa->name, "-") == 0) {
+	while (!SLIST_EMPTY(&ins)) {
+		cm = SLIST_FIRST(&ins);
+		SLIST_REMOVE_HEAD(&ins, entry);
+		if (strcmp(cm->path, "-") == 0) {
 			fd = STDIN_FILENO;
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 				warn("stdin");
 		} else {
-			fd = open(fa->name, O_RDONLY | O_NONBLOCK, 0666);
+			fd = open(cm->path, O_RDONLY | O_NONBLOCK, 0666);
 			if (fd < 0)
-				err(1, "%s", fa->name);
+				err(1, "%s", cm->path);
 		}
-		stdx = (struct file *)pipe_new(&pipe_ops, fd, fa->name);
+		stdx = (struct file *)pipe_new(&pipe_ops, fd, cm->path);
 		p = rfile_new(stdx);
 		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(p, buf);
-		dev_midiattach(buf, NULL);
-		free(fa);
+		dev_midiattach(d, buf, NULL);
+		free(cm);
 	}
-	while (!SLIST_EMPTY(&ofiles)) {
-		fa = SLIST_FIRST(&ofiles);
-		SLIST_REMOVE_HEAD(&ofiles, entry);
-		if (strcmp(fa->name, "-") == 0) {
+	while (!SLIST_EMPTY(&outs)) {
+		cm = SLIST_FIRST(&outs);
+		SLIST_REMOVE_HEAD(&outs, entry);
+		if (strcmp(cm->path, "-") == 0) {
 			fd = STDOUT_FILENO;
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 				warn("stdout");
 		} else {
-			fd = open(fa->name,
+			fd = open(cm->path,
 			    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
 			if (fd < 0)
-				err(1, "%s", fa->name);
+				err(1, "%s", cm->path);
 		}
-		stdx = (struct file *)pipe_new(&pipe_ops, fd, fa->name);
+		stdx = (struct file *)pipe_new(&pipe_ops, fd, cm->path);
 		p = wfile_new(stdx);
 		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(p, buf);
-		dev_midiattach(NULL, buf);
-		free(fa);
+		dev_midiattach(d, NULL, buf);
+		free(cm);
 	}
 	/*
 	 * loop, start processing
@@ -900,15 +991,15 @@ midicat_main(int argc, char **argv)
 	for (;;) {
 		if (quit_flag)
 			break;
-		if (!dev_run())
+		if (!dev_run(d))
 			break;
 		if (!file_poll())
 			break;
 	}
-	stopall();
-	if (0)
-		dev_unref();
-	dev_done();
+	if (l_flag)
+		file_close(&listen->file);
+	dev_unref(d);
+	dev_del(d);
 	/*
 	 * drain
 	 */
@@ -922,7 +1013,6 @@ midicat_main(int argc, char **argv)
 	unsetsig();
 	return 0;
 }
-
 
 int
 main(int argc, char **argv)

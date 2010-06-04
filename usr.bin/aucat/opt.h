@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.7 2010/05/02 11:54:26 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.8 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,6 +20,8 @@
 #include <sys/queue.h>
 #include "aparams.h"
 
+struct dev;
+
 struct opt {
 	SLIST_ENTRY(opt) entry;
 #define OPT_NAMEMAX 11
@@ -36,12 +38,15 @@ struct opt {
 #define MODE_MON	0x10	/* allowed to monitor */
 #define MODE_LOOP	0x20	/* deviceless mode */
 #define MODE_RECMASK	(MODE_REC | MODE_MON)
+#define MODE_AUDIOMASK	(MODE_REC | MODE_MON | MODE_PLAY)
+#define MODE_MIDIMASK	(MODE_MIDIIN | MODE_MIDIOUT)
 	unsigned mode;		/* bitmap of above */
+	struct dev *dev;	/* device to which we're attached */
 };
 
 SLIST_HEAD(optlist,opt);
 
-void opt_new(char *, struct aparams *, struct aparams *,
+void opt_new(char *, struct dev *, struct aparams *, struct aparams *,
     int, int, int, unsigned);
 struct opt *opt_byname(char *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.4 2010/01/10 21:47:41 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.5 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,19 +64,19 @@ struct fileops miofile_ops = {
 struct miofile *
 miofile_new(struct fileops *ops, char *path, int input, int output)
 {
+	char *siopath;
 	struct mio_hdl *hdl;
 	struct miofile *f;
 	int mode = 0;
 
+	siopath = (strcmp(path, "default") == 0) ? NULL : path;
 	if (input)
 		mode |= MIO_IN;
 	if (output)
 		mode |= MIO_OUT;
-	hdl = mio_open(path, mode, 1);
+	hdl = mio_open(siopath, mode, 1);
 	if (hdl == NULL)
 		return NULL;
-	if (path == NULL)
-		path = "default";
 	f = (struct miofile *)file_new(ops, path, mio_nfds(hdl));
 	if (f == NULL)
 		goto bad_close;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.36 2010/05/02 11:12:31 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.37 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -175,6 +175,7 @@ struct aproc {
 			struct timo timo;	/* timout for throtteling */
 		} thru;
 		struct {
+			struct dev *dev;	/* controlled device */
 #define CTL_NSLOT	8
 #define CTL_NAMEMAX	8
 			unsigned serial;
@@ -201,6 +202,7 @@ struct aproc {
 					void (*start)(void *);
 					void (*stop)(void *);
 					void (*loc)(void *, unsigned);
+					void (*quit)(void *);
 				} *ops;
 				void *arg;
 				unsigned unit;

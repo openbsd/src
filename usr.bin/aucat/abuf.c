@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.21 2010/04/06 20:07:01 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.22 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -202,6 +202,12 @@ abuf_rdiscard(struct abuf *buf, unsigned count)
 		dbg_puts("\n");
 		dbg_panic();
 	}
+	if (debug_level >= 4) {
+		abuf_dbg(buf);
+		dbg_puts(": discard(");
+		dbg_putu(count);
+		dbg_puts(")\n");
+	}
 #endif
 	buf->used -= count;
 	buf->start += count;
@@ -222,6 +228,12 @@ abuf_wcommit(struct abuf *buf, unsigned count)
 		dbg_putu(count);
 		dbg_puts("\n");
 		dbg_panic();
+	}
+	if (debug_level >= 4) {
+		abuf_dbg(buf);
+		dbg_puts(": commit(");
+		dbg_putu(count);
+		dbg_puts(")\n");
 	}
 #endif
 	buf->used += count;

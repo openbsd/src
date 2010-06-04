@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.69 2010/04/22 17:43:30 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.70 2010/06/04 06:15:28 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2010 $
+.Dd $Mdocdate: June 4 2010 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm aucat
 .Bk -words
 .Op Fl dlnu
+.Op Fl a Ar flag
 .Op Fl b Ar nframes
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
@@ -58,6 +59,20 @@ which does not convert on the fly and supports playback of .au files.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar flag
+Control whether
+.Nm
+opens the device only when needed or keeps it open all the time.
+If the flag is
+.Va on
+then the device is kept open all the time, ensuring no other program can
+steal it.
+If the flag is
+.Va off ,
+then it's automatically closed, allowing other programs to have direct
+access to the device, or the device to be disconnected.
+The default is
+.Va on .
 .It Fl b Ar nframes
 The buffer size of the audio device in frames.
 A frame consists of one sample for each channel in the stream.
@@ -553,7 +568,7 @@ connected to the
 .Va midithru:0
 MIDI device:
 .Bd -literal -offset indent
-$ aucat -f aucat:0.mmc -t slave -q midithru:0 -i file.wav
+$ aucat -t slave -q midithru:0 -i file.wav -f aucat:0.mmc
 .Ed
 .Pp
 At this stage,

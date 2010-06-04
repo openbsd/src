@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.24 2010/05/08 15:35:45 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.25 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -676,11 +676,11 @@ ctl_trystart(struct aproc *p, int caller)
 	if (caller >= 0)
 		p->u.ctl.slot[caller].tstate = CTL_RUN;
 	p->u.ctl.tstate = CTL_RUN;
-	p->u.ctl.delta = MTC_SEC * dev_getpos();
-	if (dev_rate % (30 * 4 * dev_round) == 0) {
+	p->u.ctl.delta = MTC_SEC * dev_getpos(p->u.ctl.dev);
+	if (p->u.ctl.dev->rate % (30 * 4 * p->u.ctl.dev->round) == 0) {
 		p->u.ctl.fps_id = MTC_FPS_30;
 		p->u.ctl.fps = 30;
-	} else if (dev_rate % (25 * 4 * dev_round) == 0) {
+	} else if (p->u.ctl.dev->rate % (25 * 4 * p->u.ctl.dev->round) == 0) {
 		p->u.ctl.fps_id = MTC_FPS_25;
 		p->u.ctl.fps = 25;
 	} else {
@@ -697,7 +697,7 @@ ctl_trystart(struct aproc *p, int caller)
 		dbg_puts(" mtc fps\n");
 	}
 #endif
-	dev_wakeup();
+	dev_wakeup(p->u.ctl.dev);
 	ctl_full(p);
 	return 1;
 }
@@ -778,7 +778,7 @@ ctl_ontick(struct aproc *p, int delta)
 	if (p->u.ctl.delta < 0)
 		return;
 
-	qfrlen = dev_rate * (MTC_SEC / (4 * p->u.ctl.fps));
+	qfrlen = p->u.ctl.dev->rate * (MTC_SEC / (4 * p->u.ctl.fps));
 	while (p->u.ctl.delta >= qfrlen) {
 		ctl_qfr(p);
 		p->u.ctl.delta -= qfrlen;
@@ -1155,20 +1155,20 @@ ctl_newin(struct aproc *p, struct abuf *ibuf)
 void
 ctl_done(struct aproc *p)
 {
-#ifdef DEBUG
 	unsigned i;
 	struct ctl_slot *s;
 
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		/*
-		 * XXX: shouldn't we abord() here ?
-		 */
+		if (s->ops != NULL)
+			s->ops->quit(s->arg);
+#ifdef DEBUG
 		if (s->ops != NULL) {
 			ctl_slotdbg(p, i);
 			dbg_puts(": still in use\n");
+			dbg_panic();
 		}
-	}
 #endif
+	}
 }
 
 struct aproc_ops ctl_ops = {
@@ -1185,13 +1185,14 @@ struct aproc_ops ctl_ops = {
 };
 
 struct aproc *
-ctl_new(char *name)
+ctl_new(char *name, struct dev *dev)
 {
 	struct aproc *p;
 	struct ctl_slot *s;
 	unsigned i;
 
 	p = aproc_new(&ctl_ops, name);
+	p->u.ctl.dev = dev;
 	p->u.ctl.serial = 0;
 	p->u.ctl.tstate = CTL_STOP;
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {

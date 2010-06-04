@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.8 2010/04/21 06:13:07 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.9 2010/06/04 06:15:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,7 +27,7 @@
 struct optlist opt_list = SLIST_HEAD_INITIALIZER(&opt_list);
 
 void
-opt_new(char *name, struct aparams *wpar, struct aparams *rpar,
+opt_new(char *name, struct dev *d, struct aparams *wpar, struct aparams *rpar,
     int maxweight, int mmc, int join, unsigned mode)
 {
 	struct opt *o;
@@ -48,6 +48,12 @@ opt_new(char *name, struct aparams *wpar, struct aparams *rpar,
 			exit(1);
 		}
 	}
+	SLIST_FOREACH(o, &opt_list, entry) {
+		if (strcmp(name, o->name) == 0) {
+			fprintf(stderr, "%s: already defined\n", name);
+			exit(1);
+		}
+	}
 	o = malloc(sizeof(struct opt));
 	if (o == NULL) {
 		perror("opt_new: malloc");
@@ -62,6 +68,7 @@ opt_new(char *name, struct aparams *wpar, struct aparams *rpar,
 	o->mmc = mmc;
 	o->join = join;
 	o->mode = mode;
+	o->dev = d;
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts(o->name);

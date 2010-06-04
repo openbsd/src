@@ -138,12 +138,14 @@ void wav_setvol(void *, unsigned);
 void wav_startreq(void *);
 void wav_stopreq(void *);
 void wav_locreq(void *, unsigned);
+void wav_quitreq(void *);
 
 struct ctl_ops ctl_wavops = {
 	wav_setvol,
 	wav_startreq,
 	wav_stopreq,
-	wav_locreq
+	wav_locreq,
+	wav_quitreq
 };
 
 struct aproc_ops rwav_ops = {
@@ -180,11 +182,12 @@ void
 wav_dbg(struct wav *f)
 {
 	static char *pstates[] = { "ini", "sta", "rdy", "run", "fai" };
+	struct aproc *midi = f->dev ? f->dev->midi : NULL;
 
 	dbg_puts("wav(");
-	if (f->slot >= 0 && APROC_OK(dev_midi)) {
-		dbg_puts(dev_midi->u.ctl.slot[f->slot].name);
-		dbg_putu(dev_midi->u.ctl.slot[f->slot].unit);
+	if (f->slot >= 0 && APROC_OK(midi)) {
+		dbg_puts(midi->u.ctl.slot[f->slot].name);
+		dbg_putu(midi->u.ctl.slot[f->slot].unit);
 	} else
 		dbg_puts(f->pipe.file.name);
 	dbg_puts(")/");
@@ -231,7 +234,7 @@ wav_read(struct file *file, unsigned char *data, unsigned count)
 				dbg_puts(": read complete\n");
 			}
 #endif
-			if (!f->tr)
+			if (!f->mmc)
 				file_eof(&f->pipe.file);
 			return 0;
 		}
@@ -295,7 +298,10 @@ wav_close(struct file *file)
 		}
 	}
 	pipe_close(file);
-	dev_unref();
+	if (f->dev) {
+		dev_unref(f->dev);
+		f->dev = NULL;
+	}
 }
 
 /*
@@ -306,6 +312,7 @@ int
 wav_attach(struct wav *f, int force)
 {
 	struct abuf *rbuf = NULL, *wbuf = NULL;
+	struct dev *d = f->dev;
 
 	if (f->mode & MODE_PLAY)
 		rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
@@ -323,14 +330,14 @@ wav_attach(struct wav *f, int force)
 	 * start the device (dev_getpos() and dev_attach() must
 	 * be called on a started device
 	 */
-	dev_wakeup();
+	dev_wakeup(d);
 
-	dev_attach(f->pipe.file.name, f->mode,
-	    rbuf, &f->hpar, f->join ? dev_opar.cmax - dev_opar.cmin + 1 : 0,
-	    wbuf, &f->hpar, f->join ? dev_ipar.cmax - dev_ipar.cmin + 1 : 0,
+	dev_attach(d, f->pipe.file.name, f->mode,
+	    rbuf, &f->hpar, f->join ? d->opar.cmax - d->opar.cmin + 1 : 0,
+	    wbuf, &f->hpar, f->join ? d->ipar.cmax - d->ipar.cmin + 1 : 0,
 	    f->xrun, f->maxweight);
 	if (f->mode & MODE_PLAY)
-		dev_setvol(rbuf, MIDI_TO_ADATA(f->vol));
+		dev_setvol(d, rbuf, MIDI_TO_ADATA(f->vol));
 	return 1;
 }
 
@@ -346,11 +353,12 @@ void
 wav_allocbuf(struct wav *f)
 {
 	struct abuf *buf;
+	struct dev *d = f->dev;
 	unsigned nfr;
 
 	f->pstate = WAV_START;
 	if (f->mode & MODE_PLAY) {
-		nfr = 2 * dev_bufsz * f->hpar.rate / dev_rate;
+		nfr = 2 * d->bufsz * f->hpar.rate / d->rate;
 		buf = abuf_new(nfr, &f->hpar);
 		aproc_setout(f->pipe.file.rproc, buf);
 		abuf_fill(buf);
@@ -358,7 +366,7 @@ wav_allocbuf(struct wav *f)
 			f->pstate = WAV_READY;
 	}
 	if (f->mode & MODE_RECMASK) {
-		nfr = 2 * dev_bufsz * f->hpar.rate / dev_rate;
+		nfr = 2 * d->bufsz * f->hpar.rate / d->rate;
 		buf = abuf_new(nfr, &f->hpar);
 		aproc_setin(f->pipe.file.wproc, buf);
 		f->pstate = WAV_READY;
@@ -369,7 +377,7 @@ wav_allocbuf(struct wav *f)
 		dbg_puts(": allocating buffers\n");
 	}
 #endif
-	if (f->pstate == WAV_READY && ctl_slotstart(dev_midi, f->slot))
+	if (f->pstate == WAV_READY && ctl_slotstart(d->midi, f->slot))
 		(void)wav_attach(f, 0);
 }
 
@@ -393,7 +401,7 @@ wav_freebuf(struct wav *f)
 	}
 #endif
 	if (rbuf || wbuf)
-		ctl_slotstop(dev_midi, f->slot);
+		ctl_slotstop(f->dev->midi, f->slot);
 	if (rbuf)
 		abuf_eof(rbuf);
 	if (wbuf)
@@ -410,7 +418,7 @@ wav_reset(struct wav *f)
 	switch (f->pstate) {
 	case WAV_START:
 	case WAV_READY:
-		if (ctl_slotstart(dev_midi, f->slot))
+		if (ctl_slotstart(f->dev->midi, f->slot))
 			(void)wav_attach(f, 1);
 		/* PASSTHROUGH */
 	case WAV_RUN:
@@ -430,6 +438,7 @@ wav_reset(struct wav *f)
 void
 wav_exit(struct wav *f)
 {
+	/* XXX: call file_close() ? */
 	if (f->mode & MODE_PLAY) {
 		aproc_del(f->pipe.file.rproc);
 	} else if (f->mode & MODE_RECMASK) {
@@ -455,7 +464,7 @@ wav_seekmmc(struct wav *f)
 		 * don't make other stream wait for us
 		 */
 		if (f->slot >= 0)
-			ctl_slotstart(dev_midi, f->slot);
+			ctl_slotstart(f->dev->midi, f->slot);
 		return 0;
 	}
 	if (!pipe_seek(&f->pipe.file, f->mmcpos)) {
@@ -493,7 +502,7 @@ wav_rdata(struct wav *f)
 			f->pstate = WAV_READY;
 		/* PASSTHROUGH */
 	case WAV_READY:
-		if (ctl_slotstart(dev_midi, f->slot))
+		if (ctl_slotstart(f->dev->midi, f->slot))
 			(void)wav_attach(f, 0);
 		break;
 #ifdef DEBUG
@@ -505,7 +514,7 @@ wav_rdata(struct wav *f)
 		dbg_panic();
 #endif
 	}
-	if (f->rbytes == 0 && f->tr) {
+	if (f->rbytes == 0 && f->mmc) {
 #ifdef DEBUG
 		if (debug_level >= 3) {
 			wav_dbg(f);
@@ -549,7 +558,7 @@ wav_setvol(void *arg, unsigned vol)
 	f->vol = vol;
 	if ((f->mode & MODE_PLAY) && f->pstate == WAV_RUN) {
 		rbuf = LIST_FIRST(&f->pipe.file.rproc->outs);
-		dev_setvol(rbuf, MIDI_TO_ADATA(vol));
+		dev_setvol(f->dev, rbuf, MIDI_TO_ADATA(vol));
 	}
 }
 
@@ -605,7 +614,7 @@ wav_stopreq(void *arg)
 		dbg_puts("\n");
 	}
 #endif
-	if (!f->tr) {
+	if (!f->mmc) {
 		wav_exit(f);
 		return;
 	}
@@ -634,10 +643,29 @@ wav_locreq(void *arg, unsigned mmc)
 }
 
 /*
+ * Callback invoked when slot is gone
+ */
+void
+wav_quitreq(void *arg)
+{
+	struct wav *f = (struct wav *)arg;
+
+#ifdef DEBUG
+	if (debug_level >= 3) {
+		wav_dbg(f);
+		dbg_puts(": slot gone\n");
+	}
+#endif
+	if (f->pstate != WAV_RUN)
+		wav_exit(f);
+}
+
+/*
  * create a file reader in the ``INIT'' state
  */
 struct wav *
-wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr, 
+wav_new_in(struct fileops *ops,
+    struct dev *dev, unsigned mode, char *name, unsigned hdr,
     struct aparams *par, unsigned xrun, unsigned volctl, int tr, int join)
 {
 	int fd;
@@ -660,10 +688,11 @@ wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 		close(fd);
 		return NULL;
 	}
-	if (!dev_ref()) {
+	if (!dev_ref(dev)) {
 		close(fd);
 		return NULL;
 	}
+	f->dev = dev;
 	if (hdr == HDR_WAV) {
 		if (!wav_readhdr(f->pipe.fd, par, &f->startpos, &f->rbytes, &f->map)) {
 			file_del((struct file *)f);
@@ -683,14 +712,14 @@ wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 			f->rbytes = -1;
 		f->map = NULL;
 	}
-	f->tr = tr;
+	f->mmc = tr;
 	f->join = join;
 	f->mode = mode;
 	f->hpar = *par;
 	f->hdr = 0;
 	f->xrun = xrun;
 	f->maxweight = MIDI_TO_ADATA(volctl);
-	f->slot = ctl_slotnew(dev_midi, "play", &ctl_wavops, f, 1);
+	f->slot = ctl_slotnew(f->dev->midi, "play", &ctl_wavops, f, 1);
 	rwav_new((struct file *)f);
 	wav_allocbuf(f);
 #ifdef DEBUG
@@ -702,7 +731,7 @@ wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 		dbg_putu(f->endpos);
 		dbg_puts(": playing ");
 		aparams_dbg(par);
-		if (f->tr)
+		if (f->mmc)
 			dbg_puts(", mmc");
 		dbg_puts("\n");
 	}
@@ -714,7 +743,8 @@ wav_new_in(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
  * create a file writer in the ``INIT'' state
  */
 struct wav *
-wav_new_out(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
+wav_new_out(struct fileops *ops,
+    struct dev *dev, unsigned mode, char *name, unsigned hdr,
     struct aparams *par, unsigned xrun, int tr, int join)
 {
 	int fd;
@@ -738,10 +768,11 @@ wav_new_out(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 		close(fd);
 		return NULL;
 	}
-	if (!dev_ref()) {
+	if (!dev_ref(dev)) {
 		close(fd);
 		return NULL;
 	}
+	f->dev = dev;
 	if (hdr == HDR_WAV) {
 		par->le = 1;
 		par->sig = (par->bits <= 8) ? 0 : 1;
@@ -756,13 +787,13 @@ wav_new_out(struct fileops *ops, unsigned mode, char *name, unsigned hdr,
 		f->wbytes = -1;
 		f->startpos = f->endpos = 0;
 	}
-	f->tr = tr;
+	f->mmc = tr;
 	f->join = join;
 	f->mode = mode;
 	f->hpar = *par;
 	f->hdr = hdr;
 	f->xrun = xrun;
-	f->slot = ctl_slotnew(dev_midi, "rec", &ctl_wavops, f, 1);
+	f->slot = ctl_slotnew(f->dev->midi, "rec", &ctl_wavops, f, 1);
 	wwav_new((struct file *)f);
 	wav_allocbuf(f);
 #ifdef DEBUG
@@ -782,7 +813,7 @@ rwav_done(struct aproc *p)
 	struct wav *f = (struct wav *)p->u.io.file;
 
 	if (f->slot >= 0)
-		ctl_slotdel(dev_midi, f->slot);
+		ctl_slotdel(f->dev->midi, f->slot);
 	f->slot = -1;
 	rfile_done(p);
 }
@@ -835,7 +866,7 @@ wwav_done(struct aproc *p)
 	struct wav *f = (struct wav *)p->u.io.file;
 
 	if (f->slot >= 0)
-		ctl_slotdel(dev_midi, f->slot);
+		ctl_slotdel(f->dev->midi, f->slot);
 	f->slot = -1;
 	wfile_done(p);
 }
