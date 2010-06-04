@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.1 2010/06/03 16:49:00 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.2 2010/06/04 13:34:38 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ int		 ca_newpass(char *);
 int		 ca_export(struct ca *, char *);
 int		 ca_install(struct ca *);
 int		 ca_show_certs(struct ca *);
-int		 fcopy(char *, char *);
+int		 fcopy(char *, char *, mode_t);
 int		 rm_dir(char *);
 
 int
@@ -203,12 +203,16 @@ ca_cert_install(struct ca *ca, char *keyname)
 	}
 
 	snprintf(dst, sizeof(dst), "%s/private/local.key", KEYBASE);
-	fcopy(src, dst);
+	fcopy(src, dst, 0600);
 
 	snprintf(cmd, sizeof(cmd), "%s rsa -out %s/local.pub"
 	    " -in %s/private/local.key -pubout", PATH_OPENSSL, KEYBASE,
 	    KEYBASE);
 	system(cmd);
+
+	snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath, keyname);
+	snprintf(dst, sizeof(dst), "%s/certs/%s.crt", KEYBASE, keyname);
+	fcopy(src, dst, 0644);
 
 	return (0);
 }
@@ -285,7 +289,7 @@ ca_install(struct ca *ca)
 	}
 
 	snprintf(dst, sizeof(dst), "%s/ca/ca.crt", KEYBASE);
-	if (fcopy(src, dst) == 0)
+	if (fcopy(src, dst, 0644) == 0)
 		printf("certificate for CA '%s' installed into %s\n", ca->caname,
 		    dst);
 
@@ -325,7 +329,7 @@ ca_show_certs(struct ca *ca)
 }
 
 int
-fcopy(char *src, char *dst)
+fcopy(char *src, char *dst, mode_t mode)
 {
 	int		ifd, ofd;
 	u_int8_t	buf[BUFSIZ];
@@ -334,7 +338,7 @@ fcopy(char *src, char *dst)
 	if ((ifd = open(src, O_RDONLY)) == -1)
 		err(1, "open %s", src);
 
-	if ((ofd = open(dst, O_WRONLY|O_CREAT, 0600)) == -1) {
+	if ((ofd = open(dst, O_WRONLY|O_CREAT, mode)) == -1) {
 		close(ifd);
 		err(1, "open %s", dst);
 	}
@@ -440,25 +444,25 @@ ca_export(struct ca *ca, char *keyname)
 
 	snprintf(src, sizeof(src), "%s/private/%s.pfx", ca->sslpath, oname);
 	snprintf(dst, sizeof(dst), "%s/export/%s.pfx", p, oname);
-	fcopy(src, dst);
+	fcopy(src, dst, 0644);
 
 	snprintf(src, sizeof(src), "%s/ca.pfx", ca->sslpath);
 	snprintf(dst, sizeof(dst), "%s/export/ca.pfx", p);
-	fcopy(src, dst);
+	fcopy(src, dst, 0644);
 
 	snprintf(src, sizeof(src), "%s/ca.crt", ca->sslpath);
 	snprintf(dst, sizeof(dst), "%s/ca/ca.crt", p);
-	fcopy(src, dst);
+	fcopy(src, dst, 0644);
 
 	snprintf(src, sizeof(src), "%s/private/%s.key", ca->sslpath, keyname);
 	snprintf(dst, sizeof(dst), "%s/private/%s.key", p, keyname);
-	fcopy(src, dst);
+	fcopy(src, dst, 0600);
 	snprintf(dst, sizeof(dst), "%s/private/local.key", p);
-	fcopy(src, dst);
+	fcopy(src, dst, 0600);
 
 	snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath, keyname);
 	snprintf(dst, sizeof(dst), "%s/certs/%s.crt", p, keyname);
-	fcopy(src, dst);
+	fcopy(src, dst, 0644);
 
 	snprintf(cmd, sizeof(cmd), "%s rsa -out %s/local.pub"
 	    " -in %s/private/%s.key -pubout", PATH_OPENSSL, p, ca->sslpath,
