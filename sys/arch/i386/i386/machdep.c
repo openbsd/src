@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.471 2010/05/08 16:54:07 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.472 2010/06/04 15:03:34 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2085,6 +2085,10 @@ p3_get_bus_clock(struct cpu_info *ci)
 			    ci->ci_dev.dv_xname, bus);
 			goto print_msr;
 		}
+		break;
+	case 0x1a: /* Core i7 */
+	case 0x1e: /* Core i5 */
+	case 0x25: /* Core i3 */
 		break;
 	default: 
 		printf("%s: unknown i686 model 0x%x, can't get bus clock",
