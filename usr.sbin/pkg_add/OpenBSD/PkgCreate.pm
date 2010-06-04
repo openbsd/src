@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.2 2010/06/04 17:29:53 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -345,6 +345,12 @@ sub avert_duplicates_and_other_checks
 		    $self->keyword, " ", $self->stringize);
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
+}
+
+package OpenBSD::PackingElement::Conflict;
+sub avert_duplicates_and_other_checks
+{
+	&OpenBSD::PackingElement::Depend::avert_duplicates_and_other_checks;
 }
 
 package OpenBSD::PackingElement::AskUpdate;

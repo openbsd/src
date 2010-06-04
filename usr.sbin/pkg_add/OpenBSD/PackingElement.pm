@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.177 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.178 2010/06/04 17:29:53 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -897,6 +897,14 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 sub keyword() { "conflict" }
 __PACKAGE__->register_with_factory;
 sub category() { "conflict" }
+
+sub spec
+{
+	my $self =shift;
+
+	require OpenBSD::Search;
+	return OpenBSD::Search::PkgSpec->new($self->name);
+}
 
 package OpenBSD::PackingElement::Dependency;
 our @ISA=qw(OpenBSD::PackingElement::Depend);

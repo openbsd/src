@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.30 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.31 2010/06/04 17:29:53 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub make_conflict_list
 	push(@$l, OpenBSD::Search::PkgSpec->new(".libs-$stem-*"));
 	if (defined $plist->{conflict}) {
 		for my $cfl (@{$plist->{conflict}}) {
-		    push(@$l, OpenBSD::Search::PkgSpec->new($cfl->name));
+		    push(@$l, $cfl->spec);
 		}
 	}
 	bless $l, $class;
