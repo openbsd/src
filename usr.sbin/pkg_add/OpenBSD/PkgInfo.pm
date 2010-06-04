@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.94 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -18,11 +18,6 @@
 
 use strict;
 use warnings;
-
-use OpenBSD::PackageInfo;
-use OpenBSD::PackageName;
-use OpenBSD::Getopt;
-use OpenBSD::Error;
 
 package OpenBSD::PackingElement;
 sub dump_file
@@ -62,7 +57,12 @@ sub hunt_file
 	}
 }
 
-package main;
+package OpenBSD::PkgInfo;
+use OpenBSD::PackageInfo;
+use OpenBSD::PackageName;
+use OpenBSD::Getopt;
+use OpenBSD::Error;
+
 
 my $total_size = 0;
 my $pkgs = 0;
@@ -407,137 +407,141 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-AaCcdfIKLMmPqRSstUv] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+sub parse_and_run
+{
+	set_usage('pkg_info [-AaCcdfIKLMmPqRSstUv] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
-my %defines;
-my $locked;
-try {
-	getopts('cCdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
-	    {'e' =>
-		    sub {
-			    my $pat = shift;
-			    my @list;
-			    lock_db(1, $opt_q) unless $defines{nolock};
-			    $locked = 1;
-			    if ($pat =~ m/\//o) {
-				    @list = find_by_path($pat);
-			    } else {
-				    @list = find_by_spec($pat);
+	my %defines;
+	my $locked;
+	try {
+		getopts('cCdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
+		    {'e' =>
+			    sub {
+				    my $pat = shift;
+				    my @list;
+				    lock_db(1, $opt_q) unless $defines{nolock};
+				    $locked = 1;
+				    if ($pat =~ m/\//o) {
+					    @list = find_by_path($pat);
+				    } else {
+					    @list = find_by_spec($pat);
+				    }
+				    if (@list == 0) {
+					    $exit_code = 1;
+					    $error_e = 1;
+				    }
+				    push(@ARGV, @list);
+				    $terse = 1;
+			    },
+		     'F' => sub {
+				    for my $o (split /\,/o, shift) {
+					    $defines{$o} = 1;
+				    }
+			    },
+		     'h' => sub {	Usage(); },
+		     'E' =>
+			    sub {
+				    require File::Spec;
+
+				    push(@sought_files, File::Spec->rel2abs(shift));
+
 			    }
-			    if (@list == 0) {
-				    $exit_code = 1;
-				    $error_e = 1;
-			    }
-			    push(@ARGV, @list);
-			    $terse = 1;
-		    },
-	     'F' => sub {
-			    for my $o (split /\,/o, shift) {
-				    $defines{$o} = 1;
-			    }
-		    },
-	     'h' => sub {	Usage(); },
-	     'E' =>
-		    sub {
-			    require File::Spec;
+		});
+	} catchall {
+		Usage($_);
+	};
 
-			    push(@sought_files, File::Spec->rel2abs(shift));
+	lock_db(1, $opt_q) unless $locked or $defines{nolock};
 
-		    }
-	});
-} catchall {
-	Usage($_);
-};
-
-lock_db(1, $opt_q) unless $locked or $defines{nolock};
-
-unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I ||
-	$opt_L || $opt_R || $opt_s ||
-	$opt_S || $opt_P || $terse) {
-	if (@ARGV == 0) {
-		$opt_I = $opt_a = 1;
-	} else {
-		$opt_c = $opt_d = $opt_M = $opt_R = 1;
-	}
-}
-
-if ($opt_Q) {
-	require OpenBSD::PackageLocator;
-	require OpenBSD::Search;
-
-	print "PKG_PATH=$ENV{PKG_PATH}\n" if $opt_v;
-	my $partial = OpenBSD::Search::PartialStem->new($opt_Q);
-
-	my $r = OpenBSD::PackageLocator->match_locations($partial);
-
-	for my $p (sort map {$_->name} @$r) {
-		print $p, is_installed($p) ? " (installed)" : "" , "\n";
-	}
-
-	exit 0;
-}
-
-if ($opt_v) {
-	$opt_c = $opt_d = $opt_f = $opt_M =
-	    $opt_U = $opt_R = $opt_s = $opt_S = 1;
-}
-
-if (!defined $opt_l) {
-	$opt_l = "";
-}
-
-if ($opt_K && !$opt_L) {
-	Usage "-K only makes sense with -L";
-}
-
-if (@ARGV == 0 && !$opt_a && !$opt_A) {
-	Usage "Missing package name(s)" unless $terse || $opt_q;
-}
-
-if (@ARGV > 0 && ($opt_a || $opt_A)) {
-	Usage "Can't specify package name(s) with -a";
-}
-
-if (@ARGV > 0 && $opt_t) {
-	Usage "Can't specify package name(s) with -t";
-}
-
-if (@ARGV > 0 && $opt_m) {
-	Usage "Can't specify package name(s) with -m";
-}
-
-if (@ARGV == 0 && !$error_e) {
-	@ARGV = sort(installed_packages(defined $opt_A ? 0 : 1));
-	if ($opt_t) {
-		require OpenBSD::RequiredBy;
-		@ARGV = grep { OpenBSD::RequiredBy->new($_)->list == 0 } @ARGV;
-	}
-}
-
-if (@sought_files) {
-	my %hash = map { ($_, []) }  @sought_files;
-	@ARGV = filter_files(\%hash, @ARGV);
-	for my $f (@sought_files) {
-		my $l = $hash{$f};
-		if (@$l) {
-			print "$f: ", join(',', @$l), "\n" unless $opt_q;
+	unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I ||
+		$opt_L || $opt_R || $opt_s ||
+		$opt_S || $opt_P || $terse) {
+		if (@ARGV == 0) {
+			$opt_I = $opt_a = 1;
 		} else {
-			$exit_code = 1;
+			$opt_c = $opt_d = $opt_M = $opt_R = 1;
 		}
 	}
-}
 
-if ($opt_m) {
-	@ARGV = manual_filter(@ARGV);
-}
+	if ($opt_Q) {
+		require OpenBSD::PackageLocator;
+		require OpenBSD::Search;
 
-for my $pkg (@ARGV) {
-	if ($terse && !$opt_q) {
-		print $opt_l, $pkg, "\n";
+		print "PKG_PATH=$ENV{PKG_PATH}\n" if $opt_v;
+		my $partial = OpenBSD::Search::PartialStem->new($opt_Q);
+
+		my $r = OpenBSD::PackageLocator->match_locations($partial);
+
+		for my $p (sort map {$_->name} @$r) {
+			print $p, is_installed($p) ? " (installed)" : "" , "\n";
+		}
+
+		exit 0;
 	}
-	find_pkg($pkg, \&print_info);
+
+	if ($opt_v) {
+		$opt_c = $opt_d = $opt_f = $opt_M =
+		    $opt_U = $opt_R = $opt_s = $opt_S = 1;
+	}
+
+	if (!defined $opt_l) {
+		$opt_l = "";
+	}
+
+	if ($opt_K && !$opt_L) {
+		Usage "-K only makes sense with -L";
+	}
+
+	if (@ARGV == 0 && !$opt_a && !$opt_A) {
+		Usage "Missing package name(s)" unless $terse || $opt_q;
+	}
+
+	if (@ARGV > 0 && ($opt_a || $opt_A)) {
+		Usage "Can't specify package name(s) with -a";
+	}
+
+	if (@ARGV > 0 && $opt_t) {
+		Usage "Can't specify package name(s) with -t";
+	}
+
+	if (@ARGV > 0 && $opt_m) {
+		Usage "Can't specify package name(s) with -m";
+	}
+
+	if (@ARGV == 0 && !$error_e) {
+		@ARGV = sort(installed_packages(defined $opt_A ? 0 : 1));
+		if ($opt_t) {
+			require OpenBSD::RequiredBy;
+			@ARGV = grep { OpenBSD::RequiredBy->new($_)->list == 0 } @ARGV;
+		}
+	}
+
+	if (@sought_files) {
+		my %hash = map { ($_, []) }  @sought_files;
+		@ARGV = filter_files(\%hash, @ARGV);
+		for my $f (@sought_files) {
+			my $l = $hash{$f};
+			if (@$l) {
+				print "$f: ", join(',', @$l), "\n" unless $opt_q;
+			} else {
+				$exit_code = 1;
+			}
+		}
+	}
+
+	if ($opt_m) {
+		@ARGV = manual_filter(@ARGV);
+	}
+
+	for my $pkg (@ARGV) {
+		if ($terse && !$opt_q) {
+			print $opt_l, $pkg, "\n";
+		}
+		find_pkg($pkg, \&print_info);
+	}
+	if ($pkgs > 1) {
+		print "Total size: $total_size\n";
+	}
+	exit($exit_code);
 }
-if ($pkgs > 1) {
-	print "Total size: $total_size\n";
-}
-exit($exit_code);
+1;

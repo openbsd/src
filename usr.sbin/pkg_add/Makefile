@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.61 2010/04/24 14:33:12 espie Exp $
+# $OpenBSD: Makefile,v 1.62 2010/06/04 13:19:39 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ POD2MAN=/usr/bin/pod2man
 
 PACKAGES= \
     OpenBSD/Add.pm \
+    OpenBSD/AddCreateDelete.pm \
     OpenBSD/AddDelete.pm \
     OpenBSD/ArcCheck.pm \
     OpenBSD/CollisionReport.pm \
@@ -39,8 +40,12 @@ PACKAGES= \
     OpenBSD/PackingElement.pm \
     OpenBSD/PackingList.pm \
     OpenBSD/Paths.pm \
+    OpenBSD/PkgAdd.pm \
     OpenBSD/PkgCfl.pm \
     OpenBSD/PkgConfig.pm \
+    OpenBSD/PkgCreate.pm \
+    OpenBSD/PkgDelete.pm \
+    OpenBSD/PkgInfo.pm \
     OpenBSD/PkgSpec.pm \
     OpenBSD/ProgressMeter/Term.pm \
     OpenBSD/ProgressMeter.pm \
@@ -64,13 +69,15 @@ PACKAGEDIRS=OpenBSD  OpenBSD/PackageRepository OpenBSD/ProgressMeter \
     OpenBSD/LibSpec
 
 SCRIPTS= \
-    pkg_add \
-    pkg_info \
-    pkg_create \
-    pkg_delete \
     pkg_merge \
     pkg_mklocatedb \
     pkg
+
+SCRIPTS_LNK = \
+    pkg pkg_add \
+    pkg pkg_create \
+    pkg pkg_delete \
+    pkg pkg_info
 
 LIBBASE=/usr/libdata/perl5
 
@@ -142,7 +149,9 @@ realinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${.CURDIR}/$i ${DESTDIR}${BINDIR}/$i
 .endfor
-
+.for i j in ${SCRIPTS_LNK}
+	cd ${DESTDIR}${BINDIR} && ln -f $i $j
+.endfor
 
 .include <bsd.prog.mk>
 .PHONY: mansrc.build

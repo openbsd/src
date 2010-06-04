@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.31 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.32 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -26,8 +26,8 @@ sub new
 
 sub setup
 {
-	my ($self, $opt_x) = @_;
-	if (!$opt_x && -t STDOUT) {
+	my ($self, $opt_x, $opt_m) = @_;
+	if ($opt_m || (!$opt_x && -t STDOUT)) {
 		require OpenBSD::ProgressMeter::Term;
 		bless $self, "OpenBSD::ProgressMeter::Term";
 		$self->init;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.135 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Update.pm,v 1.136 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -135,7 +135,7 @@ sub process_handle
 				return 1;
 		}
 	}
-	if (!$state->{defines}->{downgrade}) {
+	if (!$state->defines('downgrade')) {
 		push(@search, OpenBSD::Search::FilterLocation->more_recent_than($sname, \$oldfound));
 	}
 	push(@search, OpenBSD::Search::FilterLocation->new(
@@ -164,7 +164,7 @@ sub process_handle
 			next;
 		    }
 		    my $r = $plist->signature->compare($p2->signature);
-		    if (defined $r && $r > 0 && !$state->{defines}{downgrade}) {
+		    if (defined $r && $r > 0 && !$state->defines('downgrade')) {
 		    	$oldfound = 1;
 			next;
 		    }
@@ -176,7 +176,7 @@ sub process_handle
 		return \@l2;
 	    }));
 
-	if (!$state->{defines}->{allversions}) {
+	if (!$state->defines('allversions')) {
 		push(@search, OpenBSD::Search::FilterLocation->keep_most_recent);
 	}
 
@@ -314,7 +314,7 @@ sub stem2location
 {
 	my ($self, $locator, $name, $state, $is_quirks) = @_;
 	my $l = $locator->match_locations(OpenBSD::Search::Stem->new($name));
-	if (@$l > 1 && !$state->{defines}->{allversions}) {
+	if (@$l > 1 && !$state->defines('allversions')) {
 		$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
 	}
 	return $state->choose_location($name, $l, $is_quirks);

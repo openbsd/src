@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.71 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Replace.pm,v 1.72 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -203,7 +203,7 @@ sub is_set_safe
 {
 	my ($set, $state) = @_;
 
-	if ($state->{defines}->{update} && !$state->verbose) {
+	if ($state->defines('update') && !$state->verbose) {
 		return 1;
 	}
 
@@ -217,7 +217,7 @@ sub is_set_safe
 	}
 	return 1 if $ok;
 
-	if ($state->{defines}->{update}) {
+	if ($state->defines('update')) {
 		$state->errsay("Forcing update");
 		return 1;
 	} elsif ($state->{interactive}) {

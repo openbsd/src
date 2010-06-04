@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.20 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.21 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -24,67 +24,49 @@ package main;
 our $not;
 
 package OpenBSD::AddDelete;
-use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::Paths;
 use OpenBSD::ProgressMeter;
+use OpenBSD::PackageInfo;
+use OpenBSD::Subst;
+use OpenBSD::AddCreateDelete;
 
-our $bad = 0;
-our %defines = ();
-our $state;
-
-our ($opt_n, $opt_x, $opt_v, $opt_B, $opt_L, $opt_i, $opt_q, $opt_c, $opt_I, $opt_s);
-$opt_v = 0;
+our @ISA = qw(OpenBSD::AddCreateDelete);
 
 sub handle_options
 {
-	my ($opt_string, $hash, @usage) = @_;
+	my ($self, $opt_string, $hash, @usage) = @_;
 
-	set_usage(@usage);
-	$state = OpenBSD::State->new;
-	$hash->{h} = sub { Usage(); };
+	my $state = $self->new_state;
+	$state->{opt} = $hash;
 	$hash->{F} = sub {
 		for my $o (split /\,/o, shift) {
-			$defines{$o} = 1;
+			$state->{subst}->add($o, 1);
 		}
 	};
-	$hash->{D} = sub {
-		my $_ = shift;
-		if (m/^(.*?)=(.*)/) {
-			$defines{$1} = $2;
-		} else {
-			$defines{$_} = 1;
-		}
-	};
-	try {
-		getopts('hciInqvsxB:D:F:L:'.$opt_string, $hash);
-	} catchall {
-		Usage($_);
-	};
+	$self->SUPER::handle_options($opt_string.'ciInqsB:F:',
+	    $state, @usage);
 
-	$opt_L = OpenBSD::Paths->localbase unless defined $opt_L;
-
-	if ($opt_s) {
-		$opt_n = 1;
+	if ($state->opt('s')) {
+		$state->{not} = 1;
 	}
-	$state->{not} = $opt_n;
 	# XXX RequiredBy
-	$main::not = $opt_n;
-	$state->{defines} = \%defines;
-	$state->{interactive} = $opt_i;
-	$state->{v} = $opt_v;
-	$state->{localbase} = $opt_L;
-	$state->{size_only} = $opt_s;
-	$state->{quick} = $opt_q;
-	$state->{extra} = $opt_c;
-	$state->{dont_run_scripts} = $opt_I;
+	$main::not = $state->{not};
+	$state->{interactive} = $state->opt('i');
+	$state->{localbase} = $state->opt('L') // OpenBSD::Paths->localbase;
+	$state->{size_only} = $state->opt('s');
+	$state->{quick} = $state->opt('q');
+	$state->{extra} = $state->opt('c');
+	$state->{dont_run_scripts} = $state->opt('I');
+	$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
+	return $state;
 }
 
 sub do_the_main_work
 {
-	my $code = shift;
+	my ($self, $state) = @_;
 
-	if ($bad) {
+	if ($state->{bad}) {
 		exit(1);
 	}
 
@@ -95,10 +77,10 @@ sub do_the_main_work
 	local $SIG{'KILL'} = $handler;
 	local $SIG{'TERM'} = $handler;
 
-	if ($state->{defines}->{debug}) {
-		&$code;
+	if ($state->defines('debug')) {
+		$self->main($state);
 	} else {
-		eval { &$code; };
+		eval { $self->main($state); };
 	}
 	my $dielater = $@;
 	return $dielater;
@@ -106,22 +88,21 @@ sub do_the_main_work
 
 sub framework
 {
-	my $code = shift;
+	my ($self, $state) = @_;
 	try {
-		lock_db($opt_n) unless $state->{defines}->{nolock};
-		$state->progress->setup($opt_x);
+		lock_db($state->{not}) unless $state->defines('nolock');
 		$state->check_root;
-		process_parameters();
-		my $dielater = do_the_main_work($code);
+		$self->process_parameters($state);
+		my $dielater = $self->do_the_main_work($state);
 		# cleanup various things
 		$state->{recorder}->cleanup($state);
 		OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 		OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 		$state->progress->clear;
 		$state->log->dump;
-		finish_display();
-		if ($state->verbose >= 2 || $opt_s ||
-		    $state->{defines}->{tally}) {
+		$self->finish_display($state);
+		if ($state->verbose >= 2 || $state->{size_only} ||
+		    $state->defines('tally')) {
 			$state->vstat->tally;
 		}
 		# show any error, and show why we died...
@@ -135,11 +116,20 @@ sub framework
 		exit(1);
 	};
 
-	if ($bad) {
+	if ($state->{bad}) {
 		exit(1);
 	}
 }
 
+sub parse_and_run
+{
+	my $self = shift;
+
+	my $state = $self->handle_options;
+	local $SIG{'INFO'} = sub { $state->status->print($state); };
+
+	$self->framework($state);
+}
 
 package OpenBSD::SharedItemsRecorder;
 sub new
@@ -179,41 +169,34 @@ sub dump
 }
 
 
-package OpenBSD::UI;
+package OpenBSD::AddDelete::State;
 use OpenBSD::Error;
 use OpenBSD::Vstat;
-
-sub new
-{
-	my $class = shift;
-	my $o = bless {}, $class;
-	$o->init(@_);
-	return $o;
-}
+our @ISA = qw(OpenBSD::AddCreateDelete::State);
 
 sub init
 {
 	my $self = shift;
 	$self->{l} = OpenBSD::Log->new;
 	$self->{vstat} = OpenBSD::Vstat->new($self);
-	$self->{progressmeter} = OpenBSD::ProgressMeter->new;
 	$self->{status} = OpenBSD::Status->new;
 	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	$self->{v} = 0;
+	$self->SUPER::init(@_);
 }
 
 sub ntogo
 {
 	my ($self, $offset) = @_;
 
-	return $self->progress->ntogo($self->todo, $offset);
+	return $self->progress->ntogo($self, $offset);
 }
 
 sub ntogo_string
 {
-	my ($self, $todo, $offset) = @_;
+	my ($self, $offset) = @_;
 
-	$todo //= 0;
+	my $todo = $self->{todo} // 0;
 	$offset //= 0;
 	$todo += $offset;
 
@@ -224,14 +207,10 @@ sub ntogo_string
 	}
 }
 
-sub verbose
-{
-	return shift->{v};
-}
-
 sub vstat
 {
-	return shift->{vstat};
+	my $self = shift;
+	return $self->{vstat};
 }
 
 sub log
@@ -242,36 +221,6 @@ sub log
 	} else {
 		$self->{l}->print(@_);
 	}
-}
-
-sub print
-{
-	my $self = shift;
-	$self->progress->print(@_);
-}
-
-sub say
-{
-	my $self = shift;
-	$self->progress->print(@_, "\n");
-}
-
-sub errprint
-{
-	my $self = shift;
-	$self->progress->errprint(@_);
-}
-
-sub errsay
-{
-	my $self = shift;
-	$self->progress->errprint(@_, "\n");
-}
-
-sub progress
-{
-	my $self = shift;
-	return $self->{progressmeter};
 }
 
 sub vsystem
@@ -298,7 +247,7 @@ sub unlink
 sub check_root
 {
 	my $state = shift;
-	if ($< && !$state->{defines}->{nonroot}) {
+	if ($< && !$state->defines('nonroot')) {
 		if ($state->{not}) {
 			$state->errsay("$0 should be run as root") if $state->verbose;
 		} else {
@@ -347,6 +296,12 @@ sub status
 	return $self->{status};
 }
 
+sub defines
+{
+	my ($self, $k) = @_;
+	return $self->{subst}->value($k);
+}
+
 # the object that gets displayed during status updates
 package OpenBSD::Status;
 
@@ -365,8 +320,8 @@ sub print
 		$object = "Parameters";
 	}
 
-	$state->say($what." ".$object.$state->ntogo_string($state->todo));
-	if ($state->{defines}->{carp}) {
+	$state->say($what." ".$object.$state->ntogo_string);
+	if ($state->defines('carp')) {
 		require Carp;
 		Carp::cluck("currently here");
 	}

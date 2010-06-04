@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.478 2010/05/10 09:17:54 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -21,20 +21,6 @@ use strict;
 use warnings;
 
 use OpenBSD::AddDelete;
-
-package OpenBSD::AddDelete;
-use OpenBSD::Dependencies;
-use OpenBSD::PackingList;
-use OpenBSD::PackageInfo;
-use OpenBSD::PackageLocator;
-use OpenBSD::PackageName;
-use OpenBSD::PkgCfl;
-use OpenBSD::Add;
-use OpenBSD::SharedLibs;
-use OpenBSD::UpdateSet;
-use OpenBSD::Handle;
-
-our ($state, %defines, $bad, $opt_B);
 
 package OpenBSD::PackingList;
 
@@ -77,8 +63,8 @@ sub has_different_sig
 	return $plist->{different_sig};
 }
 
-package OpenBSD::State;
-our @ISA=(qw(OpenBSD::UI));
+package OpenBSD::PkgAdd::State;
+our @ISA = qw(OpenBSD::AddDelete::State);
 
 # one-level dependencies tree, for nicer printouts
 sub build_deptree
@@ -150,7 +136,7 @@ sub new
 
 sub add
 {
-	my ($self, $handle) = @_;
+	my ($self, $handle, $state) = @_;
 	return if $self->{done}{$handle};
 	$self->{done}{$handle} = 1;
 	for my $conflict (OpenBSD::PkgCfl::find_all($handle->plist, $state)) {
@@ -174,6 +160,7 @@ sub merge
 package OpenBSD::UpdateSet;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
+use OpenBSD::Handle;
 
 OpenBSD::Auto::cache(solver,
     sub {
@@ -229,7 +216,7 @@ sub complete
 		return 1 if !defined $plist;
 		if (is_installed($pkgname) &&
 		    (!$state->{allow_replacing} ||
-		      !$state->{defines}->{installed} &&
+		      !$state->defines('installed') &&
 		      !$plist->has_different_sig($state) &&
 		      !$plist->uses_old_libs)) {
 		      	my $o = $set->{older}->{$pkgname};
@@ -255,7 +242,7 @@ sub complete
 	return 0 if !defined $check;
 
 	if ($check) {
-		$bad++;
+		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, $check);
 		$state->tracker->cant($set);
 	}
@@ -269,7 +256,7 @@ sub find_conflicts
 	my $c = $set->conflict_cache;
 
 	for my $handle ($set->newer) {
-		$c->add($handle);
+		$c->add($handle, $state);
 	}
 	return $c->list;
 }
@@ -327,7 +314,7 @@ sub install_issues
 	my @conflicts = $set->find_conflicts($state);
 
 	if (@conflicts == 0) {
-		if ($state->{defines}{update_only}) {
+		if ($state->defines('update_only')) {
 			return "only update, no install";
 		} else {
 			return 0;
@@ -420,7 +407,7 @@ sub check_forward_dependencies
 
 	if (%$bad) {
 		my $no_merge = 1;
-		if (!$state->{defines}->{dontmerge}) {
+		if (!$state->defines('dontmerge')) {
 			my $okay = 1;
 			for my $m (keys %$bad) {
 				if ($set->try_merging($m, $state)) {
@@ -431,7 +418,7 @@ sub check_forward_dependencies
 			}
 			return 0 if $okay == 1;
 		}
-		if ($state->{defines}->{updatedepends}) {
+		if ($state->defines('updatedepends')) {
 			$state->errsay("Forcing update");
 			return $no_merge;
 		} elsif ($state->{interactive}) {
@@ -465,7 +452,19 @@ sub recheck_conflicts
 	return 1;
 }
 
-package OpenBSD::AddDelete;
+package OpenBSD::PkgAdd;
+our @ISA = qw(OpenBSD::AddDelete);
+
+use OpenBSD::Dependencies;
+use OpenBSD::PackingList;
+use OpenBSD::PackageInfo;
+use OpenBSD::PackageLocator;
+use OpenBSD::PackageName;
+use OpenBSD::PkgCfl;
+use OpenBSD::Add;
+use OpenBSD::SharedLibs;
+use OpenBSD::UpdateSet;
+use OpenBSD::Error;
 
 sub failed_message
 {
@@ -552,7 +551,7 @@ sub check_x509_signature
 		$state->set_name_from_handle($handle, '+');
 		my $plist = $handle->plist;
 		if ($plist->is_signed) {
-			if ($state->{defines}->{nosig}) {
+			if ($state->defines('nosig')) {
 				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR ",
 				    $plist->pkgname);
 				$state->{check_digest} = 0;
@@ -742,7 +741,7 @@ sub newer_has_errors
 			$state->set_name_from_handle($handle);
 			$state->log("Can't install ", $handle->pkgname, ": ",
 				$handle->error_message, "\n");
-			$bad++;
+			$state->{bad}++;
 			$set->cleanup($handle->has_error);
 			$state->tracker->cant($set);
 			return 1;
@@ -752,8 +751,8 @@ sub newer_has_errors
 			unless ($handle->plist->{arch}->check($state->{arch})) {
 				$state->set_name_from_handle($handle);
 				$state->log($handle->pkgname, " is not for the right architecture");
-				if (!$defines{arch}) {
-					$bad++;
+				if (!$state->defines('arch')) {
+					$state->{bad}++;
 					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 					$state->tracker->cant($set);
 					return 1;
@@ -805,7 +804,7 @@ sub install_set
 	if ($set->older_to_do) {
 		my $r = $set->check_forward_dependencies($state);
 		if (!defined $r) {
-			$bad++;
+			$state->{bad}++;
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 			$state->tracker->cant($set);
 			return ();
@@ -821,26 +820,26 @@ sub install_set
 	if (@baddeps) {
 		$state->errsay("Can't install ", $set->print,
 		    ": can't resolve ", join(',', @baddeps));
-		$bad++;
+		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL,"bad dependencies");
 		$state->tracker->cant($set);
 		return ();
 	}
 
 	if (!$set->solver->solve_wantlibs($state)) {
-		$bad++;
+		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "libs not found");
 		$state->tracker->cant($set);
 		return ();
 	}
 #	if (!$set->solver->solve_tags($state)) {
-#		if (!$defines{libdepends}) {
-#			$bad++;
+#		if (!$state->defines('libdepends')) {
+#			$state->{bad}++;
 #			return ();
 #		}
 #	}
 	if (!$set->recheck_conflicts($state)) {
-		$bad++;
+		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "fatal conflicts");
 		$state->tracker->cant($set);
 		return ();
@@ -848,7 +847,7 @@ sub install_set
 	if ($set->older_to_do) {
 		require OpenBSD::Replace;
 		if (!OpenBSD::Replace::is_set_safe($set, $state)) {
-			$bad++;
+			$state->{bad}++;
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "exec detected");
 			$state->tracker->cant($set);
 			return ();
@@ -860,7 +859,7 @@ sub install_set
 		}
 
 		if (!$set->validate_plists($state)) {
-			$bad++;
+			$state->{bad}++;
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL,
 			    "file issues");
 			$state->tracker->cant($set);
@@ -873,66 +872,6 @@ sub install_set
 	$state->tracker->done($set);
 	return ();
 }
-
-
-
-our ($opt_a, $opt_A, $opt_P, $opt_Q, $opt_r, $opt_u, $opt_U, $opt_l, $opt_z);
-
-handle_options('aqchruUzl:A:P:Q:', {},
-    'pkg_add [-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
-    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
-
-local $SIG{'INFO'} = sub { $state->status->print($state); };
-$state->{do_faked} = 0;
-$state->{arch} = $opt_A;
-
-if (defined $opt_Q and defined $opt_B) {
-	Usage "-Q and -B are incompatible options";
-}
-if (defined $opt_Q and defined $opt_r) {
-	Usage "-r and -Q are incompatible options";
-}
-if ($opt_P) {
-	if ($opt_P eq 'cdrom') {
-		$state->{cdrom_only} = 1;
-	}
-	elsif ($opt_P eq 'ftp') {
-		$state->{ftp_only} = 1;
-	}
-	else {
-	    Usage "bad option: -P $opt_P";
-	}
-}
-if (defined $opt_Q) {
-	$state->{destdir} = $opt_Q;
-	$state->{do_faked} = 1;
-} elsif (defined $opt_B) {
-	$state->{destdir} = $opt_B;
-} elsif (defined $ENV{'PKG_PREFIX'}) {
-	$state->{destdir} = $ENV{'PKG_PREFIX'};
-}
-if (defined $state->{destdir}) {
-	$state->{destdir}.='/';
-	$ENV{'PKG_DESTDIR'} = $state->{destdir};
-} else {
-	$state->{destdir} = '';
-	delete $ENV{'PKG_DESTDIR'};
-}
-
-
-$state->{automatic} = $opt_a;
-$state->{allow_replacing} = $opt_r || $opt_u || $opt_U;
-$state->{hard_replace} = $opt_r;
-$state->{newupdates} = $opt_u || $opt_U;
-
-if (@ARGV == 0 && !$opt_u && !$opt_l) {
-	Usage "Missing pkgname";
-}
-
-# Here we create the list of packages to install
-# actually, an updateset list (@todo2), and we hope to do this lazily
-# later for the most part...
-my @todo2 = ();
 
 sub inform_user_of_problems
 {
@@ -976,13 +915,21 @@ sub do_quirks
 	};
 }
 
+# Here we create the list of packages to install
+# actually, an updateset list (@todo2), and we hope to do this lazily
+# later for the most part...
+my @todo2 = ();
+
+
 sub process_parameters
 {
-	my $add_hints = $opt_z ? "add_hints" : "add_hints2";
+	my ($self, $state) = @_;
+	my $add_hints = $state->opt('z') ? "add_hints" : "add_hints2";
 
 	# match fuzzily against a list
-	if ($opt_l) {
-		open my $f, '<', $opt_l or die "$!: bad list $opt_l";
+	if ($state->opt('l')) {
+		open my $f, '<', $state->opt('l') or 
+		    die "$!: bad list ".$state->opt('l');
 		my $_;
 		while (<$f>) {
 			chomp;
@@ -992,7 +939,7 @@ sub process_parameters
 	}
 
 	# update existing stuff
-	if ($opt_u) {
+	if ($state->opt('u')) {
 		require OpenBSD::PackageRepository::Installed;
 
 		if (@ARGV == 0) {
@@ -1028,6 +975,7 @@ sub process_parameters
 
 sub finish_display
 {
+	my ($self, $state) = @_;
 	OpenBSD::Add::manpages_index($state);
 
 
@@ -1049,9 +997,65 @@ sub finish_display
 	inform_user_of_problems($state);
 }
 
+sub handle_options
+{
+	my $self = shift;
+	my $state = $self->SUPER::handle_options('aruUzl:A:P:Q:', {},
+	    'pkg_add [-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
+	    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
-framework(
-sub {
+	$state->{do_faked} = 0;
+	$state->{arch} = $state->opt('A');
+
+	if (defined $state->opt('Q') and defined $state->opt('B')) {
+		Usage "-Q and -B are incompatible options";
+	}
+	if (defined $state->opt('Q') and defined $state->opt('r')) {
+		Usage "-r and -Q are incompatible options";
+	}
+	if ($state->opt('P')) {
+		if ($state->opt('P') eq 'cdrom') {
+			$state->{cdrom_only} = 1;
+		}
+		elsif ($state->opt('P') eq 'ftp') {
+			$state->{ftp_only} = 1;
+		}
+		else {
+		    Usage "bad option: -P ".$state->opt('P');
+		}
+	}
+	if (defined $state->opt('Q')) {
+		$state->{destdir} = $state->opt('Q');
+		$state->{do_faked} = 1;
+	} elsif (defined $state->opt('B')) {
+		$state->{destdir} = $state->opt('B');
+	} elsif (defined $ENV{'PKG_PREFIX'}) {
+		$state->{destdir} = $ENV{'PKG_PREFIX'};
+	}
+	if (defined $state->{destdir}) {
+		$state->{destdir}.='/';
+		$ENV{'PKG_DESTDIR'} = $state->{destdir};
+	} else {
+		$state->{destdir} = '';
+		delete $ENV{'PKG_DESTDIR'};
+	}
+
+
+	$state->{automatic} = $state->opt('a');
+	$state->{hard_replace} = $state->opt('r');
+	$state->{newupdates} = $state->opt('u') || $state->opt('U');
+	$state->{allow_replacing} = $state->{hard_replace} || 
+	    $state->{newupdates};
+
+	if (@ARGV == 0 && !$state->opt('u') && !$state->opt('l')) {
+		Usage "Missing pkgname";
+	}
+	return $state;
+}
+
+sub main
+{
+	my ($self, $state) = @_;
 	if ($state->{allow_replacing}) {
 		$state->progress->set_header("Checking packages");
 		do_quirks($state);
@@ -1068,5 +1072,12 @@ sub {
 			$state->quirks->tweak_list(\@todo2, $state);
 		};
 	}
-});
+}
 
+
+sub new_state
+{
+	return OpenBSD::PkgAdd::State->new;
+}
+
+1;

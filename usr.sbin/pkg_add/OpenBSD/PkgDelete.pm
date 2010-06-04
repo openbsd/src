@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.134 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -21,8 +21,8 @@ use warnings;
 
 use OpenBSD::AddDelete;
 
-package OpenBSD::State;
-our @ISA=(qw(OpenBSD::UI));
+package OpenBSD::PkgDelete::State;
+our @ISA = qw(OpenBSD::AddDelete::State);
 
 sub todo
 {
@@ -30,34 +30,14 @@ sub todo
 	return $state->{todo};
 }
 
-package OpenBSD::AddDelete;
-our ($state, %defines, $bad, $opt_B);
+package OpenBSD::PkgDelete;
+our @ISA = qw(OpenBSD::AddDelete);
 
 use OpenBSD::PackingList;
 use OpenBSD::RequiredBy;
 use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
 use OpenBSD::UpdateSet;
-
-handle_options('chxDnq', {},
-    'pkg_delete [-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
-
-local $SIG{'INFO'} = sub { $state->status->print($state); };
-$opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
-$opt_B = '' unless defined $opt_B;
-if ($opt_B ne '') {
-	$opt_B.='/' unless $opt_B =~ m/\/$/o;
-}
-$ENV{'PKG_DESTDIR'} = $opt_B;
-
-$state->{destdir} = $opt_B;
-if ($opt_B eq '') {
-    $state->{destdirname} = '';
-} else {
-    $state->{destdirname} = '${PKG_DESTDIR}';
-}
-
-$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
 
 my %done;
@@ -69,14 +49,16 @@ my @todo;
 
 sub process_parameters
 {
+	my ($self, $state) = @_;
 	OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames,
 	    "(removing them all)", $state);
 
 	@todo = OpenBSD::RequiredBy->compute_closure(@realnames);
 
 	if (@todo > @realnames) {
-		my $details = $state->verbose >= 2 || $defines{verbosedeps};
-		my $show    = sub {
+		my $details = $state->verbose >= 2 || 
+		    $state->defines('verbosedeps');
+		my $show = sub {
 			my ($p, $d) = @_;
 			$state->say("Can't remove ", join(' ', @$p),
 			    " without also removing:\n",
@@ -102,11 +84,11 @@ sub process_parameters
 			}
 		}
 		my $them = @todo > 1 ? 'them' : 'it';
-		if ($defines{dependencies} or
+		if ($state->defines('dependencies') or
 		    $state->confirm("Do you want to remove $them as well", 0)) {
 			$state->say("(removing $them as well)");
 		} else {
-			$bad = 1;
+			$state->{bad}++;
 		}
 	}
 }
@@ -115,8 +97,31 @@ sub finish_display
 {
 }
 
-framework(
-sub {
+sub handle_options
+{
+	my $self = shift;
+	my $state = $self->SUPER::handle_options('', {},
+	    'pkg_delete [-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
+
+	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
+	if ($base ne '') {
+		$base.='/' unless $base =~ m/\/$/o;
+	}
+	$ENV{'PKG_DESTDIR'} = $base;
+
+	$state->{destdir} = $base;
+	if ($base eq '') {
+	    $state->{destdirname} = '';
+	} else {
+	    $state->{destdirname} = '${PKG_DESTDIR}';
+	}
+	return $state;
+}
+
+sub main
+{
+	my ($self, $state) = @_;
+
 	# and finally, handle the removal
 	do {
 		$removed = 0;
@@ -136,7 +141,7 @@ sub {
 			}
 			my $r = OpenBSD::RequiredBy->new($pkgname);
 			if ($r->list > 0) {
-				if ($defines{baddepend}) {
+				if ($state->defines('baddepend')) {
 					for my $p ($r->list) {
 						if ($done{$p}) {
 							$r->delete($p);
@@ -164,4 +169,11 @@ sub {
 			$removed++;
 		}
 	} while ($removed);
-});
+}
+
+sub new_state
+{
+	return OpenBSD::PkgDelete::State->new;
+}
+
+1;

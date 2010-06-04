@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.33 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.34 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -62,7 +62,7 @@ sub collision_report($$)
 
 	my $destdir = $state->{destdir};
 
-	if ($state->{defines}->{removecollisions}) {
+	if ($state->defines('removecollisions')) {
 		require OpenBSD::Error;
 		for my $f (@$list) {
 			$state->unlink(1, $destdir.$f->fullname);
@@ -75,7 +75,7 @@ sub collision_report($$)
 	my $found = 0;
 
 	$state->errsay("Collision: the following files already exist");
-	if (!$state->{defines}->{dontfindcollisions}) {
+	if (!$state->defines('dontfindcollisions')) {
 		my $bypkg = find_collisions(\%todo, $state);
 		for my $pkg (sort keys %$bypkg) {
 		    for my $item (sort @{$bypkg->{$pkg}}) {
@@ -122,7 +122,7 @@ sub collision_report($$)
 	}
 	my $dorepair = 0;
 	if ($found == 0) {
-		if ($state->{defines}->{repair}) {
+		if ($state->defines('repair')) {
 			$dorepair = 1;
 		} elsif ($state->{interactive}) {
 			if ($state->confirm("It seems to be a missing package registration\nRepair", 0)) {

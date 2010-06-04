@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.126 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.127 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -405,7 +405,7 @@ sub find_dep_in_repositories
 	return unless $dep->spec->is_valid;
 
 	my $candidates = $self->{set}->match_locations($dep->spec);
-	if (!$state->{defines}->{allversions}) {
+	if (!$state->defines('allversions')) {
 		require OpenBSD::Search;
 		$candidates = OpenBSD::Search::FilterLocation->
 		    keep_most_recent->filter_locations($candidates);
@@ -509,7 +509,7 @@ sub solve_dependency
 	my $v;
 
 	if (defined $self->cached($dep)) {
-		if ($state->{defines}->{stat_cache}) {
+		if ($state->defines('stat_cache')) {
 			if (defined $global_cache->{$dep->{pattern}}) {
 				$state->print("Global ");
 			}
@@ -519,7 +519,7 @@ sub solve_dependency
 		$v = $self->cached($dep)->do($self, $state, $dep, $package);
 		return $v if $v;
 	}
-	if ($state->{defines}->{stat_cache}) {
+	if ($state->defines('stat_cache')) {
 		$state->say("No cache hit on $dep->{pattern}");
 	}
 

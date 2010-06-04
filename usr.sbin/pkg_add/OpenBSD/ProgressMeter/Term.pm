@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.3 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Term.pm,v 1.4 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -229,7 +229,8 @@ sub next
 
 sub ntogo
 {
-	&OpenBSD::UI::ntogo_string;
+	my ($self, $state, $offset) = @_;
+	return $state->ntogo_string($offset);
 }
 
 sub compute_size

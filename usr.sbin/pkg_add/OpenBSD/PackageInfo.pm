@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.45 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.46 2010/06/04 13:19:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -255,7 +255,7 @@ sub solve_installed_names
 			}
 			next if $found;
 
-			if ($state->{defines}->{ambiguous}) {
+			if ($state->defines('ambiguous')) {
 			    my @l = map {$_->name} @$r;
 			    $state->say("Ambiguous: $pkgname could be ",
 				join(' ', @l));

@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg,v 1.12 2010/05/10 09:17:54 espie Exp $
+# $OpenBSD: pkg,v 1.13 2010/06/04 13:19:39 espie Exp $
 #
-# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -19,42 +19,27 @@
 use strict;
 use warnings;
 
-use Getopt::Std;
-
-sub check_dependencies($)
+sub run
 {
-	require OpenBSD::Search;
-	require OpenBSD::PackageRepository::Installed;
-	my $dependency = shift;
-	my $m = OpenBSD::PackageRepository::Installed->new
-	    ->match_locations(OpenBSD::Search::PkgSpec->new($dependency));
-	return (@$m != 0) ? 1 : 0;
-}
-
-# Pass this off to the old package commands
-my %opts;
-my %legacy = map +($_, 1), qw{add info delete create};
-if (@ARGV == 0) {
-	die "needs arguments";
-}
-
-getopts('v', \%opts);
-
-my $cmd = shift;
-
-if (defined $legacy{$cmd}) {
-	if (defined $opts{'v'}) {
-		unshift(@ARGV, '-v');
+	my $cmd = shift;
+	my $module = "OpenBSD::Pkg\u$cmd";
+	eval "require $module;";
+	if ($@) {
+		die $@;
 	}
-	exec { "pkg_$cmd"} ("pkg_$cmd", @ARGV);
-} elsif ($cmd eq 'dependencies') {
-	my $sub = shift;
-	if ($sub eq 'check') {
-		if (check_dependencies(shift)) {
-			exit(0);
-		} else {
-			exit(1);
-		}
+	$module->parse_and_run;
+}
+my @l = qw(add create delete info);
+
+for my $i (@l) {
+	if ($0 =~ m/\/?pkg_$i$/) {
+		run($i);
 	}
 }
-die "Bad command $cmd";
+
+for my $i (@l) {
+	if ($ARGV[0] eq $i) {
+		shift;
+		run($i);
+	}
+}
