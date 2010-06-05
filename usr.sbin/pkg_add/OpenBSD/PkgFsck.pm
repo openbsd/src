@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgFsck.pm,v 1.1 2010/06/05 12:30:36 espie Exp $
+# $OpenBSD: PkgFsck.pm,v 1.2 2010/06/05 12:35:32 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -311,6 +311,7 @@ sub parse_and_run
 	$state->{interactive} = $state->opt('i');
 	$state->{force} = $state->opt('f');
 	$state->{quick} = $state->opt('q');
+	lock_db(0) unless $state->{subst}->value('nolock');
 	$self->run($state);
 	$state->log->dump;
 }
