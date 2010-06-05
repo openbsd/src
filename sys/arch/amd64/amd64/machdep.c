@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 2010/05/18 19:42:48 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.110 2010/06/05 05:55:56 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -537,6 +537,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
     union sigval val)
 {
 	struct proc *p = curproc;
+	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts * psp = p->p_sigacts;
 	struct sigcontext ksc;
@@ -573,6 +574,11 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		if (copyout(&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    (void *)sp, sizeof(struct fxsave64)))
 			sigexit(p, SIGILL);
+
+		/* Signal handlers get a completely clean FP state */
+		p->p_md.md_flags &= ~MDP_USEDFPU;
+		sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
+		sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	}
 
 	sip = 0;
@@ -650,9 +656,12 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	if (p->p_md.md_flags & MDP_USEDFPU)
 		fpusave_proc(p, 0);
 
-	if (ksc.sc_fpstate && (error = copyin(ksc.sc_fpstate,
-	    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave, sizeof (struct fxsave64))))
-		return (error);
+	if (ksc.sc_fpstate) {
+		if ((error = copyin(ksc.sc_fpstate,
+		    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave, sizeof (struct fxsave64))))
+			return (error);
+		p->p_md.md_flags |= MDP_USEDFPU;
+	}
 
 	ksc.sc_trapno = tf->tf_trapno;
 	ksc.sc_err = tf->tf_err;
