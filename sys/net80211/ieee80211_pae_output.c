@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.15 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.16 2010/06/05 15:54:35 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -497,6 +497,7 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct mbuf *m;
 	u_int16_t info;
 	u_int8_t *frm;
+	u_int8_t kid;
 
 	ni->ni_rsn_gstate = RSNA_REKEYNEGOTIATING;
 	if (++ni->ni_rsn_retries > 3) {
@@ -505,7 +506,11 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ieee80211_node_leave(ic, ni);
 		return 0;
 	}
-	k = &ic->ic_nw_keys[ic->ic_def_txkey];
+	if (ni->ni_flags & IEEE80211_NODE_REKEY)
+		kid = (ic->ic_def_txkey == 1) ? 2 : 1;
+	else
+		kid = ic->ic_def_txkey;
+	k = &ic->ic_nw_keys[kid];
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
 	    ((ni->ni_rsnprotos == IEEE80211_PROTO_WPA) ?
@@ -535,8 +540,12 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	} else {	/* RSN */
 		frm = ieee80211_add_gtk_kde(frm, ni, k);
 		if (ni->ni_flags & IEEE80211_NODE_MFP) {
+			if (ni->ni_flags & IEEE80211_NODE_REKEY)
+				kid = (ic->ic_igtk_kid == 4) ? 5 : 4;
+			else
+				kid = ic->ic_igtk_kid;
 			frm = ieee80211_add_igtk_kde(frm,
-			    &ic->ic_nw_keys[ic->ic_igtk_kid]);
+			    &ic->ic_nw_keys[kid]);
 		}
 	}
 	/* RSC = last transmit sequence number for the GTK */

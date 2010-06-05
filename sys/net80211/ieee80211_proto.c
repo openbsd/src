@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.41 2009/11/21 18:09:31 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.42 2010/06/05 15:54:35 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -430,10 +430,11 @@ ieee80211_node_gtk_rekey(void *arg, struct ieee80211_node *ni)
 		return;
 
 	/* initiate a group key handshake with STA */
-	if (ieee80211_send_group_msg1(ic, ni) == 0) {
-		ni->ni_flags |= IEEE80211_NODE_REKEY;
+	ni->ni_flags |= IEEE80211_NODE_REKEY;
+	if (ieee80211_send_group_msg1(ic, ni) != 0)
+		ni->ni_flags &= ~IEEE80211_NODE_REKEY;
+	else
 		ic->ic_rsn_keydonesta++;
-	}
 }
 
 /*
