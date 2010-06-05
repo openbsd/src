@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.2 2010/06/05 09:15:55 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,8 @@ use warnings;
 # common framework, let's place most everything in there
 
 package OpenBSD::AddCreateDelete::State;
+use OpenBSD::Subst;
+use OpenBSD::ProgressMeter;
 
 sub new
 {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.22 2010/06/05 07:35:21 landry Exp $
+# $OpenBSD: AddDelete.pm,v 1.23 2010/06/05 09:15:55 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -26,9 +26,7 @@ our $not;
 package OpenBSD::AddDelete;
 use OpenBSD::Error;
 use OpenBSD::Paths;
-use OpenBSD::ProgressMeter;
 use OpenBSD::PackageInfo;
-use OpenBSD::Subst;
 use OpenBSD::AddCreateDelete;
 
 our @ISA = qw(OpenBSD::AddCreateDelete);

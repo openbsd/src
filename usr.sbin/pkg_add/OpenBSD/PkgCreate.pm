@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.2 2010/06/04 17:29:53 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.3 2010/06/05 09:15:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -55,8 +55,6 @@ use OpenBSD::Error;
 use OpenBSD::Ustar;
 use OpenBSD::ArcCheck;
 use OpenBSD::Paths;
-use OpenBSD::Subst;
-use OpenBSD::ProgressMeter;
 use File::Basename;
 
 # Extra stuff needed to archive files
