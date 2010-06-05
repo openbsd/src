@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.58 2010/06/05 16:00:52 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.59 2010/06/05 16:14:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -454,7 +454,7 @@ dev_close(struct dev *d)
 				goto restart_mix;
 			}
 		}
-	} else if (d->sub || d->submon) {
+	} else if (d->sub) {
 		/*
 		 * Same as above, but since there's no mixer, 
 		 * we generate EOF on the record-end of the
@@ -463,10 +463,21 @@ dev_close(struct dev *d)
 	restart_sub:
 		LIST_FOREACH(f, &file_list, entry) {
 			if (f->rproc != NULL &&
-			    (aproc_depend(d->sub, f->rproc) ||
-			     aproc_depend(d->submon, f->rproc))) {
+			    aproc_depend(d->sub, f->rproc)) {
 				file_eof(f);
 				goto restart_sub;
+			}
+		}
+	} else if (d->submon) {
+		/*
+		 * Same as above
+		 */	
+	restart_submon:
+		LIST_FOREACH(f, &file_list, entry) {
+			if (f->rproc != NULL &&
+			    aproc_depend(d->submon, f->rproc)) {
+				file_eof(f);
+				goto restart_submon;
 			}
 		}
 	}
