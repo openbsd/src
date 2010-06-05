@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.48 2010/06/03 18:02:50 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.49 2010/06/05 18:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -921,10 +921,9 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct athn_softc *sc = ic->ic_softc;
-	uint32_t type, lo, hi;
-	uint16_t keybuf[8], micbuf[8];
-	const uint8_t *addr;
+	const uint8_t *txmic, *rxmic, *key, *addr;
 	uintptr_t entry, micentry;
+	uint32_t type, lo, hi;
 
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
@@ -944,9 +943,6 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return (ieee80211_set_key(ic, ni, k));
 	}
 
-	memset(keybuf, 0, sizeof(keybuf));
-	memcpy(keybuf, k->k_key, MIN(k->k_len, 16));
-
 	if (!(k->k_flags & IEEE80211_KEY_GROUP))
 		entry = IEEE80211_WEP_NKID + IEEE80211_AID(ni->ni_associd);
 	else
@@ -954,55 +950,65 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	k->k_priv = (void *)entry;
 
 	/* NB: See note about key cache registers access above. */
+	key = k->k_key;
 	if (type == AR_KEYTABLE_TYPE_TKIP) {
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			txmic = &key[16];
+			rxmic = &key[24];
+		} else
+#endif
+		{
+			rxmic = &key[16];
+			txmic = &key[24];
+		}
 		if (sc->flags & ATHN_FLAG_SPLIT_TKIP_MIC) {
 			/* Tx MIC is at entry + 64. */
 			micentry = entry + 64;
-			memcpy(micbuf, &k->k_key[16], 8);
 			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
-			    micbuf[0] | micbuf[1] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    micbuf[2] | micbuf[3] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
-			    AR_KEYTABLE_TYPE_CLR);
+			    LE_READ_4(&txmic[0]));
+			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), 0);
 
-			/* Rx MIC is at entry + 64 + 32. */
+			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
+			    LE_READ_4(&txmic[4]));
+			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
+
+			/* Rx MIC key is at entry + 64 + 32. */
 			micentry = entry + 64 + 32;
-			memcpy(micbuf, &k->k_key[24], 8);
 			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
-			    micbuf[0] | micbuf[1] << 16);
+			    LE_READ_4(&rxmic[0]));
+			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), 0);
+
 			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    micbuf[2] | micbuf[3] << 16);
-			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
-			    AR_KEYTABLE_TYPE_CLR);
+			    LE_READ_4(&rxmic[4]));
+			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), 0);
 		} else {
-			/* Tx+Rx MIC is at entry + 64. */
+			/* Tx+Rx MIC key is at entry + 64. */
 			micentry = entry + 64;
-			memcpy(micbuf, &k->k_key[16], 16);
 			AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
-			    micbuf[0] | micbuf[1] << 16);
+			    LE_READ_4(&rxmic[0]));
 			AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry),
-			    micbuf[5]);
+			    LE_READ_2(&txmic[2]));
+
 			AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
-			    micbuf[2] | micbuf[3] << 16);
+			    LE_READ_4(&rxmic[4]));
 			AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry),
-			    micbuf[4]);
+			    LE_READ_2(&txmic[0]));
+
 			AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry),
-			    micbuf[6] | micbuf[7] << 16);
+			    LE_READ_4(&txmic[4]));
 			AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry),
 			    AR_KEYTABLE_TYPE_CLR);
 		}
 	}
-	AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), keybuf[0] | keybuf[1] << 16);
-	AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), keybuf[2]);
-	AR_WRITE(sc, AR_KEYTABLE_KEY2(entry), keybuf[3] | keybuf[4] << 16);
-	AR_WRITE(sc, AR_KEYTABLE_KEY3(entry), keybuf[5]);
-	AR_WRITE(sc, AR_KEYTABLE_KEY4(entry), keybuf[6] | keybuf[7] << 16);
-	AR_WRITE(sc, AR_KEYTABLE_TYPE(entry), type);
+	AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), LE_READ_4(&key[ 0]));
+	AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), LE_READ_2(&key[ 4]));
 
-	/* Clear keys from the stack. */
-	memset(keybuf, 0, sizeof(keybuf));
-	memset(micbuf, 0, sizeof(micbuf));
+	AR_WRITE(sc, AR_KEYTABLE_KEY2(entry), LE_READ_4(&key[ 6]));
+	AR_WRITE(sc, AR_KEYTABLE_KEY3(entry), LE_READ_2(&key[10]));
+
+	AR_WRITE(sc, AR_KEYTABLE_KEY4(entry), LE_READ_4(&key[12]));
+	AR_WRITE(sc, AR_KEYTABLE_TYPE(entry), type);
 
 	if (!(k->k_flags & IEEE80211_KEY_GROUP)) {
 		addr = ni->ni_macaddr;
@@ -1724,6 +1730,8 @@ athn_init_tx_queues(struct athn_softc *sc)
 	for (qid = 0; qid < ATHN_QID_COUNT; qid++) {
 		SIMPLEQ_INIT(&sc->txq[qid].head);
 		sc->txq[qid].lastds = NULL;
+		sc->txq[qid].wait = NULL;
+		sc->txq[qid].queued = 0;
 
 		AR_WRITE(sc, AR_DRETRY_LIMIT(qid),
 		    SM(AR_D_RETRY_LIMIT_STA_SH, 32) |
@@ -1908,9 +1916,8 @@ athn_set_bss(struct athn_softc *sc, struct ieee80211_node *ni)
 {
 	const uint8_t *bssid = ni->ni_bssid;
 
-	AR_WRITE(sc, AR_BSS_ID0, bssid[0] | bssid[1] << 8 |
-	    bssid[2] << 16 | bssid[3] << 24);
-	AR_WRITE(sc, AR_BSS_ID1, bssid[4] | bssid[5] << 8 |
+	AR_WRITE(sc, AR_BSS_ID0, LE_READ_4(&bssid[0]));
+	AR_WRITE(sc, AR_BSS_ID1, LE_READ_2(&bssid[4]) |
 	    SM(AR_BSS_ID1_AID, IEEE80211_AID(ni->ni_associd)));
 }
 
@@ -2082,12 +2089,9 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	ops->spur_mitigate(sc, c, extc);
 	ops->init_from_rom(sc, c, extc);
 
-	AR_WRITE(sc, AR_STA_ID0,
-	    ic->ic_myaddr[0] <<  0 | ic->ic_myaddr[1] <<  8 |
-	    ic->ic_myaddr[2] << 16 | ic->ic_myaddr[3] << 24);
 	/* XXX */
-	AR_WRITE(sc, AR_STA_ID1,
-	    ic->ic_myaddr[4] <<  0 | ic->ic_myaddr[5] <<  8 |
+	AR_WRITE(sc, AR_STA_ID0, LE_READ_4(&ic->ic_myaddr[0]));
+	AR_WRITE(sc, AR_STA_ID1, LE_READ_2(&ic->ic_myaddr[4]) |
 	    sta_id1 | AR_STA_ID1_RTS_USE_DEF | AR_STA_ID1_CRPT_MIC_ENABLE);
 
 	athn_set_opmode(sc);
@@ -2652,7 +2656,7 @@ athn_init(struct ifnet *ifp)
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		/* Configure WEP keys. */
 		for (i = 0; i < IEEE80211_WEP_NKID; i++)
-			(void)athn_set_key(ic, NULL, &ic->ic_nw_keys[i]);
+			athn_set_key(ic, NULL, &ic->ic_nw_keys[i]);
 	}
 #endif
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)

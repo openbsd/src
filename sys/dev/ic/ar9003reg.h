@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003reg.h,v 1.1 2010/05/10 17:44:21 damien Exp $	*/
+/*	$OpenBSD: ar9003reg.h,v 1.2 2010/06/05 18:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -676,7 +676,7 @@
 #define AR_PHY_65NM_CH0_THERM_START		0x20000000
 #define AR_PHY_65NM_CH0_THERM_LOCAL		0x80000000
 
-
+#define AR9003_TX_QDEPTH	8
 #define AR9003_RX_LP_QDEPTH	128
 #define AR9003_RX_HP_QDEPTH	16
 

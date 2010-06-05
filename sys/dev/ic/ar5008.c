@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.7 2010/05/16 14:34:19 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.8 2010/06/05 18:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -597,8 +597,8 @@ ar5008_rx_alloc(struct athn_softc *sc)
 			goto fail;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0,
-		    bf->bf_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
+		    BUS_DMASYNC_PREREAD);
 
 		bf->bf_desc = ds;
 		bf->bf_daddr = rxq->map->dm_segs[0].ds_addr +
@@ -818,7 +818,7 @@ ar5008_rx_process(struct athn_softc *sc)
 	}
 
 	len = MS(ds->ds_status1, AR_RXS1_DATA_LEN);
-	if (__predict_false(len == 0 || len > ATHN_RXBUFSZ)) {
+	if (__predict_false(len < IEEE80211_MIN_LEN || len > ATHN_RXBUFSZ)) {
 		DPRINTF(("corrupted descriptor length=%d\n", len));
 		ifp->if_ierrors++;
 		goto skip;
@@ -874,7 +874,7 @@ ar5008_rx_process(struct athn_softc *sc)
 		u_int hdrlen = ieee80211_get_hdrlen(wh);
 		if (hdrlen & 3) {
 			ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
-			m_adj(m, 2);	/* XXX sure? */
+			m_adj(m, 2);
 		}
 	}
 #if NBPFILTER > 0
@@ -931,7 +931,7 @@ ar5008_tx_process(struct athn_softc *sc, int qid)
 	uint8_t failcnt;
 
 	bf = SIMPLEQ_FIRST(&txq->head);
-	if (__predict_false(bf == NULL))
+	if (bf == NULL)
 		return (ENOENT);
 	/* Get descriptor of last DMA segment. */
 	ds = &((struct ar_tx_desc *)bf->bf_descs)[bf->bf_map->dm_nsegs - 1];
@@ -1709,8 +1709,8 @@ ar5008_set_rxchains(struct athn_softc *sc)
 void
 ar5008_read_noisefloor(struct athn_softc *sc, int16_t *nf, int16_t *nf_ext)
 {
-/* Sign-extend 9-bit value to 16-bit. */
-#define SIGN_EXT(v)	((((int16_t)(v)) << 7) >> 7)
+/* Sign-extends 9-bit value (assumes upper bits are zeroes.) */
+#define SIGN_EXT(v)	(((v) ^ 0x100) - 0x100)
 	uint32_t reg;
 	int i;
 

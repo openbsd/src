@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.11 2010/05/16 14:34:19 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.12 2010/06/05 18:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -652,8 +652,8 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 		bf->bf_desc = ds;
 		bf->bf_daddr = bf->bf_map->dm_segs[0].ds_addr;
 
-		bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0,
-		    bf->bf_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
+		    BUS_DMASYNC_PREREAD);
 	}
 	return (0);
  fail:
@@ -852,7 +852,8 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	}
 
 	len = MS(ds->ds_status2, AR_RXS2_DATA_LEN);
-	if (__predict_false(len == 0 || len > ATHN_RXBUFSZ)) {
+	if (__predict_false(len < IEEE80211_MIN_LEN ||
+	    len > ATHN_RXBUFSZ - sizeof(*ds))) {
 		DPRINTF(("corrupted descriptor length=%d\n", len));
 		ifp->if_ierrors++;
 		goto skip;
@@ -892,7 +893,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 
 	/* Finalize mbuf. */
 	m->m_pkthdr.rcvif = ifp;
-	/* Strip Rx descriptor from head. */
+	/* Strip Rx status descriptor from head. */
 	m->m_data = (caddr_t)&ds[1];
 	m->m_pkthdr.len = m->m_len = len;
 
@@ -900,6 +901,14 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
 
+	/* Remove any HW padding after the 802.11 header. */
+	if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL)) {
+		u_int hdrlen = ieee80211_get_hdrlen(wh);
+		if (hdrlen & 3) {
+			ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
+			m_adj(m, 2);
+		}
+	}
 #if NBPFILTER > 0
 	if (__predict_false(sc->sc_drvbpf != NULL))
 		ar9003_rx_radiotap(sc, m, ds);
@@ -970,7 +979,7 @@ ar9003_tx_process(struct athn_softc *sc)
 	txq = &sc->txq[qid];
 
 	bf = SIMPLEQ_FIRST(&txq->head);
-	if (__predict_false(bf == NULL)) {
+	if (bf == NULL || bf == txq->wait) {
 		memset(ds, 0, sizeof(*ds));
 		return (0);
 	}
@@ -1018,13 +1027,27 @@ ar9003_tx_process(struct athn_softc *sc)
 
 	/* Link Tx buffer back to global free list. */
 	SIMPLEQ_INSERT_TAIL(&sc->txbufs, bf, bf_list);
+
+	/* Queue buffers that are waiting if there is new room. */
+	if (--txq->queued < AR9003_TX_QDEPTH && txq->wait != NULL) {
+		AR_WRITE(sc, AR_QTXDP(qid), txq->wait->bf_daddr);
+		txq->wait = SIMPLEQ_NEXT(txq->wait, bf_list);
+	}
 	return (0);
 }
 
 void
 ar9003_tx_intr(struct athn_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+
 	while (ar9003_tx_process(sc) == 0);
+
+	if (!SIMPLEQ_EMPTY(&sc->txbufs)) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+		ifp->if_start(ifp);
+	}
 }
 
 #ifndef IEEE80211_STA_ONLY
@@ -1553,20 +1576,18 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, bf->bf_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	if (!SIMPLEQ_EMPTY(&txq->head))
-		((struct ar_tx_desc *)txq->lastds)->ds_link = bf->bf_daddr;
-	else
-		AR_WRITE(sc, AR_QTXDP(qid), bf->bf_daddr);
-	txq->lastds = ds;
-	SIMPLEQ_REMOVE_HEAD(&sc->txbufs, bf_list);
-	SIMPLEQ_INSERT_TAIL(&txq->head, bf, bf_list);
-
 	DPRINTFN(6, ("Tx qid=%d nsegs=%d ctl11=0x%x ctl12=0x%x ctl14=0x%x\n",
 	    qid, bf->bf_map->dm_nsegs, ds->ds_ctl11, ds->ds_ctl12,
 	    ds->ds_ctl14));
 
-	/* Kick Tx. */
-	AR_WRITE(sc, AR_Q_TXE, 1 << qid);
+	SIMPLEQ_REMOVE_HEAD(&sc->txbufs, bf_list);
+	SIMPLEQ_INSERT_TAIL(&txq->head, bf, bf_list);
+
+	/* Queue buffer unless hardware FIFO is already full. */
+	if (++txq->queued <= AR9003_TX_QDEPTH)
+		AR_WRITE(sc, AR_QTXDP(qid), bf->bf_daddr);
+	else if (txq->wait == NULL)
+		txq->wait = bf;
 	return (0);
 }
 
@@ -1728,8 +1749,8 @@ ar9003_set_rxchains(struct athn_softc *sc)
 void
 ar9003_read_noisefloor(struct athn_softc *sc, int16_t *nf, int16_t *nf_ext)
 {
-/* Sign-extend 9-bit value to 16-bit. */
-#define SIGN_EXT(v)	((((int16_t)(v)) << 7) >> 7)
+/* Sign-extends 9-bit value (assumes upper bits are zeroes.) */
+#define SIGN_EXT(v)	(((v) ^ 0x100) - 0x100)
 	uint32_t reg;
 	int i;
 
@@ -1863,6 +1884,13 @@ ar9003_init_calib(struct athn_softc *sc)
 	txchainmask = rxchainmask = 0x7;
 	ar9003_init_chains(sc);
 
+	/* Perform Tx IQ calibration. */
+	ar9003_calib_tx_iq(sc);
+	/* Disable and re-enable the PHY chips. */
+	AR_WRITE(sc, AR_PHY_ACTIVE, AR_PHY_ACTIVE_DIS);
+	DELAY(5);
+	AR_WRITE(sc, AR_PHY_ACTIVE, AR_PHY_ACTIVE_EN);
+
 	/* Calibrate the AGC. */
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_CAL);
 	/* Poll for offset calibration completion. */
@@ -1874,11 +1902,6 @@ ar9003_init_calib(struct athn_softc *sc)
 	}
 	if (ntries == 10000)
 		return (ETIMEDOUT);
-
-#ifdef notyet
-	/* Perform Tx IQ calibration. */
-	ar9003_calib_tx_iq(sc);
-#endif
 
 	/* Restore chains masks. */
 	sc->txchainmask = txchainmask;
@@ -1895,8 +1918,7 @@ ar9003_do_calib(struct athn_softc *sc)
 
 	if (sc->cur_calib_mask & ATHN_CAL_IQ) {
 		reg = AR_READ(sc, AR_PHY_TIMING4);
-		reg = RW(reg, AR_PHY_TIMING4_IQCAL_LOG_COUNT_MAX,
-		    AR_MAX_LOG_CAL);
+		reg = RW(reg, AR_PHY_TIMING4_IQCAL_LOG_COUNT_MAX, 10);
 		AR_WRITE(sc, AR_PHY_TIMING4, reg);
 		AR_WRITE(sc, AR_PHY_CALMODE, AR_PHY_CALMODE_IQ);
 		AR_SETBITS(sc, AR_PHY_TIMING4, AR_PHY_TIMING4_DO_CAL);
@@ -1931,16 +1953,11 @@ ar9003_calib_iq(struct athn_softc *sc)
 	for (i = 0; i < AR_MAX_CHAINS; i++) {
 		cal = &sc->calib.iq[i];
 
-		/* Accumulate IQ calibration measures (clear on read). */
-		cal->pwr_meas_i += AR_READ(sc, AR_PHY_IQ_ADC_MEAS_0_B(i));
-		cal->pwr_meas_q += AR_READ(sc, AR_PHY_IQ_ADC_MEAS_1_B(i));
-		cal->iq_corr_meas +=
+		/* Read IQ calibration measures (clear on read). */
+		cal->pwr_meas_i = AR_READ(sc, AR_PHY_IQ_ADC_MEAS_0_B(i));
+		cal->pwr_meas_q = AR_READ(sc, AR_PHY_IQ_ADC_MEAS_1_B(i));
+		cal->iq_corr_meas =
 		    (int32_t)AR_READ(sc, AR_PHY_IQ_ADC_MEAS_2_B(i));
-	}
-	if (++sc->calib.nsamples < AR_CAL_SAMPLES) {
-		/* Not enough samples accumulated, continue. */
-		ar9003_do_calib(sc);
-		return;
 	}
 
 	for (i = 0; i < sc->nrxchains; i++) {
@@ -1994,8 +2011,8 @@ ar9003_calib_iq(struct athn_softc *sc)
 int
 ar9003_get_iq_corr(struct athn_softc *sc, int32_t res[6], int32_t coeff[2])
 {
-/* Sign-extend 12-bit values to 32-bit. */
-#define SIGN_EXT(v)	((((int32_t)(v)) << 20) >> 20)
+/* Sign-extends 12-bit value (assumes upper bits are zeroes.) */
+#define SIGN_EXT(v)	(((v) ^ 0x800) - 0x800)
 #define SCALE		(1 << 15)
 #define SHIFT		(1 <<  8)
 	struct {

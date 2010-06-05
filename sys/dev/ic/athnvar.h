@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.14 2010/05/16 14:34:19 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.15 2010/06/05 18:43:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -27,6 +27,9 @@ extern int athn_debug;
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
 #endif
+
+#define LE_READ_4(p)	((p)[0] | (p)[1] << 8 | (p)[2] << 16 | (p)[3] << 24)
+#define LE_READ_2(p)	((p)[0] | (p)[1] << 8)
 
 #define ATHN_RXBUFSZ	3872
 #define ATHN_TXBUFSZ	4096
@@ -82,6 +85,8 @@ struct athn_tx_buf {
 struct athn_txq {
 	SIMPLEQ_HEAD(, athn_tx_buf)	head;
 	void				*lastds;
+	struct athn_tx_buf		*wait;
+	int				queued;
 };
 
 struct athn_rx_buf {
