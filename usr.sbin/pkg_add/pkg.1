@@ -1,6 +1,6 @@
-.\"	$OpenBSD: pkg.1,v 1.4 2010/05/10 09:17:54 espie Exp $
+.\"	$OpenBSD: pkg.1,v 1.5 2010/06/05 07:11:43 espie Exp $
 .\"
-.\" Copyright (c) 2001-2004 Marc Espie <espie@openbsd.org>
+.\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,21 +14,33 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: June 5 2010 $
 .Dt PKG 1
 .Os
 .Sh NAME
 .Nm pkg
-.Nd replacement-to-be of pkg_* tools
+.Nd front-end to package tools
 .Sh DESCRIPTION
 .Nm
-is meant to be a replacement of the old pkg_* tools.
-For the time being, it should only be invoked internally by
+is the actual script that starts
 .Xr pkg_add 1 ,
-to handle dependencies.
+.Xr pkg_create 1 ,
+.Xr pkg_delete 1 ,
+and
+.Xr pkg_info 1 .
+.Pp
+It can be invoked as a link to those commands, or with
+.Ar add ,
+.Ar create ,
+.Ar delete ,
+.Ar info
+as first argument.
+.Pp
+Refer to the documentation of those commands for further info.
 .Sh SEE ALSO
-.Xr pkg_add 1
+.Xr pkg_add 1 ,
+.Xr pkg_create 1 ,
+.Xr pkg_delete 1 ,
+.Xr pkg_info 1
 .Sh AUTHORS
 This program was written by Marc Espie.
-.Sh BUGS
-This program's design is not even finished yet.

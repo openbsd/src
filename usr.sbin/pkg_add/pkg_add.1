@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.99 2010/05/10 14:14:08 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.100 2010/06/05 07:11:43 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: June 5 2010 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acIinqrsUuvxz
+.Op Fl acIimnqrsUuvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Oo Fl D Ar name
@@ -311,6 +311,10 @@ and
 will try its best to reproduce the installation, even if the
 version numbers don't quite match and even if some packages cannot
 be found.
+.It Fl m
+Causes
+.Nm
+to always display the progress meter in cases it would not do so by default.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.

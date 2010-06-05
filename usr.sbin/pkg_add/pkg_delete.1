@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.34 2010/05/10 09:12:18 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.35 2010/06/05 07:11:43 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: June 5 2010 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd delete software package distributions
 .Sh SYNOPSIS
 .Nm pkg_delete
-.Op Fl cIinqsvx
+.Op Fl cIimnqsvx
 .Op Fl B Ar pkg-destdir
 .Oo Fl D Ar name
 .Ns Oo Ns = Ns Ar value
@@ -93,6 +93,10 @@ If scripts exist for a given package, do not execute them.
 Switch on interactive mode.
 .Nm
 may ask questions to the user if faced with difficult decisions.
+.It Fl m
+Causes
+.Nm
+to always display the progress meter in cases it would not do so by default.
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.

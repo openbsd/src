@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.61 2010/05/10 09:17:55 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.62 2010/06/05 07:11:43 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: June 5 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@
 .Sh SYNOPSIS
 .Nm pkg_create
 .Bk -words
-.Op Fl nQqvx
+.Op Fl mnQqvx
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
 .Oo Fl D Ar name
@@ -163,6 +163,10 @@ Display the file (using
 after installing the package.
 Useful for things like
 legal notices on almost-free software, etc.
+.It Fl m
+Causes
+.Nm
+to always display the progress meter in cases it would not do so by default.
 .It Fl n
 Don't actually create a package.
 .It Fl P Ar pkg-dependency
