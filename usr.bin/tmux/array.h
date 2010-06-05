@@ -1,4 +1,4 @@
-/* $OpenBSD: array.h,v 1.4 2010/02/06 23:22:27 nicm Exp $ */
+/* $OpenBSD: array.h,v 1.5 2010/06/05 16:32:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2006 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -47,7 +47,7 @@
 	}								\
 } while (0)
 
-#define ARRAY_EMPTY(a) ((a) == NULL || (a)->num == 0)
+#define ARRAY_EMPTY(a) (((void *) (a)) == NULL || (a)->num == 0)
 #define ARRAY_LENGTH(a) ((a)->num)
 #define ARRAY_DATA(a) ((a)->list)
 
