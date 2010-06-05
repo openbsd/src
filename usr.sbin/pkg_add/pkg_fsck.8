@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_fsck.8,v 1.1 2010/06/05 12:30:36 espie Exp $
+.\"	$OpenBSD: pkg_fsck.8,v 1.2 2010/06/05 17:03:27 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -35,15 +35,16 @@ verifies as much information as it can about installed packages.
 .Pp
 .Nm
 is not needed under normal circumstances, but it can be used to recover after
-a catastrophic system failure in a middle of
-.Xr pkg_add 1 ,
+a catastrophic system failure in the middle of a
+.Xr pkg_add 1
+or
 .Xr pkg_delete 1 .
 .Pp
 .Nm
 performs the following checks:
 .Bl -tag -width small
 .It Packing-list sanity
-Checks that 
+Checks that
 .Pa /var/db/pkg
 only contains directories, that each directory holds a packing-list,
 and that said packing-list is an actual packing-list that matches the directory.
@@ -52,13 +53,13 @@ Checks that each file or directory in those packing-lists actually exist,
 and that their checksum matches what's recorded in the packing-list.
 .El
 .Pp
-Options are as follows:
-.Bl -tag -width flagq
+The options are as follows:
+.Bl -tag -width Ds
 .It Xo
 .Fl D
 .Ar name Ns Op = Ns Ar value
 .Xc
-for consistency with other pkg commands.
+For consistency with other pkg commands.
 No relevant defines so far.
 .It Fl f
 Force the removal of bogus package information.
@@ -82,9 +83,10 @@ Disable progress meter.
 .El
 .Sh SEE ALSO
 .Xr fsck 8
+.Sh AUTHORS
+This program was written by
+.An Marc Espie .
 .Sh BUGS
 Work in progress.
 More checks to be added.
 Use with caution.
-.Sh AUTHORS
-This program was written by Marc Espie.
