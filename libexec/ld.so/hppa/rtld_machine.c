@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.20 2010/05/27 08:26:49 kettenis Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.21 2010/06/05 17:04:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -368,8 +368,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		__asm __volatile("fdc 0(%0)" :: "r" (&got[-7]));
 		__asm __volatile("fdc 0(%0)" :: "r" (&got[-6]));
 		__asm __volatile("sync");
-		__asm __volatile("fic 0(%0)" :: "r" (&got[-7]));
-		__asm __volatile("fic 0(%0)" :: "r" (&got[-6]));
+		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-7]));
+		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-6]));
 		__asm __volatile("sync");
 
 		/*
