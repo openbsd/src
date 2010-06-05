@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2010/05/31 17:47:12 martinh Exp $
+#	$OpenBSD: Makefile,v 1.3 2010/06/05 17:29:14 martinh Exp $
 
 PROG=		ldapd
 MAN=		ldapd.8 ldapd.conf.5
@@ -16,6 +16,15 @@ CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 CLEANFILES+=	y.tab.h parse.c
+
+SCHEMA_FILES=	core.schema \
+		inetorgperson.schema \
+		nis.schema
+
+distribution:
+	for i in ${SCHEMA_FILES}; do \
+		${INSTALL} -C -o root -g wheel -m 0644 ${.CURDIR}/schema/$$i ${DESTDIR}/etc/ldap/; \
+	done
 
 .include <bsd.prog.mk>
 

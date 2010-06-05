@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.204 2010/05/17 18:14:47 naddy Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.205 2010/06/05 17:29:14 martinh Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -113,6 +113,17 @@ ufqdn		uname=root mode=0755
 # ./etc/kerberosV
 kerberosV
 # ./etc/kerberosV
+..
+
+# ./etc/ldap
+ldap
+
+# ./etc/ldap/certs
+certs		mode=0700
+# ./etc/ldap/certs
+..
+
+# ./etc/ldap
 ..
 
 # ./etc/mail
@@ -2330,6 +2341,11 @@ tabs		gname=crontab mode=01730
 
 # ./var/db
 db
+
+# ./var/db/ldap
+ldap		mode=0700
+# ./var/db/ldap
+..
 
 # ./var/db/ns
 ns
