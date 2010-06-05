@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.26 2010/06/04 07:02:59 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.27 2010/06/05 16:05:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1120,8 +1120,8 @@ ctl_eof(struct aproc *p, struct abuf *ibuf)
 	if (!(p->flags & APROC_QUIT))
 		return;
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (s->ops)
-			return;
+		if (s->ops != NULL)
+			s->ops->quit(s->arg);
 	}
 	if (!LIST_EMPTY(&p->outs) || !LIST_EMPTY(&p->ins))
 		aproc_del(p);
