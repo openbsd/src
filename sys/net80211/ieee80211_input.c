@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.113 2010/02/25 17:49:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.114 2010/06/05 13:13:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -902,7 +902,7 @@ void
 ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int hdrlen)
 {
-	struct ieee80211_qosframe_addr4 wh;	/* largest 802.11 header */
+	struct ieee80211_frame_addr4 wh;
 	struct ether_header *eh;
 	struct llc *llc;
 
@@ -911,7 +911,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m,
 		ic->ic_stats.is_rx_decap++;
 		return;
 	}
-	memcpy(&wh, mtod(m, caddr_t), hdrlen);
+	memcpy(&wh, mtod(m, caddr_t), MIN(hdrlen, sizeof(wh)));
 	llc = (struct llc *)(mtod(m, caddr_t) + hdrlen);
 	if (llc->llc_dsap == LLC_SNAP_LSAP &&
 	    llc->llc_ssap == LLC_SNAP_LSAP &&
