@@ -2499,6 +2499,7 @@
 ./usr/share/man/cat5/i386
 ./usr/share/man/cat5/i386/boot.conf.0
 ./usr/share/man/cat5/ifstated.conf.0
+./usr/share/man/cat5/iked.conf.0
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/info.0
 ./usr/share/man/cat5/inode.0
@@ -2790,6 +2791,8 @@
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
 ./usr/share/man/cat8/ifstated.0
+./usr/share/man/cat8/ikectl.0
+./usr/share/man/cat8/iked.0
 ./usr/share/man/cat8/inetd.0
 ./usr/share/man/cat8/init.0
 ./usr/share/man/cat8/intro.0

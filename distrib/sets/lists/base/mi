@@ -114,6 +114,7 @@
 ./sbin/growfs
 ./sbin/halt
 ./sbin/ifconfig
+./sbin/iked
 ./sbin/init
 ./sbin/ipsecctl
 ./sbin/isakmpd
@@ -944,6 +945,7 @@
 ./usr/libdata/perl5/Object/Accessor.pm
 ./usr/libdata/perl5/OpenBSD
 ./usr/libdata/perl5/OpenBSD/Add.pm
+./usr/libdata/perl5/OpenBSD/AddCreateDelete.pm
 ./usr/libdata/perl5/OpenBSD/AddDelete.pm
 ./usr/libdata/perl5/OpenBSD/ArcCheck.pm
 ./usr/libdata/perl5/OpenBSD/CollisionReport.pm
@@ -980,8 +982,12 @@
 ./usr/libdata/perl5/OpenBSD/PackingElement.pm
 ./usr/libdata/perl5/OpenBSD/PackingList.pm
 ./usr/libdata/perl5/OpenBSD/Paths.pm
+./usr/libdata/perl5/OpenBSD/PkgAdd.pm
 ./usr/libdata/perl5/OpenBSD/PkgCfl.pm
 ./usr/libdata/perl5/OpenBSD/PkgConfig.pm
+./usr/libdata/perl5/OpenBSD/PkgCreate.pm
+./usr/libdata/perl5/OpenBSD/PkgDelete.pm
+./usr/libdata/perl5/OpenBSD/PkgInfo.pm
 ./usr/libdata/perl5/OpenBSD/PkgSpec.pm
 ./usr/libdata/perl5/OpenBSD/ProgressMeter
 ./usr/libdata/perl5/OpenBSD/ProgressMeter.pm
@@ -2152,6 +2158,7 @@
 ./usr/sbin/hostapd
 ./usr/sbin/httpd
 ./usr/sbin/ifstated
+./usr/sbin/ikectl
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/kadmin
