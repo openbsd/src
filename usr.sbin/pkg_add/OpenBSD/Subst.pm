@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.9 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Subst.pm,v 1.10 2010/06/05 07:59:52 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -92,6 +92,7 @@ sub copy
 	my ($self, $srcname, $destname) = @_;
 	open my $dest, '>', $destname or die "can't open $destname";
 	$self->copy_fh($srcname, $dest);
+	return $dest;
 }
 
 sub has_fragment
