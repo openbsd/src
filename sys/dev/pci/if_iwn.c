@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.97 2010/06/05 18:52:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3674,7 +3674,7 @@ iwn4965_get_temperature(struct iwn_softc *sc)
 		return 0;
 
 	/* Sign-extend 23-bit R4 value to 32-bit. */
-	r4 = (r4 << 8) >> 8;
+	r4 = ((r4 & 0xffffff) ^ 0x800000) - 0x800000;
 	/* Compute temperature in Kelvin. */
 	temp = (259 * (r4 - r2)) / (r3 - r1);
 	temp = (temp * 97) / 100 + 8;
