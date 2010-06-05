@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.105 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.106 2010/06/05 16:22:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -518,7 +518,7 @@ sub from_installation
 
 	require OpenBSD::PackageInfo;
 
-	$code = \&defaultCode if !defined $code;
+	$code //= \&defaultCode;
 
 	if ($code == \&DependOnly && defined $plist_cache->{$pkgname}) {
 	    return $plist_cache->{$pkgname};
