@@ -59,7 +59,18 @@
 .el \{\
 .  nr IN 7.2n
 .\}
-.nr LL 6.5i
+.if n \{\
+.  nr ll 78n
+.  ll 78n
+.  nr lt 78n
+.  lt 78n
+.\}
+.el \{\
+.  nr ll 6.5i
+.  ll 6.5i
+.  nr lt 6.5i
+.  lt 6.5i
+.\}
 .PD
 .nr PS 10 \" normal point-size
 .nr SN 3n \" the indentation of sub-sub-headings relative to sub-headings
