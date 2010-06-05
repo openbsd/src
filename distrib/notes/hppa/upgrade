@@ -1,6 +1,4 @@
-dnl	$OpenBSD: upgrade,v 1.7 2009/05/17 00:31:51 sthen Exp $
-dnl Replace with this (removing the mention about the bootblocks update)
-dnl for 4.5 or 4.6, maybe...
+dnl	$OpenBSD: upgrade,v 1.8 2010/06/05 19:35:57 miod Exp $
 Warning! Upgrades to OpenBSD OSREV are currently only supported from the
 immediately previous release.  The upgrade process will also work with older
 releases, but might not execute some migration tasks that would be necessary
@@ -10,19 +8,16 @@ your data and reinstall from scratch.
 To upgrade OpenBSD OSREV from a previous version, start with the general
 instructions in the section "Installing OpenBSD".
 
-dnl For 4.5, alter this text to mention this is needed for bootblocks
-dnl older than 4.4.
-Warning! If you intend to upgrade by booting bsd.rd from the existing
-OpenBSD system disk, it will be necessary to update your boot blocks first.
-To do this, replace your existing boot blocks with the xxboot file provided
-in the OpenBSD/MACHINE OSrev distribution:
-
-  # cat xxboot > /usr/mdec/xxboot
-  # /sbin/disklabel -B /dev/rsd0c
-
-(assuming your system disk is sd0). Do NOT use `cp' to copy the boot blocks,
-as there are several hard links to /usr/mdec/xxboot which need to be
-preserved for this operation to succeed.
+    Warning! If you intend to upgrade an OpenBSD 4.4 system, or an even older
+    version, by booting bsd.rd from the existing OpenBSD system disk, it will
+    be necessary to update your boot blocks first.
+    To do this, replace your existing boot blocks with the xxboot file
+    provided in the OpenBSD/MACHINE OSrev distribution:
+	  # cat xxboot > /usr/mdec/xxboot
+	  # /sbin/disklabel -B /dev/rsd0c
+    (assuming your system disk is sd0). Do NOT use `cp' to copy the boot
+    blocks, as there are several hard links to /usr/mdec/xxboot which need
+    to be preserved for this operation to succeed.
 
 Boot from the LIF image ``lif{:--:}OSrev.fs'', or a RAMDISK kernel ``bsd.rd''.
 When prompted, select the (U)pgrade option rather than the (I)nstall
