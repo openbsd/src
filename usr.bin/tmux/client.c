@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.40 2010/06/05 16:29:45 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.41 2010/06/05 16:47:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -174,6 +174,13 @@ client_main(void)
 
 	/* Set up signals. */
 	set_signals(client_signal);
+
+	/*
+	 * Send a resize message immediately in case the terminal size has
+	 * changed between the identify message to the server and the MSG_READY
+	 * telling us to move into the client code.
+	 */
+	 client_write_server(MSG_RESIZE, NULL, 0);
 
 	/*
 	 * imsg_read in the first client poll loop (before the terminal has

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.31 2010/05/23 19:42:19 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.32 2010/06/05 16:47:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -561,9 +561,10 @@ server_client_msg_dispatch(struct client *c)
 			if (datalen != 0)
 				fatalx("bad MSG_RESIZE size");
 
-			tty_resize(&c->tty);
-			recalculate_sizes();
-			server_redraw_client(c);
+			if (tty_resize(&c->tty)) {
+				recalculate_sizes();
+				server_redraw_client(c);
+			}
 			break;
 		case MSG_EXITING:
 			if (datalen != 0)
