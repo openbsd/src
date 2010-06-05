@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgFsck.pm,v 1.3 2010/06/05 16:21:35 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.1 2010/06/05 17:15:32 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -171,7 +171,7 @@ sub dump
 	&OpenBSD::Error::delayed_output;
 }
 
-package OpenBSD::PkgFsck::State;
+package OpenBSD::PkgCheck::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
 
 sub init
@@ -191,7 +191,7 @@ sub log
 	}
 }
 
-package OpenBSD::PkgFsck;
+package OpenBSD::PkgCheck;
 our @ISA = qw(OpenBSD::AddCreateDelete);
 
 use OpenBSD::PackageInfo;
@@ -401,9 +401,9 @@ sub parse_and_run
 {
 	my $self = shift;
 
-	my $state = OpenBSD::PkgFsck::State->new;
+	my $state = OpenBSD::PkgCheck::State->new;
 	$self->handle_options('fiq', $state,
-		'pkg_fsck [-fimnqvx] [-B pkg-destdir] [-D value]');
+		'pkg_check [-fimnqvx] [-B pkg-destdir] [-D value]');
 	if (@ARGV != 0) {
 		Usage();
 	}
