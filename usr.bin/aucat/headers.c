@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.17 2010/06/05 16:52:28 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.18 2010/06/05 16:54:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -201,7 +201,7 @@ wav_readhdr(int fd, struct aparams *par, off_t *startpos, off_t *datasz, short *
 				return 0;
 			fmt_done = 1;
 		} else if (memcmp(chunk.id, wav_id_data, 4) == 0) {
-			*startpos = pos;
+			*startpos = pos + sizeof(riff) + sizeof(chunk);
 			*datasz = csize;
 			break;
 		} else {
