@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.39 2010/05/12 15:05:39 jsing Exp $ */
+/* $OpenBSD: client.c,v 1.40 2010/06/05 16:29:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -115,12 +114,9 @@ void
 client_send_identify(int flags)
 {
 	struct msg_identify_data	data;
-	struct winsize			ws;
 	char			       *term;
 	int				fd;
 
-	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1)
-		fatal("ioctl(TIOCGWINSZ)");
 	data.flags = flags;
 
 	if (getcwd(data.cwd, sizeof data.cwd) == NULL)
