@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.48 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.49 2010/06/05 12:45:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -354,6 +354,7 @@ sock_new(struct fileops *ops, int fd)
 	f->xrun = AMSG_IGNORE;
 	f->delta = 0;
 	f->tickpending = 0;
+	f->startpos = 0;
 	f->startpending = 0;
 	f->vol = f->lastvol = MIDI_MAXCTL;
 	f->slot = -1;
@@ -422,6 +423,7 @@ sock_allocbuf(struct sock *f)
 		f->walign = f->round;
 	}
 	f->delta = 0;
+	f->startpos = 0;
 	f->wmax = 0;
 	f->rmax = f->bufsz;
 	f->tickpending = 0;
@@ -563,14 +565,14 @@ sock_attach(struct sock *f, int force)
 	 * get the current position, the origin is when
 	 * the first sample is played/recorded
 	 */
-	f->delta = dev_getpos(f->dev) * (int)f->round / (int)f->dev->round;
+	f->startpos = dev_getpos(f->dev) * (int)f->round / (int)f->dev->round;
 	f->startpending = 1;
 	f->pstate = SOCK_RUN;
 #ifdef DEBUG
 	if (debug_level >= 3) {
 		sock_dbg(f);
 		dbg_puts(": attaching at ");
-		dbg_puti(f->delta);
+		dbg_puti(f->startpos);
 		dbg_puts("\n");
 	}
 #endif
@@ -1492,20 +1494,40 @@ sock_buildmsg(struct sock *f)
 	}
 
 	/*
-	 * If pos changed, build a MOVE message.
+	 * Send initial position
 	 */
-	if ((f->tickpending && f->delta > 0) || f->startpending) {
+	if (f->startpending) {
 #ifdef DEBUG
 		if (debug_level >= 4) {
 			sock_dbg(f);
-			dbg_puts(": building POS message, delta = ");
+			dbg_puts(": building POS message, pos = ");
+			dbg_puti(f->startpos);
+			dbg_puts("\n");
+		}
+#endif
+		AMSG_INIT(&f->wmsg);
+		f->wmsg.cmd = AMSG_POS;
+		f->wmsg.u.ts.delta = f->startpos;
+		f->wtodo = sizeof(struct amsg);
+		f->wstate = SOCK_WMSG;
+		f->startpending = 0;
+		return 1;
+	}
+
+	/*
+	 * If pos changed, build a MOVE message.
+	 */
+	if (f->tickpending) {
+#ifdef DEBUG
+		if (debug_level >= 4) {
+			sock_dbg(f);
+			dbg_puts(": building MOVE message, delta = ");
 			dbg_puti(f->delta);
 			dbg_puts("\n");
 		}
 #endif
 		f->wmax += f->delta;
-		if (f->delta > 0)
-			f->rmax += f->delta;
+		f->rmax += f->delta;
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_MOVE;
 		f->wmsg.u.ts.delta = f->delta;
@@ -1513,7 +1535,6 @@ sock_buildmsg(struct sock *f)
 		f->wstate = SOCK_WMSG;
 		f->delta = 0;
 		f->tickpending = 0;
-		f->startpending = 0;
 		return 1;
 	}
 

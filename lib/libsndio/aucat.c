@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.38 2010/05/25 06:51:28 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.39 2010/06/05 12:45:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -150,16 +150,19 @@ aucat_runmsg(struct aucat_hdl *hdl)
 		hdl->rstate = STATE_DATA;
 		hdl->rtodo = hdl->rmsg.u.data.size;
 		break;
+	case AMSG_POS:
+		DPRINTF("aucat: pos = %d, maxwrite = %u\n",
+		    hdl->rmsg.u.ts.delta, hdl->maxwrite);
+		hdl->rstate = STATE_MSG;
+		hdl->rtodo = sizeof(struct amsg);
+		break;
 	case AMSG_MOVE:
-		DPRINTF("aucat: tick, delta = %d\n", hdl->rmsg.u.ts.delta);
-		if (hdl->rmsg.u.ts.delta > 0)
-			hdl->maxwrite += hdl->rmsg.u.ts.delta * hdl->wbpf;
+		hdl->maxwrite += hdl->rmsg.u.ts.delta * hdl->wbpf;
 		hdl->delta += hdl->rmsg.u.ts.delta;
-		if (hdl->delta >= 0) {
-			DPRINTF("aucat: move: maxwrite = %d\n", hdl->maxwrite);
-			sio_onmove_cb(&hdl->sio, hdl->delta);
-			hdl->delta = 0;
-		}
+		DPRINTF("aucat: tick = %d, maxwrite = %u\n",
+		    hdl->rmsg.u.ts.delta, hdl->maxwrite);
+		sio_onmove_cb(&hdl->sio, hdl->delta);
+		hdl->delta = 0;
 		hdl->rstate = STATE_MSG;
 		hdl->rtodo = sizeof(struct amsg);
 		break;

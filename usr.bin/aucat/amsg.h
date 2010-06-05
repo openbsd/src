@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.16 2010/04/06 20:19:42 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.17 2010/06/05 12:45:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,11 +35,12 @@ struct amsg {
 #define AMSG_START	3	/* request the server to start the stream */
 #define AMSG_STOP	4	/* request the server to stop the stream */
 #define AMSG_DATA	5	/* data block */
-#define AMSG_MOVE	6	/* position changed */
-#define AMSG_GETCAP	7	/* get capabilities */
-#define AMSG_SETVOL	8	/* set volume */
-#define AMSG_HELLO	9	/* say hello, check versions and so ... */
-#define AMSG_BYE	10	/* ask server to drop connection */
+#define AMSG_POS	6	/* initial position */
+#define AMSG_MOVE	7	/* position changed */
+#define AMSG_GETCAP	8	/* get capabilities */
+#define AMSG_SETVOL	9	/* set volume */
+#define AMSG_HELLO	10	/* say hello, check versions and so ... */
+#define AMSG_BYE	11	/* ask server to drop connection */
 	uint32_t cmd;
 	uint32_t __pad;
 	union {
@@ -90,7 +91,7 @@ struct amsg {
 #define AMSG_MON	0x10			/* audio monitoring */
 #define AMSG_RECMASK	(AMSG_REC | AMSG_MON)	/* can record ? */
 			uint16_t proto;		/* protocol type */
-#define AMSG_VERSION	2
+#define AMSG_VERSION	3
 			uint8_t version;	/* protocol version */
 			uint8_t reserved1[5];	/* for future use */
 			char opt[12];		/* profile name */

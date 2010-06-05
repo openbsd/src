@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.92 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.93 2010/06/05 12:45:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -242,7 +242,7 @@ struct cfdev {
 	struct cfmidlist mids;		/* midi ports to subscribe */
 	struct aparams ipar;		/* input (read) parameters */
 	struct aparams opar;		/* output (write) parameters */
-	unsigned hold;		/* open immediately */
+	unsigned hold;			/* open immediately */
 	unsigned bufsz;			/* par.bufsz for sio device */
 	unsigned round;			/* par.round for sio device */
 	unsigned mode;			/* bitmap of MODE_XXX */
