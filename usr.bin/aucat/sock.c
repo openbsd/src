@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.49 2010/06/05 12:45:48 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.50 2010/06/05 16:00:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -409,23 +409,25 @@ void
 sock_allocbuf(struct sock *f)
 {
 	struct abuf *rbuf = NULL, *wbuf = NULL;
+	unsigned bufsz;
 
+	bufsz = f->bufsz + f->dev->bufsz / f->dev->round * f->round;
 	f->pstate = SOCK_START;
 	if (f->mode & AMSG_PLAY) {
-		rbuf = abuf_new(f->bufsz, &f->rpar);
+		rbuf = abuf_new(bufsz, &f->rpar);
 		aproc_setout(f->pipe.file.rproc, rbuf);
 		if (!ABUF_WOK(rbuf) || (f->pipe.file.state & FILE_EOF))
 			f->pstate = SOCK_READY;
+		f->rmax = bufsz * aparams_bpf(&f->rpar);
 	}
 	if (f->mode & AMSG_RECMASK) {
-		wbuf = abuf_new(f->bufsz, &f->wpar);
+		wbuf = abuf_new(bufsz, &f->wpar);
 		aproc_setin(f->pipe.file.wproc, wbuf);
 		f->walign = f->round;
+		f->wmax = 0;
 	}
 	f->delta = 0;
 	f->startpos = 0;
-	f->wmax = 0;
-	f->rmax = f->bufsz;
 	f->tickpending = 0;
 	f->startpending = 0;
 #ifdef DEBUG
@@ -433,6 +435,8 @@ sock_allocbuf(struct sock *f)
 		sock_dbg(f);
 		dbg_puts(": allocating ");
 		dbg_putu(f->bufsz);
+		dbg_puts("/");
+		dbg_putu(bufsz);
 		dbg_puts(" fr buffers, rmax = ");
 		dbg_putu(f->rmax);
 		dbg_puts("\n");
@@ -925,24 +929,6 @@ sock_setpar(struct sock *f)
 			dbg_puts(" xrun policy\n");
 		}
 #endif
-	}
-	if (AMSG_ISSET(p->bufsz)) {
-		/*
-		 * XXX: bufsz will become read-only, but for now
-		 *      allow old library to properly work
-		 */
-#ifdef DEBUG
-		if (debug_level >= 1) {
-			sock_dbg(f);
-			dbg_puts(": legacy client using ");
-			dbg_putx(p->bufsz);
-			dbg_puts("fr total buffer size\n");
-		}
-#endif
-		min = (f->dev->bufsz / f->dev->round) * f->round;
-		if (p->bufsz < min)
-			p->bufsz = min;
-		p->appbufsz = p->bufsz - min;
 	}
 	if (AMSG_ISSET(p->appbufsz)) {
 		rate = (f->mode & AMSG_PLAY) ? f->rpar.rate : f->wpar.rate;
@@ -1508,6 +1494,7 @@ sock_buildmsg(struct sock *f)
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_POS;
 		f->wmsg.u.ts.delta = f->startpos;
+		f->rmax += f->startpos;
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
 		f->startpending = 0;

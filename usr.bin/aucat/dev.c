@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.57 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.58 2010/06/05 16:00:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -105,7 +105,6 @@ void dev_close(struct dev *);
 void dev_start(struct dev *);
 void dev_stop(struct dev *);
 void dev_clear(struct dev *);
-void dev_prime(struct dev *);
 
 struct dev *dev_list = NULL;
 
@@ -115,7 +114,7 @@ struct dev *dev_list = NULL;
 struct dev *
 dev_new_sio(char *path,
     unsigned mode, struct aparams *dipar, struct aparams *dopar,
-    unsigned bufsz, unsigned round, unsigned hold, unsigned prime)
+    unsigned bufsz, unsigned round, unsigned hold)
 {
 	struct dev *d;
 
@@ -132,7 +131,6 @@ dev_new_sio(char *path,
 		d->reqipar = *dipar;
 	d->reqbufsz = bufsz;
 	d->reqround = round;
-	d->prime = prime;
 	d->hold = hold;
 	d->pstate = DEV_CLOSED;
 	d->next = dev_list;
@@ -171,7 +169,6 @@ dev_new_loop(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	d->reqmode = MODE_PLAY | MODE_REC | MODE_LOOP;
 	d->pstate = DEV_CLOSED;
 	d->hold = 0;
-	d->prime = 0;
 	d->next = dev_list;
 	dev_list = d;
 	return d;
@@ -193,7 +190,6 @@ dev_new_thru(void)
 	d->reqmode = 0;
 	d->pstate = DEV_CLOSED;
 	d->hold = 0;
-	d->prime = 0;
 	d->next = dev_list;
 	dev_list = d;
 	return d;
@@ -391,8 +387,6 @@ dev_open(struct dev *d)
 	}
 #endif
 	d->pstate = DEV_INIT;
-	if (d->prime)
-		dev_prime(d);
 	return 1;
 }
 
@@ -748,11 +742,8 @@ dev_run(struct dev *d)
 			dev_stop(d);
 			if (d->refcnt == 0 && !d->hold)
 				dev_close(d);
-			else {
+			else
 				dev_clear(d);
-				if (d->prime)
-					dev_prime(d);
-			}
 		}
 		break;
 	}
@@ -760,10 +751,7 @@ dev_run(struct dev *d)
 }
 
 /*
- * If the device is paused, then resume it. If the caller is using
- * full-duplex and its buffers are small, the ``prime'' flag
- * could be set to initialize device buffers with silence
- *
+ * If the device is paused, then resume it.
  * This routine can be called from aproc context.
  */
 void
@@ -1149,28 +1137,5 @@ dev_clear(struct dev *d)
 		}
 		sub_clear(d->submon);
 		mon_clear(d->mon);
-	}
-}
-
-/*
- * Fill with silence play buffers and schedule the same amount of recorded
- * samples to drop
- */
-void
-dev_prime(struct dev *d)
-{
-
-#ifdef DEBUG
-	if (debug_level >= 3)
-		dbg_puts("priming device\n");
-#endif
-	if (APROC_OK(d->mix)) {
-#ifdef DEBUG
-		if (!LIST_EMPTY(&d->mix->ins)) {
-			dbg_puts("play end not idle, can't prime device\n");
-			dbg_panic();	
-		}
-#endif
-		mix_prime(d->mix);
 	}
 }

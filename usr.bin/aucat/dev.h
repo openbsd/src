@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.24 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.25 2010/06/05 16:00:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,7 +32,6 @@ struct dev {
 	unsigned reqbufsz;			/* buffer size */
 	unsigned reqround;			/* block size */
 	unsigned reqrate;			/* sample rate */
-	unsigned prime;				/* prime play buffer? */
 	unsigned hold;				/* hold the device open ? */
 	unsigned refcnt;			/* number of openers */
 #define DEV_CLOSED	0			/* closed */
@@ -63,8 +62,7 @@ void dev_wakeup(struct dev *);
 struct dev *dev_new_thru(void);
 struct dev *dev_new_loop(struct aparams *, struct aparams *, unsigned);
 struct dev *dev_new_sio(char *, unsigned, 
-    struct aparams *, struct aparams *, unsigned, unsigned,
-    unsigned, unsigned);
+    struct aparams *, struct aparams *, unsigned, unsigned, unsigned);
 int  dev_thruadd(struct dev *, char *, int, int);
 void dev_midiattach(struct dev *, struct abuf *, struct abuf *);
 unsigned dev_roundof(struct dev *, unsigned);
