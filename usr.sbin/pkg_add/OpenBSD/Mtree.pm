@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Mtree.pm,v 1.7 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Mtree.pm,v 1.8 2010/06/05 12:01:08 espie Exp $
 #
 # Copyright (c) 2004-2005 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,7 @@ use File::Spec;
 
 sub parse_fh
 {
-	my ($mtree, $basedir, $fh) = @_;
+	my ($mtree, $basedir, $fh, $h) = @_;
 	my $_;
 	while(<$fh>) {
 		chomp;
@@ -43,15 +43,19 @@ sub parse_fh
 		}
 		$_ = $basedir;
 		while (s|/\./|/|o)	{}
-		$mtree->{File::Spec->canonpath($_)} = 1;
+		if (defined $h) {
+			$mtree->{File::Spec->canonpath($_)} //= {};
+		} else {
+			$mtree->{File::Spec->canonpath($_)} = 1;
+		}
 	}
 }
 
 sub parse
 {
-	my ($mtree, $basedir, $filename) = @_;
+	my ($mtree, $basedir, $filename, $h) = @_;
 	open my $file, '<', $filename or die "can't open $filename: $!";
-	parse_fh($mtree, $basedir, $file);
+	parse_fh($mtree, $basedir, $file, $h);
 	close $file;
 }
 

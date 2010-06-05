@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.4 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: Term.pm,v 1.5 2010/06/05 12:01:08 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -64,6 +64,7 @@ sub init
 	$self->find_window_size;
 	$self->{lastdisplay} = '';
 	$self->{continued} = 0;
+	$self->{work} = 0;
 	return unless defined $ENV{TERM} || defined $ENV{TERMCAP};
 	my $termios = POSIX::Termios->new;
 	$termios->getattr(0);
@@ -205,6 +206,12 @@ sub show
 	}
 }
 
+sub working
+{
+	my ($self, $slowdown) = @_;
+	$self->{work}++;
+	$self->message(substr("/-\\|", ($self->{work}/$slowdown) % 4, 1));
+}
 sub clear
 {
 	my $self = shift;
