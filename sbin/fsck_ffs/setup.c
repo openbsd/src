@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.42 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: setup.c,v 1.43 2010/06/05 07:36:23 jsing Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -80,26 +80,30 @@ setup(char *dev)
 	int doskipclean;
 	int32_t maxsymlinklen, nindir, inopb;
 	u_int64_t maxfilesize;
+	char *realdev;
 
 	havesb = 0;
 	fswritefd = fsreadfd = -1;
 	doskipclean = skipclean;
-	if (stat(dev, &statb) < 0) {
-		printf("Can't stat %s: %s\n", dev, strerror(errno));
-		return (0);
-	}
-	if (!S_ISCHR(statb.st_mode)) {
-		pfatal("%s is not a character device", dev);
-		if (reply("CONTINUE") == 0)
-			return (0);
-	}
-	if ((fsreadfd = open(dev, O_RDONLY)) < 0) {
+	if ((fsreadfd = opendev(dev, O_RDONLY, 0, &realdev)) < 0) {
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
+	if (fstat(fsreadfd, &statb) < 0) {
+		printf("Can't stat %s: %s\n", realdev, strerror(errno));
+		close(fsreadfd);
+		return (0);
+	}
+	if (!S_ISCHR(statb.st_mode)) {
+		pfatal("%s is not a character device", realdev);
+		if (reply("CONTINUE") == 0) {
+			close(fsreadfd);
+			return (0);
+		}
+	}
 	if (preen == 0)
-		printf("** %s", dev);
-	if (nflag || (fswritefd = open(dev, O_WRONLY)) < 0) {
+		printf("** %s", realdev);
+	if (nflag || (fswritefd = opendev(dev, O_WRONLY, 0, NULL)) < 0) {
 		fswritefd = -1;
 		if (preen)
 			pfatal("NO WRITE ACCESS");
@@ -123,7 +127,7 @@ setup(char *dev)
 	 * Read in the superblock, looking for alternates if necessary
 	 */
 	if (readsb(1) == 0) {
-		if (bflag || preen || calcsb(dev, fsreadfd, &proto) == 0)
+		if (bflag || preen || calcsb(realdev, fsreadfd, &proto) == 0)
 			return(0);
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return (0);
