@@ -34,6 +34,10 @@
 ./etc/inetd.conf
 ./etc/ipsec.conf
 ./etc/ksh.kshrc
+./etc/ldap/core.schema
+./etc/ldap/inetorgperson.schema
+./etc/ldap/nis.schema
+./etc/ldapd.conf
 ./etc/ldpd.conf
 ./etc/localtime
 ./etc/locate.rc

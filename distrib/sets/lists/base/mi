@@ -66,6 +66,8 @@
 ./etc/kerberosV
 ./etc/kerberosV/README
 ./etc/kerberosV/krb5.conf.example
+./etc/ldap
+./etc/ldap/certs
 ./etc/magic
 ./etc/mail
 ./etc/mtree
@@ -984,6 +986,7 @@
 ./usr/libdata/perl5/OpenBSD/Paths.pm
 ./usr/libdata/perl5/OpenBSD/PkgAdd.pm
 ./usr/libdata/perl5/OpenBSD/PkgCfl.pm
+./usr/libdata/perl5/OpenBSD/PkgCheck.pm
 ./usr/libdata/perl5/OpenBSD/PkgConfig.pm
 ./usr/libdata/perl5/OpenBSD/PkgCreate.pm
 ./usr/libdata/perl5/OpenBSD/PkgDelete.pm
@@ -2206,6 +2209,7 @@
 ./usr/sbin/pac
 ./usr/sbin/pkg
 ./usr/sbin/pkg_add
+./usr/sbin/pkg_check
 ./usr/sbin/pkg_create
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
@@ -4912,6 +4916,7 @@
 ./var/cron/atjobs
 ./var/cron/tabs
 ./var/db
+./var/db/ldap
 ./var/db/ns
 ./var/db/pkg
 ./var/db/sysmerge
