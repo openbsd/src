@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.21 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.22 2010/06/05 07:35:21 landry Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -272,7 +272,7 @@ sub choose_location
 
 		$h{'<None>'} = undef;
 		$state->progress->clear;
-		my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
+		my $result = $state->ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
 		return $h{$result};
 	} else {
 		$state->errsay("Ambiguous: $name could be ", join(' ', keys %h));
@@ -287,6 +287,14 @@ sub confirm
 	return 0 if !$state->{interactive};
 	require OpenBSD::Interactive;
 	return OpenBSD::Interactive::confirm($prompt, $default);
+}
+
+sub ask_list
+{
+	my ($state, $prompt, $interactive, @values) = @_;
+
+	require OpenBSD::Interactive;
+	return OpenBSD::Interactive::ask_list($prompt, $interactive, @values);
 }
 
 sub status
