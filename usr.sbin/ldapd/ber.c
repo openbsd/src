@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: ber.c,v 1.2 2010/06/05 15:27:35 martinh Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -26,12 +26,12 @@
 #include <stdlib.h>
 #include <err.h>	/* XXX for debug output */
 #include <stdio.h>	/* XXX for debug output */
-#include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <stdint.h>
 
 #include "ber.h"
+
 
 #define BER_TYPE_CONSTRUCTED	0x20	/* otherwise primitive */
 #define BER_TYPE_SINGLE_MAX	30
@@ -624,7 +624,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 	bzero(parent, sizeof(struct ber_element *) * _MAX_SEQ);
 
 	va_start(ap, fmt);
-	while (*fmt != '\0' && ber != NULL) {
+	while (*fmt) {
 		switch (*fmt++) {
 		case 'B':
 			ptr = va_arg(ap, void **);
@@ -717,6 +717,8 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			goto fail;
 		}
 
+		if (ber->be_next == NULL)
+			continue;
 		ber = ber->be_next;
 	}
 	va_end(ap);
@@ -735,7 +737,9 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
  *	ber	holds the socket
  *	root	fully populated element tree
  *
- * returns number of bytes written, or -1 on error and sets errno
+ * returns:
+ *      >=0     number of bytes written
+ *	-1	on failure and sets errno
  */
 int
 ber_write_elements(struct ber *ber, struct ber_element *root)
