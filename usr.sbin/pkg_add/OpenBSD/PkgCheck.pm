@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.1 2010/06/05 17:15:32 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.2 2010/06/05 18:08:31 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -304,7 +304,7 @@ sub sanity_check
 		eval {
 			$plist = OpenBSD::PackingList->fromfile($contents);
 		};
-		if ($@) {
+		if ($@ || !defined $plist) {
 			$state->errsay("$name: bad plist");
 			$self->may_remove($state, $name);
 			next;
