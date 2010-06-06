@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.33 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: main.c,v 1.34 2010/06/06 20:30:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -86,12 +86,11 @@ struct	curparse {
 static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"ok",
 	"text should be uppercase",
-	"sections out of conentional order",
+	"sections out of conventional order",
 	"section name repeats",
 	"out of order prologue",
 	"repeated prologue entry",
 	"list type must come first",
-	"column syntax is inconsistent",
 	"bad standard",
 	"bad library",
 	"bad escape sequence",
@@ -100,7 +99,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"superfluous width argument",
 	"bad date argument",
 	"bad width argument",
-	"unknown manual sction",
+	"unknown manual section",
 	"section not in conventional manual section",
 	"end of line whitespace",
 	"scope open on exit",
@@ -131,11 +130,12 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"macro requires body argument(s)",
 	"macro requires argument(s)",
 	"no title in document",
+	"missing list type",
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
+	"column syntax is inconsistent",
 	"missing font type",
 	"missing display type",
-	"missing list type",
 	"displays may not be nested",
 	"no scope to rewind: syntax violated",
 	"scope broken, syntax violated",

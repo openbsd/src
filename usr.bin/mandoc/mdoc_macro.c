@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.45 2010/06/06 18:08:41 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.46 2010/06/06 20:30:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -40,13 +40,13 @@ static	int	  	in_line_eoln(MACRO_PROT_ARGS);
 static	int	  	in_line_argn(MACRO_PROT_ARGS);
 static	int	  	in_line(MACRO_PROT_ARGS);
 static	int	  	obsolete(MACRO_PROT_ARGS);
+static	int	  	phrase_ta(MACRO_PROT_ARGS);
 
 static	int	  	append_delims(struct mdoc *, 
 				int, int *, char *);
 static	enum mdoct	lookup(enum mdoct, const char *);
 static	enum mdoct	lookup_raw(const char *);
-static	int	  	phrase(struct mdoc *, int, int, 
-				char *, enum margserr);
+static	int	  	phrase(struct mdoc *, int, int, char *);
 static	enum mdoct 	rew_alt(enum mdoct);
 static	int	  	rew_dobreak(enum mdoct, 
 				const struct mdoc_node *);
@@ -182,6 +182,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* br */
 	{ in_line_eoln, 0 }, /* sp */
 	{ in_line_eoln, 0 }, /* %U */
+	{ phrase_ta, MDOC_CALLABLE | MDOC_PARSED }, /* Ta */
 };
 
 const	struct mdoc_macro * const mdoc_macros = __mdoc_macros;
@@ -192,7 +193,7 @@ swarn(struct mdoc *mdoc, enum mdoc_type type,
 		int line, int pos, const struct mdoc_node *p)
 {
 	const char	*n, *t, *tt;
-	int		 rc;
+	enum mandocerr	 ec;
 
 	n = t = "<root>";
 	tt = "block";
@@ -225,11 +226,12 @@ swarn(struct mdoc *mdoc, enum mdoc_type type,
 		break;
 	}
 
-	rc = mdoc_vmsg(mdoc, MANDOCERR_SCOPE, line, pos,
-			"%s scope breaks %s of %s", tt, t, n);
+	ec = (MDOC_IGN_SCOPE & mdoc->pflags) ?
+		MANDOCERR_SCOPE : MANDOCERR_SYNTSCOPE;
 
-	/* FIXME: logic should be in driver. */
-	return(MDOC_IGN_SCOPE & mdoc->pflags ? rc : 0);
+	return(mdoc_vmsg(mdoc, ec, line, pos, 
+				"%s scope breaks %s of %s", 
+				tt, t, n));
 }
 
 
@@ -928,6 +930,7 @@ blk_full(MACRO_PROT_ARGS)
 	struct mdoc_node *head; /* save of head macro */
 	struct mdoc_node *body; /* save of body macro */
 	struct mdoc_node *n;
+	enum mdoc_type	  mtt;
 	enum mdoct	  ntok;
 	enum margserr	  ac, lac;
 	enum margverr	  av;
@@ -996,24 +999,38 @@ blk_full(MACRO_PROT_ARGS)
 
 	for ( ; ; ) {
 		la = *pos;
-		lac = ac;
+		/* Initialise last-phrase-type with ARGS_PEND. */
+		lac = ARGS_ERROR == ac ? ARGS_PEND : ac;
 		ac = mdoc_args(m, line, pos, buf, tok, &p);
 
 		if (ARGS_ERROR == ac)
 			return(0);
-		if (ARGS_EOLN == ac)
-			break;
 
-		if (ARGS_PEND == ac) {
-			if (ARGS_PPHRASE == lac)
-				ac = ARGS_PPHRASE;
-			else
-				ac = ARGS_PHRASE;
+		if (ARGS_EOLN == ac) {
+			if (ARGS_PPHRASE != lac && ARGS_PHRASE != lac)
+				break;
+			/*
+			 * This is necessary: if the last token on a
+			 * line is a `Ta' or tab, then we'll get
+			 * ARGS_EOLN, so we must be smart enough to
+			 * reopen our scope if the last parse was a
+			 * phrase or partial phrase.
+			 */
+			if ( ! rew_sub(MDOC_BODY, m, tok, line, ppos))
+				return(0);
+			if ( ! mdoc_body_alloc(m, line, ppos, tok))
+				return(0);
+			body = m->last;
+			break;
 		}
 
-		/* Don't emit leading punct. for phrases. */
+		/* 
+		 * Emit leading punctuation (i.e., punctuation before
+		 * the MDOC_HEAD) for non-phrase types.
+		 */
 
 		if (NULL == head && 
+				ARGS_PEND != ac &&
 				ARGS_PHRASE != ac &&
 				ARGS_PPHRASE != ac &&
 				ARGS_QWORD != ac &&
@@ -1023,24 +1040,47 @@ blk_full(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		/* Always re-open head for phrases. */
+		/* Open a head if one hasn't been opened. */
 
-		if (NULL == head || 
-				ARGS_PHRASE == ac || 
-				ARGS_PPHRASE == ac) {
+		if (NULL == head) {
 			if ( ! mdoc_head_alloc(m, line, ppos, tok))
 				return(0);
 			head = m->last;
 		}
 
-		if (ARGS_PHRASE == ac || ARGS_PPHRASE == ac) {
+		if (ARGS_PHRASE == ac || 
+				ARGS_PEND == ac ||
+				ARGS_PPHRASE == ac) {
+			/*
+			 * If we haven't opened a body yet, rewind the
+			 * head; if we have, rewind that instead.
+			 */
+
+			mtt = body ? MDOC_BODY : MDOC_HEAD;
+			if ( ! rew_sub(mtt, m, tok, line, ppos))
+				return(0);
+			
+			/* Then allocate our body context. */
+
+			if ( ! mdoc_body_alloc(m, line, ppos, tok))
+				return(0);
+			body = m->last;
+
+			/*
+			 * Process phrases: set whether we're in a
+			 * partial-phrase (this effects line handling)
+			 * then call down into the phrase parser.
+			 */
+
 			if (ARGS_PPHRASE == ac)
 				m->flags |= MDOC_PPHRASE;
-			if ( ! phrase(m, line, la, buf, ac))
+			if (ARGS_PEND == ac && ARGS_PPHRASE == lac)
+				m->flags |= MDOC_PPHRASE;
+
+			if ( ! phrase(m, line, la, buf))
 				return(0);
+
 			m->flags &= ~MDOC_PPHRASE;
-			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
-				return(0);
 			continue;
 		}
 
@@ -1069,7 +1109,7 @@ blk_full(MACRO_PROT_ARGS)
 	/* If we've already opened our body, exit now. */
 
 	if (NULL != body)
-		return(1);
+		goto out;
 
 	/*
 	 * If there is an open (i.e., unvalidated) sub-block requiring
@@ -1093,6 +1133,16 @@ blk_full(MACRO_PROT_ARGS)
 	if ( ! mdoc_body_alloc(m, line, ppos, tok))
 		return(0);
 
+out:
+	if ( ! (MDOC_FREECOL & m->flags))
+		return(1);
+
+	if ( ! rew_sub(MDOC_BODY, m, tok, line, ppos))
+		return(0);
+	if ( ! rew_sub(MDOC_BLOCK, m, tok, line, ppos))
+		return(0);
+
+	m->flags &= ~MDOC_FREECOL;
 	return(1);
 }
 
@@ -1582,26 +1632,24 @@ obsolete(MACRO_PROT_ARGS)
  * macro is encountered.
  */
 static int
-phrase(struct mdoc *m, int line, int ppos, char *buf, enum margserr ac)
+phrase(struct mdoc *m, int line, int ppos, char *buf)
 {
 	int		 la, pos;
-	enum margserr	 aac;
+	enum margserr	 ac;
 	enum mdoct	 ntok;
 	char		*p;
-
-	assert(ARGS_PHRASE == ac || ARGS_PPHRASE == ac);
 
 	for (pos = ppos; ; ) {
 		la = pos;
 
-		aac = mdoc_zargs(m, line, &pos, buf, 0, &p);
+		ac = mdoc_zargs(m, line, &pos, buf, 0, &p);
 
-		if (ARGS_ERROR == aac)
+		if (ARGS_ERROR == ac)
 			return(0);
-		if (ARGS_EOLN == aac)
+		if (ARGS_EOLN == ac)
 			break;
 
-		ntok = ARGS_QWORD == aac ? MDOC_MAX : lookup_raw(p);
+		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup_raw(p);
 
 		if (MDOC_MAX == ntok) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
@@ -1618,3 +1666,46 @@ phrase(struct mdoc *m, int line, int ppos, char *buf, enum margserr ac)
 }
 
 
+/* ARGSUSED */
+static int
+phrase_ta(MACRO_PROT_ARGS)
+{
+	int		  la;
+	enum mdoct	  ntok;
+	enum margserr	  ac;
+	char		 *p;
+
+	/*
+	 * FIXME: this is overly restrictive: if the `Ta' is unexpected,
+	 * it should simply error out with ARGSLOST.
+	 */
+
+	if ( ! rew_sub(MDOC_BODY, m, MDOC_It, line, ppos))
+		return(0);
+	if ( ! mdoc_body_alloc(m, line, ppos, MDOC_It))
+		return(0);
+
+	for (;;) {
+		la = *pos;
+		ac = mdoc_zargs(m, line, pos, buf, 0, &p);
+
+		if (ARGS_ERROR == ac)
+			return(0);
+		if (ARGS_EOLN == ac)
+			break;
+
+		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup_raw(p);
+
+		if (MDOC_MAX == ntok) {
+			if ( ! mdoc_word_alloc(m, line, la, p))
+				return(0);
+			continue;
+		}
+
+		if ( ! mdoc_macro(m, ntok, line, la, pos, buf))
+			return(0);
+		return(append_delims(m, line, pos, buf));
+	}
+
+	return(1);
+}

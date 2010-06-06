@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.5 2010/05/26 02:39:58 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.6 2010/06/06 20:30:08 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,12 +26,11 @@ __BEGIN_DECLS
 enum	mandocerr {
 	MANDOCERR_OK,
 	MANDOCERR_UPPERCASE, /* text should be uppercase */
-	MANDOCERR_SECOOO, /* sections out of conentional order */
+	MANDOCERR_SECOOO, /* sections out of conventional order */
 	MANDOCERR_SECREP, /* section name repeats */
 	MANDOCERR_PROLOGOOO, /* out of order prologue */
 	MANDOCERR_PROLOGREP, /* repeated prologue entry */
 	MANDOCERR_LISTFIRST, /* list type must come first */
-	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	MANDOCERR_BADSTANDARD, /* bad standard */
 	MANDOCERR_BADLIB, /* bad library */
 	MANDOCERR_BADESCAPE, /* bad escape sequence */
@@ -40,7 +39,7 @@ enum	mandocerr {
 	MANDOCERR_WIDTHARG, /* superfluous width argument */
 	MANDOCERR_BADDATE, /* bad date argument */
 	MANDOCERR_BADWIDTH, /* bad width argument */
-	MANDOCERR_BADMSEC, /* unknown manual sction */
+	MANDOCERR_BADMSEC, /* unknown manual section */
 	MANDOCERR_SECMSEC, /* section not in conventional manual section */
 	MANDOCERR_EOLNSPACE, /* end of line whitespace */
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
@@ -74,16 +73,16 @@ enum	mandocerr {
 	MANDOCERR_NOBODY, /* macro requires body argument(s) */
 	MANDOCERR_NOARGV, /* macro requires argument(s) */
 	MANDOCERR_NOTITLE, /* no title in document */
+	MANDOCERR_LISTTYPE, /* missing list type */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
 #define	MANDOCERR_ERROR		MANDOCERR_BODYLOST
 
+	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_FONTTYPE, /* missing font type */
 	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_DISPTYPE, /* missing display type */
-	/* FIXME: this should be a MANDOCERR_ERROR */
-	MANDOCERR_LISTTYPE, /* missing list type */
 	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_NESTEDDISP, /* displays may not be nested */
 	MANDOCERR_SYNTNOSCOPE, /* request scope close w/none open */

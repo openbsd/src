@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.26 2010/05/24 00:00:10 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.27 2010/06/06 20:30:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -149,6 +149,7 @@ enum	mdoct {
 	MDOC_br,
 	MDOC_sp,
 	MDOC__U,
+	MDOC_Ta,
 	MDOC_MAX
 };
 

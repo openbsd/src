@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.3,v 1.7 2010/05/26 02:55:16 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.8 2010/06/06 20:30:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2010 $
+.Dd $Mdocdate: June 6 2010 $
 .Dt MDOC 3
 .Os
 .Sh NAME
@@ -221,9 +221,7 @@ where capitalised non-terminals represent nodes.
 .It mnode
 \(<- BLOCK | ELEMENT | TEXT
 .It BLOCK
-\(<- (HEAD [TEXT])+ [BODY [TEXT]] [TAIL [TEXT]]
-.It BLOCK
-\(<- BODY [TEXT] [TAIL [TEXT]]
+\(<- HEAD [TEXT] (BODY [TEXT])+ [TAIL [TEXT]]
 .It ELEMENT
 \(<- TEXT*
 .It HEAD
@@ -237,12 +235,14 @@ where capitalised non-terminals represent nodes.
 .El
 .Pp
 Of note are the TEXT nodes following the HEAD, BODY and TAIL nodes of
-the BLOCK production.
-These refer to punctuation marks.
+the BLOCK production: these refer to punctuation marks.
 Furthermore, although a TEXT node will generally have a non-zero-length
 string, in the specific case of
 .Sq \&.Bd \-literal ,
 an empty line will produce a zero-length string.
+Multiple body parts are only found in invocations of
+.Sq \&Bl \-column ,
+where a new body introduces a new phrase.
 .Sh EXAMPLES
 The following example reads lines from stdin and parses them, operating
 on the finished parse tree with

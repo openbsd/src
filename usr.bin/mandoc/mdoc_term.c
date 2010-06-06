@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.84 2010/06/06 18:08:41 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.85 2010/06/06 20:30:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -78,7 +78,6 @@ static	void	  termp_dq_post(DECL_ARGS);
 static	void	  termp_fd_post(DECL_ARGS);
 static	void	  termp_fn_post(DECL_ARGS);
 static	void	  termp_fo_post(DECL_ARGS);
-static	void	  termp_ft_post(DECL_ARGS);
 static	void	  termp_in_post(DECL_ARGS);
 static	void	  termp_it_post(DECL_ARGS);
 static	void	  termp_lb_post(DECL_ARGS);
@@ -162,7 +161,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_bold_pre, termp_fd_post }, /* Fd */ 
 	{ termp_fl_pre, NULL }, /* Fl */
 	{ termp_fn_pre, termp_fn_post }, /* Fn */ 
-	{ termp_ft_pre, termp_ft_post }, /* Ft */ 
+	{ termp_ft_pre, NULL }, /* Ft */ 
 	{ termp_bold_pre, NULL }, /* Ic */ 
 	{ termp_in_pre, termp_in_post }, /* In */ 
 	{ termp_li_pre, NULL }, /* Li */
@@ -256,6 +255,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_sp_pre, NULL }, /* br */
 	{ termp_sp_pre, NULL }, /* sp */ 
 	{ termp_under_pre, termp____post }, /* %U */ 
+	{ NULL, NULL }, /* Ta */ 
 };
 
 
@@ -696,7 +696,7 @@ termp_it_pre(DECL_ARGS)
 
 	switch (type) {
 	case (LIST_column):
-		if (MDOC_BODY == n->type)
+		if (MDOC_HEAD == n->type)
 			break;
 		/*
 		 * Imitate groff's column handling:
@@ -711,8 +711,13 @@ termp_it_pre(DECL_ARGS)
 		/* LINTED */
 		dcol = ncols < 5 ? 4 : ncols == 5 ? 3 : 1;
 
+		/*
+		 * Calculate the offset by applying all prior MDOC_BODY,
+		 * so we stop at the MDOC_HEAD (NULL == nn->prev).
+		 */
+
 		for (i = 0, nn = n->prev; 
-				nn && i < (int)ncols; 
+				nn->prev && i < (int)ncols; 
 				nn = nn->prev, i++)
 			offset += dcol + a2width
 				(&bl->args->argv[vals[2]], i);
@@ -865,15 +870,18 @@ termp_it_pre(DECL_ARGS)
 			p->flags |= TERMP_DANGLE;
 		break;
 	case (LIST_column):
-		if (MDOC_HEAD == n->type) {
-			assert(n->next);
-			if (MDOC_BODY == n->next->type)
-				p->flags &= ~TERMP_NOBREAK;
-			else
-				p->flags |= TERMP_NOBREAK;
-			if (n->prev) 
-				p->flags |= TERMP_NOLPAD;
-		}
+		if (MDOC_HEAD == n->type)
+			break;
+
+		if (NULL == n->next)
+			p->flags &= ~TERMP_NOBREAK;
+		else
+			p->flags |= TERMP_NOBREAK;
+
+		assert(n->prev);
+		if (MDOC_BODY == n->prev->type) 
+			p->flags |= TERMP_NOLPAD;
+
 		break;
 	case (LIST_diag):
 		if (MDOC_HEAD == n->type)
@@ -925,9 +933,9 @@ termp_it_pre(DECL_ARGS)
 		 * XXX - this behaviour is not documented: the
 		 * right-most column is filled to the right margin.
 		 */
-		if (MDOC_HEAD == n->type &&
-				MDOC_BODY == n->next->type &&
-				p->rmargin < p->maxrmargin)
+		if (MDOC_HEAD == n->type)
+			break;
+		if (NULL == n->next && p->rmargin < p->maxrmargin)
 			p->rmargin = p->maxrmargin;
 		break;
 	default:
@@ -981,7 +989,7 @@ termp_it_pre(DECL_ARGS)
 			return(0);
 		break;
 	case (LIST_column):
-		if (MDOC_BODY == n->type)
+		if (MDOC_HEAD == n->type)
 			return(0);
 		break;
 	default:
@@ -1013,7 +1021,7 @@ termp_it_post(DECL_ARGS)
 			term_newln(p);
 		break;
 	case (LIST_column):
-		if (MDOC_HEAD == n->type)
+		if (MDOC_BODY == n->type)
 			term_flushln(p);
 		break;
 	default:
@@ -1345,12 +1353,7 @@ static void
 termp_fd_post(DECL_ARGS)
 {
 
-	if (n->sec != SEC_SYNOPSIS || ! (MDOC_LINE & n->flags))
-		return;
-
 	term_newln(p);
-	if (n->next && MDOC_Fd != n->next->tok)
-		term_vspace(p);
 }
 
 
@@ -1503,22 +1506,12 @@ static int
 termp_ft_pre(DECL_ARGS)
 {
 
-	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
-		if (n->prev && MDOC_Fo == n->prev->tok)
-			term_vspace(p);
+	/* NB: MDOC_LINE does not effect this! */
+	if (SEC_SYNOPSIS == n->sec && n->prev)
+		term_vspace(p);
 
 	term_fontpush(p, TERMFONT_UNDER);
 	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp_ft_post(DECL_ARGS)
-{
-
-	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
-		term_newln(p);
 }
 
 
@@ -1527,6 +1520,14 @@ static int
 termp_fn_pre(DECL_ARGS)
 {
 	const struct mdoc_node	*nn;
+
+	/* NB: MDOC_LINE has no effect on this macro! */
+	if (SEC_SYNOPSIS == n->sec) {
+		if (n->prev && MDOC_Ft == n->prev->tok)
+			term_newln(p);
+		else if (n->prev)
+			term_vspace(p);
+	}
 
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, n->child->string);
@@ -1558,8 +1559,9 @@ static void
 termp_fn_post(DECL_ARGS)
 {
 
-	if (n->sec == SEC_SYNOPSIS && n->next && MDOC_LINE & n->flags)
-		term_vspace(p);
+	/* NB: MDOC_LINE has no effect on this macro! */
+	if (SEC_SYNOPSIS == n->sec)
+		term_newln(p);
 }
 
 
@@ -1839,11 +1841,18 @@ static int
 termp_in_pre(DECL_ARGS)
 {
 
-	term_fontpush(p, TERMFONT_BOLD);
-	if (SEC_SYNOPSIS == n->sec)
-		term_word(p, "#include");
+	if (SEC_SYNOPSIS == n->sec && n->prev && MDOC_In != n->prev->tok)
+		term_vspace(p);
 
-	term_word(p, "<");
+	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags) {
+		term_fontpush(p, TERMFONT_BOLD);
+		term_word(p, "#include");
+		term_word(p, "<");
+	} else {
+		term_word(p, "<");
+		term_fontpush(p, TERMFONT_UNDER);
+	}
+
 	p->flags |= TERMP_NOSPACE;
 	return(1);
 }
@@ -1854,23 +1863,16 @@ static void
 termp_in_post(DECL_ARGS)
 {
 
-	term_fontpush(p, TERMFONT_BOLD);
+	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
+		term_fontpush(p, TERMFONT_BOLD);
+
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ">");
-	term_fontpop(p);
 
-	if (SEC_SYNOPSIS != n->sec && ! (MDOC_LINE & n->flags))
-		return;
-
-	term_newln(p);
-	/* 
-	 * XXX Not entirely correct.  If `.In foo bar' is specified in
-	 * the SYNOPSIS section, then it produces a single break after
-	 * the <foo>; mandoc asserts a vertical space.  Since this
-	 * construction is rarely used, I think it's fine.
-	 */
-	if (n->next && MDOC_In != n->next->tok)
-		term_vspace(p);
+	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags) {
+		term_fontpop(p);
+		term_newln(p);
+	}
 }
 
 
@@ -1979,23 +1981,29 @@ termp_pq_post(DECL_ARGS)
 static int
 termp_fo_pre(DECL_ARGS)
 {
-	const struct mdoc_node *nn;
 
-	if (MDOC_BODY == n->type) {
+	if (MDOC_BLOCK == n->type) {
+		/* NB: MDOC_LINE has no effect on this macro! */
+		if (SEC_SYNOPSIS != n->sec)
+			return(1);
+		if (n->prev && MDOC_Ft == n->prev->tok)
+			term_newln(p);
+		else if (n->prev)
+			term_vspace(p);
+		return(1);
+	} else if (MDOC_BODY == n->type) {
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, "(");
 		p->flags |= TERMP_NOSPACE;
 		return(1);
-	} else if (MDOC_HEAD != n->type) 
-		return(1);
+	} 
 
+	/* XXX: we drop non-initial arguments as per groff. */
+
+	assert(n->child);
+	assert(n->child->string);
 	term_fontpush(p, TERMFONT_BOLD);
-	for (nn = n->child; nn; nn = nn->next) {
-		assert(MDOC_TEXT == nn->type);
-		term_word(p, nn->string);
-	}
-	term_fontpop(p);
-
+	term_word(p, n->child->string);
 	return(0);
 }
 
@@ -2005,13 +2013,18 @@ static void
 termp_fo_post(DECL_ARGS)
 {
 
-	if (MDOC_BODY != n->type)
-		return;
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, ")");
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, ";");
-	term_newln(p);
+	if (MDOC_BLOCK == n->type) {
+		/* NB: MDOC_LINE has no effect on this macro! */
+		if (SEC_SYNOPSIS == n->sec)
+			term_newln(p);
+	} else if (MDOC_BODY == n->type) {
+		p->flags |= TERMP_NOSPACE;
+		term_word(p, ")");
+		if (SEC_SYNOPSIS == n->sec) {
+			p->flags |= TERMP_NOSPACE;
+			term_word(p, ";");
+		}
+	}
 }
 
 

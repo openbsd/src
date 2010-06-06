@@ -1,6 +1,6 @@
-/*	$Id: mdoc.c,v 1.55 2010/05/26 02:39:58 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.56 2010/06/06 20:30:08 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	/* LINTED */
 	"Dx",		"%Q",		"br",		"sp",
 	/* LINTED */
-	"%U"
+	"%U",		"Ta"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -272,11 +272,11 @@ mdoc_macro(struct mdoc *m, enum mdoct tok,
 		if ( ! mdoc_pmsg(m, ln, pp, MANDOCERR_BADPROLOG))
 			return(0);
 		if (NULL == m->meta.title)
-			m->meta.title = mandoc_strdup("unknown");
+			m->meta.title = mandoc_strdup("UNKNOWN");
 		if (NULL == m->meta.vol)
-			m->meta.vol = mandoc_strdup("local");
+			m->meta.vol = mandoc_strdup("LOCAL");
 		if (NULL == m->meta.os)
-			m->meta.os = mandoc_strdup("local");
+			m->meta.os = mandoc_strdup("LOCAL");
 		if (0 == m->meta.date)
 			m->meta.date = time(NULL);
 		m->flags |= MDOC_PBODY;
@@ -538,7 +538,8 @@ mdoc_node_delete(struct mdoc *m, struct mdoc_node *p)
 static int
 mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 {
-	char		*c, *ws, *end;
+	char		 *c, *ws, *end;
+	struct mdoc_node *n;
 
 	/* Ignore bogus comments. */
 
@@ -552,16 +553,45 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	if (SEC_NONE == m->lastnamed)
 		return(mdoc_pmsg(m, line, offs, MANDOCERR_NOTEXT));
 
+	assert(m->last);
+	n = m->last;
+
+	/*
+	 * Divert directly to list processing if we're encountering a
+	 * columnar MDOC_BLOCK with or without a prior MDOC_BLOCK entry
+	 * (a MDOC_BODY means it's already open, in which case we should
+	 * process within its context in the normal way).
+	 */
+
+	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
+			LIST_column == n->data.list) {
+		/* `Bl' is open without any children. */
+		m->flags |= MDOC_FREECOL;
+		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
+	}
+
+	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
+			NULL != n->parent &&
+			MDOC_Bl == n->parent->tok &&
+			LIST_column == n->parent->data.list) {
+		/* `Bl' has block-level `It' children. */
+		m->flags |= MDOC_FREECOL;
+		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
+	}
+
 	/*
 	 * Search for the beginning of unescaped trailing whitespace (ws)
 	 * and for the first character not to be output (end).
 	 */
+
+	/* FIXME: replace with strcspn(). */
 	ws = NULL;
 	for (c = end = buf + offs; *c; c++) {
 		switch (*c) {
 		case '-':
 			if (mandoc_hyph(buf + offs, c))
 				*c = ASCII_HYPH;
+			ws = NULL;
 			break;
 		case ' ':
 			if (NULL == ws)
@@ -646,6 +676,7 @@ macrowarn(struct mdoc *m, int ln, const char *buf, int offs)
 			buf, strlen(buf) > 3 ? "..." : "");
 
 	/* FIXME: logic should be in driver. */
+	/* FIXME: broken, will error out and not omit a message. */
 	return(MDOC_IGN_MACRO & m->pflags ? rc : 0);
 }
 
@@ -657,9 +688,10 @@ macrowarn(struct mdoc *m, int ln, const char *buf, int offs)
 int
 mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 {
-	enum mdoct	tok;
-	int		i, j, sv;
-	char		mac[5];
+	enum mdoct	  tok;
+	int		  i, j, sv;
+	char		  mac[5];
+	struct mdoc_node *n;
 
 	/* Empty lines are ignored. */
 
@@ -727,10 +759,51 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 		if ( ! mdoc_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE))
 			goto err;
 
-	/* 
-	 * Begin recursive parse sequence.  Since we're at the start of
-	 * the line, we don't need to do callable/parseable checks.
+	/*
+	 * If an initial macro or a list invocation, divert directly
+	 * into macro processing.
 	 */
+
+	if (NULL == m->last || MDOC_It == tok || MDOC_El == tok) {
+		if ( ! mdoc_macro(m, tok, ln, sv, &i, buf)) 
+			goto err;
+		return(1);
+	}
+
+	n = m->last;
+	assert(m->last);
+
+	/*
+	 * If the first macro of a `Bl -column', open an `It' block
+	 * context around the parsed macro.
+	 */
+
+	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
+			LIST_column == n->data.list) {
+		m->flags |= MDOC_FREECOL;
+		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
+			goto err;
+		return(1);
+	}
+
+	/*
+	 * If we're following a block-level `It' within a `Bl -column'
+	 * context (perhaps opened in the above block or in ptext()),
+	 * then open an `It' block context around the parsed macro.
+	 */
+
+	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
+			NULL != n->parent &&
+			MDOC_Bl == n->parent->tok &&
+			LIST_column == n->parent->data.list) {
+		m->flags |= MDOC_FREECOL;
+		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
+			goto err;
+		return(1);
+	}
+
+	/* Normal processing of a macro. */
+
 	if ( ! mdoc_macro(m, tok, ln, sv, &i, buf)) 
 		goto err;
 
