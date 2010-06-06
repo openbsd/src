@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.20 2010/04/05 08:11:34 armani Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.21 2010/06/06 17:53:31 miod Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -130,11 +130,8 @@ struct cfattach urndis_ca = {
 /*
  * Supported devices that we can't match by class IDs.
  */
-struct urndis_type {
-	u_int16_t	urndis_vid;
-	u_int16_t	urndis_pid;
-} urndis_devs[] = {
-	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID },
+static const struct usb_devno urndis_devs[] = {
+	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID }
 };
 
 usbd_status
@@ -1311,7 +1308,6 @@ urndis_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg		*uaa;
 	usb_interface_descriptor_t	*id;
-	int				 i;
 
 	uaa = aux;
 
@@ -1327,17 +1323,8 @@ urndis_match(struct device *parent, void *match, void *aux)
 	    id->bInterfaceProtocol == UIPROTO_RNDIS)
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 
-	for (i = 0; i < sizeof(urndis_devs) / sizeof(urndis_devs[0]); i++) {
-		struct urndis_type *t;
-
-		t = &urndis_devs[i];
-
-		if (uaa->vendor == t->urndis_vid &&
-		    uaa->product == t->urndis_pid)
-			return UMATCH_VENDOR_PRODUCT;
-	}
-
-	return (UMATCH_NONE);
+	return (usb_lookup(urndis_devs, uaa->vendor, uaa->product) != NULL) ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
