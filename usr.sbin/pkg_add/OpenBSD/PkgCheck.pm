@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.2 2010/06/05 18:08:31 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.3 2010/06/06 09:08:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -52,11 +52,28 @@ sub basic_check
 	if ($self->{symlink}) {
 		if (!-l $name) {
 			$state->log("$name is not a symlink\n");
+		} else {
+			if (readlink($name) ne $self->{symlink}) {
+				$state->log("$name should point to $self->{symlink} but points to ", readlink($name), " instead\n");
+			}
 		}
 		return;
 	}
 	if (!-f _) {
 		$state->log("$name is not a file\n");
+	}
+	if ($self->{link}) {
+		my ($a, $b) = (stat _)[0, 1];
+		if (!-f $state->{destdir}.$self->{link}) {
+			$state->log("$name should link to non-existent $self->{link}");
+		} else {
+			my ($c, $d) = (stat _)[0, 1];
+			if (defined $a && defined $c) {
+				if ($a != $c || $b != $d) {
+					$state->log("$name doesn't link to $self->{link}\n");
+				}
+			}
+		}
 	}
 }
 
@@ -368,19 +385,28 @@ sub localbase_check
 {
 	my ($self, $state) = @_;
 	$state->{known} //= {};
+	my $base = $state->{destdir}.OpenBSD::Paths->localbase;
+	$state->{known}{$base."/man"}{'whatis.db'} = 1;
+	$state->{known}{$base."/info"}{'dir'} = 1;
+	$state->{known}{$base."/lib/X11"}{'app-defaults'} = 1;
+	$state->{known}{$base."/libdata"} = {};
+	$state->{known}{$base."/libdata/perl5"} = {};
 	# XXX
-	OpenBSD::Mtree::parse($state->{known}, 
-	    $state->{destdir}.OpenBSD::Paths->localbase,
+	OpenBSD::Mtree::parse($state->{known}, $base,
 	    "/etc/mtree/BSD.local.dist", 1);
 	$state->progress->set_header("Other files");
 	find(sub {
 		$state->progress->working(1024);
 		if (-d $_) {
 			return if defined $state->{known}{$File::Find::name};
+			if (-l $_) {
+				return if $state->{known}{$File::Find::dir}{$_};
+			}
+			$state->say("Unknown directory $File::Find::name");
 		} else {
 			return if $state->{known}{$File::Find::dir}{$_};
+			$state->say("Unknown file $File::Find::name");
 		}
-		$state->say("Unknown object $File::Find::name");
 	}, OpenBSD::Paths->localbase);
 }
 
@@ -395,6 +421,7 @@ sub run
 	$self->package_files_check($state, \@list);
 	$state->log->dump;
 	$self->localbase_check($state);
+	$state->progress->next;
 }
 
 sub parse_and_run
