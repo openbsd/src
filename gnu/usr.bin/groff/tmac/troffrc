@@ -20,7 +20,7 @@
 troffrc!X100 troffrc!X100-12 troffrc!lj4 troffrc!html
 .do tr \[char160]
 .\" Set the hyphenation language to `us'.
-.\" .do hla us
+.do hla us
 .\" Load hyphenation patterns from `hyphen.us' (in the tmac directory).
-.\" .do hpf hyphen.us
+.do hpf hyphen.us
 .\" Don't let blank lines creep in here.
