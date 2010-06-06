@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.32 2010/05/16 02:06:50 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.33 2010/06/06 18:08:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2010 $
+.Dd $Mdocdate: June 6 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -731,7 +731,9 @@ Note that the
 macro is a
 .Sx Block partial-implicit
 only when invoked as the first macro
-in a SYNOPSIS section line, else it is
+in a
+.Em SYNOPSIS
+section line, else it is
 .Sx In-line .
 .Ss In-line
 Closed by
@@ -1644,6 +1646,28 @@ and
 .Ss \&In
 .Ss \&It
 .Ss \&Lb
+Specify a library.
+The calling syntax is as follows:
+.Pp
+.D1 \. Ns Sx \&Lb Cm library
+.Pp
+The
+.Cm library
+parameter may be a system library, such as
+.Cm libz
+or
+.Cm libpam ,
+in which case a small library description is printed next to the linker
+invocation; or a custom library, in which case the library name is
+printed in quotes.
+This is most commonly used in the
+.Em SYNOPSIS
+section as described in
+.Sx MANUAL STRUCTURE .
+.Pp
+Examples:
+.D1 \&.Lb libz
+.D1 \&.Lb mdoc
 .Ss \&Li
 .Ss \&Lk
 Format a hyperlink.
@@ -1796,6 +1820,8 @@ line.
 .Ss \&Sy
 .Ss \&Tn
 .Ss \&Ud
+Prints out
+.Dq currently under development.
 .Ss \&Ux
 Format the UNIX name.
 Accepts no argument.

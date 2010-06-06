@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.2 2010/05/20 00:58:02 schwarze Exp $ */
+/*	$Id: roff.c,v 1.3 2010/06/06 18:08:41 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,6 +19,7 @@
 #endif
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -91,6 +92,7 @@ struct	roffmac {
 	roffproc	 sub; /* process as child of macro */
 	int		 flags;
 #define	ROFFMAC_STRUCT	(1 << 0) /* always interpret */
+	struct roffmac	*next;
 };
 
 static	enum rofferr	 roff_block(ROFF_ARGS);
@@ -103,31 +105,64 @@ static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_line(ROFF_ARGS);
 
-const	struct roffmac	 roffs[ROFF_MAX] = {
-	{ "am", roff_block, roff_block_text, roff_block_sub, 0 },
-	{ "ami", roff_block, roff_block_text, roff_block_sub, 0 },
-	{ "am1", roff_block, roff_block_text, roff_block_sub, 0 },
-	{ "de", roff_block, roff_block_text, roff_block_sub, 0 },
-	{ "dei", roff_block, roff_block_text, roff_block_sub, 0 },
-	{ "de1", roff_block, roff_block_text, roff_block_sub, 0 },
-	{ "ds", roff_line, NULL, NULL, 0 },
-	{ "el", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT },
-	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT },
-	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT },
-	{ "ig", roff_block, roff_block_text, roff_block_sub, 0 },
-	{ "rm", roff_line, NULL, NULL, 0 },
-	{ "tr", roff_line, NULL, NULL, 0 },
-	{ ".", roff_cblock, NULL, NULL, 0 },
-	{ "\\}", roff_ccond, NULL, NULL, 0 },
+/* See roff_hash_find() */
+
+#define	ASCII_HI	 126
+#define	ASCII_LO	 33
+#define	HASHWIDTH	(ASCII_HI - ASCII_LO + 1)
+
+static	struct roffmac	*hash[HASHWIDTH];
+
+static	struct roffmac	 roffs[ROFF_MAX] = {
+	{ "am", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "ami", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "am1", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "de", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "dei", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "de1", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "ds", roff_line, NULL, NULL, 0, NULL },
+	{ "el", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
+	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
+	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
+	{ "ig", roff_block, roff_block_text, roff_block_sub, 0, NULL },
+	{ "rm", roff_line, NULL, NULL, 0, NULL },
+	{ "tr", roff_line, NULL, NULL, 0, NULL },
+	{ ".", roff_cblock, NULL, NULL, 0, NULL },
+	{ "\\}", roff_ccond, NULL, NULL, 0, NULL },
 };
 
 static	void		 roff_free1(struct roff *);
 static	enum rofft	 roff_hash_find(const char *);
+static	void		 roff_hash_init(void);
 static	void		 roffnode_cleanscope(struct roff *);
 static	int		 roffnode_push(struct roff *, 
 				enum rofft, int, int);
 static	void		 roffnode_pop(struct roff *);
 static	enum rofft	 roff_parse(const char *, int *);
+
+/* See roff_hash_find() */
+#define	ROFF_HASH(p)	(p[0] - ASCII_LO)
+
+static void
+roff_hash_init(void)
+{
+	struct roffmac	 *n;
+	int		  buc, i;
+
+	for (i = 0; i < (int)ROFF_MAX; i++) {
+		assert(roffs[i].name[0] >= ASCII_LO);
+		assert(roffs[i].name[0] <= ASCII_HI);
+
+		buc = ROFF_HASH(roffs[i].name);
+
+		if (NULL != (n = hash[buc])) {
+			for ( ; n->next; n = n->next)
+				/* Do nothing. */ ;
+			n->next = &roffs[i];
+		} else
+			hash[buc] = &roffs[i];
+	}
+}
 
 
 /*
@@ -137,13 +172,26 @@ static	enum rofft	 roff_parse(const char *, int *);
 static enum rofft
 roff_hash_find(const char *p)
 {
-	int		 i;
+	int		 buc;
+	struct roffmac	*n;
 
-	/* FIXME: make this be fast and efficient. */
+	/*
+	 * libroff has an extremely simple hashtable, for the time
+	 * being, which simply keys on the first character, which must
+	 * be printable, then walks a chain.  It works well enough until
+	 * optimised.
+	 */
 
-	for (i = 0; i < (int)ROFF_MAX; i++)
-		if (0 == strcmp(roffs[i].name, p))
-			return((enum rofft)i);
+	if (p[0] < ASCII_LO || p[0] > ASCII_HI)
+		return(ROFF_MAX);
+
+	buc = ROFF_HASH(p);
+
+	if (NULL == (n = hash[buc]))
+		return(ROFF_MAX);
+	for ( ; n; n = n->next)
+		if (0 == strcmp(n->name, p))
+			return((enum rofft)(n - roffs));
 
 	return(ROFF_MAX);
 }
@@ -236,6 +284,8 @@ roff_alloc(const mandocmsg msg, void *data)
 	r->msg = msg;
 	r->data = data;
 	r->rstackpos = -1;
+	
+	roff_hash_init();
 	return(r);
 }
 

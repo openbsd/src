@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.26 2010/05/26 02:55:16 schwarze Exp $
+.\"	$Id: man.7,v 1.27 2010/06/06 18:08:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2010 $
+.Dd $Mdocdate: June 6 2010 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -809,8 +809,9 @@ arguments must be provided.
 The
 .Cm date
 argument should be formatted as described in
-.Sx Dates :
-if it does not conform, the current date is used instead.
+.Sx Dates ,
+but will be printed verbatim if it is not.
+If the date is not specified, the current date is used.
 The
 .Cm source
 string specifies the organisation providing the utility.

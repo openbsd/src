@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.33 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: man.c,v 1.34 2010/06/06 18:08:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -142,6 +142,8 @@ man_free1(struct man *man)
 		free(man->meta.title);
 	if (man->meta.source)
 		free(man->meta.source);
+	if (man->meta.rawdate)
+		free(man->meta.rawdate);
 	if (man->meta.vol)
 		free(man->meta.vol);
 	if (man->meta.msec)

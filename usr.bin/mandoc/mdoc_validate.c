@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.58 2010/05/26 02:39:58 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.59 2010/06/06 18:08:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -88,6 +88,7 @@ static	int	 post_sh(POST_ARGS);
 static	int	 post_sh_body(POST_ARGS);
 static	int	 post_sh_head(POST_ARGS);
 static	int	 post_st(POST_ARGS);
+static	int	 post_eoln(POST_ARGS);
 static	int	 post_vt(POST_ARGS);
 static	int	 pre_an(PRE_ARGS);
 static	int	 pre_bd(PRE_ARGS);
@@ -107,6 +108,7 @@ static	v_post	 posts_bd[] = { hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
 static	v_post	 posts_bool[] = { eerr_eq1, ebool, NULL };
+static	v_post	 posts_eoln[] = { post_eoln, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
 static	v_post	 posts_it[] = { post_it, NULL };
 static	v_post	 posts_lb[] = { eerr_eq1, post_lb, NULL };
@@ -123,7 +125,6 @@ static	v_post	 posts_text1[] = { eerr_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
 static	v_post	 posts_wline[] = { bwarn_ge1, herr_eq0, NULL };
 static	v_post	 posts_wtext[] = { ewarn_ge1, NULL };
-static	v_post	 posts_xr[] = { ewarn_ge1, NULL };
 static	v_pre	 pres_an[] = { pre_an, NULL };
 static	v_pre	 pres_bd[] = { pre_display, pre_bd, NULL };
 static	v_pre	 pres_bl[] = { pre_bl, NULL };
@@ -134,7 +135,6 @@ static	v_pre	 pres_er[] = { NULL, NULL };
 static	v_pre	 pres_ex[] = { NULL, NULL };
 static	v_pre	 pres_fd[] = { NULL, NULL };
 static	v_pre	 pres_it[] = { pre_it, NULL };
-static	v_pre	 pres_lb[] = { NULL, NULL };
 static	v_pre	 pres_os[] = { pre_os, NULL };
 static	v_pre	 pres_rv[] = { pre_rv, NULL };
 static	v_pre	 pres_sh[] = { pre_sh, NULL };
@@ -181,7 +181,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_st },			/* St */ 
 	{ NULL, NULL },				/* Va */
 	{ NULL, posts_vt },			/* Vt */ 
-	{ NULL, posts_xr },			/* Xr */ 
+	{ NULL, posts_wtext },			/* Xr */ 
 	{ NULL, posts_text },			/* %A */
 	{ NULL, posts_text },			/* %B */ /* FIXME: can be used outside Rs/Re. */
 	{ NULL, posts_text },			/* %D */ /* FIXME: check date with mandoc_a2time(). */
@@ -243,11 +243,11 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Oc */
 	{ NULL, posts_wline },			/* Bk */
 	{ NULL, NULL },				/* Ek */
-	{ NULL, posts_notext },			/* Bt */
+	{ NULL, posts_eoln },			/* Bt */
 	{ NULL, NULL },				/* Hf */
 	{ NULL, NULL },				/* Fr */
-	{ NULL, posts_notext },			/* Ud */
-	{ pres_lb, posts_lb },			/* Lb */
+	{ NULL, posts_eoln },			/* Ud */
+	{ NULL, posts_lb },			/* Lb */
 	{ NULL, posts_notext },			/* Lp */ 
 	{ NULL, posts_text },			/* Lk */ 
 	{ NULL, posts_text },			/* Mt */ 
@@ -388,7 +388,7 @@ CHECK_CHILD_DEFN(err, lt, <)			/* err_child_lt() */
 CHECK_CHILD_DEFN(warn, lt, <)			/* warn_child_lt() */
 CHECK_BODY_DEFN(ge1, warn, warn_child_gt, 0)	/* bwarn_ge1() */
 CHECK_BODY_DEFN(ge1, err, err_child_gt, 0)	/* berr_ge1() */
-CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_gt1() */
+CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_ge1() */
 CHECK_ELEM_DEFN(eq1, err, err_child_eq, 1)	/* eerr_eq1() */
 CHECK_ELEM_DEFN(le1, err, err_child_lt, 2)	/* eerr_le1() */
 CHECK_ELEM_DEFN(eq0, err, err_child_eq, 0)	/* eerr_eq0() */
@@ -822,6 +822,16 @@ post_lb(POST_ARGS)
 	if (mdoc_a2lib(mdoc->last->child->string))
 		return(1);
 	return(mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_BADLIB));
+}
+
+
+static int
+post_eoln(POST_ARGS)
+{
+
+	if (NULL == mdoc->last->child)
+		return(1);
+	return(mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_ARGSLOST));
 }
 
 

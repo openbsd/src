@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.14 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.15 2010/06/06 18:08:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -304,7 +304,10 @@ man_root_post(MAN_ARGS)
 	struct tag	*t, *tt;
 	char		 b[DATESIZ];
 
-	time2a(m->date, b, DATESIZ);
+	if (m->rawdate)
+		strlcpy(b, m->rawdate, DATESIZ);
+	else
+		time2a(m->date, b, DATESIZ);
 
 	PAIR_CLASS_INIT(&tag[0], "footer");
 	bufcat_style(h, "width", "100%");

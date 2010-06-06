@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.22 2010/05/23 22:45:00 schwarze Exp $ */
+/*	$Id: man.h,v 1.23 2010/06/06 18:08:41 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -71,6 +71,7 @@ enum	man_type {
 struct	man_meta {
 	char		*msec;
 	time_t		 date;
+	char		*rawdate;
 	char		*vol;
 	char		*title;
 	char		*source;
