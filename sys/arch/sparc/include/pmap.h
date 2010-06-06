@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.45 2009/02/12 18:52:15 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.46 2010/06/06 10:04:33 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -119,7 +119,7 @@
  * hierarchy of page tables in allocated kernel memory; these tables refer
  * to each other by physical address pointers in SRMMU format (thus they
  * are not very useful to the kernel's management routines). The other set
- * of tables is similar to those used for the Sun4/100's 3-level MMU; it
+ * of tables is similar to those used for the Sun4/400's 3-level MMU; it
  * is a hierarchy of regmap and segmap structures which contain kernel virtual
  * pointers to each other. These must (unfortunately) be kept in sync.
  *
