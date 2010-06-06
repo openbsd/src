@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.4 2010/06/06 15:12:33 jasper Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.5 2010/06/06 21:18:47 jasper Exp $	*/
 /*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
 
 /*-
@@ -30,12 +30,19 @@
 #include "assym.h"
 
 #include <sh/param.h>
-#include <sh/asm.h>
 #include <sh/locore.h>
 #include <sh/trap.h>
 #include <sh/ubcreg.h>
 #include <sh/mmu_sh3.h>
 #include <sh/mmu_sh4.h>
+
+/* 
+ * Align vectors more strictly here (where we don't really care) so
+ * that .align 5 (i.e. 32B cache line) before data block does the
+ * right thing w.r.t. final destinations after vectors are copied.
+ */
+#define _ALIGN_TEXT	.align 5
+#include <sh/asm.h>
 
 /*
  * Exception vectors.
@@ -111,7 +118,7 @@ NENTRY(sh_vector_generic)
 #endif /* DDB */
 2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
-	.align	2
+	.align	5
 .Lg_curproc:			.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
@@ -139,50 +146,61 @@ NENTRY(sh3_vector_tlbmiss)
 	__EXCEPTION_ENTRY
 	mov	#(SH3_TEA & 0xff), r0
 	mov.l	@r0,	r6	/* 3rd arg: va = TEA */
+
+	/* if kernel stack is in P3, handle it here fast */
 #if !defined(P1_STACK)
 	/* Load kernel stack */
 	mov.l	.L3_VPN_MASK, r0
-	and	r6,	r0
-	tst	r0,	r0	/* check VPN == 0 */
-	bt	6f
+	and	r6,	r0	/* VPN */
+	tst	r0,	r0
+	bt	6f		/* punt if VPN is 0 */
+
 	mov.l	.L3_CURUPTE, r1
-	mov.l	@r1,	r1
-	mov	#UPAGES,r3
-	mov	#1,	r2
-4:	mov.l	@r1+,	r7
-	cmp/eq	r7,	r0	/* md_upte.addr: u-area VPN */
-	bt	5f
-	add	#4,	r1	/* skip md_upte.data */
+	mov.l	@r1, r1		/* upte = &l->l_md.md_upte[0] */
+	mov	#UPAGES, r3	/* loop limit */
+	mov	#1, r2		/* loop count */
+
+	/* for each page of u-area */
+4:	mov.l	@r1+, r7	/* upte->addr: u-area VPN */
+	cmp/eq	r7, r0		/* if (vpn == upte->addr) */
+	bt	5f		/*     goto found; */
+	add	#4, r1		/* skip, upte->data; point to next md_upte[i] */
 	cmp/eq	r2,	r3
 	bf/s	4b
 	 add	#1,	r2
+	/* not a page of u-area, proceed to handler */
 	bra	7f		/* pull insn at 6f into delay slot */
 	 mov	#(SH3_EXPEVT & 0xff), r0
-5:	mov.l	@r1,	r2	/* md_upte.data: u-area PTE */
+
+	/* load entry for this uarea page into tlb */
+5:	mov.l	@r1, r2		/* upte->data: u-area PTE */
 	mov	#(SH3_PTEL & 0xff), r1
 	mov.l	r2,	@r1
+
 	mov	#(SH3_PTEH & 0xff), r1
 	mov.l	@r1,	r2
 	mov.l	.L3_VPN_MASK, r0
 	and	r2,	r0
 	mov.l	r0,	@r1	/* ASID 0 */
+
 	ldtlb
-	bra	3f
-	 mov.l	r2,	@r1	/* restore ASID */
+	bra	99f		/* return */
+	 mov.l	r2, @r1		/*  restore ASID */
 #endif /* !P1_STACK */
+	/* tlb_exception(curproc, trapframe, tea) */
 6:	mov	#(SH3_EXPEVT & 0xff), r0
 7:	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
 	mov.l	.L3_curproc,	r0
-	mov.l	@r0,	r4	/* 1st arg */
+	mov.l	@r0,	r4	/* 1st arg: curproc */
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	.L3_tlb_exception,	r0
 	jsr	@r0
-	 mov	r14,	r5	/* 2nd arg */
-3:	__EXCEPTION_RETURN
+	 mov	r14,	r5	/* 2nd arg: trap frame */
+99:	__EXCEPTION_RETURN
 
-	.align	2
+	.align	5
 .L3_curproc:		.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 .L3_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .L3_VPN_MASK:		.long	0xfffff000
@@ -218,7 +236,7 @@ NENTRY(sh4_vector_tlbmiss)
 	 mov	r14,	r5	/* 2nd arg */
 	__EXCEPTION_RETURN
 
-	.align	2
+	.align	5
 .L4_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .L4_curproc:		.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 .L4_EXPEVT4:		.long	SH4_EXPEVT
@@ -261,7 +279,7 @@ NENTRY(sh_vector_interrupt)
 	 mov	r14,	r5	/* 2nd arg */
 	__EXCEPTION_RETURN
 
-	.align	2
+	.align	5
 .Li_curproc:		.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 .Li_intc_intr:		.long	_C_LABEL(intc_intr)
 .Li_ast:		.long	_C_LABEL(ast)
