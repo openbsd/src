@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.s,v 1.5 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: debug.s,v 1.6 2010/06/06 11:25:37 miod Exp $ */
 /* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-
@@ -50,7 +50,8 @@
  */
 #define	DEBUG_STACK_SIZE	8192
 BSS(debug_stack_bottom, DEBUG_STACK_SIZE)
-ABS(debug_stack_top, debug_stack_bottom + DEBUG_STACK_SIZE)
+
+#define	debug_stack_top	(debug_stack_bottom + DEBUG_STACK_SIZE)
 
 /*
  * alpha_debug:
