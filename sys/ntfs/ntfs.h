@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.7 2009/08/13 16:00:53 jasper Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.8 2010/06/06 12:04:27 miod Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ struct attr_indexroot {
 	u_int32_t       ir_size;/* ??? */
 	u_int32_t       ir_unkn3;	/* number of cluster */
 	u_int32_t       ir_unkn4;	/* always 0x10 */
-	u_int32_t       ir_datalen;	/* sizeof simething */
+	u_int32_t       ir_datalen;	/* sizeof something */
 	u_int32_t       ir_allocated;	/* same as above */
 	u_int16_t       ir_flag;/* ?? always 1 */
 	u_int16_t       ir_unkn7;
