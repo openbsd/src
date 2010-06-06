@@ -1,7 +1,7 @@
 /* html.c -- html-related utilities.
-   $Id: html.c,v 1.2 2006/07/17 22:29:29 espie Exp $
+   $Id: html.c,v 1.3 2010/06/06 12:31:09 fgsch Exp $
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -166,6 +166,9 @@ process_css_file (char *filename)
 
       lastchar = c;
     }
+
+  fclose (f);  /* Even closing stdin should be ok, can't read it more
+                  than once? */
 
   /* Reached the end of the file.  We should not be still in a comment.  */
   if (state == comment_state)
