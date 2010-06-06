@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.35 2008/07/29 18:40:23 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.36 2010/06/06 11:26:11 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -151,8 +151,6 @@ sioattach(parent, self, aux)
         sc->sc_dmat = pa->pa_dmat;
 	sc->sc_haseisa = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
-
-	evcount_attach(&sio_intr_count, self->dv_xname, NULL, &evcount_intr);
 
 	config_defer(self, sio_bridge_callback);
 }

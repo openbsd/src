@@ -1,4 +1,4 @@
-/*	$OpenBSD: siovar.h,v 1.13 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: siovar.h,v 1.14 2010/06/06 11:26:11 miod Exp $	*/
 /*	$NetBSD: siovar.h,v 1.5 1996/10/23 04:12:34 cgd Exp $	*/
 
 /*
@@ -38,5 +38,3 @@ int	sio_intr_line(void *, int);
 void	*sio_intr_establish(void *, int, int, int, int (*)(void *),
 	    void *, const char *);
 void	sio_intr_disestablish(void *, void *);
-
-struct evcount sio_intr_count;
