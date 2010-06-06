@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.6 2010/06/05 12:27:13 espie Exp $
+# $OpenBSD: Term.pm,v 1.7 2010/06/06 07:27:03 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -162,7 +162,7 @@ sub _show
 			$prefix += $self->{stars};
 		}
 	}
-	if (substr($self->{lastdisplay}, 0, $prefix) eq 
+	if (defined $self->{hpa} && substr($self->{lastdisplay}, 0, $prefix) eq 
 	    substr($d, 0, $prefix)) {
 		print $self->hmove($prefix), substr($d, $prefix);
 	} else {
