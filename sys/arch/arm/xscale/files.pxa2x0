@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.22 2009/09/09 12:14:39 marex Exp $
+#	$OpenBSD: files.pxa2x0,v 1.23 2010/06/07 16:34:20 drahn Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -48,7 +48,6 @@ file	arch/arm/xscale/pxa2x0_a4x_io.S		com_pxaip
 
 # PXA27x USB Device Controller
 device	pxaudc: usbdev
-attach	pxaudc at pxaip
 file	arch/arm/xscale/pxa27x_udc.c		pxaudc
 
 # OHCI USB Controller

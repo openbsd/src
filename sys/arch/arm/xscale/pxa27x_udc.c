@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.23 2008/11/25 14:55:44 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.24 2010/06/07 16:34:20 drahn Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -38,11 +38,7 @@
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
-#include <arm/xscale/pxa27x_udcreg.h>
-#define PXAUDC_EP0MAXP	16	/* XXX */
-#define PXAUDC_NEP	24	/* total number of endpoints */
-
-#include <machine/machine_reg.h>	/* XXX */
+#include <arm/xscale/pxa27x_udc.h>
 
 #include "usbf.h"
 
@@ -56,43 +52,7 @@ struct pxaudc_pipe {
 //	LIST_ENTRY(pxaudc_pipe)	 list;
 };
 
-struct pxaudc_softc {
-	struct usbf_bus		 sc_bus;
-	bus_space_tag_t		 sc_iot;
-	bus_space_handle_t	 sc_ioh;
-	bus_size_t		 sc_size;
-	void			*sc_ih;
-	void			*sc_conn_ih;
-	void 			*sc_powerhook;
-	SIMPLEQ_HEAD(,usbf_xfer) sc_free_xfers;	/* recycled xfers */
-	u_int32_t		 sc_icr0;	/* enabled EP interrupts */
-	u_int32_t		 sc_icr1;	/* enabled EP interrupts */
-	enum {
-		EP0_SETUP,
-		EP0_IN
-	}			 sc_ep0state;
-	u_int32_t		 sc_isr0;	/* XXX deferred interrupts */
-	u_int32_t		 sc_isr1;	/* XXX deferred interrupts */
-	u_int32_t		 sc_otgisr;	/* XXX deferred interrupts */
-	struct pxaudc_pipe	*sc_pipe[PXAUDC_NEP];
-	int			 sc_npipe;
-
-	int			 sc_cn;
-	int			 sc_in;
-	int			 sc_isn;
-	int8_t			 sc_ep_map[16];
-};
-
-int		 pxaudc_match(struct device *, void *, void *);
-void		 pxaudc_attach(struct device *, struct device *, void *);
-int		 pxaudc_detach(struct device *, int);
 void		 pxaudc_power(int, void *);
-
-int		 pxaudc_is_host(void);
-int		 pxaudc_is_device(void);
-void		 pxaudc_setup(struct pxaudc_softc *);
-void		 pxaudc_hide(struct pxaudc_softc *);
-void		 pxaudc_show(struct pxaudc_softc *);
 
 void		 pxaudc_enable(struct pxaudc_softc *);
 void		 pxaudc_disable(struct pxaudc_softc *);
@@ -126,11 +86,6 @@ usbf_status	 pxaudc_bulk_start(usbf_xfer_handle);
 void		 pxaudc_bulk_abort(usbf_xfer_handle);
 void		 pxaudc_bulk_done(usbf_xfer_handle);
 void		 pxaudc_bulk_close(usbf_pipe_handle);
-
-struct cfattach pxaudc_ca = {
-	sizeof(struct pxaudc_softc), pxaudc_match, pxaudc_attach,
-	pxaudc_detach
-};
 
 struct cfdriver pxaudc_cd = {
 	NULL, "pxaudc", DV_DULL
@@ -186,7 +141,7 @@ int pxaudcdebug = 0;
 #endif
 
 int
-pxaudc_match(struct device *parent, void *match, void *aux)
+pxaudc_match(void)
 {
 	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) != CPU_ID_PXA27X)
 		return (0);
@@ -195,11 +150,12 @@ pxaudc_match(struct device *parent, void *match, void *aux)
 }
 
 void
-pxaudc_attach(struct device *parent, struct device *self, void *aux)
+pxaudc_attach(struct pxaudc_softc *sc, void *aux)
 {
-	struct pxaudc_softc		*sc = (struct pxaudc_softc *)self;
 	struct pxaip_attach_args	*pxa = aux;
+#if NUSBF > 0
 	int i;
+#endif
 
 	sc->sc_iot = pxa->pxa_iot;
 	if (bus_space_map(sc->sc_iot, PXA2X0_USBDC_BASE, PXA2X0_USBDC_SIZE, 0,
@@ -215,7 +171,6 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
 	/* Set up GPIO pins and disable the controller. */
-	pxaudc_setup(sc);
 	pxaudc_disable(sc);
 
 #if NUSBF > 0
@@ -234,7 +189,7 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_conn_ih = pxa2x0_gpio_intr_establish(PXA_USB_DEVICE_PIN, /* XXX */
 	    IST_EDGE_BOTH, IPL_USB, pxaudc_connect_intr, sc, "usbc");
 #endif
-	sc->sc_conn_ih = pxa2x0_gpio_intr_establish(PXA_USB_CONNECT_PIN,
+	sc->sc_conn_ih = pxa2x0_gpio_intr_establish(sc->sc_gpio_detect,
 	    IST_EDGE_BOTH, IPL_USB, pxaudc_connect_intr, sc, "usbc");
 	if (sc->sc_conn_ih == NULL) {
 		printf(": unable to establish connect interrupt\n");
@@ -262,19 +217,17 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach logical device and function. */
-	(void)config_found(self, &sc->sc_bus, NULL);
+	(void)config_found((struct device *)sc, &sc->sc_bus, NULL);
 
 	/* Enable the controller unless we're now acting as a host. */
-	if (!pxaudc_is_host())
+	if (!sc->sc_is_host())
 		pxaudc_enable(sc);
 #endif
 }
 
 int
-pxaudc_detach(struct device *self, int flags)
+pxaudc_detach(struct pxaudc_softc *sc, int flags)
 {
-	struct pxaudc_softc		*sc = (struct pxaudc_softc *)self;
-
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
 
@@ -307,56 +260,6 @@ pxaudc_power(int why, void *arg)
 		pxaudc_enable(sc);
 		break;
 	}
-}
-
-/*
- * Machine-specific functions
- */
-
-/* XXX move to machine-specific file */
-
-int
-pxaudc_is_host(void)
-{
-	return (!pxa2x0_gpio_get_bit(PXA_USB_CONNECT_PIN) &&
-		!pxa2x0_gpio_get_bit(PXA_USB_DEVICE_PIN));
-}
-
-int
-pxaudc_is_device(void)
-{
-	return (pxa2x0_gpio_get_bit(PXA_USB_CONNECT_PIN) &&
-		pxa2x0_gpio_get_bit(PXA_USB_DEVICE_PIN));
-}
-
-void
-pxaudc_setup(struct pxaudc_softc *sc)
-{
-	pxa2x0_gpio_set_function(45, GPIO_OUT);
-	pxa2x0_gpio_set_function(PXA_USB_CONNECT_PIN, GPIO_IN); /* 41 */
-	pxa2x0_gpio_set_function(40, GPIO_OUT);
-	pxa2x0_gpio_set_function(39, GPIO_IN);
-	pxa2x0_gpio_set_function(38, GPIO_IN);
-	pxa2x0_gpio_set_function(37, GPIO_OUT);
-	pxa2x0_gpio_set_function(36, GPIO_IN);
-	pxa2x0_gpio_set_function(PXA_USB_DEVICE_PIN, GPIO_IN); /* 35 */
-	pxa2x0_gpio_set_function(34, GPIO_IN);
-	pxa2x0_gpio_set_function(89, GPIO_OUT);
-	pxa2x0_gpio_set_function(120, GPIO_OUT);
-}
-
-/* Hide us from the host. */
-void
-pxaudc_hide(struct pxaudc_softc *sc)
-{
-	pxa2x0_gpio_clear_bit(PXA_USB_PULLUP_PIN);
-}
-
-/* Show us to the host. */
-void
-pxaudc_show(struct pxaudc_softc *sc)
-{
-	pxa2x0_gpio_set_bit(PXA_USB_PULLUP_PIN);
 }
 
 /*
@@ -790,12 +693,11 @@ pxaudc_connect_intr(void *v)
 {
 	struct pxaudc_softc *sc = v;
 
-	DPRINTF(10,("pxaudc_connect_intr: connect=%d device=%d\n",
-	    pxa2x0_gpio_get_bit(PXA_USB_CONNECT_PIN),
-	    pxa2x0_gpio_get_bit(PXA_USB_DEVICE_PIN)));
+	DPRINTF(10,("pxaudc_connect_intr: connect=%d\n",
+	    pxa2x0_gpio_get_bit(sc->sc_gpio_detect)));
 
 	/* XXX only set a flag here */
-	if (pxaudc_is_host()) {
+	if (sc->sc_is_host()) {
 #if 0
 		printf("%s:switching to host\n", sc->sc_bus.bdev.dv_xname);
 #endif

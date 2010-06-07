@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.25 2007/06/08 22:57:43 jasper Exp $
+#	$OpenBSD: files.zaurus,v 1.26 2010/06/07 16:34:20 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -18,8 +18,8 @@ file	arch/zaurus/zaurus/zaurus_machdep.c
 #
 # Machine-independent SCSI drivers
 #
-include "../../../scsi/files.scsi"
-include "../../../dev/atapiscsi/files.atapiscsi"
+include "scsi/files.scsi"
+include "dev/atapiscsi/files.atapiscsi"
 
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"
@@ -102,6 +102,8 @@ include "dev/pckbc/files.pckbc"
 # Include USB stuff
 include "dev/usb/files.usb"
 
+attach pxaudc at pxaip with pxaudc_zaurus
+file arch/zaurus/dev/zaurus_udc.c		pxaudc_zaurus
 # Bluetooth
 include "dev/bluetooth/files.bluetooth"
 
