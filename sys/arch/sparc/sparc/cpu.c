@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.44 2008/06/29 01:27:42 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.45 2010/06/07 19:44:54 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -257,10 +257,12 @@ cpu_attach(parent, self, aux)
 		 * nasty to happen to the pagetables while the cache is
 		 * enabled and we haven't uncached them yet.
 		 */
-		s = splhigh();
-		sc->cache_enable();
-		pmap_cache_enable();
-		splx(s);
+		if (sc->cacheinfo.c_totalsize != 0) {
+			s = splhigh();
+			sc->cache_enable();
+			pmap_cache_enable();
+			splx(s);
+		}
 		return;
 	}
 
