@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.115 2010/06/07 16:46:17 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.116 2010/06/07 16:51:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -42,7 +42,6 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
