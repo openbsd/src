@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.2 2010/06/03 21:57:15 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.3 2010/06/07 08:40:21 jmc Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2010 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ by specifying
 policies in
 .Nm
 (see
-.Sx AUTOMATIC KEYING POLICIES,
+.Sx AUTOMATIC KEYING POLICIES ,
 below).
 .Pp
 Alternative methods of setting up flows and SAs are also possible
@@ -55,8 +55,7 @@ using manual keying or automatic keying using the older ISAKMP/Oakley
 a.k.a. IKEv1 protocol.
 Manual keying is not recommended, but can be convenient for quick
 setups and testing.
-Those procedures are not documented within this page,
-see
+See
 .Xr ipsec.conf 5
 and
 .Xr isakmpd 8
@@ -109,7 +108,6 @@ ikev2 esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Ed
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
-The commands are as follows:
 .Bl -tag -width xxxx
 .It Ic user Ar name Ar password
 .Xr iked 8
@@ -121,7 +119,7 @@ local, integrated password database that is configured with the
 lines in
 .Nm
 and the
-.Ar username
+.Ar name
 and
 .Ar password
 arguments.
@@ -155,12 +153,12 @@ The commands are as follows:
 is an optional arbitrary string identifying the policy.
 The name should only occur once in
 .Nm
-or any incluced files.
+or any included files.
 If omitted,
 a name will be generated automatically for the policy.
 .Pp
 .Ar mode
-specifies the IKE mode to use:
+specifies the IKEv2 mode to use:
 one of
 .Ar passive
 or
@@ -211,7 +209,7 @@ see the file
 .It Xo
 .Ic from Ar src
 .Op Ic port Ar sport
-.Oo ( Ar srcnat ) Oc
+.Op Pq Ar srcnat
 .Ic to Ar dst
 .Op Ic port Ar dport
 .Xc
@@ -291,7 +289,6 @@ and the default proposals are described below in
 If omitted,
 .Xr iked 8
 will use the default proposals for the IKEv2 protocol.
-.Pp
 .It Xo
 .Ic childsa
 .Ic auth Ar algorithm
@@ -302,7 +299,7 @@ These parameters define the cryptographic transforms to be used for
 the Child SA negotiation, also known as phase 2.
 Each Child SA will be used to negotiate the actual IPsec SAs.
 The initial Child SA is always negotiated with the initial IKEv2 key
-exchange, additional Child SAs may be negotiated with additional
+exchange; additional Child SAs may be negotiated with additional
 Child SA key exchanges for an established IKE SA.
 .Pp
 Possible values for
@@ -356,7 +353,7 @@ but instead specifies the ID to be used
 by the remote peer.
 .It Op Ar ikeauth
 Specify the mode to mutually authenticate the peers.
-Non-psk modes will require to set up certificates and RSA public keys,
+Non-psk modes will require to set up certificates and RSA public keys;
 see
 .Xr iked 8
 for more information.
@@ -402,7 +399,7 @@ e.g.\&
 .Ar foo.example.com .
 To limit the size of the derived tag,
 .Xr iked 8
-will extract the common name 
+will extract the common name
 .Sq CN=
 from DER_ASN1_DN IDs, for example
 .Ar /C=DE/../CN=10.1.1.1/..
@@ -656,7 +653,7 @@ keyword:
 .El
 .Pp
 The currently supported group types are either
-MODP (exponentiation groups modulo a prime), 
+MODP (exponentiation groups modulo a prime),
 EC2N (elliptic curve groups over GF[2^N]),
 or
 ECP (elliptic curve groups modulo a prime).
@@ -695,12 +692,11 @@ ikev2 "big test" \e
 .Ed
 .Sh SEE ALSO
 .Xr enc 4 ,
-.Xr ikectl 8 ,
-.Xr iked 8 ,
 .Xr ipsec 4 ,
-.Xr ipsec.conf 5
-.\".Xr ipcomp 4 ,
-.Xr pf.conf 5
+.Xr ipsec.conf 5 ,
+.Xr pf.conf 5 ,
+.Xr ikectl 8 ,
+.Xr iked 8
 .Sh HISTORY
 The
 .Nm
