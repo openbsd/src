@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.1 2010/06/03 16:41:12 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.2 2010/06/07 10:07:44 jmc Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2010 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd Internet Key Exchange version 2 (IKEv2) daemon
 .Sh SYNOPSIS
 .Nm iked
-.Op Fl dnvT
+.Op Fl dnTv
 .Oo
 .Fl D Ar macro Ns = Ns Ar value
 .Oc
@@ -31,17 +31,20 @@
 .Sh DESCRIPTION
 .Nm
 is an Internet Key Exchange (IKEv2) daemon which performs mutual
-authentication and is establishing and maintaining IPsec flows and
+authentication and which establishes and maintains IPsec flows and
 security associations (SAs) between the two peers.
 .Pp
-The IKEv2 protocol is defined in RFC 4306 which combines and updates
-the previous standards ISAKMP/Oakley (RFC 2408), IKE (RFC 2409), and
-the Internet DOI (RFC 2407).
+The IKEv2 protocol is defined in RFC 4306,
+which combines and updates the previous standards:
+ISAKMP/Oakley (RFC 2408),
+IKE (RFC 2409),
+and the Internet DOI (RFC 2407).
 .Nm
 only supports the IKEv2 protocol;
-have a look at
-.Xr isakmpd 8
-for ISAKMP/Oakley or IKEv1 support.
+support for
+ISAKMP/Oakley and IKEv1
+is provided by
+.Xr isakmpd 8 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -65,32 +68,32 @@ as the configuration file, instead of the default
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl v
-Produce more verbose output.
 .It Fl T
 Disable NAT-Traversal and do not propose NAT-Traversal support to the peers.
+.It Fl v
+Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/isakmpd/private/" -compact
-.It /etc/iked.conf
+.Bl -tag -width "/etc/isakmpd/private/XXX" -compact
+.It Pa /etc/iked.conf
 The default
 .Nm
 configuration file.
-.It /etc/isakmpd/ca/
+.It Pa /etc/isakmpd/ca/
 The directory where CA certificates are kept.
-.It /etc/isakmpd/certs/
+.It Pa /etc/isakmpd/certs/
 The directory where IKE certificates are kept, both the local
 certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
-.It /etc/isakmpd/crls/
+.It Pa /etc/isakmpd/crls/
 The directory where CRLs are kept.
-.It /etc/isakmpd/private/
+.It Pa /etc/isakmpd/private/
 The directory where local private keys used for public key authentication
 are kept.
 The file
 .Pa local.key
 is used to store the local private key.
-.It /etc/isakmpd/pubkeys/
+.It Pa /etc/isakmpd/pubkeys/
 The directory in which trusted public keys are kept.
 The keys must be named in the fashion described above.
 .It Pa /var/run/iked.sock
@@ -119,11 +122,5 @@ program was written by
 .An Reyk Floeter Aq reyk@vantronix.net .
 .Sh CAVEATS
 .Nm
-does not provide backwards compatibility for the ISAKMP/IKEv1 protocol.
-Please use
-.Xr isakmpd 8
-instead.
-.Pp
-.Nm
-is not yet finished and misses some important security features.
-Please don't use it in production networks yet.
+is not yet finished and is missing some important security features.
+It should not yet be used in production networks.
