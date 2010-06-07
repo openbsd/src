@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.14 2008/12/04 15:48:19 weingart Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.15 2010/06/07 08:23:58 thib Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -170,7 +170,7 @@ x86fpflags_to_siginfo(u_int32_t flags)
                 FPE_FLTINV, /* bit 6 - stack fault      */
         };
 
-        for (i=0;i < sizeof(x86fp_siginfo_table)/sizeof(int); i++) {
+        for (i = 0; i < nitems(x86fp_siginfo_table); i++) {
                 if (flags & (1 << i))
                         return (x86fp_siginfo_table[i]);
         }
