@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.91 2010/02/18 20:18:38 otto Exp $
+#	$OpenBSD: Makefile,v 1.92 2010/06/07 08:39:43 reyk Exp $
 
 SUBDIR=	atactl badsect bioctl ccdconfig clri dhclient \
 	disklabel dmesg dump dumpfs fdisk fsck fsck_ext2fs fsck_ffs  \
-	fsck_msdos fsdb fsirand growfs ifconfig init iopctl ipsecctl  \
+	fsck_msdos fsdb fsirand growfs ifconfig iked init iopctl ipsecctl  \
 	isakmpd kbd ldattach lmccontrol mknod modload modunload mount \
 	mount_cd9660 mount_ext2fs mount_ffs mount_msdos \
 	mount_nfs mount_ntfs mount_portal mount_procfs mount_udf \
