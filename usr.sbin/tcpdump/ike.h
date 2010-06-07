@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.22 2008/11/29 16:02:45 reyk Exp $ */
+/* $OpenBSD: ike.h,v 1.23 2010/06/07 16:20:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -33,6 +33,8 @@
 #define PROTO_IPSEC_AH		2
 #define PROTO_IPSEC_ESP		3
 #define PROTO_IPCOMP		4
+
+#define IKE_VERSION_2		(2 << 4)
 
 #define IKE_ATTR_ENCRYPTION_ALGORITHM	1
 #define IKE_ATTR_HASH_ALGORITHM		2
@@ -125,6 +127,26 @@
 #define PAYLOAD_NAT_OA_DRAFT	131
 #define PAYLOAD_PRIVATE_MAX	132
 
+#define PAYLOAD_IKEV2_NONE	0
+#define PAYLOAD_IKEV2_SA	33
+#define PAYLOAD_IKEV2_KE	34
+#define PAYLOAD_IKEV2_IDI	35
+#define PAYLOAD_IKEV2_IDR	36
+#define PAYLOAD_IKEV2_CERT	37
+#define PAYLOAD_IKEV2_CERTREQ	38
+#define PAYLOAD_IKEV2_AUTH	39
+#define PAYLOAD_IKEV2_NONCE	40
+#define PAYLOAD_IKEV2_N		41
+#define PAYLOAD_IKEV2_D		42
+#define PAYLOAD_IKEV2_V		43
+#define PAYLOAD_IKEV2_TSI	44
+#define PAYLOAD_IKEV2_TSR	45
+#define PAYLOAD_IKEV2_E		46
+#define PAYLOAD_IKEV2_CP	47
+#define PAYLOAD_IKEV2_EAP	48
+#define PAYLOAD_IKEV2_PRIV_MIN	128
+#define PAYLOAD_IKEv2_PRIV_MAX	255
+
 /* see http://www.iana.org/assignments/isakmp-registry */
 #define IKE_PAYLOAD_TYPES_INITIALIZER			\
 	{ "NONE",		/*  0 */		\
@@ -158,16 +180,42 @@
 	  "NAT-OA-DRAFT",	/*  131 (draft-ietf-ipsec-nat-t-ike-03) */  \
 	}
 
+/* see http://www.iana.org/assignments/ikev2-parameters */
+#define IKEV2_PAYLOAD_TYPES_INITIALIZER			\
+	{ "SA",			/* 33 */		\
+	  "KE",			/* 34 */		\
+	  "IDi",		/* 35 */		\
+	  "IDr",		/* 36 */		\
+	  "CERT",		/* 37 */		\
+	  "CERTREQ",		/* 38 */		\
+	  "AUTH",		/* 39 */		\
+	  "NONCE",		/* 40 */		\
+	  "N",			/* 41 */		\
+	  "D",			/* 42 */		\
+	  "V",			/* 43 */		\
+	  "TSi",		/* 44 */		\
+	  "TSr",		/* 45 */		\
+	  "E",			/* 46 */		\
+	  "CP",			/* 47 */		\
+	  "EAP",		/* 48 */		\
+	}
+	
+
 /* Exchange types */
-#define EXCHANGE_NONE		0
-#define EXCHANGE_BASE		1
-#define EXCHANGE_ID_PROT	2
-#define EXCHANGE_AUTH_ONLY	3
-#define EXCHANGE_AGGRESSIVE	4
-#define EXCHANGE_INFO		5
-#define EXCHANGE_TRANSACTION	6
-#define EXCHANGE_QUICK_MODE	32
-#define EXCHANGE_NEW_GROUP_MODE	33
+#define EXCHANGE_NONE			0
+#define EXCHANGE_BASE			1
+#define EXCHANGE_ID_PROT		2
+#define EXCHANGE_AUTH_ONLY		3
+#define EXCHANGE_AGGRESSIVE		4
+#define EXCHANGE_INFO			5
+#define EXCHANGE_TRANSACTION		6
+#define EXCHANGE_QUICK_MODE		32
+#define EXCHANGE_NEW_GROUP_MODE		33
+#define EXCHANGE_IKE_SA_INIT		34
+#define EXCHANGE_IKE_AUTH		35
+#define EXCHANGE_CREATE_CHILD_SA	36
+#define EXCHANGE_INFORMATIONAL		37
+#define EXCHANGE_IKE_SESSION_RESUME	38
 
 /* Exchange types */
 #define IKE_EXCHANGE_TYPES_INITIALIZER			\
@@ -188,6 +236,11 @@
 	  "unknown",					\
 	  "QUICK_MODE",		/* 32 */		\
 	  "NEW_GROUP_MODE",	/* 33 */		\
+	  "IKE_SA_INIT",	/* 34 */		\
+	  "IKE_AUTH",		/* 35 */		\
+	  "CREATE_CHILD_SA",	/* 36 */		\
+	  "INFORMATIONAL",	/* 37 */		\
+	  "IKE_SESSION_RESUME",	/* 38 */		\
 	}
 
 #define FLAGS_ENCRYPTION	1
