@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.47 2010/05/02 00:28:38 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.48 2010/06/07 09:41:16 sthen Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -64,7 +64,7 @@ typedef __uint16_t	Elf64_Quarter;
 
 /*
  * e_ident[] identification indexes 
- * See http://www.caldera.com/developers/gabi/2000-07-17/ch4.eheader.html
+ * See http://www.sco.com/developers/gabi/latest/ch4.eheader.html
  */
 #define EI_MAG0		0		/* file ID */
 #define EI_MAG1		1		/* file ID */
