@@ -1,3 +1,5 @@
+/*	$OpenBSD: brconfig.h,v 1.3 2010/06/07 15:05:42 jsg Exp $	*/
+
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
  *
