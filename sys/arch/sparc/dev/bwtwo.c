@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.36 2010/05/15 15:28:09 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.37 2010/06/07 19:43:45 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -253,21 +253,21 @@ obp_name:
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 		int constype = ISSET(sc->sc_sunfb.sf_flags, FB_PFOUR) ?
-		    EE_CONS_P4OPT : EE_CONS_BW;
+		    EED_CONS_P4 : EED_CONS_BW;
 		/*
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == constype)
+		if (eep == NULL || eep->ee_diag.eed_console == constype)
 			isconsole = 1;
 		else
 		/*
 		 * On sun4 systems without on-board framebuffers (such as
-		 * the 4/3xx models), the PROM will accept the EE_CONS_BW
+		 * the 4/3xx models), the PROM will accept the EED_CONS_BW
 		 * setting although the framebuffer is a P4.
 		 * Accept this setting as well.
 		 */
-		if (eep->eeConsole == EE_CONS_BW)
+		if (eep->ee_diag.eed_console == EED_CONS_BW)
 			isconsole = 1;
 	}
 #endif

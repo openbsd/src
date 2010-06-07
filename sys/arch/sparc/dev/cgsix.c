@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.41 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.42 2010/06/07 19:43:45 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -243,12 +243,12 @@ cgsixattach(struct device *parent, struct device *self, void *args)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 		int constype = ISSET(sc->sc_sunfb.sf_flags, FB_PFOUR) ?
-		    EE_CONS_P4OPT : EE_CONS_COLOR;
+		    EED_CONS_P4 : EED_CONS_COLOR;
 		/*
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == constype)
+		if (eep == NULL || eep->ee_diag.eed_console == constype)
 			isconsole = 1;
 	}
 #endif

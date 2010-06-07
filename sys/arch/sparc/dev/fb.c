@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.50 2010/05/15 15:27:15 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.51 2010/06/07 19:43:45 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -207,22 +207,30 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 					break;
 				}
 			} else if (eep != NULL) {
-				switch (eep->eeScreenSize) {
-				case EE_SCR_1152X900:
+				switch (eep->ee_diag.eed_scrsize) {
+				case EED_SCR_1152X900:
 					sf->sf_width = 1152;
 					sf->sf_height = 900;
 					break;
-				case EE_SCR_1024X1024:
+				case EED_SCR_1024X1024:
 					sf->sf_width = 1024;
 					sf->sf_height = 1024;
 					break;
-				case EE_SCR_1600X1280:
+				case EED_SCR_1600X1280:
 					sf->sf_width = 1600;
 					sf->sf_height = 1280;
 					break;
-				case EE_SCR_1440X1440:
+				case EED_SCR_1440X1440:
 					sf->sf_width = 1440;
 					sf->sf_height = 1440;
+					break;
+				case EED_SCR_640X480:
+					sf->sf_width = 640;
+					sf->sf_height = 480;
+					break;
+				case EED_SCR_1280X1024:
+					sf->sf_width = 1280;
+					sf->sf_height = 1024;
 					break;
 				}
 			}
@@ -329,8 +337,8 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 		struct eeprom *ep = (struct eeprom *)eeprom_va;
 
 		if (ep != NULL) {
-			rows = (u_short)ep->eeTtyRows;
-			cols = (u_short)ep->eeTtyCols;
+			rows = (u_short)ep->ee_diag.eed_rowsize;
+			cols = (u_short)ep->ee_diag.eed_colsize;
 			/* deal with broken nvram contents... */
 			if (rows <= 0)
 				rows = 34;

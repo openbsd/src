@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.h,v 1.11 2007/04/10 17:47:54 miod Exp $	*/
+/*	$OpenBSD: eeprom.h,v 1.12 2010/06/07 19:43:49 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -98,7 +98,7 @@ struct eeprom {
 		u_char	eed_bootunit;	/* 0x01c: unit number */
 		u_char	eed_bootpart;	/* 0x01d: partition number */
 
-		char	eed_kbdtype;	/* 0x01f: non-Sun keyboard type - for OEM's */
+		char	eed_kbdtype;	/* 0x01e: non-Sun keyboard type - for OEM's */
 #define	EED_KBD_SUN	0		/* one of the Sun keyboards */
 
 		char	eed_console;	/* 0x01f: console device */
@@ -357,30 +357,4 @@ struct eeprom {
 #ifdef _KERNEL
 extern	char *eeprom_va;
 int	eeprom_uio(struct uio *);
-
-/*
- * Compatibility defines with NetBSD's eeprom.h.
- *
- * The goal here is to provide enough compatibility for kernel drivers to
- * compile without changes; not to make userland utilities compile.  Userland
- * should use the native interface.
- */
-#define EE_CONS_BW		EED_CONS_BW
-#define EE_CONS_TTYA		EED_CONS_TTYA
-#define EE_CONS_TTYB		EED_CONS_TTYB
-#define EE_CONS_COLOR		EED_CONS_COLOR
-#define EE_CONS_P4OPT		EED_CONS_P4
-
-#define	EE_SCR_1152X900		EED_SCR_1152X900
-#define	EE_SCR_1024X1024	EED_SCR_1024X1024
-#define EE_SCR_1600X1280	EED_SCR_1600X1280
-#define EE_SCR_1440X1440	EED_SCR_1440X1440
-#define EE_SCR_640X480		EED_SCR_640X480
-#define EE_SCR_1280X1024	EED_SCR_1280X1024
-
-#define eeConsole		ee_diag.eed_console
-#define eeTtyRows		ee_diag.eed_rowsize
-#define eeTtyCols		ee_diag.eed_colsize
-#define eeScreenSize		ee_diag.eed_scrsize
-
 #endif /* _KERNEL */

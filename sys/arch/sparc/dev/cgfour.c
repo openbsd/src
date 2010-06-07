@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.28 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.29 2010/06/07 19:43:45 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ cgfourattach(struct device *parent, struct device *self, void *args)
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
+		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_P4)
 			isconsole = 1;
 	}
 
