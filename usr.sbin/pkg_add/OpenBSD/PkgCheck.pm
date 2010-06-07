@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.6 2010/06/07 09:54:28 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.7 2010/06/07 10:02:27 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -387,7 +387,6 @@ sub dependencies_check
 {
 	my ($self, $state, $l) = @_;
 	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
-	my $i = 0;
 	$self->for_all_packages($state, $l, "Dependencies", sub {
 		my $name = shift;
 		my $plist = OpenBSD::PackingList->from_installation($name,
@@ -408,6 +407,48 @@ sub dependencies_check
 		$state->{localbase} = $plist->localbase;
 		$plist->find_dependencies($state, $l, \%not_yet, \%possible,
 		    \%other);
+		if (keys %not_yet > 0) {
+			my @todo = sort keys %not_yet;
+			$state->errsay("$name is having too many dependencies: ", join(' ', @todo));
+			$self->ask_delete_deps($state, $name, \@todo, $req);
+		}
+		if (keys %other > 0) {
+			my @todo = sort keys %other;
+			$state->errsay("$name is missing dependencies: ", 
+			    join(' ', @todo));
+			$self->ask_add_deps($state, $name, \@todo, $req);
+		}
+		for my $dep ($req->list) {
+			push(@{$state->{reverse}{$dep}}, $name);
+		}
+	});
+}
+
+sub reverse_dependencies_check
+{
+	my ($self, $state, $l) = @_;
+	$self->for_all_packages($state, $l, "Reverse dependencies", sub {
+		my $name = shift;
+		my $req = OpenBSD::RequiredBy->new($name);
+		my @known = $req->list;
+		my %not_yet = (); 
+		my %possible = ();
+		my %other = ();
+		for my $pkg (@known) {
+			$not_yet{$pkg} = 1;
+			if ($state->{exists}{$pkg}) {
+				$possible{$pkg} = 1;
+			} else {
+				$state->errsay("$name: bogus reverse dependency $pkg");
+			}
+		}
+		for my $i (@{$state->{reverse}{$name}}) {
+			if ($possible{$i}) {
+				delete $not_yet{$i};
+			} else {
+				$other{$i} = 1;
+			}
+		}
 		if (keys %not_yet > 0) {
 			my @todo = sort keys %not_yet;
 			$state->errsay("$name is having too many dependencies: ", join(' ', @todo));
@@ -474,6 +515,8 @@ sub run
 	my @list = installed_packages(1);
 	$self->sanity_check($state, \@list);
 	$self->dependencies_check($state, \@list);
+	$state->log->dump;
+	$self->reverse_dependencies_check($state, \@list);
 	$state->log->dump;
 	$self->package_files_check($state, \@list);
 	$state->log->dump;
