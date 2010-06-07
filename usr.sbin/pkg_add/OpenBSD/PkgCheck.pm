@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.3 2010/06/06 09:08:44 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.4 2010/06/07 09:10:37 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -21,6 +21,7 @@ use strict;
 use warnings;
 
 use OpenBSD::AddCreateDelete;
+use OpenBSD::SharedLibs;
 
 package OpenBSD::PackingElement;
 sub thorough_check
@@ -171,6 +172,33 @@ sub find_dependencies
 	}
 	if (!$okay) {
 		$others->{$deps[0]} = 1;
+	}
+}
+
+package OpenBSD::PackingElement::Wantlib;
+sub find_dependencies
+{
+	my ($self, $state, $l, $not_yet, $possible, $others) = @_;
+	my $r = OpenBSD::SharedLibs::lookup_libspec($state->{localbase}, 
+	    $self->spec);
+	if (defined $r) {
+		my $okay = 0;
+		for my $lib (@$r) {
+			my $i = $lib->origin;
+			if ($i eq 'system') {
+				$okay = 1;
+				next;
+			}
+			if ($possible->{$i}) {
+				delete $not_yet->{$i};
+				$okay = 1;
+			}
+		}
+		if (!$okay) {
+			$others->{$r->[0]->origin} = 1;
+		}
+	} else {
+		$state->log($self->stringize, " not found\n");
 	}
 }
 
@@ -330,6 +358,7 @@ sub sanity_check
 			$state->errsay("$name: pkgname does not match");
 			$self->may_remove($state, $name);
 		}
+		$plist->mark_available_lib($plist->pkgname);
 	}
 }
 
@@ -337,6 +366,7 @@ sub dependencies_check
 {
 	my ($self, $state, $l) = @_;
 	$state->progress->set_header("Dependencies");
+	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
 	my $i = 0;
 	for my $name (@$l) {
 		$state->progress->show(++$i, scalar @$l);
@@ -347,6 +377,7 @@ sub dependencies_check
 		my %not_yet =map {($_, 1)} @known;
 		my %possible = map {($_, 1)} @known;
 		my %other = ();
+		$state->{localbase} = $plist->localbase;
 		$plist->find_dependencies($state, $l, \%not_yet, \%possible,
 		    \%other);
 		if (keys %not_yet > 0) {
@@ -378,6 +409,7 @@ sub package_files_check
 		} else {
 			$plist->thorough_check($state);
 		}
+		$plist->mark_available_lib($plist->pkgname);
 	}
 }
 
@@ -416,8 +448,8 @@ sub run
 
 	my @list = installed_packages(1);
 	$self->sanity_check($state, \@list);
-#	$self->dependencies_check($state, \@list);
-#	$state->log->dump;
+	$self->dependencies_check($state, \@list);
+	$state->log->dump;
 	$self->package_files_check($state, \@list);
 	$state->log->dump;
 	$self->localbase_check($state);
