@@ -52,6 +52,12 @@
 ./etc/amd
 ./etc/disklabels
 ./etc/firmware
+./etc/iked
+./etc/iked/ca
+./etc/iked/certs
+./etc/iked/crls
+./etc/iked/private
+./etc/iked/pubkeys
 ./etc/isakmpd
 ./etc/isakmpd/ca
 ./etc/isakmpd/certs
