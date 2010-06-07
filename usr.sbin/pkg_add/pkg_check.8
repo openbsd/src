@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_check.8,v 1.1 2010/06/05 17:15:32 espie Exp $
+.\"	$OpenBSD: pkg_check.8,v 1.2 2010/06/07 13:41:22 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2010 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt PKG_CHECK 8
 .Os
 .Sh NAME
@@ -48,10 +48,32 @@ Checks that
 .Pa /var/db/pkg
 only contains directories, that each directory holds a packing-list,
 and that said packing-list is an actual packing-list that matches the directory.
+.It Direct dependencies
+Checks that all direct dependencies are recorded correctly, specifically, that
+.Cm @depend
+and
+.Cm @wantlib
+match actual packages.
+It currently does not verify that
+.Cm @wantlib
+are reachable from the base package.
+.It Reverse dependencies
+Checks that all direct dependencies have corresponding reverse dependencies.
 .It Files from packages
-Checks that each file or directory in those packing-lists actually exist,
+Checks that each file, link or directory in those packing-lists actually exist,
 and that their checksum matches what's recorded in the packing-list.
+.It Other files
+Checks that there are no other random objects under
+.Pa /usr/local .
 .El
+.Pp
+By default,
+.Nm
+will only perform very safe transformations, such as the removal of core-dumps.
+.Fl f
+or
+.Fl i
+are the only way to perform further changes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -88,5 +110,5 @@ This program was written by
 .An Marc Espie .
 .Sh BUGS
 Work in progress.
-More checks to be added.
+The order of checks is not definitive, and more checks may be added.
 Use with caution.
