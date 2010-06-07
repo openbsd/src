@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.205 2010/06/05 17:29:14 martinh Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.206 2010/06/07 14:15:27 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -51,6 +51,58 @@ firmware
 # ./etc/hotplug
 hotplug
 # ./etc/hotplug
+..
+
+# ./etc/iked
+iked
+
+# ./etc/iked/ca
+ca
+# ./etc/iked/ca
+..
+
+# ./etc/iked/certs
+certs
+# ./etc/iked/certs
+..
+
+# ./etc/iked/crls
+crls
+# ./etc/iked/crls
+..
+
+# ./etc/iked/private
+private		uname=root mode=0700
+# ./etc/iked/private
+..
+
+# ./etc/iked/pubkeys
+pubkeys		uname=root mode=0755
+
+# ./etc/iked/pubkeys/fqdn
+fqdn		uname=root mode=0755
+# ./etc/iked/pubkeys/fqdn
+..
+
+# ./etc/iked/pubkeys/ipv4
+ipv4		uname=root mode=0755
+# ./etc/iked/pubkeys/ipv4
+..
+
+# ./etc/iked/pubkeys/ipv6
+ipv6		uname=root mode=0755
+# ./etc/iked/pubkeys/ipv6
+..
+
+# ./etc/iked/pubkeys/ufqdn
+ufqdn		uname=root mode=0755
+# ./etc/iked/pubkeys/ufqdn
+..
+
+# ./etc/iked/pubkeys
+..
+
+# ./etc/iked
 ..
 
 # ./etc/isakmpd

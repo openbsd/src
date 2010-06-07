@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.2 2010/06/07 10:07:44 jmc Exp $
+.\" $OpenBSD: iked.8,v 1.3 2010/06/07 14:15:27 jsg Exp $
 .\" $vantronix: iked.8,v 1.5 2010/06/02 14:38:08 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -74,26 +74,26 @@ Disable NAT-Traversal and do not propose NAT-Traversal support to the peers.
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/isakmpd/private/XXX" -compact
+.Bl -tag -width "/etc/iked/private/XXX" -compact
 .It Pa /etc/iked.conf
 The default
 .Nm
 configuration file.
-.It Pa /etc/isakmpd/ca/
+.It Pa /etc/iked/ca/
 The directory where CA certificates are kept.
-.It Pa /etc/isakmpd/certs/
+.It Pa /etc/iked/certs/
 The directory where IKE certificates are kept, both the local
 certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
-.It Pa /etc/isakmpd/crls/
+.It Pa /etc/iked/crls/
 The directory where CRLs are kept.
-.It Pa /etc/isakmpd/private/
+.It Pa /etc/iked/private/
 The directory where local private keys used for public key authentication
 are kept.
 The file
 .Pa local.key
 is used to store the local private key.
-.It Pa /etc/isakmpd/pubkeys/
+.It Pa /etc/iked/pubkeys/
 The directory in which trusted public keys are kept.
 The keys must be named in the fashion described above.
 .It Pa /var/run/iked.sock

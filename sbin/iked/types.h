@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.2 2010/06/03 20:28:22 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.3 2010/06/07 14:15:27 jsg Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #define IKED_SOCKET	"/var/run/iked.sock"
 
 #ifndef IKED_CA
-#define IKED_CA		"/etc/isakmpd/"
+#define IKED_CA		"/etc/iked/"
 #endif
 #define IKED_CA_DIR	"ca/"
 #define IKED_CRL_DIR	"crls/"
