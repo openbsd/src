@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgeight.4,v 1.24 2008/06/26 05:42:07 ray Exp $
+.\"	$OpenBSD: cgeight.4,v 1.25 2010/06/07 19:54:30 miod Exp $
 .\"	$NetBSD: cgeight.4,v 1.2 1997/10/08 22:00:03 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,15 +28,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt CGEIGHT 4 sparc
 .Os
 .Sh NAME
 .Nm cgeight
 .Nd 24-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "cgeight0 at obio0 addr 0xfb300000 level 4" Pq sun4/300
-.Cd "cgeight0 at obio0 addr 0x0b300000 level 4" Pq sun4/100
+.Cd "cgeight0 at obio0 addr 0xfb300000 level 4" Pq "sun4/100 and sun4/300"
 .Cd "wsdisplay* at cgeight?"
 .Sh DESCRIPTION
 The

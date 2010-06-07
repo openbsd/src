@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ie.4,v 1.14 2008/03/31 07:44:30 jmc Exp $
+.\"     $OpenBSD: ie.4,v 1.15 2010/06/07 19:54:30 miod Exp $
 .\"
 .\" Copyright (c) 1988 John E. Stone <j.stone@acm.org>
 .\"
@@ -14,15 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2008 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt IE 4 sparc
 .Os
 .Sh NAME
 .Nm ie
 .Nd Intel i82586 Ethernet device
 .Sh SYNOPSIS
-.Cd "ie0 at obio0 addr 0xf6000000 level 6          " Pq "sun4/200 on-board"
-.Cd "ie0 at obio0 addr 0x06000000 level 6          " Pq "sun4/100 on-board"
+.Cd "ie0 at obio0 addr 0xf6000000 level 6          " Pq "sun4/100 and sun4/200"
 .Cd "ie1 at vmes0 addr 0xffe88000 level 5 vect 0x75" Pq "VME"
 .Cd "ie2 at vmes0 addr 0xff31ff02 level 5 vect 0x76" Pq "VME"
 .Cd "ie3 at vmes0 addr 0xff35ff02 level 5 vect 0x77" Pq "VME"

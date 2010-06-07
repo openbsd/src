@@ -1,10 +1,10 @@
-.\"	$OpenBSD: zs.4,v 1.21 2009/05/20 20:13:42 jmc Exp $
+.\"	$OpenBSD: zs.4,v 1.22 2010/06/07 19:54:30 miod Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd $Mdocdate: May 20 2009 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt ZS 4 sparc
 .Os
 .Sh NAME
@@ -13,12 +13,10 @@
 .Sh SYNOPSIS
 .Cd "zs0 at mainbus0                      " Pq sun4c
 .Cd "zs0 at obio0                         " Pq sun4m
-.Cd "zs0 at obio0 addr 0xf1000000 level 12" Pq sun4/[23]00
-.Cd "zs0 at obio0 addr 0x01000000 level 12" Pq sun4/100
+.Cd "zs0 at obio0 addr 0xf1000000 level 12" Pq sun4
 .Cd "zs1 at mainbus0                      " Pq sun4c
 .Cd "zs1 at obio0                         " Pq sun4m
-.Cd "zs1 at obio0 addr 0xf0000000 level 12" Pq sun4/[23]00
-.Cd "zs1 at obio0 addr 0x00000000 level 12" Pq sun4/100
+.Cd "zs1 at obio0 addr 0xf0000000 level 12" Pq sun4
 .Cd "zs2 at obio0 addr 0xe0000000 level 12" Pq sun4/300
 .Cd "zstty* at zs?"
 .Cd "zskbd* at zs?"

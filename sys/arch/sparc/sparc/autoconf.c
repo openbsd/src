@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.84 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.85 2010/06/07 19:54:33 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -771,20 +771,6 @@ cpu_configure()
 		for (cf = cfdata; memregcf==NULL && cf->cf_driver; cf++) {
 			if (cf->cf_driver != &memreg_cd ||
 				cf->cf_loc[0] == -1) /* avoid sun4m memreg0 */
-				continue;
-			/*
-			 * On the 4/100 obio addresses must be mapped at
-			 * 0x0YYYYYYY, but alias higher up (we avoid the
-			 * alias condition because it causes pmap difficulties)
-			 * XXX: We also assume that 4/[23]00 obio addresses
-			 * must be 0xZYYYYYYY, where (Z != 0)
-			 * make sure we get the correct memreg cfdriver!
-			 */
-			if (cpuinfo.cpu_type == CPUTYP_4_100 &&
-			    (cf->cf_loc[0] & 0xf0000000))
-				continue;
-			if (cpuinfo.cpu_type != CPUTYP_4_100 &&
-			    !(cf->cf_loc[0] & 0xf0000000))
 				continue;
 			for (p = cf->cf_parents; memregcf==NULL && *p >= 0; p++)
 				if (cfdata[*p].cf_driver == &obio_cd)

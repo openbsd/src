@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.20 2009/10/26 20:17:27 deraadt Exp $	*/
+/*	$OpenBSD: obio.c,v 1.21 2010/06/07 19:54:33 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -120,6 +120,19 @@ struct cfdriver vme_cd = {
 
 struct intrhand **vmeints;
 
+/*
+ * 4/110 comment: the 4/110 chops off the top 4 bits of an OBIO address.
+ *	this confuses autoconf.  for example, if you try and map
+ *	0xfe000000 in obio space on a 4/110 it actually maps 0x0e000000.
+ *	this is easy to verify with the PROM.   this causes problems
+ *	with devices like "esp0 at obio0 addr 0xfa000000" because the
+ *	4/110 treats it as esp0 at obio0 addr 0x0a000000" which is the
+ *	address of the 4/110's "sw0" scsi chip.   the same thing happens
+ *	between zs1 and zs2.    since the sun4 line is "closed" and
+ *	we know all the "obio" devices that will ever be on it we just
+ *	put in some special case "if"'s in the match routines of esp,
+ *	dma, and zs.
+ */
 
 int
 busmatch(parent, vcf, aux)
@@ -440,10 +453,10 @@ busattach(parent, vcf, args, bustype)
 	register struct cfdata *cf = vcf;
 	register struct confargs *ca = args;
 	struct confargs oca;
+	paddr_t pa = (paddr_t)cf->cf_loc[0];
 	caddr_t tmp;
 
 	if (bustype == BUS_OBIO && CPU_ISSUN4) {
-
 		/*
 		 * avoid sun4m entries which don't have valid PA's.
 		 * no point in even probing them. 
@@ -452,20 +465,17 @@ busattach(parent, vcf, args, bustype)
 
 		/*
 		 * On the 4/100 obio addresses must be mapped at
-		 * 0x0YYYYYYY, but alias higher up (we avoid the
-		 * alias condition because it causes pmap difficulties)
-		 * XXX: We also assume that 4/[23]00 obio addresses
-		 * must be 0xZYYYYYYY, where (Z != 0)
+		 * 0x0YYYYYYY, but alias higher up (the kernel
+		 * configuration file uses addresses with the top
+		 * four bits set). We ignore 4/[23]00 devices here.
 		 */
-		if (cpuinfo.cpu_type == CPUTYP_4_100 &&
-		    (cf->cf_loc[0] & 0xf0000000))
-			return 0;
-		if (cpuinfo.cpu_type != CPUTYP_4_100 &&
-		    !(cf->cf_loc[0] & 0xf0000000))
-			return 0;
+		if (cpuinfo.cpu_type == CPUTYP_4_100) {
+			if ((pa & 0xf0000000) != 0xf0000000)
+				return 0;
+		}
 	}
 
-	oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
+	oca.ca_ra.ra_paddr = (void *)pa;
 	oca.ca_ra.ra_len = 0;
 	oca.ca_ra.ra_nreg = 1;
 	if (CPU_ISSUN4M)
@@ -645,11 +655,18 @@ bus_map(pa, len)
 	struct rom_reg *pa;
 	int len;
 {
-
+#ifdef SUN4
 	if (CPU_ISSUN4 && len <= NBPG) {
-		u_long	pf = (u_long)(pa->rr_paddr) >> PGSHIFT;
+		paddr_t paddr;
+		vaddr_t va;
+		u_long	pf, pte;
 		int pgtype = PMAP_T2PTE_4(pa->rr_iospace);
-		u_long	va, pte;
+
+		if (cpuinfo.cpu_type == CPUTYP_4_100)
+			paddr = ((paddr_t)pa->rr_paddr) & 0x0fffffff;
+		else
+			paddr = (paddr_t)pa->rr_paddr;
+		pf = paddr >> PGSHIFT;
 
 		for (va = OLDMON_STARTVADDR; va < OLDMON_ENDVADDR; va += NBPG) {
 			pte = getpte(va);
@@ -660,6 +677,7 @@ bus_map(pa, len)
 					/* note: preserve page offset */
 		}
 	}
+#endif
 
 	return mapiodev(pa, 0, len);
 }

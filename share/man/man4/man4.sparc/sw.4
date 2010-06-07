@@ -1,18 +1,18 @@
-.\"	$OpenBSD: sw.4,v 1.8 2007/05/31 19:19:56 jmc Exp $
+.\"	$OpenBSD: sw.4,v 1.9 2010/06/07 19:54:30 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt SW 4 sparc
 .Os
 .Sh NAME
 .Nm sw
 .Nd NCR 5380 "SCSI Weird" Sun 4/100 on-board SCSI controller
 .Sh SYNOPSIS
-.Cd "sw0     at obio0 addr 0x0a000000 level 3" Pq sun4/100
-.Cd "#sw0     at obio0 addr 0x0a000000 level 3 flags 0x07" Pq sun4/100
+.Cd "sw0     at obio0 addr 0xfa000000 level 3" Pq sun4/100
+.Cd "#sw0     at obio0 addr 0xfa000000 level 3 flags 0x07" Pq sun4/100
 .Cd "scsibus* at sw?"
 .Sh DESCRIPTION
 The

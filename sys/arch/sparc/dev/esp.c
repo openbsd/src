@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.28 2009/10/26 20:17:27 deraadt Exp $	*/
+/*	$OpenBSD: esp.c,v 1.29 2010/06/07 19:54:33 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -215,6 +215,10 @@ espmatch(parent, vcf, aux)
 			return (0);
 		return (1);
 	}
+#endif
+#ifdef SUN4
+	if (cpuinfo.cpu_type == CPUTYP_4_100)
+		return (0);
 #endif
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
