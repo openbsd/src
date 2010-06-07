@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.136 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.137 2010/06/07 19:47:25 blambert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -628,14 +628,8 @@ m_copym0(struct mbuf *m, int off, int len, int wait, int deep)
 		panic("m_copym0: off %d, len %d", off, len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
-	while (off > 0) {
-		if (m == NULL)
-			panic("m_copym0: null mbuf");
-		if (off < m->m_len)
-			break;
-		off -= m->m_len;
-		m = m->m_next;
-	}
+	if ((m = m_getptr(m, off, &off)) == NULL)
+		panic("m_copym0: short mbuf chain");
 	np = &top;
 	top = NULL;
 	while (len > 0) {
@@ -709,14 +703,8 @@ m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 		panic("m_copydata: off %d < 0", off);
 	if (len < 0)
 		panic("m_copydata: len %d < 0", len);
-	while (off > 0) {
-		if (m == NULL)
-			panic("m_copydata: null mbuf in skip");
-		if (off < m->m_len)
-			break;
-		off -= m->m_len;
-		m = m->m_next;
-	}
+	if ((m = m_getptr(m, off, &off)) == NULL)
+		panic("m_copydata: short mbuf chain");
 	while (len > 0) {
 		if (m == NULL)
 			panic("m_copydata: null mbuf");
@@ -1044,8 +1032,7 @@ m_getptr(struct mbuf *m, int loc, int *off)
 		if (m->m_len > loc) {
 	    		*off = loc;
 	    		return (m);
-		}
-		else {
+		} else {
 	    		loc -= m->m_len;
 
 	    		if (m->m_next == NULL) {
@@ -1053,11 +1040,12 @@ m_getptr(struct mbuf *m, int loc, int *off)
  					/* Point at the end of valid data */
 		    			*off = m->m_len;
 		    			return (m);
-				}
-				else
+				} else {
 		  			return (NULL);
-	    		} else
+				}
+	    		} else {
 	      			m = m->m_next;
+			}
 		}
     	}
 

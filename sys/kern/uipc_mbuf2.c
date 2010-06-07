@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.31 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.32 2010/06/07 19:47:25 blambert Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -96,17 +96,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 		return (NULL);	/* impossible */
 	}
 
-	n = m;
-	while (n != NULL && off > 0) {
-		if (n->m_len > off)
-			break;
-		off -= n->m_len;
-		n = n->m_next;
-	}
-	/* be sure to point non-empty mbuf */
-	while (n != NULL && n->m_len == 0)
-		n = n->m_next;
-	if (!n) {
+	if ((n = m_getptr(m, off, &off)) == NULL) {
 		m_freem(m);
 		return (NULL);	/* mbuf chain too short */
 	}
