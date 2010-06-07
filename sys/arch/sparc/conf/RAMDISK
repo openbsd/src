@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.67 2010/04/19 10:42:04 dcoppa Exp $
+#	$OpenBSD: RAMDISK,v 1.68 2010/06/07 20:46:21 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -78,14 +78,12 @@ clock0	at obio0				# sun4m
 clock0	at obio0 addr 0xf2000000		# sun4/300
 
 # Intersil clock found on 4/100 and 4/200 systems.
-oclock0	at obio0 addr 0xf3000000		# sun4/200
-oclock0	at obio0 addr 0x03000000		# sun4/100
+oclock0	at obio0 addr 0xf3000000		# sun4/100 and sun4/200
 
 # Memory error registers.
 memreg0	at mainbus0				# sun4c
 memreg0	at obio0				# sun4m
-memreg0	at obio0 addr 0xf4000000		# sun4/200 and sun4/300
-memreg0	at obio0 addr 0x04000000		# sun4/100
+memreg0	at obio0 addr 0xf4000000		# sun4
 
 # Timer chip found on 4/300, sun4c, and sun4m systems.
 timer0	at mainbus0				# sun4c
@@ -95,19 +93,16 @@ timer0	at obio0 addr 0xef000000		# sun4/300
 # EEPROM found on 4/100 and 4/200 systems.  Note that the 4/300
 # doesn't use this driver; the `EEPROM' is in the NVRAM on the
 # Mostek clock chip on 4/300 systems.
-eeprom0	at obio0 addr 0xf2000000		# sun4/200
-eeprom0	at obio0 addr 0x02000000		# sun4/100
+eeprom0	at obio0 addr 0xf2000000		# sun4/100 and sun4/200
 
 # Zilog 8530 serial chips.  Each has two-channels.
 # zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
 zs0	at mainbus0					# sun4c
 zs0	at obio0					# sun4m
-zs0	at obio0 addr 0xf1000000 level 12		# sun4/200 and sun4/300
-zs0	at obio0 addr 0x01000000 level 12		# sun4/100
+zs0	at obio0 addr 0xf1000000 level 12		# sun4
 zs1	at mainbus0					# sun4c
 zs1	at obio0					# sun4m
-zs1	at obio0 addr 0xf0000000 level 12		# sun4/200 and sun4/300
-zs1	at obio0 addr 0x00000000 level 12		# sun4/100
+zs1	at obio0 addr 0xf0000000 level 12		# sun4
 zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 
 zstty* at zs?
@@ -165,8 +160,7 @@ le0	at obio0 addr 0xf9000000 level 6		# sun4/300
 
 # sun4/100 and sun4/200 Ethernet - an Intel 82586 on-board
 # or on a Multibus/VME card.
-ie0	at obio0 addr 0xf6000000 level 6		# sun4/200 on-board
-ie0	at obio0 addr 0x06000000 level 6		# sun4/100 on-board
+ie0	at obio0 addr 0xf6000000 level 6		# sun4/100 and sun4/200
 
 ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75
 ie2	at vmes0 addr 0xff31ff02 level 5 vect 0x76
@@ -238,15 +232,14 @@ si0	at vmes0 addr 0xff200000 level 3 vect 0x40 flags 0x01
 # controller.  Note, while DMA is enabled by default, only
 # polled DMA works at this time, and reselects do not work
 # on this particular controller.
-sw0	at obio0 addr 0x0a000000 level 3 flags 0x01
+sw0	at obio0 addr 0xfa000000 level 3 flags 0x01
 
 # Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
 # systems.
 bwtwo0	at sbus0				# sun4c on-board
 bwtwo*	at sbus?				# sun4c and sun4m
 bwtwo0	at obio0 addr 0xfd000000 level 4	# sun4/200
-bwtwo0	at obio0 addr 0xfb300000 level 4	# sun4/300 in P4 slot
-bwtwo0	at obio0 addr 0x0b300000 level 4	# sun4/100 in P4 slot
+bwtwo0	at obio0 addr 0xfb300000 level 4	# sun4/100 and sun4/300 P4
 wsdisplay* at bwtwo?
 
 # Sun "cgtwo" VME color framebuffer.
@@ -258,20 +251,17 @@ cgthree* at sbus?
 wsdisplay* at cgthree?
 
 # Sun "cgfour" color framebuffer.
-cgfour0	at obio0 addr 0xfb300000 level 4	# sun4/300 P4
-cgfour0	at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+cgfour0	at obio0 addr 0xfb300000 level 4	# sun4/100 and sun4/300 P4
 wsdisplay* at cgfour?
 
 # Sun "cgsix" accelerated color framebuffer.
 cgsix0	at sbus?
 cgsix*	at sbus?
-cgsix0	at obio0 addr 0xfb000000 level 4	# sun4/300 P4
-cgsix0	at obio0 addr 0x0b000000 level 4	# sun4/100 P4
+cgsix0	at obio0 addr 0xfb000000 level 4	# sun4/100 and sun4/300 P4
 wsdisplay* at cgsix?
 
 # Sun "cgeight" 24-bit framebuffer.
-cgeight0 at obio0 addr 0xfb300000 level 4	# sun4/300 P4
-cgeight0 at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+cgeight0 at obio0 addr 0xfb300000 level 4	# sun4/100 and sun4/300 P4
 wsdisplay* at cgeight?
 
 # Sun "tcx" accelerated color framebuffer.
