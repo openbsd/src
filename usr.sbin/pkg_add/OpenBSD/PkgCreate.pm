@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.5 2010/06/06 11:00:40 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.6 2010/06/07 13:51:19 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -461,10 +461,12 @@ sub deduce_name
 		die "Missing fragments for $frag: $o and $noto don't exist";
 	}
 	if ($not) {
-		print "Switching to $noto\n" if !defined $state->opt('q');
+		$state->set_status("switching to $noto")
+		    if !defined $state->opt('q');
 		return $noto if -e $noto;
     	} else {
-		print "Switching to $o\n" if !defined $state->opt('q');
+		$state->set_status("switching to $o")
+		    if !defined $state->opt('q');
 		return $o if -e $o;
 	}
 	return;
