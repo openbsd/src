@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.77 2007/05/31 19:19:50 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.78 2010/06/07 08:38:09 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -149,8 +149,10 @@ This may be done manually, or automatically using a key management daemon.
 .Pp
 Further information on manual SA establishment is described in
 .Xr ipsecctl 8 .
-Information on automated key management may be found in
-.Xr isakmpd 8 .
+Information on automated key management for IKEv1 can be found in
+.Xr isakmpd 8
+and for IKEv2 in
+.Xr iked.conf 5 .
 .Ss Security Parameter Indexes (SPIs)
 In order to identify an SA we need to have a unique name for it.
 This name is a triplet, consisting of the destination address, security
@@ -249,7 +251,9 @@ Security Associations can be set up manually with
 .Xr ipsecctl 8
 or automatically with the
 .Xr isakmpd 8
-key management daemon.
+or
+.Xr iked 8
+key management daemons.
 .Ss Additional Variables
 A number of
 .Xr sysctl 8
@@ -369,6 +373,7 @@ flag (look for ``tdb'' and ``xform'' allocations).
 .Xr enc 4 ,
 .\".Xr ipcomp 4 ,
 .Xr options 4 ,
+.Xr iked 8 ,
 .Xr ipsecctl 8 ,
 .Xr isakmpd 8 ,
 .Xr sysctl 8

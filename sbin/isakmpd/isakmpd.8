@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.106 2010/06/03 16:57:40 reyk Exp $
+.\" $OpenBSD: isakmpd.8,v 1.107 2010/06/07 08:38:09 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 3 2010 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -71,13 +71,15 @@ A newer, much simpler format is now available:
 .Nm
 implements the IKEv1 protocol which is defined in the standards
 ISAKMP/Oakley (RFC 2408), IKE (RFC 2409), and the Internet DOI (RFC 2407).
-The IKEv2 protocol,
+The newer IKEv2 protocol,
 as defined in RFC 4306,
 is not supported by
-.Nm ;
+.Nm
 but by
-.Xr iked 8
-instead.
+.Xr iked 8 .
+It follows then that references to IKE in this document
+pertain to IKEv1 only,
+and not IKEv2.
 .Pp
 The way
 .Nm
@@ -798,6 +800,7 @@ command is issued in the command FIFO.
 .Xr ipsec.conf 5 ,
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
+.Xr iked 8 ,
 .Xr sasyncd 8 ,
 .Xr ssl 8 ,
 .Xr tcpdump 8
@@ -827,9 +830,3 @@ For redundant setups,
 must be manually restarted every time
 .Nm
 is restarted.
-.Pp
-The IKEv2 protocol is not supported by
-.Nm ;
-but by
-.Xr iked 8
-instead.

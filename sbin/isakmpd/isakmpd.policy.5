@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.43 2010/04/06 06:46:30 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.44 2010/06/07 08:38:09 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: April 6 2010 $
+.Dd $Mdocdate: June 7 2010 $
 .Dt ISAKMPD.POLICY 5
 .Os
 .Sh NAME
@@ -39,13 +39,20 @@ is the policy configuration file for the
 daemon, managing security association and key management for the
 .Xr ipsec 4
 layer of the kernel's networking stack.
-.Pp
 The
 .Xr isakmpd 8
-daemon (also known as IKE, for Internet Key Exchange) is used when two
+daemon,
+also known as the IKEv1 key management daemon,
+implements the Internet Key Exchange version 1 (IKEv1) protocol.
+It follows then that references to IKE in this document
+pertain to IKEv1 only,
+and not IKEv2.
+.Pp
+.Xr isakmpd 8
+is used when two
 systems need to automatically set up a pair of Security Associations
 (SAs) for secure communication using IPsec.
-IKE operates in two stages:
+IKEv1 operates in two stages:
 .Pp
 In the first stage (Main or Identity Protection Mode), the two IKE
 daemons establish a secure link between themselves, fully
