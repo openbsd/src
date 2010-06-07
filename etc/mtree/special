@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.86 2010/02/22 15:20:22 claudio Exp $
+#	$OpenBSD: special,v 1.87 2010/06/07 10:09:05 reyk Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -34,6 +34,7 @@ group		type=file mode=0644 uname=root gname=wheel
 hostapd.conf	type=file mode=0600 uname=root gname=wheel
 hosts		type=file mode=0644 uname=root gname=wheel
 hosts.equiv	type=file mode=0600 uname=root gname=wheel optional
+iked.conf	type=file mode=0600 uname=root gname=wheel
 inetd.conf	type=file mode=0644 uname=root gname=wheel
 ipsec.conf	type=file mode=0600 uname=root gname=wheel
 isakmpd		type=dir mode=0755 uname=root gname=wheel
