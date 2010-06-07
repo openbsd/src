@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.4 2010/06/07 09:10:37 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.5 2010/06/07 09:18:11 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -288,7 +288,7 @@ sub may_remove
 		$self->remove($state, $name);
 	} elsif ($state->{interactive}) {
 		require OpenBSD::Interactive;
-		if (OpenBSD::Interactive("Remove wrong package $name ?")) {
+		if (OpenBSD::Interactive::confirm("Remove wrong package $name ?")) {
 			$self->remove($state, $name);
 		}
 	}
@@ -301,7 +301,7 @@ sub ask_delete_deps
 		$req->delete(@$l);
 	} elsif ($state->{interactive}) {
 		require OpenBSD::Interactive;
-		if (OpenBSD::Interactive("Remove missing deps ?")) {
+		if (OpenBSD::Interactive::confirm("Remove missing deps ?")) {
 			$req->delete(@$l);
 		}
 	}
@@ -314,7 +314,7 @@ sub ask_add_deps
 		$req->add(@$l);
 	} elsif ($state->{interactive}) {
 		require OpenBSD::Interactive;
-		if (OpenBSD::Interactive("Add missing deps ?")) {
+		if (OpenBSD::Interactive::confirm("Add missing deps ?")) {
 			$req->add(@$l);
 		}
 	}
