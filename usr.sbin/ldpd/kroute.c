@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2010/05/25 13:29:45 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.13 2010/06/07 13:24:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1026,7 +1026,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		return (0);
 
 	/* Implicit NULL label should be added/remove just one time */
-	hr_label = ntohl(kroute->local_label) >> MPLS_LABEL_OFFSET;
+	hr_label = kroute->local_label;
 	if (hr_label == MPLS_LABEL_IMPLNULL) {
 		if (action == RTM_ADD && flag_implicit_null)
 			return (0);
@@ -1053,7 +1053,8 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		bzero(&label_in, sizeof(label_in));
 		label_in.smpls_len = sizeof(label_in);
 		label_in.smpls_family = AF_MPLS;
-		label_in.smpls_label = kroute->local_label;
+		label_in.smpls_label =
+		    htonl(kroute->local_label << MPLS_LABEL_OFFSET);
 		/* adjust header */
 		hdr.rtm_flags |= RTF_MPLS;
 		hdr.rtm_priority = RTP_DEFAULT;
@@ -1106,7 +1107,8 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		bzero(&label_out, sizeof(label_out));
 		label_out.smpls_len = sizeof(label_out);
 		label_out.smpls_family = AF_MPLS;
-		label_out.smpls_label = kroute->remote_label;
+		label_out.smpls_label =
+		    htonl(kroute->remote_label << MPLS_LABEL_OFFSET);
 		/* adjust header */
 		hdr.rtm_addrs |= RTA_SRC;
 		hdr.rtm_flags |= RTF_MPLS;
@@ -1115,8 +1117,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		iov[iovcnt].iov_base = &label_out;
 		iov[iovcnt++].iov_len = sizeof(label_out);
 
-		if (ntohl(kroute->remote_label) >> MPLS_LABEL_OFFSET ==
-		    MPLS_LABEL_IMPLNULL) {
+		if (kroute->remote_label == MPLS_LABEL_IMPLNULL) {
 			if (family == AF_MPLS)
 				hdr.rtm_mpls = MPLS_OP_POP;
 			else
@@ -1268,7 +1269,8 @@ fetchtable(void)
 
 		if ((sa_mpls = (struct sockaddr_mpls *)rti_info[RTAX_SRC])
 		    != NULL)
-			kr->r.local_label = sa_mpls->smpls_label;
+			kr->r.local_label =
+			    ntohl(sa_mpls->smpls_label) >> MPLS_LABEL_OFFSET;
 
 		kroute_insert(kr);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.15 2010/06/02 11:56:29 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.16 2010/06/07 13:24:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -426,7 +426,7 @@ lde_assign_label(void)
 
 	/* XXX some checks needed */
 	label++;
-	return (htonl(label << MPLS_LABEL_OFFSET));
+	return label;
 }
 
 void
@@ -605,8 +605,7 @@ lde_nbr_do_mappings(struct rt_node *rn)
 	struct lde_req	*lr;
 	struct map	 map;
 
-	map.label = (ntohl(rn->local_label) & MPLS_LABEL_MASK) >>
-	    MPLS_LABEL_OFFSET;
+	map.label = rn->local_label;
 	map.prefix = rn->fec.prefix.s_addr;
 	map.prefixlen = rn->fec.prefixlen;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.19 2010/06/02 11:56:29 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.20 2010/06/07 13:24:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -161,8 +161,7 @@ rt_snap(u_int32_t peerid)
 		r = (struct rt_node *)f;
 		map.prefix = r->fec.prefix.s_addr;
 		map.prefixlen = r->fec.prefixlen;
-		map.label = (ntohl(r->local_label) & MPLS_LABEL_MASK) >>
-		    MPLS_LABEL_OFFSET;
+		map.label = r->local_label;
 
 		lde_imsg_compose_ldpe(IMSG_MAPPING_ADD, peerid, 0, &map,
 		    sizeof(map));
@@ -219,8 +218,7 @@ lde_kernel_insert(struct kroute *kr)
 		LIST_FOREACH(map, &rn->downstream, entry) {
 			addr = lde_address_find(map->nexthop, &rn->nexthop);
 			if (addr != NULL) {
-				rn->remote_label =
-				    htonl(map->label << MPLS_LABEL_OFFSET);
+				rn->remote_label = map->label;
 				break;
 			}
 		}
@@ -238,15 +236,14 @@ lde_kernel_insert(struct kroute *kr)
 
 	/* There is static assigned label for this route, record it in lib */
 	if (kr->local_label != NO_LABEL) {
-		rn->local_label = htonl(kr->local_label << MPLS_LABEL_OFFSET);
+		rn->local_label = kr->local_label;
 		return;
 	}
 
 	LIST_FOREACH(map, &rn->downstream, entry) {
 		addr = lde_address_find(map->nexthop, &rn->nexthop);
 		if (addr != NULL) {
-			rn->remote_label =
-			    htonl(map->label << MPLS_LABEL_OFFSET);
+			rn->remote_label = map->label;
 			break;
 		}
 	}
@@ -254,8 +251,7 @@ lde_kernel_insert(struct kroute *kr)
 	if (rn->local_label == NO_LABEL) {
 		/* Directly connected route */
 		if (kr->nexthop.s_addr == INADDR_ANY) {
-			rn->local_label =
-			    htonl(MPLS_LABEL_IMPLNULL << MPLS_LABEL_OFFSET);
+			rn->local_label = MPLS_LABEL_IMPLNULL;
 			rn->nexthop.s_addr = htonl(INADDR_LOOPBACK);
 		} else
 			rn->local_label = lde_assign_label();
@@ -286,8 +282,7 @@ lde_kernel_remove(struct kroute *kr)
 			if (map == NULL)
 				fatal("lde_kernel_remove");
 
-			map->label = (ntohl(rn->remote_label) &
-			    MPLS_LABEL_MASK) >> MPLS_LABEL_OFFSET;
+			map->label = rn->remote_label;
 			map->fec = rn->fec;
 			map->nexthop = ln;
 			LIST_INSERT_HEAD(&rn->downstream, map, entry);
@@ -377,7 +372,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		return;
 	}
 
-	rn->remote_label = htonl(map->label << MPLS_LABEL_OFFSET);
+	rn->remote_label = map->label;
 
 	/* If we are ingress for this LSP install the label */
 	if (rn->nexthop.s_addr == INADDR_ANY)

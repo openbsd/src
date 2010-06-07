@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.9 2010/04/13 15:42:09 michele Exp $
+/*	$OpenBSD: ldpctl.c,v 1.10 2010/06/07 13:24:23 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -320,7 +320,6 @@ show_lib_msg(struct imsg *imsg)
 {
 	struct ctl_rt	*rt;
 	char		*dstnet, *remote;
-	int             remote_label;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_LIB:
@@ -328,26 +327,23 @@ show_lib_msg(struct imsg *imsg)
 		if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
 		    rt->prefixlen) == -1)
 			err(1, NULL);
-		remote_label = ntohl(rt->remote_label) >> MPLS_LABEL_OFFSET;
 		if (!rt->in_use) {
 			if (asprintf(&remote, "-") == -1)
 				err(1, NULL);
-		} else if (rt->connected ||
-		    (remote_label == (NO_LABEL >> MPLS_LABEL_OFFSET))) {
+		} else if (rt->connected || rt->remote_label == NO_LABEL) {
 			if (asprintf(&remote, "Untagged") == -1)
 				err(1, NULL);
-		} else if (remote_label == MPLS_LABEL_IMPLNULL) {
+		} else if (rt->remote_label == MPLS_LABEL_IMPLNULL) {
 			if (asprintf(&remote, "Pop tag") == -1)
 				err(1, NULL);
 		} else {
-			if (asprintf(&remote, "%u", remote_label) == -1)
+			if (asprintf(&remote, "%u", rt->remote_label) == -1)
 				err(1, NULL);
 		}
 
 		printf("%-20s %-17s %-14u %-14s %s\n", dstnet,
-		    inet_ntoa(rt->nexthop),
-		    (ntohl(rt->local_label) >> MPLS_LABEL_OFFSET),
-		    remote, rt->in_use ? "yes" : "no");
+		    inet_ntoa(rt->nexthop), rt->local_label, remote,
+		    rt->in_use ? "yes" : "no");
 		free(remote);
 		free(dstnet);
 
@@ -439,21 +435,17 @@ show_lfib_msg(struct imsg *imsg)
 
 		if (k->local_label == NO_LABEL) {
 			printf("%-18s", "-");
-		} else if (ntohl(k->local_label) >> MPLS_LABEL_OFFSET ==
-		    MPLS_LABEL_IMPLNULL) {
+		} else if (k->local_label == MPLS_LABEL_IMPLNULL) {
 			printf("%-18s", "imp-null");
 		} else
-			printf("%-18u", (ntohl(k->local_label) >>
-			    MPLS_LABEL_OFFSET));
+			printf("%-18u", k->local_label);
 
 		if (k->remote_label == NO_LABEL) {
 			printf("-");
-		} else if (htonl(k->remote_label) >> MPLS_LABEL_OFFSET ==
-		    MPLS_LABEL_IMPLNULL) {
+		} else if (k->remote_label == MPLS_LABEL_IMPLNULL) {
 			printf("Pop");
 		} else {
-			printf("%u", (ntohl(k->remote_label) >>
-			    MPLS_LABEL_OFFSET));
+			printf("%u", k->remote_label);
 		}
 
 		printf("\n");
