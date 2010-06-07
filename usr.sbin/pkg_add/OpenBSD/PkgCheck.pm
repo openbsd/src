@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.5 2010/06/07 09:18:11 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.6 2010/06/07 09:54:28 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -47,18 +47,26 @@ sub basic_check
 
 	my $name = $state->{destdir}.$self->fullname;
 	$state->{known}{dirname($name)}{basename($name)} = 1;
-	if (!-e $name) {
-		$state->log("$name should exist\n");
-	}
 	if ($self->{symlink}) {
 		if (!-l $name) {
-			$state->log("$name is not a symlink\n");
+			if (!-e $name) {
+				$state->log("$name should be a symlink but does not exist");
+			} else {
+				$state->log("$name is not a symlink\n");
+			}
 		} else {
 			if (readlink($name) ne $self->{symlink}) {
 				$state->log("$name should point to $self->{symlink} but points to ", readlink($name), " instead\n");
 			}
 		}
 		return;
+	}
+	if (!-e $name) {
+		if (-l $name) {
+			$state->log("$name points to non-existent ".readlink($name)."\n");
+		} else {
+			$state->log("$name should exist\n");
+		}
 	}
 	if (!-f _) {
 		$state->log("$name is not a file\n");
@@ -320,14 +328,26 @@ sub ask_add_deps
 	}
 }
 
+sub for_all_packages
+{
+	my ($self, $state, $l, $msg, $code) = @_;
+
+	my $total = scalar @$l;
+	$state->progress->set_header($msg);
+	my $i = 0;
+	for my $name (@$l) {
+		$state->progress->show(++$i, $total);
+		next if $state->{removed}{$name};
+		&$code($name);
+	}
+}
+
 sub sanity_check
 {
 	my ($self, $state, $l) = @_;
-	$state->progress->set_header("Packing-list sanity");
-	my $i = 0;
-	for my $name (@$l) {
+	$self->for_all_packages($state, $l, "Packing-list sanity", sub {
+		my $name = shift;
 		my $info = installed_info($name);
-		$state->progress->show(++$i, scalar @$l);
 		if (-f $info) {
 			$state->errsay("$name: $info should be a directory");
 			if ($info =~ m/\.core$/) {
@@ -359,24 +379,32 @@ sub sanity_check
 			$self->may_remove($state, $name);
 		}
 		$plist->mark_available_lib($plist->pkgname);
-	}
+		$state->{exists}{$plist->pkgname} = 1;
+	});
 }
 
 sub dependencies_check
 {
 	my ($self, $state, $l) = @_;
-	$state->progress->set_header("Dependencies");
 	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
 	my $i = 0;
-	for my $name (@$l) {
-		$state->progress->show(++$i, scalar @$l);
+	$self->for_all_packages($state, $l, "Dependencies", sub {
+		my $name = shift;
 		my $plist = OpenBSD::PackingList->from_installation($name,
 		    \&OpenBSD::PackingList::DependOnly);
 		my $req = OpenBSD::Requiring->new($name);
 		my @known = $req->list;
-		my %not_yet =map {($_, 1)} @known;
-		my %possible = map {($_, 1)} @known;
+		my %not_yet = (); 
+		my %possible = ();
 		my %other = ();
+		for my $pkg (@known) {
+			$not_yet{$pkg} = 1;
+			if ($state->{exists}{$pkg}) {
+				$possible{$pkg} = 1;
+			} else {
+				$state->errsay("$name: bogus dependency $pkg");
+			}
+		}
 		$state->{localbase} = $plist->localbase;
 		$plist->find_dependencies($state, $l, \%not_yet, \%possible,
 		    \%other);
@@ -391,17 +419,14 @@ sub dependencies_check
 			    join(' ', @todo));
 			$self->ask_add_deps($state, $name, \@todo, $req);
 		}
-	}
+	});
 }
 
 sub package_files_check
 {
 	my ($self, $state, $l) = @_;
-	$state->progress->set_header("Files from packages");
-	my $i = 0;
-	for my $name (@$l) {
-		next if $state->{removed}{$name};
-		$state->progress->show(++$i, scalar @$l);
+	$self->for_all_packages($state, $l, "Files from packages", sub {
+		my $name = shift;
 		my $plist = OpenBSD::PackingList->from_installation($name);
 		$state->log->set_context($name);
 		if ($state->{quick}) {
@@ -410,7 +435,7 @@ sub package_files_check
 			$plist->thorough_check($state);
 		}
 		$plist->mark_available_lib($plist->pkgname);
-	}
+	});
 }
 
 sub localbase_check
