@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.235 2010/06/04 08:53:24 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.236 2010/06/07 14:50:34 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -191,7 +191,6 @@ void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
 void	settimeslot(const char *, int);
 void	timeslot_status(void);
-void	setifmpls(const char *, int);
 void	setmpelabel(const char *, int);
 void	setvlantag(const char *, int);
 void	setvlanprio(const char *, int);
