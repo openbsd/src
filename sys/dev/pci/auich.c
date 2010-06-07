@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.81 2010/03/30 09:38:07 dcoppa Exp $	*/
+/*	$OpenBSD: auich.c,v 1.82 2010/06/07 23:35:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -26,12 +26,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define	AUICH_DEBUG */
 /*
  * AC'97 audio found on Intel 810/815/820/440MX chipsets.
  *	http://developer.intel.com/design/chipsets/datashts/290655.htm
  *	http://developer.intel.com/design/chipsets/manuals/298028.htm
- *	http://www.intel.com/design/chipsets/datashts/290716.htm
+ *	http://www.intel.com/design/chipsets/datashts/290714.htm
  *	http://www.intel.com/design/chipsets/datashts/290744.htm
  */
 
@@ -75,7 +74,7 @@
 #define		AUICH_BCIS	0x08	/* r- buf cmplt int sts; wr ack */
 #define		AUICH_LVBCI	0x04	/* r- last valid bci, wr ack */
 #define		AUICH_CELV	0x02	/* current equals last valid */
-#define		AUICH_DCH		0x01	/* dma halted */
+#define		AUICH_DCH	0x01	/* dma halted */
 #define		AUICH_ISTS_BITS	"\020\01dch\02celv\03lvbci\04bcis\05fifoe"
 #define	AUICH_PICB	0x08	/* 16 bits */
 #define	AUICH_PIV		0x0a	/* 5 bits prefetched index value */
@@ -232,7 +231,7 @@ struct auich_softc {
 
 #ifdef AUICH_DEBUG
 #define	DPRINTF(l,x)	do { if (auich_debug & (l)) printf x; } while(0)
-int auich_debug = 0xfffe;
+int auich_debug = 0x0002;
 #define	AUICH_DEBUG_CODECIO	0x0001
 #define	AUICH_DEBUG_DMA		0x0002
 #define	AUICH_DEBUG_INTR	0x0004
@@ -1174,14 +1173,22 @@ void
 auich_halt_pipe(struct auich_softc *sc, int pipe)
 {
 	int i;
-	uint32_t status;
+	uint32_t sts;
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_CTRL, 0);
-	for (i = 0; i < 100; i++) {
-		status = bus_space_read_4(sc->iot, sc->aud_ioh, pipe + AUICH_STS);
-		if (status & AUICH_DCH)
+
+	/* wait for DMA halted and clear interrupt / event bits if needed */
+	for (i = 0; i < 1000; i++) {
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    pipe + sc->sc_sts_reg);
+		if (sts & (AUICH_CELV | AUICH_LVBCI | AUICH_BCIS | AUICH_FIFOE))
+			bus_space_write_2(sc->iot, sc->aud_ioh,
+			    pipe + sc->sc_sts_reg,
+			    AUICH_CELV | AUICH_LVBCI |
+			    AUICH_BCIS | AUICH_FIFOE);
+		if (sts & AUICH_DCH)
 			break;
-		DELAY(1);
+		DELAY(100);
 	}
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_CTRL, AUICH_RR);
 
@@ -1199,7 +1206,8 @@ auich_halt_output(v)
 
 	DPRINTF(AUICH_DEBUG_DMA, ("%s: halt_output\n", sc->sc_dev.dv_xname));
 
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_CTRL, AUICH_RR);
+	auich_halt_pipe(sc, AUICH_PCMO);
+
 	sc->pcmo.intr = NULL;
 
 	return 0;
@@ -1216,8 +1224,9 @@ auich_halt_input(v)
 
 	/* XXX halt both unless known otherwise */
 
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL, AUICH_RR);
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_MICI + AUICH_CTRL, AUICH_RR);
+	auich_halt_pipe(sc, AUICH_PCMI);
+	auich_halt_pipe(sc, AUICH_MICI);
+
 	sc->pcmi.intr = NULL;
 
 	return 0;
@@ -1381,8 +1390,15 @@ auich_intr(v)
 
 #ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE) {
-			printf("%s: fifo underrun # %u\n",
-			    sc->sc_dev.dv_xname, ++sc->pcmo_fifoe);
+			printf("%s: in fifo underrun # %u civ=%u ctrl=0x%x sts=%b\n",
+			    sc->sc_dev.dv_xname, sc->pcmo_fifoe++,
+			    bus_space_read_1(sc->iot, sc->aud_ioh,
+				AUICH_PCMO + AUICH_CIV),
+			    bus_space_read_1(sc->iot, sc->aud_ioh,
+				AUICH_PCMO + AUICH_CTRL),
+			    bus_space_read_2(sc->iot, sc->aud_ioh,
+				AUICH_PCMO + sc->sc_sts_reg),
+			    AUICH_ISTS_BITS);
 		}
 #endif
 
@@ -1405,8 +1421,15 @@ auich_intr(v)
 
 #ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE) {
-			printf("%s: in fifo overrun # %u\n",
-			    sc->sc_dev.dv_xname, ++sc->pcmi_fifoe);
+			printf("%s: in fifo overrun civ=%u ctrl=0x%x sts=%b\n",
+			    sc->sc_dev.dv_xname, sc->pcmi_fifoe++,
+			    bus_space_read_1(sc->iot, sc->aud_ioh,
+				AUICH_PCMI + AUICH_CIV),
+			    bus_space_read_1(sc->iot, sc->aud_ioh,
+				AUICH_PCMI + AUICH_CTRL),
+			    bus_space_read_2(sc->iot, sc->aud_ioh,
+				AUICH_PCMI + sc->sc_sts_reg),
+			    AUICH_ISTS_BITS);
 		}
 #endif
 
@@ -1427,10 +1450,18 @@ auich_intr(v)
 		DPRINTF(AUICH_DEBUG_INTR,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 #ifdef AUICH_DEBUG
-		if (sts & AUICH_FIFOE)
-			printf("%s: mic fifo overrun\n", sc->sc_dev.dv_xname);
+		if (sts & AUICH_FIFOE) {
+			printf("%s: in fifo overrun # %u civ=%u ctrl=0x%x sts=%b\n",
+			    sc->sc_dev.dv_xname,
+			    bus_space_read_1(sc->iot, sc->aud_ioh,
+				AUICH_MICI + AUICH_CIV),
+			    bus_space_read_1(sc->iot, sc->aud_ioh,
+				AUICH_MICI + AUICH_CTRL),
+			    bus_space_read_2(sc->iot, sc->aud_ioh,
+				AUICH_MICI + sc->sc_sts_reg),
+			    AUICH_ISTS_BITS);
+		}
 #endif
-
 		if (sts & AUICH_BCIS)
 			auich_intr_pipe(sc, AUICH_MICI, &sc->mici);
 
@@ -1454,34 +1485,37 @@ auich_trigger_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 	struct auich_dmalist *q;
 
 	blksize = ring->blksize;
+	qptr = oqptr = bus_space_read_1(sc->iot, sc->aud_ioh, pipe + AUICH_CIV);
 
-	DPRINTF(AUICH_DEBUG_INTR, ("auich_trigger_pipe: ring->qptr: %d\n",
-	    ring->qptr));
-
-	qptr = bus_space_read_1(sc->iot, sc->aud_ioh, pipe + AUICH_CIV);
-	oqptr = qptr;
-
-	DPRINTF(AUICH_DEBUG_INTR, ("auich_trigger_pipe: qptr: %d\n", qptr));
-
+	/* XXX remove this when no one reports problems */
 	if(oqptr >= AUICH_DMALIST_MAX) {
 		printf("%s: Unexpected CIV: %d\n", sc->sc_dev.dv_xname, oqptr);
 		qptr = oqptr = 0;
 	}
+
 	do {
 		q = &ring->dmalist[qptr];
 		q->base = ring->p;
 		q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
 
+		DPRINTF(AUICH_DEBUG_INTR,
+		    ("auich_trigger_pipe: %p, %p = %x @ 0x%x qptr=%d\n",
+			&ring->dmalist[qptr], q, q->len, q->base, qptr));
+
 		ring->p += blksize;
 		if (ring->p >= ring->end)
 			ring->p = ring->start;
-		qptr++;
-		if (qptr == AUICH_DMALIST_MAX)
-			qptr = 0;
+
+		qptr = (qptr + 1) & AUICH_LVI_MASK;
 	} while (qptr != oqptr);
+
 	ring->qptr = qptr;
+
+	DPRINTF(AUICH_DEBUG_DMA,
+	    ("auich_trigger_pipe: qptr=%d\n", qptr));
+
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_LVI,
-	    (AUICH_DMALIST_MAX - 1) & AUICH_LVI_MASK);
+	    (qptr - 1) & AUICH_LVI_MASK);
 	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_CTRL,
 	    AUICH_IOCE | AUICH_FEIE | AUICH_RPBM);
 }
@@ -1502,8 +1536,8 @@ auich_intr_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 		q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
 
 		DPRINTF(AUICH_DEBUG_INTR,
-		    ("auich_intr: %p, %p = %x @ 0x%x\n",
-		    &ring->dmalist[qptr], q, q->len, q->base));
+		    ("auich_intr: %p, %p = %x @ 0x%x qptr=%d\n",
+		    &ring->dmalist[qptr], q, q->len, q->base, qptr));
 
 		ring->p += blksize;
 		if (ring->p >= ring->end)
@@ -1512,6 +1546,8 @@ auich_intr_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
 		qptr = (qptr + 1) & AUICH_LVI_MASK;
 		if (ring->intr)
 			ring->intr(ring->arg);
+		else
+			printf("auich_intr: got progress with intr==NULL\n");
 	}
 	ring->qptr = qptr;
 
@@ -1532,10 +1568,14 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 	struct auich_softc *sc = v;
 	struct auich_dma *p;
 	size_t size;
-
+#ifdef AUICH_DEBUG
+	uint16_t sts;
+	sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+	    AUICH_PCMO + sc->sc_sts_reg);
 	DPRINTF(AUICH_DEBUG_DMA,
-	    ("auich_trigger_output(%x, %x, %d, %p, %p, %p)\n",
-	    start, end, blksize, intr, arg, param));
+	    ("auich_trigger_output(%x, %x, %d, %p, %p, %p) sts=%b\n",
+		start, end, blksize, intr, arg, param, sts, AUICH_ISTS_BITS));
+#endif
 
 	if (sc->sc_pdma->addr == start)
 		p = sc->sc_pdma;
@@ -1577,10 +1617,14 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	struct auich_dma *p;
 	size_t size;
 
+#ifdef AUICH_DEBUG
 	DPRINTF(AUICH_DEBUG_DMA,
-	    ("auich_trigger_input(%x, %x, %d, %p, %p, %p)\n",
-	    start, end, blksize, intr, arg, param));
-
+	    ("auich_trigger_input(%x, %x, %d, %p, %p, %p) sts=%b\n",
+		start, end, blksize, intr, arg, param,
+		bus_space_read_2(sc->iot, sc->aud_ioh,
+		    AUICH_PCMI + sc->sc_sts_reg),
+		AUICH_ISTS_BITS));
+#endif
 	if (sc->sc_rdma->addr == start)
 		p = sc->sc_rdma;
 	else
@@ -1770,7 +1814,8 @@ unsigned int
 auich_calibrate(struct auich_softc *sc)
 {
 	struct timeval t1, t2;
-	u_int8_t ociv, nciv;
+	u_int8_t civ, ociv;
+	uint16_t sts, osts;
 	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
@@ -1781,6 +1826,8 @@ auich_calibrate(struct auich_softc *sc)
 	 * much we actually get with what we expect.  Interval needs
 	 * to be sufficiently short that no interrupts are
 	 * generated.
+	 * XXX: Is this true? We don't request any interrupts,
+	 * so why should the chip issue any?
 	 */
 
 	/* Setup a buffer */
@@ -1795,8 +1842,10 @@ auich_calibrate(struct auich_softc *sc)
 		return (ac97rate);
 	}
 
-	sc->pcmi.dmalist[0].base = p->map->dm_segs[0].ds_addr;
-	sc->pcmi.dmalist[0].len = bytes / sc->sc_sample_size;
+	/* get current CIV (usually 0 after reboot) */
+	ociv = civ = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CIV);
+	sc->pcmi.dmalist[civ].base = p->map->dm_segs[0].ds_addr;
+	sc->pcmi.dmalist[civ].len = bytes / sc->sc_sample_size;
 
 
 	/*
@@ -1812,44 +1861,90 @@ auich_calibrate(struct auich_softc *sc)
 	 */
 
 	/* prepare */
-	ociv = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CIV);
-	nciv = ociv;
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_BDBAR,
 	    sc->sc_cddma + AUICH_PCMI_OFF(0));
+	/* we got only one valid sample, so set LVI to CIV
+	 * otherwise we provoke a AUICH_FIFOE FIFO error
+	 * which will confuse the chip later on. */
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_LVI,
-			  (0 - 1) & AUICH_LVI_MASK);
+	    civ & AUICH_LVI_MASK);
 
-	/* start */
+	/* start, but don't request any interupts */
 	microuptime(&t1);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL,
 	    AUICH_RPBM);
 
+	/* XXX remove this sometime */
+	osts = bus_space_read_2(sc->iot, sc->aud_ioh,
+	    AUICH_PCMI + sc->sc_sts_reg);
 	/* wait */
-	while (nciv == ociv) {
+	while(1) {
 		microuptime(&t2);
-		if (t2.tv_sec - t1.tv_sec > 1)
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    AUICH_PCMI + sc->sc_sts_reg);
+		civ = bus_space_read_1(sc->iot, sc->aud_ioh,
+		    AUICH_PCMI + AUICH_CIV);
+	  
+		/* turn time delta into us */
+		wait_us = ((t2.tv_sec - t1.tv_sec) * 1000000) +
+		    t2.tv_usec - t1.tv_usec;
+
+		/* this should actually never happen because civ==lvi */
+		if ((civ & AUICH_LVI_MASK) != (ociv & AUICH_LVI_MASK)) {
+			printf("%s: ac97 CIV progressed after %d us sts=%b civ=%u\n",
+			    sc->sc_dev.dv_xname, wait_us, sts,
+			    AUICH_ISTS_BITS, civ);
+			ociv = civ;
+		}
+		/* normal completion */
+		if (sts & (AUICH_DCH | AUICH_CELV | AUICH_LVBCI))
 			break;
-		nciv = bus_space_read_1(sc->iot, sc->aud_ioh,
-					AUICH_PCMI + AUICH_CIV);
+		/*
+		 * check for strange changes in STS -
+		 * XXX remove it when everythings fine
+		 */
+		if (sts != osts) {
+			printf("%s: ac97 sts changed after %d us sts=%b civ=%u\n",
+			    sc->sc_dev.dv_xname, wait_us, sts,
+			    AUICH_ISTS_BITS, civ);
+			osts = sts;
+		}
+		/*
+		 * timeout: we expect 83333 us for 48k sampling rate,
+		 * 600000 us will be enough even for 8k sampling rate
+		 */
+		if (wait_us > 600000) {
+			printf("%s: ac97 link rate timed out %d us sts=%b civ=%u\n",
+			    sc->sc_dev.dv_xname, wait_us, sts,
+			    AUICH_ISTS_BITS, civ);
+			/* reset and clean up*/
+			auich_halt_pipe(sc, AUICH_PCMI);
+			auich_halt_pipe(sc, AUICH_MICI);
+			auich_freem(sc, temp_buffer, M_DEVBUF);
+			/* return default sample rate */
+			return (ac97rate);
+		}
 	}
-	microuptime(&t2);
 
-	/* reset */
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL, AUICH_RR);
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_MICI + AUICH_CTRL, AUICH_RR);
-	DELAY(100);
+	DPRINTF(AUICH_DEBUG_CODECIO,
+	    ("%s: ac97 link rate calibration took %d us sts=%b civ=%u\n",
+		sc->sc_dev.dv_xname, wait_us, sts, AUICH_ISTS_BITS, civ));
 
-	/* turn time delta into us */
-	wait_us = ((t2.tv_sec - t1.tv_sec) * 1000000) + t2.tv_usec - t1.tv_usec;
-
+	/* reset and clean up */
+	auich_halt_pipe(sc, AUICH_PCMI);
+	auich_halt_pipe(sc, AUICH_MICI);
 	auich_freem(sc, temp_buffer, M_DEVBUF);
 
-	if (nciv == ociv) {
-		printf("%s: ac97 link rate calibration timed out after %d us\n",
-		       sc->sc_dev.dv_xname, wait_us);
-		return (ac97rate);
-	}
+#ifdef AUICH_DEBUG
+	sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+	    AUICH_PCMI + sc->sc_sts_reg);
+	civ = bus_space_read_4(sc->iot, sc->aud_ioh,
+	    AUICH_PCMI + AUICH_CIV);
+	printf("%s: after calibration and reset sts=%b civ=%u\n",
+	    sc->sc_dev.dv_xname, sts, AUICH_ISTS_BITS, civ);
+#endif
 
+	/* now finally calculate measured samplerate */
 	actual_48k_rate = (bytes * 250000) / wait_us;
 
 	if (actual_48k_rate <= 48500)
@@ -1858,7 +1953,7 @@ auich_calibrate(struct auich_softc *sc)
 		ac97rate = actual_48k_rate;
 
 	DPRINTF(AUICH_DEBUG_CODECIO, ("%s: measured ac97 link rate at %d Hz",
-	       sc->sc_dev.dv_xname, actual_48k_rate));
+		sc->sc_dev.dv_xname, actual_48k_rate));
 	if (ac97rate != actual_48k_rate)
 		DPRINTF(AUICH_DEBUG_CODECIO, (", will use %d Hz", ac97rate));
 	DPRINTF(AUICH_DEBUG_CODECIO, ("\n"));
