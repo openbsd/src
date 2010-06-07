@@ -2110,7 +2110,7 @@ radeon_emit_packets(drm_radeon_private_t * dev_priv, struct drm_file *file_priv,
 	int sz, reg;
 	int *data = (int *)cmdbuf->buf;
 
-	if (id >= RADEON_MAX_STATE_PACKETS)
+	if (id < 0 || id >= RADEON_MAX_STATE_PACKETS)
 		return EINVAL;
 
 	sz = packet[id].len;
