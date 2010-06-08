@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.7 2010/06/08 07:25:38 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.8 2010/06/08 07:49:00 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -478,9 +478,9 @@ sub handle_fragment
 	}
 	my $newname = deduce_name($state, $file->name, $frag, $not);
 	if ($state->{subst}->has_fragment($def, $frag)) {
-		return if defined $not;
+		return $file if defined $not;
 	} else {
-		return unless defined $not;
+		return $file unless defined $not;
 	}
 	if (defined $newname) {
 		$state->set_status("switching to $newname") 
