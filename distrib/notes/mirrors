@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.80 2010/05/29 17:20:50 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.81 2010/06/08 01:48:18 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -49,6 +49,7 @@ Brazil:
 
 Canada:
     ftp://openbsd.arcticnetwork.ca/pub/OpenBSD (Calgary)
+    http://openbsd.arcticnetwork.ca (Calgary)
     ftp://ftp.ca.openbsd.org/pub/OpenBSD (Edmonton)
 
 China:
@@ -82,7 +83,9 @@ France:
     ftp://ftp.arcane-networks.fr/pub/OpenBSD (Paris)
     http://ftp.arcane-networks.fr/pub/OpenBSD (Paris)
     ftp://ftp.crans.org/pub/OpenBSD (Paris)
+    http://ftp.crans.org/pub/OpenBSD (Paris)
     ftp://ftp.irisa.fr/pub/OpenBSD (Rennes)
+    ftp://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
     ftp://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
 
 Germany:
@@ -90,11 +93,13 @@ Germany:
     ftp://ftp.spline.de/pub/OpenBSD (Berlin)
     http://ftp.spline.de/pub/OpenBSD (Berlin)
     ftp://ftp.freenet.de/pub/ftp.openbsd.org/pub/OpenBSD (Dusseldorf)
+    http://ftp.freenet.de/pub/ftp.openbsd.org/pub/OpenBSD (Dusseldorf)
     ftp://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
     http://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
     ftp://mirror.roothell.org/pub/OpenBSD (Nurnberg)
     http://mirror.roothell.org/pub/OpenBSD (Nurnberg)
     ftp://ftp.bytemine.net/pub/OpenBSD (Oldenburg)
+    http://ftp.bytemine.net/pub/OpenBSD (Oldenburg)
     http://artfiles.org/openbsd (Hamburg)
     ftp://ftp.halifax.rwth-aachen.de/pub/OpenBSD (Aachen)
     http://ftp.halifax.rwth-aachen.de/openbsd (Aachen)
@@ -105,6 +110,7 @@ Greece:
 
 Hungary:
     ftp://ftp.fsn.hu/pub/OpenBSD (Budapest)
+    http://ftp.fsn.hu/pub/OpenBSD (Budapest)
 
 Indonesia:
     ftp://ftp.openbsd.or.id/pub/OpenBSD (Jakarta)
@@ -119,6 +125,7 @@ Japan:
     ftp://ftp.jaist.ac.jp/pub/OpenBSD (Ishikawa)
     http://ftp.jaist.ac.jp/pub/OpenBSD (Ishikawa)
     ftp://ftp.kddlabs.co.jp/OpenBSD (Tokyo)
+    http://ftp.kddlabs.co.jp/OpenBSD (Tokyo)
 
 Korea:
     ftp://ftp.kaist.ac.kr/pub/OpenBSD (Daejeon)
@@ -126,6 +133,7 @@ Korea:
 
 The Netherlands:
     ftp://ftp.nluug.nl/pub/OpenBSD (Utrecht)
+    http://ftp.nluug.nl/pub/OpenBSD (Utrecht)
     ftp://mirror.hostfuss.com/pub/OpenBSD (Amsterdam)
     http://mirror.hostfuss.com/pub/OpenBSD (Amsterdam)
 
@@ -161,6 +169,7 @@ Spain:
     ftp://ftp.udc.es/pub/OpenBSD (A Coruna)
     http://ftp.udc.es/OpenBSD (A Coruna)
     ftp://mirror.cdmon.com/pub/OpenBSD (Barcelona)
+    http://mirror.cdmon.com/pub/OpenBSD (Barcelona)
 
 Sweden:
     ftp://ftp.df.lth.se/pub/OpenBSD (Lund)
