@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.20 2010/06/06 20:30:08 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.21 2010/06/08 00:11:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -49,6 +49,8 @@ static	void		  print_mdoc(MDOC_ARGS);
 static	void		  print_mdoc_head(MDOC_ARGS);
 static	void		  print_mdoc_node(MDOC_ARGS);
 static	void		  print_mdoc_nodelist(MDOC_ARGS);
+static	void	  	  synopsis_pre(struct html *, 
+				const struct mdoc_node *);
 
 static	void		  a2width(const char *, struct roffsu *);
 static	void		  a2offs(const char *, struct roffsu *);
@@ -80,7 +82,6 @@ static	void		  mdoc_dq_post(MDOC_ARGS);
 static	int		  mdoc_dq_pre(MDOC_ARGS);
 static	int		  mdoc_dv_pre(MDOC_ARGS);
 static	int		  mdoc_fa_pre(MDOC_ARGS);
-static	void		  mdoc_fd_post(MDOC_ARGS);
 static	int		  mdoc_fd_pre(MDOC_ARGS);
 static	int		  mdoc_fl_pre(MDOC_ARGS);
 static	int		  mdoc_fn_pre(MDOC_ARGS);
@@ -155,7 +156,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_ev_pre, NULL}, /* Ev */ 
 	{mdoc_ex_pre, NULL}, /* Ex */
 	{mdoc_fa_pre, NULL}, /* Fa */ 
-	{mdoc_fd_pre, mdoc_fd_post}, /* Fd */ 
+	{mdoc_fd_pre, NULL}, /* Fd */ 
 	{mdoc_fl_pre, NULL}, /* Fl */
 	{mdoc_fn_pre, NULL}, /* Fn */ 
 	{mdoc_ft_pre, NULL}, /* Ft */ 
@@ -285,6 +286,55 @@ a2width(const char *p, struct roffsu *su)
 	if ( ! a2roffsu(p, su, SCALE_MAX)) {
 		su->unit = SCALE_EM;
 		su->scale = (int)strlen(p);
+	}
+}
+
+
+/*
+ * See the same function in mdoc_term.c for documentation.
+ */
+static void
+synopsis_pre(struct html *h, const struct mdoc_node *n)
+{
+	struct roffsu	 su;
+	struct htmlpair	 tag;
+
+	if (NULL == n->prev || SEC_SYNOPSIS != n->sec)
+		return;
+
+	SCALE_VS_INIT(&su, 1);
+	bufcat_su(h, "margin-top", &su);
+	PAIR_STYLE_INIT(&tag, h);
+
+	if (n->prev->tok == n->tok && 
+			MDOC_Fo != n->tok && 
+			MDOC_Ft != n->tok && 
+			MDOC_Fn != n->tok) {
+		print_otag(h, TAG_DIV, 0, NULL);
+		return;
+	}
+
+	switch (n->prev->tok) {
+	case (MDOC_Fd):
+		/* FALLTHROUGH */
+	case (MDOC_Fn):
+		/* FALLTHROUGH */
+	case (MDOC_Fo):
+		/* FALLTHROUGH */
+	case (MDOC_In):
+		/* FALLTHROUGH */
+	case (MDOC_Vt):
+		print_otag(h, TAG_DIV, 1, &tag);
+		break;
+	case (MDOC_Ft):
+		if (MDOC_Fn != n->tok && MDOC_Fo != n->tok) {
+			print_otag(h, TAG_DIV, 1, &tag);
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
+		print_otag(h, TAG_DIV, 0, NULL);
+		break;
 	}
 }
 
@@ -686,18 +736,12 @@ mdoc_nm_pre(MDOC_ARGS)
 	if (NULL == n->child && NULL == m->name)
 		return(1);
 
-	if (SEC_SYNOPSIS == n->sec && 
-			n->prev && MDOC_LINE & n->flags) {
-		bufcat_style(h, "clear", "both");
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_BR, 1, &tag);
-	}
+	synopsis_pre(h, n);
 
 	PAIR_CLASS_INIT(&tag, "name");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	if (NULL == n->child)
 		print_text(h, m->name);
-
 	return(1);
 }
 
@@ -1434,7 +1478,7 @@ mdoc_cd_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
 
-	print_otag(h, TAG_DIV, 0, NULL);
+	synopsis_pre(h, n);
 	PAIR_CLASS_INIT(&tag, "config");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	return(1);
@@ -1507,19 +1551,12 @@ mdoc_fa_pre(MDOC_ARGS)
 
 
 /* ARGSUSED */
-static void
-mdoc_fd_post(MDOC_ARGS)
-{
-
-	print_otag(h, TAG_BR, 0, NULL);
-}
-
-
-/* ARGSUSED */
 static int
 mdoc_fd_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
+
+	synopsis_pre(h, n);
 
 	PAIR_CLASS_INIT(&tag, "macro");
 	print_otag(h, TAG_SPAN, 1, &tag);
@@ -1532,18 +1569,12 @@ static int
 mdoc_vt_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
-	struct roffsu	 su;
 
-	if (SEC_SYNOPSIS == n->sec && MDOC_BLOCK == n->type) {
-		if (n->next && MDOC_Vt != n->next->tok) {
-			SCALE_VS_INIT(&su, 1);
-			bufcat_su(h, "margin-bottom", &su);
-			PAIR_STYLE_INIT(&tag, h);
-			print_otag(h, TAG_DIV, 1, &tag);
-		} else
-			print_otag(h, TAG_DIV, 0, NULL);
-		
+	if (MDOC_BLOCK == n->type) {
+		synopsis_pre(h, n);
 		return(1);
+	} else if (MDOC_ELEM == n->type) {
+		synopsis_pre(h, n);
 	} else if (MDOC_HEAD == n->type)
 		return(0);
 
@@ -1559,9 +1590,7 @@ mdoc_ft_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
 
-	if (SEC_SYNOPSIS == n->sec && n->prev)
-		print_otag(h, TAG_BR, 0, NULL);
-
+	synopsis_pre(h, n);
 	PAIR_CLASS_INIT(&tag, "ftype");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	return(1);
@@ -1578,21 +1607,8 @@ mdoc_fn_pre(MDOC_ARGS)
 	char			 nbuf[BUFSIZ];
 	const char		*sp, *ep;
 	int			 sz, i;
-	struct roffsu		 su;
 
-	/* NB: MDOC_LINE has no effect on this macro! */
-	if (SEC_SYNOPSIS == n->sec) {
-		SCALE_HS_INIT(&su, INDENT);
-		bufcat_su(h, "margin-left", &su);
-		su.scale = -su.scale;
-		bufcat_su(h, "text-indent", &su);
-		if (n->prev && MDOC_Ft != n->prev->tok) {
-			SCALE_VS_INIT(&su, 1);
-			bufcat_su(h, "margin-top", &su);
-		} 
-		PAIR_STYLE_INIT(&tag[0], h);
-		print_otag(h, TAG_DIV, 1, tag);
-	}
+	synopsis_pre(h, n);
 
 	/* Split apart into type and name. */
 	assert(n->child->string);
@@ -1778,7 +1794,6 @@ static int
 mdoc_fo_pre(MDOC_ARGS)
 {
 	struct htmlpair	 tag;
-	struct roffsu	 su;
 	struct tag	*t;
 
 	if (MDOC_BODY == n->type) {
@@ -1787,16 +1802,7 @@ mdoc_fo_pre(MDOC_ARGS)
 		h->flags |= HTML_NOSPACE;
 		return(1);
 	} else if (MDOC_BLOCK == n->type) {
-		if (SEC_SYNOPSIS != n->sec)
-			return(1);
-		if (NULL == n->prev || MDOC_Ft == n->prev->tok) {
-			print_otag(h, TAG_DIV, 0, NULL);
-			return(1);
-		}
-		SCALE_VS_INIT(&su, 1);
-		bufcat_su(h, "margin-top", &su);
-		PAIR_STYLE_INIT(&tag, h);
-		print_otag(h, TAG_DIV, 1, &tag);
+		synopsis_pre(h, n);
 		return(1);
 	}
 
@@ -1817,6 +1823,7 @@ mdoc_fo_pre(MDOC_ARGS)
 static void
 mdoc_fo_post(MDOC_ARGS)
 {
+
 	if (MDOC_BODY != n->type)
 		return;
 	h->flags |= HTML_NOSPACE;
@@ -1834,6 +1841,8 @@ mdoc_in_pre(MDOC_ARGS)
 	struct tag		*t;
 	struct htmlpair		 tag[2];
 	int			 i;
+
+	synopsis_pre(h, n);
 
 	PAIR_CLASS_INIT(&tag[0], "includes");
 	print_otag(h, TAG_SPAN, 1, tag);
@@ -1860,9 +1869,6 @@ mdoc_in_pre(MDOC_ARGS)
 
 	h->flags |= HTML_NOSPACE;
 	print_text(h, ">");
-
-	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags) 
-		print_otag(h, TAG_BR, 0, NULL);
 
 	return(0);
 }

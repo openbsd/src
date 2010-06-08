@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.29 2010/05/14 01:54:37 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.30 2010/06/08 00:11:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2010 $
+.Dd $Mdocdate: June 8 2010 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -203,11 +203,11 @@ and
 .Fl f Ns Cm no-ign-macro .
 .El
 .Ss Output Options
-For the time being, only
+The
 .Fl T Ns Ar html
 and
 .Fl T Ns Ar xhtml
-accept output options:
+modes accept the following output options:
 .Bl -tag -width Ds
 .It Fl O Ns Cm includes Ns = Ns Ar fmt
 The string
@@ -244,6 +244,16 @@ The file
 is used for an external style-sheet.
 This must be a valid absolute or
 relative URI.
+.El
+.Pp
+The
+.Fl T Ns Ar ascii
+mode accepts the following output option:
+.Bl -tag -width Ds
+.It Fl O Ns Cm width Ns = Ns Ar width
+The output width is set to
+.Ar width ,
+which will normalise to \(>=60.
 .El
 .Sh OUTPUT
 This section documents output details of

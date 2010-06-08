@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.9 2010/05/26 02:39:58 schwarze Exp $ */
+/*	$Id: html.c,v 1.10 2010/06/08 00:11:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,8 +30,6 @@
 #include "chars.h"
 #include "html.h"
 #include "main.h"
-
-#define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
 struct	htmldata {
 	const char	 *name;

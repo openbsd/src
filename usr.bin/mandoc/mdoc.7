@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.34 2010/06/06 20:30:08 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.35 2010/06/08 00:11:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2010 $
+.Dd $Mdocdate: June 8 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ Text following a
 whether in a macro or free-form text line, is ignored to the end of
 line.  A macro line with only a control character and comment escape,
 .Sq \&.\e" ,
-is also ignored.  Macro lines with only a control charater and optionally
+is also ignored.  Macro lines with only a control character and optionally
 whitespace are stripped from input.
 .Ss Reserved Characters
 Within a macro line, the following characters are reserved:
@@ -167,7 +167,7 @@ also defined a set of package-specific
 .Dq predefined strings ,
 which, like
 .Sx Special Characters ,
-demark special output characters and strings by way of input codes.
+mark special output characters and strings by way of input codes.
 Predefined strings are escaped with the slash-asterisk,
 .Sq \e* :
 single-character
@@ -333,8 +333,11 @@ must be the NAME section, consisting of at least one
 followed by
 .Sx \&Nd .
 .Pp
-Following that, convention dictates specifying at least the SYNOPSIS and
-DESCRIPTION sections, although this varies between manual sections.
+Following that, convention dictates specifying at least the
+.Em SYNOPSIS
+and
+.Em DESCRIPTION
+sections, although this varies between manual sections.
 .Pp
 The following is a well-formed skeleton
 .Nm
@@ -450,13 +453,31 @@ And for the third, configurations (section 4):
 Manuals not in these sections generally don't need a
 .Em SYNOPSIS .
 .Pp
-See
-.Sx \&Op ,
+Some macros are displayed differently in the
+.Em SYNOPSIS
+section, particularly
+.Sx \&Nm ,
 .Sx \&Cd ,
+.Sx \&Fd ,
 .Sx \&Fn ,
-.Sx \&Ft ,
+.Sx \&Fo ,
+.Sx \&In ,
+.Sx \&Vt ,
 and
-.Sx \&Vt .
+.Sx \&Ft .
+All of these macros are output on their own line.  If two such
+dissimilar macros are pair-wise invoked (except for
+.Sx \&Ft
+before
+.Sx \&Fo
+or
+.Sx \&Fn ) ,
+they are separated by a vertical space, unless in the case of
+.Sx \&Fo ,
+.Sx \&Fn ,
+and
+.Sx \&Ft ,
+which are always separated by vertical space.
 .It Em DESCRIPTION
 This expands upon the brief, one-line description in
 .Em NAME .
@@ -952,7 +973,7 @@ See also
 .Sx \&Aq .
 .Ss \&Ap
 Inserts an apostrophe without any surrounding white-space.
-This is generally used as a grammatic device when referring to the verb
+This is generally used as a grammatical device when referring to the verb
 form of a function:
 .Bd -literal -offset indent
 \&.Fn execve Ap d
@@ -1656,6 +1677,8 @@ This usage has been deprecated in favour of
 Do not use this macro.
 .Pp
 See also
+.Sx MANUAL STRUCTURE
+and
 .Sx \&In .
 .Ss \&Fl
 Command-line flag.
@@ -1685,10 +1708,7 @@ Its syntax is as follows:
 .Op Oo Cm argtype Oc Cm argname
 .Ed
 .Pp
-If invoked in the
-.Em SYNOPSIS
-section, vertical space is asserted before and after the macro.
-In all cases, the function arguments are surrounded in parenthesis and
+Function arguments are surrounded in parenthesis and
 are delimited by commas.
 If no arguments are specified, blank parenthesis are output.
 .Pp
@@ -1702,9 +1722,7 @@ Examples:
 .Ed
 .Pp
 See also
-.Sx \&Fa ,
-.Sx \&Fo ,
-.Sx \&Fc ,
+.Sx MANUAL STRUCTURE
 and
 .Sx \&Ft .
 .Ss \&Fo
@@ -1728,41 +1746,20 @@ Invocations usually occur in the following context:
 .Pf \. Sx \&Fc
 .Ed
 .Pp
-In the
-.Em SYNOPSIS
-section, a
-.Sx \&Fo
-block is surrounded by vertical space unless
-.Sx \&Ft
-is the prior macro, in which case it is preceded by only a newline.
-.Pp
 A
 .Sx \&Fo
 scope is closed by
 .Pp
 See also
+.Sx MANUAL STRUCTURE ,
 .Sx \&Fa ,
 .Sx \&Fc ,
 and
-.Sx \&Fn .
-.Sx \&Fc .
-.Ss \&Fr
 .Ss \&Ft
 A function type.
 Its syntax is as follows:
 .Pp
 .D1 Pf \. Sx \&Ft Cm functype
-.Pp
-If invoked before a
-.Sx \&Fo
-or
-.Sx \&Fn
-in the
-.Em SYNOPSIS
-section, a line-break will follow.
-Furthermore, if invoked in the
-.Em SYNOPSIS
-section, it will assert vertical space prior to its arguments.
 .Pp
 Examples:
 .D1 \&.Ft int
@@ -1772,10 +1769,10 @@ Examples:
 .Ed
 .Pp
 See also
-.Sx \&Fo ,
-.Sx \&Fc ,
+.Sx MANUAL STRUCTURE ,
+.Sx \&Fn ,
 and
-.Sx \&Fn .
+.Sx \&Fo .
 .Ss \&Fx
 Format the FreeBSD version provided as an argument, or a default value
 if no argument is provided.
@@ -1804,11 +1801,13 @@ In the
 section (only if invoked as the line macro), the first argument is
 preceded by
 .Qq #include ,
-the arguments is enclosed in angled braces, and a newline is asserted.
-In all other invocations, only angled braces will enclose the argument.
+the arguments is enclosed in angled braces.
 .Pp
-Examples
+Examples:
 .D1 \&.In sys/types
+.Pp
+See also
+.Sx MANUAL STRUCTURE .
 .Ss \&It
 A list item.
 The syntax of this macro depends on the list type.
@@ -1880,12 +1879,12 @@ line itself.
 Subsequent this, only the
 .Sq \&Ta
 pseudo-macro may be used to delimit phrases.
-Furthermore, note that quoted sections propogate over tab-delimited
+Furthermore, note that quoted sections propagate over tab-delimited
 phrases on an
 .Sx \&It ,
 for example,
 .Pp
-.D1 .It \(dqcol1 ; <TAB> col2 ;\(dq ;
+.D1 .It \(dqcol1 ; <TAB> col2 ;\(dq \&;
 .Pp
 will preserve the semicolon whitespace except for the last.
 .Pp
@@ -2098,12 +2097,14 @@ and
 .Ss \&Va
 .Ss \&Vt
 A variable type.
-This is also used for indicating global variables in the SYNOPSIS
+This is also used for indicating global variables in the
+.Em SYNOPSIS
 section, in which case a variable name is also specified.
 Note that it accepts
 .Sx Block partial-implicit
-syntax when invoked as the first macro in the SYNOPSIS section, else it
-accepts ordinary
+syntax when invoked as the first macro in the
+.Em SYNOPSIS
+section, else it accepts ordinary
 .Sx In-line
 syntax.
 .Pp
@@ -2113,10 +2114,10 @@ which is used for function return types.
 .Pp
 Examples:
 .D1 \&.Vt unsigned char
-.D1 \&.Vt extern const char * const sys_signame[] ;
+.D1 \&.Vt extern const char * const sys_signame[] \&;
 .Pp
 See also
-.Sx \&Ft
+.Sx MANUAL STRUCTURE
 and
 .Sx \&Va .
 .Ss \&Xc
@@ -2148,7 +2149,7 @@ This behaviour is for compatibility with
 .Pp
 Examples:
 .D1 \&.Xr mandoc 1
-.D1 \&.Xr mandoc 1 ;
+.D1 \&.Xr mandoc 1 \&;
 .D1 \&.Xr mandoc 1 \&Ns s behaviour
 .Ss \&br
 .Ss \&sp
@@ -2184,7 +2185,7 @@ and
 .Sx \&Fn
 in the
 .Em SYNOPSIS :
-at times newline(s) are suppressed dependong on whether a prior
+at times newline(s) are suppressed depending on whether a prior
 .Sx \&Fn
 has been invoked.
 In mandoc, this is not the case.
@@ -2249,7 +2250,7 @@ and
 .Fl right
 are aliases for
 .Fl left
-in manodc.  Furthermore, the
+in mandoc.  Furthermore, the
 .Fl file Ar file
 argument is ignored.
 Lastly, since text is not right-justified in mandoc (or even groff),

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.85 2010/06/06 20:30:08 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.86 2010/06/08 00:11:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -64,6 +64,8 @@ static	void  	  print_mdoc_node(DECL_ARGS);
 static	void	  print_mdoc_head(DECL_ARGS);
 static	void	  print_mdoc_nodelist(DECL_ARGS);
 static	void	  print_foot(DECL_ARGS);
+static	void	  synopsis_pre(struct termp *, 
+			const struct mdoc_node *);
 
 static	void	  termp____post(DECL_ARGS);
 static	void	  termp_an_post(DECL_ARGS);
@@ -75,8 +77,7 @@ static	void	  termp_brq_post(DECL_ARGS);
 static	void	  termp_bx_post(DECL_ARGS);
 static	void	  termp_d1_post(DECL_ARGS);
 static	void	  termp_dq_post(DECL_ARGS);
-static	void	  termp_fd_post(DECL_ARGS);
-static	void	  termp_fn_post(DECL_ARGS);
+static	int	  termp_fd_pre(DECL_ARGS);
 static	void	  termp_fo_post(DECL_ARGS);
 static	void	  termp_in_post(DECL_ARGS);
 static	void	  termp_it_post(DECL_ARGS);
@@ -88,7 +89,6 @@ static	void	  termp_qq_post(DECL_ARGS);
 static	void	  termp_sh_post(DECL_ARGS);
 static	void	  termp_sq_post(DECL_ARGS);
 static	void	  termp_ss_post(DECL_ARGS);
-static	void	  termp_vt_post(DECL_ARGS);
 
 static	int	  termp_an_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
@@ -158,9 +158,9 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ev */ 
 	{ termp_ex_pre, NULL }, /* Ex */
 	{ termp_fa_pre, NULL }, /* Fa */ 
-	{ termp_bold_pre, termp_fd_post }, /* Fd */ 
+	{ termp_fd_pre, NULL }, /* Fd */ 
 	{ termp_fl_pre, NULL }, /* Fl */
-	{ termp_fn_pre, termp_fn_post }, /* Fn */ 
+	{ termp_fn_pre, NULL }, /* Fn */ 
 	{ termp_ft_pre, NULL }, /* Ft */ 
 	{ termp_bold_pre, NULL }, /* Ic */ 
 	{ termp_in_pre, termp_in_post }, /* In */ 
@@ -173,7 +173,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_rv_pre, NULL }, /* Rv */
 	{ NULL, NULL }, /* St */ 
 	{ termp_under_pre, NULL }, /* Va */
-	{ termp_vt_pre, termp_vt_post }, /* Vt */
+	{ termp_vt_pre, NULL }, /* Vt */
 	{ termp_xr_pre, NULL }, /* Xr */
 	{ NULL, termp____post }, /* %A */
 	{ termp_under_pre, termp____post }, /* %B */
@@ -1051,14 +1051,11 @@ termp_nm_pre(DECL_ARGS)
 	if (NULL == n->child && NULL == m->name)
 		return(1);
 
-	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
-		term_newln(p);
+	synopsis_pre(p, n);
 
 	term_fontpush(p, TERMFONT_BOLD);
-
 	if (NULL == n->child)
 		term_word(p, m->name);
-
 	return(1);
 }
 
@@ -1309,32 +1306,78 @@ termp_xr_pre(DECL_ARGS)
 }
 
 
+/*
+ * This decides how to assert whitespace before any of the SYNOPSIS set
+ * of macros (which, as in the case of Ft/Fo and Ft/Fn, may contain
+ * macro combos).
+ */
+static void
+synopsis_pre(struct termp *p, const struct mdoc_node *n)
+{
+	/* 
+	 * Obviously, if we're not in a SYNOPSIS or no prior macros
+	 * exist, do nothing.
+	 */
+	if (NULL == n->prev || SEC_SYNOPSIS != n->sec)
+		return;
+
+	/*
+	 * If we're the second in a pair of like elements, emit our
+	 * newline and return.  UNLESS we're `Fo', `Fn', `Fn', in which
+	 * case we soldier on.
+	 */
+	if (n->prev->tok == n->tok && 
+			MDOC_Ft != n->tok && 
+			MDOC_Fo != n->tok && 
+			MDOC_Fn != n->tok) {
+		term_newln(p);
+		return;
+	}
+
+	/*
+	 * If we're one of the SYNOPSIS set and non-like pair-wise after
+	 * another (or Fn/Fo, which we've let slip through) then assert
+	 * vertical space, else only newline and move on.
+	 */
+	switch (n->prev->tok) {
+	case (MDOC_Fd):
+		/* FALLTHROUGH */
+	case (MDOC_Fn):
+		/* FALLTHROUGH */
+	case (MDOC_Fo):
+		/* FALLTHROUGH */
+	case (MDOC_In):
+		/* FALLTHROUGH */
+	case (MDOC_Vt):
+		term_vspace(p);
+		break;
+	case (MDOC_Ft):
+		if (MDOC_Fn != n->tok && MDOC_Fo != n->tok) {
+			term_vspace(p);
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
+		term_newln(p);
+		break;
+	}
+}
+
+
 static int
 termp_vt_pre(DECL_ARGS)
 {
 
-	if (MDOC_ELEM == n->type)
+	if (MDOC_ELEM == n->type) {
+		synopsis_pre(p, n);
 		return(termp_under_pre(p, pair, m, n));
-	else if (MDOC_HEAD == n->type)
-		return(0);
-	else if (MDOC_BLOCK == n->type)
+	} else if (MDOC_BLOCK == n->type) {
+		synopsis_pre(p, n);
 		return(1);
+	} else if (MDOC_HEAD == n->type)
+		return(0);
 
 	return(termp_under_pre(p, pair, m, n));
-}
-
-
-/* ARGSUSED */
-static void
-termp_vt_post(DECL_ARGS)
-{
-
-	if (MDOC_BLOCK != n->type)
-		return;
-	if (n->next && MDOC_Vt == n->next->tok)
-		term_newln(p);
-	else if (n->next)
-		term_vspace(p);
 }
 
 
@@ -1349,11 +1392,12 @@ termp_bold_pre(DECL_ARGS)
 
 
 /* ARGSUSED */
-static void
-termp_fd_post(DECL_ARGS)
+static int
+termp_fd_pre(DECL_ARGS)
 {
 
-	term_newln(p);
+	synopsis_pre(p, n);
+	return(termp_bold_pre(p, pair, m, n));
 }
 
 
@@ -1507,9 +1551,7 @@ termp_ft_pre(DECL_ARGS)
 {
 
 	/* NB: MDOC_LINE does not effect this! */
-	if (SEC_SYNOPSIS == n->sec && n->prev)
-		term_vspace(p);
-
+	synopsis_pre(p, n);
 	term_fontpush(p, TERMFONT_UNDER);
 	return(1);
 }
@@ -1521,13 +1563,7 @@ termp_fn_pre(DECL_ARGS)
 {
 	const struct mdoc_node	*nn;
 
-	/* NB: MDOC_LINE has no effect on this macro! */
-	if (SEC_SYNOPSIS == n->sec) {
-		if (n->prev && MDOC_Ft == n->prev->tok)
-			term_newln(p);
-		else if (n->prev)
-			term_vspace(p);
-	}
+	synopsis_pre(p, n);
 
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, n->child->string);
@@ -1551,17 +1587,6 @@ termp_fn_pre(DECL_ARGS)
 		term_word(p, ";");
 
 	return(0);
-}
-
-
-/* ARGSUSED */
-static void
-termp_fn_post(DECL_ARGS)
-{
-
-	/* NB: MDOC_LINE has no effect on this macro! */
-	if (SEC_SYNOPSIS == n->sec)
-		term_newln(p);
 }
 
 
@@ -1830,8 +1855,8 @@ static int
 termp_cd_pre(DECL_ARGS)
 {
 
+	synopsis_pre(p, n);
 	term_fontpush(p, TERMFONT_BOLD);
-	term_newln(p);
 	return(1);
 }
 
@@ -1841,8 +1866,7 @@ static int
 termp_in_pre(DECL_ARGS)
 {
 
-	if (SEC_SYNOPSIS == n->sec && n->prev && MDOC_In != n->prev->tok)
-		term_vspace(p);
+	synopsis_pre(p, n);
 
 	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags) {
 		term_fontpush(p, TERMFONT_BOLD);
@@ -1863,16 +1887,14 @@ static void
 termp_in_post(DECL_ARGS)
 {
 
-	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
+	if (SEC_SYNOPSIS == n->sec)
 		term_fontpush(p, TERMFONT_BOLD);
 
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ">");
 
-	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags) {
+	if (SEC_SYNOPSIS == n->sec)
 		term_fontpop(p);
-		term_newln(p);
-	}
 }
 
 
@@ -1983,13 +2005,7 @@ termp_fo_pre(DECL_ARGS)
 {
 
 	if (MDOC_BLOCK == n->type) {
-		/* NB: MDOC_LINE has no effect on this macro! */
-		if (SEC_SYNOPSIS != n->sec)
-			return(1);
-		if (n->prev && MDOC_Ft == n->prev->tok)
-			term_newln(p);
-		else if (n->prev)
-			term_vspace(p);
+		synopsis_pre(p, n);
 		return(1);
 	} else if (MDOC_BODY == n->type) {
 		p->flags |= TERMP_NOSPACE;
@@ -2013,17 +2029,15 @@ static void
 termp_fo_post(DECL_ARGS)
 {
 
-	if (MDOC_BLOCK == n->type) {
-		/* NB: MDOC_LINE has no effect on this macro! */
-		if (SEC_SYNOPSIS == n->sec)
-			term_newln(p);
-	} else if (MDOC_BODY == n->type) {
+	if (MDOC_BODY != n->type) 
+		return;
+
+	p->flags |= TERMP_NOSPACE;
+	term_word(p, ")");
+
+	if (SEC_SYNOPSIS == n->sec) {
 		p->flags |= TERMP_NOSPACE;
-		term_word(p, ")");
-		if (SEC_SYNOPSIS == n->sec) {
-			p->flags |= TERMP_NOSPACE;
-			term_word(p, ";");
-		}
+		term_word(p, ";");
 	}
 }
 
