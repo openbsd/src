@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.20 2010/02/24 14:09:45 jmc Exp $ */
+/*	$OpenBSD: ber.c,v 1.21 2010/06/08 17:52:47 martinh Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -823,10 +823,6 @@ ber_free_elements(struct ber_element *root)
 	free(root);
 }
 
-/*
- * internal functions
- */
-
 size_t
 ber_calc_len(struct ber_element *root)
 {
@@ -857,6 +853,10 @@ ber_calc_len(struct ber_element *root)
 
 	return (root->be_len + size);
 }
+
+/*
+ * internal functions
+ */
 
 static int
 ber_dump_element(struct ber *ber, struct ber_element *root)
