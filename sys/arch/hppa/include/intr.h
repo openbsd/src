@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.31 2010/05/21 15:24:29 jsing Exp $	*/
+/*	$OpenBSD: intr.h,v 1.32 2010/06/08 12:33:30 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -160,6 +160,7 @@ void	 softintr_schedule(void *);
 
 #ifdef MULTIPROCESSOR
 void	 hppa_ipi_init(struct cpu_info *);
+int	 hppa_ipi_intr(void *arg);
 int	 hppa_ipi_send(struct cpu_info *, u_long);
 #endif
 
