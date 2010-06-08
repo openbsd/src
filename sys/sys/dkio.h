@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkio.h,v 1.7 2010/05/19 05:29:14 dlg Exp $	*/
+/*	$OpenBSD: dkio.h,v 1.8 2010/06/08 12:46:49 jsing Exp $	*/
 /*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
 
 /*
@@ -75,5 +75,13 @@ struct dk_cache {
 
 #define DIOCGCACHE	_IOR('d', 117, struct dk_cache)	/* get cache enabled */
 #define DIOCSCACHE	_IOW('d', 118, struct dk_cache)	/* set cache enabled */
+
+struct dk_diskmap {
+	char		*device;
+	int		fd;
+	int		flags;
+};
+
+#define	DIOCMAP		_IOWR('d', 119, struct dk_diskmap)
 
 #endif /* _SYS_DKIO_H_ */

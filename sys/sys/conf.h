@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.96 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: conf.h,v 1.97 2010/06/08 12:46:49 jsing Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -638,6 +638,8 @@ cdev_decl(rd);
 
 bdev_decl(uk);
 cdev_decl(uk);
+
+cdev_decl(diskmap);
 
 cdev_decl(bpf);
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.491 2010/05/26 16:16:23 thib Exp $
+#	$OpenBSD: files,v 1.492 2010/06/08 12:46:49 jsing Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -591,6 +591,7 @@ file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/cons.c
+file dev/diskmap.c
 file dev/firmload.c			firmload
 file dev/flash.c			flash			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
