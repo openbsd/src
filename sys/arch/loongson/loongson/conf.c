@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2010/03/30 19:16:09 matthieu Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 2010/06/08 20:51:05 todd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,6 +139,7 @@ cdev_decl(pci);
 #include "ucom.h"
 
 #include "bthub.h"
+#include "vscsi.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -219,6 +220,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 67: devices hotplugging */
 	cdev_bthub_init(NBTHUB,bthub),	/* 68: bluetooth hub */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 69: vscsi */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
