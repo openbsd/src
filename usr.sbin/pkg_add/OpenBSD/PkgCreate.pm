@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.6 2010/06/07 13:51:19 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.7 2010/06/08 07:25:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -461,15 +461,34 @@ sub deduce_name
 		die "Missing fragments for $frag: $o and $noto don't exist";
 	}
 	if ($not) {
-		$state->set_status("switching to $noto")
-		    if !defined $state->opt('q');
 		return $noto if -e $noto;
     	} else {
-		$state->set_status("switching to $o")
-		    if !defined $state->opt('q');
 		return $o if -e $o;
 	}
 	return;
+}
+
+sub handle_fragment
+{
+	my ($state, $stack, $file, $not, $frag) = @_;
+	my $def = $frag;
+	if ($frag eq 'SHARED') {
+		$def = 'SHARED_LIBS';
+		$frag = 'shared';
+	}
+	my $newname = deduce_name($state, $file->name, $frag, $not);
+	if ($state->{subst}->has_fragment($def, $frag)) {
+		return if defined $not;
+	} else {
+		return unless defined $not;
+	}
+	if (defined $newname) {
+		$state->set_status("switching to $newname") 
+		    if !defined $state->opt('q');
+		push(@$stack, $file);
+		$file = MyFile->new($newname);
+	}
+	return $file;
 }
 
 sub read_fragments
@@ -483,29 +502,9 @@ sub read_fragments
 	return $plist->read($stack,
 	    sub {
 		my ($stack, $cont) = @_;
-		local $_;
 		while(my $file = pop @$stack) {
-			GETLINE:
-			while ($_ = $file->readline) {
+			while (my $_ = $file->readline) {
 				$state->progress->working(2048);
-				if (my ($not, $frag) = m/^(\!)?\%\%(.*)\%\%$/) {
-					my $def = $frag;
-					if ($frag eq 'SHARED') {
-						$def = 'SHARED_LIBS';
-						$frag = 'shared';
-					}
-					if ($subst->has_fragment($def, $frag)) {
-						next GETLINE if defined $not;
-					} else {
-						next GETLINE unless defined $not;
-					}
-					my $newname = deduce_name($state, $file->name, $frag, $not);
-					if (defined $newname) {
-						push(@$stack, $file);
-						$file = MyFile->new($newname);
-					}
-					next GETLINE;
-				}
 				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
@@ -513,7 +512,12 @@ sub read_fragments
 				    OpenBSD::PackingElement::Lib->parse($1)) {
 				    	$state->error("Shared library without SHARED_LIBS: $_");
 				}
-				&$cont($subst->do($_));
+				if (my ($not, $frag) = m/^(\!)?\%\%(.*)\%\%$/) {
+					$file = handle_fragment($state, $stack,
+					    $file, $not, $frag);
+				} else {
+					&$cont($subst->do($_));
+				}
 			}
 		}
 	    }
