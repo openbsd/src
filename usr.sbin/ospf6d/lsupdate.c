@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.7 2010/06/03 10:00:34 bluhm Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.8 2010/06/08 16:04:25 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -21,6 +21,8 @@
 #include <sys/hash.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip6.h>
+#include <netinet/ip_ah.h>
 #include <arpa/inet.h>
 
 #include <stdlib.h>
@@ -35,7 +37,7 @@
 extern struct ospfd_conf	*oeconf;
 extern struct imsgev		*iev_rde;
 
-struct ibuf *prepare_ls_update(struct iface *);
+struct ibuf *prepare_ls_update(struct iface *, int);
 int	add_ls_update(struct ibuf *, struct iface *, void *, int, u_int16_t);
 int	send_ls_update(struct ibuf *, struct iface *, struct in6_addr, u_int32_t);
 
@@ -147,11 +149,27 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 }
 
 struct ibuf *
-prepare_ls_update(struct iface *iface)
+prepare_ls_update(struct iface *iface, int bigpkt)
 {
 	struct ibuf		*buf;
+	size_t			 size;
 
-	if ((buf = ibuf_open(iface->mtu - sizeof(struct ip))) == NULL)
+	size = bigpkt ? IPV6_MAXPACKET : iface->mtu;
+	if (size < IPV6_MMTU)
+		size = IPV6_MMTU;
+	size -= sizeof(struct ip6_hdr);
+	/*
+	 * Reserve space for optional ah or esp encryption.  The
+	 * algorithm is taken from ah_output and esp_output, the
+	 * values are the maxima of crypto/xform.c.
+	 */
+	size -= max(
+	    /* base-ah-header replay authsize */
+	    AH_FLENGTH + sizeof(u_int32_t) + 32,
+	    /* spi sequence ivlen blocksize pad-length next-header authsize */
+	    2 * sizeof(u_int32_t) + 16 + 16 + 2 * sizeof(u_int8_t) + 32);
+
+	if ((buf = ibuf_open(size)) == NULL)
 		fatal("prepare_ls_update");
 
 	/* OSPF header */
@@ -418,7 +436,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 	struct lsa_entry	*le;
 	struct ibuf		*buf;
 	time_t			 now;
-	int			 d;
+	int			 bigpkt, d;
 	u_int32_t		 nlsa = 0;
 
 	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL)
@@ -452,7 +470,17 @@ ls_retrans_timer(int fd, short event, void *bula)
 	} else
 		memcpy(&addr, &nbr->addr, sizeof(addr));
 
-	if ((buf = prepare_ls_update(nbr->iface)) == NULL) {
+	/*
+	 * Allow big ipv6 packets that may get fragmented if a
+	 * single lsa might be too big for an unfragmented packet.
+	 * To avoid the exact algorithm duplicated here, just make
+	 * a good guess.  If the first lsa is bigger than 1024
+	 * bytes, reserve a separate big packet for it.  The kernel
+	 * will figure out if fragmentation is necessary.  For
+	 * smaller lsas, we avoid big packets and fragmentation.
+	 */
+	bigpkt = le->le_ref->len > 1024;
+	if ((buf = prepare_ls_update(nbr->iface, bigpkt)) == NULL) {
 		le->le_when = 1;
 		goto done;
 	}
@@ -489,6 +517,9 @@ ls_retrans_timer(int fd, short event, void *bula)
 			le->le_when = nbr->iface->rxmt_interval;
 			ls_retrans_list_insert(nbr, le);
 		}
+		/* do not put additional lsa into fragmented big packet */
+		if (bigpkt)
+			break;
 	}
 	send_ls_update(buf, nbr->iface, addr, nlsa);
 
