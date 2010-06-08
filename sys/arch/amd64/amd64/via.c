@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.2 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: via.c,v 1.3 2010/06/08 07:36:36 thib Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -106,8 +106,8 @@ viac3_crypto_setup(void)
 {
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
 
-	if ((vc3_sc = malloc(sizeof(*vc3_sc), M_DEVBUF,
-	    M_NOWAIT|M_ZERO)) == NULL)
+	vc3_sc = malloc(sizeof(*vc3_sc), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (vc3_sc == NULL)
 		return;		/* YYY bitch? */
 
 	bzero(algs, sizeof(algs));
@@ -120,8 +120,10 @@ viac3_crypto_setup(void)
 	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	vc3_sc->sc_cid = crypto_get_driverid(0);
-	if (vc3_sc->sc_cid < 0)
+	if (vc3_sc->sc_cid < 0) {
+		free(vc3_sc, M_DEVBUF);
 		return;		/* YYY bitch? */
+	}
 
 	crypto_register(vc3_sc->sc_cid, algs, viac3_crypto_newsession,
 	    viac3_crypto_freesession, viac3_crypto_process);
