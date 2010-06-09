@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.43 2010/06/05 07:36:23 jsing Exp $	*/
+/*	$OpenBSD: setup.c,v 1.44 2010/06/09 21:34:56 chl Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -45,6 +45,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
+#include <unistd.h>
 #include <ctype.h>
 
 #include "fsck.h"
