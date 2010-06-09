@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.191 2010/06/01 23:06:25 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.192 2010/06/09 20:00:55 zinovik Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -380,7 +380,7 @@ struct action {
 struct content {
 	SLIST_HEAD(,action)	 actions;
 	u_int64_t		 id;
-	u_int32_t		 ref;
+	int		 	 ref;
 	struct event		*ev;
 };
 
