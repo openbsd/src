@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.30 2010/03/01 08:55:45 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.31 2010/06/09 17:36:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -941,7 +941,7 @@ lsa_get_prefix(void *buf, u_int16_t len, struct rt_prefix *p)
 	struct lsa_prefix	*lp = buf;
 	u_int32_t		*buf32, *addr = NULL;
 	u_int8_t		 prefixlen;
-	u_int16_t		 consumed = 0;
+	u_int16_t		 consumed;
 
 	if (len < sizeof(*lp))
 		return (-1);
@@ -957,9 +957,10 @@ lsa_get_prefix(void *buf, u_int16_t len, struct rt_prefix *p)
 	}
 
 	buf32 = (u_int32_t *)(lp + 1);
-	consumed += sizeof(*lp);
+	consumed = sizeof(*lp);
 
-	for (; ((prefixlen + 31) / 32) > 0; prefixlen -= 32) {
+	for (prefixlen = LSA_PREFIXSIZE(prefixlen) / sizeof(u_int32_t);
+	    prefixlen > 0; prefixlen--) {
 		if (len < consumed + sizeof(u_int32_t))
 			return (-1);
 		if (addr)
