@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.32 2009/08/11 19:17:16 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.33 2010/06/09 15:44:17 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -120,6 +120,8 @@ int kbd_reset;
 int lid_suspend;
 extern int xscale_maxspeed;
 #endif
+
+struct consdev *cn_tab;
 
 /* Prototypes */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.185 2010/05/24 15:04:55 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.186 2010/06/09 15:44:17 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -163,6 +163,7 @@ long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 struct extent *hppa_ex;
 struct pool hppa_fppl;
 struct fpreg proc0fpregs;
+struct consdev *cn_tab;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;

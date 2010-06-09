@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.121 2009/11/07 23:01:36 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.122 2010/06/09 15:44:15 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -176,6 +176,8 @@ struct	user *proc0paddr;
 u_int64_t	cycles_per_usec;
 
 struct bootinfo_kernel bootinfo;
+
+struct consdev *cn_tab;
 
 /* For built-in TCDS */
 #if defined(DEC_3000_300) || defined(DEC_3000_500)
