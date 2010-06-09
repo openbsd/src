@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.24 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.25 2010/06/09 10:58:01 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@ use OpenBSD::PackingList;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::Paths;
+use OpenBSD::State;
 use File::Path;
 
 package OpenBSD::PackingElement;
@@ -37,7 +38,8 @@ sub print_name
 
 package main;
 
-set_usage('pkg_mklocatedb [-anPq] [-d repository] [-p portsdir] [-r release] [-s src] [-x X11src] [pkg-name [...]]');
+my $ui = OpenBSD::State->new("pkg_mklocatedb");
+$ui->usage_is('[-anPq] [-d repository] [-p portsdir] [-r release] [-s src] [-x X11src] [pkg-name [...]]');
 
 our ($opt_a, $opt_n, $opt_q, $opt_s, $opt_x, $opt_r, $opt_p, $opt_P, $opt_d);
 
@@ -74,7 +76,7 @@ sub tag
 try {
 	getopts('ad:nqs:x:r:p:P');
 } catchall {
-	Usage($_);
+	$ui->usage($_);
 };
 
 my $fh;

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_merge,v 1.14 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: pkg_merge,v 1.15 2010/06/09 10:58:01 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@ use OpenBSD::Error;
 use OpenBSD::Ustar;
 use OpenBSD::ArcCheck;
 use OpenBSD::Paths;
+use OpenBSD::State;
 use File::Copy;
 use File::Path;
 
@@ -127,22 +128,23 @@ sub occurs_first
 }
 
 
-set_usage('pkg_merge [-v] -o result pkg pkg2 ...');
+my $ui = OpenBSD::State->new("pkg_merge");
+$ui->usage_is('[-v] -o result pkg pkg2 ...');
 
 our ($opt_o, $opt_v);
 
 try {
 	getopts('o:v');
 } catchall {
-	Usage($_);
+	$ui->usage($_);
 };
 
 if (!defined $opt_o) {
-	Usage "Missing -o result";
+	$ui->usage("Missing -o result");
 }
 
 if (@ARGV<2) {
-	Usage "Can't merge less than two packages";
+	$ui->usage("Can't merge less than two packages");
 }
 my @tomerge;
 
