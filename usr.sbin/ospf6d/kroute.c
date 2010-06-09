@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.19 2010/02/23 16:22:57 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.20 2010/06/09 17:46:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -981,9 +981,13 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		 * XXX into the sin6_addr. Welcome to the typical
 		 * XXX IPv6 insanity and all without wine bottles.
 		 */
-		/* nexthop.addr.sin6_scope_id = kroute->scope; */
-		nexthop.addr.sin6_addr.s6_addr[2] = (kroute->scope >> 8) & 0xff;
-		nexthop.addr.sin6_addr.s6_addr[3] = kroute->scope & 0xff;
+		if (IN6_IS_ADDR_LINKLOCAL(&nexthop.addr.sin6_addr)) {
+			/* nexthop.addr.sin6_scope_id = kroute->scope; */
+			nexthop.addr.sin6_addr.s6_addr[2] =
+			    (kroute->scope >> 8) & 0xff;
+			nexthop.addr.sin6_addr.s6_addr[3] =
+			    kroute->scope & 0xff;
+		}
 		/* adjust header */
 		hdr.rtm_flags |= RTF_GATEWAY;
 		hdr.rtm_addrs |= RTA_GATEWAY;
