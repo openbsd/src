@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.7 2010/06/06 07:27:03 espie Exp $
+# $OpenBSD: Term.pm,v 1.8 2010/06/09 08:13:19 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -230,8 +230,8 @@ sub next
 	my ($self, $todo) = @_;
 	$self->clear;
 
-	$todo //= '';
-	print "\r$self->{header}: ok$todo\n";
+	$todo //= 'ok';
+	print "\r$self->{header}: $todo\n";
 }
 
 sub ntogo

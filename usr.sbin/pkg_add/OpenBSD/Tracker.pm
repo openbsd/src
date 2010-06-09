@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.20 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.21 2010/06/09 08:13:19 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -40,17 +40,17 @@ sub new
 
 sub sets_todo
 {
-	my $self = shift;
-
-	return scalar keys %{$self->{todo}};
+	my ($self, $offset) = @_;
+	return sprintf("%u/%u", (scalar keys %{$self->{done}})-$offset,
+		scalar keys %{$self->{total}});
 }
+
 sub handle_set
 {
 	my ($self, $set) = @_;
+	$self->{total}->{$set} = 1;
 	if ($set->{finished}) {
-		delete $self->{todo}->{$set};
-	} else {
-		$self->{todo}->{$set} = 1;
+		$self->{done}->{$set} = 1;
 	}
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.24 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.25 2010/06/09 08:13:19 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -194,15 +194,7 @@ sub ntogo_string
 {
 	my ($self, $offset) = @_;
 
-	my $todo = $self->{todo} // 0;
-	$offset //= 0;
-	$todo += $offset;
-
-	if ($todo > 0) {
-		return " ($todo to go)";
-	} else {
-		return "";
-	}
+	return $self->todo($offset // 0);
 }
 
 sub vstat
@@ -328,7 +320,7 @@ sub print
 		$object = "Parameters";
 	}
 
-	$state->say($what." ".$object.$state->ntogo_string);
+	$state->say($what." #1 (#2)", $object, $state->ntogo_string);
 	if ($state->defines('carp')) {
 		require Carp;
 		Carp::cluck("currently here");

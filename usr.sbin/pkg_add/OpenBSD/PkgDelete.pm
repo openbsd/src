@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.2 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.3 2010/06/09 08:13:19 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -26,8 +26,8 @@ our @ISA = qw(OpenBSD::AddDelete::State);
 
 sub todo
 {
-	my $state = shift;
-	return $state->{todo};
+	my ($state, $offset) = @_;
+	return sprintf("%u/%u", $state->{done} - $offset, $state->{total});
 }
 
 package OpenBSD::PkgDelete;
@@ -130,12 +130,16 @@ sub main
 		} else {
 			$state->status->what("Deleting");
 		}
+		$state->{total} = scalar @todo;
 		DELETE: for my $pkgname (@todo) {
-			$state->{todo} = scalar @todo - scalar keys %done;
-			next if $done{$pkgname};
+			if ($done{$pkgname}) {
+				$state->{total}--;
+				next;
+			}
 			unless (is_installed($pkgname)) {
 				$state->errsay("#1 was not installed", $pkgname);
 				$done{$pkgname} = 1;
+				$state->{total}--;
 				$removed++;
 				next;
 			}

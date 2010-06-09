@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.2 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.3 2010/06/09 08:13:19 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -81,8 +81,8 @@ sub build_deptree
 
 sub todo
 {
-	my $state = shift;
-	return $state->tracker->sets_todo;
+	my ($state, $offset) = @_;
+	return $state->tracker->sets_todo($offset);
 }
 
 sub deptree_header
@@ -386,11 +386,11 @@ sub try_merging
 		    OpenBSD::Handle->create_old($m, $state));
 	}
 	if ($state->updater->process_set($s, $state)) {
-		$state->say("Merging #1#2", $s->print, $state->ntogo);
+		$state->say("Merging #1 (#2)", $s->print, $state->ntogo);
 		$set->merge($state->tracker, $s);
 		return 1;
 	} else {
-		$state->errsay("NOT MERGING: can't find update for #1#2", 
+		$state->errsay("NOT MERGING: can't find update for #1 (#2)", 
 		    $s->print, $state->ntogo);
 		return 0;
 	}
