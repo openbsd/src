@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.1 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: State.pm,v 1.2 2010/06/09 11:57:21 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -100,6 +100,16 @@ sub errsay
 {
 	my $self = shift;
 	print STDERR $self->f(@_), "\n";
+}
+
+sub do_options
+{
+	my ($state, $sub) = @_;
+	require OpenBSD::Error;
+	# this could be nicer...
+	eval { &$sub; };
+	OpenBSD::Error::dienow($@, 
+	    bless sub { $state->usage("#1", $_)}, "OpenBSD::Error::catchall");
 }
 
 1;

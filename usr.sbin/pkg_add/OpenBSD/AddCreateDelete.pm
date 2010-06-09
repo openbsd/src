@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.3 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.4 2010/06/09 11:57:21 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -101,11 +101,9 @@ sub handle_options
 		$state->{subst}->parse_option(shift);
 	};
 	$state->usage_is(@usage);
-	try {
+	$state->do_options(sub {
 		getopts('hmnvxD:'.$opt_string, $state->{opt});
-	} catchall {
-		$state->usage("#1", $_);
-	};
+	});
 	$state->progress->setup($state->opt('x'), $state->opt('m'));
 	$state->{v} = $state->opt('v');
 	$state->{not} = $state->opt('n');

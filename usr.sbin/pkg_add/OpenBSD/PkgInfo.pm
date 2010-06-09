@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.3 2010/06/09 10:25:17 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.4 2010/06/09 11:57:21 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -417,7 +417,7 @@ sub parse_and_run
 
 	my %defines;
 	my $locked;
-	try {
+	$state->do_options(sub {
 		getopts('cCdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
 		    {'e' =>
 			    sub {
@@ -450,10 +450,8 @@ sub parse_and_run
 				    push(@sought_files, File::Spec->rel2abs(shift));
 
 			    }
-		});
-	} catchall {
-		$state->usage("#1", $_);
-	};
+		})
+	    });
 
 	lock_db(1, $opt_q) unless $locked or $defines{nolock};
 
