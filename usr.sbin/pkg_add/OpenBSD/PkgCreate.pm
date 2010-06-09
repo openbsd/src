@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.11 2010/06/09 10:41:19 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.12 2010/06/09 10:47:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -167,7 +167,7 @@ sub compute_checksum
 		my $chk = resolve_link($fname, $base);
 		$fname =~ s|^//|/|; # cosmetic
 		if (!defined $chk) {
-			$state->fatal("bogus symlink: #1 (too deep)", $fname);
+			$state->error("bogus symlink: #1 (too deep)", $fname);
 		} elsif (!-e $chk) {
 			$state->errsay("Warning: symlink #1 points to non-existent #2", 
 			    $fname, $chk);
