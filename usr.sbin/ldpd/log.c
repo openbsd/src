@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2010/04/29 12:09:28 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.6 2010/06/09 14:01:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -15,6 +15,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <stdarg.h>
@@ -284,4 +289,18 @@ notification_name(u_int32_t status)
 		snprintf(buf, sizeof(buf), "[%08x]", status);
 		return (buf);
 	}
+}
+
+const char *
+log_fec(struct map *map)
+{
+	static char	buf[32];
+	char		pstr[32];
+
+	if (snprintf(buf, sizeof(buf), "FEC %s/%u",
+	    inet_ntop(AF_INET, &map->prefix, pstr, sizeof(pstr)),
+	    map->prefixlen) == -1)
+		return ("FEC ???");
+
+	return (buf);
 }

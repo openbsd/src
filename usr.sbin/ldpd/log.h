@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.2 2009/11/02 20:34:58 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.3 2010/06/09 14:01:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,5 +30,6 @@ void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
 void	fatal(const char *) __dead;
 void	fatalx(const char *) __dead;
+const char *log_fec(struct map *);
 
 #endif /* _LOG_H_ */

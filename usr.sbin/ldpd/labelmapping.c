@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.11 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.12 2010/06/09 14:01:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -56,8 +56,6 @@ send_labelmapping(struct nbr *nbr)
 	if (nbr->iface->passive)
 		return;
 
-	log_debug("send_labelmapping: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_labelmapping");
 
@@ -93,8 +91,6 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	struct map		 map;
 	int			 feclen, tlen;
 	u_int8_t		 addr_type;
-
-	log_debug("recv_labelmapping: neighbor ID %s", inet_ntoa(nbr->id));
 
 	if (nbr->state != NBR_STA_OPER)
 		return (-1);
@@ -169,8 +165,6 @@ send_labelrequest(struct nbr *nbr)
 	if (nbr->iface->passive)
 		return;
 
-	log_debug("send_labelrequest: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_labelrequest");
 
@@ -204,8 +198,6 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 	struct map	 map;
 	int		 feclen, tlen;
 	u_int8_t	 addr_type;
-
-	log_debug("recv_labelrequest: neighbor ID %s", inet_ntoa(nbr->id));
 
 	if (nbr->state != NBR_STA_OPER)
 		return (-1);
@@ -268,8 +260,6 @@ send_labelwithdraw(struct nbr *nbr)
 	if (nbr->iface->passive)
 		return;
 
-	log_debug("send_labelwithdraw: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_labelwithdraw");
 
@@ -312,8 +302,6 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	u_int32_t	 optlabel = NO_LABEL;
 	int		 feclen, tlen;
 	u_int8_t	 addr_type;
-
-	log_debug("recv_labelwithdraw: neighbor ID %s", inet_ntoa(nbr->id));
 
 	if (nbr->state != NBR_STA_OPER)
 		return (-1);
@@ -399,8 +387,6 @@ send_labelrelease(struct nbr *nbr)
 	if (nbr->iface->passive)
 		return;
 
-	log_debug("send_labelrelease: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_labelrelease");
 
@@ -443,8 +429,6 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 	u_int32_t	 optlabel = NO_LABEL;
 	int		 feclen, tlen;
 	u_int8_t	 addr_type;
-
-	log_debug("recv_labelrelease: neighbor ID %s", inet_ntoa(nbr->id));
 
 	if (nbr->state != NBR_STA_OPER)
 		return (-1);
@@ -527,8 +511,6 @@ send_labelabortreq(struct nbr *nbr)
 
 	if (nbr->iface->passive)
 		return;
-
-	log_debug("send_labelabortreq: neighbor ID %s", inet_ntoa(nbr->id));
 
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_labelabortreq");

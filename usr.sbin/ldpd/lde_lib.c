@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.20 2010/06/07 13:24:23 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.21 2010/06/09 14:01:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -181,6 +181,9 @@ lde_kernel_insert(struct kroute *kr)
 	struct lde_nbr_address	*addr;
 	struct lde_map		*map;
 
+	log_debug("kernel add route %s/%u", inet_ntoa(kr->prefix),
+	    kr->prefixlen);
+
 	rn = (struct rt_node *)fec_find_prefix(&rt, kr->prefix.s_addr,
 	    kr->prefixlen);
 	if (rn == NULL) {
@@ -270,6 +273,9 @@ lde_kernel_remove(struct kroute *kr)
 	struct lde_map		*map;
 	struct lde_nbr		*ln;
 
+	log_debug("kernel remove route %s/%u", inet_ntoa(kr->prefix),
+	    kr->prefixlen);
+
 	rn = (struct rt_node *)fec_find_prefix(&rt, kr->prefix.s_addr,
 	    kr->prefixlen);
 	if (rn == NULL)
@@ -304,6 +310,9 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	struct rt_node		*rn;
 	struct lde_nbr_address	*addr;
 	struct lde_map		*me;
+
+	log_debug("label mapping from nbr %s, FEC %s/%u, label %u",
+	    inet_ntoa(ln->id), log_fec(map), map->label);
 
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix,
 	    map->prefixlen);
@@ -407,6 +416,9 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	struct lde_nbr	*lnn;
 	struct map	 localmap;
 
+	log_debug("label request from nbr %s, FEC %s",
+	    inet_ntoa(ln->id), log_fec(map));
+
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix,
 	    map->prefixlen);
 	if (rn == NULL || rn->remote_label == NO_LABEL) {
@@ -457,4 +469,9 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 void
 lde_check_release(struct map *map, struct lde_nbr *ln)
 {
+	log_debug("label mapping from nbr %s, FEC %s",
+	    inet_ntoa(ln->id), log_fec(map));
+
+	/* check withdraw list */
+	/* check sent map list */
 }
