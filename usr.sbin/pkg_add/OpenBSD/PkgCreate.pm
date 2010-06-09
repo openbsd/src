@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.9 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.10 2010/06/09 10:22:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -42,8 +42,9 @@ sub stash
 sub error
 {
 	my $self = shift;
+	my $msg = shift;
 	$self->{bad}++;
-	$self->errsay(@_);
+	$self->errsay("Error: $msg", @_);
 }
 
 sub set_status
@@ -114,7 +115,7 @@ sub avert_duplicates_and_other_checks
 	return unless $self->NoDuplicateNames;
 	my $n = $self->fullname;
 	if (defined $state->stash($n)) {
-		$state->error("Error in packing-list: duplicate item #1", $n);
+		$state->error("duplicate item in packing-list #1", $n);
 	}
 	$state->{stash}{$n} = 1;
 }
@@ -139,6 +140,10 @@ sub compute_checksum
 	}
 
 	if (-l $fname) {
+		if (!defined $base) {
+			$state->error("special file #1 can't be a symlink",
+			    $self->stringize);
+		}
 		my $value = readlink $fname;
 		$result->make_symlink($value);
 	} elsif (-f _) {
@@ -151,7 +156,7 @@ sub compute_checksum
 			$result->add_size($size);
 		}
 	} else {
-		$state->error("Error in package: #1 does not exist", $fname);
+		$state->error("#1 does not exist", $fname);
 	}
 }
 
@@ -172,14 +177,14 @@ sub verify_checksum_with_base
 		if ((defined $check->{$field} && defined $self->{$field} &&
 		    $check->{$field} ne $self->{$field}) ||
 		    (defined $check->{$field} xor defined $self->{$field})) {
-		    	$state->error("Error: #1 inconsistency for #2",
+		    	$state->error("#1 inconsistency for #2",
 			    $field, $self->fullname);
 		}
 	}
 	if ((defined $check->{d} && defined $self->{d} &&
 	    !$check->{d}->equals($self->{d})) ||
 	    (defined $check->{d} xor defined $self->{d})) {
-	    	$state->error("Error: checksum inconsistency for #1",
+	    	$state->error("checksum inconsistency for #1",
 		    $self->fullname);
 	}
 }
@@ -191,7 +196,7 @@ sub prepare_for_archival
 
 	my $o = $state->{archive}->prepare_long($self);
 	if (!$o->verify_modes($self)) {
-		$state->error("Modes don't match");
+		$state->error("modes don't match for #1", $self->fullname);
 	}
 	return $o;
 }
@@ -367,7 +372,7 @@ sub avert_duplicates_and_other_checks
 {
 	my ($self, $state) = @_;
 	if (!$self->spec->is_valid) {
-		$state->error("Error in packing-list: invalid \@#1 #2",
+		$state->error("invalid \@#1 #2 in packing-list",
 		    $self->keyword, $self->stringize);
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
@@ -392,7 +397,7 @@ sub avert_duplicates_and_other_checks
 
 	my @issues = OpenBSD::PackageName->from_string($self->{def})->has_issues;
 	if (@issues > 0) {
-		$state->error("Error in packing-list: invalid \@#1 #2\n#3, #4",
+		$state->error("invalid \@#1 #2 in packing-list\n#3, #4",
 		    $self->keyword, $self->stringize,
 		    $self->{def}, join(' ', @issues));
 	}
@@ -407,7 +412,7 @@ sub avert_duplicates_and_other_checks
 
 	my @issues = OpenBSD::PackageName->from_string($self->name)->has_issues;
 	if (@issues > 0) {
-		$state->error("Bad packagename #1: ", $self->name,
+		$state->error("bad package name #1: ", $self->name,
 		    join(' ', @issues));
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
@@ -510,7 +515,7 @@ sub read_fragments
 				}
 				if (m/^\@lib\s+(.*)$/o &&
 				    OpenBSD::PackingElement::Lib->parse($1)) {
-				    	$state->error("Shared library without SHARED_LIBS: $_");
+				    	$state->error("shared library without SHARED_LIBS: #1", $_);
 				}
 				if (my ($not, $frag) = m/^(\!)?\%\%(.*)\%\%$/) {
 					$file = handle_fragment($state, $stack,
@@ -694,7 +699,7 @@ sub create_plist
 	}
 	for my $contentsfile (@$frags) {
 		read_fragments($state, $plist, $contentsfile) or
-		    $state->fatal("can't read packing list #1", $contentsfile);
+		    $state->fatal("can't read packing-list #1", $contentsfile);
 	}
 	return $plist;
 }
@@ -720,7 +725,7 @@ sub read_existing_plist
 		$plist->set_infodir(dirname($contents));
 	}
 	$plist->fromfile($contents) or
-	    $state->fatal("can't read packing list #1", $contents);
+	    $state->fatal("can't read packing-list #1", $contents);
 	return $plist;
 }
 
@@ -814,14 +819,14 @@ sub parse_and_run
 		if (@signature_params > 0) {
 			$sign_only = 1;
 		} else {
-			$state->usage("Packing list required");
+			$state->usage("Packing-list required");
 		}
 	}
 
 	my $plist;
 	if ($regen_package) {
 		if (@contents != 1) {
-			$state->usage("Exactly one single packing list is required");
+			$state->usage("Exactly one single packing-list is required");
 		}
 		$plist = $self->read_existing_plist($state, $contents[0]);
 	} elsif ($sign_only) {
@@ -858,7 +863,7 @@ sub parse_and_run
 	}
 
 	if (!defined $plist->pkgname) {
-		$state->error("Can't write unnamed packing list");
+		$state->error("can't write unnamed packing-list");
 		exit 1;
 	}
 
@@ -872,7 +877,7 @@ sub parse_and_run
 	}
 
 	if ($plist->{deprecated}) {
-		$state->error("Error: found obsolete constructs");
+		$state->error("found obsolete constructs");
 		exit 1;
 	}
 
@@ -893,7 +898,7 @@ sub parse_and_run
 	if ($regen_package) {
 		$wname = $plist->pkgname.".tgz";
 	} else {
-		$plist->save or $state->fatal("can't write packing list");
+		$plist->save or $state->fatal("can't write packing-list");
 		$wname = $ARGV[0];
 	}
 
