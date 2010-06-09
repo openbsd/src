@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2010/03/30 19:16:09 matthieu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2010/06/09 15:25:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -388,6 +388,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptm_init(NPTY,ptm),		/* 98: pseudo-tty ptm device */
 	cdev_vscsi_init(NVSCSI,vscsi),		/* 99: vscsi */
 	cdev_bthub_init(NBTHUB,bthub),		/* 100: bthub */
+	cdev_disk_init(1,diskmap),		/* 101: disk mapper */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);

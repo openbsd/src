@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2009/08/13 15:04:20 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2010/06/09 15:25:32 jsing Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -158,6 +158,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 53: vscsi */
+	cdev_disk_init(1,diskmap),	/* 54: disk mapper */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

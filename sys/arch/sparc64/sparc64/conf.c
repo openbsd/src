@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.54 2010/03/30 19:16:09 matthieu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.55 2010/06/09 15:25:33 jsing Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -294,6 +294,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NVCCTTY,vcctty),	/* 127: virtual console concentrator */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 128: vscsi */
 	cdev_bthub_init(NBTHUB,bthub),	/* 129: bluetooth hub */
+	cdev_disk_init(1,diskmap),	/* 130: disk mapper */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

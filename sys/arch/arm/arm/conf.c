@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2010/03/30 19:16:09 matthieu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2010/06/09 15:25:32 jsing Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -410,6 +410,7 @@ struct cdevsw cdevsw[] = {
 	cdev_spkr_init(NSPKR,spkr),		/* 99: PC speaker */
 	cdev_vscsi_init(NVSCSI,vscsi),		/* 100: vscsi */
 	cdev_bthub_init(NBTHUB,bthub),		/* 101: bthub */
+	cdev_disk_init(1,diskmap),		/* 102: disk mapper */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);

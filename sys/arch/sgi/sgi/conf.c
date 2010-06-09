@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2009/08/13 15:04:20 dlg Exp $ */
+/*	$OpenBSD: conf.c,v 1.23 2010/06/09 15:25:33 jsing Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -211,6 +211,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 67: devices hotplugging */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 68: vscsi */
+	cdev_disk_init(1,diskmap),	/* 69: disk mapper */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.61 2010/03/30 19:16:09 matthieu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.62 2010/06/09 15:25:32 jsing Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -210,6 +210,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),	/* 60: ws multiplexor */
 	cdev_vscsi_init(NVSCSI, vscsi),	/* 61: vscsi */
 	cdev_bthub_init(NBTHUB, bthub), /* 62: bthub */
+	cdev_disk_init(1,diskmap),	/* 63: disk mapper */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
