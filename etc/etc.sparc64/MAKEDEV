@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.56 2010/03/30 19:16:09 matthieu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.57 2010/06/09 16:10:25 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -97,6 +97,7 @@
 #	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
 #	bthub*	Bluetooth Hubs
+#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -241,6 +242,10 @@ std)
 	M klog		c 16 0 600
 	M openprom	c 70 0 640 kmem
 	M mdesc		c 70 1 640 kmem
+	;;
+
+diskmap)
+	M diskmap b 130 0 640 operator
 	;;
 
 bthub*)
@@ -615,12 +620,12 @@ all)
 	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2
 	R tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
-	R fd0D fd0E fd0F fd0G fd0H vscsi0 nnpfs0 ss0 ss1 ch0 ccd0 ccd1
-	R ccd2 ccd3 hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
-	R video0 audio0 audio1 audio2 uk0 random lpa0 lpa1 lpa2 lpt0
-	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1 crypto pf
-	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
-	R fd
+	R fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ss0 ss1 ch0
+	R ccd0 ccd1 ccd2 ccd3 hotplug ptm local wscons pci0 pci1 pci2
+	R pci3 uall video0 audio0 audio1 audio2 uk0 random lpa0 lpa1
+	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1
+	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.40 2009/08/13 15:12:36 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.41 2010/06/09 16:10:25 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -80,6 +80,7 @@
 #	uk*	Unknown SCSI devices
 #	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
+#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -224,6 +225,10 @@ std)
 	M klog		c 16 0 600
 	M eeprom	c 3 11	640 kmem
 	M openprom	c 70 0	640 kmem
+	;;
+
+diskmap)
+	M diskmap b 129 0 640 operator
 	;;
 
 vscsi*)
@@ -519,11 +524,11 @@ all)
 	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2
 	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
-	R fd0E fd0F fd0G fd0H vscsi0 nnpfs0 ss0 ss1 ch0 bio cuaa cuab
-	R cuac cuad ttya ttyb ttyc ttyd ptm local wscons audio0 audio1
-	R audio2 uk0 random lkm tty00 tty01 tty02 tty03 apm pf
-	R systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1
-	R fd
+	R fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ss0 ss1 ch0 bio
+	R cuaa cuab cuac cuad ttya ttyb ttyc ttyd ptm local wscons
+	R audio0 audio1 audio2 uk0 random lkm tty00 tty01 tty02 tty03
+	R apm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std
+	R st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*|raid*|ccd*)

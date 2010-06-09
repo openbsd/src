@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.20 2010/03/30 19:20:36 matthieu Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.21 2010/06/09 16:11:43 todd Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.landisk/MAKEDEV.md,v 1.18 2010/03/30 19:16:09 matthieu Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
+.\"	OpenBSD: etc.landisk/MAKEDEV.md,v 1.19 2010/06/09 16:10:25 todd Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2010 $
+.Dd $Mdocdate: June 9 2010 $
 .Dt MAKEDEV 8 landisk
 .Os
 .Sh NAME
@@ -242,6 +242,9 @@ Virtual SCSI controller, see
 .It Ar bthub*
 Bluetooth Hubs, see
 .Xr bthub 4 .
+.It Ar diskmap
+Disk mapper, see
+.Xr diskmap 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

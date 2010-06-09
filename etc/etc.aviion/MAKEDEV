@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.aviion/MAKEDEV.md,v 1.9 2009/08/13 15:12:36 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.45 2009/08/13 15:12:36 deraadt Exp 
+#	OpenBSD: etc.aviion/MAKEDEV.md,v 1.10 2010/06/09 16:10:25 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -58,6 +58,7 @@
 #	uk*	Unknown SCSI devices
 #	nnpfs*	NNPFS filesystem node
 #	vscsi*	Virtual SCSI controller
+#	diskmap	Disk mapper
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -197,6 +198,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+
+diskmap)
+	M diskmap b 54 0 640 operator
+	;;
 
 vscsi*)
 	M vscsi$U c 53 $U 600
@@ -342,9 +347,9 @@ ramdisk)
 all)
 	R ttya ttyb ttyc ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0
 	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 vscsi0
-	R nnpfs0 ss0 ch0 nvram0 ptm local uk0 random lkm pf systrace
-	R std st0 st1 fd
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap
+	R vscsi0 nnpfs0 ss0 ch0 nvram0 ptm local uk0 random lkm pf
+	R systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)
