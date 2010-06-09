@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg,v 1.16 2010/06/05 17:15:32 espie Exp $
+# $OpenBSD: pkg,v 1.17 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -21,27 +21,27 @@ use warnings;
 
 sub run
 {
-	my $cmd = shift;
+	my ($cmd, $name) = @_;
 	my $module = "OpenBSD::Pkg\u$cmd";
 	eval "require $module;";
 	if ($@) {
 		die $@;
 	}
-	$module->parse_and_run;
+	$module->parse_and_run($name);
 	exit(0);
 }
 my @l = qw(add check create delete info);
 
 for my $i (@l) {
 	if ($0 =~ m/\/?pkg_$i$/) {
-		run($i);
+		run($i, "pkg_$i");
 	}
 }
 
 for my $i (@l) {
 	if ($ARGV[0] eq $i) {
 		shift;
-		run($i);
+		run($i, "pkg $i");
 	}
 }
 print STDERR "Usage: pkg [",join("|", @l),"] [args]\n";

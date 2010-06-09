@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.128 2010/06/05 07:35:21 landry Exp $
+# $OpenBSD: Dependencies.pm,v 1.129 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -80,9 +80,9 @@ our @ISA=qw(OpenBSD::lookup);
 
 sub say_found
 {
-	my ($self, $state, $obj, $msg) = @_;
+	my ($self, $state, $obj, $where) = @_;
 
-	$state->say("found libspec ", $obj->to_string, " ", $msg)
+	$state->say("found libspec #1 in #2", $obj->to_string, $where)
 	    if $state->verbose >= 3;
 }
 
@@ -94,7 +94,7 @@ sub find_in_already_done
 	my $r = $solver->check_lib_spec($solver->{localbase}, $obj,
 	    $self->{known});
 	if ($r) {
-		$self->say_found($state, $obj, "in package $r");
+		$self->say_found($state, $obj, $state->f("package #1", $r));
 		return $r;
 	} else {
 		return undef;
@@ -109,7 +109,7 @@ sub find_in_extra_sources
 	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
 	for my $dir (OpenBSD::SharedLibs::system_dirs()) {
 		if ($solver->check_lib_spec($dir, $obj, {system => 1})) {
-			$self->say_found($state, $obj, "in $dir/lib");
+			$self->say_found($state, $obj, $state->f("#1/lib", $dir));
 			return 'system';
 		}
 	}
@@ -127,7 +127,7 @@ sub find_in_new_source
 	}
 	if ($solver->check_lib_spec($solver->{localbase}, $obj,
 	    {$dep => 1})) {
-	    	$self->say_found($state, $obj, "in package $dep");
+	    	$self->say_found($state, $obj, $state->f("package #1", $dep));
 		return $dep;
 	}
 	return undef;
@@ -143,7 +143,7 @@ sub find_elsewhere
 			    $solver->{localbase}, $dep->{pattern}, $obj);
 			if ($r) {
 				$self->say_found($state, $obj,
-				    "in old package $r");
+				    $state->f("old package #1", $r));
 				return $r;
 			}
 		}
@@ -166,7 +166,7 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 	my $r = $self->{known_tags}->{$obj};
 	if (defined $r) {
-		$state->say("Found tag $obj in $r") if $state->verbose >= 3;
+		$state->say("Found tag #1 in #2", $obj, $r) if $state->verbose >= 3;
 	}
 	return $r;
 }
@@ -187,7 +187,7 @@ sub find_in_new_source
 	my $plist = OpenBSD::PackingList->from_installation($dep,
 	    \&OpenBSD::PackingList::DependOnly);
 	if (!defined $plist) {
-		$state->errsay("Can't read plist for $dep");
+		$state->errsay("Can't read plist for #1", $dep);
 	}
 	$self->find_in_plist($plist, $dep);
 	return $self->find_in_already_done($solver, $state, $obj);
@@ -369,13 +369,13 @@ sub check_for_loops
 	if (@to_merge > 0) {
 		my $merged = {};
 		my @real = ();
-		$state->say("Detected loop, merging sets", $state->ntogo);
-		$state->say("| ", $initial->print);
+		$state->say("Detected loop, merging sets #1", $state->ntogo);
+		$state->say("| #1", $initial->print);
 		for my $set (@to_merge) {
 			my $k = $set;
 			while ($k ne $initial && !$merged->{$k}) {
 				unless ($k->{finished}) {
-					$state->say("| ", $k->print);
+					$state->say("| #1", $k->print);
 					delete $k->solver->{deplist};
 					push(@real, $k);
 				}
@@ -513,14 +513,14 @@ sub solve_dependency
 			if (defined $global_cache->{$dep->{pattern}}) {
 				$state->print("Global ");
 			}
-			$state->say("Cache hit on $dep->{pattern}: ",
+			$state->say("Cache hit on #1: #2", $dep->{pattern},
 			    $self->cached($dep)->pretty);
 		}
 		$v = $self->cached($dep)->do($self, $state, $dep, $package);
 		return $v if $v;
 	}
 	if ($state->defines('stat_cache')) {
-		$state->say("No cache hit on $dep->{pattern}");
+		$state->say("No cache hit on #1", $dep->{pattern});
 	}
 
 	if ($state->{allow_replacing}) {
@@ -700,8 +700,7 @@ sub solve_wantlibs
 			    $solver->{to_register}->{$h}, $state,
 			    $lib->spec);
 			if ($okay) {
-				$state->errsay("Can't install ",
-				    $h->pkgname, " because of libraries");
+				$state->errsay("Can't install #1 because of libraries", $h->pkgname);
 			}
 			$okay = 0;
 			OpenBSD::SharedLibs::report_problem($state,
@@ -725,9 +724,8 @@ sub solve_tags
 		for my $tag (keys %{$h->{plist}->{tags}}) {
 			next if $tag_finder->lookup($solver,
 			    $solver->{to_register}->{$h}, $state, $tag);
-			$state->errsay("Can't install ",
-			    $h->pkgname, ": tag definition not found ",
-			    $tag);
+			$state->errsay("Can't install #1: tag definition not found #2",
+			    $h->pkgname, $tag);
 			if ($okay) {
 				$solver->dump;
 				$tag_finder->dump;

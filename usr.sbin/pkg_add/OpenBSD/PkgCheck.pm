@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.9 2010/06/07 13:41:22 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.10 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -50,36 +50,40 @@ sub basic_check
 	if ($self->{symlink}) {
 		if (!-l $name) {
 			if (!-e $name) {
-				$state->log("$name should be a symlink but does not exist");
+				$state->log("#1 should be a symlink but does not exist", $name);
 			} else {
-				$state->log("$name is not a symlink\n");
+				$state->log("#1 is not a symlink", $name);
 			}
 		} else {
 			if (readlink($name) ne $self->{symlink}) {
-				$state->log("$name should point to $self->{symlink} but points to ", readlink($name), " instead\n");
+				$state->log("#1 should point to #2 but points to #3 instead", 
+				    $name, $self->{symlink}, readlink($name));
 			}
 		}
 		return;
 	}
 	if (!-e $name) {
 		if (-l $name) {
-			$state->log("$name points to non-existent ".readlink($name)."\n");
+			$state->log("#1 points to non-existent #2", 
+			    $name, readlink($name));
 		} else {
-			$state->log("$name should exist\n");
+			$state->log("#1 should exist", $name);
 		}
 	}
 	if (!-f _) {
-		$state->log("$name is not a file\n");
+		$state->log("#1 is not a file", $name);
 	}
 	if ($self->{link}) {
 		my ($a, $b) = (stat _)[0, 1];
 		if (!-f $state->{destdir}.$self->{link}) {
-			$state->log("$name should link to non-existent $self->{link}");
+			$state->log("#1 should link to non-existent #2", 
+			    $name, $self->{link});
 		} else {
 			my ($c, $d) = (stat _)[0, 1];
 			if (defined $a && defined $c) {
 				if ($a != $c || $b != $d) {
-					$state->log("$name doesn't link to $self->{link}\n");
+					$state->log("#1 doesn't link to #2",
+					    $name, $self->{link});
 				}
 			}
 		}
@@ -93,12 +97,12 @@ sub thorough_check
 	$self->basic_check($state);
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	if (!-r $name) {
-		$state->log("can't read $name\n");
+		$state->log("can't read #1", $name);
 		return;
 	}
 	my $d = $self->compute_digest($name);
 	if (!$d->equals($self->{d})) {
-		$state->log("checksum for $name does not match", "\n");
+		$state->log("checksum for #1 does not match", $name);
 	}
 }
 
@@ -120,10 +124,10 @@ sub basic_check
 	my $name = $state->{destdir}.$self->fullname;
 	$state->{known}{$name} //= {};
 	if (!-e $name) {
-		$state->log("$name should exist\n");
+		$state->log("#1 should exist", $name);
 	}
 	if (!-d _) {
-		$state->log("$name is not a directory\n");
+		$state->log("#1 is not a directory", $name);
 	}
 }
 
@@ -168,7 +172,8 @@ sub find_dependencies
 	}
 	my @deps = $self->spec->filter(@$l);
 	if (@deps == 0) {
-		$state->log("dependency ", $self->stringize, " does not match any installed package");
+		$state->log("dependency #1 does not match any installed package",
+		    $self->stringize);
 		return;
 	}
 	my $okay = 0;
@@ -188,7 +193,7 @@ sub find_dependencies
 	my ($self, $state, $l, $checker) = @_;
 	my $r = OpenBSD::SharedLibs::lookup_libspec($state->{localbase}, 
 	    $self->spec);
-	if (defined $r) {
+	if (defined $r && @$r != 0) {
 		my $okay = 0;
 		for my $lib (@$r) {
 			my $i = $lib->origin;
@@ -204,7 +209,7 @@ sub find_dependencies
 			$checker->not_found($r->[0]->origin);
 		}
 	} else {
-		$state->log($self->stringize, " not found\n");
+		$state->log("#1 not found", $self->stringize);
 	}
 }
 
@@ -259,7 +264,7 @@ sub new
 		if ($state->{exists}{$pkg}) {
 			$o->{possible}{$pkg} = 1;
 		} else {
-			$state->errsay("$name: bogus ", $o->string($pkg));
+			$state->errsay("#1: bogus #2", $name, $o->string($pkg));
 		}
 	}
 	return $o;
@@ -315,14 +320,19 @@ sub adjust
 	my ($self, $state) = @_;
 	if (keys %{$self->{not_yet}} > 0) {
 		my @todo = sort keys %{$self->{not_yet}};
-		$state->errsay($self->{name}, " is having too many ",
-		    $self->string(@todo));
-		$self->ask_delete_deps($state, \@todo);
+		unless ($state->{subst}->value("weed_libs")) {
+			@todo = grep {!/^\.libs/} @todo;
+		}
+		if (@todo != 0) {
+			$state->errsay("#1 is having too many #2",
+			    $self->{name}, $self->string(@todo));
+			$self->ask_delete_deps($state, \@todo);
+		}
 	}
 	if (keys %{$self->{others}} > 0) {
 		my @todo = sort keys %{$self->{others}};
-		$state->errsay($self->{name}, " is missing ",
-		    $self->string(@todo));
+		$state->errsay("#1 is missing #2",
+		    $self->{name}, $self->string(@todo));
 		$self->ask_add_deps($state, \@todo);
 	}
 }
@@ -384,29 +394,32 @@ sub remove
 	for my $i (@OpenBSD::PackageInfo::info) {
 		if (-e $dir.$i) {
 			if ($state->verbose) {
-				$state->say("unlink($dir.$i)");
+				$state->say("unlink(#1)", $dir.$i);
 			}
 			unless ($state->{not}) {
 				unlink($dir.$i) or
-				    $state->errsay("$name: Couldn't delete $dir.$i: $!");
+				    $state->errsay("#1: Couldn't delete #2: #3",
+				    	$name, $dir.$i, $!);
 			}
 		}
 	}
 	if (-f $dir) {
 		if ($state->verbose) {
-			$state->say("unlink($dir)");
+			$state->say("unlink(#1)", $dir);
 		}
 		unless ($state->{not}) {
 			unlink($dir) or
-			    $state->errsay("$name: Couldn't delete $dir: $!");
+			    $state->errsay("#1: Couldn't delete #2: #3", 
+				$name, $dir, $!);
 		}
 	} elsif (-d $dir) {
 		if ($state->verbose) {
-			$state->say("rmdir($dir)");
+			$state->say("rmdir(#1)", $dir);
 		}
 		unless ($state->{not}) {
 			rmdir($dir) or
-			    $state->errsay("$name: Couldn't delete $dir: $!");
+			    $state->errsay("#1: Couldn't delete #2: #3",
+			    	$name, $dir, $!);
 		}
 	}
 }
@@ -445,9 +458,9 @@ sub sanity_check
 		my $name = shift;
 		my $info = installed_info($name);
 		if (-f $info) {
-			$state->errsay("$name: $info should be a directory");
+			$state->errsay("#1: #2 should be a directory", $name, $info);
 			if ($info =~ m/\.core$/) {
-				$state->errsay("looks like a core dump, ",
+				$state->errsay("looks like a core dump, ".
 					"removing");
 				$self->remove($state, $name);
 			} else {
@@ -457,7 +470,7 @@ sub sanity_check
 		}
 		my $contents = $info.OpenBSD::PackageInfo::CONTENTS;
 		unless (-f $contents) {
-			$state->errsay("$name: missing $contents");
+			$state->errsay("#1: missing #2", $name, $contents);
 			$self->may_remove($state, $name);
 			next;
 		}
@@ -466,12 +479,12 @@ sub sanity_check
 			$plist = OpenBSD::PackingList->fromfile($contents);
 		};
 		if ($@ || !defined $plist) {
-			$state->errsay("$name: bad plist");
+			$state->errsay("#1: bad plist", $name);
 			$self->may_remove($state, $name);
 			next;
 		}
 		if ($plist->pkgname ne $name) {
-			$state->errsay("$name: pkgname does not match");
+			$state->errsay("#1: pkgname does not match", $name);
 			$self->may_remove($state, $name);
 		}
 		$plist->mark_available_lib($plist->pkgname);
@@ -549,10 +562,10 @@ sub localbase_check
 			if (-l $_) {
 				return if $state->{known}{$File::Find::dir}{$_};
 			}
-			$state->say("Unknown directory $File::Find::name");
+			$state->say("Unknown directory #1", $File::Find::name);
 		} else {
 			return if $state->{known}{$File::Find::dir}{$_};
-			$state->say("Unknown file $File::Find::name");
+			$state->say("Unknown file #1", $File::Find::name);
 		}
 	}, OpenBSD::Paths->localbase);
 }
@@ -561,7 +574,7 @@ sub run
 {
 	my ($self, $state) = @_;
 
-	my @list = installed_packages(1);
+	my @list = installed_packages();
 	$self->sanity_check($state, \@list);
 	$self->dependencies_check($state, \@list);
 	$state->log->dump;
@@ -575,13 +588,13 @@ sub run
 
 sub parse_and_run
 {
-	my $self = shift;
+	my ($self, $cmd) = @_;
 
-	my $state = OpenBSD::PkgCheck::State->new;
+	my $state = OpenBSD::PkgCheck::State->new($cmd);
 	$self->handle_options('fiq', $state,
-		'pkg_check [-fimnqvx] [-B pkg-destdir] [-D value]');
+		'[-fimnqvx] [-B pkg-destdir] [-D value]');
 	if (@ARGV != 0) {
-		Usage();
+		$state->usage;
 	}
 	$state->{interactive} = $state->opt('i');
 	$state->{force} = $state->opt('f');

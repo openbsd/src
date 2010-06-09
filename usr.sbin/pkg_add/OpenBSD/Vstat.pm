@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.58 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.59 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -223,7 +223,7 @@ sub run
 	my $state = shift;
 	my $code = pop;
 	open(my $cmd, "-|", @_) or
-		$state->errsay("Can't run ",join(' ', @_))
+		$state->errsay("Can't run #1", join(' ', @_))
 		and return;
 	my $_;
 	while (<$cmd>) {
@@ -231,9 +231,9 @@ sub run
 	}
 	if (!close($cmd)) {
 		if ($!) {
-			$state->errsay("Error running ", join(' ', @_),": $!");
+			$state->errsay("Error running #1: #2", join(' ', @_), $!);
 		} else {
-			$state->errsay("Exit status $? from ", join(' ', @_));
+			$state->errsay("Exit status #1 from #2", join(' ', @_), $?);
 		}
 	}
 }
@@ -250,7 +250,7 @@ sub ask_mount
 			my ($dev, $opts) = ($1, $2);
 			$class->new($dev, $opts);
 		} else {
-			$state->errsay("Can't parse mount line: $_");
+			$state->errsay("Can't parse mount line: #1", $_);
 		}
 	});
 }
@@ -384,10 +384,10 @@ sub report_ro
 	my ($s, $state, $fname) = @_;
 
 	if ($state->verbose >= 3 or ++($s->{problems}) < 4) {
-		$state->errsay("Error: ", $s->name,
-		    " is read-only ($fname)");
+		$state->errsay("Error: #1 is read-only (#2)",
+		    $s->name, $fname);
 	} elsif ($s->{problems} == 4) {
-		$state->errsay("Error: ... more files on ", $s->name);
+		$state->errsay("Error: ... more files on #1", $s->name);
 	}
 	$state->{problems}++;
 }
@@ -397,10 +397,10 @@ sub report_overflow
 	my ($s, $state, $fname) = @_;
 
 	if ($state->verbose >= 3 or ++($s->{problems}) < 4) {
-		$state->errsay("Error: ", $s->name,
-		    " is not large enough ($fname)");
+		$state->errsay("Error: #1 is not large enough (#2)",
+		    $s->name, $fname);
 	} elsif ($s->{problems} == 4) {
-		$state->errsay("Error: ... more files do not fit on ",
+		$state->errsay("Error: ... more files do not fit on #1",
 		    $s->name);
 	}
 	$state->{problems}++;
@@ -410,7 +410,7 @@ sub report_overflow
 sub report_noexec
 {
 	my ($s, $state, $fname) = @_;
-	$state->errsay("Error: ", $s->name, " is noexec ($fname)");
+	$state->errsay("Error: #1 is noexec (#2)", $s->name, $fname);
 	$state->{problems}++;
 }
 
@@ -442,11 +442,11 @@ sub tally
 	$state->print($data->name, ": ", $data->{used}, " bytes");
 	my $avail = $data->avail;
 	if ($avail < 0) {
-		$state->print(" (missing ", int(-$avail+1), " blocks)");
+		$state->print(" (missing #1 blocks)", int(-$avail+1));
 	} elsif ($data->{hw} >0 && $data->{hw} > $data->{used}) {
-		$state->print(" (highwater ", $data->{hw}, " bytes)");
+		$state->print(" (highwater #1 bytes)", $data->{hw});
 	}
-	$state->say;
+	$state->print("\n");
 }
 
 package OpenBSD::MountPoint::Fail;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.2 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -40,9 +40,8 @@ sub has_different_sig
 		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
 		my $o = $plist->signature;
 		my $r = $n->compare($o);
-		$state->print("Comparing full signature for ",
-		    $plist->pkgname, " \"", $o->string, "\" vs. \"",
-		    $n->string,"\": ")
+		$state->print("Comparing full signature for #1 \"#2\" vs. \"#3\":",
+		    $plist->pkgname, $o->string, $n->string)
 			if $state->verbose >= 3;
 		if (defined $r) {
 			if ($r == 0) {
@@ -196,12 +195,12 @@ sub setup_header
 			return;
 		}
 		$state->{lastheader} = $header;
-		print $header;
-		print "(pretending) " if $state->{not};
+		$state->print("#1", $header);
+		$state->print("(pretending) ") if $state->{not};
 		if ($state->{do_faked}) {
-			print " under ", $state->{destdir};
+			$state->print(" under #1", $state->{destdir});
 		}
-		print "\n";
+		$state->print("\n");
 	}
 }
 
@@ -324,9 +323,8 @@ sub install_issues
 	if (!$state->{allow_replacing}) {
 		if (grep { !/^.libs\d*\-/ && !/^partial\-/ } @conflicts) {
 			if (!$set->is_an_update_from(@conflicts)) {
-				$state->errsay("Can't install ", $set->print,
-				    " because of conflicts (",
-				    join(',', @conflicts), ")");
+				$state->errsay("Can't install #1 because of conflicts (#2)",
+				    $set->print, join(',', @conflicts));
 				return "conflicts";
 			}
 		}
@@ -335,8 +333,8 @@ sub install_issues
 	my $later = 0;
 	for my $toreplace (@conflicts) {
 		if ($state->tracker->is_installed($toreplace)) {
-			$state->errsay("Cannot replace $toreplace in ",
-			    $set->print, ": just got installed");
+			$state->errsay("Cannot replace #1 in #2: just got installed",
+			    $toreplace, $set->print);
 			return "replacing just installed";
 		}
 
@@ -362,10 +360,10 @@ sub install_issues
 		my $name = $old->pkgname;
 
 		if ($old->has_error(OpenBSD::Handle::NOT_FOUND)) {
-			Fatal "Can't find $name as an installed package\n";
+			$state->fatal("can't find #1 in installation", $name);
 		}
 		if ($old->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
-			Fatal "Couldn't find packing-list for $name\n";
+			$state->fatal("couldn't find packing-list for #1", $name);
 		}
 
 		if ($old->plist->has('manual-installation')) {
@@ -388,11 +386,12 @@ sub try_merging
 		    OpenBSD::Handle->create_old($m, $state));
 	}
 	if ($state->updater->process_set($s, $state)) {
-		$state->say("Merging ", $s->print, $state->ntogo);
+		$state->say("Merging #1#2", $s->print, $state->ntogo);
 		$set->merge($state->tracker, $s);
 		return 1;
 	} else {
-		$state->errsay("NOT MERGING: can't find update for ", $s->print, $state->ntogo);
+		$state->errsay("NOT MERGING: can't find update for #1#2", 
+		    $s->print, $state->ntogo);
 		return 0;
 	}
 }
@@ -443,7 +442,8 @@ sub recheck_conflicts
 		for my $h2 ($set->newer, $set->kept) {
 			next if $h2 == $h;
 			if ($h->plist->conflict_list->conflicts_with($h2->pkgname)) {
-				$state->errsay($set->print, ": internal conflict between ", $h->pkgname, " and ", $h2->pkgname);
+				$state->errsay("#1: internal conflict between #2 and #3", 
+				    $set->print, $h->pkgname, $h2->pkgname);
 				return 0;
 			}
 		}
@@ -552,7 +552,7 @@ sub check_x509_signature
 		my $plist = $handle->plist;
 		if ($plist->is_signed) {
 			if ($state->defines('nosig')) {
-				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR ",
+				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
 				    $plist->pkgname);
 				$state->{check_digest} = 0;
 			} else {
@@ -560,7 +560,8 @@ sub check_x509_signature
 
 				if (!OpenBSD::x509::check_signature($plist,
 				    $state)) {
-					Fatal "fatal issues in ", $set->print;
+					$state->fatal("#1 is corrupted", 
+					    $set->print);
 				}
 				$state->{check_digest} = 1;
 				$state->{packages_with_sig}++;
@@ -588,9 +589,9 @@ sub delete_old_packages
 			OpenBSD::Delete::delete_plist($o->plist, $state);
 		} catchall {
 			$state->errprint($_);
-			Fatal partial_install(
+			$state->fatal(partial_install(
 			    "Deinstallation of $oldname failed",
-			    $set, $state);
+			    $set, $state));
 		};
 
 		if (defined $state->{updatedepends}) {
@@ -660,8 +661,8 @@ sub really_add
 				}
 			};
 			if ($state->{interrupted} || $errors) {
-				Fatal partial_install("Installation of ".
-				    $handle->pkgname." failed", $set, $state);
+				$state->fatal(partial_install("Installation of ".
+				    $handle->pkgname." failed", $set, $state));
 			}
 		}
 	} else {
@@ -696,8 +697,8 @@ sub really_add
 
 		unlink($plist->infodir.CONTENTS);
 		if ($state->{interrupted} || $errors) {
-			Fatal partial_install("Installation of $pkgname failed",
-			    $set, $state);
+			$state->fatal(partial_install("Installation of $pkgname failed",
+			    $set, $state));
 		}
 	});
 	$set->setup_header($state);
@@ -739,8 +740,8 @@ sub newer_has_errors
 		}
 		if ($handle->has_error) {
 			$state->set_name_from_handle($handle);
-			$state->log("Can't install ", $handle->pkgname, ": ",
-				$handle->error_message, "\n");
+			$state->log("Can't install #1: #2", 
+			    $handle->pkgname, $handle->error_message);
 			$state->{bad}++;
 			$set->cleanup($handle->has_error);
 			$state->tracker->cant($set);
@@ -750,7 +751,8 @@ sub newer_has_errors
 		if ($handle->plist->has('arch')) {
 			unless ($handle->plist->{arch}->check($state->{arch})) {
 				$state->set_name_from_handle($handle);
-				$state->log($handle->pkgname, " is not for the right architecture");
+				$state->log("#1 is not for the right architecture",
+				    $handle->pkgname);
 				if (!$state->defines('arch')) {
 					$state->{bad}++;
 					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
@@ -818,8 +820,8 @@ sub install_set
 	my @baddeps = $set->solver->check_depends;
 
 	if (@baddeps) {
-		$state->errsay("Can't install ", $set->print,
-		    ": can't resolve ", join(',', @baddeps));
+		$state->errsay("Can't install #1: can't resolve #2", 
+		    $set->print, join(',', @baddeps));
 		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL,"bad dependencies");
 		$state->tracker->cant($set);
@@ -878,10 +880,10 @@ sub inform_user_of_problems
 	my $state = shift;
 	my @cantupdate = $state->tracker->cant_list;
 	if (@cantupdate > 0) {
-		$state->print("Couldn't find updates for ", join(', ', @cantupdate), "\n");
+		$state->say("Couldn't find updates for #1", join(', ', @cantupdate));
 	}
 	if (defined $state->{issues}) {
-		$state->say("There were some ambiguities. ",
+		$state->say("There were some ambiguities. ".
 		    "Please run in interactive mode again.");
 	}
 }
@@ -957,7 +959,7 @@ sub process_parameters
 				$l = $inst->find($pkgname, $state->{arch});
 			}
 			if (!defined $l) {
-				$state->say("Problem finding $pkgname");
+				$state->say("Problem finding #1", $pkgname);
 			} else {
 				push(@todo2, OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l)));
 			}
@@ -981,7 +983,7 @@ sub finish_display
 
 	# and display delayed thingies.
 	if ($state->{packages_with_sig}) {
-		$state->print("Packages with signatures: ",
+		$state->print("Packages with signatures: #1",
 		    $state->{packages_with_sig});
 		if ($state->{packages_without_sig}) {
 			print ". UNSIGNED PACKAGES: ",
@@ -999,19 +1001,19 @@ sub finish_display
 
 sub handle_options
 {
-	my $self = shift;
-	my $state = $self->SUPER::handle_options('aruUzl:A:P:Q:', {},
-	    'pkg_add [-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
+	my ($self, $cmd) = @_;
+	my $state = $self->SUPER::handle_options('aruUzl:A:P:Q:', {}, $cmd,
+	    '[-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
 	$state->{do_faked} = 0;
 	$state->{arch} = $state->opt('A');
 
 	if (defined $state->opt('Q') and defined $state->opt('B')) {
-		Usage "-Q and -B are incompatible options";
+		$state->usage("-Q and -B are incompatible options");
 	}
 	if (defined $state->opt('Q') and defined $state->opt('r')) {
-		Usage "-r and -Q are incompatible options";
+		$state->usage("-r and -Q are incompatible options");
 	}
 	if ($state->opt('P')) {
 		if ($state->opt('P') eq 'cdrom') {
@@ -1021,7 +1023,7 @@ sub handle_options
 			$state->{ftp_only} = 1;
 		}
 		else {
-		    Usage "bad option: -P ".$state->opt('P');
+		    $state->usage("bad option: -P #1", $state->opt('P'));
 		}
 	}
 	if (defined $state->opt('Q')) {
@@ -1048,7 +1050,7 @@ sub handle_options
 	    $state->{newupdates};
 
 	if (@ARGV == 0 && !$state->opt('u') && !$state->opt('l')) {
-		Usage "Missing pkgname";
+		$state->usage("Missing pkgname");
 	}
 	return $state;
 }
@@ -1077,7 +1079,8 @@ sub main
 
 sub new_state
 {
-	return OpenBSD::PkgAdd::State->new;
+	my ($self, $cmd) = @_;
+	return OpenBSD::PkgAdd::State->new($cmd);
 }
 
 1;

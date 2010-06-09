@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.72 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: Replace.pm,v 1.73 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -66,7 +66,7 @@ sub extract
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
-		$state->say("extracting tempfile under $d")
+		$state->say("extracting tempfile under #1", $d)
 		    if $state->verbose >= 3;
 		$state->{archive}->skip;
 	} else {
@@ -75,7 +75,7 @@ sub extract
 		}
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 
-		$state->say("extracting $tempname") if $state->verbose >= 3;
+		$state->say("extracting #1", $tempname) if $state->verbose >= 3;
 		$self->{tempname} = $tempname;
 
 		# XXX don't apply destdir twice
@@ -95,7 +95,7 @@ sub extract
 
 	return if -e $destdir.$fullname;
 	$self->SUPER::extract($state);
-	$state->say("new directory ", $destdir, $fullname)
+	$state->say("new directory #1", $destdir.$fullname)
 	    if $state->verbose >= 3;
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
@@ -179,10 +179,10 @@ sub check_plist_exec
 	$plist->can_update($new, $state);
 	return 1 if @{$state->{journal}} == 0;
 
-	$state->errsay($new ? "New": "Old", " package ", $plist->pkgname,
-	    " contains potentially unsafe operations");
+	$state->errsay(($new ? "New": "Old"). 
+	    " package #1 contains potentially unsafe operations", $plist->pkgname);
 	for my $i (@{$state->{journal}}) {
-		$state->errsay("| ", $i);
+		$state->errsay("| #1", $i);
 	}
 	return 0;
 }
@@ -228,8 +228,8 @@ sub is_set_safe
 			return 0;
 		}
 	} else {
-		$state->errsay("Cannot install ", $set->print,
-		    " (use -D update)");
+		$state->errsay("Cannot install #1 (use -D update)",
+		    $set->print);
 		return 0;
     	}
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.22 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.23 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -78,8 +78,9 @@ sub cleanup
 					$i->cleanup($state);
 				}
 				if (!rmdir $realname) {
-					$state->log("Error deleting directory $realname: $!\n")
-					    unless $state->{dirs_okay}->{$d};
+					$state->log("Error deleting directory #1: #2",
+					    $realname, $!)
+						unless $state->{dirs_okay}->{$d};
 				}
 			}
 			$done++;
@@ -94,7 +95,7 @@ sub cleanup
 				    $user);
 			} else {
 				$state->log->set_context($pkgname);
-				$state->log("You should also run /usr/sbin/userdel $user\n");
+				$state->log("You should also run /usr/sbin/userdel #1", $user);
 			}
 			$done++;
 		}
@@ -108,7 +109,7 @@ sub cleanup
 				    $group);
 			} else {
 				$state->log->set_context($pkgname);
-				$state->log("You should also run /usr/sbin/groupdel $group\n");
+				$state->log("You should also run /usr/sbin/groupdel #1", $group);
 			}
 			$done++;
 		}
@@ -134,7 +135,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
-	$state->log("You may wish to remove ", $fullname, " from man.conf\n");
+	$state->log("You may wish to remove #1 from man.conf", $fullname);
 	for my $f (OpenBSD::Paths->man_cruft) {
 		unlink("$fullname/$f");
 	}
@@ -145,7 +146,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
-	$state->log("You may wish to remove ", $fullname, " from your font path\n");
+	$state->log("You may wish to remove #1 from your font path", $fullname);
 	for my $f (OpenBSD::Paths->font_cruft) {
 		unlink("$fullname/$f");
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.136 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: Update.pm,v 1.137 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -97,7 +97,7 @@ sub process_handle
 	my $plist = OpenBSD::PackingList->from_installation($pkgname,
 	    \&OpenBSD::PackingList::UpdateInfoOnly);
 	if (!defined $plist) {
-		Fatal("Can't locate $pkgname");
+		$state->fatal("can't locate #1", $pkgname);
 	}
 
 	if ($plist->has('explicit-update') && $state->{allupdates}) {
@@ -193,7 +193,7 @@ sub process_handle
 		}
 		return undef;
 	}
-	$state->say("Update candidates: $pkgname -> ",
+	$state->say("Update candidates: #1 -> #2", $pkgname,
 	    join(' ', map {$_->name} @$l), $state->ntogo) if $state->verbose;
 
 	my $r = $state->choose_location($pkgname, $l);
@@ -297,9 +297,8 @@ sub process_set
 	if (@problems > 0) {
 		$state->tracker->cant($set) if !$set->{quirks};
 		if ($set->{updates} != 0) {
-			$state->say("Can't update ", $set->print,
-			    ": no update found for ",
-			    join(',', @problems));
+			$state->say("Can't update #1: no update found for ",
+			    $set->print, join(',', @problems));
 		}
 		return 0;
 	} elsif ($set->{updates} == 0) {

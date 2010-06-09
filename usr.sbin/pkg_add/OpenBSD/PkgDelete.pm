@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.2 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -60,9 +60,9 @@ sub process_parameters
 		    $state->defines('verbosedeps');
 		my $show = sub {
 			my ($p, $d) = @_;
-			$state->say("Can't remove ", join(' ', @$p),
-			    " without also removing:\n",
-			    join(' ', @$d));
+			$state->say("Can't remove #1", 
+			    " without also removing:\n#2",
+			    join(' ', @$p), join(' ', @$d));
 		};
 		if ($state->{interactive} || !$details) {
 			my %deps = map {($_, 1)} @todo;
@@ -86,7 +86,7 @@ sub process_parameters
 		my $them = @todo > 1 ? 'them' : 'it';
 		if ($state->defines('dependencies') or
 		    $state->confirm("Do you want to remove $them as well", 0)) {
-			$state->say("(removing $them as well)");
+			$state->say("(removing #1 as well)", $them);
 		} else {
 			$state->{bad}++;
 		}
@@ -99,9 +99,9 @@ sub finish_display
 
 sub handle_options
 {
-	my $self = shift;
-	my $state = $self->SUPER::handle_options('', {},
-	    'pkg_delete [-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
+	my ($self, $cmd) = @_;
+	my $state = $self->SUPER::handle_options('', {}, $cmd,
+	    '[-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
 
 	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
 	if ($base ne '') {
@@ -134,7 +134,7 @@ sub main
 			$state->{todo} = scalar @todo - scalar keys %done;
 			next if $done{$pkgname};
 			unless (is_installed($pkgname)) {
-				$state->errsay("$pkgname was not installed");
+				$state->errsay("#1 was not installed", $pkgname);
 				$done{$pkgname} = 1;
 				$removed++;
 				next;
@@ -159,8 +159,8 @@ sub main
 			$state->status->object($pkgname);
 			if (!$state->progress->set_header($pkgname)) {
 				$state->say($state->{not} ?
-				    "Pretending to delete " :
-				    "Deleting ",
+				    "Pretending to delete #1" :
+				    "Deleting #1",
 				    $pkgname) if $state->verbose;
 			}
 			$state->log->set_context('-'.$pkgname);
@@ -173,7 +173,8 @@ sub main
 
 sub new_state
 {
-	return OpenBSD::PkgDelete::State->new;
+	my ($self, $cmd) = @_;
+	return OpenBSD::PkgDelete::State->new($cmd);
 }
 
 1;

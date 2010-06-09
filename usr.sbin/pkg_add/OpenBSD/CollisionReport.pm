@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.34 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.35 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -40,7 +40,7 @@ sub find_collisions
 		return $bypkg;
 	}
 	for my $pkg (installed_packages()) {
-		$state->say("Looking for collisions in $pkg") if $verbose;
+		$state->say("Looking for collisions in #1", $pkg) if $verbose;
 		my $plist = OpenBSD::PackingList->from_installation($pkg,
 		    \&OpenBSD::PackingList::FilesOnly);
 		next if !defined $plist;
@@ -80,7 +80,7 @@ sub collision_report($$)
 		for my $pkg (sort keys %$bypkg) {
 		    for my $item (sort @{$bypkg->{$pkg}}) {
 		    	$found++;
-			$state->errsay("\t$item ($pkg)");
+			$state->errsay("\t#1 (#2)", $item, $pkg);
 		    }
 		    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/o) {
 			$clueless_bat = $pkg;
@@ -94,7 +94,7 @@ sub collision_report($$)
 
 		for my $item (sort keys %todo) {
 			my $old = $todo{$item};
-		    $state->errprint("\t$item");
+		    $state->errprint("\t#1", $item);
 		    if (defined $old && -f $destdir.$item) {
 			    my $d = $old->new($destdir.$item);
 
@@ -109,16 +109,16 @@ sub collision_report($$)
 	    	}
 	}
 	if (defined $clueless_bat) {
-		$state->errprint("The package name $clueless_bat suggests that a former installation\n",
-		    "of a similar package got interrupted.  It is likely that\n",
-		    "\tpkg_delete $clueless_bat\n",
-		    "will solve the problem\n");
+		$state->errprint("The package name #1 suggests that a former installation\n".
+		    "of a similar package got interrupted.  It is likely that\n".
+		    "\tpkg_delete #1\n".
+		    "will solve the problem\n", $clueless_bat);
 	}
 	if (defined $clueless_bat2) {
-		$state->errprint("The package name $clueless_bat2 suggests remaining libraries\n",
-		    "from a former package update.  It is likely that\n",
-		    "\tpkg_delete $clueless_bat2\n".
-		    "will solve the problem\n");
+		$state->errprint("The package name #1 suggests remaining libraries\n".
+		    "from a former package update.  It is likely that\n".
+		    "\tpkg_delete #1\n".
+		    "will solve the problem\n", $clueless_bat2);
 	}
 	my $dorepair = 0;
 	if ($found == 0) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: OldLibs.pm,v 1.3 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: OldLibs.pm,v 1.4 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -150,7 +150,7 @@ sub adjust_depends_closure
 
 	my $write = OpenBSD::RequiredBy->new($plist->pkgname);
 	for my $pkg (OpenBSD::RequiredBy->compute_closure($oldname)) {
-		$state->say("\t", $pkg) if $state->verbose >= 3;
+		$state->say("\t#1", $pkg) if $state->verbose >= 3;
 		$write->add($pkg);
 		my $r = OpenBSD::Requiring->new($pkg)->add($plist->pkgname);
 		if ($oldname =~ m/^\.libs\d*\-/o) {
@@ -168,7 +168,7 @@ sub do_save_libs
 	($o->{plist}, my $stub_list) = split_libs($o->plist, $libs);
 	my $stub_name = $stub_list->pkgname;
 	my $dest = installed_info($stub_name);
-	$state->say("Keeping them in $stub_name")
+	$state->say("Keeping them in #1", $stub_name)
 	    if $state->verbose >= 2;
 
 
@@ -214,7 +214,7 @@ sub save_libs_from_handle
 	}
 
 	if (%$libs) {
-		$state->say("Libraries to keep: ",
+		$state->say("Libraries to keep: #1",
 		    join(",", sort(keys %$libs))) if $state->verbose >= 2;
 		do_save_libs($o, $libs, $state);
 	} else {

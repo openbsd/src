@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.23 2010/06/05 09:15:55 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.24 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -33,9 +33,9 @@ our @ISA = qw(OpenBSD::AddCreateDelete);
 
 sub handle_options
 {
-	my ($self, $opt_string, $hash, @usage) = @_;
+	my ($self, $opt_string, $hash, $cmd, @usage) = @_;
 
-	my $state = $self->new_state;
+	my $state = $self->new_state($cmd);
 	$state->{opt} = $hash;
 	$hash->{F} = sub {
 		for my $o (split /\,/o, shift) {
@@ -68,7 +68,7 @@ sub do_the_main_work
 		exit(1);
 	}
 
-	my $handler = sub { my $sig = shift; Fatal "Caught SIG$sig"; };
+	my $handler = sub { $state->fatal("Caught SIG#1", shift); };
 	local $SIG{'INT'} = $handler;
 	local $SIG{'QUIT'} = $handler;
 	local $SIG{'HUP'} = $handler;
@@ -121,9 +121,9 @@ sub framework
 
 sub parse_and_run
 {
-	my $self = shift;
+	my ($self, $cmd) = @_;
 
-	my $state = $self->handle_options;
+	my $state = $self->handle_options($cmd);
 	local $SIG{'INFO'} = sub { $state->status->print($state); };
 
 	$self->framework($state);
@@ -217,7 +217,7 @@ sub log
 	if (@_ == 0) {
 		return $self->{l};
 	} else {
-		$self->{l}->print(@_);
+		$self->{l}->print($self->f(@_), "\n");
 	}
 }
 
@@ -247,9 +247,10 @@ sub check_root
 	my $state = shift;
 	if ($< && !$state->defines('nonroot')) {
 		if ($state->{not}) {
-			$state->errsay("$0 should be run as root") if $state->verbose;
+			$state->errsay("#1 should be run as root", 
+			    $state->{cmd}) if $state->verbose;
 		} else {
-			Fatal "$0 must be run as root";
+			$state->fatal("#1 must be run as root", $state->{cmd});
 		}
 	}
 }
@@ -258,7 +259,7 @@ sub choose_location
 {
 	my ($state, $name, $list, $is_quirks) = @_;
 	if (@$list == 0) {
-		$state->errsay("Can't find $name") unless $is_quirks;
+		$state->errsay("Can't find #1", $name) unless $is_quirks;
 		return undef;
 	} elsif (@$list == 1) {
 		return $list->[0];
@@ -273,7 +274,8 @@ sub choose_location
 		my $result = $state->ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
 		return $h{$result};
 	} else {
-		$state->errsay("Ambiguous: $name could be ", join(' ', keys %h));
+		$state->errsay("Ambiguous: #1 could be #2", 
+		    $name, join(' ', keys %h));
 		return undef;
 	}
 }

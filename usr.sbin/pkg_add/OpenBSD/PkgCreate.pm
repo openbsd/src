@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.8 2010/06/08 07:49:00 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.9 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -114,7 +114,7 @@ sub avert_duplicates_and_other_checks
 	return unless $self->NoDuplicateNames;
 	my $n = $self->fullname;
 	if (defined $state->stash($n)) {
-		$state->error("Error in packing-list: duplicate item $n");
+		$state->error("Error in packing-list: duplicate item #1", $n);
 	}
 	$state->{stash}{$n} = 1;
 }
@@ -151,7 +151,7 @@ sub compute_checksum
 			$result->add_size($size);
 		}
 	} else {
-		$state->error("Error in package: $fname does not exist");
+		$state->error("Error in package: #1 does not exist", $fname);
 	}
 }
 
@@ -172,14 +172,14 @@ sub verify_checksum_with_base
 		if ((defined $check->{$field} && defined $self->{$field} &&
 		    $check->{$field} ne $self->{$field}) ||
 		    (defined $check->{$field} xor defined $self->{$field})) {
-		    	$state->error("Error: $field inconsistency for ",
-			    $self->fullname);
+		    	$state->error("Error: #1 inconsistency for #2",
+			    $field, $self->fullname);
 		}
 	}
 	if ((defined $check->{d} && defined $self->{d} &&
 	    !$check->{d}->equals($self->{d})) ||
 	    (defined $check->{d} xor defined $self->{d})) {
-	    	$state->error("Error: checksum inconsistency for ",
+	    	$state->error("Error: checksum inconsistency for #1",
 		    $self->fullname);
 	}
 }
@@ -367,8 +367,8 @@ sub avert_duplicates_and_other_checks
 {
 	my ($self, $state) = @_;
 	if (!$self->spec->is_valid) {
-		$state->error("Error in packing-list: invalid \@",
-		    $self->keyword, " ", $self->stringize);
+		$state->error("Error in packing-list: invalid \@#1 #2",
+		    $self->keyword, $self->stringize);
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
 }
@@ -392,9 +392,9 @@ sub avert_duplicates_and_other_checks
 
 	my @issues = OpenBSD::PackageName->from_string($self->{def})->has_issues;
 	if (@issues > 0) {
-		$state->error("Error in packing-list: invalid \@",
-		    $self->keyword, " ", $self->stringize, "\n",
-		    "$self->{def}: , ", join(' ', @issues));
+		$state->error("Error in packing-list: invalid \@#1 #2\n#3, #4",
+		    $self->keyword, $self->stringize,
+		    $self->{def}, join(' ', @issues));
 	}
 
 	$self->SUPER::avert_duplicates_and_other_checks($state);
@@ -407,7 +407,7 @@ sub avert_duplicates_and_other_checks
 
 	my @issues = OpenBSD::PackageName->from_string($self->name)->has_issues;
 	if (@issues > 0) {
-		$state->error("Bad packagename ", $self->name, ":",
+		$state->error("Bad packagename #1: ", $self->name,
 		    join(' ', @issues));
 	}
 	$self->SUPER::avert_duplicates_and_other_checks($state);
@@ -535,21 +535,20 @@ sub add_special_file
 
 sub add_description
 {
-	my ($subst, $plist, $name, $opt_d) = @_;
+	my ($state, $plist, $name, $opt_d) = @_;
 	my $o = OpenBSD::PackingElement::FDESC->add($plist, $name);
+	my $subst = $state->{subst};
 	my $comment = $subst->value('COMMENT');
 	if (defined $comment) {
 		if (length $comment > 60) {
-			print STDERR "Error: comment is too long\n";
-			print STDERR $comment, "\n";
-			print STDERR ' 'x60, "^"x (length($comment)-60), "\n";
-			exit 1;
+			$state->fatal("comment is too long\n#1\n#2\n",
+			    $comment, ' 'x60 . "^" x (length($comment)-60));
 		}
 	} else {
-		Usage "Comment required";
+		$state->usage("Comment required");
 	}
 	if (!defined $opt_d) {
-		Usage "Description required";
+		$state->usage("Description required");
 	}
 	if (defined $o->fullname) {
 	    open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
@@ -563,7 +562,7 @@ sub add_description
 	    }
 	    if (defined $comment) {
 		if ($subst->empty('MAINTAINER')) {
-			Warn "no MAINTAINER\n";
+			$state->errsay("no MAINTAINER");
 		} else {
 			print $fh "\n", $subst->do('Maintainer: ${MAINTAINER}'), "\n";
 		}
@@ -619,8 +618,9 @@ sub sign_existing_package
 
 sub add_extra_info
 {
-	my ($self, $plist, $subst) = @_;
+	my ($self, $plist, $state) = @_;
 
+	my $subst = $state->{subst};
 	my $fullpkgpath = $subst->value('FULLPKGPATH');
 	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') ||
 	    $subst->value('CDROM');;
@@ -636,7 +636,7 @@ sub add_extra_info
 		OpenBSD::PackingElement::ExtraInfo->add($plist,
 		    $fullpkgpath, $cdrom, $ftp);
 	} else {
-		Warn "Package without FULLPKGPATH\n";
+		$state->warn("Package without FULLPKGPATH\n");
 	}
 }
 
@@ -645,13 +645,13 @@ sub add_elements
 	my ($self, $plist, $state, $dep, $want) = @_;
 
 	my $subst = $state->{subst};
-	add_description($subst, $plist, DESC, $state->opt('d'));
+	add_description($state, $plist, DESC, $state->opt('d'));
 	add_special_file($subst, $plist, DISPLAY, $state->opt('M'));
 	add_special_file($subst, $plist, UNDISPLAY, $state->opt('U'));
 	if (defined $state->opt('p')) {
 		OpenBSD::PackingElement::Cwd->add($plist, $state->opt('p'));
 	} else {
-		Usage "Prefix required";
+		$state->usage("Prefix required");
 	}
 	for my $d (sort keys %$dep) {
 		OpenBSD::PackingElement::Dependency->add($plist, $d);
@@ -668,7 +668,7 @@ sub add_elements
 	if (defined $state->opt('L')) {
 		OpenBSD::PackingElement::LocalBase->add($plist, $state->opt('L'));
 	}
-	$self->add_extra_info($plist, $subst);
+	$self->add_extra_info($plist, $state);
 }
 
 sub create_plist
@@ -682,7 +682,7 @@ sub create_plist
 		$pkgname =~ s/\.tgz$//o;
 	}
 	$plist->set_pkgname($pkgname);
-	print "Creating package $pkgname\n" 
+	$state->say("Creating package #1", $pkgname)
 	    if !(defined $state->opt('q')) && $state->opt('v');
 	if (!$state->opt('q')) {
 		$plist->set_infodir(OpenBSD::Temp->dir);
@@ -694,7 +694,7 @@ sub create_plist
 	}
 	for my $contentsfile (@$frags) {
 		read_fragments($state, $plist, $contentsfile) or
-		    Fatal "Can't read packing list $contentsfile";
+		    $state->fatal("can't read packing list #1", $contentsfile);
 	}
 	return $plist;
 }
@@ -710,7 +710,7 @@ sub make_plist_with_sum
 
 sub read_existing_plist
 {
-	my ($self, $contents) = @_;
+	my ($self, $state, $contents) = @_;
 
 	my $plist = OpenBSD::PackingList->new;
 	if (-d $contents && -f $contents.'/'.CONTENTS) {
@@ -720,7 +720,7 @@ sub read_existing_plist
 		$plist->set_infodir(dirname($contents));
 	}
 	$plist->fromfile($contents) or
-	    Fatal "Can't read packing list $contents";
+	    $state->fatal("can't read packing list #1", $contents);
 	return $plist;
 }
 
@@ -728,7 +728,8 @@ sub create_package
 {
 	my ($self, $state, $plist, $wname) = @_;
 
-	print "Creating gzip'd tar ball in '$wname'\n" if $state->opt('v');
+	$state->say("Creating gzip'd tar ball in '#1'", $wname)
+	    if $state->opt('v');
 	my $h = sub {
 		unlink $wname;
 		my $caught = shift;
@@ -754,7 +755,7 @@ sub create_package
 
 sub parse_and_run
 {
-	my $self = shift;
+	my ($self, $cmd) = @_;
 
 	my ($cert, $privkey);
 	my $regen_package = 0;
@@ -762,7 +763,7 @@ sub parse_and_run
 	my (@contents, %dependencies, %wantlib, @signature_params);
 
 
-	my $state = OpenBSD::PkgCreate::State->new;
+	my $state = OpenBSD::PkgCreate::State->new($cmd);
 
 	$state->{opt} = {
 	    'f' =>
@@ -782,7 +783,7 @@ sub parse_and_run
 		    }
 	};
 	$self->handle_options('p:f:d:M:U:s:A:L:B:P:W:qQ', $state,
-	    'pkg_create [-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
+	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
 	    '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
 	    '-d desc -D COMMENT=value -f packinglist -p prefix pkg-name');
@@ -791,8 +792,7 @@ sub parse_and_run
 		$regen_package = 1;
 	} elsif (@ARGV != 1) {
 		if (@contents || @signature_params == 0) {
-			Usage "Exactly one single package name is required: ",
-			    join(' ', @ARGV);
+			$state->usage("Exactly one single package name is required: #1", join(' ', @ARGV));
 		}
 	}
 
@@ -800,7 +800,7 @@ sub parse_and_run
 	if (@signature_params > 0) {
 		if (@signature_params != 3 || $signature_params[0] ne 'x509' ||
 		    !-f $signature_params[1] || !-f $signature_params[2]) {
-			Usage "Signature only works as -s x509 -s cert -s privkey";
+			$state->usage("Signature only works as -s x509 -s cert -s privkey");
 		}
 		$cert = $signature_params[1];
 		$privkey = $signature_params[2];
@@ -814,19 +814,19 @@ sub parse_and_run
 		if (@signature_params > 0) {
 			$sign_only = 1;
 		} else {
-			Usage "Packing list required";
+			$state->usage("Packing list required");
 		}
 	}
 
 	my $plist;
 	if ($regen_package) {
 		if (@contents != 1) {
-			Usage "Exactly one single packing list is required";
+			$state->usage("Exactly one single packing list is required");
 		}
-		$plist = $self->read_existing_plist($contents[0]);
+		$plist = $self->read_existing_plist($state, $contents[0]);
 	} elsif ($sign_only) {
 		if ($state->not) {
-			Fatal "Can't pretend to sign existing packages";
+			$state->fatal("can't pretend to sign existing packages");
 		}
 		for my $pkgname (@ARGV) {
 			$self->sign_existing($pkgname, $cert, $privkey);
@@ -893,7 +893,7 @@ sub parse_and_run
 	if ($regen_package) {
 		$wname = $plist->pkgname.".tgz";
 	} else {
-		$plist->save or Fatal "Can't write packing list";
+		$plist->save or $state->fatal("can't write packing list");
 		$wname = $ARGV[0];
 	}
 

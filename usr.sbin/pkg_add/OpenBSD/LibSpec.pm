@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.8 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.9 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -100,7 +100,7 @@ our @ISA=qw(OpenBSD::LibObject);
 sub to_string
 {
 	my $self = shift;
-	return $self;
+	return $$self;
 }
 
 sub new

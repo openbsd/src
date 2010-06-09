@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.178 2010/06/04 17:29:53 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.179 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -394,16 +394,16 @@ sub check_digest
 	my ($self, $file, $state) = @_;
 	return if $self->{link} or $self->{symlink};
 	if (!defined $self->{d}) {
-		$state->log->fatal($self->fullname,
-		    " does not have a signature");
+		$state->log->fatal($state->f("#1 does not have a signature", 
+		    $self->fullname));
 	}
 	my $d = $self->compute_digest($file->{destdir}.$file->name);
 	if (!$d->equals($self->{d})) {
-		$state->log->fatal("checksum for ", $self->fullname,
-		    " does not match");
+		$state->log->fatal($state->f("checksum for #1 does not match",
+		    $self->fullname));
 	}
 	if ($state->verbose >= 3) {
-		$state->say("Checksum match for ", $self->fullname);
+		$state->say("Checksum match for #1", $self->fullname);
 	}
 }
 
@@ -1258,7 +1258,7 @@ sub run
 	my ($self, $state) = @_;
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	$state->say($self->keyword, " ", $self->{expanded})
+	$state->say("#1 #2", $self->keyword, $self->{expanded})
 	    if $state->verbose >= 2;
 	$state->log->system(OpenBSD::Paths->sh, '-c', $self->{expanded})
 	    unless $state->{not};
@@ -1428,7 +1428,7 @@ sub run_if_exists
 	if (-x $cmd) {
 		$state->vsystem($cmd, @l);
 	} else {
-		$state->errsay("$cmd not found");
+		$state->errsay("#1 not found", $cmd);
 	}
 }
 
@@ -1440,7 +1440,7 @@ sub finish_fontdirs
 		require OpenBSD::Error;
 
 		map { update_fontalias($_) } @l unless $state->{not};
-		$state->say("You may wish to update your font path for ",
+		$state->say("You may wish to update your font path for #1",
 		    join(' ', @l));
 		return if $state->{not};
 		run_if_exists($state, OpenBSD::Paths->mkfontscale, '--', @l);
@@ -1572,7 +1572,7 @@ sub run
 	return if $state->{dont_run_scripts};
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	$state->say($self->beautify, " script: $name $pkgname ",
+	$state->say("#1 script: #2 #3 #4", $self->beautify, $name, $pkgname,
 	    join(' ', @args)) if $state->verbose >= 2;
 	return if $state->{not};
 	chmod 0755, $name;
@@ -1619,12 +1619,13 @@ sub prepare
 	my $fname = $self->fullname;
 	if (open(my $src, '<', $fname)) {
 		while (<$src>) {
+			chomp;
 			next if m/^\+\-+\s*$/o;
 			s/^[+-] //o;
 			$state->log($_);
 		}
 	} else {
-		$state->errsay("Can't open $fname: $!");
+		$state->errsay("Can't open #1: #2", $fname, $!);
     	}
 }
 

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.1 2010/06/04 13:19:39 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.2 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -62,6 +62,7 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
+use OpenBSD::State;
 
 
 my $total_size = 0;
@@ -282,6 +283,7 @@ my $terse = 0;
 my $exit_code = 0;
 my $error_e = 0;
 my @sought_files;
+my $state;
 
 sub just_in_time_header
 {
@@ -346,7 +348,7 @@ sub print_info
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
-			Fatal "Bad packing list for", $handle->url
+			$state->fatal("bad packing list for", $handle->url)
 			    unless defined $plist;
 		}
 		if ($opt_L) {
@@ -409,7 +411,9 @@ sub print_info
 
 sub parse_and_run
 {
-	set_usage('pkg_info [-AaCcdfIKLMmPqRSstUv] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+	my ($self, $cmd) = @_;
+	$state = OpenBSD::State->new($cmd);
+	$state->usage_is('[-AaCcdfIKLMmPqRSstUv] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
 	my %defines;
 	my $locked;
@@ -438,7 +442,7 @@ sub parse_and_run
 					    $defines{$o} = 1;
 				    }
 			    },
-		     'h' => sub {	Usage(); },
+		     'h' => sub {	$state->usage; },
 		     'E' =>
 			    sub {
 				    require File::Spec;
@@ -448,7 +452,7 @@ sub parse_and_run
 			    }
 		});
 	} catchall {
-		Usage($_);
+		$state->usage("#1", $_);
 	};
 
 	lock_db(1, $opt_q) unless $locked or $defines{nolock};
@@ -489,23 +493,23 @@ sub parse_and_run
 	}
 
 	if ($opt_K && !$opt_L) {
-		Usage "-K only makes sense with -L";
+		$state->usage("-K only makes sense with -L");
 	}
 
 	if (@ARGV == 0 && !$opt_a && !$opt_A) {
-		Usage "Missing package name(s)" unless $terse || $opt_q;
+		$state->usage("Missing package name(s)") unless $terse || $opt_q;
 	}
 
 	if (@ARGV > 0 && ($opt_a || $opt_A)) {
-		Usage "Can't specify package name(s) with -a";
+		$state->usage("Can't specify package name(s) with -a");
 	}
 
 	if (@ARGV > 0 && $opt_t) {
-		Usage "Can't specify package name(s) with -t";
+		$state->usage("Can't specify package name(s) with -t");
 	}
 
 	if (@ARGV > 0 && $opt_m) {
-		Usage "Can't specify package name(s) with -m";
+		$state->usage("Can't specify package name(s) with -m");
 	}
 
 	if (@ARGV == 0 && !$error_e) {

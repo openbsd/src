@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.6 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.7 2010/06/09 07:26:01 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -48,12 +48,13 @@ sub adjust
 			my $h = $set->{older}->{$check};
 			next unless defined $h;
 			if (!defined $h->{update_found}) {
-				$state->errsay("XXX $check");
+				$state->errsay("XXX #1", $check);
 				$deps_f->delete($check);
 			} else {
 				my $r = $h->{update_found}->pkgname;
-				$state->say("Adjusting $check to $r in $f")
-				    if $state->verbose >= 3;
+				$state->say("Adjusting #1 to #2 in #3", 
+				    $check, $r, $f)
+					if $state->verbose >= 3;
 				if ($check ne $r) {
 					$deps_f->delete($check)->add($r);
 				}
@@ -74,7 +75,7 @@ sub check
 	my $result = {};
 
 	return $result if @r == 0;
-	$state->say("Verifying dependencies still match for ",
+	$state->say("Verifying dependencies still match for #1",
 	    join(', ', @r)) if $state->verbose >= 2;
 
 	my @new = ($set->newer_names, $set->kept_names);
@@ -84,19 +85,21 @@ sub check
 		my $p2 = OpenBSD::PackingList->from_installation(
 		    $f, \&OpenBSD::PackingList::DependOnly);
 		if (!defined $p2) {
-			$state->errsay("Error: $f missing from installation");
+			$state->errsay("Error: #1 missing from installation", $f);
 		} else {
 			$p2->check_forward_dependency($f, \@old, \@new, $result);
 		}
 	}
 	if (%$result) {
-		$state->say($set->print, " forward dependencies:");
+		$state->say("#1 forward dependencies:", $set->print);
 		while (my ($pkg, $l) = each %$result) {
 			my $deps = join(',', map {$_->{pattern}} @$l);
 			if (@$l == 1) {
-				$state->say("| Dependency of $pkg on $deps doesn't match");
+				$state->say("| Dependency of #1 on #2 doesn't match",
+				    $pkg, $deps);
 			} else {
-				$state->say("| Dependencies of $pkg on $deps don't match");
+				$state->say("| Dependencies of #1 on #2 don't match",
+				    $pkg, $deps);
 			}
 		}
 	}
