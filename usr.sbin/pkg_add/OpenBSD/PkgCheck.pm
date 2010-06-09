@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.11 2010/06/09 09:53:03 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.12 2010/06/09 11:21:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -247,6 +247,13 @@ sub log
 	}
 }
 
+sub safe
+{
+	my ($self, $_) = @_;
+	s/[^\w\d\s\+\-\.\>\<\=\/\;\:\,\(\)\[\]]/?/g;
+	return $_;
+}
+
 package OpenBSD::DependencyCheck;
 
 sub new
@@ -264,7 +271,8 @@ sub new
 		if ($state->{exists}{$pkg}) {
 			$o->{possible}{$pkg} = 1;
 		} else {
-			$state->errsay("#1: bogus #2", $name, $o->string($pkg));
+			$state->errsay("#1: bogus #2", 
+			    $name, $o->string($state->safe($pkg)));
 		}
 	}
 	return $o;
@@ -295,7 +303,7 @@ sub ask_delete_deps
 	} elsif ($state->{interactive}) {
 		require OpenBSD::Interactive;
 		if (OpenBSD::Interactive::confirm("Remove missing ".
-		    $self->string(@$l))) {
+		    $state->safe($self->string(@$l)))) {
 			$self->{req}->delete(@$l);
 		}
 	}
@@ -325,7 +333,7 @@ sub adjust
 		}
 		if (@todo != 0) {
 			$state->errsay("#1 is having too many #2",
-			    $self->{name}, $self->string(@todo));
+			    $self->{name}, $state->safe($self->string(@todo)));
 			$self->ask_delete_deps($state, \@todo);
 		}
 	}
@@ -344,7 +352,7 @@ sub string
 { 
 	my $self = shift;
 	if (@_ == 1) {
-		return "dependency: @_";
+		return "dependency: ".$_[0];
 	} else {
 		return "dependencies: ". join(' ', @_);
 	}
@@ -458,7 +466,8 @@ sub sanity_check
 		my $name = shift;
 		my $info = installed_info($name);
 		if (-f $info) {
-			$state->errsay("#1: #2 should be a directory", $name, $info);
+			$state->errsay("#1: #2 should be a directory", 
+			    $state->safe($name), $state->safe($info));
 			if ($info =~ m/\.core$/) {
 				$state->errsay("looks like a core dump, ".
 					"removing");
@@ -470,7 +479,8 @@ sub sanity_check
 		}
 		my $contents = $info.OpenBSD::PackageInfo::CONTENTS;
 		unless (-f $contents) {
-			$state->errsay("#1: missing #2", $name, $contents);
+			$state->errsay("#1: missing #2", 
+			    $state->safe($name), $state->safe($contents));
 			$self->may_remove($state, $name);
 			next;
 		}
@@ -479,12 +489,13 @@ sub sanity_check
 			$plist = OpenBSD::PackingList->fromfile($contents);
 		};
 		if ($@ || !defined $plist) {
-			$state->errsay("#1: bad plist", $name);
+			$state->errsay("#1: bad packing-list", $state->safe($name));
 			$self->may_remove($state, $name);
 			next;
 		}
 		if ($plist->pkgname ne $name) {
-			$state->errsay("#1: pkgname does not match", $name);
+			$state->errsay("#1: pkgname does not match", 
+			    $state->safe($name));
 			$self->may_remove($state, $name);
 		}
 		$plist->mark_available_lib($plist->pkgname);
