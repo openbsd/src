@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.10 2010/06/09 10:22:54 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.11 2010/06/09 10:41:19 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -130,6 +130,25 @@ sub verify_checksum
 {
 }
 
+sub resolve_link
+{
+	my ($filename, $base, $level) = @_;
+	$level //= 0;
+	if (-l $filename) {
+		my $l = readlink($filename); 
+		if ($level++ > 14) {
+			return undef;
+		}
+		if ($l =~ m|^/|) {
+			return $base.resolve_link($l, $base, $level);
+		} else {
+			return resolve_link(File::Spec->catfile(File::Basename::dirname($filename),$l), $base, $level);
+		}
+	} else {
+		return $filename;
+	}
+}
+
 sub compute_checksum
 {
 	my ($self, $result, $state, $base) = @_;
@@ -145,6 +164,14 @@ sub compute_checksum
 			    $self->stringize);
 		}
 		my $value = readlink $fname;
+		my $chk = resolve_link($fname, $base);
+		$fname =~ s|^//|/|; # cosmetic
+		if (!defined $chk) {
+			$state->fatal("bogus symlink: #1 (too deep)", $fname);
+		} elsif (!-e $chk) {
+			$state->errsay("Warning: symlink #1 points to non-existent #2", 
+			    $fname, $chk);
+		}
 		$result->make_symlink($value);
 	} elsif (-f _) {
 		my ($dev, $ino, $size) = (stat _)[0,1,7];
