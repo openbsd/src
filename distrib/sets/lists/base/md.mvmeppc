@@ -2301,7 +2301,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_page.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_pager.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_param.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_pdaemon.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_pglist.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_pmap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_pmemrange.ph

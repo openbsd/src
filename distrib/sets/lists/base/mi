@@ -1007,6 +1007,7 @@
 ./usr/libdata/perl5/OpenBSD/SharedItems.pm
 ./usr/libdata/perl5/OpenBSD/SharedLibs.pm
 ./usr/libdata/perl5/OpenBSD/Signature.pm
+./usr/libdata/perl5/OpenBSD/State.pm
 ./usr/libdata/perl5/OpenBSD/Subst.pm
 ./usr/libdata/perl5/OpenBSD/Temp.pm
 ./usr/libdata/perl5/OpenBSD/Tracker.pm
