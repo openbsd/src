@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.38 2010/05/10 09:17:55 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.39 2010/06/09 10:25:17 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: June 9 2010 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ For example,
 will match any package that was compiled according to
 .Pa ${PORTSDIR}/x11/kde/base3 .
 .It Fl f
-Show the packing list instructions for each package.
+Show the packing-list instructions for each package.
 .It Fl I
 Show the index entry for each package.
 .It Fl K
@@ -120,7 +120,7 @@ Always used together with
 .It Fl L
 Show the files within each package.
 This is different from just
-viewing the packing list, since full pathnames for everything
+viewing the packing-list, since full pathnames for everything
 are generated.
 .It Fl l Ar str
 Prefix each information category header (see

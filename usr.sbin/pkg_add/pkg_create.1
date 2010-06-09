@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.62 2010/06/05 07:11:43 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.63 2010/06/09 10:25:17 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 5 2010 $
+.Dd $Mdocdate: June 9 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -142,7 +142,7 @@ or, if preceded by
 the argument itself.
 .It Fl f Ar packinglist
 Fetch
-.Dq packing list
+.Dq packing-list
 for package from the file
 .Ar packinglist .
 Several packing-lists can be mentioned, in which case they will be
@@ -237,9 +237,9 @@ package:
 .Bd -literal -offset indent
 pkg_create -f /var/db/pkg/kdelibs-3.4.3/+CONTENTS
 .Ed
-.Sh PACKING LIST DETAILS
+.Sh PACKING-LIST DETAILS
 The
-.Dq packing list
+.Dq packing-list
 format (see
 .Fl f )
 is fairly simple, being basically a list of filenames and directory names
@@ -265,7 +265,7 @@ Describe the file as an
 binary executable (not a script).
 .Pp
 .It Cm @comment Ar string
-Imbed a comment in the packing list.
+Imbed a comment in the packing-list.
 Useful in trying to document some particularly hairy sequence that
 may trip someone up later.
 Can also be used to comment out elements that update-plist

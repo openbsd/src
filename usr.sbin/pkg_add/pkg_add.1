@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.100 2010/06/05 07:11:43 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.101 2010/06/09 10:25:17 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 5 2010 $
+.Dd $Mdocdate: June 9 2010 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -450,7 +450,7 @@ For each new package in an updateset,
 .Nm
 extracts the package's
 .Dq packing information
-(the packing list, description, and installation/deinstallation scripts)
+(the packing-list, description, and installation/deinstallation scripts)
 into a special staging directory in
 .Pa /var/tmp
 (or
@@ -483,7 +483,7 @@ and
 .Cm @wantlib
 directives; see
 .Xr pkg_create 1 )
-are read from the packing list.
+are read from the packing-list.
 If any of these dependencies are not currently fulfilled,
 an attempt is made to find a package that meets them and install it,
 looking first in the current updateset, then in the list of packages
@@ -513,7 +513,7 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-The packing list is used as a guide for extracting
+The packing-list is used as a guide for extracting
 files from the package into their final locations.
 .It
 If an

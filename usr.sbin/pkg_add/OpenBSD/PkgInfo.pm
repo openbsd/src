@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.2 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.3 2010/06/09 10:25:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -348,7 +348,7 @@ sub print_info
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
-			$state->fatal("bad packing list for", $handle->url)
+			$state->fatal("bad packing-list for", $handle->url)
 			    unless defined $plist;
 		}
 		if ($opt_L) {
@@ -400,7 +400,7 @@ sub print_info
 
 		if ($opt_f) {
 			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Packing list:\n" unless $opt_q;
+			print $opt_l, "Packing-list:\n" unless $opt_q;
 			$plist->write(\*STDOUT);
 			print "\n";
 		}
