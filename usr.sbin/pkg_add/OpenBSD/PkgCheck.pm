@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.10 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.11 2010/06/09 09:53:03 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -532,6 +532,13 @@ sub package_files_check
 		my $name = shift;
 		my $plist = OpenBSD::PackingList->from_installation($name);
 		$state->log->set_context($name);
+		if ($plist->is_signed && !$state->defines('nosig')) {
+			require OpenBSD::x509;
+
+			if (!OpenBSD::x509::check_signature($plist, $state)) {
+				$state->fatal("#1 is corrupted", $name);
+			}
+		}
 		if ($state->{quick}) {
 			$plist->basic_check($state);
 		} else {
