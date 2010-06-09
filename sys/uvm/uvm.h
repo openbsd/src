@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.38 2010/04/22 19:02:55 oga Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.39 2010/06/09 08:26:21 thib Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pager.h>
-#include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
 #include <uvm/uvm_pmemrange.h>
 #ifdef UVM_SWAP_ENCRYPT
