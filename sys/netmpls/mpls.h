@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.23 2010/06/02 15:41:06 claudio Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.24 2010/06/09 11:40:36 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -180,8 +180,5 @@ int		 mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void		 mpls_input(struct mbuf *);
 int		 mpls_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
-
-void		 mpls_ip_input(struct mbuf *, u_int8_t);
-void		 mpls_ip6_input(struct mbuf *, u_int8_t);
 
 #endif /* _KERNEL */
