@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.16 2010/06/07 13:24:23 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.17 2010/06/09 13:32:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -251,7 +251,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				lde_check_release(&map, nbr);
 				break;
 			default:
-				log_warnx("not yet");
+				log_warnx("type %d not yet handled. nbr %s",
+				    imsg.hdr.type, inet_ntoa(nbr->id));
 			}
 			break;
 		case IMSG_ADDRESS_ADD:
