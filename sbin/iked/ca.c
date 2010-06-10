@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.2 2010/06/10 08:29:47 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.3 2010/06/10 14:09:19 jsg Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -776,13 +776,13 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 			goto done;
 	}
 
+	bzero(&csc, sizeof(csc));
 	X509_STORE_CTX_init(&csc, store->ca_cas, cert, NULL);
 	if (store->ca_cas->param->flags & X509_V_FLAG_CRL_CHECK) {
 		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
 		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK_ALL);
 	}
 
-	bzero(&csc, sizeof(csc));
 	result = X509_verify_cert(&csc);
 	error = csc.error;
 	X509_STORE_CTX_cleanup(&csc);
