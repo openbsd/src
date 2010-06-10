@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.2 2010/06/10 07:35:41 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.3 2010/06/10 12:06:34 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -213,6 +213,35 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	config_free_sa(env, sa);
 }
 
+int
+sa_address(struct iked_sa *sa, struct iked_addr *addr,
+    struct sockaddr_storage *peer)
+{
+	struct iked_policy	*pol = sa->sa_policy;
+
+	if (pol == NULL) {
+		log_debug("%s: invalid policy", __func__);
+		return (-1);
+	}
+
+	bzero(addr, sizeof(*addr));
+	addr->addr_af = peer->ss_family;
+	addr->addr_port = htons(socket_getport(peer));
+	memcpy(&addr->addr, peer, sizeof(*peer));
+	if (socket_af((struct sockaddr *)&addr->addr, addr->addr_port) == -1) {
+		log_debug("%s: invalid address", __func__);
+		return (-1);
+	}
+
+	if (addr == &sa->sa_peer) {
+		/* Re-insert node into the tree */
+		(void)RB_REMOVE(iked_sapeers, &pol->pol_sapeers, sa);
+		RB_INSERT(iked_sapeers, &pol->pol_sapeers, sa);
+	}
+
+	return (0);
+}
+
 void
 childsa_free(struct iked_childsa *sa)
 {
@@ -266,6 +295,24 @@ sa_cmp(struct iked_sa *a, struct iked_sa *b)
 }
 
 RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);
+
+struct iked_sa *
+sa_peer_lookup(struct iked_policy *pol, struct sockaddr_storage *peer)
+{
+	struct iked_sa	 key;
+
+	memcpy(&key.sa_peer.addr, peer, sizeof(*peer));
+	return (RB_FIND(iked_sapeers, &pol->pol_sapeers, &key));
+}
+
+static __inline int
+sa_peer_cmp(struct iked_sa *a, struct iked_sa *b)
+{
+	return (sockaddr_cmp((struct sockaddr *)&a->sa_peer.addr,
+	    (struct sockaddr *)&b->sa_peer.addr, -1));
+}
+
+RB_GENERATE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
 
 struct iked_user *
 user_lookup(struct iked *env, const char *user)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.3 2010/06/10 08:29:47 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.4 2010/06/10 12:06:34 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -376,33 +376,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		} else
 			sa->sa_msgid = betoh32(hdr->ike_msgid);
 
-		if (msg->msg_peerlen > sizeof(sa->sa_peer)) {
-			log_debug("%s: invalid peer address",
-			    __func__);
+		if (sa_address(sa, &sa->sa_peer, &msg->msg_peer) == -1 ||
+		    sa_address(sa, &sa->sa_local, &msg->msg_local) == -1)
 			return;
-		}
-		sa->sa_peer.addr_af = msg->msg_peer.ss_family;
-		sa->sa_peer.addr.ss_len = msg->msg_peerlen;
-		sa->sa_peer.addr_port =
-		    htons(socket_getport(&msg->msg_peer));
-		socket_af((struct sockaddr *)&sa->sa_peer.addr,
-		    sa->sa_peer.addr_port);
-		memcpy(&sa->sa_peer.addr, &msg->msg_peer,
-		    sizeof(sa->sa_peer.addr));
 
-		if (msg->msg_locallen > sizeof(sa->sa_local)) {
-			log_debug("%s: invalid local address",
-			    __func__);
-			return;
-		}
-		sa->sa_local.addr_af = msg->msg_local.ss_family;
-		sa->sa_local.addr.ss_len = msg->msg_locallen;
-		sa->sa_local.addr_port =
-		    htons(socket_getport(&msg->msg_local));
-		socket_af((struct sockaddr *)&sa->sa_local.addr,
-		    sa->sa_local.addr_port);
-		memcpy(&sa->sa_local.addr, &msg->msg_local,
-		    sizeof(sa->sa_local.addr));
 		sa->sa_fd = msg->msg_fd;
 
 		log_debug("%s: updated SA peer %s local %s", __func__,

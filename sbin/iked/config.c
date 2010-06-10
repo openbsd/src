@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.2 2010/06/10 12:06:34 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -90,7 +90,10 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	config_free_childsas(env, &sa->sa_childsas, NULL, NULL);
 	config_free_flows(env, &sa->sa_flows, NULL);
 
-	policy_unref(env, sa->sa_policy);
+	if (sa->sa_policy) {
+		(void)RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
+		policy_unref(env, sa->sa_policy);
+	}
 
 	ibuf_release(sa->sa_inonce);
 	ibuf_release(sa->sa_rnonce);
@@ -137,6 +140,7 @@ config_new_policy(struct iked *env)
 		return (NULL);
 
 	TAILQ_INIT(&pol->pol_proposals);
+	RB_INIT(&pol->pol_sapeers);
 
 	if (env != NULL)
 		RB_INSERT(iked_policies, &env->sc_policies, pol);
@@ -147,14 +151,14 @@ config_new_policy(struct iked *env)
 void
 config_free_policy(struct iked *env, struct iked_policy *pol)
 {
-	struct iked_sa	*sa;
+	struct iked_sa		*sa;
 
 	if (pol->pol_flags & IKED_POLICY_REFCNT)
 		goto remove;
 
 	(void)RB_REMOVE(iked_policies, &env->sc_policies, pol);
 
-	RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+	RB_FOREACH(sa, iked_sapeers, &pol->pol_sapeers) {
 		/* Remove from the policy tree, but keep for existing SAs */
 		if (sa->sa_policy == pol)
 			policy_ref(env, pol);

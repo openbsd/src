@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.2 2010/06/10 08:29:47 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.3 2010/06/10 12:06:34 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -186,6 +186,8 @@ struct iked_cfg {
 	} cfg;
 };
 
+RB_HEAD(iked_sapeers, iked_sa);
+
 struct iked_policy {
 	u_int				 pol_id;
 	char				 pol_name[IKED_ID_SIZE];
@@ -224,6 +226,8 @@ struct iked_policy {
 
 	struct iked_cfg			 pol_cfg[IKED_CFG_MAX];
 	u_int				 pol_ncfg;
+
+	struct iked_sapeers		 pol_sapeers;
 
 	RB_ENTRY(iked_policy)		 pol_entry;
 };
@@ -344,6 +348,7 @@ struct iked_sa {
 	struct iked_flows		 sa_flows;	/* IPSec flows */
 	u_int8_t			 sa_flowhash[20]; /* SHA1 */
 
+	RB_ENTRY(iked_sa)		 sa_peer_entry;
 	RB_ENTRY(iked_sa)		 sa_entry;
 };
 RB_HEAD(iked_sas, iked_sa);
@@ -494,14 +499,19 @@ struct iked_sa *
 	 sa_new(struct iked *, u_int64_t, u_int64_t, u_int,
 	    struct iked_policy *);
 void	 sa_free(struct iked *, struct iked_sa *);
+int	 sa_address(struct iked_sa *, struct iked_addr *,
+	    struct sockaddr_storage *);
 void	 childsa_free(struct iked_childsa *);
 void	 flow_free(struct iked_flow *);
 struct iked_sa *
 	 sa_lookup(struct iked *, u_int64_t, u_int64_t, u_int);
+struct iked_sa *
+	 sa_peer_lookup(struct iked_policy *, struct sockaddr_storage *);
 struct iked_user *
 	 user_lookup(struct iked *, const char *);
 RB_PROTOTYPE(iked_policies, iked_policy, pol_entry, policy_cmp);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
+RB_PROTOTYPE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
 RB_PROTOTYPE(iked_users, iked_user, user_entry, user_cmp);
 
 /* crypto.c */
