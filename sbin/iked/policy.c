@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.2 2010/06/10 07:35:41 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	    print_spi(sa->sa_hdr.sh_ispi, 8),
 	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
-	(void)RB_REMOVE(iked_sas, &env->sc_sas, sa);
 	config_free_sa(env, sa);
 }
 
