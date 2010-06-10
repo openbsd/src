@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.3 2010/06/10 12:04:21 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.4 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
 
 static u_int32_t sadb_msg_seq = 1;
+static u_int sadb_decoupled = 0;
 
 struct pfkey_constmap {
 	u_int8_t	 pfkey_id;
@@ -99,6 +100,46 @@ int	pfkey_reply(int, u_int8_t **, ssize_t *);
 
 struct sadb_ident *
 	pfkey_id2ident(struct iked_id *, u_int);
+
+int
+pfkey_couple(int sd, struct iked_sas *sas, int couple)
+{
+	struct iked_sa		*sa;
+	struct iked_flow	*flow;
+	struct iked_childsa	*csa;
+	u_int			 old;
+	const char		*mode[] = { "coupled", "decoupled" };
+
+	/* Socket is not ready */
+	if (sd == -1)
+		return (-1);
+
+	old = sadb_decoupled ? 1 : 0;
+	sadb_decoupled = couple ? 0 : 1;
+
+	if (old == sadb_decoupled)
+		return (0);
+
+	log_debug("%s: kernel %s -> %s", __func__,
+	    mode[old], mode[sadb_decoupled]);
+
+	RB_FOREACH(sa, iked_sas, sas) {
+		TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
+			if (!csa->csa_loaded && !sadb_decoupled)
+				(void)pfkey_sa_add(sd, csa, NULL);
+			else if (csa->csa_loaded && sadb_decoupled)
+				(void)pfkey_sa_delete(sd, csa);
+		}
+		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
+			if (!flow->flow_loaded && !sadb_decoupled)
+				(void)pfkey_flow_add(sd, flow);
+			else if (flow->flow_loaded && sadb_decoupled)
+				(void)pfkey_flow_delete(sd, flow);
+		}
+	}
+
+	return (0);
+}
 
 int
 pfkey_map(const struct pfkey_constmap *map, u_int16_t alg, u_int8_t *pfkalg)
@@ -811,6 +852,21 @@ pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
     u_int8_t **datap, ssize_t *lenp)
 {
 	ssize_t n, len = smsg->sadb_msg_len * 8;
+
+	if (sadb_decoupled) {
+		switch (smsg->sadb_msg_type) {
+		case SADB_GETSPI:
+			/* we need to get a new SPI from the kernel */
+			break;
+		default:
+			if (datap || lenp) {
+				log_warnx("%s: pfkey not coupled", __func__);
+				return (-1);
+			}
+			/* ignore request */
+			return (0);
+		}
+	}
 
 	if ((n = writev(sd, iov, iov_cnt)) == -1) {
 		log_warn("%s: writev failed", __func__);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.2 2010/06/10 08:29:47 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.3 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -69,6 +69,12 @@ ikev1_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
 		log_debug("%s: config reload", __func__);
+		return (0);
+	case IMSG_CTL_COUPLE:
+	case IMSG_CTL_DECOUPLE:
+		return (0);
+	case IMSG_CTL_ACTIVE:
+	case IMSG_CTL_PASSIVE:
 		return (0);
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev1_msg_cb));

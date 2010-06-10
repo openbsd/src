@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.3 2010/06/07 08:40:21 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.4 2010/06/10 14:08:37 reyk Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2010 $
+.Dd $Mdocdate: June 10 2010 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -109,6 +109,31 @@ ikev2 esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
 .Bl -tag -width xxxx
+.It Ic set Ar active
+Set
+.Xr iked 8
+to active mode.
+This is the default.
+.It Ic set Ar passive
+Set
+.Xr iked 8
+to passive mode.
+In passive mode no packets are sent to peers and no connections are
+initiated by
+.Xr iked 8 .
+This option is used for setups using
+.Xr sasyncd 8
+and
+.Xr carp 4
+to provide redundancy.
+iked will run in passive mode until sasyncd has determined that the host
+is the master and can switch to active mode.
+.It Ic set Ar couple
+Load the negotiated security associations (SAs) and flows into the kernel.
+This is the default.
+.It Ic set Ar decouple
+Don't load the negotiated SAs and flows from the kernel.
+This mode is only useful for testing and debugging.
 .It Ic user Ar name Ar password
 .Xr iked 8
 supports user-based authentication by tunneling the Extensible

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.1 2010/06/03 16:49:00 reyk Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.2 2010/06/10 14:08:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -256,6 +256,18 @@ main(int argc, char *argv[])
 	case MONITOR:
 		imsg_compose(ibuf, IMSG_CTL_NOTIFY, 0, 0, -1, NULL, 0);
 		done = 0;
+		break;
+	case COUPLE:
+		imsg_compose(ibuf, IMSG_CTL_COUPLE, 0, 0, -1, NULL, 0);
+		break;
+	case DECOUPLE:
+		imsg_compose(ibuf, IMSG_CTL_DECOUPLE, 0, 0, -1, NULL, 0);
+		break;
+	case ACTIVE:
+		imsg_compose(ibuf, IMSG_CTL_ACTIVE, 0, 0, -1, NULL, 0);
+		break;
+	case PASSIVE:
+		imsg_compose(ibuf, IMSG_CTL_PASSIVE, 0, 0, -1, NULL, 0);
 		break;
 	case LOG_VERBOSE:
 	case LOG_BRIEF:

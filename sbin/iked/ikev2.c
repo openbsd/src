@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.4 2010/06/10 12:06:34 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.5 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -100,6 +100,12 @@ ikev2_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
 		return (config_getreset(env, imsg));
+	case IMSG_CTL_COUPLE:
+	case IMSG_CTL_DECOUPLE:
+		return (config_getcoupled(env, imsg->hdr.type));
+	case IMSG_CTL_ACTIVE:
+	case IMSG_CTL_PASSIVE:
+		return (config_getmode(env, imsg->hdr.type));
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
 	case IMSG_PFKEY_SOCKET:

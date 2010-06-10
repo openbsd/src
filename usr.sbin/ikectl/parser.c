@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2010/06/03 16:49:00 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2010/06/10 14:08:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -66,13 +66,17 @@ static const struct token t_show_ca[];
 static const struct token t_show_ca_modifiers[];
 
 static const struct token t_main[] = {
-	{ KEYWORD,	"reset",	NONE,		t_reset },
+	{ KEYWORD,	"active",	ACTIVE,		NULL },
+	{ KEYWORD,	"passive",	PASSIVE,	NULL },
+	{ KEYWORD,	"couple",	COUPLE,		NULL },
+	{ KEYWORD,	"decouple",	DECOUPLE,	NULL },
+	{ KEYWORD,	"load",		LOAD,		t_load },
 	{ KEYWORD,	"log",		NONE,		t_log },
 	{ KEYWORD,	"monitor",	MONITOR,	NULL },
-	{ KEYWORD,	"load",		LOAD,		t_load },
 	{ KEYWORD,	"reload",	RELOAD,		NULL },
-	{ KEYWORD,	"ca",		CA,		t_ca },
+	{ KEYWORD,	"reset",	NONE,		t_reset },
 	{ KEYWORD,	"show",		NONE,		t_show },
+	{ KEYWORD,	"ca",		CA,		t_ca },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 

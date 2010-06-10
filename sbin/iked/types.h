@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.3 2010/06/07 14:15:27 jsg Exp $	*/
+/*	$OpenBSD: types.h,v 1.4 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -79,6 +79,10 @@ enum imsg_type {
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_RESET,
+	IMSG_CTL_COUPLE,
+	IMSG_CTL_DECOUPLE,
+	IMSG_CTL_ACTIVE,
+	IMSG_CTL_PASSIVE,
 	IMSG_UDP_SOCKET,
 	IMSG_PFKEY_SOCKET,
 	IMSG_IKE_MESSAGE,

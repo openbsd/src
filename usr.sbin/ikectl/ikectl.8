@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.1 2010/06/03 16:49:00 reyk Exp $
+.\" $OpenBSD: ikectl.8,v 1.2 2010/06/10 14:08:37 reyk Exp $
 .\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2010 $
+.Dd $Mdocdate: June 10 2010 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -48,6 +48,22 @@ to communicate with
 The following commands are available to control
 .Xr iked 8 :
 .Bl -tag -width Ds
+.It Cm active
+Set
+.Xr iked 8
+to active mode.
+.It Cm passive
+Set
+.Xr iked 8
+to passive mode.
+In passive mode no packets are sent to peers and no connections
+are initiated by
+.Xr iked 8 .
+.It Cm couple
+Load the negotiated security associations (SAs) and flows into the kernel.
+.It Cm decouple
+Unload the negotiated SAs and flows from the kernel.
+This mode is only useful for testing and debugging.
 .It Cm load Ar filename
 Reload the configuration from the specified file.
 .It Cm log brief

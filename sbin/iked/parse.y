@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -92,6 +92,8 @@ int		 cmdline_symset(char *);
 static struct iked	*env = NULL;
 static int		 debug = 0;
 static int		 rules = 0;
+static int		 passive = 0;
+static int		 decouple = 0;
 
 struct ipsec_xf {
 	const char	*name;
@@ -309,7 +311,7 @@ typedef struct {
 %token	FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK PORT
 %token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA
 %token	PASSIVE ACTIVE ANY TAG PROTO LOCAL GROUP NAME CONFIG EAP USER
-%token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT
+%token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
@@ -338,6 +340,7 @@ typedef struct {
 grammar		: /* empty */
 		| grammar include '\n'
 		| grammar '\n'
+		| grammar set '\n'
 		| grammar user '\n'
 		| grammar ikev2rule '\n'
 		| grammar varset '\n'
@@ -362,6 +365,12 @@ include		: INCLUDE STRING		{
 			file = nfile;
 			lungetc('\n');
 		}
+		;
+
+set		: SET ACTIVE	{ passive = 0; }
+		| SET PASSIVE	{ passive = 1; }
+		| SET COUPLE	{ decouple = 0; }
+		| SET DECOUPLE	{ decouple = 1; }
 		;
 
 user		: USER STRING STRING		{
@@ -875,6 +884,8 @@ lookup(char *s)
 		{ "auth",		AUTHXF },
 		{ "childsa",		CHILDSA },
 		{ "config",		CONFIG },
+		{ "couple",		COUPLE },
+		{ "decouple",		DECOUPLE },
 		{ "dstid",		DSTID },
 		{ "eap",		EAP },
 		{ "enc",		ENCXF },
@@ -896,6 +907,7 @@ lookup(char *s)
 		{ "psk",		PSK },
 		{ "rsa",		RSA },
 		{ "sa",			SA },
+		{ "set",		SET },
 		{ "srcid",		SRCID },
 		{ "tag",		TAG },
 		{ "tcpmd5",		TCPMD5 },
@@ -1246,9 +1258,14 @@ parse_config(const char *filename, struct iked *x_env)
 	if ((file = pushfile(filename, 1)) == NULL)
 		return (-1);
 
+	decouple = passive = 0;
+
 	yyparse();
 	errors = file->errors;
 	popfile();
+
+	env->sc_passive = passive ? 1 : 0;
+	env->sc_decoupled = decouple ? 1 : 0;
 
 	if (!rules)
 		log_warnx("%s: no valid configuration rules found",

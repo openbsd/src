@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.3 2010/06/10 12:06:34 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.4 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -397,6 +397,8 @@ struct iked {
 	char				 sc_conffile[MAXPATHLEN];
 
 	u_int32_t			 sc_opts;
+	u_int8_t			 sc_passive;
+	u_int8_t			 sc_decoupled;
 
 	int				 sc_pipes[PROC_MAX][PROC_MAX];
 	struct imsgev			 sc_ievs[PROC_MAX];
@@ -473,6 +475,10 @@ void	 config_free_childsas(struct iked *, struct iked_childsas *,
 struct iked_transform *
 	 config_add_transform(struct iked_proposal *,
 	    u_int, u_int, u_int, u_int);
+int	 config_setcoupled(struct iked *, u_int);
+int	 config_getcoupled(struct iked *, u_int);
+int	 config_setmode(struct iked *, u_int);
+int	 config_getmode(struct iked *, u_int);
 int	 config_setreset(struct iked *, u_int, enum iked_procid);
 int	 config_getreset(struct iked *, struct imsg *);
 int	 config_setpolicy(struct iked *, struct iked_policy *,
@@ -621,6 +627,7 @@ ssize_t	 eap_identity_request(struct ibuf *);
 int	 eap_parse(struct iked *, struct iked_sa *, void *, int);
 
 /* pfkey.c */
+int	 pfkey_couple(int, struct iked_sas *, int);
 int	 pfkey_flow_add(int fd, struct iked_flow *);
 int	 pfkey_flow_delete(int fd, struct iked_flow *);
 int	 pfkey_sa_init(int, struct iked_childsa *, u_int32_t *);

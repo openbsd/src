@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2010/06/10 12:06:34 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -387,6 +387,55 @@ config_new_user(struct iked *env, struct iked_user *new)
 /*
  * Inter-process communication of configuration items.
  */
+
+int
+config_setcoupled(struct iked *env, u_int couple)
+{
+	u_int	 type;
+
+	type = couple ? IMSG_CTL_COUPLE : IMSG_CTL_DECOUPLE;
+	imsg_compose_proc(env, PROC_IKEV1, type, -1, NULL, 0);
+	imsg_compose_proc(env, PROC_IKEV2, type, -1, NULL, 0);
+
+	return (0);
+}
+
+int
+config_getcoupled(struct iked *env, u_int type)
+{
+	return (pfkey_couple(env->sc_pfkey, &env->sc_sas,
+	    type == IMSG_CTL_COUPLE ? 1 : 0));
+}
+
+int
+config_setmode(struct iked *env, u_int passive)
+{
+	u_int	 type;
+
+	type = passive ? IMSG_CTL_PASSIVE : IMSG_CTL_ACTIVE;
+	imsg_compose_proc(env, PROC_IKEV1, type, -1, NULL, 0);
+	imsg_compose_proc(env, PROC_IKEV2, type, -1, NULL, 0);
+
+	return (0);
+}
+
+int
+config_getmode(struct iked *env, u_int type)
+{
+	u_int8_t	 old;
+	u_char		*mode[] = { "active", "passive" };
+
+	old = env->sc_passive ? 1 : 0;
+	env->sc_passive = type == IMSG_CTL_PASSIVE ? 1 : 0;
+
+	if (old == env->sc_passive)
+		return (0);
+
+	log_debug("%s: mode %s -> %s", __func__,
+	    mode[old], mode[env->sc_passive]);
+
+	return (0);
+}
 
 int
 config_setreset(struct iked *env, u_int mode, enum iked_procid id)

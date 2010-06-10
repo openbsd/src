@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2010/06/10 14:08:37 reyk Exp $	*/
 /*	$vantronix: control.c,v 1.4 2010/05/14 07:35:52 reyk Exp $	*/
 
 /*
@@ -269,6 +269,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_RESET:
+		case IMSG_CTL_COUPLE:
+		case IMSG_CTL_DECOUPLE:
+		case IMSG_CTL_ACTIVE:
+		case IMSG_CTL_PASSIVE:
 			imsg_forward_proc(env, &imsg, PROC_PARENT);
 			break;
 		default:
