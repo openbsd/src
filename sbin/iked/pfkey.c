@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.2 2010/06/04 09:51:45 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.3 2010/06/10 12:04:21 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -93,7 +93,10 @@ int	pfkey_sa(int, u_int8_t, u_int8_t, struct iked_childsa *);
 int	pfkey_sa_getspi(int, u_int8_t, struct iked_childsa *, u_int32_t *);
 int	pfkey_sagroup(int, u_int8_t, u_int8_t,
 	    struct iked_childsa *, struct iked_childsa *);
+int	pfkey_write(int sd, struct sadb_msg *, struct iovec *, int,
+	    u_int8_t **, ssize_t *);
 int	pfkey_reply(int, u_int8_t **, ssize_t *);
+
 struct sadb_ident *
 	pfkey_id2ident(struct iked_id *, u_int);
 
@@ -120,8 +123,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	struct sadb_ident	*sa_srcid, *sa_dstid;
 	struct sockaddr_storage	 ssrc, sdst, slocal, speer, smask, dmask;
 	struct iovec		 iov[IOV_CNT];
-	ssize_t			 n;
-	int			 iov_cnt, len, ret = -1;
+	int			 iov_cnt, ret = -1;
 	in_port_t		 sport, dport;
 
 	sport = dport = 0;
@@ -347,18 +349,8 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 		iov_cnt++;
 	}
 
-	len = smsg.sadb_msg_len * 8;
-	if ((n = writev(sd, iov, iov_cnt)) == -1) {
-		log_warn("%s: writev failed", __func__);
-		goto done;
-	} else if (n != len) {
-		log_warnx("%s: short write", __func__);
-		goto done;
-	}
+	ret = pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL);
 
-	ret = pfkey_reply(sd, NULL, NULL);
-
- done:
 	if (sa_srcid)
 		free(sa_srcid);
 	if (sa_dstid)
@@ -379,8 +371,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	struct sockaddr_storage	 ssrc, sdst;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
 	struct iovec		 iov[IOV_CNT];
-	ssize_t			 n;
-	int			 iov_cnt, len;
+	int			 iov_cnt;
 	char			*tag = NULL;
 
 	sa_srcid = sa_dstid = NULL;
@@ -590,16 +581,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		iov_cnt++;
 	}
 
-	len = smsg.sadb_msg_len * 8;
-	if ((n = writev(sd, iov, iov_cnt)) == -1) {
-		log_warn("%s: writev failed", __func__);
-		return (-1);
-	} else if (n != len) {
-		log_warnx("%s: short write", __func__);
-		return (-1);
-	}
-
-	return (pfkey_reply(sd, NULL, NULL));
+	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
 }
 
 int
@@ -615,7 +597,7 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 	struct iovec		 iov[IOV_CNT];
 	u_int8_t		*data;
 	ssize_t			 n;
-	int			 iov_cnt, len, ret = 0;
+	int			 iov_cnt, ret = 0;
 
 	bzero(&ssrc, sizeof(ssrc));
 	memcpy(&ssrc, &sa->csa_local->addr, sizeof(ssrc));
@@ -687,16 +669,7 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 
 	*spip = 0;	
 
-	len = smsg.sadb_msg_len * 8;
-	if ((n = writev(sd, iov, iov_cnt)) == -1) {
-		log_warn("%s: writev failed", __func__);
-		return (-1);
-	} else if (n != len) {
-		log_warnx("%s: short write", __func__);
-		return (-1);
-	}
-
-	if ((ret = pfkey_reply(sd, &data, &n)) != 0)
+	if ((ret = pfkey_write(sd, &smsg, iov, iov_cnt, &data, &n)) != 0)
 		return (-1);
 
 	msg = (struct sadb_msg *)data;
@@ -712,7 +685,7 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 		}
 	}
 
-	bzero(data, len);
+	bzero(data, n);
 	free(data);
 
 	log_debug("%s: spi 0x%08x", __func__, *spip);
@@ -730,8 +703,7 @@ pfkey_sagroup(int sd, u_int8_t satype1, u_int8_t action,
 	struct sockaddr_storage	sdst1, sdst2;
 	struct sadb_protocol	sa_proto;
 	struct iovec		iov[IOV_CNT];
-	ssize_t			n;
-	int			iov_cnt, len;
+	int			iov_cnt;
 	u_int8_t		satype2;
 
 	if (pfkey_map(pfkey_satype, sa2->csa_saproto, &satype2) == -1)
@@ -831,16 +803,24 @@ pfkey_sagroup(int sd, u_int8_t satype1, u_int8_t action,
 	smsg.sadb_msg_len += sa_proto.sadb_protocol_len;
 	iov_cnt++;
 
-	len = smsg.sadb_msg_len * 8;
+	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
+}
+
+int
+pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
+    u_int8_t **datap, ssize_t *lenp)
+{
+	ssize_t n, len = smsg->sadb_msg_len * 8;
+
 	if ((n = writev(sd, iov, iov_cnt)) == -1) {
 		log_warn("%s: writev failed", __func__);
 		return (-1);
 	} else if (n != len) {
-		log_warnx("%s: short write", __func__);
+		log_warn("%s: short write", __func__);
 		return (-1);
 	}
 
-	return (pfkey_reply(sd, NULL, NULL));
+	return (pfkey_reply(sd, datap, lenp));
 }
 
 int
@@ -851,17 +831,19 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 	u_int8_t	*data;
 
 	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
-		warnx("short read");
-		return -1;
+		log_warnx("%s: short recv", __func__);
+		return (-1);
 	}
 	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
-	if ((data = malloc(len)) == NULL)
-		err(1, "pfkey_reply: malloc");
+	if ((data = malloc(len)) == NULL) {
+		log_warn("%s: malloc", __func__);
+		return (-1);
+	}
 	if (read(sd, data, len) != len) {
-		warn("PF_KEY short read");
+		log_warnx("%s: short read", __func__);
 		bzero(data, len);
 		free(data);
-		return -1;
+		return (-1);
 	}
 	if (datap) {
 		*datap = data;
@@ -874,11 +856,11 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 	if (datap == NULL && hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
 		if (errno != EEXIST) {
-			warn("PF_KEY failed");
-			return -1;
+			log_warn("%s: message", __func__);
+			return (-1);
 		}
 	}
-	return 0;
+	return (0);
 }
 
 int
@@ -991,8 +973,7 @@ pfkey_flush(int sd)
 {
 	struct sadb_msg smsg;
 	struct iovec	iov[IOV_CNT];
-	ssize_t		n;
-	int		iov_cnt, len;
+	int		iov_cnt;
 
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
@@ -1008,19 +989,7 @@ pfkey_flush(int sd)
 	iov[iov_cnt].iov_len = sizeof(smsg);
 	iov_cnt++;
 
-	len = smsg.sadb_msg_len * 8;
-	if ((n = writev(sd, iov, iov_cnt)) == -1) {
-		log_warn("%s: writev failed", __func__);
-		return (-1);
-	}
-	if (n != len) {
-		log_warnx("%s: short write", __func__);
-		return (-1);
-	}
-	if (pfkey_reply(sd, NULL, NULL) < 0)
-		return (-1);
-
-	return (0);
+	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
 }
 
 struct sadb_ident *
