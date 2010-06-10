@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.2 2010/06/10 08:29:47 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -47,8 +47,8 @@
 int	 ikev1_dispatch_parent(int, struct iked_proc *, struct imsg *);
 int	 ikev1_dispatch_ikev2(int, struct iked_proc *, struct imsg *);
 
-void	 ikev1_message_cb(int, short, void *);
-void	 ikev1_message_recv(struct iked *, struct iked_message *);
+void	 ikev1_msg_cb(int, short, void *);
+void	 ikev1_recv(struct iked *, struct iked_message *);
 
 static struct iked_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev1_dispatch_parent },
@@ -71,7 +71,7 @@ ikev1_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 		log_debug("%s: config reload", __func__);
 		return (0);
 	case IMSG_UDP_SOCKET:
-		return (config_getsocket(env, imsg, ikev1_message_cb));
+		return (config_getsocket(env, imsg, ikev1_msg_cb));
 	default:
 		break;
 	}
@@ -102,7 +102,7 @@ ikev1_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
 
 		log_debug("%s: message length %d", __func__, len);
 
-		ikev1_message_recv(env, &msg);
+		ikev1_recv(env, &msg);
 		message_cleanup(env, &msg);
 		return (0);
 	default:
@@ -113,7 +113,7 @@ ikev1_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
 }
 
 void
-ikev1_message_cb(int fd, short event, void *arg)
+ikev1_msg_cb(int fd, short event, void *arg)
 {
 	struct iked_socket	*sock = arg;
 	struct iked		*env = sock->sock_env;
@@ -149,14 +149,14 @@ ikev1_message_cb(int fd, short event, void *arg)
 		goto done;
 	}
 
-	ikev1_message_recv(env, &msg);
+	ikev1_recv(env, &msg);
 
  done:
 	message_cleanup(env, &msg);
 }
 
 void
-ikev1_message_recv(struct iked *env, struct iked_message *msg)
+ikev1_recv(struct iked *env, struct iked_message *msg)
 {
 	struct ike_header	*hdr;
 

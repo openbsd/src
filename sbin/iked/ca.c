@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.2 2010/06/10 08:29:47 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 
 	if (type == IKEV2_AUTH_SHARED_KEY_MIC) {
 		sa->sa_stateflags |= IKED_REQ_AUTH;
-		return (ikev2_message_authsign(env, sa,
+		return (ikev2_msg_authsign(env, sa,
 		    &policy->pol_auth, authmsg));
 	}
 
@@ -423,7 +423,7 @@ ca_getauth(struct iked *env, struct imsg *imsg)
 		id = &sa.sa_rcert;
 	memcpy(id, &store->ca_privkey, sizeof(*id));
 
-	if (ikev2_message_authsign(env, &sa, &policy.pol_auth, authmsg) != 0) {
+	if (ikev2_msg_authsign(env, &sa, &policy.pol_auth, authmsg) != 0) {
 		log_debug("%s: AUTH sign failed", __func__);
 		policy.pol_auth.auth_method = IKEV2_AUTH_NONE;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.2 2010/06/10 08:29:47 reyk Exp $	*/
 /*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
 
 /*
@@ -75,19 +75,8 @@ extern size_t ikev2_default_nesp_transforms;
 extern struct iked_constmap ikev2_state_map[];
 
 /*
- * IKE header (partially compatible with IKEv1)
+ * IKEv2 definitions of the IKE header
  */
-
-struct ike_header {
-	u_int64_t	 ike_ispi;		/* IKE_SA Initiator SPI */
-	u_int64_t	 ike_rspi;		/* IKE_SA Responder SPI */
-	u_int8_t	 ike_nextpayload;	/* Next payload type */
-	u_int8_t	 ike_version;		/* Major/Minor version number */
-	u_int8_t	 ike_exchange;		/* Exchange type */
-	u_int8_t	 ike_flags;		/* Message options */
-	u_int32_t	 ike_msgid;		/* Message identifier */
-	u_int32_t	 ike_length;		/* Total message length */
-} __packed;
 
 /* IKEv2 exchange types */
 #define IKEV2_EXCHANGE_IKE_SA_INIT		34	/* Initial Exchange */
@@ -503,13 +492,5 @@ struct ikev2_cfg {
 #define IKEV2_CFG_INTERNAL_IP6_SERVER		23457	/* MS-IKEE */
 
 extern struct iked_constmap ikev2_cfg_map[];
-
-/*
- * Internal structures
- */
-
-struct ikev2_message {
-	struct ike_header	 im_header;
-};
 
 #endif /* _IKEV2_H */
