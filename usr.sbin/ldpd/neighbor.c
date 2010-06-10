@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.16 2010/05/28 12:27:17 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.17 2010/06/10 10:04:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -171,6 +171,8 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr_send_labelmappings(nbr);
 		break;
 	case NBR_ACT_CLOSE_SESSION:
+		ldpe_imsg_compose_lde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0,
+		    NULL, 0);
 		session_close(nbr);
 		nbr_start_idtimer(nbr);
 		break;
@@ -267,8 +269,6 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface)
 void
 nbr_del(struct nbr *nbr)
 {
-	ldpe_imsg_compose_lde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0, NULL, 0);
-
 	session_close(nbr);
 
 	if (evtimer_pending(&nbr->inactivity_timer, NULL))
