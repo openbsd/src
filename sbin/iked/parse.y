@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2010/06/10 14:17:48 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -1259,6 +1259,9 @@ parse_config(const char *filename, struct iked *x_env)
 		return (-1);
 
 	decouple = passive = 0;
+
+	if (env->sc_opts & IKED_OPT_PASSIVE)
+		passive = 1;
 
 	yyparse();
 	errors = file->errors;

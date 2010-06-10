@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.4 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.5 2010/06/10 14:17:48 reyk Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #define IKED_OPT_VERBOSE	0x00000001
 #define IKED_OPT_NOACTION	0x00000002
 #define IKED_OPT_NONATT		0x00000004
+#define IKED_OPT_PASSIVE	0x00000008
 
 #define IKED_IKE_PORT		500
 #define IKED_NATT_PORT		4500

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.3 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.4 2010/06/10 14:17:48 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 
 	log_init(1);
 
-	while ((c = getopt(argc, argv, "dD:nf:vT")) != -1) {
+	while ((c = getopt(argc, argv, "dD:nf:vST")) != -1) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -103,6 +103,9 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose++;
 			opts |= IKED_OPT_VERBOSE;
+			break;
+		case 'S':
+			opts |= IKED_OPT_PASSIVE;
 			break;
 		case 'T':
 			opts |= IKED_OPT_NONATT;
