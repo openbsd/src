@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.4 2010/06/10 14:08:37 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.5 2010/06/10 14:24:03 reyk Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -109,12 +109,12 @@ ikev2 esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
 .Bl -tag -width xxxx
-.It Ic set Ar active
+.It Ic set active
 Set
 .Xr iked 8
 to active mode.
 This is the default.
-.It Ic set Ar passive
+.It Ic set passive
 Set
 .Xr iked 8
 to passive mode.
@@ -128,10 +128,10 @@ and
 to provide redundancy.
 iked will run in passive mode until sasyncd has determined that the host
 is the master and can switch to active mode.
-.It Ic set Ar couple
+.It Ic set couple
 Load the negotiated security associations (SAs) and flows into the kernel.
 This is the default.
-.It Ic set Ar decouple
+.It Ic set decouple
 Don't load the negotiated SAs and flows from the kernel.
 This mode is only useful for testing and debugging.
 .It Ic user Ar name Ar password
