@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2010/06/10 17:54:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -114,6 +114,12 @@ int	kbd_reset;
 int	led_blink;
 
 extern u_int32_t getramsize(void);
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int   safepri = 0;
 
 void
 cpu_startup(void)

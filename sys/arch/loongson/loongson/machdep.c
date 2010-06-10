@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2010/05/08 21:59:56 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.20 2010/06/10 17:54:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -96,6 +96,12 @@ int	bufcachepercent = BUFCACHEPERCENT;
 
 vm_map_t exec_map;
 vm_map_t phys_map;
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int   safepri = 0;
 
 caddr_t	msgbufbase;
 vaddr_t	uncached_base;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.93 2009/12/27 04:59:43 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.94 2010/06/10 17:54:12 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ sleep_queue_init(void)
  * that is safe for use on the interrupt stack; it can be made
  * higher to block network software interrupts after panics.
  */
-int safepri;
+extern int safepri;
 
 /*
  * General sleep call.  Suspends the current process until a wakeup is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.110 2010/06/05 05:55:56 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.111 2010/06/10 17:54:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -180,6 +180,12 @@ paddr_t lo32_paddr;
 paddr_t tramp_pdirpa;
 
 int kbd_reset;
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int	safepri = 0;
 
 #ifdef LKM
 vaddr_t lkm_start, lkm_end;

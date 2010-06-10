@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.472 2010/06/04 15:03:34 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.473 2010/06/10 17:54:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -234,6 +234,12 @@ void (*update_cpuspeed)(void) = NULL;
 void	via_update_sensor(void *args);
 #endif
 int kbd_reset;
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int	safepri = 0;
 
 #if !defined(SMALL_KERNEL)
 int bus_clock;
@@ -2190,7 +2196,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	frame.sf_fpstate = NULL;
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 		sp -= sizeof(union savefpu);
-		sp &= ~0xf;	/* foe XMM regs */
+		sp &= ~0xf;	/* for XMM regs */
 		frame.sf_fpstate = (void *)sp;
 	}
 

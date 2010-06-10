@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.122 2010/06/09 15:44:15 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.123 2010/06/10 17:54:13 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -145,6 +145,12 @@ int	bufcachepercent = BUFCACHEPERCENT;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int   safepri = 0;
 
 #ifdef APERTURE
 #ifdef INSECURE

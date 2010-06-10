@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2009/10/01 20:19:19 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 2010/06/10 17:54:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -89,6 +89,12 @@ struct bat battable[16];
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int   safepri = 0;
 
 int ppc_malloc_ok = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.116 2009/12/10 16:45:59 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.117 2010/06/10 17:54:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -467,6 +467,12 @@ install_extint(void (*handler)(void))
 	syncicache((void *)EXC_EXI, (int)&extsize);
 	ppc_mtmsr(omsr);
 }
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int   safepri = 0;
 
 /*
  * Machine dependent startup code.
