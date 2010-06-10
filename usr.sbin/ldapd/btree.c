@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.4 2010/06/03 17:32:25 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.5 2010/06/10 19:36:39 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -653,16 +653,16 @@ btree_txn_abort(struct btree_txn *txn)
 	bt = txn->bt;
 	DPRINTF("abort transaction on btree %p, root page %u", bt, txn->root);
 
-	/* Discard all dirty pages.
-	 */
-	while (!SIMPLEQ_EMPTY(txn->dirty_queue)) {
-		mp = SIMPLEQ_FIRST(txn->dirty_queue);
-		assert(mp->ref == 0);		/* cursors should be closed */
-		mpage_del(bt, mp);
-		SIMPLEQ_REMOVE_HEAD(txn->dirty_queue, next);
-	}
-
 	if (!F_ISSET(txn->flags, BT_TXN_RDONLY)) {
+		/* Discard all dirty pages.
+		 */
+		while (!SIMPLEQ_EMPTY(txn->dirty_queue)) {
+			mp = SIMPLEQ_FIRST(txn->dirty_queue);
+			assert(mp->ref == 0);	/* cursors should be closed */
+			mpage_del(bt, mp);
+			SIMPLEQ_REMOVE_HEAD(txn->dirty_queue, next);
+		}
+
 		DPRINTF("releasing write lock on txn %p", txn);
 		txn->bt->txn = NULL;
 		if (flock(txn->bt->fd, LOCK_UN) != 0) {
