@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.3 2010/06/07 14:15:27 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.4 2010/06/10 16:14:04 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -73,8 +73,10 @@ int		 ca_certificate(struct ca *, char *, int);
 int		 ca_cert_install(struct ca *, char *);
 int		 ca_newpass(char *);
 int		 ca_export(struct ca *, char *);
+int		 ca_revoke(struct ca *, char *);
 int		 ca_install(struct ca *);
 int		 ca_show_certs(struct ca *);
+char *		 ca_readpass(char *, size_t *);
 int		 fcopy(char *, char *, mode_t);
 int		 rm_dir(char *);
 
@@ -290,8 +292,16 @@ ca_install(struct ca *ca)
 
 	snprintf(dst, sizeof(dst), "%s/ca/ca.crt", KEYBASE);
 	if (fcopy(src, dst, 0644) == 0)
-		printf("certificate for CA '%s' installed into %s\n", ca->caname,
-		    dst);
+		printf("certificate for CA '%s' installed into %s\n",
+		    ca->caname, dst);
+
+	snprintf(src, sizeof(src), "%s/ca.crl", ca->sslpath);
+	if (stat(src, &st) == 0) {
+		snprintf(dst, sizeof(dst), "%s/crls/ca.crl", KEYBASE);
+		if (fcopy(src, dst, 0644) == 0)
+			printf("CRL for CA '%s' installed to %s\n",
+			    ca->caname, dst);
+	}
 
 	return (0);
 }
@@ -400,7 +410,8 @@ ca_export(struct ca *ca, char *keyname)
 	char		 dst[PATH_MAX];
 	char		*p;
 	char		 tpl[] = "/tmp/ikectl.XXXXXXXXXX";
-	const char	*exdirs[] = { "/ca", "/certs", "/private", "/export" };
+	const char	*exdirs[] = { "/ca", "/certs", "/crls", "/private",
+	    		              "/export" };
 	u_int		 i;
 
 	/* colons are not valid characters in windows filenames... */
@@ -464,6 +475,12 @@ ca_export(struct ca *ca, char *keyname)
 	snprintf(dst, sizeof(dst), "%s/certs/%s.crt", p, keyname);
 	fcopy(src, dst, 0644);
 
+	snprintf(src, sizeof(src), "%s/ca.crl", ca->sslpath);
+	if (stat(src, &st) == 0) {
+		snprintf(dst, sizeof(dst), "%s/crls/ca.crl", p);
+		fcopy(src, dst, 0644);
+	}
+
 	snprintf(cmd, sizeof(cmd), "%s rsa -out %s/local.pub"
 	    " -in %s/private/%s.key -pubout", PATH_OPENSSL, p, ca->sslpath,
 	    keyname);
@@ -496,6 +513,94 @@ ca_export(struct ca *ca, char *keyname)
 	}
 
 	rm_dir(p);
+
+	return (0);
+}
+
+char *
+ca_readpass(char *path, size_t *len)
+{
+	FILE		*f;
+	char		*p, *r;
+
+	if ((f = fopen(path, "r")) == NULL) {
+		warn("fopen %s", path);
+		return (NULL);
+	}
+
+	if ((p = fgetln(f, len)) != NULL) {
+		if ((r = malloc(*len + 1)) == NULL)
+			err(1, "malloc");
+		memcpy(r, p, *len);
+		if (r[*len - 1] == '\n')
+			r[*len - 1] = '\0';
+		else
+			r[*len] = '\0';
+	} else
+		r = NULL;
+
+	fclose(f);
+
+	return (r);
+}
+
+int
+ca_revoke(struct ca *ca, char *keyname)
+{
+	struct stat	 st;
+	char		 cmd[PATH_MAX * 2];
+	char		 path[PATH_MAX];
+	int		 fd;
+	char		*pass;
+	size_t		 len;
+
+	snprintf(path, sizeof(path), "%s/%s.crt",
+	    ca->sslpath, keyname);
+	if (stat(path, &st) != 0) {
+		warn("Problem with certificate for '%s'", keyname);
+		return (1);
+	}
+
+	snprintf(path, sizeof(path), "%s/ikeca.passwd", ca->sslpath);
+	pass = ca_readpass(path, &len);
+	if (pass == NULL)
+		err(1, "could not open passphrase file");
+
+	/* create index if it doesn't already exist */
+	snprintf(path, sizeof(path), "%s/index.txt", ca->sslpath);
+	if (stat(path, &st) != 0) {
+		if  (errno == ENOENT) {
+			if ((fd = open(path, O_WRONLY | O_CREAT, 0644)) == -1)
+				err(1, "could not create file %s", path);
+			close(fd);
+		} else
+			err(1, "could not access %s", path);
+	}
+
+	snprintf(cmd, sizeof(cmd), "env CADB='%s/index.txt' "
+	    " %s ca -config %s -keyfile %s/private/ca.key"
+	    " -key %s"
+	    " -cert %s/ca.crt"
+	    " -md sha1"
+	    " -revoke %s/%s.crt",
+	    ca->sslpath, PATH_OPENSSL,  ca->sslcnf, ca->sslpath, pass,
+	    ca->sslpath, ca->sslpath, keyname);
+	system(cmd);
+
+	snprintf(cmd, sizeof(cmd), "env CADB='%s/index.txt' "
+	    " %s ca -config %s -keyfile %s/private/ca.key"
+	    " -key %s"
+	    " -gencrl"
+	    " -cert %s/ca.crt"
+	    " -md sha1"
+	    " -crldays 365"
+	    " -out %s/ca.crl",
+	    ca->sslpath, PATH_OPENSSL,  ca->sslcnf, ca->sslpath, pass,
+	    ca->sslpath, ca->sslpath);
+	system(cmd);
+
+	bzero(pass, len);
+	free(pass);
 
 	return (0);
 }

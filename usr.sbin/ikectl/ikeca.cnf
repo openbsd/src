@@ -1,4 +1,4 @@
-# $OpenBSD: ikeca.cnf,v 1.1 2010/06/03 16:49:00 reyk Exp $
+# $OpenBSD: ikeca.cnf,v 1.2 2010/06/10 16:14:04 jsg Exp $
 # $vantronix: ikeca.cnf,v 1.3 2010/05/31 12:26:26 reyk Exp $
 
 RANDFILE		= /dev/arandom
@@ -17,6 +17,7 @@ CERTUSAGE		= digitalSignature,keyCertSign,cRLSign
 EXTCERTUSAGE		= serverAuth,clientAuth
 CERTIP			= 0.0.0.0
 CERTFQDN		= nohost.nodomain
+CADB			= index.txt
 
 [ req ]
 default_bits		= 2048
@@ -79,3 +80,10 @@ extendedKeyUsage=$ENV::EXTCERTUSAGE
 [x509v3_FQDN]
 subjectAltName=DNS:$ENV::CERTFQDN
 extendedKeyUsage=$ENV::EXTCERTUSAGE
+
+[ca]
+default_ca			= CA_default
+
+[CA_default]
+database=$ENV::CADB
+

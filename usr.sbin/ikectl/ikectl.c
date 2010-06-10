@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.2 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.3 2010/06/10 16:14:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -54,6 +54,7 @@ struct ca	*ca_setup(char *, int);
 int		 ca_create(struct ca *);
 int		 ca_certificate(struct ca *, char *, int);
 int		 ca_export(struct ca *, char *);
+int		 ca_revoke(struct ca *, char *);
 int		 ca_delete(struct ca *);
 int		 ca_delkey(struct ca *, char *);
 int		 ca_install(struct ca *);
@@ -116,6 +117,9 @@ ca_opt(struct parse_result *res)
 	case CA_CERT_EXPORT:
 		ca_export(ca, res->host);
 		break;
+	case CA_CERT_REVOKE:
+		ca_revoke(ca, res->host);
+		break;
 	case SHOW_CA_CERTIFICATES:
 		ca_show_certs(ca);
 		break;
@@ -167,6 +171,7 @@ main(int argc, char *argv[])
 	case CA_CERT_DELETE:
 	case CA_CERT_INSTALL:
 	case CA_CERT_EXPORT:
+	case CA_CERT_REVOKE:
 	case SHOW_CA:
 	case SHOW_CA_CERTIFICATES:
 		ca_opt(res);

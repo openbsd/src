@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.3 2010/06/10 16:14:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -124,6 +124,7 @@ static const struct token t_ca_cert_modifiers[] = {
 	{ KEYWORD,	"delete",	CA_CERT_DELETE,		NULL },
 	{ KEYWORD,	"install",	CA_CERT_INSTALL,	NULL },
 	{ KEYWORD,	"export",	CA_CERT_EXPORT,		NULL },
+	{ KEYWORD,	"revoke",	CA_CERT_REVOKE,		NULL },
 	{ ENDTOKEN,	"",		NONE,			NULL }
 };
 

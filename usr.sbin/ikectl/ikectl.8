@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.2 2010/06/10 14:08:37 reyk Exp $
+.\" $OpenBSD: ikectl.8,v 1.3 2010/06/10 16:14:04 jsg Exp $
 .\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
@@ -106,7 +106,7 @@ Create a new certificate authority with the specified
 Delete the certificate authority with the specified
 .Ar name .
 .It Cm ca Ar name Cm install
-Install the certificate for CA
+Install the certificate and Certificate Revocation List (CRL) for CA
 .Ar name
 as the currently active CA.
 .It Cm ca Ar name Cm certificate Ar host Cm create
@@ -127,6 +127,10 @@ into the current directory for transport to other systems.
 Install the private and public key for
 .Ar host
 into the active configuration.
+.It Cm ca Ar name Cm certificate Ar host Cm revoke
+Revoke the certificate specified by
+.Ar host
+and generate a new Certificate Revocation List (CRL).
 .It Cm show Cm ca Ar name Cm certificates
 Display a listing of certificates associated with CA
 .Ar name .
