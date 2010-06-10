@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2010/06/10 09:14:38 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -303,6 +303,9 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 	if (b->sa_family != AF_UNSPEC && (a->sa_family < b->sa_family))
 		return (-1);
 
+	if (prefixlen == -1)
+		memset(&mv, 0xff, sizeof(mv));
+
 	switch (a->sa_family) {
 	case AF_INET:
 		a4 = (struct sockaddr_in *)a;
@@ -310,11 +313,12 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 
 		av[0] = a4->sin_addr.s_addr;
 		bv[0] = b4->sin_addr.s_addr;
-		mv[0] = prefixlen2mask(prefixlen);
+		if (prefixlen != -1)
+			mv[0] = prefixlen2mask(prefixlen);
 
 		if ((av[0] & mv[0]) > (bv[0] & mv[0]))
 			return (1);
-		if ((bv[0] & mv[0]) < (bv[0] & mv[0]))
+		if ((av[0] & mv[0]) < (bv[0] & mv[0]))
 			return (-1);
 		break;
 	case AF_INET6:
@@ -323,7 +327,8 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 
 		memcpy(&av, &a6->sin6_addr.s6_addr, 16);
 		memcpy(&bv, &b6->sin6_addr.s6_addr, 16);
-		prefixlen2mask6(prefixlen, mv);
+		if (prefixlen != -1)
+			prefixlen2mask6(prefixlen, mv);
 
 		if ((av[3] & mv[3]) > (bv[3] & mv[3]))
 			return (1);
