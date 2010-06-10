@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.19 2010/05/15 21:09:53 schwarze Exp $ */
+/*	$Id: term.h,v 1.20 2010/06/10 22:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,8 +19,15 @@
 
 __BEGIN_DECLS
 
+struct	termp;
+
 enum	termenc {
 	TERMENC_ASCII
+};
+
+enum	termtype {
+	TERMTYPE_CHAR,
+	TERMTYPE_PS
 };
 
 enum	termfont {
@@ -31,7 +38,22 @@ enum	termfont {
 
 #define	TERM_MAXMARGIN	  100000 /* FIXME */
 
+typedef void	(*term_margin)(struct termp *, const void *);
+
+struct	termp_ps {
+	int		  psstate;	/* state of ps output */
+#define	PS_INLINE	 (1 << 0)	/* we're in a word */
+#define	PS_MARGINS	 (1 << 1)	/* we're in the margins */
+	size_t		  pscol;	/* visible column */
+	size_t		  psrow;	/* visible row */
+	char		 *psmarg;	/* margin buf */
+	size_t		  psmargsz;	/* margin buf size */
+	size_t		  psmargcur;	/* current pos in margin buf */
+	size_t	 	  pspage;	/* current page */
+};
+
 struct	termp {
+	enum termtype	  type;
 	size_t		  defrmargin;	/* Right margin of the device.. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  maxrmargin;	/* Max right margin. */
@@ -60,12 +82,28 @@ struct	termp {
 	enum termfont	  fontl;	/* Last font set. */
 	enum termfont	  fontq[10];	/* Symmetric fonts. */
 	int		  fonti;	/* Index of font stack. */
+	term_margin	  headf;	/* invoked to print head */
+	term_margin	  footf;	/* invoked to print foot */
+	void		(*letter)(struct termp *, char);
+	void		(*begin)(struct termp *);
+	void		(*end)(struct termp *);
+	void		(*endline)(struct termp *);
+	void		(*advance)(struct termp *, size_t);
+	const void	 *argf;		/* arg for headf/footf */
+	union {
+		struct termp_ps ps;
+	} engine;
 };
 
+struct termp	 *term_alloc(enum termenc);
+void		  term_free(struct termp *);
 void		  term_newln(struct termp *);
 void		  term_vspace(struct termp *);
 void		  term_word(struct termp *, const char *);
 void		  term_flushln(struct termp *);
+void		  term_begin(struct termp *, term_margin, 
+			term_margin, const void *);
+void		  term_end(struct termp *);
 
 size_t		  term_hspan(const struct roffsu *);
 size_t		  term_vspan(const struct roffsu *);

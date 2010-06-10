@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.36 2010/06/08 00:11:47 schwarze Exp $ */
+/*	$Id: term.c,v 1.37 2010/06/10 22:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "mandoc.h"
 #include "chars.h"
@@ -32,8 +31,6 @@
 #include "mdoc.h"
 #include "main.h"
 
-static	struct termp	 *term_alloc(char *, enum termenc);
-static	void		  term_free(struct termp *);
 static	void		  spec(struct termp *, const char *, size_t);
 static	void		  res(struct termp *, const char *, size_t);
 static	void		  buffera(struct termp *, const char *, size_t);
@@ -42,23 +39,7 @@ static	void		  adjbuf(struct termp *p, size_t);
 static	void		  encode(struct termp *, const char *, size_t);
 
 
-void *
-ascii_alloc(char *outopts)
-{
-
-	return(term_alloc(outopts, TERMENC_ASCII));
-}
-
-
 void
-terminal_free(void *arg)
-{
-
-	term_free((struct termp *)arg);
-}
-
-
-static void
 term_free(struct termp *p)
 {
 
@@ -71,16 +52,30 @@ term_free(struct termp *p)
 }
 
 
-static struct termp *
-term_alloc(char *outopts, enum termenc enc)
+void
+term_begin(struct termp *p, term_margin head, 
+		term_margin foot, const void *arg)
+{
+
+	p->headf = head;
+	p->footf = foot;
+	p->argf = arg;
+	(*p->begin)(p);
+}
+
+
+void
+term_end(struct termp *p)
+{
+
+	(*p->end)(p);
+}
+
+
+struct termp *
+term_alloc(enum termenc enc)
 {
 	struct termp	*p;
-	const char	*toks[2];
-	char		*v;
-	size_t		 width;
-
-	toks[0] = "width";
-	toks[1] = NULL;
 
 	p = calloc(1, sizeof(struct termp));
 	if (NULL == p) {
@@ -90,21 +85,7 @@ term_alloc(char *outopts, enum termenc enc)
 
 	p->tabwidth = 5;
 	p->enc = enc;
-	width = 80;
-
-	while (outopts && *outopts)
-		switch (getsubopt(&outopts, UNCONST(toks), &v)) {
-		case (0):
-			width = (size_t)atoi(v);
-			break;
-		default:
-			break;
-		}
-
-	/* Enforce some lower boundary. */
-	if (width < 60)
-		width = 60;
-	p->defrmargin = width - 2;
+	p->defrmargin = 78;
 	return(p);
 }
 
@@ -224,11 +205,10 @@ term_flushln(struct termp *p)
 		 */
 		if (vend > bp && 0 == jhy && vis > 0) {
 			vend -= vis;
-			putchar('\n');
+			(*p->endline)(p);
 			if (TERMP_NOBREAK & p->flags) {
 				p->viscol = p->rmargin;
-				for (j = 0; j < (int)p->rmargin; j++)
-					putchar(' ');
+				(*p->advance)(p, p->rmargin);
 				vend += p->rmargin - p->offset;
 			} else {
 				p->viscol = 0;
@@ -272,16 +252,15 @@ term_flushln(struct termp *p)
 			 * so write preceding white space now.
 			 */
 			if (vbl) {
-				for (j = 0; j < (int)vbl; j++)
-					putchar(' ');
+				(*p->advance)(p, vbl);
 				p->viscol += vbl;
 				vbl = 0;
 			}
 
 			if (ASCII_HYPH == p->buf[i])
-				putchar('-');
+				(*p->letter)(p, '-');
 			else
-				putchar(p->buf[i]);
+				(*p->letter)(p, p->buf[i]);
 
 			p->viscol += 1;
 		}
@@ -294,7 +273,7 @@ term_flushln(struct termp *p)
 
 	if ( ! (TERMP_NOBREAK & p->flags)) {
 		p->viscol = 0;
-		putchar('\n');
+		(*p->endline)(p);
 		return;
 	}
 
@@ -327,13 +306,12 @@ term_flushln(struct termp *p)
 	if (maxvis > vis + /* LINTED */
 			((TERMP_TWOSPACE & p->flags) ? 1 : 0)) {
 		p->viscol += maxvis - vis;
-		for ( ; vis < maxvis; vis++)
-			putchar(' ');
+		(*p->advance)(p, maxvis - vis);
+		vis += (maxvis - vis);
 	} else {	/* ...or newline break. */
-		putchar('\n');
+		(*p->endline)(p);
 		p->viscol = p->rmargin;
-		for (i = 0; i < (int)p->rmargin; i++)
-			putchar(' ');
+		(*p->advance)(p, p->rmargin);
 	}
 }
 
@@ -369,7 +347,7 @@ term_vspace(struct termp *p)
 
 	term_newln(p);
 	p->viscol = 0;
-	putchar('\n');
+	(*p->endline)(p);
 }
 
 
@@ -621,7 +599,10 @@ encode(struct termp *p, const char *word, size_t sz)
 	 * character by character.
 	 */
 
-	if (TERMFONT_NONE == (f = term_fonttop(p))) {
+	if (TERMTYPE_PS == p->type) {
+		buffera(p, word, sz);
+		return;
+	} else if (TERMFONT_NONE == (f = term_fonttop(p))) {
 		buffera(p, word, sz);
 		return;
 	}

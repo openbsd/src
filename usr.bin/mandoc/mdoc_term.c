@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.86 2010/06/08 00:11:47 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.87 2010/06/10 22:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -61,9 +61,9 @@ static	void	  print_bvspace(struct termp *,
 			const struct mdoc_node *,
 			const struct mdoc_node *);
 static	void  	  print_mdoc_node(DECL_ARGS);
-static	void	  print_mdoc_head(DECL_ARGS);
 static	void	  print_mdoc_nodelist(DECL_ARGS);
-static	void	  print_foot(DECL_ARGS);
+static	void	  print_mdoc_head(struct termp *, const void *);
+static	void	  print_mdoc_foot(struct termp *, const void *);
 static	void	  synopsis_pre(struct termp *, 
 			const struct mdoc_node *);
 
@@ -285,10 +285,12 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 	n = mdoc_node(mdoc);
 	m = mdoc_meta(mdoc);
 
-	print_mdoc_head(p, NULL, m, n);
+	term_begin(p, print_mdoc_head, print_mdoc_foot, m);
+
 	if (n->child)
 		print_mdoc_nodelist(p, NULL, m, n->child);
-	print_foot(p, NULL, m, n);
+
+	term_end(p);
 }
 
 
@@ -342,11 +344,13 @@ print_mdoc_node(DECL_ARGS)
 }
 
 
-/* ARGSUSED */
 static void
-print_foot(DECL_ARGS)
+print_mdoc_foot(struct termp *p, const void *arg)
 {
 	char		buf[DATESIZ], os[BUFSIZ];
+	const struct mdoc_meta *m;
+
+	m = (const struct mdoc_meta *)arg;
 
 	term_fontrepl(p, TERMFONT_NONE);
 
@@ -391,11 +395,13 @@ print_foot(DECL_ARGS)
 }
 
 
-/* ARGSUSED */
 static void
-print_mdoc_head(DECL_ARGS)
+print_mdoc_head(struct termp *p, const void *arg)
 {
 	char		buf[BUFSIZ], title[BUFSIZ];
+	const struct mdoc_meta *m;
+
+	m = (const struct mdoc_meta *)arg;
 
 	p->rmargin = p->maxrmargin;
 	p->offset = 0;

@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.40 2010/06/06 18:08:41 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.41 2010/06/10 22:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -69,12 +69,10 @@ struct	termact {
 static	int		  a2width(const struct man_node *);
 static	int		  a2height(const struct man_node *);
 
-static	void		  print_man_head(struct termp *, 
-				const struct man_meta *);
 static	void		  print_man_nodelist(DECL_ARGS);
 static	void		  print_man_node(DECL_ARGS);
-static	void		  print_man_foot(struct termp *, 
-				const struct man_meta *);
+static	void		  print_man_head(struct termp *, const void *);
+static	void		  print_man_foot(struct termp *, const void *);
 static	void		  print_bvspace(struct termp *, 
 				const struct man_node *);
 
@@ -171,7 +169,7 @@ terminal_man(void *arg, const struct man *man)
 	n = man_node(man);
 	m = man_meta(man);
 
-	print_man_head(p, m);
+	term_begin(p, print_man_head, print_man_foot, m);
 	p->flags |= TERMP_NOSPACE;
 
 	mt.fl = 0;
@@ -180,7 +178,8 @@ terminal_man(void *arg, const struct man *man)
 
 	if (n->child)
 		print_man_nodelist(p, &mt, n->child, m);
-	print_man_foot(p, m);
+
+	term_end(p);
 }
 
 
@@ -855,9 +854,12 @@ print_man_nodelist(DECL_ARGS)
 
 
 static void
-print_man_foot(struct termp *p, const struct man_meta *meta)
+print_man_foot(struct termp *p, const void *arg)
 {
 	char		buf[DATESIZ];
+	const struct man_meta *meta;
+
+	meta = (const struct man_meta *)arg;
 
 	term_fontrepl(p, TERMFONT_NONE);
 
@@ -891,10 +893,13 @@ print_man_foot(struct termp *p, const struct man_meta *meta)
 
 
 static void
-print_man_head(struct termp *p, const struct man_meta *m)
+print_man_head(struct termp *p, const void *arg)
 {
 	char		buf[BUFSIZ], title[BUFSIZ];
 	size_t		buflen, titlen;
+	const struct man_meta *m;
+
+	m = (const struct man_meta *)arg;
 
 	/*
 	 * Note that old groff would spit out some spaces before the

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.35 2010/06/08 00:11:47 schwarze Exp $ */
+/*	$Id: main.c,v 1.36 2010/06/10 22:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -54,7 +54,8 @@ enum	outt {
 	OUTT_TREE,
 	OUTT_HTML,
 	OUTT_XHTML,
-	OUTT_LINT
+	OUTT_LINT,
+	OUTT_PS
 };
 
 struct	curparse {
@@ -573,12 +574,26 @@ fdesc(struct curparse *curp)
 		switch (curp->outtype) {
 		case (OUTT_XHTML):
 			curp->outdata = xhtml_alloc(curp->outopts);
-			curp->outman = html_man;
-			curp->outmdoc = html_mdoc;
-			curp->outfree = html_free;
 			break;
 		case (OUTT_HTML):
 			curp->outdata = html_alloc(curp->outopts);
+			break;
+		case (OUTT_ASCII):
+			curp->outdata = ascii_alloc(curp->outopts);
+			curp->outfree = ascii_free;
+			break;
+		case (OUTT_PS):
+			curp->outdata = ps_alloc();
+			curp->outfree = ps_free;
+			break;
+		default:
+			break;
+		}
+
+		switch (curp->outtype) {
+		case (OUTT_HTML):
+			/* FALLTHROUGH */
+		case (OUTT_XHTML):
 			curp->outman = html_man;
 			curp->outmdoc = html_mdoc;
 			curp->outfree = html_free;
@@ -587,13 +602,13 @@ fdesc(struct curparse *curp)
 			curp->outman = tree_man;
 			curp->outmdoc = tree_mdoc;
 			break;
-		case (OUTT_LINT):
-			break;
-		default:
-			curp->outdata = ascii_alloc(curp->outopts);
+		case (OUTT_ASCII):
+			/* FALLTHROUGH */
+		case (OUTT_PS):
 			curp->outman = terminal_man;
 			curp->outmdoc = terminal_mdoc;
-			curp->outfree = terminal_free;
+			break;
+		default:
 			break;
 		}
 	}
@@ -718,6 +733,8 @@ toptions(struct curparse *curp, char *arg)
 		curp->outtype = OUTT_HTML;
 	else if (0 == strcmp(arg, "xhtml"))
 		curp->outtype = OUTT_XHTML;
+	else if (0 == strcmp(arg, "ps"))
+		curp->outtype = OUTT_PS;
 	else {
 		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);
