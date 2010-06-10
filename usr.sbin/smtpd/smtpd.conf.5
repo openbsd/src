@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.32 2010/04/27 14:39:24 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.33 2010/06/10 19:34:51 chl Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 27 2010 $
+.Dd $Mdocdate: June 10 2010 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -201,6 +201,14 @@ is desired, use the
 .Ic enable auth
 parameter.
 .El
+.It Ic expire Ar n {s|m|h|d}
+Specify how long a message can stay in the queue.
+The default value is 4 days.
+For example:
+.Bd -literal -offset indent
+expire 4d	# expire after 4 days
+expire 10h	# expire after 10 hours
+.Ed
 .It Ic hostname Ar name
 Specify the domain name of the server.
 By default the current host name is used,

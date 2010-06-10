@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.87 2010/06/02 19:16:53 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.88 2010/06/10 19:34:51 chl Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -741,7 +741,7 @@ queue_mem_init(struct smtpd *env)
 				batch->retry = queue_retry(rq, a.birth,
 				    batch->retry);
 
-			if (batch->retry > a.birth + SMTPD_EXPIRE)
+			if (batch->retry > a.birth + env->sc_qexpire)
 				batch->retry = NO_RETRY_EXPIRED;
 
 			SLIST_INSERT_HEAD(&bhash[a.content_id & 4095], batch,
@@ -1077,7 +1077,7 @@ queue_done(int rq, int i)
 		    action->id) < 0)
 			fatal("queue: action read error");
 		batch->retry = queue_retry(rq, a.birth, batch->retry);
-		if (batch->retry > a.birth + SMTPD_EXPIRE)
+		if (batch->retry > a.birth + runqs[rq].env->sc_qexpire)
 			batch->retry = NO_RETRY_EXPIRED;
 		queue_schedule(rq, batch);
 	}

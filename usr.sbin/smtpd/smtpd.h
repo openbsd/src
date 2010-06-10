@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.192 2010/06/09 20:00:55 zinovik Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.193 2010/06/10 19:34:51 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -604,6 +604,7 @@ struct smtpd {
 #define SMTPD_SMTP_PAUSED		       	 0x00000010
 	u_int32_t				 sc_flags;
 	u_int32_t				 sc_maxconn;
+	int					 sc_qexpire;
 	struct event				 sc_ev;
 	int					 *sc_pipes[PROC_COUNT]
 							[PROC_COUNT];
