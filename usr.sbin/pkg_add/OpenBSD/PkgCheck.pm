@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.12 2010/06/09 11:21:15 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.13 2010/06/10 07:21:07 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -475,14 +475,14 @@ sub sanity_check
 			} else {
 				$self->may_remove($state, $name);
 			}
-			next;
+			return;
 		}
 		my $contents = $info.OpenBSD::PackageInfo::CONTENTS;
 		unless (-f $contents) {
 			$state->errsay("#1: missing #2", 
 			    $state->safe($name), $state->safe($contents));
 			$self->may_remove($state, $name);
-			next;
+			return;
 		}
 		my $plist;
 		eval {
@@ -491,7 +491,7 @@ sub sanity_check
 		if ($@ || !defined $plist) {
 			$state->errsay("#1: bad packing-list", $state->safe($name));
 			$self->may_remove($state, $name);
-			next;
+			return;
 		}
 		if ($plist->pkgname ne $name) {
 			$state->errsay("#1: pkgname does not match", 
