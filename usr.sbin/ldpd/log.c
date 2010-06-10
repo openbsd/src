@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2010/06/09 14:01:03 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.7 2010/06/10 13:22:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -297,10 +297,10 @@ log_fec(struct map *map)
 	static char	buf[32];
 	char		pstr[32];
 
-	if (snprintf(buf, sizeof(buf), "FEC %s/%u",
+	if (snprintf(buf, sizeof(buf), "%s/%u",
 	    inet_ntop(AF_INET, &map->prefix, pstr, sizeof(pstr)),
 	    map->prefixlen) == -1)
-		return ("FEC ???");
+		return ("???");
 
 	return (buf);
 }
