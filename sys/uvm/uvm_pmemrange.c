@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.12 2010/06/10 08:42:23 thib Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.13 2010/06/10 08:48:36 thib Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -590,7 +590,7 @@ uvm_pmr_remove_1strange(struct pglist *pgl, paddr_t boundary,
 	 * element (rather than a close match to the smallest element).
 	 */
 	if (is_desperate) {
-		/* Lineair search for smallest segment. */
+		/* Linear search for smallest segment. */
 		pmr_iter = pmr;
 		for (iter = TAILQ_NEXT(end, pageq);
 		    iter != NULL && start != end;
