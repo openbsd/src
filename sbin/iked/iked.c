@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.4 2010/06/10 14:17:48 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.5 2010/06/10 14:18:26 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dnTv] [-D macro=value] "
+	fprintf(stderr, "usage: %s [-dnSTv] [-D macro=value] "
 	    "[-f file]\n", __progname);
 	exit(1);
 }
