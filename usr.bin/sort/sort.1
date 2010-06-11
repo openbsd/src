@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.36 2010/05/27 20:32:41 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.37 2010/06/11 06:51:41 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,12 +32,12 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 27 2010 $
+.Dd $Mdocdate: June 11 2010 $
 .Dt SORT 1
 .Os
 .Sh NAME
 .Nm sort
-.Nd sort or merge text files
+.Nd sort, merge, or sequence check text files
 .Sh SYNOPSIS
 .Nm sort
 .Op Fl bCcdfHimnrsuz
@@ -54,7 +54,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility sorts text files by lines.
+utility sorts text files by lines,
+operating in one of three modes: sort, merge, or check.
+In sort mode, the specified files are combined and sorted
+by line.
+Merge mode is the same as sort mode except that the input
+files are assumed to be pre-sorted.
+In check mode, a single input file is checked to ensure that
+it is correctly sorted.
+.Pp
 Comparisons are based on one or more sort keys extracted
 from each line of input, and are performed lexicographically.
 By default, if keys are not given,
@@ -70,11 +78,17 @@ In either case, produce no output.
 .It Fl c
 Like
 .Fl C ,
-but write a message to
+but additionally write a message to
 .Em stderr
 if the input file is not sorted.
 .It Fl m
 Merge only; the input files are assumed to be pre-sorted.
+This option is overridden by the
+.Fl C
+or
+.Fl c
+options,
+if they are also present.
 .It Fl o Ar output
 The argument given is the name of an
 .Ar output
@@ -101,13 +115,17 @@ options, also check that there are no lines with duplicate keys.
 .El
 .Pp
 The following options override the default ordering rules.
-When ordering options appear independent of key field
-specifications, the requested field ordering rules are
-applied globally to all sort keys.
+If ordering options appear before the first
+.Fl k
+option, they apply globally to all sort keys.
 When attached to a specific key (see
 .Fl k ) ,
 the ordering options override
 all global ordering options for that key.
+Note that the ordering options intended to apply globally should not
+appear after
+.Fl k
+or results may be unexpected.
 .Bl -tag -width indent
 .It Fl d
 Only blank space and alphanumeric characters
@@ -162,29 +180,11 @@ option can be attached independently to each
 argument of the
 .Fl k
 option (see below).
-Note that the
+Note that
 .Fl b
-option has no effect unless key fields are specified.
-.It Xo
-.Sm off
-.Fl k\ \& Ar field1 Op , Ar field2
-.Sm on
-.Xc
-Designates the starting position,
-.Ar field1 ,
-and optional ending position,
-.Ar field2 ,
-of a key field.
-The
-.Fl k
-option may be specified multiple times,
-in which case subsequent keys are compared after earlier keys compare equal.
-The
-.Fl k
-option replaces the obsolescent options
-.Cm \(pl Ns Ar pos1
-and
-.Fl Ns Ar pos2 .
+should not appear after
+.Fl k ,
+and that it has no effect unless key fields are specified.
 .It Fl R Ar char
 .Ar char
 is used as the record separator character.
@@ -213,6 +213,30 @@ delimit an empty field; further, the initial blank space
 considered part of a field when determining key offsets.
 .It Fl z
 Uses the nul character as the record separator.
+.El
+.Pp
+Sort keys are specified with:
+.Bl -tag -width indent
+.It Xo
+.Sm off
+.Fl k\ \& Ar field1 Op , Ar field2
+.Sm on
+.Xc
+Designates the starting position,
+.Ar field1 ,
+and optional ending position,
+.Ar field2 ,
+of a key field.
+The
+.Fl k
+option may be specified multiple times,
+in which case subsequent keys are compared after earlier keys compare equal.
+The
+.Fl k
+option replaces the obsolescent options
+.Cm \(pl Ns Ar pos1
+and
+.Fl Ns Ar pos2 .
 .El
 .Pp
 The following operands are available:
