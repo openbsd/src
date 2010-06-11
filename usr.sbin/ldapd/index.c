@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.3 2010/06/03 17:32:25 martinh Exp $ */
+/*	$OpenBSD: index.c,v 1.4 2010/06/11 08:45:06 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -111,7 +111,8 @@ index_attribute(struct namespace *ns, char *attr, struct btval *dn,
 		    (char *)dn->data);
 		key.data = t;
 		normalize_dn(key.data);
-		rc = btree_txn_put(ns->indx_db, ns->indx_txn, &key, &val, BT_NOOVERWRITE);
+		rc = btree_txn_put(NULL, ns->indx_txn, &key, &val,
+		    BT_NOOVERWRITE);
 		free(t);
 		if (rc == BT_FAIL)
 			return -1;
@@ -152,7 +153,7 @@ index_rdn(struct namespace *ns, struct btval *dn)
 	key.data = t;
 	log_debug("indexing rdn on %.*s", (int)key.size, (char *)key.data);
 	normalize_dn(key.data);
-	rc = btree_txn_put(ns->indx_db, ns->indx_txn, &key, &val, BT_NOOVERWRITE);
+	rc = btree_txn_put(NULL, ns->indx_txn, &key, &val, BT_NOOVERWRITE);
 	free(t);
 	if (rc == BT_FAIL)
 		return -1;
@@ -188,7 +189,7 @@ unindex_attribute(struct namespace *ns, char *attr, struct btval *dn,
 		    (char *)dn->data);
 		key.data = t;
 		normalize_dn(key.data);
-		rc = btree_txn_del(ns->indx_db, ns->indx_txn, &key, NULL);
+		rc = btree_txn_del(NULL, ns->indx_txn, &key, NULL);
 		free(t);
 		if (rc == BT_FAIL)
 			return -1;
@@ -240,7 +241,7 @@ unindex_rdn(struct namespace *ns, struct btval *dn)
 	key.data = t;
 	log_debug("unindexing rdn on %.*s", (int)key.size, (char *)key.data);
 	normalize_dn(key.data);
-	rc = btree_txn_del(ns->indx_db, ns->indx_txn, &key, NULL);
+	rc = btree_txn_del(NULL, ns->indx_txn, &key, NULL);
 	free(t);
 	if (rc == BT_FAIL)
 		return -1;

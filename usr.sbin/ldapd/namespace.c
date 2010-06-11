@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.3 2010/06/03 17:29:54 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.4 2010/06/11 08:45:06 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -389,7 +389,7 @@ namespace_put(struct namespace *ns, char *dn, struct ber_element *root,
 	if (namespace_begin(ns) != 0)
 		return BT_FAIL;
 
-	rc = btree_txn_put(ns->data_db, ns->data_txn, &key, &val,
+	rc = btree_txn_put(NULL, ns->data_txn, &key, &val,
 	    update ? 0 : BT_NOOVERWRITE);
 	if (rc != BT_SUCCESS) {
 		if (rc == BT_EXISTS)
@@ -452,7 +452,7 @@ namespace_del(struct namespace *ns, char *dn)
 	if (namespace_begin(ns) != 0)
 		return BT_FAIL;
 
-	rc = btree_txn_del(ns->data_db, ns->data_txn, &key, &data);
+	rc = btree_txn_del(NULL, ns->data_txn, &key, &data);
 	if (rc != BT_SUCCESS)
 		goto fail;
 
