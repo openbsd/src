@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2010/04/27 15:36:46 claudio Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.14 2010/06/11 10:45:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1276,4 +1276,27 @@ add6:
 	}
 
 	return (0);
+}
+
+struct kroute *
+kroute_first(void)
+{
+	struct kroute_node	*kn;
+
+	kn = RB_MIN(kroute_tree, &krt);
+	return (&kn->r);
+}
+
+struct kroute *
+kroute_getaddr(in_addr_t prefix, u_int8_t prefixlen, u_int8_t prio, int next)
+{
+	struct kroute_node	*kn;
+
+	kn = kroute_find(prefix, prefixlen, prio);
+	if (kn != NULL && next)
+		kn = RB_NEXT(kroute_tree, &krt, kn);
+	if (kn != NULL)
+		return (&kn->r);
+	else
+		return (NULL);
 }

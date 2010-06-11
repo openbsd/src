@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.28 2010/04/01 14:42:32 claudio Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.29 2010/06/11 10:45:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -347,6 +347,9 @@ struct kif	*kr_getif(u_short);
 struct kif	*kr_getnextif(u_short);
 struct kif_addr *kr_getaddr(struct sockaddr *);
 struct kif_addr *kr_getnextaddr(struct sockaddr *);
+
+struct kroute	*kroute_first(void);
+struct kroute	*kroute_getaddr(in_addr_t, u_int8_t, u_int8_t, int);
 
 /* snmpe.c */
 pid_t		 snmpe(struct snmpd *, int [2]);

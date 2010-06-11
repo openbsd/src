@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.19 2008/12/23 08:06:10 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.20 2010/06/11 10:45:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -304,6 +304,31 @@
 #define MIB_ipNetToMediaNetAddress	MIB_ipNetToMediaEntry, 3
 #define MIB_ipNetToMediaType		MIB_ipNetToMediaEntry, 4
 #define MIB_ipRoutingDiscards		MIB_ipMIB, 23
+
+/* IP-FORWARD-MIB */
+#define MIB_ipfMIB			MIB_ipMIB, 24
+#define MIB_ipfInetCidrRouteNumber	MIB_ipfMIB, 6
+#define MIB_ipfInetCidrRouteTable	MIB_ipfMIB, 7
+#define MIB_ipfInetCidrRouteEntry	MIB_ipfInetCidrRouteTable, 1
+#define OIDIDX_ipfInetCidrRoute		10
+#define MIB_ipfRouteEntDestType		MIB_ipfInetCidrRouteEntry, 1
+#define MIB_ipfRouteEntDest		MIB_ipfInetCidrRouteEntry, 2
+#define MIB_ipfRouteEntPfxLen		MIB_ipfInetCidrRouteEntry, 3
+#define MIB_ipfRouteEntPolicy		MIB_ipfInetCidrRouteEntry, 4
+#define MIB_ipfRouteEntNextHopType	MIB_ipfInetCidrRouteEntry, 5
+#define MIB_ipfRouteEntNextHop		MIB_ipfInetCidrRouteEntry, 6
+#define MIB_ipfRouteEntIfIndex		MIB_ipfInetCidrRouteEntry, 7
+#define MIB_ipfRouteEntType		MIB_ipfInetCidrRouteEntry, 8
+#define MIB_ipfRouteEntProto		MIB_ipfInetCidrRouteEntry, 9
+#define MIB_ipfRouteEntAge		MIB_ipfInetCidrRouteEntry, 10
+#define MIB_ipfRouteEntNextHopAS	MIB_ipfInetCidrRouteEntry, 11
+#define MIB_ipfRouteEntRouteMetric1	MIB_ipfInetCidrRouteEntry, 12
+#define MIB_ipfRouteEntRouteMetric2	MIB_ipfInetCidrRouteEntry, 13
+#define MIB_ipfRouteEntRouteMetric3	MIB_ipfInetCidrRouteEntry, 14
+#define MIB_ipfRouteEntRouteMetric4	MIB_ipfInetCidrRouteEntry, 15
+#define MIB_ipfRouteEntRouteMetric5	MIB_ipfInetCidrRouteEntry, 16
+#define MIB_ipfRouteEntStatus		MIB_ipfInetCidrRouteEntry, 17
+#define MIB_ipfInetCidrRouteDiscards	MIB_ipfMIB, 8
 
 /* BRIDGE-MIB */
 #define MIB_dot1dBridge			MIB_mib_2, 17
@@ -715,6 +740,21 @@
 	{ MIBDECL(ipNetToMediaType) },			\
 	{ MIBDECL(ipNetToMediaType) },			\
 							\
+	{ MIBDECL(ipfMIB) },				\
+	{ MIBDECL(ipfInetCidrRouteNumber) },		\
+	{ MIBDECL(ipfInetCidrRouteTable) },		\
+	{ MIBDECL(ipfInetCidrRouteEntry) },		\
+	{ MIBDECL(ipfRouteEntIfIndex) },		\
+	{ MIBDECL(ipfRouteEntType) },			\
+	{ MIBDECL(ipfRouteEntProto) },			\
+	{ MIBDECL(ipfRouteEntAge) },			\
+	{ MIBDECL(ipfRouteEntNextHopAS) },		\
+	{ MIBDECL(ipfRouteEntRouteMetric1) },		\
+	{ MIBDECL(ipfRouteEntRouteMetric2) },		\
+	{ MIBDECL(ipfRouteEntRouteMetric3) },		\
+	{ MIBDECL(ipfRouteEntRouteMetric4) },		\
+	{ MIBDECL(ipfRouteEntRouteMetric5) },		\
+	{ MIBDECL(ipfRouteEntStatus) },			\
 	{ MIBEND }					\
 }
 

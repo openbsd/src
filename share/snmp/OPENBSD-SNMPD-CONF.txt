@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-SNMPD-CONF.txt,v 1.1 2008/12/23 18:32:10 reyk Exp $
+-- $OpenBSD: OPENBSD-SNMPD-CONF.txt,v 1.2 2010/06/11 10:45:37 jsg Exp $
 --
 -- Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
 --
@@ -49,6 +49,10 @@ IMPORTS
 	-- (IP), RFC 4293, April 2006
 	ipMIB
 	    FROM IP-MIB
+
+	-- IP Forwarding MIB, RFC 4292, April 2006
+	ipForward
+	    FROM IP-FORWARD-MIB
 
 	-- Host Resources MIB, RFC 2790, March 2000
 	hostResourcesMibModule

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.39 2010/04/27 15:37:13 jsg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.40 2010/06/11 10:45:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1775,6 +1775,249 @@ mib_ipaddr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 /*
+ * Defined in IP-FORWARD-MIB.txt (rfc4292)
+ */
+
+int mib_ipfnroutes(struct oid *, struct ber_oid *, struct ber_element **);
+struct ber_oid *
+mib_ipfroutetable(struct oid *oid, struct ber_oid *o, struct ber_oid *no);
+int mib_ipfroute(struct oid *, struct ber_oid *, struct ber_element **);
+
+static struct oid ipf_mib[] = {
+	{ MIB(ipfMIB),			OID_MIB },
+	{ MIB(ipfInetCidrRouteNumber),	OID_RD, mib_ipfnroutes },
+
+	{ MIB(ipfRouteEntIfIndex),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntType),		OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntProto),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntAge),		OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntNextHopAS),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntRouteMetric1),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntRouteMetric2),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntRouteMetric3),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntRouteMetric4),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntRouteMetric5),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIB(ipfRouteEntStatus),	OID_TRD, mib_ipfroute, NULL,
+	    mib_ipfroutetable },
+	{ MIBEND }
+};
+
+int
+mib_ipfnroutes(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	*elm = ber_add_integer(*elm, kr_routenumber());
+	ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_GAUGE32);
+	
+	return (0);
+}
+
+struct ber_oid *
+mib_ipfroutetable(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
+{
+	u_int32_t		 col, id;
+	struct oid		 a, b;
+	struct sockaddr_in	 addr;
+	struct kroute		*kr;
+	int			 af, atype, idx;
+	u_int8_t		 prefixlen;
+	u_int8_t		 prio;
+
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_len = sizeof(addr);
+
+	bcopy(&oid->o_id, no, sizeof(*no));
+	id = oid->o_oidlen - 1;
+
+	if (o->bo_n >= oid->o_oidlen) {
+		/*
+		 * Compare the requested and the matched OID to see
+		 * if we have to iterate to the next element.
+		 */
+		bzero(&a, sizeof(a));
+		bcopy(o, &a.o_id, sizeof(struct ber_oid));
+		bzero(&b, sizeof(b));
+		bcopy(&oid->o_id, &b.o_id, sizeof(struct ber_oid));
+		b.o_oidlen--;
+		b.o_flags |= OID_TABLE;
+		if (smi_oid_cmp(&a, &b) == 0) {
+			col = oid->o_oid[id];
+			o->bo_id[id] = col;
+			bcopy(o, no, sizeof(*no));
+		}
+	}
+
+	af = no->bo_id[OIDIDX_ipfInetCidrRoute + 1];
+	mps_decodeinaddr(no, &addr.sin_addr, OIDIDX_ipfInetCidrRoute + 3);
+	prefixlen = o->bo_id[OIDIDX_ipfInetCidrRoute + 7];
+	prio = o->bo_id[OIDIDX_ipfInetCidrRoute + 10];
+
+	if (af == 0)
+		kr = kroute_first();
+	else
+		kr = kroute_getaddr(addr.sin_addr.s_addr, prefixlen, prio, 1);
+
+	if (kr == NULL) {
+		addr.sin_addr.s_addr = 0;
+		prefixlen = 0;
+		prio = 0;
+		addr.sin_family = 0;
+	} else {
+		addr.sin_addr.s_addr = kr->prefix.s_addr;
+		prefixlen = kr->prefixlen;
+		prio = kr->priority;
+	}
+
+	switch(addr.sin_family) {
+	case AF_INET:
+		atype = 1;
+		break;
+	case AF_INET6:
+		atype = 2;
+		break;
+	default:
+		atype = 0;
+		break;
+	}
+	idx = OIDIDX_ipfInetCidrRoute + 1;
+	no->bo_id[idx++] = atype;
+	no->bo_id[idx++] = 0x04;
+	no->bo_n++;
+
+	mps_encodeinaddr(no, &addr.sin_addr, idx);
+	no->bo_id[no->bo_n++] = prefixlen;
+	no->bo_id[no->bo_n++] = 0x02;
+	no->bo_n += 2; /* policy */
+	no->bo_id[OIDIDX_ipfInetCidrRoute + 10]  = prio;
+
+	if (kr != NULL) {
+		no->bo_id[no->bo_n++] = atype;
+		no->bo_id[no->bo_n++] = 0x04;
+		mps_encodeinaddr(no, &kr->nexthop, no->bo_n);
+	} else
+		no->bo_n += 2;
+
+	smi_oidlen(o);
+
+	return (no);
+}
+
+int
+mib_ipfroute(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	struct kroute		*kr;
+	struct sockaddr_in	 addr, nhaddr;
+	int			 idx = o->bo_id[OIDIDX_ipfInetCidrRoute];
+	int			 af;
+	u_int8_t		 prefixlen, prio, type, proto;
+
+
+	bzero(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_len = sizeof(addr);
+
+	af = o->bo_id[OIDIDX_ipfInetCidrRoute + 1];
+	mps_decodeinaddr(o, &addr.sin_addr, OIDIDX_ipfInetCidrRoute + 3);
+	mps_decodeinaddr(o, &nhaddr.sin_addr, OIDIDX_ipfInetCidrRoute + 23);
+	prefixlen = o->bo_id[OIDIDX_ipfInetCidrRoute + 7];
+	prio = o->bo_id[OIDIDX_ipfInetCidrRoute + 10];
+	kr = kroute_getaddr(addr.sin_addr.s_addr, prefixlen, prio, 0);
+	if (kr == NULL || af == 0) {
+		return (1);
+	}
+
+	/* write OID */
+	ber = ber_add_oid(ber, o);
+
+	switch (idx) {
+	case 7: /* IfIndex */
+		ber = ber_add_integer(ber, kr->if_index);
+		break;
+	case 8: /* Type */
+		if (kr->flags & F_REJECT)
+			type = 2;
+		else if (kr->flags & F_BLACKHOLE)
+			type = 5;
+		else if (kr->flags & F_CONNECTED)
+			type = 3;
+		else
+			type = 4;
+		ber = ber_add_integer(ber, type);
+		break;
+	case 9: /* Proto */
+		switch (kr->priority) {
+		case RTP_CONNECTED:
+			proto = 2;
+			break;
+		case RTP_STATIC:
+			proto = 3;
+			break;
+		case RTP_OSPF:
+			proto = 13;
+			break;
+		case RTP_ISIS:
+			proto = 9;
+			break;
+		case RTP_RIP:
+			proto = 8;
+			break;
+		case RTP_BGP:
+			proto = 14;
+			break;
+		default:
+			if (kr->flags & F_DYNAMIC)
+				proto = 4;
+			else
+				proto = 1; /* not specified */
+			break;
+		}
+		ber = ber_add_integer(ber, proto);
+		break;
+	case 10: /* Age */
+		ber = ber_add_integer(ber, 0);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_GAUGE32);
+		break;
+	case 11: /* NextHopAS */
+		ber = ber_add_integer(ber, 0);	/* unknown */
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_GAUGE32);
+		break;
+	case 12: /* Metric1 */
+		ber = ber_add_integer(ber, -1);	/* XXX */
+		break;
+	case 13: /* Metric2 */
+		ber = ber_add_integer(ber, -1);	/* XXX */
+		break;
+	case 14: /* Metric3 */
+		ber = ber_add_integer(ber, -1);	/* XXX */
+		break;
+	case 15: /* Metric4 */
+		ber = ber_add_integer(ber, -1);	/* XXX */
+		break;
+	case 16: /* Metric5 */
+		ber = ber_add_integer(ber, -1);	/* XXX */
+		break;
+	case 17: /* Status */
+		ber = ber_add_integer(ber, 1);	/* XXX */
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
  * Defined in BRIDGE-MIB.txt (rfc1493)
  *
  * This MIB is required by some NMS to accept the device because
@@ -1857,6 +2100,9 @@ mib_init(void)
 
 	/* IP-MIB */
 	smi_mibtree(ip_mib);
+
+	/* IP-FORWARD-MIB */
+	smi_mibtree(ipf_mib);
 
 	/* BRIDGE-MIB */
 	smi_mibtree(bridge_mib);
