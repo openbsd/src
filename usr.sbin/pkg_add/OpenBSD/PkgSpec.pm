@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.28 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.29 2010/06/11 09:56:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -249,7 +249,11 @@ LOOP1:
 		for my $c (@{$o->{constraints}}) {
 			next LOOP1 unless $c->match($name);
 		}
-		push(@result, $s);
+		if (wantarray) {
+			push(@result, $s);
+		} else {
+			return 1;
+		}
 	}
 
 	return @result;
@@ -296,11 +300,20 @@ sub new
 sub match_ref
 {
 	my ($self, $r) = @_;
-	my @l = ();
-	for my $subpattern (@$self) {
-		push(@l, $subpattern->match_ref($r));
+	if (wantarray) {
+		my @l = ();
+		for my $subpattern (@$self) {
+			push(@l, $subpattern->match_ref($r));
+		}
+		return @l;
+	} else {
+		for my $subpattern (@$self) {
+			if ($subpattern->match_ref($r)) {
+				return 1;
+			}
+		}
+		return 0;
 	}
-	return @l;
 }
 
 sub match_locations

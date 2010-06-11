@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.31 2010/06/04 17:29:53 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.32 2010/06/11 09:56:44 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -47,11 +47,20 @@ sub make_conflict_list
 sub conflicts_with
 {
 	my ($self, @pkgnames) = @_;
-	my @l = ();
-	for my $cfl (@$self) {
-		push(@l, $cfl->filter(@pkgnames));
+	if (wantarray) {
+		my @l = ();
+		for my $cfl (@$self) {
+			push(@l, $cfl->filter(@pkgnames));
+		}
+		return @l;
+	} else {
+		for my $cfl (@$self) {
+			if ($cfl->filter(@pkgnames)) {
+				return 1;
+			}
+		}
+		return 0;
 	}
-	return @l;
 }
 
 sub register($$)
