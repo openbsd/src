@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.3 2010/06/03 17:32:25 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.4 2010/06/11 12:02:03 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -166,8 +166,10 @@ search_close(struct search *search)
 	}
 
 	btree_cursor_close(search->cursor);
+	btree_txn_abort(search->data_txn);
+	btree_txn_abort(search->indx_txn);
 
-	log_debug("finished search on msgid %d", search->req->msgid);
+	log_debug("finished search on msgid %lld", search->req->msgid);
 	TAILQ_REMOVE(&search->conn->searches, search, next);
 	request_free(search->req);
 	filter_free(search->plan);
@@ -276,7 +278,7 @@ conn_search(struct search *search)
 	unsigned int		 op = BT_NEXT;
 	time_t			 now;
 	struct conn		*conn;
-	struct btree		*db;
+	struct btree_txn	*txn;
 	struct btval		 key, ikey, val;
 
 	conn = search->conn;
@@ -285,12 +287,13 @@ conn_search(struct search *search)
 	bzero(&val, sizeof(val));
 
 	if (search->plan->indexed)
-		db = search->ns->indx_db;
+		txn = search->indx_txn;
 	else
-		db = search->ns->data_db;
+		txn = search->data_txn;
 
 	if (!search->init) {
-		if ((search->cursor = btree_cursor_open(db)) == NULL) {
+		search->cursor = btree_txn_cursor_open(NULL, txn);
+		if (search->cursor == NULL) {
 			log_warn("btree_cursor_open");
 			search_close(search);
 			return;
@@ -383,7 +386,7 @@ conn_search(struct search *search)
 				btval_reset(&key);
 				continue;
 			}
-			rc = btree_get(search->ns->data_db, &key, &val);
+			rc = btree_txn_get(NULL, search->data_txn, &key, &val);
 			if (rc == BT_FAIL) {
 				log_warnx("btree failure");
 				reason = LDAP_OTHER;
@@ -422,7 +425,7 @@ conn_search(struct search *search)
 		/* Check if we have passed the size limit. */
 		if (rc == BT_SUCCESS && search->szlim > 0 &&
 		    search->nmatched >= search->szlim) {
-			log_debug("search %i/%i has reached size limit (%u)",
+			log_debug("search %d/%lld has reached size limit (%u)",
 			    search->conn->fd, search->req->msgid,
 			    search->szlim);
 			reason = LDAP_SIZELIMIT_EXCEEDED;
@@ -434,7 +437,7 @@ conn_search(struct search *search)
 	now = time(0);
 	if (rc == 0 && search->tmlim > 0 &&
 	    search->started_at + search->tmlim <= now) {
-		log_debug("search %i/%i has reached time limit (%u)",
+		log_debug("search %d/%lld has reached time limit (%u)",
 		    search->conn->fd, search->req->msgid,
 		    search->tmlim);
 		reason = LDAP_TIMELIMIT_EXCEEDED;
@@ -779,6 +782,16 @@ ldap_search(struct request *req)
 		goto done;
 	}
 
+	search->data_txn = btree_txn_begin(search->ns->data_db, 1);
+	if (search->data_txn != NULL)
+		search->indx_txn = btree_txn_begin(search->ns->indx_db, 1);
+	if (search->indx_txn == NULL) {
+		btree_txn_abort(search->data_txn);
+		search->data_txn = NULL;
+		reason = LDAP_OPERATIONS_ERROR;
+		goto done;
+	}
+
 	if (search->scope == LDAP_SCOPE_BASE) {
 		struct btval		 key, val;
 
@@ -786,7 +799,7 @@ ldap_search(struct request *req)
 		bzero(&val, sizeof(val));
 		key.data = search->basedn;
 		key.size = strlen(key.data);
-		switch (btree_get(search->ns->data_db, &key, &val)) {
+		switch (btree_txn_get(NULL, search->data_txn, &key, &val)) {
 		case BT_SUCCESS:
 			check_search_entry(&key, &val, search);
 			btval_reset(&val);
@@ -794,7 +807,9 @@ ldap_search(struct request *req)
 		case BT_NOTFOUND:
 			reason = LDAP_SUCCESS;
 			goto done;
+		case BT_DEAD:
 		case BT_FAIL:
+		default:
 			reason = LDAP_OTHER;
 			goto done;
 		}

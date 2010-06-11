@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.2 2010/06/03 17:29:54 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.3 2010/06/11 12:02:03 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -162,6 +162,8 @@ struct search {
 	struct conn		*conn;
 	struct request		*req;
 	struct namespace	*ns;
+	struct btree_txn	*data_txn;
+	struct btree_txn	*indx_txn;
 	struct cursor		*cursor;
 	unsigned int		 nscanned, nmatched, ndups;
 	time_t			 started_at;
