@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.72 2010/06/01 15:27:16 thib Exp $	*/
+/*	$OpenBSD: ss.c,v 1.73 2010/06/11 12:02:44 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -676,7 +676,7 @@ ssdone(struct scsi_xfer *xs)
 {
 	struct ss_softc *ss = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
-	int s;
+	int error, s;
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -694,7 +694,13 @@ ssdone(struct scsi_xfer *xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-		if (scsi_interpret_sense(xs) != ERESTART)
+		error = scsi_interpret_sense(xs);
+		if (error == 0) {
+			bp->b_error = 0;
+			bp->b_resid = xs->resid;
+			break;
+		}
+		if (error != ERESTART)
 			xs->retries = 0;
 		goto retry;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.22 2010/06/01 15:27:16 thib Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.23 2010/06/11 12:02:44 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ mustek_read_done(struct scsi_xfer *xs)
 {
 	struct ss_softc *ss = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
-	int s;
+	int error, s;
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -494,7 +494,17 @@ mustek_read_done(struct scsi_xfer *xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-		if (scsi_interpret_sense(xs) != ERESTART)
+		error = scsi_interpret_sense(xs);
+		if (error == 0) {
+			ss->sio.scan_lines -= bp->b_bcount /
+			    ((ss->sio.scan_pixels_per_line *
+			    ss->sio.scan_bits_per_pixel) / 8);
+			ss->sio.scan_window_size -= bp->b_bcount;
+			bp->b_error = 0;
+			bp->b_resid = xs->resid;
+			break;
+		}
+		if (error != ERESTART)
 			xs->retries = 0;
 		goto retry;
 

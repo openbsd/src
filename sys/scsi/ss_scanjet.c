@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.39 2010/06/01 15:27:16 thib Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.40 2010/06/11 12:02:44 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ scanjet_read_done(struct scsi_xfer *xs)
 {
 	struct ss_softc *ss = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
-	int s;
+	int error, s;
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -332,7 +332,17 @@ scanjet_read_done(struct scsi_xfer *xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-		if (scsi_interpret_sense(xs) != ERESTART)
+		error = scsi_interpret_sense(xs);
+		if (error == 0) {
+			if (bp->b_bcount >= ss->sio.scan_window_size)
+				ss->sio.scan_window_size = 0;
+			else
+				ss->sio.scan_window_size -= bp->b_bcount;
+			bp->b_error = 0;
+			bp->b_resid = xs->resid;
+			break;
+		}
+		if (error != ERESTART)
 			xs->retries = 0;
 		goto retry;
 
