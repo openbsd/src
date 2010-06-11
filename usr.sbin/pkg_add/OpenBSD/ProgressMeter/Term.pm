@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.8 2010/06/09 08:13:19 espie Exp $
+# $OpenBSD: Term.pm,v 1.9 2010/06/11 23:51:16 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -65,6 +65,7 @@ sub init
 	$self->{lastdisplay} = '';
 	$self->{continued} = 0;
 	$self->{work} = 0;
+	$self->{header} = '';
 	return unless defined $ENV{TERM} || defined $ENV{TERMCAP};
 	my $termios = POSIX::Termios->new;
 	$termios->getattr(0);
@@ -212,6 +213,7 @@ sub working
 	return if $self->{work} < $slowdown;
 	$self->message(substr("/-\\|", ($self->{work}/$slowdown) % 4, 1));
 }
+
 sub clear
 {
 	my $self = shift;
