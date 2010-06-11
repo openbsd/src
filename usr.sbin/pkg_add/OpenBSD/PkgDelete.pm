@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.3 2010/06/09 08:13:19 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.4 2010/06/11 09:53:06 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -60,7 +60,7 @@ sub process_parameters
 		    $state->defines('verbosedeps');
 		my $show = sub {
 			my ($p, $d) = @_;
-			$state->say("Can't remove #1", 
+			$state->say("Can't remove #1". 
 			    " without also removing:\n#2",
 			    join(' ', @$p), join(' ', @$d));
 		};
