@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.h,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: btree.h,v 1.2 2010/06/11 05:29:22 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -56,6 +56,7 @@ enum cursor_op {				/* cursor operations */
 #define BT_SUCCESS	 0
 #define BT_NOTFOUND	 1
 #define BT_EXISTS	 2
+#define BT_DEAD		 3			/* file has been replaced */
 
 /* btree flags */
 #define BT_NOSYNC		 0x01		/* don't fsync after commit */

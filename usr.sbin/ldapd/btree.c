@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.5 2010/06/10 19:36:39 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.6 2010/06/11 05:29:22 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -93,6 +93,7 @@ struct page {				/* represents an on-disk page */
 struct bt_meta {				/* meta (footer) page content */
 	uint32_t	 magic;			/* really needed? */
 	uint32_t	 version;
+#define BT_TOMBSTONE	 0x01			/* file is replaced */
 	uint32_t	 flags;
 	uint32_t	 psize;			/* page size */
 	pgno_t		 root;			/* page number of root page */
@@ -132,6 +133,7 @@ static int		 mpage_cmp(struct mpage *a, struct mpage *b);
 static struct mpage	*mpage_lookup(struct btree *bt, pgno_t pgno);
 static void		 mpage_add(struct btree *bt, struct mpage *mp);
 static void		 mpage_del(struct btree *bt, struct mpage *mp);
+static void		 mpage_flush(struct btree *bt);
 static struct mpage	*mpage_copy(struct mpage *mp);
 static void		 mpage_prune(struct btree *bt);
 static void		 mpage_dirty(struct btree *bt, struct mpage *mp);
@@ -197,7 +199,7 @@ struct btree {
 	struct page_cache	*page_cache;
 	struct lru_queue	*lru_queue;
 	struct btree_txn	*txn;		/* current write transaction */
-	int			 ref;		/* increased by cursors */
+	int			 ref;		/* increased by cursors & txn */
 	struct btree_stat	 stat;
 	off_t			 size;		/* current file size */
 };
@@ -232,7 +234,8 @@ static int		 btree_search_page(struct btree *bt,
 static void		 btree_init_meta(struct btree *bt);
 static int		 btree_is_meta_page(struct page *p);
 static int		 btree_read_meta(struct btree *bt, pgno_t *p_next);
-static int		 btree_write_meta(struct btree *bt, pgno_t root);
+static int		 btree_write_meta(struct btree *bt, pgno_t root,
+			    unsigned int flags);
 
 static struct node	*btree_search_node(struct btree *bt, struct mpage *mp,
 			    struct btval *key, int *exactp, unsigned int *kip);
@@ -482,6 +485,17 @@ mpage_del(struct btree *bt, struct mpage *mp)
 	TAILQ_REMOVE(bt->lru_queue, mp, lru_next);
 }
 
+static void
+mpage_flush(struct btree *bt)
+{
+	struct mpage	*mp;
+
+	while ((mp = RB_MIN(page_cache, bt->page_cache)) != NULL) {
+		mpage_del(bt, mp);
+		free(mp);
+	}
+}
+
 static struct mpage *
 mpage_copy(struct mpage *mp)
 {
@@ -630,7 +644,8 @@ btree_txn_begin(struct btree *bt, int rdonly)
 	txn->bt = bt;
 	bt->ref++;
 
-	if ((rc = btree_read_meta(bt, &txn->next_pgno)) == BT_FAIL) {
+	if ((rc = btree_read_meta(bt, &txn->next_pgno)) == BT_FAIL ||
+	    rc == BT_DEAD) {
 		btree_txn_abort(txn);
 		return NULL;
 	}
@@ -768,7 +783,7 @@ btree_txn_commit(struct btree_txn *txn)
 	} while (!done);
 
 	if (btree_sync(bt) != 0 ||
-	    btree_write_meta(bt, txn->root) != BT_SUCCESS ||
+	    btree_write_meta(bt, txn->root, 0) != BT_SUCCESS ||
 	    btree_sync(bt) != 0) {
 		btree_txn_abort(txn);
 		return BT_FAIL;
@@ -782,7 +797,7 @@ done:
 }
 
 static int
-btree_write_meta(struct btree *bt, pgno_t root)
+btree_write_meta(struct btree *bt, pgno_t root, unsigned int flags)
 {
 	ssize_t		 rc;
 
@@ -797,6 +812,7 @@ btree_write_meta(struct btree *bt, pgno_t root)
 	bt->metapage->pgno = bt->txn->next_pgno++;
 
 	bt->meta->root = root;
+	bt->meta->flags = flags;
 	bt->meta->created_at = time(0);
 	bt->meta->revisions++;
 	SHA1((unsigned char *)bt->meta, METAHASHLEN, bt->meta->hash);
@@ -916,7 +932,13 @@ btree_read_meta(struct btree *bt, pgno_t *p_next)
 			break;		/* no meta page found */
 		if (rc == BT_SUCCESS && btree_is_meta_page(bt->metapage)) {
 			bt->meta = METADATA(bt->metapage);
-			return BT_SUCCESS;
+			DPRINTF("flags = 0x%x", bt->meta->flags);
+			if (F_ISSET(bt->meta->flags, BT_TOMBSTONE)) {
+				DPRINTF("file is dead");
+				errno = EAGAIN;
+				return BT_DEAD;
+			} else
+				return BT_SUCCESS;
 		}
 		--meta_pgno;	/* scan backwards to first valid meta page */
 	}
@@ -931,7 +953,7 @@ fail:
 struct btree *
 btree_open_fd(int fd, uint32_t flags)
 {
-	int		 fl;
+	int		 fl, rc;
 	struct btree	*bt;
 
 	fl = fcntl(fd, F_GETFL, 0);
@@ -956,7 +978,7 @@ btree_open_fd(int fd, uint32_t flags)
 	if ((bt->metapage = calloc(1, PAGESIZE)) == NULL)
 		goto fail;
 
-	if (btree_read_meta(bt, NULL) == BT_FAIL)
+	if ((rc = btree_read_meta(bt, NULL)) == BT_FAIL || rc == BT_DEAD)
 		goto fail;
 
 	if (bt->meta == NULL) {
@@ -1019,20 +1041,17 @@ btree_open(const char *path, uint32_t flags, mode_t mode)
 void
 btree_close(struct btree *bt)
 {
-	struct mpage	*mp;
+	if (bt == NULL)
+		return;
 
-	if (bt != NULL && --bt->ref == 0) {
+	if (--bt->ref == 0) {
 		DPRINTF("ref is zero, closing btree %p", bt);
 		close(bt->fd);
-
-		/* Free page_cache. */
-		while ((mp = RB_MIN(page_cache, bt->page_cache)) != NULL) {
-			mpage_del(bt, mp);
-			free(mp);
-		}
+		mpage_flush(bt);
 		free(bt->page_cache);
 		free(bt);
-	}
+	} else
+		DPRINTF("ref is now %d", bt->ref);
 }
 
 /* Search for key within a leaf page, using binary search.
@@ -2800,17 +2819,17 @@ btree_compact(struct btree *bt)
 	int			 rc, fd, old_fd;
 	char			*compact_path = NULL;
 	struct btree_txn	*txn;
-	pgno_t			 root;
+	pgno_t			 root, next_pgno;
 
 	assert(bt != NULL);
 
 	if (bt->path == NULL)
 		return BT_FAIL;
 
-	if ((rc = btree_read_meta(bt, NULL)) == BT_FAIL)
-		return BT_FAIL;
-	else if (rc == BT_NOTFOUND)
+	if ((rc = btree_read_meta(bt, NULL)) == BT_NOTFOUND)
 		return BT_SUCCESS;
+	else if (rc != BT_SUCCESS)
+		return rc;
 
 	asprintf(&compact_path, "%s.compact.XXXXXX", bt->path);
 	fd = mkstemp(compact_path);
@@ -2824,13 +2843,14 @@ btree_compact(struct btree *bt)
 	if ((txn = btree_txn_begin(bt, 0)) == NULL)
 		goto failed;
 
+	next_pgno = bt->txn->next_pgno;
 	bt->txn->next_pgno = 0;
 	root = btree_compact_tree(bt, bt->meta->root, fd);
 	if (root == P_INVALID)
 		goto failed;
 	bt->fd = fd;
 	bt->meta->revisions = 0;
-	if (btree_write_meta(bt, root) != BT_SUCCESS)
+	if (btree_write_meta(bt, root, 0) != BT_SUCCESS)
 		goto failed;
 
 	fsync(fd);
@@ -2839,11 +2859,18 @@ btree_compact(struct btree *bt)
 	if (rename(compact_path, bt->path) != 0)
 		goto failed;
 
-	/* XXX: write a "reopen me" meta page for other processes to see */
-	btree_txn_abort(txn);
-	close(old_fd);
+	/* Write a "tombstone" meta page so other processes can pick up
+	 * the change and re-open the file.
+	 */
+	bt->fd = old_fd;
+	bt->txn->next_pgno = next_pgno;
+	if (btree_write_meta(bt, P_INVALID, BT_TOMBSTONE) != BT_SUCCESS)
+		goto failed;
 
+	bt->fd = fd;
+	btree_txn_abort(txn);
 	free(compact_path);
+	mpage_flush(bt);
 	return BT_SUCCESS;
 
 failed:
@@ -2859,11 +2886,10 @@ failed:
 int
 btree_revert(struct btree *bt)
 {
-	if (btree_read_meta(bt, NULL) == BT_FAIL)
-		return BT_FAIL;
+	int	 rc;
 
-	if (bt->meta == NULL)
-		return BT_SUCCESS;
+	if ((rc = btree_read_meta(bt, NULL)) != BT_SUCCESS)
+		return rc;
 
 	DPRINTF("truncating file at page %u", bt->meta->root);
 	return ftruncate(bt->fd, PAGESIZE * bt->meta->root);
