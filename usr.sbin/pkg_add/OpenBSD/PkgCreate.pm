@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.12 2010/06/09 10:47:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.13 2010/06/11 23:44:37 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -536,7 +536,7 @@ sub read_fragments
 		my ($stack, $cont) = @_;
 		while(my $file = pop @$stack) {
 			while (my $_ = $file->readline) {
-				$state->progress->working(2048);
+				$state->progress->working(2048) unless $state->opt('q');
 				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
