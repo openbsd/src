@@ -195,13 +195,16 @@ typedef struct
 #define Cpu3dnow       0x4000	/* 3dnow! support required */
 #define CpuPNI	       0x8000	/* Prescott New Instructions required */
 #define CpuPadLock    0x10000	/* VIA PadLock required */
+#define CpuSSSE3      0x20000	/* Supplementary SSE3 required */
+#define CpuAES        0x40000	/* Intel AES extensions required */
+#define CpuPCLMUL     0x80000	/* Intel Carry-less Multiplication extensions */
 
   /* These flags are set by gas depending on the flag_code.  */
 #define Cpu64	     0x4000000   /* 64bit support required  */
 #define CpuNo64      0x8000000   /* Not supported in the 64bit mode  */
 
   /* The default value for unknown CPUs - enable all features to avoid problems.  */
-#define CpuUnknownFlags (Cpu086|Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuP4|CpuSledgehammer|CpuMMX|CpuSSE|CpuSSE2|CpuPNI|Cpu3dnow|CpuK6|CpuAthlon|CpuPadLock)
+#define CpuUnknownFlags (Cpu086|Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuP4|CpuSledgehammer|CpuMMX|CpuSSE|CpuSSE2|CpuPNI|Cpu3dnow|CpuK6|CpuAthlon|CpuPadLock|CpuSSSE3|CpuAES|CpuPCLMUL)
 
   /* the bits in opcode_modifier are used to generate the final opcode from
      the base_opcode.  These bits also are used to detect alternate forms of

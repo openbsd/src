@@ -3156,7 +3156,7 @@ output_insn ()
       /* All opcodes on i386 have either 1 or 2 bytes, PadLock instructions
 	 have 3 bytes.  We may use one more higher byte to specify a prefix
 	 the instruction requires.  */
-      if ((i.tm.cpu_flags & CpuPadLock) != 0
+      if (((i.tm.cpu_flags & (CpuPadLock|CpuSSSE3|CpuAES|CpuPCLMUL)) != 0)
 	  && (i.tm.base_opcode & 0xff000000) != 0)
         {
 	  unsigned int prefix;
@@ -3190,7 +3190,7 @@ output_insn ()
 	}
       else
 	{
-	  if ((i.tm.cpu_flags & CpuPadLock) != 0)
+	  if ((i.tm.cpu_flags & (CpuPadLock|CpuSSSE3|CpuAES|CpuPCLMUL)) != 0)
 	    {
 	      p = frag_more (3);
 	      *p++ = (i.tm.base_opcode >> 16) & 0xff;

@@ -1383,6 +1383,24 @@ static const template i386_optab[] = {
 /* alias for xstorerng */
 {"xstore", 0, 0x0fa7c0, X, Cpu686|CpuPadLock, NoSuf|IsString, { 0, 0, 0} },
 
+/* Supplemental Streaming SIMD Extensions 3 extensions. */
+{"pshufb", 2, 0x660f3800, X, CpuSSSE3, FP|Modrm|IgnoreSize|NoSuf, { RegXMM|LLongMem, RegXMM } },
+
+/* Intel AES extensions */
+{"aesdec", 2, 0x660f38de, X, CpuAES, FP|Modrm|IgnoreSize|NoSuf, { RegXMM|LLongMem, RegXMM } },
+{"aesdeclast", 2, 0x660f38df, X, CpuAES, FP|Modrm|IgnoreSize|NoSuf, { RegXMM|LLongMem, RegXMM } },
+{"aesenc", 2, 0x660f38dc, X, CpuAES, FP|Modrm|IgnoreSize|NoSuf, { RegXMM|LLongMem, RegXMM } },
+{"aesenclast", 2, 0x660f38dd, X, CpuAES, FP|Modrm|IgnoreSize|NoSuf, { RegXMM|LLongMem, RegXMM } },
+{"aesimc", 2, 0x660f38db, X, CpuAES, FP|Modrm|IgnoreSize|NoSuf, { RegXMM|LLongMem, RegXMM } },
+{"aeskeygenassist", 3, 0x660f3adf, X, CpuAES, FP|Modrm|IgnoreSize|NoSuf, { Imm8, RegXMM|LLongMem, RegXMM } },
+
+/* Intel Carry-less Multiplication extensions */
+{"pclmulqdq", 3, 0x660f3a44, X, CpuPCLMUL, FP|Modrm|IgnoreSize|NoSuf, { Imm8, RegXMM|LLongMem, RegXMM } },
+{"pclmullqlqdq", 2, 0x660f3a44, 0x0, CpuPCLMUL, FP|Modrm|IgnoreSize|NoSuf|ImmExt, { RegXMM|LLongMem, RegXMM } },
+{"pclmulhqlqdq", 2, 0x660f3a44, 0x1, CpuPCLMUL, FP|Modrm|IgnoreSize|NoSuf|ImmExt, { RegXMM|LLongMem, RegXMM } },
+{"pclmullqhqdq", 2, 0x660f3a44, 0x10, CpuPCLMUL, FP|Modrm|IgnoreSize|NoSuf|ImmExt, { RegXMM|LLongMem, RegXMM } },
+{"pclmulhqhqdq", 2, 0x660f3a44, 0x11, CpuPCLMUL, FP|Modrm|IgnoreSize|NoSuf|ImmExt, { RegXMM|LLongMem, RegXMM } },
+
 /* sentinel */
 {NULL, 0, 0, 0, 0, 0, { 0, 0, 0} }
 };

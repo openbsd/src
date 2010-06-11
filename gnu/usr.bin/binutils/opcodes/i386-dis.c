@@ -101,6 +101,8 @@ static void OP_SIMD_Suffix (int, int);
 static void SIMD_Fixup (int, int);
 static void PNI_Fixup (int, int);
 static void INVLPG_Fixup (int, int);
+static void OP_0f38 (int, int);
+static void OP_0f3a (int, int);
 static void BadOp (void);
 
 struct dis_private {
@@ -301,6 +303,8 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define OPXCRYPT OP_xcrypt, 0
 #define OPXCRYPT2 OP_xcrypt2, 0
 #define OPSIMD OP_SIMD_Suffix, 0
+#define OP0F38 OP_0f38, 0
+#define OP0F3A OP_0f3a, 0
 
 #define cond_jump_flag NULL, cond_jump_mode
 #define loop_jcxz_flag NULL, loop_jcxz_mode
@@ -831,9 +835,9 @@ static const struct dis386 dis386_twobyte[] = {
   { "(bad)",		XX, XX, XX },
   { "(bad)",		XX, XX, XX },
   /* 38 */
+  { "",			OP0F38, XX, XX },
   { "(bad)",		XX, XX, XX },
-  { "(bad)",		XX, XX, XX },
-  { "(bad)",		XX, XX, XX },
+  { "",			OP0F3A, XX, XX },
   { "(bad)",		XX, XX, XX },
   { "(bad)",		XX, XX, XX },
   { "(bad)",		XX, XX, XX },
@@ -1109,7 +1113,7 @@ static const unsigned char twobyte_uses_SSE_prefix[256] = {
   /* 00 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0f */
   /* 10 */ 1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0, /* 1f */
   /* 20 */ 0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0, /* 2f */
-  /* 30 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 3f */
+  /* 30 */ 0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0, /* 3f */
   /* 40 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 4f */
   /* 50 */ 0,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1, /* 5f */
   /* 60 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1, /* 6f */
@@ -4249,6 +4253,135 @@ OP_xcrypt2 (bytemode, sizeflag)
   else
     BadOp();
  }
+
+static struct {
+     unsigned char opc;
+     char *name;
+} aes[] = {
+  {  0x00, "pshufb" },
+  {  0xdb, "aesimc" },
+  {  0xdc, "aesenc" },
+  {  0xde, "aesdec" },
+  {  0xdd, "aesenclast" },
+  {  0xdf, "aesdeclast" }
+};
+
+#define XMM_DST(rex, modrm) \
+	(((((rex) & ~0x40) & 0x4) ? 8 : 0) | (((modrm) & ~0xc0) >> 3))
+#define XMM_SRC(rex, modrm) \
+	(((((rex) & ~0x40) & 0x1) ? 8 : 0) | (((modrm) & ~0xc0) & 7))
+
+static void
+OP_0f38 (bytemode, sizeflag)
+     int bytemode ATTRIBUTE_UNUSED;
+     int sizeflag ATTRIBUTE_UNUSED;
+{
+  const char *mnemonic = NULL;
+  unsigned int i;
+
+  FETCH_DATA (the_info, codep + 1);
+  obufp = obuf + strlen (obuf);
+
+  for (i = 0; i < sizeof(aes) / sizeof(aes[0]); i++)
+    if (aes[i].opc == (*codep & 0xff))
+      mnemonic = aes[i].name;
+
+  codep++;
+  if (mnemonic)
+   {
+     oappend (mnemonic);
+
+     FETCH_DATA (the_info, codep + 1);
+     sprintf (scratchbuf, " %%xmm%d", XMM_SRC (rex, *codep));
+     oappend (scratchbuf);
+     sprintf (scratchbuf, ",%%xmm%d", XMM_DST (rex, *codep));
+     oappend (scratchbuf);
+
+     codep++;
+     used_prefixes |= (prefixes & PREFIX_DATA);
+     USED_REX(rex);
+   }
+  else
+    BadOp();
+}
+
+static struct {
+     unsigned char opc;
+     char *name;
+} pclmul[] = {
+  {  0x00, "pclmullqlqdq" },
+  {  0x01, "pclmulhqlqdq" },
+  {  0x10, "pclmullqhqdq" },
+  {  0x11, "pclmulhqhqdq" },
+};
+
+static void
+OP_0f3a (bytemode, sizeflag)
+     int bytemode ATTRIBUTE_UNUSED;
+     int sizeflag ATTRIBUTE_UNUSED;
+{
+  const char *mnemonic = NULL;
+  unsigned int i, xmms;
+  unsigned char op, imm;
+
+  FETCH_DATA (the_info, codep + 1);
+  obufp = obuf + strlen (obuf);
+
+  op = *codep;
+  codep++;
+
+  FETCH_DATA (the_info, codep + 1);
+
+  /* save xmm pair */
+  xmms = XMM_DST (rex, *codep) << 8;
+  xmms |= XMM_SRC (rex, *codep);
+  codep++;
+
+  /* save immediate field */
+  FETCH_DATA (the_info, codep + 2);
+  imm = *codep;
+  codep++;
+
+  if (op != 0x44 && op != 0xdf)
+   {
+     BadOp();
+     return;
+   }
+
+  switch (op)
+   {
+   case 0x44:
+     for (i = 0; i < sizeof(pclmul) / sizeof(pclmul[0]); i++)
+       if (pclmul[i].opc == imm)
+	 mnemonic = pclmul[i].name;
+
+     if (!mnemonic)
+      {
+	oappend ("pclmulqdq");
+        sprintf (scratchbuf, " $%#x,", imm);
+        oappend (scratchbuf);
+      }
+     else
+      {
+	oappend (mnemonic);
+	oappend (" ");
+      }
+     break;
+   case 0xdf:
+     oappend ("aeskeygenassist ");
+     sprintf (scratchbuf, " $%#x,", imm);
+     oappend (scratchbuf);
+     break;
+   }
+
+   sprintf (scratchbuf, "%%xmm%d,", xmms & 0xff);
+   oappend (scratchbuf);
+   sprintf (scratchbuf, "%%xmm%d", xmms >> 8);
+   oappend (scratchbuf);
+
+   used_prefixes |= (prefixes & PREFIX_DATA);
+   USED_REX(rex);
+}
 
 static void
 BadOp (void)
