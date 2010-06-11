@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.3 2010/06/03 17:29:54 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.4 2010/06/11 08:27:58 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -72,7 +72,7 @@ send_ldap_extended_response(struct conn *conn, int msgid, unsigned long type,
 	struct ber_element	*root, *elm;
 	void			*buf;
 
-	log_debug("sending response %u with result %d", type, result_code);
+	log_debug("sending response %u with result %lld", type, result_code);
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
