@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.7 2010/06/11 07:41:16 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.8 2010/06/11 08:40:32 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -922,7 +922,12 @@ btree_read_meta(struct btree *bt, pgno_t *p_next)
 
 	if (size == bt->size) {
 		DPRINTF("size unchanged, keeping current meta page");
-		return BT_SUCCESS;
+		if (F_ISSET(bt->meta->flags, BT_TOMBSTONE)) {
+			DPRINTF("file is dead");
+			errno = EAGAIN;
+			return BT_DEAD;
+		} else
+			return BT_SUCCESS;
 	}
 	bt->size = size;
 
