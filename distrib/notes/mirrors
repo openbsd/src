@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.84 2010/06/11 07:03:39 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.85 2010/06/11 08:50:08 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -191,6 +191,7 @@ Taiwan:
 
 Turkey:
     ftp://ftp.ulak.net.tr/OpenBSD
+    http://ftpopenbsd.ulak.net.tr
 
 United Kingdom:
     ftp://ftp.mirrorservice.org/pub/OpenBSD (Kent)
