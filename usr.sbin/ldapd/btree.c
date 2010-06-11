@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.6 2010/06/11 05:29:22 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.7 2010/06/11 07:41:16 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -1418,10 +1418,22 @@ btree_txn_get(struct btree *bt, struct btree_txn *txn,
 	struct node	*leaf;
 	struct mpage	*mp;
 
-	assert(bt);
 	assert(key);
 	assert(data);
 	DPRINTF("===> get key [%.*s]", (int)key->size, (char *)key->data);
+
+	if (bt != NULL && txn != NULL && bt != txn->bt) {
+		errno = EINVAL;
+		return BT_FAIL;
+	}
+
+	if (bt == NULL) {
+		if (txn == NULL) {
+			errno = EINVAL;
+			return BT_FAIL;
+		}
+		bt = txn->bt;
+	}
 
 	if (key->size == 0 || key->size > MAXKEYSIZE) {
 		errno = EINVAL;
@@ -1895,6 +1907,19 @@ struct cursor *
 btree_txn_cursor_open(struct btree *bt, struct btree_txn *txn)
 {
 	struct cursor	*cursor;
+
+	if (bt != NULL && txn != NULL && bt != txn->bt) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	if (bt == NULL) {
+		if (txn == NULL) {
+			errno = EINVAL;
+			return NULL;
+		}
+		bt = txn->bt;
+	}
 
 	if ((cursor = calloc(1, sizeof(*cursor))) != NULL) {
 		SLIST_INIT(&cursor->stack);
@@ -2385,8 +2410,20 @@ btree_txn_del(struct btree *bt, struct btree_txn *txn,
 
 	DPRINTF("========> delete key %.*s", (int)key->size, (char *)key->data);
 
-	assert(bt != NULL);
 	assert(key != NULL);
+
+	if (bt != NULL && txn != NULL && bt != txn->bt) {
+		errno = EINVAL;
+		return BT_FAIL;
+	}
+
+	if (bt == NULL) {
+		if (txn == NULL) {
+			errno = EINVAL;
+			return BT_FAIL;
+		}
+		bt = txn->bt;
+	}
 
 	if (key->size == 0 || key->size > MAXKEYSIZE) {
 		errno = EINVAL;
@@ -2682,9 +2719,21 @@ btree_txn_put(struct btree *bt, struct btree_txn *txn,
 	struct mpage	*mp;
 	struct btval	 xkey;
 
-	assert(bt != NULL);
 	assert(key != NULL);
 	assert(data != NULL);
+
+	if (bt != NULL && txn != NULL && bt != txn->bt) {
+		errno = EINVAL;
+		return BT_FAIL;
+	}
+
+	if (bt == NULL) {
+		if (txn == NULL) {
+			errno = EINVAL;
+			return BT_FAIL;
+		}
+		bt = txn->bt;
+	}
 
 	if (key->size == 0 || key->size > MAXKEYSIZE) {
 		errno = EINVAL;
