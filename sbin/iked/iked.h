@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.4 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.5 2010/06/11 12:47:18 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -648,6 +648,11 @@ void	 ca_sslinit(void);
 void	 ca_sslerror(void);
 char	*ca_asn1_name(u_int8_t *, size_t);
 char	*ca_x509_name(void *);
+
+/* timer.c */
+void	 timer_register_initiator(struct iked *,
+	    void (*)(struct iked *, struct iked_policy *));
+void	 timer_unregister_initiator(struct iked *);
 
 /* proc.c */
 void	 init_procs(struct iked *, struct iked_proc *, u_int);

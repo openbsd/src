@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.5 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.6 2010/06/11 12:47:18 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ struct iked_sa *
 
 void	 ikev2_cb(int, short, void *);
 void	 ikev2_recv(struct iked *, struct iked_message *);
+void	 ikev2_initiator(struct iked *, struct iked_policy *);
 
 int	 ikev2_resp_ike_sa_init(struct iked *, struct iked_message *);
 int	 ikev2_resp_ike_auth(struct iked *, struct iked_sa *);
@@ -105,7 +106,13 @@ ikev2_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 		return (config_getcoupled(env, imsg->hdr.type));
 	case IMSG_CTL_ACTIVE:
 	case IMSG_CTL_PASSIVE:
-		return (config_getmode(env, imsg->hdr.type));
+		if (config_getmode(env, imsg->hdr.type) == -1)
+			return (0);	/* ignore error */
+		if (env->sc_passive)
+			timer_unregister_initiator(env);
+		else
+			timer_register_initiator(env, ikev2_initiator);
+		return (0);
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
 	case IMSG_PFKEY_SOCKET:
@@ -462,6 +469,13 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	if (msg->msg_sa && msg->msg_sa->sa_state == IKEV2_STATE_DELETE)
 		sa_free(env, msg->msg_sa);
+}
+
+void
+ikev2_initiator(struct iked *env, struct iked_policy *pol)
+{
+	/* XXX */
+	log_debug("%s: not implemented", __func__);
 }
 
 int
