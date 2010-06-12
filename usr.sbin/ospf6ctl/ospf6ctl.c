@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.34 2010/02/25 16:40:23 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.35 2010/06/12 09:48:39 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -851,7 +851,7 @@ show_db_msg_detail(struct imsg *imsg)
 
 		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_rtr_link);
-		printf("Number of Links: %d\n", nlinks);
+		printf("Number of Links: %d\n\n", nlinks);
 
 		off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
 
