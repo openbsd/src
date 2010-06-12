@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.49 2010/06/05 18:43:57 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.50 2010/06/12 16:30:45 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2024,7 +2024,7 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 		error = athn_reset(sc, 0);
 	if (error != 0) {
 		printf("%s: could not reset chip (error=%d)\n",
-		    sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname, error);
 		return (error);
 	}
 
