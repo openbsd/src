@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.53 2010/02/19 10:35:52 dlg Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.54 2010/06/12 09:44:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -787,6 +787,7 @@ show_db_msg_detail(struct imsg *imsg)
 		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link);
 		off = sizeof(lsa->hdr) + sizeof(u_int32_t);
+		printf("Number of Routers: %d\n", nlinks);
 
 		for (i = 0; i < nlinks; i++) {
 			addr.s_addr = lsa->data.net.att_rtr[i];
