@@ -2067,11 +2067,12 @@ i915_write_fence_reg(struct inteldrm_fence *reg)
 	pitch_val = obj_priv->stride / tile_width;
 	pitch_val = ffs(pitch_val) - 1;
 
+	/* XXX print more */
 	if ((obj_priv->tiling_mode == I915_TILING_Y &&
 	    HAS_128_BYTE_Y_TILING(dev_priv) &&
 	    pitch_val > I830_FENCE_MAX_PITCH_VAL) ||
 	    pitch_val > I915_FENCE_MAX_PITCH_VAL)
-		printf("%s: invalid pitch provided"); /* XXX print more */
+		printf("%s: invalid pitch provided", __func__);
 
 	val = obj_priv->gtt_offset;
 	if (obj_priv->tiling_mode == I915_TILING_Y)
