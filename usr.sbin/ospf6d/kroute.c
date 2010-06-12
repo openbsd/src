@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.20 2010/06/09 17:46:42 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.21 2010/06/12 10:03:38 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1352,7 +1352,7 @@ dispatch_rtmsg(void)
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
 		case RTM_CHANGE:
-			if (!IN6_IS_ADDR_UNSPECIFIED(&nexthop) &&
+			if (IN6_IS_ADDR_UNSPECIFIED(&nexthop) &&
 			    !(flags & F_CONNECTED)) {
 				log_warnx("dispatch_rtmsg no nexthop for %s/%u",
 				    log_in6addr(&prefix), prefixlen);
