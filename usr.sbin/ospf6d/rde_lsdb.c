@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.31 2010/06/09 17:36:36 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.32 2010/06/12 10:12:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -787,7 +787,7 @@ lsa_timeout(int fd, short event, void *bula)
 			v->deleted = 0;
 
 			/* schedule recalculation of the RIB */
-			if (v->lsa->hdr.type != LSA_TYPE_EXTERNAL)
+			if (ntohs(v->lsa->hdr.type) != LSA_TYPE_EXTERNAL)
 				v->area->dirty = 1;
 			start_spf_timer();
 
