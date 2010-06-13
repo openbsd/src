@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.h,v 1.2 2010/06/11 05:29:22 martinh Exp $ */
+/*	$OpenBSD: btree.h,v 1.3 2010/06/13 06:46:03 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -59,9 +59,9 @@ enum cursor_op {				/* cursor operations */
 #define BT_DEAD		 3			/* file has been replaced */
 
 /* btree flags */
-#define BT_NOSYNC		 0x01		/* don't fsync after commit */
-#define BT_RDONLY		 0x08		/* read only */
-#define BT_REVERSEKEY		 0x10		/* use reverse string keys */
+#define BT_NOSYNC		 0x02		/* don't fsync after commit */
+#define BT_RDONLY		 0x04		/* read only */
+#define BT_REVERSEKEY		 0x08		/* use reverse string keys */
 
 struct btree_stat {
 	unsigned long long int	 hits;		/* cache hits */
