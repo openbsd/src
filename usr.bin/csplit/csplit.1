@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csplit.1,v 1.7 2009/10/22 12:35:53 sobrado Exp $
+.\"	$OpenBSD: csplit.1,v 1.8 2010/06/13 11:39:41 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/usr.bin/csplit/csplit.1,v 1.11 2005/01/25 22:29:51 tjr Exp $
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: June 13 2010 $
 .Dt CSPLIT 1
 .Os
 .Sh NAME
@@ -133,15 +133,6 @@ Requesting to split at a line before the current line number or past the
 end of the file will result in an error.
 .Pp
 .Ex -std
-.Sh ENVIRONMENT
-The
-.Ev LANG , LC_ALL , LC_COLLATE ,
-and
-.Ev LC_CTYPE
-environment variables affect the execution of
-.Nm
-as described in
-.Xr environ 7 .
 .Sh EXAMPLES
 Split the
 .Xr mdoc 7
