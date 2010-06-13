@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.25 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.26 2010/06/13 15:26:06 tobias Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -135,6 +135,8 @@ main(int argc, char *argv[])
 	timeout.tv_sec = sectimeout * 60;
 
 	gethostname(hostname, sizeof(hostname));
+	if (usemine && lc == NULL)
+		errx(1, "login class not found");
 	if (!(ttynam = ttyname(STDIN_FILENO)))
 		errx(1, "not a terminal?");
 	curtime = time(NULL);
