@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.15 2008/10/06 20:38:33 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.16 2010/06/13 17:58:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -877,7 +877,7 @@ int cgoto(fa *f, int s, int c)
 					if (q[j] >= maxsetvec) {
 						maxsetvec *= 4;
 						setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
-						tmpset = (int *) realloc(setvec, maxsetvec * sizeof(int));
+						tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
 						if (setvec == 0 || tmpset == 0)
 							overflo("cgoto overflow");
 					}

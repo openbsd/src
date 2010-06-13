@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.18 2008/10/06 20:38:33 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.19 2010/06/13 17:58:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -276,6 +276,7 @@ void fldbld(void)	/* create fields from current record */
 	}
 	fr = fields;
 	i = 0;	/* number of fields accumulated here */
+	strlcpy(inputFS, *FS, sizeof(inputFS));
 	if (strlen(inputFS) > 1) {	/* it's a regular expression */
 		i = refldbld(r, inputFS);
 	} else if ((sep = *inputFS) == ' ') {	/* default whitespace */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.30 2008/10/06 20:38:33 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.31 2010/06/13 17:58:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -391,7 +391,7 @@ Cell *jump(Node **a, int n)	/* break, continue, next, nextfile, return */
 	return 0;	/* not reached */
 }
 
-Cell *getline(Node **a, int n)	/* get next line from specific input */
+Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 {		/* a[0] is variable, a[1] is operator, a[2] is filename */
 	Cell *r, *x;
 	extern Cell **fldtab;
@@ -1167,11 +1167,11 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 			x->sval, y->sval);
 	strlcpy(s, x->sval, len);
 	strlcpy(s+n1, y->sval, len - n1);
+	tempfree(x);
 	tempfree(y);
 	z = gettemp();
 	z->sval = s;
 	z->tval = STR;
-	tempfree(x);
 	return(z);
 }
 
@@ -1956,9 +1956,10 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 		adjbuf(&buf, &bufsz, 1+strlen(sptr)+pb-buf, 0, &pb, "gsub");
 		while ((*pb++ = *sptr++) != 0)
 			;
-	done:	if (pb > buf + bufsz)
-			FATAL("gsub result2 %.30s too big; can't happen", buf);
-		*pb = '\0';
+	done:	if (pb < buf + bufsz)
+			*pb = '\0';
+		else if (*(pb-1) != '\0')
+			FATAL("gsub result2 %.30s truncated; can't happen", buf);
 		setsval(x, buf);	/* BUG: should be able to avoid copy + free */
 		pfa->initstat = tempstat;
 	}

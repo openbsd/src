@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.14 2008/10/06 20:38:33 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.15 2010/06/13 17:58:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,34 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+May 23, 2010:
+	fixed long-standing overflow bug in run.c; many thanks to
+	nelson beebe for spotting it and providing the fix.
+
+	fixed bug that didn't parse -vd=1 properly; thanks to santiago
+	vila for spotting it.
+
+Feb 8, 2010:
+	i give up.  replaced isblank with isspace in b.c; there are
+	no consistent header files.
+
+Nov 26, 2009:
+	fixed a long-standing issue with when FS takes effect.  a
+	change to FS is now noticed immediately for subsequent splits.
+
+	changed the name getline() to awkgetline() to avoid yet another
+	name conflict somewhere.
+
+Feb 11, 2009:
+	temporarily for now defined HAS_ISBLANK, since that seems to
+	be the best way through the thicket.  isblank arrived in C99,
+	but seems to be arriving at different systems at different
+	times.
+
+Oct 8, 2008:
+	fixed typo in b.c that set tmpvec wrongly.  no one had ever
+	run into the problem, apparently.  thanks to alistair crooks.
 
 Oct 23, 2007:
 	minor fix in lib.c: increase inputFS to 100, change malloc
