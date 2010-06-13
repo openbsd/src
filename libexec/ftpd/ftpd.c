@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.187 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.188 2010/06/13 15:27:46 tobias Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -972,7 +972,7 @@ pass(char *passwd)
 	else
 		(void) umask(defumask);
 	if (setusercontext(lc, pw, (uid_t)0, flags) != 0) {
-		perror_reply(451, "Local resource failure: setusercontext");
+		perror_reply(421, "Local resource failure: setusercontext");
 		syslog(LOG_NOTICE, "setusercontext: %m");
 		dologout(1);
 		/* NOTREACHED */
@@ -1427,7 +1427,7 @@ dataconn(char *name, off_t size, char *mode)
 			return (NULL);
 		}
 		if (portcheck && memcmp(fa, ha, alen) != 0) {
-			reply(435, "Can't build data connection: "
+			reply(425, "Can't build data connection: "
 			    "illegal port number");
 			(void) close(pdata);
 			(void) close(s);
@@ -1932,7 +1932,7 @@ reply(int n, const char *fmt, ...)
 	rval = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 	if (rval == -1 || buf == NULL) {
-		printf("412 Local resource failure: malloc\r\n");
+		printf("421 Local resource failure: malloc\r\n");
 		fflush(stdout);
 		dologout(1);
 	}
