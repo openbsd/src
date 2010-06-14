@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.13 2010/06/05 16:34:30 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.14 2010/06/14 23:06:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,7 +56,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	char			*command;
 	int			 old_fd, pipe_fd[2], null_fd, mode;
 
-	if ((c = cmd_find_client(ctx, data->target)) == NULL)
+	if ((c = cmd_find_client(ctx, NULL)) == NULL)
 		return (-1);
 
 	if (cmd_find_pane(ctx, data->target, NULL, &wp) == NULL)
