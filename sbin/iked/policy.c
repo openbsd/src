@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.5 2010/06/14 11:33:55 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.6 2010/06/14 12:06:33 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -291,12 +291,6 @@ sa_lookup(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 static __inline int
 sa_cmp(struct iked_sa *a, struct iked_sa *b)
 {
-	log_debug("%s: ispi %s rspi %s <-> ispi %s rspi %s", __func__,
-	    print_spi(a->sa_hdr.sh_ispi, 8),
-	    print_spi(a->sa_hdr.sh_rspi, 8),
-	    print_spi(b->sa_hdr.sh_ispi, 8),
-	    print_spi(b->sa_hdr.sh_rspi, 8));
-
 	if (a->sa_hdr.sh_initiator != b->sa_hdr.sh_initiator)
 		return (-2);
 
