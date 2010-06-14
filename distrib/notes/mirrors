@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.85 2010/06/11 08:50:08 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.86 2010/06/14 10:01:30 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -58,6 +58,10 @@ China:
 Costa Rica:
     ftp://mirrors.ucr.ac.cr/OpenBSD
     http://mirrors.ucr.ac.cr/OpenBSD
+
+Czech Republic:
+    ftp://ftp.sh.cvut.cz/MIRRORS/openbsd (Prague)
+    http://ftp.sh.cvut.cz/MIRRORS/openbsd (Prague)
 
 Denmark:
     ftp://ftp.openbsd.dk/pub/OpenBSD (Aalborg)
