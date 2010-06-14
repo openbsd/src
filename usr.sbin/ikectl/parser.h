@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.3 2010/06/10 16:14:04 jsg Exp $	*/
+/*	$OpenBSD: parser.h,v 1.4 2010/06/14 17:41:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -42,6 +42,10 @@ enum actions {
 	CA_CERT_INSTALL,
 	CA_CERT_EXPORT,
 	CA_CERT_REVOKE,
+	CA_KEY_CREATE,
+	CA_KEY_DELETE,
+	CA_KEY_INSTALL,
+	CA_KEY_IMPORT,
 	SHOW_CA,
 	SHOW_CA_CERTIFICATES
 };

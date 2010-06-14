@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.3 2010/06/10 16:14:04 jsg Exp $
+.\" $OpenBSD: ikectl.8,v 1.4 2010/06/14 17:41:18 jsg Exp $
 .\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2010 $
+.Dd $Mdocdate: June 14 2010 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -134,6 +134,22 @@ and generate a new Certificate Revocation List (CRL).
 .It Cm show Cm ca Ar name Cm certificates
 Display a listing of certificates associated with CA
 .Ar name .
+.It Cm ca Ar name Cm key Ar host Cm create
+Create a private key for
+.Ar host
+if one does not already exist.
+.It Cm ca Ar name Cm key Ar host Cm install
+Install the private and public keys for
+.Ar host
+into the active configuration.
+.It Cm ca Ar name Cm key Ar host Cm delete
+Delete the private key for
+.Ar host .
+.It Cm ca Ar name Cm key Ar host Cm import Cm file
+Source the private key for
+.Ar host
+from the named
+.Ar file .
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/iked.sockXX" -compact

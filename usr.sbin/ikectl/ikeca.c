@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.4 2010/06/10 16:14:04 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.5 2010/06/14 17:41:18 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -65,12 +65,15 @@ struct ca {
 struct ca	*ca_setup(char *, int);
 int		 ca_create(struct ca *);
 int		 ca_delete(struct ca *);
-int		 ca_key(char *, char *, char *);
 int		 ca_delkey(struct ca *, char *);
 int		 ca_sign(struct ca *, char *, int);
 int		 ca_request(char *, char *, char *);
 int		 ca_certificate(struct ca *, char *, int);
 int		 ca_cert_install(struct ca *, char *);
+int		 ca_key_install(struct ca *, char *);
+int		 ca_key_create(struct ca *, char *);
+int		 ca_key_delete(struct ca *, char *);
+int		 ca_key_import(struct ca *, char *, char *);
 int		 ca_newpass(char *);
 int		 ca_export(struct ca *, char *);
 int		 ca_revoke(struct ca *, char *);
@@ -87,18 +90,52 @@ ca_delete(struct ca *ca)
 }
 
 int
-ca_key(char *sslpath, char *caname, char *keyname)
+ca_key_create(struct ca *ca, char *keyname)
 {
+	struct stat		 st;
 	char			 cmd[PATH_MAX * 2];
 	char			 path[PATH_MAX];
 
-	snprintf(path, sizeof(path), "%s/private/%s.key", sslpath, keyname);
+	snprintf(path, sizeof(path), "%s/private/%s.key", ca->sslpath, keyname);
+
+	/* don't recreate key if one is already present */
+	if (stat(path, &st) == 0) {
+		return (0);
+	}
 
 	snprintf(cmd, sizeof(cmd),
 	    "%s genrsa -out %s 2048",
 	    PATH_OPENSSL, path);
 	system(cmd);
 	chmod(path, 0600);
+
+	return (0);
+}
+
+int
+ca_key_import(struct ca *ca, char *keyname, char *import)
+{
+	struct stat		 st;
+	char			 dst[PATH_MAX];
+
+	if (stat(import, &st) != 0) {
+		warn("could not access keyfile %s", import);
+		return (1);
+	}
+
+	snprintf(dst, sizeof(dst), "%s/private/%s.key", ca->sslpath, keyname);
+	fcopy(import, dst, 0600);
+
+	return (0);
+}
+
+int
+ca_key_delete(struct ca *ca, char *keyname)
+{
+	char			 path[PATH_MAX];
+
+	snprintf(path, sizeof(path), "%s/private/%s.key", ca->sslpath, keyname);
+	unlink(path);
 
 	return (0);
 }
@@ -180,7 +217,7 @@ ca_sign(struct ca *ca, char *keyname, int type)
 int
 ca_certificate(struct ca *ca, char *keyname, int type)
 {
-	ca_key(ca->sslpath, ca->caname, keyname);
+	ca_key_create(ca, keyname);
 	ca_request(ca->sslpath, ca->sslcnf, keyname);
 	ca_sign(ca, keyname, type);
 	
@@ -188,7 +225,7 @@ ca_certificate(struct ca *ca, char *keyname, int type)
 }
 
 int
-ca_cert_install(struct ca *ca, char *keyname)
+ca_key_install(struct ca *ca, char *keyname)
 {
 	struct stat	st;
 	char		cmd[PATH_MAX * 2];
@@ -211,6 +248,20 @@ ca_cert_install(struct ca *ca, char *keyname)
 	    " -in %s/private/local.key -pubout", PATH_OPENSSL, KEYBASE,
 	    KEYBASE);
 	system(cmd);
+
+
+	return (1);
+}
+
+int
+ca_cert_install(struct ca *ca, char *keyname)
+{
+	char		src[PATH_MAX];
+	char		dst[PATH_MAX];
+	int		r;
+
+	if ((r = ca_key_install(ca, keyname)) != 0)
+		return (r);
 
 	snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath, keyname);
 	snprintf(dst, sizeof(dst), "%s/certs/%s.crt", KEYBASE, keyname);
@@ -348,7 +399,7 @@ fcopy(char *src, char *dst, mode_t mode)
 	if ((ifd = open(src, O_RDONLY)) == -1)
 		err(1, "open %s", src);
 
-	if ((ofd = open(dst, O_WRONLY|O_CREAT, mode)) == -1) {
+	if ((ofd = open(dst, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1) {
 		close(ifd);
 		err(1, "open %s", dst);
 	}

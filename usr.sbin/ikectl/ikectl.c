@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.3 2010/06/10 16:14:04 jsg Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.4 2010/06/14 17:41:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -60,6 +60,10 @@ int		 ca_delkey(struct ca *, char *);
 int		 ca_install(struct ca *);
 int		 ca_cert_install(struct ca *, char *);
 int		 ca_show_certs(struct ca *);
+int		 ca_key_create(struct ca *, char *);
+int		 ca_key_delete(struct ca *, char *);
+int		 ca_key_install(struct ca *, char *);
+int		 ca_key_import(struct ca *, char *, char *);
 
 struct imsgname imsgs[] = {
 	{ IMSG_CTL_OK,			"ok",			NULL },
@@ -123,6 +127,18 @@ ca_opt(struct parse_result *res)
 	case SHOW_CA_CERTIFICATES:
 		ca_show_certs(ca);
 		break;
+	case CA_KEY_CREATE:
+		ca_key_create(ca, res->host);
+		break;
+	case CA_KEY_DELETE:
+		ca_key_delete(ca, res->host);
+		break;
+	case CA_KEY_INSTALL:
+		ca_key_install(ca, res->host);
+		break;
+	case CA_KEY_IMPORT:
+		ca_key_import(ca, res->host, res->filename);
+		break;
 	default:
 		break;
 	}
@@ -174,6 +190,10 @@ main(int argc, char *argv[])
 	case CA_CERT_REVOKE:
 	case SHOW_CA:
 	case SHOW_CA_CERTIFICATES:
+	case CA_KEY_CREATE:
+	case CA_KEY_DELETE:
+	case CA_KEY_INSTALL:
+	case CA_KEY_IMPORT:
 		ca_opt(res);
 		break;
 	case NONE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2010/06/10 16:14:04 jsg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.4 2010/06/14 17:41:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -61,6 +61,9 @@ static const struct token t_ca[];
 static const struct token t_ca_modifiers[];
 static const struct token t_ca_cert[];
 static const struct token t_ca_cert_modifiers[];
+static const struct token t_ca_key[];
+static const struct token t_ca_key_modifiers[];
+static const struct token t_ca_key_path[];
 static const struct token t_show[];
 static const struct token t_show_ca[];
 static const struct token t_show_ca_modifiers[];
@@ -110,6 +113,7 @@ static const struct token t_ca_modifiers[] = {
 	{ KEYWORD,	"delete",	CA_DELETE,	NULL },
 	{ KEYWORD,	"install",	CA_INSTALL,	NULL },
 	{ KEYWORD,	"certificate",	CA_CERTIFICATE,	t_ca_cert },
+	{ KEYWORD,	"key",		NONE,		t_ca_key },
 	{ ENDTOKEN, 	"",		NONE,		NULL }
 };
 
@@ -126,6 +130,25 @@ static const struct token t_ca_cert_modifiers[] = {
 	{ KEYWORD,	"export",	CA_CERT_EXPORT,		NULL },
 	{ KEYWORD,	"revoke",	CA_CERT_REVOKE,		NULL },
 	{ ENDTOKEN,	"",		NONE,			NULL }
+};
+
+static const struct token t_ca_key[] = {
+	{ ADDRESS,	"",		NONE,		t_ca_key_modifiers },
+	{ FQDN,		"",		NONE,		t_ca_key_modifiers },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_ca_key_modifiers[] = {
+	{ KEYWORD,	"create",	CA_KEY_CREATE,		NULL },
+	{ KEYWORD,	"delete",	CA_KEY_DELETE,		NULL },
+	{ KEYWORD,	"install",	CA_KEY_INSTALL,		NULL },
+	{ KEYWORD,	"import",	CA_KEY_IMPORT,		t_ca_key_path },
+	{ ENDTOKEN,	"",		NONE,			NULL }
+};
+
+static const struct token t_ca_key_path[] = {
+	{ FILENAME,	"",		NONE,		NULL },
+	{ ENDTOKEN, 	"",		NONE,		NULL }
 };
 
 static const struct token t_show[] = {
