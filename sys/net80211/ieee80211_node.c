@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.57 2010/03/28 13:02:58 krw Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.58 2010/06/14 17:39:20 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -439,6 +439,9 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 			if (!(ic->ic_flags & IEEE80211_F_PSK))
 				fail |= 0x40;
 		}
+		if (ni->ni_rsngroupcipher == IEEE80211_CIPHER_NONE ||
+		    ni->ni_rsngroupcipher == IEEE80211_CIPHER_USEGROUP)
+			fail |= 0x40;
 		if ((ni->ni_rsnciphers & ic->ic_rsnciphers) == 0)
 			fail |= 0x40;
 
