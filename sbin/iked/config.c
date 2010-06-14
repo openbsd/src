@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2010/06/14 08:10:32 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ config_new_sa(struct iked *env, int initiator)
 	TAILQ_INIT(&sa->sa_childsas);
 	TAILQ_INIT(&sa->sa_flows);
 	sa->sa_hdr.sh_initiator = initiator;
+	sa->sa_type = IKED_SATYPE_LOCAL;
 
 	if (initiator)
 		sa->sa_hdr.sh_ispi = config_getspi();
@@ -504,7 +505,7 @@ int
 config_getsocket(struct iked *env, struct imsg *imsg,
     void (*cb)(int, short, void *))
 {
-	struct iked_socket	*sock;
+	struct iked_socket	*sock, **sptr;
 
 	log_debug("%s: received socket fd %d", __func__, imsg->fd);
 
@@ -516,6 +517,20 @@ config_getsocket(struct iked *env, struct imsg *imsg,
 	memcpy(&sock->sock_addr, imsg->data, sizeof(sock->sock_addr));
 	sock->sock_fd = imsg->fd;
 	sock->sock_env = env;
+
+	switch (sock->sock_addr.ss_family) {
+	case AF_INET:
+		sptr = &env->sc_sock4;
+		break;
+	case AF_INET6:
+		sptr = &env->sc_sock6;
+		break;
+	default:
+		fatal("config_getsocket: socket af");
+		/* NOTREACHED */
+	}
+	if (*sptr == NULL)
+		*sptr = sock;
 
 	event_set(&sock->sock_ev, sock->sock_fd,
 	    EV_READ|EV_PERSIST, cb, sock);

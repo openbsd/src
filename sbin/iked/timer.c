@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.1 2010/06/11 12:47:18 reyk Exp $	*/
+/*	$OpenBSD: timer.c,v 1.2 2010/06/14 08:10:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -39,7 +39,7 @@ struct timer_cbarg {
 	struct timeval	 tmr_first;
 	struct timeval	 tmr_last;
 	struct timeval	 tmr_tv;
-	void		(*tmr_initcb)(struct iked *, struct iked_policy *);
+	int		(*tmr_initcb)(struct iked *, struct iked_policy *);
 } timer_initiator;
 
 void	 timer_initiator_cb(int, short, void *);
@@ -49,7 +49,7 @@ void	 timer_initiator_cb(int, short, void *);
 
 void
 timer_register_initiator(struct iked *env,
-    void (*cb)(struct iked *, struct iked_policy *))
+    int (*cb)(struct iked *, struct iked_policy *))
 {
 	struct timer_cbarg	*tmr;
 
@@ -102,8 +102,10 @@ timer_initiator_cb(int fd, short event, void *arg)
 
 		log_debug("%s: initiating \"%s\"", __func__, pol->pol_name);
 
-		if (tmr->tmr_initcb != NULL)
-			tmr->tmr_initcb(env, pol);
+		if (tmr->tmr_initcb != NULL) {
+			/* Ignore error but what should we do on failure? */
+			(void)tmr->tmr_initcb(env, pol);
+		}
 	}
 
 	tmr->tmr_tv.tv_sec = IKED_TIMER_INITIATOR_INTERVAL;

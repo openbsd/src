@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.5 2010/06/11 12:47:18 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.6 2010/06/14 08:10:32 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -292,6 +292,10 @@ struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	u_int32_t			 sa_msgid;
 
+	int				 sa_type;
+#define IKED_SATYPE_LOOKUP		 0		/* Used for lookup */
+#define IKED_SATYPE_LOCAL		 1		/* Local SA */
+
 	struct iked_addr		 sa_peer;
 	struct iked_addr		 sa_local;
 	int				 sa_fd;
@@ -417,6 +421,9 @@ struct iked {
 	int				 sc_pfkey;	/* ike process */
 	u_int8_t			 sc_certreqtype;
 	struct ibuf			*sc_certreq;
+
+	struct iked_socket		*sc_sock4;
+	struct iked_socket		*sc_sock6;
 
 	struct control_sock		 sc_csock;
 
@@ -617,6 +624,9 @@ struct ibuf *
 	 ikev2_msg_decrypt(struct iked *, struct iked_sa *,
 	    struct ibuf *, struct ibuf *);
 int	 ikev2_msg_integr(struct iked *, struct iked_sa *, struct ibuf *);
+int	 ikev2_msg_frompeer(struct iked_message *);
+struct iked_socket *
+	 ikev2_msg_getsocket(struct iked *, int);
 
 /* ikev2_pld.c */
 int	 ikev2_pld_parse(struct iked *, struct ike_header *,
@@ -651,7 +661,7 @@ char	*ca_x509_name(void *);
 
 /* timer.c */
 void	 timer_register_initiator(struct iked *,
-	    void (*)(struct iked *, struct iked_policy *));
+	    int (*)(struct iked *, struct iked_policy *));
 void	 timer_unregister_initiator(struct iked *);
 
 /* proc.c */

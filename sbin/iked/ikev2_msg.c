@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.1 2010/06/10 08:29:47 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.2 2010/06/14 08:10:32 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -785,4 +785,38 @@ ikev2_msg_authsign(struct iked *env, struct iked_sa *sa,
 	dsa_free(dsa);
 
 	return (ret);
+}
+
+int
+ikev2_msg_frompeer(struct iked_message *msg)
+{
+	struct iked_sa		*sa = msg->msg_sa;
+	struct ike_header	*hdr;
+
+	if (sa == NULL ||
+	    (hdr = ibuf_seek(msg->msg_data, 0, sizeof(*hdr))) == NULL)
+		return (0);
+
+	if (!sa->sa_hdr.sh_initiator &&
+	    (hdr->ike_flags & IKEV2_FLAG_INITIATOR))
+		return (1);
+	else if (sa->sa_hdr.sh_initiator &&
+	    (hdr->ike_flags & IKEV2_FLAG_INITIATOR) == 0)
+		return (1);
+
+	return (0);
+}
+
+struct iked_socket *
+ikev2_msg_getsocket(struct iked *env, int af)
+{
+	switch (af) {
+	case AF_INET:
+		return (env->sc_sock4);
+	case AF_INET6:
+		return (env->sc_sock6);
+	}
+
+	log_debug("%s: af socket %d not available", __func__, af);
+	return (NULL);
 }
