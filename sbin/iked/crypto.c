@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.2 2010/06/14 16:31:29 reyk Exp $	*/
 /*	$vantronix: crypto.c,v 1.18 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ cipher_new(u_int8_t type, u_int16_t id, u_int16_t id_length)
 			}
 			if (cipher == NULL)
 				break;
-			length = id_length / 8;
+			length = EVP_CIPHER_block_size(cipher);
 			ivlength = EVP_CIPHER_iv_length(cipher);
 			fixedkey = EVP_CIPHER_key_length(cipher);
 			break;
