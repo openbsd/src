@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.13 2010/06/10 07:21:07 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.14 2010/06/14 08:16:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -243,7 +243,7 @@ sub log
 	if (@_ == 0) {
 		return $self->{l};
 	} else {
-		$self->{l}->print(@_);
+		$self->{l}->print($self->f(@_), "\n");
 	}
 }
 
