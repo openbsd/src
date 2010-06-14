@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.23 2010/04/28 10:05:28 jasper Exp $ */
-/*	$OpenBSD: aldap.c,v 1.23 2010/04/28 10:05:28 jasper Exp $ */
+/*	$Id: aldap.c,v 1.24 2010/06/14 13:15:22 pyr Exp $ */
+/*	$OpenBSD: aldap.c,v 1.24 2010/06/14 13:15:22 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -55,6 +55,7 @@ aldap_close(struct aldap *al)
 	if (close(al->ber.fd) == -1)
 		return (-1);
 
+	ber_free(&al->ber);
 	free(al);
 
 	return (0);
