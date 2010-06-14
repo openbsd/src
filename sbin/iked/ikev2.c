@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.9 2010/06/14 11:33:55 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.10 2010/06/14 12:05:32 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -830,10 +830,10 @@ ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
 		if ((hdr = ibuf_seek(msg->msg_data, 0, sizeof(*hdr))) == NULL)
 			return (-1);
 		ispi = hdr->ike_ispi;
-		rspi = hdr->ike_rspi;
+		rspi = 0;
 	} else {
 		ispi = htobe64(sa->sa_hdr.sh_ispi);
-		rspi = htobe64(sa->sa_hdr.sh_rspi);
+		rspi = 0;
 	}
 
 	EVP_MD_CTX_init(&ctx);
