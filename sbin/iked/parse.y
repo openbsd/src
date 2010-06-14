@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2010/06/10 14:17:48 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2010/06/14 18:39:04 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -903,6 +903,7 @@ lookup(char *s)
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
 		{ "port",		PORT },
+/* XXX		{ "prf",		PRFXF }, */
 		{ "proto",		PROTO },
 		{ "psk",		PSK },
 		{ "rsa",		RSA },
