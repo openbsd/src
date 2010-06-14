@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.5 2010/06/14 21:12:56 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.6 2010/06/14 23:23:52 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -674,7 +674,7 @@ ikev2_msg_authverify(struct iked *env, struct iked_sa *sa,
 		keytype = 0;
 		break;
 	default:
-		if (id == NULL) {
+		if (!id->id_type || !ibuf_length(id->id_buf)) {
 			log_debug("%s: no cert found", __func__);
 			goto done;
 		}
