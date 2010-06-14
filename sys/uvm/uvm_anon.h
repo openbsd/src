@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.14 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.15 2010/06/14 10:05:37 thib Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.13 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
@@ -37,10 +37,6 @@
 #define _UVM_UVM_ANON_H_
 
 /*
- * uvm_anon.h
- */
-
-/*
  * anonymous memory management
  *
  * anonymous virtual memory is short term virtual memory that goes away
@@ -51,10 +47,14 @@
 struct vm_anon {
 	struct vm_page *an_page;	/* if in RAM [an_lock] */
 	int an_ref;			/* reference count [an_lock] */
-	int an_swslot;		/* drum swap slot # (if != 0) 
-				   [an_lock.  also, it is ok to read
-				   an_swslot if we hold an_page PG_BUSY] */
-	simple_lock_data_t an_lock;	/* lock for an_ref */
+
+	/*
+	 * Drum swap slot # (if != 0) [an_lock or not, if we hold an_page
+	 * PG_BUSY]
+	 */
+	int an_swslot;
+
+	simple_lock_data_t an_lock;
 };
 
 /*
@@ -76,6 +76,9 @@ struct vm_anon {
 /*
  * processes reference anonymous virtual memory maps with an anonymous 
  * reference structure:
+ * Note that the offset field indicates which part of the amap we are
+ * referencing.
+ * Locked by vm_map lock.
  */
 
 struct vm_aref {
@@ -83,23 +86,13 @@ struct vm_aref {
 	struct vm_amap *ar_amap;	/* pointer to amap */
 };
 
-/*
- * the offset field indicates which part of the amap we are referencing.
- * locked by vm_map lock.
- */
-
 #ifdef _KERNEL
-
-/*
- * prototypes
- */
-
-struct vm_anon *uvm_analloc(void);
-void uvm_anfree(struct vm_anon *);
-void uvm_anon_init(void);
-struct vm_page *uvm_anon_lockloanpg(struct vm_anon *);
-void uvm_anon_dropswap(struct vm_anon *);
-boolean_t uvm_anon_pagein(struct vm_anon *);
+struct vm_anon	*uvm_analloc(void);
+void		 uvm_anfree(struct vm_anon *);
+void		 uvm_anon_init(void);
+struct vm_page	*uvm_anon_lockloanpg(struct vm_anon *);
+void		 uvm_anon_dropswap(struct vm_anon *);
+boolean_t	 uvm_anon_pagein(struct vm_anon *);
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */
