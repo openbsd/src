@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.2 2010/06/10 08:29:47 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.3 2010/06/14 08:32:45 reyk Exp $	*/
 /*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ struct ikev2_sa_proposal {
 #define IKEV2_SAP_LAST	0
 #define IKEV2_SAP_MORE	2
 
+#define IKEV2_SAPROTO_NONE		0	/* None */
 #define IKEV2_SAPROTO_IKE		1	/* IKEv2 */
 #define IKEV2_SAPROTO_AH		2	/* AH */
 #define IKEV2_SAPROTO_ESP		3	/* ESP */
