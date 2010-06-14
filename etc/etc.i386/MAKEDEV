@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.i386/MAKEDEV.md,v 1.54 2010/06/09 16:10:25 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.48 2010/06/14 14:07:49 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -255,7 +255,7 @@ ttyc*)
 	;;
 
 diskmap)
-	M diskmap b 91 0 640 operator
+	M diskmap c 91 0 640 operator
 	;;
 
 vscsi*)
