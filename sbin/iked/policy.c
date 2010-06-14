@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.6 2010/06/14 12:06:33 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.7 2010/06/14 21:12:56 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -188,25 +188,26 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	else
 		pol = sa->sa_policy;
 
-	if (initiator) {
-		localid = &sa->sa_iid;
-	} else {
-		localid = &sa->sa_rid;
-
-		sa->sa_staterequire = IKED_REQ_AUTH|IKED_REQ_SA;
-		if (pol != NULL && pol->pol_auth.auth_eap) {
-			sa->sa_staterequire |= IKED_REQ_CERT;
-		} else if (pol != NULL && pol->pol_auth.auth_method !=
-		    IKEV2_AUTH_SHARED_KEY_MIC) {
-			sa->sa_staterequire |= IKED_REQ_VALID|IKED_REQ_CERT;
-		}
-		if (sa->sa_hdr.sh_ispi == 0)
-			sa->sa_hdr.sh_ispi = ispi;
-		if (sa->sa_hdr.sh_rspi == 0)
-			sa->sa_hdr.sh_rspi = rspi;
+	sa->sa_staterequire = IKED_REQ_AUTH|IKED_REQ_SA;
+	if (pol != NULL && pol->pol_auth.auth_eap) {
+		sa->sa_staterequire |= IKED_REQ_CERT;
+	} else if (pol != NULL && pol->pol_auth.auth_method !=
+	    IKEV2_AUTH_SHARED_KEY_MIC) {
+		sa->sa_staterequire |= IKED_REQ_VALID|IKED_REQ_CERT;
 	}
 
-	if (ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {
+	if (sa->sa_hdr.sh_ispi == 0)
+		sa->sa_hdr.sh_ispi = ispi;
+	if (sa->sa_hdr.sh_rspi == 0)
+		sa->sa_hdr.sh_rspi = rspi;
+
+	if (initiator)
+		localid = &sa->sa_iid;
+	else
+		localid = &sa->sa_rid;
+
+	if (!ibuf_length(localid->id_buf) &&
+	    ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {
 		log_debug("%s: failed to get local id", __func__);
 		sa_free(env, sa);
 		return (NULL);

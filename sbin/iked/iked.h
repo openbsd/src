@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.9 2010/06/14 14:03:15 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.10 2010/06/14 21:12:56 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -142,8 +142,9 @@ struct iked_childsa {
 	u_int				 csa_dir;	/* in/out */
 
 	u_int64_t			 csa_peerspi;	/* peer relation */
-	u_int				 csa_loaded;	/* pfkey done */
-	u_int				 csa_rekey;	/* will be deleted */
+	u_int8_t			 csa_loaded;	/* pfkey done */
+	u_int8_t			 csa_rekey;	/* will be deleted */
+	u_int8_t			 csa_allocated;	/* from the kernel */
 
 	struct iked_spi			 csa_spi;
 
@@ -321,6 +322,7 @@ struct iked_sa {
 	struct group			*sa_dhgroup;	/* DH group */
 	struct ibuf			*sa_dhiexchange;
 	struct ibuf			*sa_dhrexchange;
+	struct ibuf			*sa_dhpeer;	/* pointer to i or r */
 
 	struct iked_hash		*sa_prf;	/* PRF alg */
 	struct iked_hash		*sa_integr;	/* integrity alg */
@@ -366,6 +368,8 @@ struct iked_message {
 
 	struct sockaddr_storage	 msg_peer;
 	socklen_t		 msg_peerlen;
+
+	struct iked_socket	*msg_sock;
 
 	int			 msg_fd;
 	int			 msg_response;

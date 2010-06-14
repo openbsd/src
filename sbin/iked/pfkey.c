@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.4 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.5 2010/06/14 21:12:56 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -980,7 +980,7 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
 		return (-1);
 
-	if (sa->csa_dir == IPSP_DIRECTION_IN || sa->csa_loaded)
+	if (sa->csa_allocated || sa->csa_loaded)
 		cmd = SADB_UPDATE;
 	else
 		cmd = SADB_ADD;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.4 2010/06/14 11:33:55 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.5 2010/06/14 21:12:56 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -211,18 +211,19 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 int
 ikev2_msg_send(struct iked *env, int fd, struct iked_message *msg)
 {
-	struct ibuf	*buf = msg->msg_data;
-	u_int32_t	 natt = 0x00000000;
+	struct ibuf		*buf = msg->msg_data;
+	u_int32_t		 natt = 0x00000000;
 	struct ike_header	*hdr;
 
 	if (buf == NULL || (hdr = ibuf_seek(msg->msg_data,
 	    msg->msg_offset, sizeof(*hdr))) == NULL)
 		return (-1);
 
-	log_info("%s: %s to %s from %s", __func__,
+	log_info("%s: %s from %s to %s, %ld bytes", __func__,
 	    print_map(hdr->ike_exchange, ikev2_exchange_map),
+	    print_host(&msg->msg_local, NULL, 0),
 	    print_host(&msg->msg_peer, NULL, 0),
-	    print_host(&msg->msg_local, NULL, 0));
+	    ibuf_length(buf));
 
 	if (msg->msg_natt || (msg->msg_sa && msg->msg_sa->sa_natt)) {
 		if (ibuf_prepend(buf, &natt, sizeof(natt)) == -1) {
@@ -565,9 +566,7 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa,
 	resp.msg_sa = sa;
 	TAILQ_INIT(&resp.msg_proposals);
 
-	sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
 	(void)ikev2_pld_parse(env, hdr, &resp, 0);
-	sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
 
 	ret = ikev2_msg_send(env, sa->sa_fd, &resp);
 

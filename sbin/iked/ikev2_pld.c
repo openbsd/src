@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.5 2010/06/14 14:03:15 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.6 2010/06/14 21:12:56 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -972,6 +972,7 @@ int
 ikev2_pld_e(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, off_t offset)
 {
+	struct iked_sa		*sa = msg->msg_sa;
 	struct ibuf		*e = NULL;
 	u_int8_t		*msgbuf = ibuf_data(msg->msg_data);
 	struct iked_message	 emsg;
@@ -985,8 +986,15 @@ ikev2_pld_e(struct iked *env, struct ikev2_payload *pld,
 	if ((e = ibuf_new(buf, len)) == NULL)
 		goto done;
 
-	if ((e = ikev2_msg_decrypt(env, msg->msg_sa,
-	    msg->msg_data, e)) == NULL)
+	if (ikev2_msg_frompeer(msg)) {
+		e = ikev2_msg_decrypt(env, msg->msg_sa, msg->msg_data, e);
+	} else {
+		sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
+		e = ikev2_msg_decrypt(env, msg->msg_sa, msg->msg_data, e);
+		sa->sa_hdr.sh_initiator = sa->sa_hdr.sh_initiator ? 0 : 1;
+	}
+
+	if (e == NULL)
 		goto done;
 
 	/*
