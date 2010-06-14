@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.499 2010/06/01 04:53:17 mglocker Exp $
+$OpenBSD: usbdevs,v 1.500 2010/06/14 13:04:44 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1143,6 +1143,7 @@ product CMOTECH CM5100P		0x5523	CM-5100P EVDO
 product CMOTECH CCU550		0x5533	CCU-550 EVDO
 product CMOTECH CNU550pro	0x5543	CNU-550pro EVDO
 product CMOTECH CGU628		0x6006	CGU-628
+product CMOTECH CNU680		0x6803	CNU-680
 product CMOTECH CGU628_DISK	0xf000	CGU-628 disk mode
 
 /* Conceptronic products */
