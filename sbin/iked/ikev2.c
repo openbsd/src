@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.11 2010/06/14 14:03:15 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.12 2010/06/14 14:17:49 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -836,13 +836,13 @@ ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
 		if ((hdr = ibuf_seek(buf, 0, sizeof(*hdr))) == NULL)
 			return (-1);
 		ispi = hdr->ike_ispi;
-		rspi = 0;
+		rspi = hdr->ike_rspi;
 		frompeer = 1;
 		src = &msg->msg_peer;
 		dst = &msg->msg_local;
 	} else {
 		ispi = htobe64(sa->sa_hdr.sh_ispi);
-		rspi = 0;
+		rspi = htobe64(sa->sa_hdr.sh_rspi);
 		frompeer = 0;
 		src = &msg->msg_local;
 		dst = &msg->msg_peer;
@@ -1190,15 +1190,17 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			return;
 		}
 
-		if (ikev2_sa_negotiate(sa,
-		    &sa->sa_policy->pol_proposals,
-		    &msg->msg_proposals, IKEV2_SAPROTO_ESP) != 0) {
-			log_debug("%s: no proposal chosen", __func__);
-			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
-			sa_state(env, sa, IKEV2_STATE_DELETE);
-			return;
-		} else
-			sa_stateflags(sa, IKED_REQ_SA);
+		if (!TAILQ_EMPTY(&msg->msg_proposals)) {
+			if (ikev2_sa_negotiate(sa,
+			    &sa->sa_policy->pol_proposals,
+			    &msg->msg_proposals, IKEV2_SAPROTO_ESP) != 0) {
+				log_debug("%s: no proposal chosen", __func__);
+				msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
+				sa_state(env, sa, IKEV2_STATE_DELETE);
+				return;
+			} else
+				sa_stateflags(sa, IKED_REQ_SA);
+		}
 
 		if (!sa_stateok(sa, IKEV2_STATE_AUTH_REQUEST) &&
 		    sa->sa_policy->pol_auth.auth_eap)
