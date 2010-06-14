@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.63 2010/05/20 11:31:34 yuo Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.64 2010/06/14 13:07:01 fkr Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -232,6 +232,7 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_CMOTECH, USB_PRODUCT_CMOTECH_CCU550 }, 0}, /* ??? */
 	{{ USB_VENDOR_CMOTECH, USB_PRODUCT_CMOTECH_CGU628 }, DEV_UMASS1},
 	{{ USB_VENDOR_CMOTECH, USB_PRODUCT_CMOTECH_CGU628_DISK }, 0},
+	{{ USB_VENDOR_CMOTECH, USB_PRODUCT_CMOTECH_CNU680 }, DEV_UMASS1},
 };
 
 #define umsm_lookup(v, p) ((const struct umsm_type *)usb_lookup(umsm_devs, v, p))
