@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.13 2010/06/11 23:44:37 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.14 2010/06/14 22:08:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -54,7 +54,7 @@ sub set_status
 		print "\n$status";
 	} else {
 		if ($self->progress->set_header($status)) {
-			$self->progress->message;
+			$self->progress->message('');
 		} else {
 			$| = 1;
 			print "$status...";
@@ -668,7 +668,7 @@ sub add_extra_info
 		OpenBSD::PackingElement::ExtraInfo->add($plist,
 		    $fullpkgpath, $cdrom, $ftp);
 	} else {
-		$state->warn("Package without FULLPKGPATH\n");
+		$state->errsay("Package without FULLPKGPATH");
 	}
 }
 
