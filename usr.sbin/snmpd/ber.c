@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.21 2010/06/08 17:52:47 martinh Exp $ */
+/*	$OpenBSD: ber.c,v 1.22 2010/06/14 13:46:08 martinh Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -101,7 +101,7 @@ ber_unlink_elements(struct ber_element *prev)
 
 	if ((prev->be_encoding == BER_TYPE_SEQUENCE ||
 	    prev->be_encoding == BER_TYPE_SET) &&
-	    prev->be_sub == NULL) {
+	    prev->be_sub != NULL) {
 		elm = prev->be_sub;
 		prev->be_sub = NULL;
 	} else {
@@ -1136,18 +1136,18 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 				return -1;
 		}
 		next = elm->be_sub;
-		do {
+		while (len > 0) {
 			r = ber_read_element(ber, next);
 			if (r == -1)
 				return -1;
-			if (next->be_next == NULL) {
+			len -= r;
+			if (len > 0 && next->be_next == NULL) {
 				if ((next->be_next = ber_get_element(0)) ==
 				    NULL)
 					return -1;
 			}
 			next = next->be_next;
-			len -= r;
-		} while (len > 0);
+		}
 		break;
 	}
 	return totlen;
