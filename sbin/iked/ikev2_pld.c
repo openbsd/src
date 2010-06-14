@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.4 2010/06/14 12:05:32 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.5 2010/06/14 14:03:15 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -711,8 +711,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 	switch (type) {
 	case IKEV2_N_NAT_DETECTION_SOURCE_IP:
 	case IKEV2_N_NAT_DETECTION_DESTINATION_IP:
-		if (ikev2_nat_detection(msg, md, sizeof(md), type,
-		    ikev2_msg_frompeer(msg)) == -1)
+		if (ikev2_nat_detection(msg, md, sizeof(md), type) == -1)
 			return (-1);
 		if (len != sizeof(md) || memcmp(buf, md, len) != 0) {
 			log_debug("%s: %s detected NAT, enabling "

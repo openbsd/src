@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.10 2010/06/14 12:05:32 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.11 2010/06/14 14:03:15 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	log_info("%s: %s from %s %s to %s policy '%s', %ld bytes", __func__,
 	    print_map(hdr->ike_exchange, ikev2_exchange_map),
-	    initiator ? "initiator" : "responder",
+	    initiator ? "responder" : "initiator",
 	    print_host(&msg->msg_peer, NULL, 0),
 	    print_host(&msg->msg_local, NULL, 0),
 	    msg->msg_policy->pol_name,
@@ -518,11 +518,11 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_SOURCE_IP);
-		len = ikev2_nat_detection(&req, NULL, 0, 0, 0);
+		len = ikev2_nat_detection(&req, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
 		if ((len = ikev2_nat_detection(&req, ptr, len,
-		    betoh16(n->n_type), 0)) == -1)
+		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);
 
@@ -534,11 +534,11 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_DESTINATION_IP);
-		len = ikev2_nat_detection(&req, NULL, 0, 0, 0);
+		len = ikev2_nat_detection(&req, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
 		if ((len = ikev2_nat_detection(&req, ptr, len,
-		    betoh16(n->n_type), 0)) == -1)
+		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);
 	}
@@ -810,7 +810,7 @@ ikev2_next_payload(struct ikev2_payload *pld, size_t length,
 
 ssize_t
 ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
-    u_int type, int response)
+    u_int type)
 {
 	EVP_MD_CTX		 ctx;
 	struct ike_header	*hdr;
@@ -820,20 +820,32 @@ ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
 	ssize_t			 ret = -1;
-	struct sockaddr_storage	*ss;
+	struct sockaddr_storage	*src, *dst, *ss;
 	u_int64_t		 rspi, ispi;
+	struct ibuf		*buf;
+	int			 frompeer = 0;
 
 	if (ptr == NULL)
 		return (mdlen);
 
-	if (!response || sa == NULL) {
-		if ((hdr = ibuf_seek(msg->msg_data, 0, sizeof(*hdr))) == NULL)
+	if (ikev2_msg_frompeer(msg)) {
+		if (msg->msg_decrypted)
+			buf = msg->msg_decrypted->msg_data;
+		else
+			buf = msg->msg_data;
+		if ((hdr = ibuf_seek(buf, 0, sizeof(*hdr))) == NULL)
 			return (-1);
 		ispi = hdr->ike_ispi;
 		rspi = 0;
+		frompeer = 1;
+		src = &msg->msg_peer;
+		dst = &msg->msg_local;
 	} else {
 		ispi = htobe64(sa->sa_hdr.sh_ispi);
 		rspi = 0;
+		frompeer = 0;
+		src = &msg->msg_local;
+		dst = &msg->msg_peer;
 	}
 
 	EVP_MD_CTX_init(&ctx);
@@ -841,26 +853,20 @@ ikev2_nat_detection(struct iked_message *msg, void *ptr, size_t len,
 
 	switch (type) {
 	case IKEV2_N_NAT_DETECTION_SOURCE_IP:
-		if (response)
-			ss = &msg->msg_local;
-		else
-			ss = &msg->msg_peer;
-
-		log_debug("%s: source %s %s %s", __func__,
+		log_debug("%s: %s source %s %s %s", __func__,
+		    frompeer ? "peer" : "local",
 		    print_spi(betoh64(ispi), 8),
 		    print_spi(betoh64(rspi), 8),
-		    print_host(ss, NULL, 0));
+		    print_host(src, NULL, 0));
+		ss = src;
 		break;
 	case IKEV2_N_NAT_DETECTION_DESTINATION_IP:
-		if (response)
-			ss = &msg->msg_peer;
-		else
-			ss = &msg->msg_local;
-
-		log_debug("%s: destination %s %s %s", __func__,
+		log_debug("%s: %s destination %s %s %s", __func__,
+		    frompeer ? "peer" : "local",
 		    print_spi(betoh64(ispi), 8),
 		    print_spi(betoh64(rspi), 8),
-		    print_host(ss, NULL, 0));
+		    print_host(dst, NULL, 0));
+		ss = dst;
 		break;
 	default:
 		goto done;
@@ -1237,6 +1243,8 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	    &msg->msg_local, msg->msg_locallen, 1)) == NULL)
 		goto done;
 
+	resp.msg_sa = sa;
+
 	/* IKE header */
 	if ((hdr = ikev2_add_header(buf, sa, 0,
 	    IKEV2_PAYLOAD_SA, IKEV2_EXCHANGE_IKE_SA_INIT,
@@ -1288,11 +1296,11 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_SOURCE_IP);
-		len = ikev2_nat_detection(msg, NULL, 0, 0, 1);
+		len = ikev2_nat_detection(&resp, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
-		if ((len = ikev2_nat_detection(msg, ptr, len,
-		    betoh16(n->n_type), 1)) == -1)
+		if ((len = ikev2_nat_detection(&resp, ptr, len,
+		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);
 
@@ -1304,16 +1312,16 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
 			goto done;
 		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_DESTINATION_IP);
-		len = ikev2_nat_detection(msg, NULL, 0, 0, 1);
+		len = ikev2_nat_detection(&resp, NULL, 0, 0);
 		if ((ptr = ibuf_advance(buf, len)) == NULL)
 			goto done;
-		if ((len = ikev2_nat_detection(msg, ptr, len,
-		    betoh16(n->n_type), 1)) == -1)
+		if ((len = ikev2_nat_detection(&resp, ptr, len,
+		    betoh16(n->n_type))) == -1)
 			goto done;
 		len += sizeof(*n);
 	}
 
-	if (env->sc_certreqtype) {
+	if (env->sc_certreqtype && (sa->sa_staterequire & IKED_REQ_CERT)) {
 		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_CERTREQ) == -1)
 			goto done;
 

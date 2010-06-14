@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.8 2010/06/14 11:33:55 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.9 2010/06/14 14:03:15 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -588,8 +588,7 @@ struct ibuf *
 	 ikev2_prfplus(struct iked_hash *, struct ibuf *, struct ibuf *,
 	    size_t);
 ssize_t	 ikev2_psk(struct iked_sa *, u_int8_t *, size_t, u_int8_t **);
-ssize_t	 ikev2_nat_detection(struct iked_message *, void *, size_t,
-	    u_int, int);
+ssize_t	 ikev2_nat_detection(struct iked_message *, void *, size_t, u_int);
 int	 ikev2_send_informational(struct iked *, struct iked_message *);
 int	 ikev2_send_ike_e(struct iked *, struct iked_sa *, struct ibuf *,
 	    u_int8_t, u_int8_t, int);
