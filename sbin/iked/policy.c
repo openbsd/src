@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.7 2010/06/14 21:12:56 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.8 2010/06/14 23:14:09 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -139,10 +139,17 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 void
 sa_stateflags(struct iked_sa *sa, u_int flags)
 {
+	u_int	require;
+
+	if (sa->sa_state > IKEV2_STATE_SA_INIT)
+		require = sa->sa_statevalid;
+	else
+		require = sa->sa_stateinit;
+
 	log_debug("%s: 0x%02x -> 0x%02x %s (required 0x%02x)", __func__,
 	    sa->sa_stateflags, sa->sa_stateflags | flags,
 	    print_bits(sa->sa_stateflags | flags,
-	    IKED_REQ_BITS), sa->sa_staterequire);
+	    IKED_REQ_BITS), require);
 
 	sa->sa_stateflags |= flags;
 }
@@ -150,18 +157,25 @@ sa_stateflags(struct iked_sa *sa, u_int flags)
 int
 sa_stateok(struct iked_sa *sa, int state)
 {
+	u_int	 require;
+
 	if (sa->sa_state < state)
 		return (0);
-	if (state == IKEV2_STATE_VALID ||
-	    state == IKEV2_STATE_EAP) {
-		log_debug("%s: flags 0x%02x require 0x%02x %s", __func__,
-		    (sa->sa_stateflags & sa->sa_staterequire),
-		    sa->sa_staterequire,
-		    print_bits(sa->sa_staterequire,
-		    IKED_REQ_BITS));
 
-		if ((sa->sa_stateflags & sa->sa_staterequire) !=
-		    sa->sa_staterequire)
+	if (state == IKEV2_STATE_SA_INIT)
+		require = sa->sa_stateinit;
+	else
+		require = sa->sa_statevalid;
+
+	if (state == IKEV2_STATE_SA_INIT ||
+	    state == IKEV2_STATE_VALID ||
+	    state == IKEV2_STATE_EAP) {
+		log_debug("%s: %s flags 0x%02x, require 0x%02x %s", __func__,
+		    print_map(state, ikev2_state_map),
+		    (sa->sa_stateflags & require), require,
+		    print_bits(require, IKED_REQ_BITS));
+
+		if ((sa->sa_stateflags & require) != require)
 			return (0);	/* not ready, ignore */
 	}
 	return (1);
@@ -173,6 +187,7 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 {
 	struct iked_sa	*sa;
 	struct iked_id	*localid;
+	u_int		 diff;
 
 	if ((ispi == 0 && rspi == 0) ||
 	    (sa = sa_lookup(env, ispi, rspi, initiator)) == NULL) {
@@ -188,23 +203,26 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	else
 		pol = sa->sa_policy;
 
-	sa->sa_staterequire = IKED_REQ_AUTH|IKED_REQ_SA;
+	sa->sa_statevalid = IKED_REQ_AUTH|IKED_REQ_SA;
 	if (pol != NULL && pol->pol_auth.auth_eap) {
-		sa->sa_staterequire |= IKED_REQ_CERT;
+		sa->sa_statevalid |= IKED_REQ_CERT;
 	} else if (pol != NULL && pol->pol_auth.auth_method !=
 	    IKEV2_AUTH_SHARED_KEY_MIC) {
-		sa->sa_staterequire |= IKED_REQ_VALID|IKED_REQ_CERT;
+		sa->sa_statevalid |= IKED_REQ_VALID|IKED_REQ_CERT;
 	}
+
+	if (initiator) {
+		localid = &sa->sa_iid;
+		diff = IKED_REQ_VALID|IKED_REQ_SA;
+		sa->sa_stateinit = sa->sa_statevalid & ~diff;
+		sa->sa_statevalid = sa->sa_statevalid & diff;
+	} else
+		localid = &sa->sa_rid;
 
 	if (sa->sa_hdr.sh_ispi == 0)
 		sa->sa_hdr.sh_ispi = ispi;
 	if (sa->sa_hdr.sh_rspi == 0)
 		sa->sa_hdr.sh_rspi = rspi;
-
-	if (initiator)
-		localid = &sa->sa_iid;
-	else
-		localid = &sa->sa_rid;
 
 	if (!ibuf_length(localid->id_buf) &&
 	    ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {

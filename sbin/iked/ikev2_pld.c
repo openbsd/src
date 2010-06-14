@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.6 2010/06/14 21:12:56 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.7 2010/06/14 23:14:09 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -510,10 +510,10 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
 
-	if (!sa->sa_hdr.sh_initiator && !msg->msg_response) {
+	if (!sa->sa_hdr.sh_initiator) {
 		certid = &sa->sa_icert;
 		id = &sa->sa_iid;
-	} else if (sa->sa_hdr.sh_initiator && msg->msg_response) {
+	} else if (sa->sa_hdr.sh_initiator) {
 		certid = &sa->sa_rcert;
 		id = &sa->sa_rid;
 	} else
@@ -535,6 +535,7 @@ int
 ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, off_t offset)
 {
+	struct iked_sa			*sa = msg->msg_sa;
 	struct ikev2_cert		 cert;
 	u_int8_t			*buf;
 	size_t				 len;
@@ -562,10 +563,12 @@ ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
 		return (-1);
 
 	/* Optional certreq for PSK */
-	msg->msg_sa->sa_staterequire |= IKED_REQ_CERT;
+	if (sa->sa_hdr.sh_initiator)
+		sa->sa_stateinit |= IKED_REQ_CERT;
+	else
+		sa->sa_statevalid |= IKED_REQ_CERT;
 
-	ca_setreq(env, &msg->msg_sa->sa_hdr, cert.cert_type,
-	    buf, len, PROC_CERT);
+	ca_setreq(env, &sa->sa_hdr, cert.cert_type, buf, len, PROC_CERT);
 
 	return (0);
 }

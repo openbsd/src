@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.10 2010/06/14 21:12:56 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.11 2010/06/14 23:14:09 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -306,7 +306,8 @@ struct iked_sa {
 
 	int				 sa_state;
 	u_int				 sa_stateflags;
-	u_int				 sa_staterequire;
+	u_int				 sa_stateinit;	/* SA_INIT */
+	u_int				 sa_statevalid;	/* IKE_AUTH */
 
 	int				 sa_cp;		/* XXX */
 

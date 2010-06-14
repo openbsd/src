@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.13 2010/06/14 21:12:56 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.14 2010/06/14 23:14:09 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -56,12 +56,15 @@ struct iked_sa *
 	    u_int8_t *, u_int8_t **, size_t *);
 
 void	 ikev2_recv(struct iked *, struct iked_message *);
+int	 ikev2_ike_auth(struct iked *, struct iked_sa *);
 
 void	 ikev2_init_recv(struct iked *, struct iked_message *,
 	    struct ike_header *);
 int	 ikev2_init_ike_sa(struct iked *, struct iked_policy *);
-int	 ikev2_init_ike_auth(struct iked *, struct iked_message *);
-int	 ikev2_init_done(struct iked *, struct iked_message *);
+int	 ikev2_init_ike_auth(struct iked *, struct iked_sa *);
+int	 ikev2_init_auth(struct iked *, struct iked_message *);
+int	 ikev2_init_done(struct iked *, struct iked_sa *,
+	    struct iked_message *);
 
 void	 ikev2_resp_recv(struct iked *, struct iked_message *,
 	    struct ike_header *);
@@ -213,14 +216,14 @@ ikev2_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
 
 		if (imsg->hdr.type == IMSG_CERTVALID) {
 			log_debug("%s: peer certificate is valid", __func__);
+			sa_stateflags(sa, IKED_REQ_VALID);
 			sa_state(env, sa, IKEV2_STATE_VALID);
-		} else
+		} else {
 			log_debug("%s: peer certificate is invalid", __func__);
+		}
 
-		sa_stateflags(sa, IKED_REQ_VALID);
-
-		if (ikev2_resp_ike_auth(env, sa) != 0)
-			log_debug("%s: failed to send auth response", __func__);
+		if (ikev2_ike_auth(env, sa) != 0)
+			log_debug("%s: failed to send ike auth", __func__);
 		break;
 	case IMSG_CERT:
 		if ((sa = ikev2_getimsgdata(env, imsg,
@@ -252,8 +255,8 @@ ikev2_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
 
 		sa_stateflags(sa, IKED_REQ_CERT);
 
-		if (ikev2_resp_ike_auth(env, sa) != 0)
-			log_debug("%s: failed to send auth response", __func__);
+		if (ikev2_ike_auth(env, sa) != 0)
+			log_debug("%s: failed to send ike auth", __func__);
 		break;
 	case IMSG_AUTH:
 		if ((sa = ikev2_getimsgdata(env, imsg,
@@ -279,8 +282,8 @@ ikev2_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
 
 		sa_stateflags(sa, IKED_REQ_AUTH);
 
-		if (ikev2_resp_ike_auth(env, sa) != 0)
-			log_debug("%s: failed to send auth response", __func__);
+		if (ikev2_ike_auth(env, sa) != 0)
+			log_debug("%s: failed to send ike auth", __func__);
 		break;
 	default:
 		return (-1);
@@ -383,6 +386,18 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		sa_free(env, sa);
 }
 
+int
+ikev2_ike_auth(struct iked *env, struct iked_sa *sa)
+{
+	if (sa->sa_hdr.sh_initiator) {
+		if (sa_stateok(sa, IKEV2_STATE_AUTH_SUCCESS))
+			return (ikev2_init_done(env, sa, NULL));
+		else
+			return (ikev2_init_ike_auth(env, sa));
+	}
+	return (ikev2_resp_ike_auth(env, sa));
+}
+
 void
 ikev2_init_recv(struct iked *env, struct iked_message *msg,
     struct ike_header *hdr)
@@ -425,10 +440,10 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 
 	switch (hdr->ike_exchange) {
 	case IKEV2_EXCHANGE_IKE_SA_INIT:
-		(void)ikev2_init_ike_auth(env, msg);
+		(void)ikev2_init_auth(env, msg);
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
-		(void)ikev2_init_done(env, msg);
+		(void)ikev2_init_done(env, sa, msg);
 		break;
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
 	default:
@@ -580,18 +595,9 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
 }
 
 int
-ikev2_init_ike_auth(struct iked *env, struct iked_message *msg)
+ikev2_init_auth(struct iked *env, struct iked_message *msg)
 {
 	struct iked_sa			*sa = msg->msg_sa;
-	struct iked_policy		*pol = sa->sa_policy;
-	struct ikev2_payload		*pld;
-	struct ikev2_cert		*cert;
-	struct ikev2_auth		*auth;
-	struct iked_id			*id, *certid;
-	struct ibuf			*e = NULL;
-	u_int8_t			 firstpayload;
-	int				 ret = -1;
-	ssize_t				 len;
 	struct ibuf			*authmsg;
 
 	if (sa == NULL)
@@ -608,11 +614,29 @@ ikev2_init_ike_auth(struct iked *env, struct iked_message *msg)
 		return (-1);
 	}
 
-	/* XXX this doesn't work with certificates */
-	ca_setauth(env, sa, authmsg, PROC_CERT);
+	if (ca_setauth(env, sa, authmsg, PROC_CERT) == -1) {
+		log_debug("%s: failed to get cert", __func__);
+		return (-1);
+	}
+
+	return (ikev2_init_ike_auth(env, sa));
+}	
+
+int
+ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
+{
+	struct iked_policy		*pol = sa->sa_policy;
+	struct ikev2_payload		*pld;
+	struct ikev2_cert		*cert;
+	struct ikev2_auth		*auth;
+	struct iked_id			*id, *certid;
+	struct ibuf			*e = NULL;
+	u_int8_t			 firstpayload;
+	int				 ret = -1;
+	ssize_t				 len;
 
 	if (!sa_stateok(sa, IKEV2_STATE_SA_INIT))
-		return (0);	/* ignore */
+		return (0);
 
 	if (!sa->sa_localauth.id_type) {
 		log_debug("%s: no local auth", __func__);
@@ -635,7 +659,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_message *msg)
 	len = ibuf_size(id->id_buf);
 
 	/* CERT payload */
-	if ((sa->sa_staterequire & IKED_REQ_CERT) &&
+	if ((sa->sa_stateinit & IKED_REQ_CERT) &&
 	    (certid->id_type != IKEV2_CERT_NONE)) {
 		if (ikev2_next_payload(pld, len,
 		    IKEV2_PAYLOAD_CERT) == -1)
@@ -648,6 +672,22 @@ ikev2_init_ike_auth(struct iked *env, struct iked_message *msg)
 		if (ibuf_cat(e, certid->id_buf) != 0)
 			goto done;
 		len = ibuf_size(certid->id_buf) + sizeof(*cert);
+
+		if (env->sc_certreqtype) {
+			if (ikev2_next_payload(pld, len,
+			    IKEV2_PAYLOAD_CERTREQ) == -1)
+				goto done;
+
+			/* CERTREQ payload */
+			if ((pld = ikev2_add_payload(e)) == NULL)
+				goto done;
+			if ((cert = ibuf_advance(e, sizeof(*cert))) == NULL)
+				goto done;
+			cert->cert_type = env->sc_certreqtype;
+			if (ikev2_add_buf(e, env->sc_certreq) == -1)
+				goto done;
+			len = ibuf_size(env->sc_certreq) + sizeof(*cert);
+		}
 	}
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_AUTH) == -1)
@@ -715,12 +755,12 @@ ikev2_init_ike_auth(struct iked *env, struct iked_message *msg)
 }
 
 int
-ikev2_init_done(struct iked *env, struct iked_message *msg)
+ikev2_init_done(struct iked *env, struct iked_sa *sa,
+    struct iked_message *msg)
 {
-	struct iked_sa	*sa = msg->msg_sa;
 	int		 ret;
 
-	if (!TAILQ_EMPTY(&msg->msg_proposals)) {
+	if (msg != NULL && !TAILQ_EMPTY(&msg->msg_proposals)) {
 		if (ikev2_sa_negotiate(sa,
 		    &sa->sa_policy->pol_proposals,
 		    &msg->msg_proposals, IKEV2_SAPROTO_ESP) != 0) {
@@ -1518,7 +1558,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		len += sizeof(*n);
 	}
 
-	if (env->sc_certreqtype && (sa->sa_staterequire & IKED_REQ_CERT)) {
+	if (env->sc_certreqtype && (sa->sa_statevalid & IKED_REQ_CERT)) {
 		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_CERTREQ) == -1)
 			goto done;
 
@@ -1622,7 +1662,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		len = ibuf_size(id->id_buf);
 
 		/* CERT payload */
-		if ((sa->sa_staterequire & IKED_REQ_CERT) &&
+		if ((sa->sa_statevalid & IKED_REQ_CERT) &&
 		    (certid->id_type != IKEV2_CERT_NONE)) {
 			if (ikev2_next_payload(pld, len,
 			    IKEV2_PAYLOAD_CERT) == -1)
@@ -1743,7 +1783,7 @@ ikev2_resp_ike_eap(struct iked *env, struct iked_sa *sa, struct ibuf *eapmsg)
 		goto done;
 	len = ibuf_size(id->id_buf);
 
-	if ((sa->sa_staterequire & IKED_REQ_CERT) &&
+	if ((sa->sa_statevalid & IKED_REQ_CERT) &&
 	    (certid->id_type != IKEV2_CERT_NONE)) {
 		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_CERT) == -1)
 			goto done;
