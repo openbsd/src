@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.9 2010/06/11 23:51:16 espie Exp $
+# $OpenBSD: Term.pm,v 1.10 2010/06/14 08:17:37 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -74,6 +74,13 @@ sub init
 	$self->{glitch} = $self->{terminal}->Tputs("xn", 1);
 	$self->{cleareol} = $self->{terminal}->Tputs("ce", 1);
 	$self->{hpa} = $self->{terminal}->Tputs("ch", 1);
+	if (!defined $self->{hpa}) {
+		# XXX this works with screen and tmux
+		$self->{cuf} = $self->{terminal}->Tputs("RI", 1);
+		if (defined $self->{cuf}) {
+			$self->{hpa} = "\r".$self->{cuf};
+		}
+	}
 }
 
 my $wsz_format = 'SSSS';
