@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.3 2010/06/10 14:08:37 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.4 2010/06/14 08:55:59 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ ikev1_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
 		log_debug("%s: message length %d", __func__, len);
 
 		ikev1_recv(env, &msg);
-		message_cleanup(env, &msg);
+		ikev2_msg_cleanup(env, &msg);
 		return (0);
 	default:
 		break;
@@ -158,7 +158,7 @@ ikev1_msg_cb(int fd, short event, void *arg)
 	ikev1_recv(env, &msg);
 
  done:
-	message_cleanup(env, &msg);
+	ikev2_msg_cleanup(env, &msg);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2010/06/10 09:14:38 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2010/06/14 08:55:59 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -724,15 +724,6 @@ print_proto(u_int8_t proto)
 
 
 	return (buf[idx++]);
-}
-
-void
-message_cleanup(struct iked *env, struct iked_message *msg)
-{
-	if (msg->msg_data != NULL) {
-		ibuf_release(msg->msg_data);
-		msg->msg_data = NULL;
-	}
 }
 
 int

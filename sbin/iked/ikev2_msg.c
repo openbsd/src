@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.2 2010/06/14 08:10:32 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.3 2010/06/14 08:55:59 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ ikev2_msg_cb(int fd, short event, void *arg)
 	ikev2_recv(env, &msg);
 
  done:
-	message_cleanup(env, &msg);
+	ikev2_msg_cleanup(env, &msg);
 }
 
 struct ibuf *
@@ -120,8 +120,19 @@ ikev2_msg_init(struct iked *env, struct iked_message *msg,
 	msg->msg_response = response ? 1 : 0;
 	msg->msg_fd = -1;
 	msg->msg_data = ibuf_static();
+	TAILQ_INIT(&msg->msg_proposals);
 
 	return (msg->msg_data);
+}
+
+void
+ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
+{
+	if (msg->msg_data != NULL) {
+		ibuf_release(msg->msg_data);
+		msg->msg_data = NULL;
+	}
+	config_free_proposals(&msg->msg_proposals, 0);
 }
 
 int
@@ -190,7 +201,7 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 	(void)ikev2_msg_send(env, msg->msg_fd, &resp);
 
  done:
-	message_cleanup(env, &resp);
+	ikev2_msg_cleanup(env, &resp);
 #endif
 
 	/* Always fail */
@@ -563,7 +574,7 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa,
  done:
 	/* e is cleaned up by the calling function */
 	*ep = e;
-	message_cleanup(env, &resp);
+	ikev2_msg_cleanup(env, &resp);
 
 	return (ret);
 }

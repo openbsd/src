@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.6 2010/06/14 08:10:32 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.7 2010/06/14 08:55:59 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -605,6 +605,7 @@ struct ibuf *
 	 ikev2_msg_init(struct iked *, struct iked_message *,
 	    struct sockaddr_storage *, socklen_t,
 	    struct sockaddr_storage *, socklen_t, int);
+void	 ikev2_msg_cleanup(struct iked *, struct iked_message *);
 u_int32_t
 	 ikev2_msg_id(struct iked *, struct iked_sa *, int);
 struct ibuf
@@ -715,7 +716,6 @@ char	*get_string(u_int8_t *, size_t);
 int	 print_id(struct iked_id *, off_t, char *, size_t);
 const char *
 	 print_proto(u_int8_t);
-void	 message_cleanup(struct iked *, struct iked_message *);
 int	 expand_string(char *, size_t, const char *, const char *);
 u_int8_t *string2unicode(const char *, size_t *);
 

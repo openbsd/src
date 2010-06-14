@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.7 2010/06/14 08:10:32 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.8 2010/06/14 08:55:59 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ ikev2_dispatch_ikev1(int fd, struct iked_proc *p, struct imsg *imsg)
 		log_debug("%s: message length %d", __func__, len);
 
 		ikev2_recv(env, &msg);
-		message_cleanup(env, &msg);
+		ikev2_msg_cleanup(env, &msg);
 		return (0);
 	default:
 		break;
@@ -615,7 +615,7 @@ ikev2_init_ike_sa(struct iked *env, struct iked_policy *pol)
  done:
 	if (ret == -1)
 		sa_free(env, sa);
-	message_cleanup(env, &req);
+	ikev2_msg_cleanup(env, &req);
 
 	return (ret);
 }
@@ -1295,7 +1295,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	ret = ikev2_msg_send(env, msg->msg_fd, &resp);
 
  done:
-	message_cleanup(env, &resp);
+	ikev2_msg_cleanup(env, &resp);
 
 	return (ret);
 }
@@ -1766,7 +1766,7 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 
  done:
 	ibuf_release(e);
-	message_cleanup(env, &resp);
+	ikev2_msg_cleanup(env, &resp);
 
 	return (ret);
 }
