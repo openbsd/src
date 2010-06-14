@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.174 2010/06/01 10:11:05 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.175 2010/06/14 10:03:33 thib Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2250,74 +2250,6 @@ scsi_decode_sense(struct scsi_sense_data *sense, int flag)
 	}
 
 	return (rqsbuf);
-}
-
-void
-scsi_buf_enqueue(struct buf *head, struct buf *bp, struct mutex *mtx)
-{
-	struct buf *dp;
-
-	mtx_enter(mtx);
-	dp = head;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	mtx_leave(mtx);
-}
-
-struct buf *
-scsi_buf_dequeue(struct buf *head, struct mutex *mtx)
-{
-	struct buf *bp;
-
-	mtx_enter(mtx);
-	bp = head->b_actf;
-	if (bp != NULL)
-		head->b_actf = bp->b_actf;
-	if (head->b_actf == NULL)
-		head->b_actb = &head->b_actf;
-	mtx_leave(mtx);
-
-	return (bp);
-}
-
-void
-scsi_buf_requeue(struct buf *head, struct buf *bp, struct mutex *mtx)
-{
-	mtx_enter(mtx);
-	bp->b_actf = head->b_actf;
-	head->b_actf = bp;
-	if (bp->b_actf == NULL)
-		head->b_actb = &bp->b_actf;
-	mtx_leave(mtx);
-}
-
-int
-scsi_buf_canqueue(struct buf *head, struct mutex *mtx)
-{
-	int rv;
-
-	mtx_enter(mtx);
-	rv = (head->b_actf != NULL);
-	mtx_leave(mtx);
-
-	return (rv);
-}
-
-void
-scsi_buf_killqueue(struct buf *head, struct mutex *mtx)
-{
-	struct buf *bp;
-	int s;
-
-	while ((bp = scsi_buf_dequeue(head, mtx)) != NULL) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		s = splbio();
-		biodone(bp);
-		splx(s);
-	}
 }
 
 #ifdef SCSIDEBUG
