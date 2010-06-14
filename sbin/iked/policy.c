@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.4 2010/06/14 08:10:32 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.5 2010/06/14 11:33:55 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -169,9 +169,10 @@ sa_stateok(struct iked_sa *sa, int state)
 
 struct iked_sa *
 sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
-    u_int initiator, struct iked_policy *policy)
+    u_int initiator, struct iked_policy *pol)
 {
 	struct iked_sa	*sa;
+	struct iked_id	*localid;
 
 	if ((ispi == 0 && rspi == 0) ||
 	    (sa = sa_lookup(env, ispi, rspi, initiator)) == NULL) {
@@ -183,13 +184,19 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 		return (NULL);
 	}
 	if (sa->sa_policy == NULL)
-		sa->sa_policy = policy;
+		sa->sa_policy = pol;
+	else
+		pol = sa->sa_policy;
 
-	if (!initiator) {
+	if (initiator) {
+		localid = &sa->sa_iid;
+	} else {
+		localid = &sa->sa_rid;
+
 		sa->sa_staterequire = IKED_REQ_AUTH|IKED_REQ_SA;
-		if (policy != NULL && policy->pol_auth.auth_eap) {
+		if (pol != NULL && pol->pol_auth.auth_eap) {
 			sa->sa_staterequire |= IKED_REQ_CERT;
-		} else if (policy != NULL && policy->pol_auth.auth_method !=
+		} else if (pol != NULL && pol->pol_auth.auth_method !=
 		    IKEV2_AUTH_SHARED_KEY_MIC) {
 			sa->sa_staterequire |= IKED_REQ_VALID|IKED_REQ_CERT;
 		}
@@ -197,6 +204,12 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 			sa->sa_hdr.sh_ispi = ispi;
 		if (sa->sa_hdr.sh_rspi == 0)
 			sa->sa_hdr.sh_rspi = rspi;
+	}
+
+	if (ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {
+		log_debug("%s: failed to get local id", __func__);
+		sa_free(env, sa);
+		return (NULL);
 	}
 
 	/* Re-insert node into the tree */

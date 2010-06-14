@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.3 2010/06/14 08:55:59 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.4 2010/06/14 11:33:55 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -803,6 +803,9 @@ ikev2_msg_frompeer(struct iked_message *msg)
 {
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ike_header	*hdr;
+
+	if (msg->msg_decrypted)
+		msg = msg->msg_decrypted;
 
 	if (sa == NULL ||
 	    (hdr = ibuf_seek(msg->msg_data, 0, sizeof(*hdr))) == NULL)

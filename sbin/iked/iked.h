@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.7 2010/06/14 08:55:59 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.8 2010/06/14 11:33:55 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -380,6 +380,8 @@ struct iked_message {
 	/* Parsed information */
 	struct iked_proposals	 msg_proposals;
 	struct iked_spi		 msg_rekey;
+	struct ibuf		*msg_nonce;	/* dh NONCE */
+	struct ibuf		*msg_ke;	/* dh key exchange */
 
 	/* Parse stack */
 	struct iked_proposal	*msg_prop;
@@ -579,6 +581,7 @@ pid_t	 ikev2(struct iked *, struct iked_proc *);
 void	 ikev2_recv(struct iked *, struct iked_message *);
 int	 ikev2_sa_negotiate(struct iked_sa *, struct iked_proposals *,
 	    struct iked_proposals *, u_int8_t);
+int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
 	    u_int8_t, u_int64_t, u_int64_t *, int);
 struct ibuf *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.2 2010/06/14 08:10:32 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.3 2010/06/14 11:33:55 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -228,7 +228,12 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	u_int32_t			 spi32;
 	u_int64_t			 spi = 0, spi64;
 	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
-	struct iked_sa			*sa = msg->msg_sa;
+	struct iked_proposals		*props;
+
+	if (msg->msg_decrypted)
+		props = &msg->msg_decrypted->msg_proposals;
+	else
+		props = &msg->msg_proposals;
 
 	memcpy(&sap, msgbuf + offset, sizeof(sap));
 	offset += sizeof(sap);
@@ -260,7 +265,7 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	    sap.sap_transforms, print_spi(spi, sap.sap_spisize));
 
 	if (ikev2_msg_frompeer(msg)) {
-		if ((msg->msg_prop = config_add_proposal(&msg->msg_proposals,
+		if ((msg->msg_prop = config_add_proposal(props,
 		    sap.sap_proposalnr, sap.sap_protoid)) == NULL) {
 			log_debug("%s: invalid proposal", __func__);
 			return (-1);
@@ -277,20 +282,6 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 		log_debug("%s: invalid proposal transforms", __func__);
 		return (-1);
 	}
-
-	if (!ikev2_msg_frompeer(msg))
-		return (0);
-
-	/* XXX we need a better way to get this */
-	if (ikev2_sa_negotiate(sa,
-	    &msg->msg_policy->pol_proposals,
-	    &msg->msg_proposals, msg->msg_decrypted ?
-	    IKEV2_SAPROTO_ESP : IKEV2_SAPROTO_IKE) != 0) {
-		log_debug("%s: no proposal chosen", __func__);
-		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
-		return (-1);
-	} else if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
-		sa_stateflags(sa, IKED_REQ_SA);
 
 	return (0);
 }
@@ -423,8 +414,8 @@ ikev2_pld_ke(struct iked *env, struct ikev2_payload *pld,
 	print_hex(buf, 0, len);
 
 	if (ikev2_msg_frompeer(msg)) {
-		if ((msg->msg_sa->sa_dhiexchange =
-		    ibuf_new(buf, len)) == NULL) {
+		ibuf_release(msg->msg_ke);
+		if ((msg->msg_ke = ibuf_new(buf, len)) == NULL) {
 			log_debug("%s: failed to get exchange", __func__);
 			return (-1);
 		}
@@ -671,27 +662,16 @@ ikev2_pld_nonce(struct iked *env, struct ikev2_payload *pld,
 	size_t		 len;
 	u_int8_t	*buf;
 	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
-	struct iked_sa	*sa = msg->msg_sa;
-	struct ibuf	*peernonce;
 
 	buf = msgbuf + offset;
 	len = betoh16(pld->pld_length) - sizeof(*pld);
 	print_hex(buf, 0, len);
 
 	if (ikev2_msg_frompeer(msg)) {
-		if ((peernonce = ibuf_new(buf, len)) == NULL) {
+		ibuf_release(msg->msg_nonce);
+		if ((msg->msg_nonce = ibuf_new(buf, len)) == NULL) {
 			log_debug("%s: failed to get peer nonce", __func__);
 			return (-1);
-		}
-
-		log_debug("%s: updating peer nonce", __func__);
-
-		if (sa->sa_hdr.sh_initiator) {
-			ibuf_release(sa->sa_rnonce);
-			sa->sa_rnonce = peernonce;
-		} else {
-			ibuf_release(sa->sa_inonce);
-			sa->sa_inonce = peernonce;
 		}
 	}
 
