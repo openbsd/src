@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.194 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.195 2010/06/15 04:31:46 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -165,6 +165,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	struct scsi_link *sc_link = sa->sa_sc_link;
 	int sd_autoconf = scsi_autoconf | SCSI_SILENT |
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE;
+	struct dk_cache dkc;
 	int error, result;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
@@ -250,6 +251,12 @@ sdattach(struct device *parent, struct device *self, void *aux)
 #endif
 	}
 	printf("\n");
+
+	memset(&dkc, 0, sizeof(dkc));
+	if (sd_ioctl_cache(sc, DIOCGCACHE, &dkc) == 0 && dkc.wrcache == 0) {
+		dkc.wrcache = 1;
+		sd_ioctl_cache(sc, DIOCSCACHE, &dkc);
+	}
 
 	/*
 	 * Establish a shutdown hook so that we can ensure that
@@ -963,12 +970,14 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			    (struct dk_inquiry *)addr);
 		goto exit;
 
-	case DIOCGCACHE:
 	case DIOCSCACHE:
-		error = scsi_do_ioctl(sc->sc_link, cmd, addr, flag);
-		if (error == ENOTTY)
-			error = sd_ioctl_cache(sc, cmd,
-			    (struct dk_cache *)addr);
+		if (!ISSET(flag, FWRITE)) {
+			error = EBADF;
+			goto exit;
+		}
+		/* FALLTHROUGH */
+	case DIOCGCACHE:
+		error = sd_ioctl_cache(sc, cmd, (struct dk_cache *)addr);
 		goto exit;
 
 	default:
@@ -1016,13 +1025,19 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	int big;
 	int rv;
 
+	/* see if the adapter has special handling */
+	rv = scsi_do_ioctl(sc->sc_link, cmd, (caddr_t)dkc, 0);
+	if (rv != ENOTTY) {
+		return (rv);
+	}
+
 	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK|M_CANFAIL);
 	if (buf == NULL)
 		return (ENOMEM);
 
 	rv = scsi_do_mode_sense(sc->sc_link, PAGE_CACHING_MODE,
 	    buf, (void **)&mode, NULL, NULL, NULL,
-	    sizeof(*mode) - 4, SCSI_SILENT, &big);
+	    sizeof(*mode) - 4, scsi_autoconf | SCSI_SILENT, &big);
 	if (rv != 0)
 		goto done;
 
@@ -1056,10 +1071,10 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 
 		if (big) {
 			rv = scsi_mode_select_big(sc->sc_link, SMS_PF,
-			    &buf->hdr_big, SCSI_SILENT, 20000);
+			    &buf->hdr_big, scsi_autoconf | SCSI_SILENT, 20000);
 		} else {
 			rv = scsi_mode_select(sc->sc_link, SMS_PF,
-			    &buf->hdr, SCSI_SILENT, 20000);
+			    &buf->hdr, scsi_autoconf | SCSI_SILENT, 20000);
 		}
 		break;
 	}
