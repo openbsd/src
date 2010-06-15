@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.5 2010/06/15 08:30:37 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.6 2010/06/15 08:35:11 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -71,7 +71,7 @@ sub _print
 sub _errprint
 {
 	my $self = shift;
-	$self->progress->_errprint(@_);
+	$self->progress->errprint(@_);
 }
 
 package OpenBSD::AddCreateDelete;
