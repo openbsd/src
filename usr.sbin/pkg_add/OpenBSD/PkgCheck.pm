@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.16 2010/06/15 08:45:15 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.17 2010/06/15 08:53:55 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -568,6 +568,13 @@ sub localbase_check
 	find(sub {
 		$state->progress->working(1024);
 		if (-d $_) {
+			if ($File::Find::name eq 
+			    OpenBSD::Paths->localbase."/lost+found") {
+				$state->say("fsck(8) info found: #1", 
+				    $File::Find::name);
+				$File::Find::prune = 1;
+				return;
+			}
 			return if defined $state->{known}{$File::Find::name};
 			if (-l $_) {
 				return if $state->{known}{$File::Find::dir}{$_};
