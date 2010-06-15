@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.205 2010/06/15 04:11:34 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.206 2010/06/15 10:59:52 dlg Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1967,7 +1967,13 @@ sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_scsi_ioctl cmd: %#x\n",
 	    DEVNAME((struct sr_softc *)link->adapter_softc), cmd);
 
-	return (sr_ioctl(link->adapter_softc, cmd, addr));
+	switch (cmd) {
+	case DIOCGCACHE:
+	case DIOCSCACHE:
+		return (EOPNOTSUPP);
+	default:
+		return (sr_ioctl(link->adapter_softc, cmd, addr));
+	}
 }
 
 int
