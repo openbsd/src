@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.150 2010/06/15 04:11:34 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.151 2010/06/15 04:30:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -140,6 +140,7 @@ int			mpi_portenable(struct mpi_softc *);
 int			mpi_cfg_coalescing(struct mpi_softc *);
 void			mpi_get_raid(struct mpi_softc *);
 int			mpi_fwupload(struct mpi_softc *);
+int			mpi_scsi_probe_virtual(struct scsi_link *);
 
 int			mpi_eventnotify(struct mpi_softc *);
 void			mpi_eventnotify_done(struct mpi_ccb *);
@@ -291,6 +292,41 @@ mpi_attach(struct mpi_softc *sc)
 
 	rw_init(&sc->sc_lock, "mpi_lock");
 
+	/* get raid pages */
+	mpi_get_raid(sc);
+#if NBIO > 0
+	if (sc->sc_flags & MPI_F_RAID) {
+		if (bio_register(&sc->sc_dev, mpi_ioctl) != 0)
+			panic("%s: controller registration failed",
+			    DEVNAME(sc));
+		else {
+			if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC,
+			    2, 0, &sc->sc_cfg_hdr) != 0) {
+				panic("%s: can't get IOC page 2 hdr",
+				    DEVNAME(sc));
+			}
+
+			sc->sc_vol_page = malloc(sc->sc_cfg_hdr.page_length * 4,
+			    M_TEMP, M_WAITOK | M_CANFAIL);
+			if (sc->sc_vol_page == NULL) {
+				panic("%s: can't get memory for IOC page 2, "
+				    "bio disabled", DEVNAME(sc));
+			}
+
+			if (mpi_cfg_page(sc, 0, &sc->sc_cfg_hdr, 1,
+			    sc->sc_vol_page,
+			    sc->sc_cfg_hdr.page_length * 4) != 0) {
+				panic("%s: can't get IOC page 2", DEVNAME(sc));
+			}
+
+			sc->sc_vol_list = (struct mpi_cfg_raid_vol *)
+			    (sc->sc_vol_page + 1);
+ 
+			sc->sc_ioctl = mpi_ioctl;
+		}
+	}
+#endif /* NBIO > 0 */
+
 	/* we should be good to go now, attach scsibus */
 	sc->sc_link.device = &mpi_dev;
 	sc->sc_link.adapter = &mpi_switch;
@@ -307,9 +343,6 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
 	    &saa, scsiprint);
 
-	/* get raid pages */
-	mpi_get_raid(sc);
-
 	/* do domain validation */
 	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SCSI)
 		mpi_run_ppr(sc);
@@ -318,34 +351,9 @@ mpi_attach(struct mpi_softc *sc)
 	mpi_write(sc, MPI_INTR_MASK, MPI_INTR_MASK_DOORBELL);
 
 #if NBIO > 0
-	if (sc->sc_flags & MPI_F_RAID) {
-		if (bio_register(&sc->sc_dev, mpi_ioctl) != 0)
-			panic("%s: controller registration failed",
-			    DEVNAME(sc));
-		else {
-			if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC,
-			    2, 0, &sc->sc_cfg_hdr) != 0) {
-				printf("%s: can't get IOC page 2 hdr, bio "
-				    "disabled\n", DEVNAME(sc));
-				goto done;
-			}
-			sc->sc_vol_page = malloc(sc->sc_cfg_hdr.page_length * 4,
-			    M_TEMP, M_WAITOK | M_CANFAIL);
-			if (sc->sc_vol_page == NULL) {
-				printf("%s: can't get memory for IOC page 2, "
-				    "bio disabled\n", DEVNAME(sc));
-				goto done;
-			}
-			sc->sc_vol_list = (struct mpi_cfg_raid_vol *)
-			    (sc->sc_vol_page + 1);
-
-			sc->sc_ioctl = mpi_ioctl;
-		}
-	}
 #ifndef SMALL_KERNEL
 	mpi_create_sensors(sc);
 #endif /* SMALL_KERNEL */
-done:
 #endif /* NBIO > 0 */
 
 	return (0);
@@ -1528,12 +1536,53 @@ mpi_minphys(struct buf *bp, struct scsi_link *sl)
 }
 
 int
+mpi_scsi_probe_virtual(struct scsi_link *link)
+{
+	struct mpi_softc		*sc = link->adapter_softc;
+	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_raid_vol_pg0	*rp0;
+	int				len;
+	int				rv;
+
+	if (!ISSET(sc->sc_flags, MPI_F_RAID))
+		return (0);
+
+	if (link->lun > 0)
+		return (0);
+
+	rv = mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL,
+	    0, link->target, MPI_PG_POLL, &hdr);
+	if (rv != 0)
+		return (rv);
+
+	len = hdr.page_length * 4;
+	rp0 = malloc(len, M_TEMP, M_NOWAIT);
+	if (rp0 == NULL)
+		return (ENOMEM);
+
+	rv = mpi_req_cfg_page(sc, link->target, MPI_PG_POLL, &hdr, 1, rp0, len);
+	if (rv == 0)
+		SET(link->flags, SDEV_VIRTUAL);
+
+	free(rp0, M_TEMP);
+	return (0);
+}
+
+int
 mpi_scsi_probe(struct scsi_link *link)
 {
 	struct mpi_softc		*sc = link->adapter_softc;
 	struct mpi_ecfg_hdr		ehdr;
 	struct mpi_cfg_sas_dev_pg0	pg0;
 	u_int32_t			address;
+	int				rv;
+
+	rv = mpi_scsi_probe_virtual(link);
+	if (rv != 0)
+		return (rv);
+
+	if (ISSET(link->flags, SDEV_VIRTUAL))
+		return (0);
 
 	if (sc->sc_porttype != MPI_PORTFACTS_PORTTYPE_SAS)
 		return (0);
@@ -2403,11 +2452,9 @@ mpi_get_raid(struct mpi_softc *sc)
 {
 	struct mpi_cfg_hdr		hdr;
 	struct mpi_cfg_ioc_pg2		*vol_page;
-	struct mpi_cfg_raid_vol		*vol_list, *vol;
+	struct mpi_cfg_raid_vol		*vol_list;
 	size_t				pagelen;
 	u_int32_t			capabilities;
-	struct scsi_link		*link;
-	int				i;
 
 	DNPRINTF(MPI_D_RAID, "%s: mpi_get_raid\n", DEVNAME(sc));
 
@@ -2447,30 +2494,8 @@ mpi_get_raid(struct mpi_softc *sc)
 		goto out;
 	}
 
-	if ((capabilities & MPI_CFG_IOC_2_CAPABILITIES_RAID) == 0 ||
-	    (vol_page->active_vols == 0))
-		goto out;
-
-	sc->sc_flags |= MPI_F_RAID;
-
-	for (i = 0; i < vol_page->active_vols; i++) {
-		vol = &vol_list[i];
-
-		DNPRINTF(MPI_D_RAID, "%s:   id: %d bus: %d ioc: %d pg: %d\n",
-		    DEVNAME(sc), vol->vol_id, vol->vol_bus, vol->vol_ioc,
-		    vol->vol_page);
-		DNPRINTF(MPI_D_RAID, "%s:   type: 0x%02x flags: 0x%02x\n",
-		    DEVNAME(sc), vol->vol_type, vol->flags);
-
-		if (vol->vol_ioc != sc->sc_ioc_number || vol->vol_bus != 0)
-			continue;
-
-		link = sc->sc_scsibus->sc_link[vol->vol_id][0];
-		if (link == NULL)
-			continue;
-
-		link->flags |= SDEV_VIRTUAL;
-	}
+	if (ISSET(capabilities, MPI_CFG_IOC_2_CAPABILITIES_RAID))
+		sc->sc_flags |= MPI_F_RAID;
 
 out:
 	free(vol_page, M_TEMP);
@@ -2713,7 +2738,6 @@ mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	struct mpi_softc	*sc = (struct mpi_softc *)link->adapter_softc;
 	struct mpi_ccb		*ccb;
 	int			len, rv;
-	u_int32_t		address;
 	struct mpi_cfg_hdr	hdr;
 	struct mpi_cfg_raid_vol_pg0 *rpg0;
 	int			enabled;
@@ -2721,18 +2745,19 @@ mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	struct mpi_msg_raid_action_reply *rep;
 	struct mpi_raid_settings settings;
 
-	address = link->target;
-
 	rv = mpi_req_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_RAID_VOL, 0,
-	    address, 0, &hdr);
+	    link->target, MPI_PG_POLL, &hdr);
 	if (rv != 0)
 		return (EIO);
 
-	len = sizeof *rpg0 + sc->sc_vol_page->max_physdisks *
+	len = sizeof(*rpg0) + sc->sc_vol_page->max_physdisks *
 	    sizeof(struct mpi_cfg_raid_vol_pg0_physdisk);
-	rpg0 = malloc(len, M_TEMP, M_WAITOK);
+	rpg0 = malloc(len, M_TEMP, M_NOWAIT);
+	if (rpg0 == NULL)
+		return (ENOMEM);
 
-	if (mpi_req_cfg_page(sc, address, 0, &hdr, 1, rpg0, len) != 0) {
+	if (mpi_req_cfg_page(sc, link->target, MPI_PG_POLL, &hdr, 1,
+	    rpg0, len) != 0) {
 		DNPRINTF(MPI_D_RAID, "%s: can't get RAID vol cfg page 0\n",
 		    DEVNAME(sc));
 		rv = EIO;
@@ -2765,7 +2790,7 @@ mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 		    htole16(MPI_CFG_RAID_VOL_0_SETTINGS_WRITE_CACHE_EN));
 	}
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
 		rv = ENOMEM;
 		goto done;
@@ -2779,9 +2804,11 @@ mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	req->msg_context = htole32(ccb->ccb_id);
 
 	memcpy(&req->data_word, &settings, sizeof(req->data_word));
-
 	ccb->ccb_done = mpi_empty_done;
-	mpi_wait(sc, ccb);
+	if (mpi_poll(sc, ccb, 50000) != 0) {
+		rv = EIO;
+		goto done;
+	}
 
 	rep = (struct mpi_msg_raid_action_reply *)ccb->ccb_rcb;
 	if (rep == NULL)
