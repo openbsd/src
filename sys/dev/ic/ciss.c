@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.54 2010/06/03 01:03:55 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.55 2010/06/15 04:11:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -69,8 +69,7 @@ struct cfdriver ciss_cd = {
 };
 
 void	ciss_scsi_cmd(struct scsi_xfer *xs);
-int	ciss_scsi_ioctl(struct scsi_link *link, u_long cmd,
-    caddr_t addr, int flag, struct proc *p);
+int	ciss_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void	cissminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter ciss_switch = {
@@ -957,8 +956,7 @@ ciss_heartbeat(void *v)
 }
 
 int
-ciss_scsi_ioctl(struct scsi_link *link, u_long cmd,
-    caddr_t addr, int flag, struct proc *p)
+ciss_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 #if NBIO > 0
 	return ciss_ioctl(link->adapter_softc, cmd, addr);

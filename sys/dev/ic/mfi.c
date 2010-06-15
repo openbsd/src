@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.105 2010/05/20 00:55:17 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.106 2010/06/15 04:11:34 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -56,7 +56,7 @@ struct cfdriver mfi_cd = {
 };
 
 void	mfi_scsi_cmd(struct scsi_xfer *);
-int	mfi_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
+int	mfi_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void	mfiminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter mfi_switch = {
@@ -1261,8 +1261,7 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 }
 
 int
-mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
-    struct proc *p)
+mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 	struct mfi_softc	*sc = (struct mfi_softc *)link->adapter_softc;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.205 2010/06/03 12:04:39 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.206 2010/06/15 04:11:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -93,7 +93,7 @@ struct cfdriver ami_cd = {
 };
 
 void	ami_scsi_cmd(struct scsi_xfer *);
-int	ami_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
+int	ami_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void	amiminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter ami_switch = {
@@ -1670,8 +1670,7 @@ ami_intr(void *v)
 }
 
 int
-ami_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
-    struct proc *p)
+ami_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
 	/* struct device *dev = (struct device *)link->device_softc; */

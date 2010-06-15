@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.149 2010/05/19 07:26:01 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.150 2010/06/15 04:11:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -68,7 +68,7 @@ void			mpi_scsi_cmd_done(struct mpi_ccb *);
 void			mpi_minphys(struct buf *bp, struct scsi_link *sl);
 int			mpi_scsi_probe(struct scsi_link *);
 int			mpi_scsi_ioctl(struct scsi_link *, u_long, caddr_t,
-			    int, struct proc *);
+			    int);
 
 struct scsi_adapter mpi_switch = {
 	mpi_scsi_cmd,
@@ -2682,8 +2682,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 }
 
 int
-mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
-    struct proc *p)
+mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 	struct mpi_softc	*sc = (struct mpi_softc *)link->adapter_softc;
 

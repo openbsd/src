@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.41 2010/04/23 01:39:05 dlg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.42 2010/06/15 04:11:34 dlg Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 
@@ -277,12 +276,9 @@ err:
  * Something (e.g. another driver) has called us
  * with an sc_link for a target/lun/adapter, and a scsi
  * specific ioctl to perform, better try.
- * If user-level type command, we must still be running
- * in the context of the calling process
  */
 int
-scsi_do_ioctl(struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
-    int flag, struct proc *p)
+scsi_do_ioctl(struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
 {
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 
@@ -313,7 +309,7 @@ scsi_do_ioctl(struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 	default:
 		if (sc_link->adapter->ioctl)
 			return ((sc_link->adapter->ioctl)(sc_link, cmd, addr,
-			    flag, p));
+			    flag));
 		else
 			return (ENOTTY);
 	}

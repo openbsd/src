@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.97 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.98 2010/06/15 04:11:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -429,8 +429,7 @@ void	ips_attach(struct device *, struct device *, void *);
 
 void	ips_scsi_cmd(struct scsi_xfer *);
 void	ips_scsi_pt_cmd(struct scsi_xfer *);
-int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
-	    struct proc *);
+int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 
 #if NBIO > 0
 int	ips_ioctl(struct device *, u_long, caddr_t);
@@ -1101,8 +1100,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 }
 
 int
-ips_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
-    struct proc *p)
+ips_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 #if NBIO > 0
 	return (ips_ioctl(link->adapter_softc, cmd, addr));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.96 2010/06/11 12:02:44 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.97 2010/06/15 04:11:34 dlg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1357,7 +1357,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 #endif
 
 	default:
-		error = scsi_do_ioctl(st->sc_link, dev, cmd, arg, flag, p);
+		error = scsi_do_ioctl(st->sc_link, cmd, arg, flag);
 		break;
 	}
 	goto done;

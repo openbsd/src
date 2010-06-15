@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.22 2010/05/22 19:55:42 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.23 2010/06/15 04:11:34 dlg Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -203,7 +203,6 @@ void	vdsk_send_rdx(struct vdsk_softc *);
 void	vdsk_scsi_cmd(struct scsi_xfer *);
 int	vdsk_dev_probe(struct scsi_link *);
 void	vdsk_dev_free(struct scsi_link *);
-int	vdsk_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
 
 void	vdsk_scsi_inq(struct scsi_xfer *);
 void	vdsk_scsi_inquiry(struct scsi_xfer *);
@@ -343,7 +342,6 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_switch.scsi_minphys = scsi_minphys;
 	sc->sc_switch.dev_probe = vdsk_dev_probe;
 	sc->sc_switch.dev_free = vdsk_dev_free;
-	sc->sc_switch.ioctl = vdsk_ioctl;
 
 	sc->sc_link.device = &vdsk_device;
 	sc->sc_link.adapter = &sc->sc_switch;
@@ -1137,12 +1135,4 @@ void
 vdsk_dev_free(struct scsi_link *link)
 {
 	printf("%s\n", __func__);
-}
-
-int
-vdsk_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flags,
-    struct proc *p)
-{
-	printf("%s\n", __func__);
-	return (ENOTTY);
 }

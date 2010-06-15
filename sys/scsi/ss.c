@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.73 2010/06/11 12:02:44 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.74 2010/06/15 04:11:34 dlg Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -788,8 +788,7 @@ ssioctl(dev, cmd, addr, flag, p)
 	default:
 		if (SSMODE(dev) != MODE_CONTROL)
 			return (ENOTTY);
-		return (scsi_do_ioctl(ss->sc_link, dev, cmd, addr,
-		    flag, p));
+		return (scsi_do_ioctl(ss->sc_link, cmd, addr, flag));
 	}
 	return (error);
 }

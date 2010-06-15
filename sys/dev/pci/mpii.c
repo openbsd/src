@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.19 2010/05/26 17:46:31 marco Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.20 2010/06/15 04:11:34 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1961,8 +1961,7 @@ struct cfdriver mpii_cd = {
 void		mpii_scsi_cmd(struct scsi_xfer *);
 void		mpii_scsi_cmd_done(struct mpii_ccb *);
 int		mpii_scsi_probe(struct scsi_link *);
-int		mpii_scsi_ioctl(struct scsi_link *, u_long, caddr_t,
-		    int, struct proc *);
+int		mpii_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 
 struct scsi_adapter mpii_switch = {
 	mpii_scsi_cmd,
@@ -4571,8 +4570,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 }
 
 int
-mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
-    struct proc *p)
+mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 	struct mpii_softc	*sc = (struct mpii_softc *)link->adapter_softc;
 

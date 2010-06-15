@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.89 2010/05/20 00:55:17 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.90 2010/06/15 04:11:34 dlg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -165,8 +165,7 @@ struct atapiscsi_softc {
 };
 
 void  wdc_atapi_minphys(struct buf *bp, struct scsi_link *sl);
-int   wdc_atapi_ioctl(struct scsi_link *,
-	u_long, caddr_t, int, struct proc *);
+int   wdc_atapi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void  wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer);
 
 static struct scsi_adapter atapiscsi_switch =
@@ -437,12 +436,11 @@ wdc_atapi_minphys (struct buf *bp, struct scsi_link *sl)
 }
 
 int
-wdc_atapi_ioctl (sc_link, cmd, addr, flag, p)
+wdc_atapi_ioctl (sc_link, cmd, addr, flag)
 	struct   scsi_link *sc_link;
 	u_long   cmd;
 	caddr_t  addr;
 	int      flag;
-	struct proc *p;
 {
 	struct atapiscsi_softc *as = sc_link->adapter_softc;
 	struct channel_softc *chp = as->chp;
@@ -451,7 +449,7 @@ wdc_atapi_ioctl (sc_link, cmd, addr, flag, p)
 	if (sc_link->target != 0)
 		return ENOTTY;
 
-	return (wdc_ioctl(drvp, cmd, addr, flag, p));
+	return (wdc_ioctl(drvp, cmd, addr, flag, curproc));
 }
 
 
