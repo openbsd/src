@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
+/*	$OpenBSD: uuid.c,v 1.3 2010/06/15 15:14:57 martinh Exp $ */
 /*
  * Copyright (c) 2002, Stockholms Universitet
  * (Stockholm University, Stockholm Sweden)
@@ -154,7 +154,7 @@ uuid_compare(const afsUUID *uuid1, const afsUUID *uuid2)
  *    Creates a new UUID.
  */
 
-int
+void
 uuid_create(afsUUID *uuid)
 {
     static int uuid_inited = 0;
@@ -219,8 +219,6 @@ uuid_create(afsUUID *uuid)
     uuid->clock_seq_hi_and_reserved |= 0x80; /* dce variant */
 
     memcpy(uuid->node, nodeaddr, 6);
-
-    return 0;
 }
 
 /*
@@ -278,26 +276,6 @@ uuid_from_string(const char *str, afsUUID *uuid)
 	uuid->node[i] = node[i];
 
     return 0;
-}
-
-/*
- *    Creates a hash value for a UUID.
- */
-
-uint32_t
-uuid_hash(const afsUUID *uuid)
-{
-    uint32_t hash;
-    const uint32_t *hp;
-    unsigned int i;
-
-    /* use the sum instead ? */
-
-    hash = 0;
-    hp = (const uint32_t *)uuid;
-    for (i = 0; i < sizeof(*uuid)/4; i++, hp++)
-	hash ^= *hp;
-    return hash;
 }
 
 /*
