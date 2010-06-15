@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.3 2010/06/09 08:13:19 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.4 2010/06/15 08:20:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -917,31 +917,27 @@ sub do_quirks
 	};
 }
 
-# Here we create the list of packages to install
-# actually, an updateset list (@todo2), and we hope to do this lazily
-# later for the most part...
-my @todo2 = ();
-
 
 sub process_parameters
 {
 	my ($self, $state) = @_;
-	my $add_hints = $state->opt('z') ? "add_hints" : "add_hints2";
+	my $add_hints = $state->{fuzzy} ? "add_hints" : "add_hints2";
 
-	# match fuzzily against a list
-	if ($state->opt('l')) {
-		open my $f, '<', $state->opt('l') or 
-		    die "$!: bad list ".$state->opt('l');
+	# match against a list
+	if ($state->{pkglist}) {
+		open my $f, '<', $state->{pkglist} or 
+		    $state->fatal("bad list #1: #2", $state->{pkglist}, $!);
 		my $_;
 		while (<$f>) {
 			chomp;
 			s/\s.*//;
-			push(@todo2, OpenBSD::UpdateSet->new->$add_hints($_));
+			push(@{$state->{setlist}}, 
+			    OpenBSD::UpdateSet->new->$add_hints($_));
 		}
 	}
 
 	# update existing stuff
-	if ($state->opt('u')) {
+	if ($state->{update}) {
 		require OpenBSD::PackageRepository::Installed;
 
 		if (@ARGV == 0) {
@@ -961,7 +957,8 @@ sub process_parameters
 			if (!defined $l) {
 				$state->say("Problem finding #1", $pkgname);
 			} else {
-				push(@todo2, OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l)));
+				push(@{$state->{setlist}}, 
+				    OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l)));
 			}
 		}
 	} else {
@@ -969,7 +966,7 @@ sub process_parameters
 	# actual names
 		for my $pkgname (@ARGV) {
 			next if $pkgname =~ m/^quirks\-\d/;
-			push(@todo2,
+			push(@{$state->{setlist}},
 			    OpenBSD::UpdateSet->new->$add_hints($pkgname));
 		}
 	}
@@ -1048,8 +1045,11 @@ sub handle_options
 	$state->{newupdates} = $state->opt('u') || $state->opt('U');
 	$state->{allow_replacing} = $state->{hard_replace} || 
 	    $state->{newupdates};
+	$state->{pkglist} = $state->opt('l');
+	$state->{update} = $state->opt('u');
+	$state->{fuzzy} = $state->opt('z');
 
-	if (@ARGV == 0 && !$state->opt('u') && !$state->opt('l')) {
+	if (@ARGV == 0 && !$state->{update} && !$state->{pkglist}) {
 		$state->usage("Missing pkgname");
 	}
 	return $state;
@@ -1058,20 +1058,20 @@ sub handle_options
 sub main
 {
 	my ($self, $state) = @_;
+
+	$state->progress->set_header("Checking packages");
 	if ($state->{allow_replacing}) {
-		$state->progress->set_header("Checking packages");
 		do_quirks($state);
 	}
 
-	$state->tracker->todo(@todo2);
+	$state->tracker->todo(@{$state->{setlist}});
 	# This is the actual very small loop that adds all packages
-	while (my $set = shift @todo2) {
-		$state->progress->set_header("Checking packages");
+	while (my $set = shift @{$state->{setlist}}) {
 
 		$state->status->what->set($set);
-		unshift(@todo2, install_set($set, $state));
+		unshift(@{$state->{setlist}}, install_set($set, $state));
 		eval {
-			$state->quirks->tweak_list(\@todo2, $state);
+			$state->quirks->tweak_list($state->{setlist}, $state);
 		};
 	}
 }
