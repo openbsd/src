@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.15 2010/06/15 08:26:39 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.16 2010/06/15 08:45:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -329,7 +329,11 @@ sub adjust
 		my @todo = sort keys %{$self->{others}};
 		$state->errsay("#1 is missing #2",
 		    $self->{name}, $self->string(@todo));
-		$self->ask_add_deps($state, \@todo);
+		    if ($self->{name} =~ m/^partial/) {
+			    $state->errsay("not a problem, since this is a partial- package");
+		    } else {
+			    $self->ask_add_deps($state, \@todo);
+		    }
 	}
 }
 
