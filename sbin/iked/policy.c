@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.8 2010/06/14 23:14:09 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.9 2010/06/15 00:34:17 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -219,11 +219,6 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	} else
 		localid = &sa->sa_rid;
 
-	if (sa->sa_hdr.sh_ispi == 0)
-		sa->sa_hdr.sh_ispi = ispi;
-	if (sa->sa_hdr.sh_rspi == 0)
-		sa->sa_hdr.sh_rspi = rspi;
-
 	if (!ibuf_length(localid->id_buf) &&
 	    ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {
 		log_debug("%s: failed to get local id", __func__);
@@ -231,8 +226,12 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 		return (NULL);
 	}
 
+	if (sa->sa_hdr.sh_ispi == 0)
+		sa->sa_hdr.sh_ispi = ispi;
+	if (sa->sa_hdr.sh_rspi == 0)
+		sa->sa_hdr.sh_rspi = rspi;
+
 	/* Re-insert node into the tree */
-	(void)RB_REMOVE(iked_sas, &env->sc_sas, sa);
 	RB_INSERT(iked_sas, &env->sc_sas, sa);
 
 	return (sa);
@@ -269,7 +268,7 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 	}
 
 	if (addr == &sa->sa_peer) {
-		/* Re-insert node into the tree */
+		/* XXX Re-insert node into the tree */
 		(void)RB_REMOVE(iked_sapeers, &pol->pol_sapeers, sa);
 		RB_INSERT(iked_sapeers, &pol->pol_sapeers, sa);
 	}
@@ -301,8 +300,14 @@ sa_lookup(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	key.sa_hdr.sh_rspi = rspi;
 	key.sa_hdr.sh_initiator = initiator;
 
-	if ((sa = RB_FIND(iked_sas, &env->sc_sas, &key)) != NULL)
+	if ((sa = RB_FIND(iked_sas, &env->sc_sas, &key)) != NULL) {
 		gettimeofday(&sa->sa_timeused, NULL);
+
+		/* Validate if SPIr matches */
+		if ((sa->sa_hdr.sh_rspi != 0) &&
+		    (sa->sa_hdr.sh_rspi != rspi))
+			return (NULL);
+	}
 
 	return (sa);
 }
@@ -318,6 +323,7 @@ sa_cmp(struct iked_sa *a, struct iked_sa *b)
 	if (a->sa_hdr.sh_ispi < b->sa_hdr.sh_ispi)
 		return (1);
 
+#if 0
 	/* Responder SPI is not yet set in the local IKE SADB */
 	if ((b->sa_type == IKED_SATYPE_LOCAL && b->sa_hdr.sh_rspi == 0) ||
 	    (a->sa_type == IKED_SATYPE_LOCAL && a->sa_hdr.sh_rspi == 0))
@@ -327,6 +333,7 @@ sa_cmp(struct iked_sa *a, struct iked_sa *b)
 		return (-1);
 	if (a->sa_hdr.sh_rspi < b->sa_hdr.sh_rspi)
 		return (1);
+#endif
 
 	return (0);
 }
