@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.3 2010/06/15 14:43:56 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -253,10 +253,12 @@ imsg_compose_event(struct imsgev *iev, u_int16_t type,
 int
 imsg_event_handle(struct imsgev *iev, short event)
 {
-	ssize_t			 n;
+	ssize_t			 n = 0;
 
-	switch (event) {
-	case EV_READ:
+	if ((event & ~(EV_READ | EV_WRITE)) != 0)
+		fatalx("unknown event");
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(&iev->ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
@@ -265,17 +267,15 @@ imsg_event_handle(struct imsgev *iev, short event)
 			event_loopexit(NULL);
 			return -1;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&iev->ibuf.w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(iev);
-		return 1;
-	default:
-		fatalx("unknown event");
 	}
 
-	return 0;
+	return (n == 0) ? 1 : 0;
 }
 
 void
