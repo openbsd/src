@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.110 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: Add.pm,v 1.111 2010/06/15 08:26:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -179,7 +179,7 @@ sub copy_info
 
 sub set_modes
 {
-	my ($self, $name) = @_;
+	my ($self, $state, $name) = @_;
 
 	if (defined $self->{owner} || defined $self->{group}) {
 		require OpenBSD::IdCache;
@@ -207,7 +207,7 @@ sub set_modes
 		if ($v =~ m/^\d+$/o) {
 			chmod oct($v), $name;
 		} else {
-			System(OpenBSD::Paths->chmod, $self->{mode}, $name);
+			$state->system(OpenBSD::Paths->chmod, $self->{mode}, $name);
 		}
 	}
 }
@@ -404,7 +404,7 @@ sub install
 
 		}
 	}
-	$self->set_modes($destdir.$fullname);
+	$self->set_modes($state, $destdir.$fullname);
 }
 
 sub prepare_to_extract
@@ -523,7 +523,7 @@ sub install
 			if (!copy($origname, $filename)) {
 				$state->errsay("File #1 could not be installed:\n\t#2", $filename, $!);
 			}
-			$self->set_modes($filename);
+			$self->set_modes($state, $filename);
 			if ($state->verbose >= 2) {
 			    $state->say("installed #1 from #2", 
 				$filename, $origname);
@@ -605,7 +605,7 @@ sub install
 	$state->say("new directory #1", $destdir.$fullname) if $state->verbose >= 5;
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
-	$self->set_modes($destdir.$fullname);
+	$self->set_modes($state, $destdir.$fullname);
 }
 
 package OpenBSD::PackingElement::Exec;

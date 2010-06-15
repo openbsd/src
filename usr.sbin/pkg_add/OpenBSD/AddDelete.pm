@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.25 2010/06/09 08:13:19 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.26 2010/06/15 08:26:39 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -152,30 +152,15 @@ sub cleanup
 	OpenBSD::SharedItems::cleanup($self, $state);
 }
 
-package OpenBSD::Log;
-use OpenBSD::Error;
-our @ISA = qw(OpenBSD::Error);
-
-sub set_context
-{
-	&OpenBSD::Error::set_pkgname;
-}
-
-sub dump
-{
-	&OpenBSD::Error::delayed_output;
-}
-
-
 package OpenBSD::AddDelete::State;
-use OpenBSD::Error;
 use OpenBSD::Vstat;
+use OpenBSD::Log;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
 
 sub init
 {
 	my $self = shift;
-	$self->{l} = OpenBSD::Log->new;
+	$self->{l} = OpenBSD::Log->new($self);
 	$self->{vstat} = OpenBSD::Vstat->new($self);
 	$self->{status} = OpenBSD::Status->new;
 	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
@@ -209,29 +194,32 @@ sub log
 	if (@_ == 0) {
 		return $self->{l};
 	} else {
-		$self->{l}->print($self->f(@_), "\n");
+		$self->{l}->say(@_);
 	}
 }
 
 sub vsystem
 {
 	my $self = shift;
-	$self->progress->clear;
-	OpenBSD::Error::VSystem($self->verbose >= 2, @_);
+	my $verbose = $self;
+	if ($self->verbose < 2) {
+		$self->system(@_);
+	} else {
+		$self->print("Running #1", join(' ', @_));
+		my $r = CORE::system(@_);
+		if ($r != 0) {
+			$self->say("... failed: #1", $self->child_error);
+		} else {
+			$self->say;
+		}
+	}
 }
 
 sub system
 {
 	my $self = shift;
 	$self->progress->clear;
-	OpenBSD::Error::System(@_);
-}
-
-sub unlink
-{
-	my $self = shift;
-	$self->progress->clear;
-	OpenBSD::Error::Unlink(@_);
+	$self->SUPER::system(@_);
 }
 
 sub check_root

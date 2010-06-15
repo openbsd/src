@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.179 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.180 2010/06/15 08:26:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1578,7 +1578,7 @@ sub run
 	chmod 0755, $name;
 	return if $state->log->system($name, $pkgname, @args) == 0;
 	if ($state->defines('scripts')) {
-		$state->log->warn($self->beautify, " script failed\n");
+		$state->log->say($self->beautify." script failed");
 	} else {
 		$state->log->fatal($self->beautify." script failed");
 	}

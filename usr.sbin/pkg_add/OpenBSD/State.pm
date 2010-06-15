@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.2 2010/06/09 11:57:21 espie Exp $
+# $OpenBSD: State.pm,v 1.3 2010/06/15 08:26:39 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -70,36 +70,54 @@ sub f
 	return $_;
 }
 
-sub fatal
+sub _fatal
 {
 	my $self = shift;
 	# implementation note: to print "fatal errors" elsewhere,
 	# the way is to eval { croak @_}; and decide what to do with $@.
-	croak "Fatal error: ", $self->f(@_), "\n";
+	croak "Fatal error: ", @_, "\n";
+}
+
+sub fatal
+{
+	my $self = shift;
+	$self->_fatal($self->f(@_));
+}
+
+sub _print
+{
+	my $self = shift;
+	print @_;
+}
+
+sub _errprint
+{
+	my $self = shift;
+	print STDERR @_;
 }
 
 sub print
 {
 	my $self = shift;
-	print $self->f(@_);
+	$self->_print($self->f(@_));
 }
 
 sub say
 {
 	my $self = shift;
-	print $self->f(@_), "\n";
+	$self-_print($self->f(@_), "\n");
 }
 
 sub errprint
 {
 	my $self = shift;
-	print STDERR $self->f(@_);
+	$self->_errprint($self->f(@_));
 }
 
 sub errsay
 {
 	my $self = shift;
-	print STDERR $self->f(@_), "\n";
+	$self->_errprint($self->f(@_), "\n");
 }
 
 sub do_options
@@ -110,6 +128,114 @@ sub do_options
 	eval { &$sub; };
 	OpenBSD::Error::dienow($@, 
 	    bless sub { $state->usage("#1", $_)}, "OpenBSD::Error::catchall");
+}
+
+my @signal_name = ();
+sub fillup_names
+{
+	{
+	# XXX force autoload
+	package verylocal;
+
+	require POSIX;
+	POSIX->import(qw(signal_h));
+	}
+
+	for my $sym (keys %POSIX::) {
+		next unless $sym =~ /^SIG([A-Z].*)/;
+		$signal_name[eval "&POSIX::$sym()"] = $1;
+	}
+	# extra BSD signals
+	$signal_name[5] = 'TRAP';
+	$signal_name[7] = 'IOT';
+	$signal_name[10] = 'BUS';
+	$signal_name[12] = 'SYS';
+	$signal_name[16] = 'URG';
+	$signal_name[23] = 'IO';
+	$signal_name[24] = 'XCPU';
+	$signal_name[25] = 'XFSZ';
+	$signal_name[26] = 'VTALRM';
+	$signal_name[27] = 'PROF';
+	$signal_name[28] = 'WINCH';
+	$signal_name[29] = 'INFO';
+}
+
+sub find_signal
+{
+	my $number =  shift;
+
+	if (@signal_name == 0) {
+		fillup_names();
+	}
+
+	return $signal_name[$number] || $number;
+}
+
+sub child_error
+{
+	my $self = shift;
+	my $error = $?;
+
+	my $extra = "";
+
+	if ($error & 128) {
+		$extra = $self->f(" (core dumped)");
+	}
+	if ($error & 127) {
+		return $self->f("killed by signal #1#2", 
+		    find_signal($error & 127), $extra);
+	} else {
+		return $self->f("exit(#1)#2", ($error >> 8), $extra);
+	}
+}
+
+sub system
+{
+	my $self = shift;
+	my $r = CORE::system(@_);
+	if ($r != 0) {
+		$self->say("system(#1) failed: #2", 
+		    join(", ", @_), $self->child_error);
+	}
+	return $r;
+}
+
+sub copy_file
+{
+	my $self = shift;
+	require File::Copy;
+
+	my $r = File::Copy::copy(@_);
+	if (!$r) {
+		$self->say("copy(#1) failed: #2", join(',', @_), $!);
+	}
+	return $r;
+}
+
+sub unlink
+{
+	my $self = shift;
+	my $verbose = shift;
+	my $r = unlink @_;
+	if ($r != @_) {
+		$self->say("rm #1 failed: removed only #2 targets, #3",
+		    join(' ', @_), $r, $1);
+	} elsif ($verbose) {
+		$self->say("rm #1", join(' ', @_));
+	}
+	return $r;
+}
+
+sub copy
+{
+	my $self = shift;
+	require File::Copy;
+
+	my $r = File::Copy::copy(@_);
+	if (!$r) {
+		$self->say("copy(#1) failed: #2", join(',', @_), $!);
+	}
+	return $r;
 }
 
 1;

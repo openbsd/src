@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.25 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Error.pm,v 1.26 2010/06/15 08:26:39 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -63,8 +63,7 @@ __PACKAGE__->reset;
 package OpenBSD::Error;
 require Exporter;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(System VSystem Copy Unlink Fatal Warn Usage set_usage
-    try throw catch catchall rethrow);
+our @EXPORT=qw(Copy Unlink try throw catch catchall rethrow);
 
 our ($FileName, $Line, $FullMessage);
 
@@ -128,32 +127,6 @@ sub child_error
 	}
 }
 
-sub System
-{
-	my $r = system(@_);
-	if ($r != 0) {
-		print "system(", join(", ", @_), ") failed: ", child_error(),
-		    "\n";
-	}
-	return $r;
-}
-
-sub VSystem
-{
-	my $verbose = shift;
-	if (!$verbose) {
-		&System;
-	} else {
-		print "Running ", join(' ', @_);
-		my $r = system(@_);
-		if ($r != 0) {
-			print "... failed: ", child_error(), "\n";
-		} else {
-			print "\n";
-		}
-	}
-}
-
 sub Copy
 {
 	require File::Copy;
@@ -175,102 +148,6 @@ sub Unlink
 		print "rm @_\n";
 	}
 	return $r;
-}
-
-sub Fatal
-{
-	croak @_;
-}
-
-sub Warn
-{
-	print STDERR @_;
-}
-
-sub new
-{
-	my $class = shift;
-	bless {messages=>{}, dirs_okay=>{}}, $class;
-}
-
-sub set_pkgname
-{
-	my ($self, $pkgname) = @_;
-	$self->{pkgname} = $pkgname;
-	$self->{output} = $self->{messages}->{$pkgname} //= [];
-}
-
-sub warn
-{
-	&OpenBSD::Error::print;
-}
-
-sub fatal
-{
-	my $self = shift;
-	if (defined $self->{pkgname}) {
-		unshift @_, $self->{pkgname}, ':';
-	}
-	croak @_;
-}
-
-sub print
-{
-	my $self = shift;
-	push(@{$self->{output}}, join('', @_));
-}
-
-sub delayed_output
-{
-	my $self = shift;
-	for my $pkg (sort keys %{$self->{messages}}) {
-		my $msgs = $self->{messages}->{$pkg};
-		if (@$msgs > 0) {
-			print "--- $pkg -------------------\n";
-			print @$msgs;
-		}
-	}
-	$self->{messages} = {};
-}
-
-sub system
-{
-	my $self = shift;
-	if (open(my $grab, "-|", @_)) {
-		my $_;
-		while (<$grab>) {
-			$self->print($_);
-		}
-		if (!close $grab) {
-		    $self->print("system(", join(", ", @_), ") failed: $! ",
-		    	child_error(), "\n");
-		}
-		return $?;
-	} else {
-		    $self->print("system(", join(", ", @_),
-		    	") was not run: $!", child_error(), "\n");
-	}
-}
-
-my @usage_line;
-
-sub set_usage
-{
-	@usage_line = @_;
-}
-
-sub Usage
-{
-	my $code = 0;
-	if (@_) {
-		print STDERR "$0: ", @_, "\n";
-		$code = 1;
-	}
-	print STDERR "Usage: ", shift(@usage_line), "\n";
-	for my $l (@usage_line) {
-		print STDERR "       $l\n";
-	}
-	exit($code);
 }
 
 sub dienow

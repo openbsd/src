@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.14 2010/06/14 08:16:14 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.15 2010/06/15 08:26:39 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -213,22 +213,10 @@ sub find_dependencies
 	}
 }
 
-package OpenBSD::Log;
-use OpenBSD::Error;
-our @ISA = qw(OpenBSD::Error);
-
-sub set_context
-{
-	&OpenBSD::Error::set_pkgname;
-}
-
-sub dump
-{
-	&OpenBSD::Error::delayed_output;
-}
-
 package OpenBSD::PkgCheck::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
+
+use OpenBSD::Log;
 
 sub init
 {
@@ -243,7 +231,7 @@ sub log
 	if (@_ == 0) {
 		return $self->{l};
 	} else {
-		$self->{l}->print($self->f(@_), "\n");
+		$self->{l}->say(@_);
 	}
 }
 
