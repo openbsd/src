@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2010/06/02 09:12:13 martinh Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2010/06/15 19:30:26 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -1524,5 +1524,26 @@ mk_aci(int type, int rights, enum scope scope, char *target, char *subject)
 	    aci->subject ?: "any");
 
 	return aci;
+}
+
+struct namespace *
+namespace_new(const char *suffix)
+{
+	struct namespace		*ns;
+
+	if ((ns = calloc(1, sizeof(*ns))) == NULL)
+		return NULL;
+	ns->suffix = strdup(suffix);
+	ns->sync = 1;
+	if (ns->suffix == NULL) {
+		free(ns->suffix);
+		free(ns);
+		return NULL;
+	}
+	TAILQ_INIT(&ns->indices);
+	TAILQ_INIT(&ns->request_queue);
+	SIMPLEQ_INIT(&ns->acl);
+
+	return ns;
 }
 

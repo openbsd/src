@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.6 2010/06/15 15:47:56 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.7 2010/06/15 19:30:26 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -37,27 +37,6 @@ static struct btval	*namespace_find(struct namespace *ns, char *dn);
 static void		 namespace_queue_replay(int fd, short event, void *arg);
 static int		 namespace_set_fd(struct namespace *ns,
 			    struct btree **bt, int fd, unsigned int flags);
-
-struct namespace *
-namespace_new(const char *suffix)
-{
-	struct namespace		*ns;
-
-	if ((ns = calloc(1, sizeof(*ns))) == NULL)
-		return NULL;
-	ns->suffix = strdup(suffix);
-	ns->sync = 1;
-	if (ns->suffix == NULL) {
-		free(ns->suffix);
-		free(ns);
-		return NULL;
-	}
-	TAILQ_INIT(&ns->indices);
-	TAILQ_INIT(&ns->request_queue);
-	SIMPLEQ_INIT(&ns->acl);
-
-	return ns;
-}
 
 int
 namespace_begin_txn(struct namespace *ns, struct btree_txn **data_txn,
@@ -327,104 +306,13 @@ int
 namespace_ber2db(struct namespace *ns, struct ber_element *root,
     struct btval *val)
 {
-	int			 rc;
-	ssize_t			 len;
-	uLongf			 destlen;
-	Bytef			*dest;
-	void			*buf;
-	struct ber		 ber;
-
-	bzero(val, sizeof(*val));
-
-	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
-	ber_write_elements(&ber, root);
-
-	if ((len = ber_get_writebuf(&ber, &buf)) == -1)
-		return -1;
-
-	if (ns->compression_level > 0) {
-		val->size = compressBound(len);
-		val->data = malloc(val->size + sizeof(uint32_t));
-		if (val->data == NULL) {
-			log_warn("malloc(%u)", val->size + sizeof(uint32_t));
-			ber_free(&ber);
-			return -1;
-		}
-		dest = (char *)val->data + sizeof(uint32_t);
-		destlen = val->size - sizeof(uint32_t);
-		if ((rc = compress2(dest, &destlen, buf, len,
-		    ns->compression_level)) != Z_OK) {
-			log_warn("compress returned %i", rc);
-			free(val->data);
-			ber_free(&ber);
-			return -1;
-		}
-		log_debug("compressed entry from %u -> %u byte",
-		    len, destlen + sizeof(uint32_t));
-
-		*(uint32_t *)val->data = len;
-		val->size = destlen + sizeof(uint32_t);
-		val->free_data = 1;
-	} else {
-		val->data = buf;
-		val->size = len;
-		val->free_data = 1;	/* XXX: take over internal br_wbuf */
-		ber.br_wbuf = NULL;
-	}
-
-	ber_free(&ber);
-
-	return 0;
+	return ber2db(root, val, ns->compression_level);
 }
 
 struct ber_element *
 namespace_db2ber(struct namespace *ns, struct btval *val)
 {
-	int			 rc;
-	uLongf			 len;
-	void			*buf;
-	Bytef			*src;
-	uLong			 srclen;
-	struct ber_element	*elm;
-	struct ber		 ber;
-
-	assert(ns != NULL);
-	assert(val != NULL);
-
-	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
-
-	if (ns->compression_level > 0) {
-		if (val->size < sizeof(uint32_t))
-			return NULL;
-
-		len = *(uint32_t *)val->data;
-		if ((buf = malloc(len)) == NULL) {
-			log_warn("malloc(%u)", len);
-			return NULL;
-		}
-
-		src = (char *)val->data + sizeof(uint32_t);
-		srclen = val->size - sizeof(uint32_t);
-		rc = uncompress(buf, &len, src, srclen);
-		if (rc != Z_OK) {
-			log_warnx("dbt_to_ber: uncompress returned %i", rc);
-			free(buf);
-			return NULL;
-		}
-
-		log_debug("uncompressed entry from %u -> %u byte",
-		    val->size, len);
-
-		ber_set_readbuf(&ber, buf, len);
-		elm = ber_read_elements(&ber, NULL);
-		free(buf);
-		return elm;
-	} else {
-		ber_set_readbuf(&ber, val->data, val->size);
-		return ber_read_elements(&ber, NULL);
-	}
+	return db2ber(val, ns->compression_level);
 }
 
 static int

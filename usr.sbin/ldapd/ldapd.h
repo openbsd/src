@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.5 2010/06/15 15:47:56 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.6 2010/06/15 19:30:26 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -594,6 +594,9 @@ int			 bsnprintf(char *str, size_t size,
 int			 has_suffix(struct btval *key, const char *suffix);
 int			 has_prefix(struct btval *key, const char *prefix);
 void			 normalize_dn(char *dn);
+int			 ber2db(struct ber_element *root, struct btval *val,
+			    int compression_level);
+struct ber_element	*db2ber(struct btval *val, int compression_level);
 
 /* index.c */
 int			 index_namespace(struct namespace *ns);
