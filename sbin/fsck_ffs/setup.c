@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.44 2010/06/09 21:34:56 chl Exp $	*/
+/*	$OpenBSD: setup.c,v 1.45 2010/06/15 14:25:09 jsing Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -103,6 +103,8 @@ setup(char *dev)
 			return (0);
 		}
 	}
+	if (strncmp(dev, realdev, PATH_MAX) != 0)
+		blockcheck(unrawname(realdev));
 	if (preen == 0)
 		printf("** %s", realdev);
 	if (nflag || (fswritefd = opendev(dev, O_WRONLY, 0, NULL)) < 0) {
