@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.4 2010/06/11 12:02:03 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.5 2010/06/15 15:47:56 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -20,9 +20,10 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 
+#include <errno.h>
 #include <event.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "ldapd.h"
@@ -169,9 +170,11 @@ search_close(struct search *search)
 	btree_txn_abort(search->data_txn);
 	btree_txn_abort(search->indx_txn);
 
-	log_debug("finished search on msgid %lld", search->req->msgid);
+	if (search->req != NULL) {
+		log_debug("finished search on msgid %lld", search->req->msgid);
+		request_free(search->req);
+	}
 	TAILQ_REMOVE(&search->conn->searches, search, next);
-	request_free(search->req);
 	filter_free(search->plan);
 	free(search);
 	--stats.searches;
@@ -698,6 +701,7 @@ ldap_search(struct request *req)
 {
 	long long		 reason = LDAP_OTHER;
 	struct search		*search = NULL;
+	int			 rc;
 
 	if (stats.searches > MAX_SEARCHES) {
 		log_warnx("refusing more than %u concurrent searches",
@@ -782,13 +786,18 @@ ldap_search(struct request *req)
 		goto done;
 	}
 
-	search->data_txn = btree_txn_begin(search->ns->data_db, 1);
-	if (search->data_txn != NULL)
-		search->indx_txn = btree_txn_begin(search->ns->indx_db, 1);
-	if (search->indx_txn == NULL) {
-		btree_txn_abort(search->data_txn);
-		search->data_txn = NULL;
-		reason = LDAP_OPERATIONS_ERROR;
+	if ((rc = namespace_begin_txn(search->ns,
+	    &search->data_txn, &search->indx_txn, 1)) != BT_SUCCESS) {
+		if (rc == BT_DEAD) {
+			if (namespace_queue_request(search->ns, req) != 0) {
+				reason = LDAP_BUSY;
+				goto done;
+			}
+			search->req = NULL;	/* keep the scheduled request */
+			search_close(search);
+			return 0;
+		}
+		reason = LDAP_OTHER;
 		goto done;
 	}
 

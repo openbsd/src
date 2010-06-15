@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.2 2010/06/15 15:47:56 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -29,6 +29,7 @@
 int
 ldap_delete(struct request *req)
 {
+	int			 rc;
 	char			*dn;
 	struct namespace	*ns;
 
@@ -46,20 +47,29 @@ ldap_delete(struct request *req)
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
-	if (namespace_should_queue(ns, req)) {
+	if ((rc = namespace_begin(ns)) == BT_DEAD) {
 		if (namespace_queue_request(ns, req) != 0)
 			return ldap_respond(req, LDAP_BUSY);
 		return LDAP_BUSY;
-	}
+	} else if (rc != BT_SUCCESS)
+		return ldap_respond(req, LDAP_OTHER);
 
 	switch (namespace_del(ns, dn)) {
 	case BT_NOTFOUND:
-		return ldap_respond(req, LDAP_NO_SUCH_OBJECT);
+		rc = LDAP_NO_SUCH_OBJECT;
+		break;
 	case BT_SUCCESS:
-		return ldap_respond(req, LDAP_SUCCESS);
+		rc = LDAP_SUCCESS;
+		break;
 	default:
-		return ldap_respond(req, LDAP_OTHER);
+		rc = LDAP_OTHER;
+		break;
 	}
+
+	namespace_commit(ns);
+	if (rc >= 0)
+		ldap_respond(req, rc);
+	return rc;
 }
 
 int
@@ -89,11 +99,12 @@ ldap_add(struct request *req)
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
-	if (namespace_should_queue(ns, req)) {
+	if ((rc = namespace_begin(ns)) == BT_DEAD) {
 		if (namespace_queue_request(ns, req) != 0)
 			return ldap_respond(req, LDAP_BUSY);
 		return LDAP_BUSY;
-	}
+	} else if (rc != BT_SUCCESS)
+		return ldap_respond(req, LDAP_OTHER);
 
 	/* add operational attributes
 	 */
@@ -112,16 +123,25 @@ ldap_add(struct request *req)
 	ldap_add_attribute(attrs, "entryUUID", set);
 
 	if ((rc = validate_entry(dn, attrs, ns->relax)) != LDAP_SUCCESS)
-		return ldap_respond(req, rc);
+		goto done;
 
 	switch (namespace_add(ns, dn, attrs)) {
 	case BT_SUCCESS:
-		return ldap_respond(req, LDAP_SUCCESS);
+		rc = LDAP_SUCCESS;
+		break;
 	case BT_EXISTS:
-		return ldap_respond(req, LDAP_ALREADY_EXISTS);
+		rc = LDAP_ALREADY_EXISTS;
+		break;
 	default:
-		return ldap_respond(req, LDAP_OTHER);
+		rc = LDAP_OTHER;
+		break;
 	}
+
+done:
+	namespace_commit(ns);
+	if (rc >= 0)
+		ldap_respond(req, rc);
+	return rc;
 }
 
 int
@@ -152,32 +172,40 @@ ldap_modify(struct request *req)
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
-	if (namespace_should_queue(ns, req)) {
+	if ((rc = namespace_begin(ns)) == BT_DEAD) {
 		if (namespace_queue_request(ns, req) != 0)
 			return ldap_respond(req, LDAP_BUSY);
 		return LDAP_BUSY;
+	} else if (rc != BT_SUCCESS)
+		return ldap_respond(req, LDAP_OTHER);
+
+	if ((entry = namespace_get(ns, dn)) == NULL) {
+		rc = LDAP_NO_SUCH_OBJECT;
+		goto done;
 	}
 
-	if ((entry = namespace_get(ns, dn)) == NULL)
-		return ldap_respond(req, LDAP_NO_SUCH_OBJECT);
-
 	for (mod = mods->be_sub; mod; mod = mod->be_next) {
-		if (ber_scanf_elements(mod, "{E{se", &op, &attr, &vals) != 0)
-			return ldap_respond(req, LDAP_PROTOCOL_ERROR);
+		if (ber_scanf_elements(mod, "{E{se", &op, &attr, &vals) != 0) {
+			rc = LDAP_PROTOCOL_ERROR;
+			goto done;
+		}
 
 		if ((at = lookup_attribute(attr)) == NULL && !ns->relax) {
 			log_debug("unknown attribute type %s", attr);
-			return ldap_respond(req, LDAP_NO_SUCH_ATTRIBUTE);
+			rc = LDAP_NO_SUCH_ATTRIBUTE;
+			goto done;
 		}
 		if (at != NULL && at->immutable) {
 			log_debug("attempt to modify immutable attribute %s",
 			    attr);
-			return ldap_respond(req, LDAP_CONSTRAINT_VIOLATION);
+			rc = LDAP_CONSTRAINT_VIOLATION;
+			goto done;
 		}
 		if (at != NULL && at->usage != USAGE_USER_APP) {
 			log_debug("attempt to modify operational attribute %s",
 			    attr);
-			return ldap_respond(req, LDAP_CONSTRAINT_VIOLATION);
+			rc = LDAP_CONSTRAINT_VIOLATION;
+			goto done;
 		}
 
 		a = ldap_get_attribute(entry, attr);
@@ -209,7 +237,7 @@ ldap_modify(struct request *req)
 	}
 
 	if ((rc = validate_entry(dn, entry, ns->relax)) != LDAP_SUCCESS)
-		return ldap_respond(req, rc);
+		goto done;
 
 	set = ber_add_set(NULL);
 	ber_add_string(set, req->conn->binddn ?: "");
@@ -227,11 +255,20 @@ ldap_modify(struct request *req)
 
 	switch (namespace_update(ns, dn, entry)) {
 	case BT_SUCCESS:
-		return ldap_respond(req, LDAP_SUCCESS);
+		rc = LDAP_SUCCESS;
+		break;
 	case BT_EXISTS:
-		return ldap_respond(req, LDAP_ALREADY_EXISTS);
+		rc = LDAP_ALREADY_EXISTS;
+		break;
 	default:
-		return ldap_respond(req, LDAP_OTHER);
+		rc = LDAP_OTHER;
+		break;
 	}
+
+done:
+	namespace_commit(ns);
+	if (rc >= 0)
+		ldap_respond(req, rc);
+	return rc;
 }
 

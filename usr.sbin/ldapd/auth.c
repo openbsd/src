@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: auth.c,v 1.2 2010/06/15 15:47:56 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 #include <netinet/in.h>
 
+#include <errno.h>
 #include <openssl/sha.h>
 #include <pwd.h>
 #include <resolv.h>		/* for b64_pton */
@@ -286,7 +287,14 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 		    LDAP_SCOPE_BASE))
 			return LDAP_INSUFFICIENT_ACCESS;
 
-		elm = namespace_get(ns, binddn);
+		if (ns->data_db == NULL ||
+		    ((elm = namespace_get(ns, binddn)) == NULL &&
+		     errno == EAGAIN)) {
+			if (namespace_queue_request(ns, req) != 0)
+				return LDAP_BUSY;
+			return -1;	/* Database is being reopened. */
+		}
+
 		if (elm != NULL)
 			pw = ldap_get_attribute(elm, "userPassword");
 		if (pw != NULL) {
@@ -355,7 +363,8 @@ ldap_bind(struct request *req)
 
 	switch (auth->be_type) {
 	case LDAP_AUTH_SIMPLE:
-		rc = ldap_auth_simple(req, binddn, auth);
+		if ((rc = ldap_auth_simple(req, binddn, auth)) < 0)
+			return rc;
 		break;
 	case LDAP_AUTH_SASL:
 		if ((rc = ldap_auth_sasl(req, binddn, auth)) == LDAP_SUCCESS)

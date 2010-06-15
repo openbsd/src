@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.5 2010/06/15 15:12:54 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.6 2010/06/15 15:47:56 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,19 +60,36 @@ namespace_new(const char *suffix)
 }
 
 int
-namespace_begin(struct namespace *ns)
+namespace_begin_txn(struct namespace *ns, struct btree_txn **data_txn,
+    struct btree_txn **indx_txn, int rdonly)
 {
-	if (ns->data_txn != NULL)
-		return -1;
+	int	rc = BT_FAIL;
 
-	if ((ns->data_txn = btree_txn_begin(ns->data_db, 0)) == NULL ||
-	    (ns->indx_txn = btree_txn_begin(ns->indx_db, 0)) == NULL) {
-		btree_txn_abort(ns->data_txn);
-		ns->data_txn = NULL;
-		return -1;
+	if (ns->data_db == NULL || ns->indx_db == NULL)
+		return BT_DEAD;
+
+	if ((*data_txn = btree_txn_begin(ns->data_db, rdonly)) == NULL ||
+	    (*indx_txn = btree_txn_begin(ns->indx_db, rdonly)) == NULL) {
+		if (errno == EAGAIN) {
+			if (*data_txn == NULL)
+				namespace_reopen_data(ns);
+			else
+				namespace_reopen_indx(ns);
+			rc = BT_DEAD;
+		}
+		log_warn("failed to open transaction");
+		btree_txn_abort(*data_txn);
+		*data_txn = NULL;
+		return rc;
 	}
 
-	return 0;
+	return BT_SUCCESS;
+}
+
+int
+namespace_begin(struct namespace *ns)
+{
+	return namespace_begin_txn(ns, &ns->data_txn, &ns->indx_txn, 0);
 }
 
 int
@@ -141,34 +159,43 @@ namespace_open(struct namespace *ns)
 	return 0;
 }
 
+static int
+namespace_reopen(const char *path)
+{
+	struct open_req		 req;
+
+	log_debug("asking parent to open %s", path);
+
+	bzero(&req, sizeof(req));
+	if (strlcpy(req.path, path, sizeof(req.path)) >= sizeof(req.path)) {
+		log_warnx("%s: path truncated", __func__);
+		return -1;
+	}
+
+	return imsg_compose_event(iev_ldapd, IMSG_LDAPD_OPEN, 0, 0, -1, &req,
+	    sizeof(req));
+}
+
 int
 namespace_reopen_data(struct namespace *ns)
 {
-	uint32_t	 old_flags;
-
-	log_info("reopening namespace %s (entries)", ns->suffix);
-	old_flags = btree_get_flags(ns->data_db);
-	btree_close(ns->data_db);
-	ns->data_db = btree_open(ns->data_path, old_flags, 0644);
-	if (ns->data_db == NULL)
-		return -1;
-
-	return 0;
+	if (ns->data_db != NULL) {
+		btree_close(ns->data_db);
+		ns->data_db = NULL;
+		return namespace_reopen(ns->data_path);
+	}
+	return 1;
 }
 
 int
 namespace_reopen_indx(struct namespace *ns)
 {
-	uint32_t	 old_flags;
-
-	log_info("reopening namespace %s (index)", ns->suffix);
-	old_flags = btree_get_flags(ns->indx_db);
-	btree_close(ns->indx_db);
-	ns->indx_db = btree_open(ns->indx_path, old_flags, 0644);
-	if (ns->indx_db == NULL)
-		return -1;
-
-	return 0;
+	if (ns->indx_db != NULL) {
+		btree_close(ns->indx_db);
+		ns->indx_db = NULL;
+		return namespace_reopen(ns->indx_path);
+	}
+	return 1;
 }
 
 static int
@@ -255,9 +282,13 @@ namespace_find(struct namespace *ns, char *dn)
 	key.data = dn;
 	key.size = strlen(dn);
 
-	switch (btree_get(ns->data_db, &key, &val)) {
+	switch (btree_txn_get(ns->data_db, ns->data_txn, &key, &val)) {
 	case BT_FAIL:
 		log_warn("%s", dn);
+		return NULL;
+	case BT_DEAD:
+		log_warn("%s", dn);
+		namespace_reopen_data(ns);
 		return NULL;
 	case BT_NOTFOUND:
 		log_debug("%s: dn not found", dn);
@@ -404,17 +435,14 @@ namespace_put(struct namespace *ns, char *dn, struct ber_element *root,
 	struct btval		 key, val;
 
 	assert(ns != NULL);
-	assert(ns->data_txn == NULL);
-	assert(ns->indx_txn == NULL);
+	assert(ns->data_txn != NULL);
+	assert(ns->indx_txn != NULL);
 
 	bzero(&key, sizeof(key));
 	key.data = dn;
 	key.size = strlen(dn);
 
 	if (namespace_ber2db(ns, root, &val) != 0)
-		return BT_FAIL;
-
-	if (namespace_begin(ns) != 0)
 		return BT_FAIL;
 
 	rc = btree_txn_put(NULL, ns->data_txn, &key, &val,
@@ -424,27 +452,18 @@ namespace_put(struct namespace *ns, char *dn, struct ber_element *root,
 			log_debug("%s: already exists", dn);
 		else
 			log_warn("%s", dn);
-		goto fail;
+		goto done;
 	}
 
 	/* FIXME: if updating, try harder to just update changed indices.
 	 */
 	if (update && unindex_entry(ns, &key, root) != BT_SUCCESS)
-		goto fail;
+		goto done;
 
-	if (index_entry(ns, &key, root) != 0)
-		goto fail;
+	rc = index_entry(ns, &key, root);
 
-	if (namespace_commit(ns) != BT_SUCCESS)
-		goto fail;
-
+done:
 	btval_reset(&val);
-	return 0;
-
-fail:
-	namespace_abort(ns);
-	btval_reset(&val);
-
 	return rc;
 }
 
@@ -468,8 +487,8 @@ namespace_del(struct namespace *ns, char *dn)
 	struct btval		 key, data;
 
 	assert(ns != NULL);
-	assert(ns->indx_txn == NULL);
-	assert(ns->data_txn == NULL);
+	assert(ns->indx_txn != NULL);
+	assert(ns->data_txn != NULL);
 
 	bzero(&key, sizeof(key));
 	bzero(&data, sizeof(data));
@@ -477,31 +496,11 @@ namespace_del(struct namespace *ns, char *dn)
 	key.data = dn;
 	key.size = strlen(key.data);
 
-	if (namespace_begin(ns) != 0)
-		return BT_FAIL;
-
 	rc = btree_txn_del(NULL, ns->data_txn, &key, &data);
-	if (rc != BT_SUCCESS)
-		goto fail;
-
-	if ((root = namespace_db2ber(ns, &data)) == NULL ||
-	    (rc = unindex_entry(ns, &key, root)) != 0)
-		goto fail;
-
-	if (btree_txn_commit(ns->data_txn) != BT_SUCCESS)
-		goto fail;
-	ns->data_txn = NULL;
-	if (btree_txn_commit(ns->indx_txn) != BT_SUCCESS)
-		goto fail;
-	ns->indx_txn = NULL;
+	if (rc == BT_SUCCESS && (root = namespace_db2ber(ns, &data)) != NULL)
+		rc = unindex_entry(ns, &key, root);
 
 	btval_reset(&data);
-	return 0;
-
-fail:
-	namespace_abort(ns);
-	btval_reset(&data);
-
 	return rc;
 }
 
@@ -540,7 +539,7 @@ namespace_has_index(struct namespace *ns, const char *attr,
 	return 0;
 }
 
-/* Queues modification requests while the namespace is being compacted.
+/* Queues modification requests while the namespace is being reopened.
  */
 int
 namespace_queue_request(struct namespace *ns, struct request *req)
@@ -561,16 +560,19 @@ namespace_queue_replay(int fd, short event, void *data)
 	struct namespace	*ns = data;
 	struct request		*req;
 
+	if (ns->data_db == NULL || ns->indx_db == NULL) {
+		log_debug("%s: database is being reopened", ns->suffix);
+		return;		/* Database is being reopened. */
+	}
+
 	if ((req = TAILQ_FIRST(&ns->request_queue)) == NULL)
 		return;
 	TAILQ_REMOVE(&ns->request_queue, req, next);
 
+	log_debug("replaying queued request");
 	req->replayed = 1;
 	request_dispatch(req);
 	ns->queued_requests--;
-
-	if (!ns->compacting)
-		namespace_queue_schedule(ns);
 }
 
 void
@@ -578,25 +580,11 @@ namespace_queue_schedule(struct namespace *ns)
 {
 	struct timeval	 tv;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	evtimer_add(&ns->ev_queue, &tv);
-}
-
-int
-namespace_should_queue(struct namespace *ns, struct request *req)
-{
-	if (ns->compacting) {
-		log_debug("namespace %s is being compacted", ns->suffix);
-		return 1;
+	if (!evtimer_pending(&ns->ev_queue, NULL)) {
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+		evtimer_add(&ns->ev_queue, &tv);
 	}
-
-	if (ns->queued_requests > 0 && !req->replayed) {
-		log_debug("namespace %s is being replayed", ns->suffix);
-		return 1;
-	}
-
-	return 0;
 }
 
 /* Cancel all queued requests from the given connection. Drops matching
