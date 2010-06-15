@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.4 2010/06/11 08:45:06 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.5 2010/06/15 15:12:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -34,6 +34,8 @@
 
 static struct btval	*namespace_find(struct namespace *ns, char *dn);
 static void		 namespace_queue_replay(int fd, short event, void *arg);
+static int		 namespace_set_fd(struct namespace *ns,
+			    struct btree **bt, int fd, unsigned int flags);
 
 struct namespace *
 namespace_new(const char *suffix)
@@ -167,6 +169,32 @@ namespace_reopen_indx(struct namespace *ns)
 		return -1;
 
 	return 0;
+}
+
+static int
+namespace_set_fd(struct namespace *ns, struct btree **bt, int fd,
+    unsigned int flags)
+{
+	log_info("reopening namespace %s (entries)", ns->suffix);
+	btree_close(*bt);
+	if (ns->sync == 0)
+		flags |= BT_NOSYNC;
+	*bt = btree_open_fd(fd, flags);
+	if (*bt == NULL)
+		return -1;
+	return 0;
+}
+
+int
+namespace_set_data_fd(struct namespace *ns, int fd)
+{
+	return namespace_set_fd(ns, &ns->data_db, fd, BT_REVERSEKEY);
+}
+
+int
+namespace_set_indx_fd(struct namespace *ns, int fd)
+{
+	return namespace_set_fd(ns, &ns->indx_db, fd, 0);
 }
 
 void

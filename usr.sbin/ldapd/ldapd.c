@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.3 2010/06/15 14:43:56 martinh Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.4 2010/06/15 15:12:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -36,10 +36,13 @@
 
 #include "ldapd.h"
 
-void			 usage(void);
-void			 ldapd_sig_handler(int fd, short why, void *data);
-void			 ldapd_sigchld_handler(int sig, short why, void *data);
-void			 ldapd_dispatch_ldape(int fd, short event, void *ptr);
+void		 usage(void);
+void		 ldapd_sig_handler(int fd, short why, void *data);
+void		 ldapd_sigchld_handler(int sig, short why, void *data);
+void		 ldapd_dispatch_ldape(int fd, short event, void *ptr);
+static void	 ldapd_auth_request(struct imsgev *iev, struct imsg *imsg);
+static void	 ldapd_open_request(struct imsgev *iev, struct imsg *imsg);
+static void	 ldapd_log_verbose(struct imsg *imsg);
 
 struct ldapd_stats	 stats;
 pid_t			 ldape_pid;
@@ -285,7 +288,6 @@ ldapd_dispatch_ldape(int fd, short event, void *ptr)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
-	int			 verbose;
 
 	if (imsg_event_handle(iev, event) != 0)
 		return;
@@ -300,24 +302,14 @@ ldapd_dispatch_ldape(int fd, short event, void *ptr)
 		log_debug("ldapd_dispatch_ldape: imsg type %u", imsg.hdr.type);
 
 		switch (imsg.hdr.type) {
-		case IMSG_LDAPD_AUTH: {
-			struct auth_req		*areq = imsg.data;
-			struct auth_res		 ares;
-
-			log_debug("authenticating [%s]", areq->name);
-			ares.ok = auth_userokay(areq->name, NULL, "auth-ldap",
-			    areq->password);
-			ares.fd = areq->fd;
-			ares.msgid = areq->msgid;
-			bzero(areq, sizeof(*areq));
-			imsg_compose(ibuf, IMSG_LDAPD_AUTH_RESULT, 0, 0, -1,
-			    &ares, sizeof(ares));
-			imsg_event_add(iev);
+		case IMSG_LDAPD_AUTH:
+			ldapd_auth_request(iev, &imsg);
 			break;
-		}
 		case IMSG_CTL_LOG_VERBOSE:
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-			log_verbose(verbose);
+			ldapd_log_verbose(&imsg);
+			break;
+		case IMSG_LDAPD_OPEN:
+			ldapd_open_request(iev, &imsg);
 			break;
 		default:
 			log_debug("ldapd_dispatch_ldape: unexpected imsg %d",
@@ -327,5 +319,70 @@ ldapd_dispatch_ldape(int fd, short event, void *ptr)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);
+}
+
+static void
+ldapd_auth_request(struct imsgev *iev, struct imsg *imsg)
+{
+	struct auth_req		*areq = imsg->data;
+	struct auth_res		 ares;
+
+	if (imsg->hdr.len != sizeof(*areq) + IMSG_HEADER_SIZE)
+		fatal("invalid size of auth request");
+
+	/* make sure name and password are null-terminated */
+	areq->name[sizeof(areq->name) - 1] = '\0';
+	areq->password[sizeof(areq->password) - 1] = '\0';
+
+	log_debug("authenticating [%s]", areq->name);
+	ares.ok = auth_userokay(areq->name, NULL, "auth-ldap", areq->password);
+	ares.fd = areq->fd;
+	ares.msgid = areq->msgid;
+	bzero(areq, sizeof(*areq));
+	imsg_compose_event(iev, IMSG_LDAPD_AUTH_RESULT, 0, 0, -1, &ares,
+	    sizeof(ares));
+}
+
+static void
+ldapd_log_verbose(struct imsg *imsg)
+{
+	int	 verbose;
+
+	if (imsg->hdr.len != sizeof(verbose) + IMSG_HEADER_SIZE)
+		fatal("invalid size of log verbose request");
+
+	memcpy(&verbose, imsg->data, sizeof(verbose));
+	log_verbose(verbose);
+}
+
+static void
+ldapd_open_request(struct imsgev *iev, struct imsg *imsg)
+{
+	struct open_req		*oreq = imsg->data;
+	int			 oflags, fd;
+
+	if (imsg->hdr.len != sizeof(*oreq) + IMSG_HEADER_SIZE)
+		fatal("invalid size of open request");
+
+	/* make sure path is null-terminated */
+	oreq->path[MAXPATHLEN] = '\0';
+
+	if (strncmp(oreq->path, DATADIR, strlen(DATADIR)) != 0) {
+		log_warnx("refusing to open file %s", oreq->path);
+		fatal("ldape sent invalid open request");
+	}
+
+	if (oreq->rdonly)
+		oflags = O_RDONLY;
+	else
+		oflags = O_RDWR | O_CREAT | O_APPEND;
+
+	log_debug("opening [%s]", oreq->path);
+	fd = open(oreq->path, oflags | O_NOFOLLOW, 0600);
+	if (fd == -1)
+		log_warn("%s", oreq->path);
+
+	imsg_compose_event(iev, IMSG_LDAPD_OPEN_RESULT, 0, 0, fd, oreq,
+	    sizeof(*oreq));
 }
 

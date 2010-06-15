@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.3 2010/06/11 12:02:03 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.4 2010/06/15 15:12:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -24,6 +24,7 @@
 #include <sys/tree.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/param.h>
 
 #include <event.h>
 #include <imsg.h>
@@ -343,6 +344,11 @@ struct auth_res
 	long long		 msgid;
 };
 
+struct open_req {
+	char			 path[MAXPATHLEN+1];
+	unsigned int		 rdonly;
+};
+
 enum imsg_type {
 	IMSG_NONE,
 	IMSG_CTL_OK,
@@ -358,6 +364,8 @@ enum imsg_type {
 
 	IMSG_LDAPD_AUTH,
 	IMSG_LDAPD_AUTH_RESULT,
+	IMSG_LDAPD_OPEN,
+	IMSG_LDAPD_OPEN_RESULT,
 };
 
 struct ns_stat {
@@ -469,6 +477,8 @@ struct namespace	*namespace_new(const char *suffix);
 int			 namespace_open(struct namespace *ns);
 int			 namespace_reopen_data(struct namespace *ns);
 int			 namespace_reopen_indx(struct namespace *ns);
+int			 namespace_set_data_fd(struct namespace *ns, int fd);
+int			 namespace_set_indx_fd(struct namespace *ns, int fd);
 struct namespace	*namespace_init(const char *suffix, const char *dir);
 void			 namespace_close(struct namespace *ns);
 void			 namespace_remove(struct namespace *ns);

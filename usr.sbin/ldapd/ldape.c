@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.4 2010/06/11 08:27:58 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.5 2010/06/15 15:12:54 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -34,6 +34,8 @@
 
 void			 ldape_sig_handler(int fd, short why, void *data);
 void			 ldape_dispatch_ldapd(int fd, short event, void *ptr);
+static void		 ldape_auth_result(struct imsg *imsg);
+static void		 ldape_open_result(struct imsg *imsg);
 
 int			 ldap_starttls(struct request *req);
 void			 send_ldap_extended_response(struct conn *conn,
@@ -333,21 +335,12 @@ ldape_dispatch_ldapd(int fd, short event, void *ptr)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LDAPD_AUTH_RESULT: {
-			struct conn		*conn;
-			struct auth_res		*ares;
-
-			ares = imsg.data;
-			log_debug("authentication on conn %i/%lld = %d",
-			    ares->fd, ares->msgid, ares->ok);
-			conn = conn_by_fd(ares->fd);
-			if (conn->bind_req &&
-			    conn->bind_req->msgid == ares->msgid)
-				ldap_bind_continue(conn, ares->ok);
-			else
-				log_warnx("spurious auth result");
+		case IMSG_LDAPD_AUTH_RESULT:
+			ldape_auth_result(&imsg);
 			break;
-		}
+		case IMSG_LDAPD_OPEN_RESULT:
+			ldape_open_result(&imsg);
+			break;
 		default:
 			log_debug("ldape_dispatch_ldapd: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -356,5 +349,52 @@ ldape_dispatch_ldapd(int fd, short event, void *ptr)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);
+}
+
+static void
+ldape_auth_result(struct imsg *imsg)
+{
+	struct conn		*conn;
+	struct auth_res		*ares = imsg->data;
+
+	log_debug("authentication on conn %i/%lld = %d", ares->fd, ares->msgid,
+	    ares->ok);
+	conn = conn_by_fd(ares->fd);
+	if (conn->bind_req != NULL && conn->bind_req->msgid == ares->msgid)
+		ldap_bind_continue(conn, ares->ok);
+	else
+		log_warnx("spurious auth result");
+}
+
+static void
+ldape_open_result(struct imsg *imsg)
+{
+	struct namespace	*ns;
+	struct open_req		*oreq = imsg->data;
+
+	if (imsg->hdr.len != sizeof(*oreq) + IMSG_HEADER_SIZE)
+		fatal("invalid size of open result");
+
+	/* make sure path is null-terminated */
+	oreq->path[MAXPATHLEN] = '\0';
+
+	log_debug("open(%s) returned fd %i", oreq->path, imsg->fd);
+
+	TAILQ_FOREACH(ns, &conf->namespaces, next) {
+		if (strcmp(oreq->path, ns->data_path) == 0) {
+			namespace_set_data_fd(ns, imsg->fd);
+			break;
+		}
+		if (strcmp(oreq->path, ns->indx_path) == 0) {
+			namespace_set_indx_fd(ns, imsg->fd);
+			break;
+		}
+	}
+
+	if (ns == NULL) {
+		log_warnx("spurious open result");
+		close(imsg->fd);
+	} else
+		namespace_queue_schedule(ns);
 }
 
