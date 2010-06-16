@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.244 2010/05/01 10:30:41 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.245 2010/06/16 12:07:39 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 1 2010 $
+.Dd $Mdocdate: June 16 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -857,7 +857,7 @@ by setting CLEANDEPENDS_${PKGPATH}.
 Short, one line description of the port, used for the package, and in the
 INDEX.
 .It Ev COMMENT-foo
-Same as COMMENT but used for sub package foo in a multi-package setup.
+Same as COMMENT but used for sub package -foo in a multi-package setup.
 .It Ev COMMENT-vanilla
 Same as COMMENT but used for a flavored package, if the non-flavored comment
 is inappropriate.
@@ -940,6 +940,11 @@ If
 .Sq simple ,
 there is a configure script, but it does not fit the normal GNU configure
 conventions.
+.Pp
+Extensions may be defined by specific MODULES.
+See
+.Xr port-modules 5
+for details.
 .It Ev COPTS
 User settings.
 Supplementary options appended to ${CFLAGS} for building.
@@ -1175,6 +1180,14 @@ Defaults to ${PKGNAME}${FLAVOR_EXT}.
 .It Ev FULLPKGPATH
 Path to the current port's directory, relative to ${PORTSDIR},
 including flavors and subpackages.
+.It Ev GCC2_ARCHS , GCC3_ARCHS , GCC4_ARCHS
+Set to the list of architectures using gcc 2.95.3, gcc 3.3.5, or gcc 4.2.1.
+Read-only.
+Use with
+.Ev NOT_FOR_ARCHS
+or
+.Ev ONLY_FOR_ARCHS
+to limit ports to architectures where they compile.
 .It Ev GMAKE
 Location of the GNU make binary, if needed.
 Defaults to gmake.
@@ -1262,14 +1275,19 @@ User settings.
 If set, points to a directory common for all instances of concurrent ports
 builds.
 .It Ev LOCK_CMD
-User settings.
-If set, expands to a command that will acquire a lock.
-This lock will reside in
-.Pa ${LOCKDIR} .
+expands to a command that will acquire a lock.
 See also
 .Xr ports 7 .
+.It Ev LOCK_VERBOSE
+User settings.
+Defaults to
+.Sq No .
+Set to
+.Sq Yes
+to show every acquire/release lock operation.
 .It Ev LP64_ARCHS
 Set to the list of 64-bit architectures.
+Read-only.
 Use with
 .Ev NOT_FOR_ARCHS .
 .It Ev MAINTAINER
@@ -1535,15 +1553,31 @@ PERMIT_* lines in the Makefile should be preceded with a comment explaining
 details about licensing and patents issues the port may have.
 Porters must be very thorough in their checks.
 In case of doubt, ask.
+.It Ev PKG_ADD
+Path to
+.Xr pkg_add 1
+command, with possible options.
 .It Ev PKG_ARCH
 Comma-separated list of architectures on which this package may install.
 Defaults to ${MACHINE_ARCH},${ARCH}.
 Use * to mean any arch.
+.It Ev PKG_CREATE
+Path to
+.Xr pkg_create 1
+command, with possible options.
 .It Ev PKG_DBDIR
 Path to package installation records.
 Defaults to
 .Pa /var/db/pkg .
 User settings.
+.It Ev PKG_DELETE
+Path to
+.Xr pkg_delete 1
+command, with possible options.
+.It Ev PKG_INFO
+Path to
+.Xr pkg_info 1
+command, with possible options.
 .It Ev PORTHOME
 Setting of env variable
 .Ev HOME
@@ -1603,6 +1637,14 @@ Base directory for the current port installation.
 Usually ${LOCALBASE}, though some ports may elect a location under
 .Pa /var ,
 and some multi-package ports may install under several locations.
+.It Ev PROGRESS_METER
+User-settings.
+Defaults to
+.Sq Yes .
+Forces commands like
+.Xr ftp 1 ,
+.Xr pkg_create 1 ...
+to use their progress-meter even in the absence of a terminal.
 .It Ev PSEUDO_FLAVORS
 Extra list of flavors that do not register in package names, but are still
 used to control build logic, and e.g., working directory names.
@@ -2287,6 +2329,9 @@ becomes
 PATCHFILES=foo.diff.gz:0
 MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
+.It Ev PKG_CMD
+replaced by
+.Ev PKG_CREATE .
 .It Ev PKGREPOSITORY
 Old user settings.
 See
