@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.195 2010/06/15 04:31:46 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.196 2010/06/16 02:58:02 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1041,7 +1041,7 @@ sd_ioctl_cache(struct sd_softc *sc, long cmd, struct dk_cache *dkc)
 	if (rv != 0)
 		goto done;
 
-	if (!DISK_PGCODE(mode, PAGE_CACHING_MODE)) {
+	if ((mode == NULL) || (!DISK_PGCODE(mode, PAGE_CACHING_MODE))) {
 		rv = EIO;
 		goto done;
 	}
@@ -1388,11 +1388,12 @@ int
 sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 {
 	union scsi_mode_sense_buf *buf = NULL;
-	struct page_rigid_geometry *rigid;
-	struct page_flex_geometry *flex;
-	struct page_reduced_geometry *reduced;
+	struct page_rigid_geometry *rigid = NULL;
+	struct page_flex_geometry *flex = NULL;
+	struct page_reduced_geometry *reduced = NULL;
 	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize = 0, ssblksize;
 	u_int16_t rpm = 0;
+	int err;
 
 	dp->disksize = scsi_size(sc->sc_link, flags, &ssblksize);
 
@@ -1415,10 +1416,11 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 
 	case T_RDIRECT:
 		/* T_RDIRECT supports only PAGE_REDUCED_GEOMETRY (6). */
-		scsi_do_mode_sense(sc->sc_link, PAGE_REDUCED_GEOMETRY, buf,
-		    (void **)&reduced, NULL, NULL, &blksize, sizeof(*reduced),
-		    flags | SCSI_SILENT, NULL);
-		if (DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
+		err = scsi_do_mode_sense(sc->sc_link, PAGE_REDUCED_GEOMETRY,
+		    buf, (void **)&reduced, NULL, NULL, &blksize,
+		    sizeof(*reduced), flags | SCSI_SILENT, NULL);
+		if (!err && reduced &&
+		    DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
 			if (dp->disksize == 0)
 				dp->disksize = _5btol(reduced->sectors);
 			if (blksize == 0)
@@ -1434,23 +1436,25 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 		 * so accept the page. The extra bytes will be zero and RPM will
 		 * end up with the default value of 3600.
 		 */
-		rigid = NULL;
 		if (((sc->sc_link->flags & SDEV_ATAPI) == 0) ||
 		    ((sc->sc_link->flags & SDEV_REMOVABLE) == 0))
-			scsi_do_mode_sense(sc->sc_link, PAGE_RIGID_GEOMETRY,
-			    buf, (void **)&rigid, NULL, NULL, &blksize,
-			    sizeof(*rigid) - 4, flags | SCSI_SILENT, NULL);
-		if (DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
+			err = scsi_do_mode_sense(sc->sc_link,
+			    PAGE_RIGID_GEOMETRY, buf, (void **)&rigid, NULL,
+			    NULL, &blksize, sizeof(*rigid) - 4,
+			    flags | SCSI_SILENT, NULL);
+		if (!err && rigid && DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			heads = rigid->nheads;
 			cyls = _3btol(rigid->ncyl);
 			rpm = _2btol(rigid->rpm);
 			if (heads * cyls > 0)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
-			scsi_do_mode_sense(sc->sc_link, PAGE_FLEX_GEOMETRY,
-			    buf, (void **)&flex, NULL, NULL, &blksize,
-			    sizeof(*flex) - 4, flags | SCSI_SILENT, NULL);
-			if (DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
+			err = scsi_do_mode_sense(sc->sc_link,
+			    PAGE_FLEX_GEOMETRY, buf, (void **)&flex, NULL, NULL,
+			    &blksize, sizeof(*flex) - 4,
+			    flags | SCSI_SILENT, NULL);
+			if (!err && flex &&
+			    DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
 				sectors = flex->ph_sec_tr;
 				heads = flex->nheads;
 				cyls = _2btol(flex->ncyl);
