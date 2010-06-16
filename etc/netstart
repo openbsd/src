@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.129 2010/01/12 07:43:41 henning Exp $
+#	$OpenBSD: netstart,v 1.130 2010/06/16 23:45:57 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -111,7 +111,7 @@ ifstart() {
 			dest)
 				cmd="$cmd $dtaddr"
 				;;
-			[a-z!]*)
+			*)
 				cmd2="$dt $dtaddr"
 				;;
 			esac
