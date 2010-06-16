@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.245 2010/06/16 12:07:39 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.246 2010/06/16 12:14:40 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1803,6 +1803,16 @@ to
 .Pa ${PREFIX} ,
 for instance.
 Read-only.
+.Pp
+.Ev SUBST_CMD
+can be used like
+.Xr install 1 :
+.Dl ${SUBST_CMD} Oo Fl g Ar group Oc Oo Fl m Ar mode Oc Oo Fl o Ar owner Oc file...
+to set file 
+.Ar owner , 
+.Ar group 
+and/or 
+.Ar mode .
 .It Ev SUBST_VARS
 Make variables whose values get substituted to create the actual package
 information.
