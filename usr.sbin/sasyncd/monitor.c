@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.12 2006/12/25 08:17:17 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.13 2010/06/16 17:39:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <sys/un.h>
 #include <net/pfkeyv2.h>
 
 #include <errno.h>
@@ -41,6 +42,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <imsg.h>
+
+#include "types.h"	/* iked imsg types */
 
 #include "monitor.h"
 #include "sasyncd.h"
@@ -55,8 +59,8 @@ volatile sig_atomic_t		sigchld = 0;
 static void	got_sigchld(int);
 static void	sig_to_child(int);
 static void	m_priv_pfkey_snap(int);
-static void	m_priv_isakmpd_activate(void);
-static void	m_priv_isakmpd_passivate(void);
+static int	m_priv_control_activate(void);
+static int	m_priv_control_passivate(void);
 static ssize_t	m_write(int, void *, size_t);
 static ssize_t	m_read(int, void *, size_t);
 
@@ -146,10 +150,20 @@ monitor_drain_input(void)
 void
 monitor_loop(void)
 {
-	u_int32_t	v;
-	ssize_t		r;
+	u_int32_t	 v, vn;
+	ssize_t		 r;
+	fd_set		 rfds;
+	int		 ret;
+	struct timeval	*tvp, tv;
+
+	FD_ZERO(&rfds);
+	tvp = NULL;
+	vn = 0;
 
 	for (;;) {
+		ret = 0;
+		v = 0;
+
 		if (sigchld) {
 			pid_t	pid;
 			int	status;
@@ -162,11 +176,28 @@ monitor_loop(void)
 				break;
 		}
 
-		/* Wait for next task */
-		if ((r = m_read(m_state.s, &v, sizeof v)) < 1) {
-			if (r == -1)
-				log_err(0, "monitor_loop: read() ");
+		FD_SET(m_state.s, &rfds);
+		if (select(m_state.s + 1, &rfds, NULL, NULL, tvp) == -1) {
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			log_err(0, "monitor_loop: select() ");
 			break;
+		}
+
+		/* Wait for next task */
+		if (FD_ISSET(m_state.s, &rfds)) {
+			if ((r = m_read(m_state.s, &v, sizeof v)) < 1) {
+				if (r == -1)
+					log_err(0, "monitor_loop: read() ");
+				break;
+			}
+		}
+
+		/* Retry after timeout */
+		if (v == 0 && tvp != NULL) {
+			v = vn;
+			tvp = NULL;
+			vn = 0;
 		}
 
 		switch (v) {
@@ -180,12 +211,20 @@ monitor_loop(void)
 		case MONITOR_CARPDEC:
 			carp_demote(CARP_DEC, 1);
 			break;
-		case MONITOR_ISAKMPD_ACTIVATE:
-			m_priv_isakmpd_activate();
+		case MONITOR_CONTROL_ACTIVATE:
+			ret = m_priv_control_activate();
 			break;
-		case MONITOR_ISAKMPD_PASSIVATE:
-			m_priv_isakmpd_passivate();
+		case MONITOR_CONTROL_PASSIVATE:
+			ret = m_priv_control_passivate();
 			break;
+		}
+
+		if (ret == -1) {
+			/* Trigger retry after timeout */
+			tv.tv_sec = MONITOR_RETRY_TIMEOUT;
+			tv.tv_usec = 0;
+			tvp = &tv;
+			vn = v;
 		}
 	}
 
@@ -288,10 +327,10 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 }
 
 int
-monitor_isakmpd_active(int active)
+monitor_control_active(int active)
 {
 	u_int32_t	cmd =
-	    active ? MONITOR_ISAKMPD_ACTIVATE : MONITOR_ISAKMPD_PASSIVATE;
+	    active ? MONITOR_CONTROL_ACTIVATE : MONITOR_CONTROL_PASSIVATE;
 	if (write(m_state.s, &cmd, sizeof cmd) < 1)
 		return -1;
 	return 0;
@@ -386,11 +425,11 @@ m_priv_pfkey_snap(int s)
 	return;
 }
 
-static void
+static int
 m_priv_isakmpd_fifocmd(const char *cmd)
 {
 	struct stat	sb;
-	int		fd = -1;
+	int		fd = -1, ret = -1;
 
 	if ((fd = open(ISAKMPD_FIFO, O_WRONLY)) == -1) {
 		log_err("m_priv_isakmpd_fifocmd: open(%s)", ISAKMPD_FIFO);
@@ -409,23 +448,78 @@ m_priv_isakmpd_fifocmd(const char *cmd)
 		log_err("m_priv_isakmpd_fifocmd write");
 		goto out;
 	}
+
+	ret = 0;
  out:
 	if (fd != -1)
 		close(fd);
-	/* No values returned. */
-	return;
+
+	return (ret);
 }
 
-static void
-m_priv_isakmpd_activate(void)
+static int
+m_priv_iked_imsg(u_int cmd)
 {
-	m_priv_isakmpd_fifocmd("M active\n");
+	struct sockaddr_un	 sun;
+	int			 fd = -1, ret = -1;
+	struct imsgbuf		 ibuf;
+
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+		log_err("m_priv_iked_imsg: socket");
+		goto out;
+	}
+
+	bzero(&sun, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+	strlcpy(sun.sun_path, IKED_SOCKET, sizeof(sun.sun_path));
+
+	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+		log_err("m_priv_iked_imsg: connect");
+		goto out;				
+	}
+
+	imsg_init(&ibuf, fd);
+	if (imsg_compose(&ibuf, cmd, 0, 0, -1, NULL, 0) == -1) {
+		log_err("m_priv_iked_imsg: compose");
+		goto err;
+	}
+	if (imsg_flush(&ibuf) == -1) {
+		log_err("m_priv_iked_imsg: flush");
+		goto err;
+	}
+
+	ret = 0;
+ err:
+	imsg_clear(&ibuf);
+ out:
+	if (fd != -1)
+		close(fd);
+
+	return (ret);
 }
 
-static void
-m_priv_isakmpd_passivate(void)
+static int
+m_priv_control_activate(void)
 {
-	m_priv_isakmpd_fifocmd("M passive\n");
+	if (cfgstate.flags & CTL_ISAKMPD)
+		if (m_priv_isakmpd_fifocmd("M active\n") == -1)
+			return (-1);
+	if (cfgstate.flags & CTL_IKED)
+		if (m_priv_iked_imsg(IMSG_CTL_ACTIVE) == -1)
+			return (-1);
+	return (0);
+}
+
+static int
+m_priv_control_passivate(void)
+{
+	if (cfgstate.flags & CTL_ISAKMPD)
+		if (m_priv_isakmpd_fifocmd("M passive\n") == -1)
+			return (-1);
+	if (cfgstate.flags & CTL_IKED)
+		if (m_priv_iked_imsg(IMSG_CTL_PASSIVE) == -1)
+			return (-1);
+	return (0);
 }
 
 ssize_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.10 2009/06/26 13:25:23 deraadt Exp $	*/
+/*	$OpenBSD: carp.c,v 1.11 2010/06/16 17:39:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -173,7 +173,7 @@ carp_update_state(enum RUNSTATE current_state)
 		cfgstate.runstate = current_state;
 		if (current_state == MASTER)
 			pfkey_set_promisc();
-		isakmpd_setrun();
+		control_setrun();
 		net_ctl_update_state();
 	}
 }
@@ -269,15 +269,15 @@ carp_init(void)
 	return 0;
 }
 
-/* Enable or disable isakmpd connection checker. */
+/* Enable or disable isakmpd/iked connection checker. */
 void
-isakmpd_setrun(void)
+control_setrun(void)
 {
 	if (cfgstate.runstate == MASTER) {
-		if (monitor_isakmpd_active(1))
-			log_msg(0, "failed to activate isakmpd");
+		if (monitor_control_active(1))
+			log_msg(0, "failed to activate controlled daemon");
 	} else {
-		if (monitor_isakmpd_active(0))
-			log_msg(0, "failed to passivate isakmpd");
+		if (monitor_control_active(0))
+			log_msg(0, "failed to passivate controlled daemon");
 	}
 }

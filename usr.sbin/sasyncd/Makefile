@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 2005/05/24 02:35:39 ho Exp $
+#	$Id: Makefile,v 1.6 2010/06/16 17:39:05 reyk Exp $
 
 PROG=	sasyncd
 SRCS=	sasyncd.c carp.c conf.y log.c monitor.c net.c net_ctl.c pfkey.c timer.c
@@ -8,7 +8,7 @@ MAN=	sasyncd.8 sasyncd.conf.5
 CFLAGS=		-O0 $(PIPE) $(DEBUG)
 .endif
 
-CFLAGS+=	-I${.CURDIR}
+CFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../../sbin/iked
 CLEANFILES=	y.tab.h
 
 # ElectricFence
@@ -20,6 +20,6 @@ CLEANFILES=	y.tab.h
 
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wmissing-declarations
-LDADD+=		-lcrypto
+LDADD+=		-lcrypto -lutil
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.14 2007/01/08 15:31:01 markus Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.15 2010/06/16 17:39:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -73,6 +73,13 @@ struct cfgstate {
 /* Do not sync SAs to/from our peers. */
 #define SKIP_LOCAL_SAS	0x0004
 
+/* Control isakmpd or iked */
+#define CTL_NONE	0x0000
+#define CTL_ISAKMPD	0x0008
+#define CTL_IKED	0x0010
+#define CTL_DEFAULT	CTL_ISAKMPD
+#define CTL_MASK	0x0018
+
 extern struct cfgstate	cfgstate;
 extern int		carp_demoted;
 
@@ -113,7 +120,7 @@ void		carp_update_state(enum RUNSTATE);
 void		carp_set_rfd(fd_set *);
 void		carp_read_message(fd_set *);
 const char*	carp_state_name(enum RUNSTATE);
-void		isakmpd_setrun(void);
+void		control_setrun(void);
 
 
 /* log.c */

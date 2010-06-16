@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.h,v 1.1 2006/09/01 01:13:25 mpf Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.2 2010/06/16 17:39:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -28,8 +28,10 @@
 #define MONITOR_GETSNAP			1
 #define MONITOR_CARPINC			2
 #define MONITOR_CARPDEC			3
-#define MONITOR_ISAKMPD_ACTIVATE	4
-#define MONITOR_ISAKMPD_PASSIVATE	5
+#define MONITOR_CONTROL_ACTIVATE	4
+#define MONITOR_CONTROL_PASSIVATE	5
+
+#define MONITOR_RETRY_TIMEOUT	4
 
 #define ISAKMPD_FIFO	"/var/run/isakmpd.fifo"
 
@@ -38,4 +40,4 @@ void	monitor_loop(void);
 
 int	monitor_get_pfkey_snap(u_int8_t **, u_int32_t *, u_int8_t **,
     u_int32_t *);
-int	monitor_isakmpd_active(int);
+int	monitor_control_active(int);

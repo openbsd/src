@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.14 2007/05/17 11:01:36 moritz Exp $	*/
+/*	$OpenBSD: conf.y,v 1.15 2010/06/16 17:39:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -64,11 +64,11 @@ unsigned char x2i(unsigned char *);
 
 %token MODE INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
 %token Y_SLAVE Y_MASTER INET INET6 FLUSHMODE STARTUP NEVER SYNC
-%token GROUP SKIPSLAVE
+%token GROUP SKIPSLAVE CONTROL
 %token <string> STRING
 %token <hex>	HEX
 %token <val>	VALUE
-%type  <val>	af port mode flushmode
+%type  <val>	af port mode flushmode ctlmode
 
 %%
 /* Rules */
@@ -124,6 +124,27 @@ key		: STRING
 			cfgstate.sharedkey_len = $1.len * 8;
 			log_msg(2, "config: %d byte shared hex key", $1.len);
 		}
+
+ctlmode		: STRING
+		{
+			/* Compare strings to avoid keywords for daemons */
+			if (strcmp("isakmpd", $1) == 0)
+				$$ = CTL_ISAKMPD;
+			else if (strcmp("iked", $1) == 0)
+				$$ = CTL_IKED;
+			else if (strcmp("all", $1) == 0)
+				$$ = CTL_MASK;
+			else if (strcmp("none", $1) == 0)
+				$$ = CTL_NONE;
+			else {
+				log_err("config: invalid control mode");
+				free($1);
+				YYERROR;
+			}
+			log_msg(2, "config: control mode set to %s", $1);
+			free($1);
+		}
+		;
 
 setting		: INTERFACE STRING
 		{
@@ -210,6 +231,11 @@ setting		: INTERFACE STRING
 			}
 			log_msg(2, "config: shared key set");
 		}
+		| CONTROL ctlmode
+		{
+			cfgstate.flags &= ~CTL_MASK;
+			cfgstate.flags |= $2;
+		}
 		;
 
 %%
@@ -231,6 +257,7 @@ match(char *token)
 {
 	/* Sorted */
 	static const struct keyword keywords[] = {
+		{ "control", CONTROL },
 		{ "flushmode", FLUSHMODE },
 		{ "group", GROUP },
 		{ "inet", INET },
