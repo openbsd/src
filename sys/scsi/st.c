@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.97 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: st.c,v 1.98 2010/06/16 00:20:06 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -833,14 +833,16 @@ ststrategy(struct buf *bp)
 {
 	struct scsi_link *sc_link;
 	struct st_softc *st;
-	int error, s;
+	int s;
 
 	st = stlookup(STUNIT(bp->b_dev));
-	if (st == NULL)
-		return;
+	if (st == NULL) {
+		bp->b_error = ENXIO;
+		goto bad;
+	}
 	if (st->flags & ST_DYING) {
-		error = ENXIO;
-		goto done;
+		bp->b_error = ENXIO;
+		goto bad;
 	}
 	sc_link = st->sc_link;
 
@@ -897,14 +899,13 @@ ststrategy(struct buf *bp)
 bad:
 	bp->b_flags |= B_ERROR;
 done:
-	device_unref(&st->sc_dev);
-	/*
-	 * Correctly set the buf to indicate a completed xfer
-	 */
+	/* Set b_resid to indicate no xfer was done. */
 	bp->b_resid = bp->b_bcount;
 	s = splbio();
 	biodone(bp);
 	splx(s);
+	if (st)
+		device_unref(&st->sc_dev);
 }
 
 /*
