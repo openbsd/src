@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.11 2010/06/15 15:54:39 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.12 2010/06/17 18:36:36 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -82,7 +82,7 @@ struct page {				/* represents an on-disk page */
 #define PAGEHDRSZ	 (sizeof(pgno_t) + sizeof(uint32_t) + \
 				sizeof(union page_bounds))
 	indx_t		 ptrs[(PAGESIZE - PAGEHDRSZ) / sizeof(indx_t)];
-};
+} __packed;
 
 #define NUMKEYSP(p)	 (((p)->lower - PAGEHDRSZ) >> 1)
 #define NUMKEYS(mp)	 (((mp)->page.lower - PAGEHDRSZ) >> 1)
@@ -109,7 +109,7 @@ struct bt_meta {				/* meta (footer) page content */
 	uint32_t	 depth;
 	uint64_t	 entries;
 	unsigned char	 hash[SHA_DIGEST_LENGTH];
-};
+} __packed;
 
 struct btkey {
 	size_t			 len;
@@ -179,7 +179,7 @@ struct node {
 #define F_BIGDATA	 0x01			/* data put on overflow page */
 	uint8_t		 flags;
 	char		 data[1];
-};
+} __packed;
 
 struct btree_txn {
 	pgno_t			 root;		/* current / new root page */
