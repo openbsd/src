@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.153 2010/03/27 15:14:34 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.154 2010/06/17 16:11:19 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3056,7 +3056,7 @@ pmap_bootstrap4m(void)
 	pagetables_start = (vaddr_t)p;
 	/*
 	 * Allocate context table.
-	 * To keep supersparc happy, minimum aligment is on a 4K boundary.
+	 * To keep supersparc happy, minimum alignment is on a 4K boundary.
 	 */
 	ctxtblsize = max(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);

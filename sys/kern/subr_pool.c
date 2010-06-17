@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.91 2010/01/16 03:08:00 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.92 2010/06/17 16:11:20 miod Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -856,7 +856,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 		pp->pr_curcolor = 0;
 
 	/*
-	 * Adjust storage to apply aligment to `pr_itemoffset' in each item.
+	 * Adjust storage to apply alignment to `pr_itemoffset' in each item.
 	 */
 	if (ioff != 0)
 		cp = (caddr_t)(cp + (align - ioff));

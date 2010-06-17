@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.84 2009/04/10 20:53:54 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.85 2010/06/17 16:11:19 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ sun4_notsup:
 _C_LABEL(kernel_text):
 start:
 /*
- * Put sun4 traptable first, since it needs the most stringent aligment (8192)
+ * Put sun4 traptable first, since it needs the most stringent alignment (8192)
  */
 #if defined(SUN4)
 trapbase_sun4:
