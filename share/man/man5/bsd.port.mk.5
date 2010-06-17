@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.247 2010/06/17 03:19:39 william Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.248 2010/06/17 13:28:17 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1275,7 +1275,7 @@ User settings.
 If set, points to a directory common for all instances of concurrent ports
 builds.
 .It Ev LOCK_CMD
-expands to a command that will acquire a lock.
+Expands to a command that will acquire a lock.
 See also
 .Xr ports 7 .
 .It Ev LOCK_VERBOSE
@@ -1808,10 +1808,10 @@ Read-only.
 can be used like
 .Xr install 1 :
 .Dl ${SUBST_CMD} Oo Fl g Ar group Oc Oo Fl m Ar mode Oc Oo Fl o Ar owner Oc file...
-to set file 
-.Ar owner , 
-.Ar group 
-and/or 
+to set file
+.Ar owner ,
+.Ar group
+and/or
 .Ar mode .
 .It Ev SUBST_VARS
 Make variables whose values get substituted to create the actual package
