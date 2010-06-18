@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.6 2007/05/29 09:54:21 sobrado Exp $	*/
+/*	$OpenBSD: pte.h,v 1.7 2010/06/18 23:48:11 miod Exp $	*/
 /*	$NetBSD: pte.h,v 1.19 1997/08/05 11:00:10 pk Exp $ */
 
 /*
@@ -380,12 +380,3 @@ struct srmmu_pte {
 #define SRMMU_L1SIZE	0x100
 #define SRMMU_L2SIZE 	0x40
 #define SRMMU_L3SIZE	0x40
-
-/*
- * IOMMU PTE bits.
- */
-#define IOPTE_PPN_MASK  0x07ffff00
-#define IOPTE_PPN_SHIFT 8
-#define IOPTE_RSVD      0x000000f1
-#define IOPTE_WRITE     0x00000004
-#define IOPTE_VALID     0x00000002
