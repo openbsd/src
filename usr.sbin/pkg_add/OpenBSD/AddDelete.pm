@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.26 2010/06/15 08:26:39 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.27 2010/06/18 10:55:58 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -227,7 +227,7 @@ sub check_root
 	my $state = shift;
 	if ($< && !$state->defines('nonroot')) {
 		if ($state->{not}) {
-			$state->errsay("#1 should be run as root", 
+			$state->errsay("#1 should be run as root",
 			    $state->{cmd}) if $state->verbose;
 		} else {
 			$state->fatal("#1 must be run as root", $state->{cmd});
@@ -254,7 +254,7 @@ sub choose_location
 		my $result = $state->ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
 		return $h{$result};
 	} else {
-		$state->errsay("Ambiguous: #1 could be #2", 
+		$state->errsay("Ambiguous: #1 could be #2",
 		    $name, join(' ', keys %h));
 		return undef;
 	}
