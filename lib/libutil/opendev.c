@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.8 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.9 2010/06/18 17:03:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -33,17 +33,43 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/limits.h>
+#include <sys/disk.h>
+#include <sys/dkio.h>
+
 #include "util.h"
+
+/* Returns 1 if a valid disklabel UID.  */
+static int
+valid_diskuid(const char *duid, int dflags)
+{
+	char c;
+	int i;
+
+	/* Basic format check. */
+	if (!((strlen(duid) == 16 && (dflags & OPENDEV_PART)) ||
+	    (strlen(duid) == 18 && duid[16] == '.')))
+		return 0;
+
+	/* Check UID. */
+	for (i = 0; i < 16; i++) {
+		c = duid[i];
+		if ((c < '0' || c > '9') && (c < 'a' || c > 'f'))
+			return 0;
+	}
+
+	return 1;
+}
 
 /*
  * This routine is a generic rewrite of the original code found in
  * disklabel(8).
  */
-
 int
 opendev(char *path, int oflags, int dflags, char **realpath)
 {
 	static char namebuf[PATH_MAX];
+	struct dk_diskmap dm;
 	char *slash, *prefix;
 	int fd;
 
@@ -60,7 +86,29 @@ opendev(char *path, int oflags, int dflags, char **realpath)
 
 	if ((slash = strchr(path, '/')))
 		fd = open(path, oflags);
-	else if (dflags & OPENDEV_PART) {
+	else if (valid_diskuid(path, dflags)) {
+		if ((fd = open("/dev/diskmap", oflags)) != -1) {
+			bzero(&dm, sizeof(struct dk_diskmap));
+			strlcpy(namebuf, path, sizeof(namebuf));
+			dm.device = namebuf;
+			dm.fd = fd;
+			if (dflags & OPENDEV_PART)
+				dm.flags |= DM_OPENPART;
+			if (dflags & OPENDEV_BLCK)
+				dm.flags |= DM_OPENBLCK;
+
+			if (ioctl(fd, DIOCMAP, &dm) == -1) {
+				close(fd);
+				fd = -1;
+				errno = ENOENT;
+			} else if (realpath)
+				*realpath = namebuf;
+		} else if (errno != ENOENT) {
+			errno = ENXIO;
+			return -1;
+		}
+	}
+	if (fd == -1 && errno == ENOENT && (dflags & OPENDEV_PART)) {
 		/*
 		 * First try raw partition (for removable drives)
 		 */
