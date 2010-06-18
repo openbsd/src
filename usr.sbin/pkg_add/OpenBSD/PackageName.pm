@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.44 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.45 2010/06/18 14:04:20 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -106,9 +106,7 @@ sub avail2stems
 {
 	my @avail = @_;
 	if (@avail == 0) {
-		require OpenBSD::Error;
-
-		OpenBSD::Error::Warn("No packages available in the PKG_PATH\n");
+		print STDERR "No packages available in the PKG_PATH\n";
 	}
 	return OpenBSD::PackageName::compile_stemlist(@avail);
 }
