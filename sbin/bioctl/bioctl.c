@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.93 2010/05/18 04:41:14 dlg Exp $       */
+/* $OpenBSD: bioctl.c,v 1.94 2010/06/18 17:15:37 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 	extern char		*optarg;
 	u_int64_t		func = 0;
 	/* u_int64_t subfunc = 0; */
-	char			*bioc_dev = NULL, *sd_dev = NULL;
+	char			*devname = NULL;
 	char			*realname = NULL, *al_arg = NULL;
 	char			*bl_arg = NULL, *dev_list = NULL;
 	char			*key_disk = NULL;
@@ -107,6 +107,7 @@ main(int argc, char *argv[])
 	int			ch, rv, blink = 0, changepass = 0, diskinq = 0;
 	int			ss_func = 0;
 	u_int16_t		cr_level = 0;
+	int			biodev = 0;
 
 	if (argc < 2)
 		usage();
@@ -199,51 +200,46 @@ main(int argc, char *argv[])
 	if (func == 0)
 		func |= BIOC_INQ;
 
-	/* if at least glob sd[0-9]*, it is a drive identifier */
-	if (strncmp(argv[0], "sd", 2) == 0 && strlen(argv[0]) > 2 &&
-	    isdigit(argv[0][2]))
-		sd_dev = argv[0];
-	else
-		bioc_dev = argv[0];
+	devname = argv[0];
+	if (devname == NULL)
+		errx(1, "need device");
 
-	if (bioc_dev) {
+	devh = opendev(devname, O_RDWR, OPENDEV_PART, &realname);
+	if (devh == -1) {
 		devh = open("/dev/bio", O_RDWR);
 		if (devh == -1)
 			err(1, "Can't open %s", "/dev/bio");
 
-		bl.bl_name = bioc_dev;
+		bl.bl_name = devname;
 		rv = ioctl(devh, BIOCLOCATE, &bl);
 		if (rv == -1)
 			errx(1, "Can't locate %s device via %s",
 			    bl.bl_name, "/dev/bio");
-	} else if (sd_dev) {
-		devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
-		if (devh == -1)
-			err(1, "Can't open %s", sd_dev);
-	} else
-		errx(1, "need device");
+		biodev = 1;
+		devname = NULL;
+	}
 
 	if (diskinq) {
-		bio_diskinq(sd_dev);
-	} else if (changepass && sd_dev != NULL) {
-		bio_changepass(sd_dev);
+		bio_diskinq(devname);
+	} else if (changepass && !biodev) {
+		bio_changepass(devname);
 	} else if (func & BIOC_INQ) {
-		bio_inq(sd_dev);
+		bio_inq(devname);
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
 	} else if (func == BIOC_BLINK) {
-		bio_setblink(sd_dev, bl_arg, blink);
+		bio_setblink(devname, bl_arg, blink);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg, ss_func, argv[0]);
-	} else if (func == BIOC_DELETERAID && sd_dev != NULL) {
-		bio_deleteraid(sd_dev);
+	} else if (func == BIOC_DELETERAID && !biodev) {
+		bio_deleteraid(devname);
 	} else if (func & BIOC_CREATERAID || func & BIOC_DEVLIST) {
 		if (!(func & BIOC_CREATERAID))
 			errx(1, "need -c parameter");
 		if (!(func & BIOC_DEVLIST))
 			errx(1, "need -l parameter");
-		if (sd_dev)
-			errx(1, "can't use sd device");
+		if (!biodev)
+			errx(1, "must use bio device");
 		bio_createraid(cr_level, dev_list, key_disk);
 	}
 
@@ -862,6 +858,7 @@ bio_parse_devlist(char *lst, dev_t *dt)
 	int			no_dev = 0, i, x;
 	struct stat		sb;
 	char			dev[MAXPATHLEN];
+	int			fd;
 
 	if (!lst)
 		errx(1, "invalid device list");
@@ -875,8 +872,14 @@ bio_parse_devlist(char *lst, dev_t *dt)
 			/* got one */
 			sz = e - s + 1;
 			strlcpy(dev, s, sz + 1);
-			if (stat(dev, &sb) == -1)
+			fd = opendev(dev, O_RDONLY, OPENDEV_BLCK, NULL);
+			if (fd == -1)
+				err(1, "could not open %s", dev);
+			if (fstat(fd, &sb) == -1) {
+				close(fd);
 				err(1, "could not stat %s", dev);
+			}
+			close(fd);
 			dt[no_dev] = sb.st_rdev;
 			no_dev++;
 			if (no_dev > (int)(BIOC_CRMAXLEN / sizeof(dev_t)))
