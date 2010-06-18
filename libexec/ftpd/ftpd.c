@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.188 2010/06/13 15:27:46 tobias Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.189 2010/06/18 06:02:57 tobias Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1758,6 +1758,10 @@ statfilecmd(char *filename)
 
 	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
 	fin = ftpd_popen(line, "r");
+	if (fin == NULL) {
+		reply(451, "Local resource failure");
+		return;
+	}
 	lreply(211, "status of %s:", filename);
 	atstart = 1;
 	while ((c = getc(fin)) != EOF) {
