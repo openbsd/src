@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.13 2010/01/08 18:01:54 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.14 2010/06/18 10:56:32 espie Exp $
 
 =head1 NAME
 
@@ -193,7 +193,6 @@ Lists of inter-dependencies are recorded in both directions
 subtleties (removing duplicates, keeping things ordered, and handling
 pretend operations).
 
-
 =item shared items
 
 Some items may be recorded multiple times within several packages (mostly
@@ -213,6 +212,24 @@ will happen before doing an operation.  All the computations and caching
 are handled through the L<OpenBSD::Vstat(3p)> module, which is designed
 to hide file system oddities, and to perform addition/deletion operations
 virtually before doing them for real.
+
+=item framework for user interaction
+
+Most commands are now implemented as perl modules, with C<pkg(1)> requiring
+the correct module C<M>, and invoking C<M-E<gt>parse_and_run("command")>.
+
+All those commands use a class derived from C<OpenBSD::State> for user
+interaction. Among other things, C<OpenBSD::State> provides for printable, 
+translatable messages, consistent option handling and usage messages.
+
+All commands that provide a progress meter use the derived module
+C<OpenBSD::AddCreateDelete>, which contains a derived state class
+C<OpenBSD::AddCreateDelete::State>, and a main command class
+C<OpenBSD::AddCreateDelete>, with consistent options.
+
+Eventually, this will allow third party tools to simply override the user
+interface part of C<OpenBSD::State>/C<OpenBSD::ProgressMeter> to provide
+alternate displays.
 
 =back
 
@@ -336,20 +353,8 @@ There are a few desireable changes that will happen in the future:
 
 =item *
 
-Version number handling does not yet extends to package signatures.
-Thus, some spurious downgrades may happen if the packagename itself does not
-change.
-
-=item *
-
 there should be some carefully designed mechanisms to register more
 `global' processing, to avoid exec/unexec.
-
-=item *
-
-some packages should be able to refuse automatic update, and to interact
-with the user. Again, to be carefully designed, so that one can still
-understand what's going on.
 
 =back
 
@@ -360,6 +365,19 @@ understand what's going on.
 =item OpenBSD::Add
 
 common operations related to a package addition.
+
+=item OpenBSD::AddCreateDelete
+
+common operations related to package addition/creation/deletion.
+Mainly C<OpenBSD::ProgressMeter> related.
+
+=item OpenBSD::AddDelete
+
+common operations used during addition and deletion.
+Mainly due to the fact that C<pkg_add(1)> will remove packages during
+updates, and that addition/suppression operations are only allowed to
+fail at specific times. Most updateset algorithms live there, as does
+the upper layer framework for handling signals safely.
 
 =item OpenBSD::ArcCheck
 
@@ -374,16 +392,26 @@ full list of installed files, and reports origin of existing files.
 
 =item OpenBSD::Delete
 
-common operations related to a package deletion
+common operations related to package deletion.
+
+=item OpenBSD::Dependencies
+
+looking up all kind of dependencies.  Contains rather complicated caching
+to speed things up.  Interacts with the global tracker object.
 
 =item OpenBSD::Error
 
-handles external calls through C<system(3p)>, exception mechanism,
-fatal errors and warnings.
+handles signal registration, the exception mechanism, and auto-caching 
+methods.  Most I/O operations have moved to C<OpenBSD::State>.
 
 =item OpenBSD::Getopt
 
 L<Getopt::Std(3p)>-like with extra hooks for special options.
+
+=item OpenBSD::Handle
+
+proxy class to go from a package location to an opened package with plist,
+including state information to cache errors.
 
 =item OpenBSD::IdCache
 
@@ -391,11 +419,32 @@ caches uid and gid vs. user names and group names correspondences.
 
 =item OpenBSD::Interactive
 
-handles user questions (to be redesigned)
+handles user questions (do not call directly, go through C<OpenBSD::State>
+and derivatives).
+
+=item OpenBSD::LibSpec
+
+interactions between library objects from packing-lists, library specifications,
+and matching those against actual lists of libraries (from packages or from
+the system).
+
+=item OpenBSD::LibSpec::Build
+
+extends C<OpenBSD::LibSpec> for matching during ports builds.
+
+=item OpenBSD::Log
+
+component for printing information later, to be used by derivative classes
+of C<OpenBSD::State>.
 
 =item OpenBSD::Mtree
 
 simple parser for L<mtree(8)> specifications.
+
+=item OpenBSD::OldLibs
+
+code required by C<pkg_add(1)> to handle the removal of old libraries during
+update.
 
 =item OpenBSD::PackageInfo
 
@@ -431,9 +480,17 @@ because searching through a repository list has L<ld(1)>-like semantics
 all the packing-list elements class hierarchy, together with common
 methods that do not belong elsewhere.
 
+=item OpenBSD::PackingList
+
+responsible for reading/writing packing-lists, copying them, comparing them.
+
 =item OpenBSD::Paths
 
 hardcoded paths to external programs and locations.
+
+=item OpenBSD::PkgAdd, OpenBSD::PkgCreate, OpenBSD::PkgCheck, OpenBSD::PkgDelete, OpenBSD:PkgInfo
+
+implements corresponding commands.
 
 =item OpenBSD::PkgCfl
 
@@ -447,10 +504,8 @@ exist.
 
 =item OpenBSD::ProgressMeter
 
-handles display of a progress meter when a terminal is available.
-Provided as a singleton object so that a graphical interface could
-be used instead. In practice, most input-output of the package tools
-will need to be abstracted first.
+handles display of a progress meter when a terminal is available, devolves
+to nothings otherwise.
 
 =item OpenBSD::Replace
 
@@ -471,6 +526,15 @@ handles items that may be shared by several packages.
 =item OpenBSD::SharedLibs
 
 shared library specificities when handled as dependencies.
+
+=item OpenBSD::Signature
+
+handles package signatures and the corresponding version comparison (do not
+confuse with cryptographic signatures, as handled through C<OpenBSD::x509>).
+
+=item OpenBSD::State
+
+base class to UI and option handling. 
 
 =item OpenBSD::Subst
 
@@ -508,5 +572,11 @@ virtual file system (pretend) operations.
 =item OpenBSD::md5
 
 simple interface to the L<Digest::MD5(3p)> module.
+
+=item OpenBSD::x509
+
+cryptographic signature through x509 certificates. Mostly calls C<openssl(1)>.
+Note that C<OpenBSD::ArcCheck>  is vital in ensuring archive meta-info have
+not been tampered with.
 
 =back
