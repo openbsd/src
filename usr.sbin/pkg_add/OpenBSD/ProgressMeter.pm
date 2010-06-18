@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.33 2010/06/05 12:01:08 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.34 2010/06/18 09:01:38 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -44,6 +44,21 @@ sub errprint
 {
 	shift->clear;
 	print STDERR @_;
+}
+
+sub for_list
+{
+	my ($self, $msg, $l, $code) = @_;
+	if (defined $msg) {
+		$self->set_header($msg);
+	}
+	my $total = scalar @$l;
+	my $i = 0;
+	for my $e (@$l) {
+		$self->show(++$i, $total);
+		&$code($e);
+	}
+	$self->next;
 }
 
 # stub class when no actual progressmeter that still prints out.

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.17 2010/06/15 08:53:55 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.18 2010/06/18 09:01:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -221,7 +221,7 @@ use OpenBSD::Log;
 sub init
 {
 	my $self = shift;
-	$self->{l} = OpenBSD::Log->new;
+	$self->{l} = OpenBSD::Log->new($self);
 	$self->SUPER::init;
 }
 
@@ -441,14 +441,11 @@ sub for_all_packages
 {
 	my ($self, $state, $l, $msg, $code) = @_;
 
-	my $total = scalar @$l;
-	$state->progress->set_header($msg);
-	my $i = 0;
-	for my $name (@$l) {
-		$state->progress->show(++$i, $total);
-		next if $state->{removed}{$name};
-		&$code($name);
-	}
+	$state->progress->for_list($msg, $l, 
+	    sub {
+		next if $state->{removed}{$_[0]};
+		&$code;
+	    });
 }
 
 sub sanity_check
