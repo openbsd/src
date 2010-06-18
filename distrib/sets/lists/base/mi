@@ -968,6 +968,7 @@
 ./usr/libdata/perl5/OpenBSD/LibSpec
 ./usr/libdata/perl5/OpenBSD/LibSpec.pm
 ./usr/libdata/perl5/OpenBSD/LibSpec/Build.pm
+./usr/libdata/perl5/OpenBSD/Log.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis
 ./usr/libdata/perl5/OpenBSD/Makewhatis.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Check.pm
