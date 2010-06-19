@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.157 2009/12/05 02:38:11 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.158 2010/06/19 19:43:06 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -699,6 +699,10 @@ aml_delchildren(struct aml_node *node)
 
 		aml_delchildren(onode);
 
+		/* Don't delete values that have references */
+		if (onode->value && onode->value->refcnt > 1)
+			onode->value->node = NULL;
+
 		/* Decrease reference count */
 		aml_xdelref(&onode->value, "");
 
@@ -976,6 +980,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		break;
 	case AML_OBJTYPE_OBJREF:
 		lhs->v_objref = rhs->v_objref;
+		aml_xaddref(lhs->v_objref.ref, "");
 		break;
 	default:
 		printf("copyvalue: %x", rhs->type);
@@ -3626,12 +3631,12 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		/* CondRef: rr => I */
 		ival = 0;
 		if (opargs[0]->node != NULL) {
-			aml_freevalue(opargs[1]);
-
 			/* Create Object Reference */
-			_aml_setvalue(opargs[1], AML_OBJTYPE_OBJREF, opcode, opargs[0]);
-			aml_xaddref(opargs[1], "CondRef");
-			
+			opargs[2] = aml_allocvalue(AML_OBJTYPE_OBJREF, opcode,
+				opargs[0]);
+			aml_xaddref(opargs[0], "CondRef");
+			aml_xstore(scope, opargs[1], 0, opargs[2]);
+
 			/* Mark that we found it */
 			ival = -1;
 		}
