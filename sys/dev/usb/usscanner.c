@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.31 2010/03/23 01:57:20 krw Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.32 2010/06/19 21:43:16 krw Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -471,7 +471,6 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
-	int s;
 
 	DPRINTFN(10, ("usscanner_data_cb status=%d\n", status));
 
@@ -487,9 +486,7 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	sc->sc_state = UAS_IDLE;
 
-	s = splbio();
 	scsipi_done(sc->sc_xs);
-	splx(s);
 }
 
 void
@@ -708,7 +705,6 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct usscanner_softc *sc = sc_link->adapter_softc;
 	usbd_status err;
-	int s;
 
 #ifdef notyet
 	DPRINTFN(8, ("%s: usscanner_scsi_cmd: %d:%d "
@@ -763,7 +759,5 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 
  done:
 	sc->sc_state = UAS_IDLE;
-	s = splbio();
 	scsipi_done(xs);
-	splx(s);
 }

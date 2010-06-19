@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.85 2010/05/26 12:17:35 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.86 2010/06/19 21:43:16 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1129,13 +1129,8 @@ atascsi_atapi_cmd_done(struct ata_xfer *xa)
 void
 atascsi_done(struct scsi_xfer *xs, int error)
 {
-	int			s;
-
 	xs->error = error;
-
-	s = splbio();
 	scsi_done(xs);
-	splx(s);
 }
 
 void
