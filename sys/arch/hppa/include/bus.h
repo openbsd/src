@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.28 2009/07/30 21:39:54 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.29 2010/06/19 14:06:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -167,7 +167,6 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	BUS_SPACE_MAP_LINEAR		0x0002
 #define	BUS_SPACE_MAP_READONLY		0x0004
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x0008
-#define	BUS_SPACE_MAP_NOEXTENT		0x8000	/* no extent ops */
 
 /* bus access routines */
 

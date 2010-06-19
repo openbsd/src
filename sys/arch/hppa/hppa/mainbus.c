@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.80 2010/05/24 15:04:55 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.81 2010/06/19 14:06:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -275,8 +275,7 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
 {
 	int error;
 
-	if (!(flags & BUS_SPACE_MAP_NOEXTENT) &&
-	    (error = extent_alloc_region(hppa_ex, bpa, size, EX_NOWAIT)))
+	if ((error = extent_alloc_region(hppa_ex, bpa, size, EX_NOWAIT)))
 		return (error);
 
 	if ((error = mbus_add_mapping(bpa, size, flags, bshp))) {
