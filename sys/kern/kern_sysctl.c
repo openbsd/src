@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.183 2010/05/02 11:15:29 kettenis Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.184 2010/06/19 14:44:44 thib Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1244,9 +1244,9 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 		}
 		rw_enter_read(&allproclk);
 		LIST_FOREACH(pp, &allproc, p_list) {
-			/* skip system, embryonic and undead processes */
-			if ((pp->p_flag & P_SYSTEM) ||
-			    pp->p_stat == SIDL || pp->p_stat == SZOMB)
+			/* skip system, exiting, embryonic and undead processes */
+			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
+			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
 			if (arg > 0 && pp->p_pid != (pid_t)arg) {
 				/* not the pid we are looking for */
@@ -1276,9 +1276,9 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 	case KERN_FILE_BYUID:
 		rw_enter_read(&allproclk);
 		LIST_FOREACH(pp, &allproc, p_list) {
-			/* skip system, embryonic and undead processes */
-			if ((pp->p_flag & P_SYSTEM) ||
-			    pp->p_stat == SIDL || pp->p_stat == SZOMB)
+			/* skip system, exiting, embryonic and undead processes */
+			if ((pp->p_flag & P_SYSTEM) || (pp->p_flag & P_WEXIT)
+			    || pp->p_stat == SIDL || pp->p_stat == SZOMB)
 				continue;
 			if (arg > 0 && pp->p_ucred->cr_uid != (uid_t)arg) {
 				/* not the uid we are looking for */
