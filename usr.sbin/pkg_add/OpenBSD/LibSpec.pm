@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.9 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.10 2010/06/19 08:22:06 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -79,19 +79,6 @@ sub lookup
 		}
 	}
 	return $r;
-}
-
-sub findbest
-{
-	my ($spec, $repo, $base) = @_;
-	my $r = $spec->lookup($repo, $base);
-	my $best;
-	for my $candidate (@$r) {
-		if (!defined $best || $candidate->is_better($best)) {
-			$best = $candidate;
-		}
-	}
-	return $best;
 }
 
 package OpenBSD::BadLib;
