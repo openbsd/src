@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.42 2010/01/14 23:12:11 schwarze Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.43 2010/06/20 17:57:09 phessler Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define	malloc(s, t, flags)		malloc(s)
 #define	free(p, t)			free(p)

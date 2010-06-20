@@ -1,4 +1,4 @@
-/*	$OpenBSD: bb.c,v 1.1.1.1 2005/09/23 19:02:29 kurt Exp $	*/
+/*	$OpenBSD: bb.c,v 1.2 2010/06/20 17:57:09 phessler Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <stdio.h>
 
 int weakFunction1(void) __attribute__((weak));
 int weakFunction2(void) __attribute__((weak));

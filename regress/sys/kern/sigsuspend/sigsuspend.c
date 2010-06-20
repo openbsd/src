@@ -1,8 +1,11 @@
-/*	$OpenBSD: sigsuspend.c,v 1.1 2005/05/31 09:27:28 art Exp $	*/
+/*	$OpenBSD: sigsuspend.c,v 1.2 2010/06/20 17:57:09 phessler Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2005, Public domain.
  */
+
+#include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 #include <err.h>
 #include <sys/types.h>
