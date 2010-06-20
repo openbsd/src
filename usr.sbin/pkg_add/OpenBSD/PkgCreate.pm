@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.14 2010/06/14 22:08:24 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.15 2010/06/20 08:32:26 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -169,8 +169,7 @@ sub compute_checksum
 		if (!defined $chk) {
 			$state->error("bogus symlink: #1 (too deep)", $fname);
 		} elsif (!-e $chk) {
-			$state->errsay("Warning: symlink #1 points to non-existent #2", 
-			    $fname, $chk);
+			push(@{$state->{bad_symlinks}{$chk}}, $fname);
 		}
 		$result->make_symlink($value);
 	} elsif (-f _) {
@@ -785,6 +784,18 @@ sub create_package
 	}
 }
 
+sub show_bad_symlinks
+{
+	my ($self, $state) = @_;
+	for my $dest (sort keys %{$state->{bad_symlinks}}) {
+		$state->errsay("Warning: symlink(s) point to non-existent #1", 
+		    $dest);
+		for my $link (@{$state->{bad_symlinks}{$dest}}) {
+			$state->errsay("\t#1", $link);
+		}
+	}
+}
+
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
@@ -886,6 +897,7 @@ sub parse_and_run
 		} else {
 			$plist = $self->make_plist_with_sum($state, $plist);
 		}
+		$self->show_bad_symlinks($state);
 		$state->end_status;
 	}
 
