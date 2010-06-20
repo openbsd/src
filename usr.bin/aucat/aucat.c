@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.94 2010/06/05 16:00:52 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.95 2010/06/20 11:32:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -930,8 +930,8 @@ midicat_main(int argc, char **argv)
 		cm = SLIST_FIRST(&mids);
 		SLIST_REMOVE_HEAD(&mids, entry);
 		if (!dev_thruadd(d, cm->path,
-			!SLIST_EMPTY(&ins) || l_flag,
-			!SLIST_EMPTY(&outs) || l_flag)) {
+			!SLIST_EMPTY(&outs) || l_flag,
+			!SLIST_EMPTY(&ins) || l_flag)) {
 			errx(1, "%s: can't open device", cm->path);
 		}
 		free(cm);
