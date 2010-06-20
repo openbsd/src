@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.1 2008/07/25 11:41:22 art Exp $
+#	$OpenBSD: Makefile,v 1.2 2010/06/20 14:14:49 phessler Exp $
 
 PROG=	flock
 
 TESTS!=jot 15 1
 
 .for a in ${TESTS}
-t-${a}:
+t-${a}: flock
 	./flock /tmp ${a}
 REGRESS_TARGETS+=t-${a}
 .endfor
