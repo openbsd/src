@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.77 2010/02/11 13:26:33 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.78 2010/06/20 08:32:03 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: February 11 2010 $
+.Dd $Mdocdate: June 20 2010 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -116,6 +116,9 @@ Configuration files for X11 window system fonts.
 .It hotplug/
 Scripts for the hotplug daemon,
 .Xr hotplugd 8 .
+.It iked/
+Configuration files for
+.Xr iked 8 .
 .It isakmpd/
 Configuration files for
 .Xr isakmpd 8 .
@@ -205,7 +208,7 @@ Default configuration files for X11 and companion applications (see
 Various libraries and drivers for the X11 window system.
 .It pkgconfig/
 Package metadata for
-.Xr pkgconfig 1 .
+.Xr pkg-config 1 .
 .It xorg/
 Data files used by the X server.
 .El
