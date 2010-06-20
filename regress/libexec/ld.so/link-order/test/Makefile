@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2003/07/01 07:08:31 niklas Exp $
+# $OpenBSD: Makefile,v 1.4 2010/06/20 14:19:13 phessler Exp $
 
 .include <bsd.own.mk>
 
@@ -54,7 +54,10 @@ OBJDIR_PROG!=	if [ -d $(DIR_PROG)/${__objdir} ]; then \
 
 PROGPATH=	${OBJDIR_PROG}/prog
 
-make-lib:
+prog:
+	@cd $(DIR_PROG) && $(MAKE)
+
+make-lib: prog
 	@mkdir lib >/dev/null 2>&1 || true
 
 clean:
