@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.210 2010/05/10 02:00:50 krw Exp $
+# $OpenBSD: Makefile,v 1.211 2010/06/20 20:35:06 phessler Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -29,7 +29,7 @@ PFALTQ=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 # only testing parser, load test would be useless
 # PFLOAD+=6 22 41 50 52 53 55 57 83 85 86
 PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12 13
-PFOPT=1 2 3 5 6
+PFOPT=1 2 3 6
 PFIF2IP=1 2 3
 PFCHKSUM=1 2 3
 
