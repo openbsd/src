@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.38 2010/04/08 00:23:53 tedu Exp $ */
+/*      $OpenBSD: eap.c,v 1.39 2010/06/20 10:22:25 ratchov Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -80,7 +80,7 @@ struct        cfdriver eap_cd = {
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (eapdebug) printf x
 #define DPRINTFN(n,x)	if (eapdebug>(n)) printf x
-int	eapdebug = 20;
+int	eapdebug = 1;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -182,9 +182,6 @@ paddr_t	eap_mappage(void *, void *, off_t, int);
 int	eap_get_props(void *);
 void	eap1370_set_mixer(struct eap_softc *sc, int a, int d);
 u_int32_t eap1371_src_wait(struct eap_softc *sc);
-void 	eap1371_set_adc_rate(struct eap_softc *sc, int rate);
-void 	eap1371_set_dac_rate(struct eap_softc *sc, int rate, int which);
-int	eap1371_src_read(struct eap_softc *sc, int a);
 void	eap1371_src_write(struct eap_softc *sc, int a, int d);
 int	eap1371_query_devinfo(void *addr, mixer_devinfo_t *dip);
 
@@ -424,33 +421,6 @@ eap1371_src_wait(struct eap_softc *sc)
 	return (src);
 }
 
-int
-eap1371_src_read(struct eap_softc *sc, int a)
-{
-	int to;
-	u_int32_t src, t;
-
-	t = eap1371_src_wait(sc);
-
-	src = (t & E1371_SRC_CTLMASK) | E1371_SRC_ADDR(a);
-	EWRITE4(sc, E1371_SRC, src | E1371_SRC_STATE_OK);
-
-	t = eap1371_src_wait(sc);
-
-	if ((t & E1371_SRC_STATE_MASK) != E1371_SRC_STATE_OK) {
-		for (to = 0; to < EAP_READ_TIMEOUT; to++) {
-			t = EREAD4(sc, E1371_SRC);
-			if ((t & E1371_SRC_STATE_MASK) == E1371_SRC_STATE_OK)
-				break;
-			delay(1);
-		}
-	}
-
-	EWRITE4(sc, E1371_SRC, src);
-
-	return t & E1371_SRC_DATAMASK;
-}
-
 void
 eap1371_src_write(struct eap_softc *sc, int a, int d)
 {
@@ -461,78 +431,6 @@ eap1371_src_write(struct eap_softc *sc, int a, int d)
 	EWRITE4(sc, E1371_SRC, r);
 }
 	
-void
-eap1371_set_adc_rate(struct eap_softc *sc, int rate)
-{
-	int freq, n, truncm;
-	int out;
-	int s;
-
-	/* Whatever, it works, so I'll leave it :) */
-
-	if (rate > 48000)
-		rate = 48000;
-	if (rate < 4000)
-		rate = 4000;
-	n = rate / 3000;
-	if ((1 << n) & SRC_MAGIC)
-		n--;
-	truncm = ((21 * n) - 1) | 1;
-	freq = ((48000 << 15) / rate) * n;
-	if (rate >= 24000) {
-		if (truncm > 239)
-			truncm = 239;
-		out = ESRC_SET_TRUNC((239 - truncm) / 2);
-	} else {
-		if (truncm > 119)
-			truncm = 119;
-		out = ESRC_SMF | ESRC_SET_TRUNC((119 - truncm) / 2);
-	}
- 	out |= ESRC_SET_N(n);
-	s = splaudio();
-	eap1371_src_write(sc, ESRC_ADC+ESRC_TRUNC_N, out);
-
-      
-	out = eap1371_src_read(sc, ESRC_ADC+ESRC_IREGS) & 0xff;
-	eap1371_src_write(sc, ESRC_ADC+ESRC_IREGS, out |
-	    ESRC_SET_VFI(freq >> 15));
-	eap1371_src_write(sc, ESRC_ADC+ESRC_VFF, freq & 0x7fff);
-	eap1371_src_write(sc, ESRC_ADC_VOLL, ESRC_SET_ADC_VOL(n));
-	eap1371_src_write(sc, ESRC_ADC_VOLR, ESRC_SET_ADC_VOL(n));
-	splx(s);
-}
-
-void
-eap1371_set_dac_rate(struct eap_softc *sc, int rate, int which)
-{
-	int dac = which == 1 ? ESRC_DAC1 : ESRC_DAC2;
-	int freq, r;
-	int s;
- 
-	/* Whatever, it works, so I'll leave it :) */
-
-	if (rate > 48000)
-	    rate = 48000;
-	if (rate < 4000)
-	    rate = 4000;
-	freq = ((rate << 15) + 1500) / 3000;
-	
-	s = splaudio();
-	eap1371_src_wait(sc);
-	r = EREAD4(sc, E1371_SRC) & (E1371_SRC_DISABLE |
-	    E1371_SRC_DISP2 | E1371_SRC_DISP1 | E1371_SRC_DISREC);
-	r |= (which == 1) ? E1371_SRC_DISP1 : E1371_SRC_DISP2;
-	EWRITE4(sc, E1371_SRC, r);
-	r = eap1371_src_read(sc, dac + ESRC_IREGS) & 0x00ff;
-	eap1371_src_write(sc, dac + ESRC_IREGS, r | ((freq >> 5) & 0xfc00));
-	eap1371_src_write(sc, dac + ESRC_VFF, freq & 0x7fff);
-	r = EREAD4(sc, E1371_SRC) & (E1371_SRC_DISABLE |
-	    E1371_SRC_DISP2 | E1371_SRC_DISP1 | E1371_SRC_DISREC);
-	r &= ~(which == 1 ? E1371_SRC_DISP1 : E1371_SRC_DISP2);
-	EWRITE4(sc, E1371_SRC, r);
-	splx(s);
-}
-
 void
 eap_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -646,26 +544,34 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 
 		/*
 		 * Must properly reprogram sample rate converter,
-		 * or it locks up.  Set some defaults for the life of the
-		 * machine, and set up an ac97 default sample rate.
+		 * or it locks up.
+		 *
+		 * We don't know how to program it (no documentation),
+		 * and the linux/oss magic receipe doesn't work (breaks
+		 * full-duplex, by selecting different play and record
+		 * rates). On the other hand, the sample rate converter
+		 * can't be disabled (disabling it would disable DMA),
+		 * so we use these magic defaults that make it "resample"
+		 * 48kHz to 48kHz without breaking full-duplex.
 		 */
 		EWRITE4(sc, E1371_SRC, E1371_SRC_DISABLE);
 		for (i = 0; i < 0x80; i++)
 			eap1371_src_write(sc, i, 0);
-		eap1371_src_write(sc, ESRC_DAC1+ESRC_TRUNC_N, ESRC_SET_N(16));
-		eap1371_src_write(sc, ESRC_DAC2+ESRC_TRUNC_N, ESRC_SET_N(16));
-		eap1371_src_write(sc, ESRC_DAC1+ESRC_IREGS, ESRC_SET_VFI(16));
-		eap1371_src_write(sc, ESRC_DAC2+ESRC_IREGS, ESRC_SET_VFI(16));
+		eap1371_src_write(sc, ESRC_ADC + ESRC_TRUNC_N, ESRC_SET_N(16));
+		eap1371_src_write(sc, ESRC_ADC + ESRC_IREGS, ESRC_SET_VFI(16));
+		eap1371_src_write(sc, ESRC_ADC + ESRC_VFF, 0);
 		eap1371_src_write(sc, ESRC_ADC_VOLL, ESRC_SET_ADC_VOL(16));
 		eap1371_src_write(sc, ESRC_ADC_VOLR, ESRC_SET_ADC_VOL(16));
+		eap1371_src_write(sc, ESRC_DAC1 + ESRC_TRUNC_N, ESRC_SET_N(16));
+		eap1371_src_write(sc, ESRC_DAC1 + ESRC_IREGS, ESRC_SET_VFI(16));
+		eap1371_src_write(sc, ESRC_DAC1 + ESRC_VFF, 0);
 		eap1371_src_write(sc, ESRC_DAC1_VOLL, ESRC_SET_DAC_VOLI(1));
 		eap1371_src_write(sc, ESRC_DAC1_VOLR, ESRC_SET_DAC_VOLI(1));
+		eap1371_src_write(sc, ESRC_DAC2 + ESRC_IREGS, ESRC_SET_VFI(16));
+		eap1371_src_write(sc, ESRC_DAC2 + ESRC_TRUNC_N, ESRC_SET_N(16));
+		eap1371_src_write(sc, ESRC_DAC2 + ESRC_VFF, 0);
 		eap1371_src_write(sc, ESRC_DAC2_VOLL, ESRC_SET_DAC_VOLI(1));
 		eap1371_src_write(sc, ESRC_DAC2_VOLR, ESRC_SET_DAC_VOLI(1));
-		eap1371_set_adc_rate(sc, 48000);
-		eap1371_set_dac_rate(sc, 48000, 1);
-		eap1371_set_dac_rate(sc, 48000, 2);
-	     
 		EWRITE4(sc, E1371_SRC, 0);
 
 		/* Reset codec */
@@ -946,6 +852,8 @@ eap_set_params(void *addr, int setmode, int usemode,
 
 		p = mode == AUMODE_PLAY ? play : rec;
 
+		if (sc->sc_1371)
+			p->sample_rate = 48000;
 		if (p->sample_rate < 4000)
 			p->sample_rate = 4000;
 		if (p->sample_rate > 48000)
@@ -998,11 +906,7 @@ eap_set_params(void *addr, int setmode, int usemode,
 		}
 	}
 
-	if (sc->sc_1371) {
-		eap1371_set_dac_rate(sc, play->sample_rate, 1);
-		eap1371_set_dac_rate(sc, play->sample_rate, 2);
-		eap1371_set_adc_rate(sc, rec->sample_rate);
-	} else {
+	if (!sc->sc_1371) {
 		/* Set the speed */
 		DPRINTFN(2, ("eap_set_params: old ICSC = 0x%08x\n",
 		    EREAD4(sc, EAP_ICSC)));
