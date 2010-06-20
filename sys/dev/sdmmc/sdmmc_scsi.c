@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.22 2010/05/20 00:55:18 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.23 2010/06/20 23:05:29 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -47,7 +47,6 @@ struct sdmmc_ccb {
 	struct scsi_xfer *ccb_xs;
 	int ccb_flags;
 #define SDMMC_CCB_F_ERR		0x0001
-	void (*ccb_done)(struct sdmmc_ccb *);
 	u_int32_t ccb_blockno;
 	u_int32_t ccb_blockcnt;
 	volatile enum {
@@ -210,7 +209,6 @@ sdmmc_alloc_ccbs(struct sdmmc_scsi_softc *scbus, int nccbs)
 		ccb->ccb_state = SDMMC_CCB_FREE;
 		ccb->ccb_flags = 0;
 		ccb->ccb_xs = NULL;
-		ccb->ccb_done = NULL;
 
 		TAILQ_INSERT_TAIL(&scbus->sc_ccb_freeq, ccb, ccb_link);
 	}
@@ -256,7 +254,6 @@ sdmmc_put_ccb(struct sdmmc_ccb *ccb)
 	ccb->ccb_state = SDMMC_CCB_FREE;
 	ccb->ccb_flags = 0;
 	ccb->ccb_xs = NULL;
-	ccb->ccb_done = NULL;
 	TAILQ_INSERT_TAIL(&scbus->sc_ccb_freeq, ccb, ccb_link);
 	if (TAILQ_NEXT(ccb, ccb_link) == NULL)
 		wakeup(&scbus->sc_ccb_freeq);
@@ -380,7 +377,6 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	ccb->ccb_xs = xs;
-	ccb->ccb_done = sdmmc_done_xs;
 
 	ccb->ccb_blockcnt = blockcnt;
 	ccb->ccb_blockno = blockno;
@@ -440,7 +436,7 @@ sdmmc_complete_xs(void *arg)
 	if (error != 0)
 		xs->error = XS_DRIVER_STUFFUP;
 
-	ccb->ccb_done(ccb);
+	sdmmc_done_xs(ccb);
 	splx(s);
 }
 
@@ -478,7 +474,7 @@ sdmmc_stimeout(void *arg)
 	ccb->ccb_flags |= SDMMC_CCB_F_ERR;
 	if (sdmmc_task_pending(&ccb->ccb_task)) {
 		sdmmc_del_task(&ccb->ccb_task);
-		ccb->ccb_done(ccb);
+		sdmmc_done_xs(ccb);
 	}
 	splx(s);
 }
