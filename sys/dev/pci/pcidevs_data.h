@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1557 2010/05/24 20:36:29 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1558 2010/06/20 10:24:06 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7188,6 +7188,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "10GbE SR Dual (82598)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575GB_QP_PM,
+	    "PRO/1000 QP (82575GB)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_BM,
 	    "ICH9 BM",
 	},
@@ -7204,12 +7208,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000 QP (82576)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82577LM,
+	    "82577LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82577LC,
+	    "82577LC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598EB_CX4_DUAL,
 	    "10GbE CX4 Dual (82598EB)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82578DM,
 	    "82578DM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82578DC,
+	    "82578DC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82598_DA_DUAL,
@@ -7222,6 +7238,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH9_IGP_M_AMT,
 	    "ICH9 IGP M AMT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82574LA,
+	    "82574L",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_KX4,
@@ -7348,6 +7368,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82870P2 Hot Plug",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_82567V_3,
+	    "ICH8 82567V-3",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_SFP_EM,
 	    "10GbE SFP EM (82599)",
 	},
@@ -7364,8 +7388,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000 (82583V)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_SERDES_QUAD,
+	    "82576 SerDes QP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER,
+	    "I340-T4 (82580)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_FIBER,
+	    "82580 Fiber",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SERDES,
+	    "82580 SerDes",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SGMII,
+	    "82580 SFP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER_DUAL,
+	    "I340-T2 (82580)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_KX4_MEZZ,
 	    "10GbE KX4 (82599)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_NS_SERDES,
+	    "82576NS SerDes",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_QUAD_CU_ET2,
