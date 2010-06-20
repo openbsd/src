@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.37 2010/05/18 21:51:10 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.38 2010/06/20 10:36:03 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -487,6 +487,7 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82573E_IAMT         0x108C
 #define E1000_DEV_ID_82573L              0x109A
 #define E1000_DEV_ID_82574L              0x10D3
+#define E1000_DEV_ID_82574LA             0x10F6
 #define E1000_DEV_ID_82546GB_2           0x109B
 #define E1000_DEV_ID_82571EB_AT          0x10A0
 #define E1000_DEV_ID_82571EB_AF          0x10A1
@@ -499,6 +500,7 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_80003ES2LAN_SERDES_DPT 0x1098
 #define E1000_DEV_ID_80003ES2LAN_COPPER_SPT 0x10BA
 #define E1000_DEV_ID_80003ES2LAN_SERDES_SPT 0x10BB
+#define E1000_DEV_ID_ICH8_82567V_3       0x1501
 #define E1000_DEV_ID_ICH8_IGP_M_AMT      0x1049
 #define E1000_DEV_ID_ICH8_IGP_AMT        0x104A
 #define E1000_DEV_ID_ICH8_IGP_C          0x104B
@@ -520,19 +522,31 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_ICH10_R_BM_V        0x10CE
 #define E1000_DEV_ID_ICH10_D_BM_LM       0x10DE
 #define E1000_DEV_ID_ICH10_D_BM_LF       0x10DF
+#define E1000_DEV_ID_PCH_M_HV_LM         0x10EA
+#define E1000_DEV_ID_PCH_M_HV_LC         0x10EB
+#define E1000_DEV_ID_PCH_D_HV_DM         0x10EF
+#define E1000_DEV_ID_PCH_D_HV_DC         0x10F0
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
-#define E1000_DEV_ID_82575GB_QP		 0x10D6
-#define E1000_DEV_ID_82576		 0x10C9
-#define E1000_DEV_ID_82576_FIBER	 0x10E6
-#define E1000_DEV_ID_82576_SERDES	 0x10E7
-#define E1000_DEV_ID_82576_QUAD_COPPER	 0x10E8
-#define E1000_DEV_ID_82576_NS		 0x150A
-#define E1000_DEV_ID_82576_QUAD_CU_ET2	 0x1526
-#define E1000_DEV_ID_82574L		 0x10D3
-#define E1000_DEV_ID_EP80579_LAN_1	 0x5040          /* EP80579 LAN */
-#define E1000_DEV_ID_EP80579_LAN_2	 0x5044          /* EP80579 LAN */
-#define E1000_DEV_ID_EP80579_LAN_3	 0x5048          /* EP80579 LAN */
+#define E1000_DEV_ID_82575GB_QP          0x10D6
+#define E1000_DEV_ID_82575GB_QP_PM       0x10E2
+#define E1000_DEV_ID_82576               0x10C9
+#define E1000_DEV_ID_82576_FIBER         0x10E6
+#define E1000_DEV_ID_82576_SERDES        0x10E7
+#define E1000_DEV_ID_82576_QUAD_COPPER   0x10E8
+#define E1000_DEV_ID_82576_NS            0x150A
+#define E1000_DEV_ID_82576_NS_SERDES     0x1518
+#define E1000_DEV_ID_82576_SERDES_QUAD   0x150D
+#define E1000_DEV_ID_82580_COPPER        0x150E
+#define E1000_DEV_ID_82580_FIBER         0x150F
+#define E1000_DEV_ID_82580_SERDES        0x1510
+#define E1000_DEV_ID_82580_SGMII         0x1511
+#define E1000_DEV_ID_82580_COPPER_DUAL   0x1516
+#define E1000_DEV_ID_82576_QUAD_CU_ET2   0x1526
+#define E1000_DEV_ID_82574L              0x10D3
+#define E1000_DEV_ID_EP80579_LAN_1       0x5040
+#define E1000_DEV_ID_EP80579_LAN_2       0x5044
+#define E1000_DEV_ID_EP80579_LAN_3       0x5048
 
 #define NODE_ADDRESS_SIZE 6
 #define ETH_LENGTH_OF_ADDRESS 6
@@ -3194,19 +3208,24 @@ struct em_host_command_info {
 /* I = Integrated
  * E = External
  */
-#define M88_VENDOR         0x0141
-#define M88E1000_E_PHY_ID  0x01410C50
-#define M88E1000_I_PHY_ID  0x01410C30
-#define M88E1011_I_PHY_ID  0x01410C20
+#define M88_VENDOR           0x0141
+#define M88E1000_E_PHY_ID    0x01410C50
+#define M88E1000_I_PHY_ID    0x01410C30
+#define M88E1011_I_PHY_ID    0x01410C20
 #define IGP01E1000_I_PHY_ID  0x02A80380
-#define M88E1000_12_PHY_ID M88E1000_E_PHY_ID
-#define M88E1000_14_PHY_ID M88E1000_E_PHY_ID
-#define M88E1011_I_REV_4   0x04
-#define M88E1111_I_PHY_ID  0x01410CC0
-#define L1LXT971A_PHY_ID   0x001378E0
-#define GG82563_E_PHY_ID   0x01410CA0
-#define BME1000_E_PHY_ID   0x01410CB0
-#define M88E1141_E_PHY_ID  0x01410CD0
+#define M88E1000_12_PHY_ID   M88E1000_E_PHY_ID
+#define M88E1000_14_PHY_ID   M88E1000_E_PHY_ID
+#define M88E1011_I_REV_4     0x04
+#define M88E1111_I_PHY_ID    0x01410CC0
+#define L1LXT971A_PHY_ID     0x001378E0
+#define GG82563_E_PHY_ID     0x01410CA0
+#define BME1000_E_PHY_ID     0x01410CB0
+#define BME1000_E_PHY_ID_R2  0x01410CB1
+#define I82577_E_PHY_ID      0x01540050
+#define I82578_E_PHY_ID      0x004DD040
+#define I82580_I_PHY_ID      0x015403A0
+#define IGP04E1000_E_PHY_ID  0x02A80391
+#define M88E1141_E_PHY_ID    0x01410CD0
 
 /* Bits...
  * 15-5: page
