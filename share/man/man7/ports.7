@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.80 2010/05/01 10:30:41 espie Exp $
+.\" $OpenBSD: ports.7,v 1.81 2010/06/20 07:59:53 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: May 1 2010 $
+.Dd $Mdocdate: June 20 2010 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -338,10 +338,11 @@ Remove the symbolic links created by
 .Sh LOCK INFRASTRUCTURE
 The ports tree can be used concurrently for building several ports at the
 same time, thanks to a locking mechanism.
-By default, this mechanism is disabled.
+By default, locks are stored under
+.Pa /tmp/portslocks .
 Defining
 .Ev LOCKDIR
-to a proper value will activate it.
+will point them elsewhere, or disable the mechanism if set to an empty value.
 .Pp
 All locks will be stored in
 .Pa ${LOCKDIR} .
