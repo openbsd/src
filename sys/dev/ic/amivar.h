@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.55 2010/06/04 06:52:58 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.56 2010/06/21 11:43:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -112,7 +112,9 @@ struct ami_softc {
 	paddr_t			sc_mbox_pa;
 
 	struct ami_ccb		*sc_ccbs;
-	struct ami_ccb_list	sc_ccb_freeq, sc_ccb_preq, sc_ccb_runq;
+	struct ami_ccb_list	sc_ccb_freeq;
+	struct mutex		sc_ccb_freeq_mtx;
+	struct ami_ccb_list	sc_ccb_preq, sc_ccb_runq;
 
 	struct ami_mem		*sc_ccbmem_am;
 
