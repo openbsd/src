@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.12 2010/06/05 18:43:57 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.13 2010/06/21 19:31:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2315,8 +2315,6 @@ ar9003_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	DPRINTFN(4, ("writing pre and core init vals\n"));
 	for (i = 0; i < ini->ncmregs; i++) {
 		AR_WRITE(sc, X(ini->cmregs[i]), ini->cmvals[i]);
-		if (AR_IS_ANALOG_REG(X(ini->cmregs[i])))
-			DELAY(100);
 		if ((i & 0x1f) == 0)
 			DELAY(1);
 	}
@@ -2342,8 +2340,6 @@ ar9003_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 	DPRINTFN(4, ("writing post init vals\n"));
 	for (i = 0; i < ini->nregs; i++) {
 		AR_WRITE(sc, X(ini->regs[i]), pvals[i]);
-		if (AR_IS_ANALOG_REG(X(ini->regs[i])))
-			DELAY(100);
 		if ((i & 0x1f) == 0)
 			DELAY(1);
 	}
@@ -2365,8 +2361,6 @@ ar9003_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 		DPRINTFN(4, ("writing fast pll clock init vals\n"));
 		for (i = 0; i < ini->nfastregs; i++) {
 			AR_WRITE(sc, X(ini->fastregs[i]), pvals[i]);
-			if (AR_IS_ANALOG_REG(X(ini->fastregs[i])))
-				DELAY(100);
 			if ((i & 0x1f) == 0)
 				DELAY(1);
 		}
