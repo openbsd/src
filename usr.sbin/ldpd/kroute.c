@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2010/06/07 13:24:23 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.14 2010/06/21 19:43:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -373,7 +373,7 @@ kr_show_route(struct imsg *imsg)
 				do {
 					main_imsg_compose_ldpe(IMSG_CTL_KROUTE,
 					    imsg->hdr.pid,
-					    &kr->r, sizeof(kr->r));
+					    &kn->r, sizeof(kn->r));
 				} while ((kn = kn->next) != NULL);
 			}
 		break;
