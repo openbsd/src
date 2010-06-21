@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.52 2010/06/21 19:46:50 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.53 2010/06/21 19:56:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1013,8 +1013,8 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	if (!(k->k_flags & IEEE80211_KEY_GROUP)) {
 		addr = ni->ni_macaddr;
-		lo = addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24;
-		hi = addr[4] | addr[5] << 8;
+		lo = LE_READ_4(&addr[0]);
+		hi = LE_READ_2(&addr[4]);
 		lo = lo >> 1 | hi << 31;
 		hi = hi >> 1;
 	} else
