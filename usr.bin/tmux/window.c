@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.51 2010/05/23 19:42:19 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.52 2010/06/21 01:46:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -170,6 +170,28 @@ struct winlink *
 winlink_previous(struct winlink *wl)
 {
 	return (RB_PREV(winlinks, wwl, wl));
+}
+
+struct winlink *
+winlink_next_by_number(struct winlink *wl, int n)
+{
+	for (; n > 0; n--) {
+		if ((wl = RB_NEXT(winlinks, wwl, wl)) == NULL)
+			break;
+	}
+
+	return (wl);
+}
+
+struct winlink *
+winlink_previous_by_number(struct winlink *wl, int n)
+{
+	for (; n > 0; n--) {
+		if ((wl = RB_PREV(winlinks, wwl, wl)) == NULL)
+			break;
+	}
+
+	return (wl);
 }
 
 void
