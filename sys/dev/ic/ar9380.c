@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9380.c,v 1.4 2010/05/13 09:03:12 damien Exp $	*/
+/*	$OpenBSD: ar9380.c,v 1.5 2010/06/21 19:54:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -67,6 +67,8 @@ void	ar9380_setup(struct athn_softc *);
 void	ar9380_swap_rom(struct athn_softc *);
 int	ar9380_set_synth(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
+void	ar9380_get_paprd_masks(struct athn_softc *, struct ieee80211_channel *,
+	    uint32_t *, uint32_t *);
 void	ar9380_init_from_rom(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9380_spur_mitigate_cck(struct athn_softc *,
@@ -108,6 +110,7 @@ ar9380_attach(struct athn_softc *sc)
 	sc->ops.set_txpower = ar9380_set_txpower;
 	sc->ops.set_synth = ar9380_set_synth;
 	sc->ops.spur_mitigate = ar9380_spur_mitigate;
+	sc->ops.get_paprd_masks = ar9380_get_paprd_masks;
 	sc->cca_min_2g = AR9380_PHY_CCA_MIN_GOOD_VAL_2GHZ;
 	sc->cca_max_2g = AR9380_PHY_CCA_MAX_GOOD_VAL_2GHZ;
 	sc->cca_min_5g = AR9380_PHY_CCA_MIN_GOOD_VAL_5GHZ;
@@ -153,6 +156,10 @@ ar9380_setup(struct athn_softc *sc)
 
 	/* Fast PLL clock is always supported. */
 	sc->flags |= ATHN_FLAG_FAST_PLL_CLOCK;
+
+	/* Enable PA predistortion if supported. */
+	if (base->featureEnable & AR_EEP_PAPRD)
+		sc->flags |= ATHN_FLAG_PAPRD;
 
 	/* Select initialization values based on ROM. */
 	type = MS(eep->baseEepHeader.txrxgain, AR_EEP_RX_GAIN);
@@ -202,15 +209,34 @@ ar9380_swap_rom(struct athn_softc *sc)
 	modal = &eep->modalHeader2G;
 	modal->antCtrlCommon = swap32(modal->antCtrlCommon);
 	modal->antCtrlCommon2 = swap32(modal->antCtrlCommon2);
+	modal->papdRateMaskHt20 = swap32(modal->papdRateMaskHt20);
+	modal->papdRateMaskHt40 = swap32(modal->papdRateMaskHt40);
 	for (i = 0; i < AR9380_MAX_CHAINS; i++)
 		modal->antCtrlChain[i] = swap16(modal->antCtrlChain[i]);
 
 	modal = &eep->modalHeader5G;
 	modal->antCtrlCommon = swap32(modal->antCtrlCommon);
 	modal->antCtrlCommon2 = swap32(modal->antCtrlCommon2);
+	modal->papdRateMaskHt20 = swap32(modal->papdRateMaskHt20);
+	modal->papdRateMaskHt40 = swap32(modal->papdRateMaskHt40);
 	for (i = 0; i < AR9380_MAX_CHAINS; i++)
 		modal->antCtrlChain[i] = swap16(modal->antCtrlChain[i]);
 #endif
+}
+
+void
+ar9380_get_paprd_masks(struct athn_softc *sc, struct ieee80211_channel *c,
+    uint32_t *ht20mask, uint32_t *ht40mask)
+{
+	const struct ar9380_eeprom *eep = sc->eep;
+	const struct ar9380_modal_eep_header *modal;
+
+	if (IEEE80211_IS_CHAN_2GHZ(c))
+		modal = &eep->modalHeader2G;
+	else
+		modal = &eep->modalHeader5G;
+	*ht20mask = modal->papdRateMaskHt20;
+	*ht40mask = modal->papdRateMaskHt40;
 }
 
 int
@@ -501,9 +527,7 @@ ar9380_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 {
 	const struct ar9380_eeprom *eep = sc->eep;
 	uint8_t tpow_cck[4], tpow_ofdm[4];
-#ifndef IEEE80211_NO_HT
 	uint8_t tpow_ht20[14], tpow_ht40[14];
-#endif
 	int16_t power[ATHN_POWER_COUNT];
 
 	if (IEEE80211_IS_CHAN_2GHZ(c)) {
@@ -517,7 +541,6 @@ ar9380_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		    eep->calTargetFbin2G, eep->calTargetPower2G,
 		    AR9380_NUM_2G_20_TARGET_POWERS, tpow_ofdm);
 
-#ifndef IEEE80211_NO_HT
 		/* Get HT-20 target powers. */
 		ar9003_get_ht_tpow(sc, c, AR_CTL_2GHT20,
 		    eep->calTargetFbin2GHT20, eep->calTargetPower2GHT20,
@@ -530,14 +553,12 @@ ar9380_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 			    eep->calTargetPower2GHT40,
 			    AR9380_NUM_2G_40_TARGET_POWERS, tpow_ht40);
 		}
-#endif
 	} else {
 		/* Get OFDM target powers. */
 		ar9003_get_lg_tpow(sc, c, AR_CTL_11A,
 		    eep->calTargetFbin5G, eep->calTargetPower5G,
 		    AR9380_NUM_5G_20_TARGET_POWERS, tpow_ofdm);
 
-#ifndef IEEE80211_NO_HT
 		/* Get HT-20 target powers. */
 		ar9003_get_ht_tpow(sc, c, AR_CTL_5GHT20,
 		    eep->calTargetFbin5GHT20, eep->calTargetPower5GHT20,
@@ -550,7 +571,6 @@ ar9380_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 			    eep->calTargetPower5GHT40,
 			    AR9380_NUM_5G_40_TARGET_POWERS, tpow_ht40);
 		}
-#endif
 	}
 
 	memset(power, 0, sizeof(power));
@@ -572,7 +592,6 @@ ar9380_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		power[ATHN_POWER_CCK11_LP] = tpow_cck[2];
 		power[ATHN_POWER_CCK11_SP] = tpow_cck[3];
 	}
-#ifndef IEEE80211_NO_HT
 	/* Next entry covers MCS0, MCS8 and MCS16. */
 	power[ATHN_POWER_HT20( 0)] = tpow_ht20[ 0];
 	/* Next entry covers MCS1-3, MCS9-11 and MCS17-19. */
@@ -607,7 +626,6 @@ ar9380_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 		power[ATHN_POWER_HT40(22)] = tpow_ht40[12];
 		power[ATHN_POWER_HT40(23)] = tpow_ht40[13];
 	}
-#endif
 
 	/* Write transmit power values to hardware. */
 	ar9003_write_txpower(sc, power);
@@ -661,7 +679,7 @@ ar9380_set_correction(struct athn_softc *sc, struct ieee80211_channel *c)
 			temp0 = temp;
 
 		reg = AR_READ(sc, AR_PHY_TPC_11_B(i));
-		reg = RW(reg, AR_PHY_TPC_OLPC_GAIN_DELTA, corr);
+		reg = RW(reg, AR_PHY_TPC_11_OLPC_GAIN_DELTA, corr);
 		AR_WRITE(sc, AR_PHY_TPC_11_B(i), reg);
 
 		/* Enable open loop power control. */
@@ -681,6 +699,6 @@ ar9380_set_correction(struct athn_softc *sc, struct ieee80211_channel *c)
 	AR_WRITE(sc, AR_PHY_TPC_19, reg);
 
 	reg = AR_READ(sc, AR_PHY_TPC_18);
-	reg = RW(reg, AR_PHY_TPC_18_THERM_CAL_VALUE, temp0);
+	reg = RW(reg, AR_PHY_TPC_18_THERM_CAL, temp0);
 	AR_WRITE(sc, AR_PHY_TPC_18, reg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.16 2010/06/21 19:46:50 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.17 2010/06/21 19:54:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -81,6 +81,7 @@ struct athn_tx_buf {
 	struct mbuf			*bf_m;
 	struct ieee80211_node		*bf_ni;
 	int				bf_txflags;
+#define ATHN_TXFLAG_PAPRD	(1 << 0)
 };
 
 struct athn_txq {
@@ -390,6 +391,8 @@ struct athn_ops {
 	void	(*next_calib)(struct athn_softc *);
 	void	(*hw_init)(struct athn_softc *, struct ieee80211_channel *,
 		    struct ieee80211_channel *);
+	void	(*get_paprd_masks)(struct athn_softc *sc,
+		    struct ieee80211_channel *, uint32_t *, uint32_t *);
 	/* ANI callbacks. */
 	void	(*set_noise_immunity_level)(struct athn_softc *, int);
 	void	(*enable_ofdm_weak_signal)(struct athn_softc *);
@@ -434,6 +437,7 @@ struct athn_softc {
 #define ATHN_FLAG_11G			(1 << 9)
 #define ATHN_FLAG_11N			(1 << 10)
 #define ATHN_FLAG_SPLIT_TKIP_MIC	(1 << 11)
+#define ATHN_FLAG_PAPRD			(1 << 12)
 
 	uint8_t				ngpiopins;
 	int				led_pin;
@@ -465,6 +469,14 @@ struct athn_softc {
 	int8_t				tx_gain_tbl[AR9280_TX_GAIN_TABLE_SIZE];
 	int8_t				pdadc;
 	int8_t				tcomp;
+
+	/* PA predistortion. */
+	uint16_t			gain1[AR_MAX_CHAINS];
+	uint32_t			txgain[AR9003_TX_GAIN_TABLE_SIZE];
+	uint32_t			paprd[AR_MAX_CHAINS]
+					     [AR9003_PAPRD_MEM_TAB_SIZE];
+	int32_t				trainpow;
+	uint8_t				paprd_curchain;
 
 	uint32_t			rwbuf[64];
 

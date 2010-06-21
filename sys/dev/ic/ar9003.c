@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.14 2010/06/21 19:46:50 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.15 2010/06/21 19:54:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -118,6 +118,16 @@ void	ar9003_next_calib(struct athn_softc *);
 void	ar9003_calib_iq(struct athn_softc *);
 int	ar9003_get_iq_corr(struct athn_softc *, int32_t[], int32_t[]);
 int	ar9003_calib_tx_iq(struct athn_softc *);
+void	ar9003_paprd_calib(struct athn_softc *, struct ieee80211_channel *);
+int	ar9003_get_desired_txgain(struct athn_softc *, int, int);
+void	ar9003_force_txgain(struct athn_softc *, uint32_t);
+void	ar9003_set_training_gain(struct athn_softc *, int);
+int	ar9003_paprd_tx_tone(struct athn_softc *);
+int	ar9003_compute_predistortion(struct athn_softc *, const uint32_t *,
+	    const uint32_t *);
+void	ar9003_enable_predistorter(struct athn_softc *, int);
+void	ar9003_paprd_enable(struct athn_softc *);
+void	ar9003_paprd_tx_tone_done(struct athn_softc *);
 void	ar9003_write_txpower(struct athn_softc *, int16_t power[]);
 void	ar9003_reset_rx_gain(struct athn_softc *, struct ieee80211_channel *);
 void	ar9003_reset_tx_gain(struct athn_softc *, struct ieee80211_channel *);
@@ -995,6 +1005,10 @@ ar9003_tx_process(struct athn_softc *sc)
 	if (ds->ds_status3 & AR_TXS3_UNDERRUN)
 		athn_inc_tx_trigger_level(sc);
 
+	/* Wakeup PA predistortion state machine. */
+	if (bf->bf_txflags & ATHN_TXFLAG_PAPRD)
+		ar9003_paprd_tx_tone_done(sc);
+
 	an = (struct athn_node *)bf->bf_ni;
 	/*
 	 * NB: the data fail count contains the number of un-acked tries
@@ -1482,6 +1496,11 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 			series[i].dur = athn_txtime(sc, IEEE80211_ACK_LEN,
 			    athn_rates[ridx[i]].rspridx, ic->ic_flags);
 		}
+	}
+
+	if (__predict_false(txflags & ATHN_TXFLAG_PAPRD)) {
+		ds->ds_ctl12 |= SM(AR_TXC12_PAPRD_CHAIN_MASK,
+		    1 << sc->paprd_curchain);
 	}
 
 	/* Write number of tries for each series. */
@@ -2201,6 +2220,596 @@ ar9003_calib_tx_iq(struct athn_softc *sc)
 }
 #undef DELPT
 
+/*-
+ * The power amplifier predistortion state machine works as follows:
+ * 1) Disable digital predistorters for all Tx chains
+ * 2) Repeat steps 3~7 for all Tx chains
+ * 3)   Force Tx gain to that of training signal
+ * 4)   Send training signal (asynchronous)
+ * 5)   Wait for training signal to complete (asynchronous)
+ * 6)   Read PA measurements (input power, output power, output phase)
+ * 7)   Compute the predistortion function that linearizes PA output
+ * 8) Write predistortion functions to hardware tables for all Tx chains
+ * 9) Enable digital predistorters for all Tx chains
+ */
+void
+ar9003_paprd_calib(struct athn_softc *sc, struct ieee80211_channel *c)
+{
+	static const int scaling[] = {
+		261376, 248079, 233759, 220464,
+		208194, 196949, 185706, 175487
+	};
+	struct athn_ops *ops = &sc->ops;
+	uint32_t reg, ht20mask, ht40mask;
+	int i;
+
+	/* Read PA predistortion masks from ROM. */
+	ops->get_paprd_masks(sc, c, &ht20mask, &ht40mask);
+
+	/* AM-to-AM: amplifier's amplitude characteristic. */
+	reg = AR_READ(sc, AR_PHY_PAPRD_AM2AM);
+	reg = RW(reg, AR_PHY_PAPRD_AM2AM_MASK, ht20mask);
+	AR_WRITE(sc, AR_PHY_PAPRD_AM2AM, reg);
+
+	/* AM-to-PM: amplifier's phase transfer characteristic. */
+	reg = AR_READ(sc, AR_PHY_PAPRD_AM2PM);
+	reg = RW(reg, AR_PHY_PAPRD_AM2PM_MASK, ht20mask);
+	AR_WRITE(sc, AR_PHY_PAPRD_AM2PM, reg);
+
+	reg = AR_READ(sc, AR_PHY_PAPRD_HT40);
+	reg = RW(reg, AR_PHY_PAPRD_HT40_MASK, ht40mask);
+	AR_WRITE(sc, AR_PHY_PAPRD_HT40, reg);
+
+	for (i = 0; i < AR9003_MAX_CHAINS; i++) {
+		AR_SETBITS(sc, AR_PHY_PAPRD_CTRL0_B(i),
+		    AR_PHY_PAPRD_CTRL0_USE_SINGLE_TABLE);
+
+		reg = AR_READ(sc, AR_PHY_PAPRD_CTRL1_B(i));
+		reg = RW(reg, AR_PHY_PAPRD_CTRL1_PA_GAIN_SCALE_FACT, 181);
+		reg = RW(reg, AR_PHY_PAPRD_CTRL1_MAG_SCALE_FACT, 361);
+		reg &= ~AR_PHY_PAPRD_CTRL1_ADAPTIVE_SCALING_ENA;
+		reg |= AR_PHY_PAPRD_CTRL1_ADAPTIVE_AM2AM_ENA;
+		reg |= AR_PHY_PAPRD_CTRL1_ADAPTIVE_AM2PM_ENA;
+		AR_WRITE(sc, AR_PHY_PAPRD_CTRL1_B(i), reg);
+
+		reg = AR_READ(sc, AR_PHY_PAPRD_CTRL0_B(i));
+		reg = RW(reg, AR_PHY_PAPRD_CTRL0_PAPRD_MAG_THRSH, 3);
+		AR_WRITE(sc, AR_PHY_PAPRD_CTRL0_B(i), reg);
+	}
+
+	/* Disable all digital predistorters during calibration. */
+	for (i = 0; i < AR9003_MAX_CHAINS; i++) {
+		AR_CLRBITS(sc, AR_PHY_PAPRD_CTRL0_B(i),
+		    AR_PHY_PAPRD_CTRL0_PAPRD_ENABLE);
+	}
+
+	/*
+	 * Configure training signal.
+	 */
+	reg = AR_READ(sc, AR_PHY_PAPRD_TRAINER_CNTL1);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL1_AGC2_SETTLING, 28);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL1_LB_SKIP, 0x30);
+	reg &= ~AR_PHY_PAPRD_TRAINER_CNTL1_RX_BB_GAIN_FORCE;
+	reg &= ~AR_PHY_PAPRD_TRAINER_CNTL1_IQCORR_ENABLE;
+	reg |= AR_PHY_PAPRD_TRAINER_CNTL1_LB_ENABLE;
+	reg |= AR_PHY_PAPRD_TRAINER_CNTL1_TX_GAIN_FORCE;
+	reg |= AR_PHY_PAPRD_TRAINER_CNTL1_TRAIN_ENABLE;
+	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL1, reg);
+
+	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL2, 147);
+
+	reg = AR_READ(sc, AR_PHY_PAPRD_TRAINER_CNTL3);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_FINE_CORR_LEN, 4);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_COARSE_CORR_LEN, 4);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_NUM_CORR_STAGES, 7);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_MIN_LOOPBACK_DEL, 1);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_QUICK_DROP, -6);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL3_ADC_DESIRED_SIZE, -15);
+	reg |= AR_PHY_PAPRD_TRAINER_CNTL3_BBTXMIX_DISABLE;
+	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL3, reg);
+
+	reg = AR_READ(sc, AR_PHY_PAPRD_TRAINER_CNTL4);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL4_SAFETY_DELTA, 0);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL4_MIN_CORR, 400);
+	reg = RW(reg, AR_PHY_PAPRD_TRAINER_CNTL4_NUM_TRAIN_SAMPLES, 100);
+	AR_WRITE(sc, AR_PHY_PAPRD_TRAINER_CNTL4, reg);
+
+	for (i = 0; i < nitems(scaling); i++) {
+		reg = AR_READ(sc, AR_PHY_PAPRD_PRE_POST_SCALE_B0(i));
+		reg = RW(reg, AR_PHY_PAPRD_PRE_POST_SCALING, scaling[i]);
+		AR_WRITE(sc, AR_PHY_PAPRD_PRE_POST_SCALE_B0(i), reg);
+	}
+
+	/* Save Tx gain table. */
+	for (i = 0; i < AR9003_TX_GAIN_TABLE_SIZE; i++)
+		sc->txgain[i] = AR_READ(sc, AR_PHY_TXGAIN_TABLE(i));
+
+	/* Set Tx power of training signal (use setting for MCS0.) */
+	sc->trainpow = MS(AR_READ(sc, AR_PHY_PWRTX_RATE5),
+	    AR_PHY_PWRTX_RATE5_POWERTXHT20_0) - 4;
+
+	/*
+	 * Start PA predistortion calibration state machine.
+	 */
+	/* Find first available Tx chain. */
+	sc->paprd_curchain = 0;
+	while (!(sc->txchainmask & (1 << sc->paprd_curchain)))
+		sc->paprd_curchain++;
+
+	/* Make sure training done bit is clear. */
+	AR_CLRBITS(sc, AR_PHY_PAPRD_TRAINER_STAT1,
+	    AR_PHY_PAPRD_TRAINER_STAT1_TRAIN_DONE);
+
+	/* Transmit training signal. */
+	ar9003_paprd_tx_tone(sc);
+}
+
+int
+ar9003_get_desired_txgain(struct athn_softc *sc, int chain, int pow)
+{
+	int32_t scale, atemp, avolt, tempcal, voltcal, temp, volt;
+	int32_t tempcorr, voltcorr;
+	uint32_t reg;
+	int8_t delta;
+
+	AR_CLRBITS(sc, AR_PHY_PAPRD_TRAINER_STAT1,
+	    AR_PHY_PAPRD_TRAINER_STAT1_TRAIN_DONE);
+
+	scale = MS(AR_READ(sc, AR_PHY_TPC_12),
+	    AR_PHY_TPC_12_DESIRED_SCALE_HT40_5);
+
+	reg = AR_READ(sc, AR_PHY_TPC_19);
+	atemp = MS(reg, AR_PHY_TPC_19_ALPHA_THERM);
+	avolt = MS(reg, AR_PHY_TPC_19_ALPHA_VOLT);
+
+	reg = AR_READ(sc, AR_PHY_TPC_18);
+	tempcal = MS(reg, AR_PHY_TPC_18_THERM_CAL);
+	voltcal = MS(reg, AR_PHY_TPC_18_VOLT_CAL);
+
+	reg = AR_READ(sc, AR_PHY_BB_THERM_ADC_4);
+	temp = MS(reg, AR_PHY_BB_THERM_ADC_4_LATEST_THERM);
+	volt = MS(reg, AR_PHY_BB_THERM_ADC_4_LATEST_VOLT);
+
+	delta = (int8_t)MS(AR_READ(sc, AR_PHY_TPC_11_B(chain)),
+	    AR_PHY_TPC_11_OLPC_GAIN_DELTA);
+
+	/* Compute temperature and voltage correction. */
+	tempcorr = (atemp * (temp - tempcal) + 128) / 256;
+	voltcorr = (avolt * (volt - voltcal) + 64) / 128;
+
+	/* Compute desired Tx gain. */
+	return (pow - delta - tempcorr - voltcorr + scale);
+}
+
+void
+ar9003_force_txgain(struct athn_softc *sc, uint32_t txgain)
+{
+	uint32_t reg;
+
+	reg = AR_READ(sc, AR_PHY_TX_FORCED_GAIN);
+	reg = RW(reg, AR_PHY_TX_FORCED_GAIN_TXBB1DBGAIN,
+	    MS(txgain, AR_PHY_TXGAIN_TXBB1DBGAIN));
+	reg = RW(reg, AR_PHY_TX_FORCED_GAIN_TXBB6DBGAIN,
+	    MS(txgain, AR_PHY_TXGAIN_TXBB6DBGAIN));
+	reg = RW(reg, AR_PHY_TX_FORCED_GAIN_TXMXRGAIN,
+	    MS(txgain, AR_PHY_TXGAIN_TXMXRGAIN));
+	reg = RW(reg, AR_PHY_TX_FORCED_GAIN_PADRVGNA,
+	    MS(txgain, AR_PHY_TXGAIN_PADRVGNA));
+	reg = RW(reg, AR_PHY_TX_FORCED_GAIN_PADRVGNB,
+	    MS(txgain, AR_PHY_TXGAIN_PADRVGNB));
+	reg = RW(reg, AR_PHY_TX_FORCED_GAIN_PADRVGNC,
+	    MS(txgain, AR_PHY_TXGAIN_PADRVGNC));
+	reg = RW(reg, AR_PHY_TX_FORCED_GAIN_PADRVGND,
+	    MS(txgain, AR_PHY_TXGAIN_PADRVGND));
+	reg &= ~AR_PHY_TX_FORCED_GAIN_ENABLE_PAL;
+	reg &= ~AR_PHY_TX_FORCED_GAIN_FORCE_TX_GAIN;
+	AR_WRITE(sc, AR_PHY_TX_FORCED_GAIN, reg);
+
+	reg = AR_READ(sc, AR_PHY_TPC_1);
+	reg = RW(reg, AR_PHY_TPC_1_FORCED_DAC_GAIN, 0);
+	reg &= ~AR_PHY_TPC_1_FORCE_DAC_GAIN;
+	AR_WRITE(sc, AR_PHY_TPC_1, reg);
+}
+
+void
+ar9003_set_training_gain(struct athn_softc *sc, int chain)
+{
+	int i, gain;
+
+	/*
+	 * Get desired gain for training signal power (take into account
+	 * current temperature/voltage.)
+	 */
+	gain = ar9003_get_desired_txgain(sc, chain, sc->trainpow);
+	/* Find entry in table. */
+	for (i = 0; i < AR9003_TX_GAIN_TABLE_SIZE - 1; i++)
+		if (MS(sc->txgain[i], AR_PHY_TXGAIN_INDEX) >= gain)
+			break;
+	ar9003_force_txgain(sc, sc->txgain[i]);
+}
+
+int
+ar9003_paprd_tx_tone(struct athn_softc *sc)
+{
+#define TONE_LEN	1800
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct mbuf *m;
+	int error;
+
+	/* Build a Null (no data) frame of TONE_LEN bytes. */
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, TONE_LEN);
+	if (m == NULL)
+		return (ENOBUFS);
+	memset(mtod(m, caddr_t), 0, TONE_LEN);
+	wh = mtod(m, struct ieee80211_frame *);
+	wh->i_fc[0] = IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_NODATA;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)wh->i_dur = htole16(10);	/* XXX */
+	IEEE80211_ADDR_COPY(wh->i_addr1, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_myaddr);
+	m->m_pkthdr.len = m->m_len = TONE_LEN;
+
+	/* Set gain of training signal. */
+	ar9003_set_training_gain(sc, sc->paprd_curchain);
+
+	/* Transmit training signal. */
+	ni = ieee80211_ref_node(ic->ic_bss);
+	if ((error = ar9003_tx(sc, m, ni, ATHN_TXFLAG_PAPRD)) != 0)
+		ieee80211_release_node(ic, ni);
+	return (error);
+#undef TONE_LEN
+}
+
+static __inline int
+get_scale(int val)
+{
+	int log = 0;
+
+	/* Find the log base 2 (position of highest bit set.) */
+	while (val >>= 1)
+		log++;
+
+	return ((log > 10) ? log - 10 : 0);
+}
+
+/*
+ * Compute predistortion function to linearize power amplifier output based
+ * on feedback from training signal.
+ */
+int
+ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
+    const uint32_t *hi)
+{
+#define NBINS	23
+	int chain = sc->paprd_curchain;
+	int x[NBINS + 1], y[NBINS + 1], t[NBINS + 1];
+	int b1[NBINS + 1], b2[NBINS + 1], xtilde[NBINS + 1];
+	int in[AR9003_PAPRD_MEM_TAB_SIZE];
+	int nsamples, txsum, rxsum, rosum, maxidx;
+	int order, order5x, order5xrem, order3x, order3xrem, y5, y3;
+	int icept, G, I, L, M, angle, xnonlin, y2, y4, sumy2, sumy4;
+	int alpha, beta, scale, Qalpha, Qbeta, Qscale, Qx, Qb1, Qb2;
+	int tavg, ttilde, maxb1abs, maxb2abs, maxxtildeabs;
+	int tmp, i;
+
+	/* Set values at origin. */
+	x[0] = y[0] = t[0] = 0;
+
+#define SCALE	32
+	maxidx = 0;
+	for (i = 0; i < NBINS; i++) {
+		nsamples = lo[i] & 0xffff;
+		/* Skip bins that contain 16 or less samples. */
+		if (nsamples <= 16) {
+			x[i + 1] = y[i + 1] = t[i + 1] = 0;
+			continue;
+		}
+		txsum = (hi[i] & 0x7ff) << 16 | lo[i] >> 16;
+		rxsum = (lo[i + NBINS] & 0xffff) << 5 |
+		    ((hi[i] >> 11) & 0x1f);
+		rosum = (hi[i + NBINS] & 0x7ff) << 16 | hi[i + NBINS] >> 16;
+		/* Sign-extend 27-bit value. */
+		rosum = (rosum ^ 0x4000000) - 0x4000000;
+
+		txsum *= SCALE;
+		rxsum *= SCALE;
+		rosum *= SCALE;
+
+		x[i + 1] = ((txsum + nsamples) / nsamples + SCALE) / SCALE;
+		y[i + 1] = ((rxsum + nsamples) / nsamples + SCALE) / SCALE +
+		    SCALE * maxidx + SCALE / 2;
+		t[i + 1] = (rosum + nsamples) / nsamples;
+		maxidx++;
+	}
+#undef SCALE
+
+#define SCALE_LOG	8
+#define SCALE		(1 << SCALE_LOG)
+	if (x[6] == x[3])
+		return (1);	/* Prevent division by 0. */
+	G = ((y[6] - y[3]) * SCALE + (x[6] - x[3])) / (x[6] - x[3]);
+	if (G == 0)
+		return (1);	/* Prevent division by 0. */
+
+	sc->gain1[chain] = G;	/* Save low signal gain. */
+
+	/* Find interception point. */
+	icept = (G * (x[0] - x[3]) + SCALE) / SCALE + y[3];
+	for (i = 0; i <= 3; i++) {
+		y[i] = i * 32;
+		x[i] = (y[i] * SCALE + G) / G;
+	}
+	for (i = 4; i <= maxidx; i++)
+		y[i] -= icept;
+
+	xnonlin = x[maxidx] - (y[maxidx] * SCALE + G) / G;
+	order = (xnonlin + y[maxidx]) / y[maxidx];
+	if (order == 0)
+		M = 10;
+	else if (order == 1)
+		M = 9;
+	else
+		M = 8;
+
+	I = (maxidx >= 16) ? 7 : maxidx / 2;
+	L = maxidx - I;
+
+	maxxtildeabs = 0;
+	sumy2 = sumy4 = 0;
+	for (i = 0; i <= L; i++) {
+		if (y[i + I] == 0)
+			return (1);	/* Prevent division by 0. */
+
+		xnonlin = x[i + I] - ((y[i + I] * SCALE) + G) / G;
+		xtilde[i] = ((xnonlin << M) + y[i + I]) / y[i + I];
+		xtilde[i] = ((xtilde[i] << M) + y[i + I]) / y[i + I];
+		xtilde[i] = ((xtilde[i] << M) + y[i + I]) / y[i + I];
+		y2 = (y[i + I] * y[i + I] + SCALE * SCALE) / (SCALE * SCALE);
+
+		tmp = abs(xtilde[i]);
+		if (tmp > maxxtildeabs)
+			maxxtildeabs = tmp;
+
+		sumy2 += y2;
+		sumy4 += y2 * y2;
+
+		b1[i] = y2 * (L + 1);
+		b2[i] = y2;
+	}
+
+	maxb1abs = maxb2abs = 0;
+	for (i = 0; i <= L; i++) {
+		b1[i] -= sumy2;
+		b2[i] = sumy4 - sumy2 * b2[i];
+
+		tmp = abs(b1[i]);
+		if (tmp > maxb1abs)
+			maxb1abs = tmp;
+		tmp = abs(b2[i]);
+		if (tmp > maxb2abs)
+			maxb2abs = tmp;
+	}
+
+	Qx  = get_scale(maxxtildeabs);
+	Qb1 = get_scale(maxb1abs);
+	Qb2 = get_scale(maxb2abs);
+
+	alpha = beta = 0;
+	for (i = 0; i <= L; i++) {
+		xtilde[i] >>= Qx;
+		b1[i] >>= Qb1;
+		b2[i] >>= Qb2;
+
+		alpha += b1[i] * xtilde[i];
+		beta += b2[i] * xtilde[i];
+	}
+
+	scale = ((y4 / SCALE_LOG) * (L + 1) -
+		 (y2 / SCALE_LOG) * sumy2) * SCALE_LOG;
+
+	Qscale = get_scale(abs(scale));
+	Qalpha = get_scale(abs(alpha));
+	Qbeta  = get_scale(abs(beta));
+	scale >>= Qscale;
+	alpha >>= Qalpha;
+	beta  >>= Qbeta;
+
+	order = 3 * M - Qx - Qb1 - Qbeta + 10 + Qscale;
+	order5x = 1 << (order / 5);
+	order5xrem = 1 << (order % 5);
+
+	order = 3 * M - Qx - Qb2 - Qalpha + 10 + Qscale;
+	order3x = 1 << (order / 3);
+	order3xrem = 1 << (order % 3);
+
+	for (i = 0; i < AR9003_PAPRD_MEM_TAB_SIZE; i++) {
+		tmp = i * 32;
+
+		/* Fifth order. */
+		y5 = ((beta * tmp) / 64) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = y5 / order5xrem;
+
+		/* Third oder. */
+		y3 = (alpha * tmp) / order3x;
+		y3 = (y3 * tmp) / order3x;
+		y3 = (y3 * tmp) / order3x;
+		y3 = y3 / order3xrem;
+
+		in[i] = y5 + y3 + (SCALE * tmp) / G;
+		if (i >= 2 && in[i] < in[i - 1])
+			in[i] = in[i - 1] + (in[i - 1] - in[i - 2]);
+		if (in[i] > 1400)
+			in[i] = 1400;
+	}
+
+	/* Compute average theta of first 5 bins (linear region.) */
+	tavg = 0;
+	for (i = 1; i <= 5; i++)
+		tavg += t[i];
+	tavg /= 5;
+	for (i = 1; i <= 5; i++)
+		t[i] = 0;
+	for (i = 6; i <= maxidx; i++)
+		t[i] -= tavg;
+
+	alpha = beta = 0;
+	for (i = 0; i <= L; i++) {
+		ttilde = ((t[i + I] << M) + y[i + I]) / y[i + I];
+		ttilde = ((ttilde << M) +  y[i + I]) / y[i + I];
+		ttilde = ((ttilde << M) +  y[i + I]) / y[i + I];
+
+		alpha += b2[i] * ttilde;
+		beta += b1[i] * ttilde;
+	}
+
+	Qalpha = get_scale(abs(alpha));
+	Qbeta  = get_scale(abs(beta));
+	alpha >>= Qalpha;
+	beta  >>= Qbeta;
+
+	order = 3 * M - Qx - Qb1 - Qbeta + 10 + Qscale + 5;
+	order5x = 1 << (order / 5);
+	order5xrem = 1 << (order % 5);
+
+	order = 3 * M - Qx - Qb2 - Qalpha + 10 + Qscale + 5;
+	order3x = 1 << (order / 3);
+	order3xrem = 1 << (order % 3);
+
+	for (i = 0; i < AR9003_PAPRD_MEM_TAB_SIZE; i++) {
+		if (i == 4)	/* 4 is based on angle for 5. */
+			continue;
+		tmp = i * 32;
+
+		/* Fifth order. */
+		if (beta > 0)
+			y5 = (((beta * tmp - 64) / 64) - order5x) / order5x;
+		else
+			y5 = (((beta * tmp - 64) / 64) + order5x) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = (y5 * tmp) / order5x;
+		y5 = y5 / order5xrem;
+
+		/* Third oder. */
+		if (beta > 0)	/* XXX alpha? */
+			y3 = (alpha * tmp - order3x) / order3x;
+		else
+			y3 = (alpha * tmp + order3x) / order3x;
+		y3 = (y3 * tmp) / order3x;
+		y3 = (y3 * tmp) / order3x;
+		y3 = y3 / order3xrem;
+
+		if (i >= 4) {
+			angle = y5 + y3;
+			if (angle < -150)
+				angle = -150;
+			else if (angle > 150)
+				angle = 150;
+		} else
+			angle = 0;
+
+		/* Fill predistorter's lookup table. */
+		sc->paprd[chain][i] =
+		    SM(AR_PHY_PAPRD_PA_IN, in[i]) |
+		    SM(AR_PHY_PAPRD_ANGLE, angle);
+		if (i == 5) {
+			angle = (angle + 2) / 2;
+			sc->paprd[chain][4] =
+			    SM(AR_PHY_PAPRD_PA_IN, in[4]) |
+			    SM(AR_PHY_PAPRD_ANGLE, angle);
+		}
+	}
+	return (0);
+#undef SCALE
+#undef SCALE_LOG
+#undef NBINS
+}
+
+void
+ar9003_enable_predistorter(struct athn_softc *sc, int chain)
+{
+	uint32_t reg;
+	int i;
+
+	/* Write digital predistorter lookup table. */
+	for (i = 0; i < AR9003_PAPRD_MEM_TAB_SIZE; i++) {
+		AR_WRITE(sc, AR_PHY_PAPRD_MEM_TAB_B(chain, i),
+		    sc->paprd[chain][i]);
+	}
+
+	reg = AR_READ(sc, AR_PHY_PA_GAIN123_B(chain));
+	reg = RW(reg, AR_PHY_PA_GAIN123_PA_GAIN1, sc->gain1[chain]);
+	AR_WRITE(sc, AR_PHY_PA_GAIN123_B(chain), reg);
+
+	/* Indicate Tx power used for calibration (training signal.) */
+	reg = AR_READ(sc, AR_PHY_PAPRD_CTRL1_B(chain));
+	reg = RW(reg, AR_PHY_PAPRD_CTRL1_POWER_AT_AM2AM_CAL, sc->trainpow);
+	AR_WRITE(sc, AR_PHY_PAPRD_CTRL1_B(chain), reg);
+
+	/* Enable digital predistorter for this chain. */
+	AR_SETBITS(sc, AR_PHY_PAPRD_CTRL0_B(chain),
+	    AR_PHY_PAPRD_CTRL0_PAPRD_ENABLE);
+}
+
+void
+ar9003_paprd_enable(struct athn_softc *sc)
+{
+	int i;
+
+	/* Enable digital predistorters for all Tx chains. */
+	for (i = 0; i < AR9003_MAX_CHAINS; i++)
+		if (sc->txchainmask & (1 << i))
+			ar9003_enable_predistorter(sc, i);
+}
+
+/*
+ * This function is called when our training signal has been sent.
+ */
+void
+ar9003_paprd_tx_tone_done(struct athn_softc *sc)
+{
+	uint32_t lo[48], hi[48];
+	int i;
+
+	/* Make sure training is complete. */
+	if (!(AR_READ(sc, AR_PHY_PAPRD_TRAINER_STAT1) &
+	    AR_PHY_PAPRD_TRAINER_STAT1_TRAIN_DONE))
+		return;
+
+	/* Read feedback from training signal. */
+	AR_CLRBITS(sc, AR_PHY_CHAN_INFO_MEMORY, AR_PHY_CHAN_INFO_TAB_S2_READ);
+	for (i = 0; i < nitems(lo); i++)
+		lo[i] = AR_READ(sc, AR_PHY_CHAN_INFO_TAB(0, i));
+	AR_SETBITS(sc, AR_PHY_CHAN_INFO_MEMORY, AR_PHY_CHAN_INFO_TAB_S2_READ);
+	for (i = 0; i < nitems(hi); i++)
+		hi[i] = AR_READ(sc, AR_PHY_CHAN_INFO_TAB(0, i));
+
+	AR_CLRBITS(sc, AR_PHY_PAPRD_TRAINER_STAT1,
+	    AR_PHY_PAPRD_TRAINER_STAT1_TRAIN_DONE);
+
+	/* Compute predistortion function based on this feedback. */
+	if (ar9003_compute_predistortion(sc, lo, hi) != 0)
+		return;
+
+	/* Get next available Tx chain. */
+	while (++sc->paprd_curchain < AR9003_MAX_CHAINS)
+		if (sc->txchainmask & (1 << sc->paprd_curchain))
+			break;
+	if (sc->paprd_curchain == AR9003_MAX_CHAINS) {
+		/* All Tx chains measured; enable digital predistortion. */
+		ar9003_paprd_enable(sc);
+	} else	/* Measure next Tx chain. */
+		ar9003_paprd_tx_tone(sc);
+}
+
 void
 ar9003_write_txpower(struct athn_softc *sc, int16_t power[ATHN_POWER_COUNT])
 {
@@ -2227,12 +2836,16 @@ ar9003_write_txpower(struct athn_softc *sc, int16_t power[ATHN_POWER_COUNT])
 	    (power[ATHN_POWER_CCK11_LP] & 0x3f) << 16 |
 	    (power[ATHN_POWER_CCK55_SP] & 0x3f) <<  8 |
 	    (power[ATHN_POWER_CCK55_LP] & 0x3f));
-#ifndef IEEE80211_NO_HT
+	/*
+	 * NB: AR_PHY_PWRTX_RATE5 needs to be written even if HT is disabled
+	 * because it is read by PA predistortion functions.
+	 */
 	AR_WRITE(sc, AR_PHY_PWRTX_RATE5,
 	    (power[ATHN_POWER_HT20( 5)] & 0x3f) << 24 |
 	    (power[ATHN_POWER_HT20( 4)] & 0x3f) << 16 |
 	    (power[ATHN_POWER_HT20( 1)] & 0x3f) <<  8 |
 	    (power[ATHN_POWER_HT20( 0)] & 0x3f));
+#ifndef IEEE80211_NO_HT
 	AR_WRITE(sc, AR_PHY_PWRTX_RATE6,
 	    (power[ATHN_POWER_HT20(13)] & 0x3f) << 24 |
 	    (power[ATHN_POWER_HT20(12)] & 0x3f) << 16 |
@@ -2420,7 +3033,6 @@ ar9003_get_lg_tpow(struct athn_softc *sc, struct ieee80211_channel *c,
 	/* XXX Apply conformance test limit. */
 }
 
-#ifndef IEEE80211_NO_HT
 void
 ar9003_get_ht_tpow(struct athn_softc *sc, struct ieee80211_channel *c,
     uint8_t ctl, const uint8_t *fbins,
@@ -2452,7 +3064,6 @@ ar9003_get_ht_tpow(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 	/* XXX Apply conformance test limit. */
 }
-#endif
 
 /*
  * Adaptive noise immunity.

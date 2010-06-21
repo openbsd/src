@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.12 2010/06/03 18:02:50 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.13 2010/06/21 19:54:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1403,6 +1403,8 @@
 #define AR_HT40_POWER_INC_FOR_PDADC	2
 #define AR_PWR_TABLE_OFFSET_DB		(-5)
 #define AR9280_TX_GAIN_TABLE_SIZE	22
+#define AR9003_TX_GAIN_TABLE_SIZE	32
+#define AR9003_PAPRD_MEM_TAB_SIZE	24
 
 #define AR_BASE_FREQ_2GHZ	2300
 #define AR_BASE_FREQ_5GHZ	4900
