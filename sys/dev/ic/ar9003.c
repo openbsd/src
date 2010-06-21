@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.13 2010/06/21 19:31:12 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.14 2010/06/21 19:46:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -92,7 +92,8 @@ int	ar9003_tx_process(struct athn_softc *);
 void	ar9003_tx_intr(struct athn_softc *);
 int	ar9003_swba_intr(struct athn_softc *);
 int	ar9003_intr(struct athn_softc *);
-int	ar9003_tx(struct athn_softc *, struct mbuf *, struct ieee80211_node *);
+int	ar9003_tx(struct athn_softc *, struct mbuf *, struct ieee80211_node *,
+	    int);
 void	ar9003_set_rf_mode(struct athn_softc *, struct ieee80211_channel *);
 int	ar9003_rf_bus_request(struct athn_softc *);
 void	ar9003_rf_bus_release(struct athn_softc *);
@@ -1239,7 +1240,8 @@ ar9003_intr(struct athn_softc *sc)
 }
 
 int
-ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
+    int txflags)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_key *k = NULL;
@@ -1388,6 +1390,7 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	bf->bf_m = m;
 	bf->bf_ni = ni;
+	bf->bf_txflags = txflags;
 
 	wh = mtod(m, struct ieee80211_frame *);
 

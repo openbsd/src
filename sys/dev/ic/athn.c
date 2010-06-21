@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.51 2010/06/21 19:40:08 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.52 2010/06/21 19:46:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2442,7 +2442,7 @@ athn_start(struct ifnet *ifp)
 		if (ic->ic_rawbpf != NULL)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
-		if (sc->ops.tx(sc, m, ni) != 0) {
+		if (sc->ops.tx(sc, m, ni, 0) != 0) {
 			ieee80211_release_node(ic, ni);
 			ifp->if_oerrors++;
 			continue;

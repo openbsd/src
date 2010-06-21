@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.8 2010/06/05 18:43:57 damien Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.9 2010/06/21 19:46:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -88,7 +88,8 @@ int	ar5008_tx_process(struct athn_softc *, int);
 void	ar5008_tx_intr(struct athn_softc *);
 int	ar5008_swba_intr(struct athn_softc *);
 int	ar5008_intr(struct athn_softc *);
-int	ar5008_tx(struct athn_softc *, struct mbuf *, struct ieee80211_node *);
+int	ar5008_tx(struct athn_softc *, struct mbuf *, struct ieee80211_node *,
+	    int);
 void	ar5008_set_rf_mode(struct athn_softc *, struct ieee80211_channel *);
 int	ar5008_rf_bus_request(struct athn_softc *);
 void	ar5008_rf_bus_release(struct athn_softc *);
@@ -1193,7 +1194,8 @@ ar5008_intr(struct athn_softc *sc)
 }
 
 int
-ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
+    int txflags)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_key *k = NULL;
@@ -1341,6 +1343,7 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	bf->bf_m = m;
 	bf->bf_ni = ni;
+	bf->bf_txflags = txflags;
 
 	wh = mtod(m, struct ieee80211_frame *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.15 2010/06/05 18:43:57 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.16 2010/06/21 19:46:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -80,6 +80,7 @@ struct athn_tx_buf {
 
 	struct mbuf			*bf_m;
 	struct ieee80211_node		*bf_ni;
+	int				bf_txflags;
 };
 
 struct athn_txq {
@@ -370,7 +371,7 @@ struct athn_ops {
 	void	(*rx_enable)(struct athn_softc *);
 	int	(*intr)(struct athn_softc *);
 	int	(*tx)(struct athn_softc *, struct mbuf *,
-		    struct ieee80211_node *);
+		    struct ieee80211_node *, int);
 	/* PHY callbacks. */
 	void	(*set_rf_mode)(struct athn_softc *,
 		    struct ieee80211_channel *);
