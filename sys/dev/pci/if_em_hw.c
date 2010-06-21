@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.47 2010/05/18 21:51:10 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.48 2010/06/21 20:43:44 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -218,6 +218,7 @@ em_set_phy_type(struct em_hw *hw)
 			break;
 		}
 	case IGP03E1000_E_PHY_ID:
+	case IGP04E1000_E_PHY_ID:
 		hw->phy_type = em_phy_igp_3;
 		break;
 	case IFE_E_PHY_ID:
@@ -456,17 +457,21 @@ em_set_mac_type(struct em_hw *hw)
 		hw->mac_type = em_82573;
 		break;
 	case E1000_DEV_ID_82574L:
+	case E1000_DEV_ID_82574LA:
 		hw->mac_type = em_82574;
 		break;
 	case E1000_DEV_ID_82575EB_PT:
 	case E1000_DEV_ID_82575EB_PF:
 	case E1000_DEV_ID_82575GB_QP:
+	case E1000_DEV_ID_82575GB_QP_PM:
 	case E1000_DEV_ID_82576:
 	case E1000_DEV_ID_82576_FIBER:
 	case E1000_DEV_ID_82576_SERDES:
 	case E1000_DEV_ID_82576_QUAD_COPPER:
 	case E1000_DEV_ID_82576_QUAD_CU_ET2:
 	case E1000_DEV_ID_82576_NS:
+	case E1000_DEV_ID_82576_NS_SERDES:
+	case E1000_DEV_ID_82576_SERDES_QUAD:
 		hw->mac_type = em_82575;
 		hw->initialize_hw_bits_disable = 1;
 		break;
@@ -483,6 +488,7 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_ICH8_IGP_C:
 	case E1000_DEV_ID_ICH8_IGP_M:
 	case E1000_DEV_ID_ICH8_IGP_M_AMT:
+	case E1000_DEV_ID_ICH8_82567V_3:
 		hw->mac_type = em_ich8lan;
 		break;
 	case E1000_DEV_ID_ICH9_BM:
