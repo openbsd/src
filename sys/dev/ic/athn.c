@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.50 2010/06/12 16:30:45 jsg Exp $	*/
+/*	$OpenBSD: athn.c,v 1.51 2010/06/21 19:40:08 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -129,6 +129,7 @@ void		athn_next_scan(void *);
 int		athn_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 void		athn_updateedca(struct ieee80211com *);
+int		athn_clock_rate(struct athn_softc *);
 void		athn_updateslot(struct ieee80211com *);
 void		athn_start(struct ifnet *);
 void		athn_watchdog(struct ifnet *);
@@ -1454,7 +1455,9 @@ athn_ani_monitor(struct athn_softc *sc)
 		cycdelta = cyccnt - ani->cyccnt;
 		txfdelta = txfcnt - ani->txfcnt;
 		rxfdelta = rxfcnt - ani->rxfcnt;
-		listen_time = (cycdelta - txfdelta - rxfdelta) / 44000;
+
+		listen_time = (cycdelta - txfdelta - rxfdelta) /
+		    (athn_clock_rate(sc) * 1000);
 	} else
 		listen_time = 0;
 
@@ -2367,28 +2370,36 @@ athn_updateedca(struct ieee80211com *ic)
 #undef ATHN_EXP2
 }
 
+int
+athn_clock_rate(struct athn_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	int clockrate;	/* MHz. */
+
+	if (ic->ic_curmode == IEEE80211_MODE_11A) {
+		if (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)
+			clockrate = AR_CLOCK_RATE_FAST_5GHZ_OFDM;
+		else
+			clockrate = AR_CLOCK_RATE_5GHZ_OFDM;
+	} else if (ic->ic_curmode == IEEE80211_MODE_11B) {
+		clockrate = AR_CLOCK_RATE_CCK;
+	} else
+		clockrate = AR_CLOCK_RATE_2GHZ_OFDM;
+#ifndef IEEE80211_NO_HT
+	if (sc->curchanext != NULL)
+		clockrate *= 2;
+#endif
+	return (clockrate);
+}
+
 void
 athn_updateslot(struct ieee80211com *ic)
 {
 	struct athn_softc *sc = ic->ic_softc;
-	uint32_t clks;
+	int slot;
 
-	if (ic->ic_curmode == IEEE80211_MODE_11A) {
-		if (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)
-			clks = AR_CLOCK_RATE_FAST_5GHZ_OFDM;
-		else
-			clks = AR_CLOCK_RATE_5GHZ_OFDM;
-	} else if (ic->ic_curmode == IEEE80211_MODE_11B) {
-		clks = AR_CLOCK_RATE_CCK;
-	} else
-		clks = AR_CLOCK_RATE_2GHZ_OFDM;
-#ifndef IEEE80211_NO_HT
-	if (sc->curchanext != NULL)
-		clks *= 2;
-#endif
-	clks *= (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
-
-	AR_WRITE(sc, AR_D_GBL_IFS_SLOT, clks);
+	slot = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	AR_WRITE(sc, AR_D_GBL_IFS_SLOT, slot * athn_clock_rate(sc));
 }
 
 void
