@@ -8,6 +8,7 @@
 void check_oflow(void);
 void check_div0(int);
 void timedout(int);
+void div0_handler(int);
 __dead void usage(void);
 
 /*
@@ -33,7 +34,7 @@ main(int argc, char **argv)
 	if (oflag && zflag)
 		usage();
 
-	signal(SIGFPE, SIG_IGN);
+	signal(SIGFPE, div0_handler);
 	signal(SIGALRM, timedout);
 
 	if (oflag)
@@ -73,6 +74,12 @@ void
 timedout(int sig)
 {
 	_exit(1);
+}
+
+void
+div0_handler(int sig)
+{
+	_exit(0);
 }
 
 __dead void
