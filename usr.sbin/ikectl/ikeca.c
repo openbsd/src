@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.5 2010/06/14 17:41:18 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.6 2010/06/21 10:48:12 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -555,7 +555,7 @@ ca_export(struct ca *ca, char *keyname)
 			err(1, "could not change %s", dst);
 
 		snprintf(dst, sizeof(dst), "%s/%s.zip", src, oname);
-		snprintf(cmd, sizeof(cmd), "zip -qr %s .", dst);
+		snprintf(cmd, sizeof(cmd), "%s -qr %s .", PATH_ZIP, dst);
 		system(cmd);
 		printf("exported files in %s\n", dst);
 
