@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.4 2009/09/24 07:02:56 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.5 2010/06/21 01:27:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -105,7 +105,7 @@ recalculate_sizes(void)
 			if (flag)
 				has = s->curw->window == w;
 			else
-				has = session_has(s, w);
+				has = session_has(s, w) != NULL;
 			if (has) {
 				if (s->sx < ssx)
 					ssx = s->sx;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.13 2010/03/27 11:46:58 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.14 2010/06/21 01:27:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -162,7 +162,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		 * Can't use session_detach as it will destroy session if this
 		 * makes it empty.
 		 */
-		session_alert_cancel(s, wl);
+		wl->flags &= ~WINLINK_ALERTFLAGS;
 		winlink_stack_remove(&s->lastw, wl);
 		winlink_remove(&s->windows, wl);
 
