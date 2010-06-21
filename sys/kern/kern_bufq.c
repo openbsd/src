@@ -21,7 +21,6 @@
 #include <sys/mutex.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/mutex.h>
 #include <sys/queue.h>
 
 #include <sys/disklabel.h>
