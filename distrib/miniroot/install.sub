@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.602 2010/04/05 01:09:45 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.603 2010/06/21 02:19:16 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1619,8 +1619,9 @@ check_fs() {
 	[[ $resp == y ]] && _f=f
 
 	while read _dev _mp _fstype _rest; do
-		[ "$_dev" != /dev/"$ROOTDEV" ] || continue
-		[ -f "/sbin/fsck_$_fstype" ] || continue
+		[[ $_dev == /dev/* ]] || continue
+		[[ $_dev != /dev/$ROOTDEV ]] || continue
+		[[ -f /sbin/fsck_$_fstype ]] || continue
 		# Make sure device exists before fsck'ing it.
 		_rest=${_dev#/dev/}
 		makedev ${_rest%[a-p]} || continue
@@ -1633,7 +1634,7 @@ check_fs() {
 		fi
 	done </etc/fstab
 
-	[ "$_fail" ] && exit
+	[[ $_fail == y ]] && exit
 }
 
 # Extract fully qualified domain name from current hostname. If none is
