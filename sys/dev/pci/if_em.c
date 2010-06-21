@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.237 2010/06/21 20:43:44 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.238 2010/06/21 21:11:52 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -131,6 +131,8 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_NS },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_NS_SERDES },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_SERDES_QUAD },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82577LC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82577LM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_82567V_3 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE_G },
@@ -398,6 +400,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_80003es2lan:
 			/* Limit Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
+			break;
+		case em_pchlan:
+			sc->hw.max_frame_size = 4096;
 			break;
 		case em_82542_rev2_0:
 		case em_82542_rev2_1:
@@ -761,6 +766,7 @@ em_init(void *arg)
 		break;
 	case em_ich9lan:
 	case em_ich10lan:
+	case em_pchlan:
 		pba = E1000_PBA_10K;
 		break;
 	default:
@@ -1593,7 +1599,8 @@ em_allocate_pci_resources(struct em_softc *sc)
 	/* for ICH8 and family we need to find the flash memory */
 	if (sc->hw.mac_type == em_ich8lan ||
 	    sc->hw.mac_type == em_ich9lan ||
-	    sc->hw.mac_type == em_ich10lan) {
+	    sc->hw.mac_type == em_ich10lan ||
+	    sc->hw.mac_type == em_pchlan) {
 		val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_FLASH);
 		if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
 			printf(": flash is not mem space\n");

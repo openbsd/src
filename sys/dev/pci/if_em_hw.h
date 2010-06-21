@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.38 2010/06/20 10:36:03 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.39 2010/06/21 21:11:53 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -74,6 +74,7 @@ typedef enum {
     em_ich8lan,
     em_ich9lan,
     em_ich10lan,
+    em_pchlan,
     em_num_macs
 } em_mac_type;
 
@@ -235,6 +236,7 @@ typedef enum {
     em_phy_ife,
     em_phy_bm,		/* phy used in i82574L, ICH10 and some ICH9 */
     em_phy_oem,
+    em_phy_82577,
     em_phy_undefined = 0xFF
 } em_phy_type;
 
@@ -1104,6 +1106,7 @@ struct em_ffvt_entry {
 #define E1000_WUPL     0x05900  /* Wakeup Packet Length - RW */
 #define E1000_WUPM     0x05A00  /* Wakeup Packet Memory - RO A */
 #define E1000_FFLT     0x05F00  /* Flexible Filter Length Table - RW Array */
+#define E1000_CRC_OFFSET 0x05F50  /* CRC Offset Register */
 #define E1000_HOST_IF  0x08800  /* Host Interface */
 #define E1000_FFMT     0x09000  /* Flexible Filter Mask Table - RW Array */
 #define E1000_FFVT     0x09800  /* Flexible Filter Value Table - RW Array */
@@ -1307,6 +1310,7 @@ struct em_ffvt_entry {
 #define E1000_82542_TDFT     0x08018
 #define E1000_82542_FFMT     E1000_FFMT
 #define E1000_82542_FFVT     E1000_FFVT
+#define E1000_82542_CRC_OFFSET E1000_CRC_OFFSET
 #define E1000_82542_HOST_IF  E1000_HOST_IF
 #define E1000_82542_IAM         E1000_IAM
 #define E1000_82542_EEMNGCTL    E1000_EEMNGCTL
@@ -2485,6 +2489,7 @@ struct em_host_command_info {
 #define E1000_PBA_16K 0x0010    /* 16KB, default TX allocation */
 #define E1000_PBA_22K 0x0016
 #define E1000_PBA_24K 0x0018
+#define E1000_PBA_26K 0x001A
 #define E1000_PBA_30K 0x001E
 #define E1000_PBA_32K 0x0020
 #define E1000_PBA_34K 0x0022
@@ -2769,6 +2774,15 @@ struct em_host_command_info {
         GG82563_REG(194, 25) /* Link Partner Advertised Next page */
 #define GG82563_PHY_KMRN_MISC           \
         GG82563_REG(194, 26) /* Misc. */
+        
+/* I82577 Specific Registers */
+#define I82577_PHY_ADDR_REG 16
+#define I82577_PHY_CFG_REG  22
+#define I82577_PHY_CTRL_REG 23
+
+/* I82577 Config Register */
+#define I82577_PHY_CFG_ENABLE_CRS_ON_TX (1 << 15)
+#define I82577_PHY_CFG_ENABLE_DOWNSHIFT ((1 << 10) + (1 << 11))
 
 /* PHY Control Register */
 #define MII_CR_SPEED_SELECT_MSB 0x0040  /* bits 6,13: 10=1000, 01=100, 00=10 */
