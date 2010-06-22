@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.85 2010/06/07 19:54:33 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.86 2010/06/22 16:27:45 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1211,12 +1211,15 @@ mainbus_attach(parent, dev, aux)
 		 * node if a framebuffer is installed, even if console is
 		 * set to serial.
 		 */
-		if (*promvec->pv_stdout != PROMDEV_SCREEN)
+		if (*promvec->pv_stdout != PROMDEV_SCREEN ||
+		    *promvec->pv_stdin != PROMDEV_KBD)
 			fbnode = 0;
 		else {
 			/* remember which frame buffer is the console */
 			fbnode = getpropint(node, "fb", 0);
 		}
+	} else {
+		/* fbnode already initialized in consinit() */
 	}
 
 	/* Find the "options" node */
