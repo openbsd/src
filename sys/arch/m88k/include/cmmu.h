@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.22 2009/02/16 23:03:31 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.23 2010/06/22 17:42:35 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -71,26 +71,24 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 
 #define cmmu_init			(cmmu->init)
 #define setup_board_config		(cmmu->setup_board_config)
-#define	cpu_configuration_print(a)	(cmmu->cpu_configuration_print)(a)
+#define	cpu_configuration_print(cpu)	(cmmu->cpu_configuration_print)(cpu)
 #define	cmmu_shutdown			(cmmu->shutdown)
 #define	cmmu_cpu_number			(cmmu->cpu_number)
-#define	cmmu_set_sapr(a)		(cmmu->set_sapr)(a)
-#define	cmmu_set_uapr(a)		(cmmu->set_uapr)(a)
-#define	cmmu_flush_tlb(a, b, c, d) 	(cmmu->flush_tlb)(a, b, c, d)
-#define	cmmu_flush_cache(a, b, c)	(cmmu->flush_cache)(a, b, c)
-#define	cmmu_flush_inst_cache(a, b, c)	(cmmu->flush_inst_cache)(a, b, c)
-#define	dma_cachectl(a, b, c)		(cmmu->dma_cachectl)(a, b, c)
-#define	dma_cachectl_local(a, b, c)	(cmmu->dma_cachectl_local)(a, b, c)
-#define	cmmu_initialize_cpu(a)		(cmmu->initialize_cpu)(a)
+#define	cmmu_set_sapr(apr)		(cmmu->set_sapr)(apr)
+#define	cmmu_set_uapr(apr)		(cmmu->set_uapr)(apr)
+#define	cmmu_flush_tlb(cpu, k, va, c) 	(cmmu->flush_tlb)(cpu, k, va, c)
+#define	cmmu_flush_cache(cpu, pa, s)	(cmmu->flush_cache)(cpu, pa, s)
+#define	cmmu_flush_inst_cache(cpu,pa,s)	(cmmu->flush_inst_cache)(cpu, pa, s)
+#define	dma_cachectl(pa, s, op)		(cmmu->dma_cachectl)(pa, s, op)
+#define	dma_cachectl_local(pa, s, op)	(cmmu->dma_cachectl_local)(pa, s, op)
+#define	cmmu_initialize_cpu(cpu)	(cmmu->initialize_cpu)(cpu)
 
 /*
  * dma_cachectl{,_local}() modes
  */
-#define DMA_CACHE_SYNC		0x00
+#define DMA_CACHE_INV		0x00
 #define DMA_CACHE_SYNC_INVAL	0x01
-#define DMA_CACHE_INV		0x02
-
-#define	DMA_CACHE_MASK		0x03
+#define DMA_CACHE_SYNC		0x02
 
 #endif	/* _KERNEL && !_LOCORE */
 

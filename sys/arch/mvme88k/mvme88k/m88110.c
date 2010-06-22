@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.64 2010/04/17 22:10:13 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.65 2010/06/22 17:42:37 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -647,6 +647,14 @@ m88110_cmmu_inval_cache(paddr_t pa, psize_t size)
  * High level cache handling functions (used by bus_dma).
  */
 
+#ifdef MULTIPROCESSOR
+void
+m88110_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
+{
+	/* Obviously nothing to do. */
+}
+#endif
+
 void
 m88110_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 {
@@ -790,14 +798,11 @@ m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 
 	m88410_dma_cachectl_local(pa, size, op);
 #ifdef MULTIPROCESSOR
-	m197_broadcast_complex_ipi(CI_IPI_DMA_CACHECTL, pa, size | op);
+	/*
+	 * Since snooping is enabled, all we need is to propagate invalidate 
+	 * requests if necessary.
+	 */
+	if (op != DMA_CACHE_SYNC)
+		m197_broadcast_complex_ipi(CI_IPI_DMA_CACHECTL, pa, size);
 #endif
 }
-
-#ifdef MULTIPROCESSOR
-void
-m88110_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
-{
-	/* Obviously nothing to do. */
-}
-#endif
