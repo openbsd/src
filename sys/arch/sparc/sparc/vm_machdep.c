@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.51 2007/11/28 16:33:20 martin Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.52 2010/06/22 20:27:32 oga Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -203,9 +203,8 @@ dvma_mapin_space(map, va, len, canwait, space)
 				pa |= PG_IOC;
 #endif
 #endif
-			/* XXX - this should probably be pmap_kenter */
-			pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
-				   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+			pmap_kenter_pa(tva, pa | PMAP_NC,
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 
 		tva += PAGE_SIZE;
@@ -244,7 +243,7 @@ dvma_mapout(kva, va, len)
 	else
 #endif
 	{
-		pmap_remove(pmap_kernel(), kva, kva + klen);
+		pmap_kremove(kva, klen);
 		pmap_update(pmap_kernel());
 	}
 
