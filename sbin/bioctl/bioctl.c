@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.94 2010/06/18 17:15:37 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.95 2010/06/22 00:43:37 dtucker Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 	extern char		*optarg;
 	u_int64_t		func = 0;
 	/* u_int64_t subfunc = 0; */
-	char			*devname = NULL;
+	char			*devicename = NULL;
 	char			*realname = NULL, *al_arg = NULL;
 	char			*bl_arg = NULL, *dev_list = NULL;
 	char			*key_disk = NULL;
@@ -200,39 +200,39 @@ main(int argc, char *argv[])
 	if (func == 0)
 		func |= BIOC_INQ;
 
-	devname = argv[0];
-	if (devname == NULL)
+	devicename = argv[0];
+	if (devicename == NULL)
 		errx(1, "need device");
 
-	devh = opendev(devname, O_RDWR, OPENDEV_PART, &realname);
+	devh = opendev(devicename, O_RDWR, OPENDEV_PART, &realname);
 	if (devh == -1) {
 		devh = open("/dev/bio", O_RDWR);
 		if (devh == -1)
 			err(1, "Can't open %s", "/dev/bio");
 
-		bl.bl_name = devname;
+		bl.bl_name = devicename;
 		rv = ioctl(devh, BIOCLOCATE, &bl);
 		if (rv == -1)
 			errx(1, "Can't locate %s device via %s",
 			    bl.bl_name, "/dev/bio");
 		biodev = 1;
-		devname = NULL;
+		devicename = NULL;
 	}
 
 	if (diskinq) {
-		bio_diskinq(devname);
+		bio_diskinq(devicename);
 	} else if (changepass && !biodev) {
-		bio_changepass(devname);
+		bio_changepass(devicename);
 	} else if (func & BIOC_INQ) {
-		bio_inq(devname);
+		bio_inq(devicename);
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
 	} else if (func == BIOC_BLINK) {
-		bio_setblink(devname, bl_arg, blink);
+		bio_setblink(devicename, bl_arg, blink);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg, ss_func, argv[0]);
 	} else if (func == BIOC_DELETERAID && !biodev) {
-		bio_deleteraid(devname);
+		bio_deleteraid(devicename);
 	} else if (func & BIOC_CREATERAID || func & BIOC_DEVLIST) {
 		if (!(func & BIOC_CREATERAID))
 			errx(1, "need -c parameter");
