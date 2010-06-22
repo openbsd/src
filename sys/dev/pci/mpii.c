@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.20 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.21 2010/06/22 13:10:38 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1807,6 +1807,7 @@ struct mpii_softc {
 
 	struct mpii_ccb		*sc_ccbs;
 	struct mpii_ccb_list	sc_ccb_free;
+	struct mutex		sc_ccb_free_mtx;
 
 	struct mpii_dmamem	*sc_requests;
 
@@ -3524,9 +3525,7 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	struct mpii_ccb				*ccb;
 	int					s;
 
-	s = splbio();
 	ccb = mpii_get_ccb(sc);
-	splx(s);
 	if (ccb == NULL)
 		return;
 
@@ -3652,9 +3651,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	    "address: 0x%08x flags: 0x%b\n", DEVNAME(sc), type, number,
 	    address, flags, MPII_PG_FMT);
 
-	s = splbio();
 	ccb = mpii_get_ccb(sc);
-	splx(s);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_header ccb_get\n",
 		    DEVNAME(sc));
@@ -3696,9 +3693,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	}
 
 	if (ccb->ccb_rcb == NULL) {
-		s = splbio();
 		mpii_put_ccb(sc, ccb);
-		splx(s);
 		return (1);
 	}
 	cp = ccb->ccb_rcb->rcb_reply;
@@ -3737,8 +3732,8 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 
 	s = splbio();
 	mpii_push_reply(sc, ccb->ccb_rcb);
-	mpii_put_ccb(sc, ccb);
 	splx(s);
+	mpii_put_ccb(sc, ccb);
 
 	return (rv);
 }
@@ -3768,9 +3763,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
     	    len < page_length * 4)
 		return (1);
 
-	s = splbio();
 	ccb = mpii_get_ccb(sc);
-	splx(s);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_page ccb_get\n",
 		    DEVNAME(sc));
@@ -3828,9 +3821,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	}
 
 	if (ccb->ccb_rcb == NULL) {
-		s = splbio();
 		mpii_put_ccb(sc, ccb);
-		splx(s);
 		return (1);
 	}
 	cp = ccb->ccb_rcb->rcb_reply;
@@ -3862,8 +3853,8 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 
 	s = splbio();
 	mpii_push_reply(sc, ccb->ccb_rcb);
-	mpii_put_ccb(sc, ccb);
 	splx(s);
+	mpii_put_ccb(sc, ccb);
 
 	return (rv);
 }
@@ -4035,6 +4026,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 	int			i;
 
 	SLIST_INIT(&sc->sc_ccb_free);
+	mtx_init(&sc->sc_ccb_free_mtx, IPL_BIO);
 
 	sc->sc_ccbs = malloc(sizeof(*ccb) * (sc->sc_request_depth-1),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -4108,7 +4100,10 @@ mpii_put_ccb(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	ccb->ccb_done = NULL;
 	ccb->ccb_rcb = NULL;
 	bzero(ccb->ccb_cmd, MPII_REQUEST_SIZE);
+
+	mtx_enter(&sc->sc_ccb_free_mtx);
 	SLIST_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
+	mtx_leave(&sc->sc_ccb_free_mtx);
 }
 
 struct mpii_ccb *
@@ -4116,11 +4111,13 @@ mpii_get_ccb(struct mpii_softc *sc)
 {
 	struct mpii_ccb		*ccb;
 
+	mtx_enter(&sc->sc_ccb_free_mtx);
 	ccb = SLIST_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL) {
 		SLIST_REMOVE_HEAD(&sc->sc_ccb_free, ccb_link);
 		ccb->ccb_state = MPII_CCB_READY;
 	}
+	mtx_leave(&sc->sc_ccb_free_mtx);
 
 	DNPRINTF(MPII_D_CCB, "%s: mpii_get_ccb %#x\n", DEVNAME(sc), ccb);
 
@@ -4370,9 +4367,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	s = splbio();
 	ccb = mpii_get_ccb(sc);
-	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_NO_CCB;
 		scsi_done(xs);
@@ -4418,10 +4413,8 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	if (mpii_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		mpii_put_ccb(sc, ccb);
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -4441,10 +4434,8 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL) {
 		if (mpii_poll(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			s = splbio();
 			mpii_put_ccb(sc, ccb);
 			scsi_done(xs);
-			splx(s);
 		}
 		return;
 	}
