@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.15 2010/06/21 19:54:28 damien Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.16 2010/06/22 19:44:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1497,7 +1497,7 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 			    athn_rates[ridx[i]].rspridx, ic->ic_flags);
 		}
 	}
-
+	/* If this is a PA training frame, select the Tx chain to use. */
 	if (__predict_false(txflags & ATHN_TXFLAG_PAPRD)) {
 		ds->ds_ctl12 |= SM(AR_TXC12_PAPRD_CHAIN_MASK,
 		    1 << sc->paprd_curchain);
@@ -2352,9 +2352,6 @@ ar9003_get_desired_txgain(struct athn_softc *sc, int chain, int pow)
 	uint32_t reg;
 	int8_t delta;
 
-	AR_CLRBITS(sc, AR_PHY_PAPRD_TRAINER_STAT1,
-	    AR_PHY_PAPRD_TRAINER_STAT1_TRAIN_DONE);
-
 	scale = MS(AR_READ(sc, AR_PHY_TPC_12),
 	    AR_PHY_TPC_12_DESIRED_SCALE_HT40_5);
 
@@ -2487,12 +2484,11 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 	int chain = sc->paprd_curchain;
 	int x[NBINS + 1], y[NBINS + 1], t[NBINS + 1];
 	int b1[NBINS + 1], b2[NBINS + 1], xtilde[NBINS + 1];
-	int in[AR9003_PAPRD_MEM_TAB_SIZE];
 	int nsamples, txsum, rxsum, rosum, maxidx;
 	int order, order5x, order5xrem, order3x, order3xrem, y5, y3;
 	int icept, G, I, L, M, angle, xnonlin, y2, y4, sumy2, sumy4;
 	int alpha, beta, scale, Qalpha, Qbeta, Qscale, Qx, Qb1, Qb2;
-	int tavg, ttilde, maxb1abs, maxb2abs, maxxtildeabs;
+	int tavg, ttilde, maxb1abs, maxb2abs, maxxtildeabs, in;
 	int tmp, i;
 
 	/* Set values at origin. */
@@ -2557,7 +2553,6 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 	I = (maxidx >= 16) ? 7 : maxidx / 2;
 	L = maxidx - I;
 
-	maxxtildeabs = 0;
 	sumy2 = sumy4 = 0;
 	for (i = 0; i <= L; i++) {
 		if (y[i + I] == 0)
@@ -2567,11 +2562,8 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		xtilde[i] = ((xnonlin << M) + y[i + I]) / y[i + I];
 		xtilde[i] = ((xtilde[i] << M) + y[i + I]) / y[i + I];
 		xtilde[i] = ((xtilde[i] << M) + y[i + I]) / y[i + I];
-		y2 = (y[i + I] * y[i + I] + SCALE * SCALE) / (SCALE * SCALE);
 
-		tmp = abs(xtilde[i]);
-		if (tmp > maxxtildeabs)
-			maxxtildeabs = tmp;
+		y2 = (y[i + I] * y[i + I] + SCALE * SCALE) / (SCALE * SCALE);
 
 		sumy2 += y2;
 		sumy4 += y2 * y2;
@@ -2579,43 +2571,49 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		b1[i] = y2 * (L + 1);
 		b2[i] = y2;
 	}
-
-	maxb1abs = maxb2abs = 0;
 	for (i = 0; i <= L; i++) {
 		b1[i] -= sumy2;
 		b2[i] = sumy4 - sumy2 * b2[i];
+	}
+
+	maxxtildeabs = maxb1abs = maxb2abs = 0;
+	for (i = 0; i <= L; i++) {
+		tmp = abs(xtilde[i]);
+		if (tmp > maxxtildeabs)
+			maxxtildeabs = tmp;
 
 		tmp = abs(b1[i]);
 		if (tmp > maxb1abs)
 			maxb1abs = tmp;
+
 		tmp = abs(b2[i]);
 		if (tmp > maxb2abs)
 			maxb2abs = tmp;
 	}
-
 	Qx  = get_scale(maxxtildeabs);
 	Qb1 = get_scale(maxb1abs);
 	Qb2 = get_scale(maxb2abs);
+	for (i = 0; i <= L; i++) {
+		xtilde[i] /= 1 << Qx;
+		b1[i] /= 1 << Qb1;
+		b2[i] /= 1 << Qb2;
+	}
 
 	alpha = beta = 0;
 	for (i = 0; i <= L; i++) {
-		xtilde[i] >>= Qx;
-		b1[i] >>= Qb1;
-		b2[i] >>= Qb2;
-
 		alpha += b1[i] * xtilde[i];
-		beta += b2[i] * xtilde[i];
+		beta  += b2[i] * xtilde[i];
 	}
 
 	scale = ((y4 / SCALE_LOG) * (L + 1) -
 		 (y2 / SCALE_LOG) * sumy2) * SCALE_LOG;
 
 	Qscale = get_scale(abs(scale));
+	scale /= 1 << Qscale;
 	Qalpha = get_scale(abs(alpha));
+	alpha /= 1 << Qalpha;
 	Qbeta  = get_scale(abs(beta));
-	scale >>= Qscale;
-	alpha >>= Qalpha;
-	beta  >>= Qbeta;
+	beta  /= 1 << Qbeta;
 
 	order = 3 * M - Qx - Qb1 - Qbeta + 10 + Qscale;
 	order5x = 1 << (order / 5);
@@ -2642,11 +2640,15 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		y3 = (y3 * tmp) / order3x;
 		y3 = y3 / order3xrem;
 
-		in[i] = y5 + y3 + (SCALE * tmp) / G;
-		if (i >= 2 && in[i] < in[i - 1])
-			in[i] = in[i - 1] + (in[i - 1] - in[i - 2]);
-		if (in[i] > 1400)
-			in[i] = 1400;
+		in = y5 + y3 + (SCALE * tmp) / G;
+		if (i >= 2 && in < sc->pa_in[chain][i - 1]) {
+			in = sc->pa_in[chain][i - 1] +
+			    (sc->pa_in[chain][i - 1] -
+			     sc->pa_in[chain][i - 2]);
+		}
+		if (in > 1400)
+			in = 1400;
+		sc->pa_in[chain][i] = in;
 	}
 
 	/* Compute average theta of first 5 bins (linear region.) */
@@ -2666,13 +2668,13 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		ttilde = ((ttilde << M) +  y[i + I]) / y[i + I];
 
 		alpha += b2[i] * ttilde;
-		beta += b1[i] * ttilde;
+		beta  += b1[i] * ttilde;
 	}
 
 	Qalpha = get_scale(abs(alpha));
+	alpha /= 1 << Qalpha;
 	Qbeta  = get_scale(abs(beta));
-	alpha >>= Qalpha;
-	beta  >>= Qbeta;
+	beta  /= 1 << Qbeta;
 
 	order = 3 * M - Qx - Qb1 - Qbeta + 10 + Qscale + 5;
 	order5x = 1 << (order / 5);
@@ -2682,9 +2684,9 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 	order3x = 1 << (order / 3);
 	order3xrem = 1 << (order % 3);
 
-	for (i = 0; i < AR9003_PAPRD_MEM_TAB_SIZE; i++) {
-		if (i == 4)	/* 4 is based on angle for 5. */
-			continue;
+	for (i = 0; i <= 4; i++)
+		sc->angle[chain][i] = 0;	/* Linear at that range. */
+	for (i = 5; i < AR9003_PAPRD_MEM_TAB_SIZE; i++) {
 		tmp = i * 32;
 
 		/* Fifth order. */
@@ -2707,26 +2709,16 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		y3 = (y3 * tmp) / order3x;
 		y3 = y3 / order3xrem;
 
-		if (i >= 4) {
-			angle = y5 + y3;
-			if (angle < -150)
-				angle = -150;
-			else if (angle > 150)
-				angle = 150;
-		} else
-			angle = 0;
-
-		/* Fill predistorter's lookup table. */
-		sc->paprd[chain][i] =
-		    SM(AR_PHY_PAPRD_PA_IN, in[i]) |
-		    SM(AR_PHY_PAPRD_ANGLE, angle);
-		if (i == 5) {
-			angle = (angle + 2) / 2;
-			sc->paprd[chain][4] =
-			    SM(AR_PHY_PAPRD_PA_IN, in[4]) |
-			    SM(AR_PHY_PAPRD_ANGLE, angle);
-		}
+		angle = y5 + y3;
+		if (angle < -150)
+			angle = -150;
+		else if (angle > 150)
+			angle = 150;
+		sc->angle[chain][i] = angle;
 	}
+	/* Angle for entry 4 is derived from angle for entry 5. */
+	sc->angle[chain][4] = (sc->angle[chain][5] + 2) / 2;
+
 	return (0);
 #undef SCALE
 #undef SCALE_LOG
@@ -2742,7 +2734,8 @@ ar9003_enable_predistorter(struct athn_softc *sc, int chain)
 	/* Write digital predistorter lookup table. */
 	for (i = 0; i < AR9003_PAPRD_MEM_TAB_SIZE; i++) {
 		AR_WRITE(sc, AR_PHY_PAPRD_MEM_TAB_B(chain, i),
-		    sc->paprd[chain][i]);
+		    SM(AR_PHY_PAPRD_PA_IN, sc->pa_in[chain][i]) |
+		    SM(AR_PHY_PAPRD_ANGLE, sc->angle[chain][i]));
 	}
 
 	reg = AR_READ(sc, AR_PHY_PA_GAIN123_B(chain));

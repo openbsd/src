@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.17 2010/06/21 19:54:28 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.18 2010/06/22 19:44:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -473,7 +473,9 @@ struct athn_softc {
 	/* PA predistortion. */
 	uint16_t			gain1[AR_MAX_CHAINS];
 	uint32_t			txgain[AR9003_TX_GAIN_TABLE_SIZE];
-	uint32_t			paprd[AR_MAX_CHAINS]
+	int16_t				pa_in[AR_MAX_CHAINS]
+					     [AR9003_PAPRD_MEM_TAB_SIZE];
+	int16_t				angle[AR_MAX_CHAINS]
 					     [AR9003_PAPRD_MEM_TAB_SIZE];
 	int32_t				trainpow;
 	uint8_t				paprd_curchain;
