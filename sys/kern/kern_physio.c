@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.29 2009/06/04 21:27:14 oga Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.30 2010/06/23 14:18:32 thib Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -262,12 +262,8 @@ struct buf *
 getphysbuf(void)
 {
 	struct buf *bp;
-	int s;
 
-	s = splbio();
 	bp = pool_get(&bufpool, PR_WAITOK | PR_ZERO);
-	splx(s);
-
 	bp->b_vnbufs.le_next = NOLIST;
 
 	return (bp);
