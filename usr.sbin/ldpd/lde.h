@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.11 2010/06/02 11:56:29 claudio Exp $ */
+/*	$OpenBSD: lde.h,v 1.12 2010/06/23 15:42:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -88,7 +88,6 @@ struct rt_node {
 	u_int32_t		remote_label;
 	u_int16_t		lspace;
 	u_int8_t		flags;
-	u_int8_t		invalid;
 	u_int8_t		present;	/* Is it present in fib? */
 };
 
