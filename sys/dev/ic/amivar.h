@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.56 2010/06/21 11:43:38 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.57 2010/06/23 03:46:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -107,14 +107,16 @@ struct ami_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
 
+	struct ami_ccb		*sc_ccbs;
+	struct ami_ccb_list	sc_ccb_freeq;
+	struct mutex		sc_ccb_freeq_mtx;
+
 	struct ami_mem		*sc_mbox_am;
 	volatile struct ami_iocmd *sc_mbox;
 	paddr_t			sc_mbox_pa;
 
-	struct ami_ccb		*sc_ccbs;
-	struct ami_ccb_list	sc_ccb_freeq;
-	struct mutex		sc_ccb_freeq_mtx;
 	struct ami_ccb_list	sc_ccb_preq, sc_ccb_runq;
+	struct mutex		sc_cmd_mtx;
 
 	struct ami_mem		*sc_ccbmem_am;
 
