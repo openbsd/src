@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.13 2010/06/10 08:48:36 thib Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.14 2010/06/23 09:36:03 thib Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1638,8 +1638,11 @@ uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
 	int	memtype;
 
 	fcount = 0;
-	for (pmr = TAILQ_FIRST(&uvm.pmr_control.use);
-	    pmr != NULL && fcount != count; pmr = TAILQ_NEXT(pmr, pmr_use)) {
+	TAILQ_FOREACH(pmr, &uvm.pmr_control.use, pmr_use) {
+		/* We're done. */
+		if (fcount == count)
+			break;
+
 		/* Outside requested range. */
 		if (!(start == 0 && end == 0) &&
 		    !PMR_INTERSECTS_WITH(pmr->low, pmr->high, start, end))
@@ -1649,11 +1652,9 @@ uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
 		if (pmr->nsegs == 0)
 			continue;
 
-		/*
-		 * Loop over all memtypes, starting at memtype_init.
-		 */
+		/* Loop over all memtypes, starting at memtype_init. */
 		memtype = memtype_init;
-		do {
+		while (fcount != count) {
 			found = TAILQ_FIRST(&pmr->single[memtype]);
 			/*
 			 * If found is outside the range, walk the list
@@ -1751,8 +1752,10 @@ uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
 				memtype += 1;
 				if (memtype == UVM_PMR_MEMTYPE_MAX)
 					memtype = 0;
+				if (memtype == memtype_init)
+					break;
 			}
-		} while (memtype != memtype_init && fcount != count);
+		}
 	}
 
 	/*
