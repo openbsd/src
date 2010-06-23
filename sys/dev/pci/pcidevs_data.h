@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1560 2010/06/23 05:31:18 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1561 2010/06/23 06:27:15 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6030,6 +6030,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_FUJITSU, PCI_PRODUCT_FUJITSU_PP250_450_LAN,
 	    "PRIMEPOWER250/450 LAN",
+	},
+	{
+	    PCI_VENDOR_FUSIONIO, PCI_PRODUCT_FUSIONIO_IODRIVE_1_2,
+	    "ioDrive v1.2",
+	},
+	{
+	    PCI_VENDOR_FUSIONIO, PCI_PRODUCT_FUSIONIO_IODRIVE,
+	    "ioDrive",
+	},
+	{
+	    PCI_VENDOR_FUSIONIO, PCI_PRODUCT_FUSIONIO_IOXTREME,
+	    "ioXtreme",
+	},
+	{
+	    PCI_VENDOR_FUSIONIO, PCI_PRODUCT_FUSIONIO_IOXTREME_PRO,
+	    "ioXtreme Pro",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -19826,6 +19842,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_AWT,
 	    "AWT",
+	},
+	{
+	    PCI_VENDOR_FUSIONIO,
+	    "Fusion-io",
 	},
 	{
 	    PCI_VENDOR_QUMRANET,

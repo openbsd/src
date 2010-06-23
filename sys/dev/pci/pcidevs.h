@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1560 2010/06/23 05:31:18 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1561 2010/06/23 06:27:15 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -314,6 +314,7 @@
 #define	PCI_VENDOR_PHISON	0x1987		/* Phison */
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
+#define	PCI_VENDOR_FUSIONIO	0x1aed		/* Fusion-io */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
@@ -2049,6 +2050,12 @@
 #define	PCI_PRODUCT_FUJITSU_PW008GE5	0x11a1		/* PW008GE5 */
 #define	PCI_PRODUCT_FUJITSU_PW008GE4	0x11a2		/* PW008GE4 */
 #define	PCI_PRODUCT_FUJITSU_PP250_450_LAN	0x11cc		/* PRIMEPOWER250/450 LAN */
+
+/* Fusion-io products */
+#define	PCI_PRODUCT_FUSIONIO_IODRIVE_1_2	0x1003		/* ioDrive v1.2 */
+#define	PCI_PRODUCT_FUSIONIO_IODRIVE	0x1005		/* ioDrive */
+#define	PCI_PRODUCT_FUSIONIO_IOXTREME	0x1006		/* ioXtreme */
+#define	PCI_PRODUCT_FUSIONIO_IOXTREME_PRO	0x1007		/* ioXtreme Pro */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
