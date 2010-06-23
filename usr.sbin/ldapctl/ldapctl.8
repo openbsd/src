@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapctl.8,v 1.2 2010/06/23 13:31:30 martinh Exp $
+.\"	$OpenBSD: ldapctl.8,v 1.3 2010/06/23 16:22:29 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -36,6 +36,11 @@ daemon.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl f Ar file
+Use
+.Ar file
+as the configuration file, instead of the default
+.Pa /etc/ldapd.conf .
 .It Fl s Ar socket
 Use
 .Ar socket
@@ -43,11 +48,6 @@ instead of the default
 .Pa /var/run/ldapd.sock
 to communicate with
 .Xr ldapd 8 .
-.It Fl f Ar file
-Use
-.Ar file
-as the configuration file, instead of the default
-.Pa /etc/ldapd.conf .
 .It Fl v
 Produce more verbose output.
 .El
