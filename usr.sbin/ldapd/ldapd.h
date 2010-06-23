@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.6 2010/06/15 19:30:26 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.7 2010/06/23 12:40:19 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -117,8 +117,6 @@ struct namespace {
 	struct attr_index_list	 indices;
 	unsigned int		 cache_size;
 	unsigned int		 index_cache_size;
-	int			 compacting;	/* true if being compacted */
-	int			 indexing;	/* true if being indexed */
 	struct request_queue	 request_queue;
 	struct event		 ev_queue;
 	unsigned int		 queued_requests;
@@ -410,16 +408,6 @@ struct ctl_conn {
 #define CTL_CONN_NOTIFY		 0x01
 #define CTL_CONN_LOCKED		 0x02		/* restricted mode */
 	struct imsgev		 iev;
-
-	ctl_close_func		 closecb;
-
-	enum comp_state		 state;
-	pid_t			 pid;		/* compaction process */
-	struct namespace	*ns;		/* compacted or indexed */
-	uint64_t		 ncomplete;	/* completed entries */
-	int			 all;		/* 1: traverse all namespaces */
-	struct cursor		*cursor;
-	struct event		 ev;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 extern  struct ctl_connlist ctl_conns;
@@ -442,11 +430,6 @@ int			 imsg_compose_event(struct imsgev *iev, u_int16_t type,
 			    u_int32_t peerid, pid_t pid, int fd, void *data,
 			    u_int16_t datalen);
 int			 imsg_event_handle(struct imsgev *iev, short event);
-
-/* compact.c */
-int			 run_compaction(struct ctl_conn *c,
-				struct namespace *ns);
-void			 check_compaction(pid_t pid, int status);
 
 /* conn.c */
 extern struct conn_list	 conn_list;
@@ -530,17 +513,12 @@ char			*ldap_now(void);
 
 /* control.c */
 void			 control_init(struct control_sock *);
-struct ctl_conn		*control_connbypid(pid_t);
 void			 control_listen(struct control_sock *);
 void			 control_accept(int, short, void *);
 void			 control_dispatch_imsg(int, short, void *);
 void			 control_imsg_forward(struct imsg *);
 void			 control_cleanup(struct control_sock *);
 void			 control_end(struct ctl_conn *c);
-void			 control_report_compaction(struct ctl_conn *c,
-				int status);
-void			 control_report_indexer( struct ctl_conn *c,
-				int status);
 
 /* filter.c */
 int			 ldap_matches_filter(struct ber_element *root,
@@ -599,18 +577,12 @@ int			 ber2db(struct ber_element *root, struct btval *val,
 struct ber_element	*db2ber(struct btval *val, int compression_level);
 
 /* index.c */
-int			 index_namespace(struct namespace *ns);
 int			 index_entry(struct namespace *ns, struct btval *dn,
 				struct ber_element *elm);
 int			 unindex_entry(struct namespace *ns, struct btval *dn,
 				struct ber_element *elm);
-int			 index_attribute(struct namespace *ns, char *attr,
-				struct btval *dn, struct ber_element *a);
-int			 unindex_attribute(struct namespace *ns, char *attr,
-				struct btval *dn, struct ber_element *a);
 int			 index_to_dn(struct namespace *ns, struct btval *indx,
 				struct btval *dn);
-int			 run_indexer(struct ctl_conn *c, struct namespace *ns);
 
 /* ssl.c */
 void	 ssl_init(void);

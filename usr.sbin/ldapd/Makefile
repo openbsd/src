@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.4 2010/06/06 17:49:56 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2010/06/23 12:40:19 martinh Exp $
 
 PROG=		ldapd
 MAN=		ldapd.8 ldapd.conf.5
 SRCS=		ber.c log.c control.c \
 		util.c ldapd.c ldape.c conn.c attributes.c namespace.c \
 		btree.c filter.c search.c parse.y \
-		auth.c modify.c index.c ssl.c ssl_privsep.c compact.c \
+		auth.c modify.c index.c ssl.c ssl_privsep.c \
 		validate.c uuid.c
 
 LDADD=		-levent -lssl -lcrypto -lz -lutil

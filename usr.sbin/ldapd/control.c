@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2010/05/31 17:36:31 martinh Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2010/06/23 12:40:19 martinh Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -163,18 +163,6 @@ control_connbyfd(int fd)
 	return (c);
 }
 
-struct ctl_conn *
-control_connbypid(pid_t pid)
-{
-	struct ctl_conn	*c;
-
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->pid != pid;
-	    c = TAILQ_NEXT(c, entry))
-		;	/* nothing */
-
-	return (c);
-}
-
 void
 control_close(int fd)
 {
@@ -187,9 +175,6 @@ control_close(int fd)
 
 	msgbuf_clear(&c->iev.ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
-
-	if (c->closecb)
-		c->closecb(c);
 
 	event_del(&c->iev.ev);
 	close(c->iev.ibuf.fd);
@@ -300,12 +285,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 			log_verbose(verbose);
 			break;
-		case IMSG_CTL_COMPACT:
-			run_compaction(c, NULL);
-			break;
-		case IMSG_CTL_INDEX:
-			run_indexer(c, NULL);
-			break;
 		default:
 			log_debug("control_dispatch_imsg: "
 			    "error handling imsg %d", imsg.hdr.type);
@@ -334,46 +313,6 @@ control_end(struct ctl_conn *c)
 {
 	imsg_compose(&c->iev.ibuf, IMSG_CTL_END, 0, c->iev.ibuf.pid,
 	    -1, NULL, 0);
-	imsg_event_add(&c->iev);
-}
-
-void
-control_report_compaction(struct ctl_conn *c, int status)
-{
-	struct compaction_status	 cs;
-
-	/* Report compaction status to the requesting control conn.
-	 */
-	bzero(&cs, sizeof(cs));
-	strlcpy(cs.suffix, c->ns->suffix, sizeof(cs.suffix));
-	cs.db = c->state;
-	cs.status = status;
-	imsg_compose(&c->iev.ibuf, IMSG_CTL_COMPACT_STATUS, 0,
-	    c->iev.ibuf.pid, -1, &cs, sizeof(cs));
-
-	imsg_event_add(&c->iev);
-}
-
-
-void
-control_report_indexer(struct ctl_conn *c, int status)
-{
-	const struct btree_stat	*st;
-	struct indexer_status	 is;
-
-	/* Report indexer status to the requesting control conn.
-	 */
-	bzero(&is, sizeof(is));
-	strlcpy(is.suffix, c->ns->suffix, sizeof(is.suffix));
-	st = btree_stat(c->ns->data_db);
-	is.entries = st->entries;
-	is.ncomplete = c->ncomplete;
-	is.status = status;
-	log_debug("reporting indexer status %ju/%ju for ns %s",
-	    (intmax_t)is.ncomplete, (intmax_t)is.entries, c->ns->suffix);
-	imsg_compose(&c->iev.ibuf, IMSG_CTL_INDEX_STATUS, 0,
-	    c->iev.ibuf.pid, -1, &is, sizeof(is));
-
 	imsg_event_add(&c->iev);
 }
 
