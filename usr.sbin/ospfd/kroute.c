@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.82 2010/06/23 04:26:51 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.83 2010/06/23 23:34:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -907,7 +907,7 @@ protect_lo(void)
 		log_warn("protect_lo");
 		return (-1);
 	}
-	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK);
+	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
 	kr->r.prefixlen = 8;
 	kr->r.flags = F_KERNEL|F_CONNECTED;
 
@@ -1354,10 +1354,8 @@ rtmsg_process(char *buf, int len)
 			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 				continue;
 
-#ifdef RTF_MPATH
 			if (rtm->rtm_flags & RTF_MPATH)
 				mpath = 1;
-#endif
 			prio = rtm->rtm_priority;
 			flags = (prio == RTP_OSPF) ?
 			    F_OSPFD_INSERTED : F_KERNEL;
