@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.7 2010/06/23 12:40:19 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.8 2010/06/23 13:34:53 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -355,10 +355,6 @@ enum imsg_type {
 	IMSG_CTL_STATS,
 	IMSG_CTL_NSSTATS,
 	IMSG_CTL_LOG_VERBOSE,
-	IMSG_CTL_COMPACT,
-	IMSG_CTL_COMPACT_STATUS,
-	IMSG_CTL_INDEX,
-	IMSG_CTL_INDEX_STATUS,
 
 	IMSG_LDAPD_AUTH,
 	IMSG_LDAPD_AUTH_RESULT,
@@ -370,25 +366,6 @@ struct ns_stat {
 	char			 suffix[256];
 	struct btree_stat	 data_stat;
 	struct btree_stat	 indx_stat;
-};
-
-enum comp_state {
-	COMPACT_DATA,
-	COMPACT_INDX,
-	COMPACT_DONE
-};
-
-struct compaction_status {
-	char			 suffix[256];
-	int			 db;
-	int			 status;
-};
-
-struct indexer_status {
-	char			 suffix[256];
-	uint64_t		 entries;
-	uint64_t		 ncomplete;
-	int			 status;
 };
 
 struct imsgev {
