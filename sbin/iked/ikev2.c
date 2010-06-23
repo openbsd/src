@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.14 2010/06/14 23:14:09 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.15 2010/06/23 10:49:37 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -2247,7 +2247,8 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 		}
 		if ((sa->sa_dhgroup =
 		    group_get(xform->xform_id)) == NULL) {
-			log_debug("%s: invalid dh", __func__);
+			log_debug("%s: invalid dh %d", __func__,
+			    xform->xform_id);
 			return (-1);
 		}
 	}

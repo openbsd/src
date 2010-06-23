@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.h,v 1.1 2010/06/03 16:41:12 reyk Exp $	*/
+/*	$OpenBSD: dh.h,v 1.2 2010/06/23 10:49:37 reyk Exp $	*/
 /*	$vantronix: dh.h,v 1.8 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -19,8 +19,6 @@
 
 #ifndef _DH_H_
 #define _DH_H_
-
-#include <sys/types.h>
 
 enum group_type {
 	GROUP_MODP	= 0,
@@ -49,14 +47,14 @@ struct group {
 	int		(*shared)(struct group *, u_int8_t *, u_int8_t *);
 };
 
+#define DH_MAXSZ	1024	/* 8192 bits */
+
 void            group_init(void);
 void            group_free(struct group *);
 struct group   *group_get(u_int32_t);
 
-int	dh_init(struct group *);
-int	dh_getlen(struct group *);
-int	dh_create_exchange(struct group *, u_int8_t *);
-int	dh_create_shared(struct group *, u_int8_t *, u_int8_t *);
-void	dh_selftest(void);
+int		dh_getlen(struct group *);
+int		dh_create_exchange(struct group *, u_int8_t *);
+int		dh_create_shared(struct group *, u_int8_t *, u_int8_t *);
 
 #endif /* _DH_H_ */
