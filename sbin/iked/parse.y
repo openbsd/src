@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2010/06/15 00:41:04 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2010/06/23 11:26:13 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -162,10 +162,10 @@ const struct ipsec_xf groupxfs[] = {
 	{ "grp1",		IKEV2_XFORMDH_MODP_768 },
 	{ "modp1024",		IKEV2_XFORMDH_MODP_1024 },
 	{ "grp2",		IKEV2_XFORMDH_MODP_1024 },
-	{ "ec155",		IKEV2_XFORMDH_EC_155 },
-	{ "grp3",		IKEV2_XFORMDH_EC_155 },
-	{ "ec185",		IKEV2_XFORMDH_EC_185 },
-	{ "grp4",		IKEV2_XFORMDH_EC_185 },
+	{ "ec2n155",		IKEV2_XFORMDH_EC2N_155 },
+	{ "grp3",		IKEV2_XFORMDH_EC2N_155 },
+	{ "ec2n185",		IKEV2_XFORMDH_EC2N_185 },
+	{ "grp4",		IKEV2_XFORMDH_EC2N_185 },
 	{ "modp1536",		IKEV2_XFORMDH_MODP_1536 },
 	{ "grp5",		IKEV2_XFORMDH_MODP_1536 },
 	{ "modp2048",		IKEV2_XFORMDH_MODP_2048 },
@@ -178,22 +178,22 @@ const struct ipsec_xf groupxfs[] = {
 	{ "grp17",		IKEV2_XFORMDH_MODP_6144 },
 	{ "modp8192",		IKEV2_XFORMDH_MODP_8192 },
 	{ "grp18",		IKEV2_XFORMDH_MODP_8192 },
-	{ "ec256",		IKEV2_XFORMDH_EC_256 },
-	{ "grp19",		IKEV2_XFORMDH_EC_256 },
-	{ "ec384",		IKEV2_XFORMDH_EC_384 },
-	{ "grp20",		IKEV2_XFORMDH_EC_384 },
-	{ "ec521",		IKEV2_XFORMDH_EC_521 },
-	{ "grp21",		IKEV2_XFORMDH_EC_521 },
+	{ "ecp256",		IKEV2_XFORMDH_ECP_256 },
+	{ "grp19",		IKEV2_XFORMDH_ECP_256 },
+	{ "ecp384",		IKEV2_XFORMDH_ECP_384 },
+	{ "grp20",		IKEV2_XFORMDH_ECP_384 },
+	{ "ecp521",		IKEV2_XFORMDH_ECP_521 },
+	{ "grp21",		IKEV2_XFORMDH_ECP_521 },
 	{ "modp1024-160",	IKEV2_XFORMDH_MODP_1024_160 },
 	{ "grp22",		IKEV2_XFORMDH_MODP_1024_160 },
 	{ "modp2048-224",	IKEV2_XFORMDH_MODP_2048_224 },
 	{ "grp23",		IKEV2_XFORMDH_MODP_2048_224 },
 	{ "modp2048-256",	IKEV2_XFORMDH_MODP_2048_256 },
 	{ "grp24",		IKEV2_XFORMDH_MODP_2048_256 },
-	{ "ec192",		IKEV2_XFORMDH_EC_192 },
-	{ "grp25",		IKEV2_XFORMDH_EC_192 },
-	{ "ec224",		IKEV2_XFORMDH_EC_224 },
-	{ "grp26",		IKEV2_XFORMDH_EC_224 },
+	{ "ecp192",		IKEV2_XFORMDH_ECP_192 },
+	{ "grp25",		IKEV2_XFORMDH_ECP_192 },
+	{ "ecp224",		IKEV2_XFORMDH_ECP_224 },
+	{ "grp26",		IKEV2_XFORMDH_ECP_224 },
 	{ NULL }
 };
 

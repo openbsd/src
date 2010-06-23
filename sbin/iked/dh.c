@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.2 2010/06/23 10:49:37 reyk Exp $	*/
+/*	$OpenBSD: dh.c,v 1.3 2010/06/23 11:26:13 reyk Exp $	*/
 /*	$vantronix: dh.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -60,8 +60,8 @@ struct group_id ike_groups[] = {
 	    "FFFFFFFFFFFFFFFF",
 	    "02"
 	},
-	{ GROUP_EC, 3, 155, NULL, NULL, NID_ipsec3 },
-	{ GROUP_EC, 4, 185, NULL, NULL, NID_ipsec4 },
+	{ GROUP_EC2N, 3, 155, NULL, NULL, NID_ipsec3 },
+	{ GROUP_EC2N, 4, 185, NULL, NULL, NID_ipsec4 },
 	{ GROUP_MODP, 5, 1536,
 	    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
 	    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
@@ -212,9 +212,9 @@ struct group_id ike_groups[] = {
 	    "60C980DD98EDD3DFFFFFFFFFFFFFFFFF",
 	    "02"
 	},
-	{ GROUP_EC, 19, 256, NULL, NULL, NID_X9_62_prime256v1 },
-	{ GROUP_EC, 20, 384, NULL, NULL, NID_secp384r1 },
-	{ GROUP_EC, 21, 521, NULL, NULL, NID_secp521r1 },
+	{ GROUP_ECP, 19, 256, NULL, NULL, NID_X9_62_prime256v1 },
+	{ GROUP_ECP, 20, 384, NULL, NULL, NID_secp384r1 },
+	{ GROUP_ECP, 21, 521, NULL, NULL, NID_secp521r1 },
 	{ GROUP_MODP, 22, 1024,
 	    "B10B8F96A080E01DDE92DE5EAE5D54EC52C99FBCFB06A3C6"
 	    "9A6A9DCA52D23B616073E28675A23D189838EF1E2EE652C0"
@@ -277,8 +277,8 @@ struct group_id ike_groups[] = {
 	    "184B523D1DB246C32F63078490F00EF8D647D148D4795451"
 	    "5E2327CFEF98C582664B4C0F6CC41659"
 	},
-	{ GROUP_EC, 25, 192, NULL, NULL, NID_X9_62_prime192v1 },
-	{ GROUP_EC, 26, 224, NULL, NULL, NID_secp224r1 }
+	{ GROUP_ECP, 25, 192, NULL, NULL, NID_X9_62_prime192v1 },
+	{ GROUP_ECP, 26, 224, NULL, NULL, NID_secp224r1 }
 };
 
 void
@@ -330,7 +330,8 @@ group_get(u_int32_t id)
 		group->exchange = modp_create_exchange;
 		group->shared = modp_create_shared;
 		break;
-	case GROUP_EC:
+	case GROUP_EC2N:
+	case GROUP_ECP:
 		group->init = ec_init;
 		group->getlen = ec_getlen;
 		group->exchange = ec_create_exchange;

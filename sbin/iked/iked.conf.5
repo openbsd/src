@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.5 2010/06/10 14:24:03 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.6 2010/06/23 11:26:13 reyk Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2010 $
+.Dd $Mdocdate: June 23 2010 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -659,22 +659,22 @@ keyword:
 .It Em Name	Group	Size	Type
 .It Li modp768 Ta grp1 Ta 768 Ta "MODP"
 .It Li modp1024 Ta grp2 Ta 1024 Ta "MODP"
-.It Li ec155 Ta grp3 Ta 155 Ta "EC2N [insecure]"
-.It Li ec185 Ta grp4 Ta 185 Ta "EC2N [insecure]"
+.It Li ec2n155 Ta grp3 Ta 155 Ta "EC2N [insecure]"
+.It Li ec2n185 Ta grp4 Ta 185 Ta "EC2N [insecure]"
 .It Li modp1536 Ta grp5 Ta 1536 Ta "MODP"
 .It Li modp2048 Ta grp14 Ta 2048 Ta "MODP"
 .It Li modp3072 Ta grp15 Ta 3072 Ta "MODP"
 .It Li modp4096 Ta grp16 Ta 4096 Ta "MODP"
 .It Li modp6144 Ta grp17 Ta 6144 Ta "MODP"
 .It Li modp8192 Ta grp18 Ta 8192 Ta "MODP"
-.It Li ec256 Ta grp19 Ta 256 Ta "ECP"
-.It Li ec384 Ta grp20 Ta 384 Ta "ECP"
-.It Li ec521 Ta grp21 Ta 521 Ta "ECP"
+.It Li ecp256 Ta grp19 Ta 256 Ta "ECP"
+.It Li ecp384 Ta grp20 Ta 384 Ta "ECP"
+.It Li ecp521 Ta grp21 Ta 521 Ta "ECP"
 .It Li modp1024-160 Ta grp22 Ta 2048 Ta "MODP, 160 bit Prime Order Subgroup"
 .It Li modp2048-224 Ta grp23 Ta 2048 Ta "MODP, 224 bit Prime Order Subgroup"
 .It Li modp2048-256 Ta grp24 Ta 2048 Ta "MODP, 256 bit Prime Order Subgroup"
-.It Li ec192 Ta grp25 Ta 192 Ta "ECP"
-.It Li ec224 Ta grp26 Ta 224 Ta "ECP"
+.It Li ecp192 Ta grp25 Ta 192 Ta "ECP"
+.It Li ecp224 Ta grp26 Ta 224 Ta "ECP"
 .El
 .Pp
 The currently supported group types are either

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.3 2010/06/14 08:32:45 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.4 2010/06/23 11:26:13 reyk Exp $	*/
 /*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
 
 /*
@@ -236,22 +236,22 @@ extern struct iked_constmap ikev2_xformauth_map[];
 #define IKEV2_XFORMDH_NONE		0	/* No DH */
 #define IKEV2_XFORMDH_MODP_768		1	/* DH Group 1 */
 #define IKEV2_XFORMDH_MODP_1024		2	/* DH Group 2 */
-#define IKEV2_XFORMDH_EC_155		3	/* DH Group 3 */
-#define IKEV2_XFORMDH_EC_185		4	/* DH Group 3 */
+#define IKEV2_XFORMDH_EC2N_155		3	/* DH Group 3 */
+#define IKEV2_XFORMDH_EC2N_185		4	/* DH Group 3 */
 #define IKEV2_XFORMDH_MODP_1536		5	/* DH Group 5 */
 #define IKEV2_XFORMDH_MODP_2048		14	/* DH Group 14 */
 #define IKEV2_XFORMDH_MODP_3072		15	/* DH Group 15 */
 #define IKEV2_XFORMDH_MODP_4096		16	/* DH Group 16 */
 #define IKEV2_XFORMDH_MODP_6144		17	/* DH Group 17 */
 #define IKEV2_XFORMDH_MODP_8192		18	/* DH Group 18 */
-#define IKEV2_XFORMDH_EC_256		19	/* DH Group 19 */
-#define IKEV2_XFORMDH_EC_384		20	/* DH Group 20 */
-#define IKEV2_XFORMDH_EC_521		21	/* DH Group 21 */
+#define IKEV2_XFORMDH_ECP_256		19	/* DH Group 19 */
+#define IKEV2_XFORMDH_ECP_384		20	/* DH Group 20 */
+#define IKEV2_XFORMDH_ECP_521		21	/* DH Group 21 */
 #define IKEV2_XFORMDH_MODP_1024_160	22	/* DH Group 22 */
 #define IKEV2_XFORMDH_MODP_2048_224	23	/* DH Group 23 */
 #define IKEV2_XFORMDH_MODP_2048_256	24	/* DH Group 24 */
-#define IKEV2_XFORMDH_EC_192		25	/* DH Group 25 */
-#define IKEV2_XFORMDH_EC_224		26	/* DH Group 26 */
+#define IKEV2_XFORMDH_ECP_192		25	/* DH Group 25 */
+#define IKEV2_XFORMDH_ECP_224		26	/* DH Group 26 */
 #define IKEV2_XFORMDH_MAX		27
 
 extern struct iked_constmap ikev2_xformdh_map[];
