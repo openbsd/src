@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.5 2010/06/15 08:41:44 jsg Exp $
+.\" $OpenBSD: ikectl.8,v 1.6 2010/06/23 16:01:01 jsg Exp $
 .\" $vantronix: ikectl.8,v 1.11 2010/06/03 15:55:51 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2009, 2010 Reyk Floeter <reyk@vantronix.net>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 15 2010 $
+.Dd $Mdocdate: June 23 2010 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -105,6 +105,15 @@ Create a new certificate authority with the specified
 .It Cm ca Ar name Cm delete
 Delete the certificate authority with the specified
 .Ar name .
+.It Cm ca Ar name Cm export Op Ar peer
+Export the certificate authority with the specified
+.Ar name
+into the current directory for transport to other systems.
+The optional
+.Ar peer
+argument can be used to specify the address or FQDN of the local gateway
+which will be written into a text file
+.Pa peer.txt .
 .It Cm ca Ar name Cm install
 Install the certificate and Certificate Revocation List (CRL) for CA
 .Ar name
@@ -117,12 +126,17 @@ and sign then with the key of certificate authority with the speicified
 .It Cm ca Ar name Cm certificate Ar host Cm delete
 Deletes the private key and and certificates associated with
 .Ar host .
-.It Cm ca Ar name Cm certificate Ar host Cm export
+.It Cm ca Ar name Cm certificate Ar host Cm export Op Ar peer
 Export key files for
 .Ar host
 of the certificate authority with the specified
 .Ar name
 into the current directory for transport to other systems.
+The optional
+.Ar peer
+argument can be used to specify the address or FQDN of the local gateway
+which will be written into a text file
+.Pa peer.txt .
 .It Cm ca Ar name Cm certificate Ar host Cm install
 Install the private and public key for
 .Ar host
@@ -155,6 +169,12 @@ from the named
 .Bl -tag -width "/var/run/iked.sockXX" -compact
 .It /etc/ssl/
 Directory to store the CA files.
+.It /usr/share/iked
+If this optional directory exists,
+.Nm
+will include the contents with the
+.Cm ca export
+commands.
 .It /var/run/iked.sock
 default
 .Ux Ns -domain

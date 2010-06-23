@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.4 2010/06/14 17:41:18 jsg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.5 2010/06/23 16:01:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -42,6 +42,7 @@ enum token_type {
 	KEYWORD,
 	FILENAME,
 	CANAME,
+	PEER,
 	ADDRESS,
 	FQDN
 };
@@ -58,8 +59,10 @@ static const struct token t_reset[];
 static const struct token t_log[];
 static const struct token t_load[];
 static const struct token t_ca[];
+static const struct token t_ca_ex_peer[];
 static const struct token t_ca_modifiers[];
 static const struct token t_ca_cert[];
+static const struct token t_ca_cert_ex_peer[];
 static const struct token t_ca_cert_modifiers[];
 static const struct token t_ca_key[];
 static const struct token t_ca_key_modifiers[];
@@ -114,7 +117,14 @@ static const struct token t_ca_modifiers[] = {
 	{ KEYWORD,	"install",	CA_INSTALL,	NULL },
 	{ KEYWORD,	"certificate",	CA_CERTIFICATE,	t_ca_cert },
 	{ KEYWORD,	"key",		NONE,		t_ca_key },
+	{ KEYWORD,	"export",	CA_EXPORT,	t_ca_ex_peer },
 	{ ENDTOKEN, 	"",		NONE,		NULL }
+};
+
+static const struct token t_ca_ex_peer[] = {
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ PEER,		"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL },
 };
 
 static const struct token t_ca_cert[] = {
@@ -127,9 +137,15 @@ static const struct token t_ca_cert_modifiers[] = {
 	{ KEYWORD,	"create",	CA_CERT_CREATE,		NULL },
 	{ KEYWORD,	"delete",	CA_CERT_DELETE,		NULL },
 	{ KEYWORD,	"install",	CA_CERT_INSTALL,	NULL },
-	{ KEYWORD,	"export",	CA_CERT_EXPORT,		NULL },
+	{ KEYWORD,	"export",	CA_CERT_EXPORT,		t_ca_cert_ex_peer },
 	{ KEYWORD,	"revoke",	CA_CERT_REVOKE,		NULL },
 	{ ENDTOKEN,	"",		NONE,			NULL }
+};
+
+static const struct token t_ca_cert_ex_peer[] = {
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ PEER,		"",		NONE,		NULL },
+	{ ENDTOKEN,	"",		NONE,		NULL },
 };
 
 static const struct token t_ca_key[] = {
@@ -258,6 +274,13 @@ match_token(char *word, const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case PEER:
+			if (!match && word != NULL && strlen(word) > 0) {
+				res.peer = strdup(word);
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ADDRESS:
 		case FQDN:
 			if (!match && word != NULL && strlen(word) > 0) {
@@ -307,6 +330,9 @@ show_valid_args(const struct token table[])
 			break;
 		case CANAME:
 			fprintf(stderr, "  <caname>\n");
+			break;
+		case PEER:
+			fprintf(stderr, "  <peer>\n");
 			break;
 		case ADDRESS:
 			fprintf(stderr, "  <ipaddr>\n");

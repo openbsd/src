@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.4 2010/06/14 17:41:18 jsg Exp $	*/
+/*	$OpenBSD: parser.h,v 1.5 2010/06/23 16:01:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -36,6 +36,7 @@ enum actions {
 	CA_CREATE,
 	CA_DELETE,
 	CA_INSTALL,
+	CA_EXPORT,
 	CA_CERTIFICATE,
 	CA_CERT_CREATE,
 	CA_CERT_DELETE,
@@ -56,6 +57,7 @@ struct parse_result {
 	char		*filename;
 	char 		*caname;
 	char		*host;
+	char		*peer;
 	int		 htype;
 };
 
