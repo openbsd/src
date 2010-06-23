@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.1 2010/05/26 16:44:32 nicm Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.2 2010/06/23 07:53:55 nicm Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -17,6 +17,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _IMSG_H_
+#define _IMSG_H_
 
 #define IBUF_READ_SIZE		65535
 #define IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
@@ -105,3 +108,5 @@ void	 imsg_close(struct imsgbuf *, struct ibuf *);
 void	 imsg_free(struct imsg *);
 int	 imsg_flush(struct imsgbuf *);
 void	 imsg_clear(struct imsgbuf *);
+
+#endif
