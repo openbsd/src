@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.7 2010/06/23 16:01:01 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.8 2010/06/23 17:10:49 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -47,13 +47,6 @@
 #define PATH_ZIP	"/usr/local/bin/zip"
 #define PATH_TAR	"/bin/tar"
 
-const char *cafiles[] = {
-	"ca.crt",
-	"ca.pfx",
-	"private/ca.key",
-	"private/ca.pfx"
-};
-
 struct ca {
 	char		 sslpath[PATH_MAX];
 	char		 passfile[PATH_MAX];
@@ -61,7 +54,6 @@ struct ca {
 	char		 extcnf[PATH_MAX];
 	char		*caname;
 };
-
 
 struct ca	*ca_setup(char *, int);
 int		 ca_create(struct ca *);
@@ -469,11 +461,12 @@ ca_export(struct ca *ca, char *keyname, char *myname)
 	u_int		 i;
 	int		 fd;
 
-	if (keyname != NULL)
-		keyname = "ca";
-
-	if (strlcpy(oname, keyname, sizeof(oname)) >= sizeof(oname))
-		err(1, "name too long");
+	if (keyname != NULL) {
+		if (strlcpy(oname, keyname, sizeof(oname)) >= sizeof(oname))
+			err(1, "name too long");
+	} else {
+		strlcpy(oname, "ca", sizeof(oname));
+	}
 
 	/* colons are not valid characters in windows filenames... */
 	while ((p = strchr(oname, ':')) != NULL)
@@ -562,8 +555,12 @@ ca_export(struct ca *ca, char *keyname, char *myname)
 	}
 
 	if (stat(PATH_TAR, &st) == 0) {
-		snprintf(cmd, sizeof(cmd), "%s -zcf %s.tgz -C %s .", PATH_TAR,
-		    oname, p);
+		if (keyname == NULL)
+			snprintf(cmd, sizeof(cmd), "%s -zcf %s.tgz -C %s .",
+			    PATH_TAR, oname, ca->sslpath);
+		else
+			snprintf(cmd, sizeof(cmd), "%s -zcf %s.tgz -C %s .",
+			    PATH_TAR, oname, p);
 		system(cmd);
 		snprintf(src, sizeof(src), "%s.tgz", oname);
 		if (realpath(src, dst) != NULL)
