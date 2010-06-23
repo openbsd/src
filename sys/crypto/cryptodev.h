@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.50 2010/06/09 19:38:19 thib Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.51 2010/06/23 09:26:32 thib Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -315,7 +315,6 @@ int	crypto_register(u_int32_t, int *,
 int	crypto_kregister(u_int32_t, int *, int (*)(struct cryptkop *));
 int	crypto_unregister(u_int32_t, int);
 int32_t	crypto_get_driverid(u_int8_t);
-void	crypto_thread(void);
 int	crypto_invoke(struct cryptop *);
 int	crypto_kinvoke(struct cryptkop *);
 void	crypto_done(struct cryptop *);
