@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.1 2010/05/31 17:36:31 martinh Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.2 2010/06/23 13:31:30 martinh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -55,8 +55,11 @@ __dead void	 usage(void);
 void		 show_stats(struct imsg *imsg);
 void		 show_dbstats(const char *prefix, struct btree_stat *st);
 void		 show_nsstats(struct imsg *imsg);
-void		 show_compact_status(struct imsg *imsg);
-void		 show_index_status(struct imsg *imsg);
+int		 compact_db(const char *path);
+int		 compact_namespace(struct namespace *ns);
+int		 compact_namespaces(void);
+int		 index_namespace(struct namespace *ns);
+int		 index_namespaces(void);
 
 __dead void
 usage(void)
@@ -69,6 +72,163 @@ usage(void)
 }
 
 int
+compact_db(const char *path)
+{
+	struct btree	*bt;
+	int		 rc;
+
+	log_info("compacting database %s", path);
+	bt = btree_open(path, BT_NOSYNC | BT_REVERSEKEY, 0644);
+	if (bt == NULL)
+		return -1;
+
+	do {
+		if ((rc = btree_compact(bt)) == -1 && errno == EBUSY)
+			usleep(100000);
+	} while (rc == -1 && errno == EBUSY);
+
+	btree_close(bt);
+	return rc;
+}
+
+int
+compact_namespace(struct namespace *ns)
+{
+	char		*path;
+
+	if (asprintf(&path, "%s/%s_data.db", DATADIR, ns->suffix) < 0)
+		return -1;
+	if (compact_db(path) != 0) {
+		log_warn("%s", path);
+		free(path);
+		return -1;
+	}
+	free(path);
+
+	if (asprintf(&path, "%s/%s_indx.db", DATADIR, ns->suffix) < 0)
+		return -1;
+	if (compact_db(path) != 0) {
+		log_warn("%s", path);
+		free(path);
+		return -1;
+	}
+	free(path);
+
+	return 0;
+}
+
+int
+compact_namespaces(void)
+{
+	struct namespace	*ns;
+
+	TAILQ_FOREACH(ns, &conf->namespaces, next)
+		if (compact_namespace(ns) != 0)
+			return -1;
+
+	return 0;
+}
+
+int
+index_namespace(struct namespace *ns)
+{
+	struct btval		 key, val;
+	struct btree		*data_db, *indx_db;
+	struct cursor		*cursor;
+	struct ber_element	*elm;
+	char			*path;
+	long long int		 ncomplete = 0;
+	int			 i, rc;
+
+	log_info("indexing namespace %s", ns->suffix);
+
+	if (asprintf(&path, "%s/%s_data.db", DATADIR, ns->suffix) < 0)
+		return -1;
+	data_db = btree_open(path, BT_NOSYNC | BT_REVERSEKEY, 0644);
+	free(path);
+	if (data_db == NULL)
+		return -1;
+
+	if (asprintf(&path, "%s/%s_indx.db", DATADIR, ns->suffix) < 0)
+		return -1;
+	indx_db = btree_open(path, BT_NOSYNC, 0644);
+	free(path);
+	if (indx_db == NULL) {
+		btree_close(data_db);
+		return -1;
+	}
+
+	if ((cursor = btree_cursor_open(data_db)) == NULL) {
+		btree_close(data_db);
+		btree_close(indx_db);
+		return -1;
+	}
+
+	bzero(&key, sizeof(key));
+	bzero(&val, sizeof(val));
+
+	for (;;) {
+		for (;;) {
+			ns->indx_txn = btree_txn_begin(indx_db, 0);
+			if (ns->indx_txn == NULL && errno == EBUSY)
+				usleep(100000);
+			else
+				break;
+		}
+
+		if (ns->indx_txn == NULL) {
+			log_warn("failed to start transaction");
+			break;
+		}
+
+		for (i = 0; i < 100; i++) {
+			rc = btree_cursor_get(cursor, &key, &val, BT_NEXT);
+			if (rc != BT_SUCCESS)
+				break;
+			if ((elm = db2ber(&val, ns->compression_level)) == NULL)
+				continue;
+			rc = index_entry(ns, &key, elm);
+			ber_free_elements(elm);
+			btval_reset(&key);
+			btval_reset(&val);
+			if (rc != 0)
+				break;
+			++ncomplete;
+		}
+
+		if (btree_txn_commit(ns->indx_txn) != BT_SUCCESS)
+			break;
+
+		if (i != 100)
+			break;
+	}
+
+	btree_cursor_close(cursor);
+	btree_close(data_db);
+	btree_close(indx_db);
+
+	return 0;
+}
+
+int
+index_namespaces(void)
+{
+	struct namespace	*ns;
+
+	TAILQ_FOREACH(ns, &conf->namespaces, next)
+		if (index_namespace(ns) != 0)
+			return -1;
+
+	return 0;
+}
+
+int
+ssl_load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags)
+{
+	return 0;
+}
+
+int
 main(int argc, char *argv[])
 {
 	int			 ctl_sock;
@@ -77,14 +237,23 @@ main(int argc, char *argv[])
 	int			 ch;
 	enum action		 action = NONE;
 	const char		*sock = LDAPD_SOCKET;
+	char			*conffile = CONFFILE;
 	struct sockaddr_un	 sun;
 	struct imsg		 imsg;
 	struct imsgbuf		 ibuf;
 
-	while ((ch = getopt(argc, argv, "s:")) != -1) {
+	log_init(1);
+
+	while ((ch = getopt(argc, argv, "f:s:v")) != -1) {
 		switch (ch) {
+		case 'f':
+			conffile = optarg;
+			break;
 		case 's':
 			sock = optarg;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		default:
 			usage();
@@ -96,6 +265,8 @@ main(int argc, char *argv[])
 
 	if (argc == 0)
 		usage();
+
+	log_verbose(verbose);
 
 	if (strcmp(argv[0], "stats") == 0)
 		action = SHOW_STATS;
@@ -115,6 +286,15 @@ main(int argc, char *argv[])
 	} else
 		usage();
 
+	if (action == COMPACT_DB || action == INDEX_DB) {
+		if (parse_config(conffile) != 0)
+			exit(2);
+		if (action == COMPACT_DB)
+			return compact_namespaces();
+		else
+			return index_namespaces();
+	}
+
 	/* connect to ldapd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
@@ -133,12 +313,6 @@ main(int argc, char *argv[])
 	case SHOW_STATS:
 		imsg_compose(&ibuf, IMSG_CTL_STATS, 0, 0, -1, NULL, 0);
 		break;
-	case COMPACT_DB:
-		imsg_compose(&ibuf, IMSG_CTL_COMPACT, 0, 0, -1, NULL, 0);
-		break;
-	case INDEX_DB:
-		imsg_compose(&ibuf, IMSG_CTL_INDEX, 0, 0, -1, NULL, 0);
-		break;
 	case LOG_VERBOSE:
 		verbose = 1;
 		/* FALLTHROUGH */
@@ -150,6 +324,9 @@ main(int argc, char *argv[])
 		break;
 	case NONE:
 		break;
+	case COMPACT_DB:
+	case INDEX_DB:
+		fatal("internal error");
 	}
 
 	while (ibuf.w.queued)
@@ -173,12 +350,6 @@ main(int argc, char *argv[])
 				break;
 			case IMSG_CTL_NSSTATS:
 				show_nsstats(&imsg);
-				break;
-			case IMSG_CTL_COMPACT_STATUS:
-				show_compact_status(&imsg);
-				break;
-			case IMSG_CTL_INDEX_STATUS:
-				show_index_status(&imsg);
 				break;
 			case IMSG_CTL_END:
 				done = 1;
@@ -243,35 +414,5 @@ show_nsstats(struct imsg *imsg)
 	printf("\nsuffix: %s\n", nss->suffix);
 	show_dbstats("data", &nss->data_stat);
 	show_dbstats("indx", &nss->indx_stat);
-}
-
-void
-show_compact_status(struct imsg *imsg)
-{
-	struct compaction_status	*cs;
-
-	cs = imsg->data;
-	printf("%s (%s): %s\n", cs->suffix,
-	    cs->db == 1 ? "entries" : "index",
-	    cs->status == 0 ? "ok" : "failed");
-}
-
-void
-show_index_status(struct imsg *imsg)
-{
-	struct indexer_status	*is;
-
-	is = imsg->data;
-	if (is->status != 0)
-		printf("\r%s: %s  \n", is->suffix,
-		    is->status < 0 ? "failed" : "ok");
-	else if (is->entries > 0)
-		printf("\r%s: %i%%",
-		    is->suffix,
-		    (int)(100 * (double)is->ncomplete / is->entries));
-	else
-		printf("\r%s: 100%%", is->suffix);
-
-	fflush(stdout);
 }
 

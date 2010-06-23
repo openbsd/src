@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapctl.8,v 1.1 2010/05/31 17:36:31 martinh Exp $
+.\"	$OpenBSD: ldapctl.8,v 1.2 2010/06/23 13:31:30 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2010 $
+.Dd $Mdocdate: June 23 2010 $
 .Dt LDAPCTL 8
 .Os
 .Sh NAME
@@ -22,6 +22,8 @@
 .Nd LDAP daemon control program
 .Sh SYNOPSIS
 .Nm ldapctl
+.Op Fl v
+.Op Fl f Ar file
 .Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
@@ -41,25 +43,38 @@ instead of the default
 .Pa /var/run/ldapd.sock
 to communicate with
 .Xr ldapd 8 .
+.It Fl f Ar file
+Use
+.Ar file
+as the configuration file, instead of the default
+.Pa /etc/ldapd.conf .
+.It Fl v
+Produce more verbose output.
 .El
 .Pp
 The commands are as follows:
 .Bl -tag -width xxxxxx
 .It Cm stats
 Show statistics counters.
+.It Cm log brief
+Disable verbose debug logging.
+.It Cm log verbose
+Enable verbose debug logging.
 .It Cm compact
-Initiate compaction of all databases.
-Compaction is performed online against a running
-.Xr ldapd 8 .
-When compaction of a database file is complete,
+Compact all databases.
 .Xr ldapd 8
-reopens the file and new requests are performed against the new database.
-Write requests are buffered until the compaction is complete.
+does not have to be running.
+When compaction of a database file is complete, a special marker is appended
+to the database file that tells
+.Xr ldapd 8
+to reopen the file and perform new requests against the compacted database.
+A write transaction is opened to force other processes to buffer write
+requests while performing compaction.
 Read requests are handled without disruption.
 .It Cm index
-Initiate re-indexing of all databases.
-Indexing is performed online against a running
-.Xr ldapd 8 .
+Re-index all databases.
+.Xr ldapd 8
+does not have to be running.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/ldapd.sockXXXXXXX" -compact
@@ -67,6 +82,10 @@ Indexing is performed online against a running
 default
 .Nm
 control socket
+.It Pa /etc/ldapd.conf
+default
+.Xr ldapd 8
+configuration file
 .El
 .Sh SEE ALSO
 .Xr ldapd.conf 5 ,
