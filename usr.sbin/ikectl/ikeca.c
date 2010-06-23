@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.8 2010/06/23 17:10:49 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.9 2010/06/23 19:28:18 jsg Exp $	*/
 /*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
 
 /*
@@ -456,10 +456,19 @@ ca_export(struct ca *ca, char *keyname, char *myname)
 	char		 dst[PATH_MAX];
 	char		*p;
 	char		 tpl[] = "/tmp/ikectl.XXXXXXXXXX";
-	const char	*exdirs[] = { "/ca", "/certs", "/crls", "/private",
-	    		              "/export" };
 	u_int		 i;
 	int		 fd;
+
+	struct {
+		char	*dir;
+		mode_t	 mode;
+	} exdirs[] = {
+		{ "/ca",	0755 },
+		{ "/certs",	0755 },
+		{ "/crls",	0755 },
+		{ "/export",	0755 },
+		{ "/private",	0700 }
+	};
 
 	if (keyname != NULL) {
 		if (strlcpy(oname, keyname, sizeof(oname)) >= sizeof(oname))
@@ -503,8 +512,8 @@ ca_export(struct ca *ca, char *keyname, char *myname)
 
 	for (i = 0; i < nitems(exdirs); i++) {
 		strlcpy(dst, p, sizeof(dst));
-		strlcat(dst, exdirs[i], sizeof(dst));
-		if (mkdir(dst, 0700) != 0)
+		strlcat(dst, exdirs[i].dir, sizeof(dst));
+		if (mkdir(dst, exdirs[i].mode) != 0)
 			err(1, "failed to create dir %s", dst);
 	}
 
