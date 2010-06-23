@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.2 2010/06/15 15:47:56 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.3 2010/06/23 13:10:14 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -29,7 +30,6 @@
 int
 ldap_delete(struct request *req)
 {
-	int			 rc;
 	char			*dn;
 	struct namespace	*ns;
 
@@ -47,29 +47,25 @@ ldap_delete(struct request *req)
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
-	if ((rc = namespace_begin(ns)) == BT_DEAD) {
-		if (namespace_queue_request(ns, req) != 0)
-			return ldap_respond(req, LDAP_BUSY);
-		return LDAP_BUSY;
-	} else if (rc != BT_SUCCESS)
+	if (namespace_begin(ns) != 0) {
+		if (errno == EBUSY) {
+			if (namespace_queue_request(ns, req) != 0)
+				return ldap_respond(req, LDAP_BUSY);
+			return LDAP_BUSY;
+		}
 		return ldap_respond(req, LDAP_OTHER);
-
-	switch (namespace_del(ns, dn)) {
-	case BT_NOTFOUND:
-		rc = LDAP_NO_SUCH_OBJECT;
-		break;
-	case BT_SUCCESS:
-		rc = LDAP_SUCCESS;
-		break;
-	default:
-		rc = LDAP_OTHER;
-		break;
 	}
 
-	namespace_commit(ns);
-	if (rc >= 0)
-		ldap_respond(req, rc);
-	return rc;
+	if (namespace_del(ns, dn) == 0) {
+		namespace_commit(ns);
+		return ldap_respond(req, LDAP_SUCCESS);
+	} else {
+		namespace_abort(ns);
+		if (errno == ENOENT)
+			return ldap_respond(req, LDAP_NO_SUCH_OBJECT);
+		else
+			return ldap_respond(req, LDAP_OTHER);
+	}
 }
 
 int
@@ -99,12 +95,14 @@ ldap_add(struct request *req)
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
-	if ((rc = namespace_begin(ns)) == BT_DEAD) {
-		if (namespace_queue_request(ns, req) != 0)
-			return ldap_respond(req, LDAP_BUSY);
-		return LDAP_BUSY;
-	} else if (rc != BT_SUCCESS)
+	if (namespace_begin(ns) == -1) {
+		if (errno == EBUSY) {
+			if (namespace_queue_request(ns, req) != 0)
+				return ldap_respond(req, LDAP_BUSY);
+			return LDAP_BUSY;
+		}
 		return ldap_respond(req, LDAP_OTHER);
+	}
 
 	/* add operational attributes
 	 */
@@ -122,26 +120,17 @@ ldap_add(struct request *req)
 	ber_add_string(set, uuid_str);
 	ldap_add_attribute(attrs, "entryUUID", set);
 
-	if ((rc = validate_entry(dn, attrs, ns->relax)) != LDAP_SUCCESS)
-		goto done;
-
-	switch (namespace_add(ns, dn, attrs)) {
-	case BT_SUCCESS:
-		rc = LDAP_SUCCESS;
-		break;
-	case BT_EXISTS:
-		rc = LDAP_ALREADY_EXISTS;
-		break;
-	default:
+	if ((rc = validate_entry(dn, attrs, ns->relax)) != LDAP_SUCCESS ||
+	    namespace_add(ns, dn, attrs) != 0) {
+		namespace_abort(ns);
+		if (rc == LDAP_SUCCESS && errno == EEXIST)
+			rc = LDAP_ALREADY_EXISTS;
+		else
+			rc = LDAP_OTHER;
+	} else if (namespace_commit(ns) != 0)
 		rc = LDAP_OTHER;
-		break;
-	}
 
-done:
-	namespace_commit(ns);
-	if (rc >= 0)
-		ldap_respond(req, rc);
-	return rc;
+	return ldap_respond(req, rc);
 }
 
 int
@@ -172,12 +161,14 @@ ldap_modify(struct request *req)
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
-	if ((rc = namespace_begin(ns)) == BT_DEAD) {
-		if (namespace_queue_request(ns, req) != 0)
-			return ldap_respond(req, LDAP_BUSY);
-		return LDAP_BUSY;
-	} else if (rc != BT_SUCCESS)
+	if (namespace_begin(ns) == -1) {
+		if (errno == EBUSY) {
+			if (namespace_queue_request(ns, req) != 0)
+				return ldap_respond(req, LDAP_BUSY);
+			return LDAP_BUSY;
+		}
 		return ldap_respond(req, LDAP_OTHER);
+	}
 
 	if ((entry = namespace_get(ns, dn)) == NULL) {
 		rc = LDAP_NO_SUCH_OBJECT;
@@ -253,20 +244,17 @@ ldap_modify(struct request *req)
 	else
 		ldap_add_attribute(entry, "modifyTimestamp", set);
 
-	switch (namespace_update(ns, dn, entry)) {
-	case BT_SUCCESS:
+	if (namespace_update(ns, dn, entry) == 0)
 		rc = LDAP_SUCCESS;
-		break;
-	case BT_EXISTS:
-		rc = LDAP_ALREADY_EXISTS;
-		break;
-	default:
+	else
 		rc = LDAP_OTHER;
-		break;
-	}
 
 done:
-	namespace_commit(ns);
+	if (rc == LDAP_SUCCESS)
+		namespace_commit(ns);
+	else
+		namespace_abort(ns);
+
 	if (rc >= 0)
 		ldap_respond(req, rc);
 	return rc;

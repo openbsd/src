@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.5 2010/06/15 15:47:56 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.6 2010/06/23 13:10:14 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -332,11 +332,13 @@ conn_search(struct search *search)
 				    search->cindx->prefix);
 				btval_reset(&val);
 				btval_reset(&key);
-				rc = BT_NOTFOUND;
+				rc = BT_FAIL;
+				errno = ENOENT;
 			}
 		}
 
-		if (rc == BT_NOTFOUND && search->plan->indexed > 1) {
+		if (rc == BT_FAIL && errno == ENOENT &&
+		    search->plan->indexed > 1) {
 			search->cindx = TAILQ_NEXT(search->cindx, next);
 			if (search->cindx != NULL) {
 				rc = BT_SUCCESS;
@@ -350,7 +352,7 @@ conn_search(struct search *search)
 		}
 
 		if (rc != BT_SUCCESS) {
-			if (rc == BT_FAIL) {
+			if (errno != ENOENT) {
 				log_warnx("btree failure");
 				reason = LDAP_OTHER;
 			}
@@ -389,18 +391,21 @@ conn_search(struct search *search)
 				btval_reset(&key);
 				continue;
 			}
+
 			rc = btree_txn_get(NULL, search->data_txn, &key, &val);
 			if (rc == BT_FAIL) {
+				if (errno == ENOENT) {
+					log_warnx("indexed key [%.*s]"
+					    " doesn't exist!",
+					    (int)key.size, (char *)key.data);
+					btval_reset(&key);
+					rc = BT_SUCCESS;
+					continue;
+				}
 				log_warnx("btree failure");
+				btval_reset(&key);
 				reason = LDAP_OTHER;
-				btval_reset(&key);
 				break;
-			} else if (rc == BT_NOTFOUND) {
-				log_warnx("indexed key [%.*s] doesn't exist!",
-				    (int)key.size, (char *)key.data);
-				rc = BT_SUCCESS;
-				btval_reset(&key);
-				continue;
 			}
 		}
 
@@ -432,7 +437,7 @@ conn_search(struct search *search)
 			    search->conn->fd, search->req->msgid,
 			    search->szlim);
 			reason = LDAP_SIZELIMIT_EXCEEDED;
-			rc = BT_NOTFOUND;
+			rc = BT_FAIL;
 		}
 	}
 
@@ -455,8 +460,8 @@ conn_search(struct search *search)
 		    search->nscanned, search->nmatched, search->ndups);
 		send_ldap_result(conn, search->req->msgid,
 		    LDAP_RES_SEARCH_RESULT, reason);
-		if (rc == -1)
-			log_debug("search failed");
+		if (errno != ENOENT)
+			log_debug("search failed: %s", strerror(errno));
 		search_close(search);
 	}
 }
@@ -786,9 +791,9 @@ ldap_search(struct request *req)
 		goto done;
 	}
 
-	if ((rc = namespace_begin_txn(search->ns,
-	    &search->data_txn, &search->indx_txn, 1)) != BT_SUCCESS) {
-		if (rc == BT_DEAD) {
+	if ((rc = namespace_begin_txn(search->ns, &search->data_txn,
+	    &search->indx_txn, 1)) != BT_SUCCESS) {
+		if (errno == EBUSY) {
 			if (namespace_queue_request(search->ns, req) != 0) {
 				reason = LDAP_BUSY;
 				goto done;
@@ -808,22 +813,16 @@ ldap_search(struct request *req)
 		bzero(&val, sizeof(val));
 		key.data = search->basedn;
 		key.size = strlen(key.data);
-		switch (btree_txn_get(NULL, search->data_txn, &key, &val)) {
-		case BT_SUCCESS:
+
+		if (btree_txn_get(NULL, search->data_txn, &key, &val) == 0) {
 			check_search_entry(&key, &val, search);
 			btval_reset(&val);
-			/* FALLTHROUGH */
-		case BT_NOTFOUND:
 			reason = LDAP_SUCCESS;
-			goto done;
-		case BT_DEAD:
-		case BT_FAIL:
-		default:
+		} else if (errno == ENOENT)
+			reason = LDAP_SUCCESS;
+		else
 			reason = LDAP_OTHER;
-			goto done;
-		}
-
-		return 0;
+		goto done;
 	}
 
 	search->plan = search_planner(search->ns, search->filter);

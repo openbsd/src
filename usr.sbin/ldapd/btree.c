@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.12 2010/06/17 18:36:36 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.13 2010/06/23 13:10:14 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -586,7 +586,8 @@ btree_read_page(struct btree *bt, pgno_t pgno, struct page *page)
 	bt->stat.reads++;
 	if ((rc = pread(bt->fd, page, PAGESIZE, (off_t)pgno*PAGESIZE)) == 0) {
 		DPRINTF("page %u doesn't exist", pgno);
-		return BT_NOTFOUND;
+		errno = ENOENT;
+		return BT_FAIL;
 	}
 	else if (rc != PAGESIZE) {
 		DPRINTF("read: %s", strerror(errno));
@@ -613,11 +614,11 @@ btree_sync(struct btree *bt)
 struct btree_txn *
 btree_txn_begin(struct btree *bt, int rdonly)
 {
-	int			 rc;
 	struct btree_txn	*txn;
 
 	if (!rdonly && bt->txn != NULL) {
 		DPRINTF("write transaction already begun");
+		errno = EBUSY;
 		return NULL;
 	}
 
@@ -638,6 +639,8 @@ btree_txn_begin(struct btree *bt, int rdonly)
 
 		DPRINTF("taking write lock on txn %p", txn);
 		if (flock(bt->fd, LOCK_EX | LOCK_NB) != 0) {
+			DPRINTF("flock: %s", strerror(errno));
+			errno = EBUSY;
 			free(txn->dirty_queue);
 			free(txn);
 			return NULL;
@@ -648,8 +651,7 @@ btree_txn_begin(struct btree *bt, int rdonly)
 	txn->bt = bt;
 	btree_ref(bt);
 
-	if ((rc = btree_read_meta(bt, &txn->next_pgno)) == BT_FAIL ||
-	    rc == BT_DEAD) {
+	if (btree_read_meta(bt, &txn->next_pgno) != BT_SUCCESS) {
 		btree_txn_abort(txn);
 		return NULL;
 	}
@@ -713,18 +715,21 @@ btree_txn_commit(struct btree_txn *txn)
 	if (F_ISSET(txn->flags, BT_TXN_RDONLY)) {
 		DPRINTF("attempt to commit read-only transaction");
 		btree_txn_abort(txn);
+		errno = EPERM;
 		return BT_FAIL;
 	}
 
 	if (txn != bt->txn) {
 		DPRINTF("attempt to commit unknown transaction");
 		btree_txn_abort(txn);
+		errno = EINVAL;
 		return BT_FAIL;
 	}
 
 	if (F_ISSET(txn->flags, BT_TXN_ERROR)) {
 		DPRINTF("error flag is set, can't commit");
 		btree_txn_abort(txn);
+		errno = EINVAL;
 		return BT_FAIL;
 	}
 
@@ -903,7 +908,7 @@ btree_read_meta(struct btree *bt, pgno_t *p_next)
 	if (size == 0) {
 		if (p_next != NULL)
 			*p_next = 0;
-		return BT_NOTFOUND;		/* new file */
+		return BT_SUCCESS;		/* new file */
 	}
 
 	next_pgno = size / PAGESIZE;
@@ -928,8 +933,8 @@ btree_read_meta(struct btree *bt, pgno_t *p_next)
 		DPRINTF("size unchanged, keeping current meta page");
 		if (F_ISSET(bt->meta->flags, BT_TOMBSTONE)) {
 			DPRINTF("file is dead");
-			errno = EAGAIN;
-			return BT_DEAD;
+			errno = ESTALE;
+			return BT_FAIL;
 		} else
 			return BT_SUCCESS;
 	}
@@ -937,15 +942,15 @@ btree_read_meta(struct btree *bt, pgno_t *p_next)
 
 	while (meta_pgno > 0) {
 		rc = btree_read_page(bt, meta_pgno, bt->metapage);
-		if (rc == BT_NOTFOUND)
+		if (rc == BT_FAIL && errno == ENOENT)
 			break;		/* no meta page found */
 		if (rc == BT_SUCCESS && btree_is_meta_page(bt->metapage)) {
 			bt->meta = METADATA(bt->metapage);
 			DPRINTF("flags = 0x%x", bt->meta->flags);
 			if (F_ISSET(bt->meta->flags, BT_TOMBSTONE)) {
 				DPRINTF("file is dead");
-				errno = EAGAIN;
-				return BT_DEAD;
+				errno = ESTALE;
+				return BT_FAIL;
 			} else
 				return BT_SUCCESS;
 		}
@@ -962,7 +967,7 @@ fail:
 struct btree *
 btree_open_fd(int fd, unsigned int flags)
 {
-	int		 fl, rc;
+	int		 fl;
 	struct btree	*bt;
 
 	fl = fcntl(fd, F_GETFL, 0);
@@ -988,7 +993,7 @@ btree_open_fd(int fd, unsigned int flags)
 	if ((bt->metapage = calloc(1, PAGESIZE)) == NULL)
 		goto fail;
 
-	if ((rc = btree_read_meta(bt, NULL)) == BT_FAIL || rc == BT_DEAD)
+	if (btree_read_meta(bt, NULL) != 0)
 		goto fail;
 
 	if (bt->meta == NULL) {
@@ -1346,12 +1351,15 @@ btree_search_page(struct btree *bt, struct btree_txn *txn, struct btval *key,
 		root = bt->meta->root;
 	} else if (F_ISSET(txn->flags, BT_TXN_ERROR)) {
 		DPRINTF("transaction has failed, must abort");
+		errno = EINVAL;
 		return BT_FAIL;
 	} else
 		root = txn->root;
 
-	if (root == P_INVALID)		/* Tree is empty. */
-		return BT_NOTFOUND;
+	if (root == P_INVALID) {		/* Tree is empty. */
+		errno = ENOENT;
+		return BT_FAIL;
+	}
 
 	if ((rc = btree_get_mpage(bt, root, &mp)) != BT_SUCCESS)
 		return rc;
@@ -1409,7 +1417,7 @@ btree_read_data(struct btree *bt, struct mpage *mp, struct node *leaf,
 	data->mp = NULL;
 	pgno = *(pgno_t *)NODEDATA(leaf);	/* XXX: alignment? */
 	for (sz = 0; sz < data->size; ) {
-		if (btree_read_page(bt, pgno, &p) != 0 ||
+		if (btree_read_page(bt, pgno, &p) != BT_SUCCESS ||
 		    !F_ISSET(p.flags, P_OVERFLOW)) {
 			DPRINTF("read overflow page failed (%02x)", p.flags);
 			free(data->data);
@@ -1462,8 +1470,10 @@ btree_txn_get(struct btree *bt, struct btree_txn *txn,
 	leaf = btree_search_node(bt, mp, key, &exact, NULL);
 	if (leaf && exact)
 		rc = btree_read_data(bt, mp, leaf, data);
-	else
-		rc = BT_NOTFOUND;
+	else {
+		errno = ENOENT;
+		rc = BT_FAIL;
+	}
 
 	mpage_prune(bt);
 	return rc;
@@ -1478,8 +1488,10 @@ btree_sibling(struct cursor *cursor, int move_right)
 	struct mpage	*mp;
 
 	top = CURSOR_TOP(cursor);
-	if ((parent = SLIST_NEXT(top, entry)) == NULL)
-		return BT_NOTFOUND;		/* root has no siblings */
+	if ((parent = SLIST_NEXT(top, entry)) == NULL) {
+		errno = ENOENT;
+		return BT_FAIL;			/* root has no siblings */
+	}
 
 	DPRINTF("parent page is page %u, index %u",
 	    parent->mpage->pgno, parent->ki);
@@ -1549,8 +1561,10 @@ btree_cursor_next(struct cursor *cursor, struct btval *key, struct btval *data)
 	struct mpage	*mp;
 	struct node	*leaf;
 
-	if (cursor->eof)
-		return BT_NOTFOUND;
+	if (cursor->eof) {
+		errno = ENOENT;
+		return BT_FAIL;
+	}
 
 	assert(cursor->initialized);
 
@@ -1563,7 +1577,7 @@ btree_cursor_next(struct cursor *cursor, struct btval *key, struct btval *data)
 		DPRINTF("=====> move to next sibling page");
 		if (btree_sibling(cursor, 1) != BT_SUCCESS) {
 			cursor->eof = 1;
-			return BT_NOTFOUND;
+			return BT_FAIL;
 		}
 		top = CURSOR_TOP(cursor);
 		mp = top->mpage;
@@ -1608,7 +1622,7 @@ btree_cursor_set(struct cursor *cursor, struct btval *key, struct btval *data)
 	if (leaf == NULL) {
 		DPRINTF("===> inexact leaf not found, goto sibling");
 		if (btree_sibling(cursor, 1) != BT_SUCCESS)
-			return BT_NOTFOUND; /* no entries matched */
+			return BT_FAIL;		/* no entries matched */
 		top = CURSOR_TOP(cursor);
 		top->ki = 0;
 		mp = top->mpage;
@@ -2462,7 +2476,8 @@ btree_txn_del(struct btree *bt, struct btree_txn *txn,
 
 	leaf = btree_search_node(bt, mp, key, &exact, &ki);
 	if (leaf == NULL || !exact) {
-		rc = BT_NOTFOUND;
+		errno = ENOENT;
+		rc = BT_FAIL;
 		goto done;
 	}
 
@@ -2782,7 +2797,8 @@ btree_txn_put(struct btree *bt, struct btree_txn *txn,
 			if (F_ISSET(flags, BT_NOOVERWRITE)) {
 				DPRINTF("duplicate key %.*s",
 				    (int)key->size, (char *)key->data);
-				rc = BT_EXISTS;
+				errno = EEXIST;
+				rc = BT_FAIL;
 				goto done;
 			}
 			btree_del_node(bt, mp, ki);
@@ -2791,7 +2807,7 @@ btree_txn_put(struct btree *bt, struct btree_txn *txn,
 			ki = NUMKEYS(mp);
 			DPRINTF("appending key at index %i", ki);
 		}
-	} else if (rc == BT_NOTFOUND) {
+	} else if (errno == ENOENT) {
 		/* new file, just write a root leaf page */
 		DPRINTF("allocating new root leaf page");
 		if ((mp = btree_new_page(bt, P_LEAF)) == NULL) {
@@ -2891,32 +2907,39 @@ btree_compact_tree(struct btree *bt, pgno_t pgno, int fd)
 int
 btree_compact(struct btree *bt)
 {
-	int			 rc, fd, old_fd;
+	off_t			 old_size;
 	char			*compact_path = NULL;
 	struct btree_txn	*txn;
+	int			 fd, old_fd;
 	pgno_t			 root, next_pgno;
 
 	assert(bt != NULL);
 
-	if (bt->path == NULL)
+	DPRINTF("compacting btree %p with path %s", bt, bt->path);
+
+	if (bt->path == NULL) {
+		errno = EINVAL;
+		return BT_FAIL;
+	}
+
+	if ((txn = btree_txn_begin(bt, 0)) == NULL)
 		return BT_FAIL;
 
-	if ((rc = btree_read_meta(bt, NULL)) == BT_NOTFOUND)
+	if (txn->next_pgno == 0) {
+		/* File is empty. */
+		btree_txn_abort(txn);
 		return BT_SUCCESS;
-	else if (rc != BT_SUCCESS)
-		return rc;
+	}
 
 	asprintf(&compact_path, "%s.compact.XXXXXX", bt->path);
 	fd = mkstemp(compact_path);
 	if (fd == -1) {
 		free(compact_path);
+		btree_txn_abort(txn);
 		return BT_FAIL;
 	}
 
 	old_fd = bt->fd;
-
-	if ((txn = btree_txn_begin(bt, 0)) == NULL)
-		goto failed;
 
 	next_pgno = bt->txn->next_pgno;
 	bt->txn->next_pgno = 0;
@@ -2937,12 +2960,14 @@ btree_compact(struct btree *bt)
 	/* Write a "tombstone" meta page so other processes can pick up
 	 * the change and re-open the file.
 	 */
+	old_size = bt->size;
 	bt->fd = old_fd;
 	bt->txn->next_pgno = next_pgno;
 	if (btree_write_meta(bt, P_INVALID, BT_TOMBSTONE) != BT_SUCCESS)
 		goto failed;
 
 	bt->fd = fd;
+	bt->size = old_size;
 	btree_txn_abort(txn);
 	free(compact_path);
 	mpage_flush(bt);

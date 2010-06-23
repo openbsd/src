@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.5 2010/06/23 12:40:19 martinh Exp $ */
+/*	$OpenBSD: index.c,v 1.6 2010/06/23 13:10:14 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -74,6 +74,7 @@
 #include <sys/queue.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -188,7 +189,7 @@ unindex_attribute(struct namespace *ns, char *attr, struct btval *dn,
 		normalize_dn(key.data);
 		rc = btree_txn_del(NULL, ns->indx_txn, &key, NULL);
 		free(t);
-		if (rc == BT_FAIL)
+		if (rc == BT_FAIL && errno != ENOENT)
 			return -1;
 	}
 
@@ -240,7 +241,7 @@ unindex_rdn(struct namespace *ns, struct btval *dn)
 	normalize_dn(key.data);
 	rc = btree_txn_del(NULL, ns->indx_txn, &key, NULL);
 	free(t);
-	if (rc == BT_FAIL)
+	if (rc == BT_FAIL && errno != ENOENT)
 		return -1;
 	return 0;
 }

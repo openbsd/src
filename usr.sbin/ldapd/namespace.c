@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.7 2010/06/15 19:30:26 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.8 2010/06/23 13:10:14 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -42,27 +42,27 @@ int
 namespace_begin_txn(struct namespace *ns, struct btree_txn **data_txn,
     struct btree_txn **indx_txn, int rdonly)
 {
-	int	rc = BT_FAIL;
-
-	if (ns->data_db == NULL || ns->indx_db == NULL)
-		return BT_DEAD;
+	if (ns->data_db == NULL || ns->indx_db == NULL) {
+		errno = EBUSY;	/* namespace is being reopened */
+		return -1;
+	}
 
 	if ((*data_txn = btree_txn_begin(ns->data_db, rdonly)) == NULL ||
 	    (*indx_txn = btree_txn_begin(ns->indx_db, rdonly)) == NULL) {
-		if (errno == EAGAIN) {
+		if (errno == ESTALE) {
 			if (*data_txn == NULL)
 				namespace_reopen_data(ns);
 			else
 				namespace_reopen_indx(ns);
-			rc = BT_DEAD;
+			errno = EBUSY;
 		}
 		log_warn("failed to open transaction");
 		btree_txn_abort(*data_txn);
 		*data_txn = NULL;
-		return rc;
+		return -1;
 	}
 
-	return BT_SUCCESS;
+	return 0;
 }
 
 int
@@ -255,22 +255,26 @@ namespace_find(struct namespace *ns, char *dn)
 	struct btval		 key;
 	static struct btval	 val;
 
+	if (ns->data_db == NULL) {
+		errno = EBUSY;	/* namespace is being reopened */
+		return NULL;
+	}
+
 	bzero(&key, sizeof(key));
 	bzero(&val, sizeof(val));
 
 	key.data = dn;
 	key.size = strlen(dn);
 
-	switch (btree_txn_get(ns->data_db, ns->data_txn, &key, &val)) {
-	case BT_FAIL:
-		log_warn("%s", dn);
-		return NULL;
-	case BT_DEAD:
-		log_warn("%s", dn);
-		namespace_reopen_data(ns);
-		return NULL;
-	case BT_NOTFOUND:
-		log_debug("%s: dn not found", dn);
+	if (btree_txn_get(ns->data_db, ns->data_txn, &key, &val) != 0) {
+		if (errno == ENOENT)
+			log_debug("%s: dn not found", dn);
+		else
+			log_warn("%s", dn);
+
+		if (errno == ESTALE)
+			namespace_reopen_data(ns);
+
 		return NULL;
 	}
 
@@ -336,7 +340,7 @@ namespace_put(struct namespace *ns, char *dn, struct ber_element *root,
 	rc = btree_txn_put(NULL, ns->data_txn, &key, &val,
 	    update ? 0 : BT_NOOVERWRITE);
 	if (rc != BT_SUCCESS) {
-		if (rc == BT_EXISTS)
+		if (errno == EEXIST)
 			log_debug("%s: already exists", dn);
 		else
 			log_warn("%s", dn);
@@ -345,7 +349,7 @@ namespace_put(struct namespace *ns, char *dn, struct ber_element *root,
 
 	/* FIXME: if updating, try harder to just update changed indices.
 	 */
-	if (update && unindex_entry(ns, &key, root) != BT_SUCCESS)
+	if (update && (rc = unindex_entry(ns, &key, root)) != BT_SUCCESS)
 		goto done;
 
 	rc = index_entry(ns, &key, root);
