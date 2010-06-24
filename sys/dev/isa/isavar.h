@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.54 2010/05/23 11:52:37 deraadt Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.55 2010/06/24 21:17:59 jasper Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -153,8 +153,6 @@ struct isapnp_softc;
 # define ISAPNP_READ_DATA(sc) \
     bus_space_read_1(sc->sc_iot, sc->sc_read_ioh, 0)
 
-# define ISAPNP_MALLOC(a) malloc(a, M_DEVBUF, M_WAITOK)
-# define ISAPNP_FREE(a) free(a, M_DEVBUF)
 # define ISAPNP_CLONE_SETUP(dest, src) \
 	do { \
 		bzero((dest), sizeof(*(dest))); \

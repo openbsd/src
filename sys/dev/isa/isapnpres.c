@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.6 2002/06/30 16:05:59 miod Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.7 2010/06/24 21:17:59 jasper Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct isa_attach_args *
 isapnp_newdev(card)
 	struct isa_attach_args *card;
 {
-	struct isa_attach_args *ipa, *dev = ISAPNP_MALLOC(sizeof(*dev));
+	struct isa_attach_args *ipa, *dev = malloc(sizeof(*dev), M_DEVBUF, M_WAITOK);
 
 	ISAPNP_CLONE_SETUP(dev, card);
 
@@ -120,7 +120,7 @@ struct isa_attach_args *
 isapnp_newconf(dev)
 	struct isa_attach_args *dev;
 {
-	struct isa_attach_args *ipa, *conf = ISAPNP_MALLOC(sizeof(*conf));
+	struct isa_attach_args *ipa, *conf = malloc(sizeof(*conf), M_DEVBUF, M_WAITOK);
 
 	ISAPNP_CLONE_SETUP(conf, dev);
 
@@ -183,7 +183,7 @@ isapnp_flatten(card)
 	struct isa_attach_args *dev, *conf, *d, *c, *pa;
 
 	dev = card->ipa_child;
-	ISAPNP_FREE(card);
+	free(card, M_DEVBUF);
 
 	for (conf = c = NULL, d = dev; d; d = dev) {
 		dev = d->ipa_sibling;
@@ -204,7 +204,7 @@ isapnp_flatten(card)
 				isapnp_merge(pa, d);
 
 			pa = d->ipa_child;
-			ISAPNP_FREE(d);
+			free(d, M_DEVBUF);
 		}
 
 		if (c == NULL)
@@ -451,7 +451,7 @@ isapnp_get_resource(sc, c, template)
 
 	bzero(buf, sizeof(buf));
 
-	card = ISAPNP_MALLOC(sizeof(*card));
+	card = malloc(sizeof(*card), M_DEVBUF, M_WAITOK);
 	ISAPNP_CLONE_SETUP(card, template);
 
 #define NEXT_BYTE \
@@ -522,7 +522,7 @@ parse:
 bad:
 	for (card = isapnp_flatten(card); card; ) {
 		dev = card->ipa_sibling;
-		ISAPNP_FREE(card);
+		free(card, M_DEVBUF);
 		card = dev;
 	}
 	printf("%s: %s, card %d\n", sc->sc_dev.dv_xname,
