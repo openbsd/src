@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.5 2010/06/10 14:18:26 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.6 2010/06/24 20:15:30 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -342,26 +342,26 @@ parent_dispatch_ca(int fd, struct iked_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &v);
 		memcpy(&v, imsg->data, sizeof(v));
 		parent_reload(env, v, NULL);
-		return (0);
+		break;
 	case IMSG_CTL_COUPLE:
 	case IMSG_CTL_DECOUPLE:
 	case IMSG_CTL_ACTIVE:
 	case IMSG_CTL_PASSIVE:
 		imsg_compose_proc(env, PROC_IKEV1, type, -1, NULL, 0);
 		imsg_compose_proc(env, PROC_IKEV2, type, -1, NULL, 0);
-		return (0);
+		break;
 	case IMSG_CTL_RELOAD:
 		if (IMSG_DATA_SIZE(imsg) > 0)
 			str = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
 		parent_reload(env, 0, str);
 		if (str != NULL)
 			free(str);
-		return (0);
-	default:
 		break;
+	default:
+		return (-1);
 	}
 
-	return (-1);
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.4 2010/06/11 10:15:31 jsg Exp $	*/
+/*	$OpenBSD: ca.c,v 1.5 2010/06/24 20:15:30 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -65,10 +65,12 @@ struct ibuf *
 int	 ca_key_serialize(EVP_PKEY *, struct iked_id *);
 
 int	 ca_dispatch_parent(int, struct iked_proc *, struct imsg *);
+int	 ca_dispatch_ikev1(int, struct iked_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct iked_proc *, struct imsg *);
 
 static struct iked_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ca_dispatch_parent },
+	{ "ikev1",	PROC_IKEV1,	ca_dispatch_ikev1 },
 	{ "ikev2",	PROC_IKEV2,	ca_dispatch_ikev2 }
 };
 
@@ -151,11 +153,17 @@ ca_dispatch_parent(int fd, struct iked_proc *p, struct imsg *imsg)
 			log_debug("%s: config reload", __func__);
 			ca_reset(env, store);
 		}
-		return (0);
-	default:
 		break;
+	default:
+		return (-1);
 	}
 
+	return (0);
+}
+
+int
+ca_dispatch_ikev1(int fd, struct iked_proc *p, struct imsg *imsg)
+{
 	return (-1);
 }
 

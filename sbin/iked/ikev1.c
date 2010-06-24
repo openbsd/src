@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.4 2010/06/14 08:55:59 reyk Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.5 2010/06/24 20:15:30 reyk Exp $	*/
 /*	$vantronix: ikev1.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -46,13 +46,15 @@
 
 int	 ikev1_dispatch_parent(int, struct iked_proc *, struct imsg *);
 int	 ikev1_dispatch_ikev2(int, struct iked_proc *, struct imsg *);
+int	 ikev1_dispatch_cert(int, struct iked_proc *, struct imsg *);
 
 void	 ikev1_msg_cb(int, short, void *);
 void	 ikev1_recv(struct iked *, struct iked_message *);
 
 static struct iked_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev1_dispatch_parent },
-	{ "ikev2",	PROC_IKEV2,	ikev1_dispatch_ikev2 }
+	{ "ikev2",	PROC_IKEV2,	ikev1_dispatch_ikev2 },
+	{ "certstore",	PROC_CERT,	ikev1_dispatch_cert }
 };
 
 pid_t
@@ -115,6 +117,12 @@ ikev1_dispatch_ikev2(int fd, struct iked_proc *p, struct imsg *imsg)
 		break;
 	}
 
+	return (-1);
+}
+
+int
+ikev1_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
+{
 	return (-1);
 }
 
