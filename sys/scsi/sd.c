@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.196 2010/06/16 02:58:02 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.197 2010/06/24 10:05:18 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1332,7 +1332,7 @@ sddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 			return (ENOMEM);
 
 		xs->timeout = 10000;
-		xs->flags = SCSI_POLL | SCSI_DATA_OUT;
+		xs->flags |= SCSI_DATA_OUT;
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
 
