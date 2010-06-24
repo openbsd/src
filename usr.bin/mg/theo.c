@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.118 2010/03/03 14:55:21 jasper Exp $	*/
+/*	$OpenBSD: theo.c,v 1.119 2010/06/24 21:12:09 jasper Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -159,7 +159,8 @@ static const char *talk[] = {
 	"I'm not very reliable",
 	"I don't like control",
 	"You aren't being conservative -- you are trying to be a caveman.",
-	"nfs loves everyone"
+	"nfs loves everyone",
+	"basically, dung beetles fucking.  that's what kerberosV + openssl is like"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
