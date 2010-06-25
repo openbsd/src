@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.304 2010/05/14 23:29:23 djm Exp $ */
+/* $OpenBSD: channels.c,v 1.305 2010/06/25 07:14:45 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -110,10 +110,10 @@ typedef struct {
 } ForwardPermission;
 
 /* List of all permitted host/port pairs to connect by the user. */
-static ForwardPermission permitted_opens[SSH_MAX_FORWARDS_PER_DIRECTION];
+static ForwardPermission *permitted_opens = NULL;
 
 /* List of all permitted host/port pairs to connect by the admin. */
-static ForwardPermission permitted_adm_opens[SSH_MAX_FORWARDS_PER_DIRECTION];
+static ForwardPermission *permitted_adm_opens = NULL;
 
 /* Number of permitted host/port pairs in the array permitted by the user. */
 static int num_permitted_opens = 0;
@@ -2810,10 +2810,6 @@ channel_request_remote_forwarding(const char *listen_host, u_short listen_port,
 {
 	int type, success = 0;
 
-	/* Record locally that connection to this host/port is permitted. */
-	if (num_permitted_opens >= SSH_MAX_FORWARDS_PER_DIRECTION)
-		fatal("channel_request_remote_forwarding: too many forwards");
-
 	/* Send the forward request to the remote side. */
 	if (compat20) {
 		const char *address_to_bind;
@@ -2863,6 +2859,9 @@ channel_request_remote_forwarding(const char *listen_host, u_short listen_port,
 		}
 	}
 	if (success) {
+		/* Record that connection to this host/port is permitted. */
+		permitted_opens = xrealloc(permitted_opens,
+		    num_permitted_opens + 1, sizeof(*permitted_opens));
 		permitted_opens[num_permitted_opens].host_to_connect = xstrdup(host_to_connect);
 		permitted_opens[num_permitted_opens].port_to_connect = port_to_connect;
 		permitted_opens[num_permitted_opens].listen_port = listen_port;
@@ -2958,10 +2957,10 @@ channel_permit_all_opens(void)
 void
 channel_add_permitted_opens(char *host, int port)
 {
-	if (num_permitted_opens >= SSH_MAX_FORWARDS_PER_DIRECTION)
-		fatal("channel_add_permitted_opens: too many forwards");
 	debug("allow port forwarding to host %s port %d", host, port);
 
+	permitted_opens = xrealloc(permitted_opens,
+	    num_permitted_opens + 1, sizeof(*permitted_opens));
 	permitted_opens[num_permitted_opens].host_to_connect = xstrdup(host);
 	permitted_opens[num_permitted_opens].port_to_connect = port;
 	num_permitted_opens++;
@@ -2972,10 +2971,10 @@ channel_add_permitted_opens(char *host, int port)
 int
 channel_add_adm_permitted_opens(char *host, int port)
 {
-	if (num_adm_permitted_opens >= SSH_MAX_FORWARDS_PER_DIRECTION)
-		fatal("channel_add_adm_permitted_opens: too many forwards");
 	debug("config allows port forwarding to host %s port %d", host, port);
 
+	permitted_adm_opens = xrealloc(permitted_adm_opens,
+	    num_adm_permitted_opens + 1, sizeof(*permitted_adm_opens));
 	permitted_adm_opens[num_adm_permitted_opens].host_to_connect
 	     = xstrdup(host);
 	permitted_adm_opens[num_adm_permitted_opens].port_to_connect = port;
@@ -2990,6 +2989,10 @@ channel_clear_permitted_opens(void)
 	for (i = 0; i < num_permitted_opens; i++)
 		if (permitted_opens[i].host_to_connect != NULL)
 			xfree(permitted_opens[i].host_to_connect);
+	if (num_permitted_opens > 0) {
+		xfree(permitted_opens);
+		permitted_opens = NULL;
+	}
 	num_permitted_opens = 0;
 }
 
@@ -3001,6 +3004,10 @@ channel_clear_adm_permitted_opens(void)
 	for (i = 0; i < num_adm_permitted_opens; i++)
 		if (permitted_adm_opens[i].host_to_connect != NULL)
 			xfree(permitted_adm_opens[i].host_to_connect);
+	if (num_adm_permitted_opens > 0) {
+		xfree(permitted_adm_opens);
+		permitted_adm_opens = NULL;
+	}
 	num_adm_permitted_opens = 0;
 }
 
