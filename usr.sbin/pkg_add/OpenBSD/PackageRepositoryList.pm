@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.22 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.23 2010/06/25 10:13:37 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -23,16 +23,31 @@ package OpenBSD::PackageRepositoryList;
 sub new
 {
 	my $class = shift;
-	return bless {l => [], c => {}, k => {}}, $class;
+	return bless {l => [], k => {}}, $class;
+}
+
+sub filter_new
+{
+	my $self = shift;
+	my @l = ();
+	for my $r (@_) {
+		next if $self->{k}{$r};
+		$self->{k}{$r} = 1;
+		push @l, $r;
+	}
+	return @l;
 }
 
 sub add
 {
 	my $self = shift;
-	for my $r (@_) {
-		next if $self->{k}{$r};
-		push @{$self->{l}}, $r;
-	}
+	push @{$self->{l}}, $self->filter_new(@_);
+}
+
+sub prepend
+{
+	my $self = shift;
+	unshift @{$self->{l}}, $self->filter_new(@_);
 }
 
 sub do_something
