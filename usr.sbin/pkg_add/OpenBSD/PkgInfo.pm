@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.4 2010/06/09 11:57:21 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.5 2010/06/25 10:22:56 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,8 @@
 
 use strict;
 use warnings;
+
+use OpenBSD::State;
 
 package OpenBSD::PackingElement;
 sub dump_file
@@ -57,12 +59,25 @@ sub hunt_file
 	}
 }
 
+package OpenBSD::PkgInfo::State;
+our @ISA = qw(OpenBSD::State);
+
+use OpenBSD::PackageInfo;
+
+sub lock
+{
+	my $state = shift;
+	return if $state->{locked};
+	return if $state->{subst}->value('nolock');
+	lock_db(1, $state->opt('q'));
+	$state->{locked} = 1;
+}
+
 package OpenBSD::PkgInfo;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
-use OpenBSD::State;
 
 
 my $total_size = 0;
@@ -412,48 +427,39 @@ sub print_info
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
-	$state = OpenBSD::State->new($cmd);
-	$state->usage_is('[-AaCcdfIKLMmPqRSstUv] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
-
-	my %defines;
-	my $locked;
-	$state->do_options(sub {
-		getopts('cCdfF:hIKLmPQ:qRsSUve:E:Ml:aAt',
-		    {'e' =>
-			    sub {
-				    my $pat = shift;
-				    my @list;
-				    lock_db(1, $opt_q) unless $defines{nolock};
-				    $locked = 1;
-				    if ($pat =~ m/\//o) {
-					    @list = find_by_path($pat);
-				    } else {
-					    @list = find_by_spec($pat);
-				    }
-				    if (@list == 0) {
-					    $exit_code = 1;
-					    $error_e = 1;
-				    }
-				    push(@ARGV, @list);
-				    $terse = 1;
-			    },
-		     'F' => sub {
-				    for my $o (split /\,/o, shift) {
-					    $defines{$o} = 1;
-				    }
-			    },
-		     'h' => sub {	$state->usage; },
-		     'E' =>
-			    sub {
-				    require File::Spec;
-
-				    push(@sought_files, File::Spec->rel2abs(shift));
-
+	$state = OpenBSD::PkgInfo::State->new($cmd);
+	$state->{opt} =
+	    {
+	    	'e' =>
+		    sub {
+			    my $pat = shift;
+			    my @list;
+			    $state->lock;
+			    if ($pat =~ m/\//o) {
+				    @list = find_by_path($pat);
+			    } else {
+				    @list = find_by_spec($pat);
 			    }
-		})
-	    });
+			    if (@list == 0) {
+				    $exit_code = 1;
+				    $error_e = 1;
+			    }
+			    push(@ARGV, @list);
+			    $terse = 1;
+		    },
+	     'E' =>
+		    sub {
+			    require File::Spec;
 
-	lock_db(1, $opt_q) unless $locked or $defines{nolock};
+			    push(@sought_files, File::Spec->rel2abs(shift));
+
+		    }
+	    };
+	$state->handle_options('cCdfF:hIKLmPQ:qRsSUe:E:Ml:aAt',
+	    '[-AaCcdfIKLMmPqRSstUv] [-D nolock][-E filename] [-e pkg-name] ',
+	    '[-l str] [-Q query] [pkg-name] [...]');
+
+	$state->lock;
 
 	unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I ||
 		$opt_L || $opt_R || $opt_s ||
@@ -469,19 +475,20 @@ sub parse_and_run
 		require OpenBSD::PackageLocator;
 		require OpenBSD::Search;
 
-		print "PKG_PATH=$ENV{PKG_PATH}\n" if $opt_v;
+		print "PKG_PATH=$ENV{PKG_PATH}\n" if $state->verbose;
 		my $partial = OpenBSD::Search::PartialStem->new($opt_Q);
 
 		my $r = OpenBSD::PackageLocator->match_locations($partial);
 
 		for my $p (sort map {$_->name} @$r) {
-			print $p, is_installed($p) ? " (installed)" : "" , "\n";
+			$state->say(
+			    is_installed($p) ? "#1 (installed)" : "#1", $p);
 		}
 
 		exit 0;
 	}
 
-	if ($opt_v) {
+	if ($state->verbose) {
 		$opt_c = $opt_d = $opt_f = $opt_M =
 		    $opt_U = $opt_R = $opt_s = $opt_S = 1;
 	}
