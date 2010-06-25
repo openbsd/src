@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.6 2010/06/15 08:35:11 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.7 2010/06/25 10:19:00 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -24,7 +24,6 @@ use warnings;
 package OpenBSD::AddCreateDelete::State;
 our @ISA = qw(OpenBSD::State);
 
-use OpenBSD::Subst;
 use OpenBSD::State;
 use OpenBSD::ProgressMeter;
 
@@ -32,7 +31,6 @@ sub init
 {
 	my $self = shift;
 
-	$self->{subst} = OpenBSD::Subst->new;
 	$self->{progressmeter} = OpenBSD::ProgressMeter->new;
 	$self->{bad} = 0;
 	$self->SUPER::init;
@@ -44,22 +42,10 @@ sub progress
 	return $self->{progressmeter};
 }
 
-sub verbose
-{
-	my $self = shift;
-	return $self->{v};
-}
-
 sub not
 {
 	my $self = shift;
 	return $self->{not};
-}
-
-sub opt
-{
-	my ($self, $k) = @_;
-	return $self->{opt}{$k};
 }
 
 sub _print
@@ -74,27 +60,23 @@ sub _errprint
 	$self->progress->errprint(@_);
 }
 
+sub handle_options
+{
+	my ($state, $opt_string, @usage) = @_;
+
+	$state->SUPER::handle_options('mnx'.$opt_string, @usage);
+
+	$state->progress->setup($state->opt('x'), $state->opt('m'));
+	$state->{not} = $state->opt('n');
+}
+
 package OpenBSD::AddCreateDelete;
-use OpenBSD::Getopt;
 use OpenBSD::Error;
 
 sub handle_options
 {
 	my ($self, $opt_string, $state, @usage) = @_;
-
-
-	$state->{opt}{v} = 0;
-	$state->{opt}{h} = sub { $state->usage; };
-	$state->{opt}{D} = sub {
-		$state->{subst}->parse_option(shift);
-	};
-	$state->usage_is(@usage);
-	$state->do_options(sub {
-		getopts('hmnvxD:'.$opt_string, $state->{opt});
-	});
-	$state->progress->setup($state->opt('x'), $state->opt('m'));
-	$state->{v} = $state->opt('v');
-	$state->{not} = $state->opt('n');
+	$state->handle_options($opt_string, $self, @usage);
 }
 
 1;

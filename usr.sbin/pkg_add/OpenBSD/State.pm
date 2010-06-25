@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.4 2010/06/15 08:29:22 espie Exp $
+# $OpenBSD: State.pm,v 1.5 2010/06/25 10:19:00 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,10 @@ use warnings;
 # in particular, provides "singleton-like" access to UI.
 package OpenBSD::State;
 use Carp;
+use OpenBSD::Subst;
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT = ();
 
 sub new
 {
@@ -34,12 +38,26 @@ sub new
 
 sub init
 {
+	my $self = shift;
+	$self->{subst} = OpenBSD::Subst->new;
 }
 
 sub usage_is
 {
 	my ($self, @usage) = @_;
 	$self->{usage} = \@usage;
+}
+
+sub verbose
+{
+	my $self = shift;
+	return $self->{v};
+}
+
+sub opt
+{
+	my ($self, $k) = @_;
+	return $self->{opt}{$k};
 }
 
 sub usage
@@ -128,6 +146,33 @@ sub do_options
 	eval { &$sub; };
 	OpenBSD::Error::dienow($@, 
 	    bless sub { $state->usage("#1", $_)}, "OpenBSD::Error::catchall");
+}
+
+sub handle_options
+{
+	my ($state, $opt_string, @usage) = @_;
+	require OpenBSD::Getopt;
+
+	$state->{opt}{v} = 0;
+	$state->{opt}{h} = sub { $state->usage; };
+	$state->{opt}{D} = sub {
+		$state->{subst}->parse_option(shift);
+	};
+	$state->usage_is(@usage);
+	$state->do_options(sub {
+		OpenBSD::Getopt::getopts('hvD:'.$opt_string, $state->{opt});
+	});
+	$state->{v} = $state->opt('v');
+	return if $state->{no_exports};
+	# XXX
+	no strict "refs";
+	no strict "vars";
+	for my $k (keys %{$state->{opt}}) {
+		${"opt_$k"} = $state->opt($k);
+		push(@EXPORT, "\$opt_$k");
+	}
+	local $Exporter::ExportLevel = 1;
+	import OpenBSD::State;
 }
 
 my @signal_name = ();
