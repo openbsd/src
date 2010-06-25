@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.95 2010/06/20 11:32:54 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.96 2010/06/25 07:32:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -817,14 +817,16 @@ aucat_main(int argc, char **argv)
   fatal:
 	if (l_flag)
 		file_close(&listen->file);
-	while (dev_list)
-		dev_del(dev_list);
-
 	/*
 	 * give a chance to drain
 	 */
+	for (d = dev_list; d != NULL; d = d->next)
+		dev_drain(d);
 	while (file_poll())
 		; /* nothing */
+
+	while (dev_list)
+		dev_del(dev_list);
 	filelist_done();
 	if (l_flag) {
 		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)

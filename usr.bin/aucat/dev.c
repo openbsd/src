@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.59 2010/06/05 16:14:44 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.60 2010/06/25 07:32:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -533,6 +533,16 @@ dev_close(struct dev *d)
 }
 
 /*
+ * Unless the device is already in process of closing, request it to close
+ */
+void
+dev_drain(struct dev *d)
+{
+	if (d->pstate != DEV_CLOSED)
+		dev_close(d);
+}
+
+/*
  * Free the device
  */
 void
@@ -540,8 +550,7 @@ dev_del(struct dev *d)
 {
 	struct dev **p;
 
-	if (d->pstate != DEV_CLOSED)
-		dev_close(d);
+	dev_drain(d);
 	for (p = &dev_list; *p != d; p = &(*p)->next) {
 #ifdef DEBUG
 		if (*p == NULL) {

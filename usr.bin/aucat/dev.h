@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.25 2010/06/05 16:00:52 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.26 2010/06/25 07:32:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,6 +59,7 @@ int  dev_ref(struct dev *);
 void dev_unref(struct dev *);
 void dev_del(struct dev *);
 void dev_wakeup(struct dev *);
+void dev_drain(struct dev *);
 struct dev *dev_new_thru(void);
 struct dev *dev_new_loop(struct aparams *, struct aparams *, unsigned);
 struct dev *dev_new_sio(char *, unsigned, 
