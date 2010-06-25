@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.66 2010/06/15 08:26:39 espie Exp $
+# $OpenBSD: Makefile,v 1.67 2010/06/25 12:03:54 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -98,6 +98,7 @@ PODS= \
     OpenBSD::PkgSpec \
     OpenBSD::RequiredBy \
     OpenBSD::Search \
+    OpenBSD::State \
     OpenBSD::Ustar \
     OpenBSD::Vstat
 
