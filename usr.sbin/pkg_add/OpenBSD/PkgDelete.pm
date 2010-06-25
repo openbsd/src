@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.5 2010/06/15 08:21:05 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.6 2010/06/25 11:12:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,26 @@ use OpenBSD::AddDelete;
 
 package OpenBSD::PkgDelete::State;
 our @ISA = qw(OpenBSD::AddDelete::State);
+
+sub handle_options
+{
+	my $state = shift;
+	$state->SUPER::handle_options('', 
+	    '[-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
+
+	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
+	if ($base ne '') {
+		$base.='/' unless $base =~ m/\/$/o;
+	}
+	$ENV{'PKG_DESTDIR'} = $base;
+
+	$state->{destdir} = $base;
+	if ($base eq '') {
+	    $state->{destdirname} = '';
+	} else {
+	    $state->{destdirname} = '${PKG_DESTDIR}';
+	}
+}
 
 sub todo
 {
@@ -95,27 +115,6 @@ sub process_parameters
 
 sub finish_display
 {
-}
-
-sub handle_options
-{
-	my ($self, $cmd) = @_;
-	my $state = $self->SUPER::handle_options('', {}, $cmd,
-	    '[-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
-
-	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
-	if ($base ne '') {
-		$base.='/' unless $base =~ m/\/$/o;
-	}
-	$ENV{'PKG_DESTDIR'} = $base;
-
-	$state->{destdir} = $base;
-	if ($base eq '') {
-	    $state->{destdirname} = '';
-	} else {
-	    $state->{destdirname} = '${PKG_DESTDIR}';
-	}
-	return $state;
 }
 
 sub main

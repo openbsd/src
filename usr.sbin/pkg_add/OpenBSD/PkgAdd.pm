@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.4 2010/06/15 08:20:44 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.5 2010/06/25 11:12:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -64,6 +64,64 @@ sub has_different_sig
 
 package OpenBSD::PkgAdd::State;
 our @ISA = qw(OpenBSD::AddDelete::State);
+
+sub handle_options
+{
+	my $state = shift;
+	$state->SUPER::handle_options('aruUzl:A:P:Q:', 
+	    '[-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
+	    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
+
+	$state->{do_faked} = 0;
+	$state->{arch} = $state->opt('A');
+
+	if (defined $state->opt('Q') and defined $state->opt('B')) {
+		$state->usage("-Q and -B are incompatible options");
+	}
+	if (defined $state->opt('Q') and defined $state->opt('r')) {
+		$state->usage("-r and -Q are incompatible options");
+	}
+	if ($state->opt('P')) {
+		if ($state->opt('P') eq 'cdrom') {
+			$state->{cdrom_only} = 1;
+		}
+		elsif ($state->opt('P') eq 'ftp') {
+			$state->{ftp_only} = 1;
+		}
+		else {
+		    $state->usage("bad option: -P #1", $state->opt('P'));
+		}
+	}
+	if (defined $state->opt('Q')) {
+		$state->{destdir} = $state->opt('Q');
+		$state->{do_faked} = 1;
+	} elsif (defined $state->opt('B')) {
+		$state->{destdir} = $state->opt('B');
+	} elsif (defined $ENV{'PKG_PREFIX'}) {
+		$state->{destdir} = $ENV{'PKG_PREFIX'};
+	}
+	if (defined $state->{destdir}) {
+		$state->{destdir}.='/';
+		$ENV{'PKG_DESTDIR'} = $state->{destdir};
+	} else {
+		$state->{destdir} = '';
+		delete $ENV{'PKG_DESTDIR'};
+	}
+
+
+	$state->{automatic} = $state->opt('a');
+	$state->{hard_replace} = $state->opt('r');
+	$state->{newupdates} = $state->opt('u') || $state->opt('U');
+	$state->{allow_replacing} = $state->{hard_replace} || 
+	    $state->{newupdates};
+	$state->{pkglist} = $state->opt('l');
+	$state->{update} = $state->opt('u');
+	$state->{fuzzy} = $state->opt('z');
+
+	if (@ARGV == 0 && !$state->{update} && !$state->{pkglist}) {
+		$state->usage("Missing pkgname");
+	}
+}
 
 # one-level dependencies tree, for nicer printouts
 sub build_deptree
@@ -994,65 +1052,6 @@ sub finish_display
 		    " may remain\n";
 	}
 	inform_user_of_problems($state);
-}
-
-sub handle_options
-{
-	my ($self, $cmd) = @_;
-	my $state = $self->SUPER::handle_options('aruUzl:A:P:Q:', {}, $cmd,
-	    '[-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
-	    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
-
-	$state->{do_faked} = 0;
-	$state->{arch} = $state->opt('A');
-
-	if (defined $state->opt('Q') and defined $state->opt('B')) {
-		$state->usage("-Q and -B are incompatible options");
-	}
-	if (defined $state->opt('Q') and defined $state->opt('r')) {
-		$state->usage("-r and -Q are incompatible options");
-	}
-	if ($state->opt('P')) {
-		if ($state->opt('P') eq 'cdrom') {
-			$state->{cdrom_only} = 1;
-		}
-		elsif ($state->opt('P') eq 'ftp') {
-			$state->{ftp_only} = 1;
-		}
-		else {
-		    $state->usage("bad option: -P #1", $state->opt('P'));
-		}
-	}
-	if (defined $state->opt('Q')) {
-		$state->{destdir} = $state->opt('Q');
-		$state->{do_faked} = 1;
-	} elsif (defined $state->opt('B')) {
-		$state->{destdir} = $state->opt('B');
-	} elsif (defined $ENV{'PKG_PREFIX'}) {
-		$state->{destdir} = $ENV{'PKG_PREFIX'};
-	}
-	if (defined $state->{destdir}) {
-		$state->{destdir}.='/';
-		$ENV{'PKG_DESTDIR'} = $state->{destdir};
-	} else {
-		$state->{destdir} = '';
-		delete $ENV{'PKG_DESTDIR'};
-	}
-
-
-	$state->{automatic} = $state->opt('a');
-	$state->{hard_replace} = $state->opt('r');
-	$state->{newupdates} = $state->opt('u') || $state->opt('U');
-	$state->{allow_replacing} = $state->{hard_replace} || 
-	    $state->{newupdates};
-	$state->{pkglist} = $state->opt('l');
-	$state->{update} = $state->opt('u');
-	$state->{fuzzy} = $state->opt('z');
-
-	if (@ARGV == 0 && !$state->{update} && !$state->{pkglist}) {
-		$state->usage("Missing pkgname");
-	}
-	return $state;
 }
 
 sub main

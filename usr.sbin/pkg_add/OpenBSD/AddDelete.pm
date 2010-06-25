@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.28 2010/06/25 10:54:28 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.29 2010/06/25 11:12:14 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -28,16 +28,6 @@ use OpenBSD::Error;
 use OpenBSD::Paths;
 use OpenBSD::PackageInfo;
 use OpenBSD::AddCreateDelete;
-
-sub handle_options
-{
-	my ($self, $opt_string, $hash, $cmd, @usage) = @_;
-
-	my $state = $self->new_state($cmd);
-	$state->{opt} = $hash;
-	$state->handle_options($opt_string, @usage);
-	return $state;
-}
 
 sub do_the_main_work
 {
@@ -102,7 +92,8 @@ sub parse_and_run
 {
 	my ($self, $cmd) = @_;
 
-	my $state = $self->handle_options($cmd);
+	my $state = $self->new_state($cmd);
+	$state->handle_options;
 	local $SIG{'INFO'} = sub { $state->status->print($state); };
 
 	$self->framework($state);
@@ -146,6 +137,7 @@ sub handle_options
 			$state->{subst}->add($o, 1);
 		}
 	};
+	$state->{no_exports} = 1;
 	$state->SUPER::handle_options($opt_string.'ciInqsB:F:', @usage);
 
 	if ($state->opt('s')) {
