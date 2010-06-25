@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.8 2010/06/25 14:14:09 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.9 2010/06/25 14:32:18 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -223,7 +223,7 @@ sub find_pkg
 
 	if ($pkgname =~ m/[\/\:]/o) {
 		($repo, $pkgname) =
-		    OpenBSD::PackageLocator->path_parse($pkgname);
+		    OpenBSD::PackageLocator->new($state)->path_parse($pkgname);
 	} else {
 		$repo = 'OpenBSD::PackageLocator';
 	}
@@ -514,9 +514,7 @@ sub parse_and_run
 
 		print "PKG_PATH=$ENV{PKG_PATH}\n" if $state->verbose;
 		my $partial = OpenBSD::Search::PartialStem->new($state->opt('Q'));
-		my $locator = OpenBSD::PackageLocator->new($state);
-
-		my $r = $locator->match_locations($partial);
+		my $r = OpenBSD::PackageLocator->new($state)->match_locations($partial);
 
 		for my $p (sort map {$_->name} @$r) {
 			$state->say(
