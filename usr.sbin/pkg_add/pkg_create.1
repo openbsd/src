@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.63 2010/06/09 10:25:17 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.64 2010/06/25 09:00:56 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 9 2010 $
+.Dd $Mdocdate: June 25 2010 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -680,7 +680,7 @@ it refers to a configuration directory instead.
 Added after a file entry by
 .Nm
 to record the files's cryptographic checksum,
-as a sha25 digest encoded in base64.
+as a sha256 digest encoded in base64.
 .Pp
 .It Cm @shell Ar filename
 Specialized version of
