@@ -1,4 +1,4 @@
-/* $OpenBSD: auth1.c,v 1.73 2008/07/04 23:30:16 djm Exp $ */
+/* $OpenBSD: auth1.c,v 1.74 2010/06/25 08:46:17 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -239,7 +239,7 @@ do_authloop(Authctxt *authctxt)
 	    authctxt->valid ? "" : "invalid user ", authctxt->user);
 
 	/* If the user has no password, accept authentication immediately. */
-	if (options.password_authentication &&
+	if (options.permit_empty_passwd && options.password_authentication &&
 #ifdef KRB5
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
