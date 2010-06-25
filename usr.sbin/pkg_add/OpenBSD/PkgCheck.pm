@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.18 2010/06/18 09:01:38 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.19 2010/06/25 10:58:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -240,6 +240,30 @@ sub safe
 	my ($self, $_) = @_;
 	s/[^\w\d\s\+\-\.\>\<\=\/\;\:\,\(\)\[\]]/?/g;
 	return $_;
+}
+
+sub handle_options
+{
+	my $self = shift;
+	$self->{no_exports} = 1;
+
+	$self->SUPER::handle_options('fiq',
+		'[-fimnqvx] [-B pkg-destdir] [-D value]');
+	$self->{interactive} = $self->opt('i');
+	$self->{force} = $self->opt('f');
+	$self->{quick} = $self->opt('q');
+	if (defined $self->opt('B')) {
+		$self->{destdir} = $self->opt('B');
+	} elsif (defined $ENV{'PKG_PREFIX'}) {
+		$self->{destdir} = $ENV{'PKG_PREFIX'};
+	}
+	if (defined $self->{destdir}) {
+		$self->{destdir} .= '/';
+		$ENV{'PKG_DESTDIR'} = $self->{destdir};
+	} else {
+		$self->{destdir} = '';
+		delete $ENV{'PKG_DESTDIR'};
+	}
 }
 
 package OpenBSD::DependencyCheck;
@@ -605,25 +629,9 @@ sub parse_and_run
 	my ($self, $cmd) = @_;
 
 	my $state = OpenBSD::PkgCheck::State->new($cmd);
-	$self->handle_options('fiq', $state,
-		'[-fimnqvx] [-B pkg-destdir] [-D value]');
+	$state->handle_options;
 	if (@ARGV != 0) {
 		$state->usage;
-	}
-	$state->{interactive} = $state->opt('i');
-	$state->{force} = $state->opt('f');
-	$state->{quick} = $state->opt('q');
-	if (defined $state->opt('B')) {
-		$state->{destdir} = $state->opt('B');
-	} elsif (defined $ENV{'PKG_PREFIX'}) {
-		$state->{destdir} = $ENV{'PKG_PREFIX'};
-	}
-	if (defined $state->{destdir}) {
-		$state->{destdir} .= '/';
-		$ENV{'PKG_DESTDIR'} = $state->{destdir};
-	} else {
-		$state->{destdir} = '';
-		delete $ENV{'PKG_DESTDIR'};
 	}
 	lock_db(0) unless $state->{subst}->value('nolock');
 	$self->run($state);
