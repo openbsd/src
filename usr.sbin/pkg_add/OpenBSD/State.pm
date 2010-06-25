@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.5 2010/06/25 10:19:00 espie Exp $
+# $OpenBSD: State.pm,v 1.6 2010/06/25 10:34:03 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -153,14 +153,14 @@ sub handle_options
 	my ($state, $opt_string, @usage) = @_;
 	require OpenBSD::Getopt;
 
-	$state->{opt}{v} = 0;
-	$state->{opt}{h} = sub { $state->usage; };
+	$state->{opt}{v} = 0 unless $opt_string =~ m/v/;
+	$state->{opt}{h} = sub { $state->usage; } unless $opt_string =~ m/h/;
 	$state->{opt}{D} = sub {
 		$state->{subst}->parse_option(shift);
-	};
+	} unless $opt_string =~ m/D/;
 	$state->usage_is(@usage);
 	$state->do_options(sub {
-		OpenBSD::Getopt::getopts('hvD:'.$opt_string, $state->{opt});
+		OpenBSD::Getopt::getopts($opt_string.'hvD:', $state->{opt});
 	});
 	$state->{v} = $state->opt('v');
 	return if $state->{no_exports};
