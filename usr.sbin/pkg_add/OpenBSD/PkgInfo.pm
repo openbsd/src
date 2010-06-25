@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.5 2010/06/25 10:22:56 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.6 2010/06/25 13:03:59 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -73,6 +73,36 @@ sub lock
 	$state->{locked} = 1;
 }
 
+sub banner
+{
+	my ($state, @args) = @_;
+	return if $state->opt('q');
+	$state->print("#1", $state->opt('l')) if $state->opt('l');
+	$state->say(@args);
+}
+
+sub header
+{
+	my ($state, $handle) = @_;
+	return if $state->{terse} || $state->opt('q');
+	my $url = $handle->url;
+	return if $state->{header_done}{$url};
+	$state->{header_done}{$url} = 1;
+	$state->banner("Information for #1\n", $url);
+}
+
+sub footer
+{
+	my ($state, $handle) = @_;
+	return if $state->opt('q') || $state->{terse};
+	return unless $state->{header_done}{$handle->url};
+	if ($state->opt('l')) {
+		$state->say("#1", $state->opt('l'));
+	} else {
+		$state->say("");
+	}
+}
+
 package OpenBSD::PkgInfo;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
@@ -85,7 +115,7 @@ my $pkgs = 0;
 
 sub find_pkg_in
 {
-	my ($repo, $pkgname, $code) = @_;
+	my ($self, $state, $repo, $pkgname, $code) = @_;
 
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
 		require OpenBSD::Search;
@@ -132,10 +162,10 @@ sub find_pkg_in
 
 sub find_pkg
 {
-	my ($pkgname, $code) = @_;
+	my ($self, $state, $pkgname, $code) = @_;
 	require OpenBSD::PackageRepository::Installed;
 
-	if (find_pkg_in(OpenBSD::PackageRepository::Installed->new, $pkgname,
+	if ($self->find_pkg_in($state, OpenBSD::PackageRepository::Installed->new, $pkgname,
 	    $code)) {
 		return;
 	}
@@ -150,7 +180,7 @@ sub find_pkg
 		$repo = 'OpenBSD::PackageLocator';
 	}
 
-	find_pkg_in($repo, $pkgname, $code);
+	$self->find_pkg_in($state, $repo, $pkgname, $code);
 }
 
 sub printfile
@@ -213,12 +243,12 @@ sub find_by_spec
 
 sub filter_files
 {
+	my ($self, $state, $search, @args) = @_;
 	require OpenBSD::PackingList;
 
-	my $search = shift;
 	my @result = ();
-	for my $arg (@_) {
-		find_pkg($arg,
+	for my $arg (@args) {
+		$self->find_pkg($state, $arg,
 		    sub {
 		    	my ($pkgname, $handle) = @_;
 
@@ -232,11 +262,12 @@ sub filter_files
 
 sub manual_filter
 {
+	my ($self, $state, @args) = @_;
 	require OpenBSD::PackingList;
 
 	my @result = ();
-	for my $arg (@_) {
-		find_pkg($arg,
+	for my $arg (@args) {
+		$self->find_pkg($state, $arg,
 		    sub {
 		    	my ($pkgname, $handle) = @_;
 
@@ -294,27 +325,17 @@ sub find_by_path
 our ($opt_c, $opt_C, $opt_d, $opt_f, $opt_I, $opt_K,
     $opt_L, $opt_Q, $opt_q, $opt_R, $opt_s, $opt_v, $opt_h,
     $opt_l, $opt_a, $opt_m, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
-my $terse = 0;
 my $exit_code = 0;
 my $error_e = 0;
 my @sought_files;
 my $state;
 
-sub just_in_time_header
-{
-	my ($pkg, $handle, $rdone) = @_;
-	return if $$rdone == 1;
-	if (!$terse && !$opt_q) {
-		print $opt_l, "Information for ", $handle->url, "\n\n";
-	}
-	$$rdone = 1;
-}
-
 sub print_info
 {
-	my ($pkg, $handle) = @_;
+	my ($self, $state, $pkg, $handle) = @_;
 	unless (defined $handle) {
-		print STDERR "Error printing info for $pkg: no info ?\n";
+		$state->errsay("Error printing info for #1: no info ?", $pkg);
+		return;
 	}
 	if ($opt_I) {
 		my $l = 20 - length($pkg);
@@ -323,34 +344,33 @@ sub print_info
 		print " "x$l, get_comment($handle->info) unless $opt_q;
 		print "\n";
 	} else {
-		my $done = 0;
 		if ($opt_c) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Comment:\n" unless $opt_q;
+			$state->header($handle);
+			$state->banner("Comment:");
 			print get_comment($handle->info), "\n";
 			print "\n";
 		}
 		if ($opt_R && -f $handle->info.REQUIRED_BY) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Required by:\n" unless $opt_q;
+			$state->header($handle);
+			$state->banner("Required by:");
 			printfile($handle->info.REQUIRED_BY);
 			print "\n";
 		}
 		if ($opt_d) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Description:\n" unless $opt_q;
+			$state->header($handle);
+			$state->banner("Description:");
 			print_description($handle->info);
 			print "\n";
 		}
 		if ($opt_M && -f $handle->info.DISPLAY) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Install notice:\n" unless $opt_q;
+			$state->header($handle);
+			$state->banner("Install notice:");
 			printfile($handle->info.DISPLAY);
 			print "\n";
 		}
 		if ($opt_U && -f $handle->info.UNDISPLAY) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Deinstall notice:\n" unless $opt_q;
+			$state->header($handle);
+			$state->banner("Deinstall notice:");
 			printfile($handle->info.UNDISPLAY);
 			print "\n";
 		}
@@ -363,46 +383,47 @@ sub print_info
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
-			$state->fatal("bad packing-list for", $handle->url)
+			$state->fatal("bad packing-list for #1", $handle->url)
 			    unless defined $plist;
 		}
 		if ($opt_L) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Files:\n" unless $opt_q;
+			$state->header($handle);
+			$state->banner("Files:");
 			$plist->dump_file($opt_K);
 			print "\n";
 		}
 		if ($opt_C) {
-			just_in_time_header($pkg, $handle ,\$done);
+			$state->header($handle);
 			if ($plist->is_signed) {
 
 				require OpenBSD::x509;
-				print $opt_l, "Certificate info:\n" unless $opt_q;
+				$state->banner("Certificate info:");
 				OpenBSD::x509::print_certificate_info($plist);
 			} else {
-				print $opt_l, "No digital signature\n" unless $opt_q;
+				$state->banner("No digital signature");
 			}
 		}
 		if ($opt_s) {
-			just_in_time_header($pkg, $handle ,\$done);
+			$state->header($handle);
 			my $size = 0;
 			$plist->sum_up(\$size);
-			print "Size: " unless $opt_q;
-			print "$size\n";
+			$state->say(
+			    ($state->opt('q') ? "#1": "Size: #1"), $size);
 			$total_size += $size;
 			$pkgs++;
 		}
 		if ($opt_S) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print "Signature: " unless $opt_q;
-			print $plist->signature->string, "\n";
+			$state->header($handle);
+			$state->say(
+			    ($state->opt('q') ? "#1": "Signature: #1"), 
+			    $plist->signature->string);
 		}
 		if ($opt_P) {
 			require OpenBSD::PackingList;
 
 			my $plist = $handle->plist(
 			    \&OpenBSD::PackingList::ExtraInfoOnly);
-			just_in_time_header($pkg, $handle ,\$done);
+			$state->header($handle);
 			print "Pkgpath:\n" unless $opt_q;
 			if (defined $plist->fullpkgpath) {
 				print $plist->fullpkgpath;
@@ -414,13 +435,12 @@ sub print_info
 		}
 
 		if ($opt_f) {
-			just_in_time_header($pkg, $handle ,\$done);
-			print $opt_l, "Packing-list:\n" unless $opt_q;
+			$state->header($handle);
+			$state->banner("Packing-list:");
 			$plist->write(\*STDOUT);
 			print "\n";
 		}
-		return unless $done;
-		print $opt_l, "\n" unless $opt_q || $terse;
+		$state->footer($handle);
 	}
 }
 
@@ -445,7 +465,7 @@ sub parse_and_run
 				    $error_e = 1;
 			    }
 			    push(@ARGV, @list);
-			    $terse = 1;
+			    $state->{terse} = 1;
 		    },
 	     'E' =>
 		    sub {
@@ -463,7 +483,7 @@ sub parse_and_run
 
 	unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I ||
 		$opt_L || $opt_R || $opt_s ||
-		$opt_S || $opt_P || $terse) {
+		$opt_S || $opt_P || $state->{terse}) {
 		if (@ARGV == 0) {
 			$opt_I = $opt_a = 1;
 		} else {
@@ -477,8 +497,9 @@ sub parse_and_run
 
 		print "PKG_PATH=$ENV{PKG_PATH}\n" if $state->verbose;
 		my $partial = OpenBSD::Search::PartialStem->new($opt_Q);
+		my $locator = OpenBSD::PackageLocator->new($state);
 
-		my $r = OpenBSD::PackageLocator->match_locations($partial);
+		my $r = $locator->match_locations($partial);
 
 		for my $p (sort map {$_->name} @$r) {
 			$state->say(
@@ -502,7 +523,7 @@ sub parse_and_run
 	}
 
 	if (@ARGV == 0 && !$opt_a && !$opt_A) {
-		$state->usage("Missing package name(s)") unless $terse || $opt_q;
+		$state->usage("Missing package name(s)") unless $state->{terse} || $opt_q;
 	}
 
 	if (@ARGV > 0 && ($opt_a || $opt_A)) {
@@ -527,11 +548,12 @@ sub parse_and_run
 
 	if (@sought_files) {
 		my %hash = map { ($_, []) }  @sought_files;
-		@ARGV = filter_files(\%hash, @ARGV);
+		@ARGV = $self->filter_files($state, \%hash, @ARGV);
 		for my $f (@sought_files) {
 			my $l = $hash{$f};
 			if (@$l) {
-				print "$f: ", join(',', @$l), "\n" unless $opt_q;
+				$state->say("#1: #2", $f, join(',', @$l))
+				    unless $state->opt('q');
 			} else {
 				$exit_code = 1;
 			}
@@ -539,18 +561,22 @@ sub parse_and_run
 	}
 
 	if ($opt_m) {
-		@ARGV = manual_filter(@ARGV);
+		@ARGV = $self->manual_filter($state, @ARGV);
 	}
 
 	for my $pkg (@ARGV) {
-		if ($terse && !$opt_q) {
-			print $opt_l, $pkg, "\n";
+		if ($state->{terse} && !$opt_q) {
+			$state->say("#1#2", $state->opt('l'), $pkg);
 		}
-		find_pkg($pkg, \&print_info);
+		$self->find_pkg($state, $pkg, 
+		    sub {
+			$self->print_info($state, @_);
+		});
 	}
 	if ($pkgs > 1) {
-		print "Total size: $total_size\n";
+		$state->say("Total size: #1", $total_size);
 	}
 	exit($exit_code);
 }
+
 1;
