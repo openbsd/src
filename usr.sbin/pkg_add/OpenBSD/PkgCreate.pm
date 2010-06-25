@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.15 2010/06/20 08:32:26 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.16 2010/06/25 10:21:41 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -626,11 +626,10 @@ sub create_archive
 
 sub sign_existing_package
 {
-	my ($self, $pkgname, $cert, $privkey) = @_;
+	my ($self, $repo, $pkgname, $cert, $privkey) = @_;
 
-	require OpenBSD::PackageLocator;
 
-	my $true_package = OpenBSD::PackageLocator->find($pkgname);
+	my $true_package = $repo->find($pkgname);
 	die "No such package $pkgname" unless $true_package;
 	my $dir = $true_package->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
@@ -825,7 +824,8 @@ sub parse_and_run
 			    push(@signature_params, shift);
 		    }
 	};
-	$self->handle_options('p:f:d:M:U:s:A:L:B:P:W:qQ', $state,
+	$state->{no_exports} = 1;
+	$state->handle_options('p:f:d:M:U:s:A:L:B:P:W:qQ',
 	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
 	    '[-s x509 -s cert -s priv] [-U undisplayfile] [-W wantedlib]',
@@ -871,8 +871,11 @@ sub parse_and_run
 		if ($state->not) {
 			$state->fatal("can't pretend to sign existing packages");
 		}
+		require OpenBSD::PackageLocator;
+
+		my $repo = OpenBSD::PackageLocator->new($state);
 		for my $pkgname (@ARGV) {
-			$self->sign_existing($pkgname, $cert, $privkey);
+			$self->sign_existing($repo, $pkgname, $cert, $privkey);
 		}
 		exit(0);
 	} else {
