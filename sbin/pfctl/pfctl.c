@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.296 2010/04/02 09:48:48 sthen Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.297 2010/06/25 23:27:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -231,7 +231,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-deghmnqrvz] ", __progname);
+	fprintf(stderr, "usage: %s [-deghnqrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
 	fprintf(stderr, "\t[-k host | network | label | id] ");
@@ -1389,12 +1389,9 @@ pfctl_load_options(struct pfctl *pf)
 	int i, error = 0;
 
 	/* load limits */
-	for (i = 0; i < PF_LIMIT_MAX; i++) {
-		if ((pf->opts & PF_OPT_MERGE) && !pf->limit_set[i])
-			continue;
+	for (i = 0; i < PF_LIMIT_MAX; i++)
 		if (pfctl_load_limit(pf, i, pf->limit[i]))
 			error = 1;
-	}
 
 	/*
 	 * If we've set the limit, but haven't explicitly set adaptive
@@ -1412,32 +1409,25 @@ pfctl_load_options(struct pfctl *pf)
 	}
 
 	/* load timeouts */
-	for (i = 0; i < PFTM_MAX; i++) {
-		if ((pf->opts & PF_OPT_MERGE) && !pf->timeout_set[i])
-			continue;
+	for (i = 0; i < PFTM_MAX; i++)
 		if (pfctl_load_timeout(pf, i, pf->timeout[i]))
 			error = 1;
-	}
 
 	/* load debug */
-	if (!(pf->opts & PF_OPT_MERGE) || pf->debug_set)
-		if (pfctl_load_debug(pf, pf->debug))
-			error = 1;
+	if (pf->debug_set && pfctl_load_debug(pf, pf->debug))
+		error = 1;
 
 	/* load logif */
-	if (!(pf->opts & PF_OPT_MERGE) || pf->ifname_set)
-		if (pfctl_load_logif(pf, pf->ifname))
-			error = 1;
+	if (pf->ifname_set && pfctl_load_logif(pf, pf->ifname))
+		error = 1;
 
 	/* load hostid */
-	if (!(pf->opts & PF_OPT_MERGE) || pf->hostid_set)
-		if (pfctl_load_hostid(pf, pf->hostid))
-			error = 1;
+	if (pf->hostid_set && pfctl_load_hostid(pf, pf->hostid))
+		error = 1;
 
 	/* load reassembly settings */
-	if (!(pf->opts & PF_OPT_MERGE) || pf->reass_set)
-		if (pfctl_load_reassembly(pf, pf->reassemble))
-			error = 1;
+	if (pf->reass_set && pfctl_load_reassembly(pf, pf->reassemble))
+		error = 1;
 
 	return (error);
 }
@@ -1884,7 +1874,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:dD:eqf:F:ghi:k:K:L:mno:p:rS:s:t:T:vx:z")) != -1) {
+	    "a:dD:eqf:F:ghi:k:K:L:no:p:rS:s:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1933,9 +1923,6 @@ main(int argc, char *argv[])
 			}
 			src_node_kill[src_node_killers++] = optarg;
 			mode = O_RDWR;
-			break;
-		case 'm':
-			opts |= PF_OPT_MERGE;
 			break;
 		case 'n':
 			opts |= PF_OPT_NOACTION;
@@ -2202,8 +2189,7 @@ main(int argc, char *argv[])
 		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
 			error = 1;
 
-	if (rulesopt != NULL && !(opts & (PF_OPT_MERGE|PF_OPT_NOACTION)) &&
-	    !anchorname[0])
+	if (rulesopt != NULL && !(opts & PF_OPT_NOACTION) && !anchorname[0])
 		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
 			error = 1;
 
