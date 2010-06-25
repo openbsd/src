@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.7 2010/06/25 14:02:07 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.8 2010/06/25 14:14:09 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -260,7 +260,7 @@ sub find_by_spec
 	} else {
 		my $r = OpenBSD::PackageRepository::Installed->new->match_locations($s);
 
-		return sort (map {$_->name} @$r);
+		return sort {$a->name <=> $b->name} @$r;
 	}
 }
 
@@ -308,8 +308,6 @@ sub add_to_path_info
 {
 	my ($path, $pkgname) = @_;
 
-	$path_info->{$path} = [] unless
-	    defined $path_info->{$path};
 	push(@{$path_info->{$path}}, $pkgname);
 }
 
@@ -464,6 +462,7 @@ sub parse_and_run
 	my @sought_files;
 	my $error_e = 0;
 	my $state = OpenBSD::PkgInfo::State->new($cmd);
+	my @extra;
 	$state->{opt} =
 	    {
 	    	'e' =>
@@ -473,14 +472,15 @@ sub parse_and_run
 			    $state->lock;
 			    if ($pat =~ m/\//o) {
 				    @list = find_by_path($pat);
+				    push(@ARGV, @list);
 			    } else {
 				    @list = find_by_spec($pat);
+				    push(@extra, @list);
 			    }
 			    if (@list == 0) {
 				    $exit_code = 1;
 				    $error_e = 1;
 			    }
-			    push(@ARGV, @list);
 			    $state->{terse} = 1;
 		    },
 	     'E' =>
@@ -498,8 +498,10 @@ sub parse_and_run
 
 	$state->lock;
 
+	my $nonames = @ARGV == 0 && @extra == 0;
+
 	unless ($state->hasanyopt('cMUdfILRsSP') || $state->{terse}) {
-		if (@ARGV == 0) {
+		if ($nonames) {
 			$state->setopts('Ia');
 		} else {
 			$state->setopts('cdMR');
@@ -534,16 +536,16 @@ sub parse_and_run
 
 	my $all = $state->opt('a') || $state->opt('A');
 
-	if (@ARGV == 0 && !$all) {
+	if ($nonames && !$all) {
 		$state->usage("Missing package name(s)") unless $state->{terse} || $state->opt('q');
 	}
 
-	if (@ARGV > 0 && $state->hasanyopt('aAtm')) {
+	if (!$nonames && $state->hasanyopt('aAtm')) {
 		$state->usage("Can't specify package name(s) with [-aAtm]");
 	}
 
 
-	if (@ARGV == 0 && !$error_e) {
+	if ($nonames && !$error_e) {
 		@ARGV = sort(installed_packages($state->opt('A') ? 0 : 1));
 		if ($state->opt('t')) {
 			require OpenBSD::RequiredBy;
@@ -570,14 +572,21 @@ sub parse_and_run
 	}
 
 	for my $pkg (@ARGV) {
-		if ($state->{terse} && !$state->opt('q')) {
-			$state->say("#1#2", $state->opt('l'), $pkg);
+		if ($state->{terse}) {
+			$state->banner('#1', $pkg);
 		}
 		$self->find_pkg($state, $pkg,
 		    sub {
 			$self->print_info($state, @_);
 		});
 	}
+	for my $extra (@extra) {
+		if ($state->{terse}) {
+			$state->banner('#1', $extra->url);
+		}
+		$self->print_info($state, $extra->url, $extra);
+	}
+
 	if ($pkgs > 1) {
 		$state->say("Total size: #1", $total_size);
 	}
