@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.98 2010/06/16 00:20:06 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.99 2010/06/25 04:29:39 dlg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -218,8 +218,7 @@ struct st_softc {
 
 	struct bufq *sc_bufq;
 	struct timeout sc_timeout;
-	struct mutex sc_start_mtx;
-	u_int sc_start_count;
+	struct scsi_xshandler sc_xsh;
 };
 
 
@@ -234,7 +233,7 @@ void	st_loadquirks(struct st_softc *);
 int	st_mount_tape(dev_t, int);
 void	st_unmount(struct st_softc *, int, int);
 int	st_decide_mode(struct st_softc *, int);
-void	ststart(void *);
+void	ststart(struct scsi_xfer *);
 void	st_buf_done(struct scsi_xfer *);
 int	st_read(struct st_softc *, char *, int, int);
 int	st_read_block_limits(struct st_softc *, int);
@@ -260,7 +259,7 @@ struct cfdriver st_cd = {
 
 struct scsi_device st_switch = {
 	st_interpret_sense,
-	ststart,
+	NULL,
 	NULL,
 	NULL,
 };
@@ -335,9 +334,9 @@ stattach(struct device *parent, struct device *self, void *aux)
 	st_identify_drive(st, sa->sa_inqbuf);
 	printf("\n");
 
-	mtx_init(&st->sc_start_mtx, IPL_BIO);
-
-	timeout_set(&st->sc_timeout, ststart, st);
+	scsi_xsh_set(&st->sc_xsh, sc_link, ststart);
+	timeout_set(&st->sc_timeout, (void (*)(void *))scsi_xsh_set,
+	    &st->sc_xsh);
 	
 	/* Set up the buf queue for this device. */
 	st->sc_bufq = bufq_init(BUFQ_DEFAULT);
@@ -571,6 +570,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 	}
 	sc_link->flags &= ~SDEV_OPEN;
 	timeout_del(&st->sc_timeout);
+	scsi_xsh_del(&st->sc_xsh);
 
 done:
 	device_unref(&st->sc_dev);
@@ -892,7 +892,7 @@ ststrategy(struct buf *bp)
 	 * not doing anything, otherwise just wait for completion
 	 * (All a bit silly if we're only allowing 1 open but..)
 	 */
-	ststart(st);
+	scsi_xsh_add(&st->sc_xsh);
 
 	device_unref(&st->sc_dev);
 	return;
@@ -908,28 +908,13 @@ done:
 		device_unref(&st->sc_dev);
 }
 
-/*
- * ststart looks to see if there is a buf waiting for the device
- * and that the device is not already busy. If both are true,
- * It dequeues the buf and creates a scsi command to perform the
- * transfer required. The transfer request will call scsi_done
- * on completion, which will in turn call this routine again
- * so that the next queued transfer is performed.
- * The bufs are queued by the strategy routine (ststrategy)
- *
- * This routine is also called after other non-queued requests
- * have been made of the scsi driver, to ensure that the queue
- * continues to be drained.
- * ststart() is called at splbio from ststrategy and scsi_done()
- */
 void
-ststart(void *v)
+ststart(struct scsi_xfer *xs)
 {
-	struct st_softc *st = v;
-	struct scsi_link *sc_link = st->sc_link;
+	struct scsi_link *sc_link = xs->sc_link;
+	struct st_softc *st = sc_link->device_softc;
 	struct buf *bp;
 	struct scsi_rw_tape *cmd;
-	struct scsi_xfer *xs;
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ststart\n"));
@@ -937,38 +922,24 @@ ststart(void *v)
 	if (st->flags & ST_DYING)
 		return;
 
-	mtx_enter(&st->sc_start_mtx);
-	st->sc_start_count++;
-	if (st->sc_start_count > 1) {
-		mtx_leave(&st->sc_start_mtx);
+	/*
+	 * if the device has been unmounted by the user
+	 * then throw away all requests until done
+	 */
+	if (!(st->flags & ST_MOUNTED) ||
+	    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
+		/* make sure that one implies the other.. */
+		sc_link->flags &= ~SDEV_MEDIA_LOADED;
+		bufq_drain(st->sc_bufq);
+		scsi_xs_put(xs);
 		return;
 	}
-	mtx_leave(&st->sc_start_mtx);
-	CLR(st->flags, ST_WAITING);
-restart:
-	while (!ISSET(st->flags, ST_WAITING) &&
-	    (bp = BUFQ_DEQUEUE(st->sc_bufq)) != NULL) {
-		/*
-		 * if the device has been unmounted by the user
-		 * then throw away all requests until done
-		 */
-		if (!(st->flags & ST_MOUNTED) ||
-		    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
-			/* make sure that one implies the other.. */
-			sc_link->flags &= ~SDEV_MEDIA_LOADED;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			bp->b_error = EIO;
-			s = splbio();
-			biodone(bp);
-			splx(s);
-			continue;
-		}
 
-		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
-		if (xs == NULL) {
-			BUFQ_REQUEUE(st->sc_bufq, bp);
-			break;
+	for (;;) {
+		bp = BUFQ_DEQUEUE(st->sc_bufq);
+		if (bp == NULL) {
+			scsi_xs_put(xs);
+			return;
 		}
 
 		/*
@@ -1023,60 +994,62 @@ restart:
 			}
 		}
 
-		/*
-		 *  Fill out the scsi command
-		 */
-		cmd = (struct scsi_rw_tape *)xs->cmd;
-		bzero(cmd, sizeof(*cmd));
-		if ((bp->b_flags & B_READ) == B_WRITE) {
-			cmd->opcode = WRITE;
-			st->flags &= ~ST_FM_WRITTEN;
-			st->flags |= ST_WRITTEN;
-			xs->flags |= SCSI_DATA_OUT;
-		} else {
-			cmd->opcode = READ;
-			xs->flags |= SCSI_DATA_IN;
-		}
-
-		/*
-		 * Handle "fixed-block-mode" tape drives by using the
-		 * block count instead of the length.
-		 */
-		if (st->flags & ST_FIXEDBLOCKS) {
-			cmd->byte2 |= SRW_FIXED;
-			_lto3b(bp->b_bcount / st->blksize, cmd->len);
-		} else
-			_lto3b(bp->b_bcount, cmd->len);
-
-		if (st->media_blkno != -1) {
-			/* Update block count now, errors will set it to -1. */
-			if (st->flags & ST_FIXEDBLOCKS)
-				st->media_blkno += _3btol(cmd->len);
-			else if (cmd->len != 0)
-				st->media_blkno++;
-		}
-
-		xs->cmdlen = sizeof(*cmd);
-		xs->timeout = ST_IO_TIME;
-		xs->data = bp->b_data;
-		xs->datalen = bp->b_bcount;
-		xs->done = st_buf_done;
-		xs->cookie = bp;
-
-		/*
-		 * go ask the adapter to do all this for us
-		 */
-		scsi_xs_exec(xs);
-	} /* go back and see if we can cram more work in.. */
-
-	mtx_enter(&st->sc_start_mtx);
-	st->sc_start_count--;
-	if (st->sc_start_count != 0) {
-		st->sc_start_count = 1;
-		mtx_leave(&st->sc_start_mtx);
-		goto restart;
+		break;
 	}
-	mtx_leave(&st->sc_start_mtx);
+
+
+	/*
+	 *  Fill out the scsi command
+	 */
+	cmd = (struct scsi_rw_tape *)xs->cmd;
+	bzero(cmd, sizeof(*cmd));
+	if ((bp->b_flags & B_READ) == B_WRITE) {
+		cmd->opcode = WRITE;
+		st->flags &= ~ST_FM_WRITTEN;
+		st->flags |= ST_WRITTEN;
+		xs->flags |= SCSI_DATA_OUT;
+	} else {
+		cmd->opcode = READ;
+		xs->flags |= SCSI_DATA_IN;
+	}
+
+	/*
+	 * Handle "fixed-block-mode" tape drives by using the
+	 * block count instead of the length.
+	 */
+	if (st->flags & ST_FIXEDBLOCKS) {
+		cmd->byte2 |= SRW_FIXED;
+		_lto3b(bp->b_bcount / st->blksize, cmd->len);
+	} else
+		_lto3b(bp->b_bcount, cmd->len);
+
+	if (st->media_blkno != -1) {
+		/* Update block count now, errors will set it to -1. */
+		if (st->flags & ST_FIXEDBLOCKS)
+			st->media_blkno += _3btol(cmd->len);
+		else if (cmd->len != 0)
+			st->media_blkno++;
+	}
+
+	xs->cmdlen = sizeof(*cmd);
+	xs->timeout = ST_IO_TIME;
+	xs->data = bp->b_data;
+	xs->datalen = bp->b_bcount;
+	xs->done = st_buf_done;
+	xs->cookie = bp;
+
+	/*
+	 * go ask the adapter to do all this for us
+	 */
+	scsi_xs_exec(xs);
+
+	/*
+	 * should we try do more work now?
+	 */
+	if (ISSET(st->flags, ST_WAITING))
+		CLR(st->flags, ST_WAITING);
+	else if (BUFQ_PEEK(st->sc_bufq))
+		scsi_xsh_add(&st->sc_xsh);
 }
 
 void
@@ -1096,7 +1069,7 @@ st_buf_done(struct scsi_xfer *xs)
 		/* The adapter is busy, requeue the buf and try it later. */
 		BUFQ_REQUEUE(st->sc_bufq, bp);
 		scsi_xs_put(xs);
-		SET(st->flags, ST_WAITING); /* break out of cdstart loop */
+		SET(st->flags, ST_WAITING); /* dont let ststart xsh_add */
 		timeout_add(&st->sc_timeout, 1);
 		return;
 
@@ -1138,7 +1111,6 @@ retry:
 	biodone(bp);
 	splx(s);
 	scsi_xs_put(xs);
-	ststart(st); /* restart io */
 }
 
 void
