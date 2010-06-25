@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.6 2010/06/25 13:03:59 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.7 2010/06/25 14:02:07 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -103,6 +103,54 @@ sub footer
 	}
 }
 
+sub printfile
+{
+	my ($state, $filename) = @_;
+	my $_;
+
+	open my $fh, '<', $filename or return;
+	while(<$fh>) {
+		chomp;
+		$state->say("#1", $_);
+	}
+	close $fh;
+	$state->say('');
+}
+
+sub print_description
+{
+	my ($state, $dir) = @_;
+	my $_;
+
+	open my $fh, '<', $dir.DESC or return;
+	$_ = <$fh> unless -f $dir.COMMENT;
+	while(<$fh>) {
+		chomp;
+		$state->say("#1", $_);
+	}
+	close $fh;
+	$state->say('');
+}
+
+sub hasanyopt
+{
+	my ($self, $string) = @_;
+	for my $i (split //, $string) {
+		if ($self->opt($i)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+sub setopts
+{
+	my ($self, $string) = @_;
+	for my $i (split //, $string) {
+		$self->{opt}{$i} = 1;
+	}
+}
+
 package OpenBSD::PkgInfo;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
@@ -181,31 +229,6 @@ sub find_pkg
 	}
 
 	$self->find_pkg_in($state, $repo, $pkgname, $code);
-}
-
-sub printfile
-{
-	my $filename = shift;
-	my $_;
-
-	open my $fh, '<', $filename or return;
-	while(<$fh>) {
-		print;
-	}
-	close $fh;
-}
-
-sub print_description
-{
-	my $dir = shift;
-	my $_;
-
-	open my $fh, '<', $dir.DESC or return;
-	$_ = <$fh> unless -f $dir.COMMENT;
-	while(<$fh>) {
-		print;
-	}
-	close $fh;
 }
 
 sub get_line
@@ -322,14 +345,6 @@ sub find_by_path
 	}
 }
 
-our ($opt_c, $opt_C, $opt_d, $opt_f, $opt_I, $opt_K,
-    $opt_L, $opt_Q, $opt_q, $opt_R, $opt_s, $opt_v, $opt_h,
-    $opt_l, $opt_a, $opt_m, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
-my $exit_code = 0;
-my $error_e = 0;
-my @sought_files;
-my $state;
-
 sub print_info
 {
 	my ($self, $state, $pkg, $handle) = @_;
@@ -337,48 +352,47 @@ sub print_info
 		$state->errsay("Error printing info for #1: no info ?", $pkg);
 		return;
 	}
-	if ($opt_I) {
-		my $l = 20 - length($pkg);
-		$l = 1 if $l <= 0;
-		print $pkg;
-		print " "x$l, get_comment($handle->info) unless $opt_q;
-		print "\n";
+	if ($state->opt('I')) {
+		if ($state->opt('q')) {
+			$state->say("#1", $pkg);
+		} else {
+			my $l = 20 - length($pkg);
+			$l = 1 if $l <= 0;
+			$state->say("#1#2#3", $pkg, " "x$l,
+			    get_comment($handle->info));
+		}
 	} else {
-		if ($opt_c) {
+		if ($state->opt('c')) {
 			$state->header($handle);
 			$state->banner("Comment:");
-			print get_comment($handle->info), "\n";
-			print "\n";
+			$state->say("#1\n", get_comment($handle->info));
 		}
-		if ($opt_R && -f $handle->info.REQUIRED_BY) {
+		if ($state->opt('R') && -f $handle->info.REQUIRED_BY) {
 			$state->header($handle);
 			$state->banner("Required by:");
-			printfile($handle->info.REQUIRED_BY);
-			print "\n";
+			$state->printfile($handle->info.REQUIRED_BY);
 		}
-		if ($opt_d) {
+		if ($state->opt('d')) {
 			$state->header($handle);
 			$state->banner("Description:");
-			print_description($handle->info);
-			print "\n";
+			$state->print_description($handle->info);
 		}
-		if ($opt_M && -f $handle->info.DISPLAY) {
+		if ($state->opt('M') && -f $handle->info.DISPLAY) {
 			$state->header($handle);
 			$state->banner("Install notice:");
-			printfile($handle->info.DISPLAY);
-			print "\n";
+			$state->printfile($handle->info.DISPLAY);
 		}
-		if ($opt_U && -f $handle->info.UNDISPLAY) {
+		if ($state->opt('U') && -f $handle->info.UNDISPLAY) {
 			$state->header($handle);
 			$state->banner("Deinstall notice:");
-			printfile($handle->info.UNDISPLAY);
-			print "\n";
+			$state->printfile($handle->info.UNDISPLAY);
 		}
 		my $plist;
-		if ($opt_f || $opt_L || $opt_s || $opt_S || $opt_C) {
+		my $needplist = $state->hasanyopt('fsSC');
+		if ($needplist || $state->opt('L')) {
 			require OpenBSD::PackingList;
 
-			if ($opt_f || $opt_s || $opt_S || $opt_C) {
+			if ($needplist) {
 				$plist = $handle->plist;
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
@@ -386,13 +400,13 @@ sub print_info
 			$state->fatal("bad packing-list for #1", $handle->url)
 			    unless defined $plist;
 		}
-		if ($opt_L) {
+		if ($state->opt('L')) {
 			$state->header($handle);
 			$state->banner("Files:");
-			$plist->dump_file($opt_K);
-			print "\n";
+			$plist->dump_file($state->opt('K'));
+			$state->say('');
 		}
-		if ($opt_C) {
+		if ($state->opt('C')) {
 			$state->header($handle);
 			if ($plist->is_signed) {
 
@@ -403,7 +417,7 @@ sub print_info
 				$state->banner("No digital signature");
 			}
 		}
-		if ($opt_s) {
+		if ($state->opt('s')) {
 			$state->header($handle);
 			my $size = 0;
 			$plist->sum_up(\$size);
@@ -412,33 +426,32 @@ sub print_info
 			$total_size += $size;
 			$pkgs++;
 		}
-		if ($opt_S) {
+		if ($state->opt('S')) {
 			$state->header($handle);
 			$state->say(
-			    ($state->opt('q') ? "#1": "Signature: #1"), 
+			    ($state->opt('q') ? "#1": "Signature: #1"),
 			    $plist->signature->string);
 		}
-		if ($opt_P) {
+		if ($state->opt('P')) {
 			require OpenBSD::PackingList;
 
 			my $plist = $handle->plist(
 			    \&OpenBSD::PackingList::ExtraInfoOnly);
 			$state->header($handle);
-			print "Pkgpath:\n" unless $opt_q;
+			$state->banner("Pkgpath:");
 			if (defined $plist->fullpkgpath) {
-				print $plist->fullpkgpath;
+				$state->say("#1", $plist->fullpkgpath);
 			} else {
-				print STDERR $plist->pkgname,
-				    " has no FULLPKGPATH\n";
+				$state->errsay("#1 has no FULLPKGPATH", $plist->pkgname);
+				$state->say("");
 			}
-			print "\n";
 		}
 
-		if ($opt_f) {
+		if ($state->opt('f')) {
 			$state->header($handle);
 			$state->banner("Packing-list:");
 			$plist->write(\*STDOUT);
-			print "\n";
+			$state->say('');
 		}
 		$state->footer($handle);
 	}
@@ -447,7 +460,10 @@ sub print_info
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
-	$state = OpenBSD::PkgInfo::State->new($cmd);
+	my $exit_code = 0;
+	my @sought_files;
+	my $error_e = 0;
+	my $state = OpenBSD::PkgInfo::State->new($cmd);
 	$state->{opt} =
 	    {
 	    	'e' =>
@@ -475,28 +491,27 @@ sub parse_and_run
 
 		    }
 	    };
+	$state->{no_exports} = 1;
 	$state->handle_options('cCdfF:hIKLmPQ:qRsSUe:E:Ml:aAt',
 	    '[-AaCcdfIKLMmPqRSstUv] [-D nolock][-E filename] [-e pkg-name] ',
 	    '[-l str] [-Q query] [pkg-name] [...]');
 
 	$state->lock;
 
-	unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I ||
-		$opt_L || $opt_R || $opt_s ||
-		$opt_S || $opt_P || $state->{terse}) {
+	unless ($state->hasanyopt('cMUdfILRsSP') || $state->{terse}) {
 		if (@ARGV == 0) {
-			$opt_I = $opt_a = 1;
+			$state->setopts('Ia');
 		} else {
-			$opt_c = $opt_d = $opt_M = $opt_R = 1;
+			$state->setopts('cdMR');
 		}
 	}
 
-	if ($opt_Q) {
+	if ($state->opt('Q')) {
 		require OpenBSD::PackageLocator;
 		require OpenBSD::Search;
 
 		print "PKG_PATH=$ENV{PKG_PATH}\n" if $state->verbose;
-		my $partial = OpenBSD::Search::PartialStem->new($opt_Q);
+		my $partial = OpenBSD::Search::PartialStem->new($state->opt('Q'));
 		my $locator = OpenBSD::PackageLocator->new($state);
 
 		my $r = $locator->match_locations($partial);
@@ -510,37 +525,27 @@ sub parse_and_run
 	}
 
 	if ($state->verbose) {
-		$opt_c = $opt_d = $opt_f = $opt_M =
-		    $opt_U = $opt_R = $opt_s = $opt_S = 1;
+		$state->setops('cdfMURsS');
 	}
 
-	if (!defined $opt_l) {
-		$opt_l = "";
-	}
-
-	if ($opt_K && !$opt_L) {
+	if ($state->opt('K') && !$state->opt('L')) {
 		$state->usage("-K only makes sense with -L");
 	}
 
-	if (@ARGV == 0 && !$opt_a && !$opt_A) {
-		$state->usage("Missing package name(s)") unless $state->{terse} || $opt_q;
+	my $all = $state->opt('a') || $state->opt('A');
+
+	if (@ARGV == 0 && !$all) {
+		$state->usage("Missing package name(s)") unless $state->{terse} || $state->opt('q');
 	}
 
-	if (@ARGV > 0 && ($opt_a || $opt_A)) {
-		$state->usage("Can't specify package name(s) with -a");
+	if (@ARGV > 0 && $state->hasanyopt('aAtm')) {
+		$state->usage("Can't specify package name(s) with [-aAtm]");
 	}
 
-	if (@ARGV > 0 && $opt_t) {
-		$state->usage("Can't specify package name(s) with -t");
-	}
-
-	if (@ARGV > 0 && $opt_m) {
-		$state->usage("Can't specify package name(s) with -m");
-	}
 
 	if (@ARGV == 0 && !$error_e) {
-		@ARGV = sort(installed_packages(defined $opt_A ? 0 : 1));
-		if ($opt_t) {
+		@ARGV = sort(installed_packages($state->opt('A') ? 0 : 1));
+		if ($state->opt('t')) {
 			require OpenBSD::RequiredBy;
 			@ARGV = grep { OpenBSD::RequiredBy->new($_)->list == 0 } @ARGV;
 		}
@@ -560,15 +565,15 @@ sub parse_and_run
 		}
 	}
 
-	if ($opt_m) {
+	if ($state->opt('m')) {
 		@ARGV = $self->manual_filter($state, @ARGV);
 	}
 
 	for my $pkg (@ARGV) {
-		if ($state->{terse} && !$opt_q) {
+		if ($state->{terse} && !$state->opt('q')) {
 			$state->say("#1#2", $state->opt('l'), $pkg);
 		}
-		$self->find_pkg($state, $pkg, 
+		$self->find_pkg($state, $pkg,
 		    sub {
 			$self->print_info($state, @_);
 		});
