@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.108 2010/05/24 15:04:55 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.109 2010/06/26 00:50:03 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -134,7 +134,6 @@ void	userret(struct proc *p);
 void
 userret(struct proc *p)
 {
-	struct cpu_info *ci = curcpu();
 	int sig;
 
 	if (p->p_md.md_astpending) {
@@ -145,7 +144,7 @@ userret(struct proc *p)
 			ADDUPROF(p);
 			KERNEL_PROC_UNLOCK(p);
 		}
-		if (ci->ci_want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt(NULL);
 	}
 
@@ -160,7 +159,6 @@ trap(type, frame)
 	int type;
 	struct trapframe *frame;
 {
-	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
 	vaddr_t va;
 	struct vm_map *map;
@@ -173,7 +171,7 @@ trap(type, frame)
 	const char *tts;
 	vm_fault_t fault = VM_FAULT_INVALID;
 #ifdef DIAGNOSTIC
-	int oldcpl = ci->ci_cpl;
+	int oldcpl = curcpu()->ci_cpl;
 #endif
 
 	trapnum = type & ~T_USER;
@@ -615,13 +613,13 @@ if (kdb_trap (type, va, frame))
 	}
 
 #ifdef DIAGNOSTIC
-	if (ci->ci_cpl != oldcpl)
+	if (curcpu()->ci_cpl != oldcpl)
 		printf("WARNING: SPL (%d) NOT LOWERED ON "
-		    "TRAP (%d) EXIT\n", ci->ci_cpl, trapnum);
+		    "TRAP (%d) EXIT\n", curcpu()->ci_cpl, trapnum);
 #endif
 
 	if (trapnum != T_INTERRUPT)
-		splx(ci->ci_cpl);	/* process softints */
+		splx(curcpu()->ci_cpl);	/* process softints */
 
 	/*
 	 * in case we were interrupted from the syscall gate page
@@ -773,13 +771,12 @@ void	syscall(struct trapframe *frame);
 void
 syscall(struct trapframe *frame)
 {
-	struct cpu_info *ci = curcpu();
 	register struct proc *p = curproc;
 	register const struct sysent *callp;
 	int retq, nsys, code, argsize, argoff, oerror, error;
 	register_t args[8], rval[2];
 #ifdef DIAGNOSTIC
-	int oldcpl = ci->ci_cpl;
+	int oldcpl = curcpu()->ci_cpl;
 #endif
 
 	uvmexp.syscalls++;
@@ -940,14 +937,15 @@ syscall(struct trapframe *frame)
 	}
 #endif
 #ifdef DIAGNOSTIC
-	if (ci->ci_cpl != oldcpl) {
+	if (curcpu()->ci_cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
 		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
-		    ci->ci_cpl, code, args[0], args[1], args[2], p->p_pid);
-		ci->ci_cpl = oldcpl;
+		    curcpu()->ci_cpl, code, args[0], args[1], args[2],
+		    p->p_pid);
+		curcpu()->ci_cpl = oldcpl;
 	}
 #endif
-	splx(ci->ci_cpl);	/* process softints */
+	splx(curcpu()->ci_cpl);	/* process softints */
 }
 
 /*
