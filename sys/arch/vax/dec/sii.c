@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.9 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: sii.c,v 1.10 2010/06/26 04:04:24 krw Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -817,7 +817,7 @@ again:
 			if (state->cmdlen > 0) {
 				printf("%s: device %d: cmd 0x%x: command data not all sent (%d) 1\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
-					sc->sc_xs[sc->sc_target]->cmd[0],
+					sc->sc_xs[sc->sc_target]->cmd->opcode,
 					state->cmdlen);
 				state->cmdlen = 0;
 #ifdef DEBUG
@@ -899,7 +899,7 @@ again:
 			if (state->cmdlen > 0) {
 				printf("%s: device %d: cmd 0x%x: command data not all sent (%d) 2\n",
 					sc->sc_dev.dv_xname, sc->sc_target,
-					sc->sc_xs[sc->sc_target]->cmd[0],
+					sc->sc_xs[sc->sc_target]->cmd->opcode,
 					state->cmdlen);
 				state->cmdlen = 0;
 #ifdef DEBUG
@@ -1692,7 +1692,8 @@ sii_CmdDone(sc, target, error)
 	if (sii_debug > 1) {
 		printf("sii_CmdDone: %s target %d cmd 0x%x err %d resid %d\n",
 			sc->sc_dev.dv_xname,
-			target, xs->cmd[0], error, sc->sc_st[target].buflen);
+			target, xs->cmd->opcode, error,
+			sc->sc_st[target].buflen);
 	}
 #endif
 

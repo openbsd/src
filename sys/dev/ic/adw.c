@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.44 2010/05/20 00:55:17 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.45 2010/06/26 04:04:24 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/timeout.h>
 
 #include <machine/bus.h>
@@ -690,10 +689,9 @@ adw_build_req(xs, ccb, flags)
 	 * For wide  boards a CDB length maximum of 16 bytes
 	 * is supported.
 	 */
-	bcopy(xs->cmd, &scsiqp->cdb, ((scsiqp->cdb_len = xs->cmdlen) <= 12)?
-			xs->cmdlen : 12 );
-	if(xs->cmdlen > 12)
-		bcopy(&(xs->cmd[12]),  &scsiqp->cdb16, xs->cmdlen - 12);
+	scsiqp->cdb_len = xs->cmdlen;
+	bcopy((caddr_t)xs->cmd, &scsiqp->cdb, 12);
+	bcopy((caddr_t)xs->cmd + 12, &scsiqp->cdb16, 4);
 
 	scsiqp->target_id = sc_link->target;
 	scsiqp->target_lun = sc_link->lun;
