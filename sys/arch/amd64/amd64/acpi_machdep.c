@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.35 2010/04/20 22:08:17 tedu Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.36 2010/06/26 04:05:32 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -303,6 +303,8 @@ acpi_resume_machdep(void)
 		sf->sf_rip = (u_int64_t)proc_trampoline;
 		pcb->pcb_rsp = (u_int64_t)sf;
 		pcb->pcb_rbp = 0;
+
+		ci->ci_idepth = 0;
 
 		ci->ci_flags &= ~CPUF_PRESENT;
 		cpu_start_secondary(ci);
