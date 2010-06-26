@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.45 2009/06/04 23:39:37 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.46 2010/06/26 16:18:43 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -592,8 +592,15 @@ dired_(char *dname)
 	struct buffer	*bp;
 	FILE	*dirpipe;
 	char	 line[256];
-	int	 len, ret;
+	int	 len, ret, counter, warp;
+	counter = 0;
+	warp = 0;
 
+	if ((fopen(dname,"r")) == NULL) {
+		if (errno == EACCES)
+			ewprintf("Permission denied");
+		return (NULL);
+	}
 	if ((dname = adjustname(dname, FALSE)) == NULL) {
 		ewprintf("Bad directory name");
 		return (NULL);
@@ -624,13 +631,26 @@ dired_(char *dname)
 	while (fgets(&line[2], sizeof(line) - 2, dirpipe) != NULL) {
 		line[strcspn(line, "\n")] = '\0'; /* remove ^J	 */
 		(void) addline(bp, line);
+		if ((strrchr(line,' ')) != NULL) {
+			counter++;
+			if ((strcmp((strrchr(line,' '))," ..")) == 0)  
+				warp = counter;
+		}
 	}
+	if ((strrchr(line,' ')) != NULL) {
+		if (strcmp((strrchr(line,' '))," ..") == 0) 
+			warp = counter - 1;
+	}		
+	if ((strrchr(line,' ')) != NULL)
+		bp->b_doto = strrchr(line,' ') - line + 1;
 	if (pclose(dirpipe) == -1) {
 		ewprintf("Problem closing pipe to ls : %s",
 		    strerror(errno));
 		return (NULL);
 	}
 	bp->b_dotp = bfirstlp(bp);
+	while (warp--)
+		bp->b_dotp  = lforw(bp->b_dotp);
 	(void)strlcpy(bp->b_fname, dname, sizeof(bp->b_fname));
 	(void)strlcpy(bp->b_cwd, dname, sizeof(bp->b_cwd));
 	if ((bp->b_modes[1] = name_mode("dired")) == NULL) {
