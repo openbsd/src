@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.16 2010/04/07 06:33:06 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.17 2010/06/26 15:56:40 mlarkin Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -100,6 +100,7 @@ i386_ipi_nop(struct cpu_info *ci)
 void
 i386_ipi_halt(struct cpu_info *ci)
 {
+	SCHED_ASSERT_UNLOCKED();
 	disable_intr();
 	ci->ci_flags &= ~CPUF_RUNNING;
 	wbinvd();
