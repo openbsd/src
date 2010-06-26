@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.74 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: ss.c,v 1.75 2010/06/26 21:27:55 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -559,8 +559,14 @@ void
 ssstrategy(bp)
 	struct buf *bp;
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss;
 	int s;
+
+	ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	if (ss == NULL) {
+		bp->b_error = ENXIO;
+		goto bad;
+	}
 
 	SC_DEBUG(ss->sc_link, SDEV_DB2, ("ssstrategy: %ld bytes @ blk %d\n",
 	    bp->b_bcount, bp->b_blkno));
@@ -588,16 +594,21 @@ ssstrategy(bp)
 	 */
 	ssstart(ss);
 
+	device_unref(&ss->sc_dev);
 	return;
 
+bad:
+	bp->b_flags |= B_ERROR;
 done:
 	/*
-	 * Correctly set the buf to indicate a completed xfer
+	 * Set the buf to indicate no xfer was done.
 	 */
 	bp->b_resid = bp->b_bcount;
 	s = splbio();
 	biodone(bp);
 	splx(s);
+	if (ss != NULL)
+		device_unref(&ss->sc_dev);
 }
 
 /*
