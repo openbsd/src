@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.604 2010/06/21 02:54:46 krw Exp $
+#	$OpenBSD: install.sub,v 1.605 2010/06/26 20:44:15 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1494,14 +1494,14 @@ install_sets() {
 	[[ -s $SERVERLISTALL ]] && \
 		_d=$(sed -ne '/^method=/s/method=//p' $SERVERLISTALL)
 
-	ifconfig netboot >/dev/null 2>&1 && : ${_d:=ftp}
+	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
 	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs" ; : ${_d:=cd} ; }
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
-	: ${_d:=ftp}
+	: ${_d:=http}
 
 	if ! isin "$_d" $_locs; then
-		for a in ftp http cd nfs tape disk; do
+		for a in http ftp cd nfs tape disk; do
 			isin $a $_locs && _d=$a && break
 		done
 	fi
