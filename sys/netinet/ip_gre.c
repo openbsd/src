@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.37 2010/05/11 09:22:56 claudio Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.38 2010/06/26 19:49:54 claudio Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -187,6 +187,11 @@ gre_input2(m , hlen, proto)
 			af = AF_INET6;
 			break;
 #endif
+		case 0:
+			/* keepalive reply, retrigger hold timer */
+			gre_recv_keepalive(sc);
+			m_freem(m);
+			return (1);
 #ifdef MPLS
 		case ETHERTYPE_MPLS:
 		case ETHERTYPE_MPLS_MCAST:

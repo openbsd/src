@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.116 2010/05/28 12:09:09 claudio Exp $	*/
+/*	$OpenBSD: if.h,v 1.117 2010/06/26 19:49:54 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -619,6 +619,12 @@ struct ifmediareq {
 	int	ifm_count;			/* # entries in ifm_ulist
 							array */
 	int	*ifm_ulist;			/* media words */
+};
+
+struct ifkalivereq {
+	char	ikar_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	int	ikar_timeo;
+	int	ikar_cnt;
 };
 
 /*
