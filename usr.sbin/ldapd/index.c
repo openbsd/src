@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.6 2010/06/23 13:10:14 martinh Exp $ */
+/*	$OpenBSD: index.c,v 1.7 2010/06/26 23:19:42 martinh Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -120,21 +120,16 @@ index_attribute(struct namespace *ns, char *attr, struct btval *dn,
 }
 
 static int
-index_rdn(struct namespace *ns, struct btval *dn)
+index_rdn_key(struct namespace *ns, struct btval *dn, struct btval *key)
 {
-	int		 dnsz, rdnsz, pdnsz, rc;
+	int		 dnsz, rdnsz, pdnsz;
 	char		*t, *parent_dn;
-	struct btval	 key, val;
 
-	bzero(&val, sizeof(val));
-
-	assert(ns);
-	assert(ns->indx_txn);
-	assert(dn);
+	bzero(key, sizeof(*key));
 
 	dnsz = dn->size - strlen(ns->suffix);
 	if (dnsz-- == 0)
-		return 0;
+		return -1;
 
 	parent_dn = memchr(dn->data, ',', dnsz);
 	if (parent_dn == NULL) {
@@ -146,13 +141,34 @@ index_rdn(struct namespace *ns, struct btval *dn)
 		++parent_dn;
 	}
 
-	key.size = asprintf(&t, "@%.*s,%.*s", pdnsz, parent_dn,
-	    rdnsz, (char *)dn->data);
-	key.data = t;
+	asprintf(&t, "@%.*s,%.*s", pdnsz, parent_dn, rdnsz, (char *)dn->data);
+
+	normalize_dn(t);
+	key->data = t;
+	key->size = strlen(t);
+	key->free_data = 1;
+
+	return 0;
+}
+
+static int
+index_rdn(struct namespace *ns, struct btval *dn)
+{
+	struct btval	 key, val;
+	int		 rc;
+
+	bzero(&val, sizeof(val));
+
+	assert(ns);
+	assert(ns->indx_txn);
+	assert(dn);
+
+	if (index_rdn_key(ns, dn, &key) < 0)
+		return 0;
+
 	log_debug("indexing rdn on %.*s", (int)key.size, (char *)key.data);
-	normalize_dn(key.data);
 	rc = btree_txn_put(NULL, ns->indx_txn, &key, &val, BT_NOOVERWRITE);
-	free(t);
+	btval_reset(&key);
 	if (rc == BT_FAIL)
 		return -1;
 	return 0;
@@ -217,30 +233,19 @@ index_entry(struct namespace *ns, struct btval *dn, struct ber_element *elm)
 static int
 unindex_rdn(struct namespace *ns, struct btval *dn)
 {
-	int		 dnsz, rdnsz, rc;
-	char		*t, *parent_dn;
-	struct btval	 key, val;
-
-	bzero(&val, sizeof(val));
+	int		 rc;
+	struct btval	 key;
 
 	assert(ns);
 	assert(ns->indx_txn);
 	assert(dn);
 
-	dnsz = dn->size - strlen(ns->suffix);
+	if (index_rdn_key(ns, dn, &key) < 0)
+		return 0;
 
-	parent_dn = memchr(dn->data, ',', dn->size);
-	if (parent_dn++ == NULL)
-		parent_dn = (char *)dn->data + dn->size;
-	rdnsz = parent_dn - (char *)dn->data;
-
-	key.size = asprintf(&t, "@%.*s,%.*s", (dnsz - rdnsz), parent_dn,
-	    rdnsz, (char *)dn->data);
-	key.data = t;
 	log_debug("unindexing rdn on %.*s", (int)key.size, (char *)key.data);
-	normalize_dn(key.data);
 	rc = btree_txn_del(NULL, ns->indx_txn, &key, NULL);
-	free(t);
+	btval_reset(&key);
 	if (rc == BT_FAIL && errno != ENOENT)
 		return -1;
 	return 0;
