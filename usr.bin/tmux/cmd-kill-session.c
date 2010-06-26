@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-session.c,v 1.6 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: cmd-kill-session.c,v 1.7 2010/06/26 23:55:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,21 +45,11 @@ cmd_kill_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct cmd_target_data	*data = self->data;
 	struct session		*s;
-	struct client		*c;
-	u_int			 i;
 
 	if ((s = cmd_find_session(ctx, data->target)) == NULL)
 		return (-1);
 
-	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-		c = ARRAY_ITEM(&clients, i);
-		if (c != NULL && c->session == s) {
-			c->session = NULL;
-			server_write_client(c, MSG_EXIT, NULL, 0);
-		}
-	}
-	recalculate_sizes();
-
+	server_destroy_session(s);
 	session_destroy(s);
 
 	return (0);
