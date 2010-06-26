@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.41 2009/06/01 14:16:02 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.42 2010/06/26 18:30:03 phessler Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 1 2009 $
+.Dd $Mdocdate: June 26 2010 $
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -102,6 +102,9 @@ Stop after sending
 .Ar count
 .Dv ECHO_RESPONSE
 packets.
+If
+.Ar count
+is 0, send an unlimited number of packets.
 .It Fl d
 Set the
 .Dv SO_DEBUG

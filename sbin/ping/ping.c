@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.86 2009/12/24 10:06:35 sobrado Exp $	*/
+/*	$OpenBSD: ping.c,v 1.87 2010/06/26 18:30:03 phessler Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -204,7 +204,8 @@ main(int argc, char *argv[])
 	    "DEI:LRS:c:defi:jl:np:qrs:T:t:V:vw:")) != -1)
 		switch(ch) {
 		case 'c':
-			npackets = (unsigned long)strtonum(optarg, 1, INT_MAX, &errstr);
+			npackets = (unsigned long)strtonum(optarg, 0,
+			    INT_MAX, &errstr);
 			if (errstr)
 				errx(1,
 				    "number of packets to transmit is %s: %s",

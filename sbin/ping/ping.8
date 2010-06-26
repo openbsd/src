@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.43 2009/12/15 21:15:49 mpf Exp $
+.\"	$OpenBSD: ping.8,v 1.44 2010/06/26 18:30:03 phessler Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 15 2009 $
+.Dd $Mdocdate: June 26 2010 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -75,6 +75,9 @@ Stop sending after
 .Ar count
 .Dv ECHO_REQUEST
 packets have been sent.
+If
+.Ar count
+is 0, send an unlimited number of packets.
 .It Fl D
 Set the
 .Dv Don't Fragment

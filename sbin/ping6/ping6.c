@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.79 2010/05/10 02:00:50 krw Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.80 2010/06/26 18:30:03 phessler Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -257,6 +257,7 @@ main(int argc, char *argv[])
 	int ch, hold, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
 	char *e, *target, *ifname = NULL, *gateway = NULL;
+	const char *errstr;
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
 #if defined(SO_SNDBUF) && defined(SO_RCVBUF)
@@ -338,10 +339,12 @@ main(int argc, char *argv[])
 #endif
 			break;
 		case 'c':
-			npackets = strtol(optarg, &e, 10);
-			if (npackets <= 0 || *optarg == '\0' || *e != '\0')
+			npackets = (unsigned long)strtonum(optarg, 0,
+			    INT_MAX, &errstr);
+			if (errstr)
 				errx(1,
-				    "illegal number of packets -- %s", optarg);
+				    "number of packets to transmit is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'd':
 			options |= F_SO_DEBUG;
