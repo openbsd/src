@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.202 2010/05/28 13:23:43 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.203 2010/06/26 19:51:12 claudio Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 28 2010 $
+.Dd $Mdocdate: June 26 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1400,6 +1400,7 @@ for a complete list of the available protocols,
 .Bk -words
 .Ar tunnel-interface
 .Op Cm deletetunnel Ar src_address dest_address
+.Op Oo Fl Oc Ns Cm keepalive Ar period Ar count
 .Op Cm tunnel Ar src_address dest_address
 .Op Cm tunneldomain Ar route-id
 .Ek
@@ -1408,6 +1409,25 @@ The following options are available for a tunnel interface:
 .Bl -tag -width Ds
 .It Cm deletetunnel Ar src_address dest_address
 Remove the source and destination tunnel addresses.
+.It Cm keepalive Ar period Ar count
+Enable
+.Xr gre 4
+keepalive with a packet sent every
+.Ar period
+seconds.
+A second timer is run with a timeout of
+.Ar count
+*
+.Ar period .
+If no keepalive response is received during that time, the link is considered
+down.
+The minimal usable
+.Ar count
+is 2 since the round-trip time of keepalive packets is not accounted.
+.It Fl keepalive
+Disable the
+.Xr gre 4
+keepalive mechanism.
 .It Cm tunnel Ar src_address dest_address
 Set the source and destination tunnel addresses on a tunnel interface,
 including

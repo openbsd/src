@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.236 2010/06/07 14:50:34 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.237 2010/06/26 19:51:12 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -180,6 +180,8 @@ void	setia6pltime(const char *, int);
 void	setia6vltime(const char *, int);
 void	setia6lifetime(const char *, const char *);
 void	setia6eui64(const char *, int);
+void	setkeepalive(const char *, const char *);
+void	unsetkeepalive(const char *, int);
 #endif /* INET6 */
 void	checkatrange(struct sockaddr_at *);
 void	setmedia(const char *, int);
@@ -401,6 +403,8 @@ const struct	cmd {
 	{ "flowdst", 	NEXTARG,	0,		setpflow_receiver },
 	{ "-flowdst", 1,		0,		unsetpflow_receiver },
 	{ "-inet6",	IFXF_NOINET6,	0,		setifxflags } ,
+	{ "keepalive",	NEXTARG2,	0,		NULL, setkeepalive },
+	{ "-keepalive",	1,		0,		unsetkeepalive },
 	{ "add",	NEXTARG,	0,		bridge_add },
 	{ "del",	NEXTARG,	0,		bridge_delete },
 	{ "addspan",	NEXTARG,	0,		bridge_addspan },
@@ -2705,6 +2709,9 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
 	struct ifreq ifrdesc;
+#ifndef SMALL
+	struct ifkalivereq ikardesc;
+#endif
 	int *media_list, i;
 	char ifdescr[IFDESCRSIZE];
 
@@ -2732,6 +2739,12 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 #ifndef SMALL
 	if (!is_bridge(name) && ioctl(s, SIOCGIFPRIORITY, &ifrdesc) == 0)
 		printf("\tpriority: %d\n", ifrdesc.ifr_metric);
+	(void) memset(&ikardesc, 0, sizeof(ikardesc));
+	(void) strlcpy(ikardesc.ikar_name, name, sizeof(ikardesc.ikar_name));
+	if (ioctl(s, SIOCGETKALIVE, &ikardesc) == 0 &&
+	    (ikardesc.ikar_timeo != 0 || ikardesc.ikar_cnt != 0))
+		printf("\tkeepalive: timeout %d count %d\n",
+		    ikardesc.ikar_timeo, ikardesc.ikar_cnt);
 #endif
 	vlan_status();
 #ifndef SMALL
@@ -4424,6 +4437,38 @@ trunk_status(void)
 		}
 	} else if (isport)
 		printf("\ttrunk: trunkdev %s\n", rp.rp_ifname);
+}
+
+void
+setkeepalive(const char *timeout, const char *count)
+{
+	const char *errmsg = NULL;
+	struct ifkalivereq ikar;
+	int t, c;
+
+	t = strtonum(timeout, 1, 3600, &errmsg);
+	if (errmsg)
+		errx(1, "keepalive period %s: %s", timeout, errmsg);
+	c = strtonum(count, 2, 600, &errmsg);
+	if (errmsg)
+		errx(1, "keepalive count %s: %s", count, errmsg);
+
+	strlcpy(ikar.ikar_name, name, sizeof(ikar.ikar_name));
+	ikar.ikar_timeo = t;
+	ikar.ikar_cnt = c;
+	if (ioctl(s, SIOCSETKALIVE, (caddr_t)&ikar) < 0)
+		warn("SIOCSETKALIVE");
+}
+
+void
+unsetkeepalive(const char *val, int d)
+{
+	struct ifkalivereq ikar;
+
+	bzero(&ikar, sizeof(ikar));
+	strlcpy(ikar.ikar_name, name, sizeof(ikar.ikar_name));
+	if (ioctl(s, SIOCSETKALIVE, (caddr_t)&ikar) < 0)
+		warn("SIOCSETKALIVE");
 }
 #endif /* SMALL */
 
