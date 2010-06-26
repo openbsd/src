@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.18 2010/02/16 08:39:05 dlg Exp $ */
+/*	$OpenBSD: ospf.h,v 1.19 2010/06/26 18:02:07 guenther Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -22,6 +22,7 @@
 #define _OSPF_H_
 
 #include <netinet/in.h>
+#include <stddef.h>
 
 /* misc */
 #define OSPF_VERSION		2
@@ -238,7 +239,7 @@ struct lsa_hdr {
 	u_int16_t		len;
 };
 
-#define LS_CKSUM_OFFSET	((u_int16_t)(&((struct lsa_hdr *)0)->ls_chksum))
+#define LS_CKSUM_OFFSET	offsetof(struct lsa_hdr, ls_chksum)
 
 struct lsa {
 	struct lsa_hdr		hdr;
