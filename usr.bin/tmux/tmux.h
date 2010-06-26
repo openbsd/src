@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.228 2010/06/21 21:44:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.229 2010/06/26 18:20:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1161,7 +1161,10 @@ struct cmd {
 
 	TAILQ_ENTRY(cmd) qentry;
 };
-TAILQ_HEAD(cmd_list, cmd);
+struct cmd_list {
+	int		 references;
+	TAILQ_HEAD(, cmd) list;
+};
 
 struct cmd_entry {
 	const char	*name;

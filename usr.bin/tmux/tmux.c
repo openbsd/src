@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.79 2010/05/14 19:03:09 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.80 2010/06/26 18:20:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -517,7 +517,7 @@ main(int argc, char **argv)
 			exit(1);
 		}
 		cmdflags &= ~CMD_STARTSERVER;
-		TAILQ_FOREACH(cmd, cmdlist, qentry) {
+		TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
 			if (cmd->entry->flags & CMD_STARTSERVER)
 				cmdflags |= CMD_STARTSERVER;
 			if (cmd->entry->flags & CMD_SENDENVIRON)
