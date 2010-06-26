@@ -378,7 +378,6 @@
 ./usr/bin/nroff
 ./usr/bin/od
 ./usr/bin/oldrdist
-./usr/bin/opencvs
 ./usr/bin/otp-md4
 ./usr/bin/otp-md5
 ./usr/bin/otp-rmd160
