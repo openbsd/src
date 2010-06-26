@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrenum.c,v 1.12 2008/04/23 10:17:50 pyr Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.13 2010/06/26 18:26:21 guenther Exp $	*/
 /*	$KAME: rrenum.c,v 1.11 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -171,9 +171,9 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 		irr->irr_u_uselen = rpu->rpu_uselen;
 		irr->irr_u_keeplen = rpu->rpu_keeplen;
 		irr->irr_raf_mask_onlink =
-			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_ONLINK);
+			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_ONLINK) == 0 ? 0 : 1;
 		irr->irr_raf_mask_auto =
-			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_AUTO);
+			(rpu->rpu_ramask & ICMP6_RR_PCOUSE_RAFLAGS_AUTO) == 0 ? 0 : 1;
 		irr->irr_vltime = ntohl(rpu->rpu_vltime);
 		irr->irr_pltime = ntohl(rpu->rpu_pltime);
 		irr->irr_raf_onlink =
