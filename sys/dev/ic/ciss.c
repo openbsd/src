@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.55 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.56 2010/06/26 22:14:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -1011,8 +1011,10 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 			break;
 		}
 		ldp = sc->sc_lds[bv->bv_volid];
-		if (!ldp)
-			return EINVAL;
+		if (!ldp) {
+			error = EINVAL;
+			break;
+		}
 		ldid = sc->scratch;
 		if ((error = ciss_ldid(sc, bv->bv_volid, ldid)))
 			break;
