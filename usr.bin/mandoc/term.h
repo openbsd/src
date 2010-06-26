@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.21 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: term.h,v 1.22 2010/06/26 19:08:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -91,6 +91,7 @@ struct	termp {
 	void		(*end)(struct termp *);
 	void		(*endline)(struct termp *);
 	void		(*advance)(struct termp *, size_t);
+	size_t		(*width)(const struct termp *, char);
 	const void	 *argf;		/* arg for headf/footf */
 	union {
 		struct termp_ps ps;
@@ -107,8 +108,12 @@ void		  term_begin(struct termp *, term_margin,
 			term_margin, const void *);
 void		  term_end(struct termp *);
 
-size_t		  term_hspan(const struct roffsu *);
-size_t		  term_vspan(const struct roffsu *);
+size_t		  term_hspan(const struct termp *, 
+			const struct roffsu *);
+size_t		  term_vspan(const struct termp *,
+			const struct roffsu *);
+size_t		  term_strlen(const struct termp *, const char *);
+size_t		  term_len(const struct termp *, size_t);
 
 enum termfont	  term_fonttop(struct termp *);
 const void	 *term_fontq(struct termp *);

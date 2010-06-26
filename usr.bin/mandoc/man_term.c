@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.41 2010/06/10 22:50:10 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.42 2010/06/26 19:08:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -66,8 +66,8 @@ struct	termact {
 #define	MAN_NOTEXT	 (1 << 0) /* Never has text children. */
 };
 
-static	int		  a2width(const struct man_node *);
-static	int		  a2height(const struct man_node *);
+static	int		  a2width(const struct termp *, const char *);
+static	size_t		  a2height(const struct termp *, const char *);
 
 static	void		  print_man_nodelist(DECL_ARGS);
 static	void		  print_man_node(DECL_ARGS);
@@ -154,7 +154,7 @@ terminal_man(void *arg, const struct man *man)
 
 	p->overstep = 0;
 	p->maxrmargin = p->defrmargin;
-	p->tabwidth = 5;
+	p->tabwidth = term_len(p, 5);
 
 	if (NULL == p->symtab)
 		switch (p->enc) {
@@ -173,8 +173,8 @@ terminal_man(void *arg, const struct man *man)
 	p->flags |= TERMP_NOSPACE;
 
 	mt.fl = 0;
-	mt.lmargin = INDENT;
-	mt.offset = INDENT;
+	mt.lmargin = term_len(p, INDENT);
+	mt.offset = term_len(p, INDENT);
 
 	if (n->child)
 		print_man_nodelist(p, &mt, n->child, m);
@@ -183,31 +183,27 @@ terminal_man(void *arg, const struct man *man)
 }
 
 
-static int
-a2height(const struct man_node *n)
+static size_t
+a2height(const struct termp *p, const char *cp)
 {
 	struct roffsu	 su;
 
-	assert(MAN_TEXT == n->type);
-	assert(n->string);
-	if ( ! a2roffsu(n->string, &su, SCALE_VS))
-		SCALE_VS_INIT(&su, strlen(n->string));
+	if ( ! a2roffsu(cp, &su, SCALE_VS))
+		SCALE_VS_INIT(&su, term_strlen(p, cp));
 
-	return((int)term_vspan(&su));
+	return(term_vspan(p, &su));
 }
 
 
 static int
-a2width(const struct man_node *n)
+a2width(const struct termp *p, const char *cp)
 {
 	struct roffsu	 su;
 
-	assert(MAN_TEXT == n->type);
-	assert(n->string);
-	if ( ! a2roffsu(n->string, &su, SCALE_BU))
+	if ( ! a2roffsu(cp, &su, SCALE_BU))
 		return(-1);
 
-	return((int)term_hspan(&su));
+	return((int)term_hspan(p, &su));
 }
 
 
@@ -355,9 +351,10 @@ pre_B(DECL_ARGS)
 static int
 pre_sp(DECL_ARGS)
 {
-	int		 i, len;
+	size_t		 i, len;
 
-	len = n->child ? a2height(n->child) : 1;
+	len = n->child ? 
+		a2height(p, n->child->string) : term_len(p, 1);
 
 	if (0 == len)
 		term_newln(p);
@@ -404,11 +401,11 @@ pre_HP(DECL_ARGS)
 	/* Calculate offset. */
 
 	if (NULL != (nn = n->parent->head->child))
-		if ((ival = a2width(nn)) >= 0)
+		if ((ival = a2width(p, nn->string)) >= 0)
 			len = (size_t)ival;
 
 	if (0 == len)
-		len = 1;
+		len = term_len(p, 1);
 
 	p->offset = mt->offset;
 	p->rmargin = mt->offset + len;
@@ -449,7 +446,7 @@ pre_PP(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		mt->lmargin = INDENT;
+		mt->lmargin = term_len(p, INDENT);
 		print_bvspace(p, n);
 		break;
 	default:
@@ -493,7 +490,7 @@ pre_IP(DECL_ARGS)
 		if (NULL != (nn = nn->next)) {
 			for ( ; nn->next; nn = nn->next)
 				/* Do nothing. */ ;
-			if ((ival = a2width(nn)) >= 0)
+			if ((ival = a2width(p, nn->string)) >= 0)
 				len = (size_t)ival;
 		}
 
@@ -501,7 +498,7 @@ pre_IP(DECL_ARGS)
 	case (MAN_HEAD):
 		/* Handle zero-width lengths. */
 		if (0 == len)
-			len = 1;
+			len = term_len(p, 1);
 
 		p->offset = mt->offset;
 		p->rmargin = mt->offset + len;
@@ -581,7 +578,7 @@ pre_TP(DECL_ARGS)
 		while (nn && MAN_TEXT != nn->type)
 			nn = nn->next;
 		if (nn && nn->next)
-			if ((ival = a2width(nn)) >= 0)
+			if ((ival = a2width(p, nn->string)) >= 0)
 				len = (size_t)ival;
 	}
 
@@ -589,7 +586,7 @@ pre_TP(DECL_ARGS)
 	case (MAN_HEAD):
 		/* Handle zero-length properly. */
 		if (0 == len)
-			len = 1;
+			len = term_len(p, 1);
 
 		p->offset = mt->offset;
 		p->rmargin = mt->offset + len;
@@ -644,8 +641,8 @@ pre_SS(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		mt->lmargin = INDENT;
-		mt->offset = INDENT;
+		mt->lmargin = term_len(p, INDENT);
+		mt->offset = term_len(p, INDENT);
 		/* If following a prior empty `SS', no vspace. */
 		if (n->prev && MAN_SS == n->prev->tok)
 			if (NULL == n->prev->body->child)
@@ -656,7 +653,7 @@ pre_SS(DECL_ARGS)
 		break;
 	case (MAN_HEAD):
 		term_fontrepl(p, TERMFONT_BOLD);
-		p->offset = HALFINDENT;
+		p->offset = term_len(p, HALFINDENT);
 		break;
 	case (MAN_BODY):
 		p->offset = mt->offset;
@@ -694,8 +691,8 @@ pre_SH(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		mt->lmargin = INDENT;
-		mt->offset = INDENT;
+		mt->lmargin = term_len(p, INDENT);
+		mt->offset = term_len(p, INDENT);
 		/* If following a prior empty `SH', no vspace. */
 		if (n->prev && MAN_SH == n->prev->tok)
 			if (NULL == n->prev->body->child)
@@ -756,15 +753,15 @@ pre_RS(DECL_ARGS)
 	}
 
 	if (NULL == (nn = n->parent->head->child)) {
-		mt->offset = mt->lmargin + INDENT;
+		mt->offset = mt->lmargin + term_len(p, INDENT);
 		p->offset = mt->offset;
 		return(1);
 	}
 
-	if ((ival = a2width(nn)) < 0)
+	if ((ival = a2width(p, nn->string)) < 0)
 		return(1);
 
-	mt->offset = INDENT + (size_t)ival;
+	mt->offset = term_len(p, INDENT) + (size_t)ival;
 	p->offset = mt->offset;
 
 	return(1);
@@ -778,13 +775,13 @@ post_RS(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		mt->offset = mt->lmargin = INDENT;
+		mt->offset = mt->lmargin = term_len(p, INDENT);
 		break;
 	case (MAN_HEAD):
 		break;
 	default:
 		term_newln(p);
-		p->offset = INDENT;
+		p->offset = term_len(p, INDENT);
 		break;
 	}
 }
@@ -873,7 +870,7 @@ print_man_foot(struct termp *p, const void *arg)
 	term_vspace(p);
 
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
-	p->rmargin = p->maxrmargin - strlen(buf);
+	p->rmargin = p->maxrmargin - term_strlen(p, buf);
 	p->offset = 0;
 
 	if (meta->source)
@@ -914,14 +911,15 @@ print_man_head(struct termp *p, const void *arg)
 
 	if (m->vol)
 		strlcpy(buf, m->vol, BUFSIZ);
-	buflen = strlen(buf);
+	buflen = term_strlen(p, buf);
 
 	snprintf(title, BUFSIZ, "%s(%s)", m->title, m->msec);
-	titlen = strlen(title);
+	titlen = term_strlen(p, title);
 
 	p->offset = 0;
 	p->rmargin = 2 * (titlen+1) + buflen < p->maxrmargin ?
-	    (p->maxrmargin - strlen(buf) + 1) / 2 :
+	    (p->maxrmargin - 
+	     term_strlen(p, buf) + term_len(p, 1)) / 2 :
 	    p->maxrmargin - buflen;
 	p->flags |= TERMP_NOBREAK | TERMP_NOSPACE;
 

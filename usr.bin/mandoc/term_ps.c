@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.2 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.3 2010/06/26 19:08:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -60,6 +60,7 @@ static	void		  ps_end(struct termp *);
 static	void		  ps_advance(struct termp *, size_t);
 static	void		  ps_endline(struct termp *);
 static	void		  ps_fclose(struct termp *);
+static	size_t		  ps_width(const struct termp *, char);
 static	void		  ps_pclose(struct termp *);
 static	void		  ps_pletter(struct termp *, char);
 static	void		  ps_printf(struct termp *, const char *, ...);
@@ -75,12 +76,16 @@ ps_alloc(void)
 	if (NULL == (p = term_alloc(TERMENC_ASCII)))
 		return(NULL);
 
+	p->defrmargin = 78;
+	p->tabwidth = 5;
+
 	p->type = TERMTYPE_PS;
 	p->letter = ps_letter;
 	p->begin = ps_begin;
 	p->end = ps_end;
 	p->advance = ps_advance;
 	p->endline = ps_endline;
+	p->width = ps_width;
 	return(p);
 }
 
@@ -425,3 +430,10 @@ ps_setfont(struct termp *p, enum termfont f)
 	p->engine.ps.lastf = f;
 }
 
+
+static size_t
+ps_width(const struct termp *p, char c)
+{
+
+	return(1);
+}
