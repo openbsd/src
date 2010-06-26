@@ -1,6 +1,6 @@
-/*	$Id: mdoc_action.c,v 1.40 2010/06/06 20:30:08 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.41 2010/06/26 17:56:43 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -64,9 +64,7 @@ static	int	  post_st(POST_ARGS);
 static	int	  post_std(POST_ARGS);
 
 static	int	  pre_bd(PRE_ARGS);
-static	int	  pre_bl(PRE_ARGS);
 static	int	  pre_dl(PRE_ARGS);
-static	int	  pre_offset(PRE_ARGS);
 
 static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ap */
@@ -80,7 +78,7 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ pre_dl, post_display }, /* Dl */
 	{ pre_bd, post_display }, /* Bd */ 
 	{ NULL, NULL }, /* Ed */
-	{ pre_bl, post_bl }, /* Bl */ 
+	{ NULL, post_bl }, /* Bl */ 
 	{ NULL, NULL }, /* El */
 	{ NULL, NULL }, /* It */
 	{ NULL, NULL }, /* Ad */ 
@@ -629,32 +627,33 @@ static int
 post_bl_tagwidth(POST_ARGS)
 {
 	struct mdoc_node *nn;
-	size_t		  sz;
+	size_t		  sz, ssz;
 	int		  i;
 	char		  buf[NUMSIZ];
 
-	/* Defaults to ten ens. */
-
-	sz = 10; /* XXX: make this a macro value. */
+	sz = 10;
 
 	for (nn = n->body->child; nn; nn = nn->next) {
-		if (MDOC_It == nn->tok)
-			break;
-	}
+		if (MDOC_It != nn->tok)
+			continue;
 
-	if (nn) {
 		assert(MDOC_BLOCK == nn->type);
 		nn = nn->head->child;
-		if (MDOC_TEXT != nn->type) {
-			sz = mdoc_macro2len(nn->tok);
-			if (sz == 0) {
-				if ( ! mdoc_nmsg(m, n, MANDOCERR_NOWIDTHARG))
-					return(0);
-				sz = 10;
-			}
-		} else
+
+		if (MDOC_TEXT == nn->type) {
 			sz = strlen(nn->string) + 1;
+			break;
+		}
+
+		if (0 != (ssz = mdoc_macro2len(nn->tok)))
+			sz = ssz;
+		else if ( ! mdoc_nmsg(m, n, MANDOCERR_NOWIDTHARG))
+			return(0);
+
+		break;
 	} 
+
+	/* Defaults to ten ens. */
 
 	snprintf(buf, NUMSIZ, "%zun", sz);
 
@@ -663,19 +662,21 @@ post_bl_tagwidth(POST_ARGS)
 	 * We're guaranteed that a MDOC_Width doesn't already exist.
 	 */
 
-	nn = n;
-	assert(nn->args);
-	i = (int)(nn->args->argc)++;
+	assert(n->args);
+	i = (int)(n->args->argc)++;
 
-	nn->args->argv = mandoc_realloc(nn->args->argv, 
-			nn->args->argc * sizeof(struct mdoc_argv));
+	n->args->argv = mandoc_realloc(n->args->argv, 
+			n->args->argc * sizeof(struct mdoc_argv));
 
-	nn->args->argv[i].arg = MDOC_Width;
-	nn->args->argv[i].line = n->line;
-	nn->args->argv[i].pos = n->pos;
-	nn->args->argv[i].sz = 1;
-	nn->args->argv[i].value = mandoc_malloc(sizeof(char *));
-	nn->args->argv[i].value[0] = mandoc_strdup(buf);
+	n->args->argv[i].arg = MDOC_Width;
+	n->args->argv[i].line = n->line;
+	n->args->argv[i].pos = n->pos;
+	n->args->argv[i].sz = 1;
+	n->args->argv[i].value = mandoc_malloc(sizeof(char *));
+	n->args->argv[i].value[0] = mandoc_strdup(buf);
+
+	/* Set our width! */
+	n->data.Bl.width = n->args->argv[i].value[0];
 	return(1);
 }
 
@@ -692,36 +693,35 @@ post_bl_width(POST_ARGS)
 	int		  i;
 	enum mdoct	  tok;
 	char		  buf[NUMSIZ];
-	char		 *p;
-
-	if (NULL == n->args)
-		return(1);
-
-	for (i = 0; i < (int)n->args->argc; i++)
-		if (MDOC_Width == n->args->argv[i].arg)
-			break;
-
-	if (i == (int)n->args->argc)
-		return(1);
-	p = n->args->argv[i].value[0];
 
 	/*
 	 * If the value to -width is a macro, then we re-write it to be
 	 * the macro's width as set in share/tmac/mdoc/doc-common.
 	 */
 
-	if (0 == strcmp(p, "Ds"))
+	if (0 == strcmp(n->data.Bl.width, "Ds"))
 		width = 6;
-	else if (MDOC_MAX == (tok = mdoc_hash_find(p)))
+	else if (MDOC_MAX == (tok = mdoc_hash_find(n->data.Bl.width)))
 		return(1);
 	else if (0 == (width = mdoc_macro2len(tok))) 
 		return(mdoc_nmsg(m, n, MANDOCERR_BADWIDTH));
 
 	/* The value already exists: free and reallocate it. */
 
+	assert(n->args);
+
+	for (i = 0; i < (int)n->args->argc; i++) 
+		if (MDOC_Width == n->args->argv[i].arg)
+			break;
+
+	assert(i < (int)n->args->argc);
+
 	snprintf(buf, NUMSIZ, "%zun", width);
 	free(n->args->argv[i].value[0]);
 	n->args->argv[i].value[0] = mandoc_strdup(buf);
+
+	/* Set our width! */
+	n->data.Bl.width = n->args->argv[i].value[0];
 	return(1);
 }
 
@@ -737,7 +737,9 @@ post_bl_head(POST_ARGS)
 	int			 i, c;
 	struct mdoc_node	*np, *nn, *nnp;
 
-	if (NULL == n->child)
+	if (LIST_column != n->data.Bl.type)
+		return(1);
+	else if (NULL == n->child)
 		return(1);
 
 	np = n->parent;
@@ -747,8 +749,7 @@ post_bl_head(POST_ARGS)
 		if (MDOC_Column == np->args->argv[c].arg)
 			break;
 
-	if (c == (int)np->args->argc)
-		return(1);
+	assert(c < (int)np->args->argc);
 	assert(0 == np->args->argv[c].sz);
 
 	/*
@@ -778,7 +779,8 @@ post_bl_head(POST_ARGS)
 static int
 post_bl(POST_ARGS)
 {
-	int		  i, r, len;
+	struct mdoc_node *nn;
+	const char	 *ww;
 
 	if (MDOC_HEAD == n->type)
 		return(post_bl_head(m, n));
@@ -793,21 +795,27 @@ post_bl(POST_ARGS)
 	 * rewritten into real lengths).
 	 */
 
-	len = (int)(n->args ? n->args->argc : 0);
+	ww = n->data.Bl.width;
 
-	for (r = i = 0; i < len; i++) {
-		if (MDOC_Tag == n->args->argv[i].arg)
-			r |= 1 << 0;
-		if (MDOC_Width == n->args->argv[i].arg)
-			r |= 1 << 1;
-	}
-
-	if (r & (1 << 0) && ! (r & (1 << 1))) {
+	if (LIST_tag == n->data.Bl.type && NULL == n->data.Bl.width) {
 		if ( ! post_bl_tagwidth(m, n))
 			return(0);
-	} else if (r & (1 << 1))
+	} else if (NULL != n->data.Bl.width) {
 		if ( ! post_bl_width(m, n))
 			return(0);
+	} else 
+		return(1);
+
+	assert(n->data.Bl.width);
+
+	/* If it has changed, propogate new width to children. */
+
+	if (ww == n->data.Bl.width)
+		return(1);
+
+	for (nn = n->child; nn; nn = nn->next)
+		if (MDOC_Bl == nn->tok)
+			nn->data.Bl.width = n->data.Bl.width;
 
 	return(1);
 }
@@ -827,7 +835,6 @@ post_pa(POST_ARGS)
 	
 	np = n;
 	m->next = MDOC_NEXT_CHILD;
-	/* XXX: make into macro value. */
 	if ( ! mdoc_word_alloc(m, n->line, n->pos, "~"))
 		return(0);
 	m->last = np;
@@ -933,61 +940,17 @@ pre_dl(PRE_ARGS)
 }
 
 
-/* ARGSUSED */
-static int
-pre_offset(PRE_ARGS)
-{
-	int		 i;
-
-	/* 
-	 * Make sure that an empty offset produces an 8n length space as
-	 * stipulated by mdoc.samples. 
-	 */
-
-	for (i = 0; n->args && i < (int)n->args->argc; i++) {
-		if (MDOC_Offset != n->args->argv[i].arg) 
-			continue;
-		if (n->args->argv[i].sz)
-			break;
-		assert(1 == n->args->refcnt);
-		/* If no value set, length of <string>. */
-		n->args->argv[i].sz++;
-		n->args->argv[i].value = mandoc_malloc(sizeof(char *));
-		n->args->argv[i].value[0] = mandoc_strdup("8n");
-		break;
-	}
-
-	return(1);
-}
-
-
-static int
-pre_bl(PRE_ARGS)
-{
-
-	if (MDOC_BLOCK == n->type)
-		return(pre_offset(m, n));
-	return(1);
-}
-
-
 static int
 pre_bd(PRE_ARGS)
 {
-	int		 i;
 
-	if (MDOC_BLOCK == n->type)
-		return(pre_offset(m, n));
 	if (MDOC_BODY != n->type)
 		return(1);
 
-	/* Enter literal context if `Bd -literal' or `-unfilled'. */
-
-	for (n = n->parent, i = 0; i < (int)n->args->argc; i++)
-		if (MDOC_Literal == n->args->argv[i].arg)
-			m->flags |= MDOC_LITERAL;
-		else if (MDOC_Unfilled == n->args->argv[i].arg)
-			m->flags |= MDOC_LITERAL;
+	if (DISP_literal == n->data.Bd.type)
+		m->flags |= MDOC_LITERAL;
+	if (DISP_unfilled == n->data.Bd.type)
+		m->flags |= MDOC_LITERAL;
 
 	return(1);
 }

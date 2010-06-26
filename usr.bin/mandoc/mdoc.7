@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.35 2010/06/08 00:11:47 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.36 2010/06/26 17:56:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2010 $
+.Dd $Mdocdate: June 26 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1094,10 +1094,7 @@ As a scaling unit following the syntax described in
 As the calculated string length of the opaque string.
 .El
 .Pp
-If unset, it will revert to the value of
-.Ar 8n
-as described in
-.Sx Scaling Widths .
+If not provided an argument, it will be ignored.
 .It Fl compact
 Do not assert a vertical space before the block.
 .It Fl file Ar file
@@ -2169,6 +2166,9 @@ Heirloom troff, the other significant troff implementation accepting
 .Pp
 .Bl -dash -compact
 .It
+Old groff fails to assert a newline before
+.Sx \&Bd Fl ragged compact .
+.It
 groff behaves inconsistently when encountering
 .Pf non- Sx \&Fa
 children of
@@ -2243,16 +2243,15 @@ In quoted literals, groff allowed pair-wise double-quotes to produce a
 standalone double-quote in formatted output.
 This idiosyncratic behaviour is not applicable in mandoc.
 .It
-Display types
+Display offsets
 .Sx \&Bd
-.Fl center
+.Fl offset Ar center
 and
-.Fl right
-are aliases for
-.Fl left
-in mandoc.  Furthermore, the
+.Fl offset Ar right
+are disregarded in mandoc.
+Furthermore, the
 .Fl file Ar file
-argument is ignored.
+argument is not supported in mandoc.
 Lastly, since text is not right-justified in mandoc (or even groff),
 .Fl ragged
 and

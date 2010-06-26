@@ -1,6 +1,6 @@
-/*	$Id: libman.h,v 1.21 2010/05/24 02:27:31 schwarze Exp $ */
+/*	$Id: libman.h,v 1.22 2010/06/26 17:56:43 schwarze Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,7 +79,7 @@ int		  man_args(struct man *, int, int *, char *, char **);
 int		  man_vmsg(struct man *, enum mandocerr,
 			int, int, const char *, ...);
 int		  man_valid_post(struct man *);
-int		  man_valid_pre(struct man *, const struct man_node *);
+int		  man_valid_pre(struct man *, struct man_node *);
 int		  man_action_post(struct man *);
 int		  man_action_pre(struct man *, struct man_node *);
 int		  man_unscope(struct man *, 

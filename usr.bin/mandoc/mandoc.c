@@ -1,6 +1,6 @@
-/*	$Id: mandoc.c,v 1.13 2010/06/06 20:30:08 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.14 2010/06/26 17:56:43 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,20 +23,42 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "libmandoc.h"
 
-static int	 a2time(time_t *, const char *, const char *);
+static	int	 a2time(time_t *, const char *, const char *);
+static	int	 spec_norm(char *, int);
+
+
+/*
+ * "Normalise" a special string by converting its ASCII_HYPH entries
+ * into actual hyphens.
+ */
+static int
+spec_norm(char *p, int sz)
+{
+	int		 i;
+
+	for (i = 0; i < sz; i++)
+		if (ASCII_HYPH == p[i])
+			p[i] = '-';
+
+	return(sz);
+}
 
 
 int
-mandoc_special(const char *p)
+mandoc_special(char *p)
 {
 	int		 terminator;	/* Terminator for \s. */
 	int		 lim;		/* Limit for N in \s. */
 	int		 c, i;
+	char		*sv;
 	
+	sv = p;
+
 	if ('\\' != *p++)
-		return(0);
+		return(spec_norm(sv, 0));
 
 	switch (*p) {
 	case ('\''):
@@ -44,6 +66,8 @@ mandoc_special(const char *p)
 	case ('`'):
 		/* FALLTHROUGH */
 	case ('q'):
+		/* FALLTHROUGH */
+	case (ASCII_HYPH):
 		/* FALLTHROUGH */
 	case ('-'):
 		/* FALLTHROUGH */
@@ -68,12 +92,12 @@ mandoc_special(const char *p)
 	case (':'):
 		/* FALLTHROUGH */
 	case ('c'):
-		return(2);
+		/* FALLTHROUGH */
 	case ('e'):
-		return(2);
+		return(spec_norm(sv, 2));
 	case ('s'):
 		if ('\0' == *++p)
-			return(2);
+			return(spec_norm(sv, 2));
 
 		c = 2;
 		terminator = 0;
@@ -103,21 +127,21 @@ mandoc_special(const char *p)
 
 		if (*p == '\'') {
 			if (terminator)
-				return(0);
+				return(spec_norm(sv, 0));
 			lim = 0;
 			terminator = 1;
 			++p;
 			++c;
 		} else if (*p == '[') {
 			if (terminator)
-				return(0);
+				return(spec_norm(sv, 0));
 			lim = 0;
 			terminator = 2;
 			++p;
 			++c;
 		} else if (*p == '(') {
 			if (terminator)
-				return(0);
+				return(spec_norm(sv, 0));
 			lim = 2;
 			terminator = 3;
 			++p;
@@ -127,7 +151,7 @@ mandoc_special(const char *p)
 		/* TODO: needs to handle floating point. */
 
 		if ( ! isdigit((u_char)*p))
-			return(0);
+			return(spec_norm(sv, 0));
 
 		for (i = 0; isdigit((u_char)*p); i++) {
 			if (lim && i >= lim)
@@ -138,52 +162,52 @@ mandoc_special(const char *p)
 
 		if (terminator && terminator < 3) {
 			if (1 == terminator && *p != '\'')
-				return(0);
+				return(spec_norm(sv, 0));
 			if (2 == terminator && *p != ']')
-				return(0);
+				return(spec_norm(sv, 0));
 			++p;
 			++c;
 		}
 
-		return(c);
+		return(spec_norm(sv, c));
 	case ('f'):
 		/* FALLTHROUGH */
 	case ('F'):
 		/* FALLTHROUGH */
 	case ('*'):
-		if (0 == *++p || ! isgraph((u_char)*p))
-			return(0);
+		if ('\0' == *++p || isspace((u_char)*p))
+			return(spec_norm(sv, 0));
 		switch (*p) {
 		case ('('):
-			if (0 == *++p || ! isgraph((u_char)*p))
-				return(0);
-			return(4);
+			if ('\0' == *++p || isspace((u_char)*p))
+				return(spec_norm(sv, 0));
+			return(spec_norm(sv, 4));
 		case ('['):
 			for (c = 3, p++; *p && ']' != *p; p++, c++)
-				if ( ! isgraph((u_char)*p))
+				if (isspace((u_char)*p))
 					break;
-			return(*p == ']' ? c : 0);
+			return(spec_norm(sv, *p == ']' ? c : 0));
 		default:
 			break;
 		}
-		return(3);
+		return(spec_norm(sv, 3));
 	case ('('):
-		if (0 == *++p || ! isgraph((u_char)*p))
-			return(0);
-		if (0 == *++p || ! isgraph((u_char)*p))
-			return(0);
-		return(4);
+		if ('\0' == *++p || isspace((u_char)*p))
+			return(spec_norm(sv, 0));
+		if ('\0' == *++p || isspace((u_char)*p))
+			return(spec_norm(sv, 0));
+		return(spec_norm(sv, 4));
 	case ('['):
 		break;
 	default:
-		return(0);
+		return(spec_norm(sv, 0));
 	}
 
 	for (c = 3, p++; *p && ']' != *p; p++, c++)
-		if ( ! isgraph((u_char)*p))
+		if (isspace((u_char)*p))
 			break;
 
-	return(*p == ']' ? c : 0);
+	return(spec_norm(sv, *p == ']' ? c : 0));
 }
 
 

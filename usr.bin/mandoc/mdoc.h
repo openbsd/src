@@ -1,6 +1,6 @@
-/*	$Id: mdoc.h,v 1.27 2010/06/06 20:30:08 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.28 2010/06/26 17:56:43 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -263,6 +263,28 @@ enum	mdoc_list {
 	LIST_tag
 };
 
+enum	mdoc_disp {
+	DISP__NONE = 0,
+	DISP_centred,
+	DISP_ragged,
+	DISP_unfilled,
+	DISP_filled,
+	DISP_literal
+};
+
+struct	mdoc_bd {
+	const char	 *offs; /* -offset */
+	enum mdoc_disp	  type; /* -ragged, etc. */
+	int		  comp; /* -compact */
+};
+
+struct	mdoc_bl {
+	const char	 *width; /* -width */
+	const char	 *offs; /* -offset */
+	enum mdoc_list	  type; /* -tag, -enum, etc. */
+	int		  comp; /* -compact */
+};
+
 /* Node in AST. */
 struct	mdoc_node {
 	struct mdoc_node *parent; /* parent AST node */
@@ -288,7 +310,8 @@ struct	mdoc_node {
 	char		 *string;	/* TEXT */
 
 	union {
-		enum mdoc_list list; /* for `Bl' nodes */
+		struct mdoc_bl Bl;
+		struct mdoc_bd Bd;
 	} data;
 };
 

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.60 2010/06/06 20:30:08 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.61 2010/06/26 17:56:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,12 +43,10 @@ struct	valids {
 
 static	int	 check_parent(PRE_ARGS, enum mdoct, enum mdoc_type);
 static	int	 check_stdarg(PRE_ARGS);
-static	int	 check_text(struct mdoc *, int, int, const char *);
+static	int	 check_text(struct mdoc *, int, int, char *);
 static	int	 check_argv(struct mdoc *, 
-			const struct mdoc_node *,
-			const struct mdoc_argv *);
-static	int	 check_args(struct mdoc *, 
-			const struct mdoc_node *);
+			struct mdoc_node *, struct mdoc_argv *);
+static	int	 check_args(struct mdoc *, struct mdoc_node *);
 static	int	 err_child_lt(struct mdoc *, const char *, int);
 static	int	 warn_child_lt(struct mdoc *, const char *, int);
 static	int	 err_child_gt(struct mdoc *, const char *, int);
@@ -273,7 +271,7 @@ mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 {
 	v_pre		*p;
 	int		 line, pos;
-	const char	*tp;
+	char		*tp;
 
 	if (MDOC_TEXT == n->type) {
 		tp = n->string;
@@ -415,7 +413,7 @@ check_stdarg(PRE_ARGS)
 
 
 static int
-check_args(struct mdoc *m, const struct mdoc_node *n)
+check_args(struct mdoc *m, struct mdoc_node *n)
 {
 	int		 i;
 
@@ -432,8 +430,7 @@ check_args(struct mdoc *m, const struct mdoc_node *n)
 
 
 static int
-check_argv(struct mdoc *m, const struct mdoc_node *n, 
-		const struct mdoc_argv *v)
+check_argv(struct mdoc *m, struct mdoc_node *n, struct mdoc_argv *v)
 {
 	int		 i;
 
@@ -453,7 +450,7 @@ check_argv(struct mdoc *m, const struct mdoc_node *n,
 
 
 static int
-check_text(struct mdoc *mdoc, int line, int pos, const char *p)
+check_text(struct mdoc *mdoc, int line, int pos, char *p)
 {
 	int		 c;
 
@@ -531,15 +528,17 @@ pre_display(PRE_ARGS)
 static int
 pre_bl(PRE_ARGS)
 {
-	int		 i, width, offs, cmpt, dupl;
+	int		 i, comp, dup;
+	const char	*offs, *width;
 	enum mdoc_list	 lt;
 
 	if (MDOC_BLOCK != n->type) {
 		assert(n->parent);
 		assert(MDOC_BLOCK == n->parent->type);
 		assert(MDOC_Bl == n->parent->tok);
-		assert(LIST__NONE != n->parent->data.list);
-		n->data.list = n->parent->data.list;
+		assert(LIST__NONE != n->parent->data.Bl.type);
+		memcpy(&n->data.Bl, &n->parent->data.Bl,
+				sizeof(struct mdoc_bl));
 		return(1);
 	}
 
@@ -549,13 +548,13 @@ pre_bl(PRE_ARGS)
 	 * ones.  If we find no list type, we default to LIST_item.
 	 */
 
-	assert(LIST__NONE == n->data.list);
-	offs = width = cmpt = -1;
+	assert(LIST__NONE == n->data.Bl.type);
 
 	/* LINTED */
 	for (i = 0; n->args && i < (int)n->args->argc; i++) {
 		lt = LIST__NONE;
-		dupl = 0;
+		dup = comp = 0;
+		width = offs = NULL;
 		switch (n->args->argv[i].arg) {
 		/* Set list types. */
 		case (MDOC_Bullet):
@@ -593,43 +592,54 @@ pre_bl(PRE_ARGS)
 			break;
 		/* Set list arguments. */
 		case (MDOC_Compact):
-			if (cmpt >= 0) 
-				dupl++;
-			cmpt = i;
+			dup = n->data.Bl.comp;
+			comp = 1;
 			break;
 		case (MDOC_Width):
-			if (width >= 0)
-				dupl++;
-			width = i;
+			dup = (NULL != n->data.Bl.width);
+			width = n->args->argv[i].value[0];
 			break;
 		case (MDOC_Offset):
-			if (offs >= 0)
-				dupl++;
-			offs = i;
+			/* NB: this can be empty! */
+			if (n->args->argv[i].sz) {
+				offs = n->args->argv[i].value[0];
+				dup = (NULL != n->data.Bl.offs);
+				break;
+			}
+			if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV))
+				return(0);
 			break;
 		}
 
 		/* Check: duplicate auxiliary arguments. */
 
-		if (dupl)
-			if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_ARGVREP))
-				return(0);
+		if (dup && ! mdoc_nmsg(mdoc, n, MANDOCERR_ARGVREP))
+			return(0);
+
+		if (comp && ! dup)
+			n->data.Bl.comp = comp;
+		if (offs && ! dup)
+			n->data.Bl.offs = offs;
+		if (width && ! dup)
+			n->data.Bl.width = width;
 
 		/* Check: multiple list types. */
 
-		if (LIST__NONE != lt && n->data.list != LIST__NONE)
+		if (LIST__NONE != lt && n->data.Bl.type != LIST__NONE)
 			if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_LISTREP))
 				return(0);
 
 		/* Assign list type. */
 
-		if (LIST__NONE != lt && n->data.list == LIST__NONE)
-			n->data.list = lt;
+		if (LIST__NONE != lt && n->data.Bl.type == LIST__NONE)
+			n->data.Bl.type = lt;
 
 		/* The list type should come first. */
 
-		if (n->data.list == LIST__NONE)
-			if (width >= 0 || offs >= 0 || cmpt >= 0)
+		if (n->data.Bl.type == LIST__NONE)
+			if (n->data.Bl.width || 
+					n->data.Bl.offs || 
+					n->data.Bl.comp)
 				if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_LISTFIRST))
 					return(0);
 
@@ -638,10 +648,10 @@ pre_bl(PRE_ARGS)
 
 	/* Allow lists to default to LIST_item. */
 
-	if (LIST__NONE == n->data.list) {
+	if (LIST__NONE == n->data.Bl.type) {
 		if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_LISTTYPE))
 			return(0);
-		n->data.list = LIST_item;
+		n->data.Bl.type = LIST_item;
 	}
 
 	/* 
@@ -650,9 +660,9 @@ pre_bl(PRE_ARGS)
 	 * and must also be warned.
 	 */
 
-	switch (n->data.list) {
+	switch (n->data.Bl.type) {
 	case (LIST_tag):
-		if (width >= 0)
+		if (n->data.Bl.width)
 			break;
 		if (mdoc_nmsg(mdoc, n, MANDOCERR_NOWIDTHARG))
 			break;
@@ -666,7 +676,7 @@ pre_bl(PRE_ARGS)
 	case (LIST_inset):
 		/* FALLTHROUGH */
 	case (LIST_item):
-		if (width < 0)
+		if (NULL == n->data.Bl.width)
 			break;
 		if (mdoc_nmsg(mdoc, n, MANDOCERR_WIDTHARG))
 			break;
@@ -682,43 +692,97 @@ pre_bl(PRE_ARGS)
 static int
 pre_bd(PRE_ARGS)
 {
-	int		 i, type, err;
+	int		 i, dup, comp;
+	enum mdoc_disp 	 dt;
+	const char	*offs;
 
-	if (MDOC_BLOCK != n->type)
+	if (MDOC_BLOCK != n->type) {
+		assert(n->parent);
+		assert(MDOC_BLOCK == n->parent->type);
+		assert(MDOC_Bd == n->parent->tok);
+		assert(DISP__NONE != n->parent->data.Bd.type);
+		memcpy(&n->data.Bd, &n->parent->data.Bd, 
+				sizeof(struct mdoc_bd));
 		return(1);
-	if (NULL == n->args) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_DISPTYPE);
-		return(0);
 	}
 
-	/* Make sure that only one type of display is specified.  */
+	assert(DISP__NONE == n->data.Bd.type);
 
 	/* LINTED */
-	for (i = 0, err = type = 0; ! err && 
-			i < (int)n->args->argc; i++)
+	for (i = 0; n->args && i < (int)n->args->argc; i++) {
+		dt = DISP__NONE;
+		dup = comp = 0;
+		offs = NULL;
+
 		switch (n->args->argv[i].arg) {
 		case (MDOC_Centred):
-			/* FALLTHROUGH */
+			dt = DISP_centred;
+			break;
 		case (MDOC_Ragged):
-			/* FALLTHROUGH */
+			dt = DISP_ragged;
+			break;
 		case (MDOC_Unfilled):
-			/* FALLTHROUGH */
+			dt = DISP_unfilled;
+			break;
 		case (MDOC_Filled):
-			/* FALLTHROUGH */
+			dt = DISP_filled;
+			break;
 		case (MDOC_Literal):
-			if (0 == type++) 
+			dt = DISP_literal;
+			break;
+		case (MDOC_File):
+			mdoc_nmsg(mdoc, n, MANDOCERR_BADDISP);
+			return(0);
+		case (MDOC_Offset):
+			/* NB: this can be empty! */
+			if (n->args->argv[i].sz) {
+				offs = n->args->argv[i].value[0];
+				dup = (NULL != n->data.Bd.offs);
 				break;
-			if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_DISPREP))
+			}
+			if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV))
 				return(0);
 			break;
-		default:
+		case (MDOC_Compact):
+			comp = 1;
+			dup = n->data.Bd.comp;
 			break;
+		default:
+			abort();
+			/* NOTREACHED */
 		}
 
-	if (type)
-		return(1);
-	mdoc_nmsg(mdoc, n, MANDOCERR_DISPTYPE);
-	return(0);
+		/* Check whether we have duplicates. */
+
+		if (dup && ! mdoc_nmsg(mdoc, n, MANDOCERR_ARGVREP))
+			return(0);
+
+		/* Make our auxiliary assignments. */
+
+		if (offs && ! dup)
+			n->data.Bd.offs = offs;
+		if (comp && ! dup)
+			n->data.Bd.comp = comp;
+
+		/* Check whether a type has already been assigned. */
+
+		if (DISP__NONE != dt && n->data.Bd.type != DISP__NONE)
+			if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_DISPREP))
+				return(0);
+
+		/* Make our type assignment. */
+
+		if (DISP__NONE != dt && n->data.Bd.type == DISP__NONE)
+			n->data.Bd.type = dt;
+	}
+
+	if (DISP__NONE == n->data.Bd.type) {
+		if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_DISPTYPE))
+			return(0);
+		n->data.Bd.type = DISP_ragged;
+	}
+
+	return(1);
 }
 
 
@@ -976,7 +1040,7 @@ post_it(POST_ARGS)
 		return(1);
 
 	n = mdoc->last->parent->parent;
-	lt = n->data.list;
+	lt = n->data.Bl.type;
 
 	if (LIST__NONE == lt) {
 		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_LISTTYPE);
@@ -1068,7 +1132,7 @@ post_bl_head(POST_ARGS)
 	assert(mdoc->last->parent);
 	n = mdoc->last->parent;
 
-	if (LIST_column == n->data.list) {
+	if (LIST_column == n->data.Bl.type) {
 		for (i = 0; i < (int)n->args->argc; i++)
 			if (MDOC_Column == n->args->argv[i].arg)
 				break;

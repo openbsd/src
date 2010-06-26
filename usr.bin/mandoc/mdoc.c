@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.56 2010/06/06 20:30:08 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.57 2010/06/26 17:56:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -564,7 +564,7 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	 */
 
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-			LIST_column == n->data.list) {
+			LIST_column == n->data.Bl.type) {
 		/* `Bl' is open without any children. */
 		m->flags |= MDOC_FREECOL;
 		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
@@ -573,7 +573,7 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
 			NULL != n->parent &&
 			MDOC_Bl == n->parent->tok &&
-			LIST_column == n->parent->data.list) {
+			LIST_column == n->parent->data.Bl.type) {
 		/* `Bl' has block-level `It' children. */
 		m->flags |= MDOC_FREECOL;
 		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
@@ -779,7 +779,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	 */
 
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-			LIST_column == n->data.list) {
+			LIST_column == n->data.Bl.type) {
 		m->flags |= MDOC_FREECOL;
 		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
 			goto err;
@@ -795,7 +795,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
 			NULL != n->parent &&
 			MDOC_Bl == n->parent->tok &&
-			LIST_column == n->parent->data.list) {
+			LIST_column == n->parent->data.Bl.type) {
 		m->flags |= MDOC_FREECOL;
 		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
 			goto err;

@@ -1,6 +1,6 @@
-/*	$Id: main.c,v 1.36 2010/06/10 22:50:10 schwarze Exp $ */
+/*	$Id: main.c,v 1.37 2010/06/26 17:56:43 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -98,6 +98,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unterminated quoted string",
 	"argument requires the width argument",
 	"superfluous width argument",
+	"ignoring argument",
 	"bad date argument",
 	"bad width argument",
 	"unknown manual section",
@@ -132,12 +133,13 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"macro requires argument(s)",
 	"no title in document",
 	"missing list type",
+	"missing display type",
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
 	"column syntax is inconsistent",
 	"missing font type",
-	"missing display type",
 	"displays may not be nested",
+	"unsupported display type",
 	"no scope to rewind: syntax violated",
 	"scope broken, syntax violated",
 	"line scope broken, syntax violated",

@@ -1,6 +1,6 @@
-/*	$Id: term.h,v 1.20 2010/06/10 22:50:10 schwarze Exp $ */
+/*	$Id: term.h,v 1.21 2010/06/26 17:56:43 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,6 +50,8 @@ struct	termp_ps {
 	size_t		  psmargsz;	/* margin buf size */
 	size_t		  psmargcur;	/* current pos in margin buf */
 	size_t	 	  pspage;	/* current page */
+	char		  last;		/* character buffer */
+	enum termfont	  lastf;	/* last set font */
 };
 
 struct	termp {
