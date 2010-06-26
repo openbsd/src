@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.49 2010/06/26 19:49:54 claudio Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.50 2010/06/26 22:11:51 claudio Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -180,6 +180,8 @@ gre_clone_destroy(struct ifnet *ifp)
 	int s;
 
 	s = splnet();
+	timeout_del(&sc->sc_ka_snd);
+	timeout_del(&sc->sc_ka_hold);
 	LIST_REMOVE(sc, sc_list);
 	splx(s);
 
