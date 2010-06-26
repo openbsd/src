@@ -1,4 +1,4 @@
-/* $OpenBSD: kqueue-tun.c,v 1.3 2004/02/28 02:22:29 deraadt Exp $ */
+/* $OpenBSD: kqueue-tun.c,v 1.4 2010/06/26 22:54:04 blambert Exp $ */
 /* $Gateweaver: tunkq.c,v 1.2 2003/11/27 22:47:41 cmaxwell Exp $ */
 /*
  * Copyright 2003 Christopher J. Maxwell <cmaxwell@themanor.net>
@@ -78,7 +78,7 @@ tunnel_write(int fd, short which, void *arg)
 		fprintf(stderr, "Tunnel %d wrote %ld bytes\n",
 		    fdkey, (long)(rlen - sizeof(type)));
 	else
-		errx(1, "Read from tunnel %d failed", fdkey);
+		errx(1, "Write to tunnel %d failed", fdkey);
 }
 
 void
