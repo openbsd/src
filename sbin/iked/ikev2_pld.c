@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.9 2010/06/26 19:48:04 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.10 2010/06/26 19:54:19 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -434,6 +434,7 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	struct iked_id			*idp, idb;
 	struct iked_sa			*sa = msg->msg_sa;
 	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	struct ibuf			*authmsg;
 	char				 idstr[IKED_ID_SIZE];
 
 	memcpy(&id, msgbuf + offset, sizeof(id));
@@ -460,22 +461,26 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 		return (0);
 	}
 
-	if (!((sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr) ||
-	    (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDi))) {
+	if (sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr) {
+		idp = &sa->sa_rid;
+	} else if (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDi) {
+		idp = &sa->sa_iid;
+	} else {
 		log_debug("%s: unexpected id payload", __func__);
-		return (-1);
-	}
-
-	idp = &msg->msg_id;
-	if (idp->id_type) {
-		log_debug("%s: duplicate id payload", __func__);
-		return (-1);
+		return (0);
 	}
 
 	ibuf_release(idp->id_buf);
 	idp->id_buf = idb.id_buf;
-	idp->id_offset = idb.id_offset;
 	idp->id_type = idb.id_type;
+
+	if ((authmsg = ikev2_msg_auth(env, sa,
+	    !sa->sa_hdr.sh_initiator)) == NULL) {
+		log_debug("%s: failed to get response auth data", __func__);
+		return (-1);
+	}
+
+	ca_setauth(env, sa, authmsg, PROC_CERT);
 
 	return (0);
 }
