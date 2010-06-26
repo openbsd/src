@@ -1,6 +1,7 @@
 # default settings
 CERTPATHLEN		= 1
 CERTUSAGE		= digitalSignature,keyCertSign,cRLSign
+EXTCERTUSAGE		= serverAuth,clientAuth
 CERTIP			= 0.0.0.0
 CERTFQDN		= nohost.nodomain
 
@@ -18,9 +19,11 @@ keyUsage=$ENV::CERTUSAGE
 # The address must be provided in the CERTIP environment variable
 [x509v3_IPAddr]
 subjectAltName=IP:$ENV::CERTIP
+extendedKeyUsage=$ENV::EXTCERTUSAGE
 
 # This section should be referenced to add a FQDN hostname
 # as an alternate subject name, needed by isakmpd
 # The address must be provided in the CERTFQDN environment variable
 [x509v3_FQDN]
 subjectAltName=DNS:$ENV::CERTFQDN
+extendedKeyUsage=$ENV::EXTCERTUSAGE
