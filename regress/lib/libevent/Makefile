@@ -1,30 +1,42 @@
-#       $OpenBSD: Makefile,v 1.6 2008/05/09 18:43:28 brad Exp $
+#       $OpenBSD: Makefile,v 1.7 2010/06/26 23:31:11 nicm Exp $
 
-PROG=	eventtest
-LDADD=	-levent
-DPADD=	${LIBEVENT}
+REGRESS_TARGETS=  run-regress run-test-eof run-test-init run-test-time
+REGRESS_TARGETS+= run-test-weof
 
-CFLAGS+= -I${.CURDIR}/../../../lib/libevent
+CFLAGS+= -I${.CURDIR}/../../../lib/libevent \
+	-DHAVE_FCNTL \
+	-DHAVE_SIGACTION \
+	-DHAVE_SYS_SOCKET_H \
+	-DHAVE_SYS_TIME_H \
+	-DHAVE_UNISTD_H
+LDFLAGS+= -levent
+CLEANFILES= event_regress test-eof test-init test-time test-weof
 
-REGRESS_TARGETS=	eventtest-select eventtest-kqueue eventtest-poll
 .PHONY: ${REGRESS_TARGETS}
 
-eventtest-kqueue: ${PROG}
-	@echo libevent using: kqueue
-	@echo
-	@EVENT_NOPOLL=yes EVENT_NOSELECT=yes ./${PROG}
-	@echo
+run-regress: event_regress
+	EVENT_NOPOLL=1 EVENT_NOSELECT=1 ./event_regress
+	EVENT_NOKQUEUE=1 EVENT_NOSELECT=1 ./event_regress
+	EVENT_NOKQUEUE=1 EVENT_NOPOLL=1 ./event_regress
 
-eventtest-select: ${PROG}
-	@echo libevent using: select
-	@echo
-	@EVENT_NOPOLL=yes EVENT_NOKQUEUE=yes ./${PROG}
-	@echo
+run-test-eof: test-eof
+	EVENT_NOPOLL=1 EVENT_NOSELECT=1 ./test-eof
+	EVENT_NOKQUEUE=1 EVENT_NOSELECT=1 ./test-eof
+	EVENT_NOKQUEUE=1 EVENT_NOPOLL=1 ./test-eof
 
-eventtest-poll: ${PROG}
-	@echo libevent using: poll
-	@echo
-	@EVENT_NOSELECT=yes EVENT_NOKQUEUE=yes ./${PROG}
-	@echo
+run-test-init: test-init
+	EVENT_NOPOLL=1 EVENT_NOSELECT=1 ./test-init
+	EVENT_NOKQUEUE=1 EVENT_NOSELECT=1 ./test-init
+	EVENT_NOKQUEUE=1 EVENT_NOPOLL=1 ./test-init
+
+run-test-time: test-time
+	EVENT_NOPOLL=1 EVENT_NOSELECT=1 ./test-time
+	EVENT_NOKQUEUE=1 EVENT_NOSELECT=1 ./test-time
+	EVENT_NOKQUEUE=1 EVENT_NOPOLL=1 ./test-time
+
+run-test-weof: test-weof
+	EVENT_NOPOLL=1 EVENT_NOSELECT=1 ./test-weof
+	EVENT_NOKQUEUE=1 EVENT_NOSELECT=1 ./test-weof
+	EVENT_NOKQUEUE=1 EVENT_NOPOLL=1 ./test-weof
 
 .include <bsd.regress.mk>
