@@ -917,12 +917,15 @@ XML_ParserCreateNS(const XML_Char *encoding,
 Constructs a new parser that has namespace processing in effect. Namespace
 expanded element names and attribute names are returned as a concatenation
 of the namespace URI, <em>sep</em>, and the local part of the name. This
-means that you should pick a character for <em>sep</em> that can't be
-part of a legal URI. There is a special case when <em>sep</em> is the null
-character <code>'\0'</code>: the namespace URI and the local part will be
-concatenated without any separator - this is intended to support RDF processors.
-It is a programming error to use the null separator with 
-<a href= "#XML_SetReturnNSTriplet">namespace triplets</a>.</div>
+means that you should pick a character for <em>sep</em> that can't be part
+of an URI. Since Expat does not check namespace URIs for conformance, the
+only safe choice for a namespace separator is a character that is illegal
+in XML. For instance, <code>'\xFF'</code> is not legal in UTF-8, and
+<code>'\xFFFF'</code> is not legal in UTF-16. There is a special case when
+<em>sep</em> is the null character <code>'\0'</code>: the namespace URI and
+the local part will be concatenated without any separator - this is intended
+to support RDF processors. It is a programming error to use the null separator
+with <a href= "#XML_SetReturnNSTriplet">namespace triplets</a>.</div>
 
 <pre class="fcndec" id="XML_ParserCreate_MM">
 XML_Parser XMLCALL
@@ -2333,11 +2336,9 @@ have been allocated by <code><a href="#XML_MemMalloc"
 </div>
 
 <hr />
-<!--
 <p><a href="http://validator.w3.org/check/referer"><img
         src="valid-xhtml10.png" alt="Valid XHTML 1.0!"
         height="31" width="88" class="noborder" /></a></p>
--->
 </div>
 </body>
 </html>
