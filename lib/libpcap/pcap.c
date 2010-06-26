@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.11 2007/09/02 15:19:18 deraadt Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.12 2010/06/26 16:47:07 henning Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -246,7 +246,6 @@ DLT_CHOICE(DLT_ENC, "IPSEC enc type (af header, spi, flags)"),
 DLT_CHOICE(DLT_RAW, "raw IP"),
 DLT_CHOICE(DLT_SLIP_BSDOS, "BSD/OS Serial Line IP"),
 DLT_CHOICE(DLT_PPP_BSDOS, "BSD/OS Point-to-point Protocol"),
-DLT_CHOICE(DLT_OLD_PFLOG, "Packet filter logging, old (XXX remove?)"),
 DLT_CHOICE(DLT_PFSYNC, "Packet filter state syncing"),
 DLT_CHOICE(DLT_PPP_ETHER, "PPP over Ethernet; session only w/o ether header"),
 DLT_CHOICE(DLT_IEEE802_11, "IEEE 802.11 wireless"),

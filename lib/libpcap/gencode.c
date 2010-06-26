@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.32 2009/09/18 23:32:13 bluhm Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.33 2010/06/26 16:47:07 henning Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -658,11 +658,6 @@ init_linktype(type)
 		off_nl = 12;
 		return;
 
-	case DLT_OLD_PFLOG:
-		off_linktype = 0;
-		off_nl = 28;
-		return;
-
 	case DLT_PFLOG:
 		off_linktype = 0;
 		/* XXX read from header? */
@@ -799,17 +794,6 @@ gen_linktype(proto)
 		else
 			return gen_false();
 		break;
-	case DLT_OLD_PFLOG:
-		if (proto == ETHERTYPE_IP)
-			return (gen_cmp(0, BPF_W, (bpf_int32)AF_INET));
-#ifdef INET6
-		else if (proto == ETHERTYPE_IPV6)
-			return (gen_cmp(0, BPF_W, (bpf_int32)AF_INET6));
-#endif /* INET6 */
-		else
-			return gen_false();
-		break;
-
 	case DLT_PFLOG:
 		if (proto == ETHERTYPE_IP)
 			return (gen_cmp(offsetof(struct pfloghdr, af), BPF_B,
@@ -2981,11 +2965,6 @@ gen_inbound(dir)
 		    (bpf_int32)((dir == 0) ? PF_IN : PF_OUT));
 		break;
 
-	case DLT_OLD_PFLOG:
-		b0 = gen_cmp(offsetof(struct old_pfloghdr, dir), BPF_H,
-		    (bpf_int32)((dir == 0) ? PF_IN : PF_OUT));
-		break;
-
 	default:
 		bpf_error("inbound/outbound not supported on linktype 0x%x",
 		    linktype);
@@ -3006,9 +2985,6 @@ gen_pf_ifname(char *ifname)
 	if (linktype == DLT_PFLOG) {
 		len = sizeof(((struct pfloghdr *)0)->ifname);
 		off = offsetof(struct pfloghdr, ifname);
-	} else if (linktype == DLT_OLD_PFLOG) {
-		len = sizeof(((struct old_pfloghdr *)0)->ifname);
-		off = offsetof(struct old_pfloghdr, ifname);
 	} else {
 		bpf_error("ifname not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
@@ -3053,9 +3029,6 @@ gen_pf_rnr(int rnr)
 	if (linktype == DLT_PFLOG) {
 		b0 = gen_cmp(offsetof(struct pfloghdr, rulenr), BPF_W,
 			 (bpf_int32)rnr);
-	} else if (linktype == DLT_OLD_PFLOG) {
-		b0 = gen_cmp(offsetof(struct old_pfloghdr, rnr), BPF_H,
-			 (bpf_int32)rnr);
 	} else {
 		bpf_error("rnr not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
@@ -3090,9 +3063,6 @@ gen_pf_reason(int reason)
 	if (linktype == DLT_PFLOG) {
 		b0 = gen_cmp(offsetof(struct pfloghdr, reason), BPF_B,
 		    (bpf_int32)reason);
-	} else if (linktype == DLT_OLD_PFLOG) {
-		b0 = gen_cmp(offsetof(struct old_pfloghdr, reason), BPF_H,
-		    (bpf_int32)reason);
 	} else {
 		bpf_error("reason not supported on linktype 0x%x", linktype);
 		/* NOTREACHED */
@@ -3109,9 +3079,6 @@ gen_pf_action(int action)
 
 	if (linktype == DLT_PFLOG) {
 		b0 = gen_cmp(offsetof(struct pfloghdr, action), BPF_B,
-		    (bpf_int32)action);
-	} else if (linktype == DLT_OLD_PFLOG) {
-		b0 = gen_cmp(offsetof(struct old_pfloghdr, action), BPF_H,
 		    (bpf_int32)action);
 	} else {
 		bpf_error("action not supported on linktype 0x%x", linktype);

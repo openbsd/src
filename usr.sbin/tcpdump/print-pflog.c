@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.20 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.21 2010/06/26 16:47:07 henning Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -168,98 +168,6 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 		if (xflag)
 			default_print((const u_char *)ip6,
 			    caplen - hdrlen);
-#endif
-	}
-
-out:
-	putchar('\n');
-}
-
-
-void
-pflog_old_if_print(u_char *user, const struct pcap_pkthdr *h,
-     register const u_char *p)
-{
-	u_int length = h->len;
-	u_int caplen = h->caplen;
-	const struct ip *ip;
-#ifdef INET6
-	const struct ip6_hdr *ip6;
-#endif
-	const struct old_pfloghdr *hdr;
-	u_short res;
-	char reason[128], *why;
-	u_int8_t af;
-
-	ts_print(&h->ts);
-
-	if (caplen < OLD_PFLOG_HDRLEN) {
-		printf("[|pflog]");
-		goto out;
-	}
-
-	/*
-	 * Some printers want to get back at the link level addresses,
-	 * and/or check that they're not walking off the end of the packet.
-	 * Rather than pass them all the way down, we set these globals.
-	 */
-	packetp = p;
-	snapend = p + caplen;
-
-	hdr = (struct old_pfloghdr *)p;
-	if (eflag) {
-		res = ntohs(hdr->reason);
-		why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
-
-		snprintf(reason, sizeof(reason), "%d(%s)", res, why);
-
-		printf("rule %d/%s: ",
-		    (short)ntohs(hdr->rnr), reason);
-		switch (ntohs(hdr->action)) {
-		case PF_MATCH:
-			printf("match");
-			break;
-		case PF_SCRUB:
-			printf("scrub");
-			break;
-		case PF_PASS:
-			printf("pass");
-			break;
-		case PF_DROP:
-			printf("block");
-			break;
-		case PF_NAT:
-		case PF_NONAT:
-			printf("nat");
-			break;
-		case PF_BINAT:
-		case PF_NOBINAT:
-			printf("binat");
-			break;
-		case PF_RDR:
-		case PF_NORDR:
-			printf("rdr");
-			break;
-		}
-		printf(" %s on %s: ",
-		    ntohs(hdr->dir) == PF_OUT ? "out" : "in",
-		    hdr->ifname);
-	}
-	af = ntohl(hdr->af);
-	length -= OLD_PFLOG_HDRLEN;
-	if (af == AF_INET) {
-		ip = (struct ip *)(p + OLD_PFLOG_HDRLEN);
-		ip_print((const u_char *)ip, length);
-		if (xflag)
-			default_print((const u_char *)ip,
-			    caplen - OLD_PFLOG_HDRLEN);
-	} else {
-#ifdef INET6
-		ip6 = (struct ip6_hdr *)(p + OLD_PFLOG_HDRLEN);
-		ip6_print((const u_char *)ip6, length);
-		if (xflag)
-			default_print((const u_char *)ip6,
-			    caplen - OLD_PFLOG_HDRLEN);
 #endif
 	}
 
