@@ -1,6 +1,6 @@
 define(MACHINE,sgi)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.28 2010/06/09 16:10:25 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.29 2010/06/26 23:49:50 jsing Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -110,3 +110,4 @@ twrget(wscons, wscons, ttyE, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 twrget(wscons, wscons, ttyF, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 target(ramd, pty, 0)dnl
 target(ramd, bio)dnl
+target(ramd, diskmap)dnl
