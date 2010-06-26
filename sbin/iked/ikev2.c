@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.16 2010/06/26 18:32:34 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.17 2010/06/26 19:48:04 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -761,6 +761,21 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa,
     struct iked_message *msg)
 {
 	int		 ret;
+	struct ibuf	*authmsg;
+
+	if (msg->msg_id.id_type) {
+		memcpy(&sa->sa_rid, &msg->msg_id, sizeof(sa->sa_rid));
+		bzero(&msg->msg_id, sizeof(msg->msg_id));
+
+		if ((authmsg = ikev2_msg_auth(env, sa, 0)) == NULL) {
+			log_debug("%s: failed to get response auth data",
+			    __func__);
+			return (-1);
+		}
+
+		ca_setauth(env, sa, authmsg, PROC_CERT);
+		return (0);
+	}
 
 	if (msg != NULL && !TAILQ_EMPTY(&msg->msg_proposals)) {
 		if (ikev2_sa_negotiate(sa,

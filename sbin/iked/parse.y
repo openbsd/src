@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2010/06/26 18:32:34 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2010/06/26 19:48:04 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -586,7 +586,8 @@ host_spec	: STRING			{
 
 host		: host_spec			{ $$ = $1; }
 		| host_spec '(' host_spec ')'   {
-			if ($3->af != $1->af) {
+			if (($1->af != AF_UNSPEC) && ($3->af != AF_UNSPEC) &&
+			    ($3->af != $1->af)) {
 				yyerror("Flow NAT address family mismatch");
 				YYERROR;
 			}
@@ -2163,7 +2164,8 @@ create_ike(char *name, u_int8_t ipproto, struct ipsec_hosts *hosts,
 	}
 
 	if (peers && peers->src && peers->dst &&
-	    peers->src->af != peers->dst->af)
+	    (peers->src->af != AF_UNSPEC) && (peers->dst->af != AF_UNSPEC) &&
+	    (peers->src->af != peers->dst->af))
 		fatalx("create_ike: address family mismatch");
 
 	ipa = ipb = NULL;

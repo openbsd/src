@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.12 2010/06/26 18:32:34 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.13 2010/06/26 19:48:04 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -389,6 +389,8 @@ struct iked_message {
 	struct iked_spi		 msg_rekey;
 	struct ibuf		*msg_nonce;	/* dh NONCE */
 	struct ibuf		*msg_ke;	/* dh key exchange */
+	struct iked_id		 msg_id;
+	struct iked_id		 msg_cert;
 
 	/* Parse stack */
 	struct iked_proposal	*msg_prop;
