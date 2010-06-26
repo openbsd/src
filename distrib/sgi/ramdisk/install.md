@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2010/02/13 14:02:58 miod Exp $
+#	$OpenBSD: install.md,v 1.23 2010/06/26 23:16:41 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -189,13 +189,7 @@ __EOT
 md_congrats() {
 	cat <<__EOT
 
-Your machine is now set up to boot OpenBSD. Normally the ARCS PROM will
-set up the system to boot from the first disk found with a valid Volume
-Header. If the 'OSLoader' environment variable already is set to 'boot'
-nothing in the firmware setup should need to be changed. To set up booting
-refer to the install document.
-
-To reboot the system, just enter 'reboot' at the shell prompt.
+INSTALL.$ARCH describes how to configure the ARCS PROM to boot OpenBSD.
 __EOT
 }
 
