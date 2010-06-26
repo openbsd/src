@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.36 2010/06/03 15:48:58 jsing Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.37 2010/06/26 23:33:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -201,9 +201,7 @@ cpu_boot_secondary_processors(void)
 
 		ci->ci_randseed = random();
 
-#ifdef notyet
 		sched_init_cpu(ci);
-#endif
 
 		/* Release the specified CPU by triggering an EIR{0}. */
 		cpu_hatch_info = ci;
@@ -245,6 +243,7 @@ cpu_hatch(void)
 	struct cpu_info *ci = curcpu();
 	extern u_long cpu_hzticks;
 	u_long itmr;
+	int s;
 
 	/* Initialise IPIs. */
 	hppa_ipi_init(ci);
@@ -260,20 +259,14 @@ cpu_hatch(void)
 	/* Enable interrupts. */
 	mtctl(ci->ci_mask, CR_EIEM);
 
-#ifdef notyet
 	ncpus++;
-#endif
 	ci->ci_flags |= CPUF_RUNNING;
 
 	/* Wait for additional CPUs to spinup. */
 	while (!start_secondary_cpu)
 		;
 
-	for (;;) ;
-
-#ifdef notyet
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
-#endif
 }
 #endif
