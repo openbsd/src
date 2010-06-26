@@ -1198,6 +1198,7 @@
 ./usr/share/man/cat3p/OpenBSD::PkgSpec.0
 ./usr/share/man/cat3p/OpenBSD::RequiredBy.0
 ./usr/share/man/cat3p/OpenBSD::Search.0
+./usr/share/man/cat3p/OpenBSD::State.0
 ./usr/share/man/cat3p/OpenBSD::Ustar.0
 ./usr/share/man/cat3p/OpenBSD::Vstat.0
 ./usr/share/man/cat3p/POSIX.0
