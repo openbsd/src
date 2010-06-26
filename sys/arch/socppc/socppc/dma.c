@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.6 2010/03/29 19:21:58 oga Exp $	*/
+/*	$OpenBSD: dma.c,v 1.7 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/extent.h>
 #include <sys/buf.h>
 #include <sys/device.h>

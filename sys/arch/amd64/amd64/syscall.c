@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.14 2010/05/06 21:33:51 nicm Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.15 2010/06/26 23:24:43 guenther Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.2 2008/05/02 21:45:14 miod Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.3 2010/06/26 23:24:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -21,7 +21,6 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 
 #include <machine/fpu.h>

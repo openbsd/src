@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.75 2010/06/26 21:27:55 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.76 2010/06/26 23:24:45 guenther Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/scanio.h>

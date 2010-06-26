@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.25 2010/03/25 13:18:03 otto Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.26 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.9 2008/07/28 17:50:11 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.10 2010/06/26 23:24:43 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -49,7 +49,6 @@
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/errno.h>

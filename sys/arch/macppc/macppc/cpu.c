@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.65 2010/03/31 19:46:27 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.66 2010/06/26 23:24:43 guenther Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -36,8 +36,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
+#include <sys/sysctl.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 

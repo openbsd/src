@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.7 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.8 2010/06/26 23:24:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -23,7 +23,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/tty.h>
-#include <sys/user.h>
 #include <sys/timeout.h>
 
 #include <dev/cons.h>

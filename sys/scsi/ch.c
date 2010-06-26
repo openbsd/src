@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.38 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: ch.c,v 1.39 2010/06/26 23:24:45 guenther Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/chio.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

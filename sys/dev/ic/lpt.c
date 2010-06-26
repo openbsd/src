@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.5 2002/03/14 01:26:54 millert Exp $ */
+/*	$OpenBSD: lpt.c,v 1.6 2010/06/26 23:24:44 guenther Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>

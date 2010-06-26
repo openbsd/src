@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.56 2010/05/13 20:37:00 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.57 2010/06/26 23:24:43 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -149,7 +149,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 
 #include <machine/pte.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.15 2009/09/18 21:08:19 martynas Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.16 2010/06/26 23:24:43 guenther Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -40,12 +40,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
 #include <machine/gdt.h>
+#include <machine/pcb.h>
 
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.13 2010/01/08 01:35:52 syuu Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.14 2010/06/26 23:24:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,7 +40,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.13 2010/01/08 01:35:52 syuu Exp $
+ *	$Id: process_machdep.c,v 1.14 2010/06/26 23:24:43 guenther Exp $
  */
 
 /*
@@ -70,7 +70,6 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 #include <machine/frame.h>

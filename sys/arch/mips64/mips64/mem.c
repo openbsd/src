@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.15 2010/01/22 21:45:25 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.16 2010/06/26 23:24:43 guenther Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>

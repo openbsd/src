@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.27 2010/03/21 23:00:57 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.28 2010/06/26 23:24:43 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>

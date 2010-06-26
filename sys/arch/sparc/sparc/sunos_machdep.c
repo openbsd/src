@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.2 1997/08/08 08:27:41 downsj Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.3 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: sunos_machdep.c,v 1.4 1996/10/05 23:44:33 mrg Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
-#include <sys/user.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.85 2010/03/30 17:40:55 oga Exp $	*/
+/*	$OpenBSD: apm.c,v 1.86 2010/06/26 23:24:43 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -43,7 +43,7 @@
 #include <sys/kthread.h>
 #include <sys/rwlock.h>
 #include <sys/proc.h>
-#include <sys/user.h>
+#include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>

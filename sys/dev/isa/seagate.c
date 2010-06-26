@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.34 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.35 2010/06/26 23:24:44 guenther Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -73,7 +73,6 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
 

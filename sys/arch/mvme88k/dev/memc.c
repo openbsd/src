@@ -1,4 +1,4 @@
-/*	$OpenBSD: memc.c,v 1.13 2006/11/16 23:21:56 miod Exp $ */
+/*	$OpenBSD: memc.c,v 1.14 2010/06/26 23:24:43 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -34,7 +34,6 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/systm.h>

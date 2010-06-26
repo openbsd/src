@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.11 2010/04/12 12:57:52 tedu Exp $ */
+/* $OpenBSD: siotty.c,v 1.12 2010/06/26 23:24:43 guenther Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -36,7 +36,6 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/fcntl.h>

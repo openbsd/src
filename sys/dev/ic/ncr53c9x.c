@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.46 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.47 2010/06/26 23:24:44 guenther Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -75,7 +75,6 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
 

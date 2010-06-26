@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.45 2010/05/02 11:15:29 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.46 2010/06/26 23:24:45 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@
 #include <sys/malloc.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
-#include <sys/user.h>
 #include <sys/sched.h>
 
 #include <sys/mount.h>

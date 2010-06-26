@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.27 2009/03/01 22:08:13 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.28 2010/06/26 23:24:43 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -30,7 +30,6 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/systm.h>

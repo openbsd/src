@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.17 2009/03/01 22:07:12 miod Exp $ */
+/*	$OpenBSD: pcc.c,v 1.18 2010/06/26 23:24:43 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -32,7 +32,6 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/systm.h>

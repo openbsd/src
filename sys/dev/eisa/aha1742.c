@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.39 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.40 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

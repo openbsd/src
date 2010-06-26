@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.138 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: com.c,v 1.139 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 #include <sys/selinfo.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

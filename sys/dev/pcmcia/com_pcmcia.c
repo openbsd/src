@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.49 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.50 2010/06/26 23:24:45 guenther Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -94,7 +94,6 @@
 #include <sys/selinfo.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

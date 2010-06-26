@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.1 2010/04/20 22:53:20 miod Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.2 2010/06/26 23:24:43 guenther Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -33,7 +33,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/extent.h>
 #include <sys/buf.h>
 #include <sys/device.h>

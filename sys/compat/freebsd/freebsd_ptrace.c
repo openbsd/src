@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_ptrace.c,v 1.6 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: freebsd_ptrace.c,v 1.7 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: freebsd_ptrace.c,v 1.2 1996/05/03 17:03:12 christos Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #include <sys/errno.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 

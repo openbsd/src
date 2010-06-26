@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.56 2010/05/23 13:49:35 naddy Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.57 2010/06/26 23:24:45 guenther Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -119,7 +119,6 @@
 #include <sys/lock.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 
 #include "raid.h"

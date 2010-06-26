@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2010/05/08 16:54:07 oga Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.34 2010/06/26 23:24:43 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -69,7 +69,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

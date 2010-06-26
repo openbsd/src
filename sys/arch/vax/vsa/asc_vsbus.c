@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.10 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.11 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/queue.h>
 

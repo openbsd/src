@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfl.c,v 1.6 2006/01/20 23:27:26 miod Exp $	*/
+/*	$OpenBSD: cfl.c,v 1.7 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: cfl.c,v 1.2 1998/04/13 12:10:26 ragge Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -42,7 +42,6 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 
 #include <machine/cpu.h>

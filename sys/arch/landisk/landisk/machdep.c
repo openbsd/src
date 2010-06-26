@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2010/06/10 17:54:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2010/06/26 23:24:43 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -71,7 +71,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
@@ -93,6 +92,7 @@
 
 #include <machine/cpu.h>
 #include <machine/kcore.h>
+#include <machine/pcb.h>
 
 #include <landisk/landisk/landiskreg.h>
 

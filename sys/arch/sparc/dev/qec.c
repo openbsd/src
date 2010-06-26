@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.17 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: qec.c,v 1.18 2010/06/26 23:24:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -35,7 +35,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 

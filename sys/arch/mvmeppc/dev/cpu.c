@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 2004/11/18 16:10:28 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.9 2010/06/26 23:24:44 guenther Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -36,7 +36,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>

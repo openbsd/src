@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.17 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.18 2010/06/26 23:24:45 guenther Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
+#include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 

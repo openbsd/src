@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.32 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.33 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -94,7 +94,6 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>

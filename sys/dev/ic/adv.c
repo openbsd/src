@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.30 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.31 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

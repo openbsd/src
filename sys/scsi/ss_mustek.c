@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.23 2010/06/11 12:02:44 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.24 2010/06/26 23:24:45 guenther Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>		/* for cdevsw */
 #include <sys/scanio.h>

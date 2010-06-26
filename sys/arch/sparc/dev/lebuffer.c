@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.7 2008/12/26 15:13:07 miod Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.8 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <sparc/autoconf.h>
 #include <sparc/cpu.h>

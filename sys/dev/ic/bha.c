@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.23 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.24 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -63,7 +63,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

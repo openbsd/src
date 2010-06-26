@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc_obio.c,v 1.15 2006/12/13 21:12:56 miod Exp $	*/
+/*	$OpenBSD: sbc_obio.c,v 1.16 2010/06/26 23:24:43 guenther Exp $	*/
 /*	$NetBSD: sbc_obio.c,v 1.1 1997/03/01 20:18:59 scottr Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>

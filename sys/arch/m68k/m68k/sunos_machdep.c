@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.19 2007/11/02 19:18:54 martin Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.20 2010/06/26 23:24:43 guenther Exp $	*/
 /*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -52,6 +51,8 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.4 2009/03/05 19:52:23 kettenis Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.5 2010/06/26 23:24:44 guenther Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.8 1997/03/16 10:14:44 thorpej Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
