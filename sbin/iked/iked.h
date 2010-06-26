@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.11 2010/06/14 23:14:09 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.12 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -169,6 +169,7 @@ TAILQ_HEAD(iked_childsas, iked_childsa);
 struct iked_static_id {
 	u_int8_t	id_type;
 	u_int8_t	id_length;
+	u_int8_t	id_offset;
 	u_int8_t	id_data[IKED_ID_SIZE];
 };
 
@@ -271,6 +272,7 @@ struct iked_dsa {
 
 struct iked_id {
 	u_int8_t	 id_type;
+	u_int8_t	 id_offset;
 	struct ibuf	*id_buf;
 };
 
@@ -720,7 +722,7 @@ u_int32_t
 const char *
 	 print_host(struct sockaddr_storage *, char *, size_t);
 char	*get_string(u_int8_t *, size_t);
-int	 print_id(struct iked_id *, off_t, char *, size_t);
+int	 print_id(struct iked_id *, char *, size_t);
 const char *
 	 print_proto(u_int8_t);
 int	 expand_string(char *, size_t, const char *, const char *);

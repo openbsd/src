@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.5 2010/06/14 21:12:56 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.6 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -1060,15 +1060,15 @@ pfkey_id2ident(struct iked_id *id, u_int exttype)
 	case IKEV2_ID_FQDN:
 		type = SADB_IDENTTYPE_FQDN;
 		break;
-	case IKEV2_ID_RFC822_ADDR:
+	case IKEV2_ID_UFQDN:
 		type = SADB_IDENTTYPE_USERFQDN;
 		break;
-	case IKEV2_ID_IPV4_ADDR:
-	case IKEV2_ID_IPV6_ADDR:
+	case IKEV2_ID_IPV4:
+	case IKEV2_ID_IPV6:
 		type = SADB_IDENTTYPE_PREFIX;
 		break;
-	case IKEV2_ID_DER_ASN1_DN:
-	case IKEV2_ID_DER_ASN1_GN:
+	case IKEV2_ID_ASN1_DN:
+	case IKEV2_ID_ASN1_GN:
 	case IKEV2_ID_KEY_ID:
 	case IKEV2_ID_NONE:
 	default:
@@ -1078,7 +1078,7 @@ pfkey_id2ident(struct iked_id *id, u_int exttype)
 
 	bzero(&idstr, sizeof(idstr));
 
-	if (print_id(id, sizeof(struct ikev2_id), idstr, sizeof(idstr)) == -1)
+	if (print_id(id, idstr, sizeof(idstr)) == -1)
 		return (NULL);
 
 	len = ROUNDUP(strlen(idstr) + 1) + sizeof(*sa_id);

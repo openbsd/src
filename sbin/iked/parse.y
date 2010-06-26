@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2010/06/23 11:26:13 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -1429,13 +1429,13 @@ get_id_type(char *string)
 		return (IKEV2_ID_NONE);
 
 	if (*string == '/')
-		return (IKEV2_ID_DER_ASN1_DN);
+		return (IKEV2_ID_ASN1_DN);
 	else if (inet_pton(AF_INET, string, &ia) == 1)
-		return (IKEV2_ID_IPV4_ADDR);
+		return (IKEV2_ID_IPV4);
 	else if (inet_pton(AF_INET6, string, &ia) == 1)
-		return (IKEV2_ID_IPV6_ADDR);
+		return (IKEV2_ID_IPV6);
 	else if (strchr(string, '@'))
-		return (IKEV2_ID_RFC822_ADDR);
+		return (IKEV2_ID_UFQDN);
 	else
 		return (IKEV2_ID_FQDN);
 }

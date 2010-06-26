@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2010/06/14 11:33:55 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -629,7 +629,7 @@ get_string(u_int8_t *ptr, size_t len)
 }
 
 int
-print_id(struct iked_id *id, off_t offset, char *idstr, size_t idstrlen)
+print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 {
 	u_int8_t			 buf[BUFSIZ], *ptr;
 	struct sockaddr_in		*s4;
@@ -637,8 +637,10 @@ print_id(struct iked_id *id, off_t offset, char *idstr, size_t idstrlen)
 	char				*str;
 	ssize_t				 len;
 	int				 i;
+	const char			*type;
 
 	bzero(buf, sizeof(buf));
+	bzero(idstr, idstrlen);
 
 	if (id->id_buf == NULL)
 		return (-1);
@@ -646,14 +648,23 @@ print_id(struct iked_id *id, off_t offset, char *idstr, size_t idstrlen)
 	len = ibuf_size(id->id_buf);
 	ptr = ibuf_data(id->id_buf);
 
-	if (len <= offset)
+	if (len <= id->id_offset)
 		return (-1);
 
-	len -= offset;
-	ptr += offset;
+	len -= id->id_offset;
+	ptr += id->id_offset;
+
+	type = print_map(id->id_type, ikev2_id_map);
+
+	if (strlcpy(idstr, type, idstrlen) >= idstrlen ||
+	    strlcat(idstr, "/", idstrlen) >= idstrlen)
+		return (-1);
+
+	idstr += strlen(idstr);
+	idstrlen -= strlen(idstr);
 
 	switch (id->id_type) {
-	case IKEV2_ID_IPV4_ADDR:
+	case IKEV2_ID_IPV4:
 		s4 = (struct sockaddr_in *)buf;
 		s4->sin_family = AF_INET;
 		s4->sin_len = sizeof(*s4);
@@ -664,7 +675,7 @@ print_id(struct iked_id *id, off_t offset, char *idstr, size_t idstrlen)
 			return (-1);
 		break;
 	case IKEV2_ID_FQDN:
-	case IKEV2_ID_RFC822_ADDR:
+	case IKEV2_ID_UFQDN:
 		if (len >= (ssize_t)sizeof(buf))
 			return (-1);
 
@@ -677,7 +688,7 @@ print_id(struct iked_id *id, off_t offset, char *idstr, size_t idstrlen)
 		}
 		free(str);
 		break;
-	case IKEV2_ID_IPV6_ADDR:
+	case IKEV2_ID_IPV6:
 		s6 = (struct sockaddr_in6 *)buf;
 		s6->sin6_family = AF_INET6;
 		s6->sin6_len = sizeof(*s6);
@@ -687,7 +698,7 @@ print_id(struct iked_id *id, off_t offset, char *idstr, size_t idstrlen)
 		    idstr, idstrlen) == NULL)
 			return (-1);
 		break;
-	case IKEV2_ID_DER_ASN1_DN:
+	case IKEV2_ID_ASN1_DN:
 		if ((str = ca_asn1_name(ptr, len)) == NULL)
 			return (-1);
 		if (strlcpy(idstr, str, idstrlen) >= idstrlen) {

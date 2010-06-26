@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.15 2010/06/23 10:49:37 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.16 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ ikev2_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
 			sa_stateflags(sa, IKED_REQ_VALID);
 			sa_state(env, sa, IKEV2_STATE_VALID);
 		} else {
-			log_debug("%s: peer certificate is invalid", __func__);
+			log_warnx("%s: peer certificate is invalid", __func__);
 		}
 
 		if (ikev2_ike_auth(env, sa) != 0)
@@ -238,6 +238,7 @@ ikev2_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
 			id = &sa->sa_rcert;
 
 		id->id_type = type;
+		id->id_offset = 0;
 		ibuf_release(id->id_buf);
 		id->id_buf = NULL;
 
@@ -269,6 +270,7 @@ ikev2_dispatch_cert(int fd, struct iked_proc *p, struct imsg *imsg)
 
 		id = &sa->sa_localauth;
 		id->id_type = type;
+		id->id_offset = 0;
 		ibuf_release(id->id_buf);
 
 		if (type != IKEV2_AUTH_NONE) {
@@ -813,19 +815,20 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 	/* Create an IKEv2 ID payload */
 	bzero(&hdr, sizeof(hdr));
 	hdr.id_type = id->id_type = polid->id_type;
+	id->id_offset = sizeof(hdr);
 
 	if ((id->id_buf = ibuf_new(&hdr, sizeof(hdr))) == NULL)
 		return (-1);
 
 	switch (id->id_type) {
-	case IKEV2_ID_IPV4_ADDR:
+	case IKEV2_ID_IPV4:
 		if (inet_pton(AF_INET, polid->id_data, &in4) != 1 ||
 		    ibuf_add(id->id_buf, &in4, sizeof(in4)) != 0) {
 			ibuf_release(id->id_buf);
 			return (-1);
 		}
 		break;
-	case IKEV2_ID_IPV6_ADDR:
+	case IKEV2_ID_IPV6:
 		if (inet_pton(AF_INET6, polid->id_data, &in6) != 1 ||
 		    ibuf_add(id->id_buf, &in6, sizeof(in6)) != 0) {
 			ibuf_release(id->id_buf);
@@ -841,12 +844,11 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 		break;
 	}
 
-	if (print_id(id, sizeof(hdr), idstr, sizeof(idstr)) == -1)
+	if (print_id(id, idstr, sizeof(idstr)) == -1)
 		return (-1);
 
-	log_debug("%s: %s %s/%s length %d", __func__,
+	log_debug("%s: %s %s length %d", __func__,
 	    srcid ? "srcid" : "dstid",
-	    print_map(id->id_type, ikev2_id_map),
 	    idstr, ibuf_size(id->id_buf));
 
 	return (0);
@@ -1424,6 +1426,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			sa_state(env, sa, IKEV2_STATE_DELETE);
 			return;
 		}
+
 
 		if (!TAILQ_EMPTY(&msg->msg_proposals)) {
 			if (ikev2_sa_negotiate(sa,
@@ -2756,14 +2759,14 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 		goto fail;
 	}
 
-	if (print_id(id, sizeof(struct ikev2_id),
-	    idstr, sizeof(idstr)) == -1) {
+	if (print_id(id, idstr, sizeof(idstr)) == -1) {
 		log_debug("%s: invalid id", __func__);
 		goto fail;
 	}
 
 	/* ASN.1 DER IDs are too long, use the CN part instead */
-	if (*idstr == '/' && (idrepl = strstr(idstr, "CN=")) != NULL) {
+	if ((id->id_type == IKEV2_ID_ASN1_DN) &&
+	    (idrepl = strstr(idstr, "CN=")) != NULL) {
 		domain = strstr(idrepl, "emailAddress=");
 		idrepl[strcspn(idrepl, "/")] = '\0';
 	} else
@@ -2787,7 +2790,7 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 	if (strstr(format, "$domain") != NULL) {
 		if (id->id_type == IKEV2_ID_FQDN)
 			domain = strchr(idrepl, '.');
-		else if (id->id_type == IKEV2_ID_RFC822_ADDR)
+		else if (id->id_type == IKEV2_ID_UFQDN)
 			domain = strchr(idrepl, '@');
 		else if (*idstr == '/' && domain != NULL)
 			domain = strchr(domain, '@');

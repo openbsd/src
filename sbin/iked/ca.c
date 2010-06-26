@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.5 2010/06/24 20:15:30 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.6 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -206,6 +206,7 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 
 		/* Convert to a static Id */
 		idb.id_type = id->id_type;
+		idb.id_offset = id->id_offset;
 		idb.id_length = ibuf_length(id->id_buf);
 		memcpy(&idb.id_data, ibuf_data(id->id_buf),
 		    ibuf_length(id->id_buf));
@@ -709,6 +710,7 @@ ca_key_serialize(EVP_PKEY *key, struct iked_id *id)
 	switch (key->type) {
 	case EVP_PKEY_RSA:
 		id->id_type = 0;
+		id->id_offset = 0;
 		ibuf_release(id->id_buf);
 
 		if ((rsa = EVP_PKEY_get1_RSA(key)) == NULL)

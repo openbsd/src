@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.7 2010/06/14 23:14:09 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.8 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -445,16 +445,16 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	len = betoh16(pld->pld_length) - sizeof(*pld);
 
 	idb.id_type = id.id_type;
+	idb.id_offset = sizeof(id);
 	if ((idb.id_buf = ibuf_new(ptr, len)) == NULL)
 		return (-1);
 
-	if (print_id(&idb, sizeof(id), idstr, sizeof(idstr)) == -1) {
+	if (print_id(&idb, idstr, sizeof(idstr)) == -1) {
 		log_debug("%s: malformed id", __func__);
 		return (-1);
 	}
 
-	log_debug("%s: id %s/%s length %d",
-	    __func__, print_map(id.id_type, ikev2_id_map), idstr, len);
+	log_debug("%s: id %s length %d", __func__, idstr, len);
 
 	if (!ikev2_msg_frompeer(msg)) {
 		ibuf_release(idb.id_buf);

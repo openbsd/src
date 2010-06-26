@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.4 2010/06/23 11:26:13 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.5 2010/06/26 18:32:34 reyk Exp $	*/
 /*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
 
 /*
@@ -371,12 +371,12 @@ struct ikev2_id {
 } __packed;
 
 #define IKEV2_ID_NONE		0	/* No ID */
-#define IKEV2_ID_IPV4_ADDR	1	/* RFC4306 */
+#define IKEV2_ID_IPV4		1	/* RFC4306 (ID_IPV4_ADDR) */
 #define IKEV2_ID_FQDN		2	/* RFC4306 */
-#define IKEV2_ID_RFC822_ADDR	3	/* RFC4306 */
-#define IKEV2_ID_IPV6_ADDR	5	/* RFC4306 */
-#define IKEV2_ID_DER_ASN1_DN	9	/* RFC4306 */
-#define IKEV2_ID_DER_ASN1_GN	10	/* RFC4306 */
+#define IKEV2_ID_UFQDN		3	/* RFC4306 (ID_RFC822_ADDR) */
+#define IKEV2_ID_IPV6		5	/* RFC4306 (ID_IPV6_ADDR) */
+#define IKEV2_ID_ASN1_DN	9	/* RFC4306 */
+#define IKEV2_ID_ASN1_GN	10	/* RFC4306 */
 #define IKEV2_ID_KEY_ID		11	/* RFC4306 */
 #define IKEV2_ID_FC_NAME	12	/* RFC4595 */
 
