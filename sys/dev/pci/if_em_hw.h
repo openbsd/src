@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.39 2010/06/21 21:11:53 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.40 2010/06/26 18:32:38 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -3473,5 +3473,11 @@ union ich8_hws_flash_regacc {
 #define E1000_IMC2     0x008F8  /* Interrupt Mask Clear 2 - RW */ 
 #define E1000_82542_IMC1     E1000_IMC1
 #define E1000_82542_IMC2     E1000_IMC2
+
+/* OEM Bits Phy Register */
+#define HV_OEM_BITS		PHY_REG(768, 25)
+#define HV_OEM_BITS_LPLU	0x0004 /* Low Power Link Up */
+#define HV_OEM_BITS_GBE_DIS	0x0040 /* Gigabit Disable */
+#define HV_OEM_BITS_RESTART_AN	0x0400 /* Restart Auto-negotiation */
 
 #endif /* _EM_HW_H_ */

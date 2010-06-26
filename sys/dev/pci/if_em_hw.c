@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.49 2010/06/21 21:11:52 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.50 2010/06/26 18:32:38 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -125,6 +125,7 @@ static int32_t	em_write_eeprom_ich8(struct em_hw *, uint16_t, uint16_t,
 static void	em_release_software_flag(struct em_hw *);
 static int32_t	em_set_d3_lplu_state(struct em_hw *, boolean_t);
 static int32_t	em_set_d0_lplu_state(struct em_hw *, boolean_t);
+static int32_t	em_set_lplu_state_pchlan(struct em_hw *, boolean_t);
 static int32_t	em_set_pci_ex_no_snoop(struct em_hw *, uint32_t);
 static void	em_set_pci_express_master_disable(struct em_hw *);
 static int32_t	em_wait_autoneg(struct em_hw *);
@@ -1693,7 +1694,10 @@ em_copper_link_igp_setup(struct em_hw *hw)
 		}
 	}
 	/* disable lplu d0 during driver init */
-	ret_val = em_set_d0_lplu_state(hw, FALSE);
+	if (hw->mac_type == em_pchlan)
+		ret_val = em_set_lplu_state_pchlan(hw, FALSE);
+	else
+		ret_val = em_set_d0_lplu_state(hw, FALSE);
 	if (ret_val) {
 		DEBUGOUT("Error Disabling LPLU D0\n");
 		return ret_val;
@@ -7472,6 +7476,41 @@ em_set_d0_lplu_state(struct em_hw *hw, boolean_t active)
 
 	}
 	return E1000_SUCCESS;
+}
+
+/**
+ *  em_set_lplu_state_pchlan - Set Low Power Link Up state
+ *  @hw: pointer to the HW structure
+ *  @active: TRUE to enable LPLU, FALSE to disable
+ *
+ *  Sets the LPLU state according to the active flag.  For PCH, if OEM write
+ *  bit are disabled in the NVM, writing the LPLU bits in the MAC will not set
+ *  the phy speed. This function will manually set the LPLU bit and restart
+ *  auto-neg as hw would do. D3 and D0 LPLU will call the same function
+ *  since it configures the same bit.
+ **/
+STATIC int32_t
+em_set_lplu_state_pchlan(struct em_hw *hw, boolean_t active)
+{
+	int32_t ret_val = E1000_SUCCESS;
+	uint16_t oem_reg;
+
+	DEBUGFUNC("e1000_set_lplu_state_pchlan");
+
+	ret_val = em_read_phy_reg(hw, HV_OEM_BITS, &oem_reg);
+	if (ret_val)
+		goto out;
+
+	if (active)
+		oem_reg |= HV_OEM_BITS_LPLU;
+	else
+		oem_reg &= ~HV_OEM_BITS_LPLU;
+
+	oem_reg |= HV_OEM_BITS_RESTART_AN;
+	ret_val = em_write_phy_reg(hw, HV_OEM_BITS, oem_reg);
+
+out:
+	return ret_val;
 }
 
 /******************************************************************************
