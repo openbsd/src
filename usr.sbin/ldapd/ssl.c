@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.2 2010/05/31 18:29:04 martinh Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.3 2010/06/27 18:19:36 martinh Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -49,12 +49,6 @@ void	 ssl_session_accept(int, short, void *);
 void	 ssl_read(int, short, void *);
 void	 ssl_write(int, short, void *);
 int	 ssl_bufferevent_add(struct event *, int);
-void	 ssl_connect(int, short, void *);
-
-SSL	*ssl_client_init(int, char *, size_t, char *, size_t);
-
-int	 ssl_buf_read(SSL *, struct ibuf_read *);
-int	 ssl_buf_write(SSL *, struct msgbuf *);
 
 DH	*get_dh512(void);
 void	 ssl_set_ephemeral_key_exchange(SSL_CTX *);
@@ -86,64 +80,6 @@ unsigned char dh512_p[] = {
 unsigned char dh512_g[] = {
         0x02,
 };
-
-#if 0
-void
-ssl_connect(int fd, short event, void *p)
-{
-	struct conn	*s = p;
-	int		 ret;
-	int		 retry_flag;
-	int		 ssl_err;
-
-	if (event == EV_TIMEOUT) {
-		log_debug("ssl_connect: session timed out");
-		conn_close(s);
-		return;
-	}
-
-	ret = SSL_connect(s->s_ssl);
-	if (ret <= 0) {
-		ssl_err = SSL_get_error(s->s_ssl, ret);
-
-		switch (ssl_err) {
-		case SSL_ERROR_WANT_READ:
-			retry_flag = EV_READ;
-			goto retry;
-		case SSL_ERROR_WANT_WRITE:
-			retry_flag = EV_WRITE;
-			goto retry;
-		case SSL_ERROR_ZERO_RETURN:
-		case SSL_ERROR_SYSCALL:
-			if (ret == 0) {
-				log_debug("session destroy in MTA #1");
-				conn_close(s);
-				return;
-			}
-			/* FALLTHROUGH */
-		default:
-			ssl_error("ssl_session_connect");
-			conn_close(s);
-			return;
-		}
-	}
-
-	event_set(&s->bev->ev_read, s->fd, EV_READ, ssl_read, s->bev);
-	event_set(&s->bev->ev_write, s->fd, EV_WRITE, ssl_write, s->bev);
-
-	log_info("ssl_connect: connected to remote ssl server");
-	bufferevent_enable(s->bev, EV_READ|EV_WRITE);
-	s->s_flags |= F_SECURE;
-
-	if (s->s_flags & F_PEERHASTLS) {
-		session_respond(s, "EHLO %s", s->s_env->sc_hostname);
-	}
-
-	return;
-retry:
-	event_add(&s->s_ev, &s->s_tv);
-}
-#endif
 
 void
 ssl_read(int fd, short event, void *p)
@@ -485,7 +421,6 @@ err:
 		SSL_CTX_free(l->ssl_ctx);
 	ssl_error("ssl_setup");
 	fatal("ssl_setup: cannot set SSL up");
-	return;
 }
 
 void
@@ -508,7 +443,6 @@ ssl_session_accept(int fd, short event, void *p)
 {
 	struct conn	*s = p;
 	int		 ret;
-	int		 retry_flag;
 	int		 ssl_err;
 
 	if (event == EV_TIMEOUT) {
@@ -517,7 +451,7 @@ ssl_session_accept(int fd, short event, void *p)
 		return;
 	}
 
-	retry_flag = ssl_err = 0;
+	ssl_err = 0;
 
 	log_debug("ssl_session_accept: accepting client");
 	ret = SSL_accept(s->s_ssl);
@@ -526,10 +460,8 @@ ssl_session_accept(int fd, short event, void *p)
 
 		switch (ssl_err) {
 		case SSL_ERROR_WANT_READ:
-			retry_flag = EV_READ;
 			goto retry;
 		case SSL_ERROR_WANT_WRITE:
-			retry_flag = EV_WRITE;
 			goto retry;
 		case SSL_ERROR_ZERO_RETURN:
 		case SSL_ERROR_SYSCALL:
@@ -601,85 +533,10 @@ ssl_session_init(struct conn *s)
 	ssl_error("ssl_session_init");
 }
 
-SSL *
-ssl_client_init(int fd, char *cert, size_t certsz, char *key, size_t keysz)
-{
-	SSL_CTX		*ctx;
-	SSL		*ssl = NULL;
-	int		 rv = -1;
-
-	ctx = ssl_ctx_create();
-
-	if (cert && key) {
-		if (!ssl_ctx_use_certificate_chain(ctx, cert, certsz))
-			goto done;
-		else if (!ssl_ctx_use_private_key(ctx, key, keysz))
-			goto done;
-		else if (!SSL_CTX_check_private_key(ctx))
-			goto done;
-	}
-
-	if ((ssl = SSL_new(ctx)) == NULL)
-		goto done;
-
-	if (!SSL_set_ssl_method(ssl, SSLv23_client_method()))
-		goto done;
-	if (!SSL_set_fd(ssl, fd))
-		goto done;
-	SSL_set_connect_state(ssl);
-
-	rv = 0;
-done:
-	if (rv) {
-		if (ssl)
-			SSL_free(ssl);
-		else if (ctx)
-			SSL_CTX_free(ctx);
-		ssl = NULL;
-	}
-	return (ssl);
-}
-
 void
 ssl_session_destroy(struct conn *s)
 {
 	SSL_free(s->s_ssl);
-}
-
-int
-ssl_buf_read(SSL *s, struct ibuf_read *r)
-{
-	char	*buf = r->buf + r->wpos;
-	ssize_t	 bufsz = sizeof(r->buf) - r->wpos;
-	int	 ret;
-
-	if (bufsz == 0) {
-		errno = EMSGSIZE;
-		return (SSL_ERROR_SYSCALL);
-	}
-
-	if ((ret = SSL_read(s, buf, bufsz)) > 0)
-		r->wpos += ret;
-
-	return SSL_get_error(s, ret);
-}
-
-int
-ssl_buf_write(SSL *s, struct msgbuf *msgbuf)
-{
-	struct ibuf	*buf;
-	int		 ret;
-
-	buf = TAILQ_FIRST(&msgbuf->bufs);
-	if (buf == NULL)
-		return (SSL_ERROR_NONE);
-
-	ret = SSL_write(s, buf->buf + buf->rpos, buf->wpos - buf->rpos);
-
-	if (ret > 0)
-		msgbuf_drain(msgbuf, ret);
-
-	return SSL_get_error(s, ret);
 }
 
 DH *

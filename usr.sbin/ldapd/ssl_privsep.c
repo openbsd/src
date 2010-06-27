@@ -1,4 +1,4 @@
-/*      $OpenBSD: ssl_privsep.c,v 1.2 2010/05/31 18:29:04 martinh Exp $    */
+/*      $OpenBSD: ssl_privsep.c,v 1.3 2010/06/27 18:19:36 martinh Exp $    */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -78,7 +78,6 @@
 
 int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
-int      ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 int      ssl_by_mem_ctrl(X509_LOOKUP *, int, const char *, long, char **);
 
 X509_LOOKUP_METHOD x509_mem_lookup = {
@@ -124,26 +123,6 @@ end:
 	if (in != NULL)
 		BIO_free(in);
 	return ret;
-}
-
-int
-ssl_ctx_load_verify_memory(SSL_CTX *ctx, char *buf, off_t len)
-{
-	X509_LOOKUP             *lu;
-	struct iovec             iov;
-
-	if ((lu = X509_STORE_add_lookup(ctx->cert_store,
-		    &x509_mem_lookup)) == NULL)
-		return (0);
-
-	iov.iov_base = buf;
-	iov.iov_len = len;
-
-	if (!ssl_by_mem_ctrl(lu, X509_L_ADD_MEM,
-		(const char *)&iov, X509_FILETYPE_PEM, NULL))
-		return (0);
-
-	return (1);
 }
 
 int

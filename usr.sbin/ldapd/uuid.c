@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid.c,v 1.3 2010/06/15 15:14:57 martinh Exp $ */
+/*	$OpenBSD: uuid.c,v 1.4 2010/06/27 18:19:36 martinh Exp $ */
 /*
  * Copyright (c) 2002, Stockholms Universitet
  * (Stockholm University, Stockholm Sweden)
@@ -63,7 +63,6 @@
 
 #include "uuid.h"
 
-static afsUUID niluuid;
 static uint32_t seq_num;
 static struct timeval last_time;
 static int32_t counter;
@@ -139,18 +138,6 @@ get_node_addr(char *addr)
 }
 
 /*
- *    Compares two UUIDs
- */
-
-int
-uuid_compare(const afsUUID *uuid1, const afsUUID *uuid2)
-{
-    if (memcmp(uuid1, uuid2, sizeof(*uuid1)) == 0)
-	return 0;
-    return 1;
-}
-
-/*
  *    Creates a new UUID.
  */
 
@@ -222,77 +209,10 @@ uuid_create(afsUUID *uuid)
 }
 
 /*
- *    Creates a nil UUID.
- *       A nil UUID has all all fields set to zero
- */
-
-int
-uuid_create_nil(afsUUID *uuid)
-{
-    memcpy(uuid, &niluuid, sizeof(niluuid));
-    return 0;
-}
-
-/*
- *    Determines if two UUIDs are equal.
- *       return non zero if true.
- */
-
-int
-uuid_equal(const afsUUID *uuid1, const afsUUID *uuid2)
-{
-    return uuid_compare(uuid1, uuid2) == 0;
-}
-
-/*
- *    Converts a string UUID to binary representation.
- */
-
-int
-uuid_from_string(const char *str, afsUUID *uuid)
-{
-    unsigned int time_low, time_mid, time_hi_and_version;
-    unsigned int clock_seq_hi_and_reserved, clock_seq_low;
-    unsigned int node[6];
-    int i;
-
-    i = sscanf(str, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-	       &time_low,
-	       &time_mid,
-	       &time_hi_and_version,
-	       &clock_seq_hi_and_reserved,
-	       &clock_seq_low,
-	       &node[0], &node[1], &node[2], &node[3], &node[4], &node[5]);
-    if (i != 11)
-	return -1;
-
-    uuid->time_low = time_low;
-    uuid->time_mid = time_mid;
-    uuid->time_hi_and_version = time_hi_and_version;
-    uuid->clock_seq_hi_and_reserved = clock_seq_hi_and_reserved;
-    uuid->clock_seq_low = clock_seq_low;
-
-    for (i = 0; i < 6; i++)
-	uuid->node[i] = node[i];
-
-    return 0;
-}
-
-/*
- *    Determines if a UUID is nil.
- */
-
-int
-uuid_is_nil(const afsUUID *uuid)
-{
-    return uuid_compare(uuid, &niluuid);
-}
-
-/*
  *    Converts a UUID from binary representation to a string representation.
  */
 
-int
+void
 uuid_to_string(const afsUUID *uuid, char *str, size_t strsz)
 {
     snprintf(str, strsz,
@@ -308,8 +228,6 @@ uuid_to_string(const afsUUID *uuid, char *str, size_t strsz)
 	     (unsigned char)uuid->node[3],
 	     (unsigned char)uuid->node[4],
 	     (unsigned char)uuid->node[5]);
-
-    return 0;
 }
 
 
@@ -331,7 +249,7 @@ main(int argc, char **argv)
 	return 0;
     }
 
-    if (uuid_compare(&u1, &u2) != 0)
+    if (bcmp(&u1, &u2, sizeof(u1)) != 0)
 	printf("u1 != u2\n");
 
     return 0;

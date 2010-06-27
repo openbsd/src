@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid.h,v 1.2 2010/06/15 15:14:57 martinh Exp $ */
+/*	$OpenBSD: uuid.h,v 1.3 2010/06/27 18:19:36 martinh Exp $ */
 /*
  * Copyright (c) 2002, Stockholms Universitet
  * (Stockholm University, Stockholm Sweden)
@@ -48,13 +48,8 @@ struct uuid {
 
 typedef struct uuid afsUUID;
 
-int	uuid_compare(const afsUUID *, const afsUUID *);
 void	uuid_create(afsUUID *);
-int	uuid_create_nil(afsUUID *);
-int	uuid_equal(const afsUUID *, const afsUUID *);
-int	uuid_from_string(const char *, afsUUID *);
-int	uuid_is_nil(const afsUUID *);
-int	uuid_to_string(const afsUUID *, char *, size_t);
+void	uuid_to_string(const afsUUID *, char *, size_t);
 
 #endif /* __ARLA_UUID_H__ */
 
