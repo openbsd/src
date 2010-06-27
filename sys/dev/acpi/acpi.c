@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.158 2010/06/27 07:26:31 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.159 2010/06/27 17:04:27 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2094,6 +2094,10 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			error = ENXIO;
 			goto fail;
 		}
+
+	/* Clear fixed event status */
+	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 1,
+	    ACPI_PM1_ALL_STS);
 
 	/* Enable wake GPEs */
 	acpi_susp_resume_gpewalk(sc, state, 1);

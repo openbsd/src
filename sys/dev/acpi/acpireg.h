@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.18 2009/07/23 01:38:16 cnst Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.19 2010/06/27 17:04:27 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -419,6 +419,11 @@ struct acpi_facs {
 #define		ACPI_PM1_RTC_STS		0x0400
 #define		ACPI_PM1_PCIEXP_WAKE_STS	0x4000
 #define		ACPI_PM1_WAK_STS		0x8000
+
+#define	ACPI_PM1_ALL_STS (ACPI_PM1_TMR_STS | ACPI_PM1_BM_STS | \
+	    ACPI_PM1_GBL_STS | ACPI_PM1_PWRBTN_STS | \
+	    ACPI_PM1_SLPBTN_STS | ACPI_PM1_RTC_STS | \
+	    ACPI_PM1_PCIEXP_WAKE_STS | ACPI_PM1_WAK_STS )
 
 /*
  * PM1 Enable Registers
