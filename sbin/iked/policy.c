@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.9 2010/06/15 00:34:17 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.10 2010/06/27 00:32:42 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -146,10 +146,10 @@ sa_stateflags(struct iked_sa *sa, u_int flags)
 	else
 		require = sa->sa_stateinit;
 
-	log_debug("%s: 0x%02x -> 0x%02x %s (required 0x%02x)", __func__,
+	log_debug("%s: 0x%02x -> 0x%02x %s (required 0x%02x %s)", __func__,
 	    sa->sa_stateflags, sa->sa_stateflags | flags,
-	    print_bits(sa->sa_stateflags | flags,
-	    IKED_REQ_BITS), require);
+	    print_bits(sa->sa_stateflags | flags, IKED_REQ_BITS), require,
+	    print_bits(require, IKED_REQ_BITS));
 
 	sa->sa_stateflags |= flags;
 }
