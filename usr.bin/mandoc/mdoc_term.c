@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.90 2010/06/27 01:24:02 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.91 2010/06/27 17:49:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -2104,8 +2104,17 @@ static int
 termp_bk_pre(DECL_ARGS)
 {
 
-	p->flags |= TERMP_PREKEEP;
-	return(1);
+	switch (n->type) {
+	case (MDOC_BLOCK):
+		return(1);
+	case (MDOC_HEAD):
+		return(0);
+	case (MDOC_BODY):
+		p->flags |= TERMP_PREKEEP;
+		return(1);
+	default:
+		abort();
+	}
 }
 
 
@@ -2114,7 +2123,8 @@ static void
 termp_bk_post(DECL_ARGS)
 {
 
-	p->flags &= ~(TERMP_KEEP | TERMP_PREKEEP);
+	if (MDOC_BODY == n->type)
+		p->flags &= ~(TERMP_KEEP | TERMP_PREKEEP);
 }
 
 /* ARGSUSED */

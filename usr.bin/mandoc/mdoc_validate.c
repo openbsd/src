@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.61 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.62 2010/06/27 17:49:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,7 +103,7 @@ static	int	 pre_ss(PRE_ARGS);
 
 static	v_post	 posts_an[] = { post_an, NULL };
 static	v_post	 posts_at[] = { post_at, NULL };
-static	v_post	 posts_bd[] = { hwarn_eq0, bwarn_ge1, NULL };
+static	v_post	 posts_bd_bk[] = { hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
 static	v_post	 posts_bool[] = { eerr_eq1, ebool, NULL };
@@ -150,7 +150,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_notext },			/* Pp */ 
 	{ pres_d1, posts_wline },		/* D1 */
 	{ pres_d1, posts_wline },		/* Dl */
-	{ pres_bd, posts_bd },			/* Bd */
+	{ pres_bd, posts_bd_bk },			/* Bd */
 	{ NULL, NULL },				/* Ed */
 	{ pres_bl, posts_bl },			/* Bl */ 
 	{ NULL, NULL },				/* El */
@@ -241,7 +241,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Fc */ 
 	{ NULL, NULL },				/* Oo */
 	{ NULL, NULL },				/* Oc */
-	{ NULL, posts_wline },			/* Bk */
+	{ NULL, posts_bd_bk },			/* Bk */
 	{ NULL, NULL },				/* Ek */
 	{ NULL, posts_eoln },			/* Bt */
 	{ NULL, NULL },				/* Hf */
