@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.1 2010/06/01 03:12:28 drahn Exp $
+# $OpenBSD: GENERIC,v 1.2 2010/06/27 20:15:11 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -158,7 +158,6 @@ ch*		at scsibus?
 ss*		at scsibus?
 uk*		at scsibus?
 
-
 # onboard uarts
 com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
 
@@ -171,12 +170,6 @@ com0	at ahb?	addr	0x49020000	size 0x400 intr 74 # UART3
 
 sdmmc*	at ommmc?		# SD/MMC bus
 scsibus* at sdmmc?		# SCSI emulation
-sd*		at scsibus?
-st*		at scsibus?
-cd*		at scsibus?
-ch*		at scsibus?
-ss*		at scsibus?
-uk*		at scsibus?
 
 # Bluetooth controllers
 #sbt*	at sdmmc?		# SDIO Bluetooth
