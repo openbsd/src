@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.232 2010/01/18 23:52:46 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.233 2010/06/27 01:28:44 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1207,12 +1207,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*oldrule = NULL, *newrule = NULL;
 		u_int32_t		 nr = 0;
-
-		if (!(pcr->action == PF_CHANGE_REMOVE ||
-		    pcr->action == PF_CHANGE_GET_TICKET)) {
-			error = EBUSY;
-			break;
-		}
 
 		if (pcr->action < PF_CHANGE_ADD_HEAD ||
 		    pcr->action > PF_CHANGE_GET_TICKET) {
