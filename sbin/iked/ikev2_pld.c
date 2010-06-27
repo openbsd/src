@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.10 2010/06/26 19:54:19 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.11 2010/06/27 01:03:22 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
 	u_int8_t		*msgbuf = ibuf_data(msg->msg_data);
 
 	/* Check if message was decrypted in an E payload */
-	e = msg->msg_decrypted ? IKED_E : 0;
+	e = msg->msg_e ? IKED_E : 0;
 
 	if (quick)
 		print_debug("%s: %spayloads", __func__,
@@ -230,10 +230,7 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
 	struct iked_proposals		*props;
 
-	if (msg->msg_decrypted)
-		props = &msg->msg_decrypted->msg_proposals;
-	else
-		props = &msg->msg_proposals;
+	props = &msg->msg_parent->msg_proposals;
 
 	memcpy(&sap, msgbuf + offset, sizeof(sap));
 	offset += sizeof(sap);
@@ -414,8 +411,8 @@ ikev2_pld_ke(struct iked *env, struct ikev2_payload *pld,
 	print_hex(buf, 0, len);
 
 	if (ikev2_msg_frompeer(msg)) {
-		ibuf_release(msg->msg_ke);
-		if ((msg->msg_ke = ibuf_new(buf, len)) == NULL) {
+		ibuf_release(msg->msg_parent->msg_ke);
+		if ((msg->msg_parent->msg_ke = ibuf_new(buf, len)) == NULL) {
 			log_debug("%s: failed to get exchange", __func__);
 			return (-1);
 		}
@@ -434,7 +431,6 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	struct iked_id			*idp, idb;
 	struct iked_sa			*sa = msg->msg_sa;
 	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
-	struct ibuf			*authmsg;
 	char				 idstr[IKED_ID_SIZE];
 
 	memcpy(&id, msgbuf + offset, sizeof(id));
@@ -461,26 +457,21 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 		return (0);
 	}
 
-	if (sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr) {
-		idp = &sa->sa_rid;
-	} else if (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDi) {
-		idp = &sa->sa_iid;
-	} else {
+	if (!((sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr) ||
+	    (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDi))) {
 		log_debug("%s: unexpected id payload", __func__);
-		return (0);
-	}
-
-	ibuf_release(idp->id_buf);
-	idp->id_buf = idb.id_buf;
-	idp->id_type = idb.id_type;
-
-	if ((authmsg = ikev2_msg_auth(env, sa,
-	    !sa->sa_hdr.sh_initiator)) == NULL) {
-		log_debug("%s: failed to get response auth data", __func__);
 		return (-1);
 	}
 
-	ca_setauth(env, sa, authmsg, PROC_CERT);
+	idp = &msg->msg_parent->msg_id;
+	if (idp->id_type) {
+		log_debug("%s: duplicate id payload", __func__);
+		return (-1);
+	}
+
+	idp->id_buf = idb.id_buf;
+	idp->id_offset = idb.id_offset;
+	idp->id_type = idb.id_type;
 
 	return (0);
 }
@@ -492,8 +483,7 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 	struct ikev2_cert		 cert;
 	u_int8_t			*buf;
 	size_t				 len;
-	struct iked_sa			*sa = msg->msg_sa;
-	struct iked_id			*certid, *id;
+	struct iked_id			*certid;
 	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
 
 	memcpy(&cert, msgbuf + offset, sizeof(cert));
@@ -510,23 +500,18 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
 
-	if (!sa->sa_hdr.sh_initiator) {
-		certid = &sa->sa_icert;
-		id = &sa->sa_iid;
-	} else if (sa->sa_hdr.sh_initiator) {
-		certid = &sa->sa_rcert;
-		id = &sa->sa_rid;
-	} else
-		return (0);	/* ignore */
+	certid = &msg->msg_parent->msg_cert;
+	if (certid->id_type) {
+		log_debug("%s: duplicate cert payload", __func__);
+		return (-1);
+	}
 
 	if ((certid->id_buf = ibuf_new(buf, len)) == NULL) {
 		log_debug("%s: failed to save cert", __func__);
 		return (-1);
 	}
 	certid->id_type = cert.cert_type;
-
-	ca_setcert(env, &msg->msg_sa->sa_hdr, id, cert.cert_type,
-	    buf, len, PROC_CERT);
+	certid->id_offset = 0;
 
 	return (0);
 }
@@ -578,13 +563,10 @@ ikev2_pld_auth(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, off_t offset)
 {
 	struct ikev2_auth		 auth;
-	struct iked_auth		 ikeauth;
+	struct iked_id			*idp;
 	u_int8_t			*buf;
 	size_t				 len;
-	struct ibuf			*authmsg;
 	struct iked_sa			*sa = msg->msg_sa;
-	struct iked_policy		*policy = sa->sa_policy;
-	int				 ret = -1;
 	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
 
 	memcpy(&auth, msgbuf + offset, sizeof(auth));
@@ -601,61 +583,23 @@ ikev2_pld_auth(struct iked *env, struct ikev2_payload *pld,
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
 
-	memcpy(&ikeauth, &policy->pol_auth, sizeof(ikeauth));
-
-	if (policy->pol_auth.auth_eap && sa->sa_eapmsk != NULL) {
-		/* The initiator EAP auth is a PSK derived from the MSK */
-		ikeauth.auth_method = IKEV2_AUTH_SHARED_KEY_MIC;
-
-		/* Copy session key as PSK */
-		memcpy(ikeauth.auth_data, ibuf_data(sa->sa_eapmsk),
-		    ibuf_size(sa->sa_eapmsk));
-		ikeauth.auth_length = ibuf_size(sa->sa_eapmsk);
-	}
-	if (auth.auth_method != ikeauth.auth_method) {
-		log_debug("%s: method %s required", __func__,
-		    print_map(ikeauth.auth_method, ikev2_auth_map));
-		return (-1);
-	}
-
 	/* The AUTH payload indicates if the responder wants EAP or not */
 	if (!sa_stateok(sa, IKEV2_STATE_EAP))
 		sa_state(env, sa, IKEV2_STATE_AUTH_REQUEST);
 
-	if ((authmsg = ikev2_msg_auth(env, sa,
-	    sa->sa_hdr.sh_initiator)) == NULL) {
-		log_debug("%s: failed to get auth data", __func__);
+	idp = &msg->msg_parent->msg_auth;
+	if (idp->id_type) {
+		log_debug("%s: duplicate auth payload", __func__);
 		return (-1);
 	}
 
-	ret = ikev2_msg_authverify(env, sa, &ikeauth, buf, len,
-	    authmsg);
+	ibuf_release(idp->id_buf);
+	idp->id_type = auth.auth_method;
+	idp->id_offset = 0;
+	if ((idp->id_buf = ibuf_new(buf, len)) == NULL)
+		return (-1);
 
-	ibuf_release(authmsg);
-	authmsg = NULL;
-
-	if (ret != 0)
-		goto done;
-
-	if (sa->sa_eapmsk != NULL) {
-		if ((authmsg = ikev2_msg_auth(env, sa,
-		    !sa->sa_hdr.sh_initiator)) == NULL) {
-			log_debug("%s: failed to get auth data", __func__);
-			return (-1);
-		}
-
-		/* 2nd AUTH for EAP messages */
-		if ((ret = ikev2_msg_authsign(env, sa,
-		    &ikeauth, authmsg)) != 0)
-			goto done;
-
-		sa_state(env, sa, IKEV2_STATE_EAP_VALID);
-	}
-
- done:
-	ibuf_release(authmsg);
-
-	return (ret);
+	return (0);
 }
 
 int
@@ -735,10 +679,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			log_debug("%s: malformed notification", __func__);
 			return (-1);
 		}
-		if (msg->msg_decrypted)
-			rekey = &msg->msg_decrypted->msg_rekey;
-		else
-			rekey = &msg->msg_rekey;
+		rekey = &msg->msg_parent->msg_rekey;
 		if (rekey->spi != 0) {
 			log_debug("%s: rekeying of multiple SAs not supported",
 			    __func__);
@@ -1006,7 +947,8 @@ ikev2_pld_e(struct iked *env, struct ikev2_payload *pld,
 	bzero(&emsg, sizeof(emsg));
 	memcpy(&emsg, msg, sizeof(*msg));
 	emsg.msg_data = e;
-	emsg.msg_decrypted = msg;
+	emsg.msg_e = 1;
+	emsg.msg_parent = msg;
 	TAILQ_INIT(&emsg.msg_proposals);
 
 	ret = ikev2_pld_payloads(env, &emsg, 0, ibuf_size(e),

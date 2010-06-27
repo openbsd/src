@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.14 2010/06/26 19:54:19 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.15 2010/06/27 01:03:22 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -377,8 +377,9 @@ struct iked_message {
 	int			 msg_fd;
 	int			 msg_response;
 	int			 msg_natt;
-	struct iked_message	*msg_decrypted;
 	int			 msg_error;
+	int			 msg_e;
+	struct iked_message	*msg_parent;
 
 	/* Associated policy and SA */
 	struct iked_policy	*msg_policy;
@@ -389,6 +390,9 @@ struct iked_message {
 	struct iked_spi		 msg_rekey;
 	struct ibuf		*msg_nonce;	/* dh NONCE */
 	struct ibuf		*msg_ke;	/* dh key exchange */
+	struct iked_id		 msg_auth;	/* AUTH payload */
+	struct iked_id		 msg_id;
+	struct iked_id		 msg_cert;
 
 	/* Parse stack */
 	struct iked_proposal	*msg_prop;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.6 2010/06/14 23:23:52 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.7 2010/06/27 01:03:22 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -65,6 +65,7 @@ ikev2_msg_cb(int fd, short event, void *arg)
 
 	msg.msg_peerlen = sizeof(msg.msg_peer);
 	msg.msg_locallen = sizeof(msg.msg_local);
+	msg.msg_parent = &msg;
 	memcpy(&msg.msg_local, &sock->sock_addr, sizeof(sock->sock_addr));
 
 	if ((len = recvfromto(fd, buf, sizeof(buf), 0,
@@ -120,6 +121,8 @@ ikev2_msg_init(struct iked *env, struct iked_message *msg,
 	msg->msg_response = response ? 1 : 0;
 	msg->msg_fd = -1;
 	msg->msg_data = ibuf_static();
+	msg->msg_e = 0;
+	msg->msg_parent = msg;	/* has to be set */
 	TAILQ_INIT(&msg->msg_proposals);
 
 	return (msg->msg_data);
@@ -128,11 +131,20 @@ ikev2_msg_init(struct iked *env, struct iked_message *msg,
 void
 ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 {
+	if (msg == msg->msg_parent) {
+		ibuf_release(msg->msg_nonce);
+		ibuf_release(msg->msg_ke);
+		ibuf_release(msg->msg_auth.id_buf);
+		ibuf_release(msg->msg_id.id_buf);
+		ibuf_release(msg->msg_cert.id_buf);
+
+		config_free_proposals(&msg->msg_proposals, 0);
+	}
+
 	if (msg->msg_data != NULL) {
 		ibuf_release(msg->msg_data);
 		msg->msg_data = NULL;
 	}
-	config_free_proposals(&msg->msg_proposals, 0);
 }
 
 int
@@ -803,8 +815,7 @@ ikev2_msg_frompeer(struct iked_message *msg)
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ike_header	*hdr;
 
-	if (msg->msg_decrypted)
-		msg = msg->msg_decrypted;
+	msg = msg->msg_parent;
 
 	if (sa == NULL ||
 	    (hdr = ibuf_seek(msg->msg_data, 0, sizeof(*hdr))) == NULL)
