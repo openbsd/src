@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.309 2010/05/07 13:33:16 claudio Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.310 2010/06/27 01:39:43 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1196,6 +1196,9 @@ struct pf_pdesc {
 		void			*any;
 	} hdr;
 
+	struct pf_addr	 nsaddr;	/* src address after NAT */
+	struct pf_addr	 ndaddr;	/* dst address after NAT */
+
 	struct ether_header
 			*eh;
 	struct pf_addr	*src;		/* src address */
@@ -1204,6 +1207,8 @@ struct pf_pdesc {
 	u_int16_t	*dport;
 	u_int16_t	 osport;
 	u_int16_t	 odport;
+	u_int16_t	 nsport;	/* src port after NAT */
+	u_int16_t	 ndport;	/* dst port after NAT */
 
 	u_int32_t	 p_len;		/* total length of payload */
 
@@ -1925,18 +1930,13 @@ int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
 			     int *);
 
 int			 pf_get_transaddr(struct pf_rule *, struct pf_pdesc *,
-			    struct pf_addr *, u_int16_t *, struct pf_addr *,
-			    u_int16_t *, struct pf_src_node **);
+			    struct pf_src_node **);
 
 int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *,
 			    struct pf_addr *, struct pf_src_node **,
 			    struct pf_pool *, enum pf_sn_types);
 
-int			 pf_state_key_setup(struct pf_pdesc *,
-			    struct pf_state_key **, struct pf_state_key **,
-			    struct pf_addr **, struct pf_addr **,
-			    u_int16_t *, u_int16_t *, int);
 #endif /* _KERNEL */
 
 

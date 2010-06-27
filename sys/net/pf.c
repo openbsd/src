@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.691 2010/05/07 13:33:16 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.692 2010/06/27 01:39:43 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -168,11 +168,11 @@ int			 pf_test_rule(struct pf_rule **, struct pf_state **,
 static __inline int	 pf_create_state(struct pf_rule *, struct pf_rule *,
 			    struct pf_pdesc *, struct pf_state_key **,
 			    struct pf_state_key **, struct mbuf *, int,
-			    struct pf_addr *, u_int16_t, struct pf_addr *,
-			    u_int16_t, int *, struct pfi_kif *,
-			    struct pf_state **, int, u_int16_t, u_int16_t,
-			    int, struct pf_rule_slist *,
+			    int *, struct pfi_kif *, struct pf_state **, int,
+			    u_int16_t, u_int16_t, int, struct pf_rule_slist *,
 			    struct pf_rule_actions *, struct pf_src_node *[]);
+int			 pf_state_key_setup(struct pf_pdesc *, struct
+			    pf_state_key **, struct pf_state_key **, int);
 void			 pf_translate(struct pf_pdesc *, struct pf_addr *,
 			    u_int16_t, struct pf_addr *, u_int16_t, u_int16_t,
 			    int, struct mbuf *, int);
@@ -826,10 +826,8 @@ pf_alloc_state_key(int pool_flags)
 }
 
 int
-pf_state_key_setup(struct pf_pdesc *pd,
-	struct pf_state_key **skw, struct pf_state_key **sks,
-	struct pf_addr **saddr, struct pf_addr **daddr,
-	u_int16_t *sport, u_int16_t *dport, int rtableid)
+pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
+    struct pf_state_key **sks, int rtableid)
 {
 	/* if returning error we MUST pool_put state keys ourselves */
 	struct pf_state_key *sk1, *sk2;
@@ -848,18 +846,18 @@ pf_state_key_setup(struct pf_pdesc *pd,
 	if (rtableid >= 0)
 		wrdom = rtable_l2(rtableid);
 
-	if (PF_ANEQ(*saddr, pd->src, pd->af) ||
-	    PF_ANEQ(*daddr, pd->dst, pd->af) ||
-	    *sport != pd->osport || *dport != pd->odport ||
+	if (PF_ANEQ(&pd->nsaddr, pd->src, pd->af) ||
+	    PF_ANEQ(&pd->ndaddr, pd->dst, pd->af) ||
+	    pd->nsport != pd->osport || pd->ndport != pd->odport ||
 	    wrdom != pd->rdomain) {	/* NAT */
 		if ((sk2 = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL) {
 			pool_put(&pf_state_key_pl, sk1);
 			return (ENOMEM);
 		}
-		PF_ACPY(&sk2->addr[pd->sidx], *saddr, pd->af);
-		PF_ACPY(&sk2->addr[pd->didx], *daddr, pd->af);
-		sk2->port[pd->sidx] = *sport;
-		sk2->port[pd->didx] = *dport;
+		PF_ACPY(&sk2->addr[pd->sidx], &pd->nsaddr, pd->af);
+		PF_ACPY(&sk2->addr[pd->didx], &pd->ndaddr, pd->af);
+		sk2->port[pd->sidx] = pd->nsport;
+		sk2->port[pd->didx] = pd->ndport;
 		sk2->proto = pd->proto;
 		sk2->af = pd->af;
 		sk2->rdomain = wrdom;
@@ -2736,7 +2734,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct ifqueue *ifq)
 {
 	struct pf_rule		*lastr = NULL;
-	struct pf_addr		 saddr, daddr;
 	sa_family_t		 af = pd->af;
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
@@ -2752,12 +2749,12 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	int			 asd = 0;
 	int			 match = 0;
 	int			 state_icmp = 0, icmp_dir, multi;
-	u_int16_t		 sport, dport, virtual_type, virtual_id;
+	u_int16_t		 virtual_type, virtual_id;
 	u_int16_t		 bproto_sum = 0, bip_sum;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
-	PF_ACPY(&saddr, pd->src, pd->af);
-	PF_ACPY(&daddr, pd->dst, pd->af);
+	PF_ACPY(&pd->nsaddr, pd->src, pd->af);
+	PF_ACPY(&pd->ndaddr, pd->dst, pd->af);
 
 	bzero(&act, sizeof(act));
 	bzero(sns, sizeof(sns));
@@ -2771,13 +2768,13 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	switch (pd->proto) {
 	case IPPROTO_TCP:
-		sport = th->th_sport;
-		dport = th->th_dport;
+		pd->nsport = th->th_sport;
+		pd->ndport = th->th_dport;
 		hdrlen = sizeof(*th);
 		break;
 	case IPPROTO_UDP:
-		sport = pd->hdr.udp->uh_sport;
-		dport = pd->hdr.udp->uh_dport;
+		pd->nsport = pd->hdr.udp->uh_sport;
+		pd->ndport = pd->hdr.udp->uh_dport;
 		hdrlen = sizeof(*pd->hdr.udp);
 		break;
 #ifdef INET
@@ -2790,11 +2787,11 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		state_icmp = pf_icmp_mapping(pd, icmptype,
 		    &icmp_dir, &multi, &virtual_id, &virtual_type);
 		if (icmp_dir == PF_IN) {
-			sport = virtual_id;
-			dport = virtual_type;
+			pd->nsport = virtual_id;
+			pd->ndport = virtual_type;
 		} else {
-			sport = virtual_type;
-			dport = virtual_id;
+			pd->nsport = virtual_type;
+			pd->ndport = virtual_id;
 		}
 		break;
 #endif /* INET */
@@ -2808,21 +2805,21 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		state_icmp = pf_icmp_mapping(pd, icmptype,
 		    &icmp_dir, &multi, &virtual_id, &virtual_type);
 		if (icmp_dir == PF_IN) {
-			sport = virtual_id;
-			dport = virtual_type;
+			pd->nsport = virtual_id;
+			pd->ndport = virtual_type;
 		} else {
-			sport = virtual_type;
-			dport = virtual_id;
+			pd->nsport = virtual_type;
+			pd->ndport = virtual_id;
 		}
 		break;
 #endif /* INET6 */
 	default:
-		sport = dport = hdrlen = 0;
+		pd->nsport = pd->ndport = hdrlen = 0;
 		break;
 	}
 
-	pd->osport = sport;
-	pd->odport = dport;
+	pd->osport = pd->nsport;
+	pd->odport = pd->ndport;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
@@ -2835,19 +2832,19 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&r->src.addr, &saddr, af,
+		else if (PF_MISMATCHAW(&r->src.addr, &pd->nsaddr, af,
 		    r->src.neg, kif, act.rtableid))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		/* tcp/udp only. port_op always 0 in other cases */
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
-		    r->src.port[0], r->src.port[1], sport))
+		    r->src.port[0], r->src.port[1], pd->nsport))
 			r = r->skip[PF_SKIP_SRC_PORT].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, &daddr, af,
+		else if (PF_MISMATCHAW(&r->dst.addr, &pd->ndaddr, af,
 		    r->dst.neg, NULL, act.rtableid))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		/* tcp/udp only. port_op always 0 in other cases */
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
-		    r->dst.port[0], r->dst.port[1], dport))
+		    r->dst.port[0], r->dst.port[1], pd->ndport))
 			r = r->skip[PF_SKIP_DST_PORT].ptr;
 		/* icmp only. type always 0 in other cases */
 		else if (r->type && r->type != icmptype + 1)
@@ -2902,9 +2899,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 					/* order is irrelevant */
 					SLIST_INSERT_HEAD(&rules, ri, entry);
 					pf_rule_to_actions(r, &act);
-					if (pf_get_transaddr(r, pd,
-					    &saddr, &sport, &daddr, &dport,
-					    sns) == -1) {
+					if (pf_get_transaddr(r, pd, sns) ==
+					    -1) {
 						REASON_SET(&reason,
 						    PFRES_MEMORY);
 						goto cleanup;
@@ -2934,8 +2930,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	/* apply actions for last matching rule */
 	if (lastr && lastr->action != PF_MATCH) {
 		pf_rule_to_actions(lastr, &act);
-		if (pf_get_transaddr(lastr, pd, &saddr, &sport, &daddr,
-		    &dport, sns) == -1) {
+		if (pf_get_transaddr(lastr, pd, sns) == -1) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			goto cleanup;
 		}
@@ -3024,9 +3019,9 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		}
 
-		action = pf_create_state(r, a, pd, &skw, &sks, m,
-		    off, &saddr, sport, &daddr, dport, &rewrite, kif, sm, tag,
-		    bproto_sum, bip_sum, hdrlen, &rules, &act, sns);
+		action = pf_create_state(r, a, pd, &skw, &sks, m, off,
+		    &rewrite, kif, sm, tag, bproto_sum, bip_sum, hdrlen,
+		    &rules, &act, sns);
 
 		if (action != PF_PASS)
 			return (action);
@@ -3082,8 +3077,7 @@ cleanup:
 static __inline int
 pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
     struct pf_state_key **skw, struct pf_state_key **sks, struct mbuf *m,
-    int off, struct pf_addr *saddr, u_int16_t sport, struct pf_addr *daddr,
-    u_int16_t dport, int *rewrite, struct pfi_kif *kif, struct pf_state **sm,
+    int off, int *rewrite, struct pfi_kif *kif, struct pf_state **sm,
     int tag, u_int16_t bproto_sum, u_int16_t bip_sum, int hdrlen,
     struct pf_rule_slist *rules, struct pf_rule_actions *act,
     struct pf_src_node *sns[PF_SN_MAX])
@@ -3199,8 +3193,7 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 	}
 	s->direction = pd->dir;
 
-	if (pf_state_key_setup(pd, skw, sks, &saddr, &daddr, &sport, &dport,
-	    act->rtableid)) {
+	if (pf_state_key_setup(pd, skw, sks, act->rtableid)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		goto csfailed;
 	}

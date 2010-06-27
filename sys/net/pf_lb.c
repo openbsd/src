@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.12 2010/02/04 14:10:12 sthen Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.13 2010/06/27 01:39:43 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -100,10 +100,9 @@
 
 void			 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
-int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_rule *,
-			    struct pf_addr *, u_int16_t, struct pf_addr *,
-			    u_int16_t, struct pf_addr *, u_int16_t *,
-			    u_int16_t, u_int16_t, struct pf_src_node **, int);
+int			 pf_get_sport(struct pf_pdesc *, struct pf_rule *,
+			    struct pf_addr *, u_int16_t *, u_int16_t,
+			    u_int16_t, struct pf_src_node **);
 
 #define mix(a,b,c) \
 	do {					\
@@ -163,24 +162,22 @@ pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
 }
 
 int
-pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
-    struct pf_addr *saddr, u_int16_t sport,
-    struct pf_addr *daddr, u_int16_t dport,
+pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
     struct pf_addr *naddr, u_int16_t *nport, u_int16_t low, u_int16_t high,
-    struct pf_src_node **sn, int rdomain)
+    struct pf_src_node **sn)
 {
 	struct pf_state_key_cmp	key;
 	struct pf_addr		init_addr;
 	u_int16_t		cut;
 
 	bzero(&init_addr, sizeof(init_addr));
-	if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn, &r->nat,
+	if (pf_map_addr(pd->af, r, &pd->nsaddr, naddr, &init_addr, sn, &r->nat,
 	    PF_SN_NAT))
 		return (1);
 
-	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
-		if (dport == htons(ICMP6_ECHO_REQUEST) ||
-		    dport == htons(ICMP_ECHO)) {
+	if (pd->proto == IPPROTO_ICMP || pd->proto == IPPROTO_ICMPV6) {
+		if (pd->ndport == htons(ICMP6_ECHO_REQUEST) ||
+		    pd->ndport == htons(ICMP_ECHO)) {
 			low = 1;
 			high = 65535;
 		} else
@@ -188,30 +185,30 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 	}
 
 	do {
-		key.af = af;
-		key.proto = proto;
-		key.rdomain = rdomain;
-		PF_ACPY(&key.addr[0], daddr, key.af);
+		key.af = pd->af;
+		key.proto = pd->proto;
+		key.rdomain = pd->rdomain;
+		PF_ACPY(&key.addr[0], &pd->ndaddr, key.af);
 		PF_ACPY(&key.addr[1], naddr, key.af);
-		key.port[0] = dport;
+		key.port[0] = pd->ndport;
 
 		/*
 		 * port search; start random, step;
 		 * similar 2 portloop in in_pcbbind
 		 */
-		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP ||
-		    proto == IPPROTO_ICMP)) {
+		if (!(pd->proto == IPPROTO_TCP || pd->proto == IPPROTO_UDP ||
+		    pd->proto == IPPROTO_ICMP)) {
 			/* XXX bug: icmp states dont use the id on both
 			 * XXX sides (traceroute -I through nat) */
-			key.port[1] = sport;
+			key.port[1] = pd->nsport;
 			if (pf_find_state_all(&key, PF_IN, NULL) == NULL) {
-				*nport = sport;
+				*nport = pd->nsport;
 				return (0);
 			}
 		} else if (low == 0 && high == 0) {
-			key.port[1] = sport;
+			key.port[1] = pd->nsport;
 			if (pf_find_state_all(&key, PF_IN, NULL) == NULL) {
-				*nport = sport;
+				*nport = pd->nsport;
 				return (0);
 			}
 		} else if (low == high) {
@@ -234,7 +231,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 			for (tmp = cut; tmp <= high; ++(tmp)) {
 				key.port[1] = htons(tmp);
 				if (pf_find_state_all(&key, PF_IN, NULL) ==
-				    NULL && !in_baddynamic(tmp, proto)) {
+				    NULL && !in_baddynamic(tmp, pd->proto)) {
 					*nport = htons(tmp);
 					return (0);
 				}
@@ -242,7 +239,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 			for (tmp = cut - 1; tmp >= low; --(tmp)) {
 				key.port[1] = htons(tmp);
 				if (pf_find_state_all(&key, PF_IN, NULL) ==
-				    NULL && !in_baddynamic(tmp, proto)) {
+				    NULL && !in_baddynamic(tmp, pd->proto)) {
 					*nport = htons(tmp);
 					return (0);
 				}
@@ -252,8 +249,8 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		switch (r->nat.opts & PF_POOL_TYPEMASK) {
 		case PF_POOL_RANDOM:
 		case PF_POOL_ROUNDROBIN:
-			if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn,
-			    &r->nat, PF_SN_NAT))
+			if (pf_map_addr(pd->af, r, &pd->nsaddr, naddr,
+			    &init_addr, sn, &r->nat, PF_SN_NAT))
 				return (1);
 			break;
 		case PF_POOL_NONE:
@@ -262,7 +259,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		default:
 			return (1);
 		}
-	} while (! PF_AEQ(&init_addr, naddr, af) );
+	} while (! PF_AEQ(&init_addr, naddr, pd->af) );
 	return (1);					/* none available */
 }
 
@@ -424,8 +421,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 }
 
 int
-pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
-    u_int16_t *sport, struct pf_addr *daddr, u_int16_t *dport,
+pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
     struct pf_src_node **sns)
 {
 	struct pf_addr	naddr;
@@ -434,30 +430,29 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 	if (r->nat.addr.type != PF_ADDR_NONE) {
 		/* XXX is this right? what if rtable is changed at the same
 		 * XXX time? where do I need to figure out the sport? */
-		if (pf_get_sport(pd->af, pd->proto, r, saddr, *sport,
-		    daddr, *dport, &naddr, &nport, r->nat.proxy_port[0],
-		    r->nat.proxy_port[1], sns, pd->rdomain)) {
+		if (pf_get_sport(pd, r, &naddr, &nport,
+		    r->nat.proxy_port[0], r->nat.proxy_port[1], sns)) {
 			DPFPRINTF(LOG_NOTICE,
 			    "pf: NAT proxy port allocation (%u-%u) failed",
 			    r->nat.proxy_port[0],
 			    r->nat.proxy_port[1]);
 			return (-1);
 		}
-		PF_ACPY(saddr, &naddr, pd->af);
-		*sport = nport;
+		PF_ACPY(&pd->nsaddr, &naddr, pd->af);
+		pd->nsport = nport;
 	}
 	if (r->rdr.addr.type != PF_ADDR_NONE) {
-		if (pf_map_addr(pd->af, r, saddr, &naddr, NULL, sns, &r->rdr,
-		    PF_SN_RDR))
+		if (pf_map_addr(pd->af, r, &pd->nsaddr, &naddr, NULL, sns,
+		    &r->rdr, PF_SN_RDR))
 			return (-1);
 		if ((r->rdr.opts & PF_POOL_TYPEMASK) == PF_POOL_BITMASK)
 			PF_POOLMASK(&naddr, &naddr,  &r->rdr.addr.v.a.mask,
-			    daddr, pd->af);
+			    &pd->ndaddr, pd->af);
 
 			if (r->rdr.proxy_port[1]) {
 				u_int32_t	tmp_nport;
 
-				tmp_nport = ((ntohs(*dport) -
+				tmp_nport = ((ntohs(pd->ndport) -
 				    ntohs(r->dst.port[0])) %
 				    (r->rdr.proxy_port[1] -
 				    r->rdr.proxy_port[0] + 1)) +
@@ -470,9 +465,9 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 			} else if (r->rdr.proxy_port[0])
 				nport = htons(r->rdr.proxy_port[0]);
 
-		PF_ACPY(daddr, &naddr, pd->af);
+		PF_ACPY(&pd->ndaddr, &naddr, pd->af);
 		if (nport)
-			*dport = nport;
+			pd->ndport = nport;
 	}
 
 	return (0);
