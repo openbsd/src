@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.7 2010/06/27 04:29:31 kettenis Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.8 2010/06/27 22:05:28 thib Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -26,19 +26,6 @@
 
 #include <sys/disklabel.h>
 
-#ifdef BUFQ_DEBUG
-#define	BUFQDBG_INIT		0x0001
-#define	BUFQDBG_DRAIN		0x0002
-#define	BUFQDBG_DISKSORT	0x0004
-#define	BUFQDBG_FIFO		0x0008
-int	bqdebug = 0;
-#define	DPRINTF(p...)		do { if (bqdebug) printf(p); } while (0)
-#define	DNPRINTF(n, p...)	do { if ((n) & bqdebug) printf(p); } while (0)
-#else
-#define	DPRINTF(p...)		/* p */
-#define	DNPRINTF(n, p...)	/* n, p */
-#endif
-
 struct buf *(*bufq_dequeue[BUFQ_HOWMANY])(struct bufq *, int) = {
 	bufq_disksort_dequeue,
 	bufq_fifo_dequeue
@@ -61,9 +48,6 @@ bufq_init(int type)
 
 	bq = malloc(sizeof(*bq), M_DEVBUF, M_NOWAIT|M_ZERO);
 	KASSERT(bq != NULL);
-
-	DNPRINTF(BUFQDBG_INIT, "%s: initing bufq %p of type %i\n",
-	    __func__, bq, type);
 
 	mtx_init(&bq->bufq_mtx, IPL_BIO);
 	bq->bufq_type = type;
@@ -90,8 +74,6 @@ bufq_destroy(struct bufq *bq)
 {
 	bufq_drain(bq);
 
-	DNPRINTF(BUFQDBG_INIT, "%s: destroying bufq %p\n", __func__, bq);
-
 	if (bq->bufq_data != NULL)
 		free(bq->bufq_data, M_DEVBUF);
 
@@ -103,9 +85,6 @@ bufq_drain(struct bufq *bq)
 {
 	struct buf	*bp;
 	int		 s;
-
-	DNPRINTF(BUFQDBG_DRAIN, "%s: draining bufq %p\n",
-	    __func__, bq);
 
 	while ((bp = BUFQ_DEQUEUE(bq)) != NULL) {
 		bp->b_error = ENXIO;
@@ -123,9 +102,6 @@ bufq_disksort_queue(struct bufq *bq, struct buf *bp)
 
 	bufq = (struct buf  *)bq->bufq_data;
 
-	DNPRINTF(BUFQDBG_DISKSORT, "%s: queueing bp %p in bufq %p\n",
-	    __func__, bp, bq);
-
 	mtx_enter(&bq->bufq_mtx);
 	disksort(bufq, bp);
 	mtx_leave(&bq->bufq_mtx);
@@ -137,9 +113,6 @@ bufq_disksort_requeue(struct bufq *bq, struct buf *bp)
 	struct buf	*bufq;
 
 	bufq = (struct buf *)bq->bufq_data;
-
-	DNPRINTF(BUFQDBG_DISKSORT, "%s: requeueing bp % in bufq %p\n",
-	    __func__, bp, bufq);
 
 	mtx_enter(&bq->bufq_mtx);
 	bp->b_actf = bufq->b_actf;
@@ -165,9 +138,6 @@ bufq_disksort_dequeue(struct bufq *bq, int peeking)
 	}
 	mtx_leave(&bq->bufq_mtx);
 
-	DNPRINTF(BUFQDBG_DISKSORT, "%s: %s buf %p from bufq %p\n", __func__, 
-	    peeking ? "peeking at" : "dequeueing", bp, bq);
-
 	return (bp);
 }
 
@@ -190,9 +160,6 @@ bufq_fifo_queue(struct bufq *bq, struct buf *bp)
 {
 	struct bufq_fifo_head	*head = bq->bufq_data;
 
-	DNPRINTF(BUFQDBG_FIFO, "%s: queueing bp %p in bufq %p\n",
-	    __func__, bp, bq);
-
 	mtx_enter(&bq->bufq_mtx);
 	TAILQ_INSERT_TAIL(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
 	mtx_leave(&bq->bufq_mtx);
@@ -202,9 +169,6 @@ void
 bufq_fifo_requeue(struct bufq *bq, struct buf *bp)
 {
 	struct bufq_fifo_head	*head = bq->bufq_data;
-
-	DNPRINTF(BUFQDBG_FIFO, "%s: requeueing bp % in bufq %p\n",
-	    __func__, bp, bq);
 
 	mtx_enter(&bq->bufq_mtx);
 	TAILQ_INSERT_HEAD(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
@@ -222,9 +186,6 @@ bufq_fifo_dequeue(struct bufq *bq, int peeking)
 	if (bp != NULL && !peeking)
 		TAILQ_REMOVE(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
 	mtx_leave(&bq->bufq_mtx);
-
-	DNPRINTF(BUFQDBG_FIFO, "%s: %s buf %p from bufq %p\n", __func__, 
-	    peeking ? "peeking at" : "dequeueing", bp, bq);
 
 	return (bp);
 }
