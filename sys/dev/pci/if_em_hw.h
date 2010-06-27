@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.40 2010/06/26 18:32:38 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.41 2010/06/27 20:13:04 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -1546,6 +1546,7 @@ struct em_hw {
 #define E1000_CTRL_D_UD_POLARITY 0x00004000 /* Defined polarity of Dock/Undock indication in SDP[0] */
 #define E1000_CTRL_FORCE_PHY_RESET 0x00008000 /* Reset both PHY ports, through PHYRST_N pin */
 #define E1000_CTRL_EXT_LINK_EN 0x00010000 /* enable link status from external LINK_0 and LINK_1 pins */
+#define E1000_CTRL_EXT_PHYPDEN 0x00100000
 #define E1000_CTRL_SWDPIN0  0x00040000  /* SWDPIN 0 value */
 #define E1000_CTRL_SWDPIN1  0x00080000  /* SWDPIN 1 value */
 #define E1000_CTRL_SWDPIN2  0x00100000  /* SWDPIN 2 value */
@@ -2646,6 +2647,7 @@ struct em_host_command_info {
 #define BM_PHY_PAGE_SELECT                22   /* Page Select for BM */
 #define BM_REG_BIAS1                      29
 #define BM_REG_BIAS2                      30
+#define BM_PORT_CTRL_PAGE		769
 
 #define IGP01E1000_IEEE_REGS_PAGE  0x0000
 #define IGP01E1000_IEEE_RESTART_AUTONEG 0x3300
@@ -3479,5 +3481,33 @@ union ich8_hws_flash_regacc {
 #define HV_OEM_BITS_LPLU	0x0004 /* Low Power Link Up */
 #define HV_OEM_BITS_GBE_DIS	0x0040 /* Gigabit Disable */
 #define HV_OEM_BITS_RESTART_AN	0x0400 /* Restart Auto-negotiation */
+
+#define HV_KMRN_MODE_CTRL	PHY_REG(769, 16)
+#define HV_KMRN_MDIO_SLOW	0x0400
+
+#define E1000_NVM_K1_CONFIG 0x1B /* NVM K1 Config Word */
+#define E1000_NVM_K1_ENABLE 0x1  /* NVM Enable K1 bit */
+
+#define E1000_KMRNCTRLSTA_OFFSET		0x001F0000
+#define E1000_KMRNCTRLSTA_OFFSET_SHIFT		16
+#define E1000_KMRNCTRLSTA_REN			0x00200000
+#define E1000_KMRNCTRLSTA_DIAG_OFFSET		0x3    /* Diagnostic */
+#define E1000_KMRNCTRLSTA_TIMEOUTS		0x4    /* Timeouts */
+#define E1000_KMRNCTRLSTA_INBAND_PARAM		0x9    /* InBand Parameters */
+#define E1000_KMRNCTRLSTA_DIAG_NELPBK		0x1000 /* Loopback mode */
+#define E1000_KMRNCTRLSTA_K1_CONFIG		0x7
+#define E1000_KMRNCTRLSTA_K1_ENABLE		0x0002
+
+
+/* Extended Configuration Control and Size */
+#define E1000_EXTCNF_CTRL_MDIO_SW_OWNERSHIP      0x00000020
+#define E1000_EXTCNF_CTRL_LCD_WRITE_ENABLE       0x00000001
+#define E1000_EXTCNF_CTRL_OEM_WRITE_ENABLE       0x00000008
+#define E1000_EXTCNF_CTRL_SWFLAG                 0x00000020
+#define E1000_EXTCNF_SIZE_EXT_PCIE_LENGTH_MASK   0x00FF0000
+#define E1000_EXTCNF_SIZE_EXT_PCIE_LENGTH_SHIFT          16
+#define E1000_EXTCNF_CTRL_EXT_CNF_POINTER_MASK   0x0FFF0000
+#define E1000_EXTCNF_CTRL_EXT_CNF_POINTER_SHIFT          16
+
 
 #endif /* _EM_HW_H_ */
