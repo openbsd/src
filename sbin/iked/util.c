@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2010/06/26 18:32:34 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2010/06/27 00:32:06 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -513,35 +513,39 @@ print_hexval(u_int8_t *buf, off_t offset, size_t length)
 const char *
 print_bits(u_short v, char *bits)
 {
-	static char	 buf[BUFSIZ];
+	static char	 buf[IKED_CYCLE_BUFFERS][BUFSIZ];
+	static int	 idx = 0;
 	u_int		 i, any = 0, j = 0;
 	char		 c;
 
 	if (!bits)
 		return ("");
 
-	bzero(buf, sizeof(buf));
+	if (++idx >= IKED_CYCLE_BUFFERS)
+		idx = 0;
+
+	bzero(buf[idx], sizeof(buf[idx]));
 
 	bits++;
 	while ((i = *bits++)) {
 		if (v & (1 << (i-1))) {
 			if (any) {
-				buf[j++] = ',';
-				if (j >= sizeof(buf))
-					return (buf);
+				buf[idx][j++] = ',';
+				if (j >= sizeof(buf[idx]))
+					return (buf[idx]);
 			}
 			any = 1;
 			for (; (c = *bits) > 32; bits++) {
-				buf[j++] = tolower(c);
-				if (j >= sizeof(buf))
-					return (buf);
+				buf[idx][j++] = tolower(c);
+				if (j >= sizeof(buf[idx]))
+					return (buf[idx]);
 			}
 		} else
 			for (; *bits > 32; bits++)
 				;
 	}
 
-	return (buf);
+	return (buf[idx]);
 }
 
 u_int32_t
