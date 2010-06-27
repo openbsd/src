@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.36 2010/05/14 19:03:09 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.37 2010/06/27 00:22:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -87,6 +87,7 @@ const struct set_option_entry set_session_option_table[] = {
 	{ "default-path", SET_OPTION_STRING, 0, 0, NULL },
 	{ "default-shell", SET_OPTION_STRING, 0, 0, NULL },
 	{ "default-terminal", SET_OPTION_STRING, 0, 0, NULL },
+	{ "detach-on-destroy", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "display-panes-colour", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "display-panes-active-colour", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "display-panes-time", SET_OPTION_NUMBER, 1, INT_MAX, NULL },
