@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.28 2010/06/26 23:24:43 guenther Exp $ */
+/*	$OpenBSD: vme.c,v 1.29 2010/06/27 22:04:03 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -39,6 +39,9 @@
 #include <sys/device.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <mvme68k/dev/vme.h>
 
 #include "lrc.h"
