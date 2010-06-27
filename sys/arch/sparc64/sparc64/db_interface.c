@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.27 2008/12/14 17:10:44 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.28 2010/06/27 13:28:47 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -36,7 +36,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <dev/cons.h>
 
@@ -1070,8 +1070,6 @@ db_register_xir(void (*fun)(void *, int), void *arg)
 	SIMPLEQ_INSERT_TAIL(&db_xh, xh, xh_list);
 }
 
-
-#include <uvm/uvm.h>
 
 #ifdef UVMHIST
 void db_uvmhistdump(db_expr_t, int, db_expr_t, char *);

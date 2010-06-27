@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.125 2010/06/27 05:06:20 beck Exp $ */
+/* $OpenBSD: machdep.c,v 1.126 2010/06/27 13:28:44 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -78,8 +78,6 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_swap.h>
 #include <uvm/uvm.h>
 #include <sys/sysctl.h>
 #include <sys/core.h>

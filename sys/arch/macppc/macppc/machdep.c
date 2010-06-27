@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2010/06/27 03:03:48 thib Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 2010/06/27 13:28:46 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/kcore.h>
 
 #include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
