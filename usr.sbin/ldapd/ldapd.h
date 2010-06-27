@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.8 2010/06/23 13:34:53 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.9 2010/06/27 16:01:08 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -375,9 +375,6 @@ struct imsgev {
 	void			*data;
 	short			 events;
 };
-
-struct ctl_conn;
-typedef void (*ctl_close_func)(struct ctl_conn *);
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
