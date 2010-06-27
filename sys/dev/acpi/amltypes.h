@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.33 2009/07/17 21:44:48 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.34 2010/06/27 21:04:22 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -349,8 +349,9 @@ struct aml_value {
 
 struct aml_node {
 	struct aml_node *parent;
-	struct aml_node *child;
-	struct aml_node *sibling;
+
+	SIMPLEQ_HEAD(,aml_node)	son;
+	SIMPLEQ_ENTRY(aml_node)	sib;
 
 	char		name[5];
 	u_int16_t	opcode;

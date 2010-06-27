@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.159 2010/06/27 07:26:31 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.160 2010/06/27 21:04:22 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -606,16 +606,16 @@ void aml_delchildren(struct aml_node *);
 struct aml_node *
 __aml_search(struct aml_node *root, uint8_t *nameseg, int create)
 {
-	struct aml_node **sp, *node;
+	struct aml_node *node;
 
 	/* XXX: Replace with SLIST/SIMPLEQ routines */
 	if (root == NULL)
 		return NULL;
 	//rw_enter_read(&aml_nslock);
-	for (sp = &root->child; *sp; sp = &(*sp)->sibling) {
-		if (!strncmp((*sp)->name, nameseg, AML_NAMESEG_LEN)) {
+	SIMPLEQ_FOREACH(node, &root->son, sib) {
+		if (!strncmp(node->name, nameseg, AML_NAMESEG_LEN)) {
 			//rw_exit_read(&aml_nslock);
-			return *sp;
+			return node;
 		}
 	}
 	//rw_exit_read(&aml_nslock);
@@ -625,13 +625,14 @@ __aml_search(struct aml_node *root, uint8_t *nameseg, int create)
 		node->value = aml_allocvalue(0,0,NULL);
 		node->value->node = node;
 		node->parent = root;
-		node->sibling = NULL;
+
+		SIMPLEQ_INIT(&node->son);
+		SIMPLEQ_INSERT_TAIL(&root->son, node, sib);
 
 		//rw_enter_write(&aml_nslock);
-		*sp = node;
 		//rw_exit_write(&aml_nslock);
 	}
-	return *sp;
+	return node;
 }
 
 /* Get absolute pathname of AML node */
@@ -694,8 +695,8 @@ aml_delchildren(struct aml_node *node)
 
 	if (node == NULL)
 		return;
-	while ((onode = node->child) != NULL) {
-		node->child = onode->sibling;
+	while ((onode = SIMPLEQ_FIRST(&node->son)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&node->son, sib);
 
 		aml_delchildren(onode);
 
@@ -1234,7 +1235,7 @@ aml_walknodes(struct aml_node *node, int mode,
 		return;
 	if (mode == AML_WALK_PRE)
 		nodecb(node, arg);
-	for (child = node->child; child; child = child->sibling)
+	SIMPLEQ_FOREACH(child, &node->son, sib)
 		aml_walknodes(child, mode, nodecb, arg);
 	if (mode == AML_WALK_POST)
 		nodecb(node, arg);
@@ -1256,8 +1257,8 @@ aml_find_node(struct aml_node *node, const char *name,
 		}
 		/* Only recurse if cbproc() wants us to */
 		if (!st)
-			aml_find_node(node->child, name, cbproc, arg);
-		node = node->sibling;
+			aml_find_node(SIMPLEQ_FIRST(&node->son), name, cbproc, arg);
+		node = SIMPLEQ_NEXT(node, sib);
 	}
 	return st;
 }
@@ -1498,6 +1499,7 @@ aml_create_defaultobjects()
 	osstring[15] = 'w';
 	osstring[18] = 'N';
 
+	SIMPLEQ_INIT(&aml_root.son);
 	strlcpy(aml_root.name, "\\", sizeof(aml_root.name));
 	aml_root.value = aml_allocvalue(0, 0, NULL);
 	aml_root.value->node = &aml_root;

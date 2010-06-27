@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.23 2009/05/30 22:49:56 jordan Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.24 2010/06/27 21:04:22 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -238,9 +238,8 @@ db_aml_walktree(struct aml_node *node)
 {
 	while (node) {
 		db_aml_showvalue(node->value);
-		db_aml_walktree(node->child);
-
-		node = node->sibling;
+		db_aml_walktree(SIMPLEQ_FIRST(&node->son));
+		node = SIMPLEQ_NEXT(node, sib);
 	}
 }
 
@@ -334,7 +333,7 @@ db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 void
 db_acpi_tree(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	db_aml_walktree(aml_root.child);
+	db_aml_walktree(&aml_root);
 }
 
 void
