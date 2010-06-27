@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.309 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: session.c,v 1.310 2010/06/27 19:53:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -175,7 +175,7 @@ setup_listeners(u_int *la_cnt)
 
 pid_t
 session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2], 
-    int pipe_s2rctl[2], char *cname, char *rcname)
+    int pipe_s2rctl[2])
 {
 	int			 nfds, timeout;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
@@ -201,12 +201,6 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 	default:
 		return (pid);
 	}
-
-	/* control socket is outside chroot */
-	if ((csock = control_init(0, cname)) == -1)
-		fatalx("control socket setup failed");
-	if (rcname != NULL && (rcsock = control_init(1, rcname)) == -1)
-		fatalx("control socket setup failed");
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal(NULL);
@@ -248,8 +242,6 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 	imsg_init(ibuf_main, pipe_m2s[1]);
 
 	TAILQ_INIT(&ctl_conns);
-	control_listen(csock);
-	control_listen(rcsock);
 	LIST_INIT(&mrthead);
 	listener_cnt = 0;
 	peer_cnt = 0;
@@ -2266,7 +2258,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	struct kif		*kif;
 	u_char			*data;
 	enum reconf_action	 reconf;
-	int			 n, depend_ok;
+	int			 n, depend_ok, restricted;
 	u_int8_t		 errcode, subcode;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -2353,6 +2345,28 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				la->reconf = RECONF_KEEP;
 			}
 
+			break;
+		case IMSG_RECONF_CTRL:
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("reconf request not from parent");
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(restricted))
+				fatalx("IFINFO imsg with wrong len");
+			memcpy(&restricted, imsg.data, sizeof(restricted));
+			if (imsg.fd == -1) {
+				log_warnx("expected to receive fd for control "
+				    "socket but didn't receive any");
+				break;
+			}
+			if (restricted) {
+				control_shutdown(rcsock);
+				rcsock = imsg.fd;
+				control_listen(rcsock);
+			} else {
+				control_shutdown(csock);
+				csock = imsg.fd;
+				control_listen(csock);
+			}
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.82 2010/05/17 16:08:20 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.83 2010/06/27 19:53:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -238,6 +238,10 @@ print_mainconf(struct bgpd_config *conf)
 		printf(" %u", conf->short_as);
 	ina.s_addr = conf->bgpid;
 	printf("\nrouter-id %s\n", inet_ntoa(ina));
+
+	printf("socket \"%s\"\n", conf->csock);
+	if (conf->rcsock)
+		printf("socket \"%s\" restricted\n", conf->rcsock);
 	if (conf->holdtime)
 		printf("holdtime %u\n", conf->holdtime);
 	if (conf->min_holdtime)

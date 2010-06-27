@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.109 2010/05/17 17:46:22 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.110 2010/06/27 19:53:34 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2010 $
+.Dd $Mdocdate: June 27 2010 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -380,6 +380,14 @@ This is the same as using the following syntax:
 .Bd -literal -offset indent
 rde rib Loc-RIB rtable number
 .Ed
+.Pp
+.It Ic socket Ar path Ic Op restricted
+Set the control socket location to
+.Ar path .
+If
+.Ic restricted
+is specified a restricted control socket will be created.
+By default /var/run/bgpd.sock is used and no restricted socket is created.
 .Pp
 .It Xo
 .Ic transparent-as

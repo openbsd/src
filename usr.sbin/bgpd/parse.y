@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.255 2010/05/17 16:08:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.256 2010/06/27 19:53:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -172,7 +172,7 @@ typedef struct {
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
 %token	DEMOTE ENFORCE NEIGHBORAS REFLECTOR DEPEND DOWN SOFTRECONFIG
-%token	DUMP IN OUT
+%token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG ROUTECOLL TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY TTLSECURITY
 %token	ALLOW DENY MATCH
@@ -190,8 +190,9 @@ typedef struct {
 %token	NE LE GE XRANGE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
-%type	<v.number>		asnumber as4number optnumber yesno inout
+%type	<v.number>		asnumber as4number optnumber
 %type	<v.number>		espah family restart origincode nettype
+%type	<v.number>		yesno inout restricted
 %type	<v.string>		string filter_rib
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -558,6 +559,15 @@ conf_main	: AS as4number		{
 			}
 			conf->connectretry = $2;
 		}
+		| SOCKET STRING	restricted {
+			if ($3) {
+				free(conf->rcsock);
+				conf->rcsock = $2;
+			} else {
+				free(conf->csock);
+				conf->csock = $2;
+			}
+		}
 		;
 
 mrtdump		: DUMP STRING inout STRING optnumber	{
@@ -625,6 +635,10 @@ network		: NETWORK prefix filter_set	{
 
 inout		: IN		{ $$ = 1; }
 		| OUT		{ $$ = 0; }
+		;
+
+restricted	: RESTRICTED	{ $$ = 1; }
+		| /* nothing */	{ $$ = 0; }
 		;
 
 address		: STRING		{
@@ -2164,6 +2178,7 @@ lookup(char *s)
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
 		{ "restart",		RESTART},
+		{ "restricted",		RESTRICTED},
 		{ "rib",		RIB},
 		{ "route-collector",	ROUTECOLL},
 		{ "route-reflector",	REFLECTOR},
@@ -2172,6 +2187,7 @@ lookup(char *s)
 		{ "rtlabel",		RTLABEL},
 		{ "self",		SELF},
 		{ "set",		SET},
+		{ "socket",		SOCKET },
 		{ "softreconfig",	SOFTRECONFIG},
 		{ "source-as",		SOURCEAS},
 		{ "spi",		SPI},
@@ -2539,6 +2555,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
 	conf->opts = xconf->opts;
+	conf->csock = strdup(SOCKET_NAME);
 
 	if ((file = pushfile(filename, 1)) == NULL) {
 		free(conf);
@@ -2599,6 +2616,9 @@ parse_config(char *filename, struct bgpd_config *xconf,
 
 	if (errors) {
 		/* XXX more leaks in this case */
+		free(conf->csock);
+		free(conf->rcsock);
+
 		while ((la = TAILQ_FIRST(listen_addrs)) != NULL) {
 			TAILQ_REMOVE(listen_addrs, la, entry);
 			free(la);

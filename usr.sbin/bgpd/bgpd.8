@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.37 2010/05/24 19:44:23 jmc Exp $
+.\" $OpenBSD: bgpd.8,v 1.38 2010/06/27 19:53:34 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: June 27 2010 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -26,8 +26,6 @@
 .Op Fl cdnv
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
-.Op Fl r Ar path
-.Op Fl s Ar path
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -119,15 +117,6 @@ instead of the default
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl r Ar path
-Open a second, restricted, control socket that
-.Xr bgpctl 8
-can use.
-Only
-.Em show
-requests are allowed on this socket.
-.It Fl s Ar path
-Use an alternate location for the default control socket.
 .It Fl v
 Produce more verbose output.
 .El

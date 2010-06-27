@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.163 2010/05/19 12:44:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.164 2010/06/27 19:53:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,6 +44,7 @@ int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 		    struct peer **);
 int		dispatch_imsg(struct imsgbuf *, int);
+int		control_setup(struct bgpd_config *);
 
 int			 rfd = -1;
 int			 cflags;
@@ -55,6 +56,8 @@ pid_t			 reconfpid;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_rde;
 struct rib_names	 ribnames = SIMPLEQ_HEAD_INITIALIZER(ribnames);
+char			*cname;
+char			*rcname;
 
 void
 sighdlr(int sig)
@@ -119,9 +122,8 @@ main(int argc, char *argv[])
 	bzero(&conf, sizeof(conf));
 	LIST_INIT(&mrt_l);
 	peer_l = NULL;
-	conf.csock = SOCKET_NAME;
 
-	while ((ch = getopt(argc, argv, "cdD:f:nr:s:v")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
 		switch (ch) {
 		case 'c':
 			conf.opts |= BGPD_OPT_FORCE_DEMOTE;
@@ -145,12 +147,6 @@ main(int argc, char *argv[])
 				conf.opts |= BGPD_OPT_VERBOSE2;
 			conf.opts |= BGPD_OPT_VERBOSE;
 			log_verbose(1);
-			break;
-		case 'r':
-			conf.rcsock = optarg;
-			break;
-		case 's':
-			conf.csock = optarg;
 			break;
 		default:
 			usage();
@@ -212,8 +208,7 @@ main(int argc, char *argv[])
 
 	/* fork children */
 	rde_pid = rde_main(pipe_m2r, pipe_s2r, pipe_m2s, pipe_s2r_c, debug);
-	io_pid = session_main(pipe_m2s, pipe_s2r, pipe_m2r, pipe_s2r_c,
-	    conf.csock, conf.rcsock);
+	io_pid = session_main(pipe_m2s, pipe_s2r, pipe_m2r, pipe_s2r_c);
 
 	setproctitle("parent");
 
@@ -447,6 +442,9 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 			return (-1);
 		la->fd = -1;
 	}
+
+	if (control_setup(conf) == -1)
+		return (-1);
 
 	/* adjust fib syncing on reload */
 	ktable_preload();
@@ -774,4 +772,46 @@ bgpd_filternexthop(struct kroute *kr, struct kroute6 *kr6)
 	}
 
 	return (1);
+}
+
+int
+control_setup(struct bgpd_config *conf)
+{
+	int fd, restricted;
+
+	/* control socket is outside chroot */
+	if (!cname || strcmp(cname, conf->csock)) {
+		if (cname) {
+			control_cleanup(cname);
+			free(cname);
+		}
+		if ((cname = strdup(conf->csock)) == NULL)
+			fatal("strdup");
+		if ((fd = control_init(0, cname)) == -1)
+			fatalx("control socket setup failed");
+		restricted = 0;
+		if (imsg_compose(ibuf_se, IMSG_RECONF_CTRL, 0, 0, fd,
+		    &restricted, sizeof(restricted)) == -1)
+			return (-1);
+	}
+	if (!conf->rcsock) {
+		/* remove restricted socket */
+		control_cleanup(rcname);
+		free(rcname);
+		rcname = NULL;
+	} else if (!rcname || strcmp(rcname, conf->rcsock)) {
+		if (rcname) {
+			control_cleanup(rcname);
+			free(rcname);
+		}
+		if ((rcname = strdup(conf->rcsock)) == NULL)
+			fatal("strdup");
+		if ((fd = control_init(1, rcname)) == -1)
+			fatalx("control socket setup failed");
+		restricted = 1;
+		if (imsg_compose(ibuf_se, IMSG_RECONF_CTRL, 0, 0, fd,
+		    &restricted, sizeof(restricted)) == -1)
+			return (-1);
+	}
+	return (0);
 }

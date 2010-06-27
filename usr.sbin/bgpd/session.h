@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.107 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: session.h,v 1.108 2010/06/27 19:53:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -227,7 +227,7 @@ struct ctl_timer {
 
 /* session.c */
 void		 session_socket_blockmode(int, enum blockmodes);
-pid_t		 session_main(int[2], int[2], int[2], int[2], char *, char *);
+pid_t		 session_main(int[2], int[2], int[2], int[2]);
 void		 bgp_fsm(struct peer *, enum session_events);
 int		 session_neighbor_rrefresh(struct peer *p);
 struct peer	*getpeerbyaddr(struct bgpd_addr *);
