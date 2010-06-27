@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.33 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: si.c,v 1.34 2010/06/27 05:52:01 beck Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -98,6 +98,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.87 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.88 2010/06/27 05:52:01 beck Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -57,6 +57,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 
 #include <net/if.h>
 
