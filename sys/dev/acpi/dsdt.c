@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.158 2010/06/19 19:43:06 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.159 2010/06/27 07:26:31 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -47,8 +47,8 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
-struct acpi_q 		*acpi_maptable(paddr_t, const char *, const char *, 
-    			    const char *);
+struct acpi_q 		*acpi_maptable(struct acpi_softc *sc, paddr_t, const char *, const char *, 
+    			    const char *, int);
 struct aml_scope 	*aml_load(struct acpi_softc *, struct aml_scope *,
     			    struct aml_value *, struct aml_value *);
 
@@ -3324,16 +3324,12 @@ aml_load(struct acpi_softc *sc, struct aml_scope *scope,
 		goto fail;
 
 	/* Load SSDT from memory */
-	entry = acpi_maptable(rgn->v_opregion.iobase, "SSDT", NULL, NULL);
+	entry = acpi_maptable(sc, rgn->v_opregion.iobase, "SSDT", NULL, NULL, 1);
 	if (entry == NULL)
 		goto fail;
 
 	dnprintf(10, "%s: loaded SSDT %s @ %llx\n", sc->sc_dev.dv_xname,
 	    aml_nodename(rgn->node), rgn->v_opregion.iobase);
- 
-	/* Add SSDT to parent list */
-	SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry,
-	    q_next);
 	ddb->v_integer = entry->q_id;
 
 	p_ssdt = entry->q_table;
