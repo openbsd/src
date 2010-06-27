@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.103 2010/05/03 15:27:28 jsing Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.104 2010/06/27 00:14:06 jsing Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -80,6 +80,8 @@ int	disk_change;		/* set if a disk has been attached/detached
 
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
+
+char *disk_readlabel(struct disklabel *, dev_t);
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
@@ -917,38 +919,14 @@ disk_unlock(struct disk *dk)
 int
 dk_mountroot(void)
 {
-	dev_t rawdev, rrootdev;
 	int part = DISKPART(rootdev);
 	int (*mountrootfn)(void);
 	struct disklabel dl;
-	struct vnode *vn;
-	int error;
+	char *error;
 
-	rrootdev = blktochr(rootdev);
-	rawdev = MAKEDISKDEV(major(rrootdev), DISKUNIT(rootdev), RAW_PART);
-#ifdef DEBUG
-	printf("rootdev=0x%x rrootdev=0x%x rawdev=0x%x\n", rootdev,
-	    rrootdev, rawdev);
-#endif
-
-	/*
-	 * open device, ioctl for the disklabel, and close it.
-	 */
-	if (cdevvp(rawdev, &vn))
-		panic("cannot obtain vnode for 0x%x/0x%x", rootdev, rrootdev);
-	error = VOP_OPEN(vn, FREAD, NOCRED, curproc);
+	error = disk_readlabel(&dl, rootdev);
 	if (error)
-		panic("cannot open disk, 0x%x/0x%x, error %d",
-		    rootdev, rrootdev, error);
-	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&dl, FREAD, NOCRED, 0);
-	if (error)
-		panic("cannot read disk label, 0x%x/0x%x, error %d",
-		    rootdev, rrootdev, error);
-	error = VOP_CLOSE(vn, FREAD, NOCRED, 0);
-	if (error)
-		panic("cannot close disk , 0x%x/0x%x, error %d",
-		    rootdev, rrootdev, error);
-	vput(vn);
+		panic(error);
 
 	if (DL_GETPSIZE(&dl.d_partitions[part]) == 0)
 		panic("root filesystem has size 0");
@@ -1280,6 +1258,56 @@ findblkname(int maj)
 	for (i = 0; nam2blk[i].name; i++)
 		if (nam2blk[i].maj == maj)
 			return (nam2blk[i].name);
+	return (NULL);
+}
+
+char *
+disk_readlabel(struct disklabel *dl, dev_t dev)
+{
+	static char errbuf[100];
+	struct vnode *vn;
+	dev_t chrdev, rawdev;
+	int error;
+
+	chrdev = blktochr(dev);
+	rawdev = MAKEDISKDEV(major(chrdev), DISKUNIT(chrdev), RAW_PART);
+
+#ifdef DEBUG
+	printf("dev=0x%x chrdev=0x%x rawdev=0x%x\n", dev, chrdev, rawdev);
+#endif
+
+	if (cdevvp(rawdev, &vn)) {
+		snprintf(errbuf, sizeof(errbuf),
+		    "cannot obtain vnode for 0x%x/0x%x", dev, rawdev);
+		return (errbuf);
+	}
+
+	error = VOP_OPEN(vn, FREAD, NOCRED, curproc);
+	if (error) {
+		snprintf(errbuf, sizeof(errbuf),
+		    "cannot open disk, 0x%x/0x%x, error %d",
+		    dev, rawdev, error);
+		return (errbuf);
+	}
+
+	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)dl, FREAD, NOCRED, 0);
+	if (error) {
+		snprintf(errbuf, sizeof(errbuf),
+		    "cannot read disk label, 0x%x/0x%x, error %d",
+		    dev, rawdev, error);
+		return (errbuf);
+	}
+
+	error = VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	if (error) {
+		snprintf(errbuf, sizeof(errbuf),
+		    "cannot close disk, 0x%x/0x%x, error %d",
+		    dev, rawdev, error);
+		return (errbuf);
+	}
+
+	vput(vn);
+
 	return (NULL);
 }
 
