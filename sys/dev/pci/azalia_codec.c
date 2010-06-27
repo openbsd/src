@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.146 2010/06/27 17:42:27 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.147 2010/06/27 21:47:07 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1390,7 +1390,7 @@ azalia_mixer_default(codec_t *this)
  	}
 	this->recvols.mute = 0;
 
-	err = azalia_codec_enable_unsol(this);
+	err = azalia_codec_enable_unsol(this, 0);
 	if (err)
 		return(err);
 
@@ -1398,7 +1398,7 @@ azalia_mixer_default(codec_t *this)
 }
 
 int
-azalia_codec_enable_unsol(codec_t *this)
+azalia_codec_enable_unsol(codec_t *this, int resuming)
 {
 	widget_t *w;
 	uint32_t result;
@@ -1416,7 +1416,7 @@ azalia_codec_enable_unsol(codec_t *this)
 		azalia_unsol_event(this, AZ_TAG_SPKR);
 
 	/* volume knob */
-	if (this->playvols.master != this->audiofunc) {
+	if (this->playvols.master != this->audiofunc && !resuming) {
 
 		w = &this->w[this->playvols.master];
 		err = azalia_comresp(this, w->nid, CORB_GET_VOLUME_KNOB,

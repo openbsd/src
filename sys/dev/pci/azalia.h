@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.59 2010/03/21 15:02:31 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.60 2010/06/27 21:47:07 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -727,4 +727,4 @@ int	azalia_comresp(const codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 int	azalia_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
 int	azalia_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
 
-int	azalia_codec_enable_unsol(codec_t *);
+int	azalia_codec_enable_unsol(codec_t *, int);

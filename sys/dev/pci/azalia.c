@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.172 2010/04/20 02:17:24 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.173 2010/06/27 21:47:07 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1415,10 +1415,6 @@ azalia_resume_codec(codec_t *this)
 
 	azalia_restore_mixer(this);
 
-	err = azalia_codec_enable_unsol(this);
-	if (err)
-		return err;
-
 	return(0);
 }
 
@@ -1446,6 +1442,10 @@ azalia_resume(azalia_t *az)
 		return err;
 
 	err = azalia_resume_codec(&az->codecs[az->codecno]);
+	if (err)
+		return err;
+
+	err = azalia_codec_enable_unsol(&az->codecs[az->codecno], 1);
 	if (err)
 		return err;
 
