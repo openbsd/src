@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.501 2010/06/26 00:32:34 yuo Exp $
+$OpenBSD: usbdevs,v 1.502 2010/06/27 01:05:33 maja Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1337,6 +1337,7 @@ product DISPLAYLINK EC008	0x019b	EasyCAP008 DVI
 product DISPLAYLINK HPDOCK	0x01d4	HP USB Docking
 product DISPLAYLINK M01061	0x01e2	Lenovo DVI
 product DISPLAYLINK SWDVI	0x024c	SUNWEIT DVI
+product DISPLAYLINK LUM70	0x02a9	Lilliput UM-70
 product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
 
 /* DMI products */
