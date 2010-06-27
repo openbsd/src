@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.683 2010/04/02 20:07:28 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.684 2010/06/27 21:00:22 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -148,7 +148,7 @@ viasio*	at isa? port 0x4e flags 0x0000
 wbsio*	at isa? port 0x2e		# Winbond LPC Super I/O
 wbsio*	at isa? port 0x4e
 lm*	at wbsio?
-uguru0	at isa? port 0xe0		# ABIT uGuru
+uguru0	at isa? disable port 0xe0	# ABIT uGuru
 fins0	at isa? port 0x4e		# Fintek F71805 Super I/O
 
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
