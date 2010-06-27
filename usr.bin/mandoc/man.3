@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.11 2010/05/26 02:55:16 schwarze Exp $
+.\"	$Id: man.3,v 1.12 2010/06/27 21:54:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2010 $
+.Dd $Mdocdate: June 27 2010 $
 .Dt MAN 3
 .Os
 .Sh NAME
@@ -29,10 +29,16 @@
 .Nd man macro compiler library
 .Sh SYNOPSIS
 .In mandoc.h
+.In regs.h
 .In man.h
 .Vt extern const char * const * man_macronames;
 .Ft "struct man *"
-.Fn man_alloc "void *data" "int pflags" "mandocmsg msgs"
+.Fo man_alloc
+.Fa "struct regset *regs"
+.Fa "void *data"
+.Fa "int pflags"
+.Fa "mandocmsg msgs"
+.Fc
 .Ft int
 .Fn man_endparse "struct man *man"
 .Ft void
@@ -42,7 +48,11 @@
 .Ft "const struct man_node *"
 .Fn man_node "const struct man *man"
 .Ft int
-.Fn man_parseln "struct man *man" "int line" "char *buf"
+.Fo man_parseln
+.Fa "struct man *man"
+.Fa "int line"
+.Fa "char *buf"
+.Fc
 .Ft void
 .Fn man_reset "struct man *man"
 .Sh DESCRIPTION
@@ -281,14 +291,16 @@ on the finished parse tree with
 .Fn parsed .
 This example does not error-check nor free memory upon failure.
 .Bd -literal -offset indent
+struct regset regs;
 struct man *man;
 struct man_node *node;
 char *buf;
 size_t len;
 int line;
 
+bzero(&regs, sizeof(struct regset));
 line = 1;
-man = man_alloc(NULL, 0, NULL);
+man = man_alloc(&regs, NULL, 0, NULL);
 buf = NULL;
 alloc_len = 0;
 

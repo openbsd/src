@@ -1,6 +1,6 @@
-/*	$Id: man.c,v 1.34 2010/06/06 18:08:41 schwarze Exp $ */
+/*	$Id: man.c,v 1.35 2010/06/27 21:54:42 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "mandoc.h"
+#include "regs.h"
 #include "libman.h"
 #include "libmandoc.h"
 
@@ -90,7 +91,8 @@ man_free(struct man *man)
 
 
 struct man *
-man_alloc(void *data, int pflags, mandocmsg msg)
+man_alloc(struct regset *regs, void *data, 
+		int pflags, mandocmsg msg)
 {
 	struct man	*p;
 
@@ -100,6 +102,7 @@ man_alloc(void *data, int pflags, mandocmsg msg)
 	p->data = data;
 	p->pflags = pflags;
 	p->msg = msg;
+	p->regs = regs;
 
 	man_alloc1(p);
 	return(p);

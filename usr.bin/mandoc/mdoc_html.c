@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.22 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.23 2010/06/27 21:54:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,7 @@
 #include "mandoc.h"
 #include "out.h"
 #include "html.h"
+#include "regs.h"
 #include "mdoc.h"
 #include "main.h"
 
@@ -299,7 +300,7 @@ synopsis_pre(struct html *h, const struct mdoc_node *n)
 	struct roffsu	 su;
 	struct htmlpair	 tag;
 
-	if (NULL == n->prev || SEC_SYNOPSIS != n->sec)
+	if (NULL == n->prev || ! (MDOC_SYNPRETTY & n->flags))
 		return;
 
 	SCALE_VS_INIT(&su, 1);
@@ -1609,7 +1610,7 @@ mdoc_fn_pre(MDOC_ARGS)
 	 */
 
 #if 0
-	if (SEC_SYNOPSIS == n->sec) {
+	if (MDOC_SYNPRETTY & n->flags) {
 		nbuf[0] = '\0';
 		html_idcat(nbuf, sp, BUFSIZ);
 		PAIR_ID_INIT(&tag[1], nbuf);
@@ -1639,7 +1640,7 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	for (nn = n->child->next; nn; nn = nn->next) {
 		i = 1;
-		if (SEC_SYNOPSIS == n->sec)
+		if (MDOC_SYNPRETTY & n->flags)
 			i = 2;
 		t = print_otag(h, TAG_SPAN, i, tag);
 		print_text(h, nn->string);
@@ -1649,7 +1650,7 @@ mdoc_fn_pre(MDOC_ARGS)
 	}
 
 	print_text(h, ")");
-	if (SEC_SYNOPSIS == n->sec)
+	if (MDOC_SYNPRETTY & n->flags)
 		print_text(h, ";");
 
 	return(0);
@@ -1819,7 +1820,7 @@ mdoc_in_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "includes");
 	print_otag(h, TAG_SPAN, 1, tag);
 
-	if (SEC_SYNOPSIS == n->sec && MDOC_LINE & n->flags)
+	if (MDOC_SYNPRETTY & n->flags && MDOC_LINE & n->flags)
 		print_text(h, "#include");
 
 	print_text(h, "<");

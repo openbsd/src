@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.3,v 1.8 2010/06/06 20:30:08 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.9 2010/06/27 21:54:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2010 $
+.Dd $Mdocdate: June 27 2010 $
 .Dt MDOC 3
 .Os
 .Sh NAME
@@ -29,11 +29,17 @@
 .Nd mdoc macro compiler library
 .Sh SYNOPSIS
 .In mandoc.h
+.In regs.h
 .In mdoc.h
 .Vt extern const char * const * mdoc_macronames;
 .Vt extern const char * const * mdoc_argnames;
 .Ft "struct mdoc *"
-.Fn mdoc_alloc "void *data" "int pflags" "mandocmsg msgs"
+.Fo mdoc_alloc
+.Fa "struct regset *regs"
+.Fa "void *data"
+.Fa "int pflags"
+.Fa "mandocmsg msgs"
+.Fc
 .Ft int
 .Fn mdoc_endparse "struct mdoc *mdoc"
 .Ft void
@@ -43,7 +49,11 @@
 .Ft "const struct mdoc_node *"
 .Fn mdoc_node "const struct mdoc *mdoc"
 .Ft int
-.Fn mdoc_parseln "struct mdoc *mdoc" "int line" "char *buf"
+.Fo mdoc_parseln
+.Fa "struct mdoc *mdoc"
+.Fa "int line"
+.Fa "char *buf"
+.Fc
 .Ft int
 .Fn mdoc_reset "struct mdoc *mdoc"
 .Sh DESCRIPTION
@@ -249,14 +259,16 @@ on the finished parse tree with
 .Fn parsed .
 This example does not error-check nor free memory upon failure.
 .Bd -literal -offset indent
+struct regset regs;
 struct mdoc *mdoc;
 const struct mdoc_node *node;
 char *buf;
 size_t len;
 int line;
 
+bzero(&regs, sizeof(struct regset));
 line = 1;
-mdoc = mdoc_alloc(NULL, 0, NULL);
+mdoc = mdoc_alloc(&regs, NULL, 0, NULL);
 buf = NULL;
 alloc_len = 0;
 

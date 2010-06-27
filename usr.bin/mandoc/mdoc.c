@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.57 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.58 2010/06/27 21:54:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,6 +25,7 @@
 #include <time.h>
 
 #include "mandoc.h"
+#include "regs.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
 
@@ -187,7 +188,8 @@ mdoc_free(struct mdoc *mdoc)
  * Allocate volatile and non-volatile parse resources.  
  */
 struct mdoc *
-mdoc_alloc(void *data, int pflags, mandocmsg msg)
+mdoc_alloc(struct regset *regs, void *data, 
+		int pflags, mandocmsg msg)
 {
 	struct mdoc	*p;
 
@@ -196,6 +198,7 @@ mdoc_alloc(void *data, int pflags, mandocmsg msg)
 	p->msg = msg;
 	p->data = data;
 	p->pflags = pflags;
+	p->regs = regs;
 
 	mdoc_hash_init();
 	mdoc_alloc1(p);
@@ -254,8 +257,7 @@ mdoc_vmsg(struct mdoc *mdoc, enum mandocerr t,
 
 
 int
-mdoc_macro(struct mdoc *m, enum mdoct tok, 
-		int ln, int pp, int *pos, char *buf)
+mdoc_macro(MACRO_PROT_ARGS)
 {
 	assert(tok < MDOC_MAX);
 
@@ -263,13 +265,13 @@ mdoc_macro(struct mdoc *m, enum mdoct tok,
 
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
 			MDOC_PBODY & m->flags)
-		return(mdoc_pmsg(m, ln, pp, MANDOCERR_BADBODY));
+		return(mdoc_pmsg(m, line, ppos, MANDOCERR_BADBODY));
 
 	/* If we're in the prologue, deny "body" macros.  */
 
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
 			! (MDOC_PBODY & m->flags)) {
-		if ( ! mdoc_pmsg(m, ln, pp, MANDOCERR_BADPROLOG))
+		if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_BADPROLOG))
 			return(0);
 		if (NULL == m->meta.title)
 			m->meta.title = mandoc_strdup("UNKNOWN");
@@ -282,7 +284,7 @@ mdoc_macro(struct mdoc *m, enum mdoct tok,
 		m->flags |= MDOC_PBODY;
 	}
 
-	return((*mdoc_macros[tok].fp)(m, tok, ln, pp, pos, buf));
+	return((*mdoc_macros[tok].fp)(m, tok, line, ppos, pos, buf));
 }
 
 
@@ -362,9 +364,27 @@ node_alloc(struct mdoc *m, int line, int pos,
 	p->pos = pos;
 	p->tok = tok;
 	p->type = type;
+
+	/* Flag analysis. */
+
 	if (MDOC_NEWLINE & m->flags)
 		p->flags |= MDOC_LINE;
 	m->flags &= ~MDOC_NEWLINE;
+
+	/* Section analysis. */
+
+	if (SEC_SYNOPSIS == p->sec)
+		p->flags |= MDOC_SYNPRETTY;
+
+	/* Register analysis. */
+
+	if (m->regs->regs[(int)REG_nS].set) {
+		if (m->regs->regs[(int)REG_nS].v.u)
+			p->flags |= MDOC_SYNPRETTY;
+		else
+			p->flags &= ~MDOC_SYNPRETTY;
+	}
+
 	return(p);
 }
 
@@ -781,7 +801,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
 			LIST_column == n->data.Bl.type) {
 		m->flags |= MDOC_FREECOL;
-		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
+		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf))
 			goto err;
 		return(1);
 	}

@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.5 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: roff.c,v 1.6 2010/06/27 21:54:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,12 +19,15 @@
 #endif
 
 #include <assert.h>
+#include <errno.h>
 #include <ctype.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
 #include "mandoc.h"
+#include "regs.h"
 #include "roff.h"
 
 #define	RSTACK_MAX	128
@@ -48,6 +51,7 @@ enum	rofft {
 	ROFF_tr,
 	ROFF_cblock,
 	ROFF_ccond,
+	ROFF_nr,
 	ROFF_MAX
 };
 
@@ -62,6 +66,7 @@ struct	roff {
 	void		*data; /* privdata for messages */
 	enum roffrule	 rstack[RSTACK_MAX]; /* stack of !`ie' rules */
 	int		 rstackpos; /* position in rstack */
+	struct regset	*regs; /* read/writable registers */
 };
 
 struct	roffnode {
@@ -103,8 +108,9 @@ static	enum rofferr	 roff_ccond(ROFF_ARGS);
 static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
-static	enum roffrule	 roff_evalcond(const char *, int *);
 static	enum rofferr	 roff_line(ROFF_ARGS);
+static	enum rofferr	 roff_nr(ROFF_ARGS);
+static	enum roffrule	 roff_evalcond(const char *, int *);
 
 /* See roff_hash_find() */
 
@@ -130,6 +136,7 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "tr", roff_line, NULL, NULL, 0, NULL },
 	{ ".", roff_cblock, NULL, NULL, 0, NULL },
 	{ "\\}", roff_ccond, NULL, NULL, 0, NULL },
+	{ "nr", roff_nr, NULL, NULL, 0, NULL },
 };
 
 static	void		 roff_free1(struct roff *);
@@ -140,6 +147,7 @@ static	int		 roffnode_push(struct roff *,
 				enum rofft, int, int);
 static	void		 roffnode_pop(struct roff *);
 static	enum rofft	 roff_parse(const char *, int *);
+static	int		 roff_parse_nat(const char *, unsigned int *);
 
 /* See roff_hash_find() */
 #define	ROFF_HASH(p)	(p[0] - ASCII_LO)
@@ -273,7 +281,7 @@ roff_free(struct roff *r)
 
 
 struct roff *
-roff_alloc(const mandocmsg msg, void *data)
+roff_alloc(struct regset *regs, const mandocmsg msg, void *data)
 {
 	struct roff	*r;
 
@@ -282,6 +290,7 @@ roff_alloc(const mandocmsg msg, void *data)
 		return(0);
 	}
 
+	r->regs = regs;
 	r->msg = msg;
 	r->data = data;
 	r->rstackpos = -1;
@@ -292,8 +301,8 @@ roff_alloc(const mandocmsg msg, void *data)
 
 
 enum rofferr
-roff_parseln(struct roff *r, int ln, 
-		char **bufp, size_t *szp, int pos, int *offs)
+roff_parseln(struct roff *r, int ln, char **bufp, 
+		size_t *szp, int pos, int *offs)
 {
 	enum rofft	 t;
 	int		 ppos;
@@ -389,6 +398,26 @@ roff_parse(const char *buf, int *pos)
 		(*pos)++;
 
 	return(t);
+}
+
+
+static int
+roff_parse_nat(const char *buf, unsigned int *res)
+{
+	char		*ep;
+	long		 lval;
+
+	errno = 0;
+	lval = strtol(buf, &ep, 10);
+	if (buf[0] == '\0' || *ep != '\0')
+		return(0);
+	if ((errno == ERANGE && 
+			(lval == LONG_MAX || lval == LONG_MIN)) ||
+			(lval > INT_MAX || lval < 0))
+		return(0);
+
+	*res = (unsigned int)lval;
+	return(1);
 }
 
 
@@ -602,8 +631,8 @@ roff_block_sub(ROFF_ARGS)
 		return(ROFF_IGN);
 
 	assert(roffs[t].proc);
-	return((*roffs[t].proc)(r, t, bufp, 
-			szp, ln, ppos, pos, offs));
+	return((*roffs[t].proc)(r, t, bufp, szp, 
+				ln, ppos, pos, offs));
 }
 
 
@@ -652,8 +681,8 @@ roff_cond_sub(ROFF_ARGS)
 				return(ROFF_IGN);
 
 	assert(roffs[t].proc);
-	return((*roffs[t].proc)
-			(r, t, bufp, szp, ln, ppos, pos, offs));
+	return((*roffs[t].proc)(r, t, bufp, szp, 
+				ln, ppos, pos, offs));
 }
 
 
@@ -707,6 +736,15 @@ roff_evalcond(const char *v, int *pos)
 	while (v[*pos] && ' ' != v[*pos])
 		(*pos)++;
 	return(ROFFRULE_DENY);
+}
+
+
+/* ARGSUSED */
+static enum rofferr
+roff_line(ROFF_ARGS)
+{
+
+	return(ROFF_IGN);
 }
 
 
@@ -808,8 +846,38 @@ roff_cond(ROFF_ARGS)
 
 /* ARGSUSED */
 static enum rofferr
-roff_line(ROFF_ARGS)
+roff_nr(ROFF_ARGS)
 {
+	const char	*key, *val;
+	struct reg	*rg;
+
+	key = &(*bufp)[pos];
+	rg = r->regs->regs;
+
+	/* Parse register request. */
+	while ((*bufp)[pos] && ' ' != (*bufp)[pos])
+		pos++;
+
+	/*
+	 * Set our nil terminator.  Because this line is going to be
+	 * ignored anyway, we can munge it as we please.
+	 */
+	if ((*bufp)[pos])
+		(*bufp)[pos++] = '\0';
+
+	/* Skip whitespace to register token. */
+	while ((*bufp)[pos] && ' ' == (*bufp)[pos])
+		pos++;
+
+	val = &(*bufp)[pos];
+
+	/* Process register token. */
+
+	if (0 == strcmp(key, "nS")) {
+		rg[(int)REG_nS].set = 1;
+		if ( ! roff_parse_nat(val, &rg[(int)REG_nS].v.u))
+			rg[(int)REG_nS].v.u = 0;
+	}
 
 	return(ROFF_IGN);
 }

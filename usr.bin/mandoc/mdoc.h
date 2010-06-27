@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.28 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.29 2010/06/27 21:54:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -155,6 +155,7 @@ enum	mdoct {
 
 /* What follows is a list of ALL possible macro arguments. */
 
+/* FIXME: make this into an enum. */
 #define	MDOC_Split	 0
 #define	MDOC_Nosplit	 1
 #define	MDOC_Ragged	 2
@@ -300,8 +301,10 @@ struct	mdoc_node {
 #define	MDOC_ACTED	 (1 << 1) /* has been acted upon */
 #define	MDOC_EOS	 (1 << 2) /* at sentence boundary */
 #define	MDOC_LINE	 (1 << 3) /* first macro/text on line */
+#define	MDOC_SYNPRETTY	 (1 << 4) /* SYNOPSIS-style formatting */
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
+	/* FIXME: these can be union'd to shave a few bytes. */
 	struct mdoc_arg	 *args; 	/* BLOCK/ELEM */
 	struct mdoc_node *pending;	/* BLOCK */
 	struct mdoc_node *head;		/* BLOCK */
@@ -331,7 +334,7 @@ struct	mdoc;
 /* See mdoc.3 for documentation. */
 
 void	 	  mdoc_free(struct mdoc *);
-struct	mdoc	 *mdoc_alloc(void *, int, mandocmsg);
+struct	mdoc	 *mdoc_alloc(struct regset *, void *, int, mandocmsg);
 void		  mdoc_reset(struct mdoc *);
 int	 	  mdoc_parseln(struct mdoc *, int, char *, int);
 const struct mdoc_node *mdoc_node(const struct mdoc *);

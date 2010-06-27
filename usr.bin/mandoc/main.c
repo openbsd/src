@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.37 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: main.c,v 1.38 2010/06/27 21:54:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,10 +27,11 @@
 #include <unistd.h>
 
 #include "mandoc.h"
+#include "regs.h"
+#include "main.h"
 #include "mdoc.h"
 #include "man.h"
 #include "roff.h"
-#include "main.h"
 
 #define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
@@ -76,6 +77,7 @@ struct	curparse {
 	struct man	 *man;		/* man parser */
 	struct mdoc	 *mdoc;		/* mdoc parser */
 	struct roff	 *roff;		/* roff parser (!NULL) */
+	struct regset	  regs;		/* roff registers */
 	enum outt	  outtype; 	/* which output to use */
 	out_mdoc	  outmdoc;	/* mdoc output ptr */
 	out_man	  	  outman;	/* man output ptr */
@@ -286,7 +288,7 @@ man_init(struct curparse *curp)
 	if (curp->fflags & FL_NIGN_ESCAPE)
 		pflags &= ~MAN_IGN_ESCAPE;
 
-	return(man_alloc(curp, pflags, mmsg));
+	return(man_alloc(&curp->regs, curp, pflags, mmsg));
 }
 
 
@@ -294,7 +296,7 @@ static struct roff *
 roff_init(struct curparse *curp)
 {
 
-	return(roff_alloc(mmsg, curp));
+	return(roff_alloc(&curp->regs, mmsg, curp));
 }
 
 
@@ -314,7 +316,7 @@ mdoc_init(struct curparse *curp)
 	if (curp->fflags & FL_NIGN_MACRO)
 		pflags &= ~MDOC_IGN_MACRO;
 
-	return(mdoc_alloc(curp, pflags, mmsg));
+	return(mdoc_alloc(&curp->regs, curp, pflags, mmsg));
 }
 
 
@@ -443,6 +445,7 @@ fdesc(struct curparse *curp)
 	man = NULL;
 	mdoc = NULL;
 	roff = NULL;
+
 	memset(&ln, 0, sizeof(struct buf));
 
 	/*
@@ -623,6 +626,7 @@ fdesc(struct curparse *curp)
 		(*curp->outmdoc)(curp->outdata, mdoc);
 
  cleanup:
+	memset(&curp->regs, 0, sizeof(struct regset));
 	if (mdoc)
 		mdoc_reset(mdoc);
 	if (man)

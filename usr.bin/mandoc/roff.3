@@ -1,4 +1,4 @@
-.\"	$Id: roff.3,v 1.1 2010/05/26 02:55:16 schwarze Exp $
+.\"	$Id: roff.3,v 1.2 2010/06/27 21:54:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2010 $
+.Dd $Mdocdate: June 27 2010 $
 .Dt ROFF 3
 .Os
 .Sh NAME
@@ -27,9 +27,14 @@
 .Nd roff macro compiler library
 .Sh SYNOPSIS
 .In mandoc.h
+.In regs.h
 .In roff.h
 .Ft "struct roff *"
-.Fn roff_alloc "mandocmsg msgs" "void *data"
+.Fo roff_alloc
+.Fa "struct regset *regs"
+.Fa "mandocmsg msgs"
+.Fa "void *data"
+.Fc
 .Ft int
 .Fn roff_endparse "struct roff *roff"
 .Ft void

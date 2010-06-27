@@ -1,4 +1,4 @@
-.\"	$Id: roff.7,v 1.5 2010/06/26 17:56:43 schwarze Exp $
+.\"	$Id: roff.7,v 1.6 2010/06/27 21:54:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2010 $
+.Dd $Mdocdate: June 27 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -268,6 +268,37 @@ This macro is intended to have one argument,
 the name of the request, macro or string to be undefined.
 Currently, it is ignored including its arguments,
 and the number of arguments is not checked.
+.Ss \&nr
+Define a register.
+A register is an arbitrary string value that defines some sort of state,
+which influences parsing and/or formatting.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&nr Cm name value
+.Pp
+The
+.Cm value
+may, at the moment, only be an integer.
+The
+.Cm name
+is defined up to the next whitespace.
+The following register
+.Cm name
+requests are recognised:
+.Bl -tag -width Ds
+.It Cm nS
+If set to a positive integer value, certain
+.Xr mdoc 7
+macros will behave as if they were defined in the
+.Em SYNOPSIS
+section.
+Otherwise, this behaviour is unset (even if called within the
+.Em SYNOPSIS
+section itself).
+Note that invoking a new
+.Xr mdoc 7
+section will unset this value.
+.El
 .Ss \&tr
 Output character translation.
 This macro is intended to have one argument,
@@ -286,6 +317,12 @@ file re-write
 .Pq somewhere between 1.15 and 1.19 .
 .Pp
 .Bl -dash -compact
+.It
+The
+.Cm nS
+request to
+.Sx \&nr
+is only compatible with OpenBSD's groff.
 .It
 Historic groff did not accept white-space buffering the custom END tag
 for the

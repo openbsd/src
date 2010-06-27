@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.62 2010/06/27 17:49:58 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.63 2010/06/27 21:54:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -802,6 +802,8 @@ pre_sh(PRE_ARGS)
 
 	if (MDOC_BLOCK != n->type)
 		return(1);
+
+	mdoc->regs->regs[(int)REG_nS].set = 0;
 	return(check_parent(mdoc, n, MDOC_MAX, MDOC_ROOT));
 }
 
