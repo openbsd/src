@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.21 2010/06/22 13:10:38 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.22 2010/06/27 01:47:36 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1767,6 +1767,12 @@ SLIST_HEAD(mpii_ccb_list, mpii_ccb);
 
 struct mpii_softc {
 	struct device		sc_dev;
+
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
+
+	void			*sc_ih;
+
 	struct scsi_link	sc_link;
 
 	int			sc_flags;
@@ -1831,133 +1837,27 @@ struct mpii_softc {
 	struct ksensordev	sc_sensordev;
 };
 
-int	mpii_attach(struct mpii_softc *);
-void	mpii_detach(struct mpii_softc *);
+int	mpii_match(struct device *, void *, void *);
+void	mpii_attach(struct device *, struct device *, void *);
+int	mpii_detach(struct device *, int);
+
 int	mpii_intr(void *);
 
-int	mpii_pci_match(struct device *, void *, void *);
-void	mpii_pci_attach(struct device *, struct device *, void *);
-int	mpii_pci_detach(struct device *, int);
-
-struct mpii_pci_softc {
-	struct mpii_softc	psc_mpii;
-
-	pci_chipset_tag_t	psc_pc;
-	pcitag_t		psc_tag;
-
-	void			*psc_ih;
+struct cfattach mpii_ca = {
+	sizeof(struct mpii_softc),
+	mpii_match,
+	mpii_attach,
+	mpii_detach
 };
-
-struct cfattach mpii_pci_ca = {
-	sizeof(struct mpii_pci_softc), mpii_pci_match, mpii_pci_attach,
-	mpii_pci_detach
-};
-
-#define PREAD(s, r)	pci_conf_read((s)->psc_pc, (s)->psc_tag, (r))
-#define PWRITE(s, r, v)	pci_conf_write((s)->psc_pc, (s)->psc_tag, (r), (v))
-
-static const struct pci_matchid mpii_devices[] = {
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2008 }
-};
-
-int
-mpii_pci_match(struct device *parent, void *match, void *aux)
-{
-	return (pci_matchbyid(aux, mpii_devices, nitems(mpii_devices)));
-}
-
-void
-mpii_pci_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct mpii_pci_softc		*psc = (void *)self;
-	struct mpii_softc		*sc = &psc->psc_mpii;
-	struct pci_attach_args		*pa = aux;
-	pcireg_t			memtype;
-	int				r;
-	pci_intr_handle_t		ih;
-	const char			*intrstr;
-
-	psc->psc_pc = pa->pa_pc;
-	psc->psc_tag = pa->pa_tag;
-	psc->psc_ih = NULL;
-	sc->sc_dmat = pa->pa_dmat;
-
-	/* find the appropriate memory base */
-	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
-		memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag, r);
-		if ((memtype & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM)
-			break;
-	}
-	if (r >= PCI_MAPREG_END) {
-		printf(": unable to locate system interface registers\n");
-		return;
-	}
-
-	if (pci_mapreg_map(pa, r, memtype, 0, &sc->sc_iot, &sc->sc_ioh,
-	    NULL, &sc->sc_ios, 0xFF) != 0) {
-		printf(": unable to map system interface registers\n");
-		return;
-	}
-
-	/* disable the expansion rom */
-	PWRITE(psc, PCI_ROM_REG, PREAD(psc, PCI_ROM_REG) & ~PCI_ROM_ENABLE);
-
-	/* hook up the interrupt */
-	if (pci_intr_map(pa, &ih)) {
-		printf(": unable to map interrupt\n");
-		goto unmap;
-	}
-	intrstr = pci_intr_string(psc->psc_pc, ih);
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
-	    mpii_intr, sc, sc->sc_dev.dv_xname);
-	if (psc->psc_ih == NULL) {
-		printf(": unable to map interrupt%s%s\n",
-		    intrstr == NULL ? "" : " at ",
-		    intrstr == NULL ? "" : intrstr);
-		goto unmap;
-	}
-	printf(": %s", intrstr);
-
-	if (mpii_attach(sc) != 0) {
-		/* error printed by mpii_attach */
-		goto deintr;
-	}
-
-	return;
-
-deintr:
-	pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
-	psc->psc_ih = NULL;
-unmap:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	sc->sc_ios = 0;
-}
-
-int
-mpii_pci_detach(struct device *self, int flags)
-{
-	struct mpii_pci_softc		*psc = (struct mpii_pci_softc *)self;
-	struct mpii_softc		*sc = &psc->psc_mpii;
-
-	mpii_detach(sc);
-
-	if (psc->psc_ih != NULL) {
-		pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
-		psc->psc_ih = NULL;
-	}
-	if (sc->sc_ios != 0) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-		sc->sc_ios = 0;
-	}
-
-	return (0);
-}
 
 struct cfdriver mpii_cd = {
 	NULL,
 	"mpii",
 	DV_DULL
 };
+
+#define PREAD(s, r)	pci_conf_read((s)->sc_pc, (s)->sc_tag, (r))
+#define PWRITE(s, r, v)	pci_conf_write((s)->sc_pc, (s)->sc_tag, (r), (v))
 
 void		mpii_scsi_cmd(struct scsi_xfer *);
 void		mpii_scsi_cmd_done(struct mpii_ccb *);
@@ -2111,32 +2011,81 @@ void		mpii_refresh_sensors(void *);
 	mpii_req_cfg_page((_s), (_a), MPII_PG_POLL|MPII_PG_EXTENDED, \
 	    (_h), (_r), (_p), (_l))
 
+static const struct pci_matchid mpii_devices[] = {
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2008 }
+};
+
 int
-mpii_attach(struct mpii_softc *sc)
+mpii_match(struct device *parent, void *match, void *aux)
 {
+	return (pci_matchbyid(aux, mpii_devices, nitems(mpii_devices)));
+}
+
+void
+mpii_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct mpii_softc		*sc = (struct mpii_softc *)self;
+	struct pci_attach_args		*pa = aux;
+	pcireg_t			memtype;
+	int				r;
+	pci_intr_handle_t		ih;
 	struct scsibus_attach_args	saa;
 	struct mpii_ccb			*ccb;
 
-	printf("\n");
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
+	sc->sc_dmat = pa->pa_dmat;
+
+	/* find the appropriate memory base */
+	for (r = PCI_MAPREG_START; r < PCI_MAPREG_END; r += sizeof(memtype)) {
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, r);
+		if ((memtype & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM)
+			break;
+	}
+	if (r >= PCI_MAPREG_END) {
+		printf(": unable to locate system interface registers\n");
+		return;
+	}
+
+	if (pci_mapreg_map(pa, r, memtype, 0, &sc->sc_iot, &sc->sc_ioh,
+	    NULL, &sc->sc_ios, 0xFF) != 0) {
+		printf(": unable to map system interface registers\n");
+		return;
+	}
+
+	/* disable the expansion rom */
+	PWRITE(sc, PCI_ROM_REG, PREAD(sc, PCI_ROM_REG) & ~PCI_ROM_ENABLE);
 
 	/* disable interrupts */
 	mpii_write(sc, MPII_INTR_MASK,
-	    MPII_INTR_MASK_RESET | MPII_INTR_MASK_REPLY
-	    | MPII_INTR_MASK_DOORBELL);
+	    MPII_INTR_MASK_RESET | MPII_INTR_MASK_REPLY |
+	    MPII_INTR_MASK_DOORBELL);
+
+	/* hook up the interrupt */
+	if (pci_intr_map(pa, &ih)) {
+		printf(": unable to map interrupt\n");
+		goto unmap;
+	}
+	printf(": %s\n", pci_intr_string(sc->sc_pc, ih));
+
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
+	    mpii_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL)
+		goto unmap;
 
 	if (mpii_init(sc) != 0) {
 		printf("%s: unable to initialize ioc\n", DEVNAME(sc));
-		return (1);
+		goto deintr;
 	}
 
 	if (mpii_iocfacts(sc) != 0) {
 		printf("%s: unable to get iocfacts\n", DEVNAME(sc));
-		return (1);
+		goto deintr;
 	}
 
 	if (mpii_alloc_ccbs(sc) != 0) {
 		/* error already printed */
-		return(1);
+		goto deintr;
 	}
 
 	if (mpii_alloc_replies(sc) != 0) {
@@ -2237,7 +2186,7 @@ mpii_attach(struct mpii_softc *sc)
 	}
 #endif
 
-	return (0);
+	return;
 
 free_dev:
 	if (sc->sc_devs)
@@ -2263,14 +2212,32 @@ free_ccbs:
 	mpii_dmamem_free(sc, sc->sc_requests);
 	free(sc->sc_ccbs, M_DEVBUF);
 
-	return(1);
+deintr:
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	sc->sc_ih = NULL;
+
+unmap:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	sc->sc_ios = 0;
 }
 
-void
-mpii_detach(struct mpii_softc *sc)
+int
+mpii_detach(struct device *self, int flags)
 {
+	struct mpii_softc		*sc = (struct mpii_softc *)self;
 
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (sc->sc_ios != 0) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+		sc->sc_ios = 0;
+	}
+
+	return (0);
 }
+
 
 int
 mpii_intr(void *arg)
@@ -3913,7 +3880,7 @@ mpii_dmamem_alloc(struct mpii_softc *sc, size_t size)
 
 	mdm = malloc(sizeof(*mdm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (mdm == NULL)
-		return (NULL);
+	return (NULL);
 
 	mdm->mdm_size = size;
 
