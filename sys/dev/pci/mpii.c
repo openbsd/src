@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.22 2010/06/27 01:47:36 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.23 2010/06/27 03:34:29 matthew Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -4408,8 +4408,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	DNPRINTF(MPII_D_CMD, "%s:    mpii_scsi_cmd(): opcode: %02x "
-	    "datalen: %d req_sense_len: %d\n", DEVNAME(sc), xs->cmd->opcode,
-	    xs->datalen, xs->req_sense_length);
+	    "datalen: %d\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen);
 
 	s = splbio();
 	mpii_start(sc, ccb);

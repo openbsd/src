@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.127 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.128 2010/06/27 03:34:29 matthew Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -491,11 +491,6 @@ struct scsi_xfer {
 	int	error;			/* an error value	*/
 	struct	buf *bp;		/* If we need to associate with a buf */
 	struct	scsi_sense_data	sense; /* 32 bytes*/
-	/*
-	 * Believe it or not, Some targets fall on the ground with
-	 * anything but a certain sense length.
-	 */
-	int	req_sense_length;	/* Explicit request sense length */
 	u_int8_t status;		/* SCSI status */
 	struct	scsi_generic cmdstore;	/* stash the command in here */
 	/*
