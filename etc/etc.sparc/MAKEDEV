@@ -3,10 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.41 2010/06/09 16:10:25 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.48 2010/06/14 14:07:49 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.42 2010/06/26 23:49:50 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -207,7 +207,7 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std bpf0 bio
+	R std bpf0 bio diskmap
 	R fd0 sd0 sd1 sd2 rd0 cd0
 	;;
 

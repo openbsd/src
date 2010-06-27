@@ -3,10 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.37 2010/06/09 16:10:25 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.48 2010/06/14 14:07:49 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.38 2010/06/26 23:49:50 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -200,7 +200,7 @@ case $i in
 ramdisk)
 	R std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
 	R sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 pty0
-	R apci0 dca0 dcm0 dcm1 bio
+	R apci0 dca0 dcm0 dcm1 bio diskmap
 	R bpf0 bpf1 tun0 tun1 lkm
 	;;
 

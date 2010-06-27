@@ -3,10 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.31 2010/06/09 16:10:25 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.48 2010/06/14 14:07:49 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.32 2010/06/26 23:49:50 jsing Exp 
+#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -394,8 +394,8 @@ local)
 	;;
 
 ramdisk)
-	R bio pty0 tty00 tty01 asc0 rd0 cd0 cd1 st0 st1 sd0 sd1 sd2
-	R sd3 sd4 bpf0 std
+	R diskmap bio pty0 tty00 tty01 asc0 rd0 cd0 cd1 st0 st1 sd0
+	R sd1 sd2 sd3 sd4 bpf0 std
 	;;
 
 all)
