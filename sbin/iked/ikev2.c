@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.19 2010/06/27 01:03:22 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.20 2010/06/27 05:40:49 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa,
 
 	if (msg->msg_cert.id_type) {
 		memcpy(certid, &msg->msg_cert, sizeof(*certid));
-		bzero(&msg->msg_id, sizeof(msg->msg_id));
+		bzero(&msg->msg_cert, sizeof(msg->msg_cert));
 
 		ca_setcert(env, &sa->sa_hdr,
 		    id, certid->id_type,
@@ -905,6 +905,7 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 		if (gethostname((char *)polid->id_data,
 		    sizeof(polid->id_data)) != 0)
 			return (-1);
+		polid->id_offset = 0;
 		polid->id_length =
 		    strlen((char *)polid->id_data); /* excluding NUL */
 	}
