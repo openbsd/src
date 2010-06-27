@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 2010/06/10 17:54:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.112 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -94,6 +94,7 @@
 #include <dev/cons.h>
 #include <stand/boot/bootarg.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_swap.h>
@@ -206,6 +207,15 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 int bufcachepercent = BUFCACHEPERCENT;
+
+/* UVM constraint ranges. */
+struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
+struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL };
+struct uvm_constraint_range *uvm_md_constraints[] = {
+    &isa_constraint,
+    &dma_constraint,
+    NULL,
+};
 
 #ifdef DEBUG
 int sigdebug = 0;

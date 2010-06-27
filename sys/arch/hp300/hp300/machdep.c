@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.126 2009/08/11 19:17:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.127 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -114,6 +114,10 @@ int	bufpages = 0;
 int	bufcachepercent = BUFCACHEPERCENT;
 
 int	physmem;		/* size of physical memory, in pages */
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
+
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.

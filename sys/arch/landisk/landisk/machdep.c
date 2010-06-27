@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -114,6 +114,9 @@ int	kbd_reset;
 int	led_blink;
 
 extern u_int32_t getramsize(void);
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait

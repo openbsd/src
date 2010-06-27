@@ -1,4 +1,4 @@
-/*	$OpenBSD: palm_machdep.c,v 1.3 2010/06/10 17:54:13 deraadt Exp $	*/
+/*	$OpenBSD: palm_machdep.c,v 1.4 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -123,6 +123,7 @@
 #include <sys/termios.h>
 #include <sys/kcore.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <sys/conf.h>
@@ -212,6 +213,9 @@ extern pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;

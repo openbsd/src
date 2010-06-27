@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.473 2010/06/10 17:54:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.474 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -194,6 +194,14 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 int	bufcachepercent = BUFCACHEPERCENT;
+
+struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
+struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL };
+struct uvm_constraint_range *uvm_md_constraints[] = {
+	&isa_constraint,
+	&dma_constraint,
+	NULL
+};
 
 extern int	boothowto;
 int	physmem;

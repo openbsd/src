@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.117 2010/06/10 17:54:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.118 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
@@ -105,6 +106,9 @@ int bufpages = BUFPAGES;
 int bufpages = 0;
 #endif
 int bufcachepercent = BUFCACHEPERCENT;
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 struct bat battable[16];
 

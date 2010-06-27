@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.14 2010/06/23 09:36:03 thib Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.15 2010/06/27 03:03:49 thib Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -108,7 +108,6 @@ void	uvm_pmr_assertvalid(struct uvm_pmemrange *pmr);
 #else
 #define uvm_pmr_assertvalid(pmr)	do {} while (0)
 #endif
-
 
 int			 uvm_pmr_get1page(psize_t, int, struct pglist *,
 			    paddr_t, paddr_t);
@@ -1305,7 +1304,26 @@ uvm_pmr_split(paddr_t pageno)
 	KASSERT(pmr->low < pageno);
 	KASSERT(pmr->high > pageno);
 
+	/*
+	 * uvm_pmr_allocpmr() calls into malloc() which in turn calls into
+	 * uvm_kmemalloc which calls into pmemrange, making the locking
+	 * a bit hard, so we just race!
+	 */
+	uvm_unlock_fpageq();
 	drain = uvm_pmr_allocpmr();
+	uvm_lock_fpageq();
+	pmr = uvm_pmemrange_find(pageno);
+	if (pmr == NULL || !(pmr->low < pageno)) {
+		/*
+		 * We lost the race since someone else ran this or a related
+		 * function, however this should be triggered very rarely so
+		 * we just leak the pmr.
+		 */
+		printf("uvm_pmr_split: lost one pmr\n");
+		uvm_unlock_fpageq();
+		return;
+	}
+
 	drain->low = pageno;
 	drain->high = pmr->high;
 	drain->use = pmr->use;
@@ -1379,37 +1397,29 @@ void
 uvm_pmr_use_inc(paddr_t low, paddr_t high)
 {
 	struct uvm_pmemrange *pmr;
+	paddr_t sz;
 
-	/*
-	 * If high+1 == 0 and low == 0, then you are increasing use
-	 * of the whole address space, which won't make any difference.
-	 * Skip in that case.
-	 */
+	/* pmr uses page numbers, translate low and high. */
 	high++;
-	if (high == 0 && low == 0)
-		return;
-
-	/*
-	 * pmr uses page numbers, translate low and high.
-	 */
-	low = atop(round_page(low));
 	high = atop(trunc_page(high));
+	low = atop(round_page(low));
 	uvm_pmr_split(low);
 	uvm_pmr_split(high);
 
 	uvm_lock_fpageq();
-
 	/* Increase use count on segments in range. */
 	RB_FOREACH(pmr, uvm_pmemrange_addr, &uvm.pmr_control.addr) {
 		if (PMR_IS_SUBRANGE_OF(pmr->low, pmr->high, low, high)) {
 			TAILQ_REMOVE(&uvm.pmr_control.use, pmr, pmr_use);
 			pmr->use++;
+			sz += pmr->high - pmr->low;
 			uvm_pmemrange_use_insert(&uvm.pmr_control.use, pmr);
 		}
 		uvm_pmr_assertvalid(pmr);
 	}
-
 	uvm_unlock_fpageq();
+
+	KASSERT(sz >= high - low);
 }
 
 /*
@@ -1420,19 +1430,21 @@ uvm_pmr_use_inc(paddr_t low, paddr_t high)
  * (And if called in between, you're dead.)
  */
 struct uvm_pmemrange *
-uvm_pmr_allocpmr()
+uvm_pmr_allocpmr(void)
 {
 	struct uvm_pmemrange *nw;
 	int i;
 
+	/* We're only ever hitting the !uvm.page_init_done case for now. */
 	if (!uvm.page_init_done) {
 		nw = (struct uvm_pmemrange *)
 		    uvm_pageboot_alloc(sizeof(struct uvm_pmemrange));
-		bzero(nw, sizeof(struct uvm_pmemrange));
 	} else {
 		nw = malloc(sizeof(struct uvm_pmemrange),
-		    M_VMMAP, M_NOWAIT | M_ZERO);
+		    M_VMMAP, M_NOWAIT);
 	}
+	KASSERT(nw != NULL);
+	bzero(nw, sizeof(struct uvm_pmemrange));
 	RB_INIT(&nw->addr);
 	for (i = 0; i < UVM_PMR_MEMTYPE_MAX; i++) {
 		RB_INIT(&nw->size[i]);
@@ -1440,8 +1452,6 @@ uvm_pmr_allocpmr()
 	}
 	return nw;
 }
-
-static const struct uvm_io_ranges uvm_io_ranges[] = UVM_IO_RANGES;
 
 /*
  * Initialization of pmr.
@@ -1458,15 +1468,18 @@ uvm_pmr_init(void)
 	TAILQ_INIT(&uvm.pmr_control.use);
 	RB_INIT(&uvm.pmr_control.addr);
 
+	/* By default, one range for the entire address space. */
 	new_pmr = uvm_pmr_allocpmr();
 	new_pmr->low = 0;
-	new_pmr->high = atop((paddr_t)-1) + 1;
+	new_pmr->high = atop((paddr_t)-1) + 1; 
 
 	RB_INSERT(uvm_pmemrange_addr, &uvm.pmr_control.addr, new_pmr);
 	uvm_pmemrange_use_insert(&uvm.pmr_control.use, new_pmr);
 
-	for (i = 0; i < nitems(uvm_io_ranges); i++)
-		uvm_pmr_use_inc(uvm_io_ranges[i].low, uvm_io_ranges[i].high);
+	for (i = 0; uvm_md_constraints[i] != NULL; i++) {
+		uvm_pmr_use_inc(uvm_md_constraints[i]->ucr_low,
+	    	    uvm_md_constraints[i]->ucr_high);
+	}
 }
 
 /*

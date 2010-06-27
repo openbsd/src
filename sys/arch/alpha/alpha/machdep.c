@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.123 2010/06/10 17:54:13 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.124 2010/06/27 03:03:48 thib Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -142,6 +142,13 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 int	bufcachepercent = BUFCACHEPERCENT;
+
+struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = {
+	&isa_constraint,
+	NULL
+};
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;

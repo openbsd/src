@@ -1,4 +1,4 @@
-/*	$OpenBSD: gumstix_machdep.c,v 1.2 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: gumstix_machdep.c,v 1.3 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -238,6 +238,9 @@ extern int pmap_debug_level;
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 extern struct user *proc0paddr;
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 /* Prototypes */
 

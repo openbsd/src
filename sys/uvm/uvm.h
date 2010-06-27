@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.39 2010/06/09 08:26:21 thib Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.40 2010/06/27 03:03:49 thib Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -68,32 +68,27 @@
 #include <machine/vmparam.h>
 
 /*
- * UVM_IO_RANGES: paddr_t pairs, describing the lowest and highest address
- * that should be reserved. These ranges (which may overlap) will have their
- * use counter increased, causing them to be avoided if an allocation can be
- * satisfied from another range of memory.
+ * uvm_constraint_range's:
+ * MD code is allowed to setup constraint ranges for memory allocators, the
+ * primary use for this is to keep allocation for certain memory consumers
+ * such as mbuf pools withing address ranges that are reachable by devices
+ * that perform DMA.
  *
- * UVM_IO_RANGES actually results into a call to uvm_pmr_use_inc() per range
- * at uvm initialization. uvm_pmr_use_inc() can also be called after uvm_init()
- * has completed.
+ * It is also to discourge memory allocations from being satisfied from ranges
+ * such as the ISA memory range, if they can be satisfied with allocation
+ * from other ranges.
  *
- * Note: the upper bound is specified in the same way as to uvm_pglistalloc.
- * Ex: a memory range of 16 bit is specified as: { 0, 0xffff }.
- * Default: no special ranges in use.
+ * the MD ranges are defined in arch/ARCH/ARCH/machdep.c
  */
-#ifndef UVM_IO_RANGES
-#define UVM_IO_RANGES							\
-	{								\
-		{ 0, 0x00ffffffUL }, /* ISA memory */			\
-		{ 0, 0xffffffffUL }, /* 32-bit PCI memory */		\
-	}
-#endif
-
-/* UVM IO ranges are described in an array of struct uvm_io_ranges. */
-struct uvm_io_ranges {
-	paddr_t low;
-	paddr_t high;
+struct uvm_constraint_range {
+	paddr_t	ucr_low;
+	paddr_t ucr_high;
 };
+
+/* Constraint ranges, set by MD code. */
+extern struct uvm_constraint_range  isa_constraint;
+extern struct uvm_constraint_range  dma_constraint;
+extern struct uvm_constraint_range *uvm_md_constraints[];
 
 /*
  * uvm structure (vm global state: collected in one structure for ease
@@ -103,7 +98,7 @@ struct uvm_io_ranges {
 struct uvm {
 	/* vm_page related parameters */
 
-		/* vm_page queues */
+	/* vm_page queues */
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */

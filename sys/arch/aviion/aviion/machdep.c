@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2010/04/24 18:46:51 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2010/06/27 03:03:48 thib Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -147,6 +147,9 @@ int bufpages = BUFPAGES;
 int bufpages = 0;
 #endif
 int bufcachepercent = BUFCACHEPERCENT;
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 /*
  * Info for CTL_HW

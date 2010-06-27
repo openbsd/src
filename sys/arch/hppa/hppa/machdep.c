@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.188 2010/06/27 00:04:44 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.189 2010/06/27 03:03:48 thib Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -201,6 +201,9 @@ int sigdebug = 0;
 pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #endif
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 /*
  * Whatever CPU types we support

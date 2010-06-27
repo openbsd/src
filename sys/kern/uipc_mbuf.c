@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.137 2010/06/07 19:47:25 blambert Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.138 2010/06/27 03:03:48 thib Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -90,6 +90,7 @@
 
 #include <machine/cpu.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 struct	mbstat mbstat;		/* mbuf stats */
@@ -137,13 +138,15 @@ mbinit(void)
 
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_setlowat(&mbpool, mblowat);
+	pool_set_constraints(&mbpool, &dma_constraint, 1);
 
 	for (i = 0; i < nitems(mclsizes); i++) {
 		snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",
 		    mclsizes[i] >> 10);
-		pool_init(&mclpools[i], mclsizes[i], 0, 0, 0, mclnames[i],
-		    NULL);
+		pool_init(&mclpools[i], mclsizes[i], 0, 0, 0,
+		    mclnames[i], NULL);
 		pool_setlowat(&mclpools[i], mcllowat);
+		pool_set_constraints(&mclpools[i], &dma_constraint, 1); 
 	}
 
 	nmbclust_update();

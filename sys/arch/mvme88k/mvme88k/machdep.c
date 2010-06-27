@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.235 2009/08/11 19:17:16 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.236 2010/06/27 03:03:48 thib Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -160,6 +160,13 @@ int bufpages = BUFPAGES;
 int bufpages = 0;
 #endif
 int bufcachepercent = BUFCACHEPERCENT;
+
+/*
+ * 32 or 34 bit physical address bus depending upon the CPU flavor.
+ * 32 bit DMA. "I am not aware of any system where the upper 2 bits
+ * have ever been used" - miod@
+struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL};
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 /*
  * Info for CTL_HW
