@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.11 2005/12/10 03:16:16 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.12 2010/06/27 03:11:44 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.7 1994/11/20 20:53:02 deraadt Exp $ */
 
 /*
@@ -105,6 +105,12 @@ struct relocation_info_sparc {
 #define R_SPARC_7		43
 #define R_SPARC_5		44
 #define R_SPARC_6		45
+#define R_SPARC_TLS_DTPMOD32	74
+#define R_SPARC_TLS_DTPMOD64	75
+#define R_SPARC_TLS_DTPOFF32	76
+#define R_SPARC_TLS_DTPOFF64	77
+#define R_SPARC_TLS_TPOFF32	78
+#define R_SPARC_TLS_TPOFF64	79
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)
 #endif

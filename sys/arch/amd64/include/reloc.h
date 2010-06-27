@@ -1,4 +1,4 @@
-/* $OpenBSD: reloc.h,v 1.1 2004/02/10 14:30:05 drahn Exp $ */
+/* $OpenBSD: reloc.h,v 1.2 2010/06/27 03:11:44 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2003 Dale Rahn
@@ -44,7 +44,7 @@
 #define R_X86_64_PC16		13
 #define R_X86_64_8		14
 #define R_X86_64_PC8		15
-#define R_X86_64_DPTMOD64	16
+#define R_X86_64_DTPMOD64	16
 #define R_X86_64_DTPOFF64	17
 #define R_X86_64_TPOFF64	18
 #define R_X86_64_TLSGD		19

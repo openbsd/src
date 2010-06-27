@@ -1,4 +1,4 @@
-/*	$OpenBSD: reloc.h,v 1.2 2001/03/29 18:52:19 drahn Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.3 2010/06/27 03:11:44 guenther Exp $	*/
 /*	$NetBSD: reloc.h,v 1.1 1996/09/30 16:34:33 ws Exp $	*/
 
 /*-
@@ -72,6 +72,19 @@ enum reloc_type {
 	RELOC_PLT16_HA,
     /* ABI defines this as 32nd entry, but we ignore this, at least for now */
 	RELOC_SDAREL,
+
+	RELOC_TLSC = 67,
+	RELOC_DTPMOD32,
+	RELOC_TPREL16,
+	RELOC_TPREL16_LO,
+	RELOC_TPREL16_HI,
+	RELOC_TPREL16_HA,
+	RELOC_TPREL32,
+	RELOC_DTPREL16,
+	RELOC_DTPREL16_LO,
+	RELOC_DTPREL16_HI,
+	RELOC_DTPREL16_HA,
+	RELOC_DTPREL32,
 	RELOC_MAX
 };
 

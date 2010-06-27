@@ -1,4 +1,4 @@
-/*	$OpenBSD: reloc.h,v 1.3 2006/05/07 15:36:40 miod Exp $	*/
+/*	$OpenBSD: reloc.h,v 1.4 2010/06/27 03:11:44 guenther Exp $	*/
 /* 
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  *   
@@ -18,15 +18,19 @@
 #ifndef	_MACH_RELOC_H_
 #define	_MACH_RELOC_H_
 
-#define RELOC_NONE	0
+#define RELOC_NONE		0
 
-#define RELOC_COPY	19
-#define RELOC_GLOB_DAT	20
-#define RELOC_JMP_SLOT	21
-#define RELOC_RELATIVE	22
-
-#define RELOC_64	32
-
-#define RELOC_UA64	54
+#define RELOC_COPY		19
+#define RELOC_GLOB_DAT		20
+#define RELOC_JMP_SLOT		21
+#define RELOC_RELATIVE		22
+#define RELOC_64		32
+#define RELOC_UA64		54
+#define RELOC_TLS_DTPMOD32	74
+#define RELOC_TLS_DTPMOD64	75
+#define RELOC_TLS_DTPOFF32	76
+#define RELOC_TLS_DTPOFF64	77
+#define RELOC_TLS_TPOFF32	78
+#define RELOC_TLS_TPOFF64	79
 
 #endif	/* _MACH_RELOC_H_ */
