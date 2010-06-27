@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.38 2009/06/07 13:18:04 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.39 2010/06/27 09:13:36 jordan Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -107,7 +107,7 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensdev);
 
 	TAILQ_INIT(&sc->sc_deps_h);
-	aml_find_node(aml_root.child, "_EJD", acpidock_foundejd, sc);
+	aml_find_node(&aml_root, "_EJD", acpidock_foundejd, sc);
 
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);

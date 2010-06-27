@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.2 2009/09/02 04:45:20 miod Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.3 2010/06/27 09:13:36 jordan Exp $ */
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -126,10 +126,10 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get the list of consumers */
 	TAILQ_INIT(&sc->sc_cons);
-	aml_find_node(aml_root.child, "_PRW", acpipwrres_foundcons, sc);
-	aml_find_node(aml_root.child, "_PR0", acpipwrres_foundcons, sc);
-	aml_find_node(aml_root.child, "_PR1", acpipwrres_foundcons, sc);
-	aml_find_node(aml_root.child, "_PR2", acpipwrres_foundcons, sc);
+	aml_find_node(&aml_root, "_PRW", acpipwrres_foundcons, sc);
+	aml_find_node(&aml_root, "_PR0", acpipwrres_foundcons, sc);
+	aml_find_node(&aml_root, "_PR1", acpipwrres_foundcons, sc);
+	aml_find_node(&aml_root, "_PR2", acpipwrres_foundcons, sc);
 }
 
 int
