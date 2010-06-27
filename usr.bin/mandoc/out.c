@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.4 2010/04/07 23:15:05 schwarze Exp $ */
+/*	$Id: out.c,v 1.5 2010/06/27 20:28:56 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -135,8 +135,6 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 	if ((dst->scale = atof(buf)) < 0)
 		dst->scale = 0;
 	dst->unit = unit;
-	dst->pt = hasd;
-
 	return(1);
 }
 
