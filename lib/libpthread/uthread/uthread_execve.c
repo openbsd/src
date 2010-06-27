@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_execve.c,v 1.10 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_execve.c,v 1.11 2010/06/27 03:14:28 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -56,10 +56,6 @@ execve(const char *name, char *const * argv, char *const * envp)
 	itimer.it_value.tv_sec     = 0;
 	itimer.it_value.tv_usec    = 0;
 	setitimer(_ITIMER_SCHED_TIMER, &itimer, NULL);
-
-	/* Close the pthread kernel pipe: */
-	_thread_sys_close(_thread_kern_pipe[0]);
-	_thread_sys_close(_thread_kern_pipe[1]);
 
 	/*
 	 * Enter a loop to set all file descriptors to blocking

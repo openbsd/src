@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.44 2009/12/06 17:54:59 kurt Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.45 2010/06/27 03:14:28 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -214,6 +214,15 @@ _thread_init(void)
 	if (res == -1)
 		PANIC("Cannot make kernel read pipe non-blocking");
 
+	flags = _thread_sys_fcntl(_thread_kern_pipe[0], F_GETFD, NULL);
+	if (flags == -1)
+		PANIC("Cannot get kernel read pipe fd flags");
+
+	res = _thread_sys_fcntl(_thread_kern_pipe[0], F_SETFD,
+			       flags | FD_CLOEXEC);
+	if (res == -1)
+		PANIC("Cannot make kernel read pipe close-on-exec");
+
 	flags = _thread_sys_fcntl(_thread_kern_pipe[1], F_GETFL, NULL);
 	if (flags == -1)
 		PANIC("Cannot get kernel write pipe flags");
@@ -222,6 +231,15 @@ _thread_init(void)
 				flags | O_NONBLOCK);
 	if (res == -1)
 		PANIC("Cannot make kernel write pipe non-blocking");
+
+	flags = _thread_sys_fcntl(_thread_kern_pipe[1], F_GETFD, NULL);
+	if (flags == -1)
+		PANIC("Cannot get kernel write pipe fd flags");
+
+	res = _thread_sys_fcntl(_thread_kern_pipe[1], F_SETFD,
+			       flags | FD_CLOEXEC);
+	if (res == -1)
+		PANIC("Cannot make kernel write pipe close-on-exec");
 
 	res = _pq_alloc(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_LAST_PRIORITY);
 	if (res != 0)
