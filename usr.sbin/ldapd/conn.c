@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.2 2010/05/31 18:29:04 martinh Exp $ */
+/*	$OpenBSD: conn.c,v 1.3 2010/06/27 18:31:13 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -83,7 +83,7 @@ conn_disconnect(struct conn *conn)
 	bufferevent_enable(conn->bev, EV_WRITE);
 }
 
-int
+void
 request_dispatch(struct request *req)
 {
 	unsigned long		 i;
@@ -109,7 +109,7 @@ request_dispatch(struct request *req)
 	if (req->conn->bind_req != NULL && req->type != LDAP_REQ_BIND) {
 		log_warnx("got request while bind in progress");
 		ldap_respond(req, LDAP_SASL_BIND_IN_PROGRESS);
-		return 0;
+		return;
 	}
 
 	for (i = 0; requests[i].fn != NULL; i++) {
@@ -123,8 +123,6 @@ request_dispatch(struct request *req)
 		log_warnx("unhandled request %d (not implemented)", req->type);
 		ldap_respond(req, LDAP_PROTOCOL_ERROR);
 	}
-
-	return 0;
 }
 
 int

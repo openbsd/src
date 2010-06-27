@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.10 2010/06/27 16:24:17 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.11 2010/06/27 18:31:12 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -414,7 +414,7 @@ void			 conn_err(struct bufferevent *bev, short w, void *data);
 void			 conn_accept(int fd, short why, void *data);
 void			 conn_close(struct conn *conn);
 void			 conn_disconnect(struct conn *conn);
-int			 request_dispatch(struct request *req);
+void			 request_dispatch(struct request *req);
 void			 request_free(struct request *req);
 
 /* ldape.c */
