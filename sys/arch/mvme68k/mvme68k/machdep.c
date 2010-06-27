@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.121 2010/06/27 03:03:48 thib Exp $ */
+/*	$OpenBSD: machdep.c,v 1.122 2010/06/27 12:41:23 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -115,8 +115,7 @@
 #include <ddb/db_var.h>
 #endif
 
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_swap.h>
+#include <uvm/uvm.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */

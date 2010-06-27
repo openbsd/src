@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2010/06/27 12:41:23 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -86,6 +86,7 @@
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
+#include <sys/resourcevar.h>
 #include <sys/syscall.h>
 
 #ifdef KTRACE

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.108 2010/06/10 17:54:13 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.109 2010/06/27 12:41:23 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -74,8 +74,7 @@
 
 #include <dev/cons.h>
 
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_swap.h>
+#include <uvm/uvm.h>
 
 #include <net/netisr.h>
 #include <net/if.h>
@@ -161,6 +160,9 @@ int	vax_led_blink = 0;
 #endif
 
 struct cpu_info cpu_info_store;
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 void dumpconf(void);
 

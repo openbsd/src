@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.17 2010/06/26 23:24:44 guenther Exp $ */
+/*	$OpenBSD: vmel.c,v 1.18 2010/06/27 12:41:23 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -30,6 +30,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
