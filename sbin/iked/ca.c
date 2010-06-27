@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.6 2010/06/26 18:32:34 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.7 2010/06/27 01:11:09 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -62,8 +62,8 @@ int	 ca_validate_cert(struct iked *, struct iked_static_id *,
 	    void *, size_t);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
+int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *);
 int	 ca_key_serialize(EVP_PKEY *, struct iked_id *);
-
 int	 ca_dispatch_parent(int, struct iked_proc *, struct imsg *);
 int	 ca_dispatch_ikev1(int, struct iked_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct iked_proc *, struct imsg *);
@@ -774,6 +774,14 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	BIO		*rawcert = NULL;
 	X509		*cert = NULL;
 	int		 ret = -1, result, error;
+	size_t		 idlen, idoff;
+	const u_int8_t	*idptr;
+	X509_NAME	*idname = NULL, *subject;
+	struct iked_id	 sanid;
+	const char	*errstr = "failed";
+	char		 idstr[IKED_ID_SIZE];
+
+	bzero(&sanid, sizeof(sanid));
 
 	if (len == 0) {
 		/* Data is already an X509 certificate */
@@ -786,6 +794,55 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 			goto done;
 	}
 
+	/* Certificate needs a valid subjectName */
+	if ((subject = X509_get_subject_name(cert)) == NULL) {
+		errstr = "invalid subject";
+		goto done;
+	}
+
+	if (id != NULL) {
+		switch (id->id_type) {
+		case IKEV2_ID_ASN1_DN:
+			idoff = id->id_offset;
+			if (id->id_length > idoff)
+				goto done;
+			idlen = id->id_length - idoff;
+			idptr = id->id_data + idoff;
+
+			if ((idname = d2i_X509_NAME(NULL,
+			    &idptr, idlen)) == NULL ||
+			    X509_NAME_cmp(subject, idname) != 0) {
+				errstr = "ASN1_DN identifier mismatch";
+				goto done;
+			}
+			break;
+		default:
+			if (ca_x509_subjectaltname(cert, &sanid) != 0) {
+				errstr = "missing subjectAltName extension";
+				goto done;
+			}
+
+			print_id(&sanid, idstr, sizeof(idstr));
+
+			/* Compare id types, length and data */
+			if ((id->id_type != sanid.id_type) ||
+			    ((ssize_t)ibuf_size(sanid.id_buf) !=
+			    (id->id_length - id->id_offset)) ||
+			    (memcmp(id->id_data + id->id_offset,
+			    ibuf_data(sanid.id_buf),
+			    ibuf_size(sanid.id_buf)) != 0)) {
+				log_debug("%s: subjectAltName %s is not %s/%s",
+				    __func__, idstr,
+				    print_map(id->id_type, ikev2_id_map),
+				    id->id_data + id->id_offset);
+
+				errstr = "subjectAltName mismatch";
+				goto done;
+			}
+			break;
+		}
+	}
+
 	bzero(&csc, sizeof(csc));
 	X509_STORE_CTX_init(&csc, store->ca_cas, cert, NULL);
 	if (store->ca_cas->param->flags & X509_V_FLAG_CRL_CHECK) {
@@ -796,25 +853,28 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	result = X509_verify_cert(&csc);
 	error = csc.error;
 	X509_STORE_CTX_cleanup(&csc);
-
-	log_debug("%s: %s %.100s", __func__, cert->name,
-	    error == 0 ? "ok" : X509_verify_cert_error_string(error));
-
-	if (!result) {
-		/* XXX should we accept self-signed certificates? */
-		ret = -1;
+	if (error != 0) {
+		errstr = X509_verify_cert_error_string(error);
 		goto done;
 	}
 
-	if (id != NULL) {
-		/* compare the id with the certificate CN or subjectAltName */
-		/* XXX */
+ 	if (!result) {
+		/* XXX should we accept self-signed certificates? */
+		errstr = "rejecting self-signed certificate";
+		goto done;
 	}
 
 	/* Success */
 	ret = 0;
 
  done:
+	if (cert != NULL)
+		log_debug("%s: %s %.100s", __func__, cert->name,
+		    ret == 0 ? "ok" : errstr);
+
+	ibuf_release(sanid.id_buf);
+	if (idname != NULL)
+		X509_NAME_free(idname);
 	if (rawcert != NULL) {
 		BIO_free(rawcert);
 		if (cert != NULL)
@@ -822,6 +882,77 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	}
 
 	return (ret);
+}
+
+int
+ca_x509_subjectaltname(X509 *cert, struct iked_id *id)
+{
+	X509_EXTENSION	*san;
+	u_int8_t	 sanhdr[4], *data;
+	int		 ext, santype, sanlen;
+	char		 idstr[IKED_ID_SIZE];
+
+	if ((ext = X509_get_ext_by_NID(cert,
+	    NID_subject_alt_name, -1)) == -1 ||
+	    ((san = X509_get_ext(cert, ext)) == NULL)) {
+		log_debug("%s: did not find subjectAltName in certificate",
+		    __func__);
+		return (-1);
+	}
+
+	if (san->value == NULL || san->value->data == NULL ||
+	    san->value->length < (int)sizeof(sanhdr)) {
+		log_debug("%s: invalid subjectAltName in certificate",
+		    __func__);
+		return (-1);
+	}
+
+	/* This is partially based on isakmpd's x509 subjectaltname code */
+	data = (u_int8_t *)san->value->data;
+	memcpy(&sanhdr, data, sizeof(sanhdr));
+	santype = sanhdr[2] & 0x3f;
+	sanlen = sanhdr[3];
+
+	if ((sanlen + (int)sizeof(sanhdr)) > san->value->length) {
+		log_debug("%s: invalid subjectAltName length", __func__);
+		return (-1);
+	}
+
+	switch (santype) {
+	case GEN_DNS:
+		id->id_type = IKEV2_ID_FQDN;
+		break;
+	case GEN_EMAIL:
+		id->id_type = IKEV2_ID_UFQDN;
+		break;
+	case GEN_IPADD:
+		if (sanlen == 4)
+			id->id_type = IKEV2_ID_IPV4;
+		else if (sanlen == 16)
+			id->id_type = IKEV2_ID_IPV6;
+		else {
+			log_debug("%s: invalid subjectAltName IP address",
+			    __func__);
+			return (-1);
+		}
+		break;
+	default:
+		log_debug("%s: unsupported subjectAltName type %d",
+		    __func__, santype);
+		return (-1);
+	}
+
+	ibuf_release(id->id_buf);
+	if ((id->id_buf = ibuf_new(data + sizeof(sanhdr), sanlen)) == NULL) {
+		log_debug("%s: failed to get id buffer", __func__);
+		return (-1);
+	}
+	id->id_offset = 0;
+
+	print_id(id, idstr, sizeof(idstr));
+	log_debug("%s: %s", __func__, idstr);
+
+	return (0);
 }
 
 void
