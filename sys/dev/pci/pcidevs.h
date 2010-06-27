@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1561 2010/06/23 06:27:15 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1562 2010/06/27 08:25:42 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2221,8 +2221,8 @@
 #define	PCI_PRODUCT_INTEL_21145	0x0039		/* 21145 */
 #define	PCI_PRODUCT_INTEL_CORE_HB	0x0040		/* Core Host */
 #define	PCI_PRODUCT_INTEL_CORE_PCIE_0	0x0041		/* Core PCIE */
-#define	PCI_PRODUCT_INTEL_CLARKDALE_IGD	0x0042		/* Intel HD graphics */
-#define	PCI_PRODUCT_INTEL_ARRANDALE_IGD	0x0046		/* Intel HD graphics */
+#define	PCI_PRODUCT_INTEL_CLARKDALE_IGD	0x0042		/* HD graphics */
+#define	PCI_PRODUCT_INTEL_ARRANDALE_IGD	0x0046		/* Mobile HD graphics */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_1	0x0082		/* Centrino Advanced-N 6205a */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1	0x0083		/* WiFi Link 1000 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_2	0x0084		/* WiFi Link 1000 */
