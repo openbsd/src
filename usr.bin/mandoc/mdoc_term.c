@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.89 2010/06/26 19:08:00 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.90 2010/06/27 01:24:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -68,6 +68,7 @@ static	void	  termp____post(DECL_ARGS);
 static	void	  termp_an_post(DECL_ARGS);
 static	void	  termp_aq_post(DECL_ARGS);
 static	void	  termp_bd_post(DECL_ARGS);
+static	void	  termp_bk_post(DECL_ARGS);
 static	void	  termp_bl_post(DECL_ARGS);
 static	void	  termp_bq_post(DECL_ARGS);
 static	void	  termp_brq_post(DECL_ARGS);
@@ -92,6 +93,7 @@ static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_aq_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
 static	int	  termp_bf_pre(DECL_ARGS);
+static	int	  termp_bk_pre(DECL_ARGS);
 static	int	  termp_bl_pre(DECL_ARGS);
 static	int	  termp_bold_pre(DECL_ARGS);
 static	int	  termp_bq_pre(DECL_ARGS);
@@ -231,7 +233,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Fc */ 
 	{ termp_op_pre, termp_op_post }, /* Oo */
 	{ NULL, NULL }, /* Oc */
-	{ NULL, NULL }, /* Bk */
+	{ termp_bk_pre, termp_bk_post }, /* Bk */
 	{ NULL, NULL }, /* Ek */
 	{ termp_bt_pre, NULL }, /* Bt */
 	{ NULL, NULL }, /* Hf */
@@ -2096,6 +2098,24 @@ termp_lk_pre(DECL_ARGS)
 	return(0);
 }
 
+
+/* ARGSUSED */
+static int
+termp_bk_pre(DECL_ARGS)
+{
+
+	p->flags |= TERMP_PREKEEP;
+	return(1);
+}
+
+
+/* ARGSUSED */
+static void
+termp_bk_post(DECL_ARGS)
+{
+
+	p->flags &= ~(TERMP_KEEP | TERMP_PREKEEP);
+}
 
 /* ARGSUSED */
 static int
