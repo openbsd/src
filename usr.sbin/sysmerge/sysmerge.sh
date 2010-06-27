@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.57 2010/02/06 14:02:36 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.58 2010/06/27 00:07:22 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -21,7 +21,8 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
-unset OBSOLETE_FILES SRCDIR SRCSUM TGZ TGZURL XETCSUM XTGZ XTGZURL
+unset NEED_REBOOT OBSOLETE_FILES SRCDIR SRCSUM TGZ TGZURL XETCSUM XTGZ
+unset XTGZURL
 
 WRKDIR=`mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
@@ -254,6 +255,7 @@ mm_install() {
 		echo -n "===> A new ${DESTDIR%/}/dev/MAKEDEV script was installed, "
 		echo "running MAKEDEV"
 		(cd ${DESTDIR}/dev && /bin/sh MAKEDEV all)
+		export NEED_REBOOT=1
 		;;
 	/etc/login.conf)
 		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
@@ -261,6 +263,7 @@ mm_install() {
 			echo "running cap_mkdb"
 			cap_mkdb ${DESTDIR}/etc/login.conf
 		fi
+		export NEED_REBOOT=1
 		;;
 	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
 		DBFILE=`echo ${1} | sed -e 's,.*/,,'`
@@ -609,7 +612,7 @@ do_post() {
 	fi
 
 	if [ -e "${REPORT}" ]; then
-		if [ "${OBSOLETE_FILES}" -o "${FILES_IN_TEMPROOT}" ]; then
+		if [ "${OBSOLETE_FILES}" -o "${FILES_IN_TEMPROOT}" -o "${NEED_NEWALIASES}" ]; then
 			echo "===> Manual intervention may be needed, see ${REPORT}"
 		else
 			echo "===> Output log available at ${REPORT}"
@@ -618,6 +621,11 @@ do_post() {
 	else
 		echo "===> Removing ${WRKDIR}"
 		rm -rf "${WRKDIR}"
+	fi
+
+	if [ "${NEED_REBOOT}" ]; then
+		echo "\n *** WARNING: some new and/or updated file(s) may require a reboot!"
+		unset NEED_REBOOT
 	fi
 
 	clean_src
