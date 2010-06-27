@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.144 2010/06/26 21:06:52 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.145 2010/06/27 01:13:25 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -179,7 +179,8 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x111d76b2:
 		this->name = "IDT 92HD71B7";
-		if ((this->subid & 0x0000ffff) == 0x00001028) {	/* DELL */
+		if ((this->subid & 0x0000ffff) == 0x00001028 || /* DELL */
+		    (this->subid & 0x0000ffff) == 0x0000103c) { /* HP */
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
 		}
 		break;
