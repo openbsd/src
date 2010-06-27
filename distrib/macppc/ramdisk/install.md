@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.45 2009/06/24 11:26:40 krw Exp $
+#	$OpenBSD: install.md,v 1.46 2010/06/27 00:42:00 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -212,23 +212,19 @@ __EOT
 }
 
 md_congrats() {
+	cat <<__EOT
+
+INSTALL.$ARCH describes how to configure Open Firmware to boot OpenBSD. The
+command to boot OpenBSD will be something like 'boot hd:,ofwboot /bsd'.
+__EOT
 	if [[ $PARTTABLE == HFS ]]; then
 		cat <<__EOT
 
-To boot OpenBSD, the 'ofwboot' program must be present in the first HFS
-partition of $ROOTDISK. If it is not currently present you must boot MacOS and
-use MacOS tools to copy it from the OpenBSD install media. Then reboot the
-machine.
+NOTE: You must use MacOS to copy 'ofwboot' from the OpenBSD install media to
+the first HFS partition of $ROOTDISK.
 __EOT
 	fi
 
-	cat <<__EOT
-
-Once the machine has rebooted use Open Firmware to boot into OpenBSD, as
-described in the INSTALL.$ARCH document. The command to boot OpenBSD will
-be something like 'boot hd:,ofwboot /bsd'.
-
-__EOT
 }
 
 md_consoleinfo() {
