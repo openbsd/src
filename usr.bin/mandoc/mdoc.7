@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.36 2010/06/26 17:56:43 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.37 2010/06/27 13:33:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2010 $
+.Dd $Mdocdate: June 27 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1116,6 +1116,25 @@ and
 .Sx \&Dl .
 .Ss \&Bf
 .Ss \&Bk
+Begins a keep block, containing a collection of macros or text
+to be kept together in the output.
+One argument is required; additional arguments are ignored.
+Currently, the only argument implemented is
+.Fl words ,
+requesting to keep together all words of the contained text
+on the same output line.
+A
+.Fl lines
+argument to keep together all lines of the contained text
+on the same page has been desired for a long time,
+but has never been implemented.
+.Pp
+Examples:
+.Bd -literal -offset indent
+\&.Bk \-words
+\&.Op o Ar output_file
+\&.Ek
+.Ed
 .Ss \&Bl
 Begins a list composed of one or more list entries.
 A list is associated with a type, which is a required argument.
@@ -1589,6 +1608,8 @@ and
 .Ss \&Ed
 .Ss \&Ef
 .Ss \&Ek
+Ends a keep context started by
+.Sx \&Bk .
 .Ss \&El
 Ends a list context started by
 .Sx \&Bl .
