@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.15 2010/06/27 01:03:22 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.16 2010/06/27 05:49:05 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -662,8 +662,8 @@ int	 pfkey_init(void);
 
 /* ca.c */
 pid_t	 caproc(struct iked *, struct iked_proc *);
-int	 ca_setreq(struct iked *, struct iked_sahdr *, u_int8_t,
-	    u_int8_t *, size_t, enum iked_procid);
+int	 ca_setreq(struct iked *, struct iked_sahdr *, struct iked_static_id *,
+	    u_int8_t, u_int8_t *, size_t, enum iked_procid);
 int	 ca_setcert(struct iked *, struct iked_sahdr *, struct iked_id *,
 	    u_int8_t, u_int8_t *, size_t, enum iked_procid);
 int	 ca_setauth(struct iked *, struct iked_sa *,

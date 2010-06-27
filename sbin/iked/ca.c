@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.8 2010/06/27 01:37:56 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.9 2010/06/27 05:49:05 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -56,12 +56,13 @@ int	 ca_getreq(struct iked *, struct imsg *);
 int	 ca_getcert(struct iked *, struct imsg *);
 int	 ca_getauth(struct iked *, struct imsg *);
 X509	*ca_by_subjectpubkey(X509_STORE *, u_int8_t *, size_t);
-X509	*ca_by_issuer(X509_STORE *, X509_NAME *);
+X509	*ca_by_issuer(X509_STORE *, X509_NAME *, struct iked_static_id *);
 int	 ca_subjectpubkey_digest(X509 *, u_int8_t *, u_int *);
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
 	    void *, size_t);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
+int	 ca_x509_subjectaltname_cmp(X509 *, struct iked_static_id *);
 int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *);
 int	 ca_key_serialize(EVP_PKEY *, struct iked_id *);
 int	 ca_dispatch_parent(int, struct iked_proc *, struct imsg *);
@@ -232,22 +233,49 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 }
 
 int
-ca_setreq(struct iked *env, struct iked_sahdr *sh, u_int8_t type,
-    u_int8_t *data, size_t len, enum iked_procid id)
+ca_setreq(struct iked *env, struct iked_sahdr *sh,
+    struct iked_static_id *localid, u_int8_t type, u_int8_t *data,
+    size_t len, enum iked_procid procid)
 {
-	struct iovec		iov[3];
-	int			iovcnt = 3;
+	struct iovec		iov[4];
+	int			iovcnt = 0;
+	struct iked_static_id	idb;
+	struct iked_id		id;
+	int			ret = -1;
 
-	iov[0].iov_base = sh;
-	iov[0].iov_len = sizeof(*sh);
-	iov[1].iov_base = &type;
-	iov[1].iov_len = sizeof(type);
-	iov[2].iov_base = data;
-	iov[2].iov_len = len;
-
-	if (imsg_composev_proc(env, id, IMSG_CERTREQ, -1, iov, iovcnt) == -1)
+	/* Convert to a static Id */
+	bzero(&id, sizeof(id));
+	if (ikev2_policy2id(localid, &id, 0) != 0)
 		return (-1);
-	return (0);
+
+	bzero(&idb, sizeof(idb));
+	idb.id_type = id.id_type;
+	idb.id_offset = id.id_offset;
+	idb.id_length = ibuf_length(id.id_buf);
+	memcpy(&idb.id_data, ibuf_data(id.id_buf),
+	    ibuf_length(id.id_buf));
+	iov[iovcnt].iov_base = &idb;
+	iov[iovcnt].iov_len = sizeof(idb);
+	iovcnt++;
+
+	iov[iovcnt].iov_base = sh;
+	iov[iovcnt].iov_len = sizeof(*sh);
+	iovcnt++;
+	iov[iovcnt].iov_base = &type;
+	iov[iovcnt].iov_len = sizeof(type);
+	iovcnt++;
+	iov[iovcnt].iov_base = data;
+	iov[iovcnt].iov_len = len;
+	iovcnt++;
+
+	if (imsg_composev_proc(env, procid,
+	    IMSG_CERTREQ, -1, iov, iovcnt) == -1)
+		goto done;
+
+	ret = 0;
+ done:
+	ibuf_release(id.id_buf);
+	return (ret);
 }
 
 int
@@ -337,15 +365,19 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	u_int			 i, n;
 	X509			*ca = NULL, *cert = NULL;
 	struct ibuf		*buf;
+	struct iked_static_id	 id;
 
 	ptr = (u_int8_t *)imsg->data;
 	len = IMSG_DATA_SIZE(imsg);
-	i = sizeof(u_int8_t) + sizeof(sh);
+	i = sizeof(id) + sizeof(u_int8_t) + sizeof(sh);
 	if (len < i || ((len - i) % SHA_DIGEST_LENGTH) != 0)
 		return (-1);
 
-	memcpy(&sh, ptr, sizeof(sh));
-	memcpy(&type, ptr + sizeof(sh), sizeof(u_int8_t));
+	memcpy(&id, ptr, sizeof(id));
+	if (id.id_type == IKEV2_ID_NONE)
+		return (-1);
+	memcpy(&sh, ptr + sizeof(id), sizeof(sh));
+	memcpy(&type, ptr + sizeof(id) + sizeof(sh), sizeof(u_int8_t));
 	if (type != IKEV2_CERT_X509_CERT)
 		return (-1);
 
@@ -360,7 +392,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 		log_debug("%s: found CA %s", __func__, ca->name);
 
 		if ((cert = ca_by_issuer(store->ca_certs,
-		    X509_get_subject_name(ca))) != NULL) {
+		    X509_get_subject_name(ca), &id)) != NULL) {
 			/* XXX should we re-validate our own cert here? */
 			break;
 		}
@@ -625,7 +657,7 @@ ca_by_subjectpubkey(X509_STORE *ctx, u_int8_t *sig, size_t siglen)
 }
 
 X509 *
-ca_by_issuer(X509_STORE *ctx, X509_NAME *subject)
+ca_by_issuer(X509_STORE *ctx, X509_NAME *subject, struct iked_static_id *id)
 {
 	STACK_OF(X509_OBJECT)	*h;
 	X509_OBJECT		*xo;
@@ -645,8 +677,11 @@ ca_by_issuer(X509_STORE *ctx, X509_NAME *subject)
 		cert = xo->data.x509;
 		if ((issuer = X509_get_issuer_name(cert)) == NULL)
 			continue;
-		else if (X509_NAME_cmp(subject, issuer) == 0)
+		else if (X509_NAME_cmp(subject, issuer) == 0) {
+			if (ca_x509_subjectaltname_cmp(cert, id) != 0)
+				continue;
 			return (cert);
+		}
 	}
 
 	return (NULL);
@@ -777,11 +812,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	size_t		 idlen, idoff;
 	const u_int8_t	*idptr;
 	X509_NAME	*idname = NULL, *subject;
-	struct iked_id	 sanid;
 	const char	*errstr = "failed";
-	char		 idstr[IKED_ID_SIZE];
-
-	bzero(&sanid, sizeof(sanid));
 
 	if (len == 0) {
 		/* Data is already an X509 certificate */
@@ -819,26 +850,8 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 			}
 			break;
 		default:
-			if (ca_x509_subjectaltname(cert, &sanid) != 0) {
-				errstr = "missing subjectAltName extension";
-				goto done;
-			}
-
-			print_id(&sanid, idstr, sizeof(idstr));
-
-			/* Compare id types, length and data */
-			if ((id->id_type != sanid.id_type) ||
-			    ((ssize_t)ibuf_size(sanid.id_buf) !=
-			    (id->id_length - id->id_offset)) ||
-			    (memcmp(id->id_data + id->id_offset,
-			    ibuf_data(sanid.id_buf),
-			    ibuf_size(sanid.id_buf)) != 0)) {
-				log_debug("%s: subjectAltName %s is not %s/%s",
-				    __func__, idstr,
-				    print_map(id->id_type, ikev2_id_map),
-				    id->id_data + id->id_offset);
-
-				errstr = "subjectAltName mismatch";
+			if (ca_x509_subjectaltname_cmp(cert, id) != 0) {
+				errstr = "invalid subjectAltName extension";
 				goto done;
 			}
 			break;
@@ -874,7 +887,6 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 		log_debug("%s: %s %.100s", __func__, cert->name,
 		    ret == 0 ? "ok" : errstr);
 
-	ibuf_release(sanid.id_buf);
 	if (idname != NULL)
 		X509_NAME_free(idname);
 	if (rawcert != NULL) {
@@ -883,6 +895,37 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 			X509_free(cert);
 	}
 
+	return (ret);
+}
+
+int
+ca_x509_subjectaltname_cmp(X509 *cert, struct iked_static_id *id)
+{
+	struct iked_id	 sanid;
+	char		 idstr[IKED_ID_SIZE];
+	int		 ret = -1;
+
+	bzero(&sanid, sizeof(sanid));
+
+	if (ca_x509_subjectaltname(cert, &sanid) != 0)
+		return (-1);
+
+	print_id(&sanid, idstr, sizeof(idstr));
+
+	/* Compare id types, length and data */
+	if ((id->id_type != sanid.id_type) ||
+	    ((ssize_t)ibuf_size(sanid.id_buf) !=
+	    (id->id_length - id->id_offset)) ||
+	    (memcmp(id->id_data + id->id_offset,
+	    ibuf_data(sanid.id_buf),
+	    ibuf_size(sanid.id_buf)) != 0)) {
+		log_debug("%s: %s mismatched", __func__, idstr);
+		goto done;
+	}
+
+	ret = 0;
+ done:
+	ibuf_release(sanid.id_buf);
 	return (ret);
 }
 
