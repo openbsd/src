@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.179 2010/06/27 00:22:22 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.180 2010/06/27 02:56:59 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1626,7 +1626,8 @@ is used as a login shell.
 .It Ic default-path Ar path
 Set the default working directory for processes created from keys, or
 interactively from the prompt.
-The default is the current working directory when the server is started.
+The default is empty, which means to use the working directory of the shell
+from which the server was started if it is available or the user's home if not.
 .It Ic default-terminal Ar terminal
 Set the default terminal for new windows created in this session - the
 default value of the

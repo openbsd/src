@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.229 2010/06/26 18:20:53 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.230 2010/06/27 02:56:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -926,6 +926,7 @@ TAILQ_HEAD(session_groups, session_group);
 
 struct session {
 	char		*name;
+	char		*cwd;
 
 	struct timeval	 creation_time;
 	struct timeval	 activity_time;

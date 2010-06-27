@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.18 2010/06/21 01:27:46 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.19 2010/06/27 02:56:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -67,6 +67,8 @@ session_create(const char *name, const char *cmd, const char *cwd,
 	if (gettimeofday(&s->creation_time, NULL) != 0)
 		fatal("gettimeofday failed");
 	memcpy(&s->activity_time, &s->creation_time, sizeof s->activity_time);
+
+	s->cwd = xstrdup(cwd);
 
 	s->curw = NULL;
 	TAILQ_INIT(&s->lastw);
@@ -142,6 +144,7 @@ session_destroy(struct session *s)
 	while (!RB_EMPTY(&s->windows))
 		winlink_remove(&s->windows, RB_ROOT(&s->windows));
 
+	xfree(s->cwd);
 	xfree(s->name);
 
 	for (i = 0; i < ARRAY_LENGTH(&dead_sessions); i++) {
