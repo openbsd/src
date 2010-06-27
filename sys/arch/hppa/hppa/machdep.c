@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.187 2010/06/10 17:54:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.188 2010/06/27 00:04:44 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -154,6 +154,10 @@ int (*cpu_dbtlb_ins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 dev_t	bootdev;
 int	physmem, resvmem, resvphysmem, esym;
 paddr_t	avail_end;
+
+#ifdef MULTIPROCESSOR
+struct mutex mtx_atomic = MUTEX_INITIALIZER(IPL_NONE);
+#endif
 
 /*
  * Things for MI glue to stick on.
