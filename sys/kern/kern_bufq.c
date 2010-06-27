@@ -1,3 +1,4 @@
+/*	$OpenBSD: kern_bufq.c,v 1.7 2010/06/27 04:29:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
