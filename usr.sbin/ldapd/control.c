@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2010/06/23 12:40:19 martinh Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2010/06/27 16:24:17 martinh Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -42,7 +42,6 @@
 struct ctl_connlist ctl_conns;
 
 struct ctl_conn	*control_connbyfd(int);
-struct ctl_conn	*control_connbypid(pid_t);
 void		 control_close(int);
 
 void
@@ -276,12 +275,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(verbose))
 				break;
 
-			memcpy(&verbose, imsg.data, sizeof(verbose));
-
+			bcopy(imsg.data, &verbose, sizeof(verbose));
 			imsg_compose_event(iev_ldapd, IMSG_CTL_LOG_VERBOSE,
 			    0, 0, -1, &verbose, sizeof(verbose));
-			memcpy(imsg.data, &verbose, sizeof(verbose));
-			control_imsg_forward(&imsg);
 
 			log_verbose(verbose);
 			break;
@@ -293,26 +289,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		imsg_free(&imsg);
 	}
 
-	imsg_event_add(&c->iev);
-}
-
-void
-control_imsg_forward(struct imsg *imsg)
-{
-	struct ctl_conn *c;
-
-	TAILQ_FOREACH(c, &ctl_conns, entry)
-		if (c->flags & CTL_CONN_NOTIFY)
-			imsg_compose(&c->iev.ibuf, imsg->hdr.type, 0,
-			    imsg->hdr.pid, -1, imsg->data,
-			    imsg->hdr.len - IMSG_HEADER_SIZE);
-}
-
-void
-control_end(struct ctl_conn *c)
-{
-	imsg_compose(&c->iev.ibuf, IMSG_CTL_END, 0, c->iev.ibuf.pid,
-	    -1, NULL, 0);
 	imsg_event_add(&c->iev);
 }
 

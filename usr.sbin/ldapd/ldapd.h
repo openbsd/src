@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.9 2010/06/27 16:01:08 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.10 2010/06/27 16:24:17 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -490,9 +490,7 @@ void			 control_init(struct control_sock *);
 void			 control_listen(struct control_sock *);
 void			 control_accept(int, short, void *);
 void			 control_dispatch_imsg(int, short, void *);
-void			 control_imsg_forward(struct imsg *);
 void			 control_cleanup(struct control_sock *);
-void			 control_end(struct ctl_conn *c);
 
 /* filter.c */
 int			 ldap_matches_filter(struct ber_element *root,
