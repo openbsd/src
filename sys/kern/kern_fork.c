@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.111 2010/05/29 02:47:48 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.112 2010/06/27 03:26:39 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -517,7 +517,7 @@ pidtaken(pid_t pid)
 	if (pgfind(pid) != NULL)
 		return (1);
 	LIST_FOREACH(p, &zombproc, p_list)
-		if (p->p_pid == pid || p->p_pgid == pid)
+		if (p->p_pid == pid || (p->p_pgrp && p->p_pgrp->pg_id == pid))
 			return (1);
 	return (0);
 }
