@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.233 2010/06/27 01:28:44 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.234 2010/06/28 23:21:41 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1560,24 +1560,31 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSETSTATUSIF: {
-		struct pfioc_if	*pi = (struct pfioc_if *)addr;
+		struct pfioc_iface	*pi = (struct pfioc_iface *)addr;
 
-		if (pi->ifname[0] == 0) {
+		if (pi->pfiio_name[0] == 0) {
 			bzero(pf_status.ifname, IFNAMSIZ);
 			break;
 		}
-		strlcpy(pf_trans_set.statusif, pi->ifname, IFNAMSIZ);
+		strlcpy(pf_trans_set.statusif, pi->pfiio_name, IFNAMSIZ);
 		pf_trans_set.mask |= PF_TSET_STATUSIF;
 		break;
 	}
 
 	case DIOCCLRSTATUS: {
+		struct pfioc_iface	*pi = (struct pfioc_iface *)addr;
+
+		/* if ifname is specified, clear counters there only */
+		if (pi->pfiio_name[0]) {
+			pfi_update_status(pi->pfiio_name, NULL);
+			break;
+		}
+
 		bzero(pf_status.counters, sizeof(pf_status.counters));
 		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
 		bzero(pf_status.scounters, sizeof(pf_status.scounters));
 		pf_status.since = time_second;
-		if (*pf_status.ifname)
-			pfi_update_status(pf_status.ifname, NULL);
+		
 		break;
 	}
 

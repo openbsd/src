@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.310 2010/06/27 01:39:43 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.311 2010/06/28 23:21:41 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1518,10 +1518,6 @@ struct pfioc_src_nodes {
 #define psn_src_nodes	psn_u.psu_src_nodes
 };
 
-struct pfioc_if {
-	char		 ifname[IFNAMSIZ];
-};
-
 struct pfioc_tm {
 	int		 timeout;
 	int		 seconds;
@@ -1616,9 +1612,9 @@ struct pfioc_iface {
 /* XXX cut 8 - 17 */
 #define DIOCCLRSTATES	_IOWR('D', 18, struct pfioc_state_kill)
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
-#define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
+#define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_iface)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
-#define DIOCCLRSTATUS	_IO  ('D', 22)
+#define DIOCCLRSTATUS	_IOWR('D', 22, struct pfioc_iface)
 #define DIOCNATLOOK	_IOWR('D', 23, struct pfioc_natlook)
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 #define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)

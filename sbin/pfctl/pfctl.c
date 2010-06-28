@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.297 2010/06/25 23:27:47 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.298 2010/06/28 23:21:41 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,7 +61,7 @@
 void	 usage(void);
 int	 pfctl_enable(int, int);
 int	 pfctl_disable(int, int);
-int	 pfctl_clear_stats(int, int);
+int	 pfctl_clear_stats(int, const char *, int);
 int	 pfctl_clear_interface_flags(int, int);
 int	 pfctl_clear_rules(int, int, char *);
 int	 pfctl_clear_altq(int, int);
@@ -281,12 +281,23 @@ pfctl_disable(int dev, int opts)
 }
 
 int
-pfctl_clear_stats(int dev, int opts)
+pfctl_clear_stats(int dev, const char *iface, int opts)
 {
-	if (ioctl(dev, DIOCCLRSTATUS))
+	struct pfioc_iface pi;
+
+	memset(&pi, 0, sizeof(pi));
+	if (iface != NULL && strlcpy(pi.pfiio_name, iface,
+	    sizeof(pi.pfiio_name)) >= sizeof(pi.pfiio_name))
+		errx(1, "invalid interface: %s", iface);
+
+	if (ioctl(dev, DIOCCLRSTATUS, &pi))
 		err(1, "DIOCCLRSTATUS");
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "pf: statistics cleared\n");
+	if ((opts & PF_OPT_QUIET) == 0) {
+		fprintf(stderr, "pf: statistics cleared");
+		if (iface != NULL)
+			fprintf(stderr, " for interface %s", iface);
+		fprintf(stderr, "\n");
+	}
 	return (0);
 }
 
@@ -1582,11 +1593,11 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 int
 pfctl_load_logif(struct pfctl *pf, char *ifname)
 {
-	struct pfioc_if pi;
+	struct pfioc_iface	pi;
 
 	memset(&pi, 0, sizeof(pi));
-	if (ifname && strlcpy(pi.ifname, ifname,
-	    sizeof(pi.ifname)) >= sizeof(pi.ifname)) {
+	if (ifname && strlcpy(pi.pfiio_name, ifname,
+	    sizeof(pi.pfiio_name)) >= sizeof(pi.pfiio_name)) {
 		warnx("pfctl_load_logif: strlcpy");
 		return (1);
 	}
@@ -2131,16 +2142,21 @@ main(int argc, char *argv[])
 			pfctl_clear_src_nodes(dev, opts);
 			break;
 		case 'i':
-			pfctl_clear_stats(dev, opts);
+			pfctl_clear_stats(dev, ifaceopt, opts);
 			break;
 		case 'a':
 			pfctl_clear_rules(dev, opts, anchorname);
 			pfctl_clear_tables(anchorname, opts);
+			if (*ifaceopt) {
+				warnx("don't specify an interface with -Fall");
+				usage();
+				/* NOTREACHED */
+			}
 			if (!*anchorname) {
 				pfctl_clear_altq(dev, opts);
 				pfctl_clear_states(dev, ifaceopt, opts);
 				pfctl_clear_src_nodes(dev, opts);
-				pfctl_clear_stats(dev, opts);
+				pfctl_clear_stats(dev, ifaceopt, opts);
 				pfctl_clear_fingerprints(dev, opts);
 				pfctl_clear_interface_flags(dev, opts);
 			}

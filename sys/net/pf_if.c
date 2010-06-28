@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.60 2010/01/18 23:52:46 mcbride Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.61 2010/06/28 23:21:41 mcbride Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -628,8 +628,17 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 	TAILQ_HEAD(, ifg_member) ifg_members;
 	int			 i, j, k, s;
 
-	strlcpy(key.pfik_name, name, sizeof(key.pfik_name));
 	s = splsoftnet();
+	if (*name == '\0' && pfs == NULL) {
+		RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+			bzero(p->pfik_packets, sizeof(p->pfik_packets));
+			bzero(p->pfik_bytes, sizeof(p->pfik_bytes));
+			p->pfik_tzero = time_second;
+		}
+		return;
+	}
+
+	strlcpy(key.pfik_name, name, sizeof(key.pfik_name));
 	p = RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&key);
 	if (p == NULL) {
 		splx(s);
