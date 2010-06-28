@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.52 2010/04/06 14:12:10 stsp Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.53 2010/06/28 18:50:37 claudio Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ void purge_detached(struct ifnet *);
 
 void in6_init_address_ltimes(struct nd_prefix *, struct in6_addrlifetime *);
 
-int rt6_deleteroute(struct radix_node *, void *);
+int rt6_deleteroute(struct radix_node *, void *, u_int);
 
 extern int nd6_recalc_reachtm_interval;
 
@@ -1907,7 +1907,7 @@ rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 }
 
 int
-rt6_deleteroute(struct radix_node *rn, void *arg)
+rt6_deleteroute(struct radix_node *rn, void *arg, u_int id)
 {
 #define SIN6(s)	((struct sockaddr_in6 *)s)
 	struct rt_addrinfo info;
@@ -1940,7 +1940,7 @@ rt6_deleteroute(struct radix_node *rn, void *arg)
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	return (rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, NULL, 0));
+	return (rtrequest1(RTM_DELETE, &info, RTP_CONNECTED, NULL, id));
 #undef SIN6
 }
 

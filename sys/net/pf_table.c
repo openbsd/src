@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.83 2010/02/24 15:04:40 henning Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.84 2010/06/28 18:50:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -156,7 +156,7 @@ int			 pfr_route_kentry(struct pfr_ktable *,
 			    struct pfr_kentry *);
 int			 pfr_unroute_kentry(struct pfr_ktable *,
 			    struct pfr_kentry *);
-int			 pfr_walktree(struct radix_node *, void *);
+int			 pfr_walktree(struct radix_node *, void *, u_int);
 int			 pfr_validate_table(struct pfr_table *, int, int);
 int			 pfr_fix_anchor(char *);
 void			 pfr_commit_ktable(struct pfr_ktable *, long);
@@ -1066,7 +1066,7 @@ pfr_copyout_addr(struct pfr_addr *ad, struct pfr_kentry *ke)
 }
 
 int
-pfr_walktree(struct radix_node *rn, void *arg)
+pfr_walktree(struct radix_node *rn, void *arg, u_int id)
 {
 	struct pfr_kentry	*ke = (struct pfr_kentry *)rn;
 	struct pfr_walktree	*w = arg;

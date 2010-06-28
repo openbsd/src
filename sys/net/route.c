@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.119 2010/06/04 11:05:13 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.120 2010/06/28 18:50:37 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -147,11 +147,11 @@ int			rttrash;	/* routes not in table but not freed */
 struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
 
-int	rtable_init(struct radix_node_head ***);
+int	rtable_init(struct radix_node_head ***, u_int);
 int	okaytoclone(u_int, int);
-int	rtflushclone1(struct radix_node *, void *);
+int	rtflushclone1(struct radix_node *, void *, u_int);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
-int	rt_if_remove_rtdelete(struct radix_node *, void *);
+int	rt_if_remove_rtdelete(struct radix_node *, void *, u_int);
 
 #define	LABELID_MAX	50000
 
@@ -173,10 +173,11 @@ encap_findgwifa(struct sockaddr *gw)
 #endif
 
 int
-rtable_init(struct radix_node_head ***table)
+rtable_init(struct radix_node_head ***table, u_int id)
 {
 	void		**p;
 	struct domain	 *dom;
+	u_int8_t	  i;
 
 	if ((p = malloc(sizeof(void *) * (rtafidx_max + 1), M_RTABLE,
 	    M_NOWAIT|M_ZERO)) == NULL)
@@ -189,11 +190,17 @@ rtable_init(struct radix_node_head ***table)
 			    dom->dom_rtoffset);
 
 	*table = (struct radix_node_head **)p;
+
+	for (i = 0; i < rtafidx_max; i++) {
+		if ((*table)[i] != NULL)
+			(*table)[i]->rnh_rtabelid = id;
+	}
+
 	return (0);
 }
 
 void
-route_init()
+route_init(void)
 {
 	struct domain	 *dom;
 
@@ -246,7 +253,7 @@ rtable_add(u_int id)	/* must be called at splsoftnet */
 		return (-1);
 
 	rt_tab2dom[id] = 0;	/* use main table/domain by default */
-	return (rtable_init(&rt_tables[id]));
+	return (rtable_init(&rt_tables[id], id));
 }
 
 u_int
@@ -553,14 +560,14 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 }
 
 int
-rtflushclone1(struct radix_node *rn, void *arg)
+rtflushclone1(struct radix_node *rn, void *arg, u_int id)
 {
 	struct rtentry	*rt, *parent;
 
 	rt = (struct rtentry *)rn;
 	parent = (struct rtentry *)arg;
 	if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent == parent)
-		rtdeletemsg(rt, 0);
+		rtdeletemsg(rt, id);
 	return 0;
 }
 
@@ -1430,7 +1437,7 @@ rt_if_remove(struct ifnet *ifp)
  * as long as EAGAIN is returned.
  */
 int
-rt_if_remove_rtdelete(struct radix_node *rn, void *vifp)
+rt_if_remove_rtdelete(struct radix_node *rn, void *vifp, u_int id)
 {
 	struct ifnet	*ifp = vifp;
 	struct rtentry	*rt = (struct rtentry *)rn;
@@ -1438,7 +1445,7 @@ rt_if_remove_rtdelete(struct radix_node *rn, void *vifp)
 	if (rt->rt_ifp == ifp) {
 		int	cloning = (rt->rt_flags & RTF_CLONING);
 
-		if (rtdeletemsg(rt, ifp->if_rdomain /* XXX wrong */) == 0 && cloning)
+		if (rtdeletemsg(rt, id) == 0 && cloning)
 			return (EAGAIN);
 	}
 
@@ -1475,7 +1482,7 @@ rt_if_track(struct ifnet *ifp)
 }
 
 int
-rt_if_linkstate_change(struct radix_node *rn, void *arg)
+rt_if_linkstate_change(struct radix_node *rn, void *arg, u_int id)
 {
 	struct ifnet *ifp = arg;
 	struct rtentry *rt = (struct rtentry *)rn;

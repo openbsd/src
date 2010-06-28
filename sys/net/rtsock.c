@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.100 2010/05/19 13:09:09 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.101 2010/06/28 18:50:37 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -648,7 +648,7 @@ report:
 #ifndef SMALL_KERNEL
 				    /* recheck link state after ifp change */
 				    rt_if_linkstate_change(
-					(struct radix_node *)rt, ifp);
+					(struct radix_node *)rt, ifp, tableid);
 #endif
 				}
 			}
@@ -1104,7 +1104,7 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
  * This is used in dumping the kernel table via sysctl().
  */
 int
-sysctl_dumpentry(struct radix_node *rn, void *v)
+sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 {
 	struct walkarg		*w = v;
 	struct rtentry		*rt = (struct rtentry *)rn;
@@ -1163,6 +1163,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt;
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_addrs = info.rti_addrs;
+		rtm->rtm_tableid = id;
 #ifdef MPLS
 		rtm->rtm_mpls = info.rti_mpls;
 #endif

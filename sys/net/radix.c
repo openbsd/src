@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.26 2009/01/06 21:40:47 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.27 2010/06/28 18:50:37 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -950,8 +950,8 @@ out:
 }
 
 int
-rn_walktree(struct radix_node_head *h, int (*f)(struct radix_node *, void *),
-    void *w)
+rn_walktree(struct radix_node_head *h, int (*f)(struct radix_node *, void *,
+    u_int), void *w)
 {
 	int error;
 	struct radix_node *base, *next;
@@ -976,7 +976,8 @@ rn_walktree(struct radix_node_head *h, int (*f)(struct radix_node *, void *),
 		/* Process leaves */
 		while ((rn = base) != NULL) {
 			base = rn->rn_dupedkey;
-			if (!(rn->rn_flags & RNF_ROOT) && (error = (*f)(rn, w)))
+			if (!(rn->rn_flags & RNF_ROOT) &&
+			    (error = (*f)(rn, w, h->rnh_rtabelid)))
 				return (error);
 		}
 		rn = next;
