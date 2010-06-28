@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.12 2010/04/16 02:20:25 deraadt Exp $	*/
+/*	$OpenBSD: scif.c,v 1.13 2010/06/28 14:13:30 deraadt Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -455,7 +455,7 @@ scif_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scifsoft, sc);
 	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
 
-	tp = ttymalloc();
+	tp = ttymalloc(0);
 	tp->t_oproc = scifstart;
 	tp->t_param = scifparam;
 	tp->t_hwiflow = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.55 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: dart.c,v 1.56 2010/06/28 14:13:29 deraadt Exp $	*/
 
 /*
  * Mach Operating System
@@ -642,7 +642,7 @@ dartopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (dart->tty != NULL)
 		tp = dart->tty;
 	else
-		tp = dart->tty = ttymalloc();
+		tp = dart->tty = ttymalloc(0);
 
 	tp->t_oproc = dartstart;
 	tp->t_param = dartparam;

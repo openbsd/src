@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.38 2010/04/12 12:57:51 tedu Exp $	*/
+/*	$OpenBSD: apci.c,v 1.39 2010/06/28 14:13:27 deraadt Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -276,7 +276,7 @@ apciopen(dev, flag, mode, p)
 
 	s = spltty();
 	if (sc->sc_tty == NULL) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = ttymalloc(0);
 	} else
 		tp = sc->sc_tty;
 	splx(s);

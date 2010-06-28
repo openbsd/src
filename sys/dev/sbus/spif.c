@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.17 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: spif.c,v 1.18 2010/06/28 14:13:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -304,7 +304,7 @@ sttyattach(parent, dev, aux)
 
 		DTR_WRITE(sc, port, 0);
 
-		tp = ttymalloc();
+		tp = ttymalloc(0);
 
 		tp->t_oproc = stty_start;
 		tp->t_param = stty_param;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.16 2010/04/12 12:57:52 tedu Exp $ */
+/*	$OpenBSD: cz.c,v 1.17 2010/06/28 14:13:33 deraadt Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -418,7 +418,7 @@ cz_attach(parent, self, aux)
 
 		timeout_set(&sc->sc_diag_to, cztty_diag, sc);
 
-		tp = ttymalloc();
+		tp = ttymalloc(0);
 		tp->t_dev = makedev(cztty_major,
 		    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + i);
 		tp->t_oproc = czttystart;

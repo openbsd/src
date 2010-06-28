@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbbc.c,v 1.8 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: sbbc.c,v 1.9 2010/06/28 14:13:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -515,7 +515,7 @@ sbbcopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc->sc_tty)
 		tp = sc->sc_tty;
 	else
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = ttymalloc(0);
 
 	tp->t_oproc = sbbcstart;
 	tp->t_param = sbbcparam;

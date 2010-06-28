@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.28 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: sab.c,v 1.29 2010/06/28 14:13:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -377,7 +377,7 @@ sabtty_attach(parent, self, aux)
 	struct sabtty_attach_args *sa = aux;
 	int r;
 
-	sc->sc_tty = ttymalloc();
+	sc->sc_tty = ttymalloc(0);
 	sc->sc_tty->t_oproc = sabtty_start;
 	sc->sc_tty->t_param = sabtty_param;
 

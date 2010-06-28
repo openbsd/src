@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.140 2010/06/28 04:36:31 ckuethe Exp $	*/
+/*	$OpenBSD: com.c,v 1.141 2010/06/28 14:13:32 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	s = spltty();
 	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = ttymalloc(1000000);
 	} else
 		tp = sc->sc_tty;
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.21 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: magma.c,v 1.22 2010/06/28 14:13:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -805,7 +805,7 @@ mtty_attach(struct device *parent, struct device *dev, void *args)
 		}
 		mp->mp_channel = chan;
 
-		tp = ttymalloc();
+		tp = ttymalloc(0);
 		tp->t_oproc = mtty_start;
 		tp->t_param = mtty_param;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.12 2010/06/26 23:24:43 guenther Exp $ */
+/* $OpenBSD: siotty.c,v 1.13 2010/06/28 14:13:28 deraadt Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -358,7 +358,7 @@ sioopen(dev, flag, mode, p)
 	if ((sc = siotty_cd.cd_devs[minor(dev)]) == NULL)
 		return ENXIO;
 	if ((tp = sc->sc_tty) == NULL) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = ttymalloc(0);
 	}		
 	else if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE)
 	    && suser(p, 0) != 0)

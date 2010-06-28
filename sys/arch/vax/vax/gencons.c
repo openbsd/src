@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.c,v 1.22 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.23 2010/06/28 14:13:31 deraadt Exp $	*/
 /*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ gencnopen(dev, flag, mode, p)
 		return ENXIO;
 
 	if (gencn_tty[unit] == NULL)
-		gencn_tty[unit] = ttymalloc();
+		gencn_tty[unit] = ttymalloc(0);
 
 	tp = gencn_tty[unit];
 

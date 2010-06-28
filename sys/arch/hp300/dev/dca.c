@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.39 2010/04/12 12:57:51 tedu Exp $	*/
+/*	$OpenBSD: dca.c,v 1.40 2010/06/28 14:13:27 deraadt Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ dcaopen(dev, flag, mode, p)
 
 	s = spltty();
 	if (sc->sc_tty == NULL) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = ttymalloc(0);
 	} else
 		tp = sc->sc_tty;
 	splx(s);

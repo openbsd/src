@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.22 2010/04/12 12:57:52 tedu Exp $ */
+/*	$OpenBSD: wl.c,v 1.23 2010/06/28 14:13:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -518,7 +518,7 @@ wlopen(dev, flag, mode, p)
 	if (cl->tty) {
 		tp = cl->tty;
 	} else {
-		tp = cl->tty = ttymalloc();
+		tp = cl->tty = ttymalloc(0);
 	}
 	tp->t_oproc = clstart;
 	tp->t_param = clparam;

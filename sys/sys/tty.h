@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.24 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: tty.h,v 1.25 2010/06/28 14:13:36 deraadt Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ struct tty {
 	long	t_cancc;		/* Canonical queue statistics. */
 	struct	clist t_outq;		/* Device output queue. */
 	long	t_outcc;		/* Output queue statistics. */
+	int	t_qlen;			/* Length of above queues */
 	u_char	t_line;			/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
@@ -165,7 +166,7 @@ struct itty {
 
 #define	TTMASK	15
 #define	OBUFSIZ	512
-#define	TTYHOG	1024
+#define	TTYHOG(tp)	(tp)->t_qlen
 
 #ifdef _KERNEL
 #define	TTMAXHIWAT	roundup(2048, CBSIZE)
@@ -295,7 +296,7 @@ int	 ttywflush(struct tty *tp);
 void	 ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd);
 
 void	tty_init(void);
-struct tty *ttymalloc(void);
+struct tty *ttymalloc(int);
 void	 ttyfree(struct tty *);
 u_char	*firstc(struct clist *clp, int *c);
 

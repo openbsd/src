@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.47 2010/04/12 12:57:52 tedu Exp $ */
+/*	$OpenBSD: ucom.c,v 1.48 2010/06/28 14:13:35 deraadt Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ ucom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_parent = uca->arg;
 	sc->sc_portno = uca->portno;
 
-	tp = ttymalloc();
+	tp = ttymalloc(1000000);
 	tp->t_oproc = ucomstart;
 	tp->t_param = ucomparam;
 	sc->sc_tty = tp;

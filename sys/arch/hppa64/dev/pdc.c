@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.8 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.9 2010/06/28 14:13:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -197,7 +197,7 @@ pdcopen(dev, flag, mode, p)
 	if (sc->sc_tty)
 		tp = sc->sc_tty;
 	else {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = ttymalloc(0);
 	}
 
 	tp->t_oproc = pdcstart;

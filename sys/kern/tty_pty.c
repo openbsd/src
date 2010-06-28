@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.45 2010/04/12 12:57:52 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.46 2010/06/28 14:13:36 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ check_pty(int minor)
 	if (!pt_softc[minor]) {
 		pti = malloc(sizeof(struct pt_softc), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
-		pti->pt_tty = ttymalloc();
+		pti->pt_tty = ttymalloc(0);
 		ptydevname(minor, pti);
 		pt_softc[minor] = pti;
 	}
@@ -240,7 +240,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 
 	pti = pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
-		tp = pti->pt_tty = ttymalloc();
+		tp = pti->pt_tty = ttymalloc(0);
 	} else
 		tp = pti->pt_tty;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -417,7 +417,7 @@ ptcopen(dev_t dev, int flag, int devtype, struct proc *p)
 
 	pti = pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
-		tp = pti->pt_tty = ttymalloc();
+		tp = pti->pt_tty = ttymalloc(0);
 	} else
 		tp = pti->pt_tty;
 	if (tp->t_oproc)
@@ -532,10 +532,10 @@ again:
 	if (pti->pt_flags & PF_REMOTE) {
 		if (tp->t_canq.c_cc)
 			goto block;
-		while (uio->uio_resid > 0 && tp->t_canq.c_cc < TTYHOG - 1) {
+		while (uio->uio_resid > 0 && tp->t_canq.c_cc < TTYHOG(tp) - 1) {
 			if (cc == 0) {
 				cc = MIN(uio->uio_resid, BUFSIZ);
-				cc = min(cc, TTYHOG - 1 - tp->t_canq.c_cc);
+				cc = min(cc, TTYHOG(tp) - 1 - tp->t_canq.c_cc);
 				if (cc > bufcc)
 					bufcc = cc;
 				cp = buf;
@@ -574,7 +574,7 @@ again:
 		}
 		bufcc = cc;
 		while (cc > 0) {
-			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
+			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG(tp) - 2 &&
 			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
 				wakeup(&tp->t_rawq);
 				goto block;
@@ -642,7 +642,7 @@ ptcpoll(dev_t dev, int events, struct proc *p)
 	if (events & (POLLOUT | POLLWRNORM)) {
 		if ((pti->pt_flags & PF_REMOTE) ?
 		    (tp->t_canq.c_cc == 0) :
-		    ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG - 2) ||
+		    ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG(tp) - 2) ||
 		    (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON))))
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
@@ -718,7 +718,7 @@ filt_ptcwrite(struct knote *kn, long hint)
 		if (ISSET(pti->pt_flags, PF_REMOTE)) {
 			if (tp->t_canq.c_cc == 0)
 				kn->kn_data = tp->t_canq.c_cn;
-		} else if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2)
+		} else if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG(tp)-2)
 			kn->kn_data = tp->t_canq.c_cn -
 			    (tp->t_rawq.c_cc + tp->t_canq.c_cc);
 	}
