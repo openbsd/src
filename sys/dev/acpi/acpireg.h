@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.19 2010/06/27 17:04:27 mlarkin Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.20 2010/06/28 06:35:15 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -395,6 +395,216 @@ struct acpi_facs {
 	u_int8_t	version;
 	u_int8_t	reserved[31];
 } __packed;
+
+/* 
+ * Intel ACPI DMA Remapping Entries 
+ */
+struct acpidmar_devpath
+{
+	uint8_t		device;
+	uint8_t		function;
+} __packed;
+
+struct acpidmar_devscope
+{
+	uint8_t		type;
+#define DMAR_ENDPOINT 			0x1
+#define DMAR_BRIDGE 			0x2
+#define DMAR_IOAPIC 			0x3
+#define DMAR_HPET 			0x4
+	uint8_t		length;
+	uint16_t	reserved;
+	uint8_t		enumid;
+	uint8_t		bus;
+} __packed;
+
+/* DMA Remapping Hardware Unit */
+struct acpidmar_drhd
+{
+	uint16_t	type;
+	uint16_t	length;
+
+	uint8_t		flags;
+	uint8_t		reserved;
+	uint16_t	segment;
+	uint64_t	address;
+	/* struct acpidmar_devscope[]; */
+} __packed;
+
+/* Reserved Memory Region Reporting */
+struct acpidmar_rmrr
+{
+	uint16_t	type;
+	uint16_t	length;
+
+	uint16_t	reserved;
+	uint16_t	segment;
+	uint64_t	base;
+	uint64_t	limit;
+	/* struct acpidmar_devscope[]; */
+} __packed;
+
+/* Root Port ATS Capability Reporting */
+struct acpidmar_atsr
+{
+	uint16_t	type;
+	uint16_t	length;
+
+	uint8_t		flags;
+	uint8_t		reserved;
+	uint16_t	segment;
+	/* struct acpidmar_devscope[]; */
+} __packed;
+
+union acpidmar_entry {
+	struct {
+		uint16_t	type;
+#define DMAR_DRHD 			0x0
+#define DMAR_RMRR 			0x1
+#define DMAR_ATSR 			0x2
+#define DMAR_RHSA 			0x3
+		uint16_t	length;
+	} __packed;
+	struct acpidmar_drhd	drhd;
+	struct acpidmar_rmrr	rmrr;
+	struct acpidmar_atsr	atsr;
+} __packed;
+
+struct acpi_dmar {
+	struct acpi_table_header	hdr;
+#define DMAR_SIG	"DMAR"
+	uint8_t		haw;
+	uint8_t		flags;
+	uint8_t		reserved[10];
+	/* struct acpidmar_entry[]; */
+} __packed;
+
+/* 
+ * AMD I/O Virtualization Remapping Entries 
+ */
+union acpi_ivhd_entry {
+	uint8_t		type;
+#define IVHD_ALL			1
+#define IVHD_SEL			2
+#define IVHD_SOR			3
+#define IVHD_EOR			4
+#define IVHD_ALIAS_SEL			66
+#define IVHD_ALIAS_SOR			67
+#define IVHD_EXT_SEL			70
+#define IVHD_EXT_SOR			71
+#define IVHD_SPECIAL			72
+	struct {
+		uint8_t		type;
+		uint16_t	resvd;
+		uint8_t		data;
+	} __packed all;
+	struct {
+		uint8_t		type;
+		uint16_t	devid;
+		uint8_t		data;
+	} __packed sel;
+	struct {
+		uint8_t		type;
+		uint16_t	devid;
+		uint8_t		data;
+	} __packed sor;
+	struct {
+		uint8_t		type;
+		uint16_t	devid;
+		uint8_t		resvd;
+	} __packed eor;
+	struct {
+		uint8_t		type;
+		uint16_t	devid;
+		uint8_t		data;
+		uint8_t		resvd1;
+		uint16_t	srcid;
+		uint8_t		resvd2;
+	} __packed alias;
+	struct {
+		uint8_t		type;
+		uint16_t	devid;
+		uint8_t		data;
+		uint32_t	extdata;
+#define IVHD_ATS_DIS			(1L << 31)
+	} __packed ext;
+	struct {
+		uint8_t		type;
+		uint16_t	resvd;
+		uint8_t		data;
+		uint8_t		handle;
+		uint16_t	devid;
+		uint8_t		variety;
+#define IVHD_IOAPIC			0x01
+#define IVHD_HPET			0x02
+	} __packed special;
+} __packed;
+
+struct acpi_ivmd
+{
+	uint8_t		type;
+	uint8_t		flags;
+#define	IVMD_EXCLRANGE			(1L << 3)
+#define IVMD_IW				(1L << 2)
+#define IVMD_IR				(1L << 1)
+#define IVMD_UNITY			(1L << 0)
+	uint16_t	length;
+	uint16_t	devid;
+	uint16_t	auxdata;
+	uint8_t		reserved[8];
+	uint64_t	base;
+	uint64_t	limit;
+} __packed;
+
+struct acpi_ivhd
+{
+	uint8_t		type;
+	uint8_t		flags;
+#define IVHD_IOTLB		(1L << 4)
+#define IVHD_ISOC		(1L << 3)
+#define IVHD_RESPASSPW		(1L << 2)
+#define IVHD_PASSPW		(1L << 1)
+#define IVHD_HTTUNEN		(1L << 0)
+	uint16_t	length;
+	uint16_t	devid;
+	uint16_t	cap;
+	uint64_t	address;
+	uint16_t	segment;
+	uint16_t	info;
+#define IVHD_UNITID_SHIFT	8
+#define IVHD_UNITID_MASK	0x1F
+#define IVHD_MSINUM_SHIFT	0
+#define IVHD_MSINUM_MASK	0x1F
+	uint32_t	reserved;
+} __packed;
+
+union acpi_ivrs_entry {
+	struct {
+		uint8_t		type;
+#define IVRS_IVHD			0x10
+#define IVRS_IVMD_ALL			0x20
+#define IVRS_IVMD_SPECIFIED		0x21
+#define IVRS_IVMD_RANGE			0x22
+		uint8_t		flags;
+		uint16_t	length;
+	} __packed;
+	struct acpi_ivhd	ivhd;
+	struct acpi_ivmd	ivmd;
+} __packed;
+
+struct acpi_ivrs
+{
+	struct acpi_table_header	hdr;
+#define IVRS_SIG	"IVRS"
+	uint32_t		ivinfo;
+#define IVRS_ATSRNG		(1L << 22)
+#define IVRS_VASIZE_SHIFT	15
+#define IVRS_VASIZE_MASK	0x7F
+#define IVRS_PASIZE_SHIFT	8
+#define IVRS_PASIZE_MASK	0x7F
+	uint8_t			reserved[8];
+} __packed;
+
 
 #define ACPI_FREQUENCY	3579545		/* Per ACPI spec */
 
