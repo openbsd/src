@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.84 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.85 2010/06/28 16:48:15 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1021,19 +1021,17 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		return;
 	}
 
-	if (req == RTM_RESOLVE &&
-	    (nd6_need_cache(ifp) == 0 || /* stf case */
-	     !nd6_is_addr_neighbor((struct sockaddr_in6 *)rt_key(rt), ifp))) {
+	if (req == RTM_RESOLVE && nd6_need_cache(ifp) == 0) {
 		/*
-		 * FreeBSD and BSD/OS often make a cloned host route based
-		 * on a less-specific route (e.g. the default route).
-		 * If the less specific route does not have a "gateway"
-		 * (this is the case when the route just goes to a p2p or an
-		 * stf interface), we'll mistakenly make a neighbor cache for
-		 * the host route, and will see strange neighbor solicitation
-		 * for the corresponding destination.  In order to avoid the
-		 * confusion, we check if the destination of the route is
-		 * a neighbor in terms of neighbor discovery, and stop the
+		 * For routing daemons like ospf6d we allow neighbor discovery
+		 * based on the cloning route only.  This allows us to sent
+		 * packets directly into a network without having an address
+		 * with matching prefix on the interface.  If the cloning
+		 * route is used for an stf interface, we would mistakenly
+		 * make a neighbor cache for the host route, and would see
+		 * strange neighbor solicitation for the corresponding
+		 * destination.  In order to avoid confusion, we check if the
+		 * interface is suitable for neighbor discovery, and stop the
 		 * process if not.  Additionally, we remove the LLINFO flag
 		 * so that ndp(8) will not try to get the neighbor information
 		 * of the destination.
