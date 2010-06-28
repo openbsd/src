@@ -1,10 +1,6 @@
 #!./perl -w
 $|=1;
 BEGIN {
-    if($ENV{PERL_CORE}) {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-    }
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bOpcode\b/ && $Config{'osname'} ne 'VMS') {
         print "1..0\n";

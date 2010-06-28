@@ -1,10 +1,6 @@
 #!perl
 
 BEGIN {
-    if ($ENV{PERL_CORE}) {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-    }
     require Config;
     import Config;
     if ($Config{'extensions'} !~ /\bOpcode\b/) {
@@ -22,8 +18,10 @@ plan(tests => 6);
 my $c = new Safe;
 $c->permit(qw(require caller));
 
-my $r = $c->reval(q!
-    no warnings 'redefine';
+my $no_warn_redef = ($] != 5.008009)
+    ? q(no warnings 'redefine';)
+    : q($SIG{__WARN__}=sub{};);
+my $r = $c->reval($no_warn_redef . q!
     sub UNIVERSAL::isa { "pwned" }
     (bless[],"Foo")->isa("Foo");
 !);
@@ -33,8 +31,7 @@ is( (bless[],"Foo")->isa("Foo"), 1, "... but not outside" );
 
 sub Foo::foo {}
 
-$r = $c->reval(q!
-    no warnings 'redefine';
+$r = $c->reval($no_warn_redef . q!
     sub UNIVERSAL::can { "pwned" }
     (bless[],"Foo")->can("foo");
 !);

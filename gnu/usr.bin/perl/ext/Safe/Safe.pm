@@ -2,8 +2,9 @@ package Safe;
 
 use 5.003_11;
 use strict;
+use Scalar::Util qw(reftype);
 
-$Safe::VERSION = "2.18";
+$Safe::VERSION = "2.27";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -11,24 +12,36 @@ $Safe::VERSION = "2.18";
 # see any lexicals in scope (apart from __ExPr__ which is unavoidable)
 
 sub lexless_anon_sub {
-		 # $_[0] is package;
-		 # $_[1] is strict flag;
+                 # $_[0] is package;
+                 # $_[1] is strict flag;
     my $__ExPr__ = $_[2];   # must be a lexical to create the closure that
-			    # can be used to pass the value into the safe
-			    # world
+                            # can be used to pass the value into the safe
+                            # world
 
     # Create anon sub ref in root of compartment.
     # Uses a closure (on $__ExPr__) to pass in the code to be executed.
     # (eval on one line to keep line numbers as expected by caller)
     eval sprintf
     'package %s; %s strict; sub { @_=(); eval q[my $__ExPr__;] . $__ExPr__; }',
-		$_[0], $_[1] ? 'use' : 'no';
+                $_[0], $_[1] ? 'use' : 'no';
 }
 
 use Carp;
 BEGIN { eval q{
     use Carp::Heavy;
 } }
+
+use B ();
+BEGIN {
+    no strict 'refs';
+    if (defined &B::sub_generation) {
+        *sub_generation = \&B::sub_generation;
+    }
+    else {
+        # fake sub generation changing for perls < 5.8.9
+        my $sg; *sub_generation = sub { ++$sg };
+    }
+}
 
 use Opcode 1.01, qw(
     opset opset_to_ops opmask_add
@@ -38,6 +51,23 @@ use Opcode 1.01, qw(
 
 *ops_to_opset = \&opset;   # Temporary alias for old Penguins
 
+# Regular expressions and other unicode-aware code may need to call
+# utf8->SWASHNEW (via perl's utf8.c).  That will fail unless we share the
+# SWASHNEW method.
+# Sadly we can't just add utf8::SWASHNEW to $default_share because perl's
+# utf8.c code does a fetchmethod on SWASHNEW to check if utf8.pm is loaded,
+# and sharing makes it look like the method exists.
+# The simplest and most robust fix is to ensure the utf8 module is loaded when
+# Safe is loaded. Then we can add utf8::SWASHNEW to $default_share.
+require utf8;
+# we must ensure that utf8_heavy.pl, where SWASHNEW is defined, is loaded
+# but without depending on knowledge of that implementation detail.
+# This code (//i on a unicode string) ensures utf8 is fully loaded
+# and also loads the ToFold SWASH.
+# (Swashes are cached internally by perl in PL_utf8_* variables
+# independent of being inside/outside of Safe. So once loaded they can be)
+do { my $a = pack('U',0xC4); my $b = chr 0xE4; utf8::upgrade $b; $a =~ /$b/i };
+# now we can safely include utf8::SWASHNEW in $default_share defined below.
 
 my $default_root  = 0;
 # share *_ and functions defined in universal.c
@@ -57,10 +87,15 @@ my $default_share = [qw[
     &utf8::downgrade
     &utf8::native_to_unicode
     &utf8::unicode_to_native
+    &utf8::SWASHNEW
     $version::VERSION
     $version::CLASS
+    $version::STRICT
+    $version::LAX
     @version::ISA
-], ($] >= 5.008001 && qw[
+], ($] < 5.010 && qw[
+    &utf8::SWASHGET
+]), ($] >= 5.008001 && qw[
     &Regexp::DESTROY
 ]), ($] >= 5.010 && qw[
     &re::is_regexp
@@ -93,6 +128,12 @@ my $default_share = [qw[
     &version::noop
     &version::is_alpha
     &version::qv
+    &version::vxs::declare
+    &version::vxs::qv
+    &version::vxs::_VERSION
+    &version::vxs::stringify
+    &version::vxs::new
+    &version::vxs::parse
 ]), ($] >= 5.011 && qw[
     &re::regexp_pattern
 ])];
@@ -103,14 +144,14 @@ sub new {
     bless $obj, $class;
 
     if (defined($root)) {
-	croak "Can't use \"$root\" as root name"
-	    if $root =~ /^main\b/ or $root !~ /^\w[:\w]*$/;
-	$obj->{Root}  = $root;
-	$obj->{Erase} = 0;
+        croak "Can't use \"$root\" as root name"
+            if $root =~ /^main\b/ or $root !~ /^\w[:\w]*$/;
+        $obj->{Root}  = $root;
+        $obj->{Erase} = 0;
     }
     else {
-	$obj->{Root}  = "Safe::Root".$default_root++;
-	$obj->{Erase} = 1;
+        $obj->{Root}  = "Safe::Root".$default_root++;
+        $obj->{Erase} = 1;
     }
 
     # use permit/deny methods instead till interface issues resolved
@@ -125,7 +166,9 @@ sub new {
     # the whole glob *_ rather than $_ and @_ separately, otherwise
     # @_ in non default packages within the compartment don't work.
     $obj->share_from('main', $default_share);
+
     Opcode::_safe_pkg_prep($obj->{Root}) if($Opcode::VERSION > 1.04);
+
     return $obj;
 }
 
@@ -140,7 +183,7 @@ sub erase {
     my ($stem, $leaf);
 
     no strict 'refs';
-    $pkg = "main::$pkg\::";	# expand to full symbol table name
+    $pkg = "main::$pkg\::";     # expand to full symbol table name
     ($stem, $leaf) = $pkg =~ m/(.*::)(\w+::)$/;
 
     # The 'my $foo' is needed! Without it you get an
@@ -149,7 +192,7 @@ sub erase {
 
     #warn "erase($pkg) stem=$stem, leaf=$leaf";
     #warn " stem_symtab hash ".scalar(%$stem_symtab)."\n";
-	# ", join(', ', %$stem_symtab),"\n";
+    # ", join(', ', %$stem_symtab),"\n";
 
 #    delete $stem_symtab->{$leaf};
 
@@ -220,11 +263,11 @@ sub dump_mask {
 }
 
 
-
 sub share {
     my($obj, @vars) = @_;
     $obj->share_from(scalar(caller), \@vars);
 }
+
 
 sub share_from {
     my $obj = shift;
@@ -236,25 +279,26 @@ sub share_from {
     no strict 'refs';
     # Check that 'from' package actually exists
     croak("Package \"$pkg\" does not exist")
-	unless keys %{"$pkg\::"};
+        unless keys %{"$pkg\::"};
     my $arg;
     foreach $arg (@$vars) {
-	# catch some $safe->share($var) errors:
-	my ($var, $type);
-	$type = $1 if ($var = $arg) =~ s/^(\W)//;
-	# warn "share_from $pkg $type $var";
-	for (1..2) { # assign twice to avoid any 'used once' warnings
-	    *{$root."::$var"} = (!$type)       ? \&{$pkg."::$var"}
-			  : ($type eq '&') ? \&{$pkg."::$var"}
-			  : ($type eq '$') ? \${$pkg."::$var"}
-			  : ($type eq '@') ? \@{$pkg."::$var"}
-			  : ($type eq '%') ? \%{$pkg."::$var"}
-			  : ($type eq '*') ?  *{$pkg."::$var"}
-			  : croak(qq(Can't share "$type$var" of unknown type));
-	}
+        # catch some $safe->share($var) errors:
+        my ($var, $type);
+        $type = $1 if ($var = $arg) =~ s/^(\W)//;
+        # warn "share_from $pkg $type $var";
+        for (1..2) { # assign twice to avoid any 'used once' warnings
+            *{$root."::$var"} = (!$type)   ? \&{$pkg."::$var"}
+                          : ($type eq '&') ? \&{$pkg."::$var"}
+                          : ($type eq '$') ? \${$pkg."::$var"}
+                          : ($type eq '@') ? \@{$pkg."::$var"}
+                          : ($type eq '%') ? \%{$pkg."::$var"}
+                          : ($type eq '*') ?  *{$pkg."::$var"}
+                          : croak(qq(Can't share "$type$var" of unknown type));
+        }
     }
     $obj->share_record($pkg, $vars) unless $no_record or !$vars;
 }
+
 
 sub share_record {
     my $obj = shift;
@@ -264,18 +308,23 @@ sub share_record {
     # Record shares using keys of $obj->{Shares}. See reinit.
     @{$shares}{@$vars} = ($pkg) x @$vars if @$vars;
 }
+
+
 sub share_redo {
     my $obj = shift;
     my $shares = \%{$obj->{Shares} ||= {}};
     my($var, $pkg);
     while(($var, $pkg) = each %$shares) {
-	# warn "share_redo $pkg\:: $var";
-	$obj->share_from($pkg,  [ $var ], 1);
+        # warn "share_redo $pkg\:: $var";
+        $obj->share_from($pkg,  [ $var ], 1);
     }
 }
+
+
 sub share_forget {
     delete shift->{Shares};
 }
+
 
 sub varglob {
     my ($obj, $var) = @_;
@@ -283,22 +332,113 @@ sub varglob {
     return *{$obj->root()."::$var"};
 }
 
+sub _clean_stash {
+    my ($root, $saved_refs) = @_;
+    $saved_refs ||= [];
+    no strict 'refs';
+    foreach my $hook (qw(DESTROY AUTOLOAD), grep /^\(/, keys %$root) {
+        push @$saved_refs, \*{$root.$hook};
+        delete ${$root}{$hook};
+    }
+
+    for (grep /::$/, keys %$root) {
+        next if \%{$root.$_} eq \%$root;
+        _clean_stash($root.$_, $saved_refs);
+    }
+}
 
 sub reval {
     my ($obj, $expr, $strict) = @_;
     my $root = $obj->{Root};
 
-    my $evalsub = lexless_anon_sub($root,$strict, $expr);
-    return Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
+    my $evalsub = lexless_anon_sub($root, $strict, $expr);
+    # propagate context
+    my $sg = sub_generation();
+    my @subret = (wantarray)
+               ?        Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub)
+               : scalar Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
+    _clean_stash($root.'::') if $sg != sub_generation();
+    $obj->wrap_code_refs_within(@subret);
+    return (wantarray) ? @subret : $subret[0];
 }
+
+
+sub wrap_code_refs_within {
+    my $obj = shift;
+
+    $obj->_find_code_refs('wrap_code_ref', @_);
+}
+
+
+sub _find_code_refs {
+    my $obj = shift;
+    my $visitor = shift;
+
+    for my $item (@_) {
+        my $reftype = $item && reftype $item
+            or next;
+        if ($reftype eq 'ARRAY') {
+            $obj->_find_code_refs($visitor, @$item);
+        }
+        elsif ($reftype eq 'HASH') {
+            $obj->_find_code_refs($visitor, values %$item);
+        }
+        # XXX GLOBs?
+        elsif ($reftype eq 'CODE') {
+            $item = $obj->$visitor($item);
+        }
+    }
+}
+
+
+sub wrap_code_ref {
+    my ($obj, $sub) = @_;
+
+    # wrap code ref $sub with _safe_call_sv so that, when called, the
+    # execution will happen with the compartment fully 'in effect'.
+
+    croak "Not a CODE reference"
+        if reftype $sub ne 'CODE';
+
+    my $ret = sub {
+        my @args = @_; # lexical to close over
+        my $sub_with_args = sub { $sub->(@args) };
+
+        my @subret;
+        my $error;
+        do {
+            local $@;  # needed due to perl_call_sv(sv, G_EVAL|G_KEEPERR)
+            my $sg = sub_generation();
+            @subret = (wantarray)
+                ?        Opcode::_safe_call_sv($obj->{Root}, $obj->{Mask}, $sub_with_args)
+                : scalar Opcode::_safe_call_sv($obj->{Root}, $obj->{Mask}, $sub_with_args);
+            $error = $@;
+            _clean_stash($obj->{Root}.'::') if $sg != sub_generation();
+        };
+        if ($error) { # rethrow exception
+            $error =~ s/\t\(in cleanup\) //; # prefix added by G_KEEPERR
+            die $error;
+        }
+        return (wantarray) ? @subret : $subret[0];
+    };
+
+    return $ret;
+}
+
 
 sub rdo {
     my ($obj, $file) = @_;
     my $root = $obj->{Root};
 
+    my $sg = sub_generation();
     my $evalsub = eval
-	    sprintf('package %s; sub { @_ = (); do $file }', $root);
-    return Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
+            sprintf('package %s; sub { @_ = (); do $file }', $root);
+    my @subret = (wantarray)
+               ?        Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub)
+               : scalar Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
+    _clean_stash($root.'::') if $sg != sub_generation();
+    $obj->wrap_code_refs_within(@subret);
+    return (wantarray) ? @subret : $subret[0];
 }
 
 
@@ -390,15 +530,7 @@ of this software.
 Your mileage will vary. If in any doubt B<do not use it>.
 
 
-=head2 RECENT CHANGES
-
-The interface to the Safe module has changed quite dramatically since
-version 1 (as supplied with Perl5.002). Study these pages carefully if
-you have code written to use Safe version 1 because you will need to
-makes changes.
-
-
-=head2 Methods in class Safe
+=head1 METHODS
 
 To create a new compartment, use
 
@@ -417,9 +549,7 @@ object returned by the above constructor. The object argument
 is implicit in each case.
 
 
-=over 8
-
-=item permit (OP, ...)
+=head2 permit (OP, ...)
 
 Permit the listed operators to be used when compiling code in the
 compartment (in I<addition> to any operators already permitted).
@@ -427,29 +557,30 @@ compartment (in I<addition> to any operators already permitted).
 You can list opcodes by names, or use a tag name; see
 L<Opcode/"Predefined Opcode Tags">.
 
-=item permit_only (OP, ...)
+=head2 permit_only (OP, ...)
 
 Permit I<only> the listed operators to be used when compiling code in
 the compartment (I<no> other operators are permitted).
 
-=item deny (OP, ...)
+=head2 deny (OP, ...)
 
 Deny the listed operators from being used when compiling code in the
 compartment (other operators may still be permitted).
 
-=item deny_only (OP, ...)
+=head2 deny_only (OP, ...)
 
 Deny I<only> the listed operators from being used when compiling code
-in the compartment (I<all> other operators will be permitted).
+in the compartment (I<all> other operators will be permitted, so you probably
+don't want to use this method).
 
-=item trap (OP, ...)
+=head2 trap (OP, ...)
 
-=item untrap (OP, ...)
+=head2 untrap (OP, ...)
 
 The trap and untrap methods are synonyms for deny and permit
 respectfully.
 
-=item share (NAME, ...)
+=head2 share (NAME, ...)
 
 This shares the variable(s) in the argument list with the compartment.
 This is almost identical to exporting variables using the L<Exporter>
@@ -465,9 +596,9 @@ for a glob (i.e.  all symbol table entries associated with "foo",
 including scalar, array, hash, sub and filehandle).
 
 Each NAME is assumed to be in the calling package. See share_from
-for an alternative method (which share uses).
+for an alternative method (which C<share> uses).
 
-=item share_from (PACKAGE, ARRAYREF)
+=head2 share_from (PACKAGE, ARRAYREF)
 
 This method is similar to share() but allows you to explicitly name the
 package that symbols should be shared from. The symbol names (including
@@ -475,20 +606,29 @@ type characters) are supplied as an array reference.
 
     $safe->share_from('main', [ '$foo', '%bar', 'func' ]);
 
+Names can include package names, which are relative to the specified PACKAGE.
+So these two calls have the same effect:
 
-=item varglob (VARNAME)
+    $safe->share_from('Scalar::Util', [ 'reftype' ]);
+    $safe->share_from('main', [ 'Scalar::Util::reftype' ]);
+
+=head2 varglob (VARNAME)
 
 This returns a glob reference for the symbol table entry of VARNAME in
 the package of the compartment. VARNAME must be the B<name> of a
-variable without any leading type marker. For example,
+variable without any leading type marker. For example:
+
+    ${$cpt->varglob('foo')} = "Hello world";
+
+has the same effect as:
 
     $cpt = new Safe 'Root';
     $Root::foo = "Hello world";
-    # Equivalent version which doesn't need to know $cpt's package name:
-    ${$cpt->varglob('foo')} = "Hello world";
+
+but avoids the need to know $cpt's package name.
 
 
-=item reval (STRING, STRICT)
+=head2 reval (STRING, STRICT)
 
 This evaluates STRING as perl code inside the compartment.
 
@@ -511,9 +651,9 @@ expression evaluated, or a return statement may be used, just as with
 subroutines and B<eval()>. The context (list or scalar) is determined
 by the caller as usual.
 
-This behaviour differs from the beta distribution of the Safe extension
-where earlier versions of perl made it hard to mimic the return
-behaviour of the eval() command and the context was always scalar.
+If the return value of reval() is (or contains) any code reference,
+those code references are wrapped to be themselves executed always
+in the compartment. See L</wrap_code_refs_within>.
 
 The formerly undocumented STRICT argument sets strictness: if true
 'use strict;' is used, otherwise it uses 'no strict;'. B<Note>: if
@@ -553,14 +693,12 @@ the code in the compartment.
 A similar effect applies to I<all> runtime symbol lookups in code
 called from a compartment but not compiled within it.
 
-
-
-=item rdo (FILENAME)
+=head2 rdo (FILENAME)
 
 This evaluates the contents of file FILENAME inside the compartment.
 See above documentation on the B<reval> method for further details.
 
-=item root (NAMESPACE)
+=head2 root (NAMESPACE)
 
 This method returns the name of the package that is the root of the
 compartment's namespace.
@@ -569,7 +707,7 @@ Note that this behaviour differs from version 1.00 of the Safe module
 where the root module could be used to change the namespace. That
 functionality has been withdrawn pending deeper consideration.
 
-=item mask (MASK)
+=head2 mask (MASK)
 
 This is a get-or-set method for the compartment's operator mask.
 
@@ -579,14 +717,34 @@ the compartment.
 With the MASK argument present, it sets the operator mask for the
 compartment (equivalent to calling the deny_only method).
 
-=back
+=head2 wrap_code_ref (CODEREF)
 
+Returns a reference to an anonymous subroutine that, when executed, will call
+CODEREF with the Safe compartment 'in effect'.  In other words, with the
+package namespace adjusted and the opmask enabled.
 
-=head2 Some Safety Issues
+Note that the opmask doesn't affect the already compiled code, it only affects
+any I<further> compilation that the already compiled code may try to perform.
 
-This section is currently just an outline of some of the things code in
-a compartment might do (intentionally or unintentionally) which can
-have an effect outside the compartment.
+This is particularly useful when applied to code references returned from reval().
+
+(It also provides a kind of workaround for RT#60374: "Safe.pm sort {} bug with
+-Dusethreads". See L<http://rt.perl.org/rt3//Public/Bug/Display.html?id=60374>
+for I<much> more detail.)
+
+=head2 wrap_code_refs_within (...)
+
+Wraps any CODE references found within the arguments by replacing each with the
+result of calling L</wrap_code_ref> on the CODE reference. Any ARRAY or HASH
+references in the arguments are inspected recursively.
+
+Returns nothing.
+
+=head1 RISKS
+
+This section is just an outline of some of the things code in a compartment
+might do (intentionally or unintentionally) which can have an effect outside
+the compartment.
 
 =over 8
 
@@ -624,7 +782,7 @@ but more subtle effect.
 
 =back
 
-=head2 AUTHOR
+=head1 AUTHOR
 
 Originally designed and implemented by Malcolm Beattie.
 

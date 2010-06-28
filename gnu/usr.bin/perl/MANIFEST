@@ -1144,7 +1144,10 @@ ext/Safe/t/safe2.t		See if Safe works
 ext/Safe/t/safe3.t		See if Safe works
 ext/Safe/t/safeload.t		Tests that some modules can be loaded by Safe
 ext/Safe/t/safeops.t		Tests that all ops can be trapped by Safe
+ext/Safe/t/safesort.t		See if Safe works
 ext/Safe/t/safeuniversal.t	Tests Safe with functions from universal.c
+ext/Safe/t/safeutf8.t		See if Safe works
+ext/Safe/t/safewrap.t		See if Safe works
 ext/SDBM_File/Makefile.PL	SDBM extension makefile writer
 ext/SDBM_File/sdbm/biblio	SDBM kit
 ext/SDBM_File/sdbm/CHANGES	SDBM kit
@@ -1962,8 +1965,8 @@ lib/Class/Struct.t		See if Class::Struct works
 lib/complete.pl			A command completion subroutine
 lib/Config/Extensions.pm	Convenient hash lookup for built extensions
 lib/Config/Extensions.t		See if Config::Extensions works
-lib/Config.t			See if Config works
 lib/Config_git.pl		Pre-generated git_version.h for OpenBSD
+lib/Config.t			See if Config works
 lib/constant.pm			For "use constant"
 lib/constant.t			See if compile-time constants work
 lib/CORE.pod			document the CORE namespace

@@ -1,10 +1,6 @@
 #!perl -w
 
 BEGIN {
-    if ($ENV{PERL_CORE}) {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-    }
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bOpcode\b/
 	&& $Config{'extensions'} !~ /\bPOSIX\b/

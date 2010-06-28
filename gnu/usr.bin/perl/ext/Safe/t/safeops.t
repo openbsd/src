@@ -2,13 +2,9 @@
 # Tests that all ops can be trapped by a Safe compartment
 
 BEGIN {
-    if ($ENV{PERL_CORE}) {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-    }
-    else {
+    unless ($ENV{PERL_CORE}) {
 	# this won't work outside of the core, so exit
-        print "1..0\n"; exit 0;
+        print "1..0 # skipped: PERL_CORE unset\n"; exit 0;
     }
 }
 use Config;
