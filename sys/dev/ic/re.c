@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.119 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: re.c,v 1.120 2010/06/28 16:04:09 sthen Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -233,6 +233,7 @@ static const struct re_revision {
 	{ RL_HWREV_8168CP,	"RTL8168CP/8111CP" },
 	{ RL_HWREV_8168D,	"RTL8168D/8111D" },
 	{ RL_HWREV_8168DP,      "RTL8168DP/8111DP" },
+	{ RL_HWREV_8168E,       "RTL8168E/8111E" },
 	{ RL_HWREV_8169,	"RTL8169" },
 	{ RL_HWREV_8169_8110SB,	"RTL8169/8110SB" },
 	{ RL_HWREV_8169_8110SBL, "RTL8169SBL" },
@@ -856,6 +857,12 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		 */
 		sc->rl_flags |= RL_FLAG_NOJUMBO;
 		break;
+	case RL_HWREV_8168E:
+		sc->rl_flags |= RL_FLAG_INVMAR | RL_FLAG_PHYWAKE |
+		    RL_FLAG_PHYWAKE_PM | RL_FLAG_PAR | RL_FLAG_DESCV2 |
+		    RL_FLAG_MACSTAT | FL_FLAG_HWIM | RL_FLAG_CMDSTOP |
+		    RL_FLAG_AUTOPAD | RL_FLAG_NOJUMBO;
+		break;
 	case RL_HWREV_8169_8110SB:
 	case RL_HWREV_8169_8110SBL:
 	case RL_HWREV_8169_8110SCd:
@@ -1113,6 +1120,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	timeout_set(&sc->timer_handle, re_tick, sc);
 
 	/* Take PHY out of power down mode. */
+	if (sc->rl_flags & RL_FLAG_PHYWAKE_PM)
+		CSR_WRITE_1(sc, RL_PMCH, CSR_READ_1(sc, RL_PMCH) | 0x80);
 	if (sc->rl_flags & RL_FLAG_PHYWAKE) {
 		re_gmii_writereg((struct device *)sc, 1, 0x1f, 0);
 		re_gmii_writereg((struct device *)sc, 1, 0x0e, 0);

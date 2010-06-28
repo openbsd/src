@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.67 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.68 2010/06/28 16:04:09 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -138,6 +138,7 @@
 #define RL_GMEDIASTAT		0x006C	/* 8 bits */
 #define RL_MACDBG		0x006D	/* 8 bits */
 #define RL_GPIO			0x006E	/* 8 bits */
+#define RL_PMCH			0x006F	/* 8 bits */
 #define RL_LDPS			0x0082	/* Link Down Power Saving */
 #define RL_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
 #define RL_IM			0x00E2
@@ -168,6 +169,7 @@
 #define RL_HWREV_8103E		0x24C00000
 #define RL_HWREV_8168D		0x28000000
 #define RL_HWREV_8168DP		0x28800000
+#define RL_HWREV_8168E		0x2C000000
 #define RL_HWREV_8168_SPIN1	0x30000000
 #define RL_HWREV_8100E_SPIN1	0x30800000
 #define RL_HWREV_8101E		0x34000000
@@ -821,22 +823,23 @@ struct rl_softc {
 
 	int			rl_txstart;
 	u_int32_t		rl_flags;
-#define	RL_FLAG_MSI		0x0001
-#define	RL_FLAG_PCI64		0x0002
-#define	RL_FLAG_PCIE		0x0004
-#define	RL_FLAG_INVMAR		0x0008
-#define	RL_FLAG_PHYWAKE		0x0010
-#define	RL_FLAG_NOJUMBO		0x0020
-#define	RL_FLAG_PAR		0x0040
-#define	RL_FLAG_DESCV2		0x0080
-#define	RL_FLAG_MACSTAT		0x0100
-#define	RL_FLAG_HWIM		0x0200
-#define	RL_FLAG_TIMERINTR	0x0400
-#define	RL_FLAG_MACLDPS		0x0800
-#define	RL_FLAG_CMDSTOP		0x1000
-#define	RL_FLAG_MACSLEEP	0x2000
-#define	RL_FLAG_AUTOPAD		0x4000
-#define	RL_FLAG_LINK		0x8000
+#define	RL_FLAG_MSI		0x00000001
+#define	RL_FLAG_PCI64		0x00000002
+#define	RL_FLAG_PCIE		0x00000004
+#define	RL_FLAG_INVMAR		0x00000008
+#define	RL_FLAG_PHYWAKE		0x00000010
+#define	RL_FLAG_NOJUMBO		0x00000020
+#define	RL_FLAG_PAR		0x00000040
+#define	RL_FLAG_DESCV2		0x00000080
+#define	RL_FLAG_MACSTAT		0x00000100
+#define	RL_FLAG_HWIM		0x00000200
+#define	RL_FLAG_TIMERINTR	0x00000400
+#define	RL_FLAG_MACLDPS		0x00000800
+#define	RL_FLAG_CMDSTOP		0x00001000
+#define	RL_FLAG_MACSLEEP	0x00002000
+#define	RL_FLAG_AUTOPAD		0x00004000
+#define	RL_FLAG_LINK		0x00008000
+#define	RL_FLAG_PHYWAKE_PM	0x00010000
 
 	u_int16_t		rl_intrs;
 	u_int16_t		rl_tx_ack;
