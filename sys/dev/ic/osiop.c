@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.43 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.44 2010/06/28 04:39:57 dlg Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -91,6 +91,8 @@
 
 void osiop_attach(struct osiop_softc *);
 void osiop_minphys(struct buf *, struct scsi_link *);
+void *osiop_io_get(void *);
+void osiop_io_put(void *, void *);
 void osiop_scsicmd(struct scsi_xfer *xs);
 void osiop_poll(struct osiop_softc *, struct osiop_acb *);
 void osiop_sched(struct osiop_softc *);
@@ -322,6 +324,9 @@ osiop_attach(sc)
 		TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 	}
 
+	mtx_init(&sc->free_list_mtx, IPL_BIO);
+	scsi_iopool_init(&sc->sc_iopool, sc, osiop_io_get, osiop_io_put);
+
 	printf(": NCR53C710 rev %d, %dMHz\n",
 	    osiop_read_1(sc, OSIOP_CTEST8) >> 4, sc->sc_clock_freq);
 
@@ -339,6 +344,7 @@ osiop_attach(sc)
 	sc->sc_link.openings = 4;
 	sc->sc_link.adapter_buswidth = OSIOP_NTGT;
 	sc->sc_link.adapter_target = sc->sc_id;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -358,6 +364,32 @@ osiop_minphys(struct buf *bp, struct scsi_link *sl)
 	if (bp->b_bcount > OSIOP_MAX_XFER)
 		bp->b_bcount = OSIOP_MAX_XFER;
 	minphys(bp);
+}
+
+void *
+osiop_io_get(void *xsc)
+{
+	struct osiop_softc *sc = xsc;
+	struct osiop_acb *acb;
+
+	mtx_enter(&sc->free_list_mtx);
+	acb = TAILQ_FIRST(&sc->free_list);
+	if (acb != NULL)
+		TAILQ_REMOVE(&sc->free_list, acb, chain);
+	mtx_leave(&sc->free_list_mtx);
+
+	return (acb);
+}
+
+void
+osiop_io_put(void *xsc, void *xio)
+{
+	struct osiop_softc *sc = xsc;
+	struct osiop_acb *acb = xio;
+
+	mtx_enter(&sc->free_list_mtx);
+	TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
+	mtx_leave(&sc->free_list_mtx);
 }
 
 /*
@@ -382,22 +414,7 @@ osiop_scsicmd(xs)
 		printf("osiop_scsicmd: busy\n");
 #endif
 
-	s = splbio();
-	acb = TAILQ_FIRST(&sc->free_list);
-	if (acb != NULL) {
-		TAILQ_REMOVE(&sc->free_list, acb, chain);
-	}
-	else {
-#ifdef DIAGNOSTIC
-		sc_print_addr(periph);
-		printf("unable to allocate acb\n");
-		panic("osiop_scsipi_request");
-#endif
-		splx(s);
-		xs->error = XS_NO_CCB;
-		scsi_done(xs);
-		return;
-	}
+	acb = xs->io;
 
 	acb->flags = 0;
 	acb->status = ACB_S_READY;
@@ -423,8 +440,6 @@ osiop_scsicmd(xs)
 			    sc->sc_dev.dv_xname, err);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
-			splx(s);
 			return;
 		}
 		bus_dmamap_sync(sc->sc_dmat, acb->datadma,
@@ -438,6 +453,7 @@ osiop_scsicmd(xs)
 	 */
 	timeout_set(&xs->stimeout, osiop_timeout, acb);
 
+	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 
 	if ((acb->xsflags & SCSI_POLL) || (sc->sc_flags & OSIOP_NODMA))
@@ -701,7 +717,6 @@ osiop_scsidone(acb, status)
 		/* Put it on the free list. */
 FREE:
 		acb->status = ACB_S_FREE;
-		TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 		sc->sc_tinfo[periph->target].cmds++;
 
 		xs->resid = 0;
@@ -2007,6 +2022,7 @@ osiop_dump(sc)
 #endif
 	printf("%s@%p istat %02x\n",
 	    sc->sc_dev.dv_xname, sc, osiop_read_1(sc, OSIOP_ISTAT));
+	mtx_enter(&sc->free_list_mtx);
 	if ((acb = TAILQ_FIRST(&sc->free_list)) != NULL) {
 		printf("Free list:\n");
 		while (acb) {
@@ -2014,6 +2030,7 @@ osiop_dump(sc)
 			acb = TAILQ_NEXT(acb, chain);
 		}
 	}
+	mtx_leave(&sc->free_list_mtx);
 	if ((acb = TAILQ_FIRST(&sc->ready_list)) != NULL) {
 		printf("Ready list:\n");
 		while (acb) {
