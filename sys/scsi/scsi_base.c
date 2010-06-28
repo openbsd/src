@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.175 2010/06/14 10:03:33 thib Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.176 2010/06/28 09:11:21 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -312,8 +312,6 @@ scsi_ioh_del(struct scsi_iohandler *ioh)
 /*
  * internal iopool runqueue handling.
  */
-
-u_int line;
 
 struct scsi_iohandler *
 scsi_ioh_deq(struct scsi_iopool *iopl)
