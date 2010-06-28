@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.78 2010/06/27 17:45:20 thib Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.79 2010/06/28 04:20:29 miod Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -699,23 +699,6 @@ uvm_km_page_init(void)
  * pressure on the small interrupt-safe kmem_map.  It is wired, but
  * not zero filled.
  */
-
-#define UVM_KM_PAGES_LOWAT_MAX	(2048)
-#define UVM_KM_PAGES_HIWAT_MAX	(4 * UVM_KM_PAGES_LOWAT_MAX)
-
-struct uvm_km_pages {
-	struct	mutex mtx;
-
-	/* Low and high water mark for addresses. */
-	int	lowat;
-	int	hiwat;
-
-	/* Kernel address pool. */
-	int	free;
-	vaddr_t	page[UVM_KM_PAGES_HIWAT_MAX];
-
-	struct	proc *km_proc;
-};
 
 struct uvm_km_pages uvm_km_pages;
 

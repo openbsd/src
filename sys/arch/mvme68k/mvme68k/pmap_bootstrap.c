@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.23 2008/01/04 19:05:32 miod Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.24 2010/06/28 04:20:28 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -68,6 +68,7 @@
 #include <machine/vmparam.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_km.h>
 
 vaddr_t iiomapbase;
 int iiomapsize;

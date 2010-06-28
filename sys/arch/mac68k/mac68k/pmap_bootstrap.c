@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.41 2009/01/10 22:12:20 thib Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.42 2010/06/28 04:20:28 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -42,7 +42,7 @@
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_pmap.h>
+#include <uvm/uvm_km.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
