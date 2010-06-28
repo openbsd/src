@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.75 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.76 2010/06/28 23:02:07 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -328,7 +328,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 		case IMSG_IFADDRDEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct ifaddrdel))
-				fatalx("IFINFO imsg with wrong len");
+				fatalx("IFADDRDEL imsg with wrong len");
 			ifc = imsg.data;
 
 			LIST_FOREACH(area, &oeconf->area_list, entry) {
