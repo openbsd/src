@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.106 2010/06/15 04:11:34 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.107 2010/06/28 18:31:02 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -61,10 +61,6 @@ void	mfiminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter mfi_switch = {
 	mfi_scsi_cmd, mfiminphys, 0, 0, mfi_scsi_ioctl
-};
-
-struct scsi_device mfi_dev = {
-	NULL, NULL, NULL, NULL
 };
 
 struct mfi_ccb	*mfi_get_ccb(struct mfi_softc *);
@@ -718,7 +714,6 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	else
 		sc->sc_link.openings = sc->sc_max_cmds;
 
-	sc->sc_link.device = &mfi_dev;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &mfi_switch;
 	sc->sc_link.adapter_target = MFI_MAX_LD;

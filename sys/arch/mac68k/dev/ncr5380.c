@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.38 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.39 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -82,13 +82,6 @@ struct scsi_adapter ncr5380_switch = {
 	ncr5380_minphys,		/* scsi_minphys() */
 	NULL,				/* probe_dev() */
 	NULL				/* free_dev() */
-};
-
-struct scsi_device ncr5380_dev = {
-	NULL,		/* use default error handler		*/
-	NULL,		/* do not have a start functio		*/
-	NULL,		/* have no async handler		*/
-	NULL		/* Use default done routine		*/
 };
 
 
@@ -237,7 +230,6 @@ void		*auxp;
 	sc->sc_link.adapter_softc   = sc;
 	sc->sc_link.adapter_target  = 7;
 	sc->sc_link.adapter         = &ncr5380_switch;
-	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
 
 	/*

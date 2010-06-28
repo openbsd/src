@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.20 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.21 2010/06/28 18:31:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -122,10 +122,6 @@ struct cfattach ioprbs_ca = {
 
 struct scsi_adapter ioprbs_switch = {
 	ioprbs_scsi_cmd, scsi_minphys, 0, 0,
-};
-
-struct scsi_device ioprbs_dev = {
-	NULL, NULL, NULL, NULL
 };
 
 #ifdef I2OVERBOSE
@@ -345,7 +341,6 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 	/* Fill in the prototype scsi_link. */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &ioprbs_switch;
-	sc->sc_link.device = &ioprbs_dev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.adapter_target = 1;

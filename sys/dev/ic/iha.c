@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.38 2010/05/20 00:55:17 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.39 2010/06/28 18:31:02 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -58,13 +58,6 @@ struct scsi_adapter iha_switch = {
 	iha_minphys,	/* scsi_minphys() */
 	NULL,		/* probe_dev(void) */
 	NULL		/* free_dev() */
-};
-
-struct scsi_device iha_dev = {
-	NULL,		/* Use default error handler    */
-	NULL,		/* have a queue, served by this */
-	NULL,		/* have no async handler	*/
-	NULL,		/* Use default 'done' routine   */
 };
 
 /*
@@ -373,7 +366,6 @@ iha_init_tulip(sc)
 	 */
 	sc->sc_link.adapter_softc    = sc;
 	sc->sc_link.adapter	     = &iha_switch;
-	sc->sc_link.device	     = &iha_dev;
 	sc->sc_link.openings	     = 4; /* # xs's allowed per device */
 	sc->sc_link.adapter_target   = pScsi->NVM_SCSI_Id;
 	sc->sc_link.adapter_buswidth = pScsi->NVM_SCSI_Targets;

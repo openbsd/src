@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.19 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.20 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -425,7 +425,7 @@ struct ncr53c9x_softc {
 	((250 * (cpb)) / (sc)->sc_freq)
 
 void	ncr53c9x_attach(struct ncr53c9x_softc *,
-	    struct scsi_adapter *, struct scsi_device *);
+	    struct scsi_adapter *);
 void	ncr53c9x_scsi_cmd(struct scsi_xfer *);
 void	ncr53c9x_reset(struct ncr53c9x_softc *);
 int	ncr53c9x_intr(void *);

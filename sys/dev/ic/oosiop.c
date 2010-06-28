@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.16 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.17 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -135,13 +135,6 @@ struct scsi_adapter oosiop_adapter = {
 	NULL
 };
 
-struct scsi_device oosiop_dev = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
 void
 oosiop_attach(struct oosiop_softc *sc)
 {
@@ -242,7 +235,6 @@ oosiop_attach(struct oosiop_softc *sc)
 	 */
 	sc->sc_link.adapter = &oosiop_adapter;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.device = &oosiop_dev;
 	sc->sc_link.openings = 1;	/* XXX */
 	sc->sc_link.adapter_buswidth = OOSIOP_NTGT;
 	sc->sc_link.adapter_target = sc->sc_id;

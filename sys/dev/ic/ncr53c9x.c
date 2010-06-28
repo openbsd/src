@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.47 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.48 2010/06/28 18:31:02 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -185,10 +185,9 @@ ncr53c9x_lunsearch(ti, lun)
  * Attach this instance, and then all the sub-devices
  */
 void
-ncr53c9x_attach(sc, adapter, dev)
+ncr53c9x_attach(sc, adapter)
 	struct ncr53c9x_softc *sc;
 	struct scsi_adapter *adapter;
-	struct scsi_device *dev;
 {
 	struct scsibus_attach_args saa;
 
@@ -265,7 +264,6 @@ ncr53c9x_attach(sc, adapter, dev)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = adapter;
-	sc->sc_link.device = dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.adapter_buswidth = sc->sc_ntarg;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: asc.c,v 1.24 2009/02/16 21:19:07 miod Exp $ */
+/* $OpenBSD: asc.c,v 1.25 2010/06/28 18:31:02 krw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,13 +75,6 @@ struct scsi_adapter asc_switch = {
 	scsi_minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
-};
-
-struct scsi_device asc_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default `done' routine */
 };
 
 /*

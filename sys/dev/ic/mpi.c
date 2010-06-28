@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.151 2010/06/15 04:30:26 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.152 2010/06/28 18:31:02 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -76,13 +76,6 @@ struct scsi_adapter mpi_switch = {
 	mpi_scsi_probe,
 	NULL,
 	mpi_scsi_ioctl
-};
-
-struct scsi_device mpi_dev = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
 };
 
 struct mpi_dmamem	*mpi_dmamem_alloc(struct mpi_softc *, size_t);
@@ -328,7 +321,6 @@ mpi_attach(struct mpi_softc *sc)
 #endif /* NBIO > 0 */
 
 	/* we should be good to go now, attach scsibus */
-	sc->sc_link.device = &mpi_dev;
 	sc->sc_link.adapter = &mpi_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_target;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.26 2010/06/26 23:24:44 guenther Exp $ */
+/* $OpenBSD: ncr.c,v 1.27 2010/06/28 18:31:01 krw Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -125,13 +125,6 @@ struct scsi_adapter	si_ops = {
 	NULL			/* free_dev() */
 };
 
-struct scsi_device	si_dev = {
-	NULL,		/* use default error handler */
-	NULL,		/* no start function */
-	NULL,		/* no async handler */
-	NULL		/* use default done routine */
-};
-
 struct cfattach ncr_ca = {
 	sizeof(struct si_softc), si_match, si_attach
 };
@@ -245,7 +238,6 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_link.adapter_softc =	sc;
 	ncr_sc->sc_link.adapter_target = target;
 	ncr_sc->sc_link.adapter = &si_ops;
-	ncr_sc->sc_link.device = &si_dev;
 	ncr_sc->sc_link.openings = 4;
 
 	/*

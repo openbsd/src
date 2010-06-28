@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.35 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.36 2010/06/28 18:31:02 krw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -295,14 +295,6 @@ struct scsi_adapter sea_switch = {
 	0,
 };
 
-/* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device sea_dev = {
-	NULL,		/* use default error handler */
-	NULL,		/* have a queue, served by this */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default 'done' routine */
-};
-
 int	seaprobe(struct device *, void *, void *);
 void	seaattach(struct device *, struct device *, void *);
 int	seaprint(void *, const char *);
@@ -434,7 +426,6 @@ seaattach(struct device *parent, struct device *self, void *aux)
 	sea->sc_link.adapter_softc = sea;
 	sea->sc_link.adapter_target = sea->our_id;
 	sea->sc_link.adapter = &sea_switch;
-	sea->sc_link.device = &sea_dev;
 	sea->sc_link.openings = 1;
 
 	printf("\n");

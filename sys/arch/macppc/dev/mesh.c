@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.26 2010/04/09 17:01:30 jasper Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.27 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -255,10 +255,6 @@ struct scsi_adapter mesh_switch = {
 	mesh_scsi_cmd, mesh_minphys, NULL, NULL
 };
 
-struct scsi_device mesh_dev = {
-	NULL, NULL, NULL, NULL
-};
-
 #define MESH_DATAOUT	0
 #define MESH_DATAIN	MESH_STATUS0_IO
 #define MESH_COMMAND	MESH_STATUS0_CD
@@ -354,7 +350,6 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
-	sc->sc_link.device = &mesh_dev;
 	sc->sc_link.adapter = &mesh_switch;
 	sc->sc_link.openings = 2;
 

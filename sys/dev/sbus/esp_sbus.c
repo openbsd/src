@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.22 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.23 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -59,13 +59,6 @@ struct scsi_adapter esp_switch = {
 	scsi_minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
-};
-
-struct scsi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /* #define ESP_SBUS_DEBUG */
@@ -514,7 +507,7 @@ espattach(struct esp_softc *esc, struct ncr53c9x_glue *gluep)
 		sc->sc_features |= NCR_F_DMASELECT;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	ncr53c9x_attach(sc, &esp_switch);
 }
 
 /*

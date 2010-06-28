@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.80 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.81 2010/06/28 18:31:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -72,13 +72,6 @@ struct scsi_adapter vs_scsiswitch = {
 	vs_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-};
-
-struct scsi_device vs_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start function */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
 };
 
 struct cfattach vs_ca = {
@@ -217,7 +210,6 @@ vsattach(struct device *parent, struct device *self, void *args)
 		sc_link->adapter_buswidth = vc->vc_width;
 		sc_link->adapter_softc = sc;
 		sc_link->adapter_target = vc->vc_id;
-		sc_link->device = &vs_scsidev;
 		if (sc->sc_bid != JAGUAR)
 			sc_link->luns = 1;	/* not enough queues */
 		sc_link->openings = 1;

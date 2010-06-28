@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.59 2010/06/03 11:37:45 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.60 2010/06/28 18:31:02 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -111,13 +111,6 @@ struct scsi_adapter siop_adapter = {
 	NULL,
 };
 
-struct scsi_device siop_dev = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-};
-
 #ifdef SIOP_STATS
 static int siop_stat_intr = 0;
 static int siop_stat_intr_shortxfer = 0;
@@ -201,7 +194,6 @@ siop_attach(sc)
 	scsi_iopool_init(&sc->iopool, sc, siop_cmd_get, siop_cmd_put);
 	sc->sc_currschedslot = 0;
 	sc->sc_c.sc_link.adapter = &siop_adapter;
-	sc->sc_c.sc_link.device = &siop_dev;
 	sc->sc_c.sc_link.openings = SIOP_NTAG;
 	sc->sc_c.sc_link.pool = &sc->iopool;
 

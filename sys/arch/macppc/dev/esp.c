@@ -1,4 +1,4 @@
-/* $OpenBSD: esp.c,v 1.6 2010/06/26 23:24:43 guenther Exp $ */
+/* $OpenBSD: esp.c,v 1.7 2010/06/28 18:31:01 krw Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -139,10 +139,6 @@ struct scsi_adapter esp_switch = {
 	ncr53c9x_scsi_cmd, scsi_minphys, NULL, NULL,
 };
 
-struct scsi_device esp_dev = {
-	NULL, NULL, NULL, NULL,
-};
-
 /*
  * Functions and the switch for the MI code.
  */
@@ -270,7 +266,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
 
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	ncr53c9x_attach(sc, &esp_switch);
 
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.47 2010/06/02 08:19:35 dlg Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.48 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -69,15 +69,6 @@ static struct scsi_adapter ahc_switch =
 	0,
 };
 
-/* the below structure is so we have a default dev struct for our link struct */
-static struct scsi_device ahc_dev =
-{
-	NULL, /* Use default error handler */
-	NULL, /* have a queue, served by this */
-	NULL, /* have no async handler */
-	NULL, /* Use default 'done' routine */
-};
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -98,7 +89,6 @@ ahc_attach(struct ahc_softc *ahc)
 	ahc->sc_channel.adapter_softc = ahc;
 	ahc->sc_channel.adapter = &ahc_switch;
 	ahc->sc_channel.openings = 16;
-	ahc->sc_channel.device = &ahc_dev;
 
 	if (ahc->features & AHC_TWIN) {
 		/* Configure the second scsi bus */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.31 2010/06/27 05:52:01 beck Exp $	*/
+/*	$OpenBSD: esp.c,v 1.32 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -138,13 +138,6 @@ struct scsi_adapter esp_switch = {
 	scsi_minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
-};
-
-struct scsi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -515,7 +508,7 @@ espattach(parent, self, aux)
 		sc->sc_features |= NCR_F_DMASELECT;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	ncr53c9x_attach(sc, &esp_switch);
 
 	bootpath_store(1, NULL);
 }

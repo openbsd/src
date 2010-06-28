@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.19 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.20 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -82,15 +82,6 @@ struct scsi_adapter	sbc_ops = {
 	sbc_minphys,			/* scsi_minphys() */
 	NULL,				/* probe_dev() */
 	NULL,				/* free_dev() */
-};
-
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-struct scsi_device sbc_dev = {
-	NULL,		/* Use default error handler.	    */
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
 };
 
 struct cfdriver sbc_cd = {

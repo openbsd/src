@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.29 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: esp.c,v 1.30 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: esp.c,v 1.17 1998/09/05 15:15:35 pk Exp $	*/
 
 /*
@@ -112,13 +112,6 @@ struct scsi_adapter esp_switch = {
 	scsi_minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
-};
-
-struct scsi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -318,7 +311,7 @@ espattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	ncr53c9x_attach(sc, &esp_switch);
 }
 
 /*

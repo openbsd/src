@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.70 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: aha.c,v 1.71 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -159,14 +159,6 @@ struct scsi_adapter aha_switch = {
 	ahaminphys,
 	0,
 	0,
-};
-
-/* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device aha_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 int	aha_isapnp_probe(struct device *, void *, void *);
@@ -399,7 +391,6 @@ ahaattach(parent, self, aux)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &aha_switch;
-	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
 
 	bzero(&saa, sizeof(saa));

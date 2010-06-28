@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.40 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.41 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -308,14 +308,6 @@ struct scsi_adapter ahb_switch = {
 	0,
 };
 
-/* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device ahb_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 int	ahbmatch(struct device *, void *, void *);
 void	ahbattach(struct device *, struct device *, void *);
 
@@ -499,7 +491,6 @@ ahbattach(parent, self, aux)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->ahb_scsi_dev;
 	sc->sc_link.adapter = &ahb_switch;
-	sc->sc_link.device = &ahb_dev;
 	sc->sc_link.openings = 2;
 
 	if (!strcmp(ea->ea_idstring, "ADP0000"))

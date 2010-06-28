@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.16 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.17 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
@@ -298,7 +298,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
 
-	ncr53c9x_attach(sc, &pcscp_adapter, NULL);
+	ncr53c9x_attach(sc, &pcscp_adapter);
 
 	/* Turn on target selection using the `dma' method */
 	sc->sc_features |= NCR_F_DMASELECT;

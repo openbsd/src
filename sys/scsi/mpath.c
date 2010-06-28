@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.15 2010/06/27 03:34:29 matthew Exp $ */
+/*	$OpenBSD: mpath.c,v 1.16 2010/06/28 18:31:02 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -87,10 +87,6 @@ struct scsi_adapter mpath_switch = {
 	NULL
 };
 
-struct scsi_device mpath_dev = {
-	NULL, NULL, NULL, NULL
-};
-
 void		mpath_xs_stuffup(struct scsi_xfer *);
 
 int
@@ -109,7 +105,6 @@ mpath_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sc->sc_link.device = &mpath_dev;
 	sc->sc_link.adapter = &mpath_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = MPATH_BUSWIDTH;

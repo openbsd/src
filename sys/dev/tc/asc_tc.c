@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tc.c,v 1.9 2008/08/09 16:42:30 miod Exp $ */
+/* $OpenBSD: asc_tc.c,v 1.10 2010/06/28 18:31:02 krw Exp $ */
 /* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -62,7 +62,6 @@ struct cfattach asc_tc_ca = {
 };
 
 extern struct scsi_adapter asc_switch;
-extern struct scsi_device asc_dev;
 
 int	asc_dma_isintr(struct ncr53c9x_softc *);
 void	asc_tc_reset(struct ncr53c9x_softc *);
@@ -180,7 +179,7 @@ asc_tc_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &asc_switch, &asc_dev);
+	ncr53c9x_attach(sc, &asc_switch);
 }
 
 void

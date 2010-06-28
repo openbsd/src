@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.32 2010/06/19 21:43:16 krw Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.33 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -77,7 +77,6 @@ int	usscannerdebug = 0;
 #define XS_CTL_DATA_OUT		SCSI_DATA_OUT
 #define scsipi_adapter		scsi_adapter
 #define scsipi_cmd		scsi_cmd
-#define scsipi_device		scsi_device
 #define scsipi_done		scsi_done
 #define scsipi_link		scsi_link
 #define scsipi_minphys		scsi_minphys
@@ -98,14 +97,6 @@ int	usscannerdebug = 0;
 #define USSCANNER_MAX_TRANSFER_SIZE	MAXBSIZE
 
 #define USSCANNER_TIMEOUT 2000
-
-struct scsipi_device usscanner_dev =
-{
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 
 struct usscanner_softc {
  	struct device		sc_dev;
@@ -341,7 +332,6 @@ usscanner_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &usscanner_dev;
 	sc->sc_link.openings = 1;
 
 	bzero(&saa, sizeof(saa));

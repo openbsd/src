@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.43 2010/03/27 02:06:03 krw Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.44 2010/06/28 18:31:02 krw Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -64,8 +64,6 @@ static void ispminphys(struct buf *, struct scsi_link *);
 static void ispcmd_slow(XS_T *);
 static void ispcmd(XS_T *);
 
-struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
-
 void isp_polled_cmd (struct ispsoftc *, XS_T *);
 void isp_wdog (void *);
 void isp_make_here(ispsoftc_t *, int);
@@ -106,7 +104,6 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo.wqf = isp->isp_osinfo.wqt = NULL;
 
 	lptr->adapter_softc = isp;
-	lptr->device = &isp_dev;
 	lptr->adapter = &isp->isp_osinfo._adapter;
 	lptr->openings = imin(isp->isp_maxcmds, MAXISPREQUEST(isp));
 	isp->isp_osinfo._adapter.scsi_cmd = ispcmd_slow;
@@ -124,7 +121,6 @@ isp_attach(struct ispsoftc *isp)
 		if (IS_DUALBUS(isp)) {
 			struct scsi_link *lptrb = &isp->isp_osinfo._link[1];
 			lptrb->adapter_softc = isp;
-			lptrb->device = &isp_dev;
 			lptrb->adapter = &isp->isp_osinfo._adapter;
 			lptrb->openings = lptr->openings;
 			lptrb->adapter_buswidth = MAX_TARGETS;

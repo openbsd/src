@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.98 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: ips.c,v 1.99 2010/06/28 18:31:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -504,23 +504,9 @@ static struct scsi_adapter ips_scsi_adapter = {
 	ips_scsi_ioctl
 };
 
-static struct scsi_device ips_scsi_device = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
 static struct scsi_adapter ips_scsi_pt_adapter = {
 	ips_scsi_pt_cmd,
 	scsi_minphys,
-	NULL,
-	NULL,
-	NULL
-};
-
-static struct scsi_device ips_scsi_pt_device = {
-	NULL,
 	NULL,
 	NULL,
 	NULL
@@ -743,7 +729,6 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_scsi_link.openings = sc->sc_nccbs / sc->sc_nunits;
 	sc->sc_scsi_link.adapter_target = sc->sc_nunits;
 	sc->sc_scsi_link.adapter_buswidth = sc->sc_nunits;
-	sc->sc_scsi_link.device = &ips_scsi_device;
 	sc->sc_scsi_link.adapter = &ips_scsi_adapter;
 	sc->sc_scsi_link.adapter_softc = sc;
 
@@ -787,7 +772,6 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		link->openings = 1;
 		link->adapter_target = IPS_MAXTARGETS;
 		link->adapter_buswidth = lastarget + 1;
-		link->device = &ips_scsi_pt_device;
 		link->adapter = &ips_scsi_pt_adapter;
 		link->adapter_softc = pt;
 

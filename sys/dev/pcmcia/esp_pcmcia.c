@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.8 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.9 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -208,7 +208,7 @@ esp_pcmcia_attach(parent, self, aux)
 	 *  Initialize nca board itself.
 	 */
 	esc->sc_flags |= ESP_PCMCIA_ATTACHING;
-	ncr53c9x_attach(sc, &esp_pcmcia_adapter, NULL);
+	ncr53c9x_attach(sc, &esp_pcmcia_adapter);
 	esc->sc_flags &= ~ESP_PCMCIA_ATTACHING;
 	esc->sc_flags |= ESP_PCMCIA_ATTACHED;
 	return;

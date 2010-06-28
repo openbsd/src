@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbic.c,v 1.6 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: vsbic.c,v 1.7 2010/06/28 18:31:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -429,13 +429,6 @@ struct scsi_adapter vsbic_swtch = {
 	scsi_minphys
 };
 
-struct scsi_device vsbic_scsidev = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
 #define	MVME327_CSR_ID		0xff
 #define	MVME327_CSR_SIZE	0x100
 
@@ -547,7 +540,6 @@ vsbic_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_link.adapter_buswidth = 8;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
-	sc->sc_link.device = &vsbic_scsidev;
 	sc->sc_link.openings = VSBIC_NUMOPENINGS;
 
 	bzero(&saa, sizeof saa);

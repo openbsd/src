@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.23 2010/06/27 03:34:29 matthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.24 2010/06/28 18:31:02 krw Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1872,13 +1872,6 @@ struct scsi_adapter mpii_switch = {
 	mpii_scsi_ioctl
 };
 
-struct scsi_device mpii_dev = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
 struct mpii_dmamem 	*mpii_dmamem_alloc(struct mpii_softc *, size_t);
 void		mpii_dmamem_free(struct mpii_softc *,
 		    struct mpii_dmamem *);
@@ -2139,7 +2132,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (mpii_alloc_dev(sc) != 0) {
-		printf("%s: unable to allocate memory for mpii_dev\n",
+		printf("%s: unable to allocate memory for mpii_device\n",
 		    DEVNAME(sc));
 		goto free_queues;
 	}
@@ -2152,7 +2145,6 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	rw_init(&sc->sc_lock, "mpii_lock");
 
 	/* we should be good to go now, attach scsibus */
-	sc->sc_link.device = &mpii_dev;
 	sc->sc_link.adapter = &mpii_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = -1;

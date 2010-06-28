@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.35 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: wds.c,v 1.36 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -174,14 +174,6 @@ struct scsi_adapter wds_switch = {
 	0,
 };
 
-/* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device wds_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 int	wdsprobe(struct device *, void *, void *);
 void	wdsattach(struct device *, struct device *, void *);
 
@@ -312,7 +304,6 @@ wdsattach(parent, self, aux)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &wds_switch;
-	sc->sc_link.device = &wds_dev;
 	/* XXX */
 	/* I don't think the -ASE can handle openings > 1. */
 	/* It gives Vendor Error 26 whenever I try it.     */

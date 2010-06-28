@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.10 2010/06/26 04:04:24 krw Exp $	*/
+/*	$OpenBSD: sii.c,v 1.11 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -170,13 +170,6 @@ struct scsi_adapter sii_scsiswitch = {
 	NULL
 };
 
-struct scsi_device sii_scsidev = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
 void
 sii_attach(sc)
 	struct sii_softc *sc;
@@ -208,7 +201,6 @@ sii_attach(sc)
 	sc->sc_link.adapter_buswidth = 8;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_regs->id & SII_IDMSK;
-	sc->sc_link.device = &sii_scsidev;
 	sc->sc_link.openings = 1;	/* driver can't queue requests yet */
 
 	/*

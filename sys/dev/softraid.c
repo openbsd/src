@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.206 2010/06/15 10:59:52 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.207 2010/06/28 18:31:01 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -167,10 +167,6 @@ extern void		(*softraid_disk_attach)(struct disk *, int);
 /* scsi glue */
 struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
-};
-
-struct scsi_device sr_dev = {
-	NULL, NULL, NULL, NULL
 };
 
 /* native metadata format */
@@ -2946,7 +2942,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			sd->sd_link.openings = sd->sd_openings(sd);
 		else
 			sd->sd_link.openings = sd->sd_max_wu;
-		sd->sd_link.device = &sr_dev;
 		sd->sd_link.device_softc = sc;
 		sd->sd_link.adapter_softc = sc;
 		sd->sd_link.adapter = &sr_switch;

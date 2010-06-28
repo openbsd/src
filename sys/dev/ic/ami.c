@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.210 2010/06/28 05:43:46 jsg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.211 2010/06/28 18:31:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -100,18 +100,10 @@ struct scsi_adapter ami_switch = {
 	ami_scsi_cmd, amiminphys, 0, 0, ami_scsi_ioctl
 };
 
-struct scsi_device ami_dev = {
-	NULL, NULL, NULL, NULL
-};
-
 void	ami_scsi_raw_cmd(struct scsi_xfer *);
 
 struct scsi_adapter ami_raw_switch = {
 	ami_scsi_raw_cmd, amiminphys, 0, 0,
-};
-
-struct scsi_device ami_raw_dev = {
-	NULL, NULL, NULL, NULL
 };
 
 void *		ami_get_ccb(void *);
@@ -529,7 +521,6 @@ ami_attach(struct ami_softc *sc)
 	/* TODO: fetch & print cache strategy */
 	/* TODO: fetch & print scsi and raid info */
 
-	sc->sc_link.device = &ami_dev;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &ami_switch;
 	sc->sc_link.adapter_target = sc->sc_maxunits;
@@ -590,7 +581,6 @@ ami_attach(struct ami_softc *sc)
 
 		rsc->sc_softc = sc;
 		rsc->sc_channel = rsc - sc->sc_rawsoftcs;
-		rsc->sc_link.device = &ami_raw_dev;
 		rsc->sc_link.openings = AMI_MAXRAWCMDS;
 		rsc->sc_link.adapter_softc = rsc;
 		rsc->sc_link.adapter = &ami_raw_switch;

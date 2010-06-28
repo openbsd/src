@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.56 2010/06/26 22:14:32 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.57 2010/06/28 18:31:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -74,10 +74,6 @@ void	cissminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter ciss_switch = {
 	ciss_scsi_cmd, cissminphys, NULL, NULL, ciss_scsi_ioctl
-};
-
-struct scsi_device ciss_dev = {
-	NULL, NULL, NULL, NULL
 };
 
 #if NBIO > 0
@@ -367,7 +363,6 @@ ciss_attach(struct ciss_softc *sc)
 		return -1;
 	}
 
-	sc->sc_link.device = &ciss_dev;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
 	sc->sc_link.adapter = &ciss_switch;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.24 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: bha.c,v 1.25 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -99,14 +99,6 @@ int bha_create_ccbs(struct bha_softc *, struct bha_ccb *, int);
 
 struct cfdriver bha_cd = {
 	NULL, "bha", DV_DULL
-};
-
-/* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device bha_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 #define BHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
@@ -272,7 +264,6 @@ bha_attach(sc, bpd)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = bpd->sc_scsi_dev;
 	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
 
 	TAILQ_INIT(&sc->sc_free_ccb);

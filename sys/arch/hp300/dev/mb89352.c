@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.24 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.25 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -163,13 +163,6 @@ void	spc_print_active_acb(void);
 
 extern struct cfdriver spc_cd;
 
-struct scsi_device spc_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 struct scsi_adapter spc_switch = {
 	spc_scsi_cmd,
 	scsi_minphys,
@@ -213,7 +206,6 @@ spc_attach(struct spc_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &spc_switch;
-	sc->sc_link.device = &spc_dev;
 	sc->sc_link.openings = 2;
 
 	bzero(&saa, sizeof(saa));

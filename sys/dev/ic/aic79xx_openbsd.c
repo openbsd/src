@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.36 2010/03/23 01:57:19 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.37 2010/06/28 18:31:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -95,15 +95,6 @@ static struct scsi_adapter ahd_switch =
 	0,
 };
 
-/* the below structure is so we have a default dev struct for our link struct */
-static struct scsi_device ahd_dev =
-{
-	NULL, /* Use default error handler */
-	NULL, /* have a queue, served by this */
-	NULL, /* have no async handler */
-	NULL, /* Use default 'done' routine */
-};
-
 /*
  * Attach all the sub-devices we can find
  */
@@ -127,7 +118,6 @@ ahd_attach(struct ahd_softc *ahd)
 	ahd->sc_channel.adapter_softc = ahd;
 	ahd->sc_channel.adapter = &ahd_switch;
 	ahd->sc_channel.openings = 16;
-	ahd->sc_channel.device = &ahd_dev;
 
 	if (bootverbose) {
 		ahd_controller_info(ahd, ahd_info, sizeof ahd_info);

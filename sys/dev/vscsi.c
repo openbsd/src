@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.13 2010/06/27 03:34:29 matthew Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.14 2010/06/28 18:31:01 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -93,10 +93,6 @@ struct scsi_adapter vscsi_switch = {
 	NULL
 };
 
-struct scsi_device vscsi_dev = {
-	NULL, NULL, NULL, NULL
-};
-
 void		vscsi_xs_stuffup(struct scsi_xfer *);
 
 
@@ -135,7 +131,6 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 	rw_init(&sc->sc_open, DEVNAME(sc));
 	rw_init(&sc->sc_ccb_polling, DEVNAME(sc));
 
-	sc->sc_link.device = &vscsi_dev;
 	sc->sc_link.adapter = &vscsi_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 256;

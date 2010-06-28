@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.36 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.37 2010/06/28 18:31:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -68,10 +68,6 @@ void	twe_scsi_cmd(struct scsi_xfer *);
 
 struct scsi_adapter twe_switch = {
 	twe_scsi_cmd, tweminphys, 0, 0,
-};
-
-struct scsi_device twe_dev = {
-	NULL, NULL, NULL, NULL
 };
 
 static __inline struct twe_ccb *twe_get_ccb(struct twe_softc *sc);
@@ -383,7 +379,6 @@ twe_attach(sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &twe_switch;
 	sc->sc_link.adapter_target = TWE_MAX_UNITS;
-	sc->sc_link.device = &twe_dev;
 	sc->sc_link.openings = TWE_MAXCMDS / nunits;
 	sc->sc_link.adapter_buswidth = TWE_MAX_UNITS;
 

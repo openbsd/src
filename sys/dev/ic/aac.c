@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.46 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.47 2010/06/28 18:31:01 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -136,10 +136,6 @@ struct scsi_adapter aac_raw_switch = {
 };
 #endif
 
-struct scsi_device aac_dev = {
-	NULL, NULL, NULL, NULL
-};
-
 /* Falcon/PPC interface */
 int	aac_fa_get_fwstatus(struct aac_softc *);
 void	aac_fa_qnotify(struct aac_softc *, int);
@@ -274,7 +270,6 @@ aac_attach(struct aac_softc *sc)
 	/* Fill in the prototype scsi_link. */
 	sc->aac_link.adapter_softc = sc;
 	sc->aac_link.adapter = &aac_switch;
-	sc->aac_link.device = &aac_dev;
 	sc->aac_link.openings = (sc->total_fibs - 8) / 
 	    (sc->aac_container_count ? sc->aac_container_count : 1);
 	sc->aac_link.adapter_buswidth = AAC_MAX_CONTAINERS;

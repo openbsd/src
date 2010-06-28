@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.18 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: uha.c,v 1.19 2010/06/28 18:31:02 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -96,14 +96,6 @@ struct scsi_adapter uha_switch = {
 	0,
 };
 
-/* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device uha_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 struct cfdriver uha_cd = {
 	NULL, "uha", DV_DULL
 };
@@ -143,7 +135,6 @@ uha_attach(sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &uha_switch;
-	sc->sc_link.device = &uha_dev;
 	sc->sc_link.openings = 2;
 
 	bzero(&saa, sizeof(saa));

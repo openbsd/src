@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.84 2010/05/20 00:55:17 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.85 2010/06/28 18:31:02 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -405,10 +405,6 @@ struct scsi_adapter arc_switch = {
 	arc_scsi_cmd, arc_minphys, NULL, NULL, NULL
 };
 
-struct scsi_device arc_dev = {
-	NULL, NULL, NULL, NULL
-};
-
 /* code to deal with getting bits in and out of the bus space */
 u_int32_t		arc_read(struct arc_softc *, bus_size_t);
 void			arc_read_region(struct arc_softc *, bus_size_t,
@@ -595,7 +591,6 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_shutdownhook == NULL)
 		panic("unable to establish arc powerhook");
 
-	sc->sc_link.device = &arc_dev;
 	sc->sc_link.adapter = &arc_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = ARC_MAX_TARGET;

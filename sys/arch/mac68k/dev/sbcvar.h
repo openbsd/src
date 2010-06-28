@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbcvar.h,v 1.8 2006/12/13 21:12:56 miod Exp $	*/
+/*	$OpenBSD: sbcvar.h,v 1.9 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: sbcvar.h,v 1.1 1997/03/01 20:19:00 scottr Exp $	*/
 
 /*
@@ -106,7 +106,6 @@ extern int	sbc_debug;
 extern int	sbc_link_flags;
 extern int	sbc_options;
 extern struct scsi_adapter sbc_ops;
-extern struct scsi_device sbc_dev;
 
 int	sbc_pdma_in(struct ncr5380_softc *, int, int, u_char *);
 int	sbc_pdma_out(struct ncr5380_softc *, int, int, u_char *);

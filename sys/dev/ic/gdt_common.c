@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.50 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.51 2010/06/28 18:31:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -103,10 +103,6 @@ struct scsi_adapter gdt_raw_switch = {
 	gdt_raw_scsi_cmd, gdtminphys, 0, 0,
 };
 
-struct scsi_device gdt_dev = {
-	NULL, NULL, NULL, NULL
-};
-
 int gdt_cnt = 0;
 u_int8_t gdt_polling;
 u_int8_t gdt_from_wait;
@@ -161,7 +157,6 @@ gdt_attach(struct gdt_softc *sc)
 	/* Fill in the prototype scsi_link. */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &gdt_switch;
-	sc->sc_link.device = &gdt_dev;
 	/* openings will be filled in later. */
 	sc->sc_link.adapter_buswidth =
 	    (sc->sc_class & GDT_FC) ? GDT_MAXID : GDT_MAX_HDRIVES;
@@ -499,7 +494,6 @@ gdt_attach(struct gdt_softc *sc)
 		sc->sc_raw_link[i].adapter_softc = sc;
 		sc->sc_raw_link[i].adapter = &gdt_raw_switch;
 		sc->sc_raw_link[i].adapter_target = 7;
-		sc->sc_raw_link[i].device = &gdt_dev;
 		sc->sc_raw_link[i].openings = 4;	/* XXX a guess */
 		sc->sc_raw_link[i].adapter_buswidth =
 		    (sc->sc_class & GDT_FC) ? GDT_MAXID : 16;	/* XXX */

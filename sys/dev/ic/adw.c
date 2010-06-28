@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.45 2010/06/26 04:04:24 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.46 2010/06/28 18:31:01 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -85,16 +85,6 @@ void adw_reset_bus(ADW_SOFTC *);
 struct cfdriver adw_cd = {
 	NULL, "adw", DV_DULL
 };
-
-/* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device adw_dev =
-{
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
 
 /******************************************************************************/
 /*                       DMA Mapping for Control Blocks                       */
@@ -562,7 +552,6 @@ adw_attach(sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->chip_scsi_id;
 	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &adw_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.adapter_buswidth = ADW_MAX_TID+1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.17 2010/05/20 00:55:17 krw Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.18 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -76,10 +76,6 @@ void	iopspminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter iopsp_switch = {
 	iopsp_scsi_cmd, iopspminphys, 0, 0,
-};
-
-struct scsi_device iopsp_dev = {
-	NULL, NULL, NULL, NULL
 };
 
 void	iopsp_adjqparam(struct device *, int);
@@ -189,7 +185,6 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &iopsp_switch;
 	sc->sc_link.adapter_target = letoh32(param.p.sci.initiatorid);
-	sc->sc_link.device = &iopsp_dev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.adapter_buswidth = fcal?
 	    IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth;

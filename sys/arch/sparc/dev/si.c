@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.34 2010/06/27 05:52:01 beck Exp $	*/
+/*	$OpenBSD: si.c,v 1.35 2010/06/28 18:31:01 krw Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -211,16 +211,6 @@ static struct scsi_adapter	si_ops = {
 	NULL,				/* free_dev() */
 };
 
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-static struct scsi_device si_dev = {
-	NULL,		/* Use default error handler.		*/
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.		*/
-	NULL,		/* Use default "done" routine.		*/
-};
-
-
 /* The Sun SCSI-3 VME controller. */
 struct cfattach si_ca = {
 	sizeof(struct si_softc), si_match, si_attach
@@ -332,7 +322,6 @@ si_attach(parent, self, args)
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
-	ncr_sc->sc_link.device = &si_dev;
 	ncr_sc->sc_link.openings = 4;
 
 	/*
