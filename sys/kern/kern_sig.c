@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.108 2010/05/18 22:26:10 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.109 2010/06/28 23:00:30 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <sys/event.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/timeb.h>
 #include <sys/times.h>
 #include <sys/buf.h>
 #include <sys/acct.h>

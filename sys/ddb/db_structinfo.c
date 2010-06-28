@@ -1,4 +1,4 @@
-/* $OpenBSD: db_structinfo.c,v 1.2 2010/05/26 15:33:51 guenther Exp $ */
+/* $OpenBSD: db_structinfo.c,v 1.3 2010/06/28 23:00:30 guenther Exp $ */
 /* public domain */
 /*
  * This file is intended to be compiled with debug information,
@@ -76,7 +76,6 @@
 #include <sys/syslog.h>
 #include <sys/termios.h>
 #include <sys/time.h>
-#include <sys/timeb.h>
 #include <sys/timeout.h>
 #include <sys/times.h>
 #include <sys/timetc.h>

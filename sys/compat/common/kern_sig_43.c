@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig_43.c,v 1.8 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: kern_sig_43.c,v 1.9 2010/06/28 23:00:30 guenther Exp $	*/
 /*	$NetBSD: kern_sig_43.c,v 1.7 1996/03/14 19:31:47 christos Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/timeb.h>
 #include <sys/times.h>
 #include <sys/buf.h>
 #include <sys/acct.h>
