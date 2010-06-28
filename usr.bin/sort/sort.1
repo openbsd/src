@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.37 2010/06/11 06:51:41 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.38 2010/06/28 15:28:52 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 11 2010 $
+.Dd $Mdocdate: June 28 2010 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -114,6 +114,17 @@ or
 options, also check that there are no lines with duplicate keys.
 .El
 .Pp
+The following options override the default ordering rules globally:
+.Bl -tag -width indent
+.It Fl H
+Use a merge sort instead of a radix sort.
+This option should be used for files larger than 60Mb.
+.It Fl s
+Enable stable sort.
+Uses additional resources (see
+.Xr sradixsort 3 ) .
+.El
+.Pp
 The following options override the default ordering rules.
 If ordering options appear before the first
 .Fl k
@@ -135,9 +146,6 @@ are used in making comparisons.
 .It Fl f
 Considers all lowercase characters that have uppercase
 equivalents to be the same for purposes of comparison.
-.It Fl H
-Use a merge sort instead of a radix sort.
-This option should be used for files larger than 60Mb.
 .It Fl i
 Ignore all non-printable characters.
 .It Fl n
@@ -155,10 +163,6 @@ option no longer implies the
 option.)
 .It Fl r
 Reverse the sense of comparisons.
-.It Fl s
-Enable stable sort.
-Uses additional resources (see
-.Xr sradixsort 3 ) .
 .El
 .Pp
 The treatment of field separators can be altered using these options:
