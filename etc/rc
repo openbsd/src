@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.337 2010/04/25 10:10:51 michele Exp $
+#	$OpenBSD: rc,v 1.338 2010/06/28 20:16:21 reyk Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -372,7 +372,7 @@ if [ X"${named_flags}" != X"NO" ]; then
 fi
 
 if [ ! -f /etc/isakmpd/private/local.key ]; then
-	echo -n "openssl: generating new isakmpd RSA key... "
+	echo -n "openssl: generating new isakmpd/iked RSA key... "
 	if /usr/sbin/openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
 	    > /dev/null 2>&1; then
 		chmod 600 /etc/isakmpd/private/local.key
@@ -384,11 +384,25 @@ if [ ! -f /etc/isakmpd/private/local.key ]; then
 	fi
 fi
 
+if [ ! -f /etc/iked/private/local.key ]; then
+	# Just copy the generated isakmpd key
+	cp /etc/isakmpd/private/local.key /etc/iked/private/local.key
+	chmod 600 /etc/iked/private/local.key
+	cp /etc/isakmpd/local.pub /etc/iked/local.pub
+fi
+
 if [ X"${isakmpd_flags}" != X"NO" ]; then
 	if [ X"${sasyncd_flags}" != X"NO" ]; then
 		isakmpd_flags="-S ${isakmpd_flags}"
 	fi
 	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
+fi
+
+if [ X"${iked_flags}" != X"NO" ]; then
+	if [ X"${sasyncd_flags}" != X"NO" ]; then
+		iked_flags="-S ${iked_flags}"
+	fi
+	echo 'starting iked';		iked ${iked_flags}
 fi
 
 if [ X"${sasyncd_flags}" != X"NO" ]; then
