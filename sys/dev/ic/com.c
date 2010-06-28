@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.139 2010/06/26 23:24:44 guenther Exp $	*/
+/*	$OpenBSD: com.c,v 1.140 2010/06/28 04:36:31 ckuethe Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -356,6 +356,8 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 
 			if (tp->t_ispeed <= 1200)
 				fifo |= FIFO_TRIGGER_1;
+			else if (tp->t_ispeed <= 38400)
+				fifo |= FIFO_TRIGGER_4;
 			else
 				fifo |= FIFO_TRIGGER_8;
 			if (sc->sc_uarttype == COM_UART_TI16750) {
