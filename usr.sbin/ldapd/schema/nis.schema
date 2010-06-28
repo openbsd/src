@@ -4,87 +4,87 @@ attributetype ( 1.3.6.1.1.1.1.0 NAME 'uidNumber'
 	DESC 'An integer uniquely identifying a user in an
 	      administrative domain'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.1 NAME 'gidNumber'
 	DESC 'An integer uniquely identifying a group in an
 	      administrative domain'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.2 NAME 'gecos'
 	DESC 'The GECOS field; the common name'
 	EQUALITY caseIgnoreIA5Match
 	SUBSTR caseIgnoreIA5SubstringsMatch
-	SYNTAX 'IA5String'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.3 NAME 'homeDirectory'
 	DESC 'The absolute path to the home directory'
 	EQUALITY caseExactIA5Match
-	SYNTAX 'IA5String'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.4 NAME 'loginShell'
 	DESC 'The path to the login shell'
 	EQUALITY caseExactIA5Match
-	SYNTAX 'IA5String'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.5 NAME 'shadowLastChange'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.6 NAME 'shadowMin'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.7 NAME 'shadowMax'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.8 NAME 'shadowWarning'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.9 NAME 'shadowInactive'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.10 NAME 'shadowExpire'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.11 NAME 'shadowFlag'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.12 NAME 'memberUid'
 	EQUALITY caseExactIA5Match
 	SUBSTR caseExactIA5SubstringsMatch
-	SYNTAX 'IA5String' )
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
 
 attributetype ( 1.3.6.1.1.1.1.13 NAME 'memberNisNetgroup'
 	EQUALITY caseExactIA5Match
 	SUBSTR caseExactIA5SubstringsMatch
-	SYNTAX 'IA5String' )
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
 
 attributetype ( 1.3.6.1.1.1.1.14 NAME 'nisNetgroupTriple'
 	DESC 'Netgroup triple'
-	SYNTAX 'nisNetgroupTripleSyntax' )
+	SYNTAX 1.3.6.1.1.1.0.0 )
 
 attributetype ( 1.3.6.1.1.1.1.15 NAME 'ipServicePort'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.16 NAME 'ipServiceProtocol'
@@ -92,48 +92,48 @@ attributetype ( 1.3.6.1.1.1.1.16 NAME 'ipServiceProtocol'
 
 attributetype ( 1.3.6.1.1.1.1.17 NAME 'ipProtocolNumber'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.18 NAME 'oncRpcNumber'
 	EQUALITY integerMatch
-	SYNTAX 'INTEGER'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.19 NAME 'ipHostNumber'
 	DESC 'IP address as a dotted decimal, eg. 192.168.1.1,
 	      omitting leading zeros'
 	EQUALITY caseIgnoreIA5Match
-	SYNTAX 'IA5String{128}' )
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128} )
 
 attributetype ( 1.3.6.1.1.1.1.20 NAME 'ipNetworkNumber'
 	DESC 'IP network as a dotted decimal, eg. 192.168,
 	      omitting leading zeros'
 	EQUALITY caseIgnoreIA5Match
-	SYNTAX 'IA5String{128}'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128}
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.21 NAME 'ipNetmaskNumber'
 	DESC 'IP netmask as a dotted decimal, eg. 255.255.255.0,
 	      omitting leading zeros'
 	EQUALITY caseIgnoreIA5Match
-	SYNTAX 'IA5String{128}'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128}
 	SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.1.1.1.22 NAME 'macAddress'
 	DESC 'MAC address in maximal, colon separated hex notation,
 	      eg. 00:00:92:90:ee:e2'
 	EQUALITY caseIgnoreIA5Match
-	SYNTAX 'IA5String{128}' )
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{128} )
 
 attributetype ( 1.3.6.1.1.1.1.23 NAME 'bootParameter'
 	DESC 'rpc.bootparamd parameter'
-	SYNTAX 'bootParameterSyntax' )
+	SYNTAX 1.3.6.1.1.1.0.1 )
 
 attributetype ( 1.3.6.1.1.1.1.24 NAME 'bootFile'
 	DESC 'Boot image name'
 	EQUALITY caseExactIA5Match
-	SYNTAX 'IA5String' )
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
 
 attributetype ( 1.3.6.1.1.1.1.26 NAME 'nisMapName'
 	SUP name )
@@ -141,7 +141,7 @@ attributetype ( 1.3.6.1.1.1.1.26 NAME 'nisMapName'
 attributetype ( 1.3.6.1.1.1.1.27 NAME 'nisMapEntry'
 	EQUALITY caseExactIA5Match
 	SUBSTR caseExactIA5SubstringsMatch
-	SYNTAX 'IA5String{1024}'
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{1024}
 	SINGLE-VALUE )
 
 objectclass ( 1.3.6.1.1.1.2.0 NAME 'posixAccount'
