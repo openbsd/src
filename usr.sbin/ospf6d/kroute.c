@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.21 2010/06/12 10:03:38 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.22 2010/06/28 15:06:00 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -937,6 +937,10 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		struct sockaddr_in6	addr;
 		char			pad[sizeof(long)]; /* thank you IPv6 */
 	} prefix, nexthop, mask;
+	struct {
+		struct sockaddr_dl	addr;
+		char			pad[sizeof(long)];
+	} ifp;
 	struct sockaddr_rtlabel	sa_rl;
 	int			iovcnt = 0;
 	const char		*label;
@@ -995,6 +999,23 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		/* adjust iovec */
 		iov[iovcnt].iov_base = &nexthop;
 		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_in6));
+	} else if (kroute->ifindex) {
+		/*
+		 * We don't have an interface address in that network,
+		 * so we install a cloning route.  The kernel will then
+		 * do neigbor discovery.
+		 */
+		bzero(&ifp, sizeof(ifp));
+		ifp.addr.sdl_len = sizeof(struct sockaddr_dl);
+		ifp.addr.sdl_family = AF_LINK;
+		ifp.addr.sdl_index  = kroute->ifindex;
+		/* adjust header */
+		hdr.rtm_flags |= RTF_CLONING;
+		hdr.rtm_addrs |= RTA_GATEWAY;
+		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_dl));
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &ifp;
+		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_dl));
 	}
 
 	bzero(&mask, sizeof(mask));
