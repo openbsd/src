@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.20 2010/06/28 06:35:15 jordan Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.21 2010/06/28 06:46:32 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -399,14 +399,12 @@ struct acpi_facs {
 /* 
  * Intel ACPI DMA Remapping Entries 
  */
-struct acpidmar_devpath
-{
+struct acpidmar_devpath {
 	uint8_t		device;
 	uint8_t		function;
 } __packed;
 
-struct acpidmar_devscope
-{
+struct acpidmar_devscope {
 	uint8_t		type;
 #define DMAR_ENDPOINT 			0x1
 #define DMAR_BRIDGE 			0x2
@@ -419,8 +417,7 @@ struct acpidmar_devscope
 } __packed;
 
 /* DMA Remapping Hardware Unit */
-struct acpidmar_drhd
-{
+struct acpidmar_drhd {
 	uint16_t	type;
 	uint16_t	length;
 
@@ -432,8 +429,7 @@ struct acpidmar_drhd
 } __packed;
 
 /* Reserved Memory Region Reporting */
-struct acpidmar_rmrr
-{
+struct acpidmar_rmrr {
 	uint16_t	type;
 	uint16_t	length;
 
@@ -445,8 +441,7 @@ struct acpidmar_rmrr
 } __packed;
 
 /* Root Port ATS Capability Reporting */
-struct acpidmar_atsr
-{
+struct acpidmar_atsr {
 	uint16_t	type;
 	uint16_t	length;
 
@@ -540,8 +535,7 @@ union acpi_ivhd_entry {
 	} __packed special;
 } __packed;
 
-struct acpi_ivmd
-{
+struct acpi_ivmd {
 	uint8_t		type;
 	uint8_t		flags;
 #define	IVMD_EXCLRANGE			(1L << 3)
@@ -556,8 +550,7 @@ struct acpi_ivmd
 	uint64_t	limit;
 } __packed;
 
-struct acpi_ivhd
-{
+struct acpi_ivhd {
 	uint8_t		type;
 	uint8_t		flags;
 #define IVHD_IOTLB		(1L << 4)
@@ -592,8 +585,7 @@ union acpi_ivrs_entry {
 	struct acpi_ivmd	ivmd;
 } __packed;
 
-struct acpi_ivrs
-{
+struct acpi_ivrs {
 	struct acpi_table_header	hdr;
 #define IVRS_SIG	"IVRS"
 	uint32_t		ivinfo;
