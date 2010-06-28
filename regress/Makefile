@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2005/02/05 10:39:50 espie Exp $
+#	$OpenBSD: Makefile,v 1.20 2010/06/28 16:03:15 phessler Exp $
 
 #
 # To run full regression tests you just need two steps:
@@ -12,7 +12,7 @@
 # To get a log of test results set the REGRESS_LOG make variable to
 # a log file, use an absolute path.
 # To mail the test results set the REGRESS_MAIL make variable to an
-# email address, preferably 'regress@openbsd.org'.
+# email address.
 # To skip the really slow tests, set the REGRESS_SKIP_SLOW variable.
 
 SUBDIR+= etc bin include lib libexec sbin sys share usr.bin usr.sbin misc gnu
@@ -40,12 +40,6 @@ MAKE_FLAGS+= _REGRESS_TMP=${_REGRESS_TMP}
 .if ${.TARGETS:Mall} || ${.TARGETS:Mregress} 
 	echo ====================================================================
 .if empty(REGRESS_MAIL) || empty(_REGRESS_TMP)
-#	echo Please mail a copy of these regression tests to regress@openbsd.org
-#	echo to help with future development.
-#	echo
-#	echo You can do this automatically by setting the REGRESS_MAIL variable
-#	echo $$ make REGRESS_MAIL=regress@openbsd.org regress
-#	echo
 	echo You can set REGRESS_LOG to point to a file and mail it manually.
 	echo $$ make REGRESS_LOG=/var/log/regress-tests regress
 .else
