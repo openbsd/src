@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.171 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.172 2010/06/28 08:35:46 jsing Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -221,12 +221,11 @@ cdattach(struct device *parent, struct device *self, void *aux)
 		sc_link->openings = CDOUTSTANDING;
 
 	/*
-	 * Initialize and attach the disk structure.
+	 * Initialize disk structures.
 	 */
 	sc->sc_dk.dk_driver = &cddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
-	disk_attach(&sc->sc_dk);
 
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
@@ -244,6 +243,9 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	if ((sc->sc_cdpwrhook = powerhook_establish(cd_powerhook, sc)) == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
+
+	/* Attach disk. */
+	disk_attach(&sc->sc_dk);
 }
 
 

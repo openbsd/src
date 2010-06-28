@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.84 2010/06/07 20:32:45 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.85 2010/06/28 08:35:46 jsing Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -365,18 +365,20 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Initialize and attach the disk structure.
+	 * Initialize disk structures.
 	 */
 	wd->sc_dk.dk_driver = &wddkdriver;
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	wd->sc_bufq = bufq_init(BUFQ_DEFAULT);
-	disk_attach(&wd->sc_dk);
-	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
 	if (wd->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    wd->sc_dev.dv_xname);
 	timeout_set(&wd->sc_restart_timeout, wdrestart, wd);
+
+	/* Attach disk. */
+	disk_attach(&wd->sc_dk);
+	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 }
 
 int

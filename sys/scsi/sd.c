@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.197 2010/06/24 10:05:18 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.198 2010/06/28 08:35:46 jsing Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -178,12 +178,11 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	sc_link->device_softc = sc;
 
 	/*
-	 * Initialize and attach the disk structure.
+	 * Initialize disk structures.
 	 */
 	sc->sc_dk.dk_driver = &sddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
-	disk_attach(&sc->sc_dk);
 
 	if ((sc_link->flags & SDEV_ATAPI) && (sc_link->flags & SDEV_REMOVABLE))
 		sc_link->quirks |= SDEV_NOSYNCCACHE;
@@ -270,6 +269,9 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	    shutdownhook_establish(sd_shutdown, sc)) == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
+
+	/* Attach disk. */
+	disk_attach(&sc->sc_dk);
 }
 
 int
