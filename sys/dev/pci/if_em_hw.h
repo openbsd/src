@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.41 2010/06/27 20:13:04 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.42 2010/06/28 20:24:39 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -237,6 +237,7 @@ typedef enum {
     em_phy_bm,		/* phy used in i82574L, ICH10 and some ICH9 */
     em_phy_oem,
     em_phy_82577,
+    em_phy_82578,
     em_phy_undefined = 0xFF
 } em_phy_type;
 
@@ -2776,7 +2777,7 @@ struct em_host_command_info {
         GG82563_REG(194, 25) /* Link Partner Advertised Next page */
 #define GG82563_PHY_KMRN_MISC           \
         GG82563_REG(194, 26) /* Misc. */
-        
+
 /* I82577 Specific Registers */
 #define I82577_PHY_ADDR_REG 16
 #define I82577_PHY_CFG_REG  22
@@ -3009,6 +3010,10 @@ struct em_host_command_info {
 /* M88E1141 specific */
 #define M88E1000_EPSCR_TX_TIME_CTRL       0x0002 /* Add Delay */
 #define M88E1000_EPSCR_RX_TIME_CTRL       0x0080 /* Add Delay */
+
+/* I82578 specific */
+#define I82578_EPSCR_DOWNSHIFT_ENABLE          0x0020
+#define I82578_EPSCR_DOWNSHIFT_COUNTER_MASK    0x001C
 
 /* IGP01E1000 Specific Port Config Register - R/W */
 #define IGP01E1000_PSCFR_AUTO_MDIX_PAR_DETECT  0x0010

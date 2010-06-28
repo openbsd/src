@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.51 2010/06/27 20:13:04 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.52 2010/06/28 20:24:39 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -165,7 +165,6 @@ static int32_t	em_configure_kmrn_for_10_100(struct em_hw *, uint16_t);
 static int32_t	em_configure_kmrn_for_1000(struct em_hw *);
 static int32_t	em_set_pciex_completion_timeout(struct em_hw *hw);
 int32_t em_hv_phy_workarounds_ich8lan(struct em_hw *);
-void em_initialize_hw_bits_ich8lan(struct em_hw *);
 int32_t em_configure_k1_ich8lan(struct em_hw *, boolean_t);
 
 /* IGP cable length table */
@@ -235,6 +234,9 @@ em_set_phy_type(struct em_hw *hw)
 		break;
 	case I82577_E_PHY_ID:
 		hw->phy_type = em_phy_82577;
+		break;
+	case I82578_E_PHY_ID:
+		hw->phy_type = em_phy_82578;
 		break;
 	case BME1000_E_PHY_ID:
 		if (hw->phy_revision == 1) {
@@ -518,6 +520,8 @@ em_set_mac_type(struct em_hw *hw)
 		break;
 	case E1000_DEV_ID_PCH_M_HV_LC:
 	case E1000_DEV_ID_PCH_M_HV_LM:
+	case E1000_DEV_ID_PCH_D_HV_DC:
+	case E1000_DEV_ID_PCH_D_HV_DM:
 		hw->mac_type = em_pchlan;
 		break;
 	case E1000_DEV_ID_EP80579_LAN_1:
@@ -1414,8 +1418,9 @@ em_setup_link(struct em_hw *hw)
 		E1000_WRITE_REG(hw, FCAL, FLOW_CONTROL_ADDRESS_LOW);
 	}
 	E1000_WRITE_REG(hw, FCTTV, hw->fc_pause_time);
-	
-	if (hw->phy_type == em_phy_82577) {
+
+	if (hw->phy_type == em_phy_82577 ||
+	    hw->phy_type == em_phy_82578) {
 		em_write_phy_reg(hw, PHY_REG(BM_PORT_CTRL_PAGE, 27),
 		    hw->fc_pause_time);
 	}
@@ -1980,6 +1985,10 @@ em_copper_link_mgp_setup(struct em_hw *hw)
 	if (hw->phy_reset_disable)
 		return E1000_SUCCESS;
 
+	/* disable lplu d0 during driver init */
+	if (hw->mac_type == em_pchlan)
+		ret_val = em_set_lplu_state_pchlan(hw, FALSE);
+
 	/* Enable CRS on TX. This must be set for half-duplex operation. */
 	ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
 	if (ret_val)
@@ -2093,6 +2102,20 @@ em_copper_link_mgp_setup(struct em_hw *hw)
 
 		/* Set PHY page 0, register 30 to 0x0000 */
 		ret_val = em_write_phy_reg(hw, BM_REG_BIAS2, 0x0000);
+		if (ret_val)
+			return ret_val;
+	}
+	if (hw->phy_type == em_phy_82578) {
+		ret_val = em_read_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL,
+		    &phy_data);
+		if (ret_val)
+			return ret_val;
+
+		/* 82578 PHY - set the downshift count to 1x. */
+		phy_data |= I82578_EPSCR_DOWNSHIFT_ENABLE;
+		phy_data &= ~I82578_EPSCR_DOWNSHIFT_COUNTER_MASK;
+		ret_val = em_write_phy_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL,
+		    phy_data);
 		if (ret_val)
 			return ret_val;
 	}
@@ -2326,7 +2349,8 @@ em_setup_copper_link(struct em_hw *hw)
 			return ret_val;
 	} else if (hw->phy_type == em_phy_m88 ||
 	    hw->phy_type == em_phy_bm ||
-	    hw->phy_type == em_phy_oem) {
+	    hw->phy_type == em_phy_oem ||
+	    hw->phy_type == em_phy_82578) {
 		ret_val = em_copper_link_mgp_setup(hw);
 		if (ret_val)
 			return ret_val;
@@ -2692,7 +2716,8 @@ em_phy_force_speed_duplex(struct em_hw *hw)
 	if ((hw->phy_type == em_phy_m88) ||
 	    (hw->phy_type == em_phy_gg82563) ||
 	    (hw->phy_type == em_phy_bm) ||
-	    (hw->phy_type == em_phy_oem)) {
+	    (hw->phy_type == em_phy_oem ||
+	    (hw->phy_type == em_phy_82578))) {
 		ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL,
 		    &phy_data);
 		if (ret_val)
@@ -4525,6 +4550,8 @@ em_match_gig_phy(struct em_hw *hw)
 		if (hw->phy_id == BME1000_E_PHY_ID)
 			match = TRUE;
 		if (hw->phy_id == I82577_E_PHY_ID)
+			match = TRUE;
+		if (hw->phy_id == I82578_E_PHY_ID)
 			match = TRUE;
 		break;
 	case em_icp_xxxx:
@@ -6796,7 +6823,8 @@ em_get_cable_length(struct em_hw *hw, uint16_t *min_length,
 
 	/* Use old method for Phy older than IGP */
 	if (hw->phy_type == em_phy_m88 ||
-	    hw->phy_type == em_phy_oem) {
+	    hw->phy_type == em_phy_oem ||
+	    hw->phy_type == em_phy_82578) {
 
 		ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS,
 		    &phy_data);
@@ -6999,7 +7027,8 @@ em_check_downshift(struct em_hw *hw)
 		    IGP01E1000_PLHR_SS_DOWNGRADE) ? 1 : 0;
 	} else if ((hw->phy_type == em_phy_m88) ||
 	    (hw->phy_type == em_phy_gg82563) ||
-	    (hw->phy_type == em_phy_oem)) {
+	    (hw->phy_type == em_phy_oem) ||
+	    (hw->phy_type == em_phy_82578)) {
 		ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS,
 		    &phy_data);
 		if (ret_val)
@@ -9126,7 +9155,8 @@ em_hv_phy_workarounds_ich8lan(struct em_hw *hw)
 	}
 
 	if (((hw->phy_type == em_phy_82577) &&
-	     ((hw->phy_revision == 1) || (hw->phy_revision == 2)))) {
+	     ((hw->phy_revision == 1) || (hw->phy_revision == 2))) ||
+	    ((hw->phy_type == em_phy_82578) && (hw->phy_revision == 1))) {
 		/* Disable generation of early preamble */
 		ret_val = em_write_phy_reg(hw, PHY_REG(769, 25), 0x4431);
 		if (ret_val)
@@ -9136,6 +9166,31 @@ em_hv_phy_workarounds_ich8lan(struct em_hw *hw)
 		ret_val = em_write_phy_reg(hw, PHY_REG(770, 16), 0xA204);
 		if (ret_val)
 			goto out;
+	}
+
+	if (hw->phy_type == em_phy_82578) {
+		if (hw->revision_id < 3) {
+			/* PHY config */
+			ret_val = em_write_phy_reg(hw, (1 << 6) | 0x29,
+						   0x66C0);
+			if (ret_val)
+				goto out;
+
+			/* PHY config */
+			ret_val = em_write_phy_reg(hw, (1 << 6) | 0x1E,
+						   0xFFFF);
+			if (ret_val)
+				goto out;
+		}
+
+		/*
+		 * Return registers to default by doing a soft reset then
+		 * writing 0x3140 to the control register.
+		 */
+		if (hw->phy_revision < 2) {
+			em_phy_reset(hw);
+			ret_val = em_write_phy_reg(hw, PHY_CTRL, 0x3140);
+		}
 	}
 
 	if ((hw->revision_id == 2) &&
