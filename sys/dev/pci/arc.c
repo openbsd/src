@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.85 2010/06/28 18:31:02 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.86 2010/06/28 18:40:51 mk Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -351,7 +351,7 @@ int			arc_intr(void *);
 
 struct arc_iop;
 struct arc_ccb;
-TAILQ_HEAD(arc_ccb_list, arc_ccb);
+SLIST_HEAD(arc_ccb_list, arc_ccb);
 
 struct arc_softc {
 	struct device		sc_dev;
@@ -448,7 +448,7 @@ struct arc_ccb {
 	struct arc_io_cmd	*ccb_cmd;
 	u_int32_t		ccb_cmd_post;
 
-	TAILQ_ENTRY(arc_ccb)	ccb_link;
+	SLIST_ENTRY(arc_ccb)	ccb_link;
 };
 
 int			arc_alloc_ccbs(struct arc_softc *);
@@ -1899,7 +1899,7 @@ arc_alloc_ccbs(struct arc_softc *sc)
 	u_int8_t			*cmd;
 	int				i;
 
-	TAILQ_INIT(&sc->sc_ccb_free);
+	SLIST_INIT(&sc->sc_ccb_free);
 
 	sc->sc_ccbs = malloc(sizeof(struct arc_ccb) * sc->sc_req_count,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
@@ -1951,9 +1951,9 @@ arc_get_ccb(struct arc_softc *sc)
 {
 	struct arc_ccb			*ccb;
 
-	ccb = TAILQ_FIRST(&sc->sc_ccb_free);
+	ccb = SLIST_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL)
-		TAILQ_REMOVE(&sc->sc_ccb_free, ccb, ccb_link);
+		SLIST_REMOVE_HEAD(&sc->sc_ccb_free, ccb_link);
 
 	return (ccb);
 }
@@ -1963,5 +1963,5 @@ arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
 	ccb->ccb_xs = NULL;
 	bzero(ccb->ccb_cmd, ARC_MAX_IOCMDLEN);
-	TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
+	SLIST_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
 }
