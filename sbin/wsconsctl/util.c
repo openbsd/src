@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.49 2010/03/07 21:26:24 miod Exp $ */
+/*	$OpenBSD: util.c,v 1.50 2010/06/28 20:40:39 maja Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -474,4 +474,5 @@ print_kmap(struct wskbd_map_data *map)
 			}
 		}
 	}
+	ksymenc(0);
 }

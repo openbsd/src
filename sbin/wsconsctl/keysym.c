@@ -1,4 +1,4 @@
-/*	$OpenBSD: keysym.c,v 1.5 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: keysym.c,v 1.6 2010/06/28 20:40:39 maja Exp $	*/
 /*	$NetBSD: keysym.c,v 1.3 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -42,6 +42,7 @@
 
 static int first_time = 1;
 static struct ksym ksym_tab_by_ksym[NUMKSYMS];
+static int encoding = KEYSYM_ENC_ISO;
 
 /* copied from dev/wscons/wskbdutil.c ... */
 
@@ -85,6 +86,7 @@ static int qcmp_name(const void *, const void *);
 static int qcmp_ksym(const void *, const void *);
 static int bcmp_name(const void *, const void *);
 static int bcmp_ksym(const void *, const void *);
+static int bcmp_ksym_enc(const void *, const void *);
 
 static void sort_ksym_tab(void);
 
@@ -97,7 +99,13 @@ qcmp_name(const void *a, const void *b)
 static int
 qcmp_ksym(const void *a, const void *b)
 {
-	return(((struct ksym *) b)->value - ((struct ksym *) a)->value);
+	int i;
+
+	i=((struct ksym *) b)->value - ((struct ksym *) a)->value;
+	if (i == 0) {
+		i=((struct ksym *) a)->enc - ((struct ksym *) b)->enc;
+	}
+	return(i);
 }
 
 static int
@@ -109,7 +117,25 @@ bcmp_name(const void *a, const void *b)
 static int
 bcmp_ksym(const void *a, const void *b)
 {
-	return(((struct ksym *) b)->value - *((int *) a));
+	int i;
+
+	i=((struct ksym *) b)->value - *((int *) a);
+	if (i == 0) {
+		i=KEYSYM_ENC_ISO - ((struct ksym *) b)->enc;
+	}
+	return(i);
+}
+
+static int
+bcmp_ksym_enc(const void *a, const void *b)
+{
+	int i;
+
+	i=((struct ksym *) b)->value - *((int *) a);
+	if (i == 0) {
+		i=encoding - ((struct ksym *) b)->enc;
+	}
+	return(i);
 }
 
 static void
@@ -134,9 +160,14 @@ ksym2name(int k)
 
 	if (first_time)
 		sort_ksym_tab();
-
+	
 	r = bsearch(&k, ksym_tab_by_ksym,
-		    NUMKSYMS, sizeof(struct ksym), bcmp_ksym);
+		    NUMKSYMS, sizeof(struct ksym), bcmp_ksym_enc);
+
+	if (r == NULL) {
+		r = bsearch(&k, ksym_tab_by_ksym,
+			    NUMKSYMS, sizeof(struct ksym), bcmp_ksym);
+	}
 
 	if (r != NULL)
 		return(r->name);
@@ -164,6 +195,32 @@ name2ksym(char *n)
 		return(res);
 	else
 		return(-1);
+}
+
+void
+ksymenc(int enc)
+{
+	switch(KB_ENCODING(enc)) {
+	case KB_HU:
+	case KB_PL:
+	case KB_SI:
+		encoding=KEYSYM_ENC_L2;
+		break;
+	case KB_TR:
+		encoding=KEYSYM_ENC_L5;
+		break;
+	case KB_LT:
+	case KB_LV:
+		encoding=KEYSYM_ENC_L7;
+		break;
+	case KB_RU:
+	case KB_UA:
+		encoding=KEYSYM_ENC_KOI;
+		break;
+	default:
+		encoding=KEYSYM_ENC_ISO;
+		break;
+	}
 }
 
 keysym_t
