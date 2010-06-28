@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.209 2010/06/23 04:53:53 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.210 2010/06/28 05:43:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1013,7 +1013,7 @@ ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 {
 	void (*done)(struct ami_softc *, struct ami_ccb *);
 	int ready;
-	int i;
+	int i = 0;
 	int s;
 
 	done = ccb->ccb_done;
