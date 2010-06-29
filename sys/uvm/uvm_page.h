@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.43 2010/06/27 03:03:49 thib Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.44 2010/06/29 21:25:16 thib Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -308,6 +308,9 @@ int		vm_physseg_find(paddr_t, int *);
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pg_flags & PQ_FREE)
+
+#define	PADDR_IS_DMA_REACHABLE(paddr)	\
+	(dma_constraint.ucr_low <= paddr && dma_constraint.ucr_high > paddr)
 
 #endif /* _KERNEL */
 
