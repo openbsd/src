@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.127 2010/05/18 22:26:10 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.128 2010/06/29 20:25:57 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -331,7 +331,6 @@ struct	pcred {
 	uid_t	p_svuid;		/* Saved effective user id. */
 	gid_t	p_rgid;			/* Real group id. */
 	gid_t	p_svgid;		/* Saved effective group id. */
-	int	p_refcnt;		/* Number of references. */
 };
 
 #ifdef _KERNEL

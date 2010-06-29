@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.115 2010/06/29 20:14:46 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.116 2010/06/29 20:25:57 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -284,7 +284,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	if ((flags & FORK_THREAD) == 0) {
 		p2->p_p->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
 		bcopy(p1->p_p->ps_cred, p2->p_p->ps_cred, sizeof(*p2->p_p->ps_cred));
-		p2->p_p->ps_cred->p_refcnt = 1;
 		crhold(p1->p_ucred);
 	}
 

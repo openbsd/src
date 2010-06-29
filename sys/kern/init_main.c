@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.167 2010/05/14 18:47:56 kettenis Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.168 2010/06/29 20:25:57 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -290,7 +290,6 @@ main(void *framep)
 	timeout_set(&p->p_realit_to, realitexpire, p);
 
 	/* Create credentials. */
-	cred0.p_refcnt = 1;
 	p->p_cred = &cred0;
 	p->p_ucred = crget();
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */

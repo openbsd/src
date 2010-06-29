@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.93 2010/06/29 00:28:14 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.94 2010/06/29 20:25:57 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -557,6 +557,8 @@ proc_reparent(struct proc *child, struct proc *parent)
 void
 proc_zap(struct proc *p)
 {
+	struct process *pr;
+
 	pool_put(&rusage_pool, p->p_ru);
 	if (p->p_ptstat)
 		free(p->p_ptstat, M_SUBPROC);
@@ -586,14 +588,13 @@ proc_zap(struct proc *p)
 	 * Remove us from our process list, possibly killing the process
 	 * in the process (pun intended).
 	 */
-	if (--p->p_p->ps_refcnt == 0) {
-		KASSERT(TAILQ_EMPTY(&p->p_p->ps_threads));
-		limfree(p->p_p->ps_limit);
-		if (--p->p_p->ps_cred->p_refcnt == 0) {
-			crfree(p->p_p->ps_cred->pc_ucred);
-			pool_put(&pcred_pool, p->p_p->ps_cred);
-		}
-		pool_put(&process_pool, p->p_p);
+	pr = p->p_p;
+	if (--pr->ps_refcnt == 0) {
+		KASSERT(TAILQ_EMPTY(&pr->ps_threads));
+		limfree(pr->ps_limit);
+		crfree(pr->ps_cred->pc_ucred);
+		pool_put(&pcred_pool, pr->ps_cred);
+		pool_put(&process_pool, pr);
 	}
 
 	pool_put(&proc_pool, p);
