@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.163 2010/06/29 22:08:29 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.164 2010/06/29 23:03:22 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -101,11 +101,14 @@ int acpi_foundide(struct aml_node *node, void *arg);
 int acpiide_notify(struct aml_node *, int, void *);
 
 int	_acpi_matchhids(const char *, const char *[]);
+int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
+	    const char *driver);
+
+struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *,
+	    const char *, const char *, int);
 
 void  wdcattach(struct channel_softc *);
 int   wdcdetach(struct channel_softc *, int);
-
-struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *, const char *, const char *, int);
 
 struct idechnl
 {
@@ -515,6 +518,31 @@ acpi_getminbus(union acpi_resource *crs, void *arg)
 	if (typ == LR_WORD && crs->lr_word.type == 2)
 		*bbn = crs->lr_word._min;
 	return 0;
+}
+
+int
+_acpi_matchhids(const char *hid, const char *hids[])
+{
+	int i;
+
+	for (i = 0; hids[i]; i++) 
+		if (!strcmp(hid, hids[i]))
+			return (1);
+	return (0);
+}
+
+int
+acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
+    const char *driver)
+{
+
+	if (aa->aaa_dev == NULL || aa->aaa_node == NULL)
+		return (0);
+	if (_acpi_matchhids(aa->aaa_dev, hids)) {
+		dnprintf(5, "driver %s matches %s\n", driver, hids[i]);
+		return (1);
+	}
+	return (0);
 }
 
 /* Map ACPI device node to PCI */
@@ -2427,31 +2455,6 @@ acpi_foundec(struct aml_node *node, void *arg)
 	aml_freevalue(&res);
 
 	return 0;
-}
-
-int
-_acpi_matchhids(const char *hid, const char *hids[])
-{
-	int i;
-
-	for (i = 0; hids[i]; i++) 
-		if (!strcmp(hid, hids[i]))
-			return (1);
-	return (0);
-}
-
-int
-acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
-    const char *driver)
-{
-
-	if (aa->aaa_dev == NULL || aa->aaa_node == NULL)
-		return (0);
-	if (_acpi_matchhids(aa->aaa_dev, hids)) {
-		dnprintf(5, "driver %s matches %s\n", driver, hids[i]);
-		return (1);
-	}
-	return (0);
 }
 
 int
