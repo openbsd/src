@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.1 2010/03/22 21:20:56 miod Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.2 2010/06/29 09:58:23 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -708,7 +708,7 @@ spdmem_probe(struct spdmem_softc *sc)
 	/* For DDR3 and FBDIMM, verify the CRC */
 	else if (type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
 		spd_len = spdmem_read(sc, 0);
-		if (spd_len && SPDMEM_SPDCRC_116)
+		if (spd_len & SPDMEM_SPDCRC_116)
 			spd_crc_cover = 116;
 		else
 			spd_crc_cover = 125;
