@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.70 2010/05/02 22:59:11 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.71 2010/06/29 00:50:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -100,7 +100,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void (*func)(void *);
 	void *arg;
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	extern u_int fpu_enable;
 	struct pcb *pcbp;
 	struct trapframe *tf;
@@ -110,9 +109,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (round_page(sizeof(struct user)) > NBPG)
 		panic("USPACE too small for user");
 #endif
-	if (p1->p_md.md_regs->tf_cr30 == fpu_curpcb) {
+	if (p1->p_md.md_regs->tf_cr30 == curcpu()->ci_fpu_state) {
 		mtctl(fpu_enable, CR_CCR);
-		fpu_save(fpu_curpcb);
+		fpu_save(curcpu()->ci_fpu_state);
 		mtctl(0, CR_CCR);
 	}
 
@@ -179,13 +178,12 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	if (fpu_curpcb == tf->tf_cr30) {
+	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
 		fpu_exit();
-		fpu_curpcb = 0;
+		curcpu()->ci_fpu_state = 0;
 	}
 	pool_put(&hppa_fppl, pcb->pcb_fpregs);
 

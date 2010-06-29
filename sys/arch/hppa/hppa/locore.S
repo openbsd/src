@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.172 2010/06/03 15:48:58 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.173 2010/06/29 00:50:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -115,8 +115,6 @@ netisr
 
 	.export	kernelmapped, data
 	BSS(kernelmapped, 4)	/* set when kernel is mapped */
-	.export	fpu_curpcb, data
-	BSS(fpu_curpcb, 4)	/* pcb of the fpu owner */
 	.export fpu_enable, data
 	BSS(fpu_enable, 4)	/* bits to set in the ccr to enable fpu */
 	BSS(cpu_fpuena, 4)	/* enable FPU, otherwise force emulate */
@@ -991,9 +989,9 @@ ENTRY(TLABEL(excpt),0)
 	copy	r9, arg0
 	copy	r1, rp
 	copy	r8, arg0
+	mfctl	cr29, r1
 	mtctl	r0, ccr		/* cause a reload after exception */
-	ldil	L%fpu_curpcb, r1
-	stw	r0, R%fpu_curpcb(r1)
+	stw	r0, CI_FPU_STATE(r1)
 
 	/* now, check for trap */
 	ldw	0(r9), r1
@@ -1057,7 +1055,6 @@ ENTRY(TLABEL(emu),0)
 	ldil	L%cpu_fpuena, r1
 	ldw	R%cpu_fpuena(r1), r9
 	comib,=	0, r9, $fpusw_emu
-	ldil	L%fpu_curpcb, r1
 
 	/* if we are already enabled and hit again, emulate */
 	mfctl	ccr, r1
@@ -1066,8 +1063,9 @@ ENTRY(TLABEL(emu),0)
 	nop
 
 $fpusw_emu
+	mfctl	cr29, r1
 	mtctl	r0, ccr		/* cause a reload after exception */
-	stw	r0, R%fpu_curpcb(r1)
+	stw	r0, CI_FPU_STATE(r1)
 #if 0
 	/* here we emulate the fld/fst */
 	mfctl	iir, r1
@@ -1090,9 +1088,9 @@ $fpusw_set
 	depi	3, 25, 2, r1
 	mtctl	r1, ccr
 
-	ldil	L%fpu_curpcb, r16
+	mfctl	cr29, r16
 	mfctl	cr30, r9
-	ldw	R%fpu_curpcb(r16), r16
+	ldw	CI_FPU_STATE(r16), r16
 
 	comb,=,n r16, r0, $fpusw_nosave
 	comb,=,n r16, r9, $fpusw_done
@@ -1151,8 +1149,8 @@ $fpusw_nosave
 	fldds,ma -8(r17), fr1
 	fldds     0(r17), fr0	/* fr0 must be restored last */
 
-	ldil	L%fpu_curpcb, r1
-	stw	r17, R%fpu_curpcb(r1)
+	mfctl	cr29, r1
+	stw	r17, CI_FPU_STATE(r1)
 
 $fpusw_done
 	rfir

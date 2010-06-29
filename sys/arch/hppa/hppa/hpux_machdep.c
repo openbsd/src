@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.4 2010/05/24 15:04:54 deraadt Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.5 2010/06/29 00:50:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -72,7 +72,6 @@ hpux_setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
 	extern int cpu_model_hpux;	/* machdep.c */
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	extern u_int fpu_version;	/* from machdep.c */
 	struct ps_strings arginfo;	/* XXX copy back in from the stack */
 	struct hpux_keybits {
@@ -120,8 +119,8 @@ hpux_setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
 	pcb->pcb_fpregs->fpr_regs[2] = 0;
 	pcb->pcb_fpregs->fpr_regs[3] = 0;
-	if (tf->tf_cr30 == fpu_curpcb) {
-		fpu_curpcb = 0;
+	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
+		curcpu()->ci_fpu_state = 0;
 		/* force an fpu ctxsw, we won't be hugged by the cpu_switch */
 		mtctl(0, CR_CCR);
 	}

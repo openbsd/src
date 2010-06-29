@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.39 2010/06/03 15:48:58 jsing Exp $
+#	$OpenBSD: genassym.cf,v 1.40 2010/06/29 00:50:40 jsing Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -163,6 +163,7 @@ member	ci_psw
 member	ci_cpl
 member	ci_ipending
 member	ci_trap_save
+member	ci_fpu_state
 
 # system calls
 export	SYSCALLGATE

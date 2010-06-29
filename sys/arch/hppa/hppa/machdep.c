@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.189 2010/06/27 03:03:48 thib Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.190 2010/06/29 00:50:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1200,7 +1200,6 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	register_t zero;
@@ -1221,9 +1220,9 @@ setregs(p, pack, stack, retval)
 	copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP), sizeof(register_t));
 
 	/* reset any of the pending FPU exceptions */
-	if (tf->tf_cr30 == fpu_curpcb) {
+	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
 		fpu_exit();
-		fpu_curpcb = 0;
+		curcpu()->ci_fpu_state = 0;
 	}
 	pcb->pcb_fpregs->fpr_regs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
@@ -1246,7 +1245,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	extern u_int fpu_enable;
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
@@ -1264,9 +1262,9 @@ sendsig(catcher, sig, mask, code, type, val)
 #endif
 
 	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == fpu_curpcb) {
+	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
 		mtctl(fpu_enable, CR_CCR);
-		fpu_save(fpu_curpcb);
+		fpu_save(curcpu()->ci_fpu_state);
 		/* fpu_curpcb = 0; only needed if fpregs are preset */
 		mtctl(0, CR_CCR);
 	}
@@ -1381,7 +1379,6 @@ sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
@@ -1396,9 +1393,9 @@ sys_sigreturn(p, v, retval)
 #endif
 
 	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == fpu_curpcb) {
+	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
 		fpu_exit();
-		fpu_curpcb = 0;
+		curcpu()->ci_fpu_state = 0;
 	}
 
 	if ((error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc)))
@@ -1474,7 +1471,6 @@ void
 hpux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
     union sigval val)
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	extern u_int fpu_enable;
 	struct proc *p = curproc;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -1490,10 +1486,10 @@ hpux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
 	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == fpu_curpcb) {
+	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
 		mtctl(fpu_enable, CR_CCR);
-		fpu_save(fpu_curpcb);
-		fpu_curpcb = 0;
+		fpu_save(curcpu()->ci_fpu_state);
+		curcpu()->ci_fpu_state = 0;
 		mtctl(0, CR_CCR);
 	}
 
@@ -1625,7 +1621,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern paddr_t fpu_curpcb;	/* from locore.S */
 	extern u_int fpu_enable;
 	extern int cpu_fpuena;
 	dev_t consdev;
@@ -1643,10 +1638,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
 	case CPU_FPU:
-		if (fpu_curpcb) {
+		if (curcpu()->ci_fpu_state) {
 			mtctl(fpu_enable, CR_CCR);
-			fpu_save(fpu_curpcb);
-			fpu_curpcb = 0;
+			fpu_save(curcpu()->ci_fpu_state);
+			curcpu()->ci_fpu_state = 0;
 			mtctl(0, CR_CCR);
 		}
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_fpuena));
