@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.20 2010/06/29 20:57:33 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.21 2010/06/29 21:34:50 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -54,10 +54,10 @@ vinit(void)
 	FILE *fp;
 
 	for (p = vtable; p->v_name != NULL; p++) {
-		if (p->v_type&ENVIRON)
+		if (p->v_flags & V_ENVIRON)
 			if ((cp = getenv(p->v_name)))
 				p->v_value = cp;
-		if (p->v_type&IREMOTE)
+		if (p->v_flags & V_IREMOTE)
 			setnumber(p->v_value, *address(p->v_value));
 	}
 	/*
@@ -88,39 +88,39 @@ vinit(void)
 static void
 vassign(value_t *p, char *v)
 {
-	if (p->v_access & READONLY) {
+	if (p->v_flags & V_READONLY) {
 		printf("access denied\r\n");
 		return;
 	}
 
-	switch (p->v_type&TMASK) {
-	case STRING:
+	switch (p->v_flags & V_TYPEMASK) {
+	case V_STRING:
 		if (p->v_value && strcmp(p->v_value, v) == 0)
 			return;
-		if (!(p->v_type&(ENVIRON|INIT)))
+		if (!(p->v_flags & (V_ENVIRON|V_INIT)))
 			free(p->v_value);
 		if ((p->v_value = strdup(v)) == NULL) {
 			printf("out of core\r\n");
 			return;
 		}
-		p->v_type &= ~(ENVIRON|INIT);
+		p->v_flags &= ~(V_ENVIRON|V_INIT);
 		break;
-	case NUMBER:
+	case V_NUMBER:
 		if (number(p->v_value) == number(v))
 			return;
 		setnumber(p->v_value, number(v));
 		break;
-	case BOOL:
+	case V_BOOL:
 		if (boolean(p->v_value) == (*v != '!'))
 			return;
 		setboolean(p->v_value, (*v != '!'));
 		break;
-	case CHAR:
+	case V_CHAR:
 		if (character(p->v_value) == *v)
 			return;
 		setcharacter(p->v_value, *v);
 	}
-	p->v_access |= CHANGED;
+	p->v_flags |= V_CHANGED;
 }
 
 void
@@ -156,7 +156,7 @@ vtoken(char *s)
 		*cp = '\0';
 		if ((p = vlookup(s))) {
 			cp++;
-			if (p->v_type&NUMBER)
+			if ((p->v_flags & V_TYPEMASK) == V_NUMBER)
 				vassign(p, (char *)atoi(cp));
 			else {
 				if (strcmp(s, "record") == 0)
@@ -193,17 +193,17 @@ vprint(value_t *p)
 		while (col++ < MIDDLE)
 			putchar(' ');
 	col += size(p->v_name);
-	switch (p->v_type&TMASK) {
+	switch (p->v_flags & V_TYPEMASK) {
 
-	case BOOL:
-		if (boolean(p->v_value) == FALSE) {
+	case V_BOOL:
+		if (!boolean(p->v_value)) {
 			col++;
 			putchar('!');
 		}
 		printf("%s", p->v_name);
 		break;
 
-	case STRING:
+	case V_STRING:
 		printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
@@ -213,12 +213,12 @@ vprint(value_t *p)
 		}
 		break;
 
-	case NUMBER:
+	case V_NUMBER:
 		col += 6;
 		printf("%s=%-5ld", p->v_name, number(p->v_value));
 		break;
 
-	case CHAR:
+	case V_CHAR:
 		printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
@@ -240,10 +240,11 @@ vlookup(char *s)
 {
 	value_t *p;
 
-	for (p = vtable; p->v_name; p++)
+	for (p = vtable; p->v_name; p++) {
 		if (strcmp(p->v_name, s) == 0 ||
-		    (p->v_abrev && strcmp(p->v_abrev, s) == 0))
+		    (p->v_abbrev && strcmp(p->v_abbrev, s) == 0))
 			return (p);
+	}
 	return (NULL);
 }
 
@@ -310,7 +311,7 @@ vstring(char *s, char *v)
 	p = vlookup(s);
 	if (p == 0)
 		return (1);
-	if (p->v_type&NUMBER)
+	if ((p->v_flags & V_TYPEMASK) == V_NUMBER)
 		vassign(p, (char *)atoi(v));
 	else {
 		if (strcmp(s, "record") == 0)

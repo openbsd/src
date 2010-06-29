@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.40 2010/06/29 20:57:33 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.41 2010/06/29 21:34:50 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -89,34 +89,25 @@ short	HD;			/* this host is half duplex - do local echo */
 /*
  * String value table
  */
-typedef
-	struct {
-		char	*v_name;	/* whose name is it */
-		char	v_type;		/* for interpreting set's */
-		char	v_access;	/* protection of touchy ones */
-		char	*v_abrev;	/* possible abreviation */
-		char	*v_value;	/* casted to a union later */
-	}
-	value_t;
+typedef	struct {
+	char	*v_name;	/* variable name */
+	int	 v_flags;	/* type and flags */
+	char	*v_abbrev;	/* possible abbreviation */
+	char	*v_value;	/* casted to a union later */
+}  value_t;
 
-#define STRING	01		/* string valued */
-#define BOOL	02		/* true-false value */
-#define NUMBER	04		/* numeric value */
-#define CHAR	010		/* character value */
+#define V_STRING	01		/* string valued */
+#define V_BOOL		02		/* true-false value */
+#define V_NUMBER	04		/* numeric value */
+#define V_CHAR		010		/* character value */
+#define V_TYPEMASK	017
 
-#define WRITE	01		/* write access to variable */
-#define	READ	02		/* read access */
+#define V_CHANGED	020		/* to show modification */
+#define V_READONLY	040		/* variable is not writable */
 
-#define CHANGED	01		/* used to show modification */
-#define READONLY 02		/* variable is not writable */
-
-#define	TRUE	1
-#define FALSE	0
-
-#define ENVIRON	020		/* initialize out of the environment */
-#define IREMOTE	040		/* initialize out of remote structure */
-#define INIT	0100		/* static data space used for initialization */
-#define TMASK	017
+#define V_ENVIRON	0100		/* initialize out of the environment */
+#define V_IREMOTE	0200		/* initialize out of remote structure */
+#define V_INIT		0400		/* static data space used for initialization */
 
 /*
  * variable manipulation stuff --

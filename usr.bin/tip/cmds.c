@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.34 2010/06/29 16:44:38 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.35 2010/06/29 21:34:50 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -741,49 +741,49 @@ variable(int c)
 	if (prompt("[set] ", buf, sizeof(buf)))
 		return;
 	vlex(buf);
-	if (vtable[BEAUTIFY].v_access&CHANGED) {
-		vtable[BEAUTIFY].v_access &= ~CHANGED;
+	if (vtable[BEAUTIFY].v_flags & V_CHANGED) {
+		vtable[BEAUTIFY].v_flags &= ~V_CHANGED;
 		write(tipout_fd, "B", 1);
 	}
-	if (vtable[SCRIPT].v_access&CHANGED) {
-		vtable[SCRIPT].v_access &= ~CHANGED;
+	if (vtable[SCRIPT].v_flags & V_CHANGED) {
+		vtable[SCRIPT].v_flags &= ~V_CHANGED;
 		setscript();
 		/*
 		 * So that "set record=blah script" doesn't
 		 *  cause two transactions to occur.
 		 */
-		if (vtable[RECORD].v_access&CHANGED)
-			vtable[RECORD].v_access &= ~CHANGED;
+		if (vtable[RECORD].v_flags & V_CHANGED)
+			vtable[RECORD].v_flags &= ~V_CHANGED;
 	}
-	if (vtable[RECORD].v_access&CHANGED) {
-		vtable[RECORD].v_access &= ~CHANGED;
+	if (vtable[RECORD].v_flags & V_CHANGED) {
+		vtable[RECORD].v_flags &= ~V_CHANGED;
 		if (boolean(value(SCRIPT)))
 			setscript();
 	}
-	if (vtable[TAND].v_access&CHANGED) {
-		vtable[TAND].v_access &= ~CHANGED;
+	if (vtable[TAND].v_flags & V_CHANGED) {
+		vtable[TAND].v_flags &= ~V_CHANGED;
 		if (boolean(value(TAND)))
 			tandem("on");
 		else
 			tandem("off");
 	}
-	if (vtable[LECHO].v_access&CHANGED) {
-		vtable[LECHO].v_access &= ~CHANGED;
+	if (vtable[LECHO].v_flags & V_CHANGED) {
+		vtable[LECHO].v_flags &= ~V_CHANGED;
 		HD = boolean(value(LECHO));
 	}
-	if (vtable[PARITY].v_access&CHANGED) {
-		vtable[PARITY].v_access &= ~CHANGED;
+	if (vtable[PARITY].v_flags & V_CHANGED) {
+		vtable[PARITY].v_flags &= ~V_CHANGED;
 		setparity(NULL);
 	}
-	if (vtable[HARDWAREFLOW].v_access&CHANGED) {
-		vtable[HARDWAREFLOW].v_access &= ~CHANGED;
+	if (vtable[HARDWAREFLOW].v_flags & V_CHANGED) {
+		vtable[HARDWAREFLOW].v_flags &= ~V_CHANGED;
 		if (boolean(value(HARDWAREFLOW)))
 			hardwareflow("on");
 		else
 			hardwareflow("off");
 	}
-	if (vtable[LINEDISC].v_access&CHANGED) {
-		vtable[LINEDISC].v_access &= ~CHANGED;
+	if (vtable[LINEDISC].v_flags & V_CHANGED) {
+		vtable[LINEDISC].v_flags &= ~V_CHANGED;
 		linedisc(NULL);
 	}
 }
@@ -798,8 +798,8 @@ listvariables(int c)
 	puts("v\r");
 	for (p = vtable; p->v_name; p++) {
 		fputs(p->v_name, stdout);
-		switch (p->v_type&TMASK) {
-		case STRING:
+		switch (p->v_flags & V_TYPEMASK) {
+		case V_STRING:
 			if (p->v_value) {
 				strnvis(buf, p->v_value, sizeof(buf),
 				    VIS_WHITE|VIS_OCTAL);
@@ -808,14 +808,14 @@ listvariables(int c)
 			putchar('\r');
 			putchar('\n');
 			break;
-		case NUMBER:
+		case V_NUMBER:
 			printf(" %ld\r\n", number(p->v_value));
 			break;
-		case BOOL:
+		case V_BOOL:
 			printf(" %s\r\n",
 			    !boolean(p->v_value) ? "false" : "true");
 			break;
-		case CHAR:
+		case V_CHAR:
 			vis(buf, character(p->v_value), VIS_WHITE|VIS_OCTAL, 0);
 			printf(" %s\r\n", buf);
 			break;

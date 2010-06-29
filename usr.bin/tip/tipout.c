@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.21 2010/02/07 20:16:47 nicm Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.22 2010/06/29 21:34:50 nicm Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -81,14 +81,14 @@ tipout_script(void)
 	if (boolean(value(SCRIPT)) && fscript != NULL)
 		fclose(fscript);
 	if (pline == line) {
-		setboolean(value(SCRIPT), FALSE);
+		setboolean(value(SCRIPT), 0);
 		reply = 'y';
 	} else {
 		if ((fscript = fopen(line, "a")) == NULL)
 			reply = 'n';
 		else {
 			reply = 'y';
-			setboolean(value(SCRIPT), TRUE);
+			setboolean(value(SCRIPT), 1);
 		}
 	}
 	write(tipin_fd, &reply, 1);

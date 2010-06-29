@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.41 2010/06/29 17:42:35 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.42 2010/06/29 21:34:50 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 	int i, pair[2];
 
 	/* XXX preserve previous braindamaged behavior */
-	setboolean(value(DC), TRUE);
+	setboolean(value(DC), 1);
 
 	if (strcmp(__progname, "cu") == 0) {
 		cumode = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.27 2010/06/29 17:42:35 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.28 2010/06/29 21:34:50 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ getopt:
 				errx(3, "speed is %s: %s", errstr, optarg);
 			break;
 		case 'h':
-			setboolean(value(LECHO), TRUE);
-			HD = TRUE;
+			setboolean(value(LECHO), 1);
+			HD = 1;
 			break;
 		case 't':
 			/* Was for a hardwired dial-up connection. */
@@ -172,7 +172,7 @@ getopt:
 		setparity("none");
 		break;
 	}
-	setboolean(value(VERBOSE), FALSE);
+	setboolean(value(VERBOSE), 0);
 	if (ttysetup(BR)) {
 		fprintf(stderr, "%s: unsupported speed %ld\n",
 		    __progname, BR);
