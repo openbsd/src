@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.26 2010/06/29 16:41:56 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.27 2010/06/29 17:42:35 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ getopt:
 			HD = TRUE;
 			break;
 		case 't':
-			HW = 1;
+			/* Was for a hardwired dial-up connection. */
 			break;
 		case 'o':
 			if (parity != 0)
@@ -173,25 +173,19 @@ getopt:
 		break;
 	}
 	setboolean(value(VERBOSE), FALSE);
-	if (HW && ttysetup(BR)) {
+	if (ttysetup(BR)) {
 		fprintf(stderr, "%s: unsupported speed %ld\n",
 		    __progname, BR);
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}
 	con();
-	if (!HW && ttysetup(BR)) {
-		fprintf(stderr, "%s: unsupported speed %ld\n",
-		    __progname, BR);
-		(void)uu_unlock(uucplock);
-		exit(3);
-	}
 }
 
 static void
 cuusage(void)
 {
-	fprintf(stderr, "usage: cu [-ehot] [-l line] "
+	fprintf(stderr, "usage: cu [-eho] [-l line] "
 	    "[-s speed | -speed] [phone-number]\n");
 	exit(8);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.36 2010/06/29 16:44:38 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.37 2010/06/29 17:42:35 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ char	*HO;			/* host name */
 long	BR;			/* line speed for conversation */
 long	FS;			/* frame size for transfers */
 
-short	HW;			/* this device is hardwired, see hunt.c */
 char	*ES;			/* escape character */
 char	*EX;			/* exceptions */
 char	*FO;			/* force (literal next) char*/

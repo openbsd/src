@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.40 2010/06/29 16:41:56 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.41 2010/06/29 17:42:35 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -141,24 +141,14 @@ notnumber:
 	vinit();				/* init variables */
 	setparity("none");			/* set the parity table */
 
-	/*
-	 * Hardwired connections require the
-	 *  line speed set before they make any transmissions
-	 *  (this is particularly true of things like a DF03-AC)
-	 */
-	if (HW && ttysetup(number(value(BAUDRATE)))) {
+	if (ttysetup(number(value(BAUDRATE)))) {
 		fprintf(stderr, "%s: bad baud rate %ld\n", __progname,
 		    number(value(BAUDRATE)));
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}
 	con();
-	if (!HW && ttysetup(number(value(BAUDRATE)))) {
-		fprintf(stderr, "%s: bad baud rate %ld\n", __progname,
-		    number(value(BAUDRATE)));
-		(void)uu_unlock(uucplock);
-		exit(3);
-	}
+
 cucommon:
 	/*
 	 * From here down the code is shared with

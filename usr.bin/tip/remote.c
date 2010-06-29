@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.20 2010/06/29 16:41:56 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.21 2010/06/29 17:42:35 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ getremcap(char *host)
 		if ((DV != NULL) ||
 		    (host[0] == '/' && access(DV = host, R_OK | W_OK) == 0)) {
 			HO = host;
-			HW = 1;
 			if (!BR)
 				BR = DEFBR;
 			FS = DEFFS;
@@ -117,13 +116,8 @@ getremcap(char *host)
 	}
 
 	HD = cgetflag("hd");
-
-	/*
-	 * This effectively eliminates the "hw" attribute
-	 *   from the description file
-	 */
-	HW = 1;
 	HO = host;
+
 	/*
 	 * see if uppercase mode should be turned on initially
 	 */

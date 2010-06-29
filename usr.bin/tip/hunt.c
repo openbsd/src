@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.14 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.15 2010/06/29 17:42:35 nicm Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -59,18 +59,9 @@ hunt(char *name)
 			uucplock = cp;
 		else
 			uucplock++;
-
 		if (uu_lock(uucplock) < 0)
 			continue;
-		/*
-		 * Straight through call units, such as the BIZCOMP,
-		 * VADIC and the DF, must indicate they're hardwired in
-		 *  order to get an open file descriptor placed in FD.
-		 * Otherwise, as for a DN-11, the open will have to
-		 *  be done in the "open" routine.
-		 */
-		if (!HW)
-			break;
+
 		if (setjmp(deadline) == 0) {
 			alarm(10);
 			FD = open(cp, (O_RDWR |
@@ -92,6 +83,7 @@ hunt(char *name)
 			signal(SIGALRM, SIG_DFL);
 			return ((long)cp);
 		}
+
 		(void)uu_unlock(uucplock);
 	}
 	signal(SIGALRM, f);
