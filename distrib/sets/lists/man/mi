@@ -2549,7 +2549,6 @@
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/pf.conf.0
 ./usr/share/man/cat5/pf.os.0
-./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/port-modules.0
 ./usr/share/man/cat5/portal.conf.0
 ./usr/share/man/cat5/printcap.0
@@ -2699,13 +2698,11 @@
 ./usr/share/man/cat8/compat_aout.0
 ./usr/share/man/cat8/compat_bsdos.0
 ./usr/share/man/cat8/compat_freebsd.0
-./usr/share/man/cat8/compat_hpux.0
 ./usr/share/man/cat8/compat_ibcs2.0
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_osf1.0
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/compat_svr4.0
-./usr/share/man/cat8/compat_ultrix.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/config.0
 ./usr/share/man/cat8/crash.0

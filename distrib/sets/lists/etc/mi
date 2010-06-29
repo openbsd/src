@@ -87,7 +87,6 @@
 ./etc/passwd
 ./etc/pf.conf
 ./etc/pf.os
-./etc/phones
 ./etc/portal.conf
 ./etc/ppp/chap-secrets
 ./etc/ppp/options
