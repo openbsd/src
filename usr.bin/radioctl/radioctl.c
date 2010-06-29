@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.16 2008/10/16 14:32:57 jmc Exp $ */
+/* $OpenBSD: radioctl.c,v 1.17 2010/06/29 05:00:05 tedu Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #define RADIO_ENV	"RADIODEVICE"
 #define RADIODEVICE	"/dev/radio"
@@ -429,7 +430,7 @@ parse_opt(char *s, struct opt_t *o) {
 
 	slen -= ++optlen;
 
-	if ((topt = (char *)malloc(optlen)) == NULL) {
+	if ((topt = malloc(optlen)) == NULL) {
 		warn("memory allocation error");
 		return 0;
 	}
@@ -465,11 +466,11 @@ parse_opt(char *s, struct opt_t *o) {
 		break;
 	case 'o':
 		if (strncmp(topt, offchar,
-			slen > OFFCHAR_LEN ? slen : OFFCHAR_LEN) == 0)
+		    slen > OFFCHAR_LEN ? slen : OFFCHAR_LEN) == 0)
 			o->value = 0;
 		else if (strncmp(topt, onchar,
-				slen > ONCHAR_LEN ? slen : ONCHAR_LEN) == 0)
-				o->value = 1;
+		    slen > ONCHAR_LEN ? slen : ONCHAR_LEN) == 0)
+			o->value = 1;
 		break;
 	case 'u':
 		if (strncmp(topt, "up", slen > 2 ? slen : 2) == 0)
@@ -480,7 +481,7 @@ parse_opt(char *s, struct opt_t *o) {
 			o->value = 0;
 		break;
 	default:
-		if (*topt > 47 && *topt < 58)
+		if (isdigit(*topt))
 			o->value = str_to_int(topt, o->option);
 		break;
 	}
