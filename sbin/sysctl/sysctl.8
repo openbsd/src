@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.154 2010/02/27 20:47:10 schwarze Exp $
+.\"	$OpenBSD: sysctl.8,v 1.155 2010/06/29 16:54:49 tedu Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: February 27 2010 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -198,6 +198,7 @@ and a few require a kernel compiled with non-standard
 .It kern.timecounter.choice	string	no
 .It kern.maxlocksperuid	integer	yes
 .It kern.bufcachepercent	integer	yes
+.It kern.rthreads	integer	yes
 .It vm.vmmeter	struct	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
