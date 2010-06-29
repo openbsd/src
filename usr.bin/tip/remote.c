@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.18 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: remote.c,v 1.19 2010/06/29 05:55:37 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ getremcap(char *host)
 	 *   from the description file
 	 */
 	if (!HW)
-		HW = (CU == NULL) || (DU && equal(DV, CU));
+		HW = (CU == NULL) || (DU && strcmp(DV, CU) == 0);
 	HO = host;
 	/*
 	 * see if uppercase mode should be turned on initially

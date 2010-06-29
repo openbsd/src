@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.38 2009/12/12 18:26:23 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.39 2010/06/29 05:55:37 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 	/* XXX preserve previous braindamaged behavior */
 	setboolean(value(DC), TRUE);
 
-	if (equal(__progname, "cu")) {
+	if (strcmp(__progname, "cu") == 0) {
 		cumode = 1;
 		cumain(argc, argv);
 		goto cucommon;
@@ -538,7 +538,7 @@ setparity(char *defparity)
 	if (value(PARITY) == NULL)
 		value(PARITY) = defparity;
 	parity = value(PARITY);
-	if (equal(parity, "none")) {
+	if (strcmp(parity, "none") == 0) {
 		bits8 = 1;
 		return;
 	}
@@ -546,13 +546,13 @@ setparity(char *defparity)
 	flip = 0;
 	clr = 0377;
 	set = 0;
-	if (equal(parity, "odd"))
+	if (strcmp(parity, "odd") == 0)
 		flip = 0200;			/* reverse bit 7 */
-	else if (equal(parity, "zero"))
+	else if (strcmp(parity, "zero") == 0)
 		clr = 0177;			/* turn off bit 7 */
-	else if (equal(parity, "one"))
+	else if (strcmp(parity, "one") == 0)
 		set = 0200;			/* turn on bit 7 */
-	else if (!equal(parity, "even")) {
+	else if (strcmp(parity, "even") != 0) {
 		(void) fprintf(stderr, "%s: unknown parity value\r\n", parity);
 		(void) fflush(stderr);
 	}

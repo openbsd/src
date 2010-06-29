@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.18 2009/10/27 23:59:45 deraadt Exp $	*/
+/*	$OpenBSD: value.c,v 1.19 2010/06/29 05:55:37 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ vassign(value_t *p, char *v)
 
 	switch (p->v_type&TMASK) {
 	case STRING:
-		if (p->v_value && equal(p->v_value, v))
+		if (p->v_value && strcmp(p->v_value, v) == 0)
 			return;
 		if (!(p->v_type&(ENVIRON|INIT)))
 			free(p->v_value);
@@ -134,7 +134,7 @@ vlex(char *s)
 	value_t *p;
 	char *cp;
 
-	if (equal(s, "all")) {
+	if (strcmp(s, "all") == 0) {
 		for (p = vtable; p->v_name; p++)
 			if (vaccess(p->v_access, READ))
 				vprint(p);
@@ -257,7 +257,8 @@ vlookup(char *s)
 	value_t *p;
 
 	for (p = vtable; p->v_name; p++)
-		if (equal(p->v_name, s) || (p->v_abrev && equal(p->v_abrev, s)))
+		if (strcmp(p->v_name, s) == 0 ||
+		    (p->v_abrev && strcmp(p->v_abrev, s) == 0))
 			return (p);
 	return (NULL);
 }

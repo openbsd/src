@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.33 2009/12/12 18:14:00 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.34 2010/06/29 05:55:37 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -136,8 +136,6 @@ typedef
 		void	(*acu_abort)(void);
 	}
 	acu_t;
-
-#define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */
 
 /*
  * variable manipulation stuff --
