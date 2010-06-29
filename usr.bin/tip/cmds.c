@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.33 2010/06/29 16:41:56 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.34 2010/06/29 16:44:38 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -511,7 +511,6 @@ pipeout(int c)
 	signal(SIGQUIT, SIG_DFL);
 }
 
-#ifdef CONNECT
 /*
  * Fork a program with:
  *  0 <-> remote tty in
@@ -561,7 +560,6 @@ consh(int c)
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
 }
-#endif
 
 /*
  * Escape to local shell

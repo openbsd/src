@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.9 2009/12/12 18:14:00 nicm Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.10 2010/06/29 16:44:38 nicm Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.3 1994/12/08 09:30:46 jtc Exp $	*/
 
 /*
@@ -40,9 +40,7 @@ esctable_t etable[] = {
 	{ 'p',		"put file to remote UNIX",		cu_put },
 	{ '|',		"pipe remote file",			pipefile },
 	{ '$',		"pipe local command to remote host",	pipeout },
-#ifdef CONNECT
 	{ 'C',  	"connect program to remote host",	consh },
-#endif
 	{ 'c',		"change directory",		 	chdirectory },
 	{ '.',		"exit from tip",			finish },
 	{ CTRL('d'),	"exit from tip",			finish },

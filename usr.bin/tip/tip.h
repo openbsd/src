@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.35 2010/06/29 16:41:56 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.36 2010/06/29 16:44:38 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -159,16 +159,10 @@ extern int	vflag;		/* verbose during reading of .tiprc file */
 extern int	noesc;		/* no escape `~' char */
 extern value_t	vtable[];	/* variable table */
 
-#ifndef ACULOG
-#define logent(a, b, c)
-#define loginit()
-#endif
-
 /*
  * Definition of indices into variable table so
  *  value(DEFINE) turns into a static address.
  */
-
 enum {
 	BEAUTIFY = 0,
 	BAUDRATE,
