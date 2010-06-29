@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.33 2010/06/29 14:41:28 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.34 2010/06/29 15:49:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -51,9 +51,6 @@ Defaults to
 .Fl m Ns Cm andoc .
 .It Fl O Ns Ar option
 Comma-separated output options.
-See
-.Sx Output Options
-for details.
 .It Fl T Ns Ar output
 Output format.
 See
@@ -139,13 +136,45 @@ specified and
 or
 .Fl m Ns Cm an
 is specified, then this format is used exclusively.
+.Ss Compiler Options
+Default
+.Xr mdoc 7
+and
+.Xr man 7
+compilation behaviour may be overridden with the
+.Fl f
+flag.
+.Bl -tag -width Ds
+.It Fl f Ns Cm ign-errors
+When parsing multiple files, don't halt when one errors out.
+Useful with
+.Fl T Ns Cm lint
+over a large set of manuals passed on the command line.
+.It Fl f Ns Cm ign-escape
+Ignore invalid escape sequences.
+This is the default, but the option can be used to override an earlier
+.Fl f Ns Cm strict .
+.It Fl f Ns Cm ign-scope
+When rewinding the scope of a block macro, forces the compiler to ignore
+scope violations.
+This can seriously mangle the resulting tree.
+.Pq mdoc only
+.It Fl f Ns Cm no-ign-escape
+Do not ignore invalid escape sequences.
+.It Fl f Ns Cm no-ign-macro
+Do not ignore unknown macros at the start of input lines.
+.It Fl f Ns Cm strict
+Implies
+.Fl f Ns Cm no-ign-escape
+and
+.Fl f Ns Cm no-ign-macro .
+.El
 .Ss Output Formats
 The
 .Nm
 utility accepts the following
 .Fl T
-arguments (see
-.Sx OUTPUT ) :
+arguments, which correspond to output modes:
 .Bl -tag -width Ds
 .It Fl T Ns Cm ascii
 Produce 7-bit ASCII output, backspace-encoded for bold and underline
@@ -177,43 +206,60 @@ See
 .Pp
 If multiple input files are specified, these will be processed by the
 corresponding filter in-order.
-.Ss Compiler Options
-Default compiler behaviour may be overridden with the
-.Fl f
-flag.
-.Bl -tag -width Ds
-.It Fl f Ns Cm ign-errors
-When parsing multiple files, don't halt when one errors out.
-Useful with
-.Fl T Ns Cm lint
-over a large set of manuals passed on the command line.
-.It Fl f Ns Cm ign-escape
-Ignore invalid escape sequences.
-This is the default, but the option can be used to override an earlier
-.Fl f Ns Cm strict .
-.It Fl f Ns Cm ign-scope
-When rewinding the scope of a block macro, forces the compiler to ignore
-scope violations.
-This can seriously mangle the resulting tree.
-.Pq mdoc only
-.It Fl f Ns Cm no-ign-escape
-Do not ignore invalid escape sequences.
-.It Fl f Ns Cm no-ign-macro
-Do not ignore unknown macros at the start of input lines.
-.It Fl f Ns Cm strict
-Implies
-.Fl f Ns Cm no-ign-escape
-and
-.Fl f Ns Cm no-ign-macro .
-.El
-.Ss Output Options
-The
-.Fl T Ns Ar html
-and
-.Fl T Ns Ar xhtml
-modes accept the following
+.Ss ASCII Output
+Output produced by
+.Fl T Ns Cm ascii ,
+which is the default, is rendered in standard 7-bit ASCII documented in
+.Xr ascii 7 .
+.Pp
+Font styles are applied by using back-spaced encoding such that an
+underlined character
+.Sq c
+is rendered as
+.Sq _ Ns \e[bs] Ns c ,
+where
+.Sq \e[bs]
+is the back-space character number 8.
+Emboldened characters are rendered as
+.Sq c Ns \e[bs] Ns c .
+.Pp
+The special characters documented in
+.Xr mandoc_char 7
+are rendered best-effort in an ASCII equivalent.
+.Pp
+Output width is limited to 78 visible columns unless literal input lines
+exceed this limit.
+.Pp
+The following
 .Fl O
-arguments:
+arguments are accepted:
+.Bl -tag -width Ds
+.It Cm width Ns = Ns Ar width
+The output width is set to
+.Ar width ,
+which will normalise to \(>=60.
+.El
+.Ss HTML Output
+Output produced by
+.Fl T Ns Cm html
+conforms to HTML-4.01 strict.
+.Pp
+Font styles and page structure are applied using CSS2.
+By default, no font style is applied to any text,
+although CSS2 is hard-coded to format
+the basic structure of output.
+.Pp
+The
+.Pa example.style.css
+file documents the range of styles applied to output and, if used, will
+cause rendered documents to appear as they do in
+.Fl T Ns Cm ascii .
+.Pp
+Special characters are rendered in decimal-encoded UTF-8.
+.Pp
+The following
+.Fl O
+arguments are accepted:
 .Bl -tag -width Ds
 .It Cm includes Ns = Ns Ar fmt
 The string
@@ -251,113 +297,29 @@ is used for an external style-sheet.
 This must be a valid absolute or
 relative URI.
 .El
-.Pp
-The
-.Fl T Ns Ar ascii
-mode accepts the following
-.Fl O
-argument:
-.Bl -tag -width Ds
-.It Cm width Ns = Ns Ar width
-The output width is set to
-.Ar width ,
-which will normalise to \(>=60.
-.El
-.Sh OUTPUT
-This section documents output details of
-.Nm .
-In general, output conforms to the traditional manual style of a header,
-a body composed of sections and sub-sections, and a footer.
-.Pp
-The text style of output characters (non-macro characters, punctuation,
-and white-space) is dictated by context.
-.Pp
-White-space is generally stripped from input.
-This can be changed with
-character escapes (specified in
-.Xr mandoc_char 7 )
-or literal modes (specified in
-.Xr mdoc 7
-and
-.Xr man 7 ) .
-.Pp
-If non-macro punctuation is set apart from words, such as in the phrase
-.Dq to be \&, or not to be ,
-it's processed by
-.Nm ,
-regardless of output format, according to the following rules:  opening
-punctuation
-.Po
-.Sq \&( ,
-.Sq \&[ ,
-and
-.Sq \&{
-.Pc
-is not followed by a space; closing punctuation
-.Po
-.Sq \&. ,
-.Sq \&, ,
-.Sq \&; ,
-.Sq \&: ,
-.Sq \&? ,
-.Sq \&! ,
-.Sq \&) ,
-.Sq \&]
-and
-.Sq \&}
-.Pc
-is not preceded by white-space.
-.Pp
-If the input is
-.Xr mdoc 7 ,
-however, these rules are also applied to macro arguments when appropriate.
-.Ss ASCII Output
-Output produced by
-.Fl T Ns Cm ascii ,
-which is the default, is rendered in standard 7-bit ASCII documented in
-.Xr ascii 7 .
-.Pp
-Font styles are applied by using back-spaced encoding such that an
-underlined character
-.Sq c
-is rendered as
-.Sq _ Ns \e[bs] Ns c ,
-where
-.Sq \e[bs]
-is the back-space character number 8.
-Emboldened characters are rendered as
-.Sq c Ns \e[bs] Ns c .
-.Pp
-The special characters documented in
-.Xr mandoc_char 7
-are rendered best-effort in an ASCII equivalent.
-.Pp
-Output width is limited to 78 visible columns unless literal input lines
-exceed this limit.
-.Ss HTML Output
-Output produced by
-.Fl T Ns Cm html
-conforms to HTML-4.01 strict.
-.Pp
-Font styles and page structure are applied using CSS2.
-By default, no font style is applied to any text,
-although CSS2 is hard-coded to format
-the basic structure of output.
-.Pp
-The
-.Pa example.style.css
-file documents the range of styles applied to output and, if used, will
-cause rendered documents to appear as they do in
-.Fl T Ns Cm ascii .
-.Pp
-Special characters are rendered in decimal-encoded UTF-8.
 .Ss PostScript Output
 PostScript
 .Qq Adobe-3.0
 Level-2 pages may be generated by
 .Fl T Ns Cm ps .
-Output pages are US-letter sized (215.9 x 279.4 mm) and rendered in
-fixed, 10-point Courier font.
+Output pages are US-letter sized and rendered in fixed, 10-point Courier
+font.
+.Pp
+Special characters are rendered as in
+.Sx ASCII Output .
+.Pp
+The following
+.Fl O
+arguments are accepted:
+.Bl -tag -width Ds
+.It Cm paper Ns = Ns Ar name
+The paper size
+.Ar name
+may be one of
+.Ar a4
+or
+.Ar letter .
+.El
 .Ss XHTML Output
 Output produced by
 .Fl T Ns Cm xhtml
@@ -382,6 +344,10 @@ as the style-sheet:
 To check over a large set of manuals:
 .Pp
 .Dl $ mandoc \-Tlint \-fign-errors `find /usr/src -name \e*\e.[1-9]`
+.Pp
+To produce a series of PostScript manuals for A4 paper:
+.Pp
+.D1 $ mandoc \-Tps \-Opaper=a4 mdoc.7 man.7 \*(Gt manuals.ps
 .Sh COMPATIBILITY
 This section summarises
 .Nm

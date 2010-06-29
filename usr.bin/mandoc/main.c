@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.38 2010/06/27 21:54:41 schwarze Exp $ */
+/*	$Id: main.c,v 1.39 2010/06/29 15:49:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -588,7 +588,7 @@ fdesc(struct curparse *curp)
 			curp->outfree = ascii_free;
 			break;
 		case (OUTT_PS):
-			curp->outdata = ps_alloc();
+			curp->outdata = ps_alloc(curp->outopts);
 			curp->outfree = ps_free;
 			break;
 		default:
