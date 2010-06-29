@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.19 2010/06/29 05:55:37 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.20 2010/06/29 20:57:33 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -38,7 +38,6 @@ static value_t *vlookup(char *);
 static void vassign(value_t *, char *);
 static void vtoken(char *);
 static void vprint(value_t *);
-static int vaccess(unsigned int, unsigned int);
 static char *vinterp(char *, int);
 
 static size_t col = 0;
@@ -83,17 +82,13 @@ vinit(void)
 			fclose(fp);
 		}
 	}
-	/*
-	 * To allow definition of exception prior to fork
-	 */
-	vtable[EXCEPTIONS].v_access &= ~(WRITE<<PUBLIC);
 }
 
 /*VARARGS1*/
 static void
 vassign(value_t *p, char *v)
 {
-	if (!vaccess(p->v_access, WRITE)) {
+	if (p->v_access & READONLY) {
 		printf("access denied\r\n");
 		return;
 	}
@@ -136,8 +131,7 @@ vlex(char *s)
 
 	if (strcmp(s, "all") == 0) {
 		for (p = vtable; p->v_name; p++)
-			if (vaccess(p->v_access, READ))
-				vprint(p);
+			vprint(p);
 	} else {
 		do {
 			if ((cp = vinterp(s, ' ')))
@@ -173,7 +167,7 @@ vtoken(char *s)
 		}
 	} else if ((cp = strchr(s, '?'))) {
 		*cp = '\0';
-		if ((p = vlookup(s)) && vaccess(p->v_access, READ)) {
+		if (p = vlookup(s)) {
 			vprint(p);
 			return;
 		}
@@ -239,16 +233,6 @@ vprint(value_t *p)
 		printf("\r\n");
 		return;
 	}
-}
-
-static int
-vaccess(unsigned int mode, unsigned int rw)
-{
-	if (mode & (rw<<PUBLIC))
-		return (1);
-	if (mode & (rw<<PRIVATE))
-		return (1);
-	return ((mode & (rw<<ROOT)) && getuid() == 0);
 }
 
 static value_t *

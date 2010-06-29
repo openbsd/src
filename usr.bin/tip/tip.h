@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.39 2010/06/29 20:09:39 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.40 2010/06/29 20:57:33 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -107,10 +107,8 @@ typedef
 #define WRITE	01		/* write access to variable */
 #define	READ	02		/* read access */
 
-#define CHANGED	01		/* low bit is used to show modification */
-#define PUBLIC	1		/* public access rights */
-#define PRIVATE	03		/* private to definer */
-#define ROOT	05		/* root defined */
+#define CHANGED	01		/* used to show modification */
+#define READONLY 02		/* variable is not writable */
 
 #define	TRUE	1
 #define FALSE	0
