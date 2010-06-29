@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.110 2010/06/29 00:28:14 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.111 2010/06/29 02:46:43 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -570,40 +570,41 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *p;
 	struct pcred *pc = cp->p_cred;
+	int pid = SCARG(uap, pid);
+	int signum = SCARG(uap, signum);
 
-	if ((u_int)SCARG(uap, signum) >= NSIG)
+	if (((u_int)signum) >= NSIG)
 		return (EINVAL);
-	if (SCARG(uap, pid) > 0) {
+	if (pid > 0) {
 		enum signal_type type = SPROCESS;
 
-		if (SCARG(uap, pid) > THREAD_PID_OFFSET) {
-			if ((p = pfind(SCARG(uap, pid)
-					- THREAD_PID_OFFSET)) == NULL)
+		if (pid > THREAD_PID_OFFSET) {
+			if ((p = pfind(pid - THREAD_PID_OFFSET)) == NULL)
 				return (ESRCH);
 			if (p->p_flag & P_THREAD)
 				return (ESRCH);
 			type = STHREAD;
 		} else {
-			if ((p = pfind(SCARG(uap, pid))) == NULL)
+			if ((p = pfind(pid)) == NULL)
 				return (ESRCH);
 			if (p->p_flag & P_THREAD)
 				type = STHREAD;
 		}
 
 		/* kill single process */
-		if (!cansignal(cp, pc, p, SCARG(uap, signum)))
+		if (!cansignal(cp, pc, p, signum))
 			return (EPERM);
-		if (SCARG(uap, signum))
-			ptsignal(p, SCARG(uap, signum), type);
+		if (signum)
+			ptsignal(p, signum, type);
 		return (0);
 	}
-	switch (SCARG(uap, pid)) {
+	switch (pid) {
 	case -1:		/* broadcast signal */
-		return (killpg1(cp, SCARG(uap, signum), 0, 1));
+		return (killpg1(cp, signum, 0, 1));
 	case 0:			/* signal own process group */
-		return (killpg1(cp, SCARG(uap, signum), 0, 0));
+		return (killpg1(cp, signum, 0, 0));
 	default:		/* negative explicit process group */
-		return (killpg1(cp, SCARG(uap, signum), -SCARG(uap, pid), 0));
+		return (killpg1(cp, signum, -pid, 0));
 	}
 	/* NOTREACHED */
 }
