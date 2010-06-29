@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.27 2010/05/20 00:55:17 krw Exp $ */
+/*	$OpenBSD: sbic.c,v 1.28 2010/06/29 21:12:01 krw Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -595,8 +595,7 @@ sbic_scsidone(acb, stat)
 
 #ifdef DEBUG
         if (report_sense)
-            printf(" => %02x %02x\n", xs->sense.flags, 
-			xs->sense.extra_bytes[3]);
+            printf(" => %02x\n", xs->sense.flags);
 #endif
 
     } else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.48 2010/04/23 01:39:05 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.49 2010/06/29 21:12:01 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -340,7 +340,6 @@ struct scsi_sense_data {
 #define SSD_SCS_BIT_INDEX	0x07
 /*17*/	u_int8_t sense_key_spec_2;
 /*18*/	u_int8_t sense_key_spec_3;
-/*32*/	u_int8_t extra_bytes[14];
 };
 
 #define SKEY_NO_SENSE		0x00
