@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.80 2008/01/29 00:47:08 espie Exp $
+#	$OpenBSD: Makefile,v 1.81 2010/06/29 19:50:16 reyk Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -38,10 +38,10 @@ SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		field.c hash.c if.c ike_auth.c ike_main_mode.c \
 		ike_phase_1.c ike_quick_mode.c init.c ipsec.c ipsec_fld.c \
 		ipsec_num.c isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c \
-		key.c libcrypto.c log.c message.c math_2n.c math_group.c \
+		key.c libcrypto.c log.c message.c \
 		prf.c sa.c sysdep.c timer.c transport.c virtual.c udp.c \
 		ui.c util.c x509.c \
-		pf_key_v2.c policy.c math_ec2n.c ike_aggressive.c isakmp_cfg.c \
+		pf_key_v2.c policy.c ike_aggressive.c isakmp_cfg.c \
 		dpd.c monitor.c monitor_fdpass.c nat_traversal.c udp_encap.c \
 		vendor.c
 

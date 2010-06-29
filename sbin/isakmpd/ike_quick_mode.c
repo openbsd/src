@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.104 2010/03/04 13:55:28 markus Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.105 2010/06/29 19:50:16 reyk Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -48,7 +48,6 @@
 #include "ike_quick_mode.h"
 #include "ipsec.h"
 #include "log.h"
-#include "math_group.h"
 #include "message.h"
 #include "policy.h"
 #include "prf.h"

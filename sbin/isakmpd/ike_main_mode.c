@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_main_mode.c,v 1.16 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: ike_main_mode.c,v 1.17 2010/06/29 19:50:16 reyk Exp $	 */
 /* $EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	 */
 
 /*
@@ -49,7 +49,6 @@
 #include "ipsec_doi.h"
 #include "isakmp.h"
 #include "log.h"
-#include "math_group.h"
 #include "message.h"
 #include "prf.h"
 #include "sa.h"

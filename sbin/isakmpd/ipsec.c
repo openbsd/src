@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.134 2010/03/04 13:55:28 markus Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.135 2010/06/29 19:50:16 reyk Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -65,7 +65,6 @@
 #include "isakmp_fld.h"
 #include "isakmp_num.h"
 #include "log.h"
-#include "math_group.h"
 #include "message.h"
 #include "nat_traversal.h"
 #include "pf_key_v2.h"

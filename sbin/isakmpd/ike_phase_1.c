@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.71 2008/02/06 11:37:53 moritz Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.72 2010/06/29 19:50:16 reyk Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -52,7 +52,6 @@
 #include "ipsec_doi.h"
 #include "isakmp.h"
 #include "log.h"
-#include "math_group.h"
 #include "message.h"
 #include "nat_traversal.h"
 #include "prf.h"

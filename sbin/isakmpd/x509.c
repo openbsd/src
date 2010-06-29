@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.112 2008/09/06 12:22:57 djm Exp $	 */
+/* $OpenBSD: x509.c,v 1.113 2010/06/29 19:50:16 reyk Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -53,7 +53,7 @@
 #include "ike_auth.h"
 #include "ipsec.h"
 #include "log.h"
-#include "math_mp.h"
+#include "dh.h"
 #include "monitor.h"
 #include "policy.h"
 #include "sa.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.39 2006/07/02 13:19:00 hshoexer Exp $	 */
+/* $OpenBSD: init.c,v 1.40 2010/06/29 19:50:16 reyk Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -46,7 +46,7 @@
 #include "isakmp_doi.h"
 #include "libcrypto.h"
 #include "log.h"
-#include "math_group.h"
+#include "dh.h"
 #include "monitor.h"
 #include "sa.h"
 #include "timer.h"

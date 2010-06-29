@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_aggressive.c,v 1.10 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: ike_aggressive.c,v 1.11 2010/06/29 19:50:16 reyk Exp $	 */
 /* $EOM: ike_aggressive.c,v 1.4 2000/01/31 22:33:45 niklas Exp $	 */
 
 /*
@@ -50,7 +50,6 @@
 #include "ipsec_doi.h"
 #include "isakmp.h"
 #include "log.h"
-#include "math_group.h"
 #include "message.h"
 #include "nat_traversal.h"
 #include "prf.h"

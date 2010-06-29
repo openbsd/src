@@ -1,7 +1,8 @@
-/*	$OpenBSD: dhtest.c,v 1.1 2005/04/08 17:12:48 cloder Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.2 2010/06/29 19:50:16 reyk Exp $	*/
 /*	$EOM: dhtest.c,v 1.1 1998/07/18 21:14:20 provos Exp $	*/
 
 /*
+ * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,66 +38,45 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "math_group.h"
 #include "dh.h"
 
-#define DUMP_X(_x_) point = (_x_); b2n_print (point->x);
-
 int
-main (void)
+main(void)
 {
-  int len;
-  char buf[100], buf2[100];
-  char sec[100], sec2[100];
-  struct group *group, *group2;
+	int len, id;
+	char buf[DH_MAXSZ], buf2[DH_MAXSZ];
+	char sec[DH_MAXSZ], sec2[DH_MAXSZ];
+	struct group *group, *group2;
+	const char *name[] = { "MODP", "EC2N", "ECP" };
 
-  group_init ();
-  group = group_get (4);
-  group2 = group_get (4);
+	group_init();
 
-  printf ("Testing DH (elliptic curve): \n");
+	for (id = 0; id < 0xff; id++) {
+		if ((group = group_get(id)) == NULL ||
+		    (group2 = group_get(id)) == NULL)
+			continue;
 
-  printf ("dh_getlen\n");
-  len = dh_getlen (group);
-  printf ("dh_create_exchange\n");
-  dh_create_exchange (group, buf);
-  dh_create_exchange (group2, buf2);
+		printf ("Testing group %d (%s%d): ", id,
+		    name[group->spec->type],
+		    group->spec->bits);
 
-  printf ("dh_create_shared\n");
-  dh_create_shared (group, sec, buf2);
-  dh_create_shared (group2, sec2, buf);
+		len = dh_getlen(group);
 
-  printf ("Result: ");
-  if (memcmp (sec, sec2, len))
-    printf ("FAILED ");
-  else
-    printf ("OKAY ");
+		dh_create_exchange(group, buf);
+		dh_create_exchange(group2, buf2);
 
-  group_free (group);
-  group_free (group2);
+		dh_create_shared(group, sec, buf2);
+		dh_create_shared(group2, sec2, buf);
 
-  printf ("\nTesting DH (MODP): \n");
+		if (memcmp (sec, sec2, len)) {
+			printf("FAILED\n");
+			return (1);
+		} else
+			printf("OKAY\n");
 
-  group = group_get (1);
-  group2 = group_get (1);
+		group_free(group);
+		group_free(group2);
+	}
 
-  printf ("dh_getlen\n");
-  len = dh_getlen (group);
-  printf ("dh_create_exchange\n");
-  dh_create_exchange (group, buf);
-  dh_create_exchange (group2, buf2);
-
-  printf ("dh_create_shared\n");
-  dh_create_shared (group, sec, buf2);
-  dh_create_shared (group2, sec2, buf);
-
-  printf ("Result: ");
-  if (memcmp (sec, sec2, len))
-    printf ("FAILED ");
-  else
-    printf ("OKAY ");
-
-
-  printf ("\n");
-  return 0;
+	return (0);
 }
