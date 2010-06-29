@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.99 2010/06/03 07:50:02 halex Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.100 2010/06/29 23:12:33 halex Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -259,7 +259,7 @@ noslash:
 	}
 
 #ifndef SMALL
-	if (resume && (strcmp(savefile, "-") == 0)) {
+	if (resume && pipeout) {
 		warnx("can't append to stdout");
 		goto cleanup_url_get;
 	}
@@ -337,7 +337,7 @@ noslash:
 			filesize = st.st_size;
 
 		/* Open the output file.  */
-		if (strcmp(savefile, "-") != 0) {
+		if (!pipeout) {
 #ifndef SMALL
 			if (resume)
 				out = open(savefile, O_CREAT | O_WRONLY |
@@ -758,7 +758,7 @@ again:
 	}
 
 	/* Open the output file.  */
-	if (strcmp(savefile, "-") != 0) {
+	if (!pipeout) {
 #ifndef SMALL
 		if (resume)
 			out = open(savefile, O_CREAT | O_WRONLY | O_APPEND,

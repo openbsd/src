@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.80 2009/08/09 18:36:11 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.81 2010/06/29 23:12:33 halex Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include "cmds.h"
 
 int family = PF_UNSPEC;
+int pipeout;
 
 int
 main(volatile int argc, char *argv[])
@@ -246,8 +247,14 @@ main(volatile int argc, char *argv[])
 
 		case 'o':
 			outfile = optarg;
-			if (strcmp(outfile, "-") == 0)
-				ttyout = stderr;
+			if (*outfile == '\0') {
+				pipeout = 0;
+				outfile = NULL;
+				ttyout = stdout;
+			} else {
+				pipeout = strcmp(outfile, "-") == 0;
+				ttyout = pipeout ? stderr : stdout;
+			}
 			break;
 
 		case 'p':
