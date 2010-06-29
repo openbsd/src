@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.15 2010/06/27 03:03:49 thib Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.16 2010/06/29 20:59:04 thib Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1188,6 +1188,10 @@ uvm_pmr_assertvalid(struct uvm_pmemrange *pmr)
 {
 	struct vm_page *prev, *next, *i, *xref;
 	int lcv, mti;
+
+	/* Empty range */
+	if (pmr->nsegs == 0)
+		return;
 
 	/* Validate address tree. */
 	RB_FOREACH(i, uvm_pmr_addr, &pmr->addr) {
