@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.196 2010/04/20 20:49:35 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.197 2010/06/29 17:04:31 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 20 2010 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -452,6 +452,7 @@ information.
 .It Dv KERN_PROF No "	node	not applicable"
 .It Dv KERN_RAWPARTITION No "	integer	no"
 .It Dv KERN_RND No "	struct rndstats	no"
+.It Dv KERN_RTHREADS No "	integer	yes"
 .It Dv KERN_SAVED_IDS No "	integer	no"
 .It Dv KERN_SECURELVL No "	integer	raise only"
 .It Dv KERN_SEMINFO No "	node	not applicable"
@@ -807,6 +808,9 @@ Returns statistics about the
 device in a
 .Li struct rndstats
 structure.
+.It Dv KERN_RTHREADS
+Enable the syscalls needed for kernel level threading.
+Experimental.
 .It Dv KERN_SAVED_IDS
 Returns 1 if saved set-group-ID and saved set-user-ID are available.
 .It Dv KERN_SECURELVL
