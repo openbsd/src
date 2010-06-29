@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.112 2010/06/27 03:26:39 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.113 2010/06/29 00:28:14 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -192,13 +192,11 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	/* sanity check some flag combinations */
 	if (flags & FORK_THREAD)
 	{
-#ifdef RTHREADS
+		if (!rthreads_enabled)
+			return (ENOTSUP);
 		if ((flags & (FORK_SIGHAND | FORK_NOZOMBIE)) !=
 		    (FORK_SIGHAND | FORK_NOZOMBIE))
 			return (EINVAL);
-#else
-		return (ENOTSUP);
-#endif
 	}
 	if (flags & FORK_SIGHAND && (flags & FORK_SHAREVM) == 0)
 		return (EINVAL);
@@ -248,7 +246,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	p2->p_exitsig = exitsig;
 	p2->p_flag = 0;
 
-#ifdef RTHREADS
 	if (flags & FORK_THREAD) {
 		atomic_setbits_int(&p2->p_flag, P_THREAD);
 		p2->p_p = p1->p_p;
@@ -257,9 +254,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	} else {
 		process_new(p2, p1);
 	}
-#else
-	process_new(p2, p1);
-#endif
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -287,12 +281,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));
 	if (flags & FORK_PTRACE)
 		atomic_setbits_int(&p2->p_flag, p1->p_flag & P_TRACED);
-#ifdef RTHREADS
 	if (flags & FORK_THREAD) {
 		/* nothing */
-	} else
-#endif
-	{
+	} else {
 		p2->p_p->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
 		bcopy(p1->p_p->ps_cred, p2->p_p->ps_cred, sizeof(*p2->p_p->ps_cred));
 		p2->p_p->ps_cred->p_refcnt = 1;
@@ -317,12 +308,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * (If PL_SHAREMOD is clear, the structure is shared
 	 * copy-on-write.)
 	 */
-#ifdef RTHREADS
 	if (flags & FORK_THREAD) {
 		/* nothing */
-	} else
-#endif
-	{
+	} else {
 		if (p1->p_p->ps_limit->p_lflags & PL_SHAREMOD)
 			p2->p_p->ps_limit = limcopy(p1->p_p->ps_limit);
 		else {

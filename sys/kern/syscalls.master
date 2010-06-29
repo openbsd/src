@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.98 2010/01/18 19:09:39 schwarze Exp $
+;	$OpenBSD: syscalls.master,v 1.99 2010/06/29 00:28:14 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -595,7 +595,6 @@
 297	UNIMPL
 #endif
 298	STD		{ int sys_sched_yield(void); }
-#ifdef RTHREADS
 299	STD		{ pid_t sys_getthrid(void); }
 300	STD		{ int sys_thrsleep(void *ident, clockid_t clock_id, \
 			    const struct timespec *tp, void *lock); }
@@ -603,13 +602,6 @@
 302	STD		{ void sys_threxit(pid_t *notdead); }
 303	STD		{ int sys_thrsigdivert(sigset_t sigmask, \
 			    siginfo_t *info, const struct timespec *timeout); }
-#else
-299	UNIMPL
-300	UNIMPL
-301	UNIMPL
-302	UNIMPL
-303	UNIMPL
-#endif
 304	STD		{ int sys___getcwd(char *buf, size_t len); }
 305	STD		{ int sys_adjfreq(const int64_t *freq, \
 			    int64_t *oldfreq); }

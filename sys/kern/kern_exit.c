@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.92 2010/05/26 15:16:57 oga Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.93 2010/06/29 00:28:14 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -90,13 +90,15 @@ sys_exit(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
-#ifdef RTHREADS
 int
 sys_threxit(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_threxit_args /* {
 		syscallarg(pid_t *) notdead;
 	} */ *uap = v;
+
+	if (!rthreads_enabled)
+		return (EINVAL);
 
 	if (SCARG(uap, notdead) != NULL) {
 		pid_t zero = 0;
@@ -108,7 +110,6 @@ sys_threxit(struct proc *p, void *v, register_t *retval)
 
 	return (0);
 }
-#endif
 
 /*
  * Exit: deallocate address space and other resources, change proc state
@@ -126,7 +127,6 @@ exit1(struct proc *p, int rv, int flags)
 	
 	/* unlink ourselves from the active threads */
 	TAILQ_REMOVE(&p->p_p->ps_threads, p, p_thr_link);
-#ifdef RTHREADS
 	if (TAILQ_EMPTY(&p->p_p->ps_threads))
 		wakeup(&p->p_p->ps_threads);
 	/*
@@ -159,7 +159,6 @@ exit1(struct proc *p, int rv, int flags)
 		while (!TAILQ_EMPTY(&p->p_p->ps_threads))
 			tsleep(&p->p_p->ps_threads, PUSER, "thrdeath", 0);
 	}
-#endif
 
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);

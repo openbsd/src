@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.184 2010/06/19 14:44:44 thib Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.185 2010/06/29 00:28:14 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -120,6 +120,8 @@ int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 int (*cpu_cpuspeed)(int *);
 void (*cpu_setperf)(int);
 int perflevel = 100;
+
+int rthreads_enabled = 0;
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -557,6 +559,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_CPTIME2:
 		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
 		    newp, newlen));
+	case KERN_RTHREADS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &rthreads_enabled));
 	case KERN_CACHEPCT: {
 		int opct, pgs;
 		opct = bufcachepercent;

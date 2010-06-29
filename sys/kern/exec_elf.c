@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.73 2010/05/02 11:15:29 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.74 2010/06/29 00:28:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1137,9 +1137,7 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 	struct uio uio;
 	struct elfcore_procinfo cpi;
 	Elf_Note nhdr;
-#ifdef RTHREADS
 	struct proc *q;
-#endif
 	size_t size, notesize;
 	int error;
 
@@ -1260,7 +1258,6 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 		return (error);
 	size += notesize;
 
-#ifdef RTHREADS
 	/*
 	 * Now, for each thread, write the register info and any other
 	 * per-thread notes.  Since we're dumping core, we don't bother
@@ -1274,7 +1271,6 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 			return (error);
 		size += notesize;
 	}
-#endif
 
 	*sizep = size;
 #endif
