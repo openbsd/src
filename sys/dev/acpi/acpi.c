@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.160 2010/06/27 19:42:57 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.161 2010/06/29 04:05:23 tedu Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1036,7 +1036,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (pi->ac_state == APM_AC_ON || rate == 0)
 			pi->minutes_left = (unsigned int)-1;
 		else
-			pi->minutes_left = 100 * minutes / rate;
+			pi->minutes_left = 60 * minutes / rate;
 
 		/* running on battery */
 		pi->battery_life = remaining / bats;
