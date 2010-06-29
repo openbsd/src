@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.23 2010/06/29 23:20:38 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.24 2010/06/29 23:32:52 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -42,11 +42,11 @@
  *   data base.
  */
 static char **caps[] = {
-	&DV, &CM, &PN, &DI, 0
+	&DV, &CM, &DI, 0
 };
 
 static char *capstrings[] = {
-	"dv", "cm", "pn", "di", 0
+	"dv", "cm", "di", 0
 };
 
 static char	*db_array[3] = { _PATH_REMOTE, 0, 0 };

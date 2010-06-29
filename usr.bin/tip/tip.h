@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.43 2010/06/29 23:20:38 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.44 2010/06/29 23:32:52 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
  */
 char	*DV;			/* UNIX device(s) to open */
 char	*CM;			/* initial connection message */
-char	*PN;			/* phone number(s) */
 char	*DI;			/* disconnect string */
 
 /*

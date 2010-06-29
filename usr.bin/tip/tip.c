@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.43 2010/06/29 23:10:56 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.44 2010/06/29 23:32:52 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -99,28 +99,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (sys == NULL)
-		goto notnumber;
-	if (isalpha(*sys))
-		goto notnumber;
-	/*
-	 * System name is really a phone number...
-	 * Copy the number then stomp on the original (in case the number
-	 *	is private, we don't want 'ps' or 'w' to find it).
-	 */
-	if (strlen(sys) > sizeof PNbuf - 1) {
-		fprintf(stderr, "%s: phone number too long (max = %d bytes)\n",
-			__progname, (int)sizeof(PNbuf) - 1);
-		exit(1);
-	}
-	strlcpy(PNbuf, sys, sizeof PNbuf - 1);
-	for (p = sys; *p; p++)
-		*p = '\0';
-	PN = PNbuf;
-	(void)snprintf(sbuf, sizeof(sbuf), "tip%ld", number(value(BAUDRATE)));
-	sys = sbuf;
-
-notnumber:
 	(void)signal(SIGINT, cleanup);
 	(void)signal(SIGQUIT, cleanup);
 	(void)signal(SIGHUP, cleanup);
