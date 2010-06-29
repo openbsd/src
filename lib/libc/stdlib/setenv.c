@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.11 2009/06/04 20:39:13 millert Exp $ */
+/*	$OpenBSD: setenv.c,v 1.12 2010/06/29 04:09:34 naddy Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -145,6 +145,10 @@ unsetenv(const char *name)
 	const char *np;
 	int offset;
 
+	if (!name || !*name) {
+		errno = EINVAL;
+		return (-1);
+	}
 	for (np = name; *np && *np != '='; ++np)
 		;
 	if (*np) {
