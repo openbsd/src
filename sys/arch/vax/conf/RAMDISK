@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.31 2008/08/20 19:00:01 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.32 2010/06/29 18:46:34 tedu Exp $
 
 machine		vax			# machine type
 
@@ -43,11 +43,7 @@ option		BOOT_CONFIG	# boot-time kernel config
 config		bsd	root on rd0a swap on rd0b	# and sd0b
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
-# Note that if COMPAT_ULTRIX is set, you lose compatibility with
-# 4.3BSD Reno programs and get Ultrix compatibility instead.
-# (They cannot coexist).
 #option		COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
-#option		COMPAT_ULTRIX
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.
 

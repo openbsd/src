@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2010/05/29 14:08:22 deraadt Exp $   */
+/*	$OpenBSD: locore.S,v 1.3 2010/06/29 18:46:34 tedu Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -39,10 +39,6 @@
 
 #define JSBENTRY(x) \
 	.text;	_ALIGN_TEXT;	.globl x;	x:
-
-#ifdef COMPAT_ULTRIX
-#include <compat/ultrix/ultrix_syscall.h>
-#endif
 
 #define TRAPCALL(namn, typ) \
 JSBENTRY(namn)			; \
@@ -482,20 +478,6 @@ _sigcode:
 		halt	
 		.align	2
 _esigcode:
-
-#ifdef COMPAT_ULTRIX
-		.globl	_ultrix_sigcode,_ultrix_esigcode
-_ultrix_sigcode:	pushr	$0x3f
-		subl2	$0xc,sp
-		movl	0x24(sp),r0
-		calls	$3,(r0)
-		popr	$0x3f
-		chmk	$ULTRIX_SYS_sigreturn
-		chmk	$SYS_exit
-		halt	
-		.align	2
-_ultrix_esigcode:
-#endif
 
 		.globl	_idsptch, _eidsptch
 _idsptch:	pushr	$0x3f

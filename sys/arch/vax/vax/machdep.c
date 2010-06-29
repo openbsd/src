@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.109 2010/06/27 12:41:23 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.110 2010/06/29 18:46:34 tedu Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -509,10 +509,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	gsigf.sf_sc.sc_r[9] = syscf->r9;
 	gsigf.sf_sc.sc_r[10] = syscf->r10;
 	gsigf.sf_sc.sc_r[11] = syscf->r11;
-
-#if defined(COMPAT_ULTRIX)
-	native_sigset_to_sigset13(mask, &gsigf.sf_sc.__sc_mask13);
-#endif
 
 	if (copyout(&gsigf, sigf, sizeof(gsigf)))
 		sigexit(p, SIGILL);
