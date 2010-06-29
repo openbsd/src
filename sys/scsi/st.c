@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.100 2010/06/26 23:24:45 guenther Exp $	*/
+/*	$OpenBSD: st.c,v 1.101 2010/06/29 07:08:07 matthew Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -338,7 +338,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	    &st->sc_xsh);
 	
 	/* Set up the buf queue for this device. */
-	st->sc_bufq = bufq_init(BUFQ_DEFAULT);
+	st->sc_bufq = bufq_init(BUFQ_FIFO);
 
 	/* Start up with media position unknown. */
 	st->media_fileno = -1;
