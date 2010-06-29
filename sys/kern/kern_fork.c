@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.113 2010/06/29 00:28:14 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.114 2010/06/29 00:35:28 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -281,9 +281,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));
 	if (flags & FORK_PTRACE)
 		atomic_setbits_int(&p2->p_flag, p1->p_flag & P_TRACED);
-	if (flags & FORK_THREAD) {
-		/* nothing */
-	} else {
+	if ((flags & FORK_THREAD) == 0) {
 		p2->p_p->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
 		bcopy(p1->p_p->ps_cred, p2->p_p->ps_cred, sizeof(*p2->p_p->ps_cred));
 		p2->p_p->ps_cred->p_refcnt = 1;
@@ -308,9 +306,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * (If PL_SHAREMOD is clear, the structure is shared
 	 * copy-on-write.)
 	 */
-	if (flags & FORK_THREAD) {
-		/* nothing */
-	} else {
+	if ((flags & FORK_THREAD) == 0) {
 		if (p1->p_p->ps_limit->p_lflags & PL_SHAREMOD)
 			p2->p_p->ps_limit = limcopy(p1->p_p->ps_limit);
 		else {
