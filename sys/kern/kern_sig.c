@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.111 2010/06/29 02:46:43 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.112 2010/06/29 20:48:50 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/user.h>		/* for coredump */
 
 int	filt_sigattach(struct knote *kn);
 void	filt_sigdetach(struct knote *kn);
@@ -1441,8 +1440,6 @@ coredump(struct proc *p)
 	vattr.va_size = 0;
 	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
-	bcopy(p, &p->p_addr->u_kproc.kp_proc, sizeof(struct proc));
-	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
 
 	io.io_proc = p;
 	io.io_vp = vp;
