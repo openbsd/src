@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.19 2010/04/08 00:23:53 tedu Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.20 2010/06/29 22:14:57 mlarkin Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -74,13 +74,14 @@ int ehci_sb700_match(struct pci_attach_args *pa);
 int	ehci_pci_match(struct device *, void *, void *);
 void	ehci_pci_attach(struct device *, struct device *, void *);
 int	ehci_pci_detach(struct device *, int);
+int	ehci_pci_activate(struct device *, int);
 void	ehci_pci_givecontroller(struct ehci_pci_softc *);
 void	ehci_pci_takecontroller(struct ehci_pci_softc *);
 void	ehci_pci_shutdown(void *);
 
 struct cfattach ehci_pci_ca = {
 	sizeof(struct ehci_pci_softc), ehci_pci_match, ehci_pci_attach,
-	ehci_pci_detach, ehci_activate
+	ehci_pci_detach, ehci_pci_activate
 };
 
 int
@@ -226,6 +227,21 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 unmap_ret:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 	splx(s);
+}
+
+int
+ehci_pci_activate(struct device *self, int act)
+{
+	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
+
+	/* On resume, take ownership from the BIOS */
+	switch (act) {
+	case DVACT_RESUME:
+		ehci_pci_takecontroller(sc);
+		break;
+	}
+
+	return ehci_activate(self, act);
 }
 
 int

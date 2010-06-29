@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.28 2010/04/08 00:23:54 tedu Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.29 2010/06/29 22:14:57 mlarkin Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ int	uhci_pci_match(struct device *, void *, void *);
 void	uhci_pci_attach(struct device *, struct device *, void *);
 void	uhci_pci_attach_deferred(struct device *);
 int	uhci_pci_detach(struct device *, int);
+int	uhci_pci_activate(struct device *, int);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
@@ -64,7 +65,7 @@ struct uhci_pci_softc {
 
 struct cfattach uhci_pci_ca = {
 	sizeof(struct uhci_pci_softc), uhci_pci_match, uhci_pci_attach,
-	uhci_pci_detach, uhci_activate
+	uhci_pci_detach, uhci_pci_activate
 };
 
 int
@@ -78,6 +79,25 @@ uhci_pci_match(struct device *parent, void *match, void *aux)
 		return (1);
  
 	return (0);
+}
+
+int
+uhci_pci_activate(struct device *self, int act)
+{
+	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
+
+	/* On resume, set legacy support attribute and enable intrs */
+	switch (act) {
+	case DVACT_RESUME:
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);
+		bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
+		    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+		bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+		break;
+	}
+
+	return uhci_activate(self, act);
 }
 
 void
