@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.4 2010/06/26 23:24:43 guenther Exp $	*/
+/*	$OpenBSD: via.c,v 1.5 2010/06/29 22:42:14 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -328,9 +328,9 @@ viac3_cbc(void *cw, void *src, void *dst, void *key, int rep,
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
 
 	/* Do the deed */
-	__asm __volatile("pushf; popf");
+	__asm __volatile("pushfq; popfq");
 	__asm __volatile("rep xcrypt-cbc" :
-	    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+	    : "b" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
 
 	lcr0(creg0);
