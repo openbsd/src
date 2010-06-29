@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.40 2007/11/28 16:33:20 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.41 2010/06/29 21:26:09 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -112,16 +112,6 @@
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 
-/*
- * dvmamap manages a range of DVMA addresses intended to create double
- * mappings of physical memory. In a way, `dvmamap' is a submap of the
- * VM map `phys_map'. The difference is the use of the `resource map'
- * routines to manage page allocation, allowing DVMA addresses to be
- * allocated and freed from within interrupt routines.
- *
- * Note that `phys_map' can still be used to allocate memory-backed pages
- * in DVMA space.
- */
 #ifdef _KERNEL
 #ifndef _LOCORE
 extern vaddr_t		dvma_base;

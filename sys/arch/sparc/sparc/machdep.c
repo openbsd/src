@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.126 2010/06/27 13:28:47 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.127 2010/06/29 21:26:12 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -100,7 +100,6 @@
 #endif
 
 struct vm_map *exec_map = NULL;
-struct vm_map *phys_map = NULL;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -128,11 +127,10 @@ int	sparc_led_blink = 0;
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
  */
-int   safepri = 0;
+int	safepri = 0;
 
 /*
- * dvmamap is used to manage DVMA memory. Note: this coincides with
- * the memory range in `phys_map' (which is mostly a place-holder).
+ * dvmamap_extent is used to manage DVMA memory.
  */
 vaddr_t dvma_base, dvma_end;
 struct extent *dvmamap_extent;
@@ -192,38 +190,11 @@ cpu_startup()
 	 * map, but we want one completely separate, even though it uses
 	 * the same pmap.
 	 */
-	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
-	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		/*
-		 * The DVMA space we want partially overrides kernel_map.
-		 * Allocate it in kernel_map as well to prevent it from being
-		 * used for other things.
-		 */
-		if (uvm_map(kernel_map, &dvma_base,
-		    vm_map_max(kernel_map) - dvma_base,
-                    NULL, UVM_UNKNOWN_OFFSET, 0,
-                    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-                                UVM_ADV_NORMAL, UVM_FLAG_FIXED)))
-			panic("startup: can not steal dvma map");
-	}
-#endif
-	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end,
-	    VM_MAP_INTRSAFE);
-	if (phys_map == NULL)
-		panic("unable to create DVMA map");
-
-	/*
-	 * Allocate DVMA space and dump into a privately managed
-	 * resource map for double mappings which is usable from
-	 * interrupt contexts.
-	 */
-	if (uvm_km_valloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
-		panic("unable to allocate from DVMA map");
+	dvma_base = CPU_ISSUN4DOR4M ? DVMA4M_BASE : DVMA_BASE;
+	dvma_end = CPU_ISSUN4DOR4M ? DVMA4M_END : DVMA_END;
 	dvmamap_extent = extent_create("dvmamap", dvma_base, dvma_end,
 				       M_DEVBUF, NULL, 0, EX_NOWAIT);
-	if (dvmamap_extent == 0)
+	if (dvmamap_extent == NULL)
 		panic("unable to allocate extent for dvma");
 
 #ifdef DEBUG

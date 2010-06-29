@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.52 2010/06/22 20:27:32 oga Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.53 2010/06/29 21:26:12 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -140,7 +140,8 @@ u_long dvma_cachealign = 0;
 
 /*
  * Map a range [va, va+len] of wired virtual addresses in the given map
- * to a kernel address in DVMA space.
+ * to a valid DVMA address. On non-SRMMU systems, this establish a
+ * second mapping of that range.
  */
 vaddr_t
 dvma_mapin_space(map, va, len, canwait, space)
@@ -222,33 +223,33 @@ dvma_mapin_space(map, va, len, canwait, space)
 }
 
 /*
- * Remove double map of `va' in DVMA space at `kva'.
+ * Remove DVMA mapping of `va' in DVMA space at `dva'.
  */
 void
-dvma_mapout(kva, va, len)
-	vaddr_t	kva, va;
+dvma_mapout(dva, va, len)
+	vaddr_t	dva, va;
 	int		len;
 {
 	int s, off;
 	int error;
-	int klen;
+	int dlen;
 
-	off = (int)kva & PGOFSET;
-	kva -= off;
-	klen = round_page(len + off);
+	off = (int)dva & PGOFSET;
+	dva -= off;
+	dlen = round_page(len + off);
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M)
-		iommu_remove(kva, klen);
+		iommu_remove(dva, dlen);
 	else
 #endif
 	{
-		pmap_kremove(kva, klen);
+		pmap_kremove(dva, dlen);
 		pmap_update(pmap_kernel());
 	}
 
 	s = splhigh();
-	error = extent_free(dvmamap_extent, kva, klen, EX_NOWAIT);
+	error = extent_free(dvmamap_extent, dva, dlen, EX_NOWAIT);
 	if (error)
 		printf("dvma_mapout: extent_free failed\n");
 	splx(s);

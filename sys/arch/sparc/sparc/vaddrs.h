@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaddrs.h,v 1.7 2005/04/17 18:47:51 miod Exp $	*/
+/*	$OpenBSD: vaddrs.h,v 1.8 2010/06/29 21:26:12 miod Exp $	*/
 /*	$NetBSD: vaddrs.h,v 1.8 1997/03/10 23:54:41 pk Exp $ */
 
 /*
@@ -52,10 +52,10 @@
  * Special (fixed) virtual addresses on the SPARC.
  *
  * IO virtual space begins at 0xfe000000 (a segment boundary) and
- * continues up to the DVMA edge at 0xff000000.  (The upper all-1s
- * byte is special since some of the hardware supplies this to pad
- * a 24-bit address space out to 32 bits.  This is a legacy of the
- * IBM PC AT bus, actually, just so you know who to blame.)
+ * continues up to the DVMA edge at 0xff000000 (on non-SRMMU systems only).
+ * (The upper all-1s byte is special anyway since some of the hardware
+ * supplies this to pad a 24-bit address space out to 32 bits.  This is a
+ * legacy of the IBM PC AT bus, actually, just so you know who to blame.)
  *
  * We reserve several pages at the base of our IO virtual space
  * for `oft-used' devices which must be present anyway in order to
@@ -100,20 +100,9 @@
  * Note that pagetables must be allocated at a cost of 1k per MB of DVMA
  * space, plus severe alignment restrictions. So don't make DVMA4M_BASE too
  * low (max space = 2G).
- *
- * Since DVMA space overlaps with normal kernel address space (notably
- * the device mappings and the PROM), we don't want to put any DVMA
- * mappings where any of this useful stuff is (i.e. if we dvma_malloc
- * a buffer, we want to still have a SRMMU mapping to it, and we can't
- * have that if its on top of kernel code). Thus the last two
- * constants define the actual DVMA addresses used. These can be anything
- * as long as they are within the bounds setup by the first 2 constants.
- * This is especially important on MP systems with cache coherency: to
- * avoid consistency problems, DVMA addresses must map to the same place
- * in both processor and IOMMU space.
  */
 #define DVMA4M_BASE	0xfc000000	/* can change subject to above rule */
-#define DVMA4M_END	0xfffff000	/* XXX is this enough? */
+#define DVMA4M_END	0xfffff000
 #define DVMA_D24_BASE	0xff000000
 #define DVMA_D24_END	0xfffff000
 

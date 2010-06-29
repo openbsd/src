@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.46 2010/06/06 10:04:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.47 2010/06/29 21:26:09 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -58,8 +58,8 @@
  * both into the same structure.  Fortunately, they are almost the same.
  *
  * The kernel begins at 0xf8000000 and runs to 0xffffffff (although
- * some of this is not actually used).  Kernel space, including DVMA
- * space (for now?), is mapped identically into all user contexts.
+ * some of this is not actually used).  Kernel space is mapped identically
+ * into all user contexts.
  * There is no point in duplicating this mapping in each user process
  * so they do not appear in the user structures.
  *
@@ -72,8 +72,8 @@
  * makes no such distinction.
  *
  * Since each virtual segment covers 256 kbytes, the user space
- * requires 3584 segments, while the kernel (including DVMA) requires
- * only 512 segments.
+ * requires 3584 segments, while the kernel (including DVMA on 4/4c)
+ * requires only 512 segments.
  *
  *
  ** FOR THE SUN4/SUN4C
