@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.32 2009/12/19 00:27:17 krw Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.33 2010/06/29 04:09:32 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -256,7 +256,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 
 	mp->mnt_data = (qaddr_t) ump;
 	mp->mnt_stat.f_fsid.val[0] = devvp->v_rdev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_UDF);
+	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 	mp->mnt_flag |= MNT_LOCAL;
 
 	ump->um_mountp = mp;
