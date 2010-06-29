@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.42 2010/06/29 21:34:50 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.43 2010/06/29 23:10:56 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			BR = atoi(&argv[1][1]);
+			setnumber(value(BAUDRATE), atoi(&argv[1][1]));
 			break;
 
 		default:
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	for (p = sys; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
-	(void)snprintf(sbuf, sizeof(sbuf), "tip%ld", BR);
+	(void)snprintf(sbuf, sizeof(sbuf), "tip%ld", number(value(BAUDRATE)));
 	sys = sbuf;
 
 notnumber:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.35 2010/06/29 21:34:50 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.36 2010/06/29 23:10:56 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -769,7 +769,7 @@ variable(int c)
 	}
 	if (vtable[LECHO].v_flags & V_CHANGED) {
 		vtable[LECHO].v_flags &= ~V_CHANGED;
-		HD = boolean(value(LECHO));
+		setboolean(value(HALFDUPLEX), boolean(value(LECHO)));
 	}
 	if (vtable[PARITY].v_flags & V_CHANGED) {
 		vtable[PARITY].v_flags &= ~V_CHANGED;

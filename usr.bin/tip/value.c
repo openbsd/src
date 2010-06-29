@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.21 2010/06/29 21:34:50 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.22 2010/06/29 23:10:56 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -54,11 +54,10 @@ vinit(void)
 	FILE *fp;
 
 	for (p = vtable; p->v_name != NULL; p++) {
-		if (p->v_flags & V_ENVIRON)
+		if (p->v_flags & V_ENVIRON) {
 			if ((cp = getenv(p->v_name)))
 				p->v_value = cp;
-		if (p->v_flags & V_IREMOTE)
-			setnumber(p->v_value, *address(p->v_value));
+		}
 	}
 	/*
 	 * Read the .tiprc file in the HOME directory

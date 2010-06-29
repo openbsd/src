@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.28 2010/06/29 21:34:50 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.29 2010/06/29 23:10:56 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -43,14 +43,14 @@ static void	cuusage(void);
 void
 cumain(int argc, char *argv[])
 {
-	int ch, i, parity;
+	int ch, i, parity, baudrate;
 	const char *errstr;
 	static char sbuf[12];
 
 	if (argc < 2)
 		cuusage();
 	DV = NULL;
-	BR = DEFBR;
+	setnumber(value(BAUDRATE), DEFBR);
 	parity = 0;	/* none */
 
 	/*
@@ -96,13 +96,14 @@ getopt:
 					err(3, "asprintf");
 			break;
 		case 's':
-			BR = (int)strtonum(optarg, 0, INT_MAX, &errstr);
+			baudrate = (int)strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr)
 				errx(3, "speed is %s: %s", errstr, optarg);
+			setnumber(value(BAUDRATE), baudrate);
 			break;
 		case 'h':
 			setboolean(value(LECHO), 1);
-			HD = 1;
+			setboolean(value(HALFDUPLEX), 1);
 			break;
 		case 't':
 			/* Was for a hardwired dial-up connection. */
@@ -148,7 +149,7 @@ getopt:
 	 * The "cu" host name is used to define the
 	 * attributes of the generic dialer.
 	 */
-	(void)snprintf(sbuf, sizeof(sbuf), "cu%ld", BR);
+	(void)snprintf(sbuf, sizeof(sbuf), "cu%ld", number(value(BAUDRATE)));
 	if ((i = hunt(sbuf)) == 0) {
 		printf("all ports busy\n");
 		exit(3);
@@ -173,9 +174,9 @@ getopt:
 		break;
 	}
 	setboolean(value(VERBOSE), 0);
-	if (ttysetup(BR)) {
+	if (ttysetup(number(value(BAUDRATE)))) {
 		fprintf(stderr, "%s: unsupported speed %ld\n",
-		    __progname, BR);
+		    __progname, number(value(BAUDRATE)));
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}

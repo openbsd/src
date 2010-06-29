@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.41 2010/06/29 21:34:50 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.42 2010/06/29 23:10:56 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -60,31 +60,14 @@
  * Remote host attributes
  */
 char	*DV;			/* UNIX device(s) to open */
-char	*EL;			/* chars marking an EOL */
 char	*CM;			/* initial connection message */
-char	*IE;			/* EOT to expect on input */
-char	*OE;			/* EOT to send to complete FT */
 char	*PN;			/* phone number(s) */
 char	*DI;			/* disconnect string */
-char	*PA;			/* parity to be generated */
-
-char	*RM;			/* remote file name */
-char	*HO;			/* host name */
-
-long	BR;			/* line speed for conversation */
-long	FS;			/* frame size for transfers */
 
 char	*ES;			/* escape character */
-char	*EX;			/* exceptions */
 char	*FO;			/* force (literal next) char*/
 char	*RC;			/* raise character */
-char	*RE;			/* script record file */
 char	*PR;			/* remote prompt */
-long	DL;			/* line delay for file transfers to remote */
-long	CL;			/* char delay for file transfers to remote */
-long	ET;			/* echocheck timeout */
-long	LD;			/* line disc */
-short	HD;			/* this host is half duplex - do local echo */
 
 /*
  * String value table
@@ -96,18 +79,17 @@ typedef	struct {
 	char	*v_value;	/* casted to a union later */
 }  value_t;
 
-#define V_STRING	01		/* string valued */
-#define V_BOOL		02		/* true-false value */
-#define V_NUMBER	04		/* numeric value */
-#define V_CHAR		010		/* character value */
+#define V_STRING	01	/* string valued */
+#define V_BOOL		02	/* true-false value */
+#define V_NUMBER	04	/* numeric value */
+#define V_CHAR		010	/* character value */
 #define V_TYPEMASK	017
 
-#define V_CHANGED	020		/* to show modification */
-#define V_READONLY	040		/* variable is not writable */
+#define V_CHANGED	020	/* to show modification */
+#define V_READONLY	040	/* variable is not writable */
 
-#define V_ENVIRON	0100		/* initialize out of the environment */
-#define V_IREMOTE	0200		/* initialize out of remote structure */
-#define V_INIT		0400		/* static data space used for initialization */
+#define V_ENVIRON	0100	/* initialize out of the environment */
+#define V_INIT		0400	/* static data space used for initialization */
 
 /*
  * variable manipulation stuff --
