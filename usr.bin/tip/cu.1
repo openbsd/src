@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.7 2010/03/04 09:10:22 sobrado Exp $
+.\"	$OpenBSD: cu.1,v 1.8 2010/06/29 16:41:56 nicm Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tip.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: March 4 2010 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt CU 1
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl ehot
-.Op Fl a Ar acu
 .Op Fl l Ar line
 .Op Fl s Ar speed \*(Ba Fl Ar speed
 .Op Ar phone-number
@@ -53,8 +52,6 @@ debugging purposes.
 .Pp
 The options are as follows:
 .Bl -tag -width 4n
-.It Fl a Ar acu
-Set the acu.
 .It Fl e
 Use even parity.
 If both
@@ -336,10 +333,6 @@ abbreviated
 (bool) Discard unprintable characters when a session is being
 scripted; abbreviated
 .Ar be .
-.It Ar dialtimeout
-(num) When dialing a phone number, the time (in seconds) to wait for a
-connection to be established; abbreviated
-.Ar dial .
 .It Ar echocheck
 (bool) Synchronize with the remote host during file transfer by
 waiting for the echo of the last character transmitted; default is

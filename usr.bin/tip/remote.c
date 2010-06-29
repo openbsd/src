@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.19 2010/06/29 05:55:37 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.20 2010/06/29 16:41:56 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -42,12 +42,12 @@
  *   data base.
  */
 static char **caps[] = {
-	&AT, &DV, &CM, &CU, &EL, &IE, &OE, &PN, &PR, &DI,
+	&DV, &CM, &EL, &IE, &OE, &PN, &PR, &DI,
 	&ES, &EX, &FO, &RC, &RE, &PA
 };
 
 static char *capstrings[] = {
-	"at", "dv", "cm", "cu", "el", "ie", "oe", "pn", "pr",
+	"dv", "cm", "el", "ie", "oe", "pn", "pr",
 	"di", "es", "ex", "fo", "rc", "re", "pa", 0
 };
 
@@ -77,10 +77,8 @@ getremcap(char *host)
 	if ((stat = cgetent(&bp, db_array, host)) < 0) {
 		if ((DV != NULL) ||
 		    (host[0] == '/' && access(DV = host, R_OK | W_OK) == 0)) {
-			CU = DV;
 			HO = host;
 			HW = 1;
-			DU = 0;
 			if (!BR)
 				BR = DEFBR;
 			FS = DEFFS;
@@ -113,22 +111,8 @@ getremcap(char *host)
 		LD = TTYDISC;
 	if (cgetnum(bp, "fs", &FS) == -1)
 		FS = DEFFS;
-	if (DU < 0)
-		DU = 0;
-	else
-		DU = cgetflag("du");
 	if (DV == NULL) {
 		fprintf(stderr, "%s: missing device spec\n", host);
-		exit(3);
-	}
-	if (DU && CU == NULL)
-		CU = DV;
-	if (DU && PN == NULL) {
-		fprintf(stderr, "%s: missing phone number\n", host);
-		exit(3);
-	}
-	if (DU && AT == NULL) {
-		fprintf(stderr, "%s: missing acu type\n", host);
 		exit(3);
 	}
 
@@ -138,8 +122,7 @@ getremcap(char *host)
 	 * This effectively eliminates the "hw" attribute
 	 *   from the description file
 	 */
-	if (!HW)
-		HW = (CU == NULL) || (DU && strcmp(DV, CU) == 0);
+	HW = 1;
 	HO = host;
 	/*
 	 * see if uppercase mode should be turned on initially

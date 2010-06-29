@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.34 2010/06/29 05:55:37 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.35 2010/06/29 16:41:56 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -64,20 +64,16 @@ char	*EL;			/* chars marking an EOL */
 char	*CM;			/* initial connection message */
 char	*IE;			/* EOT to expect on input */
 char	*OE;			/* EOT to send to complete FT */
-char	*CU;			/* call unit if making a phone call */
-char	*AT;			/* acu type */
 char	*PN;			/* phone number(s) */
 char	*DI;			/* disconnect string */
 char	*PA;			/* parity to be generated */
 
-char	*PH;			/* phone number file */
 char	*RM;			/* remote file name */
 char	*HO;			/* host name */
 
 long	BR;			/* line speed for conversation */
 long	FS;			/* frame size for transfers */
 
-short	DU;			/* this host is dialed up */
 short	HW;			/* this device is hardwired, see hunt.c */
 char	*ES;			/* escape character */
 char	*EX;			/* exceptions */
@@ -126,18 +122,6 @@ typedef
 #define TMASK	017
 
 /*
- * Definition of ACU line description
- */
-typedef
-	struct {
-		char	*acu_name;
-		int	(*acu_dialer)(char *, char *);
-		void	(*acu_disconnect)(void);
-		void	(*acu_abort)(void);
-	}
-	acu_t;
-
-/*
  * variable manipulation stuff --
  *   if we defined the value entry in value_t, then we couldn't
  *   initialize it in vars.c, so we cast it as needed to keep lint
@@ -176,7 +160,7 @@ extern int	noesc;		/* no escape `~' char */
 extern value_t	vtable[];	/* variable table */
 
 #ifndef ACULOG
-#define logent(a, b, c, d)
+#define logent(a, b, c)
 #define loginit()
 #endif
 
@@ -185,42 +169,42 @@ extern value_t	vtable[];	/* variable table */
  *  value(DEFINE) turns into a static address.
  */
 
-#define BEAUTIFY	0
-#define BAUDRATE	1
-#define DIALTIMEOUT	2
-#define EOFREAD		3
-#define EOFWRITE	4
-#define EOL		5
-#define ESCAPE		6
-#define EXCEPTIONS	7
-#define FORCE		8
-#define FRAMESIZE	9
-#define HOST		10
-#define LOG		11
-#define PHONES		12
-#define PROMPT		13
-#define RAISE		14
-#define RAISECHAR	15
-#define RECORD		16
-#define REMOTE		17
-#define SCRIPT		18
-#define TABEXPAND	19
-#define VERBOSE		20
-#define SHELL		21
-#define HOME		22
-#define ECHOCHECK	23
-#define DISCONNECT	24
-#define TAND		25
-#define LDELAY		26
-#define CDELAY		27
-#define ETIMEOUT	28
-#define RAWFTP		29
-#define HALFDUPLEX	30
-#define	LECHO		31
-#define	PARITY		32
-#define	HARDWAREFLOW	33
-#define	LINEDISC	34
-#define	DC		35
+enum {
+	BEAUTIFY = 0,
+	BAUDRATE,
+	EOFREAD,
+	EOFWRITE,
+	EOL,
+	ESCAPE,
+	EXCEPTIONS,
+	FORCE,
+	FRAMESIZE,
+	HOST,
+	LOG,
+	PROMPT,
+	RAISE,
+	RAISECHAR,
+	RECORD,
+	REMOTE,
+	SCRIPT,
+	TABEXPAND,
+	VERBOSE,
+	SHELL,
+	HOME,
+	ECHOCHECK,
+	DISCONNECT,
+	TAND,
+	LDELAY,
+	CDELAY,
+	ETIMEOUT,
+	RAWFTP,
+	HALFDUPLEX,
+	LECHO,
+	PARITY,
+	HARDWAREFLOW,
+	LINEDISC,
+	DC
+};
 
 struct termios	term;		/* current mode of terminal */
 struct termios	defterm;	/* initial mode of terminal */
@@ -256,7 +240,7 @@ extern	int disc;		/* current tty discpline */
 
 extern	char *__progname;	/* program name */
 
-char	*con(void);
+void	con(void);
 char	*ctrl(char);
 char	*expand(char *);
 char	*getremote(char *);
@@ -296,7 +280,7 @@ void	cu_take(int);
 void	cumain(int, char **);
 void	df_abort(void);
 void	df_disconnect(void);
-void	disconnect(char *);
+void	disconnect(void);
 void	dn_abort(void);
 void	dn_disconnect(void);
 void	finish(int);
@@ -306,7 +290,7 @@ void	hay_abort(void);
 void	hay_disconnect(void);
 void	help(int);
 void	listvariables(int);
-void	logent(char *, char *, char *, char *);
+void	logent(char *, char *, char *);
 void	loginit(void);
 void	parwrite(int, char *, size_t);
 void	pipefile(int);

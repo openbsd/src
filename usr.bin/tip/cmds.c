@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.32 2010/02/07 20:16:47 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.33 2010/06/29 16:41:56 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -649,7 +649,7 @@ tipabort(char *msg)
 
 	signal(SIGTERM, SIG_IGN);
 	kill(tipout_pid, SIGTERM);
-	disconnect(msg);
+	logent(value(HOST), DV, "call terminated");
 	if (msg != NULL)
 		printf("\r\n%s", msg);
 	printf("\r\n[EOT]\r\n");

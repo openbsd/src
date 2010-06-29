@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.25 2009/12/12 18:14:00 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.26 2010/06/29 16:41:56 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ cumain(int argc, char *argv[])
 
 	if (argc < 2)
 		cuusage();
-	CU = DV = NULL;
+	DV = NULL;
 	BR = DEFBR;
 	parity = 0;	/* none */
 
@@ -80,13 +80,8 @@ cumain(int argc, char *argv[])
 	}
 
 getopt:
-	while ((ch = getopt(argc, argv, "a:l:s:htoe")) != -1) {
+	while ((ch = getopt(argc, argv, "l:s:htoe")) != -1) {
 		switch (ch) {
-		case 'a':
-			if (optarg[0] == '\0')
-				errx(3, "invalid acu: \"\"");
-			CU = optarg;
-			break;
 		case 'l':
 			if (DV != NULL) {
 				fprintf(stderr,
@@ -110,7 +105,7 @@ getopt:
 			HD = TRUE;
 			break;
 		case 't':
-			HW = 1, DU = -1;
+			HW = 1;
 			break;
 		case 'o':
 			if (parity != 0)
@@ -184,11 +179,7 @@ getopt:
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}
-	if (con()) {
-		printf("Connect failed\n");
-		(void)uu_unlock(uucplock);
-		exit(1);
-	}
+	con();
 	if (!HW && ttysetup(BR)) {
 		fprintf(stderr, "%s: unsupported speed %ld\n",
 		    __progname, BR);
@@ -200,7 +191,7 @@ getopt:
 static void
 cuusage(void)
 {
-	fprintf(stderr, "usage: cu [-ehot] [-a acu] [-l line] "
+	fprintf(stderr, "usage: cu [-ehot] [-l line] "
 	    "[-s speed | -speed] [phone-number]\n");
 	exit(8);
 }

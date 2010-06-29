@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.10 2009/10/27 23:59:45 deraadt Exp $	*/
+/*	$OpenBSD: vars.c,v 1.11 2010/06/29 16:41:56 nicm Exp $	*/
 /*	$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $	*/
 
 /*
@@ -41,8 +41,6 @@ value_t vtable[] = {
 	  "be",		(char *)TRUE },
 	{ "baudrate",	NUMBER|IREMOTE|INIT,	(READ<<PUBLIC)|(WRITE<<ROOT),
 	  "ba",		(char *)&BR },
-	{ "dialtimeout",NUMBER,			(READ<<PUBLIC)|(WRITE<<ROOT),
-	  "dial",	(char *)60 },
 	{ "eofread",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
 	  "eofr",	(char *)&IE },
 	{ "eofwrite",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
@@ -61,8 +59,6 @@ value_t vtable[] = {
 	  "ho",		(char *)&HO },
 	{ "log",	STRING|INIT,		(READ|WRITE)<<ROOT,
 	  NULL,		_PATH_ACULOG },
-	{ "phones",	STRING|INIT|IREMOTE,	READ<<PUBLIC,
-	  NULL,		(char *)&PH },
 	{ "prompt",	CHAR,			(READ|WRITE)<<PUBLIC,
 	  "pr",		(char *)'\n' },
 	{ "raise",	BOOL,			(READ|WRITE)<<PUBLIC,
