@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.160 2010/06/29 04:07:39 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.161 2010/06/29 17:13:59 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -88,9 +88,6 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	struct vnode *vp;
 	struct mount *mp;
 	int error, mntflag = 0;
-#ifdef COMPAT_43
-	u_long fstypenum = 0;
-#endif
 	char fstypename[MFSNAMELEN];
 	char fspath[MNAMELEN];
 	struct vattr va;
@@ -196,28 +193,8 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	}
 	error = copyinstr(SCARG(uap, type), fstypename, MFSNAMELEN, NULL);
 	if (error) {
-#ifdef COMPAT_43
-		/*
-		 * Historically filesystem types were identified by number.
-		 * If we get an integer for the filesystem type instead of a
-		 * string, we check to see if it matches one of the historic
-		 * filesystem types.
-		 */
-		fstypenum = (u_long)SCARG(uap, type);
-
-		for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
-			if (vfsp->vfc_typenum == fstypenum)
-				break;
-		if (vfsp == NULL) {
-			vput(vp);
-			return (ENODEV);
-		}
-		strncpy(fstypename, vfsp->vfc_name, MFSNAMELEN);
-
-#else
 		vput(vp);
 		return (error);
-#endif
 	}
 	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next) {
 		if (!strcmp(vfsp->vfc_name, fstypename))
