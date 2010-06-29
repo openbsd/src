@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.7 2010/06/29 21:00:34 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.8 2010/06/29 21:54:38 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -101,6 +101,84 @@ send_ldap_extended_response(struct conn *conn, int msgid, unsigned long type,
 fail:
 	if (root)
 		ber_free_elements(root);
+}
+
+int
+ldap_refer(struct request *req, const char *basedn, struct search *search,
+    struct referrals *refs)
+{
+	struct ber_element	*root, *elm, *ref_root = NULL;
+	struct referral		*ref;
+	long long		 result_code = LDAP_REFERRAL;
+	unsigned long		 type;
+	int			 rc;
+	void			*buf;
+	char			*url, *scope_str = NULL;
+
+	if (req->type == LDAP_REQ_SEARCH)
+		type = LDAP_RES_SEARCH_RESULT;
+	else
+		type = req->type + 1;
+
+	if (search != NULL) {
+		if (search->scope != LDAP_SCOPE_SUBTREE)
+			scope_str = "base";
+		else
+			scope_str = "sub";
+	}
+
+	log_debug("sending referral in response %u on msgid %i", type, req->msgid);
+
+	if ((root = ber_add_sequence(NULL)) == NULL)
+		goto fail;
+
+	if ((elm = ref_root = ber_add_sequence(NULL)) == NULL)
+		goto fail;
+	ber_set_header(ref_root, BER_CLASS_CONTEXT, LDAP_REQ_SEARCH);
+	SLIST_FOREACH(ref, refs, next) {
+		if (search != NULL)
+			asprintf(&url, "%s/%s??%s", ref->url, basedn,
+			    scope_str);
+		else
+			asprintf(&url, "%s/%s", ref->url, basedn);
+		if (url == NULL) {
+			log_warn("asprintf");
+			goto fail;
+		}
+		log_debug("adding referral '%s'", url);
+		elm = ber_add_string(elm, url);
+		free(url);
+		if (elm == NULL)
+			goto fail;
+	}
+
+	elm = ber_printf_elements(root, "d{tEsse",
+	    req->msgid, BER_CLASS_APP, type, result_code, "", "", ref_root);
+	if (elm == NULL)
+		goto fail;
+	ref_root = NULL;
+
+	rc = ber_write_elements(&req->conn->ber, root);
+	ber_free_elements(root);
+
+	if (rc < 0)
+		log_warn("failed to create ldap result");
+	else {
+		ber_get_writebuf(&req->conn->ber, &buf);
+		if (bufferevent_write(req->conn->bev, buf, rc) != 0)
+			log_warn("failed to send ldap result");
+	}
+
+	request_free(req);
+	return LDAP_REFERRAL;
+
+fail:
+	if (root != NULL)
+		ber_free_elements(root);
+	if (ref_root != NULL)
+		ber_free_elements(ref_root);
+	request_free(req);
+	return LDAP_REFERRAL;
 }
 
 void
@@ -292,7 +370,7 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	}
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
-		if (namespace_open(ns) != 0)
+		if (!namespace_has_referrals(ns) && namespace_open(ns) != 0)
 			fatal(ns->suffix);
 	}
 

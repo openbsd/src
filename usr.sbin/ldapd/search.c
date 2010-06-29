@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.7 2010/06/29 02:45:46 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.8 2010/06/29 21:54:38 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -705,6 +705,7 @@ int
 ldap_search(struct request *req)
 {
 	long long		 reason = LDAP_OTHER;
+	struct referrals	*refs;
 	struct search		*search = NULL;
 	int			 rc;
 
@@ -779,6 +780,13 @@ ldap_search(struct request *req)
 	}
 
 	if ((search->ns = namespace_for_base(search->basedn)) == NULL) {
+		refs = namespace_referrals(search->basedn);
+		if (refs != NULL) {
+			ldap_refer(req, search->basedn, search, refs);
+			search->req = NULL; /* request free'd by ldap_refer */
+			search_close(search);
+			return LDAP_REFERRAL;
+		}
 		log_debug("no database configured for suffix %s",
 		    search->basedn);
 		reason = LDAP_NO_SUCH_OBJECT;

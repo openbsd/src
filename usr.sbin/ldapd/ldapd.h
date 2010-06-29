@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.13 2010/06/29 21:00:34 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.14 2010/06/29 21:54:38 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -103,9 +103,16 @@ struct attr_index {
 };
 TAILQ_HEAD(attr_index_list, attr_index);
 
+struct referral {
+	SLIST_ENTRY(referral)	 next;
+	char			*url;
+};
+SLIST_HEAD(referrals, referral);
+
 struct namespace {
 	TAILQ_ENTRY(namespace)	 next;
 	char			*suffix;
+	struct referrals	 referrals;
 	char			*rootdn;
 	char			*rootpw;
 	char			*data_path;
@@ -231,6 +238,7 @@ struct ldapd_config
 	struct namespace_list		 namespaces;
 	struct listenerlist		 listeners;
 	SPLAY_HEAD(ssltree, ssl)	*sc_ssl;
+	struct referrals		 referrals;
 	struct acl			 acl;
 	struct schema			*schema;
 };
@@ -348,6 +356,8 @@ int			 ldap_extended(struct request *req);
 void			 send_ldap_result(struct conn *conn, int msgid,
 				unsigned long type, long long result_code);
 int			 ldap_respond(struct request *req, int code);
+int			 ldap_refer(struct request *req, const char *basedn,
+			     struct search *search, struct referrals *refs);
 
 /* namespace.c
  */
@@ -367,7 +377,11 @@ int			 namespace_add(struct namespace *ns, char *dn,
 int			 namespace_update(struct namespace *ns, char *dn,
 				struct ber_element *root);
 int			 namespace_del(struct namespace *ns, char *dn);
+struct namespace	*namespace_lookup_base(const char *basedn,
+				int include_referrals);
 struct namespace	*namespace_for_base(const char *basedn);
+int			 namespace_has_referrals(struct namespace *ns);
+struct referrals	*namespace_referrals(const char *basedn);
 int			 namespace_has_index(struct namespace *ns,
 				const char *attr, enum index_type type);
 int			 namespace_begin_txn(struct namespace *ns,

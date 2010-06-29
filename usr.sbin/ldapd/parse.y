@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2010/06/29 02:45:46 martinh Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2010/06/29 21:54:38 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -108,8 +108,7 @@ static struct namespace *current_ns = NULL;
 %token	ERROR LISTEN ON TLS LDAPS PORT NAMESPACE ROOTDN ROOTPW INDEX
 %token	SECURE RELAX STRICT SCHEMA USE COMPRESSION LEVEL
 %token	INCLUDE CERTIFICATE FSYNC CACHE_SIZE INDEX_CACHE_SIZE
-%token	DISTRIBUTED_OPERATION DSA_OPERATION
-%token	DENY ALLOW READ WRITE BIND ACCESS TO ROOT
+%token	DENY ALLOW READ WRITE BIND ACCESS TO ROOT REFERRAL
 %token	ANY CHILDREN OF ATTRIBUTE IN SUBTREE BY SELF
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -200,6 +199,16 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 			free($6);
 			free($3);
 		}
+		| REFERRAL STRING		{
+			struct referral	*ref;
+			if ((ref = calloc(1, sizeof(*ref))) == NULL) {
+				yyerror("calloc");
+				free($2);
+				YYERROR;
+			}
+			ref->url = $2;
+			SLIST_INSERT_HEAD(&conf->referrals, ref, next);
+		}
 		;
 
 namespace	: NAMESPACE STRING '{' '\n'		{
@@ -258,6 +267,16 @@ ns_opt		: ROOTDN STRING			{
 		| RELAX SCHEMA			{ current_ns->relax = 1; }
 		| STRICT SCHEMA			{ current_ns->relax = 0; }
 		| USE COMPRESSION comp_level	{ current_ns->compression_level = $3; }
+		| REFERRAL STRING		{
+			struct referral	*ref;
+			if ((ref = calloc(1, sizeof(*ref))) == NULL) {
+				yyerror("calloc");
+				free($2);
+				YYERROR;
+			}
+			ref->url = $2;
+			SLIST_INSERT_HEAD(&current_ns->referrals, ref, next);
+		}
 		;
 
 comp_level	: /* empty */			{ $$ = 6; }
@@ -405,6 +424,7 @@ lookup(char *s)
 		{ "on",			ON },
 		{ "port",		PORT },
 		{ "read",		READ },
+		{ "referral",		REFERRAL },
 		{ "relax",		RELAX },
 		{ "root",		ROOT },
 		{ "rootdn",		ROOTDN },
@@ -759,6 +779,7 @@ parse_config(char *filename)
 		fatal(NULL);
 	SPLAY_INIT(conf->sc_ssl);
 	SIMPLEQ_INIT(&conf->acl);
+	SLIST_INIT(&conf->referrals);
 
 	if ((file = pushfile(filename, 1)) == NULL) {
 		free(conf);
@@ -1128,6 +1149,7 @@ namespace_new(const char *suffix)
 	TAILQ_INIT(&ns->indices);
 	TAILQ_INIT(&ns->request_queue);
 	SIMPLEQ_INIT(&ns->acl);
+	SLIST_INIT(&ns->referrals);
 
 	return ns;
 }

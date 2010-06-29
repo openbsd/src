@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.5 2010/06/29 02:54:20 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.6 2010/06/29 21:54:38 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -32,6 +32,7 @@ ldap_delete(struct request *req)
 {
 	char			*dn;
 	struct namespace	*ns;
+	struct referrals	*refs;
 
 	++stats.req_mod;
 
@@ -41,8 +42,13 @@ ldap_delete(struct request *req)
 	normalize_dn(dn);
 	log_debug("deleting entry %s", dn);
 
-	if ((ns = namespace_for_base(dn)) == NULL)
-		return ldap_respond(req, LDAP_NAMING_VIOLATION);
+	if ((ns = namespace_for_base(dn)) == NULL) {
+		refs = namespace_referrals(dn);
+		if (refs == NULL)
+			return ldap_respond(req, LDAP_NAMING_VIOLATION);
+		else
+			return ldap_refer(req, dn, NULL, refs);
+	}
 
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE))
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
@@ -76,6 +82,7 @@ ldap_add(struct request *req)
 	char			*dn;
 	struct ber_element	*attrs, *set;
 	struct namespace	*ns;
+	struct referrals	*refs;
 	int			 rc;
 
 	++stats.req_mod;
@@ -89,8 +96,13 @@ ldap_add(struct request *req)
 	if (*dn == '\0')
 		return ldap_respond(req, LDAP_INVALID_DN_SYNTAX);
 
-	if ((ns = namespace_for_base(dn)) == NULL)
-		return ldap_respond(req, LDAP_NAMING_VIOLATION);
+	if ((ns = namespace_for_base(dn)) == NULL) {
+		refs = namespace_referrals(dn);
+		if (refs == NULL)
+			return ldap_respond(req, LDAP_NAMING_VIOLATION);
+		else
+			return ldap_refer(req, dn, NULL, refs);
+	}
 
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
@@ -143,6 +155,7 @@ ldap_modify(struct request *req)
 	struct ber_element	*mods, *entry, *mod, *vals, *a, *set;
 	struct namespace	*ns;
 	struct attr_type	*at;
+	struct referrals	*refs;
 
 	++stats.req_mod;
 
@@ -155,8 +168,13 @@ ldap_modify(struct request *req)
 	if (*dn == 0)
 		return ldap_respond(req, LDAP_INVALID_DN_SYNTAX);
 
-	if ((ns = namespace_for_base(dn)) == NULL)
-		return ldap_respond(req, LDAP_NAMING_VIOLATION);
+	if ((ns = namespace_for_base(dn)) == NULL) {
+		refs = namespace_referrals(dn);
+		if (refs == NULL)
+			return ldap_respond(req, LDAP_NAMING_VIOLATION);
+		else
+			return ldap_refer(req, dn, NULL, refs);
+	}
 
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.2 2010/06/29 21:23:13 martinh Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.3 2010/06/29 21:54:38 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -100,6 +100,20 @@ Only secured connections accept plain text password authentication.
 Connections using TLS or unix domain sockets are always considered secured.
 The secure keyword can be used to mark an otherwise insecure connection
 secured, e.g. if IPsec is used.
+.It referral Ar URL
+Specify a default referral.
+If no namespace matches the base DN in a request, the request is
+delegated to another LDAP server instead of returning an error.
+.Pp
+This option can be given multiple times, in which case the URLs are
+considered equal.
+Clients may choose to follow any of the referral URLs.
+.Pp
+The URL format has the following format:
+.Bd -literal -offset indent
+ldap://ldap.example.com
+ldaps://ldap.example.com:3890
+.Ed
 .It schema Ar filename
 Add schema definitions from the specified file.
 .El
@@ -117,8 +131,14 @@ namespace "dc=example,dc=com" {
 }
 .Ed
 .Pp
+When matching requests aginst namespace suffixes, the most specific
+match is used.
+Each namespace stores data in a separate database file.
+.Pp
 A namespace has the following configuration properties:
 .Bl -tag -width Ds
+.It referral Ar URL
+Specify a referral to return for requests matching the suffix.
 .It rootdn Ar dn
 Specify the distinguished name of the root user for the namespace.
 The root user is always allowed to read and write entries in the namespace.

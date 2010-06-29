@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.8 2010/06/23 13:10:14 martinh Exp $ */
+/*	$OpenBSD: namespace.c,v 1.9 2010/06/29 21:54:38 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -396,21 +396,53 @@ namespace_del(struct namespace *ns, char *dn)
 	return rc;
 }
 
+int
+namespace_has_referrals(struct namespace *ns)
+{
+	return !SLIST_EMPTY(&ns->referrals);
+}
+
 struct namespace *
-namespace_for_base(const char *basedn)
+namespace_lookup_base(const char *basedn, int include_referrals)
 {
 	size_t			 blen, slen;
-	struct namespace	*ns;
+	struct namespace	*ns, *matched_ns = NULL;
 
 	assert(basedn);
 	blen = strlen(basedn);
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
 		slen = strlen(ns->suffix);
-		if (blen >= slen &&
-		    bcmp(basedn + blen - slen, ns->suffix, slen) == 0)
-			return ns;
+		if ((include_referrals || !namespace_has_referrals(ns)) &&
+		    blen >= slen &&
+		    bcmp(basedn + blen - slen, ns->suffix, slen) == 0) {
+			/* Match the longest namespace suffix. */
+			if (matched_ns == NULL ||
+			    strlen(ns->suffix) > strlen(matched_ns->suffix))
+				matched_ns = ns;
+		}
 	}
+
+	return matched_ns;
+}
+
+struct namespace *
+namespace_for_base(const char *basedn)
+{
+	return namespace_lookup_base(basedn, 0);
+}
+
+struct referrals *
+namespace_referrals(const char *basedn)
+{
+	struct namespace	*ns;
+
+	if ((ns = namespace_lookup_base(basedn, 1)) != NULL &&
+	    namespace_has_referrals(ns))
+		return &ns->referrals;
+
+	if (!SLIST_EMPTY(&conf->referrals))
+		return &conf->referrals;
 
 	return NULL;
 }

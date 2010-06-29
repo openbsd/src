@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.3 2010/06/23 13:10:14 martinh Exp $ */
+/*	$OpenBSD: auth.c,v 1.4 2010/06/29 21:54:38 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -276,12 +276,14 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 		return LDAP_UNWILLING_TO_PERFORM;
 	}
 
-	if ((ns = namespace_for_base(binddn)) == NULL)
+	if ((ns = namespace_lookup_base(binddn, 1)) == NULL)
 		return LDAP_INVALID_CREDENTIALS;
 
 	if (strcmp(ns->rootdn, binddn) == 0) {
 		if (check_password(ns->rootpw, password) == 0)
 			ok = 1;
+	} else if (namespace_has_referrals(ns)) {
+		return LDAP_INVALID_CREDENTIALS;
 	} else {
 		if (!authorized(req->conn, ns, ACI_BIND, binddn,
 		    LDAP_SCOPE_BASE))
