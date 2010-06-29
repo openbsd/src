@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.21 2010/06/02 19:16:53 chl Exp $	*/
+/*	$OpenBSD: dns.c,v 1.22 2010/06/29 03:47:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -365,14 +365,17 @@ int
 get_mxlist(char *host, char *self, struct dns **res)
 {
 	struct mx	 tab[MAX_MX_COUNT];
-	unsigned char	 buf[PACKETSZ], *p, *endp;
+	unsigned char	 *p, *endp;
 	int		 ntab, i, ret, type, n, maxprio, cname_ok = 3;
 	int		 qdcount, ancount;
-
+	union {
+		HEADER	 hdr;
+		char	 buf[PACKETSZ];
+	} answer;
 again:
 	ntab = 0;
 	maxprio = 16384;
-	ret = res_query(host, C_IN, T_MX, buf, sizeof(buf));
+	ret = res_query(host, C_IN, T_MX, answer.buf, sizeof(answer.buf));
 	if (ret < 0) {
 		switch (h_errno) {
 		case TRY_AGAIN:
@@ -388,10 +391,10 @@ again:
 		fatal("get_mxlist: res_query");
 	}
 
-	p = buf + HFIXEDSZ;
-	endp = buf + ret;
-	qdcount = ntohs(((HEADER *)buf)->qdcount);
-	ancount = ntohs(((HEADER *)buf)->ancount);
+	p = answer.buf + HFIXEDSZ;
+	endp = answer.buf + ret;
+	qdcount = ntohs(((HEADER *)answer.buf)->qdcount);
+	ancount = ntohs(((HEADER *)answer.buf)->ancount);
 
 	if (qdcount < 1)
 		return (EAI_FAIL);
@@ -415,7 +418,7 @@ again:
 		if (type == T_CNAME) {
 			if (cname_ok-- == 0)
 				return (EAI_FAIL);
-			ret = dn_expand(buf, endp, p, tab[0].host,
+			ret = dn_expand(answer.buf, endp, p, tab[0].host,
 			    sizeof(tab[0].host));
 			if (ret < 0)
 				return (EAI_FAIL);
@@ -431,7 +434,7 @@ again:
 
 		GETSHORT(tab[ntab].prio, p);
 
-		ret = dn_expand(buf, endp, p, tab[ntab].host,
+		ret = dn_expand(answer.buf, endp, p, tab[ntab].host,
 		    sizeof(tab[ntab].host));
 		if (ret < 0)
 			return (EAI_FAIL);
