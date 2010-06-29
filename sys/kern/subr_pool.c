@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.93 2010/06/27 03:03:48 thib Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.94 2010/06/29 20:39:27 thib Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -92,12 +92,6 @@ struct pool_item {
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
 	((pp)->pr_nitems < (pp)->pr_minitems)
-
-/*
- * Default constraint range for pools, that cover the whole
- * address space.
- */
-struct uvm_constraint_range	pool_full_range = { 0x0, (paddr_t)-1 };
 
 /*
  * Every pool gets a unique serial number assigned to it. If this counter
@@ -400,7 +394,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	}
 
 	/* pglistalloc/constraint parameters */
-	pp->pr_crange = &pool_full_range;
+	pp->pr_crange = &no_constraint;
 	pp->pr_pa_nsegs = 0;
 
 	/* Insert this into the list of all pools. */

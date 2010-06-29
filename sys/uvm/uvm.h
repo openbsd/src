@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.40 2010/06/27 03:03:49 thib Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.41 2010/06/29 20:39:27 thib Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ struct uvm_constraint_range {
 /* Constraint ranges, set by MD code. */
 extern struct uvm_constraint_range  isa_constraint;
 extern struct uvm_constraint_range  dma_constraint;
+extern struct uvm_constraint_range  no_constraint;
 extern struct uvm_constraint_range *uvm_md_constraints[];
 
 /*

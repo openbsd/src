@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.79 2010/06/28 04:20:29 miod Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.80 2010/06/29 20:39:27 thib Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -145,6 +145,9 @@
  */
 
 struct vm_map *kernel_map = NULL;
+
+/* Unconstraint range. */
+struct uvm_constraint_range	no_constraint = { 0x0, (paddr_t)-1 };
 
 /*
  * local data structues
