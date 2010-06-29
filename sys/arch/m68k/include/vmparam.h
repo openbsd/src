@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2008/07/25 21:25:25 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 2010/06/29 20:30:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,9 +45,8 @@
  * is the top (end) of the user stack.
  *
  * NOTE: the ONLY reason that USRSTACK is 0xfff00000 instead of -USIZE
- * is for HPUX compatibility.  Why??  Because HPUX's debuggers
- * have the user's stack hard-wired at FFF00000 for post-mortems,
- * and we must be compatible...
+ * was for HPUX compatibility.  That's been removed, so this could
+ * change now.
  */
 #define	USRTEXT		8192
 #define	USRSTACK	0xfff00000	/* Start of user stack */

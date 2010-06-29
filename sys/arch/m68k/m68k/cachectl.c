@@ -1,4 +1,4 @@
-/*	$OpenBSD: cachectl.c,v 1.1 2005/08/01 11:54:24 miod Exp $	*/
+/*	$OpenBSD: cachectl.c,v 1.2 2010/06/29 20:30:32 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.17 1997/05/19 10:15:00 veego Exp $	*/
 
 /*
@@ -63,13 +63,6 @@ cachectl(struct proc *p, int req, vaddr_t addr, int len)
 		int doall = 0;
 		paddr_t pa = 0;
 		vaddr_t end = 0;
-#ifdef COMPAT_HPUX
-		extern struct emul emul_hpux;
-
-		if ((p->p_emul == &emul_hpux) &&
-		    len != 16 && len != NBPG)
-			doall = 1;
-#endif
 
 		if (addr == 0 ||
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))

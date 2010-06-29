@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.61 2009/03/15 20:40:25 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.62 2010/06/29 20:30:32 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1034,7 +1034,7 @@ ENTRY_NOPROFILE(trap2)
 	jra	_C_LABEL(trace)
 
 /*
- * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
+ * Trap 12 is the entry point for the cachectl "syscall"
  *	cachectl(command, addr, length)
  * command in d0, addr in a1, length in d1
  */
@@ -1536,7 +1536,7 @@ ENTRY(TBIAS)
 	rts
 #endif
 
-#if defined(COMPAT_HPUX) || defined(M68060)
+#if defined(M68060)
 /*
  * Invalidate user side of TLB
  */
@@ -1564,7 +1564,7 @@ Ltbiau040:
 Ltbiauno60:
 #endif
 	rts
-#endif	/* defined(COMPAT_HPUX) || defined(M68060) */
+#endif	/* defined(M68060) */
 
 /*
  * Invalidate instruction cache

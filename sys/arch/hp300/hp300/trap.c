@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2009/03/15 20:40:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2010/06/29 20:30:31 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -92,11 +92,6 @@
 #include <uvm/uvm_pmap.h>
 
 #include <dev/cons.h>
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-extern struct emul emul_hpux;
-#endif
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -405,14 +400,6 @@ dopanic:
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			typ = 0;
-			ucode = HPUX_ILL_ILLINST_TRAP;
-			i = SIGILL;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_ILLOPC;
 		i = SIGILL;
@@ -420,11 +407,6 @@ dopanic:
 		break;
 
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux)
-			ucode = HPUX_ILL_PRIV_TRAP;
-		else
-#endif
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_PRVOPC;
 		i = SIGILL;
@@ -432,11 +414,6 @@ dopanic:
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux)
-			ucode = HPUX_FPE_INTDIV_TRAP;
-		else
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
 		typ = FPE_INTDIV;
 		i = SIGFPE;
@@ -444,14 +421,6 @@ dopanic:
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_CHK_TRAP;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
 		typ = FPE_FLTSUB;
 		i = SIGFPE;
@@ -459,14 +428,6 @@ dopanic:
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_TRAPV_TRAP;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
 		typ = ILL_ILLTRP;
 		i = SIGILL;
@@ -608,20 +569,6 @@ dopanic:
 			goto dopanic;
 		}
 
-#ifdef COMPAT_HPUX
-		if (ISHPMMADDR(p, va)) {
-			int pmap_mapmulti(pmap_t, vaddr_t);
-			vaddr_t bva;
-
-			rv = pmap_mapmulti(map->pmap, va);
-			if (rv) {
-				bva = HPMMBASEADDR(va);
-				rv = uvm_fault(map, bva, 0, ftype);
-				if (rv == 0)
-					(void)pmap_mapmulti(map->pmap, va);
-			}
-		} else
-#endif
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))

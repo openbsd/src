@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.33 2010/06/29 17:32:51 tedu Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.34 2010/06/29 20:30:32 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -35,9 +35,6 @@
 
 #include <compat/bsdos/bsdos_syscall.h>
 #include <compat/freebsd/freebsd_syscall.h>
-#if defined(__hppa__) || defined(__m68k__)
-#include <compat/hpux/hpux_syscall.h>
-#endif
 #include <compat/ibcs2/ibcs2_syscall.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/osf1/osf1_syscall.h>
@@ -57,9 +54,6 @@
 
 #include <compat/bsdos/bsdos_syscalls.c>
 #include <compat/freebsd/freebsd_syscalls.c>
-#if defined(__hppa__) || defined(__m68k__)
-#include <compat/hpux/hpux_syscalls.c>
-#endif
 #include <compat/ibcs2/ibcs2_syscalls.c>
 #include <compat/linux/linux_syscalls.c>
 #include <compat/osf1/osf1_syscalls.c>
@@ -98,9 +92,6 @@ struct emulation {
 static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
 	{ "aout",	syscallnames,		SYS_MAXSYSCALL },
-#if defined(__hppa__) || defined(__m68k__)
-	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL },
-#endif
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL },

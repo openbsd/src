@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.42 2010/06/29 17:35:15 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.43 2010/06/29 20:30:33 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -64,9 +64,6 @@ pid_t pid = -1;
 
 #include <compat/bsdos/bsdos_syscall.h>
 #include <compat/freebsd/freebsd_syscall.h>
-#if defined(__hppa__) || defined(__m68k__)
-#include <compat/hpux/hpux_syscall.h>
-#endif
 #include <compat/ibcs2/ibcs2_syscall.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/osf1/osf1_syscall.h>
@@ -86,9 +83,6 @@ pid_t pid = -1;
 
 #include <compat/bsdos/bsdos_syscalls.c>
 #include <compat/freebsd/freebsd_syscalls.c>
-#if defined(__hppa__) || defined(__m68k__)
-#include <compat/hpux/hpux_syscalls.c>
-#endif
 #include <compat/ibcs2/ibcs2_syscalls.c>
 #include <compat/linux/linux_syscalls.c>
 #include <compat/osf1/osf1_syscalls.c>
@@ -112,9 +106,6 @@ struct emulation {
 
 static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
-#if defined(__hppa__) || defined(__m68k__)
-	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL },
-#endif
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL },

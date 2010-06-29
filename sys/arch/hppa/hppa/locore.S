@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.173 2010/06/29 00:50:40 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.174 2010/06/29 20:30:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -3069,20 +3069,6 @@ sigcode_call
 	ldi	SYS_exit, t1
 ALTENTRY(esigcode)
 EXIT(sigcode)
-
-#ifdef COMPAT_HPUX
-ENTRY(hpux_sigcode,0)
-	bb,>=,n	arg3, 30, hpux_sigcode_call
-	dep	r0, 31, 2, arg3
-	ldw	4(arg3), r19
-	ldw	0(arg3), arg3
-hpux_sigcode_call
-	.call
-	ble	0(sr0, arg3)
-	nop	/* rp has already been set */
-ALTENTRY(hpux_esigcode)
-EXIT(hpux_sigcode)
-#endif /* COMPAT_HPUX */
 
 
 #ifdef COMPAT_LINUX

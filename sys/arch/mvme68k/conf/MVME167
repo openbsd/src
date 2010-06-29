@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME167,v 1.25 2009/02/17 22:28:38 miod Exp $
+#	$OpenBSD: MVME167,v 1.26 2010/06/29 20:30:33 guenther Exp $
 
 machine		mvme68k m68k
 
@@ -10,7 +10,6 @@ option		FPSP		# MC68040 floating point support
 option		MVME167		# includes 166 (requires M68040, FPSP)
 
 option		COMPAT_SUNOS
-option		COMPAT_HPUX
 option		COMPAT_M68K4K
 
 maxusers	32

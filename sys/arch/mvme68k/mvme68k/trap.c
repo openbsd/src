@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2009/03/15 20:40:25 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.69 2010/06/29 20:30:32 guenther Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -92,10 +92,6 @@ extern struct emul emul_sunos;
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmap.h>
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-#endif
 
 int	astpending;
 int	want_resched;
@@ -234,9 +230,6 @@ trap(type, code, v, frame)
 	register int i;
 	u_int ucode;
 	int typ = 0;
-#ifdef COMPAT_HPUX
-	extern struct emul emul_hpux;
-#endif
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
@@ -340,14 +333,6 @@ copyfault:
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			typ = 0;
-			ucode = HPUX_ILL_ILLINST_TRAP;
-			i = SIGILL;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_ILLOPC;
 		i = SIGILL;
@@ -355,11 +340,6 @@ copyfault:
 		break;
 
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux)
-			ucode = HPUX_ILL_PRIV_TRAP;
-		else
-#endif
 		ucode	= frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_PRVOPC;
 		i = SIGILL;
@@ -367,11 +347,6 @@ copyfault:
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux)
-			ucode = HPUX_FPE_INTDIV_TRAP;
-		else
-#endif
 		ucode	= frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
 		typ = FPE_INTDIV;
 		i = SIGFPE;
@@ -379,14 +354,6 @@ copyfault:
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_CHK_TRAP;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
 		typ = FPE_FLTSUB;
 		i = SIGFPE;
@@ -394,14 +361,6 @@ copyfault:
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_TRAPV_TRAP;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
 		typ = ILL_ILLTRP;
 		i = SIGILL;
@@ -540,19 +499,6 @@ copyfault:
 			printf("trap: bad kernel access at %x\n", v);
 			goto dopanic;
 		}
-#ifdef COMPAT_HPUX
-		if (ISHPMMADDR(p, va)) {
-			vaddr_t bva;
-
-			rv = pmap_mapmulti(map->pmap, va);
-			if (rv) {
-				bva = HPMMBASEADDR(va);
-				rv = uvm_fault(map, bva, 0, ftype);
-				if (rv == 0)
-					(void)pmap_mapmulti(map->pmap, va);
-			}
-		} else
-#endif
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))

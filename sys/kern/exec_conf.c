@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.20 2010/06/29 18:46:34 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.21 2010/06/29 20:30:33 guenther Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -63,10 +63,6 @@
 #include <compat/freebsd/freebsd_exec.h>
 #endif
 
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux_exec.h>
-#endif
-
 #ifdef COMPAT_M68K4K
 #include <compat/m68k4k/m68k4k_exec.h>
 #endif
@@ -76,7 +72,7 @@
 #endif
 
 extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
-	emul_bsdos, emul_freebsd_aout, emul_freebsd_elf, emul_hpux,
+	emul_bsdos, emul_freebsd_aout, emul_freebsd_elf,
 	emul_ibcs2, emul_linux_elf, emul_linux_aout, emul_netbsd_elf64,
 	emul_osf1, emul_sunos, emul_svr4;
 
@@ -115,9 +111,6 @@ struct execsw execsw[] = {
 #ifdef COMPAT_FREEBSD
 	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, &emul_freebsd_aout },	/* freebsd */
 	{ sizeof(Elf32_Ehdr), exec_freebsd_elf32_makecmds, &emul_freebsd_elf },
-#endif
-#ifdef COMPAT_HPUX
-	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, &emul_hpux },	/* HP-UX a.out */
 #endif
 #ifdef COMPAT_M68K4K
 	{ sizeof(struct exec), exec_m68k4k_makecmds, &emul_native },	/* m68k4k a.out */

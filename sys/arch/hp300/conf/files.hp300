@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.32 2007/01/06 20:17:41 miod Exp $
+#	$OpenBSD: files.hp300,v 1.33 2010/06/29 20:30:32 guenther Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -216,9 +216,3 @@ file	arch/hp300/hp300/sys_machdep.c
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/vm_machdep.c
 file	arch/hp300/dev/dma.c
-
-#
-# HP-UX binary compatibility
-#
-include "compat/hpux/m68k/files.hpux"
-file	arch/hp300/hp300/hpux_machdep.c		compat_hpux

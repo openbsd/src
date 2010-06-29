@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.133 2010/03/03 20:57:28 mk Exp $
+#	$OpenBSD: GENERIC,v 1.134 2010/06/29 20:30:32 guenther Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -29,7 +29,6 @@ option		FPEMUL
 option		USELEDS		# blink 'em
 option		USER_PCICONF	# user-space PCI configuration
 
-option		COMPAT_HPUX
 #option		COMPAT_LINUX
 #option		PROCFS		# /proc
 

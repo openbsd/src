@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2007/01/06 20:17:59 miod Exp $
+#	$OpenBSD: GENERIC,v 1.48 2010/06/29 20:30:32 guenther Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,7 +35,6 @@ option		USELEDS		# make the lights twinkle
 
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 
-option		COMPAT_HPUX	# HP-UX binary compatibility
 option		COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 option		COMPAT_SUNOS	# SunOS/sun3 binaries
 

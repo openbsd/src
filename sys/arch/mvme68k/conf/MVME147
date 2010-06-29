@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME147,v 1.22 2009/02/17 22:28:38 miod Exp $
+#	$OpenBSD: MVME147,v 1.23 2010/06/29 20:30:33 guenther Exp $
 
 machine		mvme68k m68k
 
@@ -9,7 +9,6 @@ option		M68030		# support for 030
 option		MVME147		# (requires M68030)
 
 option		COMPAT_SUNOS
-option		COMPAT_HPUX
 option		COMPAT_M68K4K
 
 maxusers	16

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.37 2007/09/22 09:57:40 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.38 2010/06/29 20:30:32 guenther Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -95,17 +95,5 @@
 
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define	dbtob(x)	((x) << DEV_BSHIFT)
-
-#ifdef _KERNEL
-#ifdef COMPAT_HPUX
-/*
- * Constants/macros for HPUX multiple mapping of user address space.
- * Pages in the first 256Mb are mapped in at every 256Mb segment.
- */
-#define HPMMMASK	0xF0000000
-#define ISHPMMADDR(v)	0		/* XXX ...jef */
-#define HPMMBASEADDR(v)	((unsigned)(v) & ~HPMMMASK)
-#endif
-#endif
 
 #define	__SWAP_BROKEN

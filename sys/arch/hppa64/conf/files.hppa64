@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.8 2008/04/20 17:17:32 kettenis Exp $
+#	$OpenBSD: files.hppa64,v 1.9 2010/06/29 20:30:32 guenther Exp $
 #
 # hppa64-specific configuration info
 
@@ -109,8 +109,6 @@ include	"dev/pckbc/files.pckbc"
 #
 # Compatibility
 #
-#include "compat/hpux/hppa64/files.hpux"
-#file	arch/hppa64/hppa64/hpux_machdep.c	compat_hpux
 #include "compat/osf1/files.osf1"
 #file	arch/hppa64/hppa64/osf1_machdep.c	compat_osf1
 #include	"compat/linux/files.linux"

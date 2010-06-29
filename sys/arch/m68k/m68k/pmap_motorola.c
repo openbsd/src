@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.57 2010/06/26 23:24:43 guenther Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.58 2010/06/29 20:30:32 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -290,9 +290,6 @@ struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
  */
 struct pv_entry	*pmap_alloc_pv(void);
 void		 pmap_free_pv(struct pv_entry *);
-#ifdef COMPAT_HPUX
-int		 pmap_mapmulti(pmap_t, vaddr_t);
-#endif
 void		 pmap_remove_flags(pmap_t, vaddr_t, vaddr_t, int);
 void		 pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 boolean_t	 pmap_testbit(struct vm_page *, int);
@@ -2025,44 +2022,6 @@ pmap_prefer(foff, vap)
 	}
 }
 #endif /* M68K_MMU_HP */
-
-#ifdef COMPAT_HPUX
-/*
- * pmap_mapmulti:
- *
- *	'PUX hack for dealing with the so called multi-mapped address space.
- *	The first 256mb is mapped in at every 256mb region from 0x10000000
- *	up to 0xF0000000.  This allows for 15 bits of tag information.
- *
- *	We implement this at the segment table level, the machine independent
- *	VM knows nothing about it.
- */
-int
-pmap_mapmulti(pmap, va)
-	pmap_t pmap;
-	vaddr_t va;
-{
-	st_entry_t *ste, *bste;
-
-#ifdef PMAP_DEBUG
-	if (pmapdebug & PDB_MULTIMAP) {
-		ste = pmap_ste(pmap, HPMMBASEADDR(va));
-		printf("pmap_mapmulti(%p, %lx): bste %p(%x)",
-		       pmap, va, ste, *ste);
-		ste = pmap_ste(pmap, va);
-		printf(" ste %p(%x)\n", ste, *ste);
-	}
-#endif
-	bste = pmap_ste(pmap, HPMMBASEADDR(va));
-	ste = pmap_ste(pmap, va);
-	if (!(*ste & SG_V) && (*bste & SG_V)) {
-		*ste = *bste;
-		TBIAU();
-		return (0);
-	}
-	return (EFAULT);
-}
-#endif /* COMPAT_HPUX */
 
 /*
  * Miscellaneous support routines follow

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2010/06/09 15:44:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2010/06/29 20:30:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -56,10 +56,6 @@
 #include <machine/reg.h>
 #include <machine/autoconf.h>
 #include <machine/kcore.h>
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -121,9 +117,6 @@ int	cpu_hvers;
 enum hppa_cpu_type cpu_type;
 const char *cpu_typename;
 u_int	fpu_version;
-#ifdef COMPAT_HPUX
-int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
-#endif
 
 dev_t	bootdev;
 int	physmem, resvmem, resvphysmem, esym;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.62 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.63 2010/06/29 20:30:32 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1170,30 +1170,6 @@ Ltbias851:
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
-
-#if defined(COMPAT_HPUX)
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu6		| no, skip
-	.word	0xf518			| yes, pflusha (for now) XXX
-Lmotommu6:
-#endif
-#if defined(M68020)
-	tstl	_C_LABEL(mmutype)
-	jle	Ltbiau851
-	pflush	#0,#4			| flush user TLB entries
-	rts
-Ltbiau851:
-#endif
-	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-#endif	/* COMPAT_HPUX */
 
 /*
  * Invalidate instruction cache

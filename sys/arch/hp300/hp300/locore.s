@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.64 2009/03/15 20:40:23 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.65 2010/06/29 20:30:31 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1030,7 +1030,7 @@ ENTRY_NOPROFILE(trap2)
 	jra	_C_LABEL(trace)
 
 /*
- * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
+ * Trap 12 is the entry point for the cachectl "syscall"
  *	cachectl(command, addr, length)
  * command in d0, addr in a1, length in d1
  */
@@ -1566,39 +1566,6 @@ Lhpmmu5:
 	movw	d1,sr			| restore IPL
 #endif
 	rts
-
-#if defined(COMPAT_HPUX)
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu6		| no, skip
-	.word	0xf518			| yes, pflusha (for now) XXX
-	rts
-Lmotommu6:
-#endif
-#if defined(M68K_MMU_MOTOROLA)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu8			| yes, skip
-	jpl	Lmc68851d		| 68851?
-	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851d:
-	pflushs	#0,#4			| flush user TLB entries
-	rts
-Lhpmmu8:
-#endif
-#if defined(M68K_MMU_HP)
-	MMUADDR(a0)
-	moveq	#0,d0			| more
-	movl	d0,a0@(MMUTBINVAL)	|   HP magic
-#endif
-	rts
-#endif	/* COMPAT_HPUX */
 
 /*
  * Invalidate instruction cache

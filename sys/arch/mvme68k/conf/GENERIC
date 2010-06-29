@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2009/03/01 22:08:13 miod Exp $
+#	$OpenBSD: GENERIC,v 1.33 2010/06/29 20:30:33 guenther Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,7 +28,6 @@ option		MVME172		# (requires M68060, 060SP, FPSP)
 option		MVME177		# includes 176 (requires M68060, 060SP, FPSP)
 
 option		COMPAT_SUNOS
-option		COMPAT_HPUX
 option		COMPAT_M68K4K
 
 config		bsd		swap generic

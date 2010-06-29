@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.17 2007/12/28 18:57:28 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.18 2010/06/29 20:30:32 guenther Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -142,10 +142,6 @@ void	pmap_kenter_cache(vaddr_t, paddr_t, pt_entry_t);
 #ifdef M68K_MMU_HP
 void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap)	pmap_prefer((foff), (vap))
-#endif
-
-#ifdef COMPAT_HPUX
-int	pmap_mapmulti(pmap_t, vaddr_t);
 #endif
 
 #endif	/* _KERNEL */

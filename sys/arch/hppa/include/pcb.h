@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.12 2009/07/29 18:31:11 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.13 2010/06/29 20:30:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -38,11 +38,6 @@ struct pcb {
 	u_int		pcb_ksp;	/* kernel sp for ctxsw */
 	u_int		pcb_onfault;	/* SW copy fault handler */
 	pa_space_t	pcb_space;	/* copy pmap_space, for asm's sake */
-
-	/* things used for hpux emulation */
-	void		*pcb_sigreturn;
-	u_int		pcb_srcookie;
-	u_int		pcb_sclen;
 };
 
 struct md_coredump {

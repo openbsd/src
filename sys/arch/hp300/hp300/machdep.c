@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2010/06/27 03:03:48 thib Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.128 2010/06/29 20:30:31 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -127,9 +127,6 @@ int	safepri = PSL_LOWIPL;
 extern	u_int lowram;
 extern	short exframesize[];
 
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 #ifdef COMPAT_SUNOS
 extern struct emul emul_sunos;
 #endif

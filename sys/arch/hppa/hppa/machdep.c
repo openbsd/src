@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.191 2010/06/29 04:03:21 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.192 2010/06/29 20:30:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -67,14 +67,6 @@
 #include <machine/kcore.h>
 #include <machine/fpu.h>
 
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-#include <compat/hpux/hpux_sig.h>
-#include <compat/hpux/hpux_util.h>
-#include <compat/hpux/hpux_syscallargs.h>
-#include <machine/hpux_machdep.h>
-#endif
-
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
@@ -136,9 +128,6 @@ enum hppa_cpu_type cpu_type;
 const char *cpu_typename;
 int	cpu_hvers;
 u_int	fpu_version;
-#ifdef COMPAT_HPUX
-int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
-#endif
 
 int	led_blink;
 
@@ -601,15 +590,9 @@ cpuid()
 			default:
 			case 0:
 				q = "1.0";
-#ifdef COMPAT_HPUX
-				cpu_model_hpux = HPUX_SYSCONF_CPUPA10;
-#endif
 				break;
 			case 4:
 				q = "1.1";
-#ifdef COMPAT_HPUX
-				cpu_model_hpux = HPUX_SYSCONF_CPUPA11;
-#endif
 				/* this one is just a 100MHz pcxl */
 				if (lev == 0x10)
 					lev = 0xc;
@@ -619,9 +602,6 @@ cpuid()
 				break;
 			case 8:
 				q = "2.0";
-#ifdef COMPAT_HPUX
-				cpu_model_hpux = HPUX_SYSCONF_CPUPA20;
-#endif
 				break;
 			}
 		}
@@ -1454,142 +1434,6 @@ sys_sigreturn(p, v, retval)
 #endif
 	return (EJUSTRETURN);
 }
-
-#ifdef COMPAT_HPUX
-void
-hpux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
-{
-	struct proc *p = curproc;
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct trapframe *tf = p->p_md.md_regs;
-	struct sigacts *psp = p->p_sigacts;
-	struct hpux_sigcontext hsc;
-	int sss;
-	register_t scp;
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
-		printf("hpux_sendsig: %s[%d] sig %d catcher %p\n",
-		    p->p_comm, p->p_pid, sig, catcher);
-#endif
-	/* Save the FPU context first. */
-	fpu_proc_save(p);
-
-	bzero(&hsc, sizeof hsc);
-	hsc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	hsc.sc_omask = mask;
-	/* sc_scact ??? */
-
-	hsc.sc_ret0 = tf->tf_ret0;
-	hsc.sc_ret1 = tf->tf_ret1;
-
-	hsc.sc_frame[0] = hsc.sc_args[0] = sig;
-	hsc.sc_frame[1] = hsc.sc_args[1] = NULL;
-	hsc.sc_frame[2] = hsc.sc_args[2] = scp;
-
-	/*
-	 * Allocate space for the signal handler context.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !hsc.sc_onstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		scp = (register_t)psp->ps_sigstk.ss_sp;
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		scp = (tf->tf_sp + 63) & ~63;
-
-	sss = (sizeof(hsc) + 63) & ~63;
-
-	if (tf->tf_flags & TFF_SYS) {
-		hsc.sc_tfflags = HPUX_TFF_SYSCALL;
-		hsc.sc_syscall = tf->tf_t1;
-	} else if (tf->tf_flags & TFF_INTR)
-		hsc.sc_tfflags = HPUX_TFF_INTR;
-	else
-		hsc.sc_tfflags = HPUX_TFF_TRAP;
-
-	hsc.sc_regs[0] = tf->tf_r1;
-	hsc.sc_regs[1] = tf->tf_rp;
-	hsc.sc_regs[2] = tf->tf_r3;
-	hsc.sc_regs[3] = tf->tf_r4;
-	hsc.sc_regs[4] = tf->tf_r5;
-	hsc.sc_regs[5] = tf->tf_r6;
-	hsc.sc_regs[6] = tf->tf_r7;
-	hsc.sc_regs[7] = tf->tf_r8;
-	hsc.sc_regs[8] = tf->tf_r9;
-	hsc.sc_regs[9] = tf->tf_r10;
-	hsc.sc_regs[10] = tf->tf_r11;
-	hsc.sc_regs[11] = tf->tf_r12;
-	hsc.sc_regs[12] = tf->tf_r13;
-	hsc.sc_regs[13] = tf->tf_r14;
-	hsc.sc_regs[14] = tf->tf_r15;
-	hsc.sc_regs[15] = tf->tf_r16;
-	hsc.sc_regs[16] = tf->tf_r17;
-	hsc.sc_regs[17] = tf->tf_r18;
-	hsc.sc_regs[18] = tf->tf_t4;
-	hsc.sc_regs[19] = tf->tf_t3;
-	hsc.sc_regs[20] = tf->tf_t2;
-	hsc.sc_regs[21] = tf->tf_t1;
-	hsc.sc_regs[22] = tf->tf_arg3;
-	hsc.sc_regs[23] = tf->tf_arg2;
-	hsc.sc_regs[24] = tf->tf_arg1;
-	hsc.sc_regs[25] = tf->tf_arg0;
-	hsc.sc_regs[26] = tf->tf_dp;
-	hsc.sc_regs[27] = tf->tf_ret0;
-	hsc.sc_regs[28] = tf->tf_ret1;
-	hsc.sc_regs[29] = tf->tf_sp;
-	hsc.sc_regs[30] = tf->tf_r31;
-	hsc.sc_regs[31] = tf->tf_sar;
-	hsc.sc_regs[32] = tf->tf_iioq_head;
-	hsc.sc_regs[33] = tf->tf_iisq_head;
-	hsc.sc_regs[34] = tf->tf_iioq_tail;
-	hsc.sc_regs[35] = tf->tf_iisq_tail;
-	hsc.sc_regs[35] = tf->tf_eiem;
-	hsc.sc_regs[36] = tf->tf_iir;
-	hsc.sc_regs[37] = tf->tf_isr;
-	hsc.sc_regs[38] = tf->tf_ior;
-	hsc.sc_regs[39] = tf->tf_ipsw;
-	hsc.sc_regs[40] = 0;
-	hsc.sc_regs[41] = tf->tf_sr4;
-	hsc.sc_regs[42] = tf->tf_sr0;
-	hsc.sc_regs[43] = tf->tf_sr1;
-	hsc.sc_regs[44] = tf->tf_sr2;
-	hsc.sc_regs[45] = tf->tf_sr3;
-	hsc.sc_regs[46] = tf->tf_sr5;
-	hsc.sc_regs[47] = tf->tf_sr6;
-	hsc.sc_regs[48] = tf->tf_sr7;
-	hsc.sc_regs[49] = tf->tf_rctr;
-	hsc.sc_regs[50] = tf->tf_pidr1;
-	hsc.sc_regs[51] = tf->tf_pidr2;
-	hsc.sc_regs[52] = tf->tf_ccr;
-	hsc.sc_regs[53] = tf->tf_pidr3;
-	hsc.sc_regs[54] = tf->tf_pidr4;
-	/* hsc.sc_regs[55] = tf->tf_cr24; */
-	hsc.sc_regs[56] = tf->tf_vtop;
-	/* hsc.sc_regs[57] = tf->tf_cr26; */
-	/* hsc.sc_regs[58] = tf->tf_cr27; */
-	hsc.sc_regs[59] = 0;
-	hsc.sc_regs[60] = 0;
-	bcopy(p->p_addr->u_pcb.pcb_fpregs, hsc.sc_fpregs,
-	    sizeof(hsc.sc_fpregs));
-
-	tf->tf_rp = (register_t)pcb->pcb_sigreturn;
-	tf->tf_arg3 = (register_t)catcher;
-	tf->tf_sp = scp + sss;
-	tf->tf_ipsw &= ~(PSL_N|PSL_B);
-	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_sigcode;
-	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
-
-	if (copyout(&hsc, (void *)scp, sizeof(hsc)))
-		sigexit(p, SIGILL);
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
-		printf("sendsig(%d): pc 0x%x rp 0x%x\n", p->p_pid,
-		    tf->tf_iioq_head, tf->tf_rp);
-#endif
-}
-#endif
 
 /*
  * machine dependent system variables.

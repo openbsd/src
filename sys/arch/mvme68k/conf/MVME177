@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME177,v 1.14 2009/02/17 22:28:38 miod Exp $
+#	$OpenBSD: MVME177,v 1.15 2010/06/29 20:30:33 guenther Exp $
 
 machine		mvme68k m68k
 
@@ -10,7 +10,6 @@ option		M060SP		# ...and MC68060 support package
 option		MVME177		# (requires M68060, 060SP, FPSP)
 
 option		COMPAT_SUNOS
-option		COMPAT_HPUX
 option		COMPAT_M68K4K
 
 maxusers	32
