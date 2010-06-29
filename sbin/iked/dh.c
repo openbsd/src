@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.3 2010/06/23 11:26:13 reyk Exp $	*/
+/*	$OpenBSD: dh.c,v 1.4 2010/06/29 19:38:26 reyk Exp $	*/
 /*	$vantronix: dh.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -381,12 +381,11 @@ modp_init(struct group *group)
 
 	if ((dh = DH_new()) == NULL)
 		return (-1);
+	group->dh = dh;
 
 	if (!BN_hex2bn(&dh->p, group->spec->prime) ||
 	    !BN_hex2bn(&dh->g, group->spec->generator))
 		return (-1);
-
-	group->dh = dh;
 
 	return (0);
 }
@@ -412,20 +411,24 @@ modp_create_exchange(struct group *group, u_int8_t *buf)
 	if (!BN_bn2bin(dh->pub_key, buf))
 		return (-1);
 
-	return 0;
+	return (0);
 }
 
 int
 modp_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 {
 	BIGNUM	*ex;
+	int	 ret;
 
 	if ((ex = BN_bin2bn(exchange, dh_getlen(group), NULL)) == NULL)
 		return (-1);
-	if (!DH_compute_key(secret, ex, group->dh))
+
+	ret = DH_compute_key(secret, ex, group->dh);
+	BN_clear_free(ex);
+	if (!ret)
 		return (-1);
 
-	return 0;
+	return (0);
 }
 
 int
