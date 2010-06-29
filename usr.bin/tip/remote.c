@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.22 2010/06/29 23:10:56 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.23 2010/06/29 23:20:38 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -42,11 +42,11 @@
  *   data base.
  */
 static char **caps[] = {
-	&DV, &CM, &PN, &PR, &DI, &ES, &FO, &RC, 0
+	&DV, &CM, &PN, &DI, 0
 };
 
 static char *capstrings[] = {
-	"dv", "cm", "pn", "pr", "di", "es", "fo", "rc", 0
+	"dv", "cm", "pn", "di", 0
 };
 
 static char	*db_array[3] = { _PATH_REMOTE, 0, 0 };
@@ -58,7 +58,7 @@ static void	getremcap(char *);
 static void
 getremcap(char *host)
 {
-	char  **p, ***q, *bp, *rempath;
+	char  **p, ***q, *bp, *rempath, *strval;
 	int	stat;
 	long	val;
 
@@ -112,6 +112,15 @@ getremcap(char *host)
 	cgetstr(bp, "re", &value(RECORD));
 	cgetstr(bp, "pa", &value(PARITY));
 
+	if (cgetstr(bp, "es", &strval) >= 0 && strval != NULL)
+		vstring("es", strval);
+	if (cgetstr(bp, "fo", &strval) >= 0 && strval != NULL)
+		vstring("fo", strval);
+	if (cgetstr(bp, "pr", &strval) >= 0 && strval != NULL)
+		vstring("pr", strval);
+	if (cgetstr(bp, "rc", &strval) >= 0 && strval != NULL)
+		vstring("rc", strval);
+	
 	if (!number(value(BAUDRATE))) {
 		if (cgetnum(bp, "br", &val) == -1)
 			setnumber(value(BAUDRATE), DEFBR);
@@ -168,14 +177,6 @@ getremcap(char *host)
 		value(RECORD) = "tip.record";
 	if (value(EXCEPTIONS) == NULL)
 		value(EXCEPTIONS) = "\t\n\b\f";
-	if (ES != NULL)
-		vstring("es", ES);
-	if (FO != NULL)
-		vstring("fo", FO);
-	if (PR != NULL)
-		vstring("pr", PR);
-	if (RC != NULL)
-		vstring("rc", RC);
 	if (cgetnum(bp, "dl", &val) == -1)
 		setnumber(value(LDELAY), 0);
 	else
