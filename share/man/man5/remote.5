@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.21 2009/10/22 09:22:46 sobrado Exp $
+.\"	$OpenBSD: remote.5,v 1.22 2010/06/29 17:17:53 nicm Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)remote.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt REMOTE 5
 .Os
 .Sh NAME
@@ -100,9 +100,6 @@ for example,
 .Dq xa#99 .
 A boolean capability is specified by simply listing the capability.
 .Bl -tag -width indent
-.It Sy \&at
-(str)
-Auto call unit type.
 .It Sy \&be
 (bool)
 Initialize the
@@ -123,12 +120,6 @@ The default baud rate is 300 baud.
 An initial connection message to be sent to the remote host.
 For example, if a host is reached through port selector, this
 might be set to the appropriate sequence required to switch to the host.
-.It Sy \&cu
-(str)
-Call unit if making a phone call.
-Default is the same as the
-.Sy dv
-field.
 .It Sy \&dc
 (bool)
 This host is directly connected, and
@@ -138,9 +129,6 @@ carrier detect drops.
 .It Sy \&di
 (str)
 Disconnect message sent to the host when a disconnect is requested by the user.
-.It Sy \&du
-(bool)
-This host is on a dial-up line.
 .It Sy \&dv
 (str)
 .Tn UNIX
@@ -274,38 +262,6 @@ or
 .Dq one
 (always set bit 8 to 1).
 The default is no parity.
-.It Sy \&pn
-(str)
-Telephone number(s) for this host.
-Either a list of arbitrary dialing strings separated by
-commas, or a
-.Ql @ .
-An at sign,
-.Ql @ ,
-tells
-.Xr tip 1
-to search the
-.Xr phones 5
-database for the list of telephone numbers.
-.Pp
-For modems or auto-call units that use a
-.Ql \&,
-in their dialing strings (hayes, courier, t3000)
-.Xr tip 1
-will convert any
-.Ql \&=
-in the string to a
-.Ql \&,
-when dialing.
-For modems or auto-call units that use a
-.Ql \&=
-in their dial strings, (v831),
-.Xr tip 1
-will convert any
-.Ql \&_
-to a
-.Ql \&=
-when dialing.
 .It Sy \&pr
 (str)
 Character that indicates end-of-line on the remote host.
@@ -382,15 +338,6 @@ to
 .Sy on ,
 so that verbose mode will be turned on.
 .El
-.Pp
-Here is a short example showing the use of the capability continuation
-feature:
-.Bd -literal -offset indent
-UNIX-1200:\e
-:dv=/dev/cau0:el=^D^U^C^S^Q^O@:du:at=ventel:ie=#$%:oe=^D:br#1200:
-arpavax|ax:\e
-:pn=7654321%:tc=UNIX-1200
-.Ed
 .Sh FILES
 .Bl -tag -width /etc/remote -compact
 .It Pa /etc/remote
@@ -398,7 +345,6 @@ Global database.
 .El
 .Sh SEE ALSO
 .Xr tip 1 ,
-.Xr phones 5
 .Sh HISTORY
 The
 .Nm

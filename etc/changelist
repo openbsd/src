@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.67 2010/06/07 10:09:05 reyk Exp $
+#	$OpenBSD: changelist,v 1.68 2010/06/29 17:17:53 nicm Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -97,7 +97,6 @@
 /etc/passwd
 /etc/pf.conf
 /etc/pf.os
-/etc/phones
 /etc/portal.conf
 /etc/printcap
 /etc/profile

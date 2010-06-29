@@ -1,21 +1,18 @@
-#	$OpenBSD: remote,v 1.11 2005/02/07 06:08:10 david Exp $
+#	$OpenBSD: remote,v 1.12 2010/06/29 17:17:53 nicm Exp $
 #	from: @(#)remote	8.1 (Berkeley) 6/10/93
 #
 # remote -- remote host description database
-# see tip(1), cgetcap(3), phones(5), remote(5)
+# see tip(1), cgetcap(3), remote(5)
 #
 # Capabilities used in examples:
 #
-#   at	ACU type
 #   br	baud rate (defaults to 300)
 #   dc	direct connect
-#   du	make a call flag (dial up)
 #   dv	device to use for the tty
 #   el	EOL marks (default is NULL)
 #   ie	input EOF marks (default is NULL)
 #   oe	output EOF string (default is NULL)
 #   pa	parity
-#   pn	phone #, '\@' means use the phones(5) file
 #   tc	include the named system description
 #
 # Most OpenBSD architectures use /dev/tty00, /dev/cua00, etc.
@@ -50,27 +47,14 @@
 direct:\
 	:dc:
 
-dialup:\
-	:du:at=hayes:pn=\@:
-
 doshost:\
 	:oe=^Z:tc=unixhost:
 
 unixhost:\
 	:pa=none:br#9600:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:
 
-# Sample directly connected lines. Directly connected lines are
-# most commonly used for serial consoles.
-#
 tty00|For hp300,i386,mac68k,macppc,mvmeppc,vax:\
 	:dv=/dev/tty00:tc=direct:tc=unixhost:
 
 ttya|For sparc,mvme68k:\
 	:dv=/dev/ttya:tc=direct:tc=unixhost:
-
-# Sample dial out lines.
-#
-cua00|For hp300,i386,mac68k,macppc,mvmeppc,vax:\
-	:dv=/dev/cua00:tc=dialup:tc=unixhost:
-cuaa|For sparc,mvme68k:\
-	:dv=/dev/cuaa:tc=dialup:tc=unixhost:

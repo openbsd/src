@@ -1,7 +1,0 @@
-#	$OpenBSD: phones,v 1.3 1996/09/20 21:00:35 deraadt Exp $
-#
-# phones -- remote host phone number data base
-# see tip(1), phones(5)
-# examples:
-#system1	9=2225551212
-#system2	  9995551212
