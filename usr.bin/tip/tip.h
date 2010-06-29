@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.37 2010/06/29 17:42:35 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.38 2010/06/29 18:39:18 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -233,79 +233,63 @@ extern	int disc;		/* current tty discpline */
 
 extern	char *__progname;	/* program name */
 
-void	con(void);
-char	*ctrl(char);
+/* cmds.c */
 char	*expand(char *);
+void	 chdirectory(int);
+void	 consh(int);
+void	 cu_put(int);
+void	 cu_take(int);
+void	 finish(int);
+void	 genbrk(int);
+void	 getfl(int);
+void	 listvariables(int);
+void	 parwrite(int, char *, size_t);
+void	 pipefile(int);
+void	 pipeout(int);
+void	 sendfile(int);
+void	 setscript(void);
+void	 shell(int);
+void	 suspend(int);
+void	 timeout(int);
+void	 tipabort(char *);
+void	 variable(int);
+
+/* cu.c */
+void	 cumain(int, char **);
+
+/* hunt.c */
+long	 hunt(char *);
+
+/* log.c */
+void	 logent(char *, char *, char *);
+void	 loginit(void);
+
+/* remote.c */
 char	*getremote(char *);
+
+/* tip.c */
+void	 con(void);
+char	*ctrl(char);
 char	*interp(char *);
-int	any(int, char *);
-int	biz22w_dialer(char *, char *);
-int	biz22f_dialer(char *, char *);
-int	biz31w_dialer(char *, char *);
-int	biz31f_dialer(char *, char *);
-int	cour_dialer(char *, char *);
-int	df02_dialer(char *, char *);
-int	df03_dialer(char *, char *);
-int	dn_dialer(char *, char *);
-int	hay_dialer(char *, char *);
-int	prompt(char *, char *, size_t);
-size_t	size(char *);
-int	t3000_dialer(char *, char *);
-int	ttysetup(int);
+int	 any(int, char *);
+int	 prompt(char *, char *, size_t);
+size_t	 size(char *);
+void	 cleanup(int);
+void	 help(int);
+void	 parwrite(int, char *, size_t);
+void	 raw(void);
+void	 setparity(char *);
+int	 ttysetup(int);
+void	 unraw(void);
+
+/* tipout.c */
+void	tipout(void);
+
+/* uucplock.c */
 int	uu_lock(char *);
 int	uu_unlock(char *);
-int	v3451_dialer(char *, char *);
-int	v831_dialer(char *, char *);
-int	ven_dialer(char *, char *);
-int	vstring(char *, char *);
-long	hunt(char *);
-void	biz22_disconnect(void);
-void	biz22_abort(void);
-void	biz31_disconnect(void);
-void	biz31_abort(void);
-void	chdirectory(int);
-void	cleanup(int);
-void	consh(int);
-void	cour_abort(void);
-void	cour_disconnect(void);
-void	cu_put(int);
-void	cu_take(int);
-void	cumain(int, char **);
-void	df_abort(void);
-void	df_disconnect(void);
-void	disconnect(void);
-void	dn_abort(void);
-void	dn_disconnect(void);
-void	finish(int);
-void	genbrk(int);
-void	getfl(int);
-void	hay_abort(void);
-void	hay_disconnect(void);
-void	help(int);
-void	listvariables(int);
-void	logent(char *, char *, char *);
-void	loginit(void);
-void	parwrite(int, char *, size_t);
-void	pipefile(int);
-void	pipeout(int);
-void	raw(void);
-void	sendfile(int);
-void	setparity(char *);
-void	setscript(void);
-void	shell(int);
-void	suspend(int);
-void	t3000_disconnect(void);
-void	t3000_abort(void);
-void	timeout(int);
-void	tipabort(char *);
-void	tipout(void);
-void	unraw(void);
-void	v3451_abort(void);
-void	v3451_disconnect(void);
-void	v831_disconnect(void);
-void	v831_abort(void);
-void	variable(int);
-void	ven_disconnect(void);
-void	ven_abort(void);
+
+/* value.c */
 void	vinit(void);
 void	vlex(char *);
+int	vstring(char *, char *);
