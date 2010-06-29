@@ -1,5 +1,7 @@
-#	$OpenBSD: Makefile,v 1.11 2010/05/31 22:21:43 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2010/06/29 21:42:55 deraadt Exp $
 
 SUBDIR=	060sp fpsp
+
+tags:
 
 .include <bsd.subdir.mk>
