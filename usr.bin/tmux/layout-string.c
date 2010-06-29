@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-string.c,v 1.4 2010/01/08 17:44:27 nicm Exp $ */
+/* $OpenBSD: layout-string.c,v 1.5 2010/06/29 03:30:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,6 @@ struct layout_cell *layout_find_right(struct layout_cell *);
 struct layout_cell *layout_find_topleft(struct layout_cell *);
 struct layout_cell *layout_find_topright(struct layout_cell *);
 struct layout_cell *layout_find_bottomleft(struct layout_cell *);
-struct layout_cell *layout_find_bottomright(struct layout_cell *);
 
 /* Find the cell; returns NULL if string not understood. */
 struct layout_cell *
