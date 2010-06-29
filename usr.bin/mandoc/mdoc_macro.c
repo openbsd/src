@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.48 2010/06/29 18:01:10 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.49 2010/06/29 19:42:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -48,7 +48,7 @@ static	int	  	append_delims(struct mdoc *,
 				int, int *, char *);
 static	enum mdoct	lookup(enum mdoct, const char *);
 static	enum mdoct	lookup_raw(const char *);
-static	int		make_pending(struct mdoc_node *, enum mdoc_type,
+static	int		make_pending(struct mdoc_node *, enum mdoct,
 				struct mdoc *, int, int);
 static	int	  	phrase(struct mdoc *, int, int, char *);
 static	enum mdoct 	rew_alt(enum mdoct);
