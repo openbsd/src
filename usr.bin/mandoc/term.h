@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.23 2010/06/27 01:24:02 schwarze Exp $ */
+/*	$Id: term.h,v 1.24 2010/06/29 14:41:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,8 @@ enum	termtype {
 enum	termfont {
 	TERMFONT_NONE = 0,
 	TERMFONT_BOLD,
-	TERMFONT_UNDER
+	TERMFONT_UNDER,
+	TERMFONT__MAX
 };
 
 #define	TERM_MAXMARGIN	  100000 /* FIXME */
@@ -44,14 +45,22 @@ struct	termp_ps {
 	int		  psstate;	/* state of ps output */
 #define	PS_INLINE	 (1 << 0)	/* we're in a word */
 #define	PS_MARGINS	 (1 << 1)	/* we're in the margins */
-	size_t		  pscol;	/* visible column */
-	size_t		  psrow;	/* visible row */
+	size_t		  pscol;	/* visible column (points) */
+	size_t		  psrow;	/* visible row (points) */
 	char		 *psmarg;	/* margin buf */
 	size_t		  psmargsz;	/* margin buf size */
-	size_t		  psmargcur;	/* current pos in margin buf */
-	size_t	 	  pspage;	/* current page */
+	size_t		  psmargcur;	/* cur index in margin buf */
 	char		  last;		/* character buffer */
 	enum termfont	  lastf;	/* last set font */
+	size_t		  pages;	/* number of pages shown */
+	size_t		  lineheight;	/* each line's height (points) */
+	size_t		  top;		/* body top (points) */
+	size_t		  bottom;	/* body bottom (points) */
+	size_t		  height;	/* total height (points) */
+	size_t		  width;	/* total width (points) */
+	size_t		  left;		/* body left (points) */
+	size_t		  header;	/* header position (points) */
+	size_t		  footer;	/* footer position (points) */
 };
 
 struct	termp {

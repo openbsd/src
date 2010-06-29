@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.41 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: term.c,v 1.42 2010/06/29 14:41:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -129,9 +129,10 @@ term_flushln(struct termp *p)
 	size_t		 vbl;   /* number of blanks to prepend to output */
 	size_t		 vend;	/* end of word visual position on output */
 	size_t		 bp;    /* visual right border position */
-	int		 j;     /* temporary loop index */
-	int		 jhy;	/* last hyphen before line overflow */
-	size_t		 maxvis, mmax;
+	int		 j;     /* temporary loop index for p->buf */
+	int		 jhy;	/* last hyph before overflow w/r/t j */
+	size_t		 maxvis; /* output position of visible boundary */
+	size_t		 mmax; /* used in calculating bp */
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
@@ -156,21 +157,17 @@ term_flushln(struct termp *p)
 	 */
 	vbl = p->flags & TERMP_NOLPAD ? 0 : p->offset;
 
-	/* 
-	 * FIXME: if bp is zero, we still output the first word before
-	 * breaking the line.
-	 */
-
 	vis = vend = i = 0;
-	while (i < (int)p->col) {
 
+	while (i < (int)p->col) {
 		/*
-		 * Handle literal tab characters.
+		 * Handle literal tab characters: collapse all
+		 * subsequent tabs into a single huge set of spaces.
 		 */
 		for (j = i; j < (int)p->col; j++) {
 			if ('\t' != p->buf[j])
 				break;
-			vend = (vis/p->tabwidth+1)*p->tabwidth;
+			vend = (vis / p->tabwidth + 1) * p->tabwidth;
 			vbl += vend - vis;
 			vis = vend;
 		}
@@ -186,13 +183,21 @@ term_flushln(struct termp *p)
 		for (jhy = 0; j < (int)p->col; j++) {
 			if ((j && ' ' == p->buf[j]) || '\t' == p->buf[j])
 				break;
-			if (8 != p->buf[j]) {
-				if (vend > vis && vend < bp &&
-				    ASCII_HYPH == p->buf[j])
-					jhy = j;
-				vend++;
-			} else
-				vend--;
+
+			/* Back over the the last printed character. */
+			if (8 == p->buf[j]) {
+				assert(j);
+				vend -= (*p->width)(p, p->buf[j - 1]);
+				continue;
+			}
+
+			/* Regular word. */
+			/* Break at the hyphen point if we overrun. */
+			if (vend > vis && vend < bp && 
+					ASCII_HYPH == p->buf[j])
+				jhy = j;
+
+			vend += (*p->width)(p, p->buf[j]);
 		}
 
 		/*
@@ -232,13 +237,13 @@ term_flushln(struct termp *p)
 				break;
 			if (' ' == p->buf[i]) {
 				while (' ' == p->buf[i]) {
-					vbl++;
+					vbl += (*p->width)(p, p->buf[i]);
 					i++;
 				}
 				break;
 			}
 			if (ASCII_NBRSP == p->buf[i]) {
-				vbl++;
+				vbl += (*p->width)(p, ' ');
 				continue;
 			}
 
@@ -253,12 +258,13 @@ term_flushln(struct termp *p)
 				vbl = 0;
 			}
 
-			if (ASCII_HYPH == p->buf[i])
+			if (ASCII_HYPH == p->buf[i]) {
 				(*p->letter)(p, '-');
-			else
+				p->viscol += (*p->width)(p, '-');
+			} else {
 				(*p->letter)(p, p->buf[i]);
-
-			p->viscol += 1;
+				p->viscol += (*p->width)(p, p->buf[i]);
+			}
 		}
 		vend += vbl;
 		vis = vend;
@@ -276,7 +282,7 @@ term_flushln(struct termp *p)
 	if (TERMP_HANG & p->flags) {
 		/* We need one blank after the tag. */
 		p->overstep = /* LINTED */
-			vis - maxvis + 1;
+			vis - maxvis + (*p->width)(p, ' ');
 
 		/*
 		 * Behave exactly the same way as groff:
@@ -300,7 +306,8 @@ term_flushln(struct termp *p)
 
 	/* Right-pad. */
 	if (maxvis > vis + /* LINTED */
-			((TERMP_TWOSPACE & p->flags) ? 1 : 0)) {
+			((TERMP_TWOSPACE & p->flags) ? 
+			 (*p->width)(p, ' ') : 0)) {
 		p->viscol += maxvis - vis;
 		(*p->advance)(p, maxvis - vis);
 		vis += (maxvis - vis);

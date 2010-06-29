@@ -1,4 +1,4 @@
-/*	$Id: term_ps.c,v 1.3 2010/06/26 19:08:00 schwarze Exp $ */
+/*	$Id: term_ps.c,v 1.4 2010/06/29 14:41:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,19 +25,323 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "out.h"
 #include "main.h"
 #include "term.h"
 
-#define	PS_CHAR_WIDTH	  6
-#define	PS_CHAR_HEIGHT	  12
-#define	PS_CHAR_TOPMARG	 (792 - 24)
-#define	PS_CHAR_TOP	 (PS_CHAR_TOPMARG - 36)
-#define	PS_CHAR_LEFT	  36
-#define	PS_CHAR_BOTMARG	  24
-#define	PS_CHAR_BOT	 (PS_CHAR_BOTMARG + 36)
+struct	glyph {
+	int		  wx; /* WX in AFM */
+};
 
+struct	font {
+	const char	 *name; /* FontName in AFM */
+#define	MAXCHAR		  95 /* total characters we can handle */
+	struct glyph	  gly[MAXCHAR]; /* glyph metrics */
+};
+
+/*
+ * We define, for the time being, three fonts: bold, oblique/italic, and
+ * normal (roman).  The following table hard-codes the font metrics for
+ * ASCII, i.e., 32--127.
+ */
+
+static	const struct font fonts[TERMFONT__MAX] = {
+	{ "Courier", {
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+	} },
+	{ "Courier-Bold", {
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+	} },
+	{ "Courier-Oblique", {
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+		{ 600 },
+	} },
+};
+
+/* These work the buffer used by the header and footer. */
 #define	PS_BUFSLOP	  128
 #define	PS_GROWBUF(p, sz) \
 	do if ((p)->engine.ps.psmargcur + (sz) > \
@@ -62,7 +366,7 @@ static	void		  ps_endline(struct termp *);
 static	void		  ps_fclose(struct termp *);
 static	size_t		  ps_width(const struct termp *, char);
 static	void		  ps_pclose(struct termp *);
-static	void		  ps_pletter(struct termp *, char);
+static	void		  ps_pletter(struct termp *, int);
 static	void		  ps_printf(struct termp *, const char *, ...);
 static	void		  ps_putchar(struct termp *, char);
 static	void		  ps_setfont(struct termp *, enum termfont);
@@ -72,12 +376,14 @@ void *
 ps_alloc(void)
 {
 	struct termp	*p;
+	size_t		 pagex, pagey, margin;
 
 	if (NULL == (p = term_alloc(TERMENC_ASCII)))
 		return(NULL);
 
-	p->defrmargin = 78;
-	p->tabwidth = 5;
+	pagex = 612;
+	pagey = 792;
+	margin = 72;
 
 	p->type = TERMTYPE_PS;
 	p->letter = ps_letter;
@@ -86,6 +392,20 @@ ps_alloc(void)
 	p->advance = ps_advance;
 	p->endline = ps_endline;
 	p->width = ps_width;
+
+	assert(margin * 2 < pagex);
+	assert(margin * 2 < pagey);
+
+	p->engine.ps.width = pagex;
+	p->engine.ps.height = pagey;
+	p->engine.ps.header = pagey - (margin / 2);
+	p->engine.ps.top = pagey - margin;
+	p->engine.ps.footer = (margin / 2);
+	p->engine.ps.bottom = margin;
+	p->engine.ps.left = margin;
+	p->engine.ps.lineheight = 12;
+
+	p->defrmargin = pagex - (margin * 2);
 	return(p);
 }
 
@@ -175,14 +495,20 @@ ps_end(struct termp *p)
 	assert('\0' == p->engine.ps.last);
 	assert(p->engine.ps.psmarg && p->engine.ps.psmarg[0]);
 	printf("%s", p->engine.ps.psmarg);
+	p->engine.ps.pages++;
 	printf("showpage\n");
-	printf("%s\n", "%%EOF");
+
+	printf("%%%%Trailer\n");
+	printf("%%%%Pages: %zu\n", p->engine.ps.pages);
+	printf("%%%%EOF\n");
 }
 
 
 static void
 ps_begin(struct termp *p)
 {
+	time_t		 t;
+	int		 i;
 
 	/* 
 	 * Print margins into margin buffer.  Nothing gets output to the
@@ -196,16 +522,16 @@ ps_begin(struct termp *p)
 
 	p->engine.ps.psmargcur = 0;
 	p->engine.ps.psstate = PS_MARGINS;
-	p->engine.ps.pscol = PS_CHAR_LEFT;
-	p->engine.ps.psrow = PS_CHAR_TOPMARG;
+	p->engine.ps.pscol = p->engine.ps.left;
+	p->engine.ps.psrow = p->engine.ps.header;
 
 	ps_setfont(p, TERMFONT_NONE);
 
 	(*p->headf)(p, p->argf);
 	(*p->endline)(p);
 
-	p->engine.ps.pscol = PS_CHAR_LEFT;
-	p->engine.ps.psrow = PS_CHAR_BOTMARG;
+	p->engine.ps.pscol = p->engine.ps.left;
+	p->engine.ps.psrow = p->engine.ps.footer;
 
 	(*p->footf)(p, p->argf);
 	(*p->endline)(p);
@@ -221,16 +547,38 @@ ps_begin(struct termp *p)
 	 * stuff gets printed to the screen, so make sure we're sane.
 	 */
 
-	printf("%s\n", "%!PS");
+	t = time(NULL);
+
+	printf("%%!PS-Adobe-3.0\n");
+	printf("%%%%Creator: mandoc-%s\n", VERSION);
+	printf("%%%%CreationDate: %s", ctime(&t));
+	printf("%%%%DocumentData: Clean7Bit\n");
+	printf("%%%%Orientation: Portrait\n");
+	printf("%%%%Pages: (atend)\n");
+	printf("%%%%PageOrder: Ascend\n");
+	printf("%%%%Orientation: Portrait\n");
+	printf("%%%%DocumentMedia: Default %zu %zu 0 () ()\n",
+			p->engine.ps.width,
+			p->engine.ps.height);
+	printf("%%%%DocumentNeededResources: font");
+	for (i = 0; i < (int)TERMFONT__MAX; i++)
+		printf(" %s", fonts[i].name);
+	printf("\n%%%%EndComments\n");
+
+	printf("%%%%Page: %zu %zu\n", 
+			p->engine.ps.pages + 1, 
+			p->engine.ps.pages + 1);
+
 	ps_setfont(p, TERMFONT_NONE);
-	p->engine.ps.pscol = PS_CHAR_LEFT;
-	p->engine.ps.psrow = PS_CHAR_TOP;
+	p->engine.ps.pscol = p->engine.ps.left;
+	p->engine.ps.psrow = p->engine.ps.top;
 }
 
 
 static void
-ps_pletter(struct termp *p, char c)
+ps_pletter(struct termp *p, int c)
 {
+	int		 f;
 	
 	/*
 	 * If we're not in a PostScript "word" context, then open one
@@ -265,8 +613,17 @@ ps_pletter(struct termp *p, char c)
 
 	/* Write the character and adjust where we are on the page. */
 
+	f = (int)p->engine.ps.lastf;
+
+	if (c <= 32 || (c - 32 > MAXCHAR)) {
+		ps_putchar(p, ' ');
+		p->engine.ps.pscol += (fonts[f].gly[0].wx / 100);
+		return;
+	} 
+
 	ps_putchar(p, c);
-	p->engine.ps.pscol += PS_CHAR_WIDTH;
+	c -= 32;
+	p->engine.ps.pscol += (fonts[f].gly[c].wx / 100);
 }
 
 
@@ -376,7 +733,7 @@ ps_advance(struct termp *p, size_t len)
 	 */
 
 	ps_fclose(p);
-	p->engine.ps.pscol += len ? len * PS_CHAR_WIDTH : 0;
+	p->engine.ps.pscol += len;
 }
 
 
@@ -402,16 +759,21 @@ ps_endline(struct termp *p)
 	 * showpage and restart our row.
 	 */
 
-	p->engine.ps.pscol = PS_CHAR_LEFT;
-	if (p->engine.ps.psrow >= PS_CHAR_HEIGHT + PS_CHAR_BOT) {
-		p->engine.ps.psrow -= PS_CHAR_HEIGHT;
+	p->engine.ps.pscol = p->engine.ps.left;
+	if (p->engine.ps.psrow >= p->engine.ps.lineheight + 
+			p->engine.ps.bottom) {
+		p->engine.ps.psrow -= p->engine.ps.lineheight;
 		return;
 	}
 
 	assert(p->engine.ps.psmarg && p->engine.ps.psmarg[0]);
 	printf("%s", p->engine.ps.psmarg);
+	printf("%%%%Page: %zu %zu\n", 
+			p->engine.ps.pages + 1, 
+			p->engine.ps.pages + 1);
 	printf("showpage\n");
-	p->engine.ps.psrow = PS_CHAR_TOP;
+	p->engine.ps.pages++;
+	p->engine.ps.psrow = p->engine.ps.top;
 }
 
 
@@ -419,21 +781,20 @@ static void
 ps_setfont(struct termp *p, enum termfont f)
 {
 
-	if (TERMFONT_BOLD == f) 
-		ps_printf(p, "/Courier-Bold\n");
-	else if (TERMFONT_UNDER == f)
-		ps_printf(p, "/Courier-Oblique\n");
-	else
-		ps_printf(p, "/Courier\n");
-
-	ps_printf(p, "10 selectfont\n");
+	assert(f < TERMFONT__MAX);
+	ps_printf(p, "/%s 10 selectfont\n", fonts[(int)f].name);
 	p->engine.ps.lastf = f;
 }
 
 
+/* ARGSUSED */
 static size_t
 ps_width(const struct termp *p, char c)
 {
 
-	return(1);
+	if (c <= 32 || c - 32 >= MAXCHAR)
+		return(fonts[(int)TERMFONT_NONE].gly[0].wx / 100);
+
+	c -= 32;
+	return(fonts[(int)TERMFONT_NONE].gly[(int)c].wx / 100);
 }
