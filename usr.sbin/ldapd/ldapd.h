@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.12 2010/06/29 02:45:46 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.13 2010/06/29 21:00:34 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -203,6 +203,7 @@ struct conn
 	struct request		*bind_req;	/* ongoing bind request */
 	char			*binddn;
 	TAILQ_HEAD(, search)	 searches;
+	struct listener		*listener;	/* where it connected from */
 
 	/* SSL support */
 	struct event		 s_ev;
