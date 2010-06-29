@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.52 2010/06/28 20:24:39 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.53 2010/06/29 19:14:09 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -164,8 +164,18 @@ static uint8_t	em_calculate_mng_checksum(char *, uint32_t);
 static int32_t	em_configure_kmrn_for_10_100(struct em_hw *, uint16_t);
 static int32_t	em_configure_kmrn_for_1000(struct em_hw *);
 static int32_t	em_set_pciex_completion_timeout(struct em_hw *hw);
-int32_t em_hv_phy_workarounds_ich8lan(struct em_hw *);
-int32_t em_configure_k1_ich8lan(struct em_hw *, boolean_t);
+static int32_t	em_set_mdio_slow_mode_hv(struct em_hw *);
+int32_t		em_hv_phy_workarounds_ich8lan(struct em_hw *);
+int32_t		em_link_stall_workaround_hv(struct em_hw *);
+int32_t		em_configure_k1_ich8lan(struct em_hw *, boolean_t);
+int32_t		em_access_phy_wakeup_reg_bm(struct em_hw *, uint32_t,
+		    uint16_t *, boolean_t);
+int32_t		em_access_phy_debug_regs_hv(struct em_hw *, uint32_t,
+		    uint16_t *, boolean_t);
+int32_t		em_access_phy_reg_hv(struct em_hw *, uint32_t, uint16_t *,
+		    boolean_t);
+int32_t		em_oem_bits_config_pchlan(struct em_hw *, boolean_t);
+
 
 /* IGP cable length table */
 static const uint16_t 
@@ -1034,6 +1044,39 @@ em_init_hw(struct em_hw *hw)
 		reg_data &= ~0x80000000;
 		E1000_WRITE_REG(hw, STATUS, reg_data);
 	}
+
+	if (hw->mac_type == em_pchlan) {
+		/*
+		 * The MAC-PHY interconnect may still be in SMBus mode
+		 * after Sx->S0.  Toggle the LANPHYPC Value bit to force
+		 * the interconnect to PCIe mode, but only if there is no
+		 * firmware present otherwise firmware will have done it.
+		 */
+		if ((E1000_READ_REG(hw, FWSM) & E1000_FWSM_FW_VALID) == 0) {
+			ctrl = E1000_READ_REG(hw, CTRL);
+			ctrl |=  E1000_CTRL_LANPHYPC_OVERRIDE;
+			ctrl &= ~E1000_CTRL_LANPHYPC_VALUE;
+			E1000_WRITE_REG(hw, CTRL, ctrl);
+			usec_delay(10);
+			ctrl &= ~E1000_CTRL_LANPHYPC_OVERRIDE;
+			E1000_WRITE_REG(hw, CTRL, ctrl);
+			msec_delay(50);
+		}
+		/*
+		 * Reset the PHY before any acccess to it.  Doing so,
+		 * ensures that the PHY is in a known good state before
+		 * we read/write PHY registers.  The generic reset is
+		 * sufficient here, because we haven't determined
+		 * the PHY type yet.
+		 */
+		em_phy_reset(hw);
+
+		/* Set MDIO slow mode before any other MDIO access */
+		ret_val = em_set_mdio_slow_mode_hv(hw);
+		if (ret_val)
+			return ret_val;
+	}
+
 	/* Initialize Identification LED */
 	ret_val = em_id_led_init(hw);
 	if (ret_val) {
@@ -1144,6 +1187,19 @@ em_init_hw(struct em_hw *hw)
 	    hw->mac_type == em_ich10lan ||
 	    hw->mac_type == em_pchlan)
 		msec_delay(15);
+
+        /*
+	 * The 82578 Rx buffer will stall if wakeup is enabled in host and
+	 * the ME.  Reading the BM_WUC register will clear the host wakeup bit.
+	 * Reset the phy after disabling host wakeup to reset the Rx buffer.
+	 */
+	if (hw->phy_type == em_phy_82578) {
+		em_read_phy_reg(hw, PHY_REG(BM_WUC_PAGE, 1),
+		    (uint16_t *)&reg_data);
+		ret_val = em_phy_reset(hw);
+		if (ret_val)
+			return ret_val;
+	}
 
 	/* Call a subroutine to configure the link and setup flow control. */
 	ret_val = em_setup_link(hw);
@@ -1421,6 +1477,7 @@ em_setup_link(struct em_hw *hw)
 
 	if (hw->phy_type == em_phy_82577 ||
 	    hw->phy_type == em_phy_82578) {
+		E1000_WRITE_REG(hw, FCRTV_PCH, 0x1000);
 		em_write_phy_reg(hw, PHY_REG(BM_PORT_CTRL_PAGE, 27),
 		    hw->fc_pause_time);
 	}
@@ -3366,6 +3423,12 @@ em_check_for_link(struct em_hw *hw)
 
 		hw->icp_xxxx_is_link_up = (phy_data & MII_SR_LINK_STATUS) != 0;
 
+		if (hw->phy_type == em_phy_82578) {
+			ret_val = em_link_stall_workaround_hv(hw);
+			if (ret_val)
+				return ret_val;
+		}
+
 		if (phy_data & MII_SR_LINK_STATUS) {
 			hw->get_link_status = FALSE;
 			/*
@@ -3898,6 +3961,201 @@ em_swfw_sync_release(struct em_hw *hw, uint16_t mask)
 
 	em_put_hw_eeprom_semaphore(hw);
 }
+
+int32_t
+em_access_phy_wakeup_reg_bm(struct em_hw *hw, uint32_t reg_addr,
+    uint16_t *phy_data, boolean_t read)
+{
+	int32_t ret_val;
+	uint16_t reg = BM_PHY_REG_NUM(reg_addr);
+	uint16_t phy_reg = 0;
+
+	/* Gig must be disabled for MDIO accesses to page 800 */
+	if ((hw->mac_type == em_pchlan) &&
+	    (!(E1000_READ_REG(hw, PHY_CTRL) & E1000_PHY_CTRL_GBE_DISABLE)))
+		printf("Attempting to access page 800 while gig enabled.\n");
+
+	/* All operations in this function are phy address 1 */
+	hw->phy_addr = 1;
+
+	/* Set page 769 */
+	em_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
+	    (BM_WUC_ENABLE_PAGE << PHY_PAGE_SHIFT));
+
+	ret_val = em_read_phy_reg_ex(hw, BM_WUC_ENABLE_REG, &phy_reg);
+	if (ret_val) {
+		printf("Could not read PHY page 769\n");
+		goto out;
+	}
+
+	/* First clear bit 4 to avoid a power state change */
+	phy_reg &= ~(BM_WUC_HOST_WU_BIT);
+	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ENABLE_REG, phy_reg);
+	if (ret_val) {
+		printf("Could not clear PHY page 769 bit 4\n");
+		goto out;
+	}
+
+	/* Write bit 2 = 1, and clear bit 4 to 769_17 */
+	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ENABLE_REG,
+	    phy_reg | BM_WUC_ENABLE_BIT);
+	if (ret_val) {
+		printf("Could not write PHY page 769 bit 2\n");
+		goto out;
+	}
+
+	/* Select page 800 */
+	ret_val = em_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
+	    (BM_WUC_PAGE << PHY_PAGE_SHIFT));
+
+	/* Write the page 800 offset value using opcode 0x11 */
+	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ADDRESS_OPCODE, reg);
+	if (ret_val) {
+		printf("Could not write address opcode to page 800\n");
+		goto out;
+	}
+
+	if (read)
+	        /* Read the page 800 value using opcode 0x12 */
+		ret_val = em_read_phy_reg_ex(hw, BM_WUC_DATA_OPCODE,
+		    phy_data);
+	else
+	        /* Write the page 800 value using opcode 0x12 */
+		ret_val = em_write_phy_reg_ex(hw, BM_WUC_DATA_OPCODE,
+		    *phy_data);
+
+	if (ret_val) {
+		printf("Could not access data value from page 800\n");
+		goto out;
+	}
+
+	/*
+	 * Restore 769_17.2 to its original value
+	 * Set page 769
+	 */
+	em_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
+	    (BM_WUC_ENABLE_PAGE << PHY_PAGE_SHIFT));
+
+	/* Clear 769_17.2 */
+	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ENABLE_REG, phy_reg);
+	if (ret_val) {
+		printf("Could not clear PHY page 769 bit 2\n");
+		goto out;
+	}
+
+out:
+	return ret_val;
+}
+
+int32_t
+em_access_phy_debug_regs_hv(struct em_hw *hw, uint32_t reg_addr,
+    uint16_t *phy_data, boolean_t read)
+{
+	int32_t ret_val;
+	uint32_t addr_reg = 0;
+	uint32_t data_reg = 0;
+
+	/* This takes care of the difference with desktop vs mobile phy */
+	addr_reg = (hw->phy_type == em_phy_82578) ?
+	           I82578_PHY_ADDR_REG : I82577_PHY_ADDR_REG;
+	data_reg = addr_reg + 1;
+
+	/* All operations in this function are phy address 2 */
+	hw->phy_addr = 2;
+
+	/* masking with 0x3F to remove the page from offset */
+	ret_val = em_write_phy_reg_ex(hw, addr_reg, (uint16_t)reg_addr & 0x3F);
+	if (ret_val) {
+		printf("Could not write PHY the HV address register\n");
+		goto out;
+	}
+
+	/* Read or write the data value next */
+	if (read)
+		ret_val = em_read_phy_reg_ex(hw, data_reg, phy_data);
+	else
+		ret_val = em_write_phy_reg_ex(hw, data_reg, *phy_data);
+
+	if (ret_val) {
+		printf("Could not read data value from HV data register\n");
+		goto out;
+	}
+
+out:
+	return ret_val;
+}
+
+/******************************************************************************
+ * Reads or writes the value from a PHY register, if the value is on a specific
+ * non zero page, sets the page first.
+ * hw - Struct containing variables accessed by shared code
+ * reg_addr - address of the PHY register to read
+ *****************************************************************************/
+int32_t
+em_access_phy_reg_hv(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data,
+    boolean_t read)
+{
+	uint32_t ret_val;
+	uint16_t swfw;
+	uint16_t page = BM_PHY_REG_PAGE(reg_addr);
+	uint16_t reg = BM_PHY_REG_NUM(reg_addr);
+
+	DEBUGFUNC("em_access_phy_reg_hv");
+
+	swfw = E1000_SWFW_PHY0_SM;
+
+	if (em_swfw_sync_acquire(hw, swfw))
+		return -E1000_ERR_SWFW_SYNC;
+
+	if (page == BM_WUC_PAGE) {
+		ret_val = em_access_phy_wakeup_reg_bm(hw, reg_addr,
+		    phy_data, read);
+		goto release;
+	}
+
+	if (page >= HV_INTC_FC_PAGE_START)
+		hw->phy_addr = 1;
+	else
+		hw->phy_addr = 2;
+
+	if (page == HV_INTC_FC_PAGE_START)
+		page = 0;
+
+	/*
+	 * Workaround MDIO accesses being disabled after entering IEEE Power
+	 * Down (whenever bit 11 of the PHY Control register is set)
+	 */
+	if (!read &&
+	    (hw->phy_type == em_phy_82578) &&
+	    (hw->phy_revision >= 1) &&
+	    (hw->phy_addr == 2) &&
+	    ((MAX_PHY_REG_ADDRESS & reg) == 0) &&
+	    (*phy_data & (1 << 11))) {
+		uint16_t data2 = 0x7EFF;
+
+		ret_val = em_access_phy_debug_regs_hv(hw, (1 << 6) | 0x3,
+		    &data2, FALSE);
+		if (ret_val)
+			return ret_val;
+	}
+
+	if (reg_addr > MAX_PHY_MULTI_PAGE_REG) {
+		ret_val = em_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
+		    (page << PHY_PAGE_SHIFT));
+		if (ret_val)
+			return ret_val;
+	}
+	if (read)
+		ret_val = em_read_phy_reg_ex(hw, MAX_PHY_REG_ADDRESS & reg,
+		    phy_data);
+	else
+		ret_val = em_write_phy_reg_ex(hw, MAX_PHY_REG_ADDRESS & reg,
+		    *phy_data);
+release:
+	em_swfw_sync_release(hw, swfw);
+	return ret_val;
+}
+
 /******************************************************************************
  * Reads the value from a PHY register, if the value is on a specific non zero
  * page, sets the page first.
@@ -3910,6 +4168,9 @@ em_read_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 	uint32_t ret_val;
 	uint16_t swfw;
 	DEBUGFUNC("em_read_phy_reg");
+
+	if (hw->mac_type == em_pchlan)
+		return (em_access_phy_reg_hv(hw, reg_addr, phy_data, TRUE));
 
 	if ((hw->mac_type == em_80003es2lan) &&
 	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
@@ -4067,6 +4328,9 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t phy_data)
 	uint32_t ret_val;
 	uint16_t swfw;
 	DEBUGFUNC("em_write_phy_reg");
+
+	if (hw->mac_type == em_pchlan)
+		return (em_access_phy_reg_hv(hw, reg_addr, &phy_data, FALSE));
 
 	if ((hw->mac_type == em_80003es2lan) &&
 	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
@@ -4354,6 +4618,63 @@ em_phy_hw_reset(struct em_hw *hw)
 
 	return ret_val;
 }
+
+int32_t
+em_oem_bits_config_pchlan(struct em_hw *hw, boolean_t d0_state)
+{
+	int32_t  ret_val = E1000_SUCCESS;
+	uint32_t mac_reg;
+	uint16_t oem_reg;
+	uint16_t swfw = E1000_SWFW_PHY0_SM;
+
+	if (hw->mac_type != em_pchlan)
+		return ret_val;
+
+	ret_val = em_swfw_sync_acquire(hw, swfw);
+	if (ret_val)
+		return ret_val;
+
+	mac_reg = E1000_READ_REG(hw, EXTCNF_CTRL);
+	if (mac_reg & E1000_EXTCNF_CTRL_OEM_WRITE_ENABLE)
+		goto out;
+
+	mac_reg = E1000_READ_REG(hw, FEXTNVM);
+	if (!(mac_reg & FEXTNVM_SW_CONFIG_ICH8M))
+		goto out;
+
+	mac_reg = E1000_READ_REG(hw, PHY_CTRL);
+
+	ret_val = em_read_phy_reg(hw, HV_OEM_BITS, &oem_reg);
+	if (ret_val)
+		goto out;
+
+	oem_reg &= ~(HV_OEM_BITS_GBE_DIS | HV_OEM_BITS_LPLU);
+
+	if (d0_state) {
+		if (mac_reg & E1000_PHY_CTRL_GBE_DISABLE)
+			oem_reg |= HV_OEM_BITS_GBE_DIS;
+
+		if (mac_reg & E1000_PHY_CTRL_D0A_LPLU)
+			oem_reg |= HV_OEM_BITS_LPLU;
+	} else {
+		if (mac_reg & E1000_PHY_CTRL_NOND0A_GBE_DISABLE)
+			oem_reg |= HV_OEM_BITS_GBE_DIS;
+
+		if (mac_reg & E1000_PHY_CTRL_NOND0A_LPLU)
+			oem_reg |= HV_OEM_BITS_LPLU;
+	}
+	/* Restart auto-neg to activate the bits */
+	if (!em_check_phy_reset_block(hw))
+		oem_reg |= HV_OEM_BITS_RESTART_AN;
+	ret_val = em_write_phy_reg(hw, HV_OEM_BITS, oem_reg);
+
+out:
+	em_swfw_sync_release(hw, swfw);
+
+	return ret_val;
+}
+
+
 /******************************************************************************
  * Resets the PHY
  *
@@ -4398,8 +4719,20 @@ em_phy_reset(struct em_hw *hw)
 		break;
 	}
 
+	/* Allow time for h/w to get to a quiescent state after reset */
+	msec_delay(10);
+
 	if (hw->phy_type == em_phy_igp || hw->phy_type == em_phy_igp_2)
 		em_phy_init_script(hw);
+	else if (hw->mac_type == em_pchlan) {
+		ret_val = em_hv_phy_workarounds_ich8lan(hw);
+		if (ret_val)
+			return ret_val;
+
+		ret_val = em_oem_bits_config_pchlan(hw, TRUE);
+		if (ret_val)
+			return ret_val;
+	}
 
 	return E1000_SUCCESS;
 }
@@ -6601,6 +6934,26 @@ em_clear_hw_cntrs(struct em_hw *hw)
 
 	temp = E1000_READ_REG(hw, IAC);
 	temp = E1000_READ_REG(hw, ICRXOC);
+
+	if (hw->phy_type == em_phy_82577 ||
+	    hw->phy_type == em_phy_82578) {
+		uint16_t phy_data;
+
+		em_read_phy_reg(hw, HV_SCC_UPPER, &phy_data);
+		em_read_phy_reg(hw, HV_SCC_LOWER, &phy_data);
+		em_read_phy_reg(hw, HV_ECOL_UPPER, &phy_data);
+		em_read_phy_reg(hw, HV_ECOL_LOWER, &phy_data);
+		em_read_phy_reg(hw, HV_MCC_UPPER, &phy_data);
+		em_read_phy_reg(hw, HV_MCC_LOWER, &phy_data);
+		em_read_phy_reg(hw, HV_LATECOL_UPPER, &phy_data);
+		em_read_phy_reg(hw, HV_LATECOL_LOWER, &phy_data);
+		em_read_phy_reg(hw, HV_COLC_UPPER, &phy_data);
+		em_read_phy_reg(hw, HV_COLC_LOWER, &phy_data);
+		em_read_phy_reg(hw, HV_DC_UPPER, &phy_data);
+		em_read_phy_reg(hw, HV_DC_LOWER, &phy_data);
+		em_read_phy_reg(hw, HV_TNCRS_UPPER, &phy_data);
+		em_read_phy_reg(hw, HV_TNCRS_LOWER, &phy_data);
+	}
 
 	if (hw->mac_type == em_ich8lan ||
 	    hw->mac_type == em_ich9lan ||
@@ -9122,7 +9475,8 @@ em_hv_phy_workarounds_ich8lan(struct em_hw *hw)
 	swfw = E1000_SWFW_PHY0_SM;
 
 	/* Set MDIO slow mode before any other MDIO access */
-	if (hw->phy_type == em_phy_82577) {
+	if (hw->phy_type == em_phy_82577 ||
+	    hw->phy_type == em_phy_82578) {
 		ret_val = em_set_mdio_slow_mode_hv(hw);
 		if (ret_val)
 			goto out;
@@ -9200,10 +9554,10 @@ em_hv_phy_workarounds_ich8lan(struct em_hw *hw)
 		 * Workaround for OEM (GbE) not operating after reset -
 		 * restart AN (twice)
 		 */
-		ret_val = em_write_phy_reg(hw, PHY_REG(768, 25), 0x0400);
+		ret_val = em_write_phy_reg(hw, PHY_REG(0, 25), 0x0400);
 		if (ret_val)
 			goto out;
-		ret_val = em_write_phy_reg(hw, PHY_REG(768, 25), 0x0400);
+		ret_val = em_write_phy_reg(hw, PHY_REG(0, 25), 0x0400);
 		if (ret_val)
 			goto out;
 	}
@@ -9229,6 +9583,61 @@ em_hv_phy_workarounds_ich8lan(struct em_hw *hw)
 	                                       PHY_REG(BM_PORT_CTRL_PAGE, 17),
 	                                       phy_data & 0x00FF);
 release:
+out:
+	return ret_val;
+}
+
+
+/**
+ *  em_link_stall_workaround_hv - Si workaround
+ *  @hw: pointer to the HW structure
+ *
+ *  This function works around a Si bug where the link partner can get
+ *  a link up indication before the PHY does.  If small packets are sent
+ *  by the link partner they can be placed in the packet buffer without
+ *  being properly accounted for by the PHY and will stall preventing
+ *  further packets from being received.  The workaround is to clear the
+ *  packet buffer after the PHY detects link up.
+ **/
+int32_t
+em_link_stall_workaround_hv(struct em_hw *hw)
+{
+	int32_t ret_val = E1000_SUCCESS;
+	uint16_t phy_data;
+
+	if (hw->phy_type != em_phy_82578)
+		goto out;
+
+	/* Do not apply workaround if in PHY loopback bit 14 set */
+	em_read_phy_reg(hw, PHY_CTRL, &phy_data);
+	if (phy_data & E1000_PHY_CTRL_LOOPBACK)
+		goto out;
+
+	/* check if link is up and at 1Gbps */
+	ret_val = em_read_phy_reg(hw, BM_CS_STATUS, &phy_data);
+	if (ret_val)
+		goto out;
+
+	phy_data &= BM_CS_STATUS_LINK_UP |
+		    BM_CS_STATUS_RESOLVED |
+		    BM_CS_STATUS_SPEED_MASK;
+
+	if (phy_data != (BM_CS_STATUS_LINK_UP |
+			 BM_CS_STATUS_RESOLVED |
+			 BM_CS_STATUS_SPEED_1000))
+		goto out;
+
+	msec_delay(200);
+
+	/* flush the packets in the fifo buffer */
+	ret_val = em_write_phy_reg(hw, HV_MUX_DATA_CTRL,
+	    HV_MUX_DATA_CTRL_GEN_TO_MAC | HV_MUX_DATA_CTRL_FORCE_SPEED);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, HV_MUX_DATA_CTRL,
+	    HV_MUX_DATA_CTRL_GEN_TO_MAC);
+
 out:
 	return ret_val;
 }

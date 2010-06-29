@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.42 2010/06/28 20:24:39 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.43 2010/06/29 19:14:09 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -1107,6 +1107,7 @@ struct em_ffvt_entry {
 #define E1000_WUPL     0x05900  /* Wakeup Packet Length - RW */
 #define E1000_WUPM     0x05A00  /* Wakeup Packet Memory - RO A */
 #define E1000_FFLT     0x05F00  /* Flexible Filter Length Table - RW Array */
+#define E1000_FCRTV_PCH  0x05F40  /* PCH Flow Control Refresh Timer Value */
 #define E1000_CRC_OFFSET 0x05F50  /* CRC Offset Register */
 #define E1000_HOST_IF  0x08800  /* Host Interface */
 #define E1000_FFMT     0x09000  /* Flexible Filter Mask Table - RW Array */
@@ -1307,6 +1308,7 @@ struct em_ffvt_entry {
 #define E1000_82542_WUPL     E1000_WUPL
 #define E1000_82542_WUPM     E1000_WUPM
 #define E1000_82542_FFLT     E1000_FFLT
+#define E1000_82542_FCRTV_PCH E1000_FCRTV_PCH
 #define E1000_82542_TDFH     0x08010
 #define E1000_82542_TDFT     0x08018
 #define E1000_82542_FFMT     E1000_FFMT
@@ -1546,7 +1548,8 @@ struct em_hw {
 #define E1000_CTRL_D_UD_EN  0x00002000  /* Dock/Undock enable */
 #define E1000_CTRL_D_UD_POLARITY 0x00004000 /* Defined polarity of Dock/Undock indication in SDP[0] */
 #define E1000_CTRL_FORCE_PHY_RESET 0x00008000 /* Reset both PHY ports, through PHYRST_N pin */
-#define E1000_CTRL_EXT_LINK_EN 0x00010000 /* enable link status from external LINK_0 and LINK_1 pins */
+#define E1000_CTRL_LANPHYPC_OVERRIDE 0x00010000 /* SW control of LANPHYPC */
+#define E1000_CTRL_LANPHYPC_VALUE    0x00020000 /* SW value of LANPHYPC */
 #define E1000_CTRL_EXT_PHYPDEN 0x00100000
 #define E1000_CTRL_SWDPIN0  0x00040000  /* SWDPIN 0 value */
 #define E1000_CTRL_SWDPIN1  0x00080000  /* SWDPIN 1 value */
@@ -1749,6 +1752,7 @@ struct em_hw {
 #define E1000_PHY_CTRL_NOND0A_GBE_DISABLE      0x00000008
 #define E1000_PHY_CTRL_GBE_DISABLE             0x00000040
 #define E1000_PHY_CTRL_B2B_EN                  0x00000080
+#define E1000_PHY_CTRL_LOOPBACK                0x00004000
 
 /* LED Control */
 #define E1000_LEDCTL_LED0_MODE_MASK       0x0000000F
@@ -2787,6 +2791,13 @@ struct em_host_command_info {
 #define I82577_PHY_CFG_ENABLE_CRS_ON_TX (1 << 15)
 #define I82577_PHY_CFG_ENABLE_DOWNSHIFT ((1 << 10) + (1 << 11))
 
+/* I82578 Specific Registers */
+#define I82578_PHY_ADDR_REG 29
+
+/* I82578 Downshift settings (Extended PHY Specific Control Register) */
+#define I82578_EPSCR_DOWNSHIFT_ENABLE          0x0020
+#define I82578_EPSCR_DOWNSHIFT_COUNTER_MASK    0x001C
+
 /* PHY Control Register */
 #define MII_CR_SPEED_SELECT_MSB 0x0040  /* bits 6,13: 10=1000, 01=100, 00=10 */
 #define MII_CR_COLL_TEST_ENABLE 0x0080  /* Collision test enable */
@@ -3010,10 +3021,6 @@ struct em_host_command_info {
 /* M88E1141 specific */
 #define M88E1000_EPSCR_TX_TIME_CTRL       0x0002 /* Add Delay */
 #define M88E1000_EPSCR_RX_TIME_CTRL       0x0080 /* Add Delay */
-
-/* I82578 specific */
-#define I82578_EPSCR_DOWNSHIFT_ENABLE          0x0020
-#define I82578_EPSCR_DOWNSHIFT_COUNTER_MASK    0x001C
 
 /* IGP01E1000 Specific Port Config Register - R/W */
 #define IGP01E1000_PSCFR_AUTO_MDIX_PAR_DETECT  0x0010
@@ -3481,15 +3488,6 @@ union ich8_hws_flash_regacc {
 #define E1000_82542_IMC1     E1000_IMC1
 #define E1000_82542_IMC2     E1000_IMC2
 
-/* OEM Bits Phy Register */
-#define HV_OEM_BITS		PHY_REG(768, 25)
-#define HV_OEM_BITS_LPLU	0x0004 /* Low Power Link Up */
-#define HV_OEM_BITS_GBE_DIS	0x0040 /* Gigabit Disable */
-#define HV_OEM_BITS_RESTART_AN	0x0400 /* Restart Auto-negotiation */
-
-#define HV_KMRN_MODE_CTRL	PHY_REG(769, 16)
-#define HV_KMRN_MDIO_SLOW	0x0400
-
 #define E1000_NVM_K1_CONFIG 0x1B /* NVM K1 Config Word */
 #define E1000_NVM_K1_ENABLE 0x1  /* NVM Enable K1 bit */
 
@@ -3514,5 +3512,66 @@ union ich8_hws_flash_regacc {
 #define E1000_EXTCNF_CTRL_EXT_CNF_POINTER_MASK   0x0FFF0000
 #define E1000_EXTCNF_CTRL_EXT_CNF_POINTER_SHIFT          16
 
+/* Hanksville definitions */
+#define HV_INTC_FC_PAGE_START   768
+
+#define HV_SCC_UPPER            PHY_REG(778, 16) /* Single Collision Count */
+#define HV_SCC_LOWER            PHY_REG(778, 17)
+#define HV_ECOL_UPPER           PHY_REG(778, 18) /* Excessive Collision Count */
+#define HV_ECOL_LOWER           PHY_REG(778, 19)
+#define HV_MCC_UPPER            PHY_REG(778, 20) /* Multiple Collision Count */
+#define HV_MCC_LOWER            PHY_REG(778, 21)
+#define HV_LATECOL_UPPER        PHY_REG(778, 23) /* Late Collision Count */
+#define HV_LATECOL_LOWER        PHY_REG(778, 24)
+#define HV_COLC_UPPER           PHY_REG(778, 25) /* Collision Count */
+#define HV_COLC_LOWER           PHY_REG(778, 26)
+#define HV_DC_UPPER             PHY_REG(778, 27) /* Defer Count */
+#define HV_DC_LOWER             PHY_REG(778, 28)
+#define HV_TNCRS_UPPER          PHY_REG(778, 29) /* Transmit with no CRS */
+#define HV_TNCRS_LOWER          PHY_REG(778, 30)
+
+/* OEM Bits Phy Register */
+#define HV_OEM_BITS		PHY_REG(768, 25)
+#define HV_OEM_BITS_LPLU	0x0004 /* Low Power Link Up */
+#define HV_OEM_BITS_GBE_DIS	0x0040 /* Gigabit Disable */
+#define HV_OEM_BITS_RESTART_AN	0x0400 /* Restart Auto-negotiation */
+
+#define HV_MUX_DATA_CTRL               PHY_REG(776, 16)
+#define HV_MUX_DATA_CTRL_GEN_TO_MAC    0x0400
+#define HV_MUX_DATA_CTRL_FORCE_SPEED   0x0004
+
+#define HV_KMRN_MODE_CTRL	PHY_REG(769, 16)
+#define HV_KMRN_MDIO_SLOW	0x0400
+
+/* BM/HV Specific Registers */
+#define BM_PORT_CTRL_PAGE                 769
+#define BM_PCIE_PAGE                      770
+#define BM_WUC_PAGE                       800
+#define BM_WUC_ADDRESS_OPCODE             0x11
+#define BM_WUC_DATA_OPCODE                0x12
+#define BM_WUC_ENABLE_PAGE                BM_PORT_CTRL_PAGE
+#define BM_WUC_ENABLE_REG                 17
+#define BM_WUC_ENABLE_BIT                 (1 << 2)
+#define BM_WUC_HOST_WU_BIT                (1 << 4)
+
+/* BM PHY Copper Specific Status */
+#define BM_CS_STATUS                      17
+#define BM_CS_STATUS_ENERGY_DETECT        0x0010 /* Energy Detect Status */
+#define BM_CS_STATUS_LINK_UP              0x0400
+#define BM_CS_STATUS_RESOLVED             0x0800
+#define BM_CS_STATUS_SPEED_MASK           0xC000
+#define BM_CS_STATUS_SPEED_1000           0x8000
+
+#define PHY_UPPER_SHIFT                   21
+#define BM_PHY_REG(page, reg) \
+        (((reg) & MAX_PHY_REG_ADDRESS) |\
+         (((page) & 0xFFFF) << PHY_PAGE_SHIFT) |\
+         (((reg) & ~MAX_PHY_REG_ADDRESS) << (PHY_UPPER_SHIFT - PHY_PAGE_SHIFT)))
+#define BM_PHY_REG_PAGE(offset) \
+        ((uint16_t)(((offset) >> PHY_PAGE_SHIFT) & 0xFFFF))
+#define BM_PHY_REG_NUM(offset) \
+        ((uint16_t)(((offset) & MAX_PHY_REG_ADDRESS) |\
+         (((offset) >> (PHY_UPPER_SHIFT - PHY_PAGE_SHIFT)) &\
+                ~MAX_PHY_REG_ADDRESS)))
 
 #endif /* _EM_HW_H_ */
