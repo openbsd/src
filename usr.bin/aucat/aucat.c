@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.96 2010/06/25 07:32:05 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.97 2010/06/29 06:48:39 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -804,7 +804,7 @@ aucat_main(int argc, char **argv)
 			dnext = d->next;
 			if (!dev_run(d))
 				goto fatal;
-			if (!ctl_idle(d->midi))
+			if (d->pstate != DEV_CLOSED && !ctl_idle(d->midi))
 				active = 1;
 		}
 		if (dev_list == NULL)
