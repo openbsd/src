@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.43 2010/06/29 00:28:14 tedu Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.44 2010/06/29 19:09:11 tedu Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -59,11 +59,8 @@ int
 sys_getpid(struct proc *p, void *v, register_t *retval)
 {
 
-	*retval = p->p_p->ps_mainproc->p_pid;
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS)
+	retval[0] = p->p_p->ps_mainproc->p_pid;
 	retval[1] = p->p_p->ps_mainproc->p_pptr->p_pid;
-#endif
 	return (0);
 }
 
@@ -145,11 +142,8 @@ int
 sys_getuid(struct proc *p, void *v, register_t *retval)
 {
 
-	*retval = p->p_cred->p_ruid;
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS)
+	retval[0] = p->p_cred->p_ruid;
 	retval[1] = p->p_ucred->cr_uid;
-#endif
 	return (0);
 }
 
@@ -178,10 +172,8 @@ int
 sys_getgid(struct proc *p, void *v, register_t *retval)
 {
 
-	*retval = p->p_cred->p_rgid;
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS)
+	retval[0] = p->p_cred->p_rgid;
 	retval[1] = p->p_ucred->cr_gid;
-#endif
 	return (0);
 }
 
