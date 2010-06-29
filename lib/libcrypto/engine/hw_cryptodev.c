@@ -64,7 +64,7 @@ ENGINE_load_cryptodev(void)
 #include <errno.h>
 #include <string.h>
 
-#ifdef __i386__
+#if defined(__i386__) || defined(__amd64__)
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
@@ -262,9 +262,9 @@ get_cryptodev_ciphers(const int **cnids)
 	}
 	close(fd);
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__amd64__)
 	/*
-	 * On i386, always check for the VIA C3 AES instructions;
+	 * Always check for the VIA C3 AES instructions;
 	 * even if /dev/crypto is disabled.
 	 */
 	if (check_viac3aes() >= 1) {
@@ -602,17 +602,19 @@ EVP_CIPHER cryptodev_aes_256_cbc = {
 	NULL
 };
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__amd64__)
 
 static inline void
 viac3_xcrypt_cbc(int *cw, const void *src, void *dst, void *key, int rep,
     void *iv)
 {
 #ifdef notdef
-	printf("cw %x[%x %x %x %x] src %x dst %x key %x rep %x iv %x\n",
+	printf("cw %p[%x %x %x %x] src %p dst %p key %p rep %x iv %p\n",
 	    cw, cw[0], cw[1], cw[2], cw[3],
 	    src, dst, key, rep, iv);
 #endif
+#if defined(__i386__)
+
 	/*
 	 * Clear bit 30 of EFLAGS.
 	 */
@@ -625,6 +627,17 @@ viac3_xcrypt_cbc(int *cw, const void *src, void *dst, void *key, int rep,
 	__asm __volatile("pushl %%ebx; movl %0, %%ebx; rep xcrypt-cbc; popl %%ebx" :
 	    : "m" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
+#else
+
+	/*
+	 * Clear bit 30 of EFLAGS.
+	 */
+	__asm __volatile("pushfq; popfq");
+	__asm __volatile("rep xcrypt-cbc" :
+	    : "b" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+	    : "memory", "cc");
+#endif
+
 }
 
 #define ISUNALIGNED(x)	((long)(x)) & 15
@@ -778,7 +791,7 @@ check_viac3aes(void)
 	}
 	return (value);
 }
-#endif /* __i386__ */
+#endif /* __i386__ || __amd64__ */
 
 /*
  * Registered by the ENGINE when used to find out how to deal with
