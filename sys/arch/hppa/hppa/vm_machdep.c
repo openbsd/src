@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.71 2010/06/29 00:50:40 jsing Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.72 2010/06/29 04:03:22 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -41,6 +41,7 @@
 #include <sys/pool.h>
 
 #include <machine/cpufunc.h>
+#include <machine/fpu.h>
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 
@@ -100,7 +101,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void (*func)(void *);
 	void *arg;
 {
-	extern u_int fpu_enable;
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -109,11 +109,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (round_page(sizeof(struct user)) > NBPG)
 		panic("USPACE too small for user");
 #endif
-	if (p1->p_md.md_regs->tf_cr30 == curcpu()->ci_fpu_state) {
-		mtctl(fpu_enable, CR_CCR);
-		fpu_save(curcpu()->ci_fpu_state);
-		mtctl(0, CR_CCR);
-	}
+	fpu_proc_save(p1);
 
 	pcbp = &p2->p_addr->u_pcb;
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
@@ -178,13 +174,10 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
-		fpu_exit();
-		curcpu()->ci_fpu_state = 0;
-	}
+	fpu_proc_flush(p);
+
 	pool_put(&hppa_fppl, pcb->pcb_fpregs);
 
 	pmap_deactivate(p);

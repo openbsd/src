@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.17 2010/06/29 00:50:40 jsing Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.18 2010/06/29 04:03:21 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -34,6 +34,7 @@
 #include <sys/user.h>
 
 #include <machine/cpufunc.h>
+#include <machine/fpu.h>
 #include <machine/frame.h>
 
 int
@@ -86,13 +87,8 @@ process_read_fpregs(p, fpregs)
 	struct proc *p;
 	struct fpreg *fpregs;
 {
-	extern u_int fpu_enable;
+	fpu_proc_save(p);
 
-	if (p->p_md.md_regs->tf_cr30 == curcpu()->ci_fpu_state) {
-		mtctl(fpu_enable, CR_CCR);
-		fpu_save(curcpu()->ci_fpu_state);
-		mtctl(0, CR_CCR);
-	}
 	bcopy(p->p_addr->u_pcb.pcb_fpregs, fpregs, 32 * 8);
 
 	return (0);
@@ -150,10 +146,7 @@ process_write_fpregs(p, fpregs)
 	struct proc *p;
 	struct fpreg *fpregs;
 {
-	if (p->p_md.md_regs->tf_cr30 == curcpu()->ci_fpu_state) {
-		fpu_exit();
-		curcpu()->ci_fpu_state = 0;
-	}
+	fpu_proc_flush(p);
 
 	bcopy(fpregs, p->p_addr->u_pcb.pcb_fpregs, 32 * 8);
 

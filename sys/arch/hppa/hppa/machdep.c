@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.190 2010/06/29 00:50:40 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.191 2010/06/29 04:03:21 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -65,6 +65,7 @@
 #include <machine/cpufunc.h>
 #include <machine/autoconf.h>
 #include <machine/kcore.h>
+#include <machine/fpu.h>
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
@@ -1220,10 +1221,7 @@ setregs(p, pack, stack, retval)
 	copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP), sizeof(register_t));
 
 	/* reset any of the pending FPU exceptions */
-	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
-		fpu_exit();
-		curcpu()->ci_fpu_state = 0;
-	}
+	fpu_proc_flush(p);
 	pcb->pcb_fpregs->fpr_regs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
 	pcb->pcb_fpregs->fpr_regs[2] = 0;
@@ -1245,7 +1243,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	extern u_int fpu_enable;
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -1261,13 +1258,8 @@ sendsig(catcher, sig, mask, code, type, val)
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
 
-	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
-		mtctl(fpu_enable, CR_CCR);
-		fpu_save(curcpu()->ci_fpu_state);
-		/* fpu_curpcb = 0; only needed if fpregs are preset */
-		mtctl(0, CR_CCR);
-	}
+	/* Save the FPU context first. */
+	fpu_proc_save(p);
 
 	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
@@ -1392,11 +1384,8 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 
-	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
-		fpu_exit();
-		curcpu()->ci_fpu_state = 0;
-	}
+	/* Flush the FPU context first. */
+	fpu_proc_flush(p);
 
 	if ((error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc)))
 		return (error);
@@ -1471,7 +1460,6 @@ void
 hpux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
     union sigval val)
 {
-	extern u_int fpu_enable;
 	struct proc *p = curproc;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf = p->p_md.md_regs;
@@ -1485,13 +1473,8 @@ hpux_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 		printf("hpux_sendsig: %s[%d] sig %d catcher %p\n",
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
-	/* flush the FPU ctx first */
-	if (tf->tf_cr30 == curcpu()->ci_fpu_state) {
-		mtctl(fpu_enable, CR_CCR);
-		fpu_save(curcpu()->ci_fpu_state);
-		curcpu()->ci_fpu_state = 0;
-		mtctl(0, CR_CCR);
-	}
+	/* Save the FPU context first. */
+	fpu_proc_save(p);
 
 	bzero(&hsc, sizeof hsc);
 	hsc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
