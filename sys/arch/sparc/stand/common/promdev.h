@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.h,v 1.3 2003/08/14 17:13:57 deraadt Exp $	*/
+/*	$OpenBSD: promdev.h,v 1.4 2010/06/29 21:33:54 miod Exp $	*/
 /*	$NetBSD: promdev.h,v 1.3 1995/09/18 21:31:50 pk Exp $ */
 
 /*
@@ -41,11 +41,11 @@ struct promdata {
 #define DT_NET		2
 #define DT_BYTE		3
 	/* Hooks for netif.c */
-	int	(*xmit)(struct promdata *, void *, size_t);
-	int	(*recv)(struct promdata *, void *, size_t);
+	ssize_t	(*xmit)(struct promdata *, void *, size_t);
+	ssize_t	(*recv)(struct promdata *, void *, size_t);
 };
 
-#define LOADADDR	((caddr_t)0x4000)
+#define PROM_LOADADDR	0x4000
 #define DDB_MAGIC0	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
 #define DDB_MAGIC1	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('1') )
 #define DDB_MAGIC	DDB_MAGIC0
@@ -58,14 +58,20 @@ extern int	hz;
 extern int	cputyp, nbpg, pgofset, pgshift;
 extern int	debug;
 
-extern void	prom_init(void);
+void	prom_init(void);
+struct idprom *prom_getidprom(void);
+void	prom_interpret(char *);
 
 /* Note: dvma_*() routines are for "oldmon" machines only */
-extern void	dvma_init(void);	
-extern char	*dvma_mapin(char *, size_t);
-extern char	*dvma_mapout(char *, size_t);
-extern char	*dvma_alloc(int);
-extern void	dvma_free(char *, int);
+void	dvma_init(void);	
+char	*dvma_mapin(char *, size_t);
+char	*dvma_mapout(char *, size_t);
+char	*dvma_alloc(int);
+void	dvma_free(char *, int);
+
+int	mmu_init(void);
+extern int	(*pmap_map)(vaddr_t, paddr_t, psize_t);
+extern int	(*pmap_extract)(vaddr_t, paddr_t *);
 
 /*
  * duplicates from pmap.c for mapping device on "oldmon" machines.
@@ -80,8 +86,8 @@ extern void	dvma_free(char *, int);
 #define setsegmap(va, pmeg)	(cputyp == CPU_SUN4C \
 					? stba(va, ASI_SEGMAP, pmeg) \
 					: stha(va, ASI_SEGMAP, pmeg))
-#define getregmap(va)		((unsigned)lduha(va+2, ASI_REGMAP) >> 8)
-#define setregmap(va, smeg)	stha(va+2, ASI_REGMAP, (smeg << 8))
+#define getregmap(va)		((unsigned)lduha((va) + 2, ASI_REGMAP) >> 8)
+#define setregmap(va, smeg)	stha((va) + 2, ASI_REGMAP, (smeg << 8))
 
 #define getpte(va)		lda(va, ASI_PTE)
 #define setpte(va, pte)		sta(va, ASI_PTE, pte)

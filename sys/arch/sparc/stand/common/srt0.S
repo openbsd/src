@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 2002/08/11 12:20:43 art Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.3 2010/06/29 21:33:54 miod Exp $	*/
 /*	$NetBSD: srt0.S,v 1.5.4.2 1996/07/17 01:51:46 jtc Exp $	*/
 
 /*
@@ -62,11 +62,19 @@ start:
 	save	%o1, -CCFSZ, %sp
 
 	/*
-	 * Relocate.
+	 * Find which address we are at.
 	 */
 1:	call	2f
+	 sethi	%hi(1b), %l0
+2:	or	%l0, %lo(1b), %l0
+	cmp	%l0, %o7		! %o7 contains actual address of 1b
+	beq	4f			! already there, no need to relocate
 	 nop
-2:	add	%o7, (start-1b), %l0
+
+	/*
+	 * Relocate.
+	 */
+	add	%o7, (start-1b), %l0
 	set	start, %l1
 	set	_C_LABEL(end), %o0
 	sub	%o0, %l1, %l2		! length
@@ -102,8 +110,17 @@ start:
 	 */
 	set     _C_LABEL(edata), %o0	! bzero(edata, end - edata)
 	set     _C_LABEL(end), %o1
-	call    _C_LABEL(bzero)
-	 sub    %o1, %o0, %o1
+	/* note: bzero() expanded inline for compactness */
+	subcc	%o1, %o0, %o1
+	bz	2f			! in case there is no BSS
+
+	srl	%o1, 2, %o1		! assume edata and end are aligned
+1:
+	st	%g0, [%o0]		! while (n--)
+	subcc	%o1, 1, %o1		!	*p++ = 0;
+	bnz	1b
+	 add	%o0, 4, %o0
+2:
 
 	/*
 	 * Enable interrupts, but only above level 11. This enables "L1-A",
@@ -156,45 +173,3 @@ start:
 
 	ret
 	 restore
-
-
-#ifdef TIGHT
-
-/*
- * XXX - Space saving .div & .rem routines (small & non-negative numbres only)
- */
-	.align	4
-	.global .div, .udiv
-! int n = 0; while (a >= b) { a -= b; n++; }; return n;
-.div:
-.udiv:
-	cmp	%o0, %o1
-	bl	2f
-	 mov	0, %o5
-1:
-	sub	%o0, %o1, %o0
-	cmp	%o0, %o1
-	bge	1b
-	 add	%o5, 1, %o5
-2:
-	retl
-	 mov	%o5, %o0
-
-	.align	4
-	.global .rem, .urem
-! while (a>=b) a -= b; return a;
-.rem:
-.urem:
-	cmp	%o0, %o1
-	bl	2f
-	 nop
-	sub	%o0, %o1, %o0
-1:
-	cmp	%o0, %o1
-	bge,a	1b
-	 sub	%o0, %o1, %o0
-2:
-	retl
-	 nop
-
-#endif /* TIGHT */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.5 2003/11/14 19:05:36 miod Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.6 2010/06/29 21:33:54 miod Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.2 1997/09/14 19:28:17 pk Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 {
 	char	*dummy;
 	size_t	n;
-	register void (*entry)(caddr_t) = (void (*)(caddr_t))LOADADDR;
+	register void (*entry)(caddr_t) = (void (*)(caddr_t))PROM_LOADADDR;
 
 	prom_init();
 	io.f_flags = F_RAW;
@@ -75,9 +75,9 @@ main(int argc, char *argv[])
 		panic("%s: can't open device", progname);
 	}
 
-	(void)loadboot(&io, LOADADDR);
+	(void)loadboot(&io, (caddr_t)PROM_LOADADDR);
 	(io.f_dev->dv_close)(&io);
-	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec);
+	(*entry)(cputyp == CPU_SUN4 ? (caddr_t)PROM_LOADADDR : (caddr_t)promvec);
 	_rtt();
 }
 

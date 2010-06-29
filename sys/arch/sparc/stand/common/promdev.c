@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.9 2003/08/14 17:13:57 deraadt Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.10 2010/06/29 21:33:54 miod Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -62,9 +62,14 @@ ssize_t	prom0_recv(struct promdata *, void *, size_t);
 
 static char	*prom_mapin(u_long, int, int);
 
+int	prom_findnode(int, const char *);
+int	prom_findroot(void);
+int	prom_firstchild(int);
 int	getdevtype(int, char *);
-int	getprop(int, char *, void *, int);
-char	*getpropstring(int, char *);
+int	prom_getprop(int, char *, void *, int);
+int	prom_getproplen(int, char *);
+char	*prom_getpropstring(int, char *);
+int	prom_nextsibling(int);
 
 static void	prom0_fake(void);
 
@@ -97,68 +102,6 @@ int	prom_boothow;
 
 struct	promvec	*promvec;
 static int	saveecho;
-
-void
-prom_init()
-{
-	register char	*ap, *cp, *dp;
-
-	if (cputyp == CPU_SUN4)
-		prom0_fake();
-
-	if (promvec->pv_romvec_vers >= 2) {
-		static char filestore[16];
-
-		prom_bootdevice = *promvec->pv_v2bootargs.v2_bootpath;
-
-#ifndef BOOTXX
-		cp = *promvec->pv_v2bootargs.v2_bootargs;
-		dp = prom_bootfile = filestore;
-		while (*cp && *cp != '-')
-			*dp++ = *cp++;
-		while (dp > prom_bootfile && *--dp == ' ');
-		*++dp = '\0';
-		ap = cp;
-#endif
-	} else {
-		static char bootstore[16];
-		dp = prom_bootdevice = bootstore;
-		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
-		while (*cp) {
-			*dp++ = *cp;
-			if (*cp++ == ')')
-				break;
-		}
-		*dp = '\0';
-#ifndef BOOTXX
-		prom_bootfile = (*promvec->pv_v0bootargs)->ba_kernel;
-		ap = (*promvec->pv_v0bootargs)->ba_argv[1];
-#endif
-	}
-
-#ifndef BOOTXX
-	if (ap == NULL || *ap != '-')
-		return;
-
-	while (*ap) {
-		switch (*ap++) {
-		case 'a':
-			prom_boothow |= RB_ASKNAME;
-			break;
-		case 'c':
-			prom_boothow |= RB_CONFIG;
-			break;
-		case 'd':
-			prom_boothow |= RB_KDB;
-			debug = 1;
-			break;
-		case 's':
-			prom_boothow |= RB_SINGLE;
-			break;
-		}
-	}
-#endif
-}
 
 int
 devopen(f, fname, file)
@@ -290,7 +233,7 @@ prom0_strategy(devdata, flag, dblk, size, buf, rsize)
 #endif
 
 	dmabuf = dvma_mapin(buf, size);
-	
+
 	si->si_bn = dblk;
 	si->si_ma = dmabuf;
 	si->si_cc = size;
@@ -419,7 +362,7 @@ getchar()
 {
 	char c;
 	register int n;
- 
+
 	if (promvec->pv_romvec_vers > 2)
 		while ((n = (*promvec->pv_v2devops.v2_read)
 			(*promvec->pv_v2bootargs.v2_fd0, (caddr_t)&c, 1)) != 1);
@@ -431,7 +374,7 @@ getchar()
                 if (CPU_ISSUN4) {
                         saveecho = *(oldpvec->echo);
                         *(oldpvec->echo) = 0;
-                }       
+                }
                 c = (*promvec->pv_getchar)();
                 if (CPU_ISSUN4)
                         *(oldpvec->echo) = saveecho;
@@ -441,7 +384,7 @@ getchar()
 		c = '\n';
 	return (c);
 }
- 
+
 int
 cngetc(void)
 {
@@ -453,7 +396,7 @@ peekchar(void)
 {
 	char c;
 	register int n;
- 
+
 	if (promvec->pv_romvec_vers > 2) {
 		n = (*promvec->pv_v2devops.v2_read)
 			(*promvec->pv_v2bootargs.v2_fd0, (caddr_t)&c, 1);
@@ -484,7 +427,7 @@ void
 putchar(c)
 	int c;
 {
- 
+
 	if (c == '\n')
 		pv_putchar('\r');
 	pv_putchar(c);
@@ -519,8 +462,8 @@ getticks(void)
 	return *(promvec->pv_ticks);
 }
 
-void
-prom_getether(int fd, u_char *ea)
+struct idprom *
+prom_getidprom()
 {
 	if (cputyp == CPU_SUN4) {
 		static struct idprom sun4_idprom;
@@ -536,7 +479,18 @@ prom_getether(int fd, u_char *ea)
 				*dst++ = x;
 			} while (--len > 0);
 		}
-		bcopy(sun4_idprom.id_ether, ea, 6);
+
+		return &sun4_idprom;
+	} else
+		return NULL;
+}
+
+void
+prom_getether(int fd, u_char *ea)
+{
+	if (cputyp == CPU_SUN4) {
+		struct idprom *idp = prom_getidprom();
+		bcopy(idp->id_ether, ea, 6);
 	} else if (promvec->pv_romvec_vers <= 2) {
 		(void)(*promvec->pv_enaddr)(fd, (char *)ea);
 	} else {
@@ -546,7 +500,6 @@ prom_getether(int fd, u_char *ea)
 	}
 }
 
-
 /*
  * A number of well-known devices on sun4s.
  */
@@ -555,7 +508,7 @@ static struct dtab {
 	int	type;
 } dtab[] = {
 	{ "sd",	DT_BLOCK },
-	{ "st",	DT_BLOCK },
+	{ "st",	DT_BYTE },
 	{ "xd",	DT_BLOCK },
 	{ "xy",	DT_BLOCK },
 	{ "fd",	DT_BLOCK },
@@ -571,7 +524,7 @@ getdevtype(fd, name)
 {
 	if (promvec->pv_romvec_vers >= 2) {
 		int node = (*promvec->pv_v2devops.v2_fd_phandle)(fd);
-		char *cp = getpropstring(node, "device_type");
+		char *cp = prom_getpropstring(node, "device_type");
 		if (strcmp(cp, "block") == 0)
 			return DT_BLOCK;
 		else if (strcmp(cp, "network") == 0)
@@ -592,12 +545,38 @@ getdevtype(fd, name)
 /*
  * OpenPROM nodes & property routines (from <sparc/autoconf.c>).
  */
+
 int
-getprop(node, name, buf, bufsiz)
+prom_findnode(int first, const char *name)
+{
 	int node;
-	char *name;
-	void *buf;
-	register int bufsiz;
+
+	for (node = first; node != 0; node = prom_nextsibling(node))
+		if (strcmp(prom_getpropstring(node, "name"), name) == 0)
+			return (node);
+	return (0);
+}
+
+int
+prom_findroot()
+{
+	static int rootnode;
+	int node;
+
+	if ((node = rootnode) == 0 && (node = prom_nextsibling(0)) == 0)
+		panic("no PROM root device");
+	rootnode = node;
+	return (node);
+}
+
+int
+prom_firstchild(int node)
+{
+	return promvec->pv_nodeops->no_child(node);
+}
+
+int
+prom_getprop(int node, char *name, void *buf, int bufsiz)
 {
 	register struct nodeops *no;
 	register int len;
@@ -613,26 +592,211 @@ getprop(node, name, buf, bufsiz)
 	return (len);
 }
 
+int
+prom_getproplen(int node, char *name)
+{
+	return promvec->pv_nodeops->no_proplen(node, name);
+}
+
 /*
  * Return a string property.  There is a (small) limit on the length;
  * the string is fetched into a static buffer which is overwritten on
  * subsequent calls.
  */
 char *
-getpropstring(node, name)
-	int node;
-	char *name;
+prom_getpropstring(int node, char *name)
 {
 	register int len;
 	static char stringbuf[64];
 
-	len = getprop(node, name, (void *)stringbuf, sizeof stringbuf - 1);
+	len = prom_getprop(node, name, (void *)stringbuf, sizeof stringbuf - 1);
 	if (len == -1)
 		len = 0;
 	stringbuf[len] = '\0';	/* usually unnecessary */
 	return (stringbuf);
 }
+
+int
+prom_nextsibling(int node)
+{
+	return (promvec->pv_nodeops->no_nextnode(node));
+}
+
+void
+prom_interpret(char *s)
+{
+	if (promvec->pv_romvec_vers < 2)
+		promvec->pv_fortheval.v0_eval(strlen(s), s);
+	else
+		promvec->pv_fortheval.v2_eval(s);
+}
+
+int
+prom_makememarr(struct memarr *ap, u_int xmax, int which)
+{
+	struct v0mlist *mp;
+	int node, n;
+	char *prop;
+
+	if (which != MEMARR_AVAILPHYS && which != MEMARR_TOTALPHYS)
+		panic("makememarr");
+
+	if (CPU_ISSUN4) {
+		struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
+		if (ap != NULL && xmax != 0) {
+			ap[0].addr_hi = 0;
+			ap[0].addr_lo = 0;
+			ap[0].len = which == MEMARR_AVAILPHYS ?
+			    *oldpvec->memoryAvail : *oldpvec->memorySize;
+		}
+		return 1;
+	}
+
+	switch (n = promvec->pv_romvec_vers) {
+	case 0:
+		/*
+		 * Version 0 PROMs use a linked list to describe these
+		 * guys.
+		 */
+		mp = which == MEMARR_AVAILPHYS ?
+		    *promvec->pv_v0mem.v0_physavail :
+		    *promvec->pv_v0mem.v0_phystot;
+
+		for (n = 0; mp != NULL; mp = mp->next, n++) {
+			if (ap == NULL || n >= xmax)
+				continue;
+			ap->addr_hi = 0;
+			ap->addr_lo = (u_int)mp->addr;
+			ap->len = mp->nbytes;
+			ap++;
+		}
+		break;
+	default:
+		printf("makememarr: hope version %d PROM is like version 2\n",
+		    n);
+		/* FALLTHROUGH */
+	case 3:
+	case 2:
+		/*
+		 * Version 2 PROMs use a property array to describe them.
+		 */
+		if ((node = prom_findnode(prom_firstchild(prom_findroot()),
+		    "memory")) == 0)
+			panic("makememarr: cannot find \"memory\" node");
+		prop = which == MEMARR_AVAILPHYS ? "available" : "reg";
+		n = prom_getproplen(node, prop) / sizeof(struct memarr);
+		if (ap != NULL) {
+			if (prom_getprop(node, prop, ap,
+			    xmax * sizeof(struct memarr)) <= 0)
+				panic("makememarr: cannot get property");
+		}
+		break;
+	}
+
+	if (n <= 0)
+		panic("makememarr: no memory found");
+	return (n);
+}
 #endif /* BOOTXX */
+
+void
+prom_init()
+{
+	char	*ap, *cp, *dp;
+#ifndef BOOTXX
+	int node;
+#endif
+
+	if (cputyp == CPU_SUN4) {
+		prom0_fake();
+		dvma_init();
+	}
+
+	if (promvec->pv_romvec_vers >= 2) {
+		static char filestore[16];
+
+		prom_bootdevice = *promvec->pv_v2bootargs.v2_bootpath;
+
+#ifndef BOOTXX
+		cp = *promvec->pv_v2bootargs.v2_bootargs;
+		dp = prom_bootfile = filestore;
+		while (*cp && *cp != '-')
+			*dp++ = *cp++;
+		while (dp > prom_bootfile && *--dp == ' ');
+		*++dp = '\0';
+		ap = cp;
+#endif
+	} else {
+		static char bootstore[16];
+		dp = prom_bootdevice = bootstore;
+		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
+		while (*cp) {
+			*dp++ = *cp;
+			if (*cp++ == ')')
+				break;
+		}
+		*dp = '\0';
+#ifndef BOOTXX
+		prom_bootfile = (*promvec->pv_v0bootargs)->ba_kernel;
+		ap = (*promvec->pv_v0bootargs)->ba_argv[1];
+#endif
+	}
+
+#ifndef BOOTXX
+	if (ap != NULL && *ap == '-') {
+		while (*ap) {
+			switch (*ap++) {
+			case 'a':
+				prom_boothow |= RB_ASKNAME;
+				break;
+			case 'c':
+				prom_boothow |= RB_CONFIG;
+				break;
+			case 'd':
+				prom_boothow |= RB_KDB;
+				debug = 1;
+				break;
+			case 's':
+				prom_boothow |= RB_SINGLE;
+				break;
+			}
+		}
+	}
+#endif
+
+#ifndef BOOTXX
+	/*
+	 * Find out what type of machine we're running on.
+	 *
+	 * This process is actually started in srt0.S, which has discovered
+	 * the minimal set of machine specific parameters for the 1st-level
+	 * boot program (bootxx) to run. The page size has already been set
+	 * and the CPU type is either CPU_SUN4 or CPU_SUN4C.
+	 */
+
+	if (cputyp == CPU_SUN4)
+		return;
+
+	/*
+	 * We have SUN4C, SUN4M or SUN4D.
+	 * Use the PROM `compatible' property to determine which.
+	 * Absence of the `compatible' property means `sun4c'.
+	 */
+
+	node = prom_findroot();
+	cp = prom_getpropstring(node, "compatible");
+	if (*cp == '\0' || strcmp(cp, "sun4c") == 0)
+		cputyp = CPU_SUN4C;
+	else if (strcmp(cp, "sun4m") == 0)
+		cputyp = CPU_SUN4M;
+#ifdef CPU_SUN4D
+	else if (strcmp(cp, "sun4d") == 0)
+		cputyp = CPU_SUN4D;
+#endif
+	else
+		printf("Unknown CPU type (compatible=`%s')\n", cp);
+#endif
+}
 
 /*
  * Old monitor routines
@@ -670,8 +834,6 @@ prom0_iopen(pd)
 	printf("d_devtype=%d\n", dip->d_devtype);
 	printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
 #endif
-
-	dvma_init();
 
 	si = &prom_si;
 	bzero((caddr_t)si, sizeof(*si));
@@ -756,7 +918,7 @@ static struct mapinfo {
 	{ MAP_MAINMEM,   PG_OBMEM, 0 },
 	{ MAP_OBIO,      PG_OBIO,  0 },
 	{ MAP_MBMEM,     PG_VME16, 0xFF000000 },
-	{ MAP_MBIO,      PG_VME16, 0xFFFF0000 }, 
+	{ MAP_MBIO,      PG_VME16, 0xFFFF0000 },
 	{ MAP_VME16A16D, PG_VME16, 0xFFFF0000 },
 	{ MAP_VME16A32D, PG_VME32, 0xFFFF0000 },
 	{ MAP_VME24A16D, PG_VME16, 0xFF000000 },

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2007/11/27 21:52:30 martin Exp $
+#	$OpenBSD: Makefile,v 1.17 2010/06/29 21:33:54 miod Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 PROG=	boot
@@ -8,16 +8,15 @@ INSTALL_STRIP=
 S=	${.CURDIR}/../../../..
 
 .PATH:	${.CURDIR}/../common
-SRCS=	srt0.S conf.c dvma.c net.c netif_sun.c promdev.c version.c
+SRCS=	srt0.S conf.c dvma.c mmu.c net.c netif_sun.c promdev.c version.c
 
-SRCS+=	boot.c loadfile.c
+SRCS+=	boot.c loadfile_sparc.c
 
 .PATH:	${S}/lib/libkern/arch/sparc ${S}/lib/libkern
 SRCS+=	bzero.S strlen.c mul.S umul.S strcmp.c sdiv.S urem.S udiv.S rem.S
 
 CFLAGS=	-O2 -I${.CURDIR}/../common -I${.CURDIR}/../../../../arch \
-	-I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa ${DEFS} \
-	-DSPARC_BOOT_AOUT -DSPARC_BOOT_ELF
+	-I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa ${DEFS}
 
 CLEANFILES+=${PROG}.aout ${PROG}.elf elfclean
 LIBS=${LIBSA} ${LIBZ}

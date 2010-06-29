@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.3 2003/08/14 17:13:57 deraadt Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.4 2010/06/29 21:33:54 miod Exp $	*/
 /*	$NetBSD: dvma.c,v 1.2 1995/09/17 00:50:56 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,33 +31,50 @@
  */
 
 /*
- * The easiest way to deal with the need for DVMA mappings is
- * to just map the entire third megabyte of RAM into DVMA space.
- * That way, dvma_mapin can just compute the DVMA alias address,
- * and dvma_mapout does nothing.  Note that this assumes all
- * standalone programs stay in the range SA_MIN_VA .. SA_MAX_VA
+ * The easiest way to deal with the need for DVMA mappings is to just
+ * map the entire megabyte of RAM where we are loaded into DVMA space.
+ * That way, dvma_mapin can just compute the DVMA alias address, and
+ * dvma_mapout does nothing.  Note that this assumes all standalone
+ * programs stay in the range `base_va' .. `base_va + DVMA_MAPLEN'
  */
 
 #include <sys/param.h>
 #include <machine/pte.h>
 #include <machine/ctlreg.h>
 
-#include <sparc/stand/common/promdev.h>
+#include <sparc/sparc/asm.h>
 
 #define	DVMA_BASE	0xFFF00000
 #define DVMA_MAPLEN	0xE0000	/* 1 MB - 128K (save MONSHORTSEG) */
 
-#define SA_MIN_VA	(RELOC - 0x40000)	/* XXX - magic constant */
-#define SA_MAX_VA	(SA_MIN_VA + DVMA_MAPLEN)
+static int base_va;
+
+/*
+ * This module is only used on sun4, so:
+ */
+#define getsegmap(va)		(lduha(va, ASI_SEGMAP))
+#define setsegmap(va, pmeg)	do stha(va, ASI_SEGMAP, pmeg); while(0)
 
 void
 dvma_init(void)
 {
-	register int segva, dmava;
+	u_int segva, dmava;
+	int nseg;
+	extern int start;
 
+	/*
+	 * Align our address base with the DVMA segment.
+	 * Allocate one DVMA segment to cover the stack, which
+	 * grows downward from `start'.
+	 */
 	dmava = DVMA_BASE;
-	for (segva = SA_MIN_VA; segva < SA_MAX_VA; segva += NBPSG) {
+	base_va = segva = (((int)&start) & -NBPSG) - NBPSG;
+
+	/* Then double-map the DVMA addresses */
+	nseg = (DVMA_MAPLEN + NBPSG - 1) >> SGSHIFT;
+	while (nseg-- > 0) {
 		setsegmap(dmava, getsegmap(segva));
+		segva += NBPSG;
 		dmava += NBPSG;
 	}
 }
@@ -68,13 +85,17 @@ dvma_init(void)
 char *
 dvma_mapin(char *addr, size_t len)
 {
-	register int va = (int)addr;
+	int va = (int)addr;
 
+	va -= base_va;
+
+#ifndef BOOTXX
 	/* Make sure the address is in the DVMA map. */
-	if ((va < SA_MIN_VA) || (va >= SA_MAX_VA))
+	if (va < 0 || va >= DVMA_MAPLEN)
 		panic("dvma_mapin");
+#endif
 
-	va += DVMA_BASE - SA_MIN_VA;
+	va += DVMA_BASE;
 
 	return ((char *)va);
 }
@@ -87,11 +108,15 @@ dvma_mapout(char *addr, size_t len)
 {
 	int va = (int)addr;
 
-	/* Make sure the address is in the DVMA map. */
-	if ((va < DVMA_BASE) || (va >= (DVMA_BASE + DVMA_MAPLEN)))
-		panic("dvma_mapout");
+	va -= DVMA_BASE;
 
-	va -= DVMA_BASE - SA_MIN_VA;
+#ifndef BOOTXX
+	/* Make sure the address is in the DVMA map. */
+	if (va < 0 || va >= DVMA_MAPLEN)
+		panic("dvma_mapout");
+#endif
+
+	va += base_va;
 
 	return ((char *)va);
 }
