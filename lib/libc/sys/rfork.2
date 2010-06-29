@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.24 2010/04/03 01:49:44 guenther Exp $
+.\"	$OpenBSD: rfork.2,v 1.25 2010/06/29 17:54:35 tedu Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2010 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt RFORK 2
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ Must be combined with
 .Dv RFMEM .
 Automatically enables
 .Dv RFNOWAIT .
-The kernel option RTHREADS must be enabled for this to succeed.
+The kern.rthreads sysctl must be enabled for this to succeed.
 .El
 .Pp
 .Xr fork 2
@@ -168,8 +168,7 @@ which is currently defined as 80 in
 .It Bq Er ENOTSUP
 The
 .Dv RFTHREAD
-flag was set but the kernel was not compiled with the RTHREADS
-kernel option.
+flag was set but the kern.rthreads sysctl was not enabled.
 .El
 .Sh SEE ALSO
 .Xr _exit 2 ,
