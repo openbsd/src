@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.9 2010/06/27 05:49:05 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.10 2010/06/29 21:04:42 reyk Exp $	*/
 /*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -58,6 +58,8 @@ int	 ca_getauth(struct iked *, struct imsg *);
 X509	*ca_by_subjectpubkey(X509_STORE *, u_int8_t *, size_t);
 X509	*ca_by_issuer(X509_STORE *, X509_NAME *, struct iked_static_id *);
 int	 ca_subjectpubkey_digest(X509 *, u_int8_t *, u_int *);
+int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
+	    void *, size_t);
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
 	    void *, size_t);
 struct ibuf *
@@ -320,7 +322,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	struct iked_static_id	 id;
 	u_int			 i;
 	struct iovec		 iov[2];
-	int			 iovcnt = 2, cmd;
+	int			 iovcnt = 2, cmd, ret = 0;
 
 	ptr = (u_int8_t *)imsg->data;
 	len = IMSG_DATA_SIZE(imsg);
@@ -333,13 +335,24 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 		return (-1);
 	memcpy(&sh, ptr + sizeof(id), sizeof(sh));
 	memcpy(&type, ptr + sizeof(id) + sizeof(sh), sizeof(u_int8_t));
-	if (type != IKEV2_CERT_X509_CERT)
-		return (-1);
 
 	ptr += i;
 	len -= i;
 
-	if (ca_validate_cert(env, &id, ptr, len) == 0)
+	switch (type) {
+	case IKEV2_CERT_X509_CERT:
+		ret = ca_validate_cert(env, &id, ptr, len);
+		break;
+	case IKEV2_CERT_RSA_KEY:
+		ret = ca_validate_pubkey(env, &id, ptr, len);
+		break;
+	default:
+		log_debug("%s: unsupported cert type %d", __func__, type);
+		ret = -1;
+		break;
+	}
+
+	if (ret == 0)
 		cmd = IMSG_CERTVALID;
 	else
 		cmd = IMSG_CERTINVALID;
@@ -801,6 +814,91 @@ ca_x509_name(void *ptr)
 }
 
 int
+ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
+    void *data, size_t len)
+{
+	BIO		*rawcert = NULL;
+	RSA		*rsa = NULL;
+	EVP_PKEY	*peerkey = NULL, *localkey = NULL;
+	int		 ret = -1;
+	FILE		*fp = NULL;
+	char		 idstr[IKED_ID_SIZE];
+	char		 file[MAXPATHLEN];
+	struct iked_id	 idp;
+
+	if (len == 0 && data == NULL)
+		return (-1);
+
+	switch (id->id_type) {
+	case IKEV2_ID_IPV4:
+	case IKEV2_ID_FQDN:
+	case IKEV2_ID_UFQDN:
+	case IKEV2_ID_IPV6:
+		break;
+	default:
+		/* Some types like ASN1_DN will not be mapped to file names */
+		return (-1);
+	}
+
+	bzero(&idp, sizeof(idp));
+	if ((idp.id_buf = ibuf_new(id->id_data, id->id_length)) == NULL)
+		goto done;
+
+	idp.id_type = id->id_type;
+	idp.id_offset = id->id_offset;
+	if (print_id(&idp, idstr, sizeof(idstr)) == -1)
+		goto done;
+
+	if (len == 0) {
+		/* Data is already an public key */
+		peerkey = (EVP_PKEY *)data;
+	} else {
+		if ((rawcert = BIO_new_mem_buf(data, len)) == NULL)
+			goto done;
+
+		if ((rsa = d2i_RSAPublicKey_bio(rawcert, NULL)) == NULL)
+			goto sslerr;
+		if ((peerkey = EVP_PKEY_new()) == NULL)
+			goto sslerr;
+		if (!EVP_PKEY_set1_RSA(peerkey, rsa))
+			goto sslerr;
+	}
+
+	lc_string(idstr);
+	if (strlcpy(file, IKED_PUBKEY_DIR, sizeof(file)) >= sizeof(file) ||
+	    strlcpy(file, idstr, sizeof(file)) >= sizeof(file))
+		goto done;
+
+	log_debug("%s: looking up %s", __func__, file);
+
+	if ((fp = fopen(file, "r")) == NULL)
+		goto done;
+
+	localkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
+	fclose(fp);
+	if (localkey == NULL)
+		goto sslerr;
+
+	if (!EVP_PKEY_cmp(peerkey, localkey))
+		goto done;
+
+	ret = 0;
+ sslerr:
+	if (ret != 0)
+		ca_sslerror();
+ done:
+	ibuf_release(idp.id_buf);
+	if (peerkey != NULL)
+		EVP_PKEY_free(peerkey);
+	if (rsa != NULL)
+		RSA_free(rsa);
+	if (rawcert != NULL)
+		BIO_free(rawcert);
+
+	return (ret);
+}
+
+int
 ca_validate_cert(struct iked *env, struct iked_static_id *id,
     void *data, size_t len)
 {
@@ -832,6 +930,12 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	}
 
 	if (id != NULL) {
+		if ((ret = ca_validate_pubkey(env, id, X509_get_pubkey(cert),
+		    0)) == 0) {
+			errstr = "public key found, ok";
+			goto done;
+		}
+
 		switch (id->id_type) {
 		case IKEV2_ID_ASN1_DN:
 			idoff = id->id_offset;

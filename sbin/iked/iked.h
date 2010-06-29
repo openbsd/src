@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.16 2010/06/27 05:49:05 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.17 2010/06/29 21:04:42 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -714,6 +714,7 @@ const char *
 	 print_spi(u_int64_t, int);
 const char *
 	 print_map(u_int, struct iked_constmap *);
+void	 lc_string(char *);
 void	 print_hex(u_int8_t *, off_t, size_t);
 void	 print_hexval(u_int8_t *, off_t, size_t);
 const char *

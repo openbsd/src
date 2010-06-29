@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2010/06/27 00:32:06 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2010/06/29 21:04:42 reyk Exp $	*/
 /*	$vantronix: util.c,v 1.39 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -472,6 +472,13 @@ print_map(u_int type, struct iked_constmap *map)
 		strlcpy(buf[idx], name, sizeof(buf[idx]));
 
 	return (buf[idx++]);
+}
+
+void
+lc_string(char *str)
+{
+	for (; *str != '\0'; str++)
+		*str = tolower(*str);
 }
 
 void

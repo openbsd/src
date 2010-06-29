@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.5 2010/06/10 14:17:48 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.6 2010/06/29 21:04:42 reyk Exp $	*/
 /*	$vantronix: types.h,v 1.24 2010/05/11 12:05:56 reyk Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #define IKED_CA_DIR	"ca/"
 #define IKED_CRL_DIR	"crls/"
 #define IKED_CERT_DIR	"certs/"
+#define IKED_PUBKEY_DIR	"pubkey/"
 #define IKED_PRIVKEY	IKED_CA "private/local.key"
 #define IKED_PUBKEY	"local.pub"
 
