@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.47 2010/06/29 17:10:29 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.48 2010/06/29 18:01:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -25,10 +25,12 @@
 #include "libmdoc.h"
 #include "libmandoc.h"
 
-enum	rew {
-	REWIND_REWIND,
-	REWIND_NOHALT,
-	REWIND_HALT
+enum	rew {	/* see rew_dohalt() */
+	REWIND_NONE,
+	REWIND_THIS,
+	REWIND_MORE,
+	REWIND_LATER,
+	REWIND_ERROR,
 };
 
 static	int	  	blk_full(MACRO_PROT_ARGS);
@@ -50,8 +52,6 @@ static	int		make_pending(struct mdoc_node *, enum mdoc_type,
 				struct mdoc *, int, int);
 static	int	  	phrase(struct mdoc *, int, int, char *);
 static	enum mdoct 	rew_alt(enum mdoct);
-static	int	  	rew_dobreak(enum mdoct, 
-				const struct mdoc_node *);
 static	enum rew  	rew_dohalt(enum mdoct, enum mdoc_type, 
 				const struct mdoc_node *);
 static	int	  	rew_elem(struct mdoc *, enum mdoct);
@@ -271,8 +271,8 @@ rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
 
 
 /*
- * Return the opening macro of a closing one, e.g., `Ec' has `Eo' as its
- * matching pair.
+ * For a block closing macro, return the corresponding opening one.
+ * Otherwise, return the macro itself.
  */
 static enum mdoct
 rew_alt(enum mdoct tok)
@@ -311,18 +311,20 @@ rew_alt(enum mdoct tok)
 	case (MDOC_Xc):
 		return(MDOC_Xo);
 	default:
-		break;
+		return(tok);
 	}
-	abort();
 	/* NOTREACHED */
 }
 
 
-/* 
- * Rewind rules.  This indicates whether to stop rewinding
- * (REWIND_HALT) without touching our current scope, stop rewinding and
- * close our current scope (REWIND_REWIND), or continue (REWIND_NOHALT).
- * The scope-closing and so on occurs in the various rew_* routines.
+/*
+ * Rewinding to tok, how do we have to handle *p?
+ * REWIND_NONE: *p would delimit tok, but no tok scope is open
+ *   inside *p, so there is no need to rewind anything at all.
+ * REWIND_THIS: *p matches tok, so rewind *p and nothing else.
+ * REWIND_MORE: *p is implicit, rewind it and keep searching for tok.
+ * REWIND_LATER: *p is explicit and still open, postpone rewinding.
+ * REWIND_ERROR: No tok block is open at all.
  */
 static enum rew
 rew_dohalt(enum mdoct tok, enum mdoc_type type, 
@@ -330,197 +332,57 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 {
 
 	if (MDOC_ROOT == p->type)
-		return(REWIND_HALT);
-	if (MDOC_VALID & p->flags)
-		return(REWIND_NOHALT);
+		return(MDOC_BLOCK == type &&
+		    MDOC_EXPLICIT & mdoc_macros[tok].flags ?
+		    REWIND_ERROR : REWIND_NONE);
+	if (MDOC_TEXT == p->type || MDOC_VALID & p->flags)
+		return(REWIND_MORE);
 
-	switch (tok) {
-	case (MDOC_Aq):
-		/* FALLTHROUGH */
-	case (MDOC_Bq):
-		/* FALLTHROUGH */
-	case (MDOC_Brq):
-		/* FALLTHROUGH */
-	case (MDOC_D1):
-		/* FALLTHROUGH */
-	case (MDOC_Dl):
-		/* FALLTHROUGH */
-	case (MDOC_Dq):
-		/* FALLTHROUGH */
-	case (MDOC_Op):
-		/* FALLTHROUGH */
-	case (MDOC_Pq):
-		/* FALLTHROUGH */
-	case (MDOC_Ql):
-		/* FALLTHROUGH */
-	case (MDOC_Qq):
-		/* FALLTHROUGH */
-	case (MDOC_Sq):
-		/* FALLTHROUGH */
-	case (MDOC_Vt):
-		assert(MDOC_TAIL != type);
-		if (tok != p->tok)
-			break;
-		if (p->end)
-			return(REWIND_HALT);
-		if (type == p->type)
-			return(REWIND_REWIND);
-		break;
-	case (MDOC_It):
-		assert(MDOC_TAIL != type);
-		if (type == p->type && tok == p->tok)
-			return(REWIND_REWIND);
-		if (MDOC_BODY == p->type && MDOC_Bl == p->tok)
-			return(REWIND_HALT);
-		break;
-	case (MDOC_Sh):
-		if (type == p->type && tok == p->tok)
-			return(REWIND_REWIND);
-		break;
-	case (MDOC_Nd):
-		/* FALLTHROUGH */
-	case (MDOC_Ss):
-		assert(MDOC_TAIL != type);
-		if (type == p->type && tok == p->tok)
-			return(REWIND_REWIND);
-		if (MDOC_BODY == p->type && MDOC_Sh == p->tok)
-			return(REWIND_HALT);
-		break;
-	case (MDOC_Ao):
-		/* FALLTHROUGH */
-	case (MDOC_Bd):
-		/* FALLTHROUGH */
-	case (MDOC_Bf):
-		/* FALLTHROUGH */
-	case (MDOC_Bk):
-		/* FALLTHROUGH */
-	case (MDOC_Bl):
-		/* FALLTHROUGH */
-	case (MDOC_Bo):
-		/* FALLTHROUGH */
-	case (MDOC_Bro):
-		/* FALLTHROUGH */
-	case (MDOC_Do):
-		/* FALLTHROUGH */
-	case (MDOC_Eo):
-		/* FALLTHROUGH */
-	case (MDOC_Fo):
-		/* FALLTHROUGH */
-	case (MDOC_Oo):
-		/* FALLTHROUGH */
-	case (MDOC_Po):
-		/* FALLTHROUGH */
-	case (MDOC_Qo):
-		/* FALLTHROUGH */
-	case (MDOC_Rs):
-		/* FALLTHROUGH */
-	case (MDOC_So):
-		/* FALLTHROUGH */
-	case (MDOC_Xo):
-		if (tok != p->tok)
-			break;
-		if (p->end)
-			return(REWIND_HALT);
-		if (type == p->type)
-			return(REWIND_REWIND);
-		break;
-	/* Multi-line explicit scope close. */
-	case (MDOC_Ac):
-		/* FALLTHROUGH */
-	case (MDOC_Bc):
-		/* FALLTHROUGH */
-	case (MDOC_Brc):
-		/* FALLTHROUGH */
-	case (MDOC_Dc):
-		/* FALLTHROUGH */
-	case (MDOC_Ec):
-		/* FALLTHROUGH */
-	case (MDOC_Ed):
-		/* FALLTHROUGH */
-	case (MDOC_Ek):
-		/* FALLTHROUGH */
-	case (MDOC_El):
-		/* FALLTHROUGH */
-	case (MDOC_Fc):
-		/* FALLTHROUGH */
-	case (MDOC_Ef):
-		/* FALLTHROUGH */
-	case (MDOC_Oc):
-		/* FALLTHROUGH */
-	case (MDOC_Pc):
-		/* FALLTHROUGH */
-	case (MDOC_Qc):
-		/* FALLTHROUGH */
-	case (MDOC_Re):
-		/* FALLTHROUGH */
-	case (MDOC_Sc):
-		/* FALLTHROUGH */
-	case (MDOC_Xc):
-		if (rew_alt(tok) != p->tok)
-			break;
-		if (p->end)
-			return(REWIND_HALT);
-		if (type == p->type)
-			return(REWIND_REWIND);
-		break;
-	default:
-		abort();
-		/* NOTREACHED */
-	}
+	tok = rew_alt(tok);
+	if (tok == p->tok)
+		return(p->end ? REWIND_NONE :
+		    type == p->type ? REWIND_THIS : REWIND_MORE);
 
-	return(REWIND_NOHALT);
-}
-
-
-/*
- * See if we can break an encountered scope (the rew_dohalt has returned
- * REWIND_NOHALT). 
- */
-static int
-rew_dobreak(enum mdoct tok, const struct mdoc_node *p)
-{
-
-	assert(MDOC_ROOT != p->type);
 	if (MDOC_ELEM == p->type)
-		return(1);
-	if (MDOC_TEXT == p->type)
-		return(1);
-	if (MDOC_VALID & p->flags)
-		return(1);
-	if (MDOC_BODY == p->type && p->end)
-		return(1);
+		return(REWIND_MORE);
 
 	switch (tok) {
-	case (MDOC_It):
-		return(MDOC_It == p->tok);
-	case (MDOC_Nd):
-		return(MDOC_Nd == p->tok);
-	case (MDOC_Ss):
-		return(MDOC_Ss == p->tok);
-	case (MDOC_Sh):
-		if (MDOC_Nd == p->tok)
-			return(1);
-		if (MDOC_Ss == p->tok)
-			return(1);
-		return(MDOC_Sh == p->tok);
-	case (MDOC_El):
+	case (MDOC_Bl):
 		if (MDOC_It == p->tok)
-			return(1);
+			return(REWIND_MORE);
 		break;
-	case (MDOC_Oc):
+	case (MDOC_It):
+		if (MDOC_BODY == p->type && MDOC_Bl == p->tok)
+			return(REWIND_NONE);
+		break;
+	/*
+	 * XXX Badly nested block handling still fails badly
+	 * when one block is breaking two blocks of the same type.
+	 * This is an incomplete and extremely ugly workaround,
+	 * required to let the OpenBSD tree build.
+	 */
+	case (MDOC_Oo):
 		if (MDOC_Op == p->tok)
-			return(1);
+			return(REWIND_MORE);
+		break;
+	case (MDOC_Nd):
+		/* FALLTHROUGH */
+	case (MDOC_Ss):
+		if (MDOC_BODY == p->type && MDOC_Sh == p->tok)
+			return(REWIND_NONE);
+		/* FALLTHROUGH */
+	case (MDOC_Sh):
+		if (MDOC_Nd == p->tok || MDOC_Ss == p->tok ||
+		    MDOC_Sh == p->tok)
+			return(REWIND_MORE);
 		break;
 	default:
 		break;
 	}
 
-	if (MDOC_EXPLICIT & mdoc_macros[tok].flags) 
-		return(p->tok == rew_alt(tok));
-	else if (MDOC_BLOCK == p->type)
-		return(1);
-
-	return(tok == p->tok);
+	return(p->end || (MDOC_BLOCK == p->type &&
+	    ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)) ?
+	    REWIND_MORE : REWIND_LATER);
 }
 
 
@@ -570,7 +432,7 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 			continue;
 		}
 
-		if (REWIND_REWIND != rew_dohalt(tok, MDOC_BLOCK, breaker))
+		if (REWIND_THIS != rew_dohalt(tok, MDOC_BLOCK, breaker))
 			continue;
 		if (MDOC_BODY == broken->type)
 			broken = broken->parent;
@@ -610,36 +472,37 @@ make_pending(struct mdoc_node *broken, enum mdoct tok,
 	/*
 	 * Found no matching block for tok.
 	 * Are you trying to close a block that is not open?
-	 * Report failure and abort the parser.
+	 * XXX Make this non-fatal.
 	 */
 	mdoc_pmsg(m, line, ppos, MANDOCERR_SYNTNOSCOPE);
 	return(0);
 }
+
 
 static int
 rew_sub(enum mdoc_type t, struct mdoc *m, 
 		enum mdoct tok, int line, int ppos)
 {
 	struct mdoc_node *n;
-	enum rew	  c;
 
-	/* LINTED */
-	for (n = m->last; n; n = n->parent) {
-		c = rew_dohalt(tok, t, n);
-		if (REWIND_HALT == c) {
-			if (n->end || MDOC_BLOCK != t)
-				return(1);
-			if ( ! (MDOC_EXPLICIT & mdoc_macros[tok].flags))
-				return(1);
-			/* FIXME: shouldn't raise an error */
-			mdoc_pmsg(m, line, ppos, MANDOCERR_SYNTNOSCOPE);
-			return(0);
-		}
-		if (REWIND_REWIND == c)
+	n = m->last;
+	while (n) {
+		switch (rew_dohalt(tok, t, n)) {
+		case (REWIND_NONE):
+			return(1);
+		case (REWIND_THIS):
 			break;
-		else if (rew_dobreak(tok, n))
+		case (REWIND_MORE):
+			n = n->parent;
 			continue;
-		return(make_pending(n, tok, m, line, ppos));
+		case (REWIND_LATER):
+			return(make_pending(n, tok, m, line, ppos));
+		case (REWIND_ERROR):
+			/* XXX Make this non-fatal. */
+			mdoc_pmsg(m, line, ppos, MANDOCERR_SYNTNOSCOPE);
+			return 0;
+		}
+		break;
 	}
 
 	assert(n);
