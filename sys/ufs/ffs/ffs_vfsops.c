@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.123 2010/06/09 12:58:57 jsing Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.124 2010/06/29 14:48:08 thib Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1397,7 +1397,6 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 /*
  * Vnode pointer to File handle
  */
-/* ARGSUSED */
 int
 ffs_vptofh(struct vnode *vp, struct fid *fhp)
 {

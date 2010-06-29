@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.55 2009/08/13 15:00:14 jasper Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.56 2010/06/29 14:48:08 thib Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -164,7 +164,6 @@ int doclusterwrite = 1;
 /*
  * Vnode op for reading.
  */
-/* ARGSUSED */
 int
 ffs_read(void *v)
 {
@@ -398,7 +397,6 @@ ffs_write(void *v)
 /*
  * Synch an open file.
  */
-/* ARGSUSED */
 int
 ffs_fsync(void *v)
 {
