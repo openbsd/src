@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.605 2010/06/26 20:44:15 halex Exp $
+#	$OpenBSD: install.sub,v 1.606 2010/06/29 15:11:45 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1195,7 +1195,7 @@ ftp_time() {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	and FTPOPTS must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
+	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _mirror
 	local _server_ip_var=_${_url_type}_server_ip \
 		_server_dir_var=_${_url_type}_server_dir
 
@@ -1254,6 +1254,7 @@ install_url() {
 	if (( $# > 1 )); then
 		# It's a mirror, since it has location info.
 		resp=$resp/$FTPSETDIR
+		_mirror=yes
 	fi
 
 	ask_until "Server directory?" "${resp:-pub/OpenBSD/$FTPSETDIR}"
@@ -1306,6 +1307,15 @@ install_url() {
 
 	# Remember where we installed from
 	eval installedfrom=$_url_type://\$$_server_ip_var/\$$_server_dir_var
+
+	# Bake a package path if we installed from a mirror
+	if [[ -n $_mirror ]]; then
+		package_path=$(print -r -- "$installedfrom" |
+			sed -E "/\/(snapshots|[0-9]\.[0-9])\/($ARCH)\/*$/!d
+				s!!/\1/packages/$(arch -s)/!;q")
+	else
+		package_path=
+	fi
 }
 
 install_mounted_fs() {
@@ -1824,6 +1834,13 @@ finish_up() {
 		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 	fi
 
+	# Create or update pkg.conf with the new package path, if any
+	if [[ -n $package_path ]]; then
+		grep -v '^installpath=' /mnt/etc/pkg.conf 2>&- > /tmp/pkgconf
+		print -r -- "installpath=$package_path" >> /tmp/pkgconf
+		cp /tmp/pkgconf /mnt/etc/pkg.conf
+	fi
+
 	echo -n "Making all device nodes..."
 	(cd /mnt/dev
 	sh MAKEDEV all
@@ -1868,6 +1885,7 @@ __EOT
 
 ROOTDISK=
 ROOTDEV=
+package_path=
 
 SETDIR="$VNAME/$ARCH"
 FTPDIR="pub/OpenBSD/$VNAME"
