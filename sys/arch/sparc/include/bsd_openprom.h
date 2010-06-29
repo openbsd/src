@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_openprom.h,v 1.11 2003/11/14 19:05:36 miod Exp $	*/
+/*	$OpenBSD: bsd_openprom.h,v 1.12 2010/06/29 21:28:08 miod Exp $	*/
 /*	$NetBSD: bsd_openprom.h,v 1.11 1996/05/18 12:27:43 mrg Exp $ */
 
 /*
@@ -254,7 +254,7 @@ struct promvec {
 	 * easily.
 	 */
 	void	(*pv_setctxt)(int ctxt, caddr_t va, int pmeg);
-#if defined(SUN4M) && defined(notyet)
+#if (defined(SUN4D) || defined(SUN4M)) && defined(notyet)
 	/*
 	 * The following are V3 ROM functions to handle MP machines in the
 	 * Sun4m series. They have undefined results when run on a uniprocessor!
@@ -320,3 +320,17 @@ __dead void	romhalt(void);
 __dead void	romboot(char *);
 
 extern struct promvec *promvec;
+
+/*
+ * Memory description arrays, matching version 2 memory information layout.
+ * Shared between boot blocks, pmap.c and autoconf.c; no one else should use
+ * this.
+ */
+struct memarr {
+	uint32_t	addr_hi;
+	uint32_t	addr_lo;
+	uint32_t	len;
+};
+int	makememarr(struct memarr *, u_int max, int which);
+#define	MEMARR_AVAILPHYS	0
+#define	MEMARR_TOTALPHYS	1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.88 2010/06/27 05:52:01 beck Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.89 2010/06/29 21:28:10 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -800,7 +800,8 @@ cpu_configure()
 		node = findroot();
 #endif
 
-	*promvec->pv_synchook = sync_crash;
+	if (!CPU_ISSUN4)
+		*promvec->pv_synchook = sync_crash;
 
 	oca.ca_ra.ra_node = node;
 	oca.ca_ra.ra_name = cp = "mainbus";
@@ -1361,130 +1362,76 @@ findzs(zs)
 	/* NOTREACHED */
 }
 
-#if defined(SUN4C) || defined(SUN4M)
-struct v2rmi {
-	int	zero;
-	int	addr;
-	int	len;
-} v2rmi[200];		/* version 2 rom meminfo layout */
-#endif
-
 int
-makememarr(ap, max, which)
-	register struct memarr *ap;
-	int max, which;
+makememarr(struct memarr *ap, u_int xmax, int which)
 {
 #if defined(SUN4C) || defined(SUN4M)
-#define	MAXMEMINFO (sizeof(v2rmi) / sizeof(*v2rmi))
-	register struct v0mlist *mp;
-	register int i, node, len;
+	struct v0mlist *mp;
+	int node, n;
 	char *prop;
+#endif
+
+#ifdef DIAGNOSTIC
+	if (which != MEMARR_AVAILPHYS && which != MEMARR_TOTALPHYS)
+		panic("makememarr");
 #endif
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
-		switch (which) {
-		case MEMARR_AVAILPHYS:
-			ap[0].addr = 0;
-			ap[0].len = *oldpvec->memoryAvail;
-			break;
-		case MEMARR_TOTALPHYS:
-			ap[0].addr = 0;
-			ap[0].len = *oldpvec->memorySize;
-			break;
-		default:
-			printf("pre_panic: makememarr");
-			break;
+		if (ap != NULL && xmax != 0) {
+			ap[0].addr_hi = 0;
+			ap[0].addr_lo = 0;
+			ap[0].len = which == MEMARR_AVAILPHYS ?
+			    *oldpvec->memoryAvail : *oldpvec->memorySize;
 		}
-		return (1);
+		return 1;
 	}
 #endif
 #if defined(SUN4C) || defined(SUN4M)
-	switch (i = promvec->pv_romvec_vers) {
-
+	switch (n = promvec->pv_romvec_vers) {
 	case 0:
 		/*
 		 * Version 0 PROMs use a linked list to describe these
 		 * guys.
 		 */
-		switch (which) {
+		mp = which == MEMARR_AVAILPHYS ?
+		    *promvec->pv_v0mem.v0_physavail :
+		    *promvec->pv_v0mem.v0_phystot;
 
-		case MEMARR_AVAILPHYS:
-			mp = *promvec->pv_v0mem.v0_physavail;
-			break;
-
-		case MEMARR_TOTALPHYS:
-			mp = *promvec->pv_v0mem.v0_phystot;
-			break;
-
-		default:
-			panic("makememarr");
-		}
-		for (i = 0; mp != NULL; mp = mp->next, i++) {
-			if (i >= max)
-				goto overflow;
-			ap->addr = (u_int)mp->addr;
+		for (n = 0; mp != NULL; mp = mp->next, n++) {
+			if (ap == NULL || n >= xmax)
+				continue;
+			ap->addr_hi = 0;
+			ap->addr_lo = (uint32_t)mp->addr;
 			ap->len = mp->nbytes;
 			ap++;
 		}
 		break;
-
 	default:
 		printf("makememarr: hope version %d PROM is like version 2\n",
-		    i);
+		    n);
 		/* FALLTHROUGH */
-
-        case 3:
+	case 3:
 	case 2:
 		/*
 		 * Version 2 PROMs use a property array to describe them.
 		 */
-		if (max > MAXMEMINFO) {
-			printf("makememarr: limited to %d\n", MAXMEMINFO);
-			max = MAXMEMINFO;
-		}
 		if ((node = findnode(firstchild(findroot()), "memory")) == 0)
 			panic("makememarr: cannot find \"memory\" node");
-		switch (which) {
-
-		case MEMARR_AVAILPHYS:
-			prop = "available";
-			break;
-
-		case MEMARR_TOTALPHYS:
-			prop = "reg";
-			break;
-
-		default:
-			panic("makememarr");
-		}
-		len = getprop(node, prop, (void *)v2rmi, sizeof v2rmi) /
-		    sizeof(struct v2rmi);
-		for (i = 0; i < len; i++) {
-			if (i >= max)
-				goto overflow;
-			ap->addr = v2rmi[i].addr;
-			ap->len = v2rmi[i].len;
-			ap++;
+		prop = which == MEMARR_AVAILPHYS ? "available" : "reg";
+		n = getproplen(node, prop) / sizeof(struct memarr);
+		if (ap != NULL) {
+			if (getprop(node, prop, ap,
+			    xmax * sizeof(struct memarr)) <= 0)
+				panic("makememarr: cannot get property");
 		}
 		break;
 	}
 
-	/*
-	 * Success!  (Hooray)
-	 */
-	if (i == 0)
+	if (n <= 0)
 		panic("makememarr: no memory found");
-	return (i);
-
-overflow:
-	/*
-	 * Oops, there are more things in the PROM than our caller
-	 * provided space for.  Truncate any extras.
-	 */
-	printf("makememarr: WARNING: lost some memory\n");
-	return (i);
-#endif
+	return (n);
+#endif	/* SUN4C || SUN4M */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2010/06/29 21:26:12 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.128 2010/06/29 21:28:11 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -149,6 +149,7 @@ cpu_startup()
 	int opmapdebug = pmapdebug;
 #endif
 	vaddr_t minaddr, maxaddr;
+	paddr_t msgbufpa;
 	extern struct user *proc0paddr;
 
 #ifdef DEBUG
@@ -162,9 +163,22 @@ cpu_startup()
 	}
 
 	/*
-	 * fix message buffer mapping, note phys addr of msgbuf is 0
+	 * Re-map the message buffer from its temporary address
+	 * at KERNBASE to MSGBUF_VA.
 	 */
-	pmap_map(MSGBUF_VA, 0, MSGBUFSIZE, VM_PROT_READ|VM_PROT_WRITE);
+
+	/* Get physical address of the message buffer */
+	pmap_extract(pmap_kernel(), (vaddr_t)KERNBASE, &msgbufpa);
+
+	/* Invalidate the current mapping at KERNBASE. */
+	pmap_kremove((vaddr_t)KERNBASE, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	/* Enter the new mapping */
+	pmap_map(MSGBUF_VA, msgbufpa, msgbufpa + PAGE_SIZE,
+	    VM_PROT_READ | VM_PROT_WRITE);
+
+	/* Re-initialize the message buffer. */
 	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
 
 	proc0.p_addr = proc0paddr;
@@ -697,7 +711,7 @@ dumpsys()
 	int error = 0;
 	struct memarr *mp;
 	int nmem;
-	extern struct memarr pmemarr[];
+	extern struct memarr *pmemarr;
 	extern int npmemarr;
 
 	/* copy registers to memory */
@@ -738,7 +752,7 @@ dumpsys()
 	printf("memory ");
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
 		unsigned i = 0, n;
-		unsigned maddr = mp->addr;
+		unsigned maddr = mp->addr_lo;
 
 		/* XXX - what's so special about PA 0 that we can't dump it? */
 		if (maddr == 0) {

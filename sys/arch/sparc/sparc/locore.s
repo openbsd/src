@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.85 2010/06/17 16:11:19 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.86 2010/06/29 21:28:11 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -235,6 +235,10 @@ _C_LABEL(trapbase):
 #if !defined(SUN4M)
 sun4m_notsup:
 	.asciz	"cr .( OpenBSD/sparc: this kernel does not support the sun4m) cr"
+#endif
+#if !defined(SUN4D)
+sun4d_notsup:
+	.asciz	"cr .( OpenBSD/sparc: this kernel does not support the sun4d) cr"
 #endif
 #if !defined(SUN4C)
 sun4c_notsup:
@@ -2311,7 +2315,7 @@ return_from_syscall:
  *     interrupt request can come in while we're in the handler.  If
  *     the handler deals with everything for both the original & the
  *     new request, we'll erroneously report a stray interrupt when
- *     we take the software interrupt for the new request.
+ *     we take the software interrupt for the new request).
  *
  * Inputs:
  *	%l0 = %psr
@@ -3363,11 +3367,29 @@ dostart:
 	/*
 	 * Startup.
 	 *
-	 * We have been loaded in low RAM, at some address which
-	 * is page aligned (0x4000 actually) rather than where we
-	 * want to run (KERNBASE+0x4000).  Until we get everything set,
+	 * We may have been loaded in low RAM, at some address which
+	 * is page aligned (PROM_LOADADDR actually) rather than where we
+	 * want to run (KERNBASE+PROM_LOADADDR).  Until we get everything set,
 	 * we have to be sure to use only pc-relative addressing.
 	 */
+
+	/*
+	 * Find out if the above is the case.
+	 */
+0:	call	1f
+	 sethi	%hi(0b), %l0		! %l0 = virtual address of 0:
+1:	or	%l0, %lo(0b), %l0
+	sub	%l0, %o7, %l7		! subtract actual physical address of 0:
+
+	/*
+	 * If we're already running at our desired virtual load address,
+	 * %l7 will be set to 0, otherwise it will be KERNBASE.
+	 * From now on until the end of locore bootstrap code, %l7 will
+	 * be used to relocate memory references.
+	 */
+#define	RELOCATE(l,r)		\
+	set	l, r;		\
+	sub	r, %l7, r
 
 #if defined(DDB) || NKSYMS > 0
 	/*
@@ -3403,8 +3425,9 @@ dostart:
 	tst	%o4			! do we have the symbols?
 	bz	2f
 	 sub	%o4, %l4, %o4		! apply compat correction
-	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store _esym
-	st	%o4, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
+	
+	RELOCATE(_C_LABEL(esym), %l3)
+	st	%o4, [%l3]		! store _esym
 2:
 #endif
 	/*
@@ -3420,31 +3443,34 @@ dostart:
 	mov	%o0, %g7		! save prom vector pointer
 
 	/*
-	 * are we on a sun4c or a sun4m?
+	 * are we on a sun4c, sun4d or a sun4m?
 	 */
 	ld	[%g7 + PV_NODEOPS], %o4	! node = pv->pv_nodeops->no_nextnode(0)
 	ld	[%o4 + NO_NEXTNODE], %o4
 	call	%o4
 	 mov	0, %o0			! node
 
-	mov	%o0, %l0
-	set	_C_LABEL(cputypvar)-KERNBASE, %o1 ! name = "compatible"
-	set	_C_LABEL(cputypval)-KERNBASE, %o2 ! buffer ptr (assume buffer long enough)
+	!mov	%o0, %l0
+	RELOCATE(_C_LABEL(cputypvar), %o1) ! name = "compatible"
+	RELOCATE(_C_LABEL(cputypval), %l2) ! buffer ptr (assume buffer long enough)
 	ld	[%g7 + PV_NODEOPS], %o4	! (void)pv->pv_nodeops->no_getprop(...)
 	ld	[%o4 + NO_GETPROP], %o4
 	call	 %o4
-	 nop
-	set	_C_LABEL(cputypval)-KERNBASE, %o2	! buffer ptr
-	ldub	[%o2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
+	 mov	%l2, %o2
+	!RELOCATE(_C_LABEL(cputypval), %l2)	! buffer ptr
+	ldub	[%l2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
 	cmp	%o0, 'c'
 	be	is_sun4c
+	 nop
+	cmp	%o0, 'd'
+	be	is_sun4d
 	 nop
 	cmp	%o0, 'm'
 	be	is_sun4m
 	 nop
 #endif /* SUN4C || SUN4M */
 
-	! ``on a sun4d?!  hell no!''
+	! ``on a sun4e or sun4u?  hell no!''
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3456,10 +3482,26 @@ is_sun4m:
 	b	start_havetype
 	 mov	CPU_SUN4M, %g4
 #else
-	set	sun4m_notsup-KERNBASE, %o0
+	RELOCATE(sun4m_notsup, %o0)
 	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4m architecture is not supported
+	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+	/*NOTREACHED*/
+#endif
+is_sun4d:
+#if defined(SUN4D)
+	set	trapbase_sun4m, %g6
+	mov	SUN4CM_PGSHIFT, %g5
+	b	start_havetype
+	 mov	CPU_SUN4D, %g4
+#else
+	RELOCATE(sun4d_notsup, %o0)
+	ld	[%g7 + PV_EVAL], %o1
+	call	%o1			! print a message saying that the
+	 nop				! sun4d architecture is not supported
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3476,7 +3518,7 @@ is_sun4c:
 	b	start_havetype
 	 mov	CPU_SUN4C, %g4		! XXX CPU_SUN4
 #else
-	set	sun4c_notsup-KERNBASE, %o0
+	RELOCATE(sun4c_notsup, %o0)
 
 	ld	[%g7 + PV_ROMVEC_VERS], %o1
 	cmp	%o1, 0
@@ -3486,6 +3528,7 @@ is_sun4c:
 	! stupid version 0 rom interface is pv_eval(int length, char *string)
 	mov	%o0, %o1
 2:	ldub	[%o0], %o4
+	tst	%o4
 	bne	2b
 	 inc	%o0
 	dec	%o0
@@ -3512,7 +3555,7 @@ is_sun4:
 #else
 	set	PROM_BASE, %g7
 
-	set	sun4_notsup-KERNBASE, %o0
+	RELOCATE(sun4_notsup, %o0)
 	ld	[%g7 + OLDMON_PRINTF], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4 architecture is not supported
@@ -3523,6 +3566,9 @@ is_sun4:
 #endif
 
 start_havetype:
+	cmp	%l7, 0
+	be	startmap_done
+
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
 	 * to KERNBASE (addresses [KERNBASE.._end-1]).  None of these
@@ -3563,29 +3609,10 @@ start_havetype:
 	cmp	%l1, %l2		! done?
 	blu	0b			! no, loop
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
-
-#if 0 /* moved to autoconf */
-	/*
-	 * Now map the interrupt enable register and clear any interrupts,
-	 * enabling NMIs.  Note that we will not take NMIs until we change
-	 * %tbr.
-	 */
-	set	IE_reg_addr, %l0
-
-	set	IE_REG_PTE_PG, %l1
-	set	INT_ENABLE_REG_PHYSADR, %l2
-	srl	%l2, %g5, %l2
-	or	%l2, %l1, %l1
-
-	sta	%l1, [%l0] ASI_PTE
-	mov	IE_ALLIE, %l1
-	nop; nop			! paranoia
-	stb	%l1, [%l0]
-#endif
-	b	startmap_done
-	 nop
+	b,a	startmap_done
 1:
 #endif /* SUN4C */
+
 #if defined(SUN4)
 	cmp	%g4, CPU_SUN4
 	bne	2f
@@ -3594,14 +3621,26 @@ start_havetype:
 	lduba	[%l3] ASI_CONTROL, %l3
 	cmp	%l3, 0x24 ! XXX - SUN4_400
 	bne	no_3mmu
+	 nop
+
+	/*
+	 * Three-level sun4 MMU.
+	 * Double-map by duplicating a single region entry (which covers
+	 * 16MB) corresponding to the kernel's virtual load address.
+	 */
 	add	%l0, 2, %l0		! get to proper half-word in RG space
 	add	%l1, 2, %l1
 	lduha	[%l0] ASI_REGMAP, %l4	! regmap[highva] = regmap[lowva];
 	stha	%l4, [%l1] ASI_REGMAP
-	b,a	remap_done
-
+	b,a	startmap_done
 no_3mmu:
 #endif
+
+	/*
+	 * Two-level sun4 MMU.
+	 * Double-map by duplicating the required number of segment
+	 * entries corresponding to the kernel's virtual load address.
+	 */
 	 set	1 << 18, %l3		! segment size in bytes
 0:
 	lduha	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
@@ -3610,27 +3649,6 @@ no_3mmu:
 	cmp	%l1, %l2		! done?
 	blu	0b			! no, loop
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
-
-remap_done:
-
-#if 0 /* moved to autoconf */
-	/*
-	 * Now map the interrupt enable register and clear any interrupts,
-	 * enabling NMIs.  Note that we will not take NMIs until we change
-	 * %tbr.
-	 */
-	set	IE_reg_addr, %l0
-
-	set	IE_REG_PTE_PG, %l1
-	set	INT_ENABLE_REG_PHYSADR, %l2
-	srl	%l2, %g5, %l2
-	or	%l2, %l1, %l1
-
-	sta	%l1, [%l0] ASI_PTE
-	mov	IE_ALLIE, %l1
-	nop; nop			! paranoia
-	stb	%l1, [%l0]
-#endif
 	b,a	startmap_done
 2:
 #endif /* SUN4 */
