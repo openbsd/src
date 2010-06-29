@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.21 2010/06/28 06:46:32 jordan Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.22 2010/06/29 22:08:29 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -603,6 +603,8 @@ struct acpi_ivrs {
 /*
  * PCI Configuration space
  */
+#define ACPI_ADR_PCIDEV(addr)	(u_int16_t)(addr >> 16)
+#define ACPI_ADR_PCIFUN(addr)	(u_int16_t)(addr & 0xFFFF)
 #define ACPI_PCI_BUS(addr) (u_int16_t)((addr) >> 48)
 #define ACPI_PCI_DEV(addr) (u_int16_t)((addr) >> 32)
 #define ACPI_PCI_FN(addr)  (u_int16_t)((addr) >> 16)

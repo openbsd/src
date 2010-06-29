@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.76 2010/04/21 23:12:24 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.77 2010/06/29 22:08:29 jordan Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -363,6 +363,8 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		if ((dev = config_found_sm(&sc->sc_dev, &pa, pciprint,
 		    pcisubmatch))) {
 			pcireg_t reg;
+
+			pci_dev_postattach(dev, &pa);
 
 			/* skip header type != 0 */
 			reg = pci_conf_read(pc, tag, PCI_BHLC_REG);

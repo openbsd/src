@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 2010/02/05 20:53:26 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.3 2010/06/29 22:08:28 jordan Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -88,3 +88,5 @@ extern paddr_t loongson_dma_base;
 
 pcitag_t pci_make_tag_early(int, int, int);
 pcireg_t pci_conf_read_early(pcitag_t, int);
+
+#define	pci_dev_postattach(a, b)

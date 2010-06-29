@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.160 2010/06/27 21:04:22 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.161 2010/06/29 22:08:29 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1234,7 +1234,8 @@ aml_walknodes(struct aml_node *node, int mode,
 	if (node == NULL)
 		return;
 	if (mode == AML_WALK_PRE)
-		nodecb(node, arg);
+		if (nodecb(node, arg))
+			return;
 	SIMPLEQ_FOREACH(child, &node->son, sib)
 		aml_walknodes(child, mode, nodecb, arg);
 	if (mode == AML_WALK_POST)

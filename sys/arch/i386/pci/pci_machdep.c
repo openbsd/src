@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.50 2009/09/28 15:58:30 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.51 2010/06/29 22:08:28 jordan Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -656,4 +656,17 @@ pci_init_extents(void)
 		extent_alloc_region(pcimem_ex, IOM_BEGIN, IOM_SIZE,
 		    EX_CONFLICTOK | EX_NOWAIT);
 	}
+}
+
+#include "acpi.h"
+#if NACPI > 0
+void acpi_pci_match(struct device *, struct pci_attach_args *);
+#endif
+
+void
+pci_dev_postattach(struct device *dev, struct pci_attach_args *pa)
+{
+#if NACPI > 0
+	acpi_pci_match(dev, pa);
+#endif
 }

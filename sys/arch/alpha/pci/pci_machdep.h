@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.22 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.23 2010/06/29 22:08:28 jordan Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -126,6 +126,8 @@ void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
     do { if ((c)->pc_pciide_compat_intr_disestablish != NULL)		\
 	    ((c)->pc_pciide_compat_intr_disestablish)((c)->pc_conf_v,	\
             (cookie)); } while (0)
+
+#define	pci_dev_postattach(a, b)
 
 #ifdef _KERNEL
 void pci_display_console(bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t, int, int, int);

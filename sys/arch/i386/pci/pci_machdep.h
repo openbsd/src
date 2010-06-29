@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.18 2009/10/06 21:35:43 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.19 2010/06/29 22:08:28 jordan Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -101,6 +101,8 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 		    int *, int *, int *);
+
+void 		pci_dev_postattach(struct device *, struct pci_attach_args *);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,
