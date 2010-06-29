@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.157 2010/05/26 03:26:59 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.158 2010/06/29 21:28:37 reyk Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -83,7 +83,7 @@ pseudo-device	pf		# packet filter
 pseudo-device	pflog		# pf log if
 pseudo-device	pfsync		# pf sync if
 pseudo-device	pflow		# pflow export if
-pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
+pseudo-device	enc		# option IPSEC needs the encapsulation interface
 
 pseudo-device	pty	16	# initial number of pseudo-terminals
 pseudo-device	nmea	1	# NMEA 0183 line discipline

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.204 2010/06/27 21:03:59 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.205 2010/06/29 21:28:38 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 27 2010 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -171,6 +171,7 @@ At least the following devices can be created on demand:
 .Pp
 .Xr bridge 4 ,
 .Xr carp 4 ,
+.Xr enc 4 ,
 .Xr faith 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,

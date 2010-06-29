@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.205 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.206 2010/06/29 21:28:38 reyk Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -121,6 +121,9 @@ ip_output(struct mbuf *m0, ...)
 	struct inpcb *inp;
 	struct tdb *tdb;
 	int s;
+#if NPF > 0
+	struct ifnet *encif;
+#endif
 #endif /* IPSEC */
 
 	va_start(ap, m0);
@@ -587,8 +590,8 @@ sendit:
 		 * Packet filter
 		 */
 #if NPF > 0
-
-		if (pf_test(PF_OUT, &encif[0].sc_if, &m, NULL) != PF_PASS) {
+		if ((encif = enc_getif(0)) == NULL ||
+		    pf_test(PF_OUT, encif, &m, NULL) != PF_PASS) {
 			error = EHOSTUNREACH;
 			splx(s);
 			m_freem(m);

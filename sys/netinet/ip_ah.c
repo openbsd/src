@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.93 2010/01/10 12:43:07 markus Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.94 2010/06/29 21:28:37 reyk Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -984,22 +984,24 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	u_int8_t prot;
 	struct ah *ah;
 #if NBPFILTER > 0
-	struct ifnet *ifn = &(encif[0].sc_if);
+	struct ifnet *encif;
 
-	ifn->if_opackets++;
-	ifn->if_obytes += m->m_pkthdr.len;
+	if ((encif = enc_getif(0)) != NULL) {
+		encif->if_opackets++;
+		encif->if_obytes += m->m_pkthdr.len;
 
-	if (ifn->if_bpf) {
-		struct enchdr hdr;
+		if (encif->if_bpf) {
+			struct enchdr hdr;
 
-		bzero (&hdr, sizeof(hdr));
+			bzero (&hdr, sizeof(hdr));
 
-		hdr.af = tdb->tdb_dst.sa.sa_family;
-		hdr.spi = tdb->tdb_spi;
-		hdr.flags |= M_AUTH | M_AUTH_AH;
+			hdr.af = tdb->tdb_dst.sa.sa_family;
+			hdr.spi = tdb->tdb_spi;
+			hdr.flags |= M_AUTH | M_AUTH_AH;
 
-		bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, ENC_HDRLEN, m,
-		    BPF_DIRECTION_OUT);
+			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
+			    ENC_HDRLEN, m, BPF_DIRECTION_OUT);
+		}
 	}
 #endif
 

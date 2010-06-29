@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.27 2009/01/28 21:00:32 grunk Exp $
+.\"	$OpenBSD: enc.4,v 1.28 2010/06/29 21:28:37 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2009 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt ENC 4
 .Os
 .Sh NAME
 .Nm enc
 .Nd encapsulating interface
 .Sh SYNOPSIS
-.Cd "pseudo-device enc 1"
+.Cd "pseudo-device enc"
 .Sh DESCRIPTION
 The
 .Nm
@@ -33,9 +33,19 @@ It allows packet filtering using
 prior to encapsulation and after decapsulation,
 packets may be monitored using
 .Xr tcpdump 8 .
-Only one
+.Pp
+An
 .Nm
-interface, enc0, is supported.
+interface can be created at runtime using the
+.Ic ifconfig enc Ns Ar N Ic create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+The
+.Nm enc0
+interface will always exist and cannot be destroyed using
+.Xr ifconfig 8 .
 .Pp
 Packet filtering is documented in greater detail in
 .Xr pf.conf 5 ,

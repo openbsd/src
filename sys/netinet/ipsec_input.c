@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.95 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.96 2010/06/29 21:28:38 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -240,9 +240,9 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 
 	if (sproto != IPPROTO_IPCOMP) {
 		/* XXX This conflicts with the scoped nature of IPv6 */
-		m->m_pkthdr.rcvif = &encif[0].sc_if;
+		m->m_pkthdr.rcvif = enc_getif(0);
 	}
-	
+
 	/* Register first use, setup expiration timer. */
 	if (tdbp->tdb_first_use == 0) {
 		tdbp->tdb_first_use = time_second;
@@ -279,7 +279,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 	u_char prot;
 
 #if NBPFILTER > 0
-	struct ifnet *bpfif;
+	struct ifnet *encif;
 #endif
 
 #ifdef INET
@@ -565,19 +565,20 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		m->m_flags |= M_TUNNEL;
 
 #if NBPFILTER > 0
-	bpfif = &encif[0].sc_if;
-	bpfif->if_ipackets++;
-	bpfif->if_ibytes += m->m_pkthdr.len;
+	if ((encif = enc_getif(0)) != NULL) {
+		encif->if_ipackets++;
+		encif->if_ibytes += m->m_pkthdr.len;
 
-	if (bpfif->if_bpf) {
-		struct enchdr hdr;
+		if (encif->if_bpf) {
+			struct enchdr hdr;
 
-		hdr.af = af;
-		hdr.spi = tdbp->tdb_spi;
-		hdr.flags = m->m_flags & (M_AUTH|M_CONF|M_AUTH_AH);
+			hdr.af = af;
+			hdr.spi = tdbp->tdb_spi;
+			hdr.flags = m->m_flags & (M_AUTH|M_CONF|M_AUTH_AH);
 
-		bpf_mtap_hdr(bpfif->if_bpf, (char *)&hdr, ENC_HDRLEN, m,
-		    BPF_DIRECTION_IN);
+			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
+			    ENC_HDRLEN, m, BPF_DIRECTION_IN);
+		}
 	}
 #endif
 

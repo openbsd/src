@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.106 2010/01/10 12:43:07 markus Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.107 2010/06/29 21:28:37 reyk Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -731,25 +731,27 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	struct cryptop *crp;
 #if NBPFILTER > 0
-	struct ifnet *ifn = &(encif[0].sc_if);
+	struct ifnet *encif;
 
-	ifn->if_opackets++;
-	ifn->if_obytes += m->m_pkthdr.len;
+	if ((encif = enc_getif(0)) != NULL) {
+		encif->if_opackets++;
+		encif->if_obytes += m->m_pkthdr.len;
 
-	if (ifn->if_bpf) {
-		struct enchdr hdr;
+		if (encif->if_bpf) {
+			struct enchdr hdr;
 
-		bzero (&hdr, sizeof(hdr));
+			bzero (&hdr, sizeof(hdr));
 
-		hdr.af = tdb->tdb_dst.sa.sa_family;
-		hdr.spi = tdb->tdb_spi;
-		if (espx)
-			hdr.flags |= M_CONF;
-		if (esph)
-			hdr.flags |= M_AUTH;
+			hdr.af = tdb->tdb_dst.sa.sa_family;
+			hdr.spi = tdb->tdb_spi;
+			if (espx)
+				hdr.flags |= M_CONF;
+			if (esph)
+				hdr.flags |= M_AUTH;
 
-		bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, ENC_HDRLEN, m,
-		    BPF_DIRECTION_OUT);
+			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
+			    ENC_HDRLEN, m, BPF_DIRECTION_OUT);
+		}
 	}
 #endif
 

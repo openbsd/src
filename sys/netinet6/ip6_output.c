@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.112 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.113 2010/06/29 21:28:38 reyk Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -180,6 +180,9 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	u_int32_t sspi;
 	struct tdb *tdb;
 	int s;
+#if NPF > 0
+	struct ifnet *encif;
+#endif
 #endif /* IPSEC */
 
 #ifdef IPSEC
@@ -502,7 +505,8 @@ reroute:
 	        s = splnet();
 
 #if NPF > 0
-		if (pf_test6(PF_OUT, &encif[0].sc_if, &m, NULL) != PF_PASS) {
+		if ((encif = enc_getif(0)) == NULL ||
+		    pf_test6(PF_OUT, encif, &m, NULL) != PF_PASS) {
 			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);

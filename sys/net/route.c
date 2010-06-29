@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.120 2010/06/28 18:50:37 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.121 2010/06/29 21:28:37 reyk Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -168,7 +168,12 @@ TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
-	return (TAILQ_FIRST(&encif[0].sc_if.if_addrlist));
+	struct ifnet	*encif;
+
+	if ((encif = enc_getif(0)) == NULL)
+		return (NULL);
+
+	return (TAILQ_FIRST(&encif->if_addrlist));
 }
 #endif
 
@@ -254,6 +259,22 @@ rtable_add(u_int id)	/* must be called at splsoftnet */
 
 	rt_tab2dom[id] = 0;	/* use main table/domain by default */
 	return (rtable_init(&rt_tables[id], id));
+}
+
+void
+rtable_addif(struct ifnet *ifp, u_int id)
+{
+	/* make sure that the routing table exists */
+	if (!rtable_exists(id)) {
+		if (rtable_add(id) == -1)
+			panic("rtable_addif: rtable_add");
+	}
+	if (id != rtable_l2(id)) {
+		/* XXX we should probably flush the table */
+		rtable_l2set(id, id);
+	}
+
+	ifp->if_rdomain = id;
 }
 
 u_int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.46 2010/05/07 13:33:17 claudio Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.47 2010/06/29 21:28:38 reyk Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -101,6 +101,9 @@ ip6_forward(struct mbuf *m, int srcrt)
 	u_int32_t sspi;
 	struct tdb *tdb;
 	int s;
+#if NPF > 0
+	struct ifnet *encif;
+#endif
 #endif /* IPSEC */
 	u_int rtableid = 0;
 
@@ -335,7 +338,8 @@ reroute:
 		s = splnet();
 
 #if NPF > 0
-		if (pf_test6(PF_OUT, &encif[0].sc_if, &m, NULL) != PF_PASS) {
+		if ((encif = enc_getif(0)) == NULL ||
+		    pf_test6(PF_OUT, encif, &m, NULL) != PF_PASS) {
 			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);

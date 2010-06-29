@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.178 2010/06/03 16:15:00 naddy Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.179 2010/06/29 21:28:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2319,6 +2319,9 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
+#if NPF > 0
+	struct ifnet *encif;
+#endif
 
 	if (dir == BRIDGE_IN) {
 		switch (af) {
@@ -2454,7 +2457,8 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 			switch (af) {
 #ifdef INET
 			case AF_INET:
-				if (pf_test(dir, &encif[0].sc_if,
+				if ((encif = enc_getif(0)) == NULL ||
+				    pf_test(dir, encif,
 				    &m, NULL) != PF_PASS) {
 					m_freem(m);
 					return (1);
@@ -2463,7 +2467,8 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				if (pf_test6(dir, &encif[0].sc_if,
+				if ((encif = enc_getif(0)) == NULL ||
+				    pf_test6(dir, encif,
 				    &m, NULL) != PF_PASS) {
 					m_freem(m);
 					return (1);
