@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.3 2006/10/01 10:52:10 kettenis Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.4 2010/06/29 21:13:43 thib Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
@@ -51,11 +51,12 @@ struct cpu_info;
 
 void fpuinit(struct cpu_info *);
 void fpudrop(void);
-void fpusave(struct proc *);
 void fpudiscard(struct proc *);
 void fputrap(struct trapframe *);
 void fpusave_proc(struct proc *, int);
 void fpusave_cpu(struct cpu_info *, int);
+void fpu_kernel_enter(void);
+void fpu_kernel_exit(void);
 
 #endif
 

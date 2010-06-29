@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.11 2009/10/03 21:51:01 kettenis Exp $	*/
+/*	$OpenBSD: npx.h,v 1.12 2010/06/29 21:13:43 thib Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -167,5 +167,7 @@ struct trapframe;
 
 void	npxinit(struct cpu_info *);
 void	npxtrap(struct trapframe *);
+void	fpu_kernel_enter(void);
+void	fpu_kernel_exit(void);
 
 #endif /* !_I386_NPX_H_ */

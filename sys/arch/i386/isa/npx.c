@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.47 2009/10/28 21:12:18 deraadt Exp $	*/
+/*	$OpenBSD: npx.c,v 1.48 2010/06/29 21:13:43 thib Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -858,4 +858,69 @@ npxsave_proc(struct proc *p, int save)
 	KASSERT(ci->ci_fpcurproc == p);
 	npxsave_cpu(ci, save);
 #endif
+}
+
+void
+fpu_kernel_enter(void)
+{
+	struct cpu_info	*oci, *ci = curcpu();
+	struct proc	*p = curproc;
+	uint32_t	 cw;
+	int		 s;
+
+	KASSERT(p != NULL && (p->p_flag & P_SYSTEM));
+
+	/*
+	 * Fast path. If we were the last proc on the FPU,
+	 * there is no work to do besides clearing TS.
+	 */
+	if (ci->ci_fpcurproc == p) {
+		p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+		clts();
+		return;
+	}
+
+	s = splipi();
+
+	if (ci->ci_fpcurproc != NULL) {
+		npxsave_cpu(ci, 1);
+		uvmexp.fpswtch++;
+	}
+
+	/*
+	 * If we were switched away to the other cpu, cleanup
+	 * an fpcurproc pointer.
+	 */
+	oci = p->p_addr->u_pcb.pcb_fpcpu;
+	if (oci != NULL && oci != ci && oci->ci_fpcurproc == p)
+		oci->ci_fpcurproc = NULL;
+
+	/* Claim the FPU */
+	ci->ci_fpcurproc = p;
+	p->p_addr->u_pcb.pcb_fpcpu = ci;
+	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+
+	splx(s);
+
+	/* Disables DNA exceptions */
+	clts();
+
+	/* Initialize the FPU */
+	fninit();
+	cw = __INITIAL_NPXCW__;
+	fldcw(&cw);
+	if (i386_has_sse || i386_has_sse2) {
+		cw = __INITIAL_MXCSR__;
+		ldmxcsr(&cw);
+	}
+}
+
+void
+fpu_kernel_exit(void)
+{
+	/*
+	 * Nothing to do.
+	 * TS is restored on a context switch automatically
+	 * as long as we use hardware assisted task switching.
+	 */
 }
