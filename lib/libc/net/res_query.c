@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.25 2007/05/16 04:14:23 ray Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.26 2010/06/29 21:08:54 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -96,7 +96,10 @@ res_query(const char *name,
     int anslen)		/* size of answer buffer */
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
-	u_char buf[MAXPACKET];
+	union {
+		HEADER hdr;
+		u_char buf[MAXPACKET];
+	} buf;
 	HEADER *hp = (HEADER *) answer;
 	int n;
 
@@ -112,10 +115,10 @@ res_query(const char *name,
 #endif
 
 	n = res_mkquery(QUERY, name, class, type, NULL, 0, NULL,
-			buf, sizeof(buf));
+			buf.buf, sizeof(buf.buf));
 	if (n > 0 && ((_resp->options & RES_USE_EDNS0) ||
 	    (_resp->options & RES_USE_DNSSEC))) {
-		n = res_opt(n, buf, sizeof(buf), anslen);
+		n = res_opt(n, buf.buf, sizeof(buf.buf), anslen);
 	}
 
 	if (n <= 0) {
@@ -126,7 +129,7 @@ res_query(const char *name,
 		h_errno = NO_RECOVERY;
 		return (n);
 	}
-	n = res_send(buf, n, answer, anslen);
+	n = res_send(buf.buf, n, answer, anslen);
 	if (n < 0) {
 #ifdef DEBUG
 		if (_resp->options & RES_DEBUG)
