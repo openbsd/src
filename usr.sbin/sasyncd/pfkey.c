@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.19 2007/09/02 15:19:40 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.20 2010/06/29 18:10:04 kjell Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -123,7 +123,7 @@ pfkey_send_flush(struct syncpeer *p)
 		m->sadb_msg_pid = getpid();
 		m->sadb_msg_len = sizeof *m / CHUNK;
 
-		log_msg(3, "pfkey_send_flush: sending FLUSH to peer %s",
+		log_msg(2, "pfkey_send_flush: sending FLUSH to peer %s",
 		    p->name);
 		net_queue(p, MSG_PFKEYDATA, (u_int8_t *)m, sizeof *m);
 	}
@@ -425,7 +425,7 @@ pfkey_queue_message(u_int8_t *data, u_int32_t datalen)
 
 	sadb->sadb_msg_pid = getpid();
 	sadb->sadb_msg_seq = seq++;
-	log_msg(3, "pfkey_queue_message: pfkey %s len %u seq %u",
+	log_msg(2, "pfkey_queue_message: pfkey %s len %u seq %u",
 	    pfkey_print_type(sadb), sadb->sadb_msg_len * CHUNK,
 	    sadb->sadb_msg_seq);
 
@@ -472,7 +472,7 @@ pfkey_snapshot(void *v)
 
 	/* Parse SADB data */
 	if (sadbsz && sadb) {
-		dump_buf(3, sadb, sadbsz, "pfkey_snapshot: SADB data");
+		dump_buf(2, sadb, sadbsz, "pfkey_snapshot: SADB data");
 		max = sadb + sadbsz;
 		for (next = sadb; next < max;
 		     next += m->sadb_msg_len * CHUNK) {
@@ -492,7 +492,7 @@ pfkey_snapshot(void *v)
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
 				    m->sadb_msg_len * CHUNK);
-				log_msg(3, "pfkey_snapshot: sync SA %p len %u "
+				log_msg(2, "pfkey_snapshot: sync SA %p len %u "
 				    "to peer %s", m,
 				    m->sadb_msg_len * CHUNK, p->name);
 			}
@@ -503,7 +503,7 @@ pfkey_snapshot(void *v)
 
 	/* Parse SPD data */
 	if (spdsz && spd) {
-		dump_buf(3, spd, spdsz, "pfkey_snapshot: SPD data");
+		dump_buf(2, spd, spdsz, "pfkey_snapshot: SPD data");
 		max = spd + spdsz;
 		for (next = spd; next < max; next += m->sadb_msg_len * CHUNK) {
 			m = (struct sadb_msg *)next;
@@ -522,7 +522,7 @@ pfkey_snapshot(void *v)
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
 				    m->sadb_msg_len * CHUNK);
-				log_msg(3, "pfkey_snapshot: sync FLOW %p len "
+				log_msg(2, "pfkey_snapshot: sync FLOW %p len "
 				    "%u to peer %s", m,
 				    m->sadb_msg_len * CHUNK, p->name);
 			}

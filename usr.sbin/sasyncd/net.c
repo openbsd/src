@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.15 2007/01/08 15:31:01 markus Exp $	*/
+/*	$OpenBSD: net.c,v 1.16 2010/06/29 18:10:04 kjell Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -140,10 +140,10 @@ net_add_listener(struct sockaddr *sa)
 
 	if (getnameinfo(sa, sa->sa_len, host, sizeof host, port, sizeof port,
 		NI_NUMERICHOST | NI_NUMERICSERV))
-		log_msg(3, "listening on port %u fd %d", cfgstate.listen_port,
+		log_msg(2, "listening on port %u fd %d", cfgstate.listen_port,
 		    s);
 	else
-		log_msg(3, "listening on %s port %s fd %d", host, port, s);
+		log_msg(2, "listening on %s port %s fd %d", host, port, s);
 
 	return s;
 }
@@ -249,7 +249,7 @@ net_setup_listeners(void)
 
 		listeners[count] = net_add_listener(sa);
 		if (listeners[count] == -1) {
-			log_msg(4, "net_setup_listeners(setup): failed to "
+			log_msg(2, "net_setup_listeners(setup): failed to "
 			    "add listener, count = %d", count);
 			goto errout;
 		}
@@ -342,7 +342,7 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, buf, len);
 	SHA1_Final(hash, &ctx);
-	dump_buf(5, hash, sizeof hash, "net_queue: computed hash");
+	dump_buf(2, hash, sizeof hash, "net_queue: computed hash");
 
 	/* Padding required? */
 	i = len % AES_IV_LEN;
@@ -367,13 +367,13 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 		v = arc4random();
 		memcpy(&iv[i], &v, sizeof v);
 	}
-	dump_buf(5, iv, sizeof iv, "net_queue: IV");
+	dump_buf(2, iv, sizeof iv, "net_queue: IV");
 	memcpy(tmp_iv, iv, sizeof tmp_iv);
 
 	/* Encrypt */
-	dump_buf(5, buf, len, "net_queue: pre encrypt");
+	dump_buf(2, buf, len, "net_queue: pre encrypt");
 	AES_cbc_encrypt(buf, buf, len, &aes_key[0], tmp_iv, AES_ENCRYPT);
-	dump_buf(5, buf, len, "net_queue: post encrypt");
+	dump_buf(2, buf, len, "net_queue: post encrypt");
 
 	/* Allocate send buffer */
 	m->len = len + sizeof iv + sizeof hash + 3 * sizeof(u_int32_t);
@@ -534,7 +534,7 @@ net_handle_messages(fd_set *fds)
 		if (!msg)
 			continue;
 
-		log_msg(5, "net_handle_messages: got msg type %u len %u from "
+		log_msg(2, "net_handle_messages: got msg type %u len %u from "
 		    "peer %s", msgtype, msglen, p->name);
 
 		switch (msgtype) {
@@ -584,7 +584,7 @@ net_send_messages(fd_set *fds)
 		}
 		m = qm->msg;
 
-		log_msg(5, "net_send_messages: msg %p len %u ref %d "
+		log_msg(2, "net_send_messages: msg %p len %u ref %d "
 		    "to peer %s", m, m->len, m->refcnt, p->name);
 
 		/* write message */
@@ -603,7 +603,7 @@ net_send_messages(fd_set *fds)
 		free(qm);
 
 		if (--m->refcnt < 1) {
-			log_msg(5, "net_send_messages: freeing msg %p", m);
+			log_msg(2, "net_send_messages: freeing msg %p", m);
 			free(m->buf);
 			free(m);
 		}
@@ -731,17 +731,17 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 	}
 	memcpy(msg, iv + AES_IV_LEN, *msglen);
 
-	dump_buf(5, rhash, sizeof hash, "net_read: got hash");
-	dump_buf(5, iv, AES_IV_LEN, "net_read: got IV");
-	dump_buf(5, msg, *msglen, "net_read: pre decrypt");
+	dump_buf(2, rhash, sizeof hash, "net_read: got hash");
+	dump_buf(2, iv, AES_IV_LEN, "net_read: got IV");
+	dump_buf(2, msg, *msglen, "net_read: pre decrypt");
 	AES_cbc_encrypt(msg, msg, *msglen, &aes_key[1], iv, AES_DECRYPT);
-	dump_buf(5, msg, *msglen, "net_read: post decrypt");
+	dump_buf(2, msg, *msglen, "net_read: post decrypt");
 	*msglen -= padlen;
 
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, msg, *msglen);
 	SHA1_Final(hash, &ctx);
-	dump_buf(5, hash, sizeof hash, "net_read: computed hash");
+	dump_buf(2, hash, sizeof hash, "net_read: computed hash");
 
 	if (memcmp(hash, rhash, sizeof hash) != 0) {
 		free(blob);

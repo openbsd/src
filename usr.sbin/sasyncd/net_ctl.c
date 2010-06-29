@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_ctl.c,v 1.8 2006/06/02 20:09:43 mcbride Exp $	*/
+/*	$OpenBSD: net_ctl.c,v 1.9 2010/06/29 18:10:04 kjell Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -92,7 +92,7 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 
 	switch (ntohl(ctl->type)) {
 	case CTL_ENDSNAP:
-		log_msg(4, "net_ctl: got CTL_ENDSNAP from peer \"%s\"",
+		log_msg(2, "net_ctl: got CTL_ENDSNAP from peer \"%s\"",
 		    p->name);
 
 		/* XXX More sophistication required to handle multiple peers. */
@@ -104,7 +104,7 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 		break;
 
 	case CTL_STATE:
-		log_msg(4, "net_ctl: got CTL_STATE from peer \"%s\"", p->name);
+		log_msg(2, "net_ctl: got CTL_STATE from peer \"%s\"", p->name);
 		nstate = (enum RUNSTATE)ntohl(ctl->data);
 		if (net_ctl_check_state(p, nstate) == 0)
 			net_ctl_send_ack(p, CTL_STATE, cfgstate.runstate);
@@ -136,7 +136,7 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 			ct = "<unknown>";
 		else
 			ct = ctltype[ctype];
-		log_msg(4, "net_ctl: got %s ACK from peer \"%s\"", ct,
+		log_msg(2, "net_ctl: got %s ACK from peer \"%s\"", ct,
 		    p->name);
 		if (ctype == CTL_STATE) {
 			nstate = (enum RUNSTATE)ntohl(ctl->data2);
@@ -206,7 +206,7 @@ net_ctl_update_state(void)
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		if (p->socket == -1)
 			continue;
-		log_msg(4, "net_ctl: sending my state %s to peer \"%s\"",
+		log_msg(2, "net_ctl: sending my state %s to peer \"%s\"",
 		    carp_state_name(cfgstate.runstate), p->name);
 		net_ctl_send_state(p);
 	}

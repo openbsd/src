@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.13 2010/06/16 17:39:05 reyk Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.14 2010/06/29 18:10:04 kjell Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -321,7 +321,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 		}
 	}
 
-	log_msg(3, "monitor_get_pfkey_snap: got %u bytes SADB, %u bytes SPD",
+	log_msg(2, "monitor_get_pfkey_snap: got %u bytes SADB, %u bytes SPD",
 	    *sadbsize, *spdsize);
 	return 0;
 }
