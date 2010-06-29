@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.58 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.59 2010/06/29 17:10:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -328,6 +328,8 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 		p->parent->tail = p;
 		break;
 	case (MDOC_BODY):
+		if (p->end)
+			break;
 		assert(MDOC_BLOCK == p->parent->type);
 		p->parent->body = p;
 		break;
@@ -427,6 +429,22 @@ mdoc_body_alloc(struct mdoc *m, int line, int pos, enum mdoct tok)
 	if ( ! node_append(m, p))
 		return(0);
 	m->next = MDOC_NEXT_CHILD;
+	return(1);
+}
+
+
+int
+mdoc_endbody_alloc(struct mdoc *m, int line, int pos, enum mdoct tok,
+		struct mdoc_node *body, enum mdoc_endbody end)
+{
+	struct mdoc_node *p;
+
+	p = node_alloc(m, line, pos, tok, MDOC_BODY);
+	p->pending = body;
+	p->end = end;
+	if ( ! node_append(m, p))
+		return(0);
+	m->next = MDOC_NEXT_SIBLING;
 	return(1);
 }
 

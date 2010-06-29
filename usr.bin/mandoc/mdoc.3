@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.3,v 1.9 2010/06/27 21:54:42 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.10 2010/06/29 17:10:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2010 $
+.Dd $Mdocdate: June 29 2010 $
 .Dt MDOC 3
 .Os
 .Sh NAME
@@ -217,10 +217,14 @@ and
 fields), its position in the tree (the
 .Va parent ,
 .Va child ,
+.Va nchild ,
 .Va next
 and
 .Va prev
-fields) and some type-specific data.
+fields) and some type-specific data, in particular, for nodes generated
+from macros, the generating macro in the
+.Va tok
+field.
 .Pp
 The tree itself is arranged according to the following normal form,
 where capitalised non-terminals represent nodes.
@@ -235,11 +239,11 @@ where capitalised non-terminals represent nodes.
 .It ELEMENT
 \(<- TEXT*
 .It HEAD
-\(<- mnode+
+\(<- mnode*
 .It BODY
-\(<- mnode+
+\(<- mnode* [ENDBODY mnode*]
 .It TAIL
-\(<- mnode+
+\(<- mnode*
 .It TEXT
 \(<- [[:printable:],0x1e]*
 .El
@@ -253,6 +257,65 @@ an empty line will produce a zero-length string.
 Multiple body parts are only found in invocations of
 .Sq \&Bl \-column ,
 where a new body introduces a new phrase.
+.Ss Badly nested blocks
+A special kind of node is available to end the formatting
+associated with a given block before the physical end of that block.
+Such an ENDBODY node has a non-null
+.Va end
+field, is of the BODY
+.Va type ,
+has the same
+.Va tok
+as the BLOCK it is ending, and has a
+.Va pending
+field pointing to that BLOCK's BODY node.
+It is an indirect child of that BODY node
+and has no children of its own.
+.Pp
+An ENDBODY node is generated when a block ends while one of its child
+blocks is still open, like in the following example:
+.Bd -literal -offset indent
+\&.Ao ao
+\&.Bo bo ac
+\&.Ac bc
+\&.Bc end
+.Ed
+.Pp
+This example results in the following block structure:
+.Bd -literal -offset indent
+BLOCK Ao
+	HEAD Ao
+	BODY Ao
+		TEXT ao
+		BLOCK Bo, pending -> Ao
+			HEAD Bo
+			BODY Bo
+				TEXT bo
+				TEXT ac
+				ENDBODY Ao, pending -> Ao
+				TEXT bc
+TEXT end
+.Ed
+.Pp
+Here, the formatting of the Ao block extends from TEXT ao to TEXT ac,
+while the formatting of the Bo block extends from TEXT bo to TEXT bc,
+rendering like this in
+.Fl T Ns Cm ascii
+mode:
+.Dl <ao [bo ac> bc] end
+Support for badly nested blocks is only provided for backward
+compatibility with some older
+.Xr mdoc 7
+implementations.
+Using them in new code is stronly discouraged:
+Some frontends, in particular
+.Fl T Ns Cm html ,
+are unable to render them in any meaningful way,
+many other
+.Xr mdoc 7
+implementations do not support them, and even for those that do,
+the behaviour is not well-defined, in particular when using multiple
+levels of badly nested blocks.
 .Sh EXAMPLES
 The following example reads lines from stdin and parses them, operating
 on the finished parse tree with

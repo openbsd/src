@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.8 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: tree.c,v 1.9 2010/06/29 17:10:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,7 +71,10 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		t = "block-head";
 		break;
 	case (MDOC_BODY):
-		t = "block-body";
+		if (n->end)
+			t = "body-end";
+		else
+			t = "block-body";
 		break;
 	case (MDOC_TAIL):
 		t = "block-tail";

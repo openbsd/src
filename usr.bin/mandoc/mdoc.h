@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.29 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.30 2010/06/29 17:10:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -249,6 +249,12 @@ struct 	mdoc_arg {
 	unsigned int	  refcnt;
 };
 
+enum	mdoc_endbody {
+	ENDBODY_NOT = 0,
+	ENDBODY_SPACE,
+	ENDBODY_NOSPACE,
+};
+
 enum	mdoc_list {
 	LIST__NONE = 0,
 	LIST_bullet,
@@ -302,6 +308,7 @@ struct	mdoc_node {
 #define	MDOC_EOS	 (1 << 2) /* at sentence boundary */
 #define	MDOC_LINE	 (1 << 3) /* first macro/text on line */
 #define	MDOC_SYNPRETTY	 (1 << 4) /* SYNOPSIS-style formatting */
+#define	MDOC_ENDED	 (1 << 5) /* rendering has been ended */
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
 	/* FIXME: these can be union'd to shave a few bytes. */
@@ -311,6 +318,7 @@ struct	mdoc_node {
 	struct mdoc_node *body;		/* BLOCK */
 	struct mdoc_node *tail;		/* BLOCK */
 	char		 *string;	/* TEXT */
+	enum mdoc_endbody end;		/* BODY */
 
 	union {
 		struct mdoc_bl Bl;

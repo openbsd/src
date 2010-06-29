@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.23 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.24 2010/06/29 17:10:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -433,7 +433,7 @@ print_mdoc_node(MDOC_ARGS)
 		print_text(h, n->string);
 		return;
 	default:
-		if (mdocs[n->tok].pre)
+		if (mdocs[n->tok].pre && !n->end)
 			child = (*mdocs[n->tok].pre)(m, n, h);
 		break;
 	}
@@ -449,7 +449,7 @@ print_mdoc_node(MDOC_ARGS)
 		mdoc_root_post(m, n, h);
 		break;
 	default:
-		if (mdocs[n->tok].post)
+		if (mdocs[n->tok].post && !n->end)
 			(*mdocs[n->tok].post)(m, n, h);
 		break;
 	}
