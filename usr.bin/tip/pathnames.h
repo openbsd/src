@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2010/06/29 16:41:56 nicm Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2010/06/29 20:09:39 nicm Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1994/12/08 09:30:59 jtc Exp $	*/
 
 /*
@@ -34,6 +34,5 @@
 
 #include <paths.h>
 
-#define	_PATH_ACULOG		"/var/log/aculog"
-#define	_PATH_LOCKDIRNAME	"/var/spool/lock/LCK..%s"
-#define	_PATH_REMOTE		"/etc/remote"
+#define	_PATH_ACULOG	"/var/log/aculog"
+#define	_PATH_REMOTE	"/etc/remote"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.15 2010/06/29 17:42:35 nicm Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.16 2010/06/29 20:09:39 nicm Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -30,6 +30,8 @@
  * SUCH DAMAGE.
  */
 
+#include <util.h>
+
 #include "tip.h"
 
 static	jmp_buf deadline;
@@ -59,7 +61,7 @@ hunt(char *name)
 			uucplock = cp;
 		else
 			uucplock++;
-		if (uu_lock(uucplock) < 0)
+		if (uu_lock(uucplock) != UU_LOCK_OK)
 			continue;
 
 		if (setjmp(deadline) == 0) {
