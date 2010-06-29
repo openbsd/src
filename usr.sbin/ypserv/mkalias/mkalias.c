@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.23 2009/10/27 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.24 2010/06/29 03:47:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -80,7 +80,10 @@ split_address(char *address, size_t len, char *user, char *host)
 static int
 check_host(char *address, size_t len, char *host, int dflag, int uflag, int Eflag)
 {
-	u_char answer[PACKETSZ];
+	union {
+		HEADER hdr;
+		u_char buf[PACKETSZ];
+	} answer;
 	int  status;
 
 	if ((dflag && memchr(address, '@', len)) ||
@@ -90,13 +93,13 @@ check_host(char *address, size_t len, char *host, int dflag, int uflag, int Efla
 	if ((_res.options & RES_INIT) == 0)
 		res_init();
 
-	status = res_search(host, C_IN, T_AAAA, answer, sizeof(answer));
+	status = res_search(host, C_IN, T_AAAA, answer.buf, sizeof(answer.buf));
 
 	if (status == -1)
-		status = res_search(host, C_IN, T_A, answer, sizeof(answer));
+		status = res_search(host, C_IN, T_A, answer.buf, sizeof(answer.buf));
 
 	if (status == -1 && Eflag)
-		status = res_search(host, C_IN, T_MX, answer, sizeof(answer));
+		status = res_search(host, C_IN, T_MX, answer.buf, sizeof(answer.buf));
 
 	return(status == -1);
 }
