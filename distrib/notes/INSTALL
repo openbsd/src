@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.43 2009/05/12 21:06:48 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.44 2010/06/29 19:13:10 miod Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -34,12 +34,6 @@ hardware cryptography has also been added to the base system.  Because
 security is often seen as a tradeoff with usability, OpenBSD provides
 as many security options as possible to allow the user to enjoy secure
 computing without feeling burdened by it.
-
-To integrate more smoothly in other environments, OpenBSD OSREV also
-provides, on some platforms, several binary emulation subsystems
-(which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris, and Ultrix
-compatibility), aiming at making the emulation as accurate as possible
-so that it is transparent to the user.
 
 Because OpenBSD is from Canada, the export of Cryptography pieces
 (such as OpenSSH, IPsec, and Kerberos) to the world is not restricted.
