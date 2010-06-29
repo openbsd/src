@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.4 2010/06/29 02:45:46 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.5 2010/06/29 02:54:20 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -125,7 +125,7 @@ ldap_add(struct request *req)
 		namespace_abort(ns);
 		if (rc == LDAP_SUCCESS && errno == EEXIST)
 			rc = LDAP_ALREADY_EXISTS;
-		else
+		else if (rc == LDAP_SUCCESS)
 			rc = LDAP_OTHER;
 	} else if (namespace_commit(ns) != 0)
 		rc = LDAP_OTHER;
