@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.68 2010/05/26 16:38:20 thib Exp $	*/
+/*	$OpenBSD: buf.h,v 1.69 2010/06/29 18:52:20 kettenis Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -68,9 +68,12 @@ LIST_HEAD(workhead, worklist);
 #define BUFQ_HOWMANY	2
 
 struct bufq {
-	struct mutex	   bufq_mtx;
-	void		  *bufq_data;
-	int		   bufq_type;
+	SLIST_ENTRY(bufq)	 bufq_entries;
+	struct mutex	 	 bufq_mtx;
+	void			*bufq_data;
+	u_int			 bufq_outstanding;
+	int			 bufq_stop;
+	int			 bufq_type;
 };
 
 struct buf	*bufq_disksort_dequeue(struct bufq *, int);
@@ -96,22 +99,25 @@ union bufq_data {
 	struct bufq_fifo	bufq_data_fifo;
 };
 
-extern struct buf *(*bufq_dequeue[BUFQ_HOWMANY])(struct bufq *, int);
-extern void (*bufq_queue[BUFQ_HOWMANY])(struct bufq *, struct buf *);
-extern void (*bufq_requeue[BUFQ_HOWMANY])(struct bufq *, struct buf *);
+extern struct buf *(*bufq_dequeuev[BUFQ_HOWMANY])(struct bufq *, int);
+extern void (*bufq_queuev[BUFQ_HOWMANY])(struct bufq *, struct buf *);
+extern void (*bufq_requeuev[BUFQ_HOWMANY])(struct bufq *, struct buf *);
 
-#define	BUFQ_QUEUE(_bufq, _bp)		\
-	    bufq_queue[(_bufq)->bufq_type](_bufq, _bp)
-#define BUFQ_REQUEUE(_bufq, _bp)	\
-	    bufq_requeue[(_bufq)->bufq_type](_bufq, _bp)
+#define	BUFQ_QUEUE(_bufq, _bp)	 bufq_queue(_bufq, _bp)
+#define BUFQ_REQUEUE(_bufq, _bp) bufq_requeue(_bufq, _bp)
 #define	BUFQ_DEQUEUE(_bufq)		\
-	    bufq_dequeue[(_bufq)->bufq_type](_bufq, 0)
+	    bufq_dequeuev[(_bufq)->bufq_type](_bufq, 0)
 #define	BUFQ_PEEK(_bufq)		\
-	    bufq_dequeue[(_bufq)->bufq_type](_bufq, 1)
+	bufq_dequeuev[(_bufq)->bufq_type](_bufq, 1)
 
 struct bufq	*bufq_init(int);
+void		 bufq_queue(struct bufq *, struct buf *);
+void		 bufq_requeue(struct bufq *, struct buf *);
 void		 bufq_destroy(struct bufq *);
 void		 bufq_drain(struct bufq *);
+void		 bufq_done(struct bufq *, struct buf *);
+void		 bufq_quiesce(void);
+void		 bufq_restart(void);
 
 
 /*
@@ -152,6 +158,7 @@ struct buf {
 	TAILQ_ENTRY(buf) b_valist;	/* LRU of va to reuse. */
 
 	union	bufq_data b_bufq;
+	struct	bufq	  *b_bq;	/* What bufq this buf is on */
 
 	struct uvm_object *b_pobj;	/* Object containing the pages */
 	off_t	b_poffs;		/* Offset within object */
