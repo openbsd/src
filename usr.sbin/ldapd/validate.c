@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: validate.c,v 1.2 2010/06/29 02:45:46 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -140,7 +140,7 @@ validate_dn(const char *dn, struct ber_element *entry)
 
 		log_debug("got naming attribute %s", na);
 		log_debug("got distinguished value %s", dv);
-		if ((at = lookup_attribute(na)) == NULL) {
+		if ((at = lookup_attribute(conf->schema, na)) == NULL) {
 			log_debug("attribute %s not defined in schema", na);
 			goto fail;
 		}
@@ -240,7 +240,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	for (a = objclass->be_sub; a != NULL; a = a->be_next) {
 		if (ber_get_string(a, &s) != 0)
 			return LDAP_INVALID_SYNTAX;
-		if ((obj = lookup_object(s)) == NULL) {
+		if ((obj = lookup_object(conf->schema, s)) == NULL) {
 			log_debug("objectClass %s not defined in schema", s);
 			return LDAP_NAMING_VIOLATION;
 		}
@@ -265,7 +265,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	for (a = entry->be_sub; a != NULL; a = a->be_next) {
 		if (ber_scanf_elements(a, "{se{", &s, &vals) != 0)
 			return LDAP_INVALID_SYNTAX;
-		if ((at = lookup_attribute(s)) == NULL) {
+		if ((at = lookup_attribute(conf->schema, s)) == NULL) {
 			log_debug("attribute %s not defined in schema", s);
 			return LDAP_NAMING_VIOLATION;
 		}

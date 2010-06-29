@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.11 2010/06/27 18:31:12 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.12 2010/06/29 02:45:46 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -33,6 +33,7 @@
 #include <stdarg.h>
 
 #include "aldap.h"
+#include "schema.h"
 #include "btree.h"
 
 #define CONFFILE		 "/etc/ldapd.conf"
@@ -214,84 +215,6 @@ struct conn
 };
 TAILQ_HEAD(conn_list, conn)	 conn_list;
 
-enum usage {
-	USAGE_USER_APP,
-	USAGE_DIR_OP,		/* operational attribute */
-	USAGE_DIST_OP,		/* operational attribute */
-	USAGE_DSA_OP		/* operational attribute */
-};
-
-struct name {
-	SLIST_ENTRY(name)	 next;
-	const char		*name;
-};
-SLIST_HEAD(name_list, name);
-
-struct attr_type {
-	RB_ENTRY(attr_type)	 link;
-	const char		*oid;
-	struct name_list	*names;
-	char			*desc;
-	int			 obsolete;
-	struct attr_type	*sup;
-	char			*equality;
-	char			*ordering;
-	char			*substr;
-	char			*syntax;
-	int			 single;
-	int			 collective;
-	int			 immutable;	/* no-user-modification */
-	enum usage		 usage;
-};
-RB_HEAD(attr_type_tree, attr_type);
-RB_PROTOTYPE(attr_type_tree, attr_type, link, attr_oid_cmp);
-
-struct attr_ptr {
-	SLIST_ENTRY(attr_ptr)	 next;
-	struct attr_type	*attr_type;
-};
-SLIST_HEAD(attr_list, attr_ptr);
-
-enum object_kind {
-	KIND_ABSTRACT,
-	KIND_STRUCTURAL,
-	KIND_AUXILIARY
-};
-
-struct object;
-struct obj_ptr {
-	SLIST_ENTRY(obj_ptr)	 next;
-	struct object		*object;
-};
-SLIST_HEAD(obj_list, obj_ptr);
-
-struct object {
-	RB_ENTRY(object)	 link;
-	const char		*oid;
-	struct name_list	*names;
-	char			*desc;
-	int			 obsolete;
-	struct obj_list		*sup;
-	enum object_kind	 kind;
-	struct attr_list	*must;
-	struct attr_list	*may;
-};
-RB_HEAD(object_tree, object);
-RB_PROTOTYPE(object_tree, object, link, obj_oid_cmp);
-
-struct oidname {
-	RB_ENTRY(oidname)	 link;
-	const char		*on_name;
-#define	on_attr_type		 on_ptr.ou_attr_type
-#define	on_object		 on_ptr.ou_object
-	union	{
-		struct attr_type	*ou_attr_type;
-		struct object		*ou_object;
-	} on_ptr;
-};
-RB_HEAD(oidname_tree, oidname);
-RB_PROTOTYPE(oidname_tree, oidname, link, oidname_cmp);
-
 struct ssl {
 	SPLAY_ENTRY(ssl)	 ssl_nodes;
 	char			 ssl_name[PATH_MAX];
@@ -305,13 +228,10 @@ struct ssl {
 struct ldapd_config
 {
 	struct namespace_list		 namespaces;
-	struct attr_type_tree		 attr_types;
-	struct oidname_tree		 attr_names;
-	struct object_tree		 objects;
-	struct oidname_tree		 object_names;
 	struct listenerlist		 listeners;
 	SPLAY_HEAD(ssltree, ssl)	*sc_ssl;
 	struct acl			 acl;
+	struct schema			*schema;
 };
 
 struct ldapd_stats
@@ -516,12 +436,6 @@ int			 authorized(struct conn *conn, struct namespace *ns,
 
 /* parse.y */
 int			 parse_config(char *filename);
-struct attr_type	*lookup_attribute_by_oid(const char *oid);
-struct attr_type	*lookup_attribute_by_name(const char *name);
-struct attr_type	*lookup_attribute(const char *oid_or_name);
-struct object		*lookup_object_by_oid(const char *oid);
-struct object		*lookup_object_by_name(const char *name);
-struct object		*lookup_object(const char *oid_or_name);
 int			 cmdline_symset(char *s);
 
 /* log.c */

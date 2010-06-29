@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.4 2010/06/15 19:30:26 martinh Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2010/06/29 02:45:46 martinh Exp $ */
 
 /*
- * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
+ * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -46,28 +46,6 @@
 
 #include "ldapd.h"
 
-static int
-attr_oid_cmp(struct attr_type *a, struct attr_type *b)
-{
-	return strcasecmp(a->oid, b->oid);
-}
-
-static int
-obj_oid_cmp(struct object *a, struct object *b)
-{
-	return strcasecmp(a->oid, b->oid);
-}
-
-static int
-oidname_cmp(struct oidname *a, struct oidname *b)
-{
-	return strcasecmp(a->on_name, b->on_name);
-}
-
-RB_GENERATE(attr_type_tree, attr_type, link, attr_oid_cmp);
-RB_GENERATE(object_tree, object, link, obj_oid_cmp);
-RB_GENERATE(oidname_tree, oidname, link, oidname_cmp);
-
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
 	TAILQ_ENTRY(file)	 entry;
@@ -111,77 +89,48 @@ char		*symget(const char *);
 
 struct ldapd_config	*conf;
 
-static struct attr_list	*append_attr(struct attr_list *alist,
-				struct attr_type *a);
-static struct obj_list	*append_obj(struct obj_list *olist, struct object *obj);
-int			 is_oidstr(const char *oidstr);
-static struct name_list *append_name(struct name_list *nl, const char *name);
 static struct aci	*mk_aci(int type, int rights, enum scope scope,
 				char *target, char *subject);
 
 typedef struct {
 	union {
-		int64_t			 number;
-		char			*string;
-		struct attr_type	*attr;
-		struct attr_list	*attrlist;
-		struct object		*obj;
-		struct obj_list		*objlist;
-		struct name_list	*namelist;
-		struct {
-			int		 type;
-			void		*data;
-			long long	 value;
-		}			 data;
-		struct aci		*aci;
+		int64_t		 number;
+		char		*string;
+		struct aci	*aci;
 	} v;
 	int lineno;
 } YYSTYPE;
 
-static struct attr_type *cattr = NULL;
-static struct object *cobj = NULL;
-static struct namespace *cns = NULL;
+static struct namespace *current_ns = NULL;
 
 %}
 
 %token	ERROR LISTEN ON TLS LDAPS PORT NAMESPACE ROOTDN ROOTPW INDEX
-%token	SUP SYNTAX EQUALITY ORDERING SUBSTR OBSOLETE NAME SINGLE_VALUE
-%token	DESC USAGE ATTRIBUTETYPE NO_USER_MOD COLLECTIVE
+%token	SECURE RELAX STRICT SCHEMA USE COMPRESSION LEVEL
 %token	INCLUDE CERTIFICATE FSYNC CACHE_SIZE INDEX_CACHE_SIZE
-%token	OBJECTCLASS MUST MAY SECURE RELAX STRICT SCHEMA
-%token	ABSTRACT AUXILIARY STRUCTURAL USE COMPRESSION LEVEL
-%token	USER_APPLICATIONS DIRECTORY_OPERATION
 %token	DISTRIBUTED_OPERATION DSA_OPERATION
 %token	DENY ALLOW READ WRITE BIND ACCESS TO ROOT
 %token	ANY CHILDREN OF ATTRIBUTE IN SUBTREE BY SELF
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.string>	numericoid oidlen
-%type	<v.string>	qdescr certname
-%type	<v.number>	usage kind port ssl boolean
-%type	<v.attrlist>	attrptrs attrlist
-%type	<v.attr>	attrptr
-%type	<v.objlist>	objptrs objlist
-%type	<v.obj>		objptr
-%type	<v.namelist>	qdescrs qdescrlist
+%type	<v.number>	port ssl boolean comp_level
 %type	<v.number>	aci_type aci_access aci_rights aci_right aci_scope
-%type	<v.string>	aci_target aci_subject
+%type	<v.string>	aci_target aci_subject certname
 %type	<v.aci>		aci
-%type	<v.number>	comp_level
 
 %%
 
 grammar		: /* empty */
-		| grammar include
-		| grammar attr_type
-		| grammar object
-		| grammar varset
-		| grammar conf_main
-		| grammar database
-		| grammar aci			{
+		| grammar '\n'
+		| grammar include '\n'
+		| grammar varset '\n'
+		| grammar conf_main '\n'
+		| grammar error '\n'		{ file->errors++; }
+		| grammar namespace '\n'
+		| grammar aci '\n'		{
 			SIMPLEQ_INSERT_TAIL(&conf->acl, $2, entry);
 		}
-		| grammar error			{ file->errors++; }
+		| grammar schema '\n'
 		;
 
 ssl		: /* empty */			{ $$ = 0; }
@@ -253,13 +202,12 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 		}
 		;
 
-database	: NAMESPACE STRING '{'		{
-			cns = namespace_new($2);
+namespace	: NAMESPACE STRING '{' '\n'		{
+			log_debug("parsing namespace %s", $2);
+			current_ns = namespace_new($2);
 			free($2);
-			TAILQ_INSERT_TAIL(&conf->namespaces, cns, next);
-		} ns_opts	'}'		{
-			cns = NULL;
-		}
+			TAILQ_INSERT_TAIL(&conf->namespaces, current_ns, next);
+		} ns_opts '}'			{ current_ns = NULL; }
 		;
 
 boolean		: STRING			{
@@ -281,43 +229,35 @@ boolean		: STRING			{
 		;
 
 ns_opts		: /* empty */
-		| ns_opts ROOTDN STRING		{
-			cns->rootdn = $3;
-			normalize_dn(cns->rootdn);
+		| ns_opts '\n'
+		| ns_opts ns_opt '\n'
+		;
+
+ns_opt		: ROOTDN STRING			{
+			current_ns->rootdn = $2;
+			normalize_dn(current_ns->rootdn);
 		}
-		| ns_opts ROOTPW STRING		{ cns->rootpw = $3; }
-		| ns_opts INDEX STRING		{
+		| ROOTPW STRING			{ current_ns->rootpw = $2; }
+		| INDEX STRING			{
 			struct attr_index	*ai;
 			if ((ai = calloc(1, sizeof(*ai))) == NULL) {
 				yyerror("calloc");
-                                free($3);
+                                free($2);
 				YYERROR;
 			}
-			ai->attr = $3;
+			ai->attr = $2;
 			ai->type = INDEX_EQUAL;
-			TAILQ_INSERT_TAIL(&cns->indices, ai, next);
+			TAILQ_INSERT_TAIL(&current_ns->indices, ai, next);
 		}
-		| ns_opts CACHE_SIZE NUMBER	{
-			cns->cache_size = $3;
+		| CACHE_SIZE NUMBER		{ current_ns->cache_size = $2; }
+		| INDEX_CACHE_SIZE NUMBER	{ current_ns->index_cache_size = $2; }
+		| FSYNC boolean			{ current_ns->sync = $2; }
+		| aci				{
+			SIMPLEQ_INSERT_TAIL(&current_ns->acl, $1, entry);
 		}
-		| ns_opts INDEX_CACHE_SIZE NUMBER	{
-			cns->index_cache_size = $3;
-		}
-		| ns_opts FSYNC boolean			{
-			cns->sync = $3;
-		}
-		| ns_opts aci				{
-			SIMPLEQ_INSERT_TAIL(&cns->acl, $2, entry);
-		}
-		| ns_opts RELAX SCHEMA			{
-			cns->relax = 1;
-		}
-		| ns_opts STRICT SCHEMA			{
-			cns->relax = 0;
-		}
-		| ns_opts USE COMPRESSION comp_level	{
-			cns->compression_level = $4;
-		}
+		| RELAX SCHEMA			{ current_ns->relax = 1; }
+		| STRICT SCHEMA			{ current_ns->relax = 0; }
+		| USE COMPRESSION comp_level	{ current_ns->compression_level = $3; }
 		;
 
 comp_level	: /* empty */			{ $$ = 6; }
@@ -374,209 +314,6 @@ aci_subject	: /* empty */			{ $$ = NULL; }
 		| BY SELF			{ $$ = strdup("@"); }
 		;
 
-attr_type	: ATTRIBUTETYPE '(' numericoid {
-			struct attr_type	*p;
-
-			if ((cattr = calloc(1, sizeof(*cattr))) == NULL) {
-				yyerror("calloc");
-                                free($3);
-				YYERROR;
-                        }
-			cattr->oid = $3;
-                        p = RB_INSERT(attr_type_tree, &conf->attr_types, cattr);
-			if (p != NULL) {
-				yyerror("attribute '%s' already defined", $3);
-				free($3);
-				free(cattr);
-				cattr = NULL;
-				YYERROR;
-			}
-		} attr_data ')' {
-			cattr = NULL;
-		}
-		;
-
-attr_data	: /* empty */
-		| attr_data NAME qdescrs	{ cattr->names = $3; }
-		| attr_data DESC STRING		{ cattr->desc = $3; }
-		| attr_data OBSOLETE		{ cattr->obsolete = 1; }
-		| attr_data SUP STRING		{
-			cattr->sup = lookup_attribute($3);
-			if (cattr->sup == NULL)
-				yyerror("%s: no such attribute", $3);
-			free($3);
-			if (cattr->sup == NULL)
-				YYERROR;
-		}
-		| attr_data EQUALITY STRING	{ cattr->equality = $3; }
-		| attr_data ORDERING STRING	{ cattr->ordering = $3; }
-		| attr_data SUBSTR STRING	{ cattr->substr = $3; }
-		| attr_data SYNTAX oidlen	{ cattr->syntax = $3; }
-		| attr_data SINGLE_VALUE	{ cattr->single = 1; }
-		| attr_data COLLECTIVE		{ cattr->collective = 1; }
-		| attr_data NO_USER_MOD		{ cattr->immutable = 1; }
-		| attr_data USAGE usage		{ cattr->usage = $3; }
-		;
-
-usage		: USER_APPLICATIONS		{ $$ = USAGE_USER_APP; }
-		| DIRECTORY_OPERATION		{ $$ = USAGE_DIR_OP; }
-		| DISTRIBUTED_OPERATION		{ $$ = USAGE_DIST_OP; }
-		| DSA_OPERATION			{ $$ = USAGE_DSA_OP; }
-		;
-
-object		: OBJECTCLASS '(' numericoid {
-			struct object		*p;
-
-			if ((cobj = calloc(1, sizeof(*cobj))) == NULL) {
-				yyerror("calloc");
-                                free($3);
-				YYERROR;
-                        }
-			cobj->oid = $3;
-                        p = RB_INSERT(object_tree, &conf->objects, cobj);
-			if (p != NULL) {
-				yyerror("object '%s' already defined", $3);
-				free($3);
-				free(cobj);
-				cobj = NULL;
-				YYERROR;
-			}
-		} obj_data ')' {
-			cobj = NULL;
-		}
-		;
-
-obj_data	: /* empty */
-		| obj_data NAME qdescrs		{ cobj->names = $3; }
-		| obj_data DESC STRING		{ cobj->desc = $3; }
-		| obj_data OBSOLETE		{ cobj->obsolete = 1; }
-		| obj_data SUP objlist		{ cobj->sup = $3; }
-		| obj_data kind			{ cobj->kind = $2; }
-		| obj_data MUST attrlist	{ cobj->must = $3; }
-		| obj_data MAY attrlist		{ cobj->may = $3; }
-		;
-
-attrptr		: STRING			{
-			$$ = lookup_attribute($1);
-			if ($$ == NULL) {
-				yyerror("undeclared attribute '%s'", $1);
-				free($1);
-				YYERROR;
-			}
-			free($1);
-		}
-		;
-
-attrptrs	: attrptr			{
-			if (($$ = append_attr(NULL, $1)) == NULL)
-				YYERROR;
-		}
-		| attrptrs '$' attrptr		{
-			if (($$ = append_attr($1, $3)) == NULL)
-				YYERROR;
-		}
-		;
-
-attrlist	: attrptr			{
-			if (($$ = append_attr(NULL, $1)) == NULL)
-				YYERROR;
-		}
-		| '(' attrptrs ')'		{ $$ = $2; }
-		;
-
-objptr		: STRING			{
-			$$ = lookup_object($1);
-			if ($$ == NULL) {
-				yyerror("undeclared object class '%s'", $1);
-				free($1);
-				YYERROR;
-			}
-			free($1);
-		}
-		;
-
-objptrs		: objptr			{
-			if (($$ = append_obj(NULL, $1)) == NULL)
-				YYERROR;
-		}
-		| objptrs '$' objptr		{
-			if (($$ = append_obj($1, $3)) == NULL)
-				YYERROR;
-		}
-		;
-
-objlist		: objptr			{
-			if (($$ = append_obj(NULL, $1)) == NULL)
-				YYERROR;
-		}
-		| '(' objptrs ')'		{ $$ = $2; }
-		;
-
-kind		: ABSTRACT			{ $$ = KIND_ABSTRACT; }
-		| STRUCTURAL			{ $$ = KIND_STRUCTURAL; }
-		| AUXILIARY			{ $$ = KIND_AUXILIARY; }
-		;
-
-qdescr		: STRING			{
-			struct oidname		*on, *old;
-
-			if ((on = calloc(1, sizeof(*on))) == NULL) {
-				yyerror("calloc");
-				free($1);
-				YYERROR;
-			}
-			on->on_name = $1;
-			if (cattr) {
-				on->on_attr_type = cattr;
-				old = RB_INSERT(oidname_tree, &conf->attr_names,
-				    on);
-				if (old != NULL) {
-					yyerror("attribute name '%s' already"
-					    " defined for oid %s",
-					    $1, old->on_attr_type->oid);
-					free($1);
-					free(on);
-					YYERROR;
-				}
-			} else {
-				on->on_object = cobj;
-				old = RB_INSERT(oidname_tree,
-				    &conf->object_names, on);
-				if (old != NULL) {
-					yyerror("object name '%s' already"
-					    " defined for oid %s",
-					    $1, old->on_object->oid);
-					free($1);
-					free(on);
-					YYERROR;
-				}
-			}
-		}
-		;
-
-qdescrs		: qdescr			{ $$ = append_name(NULL, $1); }
-		| '(' qdescrlist ')'		{ $$ = $2; }
-		;
-
-qdescrlist	: /* empty */			{ $$ = NULL; }
-		| qdescrlist qdescr		{ $$ = append_name($1, $2); }
-		;
-
-numericoid	: STRING			{
-			if (!is_oidstr($1)) {
-				yyerror("invalid OID: %s", $1);
-				free($1);
-				YYERROR;
-			}
-			$$ = $1;
-		}
-		;
-
-oidlen		: STRING				{ $$ = $1; }
-		| numericoid '{' NUMBER '}'	{
-			$$ = $1;
-		}
-
 include		: INCLUDE STRING		{
 			struct file	*nfile;
 
@@ -588,18 +325,29 @@ include		: INCLUDE STRING		{
 			free($2);
 
 			file = nfile;
+			lungetc('\n');
 		}
 		;
 
 varset		: STRING '=' STRING		{
-			/*if (conf->opts & BGPD_OPT_VERBOSE)*/
-				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
 			free($1);
 			free($3);
 		}
 		;
+
+schema		: SCHEMA STRING			{
+			int	 ret;
+
+			ret = schema_parse(conf->schema, $2);
+			free($2);
+			if (ret != 0) {
+				YYERROR;
+			}
+		}
+		;
+
 %%
 
 struct keywords {
@@ -634,37 +382,16 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "ABSTRACT",		ABSTRACT },
-		{ "AUXILIARY",		AUXILIARY },
-		{ "COLLECTIVE",		COLLECTIVE },
-		{ "DESC",		DESC },
-		{ "EQUALITY",		EQUALITY },
-		{ "MAY",		MAY },
-		{ "MUST",		MUST },
-		{ "NAME",		NAME },
-		{ "NO-USER-MODIFICATION", NO_USER_MOD},
-		{ "ORDERING",		ORDERING },
-		{ "SINGLE-VALUE",	SINGLE_VALUE },
-		{ "STRUCTURAL",		STRUCTURAL },
-		{ "SUBSTR",		SUBSTR },
-		{ "SUP",		SUP },
-		{ "SYNTAX",		SYNTAX },
-		{ "USAGE",		USAGE },
 		{ "access",		ACCESS },
 		{ "allow",		ALLOW },
 		{ "any",		ANY },
-		{ "attribute",		ATTRIBUTE },
-		{ "attributetype",	ATTRIBUTETYPE },
 		{ "bind",		BIND },
 		{ "by",			BY },
 		{ "cache-size",		CACHE_SIZE },
 		{ "certificate",	CERTIFICATE },
 		{ "children",		CHILDREN },
 		{ "compression",	COMPRESSION },
-		{ "dSAOperation",	DSA_OPERATION },
 		{ "deny",		DENY },
-		{ "directoryOperation",	DIRECTORY_OPERATION },
-		{ "distributedOperation", DISTRIBUTED_OPERATION },
 		{ "fsync",		FSYNC },
 		{ "in",			IN },
 		{ "include",		INCLUDE },
@@ -674,7 +401,6 @@ lookup(char *s)
 		{ "level",		LEVEL },
 		{ "listen",		LISTEN },
 		{ "namespace",		NAMESPACE },
-		{ "objectclass",	OBJECTCLASS },
 		{ "of",			OF },
 		{ "on",			ON },
 		{ "port",		PORT },
@@ -691,7 +417,6 @@ lookup(char *s)
 		{ "tls",		TLS },
 		{ "to",			TO },
 		{ "use",		USE },
-		{ "userApplications",	USER_APPLICATIONS },
 		{ "write",		WRITE },
 
 	};
@@ -803,7 +528,7 @@ findeol(void)
 int
 yylex(void)
 {
-	char	 buf[8096];
+	char	 buf[4096];
 	char	*p, *val;
 	int	 quotec, next, c;
 	int	 token;
@@ -834,8 +559,6 @@ top:
 			lungetc(c);
 			break;
 		}
-		if (*buf == '\0')
-			return ('$');
 		val = symget(buf);
 		if (val == NULL) {
 			yyerror("macro '%s' not defined", buf);
@@ -870,7 +593,7 @@ top:
 				break;
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
-				yyerror("string too long");
+				log_warnx("string too long");
 				return (findeol());
 			}
 			*p++ = (char)c;
@@ -941,7 +664,6 @@ nodigits:
 	if (c == '\n') {
 		yylval.lineno = file->lineno;
 		file->lineno++;
-		goto top;
 	}
 	if (c == EOF)
 		return (0);
@@ -990,7 +712,6 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-#if 0
 	if (secret &&
 	    check_file_secrecy(fileno(nfile->stream), nfile->name)) {
 		fclose(nfile->stream);
@@ -998,7 +719,6 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-#endif
 	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
@@ -1029,8 +749,10 @@ parse_config(char *filename)
 	if ((conf = calloc(1, sizeof(struct ldapd_config))) == NULL)
 		fatal(NULL);
 
-	RB_INIT(&conf->attr_types);
-	RB_INIT(&conf->objects);
+	conf->schema = schema_new();
+	if (conf->schema == NULL)
+		fatal("schema_new");
+
 	TAILQ_INIT(&conf->namespaces);
 	TAILQ_INIT(&conf->listeners);
 	if ((conf->sc_ssl = calloc(1, sizeof(*conf->sc_ssl))) == NULL)
@@ -1051,9 +773,7 @@ parse_config(char *filename)
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entry);
-		if (/*(conf->opts & BGPD_OPT_VERBOSE2) &&*/ !sym->used)
-			fprintf(stderr, "warning: macro \"%s\" not "
-			    "used\n", sym->nam);
+		log_debug("warning: macro \"%s\" not used", sym->nam);
 		if (!sym->persist) {
 			free(sym->nam);
 			free(sym->val);
@@ -1137,141 +857,6 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
-}
-
-struct attr_type *
-lookup_attribute_by_name(const char *name)
-{
-	struct oidname		*on, find;
-
-	find.on_name = name;
-	on = RB_FIND(oidname_tree, &conf->attr_names, &find);
-
-	if (on)
-		return on->on_attr_type;
-	return NULL;
-}
-
-struct attr_type *
-lookup_attribute_by_oid(const char *oid)
-{
-	struct attr_type	 find;
-
-	find.oid = oid;
-	return RB_FIND(attr_type_tree, &conf->attr_types, &find);
-}
-
-struct attr_type *
-lookup_attribute(const char *oid_or_name)
-{
-	if (is_oidstr(oid_or_name))
-		return lookup_attribute_by_oid(oid_or_name);
-	return lookup_attribute_by_name(oid_or_name);
-}
-
-struct object *
-lookup_object_by_oid(const char *oid)
-{
-	struct object	 find;
-
-	find.oid = oid;
-	return RB_FIND(object_tree, &conf->objects, &find);
-}
-
-struct object *
-lookup_object_by_name(const char *name)
-{
-	struct oidname		*on, find;
-
-	find.on_name = name;
-	on = RB_FIND(oidname_tree, &conf->object_names, &find);
-
-	if (on)
-		return on->on_object;
-	return NULL;
-}
-
-struct object *
-lookup_object(const char *oid_or_name)
-{
-	if (is_oidstr(oid_or_name))
-		return lookup_object_by_oid(oid_or_name);
-	return lookup_object_by_name(oid_or_name);
-}
-
-static struct attr_list *
-append_attr(struct attr_list *alist, struct attr_type *a)
-{
-	struct attr_ptr		*aptr;
-
-	if (alist == NULL) {
-		if ((alist = calloc(1, sizeof(*alist))) == NULL) {
-			yyerror("calloc");
-			return NULL;
-		}
-		SLIST_INIT(alist);
-	}
-
-	if ((aptr = calloc(1, sizeof(*aptr))) == NULL) {
-		yyerror("calloc");
-		return NULL;
-	}
-	aptr->attr_type = a;
-	SLIST_INSERT_HEAD(alist, aptr, next);
-
-	return alist;
-}
-
-static struct obj_list *
-append_obj(struct obj_list *olist, struct object *obj)
-{
-	struct obj_ptr		*optr;
-
-	if (olist == NULL) {
-		if ((olist = calloc(1, sizeof(*olist))) == NULL) {
-			yyerror("calloc");
-			return NULL;
-		}
-		SLIST_INIT(olist);
-	}
-
-	if ((optr = calloc(1, sizeof(*optr))) == NULL) {
-		yyerror("calloc");
-		return NULL;
-	}
-	optr->object = obj;
-	SLIST_INSERT_HEAD(olist, optr, next);
-
-	return olist;
-}
-
-int
-is_oidstr(const char *oidstr)
-{
-	struct ber_oid		oid;
-	return (ber_string2oid(oidstr, &oid) == 0);
-}
-
-static struct name_list *
-append_name(struct name_list *nl, const char *name)
-{
-	struct name	*n;
-
-	if (nl == NULL) {
-		if ((nl = calloc(1, sizeof(*nl))) == NULL) {
-			yyerror("calloc");
-			return NULL;
-		}
-		SLIST_INIT(nl);
-	}
-	if ((n = calloc(1, sizeof(*n))) == NULL) {
-		yyerror("calloc");
-		return NULL;
-	}
-	n->name = name;
-	SLIST_INSERT_HEAD(nl, n, next);
-
-	return nl;
 }
 
 struct listener *

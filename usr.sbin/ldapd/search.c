@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.6 2010/06/23 13:10:14 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.7 2010/06/29 02:45:46 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -55,7 +55,7 @@ is_operational(char *adesc)
 {
 	struct attr_type	*at;
 
-	at = lookup_attribute(adesc);
+	at = lookup_attribute(conf->schema, adesc);
 	if (at)
 		return at->usage != USAGE_USER_APP;
 
