@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.41 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.42 2010/06/29 17:35:15 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -72,7 +72,6 @@ pid_t pid = -1;
 #include <compat/osf1/osf1_syscall.h>
 #include <compat/sunos/sunos_syscall.h>
 #include <compat/svr4/svr4_syscall.h>
-#include <compat/ultrix/ultrix_syscall.h>
 
 #define KTRACE
 #define PTRACE
@@ -95,7 +94,6 @@ pid_t pid = -1;
 #include <compat/osf1/osf1_syscalls.c>
 #include <compat/sunos/sunos_syscalls.c>
 #include <compat/svr4/svr4_syscalls.c>
-#include <compat/ultrix/ultrix_syscalls.c>
 #undef KTRACE
 #undef PTRACE
 #undef NFSCLIENT
@@ -122,7 +120,6 @@ static struct emulation emulations[] = {
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL },
 	{ "sunos",	sunos_syscallnames,	SUNOS_SYS_MAXSYSCALL },
 	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },
-	{ "ultrix",	ultrix_syscallnames,	ULTRIX_SYS_MAXSYSCALL },
 	{ "bsdos",	bsdos_syscallnames,	BSDOS_SYS_MAXSYSCALL },
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL },
 	{ NULL,		NULL,			NULL }
