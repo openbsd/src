@@ -1,4 +1,4 @@
-/* $OpenBSD: getrrsetbyname.c,v 1.11 2007/10/11 18:36:41 jakob Exp $ */
+/* $OpenBSD: getrrsetbyname.c,v 1.12 2010/06/29 09:22:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -53,7 +53,7 @@
 
 #include "thread_private.h"
 
-#define ANSWER_BUFFER_SIZE 1024*64
+#define MAXPACKET 1024*64
 
 struct dns_query {
 	char			*name;
@@ -105,7 +105,10 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	struct rdatainfo *rdata;
 	int length;
 	unsigned int index_ans, index_sig;
-	u_char answer[ANSWER_BUFFER_SIZE];
+	union {
+		HEADER hdr;
+		u_char buf[MAXPACKET];
+	} answer;
 
 	/* check for invalid class and type */
 	if (rdclass > 0xffff || rdtype > 0xffff) {
@@ -143,7 +146,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 
 	/* make query */
 	length = res_query(hostname, (signed int) rdclass, (signed int) rdtype,
-	    answer, sizeof(answer));
+	    answer.buf, sizeof(answer.buf));
 	if (length < 0) {
 		switch(h_errno) {
 		case HOST_NOT_FOUND:
@@ -159,7 +162,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	}
 
 	/* parse result */
-	response = parse_dns_response(answer, length);
+	response = parse_dns_response(answer.buf, length);
 	if (response == NULL) {
 		result = ERRSET_FAIL;
 		goto fail;
