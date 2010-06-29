@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.11 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.12 2010/06/29 20:14:46 guenther Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -65,16 +65,11 @@ struct pstats {
 
 /*
  * Kernel shareable process resource limits.  Because this structure
- * is moderately large but changes infrequently, it is normally
- * shared copy-on-write after forks.  If a group of processes
- * ("threads") share modifications, the PL_SHAREMOD flag is set,
- * and a copy must be made for the child of a new fork that isn't
- * sharing modifications to the limits.
+ * is moderately large but changes infrequently, it is shared
+ * copy-on-write after forks.
  */
 struct plimit {
 	struct	rlimit pl_rlimit[RLIM_NLIMITS];
-#define	PL_SHAREMOD	0x01		/* modifications are shared */
-	int	p_lflags;
 	int	p_refcnt;		/* number of references */
 };
 
