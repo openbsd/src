@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.5 2010/06/06 21:18:47 jasper Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.6 2010/06/29 21:03:15 jasper Exp $	*/
 /*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
 
 /*-
@@ -158,34 +158,28 @@ NENTRY(sh3_vector_tlbmiss)
 	mov.l	.L3_CURUPTE, r1
 	mov.l	@r1, r1		/* upte = &l->l_md.md_upte[0] */
 	mov	#UPAGES, r3	/* loop limit */
-	mov	#1, r2		/* loop count */
 
 	/* for each page of u-area */
 4:	mov.l	@r1+, r7	/* upte->addr: u-area VPN */
 	cmp/eq	r7, r0		/* if (vpn == upte->addr) */
-	bt	5f		/*     goto found; */
-	add	#4, r1		/* skip, upte->data; point to next md_upte[i] */
-	cmp/eq	r2,	r3
+	bt/s	5f		/*     goto found; */
+	 dt	r3
 	bf/s	4b
-	 add	#1,	r2
+	 add	#4,	r1	/* skip upte->data; point to next md_upte[i] */
 	/* not a page of u-area, proceed to handler */
 	bra	7f		/* pull insn at 6f into delay slot */
 	 mov	#(SH3_EXPEVT & 0xff), r0
 
 	/* load entry for this uarea page into tlb */
-5:	mov.l	@r1, r2		/* upte->data: u-area PTE */
-	mov	#(SH3_PTEL & 0xff), r1
-	mov.l	r2,	@r1
-
-	mov	#(SH3_PTEH & 0xff), r1
-	mov.l	@r1,	r2
-	mov.l	.L3_VPN_MASK, r0
-	and	r2,	r0
-	mov.l	r0,	@r1	/* ASID 0 */
+5:	mov	#(SH3_PTEH & 0xff), r2
+	mov.l	@r1, r1		/* md_upte[i]->data */
+	mov.l	@r2, r3		/* save ASID */
+	mov.l	r0, @r2		/* SH3_PTEH = { VPN, ASID = 0 } */
+	mov.l	r1, @(4, r2)	/* SH3_PTEL = md_upte[i]->data */
 
 	ldtlb
 	bra	99f		/* return */
-	 mov.l	r2, @r1		/*  restore ASID */
+	 mov.l	r3,	@r2	/*  restore ASID */
 #endif /* !P1_STACK */
 	/* tlb_exception(curproc, trapframe, tea) */
 6:	mov	#(SH3_EXPEVT & 0xff), r0
