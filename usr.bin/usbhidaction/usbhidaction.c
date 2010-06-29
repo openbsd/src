@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.12 2009/10/21 15:48:27 sobrado Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.13 2010/06/29 17:15:23 ckuethe Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -400,6 +400,12 @@ docmd(struct command *cmd, int value, const char *hid, int argc, char **argv)
 	size_t len;
 	int n, r;
 
+	if (cmd->action == NULL){
+		if (verbose)
+			printf("no action for device %s value %d\n",
+			     hid, value);
+		return;
+	}
 	for (p = cmd->action, q = cmdbuf; *p && q < &cmdbuf[SIZE-1]; ) {
 		if (*p == '$') {
 			p++;
