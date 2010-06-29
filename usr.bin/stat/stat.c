@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.14 2009/06/24 09:44:25 sobrado Exp $ */
+/*	$OpenBSD: stat.c,v 1.15 2010/06/29 20:51:05 tedu Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -29,11 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.14 2009/06/24 09:44:25 sobrado Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
