@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.55 2010/05/23 10:12:42 chl Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.56 2010/06/29 03:09:29 blambert Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -69,8 +69,7 @@ int	kread(u_long addr, void *buf, int size);
 char	*plural(u_int64_t);
 char	*plurales(u_int64_t);
 
-void	protopr(u_long, char *);
-void	ip6protopr(u_long, char *);
+void	protopr(u_long, char *, int);
 void	tcp_stats(char *);
 void	udp_stats(char *);
 void	ip_stats(char *);
@@ -86,8 +85,6 @@ void	pfsync_stats (char *);
 void	pflow_stats (char *);
 void	etherip_stats(char *);
 void	ipcomp_stats(char *);
-
-void	protopr(u_long, char *);
 
 void	net80211_ifstats(char *);
 
@@ -105,7 +102,6 @@ void	pr_family(int);
 
 struct in6_addr;
 struct sockaddr_in6;
-void	ip6protopr(u_long, char *);
 void	ip6_stats(char *);
 void	ip6_ifstats(char *);
 void	icmp6_stats(char *);
@@ -139,6 +135,6 @@ void	unixpr(u_long);
 void	mroutepr(u_long, u_long, u_long);
 void	mrt_stats(void);
 
-void	atalkprotopr(u_long, char *);
+void	atalkprotopr(u_long, char *, int);
 void	ddp_stats(char *);
 char	*atalk_print(const struct sockaddr *, int);

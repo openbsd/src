@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.82 2009/11/22 22:22:14 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.83 2010/06/29 03:09:29 blambert Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ struct nlist nl[] = {
 
 struct protox {
 	u_char	pr_index;			/* index into nlist of cb head */
-	void	(*pr_cblocks)(u_long, char *);	/* control blocks printing routine */
+	void	(*pr_cblocks)(u_long, char *, int); /* control blocks printing routine */
 	void	(*pr_stats)(char *);		/* statistics printing routine */
 	void	(*pr_dump)(u_long);		/* pcb printing routine */
 	char	*pr_name;			/* well-known name */
@@ -121,10 +121,10 @@ struct protox {
 };
 
 struct protox ip6protox[] = {
-	{ N_TCBTABLE,	ip6protopr,	NULL,		tcp_dump,	"tcp" },
-	{ N_UDBTABLE,	ip6protopr,	NULL,		NULL,		"udp" },
-	{ N_RAWIP6TABLE,ip6protopr,	ip6_stats,	NULL,		"ip6" },
-	{ N_DIVB6TABLE,	ip6protopr,	div6_stats,	NULL,		"divert6" },
+	{ N_TCBTABLE,	protopr,	NULL,		tcp_dump,	"tcp" },
+	{ N_UDBTABLE,	protopr,	NULL,		NULL,		"udp" },
+	{ N_RAWIP6TABLE,protopr,	ip6_stats,	NULL,		"ip6" },
+	{ N_DIVB6TABLE,	protopr,	div6_stats,	NULL,		"divert6" },
 	{ -1,		NULL,		icmp6_stats,	NULL,		"icmp6" },
 	{ -1,		NULL,		pim6_stats,	NULL,		"pim6" },
 	{ -1,		NULL,		rip6_stats,	NULL,		"rip6" },
@@ -140,7 +140,7 @@ struct protox *protoprotox[] = {
 	protox, ip6protox, atalkprotox, NULL
 };
 
-static void printproto(struct protox *, char *);
+static void printproto(struct protox *, char *, int);
 static void usage(void);
 static struct protox *name2protox(char *);
 static struct protox *knownname(char *);
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (pflag) {
-		printproto(tp, tp->pr_name);
+		printproto(tp, tp->pr_name, af);
 		exit(0);
 	}
 	if (Pflag) {
@@ -420,22 +420,22 @@ main(int argc, char *argv[])
 					break;
 			if (tp->pr_name == 0)
 				continue;
-			printproto(tp, p->p_name);
+			printproto(tp, p->p_name, af);
 		}
 		endprotoent();
 	}
 	if (af == PF_PFLOW || af == AF_UNSPEC) {
 		tp = name2protox("pflow");
-		printproto(tp, tp->pr_name);
+		printproto(tp, tp->pr_name, af);
 	}
 	if (af == AF_INET6 || af == AF_UNSPEC)
 		for (tp = ip6protox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
+			printproto(tp, tp->pr_name, af);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
 		for (tp = atalkprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
+			printproto(tp, tp->pr_name, af);
 	exit(0);
 }
 
@@ -445,7 +445,7 @@ main(int argc, char *argv[])
  * is not in the namelist, ignore this one.
  */
 static void
-printproto(struct protox *tp, char *name)
+printproto(struct protox *tp, char *name, int af)
 {
 	if (sflag) {
 		if (tp->pr_stats != NULL)
@@ -455,7 +455,7 @@ printproto(struct protox *tp, char *name)
 		if (tp->pr_cblocks != NULL &&
 		    i < sizeof(nl) / sizeof(nl[0]) &&
 		    (nl[i].n_value || af != AF_UNSPEC))
-			(*tp->pr_cblocks)(nl[i].n_value, name);
+			(*tp->pr_cblocks)(nl[i].n_value, name, af);
 	}
 }
 

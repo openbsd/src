@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.112 2009/11/05 20:50:14 michele Exp $	*/
+/*	$OpenBSD: inet.c,v 1.113 2010/06/29 03:09:29 blambert Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -90,8 +90,6 @@ struct	inpcb inpcb;
 struct	tcpcb tcpcb;
 struct	socket sockb;
 
-static void protopr0(u_long, char *, int);
-
 char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, in_port_t, char *, int);
 char	*inet6name(struct in6_addr *);
@@ -104,19 +102,7 @@ void	inet6print(struct in6_addr *, int, char *);
  * -a (all) flag is specified.
  */
 void
-protopr(u_long off, char *name)
-{
-	protopr0(off, name, AF_INET);
-}
-
-void
-ip6protopr(u_long off, char *name)
-{
-	protopr0(off, name, AF_INET6);
-}
-
-static void
-protopr0(u_long off, char *name, int af)
+protopr(u_long off, char *name, int af)
 {
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
