@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.24 2010/06/29 23:32:52 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.25 2010/06/29 23:38:05 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -37,18 +37,6 @@
 #include "pathnames.h"
 #include "tip.h"
 
-/*
- * Attributes to be gleened from remote host description
- *   data base.
- */
-static char **caps[] = {
-	&DV, &CM, &DI, 0
-};
-
-static char *capstrings[] = {
-	"dv", "cm", "di", 0
-};
-
 static char	*db_array[3] = { _PATH_REMOTE, 0, 0 };
 
 #define cgetflag(f)	(cgetcap(bp, f, ':') != NULL)
@@ -74,8 +62,9 @@ getremcap(char *host)
 	}
 
 	if ((stat = cgetent(&bp, db_array, host)) < 0) {
-		if ((DV != NULL) ||
-		    (host[0] == '/' && access(DV = host, R_OK | W_OK) == 0)) {
+		if (value(DEVICE) != NULL ||
+		    (host[0] == '/' && access(host, R_OK | W_OK) == 0)) {
+			value(DEVICE) = host;
 			value(HOST) = host;
 			if (!number(value(BAUDRATE)))
 				setnumber(value(BAUDRATE), DEFBR);
@@ -100,11 +89,9 @@ getremcap(char *host)
 		exit(3);
 	}
 
-	for (p = capstrings, q = caps; *p != NULL; p++, q++) {
-		if (**q == NULL)
-			cgetstr(bp, *p, *q);
-	}
-
+	cgetstr(bp, "dv", &value(DEVICE));
+	cgetstr(bp, "cm", &value(CONNECT));
+	cgetstr(bp, "di", &value(DISCONNECT));
 	cgetstr(bp, "el", &value(EOL));
 	cgetstr(bp, "ie", &value(EOFREAD));
 	cgetstr(bp, "oe", &value(EOFWRITE));
@@ -137,7 +124,7 @@ getremcap(char *host)
 		setnumber(value(FRAMESIZE), DEFFS);
 	else
 		setnumber(value(FRAMESIZE), val);
-	if (DV == NULL) {
+	if (value(DEVICE) == NULL) {
 		fprintf(stderr, "%s: missing device spec\n", host);
 		exit(3);
 	}
@@ -204,7 +191,7 @@ getremote(char *host)
 			exit(3);
 		}
 		getremcap(host);
-		next = DV;
+		next = value(DEVICE);
 		lookedup++;
 	}
 	/*
@@ -214,12 +201,12 @@ getremote(char *host)
 	if (next == NULL)
 		return (NULL);
 	if ((cp = strchr(next, ',')) == NULL) {
-		DV = next;
+		value(DEVICE) = next;
 		next = NULL;
 	} else {
 		*cp++ = '\0';
-		DV = next;
+		value(DEVICE) = next;
 		next = cp;
 	}
-	return (DV);
+	return (value(DEVICE));
 }

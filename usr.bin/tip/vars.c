@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.14 2010/06/29 23:10:56 nicm Exp $	*/
+/*	$OpenBSD: vars.c,v 1.15 2010/06/29 23:38:05 nicm Exp $	*/
 /*	$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $	*/
 
 /*
@@ -41,6 +41,10 @@ value_t vtable[] = {
 	  "be",		(char *)1 },
 	{ "baudrate",	V_NUMBER|V_INIT,
 	  "ba",		0 },
+	{ "connect",    V_STRING|V_INIT|V_READONLY,
+	  "cm",         0 },
+	{ "device",     V_STRING|V_INIT|V_READONLY,
+	  "dv",         0 },
 	{ "eofread",	V_STRING|V_INIT,
 	  "eofr",	0 },
 	{ "eofwrite",	V_STRING|V_INIT,

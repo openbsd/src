@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.30 2010/06/29 23:32:52 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.31 2010/06/29 23:38:05 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -49,7 +49,6 @@ cumain(int argc, char *argv[])
 
 	if (argc < 2)
 		cuusage();
-	DV = NULL;
 	setnumber(value(BAUDRATE), DEFBR);
 	parity = 0;	/* none */
 
@@ -83,17 +82,19 @@ getopt:
 	while ((ch = getopt(argc, argv, "l:s:htoe")) != -1) {
 		switch (ch) {
 		case 'l':
-			if (DV != NULL) {
+			if (value(DEVICE) != NULL) {
 				fprintf(stderr,
 				    "%s: cannot specify multiple -l options\n",
 				    __progname);
 				exit(3);
 			}
 			if (strchr(optarg, '/'))
-				DV = optarg;
-			else
-				if (asprintf(&DV, "%s%s", _PATH_DEV, optarg) == -1)
+				value(DEVICE) = optarg;
+			else {
+				if (asprintf(&value(DEVICE),
+				    "%s%s", _PATH_DEV, optarg) == -1)
 					err(3, "asprintf");
+			}
 			break;
 		case 's':
 			baudrate = (int)strtonum(optarg, 0, INT_MAX, &errstr);

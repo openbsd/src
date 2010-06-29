@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.44 2010/06/29 23:32:52 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.45 2010/06/29 23:38:05 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -55,13 +55,6 @@
 #include <errno.h>
 #include <err.h>
 #include <limits.h>
-
-/*
- * Remote host attributes
- */
-char	*DV;			/* UNIX device(s) to open */
-char	*CM;			/* initial connection message */
-char	*DI;			/* disconnect string */
 
 /*
  * String value table
@@ -130,6 +123,8 @@ extern value_t	vtable[];	/* variable table */
 enum {
 	BEAUTIFY = 0,
 	BAUDRATE,
+	CONNECT,
+	DEVICE,
 	EOFREAD,
 	EOFWRITE,
 	EOL,

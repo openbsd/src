@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.36 2010/06/29 23:10:56 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.37 2010/06/29 23:38:05 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -644,10 +644,9 @@ chdirectory(int c)
 void
 tipabort(char *msg)
 {
-
 	signal(SIGTERM, SIG_IGN);
 	kill(tipout_pid, SIGTERM);
-	logent(value(HOST), DV, "call terminated");
+	logent(value(HOST), value(DEVICE), "call terminated");
 	if (msg != NULL)
 		printf("\r\n%s", msg);
 	printf("\r\n[EOT]\r\n");
