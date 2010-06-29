@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.18 2007/01/22 19:39:33 miod Exp $	*/
+/*	$OpenBSD: cache.c,v 1.19 2010/06/29 21:24:41 miod Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -289,32 +289,27 @@ cypress_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr;
+	extern u_long dvma_cachealign;
 
 	cache_alias_dist = CACHEINFO.c_totalsize;
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
+	dvma_cachealign = cache_alias_dist;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
-	pcr &= ~(CYPRESS_PCR_CE | CYPRESS_PCR_CM);
+	pcr &= ~CYPRESS_PCR_CM;
 
 	/* Now reset cache tag memory if cache not yet enabled */
-	ls = CACHEINFO.c_linesize;
-	ts = CACHEINFO.c_totalsize;
-	if ((pcr & CYPRESS_PCR_CE) == 0)
-		for (i = 0; i < ts; i += ls) {
+	if ((pcr & CYPRESS_PCR_CE) == 0) {
+		ls = CACHEINFO.c_linesize;
+		ts = CACHEINFO.c_totalsize;
+		for (i = 0; i < ts; i += ls)
 			sta(i, ASI_DCACHETAG, 0);
-			while (lda(i, ASI_DCACHETAG))
-				sta(i, ASI_DCACHETAG, 0);
-		}
+		pcr |= CYPRESS_PCR_CE;
+	}
 
-	pcr |= CYPRESS_PCR_CE;
-
-#if 1
-	pcr &= ~CYPRESS_PCR_CM;		/* XXX Disable write-back mode */
-#else
 	/* If put in write-back mode, turn it on */
 	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
 		pcr |= CYPRESS_PCR_CM;
-#endif
 
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
