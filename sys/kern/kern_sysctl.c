@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.185 2010/06/29 00:28:14 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.186 2010/06/29 16:39:22 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1198,7 +1198,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 
 	if (namelen > 4)
 		return (ENOTDIR);
-	if (namelen < 4)
+	if (namelen < 4 || name[2] > sizeof(*kf))
 		return (EINVAL);
 
 	buflen = where != NULL ? *sizep : 0;
@@ -1352,7 +1352,8 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 		elem_size = elem_count = 0;
 		eproc = malloc(sizeof(struct eproc), M_TEMP, M_WAITOK);
 	} else /* if (type == KERN_PROC2) */ {
-		if (namelen != 5 || name[3] < 0 || name[4] < 0)
+		if (namelen != 5 || name[3] < 0 || name[4] < 0 ||
+		    name[3] > sizeof(*kproc2))
 			return (EINVAL);
 		op = name[1];
 		arg = name[2];
