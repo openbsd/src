@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.14 2010/06/27 01:23:08 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.15 2010/06/29 04:27:15 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -609,7 +609,7 @@ btree_read_page(struct btree *bt, pgno_t pgno, struct page *page)
 		DPRINTF("page %u doesn't exist", pgno);
 		errno = ENOENT;
 		return BT_FAIL;
-	} else if (rc != bt->head.psize) {
+	} else if (rc != (ssize_t)bt->head.psize) {
 		if (rc > 0)
 			errno = EINVAL;
 		DPRINTF("read: %s", strerror(errno));
@@ -795,7 +795,7 @@ btree_txn_commit(struct btree_txn *txn)
 
 		DPRINTF("commiting %u dirty pages", n);
 		rc = writev(bt->fd, iov, n);
-		if (rc != bt->head.psize*n) {
+		if (rc != (ssize_t)bt->head.psize*n) {
 			if (rc > 0)
 				DPRINTF("short write, filesystem full?");
 			else
@@ -860,7 +860,7 @@ btree_write_header(struct btree *bt, int fd)
 
 	rc = write(fd, p, bt->head.psize);
 	free(p);
-	if (rc != bt->head.psize) {
+	if (rc != (ssize_t)bt->head.psize) {
 		if (rc > 0)
 			DPRINTF("short write, filesystem full?");
 		return BT_FAIL;
@@ -944,7 +944,8 @@ btree_write_meta(struct btree *bt, pgno_t root, unsigned int flags)
 	meta = METADATA(mp->page);
 	bcopy(&bt->meta, meta, sizeof(*meta));
 
-	if ((rc = write(bt->fd, mp->page, bt->head.psize)) != bt->head.psize) {
+	rc = write(bt->fd, mp->page, bt->head.psize);
+	if (rc != (ssize_t)bt->head.psize) {
 		if (rc > 0)
 			DPRINTF("short write, filesystem full?");
 		return BT_FAIL;
@@ -3030,7 +3031,7 @@ btree_compact_tree(struct btree *bt, pgno_t pgno, struct btree *btc)
 	pgno = p->pgno = btc->txn->next_pgno++;
 	rc = write(btc->fd, p, bt->head.psize);
 	free(p);
-	if (rc != bt->head.psize)
+	if (rc != (ssize_t)bt->head.psize)
 		return P_INVALID;
 	return pgno;
 }
