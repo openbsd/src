@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.101 2010/06/29 07:08:07 matthew Exp $	*/
+/*	$OpenBSD: st.c,v 1.102 2010/06/30 02:17:25 matthew Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1904,7 +1904,6 @@ st_interpret_sense(struct scsi_xfer *xs)
 	struct scsi_sense_data *sense = &xs->sense;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct st_softc *st = sc_link->device_softc;
-	struct buf *bp = xs->bp;
 	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 	u_int8_t skey = sense->flags & SSD_KEY;
 	int32_t info;
@@ -1961,8 +1960,6 @@ st_interpret_sense(struct scsi_xfer *xs)
 		xs->resid = info * st->blksize;
 		if (sense->flags & SSD_EOM) {
 			st->flags |= ST_EIO_PENDING;
-			if (bp)
-				bp->b_resid = xs->resid;
 		}
 		if (sense->flags & SSD_FILEMARK) {
 			st->flags |= ST_AT_FILEMARK;
@@ -1970,13 +1967,9 @@ st_interpret_sense(struct scsi_xfer *xs)
 				st->media_fileno++;
 				st->media_blkno = 0;
 			}
-			if (bp)
-				bp->b_resid = xs->resid;
 		}
 		if (sense->flags & SSD_ILI) {
 			st->flags |= ST_EIO_PENDING;
-			if (bp)
-				bp->b_resid = xs->resid;
 			if (sense->error_code & SSD_ERRCODE_VALID &&
 			    (xs->flags & SCSI_SILENT) == 0)
 				printf("%s: block wrong size, %d blocks residual\n",
@@ -2000,8 +1993,6 @@ st_interpret_sense(struct scsi_xfer *xs)
 			if (st->flags & ST_EIO_PENDING)
 				return EIO;
 			if (st->flags & ST_AT_FILEMARK) {
-				if (bp)
-					bp->b_resid = xs->resid;
 				return 0;
 			}
 		}
@@ -2014,8 +2005,6 @@ st_interpret_sense(struct scsi_xfer *xs)
 				st->media_fileno++;
 				st->media_blkno = 0;
 			}
-			if (bp)
-				bp->b_resid = bp->b_bcount;
 			return 0;
 		}
 		if (sense->flags & SSD_ILI) {
@@ -2040,8 +2029,6 @@ st_interpret_sense(struct scsi_xfer *xs)
 				return (EIO);
 			}
 			xs->resid = info;
-			if (bp)
-				bp->b_resid = info;
 			return (0);
 		}
 	}
@@ -2059,10 +2046,6 @@ st_interpret_sense(struct scsi_xfer *xs)
 		} else if (!(st->flags & (ST_2FM_AT_EOD | ST_BLANK_READ))) {
 			st->flags |= ST_BLANK_READ;
 			xs->resid = xs->datalen;
-			if (bp) {
-				bp->b_resid = xs->resid;
-				/* return an EOF */
-			}
 			return (0);
 		}
 	}
