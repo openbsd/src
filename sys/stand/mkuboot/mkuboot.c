@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkuboot.c,v 1.1 2010/02/12 17:30:41 mk Exp $	*/
+/*	$OpenBSD: mkuboot.c,v 1.2 2010/06/30 02:02:01 drahn Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -44,6 +45,7 @@
 
 #define IH_TYPE_STANDALONE	1 /* Standalone */
 #define IH_TYPE_KERNEL		2 /* OS Kernel Image */
+#define IH_TYPE_SCRIPT		6 /* Script file */
 
 #define IH_COMP_NONE		0 /* No compression */
 
@@ -89,6 +91,17 @@ static const struct arch_map archmap[] = {
     { 0, NULL }
 };
 
+struct type_map {
+	int id;
+	const char *type;
+};
+static const struct type_map typemap[] = {
+    { IH_TYPE_STANDALONE,	"standalone" },
+    { IH_TYPE_KERNEL,		"kernel" },
+    { IH_TYPE_SCRIPT,		"script" },
+    { 0, NULL }
+};
+
 struct os_map {
 	int id;
 	const char *arch;
@@ -105,19 +118,24 @@ int
 main(int argc, char *argv[])
 {
 	struct image_header ih;
+	struct stat sb;
 	const struct arch_map *mapptr;
 	const struct os_map *osmapptr;
+	const struct type_map *typemapptr;
 	const char *iname, *oname;
 	const char *arch = MACHINE_ARCH;
 	const char *os = "OpenBSD";
+	const char *type = "kernel";
+	const char *imgname = "boot";
 	int ifd, ofd;
+	uint32_t fsize;
 	u_long crc;
 	ssize_t nbytes;
 	char buf[BUFSIZ];
 	int c, ep, load;
 
 	ep = load = 0;
-	while ((c = getopt(argc, argv, "a:e:l:o:")) != -1) {
+	while ((c = getopt(argc, argv, "a:e:l:n:o:t:")) != -1) {
 		switch (c) {
 		case 'a':
 			arch = optarg;
@@ -128,8 +146,14 @@ main(int argc, char *argv[])
 		case 'l':
 			sscanf(optarg, "0x%x", &load);
 			break;
+		case 'n':
+			imgname = optarg;
+			break;
 		case 'o':
 			os = optarg;
+			break;
+		case 't':
+			type = optarg;
 			break;
 		default:
 			usage();
@@ -154,6 +178,15 @@ main(int argc, char *argv[])
 		usage();
 	}
 
+	for (typemapptr = typemap; typemapptr->type; typemapptr++)
+		if (strcasecmp(type, typemapptr->type) == 0)
+			break;
+
+	if (typemapptr->type == NULL) {
+		printf("unknown type '%s'\n", os);
+		usage();
+	}
+
 	if (argc - optind != 2)
 		usage();
 
@@ -168,9 +201,9 @@ main(int argc, char *argv[])
 	ih.ih_ep = htobe32(ep);
 	ih.ih_os = osmapptr->id;
 	ih.ih_arch = mapptr->id;
-	ih.ih_type = IH_TYPE_KERNEL;
+	ih.ih_type = typemapptr->id;
 	ih.ih_comp = IH_COMP_NONE;
-	strlcpy(ih.ih_name, "boot", sizeof ih.ih_name);
+	strlcpy(ih.ih_name, imgname, sizeof ih.ih_name);
 
 	ifd = open(iname, O_RDONLY);
 	if (ifd < 0)
@@ -180,12 +213,30 @@ main(int argc, char *argv[])
 	if (ofd < 0)
 		err(1, "%s", oname);
 
+	if (stat(iname, &sb) == -1) {
+		err(1, "%s", oname);
+	}
+
 	/* Write initial header. */
 	if (write(ofd, &ih, sizeof ih) != sizeof ih)
 		err(1, "%s", oname);
 
-	/* Copy data, calculating the data CRC as we go. */
+	/* Write data, calculating the data CRC as we go. */
 	crc = crc32(0L, Z_NULL, 0);
+
+	if (ih.ih_type == IH_TYPE_SCRIPT) {
+		/* scripts have two extra words of size/pad */
+		fsize = htobe32(sb.st_size);
+		printf("size %d\n", fsize);
+		crc = crc32(crc, (void *)&fsize, sizeof(fsize));
+		if (write(ofd, &fsize, sizeof fsize) != sizeof fsize)
+			err(1, "%s", oname);
+		fsize = 0;
+		crc = crc32(crc, (void *)&fsize, sizeof(fsize));
+		if (write(ofd, &fsize, sizeof fsize) != sizeof fsize)
+			err(1, "%s", oname);
+	}
+
 	while ((nbytes = read(ifd, buf, sizeof buf)) != 0) {
 		if (nbytes == -1)
 			err(1, "%s", iname);
@@ -195,6 +246,11 @@ main(int argc, char *argv[])
 		ih.ih_size += nbytes;
 	}
 	ih.ih_dcrc = htobe32(crc);
+
+	if (ih.ih_type == IH_TYPE_SCRIPT) {
+		ih.ih_size += 8; /* two extra pad words */
+	}
+
 	ih.ih_size = htobe32(ih.ih_size);
 
 	/* Calculate header CRC. */
@@ -217,8 +273,8 @@ usage(void)
 	const struct os_map *osmapptr;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-a arch] [-e entry] [-l loadaddr] [-o os] "
-	    "infile outfile\n", __progname);
+	    "usage: %s [-a arch] [-e entry] [-l loadaddr] [-n name] [-o os] "
+	    "[-t type ] infile outfile\n", __progname);
 	(void)fprintf(stderr,
 	    "arch is one of:");
 	for (mapptr = archmap; mapptr->arch; mapptr++)
