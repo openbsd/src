@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.9 2010/06/29 18:52:20 kettenis Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.10 2010/06/30 02:26:58 matthew Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -251,7 +251,7 @@ bufq_fifo_queue(struct bufq *bq, struct buf *bp)
 
 	bq->bufq_outstanding++;
 	bp->b_bq = bq;
-	TAILQ_INSERT_TAIL(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
+	SIMPLEQ_INSERT_TAIL(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
 }
 
 void
@@ -261,7 +261,7 @@ bufq_fifo_requeue(struct bufq *bq, struct buf *bp)
 
 	bq->bufq_outstanding++;
 	bp->b_bq = bq;;
-	TAILQ_INSERT_HEAD(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
+	SIMPLEQ_INSERT_HEAD(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
 }
 
 struct buf *
@@ -271,9 +271,9 @@ bufq_fifo_dequeue(struct bufq *bq, int peeking)
 	struct	buf		*bp;
 
 	mtx_enter(&bq->bufq_mtx);
-	bp = TAILQ_FIRST(head);
+	bp = SIMPLEQ_FIRST(head);
 	if (bp != NULL && !peeking)
-		TAILQ_REMOVE(head, bp, b_bufq.bufq_data_fifo.bqf_entries);
+		SIMPLEQ_REMOVE_HEAD(head, b_bufq.bufq_data_fifo.bqf_entries);
 	mtx_leave(&bq->bufq_mtx);
 
 	return (bp);
@@ -288,7 +288,7 @@ bufq_fifo_init(struct bufq *bq)
 	if (head == NULL)
 		return (ENOMEM);
 
-	TAILQ_INIT(head);
+	SIMPLEQ_INIT(head);
 	bq->bufq_data = head;
 
 	return (0);

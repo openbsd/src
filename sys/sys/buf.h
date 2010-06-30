@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.69 2010/06/29 18:52:20 kettenis Exp $	*/
+/*	$OpenBSD: buf.h,v 1.70 2010/06/30 02:26:58 matthew Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -89,9 +89,9 @@ struct buf	*bufq_fifo_dequeue(struct bufq *, int);
 void		 bufq_fifo_queue(struct bufq *, struct buf *);
 void		 bufq_fifo_requeue(struct bufq *, struct buf *);
 int		 bufq_fifo_init(struct bufq *);
-TAILQ_HEAD(bufq_fifo_head, buf);
+SIMPLEQ_HEAD(bufq_fifo_head, buf);
 struct bufq_fifo {
-	TAILQ_ENTRY(buf)	bqf_entries;
+	SIMPLEQ_ENTRY(buf)	bqf_entries;
 };
 
 union bufq_data {
