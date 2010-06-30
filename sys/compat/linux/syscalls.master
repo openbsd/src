@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.50 2007/05/29 03:28:01 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.51 2010/06/30 21:54:12 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -252,7 +252,7 @@
 				u_int iovcnt); }
 146	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 				u_int iovcnt); }
-147	STD		{ int linux_sys_getsid(int pid); }
+147	NOARGS		{ int sys_getsid(pid_t pid); }
 148	STD		{ int linux_sys_fdatasync(int fd); }
 149	STD		{ int linux_sys___sysctl(struct linux___sysctl *lsp); }
 150	NOARGS		{ int sys_mlock(caddr_t addr, size_t len); }

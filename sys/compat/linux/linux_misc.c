@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.63 2009/09/05 10:28:43 miod Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.64 2010/06/30 21:54:35 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1299,33 +1299,6 @@ linux_sys_setregid16(p, v, retval)
 		(uid_t)-1 : SCARG(uap, egid);
 
 	return sys_setregid(p, &bsa, retval);
-}
-
-int
-linux_sys_getsid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_getsid_args /* {
-		syscallarg(int) pid;
-	} */ *uap = v;
-	struct proc *p1;
-	pid_t pid;
-
-	pid = (pid_t)SCARG(uap, pid);
-
-	if (pid == 0) {
-		retval[0] = (int)p->p_session;	/* XXX Oh well */
-		return 0;
-	}
-
-	p1 = pfind((int)pid);
-	if (p1 == NULL)
-		return ESRCH;
-
-	retval[0] = (int)p1->p_session;
-	return 0;
 }
 
 int
