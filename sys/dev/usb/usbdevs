@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.503 2010/06/30 16:43:19 yuo Exp $
+$OpenBSD: usbdevs,v 1.504 2010/06/30 22:17:46 phessler Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3047,6 +3047,7 @@ product RATOC REXUSB60F		0xb020	REX-USB60F
 /* Realtek products */
 product REALTEK RTL8150		0x8150	RTL8150
 product REALTEK RTL8151		0x8151	RTL8151 PNA
+product REALTEK RTL8171		0x8171	RTL8171
 product REALTEK RTL8187		0x8187	RTL8187
 product REALTEK RTL8187B_0	0x8189	RTL8187B
 product REALTEK RTL8187B_1	0x8197	RTL8187B
