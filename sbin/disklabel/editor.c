@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.239 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: editor.c,v 1.240 2010/06/30 21:11:20 halex Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1618,7 +1618,7 @@ set_uid(struct disklabel *lp)
 	do {
 		s = getstring("uid", "The disklabel UID, given as a 16 "
 		    "character hexadecimal string.", NULL);
-		if (strlen(s) == 0) {
+		if (s == NULL || strlen(s) == 0) {
 			fputs("Command aborted\n", stderr);
 			return;
 		}
