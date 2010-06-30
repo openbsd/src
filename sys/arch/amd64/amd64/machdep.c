@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 2010/06/27 13:28:46 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.114 2010/06/30 19:23:15 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1669,7 +1669,6 @@ int
 amd64_pa_used(paddr_t addr)
 {
 	struct vm_page	*pg;
-	bios_memmap_t	*bmp;
 
 	/* Kernel manages these */
 	if ((pg = PHYS_TO_VM_PAGE(addr)) && (pg->pg_flags & PG_DEV) == 0)
@@ -1678,13 +1677,6 @@ amd64_pa_used(paddr_t addr)
 	/* Kernel is loaded here */
 	if (addr > IOM_END && addr < (kern_end - KERNBASE))
 		return 1;
-
-	/* Memory is otherwise reserved */
-	for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
-		if (addr > bmp->addr && addr < (bmp->addr + bmp->size) &&
-			bmp->type != BIOS_MAP_FREE)
-			return 1;
-	}
 
 	/* Low memory used for various bootstrap things */
 	if (addr >= 0 && addr < avail_start)
