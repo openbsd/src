@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.24 2009/02/08 18:03:18 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.25 2010/06/30 22:53:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -48,6 +48,9 @@
 void
 MBR_init(disk_t *disk, mbr_t *mbr)
 {
+	daddr64_t i;
+	int adj;
+
 	/* Fix up given mbr for this disk */
 	mbr->part[0].flag = 0;
 	mbr->part[1].flag = 0;
@@ -87,6 +90,16 @@ MBR_init(disk_t *disk, mbr_t *mbr)
 	/* Fix up start/length fields */
 	PRT_fix_BN(disk, &mbr->part[3], 3);
 #endif
+
+	/* Start OpenBSD MBR partition on a power of 2 block number. */
+	i = 1;
+	while (i < DL_SECTOBLK(&dl, mbr->part[3].bs))
+		i *= 2;
+	i = DL_BLKTOSEC(&dl, i);
+	adj = i - mbr->part[3].bs;
+	mbr->part[3].bs += adj;
+	mbr->part[3].ns -= adj; 
+	PRT_fix_CHS(disk, &mbr->part[3]);
 }
 
 void
