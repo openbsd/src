@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.25 2008/05/09 11:58:16 jmc Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.26 2010/06/30 19:57:03 deraadt Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 9 2008 $
+.Dd $Mdocdate: June 30 2010 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -149,6 +149,7 @@ and set with
 .It Dv SO_SNDTIMEO Ta "set timeout value for output"
 .It Dv SO_RCVTIMEO Ta "set timeout value for input"
 .It Dv SO_TIMESTAMP Ta "enables reception of a timestamp with datagrams"
+.It Dv SO_PEERCRED Ta "get the credentials from other side of connection"
 .It Dv SO_TYPE Ta "get the type of the socket (get only)"
 .It Dv SO_ERROR Ta "get and clear error on the socket (get only)"
 .El
@@ -322,6 +323,19 @@ cmsg_level = SOL_SOCKET
 cmsg_type = SCM_TIMESTAMP
 .Ed
 .Pp
+.Dv SO_PEERCRED
+fetches the
+.Va struct sockpeercred
+credentials from the other side of the connection
+(currently only possible on
+.Dv AF_UNIX
+sockets).
+These credentials are from the time that
+.Xr bind 2
+or 
+.Xr connect 2
+were called.
+.Pp
 Finally,
 .Dv SO_TYPE
 and
@@ -370,11 +384,6 @@ is not in a valid part of the process address space.
 .Xr getprotoent 3 ,
 .Xr pf.conf 5 ,
 .Xr protocols 5
-.Sh STANDARDS
-.Dv SO_PEERCRED
-is not supported, see
-.Xr getpeereid 2
-instead.
 .Sh HISTORY
 The
 .Fn getsockopt

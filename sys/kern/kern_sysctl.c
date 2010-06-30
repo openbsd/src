@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.186 2010/06/29 16:39:22 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.187 2010/06/30 19:57:05 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@
 #include <sys/pipe.h>
 #include <sys/eventvar.h>
 #include <sys/socketvar.h>
+#include <sys/socket.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #ifdef __HAVE_TIMECOUNTER

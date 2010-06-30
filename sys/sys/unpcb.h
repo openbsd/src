@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.7 2006/11/17 08:33:20 claudio Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.8 2010/06/30 19:57:05 deraadt Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -57,10 +57,6 @@
  * so that changes in the sockbuf may be computed to modify
  * back pressure on the sender accordingly.
  */
-struct	unpcbid {
-	uid_t unp_euid;
-	gid_t unp_egid;
-};
 
 struct	unpcb {
 	struct	socket *unp_socket;	/* pointer back to socket */
@@ -71,7 +67,7 @@ struct	unpcb {
 	struct 	unpcb *unp_nextref;	/* link in unp_refs list */
 	struct	mbuf *unp_addr;		/* bound address of socket */
 	int	unp_flags;		/* this unpcb contains peer eids */
-	struct	unpcbid unp_connid;	/* id of peer process */
+	struct	sockpeercred unp_connid;/* id of peer process */
 	int	unp_cc;			/* copy of rcv.sb_cc */
 	int	unp_mbcnt;		/* copy of rcv.sb_mbcnt */
 	struct	timespec unp_ctime;	/* holds creation time */

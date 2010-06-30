@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.79 2009/10/31 12:00:08 fgsch Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.80 2010/06/30 19:57:05 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/event.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/unpcb.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
@@ -1192,6 +1193,22 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 			    (val % hz) * tick;
 			break;
 		    }
+
+		case SO_PEERCRED:
+			if (so->so_proto->pr_protocol == AF_UNIX) {
+				struct unpcb *unp = sotounpcb(so);
+
+				if (unp->unp_flags & UNP_FEIDS) {
+					*mp = m = m_get(M_WAIT, MT_SOOPTS);
+					m->m_len = sizeof(unp->unp_connid);
+					bcopy((caddr_t)(&(unp->unp_connid)),
+					    mtod(m, caddr_t),
+					    (unsigned)m->m_len);
+				} else
+					return (EINVAL);
+			} else
+				return (EOPNOTSUPP);
+			break;
 
 		default:
 			(void)m_free(m);

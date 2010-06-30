@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.74 2009/12/23 07:40:31 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.75 2010/06/30 19:57:05 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1007,7 +1007,7 @@ sys_getpeereid(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct socket *so;
 	struct mbuf *m = NULL;
-	struct unpcbid *id;
+	struct sockpeercred *id;
 	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
@@ -1023,14 +1023,14 @@ sys_getpeereid(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	}	
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEEREID, 0, m, 0, p);
-	if (!error && m->m_len != sizeof(struct unpcbid))
+	if (!error && m->m_len != sizeof(struct sockpeercred))
 		error = EOPNOTSUPP;
 	if (error)
 		goto bad;
-	id = mtod(m, struct unpcbid *);
-	error = copyout(&(id->unp_euid), SCARG(uap, euid), sizeof(uid_t));
+	id = mtod(m, struct sockpeercred *);
+	error = copyout(&(id->uid), SCARG(uap, euid), sizeof(uid_t));
 	if (error == 0)
-		error = copyout(&(id->unp_egid), SCARG(uap, egid), sizeof(gid_t));
+		error = copyout(&(id->gid), SCARG(uap, egid), sizeof(gid_t));
 bad:
 	FRELE(fp);
 	m_freem(m);

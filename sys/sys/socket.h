@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.64 2010/06/29 20:30:33 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.65 2010/06/30 19:57:05 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #define SO_JUMBO	0x0400		/* try to use jumbograms */
 #define SO_TIMESTAMP	0x0800		/* timestamp received dgram traffic */
 #define	SO_BINDANY	0x1000		/* allow bind to any address */
+#define SO_PEERCRED	0x2000		/* get connect-time credentials */
 
 /*
  * Additional options, not kept in so_options.
@@ -243,6 +244,15 @@ struct sockcred {
 	int	sc_ngroups;		/* number of supplemental groups */
 	gid_t	sc_groups[1];		/* variable length */
 };
+
+#if __BSD_VISIBLE
+/* Read using getsockopt() with SOL_SOCKET, SO_PEERCRED */
+struct sockpeercred {
+	uid_t		uid;		/* effective user id */
+	gid_t		gid;		/* effective group id */
+	pid_t		pid;
+};
+#endif /* __BSD_VISIBLE */
 
 /*
  * Compute size of a sockcred structure with groups.
