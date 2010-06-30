@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.5 2010/06/25 11:12:14 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.6 2010/06/30 10:08:00 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -68,7 +68,7 @@ our @ISA = qw(OpenBSD::AddDelete::State);
 sub handle_options
 {
 	my $state = shift;
-	$state->SUPER::handle_options('aruUzl:A:P:Q:', 
+	$state->SUPER::handle_options('aruUzl:A:P:Q:',
 	    '[-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
@@ -112,7 +112,7 @@ sub handle_options
 	$state->{automatic} = $state->opt('a');
 	$state->{hard_replace} = $state->opt('r');
 	$state->{newupdates} = $state->opt('u') || $state->opt('U');
-	$state->{allow_replacing} = $state->{hard_replace} || 
+	$state->{allow_replacing} = $state->{hard_replace} ||
 	    $state->{newupdates};
 	$state->{pkglist} = $state->opt('l');
 	$state->{update} = $state->opt('u');
@@ -448,7 +448,7 @@ sub try_merging
 		$set->merge($state->tracker, $s);
 		return 1;
 	} else {
-		$state->errsay("NOT MERGING: can't find update for #1 (#2)", 
+		$state->errsay("NOT MERGING: can't find update for #1 (#2)",
 		    $s->print, $state->ntogo);
 		return 0;
 	}
@@ -500,7 +500,7 @@ sub recheck_conflicts
 		for my $h2 ($set->newer, $set->kept) {
 			next if $h2 == $h;
 			if ($h->plist->conflict_list->conflicts_with($h2->pkgname)) {
-				$state->errsay("#1: internal conflict between #2 and #3", 
+				$state->errsay("#1: internal conflict between #2 and #3",
 				    $set->print, $h->pkgname, $h2->pkgname);
 				return 0;
 			}
@@ -618,7 +618,7 @@ sub check_x509_signature
 
 				if (!OpenBSD::x509::check_signature($plist,
 				    $state)) {
-					$state->fatal("#1 is corrupted", 
+					$state->fatal("#1 is corrupted",
 					    $set->print);
 				}
 				$state->{check_digest} = 1;
@@ -798,7 +798,7 @@ sub newer_has_errors
 		}
 		if ($handle->has_error) {
 			$state->set_name_from_handle($handle);
-			$state->log("Can't install #1: #2", 
+			$state->log("Can't install #1: #2",
 			    $handle->pkgname, $handle->error_message);
 			$state->{bad}++;
 			$set->cleanup($handle->has_error);
@@ -878,7 +878,7 @@ sub install_set
 	my @baddeps = $set->solver->check_depends;
 
 	if (@baddeps) {
-		$state->errsay("Can't install #1: can't resolve #2", 
+		$state->errsay("Can't install #1: can't resolve #2",
 		    $set->print, join(',', @baddeps));
 		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL,"bad dependencies");
@@ -983,13 +983,13 @@ sub process_parameters
 
 	# match against a list
 	if ($state->{pkglist}) {
-		open my $f, '<', $state->{pkglist} or 
+		open my $f, '<', $state->{pkglist} or
 		    $state->fatal("bad list #1: #2", $state->{pkglist}, $!);
 		my $_;
 		while (<$f>) {
 			chomp;
 			s/\s.*//;
-			push(@{$state->{setlist}}, 
+			push(@{$state->{setlist}},
 			    OpenBSD::UpdateSet->new->$add_hints($_));
 		}
 	}
@@ -1015,7 +1015,7 @@ sub process_parameters
 			if (!defined $l) {
 				$state->say("Problem finding #1", $pkgname);
 			} else {
-				push(@{$state->{setlist}}, 
+				push(@{$state->{setlist}},
 				    OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l)));
 			}
 		}
