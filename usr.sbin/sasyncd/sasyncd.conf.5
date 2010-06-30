@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.16 2010/06/16 17:39:05 reyk Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.17 2010/06/30 00:44:36 kjell Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" Manual page for sasyncd.conf
 .\"
-.Dd $Mdocdate: June 16 2010 $
+.Dd $Mdocdate: June 30 2010 $
 .Dt SASYNCD.CONF 5
 .Os
 .Sh NAME
@@ -71,11 +71,14 @@ should track master/slave state on.
 .Ic group
 .Ar group
 .Xc
-Specify which interface group
+Specify on which interface group
 .Xr sasyncd 8
-should use to suppress
+should increase the demote counter.
+This has the effect of suppressing
 .Xr carp 4
-preemption while the system boots.
+preemption while initial
+.Xr sasyncd 8
+state is established.
 The default is to use the
 .Dq carp
 group.
