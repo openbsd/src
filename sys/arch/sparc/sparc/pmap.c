@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.155 2010/06/29 21:28:11 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.156 2010/06/30 20:35:03 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2005,6 +2005,8 @@ pv_changepte4_4c(pv0, bis, bic)
 				/*
 				 * Bizarreness: we never clear PG_NC on
 				 * DVMA pages.
+				 * XXX should we ever get invoked on such
+				 * XXX pages?
 				 */
 				if (bic == PG_NC &&
 				    va >= DVMA_BASE && va < DVMA_END)
@@ -2314,13 +2316,6 @@ pv_changepte4m(pv0, bis, bic)
 		ptep = getptep4m(pm, va);
 
 		if (pm->pm_ctx) {
-			/*
-			 * Bizarreness:  we never set PG_C on DVMA pages.
-			 */
-			if ((bis & SRMMU_PG_C) &&
-			    va >= DVMA_BASE && va < DVMA_END)
-				continue;
-
 			setcontext4m(pm->pm_ctxnum);
 
 			/*
