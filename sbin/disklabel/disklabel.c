@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.165 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.166 2010/06/30 23:44:06 halex Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1005,6 +1005,8 @@ uid_parse(struct disklabel *lp, char *s)
 			c -= '0';
 		else if (c >= 'a' && c <= 'f')
 			c -= ('a' - 10);
+		else if (c >= 'A' && c <= 'F')
+			c -= ('A' - 10);
 		else
 			return -1;
 		uid[i / 2] <<= 4;
