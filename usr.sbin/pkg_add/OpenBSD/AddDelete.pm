@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.29 2010/06/25 11:12:14 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.30 2010/06/30 10:27:17 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -285,6 +285,30 @@ sub defines
 {
 	my ($self, $k) = @_;
 	return $self->{subst}->value($k);
+}
+
+sub updateset
+{
+	my $self = shift;
+	require OpenBSD::UpdateSet;
+
+	return OpenBSD::UpdateSet->new($self);
+}
+
+sub updateset_with_new
+{
+	my ($self, $pkgname) = @_;
+
+	return $self->updateset->add_newer(
+	    OpenBSD::Handle->create_new($pkgname));
+}
+
+sub updateset_from_location
+{
+	my ($self, $location) = @_;
+
+	return $self->updateset->add_newer(
+	    OpenBSD::Handle->from_location($location));
 }
 
 # the object that gets displayed during status updates
