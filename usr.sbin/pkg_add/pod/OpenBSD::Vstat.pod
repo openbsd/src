@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Vstat.pod,v 1.6 2010/06/18 10:56:32 espie Exp $
+$OpenBSD: OpenBSD::Vstat.pod,v 1.7 2010/06/30 10:51:04 espie Exp $
 
 =head1 NAME
 
@@ -24,7 +24,7 @@ before doing them for real.
 The constructor C<new> expect a C<$state> object, that is, an object with
 C<$state-E<gt>{not}> and C<$state-E<gt>errsay> defined.
 
-Operations on the C<Vstat> object can modify C<$state-E<gt>{problems}> 
+Operations on the C<Vstat> object can modify C<$state-E<gt>{problems}>
 and C<$state-E<gt>{overflow}>.
 
 The method C<add> (respectively C<remove>) can be used to add a filename to

@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::State.pod,v 1.1 2010/06/25 12:03:54 espie Exp $
+$OpenBSD: OpenBSD::State.pod,v 1.2 2010/06/30 10:51:04 espie Exp $
 
 =head1 NAME
 
@@ -54,7 +54,7 @@ Meant to be overridden. Always call C<$state-E<gt>SUPER::init(@params)> at end.
 =item $state->handle_options($opt_string, @usage);
 
 handle options to relevant to this command. Takes a C<OpenBSD::Getopt>
-C<$opt_string>, and a set of C<@usage> lines that will be printed if 
+C<$opt_string>, and a set of C<@usage> lines that will be printed if
 necessary.
 
 Option results are stored in the C<$state-E<gt>{opt}> hash. This can

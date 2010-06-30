@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.14 2010/06/18 10:56:32 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.15 2010/06/30 10:51:04 espie Exp $
 
 =head1 NAME
 
@@ -130,7 +130,7 @@ whole system. An update set is simply a minimal bag of packages, with old
 packages that are going to be removed, new packages that are going
 to replace them, and an area to record related ongoing computations.
 The old set may be empty, the new set may be empty, and in all cases,
-the update set shall be small (as small as possible). 
+the update set shall be small (as small as possible).
 We have already met with update situations where
 dependencies between packages invert (A-1.0 depends on B-1.0, but B-0.0
 depends on A-0.0), or where files move between packages, which in
@@ -219,7 +219,7 @@ Most commands are now implemented as perl modules, with C<pkg(1)> requiring
 the correct module C<M>, and invoking C<M-E<gt>parse_and_run("command")>.
 
 All those commands use a class derived from C<OpenBSD::State> for user
-interaction. Among other things, C<OpenBSD::State> provides for printable, 
+interaction. Among other things, C<OpenBSD::State> provides for printable,
 translatable messages, consistent option handling and usage messages.
 
 All commands that provide a progress meter use the derived module
@@ -258,7 +258,7 @@ through all installed packages and removes stuff that's no longer used
 Package replacement is more complicated. It relies on package names
 and conflict markers.
 
-In normal usage, L<pkg_add(1)> installs only new stuff, and checks that all 
+In normal usage, L<pkg_add(1)> installs only new stuff, and checks that all
 files in the new package don't already exist in the file system.
 By convention, packages with the same stem are assumed to be different
 versions of the same package, e.g., screen-1.0 and screen-1.1 correspond
@@ -401,7 +401,7 @@ to speed things up.  Interacts with the global tracker object.
 
 =item OpenBSD::Error
 
-handles signal registration, the exception mechanism, and auto-caching 
+handles signal registration, the exception mechanism, and auto-caching
 methods.  Most I/O operations have moved to C<OpenBSD::State>.
 
 =item OpenBSD::Getopt
@@ -534,7 +534,7 @@ confuse with cryptographic signatures, as handled through C<OpenBSD::x509>).
 
 =item OpenBSD::State
 
-base class to UI and option handling. 
+base class to UI and option handling.
 
 =item OpenBSD::Subst
 

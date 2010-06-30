@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.140 2010/06/30 10:41:42 espie Exp $
+# $OpenBSD: Update.pm,v 1.141 2010/06/30 10:51:04 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #

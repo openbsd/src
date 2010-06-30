@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PkgSpec.pod,v 1.7 2010/01/12 10:14:37 espie Exp $
+$OpenBSD: OpenBSD::PkgSpec.pod,v 1.8 2010/06/30 10:51:04 espie Exp $
 
 =head1 NAME
 
@@ -22,6 +22,6 @@ C<@sublist> will only hold the package names that match the specification.
 
 For performance reason, the result may contain duplicates.
 
-Note that any pattern will create a C<PkgSpec> object. If the syntax is 
+Note that any pattern will create a C<PkgSpec> object. If the syntax is
 incorrect, the resulting object won't match anything. Use
 C<$spec-E<gt>is_valid> to check for correctness.

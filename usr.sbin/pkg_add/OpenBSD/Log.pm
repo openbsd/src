@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Log.pm,v 1.2 2010/06/30 10:41:42 espie Exp $
+# $OpenBSD: Log.pm,v 1.3 2010/06/30 10:51:04 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #

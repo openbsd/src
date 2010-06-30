@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.31 2010/06/30 10:41:41 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.32 2010/06/30 10:51:04 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -202,13 +202,7 @@ sub vsystem
 	if ($self->verbose < 2) {
 		$self->system(@_);
 	} else {
-		$self->print("Running #1", join(' ', @_));
-		my $r = CORE::system(@_);
-		if ($r != 0) {
-			$self->say("... failed: #1", $self->child_error);
-		} else {
-			$self->say("");
-		}
+		$self->verbose_system(@_);
 	}
 }
 
