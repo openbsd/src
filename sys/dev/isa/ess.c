@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.14 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: ess.c,v 1.15 2010/06/30 20:39:02 blambert Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -1310,7 +1310,7 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
 		sc->sc_audio1.blksize = blksize;
-		timeout_add(&sc->sc_tmo1, hz/30);
+		timeout_add_msec(&sc->sc_tmo1, 1000/30);
 	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
@@ -1388,7 +1388,7 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio2.buffersize = (char *)end - (char *)start;
 		sc->sc_audio2.dmacount = 0;
 		sc->sc_audio2.blksize = blksize;
-		timeout_add(&sc->sc_tmo2, hz/30);
+		timeout_add_msec(&sc->sc_tmo2, 1000/30);
 	}
 
 	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
@@ -1457,7 +1457,7 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
 		sc->sc_audio1.blksize = blksize;
-		timeout_add(&sc->sc_tmo1, hz/30);
+		timeout_add_msec(&sc->sc_tmo1, 1000/30);
 	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
@@ -1627,7 +1627,7 @@ ess_audio1_poll(addr)
 	(*sc->sc_audio1.intr)(sc->sc_audio1.arg, dmacount);
 #endif
 
-	timeout_add(&sc->sc_tmo1, hz/30);
+	timeout_add_msec(&sc->sc_tmo1, 1000/30);
 }
 
 void
@@ -1658,7 +1658,7 @@ ess_audio2_poll(addr)
 	(*sc->sc_audio2.intr)(sc->sc_audio2.arg, dmacount);
 #endif
 
-	timeout_add(&sc->sc_tmo2, hz/30);
+	timeout_add_msec(&sc->sc_tmo2, 1000/30);
 }
 
 int
