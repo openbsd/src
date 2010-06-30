@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhareg.h,v 1.4 2003/11/16 20:30:06 avsm Exp $	*/
+/*	$OpenBSD: uhareg.h,v 1.5 2010/06/30 19:06:16 mk Exp $	*/
 /*	$NetBSD: uhareg.h,v 1.2 1996/09/01 00:54:41 mycroft Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ struct uha_mscp {
 	struct uha_dma_seg uha_dma[UHA_NSEG];
 	struct scsi_sense_data mscp_sense;
 	/*-----------------end of hardware supported fields----------------*/
-	TAILQ_ENTRY(uha_mscp) chain;
+	SLIST_ENTRY(uha_mscp) chain;
 	struct uha_mscp *nexthash;
 	long hashkey;
 	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
