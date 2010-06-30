@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.609 2010/06/30 20:22:01 halex Exp $
+#	$OpenBSD: install.sub,v 1.610 2010/06/30 23:02:38 phessler Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -996,8 +996,6 @@ enable_network() {
 		route -qn add -host -inet6 default $_gw && break
 	done
 
-	# Use loopback, not the wire.
-	route -qn add -host `hostname` 127.0.0.1 >/dev/null
 	route -qn add -net 127 127.0.0.1 -reject >/dev/null
 }
 
