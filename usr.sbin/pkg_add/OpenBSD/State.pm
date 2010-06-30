@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.6 2010/06/25 10:34:03 espie Exp $
+# $OpenBSD: State.pm,v 1.7 2010/06/30 10:11:23 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -19,11 +19,59 @@
 use strict;
 use warnings;
 
+package OpenBSD::PackageRepositoryFactory;
+sub new
+{
+	my ($class, $state) = @_;
+	bless {state => $state}, $class;
+}
+
+sub installed
+{
+	my ($self, $all) = @_;
+	require OpenBSD::PackageRepository::Installed;
+
+	return OpenBSD::PackageRepository::Installed->new($all);
+}
+
+sub path_parse
+{
+	my ($self, $pkgname) = @_;
+	require OpenBSD::PackageLocator;
+
+	return OpenBSD::PackageLocator->path_parse($pkgname);
+}
+
+sub find
+{
+	my ($self, $pkg, $arch) = @_;
+	require OpenBSD::PackageLocator;
+
+	return OpenBSD::PackageLocator->find($pkg, $arch);
+}
+
+sub match_locations
+{
+	my $self = shift;
+	require OpenBSD::PackageLocator;
+
+	return OpenBSD::PackageLocator->match_locations(@_);
+}
+
+sub path
+{
+	my $self = shift;
+	require OpenBSD::PackageRepositoryList;
+
+	return OpenBSD::PackageRepositoryList->new;
+}
+
 # common routines to everything state.
 # in particular, provides "singleton-like" access to UI.
 package OpenBSD::State;
 use Carp;
 use OpenBSD::Subst;
+use OpenBSD::Error;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = ();
@@ -40,6 +88,13 @@ sub init
 {
 	my $self = shift;
 	$self->{subst} = OpenBSD::Subst->new;
+	$self->{repo} = OpenBSD::PackageRepositoryFactory->new($self);
+}
+
+sub repo
+{
+	my $self = shift;
+	return $self->{repo};
 }
 
 sub usage_is
@@ -141,11 +196,13 @@ sub errsay
 sub do_options
 {
 	my ($state, $sub) = @_;
-	require OpenBSD::Error;
 	# this could be nicer...
-	eval { &$sub; };
-	OpenBSD::Error::dienow($@, 
-	    bless sub { $state->usage("#1", $_)}, "OpenBSD::Error::catchall");
+
+	try {
+		&$sub;
+	} catchall {
+		$state->usage("#1", $_);
+	};
 }
 
 sub handle_options
