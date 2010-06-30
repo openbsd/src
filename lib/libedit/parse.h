@@ -1,5 +1,5 @@
-/*	$OpenBSD: parse.h,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: parse.h,v 1.5 2003/08/07 16:44:32 agc Exp $	*/
+/*	$OpenBSD: parse.h,v 1.7 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$NetBSD: parse.h,v 1.7 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,9 +41,9 @@
 #ifndef _h_el_parse
 #define	_h_el_parse
 
-protected int	 parse_line(EditLine *, const char *);
-protected int	 parse__escape(const char ** const);
-protected char	*parse__string(char *, const char *);
-protected int	 parse_cmd(EditLine *, const char *);
+protected int	 parse_line(EditLine *, const Char *);
+protected int	 parse__escape(const Char **);
+protected Char	*parse__string(Char *, const Char *);
+protected int	 parse_cmd(EditLine *, const Char *);
 
 #endif /* _h_el_parse */

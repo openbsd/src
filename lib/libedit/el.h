@@ -1,5 +1,5 @@
-/*	$OpenBSD: el.h,v 1.6 2003/11/25 20:12:38 otto Exp $	*/
-/*	$NetBSD: el.h,v 1.16 2003/10/18 23:48:42 christos Exp $	*/
+/*	$OpenBSD: el.h,v 1.7 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,6 +47,8 @@
 #define	VIDEFAULT
 #define	ANCHOR
 
+#include "histedit.h"
+#include "chartype.h"
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -56,6 +58,10 @@
 #define	NO_TTY		0x02
 #define	EDIT_DISABLED	0x04
 #define	UNBUFFERED	0x08
+#define	CHARSET_IS_UTF8 0x10
+#define	IGNORE_EXTCHARS 0x20            /* Ignore characters read > 0xff */
+#define	NARROW_HISTORY	0x40
+#define	NARROW_READ	0x80
 
 typedef int bool_t;			/* True or not			*/
 
@@ -67,10 +73,10 @@ typedef struct coord_t {		/* Position on the screen	*/
 } coord_t;
 
 typedef struct el_line_t {
-	char	*buffer;		/* Input line			*/
-	char	*cursor;		/* Cursor position		*/
-	char	*lastchar;		/* Last character		*/
-	const char	*limit;		/* Max position			*/
+	Char 		*buffer;	/* Input line			*/
+	Char	        *cursor;	/* Cursor position		*/
+	Char	        *lastchar;	/* Last character		*/
+	const Char	*limit;		/* Max position			*/
 } el_line_t;
 
 /*
@@ -83,13 +89,12 @@ typedef struct el_state_t {
 	int		metanext;	/* Is the next char a meta char */
 	el_action_t	lastcmd;	/* Previous command		*/
 	el_action_t	thiscmd;	/* this command 		*/
-	char		thisch;		/* char that generated it	*/
+	Char		thisch;		/* char that generated it	*/
 } el_state_t;
 
 /*
  * Until we come up with something better...
  */
-#define	el_strdup(a)	strdup(a)
 #define	el_malloc(a)	malloc(a)
 #define	el_realloc(a,b)	realloc(a, b)
 #define	el_free(a)	free(a)
@@ -110,14 +115,16 @@ typedef struct el_state_t {
 #include "read.h"
 
 struct editline {
-	char		 *el_prog;	/* the program name		*/
+	Char		 *el_prog;	/* the program name		*/
+	FILE		 *el_infile;	/* Stdio stuff			*/
 	FILE		 *el_outfile;	/* Stdio stuff			*/
 	FILE		 *el_errfile;	/* Stdio stuff			*/
 	int		  el_infd;	/* Input file descriptor	*/
 	int		  el_flags;	/* Various flags.		*/
+	int		  el_errno;	/* Local copy of errno		*/
 	coord_t		  el_cursor;	/* Cursor location		*/
-	char		**el_display;	/* Real screen image = what is there */
-	char		**el_vdisplay;	/* Virtual screen image = what we see */
+	Char		**el_display;	/* Real screen image = what is there */
+	Char		**el_vdisplay;	/* Virtual screen image = what we see */
 	void		 *el_data;	/* Client data			*/
 	el_line_t	  el_line;	/* The current line information	*/
 	el_state_t	  el_state;	/* Current editor state		*/
@@ -133,9 +140,14 @@ struct editline {
 	el_search_t	  el_search;	/* Search stuff			*/
 	el_signal_t	  el_signal;	/* Signal handling stuff	*/
 	el_read_t	  el_read;	/* Character reading stuff	*/
+#ifdef WIDECHAR
+	ct_buffer_t       el_scratch;   /* Scratch conversion buffer    */
+	ct_buffer_t       el_lgcyconv;  /* Buffer for legacy wrappers   */
+	LineInfo          el_lgcylinfo; /* Legacy LineInfo buffer       */
+#endif
 };
 
-protected int	el_editmode(EditLine *, int, const char **);
+protected int	el_editmode(EditLine *, int, const Char **);
 
 #ifdef DEBUG
 #define	EL_ABORT(a)	do { \

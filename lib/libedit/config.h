@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.1 2003/10/31 08:42:24 otto Exp $	*/
+/*	$OpenBSD: config.h,v 1.2 2010/06/30 00:05:35 nicm Exp $	*/
 /* config.h.  Generated automatically by configure.  */
 /* #undef SUNOS */
 
@@ -15,5 +15,7 @@
 #define HAVE_FGETLN 1
 #define HAVE_STRVIS 1
 #define HAVE_STRUNVIS 1
+
+#define HAVE_STRUCT_DIRENT_D_NAMLEN 1
 
 #include "sys.h"

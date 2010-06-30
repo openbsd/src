@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys.h,v 1.8 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: sys.h,v 1.8 2003/08/07 16:44:33 agc Exp $	*/
+/*	$OpenBSD: sys.h,v 1.9 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,6 +49,16 @@
 # define __attribute__(A)
 #endif
 
+#ifndef __BEGIN_DECLS
+# ifdef  __cplusplus
+#  define __BEGIN_DECLS  extern "C" {
+#  define __END_DECLS    }
+# else
+#  define __BEGIN_DECLS
+#  define __END_DECLS
+# endif
+#endif
+ 
 #ifndef public
 # define public		/* Externally visible functions/variables */
 #endif
@@ -60,6 +70,10 @@
 #ifndef protected
 # define protected	/* Redefined from elsewhere to "static" */
 			/* When we want to hide everything	*/
+#endif
+
+#ifndef __arraycount
+# define __arraycount(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
 #ifndef _PTR_T
@@ -91,6 +105,15 @@ char	*fgetln(FILE *fp, size_t *len);
 
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
+
+#if defined(__sun)
+extern int tgetent(char *, const char *);
+extern int tgetflag(char *);
+extern int tgetnum(char *);
+extern int tputs(const char *, int, int (*)(int));
+extern char* tgoto(const char*, int, int);
+extern char* tgetstr(char*, char**);
+#endif
 
 #ifdef notdef
 # undef REGEX

@@ -1,12 +1,12 @@
-/*	$OpenBSD: read.h,v 1.3 2010/06/30 00:05:35 nicm Exp $	*/
-/*	$NetBSD: read.h,v 1.7 2009/12/30 22:37:40 christos Exp $	*/
+/*	$OpenBSD: filecomplete.h,v 1.1 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$NetBSD: filecomplete.h,v 1.9 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Anthony Mallet.
+ * by Jaromir Dolecek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,23 +29,17 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _FILECOMPLETE_H_
+#define _FILECOMPLETE_H_
 
-/*
- * el.read.h: Character reading functions
- */
-#ifndef	_h_el_read
-#define	_h_el_read
+int fn_complete(EditLine *,
+    char *(*)(const char *, int),
+    char **(*)(const char *, int, int),
+    const Char *, const Char *, const char *(*)(const char *), size_t,
+    int *, int *, int *, int *);
 
-typedef int (*el_rfunc_t)(EditLine *, Char *);
+void fn_display_match_list(EditLine *, char **, size_t, size_t);
+char *fn_tilde_expand(const char *);
+char *fn_filename_completion_function(const char *, int);
 
-typedef struct el_read_t {
-	el_rfunc_t	read_char;	/* Function to read a character */
-} el_read_t;
- 
-protected int		read_init(EditLine *);
-protected void		read_prepare(EditLine *);
-protected void		read_finish(EditLine *);
-protected int		el_read_setfn(EditLine *, el_rfunc_t);
-protected el_rfunc_t	el_read_getfn(EditLine *);
-
-#endif /* _h_el_read */
+#endif

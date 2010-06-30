@@ -1,12 +1,13 @@
-#	$OpenBSD: Makefile,v 1.9 2005/11/24 20:49:17 deraadt Exp $
-#	$NetBSD: Makefile,v 1.28 2003/08/01 17:03:58 lukem Exp $
+#	$OpenBSD: Makefile,v 1.10 2010/06/30 00:05:35 nicm Exp $
+#	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
 WANTLINT=
 USE_SHLIBDIR=	yes
 
-OSRCS=	chared.c common.c el.c emacs.c fcns.c help.c hist.c key.c map.c \
+OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
+	hist.c key.c map.c chartype.c \
 	parse.c prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c
 
 MAN=	editline.3 editrc.5
@@ -16,12 +17,22 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 	editline.3 el_parse.3 editline.3 el_set.3 editline.3 el_get.3 \
 	editline.3 el_source.3 editline.3 el_resize.3 editline.3 el_line.3 \
 	editline.3 el_insertstr.3 editline.3 el_deletestr.3 \
-	editline.3 history_init.3 editline.3 history_end.3 editline.3 history.3
+	editline.3 history_init.3 editline.3 history_end.3 \
+	editline.3 history.3 \
+	editline.3 tok_init.3 editline.3 tok_end.3 editline.3 tok_reset.3 \
+	editline.3 tok_line.3 editline.3 tok_str.3
 
 # For speed and debugging
 #SRCS=   ${OSRCS} tokenizer.c history.c readline.c
 # For protection
 SRCS=	editline.c tokenizer.c history.c readline.c
+
+.if "${WIDECHAR}" == "yes"
+OSRCS+= eln.c
+SRCS+= tokenizern.c historyn.c
+CLEANFILES+=tokenizern.c.tmp tokenizern.c historyn.c.tmp historyn.c
+CPPFLAGS+=-DWIDECHAR
+.endif
 
 LIBEDITDIR?=${.CURDIR}
 
@@ -30,7 +41,7 @@ INCSDIR=/usr/include
 
 CLEANFILES+=editline.c
 CLEANFILES+=common.h.tmp editline.c.tmp emacs.h.tmp fcns.c.tmp fcns.h.tmp
-CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp
+CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp tc1.o tc1
 CFLAGS+=-Wall
 CPPFLAGS+=-I. -I${LIBEDITDIR} 
 CPPFLAGS+=-I. -I${.CURDIR}
@@ -69,7 +80,7 @@ fcns.c: ${AHDR} fcns.h help.h makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -fc ${AHDR} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
-help.c: ${ASRC} makelist 
+help.c: ${ASRC} makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -bc ${ASRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
@@ -77,14 +88,22 @@ help.h: ${ASRC} makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -bh ${ASRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
-editline.c: ${OSRCS}
-	${HOST_SH} ${LIBEDITDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}.tmp && \
+editline.c: ${OSRCS} makelist
+	${HOST_SH} ${LIBEDITDIR}/makelist -e ${OSRCS:T} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
-test.o:	${LIBEDITDIR}/TEST/test.c
-	
-test:	libedit.a test.o 
-	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
+tokenizern.c: makelist
+	${HOST_SH} ${LIBEDITDIR}/makelist -n tokenizer.c > ${.TARGET}.tmp && \
+	    mv ${.TARGET}.tmp ${.TARGET}
+
+historyn.c: makelist
+	${HOST_SH} ${LIBEDITDIR}/makelist -n history.c > ${.TARGET}.tmp && \
+	    mv ${.TARGET}.tmp ${.TARGET}
+
+tc1.o:	${LIBEDITDIR}/TEST/tc1.c
+
+tc1:	libedit.a tc1.o 
+	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -lcurses
 
 includes:
 	-cd ${.CURDIR}; cmp -s histedit.h ${DESTDIR}/usr/include/histedit.h > \

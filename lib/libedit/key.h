@@ -1,5 +1,5 @@
-/*	$OpenBSD: key.h,v 1.7 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: key.h,v 1.8 2003/08/07 16:44:32 agc Exp $	*/
+/*	$OpenBSD: key.h,v 1.8 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$NetBSD: key.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,13 +43,13 @@
 
 typedef union key_value_t {
 	el_action_t	 cmd;	/* If it is a command the #	*/
-	char		*str;	/* If it is a string...		*/
+	Char		*str;	/* If it is a string...		*/
 } key_value_t;
 
 typedef struct key_node_t key_node_t;
 
 typedef struct el_key_t {
-	char		*buf;	/* Key print buffer		*/
+	Char		*buf;	/* Key print buffer		*/
 	key_node_t	*map;	/* Key map			*/
 	key_value_t	 val;	/* Local conversion buffer	*/
 } el_key_t;
@@ -66,15 +66,16 @@ typedef struct el_key_t {
 protected int		 key_init(EditLine *);
 protected void		 key_end(EditLine *);
 protected key_value_t	*key_map_cmd(EditLine *, int);
-protected key_value_t	*key_map_str(EditLine *, char *);
+protected key_value_t	*key_map_str(EditLine *, Char *);
 protected void		 key_reset(EditLine *);
-protected int		 key_get(EditLine *, char *, key_value_t *);
-protected void		 key_add(EditLine *, const char *, key_value_t *, int);
-protected void		 key_clear(EditLine *, el_action_t *, const char *);
-protected int		 key_delete(EditLine *, const char *);
-protected void		 key_print(EditLine *, const char *);
-protected void	         key_kprint(EditLine *, const char *, key_value_t *,
+protected int		 key_get(EditLine *, Char *, key_value_t *);
+protected void		 key_add(EditLine *, const Char *, key_value_t *, int);
+protected void		 key_clear(EditLine *, el_action_t *, const Char *);
+protected int		 key_delete(EditLine *, const Char *);
+protected void		 key_print(EditLine *, const Char *);
+protected void	         key_kprint(EditLine *, const Char *, key_value_t *,
     int);
-protected char		*key__decode_str(const char *, char *, const char *);
+protected size_t	 key__decode_str(const Char *, char *, size_t,
+    const char *);
 
 #endif /* _h_el_key */

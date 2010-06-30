@@ -1,5 +1,5 @@
-/*	$OpenBSD: sig.h,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: sig.h,v 1.5 2003/08/07 16:44:33 agc Exp $	*/
+/*	$OpenBSD: sig.h,v 1.7 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$NetBSD: sig.h,v 1.8 2009/02/19 15:20:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,15 +52,18 @@
 #define	ALLSIGS		\
 	_DO(SIGINT)	\
 	_DO(SIGTSTP)	\
-	_DO(SIGSTOP)	\
 	_DO(SIGQUIT)	\
 	_DO(SIGHUP)	\
 	_DO(SIGTERM)	\
 	_DO(SIGCONT)	\
 	_DO(SIGWINCH)
+#define ALLSIGSNO	7
 
-typedef void (*el_signalhandler_t)(int);
-typedef el_signalhandler_t *el_signal_t;
+typedef struct {
+	struct sigaction sig_action[ALLSIGSNO];
+	sigset_t sig_set;
+	volatile sig_atomic_t sig_no;
+} *el_signal_t;
 
 protected void	sig_end(EditLine*);
 protected int	sig_init(EditLine*);

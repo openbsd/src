@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.h,v 1.7 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: tty.h,v 1.10 2003/08/07 16:44:34 agc Exp $	*/
+/*	$OpenBSD: tty.h,v 1.8 2010/06/30 00:05:35 nicm Exp $	*/
+/*	$NetBSD: tty.h,v 1.12 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,6 +41,7 @@
 #ifndef _h_el_tty
 #define	_h_el_tty
 
+#include "sys.h"
 #include "histedit.h"
 #include <termios.h>
 #include <unistd.h>
@@ -451,15 +452,15 @@
 
 typedef struct {
 	const char	*t_name;
-	u_int	 t_setmask;
-	u_int	 t_clrmask;
+	unsigned int	 t_setmask;
+	unsigned int	 t_clrmask;
 } ttyperm_t[NN_IO][MD_NN];
 
 typedef unsigned char ttychar_t[NN_IO][C_NCC];
 
 protected int	tty_init(EditLine *);
 protected void	tty_end(EditLine *);
-protected int	tty_stty(EditLine *, int, const char **);
+protected int	tty_stty(EditLine *, int, const Char **);
 protected int	tty_rawmode(EditLine *);
 protected int	tty_cookedmode(EditLine *);
 protected int	tty_quotemode(EditLine *);
