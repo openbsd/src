@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.107 2010/06/28 18:31:02 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.108 2010/06/30 19:10:05 mk Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -152,9 +152,9 @@ mfi_get_ccb(struct mfi_softc *sc)
 	struct mfi_ccb		*ccb;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	ccb = TAILQ_FIRST(&sc->sc_ccb_freeq);
+	ccb = SLIST_FIRST(&sc->sc_ccb_freeq);
 	if (ccb != NULL) {
-		TAILQ_REMOVE(&sc->sc_ccb_freeq, ccb, ccb_link);
+		SLIST_REMOVE_HEAD(&sc->sc_ccb_freeq, ccb_link);
 		ccb->ccb_state = MFI_CCB_READY;
 	}
 	mtx_leave(&sc->sc_ccb_mtx);
@@ -186,7 +186,7 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_len = 0;
 
 	mtx_enter(&sc->sc_ccb_mtx);
-	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
+	SLIST_INSERT_HEAD(&sc->sc_ccb_freeq, ccb, ccb_link);
 	mtx_leave(&sc->sc_ccb_mtx);
 }
 
@@ -636,7 +636,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	if (mfi_transition_firmware(sc))
 		return (1);
 
-	TAILQ_INIT(&sc->sc_ccb_freeq);
+	SLIST_INIT(&sc->sc_ccb_freeq);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 
 	rw_init(&sc->sc_lock, "mfi_lock");
