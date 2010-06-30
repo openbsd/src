@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.4 2010/06/29 22:39:47 jmc Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.5 2010/06/30 19:26:39 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 29 2010 $
+.Dd $Mdocdate: June 30 2010 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -114,6 +114,13 @@ The URL format has the following format:
 ldap://ldap.example.com
 ldaps://ldap.example.com:3890
 .Ed
+.It rootdn Ar dn
+Specify the distinguished name of the root user for all namespaces.
+The root user is always allowed to read and write entries in all
+local namespaces.
+.It rootpw Ar password
+Password for the root user.
+Specified either in plain text, or in hashed format.
 .It schema Ar filename
 Add schema definitions from the specified file.
 .El

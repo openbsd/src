@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.4 2010/06/29 21:54:38 martinh Exp $ */
+/*	$OpenBSD: auth.c,v 1.5 2010/06/30 19:26:39 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -110,8 +110,14 @@ authorized(struct conn *conn, struct namespace *ns, int rights, char *dn,
 	int		 type = ACI_ALLOW;
 
 	/* Root DN is always allowed. */
-	if (conn->binddn && ns && strcasecmp(conn->binddn, ns->rootdn) == 0)
-		return 1;
+	if (conn->binddn != NULL) {
+		if (conf->rootdn != NULL &&
+		    strcasecmp(conn->binddn, conf->rootdn) == 0)
+			return 1;
+		if (ns != NULL && ns->rootdn != NULL &&
+		    strcasecmp(conn->binddn, ns->rootdn) == 0)
+			return 1;
+	}
 
 	/* Default to deny for write access. */
 	if ((rights & (ACI_WRITE | ACI_CREATE)) != 0)
@@ -161,6 +167,9 @@ check_password(const char *stored_passwd, const char *passwd)
 	unsigned char	 md[SHA_DIGEST_LENGTH];
 	unsigned char	 tmp[128];
 	SHA_CTX		 ctx;
+
+	if (stored_passwd == NULL)
+		return -1;
 
 	if (strncmp(stored_passwd, "{SHA}", 5) == 0) {
 		sz = b64_pton(stored_passwd + 5, tmp, sizeof(tmp));
@@ -276,10 +285,12 @@ ldap_auth_simple(struct request *req, char *binddn, struct ber_element *auth)
 		return LDAP_UNWILLING_TO_PERFORM;
 	}
 
-	if ((ns = namespace_lookup_base(binddn, 1)) == NULL)
+	if (conf->rootdn != NULL && strcmp(conf->rootdn, binddn) == 0) {
+		if (check_password(conf->rootpw, password) == 0)
+			ok = 1;
+	} else if ((ns = namespace_lookup_base(binddn, 1)) == NULL) {
 		return LDAP_INVALID_CREDENTIALS;
-
-	if (strcmp(ns->rootdn, binddn) == 0) {
+	} else if (ns->rootdn != NULL && strcmp(ns->rootdn, binddn) == 0) {
 		if (check_password(ns->rootpw, password) == 0)
 			ok = 1;
 	} else if (namespace_has_referrals(ns)) {

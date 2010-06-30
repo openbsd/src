@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2010/06/29 21:54:38 martinh Exp $ */
+/*	$OpenBSD: parse.y,v 1.7 2010/06/30 19:26:39 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -209,6 +209,11 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 			ref->url = $2;
 			SLIST_INSERT_HEAD(&conf->referrals, ref, next);
 		}
+		| ROOTDN STRING			{
+			conf->rootdn = $2;
+			normalize_dn(conf->rootdn);
+		}
+		| ROOTPW STRING			{ conf->rootpw = $2; }
 		;
 
 namespace	: NAMESPACE STRING '{' '\n'		{
