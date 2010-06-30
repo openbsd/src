@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.50 2009/10/24 22:11:07 miod Exp $ */
+/*	$OpenBSD: esm.c,v 1.51 2010/06/30 15:22:05 blambert Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -464,11 +464,11 @@ esm_refresh(void *arg)
 
 	if (sc->sc_nextsensor == NULL) {
 		sc->sc_nextsensor = TAILQ_FIRST(&sc->sc_sensors);
-		timeout_add(&sc->sc_timeout, hz * 10);
+		timeout_add_sec(&sc->sc_timeout, 10);
 		return;
 	}
 tick:
-	timeout_add(&sc->sc_timeout, hz / 20);
+	timeout_add_msec(&sc->sc_timeout, 50);
 }
 
 int
