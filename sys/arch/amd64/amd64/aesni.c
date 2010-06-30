@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.1 2010/06/29 21:34:11 thib Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.2 2010/06/30 17:00:42 thib Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -43,9 +43,6 @@
 #define AESCTR_NONCESIZE	4
 #define AESCTR_IVSIZE		8
 #define AESCTR_BLOCKSIZE	16
-
-#define AESCTR_MINKEY		16+4
-#define AESCTR_MAXKEY		32+4
 
 struct aesni_sess {
 	uint32_t		 ses_ekey[4 * (AES_MAXROUNDS + 1)];
@@ -164,7 +161,7 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	if ((uint64_t)ses % 16 != 0)
 		panic("aesni: unaligned address %p\n", ses);
 
-	fpu_kernel_enter(0);
+	fpu_kernel_enter();
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
 		case CRYPTO_AES_CBC:
@@ -250,7 +247,7 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			return (EINVAL);
 		}
 	}
-	fpu_kernel_exit(0);
+	fpu_kernel_exit();
 
 	*sidp = ses->ses_sid;
 	return (0);
@@ -456,7 +453,7 @@ aesni_process(struct cryptop *crp)
 		goto out;
 	}
 
-	fpu_kernel_enter(0);
+	fpu_kernel_enter();
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		switch (crd->crd_alg) {
 		case CRYPTO_AES_CBC:
@@ -484,7 +481,7 @@ aesni_process(struct cryptop *crp)
 		}
 	}
 cleanup:
-	fpu_kernel_exit(0);
+	fpu_kernel_exit();
 out:
 	crp->crp_etype = err;
 	crypto_done(crp);
