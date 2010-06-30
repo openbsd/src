@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.6 2010/06/30 10:08:00 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.7 2010/06/30 10:37:26 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -440,7 +440,7 @@ sub try_merging
 
 	my $s = $state->tracker->is_to_update($m);
 	if (!defined $s) {
-		$s = OpenBSD::UpdateSet->new->add_older(
+		$s = $state->updateset->add_older(
 		    OpenBSD::Handle->create_old($m, $state));
 	}
 	if ($state->updater->process_set($s, $state)) {
@@ -516,7 +516,6 @@ our @ISA = qw(OpenBSD::AddDelete);
 use OpenBSD::Dependencies;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
-use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
 use OpenBSD::Add;
@@ -949,12 +948,12 @@ sub inform_user_of_problems
 # if we already have quirks, we update it. If not, we try to install it.
 sub quirk_set
 {
-	require OpenBSD::PackageRepository::Installed;
+	my $state = shift;
 	require OpenBSD::Search;
 
-	my $set = OpenBSD::UpdateSet->new;
+	my $set = $state->updateset;
 	$set->{quirks} = 1;
-	my $l = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::Stem->new('quirks'));
+	my $l = $state->repo->installed->match_locations(OpenBSD::Search::Stem->new('quirks'));
 	if (@$l > 0) {
 		$set->add_older(map {OpenBSD::Handle->from_location($_)} @$l);
 	} else {
@@ -967,7 +966,7 @@ sub do_quirks
 {
 	my $state = shift;
 
-	install_set(quirk_set(), $state);
+	install_set(quirk_set($state), $state);
 	eval {
 		require OpenBSD::Quirks;
 		# interface version number.
@@ -990,19 +989,18 @@ sub process_parameters
 			chomp;
 			s/\s.*//;
 			push(@{$state->{setlist}},
-			    OpenBSD::UpdateSet->new->$add_hints($_));
+			    $state->updateset->$add_hints($_));
 		}
 	}
 
 	# update existing stuff
 	if ($state->{update}) {
-		require OpenBSD::PackageRepository::Installed;
 
 		if (@ARGV == 0) {
 			@ARGV = sort(installed_packages());
 			$state->{allupdates} = 1;
 		}
-		my $inst = OpenBSD::PackageRepository::Installed->new;
+		my $inst = $state->repo->installed;
 		for my $pkgname (@ARGV) {
 			my $l;
 
@@ -1016,7 +1014,7 @@ sub process_parameters
 				$state->say("Problem finding #1", $pkgname);
 			} else {
 				push(@{$state->{setlist}},
-				    OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l)));
+				    $state->updateset->add_older(OpenBSD::Handle->from_location($l)));
 			}
 		}
 	} else {
@@ -1025,7 +1023,7 @@ sub process_parameters
 		for my $pkgname (@ARGV) {
 			next if $pkgname =~ m/^quirks\-\d/;
 			push(@{$state->{setlist}},
-			    OpenBSD::UpdateSet->new->$add_hints($pkgname));
+			    $state->updateset->$add_hints($pkgname));
 		}
 	}
 }

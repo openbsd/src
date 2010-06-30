@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.57 2010/06/25 10:34:03 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.58 2010/06/30 10:37:26 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -64,9 +64,9 @@ package OpenBSD::UpdateSet;
 
 sub new
 {
-	my $class = shift;
-	return bless {newer => {}, older => {}, kept => {}, hints => [], updates => 0},
-	    $class;
+	my ($class, $state) = @_;
+	return bless {newer => {}, older => {}, kept => {}, 
+	    hints => [], updates => 0, repo => $state->repo}, $class;
 }
 
 sub path
@@ -81,9 +81,7 @@ sub add_repositories
 	my ($set, @repos) = @_;
 
 	if (!defined $set->{path}) {
-		require OpenBSD::PackageRepositoryList;
-
-		$set->{path} = OpenBSD::PackageRepositoryList->new;
+		$set->{path} = $set->{repo}->path;
 	}
 	$set->{path}->add(@repos);
 }
@@ -109,8 +107,7 @@ sub match_locations
 		$r = $set->{path}->match_locations(@spec);
 	}
 	if (@$r == 0) {
-		require OpenBSD::PackageLocator;
-		$r = OpenBSD::PackageLocator->match_locations(@spec);
+		$r = $set->{repo}->match_locations(@spec);
 	}
 	return $r;
 }

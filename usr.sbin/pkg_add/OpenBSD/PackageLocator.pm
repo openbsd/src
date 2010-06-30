@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.89 2010/06/25 10:15:13 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.90 2010/06/30 10:37:25 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #

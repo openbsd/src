@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.129 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.130 2010/06/30 10:37:25 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -546,7 +546,7 @@ sub solve_dependency
 			if ($state->tracker->is_known($v)) {
 				return $v;
 			}
-			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->create_old($v, $state));
+			my $set = $state->updateset->add_older(OpenBSD::Handle->create_old($v, $state));
 			$set->merge_paths($self->{set});
 			$self->add_dep($set);
 			$self->set_cache($dep, _cache::to_update->new($v));
@@ -563,12 +563,12 @@ sub solve_dependency
 
 	my $s;
 	if ($v) {
-		$s = OpenBSD::UpdateSet->from_location($v);
+		$s = $state->updateset_from_location($v);
 		$v = $v->name;
 	} else {
 		# resort to default if nothing else
 		$v = $dep->{def};
-		$s = OpenBSD::UpdateSet->create_new($v);
+		$s = $state->updateset_with_new($v);
 	}
 
 	$s->merge_paths($self->{set});
@@ -674,10 +674,8 @@ sub find_old_lib
 	my ($self, $state, $base, $pattern, $lib) = @_;
 
 	require OpenBSD::Search;
-	require OpenBSD::PackageRepository::Installed;
 
-
-	my $r = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::PkgSpec->new(".libs-".$pattern));
+	my $r = $state->repo->installed->match_locations(OpenBSD::Search::PkgSpec->new(".libs-".$pattern));
 	for my $try (map {$_->name} @$r) {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($try);
 		if ($self->check_lib_spec($base, $lib, {$try => 1})) {
