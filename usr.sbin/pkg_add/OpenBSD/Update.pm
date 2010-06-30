@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.138 2010/06/09 08:13:19 espie Exp $
+# $OpenBSD: Update.pm,v 1.139 2010/06/30 10:36:07 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -107,9 +107,8 @@ sub process_handle
 	}
 
 #	if (defined $plist->{url}) {
-#		require OpenBSD::PackageLocator;
 #		my $repo;
-#		($repo, undef) = OpenBSD::PackageLocator->path_parse($plist->{url}->name);
+#		($repo, undef) = $state->repo->path_parse($plist->{url}->name);
 #		$set->add_repositories($repo);
 #	}
 	my @search = ();
@@ -262,9 +261,8 @@ sub process_hint2
 	my $pkgname = $hint->pkgname;
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
 		if ($pkgname =~ m/[\/\:]/o) {
-			require OpenBSD::PackageLocator;
 			my $repo;
-			($repo, $pkgname) = OpenBSD::PackageLocator->path_parse($pkgname);
+			($repo, $pkgname) = $state->repo->path_parse($pkgname);
 			$set->add_repositories($repo);
 		};
 		my $l = $state->updater->stem2location($set, $pkgname, $state,
