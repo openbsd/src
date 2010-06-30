@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.4 2010/06/30 04:17:04 martinh Exp $ */
+/*	$OpenBSD: validate.c,v 1.5 2010/06/30 19:35:20 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -275,7 +275,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	struct object		*obj, *structural_obj = NULL;
 	struct attr_type	*at;
 	struct obj_list		*olist;
-	struct obj_ptr		*optr;
+	struct obj_ptr		*optr, *optr2;
 
 	if (relax)
 		goto rdn;
@@ -334,10 +334,39 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 		return LDAP_OBJECT_CLASS_VIOLATION;
 	}
 
+	/* "An entry cannot belong to an abstract object class
+	 *  unless it belongs to a structural or auxiliary class that
+	 *  inherits from that abstract class."
+	 */
+        SLIST_FOREACH(optr, olist, next) {
+		if (optr->object->kind != KIND_ABSTRACT)
+			continue;
+
+		/* Check the structural object class. */
+		if (is_super(optr->object, structural_obj))
+			continue;
+
+		/* Check all auxiliary object classes. */
+		SLIST_FOREACH(optr2, olist, next) {
+			if (optr2->object->kind != KIND_AUXILIARY)
+				continue;
+			if (is_super(optr->object, optr2->object))
+				break;
+		}
+
+		if (optr2 == NULL) {
+			/* No subclassed object class found. */
+			log_debug("abstract class '%s' not subclassed",
+			    OBJ_NAME(optr->object));
+			return LDAP_OBJECT_CLASS_VIOLATION;
+		}
+	}
+
 	/* Check all required attributes.
 	 */
 	SLIST_FOREACH(optr, olist, next) {
-		if ((rc = validate_required_attributes(entry, optr->object)) != LDAP_SUCCESS)
+		if ((rc = validate_required_attributes(entry, optr->object)) !=
+		    LDAP_SUCCESS)
 			return rc;
 	}
 
