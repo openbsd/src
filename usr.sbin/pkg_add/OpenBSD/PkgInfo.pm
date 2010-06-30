@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.9 2010/06/25 14:32:18 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.10 2010/06/30 10:35:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -211,21 +211,17 @@ sub find_pkg_in
 sub find_pkg
 {
 	my ($self, $state, $pkgname, $code) = @_;
-	require OpenBSD::PackageRepository::Installed;
 
-	if ($self->find_pkg_in($state, OpenBSD::PackageRepository::Installed->new, $pkgname,
+	if ($self->find_pkg_in($state, $state->repo->installed, $pkgname,
 	    $code)) {
 		return;
 	}
-	require OpenBSD::PackageLocator;
-
 	my $repo;
 
 	if ($pkgname =~ m/[\/\:]/o) {
-		($repo, $pkgname) =
-		    OpenBSD::PackageLocator->new($state)->path_parse($pkgname);
+		($repo, $pkgname) = $state->repo->path_parse($pkgname);
 	} else {
-		$repo = 'OpenBSD::PackageLocator';
+		$repo = $state->repo;
 	}
 
 	$self->find_pkg_in($state, $repo, $pkgname, $code);
@@ -248,17 +244,16 @@ sub get_comment
 
 sub find_by_spec
 {
-	my $pat = shift;
+	my ($pat, $state) = @_;
 
 	require OpenBSD::Search;
-	require OpenBSD::PackageRepository::Installed;
 
 	my $s = OpenBSD::Search::PkgSpec->new($pat);
 	if (!$s->is_valid) {
-		print STDERR "Invalid spec: $pat\n";
+		$state->errsay("Invalid spec: #1", $pat);
 		return ();
 	} else {
-		my $r = OpenBSD::PackageRepository::Installed->new->match_locations($s);
+		my $r = $state->repo->installed->match_locations($s);
 
 		return sort {$a->name <=> $b->name} @$r;
 	}
@@ -474,7 +469,7 @@ sub parse_and_run
 				    @list = find_by_path($pat);
 				    push(@ARGV, @list);
 			    } else {
-				    @list = find_by_spec($pat);
+				    @list = find_by_spec($pat, $state);
 				    push(@extra, @list);
 			    }
 			    if (@list == 0) {
@@ -509,12 +504,11 @@ sub parse_and_run
 	}
 
 	if ($state->opt('Q')) {
-		require OpenBSD::PackageLocator;
 		require OpenBSD::Search;
 
 		print "PKG_PATH=$ENV{PKG_PATH}\n" if $state->verbose;
 		my $partial = OpenBSD::Search::PartialStem->new($state->opt('Q'));
-		my $r = OpenBSD::PackageLocator->new($state)->match_locations($partial);
+		my $r = $state->repo->match_locations($partial);
 
 		for my $p (sort map {$_->name} @$r) {
 			$state->say(
