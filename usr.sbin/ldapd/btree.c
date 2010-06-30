@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.15 2010/06/29 04:27:15 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.16 2010/06/30 21:44:33 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -486,7 +486,6 @@ mpage_add(struct btree *bt, struct mpage *mp)
 	assert(RB_INSERT(page_cache, bt->page_cache, mp) == NULL);
 	bt->stat.cache_size++;
 	TAILQ_INSERT_TAIL(bt->lru_queue, mp, lru_next);
-	mpage_prune(bt);
 }
 
 static void
@@ -3033,6 +3032,7 @@ btree_compact_tree(struct btree *bt, pgno_t pgno, struct btree *btc)
 	free(p);
 	if (rc != (ssize_t)bt->head.psize)
 		return P_INVALID;
+	mpage_prune(bt);
 	return pgno;
 }
 
@@ -3095,6 +3095,7 @@ btree_compact(struct btree *bt)
 	btree_txn_abort(txnc);
 	free(compact_path);
 	btree_close(btc);
+	mpage_prune(bt);
 	return 0;
 
 failed:
@@ -3103,6 +3104,7 @@ failed:
 	unlink(compact_path);
 	free(compact_path);
 	btree_close(btc);
+	mpage_prune(bt);
 	return BT_FAIL;
 }
 
