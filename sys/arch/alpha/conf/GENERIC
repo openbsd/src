@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.211 2010/03/03 20:57:28 mk Exp $
+#	$OpenBSD: GENERIC,v 1.212 2010/06/30 20:38:49 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,8 +28,6 @@ option		DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
 option		DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 option		DEC_6600	# EV6:		XP1000, 264DP OEM Board
 option		API_UP1000	# EV6:		Alpha Processor UP1000
-
-option		COMPAT_OSF1	# OSF/1 binary compatibility
 
 # Misc. options
 option		EISAVERBOSE		# recognize "unknown" EISA devices

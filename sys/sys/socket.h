@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.65 2010/06/30 19:57:05 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.66 2010/06/30 20:38:50 tedu Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -503,7 +503,7 @@ int	setrdomain(int);
 __END_DECLS
 #else
 # if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-     defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS) || defined(COMPAT_OSF1)
+     defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS)
 #  define COMPAT_OLDSOCK
 #  define MSG_COMPAT	0x8000
 # endif

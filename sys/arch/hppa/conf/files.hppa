@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.84 2010/06/29 20:30:32 guenther Exp $
+#	$OpenBSD: files.hppa,v 1.85 2010/06/30 20:38:49 tedu Exp $
 #
 # hppa-specific configuration info
 
@@ -290,8 +290,6 @@ include	"dev/pckbc/files.pckbc"
 #
 # Compatibility
 #
-include "compat/osf1/files.osf1"
-file	arch/hppa/hppa/osf1_machdep.c		compat_osf1
 include	"compat/linux/files.linux"
 include "compat/ossaudio/files.ossaudio"
 file	arch/hppa/hppa/linux_machdep.c		compat_linux

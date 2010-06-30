@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.89 2009/11/07 23:01:38 miod Exp $
+#	$OpenBSD: files.alpha,v 1.90 2010/06/30 20:38:49 tedu Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -333,10 +333,6 @@ file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a	needs-flag
 file	arch/alpha/alpha/dec_6600.c		dec_6600	needs-flag
 file	arch/alpha/alpha/api_up1000.c		api_up1000	needs-flag
-
-# OSF/1 Binary Compatibility (COMPAT_OSF1)
-include	"compat/osf1/files.osf1"
-file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 
 #
 # Machine-independent I2C drivers

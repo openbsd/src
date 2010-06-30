@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.21 2010/06/29 20:30:33 guenther Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.22 2010/06/30 20:38:49 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
 	emul_bsdos, emul_freebsd_aout, emul_freebsd_elf,
 	emul_ibcs2, emul_linux_elf, emul_linux_aout, emul_netbsd_elf64,
-	emul_osf1, emul_sunos, emul_svr4;
+	emul_sunos, emul_svr4;
 
 struct execsw execsw[] = {
 	{ EXEC_SCRIPT_HDRSZ, exec_script_makecmds, &emul_native, },	/* shell scripts */
@@ -93,9 +93,6 @@ struct execsw execsw[] = {
 #endif
 #ifdef _KERN_DO_ELF64
 	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_native },	/* elf binaries */
-#ifdef COMPAT_OSF1
-	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_osf1 },
-#endif
 #endif /* ELF64 */
 #ifdef COMPAT_LINUX
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, &emul_linux_aout }, /* linux a.out */

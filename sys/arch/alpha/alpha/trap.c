@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.55 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: trap.c,v 1.56 2010/06/30 20:38:49 tedu Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -114,10 +114,6 @@
 #include <machine/db_machdep.h>
 #endif
 #include <alpha/alpha/db_instruction.h>
-
-#ifdef COMPAT_OSF1
-#include <compat/osf1/osf1_syscall.h>
-#endif
 
 void		userret(struct proc *);
 
@@ -561,9 +557,6 @@ syscall(code, framep)
 	u_long rval[2];
 	u_long args[10];					/* XXX */
 	u_int hidden, nargs;
-#ifdef COMPAT_OSF1
-	extern struct emul emul_osf1;
-#endif
 
 	uvmexp.syscalls++;
 	p = curproc;
@@ -573,19 +566,6 @@ syscall(code, framep)
 	callp = p->p_emul->e_sysent;
 	numsys = p->p_emul->e_nsysent;
 
-#ifdef COMPAT_OSF1
-	if (p->p_emul == &emul_osf1) 
-		switch (code) {
-		case OSF1_SYS_syscall:
-			/* OSF/1 syscall() */
-			code = framep->tf_regs[FRAME_A0];
-			hidden = 1;
-			break;
-		default:
-			hidden = 0;
-		}
-	else
-#endif
 	switch(code) {
 	case SYS_syscall:
 	case SYS___syscall:
