@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2010/06/30 19:26:39 martinh Exp $ */
+/*	$OpenBSD: parse.y,v 1.8 2010/06/30 22:16:53 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1146,6 +1146,8 @@ namespace_new(const char *suffix)
 		return NULL;
 	ns->suffix = strdup(suffix);
 	ns->sync = 1;
+	ns->cache_size = 1024;
+	ns->index_cache_size = 512;
 	if (ns->suffix == NULL) {
 		free(ns->suffix);
 		free(ns);
