@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.1 2010/06/29 02:45:46 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.2 2010/06/30 04:14:59 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -767,6 +767,7 @@ static int
 schema_parse_objectclass(struct schema *schema)
 {
 	struct object		*obj = NULL, *prev;
+	struct obj_ptr		*optr;
 	char			*kw;
 	int			 token, ret = 0;
 
@@ -780,6 +781,7 @@ schema_parse_objectclass(struct schema *schema)
 		log_warn("calloc");
 		goto fail;
 	}
+	obj->kind = KIND_STRUCTURAL;
 
 	if (is_oidstr(kw))
 		obj->oid = kw;
@@ -831,6 +833,41 @@ schema_parse_objectclass(struct schema *schema)
 			obj->may = schema_parse_attrlist(schema);
 			if (obj->may == NULL)
 				goto fail;
+		}
+	}
+
+	/* Verify the subclassing is allowed.
+	 *
+	 * Structural object classes cannot subclass auxiliary object classes.
+	 * Auxiliary object classes cannot subclass structural object classes.
+	 * Abstract object classes cannot derive from structural or auxiliary
+	 *   object classes.
+	 */
+	if (obj->sup != NULL) {
+		SLIST_FOREACH(optr, obj->sup, next) {
+			if (obj->kind == KIND_STRUCTURAL &&
+			    optr->object->kind == KIND_AUXILIARY) {
+				log_warnx("structural object class '%s' cannot"
+				    " subclass auxiliary object class '%s'", 
+				    OBJ_NAME(obj), OBJ_NAME(optr->object));
+				goto fail;
+			}
+
+			if (obj->kind == KIND_AUXILIARY &&
+			    optr->object->kind == KIND_STRUCTURAL) {
+				log_warnx("auxiliary object class '%s' cannot"
+				    " subclass structural object class '%s'", 
+				    OBJ_NAME(obj), OBJ_NAME(optr->object));
+				goto fail;
+			}
+
+			if (obj->kind == KIND_ABSTRACT &&
+			    optr->object->kind != KIND_ABSTRACT) {
+				log_warnx("abstract object class '%s' cannot"
+				    " subclass non-abstract object class '%s'", 
+				    OBJ_NAME(obj), OBJ_NAME(optr->object));
+				goto fail;
+			}
 		}
 	}
 
