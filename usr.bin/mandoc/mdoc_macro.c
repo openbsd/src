@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.49 2010/06/29 19:42:03 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.50 2010/06/30 03:57:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -331,21 +331,44 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 		const struct mdoc_node *p)
 {
 
+	/*
+	 * No matching token, no delimiting block, no broken block.
+	 * This can happen when full implicit macros are called for
+	 * the first time but try to rewind their previous
+	 * instance anyway.
+	 */
 	if (MDOC_ROOT == p->type)
 		return(MDOC_BLOCK == type &&
 		    MDOC_EXPLICIT & mdoc_macros[tok].flags ?
 		    REWIND_ERROR : REWIND_NONE);
+
+	/*
+	 * When starting to rewind, skip plain text 
+	 * and nodes that have already been rewound.
+	 */
 	if (MDOC_TEXT == p->type || MDOC_VALID & p->flags)
 		return(REWIND_MORE);
 
+	/*
+	 * The easiest case:  Found a matching token.
+	 * This applies to both blocks and elements.
+	 */
 	tok = rew_alt(tok);
 	if (tok == p->tok)
 		return(p->end ? REWIND_NONE :
 		    type == p->type ? REWIND_THIS : REWIND_MORE);
 
+	/*
+	 * While elements do require rewinding for themselves,
+	 * they never affect rewinding of other nodes.
+	 */
 	if (MDOC_ELEM == p->type)
 		return(REWIND_MORE);
 
+	/*
+	 * Blocks delimited by our target token get REWIND_MORE.
+	 * Blocks delimiting our target token get REWIND_NONE. 
+	 */
 	switch (tok) {
 	case (MDOC_Bl):
 		if (MDOC_It == p->tok)
@@ -380,9 +403,25 @@ rew_dohalt(enum mdoct tok, enum mdoc_type type,
 		break;
 	}
 
-	return(p->end || (MDOC_BLOCK == p->type &&
-	    ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)) ?
-	    REWIND_MORE : REWIND_LATER);
+	/*
+	 * Default block rewinding rules.
+	 * In particular, always skip block end markers.
+	 */
+	if (p->end || (MDOC_BLOCK == p->type &&
+	    ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)))
+		return(REWIND_MORE);
+
+	/*
+	 * Partial blocks allow delayed rewinding by default.
+	 */
+	if (&blk_full != mdoc_macros[tok].fp)
+		return (REWIND_LATER);
+
+	/*
+	 * Full blocks can only be rewound when matching
+	 * or when there is an explicit rule.
+	 */
+	return(REWIND_ERROR);
 }
 
 
