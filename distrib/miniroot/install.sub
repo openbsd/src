@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.606 2010/06/29 15:11:45 halex Exp $
+#	$OpenBSD: install.sub,v 1.607 2010/06/30 00:23:02 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1836,8 +1836,8 @@ finish_up() {
 
 	# Create or update pkg.conf with the new package path, if any
 	if [[ -n $package_path ]]; then
-		grep -v '^installpath=' /mnt/etc/pkg.conf 2>&- > /tmp/pkgconf
-		print -r -- "installpath=$package_path" >> /tmp/pkgconf
+		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>&- > /tmp/pkgconf
+		print -r -- "installpath = $package_path" >> /tmp/pkgconf
 		cp /tmp/pkgconf /mnt/etc/pkg.conf
 	fi
 
