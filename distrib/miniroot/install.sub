@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.608 2010/06/30 19:31:19 halex Exp $
+#	$OpenBSD: install.sub,v 1.609 2010/06/30 20:22:01 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -175,7 +175,7 @@ mount_mnt2() {
 askpass() {
 	set -o noglob
 	stty -echo
-	read -r resp?"$1 " || exit 1
+	read -r resp?"$1 "
 	stty echo
 	set +o noglob
 	echo
@@ -227,18 +227,16 @@ retrap
 # and the function will return a non-zero value. Normally, the caller
 # will then reprint any prompt and call the function again.
 _ask() {
-	local _int _redo=0 _pid _fail
+	local _int _redo=0 _pid
 
 	trap "_int=1" INT
 	trap "_redo=1" TERM
 	lock; dmesg >/tmp/update; unlock
-	read resp || _fail=1
+	read resp
 	lock; rm /tmp/update; unlock
 	if (( _redo )); then
 		stty raw
 		stty -raw
-	elif [[ -n $_fail ]]; then
-		exit 1
 	else
 		case $resp in
 		!)	echo "Type 'exit' to return to install."
