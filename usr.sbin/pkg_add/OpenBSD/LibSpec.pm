@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.10 2010/06/19 08:22:06 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.11 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #

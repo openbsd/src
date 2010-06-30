@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.58 2010/06/30 10:37:26 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.59 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -65,7 +65,7 @@ package OpenBSD::UpdateSet;
 sub new
 {
 	my ($class, $state) = @_;
-	return bless {newer => {}, older => {}, kept => {}, 
+	return bless {newer => {}, older => {}, kept => {},
 	    hints => [], updates => 0, repo => $state->repo}, $class;
 }
 

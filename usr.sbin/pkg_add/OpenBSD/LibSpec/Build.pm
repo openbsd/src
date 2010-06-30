@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Build.pm,v 1.3 2010/06/19 08:22:06 espie Exp $
+# $OpenBSD: Build.pm,v 1.4 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -71,7 +71,7 @@ sub no_match_static
 sub findbest
 {
 	my ($spec, $repo, $base) = @_;
-	my $spec2 = OpenBSD::LibSpec::GT->new($spec->{dir}, $spec->{stem}, 
+	my $spec2 = OpenBSD::LibSpec::GT->new($spec->{dir}, $spec->{stem},
 	    0, 0);
 	my $r = $spec2->lookup($repo, $base);
 	my $best;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.6 2010/06/25 11:12:14 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.7 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -27,7 +27,7 @@ our @ISA = qw(OpenBSD::AddDelete::State);
 sub handle_options
 {
 	my $state = shift;
-	$state->SUPER::handle_options('', 
+	$state->SUPER::handle_options('',
 	    '[-cIinqsvx] [-B pkg-destdir] [-D name[=value]] pkg-name [...]');
 
 	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
@@ -76,11 +76,11 @@ sub process_parameters
 	@todo = OpenBSD::RequiredBy->compute_closure(@realnames);
 
 	if (@todo > @realnames) {
-		my $details = $state->verbose >= 2 || 
+		my $details = $state->verbose >= 2 ||
 		    $state->defines('verbosedeps');
 		my $show = sub {
 			my ($p, $d) = @_;
-			$state->say("Can't remove #1". 
+			$state->say("Can't remove #1".
 			    " without also removing:\n#2",
 			    join(' ', @$p), join(' ', @$d));
 		};

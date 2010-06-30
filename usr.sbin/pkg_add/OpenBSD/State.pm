@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.7 2010/06/30 10:11:23 espie Exp $
+# $OpenBSD: State.pm,v 1.8 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -284,7 +284,7 @@ sub child_error
 		$extra = $self->f(" (core dumped)");
 	}
 	if ($error & 127) {
-		return $self->f("killed by signal #1#2", 
+		return $self->f("killed by signal #1#2",
 		    find_signal($error & 127), $extra);
 	} else {
 		return $self->f("exit(#1)#2", ($error >> 8), $extra);
@@ -296,7 +296,7 @@ sub system
 	my $self = shift;
 	my $r = CORE::system(@_);
 	if ($r != 0) {
-		$self->say("system(#1) failed: #2", 
+		$self->say("system(#1) failed: #2",
 		    join(", ", @_), $self->child_error);
 	}
 	return $r;

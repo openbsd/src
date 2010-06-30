@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.13 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.14 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #

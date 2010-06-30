@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.103 2010/06/09 08:13:19 espie Exp $
+# $OpenBSD: Delete.pm,v 1.104 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ sub manpages_unindex
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		if ($state->{not}) {
-			$state->say("Removing manpages in #1: #2", 
+			$state->say("Removing manpages in #1: #2",
 			    $destdir.$k, join(@l)) if $state->verbose >= 2;
 		} else {
 			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
@@ -84,7 +84,7 @@ sub remove_packing_info
 	}
 	OpenBSD::RequiredBy->forget($dir);
 	OpenBSD::Requiring->forget($dir);
-	rmdir($dir) or 
+	rmdir($dir) or
 	    $state->fatal("can't finish removing directory #1: #2", $dir, $!);
 }
 
@@ -95,12 +95,12 @@ sub delete_package
 	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
 	    $state->fatal("bad package #1", $pkgname);
 	if (!defined $plist->pkgname) {
-		$state->fatal("package #1 is missing a \@name in plist", 
+		$state->fatal("package #1 is missing a \@name in plist",
 		    $pkgname);
 	}
 	if ($plist->pkgname ne $pkgname) {
-		$state->fatal("Package real name #1 does not match #2", 
-			$plist->pkgname, $pkgname); 
+		$state->fatal("Package real name #1 does not match #2",
+			$plist->pkgname, $pkgname);
 	}
 	if ($plist->is_signed) {
 		if (!$state->{quick}) {
@@ -385,7 +385,7 @@ sub delete
 		if (-l $realname) {
 			my $contents = readlink $realname;
 			if ($contents ne $self->{symlink}) {
-				$state->say("Symlink does not match: #1 (#2 vs. #3)", 
+				$state->say("Symlink does not match: #1 (#2 vs. #3)",
 				    $realname, $contents, $self->{symlink});
 				$self->do_not_delete($state);
 				return;
@@ -587,8 +587,8 @@ sub delete
 			open(my $shells2, '>', $destdir.OpenBSD::Paths->shells);
 			print $shells2 @l;
 			close $shells2;
-			$state->say("Shell #1 removed from #2", 
-			    $fullname, $destdir.OpenBSD::Paths->shells) 
+			$state->say("Shell #1 removed from #2",
+			    $fullname, $destdir.OpenBSD::Paths->shells)
 			    	if $state->verbose;
 		}
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.21 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.22 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #

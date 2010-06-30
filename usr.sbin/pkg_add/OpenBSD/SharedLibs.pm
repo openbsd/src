@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.49 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.50 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #

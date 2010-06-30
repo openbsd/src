@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.180 2010/06/15 08:26:39 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.181 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -394,7 +394,7 @@ sub check_digest
 	my ($self, $file, $state) = @_;
 	return if $self->{link} or $self->{symlink};
 	if (!defined $self->{d}) {
-		$state->log->fatal($state->f("#1 does not have a signature", 
+		$state->log->fatal($state->f("#1 does not have a signature",
 		    $self->fullname));
 	}
 	my $d = $self->compute_digest($file->{destdir}.$file->name);

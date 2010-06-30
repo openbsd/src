@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.17 2010/06/30 10:31:52 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.18 2010/06/30 10:41:42 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -135,7 +135,7 @@ sub resolve_link
 	my ($filename, $base, $level) = @_;
 	$level //= 0;
 	if (-l $filename) {
-		my $l = readlink($filename); 
+		my $l = readlink($filename);
 		if ($level++ > 14) {
 			return undef;
 		}
@@ -514,7 +514,7 @@ sub handle_fragment
 		return $file unless defined $not;
 	}
 	if (defined $newname) {
-		$state->set_status("switching to $newname") 
+		$state->set_status("switching to $newname")
 		    if !defined $state->opt('q');
 		push(@$stack, $file);
 		$file = MyFile->new($newname);
@@ -608,7 +608,7 @@ sub add_description
 sub add_signature
 {
 	my ($self, $plist, $cert, $privkey) = @_;
-		
+
 	require OpenBSD::x509;
 
 	my $sig = OpenBSD::PackingElement::DigitalSignature->new_x509;
@@ -787,7 +787,7 @@ sub show_bad_symlinks
 {
 	my ($self, $state) = @_;
 	for my $dest (sort keys %{$state->{bad_symlinks}}) {
-		$state->errsay("Warning: symlink(s) point to non-existent #1", 
+		$state->errsay("Warning: symlink(s) point to non-existent #1",
 		    $dest);
 		for my $link (@{$state->{bad_symlinks}{$dest}}) {
 			$state->errsay("\t#1", $link);
@@ -876,7 +876,7 @@ sub parse_and_run
 		}
 		exit(0);
 	} else {
-		$plist = $self->create_plist($state, $ARGV[0], \@contents, 
+		$plist = $self->create_plist($state, $ARGV[0], \@contents,
 		    \%dependencies, \%wantlib);
 	}
 
@@ -946,7 +946,7 @@ sub parse_and_run
 		$plist->pretend_to_archive($state);
 	} else {
 		$self->create_package($state, $plist, $wname);
-	} 
+	}
 	}catch {
 		print STDERR "$0: $_\n";
 		exit(1);

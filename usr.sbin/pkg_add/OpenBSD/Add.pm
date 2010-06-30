@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.111 2010/06/15 08:26:39 espie Exp $
+# $OpenBSD: Add.pm,v 1.112 2010/06/30 10:41:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub manpages_index
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		if ($state->{not}) {
-			$state->say("Merging manpages in #1: #2", 
+			$state->say("Merging manpages in #1: #2",
 				$destdir.$k, join(@l)) if $state->verbose >= 2;
 		} else {
 			try {
@@ -83,7 +83,7 @@ sub record_partial_installation
 	    my $lastname = $last->realname($state);
 	    $last->{d} = $last->compute_digest($lastname, $old);
 	    if (!$old->equals($last->{d})) {
-		$state->say("Adjusting #1 for #2 from #3 to #4", 
+		$state->say("Adjusting #1 for #2 from #3 to #4",
 		    $old->keyword, $lastname, $old->stringize,
 		    $last->{d}->stringize);
 	    }
@@ -254,7 +254,7 @@ sub prepare_for_addition
 	my $ok = $self->check;
 	if (defined $ok) {
 		if ($ok == 0) {
-			$state->errsay("#1 #2 does not match", 
+			$state->errsay("#1 #2 does not match",
 			    $self->type, $self->name);
 			$state->{problems}++;
 		}
@@ -323,7 +323,7 @@ sub install
 		return;
 	}
 	if ($state->{not}) {
-		$state->say("sysctl -w #1 =! #2", 
+		$state->say("sysctl -w #1 =! #2",
 		    $name, $self->{value}) if $state->verbose >= 2;
 		return;
 	}
@@ -372,7 +372,7 @@ sub install
 
 	if ($state->{extracted_first}) {
 		if ($state->{not}) {
-			$state->say("moving tempfile -> #1", 
+			$state->say("moving tempfile -> #1",
 			    $destdir.$fullname) if $state->verbose >= 5;
 			return;
 		}
@@ -383,17 +383,17 @@ sub install
 			symlink($self->{symlink}, $destdir.$fullname);
 		} else {
 			rename($self->{tempname}, $destdir.$fullname) or
-			    $state->fatal("can't move #1 to #2: #3", 
+			    $state->fatal("can't move #1 to #2: #3",
 			    	$self->{tempname}, $fullname, $!);
-			$state->say("moving #1 -> #2", 
-			    $self->{tempname}, $destdir.$fullname) 
+			$state->say("moving #1 -> #2",
+			    $self->{tempname}, $destdir.$fullname)
 			    	if $state->verbose >= 5;
 			undef $self->{tempname};
 		}
 	} else {
 		my $file = $self->prepare_to_extract($state);
 
-		$state->say("extracting #1", $destdir.$fullname) 
+		$state->say("extracting #1", $destdir.$fullname)
 		    if $state->verbose >= 5;
 		if ($state->{not}) {
 			$state->{archive}->skip;
@@ -419,7 +419,7 @@ sub prepare_to_extract
 	}
 	$file->{cwd} = $self->cwd;
 	if (!$file->check_name($self)) {
-		$state->fatal("archive does not match #1 != #2", 
+		$state->fatal("archive does not match #1 != #2",
 		    $file->name, $self->name);
 	}
 	if (defined $self->{symlink} || $file->isSymLink) {
@@ -427,7 +427,7 @@ sub prepare_to_extract
 			$state->fatal("bogus symlink #1", $self->name);
 		}
 		if (!$file->check_linkname($self->{symlink})) {
-			$state->fatal("archive symlink does not match #1 != #2", 
+			$state->fatal("archive symlink does not match #1 != #2",
 			    $file->{linkname}, $self->{symlink});
 		}
 	} elsif (defined $self->{link} || $file->isHardLink) {
@@ -435,7 +435,7 @@ sub prepare_to_extract
 			$state->fatal("bogus hardlink #1", $self->name);
 		}
 		if (!$file->check_linkname($self->{link})) {
-			$state->fatal("archive hardlink does not match #1 != #2", 
+			$state->fatal("archive hardlink does not match #1 != #2",
 			    $file->{linkname}, $self->{link});
 		}
 	}
@@ -509,7 +509,7 @@ sub install
 			if ($d->equals($orig->{d})) {
 			    $state->say("(but it seems to match the sample file #1)", $origname);
 			} else {
-			    $state->say("It does NOT match the sample file #1", 
+			    $state->say("It does NOT match the sample file #1",
 				$origname);
 			    $state->say("You may wish to update it manually");
 			}
@@ -517,7 +517,7 @@ sub install
 		}
 	} else {
 		if ($state->{not}) {
-			$state->say("The file #1 would be installed from #2", 
+			$state->say("The file #1 would be installed from #2",
 			    $filename, $origname) if $state->verbose >= 2;
 		} else {
 			if (!copy($origname, $filename)) {
@@ -525,7 +525,7 @@ sub install
 			}
 			$self->set_modes($state, $filename);
 			if ($state->verbose >= 2) {
-			    $state->say("installed #1 from #2", 
+			    $state->say("installed #1 from #2",
 				$filename, $origname);
 			}
 		}
@@ -590,7 +590,7 @@ sub install
 	open(my $shells2, '>>', $destdir.OpenBSD::Paths->shells) or return;
 	print $shells2 $fullname, "\n";
 	close $shells2;
-	$state->say("Shell #1 appended to #2", $fullname, 
+	$state->say("Shell #1 appended to #2", $fullname,
 	    $destdir.OpenBSD::Paths->shells) if $state->verbose;
 }
 
@@ -716,7 +716,7 @@ sub prepare_for_addition
 			    	return;
 			}
 		} else {
-			$state->errsay("Can't update #1 now: #2", 
+			$state->errsay("Can't update #1 now: #2",
 			    $pkgname, $self->{message});
 		}
 		$state->{problems}++;
