@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.83 2010/06/29 03:09:29 blambert Exp $	*/
+/*	$OpenBSD: main.c,v 1.84 2010/06/30 03:32:55 lum Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -306,6 +306,24 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
+#define	BACKWARD_COMPATIBILITY
+#ifdef	BACKWARD_COMPATIBILITY
+	if (*argv) {
+		if (isdigit(**argv)) {
+			interval = atoi(*argv);
+			if (interval <= 0)
+				usage();
+			++argv;
+			iflag = 1;
+		}
+		if (*argv) {
+			nlistf = *argv;
+			if (*++argv)
+				memf = *argv;
+		}
+	}
+#endif
+
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
@@ -325,24 +343,6 @@ main(int argc, char *argv[])
 	if (nlistf == NULL && memf == NULL && !Pflag)
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
-
-#define	BACKWARD_COMPATIBILITY
-#ifdef	BACKWARD_COMPATIBILITY
-	if (*argv) {
-		if (isdigit(**argv)) {
-			interval = atoi(*argv);
-			if (interval <= 0)
-				usage();
-			++argv;
-			iflag = 1;
-		}
-		if (*argv) {
-			nlistf = *argv;
-			if (*++argv)
-				memf = *argv;
-		}
-	}
-#endif
 
 	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 		if (nlistf)
