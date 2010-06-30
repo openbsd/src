@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.22 2010/06/29 23:10:56 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.23 2010/06/30 00:26:49 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -53,16 +53,13 @@ vinit(void)
 	value_t *p;
 	FILE *fp;
 
-	for (p = vtable; p->v_name != NULL; p++) {
-		if (p->v_flags & V_ENVIRON) {
-			if ((cp = getenv(p->v_name)))
-				p->v_value = cp;
-		}
-	}
-	/*
-	 * Read the .tiprc file in the HOME directory
-	 *  for sets
-	 */
+	/* Read environment variables. */
+	if (cp = getenv("HOME"))
+		value(HOME) = cp;
+	if (cp = getenv("SHELL"))
+		value(SHELL) = cp;
+
+	/* Read the .tiprc file in the HOME directory. */
 	written = snprintf(file, sizeof(file), "%s/.tiprc", value(HOME));
 	if (written < 0 || written >= sizeof(file)) {
 		(void)fprintf(stderr, "Home directory path too long: %s\n",
@@ -96,13 +93,13 @@ vassign(value_t *p, char *v)
 	case V_STRING:
 		if (p->v_value && strcmp(p->v_value, v) == 0)
 			return;
-		if (!(p->v_flags & (V_ENVIRON|V_INIT)))
+		if (!(p->v_flags & V_INIT))
 			free(p->v_value);
 		if ((p->v_value = strdup(v)) == NULL) {
 			printf("out of core\r\n");
 			return;
 		}
-		p->v_flags &= ~(V_ENVIRON|V_INIT);
+		p->v_flags &= ~V_INIT;
 		break;
 	case V_NUMBER:
 		if (number(p->v_value) == number(v))

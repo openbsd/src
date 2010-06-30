@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.45 2010/06/29 23:38:05 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.46 2010/06/30 00:26:49 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -74,9 +74,7 @@ typedef	struct {
 
 #define V_CHANGED	020	/* to show modification */
 #define V_READONLY	040	/* variable is not writable */
-
-#define V_ENVIRON	0100	/* initialize out of the environment */
-#define V_INIT		0400	/* static data space used for initialization */
+#define V_INIT		0100	/* static data space used for initialization */
 
 /*
  * variable manipulation stuff --

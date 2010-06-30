@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.15 2010/06/29 23:38:05 nicm Exp $	*/
+/*	$OpenBSD: vars.c,v 1.16 2010/06/30 00:26:49 nicm Exp $	*/
 /*	$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $	*/
 
 /*
@@ -79,9 +79,9 @@ value_t vtable[] = {
 	  "tab",	(char *)0 },
 	{ "verbose",	V_BOOL,
 	  "verb",	(char *)1 },
-	{ "SHELL",	V_STRING|V_ENVIRON|V_INIT,
+	{ "SHELL",	V_STRING|V_INIT,
 	  NULL,		_PATH_BSHELL },
-	{ "HOME",	V_STRING|V_ENVIRON,
+	{ "HOME",	V_STRING|V_INIT,
 	  NULL,		NULL },
 	{ "echocheck",	V_BOOL,
 	  "ec",		(char *)0 },
