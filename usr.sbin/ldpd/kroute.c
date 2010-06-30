@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.15 2010/06/30 02:09:22 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.16 2010/06/30 05:07:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -63,7 +63,7 @@ struct kif_node {
 };
 
 void	kr_redist_remove(struct kroute_node *);
-int	kr_redist_eval(struct kroute *, struct kroute *);
+int	kr_redist_eval(struct kroute *);
 void	kr_redistribute(struct kroute_node *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
@@ -423,15 +423,12 @@ kr_redist_remove(struct kroute_node *kn)
 
 	/* remove redistributed flag */
 	kn->r.flags &= ~F_REDISTRIBUTED;
-
-	if (kn == NULL) {
-		main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &kn->r,
-		    sizeof(struct kroute));
-	}
+	main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &kn->r,
+	    sizeof(struct kroute));
 }
 
 int
-kr_redist_eval(struct kroute *kr, struct kroute *orig)
+kr_redist_eval(struct kroute *kr)
 {
 	u_int32_t	 a;
 
@@ -465,7 +462,7 @@ kr_redist_eval(struct kroute *kr, struct kroute *orig)
 
 	/* prefix should be redistributed */
 	kr->flags |= F_REDISTRIBUTED;
-	*orig = *kr;
+	main_imsg_compose_lde(IMSG_NETWORK_ADD, 0, kr, sizeof(struct kroute));
 	return (1);
 
 dont_redistribute:
@@ -474,30 +471,21 @@ dont_redistribute:
 		return (0);
 
 	kr->flags &= ~F_REDISTRIBUTED;
+	main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, kr, sizeof(struct kroute));
 	return (1);
 }
 
 void
 kr_redistribute(struct kroute_node *kh)
 {
-	struct kroute		 kr;
+	struct kroute_node	*kn;
 
 	/* only the highest prio route can be redistributed */
 	if (kroute_find(kh->r.prefix.s_addr, kh->r.prefixlen, RTP_ANY) != kh)
 		return;
 
-	bzero(&kr, sizeof(kr));
-	if (!kr_redist_eval(&kh->r, &kr))
-		return;
-
-	if (kr.flags & F_REDISTRIBUTED) {
-		main_imsg_compose_lde(IMSG_NETWORK_ADD, 0, &kr,
-		    sizeof(struct kroute));
-	} else {
-		kr = kh->r;
-		main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &kr,
-		    sizeof(struct kroute));
-	}
+	for (kn = kh; kn; kn = kn->next)
+		kr_redist_eval(&kn->r);
 }
 
 void
