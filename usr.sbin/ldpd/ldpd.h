@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.22 2010/06/30 01:47:11 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.23 2010/06/30 05:21:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -84,7 +84,6 @@ enum imsg_type {
 	IMSG_CTL_IFINFO,
 	IMSG_CTL_END,
 	IMSG_CTL_LOG_VERBOSE,
-	IMSG_KLABEL_INSERT,
 	IMSG_KLABEL_CHANGE,
 	IMSG_KLABEL_DELETE,
 	IMSG_IFINFO,
@@ -404,7 +403,6 @@ void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *, struct in_addr, struct kif_addr **);
 void		 kr_reload(void);
-int		 kroute_insert_label(struct kroute *);
 
 u_int8_t	mask2prefixlen(in_addr_t);
 in_addr_t	prefixlen2mask(u_int8_t);

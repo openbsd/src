@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.16 2010/06/30 05:07:09 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.17 2010/06/30 05:21:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -190,17 +190,10 @@ kr_init(int fs)
 int
 kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 {
-	/* nexthop within 127/8 -> ignore silently */
-	if ((kroute->nexthop.s_addr & htonl(IN_CLASSA_NET)) ==
-	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
-		return (0);
-
-	kr->r.prefix.s_addr = kroute->prefix.s_addr;
-	kr->r.prefixlen = kroute->prefixlen;
 	kr->r.local_label = kroute->local_label;
 	kr->r.remote_label = kroute->remote_label;
 	kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
-	kr->r.flags = kroute->flags | F_LDPD_INSERTED;
+	kr->r.flags = kr->r.flags | F_LDPD_INSERTED;
 
 	/* send update */
 	if (send_rtmsg(kr_state.fd, action, &kr->r, AF_MPLS) == -1)
@@ -618,30 +611,6 @@ kroute_insert(struct kroute_node *kr)
 		kr->r.flags |= F_DOWN;
 
 	kr_redistribute(krm);
-	return (0);
-}
-
-int
-kroute_insert_label(struct kroute *kr)
-{
-	struct kroute_node *krn;
-
-	krn = kroute_find(kr->prefix.s_addr, kr->prefixlen, RTP_ANY);
-	if (krn == NULL) {
-		log_debug("kroute_insert_label: prefix %s/%d not present",
-		    inet_ntoa(kr->prefix), kr->prefixlen);
-		return (-1);
-	}
-
-	krn->r.flags |= F_LDPD_INSERTED;
-	krn->r.local_label = kr->local_label;
-	krn->r.remote_label = kr->remote_label;
-
-	send_rtmsg(kr_state.fd, RTM_ADD, kr, AF_MPLS);
-
-	if (kr->nexthop.s_addr != INADDR_ANY && kr->remote_label != NO_LABEL)
-		send_rtmsg(kr_state.fd, RTM_CHANGE, kr, AF_INET);
-
 	return (0);
 }
 

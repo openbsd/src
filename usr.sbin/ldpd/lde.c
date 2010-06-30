@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.18 2010/06/30 01:47:11 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.19 2010/06/30 05:21:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -428,22 +428,6 @@ lde_assign_label(void)
 	/* XXX some checks needed */
 	label++;
 	return label;
-}
-
-void
-lde_send_insert_klabel(struct rt_node *r)
-{
-	struct kroute	kr;
-
-	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->fec.prefix.s_addr;
-	kr.prefixlen = r->fec.prefixlen;
-	kr.nexthop.s_addr = r->nexthop.s_addr;
-	kr.local_label = r->local_label;
-	kr.remote_label = r->remote_label;
-
-	imsg_compose_event(iev_main, IMSG_KLABEL_INSERT, 0, 0, -1,
-	     &kr, sizeof(kr));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.22 2010/06/30 01:47:11 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.23 2010/06/30 05:21:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -260,7 +260,7 @@ lde_kernel_insert(struct kroute *kr)
 			rn->local_label = lde_assign_label();
 	}
 
-	lde_send_insert_klabel(rn);
+	lde_send_change_klabel(rn);
 
 	/* Redistribute the current mapping to every nbr */
 	lde_nbr_do_mappings(rn);
