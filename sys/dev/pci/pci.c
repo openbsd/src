@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.77 2010/06/29 22:08:29 jordan Exp $	*/
+/*	$OpenBSD: pci.c,v 1.78 2010/06/30 04:31:37 mlarkin Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -369,9 +369,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			/* skip header type != 0 */
 			reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
 			if (PCI_HDRTYPE_TYPE(reg) != 0)
-				return(0);
-			if (pci_get_capability(pc, tag,
-			    PCI_CAP_PWRMGMT, NULL, NULL) == 0)
 				return(0);
 			if (!(pd = malloc(sizeof *pd, M_DEVBUF,
 			    M_NOWAIT)))
