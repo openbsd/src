@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.198 2010/06/29 20:30:32 guenther Exp $
+.\"	$OpenBSD: options.4,v 1.199 2010/06/30 20:46:51 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 29 2010 $
+.Dd $Mdocdate: June 30 2010 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -138,16 +138,6 @@ and
 system calls which were replaced in
 .Ox 4.4
 when struct stat was expanded.
-.It Cd option COMPAT_OSF1
-On those architectures that support it, this enables binary
-compatibility with
-.Em Digital UNIX
-(formerly
-.Em OSF/1 )
-applications built for the same architecture.
-This option is available on the alpha architecture.
-See
-.Xr compat_osf1 8 .
 .It Cd option COMPAT_SUNOS
 On those architectures that support it, this enables binary
 compatibility with
