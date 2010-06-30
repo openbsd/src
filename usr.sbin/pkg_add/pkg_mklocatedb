@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.27 2010/06/24 17:21:44 sthen Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.28 2010/06/30 11:33:57 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,13 +17,12 @@
 use strict;
 use warnings;
 
-use OpenBSD::PackageLocator;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackingList;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::Paths;
-use OpenBSD::State;
+use OpenBSD::AddCreateDelete;
 use File::Path;
 
 package OpenBSD::PackingElement;
@@ -37,9 +36,6 @@ sub print_name
 }
 
 package main;
-
-my $ui = OpenBSD::State->new("pkg_mklocatedb");
-$ui->usage_is('[-anPq] [-d repository] [-p portsdir] [-r release] [-s src] [-x X11src] [pkg-name [...]]');
 
 our ($opt_a, $opt_n, $opt_q, $opt_s, $opt_x, $opt_r, $opt_p, $opt_P, $opt_d);
 
@@ -73,7 +69,10 @@ sub tag
 	return $r;
 }
 
-$ui->do_options(sub { getopts('ad:nqs:x:r:p:P'); });
+my $state = OpenBSD::AddCreateDelete::State->new("pkg_mklocatedb");
+$state->handle_options('ad:nqs:x:r:p:P', 
+    '[-anPq] [-d repository] [-p portsdir] [-r release] [-s src] ',
+    '[-x X11src] [pkg-name [...]]');
 
 my $fh;
 my $MKLOCATEDB = OpenBSD::Paths->mklocatedb;
@@ -81,7 +80,8 @@ my $MKLOCATEDB = OpenBSD::Paths->mklocatedb;
 if ($opt_n or -t STDOUT) {
 	$fh = \*STDOUT;
 } else {
-	open $fh, "|-", $MKLOCATEDB, $MKLOCATEDB or die "couldn't open pipe: $!";
+	open $fh, "|-", $MKLOCATEDB, $MKLOCATEDB or 
+	    $state->fatal("couldn't open pipe: #1", $!);
 }
 if ($opt_s || $opt_x) {
 	my $cmd = OpenBSD::Paths->uname." -mr";
@@ -164,24 +164,29 @@ if ($opt_p) {
 elsif ($opt_d) {
 	require File::Find;
 	no warnings qw(once);
-	die "Bad argument: $opt_d is not a directory" unless -d $opt_d;
+	$state->fatal("Bad argument: #1 is not a directory", $opt_d)
+	    unless -d $opt_d;
 	File::Find::find(
 		sub {
 		    return unless -f $_;
-		    my $plist = OpenBSD::PackageLocator->grabPlist($File::Find::name);
+		    my $plist = $state->repo->grabPlist($File::Find::name);
 		    return unless defined $plist;
 		    $plist->print_name($fh, info($plist));
 		}, $opt_d);
-} elsif (@ARGV==0) {
-	for my $pkgname (installed_packages()) {
+} elsif (@ARGV == 0) {
+	$state->progress->for_list("Scanning installation",
+	    [installed_packages()], sub {
+	    	my $pkgname = shift;
 		my $plist = OpenBSD::PackingList->from_installation($pkgname);
-		next unless defined $plist;
+		return unless defined $plist;
 		$plist->print_name($fh, info($plist));
-	}
+	    });
 } else {
-	for my $pkgname (@ARGV) {
-		my $plist = OpenBSD::PackageLocator->grabPlist($pkgname);
+	$state->progress->for_list("Scanning packages", \@ARGV,
+	    sub {
+	    	my $pkgname = shift;
+		my $plist = $state->repo->grabPlist($pkgname);
 		next unless $plist;
 		$plist->print_name($fh, info($plist));
-	}
+	    });
 }
