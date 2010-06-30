@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.47 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.48 2010/06/30 10:33:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -232,10 +232,9 @@ sub solve_installed_names
 		}
 	    } else {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
-		    require OpenBSD::PackageRepository::Installed;
 		    require OpenBSD::Search;
 
-		    my $r = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::Stem->new($pkgname));
+		    my $r = $state->repo->installed->match_locations(OpenBSD::Search::Stem->new($pkgname));
 		    if (@$r == 0) {
 			print "Can't resolve $pkgname to an installed package name\n";
 			$bad = 1;

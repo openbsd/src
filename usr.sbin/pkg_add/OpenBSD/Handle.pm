@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.20 2010/06/09 07:26:01 espie Exp $
+# $OpenBSD: Handle.pm,v 1.21 2010/06/30 10:33:09 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -148,9 +148,7 @@ sub create_old
 	my $self= $class->new;
 	$self->{name} = $pkgname;
 
-	require OpenBSD::PackageRepository::Installed;
-
-	my $location = OpenBSD::PackageRepository::Installed->new->find($pkgname, $state->{arch});
+	my $location = $state->repo->installed->find($pkgname, $state->{arch});
 	if (defined $location) {
 		$self->{location} = $location;
 	}
@@ -226,7 +224,7 @@ sub get_location
 
 	my $name = $handle->{name};
 
-	my $location = OpenBSD::PackageLocator->find($name, $state->{arch});
+	my $location = $state->repo->find($name, $state->{arch});
 	if (!$location) {
 		$state->print("#1", $state->deptree_header($name));
 		$handle->set_error(NOT_FOUND);
