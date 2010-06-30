@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.33 2007/11/05 00:17:28 jakemsr Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.34 2010/06/30 11:21:35 jakemsr Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -93,7 +93,7 @@
 #include <dev/isa/cs4231var.h>
 
 #ifdef AUDIO_DEBUG
-#define DPRINTF(x)	if (ad1848debug) printf x
+#define DPRINTF(x)	do { if (ad1848debug) printf x; } while (0);
 int	ad1848debug = 0;
 #else
 #define DPRINTF(x)
@@ -149,11 +149,13 @@ void	ad1848_reset(struct ad1848_softc *);
 int	ad1848_set_speed(struct ad1848_softc *, u_long *);
 void	ad1848_mute_monitor(void *, int);
 
+/* indirect register access */
 static int ad_read(struct ad1848_softc *, int);
 static void ad_write(struct ad1848_softc *, int, int);
 static void ad_set_MCE(struct ad1848_softc *, int);
 static void wait_for_calibration(struct ad1848_softc *);
 
+/* direct register (AD1848_{IADDR,IDATA,STATUS} only) access */
 #define ADREAD(sc, addr) bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_iooffs+(addr))
 #define ADWRITE(sc, addr, data) bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_iooffs+(addr), (data))
 
@@ -209,34 +211,32 @@ wait_for_calibration(sc)
     /*
      * Wait until the auto calibration process has finished.
      *
-     * 1) Wait until the chip becomes ready (reads don't return 0x80).
-     * 2) Wait until the ACI bit of I11 gets on and then off.
+     * 1) Wait until the chip becomes ready (reads don't return SP_IN_INIT).
+     * 2) Wait until the ACI bit of I11 goes hi and then lo.
+     *   a) With AD1848 alike, ACI goes hi within 5 sample cycles
+     *      and remains hi for ~384 sample periods.
+     *   b) With CS4231 alike, ACI goes hi immediately and remains
+     *      hi for at least 168 sample periods.
      */
-    timeout = 100000;
+    timeout = AD1848_TIMO;
     while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 	timeout--;
 
     if (ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 	DPRINTF(("ad1848: Auto calibration timed out(1).\n"));
 
-    ADWRITE(sc, AD1848_IADDR, SP_TEST_AND_INIT);
-    timeout = 100000;
-    while (timeout > 0 && ADREAD(sc, AD1848_IADDR) != SP_TEST_AND_INIT)
-	timeout--;
-
-    if (ADREAD(sc, AD1848_IADDR) == SP_TEST_AND_INIT)
-	DPRINTF(("ad1848: Auto calibration timed out(1.5).\n"));
-
-    if (!(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)) {
-	timeout = 100000;
-	while (timeout > 0 && !(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG))
+    if (!(sc->sc_flags & AD1848_FLAG_32REGS)) {
+	timeout = AD1848_TIMO;
+	while (timeout > 0 &&
+	 !(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG))
 	    timeout--;
 
-	if (!(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG))
+	if (!(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)) {
 	    DPRINTF(("ad1848: Auto calibration timed out(2).\n"));
+	}
     }
 
-    timeout = 100000;
+    timeout = AD1848_TIMO;
     while (timeout > 0 && ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)
 	timeout--;
     if (ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)
@@ -311,6 +311,7 @@ ad1848_probe(sc)
     /* Is there an ad1848 chip ? */
     sc->MCE_bit = MODE_CHANGE_ENABLE;
     sc->mode = 1;	/* MODE 1 = original ad1848/ad1846/cs4248 */
+    sc->sc_flags = 0;
     
     /*
      * Check that the I/O address is in use.
@@ -460,8 +461,10 @@ ad1848_probe(sc)
 		    sc->chip_name = "CS4231 or AD1845";
 		    break;
 		case 0x82:
-		case 0xa2:
 		    sc->chip_name = "CS4232";
+		    break;
+		case 0xa2:
+		    sc->chip_name = "CS4232C";
 		    break;
 		case 0x03:
 		    sc->chip_name = "CS4236/CS4236B";
@@ -469,6 +472,7 @@ ad1848_probe(sc)
 		}
 	    }
 	    sc->mode = 2;
+	    sc->sc_flags |= AD1848_FLAG_32REGS;
 	}
     }
 
@@ -508,9 +512,8 @@ ad1848_attach(sc)
     struct audio_params pparams, rparams;
     int timeout;
     
-    sc->sc_locked = 0;
-    sc->sc_playrun = NOTRUNNING;
-    sc->sc_recrun = NOTRUNNING;
+    sc->sc_playrun = 0;
+    sc->sc_recrun = 0;
 
     if (sc->sc_drq != -1) {
 	if (isa_dmamap_create(sc->sc_isa, sc->sc_drq, MAX_ISADMA,
@@ -523,7 +526,7 @@ ad1848_attach(sc)
     if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
 	if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq, MAX_ISADMA,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-		printf("ad1848_attach: can't creape map for drq %d\n",
+		printf("ad1848_attach: can't create map for second drq %d\n",
 		    sc->sc_recdrq);
 		return;
 	}
@@ -532,9 +535,16 @@ ad1848_attach(sc)
     /* Initialize the ad1848... */
     for (i = 0; i < 0x10; i++) {
 	ad_write(sc, i, ad1848_init_values[i]);
-        timeout = 100000;
-        while (timeout > 0 && ad_read(sc, AD1848_IADDR) & SP_IN_INIT)
+        timeout = AD1848_TIMO;
+        while (timeout > 0 && ADREAD(sc, AD1848_IADDR) & SP_IN_INIT)
 	    timeout--;
+    }
+    /* need 2 separate drqs for mode 2 */
+    if ((sc->mode == 2) &&
+      ((sc->sc_recdrq == -1) || (sc->sc_recdrq == sc->sc_drq))) {
+	ad_write(sc, SP_MISC_INFO, ad_read(sc, SP_MISC_INFO) & ~MODE2);
+	if (!(ad_read(sc, SP_MISC_INFO) & MODE2))
+	    sc->mode = 1;
     }
     /* ...and additional CS4231 stuff too */
     if (sc->mode == 2) {
@@ -542,9 +552,9 @@ ad1848_attach(sc)
 	    for (i = 0x10; i < 0x20; i++)
 		    if (ad1848_init_values[i] != 0) {
 			    ad_write(sc, i, ad1848_init_values[i]);
-			    timeout = 100000;
+			    timeout = AD1848_TIMO;
     			    while (timeout > 0 && 
-				   ad_read(sc, AD1848_IADDR) & SP_IN_INIT)
+				   ADREAD(sc, AD1848_IADDR) & SP_IN_INIT)
 				timeout--;
 		    }
     }
@@ -572,7 +582,6 @@ ad1848_attach(sc)
 
     if (sc->chip_name)
 	printf(": %s", sc->chip_name);
-#undef WAITREADY
 }
 
 /*
@@ -1053,29 +1062,29 @@ ad1848_set_params(addr, setmode, usemode, p, r)
     }
     switch (enc) {
     case AUDIO_ENCODING_ULAW:
-	bits = FMT_ULAW >> 5;
+	bits = FMT_ULAW;
 	break;
     case AUDIO_ENCODING_ALAW:
-	bits = FMT_ALAW >> 5;
+	bits = FMT_ALAW;
 	break;
     case AUDIO_ENCODING_ADPCM:
-	bits = FMT_ADPCM >> 5;
+	bits = FMT_ADPCM;
 	break;
     case AUDIO_ENCODING_SLINEAR_LE:
 	if (p->precision == 16)
-	    bits = FMT_TWOS_COMP >> 5;
+	    bits = FMT_TWOS_COMP;
 	else
 	    return EINVAL;
 	break;
     case AUDIO_ENCODING_SLINEAR_BE:
 	if (p->precision == 16)
-	    bits = FMT_TWOS_COMP_BE >> 5;
+	    bits = FMT_TWOS_COMP_BE;
 	else
 	    return EINVAL;
 	break;
     case AUDIO_ENCODING_ULINEAR_LE:
 	if (p->precision == 8)
-	    bits = FMT_PCM8 >> 5;
+	    bits = FMT_PCM8;
 	else
 	    return EINVAL;
 	break;
@@ -1151,10 +1160,6 @@ ad1848_round_blocksize(addr, blk)
     void *addr;
     int blk;
 {
-    struct ad1848_softc *sc = addr;
-
-    sc->sc_lastcc = -1;
-
     /* Round to a multiple of the biggest sample size. */
     blk = (blk + 3) & -4;
 
@@ -1170,16 +1175,15 @@ ad1848_open(addr, flags)
 
     DPRINTF(("ad1848_open: sc=%p\n", sc));
 
-    sc->sc_intr = 0;
-    sc->sc_lastcc = -1;
-    sc->sc_locked = 0;
+    sc->sc_pintr = sc->sc_parg = NULL;
+    sc->sc_rintr = sc->sc_rarg = NULL;
 
     /* Enable interrupts */
     DPRINTF(("ad1848_open: enable intrs\n"));
     ad_write(sc, SP_PIN_CONTROL, INTERRUPT_ENABLE|ad_read(sc, SP_PIN_CONTROL));
 
 #ifdef AUDIO_DEBUG
-    if (ad1848debug)
+    if (ad1848debug > 2)
 	ad1848_dump_regs(sc);
 #endif
 
@@ -1195,18 +1199,15 @@ ad1848_close(addr)
 {
     struct ad1848_softc *sc = addr;
     u_char r;
-    
-    sc->sc_intr = 0;
+
+    ad1848_halt_output(sc);
+    ad1848_halt_input(sc);
+
+    sc->sc_pintr = NULL;
+    sc->sc_rintr = NULL;
 
     DPRINTF(("ad1848_close: stop DMA\n"));
-    if (sc->sc_playrun != NOTRUNNING) {
-	isa_dmaabort(sc->sc_isa, sc->sc_drq);
-	sc->sc_playrun = NOTRUNNING;
-    }
-    if (sc->sc_recrun != NOTRUNNING) {
-	isa_dmaabort(sc->sc_isa, sc->sc_recdrq);
-	sc->sc_recrun = NOTRUNNING;
-    }
+
     ad_write(sc, SP_LOWER_BASE_COUNT, (u_char)0);
     ad_write(sc, SP_UPPER_BASE_COUNT, (u_char)0);
 
@@ -1221,7 +1222,7 @@ ad1848_close(addr)
     ad_write(sc, SP_INTERFACE_CONFIG, r);
 
 #ifdef AUDIO_DEBUG
-    if (ad1848debug)
+    if (ad1848debug > 2)
 	ad1848_dump_regs(sc);
 #endif
 }
@@ -1247,7 +1248,7 @@ ad1848_commit_settings(addr)
     
     ad_set_MCE(sc, 1);		/* Enables changes to the format select reg */
 
-    fs = sc->speed_bits | (sc->format_bits << 5);
+    fs = sc->speed_bits | sc->format_bits;
 
     if (sc->channels == 2)
 	fs |= FMT_STEREO;
@@ -1266,7 +1267,7 @@ ad1848_commit_settings(addr)
 	/*
 	 * Write to I8 starts resynchronization. Wait until it completes.
 	 */
-	timeout = 100000;
+	timeout = AD1848_TIMO;
 	while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 	    timeout--;
 
@@ -1281,7 +1282,7 @@ ad1848_commit_settings(addr)
     /*
      * Write to I8 starts resynchronization. Wait until it completes.
      */
-    timeout = 100000;
+    timeout = AD1848_TIMO;
     while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 	timeout--;
 
@@ -1296,8 +1297,6 @@ ad1848_commit_settings(addr)
     wait_for_calibration(sc);
 
     ad1848_mute_monitor(sc, 0);
-
-    sc->sc_lastcc = -1;
 
     splx(s);
     
@@ -1318,14 +1317,13 @@ ad1848_reset(sc)
     r &= ~(CAPTURE_ENABLE|PLAYBACK_ENABLE);
     ad_write(sc, SP_INTERFACE_CONFIG, r);
 
-    if (sc->mode == 2) {
-	    ADWRITE(sc, AD1848_IADDR, CS_IRQ_STATUS);
-	    ADWRITE(sc, AD1848_IDATA, 0);
-    }
     /* Clear interrupt status */
+    if (sc->mode == 2)
+	ad_write(sc, CS_IRQ_STATUS, 0);
     ADWRITE(sc, AD1848_STATUS, 0);
+
 #ifdef AUDIO_DEBUG
-    if (ad1848debug)
+    if (ad1848debug > 2)
 	ad1848_dump_regs(sc);
 #endif
 }
@@ -1407,198 +1405,121 @@ ad1848_set_speed(sc, argp)
  * Halt a DMA in progress.
  */
 int
-ad1848_halt_out_dma(addr)
+ad1848_halt_output(addr)
     void *addr;
 {
     struct ad1848_softc *sc = addr;
     u_char reg;
-	
-    DPRINTF(("ad1848: ad1848_halt_out_dma\n"));
+
+    DPRINTF(("ad1848: ad1848_halt_output\n"));
 
     reg = ad_read(sc, SP_INTERFACE_CONFIG);
     ad_write(sc, SP_INTERFACE_CONFIG, (reg & ~PLAYBACK_ENABLE));
-    sc->sc_locked = 0;
+
+    if (sc->sc_playrun == 1) {
+	isa_dmaabort(sc->sc_isa, sc->sc_drq);
+	sc->sc_playrun = 0;
+    }
 
     return(0);
 }
 
 int
-ad1848_halt_in_dma(addr)
+ad1848_halt_input(addr)
     void *addr;
 {
     struct ad1848_softc *sc = addr;
     u_char reg;
     
-    DPRINTF(("ad1848: ad1848_halt_in_dma\n"));
+    DPRINTF(("ad1848: ad1848_halt_input\n"));
 
     reg = ad_read(sc, SP_INTERFACE_CONFIG);
     ad_write(sc, SP_INTERFACE_CONFIG, (reg & ~CAPTURE_ENABLE));
-    sc->sc_locked = 0;
+
+    if (sc->sc_recrun == 1) {
+	isa_dmaabort(sc->sc_isa, sc->sc_recdrq);
+	sc->sc_recrun = 0;
+    }
 
     return(0);
 }
 
 int
-ad1848_dma_init_input(addr, buf, cc)
+ad1848_trigger_input(addr, start, end, blksize, intr, arg, param)
     void *addr;
-    void *buf;
-    int cc;
-{
-    struct ad1848_softc *sc = addr;
-
-    sc->sc_recrun = DMARUNNING;
-    sc->sc_dma_flags = DMAMODE_READ | DMAMODE_LOOP;
-    sc->sc_dma_bp = buf;
-    sc->sc_dma_cnt = cc;
-    isa_dmastart(sc->sc_isa, sc->sc_recdrq, buf, cc, NULL,
-		 sc->sc_dma_flags, BUS_DMA_NOWAIT);
-    DPRINTF(("ad1848_dma_init_input: %p %d\n", buf, cc));
-    return 0;
-}
-
-/*
- * DMA input/output are called at splaudio().
- */
-int
-ad1848_dma_input(addr, p, cc, intr, arg)
-    void *addr;
-    void *p;
-    int cc;
+    void *start, *end;
+    int blksize;
     void (*intr)(void *);
     void *arg;
+    struct audio_params *param;
 {
     struct ad1848_softc *sc = addr;
     u_char reg;
-    
-    if (sc->sc_locked) {
-	DPRINTF(("ad1848_dma_input: locked\n"));
-	return 0;
+
+    if (sc->sc_recdrq == -1) {
+	DPRINTF(("ad1848_trigger_input: invalid recording drq\n"));
+	return ENXIO;
     }
     
+    isa_dmastart(sc->sc_isa, sc->sc_recdrq, start, (char *)end - (char *)start,
+	NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+
+    sc->sc_recrun = 1;
+    sc->sc_rintr = intr;
+    sc->sc_rarg = arg;
+
+    blksize = (blksize * NBBY) / (param->precision * param->channels) - 1;
+
+    if (sc->mode == 2) {
+	ad_write(sc, CS_LOWER_REC_CNT, (blksize & 0xff));
+	ad_write(sc, CS_UPPER_REC_CNT, ((blksize >> 8) & 0xff));
+    } else {
+        ad_write(sc, SP_LOWER_BASE_COUNT, blksize & 0xff);
+        ad_write(sc, SP_UPPER_BASE_COUNT, (blksize >> 8) & 0xff);
+    }
+
+    reg = ad_read(sc, SP_INTERFACE_CONFIG);
+    ad_write(sc, SP_INTERFACE_CONFIG, (CAPTURE_ENABLE|reg));
+
 #ifdef AUDIO_DEBUG
     if (ad1848debug > 1)
-	printf("ad1848_dma_input: cc=%d %p (%p)\n", cc, intr, arg);
+	    printf("ad1848_trigger_input: started capture\n");
 #endif
-    sc->sc_locked = 1;
-    sc->sc_intr = intr;
-    sc->sc_arg = arg;
-
-    switch (sc->sc_recrun) {
-    case NOTRUNNING:
-	sc->sc_dma_flags = DMAMODE_READ;
-	sc->sc_dma_bp = p;
-	sc->sc_dma_cnt = cc;
-	isa_dmastart(sc->sc_isa, sc->sc_recdrq, p, cc, NULL,
-		     DMAMODE_READ, BUS_DMA_NOWAIT);
-	goto startpcm;
-    case DMARUNNING:
-	sc->sc_recrun = PCMRUNNING;
-    startpcm:
-	if (sc->precision == 16)
-	    cc >>= 1;
-	if (sc->channels == 2)
-	    cc >>= 1;
-	cc--;
-    
-	if (sc->sc_lastcc != cc || sc->sc_mode != AUMODE_RECORD) {
-	    ad_write(sc, SP_LOWER_BASE_COUNT, (u_char)(cc & 0xff));
-	    ad_write(sc, SP_UPPER_BASE_COUNT, (u_char)((cc >> 8) & 0xff));
-
-	    if (sc->mode == 2) {
-		ad_write(sc, CS_LOWER_REC_CNT, (u_char)(cc & 0xff));
-		ad_write(sc, CS_UPPER_REC_CNT, (u_char)((cc >> 8) & 0xff));
-	    }
-
-	    reg = ad_read(sc, SP_INTERFACE_CONFIG);
-	    ad_write(sc, SP_INTERFACE_CONFIG, (CAPTURE_ENABLE|reg));
-
-	    sc->sc_lastcc = cc;
-	    sc->sc_mode = AUMODE_RECORD;
-#ifdef AUDIO_DEBUG
-	    if (ad1848debug > 1)
-		    printf("ad1848_dma_input: started capture\n");
-#endif
-	}
-    case PCMRUNNING:
-	break;
-    }
     
     return 0;
 }
 
 int
-ad1848_dma_init_output(addr, buf, cc)
+ad1848_trigger_output(addr, start, end, blksize, intr, arg, param)
     void *addr;
-    void *buf;
-    int cc;
-{
-    struct ad1848_softc *sc = addr;
-
-    sc->sc_playrun = DMARUNNING;
-    sc->sc_dma_flags = DMAMODE_WRITE | DMAMODE_LOOP;
-    sc->sc_dma_bp = buf;
-    sc->sc_dma_cnt = cc;
-    isa_dmastart(sc->sc_isa, sc->sc_drq, buf, cc, NULL,
-		 sc->sc_dma_flags, BUS_DMA_NOWAIT);
-    DPRINTF(("ad1848_dma_init_output: %p %d\n", buf, cc));
-    return 0;
-}
-
-int
-ad1848_dma_output(addr, p, cc, intr, arg)
-    void *addr;
-    void *p;
-    int cc;
+    void *start, *end;
+    int blksize;
     void (*intr)(void *);
     void *arg;
+    struct audio_params *param;
 {
     struct ad1848_softc *sc = addr;
     u_char reg;
     
-    if (sc->sc_locked) {
-	DPRINTF(("ad1848_dma_output: locked\n"));
-	return 0;
-    }
-    
+    isa_dmastart(sc->sc_isa, sc->sc_drq, start, (char *)end - (char *)start,
+      NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+
+    sc->sc_playrun = 1;
+    sc->sc_pintr = intr;
+    sc->sc_parg = arg;
+
+    blksize = (blksize * NBBY) / (param->precision * param->channels) - 1;
+
+    ad_write(sc, SP_LOWER_BASE_COUNT, blksize & 0xff);
+    ad_write(sc, SP_UPPER_BASE_COUNT, (blksize >> 8) & 0xff);
+
+    reg = ad_read(sc, SP_INTERFACE_CONFIG);
+    ad_write(sc, SP_INTERFACE_CONFIG, (PLAYBACK_ENABLE|reg));
+
 #ifdef AUDIO_DEBUG
-    if (ad1848debug > 0)
-	printf("ad1848_dma_output: cc=%d at %p %p (%p)\n", cc, p, intr, arg);
+    if (ad1848debug > 1)
+	    printf("ad1848_trigger_output: started playback\n");
 #endif
-    sc->sc_locked = 1;
-    sc->sc_intr = intr;
-    sc->sc_arg = arg;
-
-    switch (sc->sc_playrun) {
-    case NOTRUNNING:
-	sc->sc_dma_flags = DMAMODE_WRITE;
-	sc->sc_dma_bp = p;
-	sc->sc_dma_cnt = cc;
-	isa_dmastart(sc->sc_isa, sc->sc_drq, p, cc, NULL,
-		     DMAMODE_WRITE, BUS_DMA_NOWAIT);
-	goto startpcm;
-    case DMARUNNING:
-	sc->sc_playrun = PCMRUNNING;
-    startpcm:
-	if (sc->precision == 16)
-	    cc >>= 1;
-	if (sc->channels == 2)
-	    cc >>= 1;
-	cc--;
-
-	if (sc->sc_lastcc != cc || sc->sc_mode != AUMODE_PLAY) {
-	    ad_write(sc, SP_LOWER_BASE_COUNT, (u_char)(cc & 0xff));
-	    ad_write(sc, SP_UPPER_BASE_COUNT, (u_char)((cc >> 8) & 0xff));
-
-	    reg = ad_read(sc, SP_INTERFACE_CONFIG);
-	    ad_write(sc, SP_INTERFACE_CONFIG, (PLAYBACK_ENABLE|reg));
-
-	    sc->sc_lastcc = cc;
-	    sc->sc_mode = AUMODE_PLAY;
-	}
-	break;
-    case PCMRUNNING:
-	break;
-    }
     
     return 0;
 }
@@ -1616,24 +1537,39 @@ ad1848_intr(arg)
     
 #ifdef AUDIO_DEBUG
     if (ad1848debug > 1)
-	printf("ad1848_intr: intr=%p status=%x\n", sc->sc_intr, status);
+	printf("ad1848_intr: mode=%d pintr=%p prun=%d rintr=%p rrun=%d status=0x%x\n",
+	    sc->mode, sc->sc_pintr, sc->sc_playrun, sc->sc_rintr, sc->sc_recrun, status);
 #endif
-    sc->sc_locked = 0;
-    sc->sc_interrupts++;
     
     /* Handle interrupt */
-    if (sc->sc_intr && (status & INTERRUPT_STATUS)) {
-	/* ACK DMA read because it may be in a bounce buffer */
-	/* XXX Do write to mask DMA ? */
-	if ((sc->sc_dma_flags & DMAMODE_READ) && sc->sc_recrun == NOTRUNNING)
-	    isa_dmadone(sc->sc_isa, sc->sc_recdrq);
-	(*sc->sc_intr)(sc->sc_arg);
-	retval = 1;
-    }
-
-    /* clear interrupt */
-    if (status & INTERRUPT_STATUS)
+    if ((status & INTERRUPT_STATUS) != 0) {
+	if (sc->mode == 2) {
+		status = ad_read(sc, CS_IRQ_STATUS);
+#ifdef AUDIO_DEBUG
+		if (ad1848debug > 2)
+			printf("ad1848_intr: cs_irq_status=0x%x (play=0x%x rec0x%x)\n",
+			    status, CS_IRQ_PI, CS_IRQ_CI);
+#endif
+		if ((status & CS_IRQ_PI) && sc->sc_playrun) {
+			(*sc->sc_pintr)(sc->sc_parg);
+			retval = 1;
+		}
+		if ((status & CS_IRQ_CI) && sc->sc_recrun) {
+			(*sc->sc_rintr)(sc->sc_rarg);
+			retval = 1;
+		}
+	} else {
+		if (sc->sc_playrun) {
+			(*sc->sc_pintr)(sc->sc_parg);
+			retval = 1;
+		} else if (sc->sc_recrun) {
+			(*sc->sc_rintr)(sc->sc_rarg);
+			retval = 1;
+		}
+	}
+	/* clear interrupt */
 	ADWRITE(sc, AD1848_STATUS, 0);
+    }
 
     return(retval);
 }
@@ -1649,10 +1585,10 @@ ad1848_malloc(addr, direction, size, pool, flags)
 	struct ad1848_softc *sc = addr;
 	int drq;
 
-	if (sc->sc_mode == AUMODE_RECORD)
-		drq = sc->sc_recdrq == -1 ? sc->sc_drq : sc->sc_recdrq;
-	else
+	if (direction == AUMODE_PLAY)
 		drq = sc->sc_drq;
+	else
+		drq = sc->sc_recdrq;
 
 	return isa_malloc(sc->sc_isa, drq, size, pool, flags);
 }
@@ -1694,5 +1630,5 @@ ad1848_get_props(addr)
 	struct ad1848_softc *sc = addr;
 
 	return AUDIO_PROP_MMAP |
-	       (sc->sc_drq != sc->sc_recdrq ? AUDIO_PROP_FULLDUPLEX : 0);
+	       (sc->mode == 2 ? AUDIO_PROP_FULLDUPLEX : 0);
 }

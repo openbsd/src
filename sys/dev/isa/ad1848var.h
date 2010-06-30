@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.12 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.13 2010/06/30 11:21:35 jakemsr Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
  */
 
 #define AD1848_NPORT	4
+#define	AD1848_TIMO	1000000
 
 struct ad1848_volume {
 	u_char	left;
@@ -54,24 +55,16 @@ struct ad1848_softc {
 	void	*parent;
 	struct	device *sc_isa;		/* ISA bus's device */
 
-	u_short	sc_locked;		/* true when doing HS DMA  */
-	u_int	sc_lastcc;		/* size of last DMA xfer */
-	int	sc_mode;		/* half-duplex record/play */
-	
-	int	sc_dma_flags;
-	void	*sc_dma_bp;
-	u_int	sc_dma_cnt;
-
 	char	sc_playrun;		/* running in continuous mode */
 	char	sc_recrun;		/* running in continuous mode */
-#define NOTRUNNING 0
-#define DMARUNNING 1
-#define PCMRUNNING 2
 
 	int	sc_irq;			/* interrupt */
 	int	sc_drq;			/* DMA */
 	int	sc_recdrq;		/* record/capture DMA */
 	
+	int	sc_flags;
+#define AD1848_FLAG_32REGS	0x01	/* newer chip (cs4231 compatible) */
+
 	/* We keep track of these */
         struct ad1848_volume gains[6];
 
@@ -94,9 +87,10 @@ struct ad1848_softc {
 	u_char	format_bits;
 	u_char	need_commit;
 
-	u_long	sc_interrupts;		/* number of interrupts taken */
-	void	(*sc_intr)(void *);	/* dma completion intr handler */
-	void	*sc_arg;		/* arg for sc_intr() */
+	void	(*sc_pintr)(void *);	/* play dma completion intr handler */
+	void	(*sc_rintr)(void *);	/* rec dma completion intr handler */
+	void	*sc_parg;		/* play arg for sc_intr() */
+	void	*sc_rarg;		/* rec arg for sc_intr() */
 
 	/* Only used by pss XXX */
 	int	sc_iobase;
@@ -194,15 +188,15 @@ int	ad1848_set_params(void *, int, int, struct audio_params *, struct audio_para
 
 int	ad1848_round_blocksize(void *, int);
 
-int	ad1848_dma_init_output(void *, void *, int);
-int	ad1848_dma_init_input(void *, void *, int);
-int	ad1848_dma_output(void *, void *, int, void (*)(void *), void *);
-int	ad1848_dma_input(void *, void *, int, void (*)(void *), void *);
+int	ad1848_trigger_input(void *, void *, void *, int, void (*)(void *),
+	void *, struct audio_params *);
+int	ad1848_trigger_output(void *, void *, void *, int, void (*)(void *),
+	void *, struct audio_params *);
 
 int	ad1848_commit_settings(void *);
 
-int	ad1848_halt_in_dma(void *);
-int	ad1848_halt_out_dma(void *);
+int	ad1848_halt_input(void *);
+int	ad1848_halt_output(void *);
 
 int	ad1848_intr(void *);
 
