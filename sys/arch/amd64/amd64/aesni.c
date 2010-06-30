@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.2 2010/06/30 17:00:42 thib Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.3 2010/06/30 17:11:05 thib Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -59,7 +59,6 @@ struct aesni_sess {
 struct aesni_softc {
 	uint8_t			 op_buf[16384];
 	int32_t			 sc_cid;
-//	uint32_t		 sc_nsessions;
 	LIST_HEAD(, aesni_sess)	 sc_sessions;
 } *aesni_sc;
 
@@ -67,14 +66,17 @@ uint32_t aesni_nsessions, aesni_ops;
 
 /* assembler-assisted key setup */
 extern void aesni_set_key(struct aesni_sess *ses, uint8_t *key, size_t len);
+
 /* aes encryption/decryption */
 extern void aesni_enc(struct aesni_sess *ses, uint8_t *dst, uint8_t *src);
 extern void aesni_dec(struct aesni_sess *ses, uint8_t *dst, uint8_t *src);
+
 /* assembler-assisted CBC mode */
 extern void aesni_cbc_enc(struct aesni_sess *ses, uint8_t *dst,
 	    uint8_t *src, size_t len, uint8_t *iv);
 extern void aesni_cbc_dec(struct aesni_sess *ses, uint8_t *dst,
 	    uint8_t *src, size_t len, uint8_t *iv);
+
 /* assembler-assisted CTR mode */
 extern void aesni_ctr_enc(struct aesni_sess *ses, uint8_t *dst,
 	    uint8_t *src, size_t len, uint8_t *iv);
@@ -94,8 +96,7 @@ void
 aesni_setup(void)
 {
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
-//	int flags = CRYPTOCAP_F_SOFTWARE;
-	int flags = 0; /* XXX TESTING */
+	int flags = 0;	/* CRYPTOCAP_F_SOFTWARE */
 
 	aesni_sc = malloc(sizeof(*aesni_sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (aesni_sc == NULL)
