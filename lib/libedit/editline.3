@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.28 2010/06/30 00:05:35 nicm Exp $
+.\"	$OpenBSD: editline.3,v 1.29 2010/06/30 07:32:06 jmc Exp $
 .\"	$NetBSD: editline.3,v 1.73 2010/01/03 19:05:26 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -55,8 +55,6 @@
 .Nm tok_line ,
 .Nm tok_str
 .Nd line editor, history and tokenization functions
-.Sh LIBRARY
-.Lb libedit
 .Sh SYNOPSIS
 .Fd #include <histedit.h>
 .Ft EditLine *
@@ -787,7 +785,7 @@ is a NUL terminated string to tokenize.
 .\"XXX: provide some examples
 .Sh SEE ALSO
 .Xr sh 1 ,
-.Xr curses 3
+.Xr curses 3 ,
 .Xr signal 3 ,
 .Xr editrc 5 ,
 .Xr termcap 5
