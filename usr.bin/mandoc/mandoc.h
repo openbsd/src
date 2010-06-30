@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.7 2010/06/26 17:56:43 schwarze Exp $ */
+/*	$Id: mandoc.h,v 1.8 2010/06/30 20:29:44 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,6 +25,9 @@ __BEGIN_DECLS
 
 enum	mandocerr {
 	MANDOCERR_OK,
+
+	MANDOCERR_WARNING, /* ===== end of warnings ===== */
+
 	MANDOCERR_UPPERCASE, /* text should be uppercase */
 	MANDOCERR_SECOOO, /* sections out of conventional order */
 	MANDOCERR_SECREP, /* section name repeats */
@@ -38,14 +41,15 @@ enum	mandocerr {
 	MANDOCERR_NOWIDTHARG, /* argument requires the width argument */
 	/* FIXME: merge with MANDOCERR_IGNARGV. */
 	MANDOCERR_WIDTHARG, /* superfluous width argument */
-	MANDOCERR_IGNARGV, /* macro ignoring argv */
+	MANDOCERR_IGNARGV, /* ignoring argument */
 	MANDOCERR_BADDATE, /* bad date argument */
 	MANDOCERR_BADWIDTH, /* bad width argument */
 	MANDOCERR_BADMSEC, /* unknown manual section */
 	MANDOCERR_SECMSEC, /* section not in conventional manual section */
 	MANDOCERR_EOLNSPACE, /* end of line whitespace */
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
-#define	MANDOCERR_WARNING	MANDOCERR_SCOPEEXIT
+
+	MANDOCERR_ERROR, /* ===== end of errors ===== */
 
 	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
 	MANDOCERR_BADBOOL, /* bad Boolean value */
@@ -79,7 +83,8 @@ enum	mandocerr {
 	MANDOCERR_DISPTYPE, /* missing display type */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
-#define	MANDOCERR_ERROR		MANDOCERR_BODYLOST
+
+	MANDOCERR_FATAL, /* ===== end of fatal errors ===== */
 
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	/* FIXME: this should be a MANDOCERR_ERROR */
@@ -87,7 +92,7 @@ enum	mandocerr {
 	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_NESTEDDISP, /* displays may not be nested */
 	MANDOCERR_BADDISP, /* unsupported display type */
-	MANDOCERR_SYNTNOSCOPE, /* request scope close w/none open */
+	MANDOCERR_SYNTNOSCOPE, /* no scope to rewind: syntax violated */
 	MANDOCERR_SYNTSCOPE, /* scope broken, syntax violated */
 	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
@@ -95,9 +100,8 @@ enum	mandocerr {
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
-	MANDOCERR_UTSNAME, /* utsname() system call failed */
+	MANDOCERR_UTSNAME, /* utsname system call failed */
 	MANDOCERR_MEM, /* memory exhausted */
-#define	MANDOCERR_FATAL		MANDOCERR_MEM
 
 	MANDOCERR_MAX
 };
