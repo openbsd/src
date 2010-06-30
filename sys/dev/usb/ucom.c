@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.48 2010/06/28 14:13:35 deraadt Exp $ */
+/*	$OpenBSD: ucom.c,v 1.49 2010/06/30 09:36:51 nicm Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 	if (sc->sc_methods->ucom_ioctl != NULL) {
 		error = sc->sc_methods->ucom_ioctl(sc->sc_parent,
 			    sc->sc_portno, cmd, data, flag, p);
-		if (error >= 0)
+		if (error != ENOTTY)
 			return (error);
 	}
 
