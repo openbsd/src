@@ -5821,6 +5821,11 @@
 ./usr/share/man/cat3/tmpfile.0
 ./usr/share/man/cat3/tmpnam.0
 ./usr/share/man/cat3/toascii.0
+./usr/share/man/cat3/tok_end.0
+./usr/share/man/cat3/tok_init.0
+./usr/share/man/cat3/tok_line.0
+./usr/share/man/cat3/tok_reset.0
+./usr/share/man/cat3/tok_str.0
 ./usr/share/man/cat3/tolower.0
 ./usr/share/man/cat3/top_panel.0
 ./usr/share/man/cat3/top_row.0
