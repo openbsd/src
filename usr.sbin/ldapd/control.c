@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2010/06/27 16:24:17 martinh Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2010/06/30 17:16:09 martinh Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -191,6 +191,8 @@ send_stats(struct imsgev *iev)
 	    &stats, sizeof(stats));
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
+		if (namespace_has_referrals(ns))
+			continue;
 		strlcpy(nss.suffix, ns->suffix, sizeof(nss.suffix));
 		st = btree_stat(ns->data_db);
 		bcopy(st, &nss.data_stat, sizeof(nss.data_stat));
