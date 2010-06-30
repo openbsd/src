@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.40 2010/06/28 14:13:27 deraadt Exp $	*/
+/*	$OpenBSD: dca.c,v 1.41 2010/06/30 18:10:47 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ dcaintr(arg)
 			}
 			if (iflowdone == 0 && tp != NULL &&
 			    (tp->t_cflag & CRTS_IFLOW) &&
-			    tp->t_rawq.c_cc > (TTYHOG / 2)) {
+			    tp->t_rawq.c_cc > (TTYHOG(tp) / 2)) {
 				dca->dca_mcr &= ~MCR_RTS;
 				iflowdone = 1;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.39 2010/06/28 14:13:27 deraadt Exp $	*/
+/*	$OpenBSD: apci.c,v 1.40 2010/06/30 18:10:47 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -486,7 +486,7 @@ apciintr(arg)
 			}
 			if (iflowdone == 0 && tp != NULL &&
 			    (tp->t_cflag & CRTS_IFLOW) &&
-			    tp->t_rawq.c_cc > (TTYHOG / 2)) {
+			    tp->t_rawq.c_cc > (TTYHOG(tp) / 2)) {
 				apci->ap_mcr &= ~MCR_RTS;
 				iflowdone = 1;
 			}
