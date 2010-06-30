@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.45 2010/06/29 23:38:05 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.46 2010/06/30 00:09:27 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -42,9 +42,6 @@
 
 #include "tip.h"
 #include "pathnames.h"
-
-int	disc = TTYDISC;		/* tip normally runs this way */
-char	PNbuf[256];			/* This limits the size of a number */
 
 static void	intprompt(int);
 static void	tipin(void);
