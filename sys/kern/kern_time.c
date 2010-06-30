@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.70 2010/06/28 21:23:20 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.71 2010/06/30 01:47:35 tedu Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -292,11 +292,12 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct timespec rqt, rmt;
 	struct timespec sts, ets;
+	struct timespec *rmtp;
 	struct timeval tv;
 	int error, error1;
 
-	error = copyin((const void *)SCARG(uap, rqtp), (void *)&rqt,
-	    sizeof(struct timespec));
+	rmtp = SCARG(uap, rmtp);
+	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
 		return (error);
 
@@ -304,7 +305,7 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	if (itimerfix(&tv))
 		return (EINVAL);
 
-	if (SCARG(uap, rmtp))
+	if (rmtp)
 		getnanouptime(&sts);
 
 	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep",
@@ -314,7 +315,7 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (SCARG(uap, rmtp)) {
+	if (rmtp) {
 		getnanouptime(&ets);
 
 		timespecsub(&ets, &sts, &sts);
@@ -323,8 +324,7 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 		if (rmt.tv_sec < 0)
 			timespecclear(&rmt);
 
-		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
-		    sizeof(rmt));
+		error1 = copyout(&rmt, rmtp, sizeof(rmt));
 		if (error1 != 0)
 			error = error1;
 	}
@@ -341,17 +341,20 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
 	struct timeval atv;
+	struct timeval *tp;
+	struct timezone *tzp;
 	int error = 0;
 
-	if (SCARG(uap, tp)) {
+	tp = SCARG(uap, tp);
+	tzp = SCARG(uap, tzp);
+
+	if (tp) {
 		microtime(&atv);
-		if ((error = copyout((void *)&atv, (void *)SCARG(uap, tp),
-		    sizeof (atv))))
+		if ((error = copyout(&atv, tp, sizeof (atv))))
 			return (error);
 	}
-	if (SCARG(uap, tzp))
-		error = copyout((void *)&tz, (void *)SCARG(uap, tzp),
-		    sizeof (tz));
+	if (tzp)
+		error = copyout(&tz, tzp, sizeof (tz));
 	return (error);
 }
 
@@ -365,25 +368,28 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct timezone atz;
 	struct timeval atv;
+	const struct timeval *tv;
+	const struct timezone *tzp;
 	int error;
+
+	tv = SCARG(uap, tv);
+	tzp = SCARG(uap, tzp);
 
 	if ((error = suser(p, 0)))
 		return (error);
 	/* Verify all parameters before changing time. */
-	if (SCARG(uap, tv) && (error = copyin((void *)SCARG(uap, tv),
-	    (void *)&atv, sizeof(atv))))
+	if (tv && (error = copyin(tv, &atv, sizeof(atv))))
 		return (error);
-	if (SCARG(uap, tzp) && (error = copyin((void *)SCARG(uap, tzp),
-	    (void *)&atz, sizeof(atz))))
+	if (tzp && (error = copyin(tzp, &atz, sizeof(atz))))
 		return (error);
-	if (SCARG(uap, tv)) {
+	if (tv) {
 		struct timespec ts;
 
 		TIMEVAL_TO_TIMESPEC(&atv, &ts);
 		if ((error = settime(&ts)) != 0)
 			return (error);
 	}
-	if (SCARG(uap, tzp))
+	if (tzp)
 		tz = atz;
 	return (0);
 }
@@ -398,38 +404,38 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 	int64_t f;
+	const int64_t *freq = SCARG(uap, freq);
+	int64_t *oldfreq = SCARG(uap, oldfreq);
 #ifndef __HAVE_TIMECOUNTER
 	int s;
 
-	if (SCARG(uap, oldfreq)) {
+	if (oldfreq) {
 		f = ntp_tick_permanent * hz;
-		if ((error = copyout((void *)&f, (void *)SCARG(uap, oldfreq),
-		    sizeof(int64_t))))
+		if ((error = copyout(&f, oldfreq, sizeof(int64_t))))
 			return (error);
 	}
-	if (SCARG(uap, freq)) {
+	if (freq) {
 		if ((error = suser(p, 0)))
 			return (error);
-		if ((error = copyin((void *)SCARG(uap, freq), (void *)&f,
-		    sizeof(int64_t))))
+		if ((error = copyin(freq, &f, sizeof(int64_t))))
 			return (error);
 		s = splclock();
 		ntp_tick_permanent = f / hz;
 		splx(s);
 	}
 #else
-	if (SCARG(uap, oldfreq)) {
-		if ((error = tc_adjfreq(&f, NULL)) != 0)
+	if (oldfreq) {
+		if ((error = tc_adjfreq(&f, NULL)))
 			return (error);
-		if ((error = copyout(&f, SCARG(uap, oldfreq), sizeof(f))) != 0)
+		if ((error = copyout(&f, oldfreq, sizeof(f))))
 			return (error);
 	}
-	if (SCARG(uap, freq)) {
+	if (freq) {
 		if ((error = suser(p, 0)))
 			return (error);
-		if ((error = copyin(SCARG(uap, freq), &f, sizeof(f))) != 0)
+		if ((error = copyin(freq, &f, sizeof(f))))
 			return (error);
-		if ((error = tc_adjfreq(NULL, &f)) != 0)
+		if ((error = tc_adjfreq(NULL, &f)))
 			return (error);
 	}
 #endif
@@ -444,20 +450,22 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
+	const struct timeval *delta = SCARG(uap, delta);
+	struct timeval *olddelta = SCARG(uap, olddelta);
 #ifdef __HAVE_TIMECOUNTER
 	int error;
 
-	if (SCARG(uap, olddelta))
-		if ((error = copyout((void *)&adjtimedelta,
-		    (void *)SCARG(uap, olddelta), sizeof(struct timeval))))
+	if (olddelta)
+		if ((error = copyout(&adjtimedelta, olddelta,
+		    sizeof(struct timeval))))
 			return (error);
 
-	if (SCARG(uap, delta)) {
+	if (delta) {
 		if ((error = suser(p, 0)))
 			return (error);
 
-		if ((error = copyin((void *)SCARG(uap, delta),
-		    (void *)&adjtimedelta, sizeof(struct timeval))))
+		if ((error = copyin(delta, &adjtimedelta,
+		    sizeof(struct timeval))))
 			return (error);
 	}
 
@@ -476,7 +484,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	long ndelta, ntickdelta, odelta;
 	int s, error;
 
-	if (!SCARG(uap, delta)) {
+	if (!delta) {
 		s = splclock();
 		odelta = timedelta;
 		splx(s);
@@ -484,8 +492,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	}
 	if ((error = suser(p, 0)))
 		return (error);
-	if ((error = copyin((void *)SCARG(uap, delta), (void *)&atv,
-	    sizeof(struct timeval))))
+	if ((error = copyin(delta, &atv, sizeof(struct timeval))))
 		return (error);
 
 	/*
@@ -530,11 +537,10 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	splx(s);
 
 out:
-	if (SCARG(uap, olddelta)) {
+	if (olddelta) {
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
-		if ((error = copyout((void *)&atv, (void *)SCARG(uap, olddelta),
-		    sizeof(struct timeval))))
+		if ((error = copyout(&atv, olddelta, sizeof(struct timeval))))
 			return (error);
 	}
 	return (0);
@@ -573,11 +579,14 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct itimerval aitv;
 	int s;
+	int which;
 
-	if (SCARG(uap, which) < ITIMER_REAL || SCARG(uap, which) > ITIMER_PROF)
+	which = SCARG(uap, which);
+
+	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
 	s = splclock();
-	if (SCARG(uap, which) == ITIMER_REAL) {
+	if (which == ITIMER_REAL) {
 		struct timeval now;
 
 		getmicrouptime(&now);
@@ -596,10 +605,9 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 				    &aitv.it_value);
 		}
 	} else
-		aitv = p->p_stats->p_timer[SCARG(uap, which)];
+		aitv = p->p_stats->p_timer[which];
 	splx(s);
-	return (copyout((void *)&aitv, (void *)SCARG(uap, itv),
-	    sizeof (struct itimerval)));
+	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
 }
 
 /* ARGSUSED */
@@ -614,18 +622,23 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
 	const struct itimerval *itvp;
+	struct itimerval *oitv;
 	int error;
 	int timo;
+	int which;
 
-	if (SCARG(uap, which) < ITIMER_REAL || SCARG(uap, which) > ITIMER_PROF)
+	which = SCARG(uap, which);
+	oitv = SCARG(uap, oitv);
+
+	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp && (error = copyin((void *)itvp, (void *)&aitv,
 	    sizeof(struct itimerval))))
 		return (error);
-	if (SCARG(uap, oitv) != NULL) {
-		SCARG(&getargs, which) = SCARG(uap, which);
-		SCARG(&getargs, itv) = SCARG(uap, oitv);
+	if (oitv != NULL) {
+		SCARG(&getargs, which) = which;
+		SCARG(&getargs, itv) = oitv;
 		if ((error = sys_getitimer(p, &getargs, retval)))
 			return (error);
 	}
@@ -633,7 +646,7 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		return (0);
 	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
 		return (EINVAL);
-	if (SCARG(uap, which) == ITIMER_REAL) {
+	if (which == ITIMER_REAL) {
 		struct timeval ctv;
 
 		timeout_del(&p->p_realit_to);
@@ -649,10 +662,10 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 
 		itimerround(&aitv.it_interval);
 		s = splclock();
-		p->p_stats->p_timer[SCARG(uap, which)] = aitv;
-		if (SCARG(uap, which) == ITIMER_VIRTUAL)
+		p->p_stats->p_timer[which] = aitv;
+		if (which == ITIMER_VIRTUAL)
 			timeout_del(&p->p_stats->p_virt_to);
-		if (SCARG(uap, which) == ITIMER_PROF)
+		if (which == ITIMER_PROF)
 			timeout_del(&p->p_stats->p_prof_to);
 		splx(s);
 	}

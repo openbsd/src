@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.112 2010/06/29 20:48:50 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.113 2010/06/30 01:47:35 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -219,16 +219,21 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigaction vec;
 	struct sigaction *sa;
+	const struct sigaction *nsa;
+	struct sigaction *osa;
 	struct sigacts *ps = p->p_sigacts;
 	int signum;
 	int bit, error;
 
 	signum = SCARG(uap, signum);
+	nsa = SCARG(uap, nsa);
+	osa = SCARG(uap, osa);
+
 	if (signum <= 0 || signum >= NSIG ||
-	    (SCARG(uap, nsa) && (signum == SIGKILL || signum == SIGSTOP)))
+	    (nsa && (signum == SIGKILL || signum == SIGSTOP)))
 		return (EINVAL);
 	sa = &vec;
-	if (SCARG(uap, osa)) {
+	if (osa) {
 		sa->sa_handler = ps->ps_sigact[signum];
 		sa->sa_mask = ps->ps_catchmask[signum];
 		bit = sigmask(signum);
@@ -250,12 +255,12 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 		if ((sa->sa_mask & bit) == 0)
 			sa->sa_flags |= SA_NODEFER;
 		sa->sa_mask &= ~bit;
-		error = copyout(sa, SCARG(uap, osa), sizeof (vec));
+		error = copyout(sa, osa, sizeof (vec));
 		if (error)
 			return (error);
 	}
-	if (SCARG(uap, nsa)) {
-		error = copyin(SCARG(uap, nsa), sa, sizeof (vec));
+	if (nsa) {
+		error = copyin(nsa, sa, sizeof (vec));
 		if (error)
 			return (error);
 		setsigvec(p, signum, sa);
@@ -416,23 +421,22 @@ sys_sigprocmask(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int error = 0;
 	int s;
+	sigset_t mask;
 
 	*retval = p->p_sigmask;
+	mask = SCARG(uap, mask);
 	s = splhigh();
 
 	switch (SCARG(uap, how)) {
 	case SIG_BLOCK:
-		p->p_sigmask |= SCARG(uap, mask) &~ sigcantmask;
+		p->p_sigmask |= mask &~ sigcantmask;
 		break;
-
 	case SIG_UNBLOCK:
-		p->p_sigmask &= ~SCARG(uap, mask);
+		p->p_sigmask &= ~mask;
 		break;
-
 	case SIG_SETMASK:
-		p->p_sigmask = SCARG(uap, mask) &~ sigcantmask;
+		p->p_sigmask = mask &~ sigcantmask;
 		break;
-
 	default:
 		error = EINVAL;
 		break;
@@ -490,21 +494,26 @@ sys_osigaltstack(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigacts *psp;
 	struct osigaltstack ss;
+	const struct osigaltstack *nss;
+	struct osigaltstack *oss;
 	int error;
+
+	nss = SCARG(uap, nss);
+	oss = SCARG(uap, oss);
 
 	psp = p->p_sigacts;
 	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
 		psp->ps_sigstk.ss_flags |= SS_DISABLE;
-	if (SCARG(uap, oss)) {
+	if (oss) {
 		ss.ss_sp = psp->ps_sigstk.ss_sp;
 		ss.ss_size = psp->ps_sigstk.ss_size;
 		ss.ss_flags = psp->ps_sigstk.ss_flags;
-		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))))
+		if ((error = copyout(&ss, oss, sizeof(ss))))
 			return (error);
 	}
-	if (SCARG(uap, nss) == NULL)
+	if (nss == NULL)
 		return (0);
-	error = copyin(SCARG(uap, nss), &ss, sizeof(ss));
+	error = copyin(nss, &ss, sizeof(ss));
 	if (error)
 		return (error);
 	if (ss.ss_flags & SS_DISABLE) {
@@ -532,17 +541,22 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigacts *psp;
 	struct sigaltstack ss;
+	const struct sigaltstack *nss;
+	struct sigaltstack *oss;
 	int error;
+
+	nss = SCARG(uap, nss);
+	oss = SCARG(uap, oss);
 
 	psp = p->p_sigacts;
 	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
 		psp->ps_sigstk.ss_flags |= SS_DISABLE;
-	if (SCARG(uap, oss) && (error = copyout(&psp->ps_sigstk,
-	    SCARG(uap, oss), sizeof(struct sigaltstack))))
+	if (oss && (error = copyout(&psp->ps_sigstk,
+	    oss, sizeof(struct sigaltstack))))
 		return (error);
-	if (SCARG(uap, nss) == NULL)
+	if (nss == NULL)
 		return (0);
-	error = copyin(SCARG(uap, nss), &ss, sizeof(ss));
+	error = copyin(nss, &ss, sizeof(ss));
 	if (error)
 		return (error);
 	if (ss.ss_flags & SS_DISABLE) {
