@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.80 2010/06/04 17:51:15 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.81 2010/06/30 10:05:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -22,7 +22,7 @@ use warnings;
 # to get all methods.
 
 use OpenBSD::PackageRepository::Installed;
-$OpenBSD::PackageRepository::Installed::ISA=(qw(OpenBSD::PackageRepository));
+$OpenBSD::PackageRepository::Installed::ISA = qw(OpenBSD::PackageRepository);
 
 package OpenBSD::PackageRepository;
 our @ISA=(qw(OpenBSD::PackageRepositoryBase));
