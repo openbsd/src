@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.158 2010/06/30 19:06:29 kettenis Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.159 2010/06/30 19:23:59 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -279,9 +279,6 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 		config_suspend(dev, act);
 		break;
 	default:
-#ifdef DIAGNOSTIC
-		printf("%s: unsupported act %d\n", sc->sc_dev.dv_xname, act);
-#endif
 		break;
 	}
 }
