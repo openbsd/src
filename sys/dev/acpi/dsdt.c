@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.161 2010/06/29 22:08:29 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.162 2010/06/30 19:23:09 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -95,12 +95,6 @@ void			*_acpi_os_malloc(size_t, const char *, int);
 void			_acpi_os_free(void *, const char *, int);
 void			acpi_sleep(int);
 void			acpi_stall(int);
-
-uint8_t *aml_xparsename(uint8_t *pos, struct aml_node *node, 
-    void (*fn)(struct aml_node *, int, uint8_t *, void *), void *arg);
-void ns_xcreate(struct aml_node *node, int n, uint8_t *pos, void *arg);
-void ns_xdis(struct aml_node *node, int n, uint8_t *pos, void *arg);
-void ns_xsearch(struct aml_node *node, int n, uint8_t *pos, void *arg);
 
 struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
 
@@ -1267,7 +1261,7 @@ aml_find_node(struct aml_node *node, const char *name,
 /*
  * @@@: Parser functions
  */
-uint8_t *aml_parsename(struct aml_scope *);
+uint8_t *aml_parsename(struct aml_node *, uint8_t *, struct aml_value **, int);
 uint8_t *aml_parseend(struct aml_scope *scope);
 int	aml_parselength(struct aml_scope *);
 int	aml_parseopcode(struct aml_scope *);
@@ -1301,27 +1295,67 @@ aml_parseopcode(struct aml_scope *scope)
 
 /* Decode embedded AML Namestring */
 uint8_t *
-aml_parsename(struct aml_scope *scope)
+aml_parsename(struct aml_node *inode, uint8_t *pos, struct aml_value **rval, int create)
 {
-	uint8_t *name = scope->pos;
+	struct aml_node *relnode, *node = inode;
+	uint8_t	*start = pos;
+	int i;
 
-	while (*scope->pos == AMLOP_ROOTCHAR || *scope->pos == AMLOP_PARENTPREFIX)
-		scope->pos++;
-
-	switch (*scope->pos) {
+	if (*pos == AMLOP_ROOTCHAR) {
+		pos++;
+		node = &aml_root;
+	}
+	while (*pos == AMLOP_PARENTPREFIX) {
+		pos++;
+		if ((node = node->parent) == NULL)
+			node = &aml_root;
+	}
+	switch (*pos) {
 	case 0x00:
+		pos++;
 		break;
 	case AMLOP_MULTINAMEPREFIX:
-		scope->pos += 2+AML_NAMESEG_LEN*scope->pos[1];
+		for (i=0; i<pos[1]; i++)
+			node = __aml_search(node, pos+2+i*AML_NAMESEG_LEN, 
+			    create);
+		pos += 2+i*AML_NAMESEG_LEN;
 		break;
 	case AMLOP_DUALNAMEPREFIX:
-		scope->pos += 1+AML_NAMESEG_LEN*2;
+		node = __aml_search(node, pos+1, create);
+		node = __aml_search(node, pos+1+AML_NAMESEG_LEN, create);
+		pos += 1+2*AML_NAMESEG_LEN;
 		break;
 	default:
-		scope->pos += AML_NAMESEG_LEN;
+		/* If Relative Search (pos == start), recursively go up root */
+		relnode = node;
+		do {
+			node = __aml_search(relnode, pos, create);
+			relnode = relnode->parent;
+		} while (!node && pos == start && relnode);
+		pos += AML_NAMESEG_LEN;
 		break;
 	}
-	return name;
+	if (node) {
+		*rval = node->value;
+
+		/* Dereference ALIAS here */
+		if ((*rval)->type == AML_OBJTYPE_OBJREF &&
+		    (*rval)->v_objref.type == AMLOP_ALIAS) {
+			dnprintf(10, "deref alias: %s\n", aml_nodename(node));
+			*rval = (*rval)->v_objref.ref;
+		}
+		aml_xaddref(*rval, 0);
+
+		dnprintf(10, "parsename: %s %x\n", aml_nodename(node), 
+		    (*rval)->type);
+	} else {
+		*rval = aml_allocvalue(AML_OBJTYPE_NAMEREF, 0, start);
+
+		dnprintf(10, "%s:%s not found\n", aml_nodename(inode), 
+		    aml_getname(start));
+	}
+
+	return pos;
 }
 
 /* Decode AML Length field
@@ -1507,13 +1541,13 @@ aml_create_defaultobjects()
 
 	for (def = aml_defobj; def->name; def++) {
 		/* Allocate object value + add to namespace */
-		aml_xparsename((uint8_t *)def->name, &aml_root,
-		    ns_xcreate, &tmp);
+		aml_parsename(&aml_root, (uint8_t *)def->name, &tmp, 1);
 		_aml_setvalue(tmp, def->type, def->ival, def->bval);
 		if (def->gval) {
 			/* Set root object pointer */
 			*def->gval = tmp;
 		}
+		aml_xdelref(&tmp, 0);
 	}
 }
 
@@ -1976,92 +2010,6 @@ aml_xmatch(struct aml_value *pkg, int index,
 }
 
 /*
- * Namespace functions
- */
-
-/* Search for name in namespace */
-void
-ns_xsearch(struct aml_node *node, int n, uint8_t *pos, void *arg)
-{
-	struct aml_value **rv = arg;
-	struct aml_node *rnode;
-
-	/* If name search is relative, check up parent nodes */
-	for (rnode=node; n == 1 && rnode; rnode=rnode->parent) {
-		if (__aml_search(rnode, pos, 0) != NULL)
-			break;
-	}
-	while (n--) {
-		rnode = __aml_search(rnode, pos, 0);
-		pos += 4;
-	}
-	if (rnode != NULL) {
-		*rv = rnode->value;
-		return;
-	}
-	*rv = NULL;
-}
-
-/* Create name in namespace */
-void
-ns_xcreate(struct aml_node *node, int n, uint8_t *pos, void *arg)
-{
-	struct aml_value **rv = arg;
-
-	while (n--) {
-		node = __aml_search(node, pos, 1);
-		pos += 4;
-	}
-	*rv = node->value;
-}
-
-void
-ns_xdis(struct aml_node *node, int n, uint8_t *pos, void *arg)
-{
-	printf(aml_nodename(node));
-	while (n--) {
-		printf("%s%c%c%c%c", n ? "." : "", 
-		    pos[0], pos[1], pos[2], pos[3]);
-		pos+=4;
-	}
-}
-
-uint8_t *
-aml_xparsename(uint8_t *pos, struct aml_node *node, 
-    void (*fn)(struct aml_node *, int, uint8_t *, void *), void *arg)
-{
-	uint8_t *rpos = pos;
-	struct aml_value **rv = arg;
-
-	if (*pos == AMLOP_ROOTCHAR) {
-		node = &aml_root;
-		pos++;
-	}
-	while (*pos == AMLOP_PARENTPREFIX) {
-		node = node ? node->parent : &aml_root;
-		pos++;
-	}
-	if (*pos == 0) {
-		fn(node, 0, pos, arg);
-		pos++;
-	} else if (*pos == AMLOP_MULTINAMEPREFIX) {
-		fn(node, pos[1], pos+2, arg);
-		pos += 2 + 4 * pos[1];
-	} else if (*pos == AMLOP_DUALNAMEPREFIX) {
-		fn(node, 2, pos+1, arg);
-		pos += 9;
-	} else if (*pos == '_' || (*pos >= 'A' && *pos <= 'Z')) {
-		fn(node, 1, pos, arg);
-		pos += 4;
-	} else {
-		printf("Invalid name!!!\n");
-	}
-	if (rv && *rv == NULL)
-		*rv = aml_allocvalue(AML_OBJTYPE_NAMEREF, 0, rpos);
-	return pos;
-}
-
-/*
  * Conversion routines
  */
 int64_t
@@ -2513,11 +2461,12 @@ aml_xparsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 			blen = 0;
 			break;
 		default: // 4-byte name, length
-			mscope->pos = aml_xparsename(mscope->pos, mscope->node,
-			    ns_xcreate, &rv);
+			mscope->pos = aml_parsename(mscope->node, mscope->pos,
+			    &rv, 1);
 			blen = aml_parselength(mscope);
 			aml_xcreatefield(rv, opcode, data, bpos, blen, index, 
 				indexval, flags);
+			aml_xdelref(&rv, 0);
 			break;
 		}
 		bpos += blen;
@@ -2714,8 +2663,7 @@ aml_disasm(struct aml_scope *scope, int lvl,
 	ch = NULL;
 	switch (opcode) {
 	case AMLOP_NAMECHAR:
-		scope->pos = aml_xparsename(scope->pos, scope->node, 
-		    ns_xsearch, &rv);
+		scope->pos = aml_parsename(scope->node, scope->pos, &rv, 0);
 		if (rv->type == AML_OBJTYPE_NAMEREF) {
 			ch = "@@@";
 			aml_xdelref(&rv, "disasm");
@@ -2731,6 +2679,7 @@ aml_disasm(struct aml_scope *scope, int lvl,
 			}
 			strlcat(mch, ")", sizeof(mch));
 		}
+		aml_xdelref(&rv, "");
 		ch = mch;
 		break;
 
@@ -2966,8 +2915,10 @@ aml_disasm(struct aml_scope *scope, int lvl,
 			break;
 		case 'R':
 			/* Search name */
-			scope->pos = aml_xparsename(scope->pos, scope->node, 
-			    ns_xdis, &rv);
+			printf("%s", aml_getname(scope->pos));
+			scope->pos = aml_parsename(scope->node, scope->pos, 
+			    &rv, 0);
+			aml_xdelref(&rv, 0);
 			break;
 		case 'z':
 		case 'n':
@@ -2991,11 +2942,12 @@ aml_disasm(struct aml_scope *scope, int lvl,
 				} else if (*ms->pos == 0x01) {
 					ms->pos+=3;
 				} else {
-					ms->pos = aml_xparsename(ms->pos, 
-					    ms->node, ns_xcreate, &rv);
+					ms->pos = aml_parsename(ms->node, 
+					     ms->pos, &rv, 1);
 					aml_parselength(ms);
 					dbprintf(arg,"	%s\n", 
 					    aml_nodename(rv->node));
+					aml_xdelref(&rv, 0);
 				}
 			}
 			aml_xpopscope(ms);
@@ -3219,16 +3171,6 @@ aml_xeval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 struct aml_value *
 aml_xparsesimple(struct aml_scope *scope, char ch, struct aml_value *rv)
 {
-	if (ch == AML_ARG_CREATENAME) {
-		scope->pos = aml_xparsename(scope->pos, scope->node, 
-		    ns_xcreate, &rv);
-		return rv;
-	}
-	else if (ch == AML_ARG_SEARCHNAME) {
-		scope->pos = aml_xparsename(scope->pos, scope->node, 
-		    ns_xsearch, &rv);
-		return rv;
-	}
 	if (rv == NULL)
 		rv = aml_allocvalue(0,0,NULL);
 	switch (ch) {
@@ -3432,17 +3374,12 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			    (char)opcode, NULL);
 			break;
 		case AML_ARG_CREATENAME:
-			rv = aml_xparsesimple(scope, *ch, NULL);
-			if (rv->type != 0 && opcode != AMLOP_SCOPE)
-				dnprintf(10, "%s value already exists %s\n",
-				    aml_nodename(rv->node),
-				    htab->mnem);
-			aml_xaddref(rv, "Create Name");
+			scope->pos = aml_parsename(scope->node, scope->pos,
+			    &rv, 1);
 			break;
 		case AML_ARG_SEARCHNAME:
-			rv = aml_xparsesimple(scope, *ch, NULL);
-			if (rv->type != AML_OBJTYPE_NAMEREF)
-				aml_xaddref(rv, "Search Name");
+			scope->pos = aml_parsename(scope->node, scope->pos,
+			    &rv, 0);
 			break;
 		case AML_ARG_BYTE:
 		case AML_ARG_WORD:
