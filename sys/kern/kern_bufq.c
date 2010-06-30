@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.10 2010/06/30 02:26:58 matthew Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.11 2010/06/30 02:29:18 matthew Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  *
@@ -157,9 +157,8 @@ restart:
 		bq->bufq_stop = 1;
 		if (bq->bufq_outstanding) {
 			mtx_leave(&bufqs_mtx);
-			msleep(&bq->bufq_outstanding, &bq->bufq_mtx, PRIBIO,
-			    "bufqqui", 0);
-			mtx_leave(&bq->bufq_mtx);
+			msleep(&bq->bufq_outstanding, &bq->bufq_mtx,
+			    PRIBIO | PNORELOCK, "bufqqui", 0);
 			goto restart;
 		}
 		mtx_leave(&bq->bufq_mtx);
