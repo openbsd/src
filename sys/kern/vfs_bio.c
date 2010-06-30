@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.122 2010/06/29 18:52:20 kettenis Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.123 2010/06/30 22:41:43 thib Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1228,9 +1228,6 @@ biodone(struct buf *bp)
 			wakeup(bp);
 		}
 	}
-
-	if (bp->b_bq)
-		bufq_done(bp->b_bq, bp);
 }
 
 #ifdef DDB
