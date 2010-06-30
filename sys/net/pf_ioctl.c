@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.234 2010/06/28 23:21:41 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.235 2010/06/30 18:10:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1096,9 +1096,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (rule->logif >= PFLOGIFS_MAX)
 			error = EINVAL;
 #endif
-		if (pf_rtlabel_add(&rule->src.addr) ||
-		    pf_rtlabel_add(&rule->dst.addr))
-			error = EBUSY;
 		if (pf_addr_setup(ruleset, &rule->src.addr, rule->af))
 			error = EINVAL;
 		if (pf_addr_setup(ruleset, &rule->dst.addr, rule->af))
@@ -1309,9 +1306,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (newrule->logif >= PFLOGIFS_MAX)
 				error = EINVAL;
 #endif
-			if (pf_rtlabel_add(&newrule->src.addr) ||
-			    pf_rtlabel_add(&newrule->dst.addr))
-				error = EBUSY;
 			if (pf_addr_setup(ruleset, &newrule->src.addr, newrule->af))
 				error = EINVAL;
 			if (pf_addr_setup(ruleset, &newrule->dst.addr, newrule->af))
