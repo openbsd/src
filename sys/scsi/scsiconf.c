@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.157 2010/04/23 21:34:40 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.158 2010/06/30 19:06:29 kettenis Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -273,6 +273,10 @@ scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
 		else
 #endif /* NMPATH */
 			config_deactivate(dev);
+		break;
+	case DVACT_SUSPEND:
+	case DVACT_RESUME:
+		config_suspend(dev, act);
 		break;
 	default:
 #ifdef DIAGNOSTIC

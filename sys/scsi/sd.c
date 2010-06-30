@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.198 2010/06/28 08:35:46 jsing Exp $	*/
+/*	$OpenBSD: sd.c,v 1.199 2010/06/30 19:06:29 kettenis Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -287,6 +287,17 @@ sdactivate(struct device *self, int act)
 	case DVACT_DEACTIVATE:
 		sc->flags |= SDF_DYING;
 		bufq_drain(sc->sc_bufq);
+		break;
+	case DVACT_SUSPEND:
+		/*
+		 * If the disk cache needs to be flushed, and the disk
+		 * supports it, flush it.  We're cold at this point,
+		 * so we poll for completion.
+		 */
+		if ((sc->flags & SDF_DIRTY) != 0)
+			sd_flush(sc, SCSI_AUTOCONF);
+		break;
+	case DVACT_RESUME:
 		break;
 	}
 
