@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.502 2010/06/27 01:05:33 maja Exp $
+$OpenBSD: usbdevs,v 1.503 2010/06/30 16:43:19 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2614,6 +2614,7 @@ product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
 
 /* MosChip products */
 product MOSCHIP MCS7703		0x7703	MCS7703 Serial
+product	MOSCHIP	MCS7715		0x7715	MCS7715	Serial Parallel
 product MOSCHIP MCS7730		0x7730	MCS7730 Ethernet
 product MOSCHIP MCS7830		0x7830	MCS7830 Ethernet
 
