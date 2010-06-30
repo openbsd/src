@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.2 2010/06/30 04:14:59 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.3 2010/06/30 19:42:40 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -848,7 +848,7 @@ schema_parse_objectclass(struct schema *schema)
 			if (obj->kind == KIND_STRUCTURAL &&
 			    optr->object->kind == KIND_AUXILIARY) {
 				log_warnx("structural object class '%s' cannot"
-				    " subclass auxiliary object class '%s'", 
+				    " subclass auxiliary object class '%s'",
 				    OBJ_NAME(obj), OBJ_NAME(optr->object));
 				goto fail;
 			}
@@ -856,7 +856,7 @@ schema_parse_objectclass(struct schema *schema)
 			if (obj->kind == KIND_AUXILIARY &&
 			    optr->object->kind == KIND_STRUCTURAL) {
 				log_warnx("auxiliary object class '%s' cannot"
-				    " subclass structural object class '%s'", 
+				    " subclass structural object class '%s'",
 				    OBJ_NAME(obj), OBJ_NAME(optr->object));
 				goto fail;
 			}
@@ -864,7 +864,7 @@ schema_parse_objectclass(struct schema *schema)
 			if (obj->kind == KIND_ABSTRACT &&
 			    optr->object->kind != KIND_ABSTRACT) {
 				log_warnx("abstract object class '%s' cannot"
-				    " subclass non-abstract object class '%s'", 
+				    " subclass non-abstract object class '%s'",
 				    OBJ_NAME(obj), OBJ_NAME(optr->object));
 				goto fail;
 			}

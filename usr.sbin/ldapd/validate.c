@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.5 2010/06/30 19:35:20 martinh Exp $ */
+/*	$OpenBSD: validate.c,v 1.6 2010/06/30 19:42:40 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -197,7 +197,7 @@ has_attribute(struct attr_type *at, struct attr_list *alist)
 		return 0;
 
 	SLIST_FOREACH(ap, alist, next) {
-		if (at == ap->attr_type) 
+		if (at == ap->attr_type)
 			return 1;
 	}
 	return 0;
