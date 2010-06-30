@@ -1,0 +1,2 @@
+pass from route "foo" to any flags S/SA keep state
+pass from any to route "bar" flags S/SA keep state
