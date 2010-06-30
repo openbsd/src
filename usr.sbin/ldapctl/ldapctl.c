@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.3 2010/06/23 16:22:29 jmc Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.4 2010/06/30 21:37:30 martinh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -124,7 +124,7 @@ compact_namespaces(void)
 	struct namespace	*ns;
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next)
-		if (compact_namespace(ns) != 0)
+		if (SLIST_EMPTY(&ns->referrals) && compact_namespace(ns) != 0)
 			return -1;
 
 	return 0;
@@ -217,7 +217,7 @@ index_namespaces(void)
 	struct namespace	*ns;
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next)
-		if (index_namespace(ns) != 0)
+		if (SLIST_EMPTY(&ns->referrals) && index_namespace(ns) != 0)
 			return -1;
 
 	return 0;
