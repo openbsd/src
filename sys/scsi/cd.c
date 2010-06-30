@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.172 2010/06/28 08:35:46 jsing Exp $	*/
+/*	$OpenBSD: cd.c,v 1.173 2010/06/30 17:38:03 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ struct cd_softc {
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
+#define	CDF_DYING	0x40		/* dying, when deactivated */
 #define CDF_WAITING	0x100
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
@@ -252,6 +253,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 int
 cdactivate(struct device *self, int act)
 {
+	struct cd_softc *sc = (struct cd_softc *)self;
 	int rv = 0;
 
 	switch (act) {
@@ -259,9 +261,8 @@ cdactivate(struct device *self, int act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVATE.
-		 */
+		sc->sc_flags |= CDF_DYING;
+		bufq_drain(sc->sc_bufq);
 		break;
 	}
 	return (rv);
@@ -315,6 +316,10 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = cdlookup(unit);
 	if (sc == NULL)
 		return (ENXIO);
+	if (sc->sc_flags & CDF_DYING) {
+		device_unref(&sc->sc_dev);
+		return (ENXIO);
+	}
 
 	sc_link = sc->sc_link;
 	SC_DEBUG(sc_link, SDEV_DB1,
@@ -435,6 +440,10 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = cdlookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
+	if (sc->sc_flags & CDF_DYING) {
+		device_unref(&sc->sc_dev);
+		return (ENXIO);
+	}
 
 	if ((error = cdlock(sc)) != 0) {
 		device_unref(&sc->sc_dev);
@@ -486,7 +495,12 @@ cdstrategy(struct buf *bp)
 	struct cd_softc *sc;
 	int s;
 
-	if ((sc = cdlookup(DISKUNIT(bp->b_dev))) == NULL) {
+	sc = cdlookup(DISKUNIT(bp->b_dev));
+	if (sc == NULL) {
+		bp->b_error = ENXIO;
+		goto bad;
+	}
+	if (sc->sc_flags & CDF_DYING) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -538,7 +552,7 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/*
-	 * Correctly set the buf to indicate a completed xfer
+	 * Set the buf to indicate no xfer was done.
 	 */
 	bp->b_resid = bp->b_bcount;
 	s = splbio();
@@ -577,6 +591,11 @@ cdstart(struct scsi_xfer *xs)
 	int read;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart\n"));
+
+	if (sc->sc_flags & CDF_DYING) {
+		scsi_xs_put(xs);
+		return;
+	}
 
 	/*
 	 * If the device has become invalid, abort all the
@@ -784,6 +803,10 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc = cdlookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
+	if (sc->sc_flags & CDF_DYING) {
+		device_unref(&sc->sc_dev);
+		return (ENXIO);
+	}
 
 	SC_DEBUG(sc->sc_link, SDEV_DB2, ("cdioctl 0x%lx\n", cmd));
 
