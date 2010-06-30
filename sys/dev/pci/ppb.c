@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.41 2010/04/06 22:28:07 tedu Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.42 2010/06/30 05:14:39 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -81,6 +81,8 @@ struct ppb_softc {
 	pcireg_t sc_bir;
 	pcireg_t sc_bcr;
 	pcireg_t sc_int;
+
+	pcireg_t sc_slcsr;
 };
 
 int	ppbmatch(struct device *, void *, void *);
@@ -357,6 +359,9 @@ ppbactivate(struct device *self, int act)
 		sc->sc_bir = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
 		sc->sc_bcr = pci_conf_read(pc, tag, PPB_REG_BRIDGECONTROL);
 		sc->sc_int = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+		if (sc->sc_cap_off)
+			sc->sc_slcsr = pci_conf_read(pc, tag,
+			    sc->sc_cap_off + PCI_PCIE_SLCSR);
 		break;
 	case DVACT_RESUME:
 		/* Restore the registers saved above. */
@@ -364,6 +369,9 @@ ppbactivate(struct device *self, int act)
 		pci_conf_write(pc, tag, PPB_REG_BUSINFO, sc->sc_bir);
 		pci_conf_write(pc, tag, PPB_REG_BRIDGECONTROL, sc->sc_bcr);
 		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, sc->sc_int);
+		if (sc->sc_cap_off)
+			pci_conf_write(pc, tag,
+			    sc->sc_cap_off + PCI_PCIE_SLCSR, sc->sc_slcsr);
 
 		/* Restore I/O window. */
 		blr = pci_conf_read(pc, tag, PPB_REG_IOSTATUS);
