@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.128 2010/06/29 20:25:57 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.129 2010/06/30 00:40:28 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -140,13 +140,26 @@ struct process {
 	 */
 	struct proc *ps_mainproc;
 	struct	pcred *ps_cred;		/* Process owner's identity. */
-	struct	plimit *ps_limit;	/* Process limits. */
 
 	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
-	int	ps_refcnt;		/* Number of references. */
 
-	u_int	ps_rdomain;		/* Process routing domain. */
+/* The following fields are all zeroed upon creation in process_new. */
+#define	ps_startzero	ps_klist
 	struct	klist ps_klist;		/* knotes attached to this process */
+
+/* End area that is zeroed on creation. */
+#define	ps_endzero	ps_startcopy
+
+/* The following fields are all copied upon creation in process_new. */
+#define	ps_startcopy	ps_limit
+
+	struct	plimit *ps_limit;	/* Process limits. */
+	u_int	ps_rdomain;		/* Process routing domain. */
+
+/* End area that is copied on creation. */
+#define ps_endcopy	ps_refcnt
+
+	int	ps_refcnt;		/* Number of references. */
 };
 #else
 struct process;

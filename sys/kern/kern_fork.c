@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.116 2010/06/29 20:25:57 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.117 2010/06/30 00:40:28 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -156,14 +156,29 @@ process_new(struct proc *newproc, struct proc *parentproc)
 {
 	struct process *pr, *parent;
 
-	pr = pool_get(&process_pool, PR_WAITOK | PR_ZERO);
+	pr = pool_get(&process_pool, PR_WAITOK);
 	pr->ps_mainproc = newproc;
 	TAILQ_INIT(&pr->ps_threads);
 	TAILQ_INSERT_TAIL(&pr->ps_threads, newproc, p_thr_link);
 	pr->ps_refcnt = 1;
 
 	parent = parentproc->p_p;
-	pr->ps_rdomain = parent->ps_rdomain;
+
+	/*
+	 * Make a process structure for the new process.
+	 * Start by zeroing the section of proc that is zero-initialized,
+	 * then copy the section that is copied directly from the parent.
+	 */
+	bzero(&pr->ps_startzero,
+	    (unsigned) ((caddr_t)&pr->ps_endzero - (caddr_t)&pr->ps_startzero));
+	bcopy(&parent->ps_startcopy, &pr->ps_startcopy,
+	    (unsigned) ((caddr_t)&pr->ps_endcopy - (caddr_t)&pr->ps_startcopy));
+
+	/* post-copy fixups */
+	pr->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
+	bcopy(parent->ps_cred, pr->ps_cred, sizeof(*pr->ps_cred));
+	crhold(parent->ps_cred->pc_ucred);
+	pr->ps_limit->p_refcnt++;
 
 	newproc->p_p = pr;
 }
@@ -281,11 +296,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));
 	if (flags & FORK_PTRACE)
 		atomic_setbits_int(&p2->p_flag, p1->p_flag & P_TRACED);
-	if ((flags & FORK_THREAD) == 0) {
-		p2->p_p->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
-		bcopy(p1->p_p->ps_cred, p2->p_p->ps_cred, sizeof(*p2->p_p->ps_cred));
-		crhold(p1->p_ucred);
-	}
 
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
@@ -298,11 +308,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		p2->p_fd = fdshare(p1);
 	else
 		p2->p_fd = fdcopy(p1);
-
-	if ((flags & FORK_THREAD) == 0) {
-		p2->p_p->ps_limit = p1->p_p->ps_limit;
-		p2->p_p->ps_limit->p_refcnt++;
-	}
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		atomic_setbits_int(&p2->p_flag, P_CONTROLT);
