@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.117 2010/06/30 00:40:28 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.118 2010/06/30 21:01:45 thib Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -205,8 +205,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 #endif
 
 	/* sanity check some flag combinations */
-	if (flags & FORK_THREAD)
-	{
+	if (flags & FORK_THREAD) {
 		if (!rthreads_enabled)
 			return (ENOTSUP);
 		if ((flags & (FORK_SIGHAND | FORK_NOZOMBIE)) !=
