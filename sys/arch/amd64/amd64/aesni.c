@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.3 2010/06/30 17:11:05 thib Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.4 2010/06/30 17:14:36 thib Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -26,18 +26,15 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 
-#ifdef CRYPTO
 #include <crypto/cryptodev.h>
 #include <crypto/rijndael.h>
 #include <crypto/xform.h>
 #include <crypto/cryptosoft.h>
-#endif
 
 #include <dev/rndvar.h>
 
 #include <machine/fpu.h>
 
-#ifdef CRYPTO
 
 /* defines from crypto/xform.c */
 #define AESCTR_NONCESIZE	4
@@ -488,5 +485,3 @@ out:
 	crypto_done(crp);
 	return (err);
 }
-
-#endif /* CRYPTO */
