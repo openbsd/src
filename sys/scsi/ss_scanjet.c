@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.41 2010/06/26 23:24:45 guenther Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.42 2010/06/30 00:02:00 dlg Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ scanjet_read_done(struct scsi_xfer *xs)
 		/* The adapter is busy, requeue the buf and try it later. */
 		BUFQ_REQUEUE(ss->sc_bufq, bp);
                 scsi_xs_put(xs);
-		SET(ss->flags, SSF_WAITING); /* break out of cdstart loop */
+		SET(ss->flags, SSF_WAITING);
 		timeout_add(&ss->timeout, 1);
 		return;
 
