@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.56 2010/05/10 09:17:55 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.57 2010/06/30 10:10:17 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -569,10 +569,7 @@ use constant {
 sub new
 {
 	my ($class, $fname) = @_;
-	open (my $out, '>', $fname);
-	if (!defined $out) {
-		return;
-	}
+	open (my $out, '>', $fname) or return;
 	my $bs = (stat $out)[11];
 	my $zeroes;
 	if (defined $bs) {
