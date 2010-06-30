@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.17 2010/06/10 10:04:10 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.18 2010/06/30 01:47:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -608,7 +608,7 @@ nbr_mapping_add(struct nbr *nbr, struct mapping_head *mh, struct map *map)
 	if (me == NULL)
 		fatal("nbr_mapping_add");
 
-	me->prefix = map->prefix;
+	me->prefix = map->prefix.s_addr;
 	me->prefixlen = map->prefixlen;
 	me->label = map->label;
 
@@ -621,7 +621,7 @@ nbr_mapping_find(struct nbr *nbr, struct mapping_head *mh, struct map *map)
 	struct mapping_entry	*me = NULL;
 
 	TAILQ_FOREACH(me, mh, entry) {
-		if (me->prefix == map->prefix &&
+		if (me->prefix == map->prefix.s_addr &&
 		    me->prefixlen == map->prefixlen)
 			return (me);
 	}

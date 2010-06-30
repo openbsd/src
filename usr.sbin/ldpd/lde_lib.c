@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.21 2010/06/09 14:01:03 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.22 2010/06/30 01:47:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -159,7 +159,7 @@ rt_snap(u_int32_t peerid)
 	bzero(&map, sizeof(map));
 	RB_FOREACH(f, fec_tree, &rt) {
 		r = (struct rt_node *)f;
-		map.prefix = r->fec.prefix.s_addr;
+		map.prefix = r->fec.prefix;
 		map.prefixlen = r->fec.prefixlen;
 		map.label = r->local_label;
 
@@ -314,7 +314,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	log_debug("label mapping from nbr %s, FEC %s/%u, label %u",
 	    inet_ntoa(ln->id), log_fec(map), map->label);
 
-	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix,
+	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
 	if (rn == NULL) {
 		/* The route is not yet in fib. If we are in liberal mode
@@ -326,7 +326,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		if (rn == NULL)
 			fatal("lde_check_mapping");
 
-		rn->fec.prefix.s_addr = map->prefix;
+		rn->fec.prefix = map->prefix;
 		rn->fec.prefixlen = map->prefixlen;
 		rn->local_label = lde_assign_label();
 		rn->remote_label = NO_LABEL;
@@ -419,7 +419,7 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	log_debug("label request from nbr %s, FEC %s",
 	    inet_ntoa(ln->id), log_fec(map));
 
-	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix,
+	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
 	if (rn == NULL || rn->remote_label == NO_LABEL) {
 		lde_send_notification(ln->peerid, S_NO_ROUTE, map->messageid,

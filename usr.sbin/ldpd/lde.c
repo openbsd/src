@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.17 2010/06/09 13:32:15 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.18 2010/06/30 01:47:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -607,7 +607,7 @@ lde_nbr_do_mappings(struct rt_node *rn)
 	struct map	 map;
 
 	map.label = rn->local_label;
-	map.prefix = rn->fec.prefix.s_addr;
+	map.prefix = rn->fec.prefix;
 	map.prefixlen = rn->fec.prefixlen;
 
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {

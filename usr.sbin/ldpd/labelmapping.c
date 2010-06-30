@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.12 2010/06/09 14:01:03 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.13 2010/06/30 01:47:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -134,7 +134,7 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 
 	do {
 		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix, &map.prefixlen)) == -1 ||
+		    &map.prefix.s_addr, &map.prefixlen)) == -1 ||
 		    addr_type == FEC_WILDCARD) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid,
 			    lm->type);
@@ -229,7 +229,7 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 
 	do {
 		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix, &map.prefixlen)) == -1 ||
+		    &map.prefix.s_addr, &map.prefixlen)) == -1 ||
 		    addr_type == FEC_WILDCARD) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lr->msgid,
 			    lr->type);
@@ -349,14 +349,14 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 	do {
 		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix, &map.prefixlen)) == -1) {
+		    &map.prefix.s_addr, &map.prefixlen)) == -1) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lw->msgid,
 			    lw->type);
 			return (-1);
 		}
 
 		if (addr_type == FEC_WILDCARD) {
-			map.prefix = 0;
+			map.prefix.s_addr = 0;
 			map.prefixlen = 0;
 			map.flags |= F_MAP_WILDCARD;
 
@@ -476,14 +476,14 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 	}
 	do {
 		if ((tlen = tlv_decode_fec_elm(buf, feclen, &addr_type,
-		    &map.prefix, &map.prefixlen)) == -1) {
+		    &map.prefix.s_addr, &map.prefixlen)) == -1) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lr->msgid,
 			    lr->type);
 			return (-1);
 		}
 
 		if (addr_type == FEC_WILDCARD) {
-			map.prefix = 0;
+			map.prefix.s_addr = 0;
 			map.prefixlen = 0;
 			map.flags |= F_MAP_WILDCARD;
 
