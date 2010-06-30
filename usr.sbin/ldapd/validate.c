@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.3 2010/06/30 03:24:40 martinh Exp $ */
+/*	$OpenBSD: validate.c,v 1.4 2010/06/30 04:17:04 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -23,10 +23,6 @@
 #include <string.h>
 
 #include "ldapd.h"
-
-#define OBJ_NAME(obj)	 ((obj)->names ? SLIST_FIRST((obj)->names)->name : \
-				(obj)->oid)
-#define ATTR_NAME(at)	 OBJ_NAME(at)
 
 static int
 validate_required_attributes(struct ber_element *entry, struct object *obj)
@@ -246,7 +242,7 @@ olist_push(struct obj_list *olist, struct object *obj)
 	optr->object = obj;
 	SLIST_INSERT_HEAD(olist, optr, next);
 
-	/* Expand the list of object classes along the superior chain.
+	/* Expand the list of object classes along the superclass chain.
 	 */
 	if (obj->sup != NULL)
 		SLIST_FOREACH(sup, obj->sup, next)
@@ -261,7 +257,7 @@ is_super(struct object *sup, struct object *obj)
 	struct obj_ptr	*optr;
 
 	if (sup == NULL || obj->sup == NULL)
-		return NULL;
+		return 0;
 
 	SLIST_FOREACH(optr, obj->sup, next)
 		if (optr->object == sup || is_super(sup, optr->object))
