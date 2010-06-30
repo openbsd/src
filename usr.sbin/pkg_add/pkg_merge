@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_merge,v 1.18 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: pkg_merge,v 1.19 2010/06/30 11:22:23 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -129,29 +129,31 @@ sub occurs_first
 
 
 my $ui = OpenBSD::State->new("pkg_merge");
-$ui->usage_is('[-v] -o result pkg pkg2 ...');
-
-our ($opt_o, $opt_v);
-
-$ui->do_options(sub { getopts('o:v'); });
-
-if (!defined $opt_o) {
+$ui->{no_exports} = 1;
+$ui->handle_options('o:v', '[-v] -o result pkg pkg2 ...');
+my $out = $ui->opt('o');
+my $verbose = $ui->opt('v');
+if (!$out) {
 	$ui->usage("Missing -o result");
 }
+if (-e $out) {
+	$ui->unlink($verbose, $out);
+}
 
-if (@ARGV<2) {
+
+if (@ARGV < 2) {
 	$ui->usage("Can't merge less than two packages");
 }
 my @tomerge;
 
 my $prefix = 'a';
 my $allprefix = '';
-open( my $outfh, "|-", OpenBSD::Paths->gzip, "-o", $opt_o);
+open( my $outfh, "|-", OpenBSD::Paths->gzip, "-o", $out);
 
 my $wrarc = OpenBSD::Ustar->new($outfh, ".");
 for my $pkgname (@ARGV) {
-	my $true_package = OpenBSD::PackageLocator->find($pkgname);
-	die "No such package $pkgname" unless $true_package;
+	my $true_package = $ui->repo->find($pkgname);
+	$ui->fatal("No such package #1", $pkgname) unless $true_package;
 	my $dir = $true_package->info;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 
@@ -230,7 +232,9 @@ while(1) {
 		    }
 		}
 		$total_files += $copies;
-		$total_size += $ref->{size} * $copies;
+		if (defined $ref->{size}) {
+			$total_size += $ref->{size} * $copies;
+		}
 		$ref->copy_over($wrarc, $currentprefix, $pkg);
 		@mergeable = @todo;
 		$all_copies += $copies;
@@ -239,13 +243,13 @@ while(1) {
 			$i->make_alias($wrarc, $currentprefix, $pkg2, $name);
 		}
 	}
-	if ($opt_v) {
+	if ($verbose) {
 		if ($all_copies) {
-			print "$name (shared: $all_copies)\n";
+			$ui->say("#1 (shared: #2)", $name, $all_copies);
 		} else {
-			print $name, "\n";
+			$ui->say("#1", $name);
 		}
 	}
 }
 $wrarc->close;
-print "Shared $total_files files for $total_size bytes\n" if $opt_v;
+$ui->say("Shared #1 files for #2 bytes", $total_files, $total_size) if $verbose;
