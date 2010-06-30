@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.14 2010/06/30 05:21:38 claudio Exp $ */
+/*	$OpenBSD: lde.h,v 1.15 2010/06/30 22:15:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -77,26 +77,31 @@ struct lde_nbr {
 	u_int16_t			 lspace;
 };
 
+struct rt_lsp {
+	LIST_ENTRY(rt_lsp)	entry;
+
+	struct in_addr		nexthop;
+	u_int32_t		remote_label;
+};
+
 struct rt_node {
 	struct fec		fec;
-	struct in_addr		nexthop;
 
+	LIST_HEAD(, rt_lsp)	lsp;		/* label switching pathes */
 	LIST_HEAD(, lde_map)	downstream;	/* recv mappings */
 	LIST_HEAD(, lde_map)	upstream;	/* sent mappings */
 
 	u_int32_t		local_label;
-	u_int32_t		remote_label;
 	u_int16_t		lspace;
 	u_int8_t		flags;
-	u_int8_t		present;	/* Is it present in fib? */
 };
 
 /* lde.c */
 pid_t		lde(struct ldpd_conf *, int [2], int [2], int [2]);
 int		lde_imsg_compose_ldpe(int, u_int32_t, pid_t, void *, u_int16_t);
 u_int32_t	lde_assign_label(void);
-void		lde_send_change_klabel(struct rt_node *);
-void		lde_send_delete_klabel(struct rt_node *);
+void		lde_send_change_klabel(struct rt_node *, struct rt_lsp *);
+void		lde_send_delete_klabel(struct rt_node *, struct rt_lsp *);
 void		lde_send_labelmapping(u_int32_t, struct map *);
 void		lde_send_labelrequest(u_int32_t, struct map *);
 void		lde_send_labelrelease(u_int32_t, struct map *);
@@ -105,6 +110,7 @@ void		lde_send_notification(u_int32_t, u_int32_t, u_int32_t,
 
 void		lde_nbr_del(struct lde_nbr *);
 void		lde_nbr_do_mappings(struct rt_node *);
+struct lde_map *lde_map_add(struct lde_nbr *, struct rt_node *, int);
 struct lde_nbr *lde_find_address(struct in_addr);
 
 

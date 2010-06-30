@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.19 2010/06/30 05:21:38 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.20 2010/06/30 22:15:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -431,29 +431,34 @@ lde_assign_label(void)
 }
 
 void
-lde_send_change_klabel(struct rt_node *r)
+lde_send_change_klabel(struct rt_node *rr, struct rt_lsp *rl)
 {
 	struct kroute	kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->fec.prefix.s_addr;
-	kr.prefixlen = r->fec.prefixlen;
-	kr.nexthop.s_addr = r->nexthop.s_addr;
-	kr.local_label = r->local_label;
-	kr.remote_label = r->remote_label;
+	kr.prefix.s_addr = rr->fec.prefix.s_addr;
+	kr.prefixlen = rr->fec.prefixlen;
+	kr.local_label = rr->local_label;
+
+	kr.nexthop.s_addr = rl->nexthop.s_addr;
+	kr.remote_label = rl->remote_label;
 
 	imsg_compose_event(iev_main, IMSG_KLABEL_CHANGE, 0, 0, -1,
 	     &kr, sizeof(kr));
 }
 
 void
-lde_send_delete_klabel(struct rt_node *r)
+lde_send_delete_klabel(struct rt_node *rr, struct rt_lsp *rl)
 {
 	struct kroute	 kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->fec.prefix.s_addr;
-	kr.prefixlen = r->fec.prefixlen;
+	kr.prefix.s_addr = rr->fec.prefix.s_addr;
+	kr.prefixlen = rr->fec.prefixlen;
+	kr.local_label = rr->local_label;
+
+	kr.nexthop.s_addr = rl->nexthop.s_addr;
+	kr.remote_label = rl->remote_label;
 
 	imsg_compose_event(iev_main, IMSG_KLABEL_DELETE, 0, 0, -1,
 	     &kr, sizeof(kr));
@@ -585,10 +590,11 @@ lde_nbr_clear(void)
 void
 lde_nbr_do_mappings(struct rt_node *rn)
 {
+	struct map	 map;
 	struct lde_nbr	*ln;
 	struct lde_map	*lm;
 	struct lde_req	*lr;
-	struct map	 map;
+	struct rt_lsp	*rl;
 
 	map.label = rn->local_label;
 	map.prefix = rn->fec.prefix;
@@ -610,9 +616,12 @@ lde_nbr_do_mappings(struct rt_node *rn)
 		if (ldeconf->mode & MODE_DIST_ORDERED) {
 			/* ordered mode needs the downstream path to be
 			 * ready before we can send the mapping upstream */
-			if (rn->nexthop.s_addr != INADDR_ANY &&
-			    rn->remote_label == NO_LABEL)
-				/* not local FEC but no remote-label, skip */
+			LIST_FOREACH(rl, &rn->lsp, entry) {
+				/* no remote-label, skip */
+				if (rl->remote_label == NO_LABEL)
+					continue;
+			}
+			if (rl == NULL)
 				continue;
 		}
 
@@ -640,6 +649,33 @@ lde_nbr_do_mappings(struct rt_node *rn)
 
 		lde_send_labelmapping(ln->peerid, &map);
 	}
+}
+
+struct lde_map *
+lde_map_add(struct lde_nbr *ln, struct rt_node *rn, int sent)
+{
+	struct lde_map  *me;
+
+	me = calloc(1, sizeof(*me));
+	if (me == NULL)
+		fatal("lde_map_add");
+
+	me->fec = rn->fec;
+	me->nexthop = ln;
+
+	if (sent) {
+		LIST_INSERT_HEAD(&rn->upstream, me, entry);
+		if (fec_insert(&ln->sent_map, &me->fec))
+			log_warnx("failed to add %s/%u to sent map",
+			    inet_ntoa(me->fec.prefix), me->fec.prefixlen);
+	} else {
+		LIST_INSERT_HEAD(&rn->downstream, me, entry);
+		if (fec_insert(&ln->recv_map, &me->fec))
+			log_warnx("failed to add %s/%u to recv map",
+			    inet_ntoa(me->fec.prefix), me->fec.prefixlen);
+	}
+
+	return (me);
 }
 
 void
