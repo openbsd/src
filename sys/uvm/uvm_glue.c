@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.50 2009/08/11 18:43:33 blambert Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.51 2010/06/30 20:20:18 thib Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -214,13 +214,8 @@ uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
  *   than just hang
  */
 void
-uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	boolean_t shared;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+uvm_fork(struct proc *p1, struct proc *p2, boolean_t shared, void *stack,
+    size_t stacksize, void (*func)(void *), void * arg)
 {
 	struct user *up = p2->p_addr;
 
