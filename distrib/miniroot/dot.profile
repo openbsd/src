@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.14 2010/01/10 13:32:56 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.15 2010/06/30 19:31:19 halex Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -61,8 +61,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 Welcome to the $OBSD installation program.
 __EOT
-	while :; do
-		read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
+	while read REPLY?'(I)nstall, (U)pgrade or (S)hell? '; do
 		case $REPLY in
 		i*|I*)	/install && break
 			;;
