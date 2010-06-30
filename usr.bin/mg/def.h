@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.112 2009/06/05 18:02:06 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.113 2010/06/30 19:12:54 oga Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -234,6 +234,7 @@ struct mgwin {
 #define WEPHEM 0x01 			/* Window is ephemeral.	 	*/
 
 struct undo_rec;
+TAILQ_HEAD(undoq, undo_rec);
 
 /*
  * Text is kept in buffers. A buffer header, described
@@ -260,7 +261,7 @@ struct buffer {
 	char		 b_fname[NFILEN]; /* File name			 */
 	char		 b_cwd[NFILEN]; /* working directory		 */
 	struct fileinfo	 b_fi;		/* File attributes		 */
-	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list		*/
+	struct undoq	 b_undo;	/* Undo actions list		 */
 	int		 b_undopos;	/* Where we were during last undo */
 	struct undo_rec *b_undoptr;
 	int		 b_dotline;	/* Line number of dot */
@@ -287,7 +288,7 @@ struct buffer {
  * This structure holds information about recent actions for the Undo command.
  */
 struct undo_rec {
-	LIST_ENTRY(undo_rec) next;
+	TAILQ_ENTRY(undo_rec) next;
 	enum {
 		INSERT = 1,
 		DELETE,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.73 2009/06/05 18:37:13 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.74 2010/06/30 19:12:54 oga Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -198,9 +198,10 @@ killbuffer(struct buffer *bp)
 			bp1->b_altb = (bp->b_altb == bp1) ? NULL : bp->b_altb;
 		bp1 = bp1->b_bufp;
 	}
-	rec = LIST_FIRST(&bp->b_undo);
+	rec = TAILQ_FIRST(&bp->b_undo);
+
 	while (rec != NULL) {
-		next = LIST_NEXT(rec, next);
+		next = TAILQ_NEXT(rec, next);
 		free_undo_record(rec);
 		rec = next;
 	}
@@ -535,7 +536,7 @@ bnew(const char *bname)
 	bp->b_nwnd = 0;
 	bp->b_headp = lp;
 	bp->b_nmodes = defb_nmodes;
-	LIST_INIT(&bp->b_undo);
+	TAILQ_INIT(&bp->b_undo);
 	bp->b_undoptr = NULL;
 	memset(&bp->b_undopos, 0, sizeof(bp->b_undopos));
 	i = 0;
