@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.5 2010/06/30 19:26:39 martinh Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.6 2010/06/30 20:36:57 martinh Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -54,7 +54,7 @@ Additional configuration files can be included with the
 .Ic include
 keyword, for example:
 .Bd -literal -offset indent
-include "/etc/ldap/inetorgperson.schema"
+include "/etc/ldap/sub.namespace.conf"
 .Ed
 .Pp
 The syntax of
