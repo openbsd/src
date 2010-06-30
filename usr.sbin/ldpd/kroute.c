@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.17 2010/06/30 05:21:38 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.18 2010/06/30 05:27:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -62,7 +62,7 @@ struct kif_node {
 	struct kif		 k;
 };
 
-void	kr_redist_remove(struct kroute_node *);
+void	kr_redist_remove(struct kroute *);
 int	kr_redist_eval(struct kroute *);
 void	kr_redistribute(struct kroute_node *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
@@ -408,15 +408,15 @@ kr_ifinfo(char *ifname, pid_t pid)
 }
 
 void
-kr_redist_remove(struct kroute_node *kn)
+kr_redist_remove(struct kroute *kr)
 {
 	/* was the route redistributed? */
-	if ((kn->r.flags & F_REDISTRIBUTED) == 0)
+	if ((kr->flags & F_REDISTRIBUTED) == 0)
 		return;
 
 	/* remove redistributed flag */
-	kn->r.flags &= ~F_REDISTRIBUTED;
-	main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &kn->r,
+	kr->flags &= ~F_REDISTRIBUTED;
+	main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, kr,
 	    sizeof(struct kroute));
 }
 
@@ -459,12 +459,7 @@ kr_redist_eval(struct kroute *kr)
 	return (1);
 
 dont_redistribute:
-	/* was the route redistributed? */
-	if ((kr->flags & F_REDISTRIBUTED) == 0)
-		return (0);
-
-	kr->flags &= ~F_REDISTRIBUTED;
-	main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, kr, sizeof(struct kroute));
+	kr_redist_remove(kr);
 	return (1);
 }
 
@@ -652,7 +647,7 @@ kroute_remove(struct kroute_node *kr)
 		krm->next = kr->next;
 	}
 
-	kr_redist_remove(kr);
+	kr_redist_remove(&kr->r);
 
 	free(kr);
 	return (0);
