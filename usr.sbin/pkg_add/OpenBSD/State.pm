@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.9 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: State.pm,v 1.10 2010/06/30 11:32:20 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -56,6 +56,14 @@ sub match_locations
 	require OpenBSD::PackageLocator;
 
 	return OpenBSD::PackageLocator->match_locations(@_);
+}
+
+sub grabPlist
+{
+	my $self = shift;
+	require OpenBSD::PackageLocator;
+
+	return OpenBSD::PackageLocator->grabPlist(@_);
 }
 
 sub path
