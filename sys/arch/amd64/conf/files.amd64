@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.56 2010/05/24 23:19:21 deraadt Exp $
+#	$OpenBSD: files.amd64,v 1.57 2010/07/01 00:24:27 thib Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -10,6 +10,8 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
 file	arch/amd64/amd64/via.c
+#file	arch/amd64/amd64/aes_intel.S		crypto
+#file	arch/amd64/amd64/aesni.c		crypto
 file	arch/amd64/amd64/amd64errata.c
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/amd64_mem.c		mtrr
