@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.504 2010/06/30 22:17:46 phessler Exp $
+$OpenBSD: usbdevs,v 1.505 2010/07/01 03:31:08 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -590,6 +590,7 @@ vendor ARKMICRO		0x6547	Arkmicro
 vendor 3COM2		0x6891	3Com
 vendor EDIMAX		0x7392	EDIMAX
 vendor INTEL		0x8086	Intel
+vendor INTEL2		0x8087	Intel
 vendor ALLWIN		0x8516	ALLWIN Tech
 vendor SITECOM2		0x9016	Sitecom
 vendor MOSCHIP		0x9710	MosChip
@@ -1936,6 +1937,7 @@ product INSYSTEM USBCABLE	0x081a	USB cable
 product INSYSTEM ADAPTERV2	0x5701	USB Storage Adapter V2
 
 /* Intel products */
+product INTEL2 RMH		0x0020	Rate Matching Hub
 product INTEL EASYPC_CAMERA	0x0110	EasyPC
 product INTEL AP310		0x0200	AP310 AnyPoint II
 product INTEL I2011B		0x1111	Wireless 2011B
