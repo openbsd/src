@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.49 2010/07/01 17:05:06 deraadt Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.50 2010/07/01 22:51:23 pirofti Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -165,11 +165,6 @@ static const struct vga_device_description vga_devs[] = {
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,	
 	    	PCI_VENDOR_SONY, 0x9039 },
 	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
-	},
-	{	/* Thinkpad x200s */
-	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD_1, 
-	    	0x17aa, 0x20e4 },	
-	    {	0xffff, 0xffff, 0xffff, 0xffff }, 0, 1
 	},
 	{
 		/* NULL */
