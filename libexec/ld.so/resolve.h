@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.59 2010/05/02 04:57:01 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.60 2010/07/01 19:25:44 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -142,6 +142,10 @@ struct elf_object {
 	/* for object confirmation */
 	dev_t	dev;
 	ino_t inode;
+
+	/* last symbol lookup on this object, to avoid mutiple searches */
+	int lastlookup_head;
+	int lastlookup;
 };
 
 struct dep_node {
@@ -201,8 +205,9 @@ int _dl_load_dep_libs(elf_object_t *object, int flags, int booting);
 int _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);
 void _dl_link_child(elf_object_t *dep, elf_object_t *p);
-void _dl_link_grpsym(elf_object_t *object);
+void _dl_link_grpsym(elf_object_t *object, int checklist);
 void _dl_cache_grpsym_list(elf_object_t *object);
+void _dl_cache_grpsym_list_setup(elf_object_t *object);
 void _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object);
 void _dl_link_dlopen(elf_object_t *dep);
 void _dl_unlink_dlopen(elf_object_t *dep);
@@ -274,5 +279,9 @@ extern int _dl_symcachestat_lookups;
 TAILQ_HEAD(dlochld, dep_node);
 extern struct dlochld _dlopened_child_list;
 
+/* variables used to avoid duplicate node checking */
+uint32_t _dl_searchnum;
+uint32_t _dl_skipnum;
+void _dl_newsymsearch(void);
 
 #endif /* _RESOLVE_H_ */

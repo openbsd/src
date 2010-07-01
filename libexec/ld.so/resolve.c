@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.49 2008/05/05 02:29:02 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.50 2010/07/01 19:25:44 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -159,6 +159,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	/* default dev, inode for dlopen-able objects. */
 	object->dev = 0;
 	object->inode = 0;
+	object->lastlookup = 0;
 	TAILQ_INIT(&object->grpsym_list);
 	TAILQ_INIT(&object->grpref_list);
 
@@ -302,6 +303,26 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 	return ret;
 }
 
+uint32_t _dl_searchnum = 0;
+void
+_dl_newsymsearch(void)
+{
+	_dl_searchnum += 1;
+
+	if (_dl_searchnum < 0) {
+		/* if the signed number roll over, reset
+		 * all counters so we dont get accidental collision
+		 */
+		elf_object_t *walkobj;
+		for (walkobj = _dl_objects;
+		    walkobj != NULL;
+		    walkobj = walkobj->next) {
+			walkobj->lastlookup = 0;
+		}
+		_dl_searchnum = 1;
+	}
+}
+
 Elf_Addr
 _dl_find_symbol(const char *name, const Elf_Sym **this,
     int flags, const Elf_Sym *ref_sym, elf_object_t *req_obj,
@@ -368,6 +389,8 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 		if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT))
 			skip = 1;
 
+		_dl_newsymsearch();
+
 		/*
 		 * search dlopened objects: global or req_obj == dlopened_obj
 		 * and and it's children
@@ -377,6 +400,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 			    (n->data != req_obj->load_object))
 				continue;
 
+			n->data->lastlookup_head = _dl_searchnum;
 			TAILQ_FOREACH(m, &n->data->grpsym_list, next_sib) {
 				if (skip == 1) {
 					if (m->data == req_obj) {
@@ -389,6 +413,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 				if ((flags & SYM_SEARCH_OTHER) &&
 				    (m->data == req_obj))
 					continue;
+				m->data->lastlookup = _dl_searchnum;
 				if (_dl_find_symbol_obj(m->data, name, h, flags,
 				    this, &weak_sym, &weak_object)) {
 					object = m->data;

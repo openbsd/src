@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.30 2010/05/09 09:53:28 matthieu Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.31 2010/07/01 19:25:44 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -448,13 +448,20 @@ _dl_link_child(elf_object_t *dep, elf_object_t *p)
 }
 
 void
-_dl_link_grpsym(elf_object_t *object)
+_dl_link_grpsym(elf_object_t *object, int checklist)
 {
 	struct dep_node *n;
 
-	TAILQ_FOREACH(n, &_dl_loading_object->grpsym_list, next_sib)
-		if (n->data == object)
+	if (checklist) {
+		TAILQ_FOREACH(n, &_dl_loading_object->grpsym_list, next_sib)
+			if (n->data == object)
+				return; /* found, dont bother adding */
+	} else {
+		if (object->lastlookup == _dl_searchnum) {
 			return; /* found, dont bother adding */
+		}
+	}
+	object->lastlookup = _dl_searchnum;
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -463,6 +470,12 @@ _dl_link_grpsym(elf_object_t *object)
 	TAILQ_INSERT_TAIL(&_dl_loading_object->grpsym_list, n, next_sib);
 }
 
+void
+_dl_cache_grpsym_list_setup(elf_object_t *object)
+{
+	_dl_newsymsearch();
+	_dl_cache_grpsym_list(object);
+}
 void
 _dl_cache_grpsym_list(elf_object_t *object)
 {
@@ -475,7 +488,7 @@ _dl_cache_grpsym_list(elf_object_t *object)
 	 */
 
 	TAILQ_FOREACH(n, &object->child_list, next_sib)
-		_dl_link_grpsym(n->data);
+		_dl_link_grpsym(n->data, 0);
 
 	TAILQ_FOREACH(n, &object->child_list, next_sib)
 		_dl_cache_grpsym_list(n->data);
