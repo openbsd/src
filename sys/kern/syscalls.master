@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.100 2010/07/01 01:54:38 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.101 2010/07/01 23:10:40 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -516,8 +516,7 @@
 262	UNIMPL
 263	STD		{ int sys_pipe(int *fdp); }
 264	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
-265	COMPAT_35	{ int sys_fhstat(const fhandle_t *fhp, \
-			    struct stat35 *sb); }
+265	UNIMPL
 266	UNIMPL
 267	STD		{ ssize_t sys_preadv(int fd, \
 			  const struct iovec *iovp, int iovcnt, \
