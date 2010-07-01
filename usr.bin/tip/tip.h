@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.48 2010/07/01 21:28:01 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.49 2010/07/01 21:43:38 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -61,8 +61,10 @@ typedef	struct {
 	char	*v_name;	/* variable name */
 	int	 v_flags;	/* type and flags */
 	char	*v_abbrev;	/* possible abbreviation */
-	char	*v_value;	/* casted to a union later */
-}  value_t;
+
+	char	*v_string;
+	int	 v_number;
+} value_t;
 extern value_t	vtable[];	/* variable table */
 
 #define V_STRING	01	/* string valued */
@@ -74,16 +76,6 @@ extern value_t	vtable[];	/* variable table */
 #define V_CHANGED	020	/* to show modification */
 #define V_READONLY	040	/* variable is not writable */
 #define V_INIT		0100	/* static data space used for initialization */
-
-#define vgetstr(v)	(vtable[v].v_value)
-#define	vgetnum(v)	((long)(vtable[v].v_value))
-
-#define vsetstr(v, s) do {				\
-		vtable[v].v_value = s;			\
-	} while (0)
-#define	vsetnum(v, n) do {				\
-		vtable[v].v_value = (char *)(long)(n);	\
-	} while (0)
 
 /* Variable table indexes. */
 enum {
@@ -232,3 +224,7 @@ void	tipout(void);
 void	vinit(void);
 void	vlex(char *);
 int	vstring(char *, char *);
+char   *vgetstr(int);
+int	vgetnum(int);
+void	vsetstr(int, char *);
+void	vsetnum(int, int);

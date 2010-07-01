@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.40 2010/07/01 21:28:01 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.41 2010/07/01 21:43:38 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -800,8 +800,8 @@ listvariables(int c)
 		fputs(p->v_name, stdout);
 		switch (p->v_flags & V_TYPEMASK) {
 		case V_STRING:
-			if (p->v_value) {
-				strnvis(buf, p->v_value, sizeof(buf),
+			if (p->v_string) {
+				strnvis(buf, p->v_string, sizeof(buf),
 				    VIS_WHITE|VIS_OCTAL);
 				printf(" %s", buf);
 			}
@@ -809,13 +809,13 @@ listvariables(int c)
 			putchar('\n');
 			break;
 		case V_NUMBER:
-			printf(" %ld\r\n", (long)p->v_value);
+			printf(" %d\r\n", p->v_number);
 			break;
 		case V_BOOL:
-			printf(" %s\r\n", p->v_value ? "true" : "false");
+			printf(" %s\r\n", p->v_number ? "true" : "false");
 			break;
 		case V_CHAR:
-			vis(buf, (int)(long)p->v_value, VIS_WHITE|VIS_OCTAL, 0);
+			vis(buf, p->v_number, VIS_WHITE|VIS_OCTAL, 0);
 			printf(" %s\r\n", buf);
 			break;
 		}

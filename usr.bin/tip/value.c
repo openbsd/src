@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.25 2010/07/01 21:28:01 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.26 2010/07/01 21:43:38 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -32,6 +32,10 @@
 
 #include "tip.h"
 
+/*
+ * Variable manipulation.
+ */
+
 #define MIDDLE	35
 
 static value_t *vlookup(char *);
@@ -42,9 +46,34 @@ static char *vinterp(char *, int);
 
 static size_t col = 0;
 
-/*
- * Variable manipulation
- */
+/* Get a string value. */
+char *
+vgetstr(int value)
+{
+	return (vtable[value].v_string);
+}
+
+/* Get a number value. */
+int
+vgetnum(int value)
+{
+	return (vtable[value].v_number);
+}
+
+/* Set a string value. */
+void
+vsetstr(int value, char *string)
+{
+	vtable[value].v_string = string;
+}
+
+/* Set a number value. */
+void
+vsetnum(int value, int number)
+{
+	vtable[value].v_number = number;
+}
+
 void
 vinit(void)
 {
@@ -90,30 +119,31 @@ vassign(value_t *p, char *v)
 
 	switch (p->v_flags & V_TYPEMASK) {
 	case V_STRING:
-		if (p->v_value && strcmp(p->v_value, v) == 0)
+		if (p->v_string && strcmp(p->v_string, v) == 0)
 			return;
 		if (!(p->v_flags & V_INIT))
-			free(p->v_value);
-		if ((p->v_value = strdup(v)) == NULL) {
+			free(p->v_string);
+		if ((p->v_string = strdup(v)) == NULL) {
 			printf("out of core\r\n");
 			return;
 		}
 		p->v_flags &= ~V_INIT;
 		break;
 	case V_NUMBER:
-		if (p->v_value == v)
+		if (p->v_number == (int)(long)v)
 			return;
-		p->v_value = v;
+		p->v_number = (int)(long)v;
 		break;
 	case V_BOOL:
-		if ((long)p->v_value == (*v != '!'))
+		if (p->v_number == (*v != '!'))
 			return;
-		p->v_value = (char *)(long)(*v != '!');
+		p->v_number = (*v != '!');
 		break;
 	case V_CHAR:
-		if ((char)(long)p->v_value == *v)
+		if (p->v_number == *v)
 			return;
-		p->v_value = (char *)(long)*v;
+		p->v_number = *v;
+		break;
 	}
 	p->v_flags |= V_CHANGED;
 }
@@ -191,7 +221,7 @@ vprint(value_t *p)
 	switch (p->v_flags & V_TYPEMASK) {
 
 	case V_BOOL:
-		if (!p->v_value) {
+		if (!p->v_number) {
 			col++;
 			putchar('!');
 		}
@@ -201,8 +231,8 @@ vprint(value_t *p)
 	case V_STRING:
 		printf("%s=", p->v_name);
 		col++;
-		if (p->v_value) {
-			cp = interp(p->v_value);
+		if (p->v_string) {
+			cp = interp(p->v_string);
 			col += size(cp);
 			printf("%s", cp);
 		}
@@ -210,14 +240,14 @@ vprint(value_t *p)
 
 	case V_NUMBER:
 		col += 6;
-		printf("%s=%-5ld", p->v_name, (long)p->v_value);
+		printf("%s=%-5d", p->v_name, p->v_number);
 		break;
 
 	case V_CHAR:
 		printf("%s=", p->v_name);
 		col++;
-		if (p->v_value) {
-			cp = ctrl((char)(long)p->v_value);
+		if (p->v_number) {
+			cp = ctrl(p->v_number);
 			col += size(cp);
 			printf("%s", cp);
 		}
