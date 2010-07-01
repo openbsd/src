@@ -337,6 +337,7 @@ void ENGINE_load_sureware(void);
 void ENGINE_load_ubsec(void);
 #endif
 void ENGINE_load_cryptodev(void);
+void ENGINE_load_aesni(void);
 void ENGINE_load_padlock(void);
 void ENGINE_load_builtin_engines(void);
 #ifndef OPENSSL_NO_CAPIENG
