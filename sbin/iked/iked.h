@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.17 2010/06/29 21:04:42 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.18 2010/07/01 02:15:08 reyk Exp $	*/
 /*	$vantronix: iked.h,v 1.61 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -219,6 +219,7 @@ struct iked_policy {
 	struct iked_auth		 pol_auth;
 
 	char				 pol_tag[IKED_TAG_SIZE];
+	u_int				 pol_tap;
 
 	struct iked_proposals		 pol_proposals;
 	size_t				 pol_nproposals;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.6 2010/06/26 18:32:34 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.7 2010/07/01 02:15:08 reyk Exp $	*/
 /*	$vantronix: pfkey.c,v 1.11 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -409,13 +409,21 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	struct sadb_key		 sa_authkey, sa_enckey;
 	struct sadb_x_udpencap	 udpencap;
 	struct sadb_x_tag	 sa_tag;
+	struct sadb_x_tap	 sa_tap;
 	struct sockaddr_storage	 ssrc, sdst;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
+	struct iked_policy	*pol;
 	struct iovec		 iov[IOV_CNT];
 	int			 iov_cnt;
 	char			*tag = NULL;
 
 	sa_srcid = sa_dstid = NULL;
+
+	if (sa->csa_ikesa == NULL || sa->csa_ikesa->sa_policy == NULL) {
+		log_warn("%s: invalid SA and policy", __func__);
+		return (-1);
+	}
+	pol = sa->csa_ikesa->sa_policy;
 
 	bzero(&ssrc, sizeof(ssrc));
 	memcpy(&ssrc, &sa->csa_local->addr, sizeof(ssrc));
@@ -534,6 +542,13 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	} else
 		tag = NULL;
 
+	if (pol->pol_tap != 0) {
+		bzero(&sa_tap, sizeof(sa_tap));
+		sa_tap.sadb_x_tap_exttype = SADB_X_EXT_TAP;
+		sa_tap.sadb_x_tap_len = sizeof(sa_tap) / 8;
+		sa_tap.sadb_x_tap_unit = pol->pol_tap;
+	}
+
  send:
 	iov_cnt = 0;
 
@@ -619,6 +634,14 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 		iov[iov_cnt].iov_base = tag;
 		iov[iov_cnt].iov_len = ROUNDUP(strlen(tag) + 1);
 		smsg.sadb_msg_len += sa_tag.sadb_x_tag_len;
+		iov_cnt++;
+	}
+
+	if (pol->pol_tap != 0) {
+		/* enc(4) device tap unit */
+		iov[iov_cnt].iov_base = &sa_tap;
+		iov[iov_cnt].iov_len = sizeof(sa_tap);
+		smsg.sadb_msg_len += sa_tap.sadb_x_tap_len;
 		iov_cnt++;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2010/06/26 19:48:04 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2010/07/01 02:15:08 reyk Exp $	*/
 /*	$vantronix: parse.y,v 1.22 2010/06/03 11:08:34 reyk Exp $	*/
 
 /*
@@ -248,6 +248,11 @@ struct ipsec_hosts {
 	u_int16_t		 dport;
 };
 
+struct ipsec_filters {
+	char	*tag;
+	u_int	 tap;
+};
+
 struct ipsec_addr_wrap	*host(const char *);
 struct ipsec_addr_wrap	*host_v6(const char *, int);
 struct ipsec_addr_wrap	*host_v4(const char *, int);
@@ -269,7 +274,7 @@ int			 create_ike(char *, u_int8_t, struct ipsec_hosts *,
 			     struct ipsec_hosts *, struct ipsec_mode *,
 			     struct ipsec_mode *, u_int8_t,
 			     u_int8_t, char *, char *, struct iked_auth *,
-			     char *, struct ipsec_addr_wrap *);
+			     struct ipsec_filters *, struct ipsec_addr_wrap *);
 int			 create_user(const char *, const char *);
 int			 get_id_type(char *);
 u_int8_t		 x2i(unsigned char *);
@@ -277,6 +282,7 @@ int			 parsekey(unsigned char *, size_t, struct iked_auth *);
 int			 parsekeyfile(char *, struct iked_auth *);
 
 struct ipsec_transforms *ipsec_transforms;
+struct ipsec_filters *ipsec_filters;
 
 typedef struct {
 	union {
@@ -301,6 +307,7 @@ typedef struct {
 		struct iked_auth	 ikeauth;
 		struct iked_auth	 ikekey;
 		struct ipsec_transforms	*transforms;
+		struct ipsec_filters	*filters;
 		struct ipsec_mode	*mode;
 	} v;
 	int lineno;
@@ -310,7 +317,7 @@ typedef struct {
 
 %token	FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK PORT
 %token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA
-%token	PASSIVE ACTIVE ANY TAG PROTO LOCAL GROUP NAME CONFIG EAP USER
+%token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE
 %token	<v.string>		STRING
@@ -328,11 +335,11 @@ typedef struct {
 %type	<v.ids>			ids
 %type	<v.id>			id
 %type	<v.transforms>		transforms
+%type	<v.filters>		filters
 %type	<v.ikemode>		ikemode
 %type	<v.ikeauth>		ikeauth
 %type	<v.ikekey>		keyspec
 %type	<v.mode>		ike_sa child_sa
-%type	<v.string>		tag
 %type	<v.string>		name
 %type	<v.cfg>			cfg ikecfg ikecfgvals
 %%
@@ -380,7 +387,7 @@ user		: USER STRING STRING		{
 		;
 
 ikev2rule	: IKEV2 name ikemode satype proto hosts_list peers
-		    ike_sa child_sa ids ikeauth ikecfg tag {
+		    ike_sa child_sa ids ikeauth ikecfg filters {
 			if (create_ike($2, $5, $6, &$7, $8, $9, $4, $3,
 			    $10.srcid, $10.dstid, &$11, $13, $12) == -1)
 				YYERROR;
@@ -776,13 +783,47 @@ keyspec		: STRING			{
 		}
 		;
 
-tag		: /* empty */
-		{
+filters		:					{
+			if ((ipsec_filters = calloc(1,
+			    sizeof(struct ipsec_filters))) == NULL)
+				err(1, "filters: calloc");
+		}
+		    filters_l			{
+			$$ = ipsec_filters;
+		}
+		| /* empty */				{
 			$$ = NULL;
 		}
-		| TAG STRING
+		;
+
+filters_l	: filters_l filter
+		| filter
+		;
+
+filter		: TAG STRING
 		{
-			$$ = $2;
+			ipsec_filters->tag = $2;
+		}
+		| TAP STRING
+		{
+			const char	*errstr = NULL;
+			size_t		 len;
+
+			len = strcspn($2, "0123456789");
+			if (strlen("enc") != len ||
+			    strncmp("enc", $2, len) != 0) {
+				yyerror("invalid tap interface name: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			ipsec_filters->tap =
+			    strtonum($2 + len, 0, UINT_MAX, &errstr);
+			free($2);
+			if (errstr != NULL) {
+				yyerror("invalid tap interface unit: %s",
+				    errstr);
+				YYERROR;
+			}
 		}
 		;
 
@@ -912,6 +953,7 @@ lookup(char *s)
 		{ "set",		SET },
 		{ "srcid",		SRCID },
 		{ "tag",		TAG },
+		{ "tap",		TAP },
 		{ "tcpmd5",		TCPMD5 },
 		{ "to",			TO },
 		{ "transport",		TRANSPORT },
@@ -2063,6 +2105,9 @@ print_policy(struct iked_policy *pol)
 	if (pol->pol_tag[0] != '\0')
 		print_verbose(" tag \"%s\"", pol->pol_tag);
 
+	if (pol->pol_tap != 0)
+		print_verbose(" tap \"enc%u\"", pol->pol_tap);
+
 	print_verbose("\n");
 }
 
@@ -2103,7 +2148,8 @@ create_ike(char *name, u_int8_t ipproto, struct ipsec_hosts *hosts,
     struct ipsec_hosts *peers, struct ipsec_mode *ike_sa,
     struct ipsec_mode *ipsec_sa, u_int8_t saproto,
     u_int8_t mode, char *srcid, char *dstid,
-    struct iked_auth *authtype, char *tag, struct ipsec_addr_wrap *ikecfg)
+    struct iked_auth *authtype, struct ipsec_filters *filter,
+    struct ipsec_addr_wrap *ikecfg)
 {
 	struct ipsec_addr_wrap	*ipa, *ipb;
 	struct iked_policy	 pol;
@@ -2152,8 +2198,10 @@ create_ike(char *name, u_int8_t ipproto, struct ipsec_hosts *hosts,
 			return (-1);
 		}
 	}
-	if (tag)
-		strlcpy(pol.pol_tag, tag, sizeof(pol.pol_tag));
+
+	if (filter->tag)
+		strlcpy(pol.pol_tag, filter->tag, sizeof(pol.pol_tag));
+	pol.pol_tap = filter->tap;
 
 	if (peers == NULL) {
 		if (pol.pol_flags & IKED_POLICY_ACTIVE) {

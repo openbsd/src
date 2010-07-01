@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.7 2010/06/26 18:32:34 reyk Exp $
+.\" $OpenBSD: iked.conf.5,v 1.8 2010/07/01 02:15:08 reyk Exp $
 .\" $vantronix: iked.conf.5,v 1.10 2010/06/03 16:13:40 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2010 $
+.Dd $Mdocdate: July 1 2010 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -449,6 +449,16 @@ expands to
 The variable expansion for the
 .Ar tag
 directive occurs only at runtime, not during configuration file parse time.
+.It Ic tap Ar interface
+Send the decapsulated IPsec traffic to the specified
+.Xr enc 4
+.Ar interface
+instead of
+.Ar enc0
+for filtering and monitoring.
+The traffic will be blocked if the specified
+.Ar interface
+does not exist.
 .El
 .Sh PACKET FILTERING
 IPsec traffic appears unencrypted on the
@@ -473,7 +483,7 @@ IKE NAT-Traversal traffic on the external interface.
 Encapsulated IPsec traffic
 on the external interface.
 .It enc0
-Interface for outgoing traffic before it's been encapsulated,
+Default interface for outgoing traffic before it's been encapsulated,
 and incoming traffic after it's been decapsulated.
 State on this interface should be interface bound;
 see
@@ -553,12 +563,14 @@ pass out on ix0 tagged ipsec-developers.example.com queue developers
 pass out on ix0 tagged ipsec-employees.example.com queue employees
 .Ed
 .Pp
-The tags will be assigned by the following
+The following example assigns the tags in the
 .Nm
-example:
+configuration and also sets an alternative
+.Xr enc 4
+device:
 .Bd -literal -offset indent
 ikev2 esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2 \e
-	tag ipsec-$domain
+	tag ipsec-$domain tap "enc1"
 .Ed
 .Sh OUTGOING NETWORK ADDRESS TRANSLATION
 In some network topologies it is desirable to perform NAT on traffic leaving
