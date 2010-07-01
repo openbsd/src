@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2010/07/01 19:56:12 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.116 2010/07/01 23:06:33 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1029,6 +1029,14 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
+	tf->tf_r8 = 0;
+	tf->tf_r9 = 0;
+	tf->tf_r10 = 0;
+	tf->tf_r11 = 0;
+	tf->tf_r12 = 0;
+	tf->tf_r13 = 0;
+	tf->tf_r14 = 0;
+	tf->tf_r15 = 0;
 	tf->tf_rip = pack->ep_entry;
 	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_rflags = PSL_USERSET;

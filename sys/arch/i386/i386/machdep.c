@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.475 2010/07/01 17:30:25 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.476 2010/07/01 23:05:50 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2713,8 +2713,13 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_edi = 0;
+	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
 	tf->tf_ebx = (int)PS_STRINGS;
+	tf->tf_edx = 0;
+	tf->tf_ecx = 0;
+	tf->tf_eax = 0;
 	tf->tf_eip = pack->ep_entry;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
