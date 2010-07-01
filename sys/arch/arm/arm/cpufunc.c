@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.12 2010/02/22 16:45:29 kevlo Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.13 2010/07/01 22:40:10 drahn Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -49,7 +49,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <uvm/uvm.h>
 #include <machine/cpu.h>
+#include <machine/pmap.h>
 #include <machine/bootconfig.h>
 
 #include <uvm/uvm.h>
@@ -1085,10 +1087,31 @@ log2(int size)
 void
 arm_get_cachetype_cp15v7(void)
 {
+	extern int pmap_cachevivt;
 	uint32_t cachereg;
 	uint32_t cache_level_id;
 	uint32_t line_size, ways, sets, size;
 	uint32_t sel;
+	uint32_t ctr;
+
+	__asm __volatile("mrc p15, 0, %0, c0, c0, 1"
+		: "=r" (ctr) :);
+
+	switch ((ctr >> 14) & 3) {
+	case 2:
+		pmap_cachevivt = 0;
+	#if 0
+		pmap_alias_dist = 0x4000;
+		pmap_alias_bits = 0x3000;
+	#endif
+		break;
+	case 3:
+		pmap_cachevivt = 0;
+		break;
+	default:
+		break;
+	}
+
 	__asm __volatile("mrc p15, 1, %0, c0, c0, 1"
 		: "=r" (cache_level_id) :);
 
@@ -1110,8 +1133,10 @@ arm_get_cachetype_cp15v7(void)
 	switch (cachereg & 0xc0000000) {
 	case 0x00000000:
 		arm_pcache_type = 0;
+		break;
 	case 0x40000000:
 		arm_pcache_type = CPU_CT_CTYPE_WT;
+		break;
 	case 0x80000000:
 	case 0xc0000000:
 		arm_pcache_type = CPU_CT_CTYPE_WB1;
@@ -1148,7 +1173,88 @@ arm_get_cachetype_cp15v7(void)
 	arm_dcache_l2_assoc = log2(ways);
 	arm_dcache_l2_linesize = log2(line_size);
 }
+
+/* 
+ */
+void
+armv7_idcache_wbinv_all()
+{
+	uint32_t arg;
+	arg = 0;
+	__asm __volatile("mcr	p15, 0, r0, c7, c5, 0" :: "r" (arg));
+	armv7_dcache_wbinv_all();
+}
+/* brute force cache flushing */
+void
+armv7_dcache_wbinv_all()
+{
+	int sets, ways, lvl;
+	int nincr, nsets, nways;
+	uint32_t wayincr, setincr;
+	uint32_t wayval, setval;
+	uint32_t word;
+
+	nsets = arm_picache_size/arm_picache_ways/arm_picache_line_size;
+	nways = arm_picache_ways;
+	nincr = arm_picache_line_size;
+
+	wayincr = 1 << (32 - arm_picache_ways);
+	setincr = arm_picache_line_size;
+
+#if 0
+	printf("l1 nsets %d nways %d nincr %d wayincr %x setincr %x\n",
+	    nsets, nways, nincr, wayincr, setincr);
 #endif
+	
+	lvl = 0; /* L1 */
+	setval = 0;
+	for (sets = 0; sets < nsets; sets++)  {
+		wayval = 0;
+		for (ways = 0; ways < nways; ways++) {
+			word = wayval | setval | lvl;
+
+			/* Clean D cache SE with Set/Index */
+			__asm __volatile("mcr	p15, 0, %0, c7, c10, 2"
+			    : : "r" (word));
+			wayval += nincr;
+		}
+		setval += setincr;
+	}
+	/* drain the write buffer */
+	__asm __volatile("mcr	p15, 0, %0, c7, c10, 4" : : "r" (0));
+
+	/* L2 */
+	nsets = 1 << arm_dcache_l2_nsets;
+	nways = 1 << arm_dcache_l2_assoc;
+	nincr = 1 << arm_dcache_l2_linesize;
+
+	wayincr = 1 << (32 - arm_picache_ways);
+	setincr = arm_picache_line_size;
+
+#if 0
+	printf("l2 nsets %d nways %d nincr %d wayincr %x setincr %x\n",
+	    nsets, nways, nincr, wayincr, setincr);
+#endif
+	
+	lvl = 1 << 1; /* L2 */
+	setval = 0;
+	for (sets = 0; sets < nsets; sets++)  {
+		wayval = 0;
+		for (ways = 0; ways < nways; ways++) {
+			word = wayval | setval | lvl;
+
+			/* Clean D cache SE with Set/Index */
+			__asm __volatile("mcr	p15, 0, %0, c7, c10, 2"
+			    : : "r" (word));
+			wayval += nincr;
+		}
+		setval += setincr;
+	}
+	/* drain the write buffer */
+	__asm __volatile("mcr	p15, 0, %0, c7, c10, 4" : : "r" (0));
+
+}
+#endif /* CPU_ARMv7 */
 
 
 /*

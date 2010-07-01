@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2010/03/31 19:46:26 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2010/07/01 22:40:10 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ int pmap_debug_level = 0;
 #define	PDB_KREMOVE	0x40000
 
 int debugmap = 1;
-int pmapdebug = 0; 
+int pmapdebug = PDB_ENTER|PDB_PVDUMP; 
 #define	NPDEBUG(_lev_,_stat_) \
 	if (pmapdebug & (_lev_)) \
         	((_stat_))
@@ -298,6 +298,8 @@ extern caddr_t msgbufaddr;
  * Flag to indicate if pmap_init() has done its thing
  */
 boolean_t pmap_initialized;
+
+int pmap_cachevivt = 1;
 
 /*
  * Misc. locking data structures
@@ -2343,8 +2345,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 				cleanlist_idx++;
 				pm->pm_remove_all = TRUE;
 			} else {
-				*ptep = 0;
-				PTE_SYNC(ptep);
 				if (pm->pm_remove_all == FALSE) {
 					if (is_exec)
 						pmap_tlb_flushID_SE(pm, sva);
@@ -2352,6 +2352,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 					if (is_refd)
 						pmap_tlb_flushD_SE(pm, sva);
 				}
+				*ptep = 0;
+				PTE_SYNC(ptep);
 			}
 
 			sva += PAGE_SIZE;
@@ -2365,6 +2367,10 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		if (cleanlist_idx <= PMAP_REMOVE_CLEAN_LIST_SIZE) {
 			total += cleanlist_idx;
 			for (cnt = 0; cnt < cleanlist_idx; cnt++) {
+			    	if (pmap_cachevivt == 0 &&
+				    curproc->p_vmspace->vm_map.pmap != pm) {
+					pmap_idcache_wbinv_all(pm);
+				} else
 				if (pm->pm_cstate.cs_all != 0) {
 					vaddr_t clva = cleanlist[cnt].va & ~1;
 					if (cleanlist[cnt].va & 1) {
@@ -5188,3 +5194,21 @@ pmap_dump_ncpg(pmap_t pm)
 	}
 }
 #endif
+
+uint32_t pmap_alias_dist;
+uint32_t pmap_alias_bits;
+
+void
+pmap_prefer(vaddr_t foff, vaddr_t *vap)
+{
+	vaddr_t va = *vap;
+	long d, m;
+
+	m = pmap_alias_dist;
+	if (m == 0)             /* m=0 => no cache aliasing */
+		return;
+
+	d = foff - va;
+	d &= (m - 1);
+	*vap = va + d;
+}

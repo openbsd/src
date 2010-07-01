@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 2009/05/24 04:56:19 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 2010/07/01 22:40:10 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -614,6 +614,15 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
+
+#ifndef _LOCORE
+/* pmap_prefer bits for VIPT ARMv7 */
+#define PMAP_PREFER(fo, ap)	pmap_prefer((fo), (ap))
+void	pmap_prefer(vaddr_t, vaddr_t *);
+
+extern uint32_t pmap_alias_dist;
+extern uint32_t pmap_alias_bits;
+#endif /* _LOCORE */
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_armv5.S,v 1.1 2008/09/11 02:38:14 kevlo Exp $	*/
+/*	$OpenBSD: cpufunc_asm_armv5.S,v 1.2 2010/07/01 22:40:10 drahn Exp $	*/
 /*	$NetBSD: cpufunc_asm_armv5.S,v 1.3 2007/01/06 00:50:54 christos Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ ENTRY(armv5_dcache_wbinv_all)
  * four variables is assumed in the code above.  Hence the reason for 
  * declaring them in the assembler file.
  */
-	.align 0
+	.align 2
 C_OBJECT(armv5_dcache_sets_max)
 	.space	4
 C_OBJECT(armv5_dcache_index_max)
