@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.212 2010/06/30 21:18:06 sthen Exp $
+# $OpenBSD: Makefile,v 1.213 2010/07/01 22:26:26 phessler Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -104,7 +104,7 @@ REGRESS_TARGETS+=selfpf
 UPDATE_TARGETS+=pf-update
 
 pf-include-setup:
-	cp ${.CURDIR}/pf95.include ${.OBJDIR}
+	-cp ${.CURDIR}/pf95.include ${.OBJDIR}
 	chmod og-rwx ${.OBJDIR}/pf95.include
 
 .for n in ${PFSIMPLE}
