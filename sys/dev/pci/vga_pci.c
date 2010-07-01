@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.47 2010/07/01 01:02:31 pirofti Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.48 2010/07/01 16:31:36 deraadt Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -137,7 +137,7 @@ struct cfattach vga_pci_ca = {
 	NULL, vga_pci_activate
 };
 
-#if defined (__i386__) || defined (__amd64__)
+#if !defined(SMALL_KERNEL) && defined (__i386__) || defined (__amd64__)
 int vga_pci_do_post;
 extern int do_real_mode_post;
 
@@ -213,7 +213,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 
-#if defined (__i386__) || defined (__amd64__)
+#if !defined(SMALL_KERNEL) && defined (__i386__) || defined (__amd64__)
 	int prod, vend, subid, subprod, subvend, i;
 #endif
 
@@ -245,7 +245,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("couldn't set up vga POST handler\n");
 #endif
 
-#if defined (__i386__) || defined (__amd64__)
+#if !defined(SMALL_KERNEL) && defined (__i386__) || defined (__amd64__)
 	vend = PCI_VENDOR(pa->pa_id);
 	prod = PCI_PRODUCT(pa->pa_id);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
