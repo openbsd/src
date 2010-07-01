@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.50 2010/07/01 22:51:23 pirofti Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.51 2010/07/01 23:38:29 mlarkin Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -164,6 +164,11 @@ static const struct vga_device_description vga_devs[] = {
 	{	/* Sony VGN-P530H */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,	
 	    	PCI_VENDOR_SONY, 0x9039 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
+	},
+	{	/* Thinkpad T510 (and similar models) */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
+	    	0x17aa, 0x215a },
 	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
 	},
 	{
