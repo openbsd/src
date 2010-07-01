@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.38 2010/07/01 20:24:19 chl Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.39 2010/07/01 20:30:05 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ transmit(FILE *fp, char *eofchars, char *command)
 			printf("\r%d", ++lcount);
 		if (boolean(value(ECHOCHECK))) {
 			timedout = 0;
-			alarm((unsigned int)lvalue(ETIMEOUT));
+			alarm((unsigned int)number(value(ETIMEOUT)));
 			do {	/* wait for prompt */
 				read(FD, (char *)&c, 1);
 				if (timedout || stop) {
@@ -438,7 +438,7 @@ send(int c)
 	}
 tryagain:
 	timedout = 0;
-	alarm((unsigned int)lvalue(ETIMEOUT));
+	alarm((unsigned int)number(value(ETIMEOUT)));
 	read(FD, &cc, 1);
 	alarm(0);
 	if (timedout) {

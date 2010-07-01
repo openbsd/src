@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.46 2010/06/30 00:26:49 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.47 2010/07/01 20:30:05 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -56,15 +56,14 @@
 #include <err.h>
 #include <limits.h>
 
-/*
- * String value table
- */
+/* Variable table entry. */
 typedef	struct {
 	char	*v_name;	/* variable name */
 	int	 v_flags;	/* type and flags */
 	char	*v_abbrev;	/* possible abbreviation */
 	char	*v_value;	/* casted to a union later */
 }  value_t;
+extern value_t	vtable[];	/* variable table */
 
 #define V_STRING	01	/* string valued */
 #define V_BOOL		02	/* true-false value */
@@ -76,25 +75,15 @@ typedef	struct {
 #define V_READONLY	040	/* variable is not writable */
 #define V_INIT		0100	/* static data space used for initialization */
 
-/*
- * variable manipulation stuff --
- *   if we defined the value entry in value_t, then we couldn't
- *   initialize it in vars.c, so we cast it as needed to keep lint
- *   happy.
- */
-
 #define value(v)	vtable[v].v_value
-#define lvalue(v)	(long)vtable[v].v_value
 
 #define	number(v)	((long)(v))
 #define	boolean(v)      ((short)(long)(v))
 #define	character(v)    ((char)(long)(v))
-#define	address(v)      ((long *)(v))
 
 #define	setnumber(v,n)		do { (v) = (char *)(long)(n); } while (0)
 #define	setboolean(v,n)		do { (v) = (char *)(long)(n); } while (0)
 #define	setcharacter(v,n)	do { (v) = (char *)(long)(n); } while (0)
-#define	setaddress(v,n)		do { (v) = (char *)(n); } while (0)
 
 /*
  * Escape command table definitions --
@@ -112,7 +101,6 @@ typedef
 
 extern int	vflag;		/* verbose during reading of .tiprc file */
 extern int	noesc;		/* no escape `~' char */
-extern value_t	vtable[];	/* variable table */
 
 /*
  * Definition of indices into variable table so
