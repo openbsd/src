@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.59 2010/06/29 17:10:29 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.60 2010/07/01 22:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -235,6 +235,20 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 		return(0);
 
 	m->flags |= MDOC_NEWLINE;
+
+	/*
+	 * Let the roff nS register switch SYNOPSIS mode early,
+	 * such that the parser knows at all times
+	 * whether this mode is on or off.
+	 * Note that this mode is also switched by the Sh macro.
+	 */
+	if (m->regs->regs[(int)REG_nS].set) {
+		if (m->regs->regs[(int)REG_nS].v.u)
+			m->flags |= MDOC_SYNOPSIS;
+		else
+			m->flags &= ~MDOC_SYNOPSIS;
+	}
+
 	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
 			mdoc_pmacro(m, ln, buf, offs) :
 			mdoc_ptext(m, ln, buf, offs));
@@ -369,23 +383,13 @@ node_alloc(struct mdoc *m, int line, int pos,
 
 	/* Flag analysis. */
 
+	if (MDOC_SYNOPSIS & m->flags)
+		p->flags |= MDOC_SYNPRETTY;
+	else
+		p->flags &= ~MDOC_SYNPRETTY;
 	if (MDOC_NEWLINE & m->flags)
 		p->flags |= MDOC_LINE;
 	m->flags &= ~MDOC_NEWLINE;
-
-	/* Section analysis. */
-
-	if (SEC_SYNOPSIS == p->sec)
-		p->flags |= MDOC_SYNPRETTY;
-
-	/* Register analysis. */
-
-	if (m->regs->regs[(int)REG_nS].set) {
-		if (m->regs->regs[(int)REG_nS].v.u)
-			p->flags |= MDOC_SYNPRETTY;
-		else
-			p->flags &= ~MDOC_SYNPRETTY;
-	}
 
 	return(p);
 }
