@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.128 2010/06/27 03:34:29 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.129 2010/07/01 03:20:39 matthew Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -380,6 +380,8 @@ struct scsi_xshandler {
  * as well.
  */
 struct scsi_link {
+	SLIST_ENTRY(scsi_link)	bus_list;
+
 	u_int		state;
 #define SDEV_S_WAITING		(1<<0)
 #define SDEV_S_DYING		(1<<1)
@@ -458,7 +460,7 @@ struct scsibus_attach_args {
 struct scsibus_softc {
 	struct device sc_dev;
 	struct scsi_link *adapter_link;	/* prototype supplied by adapter */
-	struct scsi_link ***sc_link;
+	SLIST_HEAD(, scsi_link) sc_link;
 	u_int16_t sc_buswidth;
 };
 
@@ -609,6 +611,12 @@ int	scsi_req_probe(struct scsibus_softc *, int, int);
 int	scsi_req_detach(struct scsibus_softc *, int, int, int);
 
 void	scsi_activate(struct scsibus_softc *, int, int, int);
+
+struct scsi_link *	scsi_get_link(struct scsibus_softc *, int, int);
+void			scsi_add_link(struct scsibus_softc *,
+			    struct scsi_link *);
+void			scsi_remove_link(struct scsibus_softc *,
+			    struct scsi_link *);
 
 extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])

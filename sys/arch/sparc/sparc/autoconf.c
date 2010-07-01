@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.89 2010/06/29 21:28:10 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.90 2010/07/01 03:20:38 matthew Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1707,14 +1707,14 @@ device_register(struct device *dev, void *aux)
 
 #if defined(SUN4)
 		if (CPU_ISSUN4 && dev->dv_xname[0] == 's' &&
-		    target == 0 && sbsc->sc_link[0][0] == NULL) {
+		    target == 0 && scsi_get_link(sbsc, 0, 0) == NULL) {
 			/*
 			 * disk unit 0 is magic: if there is actually no
 			 * target 0 scsi device, the PROM will call
 			 * target 3 `sd0'.
 			 * XXX - what if someone puts a tape at target 0?
 			 */
-			/* Note that sc_link[0][0] will be NULL when we are
+			/* Note that sbsc:0:0 will be NULL when we are
 			 * invoked to match the device for target 0, if it
 			 * exists. But then the attachment args will have
 			 * its own target set to zero. It this case, skip

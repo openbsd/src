@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.108 2010/06/30 19:10:05 mk Exp $ */
+/* $OpenBSD: mfi.c,v 1.109 2010/07/01 03:20:38 matthew Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1894,6 +1894,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 {
 	struct device		*dev;
 	struct scsibus_softc	*ssc = NULL;
+	struct scsi_link	*link;
 	int			i;
 
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
@@ -1918,10 +1919,11 @@ mfi_create_sensors(struct mfi_softc *sc)
 	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0; i < sc->sc_ld_cnt; i++) {
-		if (ssc->sc_link[i][0] == NULL)
+		link = scsi_get_link(ssc, i, 0);
+		if (link == NULL)
 			goto bad;
 
-		dev = ssc->sc_link[i][0]->device_softc;
+		dev = link->device_softc;
 
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;

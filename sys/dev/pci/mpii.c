@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.24 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.25 2010/07/01 03:20:38 matthew Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -4667,7 +4667,7 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 
 	bv->bv_size = letoh64(vpg->max_lba) * letoh16(vpg->block_size);
 
-	lnk = sc->sc_scsibus->sc_link[bv->bv_volid][0];
+	lnk = scsi_get_link(sc->sc_scsibus, bv->bv_volid, 0);
 	if (lnk != NULL) {
 		scdev = lnk->device_softc;
 		strlcpy(bv->bv_dev, scdev->dv_xname, sizeof(bv->bv_dev));
@@ -4973,6 +4973,7 @@ mpii_create_sensors(struct mpii_softc *sc)
 {
 	struct scsibus_softc	*ssc = sc->sc_scsibus;
 	struct device		*dev;
+	struct scsi_link	*link;
 	int			i;
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_vd_count,
@@ -4986,10 +4987,11 @@ mpii_create_sensors(struct mpii_softc *sc)
 
 	for (i = sc->sc_vd_id_low; i < sc->sc_vd_id_low + sc->sc_vd_count;
 	     i++) {
-		if (ssc->sc_link[i][0] == NULL)
+		link = scsi_get_link(ssc, i, 0);
+		if (link == NULL)
 			goto bad;
 
-		dev = ssc->sc_link[i][0]->device_softc;
+		dev = link->device_softc;
 
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;

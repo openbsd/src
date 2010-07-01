@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.33 2010/07/01 03:20:37 matthew Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -160,8 +160,8 @@ target_to_unit(bus, target, lun)
 			if (scsibus_cd.cd_devs[bus]) {
 				scsi = (struct scsibus_softc *)
 						scsibus_cd.cd_devs[bus];
-				if (scsi->sc_link[target][lun]) {
-					sc_link = scsi->sc_link[target][lun];
+				sc_link = scsi_get_link(scsi, target, lun);
+				if (sc_link != NULL) {
 					sc_dev = (struct device *)
 							sc_link->device_softc;
 					return sc_dev->dv_unit;
@@ -176,8 +176,8 @@ target_to_unit(bus, target, lun)
 	}
 	if (scsibus_cd.cd_devs[bus]) {
 		scsi = (struct scsibus_softc *) scsibus_cd.cd_devs[bus];
-		if (scsi->sc_link[target][lun]) {
-			sc_link = scsi->sc_link[target][lun];
+		sc_link = scsi_get_link(scsi, target, lun);
+		if (sc_link != NULL) {
 			sc_dev = (struct device *) sc_link->device_softc;
 			return sc_dev->dv_unit;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.211 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.212 2010/07/01 03:20:38 matthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2352,6 +2352,7 @@ ami_create_sensors(struct ami_softc *sc)
 {
 	struct device *dev;
 	struct scsibus_softc *ssc = NULL;
+	struct scsi_link *link;
 	int i;
 
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
@@ -2376,10 +2377,11 @@ ami_create_sensors(struct ami_softc *sc)
 	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0; i < sc->sc_nunits; i++) {
-		if (ssc->sc_link[i][0] == NULL)
+		link = scsi_get_link(ssc, i, 0);
+		if (link == NULL)
 			goto bad;
 
-		dev = ssc->sc_link[i][0]->device_softc;
+		dev = link->device_softc;
 
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;

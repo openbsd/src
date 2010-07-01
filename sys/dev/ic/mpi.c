@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.152 2010/06/28 18:31:02 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.153 2010/07/01 03:20:38 matthew Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -462,7 +462,7 @@ mpi_run_ppr(struct mpi_softc *sc)
 	}
 
 	for (i = 0; i < sc->sc_buswidth; i++) {
-		link = sc->sc_scsibus->sc_link[i][0];
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
 		if (link == NULL)
 			continue;
 
@@ -3026,7 +3026,7 @@ mpi_ioctl_vol(struct mpi_softc *sc, struct bioc_vol *bv)
 	bv->bv_nodisk = rpg0->num_phys_disks;
 
 	for (i = 0, vol = -1; i < sc->sc_buswidth; i++) {
-		link = sc->sc_scsibus->sc_link[i][0];
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
 		if (link == NULL)
 			continue;
 
@@ -3139,7 +3139,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 
 	/* count volumes */
 	for (i = 0, vol = 0; i < sc->sc_buswidth; i++) {
-		link = sc->sc_scsibus->sc_link[i][0];
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
 		if (link == NULL)
 			continue;
 		/* skip if not a virtual disk */
@@ -3160,7 +3160,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0, vol= 0; i < sc->sc_buswidth; i++) {
-		link = sc->sc_scsibus->sc_link[i][0];
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
 		if (link == NULL)
 			continue;
 		/* skip if not a virtual disk */
@@ -3200,7 +3200,7 @@ mpi_refresh_sensors(void *arg)
 	rw_enter_write(&sc->sc_lock);
 
 	for (i = 0, vol = 0; i < sc->sc_buswidth; i++) {
-		link = sc->sc_scsibus->sc_link[i][0];
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
 		if (link == NULL)
 			continue;
 		/* skip if not a virtual disk */

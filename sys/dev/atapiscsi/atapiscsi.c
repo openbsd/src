@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.91 2010/06/28 18:31:01 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.92 2010/07/01 03:20:38 matthew Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -284,7 +284,7 @@ atapiscsi_attach(parent, self, aux)
 
 	if (child != NULL) {
 		struct scsibus_softc *scsi = (struct scsibus_softc *)child;
-		struct scsi_link *link = scsi->sc_link[0][0];
+		struct scsi_link *link = scsi_get_link(scsi, 0, 0);
 
 		if (link) {
 			strlcpy(drvp->drive_name,

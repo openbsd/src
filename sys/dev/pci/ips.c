@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.100 2010/06/30 19:08:59 mk Exp $	*/
+/*	$OpenBSD: ips.c,v 1.101 2010/07/01 03:20:38 matthew Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -593,6 +593,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	struct ips_adapterinfo *ai;
 	struct ips_driveinfo *di;
 	struct ips_pg5 *pg5;
+	struct device *dev;
 	pcireg_t maptype;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
@@ -800,8 +801,8 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->sc_nunits; i++) {
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
-		strlcpy(sc->sc_sensors[i].desc, ((struct device *)
-		    sc->sc_scsibus->sc_link[i][0]->device_softc)->dv_xname,
+		dev = scsi_get_link(sc->sc_scsibus, i, 0)->device_softc;
+		strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
 		    sizeof(sc->sc_sensors[i].desc));
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
@@ -1194,7 +1195,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 			}
 	}
 
-	dv = sc->sc_scsibus->sc_link[vid][0]->device_softc;
+	dv = scsi_get_link(sc->sc_scsibus, vid, 0)->device_softc;
 	strlcpy(bv->bv_dev, dv->dv_xname, sizeof(bv->bv_dev));
 	strlcpy(bv->bv_vendor, "IBM", sizeof(bv->bv_vendor));
 

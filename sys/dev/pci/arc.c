@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.86 2010/06/28 18:40:51 mk Exp $ */
+/*	$OpenBSD: arc.c,v 1.87 2010/07/01 03:20:38 matthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1341,8 +1341,8 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	}
 
 	bv->bv_nodisk = volinfo->member_disks;
-	sc_link = sc->sc_scsibus->sc_link[volinfo->scsi_attr.target]
-	    [volinfo->scsi_attr.lun];
+	sc_link = scsi_get_link(sc->sc_scsibus, volinfo->scsi_attr.target,
+	    volinfo->scsi_attr.lun);
 	if (sc_link != NULL) {
 		dev = sc_link->device_softc;
 		strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
