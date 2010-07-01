@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.66 2010/06/30 20:38:50 tedu Exp $	*/
+/*	$OpenBSD: socket.h,v 1.67 2010/07/01 02:13:02 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -71,8 +71,7 @@
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 #define SO_JUMBO	0x0400		/* try to use jumbograms */
 #define SO_TIMESTAMP	0x0800		/* timestamp received dgram traffic */
-#define	SO_BINDANY	0x1000		/* allow bind to any address */
-#define SO_PEERCRED	0x2000		/* get connect-time credentials */
+#define SO_BINDANY	0x1000		/* allow bind to any address */
 
 /*
  * Additional options, not kept in so_options.
@@ -87,6 +86,7 @@
 #define	SO_TYPE		0x1008		/* get socket type */
 #define	SO_NETPROC	0x1020		/* multiplex; network processing */
 #define	SO_RDOMAIN	0x1021		/* routing domain socket belongs to */
+#define	SO_PEERCRED	0x1022		/* get connect-time credentials */
 
 /*
  * Structure used for manipulating linger option.
