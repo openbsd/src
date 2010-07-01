@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.176 2010/07/01 05:33:32 jsing Exp $	*/
+/*	$OpenBSD: locore.S,v 1.177 2010/07/01 23:20:13 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -966,7 +966,10 @@ ENTRY(TLABEL(excpt),0)
 	copy	r8, arg0
 	mfctl	cr29, r1
 	mtctl	r0, ccr		/* cause a reload after exception */
+	ldw	CI_FPU_STATE(r1), r16
 	stw	r0, CI_FPU_STATE(r1)
+	stw	r0, HFP_CPU(r16)
+	sync
 
 	/* now, check for trap */
 	ldw	0(r9), r1
@@ -1040,7 +1043,10 @@ ENTRY(TLABEL(emu),0)
 $fpusw_emu
 	mfctl	cr29, r1
 	mtctl	r0, ccr		/* cause a reload after exception */
+	ldw	CI_FPU_STATE(r1), r16
 	stw	r0, CI_FPU_STATE(r1)
+	stw	r0, HFP_CPU(r16)
+	sync
 #if 0
 	/* here we emulate the fld/fst */
 	mfctl	iir, r1
@@ -1081,6 +1087,12 @@ $fpusw_set
 	copy	r16, arg0
 	copy	r1, rp
 	copy	r17, arg0
+
+	mfctl	cr29, r1
+	ldw	CI_FPU_STATE(r1), r16
+	stw	r0, CI_FPU_STATE(r1)
+	stw	r0, HFP_CPU(r16)
+	sync
 
 $fpusw_nosave
 	/* count switches */
@@ -1126,6 +1138,9 @@ $fpusw_nosave
 
 	mfctl	cr29, r1
 	stw	r17, CI_FPU_STATE(r1)
+	mfctl	cr30, r17
+	stw	r1, HFP_CPU(r17)
+	sync
 
 $fpusw_done
 	rfir
