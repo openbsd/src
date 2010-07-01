@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.92 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.93 2010/07/01 19:48:05 oga Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -247,10 +247,10 @@ static void sw_reg_start(struct swapdev *);
 static int uvm_swap_io(struct vm_page **, int, int, int);
 
 static void swapmount(void);
+boolean_t uvm_swap_allocpages(struct vm_page **, int);
 
 #ifdef UVM_SWAP_ENCRYPT
 /* for swap encrypt */
-boolean_t uvm_swap_allocpages(struct vm_page **, int);
 void uvm_swap_markdecrypt(struct swapdev *, int, int, int);
 boolean_t uvm_swap_needdecrypt(struct swapdev *, int);
 void uvm_swap_initcrypt(struct swapdev *, int);
@@ -351,9 +351,12 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 	    M_VMSWAP, M_WAITOK|M_ZERO);
 }
 
+#endif /* UVM_SWAP_ENCRYPT */
+
 boolean_t
 uvm_swap_allocpages(struct vm_page **pps, int npages)
 {
+	struct pglist	pgl;
 	int i;
 	boolean_t fail;
 
@@ -367,17 +370,16 @@ uvm_swap_allocpages(struct vm_page **pps, int npages)
 	if (fail)
 		return FALSE;
 
-	/* Get new pages */
-	for (i = 0; i < npages; i++) {
-		pps[i] = uvm_pagealloc(NULL, 0, NULL, 0);
-		if (pps[i] == NULL)
-			break;
-	}
-
-	/* On failure free and return */
-	if (i < npages) {
-		uvm_swap_freepages(pps, i);
+	TAILQ_INIT(&pgl);
+	if (uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high, 0, 0, &pgl, npages, UVM_PLA_NOWAIT))
 		return FALSE;
+		
+	for (i = 0; i < npages; i++) {
+		pps[i] = TAILQ_FIRST(&pgl);
+		/* *sigh* */
+		atomic_setbits_int(&pps[i]->pg_flags, PG_BUSY);
+		TAILQ_REMOVE(&pgl, pps[i], pageq);
 	}
 
 	return TRUE;
@@ -394,6 +396,7 @@ uvm_swap_freepages(struct vm_page **pps, int npages)
 	uvm_unlock_pageq();
 }
 
+#ifdef UVM_SWAP_ENCRYPT
 /*
  * Mark pages on the swap device for later decryption
  */
@@ -1749,11 +1752,11 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	daddr64_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	result, s, mapinflags, pflag;
+	int	result, s, mapinflags, pflag, bounce = 0, i;
 	boolean_t write, async;
-#ifdef UVM_SWAP_ENCRYPT
-	vaddr_t dstkva;
+	vaddr_t bouncekva;
 	struct vm_page *tpps[MAXBSIZE >> PAGE_SHIFT];
+#ifdef UVM_SWAP_ENCRYPT
 	struct swapdev *sdp;
 	int	encrypt = 0;
 #endif
@@ -1795,7 +1798,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 			encrypt = 1;
 	}
 
-	if (swap_encrypt_initialized  || encrypt) { 
+	if (swap_encrypt_initialized || encrypt) { 
 		/*
 		 * we need to know the swap device that we are swapping to/from
 		 * to see if the pages need to be marked for decryption or
@@ -1808,14 +1811,27 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		simple_unlock(&uvm.swap_data_lock);
 	}
 
-	/* 
-	 * encrypt to swap
+	/*
+	 * Check that we are dma capable for read (write always bounces
+	 * through the swapencrypt anyway...
 	 */
 	if (write && encrypt) {
-		int i, opages;
-		caddr_t src, dst;
-		struct swap_key *key;
-		u_int64_t block;
+		bounce = 1; /* bounce through swapencrypt always */
+	} else {
+#else
+	{
+#endif
+
+		for (i = 0; i < npages; i++) {
+			if (VM_PAGE_TO_PHYS(pps[i]) < dma_constraint.ucr_low ||
+			   VM_PAGE_TO_PHYS(pps[i]) > dma_constraint.ucr_high) {
+				bounce = 1;
+				break;
+			}
+		}
+	}
+
+	if (bounce)  {
 		int swmapflags;
 
 		/* We always need write access. */
@@ -1828,26 +1844,46 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 			return (VM_PAGER_AGAIN);
 		}
 		
-		dstkva = uvm_pagermapin(tpps, npages, swmapflags);
-		if (dstkva == 0) {
+		bouncekva = uvm_pagermapin(tpps, npages, swmapflags);
+		if (bouncekva == 0) {
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);
 			return (VM_PAGER_AGAIN);
 		}
+	}
+
+	/* 
+	 * encrypt to swap
+	 */
+	if (write && bounce) {
+		int i, opages;
+		caddr_t src, dst;
+		u_int64_t block;
 
 		src = (caddr_t) kva;
-		dst = (caddr_t) dstkva;
+		dst = (caddr_t) bouncekva;
 		block = startblk;
 		for (i = 0; i < npages; i++) {
-			key = SWD_KEY(sdp, startslot + i);
-			SWAP_KEY_GET(sdp, key);	/* add reference */
+#ifdef UVM_SWAP_ENCRYPT
+			struct swap_key *key;
 
-			/* mark for async writes */
+			if (encrypt) {
+				key = SWD_KEY(sdp, startslot + i);
+				SWAP_KEY_GET(sdp, key);	/* add reference */
+
+				swap_encrypt(key, src, dst, block,
+				    1 << PAGE_SHIFT);
+				block += btodb(1 << PAGE_SHIFT);
+			} else {
+#else
+			{
+#endif /* UVM_SWAP_ENCRYPT */
+				memcpy(dst, src, PAGE_SIZE);
+			}
+			/* this just tells async callbacks to free */
 			atomic_setbits_int(&tpps[i]->pg_flags, PQ_ENCRYPT);
-			swap_encrypt(key, src, dst, block, 1 << PAGE_SHIFT);
 			src += 1 << PAGE_SHIFT;
 			dst += 1 << PAGE_SHIFT;
-			block += btodb(1 << PAGE_SHIFT);
 		}
 
 		uvm_pagermapout(kva, npages);
@@ -1857,16 +1893,16 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		uvm_pager_dropcluster(NULL, NULL, pps, &opages, 
 				      PGO_PDFREECLUST);
 
-		kva = dstkva;
+		kva = bouncekva;
 	}
-#endif /* UVM_SWAP_ENCRYPT */
 
 	/* 
 	 * now allocate a buf for the i/o.
 	 * [make sure we don't put the pagedaemon to sleep...]
 	 */
 	s = splbio();
-	pflag = (async || curproc == uvm.pagedaemon_proc) ? 0 : PR_WAITOK;
+	pflag = (async || curproc == uvm.pagedaemon_proc) ? PR_NOWAIT :
+	    PR_WAITOK;
 	bp = pool_get(&bufpool, pflag);
 	splx(s);
 
@@ -1874,22 +1910,23 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * if we failed to get a swapbuf, return "try again"
 	 */
 	if (bp == NULL) {
+		if (write && bounce) {
 #ifdef UVM_SWAP_ENCRYPT
-		if (write && encrypt) {
 			int i;
 
 			/* swap encrypt needs cleanup */
-			for (i = 0; i < npages; i++)
-				SWAP_KEY_PUT(sdp, SWD_KEY(sdp, startslot + i));
+			if (encrypt)
+				for (i = 0; i < npages; i++)
+					SWAP_KEY_PUT(sdp, SWD_KEY(sdp,
+					    startslot + i));
+#endif
 
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);
 		}
-#endif
 		return (VM_PAGER_AGAIN);
 	}
 	
-#ifdef UVM_SWAP_ENCRYPT
 	/* 
 	 * prevent ASYNC reads.
 	 * uvm_swap_io is only called from uvm_swap_get, uvm_swap_get
@@ -1900,7 +1937,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		flags &= ~B_ASYNC;
 		async = 0;
 	}
-#endif
+
 	/*
 	 * fill in the bp.   we currently route our i/o through
 	 * /dev/drum's vnode [swapdev_vp].
@@ -1908,7 +1945,10 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	bp->b_flags = B_BUSY | B_NOCACHE | B_RAW | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
-	bp->b_data = (caddr_t)kva;
+	if (bounce)
+		bp->b_data = (caddr_t)bouncekva;
+	else
+		bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
 	LIST_INIT(&bp->b_dep);
 	s = splbio();
@@ -1960,45 +2000,56 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	(void) biowait(bp);
 	result = (bp->b_flags & B_ERROR) ? VM_PAGER_ERROR : VM_PAGER_OK;
 
-#ifdef UVM_SWAP_ENCRYPT
 	/* 
 	 * decrypt swap
 	 */
-	if (swap_encrypt_initialized &&
-	    (bp->b_flags & B_READ) && !(bp->b_flags & B_ERROR)) {
+	if (!write && !(bp->b_flags & B_ERROR)) {
 		int i;
-		caddr_t data = bp->b_data;
+		caddr_t data = (caddr_t)kva;
+		caddr_t dst = (caddr_t)kva;
 		u_int64_t block = startblk;
-		struct swap_key *key;
+
+		if (bounce)
+			data = (caddr_t)bouncekva;
 
 		for (i = 0; i < npages; i++) {
+#ifdef UVM_SWAP_ENCRYPT
+			struct swap_key *key;
+
 			/* Check if we need to decrypt */
-			if (uvm_swap_needdecrypt(sdp, startslot + i)) {
+			if (swap_encrypt_initialized &&
+			    uvm_swap_needdecrypt(sdp, startslot + i)) {
 				key = SWD_KEY(sdp, startslot + i);
 				if (key->refcount == 0) {
 					result = VM_PAGER_ERROR;
 					break;
 				}
-				swap_decrypt(key, data, data, block,
+				swap_decrypt(key, data, dst, block,
 					     1 << PAGE_SHIFT);
+			} else if (bounce) {
+#else
+			if (bounce) {
+#endif
+				memcpy(dst, data, 1 << PAGE_SHIFT);
 			}
 			data += 1 << PAGE_SHIFT;
+			dst += 1 << PAGE_SHIFT;
 			block += btodb(1 << PAGE_SHIFT);
 		}
+		if (bounce)
+			uvm_pagermapout(bouncekva, npages);
 	}
-#endif
 	/*
 	 * kill the pager mapping
 	 */
 	uvm_pagermapout(kva, npages);
 
-#ifdef UVM_SWAP_ENCRYPT
 	/*
-	 *  Not anymore needed, free after encryption
+	 *  Not anymore needed, free after encryption/bouncing
 	 */
-	if ((bp->b_flags & B_READ) == 0 && encrypt)
+	if (!write && bounce)
 		uvm_swap_freepages(tpps, npages);
-#endif
+
 	/*
 	 * now dispose of the buf
 	 */
