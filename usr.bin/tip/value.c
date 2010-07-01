@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.26 2010/07/01 21:43:38 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.27 2010/07/01 21:47:09 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -82,9 +82,9 @@ vinit(void)
 	FILE *fp;
 
 	/* Read environment variables. */
-	if (cp = getenv("HOME"))
+	if ((cp = getenv("HOME")))
 		vsetstr(HOME, cp);
-	if (cp = getenv("SHELL"))
+	if ((cp = getenv("SHELL")))
 		vsetstr(SHELL, cp);
 
 	/* Read the .tiprc file in the HOME directory. */
@@ -192,7 +192,7 @@ vtoken(char *s)
 		}
 	} else if ((cp = strchr(s, '?'))) {
 		*cp = '\0';
-		if (p = vlookup(s)) {
+		if ((p = vlookup(s))) {
 			vprint(p);
 			return;
 		}

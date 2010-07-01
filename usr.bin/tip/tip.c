@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.48 2010/07/01 21:28:01 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.49 2010/07/01 21:47:09 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include <util.h>
 
 #include "tip.h"
 #include "pathnames.h"
@@ -117,7 +119,7 @@ main(int argc, char *argv[])
 	setparity("none");			/* set the parity table */
 
 	if (ttysetup(vgetnum(BAUDRATE))) {
-		fprintf(stderr, "%s: bad baud rate %ld\n", __progname,
+		fprintf(stderr, "%s: bad baud rate %d\n", __progname,
 		    vgetnum(BAUDRATE));
 		(void)uu_unlock(uucplock);
 		exit(3);

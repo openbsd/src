@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.33 2010/07/01 21:28:01 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.34 2010/07/01 21:47:09 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ getopt:
 	 * The "cu" host name is used to define the
 	 * attributes of the generic dialer.
 	 */
-	(void)snprintf(sbuf, sizeof(sbuf), "cu%ld", vgetnum(BAUDRATE));
+	(void)snprintf(sbuf, sizeof(sbuf), "cu%d", vgetnum(BAUDRATE));
 	if ((i = hunt(sbuf)) == 0) {
 		printf("all ports busy\n");
 		exit(3);
@@ -178,7 +178,7 @@ getopt:
 	}
 	vsetnum(VERBOSE, 0);
 	if (ttysetup(vgetnum(BAUDRATE))) {
-		fprintf(stderr, "%s: unsupported speed %ld\n",
+		fprintf(stderr, "%s: unsupported speed %d\n",
 		    __progname, vgetnum(BAUDRATE));
 		(void)uu_unlock(uucplock);
 		exit(3);
