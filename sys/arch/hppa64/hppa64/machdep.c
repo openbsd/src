@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2010/07/01 05:07:26 jsing Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2010/07/01 05:09:27 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -161,6 +161,9 @@ int sigdebug = 0;
 pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #endif
+
+struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
+struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 int	hppa_cpuspeed(int *mhz);
 
