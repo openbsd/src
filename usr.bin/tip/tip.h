@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.47 2010/07/01 20:30:05 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.48 2010/07/01 21:28:01 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -75,37 +75,17 @@ extern value_t	vtable[];	/* variable table */
 #define V_READONLY	040	/* variable is not writable */
 #define V_INIT		0100	/* static data space used for initialization */
 
-#define value(v)	vtable[v].v_value
+#define vgetstr(v)	(vtable[v].v_value)
+#define	vgetnum(v)	((long)(vtable[v].v_value))
 
-#define	number(v)	((long)(v))
-#define	boolean(v)      ((short)(long)(v))
-#define	character(v)    ((char)(long)(v))
+#define vsetstr(v, s) do {				\
+		vtable[v].v_value = s;			\
+	} while (0)
+#define	vsetnum(v, n) do {				\
+		vtable[v].v_value = (char *)(long)(n);	\
+	} while (0)
 
-#define	setnumber(v,n)		do { (v) = (char *)(long)(n); } while (0)
-#define	setboolean(v,n)		do { (v) = (char *)(long)(n); } while (0)
-#define	setcharacter(v,n)	do { (v) = (char *)(long)(n); } while (0)
-
-/*
- * Escape command table definitions --
- *   lookup in this table is performed when ``escapec'' is recognized
- *   at the begining of a line (as defined by the eolmarks variable).
-*/
-
-typedef
-	struct {
-		char	e_char;			/* char to match on */
-		char	*e_help;		/* help string */
-		void	(*e_func)(int);		/* command */
-	}
-	esctable_t;
-
-extern int	vflag;		/* verbose during reading of .tiprc file */
-extern int	noesc;		/* no escape `~' char */
-
-/*
- * Definition of indices into variable table so
- *  value(DEFINE) turns into a static address.
- */
+/* Variable table indexes. */
 enum {
 	BEAUTIFY = 0,
 	BAUDRATE,
@@ -144,6 +124,23 @@ enum {
 	LINEDISC,
 	DC
 };
+
+/*
+ * Escape command table definitions --
+ *   lookup in this table is performed when ``escapec'' is recognized
+ *   at the begining of a line (as defined by the eolmarks variable).
+*/
+
+typedef
+	struct {
+		char	e_char;			/* char to match on */
+		char	*e_help;		/* help string */
+		void	(*e_func)(int);		/* command */
+	}
+	esctable_t;
+
+extern int	vflag;		/* verbose during reading of .tiprc file */
+extern int	noesc;		/* no escape `~' char */
 
 struct termios	term;		/* current mode of terminal */
 struct termios	defterm;	/* initial mode of terminal */

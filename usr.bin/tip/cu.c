@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.32 2010/07/01 20:24:19 chl Exp $	*/
+/*	$OpenBSD: cu.c,v 1.33 2010/07/01 21:28:01 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -47,10 +47,11 @@ cumain(int argc, char *argv[])
 	int ch, i, parity, baudrate;
 	const char *errstr;
 	static char sbuf[12];
+	char *device;
 
 	if (argc < 2)
 		cuusage();
-	setnumber(value(BAUDRATE), DEFBR);
+	vsetnum(BAUDRATE, DEFBR);
 	parity = 0;	/* none */
 
 	/*
@@ -83,29 +84,30 @@ getopt:
 	while ((ch = getopt(argc, argv, "l:s:htoe")) != -1) {
 		switch (ch) {
 		case 'l':
-			if (value(DEVICE) != NULL) {
+			if (vgetstr(DEVICE) != NULL) {
 				fprintf(stderr,
 				    "%s: cannot specify multiple -l options\n",
 				    __progname);
 				exit(3);
 			}
 			if (strchr(optarg, '/'))
-				value(DEVICE) = optarg;
+				vsetstr(DEVICE, optarg);
 			else {
-				if (asprintf(&value(DEVICE),
+				if (asprintf(&device,
 				    "%s%s", _PATH_DEV, optarg) == -1)
 					err(3, "asprintf");
+				vsetstr(DEVICE, device);
 			}
 			break;
 		case 's':
 			baudrate = (int)strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr)
 				errx(3, "speed is %s: %s", errstr, optarg);
-			setnumber(value(BAUDRATE), baudrate);
+			vsetnum(BAUDRATE, baudrate);
 			break;
 		case 'h':
-			setboolean(value(LECHO), 1);
-			setboolean(value(HALFDUPLEX), 1);
+			vsetnum(LECHO, 1);
+			vsetnum(HALFDUPLEX, 1);
 			break;
 		case 't':
 			/* Was for a hardwired dial-up connection. */
@@ -150,7 +152,7 @@ getopt:
 	 * The "cu" host name is used to define the
 	 * attributes of the generic dialer.
 	 */
-	(void)snprintf(sbuf, sizeof(sbuf), "cu%ld", number(value(BAUDRATE)));
+	(void)snprintf(sbuf, sizeof(sbuf), "cu%ld", vgetnum(BAUDRATE));
 	if ((i = hunt(sbuf)) == 0) {
 		printf("all ports busy\n");
 		exit(3);
@@ -174,10 +176,10 @@ getopt:
 		setparity("none");
 		break;
 	}
-	setboolean(value(VERBOSE), 0);
-	if (ttysetup(number(value(BAUDRATE)))) {
+	vsetnum(VERBOSE, 0);
+	if (ttysetup(vgetnum(BAUDRATE))) {
 		fprintf(stderr, "%s: unsupported speed %ld\n",
-		    __progname, number(value(BAUDRATE)));
+		    __progname, vgetnum(BAUDRATE));
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}

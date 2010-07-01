@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.24 2010/07/01 20:24:19 chl Exp $	*/
+/*	$OpenBSD: value.c,v 1.25 2010/07/01 21:28:01 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -54,15 +54,15 @@ vinit(void)
 
 	/* Read environment variables. */
 	if (cp = getenv("HOME"))
-		value(HOME) = cp;
+		vsetstr(HOME, cp);
 	if (cp = getenv("SHELL"))
-		value(SHELL) = cp;
+		vsetstr(SHELL, cp);
 
 	/* Read the .tiprc file in the HOME directory. */
-	written = snprintf(file, sizeof(file), "%s/.tiprc", value(HOME));
+	written = snprintf(file, sizeof(file), "%s/.tiprc", vgetstr(HOME));
 	if (written < 0 || written >= sizeof(file)) {
 		(void)fprintf(stderr, "Home directory path too long: %s\n",
-		    value(HOME));
+		    vgetstr(HOME));
 	} else {
 		if ((fp = fopen(file, "r")) != NULL) {
 			char *tp;
@@ -101,19 +101,19 @@ vassign(value_t *p, char *v)
 		p->v_flags &= ~V_INIT;
 		break;
 	case V_NUMBER:
-		if (number(p->v_value) == number(v))
+		if (p->v_value == v)
 			return;
-		setnumber(p->v_value, number(v));
+		p->v_value = v;
 		break;
 	case V_BOOL:
-		if (boolean(p->v_value) == (*v != '!'))
+		if ((long)p->v_value == (*v != '!'))
 			return;
-		setboolean(p->v_value, (*v != '!'));
+		p->v_value = (char *)(long)(*v != '!');
 		break;
 	case V_CHAR:
-		if (character(p->v_value) == *v)
+		if ((char)(long)p->v_value == *v)
 			return;
-		setcharacter(p->v_value, *v);
+		p->v_value = (char *)(long)*v;
 	}
 	p->v_flags |= V_CHANGED;
 }
@@ -152,7 +152,7 @@ vtoken(char *s)
 		if ((p = vlookup(s))) {
 			cp++;
 			if ((p->v_flags & V_TYPEMASK) == V_NUMBER)
-				vassign(p, (char *)atoi(cp));
+				vassign(p, (char *)(long)atoi(cp));
 			else {
 				if (strcmp(s, "record") == 0)
 					cp = expand(cp);
@@ -191,7 +191,7 @@ vprint(value_t *p)
 	switch (p->v_flags & V_TYPEMASK) {
 
 	case V_BOOL:
-		if (!boolean(p->v_value)) {
+		if (!p->v_value) {
 			col++;
 			putchar('!');
 		}
@@ -210,14 +210,14 @@ vprint(value_t *p)
 
 	case V_NUMBER:
 		col += 6;
-		printf("%s=%-5ld", p->v_name, number(p->v_value));
+		printf("%s=%-5ld", p->v_name, (long)p->v_value);
 		break;
 
 	case V_CHAR:
 		printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
-			cp = ctrl(character(p->v_value));
+			cp = ctrl((char)(long)p->v_value);
 			col += size(cp);
 			printf("%s", cp);
 		}
@@ -307,7 +307,7 @@ vstring(char *s, char *v)
 	if (p == 0)
 		return (1);
 	if ((p->v_flags & V_TYPEMASK) == V_NUMBER)
-		vassign(p, (char *)atoi(v));
+		vassign(p, (char *)(long)atoi(v));
 	else {
 		if (strcmp(s, "record") == 0)
 			v = expand(v);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.22 2010/06/29 21:34:50 nicm Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.23 2010/07/01 21:28:01 nicm Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -78,17 +78,17 @@ tipout_script(void)
 		read(tipin_fd, &c, 1);
 	}
 	*pline = '\0';
-	if (boolean(value(SCRIPT)) && fscript != NULL)
+	if (vgetnum(SCRIPT) && fscript != NULL)
 		fclose(fscript);
 	if (pline == line) {
-		setboolean(value(SCRIPT), 0);
+		vsetnum(SCRIPT, 0);
 		reply = 'y';
 	} else {
 		if ((fscript = fopen(line, "a")) == NULL)
 			reply = 'n';
 		else {
 			reply = 'y';
-			setboolean(value(SCRIPT), 1);
+			vsetnum(SCRIPT, 1);
 		}
 	}
 	write(tipin_fd, &reply, 1);
@@ -107,14 +107,14 @@ tipout_write(char *buf, size_t len)
 
 	write(STDOUT_FILENO, buf, len);
 
-	if (boolean(value(SCRIPT)) && fscript != NULL) {
-		if (!boolean(value(BEAUTIFY)))
+	if (vgetnum(SCRIPT) && fscript != NULL) {
+		if (!vgetnum(BEAUTIFY))
 			fwrite(buf, 1, len, fscript);
 		else {
 			for (cp = buf; cp < buf + len; cp++) {
 				if ((*cp >= ' ' && *cp <= '~') ||
-				    any(*cp, value(EXCEPTIONS)))
-					putc(*cp, fscript);
+				    any(*cp, vgetstr(EXCEPTIONS)))
+				    putc(*cp, fscript);
 			}
 		}
 	}
@@ -177,8 +177,8 @@ tipout(void)
 					tipout_script();
 					break;
 				case 'B':	/* toggle beautify */
-					flag = !boolean(value(BEAUTIFY));
-					setboolean(value(BEAUTIFY), flag);
+					flag = !vgetnum(BEAUTIFY);
+					vsetnum(BEAUTIFY, flag);
 					break;
 				}
 				break;
@@ -203,7 +203,7 @@ tipout(void)
 	}
 
 fail:
-	if (boolean(value(SCRIPT)) && fscript != NULL)
+	if (vgetnum(SCRIPT) && fscript != NULL)
 		fclose(fscript);
 	kill(tipin_pid, SIGTERM);
 	exit(0);

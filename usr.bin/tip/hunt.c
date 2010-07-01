@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.16 2010/06/29 20:09:39 nicm Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.17 2010/07/01 21:28:01 nicm Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -66,8 +66,7 @@ hunt(char *name)
 
 		if (setjmp(deadline) == 0) {
 			alarm(10);
-			FD = open(cp, (O_RDWR |
-			    (boolean(value(DC)) ? O_NONBLOCK : 0)));
+			FD = open(cp, O_RDWR | (vgetnum(DC) ? O_NONBLOCK : 0));
 		}
 		alarm(0);
 		if (FD < 0) {
@@ -78,7 +77,7 @@ hunt(char *name)
 			struct termios cntrl;
 
 			tcgetattr(FD, &cntrl);
-			if (!boolean(value(DC)))
+			if (!vgetnum(DC))
 				cntrl.c_cflag |= HUPCL;
 			tcsetattr(FD, TCSAFLUSH, &cntrl);
 			ioctl(FD, TIOCEXCL, 0);

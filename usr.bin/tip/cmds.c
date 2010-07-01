@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.39 2010/07/01 20:30:05 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.40 2010/07/01 21:28:01 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ getfl(int c)
 		unlink(copyname);
 		return;
 	}
-	transfer(buf, sfd, value(EOFREAD));
+	transfer(buf, sfd, vgetstr(EOFREAD));
 }
 
 /*
@@ -136,7 +136,7 @@ transfer(char *buf, int fd, char *eofchars)
 	sig_t f;
 	char r;
 
-	if (number(value(FRAMESIZE)) > BUFSIZ || number(value(FRAMESIZE)) < 1) {
+	if (vgetnum(FRAMESIZE) > BUFSIZ || vgetnum(FRAMESIZE) < 1) {
 		printf("framesize must be >= 1 and <= %d\r\n", BUFSIZ);
 		close(fd);
 		return;
@@ -173,9 +173,9 @@ transfer(char *buf, int fd, char *eofchars)
 			continue;
 		*p++ = c;
 
-		if (c == '\n' && boolean(value(VERBOSE)))
+		if (c == '\n' && vgetnum(VERBOSE))
 			printf("\r%d", ++ct);
-		if ((cnt = (p-buffer)) == number(value(FRAMESIZE))) {
+		if ((cnt = (p-buffer)) == vgetnum(FRAMESIZE)) {
 			if (write(fd, buffer, cnt) != cnt) {
 				printf("\r\nwrite error\r\n");
 				quit = 1;
@@ -187,7 +187,7 @@ transfer(char *buf, int fd, char *eofchars)
 		if (write(fd, buffer, cnt) != cnt)
 			printf("\r\nwrite error\r\n");
 
-	if (boolean(value(VERBOSE)))
+	if (vgetnum(VERBOSE))
 		prtime(" lines transferred in ", time(0)-start);
 	tcsetattr(0, TCSAFLUSH, &term);
 	write(tipout_fd, (char *)&ccc, 1);
@@ -226,7 +226,7 @@ pipefile(int c)
 		} else {
 			close(pdes[0]);
 			signal(SIGPIPE, intcopy);
-			transfer(buf, pdes[1], value(EOFREAD));
+			transfer(buf, pdes[1], vgetstr(EOFREAD));
 			signal(SIGPIPE, SIG_DFL);
 			while ((p = wait(&status)) > 0 && p != cpid)
 				;
@@ -281,8 +281,8 @@ sendfile(int c)
 		printf("%s: cannot open\r\n", fname);
 		return;
 	}
-	transmit(fp, value(EOFWRITE), NULL);
-	if (!boolean(value(ECHOCHECK)))
+	transmit(fp, vgetstr(EOFWRITE), NULL);
+	if (!vgetnum(ECHOCHECK))
 		tcdrain(FD);
 }
 
@@ -306,7 +306,7 @@ transmit(FILE *fp, char *eofchars, char *command)
 	if (command != NULL) {
 		for (pc = command; *pc; pc++)
 			send(*pc);
-		if (boolean(value(ECHOCHECK)))
+		if (vgetnum(ECHOCHECK))
 			read(FD, (char *)&c, 1);	/* trailing \n */
 		else {
 			tcdrain(FD);
@@ -324,16 +324,16 @@ transmit(FILE *fp, char *eofchars, char *command)
 				goto out;
 			if (c == EOF)
 				goto out;
-			if (c == 0177 && !boolean(value(RAWFTP)))
+			if (c == 0177 && !vgetnum(RAWFTP))
 				continue;
 			lastc = c;
 			if (c < 040) {
 				if (c == '\n') {
-					if (!boolean(value(RAWFTP)))
+					if (!vgetnum(RAWFTP))
 						c = '\r';
 				} else if (c == '\t') {
-					if (!boolean(value(RAWFTP))) {
-						if (boolean(value(TABEXPAND))) {
+					if (!vgetnum(RAWFTP)) {
+						if (vgetnum(TABEXPAND)) {
 							send(' ');
 							while ((++ccount % 8) != 0)
 								send(' ');
@@ -341,16 +341,16 @@ transmit(FILE *fp, char *eofchars, char *command)
 						}
 					}
 				} else
-					if (!boolean(value(RAWFTP)))
+					if (!vgetnum(RAWFTP))
 						continue;
 			}
 			send(c);
-		} while (c != '\r' && !boolean(value(RAWFTP)));
-		if (boolean(value(VERBOSE)))
+		} while (c != '\r' && !vgetnum(RAWFTP));
+		if (vgetnum(VERBOSE))
 			printf("\r%d", ++lcount);
-		if (boolean(value(ECHOCHECK))) {
+		if (vgetnum(ECHOCHECK)) {
 			timedout = 0;
-			alarm((unsigned int)number(value(ETIMEOUT)));
+			alarm((unsigned int)vgetnum(ETIMEOUT));
 			do {	/* wait for prompt */
 				read(FD, (char *)&c, 1);
 				if (timedout || stop) {
@@ -359,12 +359,12 @@ transmit(FILE *fp, char *eofchars, char *command)
 					alarm(0);
 					goto out;
 				}
-			} while ((c&STRIP_PAR) != character(value(PROMPT)));
+			} while ((c&STRIP_PAR) != vgetnum(PROMPT));
 			alarm(0);
 		}
 	}
 out:
-	if (lastc != '\n' && !boolean(value(RAWFTP)))
+	if (lastc != '\n' && !vgetnum(RAWFTP))
 		send('\r');
 	if (eofchars) {
 		for (pc = eofchars; *pc; pc++)
@@ -373,8 +373,8 @@ out:
 	stop_t = time(0);
 	fclose(fp);
 	signal(SIGINT, f);
-	if (boolean(value(VERBOSE))) {
-		if (boolean(value(RAWFTP)))
+	if (vgetnum(VERBOSE)) {
+		if (vgetnum(RAWFTP))
 			prtime(" chars transferred in ", stop_t-start_t);
 		else
 			prtime(" lines transferred in ", stop_t-start_t);
@@ -409,7 +409,7 @@ cu_put(int c)
 		printf("%s: cannot open\r\n", copynamex);
 		return;
 	}
-	if (boolean(value(ECHOCHECK)))
+	if (vgetnum(ECHOCHECK))
 		(void)snprintf(line, sizeof(line), "cat>%s\r", argv[1]);
 	else
 		(void)snprintf(line, sizeof(line),
@@ -429,16 +429,16 @@ send(int c)
 
 	cc = c;
 	parwrite(FD, &cc, 1);
-	if (number(value(CDELAY)) > 0 && c != '\r')
-		usleep(number(value(CDELAY)));
-	if (!boolean(value(ECHOCHECK))) {
-		if (number(value(LDELAY)) > 0 && c == '\r')
-			usleep(number(value(LDELAY)));
+	if (vgetnum(CDELAY) > 0 && c != '\r')
+		usleep(vgetnum(CDELAY));
+	if (!vgetnum(ECHOCHECK)) {
+		if (vgetnum(LDELAY) > 0 && c == '\r')
+			usleep(vgetnum(LDELAY));
 		return;
 	}
 tryagain:
 	timedout = 0;
-	alarm((unsigned int)number(value(ETIMEOUT)));
+	alarm((unsigned int)vgetnum(ETIMEOUT));
 	read(FD, &cc, 1);
 	alarm(0);
 	if (timedout) {
@@ -504,7 +504,7 @@ pipeout(int c)
 		printf("can't find `%s'\r\n", buf);
 		exit(0);
 	}
-	if (boolean(value(VERBOSE)))
+	if (vgetnum(VERBOSE))
 		prtime("away for ", time(0)-start);
 	write(tipout_fd, (char *)&ccc, 1);
 	tcsetattr(0, TCSAFLUSH, &term);
@@ -554,7 +554,7 @@ consh(int c)
 		printf("can't find `%s'\r\n", buf);
 		exit(0);
 	}
-	if (boolean(value(VERBOSE)))
+	if (vgetnum(VERBOSE))
 		prtime("away for ", time(0)-start);
 	write(tipout_fd, (char *)&ccc, 1);
 	tcsetattr(0, TCSAFLUSH, &term);
@@ -587,11 +587,11 @@ shell(int c)
 	} else {
 		signal(SIGQUIT, SIG_DFL);
 		signal(SIGINT, SIG_DFL);
-		if ((cp = strrchr(value(SHELL), '/')) == NULL)
-			cp = value(SHELL);
+		if ((cp = strrchr(vgetstr(SHELL), '/')) == NULL)
+			cp = vgetstr(SHELL);
 		else
 			cp++;
-		execl(value(SHELL), cp, (char *)NULL);
+		execl(vgetstr(SHELL), cp, (char *)NULL);
 		printf("\r\ncan't execl!\r\n");
 		exit(1);
 	}
@@ -610,15 +610,15 @@ setscript(void)
 	 * enable TIPOUT side for dialogue
 	 */
 	write(tipout_fd, "S", 1);
-	if (boolean(value(SCRIPT)))
-		write(tipout_fd, value(RECORD), size(value(RECORD)));
+	if (vgetnum(SCRIPT))
+		write(tipout_fd, vgetstr(RECORD), size(vgetstr(RECORD)));
 	write(tipout_fd, "\n", 1);
 	/*
 	 * wait for TIPOUT to finish
 	 */
 	read(tipout_fd, &c, 1);
 	if (c == 'n')
-		printf("can't create %s\r\n", value(RECORD));
+		printf("can't create %s\r\n", vgetstr(RECORD));
 }
 
 /*
@@ -635,7 +635,7 @@ chdirectory(int c)
 	if (prompt("[cd] ", dirname, sizeof(dirname))) {
 		if (stoprompt)
 			return;
-		cp = value(HOME);
+		cp = vgetstr(HOME);
 	}
 	if (chdir(cp) < 0)
 		printf("%s: bad directory\r\n", cp);
@@ -647,7 +647,7 @@ tipabort(char *msg)
 {
 	signal(SIGTERM, SIG_IGN);
 	kill(tipout_pid, SIGTERM);
-	logent(value(HOST), value(DEVICE), "call terminated");
+	logent(vgetstr(HOST), vgetstr(DEVICE), "call terminated");
 	if (msg != NULL)
 		printf("\r\n%s", msg);
 	printf("\r\n[EOT]\r\n");
@@ -662,7 +662,7 @@ finish(int c)
 {
 	char *dismsg;
 
-	if ((dismsg = value(DISCONNECT)) != NULL) {
+	if ((dismsg = vgetstr(DISCONNECT)) != NULL) {
 		write(FD, dismsg, strlen(dismsg));
 		sleep(5);
 	}
@@ -683,11 +683,11 @@ execute(char *s)
 {
 	char *cp;
 
-	if ((cp = strrchr(value(SHELL), '/')) == NULL)
-		cp = value(SHELL);
+	if ((cp = strrchr(vgetstr(SHELL), '/')) == NULL)
+		cp = vgetstr(SHELL);
 	else
 		cp++;
-	execl(value(SHELL), cp, "-c", s, (char *)NULL);
+	execl(vgetstr(SHELL), cp, "-c", s, (char *)NULL);
 }
 
 static int
@@ -757,19 +757,19 @@ variable(int c)
 	}
 	if (vtable[RECORD].v_flags & V_CHANGED) {
 		vtable[RECORD].v_flags &= ~V_CHANGED;
-		if (boolean(value(SCRIPT)))
+		if (vgetnum(SCRIPT))
 			setscript();
 	}
 	if (vtable[TAND].v_flags & V_CHANGED) {
 		vtable[TAND].v_flags &= ~V_CHANGED;
-		if (boolean(value(TAND)))
+		if (vgetnum(TAND))
 			tandem("on");
 		else
 			tandem("off");
 	}
 	if (vtable[LECHO].v_flags & V_CHANGED) {
 		vtable[LECHO].v_flags &= ~V_CHANGED;
-		setboolean(value(HALFDUPLEX), boolean(value(LECHO)));
+		vsetnum(HALFDUPLEX, vgetnum(LECHO));
 	}
 	if (vtable[PARITY].v_flags & V_CHANGED) {
 		vtable[PARITY].v_flags &= ~V_CHANGED;
@@ -777,7 +777,7 @@ variable(int c)
 	}
 	if (vtable[HARDWAREFLOW].v_flags & V_CHANGED) {
 		vtable[HARDWAREFLOW].v_flags &= ~V_CHANGED;
-		if (boolean(value(HARDWAREFLOW)))
+		if (vgetnum(HARDWAREFLOW))
 			hardwareflow("on");
 		else
 			hardwareflow("off");
@@ -809,14 +809,13 @@ listvariables(int c)
 			putchar('\n');
 			break;
 		case V_NUMBER:
-			printf(" %ld\r\n", number(p->v_value));
+			printf(" %ld\r\n", (long)p->v_value);
 			break;
 		case V_BOOL:
-			printf(" %s\r\n",
-			    !boolean(p->v_value) ? "false" : "true");
+			printf(" %s\r\n", p->v_value ? "true" : "false");
 			break;
 		case V_CHAR:
-			vis(buf, character(p->v_value), VIS_WHITE|VIS_OCTAL, 0);
+			vis(buf, (int)(long)p->v_value, VIS_WHITE|VIS_OCTAL, 0);
 			printf(" %s\r\n", buf);
 			break;
 		}
@@ -865,7 +864,7 @@ hardwareflow(char *option)
 void
 linedisc(char *option)
 {
-	int ld = (int)value(LINEDISC);
+	int ld = (int)vgetnum(LINEDISC);
 
 	ioctl(FD, TIOCSETD, &ld);
 }
@@ -916,7 +915,7 @@ expand(char name[])
 	}
 	(void)snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
 	if ((pid = vfork()) == 0) {
-		Shell = value(SHELL);
+		Shell = vgetstr(SHELL);
 		if (Shell == NULL)
 			Shell = _PATH_BSHELL;
 		close(pivec[0]);

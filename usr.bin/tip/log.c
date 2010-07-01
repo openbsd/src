@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.12 2010/06/29 16:44:38 nicm Exp $	*/
+/*	$OpenBSD: log.c,v 1.13 2010/07/01 21:28:01 nicm Exp $	*/
 /*	$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ logent(char *group, char *acu, char *message)
 void
 loginit(void)
 {
-	flog = fopen(value(LOG), "a");
+	flog = fopen(vgetstr(LOG), "a");
 	if (flog == NULL)
-		fprintf(stderr, "can't open log file %s.\r\n", value(LOG));
+		fprintf(stderr, "can't open log file %s.\r\n", vgetstr(LOG));
 }
