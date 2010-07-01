@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.19 2010/07/01 05:13:11 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.20 2010/07/01 06:11:59 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -3059,6 +3059,7 @@ btree_compact(struct btree *bt)
 	if ((btc = btree_open_fd(fd, 0)) == NULL)
 		goto failed;
 	bcopy(&bt->meta, &btc->meta, sizeof(bt->meta));
+	btc->meta.revisions = 0;
 
 	if ((txnc = btree_txn_begin(btc, 0)) == NULL)
 		goto failed;
