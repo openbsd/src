@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.3 2010/07/01 04:33:23 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -38,6 +38,8 @@ struct cpu_softc {
 
 int	cpumatch(struct device *, void *, void *);
 void	cpuattach(struct device *, struct device *, void *);
+
+int	cpu_hardclock(void *);
 
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpumatch, cpuattach
