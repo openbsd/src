@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.51 2010/06/30 20:20:18 thib Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.52 2010/07/01 21:27:39 art Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -157,13 +157,12 @@ uvm_chgkprot(caddr_t addr, size_t len, int rw)
  * uvm_vslock: wire user memory for I/O
  *
  * - called from physio and sys___sysctl
- * - XXXCDC: consider nuking this (or making it a macro?)
  */
 
 int
 uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 {
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t start, end;
 	int rv;
 
@@ -182,7 +181,6 @@ uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
  * uvm_vsunlock: unwire user memory wired by uvm_vslock()
  *
  * - called from physio and sys___sysctl
- * - XXXCDC: consider nuking this (or making it a macro?)
  */
 
 void
@@ -196,6 +194,99 @@ uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 		return;
 
 	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
+}
+
+/*
+ * uvm_vslock_device: wire user memory, make sure it's device reachable
+ *  and bounce if necessary.
+ * Always bounces for now.
+ */
+int
+uvm_vslock_device(struct proc *p, void *addr, size_t len,
+    vm_prot_t access_type, void **retp)
+{
+	struct vm_page *pg;
+	struct pglist pgl;
+	int npages;
+	vaddr_t start, end, off;
+	vaddr_t sva, va;
+	vsize_t sz;
+	int error, i;
+
+	start = trunc_page((vaddr_t)addr);
+	end = round_page((vaddr_t)addr + len);
+	sz = end - start;
+	off = (vaddr_t)addr - start;
+	if (end <= start)
+		return (EINVAL);
+
+	if ((error = uvm_fault_wire(&p->p_vmspace->vm_map, start, end,
+	    access_type))) {
+		return (error);
+	}
+
+	npages = atop(sz);
+	for (i = 0; i < npages; i++) {
+		paddr_t pa;
+
+		if (!pmap_extract(p->p_vmspace->vm_map.pmap,
+		    start + ptoa(i), &pa))
+			return (EFAULT);
+		if (!PADDR_IS_DMA_REACHABLE(pa))
+			break;
+	}
+	if (i == npages) {
+		*retp = NULL;
+		return (0);
+	}
+
+	if ((va = uvm_km_valloc(kernel_map, sz)) == 0) {
+		return (ENOMEM);
+	}
+	TAILQ_INIT(&pgl);
+	if (uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high, 0, 0, &pgl, npages, UVM_PLA_WAITOK)) {
+		uvm_km_free(kernel_map, va, sz);
+		return (ENOMEM);
+	}
+
+	sva = va;
+	while ((pg = TAILQ_FIRST(&pgl)) != NULL) {
+		TAILQ_REMOVE(&pgl, pg, pageq);
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
+		va += PAGE_SIZE;
+	}
+	KASSERT(va == sva + sz);
+	*retp = (void *)(sva + off);
+
+	error = copyin(addr, *retp, len);	
+	return (error);
+}
+
+void
+uvm_vsunlock_device(struct proc *p, void *addr, size_t len, void *map)
+{
+	vaddr_t start, end;
+	vaddr_t kva;
+	vsize_t sz;
+
+	start = trunc_page((vaddr_t)addr);
+	end = round_page((vaddr_t)addr + len);
+	sz = end - start;
+	if (end <= start)
+		return;
+
+	if (map)
+		copyout(map, addr, len);
+	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
+
+	if (!map)
+		return;
+
+	kva = trunc_page((vaddr_t)map);
+	pmap_kremove(kva, sz);
+	uvm_km_pgremove_intrsafe(kva, kva + sz);
+	uvm_km_free(kernel_map, kva, sz);
 }
 
 /*

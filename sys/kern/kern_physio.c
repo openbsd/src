@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.30 2010/06/23 14:18:32 thib Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.31 2010/07/01 21:27:39 art Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -113,6 +113,8 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
 		while (iovp->iov_len > 0) {
+			void *map = NULL;
+
 			/*
 			 * [mark the buffer busy for physical I/O]
 			 * (i.e. set B_PHYS (because it's an I/O to user
@@ -124,7 +126,6 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 
 			/* [set up the buffer for a maximum-sized transfer] */
 			bp->b_blkno = btodb(uio->uio_offset);
-			bp->b_data = iovp->iov_base;
 
 			/*
 			 * Because iov_len is unsigned but b_bcount is signed,
@@ -157,15 +158,20 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 			 * saves it in b_saveaddr.  However, vunmapbuf()
 			 * restores it.
 			 */
-			error = uvm_vslock(p, bp->b_data, todo,
+			error = uvm_vslock_device(p, iovp->iov_base, todo,
 			    (flags & B_READ) ?
-			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ);
+			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ, &map);
 			if (error) {
 				bp->b_flags |= B_ERROR;
 				bp->b_error = error;
 				goto after_unlock;
 			}
-			vmapbuf(bp, todo);
+			if (map) {
+				bp->b_data = map;
+			} else {
+				bp->b_data = iovp->iov_base;
+				vmapbuf(bp, todo);
+			}
 
 			/* [call strategy to start the transfer] */
 			(*strategy)(bp);
@@ -194,8 +200,9 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 			 * [unlock the part of the address space previously
 			 *    locked]
 			 */
-			vunmapbuf(bp, todo);
-			uvm_vsunlock(p, bp->b_data, todo);
+			if (!map)
+				vunmapbuf(bp, todo);
+			uvm_vsunlock_device(p, iovp->iov_base, todo, map);
 after_unlock:
 
 			/* remember error value (save a splbio/splx pair) */
