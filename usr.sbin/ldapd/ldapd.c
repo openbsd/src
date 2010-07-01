@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.4 2010/06/15 15:12:54 martinh Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.5 2010/07/01 02:19:11 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -160,7 +160,6 @@ main(int argc, char *argv[])
 	}
 
 	argc -= optind;
-	argv += optind;
 	if (argc > 0)
 		usage();
 

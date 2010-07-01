@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.16 2010/06/30 21:44:33 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.17 2010/07/01 02:19:11 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -1278,7 +1278,6 @@ cursor_push_page(struct cursor *cursor, struct mpage *mp)
 static struct mpage *
 btree_get_mpage(struct btree *bt, pgno_t pgno)
 {
-	int		 rc;
 	struct mpage	*mp;
 
 	mp = mpage_lookup(bt, pgno);
@@ -1289,7 +1288,7 @@ btree_get_mpage(struct btree *bt, pgno_t pgno)
 			free(mp);
 			return NULL;
 		}
-		if ((rc = btree_read_page(bt, pgno, mp->page)) != BT_SUCCESS) {
+		if (btree_read_page(bt, pgno, mp->page) != BT_SUCCESS) {
 			mpage_free(mp);
 			return NULL;
 		}
@@ -1373,8 +1372,7 @@ btree_search_page_root(struct btree *bt, struct mpage *root, struct btval *key,
 
 		DPRINTF("branch page %u has %lu keys", mp->pgno, NUMKEYS(mp));
 		assert(NUMKEYS(mp) > 1);
-		node = NODEPTR(mp, 0);
-		DPRINTF("found index 0 to page %u", NODEPGNO(node));
+		DPRINTF("found index 0 to page %u", NODEPGNO(NODEPTR(mp, 0)));
 
 		if (key == NULL)	/* Initialize cursor to first page. */
 			i = 0;
@@ -2181,7 +2179,7 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 {
 	int			 rc;
 	unsigned int		 pfxlen, mp_pfxlen = 0;
-	struct node		*node, *srcnode;
+	struct node		*srcnode;
 	struct mpage		*mp = NULL;
 	struct btkey		 tmpkey, srckey;
 	struct btval		 key, data;
@@ -2269,11 +2267,6 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 	/* Update the parent separators.
 	 */
 	if (srcindx == 0 && src->parent_index != 0) {
-		node = NODEPTR(src->parent, src->parent_index);
-		DPRINTF("current parent separator for source page %u is [%.*s]",
-		    src->pgno,
-		    (int)node->ksize, (char *)NODEKEY(node));
-
 		expand_prefix(bt, src, 0, &tmpkey);
 		key.size = tmpkey.len;
 		key.data = tmpkey.str;
@@ -2293,11 +2286,6 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 	}
 
 	if (dstindx == 0 && dst->parent_index != 0) {
-		node = NODEPTR(dst->parent, dst->parent_index);
-		DPRINTF("current parent separator for destination page %u is [%.*s]",
-		    dst->pgno,
-		    (int)node->ksize, (char *)NODEKEY(node));
-
 		expand_prefix(bt, dst, 0, &tmpkey);
 		key.size = tmpkey.len;
 		key.data = tmpkey.str;

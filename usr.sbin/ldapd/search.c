@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.8 2010/06/29 21:54:38 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.9 2010/07/01 02:19:11 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -495,13 +495,13 @@ ldap_search_root_dse(struct search *search)
 	elm = ber_add_sequence(elm);
 	key = ber_add_string(elm, "supportedExtension");
 	val = ber_add_set(key);
-	val = ber_add_string(val, "1.3.6.1.4.1.1466.20037");	/* StartTLS */
+	ber_add_string(val, "1.3.6.1.4.1.1466.20037");	/* StartTLS */
 
 	elm = ber_add_sequence(elm);
 	key = ber_add_string(elm, "supportedFeatures");
 	val = ber_add_set(key);
 	/* All Operational Attributes (RFC 3673) */
-	val = ber_add_string(val, "1.3.6.1.4.1.4203.1.5.1");
+	ber_add_string(val, "1.3.6.1.4.1.4203.1.5.1");
 
 	elm = ber_add_sequence(elm);
 	key = ber_add_string(elm, "subschemaSubentry");
@@ -707,7 +707,6 @@ ldap_search(struct request *req)
 	long long		 reason = LDAP_OTHER;
 	struct referrals	*refs;
 	struct search		*search = NULL;
-	int			 rc;
 
 	if (stats.searches > MAX_SEARCHES) {
 		log_warnx("refusing more than %u concurrent searches",
@@ -799,8 +798,8 @@ ldap_search(struct request *req)
 		goto done;
 	}
 
-	if ((rc = namespace_begin_txn(search->ns, &search->data_txn,
-	    &search->indx_txn, 1)) != BT_SUCCESS) {
+	if (namespace_begin_txn(search->ns, &search->data_txn,
+	    &search->indx_txn, 1) != BT_SUCCESS) {
 		if (errno == EBUSY) {
 			if (namespace_queue_request(search->ns, req) != 0) {
 				reason = LDAP_BUSY;
