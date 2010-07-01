@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.165 2010/06/30 22:41:43 thib Exp $ */
+/* $OpenBSD: acpi.c,v 1.166 2010/07/01 01:14:36 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -578,6 +578,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 					    res.v_buffer, acpi_getminbus,
 					    &pci->bus);
 			}
+			pci->sub = pci->bus;
 			node->pci = pci;
 			dnprintf(10, "found PCI root: %s %d\n", 
 			    aml_nodename(node), pci->bus);
