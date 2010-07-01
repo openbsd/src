@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.693 2010/06/27 21:58:35 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.694 2010/07/01 19:45:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -175,7 +175,7 @@ int			 pf_state_key_setup(struct pf_pdesc *, struct
 			    pf_state_key **, struct pf_state_key **, int);
 void			 pf_translate(struct pf_pdesc *, struct pf_addr *,
 			    u_int16_t, struct pf_addr *, u_int16_t, u_int16_t,
-			    int, struct mbuf *, int);
+			    int, struct mbuf *);
 int			 pf_test_fragment(struct pf_rule **, int,
 			    struct pfi_kif *, struct mbuf *, void *,
 			    struct pf_pdesc *, struct pf_rule **,
@@ -3035,7 +3035,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_translate(pd,
 			    &sk->addr[pd->sidx], sk->port[pd->sidx],
 			    &sk->addr[pd->didx], sk->port[pd->didx],
-			    virtual_type, icmp_dir, m, off);
+			    virtual_type, icmp_dir, m);
 			rewrite = 1;
 		}
 	} else {
@@ -3269,7 +3269,7 @@ csfailed:
 void
 pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
     struct pf_addr *daddr, u_int16_t dport, u_int16_t virtual_type,
-    int icmp_dir, struct mbuf *m, int off)
+    int icmp_dir, struct mbuf *m)
 {
 	if (PF_ANEQ(daddr, pd->dst, pd->af))
 		pd->destchg = 1;
