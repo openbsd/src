@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.95 2010/06/22 00:43:37 dtucker Exp $       */
+/* $OpenBSD: bioctl.c,v 1.96 2010/07/01 09:35:42 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -698,7 +698,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	struct sr_crypto_kdfinfo kdfinfo;
 	struct sr_crypto_kdf_pbkdf2 kdfhint;
 	struct stat		sb;
-	int			rv, no_dev;
+	int			rv, no_dev, fd;
 	dev_t			*dt;
 	u_int16_t		min_disks = 0;
 
@@ -776,8 +776,15 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 
 	} else if (level == 'C' && key_disk != NULL) {
 
-		if (stat(key_disk, &sb) == -1)
+		/* Get device number for key disk. */
+		fd = opendev(key_disk, O_RDONLY, OPENDEV_BLCK, NULL);
+		if (fd == -1)
+			err(1, "could not open %s", key_disk);
+		if (fstat(fd, &sb) == -1) {
+			close(fd);
 			err(1, "could not stat %s", key_disk);
+		}
+		close(fd);
 		create.bc_key_disk = sb.st_rdev;
 
 		memset(&kdfinfo, 0, sizeof(kdfinfo));
