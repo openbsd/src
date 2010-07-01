@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.33 2010/05/24 15:04:54 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.34 2010/07/01 21:14:01 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -307,6 +307,13 @@ cpu_intr(void *v)
 
 	while ((mask = ci->ci_ipending & ~imask[s])) {
 		int r, bit = fls(mask) - 1;
+
+#ifdef MULTIPROCESSOR
+		/* XXX - Ensure that IPIs run first. */
+		if (mask & (1 << 30))
+			bit = 30;
+#endif
+
 		struct hppa_iv *iv = &intr_table[bit];
 
 		ci->ci_ipending &= ~(1L << bit);
