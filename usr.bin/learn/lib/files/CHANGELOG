@@ -1,3 +1,0 @@
-Fri Sep 25 19:31:00 MDT 1998 ian
-Split L0.1a into two so each fits in a normal 24x80 xterm.
-Removed @ and #, replacing with geneirc ERASE and KILL.
