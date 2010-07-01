@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.77 2010/06/30 00:02:00 dlg Exp $	*/
+/*	$OpenBSD: ss.c,v 1.78 2010/07/01 03:01:37 matthew Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -655,6 +655,7 @@ ssstart(struct scsi_xfer *xs)
 		xs->timeout = 100000;
 		xs->done = ssdone;
 		xs->cookie = bp;
+		xs->bp = bp;
 
 		scsi_xs_exec(xs);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.176 2010/06/28 09:11:21 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.177 2010/07/01 03:01:37 matthew Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1212,6 +1212,7 @@ scsi_scsi_cmd(struct scsi_link *link, struct scsi_generic *scsi_cmd,
 	xs->datalen = datalen;
 	xs->retries = retries;
 	xs->timeout = timeout;
+	xs->bp = bp;
 
 	error = scsi_xs_sync(xs);
 

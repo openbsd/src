@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.102 2010/06/30 02:17:25 matthew Exp $	*/
+/*	$OpenBSD: st.c,v 1.103 2010/07/01 03:01:37 matthew Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1036,6 +1036,7 @@ ststart(struct scsi_xfer *xs)
 	xs->datalen = bp->b_bcount;
 	xs->done = st_buf_done;
 	xs->cookie = bp;
+	xs->bp = bp;
 
 	/*
 	 * go ask the adapter to do all this for us

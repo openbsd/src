@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.173 2010/06/30 17:38:03 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.174 2010/07/01 03:01:37 matthew Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -663,6 +663,7 @@ cdstart(struct scsi_xfer *xs)
 	xs->datalen = bp->b_bcount;
 	xs->done = cd_buf_done;
 	xs->cookie = bp;
+	xs->bp = bp;
 
 	/* Instrumentation. */
 	disk_busy(&sc->sc_dk);

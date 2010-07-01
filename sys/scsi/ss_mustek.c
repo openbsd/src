@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.25 2010/06/30 00:02:00 dlg Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.26 2010/07/01 03:01:37 matthew Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -460,6 +460,7 @@ mustek_read(ss, xs, bp)
 	xs->flags |= SCSI_DATA_IN;
 	xs->done = mustek_read_done;
 	xs->cookie = bp;
+	xs->bp = bp;
 
 	scsi_xs_exec(xs);
 

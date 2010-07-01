@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.42 2010/06/30 00:02:00 dlg Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.43 2010/07/01 03:01:37 matthew Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -297,6 +297,7 @@ scanjet_read(ss, xs, bp)
 	xs->timeout = 100000;
 	xs->done = scanjet_read_done;
 	xs->cookie = bp;
+	xs->bp = bp;
 
 	scsi_xs_exec(xs);
 
