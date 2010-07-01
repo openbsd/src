@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.52 2010/02/03 20:49:00 miod Exp $
+# $OpenBSD: Makefile,v 1.53 2010/07/01 17:44:57 thib Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -158,7 +158,7 @@ SRCS+=	c_rle.c c_zlib.c comp_lib.c comp_err.c
 SRCS+=	p12_add.c p12_crpt.c p12_init.c p12_mutl.c p12_p8e.c
 SRCS+=	p12_asn.c p12_crt.c p12_key.c p12_npas.c p12_utl.c
 SRCS+=	p12_attr.c p12_decr.c p12_kiss.c p12_p8d.c pk12err.c
-SRCS+= eng_all.c eng_openssl.c eng_ctrl.c eng_pkey.c
+SRCS+= eng_all.c eng_openssl.c eng_ctrl.c eng_pkey.c eng_aesni.c
 SRCS+= eng_dyn.c eng_table.c tb_cipher.c tb_store.c eng_err.c tb_rsa.c
 SRCS+= tb_ecdh.c tb_ecdsa.c
 SRCS+= hw_cryptodev.c eng_cnf.c
@@ -371,7 +371,8 @@ SSLASM=\
 	bn x86_64-mont \
 	md5 md5-x86_64 \
 	rc4 rc4-x86_64 \
-	sha sha1-x86_64
+	sha sha1-x86_64 \
+	aes aesni-x86_64
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S
 GENERATED+=${f}.S
