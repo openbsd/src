@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.42 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.43 2010/07/01 03:06:43 matthew Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	xs->cmdlen = screq->cmdlen;
 
 	if (screq->datalen > 0) {
-		xs->data = malloc(screq->datalen, M_TEMP, M_WAITOK);
+		xs->data = malloc(screq->datalen, M_TEMP, M_WAITOK | M_ZERO);
 		xs->datalen = screq->datalen;
 	}
 
@@ -223,7 +223,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	xs->cmdlen = sizeof(*cdb);
 
 	if (atareq->datalen > 0) {
-		xs->data = malloc(atareq->datalen, M_TEMP, M_WAITOK);
+		xs->data = malloc(atareq->datalen, M_TEMP, M_WAITOK | M_ZERO);
 		xs->datalen = atareq->datalen;
 	}
 
