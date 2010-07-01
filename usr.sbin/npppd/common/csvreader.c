@@ -1,3 +1,4 @@
+/* $OpenBSD: csvreader.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,9 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* original version は CSVReader.java */
+/* The original version is CSVReader.java */
 /* @file
- * CSV(RFC4180) を読み込むための補助的な関数
+ * Subroutines to read CSV(RFC4180)
  * <pre>
  *  csvreader *csv;
  *  const char **cols;
@@ -53,7 +54,7 @@
  *   csvreader_destroy(csv);
  *</pre>
  */
-/* $Id: csvreader.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: csvreader.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,7 +83,7 @@ struct _csvreader {
 #define CSV_FLUSH_WAIT		4
 
 #define DQUOTE		'"'
-#define COLON		','
+#define COMMA		','
 #define	CR		'\r'
 #define	LF		'\n'
 
@@ -91,8 +92,7 @@ static int   csvreader_flush_column (csvreader *);
 static CSVREADER_STATUS  csvreader_parse_flush0 (csvreader *, int);
 
 /**
- * cvsreader コンテキストを作成して返却します。メモリ割り当てに失敗すると、
- * NULL が返ります。
+ * Make a cvsreader context and returns it. Return null if malloc() failed.
  */
 csvreader *
 csvreader_create(void)
@@ -109,7 +109,7 @@ csvreader_create(void)
 
 
 /**
- * cvsreader コンテキストを解放します。
+ * Free a cvsreader context.
  */
 void
 csvreader_destroy(csvreader *_this)
@@ -122,7 +122,7 @@ csvreader_destroy(csvreader *_this)
 }
 
 /**
- * パース済みのカラム配列の数を取得します。
+ * get the number of parsed columns.
  */
 int
 csvreader_get_number_of_column(csvreader *_this)
@@ -133,7 +133,7 @@ csvreader_get_number_of_column(csvreader *_this)
 }
 
 /**
- * パース済みのカラム配列(=行) を取得します。
+ * get a parsed column.
  */
 const char **
 csvreader_get_column(csvreader *_this)
@@ -150,7 +150,7 @@ csvreader_get_column(csvreader *_this)
 }
 
 /**
- * cvsreader コンテキストをリセットします。
+ * Reset a cvsreader context.
  */
 void
 csvreader_reset(csvreader *_this)
@@ -165,11 +165,11 @@ csvreader_reset(csvreader *_this)
 }
 
 /**
- * パース途中のカラムのパースを完了します。
+ * Finish parsing of a column on the way.
  * <p>
- * CSVファイルの末尾など、続く行
- * が存在しない場合や、CSV としての行の区切りであることが確実な場合に呼び
- * だします。フィールドが終了していない場合などにはエラーが返ります。</p>
+ * Call this function when it's sure that there is no next line or the end
+ * of the CSV.
+ * It will return error when the parsing of the field isn't finished. </p>
  */
 CSVREADER_STATUS 
 csvreader_parse_flush(csvreader *_this)
@@ -178,10 +178,10 @@ csvreader_parse_flush(csvreader *_this)
 }
 
 /**
- * 行をパースします。
+ * parse a line.
  *
- * @param	csvreader コンテキスト
- * @param	パースする行。
+ * @param	a csvreader context
+ * @param	a line to parse
  */
 CSVREADER_STATUS
 csvreader_parse(csvreader *_this, const char *line)
@@ -205,14 +205,14 @@ csvreader_parse(csvreader *_this, const char *line)
 				_this->column_start_with_quote = 1; 
 				break;
 			}
-			/* FALL THROUGH */
+			/* FALLTHROUGH */
 		case CSV_IN_DATA:
 			if (_this->column_start_with_quote != 0) {
 				if (line[off] == DQUOTE)
 					_this->state = CSV_HAS_DQUOTE;
 				break;
 			}
-			if (line[off] == COLON) {
+			if (line[off] == COMMA) {
 				append = 0;
 				csvreader_flush_column(_this);
 			}
@@ -227,12 +227,12 @@ csvreader_parse(csvreader *_this, const char *line)
 				break;
 			}
                 	_this->state = CSV_WAIT_DELIM;
-			/* FALL THROUGH */
+			/* FALLTHROUGH */
 		case CSV_WAIT_DELIM:
 			if (line[off] == CR || line[off] == LF)
 				goto eol;
 			append = 0;
-			if (line[off] != COLON)
+			if (line[off] != COMMA)
 				return CSVREADER_PARSE_ERROR;
 			csvreader_flush_column(_this);
 			break;
@@ -258,11 +258,11 @@ csvreader_parse_flush0(csvreader *_this, int is_final)
 			/* wait next line */
 			return CSVREADER_NO_ERROR;
 		}
-		/* FALL THROUGH */
+		/* FALLTHROUGH */
 	case CSV_INIT:
 		if (is_final && _this->col_pos == 0)
 			return CSVREADER_NO_ERROR;
-		/* FALL THROUGH */
+		/* FALLTHROUGH */
         case CSV_HAS_DQUOTE:
         case CSV_WAIT_DELIM:
 		csvreader_flush_column(_this);
@@ -273,12 +273,13 @@ csvreader_parse_flush0(csvreader *_this, int is_final)
 }
 
 /**
- * char ポインタの配列に格納された列を CSV の表現の行文字列に変換します。
-
- * @param	cols	変換する列。NULL 要素は、列の終わりとみなします。
- * @param	ncols	列の数。
- * @param	buffer	変換後の行文字列を書き込むスペース
- * @param	lbuffer	変換後の行文字列を書き込むスペースの大きさ。
+ * Convert columns stored in char *[] to a CVS line string.
+ *
+ * @param	cols	columns to be converted. NULL means the end of the
+ * 			column.
+ * @param	ncols	number of columns
+ * @param	buffer	the output buffer to write a converted line.
+ * @param	lbuffer	the size of the output buffer.
  */
 int
 csvreader_toline(const char **cols, int ncols, char *buffer, int lbuffer)

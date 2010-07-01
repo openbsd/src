@@ -84,8 +84,10 @@ static int radius_ensure_add_capacity(RADIUS_PACKET* packet, size_t capacity)
 	size_t newsize;
 	void* newptr;
 
-	// 最大サイズは 64KB
-	// 安全のため(?)、少し小さい値をリミットにしている。
+	/*
+	 * The maximum size is 64KB.
+	 * We use little bit smaller value for our safety(?).
+	 */
 	if(ntohs(packet->pdata->length) + capacity > 0xfe00)
 		return 1;
 
@@ -203,7 +205,7 @@ int radius_check_response_authenticator(const RADIUS_PACKET* packet,
 	MD5_CTX ctx;
 	unsigned char authenticator0[16];
 
-	/* 呼び出し前に必ず radius_set_request_packet*/
+	/* Assume radius_set_request_packet() was called before calling */
 	if (packet->request == NULL)
 		return -1;
 

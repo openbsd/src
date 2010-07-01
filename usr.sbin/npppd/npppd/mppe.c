@@ -23,14 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $ */
 /**@file
  *
- * MPPE(Microsoft Point-To-Point Encryption Protocol) の実装。
+ * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol) 
  */
 /*
- * PPPパケット入れ替わり問題の回避。
- * L2TP/IPsec で、フレーム順を復元できなければ、回避した方がベター。
+ * To avoid the PPP packet out of sequence problem.
+ * It may avoid if it reconstruct the frame order in L2TP/IPsec.
  */
 #define	WORKAROUND_OUT_OF_SEQUENCE_PPP_FRAMING	1
 
@@ -79,8 +79,8 @@ static void        rc4 __P((mppe *, mppe_rc4_t *, int, u_char *, u_char *));
 static void        GetNewKeyFromSHA __P((u_char *, u_char *, int, u_char *));
 
 /**
- * mppe コンテキストを初期化します。
- * 	- 設定を読み込みます。
+ * initializing mppe context.
+ * 	- reading configuration.
  */
 void
 mppe_init(mppe *_this, npppd_ppp *ppp)
@@ -122,7 +122,7 @@ mppe_init(mppe *_this, npppd_ppp *ppp)
 			_this->mode_stateless = 0;
 		} else if (strcmp(sval, "auto") == 0 ||
 		    strcmp(sval, "*") == 0) {
-			/* デフォルトのまま */
+			/* no changes from default. */
 		} else {
 			mppe_log(_this, LOG_WARNING,
 			    "configuration \"mppe.mode\" has bad value");
@@ -132,7 +132,7 @@ mppe_init(mppe *_this, npppd_ppp *ppp)
 	}
 	if (ppp_config_str_equal(_this->ppp, "mppe.keylen", "auto", 0) ||
 	    ppp_config_str_equal(_this->ppp, "mppe.keylen", "*", 0)) {
-		/* デフォルトのまま */
+		/* no changes from default. */
 	} else {
 		ival = ppp_config_int(_this->ppp, "mppe.keylen", -1);
 		if (ival != -1) {
@@ -188,7 +188,7 @@ mppe_key_change(mppe *_mppe, mppe_rc4_t *_this)
 }
 
 /**
- * MPPE プロトコルを開始します。
+ * starting mppe protocol.
  */
 void
 mppe_start(mppe *_this)
@@ -246,14 +246,15 @@ mppe_start(mppe *_this)
 
 
 /**
- * mppe bits を作成します。最初の提案を行う場合には、peer_bits に 0 を指定し
- * ます。peer_bits が指定されていれば、peer の提案にそった値を返します。
+ * creating the mppe bits. In case of first proposal, it specifies the 
+ * peer_bits as 0 value. If it specifies the peer_bits, it returns the
+ * value as peer's proposal.
  */
 uint32_t
 mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 {
 	uint32_t our_bits;
-	// デフォルトの提案
+	/* default proposal */
 	our_bits = CCP_MPPE_NT_128bit;
 
 	if (_this->keylen_auto == 0) {
@@ -266,7 +267,7 @@ mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 			our_bits = CCP_MPPE_NT_128bit; break;
 		}
 	} else {
-		// 自動
+		/* auto */
 		our_bits = CCP_MPPE_NT_128bit | CCP_MPPE_NT_56bit
 			| CCP_MPPE_NT_40bit;
 		if (peer_bits != 0) {
@@ -280,35 +281,35 @@ mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 	}
 
 	if (_this->mode_auto != 0) {
-		/* 自動の場合 */
+		/* in case of auto_mode */
 		if (peer_bits == 0) {
 			/*
-			 * 最初の提案は stateless で行う。Windows 9x の場合、
-			 * 送受信で stateful/stateless が逆になるバグがある。
-			 * Windows 9x は、stateless を優先してネゴシエーション
-			 * しようとするため、こちらも stateless を優先すること
-			 * で、この Windows のバグを回避する。
-			 * (idgw-develop 4224)
+			 * It proposes stateless mode in first time. Windows 9x has
+			 * a bug that it is reverse to stateful and stateless in 
+			 * sending and receiving packets.
+			 * Windows 9x is prior to negotiate in stateless mode, so
+			 * it will avoid the Windows bug to be prior to negotiate 
+			 * in stateless mode.
 			 *
-			 * このバグがなかったにせよ、パケットロスが一定割合
-			 * 以上発生するような場合に、stateful はユーザからみ
-			 * たコストが高いので、インターネットや無線LAN経由し
-			 * た利用では、よい選択ではない。
+			 * Even if this bug doesn't exists, the stateful mode is high
+			 * cost from user's viewpoint when packets may loss more than a
+			 * certain rate, so it is not good choice to use via Internet or
+			 * wireless LAN.
 			 */
 			our_bits |= CCP_MPPE_STATELESS;
 		} else {
-			/* 譲歩する */
+			/* giving up */
 			our_bits |= peer_bits & CCP_MPPE_STATELESS;
 		}
 	} else {
-		/* auto 以外が設定されている場合は、譲歩しない */
+		/* it doesn't give up in case of setting non-auto value. */
 		if (_this->mode_stateless != 0)
 			our_bits |= CCP_MPPE_STATELESS;
 	}
 	if (peer_bits != 0 && our_bits != peer_bits) {
 		char obuf[128], pbuf[128];
 
-		/* 失敗した場合にログに残らないので。*/
+		/* in case of failure, it puts a log. */
 		strlcpy(obuf, mppe_bits_to_string(our_bits), sizeof(obuf));
 		strlcpy(pbuf, mppe_bits_to_string(peer_bits), sizeof(pbuf));
 		mppe_log(_this, LOG_INFO,
@@ -323,7 +324,7 @@ mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 #define	COHRENCY_CNT_MASK	0x0fff;
 
 /**
- * MPPE 経由でのパケット受信
+ * receiving packets via MPPE.
  */
 void
 mppe_input(mppe *_this, u_char *pktp, int len)
@@ -356,11 +357,13 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	}
 #ifdef	WORKAROUND_OUT_OF_SEQUENCE_PPP_FRAMING
 	/*
-	 * L2TP/IPsec の実装で、PPPフレーム順を復元できず、順番が入れ替わった
-	 * 場合に、大量のパケットロスと区別が付かず、そう判断すると MPPE の
-	 * 鍵がズレる。この問題を回避するため、4096-256 パケット以上落ちてい
-	 * るように見える場合には、パケットが落ちたわけではなく順番が入れ替
-	 * わったモノとみなす。
+	 * In L2TP/IPsec implementation, in case that the ppp frame sequence
+	 * is not able to reconstruct and the ppp frame is out of sequence, it
+	 * is unable to identify with many packets losing. If it does so, MPPE 
+	 * key is out of place.
+	 * To avoid this problem, when it seems that more than 4096-256 packets
+	 * drops, it assumes that the packet doesn't lose but the packet is out
+	 * of sequence.
 	 */
     {
 	int coher_cnt0;
@@ -388,7 +391,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	} else {
 		if (flushed) {
 			if (coher_cnt < _this->recv.coher_cnt) {
-				// 繰り上がった場合
+				/* in case of carrying up. */
 				coher_cnt += 0x1000;
 			}
 			pktloss += coher_cnt - _this->recv.coher_cnt;
@@ -421,8 +424,10 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 #ifndef	WORKAROUND_OUT_OF_SEQUENCE_PPP_FRAMING
 	if (pktloss > 1000) {
 		/*
-		 * パケット落ち過ぎ、あるいはパケット順が入れ替わった。
-		 * 後者の場合、この後鍵がズレているため通信ができなくなる。
+		 * In case of many packets losing or out of sequence.
+		 * The latter is not able to communicate because the key is 
+		 * out of place soon.
+		 * 
 		 */
 		mppe_log(_this, LOG_WARNING, "%d packets loss", pktloss);
 	}
@@ -442,7 +447,8 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 }
 
 /**
- * CCP Reset (MPPE の場合鍵リセット) を受信した時に呼び出される関数。
+ * The call out function in case of receiving CCP Reset (key reset in case
+ * of MPPE).
  */
 void
 mppe_recv_ccp_reset(mppe *_this)
@@ -452,7 +458,7 @@ mppe_recv_ccp_reset(mppe *_this)
 }
 
 /**
- * MPPE 経由でのパケット送信
+ * sending packet via MPPE.
  */
 void
 mppe_pkt_output(mppe *_this, uint16_t proto, u_char *pktp, int len)
@@ -540,7 +546,7 @@ mppe_bits_to_string(uint32_t bits)
 }
 
 /************************************************************************
- * 以下、認証/暗号化アルゴリズムの実装
+ * implementations of authentication/cipher algorism.
  ************************************************************************/
 static u_char SHAPad1[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -567,7 +573,7 @@ static u_char SHAPad1[] = {
 #define	SHAFinal(ctx,digest)	SHA1_Final(digest, ctx)
 
 /************************************************************************
- * OpenSSL 版実装
+ * implementations of OpenSSL version
  ************************************************************************/
 
 static int

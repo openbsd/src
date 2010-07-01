@@ -26,19 +26,19 @@
 #ifndef	NPPPD_AUTH_H
 #define	NPPPD_AUTH_H 1
 
-/** ローカル認証レルム */
+/** local authentication realm */
 #define	NPPPD_AUTH_TYPE_LOCAL		1
-/** RADIUS認証レルム */
+/** RADIUS authentication realm */
 #define	NPPPD_AUTH_TYPE_RADIUS		2
 
 struct _npppd_auth_base;
 struct _npppd_auth_radius;
 struct _npppd_auth_local;
 
-/** ローカル認証レルムの既定の型 */
+/** default type of local authentication realm */
 typedef struct _npppd_auth_base npppd_auth_base;
 
-/** RADIUS認証レルムの型 */
+/** type of RADIUS authentication realm */
 typedef struct _npppd_auth_radius npppd_auth_radius;
 typedef struct _npppd_auth_local npppd_auth_local;
 

@@ -2,8 +2,8 @@
  * Copyright 2007, 2009
  *	Internet Initiative Japan Inc.  All rights reserved.
  */
-/* $Id: ipsec_util.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
-/*@file IPsec 関連ユーティリティ */
+/* $Id: ipsec_util.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/*@file IPsec related utility functions */
 /*
  * RFC 2367 PF_KEY Key Management API, Version 2
  */
@@ -59,25 +59,25 @@ ipsec_util_purge_transport_sa(struct sockaddr *sock, struct sockaddr *peer,
 
 	tv = KEYSOCK_RCVTIMEO;
 	if (setsockopt(key_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) != 0)
-		goto reigai;
+		goto fail;
 	
 	del_in.is_valid = del_out.is_valid = 0;
 	if (delete_prepare(key_sock, sock, peer, proto, &del_in, &del_out) != 0)
-		goto reigai;
+		goto fail;
 
 	if (del_in.is_valid && (dir & IPSEC_UTIL_DIRECTION_IN) != 0) {
 		if (send_sadb_delete(key_sock, &del_in))
-			goto reigai;
+			goto fail;
 	}
 	if (del_out.is_valid && (dir & IPSEC_UTIL_DIRECTION_OUT) != 0) {
 		if (send_sadb_delete(key_sock, &del_out))
-			goto reigai;
+			goto fail;
 	}
 	close(key_sock);
 
 	return 0;
 
-reigai:
+fail:
 	close(key_sock);
 
 	return -1;

@@ -33,7 +33,7 @@
 #define PPPOED_SHUTDOWN_TIMEOUT		5
 
 #ifndef PPPOE_NSESSION
-/** PPPoE 最大接続数 */
+/** PPPoE maximum number of sessions */
 #define	PPPOE_NSESSION			10000
 #endif
 #define	PPPOE_NLISTENER			512
@@ -47,10 +47,12 @@
 #define pppoe_session_sock_bpf(session)					\
 	((pppoed_listener *)slist_get(&(session)->pppoed->listener,	\
 	    (session)->listener_index))->bpf
-/** pptp_ctrl から、リスナーの物理層のラベルを取り出すマクロ */
+
+/** macro is to get the physical layer label by {@link pppoe_session} */
 #define PPPOE_SESSION_LISTENER_LABEL(session)  				\
 	((pppoed_listener *)slist_get(&(session)->pppoed->listener,	\
 	(session)->listener_index))->phy_label
+/** macro is to get the interface name by {@link pppoe_session} */
 #define PPPOE_SESSION_LISTENER_IFNAME(session) 				\
 	((pppoed_listener *)slist_get(&(session)->pppoed->listener,	\
 	(session)->listener_index))->listen_ifname

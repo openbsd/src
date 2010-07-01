@@ -97,30 +97,28 @@
 #define	INADDR_USER_SELECT	(htonl(0xFFFFFFFFL))
 #define	INADDR_NAS_SELECT	(htonl(0xFFFFFFFEL))
 
-/** トンネルタイプ定数 */
-#define PPP_TUNNEL_NONE		0	/** トンネルタイプ無し */
-#define PPP_TUNNEL_L2TP		1	/** L2TP トンネルタイプ */
-#define PPP_TUNNEL_PPTP		2	/** PPTP トンネルタイプ */
-#define PPP_TUNNEL_PPPOE	3	/** PPPoE トンネルタイプ */
+/** Constants of tunnel type */
+#define PPP_TUNNEL_NONE		0	/** None Tunnel Type */
+#define PPP_TUNNEL_L2TP		1	/** L2TP Tunnel Type */
+#define PPP_TUNNEL_PPTP		2	/** PPTP Tunnel Type */
+#define PPP_TUNNEL_PPPOE	3	/** PPPoE Tunnel Type */
 
-/** デフォルトの LCP ECHO 試行間隔(sec) */
+/** Default LCP ECHO interval (sec) */
 #define DEFAULT_LCP_ECHO_INTERVAL	300
 
-/** デフォルトの LCP ECHO 再試行間隔(sec) */
+/** Default LCP ECHO retry interval (sec) */
 #define DEFAULT_LCP_ECHO_RETRY_INTERVAL	60
 
-/** デフォルトの LCP ECHO 再試行回数(sec) */
+/** Default LCP ECHO number of retry */
 #define DEFAULT_LCP_ECHO_MAX_RETRIES	3
 
-/** MRU に MPPE/CCP ヘッダ分が含まれているかどうか */
+/** MRU includes MPPE/CCP header (XXX delete this) */
 /* #define MRU_INCLUDES_MPPE_CCP	 */
 
-/** length for phone number */
+/** Length for phone number */
 #define	NPPPD_PHONE_NUMBER_LEN	32
 
-/**
- * PPP Disconnect Codes based on RFC 3145
- */
+/** PPP Disconnect Codes based on RFC 3145 */
 typedef enum _npppd_ppp_disconnect_code {
     /*
      * 3.1.  Global Errors
@@ -233,12 +231,10 @@ typedef struct _npppd_ppp	npppd_ppp;
 #include <radius_req.h>
 #endif
 
-/**
- * LCP の型
- */
+/** Type for LCP */
 typedef struct _lcp {
 	fsm 		fsm;
-	/** LCP オプション */
+	/** LCP options */
 	struct _opt {
 		uint8_t		mru;
 		uint8_t		pfc;
@@ -249,52 +245,50 @@ typedef struct _lcp {
 		uint8_t		chapms_v2;
                 uint8_t		eap;
 	} opt;
-	/** 最後の認証方式の提案 */
+	/** Authentication method of the last Configure-Request */
 	uint32_t	lastauth;
-	/** マジック番号 */
+	/** Magic number */
 	uint32_t	magic_number;
 
-	/** 先方のマジック番号 */
+	/** Peer's magic number */
 	uint32_t	peer_magic_number;
 
 	/** context for event(3) */
     	struct evtimer_wrap timerctx;
 
-	/** echo の送信間隔(秒) */
+	/** echo internval (sec) */
 	int echo_interval;
 
-	/** echo の最大連続失敗回数 */
+	/** echo max retries */
 	int echo_max_retries;
 
-	/** echo reply を待つ時間 */
+	/** wait to echo repy (sec) */
 	int echo_retry_interval;
 
-	/** echo の失敗回数 */
+	/** failure count of echo */
 	int echo_failures;
 
-	// NAT/ブラックホール検出のために
-	/** 受信した LCP 要求 */
+	/* for NAT/Blackhole detection */
+	/** received LCP requests */
 	int8_t		recv_reqs;
-	/** 受信した LCP の応答 */
+	/** received LCP responses */
 	int8_t		recv_ress;
+
 	/*
-	 * Windows 2000 は ConfigReq に MRU は含まれず、送信した ConfigReq
-	 * にたいして Nak を返してくる。
+	 * XXX
 	 */
 	uint32_t	xxxmru;
 
-	/** 認証メソッド順 */
+	/** order of authentication methods */
 	int		auth_order[16];
 
-	uint32_t	/** dialin proxy したかどうか */
+	uint32_t	/** doing dialin proxy */
 			dialin_proxy:1,
-			/** LCP を再調停するかどうか */
+			/** do lcp renegotiation? */
 			dialin_proxy_lcp_renegotiation:1;
 } lcp;
 
-/**
- * CHAP の型
- */
+/** Type for CHAP */
 typedef struct _chap {
 	npppd_ppp 	*ppp;
 	/** context for event(3) */
@@ -315,9 +309,7 @@ typedef struct _chap {
 #endif
 } chap;
 
-/**
- * PAP の型
- */
+/** Type for PAP */
 typedef struct _pap {
 	npppd_ppp	*ppp;
 	uint32_t	state;
@@ -328,9 +320,7 @@ typedef struct _pap {
 #endif
 } pap;
 
-/**
- * EAP
- */
+/** Type for EAP */
 #ifdef USE_NPPPD_EAP_RADIUS
 #define PPP_EAP_FLAG_NAK_RESPONSE 0x01
 typedef struct _eap {
@@ -355,9 +345,7 @@ typedef struct _eap {
 } eap;
 #endif
            
-/**
- * CCP の型
- */
+/** Type for CCP */
 typedef struct _ccp {
 	npppd_ppp 	*ppp;
 	fsm		fsm;
@@ -367,9 +355,7 @@ typedef struct _ccp {
 	uint		mppe_rej;
 } ccp;
 
-/**
- * IPCP の型
- */
+/** Type for IPCP */
 typedef	struct _ipcp {
 	fsm		fsm;
 	npppd_ppp 	*ppp;
@@ -382,7 +368,7 @@ typedef	struct _ipcp {
 	struct in_addr	nbns_sec;
 } ipcp;
 
-/** パケットの recv/send 等デリゲートする際に使う関数ポインタ */
+/** Function pointer to delegate packet send/recv */
 typedef int (*npppd_iofunc) (
 	npppd_ppp 	*ppp,
 	unsigned char	*bytes,
@@ -390,7 +376,7 @@ typedef int (*npppd_iofunc) (
 	int		flags
 );
 
-/** オリジナルのパケットは MPPE で暗号化されていたことを示します。 */
+/** Flag indicates the orignal packet was encrypted by MPPE */
 #define	PPP_IO_FLAGS_MPPE_ENCRYPTED			0x0001
 
 typedef void (*npppd_voidfunc) (
@@ -417,9 +403,7 @@ typedef struct _mppe_rc4 {
 	uint8_t		session_key[MPPE_KEYLEN];
 } mppe_rc4_t;
 
-/**
- * MPPE の型
- */
+/** Type for MPPE */
 typedef struct _mppe {
 	npppd_ppp	*ppp;
 	uint8_t		master_key[MPPE_KEYLEN];
@@ -429,8 +413,8 @@ typedef struct _mppe {
 	/*
 	 * configuration parameters.
 	 */
-	uint16_t 	enabled		:1,	/* if 0 MPPE しない */
-			required	:1,	/* if 1 MPPE なしで通信不可*/
+	uint16_t 	enabled		:1,	/* if 0 No MPPE */
+			required	:1,	/* if 1 MPPE is optional */
 			mode_auto	:1,
 			keylen_auto	:1,
 			mode_stateless	:1,
@@ -441,9 +425,7 @@ typedef struct _mppe {
 } mppe;
 #endif
 
-/**
- * Type for phone number.  Can be to use as a struct sockaddr. 
- */
+/** Type for phone number.  Can be to use as a struct sockaddr. */
 typedef struct _npppd_phone_number {
 #define	NPPPD_AF_PHONE_NUMBER	(AF_MAX + 0)
 	/** total length */
@@ -454,55 +436,45 @@ typedef struct _npppd_phone_number {
 	char		pn_number[NPPPD_PHONE_NUMBER_LEN + 1];
 } npppd_phone_number;
 
-/**
- * npppd_ppp 型。
- */
+/** Type for PPP */
 struct _npppd_ppp {
 	npppd 		*pppd;
 	int		id;
-	/*
-	 * 入出力
-	 */
-	uint8_t		*outpacket_buf;		/** 出力バッファ */
-	npppd_iofunc	send_packet;		/** send to phy */
-	npppd_iofunc	recv_packet;		/** recv from phy */
+	/* Input and output */
+	uint8_t		*outpacket_buf;		/** buffer space for output */
+	npppd_iofunc	send_packet;		/** send to physical layer */
+	npppd_iofunc	recv_packet;		/** recv from physical layer */
 
-	/** アイドルタイムアウトイベント */
+	/** event context for idle-timer's timer */
 	struct event	idle_event;
-	/** アイドルタイムアウトの値 */
+	/** idle-timer value (sec) */
 	int		timeout_sec;
-	/*
-	 * 物理層
-	 */
-	int		tunnel_type;		/** PPPトンネルタイプ */
+
+	/** Physical layer */
+	int		tunnel_type;		/** PPP Tunnel TYpe */
 	uint16_t	mru;			/** MRU */
 	uint16_t	peer_mru;		/** Peer's MRU */
-	void		*phy_context;		/** 物理層のコンテキスト */
-	char		phy_label[16];		/** 物理層のラベル */
+	void		*phy_context;		/** Context of physical layer */
+	char		phy_label[16];		/** Label for physical layer */
 	union {
 		struct sockaddr_in	peer_in;/** {L2TP,PPTP}/IPv4 */
 #if defined(USE_NPPPD_PPPOE)
 		struct sockaddr_dl	peer_dl;/** PPPoE */
 #endif
 		npppd_phone_number	peer_pn;/** DialIn */
-	} phy_info;				/** 物理層の情報 */
+	} phy_info;				/** Info of physical layer */
 	char		calling_number[NPPPD_PHONE_NUMBER_LEN + 1];
 	npppd_voidfunc	phy_close;		/** close line */
 	/*
-	 * 切断。以下のどのケースでも、phy_close が呼ばれます。
-	 *	- PPP側から切断
-	 *	- 物理層側から ppp_close
-	 *	- 物理層側から ppp_phy_downed
-	 *
-	 * phy_close が呼ばれた直後に ppp は解放されるので、以後アクセスして
-	 * はいけない。
+	 * phy_close() will be called by any cases disconnecting.  ppp will be
+	 * freed just after phy_close() is called.  Don't touch the ppp after
+	 * then.
 	 */
 
-	/** 認証レルム */
+	/** authentication realm */
 	void *realm;
-	/*
-	 * プロトコル
-	 */
+
+	/* protocols */
 	lcp		lcp;			/** lcp */
 	chap		chap;			/** chap */
 	pap		pap;			/** pap */
@@ -512,8 +484,8 @@ struct _npppd_ppp {
 	ccp		ccp;			/** ccp */
 	ipcp		ipcp;			/** ccp */
 
-	char		username[MAX_USERNAME_LENGTH];	/** リモートユーザ名 */
-	int		ifidx;			/** 集約インタフェースの index*/
+	char		username[MAX_USERNAME_LENGTH];	/** Remote username */
+	int		ifidx;			/** interface index */
 
 	/** Proxy Authen Response */
 	u_char		*proxy_authen_resp;
@@ -521,7 +493,7 @@ struct _npppd_ppp {
 	int		lproxy_authen_resp;
 
 	/**
-	 * 先方に要求する認証方式
+	 * Authentication methods that requires to the peer.
 	 * <pre>
 	 * PAP		0xC023 
 	 * EAP		0xC227 
@@ -537,78 +509,79 @@ struct _npppd_ppp {
 	uint8_t		mppe_started;
 	mppe		mppe;
 #endif
-	/** 割り当てる/たIPアドレス */
+	/** Assiging/Assigned IP Address */
 	struct sockaddr_npppd snp;
 #define	ppp_framed_ip_address	snp.snp_addr
 #define	ppp_framed_ip_netmask	snp.snp_mask
 #define	ppp_ip_assigned(p)	(p->ppp_framed_ip_address.s_addr != 0)
 
-	/** 割り当てで使用したプール */
+	/** Address pool used by IP asssignment */
 	void		*assigned_pool;
 
 	struct in_addr	realm_framed_ip_address;
 	struct in_addr	realm_framed_ip_netmask;
 
-	uint8_t		/** Address and Control Filed があるか */
+	uint8_t		/** data link have the Address and Control Field? */
 			has_acf:1,
-			/** TCP MSS を MRU 以下に調整するかどうか */
+			/** adjust TCP MSS to smaller than the MRU? */
 			adjust_mss:1,
-			/** 認証は一回限り */
+			/** authentication once */
 			auth_runonce:1,
-			/** PIPEX を使うかどうか */
+			/** use pipex? */
 			use_pipex:1,
-			/** PIPEX を開始したかどうか(使えたかどうかは別) */
+			/** pipex is started?  (even if it is not available) */
 			pipex_started:1,
-			/** PIPEX を使っているかどうか */
+			/** pipex is enabled? */
 			pipex_enabled:1,
 			reserved:3;
-	uint8_t		/** 動的割り当てかどうか */
+	uint8_t		/** IP address is assigned from dynamic address pool */
 			assign_dynapool:1,
-			/** 割り当てたアドレスが有効かどうか */
+			/** assigned IP address is enabled? */
 			assigned_ip4_enabled:1,
 			assigned_ip4_rcvd:6;
 
-			/** 入力パケットをダンプするか */
-	uint8_t		log_dump_in:1,
-			/** 出力パケットをダンプするか */
+	uint8_t		/** dump input packet? */
+			log_dump_in:1,
+			/** dump output packet? */
 			log_dump_out:1,
 			log_rcvd:6;
 
-	uint8_t		/** 生IPが流れたというログを出力済みかどうか */
+	uint8_t		/** "receiving naked IP packet" is logged already? */
 			logged_naked_ip:1,
-			/** 課金開始のログを出力したかどうか */
+			/** "accounting start" is logged already? */
 			logged_acct_start:1,
 			/**
-			 * Addressフィルードが無いというログを出力済かどうか。
+			 * "receiving packet without address field" is logged
+			 * already?
 			 */
 			logged_no_address:1,
 			logged_rcvd:5;
 #ifdef	NPPPD_USE_CLIENT_AUTH
-/** 端末認証 ID の長さ */
+/** Length of client authentication ID */
 #define	NPPPD_CLIENT_AUTH_ID_MAXLEN		32
 	char		client_auth_id[NPPPD_CLIENT_AUTH_ID_MAXLEN + 1];
 	int		has_client_auth_id;		
 #endif
 	/*
-	 * 統計情報
+	 * Statistical informations
 	 */
-	/** 開始時刻 */
+	/** Start time */
 	time_t		start_time;
-	/** 開始時刻(相対時間) */
+	/** Start time (in monotime) */
 	time_t		start_monotime;
-	/** 終了時刻(相対時間) */
+	/** End time (in monotime) */
 	time_t		end_monotime;
-	/** 入力パケット数 */
+	/** Number of input packets */
 	uint32_t	ipackets;
-	/** 出力パケット数 */
+	/** Number of output packets */
 	uint32_t	opackets;
-	/** 入力エラーパケット数 */
+	/** Number of input error packets */
 	uint32_t	ierrors;
-	/** 出力エラーパケット数 */
+	/** Number of output error packets */
 	uint32_t	oerrors;
-	/** 入力パケットバイト*/
+	/** Number of input packet bytes */
 	uint64_t	ibytes;
-	/** 出力パケットバイト*/
+	/** Number of output packet bytes */
 	uint64_t	obytes;
 
 	/*
@@ -655,20 +628,20 @@ typedef struct _dialin_proxy_info {
 #define	DIALIN_PROXY_IS_REQUESTED(dpi) \
 	(((dpi)->last_sent_lcp.ldata > 0)? 1 : 0)
 
-/** MPPE をネゴすべき */
+/** MPPE must be negotiated */
 #define	MPPE_MUST_NEGO(ppp)				\
 	(((ppp)->mppe.enabled != 0) &&			\
 	(((ppp)->peer_auth == PPP_AUTH_CHAP_MS_V2) || 	\
 	((ppp)->peer_auth == PPP_AUTH_EAP))) 
 	
-/** MPPE 必須 */
+/** MPPE is required */
 #define	MPPE_REQUIRED(ppp) 				\
 	(((ppp)->mppe.enabled != 0) && ((ppp)->mppe.required != 0))
 
-/** MPPE 利用可 */
+/** MPPE is ready to use */
 #define	MPPE_READY(ppp) 	((ppp)->mppe_started  != 0)
 
-/* NetBSD:/usr/src/usr.sbin/pppd/pppd/pppd.h より。*/
+/* Adapted from NetBSD:/usr/src/usr.sbin/pppd/pppd/pppd.h */
 /*
  * Inline versions of get/put char/short/long.
  * Pointer is advanced; we assume that both arguments
@@ -729,34 +702,34 @@ typedef struct _dialin_proxy_info {
 #endif
 
 /*
- * MRU は MPPE/CCP ヘッダをカバーするかどうか。
+ * Does MRU cover MPPE/CCP header?
  *
  * RFC 1331:
- *	The Maximum-Receive-Unit covers only the Data Link Layer
- *	Information field.  It does not include the header,
- *	padding, FCS, nor any transparency bits or bytes.
+ *	The Maximum-Receive-Unit covers only the Data Link Layer Information
+ *	field.  It does not include the header, padding, FCS, nor any
+ *	transparency bits or bytes.
  *
- * Windows XP:
- *	MRU で通知する値と、Windows が TCP MSS として使う値を比較すると、
- *	単純に 40 (IPヘッダとTCPヘッダ) バイトの差だけである。つまり、セ
- *	グメントサイズが MSS ぴったりの TCP パケットを送信すると、その PPP
- *	パケットは、MRU + 4 オクテットとなる。MPPE を使わない場合は、ぴっ
- *	たり MRU となる。
+ * On Windows XP:
+ *	Comparing the MRU indicated by Windows and TCP MSS indicated by the
+ *	same Windows, Windows uses MRU minus 40 octets as a TCP MSS value
+ *	simply.  So a TCP/IP packet that has max segment size with MPPE
+ *	requires MRU + 4 octets.  If the packet witout MPPE requires just MRU
+ *	octets.
  * 
- * 「MRU は MPPE/CCP ヘッダをカバーする」と実装した場合、このホスト上で、
- *  MRU + 4 とならないような動作を行わねばならないことになる。
+ * If MRU doesn't cover MPPE/CCP header, we need to avoid sending MRU + 4
+ * octets packet.
  */
 #if !defined(USE_NPPPD_MPPE)
-/* MPPE 使わない場合は何もしない */
+/* Do nothing if we don't do MPPE */
 #define MRU_IPMTU(mru)		(mru)
 #define MRU_PKTLEN(mru, proto)	(mru)
 #else
 #ifdef MRU_INCLUDES_MPPE_CCP	
-/* MRU は MPPE/CCP ヘッダをカバーする */
+/* MRU covers MPPE/CCP header */
 #define MRU_IPMTU(mru)		((mru) - CCP_MPPE_HEADER_LEN)
 #define MRU_PKTLEN(mru, proto)	(mru)
 #else
-/* MRU は MPPE/CCP ヘッダをカバーしない */
+/* MRU doesn't cover MPPE/CCP header */
 #define MRU_IPMTU(mru)		(mru)
 #define MRU_PKTLEN(mru, proto)	(((proto) == PPP_PROTO_MPPE)	\
 	? (mru) + CCP_MPPE_HEADER_LEN : (mru))
@@ -794,7 +767,7 @@ int          ppp_config_str_equali (npppd_ppp *, const char *, const char *, int
 int          ppp_log (npppd_ppp *, int, const char *, ...) __printflike(3,4);
 void         ppp_reset_idle_timeout(npppd_ppp *);
 #ifdef USE_NPPPD_RADIUS
-void        ppp_proccess_radius_framed_ip (npppd_ppp *, RADIUS_PACKET *);
+void        ppp_process_radius_framed_ip (npppd_ppp *, RADIUS_PACKET *);
 int         ppp_set_radius_attrs_for_authreq (npppd_ppp *, radius_req_setting *, RADIUS_PACKET *);
 #endif
 void         ppp_set_client_auth_id(npppd_ppp *, const char *);

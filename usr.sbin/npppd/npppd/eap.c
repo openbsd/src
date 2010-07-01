@@ -24,18 +24,17 @@
  * SUCH DAMAGE.
  */
 /**@file
- *
- * EAP Pass-through Authenticator の実装。
- *
+ * This file provides EAP(Extensible Authentication Protocols, RFC 3748)
+ * handlers.  This currently provides only EAP Pass-through Authenticator.
  * @see RFC3748
  *	    Extensible Authentication Protocols(EAP)
  * @see RFC3579
  *	    RADIUS (Remote Authentication Dial In User Service) Support For
  *	    Extensible Authentication Protocol (EAP). B. Aboba, P. Calhoun.
  */
-// $Id: eap.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+/* $Id: eap.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 
-/* FIXME: コメント/ログの意味がわからない */
+/* FIXME: This must be rewritten. */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,9 +70,9 @@
 
 #define	EAP_HEADERLEN	4
 
-#define	EAP_TIMEOUT_INIT	3	/* 初期リトライ間隔 */
-#define	EAP_TIMEOUT_MAX		20	/* 最大リトライ間隔 */
-#define	EAP_RETRY		4	/* リトライ回数 */
+#define	EAP_TIMEOUT_INIT	3	/* Initial retry internval */
+#define	EAP_TIMEOUT_MAX		20	/* Maximum retry internval */
+#define	EAP_RETRY		4	/* Number of retry */
 
 #define	EAP_REQUEST	1
 #define	EAP_RESPONSE	2
@@ -113,9 +112,7 @@ static void eap_log(eap *_this, uint32_t prio, const char *fmt, ...) __printflik
 static int get_mppe_keys(eap *_this, RADIUS_PACKET *pkt, const char *secret);
 #endif
 
-/**
- * {@link ::_eap EAPインスタンス}を初期化します。
- */
+/** Initialize the EAP */
 void
 eap_init(eap *_this, npppd_ppp *ppp)
 {
@@ -128,9 +125,7 @@ eap_init(eap *_this, npppd_ppp *ppp)
         _this->state = EAP_STATE_INITIAL;
 }
 
-/**
- * 認証者として、EAPを開始します。Identity Requestを投げます。
- */
+/** Start the EAP as a authenticator.  Send a identity request */
 void
 eap_start(eap *_this)
 {
@@ -316,7 +311,10 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 	unsigned int timeout;
 	char buf0[MAX_USERNAME_LENGTH];
 
-	/* FIXME: 毎度やる必要なし */
+	/*
+	 * FIXME: Whenever a radius packet is forwarded, is
+	 * FIXME: npppd_ppp_bind_realm() called?
+	 */
 	if (npppd_ppp_bind_realm(_this->ppp->pppd, _this->ppp, _this->name, 1)
 	    != 0) {
 		/* 
@@ -325,7 +323,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		 */
 		eap_log(_this, LOG_ERR, "Not found realm");
 		retry = 1;
-		goto reigai;
+		goto fail;
 	}
 
 	if (npppd_ppp_is_realm_radius(
@@ -336,7 +334,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		 */
 		eap_log(_this, LOG_ERR, "Not found realm");
 		retry = 1;
-		goto reigai;
+		goto fail;
 	}
 
 	if ((rad_setting = npppd_get_radius_req_setting(
@@ -347,7 +345,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		 */
 		eap_log(_this, LOG_ERR, "Not found radius server setting");
 		retry = 1;
-		goto reigai;
+		goto fail;
 	}
 
         /*                          
@@ -361,7 +359,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		 */
 		eap_log(_this, LOG_ERR, "Can't make new request packet");
 		retry = 1;
-		goto reigai;
+		goto fail;
         }
 
 	if (ppp_set_radius_attrs_for_authreq(_this->ppp, rad_setting, radpkt)
@@ -371,7 +369,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		 * retry  
 		 */
 		retry = 1;
-		goto reigai;
+		goto fail;
 	}
 
 	/* avoid EAP fragmentation */
@@ -382,7 +380,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		 * retry  
 		 */
 		retry = 1;
-		goto reigai;
+		goto fail;
 	}
 
         /*                                    
@@ -400,7 +398,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 			    "Can't put attribute to radius packet. type = %d", 
 			    RADIUS_TYPE_USER_NAME);
 			retry = 1;
-			goto reigai;
+			goto fail;
 		}
 	} else {
 		/*
@@ -408,7 +406,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		 * discard 
 		 */
 		eap_log(_this, LOG_NOTICE, "Identity name is not seted");
-		goto reigai;
+		goto fail;
 	}
 
 	/*
@@ -426,7 +424,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 			eap_log(_this, LOG_ERR, 
 			    "Can't put attribute to radius packet. type = %d", 
 			    RADIUS_TYPE_STATE);
-			goto reigai;
+			goto fail;
 		}
 	}
 
@@ -447,7 +445,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 				    "Can't put attribute to radius packet.  "
 				    "type = %d", RADIUS_TYPE_EAP_MESSAGE);
 				retry = 1;
-				goto reigai;
+				goto fail;
 			}
 			rlength -= 253;
 		} else {
@@ -463,7 +461,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 			    	    "Can't put attribute to radius packet.  "
 				    "type = %d", RADIUS_TYPE_EAP_MESSAGE);
 				retry = 1;
-                     		goto reigai;
+                     		goto fail;
                  	}
                  	rlength -= rlength;
 		}
@@ -479,7 +477,10 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 	 * prepare request 
 	 */
 	if (_this->session_timeout != 0) 
-/* FIXME: 認証タイムアウトと独立したタイマーが必要なのか? */
+/*
+ * FIXME: Is the timer other than authentication timeout timer really
+ * FIXME: necessary?
+ */
 		timeout = _this->session_timeout/2;
 	else
 		timeout = _this->ppp->auth_timeout;
@@ -496,7 +497,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 			    "radius server setting is not ready");
 		}
 		retry  = 1;
-		goto reigai;
+		goto fail;
 	}
 	_this->radctx = radctx;
 
@@ -514,7 +515,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 		eap_log(_this, LOG_ERR, "couldn't put message authentication "
 		    "attribute to radius packet");
 		retry = 1;
-		goto reigai;
+		goto fail;
 	}
 
 	radius_get_authenticator(radpkt, _this->authenticator);
@@ -524,7 +525,7 @@ eap_forward_to_radius(eap *_this, u_int8_t *data, int datalen)
 	 */
         radius_request(_this->radctx, radpkt);
         return;
-reigai:
+fail:
 	/*
          *  don't give peer user infomation
          */
@@ -547,7 +548,7 @@ eap_recv_from_radius(void *context, RADIUS_PACKET *pkt, int flags)
 	int retry = 0;
 	char *notify_reason = NULL;
 	RADIUS_REQUEST_CTX radctx;
-	u_char msgbuf[4096], *cp;		/* FIXME: たぶん十分 */
+	u_char msgbuf[4096], *cp;		/* FIXME: May be enough? */
 	int len;
         u_int8_t attrlen = 0;
 	
@@ -776,7 +777,7 @@ eap_recv_from_radius(void *context, RADIUS_PACKET *pkt, int flags)
 			goto auth_failed;
 			break;
 		case EAP_SUCCESS:
-			ppp_proccess_radius_framed_ip(_this->ppp, pkt);
+			ppp_process_radius_framed_ip(_this->ppp, pkt);
 #ifdef USE_NPPPD_MPPE
 			if (get_mppe_keys(_this, pkt, secret)) {
 				if (MPPE_REQUIRED(_this->ppp)) {
@@ -878,12 +879,14 @@ get_mppe_keys(eap *_this, RADIUS_PACKET *pkt, const char *secret) {
 		return 1;
 	}
 	len = sizeof(sendkey);
+	/* XXX: radius_get_vs_raw_attr doesn't read 'len' */
 	if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
 	    RADIUS_VTYPE_MPPE_SEND_KEY, &sendkey, &len) != 0) {
 		eap_log(_this, LOG_ERR, "no mppe_send_key");
 		return 1;
 	}
 	len = sizeof(recvkey);
+	/* XXX: radius_get_vs_raw_attr doesn't read 'len' */
 	if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
 	    RADIUS_VTYPE_MPPE_RECV_KEY, &recvkey, &len) != 0) {
 		eap_log(_this, LOG_ERR, "no mppe_recv_key");
@@ -947,7 +950,7 @@ eap_forward_to_peer(eap *_this, u_int8_t *data, int datalen, int type, u_int8_t 
 }
 
 /************************************************************************
- * ユーティリティ関数
+ * Miscellaneous functions
  ************************************************************************/
 void
 eap_log(eap *_this, uint32_t prio, const char *fmt, ...)

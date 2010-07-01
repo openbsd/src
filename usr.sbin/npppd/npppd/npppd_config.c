@@ -23,9 +23,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
 /*@file
- * npppd 設定関連を操作する関数を格納するファイル。
+ * This file provides functions which operates configuration and so on.
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,13 +90,14 @@ NAMED_PREFIX_CONFIG_FUNCTIONS(npppd_ipcp_config, npppd_ipcp_config,
     npppd->properties, "ipcp", label);
 
 /***********************************************************************
- * 設定読み込み。各部の読み込みをまとめた export 関数
+ * Reading the configuration. This is the export function which 
+ * aggregates functions to read from each part.
  ***********************************************************************/
 /**
- * 設定ファイルを再読み込みします。
- * @param   _this   npppd へのポインタ。
- * @returns 成功時は 0 を返します。設定にエラーがあった場合などには、
- *	    0 以外を返します。
+ * reload the configuration file.
+ * @param   _this   pointer indicated to npppd
+ * @returns A 0 is returned if succeeds, otherwise non 0 is returned
+ *	    in case of configuration error.
  */
 int
 npppd_reload_config(npppd *_this)
@@ -109,23 +110,23 @@ npppd_reload_config(npppd *_this)
 		log_printf(LOG_ERR, "Load configuration from='%s' failed: %m",
 		    _this->config_file);
 		retval = -1;
-		goto reigai;
+		goto fail;
 	}
 	if ((proptmp = properties_create(1061)) == NULL) {
 		log_printf(LOG_ERR, "Load configuration from='%s' failed: %m",
 		    _this->config_file);
 		retval = -1;
-		goto reigai;
+		goto fail;
 	}
 	if (properties_load(proptmp, conffp) != 0) {
 		log_printf(LOG_ERR, "Load configuration from='%s' failed: %m",
 		    _this->config_file);
 		retval = -1;
-		goto reigai;
+		goto fail;
 	}
 
 	if (_this->properties != NULL) {
-		/* 入れ換え */
+		/* swap */
 		properties_remove_all(_this->properties);
 		properties_put_all(_this->properties, proptmp);
 		properties_destroy(proptmp);
@@ -133,7 +134,7 @@ npppd_reload_config(npppd *_this)
 		_this->properties = proptmp;
 	proptmp = NULL;
 
-	/* ログなので処理順としてここ。 */
+	/* It is suitable for here as process sequence because of logging. */
 	npppd_debug_log_reload(_this);
 
 #ifndef	NO_DELAYED_RELOAD
@@ -151,8 +152,8 @@ npppd_reload_config(npppd *_this)
 	log_printf(LOG_NOTICE, "Load configuration from='%s' successfully.",
 	    _this->config_file);
 
-	// FALL THROUGH
-reigai:
+	/* FALLTHROUGH */
+fail:
 	if (conffp != NULL)
 		fclose(conffp);
 	if (proptmp != NULL)
@@ -161,14 +162,14 @@ reigai:
 	return retval;
 }
 
-/** モジュール毎の設定の再読み込み。 */
+/** reload the configuration for each module */
 int
 npppd_modules_reload(npppd *_this)
 {
 	int i, rval;
 
 	rval = 0;
-	/* アドレスプール */
+	/* address pool */
 	if (npppd_ip_addr_pool_load(_this) != 0)
 		return -1;
 
@@ -196,10 +197,10 @@ npppd_modules_reload(npppd *_this)
 }
 
 /***********************************************************************
- * 設定読み込み。各部
+ * reload the configuration on each part
  ***********************************************************************/
 #ifdef	USE_NPPPD_NPPPD_CTL
-/** npppd制御機能の設定を読み込んで、必要なら起動します。*/
+/** reload the configuration for npppd management, start it if necessary. */
 static int
 npppd_ctl_reload(npppd *_npppd, npppd_ctl *_this)
 {
@@ -242,7 +243,7 @@ npppd_ipcp_config_load(npppd *_this)
 				continue;
 			if (n >= countof(_this->ipcp_config)) {
 				log_printf(LOG_WARNING,
-				    "number of the ipcp configration reached "
+				    "number of the ipcp configuration reached "
 				    "limit=%d",
 				    (int)countof(_this->ipcp_config));
 				    break;
@@ -257,7 +258,7 @@ npppd_ipcp_config_load(npppd *_this)
 	}
 }
 
-/** IPCP設定を読み込みます。 */
+/** load IPCP configuration */
 static void
 npppd_ipcp_config_load0(npppd_ipcp_config *_this, const char *label)
 {
@@ -280,7 +281,7 @@ npppd_ipcp_config_load0(npppd_ipcp_config *_this, const char *label)
 	}
 	strlcpy(_this->name, val, sizeof(_this->name));
 
-	/* IPアドレス割り当てポリシー */
+	/* IP address assignment policy */
 	ip_assign_flags = 0;
 	if (npppd_ipcp_config_str_equal(_this, "assign_userselect", "true", 1))
 		ip_assign_flags |= NPPPD_IP_ASSIGN_USER_SELECT;
@@ -325,7 +326,7 @@ npppd_ipcp_config_load0(npppd_ipcp_config *_this, const char *label)
 #undef	LOAD_IPADDR_SETTING
 }
 
-/** デバッグとログファイルについての設定を再読込 */
+/** reload the configuration for debug and the log file */
 static void
 npppd_debug_log_reload(npppd *_this)
 {
@@ -337,7 +338,7 @@ npppd_debug_log_reload(npppd *_this)
 	    debuglevel)
 		return;
 
-	// デバッグレベル変更
+	/* change debug level */
 	oval = debuglevel;
 	debuglevel = ival;
 	log_printf(LOG_NOTICE, "Debug level is changed %d => %d", oval, ival);
@@ -345,7 +346,7 @@ npppd_debug_log_reload(npppd *_this)
 	debugfp = debug_get_debugfp();
 	if (debugfp != stderr) {
 		sval = npppd_config_str(_this, "debug.logpath");
-		// フォアグランドモードではない
+		/* It is not foreground mode. */
 		if (debugfp != NULL)
 			fclose(debugfp);
 		if (sval != NULL) {
@@ -361,7 +362,7 @@ npppd_debug_log_reload(npppd *_this)
 	}
 }
 
-/** IPアドレスプールの設定を読み込みます。 */
+/** load the configuration for IP address pool */
 static int
 npppd_ip_addr_pool_load(npppd *_this)
 {
@@ -379,11 +380,11 @@ npppd_ip_addr_pool_load(npppd *_this)
 	    sizeof(struct sockaddr_npppd),
 	    offsetof(struct sockaddr_npppd, snp_addr),
 	    sizeof(struct in_addr), sockaddr_npppd_match)) {
-		goto reigai;
+		goto fail;
 	}
 	_this->rd = rd_new;
 
-	/* 設定ファイル読み込み */
+	/* load the configuration */
 	if ((val = npppd_config_str(_this, "pool_list")) != NULL) {
 		strlcpy(buf, val, sizeof(buf));
 		buf0 = buf;
@@ -397,29 +398,29 @@ npppd_ip_addr_pool_load(npppd *_this)
 				break;
 			}
 			if (npppd_pool_init(&pool0[n], _this, tok) != 0) {
-				log_printf(LOG_WARNING, "Failed to initilize "
+				log_printf(LOG_WARNING, "Failed to initialize "
 				    "npppd_pool '%s': %m", tok);
-				goto reigai;
+				goto fail;
 			}
 			if (npppd_pool_reload(&pool0[n]) != 0)
-				goto reigai;
+				goto fail;
 			n++;
 		}
 	} else {
 		if (npppd_pool_init(&pool0[n], _this, "default") != 0) {
-			log_printf(LOG_WARNING, "Failed to initilize "
+			log_printf(LOG_WARNING, "Failed to initialize "
 			    "npppd_pool 'default': %m");
-			goto reigai;
+			goto fail;
 		}
 		if (npppd_pool_reload(&pool0[n++]) != 0)
-			goto reigai;
+			goto fail;
 	}
 	for (; n < countof(pool0); n++)
 		pool0[n].initialized = 0;
 
-	_this->rd = rd_curr;	// backup 
+	_this->rd = rd_curr;	/* backup */
 	if (npppd_set_radish(_this, rd_new) != 0)
-		goto reigai;
+		goto fail;
 
 	for (i = 0; i < countof(_this->pool); i++) {
 		if (_this->pool[i].initialized != 0)
@@ -427,17 +428,17 @@ npppd_ip_addr_pool_load(npppd *_this)
 		if (pool0[i].initialized == 0)
 			continue;
 		_this->pool[i] = pool0[i];
-		/* 参照の差し替え */
+		/* swap references */
 		for (j = 0; j < _this->pool[i].addrs_size; j++) {
 			if (_this->pool[i].initialized == 0)
 				continue;
 			_this->pool[i].addrs[j].snp_data_ptr = &_this->pool[i];
 		}
 	}
-	log_printf(LOG_INFO, "Loading pool config successfuly.");
+	log_printf(LOG_INFO, "Loading pool config successfully.");
 	
 	return 0;
-reigai:
+fail:
 	/* rollback */
 	for (i = 0; i < n; i++) {
 		if (pool0[i].initialized != 0)
@@ -458,7 +459,7 @@ reigai:
 	return 1;
 }
 
-/* 認証レルム */
+/* authentication realm */
 static int
 npppd_auth_realm_reload(npppd *_this)
 {
@@ -475,11 +476,11 @@ npppd_auth_realm_reload(npppd *_this)
 	if (slist_add_all(&realms0, &_this->realms) != 0) {
 		log_printf(LOG_WARNING, "slist_add_all() failed in %s(): %m",
 		__func__);
-		goto reigai;
+		goto fail;
 	}
 
 	ndef = 0;
-	/* ローカルレルムのラベルを取得 */
+	/* get the label of the local realm */
 	if ((val = npppd_config_str(_this, "auth.local.realm_list")) != NULL) {
 		ndef++;
 		strlcpy(buf, val, sizeof(buf));
@@ -491,32 +492,35 @@ npppd_auth_realm_reload(npppd *_this)
 				log_printf(LOG_WARNING,
 				    "label '%s' for auth.*.realm_list is not "
 				    "unique", tok);
-				goto reigai;
+				goto fail;
 			}
 			auth_base = realm_list_remove(&realms0, tok);
 			if (auth_base != NULL &&
 			    npppd_auth_get_type(auth_base)
 				    != NPPPD_AUTH_TYPE_LOCAL) {
-				/* 同じラベル名で認証レルムの型が変わった */
+				/* 
+				 * The type of authentication realm was changed in the
+				 * same label name.
+				 */
 				slist_add(&realms0, auth_base);
 				auth_base = NULL;
 			}
 			if (auth_base == NULL) {
-				/* 新規作成 */
+				/* create newly */
 				if ((auth_base = npppd_auth_create(
 				    NPPPD_AUTH_TYPE_LOCAL, tok, _this))
 				    == NULL) {
 					log_printf(LOG_WARNING,
 					    "npppd_auth_create() failed in "
 					    "%s(): %m", __func__);
-					goto reigai;
+					goto fail;
 				}
 			}
 			slist_add(&nrealms, auth_base);
 		}
 	}
 #ifdef USE_NPPPD_RADIUS
-	/* RADIUSレルムのラベルを取得 */
+	/* get the label of the RADIUS realm */
 	if ((val = npppd_config_str(_this, "auth.radius.realm_list")) != NULL) {
 		ndef++;
 		strlcpy(buf, val, sizeof(buf));
@@ -528,25 +532,28 @@ npppd_auth_realm_reload(npppd *_this)
 				log_printf(LOG_WARNING,
 				    "label '%s' for auth.*.realm_list is not "
 				    "unique", tok);
-				goto reigai;
+				goto fail;
 			}
 			auth_base = realm_list_remove(&realms0, tok);
 			if (auth_base != NULL &&
 			    npppd_auth_get_type(auth_base)
 				    != NPPPD_AUTH_TYPE_RADIUS) {
-				/* 同じラベル名で認証レルムの型が変わった */
+				/* 
+				 * The type of authentication realm was changed in the
+				 * same label name.
+				 */
 				slist_add(&realms0, auth_base);
 				auth_base = NULL;
 			}
 			if (auth_base == NULL) {
-				/* 新規作成 */
+				/* create newly */
 				if ((auth_base = npppd_auth_create(
 				    NPPPD_AUTH_TYPE_RADIUS, tok, _this))
 				    == NULL) {
 					log_printf(LOG_WARNING,
 					    "npppd_auth_create() failed in "
 					    "%s(): %m", __func__);
-					goto reigai;
+					goto fail;
 				}
 			}
 			slist_add(&nrealms, auth_base);
@@ -556,7 +563,7 @@ npppd_auth_realm_reload(npppd *_this)
 #ifndef	NO_DEFAULT_REALM
 	if (ndef == 0) {
 		/*
-		 * 従来版との互換性。デフォルトのレルムを使う。
+		 * Compatibility for current implementation. Use default realm.
 		 */
 		if (slist_length(&realms0) > 0) {
 			slist_add_all(&nrealms, &realms0);
@@ -566,7 +573,7 @@ npppd_auth_realm_reload(npppd *_this)
 			    NPPPD_AUTH_TYPE_LOCAL, "", _this)) == NULL) {
 				log_printf(LOG_WARNING,
 				    "malloc() failed in %s(): %m", __func__);
-				goto reigai;
+				goto fail;
 			}
 			slist_add(&nrealms, auth_base);
 #ifdef USE_NPPPD_RADIUS
@@ -574,7 +581,7 @@ npppd_auth_realm_reload(npppd *_this)
 			    NPPPD_AUTH_TYPE_RADIUS, "", _this)) == NULL) {
 				log_printf(LOG_WARNING,
 				    "malloc() failed in %s(): %m", __func__);
-				goto reigai;
+				goto fail;
 			}
 			slist_add(&nrealms, auth_base);
 #endif
@@ -584,7 +591,7 @@ npppd_auth_realm_reload(npppd *_this)
 	if (slist_set_size(&_this->realms, slist_length(&nrealms)) != 0) {
 		log_printf(LOG_WARNING, "slist_set_size() failed in %s(): %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 
 	slist_itr_first(&realms0);
@@ -608,7 +615,7 @@ npppd_auth_realm_reload(npppd *_this)
 	slist_fini(&nrealms);
 
 	return rval;
-reigai:
+fail:
 
 	slist_itr_first(&nrealms);
 	while (slist_itr_has_next(&nrealms)) {
@@ -653,7 +660,7 @@ realm_list_remove(slist *list0, const char *label)
 	return NULL;
 }
 
-/** インタフェースの設定を読み込みます。*/
+/** load the interface configuration */
 int
 npppd_ifaces_load_config(npppd *_this)
 {
@@ -754,7 +761,7 @@ npppd_iface_binding_reload(npppd *_this, npppd_iface *iface,
 	} else if (_this->ipcp_config[0].initialized != 0 &&
 	    _this->ipcp_config[0].label[0] == '\0') {
 #ifndef	NO_DEFAULT_IPCP
-		/* デフォルト IPCP がある。*/
+		/* There is default IPCP configuration. */
 		binding->ipcp = &_this->ipcp_config[0];
 		using_default = 1;
 #else

@@ -25,72 +25,72 @@
  */
 
 struct _npppd_auth_base {
-	/** ラベル名 */
+	/** name of label */
 	char	label[NPPPD_GENERIC_NAME_LEN];
-	/** レルム名 */
+	/** name of realm */
 	char	name[NPPPD_GENERIC_NAME_LEN];
-	/** 親 npppd の参照 */
+	/** reference indicated to parent npppd */
 	void 	*npppd;
-	/** 認証レルムのタイプ */
+	/** type of authentication realm */
 	int	type;
-	/** PPP サフィックス */
+	/** PPP suffix */
 	char	pppsuffix[64];
-	/** PPP プレフィックス */
+	/** PPP prefix */
 	char	pppprefix[64];
 	uint32_t
-		/** 初期化済み */
+		/** whether initialized or not */
 		initialized:1,
-		/** 再読み込み可能 */
+		/** whether reloadable or not */
 		reloadable:1,
-		/** 廃棄中 */
+		/** in disposing */
 		disposing:1,
 		/** Is the account list ready */
 		acctlist_ready:1,
 		/** Is the radius configuration ready */
 		radius_ready:1,
-		/** EAP が利用できるかどうか */
+		/** whether EAP capable or not */
 		eap_capable:1,
-		/** Windows-NT ドメインを強制的に strip するかどうか */
+		/** whether force to strip Windows-NT domain or not */
 		strip_nt_domain:1,
-		/** PPPユーザ名の @ 以降を強制的に strip するかどうか。*/
+		/** whether force to strip after the '@' of PPP username or not */
 		strip_atmark_realm:1,
 		/** has account-list */
 		has_acctlist:1,
 		reserved:24;
 
-	/** ユーザ名 => npppd_auth_user hash */
+	/** username => npppd_auth_user hash */
 	hash_table *users_hash;
-	/** アカウントリストのパス名 */
+	/** path name of account list */
 	char	acctlist_path[64];
-	/** 最終ロード時間 */
+	/** last load time */
 	time_t	last_load;
 };
 
 #ifdef USE_NPPPD_RADIUS
 struct _npppd_auth_radius {
-	/** 親 npppd_auth_base */
+	/** parent of npppd_auth_base */
 	npppd_auth_base nar_base;
 
-	/** 現在の利用中のサーバ */
+	/** server currently in use */
 	int curr_server;
 
-	/** RADIUSサーバ */
+	/** RADIUS server */
 	radius_req_setting rad_setting;
 
 };
 #endif
 
-/** ローカル認証レルムの型 */
+/** type of local authentication realm */
 struct _npppd_auth_local {
-	/* 親 npppd_auth_base */
+	/* parent npppd_auth_base */
 	npppd_auth_base nal_base;
 };
 
-/** ユーザのアカウント情報を示す型 */
+/** the type of user account */
 typedef struct _npppd_auth_user {
-	/** ユーザ名 */
+	/** username */
 	char *username;
-	/** パスワード */
+	/** password */
 	char *password;
 	/** Framed-IP-Address */
 	struct in_addr	framed_ip_address;
@@ -98,7 +98,7 @@ typedef struct _npppd_auth_user {
 	struct in_addr	framed_ip_netmask;
 	/** Calling-Number */
 	char *calling_number;
-	/** スペース確保用フィールド */
+	/** field for space assignment */
 	char space[0];
 } npppd_auth_user;
 

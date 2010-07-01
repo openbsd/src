@@ -53,7 +53,7 @@ void  *slist_remove_first (slist *);
 void  *slist_remove_last (slist *);
 void  slist_swap (slist *, int, int);
 void  *slist_remove (slist *, int);
-/* slist_shuffle は random(3) を使ってます。使用前に srandom(3) してください。*/
+/* slist_shuffle() uses random(3), so call srandom(3) before use. */
 void  slist_shuffle (slist *);
 void  slist_itr_first (slist *);
 int   slist_itr_has_next (slist *);

@@ -24,21 +24,20 @@
  * SUCH DAMAGE.
  */
 /**@file
- * 任意のポインタに関するリスト操作を提供します。
+ * provide list accesses against any pointer
  */
 /*
  *	void **list;
- *	list_size;	// list に割り当てたサイズ。
- *	last_idx;	// 最初のインデックス
- *	first_idx;	// 最後のインデックス
+ *	list_size;	// allocated size for the list
+ *	last_idx;	// The last index
+ *	first_idx;	// The first index
  *
- * ・first_idx == last_idx は空を示します。
- * ・fist_idx と last_idx は 0 以上 list_size - 1 以下です。
- * ・使っているサイズは、(last_idx - first_idx) % list_size です。
- *   list_size まで使ってしまうと、空と区別ができず区別しようとすると複雑
- *   になるので、そういう状況を作りません。このため、list に割り当てたサイズ
- *   のうち 1個分は使いません。
- * ・XXX itr_curr が削除されると、
+ * - first_idx == last_idx means empty.
+ * - 0 <= (fist_idx and last_idx) <= (list_size - 1)
+ * - Allocated size is (last_idx - first_idx) % list_size.
+ *   To make the code for checking empty and full simple, we use only
+ *   list_size-1 items instead of using the full size.
+ * - XXX Wnen itr_curr is removed...
  */
 #include <sys/types.h>
 
@@ -64,28 +63,27 @@
 #endif
 
 /**
- * 内部のインデックスが範囲内ならば、1 を範囲を越えている場合には 0 を
- * を返すマクロです。
+ * Returns 1 if a index is in the valid range, otherwise returns 0.
  */
 #define	VALID_IDX(_list, _idx)					\
 	  (((_list)->first_idx <= (_list)->last_idx)			\
 	? (((_list)->first_idx <= (_idx) && (_idx) < (_list)->last_idx)? 1 : 0)\
 	: (((_list)->first_idx <= (_idx) || (_idx) < (_list)->last_idx)? 1 : 0))
 
-/** インデックスを内部のインデックスに変換します。 */
+/** Convert an index into the internal index */
 #define	REAL_IDX(_list, _idx)						\
 	(((_list)->first_idx + (_idx)) % (_list)->list_size)
 
-/** 内部のインデックスをインデックスに変換します。 */
+/** Convert a virtual index into the index */
 #define	VIRT_IDX(_list, _idx)	(((_list)->first_idx <= (_idx))	\
 	? (_idx) - (_list)->first_idx				\
 	: (_list)->list_size - (_list)->first_idx + (_idx))
 
-/** インデックスを示すメンバー変数を decrement します */
+/** Decrement an index */
 #define	DECR_IDX(_list, _memb)						\
 	(_list)->_memb = ((_list)->list_size + --((_list)->_memb))	\
 	    % (_list)->list_size
-/** インデックスを示すメンバー変数を increment します */
+/** Increment an index */
 #define	INCR_IDX(_list, _memb)						\
 	(_list)->_memb = (++((_list)->_memb)) % (_list)->list_size
 
@@ -96,7 +94,7 @@ static __inline void  slist_swap0 (slist *, int, int);
 #define	itr_is_valid(list)	((list)->itr_next >= 0)
 #define	itr_invalidate(list)	((list)->itr_next = -1)
 
-/** 初期化処理を行います */
+/** Initialize a slist */
 void
 slist_init(slist *list)
 {
@@ -105,8 +103,8 @@ slist_init(slist *list)
 }
 
 /**
- * リストのサイズを指定します。1つの要素は内部で利用されるので、必要なサイズ
- * + 1 を指定します。サイズは小さくなりません。
+ * Specify the size of a list. The size must be specified with the size you
+ * want to use +1. Extra 1 entry is for internal use. The size doesn't shrink.
  */
 int
 slist_set_size(slist *list, int size)
@@ -117,7 +115,7 @@ slist_set_size(slist *list, int size)
 	return 0;
 }
 
-/** 終了化処理を行います */
+/** Finish using. Free the buffers and reinit. */
 void
 slist_fini(slist *list)
 {
@@ -126,7 +124,7 @@ slist_fini(slist *list)
 	slist_init(list);
 }
 
-/** このリストの長さ */
+/** The length of the list */
 int
 slist_length(slist *list)
 {
@@ -136,16 +134,16 @@ slist_length(slist *list)
 	    : (list->list_size - list->first_idx + list->last_idx);
 }
 
-/** リストがいっぱいの場合に割り当てサイズを成長させます。 */
+/** Extend the size. Used if the list is full. */
 static int
 slist_grow0(slist *list, int grow_sz)
 {
 	int size_new;
 	void **list_new = NULL;
 
-	/* ひとつ追加できるか。できるならそのまま抜ける。*/
+ 	/* just return if it is possible to add one item */
 	if (slist_length(list) + 1 < list->list_size)
-		/* list_size == slist_length() という状況は作らない */
+		/* "+ 1" to avoid the situation list_size == slist_length() */
 		return 0;
 
 	size_new = list->list_size + grow_sz;
@@ -158,23 +156,27 @@ slist_grow0(slist *list, int grow_sz)
 
 	list->list = list_new;
 	if (list->last_idx < list->first_idx && list->last_idx >= 0) {
+
 		/*
-		 * 空きが真ん中にある状況で右側に空きを作ったので、左側
-		 * を右にもっていく。
+		 * space is created at the right side when center has space,
+		 * so move left side to right side
 		 */
 		if (list->last_idx <= grow_sz) {
 			/*
-			 * 左側を右側にもっていく場合に十分なスペースがある
-			 * のですべて移動
+			 * The right side has enough space, so move the left
+			 * side to right side.
 			 */
 			memmove(&list->list[list->list_size],
 			    &list->list[0], PTR_SIZE * list->last_idx);
 			list->last_idx = list->list_size + list->last_idx;
 		} else {
-			/* 左側をできるかぎり右端に copy */
+			/*
+			 * Copy the left side to right side as long as we
+			 * can
+			 */
 			memmove(&list->list[list->list_size],
 			    &list->list[0], PTR_SIZE * grow_sz);
-			/* 左側、copy した分を左にずらす */
+			/* Shift the remain to left */
 			memmove(&list->list[0], &list->list[grow_sz],
 			    PTR_SIZE *(list->last_idx - grow_sz));
 
@@ -192,7 +194,7 @@ slist_grow(slist *list)
 	return slist_grow0(list, GROW_SIZE);
 }
 
-/** リストの末尾に要素を追加します。*/
+/** Add an item to a list */
 void *
 slist_add(slist *list, void *item)
 {
@@ -213,7 +215,7 @@ slist_add(slist *list, void *item)
 
 #define slist_get0(list_, idx)	((list_)->list[REAL_IDX((list_), (idx))])
 
-/** リストの末尾に指定したリストの要素全てを追加します */
+/** Add all items in add_items to a list. */
 int
 slist_add_all(slist *list, slist *add_items)
 {
@@ -228,7 +230,7 @@ slist_add_all(slist *list, slist *add_items)
 	return 0;
 }
 
-/** idx番目の要素を返します。*/
+/** Return "idx"th item. */
 void *
 slist_get(slist *list, int idx)
 {
@@ -241,7 +243,7 @@ slist_get(slist *list, int idx)
 	return slist_get0(list, idx);
 }
 
-/** idx番目の要素をセットします。*/
+/** Store a value in "idx"th item */
 int 
 slist_set(slist *list, int idx, void *item)
 {
@@ -256,7 +258,7 @@ slist_set(slist *list, int idx, void *item)
 	return 0;
 }
 
-/** 1番目の要素を削除して取り出します。*/
+/** Remove the 1st entry and return it. */
 void *
 slist_remove_first(slist *list)
 {
@@ -278,10 +280,7 @@ slist_remove_first(slist *list)
 	return oldVal;
 }
 
-
-
-
-/** 最後の要素を削除して取り出します。*/
+/** Remove the last entry and return it */
 void *
 slist_remove_last(slist *list)
 {
@@ -295,7 +294,7 @@ slist_remove_last(slist *list)
 	return list->list[list->last_idx];
 }
 
-/** 全て要素を削除します */
+/** Remove all entries */
 void
 slist_remove_all(slist *list)
 {
@@ -306,20 +305,20 @@ slist_remove_all(slist *list)
 	list->list = list0;
 }
 
-/* this doesn't check boudary. */
+/* Swap items. This doesn't check boudary. */
 static __inline void
 slist_swap0(slist *list, int m, int n)
 {
 	void *m0;
 
-	itr_invalidate(list);	/* イテレータ無効 */
+	itr_invalidate(list);	/* Invalidate iterator */
 
 	m0 = list->list[REAL_IDX(list, m)];
 	list->list[REAL_IDX(list, m)] = list->list[REAL_IDX(list, n)];
 	list->list[REAL_IDX(list, n)] = m0;
 }
 
-/** リストの m 番目の要素と n 番目の要素を入れ換えます。 */
+/** Swap between mth and nth */
 void
 slist_swap(slist *list, int m, int n)
 {
@@ -339,7 +338,7 @@ slist_swap(slist *list, int m, int n)
 	slist_swap0(list, m, n);
 }
 
-/** idx 番目の要素を削除します */
+/** Remove "idx"th item */
 void *
 slist_remove(slist *list, int idx)
 {
@@ -365,9 +364,9 @@ slist_remove(slist *list, int idx)
 			list->itr_next = -2;	/* on the last item */
 	}
 
-	/* last 側を縮めるか、first 側を縮めるか。*/
+	/* should we reduce the last side or the first side? */
 	if (list->first_idx < list->last_idx) {
-		/* いちおう短い方を選択 */
+		/* take the smaller side */
 		if (idx0 - list->first_idx < list->last_idx - idx0) {
 			first = list->first_idx;	
 			INCR_IDX(list, first_idx);
@@ -377,7 +376,8 @@ slist_remove(slist *list, int idx)
 		}
 	} else {
 		/*
-		 * 0 < last (未使用) first < idx < size なので first 側を縮める
+		 * 0 < last (unused) first < idx < size, so let's reduce the
+		 * first.
 		 */
 		if (list->first_idx <= idx0) {
 			first = list->first_idx;	
@@ -388,10 +388,10 @@ slist_remove(slist *list, int idx)
 		}
 	}
 
-	/* last側 */
+	/* the last side */
 	if (last != -1 && last != 0 && last != idx0) {
 
-		/* idx0 〜 last を左にひとつずらす */
+		/* move left the items that is from idx0 to the last */
 		if (itr_is_valid(list) &&
 		    idx0 <= list->itr_next && list->itr_next <= last) {
 			DECR_IDX(list, itr_next);
@@ -402,10 +402,10 @@ slist_remove(slist *list, int idx)
 		memmove(&list->list[idx0], &list->list[idx0 + 1], 
 		    (PTR_SIZE) * (last - idx0));
 	}
-	/* first側 */
+	/* the first side */
 	if (first != -1 && first != idx0) {
 
-		/* first 〜 idx0 を右にひとつずらす */
+		/* move right the items that is from first to the idx0 */
 		if (itr_is_valid(list) &&
 		    first <= list->itr_next && list->itr_next <= idx0) {
 			INCR_IDX(list, itr_next);
@@ -425,10 +425,8 @@ slist_remove(slist *list, int idx)
 }
 
 /**
- * シャッフルします。
- * <p>
- * <b>slist_shuffle は random(3) を使ってます。使用前に srandom(3) してく
- * ださい。</b></p>
+ * Shuffle items.
+ * slist_shuffle() uses random(3). Call srandom(3) before use it.
  */
 void
 slist_shuffle(slist *list)
@@ -440,9 +438,7 @@ slist_shuffle(slist *list)
 		slist_swap0(list, i - 1, (int)(random() % i));
 }
 
-/**
- * イテレータを初期化します。ひとつの slist インスタンスでひとつしか使えません。
- */
+/** Init an iterator. Only one iterator exists.  */
 void
 slist_itr_first(slist *list)
 {
@@ -452,10 +448,10 @@ slist_itr_first(slist *list)
 }
 
 /**
- * イテレータが次の要素に進めるかどうかを返します。
- * @return イテレータが次の要素を返すことができる場合に 1 を返します。
- *	終端に達したか、イテレータが最後まで達したか、リスト構造の変更があって、
- *	続行不能な場合には 0 が返ります。
+ * Return whether a iterator can go to the next item.
+ * @return Return 1 if the iterator can return the next item.
+ *	Return 0 it reaches the end of the list or the list is modified
+ *	destructively.
  */
 int
 slist_itr_has_next(slist *list)
@@ -465,7 +461,7 @@ slist_itr_has_next(slist *list)
 	return VALID_IDX(list, list->itr_next);
 }
 
-/** イテレータの次の要素を取り出しつつ、次の要素に進めます。 */
+/** Return the next item and iterate to the next */
 void *
 slist_itr_next(slist *list)
 {
@@ -488,7 +484,7 @@ slist_itr_next(slist *list)
 	return rval;
 }
 
-/** イテレータの現在の要素を削除します */
+/** Delete the current iterated item  */
 void *
 slist_itr_remove(slist *list)
 {

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pppoed.c,v 1.5 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,12 +25,9 @@
  * SUCH DAMAGE.
  */
 /**@file
- * PPPoEサーバの実装。
- * <dl>
- *  <dt>RFC 2516</dt>
- *  <dd>A Method for Transmitting PPP Over Ethernet (PPPoE)</dd>
- * </dl>
- * $Id: pppoed.c,v 1.4 2010/01/31 05:49:51 yasuoka Exp $
+ * This file provides the PPPoE(RFC2516) server(access concentrator)
+ * implementaion.
+ * $Id: pppoed.c,v 1.5 2010/07/01 03:38:17 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,10 +101,11 @@ static const char *pppoe_code_string(int);
 static const char *pppoe_tag_string(int);
 #endif
 
-/***********************************************************************
- * デーモン関連
- ***********************************************************************/
-/** PPPoE デーモンを初期化します */
+/*
+ * daemon
+ */
+
+/* initialize PPPoE daemon */
 int
 pppoed_init(pppoed *_this)
 {
@@ -121,7 +120,7 @@ pppoed_init(pppoed *_this)
 	    PPPOE_SESSION_HASH_SIZ)) == NULL) {
 		pppoed_log(_this, LOG_ERR, "hash_create() failed on %s(): %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 
 	slist_init(&_this->session_free_list);
@@ -129,10 +128,10 @@ pppoed_init(pppoed *_this)
 	    (void *)PPPOED_SESSION_SHUFFLE_MARK) == NULL) {
 		pppoed_log(_this, LOG_ERR, "slist_add() failed on %s(): %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 
-	/* XXX クッキーハッシュの初期化 */
+	/* XXX initialize hash of cookies */
 	if ((_this->acookie_hash = hash_create(
 	    (int (*) (const void *, const void *))session_id_cmp,
 	    (uint32_t (*) (const void *, int))session_id_hash,
@@ -156,14 +155,14 @@ pppoed_init(pppoed *_this)
 		if (slist_add(&_this->session_free_list, (void *)id) == NULL) {
 			pppoed_log(_this, LOG_ERR,
 			    "slist_add() failed on %s(): %m", __func__);
-			goto reigai;
+			goto fail;
 		}
 	}
 
 	_this->state = PPPOED_STATE_INIT;
 
 	return 0;
-reigai:
+fail:
 	pppoed_uninit(_this);
 	return 1;
 }
@@ -177,7 +176,7 @@ pppoed_listener_init(pppoed *_this, pppoed_listener *listener)
 	listener->index = PPPOED_LISTENER_INVALID_INDEX;
 }
 
-/** リスナをリロードします */
+/* reload listner */
 int
 pppoed_reload_listeners(pppoed *_this)
 {
@@ -190,9 +189,9 @@ pppoed_reload_listeners(pppoed *_this)
 	return rval;
 }
 
-/**
- * 他人宛のパケットを受信するかも(see bpf(4))。自分宛とブロードキャスト宛
- * は弾く。
+/*
+ * Reject any packet except the packet to self and broadcasts,
+ * as bpf(4) potentially receive packets for others.
  */
 #define	REJECT_FOREIGN_ADDRESS 1
 
@@ -219,13 +218,13 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 #ifndef	REJECT_FOREIGN_ADDRESS
 		BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
 #else
-	/* ff:ff:ff:ff:ff:ff 宛 */
+	/* to ff:ff:ff:ff:ff:ff */
 		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 0),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xffffffff, 0, 3),
 		BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 4),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xffff, 0, 1),
 		BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
-	/* 自分の Mac 宛 */
+	/* to self */
 		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, 0),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K,
 		    ETHER_FIRST_INT(_this->ether_addr), 0, 3),
@@ -272,34 +271,34 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	if (!found) {
 		pppoed_log(_pppoed, log_level, "%s is not available.",
 		    _this->listen_ifname);
-		goto reigai;
+		goto fail;
 	}
 
 	/* Open /dev/bpfXX */
-	/* FIXME: NetBSD 3.0 では、/dev/bpf 一つで何度も開けるらしい */
+	/* FIXME: /dev/bpf of NetBSD3.0 can simultaneity open */
 	for (i = 0; i < 256; i++) {
 		snprintf(buf, sizeof(buf), "/dev/bpf%d", i);
 		if ((_this->bpf = priv_open(buf, O_RDWR, 0600)) >= 0) {
 			break;
 		} else if (errno == ENXIO || errno == ENOENT)
-			break;	/* これ以上探してもみつからないはず */
+			break;	/* no more entries */
 	}
 	if (_this->bpf < 0) {
 		pppoed_log(_pppoed, log_level, "Cannot open bpf");
-		goto reigai;
+		goto fail;
 	}
 
 	ival = BPF_CAPTURE_SIZ;
 	if (ioctl(_this->bpf, BIOCSBLEN, &ival) != 0) {
 		pppoed_log(_pppoed, log_level, "ioctl(bpf, BIOCSBLEN(%d)): %m",
 		    ival);
-		goto reigai;
+		goto fail;
 	}
 	ival = 1;
 	if (ioctl(_this->bpf, BIOCIMMEDIATE, &ival) != 0) {
 		pppoed_log(_pppoed, log_level, "Cannot start bpf on %s: %m",
 		    _this->listen_ifname);
-		goto reigai;
+		goto fail;
 	}
 
 	/* bind interface */
@@ -308,7 +307,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	if (ioctl(_this->bpf, BIOCSETIF, &ifreq) != 0) {
 		pppoed_log(_pppoed, log_level, "Cannot start bpf on %s: %m",
 		    _this->listen_ifname);
-		goto reigai;
+		goto fail;
 	}
 
 	/* set linklocal address */
@@ -320,7 +319,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	/* set filter */
 	if (ioctl(_this->bpf, BIOCSETF, &bf_filter) != 0) {
 		pppoed_log(_pppoed, log_level, "ioctl(bpf, BIOCSETF()): %m");
-		goto reigai;
+		goto fail;
 	}
 
 	event_set(&_this->ev_bpf, _this->bpf, EV_READ | EV_PERSIST,
@@ -334,7 +333,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	    _this->ether_addr[5]);
 
 	return 0;
-reigai:
+fail:
 	if (_this->bpf >= 0) {
 		close(_this->bpf);
 		_this->bpf = -1;
@@ -343,7 +342,7 @@ reigai:
 	return 1;
 }
 
-/** PPPoE デーモンを開始します */
+/* start PPPoE daemon */
 int
 pppoed_start(pppoed *_this)
 {
@@ -371,6 +370,7 @@ pppoed_start(pppoed *_this)
 	return rval;
 }
 
+/* stop listener */
 static void
 pppoed_listener_stop(pppoed_listener *_this)
 {
@@ -393,7 +393,7 @@ pppoed_listener_stop(pppoed_listener *_this)
 	}
 }
 
-/** PPPoE デーモンを停止します */
+/* stop PPPoE daemon */
 void
 pppoed_stop(pppoed *_this)
 {
@@ -424,7 +424,7 @@ pppoed_stop(pppoed *_this)
 	pppoed_log(_this, LOG_NOTICE, "Stopped");
 }
 
-/** PPPoE デーモンを解放します */
+/* uninitialize (free) PPPoE daemon */
 void
 pppoed_uninit(pppoed *_this)
 {
@@ -437,11 +437,13 @@ pppoed_uninit(pppoed *_this)
 		_this->acookie_hash = NULL;
 	}
 	slist_fini(&_this->session_free_list);
-	slist_fini(&_this->listener); // stop メンバは解放済。
+	/* listener themself has been released already */
+	slist_fini(&_this->listener);
+
 	_this->config = NULL;
 }
 
-/** PPPoE セッションが close された時に呼び出されます。*/
+/* it called when the PPPoE session was closed */
 void
 pppoed_pppoe_session_close_notify(pppoed *_this, pppoe_session *session)
 {
@@ -457,9 +459,9 @@ pppoed_pppoe_session_close_notify(pppoed *_this, pppoe_session *session)
 	free(session);
 }
 
-/***********************************************************************
- * 設定関連
- ***********************************************************************/
+/*
+ * PPPoE Configuration
+ */
 #define	CFG_KEY(p, s)	config_key_prefix((p), (s))
 #define	VAL_SEP		" \t\r\n"
 
@@ -467,7 +469,7 @@ CONFIG_FUNCTIONS(pppoed_config, pppoed, config);
 PREFIXED_CONFIG_FUNCTIONS(pppoed_listener_config, pppoed_listener, self->config,
     phy_label);
 
-/** PPPoE デーモンの設定を再読み込みします */
+/* reload configurations for the PPPoE daemon */
 int
 pppoed_reload(pppoed *_this, struct properties *config, const char *name,
     int default_enabled)
@@ -492,7 +494,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 	_this->config = config;
 	if (pppoed_config_str_equal(_this, CFG_KEY(name, "enabled"), "true", 
 	    default_enabled)) {
-		// false にした直後に true にされるかもしれない。
+		/* avoid false->true flapping */
 		if (pppoed_is_stopped(_this) || !pppoed_is_running(_this))
 			do_start = 1;
 	} else {
@@ -524,7 +526,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 	if (getifaddrs(&ifa0) != 0) {
 		pppoed_log(_this, LOG_ERR,
 		    "getifaddrs() failed on %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	count = 0;
 	val = pppoed_config_str(_this, CFG_KEY(name, "interface"));
@@ -537,7 +539,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 		strlcpy(buf, val, sizeof(buf));
 
 		label = NULL;
-		// タブ、スペース区切りで、複数指定可能
+		/* it accepts multiple entries with tab/space separation */
 		for (i = 0, cp = buf;
 		    (tok = strsep(&cp, VAL_SEP)) != NULL;) {
 			if (*tok == '\0')
@@ -550,9 +552,9 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 			if (count >= countof(listeners)) {
 				pppoed_log(_this, LOG_ERR,
 				    "Too many listeners");
-				goto reigai;
+				goto fail;
 			}
-			/* インタフェースの実在確認 */
+			/* check the interface exist or not */
 			found = 0;
 			for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
 				sdl = (struct sockaddr_dl *)ifa->ifa_addr;
@@ -566,7 +568,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 			if (!found) {
 				pppoed_log(_this, LOG_ERR,
 				    "interface %s is not found", tok);
-				goto reigai;
+				goto fail;
 			}
 			strlcpy(listeners[count].ifname, tok,
 			    sizeof(listeners[count].ifname));
@@ -584,7 +586,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 	}
 
 	if (slist_add_all(&rmlist, &_this->listener) != 0)
-		goto reigai;
+		goto fail;
 
 	for (i = 0; i < count; i++) {
 		found = 0;
@@ -600,7 +602,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 		}
 		if (!found) {
 			if ((l = malloc(sizeof(pppoed_listener))) == NULL)
-				goto reigai;
+				goto fail;
 			pppoed_listener_init(_this, l);
 		}
 		l->self = _this;
@@ -611,18 +613,18 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 		if (slist_add(&newlist, l) == NULL) {
 			pppoed_log(_this, LOG_ERR,
 			    "slist_add() failed in %s(): %m", __func__);
-			goto reigai;
+			goto fail;
 		}
 	}
 
 	if (slist_set_size(&_this->listener, count) != 0)
-		goto reigai;
+		goto fail;
 
-	/* 使わなくなったリスナの停止 */
+	/* garbage collection of listner context */
 	slist_itr_first(&rmlist);
 	while (slist_itr_has_next(&rmlist)) {
 		l = slist_itr_next(&rmlist);
-		/* 派生した PPPoEセッションの考慮 */
+		/* handle child PPPoE session */
 		if (_this->session_hash != NULL) {
 			for (hl = hash_first(_this->session_hash); hl != NULL;
 			    hl = hash_next(_this->session_hash)) {
@@ -635,10 +637,10 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 		free(l);
 	}
 	slist_remove_all(&_this->listener);
-	/* slist_set_size しているので、失敗しないはず */
+	/* as slist_set_size-ed, it must not fail */
 	(void)slist_add_all(&_this->listener, &newlist);
 
-	/* インデックスのリセット */
+	/* reset indexes */
 	slist_itr_first(&newlist);
 	for (i = 0; slist_itr_has_next(&newlist); i++) {
 		l = slist_itr_next(&newlist);
@@ -664,7 +666,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 		return 1;
 
 	return 0;
-reigai:
+fail:
 	slist_fini(&rmlist);
 	slist_fini(&newlist);
 	if (ifa0 != NULL)
@@ -672,9 +674,11 @@ reigai:
 
 	return 1;
 }
-/***********************************************************************
- * I/O 関連
- ***********************************************************************/
+
+/*
+ * I/O
+ */
+
 static void
 pppoed_io_event(int fd, short evmask, void *ctx)
 {
@@ -702,7 +706,8 @@ pppoed_io_event(int fd, short evmask, void *ctx)
 		ether->ether_type = ntohs(ether->ether_type);
 		if (memcmp(ether->ether_shost, _this->ether_addr,
 		    ETHER_ADDR_LEN) == 0)
-			goto next_pkt;	// 自分パケット
+			/* the packet is from myself */
+			goto next_pkt;
 		off = bpf->bh_hdrlen + sizeof(struct ether_header);
 		if (lpkt < off + sizeof(struct pppoe_header)) {
 			pppoed_log(_this->self, LOG_WARNING,
@@ -759,7 +764,8 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 		    "pppoe length field.";
 		goto bad_packet;
 	}
-	lpkt = pppoe->length;	/* PPPoEヘッダの値を使う */
+	/* use PPPoE heade value as lpkt */
+	lpkt = pppoe->length;
 
 	if (pppoe->type != PPPOE_RFC2516_TYPE ||
 	    pppoe->ver != PPPOE_RFC2516_VER) {
@@ -786,7 +792,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 		if (lpkt < 4) {
 			reason = "tlv list is broken.  "
 			    "Remaining octet is too short.";
-			goto reigai;
+			goto fail;
 		}
 		tlv = (struct pppoe_tlv *)p_tlvspace;
 		GETSHORT(tlv->type, pkt);
@@ -795,7 +801,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 		lpkt -= 4;
 		if (tlv->length > lpkt) {
 			reason = "tlv list is broken.  length is wrong.";
-			goto reigai;
+			goto fail;
 		}
 		if (tlv->length > 0) {
 			memcpy(&tlv->value, pkt, tlv->length);
@@ -815,7 +821,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 		if (tlv->type == PPPOE_TAG_END_OF_LIST)
 			break;
 		if (slist_add(&tag_list, tlv) == NULL) {
-			goto reigai;
+			goto fail;
 		}
 	}
 	switch (pppoe->code) {
@@ -838,7 +844,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 	slist_fini(&tag_list);
 
 	return;
-reigai:
+fail:
 	slist_fini(&tag_list);
 bad_packet:
 	pppoed_log(_this->self, LOG_INFO,
@@ -894,10 +900,10 @@ pppoed_recv_PADR(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	if ((session = malloc(sizeof(pppoe_session))) == NULL) {
 		pppoed_log(_pppoed, LOG_ERR, "malloc() failed on %s(): %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 
-	/* セッション Id の作成 */
+	/* create session_id */
 	shuffle_cnt = 0;
 	do {
 		session_id = (int)slist_remove_first(
@@ -911,7 +917,7 @@ pppoed_recv_PADR(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 			    __func__);
 			slist_add(&_pppoed->session_free_list,
 			    (void *)PPPOED_SESSION_SHUFFLE_MARK);
-			goto reigai;
+			goto fail;
 		}
 		slist_shuffle(&_pppoed->session_free_list);
 		slist_add(&_pppoed->session_free_list,
@@ -920,16 +926,16 @@ pppoed_recv_PADR(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 
 	if (pppoe_session_init(session, _pppoed, _this->index, session_id,
 	    shost) != 0)
-		goto reigai;
+		goto fail;
 
 	hash_insert(_pppoed->session_hash, (void *)session_id, session);
 
 	if (pppoe_session_recv_PADR(session, tag_list) != 0)
-		goto reigai;
+		goto fail;
 
 	session = NULL;	/* don't free */
-	/* FALL THROUGH */
-reigai:
+	/* FALLTHROUGH */
+fail:
 	if (session != NULL)
 		pppoe_session_fini(session);
 	return;
@@ -972,7 +978,7 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 
 			len = tlv0->length;
 			if (len >= sizeof(sn))
-				goto reigai;
+				goto fail;
 
 			memcpy(sn, tlv0->value, len);
 			sn[len] = '\0';
@@ -990,7 +996,7 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 		    shost[2], shost[3], shost[4], shost[5], sn, tlv_hostuniq?
 		    pppoed_tlv_value_string(tlv_hostuniq) : "none",
 		    _this->listen_ifname);
-		goto reigai;
+		goto fail;
 	}
 
 	pppoed_log(_this->self, LOG_INFO,
@@ -1047,8 +1053,8 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	 */
 	if (_this->self->acookie_hash != NULL) {
 		/*
-		 * ac-cookie の次の値を探す。
-		 * (uint32_t の空間で値がループします)
+		 * search next ac-cookie.
+		 * (XXX it will loop in uint32_t boundaly)
 		 */
 		do {
 			_this->self->acookie_next += 1;
@@ -1093,15 +1099,15 @@ pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 	    shost[3], shost[4], shost[5], service_name, ac_name,
 	    tlv_hostuniq? pppoed_tlv_value_string(tlv_hostuniq) : "none",
 		_this->listen_ifname);
-	// FALL THROUGH
-reigai:
+	/* FALLTHROUGH */
+fail:
 	bytebuffer_unwrap(buf);
 	bytebuffer_destroy(buf);
 }
 
-/***********************************************************************
- * ログ関連
- ***********************************************************************/
+/*
+ * log
+ */
 static void
 pppoed_log(pppoed *_this, int prio, const char *fmt, ...)
 {
@@ -1177,9 +1183,9 @@ pppoed_tlv_value_string(struct pppoe_tlv *tlv)
 	return _tlv_string_value;
 }
 
-/***********************************************************************
- * 雑多な関数
- ***********************************************************************/
+/*
+ * misc
+ */
 static int
 session_id_cmp(void *a, void *b)
 {

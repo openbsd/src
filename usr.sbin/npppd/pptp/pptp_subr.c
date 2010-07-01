@@ -1,3 +1,4 @@
+/*	$OpenBSD: pptp_subr.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,9 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/**@file
- * PPTPの補助的な関数
- */
+
+/* utility functions for the pptp.c */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -42,7 +43,7 @@
 #include "pptp_local.h"
 #include "pptp_subr.h"
 
-/** Faming Capability ビットをカンマ区切りの文字列で返す */
+/* convert the Faming Capability bit as CSV strings */
 const char *
 pptp_framing_string(uint32_t bits)
 {
@@ -58,7 +59,8 @@ pptp_framing_string(uint32_t bits)
 	return "";
 }
 
-/** Bearer Capability ビットをカンマ区切りの文字列で返す */
+
+/* convert the Bearer Capability bit as CSV strings */
 const char *
 pptp_bearer_string(uint32_t bits)
 {
@@ -74,7 +76,7 @@ pptp_bearer_string(uint32_t bits)
 	return "";
 }
 
-/** コントロールパケットのヘッダ(共通部分)を作成する */
+/* build common header part of a control packet */
 void
 pptp_init_header(struct pptp_ctrl_header *header, int length, int ctrl_mes_type)
 {
@@ -123,7 +125,9 @@ static struct _label_name {
 	NAME_VAL(PPTP_CDN_RESULT_ADMIN_SHUTDOWN),
 	NAME_VAL(PPTP_CDN_RESULT_REQUEST),
 };
-// _label_name を使ったマクロ。値を渡すと文字列で返す。
+
+
+/* value to strings convert macros */
 #define LABEL_TO_STRING(func_name, label_names, prefix_len)		\
 	const char *							\
 	func_name(int code)						\

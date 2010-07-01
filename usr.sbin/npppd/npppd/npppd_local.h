@@ -27,7 +27,7 @@
 #define	_NPPPD_LOCAL_H	1
 
 #ifndef	NPPPD_BUFSZ	
-/** バッファサイズ */
+/** buffer size */
 #define	NPPPD_BUFSZ			BUFSZ
 #endif
 
@@ -72,17 +72,17 @@
 
 #ifdef	USE_NPPPD_NPPPD_CTL
 typedef struct _npppd_ctl {
-	/** イベントコンテキスト */
+	/** event context */
 	struct event ev_sock;
-	/** ソケット */
+	/** socket */
 	int sock;
-	/** 有効/無効 */
+	/** enabled or disabled */
 	int enabled;
-	/** 親 npppd */
+	/** parent of npppd structure */
 	void *npppd;
-	/** ソケットのパス名 */
+	/** pathname of socket */
 	char pathname[MAXPATHLEN];
-	/** 最大メッセージ長 */
+	/** maximum length of message */
 	int max_msgsz;
 } npppd_ctl;
 #endif
@@ -90,73 +90,73 @@ typedef struct _npppd_ctl {
 #include "addr_range.h"
 #include "npppd_pool.h"
 
-/** プールを示す型 */
+/** structure of pool */
 struct _npppd_pool {
-	/** 基となる npppd */
+	/** base of npppd structure */
 	npppd		*npppd;
-	/** ラベル名 */
+	/** name of label */
 	char		label[NPPPD_GENERIC_NAME_LEN];
-	/** 名前(name) */
+	/** name */
 	char		name[NPPPD_GENERIC_NAME_LEN];
-	/** sockaddr_npppd 配列のサイズ */
+	/** size of sockaddr_npppd array */
 	int		addrs_size;
-	/** sockaddr_npppd 配列 */
+	/** pointer indicated to sockaddr_npppd array */
 	struct sockaddr_npppd *addrs;
-	/** 動的に割り当てるアドレスのリスト */
+	/** list of addresses dynamically allocated */
 	slist 		dyna_addrs;
-	int		/** 初期化済 */
+	int		/** whether initialized or not */
 			initialized:1,
-			/** 利用中 */
+			/** whether in use or not */
 			running:1;
 };
 
-/** IPCP設定を示す型 */
+/** structure of IPCP configuration */
 typedef struct _npppd_ipcp_config {
-	/** 名前 */
+	/** name */
 	char	name[NPPPD_GENERIC_NAME_LEN];
-	/** ラベル(紐付けるため) */
+	/** label (to associate with npppd structure) */
 	char	label[NPPPD_GENERIC_NAME_LEN];
-	/** 親 npppd へのポインタ */
+	/** pointer indicated to parent npppd structure */
 	npppd	*npppd;
 	/**
-	 * プライマリDNSサーバ。先方に通知しない場合は INADDR_NONE。
-	 * ネットワークバイトオーダー。
+	 * primary DNS server. INADDR_NONE if not inform peer this.
+	 * specified in network byte order.
 	 */
 	struct in_addr	dns_pri;
 
-	/** セカンダリDNSサーバ。先方に通知しない場合は INADDR_NONE。
-	 * ネットワークバイトオーダー。
+	/** secondary DNS server. INADDR_NONE if not inform peer this.
+	 * specified in network byte order.
 	 */
 	struct in_addr	dns_sec;
 
 	/**
-	 * プライマリWINSサーバ。先方に通知しない場合は INADDR_NONE。
-	 * ネットワークバイトオーダー。
+	 * primary WINS server. INADDR_NONE if not inform peer this.
+	 * specified in network byte order.
 	 */
 	struct in_addr	nbns_pri;
 
 	/**
-	 * セカンダリWINSサーバ。先方に通知しない場合は INADDR_NONE。
-	 * ネットワークバイトオーダー。
+	 * secondary WINS server. INADDR_NONE if not inform peer this.
+	 * specified in network byte order.
 	 */
 	struct in_addr	nbns_sec;
 
 	/**
-	 * IPアドレス割り当て方法のビットフラグ。
+	 * bit flag which specifies the way of IP address assignment.
 	 * @see	#NPPPD_IP_ASSIGN_FIXED
 	 * @see	#NPPPD_IP_ASSIGN_USER_SELECT
 	 * @see	#NPPPD_IP_ASSIGN_RADIUS
 	 */
 	int 		ip_assign_flags;
 
-	int		/** DNS サーバとしてトンネル終端アドレスを使う */
+	int		/** whether use tunnel end point address as DNS server or not */
 			dns_use_tunnel_end:1,
-			/** 初期化済かどうか */
+			/** whether initialized or not */
 			initialized:1,
 			reserved:30;
 } npppd_ipcp_config;
 
-/** インタフェースの IPCP 設定やプールアドレスへの参照を保持する型 */
+/** structure which holds an interface of IPCP configuration and references of pool address */
 typedef struct _npppd_iface_binding {
 	npppd_ipcp_config	*ipcp;
 	slist			pools;
@@ -166,79 +166,79 @@ typedef struct _npppd_iface_binding {
  * npppd
  */
 struct _npppd {
-	/** イベントハンドラー */
+	/** event handler */
 	struct event ev_sigterm, ev_sigint, ev_sighup, ev_timer;
 
-	/** PPPを集約するインターフェース */
+	/** interface which concentrates PPP  */
 	npppd_iface		iface[NPPPD_MAX_IFACE];
-	/** インタフェースの IPCP 設定やプールアドレスへの参照 */
+	/** reference of interface of IPCP configuration and pool address */
 	npppd_iface_binding	iface_bind[NPPPD_MAX_IFACE];
 
-	/** アドレスプール */
+	/** address pool */
 	npppd_pool		pool[NPPPD_MAX_POOL];
 
-	/** radish プール、割り当てアドレス管理用 */
+	/** radish pool which uses to manage allocated address */
 	struct radish_head *rd;
 
-	/** IPCP 設定 */
+	/** IPCP configuration */
 	npppd_ipcp_config ipcp_config[NPPPD_MAX_IPCP_CONFIG];
 
-	/** ユーザ名 → slist of npppd_ppp のマップ */
+	/** map of username to slist of npppd_ppp */
 	hash_table *map_user_ppp;
 
-	/** 認証レルム */
+	/** authentication realms */
 	slist realms;
 
-	/** 認証レルム終了化処理のインターバル時間(sec) */
+	/** interval time(in seconds) which finalizes authentication realms */
 	int auth_finalizer_itvl;
 
-	/** 設定ファイル名 */
+	/** name of configuration file */
 	char 	config_file[MAXPATHLEN];
 
-	/** PIDファイル名 */
+	/** name of pid file */
 	char 	pidpath[MAXPATHLEN];
 
-	/** プロセス ID */
+	/** process id */
 	pid_t	pid;
 
 #ifdef	USE_NPPPD_L2TP
-	/** L2TP デーモン */
+	/** structure of L2TP daemon */
 	l2tpd l2tpd;
 #endif
 #ifdef	USE_NPPPD_PPTP
-	/** PPTP デーモン */
+	/** structure of PPTP daemon */
 	pptpd pptpd;
 #endif
 #ifdef	USE_NPPPD_PPPOE
-	/** PPPOE デーモン */
+	/** structure of PPPOE daemon */
 	pppoed pppoed;
 #endif
-	/** 設定ファイル */
+	/** configuration file  */
 	struct properties * properties;
 
-	/** ユーザ設定ファイル */
+	/** user properties file */
 	struct properties * users_props;
 
 #ifdef	USE_NPPPD_NPPPD_CTL
 	npppd_ctl ctl;
 #endif
-	/** 起動してからの秒数。*/
+	/** the time in seconds which process was started.*/
 	uint32_t	secs;
 
-	/** 設定再読み込みを何秒猶予するか */
+	/** delay time in seconds reload configuration */
 	int16_t		delayed_reload;
-	/** 設定再読み込みカウンタ */
+	/** counter of reload configuration */
 	int16_t		reloading_count;
 
-	/** 処理済みのルーティングイベントシリアル */
+	/** serial number of routing event which was completed */
 	int		rtev_event_serial;
 
-	/** 接続できる最大の PPPセッション数 */
+	/** maximum PPP sessions */
 	int		max_session;
 
-	int /** 終了処理中 */
+	int /** whether finalizing or not */
 	    finalizing:1,
-	    /** 終了処理完了 */
+	    /** whether finalize completed or not */
 	    finalized:1;
 };
 

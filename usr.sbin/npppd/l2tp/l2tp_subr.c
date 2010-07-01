@@ -1,3 +1,4 @@
+/*	$OpenBSD: l2tp_subr.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,10 +24,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_subr.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
-/**@file
- * L2TP 関連の補助的な関数を提供します。
- */
+/* $Id: l2tp_subr.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/**@file L2TP related sub-routines */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -55,9 +54,9 @@
 #define	L2TP_SUBR_ASSERT(x)
 #endif
 
-/***********************************************************************
- * AVP関連
- ***********************************************************************/
+/*
+ * AVP
+ */
 int
 avp_enum(struct l2tp_avp *avp, const u_char *pkt, int pktlen, int filldata)
 {
@@ -309,7 +308,7 @@ avp_find_message_type_avp(struct l2tp_avp *avp, const u_char *pkt, int pktlen)
 }
 
 /**
- * bytebuffer に AVP を追加します。
+ * add an AVP to bytebuffer
  */
 int
 bytebuf_add_avp(bytebuffer *bytebuf, struct l2tp_avp *avp, int value_len)

@@ -1,12 +1,11 @@
 #
-# $Id: Makefile,v 1.1 2010/01/13 07:49:44 yasuoka Exp $
+# $Id: Makefile,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
 #
-NOMAN=		#defined
-
 .include <bsd.own.mk>
 
 PROG=		npppdctl
 SRCS=		npppdctl.c debugutil.c
+MAN=		npppdctl.8
 
 CPPFLAGS+=	-I${.CURDIR}/../npppd -I${.CURDIR}/../common
 

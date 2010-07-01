@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  */
 /**@file
- * {@link ::_npppd_tun トンネルデバイス} に関する処理を提供します。
+ * This file provides functions on {@link ::_npppd_tun tunnel device}.
  */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -59,8 +59,8 @@ static void         npppd_tundev_io_event_handler (int, short, void *);
 
 
 /**
- * {@link ::_npppd_tun トンネルデバイスインスタンス}を初期化します。
- * @param	minor	デバイスマイナー番号
+ * Initialize {@link ::_npppd_tun instance of tunnel device}.
+ * @param	minor	device minor number
  */
 void
 npppd_tundev_init(npppd *_this, int minor)
@@ -73,7 +73,7 @@ npppd_tundev_init(npppd *_this, int minor)
 }
 
 /**
- * {@link ::_npppd_tun トンネルデバイスインスタンス}を開始します。
+ * Start {@link ::_npppd_tun instance of tunnel device}.
  */
 int
 npppd_tundev_start(npppd *_this)
@@ -89,14 +89,13 @@ npppd_tundev_start(npppd *_this)
 	if ((_this->tun_file = open(buf, O_RDWR, 0600)) < 0) {
 		log_printf(LOG_ERR, "open(%s) failed in %s(): %m",
 		    buf, __func__);
-		goto reigai;
+		goto fail;
 	}
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		log_printf(LOG_ERR, "socket() failed in %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
-	// ifconfig tun1 10.0.0.1 netmask 255.255.255.25
 
 	memset(&ifra, 0, sizeof(ifra));
 	snprintf(ifra.ifra_name, sizeof(ifra.ifra_name), "tun%d",
@@ -119,7 +118,7 @@ npppd_tundev_start(npppd *_this)
 
 	if (ioctl(sock, SIOCAIFADDR, &ifra) != 0 && errno != EEXIST) {
 		log_printf(LOG_ERR, "Cannot assign tun device ip address: %m");
-		goto reigai;
+		goto fail;
 	}
 	close(sock);
 
@@ -127,7 +126,7 @@ npppd_tundev_start(npppd *_this)
 	if (ioctl(_this->tun_file, FIONBIO, &x) != 0) {
 		log_printf(LOG_ERR, "ioctl(FIONBIO) failed in %s(): %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 	event_set(&_this->ev_tun, _this->tun_file, EV_READ | EV_PERSIST,
 	    npppd_tundev_io_event_handler, _this);
@@ -136,7 +135,7 @@ npppd_tundev_start(npppd *_this)
 	log_printf(LOG_INFO, "Opened /dev/tun%d", _this->tun_minor);
 
 	return 0;
-reigai:
+fail:
 	if (_this->tun_file >= 0)
 		close(_this->tun_file);
 	_this->tun_file = -1;
@@ -145,7 +144,7 @@ reigai:
 }
 
 /**
- * トンネルデバイスに関する処理を終了します。
+ * Stop process on tunnel device.
  */
 void
 npppd_tundev_stop(npppd *_this)
@@ -159,7 +158,7 @@ npppd_tundev_stop(npppd *_this)
 }
 
 /**
- * IPアドレスをセットします。
+ * Set IP address.
  */
 int
 npppd_tundev_set_ip_addr(npppd *_this)
@@ -200,7 +199,7 @@ npppd_tundev_io_event_handler(int fd, short evtype, void *data)
 }
 
 /**
- * トンネルデバイスに書き込みます。
+ * Write to tunnel device.
  */
 void
 npppd_tundev_write(npppd *_this, uint8_t *pktp, int lpktp)

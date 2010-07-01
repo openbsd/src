@@ -24,10 +24,10 @@
  * SUCH DAMAGE.
  */
 /**@file
- * Next pppd。npppd プロセスと npppdインスタンスの実装。
- *
+ * Next pppd(nppd). This file provides a npppd daemon process and operations
+ * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $
+ * $Id: npppd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
@@ -105,7 +105,6 @@ __COPYRIGHT(
 #include <net/pipex.h>
 #endif /* USE_NPPPD_PIPEX */
 
-/* static変数はこちら。 */
 static npppd s_npppd;	/* singleton */
 
 static void            npppd_reload0(npppd *);
@@ -143,7 +142,7 @@ static void pipex_periodic(npppd *);
 #endif
 
 /***********************************************************************
- * エントリポイント
+ * Daemon process
  ***********************************************************************/
 int        main (int, char *[]);
 
@@ -197,7 +196,7 @@ main(int argc, char *argv[])
 
 	if (npppd_init(&s_npppd, npppd_conf0) != 0) {
 		retval = 1;
-		goto reigai;
+		goto fail;
 	}
 
 	if ((pw = getpwnam(NPPPD_USER)) == NULL)
@@ -215,7 +214,7 @@ main(int argc, char *argv[])
 	npppd_start(&s_npppd);
 	npppd_fini(&s_npppd);
 	/* FALLTHROUGH */
-reigai:
+fail:
 	privsep_fini();
 	log_printf(LOG_NOTICE, "Terminate npppd.");
 
@@ -236,7 +235,7 @@ usage()
 	);
 }
 
-/** 唯一の npppd インスタンスを返します。 */
+/** Returns the singleton npppd instance */
 npppd *
 npppd_get_npppd()
 {
@@ -244,9 +243,9 @@ npppd_get_npppd()
 }
 
 /***********************************************************************
- * npppd 自身の操作 (init/fini/stop/start)
+ * Operations to npppd itself (initialize/finalize/start/stop)
  ***********************************************************************/
-/** 初期化します */
+ /** Initialize the npppd */
 int
 npppd_init(npppd *_this, const char *config_file)
 {
@@ -282,24 +281,14 @@ npppd_init(npppd *_this, const char *config_file)
 		    config_file, __func__);
 		return 1;
 	}
-	/*
-	 * NetBSD 2.0 の realpath(3) より
-	 *
-	 * This implementation of realpath() differs slightly from the Solaris
-	 * implementation.  The 4.4BSD version always returns absolute
-	 * pathnames, whereas the Solaris implementation will, under certain
-	 * circumstances, return a relative resolvedname when given a relative
-	 * pathname.
-	 *
-	 * FIXME: 4.4BSD互換ではない場合には、確認が必要。
-	 */
+	/* we assume 4.4 compatible realpath().  See realpath(3) on BSD. */
 	NPPPD_ASSERT(_this->config_file[0] == '/');
 
 	/* initialize random seeds */
 	seed_random(&seed);
 	srandom(seed);
 
-	/* 設定読み込み */
+	/* load configuration */
 	if ((status = npppd_reload_config(_this)) != 0)
 		return status;
 
@@ -315,18 +304,17 @@ npppd_init(npppd *_this, const char *config_file)
 		return -1;
 	}
 
-	/* PIDファイルの場所 */
 	if ((pidpath0 = npppd_config_str(_this, "pidfile")) == NULL)
 		pidpath0 = DEFAULT_NPPPD_PIDFILE;
 
-	/* 実行時のディレクトリ */
+	/* Runtime directory */
 	if ((coredir = npppd_config_str(_this, "coredir")) == NULL) {
-		/* PIDファイルのディレクトリ */
+		/* diretory for pid file */
 		strlcpy(pidpath, pidpath0, sizeof(pidpath));
 		strlcpy(cwd, dirname(pidpath), sizeof(cwd));
 	}
 	else {
-		/* core を書くディレクトリ */
+		/* directory for dumping core */
 		strlcpy(cwd, coredir, sizeof(cwd));
 	}
 	if (chdir(cwd) != 0) {
@@ -335,10 +323,10 @@ npppd_init(npppd *_this, const char *config_file)
 		return -1;
 	}
 
-	/* イベント関連 */
+	/* initialize event(3) */
 	event_init();
 
-	/* Routingソケット関連 */
+	/* initialize rtev */
 	rtev_libevent_init(
 	    npppd_config_int(_this, "rtsock.event_delay",
 		DEFAULT_RTSOCK_EVENT_DELAY),
@@ -346,6 +334,7 @@ npppd_init(npppd *_this, const char *config_file)
 		DEFAULT_RTSOCK_SEND_WAIT_MILLISEC),
 	    npppd_config_int(_this, "rtsock.send_npkts",
 		DEFAULT_RTSOCK_SEND_NPKTS), 0);
+
 #ifdef NPPPD_USE_RT_ZEBRA
 	if (rt_zebra_get_instance() == NULL)
 		return -1;
@@ -354,27 +343,21 @@ npppd_init(npppd *_this, const char *config_file)
 #endif
 	_this->rtev_event_serial = -1;
 
-	/* 無視するシグナル */
+	/* ignore signals */
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGURG, SIG_IGN);
-	/*
-	 * シグナルハンドラ
-	 * EV_PERSIST でセットされる(event(3)参照)ので、1度でよい。
-	 */
+
+	/* set signal handlers */
 	signal_set(&_this->ev_sigterm, SIGTERM, npppd_on_sigterm, _this);
 	signal_set(&_this->ev_sigint, SIGINT, npppd_on_sigint, _this);
 	signal_set(&_this->ev_sighup, SIGHUP, npppd_on_sighup, _this);
 	signal_add(&_this->ev_sigterm, NULL);
 	signal_add(&_this->ev_sigint, NULL);
 	signal_add(&_this->ev_sighup, NULL);
-	//_npppd
-	signal_add(&_this->ev_sighup, NULL);
 
 	evtimer_set(&_this->ev_timer, npppd_timer, _this);
 
-	/*
-	 * トンネルデバイス関連
-	 */
+	/* start tun(4) or pppac(4) */
 	status = 0;
 	for (i = 0; i < countof(_this->iface); i++) {
 		if (_this->iface[i].initialized != 0)
@@ -384,10 +367,10 @@ npppd_init(npppd *_this, const char *config_file)
 		return -1;
 
 	/*
-	 * インタフェースの start (open) できたなら、唯一の nppp プロセス
-	 * と見なし、PIDファイルは上書きする。
+	 * If the npppd can start(open) interfaces successfully, it can 
+	 * act as only one npppd process on the system and overwrite the pid
+	 * file.
 	 */
-	/* pid ファイル */
 	if ((pidfp = fopen(pidpath0, "w+")) == NULL) {
 		log_printf(LOG_ERR, "fopen(%s,w+) failed in %s(): %m",
 		    pidpath0, __func__);
@@ -408,7 +391,7 @@ npppd_init(npppd *_this, const char *config_file)
 	return npppd_modules_reload(_this);
 }
 
-/** npppd を開始します。 */
+/** start the npppd */
 void
 npppd_start(npppd *_this)
 {
@@ -416,7 +399,6 @@ npppd_start(npppd *_this)
 
 	npppd_reset_timer(_this);
 	while ((event_loop(EVLOOP_ONCE)) == 0) {
-		// 終了要求の検査
 		if (_this->finalized != 0)
 			break;
 	}
@@ -424,7 +406,7 @@ npppd_start(npppd *_this)
 		log_printf(LOG_CRIT, "event_loop() failed: %m");
 }
 
-/** npppd を停止します。 */
+/** stop the npppd */
 void
 npppd_stop(npppd *_this)
 {
@@ -456,7 +438,6 @@ npppd_stop(npppd *_this)
 	_this->finalizing = 1;
 	npppd_reset_timer(_this);
 }
-
 
 static void
 npppd_stop_really(npppd *_this)
@@ -490,7 +471,7 @@ npppd_stop_really(npppd *_this)
 	_this->finalized = 1;
 }
 
-/** npppd デーモンの終了化を行います。 */
+/** finalize the npppd */
 void
 npppd_fini(npppd *_this)
 {
@@ -542,7 +523,7 @@ npppd_fini(npppd *_this)
 }
 
 /***********************************************************************
- * タイマ関連
+ * Timer related functions
  ***********************************************************************/
 static void
 npppd_reset_timer(npppd *_this)
@@ -550,7 +531,7 @@ npppd_reset_timer(npppd *_this)
 	struct timeval tv;
 
 	if (_this->finalizing != 0) {
-		/* 終了化処理の専用 */
+		/* we can use the timer exclusively on finalizing */
 		tv.tv_usec = 500000;
 		tv.tv_sec = 0;
 		evtimer_add(&_this->ev_timer, &tv);
@@ -568,9 +549,8 @@ npppd_timer(int fd, short evtype, void *ctx)
 
 	_this = ctx;
 	if (_this->finalizing != 0) {
-		npppd_stop_really(_this);
-		/* タイマはリセットされている。*/
-		return; /* 終了化処理中は専用 */
+		npppd_stop_really(_this); /* The timer has been reset */
+		return;	/* we can use the timer exclusively on finalizing */
 	}
 	_this->secs += NPPPD_TIMER_TICK_IVAL;
 	if (_this->reloading_count > 0) {
@@ -667,18 +647,24 @@ npppd_reset_routing_table(npppd *_this, int pool_only)
 }
 
 /***********************************************************************
- * npppd その他 API (export)
+ * Other npppd related functions.
  ***********************************************************************/
 /**
- * ユーザのパスワードを取得します。成功すると 0 が返ります。
+ * Get the user's password.  Return 0 on success.
  *
- * @param	username	パスワードを取得するユーザの名前
- * @param	password	パスワードを格納する領域。
- *				パスワードの長さだけを知りたい場合には NULL
- *				を指定します。
- * @param	lppassword	パスワードを格納する領域の長さのポインタ
- * @return User unknown の場合は 1、パスワードバッファの長さが足りない場合
- * は 2、その他のエラーは負の数が返ります。
+ * @param	username    Username who acquires password
+ * @param	password    A pointer to a buffer space to store the password.
+ *			    Use NULL when you need to know only the length of
+ *			    the password.
+ * @param	plpassword  A pointer to the length of the password parameter.
+ *			    This function uses this parameter value and stores
+ *			    the required length value pointed to by this
+ *			    parameter.  Use NULL when use don't need to know
+ *			    the password and its length.
+ * @return	If the function succeeds, 0 is returned.  The function returns
+ *		1 if the username is unknown, returns 2 if the password buffer
+ *		length is not enough.  It returns negative value for other
+ *		errors.
  */
 int
 npppd_get_user_password(npppd *_this, npppd_ppp *ppp,
@@ -692,7 +678,7 @@ npppd_get_user_password(npppd *_this, npppd_ppp *ppp,
 	    plpassword);
 }
 
-/** ユーザの Framed-IP-Address を取得します。*/
+/** Get the Framed-IP-Address attribute of the user */
 struct in_addr *
 npppd_get_user_framed_ip_address(npppd *_this, npppd_ppp *ppp,
     const char *username)
@@ -707,9 +693,9 @@ npppd_get_user_framed_ip_address(npppd *_this, npppd_ppp *ppp,
 	if (ppp->realm_framed_ip_address.s_addr != 0) {
 #if 1
 /*
- * FIXME: radius での固定 IPアドレス割り当てが禁止されている場合に、ここで上
- * FIXME: 書きするアドホック修正。radius と acctlist 以外を足すとバグるので、
- * FIXME: それまでに要修正。
+ * FIXME: This fix is ad hok, it overwrites the ip address here if assigning
+ * FIXME: IP address by RADIUS is prohibited.  This will make a bug when a
+ * FIXME: new authentication type is add.  Fix this until then.
  */
 		if ((ppp_ipcp(ppp)->ip_assign_flags & NPPPD_IP_ASSIGN_RADIUS)
 		    == 0) {
@@ -721,7 +707,7 @@ npppd_get_user_framed_ip_address(npppd *_this, npppd_ppp *ppp,
 
 	ppp->realm_framed_ip_netmask.s_addr = 0xffffffffL;
 	if ((ppp_ipcp(ppp)->ip_assign_flags & NPPPD_IP_ASSIGN_FIXED) != 0) {
-		/* 認証レルムから指定 */
+		/* assign by the authentication realm */
 		if (npppd_auth_get_framed_ip(ppp->realm, username,
 		    &ppp->realm_framed_ip_address,
 			    &ppp->realm_framed_ip_netmask) != 0)
@@ -729,11 +715,11 @@ npppd_get_user_framed_ip_address(npppd *_this, npppd_ppp *ppp,
 	}
 
 do_default:
-	/* 認証レルムで指定が無ければ USER_SELECT */
+	/* Use USER_SELECT if the realm doesn't specify the ip address */
 	if (ppp->realm_framed_ip_address.s_addr == 0)
 		ppp->realm_framed_ip_address.s_addr = INADDR_USER_SELECT;
 	if (ppp->realm_framed_ip_address.s_addr == INADDR_USER_SELECT) {
-		/* USER_SELECT は、設定で不許可の場合は NAS_SELECT に */
+		/* Use NAS_SELECT if USER_SELECT is not allowed by the config */
 		if ((ppp_ipcp(ppp)->ip_assign_flags &
 		    NPPPD_IP_ASSIGN_USER_SELECT) == 0)
 			ppp->realm_framed_ip_address.s_addr = INADDR_NAS_SELECT;
@@ -768,26 +754,23 @@ npppd_check_calling_number(npppd *_this, npppd_ppp *ppp)
 	return 1;
 }
 
-/* 使いまわし用 */
-static struct sockaddr_in npppd_get_ppp_by_ip_sin4 = {
-	.sin_family = AF_INET,
-	.sin_len = sizeof(struct sockaddr_in)
-};
-
 /**
- * 指定した IPアドレスが割り当てられた {@link npppd_ppp} インスタンスを
- * 検索して返します。
- * @param ipaddr	IPアドレス。ネットワークバイトオーダーで指定します。
+ * This function finds a {@link npppd_ppp} instance that is assigned the
+ * specified ip address and returns it 
+ * @param ipaddr	IP Address(Specify in network byte order)
  */
 npppd_ppp *
 npppd_get_ppp_by_ip(npppd *_this, struct in_addr ipaddr)
 {
 	struct sockaddr_npppd *snp;
 	struct radish *rdp;
+	struct sockaddr_in npppd_get_ppp_by_ip_sin4;
 
+	npppd_get_ppp_by_ip_sin4.sin_family = AF_INET;
+	npppd_get_ppp_by_ip_sin4.sin_len = sizeof(struct sockaddr_in);
 	npppd_get_ppp_by_ip_sin4.sin_addr = ipaddr;
 	if (_this->rd == NULL)
-		return NULL;	/* スタートアップ時 */
+		return NULL;	/* no radix tree on startup */
 	if (rd_match((struct sockaddr *)&npppd_get_ppp_by_ip_sin4, _this->rd,
 	    &rdp)) {
 		snp = rdp->rd_rtent;
@@ -798,11 +781,11 @@ npppd_get_ppp_by_ip(npppd *_this, struct in_addr ipaddr)
 }
 
 /**
- * 指定した PPPユーザの {@link npppd_ppp} インスタンスを検索して返します。
- * @param username	PPPユーザ名。
- * @param rlist		検索結果を格納する {@link slist}。
- * @retnr	成功したら 0。失敗したら -1。失敗した場合は、rlistのアイテム
- *	には、中途半端なデータが入っている可能性があります。
+ * This function finds {@link npppd_ppp} instances that are authenticated
+ * as the specified username and returns them as a {@link slist} list.
+ * @param username	PPP Username.
+ * @return	{@link slist} that contans the {@link npppd_ppp} instances.
+ * NULL may be returned if no instance has been found.
  */
 slist *
 npppd_get_ppp_by_user(npppd *_this, const char *username)
@@ -816,10 +799,11 @@ npppd_get_ppp_by_user(npppd *_this, const char *username)
 }
 
 /**
- * 指定した PPP の ID から {@link npppd_ppp} インスタンスを検索して返します。
- * @param	id	検索する {@link npppd_ppp#id ppp の id}
- * @return	id が一致する {@link npppd_ppp} インスタンスが見つかればその
- * ポインタを、見つからなければ NULL ポインタを返却します。
+ * This function finds a {@link npppd_ppp} instance that matches the specified
+ * ppp id and returns it.
+ * @param	id	{@link npppd_ppp#id ppp's id}
+ * @return	This function returns the pointer if the instance which has
+ *		specified ID is found, otherwise it returns NULL.
  */
 npppd_ppp *
 npppd_get_ppp_by_id(npppd *_this, int ppp_id)
@@ -835,7 +819,7 @@ npppd_get_ppp_by_id(npppd *_this, int ppp_id)
 		log_printf(LOG_WARNING,
 		    "npppd_get_all_users() failed in %s()", __func__);
 	} else {
-		/* FIXME: Id での検索がリニアサーチ */
+		/* FIXME: This linear search eats CPU. */
 		for (slist_itr_first(&users); slist_itr_has_next(&users); ) {
 			ppp0 = slist_itr_next(&users);
 			if (ppp0->id == ppp_id) {
@@ -850,9 +834,10 @@ npppd_get_ppp_by_id(npppd *_this, int ppp_id)
 }
 
 /**
- * 指定したユーザが最大接続数の制限 (user_max_session) を越えているかどうかを
- * 検査します。
- * @return	検査に問題無ければ 1 が、あれば 0 を返します。
+ * Checks whether the user reaches the maximum session limit
+ * (user_max_serssion).
+ * @return	This function returns 1(true) if the user does not reach the
+ *		limit, otherwise it returns 0(false).
  */
 int
 npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
@@ -861,10 +846,9 @@ npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
 	npppd_ppp *ppp1;
 	slist *uppp;
 
-	/* user_max_sessionが0のときは無制限とみなす */
-	if (ppp_iface(ppp)->user_max_session == 0) {
+	/* user_max_session == 0 means unlimit */
+	if (ppp_iface(ppp)->user_max_session == 0)
 		return 1;
-	}
 
 	count = 0;
 	if ((uppp = npppd_get_ppp_by_user(_this, ppp->username)) != NULL) {
@@ -880,11 +864,11 @@ npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
 }
 
 /***********************************************************************
- * ネットワーク I/O 関連
+ * Network I/O ralated functions.
  ***********************************************************************/
 /**
- * ネットワーク(tun)側に出力する際に呼び出します。
- * 現在は IPv4 のパケットを出力することを仮定しています。
+ * Call this function to output packets to the network(tun).  This function
+ * currently assumes the packet is a IPv4 datagram.
  */
 void
 npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
@@ -892,7 +876,7 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 {
 	struct ip *pip;
 	int lbuf;
-	u_char buf[256];	/* TCP/IP ヘッダとして十分なサイズ */
+	u_char buf[256];	/* enough size for TCP/IP header */
 
 	NPPPD_ASSERT(ppp != NULL);
 
@@ -931,8 +915,8 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 	if (ppp->adjust_mss) {
 		if (lpktp == lbuf) {
 			/*
-			 * TCP ヘッダまでが sizeof(buf) オクテットに収まって
-			 * いるという仮定。
+			 * We can assume the packet length is less than
+			 * sizeof(buf).
 			 */
 			if (!ALIGNED_POINTER(pktp, struct ip))
 				pktp = buf;
@@ -943,11 +927,10 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 	npppd_iface_write(ppp_iface(ppp), proto, pktp, lpktp);
 }
 
-/***********************************************************************
- * IPv4 パケットのカーネル折り返し処理
- ***********************************************************************/
 #ifdef USE_NPPPD_PIPEX
-
+/***********************************************************************
+ * PIPEX related functions
+ ***********************************************************************/
 static void
 pipex_setup_common(npppd_ppp *ppp, struct pipex_session_req *req)
 {
@@ -996,7 +979,7 @@ pipex_setup_common(npppd_ppp *ppp, struct pipex_session_req *req)
 #endif /* USE_NPPPD_MPPE */
 }
 
-/** PPPAC インタフェースの IPv4パケットカーネル折り返しを有効化します */
+/** Enable PIPEX of the {@link npppd_ppp ppp} */
 int
 npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 {
@@ -1020,7 +1003,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 	case PPP_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
-		/* PPPOE 固有の情報 */
+		/* PPPoE specific informations */
 		req.pr_protocol = PIPEX_PROTO_PPPOE;
 		req.pr_session_id = pppoe->session_id;
 		req.pr_peer_session_id = 0;
@@ -1036,7 +1019,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 	case PPP_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
-		/* PPTP 固有の情報 */
+		/* PPTP specific informations */
 		req.pr_session_id = call->id;
 		req.pr_protocol = PIPEX_PROTO_PPTP;
 
@@ -1071,7 +1054,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 
 	ppp->pipex_enabled = 1;
 	if (ppp->timeout_sec > 0) {
-		/* NPPPD 側の idle timer は停止 */
+		/* Stop the npppd's idle-timer.  We use pipex's idle-timer */
 		ppp->timeout_sec = 0;
 		ppp_reset_idle_timeout(ppp);
 	}
@@ -1079,7 +1062,7 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 	return error;
 }
 
-/** PPPAC インタフェースの IPv4パケットカーネル折り返しを無効化します */
+/** Disable PIPEX of the {@link npppd_ppp ppp} */
 int
 npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 {
@@ -1101,7 +1084,7 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 	case PPP_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
-		/* PPPOE 固有の情報 */
+		/* PPPoE specific informations */
 		req.pcr_protocol = PIPEX_PROTO_PPPOE;
 		req.pcr_session_id = pppoe->session_id;
 		break;
@@ -1110,7 +1093,7 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 	case PPP_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
-		/* PPTP 固有の情報 */
+		/* PPTP specific informations */
 		req.pcr_session_id = call->id;
 		req.pcr_protocol = PIPEX_PROTO_PPTP;
 		break;
@@ -1133,7 +1116,9 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 	return error;
 }
 
-/** PPPAC インタフェースの IPv4パケットカーネル折り返しを無効化します */
+/* XXX: s/npppd_ppp_pipex_ip_disable/npppd_ppp_pipex_stop/ ?? */
+
+/** Stop PIPEX of the {@link npppd_ppp ppp} */
 static int
 npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 {
@@ -1153,7 +1138,7 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 	case PPP_TUNNEL_PPPOE:
 		pppoe = (pppoe_session *)ppp->phy_context;
 
-		/* PPPOE 固有の情報 */
+		/* PPPoE specific informations */
 		req.pcr_protocol = PIPEX_PROTO_PPPOE;
 		req.pcr_session_id = pppoe->session_id;
 		break;
@@ -1162,7 +1147,7 @@ npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
 	case PPP_TUNNEL_PPTP:
 		call = (pptp_call *)ppp->phy_context;
 
-		/* PPTP 固有の情報 */
+		/* PPTP specific informations */
 		req.pcr_session_id = call->id;
 		req.pcr_protocol = PIPEX_PROTO_PPTP;
 		break;
@@ -1208,10 +1193,10 @@ pipex_periodic(npppd *_this)
 		goto pipex_done;
 	}
 
-	/* 切断要求処理 */
+	/* Disconnect request */
 	slist_itr_first(&dlist);
 	while (slist_itr_has_next(&dlist)) {
-		/* FIXME: PPP id での検索がリニアサーチの繰り返し */
+		/* FIXME: Linear search by PPP Id eats CPU */
 		ppp_id = (int)slist_itr_next(&dlist);
 		slist_itr_first(&users);
 		ppp = NULL;
@@ -1240,9 +1225,9 @@ pipex_done:
 #endif /* USE_NPPPD_PIPEX */
 
 /***********************************************************************
- * IP割り当て関連
+ * IP address assignment related functions
  ***********************************************************************/
-/** npppd に IP の利用を要求します。*/
+/** Prepare to use IP */
 int
 npppd_prepare_ip(npppd *_this, npppd_ppp *ppp)
 {
@@ -1270,7 +1255,7 @@ npppd_prepare_ip(npppd *_this, npppd_ppp *ppp)
 	return 0;
 }
 
-/** npppd に IP の利用が終了したことを通知して、リソースを解放します。*/
+/** Notify stop using IP to npppd and release the resources. */
 void
 npppd_release_ip(npppd *_this, npppd_ppp *ppp)
 {
@@ -1288,7 +1273,10 @@ npppd_release_ip(npppd *_this, npppd_ppp *ppp)
 	ppp->ppp_framed_ip_address.s_addr = 0;
 }
 
-/** IPアドレスの有効無効を切替えます。enabled が変更されると経路を操作します。*/
+/**
+ * Change IP enableness.  When the enableness is change, npppd will operate
+ * the route entry.
+ */
 void
 npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 {
@@ -1302,14 +1290,17 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 	    "npppd_set_ip_enabled(%s/%s, %s)", ppp->username,
 		inet_ntoa(ppp->ppp_framed_ip_address),
 		(enabled)?"true" : "false"));
+
 	/*
-	 * enabled に変更がなければ、なにもしない。経路変更すると、いろんなプ
-	 * ログラムが wakeup して重くなるので、余計な経路情報の更新は控える。
+	 * Don't do anything if the enableness is not change.  Changing route
+	 * makes many programs will wake up and do heavy operations, it causes
+	 * system overload, so we refrain useless changing route.
 	 */
 	enabled = (enabled)? 1 : 0;	
 	was_enabled = (ppp->assigned_ip4_enabled != 0)? 1 : 0;
 	if (enabled == was_enabled)
 		return;
+
 	ppp->assigned_ip4_enabled = enabled;
 	if (enabled) {
 		if (ppp->username[0] != '\0') {
@@ -1329,13 +1320,16 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 					    ppp->username));
 				}
 			}
-			if (u != NULL)	/* malloc 失敗がある */
+			if (u != NULL)	/* above malloc() may failed */
 				slist_add(u, ppp);
 		}
 
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
 		if (ppp->snp.snp_next != NULL)
-			/* 同じアドレス/マスクでブラックホールあり */
+			/*
+			 * There is a blackhole route that has same
+			 * address/mask.
+			 */
 			in_route_delete(&ppp->ppp_framed_ip_address, 
 			    &ppp->ppp_framed_ip_netmask, &loop, RTF_BLACKHOLE);
 		/* See the comment for MRU_IPMTU() on ppp.h */
@@ -1361,7 +1355,10 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 			    &ppp_iface(ppp)->ip4addr, 0);
 		}
 		if (ppp->snp.snp_next != NULL)
-			/* 同じアドレス/マスクでブラックホールあり */
+			/*
+			 * There is a blackhole route that has same
+			 * address/mask.
+			 */
 			in_route_add(&ppp->snp.snp_addr, &ppp->snp.snp_mask,
 			    &loop, LOOPBACK_IFNAME, RTF_BLACKHOLE, 0);
 #endif
@@ -1391,7 +1388,7 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 			}
 			NPPPD_ASSERT(found != 0);
 			if (slist_length(u) <= 0) {
-				/* 最後の PPP */
+				/* The last PPP */
 				NPPPD_DBG((LOG_DEBUG,
 				    "hash_delete(user->ppp, %s)",
 				    ppp->username));
@@ -1405,7 +1402,7 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 				slist_fini(u);
 				free(u);
 			} else {
-				/* 参照の差し替え */
+				/* Replace the reference. */
 				ppp1 = slist_get(u, 0);
 				hl->key = ppp1->username;
 			}
@@ -1419,10 +1416,10 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 }
 
 /**
- * IPアドレスを割り当てます。返される struct in_addr はネットバイトオーダー
- * で格納されています。
- * @param req_ip4	新たに割り当てを要求する IPアドレス。既に同一のア
- * ドレスが割り当て済の場合に呼び出すと失敗します。
+ * Assign the IP address.  Returning "struct in_addr" is stored IP address
+ * in network byte order.
+ * @param req_ip4	IP address request to assign.  If the address is used
+ * already, this function will return fail.
  */
 int
 npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
@@ -1454,7 +1451,7 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 		dyna = 1;
 	} else {
 		NPPPD_ASSERT(realm != NULL);
-		/* レルムなしで、固定 IPアドレス割り当てはできない */
+		/* We cannot assign a fixed ip address without realm */
 
 		if ((npppd_auth_get_type(realm) == NPPPD_AUTH_TYPE_RADIUS &&
 		    (flag & NPPPD_IP_ASSIGN_RADIUS) == 0 &&
@@ -1470,9 +1467,9 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 	}
 	if (!dyna) {
 		/*
-		 * fallback_dyna ...
-		 *	Realm で固定割り当てが設定されているがアドレスがプール
-		 *	されていない場合には、動的割り当てに fallback する。
+		 * Realm requires the fixed IP address, but the address
+		 * doesn't belong any address pool.  Fallback to dynamic
+		 * assignment.
 		 */
 		for (slist_itr_first(ppp_pools(ppp));
 		    slist_itr_has_next(ppp_pools(ppp));){
@@ -1483,8 +1480,9 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 			case ADDRESS_OK:
 				if (snp->snp_type == SNP_POOL) {
 					/*
-					 * 固定アドレスプールを使えるのは、
-					 * Realm で指定した場合に限る
+					 * Fixed address pool can be used
+					 * only if the realm specified to use
+					 * it.
 					 */
 					if (ppp->realm_framed_ip_address
 					    .s_addr != INADDR_USER_SELECT)
@@ -1499,7 +1497,7 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 				continue;
 			case ADDRESS_OUT_OF_POOL:
 				reason = "out of the pool";
-				continue;	/* 続行 */
+				continue;	/* try next */
 			case ADDRESS_BUSY:
 				fallback_dyna = 0;
 				reason = "busy";
@@ -1568,7 +1566,7 @@ rtlist_remove(slist *prtlist, struct radish *radish)
 	return NULL;
 }
 
-/** {@link ::npppd#rd npppd に唯一の radish} をセットします。*/
+/** Set {@link ::npppd#rd the only radish of npppd} */
 int
 npppd_set_radish(npppd *_this, void *radish_head)
 {
@@ -1586,13 +1584,13 @@ npppd_set_radish(npppd *_this, void *radish_head)
 	if (radish_head != NULL) {
 		if (rd2slist(radish_head, &rtlist1) != 0) {
 			log_printf(LOG_WARNING, "rd2slist failed: %m");
-			goto reigai;
+			goto fail;
 		}
 	}
 	if (_this->rd != NULL) {
 		if (rd2slist(_this->rd, &rtlist0) != 0) {
 			log_printf(LOG_WARNING, "rd2slist failed: %m");
-			goto reigai;
+			goto fail;
 		}
 	}
 	if (_this->rd != NULL && radish_head != NULL) {
@@ -1600,37 +1598,37 @@ npppd_set_radish(npppd *_this, void *radish_head)
 			radish = slist_itr_next(&rtlist0);
 			snp = radish->rd_rtent;
 		    /*
-		     * プールアドレスの差し替え
+		     * replace the pool address
 		     */
 			if (snp->snp_type == SNP_POOL ||
 			    snp->snp_type == SNP_DYN_POOL) {
 				if (rd_lookup(radish->rd_route, radish->rd_mask,
 					    radish_head) == NULL)
 					continue;
-				/* 追加しない */
+				/* don't add */
 				rtlist_remove(&rtlist1, radish);
-				/* 削除しない */
+				/* don't delete */
 				slist_itr_remove(&rtlist0);
 				continue;
 			}
 		    /*
-		     * アクティブ PPP セッションの処理
+		     * handle the active PPP sessions.
 		     */
 			NPPPD_ASSERT(snp->snp_type == SNP_PPP);
 			ppp =  snp->snp_data_ptr;
 
-			/* アクティブ PPP の経路は削除しない。*/
+			/* Don't delete the route of active PPP session */
 			slist_itr_remove(&rtlist0);
 
-			/* 古いプール設定に関する情報はクリア */
+			/* clear informations about old pool configuration */
 			ppp->assigned_pool = NULL;
 			snp->snp_next = NULL;
 
 			delppp0 = 0;
 			if (!rd_match((struct sockaddr *)snp, radish_head, &r)){
 				/*
-				 * 新プールに含まれない場合、PPPセッションは
-				 * 切断リスト入り。
+				 * If the address doesn't belong the new pools,
+				 * add the PPP session to the deletion list.
 				 */
 				slist_add(&delppp, snp->snp_data_ptr);
 				delppp0 = 1;
@@ -1641,26 +1639,29 @@ npppd_set_radish(npppd *_this, void *radish_head)
 				    ((struct sockaddr_npppd *)r->rd_rtent)
 					->snp_type == SNP_DYN_POOL);
 				/*
-				 * アドレス/マスクが等しいプールが存在する場合
-				 * は、RADISH エントリをリスト化する。リストは
-				 * SNP_PPP が先にするので、現在のエントリは
-				 * snp->snp_next にセットし、現在のエントリを
-				 * 削除。
+				 * If there is a pool entry that has same
+				 * address/mask, then make the RADISH entry a
+				 * list.  Set SNP_PPP as the first in the list,
+				 * set current entry in snp->snp_next and
+				 * delete it.
 				 */
 				if (sockaddr_npppd_match(
 					    radish->rd_route, r->rd_route) &&
 				    sockaddr_npppd_match(
 					    radish->rd_mask, r->rd_mask)) {
-					/* 解放するので、新経路リストから削除 */
+					/*
+					 * Releasing it, so remove it from the
+					 * new routing list.
+					 */
 					rtlist_remove(&rtlist1, radish);
-					/* snp_next をセット */
+					/* set as snp_snp_next */
 					snp->snp_next = r->rd_rtent;
 					rval = rd_delete(r->rd_route,
 					    r->rd_mask, radish_head, &dummy);
 					NPPPD_ASSERT(rval == 0);
 				}
 			}
-			/* 新 Radish に登録。*/
+			/* Register to the new radish */
 			rval = rd_insert(radish->rd_route, radish->rd_mask,
 			    radish_head, snp);
 			if (rval != 0) {
@@ -1715,7 +1716,7 @@ npppd_set_radish(npppd *_this, void *radish_head)
 	slist_fini(&delppp);
 
 	return 0;
-reigai:
+fail:
 	slist_fini(&rtlist0);
 	slist_fini(&rtlist1);
 	slist_fini(&delppp);
@@ -1724,8 +1725,8 @@ reigai:
 }
 
 /**
- * すべてのユーザを {@link slist} に格納して返却します。users には、
- * {@link ::npppd_ppp} への参照が格納されます。
+ * This function stores all users to {@link slist} and returns them.
+ * References to {@link ::npppd_ppp} will be stored in users.
  */
 int
 npppd_get_all_users(npppd *_this, slist *users)
@@ -1749,14 +1750,14 @@ npppd_get_all_users(npppd *_this, slist *users)
 			if (slist_add(users, snp->snp_data_ptr) == NULL) {
 				log_printf(LOG_ERR, 
 				    "slist_add() failed in %s: %m", __func__);
-				goto reigai;
+				goto fail;
 			}
 		}
 	}
 	slist_fini(&list);
 
 	return 0;
-reigai:
+fail:
 	slist_fini(&list);
 
 	return 1;
@@ -1805,7 +1806,7 @@ npppd_reload0(npppd *_this)
 }
 
 /***********************************************************************
- * シグナルハンドラ
+ * Signal handlers
  ***********************************************************************/
 static void
 npppd_on_sighup(int fd, short ev_type, void *ctx)
@@ -1840,7 +1841,7 @@ npppd_on_sigint(int fd, short ev_type, void *ctx)
 }
 
 /***********************************************************************
- * 雑多な関数
+ * Miscellaneous functions
  ***********************************************************************/
 static uint32_t
 str_hash(const void *ptr, int sz)
@@ -1859,8 +1860,8 @@ str_hash(const void *ptr, int sz)
 }
 
 /**
- * 指定した {@link ::npppd_ppp PPP} 用の認証レルムを選択します。
- * 選択に成功した場合には、0 が返ります。
+ * Select a authentication realm that is for given {@link ::npppd_ppp PPP}.  
+ * Return 0 on success.
  */
 int
 npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
@@ -1876,8 +1877,8 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 	NPPPD_ASSERT(username != NULL);
 
 	/*
-	 * PPPサフィックスが最長で、サフィックスの長さが同じものであれば、
-	 * 最初に一致したものを返却します。
+	 * If the PPP suffix is the longest, and the length of the suffix is
+	 * same, select the first one.
 	 */
 	lusername = strlen(username);
 	lmax = -1;
@@ -1886,8 +1887,8 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 	if ((val = ppp_config_str(ppp, "realm_list")) == NULL) {
 #ifndef	NO_DEFAULT_REALM
 		/*
-		 * 従来版との互換性のため、レルムがリストになっていなければ
-		 * ローカル=>RADIUS とフォールバックする。
+		 * If the realm is not a list, because of compatibility for
+		 * past versions, we try fallback from LOCAL to RADIUS.
 		 */
 		realm0 = NULL;
 		slist_itr_first(&_this->realms);
@@ -1976,7 +1977,7 @@ found:
 	return 0;
 }
 
-/** 割当っている認証レルムがローカル認証かどうか。*/
+/** Is assigned realm a LOCAL authentication? */
 int
 npppd_ppp_is_realm_local(npppd *_this, npppd_ppp *ppp)
 {
@@ -1990,7 +1991,7 @@ npppd_ppp_is_realm_local(npppd *_this, npppd_ppp *ppp)
 	    ? 1 : 0;
 }
 
-/** 割当っている認証レルムがRADIUS認証かどうか。*/
+/** Is assigned realm a RADIUS authentication? */
 int
 npppd_ppp_is_realm_radius(npppd *_this, npppd_ppp *ppp)
 {
@@ -2004,7 +2005,7 @@ npppd_ppp_is_realm_radius(npppd *_this, npppd_ppp *ppp)
 	    ? 1 : 0;
 }
 
-/** 割当っている認証レルムが使用可能かどうか。*/
+/** Is assigned realm usable? */
 int
 npppd_ppp_is_realm_ready(npppd *_this, npppd_ppp *ppp)
 {
@@ -2014,7 +2015,7 @@ npppd_ppp_is_realm_ready(npppd *_this, npppd_ppp *ppp)
 	return npppd_auth_is_ready(ppp->realm);
 }
 
-/** 割当っている認証レルムの名前を返却します。*/
+/** Return the name of assigned realm */
 const char *
 npppd_ppp_get_realm_name(npppd *_this, npppd_ppp *ppp)
 {
@@ -2023,7 +2024,7 @@ npppd_ppp_get_realm_name(npppd *_this, npppd_ppp *ppp)
 	return npppd_auth_get_name(ppp->realm);
 }
 
-/** ppp に割当ったインタフェース名をセットします。*/
+/** Return the interface name that bound given {@link ::npppd_ppp PPP} */
 const char *
 npppd_ppp_get_iface_name(npppd *_this, npppd_ppp *ppp)
 {
@@ -2032,7 +2033,7 @@ npppd_ppp_get_iface_name(npppd *_this, npppd_ppp *ppp)
 	return ppp_iface(ppp)->ifname;
 }
 
-/** インタフェースが利用可能かどうか。*/
+/** Is the interface usable? */
 int
 npppd_ppp_iface_is_ready(npppd *_this, npppd_ppp *ppp)
 {
@@ -2040,7 +2041,7 @@ npppd_ppp_iface_is_ready(npppd *_this, npppd_ppp *ppp)
 	    ppp_ipcp(ppp) != NULL)? 1 : 0;
 }
 
-/** ppp に適切なインタフェースを紐付けます。*/
+/** Select a suitable interface for {@link :npppd_ppp PPP} and bind them  */
 int
 npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 {
@@ -2072,7 +2073,7 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 	if (ifname == NULL)
 		return 1;
 
-	/* インタフェース検索 */
+	/* Search a interface */
 	ifidx = -1;
 	ntotal_session = 0;
 	for (i = 0; i < countof(_this->iface); i++) {
@@ -2104,7 +2105,7 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 	return 0;
 }
 
-/** ppp に割当ったインタフェースを解除します */
+/** Unbind the interface from the {@link ::npppd_ppp PPP} */
 void
 npppd_ppp_unbind_iface(npppd *_this, npppd_ppp *ppp)
 {
@@ -2136,7 +2137,10 @@ npppd_rd_walktree_delete(struct radish_head *rh)
 }
 
 #ifdef USE_NPPPD_RADIUS
-/** @return 使用可能な radius の設定が無い場合は NULL が返ります。 */
+/**
+ * Return radius_req_setting for the given {@link ::npppd_ppp PPP}.
+ * @return return NULL if no usable RADIUS setting.
+ */
 void *
 npppd_get_radius_req_setting(npppd *_this, npppd_ppp *ppp)
 {
@@ -2152,7 +2156,7 @@ npppd_get_radius_req_setting(npppd *_this, npppd_ppp *ppp)
 	    (npppd_auth_radius *)ppp->realm);
 }
 
-/** Radius サーバが問い合わせに失敗したことを通知します。*/
+/** Notice a failure on RAIDUS request/response */
 void
 npppd_radius_server_failure_notify(npppd *_this, npppd_ppp *ppp, void *rad_ctx,
     const char *reason)
@@ -2166,7 +2170,7 @@ npppd_radius_server_failure_notify(npppd *_this, npppd_ppp *ppp, void *rad_ctx,
 }
 #endif
 
-/** 認証レルムの終了化処理 */
+/** Finalize authentication realm */
 static void
 npppd_auth_finalizer_periodic(npppd *_this)
 {
@@ -2176,8 +2180,8 @@ npppd_auth_finalizer_periodic(npppd *_this)
 	npppd_ppp *ppp;
 
 	/*
-	 * disposing フラグがセットされた realm について、割当った PPP が
-	 * あれば切断する。全て切断済みなら realm を解放する。
+	 * For the realms with disposing flag, if the realm has assigned PPPs,
+	 * disconnect them.  If all PPPs are disconnected then free the realm. 
 	 */
 	NPPPD_DBG((DEBUG_LEVEL_2, "%s() called", __func__));
 	slist_itr_first(&_this->realms);
@@ -2215,7 +2219,7 @@ npppd_auth_finalizer_periodic(npppd *_this)
 		slist_fini(&users);
 }
 
-/** sockaddr_npppd の比較関数。一致すると 0 が返ります */
+/** compare sockaddr_npppd.  return 0 if matches */
 int
 sockaddr_npppd_match(void *a0, void *b0)
 {
@@ -2228,10 +2232,9 @@ sockaddr_npppd_match(void *a0, void *b0)
 }
 
 /**
- * 認証に使用するユーザ名を username_buffer で指定した領域に作成して、
- * 返却します。
- * @param username_buffer 認証に使用するユーザ名を格納するバッファ領域
- * を指定します。MAX_USERNAME_LENGTH 以上の領域である必要があります。
+ * This function stores the username for authentication to the space specified
+ * by username_buffer and returns it.  username_buffer must have space more
+ * than MAX_USERNAME_LENGTH.
  */
 const char *
 npppd_ppp_get_username_for_auth(npppd *_this, npppd_ppp *ppp,

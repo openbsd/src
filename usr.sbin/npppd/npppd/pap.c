@@ -23,15 +23,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: pap.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /**@file
- * Password Authentication Protocol (PAP) の実装
+ * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
- */
-/*
- *   Windows 2000 で PAP を行うと、8秒間に10個の AuthReq が届きタイムアウト
- *   この値は CHAP の場合の半分以下なので、Radius 要求のタイムアウトの値は、
- *   CHAP と PAP で別々に設定できたほうが良いかもしれない。
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +141,7 @@ pap_stop(pap *_this)
 	return 0;
 }
 
-/** PAP のパケット受信 */
+/** Receiving PAP packet */
 int
 pap_input(pap *_this, u_char *pktp, int lpktp)
 {
@@ -177,15 +172,15 @@ pap_input(pap *_this, u_char *pktp, int lpktp)
 		return -1;
 	}
 
-	/* ユーザ名を取り出し */
+	/* retribute the username */
 #define	remlen		(lpktp - (pktp1 - pktp))
 	if (remlen < 1)
-		goto reigai;
+		goto fail;
 	GETCHAR(len, pktp1);
 	if (len <= 0)
-		goto reigai;
+		goto fail;
 	if (remlen < len)
-		goto reigai;
+		goto fail;
 	if (len > 0)
 		memcpy(name, pktp1, len);
 	name[len] = '\0';
@@ -193,20 +188,20 @@ pap_input(pap *_this, u_char *pktp, int lpktp)
 
 	if (_this->state != PAP_STATE_STARTING) {
 		/*
-		 * まったく同じ要求を２度受け取った場合は、先方の再送による
-		 * もの。UserName が同じならば続行する。
+		 * Receiving identical message again, it must be the message
+		 * retransmit by the peer.  Continue if the username is same.
 		 */
 		if ((_this->state == PAP_STATE_AUTHENTICATING ||
 		    _this->state == PAP_STATE_SENT_RESPONSE) &&
 		    strcmp(_this->name, name) == 0) {
-			/* 続行 */
+			/* continue */
 		} else {
 			pap_log(_this, LOG_ERR,
 			    "Received AuthReq is not same as before.  "
 			    "(%d,%s) != (%d,%s)", id, name, _this->auth_id,
 			    _this->name);
 			_this->auth_id = id;
-			goto reigai;
+			goto fail;
 		}
 	}
 	if (_this->state == PAP_STATE_AUTHENTICATING)
@@ -216,12 +211,12 @@ pap_input(pap *_this, u_char *pktp, int lpktp)
 
 	_this->state = PAP_STATE_AUTHENTICATING;
 
-	/* パスワードを取り出し */
+	/* retribute the password */
 	if (remlen < 1)
-		goto reigai;
+		goto fail;
 	GETCHAR(len, pktp1);
 	if (remlen < len)
-		goto reigai;
+		goto fail;
 	if (len > 0)
 		memcpy(password, pktp1, len);
 
@@ -229,7 +224,7 @@ pap_input(pap *_this, u_char *pktp, int lpktp)
 	pap_authenticate(_this, password);
 
 	return 0;
-reigai:
+fail:
 	pap_response(_this, 0, DEFAULT_FAILURE_MESSAGE);
 	return -1;
 }
@@ -242,7 +237,7 @@ pap_authenticate(pap *_this, const char *password)
 		if (!npppd_ppp_is_realm_ready(_this->ppp->pppd, _this->ppp)) {
 			pap_log(_this, LOG_INFO,
 			    "username=\"%s\" realm is not ready.", _this->name);
-			goto reigai;
+			goto fail;
 			/* NOTREACHED */
 		}
 #if USE_NPPPD_RADIUS
@@ -258,7 +253,7 @@ pap_authenticate(pap *_this, const char *password)
 			/* NOTREACHED */
 		}
 	}
-reigai:
+fail:
 	pap_response(_this, 0, DEFAULT_FAILURE_MESSAGE);
 }
 
@@ -310,7 +305,6 @@ pap_response(pap *_this, int authok, const char *mes)
 		    "logtype=Failure username=\"%s\" realm=%s", _this->name,
 		    realm);
 		pap_stop(_this);
-		/* 失敗したら ppp 終了 */
 		ppp_stop_ex(_this->ppp, "Authentication Required",
 		    PPP_DISCON_AUTH_FAILED, PPP_PROTO_PAP, 1 /* peer */, NULL);
 	} else {
@@ -321,12 +315,11 @@ pap_response(pap *_this, int authok, const char *mes)
 		    realm);
 		pap_stop(_this);
 		ppp_auth_ok(_this->ppp);
-		// 再送要求に答えるために pap_stop でのセットを上書きします。
+		/* reset the state to response request of retransmision. */
 		_this->state = PAP_STATE_SENT_RESPONSE;
 	}
 }
 
-/** PAP認証 */
 static void
 pap_local_authenticate(pap *_this, const char *username, const char *password)
 {
@@ -395,40 +388,37 @@ pap_radius_authenticate(pap *_this, const char *username, const char *password)
 
 	if ((rad_setting = npppd_get_radius_req_setting(_this->ppp->pppd,
 	    _this->ppp)) == NULL)
-		goto reigai;
+		goto fail;
 
 	if ((radpkt = radius_new_request_packet(RADIUS_CODE_ACCESS_REQUEST))
 	    == NULL)
-		goto reigai;
+		goto fail;
 
 	if (radius_prepare(rad_setting, _this, &radctx, 
 	    pap_radius_response, _this->ppp->auth_timeout) != 0) {
 		radius_delete_packet(radpkt);
-		goto reigai;
+		goto fail;
 	}
 
 	if (ppp_set_radius_attrs_for_authreq(_this->ppp, rad_setting, radpkt)
 	    != 0)
-		goto reigai;
+		goto fail;
 
 	if (radius_put_string_attr(radpkt, RADIUS_TYPE_USER_NAME,
 	    npppd_ppp_get_username_for_auth(_this->ppp->pppd, _this->ppp, 
 	    username, buf0)) != 0)
-		goto reigai;
+		goto fail;
 
 	if (_this->radctx != NULL)
 		radius_cancel_request(_this->radctx);
 
 	_this->radctx = radctx;
 
-	/*
-	 * RADIUS User-Password アートリビュートの作成
-	 * (RFC 2865, "5.2.  User-Password")
-	 */
+	/* Create RADIUS User-Password Attribute (RFC 2865, 5.2.) */
 	s = radius_get_server_secret(_this->radctx);
 	s_len = strlen(s);
 
-	memset(pass, 0, sizeof(pass));			// null-padding
+	memset(pass, 0, sizeof(pass)); /* null padding */
 	passlen = MIN(strlen(password), sizeof(pass));
 	memcpy(pass, password, passlen);
 	if ((passlen % 16) != 0)
@@ -456,12 +446,12 @@ pap_radius_authenticate(pap *_this, const char *username, const char *password)
 
 	if (radius_put_raw_attr(radpkt, RADIUS_TYPE_USER_PASSWORD, pass,
 	    passlen) != 0)
-		goto reigai;
+		goto fail;
 
 	radius_request(_this->radctx, radpkt);
 
 	return;
-reigai:
+fail:
 	if (_this->radctx != NULL)
 		radius_cancel_request(_this->radctx);
 	pap_log(_this, LOG_ERR, "%s() failed: %m", __func__);
@@ -480,7 +470,7 @@ pap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 
 	_this = context;
 	radctx = _this->radctx;
-	_this->radctx = NULL;	/* 大事 */
+	_this->radctx = NULL;	/* important */
 
 	if (pkt == NULL) {
 		if (flags & RADIUS_REQUST_TIMEOUT) {
@@ -509,14 +499,14 @@ pap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 		    radctx, "bad authenticator");
 		goto auth_failed;
 	}
-	// 認証 OK
+	/* Autentication succeeded */
 	pap_response(_this, 1, DEFAULT_SUCCESS_MESSAGE);
-	ppp_proccess_radius_framed_ip(_this->ppp, pkt);
+	ppp_process_radius_framed_ip(_this->ppp, pkt);
 	radius_delete_packet(pkt);
 
 	return;
 auth_failed:
-	// 認証 NG
+	/* Autentication failure */
 	pap_log(_this, LOG_WARNING, "Radius authentication request failed: %s",
 	    reason);
 	if (pkt != NULL)

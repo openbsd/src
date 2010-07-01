@@ -1,11 +1,12 @@
 /**@file
  * This file was adapted from NetBSD:/usr/src/usr.sbin/pppd/pppd/fsm.c
- * <p>
- * 無駄な実装もなく、ほとんど修正せずに使えるので、なるべくオリジナルの
- * 状態に近いように実装しています。(2005/04 yasuoka)</p>
  */
 /*
-XXX 再送の ConfReq で Initial ConfReq を再送するのはどうかと思う。
+ * fsm.c is simple and it can be use without modifications.  So keep the
+ * original as much as possible.  (2005/04 yasuoka)
+ *
+ * XXX: I think the same message for initial configure-request is a bad idea
+ * XXX: on resending configure-request.(yasuoka)
  */
 /*	$NetBSD: fsm.c,v 1.13 2000/09/23 22:39:35 christos Exp $	*/
 
@@ -54,9 +55,7 @@ __RCSID("$NetBSD: fsm.c,v 1.13 2000/09/23 22:39:35 christos Exp $");
 #include <syslog.h>
 #include <stdlib.h>
 
-/*
- * npppd 関連
- */
+/* npppd related headers below */
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

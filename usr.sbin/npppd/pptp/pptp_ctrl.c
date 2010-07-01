@@ -1,3 +1,4 @@
+/*	$OpenBSD: pptp_ctrl.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,9 +25,10 @@
  * SUCH DAMAGE.
  */
 /**@file
- * PPTP(RFC 2637) コントロール接続部の実装。PACのみ。
+ * PPTP(RFC 2637) control connection implementation.
+ * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -55,7 +57,7 @@
 #include "pptp_local.h"
 #include "pptp_subr.h"
 
-/** 2 秒毎に pptp_ctrl_timeout */
+/* periods of pptp_ctrl_timeout */
 #define PPTP_CTRL_TIMEOUT_IVAL_SEC	2	
 
 #ifdef	PPTP_CTRL_DEBUG
@@ -90,9 +92,9 @@ static int         pptp_ctrl_call_input (pptp_ctrl *, int, u_char *, int);
 static const char  *pptp_ctrl_state_string (int);
 static void        pptp_ctrl_fini(pptp_ctrl *);
 
-/************************************************************************
- * pptp_ctrl インスタンス操作
- ************************************************************************/
+/*
+ * pptp_ctrl instance operation functions
+ */
 pptp_ctrl *
 pptp_ctrl_create(void)
 {
@@ -118,12 +120,12 @@ pptp_ctrl_init(pptp_ctrl *_this)
 	if ((_this->recv_buf = bytebuffer_create(PPTP_BUFSIZ)) == NULL) {
 		pptp_ctrl_log(_this, LOG_ERR, "bytebuffer_create() failed at "
 		    "%s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	if ((_this->send_buf = bytebuffer_create(PPTP_BUFSIZ)) == NULL) {
 		pptp_ctrl_log(_this, LOG_ERR, "bytebuffer_create() failed at "
 		    "%s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	_this->last_rcv_ctrl = curr_time;
 	_this->last_snd_ctrl = curr_time;
@@ -134,7 +136,7 @@ pptp_ctrl_init(pptp_ctrl *_this)
 	evtimer_set(&_this->ev_timer, pptp_ctrl_timeout, _this);
 
 	return 0;
-reigai:
+fail:
 	return 1;
 }
 
@@ -150,8 +152,7 @@ pptp_ctrl_start(pptp_ctrl *_this)
 	PPTP_CTRL_ASSERT(_this != NULL);
 	PPTP_CTRL_ASSERT(_this->sock >= 0);
 
-	/* ログ用にアドレス=>文字列変換 */
-
+	/* convert address to strings for logging */
 	strlcpy(hbuf0, "<unknown>", sizeof(hbuf0));
 	strlcpy(sbuf0, "<unknown>", sizeof(sbuf0));
 	strlcpy(hbuf1, "<unknown>", sizeof(hbuf1));
@@ -166,7 +167,7 @@ pptp_ctrl_start(pptp_ctrl *_this)
 	if (getsockname(_this->sock, (struct sockaddr *)&sock, &socklen) != 0) {
 		pptp_ctrl_log(_this, LOG_ERR,
 		    "getsockname() failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	if (getnameinfo((struct sockaddr *)&sock, sock.ss_len, hbuf1,
 	    sizeof(hbuf1), sbuf1, sizeof(sbuf1),
@@ -180,21 +181,21 @@ pptp_ctrl_start(pptp_ctrl *_this)
 	if ((ival = fcntl(_this->sock, F_GETFL, 0)) < 0) {
 		pptp_ctrl_log(_this, LOG_ERR,
 		    "fcntl(F_GET_FL) failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	} else if (fcntl(_this->sock, F_SETFL, ival | O_NONBLOCK) < 0) {
 		pptp_ctrl_log(_this, LOG_ERR,
 		    "fcntl(F_SET_FL) failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	pptp_ctrl_set_io_event(_this);
 	pptp_ctrl_reset_timeout(_this);
 
 	return 0;
-reigai:
+fail:
 	return 1;
 }
 
-/** タイマー処理 */
+/* Timer */
 static void
 pptp_ctrl_timeout(int fd, short event, void *ctx)
 {
@@ -207,7 +208,7 @@ pptp_ctrl_timeout(int fd, short event, void *ctx)
 	curr_time = get_monosec();
 
 	PPTP_CTRL_DBG((_this, DEBUG_LEVEL_3, "enter %s()", __func__));
-	/* call のクリーンアップ */
+	/* clean up call */
 	i = 0;
 	while (i < slist_length(&_this->call_list)) {
 		call = slist_get(&_this->call_list, i);
@@ -220,7 +221,7 @@ pptp_ctrl_timeout(int fd, short event, void *ctx)
 			i++;
 	}
 
-	/* ステートマシン、Timeout処理 */
+	/* State machine: Timeout */
 	switch (_this->state) {
 	default:
 	case PPTP_CTRL_STATE_WAIT_CTRL_REPLY:
@@ -250,7 +251,6 @@ pptp_ctrl_timeout(int fd, short event, void *ctx)
 		}
 		break;
 	case PPTP_CTRL_STATE_WAIT_STOP_REPLY:
-		// お片付け
 		if (curr_time - _this->last_snd_ctrl >
 		    PPTP_CTRL_StopCCRP_WAIT_TIME) {
 			pptp_ctrl_log(_this, LOG_WARNING,
@@ -273,7 +273,7 @@ pptp_ctrl_reset_timeout(pptp_ctrl *_this)
 
 	switch (_this->state) {
 	case PPTP_CTRL_STATE_DISPOSING:
-		tv.tv_sec = 0;	/* すぐに call back */
+		tv.tv_sec = 0;	/* call back immidiatly */ 
 		tv.tv_usec = 0;
 		break;
 	default:
@@ -285,10 +285,10 @@ pptp_ctrl_reset_timeout(pptp_ctrl *_this)
 }
 
 /**
- * PPTPコントロールコネクションを終了します。
- * @result	Stop-Control-Connection-Request(StopCCRQ) の result に指定する
- *		値。0 を指定すると、StopCCRQ を送信せずに、終了します。また、
- *		プロトコル上、StopCCRQ を送信する必要がない場合も送信しません。
+ * Terminate PPTP control connection
+ * @result	The value for Stop-Control-Connection-Request(StopCCRQ) result.
+		This function will not sent StopCCRQ when the value == 0 and
+		the specification does not require to sent it.
  * @see		::#PPTP_StopCCRQ_REASON_STOP_PROTOCOL
  * @see		::#PPTP_StopCCRQ_REASON_STOP_LOCAL_SHUTDOWN
  */
@@ -300,7 +300,8 @@ pptp_ctrl_stop(pptp_ctrl *_this, int result)
 
 	switch (_this->state) {
 	case PPTP_CTRL_STATE_WAIT_STOP_REPLY:
-		// 返事待ち。pptp_ctrl_timeout で処理されます。
+		/* waiting responce. */
+		/* this state will timeout by pptp_ctrl_timeout */
 		break;
 	case PPTP_CTRL_STATE_ESTABLISHED:
 		if (result != 0) {
@@ -313,7 +314,7 @@ pptp_ctrl_stop(pptp_ctrl *_this, int result)
 			_this->state = PPTP_CTRL_STATE_WAIT_STOP_REPLY;
 			break;
 		}
-		// FALL THROUGH
+		/* FALLTHROUGH */
 	default:
 		pptp_ctrl_fini(_this);
 	}
@@ -321,7 +322,7 @@ pptp_ctrl_stop(pptp_ctrl *_this, int result)
 }
 
 
-/** PPTP コントロールを終了化します。*/
+/* finish PPTP control */
 static void
 pptp_ctrl_fini(pptp_ctrl *_this)
 {
@@ -344,9 +345,9 @@ pptp_ctrl_fini(pptp_ctrl *_this)
 
 	if (_this->on_io_event != 0) {
 		/*
-		 * I/O イベントハンドラ内での終了化処理は、最後まで行うと
-		 * 例外処理が複雑になるので、途中までしか行わす、続きは、
-		 * タイマイベントハンドラで行う。
+		 * as the complete terminate process needs complicated
+		 * exception handling, do partially at here.
+		 * rest of part will be handled by timer-event-handler.
 		 */
 		PPTP_CTRL_DBG((_this, LOG_DEBUG, "Disposing"));
 		_this->state = PPTP_CTRL_STATE_DISPOSING;
@@ -359,11 +360,11 @@ pptp_ctrl_fini(pptp_ctrl *_this)
 
 	pptp_ctrl_log (_this, LOG_NOTICE, "logtype=Finished");
 
-	/* この後 _this は使用できない */
+	/* disable _this */
 	pptpd_ctrl_finished_notify(_this->pptpd, _this);
 }
 
-/* PPTP コントロールコンテキストを解放します。*/
+/* free PPTP control context */
 void
 pptp_ctrl_destroy(pptp_ctrl *_this)
 {
@@ -378,10 +379,10 @@ pptp_ctrl_destroy(pptp_ctrl *_this)
 	free(_this);
 }
 
-/************************************************************************
- * ネットワーク I/O
- ************************************************************************/
-/** I/O イベントディスパッチャ */
+/*
+ * network I/O
+ */
+/* I/O event dispather */
 static void
 pptp_ctrl_io_event(int fd, short evmask, void *ctx)
 {
@@ -396,7 +397,7 @@ pptp_ctrl_io_event(int fd, short evmask, void *ctx)
 	if ((evmask & EV_WRITE) != 0) {
 		if (pptp_ctrl_output_flush(_this) != 0 ||
 		    _this->state == PPTP_CTRL_STATE_DISPOSING)
-			goto reigai;
+			goto fail;
 		_this->send_ready = 1;
 	}
 	if ((evmask & EV_READ) != 0) {
@@ -407,12 +408,12 @@ pptp_ctrl_io_event(int fd, short evmask, void *ctx)
 				pptp_ctrl_log(_this, LOG_INFO,	
 				    "Connection closed by foreign host");
 				pptp_ctrl_fini(_this);
-				goto reigai;
+				goto fail;
 			} else if (errno != EAGAIN && errno != EINTR) {
 				pptp_ctrl_log(_this, LOG_INFO,	
 				    "read() failed at %s(): %m", __func__);
 				pptp_ctrl_fini(_this);
-				goto reigai;
+				goto fail;
 			}
 		}
 		bytebuffer_put(_this->recv_buf, BYTEBUFFER_PUT_DIRECT, sz);
@@ -433,20 +434,20 @@ pptp_ctrl_io_event(int fd, short evmask, void *ctx)
 			if (pptp_ctrl_input(_this, pkt, hdrlen) != 0 ||
 			    _this->state == PPTP_CTRL_STATE_DISPOSING) {
 				bytebuffer_compact(_this->recv_buf);
-				goto reigai;
+				goto fail;
 			}
 		}
 		bytebuffer_compact(_this->recv_buf);
 	}
 	if (pptp_ctrl_output_flush(_this) != 0)
-		goto reigai;
+		goto fail;
 	pptp_ctrl_set_io_event(_this);
-reigai:
+fail:
 	_this->on_io_event = 0;
 }
 
 
-/** イベントマスクを設定する */
+/* set i/o event mask */
 static void
 pptp_ctrl_set_io_event(pptp_ctrl *_this)
 {
@@ -470,11 +471,11 @@ pptp_ctrl_set_io_event(pptp_ctrl *_this)
 }
 
 /**
- * PPTPコントロールパケットを出力します。
- * @param pkt	パケットの領域へのポインタ。
- *		bytebuffer を使って、_this->send_buf に追記している場合には、
- *		NULL を指定します。
- * @param lpkt	パケットの長さ。
+ * Output PPTP control packet
+ * @param pkt	pointer to packet buffer.
+ *		when it was appended by _this-.send_buf using bytebuffer,
+ *		specify NULL.
+ * @param lpkt	packet length
  */
 void
 pptp_ctrl_output(pptp_ctrl *_this, u_char *pkt, int lpkt)
@@ -482,29 +483,34 @@ pptp_ctrl_output(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	PPTP_CTRL_ASSERT(_this != NULL);
 	PPTP_CTRL_ASSERT(lpkt > 0);
 
+	/* just put the packet into the buffer now.  send it later */
 	bytebuffer_put(_this->send_buf, pkt, lpkt);
-	/* 実際には書くのは後 */
 
 	if (_this->on_io_event != 0) {
-		/* pptp_ctrl_io_event で pptp_ctrl_output_flush を呼び出し */
+		/*
+		 * pptp_ctrl_output_flush() will be called by the end of
+		 * the I/O event handler.
+		 */
 	} else {
 		/*
-		 * I/O イベントハンドラからの呼出しではない場合は、
-		 * pptp_ctrl_output_flush() を呼び出す必要があるが flush =>
-		 * write 失敗 => finalize となると、この関数呼び出し側に例外
-		 * 処理を実装し煩雑になるので、write ready イベントで発行し
-		 * てもらって、そこで flush。
+		 * When this function is called by other than I/O event handler,
+		 * we need to call pptp_ctrl_output_flush().  However if we do
+		 * it here, then we need to consider the situation
+		 * 'flush => write failure => finalize'.  The situation requires
+		 * the caller function to handle the exception and causes
+		 * complication.  So we call pptp_ctrl_output_flush() by the
+		 * the next send ready event.
 		 */
-		_this->send_ready = 0;
-		pptp_ctrl_set_io_event(_this);
+		_this->send_ready = 0;		/* clear 'send ready' */
+		pptp_ctrl_set_io_event(_this);	/* wait 'send ready */
 	}
 
 	return;
 }
 
-/** Stop-Control-Connection-Request の送信 */
+/* Send Stop-Control-Connection-Request */
 
-/** 実際にパケット送信 */
+/* flush output packet */
 static int
 pptp_ctrl_output_flush(pptp_ctrl *_this)
 {
@@ -514,10 +520,10 @@ pptp_ctrl_output_flush(pptp_ctrl *_this)
 	curr_time = get_monosec();
 
 	if (bytebuffer_position(_this->send_buf) <= 0)
-		return 0;		// nothing to write
+		return 0;		/* nothing to write */
 	if (_this->send_ready == 0) {
 		pptp_ctrl_set_io_event(_this);
-		return 0;		// not ready to write
+		return 0;		/* not ready to write */
 	}
 
 	bytebuffer_flip(_this->send_buf);
@@ -543,13 +549,13 @@ pptp_ctrl_output_flush(pptp_ctrl *_this)
 	return 0;
 }
 
-/** Start-Control-Connection-Request、-Reply パケットを文字列で表現する */
+/* convert Start-Control-Connection-{Request,Reply} packet to strings */
 static void
 pptp_ctrl_SCCRx_string(struct pptp_scc *scc, u_char *buf, int lbuf)
 {
 	char buf1[128], buf2[128], buf3[128];
 
-	// 64バイトギリギリまで入っている場合があるので
+	/* sanity check */
 	strlcpy(buf1, scc->host_name, sizeof(buf1));
 	strlcpy(buf2, scc->vendor_string, sizeof(buf2));
 
@@ -569,14 +575,14 @@ pptp_ctrl_SCCRx_string(struct pptp_scc *scc, u_char *buf, int lbuf)
 	    scc->firmware_revision, scc->firmware_revision, buf1, buf2);
 }
 
-/** Start-Control-Connection-Request を受信 */
+/* receive Start-Control-Connection-Request */
 static int
 pptp_ctrl_recv_SCCRQ(pptp_ctrl *_this, u_char *pkt, int lpkt)
 {
 	char logbuf[512];
 	struct pptp_scc *scc;
 
-	// サイズ検査
+	/* sanity check */
 	if (lpkt < sizeof(struct pptp_scc)) {
 		pptp_ctrl_log(_this, LOG_ERR, "Received bad SCCRQ: packet too "
 		    "short: %d < %d", lpkt, (int)sizeof(struct pptp_scc));
@@ -584,14 +590,13 @@ pptp_ctrl_recv_SCCRQ(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	}
 	scc = (struct pptp_scc *)pkt;
 
-	// バイトオーダー
 	scc->protocol_version = ntohs(scc->protocol_version);
 	scc->framing_caps = htonl(scc->framing_caps);
 	scc->bearer_caps = htonl(scc->bearer_caps);
 	scc->max_channels = htons(scc->max_channels);
 	scc->firmware_revision = htons(scc->firmware_revision);
 
-	// プロトコルバージョン
+	/* check protocol version */
 	if (scc->protocol_version != PPTP_RFC_2637_VERSION) {
 		pptp_ctrl_log(_this, LOG_ERR, "Received bad SCCRQ: "
 		    "unknown protocol version %d", scc->protocol_version);
@@ -604,7 +609,7 @@ pptp_ctrl_recv_SCCRQ(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	return 0;
 }
 
-/** Stop-Control-Connection-Reply の受信 */
+/* Receive Stop-Control-Connection-Reply */
 static int
 pptp_ctrl_recv_StopCCRP(pptp_ctrl *_this, u_char *pkt, int lpkt)
 {
@@ -652,7 +657,7 @@ pptp_ctrl_send_StopCCRQ(pptp_ctrl *_this, int reason)
 	return 0;
 }
 
-/** Stop-Control-Connection-Request を受信 */
+/* Receive Stop-Control-Connection-Request */
 static int
 pptp_ctrl_recv_StopCCRQ(pptp_ctrl *_this, u_char *pkt, int lpkt)
 {
@@ -672,9 +677,7 @@ pptp_ctrl_recv_StopCCRQ(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	return 0;
 }
 
-
-
-/** Stop-Control-Connection-Reply を送信 */
+/* Send Stop-Control-Connection-Reply */
 static int
 pptp_ctrl_send_StopCCRP(pptp_ctrl *_this, int result, int error)
 {
@@ -707,7 +710,7 @@ pptp_ctrl_send_StopCCRP(pptp_ctrl *_this, int result, int error)
 	return 0;
 }
 
-/** Start-Control-Connection-Reply を送信 */
+/* Send Start-Control-Connection-Reply */
 static int
 pptp_ctrl_send_SCCRP(pptp_ctrl *_this, int result, int error)
 {
@@ -731,22 +734,22 @@ pptp_ctrl_send_SCCRP(pptp_ctrl *_this, int result, int error)
 	scc->protocol_version = PPTP_RFC_2637_VERSION;
 	scc->result_code = result;
 	scc->error_code = error;
-	// 同期フレームしかサポートせず。
-	//scc->framing_caps = PPTP_CTRL_FRAMING_ASYNC;
+
+	/* XXX only support sync frames */
 	scc->framing_caps = PPTP_CTRL_FRAMING_SYNC;
 	scc->bearer_caps = PPTP_CTRL_BEARER_DIGITAL;
 
-	scc->max_channels = 4;		// XX 設定?
+	scc->max_channels = 4;		/* XXX */
 	scc->firmware_revision = MAJOR_VERSION << 8 | MINOR_VERSION;
 
-	// 63文字で切れても気にしない
-
-	// ホスト名
+	/* this implementation only support these strings up to 
+	 * 63 character */
+	/* host name */
 	if ((val = pptp_ctrl_config_str(_this, "pptp.host_name")) == NULL)
 		val = "";
 	strlcpy(scc->host_name, val, sizeof(scc->host_name));
 
-	// ベンダ名
+	/* vender name */
 	if ((val = pptp_ctrl_config_str(_this, "pptp.vendor_name")) == NULL)
 		val = PPTPD_DEFAULT_VENDOR_NAME;
 
@@ -766,7 +769,7 @@ pptp_ctrl_send_SCCRP(pptp_ctrl *_this, int result, int error)
 	return 0;
 }
 
-/** ECHO の受信 => 返信 */
+/* receive ECHO and reply */
 static void
 pptp_ctrl_process_echo_req(pptp_ctrl *_this, u_char *pkt, int lpkt)
 {
@@ -804,7 +807,7 @@ pptp_ctrl_process_echo_req(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	PPTP_CTRL_DBG((_this, LOG_DEBUG, "SendEchoReply"));
 }
 
-/** Echo-Reply の受信 */
+/* receiver Echo-Reply */
 static int
 pptp_ctrl_recv_echo_rep(pptp_ctrl *_this, u_char *pkt, int lpkt)
 {
@@ -833,7 +836,7 @@ pptp_ctrl_recv_echo_rep(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	return 0;
 }
 
-/** Echo-Request の送信 */
+/* send Echo-Request */
 static void
 pptp_ctrl_send_echo_req(pptp_ctrl *_this)
 {
@@ -858,7 +861,7 @@ pptp_ctrl_send_echo_req(pptp_ctrl *_this)
 	PPTP_CTRL_DBG((_this, LOG_DEBUG, "SendEchoReq"));
 }
 
-/* Call-Disconnect-Notify の送信 */
+/* send Call-Disconnect-Notify */
 static void
 pptp_ctrl_send_CDN(pptp_ctrl *_this, int result, int error, int cause,
     const char *statistics)
@@ -891,7 +894,7 @@ pptp_ctrl_send_CDN(pptp_ctrl *_this, int result, int error, int cause,
 	pptp_ctrl_output(_this, NULL, sizeof(struct pptp_cdn));
 }
 
-/** コントロールパケット受信 */
+/* receive Control-packet */
 static int
 pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 {
@@ -904,14 +907,13 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	curr_time = get_monosec();
 	hdr = (struct pptp_ctrl_header *)pkt;
 
-	// バイトオーダー
 	hdr->length = ntohs(hdr->length);
 	hdr->pptp_message_type  = ntohs(hdr->pptp_message_type);
 	hdr->magic_cookie  = ntohl(hdr->magic_cookie);
 	hdr->control_message_type = ntohs(hdr->control_message_type);
 	hdr->reserved0 = ntohs(hdr->reserved0);
 
-	// 長さ検査
+	/* sanity check */
 	PPTP_CTRL_ASSERT(hdr->length <= lpkt);
 
 	_this->last_rcv_ctrl = curr_time;
@@ -924,21 +926,23 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 		show_hd(debug_get_debugfp(), pkt, lpkt);
 	}
 
-	/* パケット検査 */
-	// メッセージタイプ
+	/* inspect packet body */
+	/* message type */
 	if (hdr->pptp_message_type != PPTP_MES_TYPE_CTRL) {
 		snprintf(errmes, sizeof(errmes), "unknown message type %d",
 		    hdr->pptp_message_type);
 		goto bad_packet;
 	}
-	// マジッククッキー
+	/* magic cookie */
 	if (hdr->magic_cookie != PPTP_MAGIC_COOKIE) {
 		snprintf(errmes, sizeof(errmes), "wrong magic %08x != %08x",
 		    hdr->magic_cookie, PPTP_MAGIC_COOKIE);
 		goto bad_packet;
 	}
 
-	// ECHO Reply は別処理。ステートが交錯する可能性があるので。*/
+	/* As there is possibility of state conflicts, 
+	 * ECHO Reply requiries special care.
+	 */
 	switch (hdr->control_message_type) {
 	case PPTP_CTRL_MES_CODE_ECHO_RP:
 		if (pptp_ctrl_recv_echo_rep(_this, pkt, lpkt) != 0) {
@@ -947,9 +951,9 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 		}
 		return 0;
 	}
+
 	/*
-	 * ステートマシン
-	 *	- 正常に処理が終わったら、return する。
+	 * State machine
 	 */
 	switch (_this->state) {
 	case PPTP_CTRL_STATE_IDLE:
@@ -973,7 +977,7 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 		case PPTP_CTRL_MES_CODE_ECHO_RQ:
 			pptp_ctrl_process_echo_req(_this, pkt, lpkt);
 			return 0;
-		//コール関連パケットは、pptp_call_input にディスパッチ
+		/* dispatch to pptp_call_input() if it is call-related-packet */
 		case PPTP_CTRL_MES_CODE_SLI:
 		case PPTP_CTRL_MES_CODE_ICRQ:
 		case PPTP_CTRL_MES_CODE_ICRP:
@@ -1008,7 +1012,7 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 		}
 		break;
 	case PPTP_CTRL_STATE_WAIT_CTRL_REPLY:
-		// PAC の実装だけなので
+		/* XXX this implementation only support PAC mode */
 		break;
 	}
 	pptp_ctrl_log(_this, LOG_WARNING,
@@ -1024,7 +1028,7 @@ bad_packet:
 	return 0;
 }
 
-/** PPTP Call 関連のメッセージを受信 */
+/* receiver PPTP Call related messages */
 static int
 pptp_ctrl_call_input(pptp_ctrl *_this, int mes_type, u_char *pkt, int lpkt)
 {
@@ -1040,7 +1044,7 @@ pptp_ctrl_call_input(pptp_ctrl *_this, int mes_type, u_char *pkt, int lpkt)
 	lpkt -= sizeof(struct pptp_ctrl_header);
 	reason = "(no reason)";
 
-	// callId
+	/* sanity check */
 	if (lpkt < 4) {
 		reason = "received packet is too short";
 		goto badpacket;
@@ -1050,7 +1054,7 @@ pptp_ctrl_call_input(pptp_ctrl *_this, int mes_type, u_char *pkt, int lpkt)
 
 	switch (mes_type) {
 	case PPTP_CTRL_MES_CODE_SLI:	/* PNS <=> PAC */
-		/* SLI だけは、こちらの Call-ID が入っている */
+		/* only SLI contains Call-ID of this peer */
 		for (i = 0; i < slist_length(&_this->call_list); i++) {
 			call = slist_get(&_this->call_list, i);
 			if (call->id == call_id)
@@ -1064,13 +1068,15 @@ pptp_ctrl_call_input(pptp_ctrl *_this, int mes_type, u_char *pkt, int lpkt)
 		goto call_searched;
 	case PPTP_CTRL_MES_CODE_ICRP:	/* PNS => PAC */
 		/*
-		 * ICRQ は投げないのでこのメッセージは受信しないが、いちおう
-		 * pptp_call.c 側で処理させる
+		 * as this implementation never sent ICRQ, this case
+		 * should not happen. 
+		 * But just to make sure, pptp_call.c can handle this
+		 * message.
 		 */
-		// FALL THROUGH
+		/* FALLTHROUGH */
 	case PPTP_CTRL_MES_CODE_OCRQ:	/* PNS => PAC */
 	case PPTP_CTRL_MES_CODE_CCR:	/* PNS => PAC */
-		// リニアサーチでよい。
+		/* liner-search will be enough */
 		for (i = 0; i < slist_length(&_this->call_list); i++) {
 			call = slist_get(&_this->call_list, i);
 			if (call->peers_call_id == call_id)
@@ -1083,7 +1089,7 @@ pptp_ctrl_call_input(pptp_ctrl *_this, int mes_type, u_char *pkt, int lpkt)
 			goto call_searched;
 		}
 		if (mes_type == PPTP_CTRL_MES_CODE_OCRQ) {
-			// 新しい Call を作成
+			/* make new call */
 			if (call != NULL) {
 				pptp_call_input(call, mes_type, pkt0, lpkt0);
 				return 0;
@@ -1091,13 +1097,13 @@ pptp_ctrl_call_input(pptp_ctrl *_this, int mes_type, u_char *pkt, int lpkt)
 			if ((call = pptp_call_create()) == NULL) {
 				pptp_ctrl_log(_this, LOG_ERR,
 				    "pptp_call_create() failed: %m");
-				goto reigai;
+				goto fail;
 			}
 			if (pptp_call_init(call, _this) != 0) {
 				pptp_ctrl_log(_this, LOG_ERR,
 				    "pptp_call_init() failed: %m");
 				pptp_call_destroy(call);
-				goto reigai;
+				goto fail;
 			}
 			slist_add(&_this->call_list, call);
 		}
@@ -1112,28 +1118,28 @@ call_searched:
 	case PPTP_CTRL_MES_CODE_ICRQ:	/* PAC => PNS */
 	case PPTP_CTRL_MES_CODE_ICCN:	/* PAC => PNS */
 	case PPTP_CTRL_MES_CODE_CDN:	/* PAC => PNS */
-		/* 以上 PNS 用なので、受信しない */
+		/* don't receive because above messages are only of PNS */
 	default:
 		break;
 	}
 	reason = "Message type is unexpected.";
-	// FALL THROUGH
+	/* FALLTHROUGH */
 badpacket:
 	pptp_ctrl_log(_this, LOG_INFO,
 	    "Received a bad %s(%d) call_id=%d: %s",
 		pptp_ctrl_mes_type_string(mes_type), mes_type, call_id, reason);
 	return 0;
-reigai:
+fail:
 	pptp_ctrl_stop(_this, PPTP_StopCCRQ_REASON_STOP_PROTOCOL);
 	return 0;
 }
 
 
-/************************************************************************
- * 雑多な関数
- ************************************************************************/
+/*
+ * utilities 
+ */
 
-/** このインスタンスに基づいたラベルから始まるログを記録します。 */
+/* logging with the label of the instance */
 static void
 pptp_ctrl_log(pptp_ctrl *_this, int prio, const char *fmt, ...)
 {

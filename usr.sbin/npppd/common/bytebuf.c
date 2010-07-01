@@ -1,3 +1,4 @@
+/* $OpenBSD: bytebuf.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -40,7 +41,7 @@
  *	}</pre>
  *
  * @author Yasuoka Masahiko
- * $Id: bytebuf.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+ * $Id: bytebuf.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
  */
 #include <stdlib.h>
 #include <string.h>
@@ -102,7 +103,7 @@ bytebuffer_create(size_t capacity)
 
 	if (capacity > 0) {
 		if ((_this->data = malloc(capacity)) == NULL)
-			goto reigai;
+			goto fail;
 		memset(_this->data, 0, capacity);
 		_this->capacity = capacity;
 	} else
@@ -111,7 +112,7 @@ bytebuffer_create(size_t capacity)
 	_this->limit = _this->capacity;
 	_this->mark = -1;
 	return _this;
-reigai:
+fail:
 	if (_this != NULL)
 		free(_this);
 	return NULL;	

@@ -34,7 +34,7 @@
 #endif
 
 #ifndef NPPPD_MAX_SERVERS
-/** RADIUSサーバの数 */
+/** numbers of RADIUS servers */
 #define NPPPD_MAX_SERVERS			8
 #endif
 
@@ -42,26 +42,26 @@
 #define	NPPPD_TIMER_TICK_IVAL 			4
 #endif
 
-/** 認証レルム終了化処理のインターバル時間(sec) */
+/** interval time in seconds of authentication realm finalizer */
 #define NPPPD_AUTH_REALM_FINALIZER_INTERVAL		300
 
 #ifndef	NPPPD_MAX_IPCP_CONFIG
-/** IPCP設定の数 */
+/** numbers of IPCP configurations */
 #define	NPPPD_MAX_IPCP_CONFIG			1
 #endif
 
 #ifndef	NPPPD_MAX_IFACE
-/** PPP集約インタフェース(tun や pppac) の数 */
+/** numbers of PPP concentration interfaces */
 #define	NPPPD_MAX_IFACE				1
 #endif
 
 #ifndef	NPPPD_MAX_POOL
-/** プールの数 */
+/** numbers of pool */
 #define	NPPPD_MAX_POOL				1
 #endif
 
 #ifndef	NPPPD_MAX_PPTP
-/** ローカル認証レルムの数 */
+/** numbers of local authentication realms */
 #define	NPPPD_MAX_PPTP				2
 #endif
 
@@ -69,17 +69,17 @@
 #define	NPPPD_DEFAULT_AUTH_LOCAL_RELOADABLE	0
 #endif
 
-/** 同一ユーザが接続できる最大の PPPセッション数のデフォルト */
+/** default value of maximum PPP sessions per user */
 #define	NPPPD_DEFAULT_USER_MAX_PPP	3
 
 #ifndef	NPPPD_DEFAULT_MAX_PPP
-/** 同時に接続できる最大の PPPセッション数のデフォルト */
+/** default value of maximum PPP sessions in system */
 #define	NPPPD_DEFAULT_MAX_PPP		8192
 #endif
 
-#define	NPPPD_UID			-1	/* 特に指定しない */
+#define	NPPPD_UID			-1	/* not specified */
 #ifndef	NPPPD_GID			
-/** npppd 実行時のグループID。*/
+/** group id when npppd is working */
 #define	NPPPD_GID			0
 #endif
 
@@ -98,15 +98,18 @@
 #endif
 
 #ifndef DEFAULT_RTSOCK_EVENT_DELAY
-/** Routing ソケットイベントを受けてから、処理を開始するまでの待ち時間(秒)*/
+/**
+ * delay time in seconds until npppd starts working when routing socket event
+ * receive
+ */
 #define	DEFAULT_RTSOCK_EVENT_DELAY		5
 #endif
 #ifndef DEFAULT_RTSOCK_SEND_NPKTS
-/** Routing ソケットに書き込む際に一度に書くパケット数*/
+/** numbers of packets to write to routing socket once */
 #define	DEFAULT_RTSOCK_SEND_NPKTS		16
 #endif
 #ifndef DEFAULT_RTSOCK_SEND_WAIT_MILLISEC
-/** Routing ソケットへの連続書き込みで間隔を空ける時間(ミリ秒) */
+/** wait time in milliseconds to write to routing socket in-sequence */
 #define	DEFAULT_RTSOCK_SEND_WAIT_MILLISEC	0
 #endif
 

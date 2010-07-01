@@ -27,37 +27,36 @@
 #define NPPPD_INTERFACE_H 1
 
 typedef struct _npppd_iface {
- 	/** ベースとなる npppd */
+ 	/** base of npppd structure */
 	void	*npppd;
- 	/** インタフェース名 */
+ 	/** interface name */
 	char	ifname[IFNAMSIZ];
- 	/** デバイスファイルのデスクリプタ */
+ 	/** file descriptor for device file */
 	int	devf;
 
- 	/** 割り当てられた IPv4 アドレス */
+ 	/** assigned IPv4 address */
 	struct in_addr	ip4addr;
- 	/** event(3) 用メンバー */
+ 	/** for event(3)  */
 	struct event	ev;
 
-	/** 同一PPPユーザが接続できる最大の PPPセッション数 */
+	/** maximum PPP sessions per user */
 	int		user_max_session;
-	/** 接続できる最大の PPPセッション数 */
+	/** maximum PPP sessions */
 	int		max_session;
 
-	/** 接続中の PPPセッション数 */
+	/** PPP sessions already connected */
 	int		nsession;
 
  	int	/**
- 		 * npppd_iface の処理としてIPアドレスをセットするか。
- 		 * <p>0 であれば、npppd_iface は、セットされた IPアドレスを
- 		 * 参照するだけです。</p>
+ 		 * whether set IP address as npppd_iface's work or not.
+ 		 * <p>if 0, npppd_iface only refers IP address already set.</p>
  		 */
  		set_ip4addr:1,
- 		/** 初期化済みフラグ */
+ 		/** initialized flag */
   		initialized:1;
 } npppd_iface;
 
-/** インタフェースのIPアドレスは使用できるか */
+/** whether interface IP address is usable or not */
 #define npppd_iface_ip_is_ready(int) \
     ((int)->initialized != 0 && (int)->ip4addr.s_addr != INADDR_ANY)
 

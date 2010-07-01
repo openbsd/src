@@ -1,3 +1,4 @@
+/*	$OpenBSD: pptpd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,10 +24,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
+
 /**@file
- * PPTPデーモンの実装。現在は PAC(PPTP Access Concentrator) としての実装
- * のみです。
+ * This file provides a implementation of PPTP daemon.  Currently it
+ * provides functions for PAC (PPTP Access Concentrator) only.
+ * $Id: pptpd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +93,7 @@ static void      pptp_gre_header_string (struct pptp_gre_header *, char *, int);
 
 #define	PPTPD_SHUFFLE_MARK	-1
 
-/** PPTPデーモンを初期化します */
+/* initialize pptp daemon */
 int
 pptpd_init(pptpd *_this)
 {
@@ -115,7 +118,7 @@ pptpd_init(pptpd *_this)
 	slist_init(&_this->ctrl_list);
 	slist_init(&_this->call_free_list);
 
-	/* Call-ID シャッフル */
+	/* randomize call id */
 	for (i = 0; i < countof(call) ; i++)
 		call[i] = i + 1;
 	for (i = countof(call); i > 1; i--) {
@@ -124,10 +127,9 @@ pptpd_init(pptpd *_this)
 		call[m] = call[i - 1];
 		call[i - 1] = call0;
 	}
-	/* 必要個だけを slist に */
+
 	for (i = 0; i < MIN(PPTP_MAX_CALL, countof(call)); i++)
 		slist_add(&_this->call_free_list, (void *)(uintptr_t)call[i]);
-	/* 末尾に SHUFFLE_MARK。次回は slist_shuffle で shuflle される */
 	slist_add(&_this->call_free_list, (void *)PPTPD_SHUFFLE_MARK);
 
 	if (_this->call_id_map == NULL)
@@ -137,13 +139,7 @@ pptpd_init(pptpd *_this)
 	return 0;
 }
 
-/**
- * {@link ::pptpd PPTPデーモン}に{@link ::pptpd_listener リスナ}を追加します。
- * @param	_this	{@link ::pptpd PPTPデーモン}
- * @param	idx	リスナのインデックス
- * @param	label	物理層としてのラベル。"PPTP" など
- * @param	bindaddr	待ち受けるアドレス
- */
+/* add a listner to pptpd daemon context */
 int
 pptpd_add_listener(pptpd *_this, int idx, const char *label,
     struct sockaddr *bindaddr)
@@ -168,12 +164,12 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 		pptpd_log(_this, LOG_ERR,
 		    "Invalid argument error on %s(): idx must be %d but %d",
 		    __func__, slist_length(&_this->listener), idx);
-		goto reigai;
+		goto fail;
 	}
 	if ((plistener = malloc(sizeof(pptpd_listener))) == NULL) {
 		pptpd_log(_this, LOG_ERR, "malloc() failed in %s: %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 	memset(plistener, 0, sizeof(pptpd_listener));
 
@@ -181,16 +177,13 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 	memcpy(&plistener->bind_sin, bindaddr, bindaddr->sa_len);
 	memcpy(&plistener->bind_sin_gre, bindaddr, bindaddr->sa_len);
 
-	/* ポート番号が省略された場合は、デフォルト (1723/tcp)を使う */
 	if (plistener->bind_sin.sin_port == 0)
 		plistener->bind_sin.sin_port = htons(PPTPD_DEFAULT_TCP_PORT);
 
-	/*
-	 * raw ソケットで、INADDR_ANY と明示的な IP アドレス指定したソケット両
-	 * 方を bind した場合、パケットは両方のソケットで受信される。この状態が
-	 * 発生すると、パケットが重複して受信したように見えてしまうため、このよ
-	 * うな設定は許さないこととした。
-	 */
+	/* When a raw socket binds both of an INADDR_ANY and specific IP 
+	 * address sockets, packets will be recieved by those sockets 
+	 * simultaneously. To avoid this duplicate receives, not
+	 * permit such kind of configuration */
 	inaddr_any = 0;
 	slist_itr_first(&_this->listener);
 	while (slist_itr_has_next(&_this->listener)) {
@@ -203,7 +196,7 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 	if (inaddr_any > 0 && idx > 0) {
 		log_printf(LOG_ERR, "configuration error at pptpd.listener_in: "
 		    "combination 0.0.0.0 and other address is not allowed.");
-		goto reigai;
+		goto fail;
 	}
 
 	plistener->bind_sin_gre.sin_port = 0;
@@ -216,10 +209,10 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 	if (slist_add(&_this->listener, plistener) == NULL) {
 		pptpd_log(_this, LOG_ERR, "slist_add() failed in %s: %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 	return 0;
-reigai:
+fail:
 	if (plistener != NULL)
 		free(plistener);
 	return 1;
@@ -243,7 +236,6 @@ pptpd_uninit(pptpd *_this)
 	}
 	slist_fini(&_this->listener);
 	if (_this->call_id_map != NULL) {
-		// アイテムの削除?
 		hash_free(_this->call_id_map);
 	}
 	if (_this->ip4_allow != NULL)
@@ -256,7 +248,6 @@ pptpd_uninit(pptpd *_this)
 	(void *)(call->id | (call->ctrl->listener_index << 16))
 #define	CALL_ID(item)	((uint32_t)item & 0xffff)
 
-/** PPTPを割り当てます */
 int
 pptpd_assign_call(pptpd *_this, pptp_call *call)
 {
@@ -290,7 +281,6 @@ pptpd_assign_call(pptpd *_this, pptp_call *call)
 	return -1;
 }
 
-/** PPTPを解放します。*/
 void
 pptpd_release_call(pptpd *_this, pptp_call *call)
 {
@@ -320,11 +310,10 @@ pptpd_listener_start(pptpd_listener *_this)
 	if (_this->phy_label[0] == '\0')
 		strlcpy(_this->phy_label, PPTPD_DEFAULT_LAYER2_LABEL,
 		    sizeof(_this->phy_label));
-	// 1723/tcp
 	if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 		pptpd_log(_this->self, LOG_ERR, "socket() failed at %s(): %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 	ival = 1;
 	if(setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &ival, sizeof(ival)) < 0){
@@ -345,11 +334,11 @@ pptpd_listener_start(pptpd_listener *_this)
 	if ((ival = fcntl(sock, F_GETFL, 0)) < 0) {
 		pptpd_log(_this->self, LOG_ERR,
 		    "fcntl(F_GET_FL) failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	} else if (fcntl(sock, F_SETFL, ival | O_NONBLOCK) < 0) {
 		pptpd_log(_this->self, LOG_ERR,
 		    "fcntl(F_SET_FL) failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	if (bind(sock, (struct sockaddr *)&_this->bind_sin,
 	    _this->bind_sin.sin_len) != 0) {
@@ -357,14 +346,14 @@ pptpd_listener_start(pptpd_listener *_this)
 		    "bind(%s:%u) failed at %s(): %m",
 		    inet_ntoa(_this->bind_sin.sin_addr),
 		    ntohs(_this->bind_sin.sin_port), __func__);
-		goto reigai;
+		goto fail;
 	}
 	if (listen(sock, PPTP_BACKLOG) != 0) {
 		pptpd_log(_this->self, LOG_ERR,
 		    "listen(%s:%u) failed at %s(): %m",
 		    inet_ntoa(_this->bind_sin.sin_addr),
 		    ntohs(_this->bind_sin.sin_port), __func__);
-		goto reigai;
+		goto fail;
 	}
 #ifdef NPPPD_FAKEBIND
 	if (!wildcardbinding)
@@ -379,7 +368,7 @@ pptpd_listener_start(pptpd_listener *_this)
 	if ((sock_gre = priv_socket(AF_INET, SOCK_RAW, IPPROTO_GRE)) < 0) {
 		pptpd_log(_this->self, LOG_ERR, "socket() failed at %s(): %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 #ifdef NPPPD_FAKEBIND
 	if (!wildcardbinding)
@@ -395,11 +384,11 @@ pptpd_listener_start(pptpd_listener *_this)
 	if ((ival = fcntl(sock_gre, F_GETFL, 0)) < 0) {
 		pptpd_log(_this->self, LOG_ERR,
 		    "fcntl(F_GET_FL) failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	} else if (fcntl(sock_gre, F_SETFL, ival | O_NONBLOCK) < 0) {
 		pptpd_log(_this->self, LOG_ERR,
 		    "fcntl(F_SET_FL) failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	if (bind(sock_gre, (struct sockaddr *)&bind_sin_gre,
 	    bind_sin_gre.sin_len) != 0) {
@@ -407,7 +396,7 @@ pptpd_listener_start(pptpd_listener *_this)
 		    "bind(%s:%u) failed at %s(): %m",
 		    inet_ntoa(bind_sin_gre.sin_addr),
 		    ntohs(bind_sin_gre.sin_port), __func__);
-		goto reigai;
+		goto fail;
 	}
 #ifdef NPPPD_FAKEBIND
 	if (!wildcardbinding)
@@ -418,7 +407,7 @@ pptpd_listener_start(pptpd_listener *_this)
 		if (setsockoptfromto(sock) != 0) {
 			pptpd_log(_this->self, LOG_ERR,
 			    "setsockoptfromto() failed in %s(): %m", __func__);
-			goto reigai;
+			goto fail;
 		}
 #else
 		/* nothing to do */
@@ -439,7 +428,7 @@ pptpd_listener_start(pptpd_listener *_this)
 	event_add(&_this->ev_sock_gre, NULL);
 
 	return 0;
-reigai:
+fail:
 	if (sock >= 0)
 		close(sock);
 	if (sock_gre >= 0)
@@ -450,7 +439,7 @@ reigai:
 
 	return 1;
 }
-/** PPTPデーモンを開始します */
+
 int
 pptpd_start(pptpd *_this)
 {
@@ -481,7 +470,6 @@ pptpd_listener_close_gre(pptpd_listener *_this)
 	_this->sock_gre = -1;
 }
 
-/** GREの待ち受けソケットを close します */
 static void
 pptpd_close_gre(pptpd *_this)
 {
@@ -494,7 +482,6 @@ pptpd_close_gre(pptpd *_this)
 	}
 }
 
-/** 1723/tcp の待ち受けソケットを close します */
 static void
 pptpd_listener_close_1723(pptpd_listener *_this)
 {
@@ -507,7 +494,7 @@ pptpd_listener_close_1723(pptpd_listener *_this)
 	}
 	_this->sock = -1;
 }
-/** 1723/tcp の待ち受けソケットを close します */
+
 static void
 pptpd_close_1723(pptpd *_this)
 {
@@ -520,7 +507,6 @@ pptpd_close_1723(pptpd *_this)
 	}
 }
 
-/** PPTPデーモンを本当に終了します。**/
 void
 pptpd_stop_immediatly(pptpd *_this)
 {
@@ -529,10 +515,7 @@ pptpd_stop_immediatly(pptpd *_this)
 	if (event_initialized(&_this->ev_timer))
 		evtimer_del(&_this->ev_timer);
 	if (_this->state != PPTPD_STATE_STOPPED) {
-		/*
-		 * pptp_ctrl_stop を呼び出すと、この関数が再度呼ばれる可能
-		 * 性がある。このため、このstate 変更は重要。
-		 */
+		/* lock, to avoid multiple call from pptp_ctrl_stop() */
 		_this->state = PPTPD_STATE_STOPPED;
 
 		pptpd_close_1723(_this);
@@ -558,7 +541,6 @@ pptpd_stop_timeout(int fd, short event, void *ctx)
 	pptpd_stop_immediatly(_this);
 }
 
-/** PPTPデーモンを終了します */
 void
 pptpd_stop(pptpd *_this)
 {
@@ -569,7 +551,8 @@ pptpd_stop(pptpd *_this)
 	if (event_initialized(&_this->ev_timer))
 		evtimer_del(&_this->ev_timer);
 	pptpd_close_1723(_this);
-	/* このあたりの動作は l2tpd_stop とあわせるべき */
+
+	/* XXX: use common procedure with l2tpd_stop */
 
 	if (pptpd_is_stopped(_this))
 		return;
@@ -585,7 +568,6 @@ pptpd_stop(pptpd *_this)
 		nctrl++;
 	}
 	if (nctrl > 0) {
-		// タイマーセット
 		tv.tv_sec = PPTPD_SHUTDOWN_TIMEOUT;
 		tv.tv_usec = 0;
 
@@ -597,9 +579,9 @@ pptpd_stop(pptpd *_this)
 	pptpd_stop_immediatly(_this);
 }
 
-/***********************************************************************
- * 設定関連
- ***********************************************************************/
+/*
+ * PPTP Configuration
+ */
 #define	CFG_KEY(p, s)	config_key_prefix((p), (s))
 #define	VAL_SEP		" \t\r\n"
 
@@ -618,11 +600,11 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 	ASSERT(_this != NULL);
 	ASSERT(config != NULL);
 
-	_this->config = config;	/* 現在は copy しなくて大丈夫 */
+	_this->config = config;
 	do_start = 0;
 	if (pptpd_config_str_equal(_this, CFG_KEY(name, "enabled"), "true", 
 	    default_enabled)) {
-		// false にした直後に true にされるかもしれない。
+		/* avoid false-true flap */
 		if (pptpd_is_shutting_down(_this)) 
 			pptpd_stop_immediatly(_this);
 		if (pptpd_is_stopped(_this))
@@ -634,7 +616,7 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 	}
 	if (do_start && pptpd_init(_this) != 0)
 		return 1;
-	// pptpd_init でリセットされてしまうので。
+	/* set again as pptpd_init will reset it */
 	_this->config = config;
 
 	_this->ctrl_in_pktdump = pptpd_config_str_equal(_this,
@@ -648,7 +630,7 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 	_this->phy_label_with_ifname = pptpd_config_str_equal(_this,
 	    CFG_KEY(name, "label_with_ifname"), "true", 0);
 
-	// ip4_allow をパース
+	/* parse ip4_allow */
 	in_addr_range_list_remove_all(&_this->ip4_allow);
 	val = pptpd_config_str(_this, CFG_KEY(name, "ip4_allow"));
 	if (val != NULL) {
@@ -672,12 +654,10 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 	}
 
 	if (do_start) {
-		/*
-		 * 起動直後と、pptpd.enable が false -> true に変更された
-		 * 場合に、do_start。すべてのリスナーが、初期化された状態を
-		 * 仮定できる
-		 */
-		// pptpd.listener_in の読み込む
+		/* in the case of 1) cold-booted and 2) pptpd.enable
+		 * toggled "false" to "true" do this, because we can
+		 * assume that all pptpd listner are initialized. */
+
 		val = pptpd_config_str(_this, CFG_KEY(name, "listener_in"));
 		if (val != NULL) {
 			if (strlen(val) >= sizeof(buf)) {
@@ -689,7 +669,8 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 			strlcpy(buf, val, sizeof(buf));
 
 			label = NULL;
-			// タブ、スペース区切りで、複数指定可能
+			/* it can accept multple velues with tab/space 
+			 * separation */ 
 			for (i = 0, cp = buf;
 			    (tok = strsep(&cp, VAL_SEP)) != NULL;) {
 				if (*tok == '\0')
@@ -733,9 +714,9 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 	return 0;
 }
 
-/***********************************************************************
- * I/O関連
- ***********************************************************************/
+/*
+ * I/O functions
+ */
 static void
 pptpd_log_access_deny(pptpd *_this, const char *reason, struct sockaddr *peer)
 {
@@ -751,7 +732,7 @@ pptpd_log_access_deny(pptpd *_this, const char *reason, struct sockaddr *peer)
 	    hostbuf, servbuf, reason);
 }
 
-/** 1723/tcp の IOイベントハンドラ */
+/* I/O event handler of 1723/tcp */
 static void
 pptpd_io_event(int fd, short evmask, void *ctx)
 {
@@ -768,7 +749,7 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 	PPTPD_ASSERT(_this != NULL);
 
 	if ((evmask & EV_READ) != 0) {
-		for (;;) {	// EAGAIN まで 連続して accept
+		for (;;) { /* accept till EAGAIN occured */
 			peerlen = sizeof(peer);
 			if ((newsock = accept(listener->sock,
 			    (struct sockaddr *)&peer, &peerlen)) < 0) {
@@ -790,7 +771,7 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 				}
 				break;
 			}
-		// 送信元チェック
+		/* check peer */
 			switch (peer.ss_family) {
 			case AF_INET:
 				if (!in_addr_range_list_includes(
@@ -804,21 +785,21 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 				reason = "address family is not supported.";
 				break;
 			}
-		// 許可されていない
+		/* not permitted */
 			pptpd_log_access_deny(_this, reason,
 			    (struct sockaddr *)&peer);
 			close(newsock);
 			continue;
-			// NOTREACHED 
+			/* NOTREACHED */
 accept:
-		// 許可
+		/* permitted, can accepted */
 			pptp_ctrl_start_by_pptpd(_this, newsock,
 			    listener->index, (struct sockaddr *)&peer);
 		}
 	}
 }
 
-/** GRE の IOイベントハンドラー */
+/* I/O event handeler of GRE */
 static void
 pptpd_gre_io_event(int fd, short evmask, void *ctx)
 {
@@ -836,7 +817,7 @@ pptpd_gre_io_event(int fd, short evmask, void *ctx)
 
 	if (evmask & EV_READ) {
 		for (;;) {
-			// Block するまで読む
+			/* read till bloked */
 			peerlen = sizeof(peer);
 			if ((sz = recvfrom(listener->sock_gre, pkt, sizeof(pkt),
 			    0, (struct sockaddr *)&peer, &peerlen)) <= 0) {
@@ -854,7 +835,7 @@ pptpd_gre_io_event(int fd, short evmask, void *ctx)
 	}
 }
 
-/** GREの受信 → pptp_call に配送 */
+/* recieve GRE then route to pptp_call */
 static void
 pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
     int lpkt)
@@ -882,7 +863,7 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 	    NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
 		pptpd_log(_this, LOG_ERR,
 		    "getnameinfo() failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	if (_this->data_in_pktdump != 0) {
 		pptpd_log(_this, LOG_DEBUG, "PPTP Data input packet dump");
@@ -892,21 +873,18 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 		pptpd_log(_this, LOG_ERR,
 		    "Received malformed GRE packet: address family is not "
 		    "supported: peer=%s af=%d", hbuf0, peer->sa_family);
-		goto reigai;
+		goto fail;
 	}
 
 	if (lpkt < sizeof(struct ip)) {
 		pptpd_log(_this, LOG_ERR,
 		    "Received a short length packet length=%d, from %s", lpkt,
 			hbuf0);
-		goto reigai;
+		goto fail;
 	}
 	iphdr = (struct ip *)pkt;
 
-	// IPヘッダは ntohs 済み NetBSD の場合
-#if !defined(__NetBSD__)
 	iphdr->ip_len = ntohs(iphdr->ip_len);
-#endif
 	hlen = iphdr->ip_hl * 4;
 
 	if (iphdr->ip_len > lpkt ||
@@ -915,7 +893,7 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 		    "Received a broken packet: ip_hl=%d iplen=%d lpkt=%d", hlen,
 			iphdr->ip_len, lpkt);
 		show_hd(debug_get_debugfp(), pkt, lpkt);
-		goto reigai;
+		goto fail;
 	}
 	pkt += hlen;
 	lpkt -= hlen;
@@ -962,7 +940,7 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 	}
 
 
-	// pptp_call に配送 
+	/* route to pptp_call */
 	call_id = grehdr->call_id;
 
 	hl = hash_lookup(_this->call_id_map,
@@ -981,11 +959,11 @@ bad_gre:
 	    "Received malformed GRE packet: %s: peer=%s sock=%s %s seq=%u: "
 	    "ack=%u ifidx=%d", reason, hbuf0, inet_ntoa(iphdr->ip_dst), logbuf,
 	    seq, ack, listener->index);
-reigai:
+fail:
 	return;
 }
 
-/** PPTPコントロールを開始します。(新しい接続があれば呼び出される。) */
+/* start PPTP control, when new connection is established */
 static void
 pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
     struct sockaddr *peer)
@@ -997,9 +975,9 @@ pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
 
 	ctrl = NULL;
 	if ((ctrl = pptp_ctrl_create()) == NULL)
-		goto reigai;
+		goto fail;
 	if (pptp_ctrl_init(ctrl) != 0)
-		goto reigai;
+		goto fail;
 
 	memset(&ctrl->peer, 0, sizeof(ctrl->peer));
 	memcpy(&ctrl->peer, peer, peer->sa_len);
@@ -1012,15 +990,16 @@ pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
 	    &sslen) != 0) {
 		pptpd_log(_this, LOG_WARNING,
 		    "getsockname() failed at %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
-	/* "L2TP%em0.mru" などと、インタフェースで設定を変更する場合 */
+
+	/* change with interface name, ex) "L2TP%em0.mru" */
 	if (_this->phy_label_with_ifname != 0) {
 		if (get_ifname_by_sockaddr((struct sockaddr *)&ctrl->our,
 		    ifname) == NULL) {
 			pptpd_log_access_deny(_this,
 			    "could not get interface informations", peer);
-			goto reigai;
+			goto fail;
 		}
 		if (pptpd_config_str_equal(_this, 
 		    config_key_prefix("pptpd.interface", ifname), "accept", 0)){
@@ -1031,11 +1010,11 @@ pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
 			snprintf(ctrl->phy_label, sizeof(ctrl->phy_label),
 			    "%s", PPTP_CTRL_LISTENER_LABEL(ctrl));
 		} else {
-			/* このインタフェースは許可されていない。*/
+			/* the interface is not permitted */
 			snprintf(msgbuf, sizeof(msgbuf),
 			    "'%s' is not allowed by config.", ifname);
 			pptpd_log_access_deny(_this, msgbuf, peer);
-			goto reigai;
+			goto fail;
 		}
 	} else 
 		strlcpy(ctrl->phy_label, PPTP_CTRL_LISTENER_LABEL(ctrl),
@@ -1048,18 +1027,17 @@ pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
 		ctrl->echo_timeout = ival;
 
 	if (pptp_ctrl_start(ctrl) != 0)
-		goto reigai;
+		goto fail;
 
 	slist_add(&_this->ctrl_list, ctrl);
 
 	return;
-reigai:
+fail:
 	close(sock);
 	pptp_ctrl_destroy(ctrl);
 	return;
 }
 
-/** PPTPコントロールが終了後に通知してきます。*/
 void
 pptpd_ctrl_finished_notify(pptpd *_this, pptp_ctrl *ctrl)
 {
@@ -1081,14 +1059,14 @@ pptpd_ctrl_finished_notify(pptpd *_this, pptp_ctrl *ctrl)
 
 	PPTPD_DBG((_this, LOG_DEBUG, "Remains %d ctrls", nctrl));
 	if (pptpd_is_shutting_down(_this) && nctrl == 0)
-	// シャットダウン中最後の一人
 		pptpd_stop_immediatly(_this);
 }
 
-/***********************************************************************
- * その他、ユーティリティ関数
- ***********************************************************************/
-/** このインスタンスに基づいたラベルから始まるログを記録します。 */
+/*
+ * utility functions
+ */
+
+/* logging with the this PPTP instance */
 static void
 pptpd_log(pptpd *_this, int prio, const char *fmt, ...)
 {
@@ -1118,7 +1096,7 @@ pptp_call_hash(const void *ctx, int size)
 	return (uint32_t)ctx % size;
 }
 
-/** GREパケットヘッダを文字列として */
+/* convert GRE packet header to strings */
 static void
 pptp_gre_header_string(struct pptp_gre_header *grehdr, char *buf, int lbuf)
 {

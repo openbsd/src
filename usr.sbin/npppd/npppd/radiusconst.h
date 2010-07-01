@@ -23,7 +23,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* ´Á»ú¥³¡¼¥É¤Ï£Å£Õ£Ã ´Á»ú¥³¡¼¥É¤Ï£Å£Õ£Ã */
 /*
  * radiusconst.h : 
  *   RADIUS constatnts

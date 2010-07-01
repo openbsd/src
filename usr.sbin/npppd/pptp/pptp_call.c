@@ -1,3 +1,4 @@
+/*	$OpenBSD: pptp_call.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,15 +24,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
-/**@file
- * PPTPコールの実装。PACを仮定しています。
- */
+/* $Id: pptp_call.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/**@file PPTP Call */
+/* currently it supports PAC mode only */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <sys/time.h>
+#include <netinet/in.h>
+#include <net/if_dl.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -53,6 +54,8 @@
 #include "pptp.h"
 #include "pptp_local.h"
 #include "pptp_subr.h"
+
+#include "npppd.h"
 
 #ifdef PPTP_CALL_DEBUG
 #define PPTP_CALL_DBG(x)	pptp_call_log x
@@ -79,6 +82,9 @@ static void  pptp_call_OCRP_string (struct pptp_ocrp *, char *, int);
 static void   pptp_call_ppp_input (pptp_call *, unsigned char *, int);
 static char * pptp_call_state_string(int);
 
+static int   pptp_call_ppp_output (npppd_ppp *, unsigned char *, int, int);
+static void  pptp_call_closed_by_ppp (npppd_ppp *);
+
 /* not used
 static int   pptp_call_send_SLI (pptp_call *);
  */
@@ -89,13 +95,12 @@ static int   pptp_call_send_SLI (pptp_call *);
 #define SEQ_GE(a,b)	((int)((a) - (b)) >= 0)
 #define SEQ_SUB(a,b)	((int32_t)((a) - (b)))
 
-/** 切り上げ割算 */
+/* round-up division */
 #define RUPDIV(n,d)	(((n) + ((d) - ((n) % (d)))) / (d))
 
-/***********************************************************************
- * インスタンス操作関連
- ***********************************************************************/
-/** pptp_call インスタンスを生成します */
+/*
+ * instance related functions
+ */
 pptp_call *
 pptp_call_create(void)
 {
@@ -107,7 +112,6 @@ pptp_call_create(void)
 	return _this;
 }
 
-/** pptp_call インスタンスを初期化します */
 int
 pptp_call_init(pptp_call *_this, pptp_ctrl *ctrl)
 {
@@ -123,7 +127,6 @@ pptp_call_init(pptp_call *_this, pptp_ctrl *ctrl)
 	return 1;
 }
 
-/** pptp_call インスタンスを開始します */
 int
 pptp_call_start(pptp_call *_this)
 {
@@ -132,7 +135,7 @@ pptp_call_start(pptp_call *_this)
 
 	return 0;
 }
-/** pptp_call インスタンスを終了します */
+
 int
 pptp_call_stop(pptp_call *_this)
 {
@@ -145,7 +148,6 @@ pptp_call_stop(pptp_call *_this)
 	return 0;
 }
 
-/** pptp_call インスタンスを解放します */
 void
 pptp_call_destroy(pptp_call *_this)
 {
@@ -153,7 +155,6 @@ pptp_call_destroy(pptp_call *_this)
 	free(_this);
 }
 
-/** PPTPコールを切断します。*/
 void
 pptp_call_disconnect(pptp_call *_this, int result, int error, const char *
     statistics)
@@ -168,10 +169,10 @@ pptp_call_disconnect(pptp_call *_this, int result, int error, const char *
 	pptp_call_notify_down(_this);
 }
 
-/***********************************************************************
- * コントロールパケットの入出力
- ***********************************************************************/
-/** コントロールパケットの入力 */
+/*
+ * PPTP control packet I/O
+ */
+
 void
 pptp_call_input(pptp_call *_this, int mes_type, u_char *pkt, int lpkt)
 {
@@ -244,12 +245,9 @@ bad_state:
 		pptp_call_state_string(_this->state));
 }
 
-/**
- * Set-Link-Info の受信
- * <p>
- * この実装では『同期フレーム』しかサポートしないので、ACCM
- * (Asynchronous Control Character Map) は、保持しない。</p>
- */
+/* receive Set-Link-Info */
+/* XXX: this implementation is only supporting "Sync-Frame",
+ * ACCM (Asynchronous Control Character Map) will be discarded */
 static int
 pptp_call_recv_SLI(pptp_call *_this, u_char *pkt, int lpkt)
 {
@@ -277,15 +275,12 @@ pptp_call_recv_SLI(pptp_call *_this, u_char *pkt, int lpkt)
 }
 
 #if 0
-/*
- * 『PPTPパススルー』機能をサポートする一部のルータは、PAC から SLI を
- * を受信すると、以後 PAC => PNS の 1723/tcp パケットを落すモノがある
- * ようです。(今のところ富士通製 FLASHWAVE がそんな感じ)
+/* Some route implementation which has "PPTP pass-through" function 
+ * will discard 1723/tcp packet between PAC and PNS, when it recognize
+ * SLI from PAC. (for example, FLASHWAVE by Fujitsu).
  *
- * このため、使い途のわからない SLI は npppd からは送信しないことにしました。
- * See idgw-develop 5916
+ * To avoid avobe situation, npppd send well-known SLI only.
  */
-/** SLI の送信 */
 static int
 pptp_call_send_SLI(pptp_call *_this)
 {
@@ -320,28 +315,28 @@ pptp_call_send_SLI(pptp_call *_this)
 }
 #endif
 
-/** Call-Clear-Request の受信 */
+/* Receive Call-Clear-Request */
 static int
 pptp_call_recv_CCR(pptp_call *_this, u_char *pkt, int lpkt)
 {
 	struct pptp_ccr *ccr;
 
-	// サイズ検査
+	/* check size */
 	PPTP_CALL_ASSERT(lpkt >= sizeof(struct pptp_ccr));
 	if (lpkt < sizeof(struct pptp_ccr)) {
-		// call_id チェック済みでここに呼ばれるので、起こり得ない。
+		/* never happen, should KASSERT() here? */
 		return 1;
 	}
 	ccr = (struct pptp_ccr *)pkt;
 
-	// バイトオーダー
+	/* convert byte-order */
 	ccr->call_id = ntohs(ccr->call_id);
 	pptp_call_log(_this, LOG_INFO, "RecvCCR call_id=%u", ccr->call_id);
 
 	return 0;
 }
 
-/** Call-Disconnect-Notify の送信 */
+/* Send Call-Disconnect-Notify */
 static void
 pptp_call_send_CDN(pptp_call *_this, int result, int error, int cause,
     const char *statistics)
@@ -383,7 +378,7 @@ pptp_call_send_CDN(pptp_call *_this, int result, int error, int cause,
 	pptp_ctrl_output(_this->ctrl, NULL, sizeof(struct pptp_cdn));
 }
 
-/** Outgoing-Call-Reply の送信 */
+/* Send Outgoing-Call-Reply */
 static int
 pptp_call_send_OCRP(pptp_call *_this, int result, int error, int cause)
 {
@@ -430,14 +425,14 @@ pptp_call_send_OCRP(pptp_call *_this, int result, int error, int cause)
 	return 0;
 }
 
-/** Outgoing-Call-Request を受信 */
+/* Receive Outgoing-Call-Request */
 static int
 pptp_call_recv_OCRQ(pptp_call *_this, u_char *pkt, int lpkt)
 {
 	char logbuf[512];
 	struct pptp_ocrq *ocrq;
 
-	// サイズ検査
+	/* check size */
 	if (lpkt < sizeof(struct pptp_ocrq)) {
 		pptp_call_log(_this, LOG_ERR, "Received bad OCRQ: packet too "
 		    "short: %d < %d", lpkt, (int)sizeof(struct pptp_ocrq));
@@ -445,7 +440,7 @@ pptp_call_recv_OCRQ(pptp_call *_this, u_char *pkt, int lpkt)
 	}
 	ocrq = (struct pptp_ocrq *)pkt;
 
-	// バイトオーダー
+	/* convert byte-order */
 	ocrq->call_id = ntohs(ocrq->call_id);
 	ocrq->call_serial_number = ntohs(ocrq->call_serial_number);
 	ocrq->recv_winsz = ntohs(ocrq->recv_winsz);
@@ -466,11 +461,12 @@ pptp_call_recv_OCRQ(pptp_call *_this, u_char *pkt, int lpkt)
 
 	return 0;
 }
-/***********************************************************************
- * GRE の入出力
- ***********************************************************************/
 
-/** GREからパケット受信 */
+/*
+ * GRE I/O
+ */
+
+/* Reciver packet via GRE */
 void
 pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
     int input_flags, u_char *pkt, int pktlen)
@@ -501,16 +497,16 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 
 	if (input_flags & PPTP_GRE_PKT_ACK_PRESENT) {
 		if (ack + 1 == _this->snd_una) {
-			/* 前回受信した ack から進んでいないだけ */
+			/* nothing to do */
 		} else if (SEQ_LT(ack, _this->snd_una)) {
-			/* ack が戻った */
+			/* ack sequence# was rewinded */
 			if (abs(ack - _this->snd_una) < PPTP_CALL_NMAX_INSEQ) {
-				/* ちょっと戻るのはパケット順入れ替わり。*/
+				/* packet reordered ? */
 				log_prio = LOG_DEBUG;
 			}
 			reason = "ack out of sequence";
 			goto bad_pkt;
-			// FALL THROUGH
+			/* FALLTHROUGH */
 		} else if (SEQ_GT(ack, _this->snd_nxt)) {
 			reason = "ack for unknown sequence.";
 			goto bad_pkt;
@@ -523,20 +519,17 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 	if ((input_flags & PPTP_GRE_PKT_SEQ_PRESENT) == 0)
 		return;	/* ack only packet */
 
-	// seq チェック
+	/* check sequence# */
 	if (SEQ_LT(seq, _this->rcv_nxt)) {
-		/* 順番入れ替わり、届くのが遅れた? */
+		/* reorderd, delayed delivery? */
 		if (abs(seq - _this->rcv_nxt) < PPTP_CALL_NMAX_INSEQ)
 			log_prio = LOG_DEBUG;
 		reason = "out of sequence";
 		goto bad_pkt;
 	} else if (SEQ_GE(seq, _this->rcv_nxt + _this->maxwinsz)){
-		/* 
-		 * どんなにおかしくても受信せざるをえない。
-		 *
-		 * FIXME: パケットロスが 4096 発を超えると MPPE の状態が復元
-		 * できないが。
-		 */
+		/* MUST Process them */
+		/* XXX FIXME: if over 4096 packets lost, it can not
+		 * fix MPPE state */
 		pptp_call_log(_this, LOG_INFO,
 		    "Received packet caused window overflow.  seq=%u(%u-%u), "
 		    "may lost %d packets.", seq, _this->rcv_nxt,
@@ -544,13 +537,14 @@ pptp_call_gre_input(pptp_call *_this, uint32_t seq, uint32_t ack,
 		    SEQ_SUB(seq, _this->rcv_nxt));
 	}
 	seq++;
-	/* TODO: パケットロスは ppp->ierrors でカウントすべきか? */
+	/* XXX : TODO: should it counts lost packets  ppp->ierrors
+	 * and update ppp->ierrors counter? */
 	_this->rcv_nxt = seq;
 
 	if (SEQ_SUB(seq, _this->rcv_acked) > RUPDIV(_this->winsz, 2)) {
 		/*
 		 * Multi-packet acknowledgement.
-		 * window size の半分を超えた場合のみ ack する
+		 * send ack when it reachs to half of window size
 		 */
 		PPTP_CALL_DBG((_this, LOG_DEBUG, "rcv window size=%u %u %u\n",
 		    SEQ_SUB(seq, _this->rcv_acked), seq, _this->rcv_acked));
@@ -566,11 +560,8 @@ bad_pkt:
 	    ack, _this->snd_una, _this->snd_nxt);
 }
 
-/**
- * GREに出力
- * @param	fseq	SEQフィールドを含めるかどうか。
- * @param	fack	ACKフィールドを含めるかどうか。
- */
+/* output to GRE */
+/* flags: fseq: contain SEQ field, fack: contain ACK field */
 static int
 pptp_call_gre_output(pptp_call *_this, int fseq, int fack, u_char *pkt,
     int lpkt)
@@ -589,7 +580,7 @@ pptp_call_gre_output(pptp_call *_this, int fseq, int fack, u_char *pkt,
 	grehdr = (struct pptp_gre_header *)opkt;
 	opkt += sizeof(struct pptp_gre_header);
 
-	/* GREヘッダ*/
+	/* GRE header */
 	grehdr->K = 1;
 	grehdr->ver = PPTP_GRE_VERSION;
 	grehdr->protocol_type = htons(PPTP_GRE_PROTOCOL_TYPE);
@@ -651,16 +642,11 @@ pptp_call_gre_output(pptp_call *_this, int fseq, int fack, u_char *pkt,
 	return (sz > 0)? 0 : 1;
 }
 
-/************************************************************************
- * npppd の物理層として
- ************************************************************************/
-#include <net/if_dl.h>
-#include "npppd.h"
+/* 
+ * npppd physical layer functions
+ */
 
-static int   pptp_call_ppp_output (npppd_ppp *, unsigned char *, int, int);
-static void  pptp_call_closed_by_ppp (npppd_ppp *);
-
-/** PPTP の物理層が終了したことを、PPP に確実に伝える。*/
+/* notify to ppp that the PPTP physical layer is already downed */ 
 static void
 pptp_call_notify_down(pptp_call *_this)
 {
@@ -669,7 +655,7 @@ pptp_call_notify_down(pptp_call *_this)
 }
 
 
-/** ppp にパケットを入力します。 */
+/* input packet to ppp */
 static void
 pptp_call_ppp_input(pptp_call *_this, u_char *pkt, int pktlen)
 {
@@ -694,7 +680,7 @@ pptp_call_ppp_input(pptp_call *_this, u_char *pkt, int pktlen)
 	}
 }
 
-/** ppp からパケットが出力される時に呼び出されます。 */
+/* it called when ppp outputs packet */
 static int
 pptp_call_ppp_output(npppd_ppp *ppp, unsigned char *bytes, int nbytes,
     int flags)
@@ -717,7 +703,7 @@ pptp_call_ppp_output(npppd_ppp *ppp, unsigned char *bytes, int nbytes,
 	return 0;
 }
 
-/** ppp で切断された場合に呼び出されます。 */
+/* it called when pptp call was closed at ppp */
 static void
 pptp_call_closed_by_ppp(npppd_ppp *ppp)
 {
@@ -728,7 +714,8 @@ pptp_call_closed_by_ppp(npppd_ppp *ppp)
 
 	_this = ppp->phy_context;
 
-	_this->ppp = NULL;	// pptp_call_disconnect より先に。
+	/* do this before pptp_call_disconnect() */
+	_this->ppp = NULL;
 
 	if (_this->state != PPTP_CALL_STATE_CLEANUP_WAIT) {
 		pptp_call_disconnect(_this, PPTP_CDN_RESULT_LOST_CARRIER, 0,
@@ -737,7 +724,7 @@ pptp_call_closed_by_ppp(npppd_ppp *ppp)
 	pptp_call_log(_this, LOG_NOTICE, "logtype=PPPUnbind");
 }
 
-/** ppp の bind。*/
+/* bind() for ppp */
 static int
 pptp_call_bind_ppp(pptp_call *_this)
 {
@@ -745,7 +732,7 @@ pptp_call_bind_ppp(pptp_call *_this)
 
 	ppp = NULL;
 	if ((ppp = ppp_create()) == NULL)
-		goto reigai;
+		goto fail;
 
 	PPTP_CALL_ASSERT(_this->ppp == NULL);
 
@@ -765,28 +752,27 @@ pptp_call_bind_ppp(pptp_call *_this)
 	    _this->ctrl->peer.ss_len);
 
 	if (ppp_init(npppd_get_npppd(), ppp) != 0)
-		goto reigai;
+		goto fail;
 
 	pptp_call_log(_this, LOG_NOTICE, "logtype=PPPBind ppp=%d", ppp->id);
 	ppp_start(ppp);
 
 	return 0;
-reigai:
+fail:
 	pptp_call_log(_this, LOG_ERR, "failed binding ppp");
 
 	if (ppp != NULL)
 		ppp_destroy(ppp);
 	_this->ppp = NULL;
 
-	//pptp_call_disconnect(_this, PPTP_CDN_RCODE_BUSY, 0, NULL);
 	return 1;
 }
 
-/***********************************************************************
- * その他ユーティリティ関数
- ***********************************************************************/
+/*
+ * utility functions
+ */
 
-/** このインスタンスに基づいたラベルから始まるログを記録します。 */
+/* logging with the label for the instance */
 static void
 pptp_call_log(pptp_call *_this, int prio, const char *fmt, ...)
 {
@@ -805,7 +791,7 @@ pptp_call_log(pptp_call *_this, int prio, const char *fmt, ...)
 	va_end(ap);
 }
 
-/** Outgoing-Call-Request パケットを文字列で表現する */
+/* convert Outgoing-Call-Request packet to strings */
 static void
 pptp_call_OCRQ_string(struct pptp_ocrq *ocrq, char *buf, int lbuf)
 {	
@@ -820,7 +806,7 @@ pptp_call_OCRQ_string(struct pptp_ocrq *ocrq, char *buf, int lbuf)
 	    ocrq->subaddress);
 }
 
-/** Outgoing-Call-Reply パケットを文字列で表現する */
+/* convert Outgoing-Call-Reply packet to strings */
 void
 pptp_call_OCRP_string(struct pptp_ocrp *ocrp, char *buf, int lbuf)
 {	

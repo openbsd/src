@@ -23,11 +23,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: radius_req.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
 /**@file
- * radius+ ライブラリと event(3) を組み合わせた、RADIUS 要求のためのユーティ
- * リティ。
+ * This file provides functions for RADIUS request using radius+.c and event(3).
  * @author	Yasuoka Masahiko
+ * $Id: radius_req.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ 
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,9 +75,8 @@ static int select_srcaddr(struct sockaddr const *, struct sockaddr *, socklen_t 
 #endif
 
 /**
- * RADIUS リクエストを送信します。指定した pkt(RADIUS パケット) は、この実装
- * 内部で解放されます。
- * @param pkt		要求する RADIUS パケット。
+ * Send RADIUS request message.  The pkt(RADIUS packet) will be released
+ * by this implementation.
  */
 void
 radius_request(RADIUS_REQUEST_CTX ctx, RADIUS_PACKET *pkt)
@@ -97,10 +95,9 @@ radius_request(RADIUS_REQUEST_CTX ctx, RADIUS_PACKET *pkt)
 }
 
 /**
- * NAS-IP-Address または NAS-IPv6-Address を準備します。
- * setting->server[setting->curr_server].sock にローカルアドレスがセッ
- * トされていない場合には、サーバのアドレスから自動でローカルアドレスを
- * セットします。
+ * Prepare NAS-IP-Address or NAS-IPv6-Address.  If
+ * setting->server[setting->curr_server].sock is not initialized, address
+ * will be selected automatically.
  */
 int
 radius_prepare_nas_address(radius_req_setting *setting,
@@ -128,12 +125,12 @@ radius_prepare_nas_address(radius_req_setting *setting,
 			    &setting->server[setting->curr_server].peer,
 			    (struct sockaddr *)sin4, &socklen) != 0) {
 				RADIUS_REQ_ASSERT("NOTREACHED" == NULL);
-				goto reigai;
+				goto fail;
 			}
 		}
 		if (radius_put_ipv4_attr(pkt, RADIUS_TYPE_NAS_IP_ADDRESS,
 		    sin4->sin_addr) != 0)
-			goto reigai;
+			goto fail;
 		break;
 	case AF_INET6:
 		socklen = sizeof(*sin6);
@@ -142,37 +139,35 @@ radius_prepare_nas_address(radius_req_setting *setting,
 			    &setting->server[setting->curr_server].peer,
 			    (struct sockaddr *)sin4, &socklen) != 0) {
 				RADIUS_REQ_ASSERT("NOTREACHED" == NULL);
-				goto reigai;
+				goto fail;
 			}
 		}
 		if (radius_put_raw_attr(pkt, RADIUS_TYPE_NAS_IPV6_ADDRESS,
 		    sin6->sin6_addr.s6_addr, sizeof(sin6->sin6_addr.s6_addr))
 		    != 0)
-			goto reigai;
+			goto fail;
 		break;
 	}
 
 	return 0;
-reigai:
+fail:
 	return 1;
 }
 
 /**
- * RADIUS リクエストを送信する準備を行います。
- * <p>
- * 応答があった場合やタイムアウトなどのエラーは、指定した関数を呼び出(コール
- * バック)して通知します。</p>
- * <p>
- * pctx に書き出されるコンテキストと応答コールバック関数で指定される
- * 応答パケットは、この実装内部で解放されます。</p>
- * @param setting	RADIUS サーバや問い合わせの設定
- * @param context	呼び出し側コンテキスト
- * @param pctx		RADIUS リクエストコンテキスト(RADIUS_REQUEST_CTX)
- *			を書き出す領域を指定します。キャンセルする場合などに、
- *			使用します。NULL を指定しても構いません。
- * @param response_fn	応答を受信あるいはタイムアウトした時に呼び出す関数を
- *			関数ポインタで指定します。
- * @param timeout	応答タイムアウトまでの秒数
+ * Prepare sending RADIUS request.  This implementation will call back to
+ * notice that it receives the response or it fails for timeouts to the
+ * The context that is set as 'pctx' and response packet that is given
+ * by the callback function will be released by this implementation internally. 
+ * @param setting	Setting for RADIUS server or request.
+ * @param context	Context for the caller.
+ * @param pctx		Pointer to the space for context of RADIUS request
+ *			(RADIUS_REQUEST_CTX).  This will be used for canceling.
+ *			NULL can be specified when you don't need.
+ * @param response_fn	Specify callback function as a pointer. The function 
+ *			will be called when it receives a response or when
+ *			request fails for timeouts.
+ * @param timeout	response timeout in second.
  */
 int
 radius_prepare(radius_req_setting *setting, void *context,
@@ -189,12 +184,12 @@ radius_prepare(radius_req_setting *setting, void *context,
 		return 1;
 	if ((lap = malloc(sizeof(struct overlapped))) == NULL) {
 		log_printf(LOG_ERR, "malloc() failed in %s: %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	sin6 = &setting->server[setting->curr_server].peer.sin6;
 	if ((sock = socket(sin6->sin6_family, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		log_printf(LOG_ERR, "socket() failed in %s: %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	memset(lap, 0, sizeof(struct overlapped));
 	memcpy(&lap->ss, &setting->server[setting->curr_server].peer,
@@ -211,7 +206,7 @@ radius_prepare(radius_req_setting *setting, void *context,
 		*pctx = lap;
 
 	return 0;
-reigai:
+fail:
 	if (lap != NULL)
 		free(lap);
 
@@ -219,8 +214,8 @@ reigai:
 }
 
 /**
- * RADIUS 要求をキャンセルします。
- * @param	{@link radius_request()} で受け取ったコンテキスト
+ * Cancel the RADIUS request.
+ * @param	The context received by {@link radius_request()}
  */
 void
 radius_cancel_request(RADIUS_REQUEST_CTX ctx)
@@ -237,13 +232,12 @@ radius_cancel_request(RADIUS_REQUEST_CTX ctx)
 		radius_delete_packet(lap->pkt);
 		lap->pkt = NULL;
 	}
-	/* あえて no comment。*/
 	memset(lap->secret, 0x41, sizeof(lap->secret));
 
 	free(lap);
 }
 
-/** このコンテキストで利用している RADIUS サーバの共有秘密鍵を返します。*/
+/** Return the shared secret for RADIUS server that is used by this context.  */
 const char *
 radius_get_server_secret(RADIUS_REQUEST_CTX ctx)
 {
@@ -255,7 +249,7 @@ radius_get_server_secret(RADIUS_REQUEST_CTX ctx)
 	return lap->secret;
 }
 
-/** このコンテキストで利用している RADIUS サーバのアドレスを返します。*/
+/** Return the address of RADIUS server that is used by this context.  */
 struct sockaddr *
 radius_get_server_address(RADIUS_REQUEST_CTX ctx)
 {
@@ -356,16 +350,16 @@ select_srcaddr(struct sockaddr const *dst, struct sockaddr *src,
 
 	sock = -1;
 	if ((sock = socket(dst->sa_family, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		goto reigai;
+		goto fail;
 	if (connect(sock, dst, dst->sa_len) != 0)
-		goto reigai;
+		goto fail;
 	if (getsockname(sock, src, srclen) != 0)
-		goto reigai;
+		goto fail;
 
 	close(sock);
 
 	return 0;
-reigai:
+fail:
 	if (sock >= 0)
 		close(sock);
 

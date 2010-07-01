@@ -32,7 +32,7 @@
 #define	DEFAULT_NPPPD_CTL_SOCK_PATH	"/var/run/npppd_ctl"
 #endif
 
-/** 利用ユーザの統計情報 */
+/** connected user statistics */
 #define	NPPPD_CTL_CMD_WHO 			1
 
 #ifndef DEFAULT_NPPPD_CTL_MAX_MSGSZ	
@@ -42,37 +42,37 @@
 struct npppd_who {
 	/** ppp Id */
 	int id;
-	/** ユーザ名 */
+	/** username */
 	char name[MAX_USERNAME_LENGTH];
-	/** 開始時刻 */
+	/** start time */
 	time_t time;
-	/** 経過時間 */
+	/** elapsed time */
 	uint32_t duration_sec;
-	/** 物理層ラベル */
+	/** label of physical layer */
 	char phy_label[16];
-	/** 集約インターフェイス **/
+	/** concentration interface **/
 	char ifname[IF_NAMESIZE];
 
 	char rlmname[NPPPD_GENERIC_NAME_LEN];
 	union {
 		struct sockaddr_in peer_in;
 		struct sockaddr_dl peer_dl;
-	} /** 物理層のアドレス情報 */
+	} /** address information of physical interface */
 	phy_info;
 
-	/** 割り当てた IP アドレス */
+	/** assigned IP address */
 	struct in_addr assign_ip4;
-	/** 入力パケット数 */
+	/** numbers of input packets */
 	uint32_t	ipackets;
-	/** 出力パケット数 */
+	/** numbers of output packets */
 	uint32_t	opackets;
-	/** 入力エラーパケット数 */
+	/** numbers of input error packets */
 	uint32_t	ierrors;
-	/** 出力エラーパケット数 */
+	/** numbers of output error packets */
 	uint32_t	oerrors;
-	/** 入力パケットバイト*/
+	/** bytes of input packets */
 	uint64_t	ibytes;
-	/** 出力パケットバイト*/
+	/** bytes of output packets */
 	uint64_t	obytes;
 };
 struct npppd_who_list {
@@ -80,7 +80,7 @@ struct npppd_who_list {
 	struct npppd_who	entry[0];
 };
 
-/** 指定したユーザの接続を切断 */
+/** disconnect specified user's connection */
 #define	NPPPD_CTL_CMD_DISCONNECT_USER		2
 
 struct npppd_disconnect_user_req {
@@ -88,10 +88,10 @@ struct npppd_disconnect_user_req {
 	char username[MAX_USERNAME_LENGTH];
 };
 
-/** 端末認証の認証情報をセットします */
+/** set client authentication information */
 #define NPPPD_CTL_CMD_TERMID_SET_AUTH		3
 
-/** npppd の持つ経路情報をシステムにリセットします */
+/** reset npppd's routing information to system's */
 #define NPPPD_CTL_CMD_RESET_ROUTING_TABLE	4
 
 typedef	enum _npppd_ctl_ppp_key {

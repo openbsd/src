@@ -1,10 +1,13 @@
+# $OpenBSD: Makefile,v 1.5 2010/07/01 03:38:17 yasuoka Exp $
+# $OpenBSD: Makefile,v 1.5 2010/07/01 03:38:17 yasuoka Exp $
 #
 # $Id
 #
 NPPPD_COMMON_DIR=	${.CURDIR}/../common
-NOMAN=			#
 
 PROG=		npppd
+NOMAN=		noman
+#MAN=		npppd.8 npppd.conf.5 npppd-users.csv.5
 CPPFLAGS+=	-I${NPPPD_COMMON_DIR} -I${.CURDIR}
 SRCS=		ccp.c chap.c chap_ms.c fsm.c ipcp.c lcp.c
 SRCS+=		mppe.c pap.c ppp.c radius_req.c

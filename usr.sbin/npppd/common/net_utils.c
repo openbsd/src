@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: net_utils.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: net_utils.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,7 +39,7 @@
 #include "rtev.h"
 #endif
 
-/** struct sockaddr から、インタフェース名を取得します */
+/** Get an interface name from sockaddr */
 const char *
 get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 {
@@ -51,7 +51,7 @@ get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 #endif
 
 	ifname0 = NULL;
-	/* リニアサーチしかないなんて... */
+	/* I want other way than linear search */
 	getifaddrs(&addr0);
 	for (addr = addr0; ifname0 == NULL&& addr != NULL;
 	    addr = addr->ifa_next) {
@@ -88,8 +88,8 @@ get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 	return ifname0;
 }
 /**
- * "192.168.160.1:1723/tcp" や "[::1]:1723/tcp" という文字列を、getaddrinfo(3)
- * の引数の仕様に併せて実行する。現在は、"/tcp" の部分は無視します。
+ * Cconvert argument like "192.168.160.1:1723/tcp" or "[::1]:1723/tcp" to
+ * match getaddrinfo(3)'s specification and pass them to getaddrinfo(3).
  */
 int
 addrport_parse(const char *addrport, int proto, struct addrinfo **p_ai)
@@ -114,7 +114,7 @@ addrport_parse(const char *addrport, int proto, struct addrinfo **p_ai)
 		slash = strrchr(servp, '/');
 		if (slash != NULL) {
 			/*
-			 * "/tcp" などは無視する。
+			 * Ignore like "/tcp"
 			 */
 			*slash = '\0';
 			slash++;
@@ -138,10 +138,11 @@ addrport_parse(const char *addrport, int proto, struct addrinfo **p_ai)
 }
 
 /**
- * struct sockaddr から、 "192.168.160.1:1723" や "[::1]:1723" という文字列
- * を作成します。
- * @param	buf	文字列を格納するバッファ
- * @param	lbuf	文字列を格納するバッファの長さ
+ * Make a string like "192.168.160.1:1723" or "[::1]:1723" from a struct
+ * sockaddr
+ *
+ * @param	buf	the buffer to be stored a string
+ * @param	lbuf	the length of the buf
  */
 const char *
 addrport_tostring(struct sockaddr *sa, socklen_t salen, char *buf, int lbuf)
@@ -171,7 +172,7 @@ addrport_tostring(struct sockaddr *sa, socklen_t salen, char *buf, int lbuf)
 	return buf;
 }
 
-/** IPv4 ネットマスクをプレフィックス長に変換します。ホストバイトオーダーで */
+/** Convert 32bit IPv4 netmask to the prefix length in host byte order */
 int
 netmask2prefixlen(uint32_t mask)
 {

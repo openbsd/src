@@ -23,9 +23,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /**@file
- * LCP に関する処理を提供します。
+ * This file provides LCP related functions.
  *<pre>
  * RFC1661: The Point-to-Point Protocol (PPP)
  * RFC1570:  PPP LCP Extensions
@@ -109,7 +109,7 @@ static struct fsm_callbacks lcp_callbacks = {
     (!psm_opt_is_enabled(lcp, eap) || psm_opt_is_rejected(lcp, eap))
 
 
-/** LCPのためのコンテキストを初期化します。 */
+/** initializing context for LCP. */
 void
 lcp_init(lcp *_this, npppd_ppp *ppp)
 {
@@ -131,8 +131,8 @@ lcp_init(lcp *_this, npppd_ppp *ppp)
 	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,	"lcp.max_nak_loop");
 
 	/*
-	 * デフォルトは LCP ECHO しない。PPTP, L2TP は、lost carrier を検知で
-	 * きるので。
+	 * PPTP and L2TP are able to detect lost carrier, so LCP ECHO is off 
+	 * by default.
 	 */
 	_this->echo_interval = 0;
 	_this->echo_failures = 0;
@@ -143,7 +143,7 @@ lcp_init(lcp *_this, npppd_ppp *ppp)
 
 
 /**
- * LCPの下のレイヤ (HDLC) が up したときに呼び出します。
+ * This function is called when HDLC as LCP's lower layer is up.
  */
 void
 lcp_lowerup(lcp *_this)
@@ -153,7 +153,7 @@ lcp_lowerup(lcp *_this)
 }
 
 /**
- * Protocol-Reject を送信します。
+ * sending Protocol-Reject.
  */
 void
 lcp_send_protrej(lcp *_this, u_char *pktp, int lpktp)
@@ -213,7 +213,7 @@ lcp_open(fsm *f)
 	if (f->ppp->peer_mru <= 0)
 		f->ppp->peer_mru = f->ppp->mru;
 
-	// ppp->peer_mru のサイズチェック
+	/* checking the size of ppp->peer_mru. */
 	LCP_ASSERT(f->ppp->peer_mru > 500);
 
 	fsm_log(f, LOG_INFO, "logtype=Opened mru=%d/%d auth=%s magic=%08x/%08x"
@@ -241,7 +241,7 @@ lcp_finished(fsm *f)
 }
 
 /**
- * ConfReq リセット
+ * reseting ConfReq.
  */
 static void
 lcp_resetci(fsm *f)
@@ -254,7 +254,7 @@ lcp_resetci(fsm *f)
 }
 
 /**
- * ConfReq の長さ
+ * The length of ConfReq.
  */
 static int
 lcp_cilen(fsm *f)
@@ -264,8 +264,9 @@ lcp_cilen(fsm *f)
 }
 
 /**
- * auth_order 順に、まだ reject されていない認証プロトコルを選択して、LCP
- * ConfReq パケット領域に Authentication-Protocol オプションを追加する。
+ * selecting authentication protocols which is not rejected yet in order
+ * of auth_order, and adding Authentication-Protocol options in ConfReq 
+ * packet area.
  */
 static int
 lcp_add_auth(fsm *f, u_char **ucpp)
@@ -339,7 +340,7 @@ end_loop:
 }
 
 /**
- * ConfReq 作り
+ * making ConfReq.
  */
 static void
 lcp_addci(fsm *f, u_char *ucp, int *lenp)
@@ -354,7 +355,7 @@ lcp_addci(fsm *f, u_char *ucp, int *lenp)
 		PUTCHAR(PPP_LCP_MRU, ucp);
 		PUTCHAR(4, ucp);
 
-		if (_this->xxxmru > 0) {	/* Nak でもらった値 */
+		if (_this->xxxmru > 0) {	/* this value is got by Nak. */
 			PUTSHORT(_this->xxxmru, ucp);
 		} else {
 			PUTSHORT(f->ppp->mru, ucp);
@@ -420,12 +421,12 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 		GETCHAR(type, inp);
 		GETCHAR(len, inp);
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 		case PPP_LCP_MRU: 
 			if (len != 4)
-				goto reigai;
+				goto fail;
 			GETSHORT(mru, inp);
 			f->ppp->peer_mru = mru;
 			if (mru < NPPPD_MIN_MRU) {
@@ -434,7 +435,7 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 					goto reject;
 				}
 				if (lrej > 0) {
-				/* reject があれば、Rej するので Nak しない */
+				/* if there is a reject, will send Rej, not send Nak. */
 				} else {
 					inp -= 2;
 					memcpy(nakbuf, inp, len);
@@ -449,7 +450,7 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 			break;
 		case PPP_LCP_MAGICNUMBER: 
 			if (len != 6)
-				goto reigai;
+				goto fail;
 			GETLONG(magic, inp);
 			if (magic == _this->magic_number) {
 				inp -= 4;
@@ -459,17 +460,17 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 			break;
 		case PPP_LCP_PFC:
 			if (len != 2) 
-				goto reigai;
+				goto fail;
 			LCP_OPT_PEER_ACCEPTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
 			if (len != 2) 
-				goto reigai;
+				goto fail;
 			LCP_OPT_PEER_ACCEPTED(acfc);
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
-			// 認証されることは現在のところない。
-		case PPP_LCP_QUALITY_PROTOCOL:	// 使用せず
+			/* currently never authenticate. */
+		case PPP_LCP_QUALITY_PROTOCOL:	/* not used */
 		default:
 reject:
 			inp -= 2;
@@ -482,7 +483,7 @@ reject:
 	}
 	if (rcode == -1)
 		rcode = CONFACK;
-reigai:
+fail:
 	switch (rcode) {
 	case CONFREJ:
 		memcpy(inp0, rejbuf, lrej);
@@ -508,7 +509,7 @@ reigai:
 #undef LCP_OPT_PEER_ACCEPTED
 }
 
-/** ConfAck を受け取った */
+/** receiving ConfAck. */
 static int
 lcp_ackci(fsm *f, u_char *inp, int inlen)
 {
@@ -518,7 +519,7 @@ lcp_ackci(fsm *f, u_char *inp, int inlen)
 #define	remlen()	(inlen - (inp - inp0))
 #define	LCP_OPT_ACCEPTED(opt)				\
 	if (!psm_opt_is_requested(&f->ppp->lcp, opt))	\
-		goto reigai;				\
+		goto fail;				\
 	psm_opt_set_accepted(&f->ppp->lcp, opt, 1);
 
 	f->ppp->lcp.recv_ress++;
@@ -528,35 +529,35 @@ lcp_ackci(fsm *f, u_char *inp, int inlen)
 		GETCHAR(len, inp);
 
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 		case PPP_LCP_MAGICNUMBER:
 			if (len != 6) 
-				goto reigai;
+				goto fail;
 			GETLONG(magic, inp);
 			if (f->ppp->lcp.magic_number != magic)
-				goto reigai;
+				goto fail;
 			break;
 		case PPP_LCP_MRU:
 			if (len != 4) 
-				goto reigai;
+				goto fail;
 			LCP_OPT_ACCEPTED(mru);
 			GETSHORT(mru, inp);
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
 			if (len < 4) 
-				goto reigai;
+				goto fail;
 			GETSHORT(authproto, inp);
 			switch (authproto) {
 			case PPP_AUTH_PAP:
 				if (len != 4)
-					goto reigai;
+					goto fail;
 				LCP_OPT_ACCEPTED(pap);
 				break;
 			case PPP_AUTH_CHAP:
 				if (len != 5)
-					goto reigai;
+					goto fail;
 				GETCHAR(chapalg, inp);
 				switch (chapalg) {
 				case PPP_AUTH_CHAP_MD5:
@@ -572,7 +573,7 @@ lcp_ackci(fsm *f, u_char *inp, int inlen)
 				break;
                         case PPP_AUTH_EAP:
                                 if (len != 4)
-                                     goto reigai;
+                                     goto fail;
                                 LCP_OPT_ACCEPTED(eap);
                                 break;
 			}
@@ -584,21 +585,21 @@ lcp_ackci(fsm *f, u_char *inp, int inlen)
 		 */
 		case PPP_LCP_PFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_ACCEPTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_ACCEPTED(acfc);
 			break;
 
 		default:
-			goto reigai;
+			goto fail;
 		}
 	}
 	return 1;
-reigai:
+fail:
 	fsm_log(f, LOG_ERR, "Received unexpected ConfAck.");
 	if (debug_get_debugfp() != NULL)
 		show_hd(debug_get_debugfp(), inp, remlen());
@@ -606,7 +607,7 @@ reigai:
 #undef	LCP_OPT_ACCEPTED
 }
 
-/** ConfNak を受け取った */
+/** receiving ConfNak. */
 static int
 lcp_nakci(fsm *f, u_char *inp, int inlen)
 {
@@ -618,7 +619,7 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 #define	remlen()	(inlen - (inp - inp0))
 #define	LCP_OPT_REJECTED(opt)				\
 	if (!psm_opt_is_requested(&f->ppp->lcp, opt))	\
-		goto reigai;				\
+		goto fail;				\
 	psm_opt_set_rejected(&f->ppp->lcp, opt, 1);
 
 	f->ppp->lcp.recv_ress++;
@@ -629,12 +630,12 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 		GETCHAR(len, inp);
 
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 		case PPP_LCP_MRU:
 			if (len < 4) 
-				goto reigai;
+				goto fail;
 			GETSHORT(mru, inp);
 			fsm_log(f, LOG_NOTICE,
 			    "ignored ConfNak from the peer: mru=%d", mru);
@@ -642,7 +643,7 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
 			if (len < 4) 
-				goto reigai;
+				goto fail;
 			switch (_this->lastauth) {
 			case PPP_AUTH_PAP:
 				psm_opt_set_rejected(_this, pap, 1);
@@ -694,7 +695,7 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 				break;
                         case PPP_AUTH_EAP:
                                 if (len != 4)
-                                        goto reigai;
+                                        goto fail;
                                 peer_auth = "eap";
                                 psm_opt_set_accepted(_this, eap, 1);
                                 break;
@@ -710,20 +711,20 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 			break;
 		case PPP_LCP_PFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_REJECTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_REJECTED(acfc);
 			break;
 		default:
-			goto reigai;
+			goto fail;
 		}
 	}
 	return 1;
-reigai:
+fail:
 	log_printf(LOG_ERR, "Received unexpected ConfNak.");
 	if (debug_get_debugfp() != NULL)
 		show_hd(debug_get_debugfp(), inp, inlen);
@@ -733,7 +734,7 @@ reigai:
 }
 
 /**
- * ConfRej を受け取った
+ * receiving ConfRej.
  */
 static int
 lcp_rejci(fsm *f, u_char *inp, int inlen)
@@ -745,7 +746,7 @@ lcp_rejci(fsm *f, u_char *inp, int inlen)
 #define	remlen()	(inlen - (inp - inp0))
 #define	LCP_OPT_REJECTED(opt)				\
 	if (!psm_opt_is_requested(&f->ppp->lcp, opt))	\
-		goto reigai;				\
+		goto fail;				\
 	psm_opt_set_rejected(&f->ppp->lcp, opt, 1);
 
 	f->ppp->lcp.recv_ress++;
@@ -756,12 +757,12 @@ lcp_rejci(fsm *f, u_char *inp, int inlen)
 		GETCHAR(len, inp);
 
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 		case PPP_LCP_MAGICNUMBER:
 			if (f->ppp->lcp.echo_interval > 0)
-				goto reigai;
+				goto fail;
 			inp += 4;
 			break;
 		case PPP_LCP_MRU:
@@ -770,12 +771,12 @@ lcp_rejci(fsm *f, u_char *inp, int inlen)
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
 			if (len < 4) 
-				goto reigai;
+				goto fail;
 			GETSHORT(authproto, inp);
 			switch (authproto) {
 			case PPP_AUTH_PAP:
                                 if (len != 4)
-                                        goto reigai;
+                                        goto fail;
 				LCP_OPT_REJECTED(pap);
 				break;
 			case PPP_AUTH_CHAP:
@@ -801,7 +802,7 @@ lcp_rejci(fsm *f, u_char *inp, int inlen)
 				break;
                          case PPP_AUTH_EAP:
                                 if (len != 4)
-                                        goto reigai;
+                                        goto fail;
                                 LCP_OPT_REJECTED(eap);
                                 break;
 			}
@@ -814,20 +815,20 @@ lcp_rejci(fsm *f, u_char *inp, int inlen)
 			break;
 		case PPP_LCP_PFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_REJECTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_REJECTED(acfc);
 			break;
 		default:
-			goto reigai;
+			goto fail;
 		}
 	}
 	return 1;
-reigai:
+fail:
 	log_printf(LOG_ERR, "Received unexpected ConfRej.");
 	if (debug_get_debugfp() != NULL)
 		show_hd(debug_get_debugfp(), inp, inlen);
@@ -842,7 +843,7 @@ lcp_rcoderej(fsm *f, u_char *inp, int inlen)
 	fsm *rejfsm;
 
 	if (inlen < 2) {
-		fsm_log(f, LOG_WARNING, "Recevied short ProtRej packet.");
+		fsm_log(f, LOG_WARNING, "Received short ProtRej packet.");
 		return;
 	}
 	GETSHORT(proto, inp);
@@ -872,7 +873,7 @@ lcp_rcoderej(fsm *f, u_char *inp, int inlen)
 	}
 	if (rejfsm == NULL) {
 		fsm_log(f, LOG_WARNING,
-		    "Recevied ProtRej packet for unknown protocol=(%d/%04x)",
+		    "Received ProtRej packet for unknown protocol=(%d/%04x)",
 		    proto, proto);
 		return;
 	}
@@ -992,7 +993,10 @@ lcp_ext(fsm *f, int code, int id, u_char *inp, int inlen)
 }
 
 
-/** 認証の設定を読み込んで、記述順に ppp_order に格納していく。*/
+/*
+ * reading some authentication settings and storing ppp_order in 
+ * order of settings.
+ */
 static void
 lcp_load_authconfig(fsm *f)
 {
@@ -1022,7 +1026,7 @@ lcp_load_authconfig(fsm *f)
 				psm_opt_set_enabled(_this, chap, 1);
 			} else if (strcasecmp("CHAPMS", authp) == 0 ||
 			    strcasecmp("MSCHAP", authp) == 0) {
-#if 0 /* MS-CHAP は、サポートせず。 */
+#if 0 /* MS-CHAP is not supported. */
 				_this->auth_order[i++] =
 				    PPP_AUTH_CHAP_MS;
 				psm_opt_set_enabled(_this, chapms, 1);
@@ -1052,11 +1056,12 @@ lcp_load_authconfig(fsm *f)
 }
 
 /***********************************************************************
- * Dialin Proxy 関連
+ * related functions of Dialin Proxy
  **********************************************************************/
 /**
- * Dialin proxy 情報にしたがって LCP の状態をセットします。LCPの状態が、
- * 受け入れられない場合は、0 以外が返ります。
+ * This function set LCP status following dialin proxy information.
+ * This returns non-zero value when LCP status is unacceptable.
+ * 
  */
 int
 lcp_dialin_proxy(lcp *_this, dialin_proxy_info *dpi, int renegotiation,
@@ -1067,7 +1072,7 @@ lcp_dialin_proxy(lcp *_this, dialin_proxy_info *dpi, int renegotiation,
 	_this->dialin_proxy = 1;
 	lcp_load_authconfig(&_this->fsm);
 
-	/* 認証方式が設定で許可されているかどうか */
+	/* whether authentication type is permitted by configuration or not. */
 	authok = 0;
 	if (dpi->auth_type != 0) {
 		for (i = 0; _this->auth_order[i] > 0; i++) {
@@ -1093,8 +1098,8 @@ lcp_dialin_proxy(lcp *_this, dialin_proxy_info *dpi, int renegotiation,
 	if (_this->dialin_proxy_lcp_renegotiation == 0) {
 		_this->fsm.ppp->peer_auth = dpi->auth_type;
 		/*
-		 * 全て拒否された状態にして、lcp_proxy_sent_ci で合意したも
-		 * のを解釈する。
+		 * It changes status which all options are rejected, and
+		 * accepts agreed options in lcp_proxy_send_ci.
 		 */
 		psm_opt_set_rejected(_this, mru, 1);
 		psm_opt_set_rejected(_this, pfc, 1);
@@ -1144,9 +1149,9 @@ lcp_dialin_proxy(lcp *_this, dialin_proxy_info *dpi, int renegotiation,
 }
 
 /*
- * lcp_reqci からコピー。以下の点だけが異なる。
- *	- LCP_OPT_ACCEPTED を変更
- *	- Magic Number や MRU は代入
+ * This function copies from lcp_reqci. It only differs as follows:
+ *	- changes LCP_OPT_ACCEPTED.
+ *	- Magic Number and MRU.
  */
 static int
 lcp_proxy_recv_ci(fsm *f, u_char *inp, int inlen)
@@ -1169,46 +1174,46 @@ lcp_proxy_recv_ci(fsm *f, u_char *inp, int inlen)
 		GETCHAR(type, inp);
 		GETCHAR(len, inp);
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 		case PPP_LCP_MRU: 
 			if (len != 4)
-				goto reigai;
+				goto fail;
 			GETSHORT(mru, inp);
 			f->ppp->peer_mru = mru;
 			if (mru < NPPPD_MIN_MRU)
-				goto reigai;
+				goto fail;
 			else
 				LCP_OPT_PEER_ACCEPTED(mru);
 			break;
 		case PPP_LCP_MAGICNUMBER: 
 			if (len != 6)
-				goto reigai;
+				goto fail;
 			GETLONG(magic, inp);
 			if (magic == _this->magic_number)
-				goto reigai;
+				goto fail;
 			_this->peer_magic_number = magic;
 			break;
 		case PPP_LCP_PFC:
 			if (len != 2) 
-				goto reigai;
+				goto fail;
 			LCP_OPT_PEER_ACCEPTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
 			if (len != 2) 
-				goto reigai;
+				goto fail;
 			LCP_OPT_PEER_ACCEPTED(acfc);
 			break;
 		default:
-			goto reigai;
+			goto fail;
 		}
 	}
 
 #undef remlen
 #undef LCP_OPT_PEER_ACCEPTED
 	return 0;
-reigai:
+fail:
 	return 1;
 }
 
@@ -1223,10 +1228,10 @@ lcp_dialin_proxy_open(void *ctx)
 }
 
 /*
- * lcp_ackci からコピー。以下の点だけが異なる。
- *	- recv_reass++ はしない
- *	- LCP_OPT_ACCEPTED を変更
- *	- Magic Number や MRU は代入
+ * This function copies from lcp_ackci. It only differs as follows:
+ *	- Do not recv_reass++.
+ *	- changes LCP_OPT_ACCEPTED.
+ *	- Magic Number and MRU.
  */
 static int
 lcp_proxy_sent_ci(fsm *f, u_char *inp, int inlen)
@@ -1248,35 +1253,35 @@ lcp_proxy_sent_ci(fsm *f, u_char *inp, int inlen)
 		GETCHAR(len, inp);
 
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 		case PPP_LCP_MAGICNUMBER:
 			if (len != 6) 
-				goto reigai;
+				goto fail;
 			GETLONG(magic, inp);
 			f->ppp->lcp.magic_number = magic;
 			break;
 		case PPP_LCP_MRU:
 			if (len != 4) 
-				goto reigai;
+				goto fail;
 			LCP_OPT_ACCEPTED(mru);
 			GETSHORT(mru, inp);
 			f->ppp->lcp.xxxmru = mru;
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
 			if (len < 4) 
-				goto reigai;
+				goto fail;
 			GETSHORT(authproto, inp);
 			switch (authproto) {
 			case PPP_AUTH_PAP:
 				if (len != 4)
-					goto reigai;
+					goto fail;
 				LCP_OPT_ACCEPTED(pap);
 				break;
 			case PPP_AUTH_CHAP:
 				if (len != 5)
-					goto reigai;
+					goto fail;
 				GETCHAR(chapalg, inp);
 				switch (chapalg) {
 				case PPP_AUTH_CHAP_MD5:
@@ -1292,27 +1297,27 @@ lcp_proxy_sent_ci(fsm *f, u_char *inp, int inlen)
 				break;
                         case PPP_AUTH_EAP:
                                 if (len != 4)
-                                     goto reigai;
+                                     goto fail;
                                 LCP_OPT_ACCEPTED(eap);
                                 break;
 			}
 			break;
 		case PPP_LCP_PFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_ACCEPTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
 			if (len != 2)
-				goto reigai;
+				goto fail;
 			LCP_OPT_ACCEPTED(acfc);
 			break;
 		default:
-			goto reigai;
+			goto fail;
 		}
 	}
 	return 0;
-reigai:
+fail:
 	return 1;
 #undef	LCP_OPT_ACCEPTED
 }

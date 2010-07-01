@@ -1,3 +1,4 @@
+/*	$OpenBSD: pptp.h,v 1.3 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,9 +27,9 @@
 #ifndef PPTP_H
 #define PPTP_H	1
 
-/************************************************************************
- * プロトコル上の定数
- ************************************************************************/
+/*
+ * PPTP protocol constants
+ */
 #define	PPTP_MES_TYPE_CTRL			1
 #define	PPTP_MAGIC_COOKIE			0x1a2b3c4d
 #define	PPTP_RFC_2637_VERSION			0x0100
@@ -37,57 +38,57 @@
 #define	PPTP_MAX_CALL				8192
 #endif
 
+/* Start-Control-Connection-Request */
+#define	PPTP_CTRL_MES_CODE_SCCRQ	1
 
-/** Start-Control-Connection-Request */
-#define	PPTP_CTRL_MES_CODE_SCCRQ		1
+/* Start-Control-Connection-Reply */
+#define	PPTP_CTRL_MES_CODE_SCCRP	2
 
-/** Start-Control-Connection-Reply */
-#define	PPTP_CTRL_MES_CODE_SCCRP		2
+/* Stop-Control-Connection-Request */
+#define	PPTP_CTRL_MES_CODE_StopCCRQ	3
 
-/** Stop-Control-Connection-Request */
-#define	PPTP_CTRL_MES_CODE_StopCCRQ		3
+/* Stop-Control-Connection-Reply */
+#define	PPTP_CTRL_MES_CODE_StopCCRP	4
 
-/** Stop-Control-Connection-Reply */
-#define	PPTP_CTRL_MES_CODE_StopCCRP		4
+/* Echo-Request */
+#define	PPTP_CTRL_MES_CODE_ECHO_RQ	5
 
-/** Echo-Request */
-#define	PPTP_CTRL_MES_CODE_ECHO_RQ		5
+/* Echo-Reply */
+#define	PPTP_CTRL_MES_CODE_ECHO_RP	6
 
-/** Echo-Reply */
-#define	PPTP_CTRL_MES_CODE_ECHO_RP		6
+/* Outgoing-Call-Request */
+#define	PPTP_CTRL_MES_CODE_OCRQ		7
 
-/** Outgoing-Call-Request */
-#define	PPTP_CTRL_MES_CODE_OCRQ			7
+/* Outgoing-Call-Reply */
+#define	PPTP_CTRL_MES_CODE_OCRP		8
 
-/** Outgoing-Call-Reply */
-#define	PPTP_CTRL_MES_CODE_OCRP			8
+/* Incoming-Call-Request */
+#define	PPTP_CTRL_MES_CODE_ICRQ		9
 
-/** Incoming-Call-Request */
-#define	PPTP_CTRL_MES_CODE_ICRQ			9
+/* Incoming-Call-Reply */
+#define	PPTP_CTRL_MES_CODE_ICRP		10
 
-/** Incoming-Call-Reply */
-#define	PPTP_CTRL_MES_CODE_ICRP			10
+/* Incoming-Call-Connected */
+#define	PPTP_CTRL_MES_CODE_ICCN		11
 
-/** Incoming-Call-Connected */
-#define	PPTP_CTRL_MES_CODE_ICCN			11
+/* Call-Clear-Request */
+#define	PPTP_CTRL_MES_CODE_CCR		12
 
-/** Call-Clear-Request */
-#define	PPTP_CTRL_MES_CODE_CCR			12
+/* Call-Disconnect-Notify */
+#define	PPTP_CTRL_MES_CODE_CDN		13
 
-/** Call-Disconnect-Notify */
-#define	PPTP_CTRL_MES_CODE_CDN			13
-
-/** Set-Link-Info */
-#define	PPTP_CTRL_MES_CODE_SLI			15
+/* Set-Link-Info */
+#define	PPTP_CTRL_MES_CODE_SLI		15
 
 
-#define	PPTP_CTRL_FRAMING_ASYNC			1
-#define	PPTP_CTRL_FRAMING_SYNC			2
+#define	PPTP_CTRL_FRAMING_ASYNC		1
+#define	PPTP_CTRL_FRAMING_SYNC		2
 
-#define	PPTP_CTRL_BEARER_ANALOG			1
-#define	PPTP_CTRL_BEARER_DIGITAL		2
+#define	PPTP_CTRL_BEARER_ANALOG		1
+#define	PPTP_CTRL_BEARER_DIGITAL	2
 
-/* Start-Control-Connection-Reply の Result Code */
+
+/* Result Code: Start-Control-Connection-Reply */
 #define PPTP_SCCRP_RESULT_SUCCESS		1
 #define PPTP_SCCRP_RESULT_GENERIC_ERROR		2
 #define PPTP_SCCRP_RESULT_CHANNEL_EXISTS	3
@@ -102,7 +103,7 @@
 #define PPTP_ERROR_BAD_CALL			4
 #define PPTP_ERROR_PAC_ERROR			5
 
-/* Outgoing-Call-Reply の Result Code */
+/* Result Code: Outgoing-Call-Reply */
 #define PPTP_OCRP_RESULT_CONNECTED		1
 #define PPTP_OCRP_RESULT_GENERIC_ERROR		2
 #define PPTP_OCRP_RESULT_NO_CARRIER		3
@@ -111,16 +112,16 @@
 #define PPTP_OCRP_RESULT_TIMEOUT		6
 #define PPTP_OCRP_RESULT_DO_NOT_ACCEPT		7
 
-/* Echo-Reply の Result Code */
+/* Result Code: Echo-Reply */
 #define PPTP_ECHO_RP_RESULT_OK			1
 #define PPTP_ECHO_RP_RESULT_GENERIC_ERROR	2
 
-/* Stop-Control-Connection-Request の Reason */
+/* Reason code of the Stop-Control-Connection-Request */
 #define	PPTP_StopCCRQ_REASON_NONE			1
 #define	PPTP_StopCCRQ_REASON_STOP_PROTOCOL		2
 #define	PPTP_StopCCRQ_REASON_STOP_LOCAL_SHUTDOWN	3
 
-/* Stop-Control-Connection-Response の Result */
+/* Result code of the Stop-Control-Connection-Response */
 #define	PPTP_StopCCRP_RESULT_OK			1
 #define	PPTP_StopCCRP_RESULT_GENERIC_ERROR	2
 
@@ -129,17 +130,17 @@
 #define	PPTP_CDN_RESULT_ADMIN_SHUTDOWN		3
 #define	PPTP_CDN_RESULT_REQUEST			4
 
-/** デフォルトの待ち受け TCP ポート番号 */
+/* Default TCP port number */
 #define	PPTPD_DEFAULT_TCP_PORT			1723
 
 
 #define	PPTP_GRE_PROTOCOL_TYPE			0x880b
 #define	PPTP_GRE_VERSION			1
 
-/************************************************************************
- * この実装の定数
- ************************************************************************/
-/* pptpd ステータス */
+/*
+ * Constants of the NPPPD implementation
+ */
+/* pptpd status */
 #define	PPTPD_STATE_INIT 		0
 #define	PPTPD_STATE_RUNNING 		1
 #define	PPTPD_STATE_SHUTTING_DOWN 	2
@@ -152,7 +153,7 @@
 
 #define PPTPD_DEFAULT_LAYER2_LABEL		"PPTP"
 
-/** ステートマシン */
+/* pptp control state code */
 #define PPTP_CTRL_STATE_IDLE			0
 #define PPTP_CTRL_STATE_WAIT_CTRL_REPLY		1
 #define PPTP_CTRL_STATE_ESTABLISHED		2
@@ -167,28 +168,30 @@
 #define	PPTP_CALL_DEFAULT_MAXWINSZ		64
 #endif
 
+/* Connection speed that nofified by OCRP */
+/* XXX: currently we use fixed value */
 #ifndef	PPTP_CALL_CONNECT_SPEED
-/** 接続スピード。OCRP で通知する値で、現在は 10Mbps で固定 */
 #define	PPTP_CALL_CONNECT_SPEED			10000000
 #endif
 
+/* Initial packet processing delay that nofified by OCRP */
 #ifndef	PPTP_CALL_INITIAL_PPD
-/** OCRP で通知する。初期 Packet Processing Dealy */
 #define PPTP_CALL_INITIAL_PPD			0
 #endif
 
+/* PPTP_CALL_NMAX_INSEQ specifies N packets was backwarded,
+ * when sequence# backwarded */
 #ifndef	PPTP_CALL_NMAX_INSEQ
-/** シーケンスが戻った場合に何パケットまでを戻ったとみなすか。*/
 #define	PPTP_CALL_NMAX_INSEQ	64
 #endif
 
-/** call のステートマシン */
+/* pptp call state machine */
 #define	PPTP_CALL_STATE_IDLE			0
 #define	PPTP_CALL_STATE_WAIT_CONN		1
 #define	PPTP_CALL_STATE_ESTABLISHED		2
 #define	PPTP_CALL_STATE_CLEANUP_WAIT		3
 
-/* タイムアウト関連 */
+/* Timeout */
 #define PPTPD_SHUTDOWN_TIMEOUT			5
 
 #define	PPTPD_IDLE_TIMEOUT			60
@@ -199,72 +202,51 @@
 #define PPTP_CTRL_DEFAULT_ECHO_TIMEOUT		60
 #define	PPTP_CTRL_StopCCRP_WAIT_TIME		3
 
-/** アドレスは最大何個 bind 可能か。*/
+/* MAXIMUM bindable IP addresses */
 #ifndef	PPTP_NLISTENER
 #define	PPTP_NLISTENER				6
 #endif
 
-/** PPTPデーモンが停止したかどうかを返します。 */
+/* Utility macro */
 #define	pptpd_is_stopped(pptpd)					\
 	(((pptpd)->state != PPTPD_STATE_SHUTTING_DOWN &&	\
 	    (pptpd)->state != PPTPD_STATE_RUNNING)? 1 : 0)
 
-/** PPTPデーモンが停止処理中かどうかを返します。 */
 #define	pptpd_is_shutting_down(pptpd)				\
 	(((pptpd)->state == PPTPD_STATE_SHUTTING_DOWN)? 1 : 0)
 
-/************************************************************************
- * 型
- ************************************************************************/
-/** PPTP デーモンの型*/
+/*
+ * types
+ */
 struct _pptpd;
-/** PPTP デーモン待ち受け型 */
+
 typedef struct _pptpd_listener {
-	/** イベントコンテキスト */
-	struct event ev_sock;
-	/** GREイベントコンテキスト */
-	struct event ev_sock_gre;
-	/** PPTPD 自身 */
+	struct event ev_sock;	/* event context */
+	struct event ev_sock_gre; /* GRE event context */
 	struct _pptpd	*self;
-	/** インデックス番号 */
 	uint16_t	index;
-	/** 待ち受けソケット */
-	int		sock;
-	/** GREソケット */
-	int		sock_gre;
-	/** 待ち受けアドレス TCP */
-	struct sockaddr_in bind_sin;
-	/** 待ち受けアドレス GRE */
-	struct sockaddr_in bind_sin_gre;
-	/** 物理層のラベル */
+	int		sock; /* listing socket */
+	int		sock_gre; /* GRE socket */
+	struct sockaddr_in bind_sin;	/* listing TCP address */
+	struct sockaddr_in bind_sin_gre; /* listing GRE address */
 	char	phy_label[16];
 } pptpd_listener;
 
-/** PPTP デーモンの型*/
 typedef struct _pptpd {
-	/** インスタンスの Id */
 	unsigned	id;
-	/** 待ち受けリスト */
-	slist listener;
-	/** ステート */
+	slist listener;		/* list of listeners */
 	int state;
-	/** タイマーイベントコンテキスト */
-	struct event ev_timer;
-	/** PPTP コントロールのリスト */
-	slist  ctrl_list;
+	struct event ev_timer; /* timer event context */
+	slist  ctrl_list;	/* list of PPTP controls */
 
-	/** 設定 */
 	struct properties *config;
 
-	/** 空きコールリスト */
-	slist call_free_list;
-	/** コールId => Call マップ */
-	hash_table *call_id_map;
-	/** 接続を許可するIPv4ネットワーク */
+	slist call_free_list;	/* Free call lists */
+	hash_table *call_id_map; /* table to map between callid and call */
+	/* ipv4 networks that is permitted to connect */
 	struct in_addr_range *ip4_allow;
 
-	/** フラグ */
-	uint32_t
+	uint32_t		/* flags */
 	    initialized:1,
 	    ctrl_in_pktdump:1,
 	    ctrl_out_pktdump:1,
@@ -277,105 +259,70 @@ typedef struct _pptpd {
 	((pptpd_listener *)slist_get(&(ctrl)->pptpd->listener,\
 	    (ctrl)->listener_index))->sock_gre
 
-/** pptp_ctrl から、リスナーの物理層のラベルを取り出すマクロ */
+/* get listner's physical layer label from pptp_ctrl */
 #define	PPTP_CTRL_LISTENER_LABEL(ctrl)	\
 	((pptpd_listener *)slist_get(&(ctrl)->pptpd->listener,\
 	    (ctrl)->listener_index))->phy_label
 
-/** PPTP コントロールの型*/
 typedef struct _pptp_ctrl {
-	/** 親 pptpd */
-	pptpd		*pptpd;
-	/** リスナー インデックス番号*/
+	pptpd		*pptpd;	/* parents */
 	uint16_t	listener_index;
-	/** インスタンスの Id */
 	unsigned 	id;
-	/** ステート */
 	int		state;
-	/** 物理層のラベル */
 	char		phy_label[16];
 
-	/** ソケット */
 	int		sock;
-	/** 先方のアドレス */
 	struct sockaddr_storage peer;
-	/** 当方のアドレス */
 	struct sockaddr_storage our;
-	/** イベントコンテキスト */
 	struct event	ev_sock;
-	/** タイマーイベントコンテキスト */
 	struct event	ev_timer;
 
-	/** アイドル状態から ECHO 送信までの秒数。0以下は無効。*/
-	int echo_interval;
-	/** ECHO のタイムアウト */
+	int echo_interval; /* periods between idle state to ECHO transmit */
 	int echo_timeout;
 
-	/** 送信可能かどうか。送信バッファが埋まっていないか */
-	int		send_ready;
-	/** 受信バッファ */
+	int		send_ready; /* ready to send */
 	bytebuffer	*recv_buf;
-	/** 送信バッファ */
 	bytebuffer	*send_buf;
 
-	/** コールのリスト */
 	slist		call_list;
 
-	/** 最後にコントロールメッセージを送信した時間 */
-	time_t	last_snd_ctrl;	
-	/** 最後にコントロールメッセージを受信を送信した時間 */
-	time_t	last_rcv_ctrl;	
-	/** Echo Request の identifier */
-	uint32_t	echo_seq;
+	time_t	last_snd_ctrl;	/* timestamp of latest ctrl message sent */
+	time_t	last_rcv_ctrl;	/* timestamp of latest ctrl message receieved */
+	uint32_t	echo_seq; /* identifier of Echo Request */
 
-	int16_t		/** I/O イベント処理中。*/
+	int16_t		/* flags : processing I/O events */
 			on_io_event:1,
 			reserved:15;
-
 } pptp_ctrl;
 
-/** PPTP コールの型 */
 typedef struct _pptp_call {
-	/** 親コントロール */
-	pptp_ctrl	*ctrl;
-	/** コールID*/
+	pptp_ctrl	*ctrl; /* parent */
 	unsigned	id;
 
-	/** 受信インタフェース番号 */
-	int		ifidx;
+	int		ifidx; /* recieve interface index */
 
-	/** ステート */
 	int		state;
 
-	/** 先方のコールID*/
 	unsigned	peers_call_id;
 	void		*ppp;
 
-	/** 次の確認応答 */
-	uint32_t	snd_una;
-	/** 次の送信シーケンス番号 */
-	uint32_t	snd_nxt;
+	uint32_t	snd_una;	/* next ack notification */
+	uint32_t	snd_nxt;	/* next transmit sequence # */
 
-	/** 受信シーケンス番号 */
-	uint32_t	rcv_nxt;
-	/** 応答確認した受信シーケンス番号 */
-	uint32_t	rcv_acked;
+	uint32_t	rcv_nxt;	/* recieved sequence # */
+	uint32_t	rcv_acked;	/* latest acked recieved sequence # */
 
-	/** カレントウィンドウサイズ */
-	int		winsz;
-	/** 最大ウィンドウサイズ */
-	int		maxwinsz;
-	/** 先方の最大ウィンドウサイズ*/
+	int		winsz;		/* current window size */
+	int		maxwinsz;	/* maximum window size */
 	int		peers_maxwinsz;
 
 	time_t		last_io;
-
 } pptp_call;
 
 
-/************************************************************************
- * 関数プロトタイプ
- ************************************************************************/
+/*
+ * function prototypes
+ */
 #ifdef __cplusplus
 extern "C" {
 #endif

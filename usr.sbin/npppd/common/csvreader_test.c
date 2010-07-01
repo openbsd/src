@@ -1,3 +1,4 @@
+/* $OpenBSD: csvreader_test.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +27,7 @@
 /*
  * cc -o csvreader_test csvreader.c csvreader_test.c
  */
-/* $Id: csvreader_test.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: csvreader_test.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -149,7 +150,7 @@ test02(void)
 	column = csvreader_get_column(csv);
 	ASSERT(column != NULL);
 	ASSERT(strcmp(column[0], "hogehoge") == 0);
-	//printf("**%s**\n", column[1]);
+	/* printf("**%s**\n", column[1]); */
 	ASSERT(strcmp(column[1], "fuga\nfuga") == 0);
 	ASSERT(column[2] == NULL);
 
@@ -158,7 +159,7 @@ test02(void)
 	column = csvreader_get_column(csv);
 	ASSERT(column != NULL);
 	ASSERT(strcmp(column[0], "hogehoge") == 0);
-	//printf("**%s**\n", column[1]);
+	/* printf("**%s**\n", column[1]); */
 	ASSERT(strcmp(column[1], "fuga\rfuga") == 0);
 	ASSERT(column[2] == NULL);
 

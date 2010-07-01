@@ -134,7 +134,7 @@ typedef struct fsm_callbacks {
 #define DEFMAXCONFREQS	10	/* Maximum Configure-Request transmissions */
 #define DEFMAXNAKLOOPS	5	/* Maximum number of nak loops */
 
-/** NetBSD(ANU, CMU) の pppd で使われているマクロを npppd 用に定義 */
+/** define TIMEOUT to use event(3)'s timer. */
 #define	TIMEOUT(fn, f, t)						\
 	{								\
 		struct timeval tv0;					\

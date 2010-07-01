@@ -24,9 +24,9 @@
  * SUCH DAMAGE.
  */
 /**@file
- * npppd の補助的な関数を提供します。
+ * This file provides helper functions for npppd.
  */
-/* $Id: npppd_subr.c,v 1.3 2010/01/31 05:49:51 yasuoka Exp $ */
+/* $Id: npppd_subr.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <sys/cdefs.h>
 #ifndef LINT
 __COPYRIGHT(
@@ -86,8 +86,8 @@ skip_space(const char *s)
 }
 
 /**
- * resolv.conf からネームサーバの IPv4 のエントリを読み出します。
- * resolv.conf のパスは、resolv.h の _PATH_RESCONF を使います。
+ * Read and store IPv4 address of name server from resolv.conf.
+ * The path of resolv.conf is taken from _PATH_RESCONF in resolv.h.
  */
 int
 load_resolv_conf(struct in_addr *pri, struct in_addr *sec)
@@ -121,11 +121,10 @@ load_resolv_conf(struct in_addr *pri, struct in_addr *sec)
 				addr = sec;
 			if (inet_aton(ap, addr) != 1) {
 				/*
-				 * FIXME IPv6 使ってるの場合 IPv6 アドレスが入
-				 * っているかもしれない。とりあえず、continue。
+				 * FIXME: If configured IPv6, it may have IPv6
+				 * FIXME: address.  For the present, continue.
 				 */
 				continue;
-				//goto reigai;
 			}
 			addr->s_addr = addr->s_addr;
 			if (++i >= 2)
@@ -139,7 +138,7 @@ end_loop:
 	return 0;
 }
 
-// 経路追加削除
+/* Add and delete routing entry. */
 static int
 in_route0(int type, struct in_addr *dest, struct in_addr *mask,
     struct in_addr *gate, int mtu, const char *ifname, uint32_t rtm_flags)
@@ -147,7 +146,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 	struct rt_msghdr *rtm;
 	struct sockaddr_in sdest, smask, sgate;
 	struct sockaddr_dl *sdl;
-	char dl_buf[512];	// enough size
+	char dl_buf[512];	/* enough size */
 	char *cp, buf[sizeof(*rtm) + sizeof(struct sockaddr_in) * 3 +
 	    sizeof(dl_buf) + 128];
 	const char *strtype;
@@ -262,20 +261,20 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 	if ((sock = priv_socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC)) < 0) {
 		log_printf(LOG_ERR, "socket() failed in %s() on %s : %m",
 		    __func__, strtype);
-		goto reigai;
+		goto fail;
 	}
 
 	dummy = 0;
 	if ((flags = fcntl(sock, F_GETFL, dummy)) < 0) {
 		log_printf(LOG_ERR, "fcntl(,F_GETFL) failed on %s : %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 
 	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
 		log_printf(LOG_ERR, "fcntl(,F_SETFL) failed on %s : %m",
 		    __func__);
-		goto reigai;
+		goto fail;
 	}
 
 	if ((rval = priv_send(sock, buf, rtm->rtm_msglen, 0)) <= 0) {
@@ -289,7 +288,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 			    "write() failed in %s on %s : %m", __func__,
 			    strtype);
 		}
-		goto reigai;
+		goto fail;
 	}
 
 	close(sock);
@@ -298,7 +297,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 	return 0;
 
 #ifndef NPPPD_USE_RTEV_WRITE
-reigai:
+fail:
 	if (sock >= 0)
 		close(sock);
 #endif
@@ -306,7 +305,7 @@ reigai:
 	return 1;
 }
 
-/** ホスト経路を追加 */
+/** Add host routing entry. */
 int
 in_host_route_add(struct in_addr *dest, struct in_addr *gate,
     const char *ifname, int mtu)
@@ -314,14 +313,14 @@ in_host_route_add(struct in_addr *dest, struct in_addr *gate,
 	return in_route0(RTM_ADD, dest, NULL, gate, mtu, ifname, 0);
 }
 
-/** ホスト経路を削除 */
+/** Delete host routing entry. */
 int
 in_host_route_delete(struct in_addr *dest, struct in_addr *gate)
 {
 	return in_route0(RTM_DELETE, dest, NULL, gate, 0, NULL, 0);
 }
 
-/** ネット経路を追加 */
+/** Add network routing entry. */
 int
 in_route_add(struct in_addr *dest, struct in_addr *mask, struct in_addr *gate,
     const char *ifname, uint32_t rtm_flags, int mtu)
@@ -329,7 +328,7 @@ in_route_add(struct in_addr *dest, struct in_addr *mask, struct in_addr *gate,
 	return in_route0(RTM_ADD, dest, mask, gate, mtu, ifname, rtm_flags);
 }
 
-/** ネット経路を削除 */
+/** Delete network routing entry. */
 int
 in_route_delete(struct in_addr *dest, struct in_addr *mask,
     struct in_addr *gate, uint32_t rtm_flags)
@@ -337,7 +336,6 @@ in_route_delete(struct in_addr *dest, struct in_addr *mask,
 	return in_route0(RTM_DELETE, dest, mask, gate, 0, NULL, rtm_flags);
 }
 
-// 従来 ppp の ip.c より流用
 /**
  *  Check whether a packet should reset idle timer
  *  Returns 1 to don't reset timer (i.e. the packet is "idle" packet)
@@ -349,8 +347,8 @@ ip_is_idle_packet(const struct ip * pip, int len)
 	const struct udphdr *uh;
 
 	/*
-         * フラグメントされたパケットはアイドルパケットではない
-         * （フラグメントするほど長いパケットはアイドルパケットではない）
+         * Fragmented packet is not idle packet.
+         * (Long packet which needs to fragment is not idle packet.)
          */
 	ip_off = ntohs(pip->ip_off);
 	if ((ip_off & IP_MF) || ((ip_off & IP_OFFMASK) != 0))
@@ -360,7 +358,7 @@ ip_is_idle_packet(const struct ip * pip, int len)
 	case IPPROTO_IGMP:
 		return 1;
 	case IPPROTO_ICMP:
-		/* 長さは足りている？ */
+		/* Is length enough? */
 		if (pip->ip_hl * 4 + 8 > len)
 			return 1;
 
@@ -374,13 +372,13 @@ ip_is_idle_packet(const struct ip * pip, int len)
 	case IPPROTO_UDP:
 	case IPPROTO_TCP:
 		/*
-		 * UDP も TCP も、ポートの部分は同じなので、そこだけは共用で
-		 * きる。
+		 * The place of port number of UDP and TCP is the same,
+		 * so can be shared.
 		 */
 		uh = (const struct udphdr *) (((const char *) pip) +
 		    (pip->ip_hl * 4));
 
-		/* 長さは足りている？ */
+		/* Is length enough? */
 		if (pip->ip_hl * 4 + sizeof(struct udphdr) > len)
 			return 1;
 
@@ -409,7 +407,7 @@ ip_is_idle_packet(const struct ip * pip, int len)
 }
 
 /***********************************************************************
- * プールしているアドレスへの経路追加/削除
+ * Add and delete routing entry for the pool address.
  ***********************************************************************/
 void
 in_addr_range_add_route(struct in_addr_range *range)
@@ -444,7 +442,7 @@ in_addr_range_delete_route(struct in_addr_range *range)
 }
 
 
-/* #inlude <arpa/nameser_compat.h>	も GETSHORT を定義している */
+/* GETSHORT is also defined in #inlude <arpa/nameser_compat.h>. */
 #undef	GETCHAR
 #undef	GETSHORT
 #undef	PUTSHORT
@@ -512,9 +510,10 @@ in_addr_range_delete_route(struct in_addr_range *range)
 }
 
 /**
- * IPパケットが MTU 以下となるように mss を調整します。
- * @param	pktp	IPパケットのポインタ
- * @param	lpktp	長さ
+ * Adjust mss to make IP packet be shorter than or equal MTU.
+ * 
+ * @param	pktp	pointer that indicates IP packet
+ * @param	lpktp	length
  * @param	mtu	MTU
  */
 int
@@ -530,7 +529,7 @@ adjust_tcp_mss(u_char *pktp, int lpktp, int mtu)
 	pip = (struct ip *)pktp;
 	ip_off = ntohs(pip->ip_off);
 
-	/* TCP じゃないパケットやフラグメントされたパケットは対象外 */
+	/* exclude non-TCP packet or fragmented packet. */
 	if (pip->ip_p != IPPROTO_TCP || (ip_off & IP_MF) != 0 ||
 	    (ip_off & IP_OFFMASK) != 0)
 		return 0;
@@ -538,12 +537,12 @@ adjust_tcp_mss(u_char *pktp, int lpktp, int mtu)
 	pktp += pip->ip_hl << 2;
 	lpktp -= pip->ip_hl << 2;
 
-	/* 壊れてる */
+	/* broken packet */
 	if (sizeof(struct tcphdr) > lpktp)
 		return 1;
 
 	th = (struct tcphdr *)pktp;
-	/* MSS は SYN がセットされたセグメントに限る。(See RFC 793) */
+	/* MSS is selected only from SYN segment. (See RFC 793) */
 	if ((th->th_flags & TH_SYN) == 0)
 		return 0;
 

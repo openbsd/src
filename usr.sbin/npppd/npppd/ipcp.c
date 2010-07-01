@@ -24,13 +24,13 @@
  * SUCH DAMAGE.
  */
 /**@file
- * IPCP の実装です。現在ネットワーク提供者としての実装で、こちらの提案を
- * 押しつけます。
+ * This is an implementation of IPCP. This code is currently implemented
+ * as network service provider, and the peer is forced to obey our proposal.
  */
 /*
  * RFC 1332, 1877
  */
-/* $Id: ipcp.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: ipcp.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -98,7 +98,7 @@ static struct fsm_callbacks ipcp_callbacks = {
 };
 
 /**
- * {@link ::_ipcp IPCP インスタンス} を初期化します。
+ * Initialize {@link ::_ipcp IPCP instance }.
  */
 void
 ipcp_init(ipcp *_this, npppd_ppp *ppp)
@@ -209,7 +209,7 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 		rcode = CONFREJ;
 		rejbuf = pktp;
 		lrej = *lpktp;
-		goto reigai;
+		goto fail;
 	}
 
 #define	remlen()	(*lpktp - (pktp - pktp0))
@@ -219,7 +219,7 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 		GETCHAR(type, pktp);
 		GETCHAR(len, pktp);
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 		case IPCP_IP_ADDRESS:
@@ -228,7 +228,7 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 		case IPCP_SEC_DNS:
 		case IPCP_SEC_NBNS:
 			if (remlen() < 4)
-				goto reigai;
+				goto fail;
 			GETLONG(ip_addr.s_addr, pktp);
 			ip_addr.s_addr = htonl(ip_addr.s_addr);
 
@@ -240,12 +240,9 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 					    npppd_assign_ip_addr(ppp->pppd, ppp,
 					    INADDR_ANY) != 0) {
 						/*
-						 * INADDR_ANY で call しなおす
-						 * のは、user-select が許可さ
-						 * れている場合に動的割り当て
-						 * へのフォールバックを期待す
-						 * るクライアントへの対応のた
-						 * め。[IDGW-DEV 6847]
+						 * The reason why it call with INADDR_ANY again here
+						 * is to adapt the client expecting to fall back into
+						 * dynamic allocation when user-select is allowed.
 						 */
 						pktp -= 4;
 						goto do_reject;
@@ -262,10 +259,9 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 				    .s_addr, ip_addr.s_addr,
 				    ppp->ppp_framed_ip_address.s_addr)) {
 					/*
-					 * ネットワーク型払出し時は、対抗の
-					 * IP-Address Option が、払い出すネッ
-					 * トワークに含まれる場合には、対抗
-					 * の提案に従う。
+					 * In case of assigning network address, it obey
+					 * peer's proposal if peer's IP-Address Option is
+					 * included in network address to assign.
 					 */
 					ip_addrp = &ip_addr;
 				} else {
@@ -297,7 +293,7 @@ ipcp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 					goto do_reject;
 				}
 				if (lrej > 0) {
-				/* reject があれば、Rej するので Nak しない */
+				/* if there is a reject, will send Rej, not send Nak. */
 				} else {
 					PUTCHAR(type, nakbuf);
 					PUTCHAR(6, nakbuf);
@@ -325,7 +321,7 @@ do_reject:
 	if (rcode == -1)
 		rcode = CONFACK;
 	
-reigai:
+fail:
 	switch (rcode) {
 	case CONFREJ:
 		IPCP_DBG((f, LOG_DEBUG, "SendConfRej"));
@@ -334,23 +330,23 @@ reigai:
 		break;
 	case CONFNAK:
 		/*
-		 * Yamaha で、"pp ppp ipcp ip-address off" すると、IP-Adddress
-		 * Option なしで ConfReq が届く。RFC 1332 より
-		 * 
-	      	 * If negotiation about the remote IP-address is required, and
+		 * In case of Yamaha router is set "pp ppp ipcp ip-address off",
+		 * it sends ConfReq without IP-Address Option.
+		 * To quote RFC 1332:
+		 * If negotiation about the remote IP-address is required, and
 		 * the peer did not provide the option in its Configure-Request,
 		 * the option SHOULD be appended to a Configure-Nak.
 		 *
-		 * 6バイト lpkt をはみだしても大丈夫か?
-		 *	- ppp.c では mru + 64 分確保している。lpkt は mru 以下
-		 *	  なので、+6 は大丈夫。
+		 * Is any problem of overrunning 6 bytes of lpkt?
+		 *  - In ppp.c, lpkt is allocated mru + 64 bytes. lpkt is less
+		 *    than mru, so +6 is enough.
 		 */
 		if (!ip_address_acked) {
-			/* IPアドレスの割り当ては必須。*/
+			/* It is mandatory to assign IP address. */
 			if (!ppp_ip_assigned(ppp)) {
 				if (npppd_assign_ip_addr(ppp->pppd, ppp,
 				    INADDR_ANY) != 0) {
-				    /* ログは npppd_assign_ip_addr で出力済み */
+				    /* The log already put in npppd_assign_ip_addr(). */
 				}
 			}
 			PUTCHAR(IPCP_IP_ADDRESS, nakbuf);
@@ -379,8 +375,7 @@ ipcp_open(fsm *f)
 		fsm_log(f, LOG_INFO, "the ip-address option from the peer was "
 		    "not agreed.");
 		/*
-		 * IP-Address Option 無しで合意。固定IPアドレス割当てを
-		 * 試みる
+		 * agreed without IP-Address Option.  try to assign static address.
 		 */
 		if (f->ppp->realm_framed_ip_address.s_addr
 			    != INADDR_USER_SELECT &&

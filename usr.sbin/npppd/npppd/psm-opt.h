@@ -27,28 +27,21 @@
 #define	PSM_H	1
 
 /**@file
- * <p>PPPステートマシンのオプションのネゴシエーション状態を保持、変更するための
- * マクロ。</p>
- * <p>
- * オプションは LCP、CCP など fsm から導出された型に保持する。
- * <pre>
- *	struct lcp {
- *		fsm fsm;
- *		struct {
- *			uint8_t pfc;
- *			uint8_t acfc;
- *		} opt;
- *	};</pre></p>
- * <p>
- * 使用例:
- * <pre>
- *	if (!psm_opt_is_accepted(_this->lcp, pcf)) {
- *		// LCP の Protocol Field Compression を accept している
- *	}</pre></p>
- * <p>
- * fsm ではなく、導出されたクラスに保持することにしたので、fsm という名前
- * は使わず psm のサフィックスを使った。</p>
- * $Id: psm-opt.h,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+ * This files provides helper macros for negotiating configuration options.
+ *<p>Example:<pre>
+ *  struct lcp {
+ *	struct {
+ *	    uint8_t	pfc;	// bit flags for LCP PFC option
+ *	    uint8_t	acfc;	// bit flags for LCP ACFC option
+ *	} opt;
+ *  }
+ * if (psm_opt_is_accepted(lcp, pfc)) {
+ *	// We've accepted "Protocol Field Compression" option.
+ * }
+ * // Mark peer rejects "Address and Control Field Compression" option.
+ * psm_peer_opt_set_reject(lcp, acfc, true)
+ * </pre></p>
+ * $Id: psm-opt.h,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
  */
 
 #define	PSM_OPT_REQUEST_OURS		0x01

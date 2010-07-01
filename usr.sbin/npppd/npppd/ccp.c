@@ -24,12 +24,9 @@
  * SUCH DAMAGE.
  */
 /**@file
- * CCP - Compression Control Protocol
- * <p>
- * 対応するオプション
- * <pre>
- *	- MPPE</pre></p>
- * $Id: ccp.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+ * This file provides functions for CCP (Compression Control Protocol).
+ * MPPE is supported as a CCP option.
+ * $Id: ccp.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -84,9 +81,7 @@ static struct fsm_callbacks ccp_callbacks = {
 	.proto_name	= "ccp",
 };
 
-/**
- * ccp コンテキストを初期化します。
- */
+/** Initialize the context for ccp */
 void
 ccp_init(ccp *_this, npppd_ppp *ppp)
 {
@@ -98,7 +93,6 @@ ccp_init(ccp *_this, npppd_ppp *ppp)
 	_this->fsm.ppp = ppp;
 
 	fsm_init(&_this->fsm);
-	//_this->fsm.flags |= OPT_SILENT;
 
 	PPP_FSM_CONFIG(&_this->fsm, timeouttime,	"ccp.timeout");
 	PPP_FSM_CONFIG(&_this->fsm, maxconfreqtransmits,"ccp.max_configure");
@@ -106,9 +100,7 @@ ccp_init(ccp *_this, npppd_ppp *ppp)
 	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,	"ccp.max_nak_loop");
 }
 
-/**
- * Request Command Interpreter。
- */
+/** Request Command Interpreter */
 static int
 ccp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 {
@@ -141,13 +133,13 @@ ccp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 		GETCHAR(type, pktp);
 		GETCHAR(len, pktp);
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 #ifdef USE_NPPPD_MPPE
 		case CCP_MPPE:
 			if (len < 6)
-				goto reigai;
+				goto fail;
 
 			if (ppp->mppe.enabled == 0)
 				goto reject;
@@ -159,7 +151,7 @@ ccp_reqci(fsm *f, u_char *pktp, int *lpktp, int reject_if_disagree)
 					goto reject;
 				}
 				if (lrej > 0) {
-				/* reject があれば、Rej するので Nak しない */
+				/* don't nak because we are doing rej */
 				} else {
 					PUTCHAR(type, nakbuf);
 					PUTCHAR(6, nakbuf);
@@ -180,7 +172,7 @@ reject:
 		}
 		continue;
 	}
-reigai:
+fail:
 	switch (rcode) {
 	case CONFREJ:
 		memcpy(pktp0, rejbuf, lrej);
@@ -234,7 +226,7 @@ ccp_resetci(fsm *f)
 	if (f->ppp->mppe_started == 0)
 		f->ppp->ccp.mppe_o_bits =
 		    mppe_create_our_bits(&f->ppp->mppe, 0);
-	/* 開始していたらリセットはしない */
+	/* don't reset if the ccp is started. */
 #endif
 }
 
@@ -244,9 +236,7 @@ ccp_cilen(fsm *f)
 	return f->ppp->mru;
 }
 
-/**
- * ConfReq を作ります。
- */
+/** Create a Confugre-Request */
 static void
 ccp_addci(fsm *f, u_char *pktp, int *lpktp)
 {
@@ -302,32 +292,33 @@ ccp_nackackci(fsm *f, u_char *pktp, int lpkt, int is_nak, int is_rej)
 		GETCHAR(type, pktp);
 		GETCHAR(len, pktp);
 		if (len <= 0 || remlen() + 2 < len)
-			goto reigai;
+			goto fail;
 
 		switch (type) {
 #ifdef USE_NPPPD_MPPE
 		case CCP_MPPE:
 			if (len < 6)
-				goto reigai;
+				goto fail;
 			if (is_rej) {
 				f->ppp->ccp.mppe_rej = 1;
 				return 1;
 			}
 			if (ppp->mppe_started != 0) {
-				// 静かに再送する。
+				/* resend silently */
 				return 1;
 			}
 			GETLONG(peer_bits, pktp);
 			/*
-			 * RTX-1000 で ppp ccp mppe-any すると、
+			 * With Yamaha RTX-1000 that is configured as 
+			 * "ppp ccp mppe-any", 
 			 *
-			 *	IDGW ConfReq (40,56,128) => RTX
-			 *	IDGW <= (40,128) ConfNAK    RTX
-			 *	IDGW ConfReq (40,56,128) => RTX
-			 *	IDGW <= (40,128) ConfNAK    RTX
-			 *		:
-			 * とお互い譲りすぎ。ConfNak されたら、こちらが提案
-			 * する。
+			 *	npppd ConfReq (40,56,128) => RTX 1000
+			 *	npppd <= (40,128) ConfNAK    RTX 1000
+			 *	npppd ConfReq (40,56,128) => RTX 1000
+			 *	npppd <= (40,128) ConfNAK    RTX 1000
+			 *
+			 * both peers never decide the final bits.  We insist
+			 * the longest bit if our request is nacked.
 			 */
 			our_bits = mppe_create_our_bits(&ppp->mppe, peer_bits);
 			if (peer_bits == our_bits || is_nak) 
@@ -336,11 +327,11 @@ ccp_nackackci(fsm *f, u_char *pktp, int lpkt, int is_nak, int is_rej)
 			break;
 #endif
 		default:
-			goto reigai;
+			goto fail;
 		}
 	}
 	return 1;
-reigai:
+fail:
 	return 0;
 }
 
@@ -357,8 +348,10 @@ ccp_ext(fsm *f, int code, int id, u_char *pktp, int lpktp)
 		mppe_recv_ccp_reset(&f->ppp->mppe);
 #endif
 		/*
-		 * RFC 3078 では、Reset Ack 不要とは書いていないが、送信する
-		 * と Windows が Code Reject を返すので、送信しない。
+		 * RFC 3078 says MPPE can be synchronized without Reset-Ack,
+		 * but it doesn't tell about necessity of Reset-Ack.  But
+		 * in fact, windows peer will complain Reset-Ack with
+		 * Code-Reject.  So we don't send Reset-Ack.
 		 */
 		return 1;
 	case RESET_ACK:

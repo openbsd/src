@@ -23,9 +23,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* 
- * idsrv/idradiusd より。
- */
 #pragma pack(1)
 
 struct RADIUS_CHAP_PASSWORD {
@@ -55,10 +52,11 @@ struct RADIUS_MS_CHAP2_SUCCESS {
 
 struct RADIUS_MPPE_KEY {
 	char salt[2];
-	char key[253]; /*
-			* key は RFC では 16 * n byteの長さ, 
-			* ここでは salt + key = 255 byte (radius attribute サイズ)
-			*/ 
+	char key[253];	
+	/*
+	 * XXX: Having maximum size for RADIUS attribute is required to prevent
+	 * XXX: oveflow by radius_get_vs_raw_attr().
+	 */
 };
 
 struct RADIUS_MS_CHAP2_ERROR {

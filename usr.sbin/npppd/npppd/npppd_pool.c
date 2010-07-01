@@ -80,9 +80,9 @@ static int  npppd_pool_regist_radish(npppd_pool *, struct in_addr_range *,
 
 
 /***********************************************************************
- * npppd_pool オブジェクト操作
+ * npppd_pool object management
  ***********************************************************************/
-/** npppd_poll を初期化します */
+/** Initialize npppd_poll. */
 int
 npppd_pool_init(npppd_pool *_this, npppd *base, const char *name)
 {
@@ -97,20 +97,20 @@ npppd_pool_init(npppd_pool *_this, npppd *base, const char *name)
 	return 0;
 }
 
-/** npppd_pool の使用を開始します */
+/** Start to use npppd_pool. */
 int
 npppd_pool_start(npppd_pool *_this)
 {
-	return 0;	//  やることなし。
+	return 0;	/* nothing to do */
 }
 
-/* 設定テンプレート展開 */;
+/* expand config template */;
 NAMED_PREFIX_CONFIG_DECL(npppd_pool_config, npppd_pool, npppd->properties,
     "pool", label);
 NAMED_PREFIX_CONFIG_FUNCTIONS(npppd_pool_config, npppd_pool, npppd->properties,
     "pool", label);
 
-/** npppd_poll を終了化します */
+/** Finalize npppd_poll. */
 void
 npppd_pool_uninit(npppd_pool *_this)
 {
@@ -124,7 +124,7 @@ npppd_pool_uninit(npppd_pool *_this)
 	_this->npppd = NULL;
 }
 
-/** 設定を再読み込みします。*/
+/** Reload configuration. */
 int
 npppd_pool_reload(npppd_pool *_this)
 {
@@ -144,32 +144,32 @@ npppd_pool_reload(npppd_pool *_this)
 		val = _this->label;
 	strlcpy(_this->name, val, sizeof(_this->name));
 
-	/* 動的アドレスプール */
+	/* dynamic address pool */
 	val0 = NULL;
 	val = npppd_pool_config_str(_this, "dyna_pool");
 	if (val != NULL) {
 		if (in_addr_range_list_add_all(&dyna_pool, val) != 0) {
 			npppd_pool_log(_this, LOG_WARNING,
 			    "parse error at 'dyna_pool': %s", val);
-			goto reigai;
+			goto fail;
 		}
 		val0 = val;
 	}
 
-	/* 固定アドレスプール */
+	/* static address pool */
 	val = npppd_pool_config_str(_this, "pool");
 	if (val != NULL) {
 		if (in_addr_range_list_add_all(&pool, val) != 0) {
 			npppd_pool_log(_this, LOG_WARNING,
 			    "parse error at 'pool': %s", val);
-			goto reigai;
+			goto fail;
 		}
 		if (val0 != NULL)
 			/* Aggregate */
 			in_addr_range_list_add_all(&pool, val0);
 	}
 
-	/* RADISH 登録準備 */
+	/* preparing to register address with RADISH. */
 	addrs_size = 0;
 	for (range = dyna_pool; range != NULL; range = range->next)
 		addrs_size++;
@@ -178,17 +178,17 @@ npppd_pool_reload(npppd_pool *_this)
 	
 	if ((addrs = calloc(addrs_size + 1, sizeof(struct sockaddr_npppd)))
 	    == NULL) {
-		/* +1 しているのは calloc(0) を回避するため */
+		/* addr_size + 1 because of avoiding calloc(0). */
 		npppd_pool_log(_this, LOG_WARNING,
 		    "calloc() failed in %s: %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 
-	/* 動的プール => RADISH 登録 */
+	/* Register dynamic pool address with RADISH. */
 	count = 0;
 	for (i = 0, range = dyna_pool; range != NULL; range = range->next, i++){
 		if (npppd_pool_regist_radish(_this, range, &addrs[count], 1))
-			goto reigai;
+			goto fail;
 		if (count == 0)
 			strlcat(buf0, "dyn_pool=[", sizeof(buf0));
 		else
@@ -201,10 +201,10 @@ npppd_pool_reload(npppd_pool *_this)
 	if (i > 0)
 		strlcat(buf0, "] ", sizeof(buf0));
 
-	/* 固定プール => RADISH 登録 */
+	/* Register static pool address with RADISH. */
 	for (i = 0, range = pool; range != NULL; range = range->next, i++) {
 		if (npppd_pool_regist_radish(_this, range, &addrs[count], 0))
-			goto reigai;
+			goto fail;
 		if (i == 0)
 			strlcat(buf0, "pool=[", sizeof(buf0));
 		else
@@ -242,7 +242,7 @@ npppd_pool_reload(npppd_pool *_this)
 	in_addr_range_list_remove_all(&dyna_pool);
 
 	return 0;
-reigai:
+fail:
 	in_addr_range_list_remove_all(&pool);
 	in_addr_range_list_remove_all(&dyna_pool);
 
@@ -281,14 +281,14 @@ npppd_pool_regist_radish(npppd_pool *_this, struct in_addr_range *range,
 	if ((snp0 = rd_lookup(SA(&sin4a), SA(&sin4b),
 	    _this->npppd->rd)) != NULL) {
 		/*
-		 * radish ツリーは、初期化直後で POOL のエントリしかないことを
-		 * 仮定。
+		 * Immediately after the radish tree is initialized,
+		 * assuming that it has only POOL entry.
 		 */
 		NPPPD_POOL_ASSERT(snp0->snp_type != SNP_PPP);
 		npool0 = snp0->snp_data_ptr;
 
 		if (!is_dynamic && npool0 == _this)
-			/* 動的アドレスとして登録済 */
+			/* Already registered as dynamic pool address. */
 			return 0;
 
 		npppd_pool_log(_this, LOG_WARNING,
@@ -296,7 +296,7 @@ npppd_pool_regist_radish(npppd_pool *_this, struct in_addr_range *range,
 		    A(range->addr), netmask2prefixlen(range->mask),
 		    npool0->name, (snp0->snp_type == SNP_POOL)
 			? "static" : "dynamic");
-		goto reigai;
+		goto fail;
 	}
 	if ((rval = rd_insert(SA(&sin4a), SA(&sin4b), _this->npppd->rd,
 	    snp)) != 0) {
@@ -304,11 +304,11 @@ npppd_pool_regist_radish(npppd_pool *_this, struct in_addr_range *range,
 		npppd_pool_log(_this, LOG_WARNING,
 		    "rd_insert(%d.%d.%d.%d/%d) failed: %m",
 		    A(range->addr), netmask2prefixlen(range->mask));
-		goto reigai;
+		goto fail;
 	}
 
 	return 0;
-reigai:
+fail:
 	return 1;
 
 }
@@ -316,7 +316,7 @@ reigai:
 /***********************************************************************
  * API
  ***********************************************************************/
-/** 動的アドレスを割り当てます */
+/** Assign dynamic pool address. */
 uint32_t
 npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 {
@@ -336,12 +336,12 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 		result = slist_itr_next(&_this->dyna_addrs);
 		if (result == NULL)
 			break;
-		/* シャッフル */
+		/* shuffle */
 		if ((uint32_t)result == SHUFLLE_MARK) {
 			/*
-			 * 使えるアドレスが無くなると length > 1 でも、
-			 * shuffle を連続してツモる。2回ツモったら、
-			 * つまり使えるアドレスがない。
+			 * In case of no address to use,
+			 * keep suffling and get address if length > 1.
+			 * If succeed to get address twice, it means no address to use.
 			 */
 			if (shuffle_cnt++ > 0) {
 				result = NULL;
@@ -359,30 +359,29 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 		switch (npppd_pool_get_assignability(_this, (uint32_t)result,
 		    0xffffffffL, &snp)) {
 		case ADDRESS_OK:
-			/* 成功するのはココだけ。 */
+			/* only succeed here */
 			return (uint32_t)result;
 		default:
-			/* インタフェースのアドレスだった場合 */
+			/* In case that the pool address is same as interface address, */
 			/*
-			 * リストから削除しているので、インタフェースのアドレ
-			 * スだけを再変更すると、アドレスをリークしていく問題
-			 * があるが、現実装では、アドレスだけを変更していくこ
-			 * とはないので問題ない。運用上も、プールを変更せず、
-			 * tunnel-end-address だけを変更していく、というのは、
-			 * 定常的に発生するとは考えづらい。
+			 * Because the pool address is deleted from the list,
+			 * It has issue of address leak when interface address is changed.
+			 * But it will make no problem because there is no situation that
+			 * changing the pool address only in current implementation.
+			 * In opration, It is hard to assume that the pool address is not
+			 * changed and the tunnel-end-address is changed periodically.
 			 */
 			continue;
 		case ADDRESS_BUSY:
 			sin4.sin_addr.s_addr = htonl((uint32_t)result);
 			/*
-			 * 設定再読み込みにより、アクティブな PPP セッションが
-			 * リセットされた
+			 * Because of reloading configuration, reset active PPP session.
 			 */
 			NPPPD_POOL_ASSERT(snp != NULL);
 			NPPPD_POOL_ASSERT(snp->snp_type == SNP_PPP);
 			ppp0 = snp->snp_data_ptr;
 			ppp0->assigned_pool = _this;
-			ppp0->assign_dynapool = 1;	/* 返却よろしく */
+			ppp0->assign_dynapool = 1;	/* need to return */
 			continue;
 		}
 		break;
@@ -404,7 +403,7 @@ npppd_is_ifcace_ip4addr(npppd *_this, uint32_t ip4addr)
 	return 0;
 }
 
-/** IPアドレスを割り当てます */
+/** Assign IP address. */
 int
 npppd_pool_assign_ip(npppd_pool *_this, npppd_ppp *ppp)
 {
@@ -422,7 +421,7 @@ npppd_pool_assign_ip(npppd_pool *_this, npppd_ppp *ppp)
 
 	ip4 = ntohl(ppp->ppp_framed_ip_address.s_addr);
 
-	/* 動的アドレスリストに含まれたらそこから取り外す。 */
+	/* If the address contains dynamic pool address list, delete it. */
 	slist_itr_first(&_this->dyna_addrs);
 	while (slist_itr_has_next(&_this->dyna_addrs)) {
 		if ((uint32_t)slist_itr_next(
@@ -438,7 +437,7 @@ npppd_pool_assign_ip(npppd_pool *_this, npppd_ppp *ppp)
 
 	if (rd_delete(SA(&addr), SA(&mask), _this->npppd->rd, &rtent) == 0) {
 		snp = rtent;
-		/* 重複エントリあり。プールから PPPへの差し替え */
+		/* It has duplicate address entry. change from pool to PPP. */
 		NPPPD_POOL_ASSERT(snp != NULL);
 		NPPPD_POOL_ASSERT(snp->snp_type != SNP_PPP);
 		ppp->snp.snp_next = snp;
@@ -460,7 +459,7 @@ npppd_pool_assign_ip(npppd_pool *_this, npppd_ppp *ppp)
 	return 0;
 }
 
-/** IPアドレスを解放します */
+/** Release IP address. */
 void
 npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 {
@@ -475,7 +474,10 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 		.sin_len = sizeof(struct sockaddr_in),
 	};
 
-	/* _this == NULL 設定変更によりプールは解放された */
+	/*
+	 * _this == NULL the pool address is released becaus of changing 
+	 * configuration.
+	 */
 	if (!ppp_ip_assigned(ppp))
 		return;
 
@@ -493,14 +495,14 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 	snp = item;
 
 	if (_this != NULL && ppp->assign_dynapool != 0)
-		/* 動的リストに返却 */
+		/* return to dynamic address pool list */
 		slist_add(&((npppd_pool *)ppp->assigned_pool)->dyna_addrs, 
 		    (void *)ntohl(ppp->ppp_framed_ip_address.s_addr));
 
 	if (snp != NULL && snp->snp_next != NULL) {
 		/*
-		 * radish エントリがリストになっていて、アドレス/マスクが
-		 * 一致していれば、次のエントリを再登録。
+		 * Radish entry is registered to list, if address/mask of
+		 * this entry and the next is the same, the next is registered again.
 		 */
 		if (rd_insert(SA(&addr), SA(&mask), ppp->pppd->rd,
 		    snp->snp_next) != 0) {
@@ -518,10 +520,10 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 }
 
 /**
- * 指定したアドレスが割り当て可能かどうか。
- * @return {@link ::#ADDRESS_OK}、{@link ::#ADDRESS_RESERVED}、
- * {@link ::#ADDRESS_BUSY}、{@link ::#ADDRESS_INVALID} もしくは
- * {@link ::#ADDRESS_OUT_OF_POOL} が返ります。
+ * Check if specified address is assignable.
+ * @return {@link ::#ADDRESS_OK} or {@link ::#ADDRESS_RESERVED} or
+ * {@link ::#ADDRESS_BUSY} or {@link ::#ADDRESS_INVALID}  or
+ * {@link ::#ADDRESS_OUT_OF_POOL}
  */
 int
 npppd_pool_get_assignability(npppd_pool *_this, uint32_t ip4addr,
@@ -548,7 +550,7 @@ npppd_pool_get_assignability(npppd_pool *_this, uint32_t ip4addr,
 
 	if (npppd_is_ifcace_ip4addr(_this->npppd, sin4.sin_addr.s_addr))
 		return ADDRESS_RESERVED;
-		/* インタフェースのアドレスは割り振らない */
+		/* Not to assign interface address */
 
 	if (rd_match(SA(&sin4), _this->npppd->rd, &radish)) {
 		do {
@@ -574,17 +576,18 @@ npppd_pool_get_assignability(npppd_pool *_this, uint32_t ip4addr,
 	return ADDRESS_OUT_OF_POOL;
 }
 /***********************************************************************
- * 雑多
+ * miscellaneous functions
  ***********************************************************************/
 /**
- * ホストアドレスとして正しいか。
+ * Check if valid host address.
  * <pre>
- * ナチュラルマスクのブロードキャストアドレスをホストとして利用すると、
- * いくつか問題があるので「正しくない」とする。問題とは、
- *
- * (1) BSD系は、該当アドレスは転送せず、自分宛として処理する。
- * (2) [IDGW-DEV 4405]『IPアドレスに .255 が割り当てられた Windows マシン
- *     から L2TP/IPsec を利用できない問題』</pre>
+ * There are some issues that it uses host address as broadcast address
+ * in natural mask, so it is not correct.
+ * The issue is as follows:
+ * (1) BSDs treat the following packet as it is not forwarded and
+ *     is received as the packet to myself.
+ * (2) The issue that Windows can't use L2TP/IPsec when Windows is assigned 
+ *     IP address .255.</pre>
  */
 static int
 is_valid_host_address(uint32_t addr)
@@ -602,7 +605,7 @@ is_valid_host_address(uint32_t addr)
 	return 0;
 }
 
-/** このインスタンスに基づいたラベルから始まるログを記録します。 */
+/** Record log that begins the label based this instance. */
 static int
 npppd_pool_log(npppd_pool *_this, int prio, const char *fmt, ...)
 {
@@ -611,9 +614,8 @@ npppd_pool_log(npppd_pool *_this, int prio, const char *fmt, ...)
 	va_list ap;
 
 	/*
-	 * npppd_pool_release_ip は _this == NULL で呼ばれるので
-	 * NPPPD_POOL_ASSERT(_this != NULL);
-	 * できない
+	 * npppd_pool_release_ip is called as _this == NULL,
+	 * so it can't NPPPD_POOL_ASSERT(_this != NULL).
 	 */
 	va_start(ap, fmt);
 	snprintf(logbuf, sizeof(logbuf), "pool name=%s %s", 

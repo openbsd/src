@@ -1,3 +1,4 @@
+/* $OpenBSD: config_helper.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,11 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: config_helper.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
-/**@file コンフィグヘルパ。
- * <p>
- * しています。</p>
- */
+/* $Id: config_helper.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,9 +37,9 @@
 #define	KEYBUFSZ	512
 
 /**
- * コンフィグキーを作成するための文字列連結
- * (("prefix", "suffix") => "prefix.suffix") を、行います。内部で固定のバッファ
- * 領域を返します。
+ * This function concatenates given prefix and the give suffix for making
+ * configuration key (("prefix", "suffix") => "prefix.suffix").  The string
+ * returned by this function resides in a static memory area.
  */
 const char *
 config_key_prefix(const char *prefix, const char *suffix)
@@ -57,11 +54,12 @@ config_key_prefix(const char *prefix, const char *suffix)
 }
 
 /**
- * 設定を文字列で返します。
- *
- * @param   _this   {@link ::properties}へのポインタ。
- * @param   confKey 設定ファイルの設定項目名
- * @return  設定値。設定が存在しない場合には NULL が返ります。
+ * Retrieve the configuration value as a 'string' that is specified by
+ * given configuration key.
+ * @param   _this   The pointer to {@link ::properties}
+ * @param   confKey configuration key name.
+ * @return pointer to the configuration value.  If no configuration value
+ * exists then it returns NULL.
  */
 const char *
 config_str(struct properties *_this, const char *confKey)
@@ -72,11 +70,12 @@ config_str(struct properties *_this, const char *confKey)
 }
 
 /**
- * 設定を int で返します。
- *
- * @param   _this   	{@link ::properties}へのポインタ。
- * @param   confKey 	設定ファイルの設定項目名
- * @param   defValue	設定が省略されている場合のデフォルトの値
+ * Retrieve the configuration value as a 'int' that is specified by
+ * given configuration key.
+ * @param   _this   The pointer to {@link ::properties}
+ * @param   confKey configuration key name.
+ * @param   defValue	The default value.  This function will return this
+ * value in case no configuration exists
  */
 int
 config_int(struct properties *_this, const char *confKey, int defValue)
@@ -92,19 +91,19 @@ config_int(struct properties *_this, const char *confKey, int defValue)
 	x = sscanf(val, "%d", &rval);
 
 	if (x != 1)
-		/* 関数のインタフェースを変更して、エラーは区別すべきかも */
 		return defValue;
 
 	return rval;
 }
 
 /**
- * 設定があたえられた文字列と一致するかどうかを返します。
- *
- * @param   _this   	{@link ::properties}へのポインタ。
- * @param   confKey 	設定ファイルの設定項目名
- * @param   defValue	設定が省略されている場合のデフォルトの値
- * @return  一致する場合には 1、一致しない場合には 0 が返ります。
+ * Checks whether the configuration value equals given string.
+ * @param   _this   The pointer to {@link ::properties}
+ * @param   confKey configuration key name.
+ * @param   defValue	The default value.  This function will return this
+ * value in case no configuration exists
+ * @return  return 1 if given string matches the configuration value,
+ * otherwise return 0.
  */
 int
 config_str_equal(struct properties *_this, const char *confKey,
@@ -121,13 +120,14 @@ config_str_equal(struct properties *_this, const char *confKey,
 }
 
 /**
- * 設定があたえられた文字列と一致するかどうかを返します。ASCII 文字の
- * 大文字小文字は無視します。
- *
- * @param   _this   	{@link ::properties}へのポインタ。
- * @param   confKey 	設定ファイルの設定項目名
- * @param   defValue	設定が省略されている場合のデフォルトの値
- * @return  一致する場合には 1、一致しない場合には 0 が返ります。
+ * Checks whether the configuration value equals given string ignoring
+ * case.
+ * @param   _this   The pointer to {@link ::properties}
+ * @param   confKey configuration key name.
+ * @param   defValue	The default value.  This function will return this
+ * value in case no configuration exists
+ * @return  return 1 if given string equals the configuration value,
+ * otherwise return 0.
  */
 int
 config_str_equali(struct properties *_this, const char *confKey,
@@ -144,25 +144,29 @@ config_str_equali(struct properties *_this, const char *confKey,
 }
 
 /***********************************************************************
- * 設定項目名に指定したプレフィックスをつけて設定を取得し、設定がなければ
- * プレフィックスなしの設定項目で設定を取得するための関数です。
+ * Following functions are to get configuration value by given
+ * configuration key.  At first the function will try to get the value
+ * by the key with the prefix, if it fails, then it will try to get the
+ * value by the key without the prefix.
  *
- * たとえば
+ * For example, we have following configuration
+ *
+ *	pppoe.service_name: default_service
+ *	PPPoE0.pppoe.service_name: my_service
+ *
+ * calling
+ *
+ *	config_prefixed_str(prop, "PPPoE0", "service_name")
+ *
+ * returns "my_service".  If
+ *
+ *	PPPoE0.pppoe.service_name: my_service
+ *
+ * does not exist, then it returns "default_service".
  * 
- * pppoe.service_name: default_service
- * PPPoE0.pppoe.service_name: my_service
- *
- * という設定があった場合、
- *  config_prefixed_str(prop, "PPPoE0", "service_name")
- * を呼び出すと "my_service" が取得できます。設定に、
- *
- * PPPoE0.pppoe.service_name: my_service
- *
- * がない場合には、"default_service" が取得できます。
- *
- * config_helper.h に定義されている PREFIXED_CONFIG_FUNCTIONS マクロを
- * 使って、プレフィックス部分の指定方法を固定して使うこともできます。
- ***********************************************************************/
+ * Functions that have fixed prefix can be generated by
+ * PREFIXED_CONFIG_FUNCTIONS macro that is defined in config_helper.h.
+ */
 const char  *
 config_prefixed_str(struct properties *_this, const char *prefix, const char *confKey)
 {
@@ -234,24 +238,29 @@ config_prefixed_str_equali(struct properties *_this, const char *prefix,
 }
 
 /***********************************************************************
- * 設定項目名に指定したプレフィックスと指定した名前をつけて設定を取得し、
- * 設定がなければプレフィックスに設定項目で設定を取得するための関数です。
+ * Following functions are to get configuration value by given
+ * configuration key.  At first the function will try to get the value
+ * by the key with the prefix and given label, if it fail, then it will
+ * try to get the value by the key without the label.
  *
- * たとえば
+ * For example, we have following configuration
  * 
- * ipcp.dns_primary: 192.168.0.1
- * ipcp.ipcp0.dns_primary: 192.168.0.2
+ *	ipcp.dns_primary: 192.168.0.1
+ *	ipcp.ipcp0.dns_primary: 192.168.0.2
  *
- * という設定があった場合、
+ * calling
+ *
  *  config_named_prefix_str(prop, "ipcp", "ipcp0", "dns_primary");
- * を呼び出すと "192.168.0.2" が取得できます。設定に、
  *
- * ipcp.ipcp0.dns_primary: 192.168.0.2
+ * will returns "192.168.0.2".  If
  *
- * がない場合には、"192.168.0.1" が取得できます。
+ *	ipcp.ipcp0.dns_primary: 192.168.0.2
  *
- * config_helper.h に定義されている NAMED_PREFIX_CONFIG_FUNCTIONS マクロ
- * を使って、プレフィックス部分の指定方法を固定して使うこともできます。
+ * was not exists, then it returns "default_service".
+ *
+ * Functions that has fixed prefix can be generated by
+ * NAMED_PREFIXED_CONFIG_FUNCTIONS macro that is defined in
+ * config_helper.h.
  ***********************************************************************/
 const char  *
 config_named_prefix_str(struct properties *_this, const char *prefix,

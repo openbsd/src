@@ -26,60 +26,51 @@
 #ifndef	RADIUS_REQ_H
 #define	RADIUS_REQ_H 1
 
-/** RADIUS 共有秘密鍵の最大長 */
+/** maximum number of length for RADIUS shared secret */
 #define MAX_RADIUS_SECRET				128
 
-/** RADIUS サーバの最大数 */
+/** maximum number of RADIUS server */
 #define MAX_RADIUS_SERVERS				16
 
-/** RADIUS 要求が失敗した */
+/** RADIUS request failed */
 #define	RADIUS_REQUST_ERROR				0x0001
 
-/** RADIUS 要求がタイムアウトした */
+/** RADIUS request timed out */
 #define	RADIUS_REQUST_TIMEOUT				0x0002
 
-/** Authenticator チェックは OK  */
+/** response has valid authenticator */
 #define	RADIUS_REQUST_CHECK_AUTHENTICTOR_OK		0x0010
 
-/** Authenticator チェックはしていない  */
+/** authenticator is not checked */
 #define	RADIUS_REQUST_CHECK_AUTHENTICTOR_NO_CHECK	0x0020
 
-/** RADIUS 応答を受信するコールバック関数の型 */
+/** type for callback function to receive the RADIUS response */
 typedef void (radius_response)(void *context, RADIUS_PACKET *pkt, int flags);
 
-/** RADIUS 要求/応答を行うためのコンテキストを示す型 */
+/** type for context to handle RADIUS request / response */
 typedef void * RADIUS_REQUEST_CTX;
 
-/** RADIUS 要求の設定を示す型 */
+/** type for setting of RADIUS request */
 typedef struct _radius_req_setting 
 {
-	/** サーバ配列 */
+	/** RADIUS Servers */
 	struct {
+		/** Server's address */
 		union {
-			/** サーバの IPv6 アドレス */
-			struct sockaddr_in6 sin6;
-			/** サーバの IPv4 アドレス */
-			struct sockaddr_in sin4;
-		}	/** サーバのアドレス */ peer;
+			struct sockaddr_in6	sin6;
+			struct sockaddr_in	sin4;
+		} peer;
+		/** Our address */
 		union {
-			/** サーバの IPv6 アドレス */
-			struct sockaddr_in6 sin6;
-			/** サーバの IPv4 アドレス */
-			struct sockaddr_in sin4;
-		}	/** サーバのアドレス */ sock;
+			struct sockaddr_in6	sin6;
+			struct sockaddr_in	sin4;
+		} sock;
 		char	secret[MAX_RADIUS_SECRET];
-		/** このアドレスが有効かどうか */
-		int	enabled;
+		int	enabled;	
 	} server[MAX_RADIUS_SERVERS];
-	/**
-	 * 現在使用しているサーバのインデックス。
-	 * <p>
-	 * これを変更する仕組みは、radius_req.c では実装していません。npppd
-	 * では npppd.c、npppd_auth.c
-	 * あたりで実装しています。</p>
-	 */
+	/** Index of current server */
 	int curr_server;
-	/** リクエストタイムアウト(秒) */
+	/** request timeout(in second) */
 	int timeout;
 } radius_req_setting;
 

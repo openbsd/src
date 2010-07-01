@@ -27,7 +27,7 @@
 #define	PPPOE_H 1
 
 /*
- * プロトコル上の定数 (RFC 2516)
+ * Constant variables and types from PPPoE protocol (RFC 2516)
  */
 #define PPPOE_RFC2516_TYPE	0x01
 #define PPPOE_RFC2516_VER	0x01
@@ -58,7 +58,7 @@
 #define	PPPOE_TAG_AC_SYSTEM_ERROR	0x0202
 #define	PPPOE_TAG_GENERIC_ERROR		0x0203
 
-/** PPPoE ヘッダ */
+/** PPPoE Protocol Header */
 struct pppoe_header {
 #if _BYTE_ORDER == _BIG_ENDIAN
     uint8_t ver:4, type:4;
@@ -70,7 +70,7 @@ struct pppoe_header {
     uint16_t length;
 } __attribute__((__packed__));
 
-/** PPPoE TLV ヘッダ */
+/** PPPoE TLV Header */
 struct pppoe_tlv {
 	uint16_t	type;
 	uint16_t	length;
@@ -78,9 +78,9 @@ struct pppoe_tlv {
 } __attribute__((__packed__));
 
 /*
- * 実装
+ * Constant variables and types for implementions
  */
-/** デフォルトの物理層ラベル */
+/** Default data link layer label */
 #define PPPOED_DEFAULT_LAYER2_LABEL	"PPPoE"
 
 #define	PPPOED_CONFIG_BUFSIZ		65535
@@ -88,14 +88,11 @@ struct pppoe_tlv {
 #define PPPOED_PHY_LABEL_SIZE		16
 
 /*
- * pppoed ステータス
+ * pppoed status
  */
-/** 初期状態 */
-#define	PPPOED_STATE_INIT 		0
-/** 走行中 */
-#define	PPPOED_STATE_RUNNING 		1
-/** 停止j状態 */
-#define	PPPOED_STATE_STOPPED 		2
+#define	PPPOED_STATE_INIT 		0 /** Initial */
+#define	PPPOED_STATE_RUNNING 		1 /** Running */
+#define	PPPOED_STATE_STOPPED 		2 /** Stopped */
 
 #define pppoed_is_stopped(pppoed)	\
 	(((pppoed)->state == PPPOED_STATE_STOPPED)? 1 : 0)
@@ -104,95 +101,86 @@ struct pppoe_tlv {
 
 #define	PPPOED_LISTENER_INVALID_INDEX	UINT16_MAX
 
-/** PPPoE デーモン待ち受け型 */
+/** PPPoE listener type */
 typedef struct _pppoed_listener {
-	/** bpf(4) デバイスファイルのディスクリプタ */
+	/** Descriptor of bpf(4) */
 	int bpf;
-	/** bpf 用のイベントコンテキスト */
+	/** Context of event(3) for the descriptor of bpf(4) */
 	struct event ev_bpf;
-	/** PPPoE デーモン自身 */
+	/** Pointer to base PPPoE daemon */
 	struct _pppoed *self;
-	/** イーサネットアドレス */
+	/** Ethernet address */
 	u_char	ether_addr[ETHER_ADDR_LEN];
-	/** インデックス番号 */
+	/** Listener index numbered  by the base PPPoE daemon */
 	uint16_t	index;
-	/** 待ち受けるインタフェース名 */
+	/** Listening interface name */
 	char	listen_ifname[IF_NAMESIZE];
-	/** 物理層のラベル */
+	/** Label of physcal layer */
 	char	phy_label[PPPOED_PHY_LABEL_SIZE];
 } pppoed_listener;
 
-/** PPPoE デーモンを示す型です。*/
+/** PPPoE daemon type */
 typedef struct _pppoed {
-	/** PPPoE デーモンの Id */
+	/** PPPoE daemon Id */
 	int id;
-	/** 待ち受けリスト */
+	/** List of {@link pppoed_listener} */
 	slist listener;
-	/** このデーモンの状態 */
+	/** Status of this daemon */
 	int state;
-	/** タイムアウトイベント **/
 
-	/** セッション番号 => pppoe_session のハッシュマップ */
+	/** Hashmap that maps from session number to {@link pppoe_session} */
 	hash_table	*session_hash;
-	/** 空きセッション番号リスト */
+	/** List of free session numbers */
 	slist	session_free_list;
 
-	/** クッキー所持セッションのハッシュマップ */
+	/** Hashmap that contains uniq cookie value */
 	hash_table	*acookie_hash;
-	/** 次のクッキー番号 */
+	/** Next cookie number */
 	uint32_t	acookie_next;
 
-	/** 設定プロパティ */
+	/** Configuration {@link struct properties properties} */
 	struct properties *config;
 
-	/** フラグ */
+	/** Flags */
 	uint32_t
 	    desc_in_pktdump:1,
 	    desc_out_pktdump:1,
 	    session_in_pktdump:1,
 	    session_out_pktdump:1,
 	    listen_incomplete:1,
-	    /* phy_label_with_ifname:1,	PPPoE は不要 */
 	    reserved:27;
 } pppoed;
 
-/** PPPoE セッションを示す型です */
+/** PPPoE session type */
 typedef struct _pppoe_session {
+	/** State of this session */
 	int 		state;
-	/** 親 PPPoE デーモン */
+	/** Pointer to base {@link pppoed *} PPPoE daemon */
 	pppoed		*pppoed;
-	/** PPP コンテキスト */
+	/** Pointer to the PPP context */
 	void 		*ppp;
-	/** セッション Id */
+	/** Session id */
 	int		session_id;
-	/** クッキー番号 */
+	/** Cookie number */
 	int		acookie;
-	/** 対抗のイーサネットアドレス */
+	/** Peer ethernet address */
 	u_char 		ether_addr[ETHER_ADDR_LEN];
-	/** リスナインデックス */
+	/** Index of listener */
 	uint16_t	listener_index;
-	/** イーサヘッダキャッシュ */
+	/** Cache for ethernet frame header */
 	struct ether_header ehdr;
-
-	/** echo の送信間隔(秒) */
-	int lcp_echo_interval;
-	/** echo の最大連続失敗回数 */
-	int lcp_echo_max_failure;
-
-	/** 終了処理のための event コンテキスト */
+	int lcp_echo_interval;			/* XXX can remove */
+	int lcp_echo_max_failure;		/* XXX can remove */
+	/** Context of event(3) for disposing */
 	struct event ev_disposing;
 } pppoe_session;
 
-/** pppoe_session の状態が初期状態であることを示す定数です */
-#define	PPPOE_SESSION_STATE_INIT		0
+#define	PPPOE_SESSION_STATE_INIT		0 /** Inital */
+#define	PPPOE_SESSION_STATE_RUNNING		1 /** Running */
+#define	PPPOE_SESSION_STATE_DISPOSING		2 /** Disposing */
 
-/** pppoe_session の状態が走行状態であることを示す定数です */
-#define	PPPOE_SESSION_STATE_RUNNING		1
-
-/** pppoe_session の状態が終了中であることを示す定数です */
-#define	PPPOE_SESSION_STATE_DISPOSING		2
-
-#define	pppoed_need_polling(pppoed)	(((pppoed)->listen_incomplete != 0)? 1 : 0)
+#define	pppoed_need_polling(pppoed)	\
+    (((pppoed)->listen_incomplete != 0)? 1 : 0)
 
 #ifdef __cplusplus
 extern "C" {

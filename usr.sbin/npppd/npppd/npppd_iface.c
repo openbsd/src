@@ -23,10 +23,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /**@file
- * npppd がカーネルとインタフェースするためのインタフェース。NetBSD の
- * tun(4) や SEIL の pppac(4) を利用するための実装です。
+ * The interface of npppd and kernel.
+ * This is an implementation to use tun(4).
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,7 @@ static int npppd_iface_pipex_disable(npppd_iface *_this);
 #endif /* USE_NPPPD_PIPEX */
 
 
-/** npppd_iface の初期化 */
+/** initialize npppd_iface */
 void
 npppd_iface_init(npppd_iface *_this, const char *ifname)
 {
@@ -123,7 +123,7 @@ npppd_iface_setup_ip(npppd_iface *_this)
 	changed = 0;
 	memset(&ifr, 0, sizeof(ifr));
 
-	/* インタフェースに割り当てられたアドレスを取得 */
+	/* get address which was assigned to interface */
 	assigned.s_addr = INADDR_NONE;
 	memset(&ifr, 0, sizeof(ifr));
 	memset(&ifra, 0, sizeof(ifra));
@@ -134,13 +134,13 @@ npppd_iface_setup_ip(npppd_iface *_this)
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		npppd_iface_log(_this, LOG_ERR,
 		    "socket() failed in %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 	if (ioctl(sock, SIOCGIFADDR, &ifr) != 0) {
 		if (errno != EADDRNOTAVAIL) {
 			npppd_iface_log(_this, LOG_ERR,
 			    "get ip address failed: %m");
-			goto reigai;
+			goto fail;
 		}
 		assigned.s_addr = 0;
 	} else
@@ -153,7 +153,7 @@ npppd_iface_setup_ip(npppd_iface *_this)
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) != 0) {
 		npppd_iface_log(_this, LOG_ERR,
 		    "ioctl(,SIOCGIFFLAGS) failed: %m");
-		goto reigai;
+		goto fail;
 	}
 	if_flags = ifr.ifr_flags;
 
@@ -165,7 +165,7 @@ npppd_iface_setup_ip(npppd_iface *_this)
 				npppd_iface_log(_this, LOG_ERR,
 				    "delete ipaddress %s failed: %m",
 				    _this->ifname);
-				goto reigai;
+				goto fail;
 			}
 			if (ioctl(sock, SIOCGIFADDR, &ifr) != 0) {
 				if (errno == EADDRNOTAVAIL)
@@ -173,7 +173,7 @@ npppd_iface_setup_ip(npppd_iface *_this)
 				npppd_iface_log(_this, LOG_ERR,
 				    "cannot get ipaddress %s failed: %m",
 				    _this->ifname);
-				goto reigai;
+				goto fail;
 			}
 		} while (1);
 
@@ -183,7 +183,7 @@ npppd_iface_setup_ip(npppd_iface *_this)
 		if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
 			npppd_iface_log(_this, LOG_ERR,
 			    "disabling %s failed: %m", _this->ifname);
-			goto reigai;
+			goto fail;
 		}
 
 		sin0 = (struct sockaddr_in *)&ifra.ifra_addr;
@@ -203,11 +203,11 @@ npppd_iface_setup_ip(npppd_iface *_this)
 
 		if (ioctl(sock, SIOCAIFADDR, &ifra) != 0 && errno != EEXIST) {
 		/*
-		 * alias リクエストなので EEXIST?
+		 * alias request, so EEXIST?
 		 */
 			npppd_iface_log(_this, LOG_ERR,
 			    "Cannot assign tun device ip address: %m");
-			goto reigai;
+			goto fail;
 		}
 		assigned.s_addr = _this->ip4addr.s_addr;
 
@@ -216,8 +216,7 @@ npppd_iface_setup_ip(npppd_iface *_this)
 	if (npppd_iface_ip_is_ready(_this)) {
 		if (changed) {
 			/*
-			 * I/F アドレスを使っている PPPセッションがあったら、
-			 * 切断する。
+			 * If there is a PPP session which was assigned interface IP address, disconnect it.
 			 */
 			ppp = npppd_get_ppp_by_ip(_this->npppd, _this->ip4addr);
 			if (ppp != NULL) {
@@ -233,11 +232,10 @@ npppd_iface_setup_ip(npppd_iface *_this)
 		if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
 			npppd_iface_log(_this, LOG_ERR,
 			    "enabling %s failed: %m", _this->ifname);
-			goto reigai;
+			goto fail;
 		}
 		/*
-		 * ホスト自身からの _this->ip4addr への通信ができるように、
-		 * 経路追加。
+		 * Add routing entry to communicate from host itself to _this->ip4addr.
 		 */
 		gw.s_addr = htonl(INADDR_LOOPBACK);
 		in_host_route_add(&_this->ip4addr, &gw, LOOPBACK_IFNAME, 0);
@@ -245,14 +243,14 @@ npppd_iface_setup_ip(npppd_iface *_this)
 	close(sock); sock = -1;
 
 	return 0;
-reigai:
+fail:
 	if (sock >= 0)
 		close(sock);
 
 	return 1;
 }
 
-/** トンネルエンドアドレスの設定 */
+/** set tunnel end address */
 int
 npppd_iface_reinit(npppd_iface *_this)
 {
@@ -278,7 +276,7 @@ npppd_iface_reinit(npppd_iface *_this)
 	return 0;
 }
 
-/** npppd_iface の開始 */
+/** start npppd_iface */
 int
 npppd_iface_start(npppd_iface *_this)
 {
@@ -287,18 +285,18 @@ npppd_iface_start(npppd_iface *_this)
 
 	NPPPD_IFACE_ASSERT(_this != NULL);
 
-	/* デバイスファイルオープン */
+	/* open device file */
 	snprintf(buf, sizeof(buf), "/dev/%s", _this->ifname);
 	if ((_this->devf = open(buf, O_RDWR, 0600)) < 0) {
 		npppd_iface_log(_this, LOG_ERR, "open(%s) failed: %m", buf);
-		goto reigai;
+		goto fail;
 	}
 
 	x = 1;
 	if (ioctl(_this->devf, FIONBIO, &x) != 0) {
 		npppd_iface_log(_this, LOG_ERR,
 		    "ioctl(FIONBIO) failed in %s(): %m", __func__);
-		goto reigai;
+		goto fail;
 	}
 
 	x = IFF_BROADCAST;
@@ -306,7 +304,7 @@ npppd_iface_start(npppd_iface *_this)
 		npppd_iface_log(_this, LOG_ERR,
 		    "ioctl(TUNSIFMODE=IFF_BROADCAST) failed in %s(): %m",
 			__func__);
-		goto reigai;
+		goto fail;
 	}
 
 	event_set(&_this->ev, _this->devf, EV_READ | EV_PERSIST,
@@ -314,7 +312,7 @@ npppd_iface_start(npppd_iface *_this)
 	event_add(&_this->ev, NULL);
 
 	if (npppd_iface_setup_ip(_this) != 0)
-		goto reigai;
+		goto fail;
 
 #ifdef USE_NPPPD_PIPEX
 	if (npppd_iface_pipex_enable(_this) != 0) {
@@ -329,7 +327,7 @@ npppd_iface_start(npppd_iface *_this)
 		    : "(not assigned)");
 
 	return 0;
-reigai:
+fail:
 	if (_this->devf >= 0) {
 		event_del(&_this->ev);
 		close(_this->devf);
@@ -339,7 +337,7 @@ reigai:
 	return -1;
 }
 
-/** npppd_iface の利用を停止します。*/
+/** stop to use npppd_iface */
 void
 npppd_iface_stop(npppd_iface *_this)
 {
@@ -362,7 +360,7 @@ npppd_iface_stop(npppd_iface *_this)
 	event_del(&_this->ev);
 }
 
-/** npppd_iface の終了化 */
+/** finalize npppd_iface */
 void
 npppd_iface_fini(npppd_iface *_this)
 {
@@ -373,11 +371,11 @@ npppd_iface_fini(npppd_iface *_this)
 
 
 /***********************************************************************
- * PIPEX 関連
+ * PIPEX related functions
  ***********************************************************************/
 #ifdef USE_NPPPD_PIPEX
 
-/** PPPAC インタフェースの PIPEX を有効化します */
+/** enable PIPEX on PPPAC interface */
 int
 npppd_iface_pipex_enable(npppd_iface *_this)
 {
@@ -386,7 +384,7 @@ npppd_iface_pipex_enable(npppd_iface *_this)
 	return ioctl(_this->devf, PIPEXSMODE, &enable);
 }
 
-/** PPPAC インタフェースの PIPEX を無効化します */
+/** disable PIPEX on PPPAC interface */
 int
 npppd_iface_pipex_disable(npppd_iface *_this)
 {
@@ -399,9 +397,9 @@ npppd_iface_pipex_disable(npppd_iface *_this)
 
 
 /***********************************************************************
- * I/O関連
+ * I/O related functions
  ***********************************************************************/
-/** I/O イベントハンドラ */
+/** I/O event handler */
 static void
 npppd_iface_io_event_handler(int fd, short evtype, void *data)
 {
@@ -434,14 +432,14 @@ npppd_iface_io_event_handler(int fd, short evtype, void *data)
 	return;
 }
 
-/** npppd_iface_network_input_delegate の引数を表す型 */
+/** structure of argument of npppd_iface_network_input_delegate */
 struct npppd_iface_network_input_arg{
 	npppd_iface *_this;
 	u_char *pktp;
 	int lpktp;
 };
 
-/** 個々の PPP についての処理を行うコールバック関数 */
+/** callback function which works for each PPP session */
 static int 
 npppd_iface_network_input_delegate(struct radish *radish, void *args0)
 {
@@ -458,12 +456,12 @@ npppd_iface_network_input_delegate(struct radish *radish, void *args0)
 			return 0;
 #ifdef	USE_NPPPD_MPPE
 		if (MPPE_READY(ppp)) {
-			/* MPPE が開始していれば MPPE 経由で */
+			/* output via MPPE if MPPE started */
 			mppe_pkt_output(&ppp->mppe, PPP_PROTO_IP, args->pktp,
 			    args->lpktp);
 		} else if (MPPE_REQUIRED(ppp)) {
-			/* MPPE 開始してないけど MPPE必須の場合 */
-			/* マルチキャストなのでログには残さない. */
+			/* in case MPPE not started but MPPE is mandatory, */
+			/* it is not necessary to log because of multicast. */
 			return 0;
 		}
 #endif
@@ -496,7 +494,7 @@ npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
 		input_arg._this = _this;
 		input_arg.pktp = pktp;
 		input_arg.lpktp = lpktp;
-		/* デリゲート */
+		/* delegate */
 		rd_walktree(((npppd *)(_this->npppd))->rd,
 		    npppd_iface_network_input_delegate, &input_arg);
 		return;
@@ -520,11 +518,11 @@ npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
 
 #ifdef	USE_NPPPD_MPPE
 	if (MPPE_READY(ppp)) {
-		/* MPPE が開始していれば MPPE 経由で */
+		/* output via MPPE if MPPE started */
 		mppe_pkt_output(&ppp->mppe, PPP_PROTO_IP, pktp, lpktp);
 		return;
 	} else if (MPPE_REQUIRED(ppp)) {
-		/* MPPE 開始してないけど MPPE必須の場合 */
+		/* in case MPPE not started but MPPE is mandatory */
 		ppp_log(ppp, LOG_WARNING, "A packet received from network, "
 		    "but MPPE is not started.");
 		return;
@@ -534,8 +532,8 @@ npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
 }
 
 /**
- * ネットワーク(tun)側 から入力があった場合に呼び出します。現在は IPv4 の
- * パケットが入力されることを仮定しています。
+ * This function is called when an input packet come from network(tun).
+ * Currently, it assumes that it input IPv4 packet.
  */
 static void
 npppd_iface_network_input(npppd_iface *_this, u_char *pktp, int lpktp)
@@ -561,7 +559,7 @@ npppd_iface_network_input(npppd_iface *_this, u_char *pktp, int lpktp)
 	}
 }
 
-/** トンネルデバイスに書き込みます。*/
+/** write to tunnel device */
 void
 npppd_iface_write(npppd_iface *_this, int proto, u_char *pktp, int lpktp)
 {
@@ -586,9 +584,9 @@ npppd_iface_write(npppd_iface *_this, int proto, u_char *pktp, int lpktp)
 }
 
 /***********************************************************************
- * 雑多
+ * misc functions
  ***********************************************************************/
-/** このインスタンスに基づいたラベルから始まるログを記録します。 */
+/** Log it which starts the label based on this instance. */
 static int
 npppd_iface_log(npppd_iface *_this, int prio, const char *fmt, ...)
 {

@@ -77,7 +77,7 @@ dump(slist *l)
 		fprintf(stderr, "\n");
 }
 
-// まんなかに空きの場合に削除系のテスト
+/* Test code for removing of the first, last and middle item. */
 static void
 test_01a()
 {
@@ -99,7 +99,7 @@ test_01a()
 	}						\
     }
 
-	// 先頭要素削除
+	/* Remove the first item. */
 	SETUP();
 	f = 0;
 	while (slist_length(l) > 0) {
@@ -110,7 +110,7 @@ test_01a()
 		}
 	}
 
-	// 最終要素削除
+	/* Remove the last item. */
 	SETUP();
 	while (slist_length(l) > 0) {
 		slist_remove(l, slist_length(l) - 1);
@@ -118,7 +118,7 @@ test_01a()
 			ASSERT((int)slist_get(l, i) == i);
 		}
 	}
-	// 最終要素-1削除
+	/* Remove the second item from the end. */
 	SETUP();
 	while (slist_length(l) > 1) {
 		slist_remove(l, slist_length(l) - 2);
@@ -156,13 +156,13 @@ test_01()
 	ASSERT((int)slist_get(&sl, 254) == 129 + 253);
 	ASSERT((int)slist_length(&sl) == 255);
 
-	//dump(&sl);
-	//printf("==\n");
+	/* dump(&sl); */
+	/* printf("==\n"); */
 	slist_add(&sl, (void *)(128 + 255));
 	ASSERT((int)slist_get(&sl, 127) == 255);
-	//ASSERT((int)slist_get(&sl, 255) == 128 + 255);
+	/* ASSERT((int)slist_get(&sl, 255) == 128 + 255); */
 	ASSERT((int)slist_length(&sl) == 256);
-	//dump(&sl);
+	/* dump(&sl); */
 }
 
 static void
@@ -175,7 +175,7 @@ test_02()
 	slist_init(&sl);
 
 
-	// 内部配置が、左側に 300 個、右側に 211 個になるように配置
+	/* Place 300 items for left side and 211 items for right side. */
 	for (i = 0; i < 511; i++)
 		slist_add(&sl, (void *)i);
 	for (i = 0; i <= 300; i++)
@@ -184,27 +184,27 @@ test_02()
 		slist_add(&sl, (void *)i);
 
 
-	// index 番号になるように再度割り当て
+	/* Set values to make index number and value the same. */
 	for (i = 0; i < slist_length(&sl); i++)
 		slist_set(&sl, i, (void *)(i + 1));
 
-	ASSERT(slist_length(&sl) == 511);	//論理サイズは511
-	ASSERT((int)sl.list[511] == 211);	//右端が 211番目
-	ASSERT((int)sl.list[0] == 212);		//左端が 212番目
-	ASSERT(sl.list_size == 512);		//物理サイズは 512
+	ASSERT(slist_length(&sl) == 511);      /* The logical length is 511. */
+	ASSERT((int)sl.list[511] == 211);	/* The most right is 211th. */
+	ASSERT((int)sl.list[0] == 212);		/* The most left is 212th. */
+	ASSERT(sl.list_size == 512);		/* The physical size is 512. */
 
-	slist_add(&sl, (void *)512);		// 512番めを追加
+	slist_add(&sl, (void *)512);		/* Add 512th item. */
 
-	ASSERT(sl.list_size == 768);		//物理サイズが拡大
-	ASSERT(slist_length(&sl) == 512);	//論理サイズは512
-	ASSERT((int)sl.list[511] == 211);	//繋め
-	ASSERT((int)sl.list[512] == 212);	//繋め
-	ASSERT((int)sl.list[767] == 467);	//右端が 467番目
-	ASSERT((int)sl.list[0] == 468);		//左端が 468番目
+	ASSERT(sl.list_size == 768);	   /* The physical size is extended. */
+	ASSERT(slist_length(&sl) == 512);      /* The logical length is 512. */
+	ASSERT((int)sl.list[511] == 211);	/* boundary */
+	ASSERT((int)sl.list[512] == 212);	/* boundary */
+	ASSERT((int)sl.list[767] == 467);	/* The most right is 467th. */
+	ASSERT((int)sl.list[0] == 468);		/* The most left is 468th. */
 
-	//全部チェック
+	/* Check all items */
 	for (i = 0; i < slist_length(&sl); i++)
-		ASSERT((int)slist_get(&sl, i) == i + 1);	// チェック
+		ASSERT((int)slist_get(&sl, i) == i + 1);	/* check */
 }
 
 static void
@@ -225,8 +225,8 @@ test_03()
 	}
 	slist_remove(&sl, 0);
 	ASSERT(slist_length(&sl) == 0);
-	//dump(&sl);
-	//TEST(test_02);
+	/* dump(&sl); */
+	/* TEST(test_02); */
 }
 
 static void
@@ -238,30 +238,31 @@ test_itr_subr_01(slist *l)
 		slist_set(l, i, (void *)(i + 1));
 
 	slist_itr_first(l);
-	ASSERT((int)slist_itr_next(l) == 1);	// 普通にイテレート
-	ASSERT((int)slist_itr_next(l) == 2);	// 普通にイテレート
-	slist_remove(l, 2);			// next を削除
-						// "3" が削除
-	ASSERT((int)slist_itr_next(l) == 4);	// 削除したものはスキップ
-	slist_remove(l, 1);			// 通りすぎたところを削除
-						// "2" を削除
-	ASSERT((int)slist_itr_next(l) == 5);	// 影響なし
-	ASSERT((int)slist_get(l, 0) == 1);	// 削除確認
-	ASSERT((int)slist_get(l, 1) == 4);	// 削除確認
-	ASSERT((int)slist_get(l, 2) == 5);	// 削除確認
+	ASSERT((int)slist_itr_next(l) == 1);	/* normal iterate */
+	ASSERT((int)slist_itr_next(l) == 2);	/* normal iterate */
+	slist_remove(l, 2);		      /* remove next. "3" is removed */
+	ASSERT((int)slist_itr_next(l) == 4);	/* removed item is skipped */
+	slist_remove(l, 1);		 /* remove past item. "2" is removed */
+	ASSERT((int)slist_itr_next(l) == 5);	/* no influence */
+	ASSERT((int)slist_get(l, 0) == 1);	/* checking for removing */
+	ASSERT((int)slist_get(l, 1) == 4);	/* checking for removing */
+	ASSERT((int)slist_get(l, 2) == 5);	/* checking for removing */
 
-	// 255 アイテム中 2 個削除し、4回イテレートし、1回の削除は通りすぎ
-	// たあとなので、残り 250回
-
+	/*
+	 * Total number was 255. We removed 2 items and iterated 4 times.
+	 * 1 removing was past item, so the remaining is 250.
+	 */
 
 	for (i = 0; i < 249; i++)
 		ASSERT(slist_itr_next(l) != NULL);
 	ASSERT(slist_itr_next(l) != NULL);
 	ASSERT(slist_itr_next(l) == NULL);
 
-	// 上記と同じだが、最後を取り出す前に削除
+	/*
+	 * Same as above except removing before getting the last item.
+	 */
 
-	// リセット (253アイテム)
+	/* Reset (253 items) */
 	for (i = 0; i < slist_length(l); i++)
 		slist_set(l, i, (void *)(i + 1));
 	slist_itr_first(l);
@@ -272,7 +273,7 @@ test_itr_subr_01(slist *l)
 		ASSERT(slist_itr_next(l) != NULL);
 
 	slist_remove(l, 252);
-	ASSERT(slist_itr_next(l) == NULL);	// 最後を指してたけど、NULL
+	ASSERT(slist_itr_next(l) == NULL);	/* The last item is NULL */
 
 	slist_itr_first(l);
 	while (slist_length(l) > 0)
@@ -295,7 +296,7 @@ test_04()
 	test_itr_subr_01(&sl);
 
 	for (i = 0; i < 256; i++) {
-		// ローテーションして、どんな物理配置でも成功すること確認
+		/* Verify any physical placements are OK by rotating. */
 		sl.first_idx = i;
 		sl.last_idx = sl.first_idx + 255;
 		sl.last_idx %= sl.list_size;
@@ -304,7 +305,7 @@ test_04()
 	}
 }
 
-// 物理配置の一番最後の要素を削除しても、大丈夫か。
+/* Verify removing the last item on the physical location */
 static void
 test_05()
 {
@@ -313,16 +314,16 @@ test_05()
 	slist *l = &sl;
 
 	slist_init(&sl);
-	// ぎりぎりまで追加
+	/* Fill */
 	for (i = 0; i < 255; i++) {
 		slist_add(&sl, (void *)i);
 	}
-	// 254 個削除
+	/* Remove 254 items */
 	for (i = 0; i < 254; i++) {
 		slist_remove_first(&sl);
 	}
 	slist_set(l, 0, (void *)0);
-	// 7個追加
+	/* Add 7 items */
 	for (i = 0; i < 8; i++) {
 		slist_add(&sl, (void *)i + 1);
 	}
@@ -401,7 +402,6 @@ test_07()
 static void
 test_08()
 {
-	//int i, x;
 	slist sl;
 	slist *l = &sl;
 
@@ -431,8 +431,6 @@ test_08()
 	ASSERT((int)slist_get(l, 1) == 3);
 	ASSERT((int)slist_get(l, 2) == 4);
 	ASSERT((int)slist_get(l, 3) == 5);
-
-	//dump(l);
 }
 
 static void
@@ -456,7 +454,7 @@ test_09()
 	ASSERT((int)slist_itr_next(l) == 3);		/* 3 */
 							/* reaches the last */
 	slist_add(l, (void *)4);			/* add a new item */
-	ASSERT(slist_itr_has_next(l));			/* iterates the new*/
+	ASSERT(slist_itr_has_next(l));			/* iterates the new */
 	ASSERT((int)slist_itr_next(l) == 4);		
 	slist_fini(l);
 
@@ -475,11 +473,8 @@ test_09()
 	ASSERT((int)slist_itr_next(l) == 2);		/* 2 */
 	ASSERT((int)slist_itr_next(l) == 3);		/* 3 */
 							/* reaches the last */
-	//dump(l);
 	slist_itr_remove(l);				/* and remove the last*/
-	//dump(l);
 	slist_add(l, (void *)4);			/* add 4 (new last)*/
-	//dump(l);
 	ASSERT(slist_itr_has_next(l));			/* */
 	ASSERT((int)slist_itr_next(l) == 4);		/* 4 */
 	slist_fini(l);

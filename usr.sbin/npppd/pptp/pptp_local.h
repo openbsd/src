@@ -1,3 +1,4 @@
+/*	$OpenBSD: pptp_local.h,v 1.2 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -58,7 +59,7 @@ struct pptp_gre_header {
 } __attribute__((__packed__));
 
 
-/** PPTPコントロールパケットの(ヘッダ)共通部分 */
+/* Commont part of the PPTP control packet */
 struct pptp_ctrl_header {
 	uint16_t	length;
 	uint16_t	pptp_message_type;
@@ -67,7 +68,7 @@ struct pptp_ctrl_header {
 	uint16_t	reserved0;
 } __attribute__((__packed__));
 
-/** Start-Control-Connection-{Request,Reply} パケット */
+/* Start-Control-Connection-{Request,Reply} packet */
 struct pptp_scc {
 	struct pptp_ctrl_header header;
 	uint16_t	protocol_version;
@@ -81,7 +82,7 @@ struct pptp_scc {
 	u_char		vendor_string[64];
 } __attribute__((__packed__));
 
-/** Outgoing-Call-Request パケット */
+/* Outgoing-Call-Request packet */
 struct pptp_ocrq {
 	struct pptp_ctrl_header header;
 	uint16_t	call_id;
@@ -98,7 +99,7 @@ struct pptp_ocrq {
 	u_char		subaddress[64];
 } __attribute__((__packed__));
 
-/** Outgoing-Call-Reply パケット */
+/* Outgoing-Call-Reply packet */
 struct pptp_ocrp {
 	struct pptp_ctrl_header header;
 	uint16_t	call_id;
@@ -112,13 +113,13 @@ struct pptp_ocrp {
 	uint32_t	physical_channel_id;
 } __attribute__((__packed__));
 
-/** Echo-Request パケット */
+/* Echo-Request packet */
 struct pptp_echo_rq {
 	struct pptp_ctrl_header header;
 	uint32_t	identifier;
 } __attribute__((__packed__));
 
-/** Echo-Reply パケット */
+/* Echo-Reply packet */
 struct pptp_echo_rp {
 	struct pptp_ctrl_header header;
 	uint32_t	identifier;
@@ -127,7 +128,7 @@ struct pptp_echo_rp {
 	uint16_t	reserved1;
 } __attribute__((__packed__));
 
-/** Set-Link-Info パケット */
+/* Set-Link-Info packet */
 struct pptp_sli {
 	struct pptp_ctrl_header header;
 	uint16_t	peers_call_id;
@@ -151,14 +152,14 @@ struct pptp_stop_ccrp {
 } __attribute__((__packed__));
 
 
-/** Call-Clear-Request パケット */
+/* Call-Clear-Request packet */
 struct pptp_ccr {
 	struct pptp_ctrl_header header;
 	uint16_t	call_id;
 	uint16_t	reserved1;
 } __attribute__((__packed__));
 
-/** Call-Disconnect-Notify パケット */
+/* Call-Disconnect-Notify packet */
 struct pptp_cdn {
 	struct pptp_ctrl_header header;
 	uint16_t	call_id;

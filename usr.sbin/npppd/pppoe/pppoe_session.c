@@ -1,3 +1,4 @@
+/*	$OpenBSD: pppoe_session.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $	*/
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,10 +24,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 /**@file
- * PPPoE セッションの実装。
- * $Id: pppoe_session.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+ * Session management of PPPoE protocol
+ * $Id: pppoe_session.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
  */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>
@@ -79,7 +82,7 @@ static void  pppoe_session_close_by_ppp(npppd_ppp *);
 static int   pppoe_session_bind_ppp (pppoe_session *);
 static void  pppoe_session_dispose_event(int, short, void *);
 
-/** PPPoE セッションコンテキストを初期化します */
+/* Initialize PPPoE session context */
 int
 pppoe_session_init(pppoe_session *_this, pppoed *_pppoed, int idx,
     int session_id, u_char *ether_addr)
@@ -100,7 +103,7 @@ pppoe_session_init(pppoe_session *_this, pppoed *_pppoed, int idx,
 	return 0;
 }
 
-/** PPPoE セッションを切断します */
+/* Disconnect PPPoE session */
 void
 pppoe_session_disconnect(pppoe_session *_this)
 {
@@ -109,7 +112,7 @@ pppoe_session_disconnect(pppoe_session *_this)
 	if (_this->state != PPPOE_SESSION_STATE_DISPOSING) {
 		pppoe_session_send_PADT(_this);
 
-		/* 解放処理は、 単体の event で。*/
+		/* free process should be par event */
 		tv.tv_usec = 0;
 		tv.tv_sec = 0;
 		evtimer_add(&_this->ev_disposing, &tv);
@@ -119,7 +122,7 @@ pppoe_session_disconnect(pppoe_session *_this)
 		ppp_phy_downed(_this->ppp);
 }
 
-/** PPPoE セッションを停止します */
+/* Stop PPPoE session */
 void
 pppoe_session_stop(pppoe_session *_this)
 {
@@ -128,14 +131,14 @@ pppoe_session_stop(pppoe_session *_this)
 
 }
 
-/** PPPoE セッションの終了処理を行います。 */
+/* Finish PPPoE session */
 void
 pppoe_session_fini(pppoe_session *_this)
 {
 	evtimer_del(&_this->ev_disposing);
 }
 
-/* event(3) からの callback */
+/* call back function from event(3) */
 static void
 pppoe_session_dispose_event(int fd, short ev, void *ctx)
 {
@@ -145,9 +148,9 @@ pppoe_session_dispose_event(int fd, short ev, void *ctx)
 	pppoed_pppoe_session_close_notify(_this->pppoed, _this);
 }
 
-/***********************************************************************
- * I/O 関連
- ***********************************************************************/
+/*
+ * I/O
+ */
 void
 pppoe_session_input(pppoe_session *_this, u_char *pkt, int lpkt)
 {
@@ -167,11 +170,11 @@ pppoe_session_input(pppoe_session *_this, u_char *pkt, int lpkt)
 
 	if (rval == 2) {
 		/*
-		 * 現在 NPPPD PPPOE は bpf によって PIPEX が転送する
-		 * パケットも同時に受信して処理するため，統計情報が
-		 * 多重にカウントされてしまう．
-		 * PIPEX で処理する種類のパケットだった場合は
-		 * 統計情報をカウントする前に関数を抜ける必要がある．
+		 * Quit this function before statistics counter
+		 * is processed when the packet will be processed by
+		 * PIPEX. Because current NPPPD PPPOE implementation
+		 * is recieving all packet from BPF even though the
+		 * PIPEX will process it.
 		 */
 	} else if (rval != 0)  {
 		ppp->ierrors++;
@@ -245,6 +248,7 @@ pppoe_session_send_PADT(pppoe_session *_this)
 		return -1;
 	}
 	bytebuffer_clear(buf);
+
 	/*
 	 * PPPoE Header
 	 */
@@ -279,7 +283,7 @@ pppoe_session_send_PADT(pppoe_session *_this)
 	return rval;
 }
 
-/** PADS を送信します */
+/* send PADS */
 static int
 pppoe_session_send_PADS(pppoe_session *_this, struct pppoe_tlv *hostuniq,
     struct pppoe_tlv *service_name)
@@ -354,7 +358,7 @@ pppoe_session_send_PADS(pppoe_session *_this, struct pppoe_tlv *hostuniq,
 	return rval;
 }
 
-/** PADR を受信した時に呼び出されます */
+/* process PADR from the peer */
 int
 pppoe_session_recv_PADR(pppoe_session *_this, slist *tag_list)
 {
@@ -375,13 +379,10 @@ pppoe_session_recv_PADR(pppoe_session *_this, slist *tag_list)
 	}
 
 	if (ac_cookie) {
-		/*
-		 * cookie を既にもっているセッションが
-		 * いるとまずい
-		 */
+		/* avoid a session which has already has cookie. */
 		if (hash_lookup(pppoed0->acookie_hash,
 		    (void *)ac_cookie->value) != NULL)
-			goto reigai;
+			goto fail;
 
 		_this->acookie = *(uint32_t *)(ac_cookie->value);
 		hash_insert(pppoed0->acookie_hash, (void *)_this->acookie,
@@ -389,18 +390,18 @@ pppoe_session_recv_PADR(pppoe_session *_this, slist *tag_list)
 	}
 
 	if (pppoe_session_send_PADS(_this, hostuniq, service_name) != 0)
-		goto reigai;
+		goto fail;
 
 	if (pppoe_session_bind_ppp(_this) != 0)
-		goto reigai;
+		goto fail;
 
 	_this->state = PPPOE_SESSION_STATE_RUNNING;
 	return 0;
-reigai:
+fail:
 	return -1;
 }
 
-/** PADT を受信した時に呼び出されます */
+/* process PADT from the peer */
 int
 pppoe_session_recv_PADT(pppoe_session *_this, slist *tag_list)
 {
@@ -412,9 +413,9 @@ pppoe_session_recv_PADT(pppoe_session *_this, slist *tag_list)
 	return 0;
 }
 
-/***********************************************************************
- * ログ関連
- ***********************************************************************/
+/*
+ * Log
+ */
 static void
 pppoe_session_log(pppoe_session *_this, int prio, const char *fmt, ...)
 {
@@ -434,9 +435,9 @@ pppoe_session_log(pppoe_session *_this, int prio, const char *fmt, ...)
 	va_end(ap);
 }
 
-/***********************************************************************
- * PPP関連
- ***********************************************************************/
+/*
+ * PPP
+ */
 static int
 pppoe_session_ppp_output(npppd_ppp *ppp, u_char *pkt, int lpkt, int flag)
 {
@@ -459,6 +460,7 @@ pppoe_session_ppp_output(npppd_ppp *ppp, u_char *pkt, int lpkt, int flag)
 
 	return 0;
 }
+
 static void
 pppoe_session_close_by_ppp(npppd_ppp *ppp)
 {
@@ -467,11 +469,13 @@ pppoe_session_close_by_ppp(npppd_ppp *ppp)
 	_this = ppp->phy_context;
 	PPPOE_SESSION_ASSERT(_this != NULL);
 	if (_this != NULL)
-		_this->ppp = NULL;	// pptp_call_disconnect より先に。
+		/* do this before pptp_call_disconnect() */
+		_this->ppp = NULL;
+
 	pppoe_session_disconnect(_this);
 }
 
-/** ppp の bind。*/
+/* bind for PPP */
 static int
 pppoe_session_bind_ppp(pppoe_session *_this)
 {
@@ -481,7 +485,7 @@ pppoe_session_bind_ppp(pppoe_session *_this)
 
 	ppp = NULL;
 	if ((ppp = ppp_create()) == NULL)
-		goto reigai;
+		goto fail;
 
 	PPPOE_SESSION_ASSERT(_this->ppp == NULL);
 
@@ -510,7 +514,7 @@ pppoe_session_bind_ppp(pppoe_session *_this)
 	memcpy(&ppp->phy_info.peer_dl, &sdl, sizeof(sdl));
 
 	if (ppp_init(npppd_get_npppd(), ppp) != 0)
-		goto reigai;
+		goto fail;
 	ppp->has_acf = 0;
 
 
@@ -518,7 +522,7 @@ pppoe_session_bind_ppp(pppoe_session *_this)
 	ppp_start(ppp);
 
 	return 0;
-reigai:
+fail:
 	pppoe_session_log(_this, LOG_ERR, "failed binding ppp");
 
 	if (ppp != NULL)

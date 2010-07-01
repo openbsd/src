@@ -39,13 +39,13 @@
 
 #define	DEFAULT_AUTH_TIMEOUT		30
 
-/** 固定割り当て */
+/** assign fixed IP address */
 #define NPPPD_IP_ASSIGN_FIXED		0x0001
 
-/** 先方が提案したアドレスを受け入れる */
+/** accept IP address which is proposed by peer and assign it */
 #define NPPPD_IP_ASSIGN_USER_SELECT	0x0002
 
-/** RADIUS の Framed-IP-Address を使う */
+/** use RADIUS Framed-IP-Address */
 #define NPPPD_IP_ASSIGN_RADIUS		0x0004
 
 /** sockaddr_npppd */
@@ -57,9 +57,9 @@ struct sockaddr_npppd {
 #define			snp_addr	sin4.sin_addr
 	int		snp_type;	/* SNP_POOL or SNP_PPP */
 #define			snp_mask	sin4mask.sin_addr
-	/** 次のエントリ */
+	/** next entry */
 	struct sockaddr_npppd *snp_next;
-	/** エントリの中身 */
+	/** contents of entry */
 	void 		*snp_data_ptr;
 };
 #define	SNP_POOL		1

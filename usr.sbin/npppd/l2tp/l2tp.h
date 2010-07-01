@@ -26,19 +26,19 @@
 #ifndef	L2TP_H
 #define	L2TP_H 1
 /*@file
- * L2TPモジュールヘッダファイル
+ * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 
 /************************************************************************
- * プロトコル上の定数
+ * Protocol Constants
  ************************************************************************/
 
 #define	L2TP_RFC2661_VERSION			1
 #define	L2TP_RFC2661_REVISION			0
 #define	L2TP_AVP_MAXSIZ				1024
 
-/* ヘッダ */
+/* Header */
 
 #define	L2TP_HEADER_FLAG_TOM			0x8000
 #define	L2TP_HEADER_FLAG_LENGTH			0x4000
@@ -168,8 +168,8 @@
 #define	L2TP_BEARER_CAP_FLAGS_ANALOG	0x00000002
 
 /*
- * RFC2661 の pp.19 〜 pp.22 の定数
- * ラベル名は不適切かも。
+ * Constants on pp.19-22 of RFC2661
+ * macro names may be inappropriate.
  */
 #define	L2TP_STOP_CCN_RCODE_GENERAL			1
 #define	L2TP_STOP_CCN_RCODE_GENERAL_ERROR		2
@@ -209,7 +209,7 @@
 #define	L2TP_AUTH_TYPE_MS_CHAP_V1			5
 
 /************************************************************************
- * この実装の定数
+ * Implementation Specific Constants
  ************************************************************************/
 
 #define	L2TPD_BACKLOG				16
@@ -225,13 +225,13 @@
 #endif
 #define L2TPD_DEFAULT_UDP_PORT			1701
 
-/** アドレスは最大何個 bind 可能か。*/
+/** maximum number of addresses we will listen on */
 #ifndef	L2TP_NLISTENER
 #define	L2TP_NLISTENER				6
 #endif
 
 /*
- * デーモンの状態
+ * state of daemon
  */
 #define	L2TPD_STATE_INIT			0
 #define	L2TPD_STATE_RUNNING			1
@@ -239,7 +239,7 @@
 #define	L2TPD_STATE_STOPPED			3
 
 /*
- * コントロール接続の状態
+ * state of a control connection
  */
 #define	L2TP_CTRL_STATE_IDLE			0
 #define	L2TP_CTRL_STATE_WAIT_CTL_CONN		1
@@ -248,7 +248,7 @@
 #define	L2TP_CTRL_STATE_CLEANUP_WAIT		4
 
 /*
- * コールの状態
+ * state of a call
  */
 #define	L2TP_CALL_STATE_IDLE			0
 #define	L2TP_CALL_STATE_WAIT_CONN		1
@@ -256,10 +256,10 @@
 #define	L2TP_CALL_STATE_CLEANUP_WAIT		3
 
 /*
- * タイムアウト関連
+ * timeout
  */
 #define	L2TP_CTRL_CTRL_PKT_TIMEOUT		12
-/** 最初の Call を待つ時間 */
+/** wait time for the first call */
 #define	L2TP_CTRL_WAIT_CALL_TIMEOUT		16
 #define	L2TP_CTRL_CLEANUP_WAIT_TIME		3
 #define	L2TP_CTRL_DEFAULT_HELLO_INTERVAL	60
@@ -267,64 +267,64 @@
 
 #define	L2TPD_SHUTDOWN_TIMEOUT			5
 
-/** L2TPデーモンが停止したかどうかを返します。 */
+/** returns whether an L2TP daemon is stopped */
 #define	l2tpd_is_stopped(l2tpd)					\
 	(((l2tpd)->state != L2TPD_STATE_SHUTTING_DOWN &&	\
 	    (l2tpd)->state != L2TPD_STATE_RUNNING)? 1 : 0)
 
-/** L2TPデーモンが停止処理中かどうかを返します。 */
+/** returns whether an L2TP daemon is going to shutdown */
 #define	l2tpd_is_shutting_down(l2tpd)				\
 	(((l2tpd)->state == L2TPD_STATE_SHUTTING_DOWN)? 1 : 0)
 
-/** l2tp_ctrl から、リスナーの物理層のラベルを取り出すマクロ */
+/** macro to retrieve a physical layer label from l2tp_ctrl */
 #define	L2TP_CTRL_LISTENER_LABEL(ctrl)	\
 	((l2tpd_listener *)slist_get(&(ctrl)->l2tpd->listener, \
 	    (ctrl)->listener_index))->phy_label
 
 
-/** L2TP のデーモンを示す型。*/
+/** datatype represents L2TP daemon */
 struct _l2tpd;
 
 typedef struct _l2tpd_listener {
-	/** イベントコンテキスト */
+	/** event context */
 	struct event ev_sock;
-	/** L2TPD 自身 */
+	/** L2TPD itself */
 	struct _l2tpd	*self;
-	/** インデックス番号 */
+	/** index number */
 	uint16_t	index;
-	/** 有効/無効 */
+	/** enable/disable */
 	uint16_t	enabled;
-	/** 待ち受けソケット */
+	/** listening socket */
 	int		sock;
-	/** 待ち受けアドレス UDP */
+	/** listening socket address for UDP packets */
 	struct sockaddr_in bind_sin;
-	/** 物理層のラベル */
+	/** physical layer label */
 	char	phy_label[16];
 } l2tpd_listener;
 
-/** L2TP のデーモンを示す型。*/
+/** datatype represents L2TP daemon */
 typedef struct _l2tpd {
-	/** タイムアウトイベントコンテキスト */
+	/** timeout event context */
 	struct event ev_timeout;
-	/** インスタンスの ID */
+	/** instance ID */
 	unsigned id;
-	/** 待ち受けリスト */
+	/** listener list */
 	slist listener;
-	/** ステータス */
+	/** state */
 	int state;
-	/** トンネル ID と {@link ::_l2tp_ctrl L2TP コントロール} のマップ */
+	/** mappings from tunnel ID to {@link ::_l2tp_ctrl L2TP control} */
 	hash_table *ctrl_map;
 
-	/** 接続を許可するIPv4ネットワーク */
+	/** IPv4 network addresses allowed to connect */
 	struct in_addr_range *ip4_allow;
 
-	/** デフォルトのホスト名 */
+	/** default hostname */
 	char default_hostname[80];
 
-	/** 設定 */
+	/** configuration */
 	struct properties *config;
 
-	/** フラグ */
+	/** flags */
 	uint32_t
 	    require_ipsec:1,
 	    purge_ipsec_sa:1,
@@ -335,101 +335,104 @@ typedef struct _l2tpd {
 	    phy_label_with_ifname:1;
 } l2tpd;
 
-/** L2TP コントロール接続を示す型。*/
+/** datatype represents L2TP control connection */
 typedef struct _l2tp_ctrl {
 	struct event ev_timeout;
 	/** ID */
 	unsigned id;
-	/** 親 L2TPD */
+	/** parent L2TPD */
 	l2tpd 	*l2tpd;
-	/** リスナー インデックス番号 */
+	/** listener index number */
 	uint16_t	listener_index;
-	/** 状態 */
+	/** state */
 	int	state;
-	/** トンネルId。 */
+	/** tunnel Id */
 	int	tunnel_id;
-	/** Window サイズ */
+	/** window size */
 	int	winsz;
-	/** 先方のトンネルId */
+	/** peer's tunnel Id */
 	int	peer_tunnel_id;
-	/** 先方の Window サイズ */
+	/** peer's window size */
 	int	peer_winsz;
-	/** 次の確認応答 */
+	/** next acknowledgement number */
 	uint16_t	snd_una;
-	/** 次の送信シーケンス番号 */
+	/** next send sequence number */
 	uint16_t	snd_nxt;
-	/** 受信シーケンス番号 */
+	/** receive sequence number */
 	uint16_t	rcv_nxt;
-	/** 先方のアドレス*/
+	/** peer's IP address */
 	struct	sockaddr_storage peer;
-	/** こちらのアドレス */
+	/** my IP address */
 	struct	sockaddr_storage sock;
-	/** IPSEC NAT-T SA クッキー */
+	/** IPSEC NAT-T SA cookie */
 	void	*sa_cookie;
-	/** 物理層のラベル (コピー) */
+	/** physical layer label (copied) */
 	char	phy_label[16];
 
-	/** L2TPコールのリスト */
+	/** list of L2TP calls */
 	slist	call_list;
 	/*
-	 * 送信 Window 関連
-	 * 	pos == lim は、バッファが一杯であることを示します。
-	 * 	pos == -1、lim == 0 はバッファが空であることを示します。
+	 * Note about send window:
+	 * 	pos == lim when buffer is full.
+	 * 	pos == -1, lim == 0 when buffer is empty.
 	 */
-	/** 利用可能な送信バッファ。#winsz 分のリストになってます*/
+	/** bytes available in send buffer.  it is a list of length #winsz */
 	bytebuffer **snd_buffers;
-	/** Sending buffer for ZLB */
+	/** sending buffer for ZLB */
 	bytebuffer *zlb_buffer;
 
-	/** 最後にコントロールメッセージを送信した時間 */
+	/** the time when last control message sent */
 	time_t	last_snd_ctrl;	
-	/** 最後にパケットを受信を送信した時間 */
+	/** the time when last packet received */
 	time_t	last_rcv;	
 
 	/**
-	 * アクティブクローズの場合で、StopCCN を未送信の場合は、StopCCN
-	 * で伝える result code が入ります。
+	 * If we are on active close and have not sent a StopCCN message yet,
+	 * active_closing has the result code to be in the StopCCN message.
 	 */
 	int	active_closing;
 
-	/** アイドル状態から HELLO 送信までの秒数。0以下は無効。*/
+	/**
+	 * delay between transition to idle state and sending HELLO in seconds.
+	 * invalid if less than or equal to zero.
+	 */
 	int hello_interval;
-	/** HELLO のタイムアウト */
+	/** HELLO timeout */
 	int hello_timeout;
-	/** HELLO 送出時刻 */
+	/** time when the last HELLO packet was sent */
 	time_t	hello_io_time;
-	/** 確立した call 数 */
+	/** number of calls established */
 	int	ncalls;
 
 	int	
-	    /* L2TP Data Message でシーケンス番号を使うか */
+	    /** use sequence number in L2TP Data Message? */
 	    data_use_seq:1,
-	    /** HELLO の応答待ちかどうか */
+	    /** waiting to acknowledge HELLO? */
 	    hello_wait_ack:1;
 
 } l2tp_ctrl;
 
 /**
- * L2TP コールを示す型。
+ * datatype represents a L2TP call
  */
 typedef struct _l2tp_call {
 	/** ID */
 	unsigned	id;
-	/** 状態 */
+	/** state */
 	int		state;
-	/** 親コントロールコネクション */
+	/** parent control connection */
 	l2tp_ctrl 	*ctrl;
-	/** バインドした {@link ::_npppd_ppp ppp} */
+	/** bound {@link ::_npppd_ppp ppp} */
 	void		*ppp;
-	/** セッション ID */
+	/** session ID */
 	int		session_id;
-	/** 先方のセッション ID */
+	/** peer's session ID */
 	int		peer_session_id;
-	/** 次の送信シーケンス番号 */
+	/** next sequence number  */
 	uint16_t	snd_nxt;
-	/** 受信シーケンス番号 */
+	/** receiving sequence number */
 	uint16_t	rcv_nxt;
-	/** Calling number */
+	/** calling number */
 	char		calling_number[32];
 	
 	uint32_t	/** Sequencing required */

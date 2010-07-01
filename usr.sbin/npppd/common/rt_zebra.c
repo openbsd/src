@@ -2,7 +2,7 @@
  * Copyright (c) 2007
  *	Internet Initiative Japan Inc.  All rights reserved.
  */
-/* $Id: rt_zebra.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $ */
+/* $Id: rt_zebra.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 /*
  * @file This file provides utility functions to help add/delete routing
  * information with GNU Zebra.  This utility uses event(3) and uses a UNIX
@@ -154,10 +154,10 @@ rt_zebra_start(rt_zebra *_this)
 	}
 	if ((ival = fcntl(sock, F_GETFL, 0)) < 0) {
 		log_printf(LOG_ERR, "fcntl(,F_GETFL) failed: %m");
-		goto reigai;
+		goto fail;
 	} else if (fcntl(sock, F_SETFL, ival | O_NONBLOCK) < 0) {
 		log_printf(LOG_ERR, "fcntl(,F_SETFL, +O_NONBLOCK) failed: %m");
-		goto reigai;
+		goto fail;
 	}
 
 	_this->state = ZEBRA_STATUS_CONNECTING;
@@ -175,7 +175,7 @@ rt_zebra_start(rt_zebra *_this)
 		default:
 			log_printf(LOG_ERR,
 			    "Connection to the zserv failed: %m");		
-			goto reigai;
+			goto fail;
 		}
 	}
 	event_set(&_this->ev_sock, _this->sock, EV_READ|EV_WRITE,
@@ -183,7 +183,7 @@ rt_zebra_start(rt_zebra *_this)
 	event_add(&_this->ev_sock, NULL);
 
 	return 0;
-reigai:
+fail:
 	if (sock >= 0)
 		close(sock);
 	rt_zebra_stop(_this);

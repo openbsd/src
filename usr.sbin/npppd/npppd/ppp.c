@@ -23,9 +23,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.2 2010/01/13 07:49:44 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $ */
 /**@file
- * {@link :: _npppd_ppp PPPインスタンス} に関する処理を提供します。
+ * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
+ * {@link :: _npppd_ppp PPP instance} related functions.
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -87,15 +88,15 @@ static void ppp_on_network_pipex(npppd_ppp *);
 #define AUTH_IS_EAP(ppp) 	((ppp)->peer_auth == PPP_AUTH_EAP)
 
 /*
- * 終了処理
- *	ppp_lcp_finished	LCP が終了
- *				先方が TermReq
- *				こちらが TermReq (ppp_stop から状態遷移で)
- *	ppp_phy_downed		物理層が切れた
+ * About termination procedures:
+ *	ppp_lcp_finished	LCP is terminated
+ *				Terminate-Request by the peer.
+ *				Terminate-Request by ourself. (From ppp_stop())
+ *	ppp_phy_downed		Down the datalink/physical.
  *
- * どちらも ppp_stop0、ppp_down_others を呼び出している。
+ * On both cases, ppp_stop0 and ppp_down_others are called.
  */
-/** npppd_ppp オブジェクトを生成。 */
+/** Create a npppd_ppp instance */
 npppd_ppp *
 ppp_create()
 {
@@ -116,8 +117,8 @@ ppp_create()
 }
 
 /**
- * npppd_ppp を初期化します。
- * npppd_ppp#mru npppd_ppp#phy_label は呼び出し前にセットしてください。
+ * Initialize the npppd_ppp instance
+ * Set npppd_ppp#mru and npppd_ppp#phy_label before call this function.
  */
 int
 ppp_init(npppd *pppd, npppd_ppp *_this)
@@ -150,9 +151,7 @@ ppp_init(npppd *pppd, npppd_ppp *_this)
 	_this->use_pipex = ppp_config_str_equal(_this, "pipex.enabled", "true",
 	    1);
 #endif
-	/*
-	 * ログの設定を読み込む。
-	 */
+	/* load the logging configuration */
 	_this->log_dump_in =
 	    ppp_config_str_equal(_this, "log.in.pktdump",  "true", 0);
 	_this->log_dump_out =
@@ -167,7 +166,7 @@ ppp_init(npppd *pppd, npppd_ppp *_this)
 	pap_init(&_this->pap, _this);
 	chap_init(&_this->chap, _this);
 
-	/* アイドルタイマー関連 */
+	/* load the idle timer configuration */
 	_this->timeout_sec = ppp_config_int(_this, "idle_timeout", 0);
 	if (!evtimer_initialized(&_this->idle_event))
 		evtimer_set(&_this->idle_event, ppp_idle_timeout, _this);
@@ -216,12 +215,9 @@ ppp_set_tunnel_label(npppd_ppp *_this, char *buf, int lbuf)
 	}
 }
 /**
- * npppd_ppp を開始します。
- * npppd_ppp#phy_context
- * npppd_ppp#send_packet
- * npppd_ppp#phy_close
- * npppd_ppp#phy_info
- * は呼び出し前にセットしてください。
+ * Start the npppd_ppp.
+ * Set npppd_ppp#phy_context, npppd_ppp#send_packet, npppd_ppp#phy_close and
+ * npppd_ppp#phy_info before call this function.
  */
 void
 ppp_start(npppd_ppp *_this)
@@ -235,9 +231,7 @@ ppp_start(npppd_ppp *_this)
 
 	_this->start_time = time(NULL);
 	_this->start_monotime = get_monosec();
-	/*
-	 * 下位レイヤの情報をログに残す。
-	 */
+	/* log the lower layer information */
 	ppp_set_tunnel_label(_this, label, sizeof(label));
 	ppp_log(_this, LOG_INFO, "logtype=Started tunnel=%s(%s)",
 	    _this->phy_label, label);
@@ -245,10 +239,7 @@ ppp_start(npppd_ppp *_this)
 	lcp_lowerup(&_this->lcp);
 }
 
-/**
- * Dialin proxy の準備をします。dialin proxy できない場合には、0 以外が
- * 返ります。
- */
+/** Prepare "dialin proxy".  Return 0 if "dialin proxy" is not available.  */
 int
 ppp_dialin_proxy_prepare(npppd_ppp *_this, dialin_proxy_info *dpi)
 {
@@ -295,10 +286,11 @@ ppp_stop(npppd_ppp *_this, const char *reason)
 }
 
 /**
- * PPP を停止し、npppd_ppp オブジェクトを破棄します。
- * @param reason	停止の理由。特に理由がなければ NULL を指定します。
- *	この値で LCP の TermReq パケットの reason フィールドに格納されて、
- *	先方に通知されます。
+ * Stop the PPP and destroy the npppd_ppp instance
+ * @param reason	Reason of stopping the PPP.  Specify NULL if there is
+ *			no special reason.  This reason will be used as a
+ *			reason field of LCP Terminate-Request message and
+ *			notified to the peer.
  * @param code		disconnect code in {@link ::npppd_ppp_disconnect_code}.
  * @param proto		control protocol number.  see RFC3145.
  * @param direction	disconnect direction.  see RFC 3145
@@ -333,16 +325,13 @@ ppp_stop0(npppd_ppp *_this)
 	_this->phy_close = NULL;
 
 	/*
-	 * PPTP(GRE) の NAT/ブラックホール検出
+	 * NAT/Blackhole detection for PPTP(GRE) 
 	 */
 	if (_this->lcp.dialin_proxy != 0 &&
 	    _this->lcp.dialin_proxy_lcp_renegotiation == 0) {
-		/*
-		 * dialin-proxy、再ネゴシエーション無しでは LCPのやりとりは
-		 * ない
-		 */
-	} else if (_this->lcp.recv_ress == 0) {	// 応答なし
-		if (_this->lcp.recv_reqs == 0)	// 要求なし
+		/* No LCP packets on dialin proxy without LCP renegotiation */
+	} else if (_this->lcp.recv_ress == 0) {	/* No responses */
+		if (_this->lcp.recv_reqs == 0)	/* No requests */
 			ppp_log(_this, LOG_WARNING, "no PPP frames from the "
 			    "peer.  router/NAT issue? (may have filtered out)");
 		else
@@ -392,8 +381,8 @@ ppp_stop0(npppd_ppp *_this)
 }
 
 /**
- * npppd_ppp オブジェクトを破棄します。ppp_start をコール後は、ppp_stop() を
- * を使用し、この関数は使いません。
+ * Destroy the npppd_ppp instance.  Don't use this function after calling
+ * the ppp_start, please use ppp_stop() instead.
  */
 void
 ppp_destroy(void *ctx)
@@ -402,9 +391,11 @@ ppp_destroy(void *ctx)
 
 	if (_this->proxy_authen_resp != NULL)
 		free(_this->proxy_authen_resp);
+
 	/*
-	 * ppp_stop しても、先方から PPP フレームが届き、また開始してしま
-	 * っている場合があるので、再度 down, stop
+	 * Down/stop the protocols again to make sure they are stopped
+	 * even if ppp_stop is done.  They might be change their state
+	 * by receiving packets from the peer.
 	 */
 	fsm_lowerdown(&_this->ccp.fsm);
 	fsm_lowerdown(&_this->ipcp.fsm);
@@ -418,7 +409,7 @@ ppp_destroy(void *ctx)
 }
 
 /************************************************************************
- * プロトコルに関するイベント
+ * Protocol events
  ************************************************************************/
 static const char *
 ppp_peer_auth_string(npppd_ppp *_this)
@@ -433,9 +424,7 @@ ppp_peer_auth_string(npppd_ppp *_this)
 	}
 }
 
-/**
- * LCPがアップした場合に呼び出されます。
- */
+/** called when the lcp is up */
 void
 ppp_lcp_up(npppd_ppp *_this)
 {
@@ -448,9 +437,9 @@ ppp_lcp_up(npppd_ppp *_this)
 	}
 #endif
 	/*
-	 * 相手が大きな MRU を指定しても、自分の MRU 以下にする。ここで、
-	 * peer_mtu を縮めれると、経路 MTU が縮むので、MRU を越えるような
-	 * パケットは到達しないようになる。(ことを期待している)
+	 * Use our MRU value even if the peer insists on larger value.
+	 * We set the peer_mtu here, the value will be used as the MTU of the
+	 * routing entry.  So we will not receive packets larger than the MTU.
 	 */
 	if (_this->peer_mru > _this->mru)
 		_this->peer_mru = _this->mru;
@@ -479,8 +468,8 @@ ppp_lcp_up(npppd_ppp *_this)
 }
 
 /**
- * LCPが終了した場合に呼び出されます。
- * <p>STOPPED また CLOSED ステートに入った場合に呼び出されます。</p>
+ * This function will be called the LCP is terminated.
+ * (On entering STOPPED or  CLOSED state)
  */
 void
 ppp_lcp_finished(npppd_ppp *_this)
@@ -494,11 +483,11 @@ ppp_lcp_finished(npppd_ppp *_this)
 }
 
 /**
- * 物理層が切断された場合に物理層から呼び出されます。
+ * This function will be called by the physical layer when it is down.
  * <p>
- * 物理層が PPPフレームを入出力できないという状況でこの関数を呼び出して
- * ください。紳士的に PPP を切断する場合には、{@link ::#ppp_stop} を使い
- * ます。</p>
+ * Use this function only on such conditions that the physical layer cannot
+ * input or output PPP frames.  Use {@link ::ppp_stop()} instead if we can
+ * disconnect PPP gently.</p>
  */
 void
 ppp_phy_downed(npppd_ppp *_this)
@@ -524,14 +513,14 @@ proto_name(uint16_t proto)
 	case PPP_PROTO_MPPE:		return "mppe";
 	case PPP_PROTO_NCP | NCP_CCP:	return "ccp";
 	case PPP_PROTO_NCP | NCP_IPCP:	return "ipcp";
-	// 以下ログ出力用
+	/* following protocols are just for logging */
 	case PPP_PROTO_NCP | NCP_IP6CP:	return "ip6cp";
 	case PPP_PROTO_ACSP:		return "acsp";
 	}
 	return "unknown";
 }
 
-/** 認証が成功した場合に呼び出されます。*/
+/** This function is called on authentication succeed */
 void
 ppp_auth_ok(npppd_ppp *_this)
 {
@@ -555,7 +544,7 @@ ppp_auth_ok(npppd_ppp *_this)
 		}
 	}
 	if (_this->peer_auth != 0) {
-		/* ユーザ毎の最大接続数を制限する */
+		/* Limit the number of connections per the user */
 		if (!npppd_check_user_max_session(_this->pppd, _this)) {
 			ppp_log(_this, LOG_WARNING,
 			    "user %s exceeds user-max-session limit",
@@ -592,7 +581,7 @@ ppp_auth_ok(npppd_ppp *_this)
 	return;
 }
 
-/** event からコールバックされるイベントハンドラです */
+/** timer event handler for idle timer */
 static void
 ppp_idle_timeout(int fd, short evtype, void *context)
 {
@@ -604,13 +593,12 @@ ppp_idle_timeout(int fd, short evtype, void *context)
 	ppp_stop(_this, NULL);
 }
 
-/** アイドルタイマーをリセットします。アイドルでは無い場合に呼び出します。 */
+/** reset the idle-timer.  Call this function when the PPP is not idle. */
 void
 ppp_reset_idle_timeout(npppd_ppp *_this)
 {
 	struct timeval tv;
 
-	//PPP_DBG((_this, LOG_INFO, "%s", __func__));
 	evtimer_del(&_this->idle_event);
 	if (_this->timeout_sec > 0) {
 		tv.tv_usec = 0;
@@ -620,7 +608,7 @@ ppp_reset_idle_timeout(npppd_ppp *_this)
 	}
 }
 
-/** IPCP が完了した場合に呼び出されます */
+/** This function is called when IPCP is opened */
 void
 ppp_ipcp_opened(npppd_ppp *_this)
 {
@@ -661,7 +649,7 @@ ppp_ipcp_opened(npppd_ppp *_this)
 #endif
 }
 
-/** CCP が Opened になった場合に呼び出されます。*/
+/** This function is called when CCP is opened */
 void
 ppp_ccp_opened(npppd_ppp *_this)
 {
@@ -682,13 +670,13 @@ ppp_ccp_opened(npppd_ppp *_this)
 }
 
 /************************************************************************
- * ネットワーク I/O 関連
+ * Network I/O related functions
  ************************************************************************/
 /**
- * パケット受信
- * @param	flags	受信したパケットについての情報をフラグで表します。
- *	現在、PPP_IO_FLAGS_MPPE_ENCRYPTED が指定される場合があります。
- * @return	成功した場合に 0 が返り、失敗した場合に 1 が返ります。
+ * Receive the PPP packet.
+ * @param	flags	Indicate information of received packet by bit flags.
+ *			{@link ::PPP_IO_FLAGS_MPPE_ENCRYPTED} may be used.
+ * @return	return 0 on success.  return 1 on failure.
  */
 static int
 ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
@@ -717,18 +705,18 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 		if (!psm_opt_is_accepted(&_this->lcp, acfc) &&
 		    _this->logged_no_address == 0) {
 			/*
-			 * パケット落ちが発生する環境では、こちらは LCP
-			 * が確立していないのに、Windows 側が完了していて、
-			 * ACFC されたパケットが届く。
+			 * On packet loss condition, we may receive ACFC'ed
+			 * packets before our LCP is opened because the peer's
+			 * LCP is opened already.
 			 */
 			ppp_log(_this, LOG_INFO,
 			    "%s: Rcvd broken frame.  ACFC is not accepted, "
 			    "but received ppp frame that has no address.",
 			    __func__);
 			/*
-			 * Yamaha RTX-1000 では、ACFC を Reject するのに、
-			 * パケットにアドレスは入っていないので、ログが
-			 * 大量に出力されてしまう。
+			 * Log this once because it may be noisy.
+			 * For example, Yahama RTX-1000 refuses to use ACFC
+			 * but it send PPP frames without the address field.
 			 */
 			_this->logged_no_address = 1;
 		}
@@ -769,7 +757,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 			return 2;		/* handled by PIPEX */
 		case PPP_PROTO_NCP | NCP_CCP:
 			if (lpkt - (inp - pkt) < 4)
-				break;		/* エラーだが fsm.c で処理 */
+				break;		/* error but do it on fsm.c */
 			if (*inp == 0x0e ||	/* Reset-Request */
 			    *inp == 0x0f	/* Reset-Ack */) {
 				return 2;	/* handled by PIPEX */
@@ -781,40 +769,44 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 	}
 #endif /* USE_NPPPD_PIPEX */
 
-	// MPPE のチェック
 	switch (proto) {
 #ifdef	USE_NPPPD_MPPE
 	case PPP_PROTO_IP:
+		/* Checks for MPPE */
 		if ((flags & PPP_IO_FLAGS_MPPE_ENCRYPTED) == 0) {
 			if (MPPE_REQUIRED(_this)) {
-				/* MPPE 必須なのに、生 IP。*/
+				/* MPPE is required but naked ip */
 
 				if (_this->logged_naked_ip == 0) {
 					ppp_log(_this, LOG_INFO,
 					    "mppe is required but received "
 					    "naked IP.");
-					/* ログに残すのは最初の 1 回だけ */
+					/* log this once */
 					_this->logged_naked_ip = 1;
 				}
 				/*
-				 * Windows は、MPPE 未確立、IPCP 確立の状態で
-				 * 生IPパケットを投げてくる※1。CCP がパケット
-				 * ロスなどで確立が遅れた場合、高確率でこの状
-				 * 態に陥る。ここで ppp_stop する場合、パケット
-				 * ロスや順序入れ換えが発生する環境では、『繋
-				 * がらない』現象にみえる。
-				 * (※1 少なくとも Windows 2000 Pro SP4)
-				 ppp_stop(_this, "Encryption is required.");
+				 * Windows sends naked IP packets in condition
+				 * such that MPPE is not opened and IPCP is not
+				 * opened(*1).  This occurs at a high
+				 * probability when the CCP establishment is
+				 * delayed because of packet loss etc.  If we
+				 * call ppp_stop() here, Windows on the packet
+				 * loss condition etc cannot not connect us.
+				 * So we don't call ppp_stop() here.
+				 * (*1) At least Microsof Windows 2000
+				 * Professional SP4 does.
 				 */
+				 /*ppp_stop(_this, "Encryption is required.");*/
+
 				return 1;
 			}
 			if (MPPE_READY(_this)) {
-				/* MPPE 確立したのに、生 IP。*/
+				/* MPPE is opened but naked ip packet */
 				ppp_log(_this, LOG_WARNING,
-				    "mppe is avaliable but received naked IP.");
+				    "mppe is available but received naked IP.");
 			}
 		}
-		/* else MPPE からの入力 */
+		/* else input from MPPE */
 		break;
 	case PPP_PROTO_MPPE:
 #ifdef USE_NPPPD_MPPE
@@ -868,7 +860,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 					    lpkt - (inp - pkt));
 					goto handled;
 				}
-				// ネゴする必要のない場合は Protocol Reject
+				/* protocol-reject if MPPE is not necessary */
 #endif
 				break;
 			case NCP_IPCP:	/* IPCP */
@@ -878,7 +870,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 			}
 		}
 	}
-	/* ProtoRej ログに残す */
+	/* Protocol reject.  Log it with protocol number */
 	ppp_log(_this, LOG_INFO, "unhandled protocol %s, %d(%04x)",
 	    proto_name(proto), proto, proto);
 
@@ -902,7 +894,7 @@ handled:
 	return 0;
 }
 
-/** PPPに出力する場合に呼び出します。 */
+/** This function is called to output PPP packets */
 inline void
 ppp_output(npppd_ppp *_this, uint16_t proto, u_char code, u_char id,
     u_char *datap, int ldata)
@@ -912,15 +904,14 @@ ppp_output(npppd_ppp *_this, uint16_t proto, u_char code, u_char id,
 
 	outp = _this->outpacket_buf;
 
-	/* LCPは圧縮を使わない */
+	/* No header compressions for LCP */
 	is_lcp = (proto == PPP_PROTO_LCP)? 1 : 0;
 
-
 	if (_this->has_acf == 0 ||
-		(!is_lcp && psm_peer_opt_is_accepted(&_this->lcp, acfc))) {
+	    (!is_lcp && psm_peer_opt_is_accepted(&_this->lcp, acfc))) {
 		/*
-		 * Address and Control Field (ACF) がそもそも無い場合や
-		 * ACFC がネゴされている場合は ACF を追加しない。
+		 * Don't add ACF(Address and Control Field) if ACF is not
+		 * needed on this link or ACFC is negotiated.
 		 */
 	} else {
 		PUTCHAR(PPP_ALLSTATIONS, outp); 
@@ -977,8 +968,9 @@ ppp_output(npppd_ppp *_this, uint16_t proto, u_char code, u_char id,
 }
 
 /**
- * PPP 出力用のバッファ領域を返します。ヘッダ圧縮によるズレを補正します。
- * バッファ領域の長さは npppd_ppp#mru 以上です。
+ * Return the buffer space for PPP output.  The returned pointer will be
+ * adjusted for header compression. The length of the space is larger than
+ * {@link npppd_ppp#mru}.
  */
 u_char *
 ppp_packetbuf(npppd_ppp *_this, int proto)
@@ -995,7 +987,7 @@ ppp_packetbuf(npppd_ppp *_this, int proto)
 	return _this->outpacket_buf + (PPP_HDRLEN - save);
 }
 
-/** このインスタンスに基づいたラベルから始まるログを記録します。 */
+/** Record log that begins the label based this instance. */
 int
 ppp_log(npppd_ppp *_this, int prio, const char *fmt, ...)
 {
@@ -1017,11 +1009,11 @@ ppp_log(npppd_ppp *_this, int prio, const char *fmt, ...)
 #ifdef USE_NPPPD_RADIUS
 #define UCHAR_BUFSIZ 255
 /**
- * RADIUS パケットの Framed-IP-Address アートリビュートと Framed-IP-Netmask
- * アートリビュートを処理します。
+ * Process the Framed-IP-Address attribute and the Framed-IP-Netmask
+ * attribute of given RADIUS packet.
  */ 
 void
-ppp_proccess_radius_framed_ip(npppd_ppp *_this, RADIUS_PACKET *pkt)
+ppp_process_radius_framed_ip(npppd_ppp *_this, RADIUS_PACKET *pkt)
 {
 	struct in_addr ip4;
 	
@@ -1036,8 +1028,8 @@ ppp_proccess_radius_framed_ip(npppd_ppp *_this, RADIUS_PACKET *pkt)
 }
 
 /**
- * RADIUS 認証要求用の RADIUSアートリビュートをセットします。
- * 成功した場合には 0 が返ります。
+ * Set RADIUS attributes for RADIUS authentication request.
+ * Return 0 on success.
  */
 int
 ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
@@ -1045,17 +1037,17 @@ ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
 {
 	/* RFC 2865 "5.4 NAS-IP-Address" or RFC3162 "2.1. NAS-IPv6-Address" */
 	if (radius_prepare_nas_address(rad_setting, radpkt) != 0)
-		goto reigai;
+		goto fail;
 
 	/* RFC 2865 "5.6. Service-Type" */
 	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_SERVICE_TYPE,
 	    RADIUS_SERVICE_TYPE_FRAMED) != 0)
-		goto reigai;
+		goto fail;
 
 	/* RFC 2865 "5.7. Framed-Protocol" */
 	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_FRAMED_PROTOCOL, 
 	    RADIUS_FRAMED_PROTOCOL_PPP) != 0)
-		goto reigai;
+		goto fail;
 
 	if (_this->calling_number[0] != '\0') {
 		if (radius_put_string_attr(radpkt,
@@ -1063,13 +1055,13 @@ ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
 			return 1;
 	}
 	return 0;
-reigai:
+fail:
 	return 1;
 }
 #endif
 
 #ifdef USE_NPPPD_PIPEX
-/** Network が有効になった時の callback 関数 PIPEX 用*/
+/** The callback function on network is available for pipex */
 static void
 ppp_on_network_pipex(npppd_ppp *_this)
 {
@@ -1083,13 +1075,13 @@ ppp_on_network_pipex(npppd_ppp *_this)
 
 	if (_this->assigned_ip4_enabled != 0 &&
 	    (!MPPE_MUST_NEGO(_this) || _this->ccp.fsm.state == OPENED)) {
-		/* IPCP が完了し，MPPE 不要または MPPE 完了した場合 */
+		/* IPCP is opened and MPPE is not required or MPPE is opened */
 		npppd_ppp_pipex_enable(_this->pppd, _this);
 		ppp_log(_this, LOG_NOTICE, "Using pipex=%s",
 		    (_this->pipex_enabled != 0)? "yes" : "no");
 		_this->pipex_started = 1;
 	}
-	/* else CCP or IPCP 待ち */
+	/* else wait CCP or IPCP */
 }
 #endif
 
@@ -1097,7 +1089,7 @@ ppp_on_network_pipex(npppd_ppp *_this)
 #ifdef USE_NPPPD_LINKID
 #include "linkid.h"
 #endif
-/** 端末IDをセットします */
+/** Set client authentication Id */
 void
 ppp_set_client_auth_id(npppd_ppp *_this, const char *client_auth_id)
 {

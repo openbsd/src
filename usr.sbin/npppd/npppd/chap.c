@@ -24,19 +24,17 @@
  * SUCH DAMAGE.
  */
 /**@file
- * CHAP の実装
- * <p>
- * RFC 1994 PPP Challenge Handshake Authentication Protocol(CHAP) の実装です。
- * 現在認証する側の実装のみです。</p>
- * <p>
- * 対応しているプロトコルは、
- * <ul>
+ * This file provides CHAP (PPP Challenge Handshake Authentication Protocol,
+ * RFC 1994) handlers.  Currently this contains authenticator side
+ * implementation only.
+ *<p>
+ * Supported authentication types:
  *  <li>MD5-CHAP</li>
- *  <li>MS-CHAP v2</li>
- * </ul> です。
+ *  <li>MS-CHAP Version 2 (RFC 2759)</li>
+ * </ul></p>
  */
 /* RFC 1994, 2433 */
-// $Id: chap.c,v 1.1 2010/01/11 04:20:57 yasuoka Exp $
+/* $Id: chap.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -74,15 +72,16 @@
 #define	CHAP_STATE_STOPPED		5
 #define	CHAP_STATE_PROXY_AUTHENTICATION	6
 
-#define	CHAP_TIMEOUT	3	/* リトライ間隔 */
-#define	CHAP_RETRY	10	/* リトライ間隔 */
+/* retry intervals */
+#define	CHAP_TIMEOUT	3
+#define	CHAP_RETRY	10
 
 #define	CHAP_CHALLENGE	1
 #define	CHAP_RESPONSE	2
 #define	CHAP_SUCCESS	3
 #define	CHAP_FAILURE	4
 
-// RFC 2433
+/* from RFC 2433 */
 #define	ERROR_RESTRICTED_LOGIN_HOURS		646
 #define	ERROR_ACCT_DISABLED			647
 #define	ERROR_PASSWD_EXPIRED			648
@@ -90,7 +89,7 @@
 #define	ERROR_AUTHENTICATION_FAILURE		691
 #define	ERROR_CHANGING_PASSWORD			709
 
-// MprError.h
+/*  MprError.h */
 #define	ERROR_AUTH_SERVER_TIMEOUT		930
 
 #ifdef	CHAP_DEBUG
@@ -122,7 +121,7 @@ static void        chap_radius_response (void *, RADIUS_PACKET *, int);
 static char       *strip_nt_domain (char *);
 static void        chap_log (chap *, uint32_t, const char *, ...) __printflike(3,4);
 
-/** {@link ::_chap CHAPインスタンス}を初期化します。*/
+/** Initialize the CHAP */
 void
 chap_init(chap *_this, npppd_ppp *ppp)
 {
@@ -145,7 +144,7 @@ chap_init(chap *_this, npppd_ppp *ppp)
 	_this->ntry = CHAP_RETRY;
 }
 
-/** 認証者として、CHAPを開始します。チャレンジを投げます。*/
+/** Start CHAP as a authenticator.  Send a challenge */
 void
 chap_start(chap *_this)
 {
@@ -169,7 +168,7 @@ chap_start(chap *_this)
 			_this->ntry--;
 			_this->type = _this->ppp->peer_auth;
 
-			/* サポートされている認証タイプかどうか。 */
+			/* The type is supported? */
 			if (_this->type != PPP_AUTH_CHAP_MS_V2 &&
 			    _this->type != PPP_AUTH_CHAP_MD5) {
 				chap_log(_this, LOG_ALERT,
@@ -182,8 +181,9 @@ chap_start(chap *_this)
 				return;
 			}
 
-			/* MS-CHAPv2 を強制 */
+
 #ifdef USE_NPPPD_MPPE
+			/* The peer must use MS-CHAP-V2 as the type */
 			if (MPPE_REQUIRED(_this->ppp) &&
 			    _this->type != PPP_AUTH_CHAP_MS_V2) {
 				chap_log(_this, LOG_ALERT,
@@ -196,8 +196,7 @@ chap_start(chap *_this)
 				return;
 			}
 #endif
-
-			/* チャレンジのパケットを作成、送信。 */
+			/* Generate a challenge packet and send it */
 			challp = ppp_packetbuf(_this->ppp, PPP_AUTH_CHAP);
 			challp += HEADERLEN;
 			challp0 = challp;
@@ -232,7 +231,7 @@ chap_start(chap *_this)
 	}
 }
 
-/** CHAP を停止します。*/
+/** Stop the CHAP */
 void
 chap_stop(chap *_this)
 {
@@ -246,7 +245,7 @@ chap_stop(chap *_this)
 #endif
 }
 
-/** CHAP パケットの入力があった場合に呼び出します。*/
+/** Called when a CHAP packet is received. */
 void
 chap_input(chap *_this, u_char *pktp, int len)
 {
@@ -283,7 +282,8 @@ chap_input(chap *_this, u_char *pktp, int len)
 		chap_log(_this, LOG_ERR, "Received unknown code=%d", code);
 		return;
 	}
-	// Chap Response
+
+	/* Create a chap response */
 
 	if (id != _this->challid) {
 		chap_log(_this, LOG_ERR,
@@ -296,7 +296,7 @@ chap_input(chap *_this, u_char *pktp, int len)
 	authok = 0;
 	UNTIMEOUT(chap_start, _this);
 
-	/* ユーザ名を取得する */
+	/* pick the username */
 	GETCHAR(lval, pktp1);
 	val = pktp1;
 	pktp1 += lval;
@@ -320,7 +320,10 @@ chap_input(chap *_this, u_char *pktp, int len)
 	name = namebuf;
 	if (_this->state == CHAP_STATE_SENT_RESPONSE) {
 		if (strcmp(_this->name, name) != 0) {
-			/* 再送を要求されているが、ユーザ名が変更された */
+			/*
+			 * The peer requests us to resend, but the username
+			 * has been changed.
+			 */
 			chap_log(_this, LOG_ERR,
 			    "Received AuthReq is not same as before.  "
 			    "%s != %s", name, _this->name);
@@ -357,7 +360,7 @@ chap_authenticate(chap *_this, u_char *response, int lresponse)
 
 	switch(_this->type) {
 	case PPP_AUTH_CHAP_MD5:
-		/* 長さチェック */
+		/* check the length */
 		if (lresponse != 16) {
 			chap_log(_this, LOG_ERR,
 			    "Invalid response length %d != 16", lresponse);
@@ -367,7 +370,7 @@ chap_authenticate(chap *_this, u_char *response, int lresponse)
 		}
 		break;
 	case PPP_AUTH_CHAP_MS_V2:
-		/* 長さチェック */
+		/* check the length */
 		if (lresponse < 49) {
 			chap_log(_this, LOG_ERR, "Packet too short.");
 			chap_failure(_this, "FAILED",
@@ -434,7 +437,7 @@ chap_response(chap *_this, int authok, u_char *pktp, int lpktp)
 		    "logtype=Failure username=\"%s\" realm=%s", _this->name,
 		    realm_name);
 		chap_stop(_this);
-		/* 失敗したら ppp 終了 */
+		/* Stop the PPP if the authentication is failed. */
 		ppp_stop_ex(_this->ppp, "Authentication Required",
 		    PPP_DISCON_AUTH_FAILED, PPP_PROTO_CHAP, 1 /* peer */, NULL);
 	} else {
@@ -444,13 +447,13 @@ chap_response(chap *_this, int authok, u_char *pktp, int lpktp)
 		    "logtype=Success username=\"%s\" "
 		    "realm=%s", _this->name, realm_name);
 		chap_stop(_this);
-		// 再送要求に答えるために chap_stop でのセットを上書きします。
+		/* We change our state to prepare to resend requests. */
 		_this->state = CHAP_STATE_SENT_RESPONSE;
 		ppp_auth_ok(_this->ppp);
 	}
 }
 
-/** チャレンジを生成する。*/
+/** Generate a challenge */
 static void
 chap_create_challenge(chap *_this)
 {
@@ -543,7 +546,7 @@ chap_proxy_authen_prepare(chap *_this, dialin_proxy_info *dpi)
 }
 
 /************************************************************************
- * MD5 CHAP の実装	(See RFC 1994)
+ * Functions for MD5-CHAP(RFC1994)
  ************************************************************************/
 static void
 md5chap_authenticate(chap *_this, int id, char *username, u_char *challenge,
@@ -584,9 +587,9 @@ md5chap_authenticate(chap *_this, int id, char *username, u_char *challenge,
 		chap_response(_this, 1, "OK", 2);
 		return;
 	}
-	// パスワード一致せず FALL THROUGH
+	/* FALLTHROUGH.  The password are not matched */
 auth_failed:
-	//ユーザの有無の情報などは与えない
+	/* No extra information, just "FAILED" */
 	chap_send_error(_this, "FAILED");
 
 	return;
@@ -610,7 +613,7 @@ chap_send_error(chap *_this, const char *msg)
 }
 
 /************************************************************************
- * MS CHAP V2 の実装	(See RFC 2759)
+ * Functions for MS-CHAP-V2(RFC 2759)
  ************************************************************************/
 static void
 mschapv2_send_error(chap *_this, int error, int can_retry)
@@ -641,7 +644,6 @@ mschapv2_send_error(chap *_this, int error, int can_retry)
 	chap_response(_this, 0, pkt, lpkt);
 }
 
-// idradiusd/auth_mschap2.c からコピペ
 static void
 mschapv2_authenticate(chap *_this, int id, char *username, u_char *challenge,
     int lchallenge, u_char *response)
@@ -674,13 +676,12 @@ mschapv2_authenticate(chap *_this, int id, char *username, u_char *challenge,
 		}
 		goto auth_failed;
 	}
-	/*
-	 * Unicode 化
-	 */
+
+	/* Convert the string charset from ASCII to UTF16-LE */
 	passlen = strlen(password);
 	for (i = passlen - 1; i >= 0; i--) {
 		password[i*2] = password[i];
-		password[i*2+1] = 0;	// LE
+		password[i*2+1] = 0;
 	}
 
 	GenerateNTResponse(challenge, response, username, strlen(username),
@@ -691,8 +692,9 @@ mschapv2_authenticate(chap *_this, int id, char *username, u_char *challenge,
 		    "username=\"%s\" password mismatch.", username);
 		goto auth_failed;
 	}
+
     /*
-     * 認証成功
+     * Authentication succeed
      */
 	CHAP_DBG((_this, LOG_DEBUG, "%s() OK", __func__));
 
@@ -717,7 +719,7 @@ mschapv2_authenticate(chap *_this, int id, char *username, u_char *challenge,
 
 	return;
 auth_failed:
-	//ユーザの有無の情報などは与えない
+	/* No extra information */
 	mschapv2_send_error(_this, ERROR_AUTHENTICATION_FAILURE, 0);
 
 	return;
@@ -725,12 +727,10 @@ auth_failed:
 
 #ifdef USE_NPPPD_RADIUS
 /************************************************************************
- * RADIUS
+ * Functions for RADIUS
+ * RFC 2058: RADIUS
+ * RFC 2548: Microsoft Vendor-specific RADIUS Attributes
  ************************************************************************/
-/*
-    RFC 2058: RADIUS
-    RFC 2548: Microsoft Vendor-specific RADIUS Attributes
- */
 static void
 chap_radius_authenticate(chap *_this, int id, char *username,
     u_char *challenge, int lchallenge, u_char *response)
@@ -747,28 +747,28 @@ chap_radius_authenticate(chap *_this, int id, char *username,
 
 	if ((rad_setting = npppd_get_radius_req_setting(_this->ppp->pppd,
 	    _this->ppp)) == NULL) {
-		goto reigai;	// NO radius
+		goto fail;	/* no radius server */
 	}
 	pkt = ppp_packetbuf(_this->ppp, PPP_PROTO_CHAP) + HEADERLEN;
 	lpkt = _this->ppp->mru - HEADERLEN;
 
 	if ((radpkt = radius_new_request_packet(RADIUS_CODE_ACCESS_REQUEST))
 	    == NULL)
-		goto reigai;
+		goto fail;
 	if (radius_prepare(rad_setting, _this, &radctx, chap_radius_response,
 	    _this->ppp->auth_timeout) != 0) {
 		radius_delete_packet(radpkt);
-		goto reigai;
+		goto fail;
 	}
 
 	if (ppp_set_radius_attrs_for_authreq(_this->ppp, rad_setting, radpkt)
 	    != 0)
-		goto reigai;
+		goto fail;
 
 	if (radius_put_string_attr(radpkt, RADIUS_TYPE_USER_NAME,
 	    npppd_ppp_get_username_for_auth(_this->ppp->pppd, _this->ppp,
 		username, buf0)) != 0)
-		goto reigai;
+		goto fail;
 
 	switch (_this->type) {
 	case PPP_AUTH_CHAP_MD5:
@@ -779,17 +779,17 @@ chap_radius_authenticate(chap *_this, int id, char *username,
 		memcpy(&md5response[1], response, 16);
 		if (radius_put_raw_attr(radpkt, 
 		    RADIUS_TYPE_CHAP_PASSWORD, md5response, 17) != 0)
-			goto reigai;
+			goto fail;
 		if (radius_put_raw_attr(radpkt, 
 		    RADIUS_TYPE_CHAP_CHALLENGE, challenge, 16) != 0)
-			goto reigai;
+			goto fail;
 		break;
 	    }
 	case PPP_AUTH_CHAP_MS_V2:
 	    {
 		struct RADIUS_MS_CHAP2_RESPONSE msresponse;
 
-		/* RADIUS_MS_CHAP2_RESPONSE の準備 */
+		/* Preparing RADIUS_MS_CHAP2_RESPONSE  */
 		memset(&msresponse, 0, sizeof(msresponse));
 		msresponse.ident = id;
 		msresponse.flags = response[48];
@@ -798,33 +798,34 @@ chap_radius_authenticate(chap *_this, int id, char *username,
 
 		if (radius_put_vs_raw_attr(radpkt, RADIUS_VENDOR_MICROSOFT,
 		    RADIUS_VTYPE_MS_CHAP_CHALLENGE, challenge, 16) != 0)
-			goto reigai;
+			goto fail;
 		if (radius_put_vs_raw_attr(radpkt, RADIUS_VENDOR_MICROSOFT,
 		    RADIUS_VTYPE_MS_CHAP2_RESPONSE, &msresponse,
 		    sizeof(msresponse)) != 0)
-			goto reigai;
+			goto fail;
 		break;
 	    }
 
 	}
 	radius_get_authenticator(radpkt, _this->authenticator);
 
-	/* 古い要求はキャンセル。*/
+	/* Cancel previous request */
 	if (_this->radctx != NULL)
 		radius_cancel_request(_this->radctx);
 
-	/* 要求を投げる */
+	/* Send a request */
 	_this->radctx = radctx;
 	radius_request(radctx, radpkt);
 
 	return;
-reigai:
-	//ユーザの有無の情報などは与えない
+fail:
 	switch (_this->type) {
 	case PPP_AUTH_CHAP_MD5:
+		/* No extra information, just "FAILED" */
 		chap_send_error(_this, "FAILED");
 		break;
 	case PPP_AUTH_CHAP_MS_V2:
+		/* No extra information */
 		mschapv2_send_error(_this, ERROR_AUTHENTICATION_FAILURE, 0);
 		break;
 	}
@@ -849,7 +850,7 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 	_this = context;
 	secret = radius_get_server_secret(_this->radctx);
 	radctx = _this->radctx;
-	_this->radctx = NULL;	/* 大事 */
+	_this->radctx = NULL;	/* IMPORTANT */
 
 	respkt = respkt0 = ppp_packetbuf(_this->ppp, PPP_PROTO_CHAP)
 	    + HEADERLEN;
@@ -871,7 +872,7 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 	if (code == RADIUS_CODE_ACCESS_REJECT) {
 		reason="reject";
 		errorCode = ERROR_AUTHENTICATION_FAILURE;
-		/* Windows 側のパスワードはリセットされる */
+		/* Windows peer will reset the passowrd by this error code */
 		goto auth_failed;
 	} else if (code != RADIUS_CODE_ACCESS_ACCEPT) {
 		reason="error";
@@ -885,7 +886,7 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 		goto auth_failed;
 	}
 	/*
-	 * 認証 OK
+	 * Authetication OK
 	 */
 	switch (_this->type) {
 	case PPP_AUTH_CHAP_MD5:
@@ -908,12 +909,14 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 #ifdef	USE_NPPPD_MPPE
 		if (_this->ppp->mppe.enabled != 0) {
 			len = sizeof(sendkey);
+			/* XXX: radius_get_vs_raw_attr doesn't read 'len' */
 			if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
 			    RADIUS_VTYPE_MPPE_SEND_KEY, &sendkey, &len) != 0) {
 				chap_log(_this, LOG_ERR, "no mppe_send_key");
 				goto auth_failed;
 			}
 			len = sizeof(recvkey);
+			/* XXX: radius_get_vs_raw_attr doesn't read 'len' */
 			if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
 			    RADIUS_VTYPE_MPPE_RECV_KEY, &recvkey, &len) != 0) {
 				chap_log(_this, LOG_ERR, "no mppe_recv_key");
@@ -931,20 +934,20 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags)
 		break;
 	    }
 	}
-	ppp_proccess_radius_framed_ip(_this->ppp, pkt);
+	ppp_process_radius_framed_ip(_this->ppp, pkt);
 
 	return;
 auth_failed:
 	chap_log(_this, LOG_WARNING, "Radius authentication request failed: %s",
 	    reason);
-	//ユーザの有無の情報などは与えない
+	/* No extra information */
 	chap_failure(_this, "FAILED", errorCode);
 }
 
 #endif
 
 /************************************************************************
- * ユーティリティ関数
+ * Miscellaneous functions
  ************************************************************************/
 static char *
 strip_nt_domain(char *username)
