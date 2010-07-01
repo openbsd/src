@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.47 2010/02/03 20:49:00 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.48 2010/07/01 19:15:30 deraadt Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
@@ -7,7 +7,7 @@ CFLAGS+=-DRESOLVSORT
 
 SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 	getifaddrs.c getnameinfo.c getnetbyaddr.c getnetbyname.c getnetent.c \
-	getnetnamadr.c getproto.c getprotoent.c getprotoname.c \
+	getnetnamadr.c getpeereid.c getproto.c getprotoent.c getprotoname.c \
 	getservbyname.c getservbyport.c getservent.c getrrsetbyname.c \
 	herror.c if_indextoname.c if_nameindex.c if_nametoindex.c inet_addr.c \
 	inet_lnaof.c inet_makeaddr.c inet_neta.c inet_netof.c inet_network.c \
@@ -28,7 +28,7 @@ SRCS+=	ip6opt.c rthdr.c vars6.c
 .include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/net/Makefile.inc"
 
 MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
-	getifaddrs.3 getnameinfo.3 getnetent.3 getprotoent.3 \
+	getifaddrs.3 getnameinfo.3 getnetent.3 getpeereid.3 getprotoent.3 \
 	getrrsetbyname.3 getservent.3 if_indextoname.3 inet.3 \
 	inet_net.3 inet6_option_space.3 inet6_rthdr_space.3 \
 	inet6_opt_init.3 inet6_rth_space.3 \
