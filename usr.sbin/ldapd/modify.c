@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.6 2010/06/29 21:54:38 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.7 2010/07/01 00:43:56 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -79,8 +79,9 @@ ldap_add(struct request *req)
 {
 	char			 uuid_str[64];
 	struct uuid		 uuid;
-	char			*dn;
-	struct ber_element	*attrs, *set;
+	char			*dn, *s;
+	struct attr_type	*at;
+	struct ber_element	*attrs, *attr, *elm, *set = NULL;
 	struct namespace	*ns;
 	struct referrals	*refs;
 	int			 rc;
@@ -107,6 +108,23 @@ ldap_add(struct request *req)
 	if (!authorized(req->conn, ns, ACI_WRITE, dn, LDAP_SCOPE_BASE) != 0)
 		return ldap_respond(req, LDAP_INSUFFICIENT_ACCESS);
 
+	/* Check that we're not adding immutable attributes.
+	 */
+	for (elm = attrs->be_sub; elm != NULL; elm = elm->be_next) {
+		attr = elm->be_sub;
+		if (attr == NULL || ber_get_string(attr, &s) != 0)
+			return ldap_respond(req, LDAP_PROTOCOL_ERROR);
+		at = lookup_attribute(conf->schema, s);
+		if (at == NULL) {
+			log_debug("unknown attribute type %s", s);
+			return ldap_respond(req, LDAP_NO_SUCH_ATTRIBUTE);
+		}
+		if (at->immutable) {
+			log_debug("attempt to add immutable attribute %s", s);
+			return ldap_respond(req, LDAP_CONSTRAINT_VIOLATION);
+		}
+	}
+
 	if (namespace_begin(ns) == -1) {
 		if (errno == EBUSY) {
 			if (namespace_queue_request(ns, req) != 0)
@@ -118,19 +136,28 @@ ldap_add(struct request *req)
 
 	/* add operational attributes
 	 */
-	set = ber_add_set(NULL);
-	ber_add_string(set, req->conn->binddn ?: "");
-	ldap_add_attribute(attrs, "creatorsName", set);
+	if ((set = ber_add_set(NULL)) == NULL)
+		goto fail;
+	if (ber_add_string(set, req->conn->binddn ?: "") == NULL)
+		goto fail;
+	if (ldap_add_attribute(attrs, "creatorsName", set) == NULL)
+		goto fail;
 
-	set = ber_add_set(NULL);
-	ber_add_string(set, ldap_now());
-	ldap_add_attribute(attrs, "createTimestamp", set);
+	if ((set = ber_add_set(NULL)) == NULL)
+		goto fail;
+	if (ber_add_string(set, ldap_now()) == NULL)
+		goto fail;
+	if (ldap_add_attribute(attrs, "createTimestamp", set) == NULL)
+		goto fail;
 
 	uuid_create(&uuid);
 	uuid_to_string(&uuid, uuid_str, sizeof(uuid_str));
-	set = ber_add_set(NULL);
-	ber_add_string(set, uuid_str);
-	ldap_add_attribute(attrs, "entryUUID", set);
+	if ((set = ber_add_set(NULL)) == NULL)
+		goto fail;
+	if (ber_add_string(set, uuid_str) == NULL)
+		goto fail;
+	if (ldap_add_attribute(attrs, "entryUUID", set) == NULL)
+		goto fail;
 
 	if ((rc = validate_entry(dn, attrs, ns->relax)) != LDAP_SUCCESS ||
 	    namespace_add(ns, dn, attrs) != 0) {
@@ -143,6 +170,12 @@ ldap_add(struct request *req)
 		rc = LDAP_OTHER;
 
 	return ldap_respond(req, rc);
+
+fail:
+	if (set != NULL)
+		ber_free_elements(set);
+	namespace_abort(ns);
+	return ldap_respond(req, LDAP_OTHER);
 }
 
 int
@@ -199,19 +232,14 @@ ldap_modify(struct request *req)
 			goto done;
 		}
 
-		if ((at = lookup_attribute(conf->schema, attr)) == NULL && !ns->relax) {
+		if ((at = lookup_attribute(conf->schema, attr)) == NULL &&
+		    !ns->relax) {
 			log_debug("unknown attribute type %s", attr);
 			rc = LDAP_NO_SUCH_ATTRIBUTE;
 			goto done;
 		}
 		if (at != NULL && at->immutable) {
 			log_debug("attempt to modify immutable attribute %s",
-			    attr);
-			rc = LDAP_CONSTRAINT_VIOLATION;
-			goto done;
-		}
-		if (at != NULL && at->usage != USAGE_USER_APP) {
-			log_debug("attempt to modify operational attribute %s",
 			    attr);
 			rc = LDAP_CONSTRAINT_VIOLATION;
 			goto done;
