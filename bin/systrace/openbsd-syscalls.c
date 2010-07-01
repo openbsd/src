@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.35 2010/06/30 20:46:51 tedu Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.36 2010/07/01 17:26:52 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -35,7 +35,6 @@
 
 #include <compat/bsdos/bsdos_syscall.h>
 #include <compat/freebsd/freebsd_syscall.h>
-#include <compat/ibcs2/ibcs2_syscall.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/sunos/sunos_syscall.h>
 #include <compat/svr4/svr4_syscall.h>
@@ -53,7 +52,6 @@
 
 #include <compat/bsdos/bsdos_syscalls.c>
 #include <compat/freebsd/freebsd_syscalls.c>
-#include <compat/ibcs2/ibcs2_syscalls.c>
 #include <compat/linux/linux_syscalls.c>
 #include <compat/sunos/sunos_syscalls.c>
 #include <compat/svr4/svr4_syscalls.c>
@@ -90,7 +88,6 @@ struct emulation {
 static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
 	{ "aout",	syscallnames,		SYS_MAXSYSCALL },
-	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
 	{ "sunos",	sunos_syscallnames,	SUNOS_SYS_MAXSYSCALL },
 	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },

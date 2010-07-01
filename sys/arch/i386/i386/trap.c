@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.89 2010/05/09 12:03:16 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.90 2010/07/01 17:30:27 tedu Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -71,11 +71,6 @@
 #include <sys/kgdb.h>
 #endif
 
-#ifdef COMPAT_IBCS2
-#include <compat/ibcs2/ibcs2_errno.h>
-#include <compat/ibcs2/ibcs2_exec.h>
-extern struct emul emul_ibcs2;
-#endif
 #include <sys/exec.h>
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
@@ -601,13 +596,6 @@ syscall(struct trapframe *frame)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-
-#ifdef COMPAT_IBCS2
-	if (p->p_emul == &emul_ibcs2)
-		if (IBCS2_HIGH_SYSCALL(code))
-			code = IBCS2_CVT_HIGH_SYSCALL(code);
-#endif
-	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 #ifdef VM86
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.12 2010/06/29 21:13:43 thib Exp $	*/
+/*	$OpenBSD: npx.h,v 1.13 2010/07/01 17:30:27 tedu Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -134,7 +134,6 @@ struct	emcsts {
 };
 
 /* Intel prefers long real (53 bit) precision */
-#define	__iBCS_NPXCW__		0x262
 #define __BDE_NPXCW__		0x1272		/* FreeBSD */
 #define	__OpenBSD_NPXCW__	0x37f
 
@@ -149,12 +148,6 @@ struct	emcsts {
  *	round to nearest
  *	64-bit precision
  *	all exceptions masked.
- *
- * The iBCS control word has underflow, overflow, zero divide, and invalid
- * operation exceptions unmasked.  But that causes an unexpected exception
- * in the test program 'paranoia' and makes denormals useless (DBL_MIN / 2
- * underflows).  It doesn't make a lot of sense to trap underflow without
- * trapping denormals.
  */
 
 #define	__INITIAL_NPXCW__	__OpenBSD_NPXCW__

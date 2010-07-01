@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.16 2008/11/14 20:43:55 weingart Exp $	*/
+/*	$OpenBSD: segments.h,v 1.17 2010/07/01 17:30:27 tedu Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -228,8 +228,6 @@ void idt_vec_free(int);
 /*
  * Entries in the Local Descriptor Table (LDT)
  */
-#define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
-#define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
 #define	LBSDICALLS_SEL	16	/* BSDI system call gate */
 #define	NLDT		17
 
