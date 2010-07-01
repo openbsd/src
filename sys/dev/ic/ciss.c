@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.58 2010/07/01 03:20:38 matthew Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.59 2010/07/01 16:24:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -141,7 +141,6 @@ ciss_attach(struct ciss_softc *sc)
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
 	struct ciss_inquiry *inq;
-	struct device *dev;
 	bus_dma_segment_t seg[1];
 	int error, i, total, rseg, maxfer;
 	ciss_lock_t lock;
@@ -396,6 +395,8 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sensors = malloc(sizeof(struct ksensor) * sc->maxunits,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sensors) {
+		struct device *dev;
+
 		strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensordev.xname));
 		for (i = 0; i < sc->maxunits;
