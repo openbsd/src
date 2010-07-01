@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.h,v 1.2 2010/06/30 04:17:04 martinh Exp $ */
+/*	$OpenBSD: schema.h,v 1.3 2010/07/01 18:37:12 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -32,7 +32,7 @@ enum usage {
 
 struct name {
 	SLIST_ENTRY(name)	 next;
-	const char		*name;
+	char			*name;
 };
 SLIST_HEAD(name_list, name);
 

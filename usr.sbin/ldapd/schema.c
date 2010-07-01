@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.5 2010/07/01 17:21:25 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.6 2010/07/01 18:37:12 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -59,7 +59,7 @@ RB_GENERATE(symoid_tree, symoid, link, symoid_cmp);
 
 static struct attr_list	*push_attr(struct attr_list *alist, struct attr_type *a);
 static struct obj_list	*push_obj(struct obj_list *olist, struct object *obj);
-static struct name_list *push_name(struct name_list *nl, const char *name);
+static struct name_list *push_name(struct name_list *nl, char *name);
 int			 is_oidstr(const char *oidstr);
 
 struct attr_type *
@@ -251,7 +251,7 @@ is_oidstr(const char *oidstr)
 }
 
 static struct name_list *
-push_name(struct name_list *nl, const char *name)
+push_name(struct name_list *nl, char *name)
 {
 	struct name	*n;
 
@@ -553,6 +553,19 @@ fail:
 	return NULL;
 }
 
+static void
+schema_free_name_list(struct name_list *nlist)
+{
+	struct name	*name;
+
+	while ((name = SLIST_FIRST(nlist)) != NULL) {
+		SLIST_REMOVE_HEAD(nlist, next);
+		free(name->name);
+		free(name);
+	}
+	free(nlist);
+}
+
 static struct attr_list *
 schema_parse_attrlist(struct schema *schema)
 {
@@ -653,6 +666,7 @@ static int
 schema_parse_attributetype(struct schema *schema)
 {
 	struct attr_type	*attr = NULL, *prev;
+	struct name_list	*xnames;
 	char			*kw = NULL, *arg = NULL;
 	int			 token, ret = 0, c;
 
@@ -746,14 +760,23 @@ schema_parse_attributetype(struct schema *schema)
 				schema_err(schema, "invalid usage '%s'", arg);
 				goto fail;
 			}
+		} else if (strncmp(kw, "X-", 2) == 0) {
+			/* unknown extension, eat argument(s) */
+			xnames = schema_parse_names(schema);
+			if (xnames == NULL)
+				goto fail;
+			schema_free_name_list(xnames);
+		} else {
+			schema_err(schema, "syntax error at token '%s'", kw);
+			goto fail;
 		}
+		free(kw);
 	}
 
 	return 0;
 
 fail:
 	free(kw);
-	free(arg);
 	if (attr != NULL) {
 		if (attr->oid != NULL) {
 			RB_REMOVE(attr_type_tree, &schema->attr_types, attr);
@@ -770,6 +793,7 @@ schema_parse_objectclass(struct schema *schema)
 {
 	struct object		*obj = NULL, *prev;
 	struct obj_ptr		*optr;
+	struct name_list	*xnames;
 	char			*kw = NULL;
 	int			 token, ret = 0;
 
@@ -835,7 +859,17 @@ schema_parse_objectclass(struct schema *schema)
 			obj->may = schema_parse_attrlist(schema);
 			if (obj->may == NULL)
 				goto fail;
+		} else if (strncasecmp(kw, "X-", 2) == 0) {
+			/* unknown extension, eat argument(s) */
+			xnames = schema_parse_names(schema);
+			if (xnames == NULL)
+				goto fail;
+			schema_free_name_list(xnames);
+		} else {
+			schema_err(schema, "syntax error at token '%s'", kw);
+			goto fail;
 		}
+		free(kw);
 	}
 
 	/* Verify the subclassing is allowed.
