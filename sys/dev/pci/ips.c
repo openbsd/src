@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.101 2010/07/01 03:20:38 matthew Exp $	*/
+/*	$OpenBSD: ips.c,v 1.102 2010/07/01 16:30:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -593,7 +593,6 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	struct ips_adapterinfo *ai;
 	struct ips_driveinfo *di;
 	struct ips_pg5 *pg5;
-	struct device *dev;
 	pcireg_t maptype;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
@@ -753,12 +752,12 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		/* Check if channel has any devices besides disks */
 		for (target = 0, lastarget = -1; target < IPS_MAXTARGETS;
 		    target++) {
-			struct ips_dev *dev;
+			struct ips_dev *idev;
 			int type;
 
-			dev = &sc->sc_info->conf.dev[i][target];
-			type = dev->params & SID_TYPE;
-			if (dev->state && type != T_DIRECT) {
+			idev = &sc->sc_info->conf.dev[i][target];
+			type = idev->params & SID_TYPE;
+			if (idev->state && type != T_DIRECT) {
 				lastarget = target;
 				if (type == T_PROCESSOR ||
 				    type == T_ENCLOSURE)
@@ -799,6 +798,8 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 	for (i = 0; i < sc->sc_nunits; i++) {
+		struct device *dev;
+
 		sc->sc_sensors[i].type = SENSOR_DRIVE;
 		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
 		dev = scsi_get_link(sc->sc_scsibus, i, 0)->device_softc;
