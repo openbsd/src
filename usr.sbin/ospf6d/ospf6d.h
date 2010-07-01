@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.20 2010/06/03 10:00:34 bluhm Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.21 2010/07/01 18:57:21 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -100,6 +100,8 @@ enum imsg_type {
 	IMSG_IFINFO,
 	IMSG_IFADD,
 	IMSG_IFDELETE,
+	IMSG_IFADDRNEW,
+	IMSG_IFADDRDEL,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
 	IMSG_NEIGHBOR_CHANGE,
@@ -322,6 +324,13 @@ struct iface {
 #define F_IFACE_PASSIVE		0x01
 #define F_IFACE_CONFIGURED	0x02
 #define F_IFACE_AVAIL		0x04
+};
+
+struct ifaddrchange {
+	struct in6_addr		 addr;
+	struct in6_addr		 dstbrd;
+	unsigned int		 ifindex;
+	u_int8_t		 prefixlen;
 };
 
 /* ospf_conf */

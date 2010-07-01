@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.42 2010/06/28 15:05:01 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.43 2010/07/01 18:57:21 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -65,7 +65,6 @@ struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
 struct lsa	*orig_intra_lsa_net(struct iface *, struct vertex *);
 struct lsa	*orig_intra_lsa_rtr(struct area *, struct vertex *);
-void		 orig_intra_area_prefix_lsas(struct area *);
 void		 append_prefix_lsa(struct lsa **, u_int16_t *,
 		    struct lsa_prefix *);
 int		 link_lsa_from_full_nbr(struct lsa *, struct iface *);

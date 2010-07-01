@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.32 2010/06/12 10:12:41 bluhm Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.33 2010/07/01 18:57:21 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -432,6 +432,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	struct lsa_tree	*tree;
 	struct vertex	*new, *old;
 	struct timeval	 tv, now, res;
+	int		 update = 1;
 
 	if (LSA_IS_SCOPE_AS(ntohs(lsa->hdr.type)))
 		tree = &asext_tree;
@@ -460,14 +461,15 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 				fatal("lsa_add");
 			return (1);
 		}
-		if (!lsa_equal(new->lsa, old->lsa)) {
-			if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
-				nbr->area->dirty = 1;
-			start_spf_timer();
-		}
+		if (lsa_equal(new->lsa, old->lsa))
+			update = 0;
 		vertex_free(old);
 		RB_INSERT(lsa_tree, tree, new);
-	} else {
+	}
+
+	if (update) {
+		if (ntohs(lsa->hdr.type) == LSA_TYPE_LINK)
+			orig_intra_area_prefix_lsas(nbr->area);
 		if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
 			nbr->area->dirty = 1;
 		start_spf_timer();
@@ -787,6 +789,8 @@ lsa_timeout(int fd, short event, void *bula)
 			v->deleted = 0;
 
 			/* schedule recalculation of the RIB */
+			if (ntohs(v->lsa->hdr.type) == LSA_TYPE_LINK)
+				orig_intra_area_prefix_lsas(v->area);
 			if (ntohs(v->lsa->hdr.type) != LSA_TYPE_EXTERNAL)
 				v->area->dirty = 1;
 			start_spf_timer();
@@ -877,9 +881,11 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	/* overwrite the lsa all other fields are unaffected */
 	free(v->lsa);
 	v->lsa = lsa;
-	start_spf_timer();
+	if (v->type == LSA_TYPE_LINK)
+		orig_intra_area_prefix_lsas(nbr->area);
 	if (v->type != LSA_TYPE_EXTERNAL)
 		nbr->area->dirty = 1;
+	start_spf_timer();
 
 	/* set correct timeout for reflooding the LSA */
 	clock_gettime(CLOCK_MONOTONIC, &tp);

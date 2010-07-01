@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.22 2010/06/28 15:06:00 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.23 2010/07/01 18:57:21 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -77,6 +77,8 @@ int		protect_lo(void);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_newaddr(u_short, struct sockaddr_in6 *,
+		    struct sockaddr_in6 *, struct sockaddr_in6 *);
+void		if_deladdr(u_short, struct sockaddr_in6 *,
 		    struct sockaddr_in6 *, struct sockaddr_in6 *);
 void		if_announce(void *);
 
@@ -838,6 +840,7 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 {
 	struct iface		*iface;
 	struct iface_addr	*ia;
+	struct ifaddrchange	 ifc;
 
 	if (ifa == NULL || ifa->sin6_family != AF_INET6)
 		return;
@@ -898,6 +901,60 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	}
 		
 	TAILQ_INSERT_TAIL(&iface->ifa_list, ia, entry);
+	ifc.addr = ia->addr;
+	ifc.dstbrd = ia->dstbrd;
+	ifc.prefixlen = ia->prefixlen;
+	ifc.ifindex = ifindex;
+	main_imsg_compose_ospfe(IMSG_IFADDRNEW, 0, &ifc, sizeof(ifc));
+}
+
+void
+if_deladdr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
+    struct sockaddr_in6 *brd)
+{
+	struct iface		*iface;
+	struct iface_addr	*ia, *nia;
+	struct ifaddrchange	 ifc;
+
+	if (ifa == NULL || ifa->sin6_family != AF_INET6)
+		return;
+	if ((iface = if_find(ifindex)) == NULL) {
+		log_warnx("if_deladdr: corresponding if %i not found", ifindex);
+		return;
+	}
+
+	/* We only care about link-local and global-scope. */
+	if (IN6_IS_ADDR_UNSPECIFIED(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_LOOPBACK(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_MULTICAST(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_SITELOCAL(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_V4MAPPED(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_V4COMPAT(&ifa->sin6_addr))
+	    	return;
+
+	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
+	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr)) {
+		ifa->sin6_addr.s6_addr[2] = 0;
+		ifa->sin6_addr.s6_addr[3] = 0;
+	}
+
+	for (ia = TAILQ_FIRST(&iface->ifa_list); ia != NULL; ia = nia) {
+		nia = TAILQ_NEXT(ia, entry);
+
+		if (IN6_ARE_ADDR_EQUAL(&ia->addr, &ifa->sin6_addr)) {
+			log_debug("if_deladdr: ifindex %u, addr %s/%d",
+			    ifindex, log_in6addr(&ia->addr), ia->prefixlen);
+			TAILQ_REMOVE(&iface->ifa_list, ia, entry);
+			ifc.addr = ia->addr;
+			ifc.dstbrd = ia->dstbrd;
+			ifc.prefixlen = ia->prefixlen;
+			ifc.ifindex = ifindex;
+			main_imsg_compose_ospfe(IMSG_IFADDRDEL, 0, &ifc,
+			    sizeof(ifc));
+			free(ia);
+			return;
+		}
+	}
 }
 
 void
@@ -1491,6 +1548,19 @@ add:
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
 			if_newaddr(ifam->ifam_index,
+			    (struct sockaddr_in6 *)rti_info[RTAX_IFA],
+			    (struct sockaddr_in6 *)rti_info[RTAX_NETMASK],
+			    (struct sockaddr_in6 *)rti_info[RTAX_BRD]);
+			break;
+		case RTM_DELADDR:
+			ifam = (struct ifa_msghdr *)rtm;
+			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
+			    RTA_BRD)) == 0)
+				break;
+			sa = (struct sockaddr *)(ifam + 1);
+			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
+
+			if_deladdr(ifam->ifam_index,
 			    (struct sockaddr_in6 *)rti_info[RTAX_IFA],
 			    (struct sockaddr_in6 *)rti_info[RTAX_NETMASK],
 			    (struct sockaddr_in6 *)rti_info[RTAX_BRD]);
