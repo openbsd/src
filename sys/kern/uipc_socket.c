@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.80 2010/06/30 19:57:05 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.81 2010/07/01 18:47:45 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1205,7 +1205,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 					    mtod(m, caddr_t),
 					    (unsigned)m->m_len);
 				} else
-					return (EINVAL);
+					return (ENOTCONN);
 			} else
 				return (EOPNOTSUPP);
 			break;
