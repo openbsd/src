@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.27 2010/07/01 21:28:01 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.28 2010/07/01 23:41:42 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -64,7 +64,6 @@ getremcap(char *host)
 	if ((stat = cgetent(&bp, db_array, host)) < 0) {
 		if (vgetstr(DEVICE) != NULL ||
 		    (host[0] == '/' && access(host, R_OK | W_OK) == 0)) {
-			vsetstr(DEVICE, host);
 			vsetstr(HOST, host);
 			if (!vgetnum(BAUDRATE))
 				vsetnum(BAUDRATE, DEFBR);
