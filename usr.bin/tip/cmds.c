@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.37 2010/06/29 23:38:05 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.38 2010/07/01 20:24:19 chl Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include "tip.h"
 #include "pathnames.h"
 
+#include <util.h>
 #include <vis.h>
 
 /*

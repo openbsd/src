@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.31 2010/06/29 23:38:05 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.32 2010/07/01 20:24:19 chl Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
 
 #include <err.h>
 #include <paths.h>
+#include <util.h>
 
 #include "tip.h"
 

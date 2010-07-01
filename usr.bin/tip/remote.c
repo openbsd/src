@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.25 2010/06/29 23:38:05 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.26 2010/07/01 20:24:19 chl Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static void	getremcap(char *);
 static void
 getremcap(char *host)
 {
-	char  **p, ***q, *bp, *rempath, *strval;
+	char   *bp, *rempath, *strval;
 	int	stat;
 	long	val;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.46 2010/06/30 00:09:27 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.47 2010/07/01 20:24:19 chl Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static int	escape(void);
 int
 main(int argc, char *argv[])
 {
-	char *sys = NULL, sbuf[12], *p;
+	char *sys = NULL;
 	int i, pair[2];
 
 	/* XXX preserve previous braindamaged behavior */
