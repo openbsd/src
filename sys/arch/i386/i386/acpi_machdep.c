@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.31 2010/07/01 00:48:48 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.32 2010/07/01 03:22:12 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -62,7 +62,7 @@ int haveacpibutusingapm;
 
 extern u_char acpi_real_mode_resume[], acpi_resume_end[];
 
-extern int acpi_savecpu(void);
+extern int acpi_savecpu(void) __returns_twice;
 extern void intr_calculatemasks(void);
 
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000

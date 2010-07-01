@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.29 2010/04/30 20:09:35 kettenis Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.30 2010/07/01 03:22:12 jsg Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -139,6 +139,12 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused	/* suppress -Wunused warnings */
+#endif
+
+#if __GNUC_PREREQ__(4, 1)
+#define __returns_twice	__attribute__((returns_twice))
+#else
+#define __returns_twice
 #endif
 
 /*
