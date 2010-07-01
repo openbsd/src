@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.90 2010/07/01 17:30:27 tedu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.91 2010/07/01 19:47:07 tedu Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -596,6 +596,8 @@ syscall(struct trapframe *frame)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
+
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 #ifdef VM86
 	/*
