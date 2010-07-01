@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.493 2010/06/29 20:30:33 guenther Exp $
+#	$OpenBSD: files,v 1.494 2010/07/01 01:54:38 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1073,9 +1073,7 @@ file compat/common/vfs_syscalls_25.c	!small_kernel &
 	(compat_freebsd | compat_bsdos | compat_sunos)
 file compat/common/vfs_syscalls_35.c	!small_kernel & (compat_35 |
 	compat_freebsd | compat_bsdos | compat_sunos)
-file compat/common/vfs_syscalls_o43.c	!small_kernel & compat_o43
 file compat/common/kern_ipc_35.c	!small_kernel & compat_35
-file compat/common/kern_ipc_23.c	!small_kernel & compat_23
 file compat/common/kern_exit_43.c	!small_kernel
 file compat/common/kern_info_43.c	!small_kernel
 file compat/common/kern_resource_43.c	!small_kernel
