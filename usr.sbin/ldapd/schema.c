@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.3 2010/06/30 19:42:40 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.4 2010/07/01 03:47:59 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -651,7 +651,7 @@ static int
 schema_parse_attributetype(struct schema *schema)
 {
 	struct attr_type	*attr = NULL, *prev;
-	char			*kw, *arg = NULL;
+	char			*kw = NULL, *arg = NULL;
 	int			 token, ret = 0, c;
 
 	if (schema_lex(schema, NULL) != '(')
@@ -768,7 +768,7 @@ schema_parse_objectclass(struct schema *schema)
 {
 	struct object		*obj = NULL, *prev;
 	struct obj_ptr		*optr;
-	char			*kw;
+	char			*kw = NULL;
 	int			 token, ret = 0;
 
 	if (schema_lex(schema, NULL) != '(')
