@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.11 2010/05/24 15:06:05 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.12 2010/07/01 04:17:06 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -27,6 +27,7 @@
 #include <sys/reboot.h>
 #include <sys/extent.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -57,24 +58,6 @@ struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
 
 /* from machdep.c */
 extern struct extent *hppa_ex;
-
-int
-mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
-    bus_space_handle_t *bshp)
-{
-	paddr_t spa, epa;
-	int bank, off;
-
-	if ((bank = vm_physseg_find(atop(bpa), &off)) >= 0)
-		panic("mbus_add_mapping: mapping real memory @0x%lx", bpa);
-
-	for (spa = trunc_page(bpa), epa = bpa + size;
-	     spa < epa; spa += PAGE_SIZE)
-		pmap_kenter_pa(spa, spa, UVM_PROT_RW);
-
-	*bshp = bpa;
-	return (0);
-}
 
 int		 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		    bus_space_handle_t *bshp);
@@ -160,6 +143,53 @@ void		 mbus_cp_4(void *v, bus_space_handle_t h1, bus_size_t o1,
 		    bus_space_handle_t h2, bus_size_t o2, bus_size_t c);
 void		 mbus_cp_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 		    bus_space_handle_t h2, bus_size_t o2, bus_size_t c);
+
+int		 mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
+		   bus_size_t maxsegsz, bus_size_t boundary, int flags,
+		   bus_dmamap_t *dmamp);
+void		 mbus_dmamap_unload(void *v, bus_dmamap_t map);
+void		 mbus_dmamap_destroy(void *v, bus_dmamap_t map);
+int		 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
+		    void *buf, bus_size_t buflen, struct proc *p, int flags,
+		    paddr_t *lastaddrp, int *segp, int first);
+int		 mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr,
+		    bus_size_t size, struct proc *p, int flags);
+int		 mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map,
+		    struct mbuf *m0, int flags);
+int		 mbus_dmamap_load_uio(void *v, bus_dmamap_t map,
+		    struct uio *uio, int flags);
+int		 mbus_dmamap_load_raw(void *v, bus_dmamap_t map,
+		    bus_dma_segment_t *segs, int nsegs, bus_size_t size,
+		    int flags);
+void		 mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t off,
+		    bus_size_t len, int ops);
+int		 mbus_dmamem_alloc(void *v, bus_size_t size,
+		    bus_size_t alignment, bus_size_t boundary,
+		    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+void		 mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs);
+int		 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs,
+		    size_t size, caddr_t *kvap, int flags);
+void		 mbus_dmamem_unmap(void *v, caddr_t kva, size_t size);
+paddr_t		 mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
+		    off_t off, int prot, int flags);
+
+int
+mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
+{
+	paddr_t spa, epa;
+	int bank, off;
+
+	if ((bank = vm_physseg_find(atop(bpa), &off)) >= 0)
+		panic("mbus_add_mapping: mapping real memory @0x%lx", bpa);
+
+	for (spa = trunc_page(bpa), epa = bpa + size;
+	     spa < epa; spa += PAGE_SIZE)
+		pmap_kenter_pa(spa, spa, UVM_PROT_RW);
+
+	*bshp = bpa;
+	return (0);
+}
 
 int
 mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
@@ -269,8 +299,7 @@ struct hppa64_bus_space_tag hppa_bustag = {
 
 int
 mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
-		   bus_size_t maxsegsz, bus_size_t boundary, int flags,
-		   bus_dmamap_t *dmamp)
+   bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct hppa64_bus_dmamap *map;
 	size_t mapsize;
@@ -636,7 +665,7 @@ mbus_dmamem_unmap(void *v, caddr_t kva, size_t size)
 
 paddr_t
 mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs, off_t off,
-		 int prot, int flags)
+    int prot, int flags)
 {
 	panic("_dmamem_mmap: not implemented");
 }
@@ -651,35 +680,6 @@ const struct hppa64_bus_dma_tag hppa_dmatag = {
 	mbus_dmamem_alloc, mbus_dmamem_free, mbus_dmamem_map,
 	mbus_dmamem_unmap, mbus_dmamem_mmap
 };
-
-int		 mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
-		   bus_size_t maxsegsz, bus_size_t boundary, int flags,
-		   bus_dmamap_t *dmamp);
-void		 mbus_dmamap_unload(void *v, bus_dmamap_t map);
-void		 mbus_dmamap_destroy(void *v, bus_dmamap_t map);
-int		 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
-		    void *buf, bus_size_t buflen, struct proc *p, int flags,
-		    paddr_t *lastaddrp, int *segp, int first);
-int		 mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr,
-		    bus_size_t size, struct proc *p, int flags);
-int		 mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map,
-		    struct mbuf *m0, int flags);
-int		 mbus_dmamap_load_uio(void *v, bus_dmamap_t map,
-		    struct uio *uio, int flags);
-int		 mbus_dmamap_load_raw(void *v, bus_dmamap_t map,
-		    bus_dma_segment_t *segs, int nsegs, bus_size_t size,
-		    int flags);
-void		 mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t off,
-		    bus_size_t len, int ops);
-int		 mbus_dmamem_alloc(void *v, bus_size_t size,
-		    bus_size_t alignment, bus_size_t boundary,
-		    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
-void		 mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs);
-int		 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs,
-		    size_t size, caddr_t *kvap, int flags);
-void		 mbus_dmamem_unmap(void *v, caddr_t kva, size_t size);
-paddr_t		 mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
-		    off_t off, int prot, int flags);
 
 int
 mbmatch(parent, cfdata, aux)
