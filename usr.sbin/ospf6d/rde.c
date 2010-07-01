@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.44 2010/07/01 19:47:04 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.45 2010/07/01 21:19:57 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -688,6 +688,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				 */
 				if (v)
 					lsa_merge(nbrself, lsa, v);
+				else
+					free(lsa);
 			}
 			break;
 		case IMSG_KROUTE_GET:

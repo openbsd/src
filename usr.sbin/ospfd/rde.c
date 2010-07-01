@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.85 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: rde.c,v 1.86 2010/07/01 21:19:57 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -653,6 +653,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				 */
 				if (v)
 					lsa_merge(nbrself, lsa, v);
+				else
+					free(lsa);
 			}
 			break;
 		case IMSG_RECONF_CONF:
