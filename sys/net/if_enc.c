@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.49 2010/06/29 21:28:37 reyk Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.50 2010/07/01 01:55:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -89,6 +89,8 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	if_attach(ifp);
+	if (unit == 0)
+		if_addgroup(ifp, ifc->ifc_name);
 	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
