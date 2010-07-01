@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.36 2010/06/29 23:44:34 jordan Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.37 2010/07/01 01:39:39 jordan Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -278,18 +278,13 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 			aml_freevalue(&res);
 			return;
 		}
-		aml_parse_resource(res.length, res.v_buffer,
-		    acpiprt_getirq, &irq);
+		aml_parse_resource(&res, acpiprt_getirq, &irq);
 		aml_freevalue(&res);
 
 		/* Pick a new IRQ if necessary. */
 		if ((irq == 0 || irq == 2 || irq == 13) &&
 		    !aml_evalname(sc->sc_acpi, node, "_PRS", 0, NULL, &res)){
-			if (res.type == AML_OBJTYPE_BUFFER &&
-			    res.length >= 5) {
-				aml_parse_resource(res.length, res.v_buffer,
-				    acpiprt_chooseirq, &irq);
-			}
+			aml_parse_resource(&res, acpiprt_chooseirq, &irq);
 			aml_freevalue(&res);
 		}
 
@@ -409,7 +404,7 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 		aml_freevalue(&res);
 		return;
 	}
-	aml_parse_resource(res.length, res.v_buffer, acpiprt_getirq, &irq);
+	aml_parse_resource(&res, acpiprt_getirq, &irq);
 
 	/* Only re-route interrupts when necessary. */
 	if ((sta & STA_ENABLED) && irq == newirq) {

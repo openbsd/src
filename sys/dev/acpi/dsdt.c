@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.162 2010/06/30 19:23:09 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.163 2010/07/01 01:39:39 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1628,14 +1628,16 @@ aml_mapresource(union acpi_resource *crs)
 }
 
 int
-aml_parse_resource(int length, uint8_t *buffer,
+aml_parse_resource(struct aml_value *res,
     int (*crs_enum)(union acpi_resource *, void *), void *arg)
 {
 	int off, rlen;
 	union acpi_resource *crs;
 
-	for (off = 0; off < length; off += rlen) {
-		crs = (union acpi_resource *)(buffer+off);
+	if (res->type != AML_OBJTYPE_BUFFER || res->length < 5)
+		return (-1);
+	for (off = 0; off < res->length; off += rlen) {
+		crs = (union acpi_resource *)(res->v_buffer+off);
 
 		rlen = AML_CRSLEN(crs);
 		if (crs->hdr.typecode == 0x79 || rlen <= 3)
@@ -2188,8 +2190,8 @@ aml_xconcatres(struct aml_value *a1, struct aml_value *a2)
 		aml_die("concatres: not buffers\n");
 
 	/* Walk a1, a2, get length minus end tags, concatenate buffers, add end tag */
-	aml_parse_resource(a1->length, a1->v_buffer, aml_ccrlen, &l1);
-	aml_parse_resource(a2->length, a2->v_buffer, aml_ccrlen, &l2);
+	aml_parse_resource(a1, aml_ccrlen, &l1);
+	aml_parse_resource(a2, aml_ccrlen, &l2);
 
 	/* Concatenate buffers, add end tag */
 	c = aml_allocvalue(AML_OBJTYPE_BUFFER, l1+l2+l3, NULL);
