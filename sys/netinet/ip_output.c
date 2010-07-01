@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.206 2010/06/29 21:28:38 reyk Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.207 2010/07/01 02:09:45 reyk Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -586,11 +586,20 @@ sendit:
 	if (sproto != 0) {
 		s = splnet();
 
+		tdb = gettdb(sspi, &sdst, sproto);
+		if (tdb == NULL) {
+			DPRINTF(("ip_output: unknown TDB"));
+			error = EHOSTUNREACH;
+			splx(s);
+			m_freem(m);
+			goto done;
+		}
+
 		/*
 		 * Packet filter
 		 */
 #if NPF > 0
-		if ((encif = enc_getif(0)) == NULL ||
+		if ((encif = enc_getif(0, tdb->tdb_tap)) == NULL ||
 		    pf_test(PF_OUT, encif, &m, NULL) != PF_PASS) {
 			error = EHOSTUNREACH;
 			splx(s);
@@ -611,15 +620,6 @@ sendit:
 		 * What's the behaviour?
 		 */
 #endif
-
-		tdb = gettdb(sspi, &sdst, sproto);
-		if (tdb == NULL) {
-			DPRINTF(("ip_output: unknown TDB"));
-			error = EHOSTUNREACH;
-			splx(s);
-			m_freem(m);
-			goto done;
-		}
 
 		/* Check if we are allowed to fragment */
 		if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&

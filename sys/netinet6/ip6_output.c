@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.113 2010/06/29 21:28:38 reyk Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.114 2010/07/01 02:09:45 reyk Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -504,8 +504,21 @@ reroute:
 	if (sproto != 0) {
 	        s = splnet();
 
+		/*
+		 * XXX what should we do if ip6_hlim == 0 and the
+		 * packet gets tunneled?
+		 */
+
+		tdb = gettdb(sspi, &sdst, sproto);
+		if (tdb == NULL) {
+			splx(s);
+			error = EHOSTUNREACH;
+			m_freem(m);
+			goto done;
+		}
+
 #if NPF > 0
-		if ((encif = enc_getif(0)) == NULL ||
+		if ((encif = enc_getif(0, tdb->tdb_tap)) == NULL ||
 		    pf_test6(PF_OUT, encif, &m, NULL) != PF_PASS) {
 			splx(s);
 			error = EHOSTUNREACH;
@@ -525,18 +538,6 @@ reroute:
 		 * What's the behaviour?
 		 */
 #endif
-		/*
-		 * XXX what should we do if ip6_hlim == 0 and the
-		 * packet gets tunneled?
-		 */
-
-		tdb = gettdb(sspi, &sdst, sproto);
-		if (tdb == NULL) {
-			splx(s);
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto done;
-		}
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 

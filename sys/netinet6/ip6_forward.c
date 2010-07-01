@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.47 2010/06/29 21:28:38 reyk Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.48 2010/07/01 02:09:45 reyk Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -337,8 +337,16 @@ reroute:
 	if (sproto != 0) {
 		s = splnet();
 
+		tdb = gettdb(sspi, &sdst, sproto);
+		if (tdb == NULL) {
+			splx(s);
+			error = EHOSTUNREACH;
+			m_freem(m);
+			goto senderr;	/*XXX*/
+		}
+
 #if NPF > 0
-		if ((encif = enc_getif(0)) == NULL ||
+		if ((encif = enc_getif(0, tdb->tdb_tap)) == NULL ||
 		    pf_test6(PF_OUT, encif, &m, NULL) != PF_PASS) {
 			splx(s);
 			error = EHOSTUNREACH;
@@ -358,13 +366,6 @@ reroute:
 		 * What's the behaviour?
 		 */
 #endif
-		tdb = gettdb(sspi, &sdst, sproto);
-		if (tdb == NULL) {
-			splx(s);
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto senderr;	/*XXX*/
-		}
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 

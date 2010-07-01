@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.119 2008/05/09 15:48:15 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.120 2010/07/01 02:09:45 reyk Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -583,6 +583,8 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 #if NPF > 0
 	if (sa->tdb_tag)
 		i+= PADUP(PF_TAG_NAME_SIZE) + sizeof(struct sadb_x_tag);
+	if (sa->tdb_tap)
+		i+= sizeof(struct sadb_x_tap);
 #endif
 
 	if (lenp)
@@ -700,6 +702,12 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	if (sa->tdb_tag) {
 		headers[SADB_X_EXT_TAG] = p;
 		export_tag(&p, sa);
+	}
+
+	/* Export tap enc(4) device information, if present */
+	if (sa->tdb_tap) {
+		headers[SADB_X_EXT_TAP] = p;
+		export_tap(&p, sa);
 	}
 #endif
 
@@ -1053,6 +1061,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
 #if NPF > 0
 			import_tag(newsa, headers[SADB_X_EXT_TAG]);
+			import_tap(newsa, headers[SADB_X_EXT_TAP]);
 #endif
 
 			headers[SADB_EXT_KEY_AUTH] = NULL;
@@ -1102,6 +1111,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			import_udpencap(sa2, headers[SADB_X_EXT_UDPENCAP]);
 #if NPF > 0
 			import_tag(sa2, headers[SADB_X_EXT_TAG]);
+			import_tap(sa2, headers[SADB_X_EXT_TAP]);
 #endif
 		}
 
@@ -1219,6 +1229,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
 #if NPF > 0
 			import_tag(newsa, headers[SADB_X_EXT_TAG]);
+			import_tap(newsa, headers[SADB_X_EXT_TAP]);
 #endif
 
 			headers[SADB_EXT_KEY_AUTH] = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.50 2010/07/01 01:55:03 reyk Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.51 2010/07/01 02:09:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -35,9 +35,11 @@
 #include <net/bpf.h>
 #endif
 
-TAILQ_HEAD(__enchead, enc_softc) enc_list;	/* all enc interfaces */
 struct ifnet			**enc_ifps;	/* rdomain-mapped enc ifs */
-u_int				 enc_max_id;
+u_int				  enc_max_id;
+struct ifnet			**enc_allifps;	/* unit-mapped enc ifs */
+u_int				  enc_max_unit;
+#define ENC_MAX_UNITS		  4096		/* XXX n per rdomain */
 
 void	 encattach(int);
 
@@ -57,8 +59,6 @@ struct if_clone enc_cloner =
 void
 encattach(int count)
 {
-	TAILQ_INIT(&enc_list);
-
 	/* Create enc0 by default */
 	(void)enc_clone_create(&enc_cloner, 0);
 
@@ -70,6 +70,11 @@ enc_clone_create(struct if_clone *ifc, int unit)
 {
 	struct enc_softc	*sc;
 	struct ifnet		*ifp;
+	struct ifnet		**new;
+	size_t			 newlen;
+
+	if (unit > ENC_MAX_UNITS)
+		return (EINVAL);
 
 	if ((sc = malloc(sizeof(struct enc_softc),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
@@ -103,7 +108,21 @@ enc_clone_create(struct if_clone *ifc, int unit)
 		return (-1);
 	}
 
-	TAILQ_INSERT_TAIL(&enc_list, sc, sc_entry);
+	if (unit == 0 || unit > enc_max_unit) {
+		newlen = sizeof(struct ifnet *) * (unit + 1);
+
+		if ((new = malloc(newlen, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+			return (-1);
+		if (enc_allifps != NULL) {
+			memcpy(new, enc_allifps,
+			    sizeof(struct ifnet *) * (enc_max_unit + 1));
+			free(enc_allifps, M_DEVBUF);
+		}
+		enc_allifps = new;
+		enc_max_unit = unit;
+	}
+	enc_allifps[unit] = ifp;
+
 	return (0);
 }
 
@@ -118,7 +137,7 @@ enc_clone_destroy(struct ifnet *ifp)
 		return (EPERM);
 
 	s = splnet();
-	TAILQ_REMOVE(&enc_list, sc, sc_entry);
+	enc_allifps[sc->sc_unit] = NULL;
 	enc_unsetif(ifp);
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
@@ -177,8 +196,21 @@ enc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 struct ifnet *
-enc_getif(u_int id)
+enc_getif(u_int id, u_int unit)
 {
+	struct ifnet	*ifp;
+
+	/* Check if the caller wants to get a non-default enc interface */
+	if (unit > 0) {
+		if (unit > enc_max_unit)
+			return (NULL);
+		ifp = enc_allifps[unit];
+		if (ifp == NULL || ifp->if_rdomain != id)
+			return (NULL);
+		return (ifp);
+	}
+
+	/* Otherwise return the default enc interface for this rdomain */
 	if (enc_ifps == NULL)
 		return (NULL);
 	else if (id > RT_TABLEID_MAX)
@@ -202,7 +234,7 @@ enc_setif(struct ifnet *ifp, u_int id)
 	 * for this rdomain, so only the first enc interface that
 	 * was added for this rdomain becomes the default.
 	 */
-	if (enc_getif(id) != NULL)
+	if (enc_getif(id, 0) != NULL)
 		return (0);
 
 	if (id > RT_TABLEID_MAX)
@@ -233,11 +265,10 @@ enc_setif(struct ifnet *ifp, u_int id)
 void
 enc_unsetif(struct ifnet *ifp)
 {
-	u_int			 id = ifp->if_rdomain;
-	struct ifnet		*oifp;
-	struct enc_softc	*sc;
+	u_int			 id = ifp->if_rdomain, i;
+	struct ifnet		*oifp, *nifp;
 
-	if ((oifp = enc_getif(id)) == NULL || oifp != ifp)
+	if ((oifp = enc_getif(id, 0)) == NULL || oifp != ifp)
 		return;
 
 	/* Clear slot for this rdomain */
@@ -248,12 +279,14 @@ enc_unsetif(struct ifnet *ifp)
 	 * Now find the next available encif to be the default interface
 	 * for this rdomain.
 	 */
-	TAILQ_FOREACH(sc, &enc_list, sc_entry) {
-		if (&sc->sc_if == ifp || sc->sc_if.if_rdomain != id)
+	for (i = 0; i < (enc_max_unit + 1); i++) {
+		nifp = enc_allifps[i];
+
+		if (nifp == NULL || nifp == ifp || nifp->if_rdomain != id)
 			continue;
 
-		enc_ifps[id] = &sc->sc_if;
-		sc->sc_if.if_link_state = LINK_STATE_UP;
+		enc_ifps[id] = nifp;
+		nifp->if_link_state = LINK_STATE_UP;
 		break;
 	}
 }

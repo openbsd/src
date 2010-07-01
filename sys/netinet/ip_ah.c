@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.94 2010/06/29 21:28:37 reyk Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.95 2010/07/01 02:09:45 reyk Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -986,7 +986,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #if NBPFILTER > 0
 	struct ifnet *encif;
 
-	if ((encif = enc_getif(0)) != NULL) {
+	if ((encif = enc_getif(0, tdb->tdb_tap)) != NULL) {
 		encif->if_opackets++;
 		encif->if_obytes += m->m_pkthdr.len;
 

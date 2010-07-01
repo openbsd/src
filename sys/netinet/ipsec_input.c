@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.96 2010/06/29 21:28:38 reyk Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.97 2010/07/01 02:09:45 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -119,6 +119,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	union sockaddr_union dst_address;
 	struct timeval tv;
 	struct tdb *tdbp;
+	struct ifnet *encif;
 	u_int32_t spi;
 	u_int16_t cpi;
 	int s, error;
@@ -239,8 +240,22 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (sproto != IPPROTO_IPCOMP) {
+		if ((encif = enc_getif(0, tdbp->tdb_tap)) == NULL) {
+			splx(s);
+			DPRINTF(("ipsec_common_input(): "
+			    "no enc%u interface for SA %s/%08x/%u\n",
+			    tdbp->tdb_tap, ipsp_address(dst_address),
+			    ntohl(spi), tdbp->tdb_sproto));
+			m_freem(m);
+
+			IPSEC_ISTAT(espstat.esps_pdrops,
+			    ahstat.ahs_pdrops,
+			    ipcompstat.ipcomps_pdrops);
+			return EACCES;
+		}
+
 		/* XXX This conflicts with the scoped nature of IPv6 */
-		m->m_pkthdr.rcvif = enc_getif(0);
+		m->m_pkthdr.rcvif = encif;
 	}
 
 	/* Register first use, setup expiration timer. */
@@ -565,7 +580,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		m->m_flags |= M_TUNNEL;
 
 #if NBPFILTER > 0
-	if ((encif = enc_getif(0)) != NULL) {
+	if ((encif = enc_getif(0, tdbp->tdb_tap)) != NULL) {
 		encif->if_ipackets++;
 		encif->if_ibytes += m->m_pkthdr.len;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.24 2010/06/29 21:28:37 reyk Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.25 2010/07/01 02:09:45 reyk Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -384,7 +384,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 #if NBPFILTER > 0
 	struct ifnet *encif;
 
-	if ((encif = enc_getif(0)) != NULL) {
+	if ((encif = enc_getif(0, tdb->tdb_tap)) != NULL) {
 		encif->if_opackets++;
 		encif->if_obytes += m->m_pkthdr.len;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.h,v 1.9 2010/06/29 21:28:37 reyk Exp $	*/
+/*	$OpenBSD: if_enc.h,v 1.10 2010/07/01 02:09:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -25,8 +25,6 @@
 struct enc_softc {
 	struct ifnet		 sc_if;		/* virtual interface */
 	u_int			 sc_unit;
-
-	TAILQ_ENTRY(enc_softc)	 sc_entry;
 };
 
 struct enchdr {
@@ -35,6 +33,6 @@ struct enchdr {
 	u_int32_t flags;
 };
 
-struct ifnet	*enc_getif(u_int);
+struct ifnet	*enc_getif(u_int, u_int);
 
 #endif /* _NET_ENC_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.142 2010/05/11 09:36:07 claudio Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.143 2010/07/01 02:09:45 reyk Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -372,6 +372,7 @@ struct tdb {				/* tunnel descriptor block */
 	u_int16_t	tdb_udpencap_port;	/* Peer UDP port */
 
 	u_int16_t	tdb_tag;		/* Packet filter tag */
+	u_int32_t	tdb_tap;		/* Alternate enc(4) interface */
 
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
