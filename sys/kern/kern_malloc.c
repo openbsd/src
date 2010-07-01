@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.81 2009/08/25 18:02:42 miod Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.82 2010/07/01 19:51:13 thib Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include <sys/time.h>
 #include <sys/rwlock.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 static __inline__ long BUCKETINDX(size_t sz)
 {
@@ -233,10 +233,12 @@ malloc(unsigned long size, int type, int flags)
 		else
 			allocsize = 1 << indx;
 		npg = atop(round_page(allocsize));
-		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
+		va = (caddr_t)uvm_km_kmemalloc_pla(kmem_map, NULL,
 		    (vsize_t)ptoa(npg), 
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
-		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0));
+		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0),
+		    dma_constraint.ucr_low, dma_constraint.ucr_high,
+		    0, 0, 0);
 		if (va == NULL) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
