@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.168 2010/07/01 06:29:32 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.169 2010/07/01 16:23:46 thib Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
@@ -1978,6 +1979,8 @@ acpi_resume(struct acpi_softc *sc, int state)
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 
+	bufq_restart();
+
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
@@ -2066,6 +2069,8 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 		wsdisplay_suspend();
 #endif /* NWSDISPLAY > 0 */
 
+	bufq_quiesce();
+
 	acpi_saved_spl = splhigh();
 	disable_intr();
 	cold = 1;
@@ -2105,6 +2110,8 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	acpi_susp_resume_gpewalk(sc, state, 1);
 
 fail:
+	bufq_restart();
+
 #if NWSDISPLAY > 0
 	if (error)
 		wsdisplay_resume();
