@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.6 2010/06/29 21:03:15 jasper Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.7 2010/07/01 07:24:26 jasper Exp $	*/
 /*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
 
 /*-
@@ -149,11 +149,12 @@ NENTRY(sh3_vector_tlbmiss)
 
 	/* if kernel stack is in P3, handle it here fast */
 #if !defined(P1_STACK)
+	cmp/pz	r6
+	bt	6f		/* userspace address, proceed to handler */
+
 	/* Load kernel stack */
 	mov.l	.L3_VPN_MASK, r0
 	and	r6,	r0	/* VPN */
-	tst	r0,	r0
-	bt	6f		/* punt if VPN is 0 */
 
 	mov.l	.L3_CURUPTE, r1
 	mov.l	@r1, r1		/* upte = &l->l_md.md_upte[0] */
