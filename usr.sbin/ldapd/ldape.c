@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.10 2010/07/01 02:19:11 martinh Exp $ */
+/*	$OpenBSD: ldape.c,v 1.11 2010/07/01 20:09:34 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -227,6 +227,51 @@ ldap_unbind(struct request *req)
 	conn_disconnect(req->conn);
 	request_free(req);
 	return -1;		/* don't send any response */
+}
+
+int
+ldap_compare(struct request *req)
+{
+	struct ber_element	*entry, *elm, *attr;
+	struct namespace	*ns;
+	struct referrals	*refs;
+	struct attr_type	*at;
+	char			*dn, *aname, *value, *s;
+
+	if (ber_scanf_elements(req->op, "{s{ss", &dn, &aname, &value) != 0) {
+		log_debug("%s: protocol error", __func__);
+		request_free(req);
+		return -1;
+	}
+
+	if ((at = lookup_attribute(conf->schema, aname)) == NULL)
+		return ldap_respond(req, LDAP_UNDEFINED_TYPE);
+
+	if ((ns = namespace_for_base(dn)) == NULL) {
+		refs = namespace_referrals(dn);
+		if (refs == NULL)
+			return ldap_respond(req, LDAP_NO_SUCH_OBJECT);
+		else
+			return ldap_refer(req, dn, NULL, refs);
+	}
+
+	if ((entry = namespace_get(ns, dn)) == NULL)
+		return ldap_respond(req, LDAP_NO_SUCH_OBJECT);
+
+	if ((attr = ldap_find_attribute(entry, at)) == NULL)
+		return ldap_respond(req, LDAP_NO_SUCH_ATTRIBUTE);
+
+	if ((attr = attr->be_next) == NULL)	/* skip attribute name */
+		return ldap_respond(req, LDAP_OTHER);
+
+	for (elm = attr->be_sub; elm != NULL; elm = elm->be_next) {
+		if (ber_get_string(elm, &s) != 0)
+			return ldap_respond(req, LDAP_OTHER);
+		if (strcasecmp(value, s) == 0)
+			return ldap_respond(req, LDAP_COMPARE_TRUE);
+	}
+
+	return ldap_respond(req, LDAP_COMPARE_FALSE);
 }
 
 int

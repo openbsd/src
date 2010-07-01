@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.15 2010/06/30 19:26:39 martinh Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.16 2010/07/01 20:09:34 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -353,6 +353,7 @@ pid_t			 ldape(struct passwd *pw, char *csockpath,
 				int pipe_parent2ldap[2]);
 int			 ldap_abandon(struct request *req);
 int			 ldap_unbind(struct request *req);
+int			 ldap_compare(struct request *req);
 int			 ldap_extended(struct request *req);
 
 void			 send_ldap_result(struct conn *conn, int msgid,

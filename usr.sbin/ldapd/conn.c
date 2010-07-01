@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.4 2010/06/29 21:00:34 martinh Exp $ */
+/*	$OpenBSD: conn.c,v 1.5 2010/07/01 20:09:34 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -93,6 +93,7 @@ request_dispatch(struct request *req)
 	} requests[] = {
 		{ LDAP_REQ_SEARCH,	ldap_search },
 		{ LDAP_REQ_BIND,	ldap_bind },
+		{ LDAP_REQ_COMPARE,	ldap_compare },
 		{ LDAP_REQ_ADD,		ldap_add },
 		{ LDAP_REQ_UNBIND_30,	ldap_unbind },
 		{ LDAP_REQ_MODIFY,	ldap_modify },
