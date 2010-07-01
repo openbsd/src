@@ -1,4 +1,6 @@
-IF(1)                                                       IF(1)
+IF(1)                                                                    IF(1)
+
+
 
 NNAAMMEE
        if - the roff conditional instruction
@@ -9,7 +11,8 @@ DDEESSCCRRIIPPTTIIOONN
        Two-line true condition with continuation and macros.
        Outer true condition.
        Inner one-line true condition.
-       Inner two-line true condition without continuation and
-       macros.
+       Inner two-line true condition without continuation and macros.
        Back to the outer true condition.
+
+
 
