@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.13 2009/09/27 06:27:03 maja Exp $	*/
+/*	$OpenBSD: display.c,v 1.14 2010/07/01 02:37:21 maja Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -43,12 +43,16 @@ u_int width, height, depth;
 int focus;
 struct field_pc brightness, contrast, backlight;
 int burnon, burnoff, vblank, kbdact, msact, outact;
+struct wsdisplay_emultype emuls;
+struct wsdisplay_screentype screens;
 
 struct field display_field_tab[] = {
     { "type",		&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
     { "width",		&width,		FMT_UINT,	FLG_RDONLY },
     { "height",		&height,	FMT_UINT,	FLG_RDONLY },
     { "depth",		&depth,		FMT_UINT,	FLG_RDONLY },
+    { "emulations",	&emuls,		FMT_EMUL,	FLG_RDONLY },
+    { "screentypes",	&screens,	FMT_SCREEN,	FLG_RDONLY },
     { "focus",		&focus,		FMT_INT,	FLG_MODIFY },
     { "brightness",	&brightness,	FMT_PC,		FLG_MODIFY|FLG_INIT },
     { "contrast",	&contrast,	FMT_PC,		FLG_MODIFY|FLG_INIT },
@@ -91,6 +95,12 @@ display_get_values(const char *pre, int fd)
 		} else if (ptr == &focus) {
 			fillioctl(WSDISPLAYIO_GETSCREEN);
 			ptr = &gscr;
+		} else if (ptr == &emuls) {
+			fillioctl(WSDISPLAYIO_GETEMULTYPE);
+			emuls.idx=0;
+		} else if (ptr == &screens) {
+			fillioctl(WSDISPLAYIO_GETSCREENTYPE);
+			screens.idx=0;
 		} else if (ptr == &brightness) {
 			ptr = &param;
 			param.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
@@ -150,6 +160,10 @@ display_get_values(const char *pre, int fd)
 				depth = fbinfo.depth;
 			}
 			fbon++;
+		} else if (ptr == &emuls) {
+			emuls.idx=fd;
+		} else if (ptr == &screens) {
+			screens.idx=fd;
 		} else if (ptr == &param) {
 			struct field_pc *pc = pf->valp;
 

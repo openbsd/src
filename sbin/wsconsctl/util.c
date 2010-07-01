@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.50 2010/06/28 20:40:39 maja Exp $ */
+/*	$OpenBSD: util.c,v 1.51 2010/07/01 02:37:21 maja Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -169,6 +169,8 @@ static const struct nameint kbdvar_tab[] = {
 char *int2name(int, int, const struct nameint *, int);
 int name2int(char *, const struct nameint *, int);
 void print_kmap(struct wskbd_map_data *);
+void print_emul(struct wsdisplay_emultype *);
+void print_screen(struct wsdisplay_screentype *);
 
 struct field *
 field_by_name(struct field *field_tab, char *name)
@@ -286,6 +288,12 @@ pr_field(const char *pre, struct field *f, const char *sep)
 		printf("%d,%d,%d,%d,%d,%d,%d", wmcoords.minx, wmcoords.maxx,
 		    wmcoords.miny, wmcoords.maxy, wmcoords.swapxy,
 		    wmcoords.resx, wmcoords.resy);
+		break;
+	case FMT_EMUL:
+		print_emul((struct wsdisplay_emultype *) f->valp);
+		break;
+	case FMT_SCREEN:
+		print_screen((struct wsdisplay_screentype *) f->valp);
 		break;
 	default:
 		errx(1, "internal error: pr_field: no format %d", f->format);
@@ -475,4 +483,44 @@ print_kmap(struct wskbd_map_data *map)
 		}
 	}
 	ksymenc(0);
+}
+
+void
+print_emul(struct wsdisplay_emultype *emuls)
+{
+	struct wsdisplay_emultype e;
+	int fd,i;
+	char c='\0';
+
+	fd=emuls->idx;
+	e.idx=0;
+	i = ioctl(fd, WSDISPLAYIO_GETEMULTYPE, &e);
+	while(i == 0) {
+		if (c != '0')
+			printf("%c", c);
+		printf("%s", e.name);
+		c=',';
+		e.idx++;
+		i = ioctl(fd, WSDISPLAYIO_GETEMULTYPE, &e);
+	}
+}
+
+void
+print_screen(struct wsdisplay_screentype *screens)
+{
+	struct wsdisplay_screentype s;
+	int fd,i;
+	char c='\0';
+
+	fd=screens->idx;
+	s.idx=0;
+	i = ioctl(fd, WSDISPLAYIO_GETSCREENTYPE, &s);
+	while(i == 0) {
+		if (c != '0')
+			printf("%c", c);
+		printf("%s", s.name);
+		c=',';
+		s.idx++;
+		i = ioctl(fd, WSDISPLAYIO_GETSCREENTYPE, &s);
+	}
 }
