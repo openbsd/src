@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.113 2010/06/30 01:47:35 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.114 2010/07/01 02:41:12 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -95,11 +95,6 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 
 	if (p == q)
 		return (1);		/* process can always signal itself */
-
-	/* a thread can only be signalled from within the same process */
-	if (q->p_flag & P_THREAD) {
-		return (p->p_p == q->p_p);
-	}
 
 	if (signum == SIGCONT && q->p_session == p->p_session)
 		return (1);		/* SIGCONT in session */
@@ -591,22 +586,28 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 	if (pid > 0) {
 		enum signal_type type = SPROCESS;
 
+		/*
+		 * If the target pid is > THREAD_PID_OFFSET then this
+		 * must be a kill of another thread in the same process.
+		 * Otherwise, this is a process kill and the target must
+		 * be a main thread.
+		 */
 		if (pid > THREAD_PID_OFFSET) {
 			if ((p = pfind(pid - THREAD_PID_OFFSET)) == NULL)
 				return (ESRCH);
-			if (p->p_flag & P_THREAD)
+			if (p->p_p != cp->p_p)
 				return (ESRCH);
 			type = STHREAD;
 		} else {
 			if ((p = pfind(pid)) == NULL)
 				return (ESRCH);
 			if (p->p_flag & P_THREAD)
-				type = STHREAD;
+				return (ESRCH);
+			if (!cansignal(cp, pc, p, signum))
+				return (EPERM);
 		}
 
-		/* kill single process */
-		if (!cansignal(cp, pc, p, signum))
-			return (EPERM);
+		/* kill single process or thread */
 		if (signum)
 			ptsignal(p, signum, type);
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.44 2010/06/29 19:09:11 tedu Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.45 2010/07/01 02:41:12 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ sys_getthrid(struct proc *p, void *v, register_t *retval)
 
 	if (!rthreads_enabled)
 		return (ENOTSUP);
-	*retval = p->p_pid + (p->p_flag & P_THREAD ? 0 : THREAD_PID_OFFSET);
+	*retval = p->p_pid + THREAD_PID_OFFSET;
 	return (0);
 }
 
