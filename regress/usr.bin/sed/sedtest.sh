@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sedtest.sh,v 1.2 2010/07/01 17:02:02 naddy Exp $
+#	$OpenBSD: sedtest.sh,v 1.3 2010/07/01 17:04:24 naddy Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -415,6 +415,10 @@ u2/g' lines1
 # if it is preceded by a backslash
 	mark '8.18' ; sed 's/l/[/' lines1 | $SED -e 's[\[.[X['
 	mark '8.19' ; sed 's/l/[/' lines1 | $SED -e 's[\[.[X\[['
+	echo '\ in y command'
+	mark '8.20'
+	printf 'a\\b(c' |
+	$SED 'y%ABCDEFGHIJKLMNOPQRSTUVWXYZ, /\\()"%abcdefghijklmnopqrstuvwxyz,------%'
 }
 
 test_error()

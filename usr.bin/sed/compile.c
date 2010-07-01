@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.32 2010/07/01 17:02:02 naddy Exp $	*/
+/*	$OpenBSD: compile.c,v 1.33 2010/07/01 17:04:24 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -59,7 +59,7 @@ static struct labhash {
 
 static char	 *compile_addr(char *, struct s_addr *);
 static char	 *compile_ccl(char **, char *);
-static char	 *compile_delimited(char *, char *);
+static char	 *compile_delimited(char *, char *, int);
 static char	 *compile_flags(char *, struct s_subst *);
 static char	 *compile_re(char *, regex_t **);
 static char	 *compile_subst(char *, struct s_subst *);
@@ -345,7 +345,7 @@ nonsel:		/* Now parse the command */
  * with the processed string.
  */
 static char *
-compile_delimited(char *p, char *d)
+compile_delimited(char *p, char *d, int is_tr)
 {
 	char c;
 
@@ -370,7 +370,10 @@ compile_delimited(char *p, char *d)
 			p += 2;
 			continue;
 		} else if (*p == '\\' && p[1] == '\\') {
-			*d++ = *p++;
+			if (is_tr)
+				p++;
+			else
+				*d++ = *p++;
 		} else if (*p == c) {
 			*d = '\0';
 			return (p + 1);
@@ -427,7 +430,7 @@ compile_re(char *p, regex_t **repp)
 	char *re;
 
 	re = xmalloc(strlen(p) + 1); /* strlen(re) <= strlen(p) */
-	p = compile_delimited(p, re);
+	p = compile_delimited(p, re, 0);
 	if (p && strlen(re) == 0) {
 		*repp = NULL;
 		free(re);
@@ -617,13 +620,13 @@ compile_tr(char *p, char **transtab)
 		err(COMPILE,
 "transform pattern can not be delimited by newline or backslash");
 	old = xmalloc(strlen(p) + 1);
-	p = compile_delimited(p, old);
+	p = compile_delimited(p, old, 1);
 	if (p == NULL) {
 		err(COMPILE, "unterminated transform source string");
 		goto bad;
 	}
 	new = xmalloc(strlen(p) + 1);
-	p = compile_delimited(--p, new);
+	p = compile_delimited(--p, new, 1);
 	if (p == NULL) {
 		err(COMPILE, "unterminated transform target string");
 		goto bad;
