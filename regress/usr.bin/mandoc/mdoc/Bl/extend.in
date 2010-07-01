@@ -1,0 +1,31 @@
+.Dd April 12, 2010
+.Dt BL-EXTEND 1
+.Os
+.Sh NAME
+.Nm Bl-extend
+.Nd extending block headers
+.Sh DESCRIPTION
+.\" explicit quoting does not require macro lines per se
+.Ao
+plain quoted text
+.Ac
+.Bl -tag -width Ds
+.It normal tag
+normal text
+.\" when extending It headers, plain text lines fall back
+.\" into the previous It body; so macro lines are required
+.It Ao
+.No extended tag
+.Ac
+extended text
+.It prefix Ao
+.No prefixed tag
+.Ac
+prefixed text
+.\" postfix after closing macro does not work in old groff
+.\" the whole It header gets lost
+.\" .It prefix Ao
+.\" .No braced tag
+.\" .Ac postfix
+.\" braced text
+.El

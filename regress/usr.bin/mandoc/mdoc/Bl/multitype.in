@@ -1,0 +1,11 @@
+.Dd October 28, 2009
+.Dt BL-MULTITYPE 1
+.Os
+.Sh NAME
+.Nm Bl-multitype
+.Nd list with multiple types
+.Sh DESCRIPTION
+.Bl -dash -bullet -offset indent
+.It
+Some text.
+.El

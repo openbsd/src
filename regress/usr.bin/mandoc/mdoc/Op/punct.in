@@ -1,0 +1,17 @@
+.Dd April 7, 2010
+.Dt OP-PUNCT 1
+.Os
+.Sh NAME
+.Nm Op-punct
+.Nd punctuation handling by the Op macro
+.Sh DESCRIPTION
+closing punctuation
+.Op a .
+only one
+.Op .
+only more than one
+.Op . .
+middle
+.Op a . z
+start
+.Op . z

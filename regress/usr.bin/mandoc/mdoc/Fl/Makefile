@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2010/01/01 20:08:17 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2010/07/01 05:29:57 schwarze Exp $
 
-REGRESS_TARGETS=noarg multiarg
-GROFF_TARGETS=noarg multiarg
+REGRESS_TARGETS=noarg multiarg punct
+GROFF_TARGETS=noarg multiarg punct
 
 .include <bsd.regress.mk>

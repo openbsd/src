@@ -1,4 +1,4 @@
-.Dd $Mdocdate: April 12 2010 $
+.Dd February 17, 2010
 .Dt BD-BLANK 1
 .Os
 .Sh NAME
@@ -6,11 +6,16 @@
 .Nd handling of blank lines in literal displays
 .Sh DESCRIPTION
 .Bd -literal
-one completely blank line:
+completely blank line:
 
-two blank lines:
-
-
+line containing a blank character:
+ 
+line containing two blank characters:
+  
+line starting with a blank character:
+ x
+line starting with two blank characters:
+  x
 finally, a trailing blank line:
 
 .Ed

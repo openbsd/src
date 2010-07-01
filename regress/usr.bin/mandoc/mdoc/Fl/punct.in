@@ -1,0 +1,37 @@
+.Dd April 7, 2010
+.Dt FL-PUNCT 1
+.Os
+.Sh NAME
+.Nm Fl-punct
+.Nd punctuation handling by the Fl macro
+.Sh DESCRIPTION
+closing punctuation
+.Fl a )
+only one
+.Fl )
+only more than one
+.Fl ) )
+middle
+.Fl a ) z
+dot
+.Fl . z
+comma
+.Fl , z
+semicolon
+.Fl ; z
+colon
+.Fl : z
+quest
+.Fl ? z
+excl
+.Fl ! z
+paren
+.Fl ) z
+bracket
+.Fl ] z
+bar
+.Fl | m
+op paren
+.Fl ( a
+op bracket
+.Fl [ a

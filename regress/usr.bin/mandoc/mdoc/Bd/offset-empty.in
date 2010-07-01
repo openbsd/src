@@ -1,0 +1,13 @@
+.Dd October 19, 2009
+.Dt BD-OFFSET-EMPTY 1
+.Os
+.Sh NAME
+.Nm Bd-offset-empty
+.Nd no argument specified to Bd offset
+.Sh DESCRIPTION
+.Bd -literal -offset
+Bd literal offset empty
+.Ed
+.Bd -literal -offset 4n
+Bd literal offset 4n
+.Ed

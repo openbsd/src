@@ -1,0 +1,15 @@
+.Dd February 17, 2010
+.Dt BLANK-COMMENT 1
+.Os
+.Sh NAME
+.Nm blank-comment
+.Nd normal and bogus comments
+.Sh DESCRIPTION
+normal comment
+.\" normal
+bogus comment
+\."
+end of text
+.Pp
+text      \" comment
+text

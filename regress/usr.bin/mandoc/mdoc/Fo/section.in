@@ -1,0 +1,83 @@
+.Dd April 7, 2010
+.Dt FN-SECTION 3
+.Os
+.Sh NAME
+.Nm Fn-section
+.Nd special handling of Fn in various sections
+.Sh SYNOPSIS
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh DESCRIPTION
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh RETURN VALUES
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh ENVIRONMENT
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh FILES
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh EXAMPLES
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh DIAGNOSTICS
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh ERRORS
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh SEE ALSO
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh STANDARDS
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh HISTORY
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh AUTHORS
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh CAVEATS
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh BUGS
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.Sh CUSTOM
+.nr nS 1
+.Ft int
+.Fn abs "int j"
+.Ft double
+.Fn sin "double x"
+.nr nS 0

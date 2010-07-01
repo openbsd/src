@@ -1,0 +1,17 @@
+.Dd April 7, 2010
+.Dt AR-PUNCT 1
+.Os
+.Sh NAME
+.Nm Ar-punct
+.Nd punctuation handling by the Ar macro
+.Sh DESCRIPTION
+closing punctuation
+.Ar a )
+only one
+.Ar )
+only more than one
+.Ar ) )
+middle
+.Ar a ) z
+start
+.Ar ) z

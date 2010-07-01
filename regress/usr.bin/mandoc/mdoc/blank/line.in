@@ -1,0 +1,13 @@
+.Dd February 17, 2010
+.Dt BLANK-LINE 1
+.Os
+.Sh NAME
+.Nm blank-line
+.Nd handling of blank line
+.Sh DESCRIPTION
+Let us ignore this
+
+blank line, an these two
+
+
+as well.
