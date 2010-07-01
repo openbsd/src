@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sedtest.sh,v 1.1 2008/10/10 14:33:34 millert Exp $
+#	$OpenBSD: sedtest.sh,v 1.2 2010/07/01 17:02:02 naddy Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -407,6 +407,14 @@ u2/g' lines1
 	mark '8.15' ; $SED -e '1N;2y/\n/X/' lines1
 	mark '8.16'
 	echo 'eeefff' | $SED -e 'p' -e 's/e/X/p' -e ':x' -e 's//Y/p' -e '/f/bx'
+	echo '[ as an s delimiter and its escapes'
+	mark '8.17' ; $SED -e 's[_[X[' lines1
+# This is a matter of interpretation
+# POSIX 1003.1, 2004 says "Within the BRE and the replacement,
+# the BRE delimiter itself can be used as a *literal* character
+# if it is preceded by a backslash
+	mark '8.18' ; sed 's/l/[/' lines1 | $SED -e 's[\[.[X['
+	mark '8.19' ; sed 's/l/[/' lines1 | $SED -e 's[\[.[X\[['
 }
 
 test_error()
