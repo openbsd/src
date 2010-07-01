@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.23 2010/07/01 18:57:21 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.24 2010/07/01 19:47:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -856,7 +856,7 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	    IN6_IS_ADDR_SITELOCAL(&ifa->sin6_addr) ||
 	    IN6_IS_ADDR_V4MAPPED(&ifa->sin6_addr) ||
 	    IN6_IS_ADDR_V4COMPAT(&ifa->sin6_addr))
-	    	return;
+		return;
 
 	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
 	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr)) {
@@ -899,7 +899,7 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	default:
 		fatalx("if_newaddr: unknown interface type");
 	}
-		
+
 	TAILQ_INSERT_TAIL(&iface->ifa_list, ia, entry);
 	ifc.addr = ia->addr;
 	ifc.dstbrd = ia->dstbrd;
@@ -930,7 +930,7 @@ if_deladdr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	    IN6_IS_ADDR_SITELOCAL(&ifa->sin6_addr) ||
 	    IN6_IS_ADDR_V4MAPPED(&ifa->sin6_addr) ||
 	    IN6_IS_ADDR_V4COMPAT(&ifa->sin6_addr))
-	    	return;
+		return;
 
 	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
 	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr)) {

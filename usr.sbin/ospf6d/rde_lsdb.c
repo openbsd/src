@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.33 2010/07/01 18:57:21 bluhm Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.34 2010/07/01 19:47:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -341,8 +341,8 @@ lsa_asext_check(struct lsa *lsa, u_int16_t len)
 	char			*buf = (char *)lsa;
 	struct lsa_asext	*asext;
 	struct in6_addr		 fw_addr;
-	u_int32_t	 	 metric;
-	u_int16_t	 	 ref_ls_type;
+	u_int32_t		 metric;
+	u_int16_t		 ref_ls_type;
 	int			 rv;
 	u_int16_t		 total_len;
 
@@ -713,7 +713,7 @@ lsa_snap(struct rde_nbr *nbr, u_int32_t peerid)
 		if (tree == &nbr->area->lsa_tree) {
 			tree = &nbr->iface->lsa_tree;
 			continue;
-		} else 
+		} else
 			tree = &asext_tree;
 
 	} while (1);
@@ -976,4 +976,3 @@ lsa_get_prefix(void *buf, u_int16_t len, struct rt_prefix *p)
 
 	return (consumed);
 }
-

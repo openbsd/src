@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.43 2010/07/01 18:57:21 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.44 2010/07/01 19:47:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1215,7 +1215,7 @@ append_prefix_lsa(struct lsa **lsa, u_int16_t *len, struct lsa_prefix *prefix)
 	struct lsa_prefix	*copy;
 	unsigned int		 lsa_prefix_len;
 	unsigned int		 new_len;
-	char  			*new_lsa;
+	char			*new_lsa;
 
 	lsa_prefix_len = sizeof(struct lsa_prefix)
 	    + LSA_PREFIXSIZE(prefix->prefixlen);
@@ -1240,7 +1240,7 @@ prefix_compare(struct prefix_node *a, struct prefix_node *b)
 {
 	struct lsa_prefix	*p;
 	struct lsa_prefix	*q;
-	int		 	 i;
+	int			 i;
 	int			 len;
 
 	p = a->prefix;
@@ -1275,7 +1275,7 @@ prefix_tree_add(struct prefix_tree *tree, struct lsa_link *lsa)
 			fatal("prefix_tree_add");
 		new->prefix = (struct lsa_prefix *)cur_prefix;
 
-		len = sizeof(*new->prefix) 
+		len = sizeof(*new->prefix)
 		    + LSA_PREFIXSIZE(new->prefix->prefixlen);
 
 		bzero(&addr, sizeof(addr));
@@ -1320,7 +1320,7 @@ link_lsa_from_full_nbr(struct lsa *lsa, struct iface *iface)
 	if (nbr->state & NBR_STA_FULL &&
 	    ntohl(lsa->hdr.ls_id) == nbr->iface_id)
 		return 1;
-	
+
 	return 0;
 }
 
@@ -1454,7 +1454,7 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 		TAILQ_FOREACH(ia, &iface->ifa_list, entry) {
 			if (IN6_IS_ADDR_LINKLOCAL(&ia->addr))
 				continue;
-			
+
 			bzero(lsa_prefix_buf, sizeof(lsa_prefix_buf));
 
 			if (iface->type == IF_TYPE_POINTOMULTIPOINT ||

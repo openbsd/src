@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2009/03/31 21:03:49 tobias Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2010/07/01 19:47:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -269,7 +269,7 @@ conf_main	: ROUTERID STRING {
 		| defaults
 		;
 
-optlist		: /* empty */ 			{ $$ = DEFAULT_REDIST_METRIC; }
+optlist		: /* empty */			{ $$ = DEFAULT_REDIST_METRIC; }
 		| SET option			{
 			$$ = $2;
 			if (($$ & LSA_METRIC_MASK) == 0)

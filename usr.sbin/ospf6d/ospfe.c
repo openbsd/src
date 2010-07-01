@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.30 2010/07/01 18:57:21 bluhm Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.31 2010/07/01 19:47:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1010,7 +1010,7 @@ void
 orig_link_lsa(struct iface *iface)
 {
 	struct lsa_hdr		 lsa_hdr;
-	struct lsa_link	 	 lsa_link;
+	struct lsa_link		 lsa_link;
 	struct lsa_prefix	 lsa_prefix;
 	struct ibuf		*buf;
 	struct iface_addr	*ia;
@@ -1046,7 +1046,7 @@ orig_link_lsa(struct iface *iface)
 	/* reserve space for LSA header and LSA link header */
 	if (ibuf_reserve(buf, sizeof(lsa_hdr) + sizeof(lsa_link)) == NULL)
 		fatal("orig_link_lsa: ibuf_reserve failed");
-	
+
 	/* link-local address, and all prefixes configured on interface */
 	TAILQ_FOREACH(ia, &iface->ifa_list, entry) {
 		if (IN6_IS_ADDR_LINKLOCAL(&ia->addr)) {

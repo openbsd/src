@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.22 2010/03/01 08:51:40 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.23 2010/07/01 19:47:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -256,7 +256,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 				    v->ls_id, log_rtr_id(iap->ref_adv_rtr),
 				    ntohl(iap->ref_ls_id));
 				return;
-			}	
+			}
 			flags = 0;
 			break;
 		default:
@@ -401,7 +401,7 @@ asext_calc(struct vertex *v)
 
 			/* lookup forwarding address */
 			if ((r = rt_lookup(DT_NET, &fw_addr)) == NULL ||
-		    	    (r->p_type != PT_INTRA_AREA &&
+			    (r->p_type != PT_INTRA_AREA &&
 			    r->p_type != PT_INTER_AREA))
 				return;
 		}
@@ -559,7 +559,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 		case LSA_TYPE_ROUTER:
 			if (rtr_link->type != LINK_TYPE_POINTTOPOINT)
 				fatalx("inconsistent SPF tree");
-			nexthop = calc_nexthop_lladdr(dst, rtr_link, 
+			nexthop = calc_nexthop_lladdr(dst, rtr_link,
 			    ntohl(rtr_link->iface_id));
 			break;
 		case LSA_TYPE_NETWORK:
