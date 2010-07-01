@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.16 2010/06/29 20:59:04 thib Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.17 2010/07/01 21:40:32 oga Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -826,13 +826,13 @@ uvm_pmr_getpages(psize_t count, paddr_t start, paddr_t end, paddr_t align,
 	 */
 	desperate = 0;
 
-ReTry:		/* Return point after sleeping. */
+retry:		/* Return point after sleeping. */
 	fcount = 0;
 	fnsegs = 0;
 
 	uvm_lock_fpageq();
 
-ReTryDesperate:
+retry_desperate:
 	/*
 	 * If we just want any page(s), go for the really fast option.
 	 */
@@ -848,9 +848,9 @@ ReTryDesperate:
 		 * all we could anyway.
 		 */
 		if (fcount == count)
-			goto Out;
+			goto out;
 		else
-			goto Fail;
+			goto fail;
 	}
 
 	/*
@@ -895,10 +895,10 @@ ReTryDesperate:
 
 		memtype = memtype_init;
 
-ReScanMemtype:	/* Return point at memtype++. */
+rescan_memtype:	/* Return point at memtype++. */
 		try = start_try;
 
-ReScan:		/* Return point at try++. */
+rescan:		/* Return point at try++. */
 		for (found = uvm_pmr_nfindsz(pmr, search[try], memtype);
 		    found != NULL;
 		    found = f_next) {
@@ -907,7 +907,7 @@ ReScan:		/* Return point at try++. */
 			fstart = atop(VM_PAGE_TO_PHYS(found));
 			if (start != 0)
 				fstart = MAX(start, fstart);
-DrainFound:
+drain_found:
 			/*
 			 * Throw away the first segment if fnsegs == maxseg
 			 *
@@ -942,7 +942,7 @@ DrainFound:
 			    fstart, fend, result);
 
 			if (fcount == count)
-				goto Out;
+				goto out;
 
 			/*
 			 * If there's still space left in found, try to
@@ -950,7 +950,7 @@ DrainFound:
 			 */
 			if (found != NULL) {
 				fstart = fend;
-				goto DrainFound;
+				goto drain_found;
 			}
 		}
 
@@ -958,7 +958,7 @@ DrainFound:
 		 * Try a smaller search now.
 		 */
 		if (++try < nitems(search))
-			goto ReScan;
+			goto rescan;
 
 		/*
 		 * Exhaust all memory types prior to going to the next memory
@@ -978,7 +978,7 @@ DrainFound:
 		if (memtype == UVM_PMR_MEMTYPE_MAX)
 			memtype = 0;
 		if (memtype != memtype_init)
-			goto ReScanMemtype;
+			goto rescan_memtype;
 
 		/*
 		 * If not desperate, enter desperate case prior to eating all
@@ -1015,10 +1015,10 @@ DrainFound:
 			uvm_pmr_remove_1strange(result, 0, NULL, 0);
 		fnsegs = 0;
 		fcount = 0;
-		goto ReTryDesperate;
+		goto retry_desperate;
 	}
 
-Fail:
+fail:
 	/*
 	 * Allocation failed.
 	 */
@@ -1031,13 +1031,13 @@ Fail:
 
 	if (flags & UVM_PLA_WAITOK) {
 		uvm_wait("uvm_pmr_getpages");
-		goto ReTry;
+		goto retry;
 	} else
 		wakeup(&uvm.pagedaemon);
 
 	return ENOMEM;
 
-Out:
+out:
 
 	/*
 	 * Allocation succesful.
