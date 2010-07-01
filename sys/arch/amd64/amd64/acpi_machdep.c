@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.36 2010/06/26 04:05:32 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.37 2010/07/01 00:48:48 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -225,8 +225,12 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	if (sc->sc_facs->version == 1)
 		sc->sc_facs->x_wakeup_vector = 0;
 
-	/* Copy the current cpu registers into a safe place for resume. */
+	/* Copy the current cpu registers into a safe place for resume.
+	 * acpi_savecpu actually returns twice - once in the suspend
+	 * path and once in the resume path (see setjmp(3)).
+	 */
 	if (acpi_savecpu()) {
+		/* Suspend path */
 		fpusave_cpu(curcpu(), 1);
 #ifdef MULTIPROCESSOR
 		x86_broadcast_ipi(X86_IPI_FLUSH_FPU);
@@ -236,6 +240,8 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 		acpi_enter_sleep_state(sc, state);
 		panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
 	}
+
+	/* Resume path continues here */
 #if 0
 	/* Temporarily disabled for debugging purposes */
 	/* Reset the wakeup vector to avoid resuming on reboot */
