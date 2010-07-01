@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.16 2010/03/26 11:20:34 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.17 2010/07/01 19:31:04 thib Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -989,6 +989,7 @@ sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 	ccb->ccb_buf.b_proc = curproc;
 	ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[dsk]->src_dev_mm;
 	ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[dsk]->src_vn;
+	ccb->ccb_buf.b_bq = NULL;
 	if ((ccb->ccb_buf.b_flags & B_READ) == 0)
 		ccb->ccb_buf.b_vp->v_numoutput++;
 
