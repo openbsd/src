@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2010/05/24 15:06:05 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2010/07/01 04:18:36 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -22,8 +22,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lock.h>
-#include <sys/user.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/extent.h>
 
@@ -98,14 +98,24 @@ pt_entry_t	kernel_ptes[] = {
 #define	pmap_pvh_attrs(a) \
 	(((a) & PTE_DIRTY) | ((a) ^ PTE_REFTRAP))
 
-struct vm_page	*pmap_pagealloc(struct uvm_object *obj, voff_t off);
+struct vm_page	*pmap_pagealloc(int wait);
+volatile pt_entry_t *pmap_pde_get(volatile u_int32_t *pd, vaddr_t va);
+void		 pmap_pde_set(struct pmap *pm, vaddr_t va, paddr_t ptp);
 void		 pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte);
+pt_entry_t *	 pmap_pde_alloc(struct pmap *pm, vaddr_t va,
+		    struct vm_page **pdep);
 #ifdef DDB
 void		 pmap_dump_table(pa_space_t space, vaddr_t sva);
 void		 pmap_dump_pv(paddr_t pa);
 #endif
 int		 pmap_check_alias(struct pv_entry *pve, vaddr_t va,
 		    pt_entry_t pte);
+void		 pmap_pv_free(struct pv_entry *pv);
+void		 pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve,
+		    struct pmap *pm, vaddr_t va, struct vm_page *pdep);
+struct pv_entry *pmap_pv_remove(struct vm_page *pg, struct pmap *pmap,
+		    vaddr_t va);
+void		 pmap_maphys(paddr_t spa, paddr_t epa);
 
 struct vm_page *
 pmap_pagealloc(int wait)
