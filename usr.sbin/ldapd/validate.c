@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.6 2010/06/30 19:42:40 martinh Exp $ */
+/*	$OpenBSD: validate.c,v 1.7 2010/07/01 06:15:55 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -249,6 +249,22 @@ olist_push(struct obj_list *olist, struct object *obj)
 			olist_push(olist, sup->object);
 }
 
+static void
+olist_free(struct obj_list *olist)
+{
+	struct obj_ptr		*optr;
+
+	if (olist == NULL)
+		return;
+
+	while ((optr = SLIST_FIRST(olist)) != NULL) {
+		SLIST_REMOVE_HEAD(olist, next);
+		free(optr);
+	}
+
+	free(olist);
+}
+
 /* Check if sup is a superior object class to obj.
  */
 static int
@@ -274,7 +290,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	struct ber_element	*objclass, *a, *vals;
 	struct object		*obj, *structural_obj = NULL;
 	struct attr_type	*at;
-	struct obj_list		*olist;
+	struct obj_list		*olist = NULL;
 	struct obj_ptr		*optr, *optr2;
 
 	if (relax)
@@ -296,12 +312,15 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	 */
 	objclass = objclass->be_next;		/* skip attribute description */
 	for (a = objclass->be_sub; a != NULL; a = a->be_next) {
-		if (ber_get_string(a, &s) != 0)
-			return LDAP_INVALID_SYNTAX;
+		if (ber_get_string(a, &s) != 0) {
+			rc = LDAP_INVALID_SYNTAX;
+			goto done;
+		}
 
 		if ((obj = lookup_object(conf->schema, s)) == NULL) {
 			log_debug("objectClass %s not defined in schema", s);
-			return LDAP_NAMING_VIOLATION;
+			rc = LDAP_NAMING_VIOLATION;
+			goto done;
 		}
 
 		if (obj->kind == KIND_STRUCTURAL) {
@@ -311,7 +330,8 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 				else if (!is_super(obj, structural_obj)) {
 					log_debug("multiple structural"
 					    " object classes");
-					return LDAP_OBJECT_CLASS_VIOLATION;
+					rc = LDAP_OBJECT_CLASS_VIOLATION;
+					goto done;
 				}
 			} else
 				structural_obj = obj;
@@ -331,7 +351,8 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	 */
 	if (structural_obj == NULL) {
 		log_debug("no structural object class defined");
-		return LDAP_OBJECT_CLASS_VIOLATION;
+		rc = LDAP_OBJECT_CLASS_VIOLATION;
+		goto done;
 	}
 
 	/* "An entry cannot belong to an abstract object class
@@ -358,41 +379,46 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 			/* No subclassed object class found. */
 			log_debug("abstract class '%s' not subclassed",
 			    OBJ_NAME(optr->object));
-			return LDAP_OBJECT_CLASS_VIOLATION;
+			rc = LDAP_OBJECT_CLASS_VIOLATION;
+			goto done;
 		}
 	}
 
 	/* Check all required attributes.
 	 */
 	SLIST_FOREACH(optr, olist, next) {
-		if ((rc = validate_required_attributes(entry, optr->object)) !=
-		    LDAP_SUCCESS)
-			return rc;
+		rc = validate_required_attributes(entry, optr->object);
+		if (rc != LDAP_SUCCESS)
+			goto done;
 	}
 
 	/* Check all attributes against schema.
 	 */
 	for (a = entry->be_sub; a != NULL; a = a->be_next) {
-		if (ber_scanf_elements(a, "{se{", &s, &vals) != 0)
-			return LDAP_INVALID_SYNTAX;
+		if (ber_scanf_elements(a, "{se{", &s, &vals) != 0) {
+			rc = LDAP_INVALID_SYNTAX;
+			goto done;
+		}
 		if ((at = lookup_attribute(conf->schema, s)) == NULL) {
 			log_debug("attribute %s not defined in schema", s);
-			return LDAP_NAMING_VIOLATION;
+			rc = LDAP_NAMING_VIOLATION;
+			goto done;
 		}
 		if ((rc = validate_attribute(at, vals)) != LDAP_SUCCESS)
-			return rc;
+			goto done;
 		if (!extensible && at->usage == USAGE_USER_APP &&
 		    (rc = validate_allowed_attribute(at, olist)) != LDAP_SUCCESS) {
 			log_debug("%s not allowed by any object class",
 			    ATTR_NAME(at));
-			return rc;
+			goto done;
 		}
 	}
 
 rdn:
-	if ((rc = validate_dn(dn, entry)) != LDAP_SUCCESS)
-		return rc;
+	rc = validate_dn(dn, entry);
 
-	return LDAP_SUCCESS;
+done:
+	olist_free(olist);
+	return rc;
 }
 
