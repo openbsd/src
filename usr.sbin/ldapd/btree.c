@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.17 2010/07/01 02:19:11 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.18 2010/07/01 03:43:24 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -1524,7 +1524,7 @@ btree_read_data(struct btree *bt, struct mpage *mp, struct node *leaf,
 	for (sz = 0; sz < data->size; ) {
 		if ((omp = btree_get_mpage(bt, pgno)) == NULL ||
 		    !F_ISSET(omp->page->flags, P_OVERFLOW)) {
-			DPRINTF("read overflow page failed (%02x)", omp->page->flags);
+			DPRINTF("read overflow page %u failed", pgno);
 			free(data->data);
 			mpage_free(omp);
 			return BT_FAIL;
@@ -1890,6 +1890,8 @@ btree_write_overflow_data(struct btree *bt, struct page *p, struct btval *data)
 	max = bt->head.psize - PAGEHDRSZ;
 
 	while (done < data->size) {
+		if (next != NULL)
+			p = next->page;
 		linkp = &p->p_next_pgno;
 		if (data->size - done > max) {
 			/* need another overflow page */
@@ -1905,7 +1907,6 @@ btree_write_overflow_data(struct btree *bt, struct page *p, struct btval *data)
 		DPRINTF("copying %zu bytes to overflow page %u", sz, p->pgno);
 		bcopy((char *)data->data + done, p->ptrs, sz);
 		done += sz;
-		p = next->page;
 	}
 
 	return BT_SUCCESS;
@@ -1986,6 +1987,7 @@ btree_add_node(struct btree *bt, struct mpage *mp, indx_t indx,
 		bcopy(key->data, NODEKEY(node), key->size);
 
 	if (IS_LEAF(mp)) {
+		assert(key);
 		if (ofp == NULL) {
 			if (F_ISSET(flags, F_BIGDATA))
 				bcopy(data->data, node->data + key->size,
@@ -2324,6 +2326,7 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 	}
 
 	if (IS_BRANCH(dst)) {
+		assert(mp);
 		mp->parent = dst;
 		mp->parent_index = dstindx;
 		find_common_prefix(bt, mp);
