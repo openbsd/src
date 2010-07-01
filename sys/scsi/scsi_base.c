@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.177 2010/07/01 03:01:37 matthew Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.178 2010/07/01 05:11:18 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -617,9 +617,6 @@ scsi_xs_put(struct scsi_xfer *xs)
 
 	scsi_io_put(link->pool, io);
 	scsi_link_close(link);
-
-	if (link->device->start)
-		link->device->start(link->device_softc);
 }
 
 /*
@@ -1231,16 +1228,6 @@ scsi_scsi_cmd(struct scsi_link *link, struct scsi_generic *scsi_cmd,
 			biodone(bp);
 			splx(s);
 		}
-
-		if (link->device->done) {
-			/*
-			 * Tell the device the operation is actually complete.
-			 * No more will happen with this xfer.  This for
-			 * notification of the upper-level driver only; they
-			 * won't be returning any meaningful information to us.
-			 */
-			link->device->done(xs);
-		}
 	}
 
 	scsi_xs_put(xs);
@@ -1270,7 +1257,10 @@ scsi_xs_error(struct scsi_xfer *xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-		error = scsi_interpret_sense(xs);
+#ifdef SCSIDEBUG
+		scsi_sense_print_debug(xs);
+#endif
+		error = xs->sc_link->interpret_sense(xs);
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsi_interpret_sense returned %#x\n", error));
 		break;
@@ -1326,6 +1316,33 @@ scsi_delay(struct scsi_xfer *xs, int seconds)
 	return (ERESTART);
 }
 
+#ifdef SCSIDEBUG
+/*
+ * Print out sense data details.
+ */
+void
+scsi_sense_print_debug(struct scsi_xfer *xs)
+{
+	struct scsi_sense_data *sense = &xs->sense;
+	struct scsi_link *sc_link = xs->sc_link;
+
+	SC_DEBUG(sc_link, SDEV_DB1,
+	    ("code:%#x valid:%d key:%#x ili:%d eom:%d fmark:%d extra:%d\n",
+	    sense->error_code & SSD_ERRCODE,
+	    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0,
+	    sense->flags & SSD_KEY,
+	    sense->flags & SSD_ILI ? 1 : 0,
+	    sense->flags & SSD_EOM ? 1 : 0,
+	    sense->flags & SSD_FILEMARK ? 1 : 0,
+	    sense->extra_len));
+
+	if (xs->sc_link->flags & SDEV_DB1)
+		scsi_show_mem((u_char *)&xs->sense, sizeof(xs->sense));
+
+	scsi_print_sense(xs);
+}
+#endif
+
 /*
  * Look at the returned sense and act on the error, determining
  * the unix error number to pass back.  (0 = report no error)
@@ -1339,35 +1356,6 @@ scsi_interpret_sense(struct scsi_xfer *xs)
 	struct scsi_link			*sc_link = xs->sc_link;
 	u_int8_t				serr, skey;
 	int					error;
-
-	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("code:%#x valid:%d key:%#x ili:%d eom:%d fmark:%d extra:%d\n",
-	    sense->error_code & SSD_ERRCODE,
-	    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0,
-	    sense->flags & SSD_KEY,
-	    sense->flags & SSD_ILI ? 1 : 0,
-	    sense->flags & SSD_EOM ? 1 : 0,
-	    sense->flags & SSD_FILEMARK ? 1 : 0,
-	    sense->extra_len));
-
-#ifdef SCSIDEBUG
-	if (xs->sc_link->flags & SDEV_DB1)
-		scsi_show_mem((u_char *)&xs->sense, sizeof(xs->sense));
-	scsi_print_sense(xs);
-#endif /* SCSIDEBUG */
-
-	/*
-	 * If the device has its own error handler, call it first.
-	 * If it returns a legit error value, return that, otherwise
-	 * it wants us to continue with normal error processing.
-	 */
-	if (sc_link->device->err_handler) {
-		SC_DEBUG(sc_link, SDEV_DB2,
-		    ("calling private err_handler()\n"));
-		error = (*sc_link->device->err_handler) (xs);
-		if (error != EJUSTRETURN)
-			return (error); /* error >= 0  better ? */
-	}
 
 	/* Default sense interpretation. */
 	serr = sense->error_code & SSD_ERRCODE;

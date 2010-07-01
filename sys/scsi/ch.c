@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.39 2010/06/26 23:24:45 guenther Exp $	*/
+/*	$OpenBSD: ch.c,v 1.40 2010/07/01 05:11:18 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -119,14 +119,6 @@ int	ch_get_params(struct ch_softc *, int);
 int	ch_interpret_sense(struct scsi_xfer *xs);
 void	ch_get_quirks(struct ch_softc *, struct scsi_inquiry_data *);
 
-/* SCSI glue */
-struct scsi_device ch_switch = {
-	ch_interpret_sense,
-	NULL,
-	NULL,
-	NULL
-};
-
 /*
  * SCSI changer quirks.
  */
@@ -167,7 +159,7 @@ chattach(parent, self, aux)
 
 	/* Glue into the SCSI bus */
 	sc->sc_link = link;
-	link->device = &ch_switch;
+	link->interpret_sense = ch_interpret_sense;
 	link->device_softc = sc;
 	link->openings = 1;
 
@@ -765,7 +757,7 @@ ch_interpret_sense(xs)
 
 	if (((sc_link->flags & SDEV_OPEN) == 0) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
-		return (EJUSTRETURN); /* let the generic code handle it */
+		return (scsi_interpret_sense(xs));
 
 	switch (skey) {
 
@@ -792,9 +784,9 @@ ch_interpret_sense(xs)
 			xs->retries++;
 			return (scsi_delay(xs, 1));
 		default:
-			return (EJUSTRETURN);
+			return (scsi_interpret_sense(xs));
 	}
 	default:
-		return (EJUSTRETURN);
+		return (scsi_interpret_sense(xs));
 	}
 }

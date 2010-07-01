@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.160 2010/07/01 03:20:39 matthew Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.161 2010/07/01 05:11:18 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -74,13 +74,6 @@ int	scsi_probedev(struct scsibus_softc *, int, int);
 
 void	scsi_devid(struct scsi_link *);
 int	scsi_devid_pg83(struct scsi_link *);
-
-struct scsi_device probe_switch = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-};
 
 int	scsibusmatch(struct device *, void *, void *);
 void	scsibusattach(struct device *, struct device *, void *);
@@ -865,7 +858,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	*sc_link = *scsi->adapter_link;
 	sc_link->target = target;
 	sc_link->lun = lun;
-	sc_link->device = &probe_switch;
+	sc_link->interpret_sense = scsi_interpret_sense;
 	TAILQ_INIT(&sc_link->queue);
 	inqbuf = &sc_link->inqdata;
 

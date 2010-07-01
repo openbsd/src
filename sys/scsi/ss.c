@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.78 2010/07/01 03:01:37 matthew Exp $	*/
+/*	$OpenBSD: ss.c,v 1.79 2010/07/01 05:11:18 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -252,13 +252,6 @@ struct cfdriver ss_cd = {
 	NULL, "ss", DV_DULL
 };
 
-struct scsi_device ss_switch = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-};
-
 const struct scsi_inquiry_pattern ss_patterns[] = {
 	{T_SCANNER, T_FIXED,
 	 "",         "",                 ""},
@@ -325,7 +318,6 @@ ssattach(parent, self, aux)
 	 * Store information needed to contact our base driver
 	 */
 	ss->sc_link = sc_link;
-	sc_link->device = &ss_switch;
 	sc_link->device_softc = ss;
 	sc_link->openings = 1;
 
@@ -689,6 +681,9 @@ ssdone(struct scsi_xfer *xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
+#ifdef SCSIDEBUG
+		scsi_sense_print_debug(xs);
+#endif
 		error = scsi_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;

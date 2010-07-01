@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.14 2010/06/15 04:11:34 dlg Exp $	*/
+/*	$OpenBSD: uk.c,v 1.15 2010/07/01 05:11:18 krw Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -64,16 +64,6 @@ struct cfdriver uk_cd = {
 	NULL, "uk", DV_DULL
 };
 
-/*
- * This driver is so simple it uses all the default services
- */
-struct scsi_device uk_switch = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-};
-
 int
 ukmatch(struct device *parent, void *match, void *aux)
 {
@@ -95,7 +85,6 @@ ukattach(struct device *parent, struct device *self, void *aux)
 
 	/* Store information needed to contact our base driver */
 	uk->sc_link = sc_link;
-	sc_link->device = &uk_switch;
 	sc_link->device_softc = uk;
 	sc_link->openings = 1;
 

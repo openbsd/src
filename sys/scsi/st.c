@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.103 2010/07/01 03:01:37 matthew Exp $	*/
+/*	$OpenBSD: st.c,v 1.104 2010/07/01 05:11:18 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -256,13 +256,6 @@ struct cfdriver st_cd = {
 	NULL, "st", DV_TAPE
 };
 
-struct scsi_device st_switch = {
-	st_interpret_sense,
-	NULL,
-	NULL,
-	NULL,
-};
-
 #define	ST_INFO_VALID	0x0001
 #define	ST_BLOCK_SET	0x0002	/* block size, mode set by ioctl      */
 #define	ST_WRITTEN	0x0004	/* data have been written, EOD needed */
@@ -323,7 +316,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	 * Store information needed to contact our base driver
 	 */
 	st->sc_link = sc_link;
-	sc_link->device = &st_switch;
+	sc_link->interpret_sense = st_interpret_sense;
 	sc_link->device_softc = st;
 
 	/*
@@ -1075,7 +1068,10 @@ st_buf_done(struct scsi_xfer *xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-		error = scsi_interpret_sense(xs);
+#ifdef SCSIDEBUG
+		scsi_sense_print_debug(xs);
+#endif
+		error = st_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;
 			bp->b_resid = xs->resid;
@@ -1911,7 +1907,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 
 	if (((sc_link->flags & SDEV_OPEN) == 0) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
-		return (EJUSTRETURN); /* let the generic code handle it */
+		return (scsi_interpret_sense(xs));
 
 	switch (skey) {
 
@@ -1938,7 +1934,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 			xs->retries++;
 			return (scsi_delay(xs, 1));
 		default:
-			return (EJUSTRETURN);
+			return (scsi_interpret_sense(xs));
 	}
 	case SKEY_NO_SENSE:
 	case SKEY_RECOVERED_ERROR:
@@ -1947,7 +1943,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	case SKEY_BLANK_CHECK:
 		break;
 	default:
-		return (EJUSTRETURN);
+		return (scsi_interpret_sense(xs));
 	}
 
 	/*
@@ -2051,7 +2047,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 		}
 	}
 
-	return (EJUSTRETURN);
+	return (scsi_interpret_sense(xs));
 }
 
 /*
