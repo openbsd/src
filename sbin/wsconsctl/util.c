@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.51 2010/07/01 02:37:21 maja Exp $ */
+/*	$OpenBSD: util.c,v 1.52 2010/07/01 03:00:14 maja Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -496,7 +496,7 @@ print_emul(struct wsdisplay_emultype *emuls)
 	e.idx=0;
 	i = ioctl(fd, WSDISPLAYIO_GETEMULTYPE, &e);
 	while(i == 0) {
-		if (c != '0')
+		if (c != '\0')
 			printf("%c", c);
 		printf("%s", e.name);
 		c=',';
@@ -516,7 +516,7 @@ print_screen(struct wsdisplay_screentype *screens)
 	s.idx=0;
 	i = ioctl(fd, WSDISPLAYIO_GETSCREENTYPE, &s);
 	while(i == 0) {
-		if (c != '0')
+		if (c != '\0')
 			printf("%c", c);
 		printf("%s", s.name);
 		c=',';
