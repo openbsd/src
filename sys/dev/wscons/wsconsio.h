@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.60 2010/03/07 21:26:24 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.61 2010/07/01 02:33:05 maja Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -479,6 +479,23 @@ struct wsdisplay_gfx_mode {
 };
 
 #define WSDISPLAYIO_SETGFXMODE	_IOW('W', 92, struct wsdisplay_gfx_mode)
+
+struct wsdisplay_screentype {
+	int idx;
+	int nidx;
+	char name[WSSCREEN_NAME_SIZE];
+	int ncols, nrows;
+	int fontwidth, fontheight;
+};
+
+#define	WSDISPLAYIO_GETSCREENTYPE	_IOWR('W', 93, struct wsdisplay_screentype)
+
+struct wsdisplay_emultype {
+	int idx;
+	char name[WSSCREEN_NAME_SIZE];
+};
+
+#define	WSDISPLAYIO_GETEMULTYPE	_IOWR('W', 94, struct wsdisplay_emultype)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */

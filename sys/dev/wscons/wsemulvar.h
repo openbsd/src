@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.12 2009/09/05 14:49:20 miod Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.13 2010/07/01 02:33:06 maja Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -76,6 +76,7 @@ extern const struct wsemul_ops wsemul_sun_ops;
 extern const struct wsemul_ops wsemul_vt100_ops;
 
 const struct wsemul_ops *wsemul_pick(const char *);
+const char *wsemul_getname(int);
 
 /*
  * Callbacks from the emulation code to the display interface driver.
