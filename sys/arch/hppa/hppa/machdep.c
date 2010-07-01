@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.192 2010/06/29 20:30:32 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.193 2010/07/01 05:33:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -156,7 +156,7 @@ struct user *proc0paddr;
 long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 struct extent *hppa_ex;
 struct pool hppa_fppl;
-struct fpreg proc0fpregs;
+struct hppa_fpstate proc0fpstate;
 struct consdev *cn_tab;
 
 struct vm_map *exec_map = NULL;
@@ -414,8 +414,9 @@ hppa_init(start)
 	ficacheall();
 	fdcacheall();
 
-	proc0paddr->u_pcb.pcb_fpregs = &proc0fpregs;
-	pool_init(&hppa_fppl, sizeof(struct fpreg), 16, 0, 0, "hppafp", NULL);
+	proc0paddr->u_pcb.pcb_fpstate = &proc0fpstate;
+	pool_init(&hppa_fppl, sizeof(struct hppa_fpstate), 16, 0, 0,
+	    "hppafp", NULL);
 }
 
 void
@@ -1202,10 +1203,11 @@ setregs(p, pack, stack, retval)
 
 	/* reset any of the pending FPU exceptions */
 	fpu_proc_flush(p);
-	pcb->pcb_fpregs->fpr_regs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
-	pcb->pcb_fpregs->fpr_regs[1] = 0;
-	pcb->pcb_fpregs->fpr_regs[2] = 0;
-	pcb->pcb_fpregs->fpr_regs[3] = 0;
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[0] =
+	    ((u_int64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[1] = 0;
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[2] = 0;
+	pcb->pcb_fpstate->hfp_regs.fpr_regs[3] = 0;
 
 	p->p_md.md_bpva = 0;
 
@@ -1303,7 +1305,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	ksc.sc_regs[29] = tf->tf_ret0;
 	ksc.sc_regs[30] = tf->tf_ret1;
 	ksc.sc_regs[31] = tf->tf_r31;
-	bcopy(p->p_addr->u_pcb.pcb_fpregs, ksc.sc_fpregs,
+	bcopy(&p->p_addr->u_pcb.pcb_fpstate->hfp_regs, ksc.sc_fpregs,
 	    sizeof(ksc.sc_fpregs));
 
 	sss += HPPA_FRAME_SIZE;
@@ -1413,7 +1415,7 @@ sys_sigreturn(p, v, retval)
 	tf->tf_ret0 = ksc.sc_regs[29];
 	tf->tf_ret1 = ksc.sc_regs[30];
 	tf->tf_r31 = ksc.sc_regs[31];
-	bcopy(ksc.sc_fpregs, p->p_addr->u_pcb.pcb_fpregs,
+	bcopy(ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fpstate->hfp_regs,
 	    sizeof(ksc.sc_fpregs));
 
 	tf->tf_iioq_head = ksc.sc_pcoqh | HPPA_PC_PRIV_USER;

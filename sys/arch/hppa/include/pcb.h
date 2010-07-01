@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.13 2010/06/29 20:30:32 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.14 2010/07/01 05:33:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -30,10 +30,11 @@
 #ifndef _MACHINE_PCB_H_
 #define _MACHINE_PCB_H_
 
+#include <machine/fpu.h>
 #include <machine/reg.h>
 
 struct pcb {
-	struct fpreg	*pcb_fpregs;	/* not in the trapframe */
+	struct hppa_fpstate *pcb_fpstate;	/* not in the trapframe */
 
 	u_int		pcb_ksp;	/* kernel sp for ctxsw */
 	u_int		pcb_onfault;	/* SW copy fault handler */

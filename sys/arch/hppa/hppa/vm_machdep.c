@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.73 2010/06/29 04:54:26 jsing Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.74 2010/07/01 05:33:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -108,14 +108,14 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pm_space;
-	pcbp->pcb_fpregs = pool_get(&hppa_fppl, PR_WAITOK);
-	*pcbp->pcb_fpregs = *p1->p_addr->u_pcb.pcb_fpregs;
+	pcbp->pcb_fpstate = pool_get(&hppa_fppl, PR_WAITOK);
+	*pcbp->pcb_fpstate = *p1->p_addr->u_pcb.pcb_fpstate;
 	/* reset any of the pending FPU exceptions from parent */
-	pcbp->pcb_fpregs->fpr_regs[0] =
-	    HPPA_FPU_FORK(pcbp->pcb_fpregs->fpr_regs[0]);
-	pcbp->pcb_fpregs->fpr_regs[1] = 0;
-	pcbp->pcb_fpregs->fpr_regs[2] = 0;
-	pcbp->pcb_fpregs->fpr_regs[3] = 0;
+	pcbp->pcb_fpstate->hfp_regs.fpr_regs[0] =
+	    HPPA_FPU_FORK(pcbp->pcb_fpstate->hfp_regs.fpr_regs[0]);
+	pcbp->pcb_fpstate->hfp_regs.fpr_regs[1] = 0;
+	pcbp->pcb_fpstate->hfp_regs.fpr_regs[2] = 0;
+	pcbp->pcb_fpstate->hfp_regs.fpr_regs[3] = 0;
 
 	p2->p_md.md_bpva = p1->p_md.md_bpva;
 	p2->p_md.md_bpsave[0] = p1->p_md.md_bpsave[0];
@@ -126,7 +126,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sp += sizeof(struct trapframe);
 	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));
 
-	tf->tf_cr30 = (paddr_t)pcbp->pcb_fpregs;
+	tf->tf_cr30 = (paddr_t)pcbp->pcb_fpstate;
 
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
 	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 =
@@ -170,7 +170,7 @@ cpu_exit(struct proc *p)
 
 	fpu_proc_flush(p);
 
-	pool_put(&hppa_fppl, pcb->pcb_fpregs);
+	pool_put(&hppa_fppl, pcb->pcb_fpstate);
 
 	pmap_deactivate(p);
 	sched_exit(p);

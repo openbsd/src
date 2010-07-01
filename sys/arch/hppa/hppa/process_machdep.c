@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.18 2010/06/29 04:03:21 jsing Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.19 2010/07/01 05:33:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -89,7 +89,7 @@ process_read_fpregs(p, fpregs)
 {
 	fpu_proc_save(p);
 
-	bcopy(p->p_addr->u_pcb.pcb_fpregs, fpregs, 32 * 8);
+	bcopy(&p->p_addr->u_pcb.pcb_fpstate->hfp_regs, fpregs, 32 * 8);
 
 	return (0);
 }
@@ -148,7 +148,7 @@ process_write_fpregs(p, fpregs)
 {
 	fpu_proc_flush(p);
 
-	bcopy(fpregs, p->p_addr->u_pcb.pcb_fpregs, 32 * 8);
+	bcopy(fpregs, &p->p_addr->u_pcb.pcb_fpstate->hfp_regs, 32 * 8);
 
 	return (0);
 }

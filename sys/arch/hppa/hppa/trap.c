@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.109 2010/06/26 00:50:03 jsing Exp $	*/
+/*	$OpenBSD: trap.c,v 1.110 2010/07/01 05:33:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -296,9 +296,13 @@ trap(type, frame)
 #endif
 
 	case T_EXCEPTION | T_USER: {
-		u_int64_t *fpp = (u_int64_t *)frame->tf_cr30;
+		struct hppa_fpstate *hfp;
+		u_int64_t *fpp;
 		u_int32_t *pex;
 		int i, flt;
+
+		hfp = (struct hppa_fpstate *)frame->tf_cr30;
+		fpp = (u_int64_t *)&hfp->hfp_regs;
 
 		pex = (u_int32_t *)&fpp[0];
 		for (i = 0, pex++; i < 7 && !*pex; i++, pex++);

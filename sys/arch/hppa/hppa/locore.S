@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.175 2010/06/30 20:38:49 tedu Exp $	*/
+/*	$OpenBSD: locore.S,v 1.176 2010/07/01 05:33:32 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -955,8 +955,8 @@ ENTRY(TLABEL(excpt),0)
 	copy	rp, r1
 	copy	arg0, r8
 	mfctl	cr30, r9
-#if (PCB_FPREGS+U_PCB) != 0
-	ldo	PCB_FPREGS+U_PCB(r9), r9
+#if HFP_REGS != 0
+	ldo	HFP_REGS(r9), r9
 #endif
 	.import	fpu_save, code
 	.call
@@ -1072,8 +1072,8 @@ $fpusw_set
 
 	copy	arg0, r17
 	copy	rp, r1
-#if (PCB_FPREGS+U_PCB) != 0
-	ldo	PCB_FPREGS+U_PCB(r16), r16
+#if HFP_REGS != 0
+	ldo	HFP_REGS(r16), r16
 #endif
 	.import	fpu_save, code
 	.call
@@ -1087,7 +1087,7 @@ $fpusw_nosave
 	.import	uvmexp, data
 	ldil	L%(uvmexp+FPSWTCH), r1
 	ldw	R%(uvmexp+FPSWTCH)(r1), r16
-	ldo	31*8+PCB_FPREGS+U_PCB(r9), r17
+	ldo	31*8+HFP_REGS(r9), r17
 	ldo	1(r16), r16
 	stw	r16, R%(uvmexp+FPSWTCH)(r1)
 

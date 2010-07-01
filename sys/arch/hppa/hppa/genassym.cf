@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.40 2010/06/29 00:50:40 jsing Exp $
+#	$OpenBSD: genassym.cf,v 1.41 2010/07/01 05:33:32 jsing Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -142,7 +142,7 @@ export	SRUN
 export	SONPROC
 
 struct	pcb
-member	pcb_fpregs
+member	pcb_fpstate
 member	pcb_onfault
 member	pcb_space
 member	pcb_ksp
@@ -164,6 +164,10 @@ member	ci_cpl
 member	ci_ipending
 member	ci_trap_save
 member	ci_fpu_state
+
+struct	hppa_fpstate
+member	hfp_regs
+member	hfp_cpu
 
 # system calls
 export	SYSCALLGATE
