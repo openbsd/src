@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.35 2010/06/29 22:08:29 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.36 2010/07/01 06:29:32 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -347,32 +347,21 @@ struct aml_value {
 #define aml_pkglen(v)		((v)->length)
 #define aml_pkgval(v,i)		(&(v)->v_package[(i)])
 
-struct acpi_pci {
-	TAILQ_ENTRY(acpi_pci)		next;
-
-	struct aml_node			*node;
-	struct device			*device;
-
-	int				sub;
-	int				seg;
-	int				bus;
-	int				dev;
-	int				fun;
-};
-
 struct aml_node {
 	struct aml_node *parent;
-
-	SIMPLEQ_HEAD(,aml_node)	son;
-	SIMPLEQ_ENTRY(aml_node)	sib;
+	struct aml_node *child;
+	struct aml_node *sibling;
 
 	char		name[5];
 	u_int16_t	opcode;
 	u_int8_t	*start;
 	u_int8_t	*end;
+  //	const char	*name;
+  //	const char	*mnem;
 
 	struct aml_value *value;
-	struct acpi_pci  *pci;
+
+	int		depth;
 };
 
 #define aml_bitmask(n)		(1L << ((n) & 0x7))

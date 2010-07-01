@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.51 2010/06/29 22:08:28 jordan Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.52 2010/07/01 06:29:32 jordan Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -667,6 +667,6 @@ void
 pci_dev_postattach(struct device *dev, struct pci_attach_args *pa)
 {
 #if NACPI > 0
-	acpi_pci_match(dev, pa);
+	//acpi_pci_match(dev, pa);
 #endif
 }

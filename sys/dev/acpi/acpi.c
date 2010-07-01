@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.167 2010/07/01 01:39:39 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.168 2010/07/01 06:29:32 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
@@ -41,10 +40,6 @@
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
 #include <dev/wscons/wsdisplayvar.h>
-
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/ppbreg.h>
 
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
@@ -70,8 +65,6 @@ int acpi_saved_spl;
 
 void	acpi_isr_thread(void *);
 void	acpi_create_thread(void *);
-
-void 	acpi_pci_match(struct device *, struct pci_attach_args *);
 
 int	acpi_match(struct device *, void *, void *);
 void	acpi_attach(struct device *, struct device *, void *);
@@ -101,14 +94,11 @@ int acpi_foundide(struct aml_node *node, void *arg);
 int acpiide_notify(struct aml_node *, int, void *);
 
 int	_acpi_matchhids(const char *, const char *[]);
-int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
-	    const char *driver);
-
-struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *,
-	    const char *, const char *, int);
 
 void  wdcattach(struct channel_softc *);
 int   wdcdetach(struct channel_softc *, int);
+
+struct acpi_q *acpi_maptable(struct acpi_softc *, paddr_t, const char *, const char *, const char *, int);
 
 struct idechnl
 {
@@ -502,150 +492,6 @@ acpi_match(struct device *parent, void *match, void *aux)
 	return (1);
 }
 
-TAILQ_HEAD(, acpi_pci) acpi_pcidevs =
-    TAILQ_HEAD_INITIALIZER(acpi_pcidevs);
-
-int acpi_getpci(struct aml_node *node, void *arg);
-int acpi_getminbus(union acpi_resource *crs, void *arg);
-
-int
-acpi_getminbus(union acpi_resource *crs, void *arg)
-{
-	int *bbn = arg;
-	int typ = AML_CRSTYPE(crs);
-
-	/* Check for embedded bus number */
-	if (typ == LR_WORD && crs->lr_word.type == 2)
-		*bbn = crs->lr_word._min;
-	return 0;
-}
-
-int
-_acpi_matchhids(const char *hid, const char *hids[])
-{
-	int i;
-
-	for (i = 0; hids[i]; i++) 
-		if (!strcmp(hid, hids[i]))
-			return (1);
-	return (0);
-}
-
-int
-acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
-    const char *driver)
-{
-
-	if (aa->aaa_dev == NULL || aa->aaa_node == NULL)
-		return (0);
-	if (_acpi_matchhids(aa->aaa_dev, hids)) {
-		dnprintf(5, "driver %s matches %s\n", driver, hids[i]);
-		return (1);
-	}
-	return (0);
-}
-
-/* Map ACPI device node to PCI */
-int
-acpi_getpci(struct aml_node *node, void *arg)
-{
-	const char *pcihid[] = { ACPI_DEV_PCIB, ACPI_DEV_PCIEB, "HWP0002", 0 };
-	struct acpi_pci *pci, *ppci;
-	struct aml_value res;
-	struct acpi_softc *sc = arg;
-	pci_chipset_tag_t pc = NULL;
-	pcitag_t tag;
-	uint64_t val;
-	uint32_t reg;
-
-	if (!node->value || node->value->type != AML_OBJTYPE_DEVICE)
-		return 0;
-	if (!aml_evalhid(node, &res)) {
-		/* Check if this is a PCI Root node */
-		if (_acpi_matchhids(res.v_string, pcihid)) {
-			aml_freevalue(&res);
-
-			pci = malloc(sizeof(*pci), M_DEVBUF, M_WAITOK|M_ZERO);
-
-			if (!aml_evalinteger(sc, node, "_SEG", 0, NULL, &val))
-				pci->seg = val;
-			if (!aml_evalinteger(sc, node, "_BBN", 0, NULL, &val))
-				pci->bus = val;
-			else if (!aml_evalname(sc, node, "_CRS", 0, NULL, &res)) {
-				aml_parse_resource(&res, acpi_getminbus, 
-				    &pci->bus);
-			}
-			pci->sub = pci->bus;
-			node->pci = pci;
-			dnprintf(10, "found PCI root: %s %d\n", 
-			    aml_nodename(node), pci->bus);
-		}
-		aml_freevalue(&res);
-		return 0;
-	}
-
-	/* If parent is not PCI, or device does not have _ADR, return */
-	if (!node->parent || (ppci = node->parent->pci) == NULL)
-		return 0;
-	if (aml_evalinteger(sc, node, "_ADR", 0, NULL, &val))
-		return 0;
-
-	pci = malloc(sizeof(*pci), M_DEVBUF, M_WAITOK|M_ZERO);
-	pci->bus = ppci->sub;
-	pci->dev = ACPI_ADR_PCIDEV(val);
-	pci->fun = ACPI_ADR_PCIFUN(val);
-	pci->node = node;
-	pci->sub = -1;
-
-	dnprintf(10, "%.2x:%.2x.%x -> %s\n", 
-		pci->bus, pci->dev, pci->fun,
-		aml_nodename(node));
-
-	/* Check if PCI device exists */
-	tag = pci_make_tag(pc, pci->bus, pci->dev, pci->fun);
-	reg = pci_conf_read(pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID) {
-		free(pci, M_DEVBUF);
-		return (1);
-	}
-	node->pci = pci;
-
-	TAILQ_INSERT_TAIL(&acpi_pcidevs, pci, next);
-
-	/* Check if this is a PCI bridge */
-	reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
-	if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI) {
-		reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
-		pci->sub = PPB_BUSINFO_SECONDARY(reg);
-
-		dnprintf(10, "found PCI bridge: %s %d\n", 
-		    aml_nodename(node), pci->sub);
-
-		/* Continue scanning */
-		return (0);
-	}
-
-	/* Device does not have children, stop scanning */
-	return (1);
-}
-
-void
-acpi_pci_match(struct device *dev, struct pci_attach_args *pa)
-{
-	struct acpi_pci *pdev;
-
-	TAILQ_FOREACH(pdev, &acpi_pcidevs, next) {
-		if (pdev->bus == pa->pa_bus && 
-		    pdev->dev == pa->pa_device && 
-		    pdev->fun == pa->pa_function) {
-			dnprintf(10,"%s at acpi0 %s\n", 
-			    dev->dv_xname, aml_nodename(pdev->node));
-			pdev->device = dev;
-		}
-	}
-}
-
 void
 acpi_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -862,9 +708,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* initialize runtime environment */
 	aml_find_node(&aml_root, "_INI", acpi_inidev, sc);
-
-	/* Get PCI mapping */
-	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_getpci, sc);
 
 	/* attach pci interrupt routing tables */
 	aml_find_node(&aml_root, "_PRT", acpi_foundprt, sc);
@@ -2262,12 +2105,10 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	acpi_susp_resume_gpewalk(sc, state, 1);
 
 fail:
-
 #if NWSDISPLAY > 0
 	if (error)
 		wsdisplay_resume();
 #endif /* NWSDISPLAY > 0 */
-
 	return (error);
 }
 
@@ -2448,6 +2289,31 @@ acpi_foundec(struct aml_node *node, void *arg)
 	aml_freevalue(&res);
 
 	return 0;
+}
+
+int
+_acpi_matchhids(const char *hid, const char *hids[])
+{
+	int i;
+
+	for (i = 0; hids[i]; i++) 
+		if (!strcmp(hid, hids[i]))
+			return (1);
+	return (0);
+}
+
+int
+acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
+    const char *driver)
+{
+
+	if (aa->aaa_dev == NULL || aa->aaa_node == NULL)
+		return (0);
+	if (_acpi_matchhids(aa->aaa_dev, hids)) {
+		dnprintf(5, "driver %s matches %s\n", driver, hids[i]);
+		return (1);
+	}
+	return (0);
 }
 
 int
