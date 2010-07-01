@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.37 2010/06/27 13:33:43 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.38 2010/07/01 15:36:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2010 $
+.Dd $Mdocdate: July 1 2010 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -478,6 +478,19 @@ they are separated by a vertical space, unless in the case of
 and
 .Sx \&Ft ,
 which are always separated by vertical space.
+.Pp
+When text and macros following an
+.Sx \&Nm
+macro starting an input line span multiple output lines,
+all output lines but the first will be indented to align
+with the text immediately following the
+.Sx \&Nm
+macro, up to the next
+.Sx \&Nm ,
+.Sx \&Sx ,
+or
+.Sx \&Ss
+macro or the end of an enclosing block, whichever comes first.
 .It Em DESCRIPTION
 This expands upon the brief, one-line description in
 .Em NAME .
@@ -672,9 +685,20 @@ has multiple heads.
 .It Em Macro Ta Em Callable Ta Em Parsable Ta Em Scope
 .It Sx \&It  Ta    \&No     Ta    Yes      Ta    closed by Sx \&It , Sx \&El
 .It Sx \&Nd  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh
+.It Sx \&Nm  Ta    \&No     Ta  Yes Ta closed by Sx \&Nm , Sx \&Sh , Sx \&Ss
 .It Sx \&Sh  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh
 .It Sx \&Ss  Ta    \&No     Ta    \&No     Ta    closed by Sx \&Sh , Sx \&Ss
 .El
+.Pp
+Note that the
+.Sx \&Nm
+macro is a
+.Sx Block full-implicit
+macro only when invoked as the first macro
+in a
+.Em SYNOPSIS
+section line, else it is
+.Sx In-line .
 .Ss Block partial-explicit
 Like block full-explicit, but also with single-line scope.
 Each has at least a body and, in limited circumstances, a head
@@ -1958,6 +1982,42 @@ Examples:
 .D1 \&.Mt discuss@manpages.bsd.lv
 .Ss \&Nd
 .Ss \&Nm
+The name of the manual page, or \(em in particular in section 1, 6,
+and 8 pages \(em of an additional command or feature documented in
+the manual page.
+When first invoked, the
+.Sx \&Nm
+macro expects a single argument, the name of the manual page.
+Usually, the first invocation happens in the
+.Em NAME
+section of the page.
+The specified name will be remembered and used whenever the macro is
+called again without arguments later in the page.
+The
+.Sx \&Nm
+macro uses
+.Sx Block full-implicit
+semantics when invoked as the first macro on an input line in the
+.Em SYNOPSIS
+section; otherwise, it uses ordinary
+.Sx In-line
+semantics.
+.Pp
+Examples:
+.Bd -literal -offset indent
+\&.Sh SYNOPSIS
+\&.Nm cat
+\&.Op Fl benstuv
+\&.Op Ar
+.Ed
+.Pp
+In the
+.Em SYNOPSIS
+of section 2, 3 and 9 manual pages, use the
+.Sx \&Fn
+macro rather than
+.Sx \&Nm
+to mark up the name of the manual page.
 .Ss \&No
 .Ss \&Ns
 .Ss \&Nx

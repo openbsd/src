@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.40 2010/06/30 20:29:44 schwarze Exp $ */
+/*	$Id: main.c,v 1.41 2010/07/01 15:36:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -109,6 +109,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown manual section",
 	"section not in conventional manual section",
 	"end of line whitespace",
+	"blocks badly nested",
 	"scope open on exit",
 
 	"generic error",
@@ -132,7 +133,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"bad comment style",
 	"unknown macro will be lost",
 	"line scope broken",
-	"scope broken",
 	"argument count wrong",
 	"request scope close w/none open",
 	"scope already open",
@@ -151,7 +151,8 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"missing font type",
 	"displays may not be nested",
 	"unsupported display type",
-	"no scope to rewind: syntax violated",
+	"blocks badly nested",
+	"no such block is open",
 	"scope broken, syntax violated",
 	"line scope broken, syntax violated",
 	"argument count wrong, violates syntax",
