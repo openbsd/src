@@ -1,0 +1,85 @@
+.\"	$OpenBSD: npppdctl.8,v 1.1 2010/07/01 03:55:23 yasuoka Exp $
+.\"
+.\"
+.Dd $Mdocdate: July 1 2010 $
+.Dt NPPPDCTL 8
+.Os
+.Sh NAME
+.Nm npppdctl
+.Nd control the npppd daemon
+.Sh SYNOPSIS
+.Nm npppdctl
+.Op Fl slnuh
+.Op Fl d Ar ppp_user
+.Op Fl r Ar rcvbuf_sz
+.Op Fl p Ar npppd_ctl_path
+.Nm npppdctl
+.Fl R 
+.Op Fl p Ar npppd_ctl_path
+.Sh DESCRIPTION
+The
+.Nm
+program controls the
+.Xr npppd 8
+daemon.
+.Pp
+If no options are specified,
+.Nm
+displays list of all users currently established, showing for each PPP user
+print the PPP user name, assigned IP address, the date and time the PPP
+started and the address which the user connected from.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl s
+Show I/O statistics instead of default display.  Print bytes, number of
+packets and number of errors for input and output.
+.It Fl l
+Use long line to display information.
+.It Fl n
+Don't convert addresses/ports to names.
+.It Fl u
+Show 'since' field as unix time.
+.It Fl d Ar ppp_user
+Disconnect the user specified by
+.Ar ppp_user
+.It Fl r Ar rcvbuf_sz
+Specify receive buffer size.
+.It Fl p Ar npppd_ctl_path
+Specify a path
+.Nm 's control socket.
+.It Fl R 
+Request to reset the routing table.
+.It Fl h
+Show usage.
+.El
+.Sh EXAMPLES
+Following is displayed in default.
+.Bd -literal -offset 0
+% npppdctl
+name             assigned         since         proto  from
+user35425        10.100.187.37    Jan 26 18:13  L2TP   h084n074.example.com:1701
+user31012        10.100.187.105   Jan 26 18:14  PPTP   h069n074.example.com:49194
+.Ed
+.Pp
+With
+.Fl s
+option, I/O statistics are shown.
+.Bd -literal -offset 0
+% npppdctl -s
+id       name                  in(Kbytes/pkts/errs)     out(Kbytes/pkts/errs)
+    708  user35425                 153.5    1500    37      334.1    1656     0
+    709  user31012                4993.0   47179     1    24303.3   64123     0
+.Ed
+.Pp
+With
+.Fl d
+option, disconnect the PPP that is specified by its user name.
+.Bd -literal -offset 0
+% npppdctl -d user31012
+Disconnected 1 ppp connections
+%
+.Ed
+.Sh SEE ALSO
+.Xr npppd 8
+.Xr npppd.conf 5
