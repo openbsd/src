@@ -83,6 +83,7 @@
 	.global _C_LABEL(acpi_real_mode_resume)
 	.global _C_LABEL(acpi_protected_mode_resume)
 	.global _C_LABEL(acpi_resume_end)
+	.global _C_LABEL(do_real_mode_post)
 _C_LABEL(acpi_real_mode_resume):
 	nop
 	cli
@@ -127,7 +128,8 @@ _C_LABEL(acpi_real_mode_resume):
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
-	jmp	nobiosreset	/* XXX make this a tunable */
+	cmpl	$0, do_real_mode_post_off
+	jz	nobiosreset
 	lcall	$0xc000,$3
 
 	/*
@@ -370,6 +372,11 @@ _ACPI_TRMP_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
 	.word	0
+
+	.align 4
+_C_LABEL(do_real_mode_post):
+_ACPI_TRMP_OFFSET(do_real_mode_post_off)
+	.long 0
 
 	.align 4
 _ACPI_TRMP_LABEL(acpi_saved_ebx)

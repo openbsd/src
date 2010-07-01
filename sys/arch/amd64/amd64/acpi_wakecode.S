@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.10 2010/02/22 19:44:11 kettenis Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.11 2010/07/01 01:02:31 pirofti Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -87,6 +87,7 @@
 	.global _C_LABEL(acpi_long_mode_resume)
 	.global _C_LABEL(acpi_resume_end)
 	.global _C_LABEL(acpi_pdirpa)
+	.global _C_LABEL(do_real_mode_post)
 _C_LABEL(acpi_real_mode_resume):
 	nop
 	cli
@@ -131,7 +132,8 @@ _C_LABEL(acpi_real_mode_resume):
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
-	jmp	nobiosreset	/* XXX make this a tunable */
+	cmp	$0, do_real_mode_post_off
+	jz	nobiosreset
 	lcall	$0xc000,$3
 
 	/*
@@ -439,6 +441,11 @@ _ACPI_TRMP_LABEL(tmp_gdtable64)
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
 _ACPI_TRMP_LABEL(tmp_gdt64_end)
+
+	.align 4
+_C_LABEL(do_real_mode_post):
+_ACPI_TRMP_OFFSET(do_real_mode_post_off)
+	.long	0
 
 	.align 8
 _ACPI_TRMP_LABEL(acpi_saved_rbx)

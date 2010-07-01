@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.46 2009/11/28 22:43:22 kettenis Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.47 2010/07/01 01:02:31 pirofti Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -137,6 +137,48 @@ struct cfattach vga_pci_ca = {
 	NULL, vga_pci_activate
 };
 
+#if defined (__i386__) || defined (__amd64__)
+int vga_pci_do_post;
+extern int do_real_mode_post;
+
+struct vga_device_description {
+	u_int16_t	rval[4];
+	u_int16_t	rmask[4];
+	char	vga_pci_post;
+	char	real_mode_post;
+};
+
+static const struct vga_device_description vga_devs[] = {
+	/*
+	 * Header description:
+	 *
+	 * First entry is a list of the pci video information in the following
+	 * order: VENDOR, PRODUCT, SUBVENDOR, SUBPRODUCT
+	 *
+	 * The next entry is a list of corresponding masks.
+	 *
+	 * Finally the last two values set what resume should do, repost with
+	 * vga_pci (i.e. the x86emulator) or with a locore call to the video
+	 * bios.
+	 */
+	{	/* Sony VGN-P530H */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,	
+	    	PCI_VENDOR_SONY, 0x9039 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
+	},
+	{	/* Thinkpad x200s */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD_1, 
+	    	0x17aa, 0x20e4 },	
+	    {	0xffff, 0xffff, 0xffff, 0xffff }, 0, 1
+	},
+	{
+		/* NULL */
+	    {	0,	0,	0,	0     },
+	    {	0,	0,	0,	0     }, 0, 0
+	}
+};
+#endif
+
 int
 vga_pci_match(struct device *parent, void *match, void *aux)
 {
@@ -171,6 +213,10 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 
+#if defined (__i386__) || defined (__amd64__)
+	int prod, vend, subid, subprod, subvend, i;
+#endif
+
 	/*
 	 * Enable bus master; X might need this for accelerated graphics.
 	 */
@@ -199,6 +245,26 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("couldn't set up vga POST handler\n");
 #endif
 
+#if defined (__i386__) || defined (__amd64__)
+	vend = PCI_VENDOR(pa->pa_id);
+	prod = PCI_PRODUCT(pa->pa_id);
+	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	subvend = PCI_VENDOR(subid);
+	subprod = PCI_PRODUCT(subid);
+
+	for (i = 0; vga_devs[i].rval[0] && vga_devs[i].rval[1] &&
+	    vga_devs[i].rval[2] && vga_devs[i].rval[3]; i++)
+		if ((vend & vga_devs[i].rmask[0]) == vga_devs[i].rval[0] &&
+		    (prod & vga_devs[i].rmask[1]) == vga_devs[i].rval[1] &&
+		    (subvend & vga_devs[i].rmask[2]) == vga_devs[i].rval[2] &&
+		    (subprod & vga_devs[i].rmask[3]) == vga_devs[i].rval[3]) {
+			vga_pci_do_post = vga_devs[i].vga_pci_post;
+			if (sc->sc_dev.dv_unit == 0)	/* main screen only */
+				do_real_mode_post = vga_devs[i].real_mode_post;
+			break;
+		}
+#endif
+
 #if NINTAGP > 0
 	/*
 	 * attach intagp here instead of pchb so it can share mappings
@@ -220,11 +286,19 @@ vga_pci_activate(struct device *self, int act)
 {
 	int rv = 0;
 
+#if defined (X86EMU) && (defined (__i386__) || defined (__amd64__))
+	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
+#endif
+
 	switch (act) {
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_RESUME:
+#if defined (X86EMU) && (defined (__i386__) || defined (__amd64__))
+		if (vga_pci_do_post)
+			vga_post_call(sc->sc_posth);
+#endif
 		rv = config_activate_children(self, act);
 		break;
 	}
