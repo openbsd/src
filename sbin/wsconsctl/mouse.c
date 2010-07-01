@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.9 2009/11/24 16:28:50 matthieu Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.10 2010/07/01 16:47:58 maja Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -35,6 +35,8 @@
 #include <dev/wscons/wsconsio.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include "wsconsctl.h"
 
 static int mstype;
@@ -128,4 +130,20 @@ mouse_put_values(const char *pre, int fd)
 	}
 
 	return 0;
+}
+
+int
+mouse_next_device(int *index)
+{
+	char devname[20];
+	int fd;
+
+	snprintf(devname, sizeof(devname), "/dev/wsmouse%d", *index);
+
+	if ((fd = open(devname, O_WRONLY)) < 0 &&
+	    (fd = open(devname, O_RDONLY)) < 0) {
+		if (errno != ENXIO)
+			*index = -1;
+	}
+	return(fd);
 }

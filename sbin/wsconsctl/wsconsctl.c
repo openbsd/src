@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.24 2009/07/19 15:34:45 martynas Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.25 2010/07/01 16:47:58 maja Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -38,10 +38,6 @@
 #include <unistd.h>
 #include "wsconsctl.h"
 
-#define PATH_KEYBOARD		"/dev/wskbd0"
-#define PATH_MOUSE		"/dev/wsmouse0"
-#define PATH_DISPLAY		"/dev/ttyC0"
-
 extern const char *__progname;		/* from crt0.o */
 
 extern struct field keyboard_field_tab[];
@@ -51,22 +47,22 @@ extern struct field display_field_tab[];
 void usage(char *);
 
 struct vartypesw {
-	const char *name, *file;
-	int fd;
+	const char *name;
 	struct field *field_tab;
 	void (*getval)(const char *pre, int);
 	int (*putval)(const char *pre, int);
+	int (*nextdev)(int *);
 } typesw[] = {
-	{ "keyboard", PATH_KEYBOARD, -1, keyboard_field_tab,
-	  keyboard_get_values, keyboard_put_values },
-	{ "mouse", PATH_MOUSE, -1, mouse_field_tab,
-	  mouse_get_values, mouse_put_values },
-	{ "display", PATH_DISPLAY, -1, display_field_tab,
-	  display_get_values, display_put_values },
+	{ "keyboard", keyboard_field_tab,
+	  keyboard_get_values, keyboard_put_values, keyboard_next_device },
+	{ "mouse", mouse_field_tab,
+	  mouse_get_values, mouse_put_values, mouse_next_device },
+	{ "display", display_field_tab,
+	  display_get_values, display_put_values, display_next_device },
 	{ NULL }
 };
 
-struct vartypesw *tab_by_name(const char *);
+struct vartypesw *tab_by_name(const char *, int *);
 
 void
 usage(char *msg)
@@ -87,11 +83,12 @@ usage(char *msg)
 int
 main(int argc, char *argv[])
 {
-	int i, ch, error = 0, aflag = 0, do_merge, putval;
+	int i, ch, error = 0, aflag = 0, do_merge, putval, devidx, devfd;
 	struct vartypesw *sw = NULL;
 	char *getsep = "=", *setsep = " -> ", *p;
 	char *wdev = NULL;
 	struct field *f;
+	char devname[20];
 
 	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
 		switch(ch) {
@@ -122,44 +119,102 @@ main(int argc, char *argv[])
 
 	if (aflag != 0) {
 		for (sw = typesw; sw->name; sw++) {
-			if (sw->fd < 0 &&
-			    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
-			    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
-				warn("%s", sw->file);
-				error = 1;
-				continue;
-			}
-			for (f = sw->field_tab; f->name; f++)
-				if ((f->flags & (FLG_NOAUTO|FLG_WRONLY)) == 0)
-					f->flags |= FLG_GET;
-			(*sw->getval)(sw->name, sw->fd);
-			for (f = sw->field_tab; f->name; f++)
-				if (f->flags & FLG_DEAD)
+			devidx = 0;
+			while (devidx >= 0) {
+				devfd = (*sw->nextdev)(&devidx);
+				if (devidx < 0)
 					continue;
-				else if (f->flags & FLG_NOAUTO)
-					warnx("Use explicit arg to view %s.%s.",
-					      sw->name, f->name);
-				else if (f->flags & FLG_GET)
-					pr_field(sw->name, f, getsep);
+
+				if (devidx == 0)
+					snprintf(devname,
+						 sizeof(devname),
+						 "%s",
+						 sw->name);
+				else
+					snprintf(devname,
+						 sizeof(devname),
+						 "%s%d",
+						 sw->name,
+						 devidx);
+				devidx++;
+
+				if (devfd < 0)
+					continue;
+
+				for (f = sw->field_tab; f->name; f++)
+					if ((f->flags & (FLG_NOAUTO|FLG_WRONLY)) == 0)
+						f->flags |= FLG_GET;
+				(*sw->getval)(devname, devfd);
+				for (f = sw->field_tab; f->name; f++)
+					if (f->flags & FLG_DEAD)
+						continue;
+					else if (f->flags & FLG_NOAUTO)
+						warnx("Use explicit arg to view %s.%s.",
+						      devname, f->name);
+					else if (f->flags & FLG_GET)
+						pr_field(devname, f, getsep);
+			}
 		}
 	} else if (argc > 0) {
 		for (i = 0; i < argc; i++) {
 			p = strchr(argv[i], '=');
 			if (p == NULL) {
-				sw = tab_by_name(argv[i]);
+				sw = tab_by_name(argv[i], &devidx);
 				if (!sw)
 					continue;
 
-				if (wdev != NULL)
-					sw->file = (const char *)wdev;
+				devfd = (*sw->nextdev)(&devidx);
+				if (devidx < 0) {
+					const char *c = strchr(argv[i], '.');
+					int k;
+					if (!c)
+						c = strchr(argv[i], '\0');
+					k = c - argv[i];
+					warnx("%*.*s: no such variable", k, k, argv[i]);
+					continue;
+				}
 
-				if (sw->fd < 0 &&
-				    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
-				    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
-					warn("open: %s", sw->file);
+				if (devidx == 0)
+					snprintf(devname,
+						 sizeof(devname),
+						 "%s",
+						 sw->name);
+				else
+					snprintf(devname,
+						 sizeof(devname),
+						 "%s%d",
+						 sw->name,
+						 devidx);
+
+				if (wdev != NULL &&
+				    (devfd = open(wdev, O_WRONLY)) < 0 &&
+				    (devfd = open(wdev, O_RDONLY)) < 0) {
+					warn("open: %s", wdev);
 					error = 1;
 					continue;
 				}
+
+				if (devfd < 0)
+					continue;
+
+				if (!strchr(argv[i],'.')) {
+
+					for (f = sw->field_tab; f->name; f++)
+						if ((f->flags & (FLG_NOAUTO|FLG_WRONLY)) == 0)
+							f->flags |= FLG_GET;
+					(*sw->getval)(devname, devfd);
+					for (f = sw->field_tab; f->name; f++)
+						if (f->flags & FLG_DEAD)
+							continue;
+						else if (f->flags & FLG_NOAUTO)
+							warnx("Use explicit arg to view %s.%s.",
+							      devname, f->name);
+						else if (f->flags & FLG_GET)
+							pr_field(devname, f, getsep);
+
+					continue;
+				}
+
 				f = field_by_name(sw->field_tab, argv[i]);
 				if (f->flags & FLG_DEAD)
 					continue;
@@ -168,10 +223,16 @@ main(int argc, char *argv[])
 					continue;
 				}
 				f->flags |= FLG_GET;
-				(*sw->getval)(sw->name, sw->fd);
+				(*sw->getval)(devname, devfd);
 				if (f->flags & FLG_DEAD)
 					continue;
-				pr_field(sw->name, f, getsep);
+				pr_field(devname, f, getsep);
+
+				continue;
+			}
+			if (!strchr(argv[i],'.') ||
+			    (strchr(argv[i],'.') > p)) {
+				warnx("%s: illegal variable name", argv[i]);
 				continue;
 			}
 			if (p > argv[i] &&
@@ -181,20 +242,45 @@ main(int argc, char *argv[])
 			} else
 				do_merge = 0;
 			*p++ = '\0';
-			sw = tab_by_name(argv[i]);
+
+			sw = tab_by_name(argv[i], &devidx);
 			if (!sw)
 				continue;
 
-			if (wdev != NULL)
-				sw->file = (const char *)wdev;
+			devfd = (*sw->nextdev)(&devidx);
+			if (devidx < 0) {
+				const char *c = strchr(argv[i], '.');
+				int k;
+				if (!c)
+					c = strchr(argv[i], '\0');
+				k = c - argv[i];
+				warnx("%*.*s: no such variable", k, k, argv[i]);
+				continue;
+			}
 
-			if (sw->fd < 0 &&
-			    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
-			    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
-				warn("open: %s", sw->file);
+			if (devidx == 0)
+				snprintf(devname,
+					 sizeof(devname),
+					 "%s",
+					 sw->name);
+			else
+				snprintf(devname,
+					 sizeof(devname),
+					 "%s%d",
+					 sw->name,
+					 devidx);
+
+			if (wdev != NULL &&
+			    (devfd = open(wdev, O_WRONLY)) < 0 &&
+			    (devfd = open(wdev, O_RDONLY)) < 0) {
+				warn("open: %s", wdev);
 				error = 1;
 				continue;
 			}
+
+			if (devfd < 0)
+				continue;
+
 			f = field_by_name(sw->field_tab, argv[i]);
 			if (f->flags & FLG_DEAD)
 				continue;
@@ -207,23 +293,23 @@ main(int argc, char *argv[])
 					errx(1, "%s: can only be set",
 					     argv[i]);
 				f->flags |= FLG_GET;
-				(*sw->getval)(sw->name, sw->fd);
+				(*sw->getval)(devname, devfd);
 				f->flags &= ~FLG_GET;
 			}
 			rd_field(f, p, do_merge);
 			f->flags |= FLG_SET;
-			putval = (*sw->putval)(sw->name, sw->fd);
+			putval = (*sw->putval)(devname, devfd);
 			f->flags &= ~FLG_SET;
 			if (putval != 0 || f->flags & (FLG_DEAD | FLG_NOAUTO))
 				continue;
 			if (f->flags & FLG_WRONLY) {
-				pr_field(sw->name, f, setsep);
+				pr_field(devname, f, setsep);
 			} else {
 				f->flags |= FLG_GET;
-				(*sw->getval)(sw->name, sw->fd);
+				(*sw->getval)(devname, devfd);
 				if (f->flags & FLG_DEAD)
 					continue;
-				pr_field(sw->name, f, setsep);
+				pr_field(devname, f, setsep);
 			}
 		}
 	} else
@@ -233,24 +319,46 @@ main(int argc, char *argv[])
 }
 
 struct vartypesw *
-tab_by_name(const char *var)
+tab_by_name(const char *var, int *idx)
 {
 	struct vartypesw *sw;
 	const char *p = strchr(var, '.');
-
-	if (!p) {
-		warnx("%s: illegal variable name", var);
-		return (NULL);
-	}
+	char *c;
+	int i;
 
 	for (sw = typesw; sw->name; sw++)
-		if (!strncmp(sw->name, var, p - var))
+		if (!strncmp(sw->name, var, strlen(sw->name)))
 			break;
 
+	if (!p)
+		p=strchr(var, '\0');
+
 	if (!sw->name) {
-		warnx("%s: no such variable", var);
+		i = p - var;
+		warnx("%*.*s: no such variable", i, i, var);
 		return (NULL);
 	}
+
+	if ((p - var) > strlen(sw->name)) {
+		c = (char *)var;
+		c = c + strlen(sw->name);
+		i = 0;
+		while (c < p) {
+			if (*c >= '0' && *c <= '9')
+				i=i*10 + *c - '0';
+			else
+				i=-1;
+			c++;
+		}
+		if (i < 0 || i > 32) {
+			i = p - var;
+			warnx("%*.*s: no such variable", i, i, var);
+			return(NULL);
+		}
+	} else
+		i = 0;
+	
+	*idx = i;
 
 	return (sw);
 }

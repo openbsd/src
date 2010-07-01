@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.8 2010/06/28 20:40:39 maja Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.9 2010/07/01 16:47:58 maja Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -35,6 +35,9 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsconsio.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include "wsconsctl.h"
 
 static int kbtype;
@@ -202,4 +205,20 @@ keyboard_put_values(const char *pre, int fd)
 	}
 
 	return 0;
+}
+
+int
+keyboard_next_device(int *index)
+{
+	char devname[20];
+	int fd;
+
+	snprintf(devname, sizeof(devname), "/dev/wskbd%d", *index);
+
+	if ((fd = open(devname, O_WRONLY)) < 0 &&
+	    (fd = open(devname, O_RDONLY)) < 0) {
+		if (errno != ENXIO)
+			*index = -1;
+	}
+	return(fd);
 }
