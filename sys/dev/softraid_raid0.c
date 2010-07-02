@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.21 2010/07/01 19:31:04 thib Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.22 2010/07/02 09:20:26 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -300,7 +300,8 @@ sr_raid0_rw(struct sr_workunit *wu)
 	chunk = strip_no % no_chunk;
 	stripoffs = lbaoffs & (strip_size - 1);
 	chunkoffs = (strip_no / no_chunk) << strip_bits;
-	physoffs = chunkoffs + stripoffs + (SR_DATA_OFFSET << DEV_BSHIFT);
+	physoffs = chunkoffs + stripoffs +
+	    (sd->sd_meta->ssd_data_offset << DEV_BSHIFT);
 	length = MIN(xs->datalen, strip_size - stripoffs);
 	leftover = xs->datalen;
 	data = xs->data;

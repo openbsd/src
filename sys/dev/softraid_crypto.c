@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.52 2010/05/18 04:41:14 dlg Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.53 2010/07/02 09:20:26 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1165,7 +1165,7 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 	if (sr_validate_io(wu, &blk, "sr_crypto_rw2"))
 		goto bad;
 
-	blk += SR_DATA_OFFSET;
+	blk += sd->sd_meta->ssd_data_offset;
 
 	wu->swu_io_count = 1;
 

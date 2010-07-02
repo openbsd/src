@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.207 2010/06/28 18:31:01 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.208 2010/07/02 09:20:26 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -538,6 +538,7 @@ sr_meta_init(struct sr_discipline *sd, struct sr_chunk_head *cl)
 	sm->ssdi.ssd_version = SR_META_VERSION;
 	sm->ssd_ondisk = 0;
 	sm->ssdi.ssd_flags = sd->sd_meta_flags;
+	sm->ssd_data_offset = SR_DATA_OFFSET;
 
 	/* get uuid from chunk 0 */
 	bcopy(&sd->sd_vol.sv_chunks[0]->src_meta.scmi.scm_uuid,
@@ -815,20 +816,43 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 		goto done;
 	}
 
-	if (sm->ssdi.ssd_version != SR_META_VERSION) {
-		printf("%s: %s can not read metadata version %u, expected %u\n",
-		    DEVNAME(sc), devname, sm->ssdi.ssd_version,
-		    SR_META_VERSION);
-		goto done;
-	}
-
+	/* Verify metadata checksum. */
 	sr_checksum(sc, sm, &checksum, sizeof(struct sr_meta_invariant));
 	if (bcmp(&checksum, &sm->ssd_checksum, sizeof(checksum))) {
 		printf("%s: invalid metadata checksum\n", DEVNAME(sc));
 		goto done;
 	}
 
-	/* XXX do other checksums */
+	/* Handle changes between versions. */
+	if (sm->ssdi.ssd_version == 3) {
+
+		/*
+		 * Version 3 - update metadata version and fix up data offset
+		 * value since this did not exist in version 3.
+		 */
+		sm->ssdi.ssd_version = SR_META_VERSION;
+		snprintf(sm->ssdi.ssd_revision, sizeof(sm->ssdi.ssd_revision),
+		    "%03d", SR_META_VERSION);
+		if (sm->ssd_data_offset == 0)
+			sm->ssd_data_offset = SR_META_V3_DATA_OFFSET;
+
+	} else if (sm->ssdi.ssd_version == SR_META_VERSION) {
+
+		/* 
+		 * Version 4 - original metadata format did not store
+		 * data offset so fix this up if necessary.
+		 */
+		if (sm->ssd_data_offset == 0)
+			sm->ssd_data_offset = SR_DATA_OFFSET;
+
+	} else {
+
+		printf("%s: %s can not read metadata version %u, expected %u\n",
+		    DEVNAME(sc), devname, sm->ssdi.ssd_version,
+		    SR_META_VERSION);
+		goto done;
+
+	}
 
 #ifdef SR_DEBUG
 	/* warn if disk changed order */
@@ -3717,6 +3741,9 @@ sr_validate_io(struct sr_workunit *wu, daddr64_t *blk, char *func)
 
 	DNPRINTF(SR_D_DIS, "%s: %s 0x%02x\n", DEVNAME(sd->sd_sc), func,
 	    xs->cmd->opcode);
+
+	if (sd->sd_meta->ssd_data_offset == 0)
+		panic("invalid data offset");
 
 	if (sd->sd_vol_status == BIOC_SVOFFLINE) {
 		DNPRINTF(SR_D_DIS, "%s: %s device offline\n",

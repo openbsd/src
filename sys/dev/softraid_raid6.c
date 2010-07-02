@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.17 2010/07/01 19:31:04 thib Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.18 2010/07/02 09:20:26 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -491,7 +491,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 		strip_offs = lbaoffs & (strip_size - 1);
 		chunk_offs = (strip_no / no_chunk) << strip_bits;
 		phys_offs = chunk_offs + strip_offs +
-		    (SR_DATA_OFFSET << DEV_BSHIFT);
+		    (sd->sd_meta->ssd_data_offset << DEV_BSHIFT);
 
 		/* get size remaining in this stripe */
 		length = MIN(strip_size - strip_offs, datalen);
