@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.128 2010/06/29 21:28:11 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.129 2010/07/02 04:14:19 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -204,8 +204,8 @@ cpu_startup()
 	 * map, but we want one completely separate, even though it uses
 	 * the same pmap.
 	 */
-	dvma_base = CPU_ISSUN4DOR4M ? DVMA4M_BASE : DVMA_BASE;
-	dvma_end = CPU_ISSUN4DOR4M ? DVMA4M_END : DVMA_END;
+	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
+	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
 	dvmamap_extent = extent_create("dvmamap", dvma_base, dvma_end,
 				       M_DEVBUF, NULL, 0, EX_NOWAIT);
 	if (dvmamap_extent == NULL)
