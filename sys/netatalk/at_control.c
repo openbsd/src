@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.15 2010/01/13 02:13:12 henning Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.16 2010/07/02 05:45:25 blambert Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -399,7 +399,7 @@ at_ifinit( ifp, aa, sat )
 		aa->aa_probcnt = 10;
 		timeout_set(&aarpprobe_timeout, aarpprobe, ifp);
 		/* XXX don't use hz so badly */
-		timeout_add(&aarpprobe_timeout, hz / 5);
+		timeout_add_msec(&aarpprobe_timeout, 200);
 		if ( tsleep( aa, PPAUSE|PCATCH, "at_ifinit", 0 )) {
 		    printf( "at_ifinit why did this happen?!\n" );
 		    aa->aa_addr = oldaddr;

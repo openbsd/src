@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.9 2009/11/13 15:07:23 claudio Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.10 2010/07/02 05:45:25 blambert Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -635,7 +635,7 @@ aarpprobe( arg )
 	return;
     } else {
 	timeout_set(&aarpprobe_timeout, aarpprobe, ac);
-	timeout_add(&aarpprobe_timeout, hz / 5);
+	timeout_add_msec(&aarpprobe_timeout, 200);
     }
 
     if (( m = m_gethdr( M_DONTWAIT, MT_DATA )) == NULL ) {
