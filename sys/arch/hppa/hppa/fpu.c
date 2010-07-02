@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.3 2010/07/02 04:51:13 jsing Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.4 2010/07/02 05:04:33 jsing Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -64,6 +64,11 @@ fpu_proc(struct proc *p, int save)
 		if (hppa_ipi_send(fpuci, HPPA_IPI_FPU_SAVE))
 			panic("FPU shootdown failed!\n");
 
+		/*
+		 * The sync is essential here since the volatile on hfp_cpu
+		 * is ignored by gcc. Without this we will deadlock since
+		 * hfp_cpu is never reloaded within the loop.
+		 */
 		while (hfp->hfp_cpu != NULL)
 			asm volatile ("sync" ::: "memory");
 
