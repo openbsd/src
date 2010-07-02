@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.64 2010/06/30 09:17:04 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.65 2010/07/02 02:33:57 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -494,11 +494,12 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	return;
 out:
 
-	if (isc->gatt)
+	if (isc->gatt) {
 		if (isc->gatt->ag_size != 0)
-			agp_free_dmamem(pa->pa_dmat, gatt->ag_size,
-			    gatt->ag_dmamap, &gatt->ag_dmaseg);
+			agp_free_dmamem(pa->pa_dmat, isc->gatt->ag_size,
+			    isc->gatt->ag_dmamap, &isc->gatt->ag_dmaseg);
 		free(isc->gatt, M_AGP);
+	}
 	if (isc->gtt_map != NULL)
 		vga_pci_bar_unmap(isc->gtt_map);
 	if (isc->map != NULL)
