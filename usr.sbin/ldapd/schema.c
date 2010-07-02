@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.6 2010/07/01 18:37:12 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.7 2010/07/02 00:42:50 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -604,6 +604,7 @@ schema_parse_attrlist(struct schema *schema)
 			goto fail;
 		}
 		alist = push_attr(alist, attr);
+		free(kw);
 		want_dollar = 1;
 	}
 
@@ -720,6 +721,7 @@ schema_parse_attributetype(struct schema *schema)
 				schema_err(schema, "%s: no such attribute", arg);
 				goto fail;
 			}
+			free(arg);
 		} else if (strcasecmp(kw, "EQUALITY") == 0) {
 			if (schema_lex(schema, &attr->equality) != STRING)
 				goto fail;
@@ -760,6 +762,7 @@ schema_parse_attributetype(struct schema *schema)
 				schema_err(schema, "invalid usage '%s'", arg);
 				goto fail;
 			}
+			free(arg);
 		} else if (strncmp(kw, "X-", 2) == 0) {
 			/* unknown extension, eat argument(s) */
 			xnames = schema_parse_names(schema);
