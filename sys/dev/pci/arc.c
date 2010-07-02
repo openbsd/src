@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.87 2010/07/01 03:20:38 matthew Exp $ */
+/*	$OpenBSD: arc.c,v 1.88 2010/07/02 20:52:14 mk Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/device.h>
 #include <sys/rwlock.h>
 
@@ -375,6 +376,7 @@ struct arc_softc {
 	struct arc_dmamem	*sc_requests;
 	struct arc_ccb		*sc_ccbs;
 	struct arc_ccb_list	sc_ccb_free;
+	struct mutex		sc_ccb_mtx;
 
 	struct scsibus_softc	*sc_scsibus;
 
@@ -723,9 +725,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	s = splbio();
 	ccb = arc_get_ccb(sc);
-	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
@@ -736,10 +736,8 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 
 	if (arc_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		arc_put_ccb(sc, ccb);
 		scsi_done(xs);
-		splx(s);
 		return;
 	}
 
@@ -1900,6 +1898,7 @@ arc_alloc_ccbs(struct arc_softc *sc)
 	int				i;
 
 	SLIST_INIT(&sc->sc_ccb_free);
+	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 
 	sc->sc_ccbs = malloc(sizeof(struct arc_ccb) * sc->sc_req_count,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
@@ -1951,9 +1950,11 @@ arc_get_ccb(struct arc_softc *sc)
 {
 	struct arc_ccb			*ccb;
 
+	mtx_enter(&sc->sc_ccb_mtx);
 	ccb = SLIST_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL)
 		SLIST_REMOVE_HEAD(&sc->sc_ccb_free, ccb_link);
+	mtx_leave(&sc->sc_ccb_mtx);
 
 	return (ccb);
 }
@@ -1963,5 +1964,7 @@ arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
 	ccb->ccb_xs = NULL;
 	bzero(ccb->ccb_cmd, ARC_MAX_IOCMDLEN);
+	mtx_enter(&sc->sc_ccb_mtx);
 	SLIST_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_link);
+	mtx_leave(&sc->sc_ccb_mtx);
 }
