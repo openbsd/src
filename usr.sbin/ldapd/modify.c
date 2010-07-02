@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.8 2010/07/02 01:44:45 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.9 2010/07/02 02:42:02 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -136,14 +136,19 @@ ldap_add(struct request *req)
 		attr = elm->be_sub;
 		if (attr == NULL || ber_get_string(attr, &s) != 0)
 			return ldap_respond(req, LDAP_PROTOCOL_ERROR);
-		at = lookup_attribute(conf->schema, s);
-		if (at == NULL) {
-			log_debug("unknown attribute type %s", s);
-			return ldap_respond(req, LDAP_NO_SUCH_ATTRIBUTE);
-		}
-		if (at->immutable) {
-			log_debug("attempt to add immutable attribute %s", s);
-			return ldap_respond(req, LDAP_CONSTRAINT_VIOLATION);
+		if (!ns->relax) {
+			at = lookup_attribute(conf->schema, s);
+			if (at == NULL) {
+				log_debug("unknown attribute type %s", s);
+				return ldap_respond(req,
+				    LDAP_NO_SUCH_ATTRIBUTE);
+			}
+			if (at->immutable) {
+				log_debug("attempt to add immutable"
+				    " attribute %s", s);
+				return ldap_respond(req,
+				    LDAP_CONSTRAINT_VIOLATION);
+			}
 		}
 	}
 
@@ -254,17 +259,19 @@ ldap_modify(struct request *req)
 			goto done;
 		}
 
-		if ((at = lookup_attribute(conf->schema, attr)) == NULL &&
-		    !ns->relax) {
-			log_debug("unknown attribute type %s", attr);
-			rc = LDAP_NO_SUCH_ATTRIBUTE;
-			goto done;
-		}
-		if (at != NULL && at->immutable) {
-			log_debug("attempt to modify immutable attribute %s",
-			    attr);
-			rc = LDAP_CONSTRAINT_VIOLATION;
-			goto done;
+		if (!ns->relax) {
+			at = lookup_attribute(conf->schema, attr);
+			if (at == NULL) {
+				log_debug("unknown attribute type %s", attr);
+				rc = LDAP_NO_SUCH_ATTRIBUTE;
+				goto done;
+			}
+			if (at->immutable) {
+				log_debug("attempt to modify immutable"
+				    " attribute %s", attr);
+				rc = LDAP_CONSTRAINT_VIOLATION;
+				goto done;
+			}
 		}
 
 		a = ldap_get_attribute(entry, attr);
