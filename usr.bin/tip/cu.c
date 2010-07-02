@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.34 2010/07/01 21:47:09 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.35 2010/07/02 05:52:48 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -153,15 +153,7 @@ getopt:
 	 * attributes of the generic dialer.
 	 */
 	(void)snprintf(sbuf, sizeof(sbuf), "cu%d", vgetnum(BAUDRATE));
-	if ((i = hunt(sbuf)) == 0) {
-		printf("all ports busy\n");
-		exit(3);
-	}
-	if (i == -1) {
-		printf("link down\n");
-		(void)uu_unlock(uucplock);
-		exit(3);
-	}
+	FD = hunt(sbuf);
 	setbuf(stdout, NULL);
 	loginit();
 	vinit();

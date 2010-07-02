@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.49 2010/07/01 21:47:09 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.50 2010/07/02 05:52:48 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -104,15 +104,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGTERM, cleanup);
 	(void)signal(SIGCHLD, SIG_DFL);
 
-	if ((i = hunt(sys)) == 0) {
-		printf("all ports busy\n");
-		exit(3);
-	}
-	if (i == -1) {
-		printf("link down\n");
-		(void)uu_unlock(uucplock);
-		exit(3);
-	}
+	FD = hunt(sys);
 	setbuf(stdout, NULL);
 	loginit();
 	vinit();				/* init variables */

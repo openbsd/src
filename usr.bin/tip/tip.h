@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.49 2010/07/01 21:43:38 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.50 2010/07/02 05:52:48 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ void	 variable(int);
 void	 cumain(int, char **);
 
 /* hunt.c */
-long	 hunt(char *);
+int	 hunt(char *);
 
 /* log.c */
 void	 logent(char *, char *, char *);

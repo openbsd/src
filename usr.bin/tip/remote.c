@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.28 2010/07/01 23:41:42 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.29 2010/07/02 05:52:48 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -43,8 +43,8 @@ static char	*db_array[3] = { _PATH_REMOTE, 0, 0 };
 
 static void	getremcap(char *);
 
-static void
-getremcap(char *host)
+char *
+getremote(char *host)
 {
 	char   *bp, *rempath, *strval;
 	int	stat;
@@ -64,11 +64,13 @@ getremcap(char *host)
 	if ((stat = cgetent(&bp, db_array, host)) < 0) {
 		if (vgetstr(DEVICE) != NULL ||
 		    (host[0] == '/' && access(host, R_OK | W_OK) == 0)) {
+			if (vgetstr(DEVICE) == NULL)
+				vsetstr(DEVICE, host);
 			vsetstr(HOST, host);
 			if (!vgetnum(BAUDRATE))
 				vsetnum(BAUDRATE, DEFBR);
 			vsetnum(FRAMESIZE, DEFFS);
-			return;
+			return (vgetstr(DEVICE));
 		}
 		switch (stat) {
 		case -1:
@@ -193,37 +195,6 @@ getremcap(char *host)
 		vsetnum(ETIMEOUT, 0);
 	else
 		vsetnum(ETIMEOUT, val);
-}
 
-char *
-getremote(char *host)
-{
-	char *cp;
-	static char *next;
-	static int lookedup = 0;
-
-	if (!lookedup) {
-		if (host == NULL && (host = getenv("HOST")) == NULL) {
-			fprintf(stderr, "%s: no host specified\n", __progname);
-			exit(3);
-		}
-		getremcap(host);
-		next = vgetstr(DEVICE);
-		lookedup++;
-	}
-	/*
-	 * We return a new device each time we're called (to allow
-	 *   a rotary action to be simulated)
-	 */
-	if (next == NULL)
-		return (NULL);
-	if ((cp = strchr(next, ',')) == NULL) {
-		vsetstr(DEVICE, next);
-		next = NULL;
-	} else {
-		*cp++ = '\0';
-		vsetstr(DEVICE, next);
-		next = cp;
-	}
 	return (vgetstr(DEVICE));
 }
