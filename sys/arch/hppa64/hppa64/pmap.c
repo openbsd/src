@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2010/07/01 04:18:36 jsing Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2010/07/02 22:47:54 jsing Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -572,7 +572,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 	vm_physmem[0].end -= npg;
 	vm_physmem[0].avail_end -= npg;
-	va = ptoa(vm_physmem[0].avail_end) - size;
+	va = ptoa(vm_physmem[0].avail_end);
 	bzero((void *)va, size);
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_steal_memory: 0x%lx\n", va));
