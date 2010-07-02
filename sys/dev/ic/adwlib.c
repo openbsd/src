@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.21 2008/06/26 05:42:15 ray Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.22 2010/07/02 03:24:50 tedu Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -1023,15 +1023,15 @@ AdwLoadMCode(iot, ioh, bios_mem, chip_type)
 	u_int16_t *bios_mem;
 	u_int8_t chip_type;
 {
-	u_int8_t	*mcode_data;
-	u_int32_t	 mcode_chksum;
-	u_int16_t	 mcode_size;
+	u_int8_t	*mcode_data = NULL;
+	u_int32_t	 mcode_chksum = 0;
+	u_int16_t	 mcode_size = 0;
 	u_int32_t	sum;
 	u_int16_t	code_sum;
 	int		begin_addr;
 	int		end_addr;
 	int		word;
-	int		adw_memsize;
+	int		adw_memsize = 0;
 	int		adw_mcode_expanded_size;
 	int		i, j;
 
@@ -1895,7 +1895,7 @@ ADW_SOFTC	*sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int		status;
-	u_int16_t	wdtr_able, sdtr_able, ppr_able, tagqng_able;
+	u_int16_t	wdtr_able, sdtr_able, ppr_able = 0, tagqng_able;
 	u_int8_t	tid, max_cmd[ADW_MAX_TID + 1];
 	u_int16_t	bios_sig;
 
