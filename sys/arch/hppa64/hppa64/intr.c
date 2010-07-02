@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.1 2010/07/01 03:44:35 jsing Exp $	*/
+/*	$OpenBSD: intr.c,v 1.2 2010/07/02 23:24:21 jsing Exp $	*/
 
 /*
  * Copyright (c) Joel Sing <jsing@openbsd.org>
@@ -25,7 +25,7 @@ volatile u_long imask;
 void *
 softintr_establish(int pri, void (*handler)(void *), void *arg)
 {
-	return NULL;
+	return (void *)1;
 }
 
 void
