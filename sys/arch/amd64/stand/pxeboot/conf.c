@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2008/04/19 23:20:22 weingart Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2010/07/02 00:36:52 weingart Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -44,7 +44,7 @@
 #include "pxeboot.h"
 #include "pxe_net.h"
 
-const char version[] = "2.02";
+const char version[] = "3.14";
 int	debug = 0;
 
 #undef _TEST

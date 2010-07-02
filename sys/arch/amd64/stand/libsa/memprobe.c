@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.6 2009/11/30 16:33:20 canacar Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.7 2010/07/02 00:36:52 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -387,6 +387,28 @@ dump_biosmem(bios_memmap_t *tm)
 
 	printf("Low ram: %dKB  High ram: %dKB\n", cnvmem, extmem);
 	printf("Total free memory: %uKB\n", total);
+}
+
+int
+mem_limit(long long ml)
+{
+	register bios_memmap_t *p;
+
+	for (p = bios_memmap; p->type != BIOS_MAP_END; p++) {
+		register int64_t sp = p->addr, ep = p->addr + p->size;
+
+		if (p->type != BIOS_MAP_FREE)
+			continue;
+
+		/* Wholy above limit, nuke it */
+		if ((sp >= ml) && (ep >= ml)) {
+			bcopy (p + 1, p, (char *)bios_memmap +
+			       sizeof(bios_memmap) - (char *)p);
+		} else if ((sp < ml) && (ep >= ml)) {
+			p->size -= (ep - ml);
+		}
+	}
+	return 0;
 }
 
 int

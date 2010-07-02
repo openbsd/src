@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.29 2006/09/18 21:14:15 mpf Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.30 2010/07/02 00:36:52 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -155,11 +155,32 @@ Xmemory(void)
 			p = cmd.argv[i];
 
 			size = strtoll(p + 1, &p, 0);
-			if (*p && *p == '@')
-				addr = strtoll(p + 1, NULL, 0);
-			else
-				addr = 0;
-			if (addr == 0 && (*p != '@' || size == 0)) {
+			/* Size the size */
+			switch(*p) {
+				case 'G':
+					size *= 1024;
+				case 'M':
+					size *= 1024;
+				case 'K':
+					size *= 1024;
+					p++;
+			}
+
+			/* Handle (possibly non-existant) address part */
+			switch(*p) {
+				case '@':
+					addr = strtoll(p + 1, NULL, 0);
+					break;
+
+				/* Adjust address if we don't need it */
+				default:
+					if (cmd.argv[i][0] == '=')
+						addr = -1;
+					else
+						addr = 0;
+			}
+
+			if (addr == 0 || size == 0) {
 				printf("bad language\n");
 				return 0;
 			} else {
@@ -169,6 +190,9 @@ Xmemory(void)
 					break;
 				case '+':
 					mem_add(addr, addr + size);
+					break;
+				case '=':
+					mem_limit(size);
 					break;
 				default :
 					printf("bad OP\n");
