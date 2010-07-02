@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.122 2010/07/01 02:09:45 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.123 2010/07/02 00:20:49 jsg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -148,7 +148,6 @@ struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
 
 int	rtable_init(struct radix_node_head ***, u_int);
-int	okaytoclone(u_int, int);
 int	rtflushclone1(struct radix_node *, void *, u_int);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
 int	rt_if_remove_rtdelete(struct radix_node *, void *, u_int);
