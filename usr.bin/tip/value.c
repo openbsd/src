@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.30 2010/07/02 07:40:03 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.31 2010/07/02 07:55:00 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -78,14 +78,11 @@ value_t vtable[] = {
 	{ NULL,           0,	                NULL,    NULL, 0 },
 };
 
-#define MIDDLE	35
-
 static int	vlookup(char *);
 static void	vtoken(char *);
-static void	vprint(value_t *);
+static size_t	vprint(value_t *);
+static void	vprintall(void);
 static char    *vinterp(char *, int);
-
-static size_t col = 0;
 
 /* Get a string value. */
 char *
@@ -148,6 +145,73 @@ vsetnum(int value, int number)
 		errx(1, "variable %s not a number", vp->v_name);
 
 	vp->v_number = number;
+}
+
+/* Print a single variable and its value. */
+static size_t
+vprint(value_t *p)
+{
+	char	*cp;
+	size_t	 width;
+
+	width = size(p->v_name);
+	switch (p->v_flags & V_TYPEMASK) {
+	case V_BOOL:
+		if (!p->v_number) {
+			width++;
+			putchar('!');
+		}
+		printf("%s", p->v_name);
+		break;
+	case V_STRING:
+		printf("%s=", p->v_name);
+		width++;
+		if (p->v_string) {
+			cp = interp(p->v_string);
+			width += size(cp);
+			printf("%s", cp);
+		}
+		break;
+	case V_NUMBER:
+		width += 6;
+		printf("%s=%-5d", p->v_name, p->v_number);
+		break;
+	case V_CHAR:
+		printf("%s=", p->v_name);
+		width++;
+		if (p->v_number) {
+			cp = ctrl(p->v_number);
+			width += size(cp);
+			printf("%s", cp);
+		}
+		break;
+	}
+	return (width);
+}
+
+/* Print all variables. */
+static void
+vprintall(void)
+{
+	value_t	*vp;
+	size_t	 width;
+
+#define MIDDLE 35
+	width = 0;
+	for (vp = vtable; vp->v_name; vp++) {
+		if (vp->v_flags & V_READONLY)
+			continue;
+		if (width > 0 && width < MIDDLE) {
+			while (width++ < MIDDLE)
+				putchar(' ');
+		}
+		width += vprint(vp);
+		if (width > MIDDLE) {
+			printf("\r\n");
+			width = 0;
+		}
+	}
+#undef MIDDLE
 }
 
 /* Find index of variable by name or abbreviation. */
@@ -230,20 +294,15 @@ vlex(char *s)
 	value_t *p;
 	char *cp;
 
-	if (strcmp(s, "all") == 0) {
-		for (p = vtable; p->v_name; p++)
-			vprint(p);
-	} else {
+	if (strcmp(s, "all") == 0)
+		vprintall();
+	else {
 		do {
 			if ((cp = vinterp(s, ' ')))
 				cp++;
 			vtoken(s);
 			s = cp;
 		} while (s);
-	}
-	if (col > 0) {
-		printf("\r\n");
-		col = 0;
 	}
 }
 
@@ -293,7 +352,8 @@ vtoken(char *s)
 	} else if ((cp = strchr(s, '?'))) {
 		*cp = '\0';
 		if ((i = vlookup(s)) != -1) {
-			vprint(&vtable[i]);
+			if (vprint(&vtable[i]) > 0)
+				printf("\r\n");
 			return;
 		}
 	} else {
@@ -317,57 +377,6 @@ vtoken(char *s)
 		}
 	}
 	printf("%s: unknown variable\r\n", s);
-}
-
-static void
-vprint(value_t *p)
-{
-	char *cp;
-
-	if (col > 0 && col < MIDDLE)
-		while (col++ < MIDDLE)
-			putchar(' ');
-	col += size(p->v_name);
-	switch (p->v_flags & V_TYPEMASK) {
-
-	case V_BOOL:
-		if (!p->v_number) {
-			col++;
-			putchar('!');
-		}
-		printf("%s", p->v_name);
-		break;
-
-	case V_STRING:
-		printf("%s=", p->v_name);
-		col++;
-		if (p->v_string) {
-			cp = interp(p->v_string);
-			col += size(cp);
-			printf("%s", cp);
-		}
-		break;
-
-	case V_NUMBER:
-		col += 6;
-		printf("%s=%-5d", p->v_name, p->v_number);
-		break;
-
-	case V_CHAR:
-		printf("%s=", p->v_name);
-		col++;
-		if (p->v_number) {
-			cp = ctrl(p->v_number);
-			col += size(cp);
-			printf("%s", cp);
-		}
-		break;
-	}
-	if (col >= MIDDLE) {
-		col = 0;
-		printf("\r\n");
-		return;
-	}
 }
 
 static char *
