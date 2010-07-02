@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.22 2008/05/11 22:21:25 millert Exp $	*/
+/*	$OpenBSD: hash.c,v 1.23 2010/07/02 16:46:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -62,7 +62,7 @@ static void *hash_realloc(SEGMENT **, int, int);
 static int   hash_seq(const DB *, DBT *, DBT *, u_int32_t);
 static int   hash_sync(const DB *, u_int32_t);
 static int   hdestroy(HTAB *);
-static HTAB *init_hash(HTAB *, const char *, HASHINFO *);
+static HTAB *init_hash(HTAB *, const char *, const HASHINFO *);
 static int   init_htab(HTAB *, int);
 #if BYTE_ORDER == LITTLE_ENDIAN
 static void  swap_header(HTAB *);
@@ -124,7 +124,7 @@ __hash_open(const char *file, int flags, int mode,
 		new_table = 1;
 
 	if (new_table) {
-		if (!(hashp = init_hash(hashp, file, (HASHINFO *)info)))
+		if (!(hashp = init_hash(hashp, file, info)))
 			RETURN_ERROR(errno, error1);
 	} else {
 		/* Table already exists */
@@ -264,7 +264,7 @@ hash_fd(const DB *dbp)
 
 /************************** LOCAL CREATION ROUTINES **********************/
 static HTAB *
-init_hash(HTAB *hashp, const char *file, HASHINFO *info)
+init_hash(HTAB *hashp, const char *file, const HASHINFO *info)
 {
 	struct stat statbuf;
 	int nelem;
