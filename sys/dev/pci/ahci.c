@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.166 2010/06/29 18:57:53 kettenis Exp $ */
+/*	$OpenBSD: ahci.c,v 1.167 2010/07/02 05:20:17 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -455,6 +455,12 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP77_AHCI_6,
 	    NULL,		ahci_nvidia_mcp_attach },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_1,
+	    NULL,		ahci_nvidia_mcp_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_2,
+	    NULL,		ahci_nvidia_mcp_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_3,
+	    NULL,		ahci_nvidia_mcp_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP79_AHCI_4,
 	    NULL,		ahci_nvidia_mcp_attach },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
