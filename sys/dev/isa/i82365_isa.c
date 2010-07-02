@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.20 2005/03/25 16:41:18 mickey Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.21 2010/07/02 04:23:15 blambert Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ pcic_isa_attach(parent, self, aux)
 	printf("polling enabled\n");
 	if (sc->poll_established == 0) {
 		timeout_set(&sc->poll_timeout, pcic_poll_intr, sc);
-		timeout_add(&sc->poll_timeout, hz / 2);
+		timeout_add_msec(&sc->poll_timeout, 500);
 		sc->poll_established = 1;
 	}
 }
