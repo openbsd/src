@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_defs.h,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -38,7 +40,7 @@
 #define NPPPD_MAX_SERVERS			8
 #endif
 
-#ifndef	NPPPD_TIMER_TICK_IVAL 
+#ifndef	NPPPD_TIMER_TICK_IVAL
 #define	NPPPD_TIMER_TICK_IVAL 			4
 #endif
 
@@ -78,7 +80,7 @@
 #endif
 
 #define	NPPPD_UID			-1	/* not specified */
-#ifndef	NPPPD_GID			
+#ifndef	NPPPD_GID
 /** group id when npppd is working */
 #define	NPPPD_GID			0
 #endif

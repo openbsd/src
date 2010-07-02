@@ -56,7 +56,7 @@ dump(slist *l)
 {
 	int i;
 
-	fprintf(stderr, 
+	fprintf(stderr,
 	    "\tl->itr_curr = %d\n"
 	    "\tl->itr_next = %d\n"
 	    "\tl->first_idx = %d\n"
@@ -455,7 +455,7 @@ test_09()
 							/* reaches the last */
 	slist_add(l, (void *)4);			/* add a new item */
 	ASSERT(slist_itr_has_next(l));			/* iterates the new */
-	ASSERT((int)slist_itr_next(l) == 4);		
+	ASSERT((int)slist_itr_next(l) == 4);
 	slist_fini(l);
 
 

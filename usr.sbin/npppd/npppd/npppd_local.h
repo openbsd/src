@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_local.h,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +28,7 @@
 #ifndef	_NPPPD_LOCAL_H
 #define	_NPPPD_LOCAL_H	1
 
-#ifndef	NPPPD_BUFSZ	
+#ifndef	NPPPD_BUFSZ
 /** buffer size */
 #define	NPPPD_BUFSZ			BUFSZ
 #endif

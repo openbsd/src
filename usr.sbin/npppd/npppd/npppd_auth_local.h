@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_auth_local.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -118,6 +120,6 @@ static int                npppd_auth_config_str_equal (npppd_auth_base *, const 
 #define NPPPD_AUTH_DBG(x) 	npppd_auth_base_log x
 #define NPPPD_AUTH_ASSERT(x)	ASSERT(x)
 #else
-#define NPPPD_AUTH_DBG(x) 
+#define NPPPD_AUTH_DBG(x)
 #define NPPPD_AUTH_ASSERT(x)
 #endif

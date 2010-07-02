@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_ctl.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -28,7 +30,7 @@
  * This file provides to open UNIX domain socket which located in
  * /var/run/npppd_ctl and accept commmands from the npppdctl command.
  */
-/* $Id: npppd_ctl.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: npppd_ctl.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -88,7 +90,7 @@
 	}
 #else
 #define	NPPPD_CTL_DBG(x)
-#define	NPPPD_CTL_ASSERT(cond)			
+#define	NPPPD_CTL_ASSERT(cond)
 #endif
 #include "debugutil.h"
 
@@ -281,11 +283,11 @@ cmd_who_send_error:
 		NPPPD_CTL_DBG((_this, LOG_DEBUG, "sendto() failed in %s: %m",
 		    __func__));
 		if (errno == ENOBUFS || errno == EMSGSIZE || errno == EINVAL) {
-			npppd_ctl_log(_this, LOG_INFO, 
+			npppd_ctl_log(_this, LOG_INFO,
 			    "'who' is requested, but "
 			    "the buffer is not enough.");
 		} else {
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "sendto() failed in %s: %m",
 			    __func__);
 		}
@@ -306,7 +308,7 @@ cmd_who_send_error:
 		req = (struct npppd_disconnect_user_req *)pkt;
 
 		if (sizeof(struct npppd_disconnect_user_req) > pktlen) {
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "'disconnect by user' is requested, "
 			    " but the request has invalid data length"
 			    "(%d:%d)", pktlen, (int)sizeof(req->username));
@@ -317,7 +319,7 @@ cmd_who_send_error:
 				break;
 		}
 		if (i >= sizeof(req->username)) {
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "'disconnect by user' is requested, "
 			    " but the request has invalid user name");
 			break;
@@ -325,7 +327,7 @@ cmd_who_send_error:
 
 		if ((ppplist = npppd_get_ppp_by_user(_npppd, req->username))
 		    == NULL) {
-			npppd_ctl_log(_this, LOG_INFO, 
+			npppd_ctl_log(_this, LOG_INFO,
 			    "npppd_get_ppp_by_user() could't find user \"%s\" in %s: %m",
 			    req->username, __func__);
 			goto user_end;
@@ -341,16 +343,16 @@ cmd_who_send_error:
 			stopped++;
 		}
 user_end:
-		
-		npppd_ctl_log(_this, LOG_NOTICE, 
+
+		npppd_ctl_log(_this, LOG_NOTICE,
 		    "'disconnect by user' is requested, "
 		    "stopped %d connections.", stopped);
 		snprintf(respbuf, sizeof(respbuf),
 		    "Disconnected %d ppp connections", stopped);
-		
+
 		if (sendto(_this->sock, respbuf, strlen(respbuf), 0, peer,
 		    peer->sa_len) < 0) {
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "sendto() failed in %s: %m", __func__);
 		}
 		break;
@@ -360,7 +362,7 @@ user_end:
 	 */
 	case NPPPD_CTL_CMD_TERMID_SET_AUTH: {
 #ifndef	NPPPD_USE_CLIENT_AUTH
-		npppd_ctl_log(_this, LOG_ERR, 
+		npppd_ctl_log(_this, LOG_ERR,
 		    "NPPPD_CTL_CMD_TERMID_SET_AUTH is requested, but "
 		    "the terminal authentication is disabled.");
 		goto fail;
@@ -370,7 +372,7 @@ user_end:
 
 		req = (struct npppd_ctl_termid_set_auth_request *)pkt;
 		if (pktlen < sizeof(struct npppd_ctl_termid_set_auth_request)) {
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "NPPPD_CTL_CMD_TERMID_SET_AUTH is requested, but "
 			    "the request is invalid.");
 			goto fail;
@@ -382,7 +384,7 @@ user_end:
 		case NPPPD_CTL_PPP_ID:
 			if ((ppp = npppd_get_ppp_by_id(npppd_get_npppd(),
 			    req->ppp_key.id)) == NULL) {
-				npppd_ctl_log(_this, LOG_ERR, 
+				npppd_ctl_log(_this, LOG_ERR,
 				    "NPPPD_CTL_CMD_TERMID_SET_AUTH is "
 				    "requested, but the requested ppp(id=%d) "
 				    "is not found.", req->ppp_key.id);
@@ -393,7 +395,7 @@ user_end:
 		case NPPPD_CTL_PPP_FRAMED_IP_ADDRESS:
 			if ((ppp = npppd_get_ppp_by_ip(npppd_get_npppd(),
 			    req->ppp_key.framed_ip_address)) == NULL) {
-				npppd_ctl_log(_this, LOG_ERR, 
+				npppd_ctl_log(_this, LOG_ERR,
 				    "NPPPD_CTL_CMD_TERMID_SET_AUTH is "
 				    "requested, but the requested ppp(ip=%s) "
 				    "is not found.",
@@ -402,7 +404,7 @@ user_end:
 			}
 			break;
 		default:
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "NPPPD_CTL_CMD_TERMID_SET_AUTH is requested, but "
 			    "the ppp_key_type is invalid.");
 			goto fail;
@@ -416,9 +418,9 @@ user_end:
 
 		if (sendto(_this->sock, respbuf, strlen(respbuf), 0, peer,
 		    peer->sa_len) < 0) {
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "sendto() failed in %s: %m", __func__);
-			
+
 		}
 #endif
 		break;
@@ -435,14 +437,14 @@ user_end:
 
 		if (sendto(_this->sock, respbuf, strlen(respbuf), 0, peer,
 		    peer->sa_len) < 0) {
-			npppd_ctl_log(_this, LOG_ERR, 
+			npppd_ctl_log(_this, LOG_ERR,
 			    "sendto() failed in %s: %m", __func__);
-			
+
 		}
 		break;
 	    }
 	default:
-	    npppd_ctl_log(_this, LOG_ERR, 
+	    npppd_ctl_log(_this, LOG_ERR,
 		"Received unknown command %04x", command);
 	}
 fail:

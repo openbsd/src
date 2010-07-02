@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  */
 /*
- * $Id: properties.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
+ * $Id: properties.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
  */
 /* LINTLIBRARY */
 #include <sys/types.h>
@@ -121,7 +121,7 @@ properties_remove(struct properties *_this, const char *key)
 
 	if ((hl = hash_lookup(_this->hash_tbl, key)) == NULL)
 		return;
-	
+
 	key0 = /* NOSTRICT */(char *)hl->key;
 
 	hash_delete(_this->hash_tbl, key, 1);
@@ -495,7 +495,7 @@ trim(s)
 
 	r = /* NOSTRICT */(char *)skip_space(s);
 	for (t = r + strlen(r) - 1; r <= t; t--) {
-		if (ISSPACE(*t)) 
+		if (ISSPACE(*t))
 			*t = '\0';
 		else
 			break;
@@ -510,7 +510,7 @@ chomp(s)
 	char *t;
 
 	for (t = s + strlen(s) - 1; s <= t; t--) {
-		if (ISCRLF(*t)) 
+		if (ISCRLF(*t))
 			*t = '\0';
 		else
 			break;

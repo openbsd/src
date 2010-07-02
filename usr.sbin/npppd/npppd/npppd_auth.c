@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_auth.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.5 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $ */
 /* I hope to write the source code in npppd-independent as possible. */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -101,7 +103,7 @@ npppd_auth_create(int auth_type, const char *label, void *_npppd)
 		}
 		break;
 #endif
-	
+
 	default:
 		NPPPD_AUTH_ASSERT(0);
 		break;
@@ -111,7 +113,7 @@ npppd_auth_create(int auth_type, const char *label, void *_npppd)
 }
 
 /**
- * Call this function to make the object unusable. 
+ * Call this function to make the object unusable.
  * <p>
  * {@link ::npppd_auth_base} objects is refered by the {@link ::npppd_ppp}
  * object.   After this funcation is called, npppd will disconnect the PPP
@@ -185,9 +187,9 @@ npppd_auth_reload(npppd_auth_base *base)
 
 	base->eap_capable =
 	    npppd_auth_config_str_equal(base, "eap_capable", "true", 1);
-	base->strip_nt_domain = 
+	base->strip_nt_domain =
 	    npppd_auth_config_str_equal(base, "strip_nt_domain", "true", 1);
-	base->strip_atmark_realm = 
+	base->strip_atmark_realm =
 	    npppd_auth_config_str_equal(base, "strip_atmark_realm", "true", 0);
 
 	base->has_acctlist = 0;
@@ -239,7 +241,7 @@ fail:
 }
 
 /**
- * This function gets specified user's password. The value 0 is returned 
+ * This function gets specified user's password. The value 0 is returned
  * if the call succeeds.
  *
  * @param	username	username which gets the password
@@ -249,7 +251,7 @@ fail:
  * @param	lppassword	pointer which indicates the length of
  *				the buffer which stores the password.
  * @return A value 1 is returned if user is unknown. A value 2 is returned
- *				if password buffer is sufficient. A negative value is 
+ *				if password buffer is sufficient. A negative value is
  *				returned if other error occurred.
  */
 int
@@ -388,9 +390,9 @@ npppd_auth_is_ready(npppd_auth_base *base)
 	case NPPPD_AUTH_TYPE_LOCAL:
 		return (base->acctlist_ready != 0)? 1 : 0;
 		/* NOTREACHED */
-		
+
 	case NPPPD_AUTH_TYPE_RADIUS:
-		return (base->acctlist_ready != 0 || 
+		return (base->acctlist_ready != 0 ||
 		    base->radius_ready != 0)? 1 : 0;
 		/* NOTREACHED */
 	}
@@ -515,7 +517,7 @@ npppd_auth_reload_acctlist(npppd_auth_base *base)
 				    "line too long", linno + 1);
 				goto fail;
 			}
-			
+
 			status = csvreader_parse(csv, line);
 		} else {
 			if (!feof(file)) {
@@ -696,7 +698,7 @@ radius_server_address_load(radius_req_setting *radius, int idx,
 	memset(&radius->server[idx], 0, sizeof(radius->server[0]));
 
 	if (addrport_parse(address, IPPROTO_TCP, &ai) !=0)
-		return 1; 
+		return 1;
 
 	switch (ai->ai_family) {
 	default:
@@ -904,7 +906,7 @@ npppd_auth_config_prefix(npppd_auth_base *base)
 	switch(base->type) {
 	case NPPPD_AUTH_TYPE_LOCAL:
 		return "auth.local.realm";
-	
+
 	case NPPPD_AUTH_TYPE_RADIUS:
 		return "auth.radius.realm";
 

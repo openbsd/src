@@ -1,3 +1,5 @@
+/* $OpenBSD: radius_req.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius+.c and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ 
+ * $Id: radius_req.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +73,7 @@ static int select_srcaddr(struct sockaddr const *, struct sockaddr *, socklen_t 
 	    abort(); 						\
 	}
 #else
-#define	RADIUS_REQ_ASSERT(cond)			
+#define	RADIUS_REQ_ASSERT(cond)
 #endif
 
 /**
@@ -158,13 +160,13 @@ fail:
  * Prepare sending RADIUS request.  This implementation will call back to
  * notice that it receives the response or it fails for timeouts to the
  * The context that is set as 'pctx' and response packet that is given
- * by the callback function will be released by this implementation internally. 
+ * by the callback function will be released by this implementation internally.
  * @param setting	Setting for RADIUS server or request.
  * @param context	Context for the caller.
  * @param pctx		Pointer to the space for context of RADIUS request
  *			(RADIUS_REQUEST_CTX).  This will be used for canceling.
  *			NULL can be specified when you don't need.
- * @param response_fn	Specify callback function as a pointer. The function 
+ * @param response_fn	Specify callback function as a pointer. The function
  *			will be called when it receives a response or when
  *			request fails for timeouts.
  * @param timeout	response timeout in second.
@@ -327,8 +329,8 @@ radius_request_io_event(int fd, short evmask, void *context)
 	} else if ((evmask & EV_TIMEOUT) != 0) {
 		lap = context;
 		if (lap->ntry > 0) {
-			if (radius_request0(lap) != 0) { 
-				if (lap->response_fn != NULL) 
+			if (radius_request0(lap) != 0) {
+				if (lap->response_fn != NULL)
 					lap->response_fn(lap->context, NULL,
 					    RADIUS_REQUST_ERROR);
 				radius_cancel_request(lap);

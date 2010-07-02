@@ -1,4 +1,5 @@
-/*	$OpenBSD: l2tpd.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: l2tpd.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: l2tpd.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -107,7 +108,7 @@ l2tpd_init(l2tpd *_this)
 	memset(&sin0, 0, sizeof(sin0));
 	sin0.sin_len = sizeof(sin0);
 	sin0.sin_family = AF_INET;
-	if (l2tpd_add_listener(_this, 0, L2TPD_DEFAULT_LAYER2_LABEL, 
+	if (l2tpd_add_listener(_this, 0, L2TPD_DEFAULT_LAYER2_LABEL,
 	    (struct sockaddr *)&sin0) != 0) {
 		return 1;
 	}
@@ -339,7 +340,7 @@ l2tpd_listener_start(l2tpd_listener *_this, char *ipsec_policy_in,
 fail:
 	if (sock >= 0)
 		close(sock);
-		
+
 	return 1;
 }
 
@@ -534,10 +535,10 @@ l2tpd_reload(l2tpd *_this, struct properties *config, const char *name,
 
 	_this->config = config;
 	do_start = 0;
-	if (l2tpd_config_str_equal(_this, CFG_KEY(name, "enabled"), "true", 
+	if (l2tpd_config_str_equal(_this, CFG_KEY(name, "enabled"), "true",
 	    default_enabled)) {
 		/* care the case false-true flapping */
-		if (l2tpd_is_shutting_down(_this)) 
+		if (l2tpd_is_shutting_down(_this))
 			l2tpd_stop_immediatly(_this);
 		if (l2tpd_is_stopped(_this))
 			do_start = 1;
@@ -737,7 +738,7 @@ l2tpd_io_event(int fd, short evtype, void *ctx)
 					    (struct sockaddr *)&sock, nat_t,
 					    buf, sz);
 				else
-					l2tpd_log_access_deny(_l2tpd, 
+					l2tpd_log_access_deny(_l2tpd,
 					    "not allowed by acl.",
 					    (struct sockaddr *)&peer);
 				break;

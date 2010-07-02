@@ -1,3 +1,5 @@
+/* $OpenBSD: radius_req.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -51,7 +53,7 @@ typedef void (radius_response)(void *context, RADIUS_PACKET *pkt, int flags);
 typedef void * RADIUS_REQUEST_CTX;
 
 /** type for setting of RADIUS request */
-typedef struct _radius_req_setting 
+typedef struct _radius_req_setting
 {
 	/** RADIUS Servers */
 	struct {
@@ -66,7 +68,7 @@ typedef struct _radius_req_setting
 			struct sockaddr_in	sin4;
 		} sock;
 		char	secret[MAX_RADIUS_SECRET];
-		int	enabled;	
+		int	enabled;
 	} server[MAX_RADIUS_SERVERS];
 	/** Index of current server */
 	int curr_server;

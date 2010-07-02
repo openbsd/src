@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_config.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
@@ -61,8 +63,8 @@
 #define NPPPD_CONFIG_DBG(x) 	log_printf x
 #define NPPPD_CONFIG_ASSERT(x) ASSERT(x)
 #else
-#define NPPPD_CONFIG_DBG(x) 	
-#define NPPPD_CONFIG_ASSERT(x) 
+#define NPPPD_CONFIG_DBG(x)
+#define NPPPD_CONFIG_ASSERT(x)
 #endif
 
 
@@ -90,7 +92,7 @@ NAMED_PREFIX_CONFIG_FUNCTIONS(npppd_ipcp_config, npppd_ipcp_config,
     npppd->properties, "ipcp", label);
 
 /***********************************************************************
- * Reading the configuration. This is the export function which 
+ * Reading the configuration. This is the export function which
  * aggregates functions to read from each part.
  ***********************************************************************/
 /**
@@ -334,7 +336,7 @@ npppd_debug_log_reload(npppd *_this)
 	FILE *debugfp;
 	const char *sval;
 
-	if ((ival = npppd_config_int(_this, "debug.level", debuglevel)) == 
+	if ((ival = npppd_config_int(_this, "debug.level", debuglevel)) ==
 	    debuglevel)
 		return;
 
@@ -351,10 +353,10 @@ npppd_debug_log_reload(npppd *_this)
 			fclose(debugfp);
 		if (sval != NULL) {
 			if ((debugfp = fopen(sval, "a+")) == NULL) {
-				log_printf(LOG_ERR, 
+				log_printf(LOG_ERR,
 				    "Failed to open logfile %s: %m", sval);
 			} else {
-				log_printf(LOG_INFO, 
+				log_printf(LOG_INFO,
 				    "open logfile successfully %s", sval);
 				debug_set_debugfp(debugfp);
 			}
@@ -374,7 +376,7 @@ npppd_ip_addr_pool_load(npppd *_this)
 
 	rd_curr = _this->rd;
 	rd_new = NULL;
-	
+
 	n = 0;
 	if (!rd_inithead((void *)&rd_new, 0x41,
 	    sizeof(struct sockaddr_npppd),
@@ -436,7 +438,7 @@ npppd_ip_addr_pool_load(npppd *_this)
 		}
 	}
 	log_printf(LOG_INFO, "Loading pool config successfully.");
-	
+
 	return 0;
 fail:
 	/* rollback */
@@ -498,7 +500,7 @@ npppd_auth_realm_reload(npppd *_this)
 			if (auth_base != NULL &&
 			    npppd_auth_get_type(auth_base)
 				    != NPPPD_AUTH_TYPE_LOCAL) {
-				/* 
+				/*
 				 * The type of authentication realm was changed in the
 				 * same label name.
 				 */
@@ -538,7 +540,7 @@ npppd_auth_realm_reload(npppd *_this)
 			if (auth_base != NULL &&
 			    npppd_auth_get_type(auth_base)
 				    != NPPPD_AUTH_TYPE_RADIUS) {
-				/* 
+				/*
 				 * The type of authentication realm was changed in the
 				 * same label name.
 				 */

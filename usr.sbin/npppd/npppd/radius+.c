@@ -1,3 +1,5 @@
+/* $OpenBSD: radius+.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /*
- * radius+.cc : 
+ * radius+.cc :
  *   yet another RADIUS library
  */
 #ifdef WITH_MPATROL
@@ -394,7 +396,7 @@ int radius_get_vs_raw_attr_all(const RADIUS_PACKET* packet, u_int32_t vendor,
 			continue;
 		if(attr->vtype != vtype)
 			continue;
-		
+
 		if (buf != NULL) {
 			if (off + attr->vlength - 2 <= *length)
 				memcpy(off + buf, attr->vdata,
@@ -513,7 +515,7 @@ u_int32_t radius_get_uint32_attr_retval(const RADIUS_PACKET* packet,
 		return 0xffffffff;
 	return ntohl(nval);
 }
-	
+
 int radius_put_uint32_attr(RADIUS_PACKET* packet, u_int8_t type, u_int32_t val)
 {
 	u_int32_t nval;
@@ -582,7 +584,7 @@ struct in_addr radius_get_ipv4_attr_retval(const RADIUS_PACKET* packet,
 		addr.s_addr = htonl(INADDR_ANY);
 	return addr;
 }
-	
+
 int radius_put_ipv4_attr(RADIUS_PACKET* packet, u_int8_t type, struct in_addr addr)
 {
 	return radius_put_raw_attr(packet, type, &addr, sizeof(struct in_addr));

@@ -151,7 +151,7 @@ slist_grow0(slist *list, int grow_sz)
 	    == NULL)
 		return -1;
 
-	memset(&list_new[list->list_size], 0, 
+	memset(&list_new[list->list_size], 0,
 	    PTR_SIZE * (size_new - list->list_size));
 
 	list->list = list_new;
@@ -180,7 +180,7 @@ slist_grow0(slist *list, int grow_sz)
 			memmove(&list->list[0], &list->list[grow_sz],
 			    PTR_SIZE *(list->last_idx - grow_sz));
 
-			list->last_idx -= grow_sz; 
+			list->last_idx -= grow_sz;
 		}
 	}
 	list->list_size = size_new;
@@ -244,7 +244,7 @@ slist_get(slist *list, int idx)
 }
 
 /** Store a value in "idx"th item */
-int 
+int
 slist_set(slist *list, int idx, void *item)
 {
 	SLIST_ASSERT(idx >= 0);
@@ -266,7 +266,7 @@ slist_remove_first(slist *list)
 
 	if (slist_length(list) <= 0)
 		return NULL;
-	
+
 	oldVal = list->list[list->first_idx];
 
 	if (itr_is_valid(list) && list->itr_next == list->first_idx)
@@ -299,7 +299,7 @@ void
 slist_remove_all(slist *list)
 {
 	void **list0 = list->list;
-	
+
 	slist_init(list);
 
 	list->list = list0;
@@ -331,9 +331,9 @@ slist_swap(slist *list, int m, int n)
 	SLIST_ASSERT(len > n);
 
 	if (m < 0 || n < 0)
-		return;	
+		return;
 	if (m >= len || n >= len)
-		return;	
+		return;
 
 	slist_swap0(list, m, n);
 }
@@ -368,7 +368,7 @@ slist_remove(slist *list, int idx)
 	if (list->first_idx < list->last_idx) {
 		/* take the smaller side */
 		if (idx0 - list->first_idx < list->last_idx - idx0) {
-			first = list->first_idx;	
+			first = list->first_idx;
 			INCR_IDX(list, first_idx);
 		} else {
 			last = list->last_idx;
@@ -380,7 +380,7 @@ slist_remove(slist *list, int idx)
 		 * first.
 		 */
 		if (list->first_idx <= idx0) {
-			first = list->first_idx;	
+			first = list->first_idx;
 			INCR_IDX(list, first_idx);
 		} else {
 			last = list->last_idx;
@@ -399,7 +399,7 @@ slist_remove(slist *list, int idx)
 				itr_invalidate(list);
 		}
 
-		memmove(&list->list[idx0], &list->list[idx0 + 1], 
+		memmove(&list->list[idx0], &list->list[idx0 + 1],
 		    (PTR_SIZE) * (last - idx0));
 	}
 	/* the first side */
@@ -413,7 +413,7 @@ slist_remove(slist *list, int idx)
 				itr_invalidate(list);
 		}
 
-		memmove(&list->list[first + 1], &list->list[first], 
+		memmove(&list->list[first + 1], &list->list[first],
 		    (PTR_SIZE) * (idx0 - first));
 	}
 	if (list->first_idx == list->last_idx) {

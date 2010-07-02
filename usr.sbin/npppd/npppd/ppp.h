@@ -1,3 +1,5 @@
+/* $OpenBSD: ppp.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -91,7 +93,7 @@
 #define	CCP_MPPE_NT_128bit	0x00000040
 #define	CCP_MPPE_NT_56bit	0x00000080
 #define	CCP_MPPE_STATELESS	0x01000000 /* Packet-by-packet encryption */
-#define	CCP_MPPE_KEYLENMASK	0x00000FF0 
+#define	CCP_MPPE_KEYLENMASK	0x00000FF0
 #define	CCP_MPPE_HEADER_LEN	4	/* mppe header + protocol */
 
 #define	INADDR_USER_SELECT	(htonl(0xFFFFFFFFL))
@@ -180,7 +182,7 @@ typedef enum _npppd_ppp_disconnect_code {
 	 */
 	PPP_DISCON_LCP_COMPULSORY_CALL_BACK_REQUIRED = 12,
 
-    /* 
+    /*
      * 3.3.  Authentication Errors
      */
 	/** FSM Timeout error. */
@@ -302,7 +304,7 @@ typedef struct _chap {
 	u_char		pktid;			/* PPP Packet Id */
 	u_char		challid;		/* Id of challange */
 	int		type;			/* chap type */
-	int		ntry;		
+	int		ntry;
 	u_char		authenticator[16];
 #ifdef USE_NPPPD_RADIUS
 	RADIUS_REQUEST_CTX radctx;
@@ -328,7 +330,7 @@ typedef struct _eap {
     	struct evtimer_wrap timerctx;
 	uint32_t	state;
 	u_char		eapid;
-	int 		ntry;		
+	int 		ntry;
 	u_char		name[MAX_USERNAME_LENGTH];
 	u_char		authenticator[16];
 /* FIXME */
@@ -337,14 +339,14 @@ typedef struct _eap {
 	u_char		attr_state[RADIUS_ATTR_STATE_LEN];
 	u_char		attr_state_len;
 	unsigned int	session_timeout;
-	/* 
+	/*
 	 * nak response 0x01
 	 */
 	u_char		flags;
 	RADIUS_REQUEST_CTX radctx;
 } eap;
 #endif
-           
+
 /** Type for CCP */
 typedef struct _ccp {
 	npppd_ppp 	*ppp;
@@ -429,7 +431,7 @@ typedef struct _mppe {
 typedef struct _npppd_phone_number {
 #define	NPPPD_AF_PHONE_NUMBER	(AF_MAX + 0)
 	/** total length */
-	uint8_t		pn_len;	
+	uint8_t		pn_len;
 	/** address family.  this must be NPPPD_AF_PHONE_NUMBER */
 	sa_family_t     pn_family;
 	/** phone number */
@@ -495,14 +497,14 @@ struct _npppd_ppp {
 	/**
 	 * Authentication methods that requires to the peer.
 	 * <pre>
-	 * PAP		0xC023 
-	 * EAP		0xC227 
-	 * CHAP		0x0005 
-	 * MSCHAP	0x0080 
-	 * MSCHAPv2	0x0081 
+	 * PAP		0xC023
+	 * EAP		0xC227
+	 * CHAP		0x0005
+	 * MSCHAP	0x0080
+	 * MSCHAPv2	0x0081
 	 * </pre>
 	 */
-	uint16_t	peer_auth;		
+	uint16_t	peer_auth;
 	u_short		auth_timeout;
 
 #ifdef	USE_NPPPD_MPPE
@@ -560,7 +562,7 @@ struct _npppd_ppp {
 /** Length of client authentication ID */
 #define	NPPPD_CLIENT_AUTH_ID_MAXLEN		32
 	char		client_auth_id[NPPPD_CLIENT_AUTH_ID_MAXLEN + 1];
-	int		has_client_auth_id;		
+	int		has_client_auth_id;
 #endif
 	/*
 	 * Statistical informations
@@ -632,8 +634,8 @@ typedef struct _dialin_proxy_info {
 #define	MPPE_MUST_NEGO(ppp)				\
 	(((ppp)->mppe.enabled != 0) &&			\
 	(((ppp)->peer_auth == PPP_AUTH_CHAP_MS_V2) || 	\
-	((ppp)->peer_auth == PPP_AUTH_EAP))) 
-	
+	((ppp)->peer_auth == PPP_AUTH_EAP)))
+
 /** MPPE is required */
 #define	MPPE_REQUIRED(ppp) 				\
 	(((ppp)->mppe.enabled != 0) && ((ppp)->mppe.required != 0))
@@ -715,7 +717,7 @@ typedef struct _dialin_proxy_info {
  *	simply.  So a TCP/IP packet that has max segment size with MPPE
  *	requires MRU + 4 octets.  If the packet witout MPPE requires just MRU
  *	octets.
- * 
+ *
  * If MRU doesn't cover MPPE/CCP header, we need to avoid sending MRU + 4
  * octets packet.
  */
@@ -724,7 +726,7 @@ typedef struct _dialin_proxy_info {
 #define MRU_IPMTU(mru)		(mru)
 #define MRU_PKTLEN(mru, proto)	(mru)
 #else
-#ifdef MRU_INCLUDES_MPPE_CCP	
+#ifdef MRU_INCLUDES_MPPE_CCP
 /* MRU covers MPPE/CCP header */
 #define MRU_IPMTU(mru)		((mru) - CCP_MPPE_HEADER_LEN)
 #define MRU_PKTLEN(mru, proto)	(mru)
@@ -750,7 +752,7 @@ void         ppp_start (npppd_ppp *);
 int          ppp_dialin_proxy_prepare (npppd_ppp *, dialin_proxy_info *);
 void         ppp_stop (npppd_ppp *, const char *);
 void         ppp_stop_ex (npppd_ppp *, const char *, npppd_ppp_disconnect_code, int, int, const char *);
-    
+
 void         ppp_destroy (void *);
 void         ppp_lcp_up (npppd_ppp *);
 void         ppp_lcp_finished (npppd_ppp *);

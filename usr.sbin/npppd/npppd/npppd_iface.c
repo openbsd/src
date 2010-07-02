@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_iface.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.3 2010/07/02 19:05:20 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4).
@@ -80,7 +82,7 @@
 	    abort(); 						\
 	}
 #else
-#define	NPPPD_IFACE_ASSERT(cond)			
+#define	NPPPD_IFACE_ASSERT(cond)
 #define	NPPPD_IFACE_DBG(x)
 #endif
 
@@ -419,7 +421,7 @@ npppd_iface_io_event_handler(int fd, short evtype, void *data)
 				    "file is closed");
 			else if (errno == EAGAIN)
 				break;
-			else 
+			else
 				npppd_iface_log(_this, LOG_ERR,
 				    "read failed: %m");
 			npppd_iface_stop(_this);
@@ -440,13 +442,13 @@ struct npppd_iface_network_input_arg{
 };
 
 /** callback function which works for each PPP session */
-static int 
+static int
 npppd_iface_network_input_delegate(struct radish *radish, void *args0)
 {
 	npppd_ppp *ppp;
 	struct sockaddr_npppd *snp;
 	struct npppd_iface_network_input_arg *args;
-	
+
 	snp = radish->rd_rtent;
 
 	if (snp->snp_type == SNP_PPP) {

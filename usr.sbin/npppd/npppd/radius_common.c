@@ -1,3 +1,5 @@
+/* $OpenBSD: radius_common.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -27,7 +29,7 @@
 /**@file
  * This file provides functions commonly used for RADIUS request.
  * @author	Yasuoka Masahiko
- * $Id: radius_common.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
+ * $Id: radius_common.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/* $OpenBSD: npppdctl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppdctl.c,v 1.3 2010/07/02 19:05:20 yasuoka Exp $ */
+/* $Id: npppdctl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -270,7 +272,7 @@ npppd_who(int show_stat)
 	else
 		printf("id       name                  in(Kbytes/pkts/errs)"
 		    "     out(Kbytes/pkts/errs)\n");
-		
+
 	n = 0;
 	l->count = -1;
 	do {
@@ -322,7 +324,7 @@ print_who(struct npppd_who *w)
 
 	hasserv = (sa->sa_family == AF_INET || sa->sa_family ==AF_INET6)? 1 : 0;
 	if (sa->sa_family == AF_LINK) {
-		snprintf(hoststr, sizeof(hoststr), 
+		snprintf(hoststr, sizeof(hoststr),
 		    "%02x:%02x:%02x:%02x:%02x:%02x",
 		    LLADDR((struct sockaddr_dl *)sa)[0] & 0xff,
 		    LLADDR((struct sockaddr_dl *)sa)[1] & 0xff,

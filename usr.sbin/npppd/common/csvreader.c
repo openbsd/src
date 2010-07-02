@@ -1,4 +1,4 @@
-/* $OpenBSD: csvreader.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $OpenBSD: csvreader.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  *   csvreader_destroy(csv);
  *</pre>
  */
-/* $Id: csvreader.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: csvreader.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,7 +171,7 @@ csvreader_reset(csvreader *_this)
  * of the CSV.
  * It will return error when the parsing of the field isn't finished. </p>
  */
-CSVREADER_STATUS 
+CSVREADER_STATUS
 csvreader_parse_flush(csvreader *_this)
 {
 	return csvreader_parse_flush0(_this, 1);
@@ -202,7 +202,7 @@ csvreader_parse(csvreader *_this, const char *line)
 		case CSV_INIT:
 			_this->state = CSV_IN_DATA;
 			if (line[off] == DQUOTE) {
-				_this->column_start_with_quote = 1; 
+				_this->column_start_with_quote = 1;
 				break;
 			}
 			/* FALLTHROUGH */
@@ -245,7 +245,7 @@ eol:
 	return csvreader_parse_flush0(_this, 0);
 }
 
-static CSVREADER_STATUS 
+static CSVREADER_STATUS
 csvreader_parse_flush0(csvreader *_this, int is_final)
 {
 	if (_this->state == CSV_FLUSH_WAIT)
@@ -360,7 +360,7 @@ csvreader_flush_column(csvreader *_this)
 	_this->cols[_this->col_pos++] = _this->buffer + _this->start_pos;
 	_this->cols[_this->col_pos] = NULL;
 	_this->start_pos = _this->pos;
-	_this->column_start_with_quote = 0; 
+	_this->column_start_with_quote = 0;
 	_this->state = CSV_INIT;
 
 	return CSVREADER_NO_ERROR;

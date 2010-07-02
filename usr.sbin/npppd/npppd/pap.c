@@ -1,3 +1,5 @@
+/* $OpenBSD: pap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: pap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
@@ -77,8 +79,8 @@
 	    abort(); 						\
 	}
 #else
-#define	PAP_ASSERT(cond)			
-#define	PAP_DBG(x)	
+#define	PAP_ASSERT(cond)
+#define	PAP_DBG(x)
 #endif
 
 static void  pap_log (pap *, uint32_t, const char *, ...) __printflike(3,4);
@@ -394,7 +396,7 @@ pap_radius_authenticate(pap *_this, const char *username, const char *password)
 	    == NULL)
 		goto fail;
 
-	if (radius_prepare(rad_setting, _this, &radctx, 
+	if (radius_prepare(rad_setting, _this, &radctx,
 	    pap_radius_response, _this->ppp->auth_timeout) != 0) {
 		radius_delete_packet(radpkt);
 		goto fail;
@@ -405,7 +407,7 @@ pap_radius_authenticate(pap *_this, const char *username, const char *password)
 		goto fail;
 
 	if (radius_put_string_attr(radpkt, RADIUS_TYPE_USER_NAME,
-	    npppd_ppp_get_username_for_auth(_this->ppp->pppd, _this->ppp, 
+	    npppd_ppp_get_username_for_auth(_this->ppp->pppd, _this->ppp,
 	    username, buf0)) != 0)
 		goto fail;
 

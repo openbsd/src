@@ -2,7 +2,7 @@
  * Copyright (c) 2007
  *	Internet Initiative Japan Inc.  All rights reserved.
  */
-/* $Id: rt_zebra.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: rt_zebra.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 /*
  * @file This file provides utility functions to help add/delete routing
  * information with GNU Zebra.  This utility uses event(3) and uses a UNIX
@@ -65,7 +65,7 @@ static int   rt_zebra_log (rt_zebra *, int, const char *, ...) __printflike(3,4)
 static int   rt_zebra_ipv4_blackhole_rt0(rt_zebra *, uint32_t, uint32_t, int);
 
 static rt_zebra rt_zebra_singleton; 		/* singleton */
-static int rt_zebra_blackhole_ifidx = -1;	
+static int rt_zebra_blackhole_ifidx = -1;
 
 /** Returns the only one rt_zebra context. */
 rt_zebra *
@@ -120,7 +120,7 @@ rt_zebra_add_ipv4_blackhole_rt(rt_zebra *_this, uint32_t addr,
 }
 
 /**
- * Deletes the specified IPv4 blackhole routing entry. 
+ * Deletes the specified IPv4 blackhole routing entry.
  * @param addr	the detination IPv4 address part in host byte-order.
  * @param mask	the detination IPv4 netmask part in host byte-order.
  */
@@ -174,7 +174,7 @@ rt_zebra_start(rt_zebra *_this)
 			break;
 		default:
 			log_printf(LOG_ERR,
-			    "Connection to the zserv failed: %m");		
+			    "Connection to the zserv failed: %m");
 			goto fail;
 		}
 	}

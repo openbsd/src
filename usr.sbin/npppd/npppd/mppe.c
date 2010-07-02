@@ -1,3 +1,5 @@
+/* $OpenBSD: mppe.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,10 +25,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
 /**@file
  *
- * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol) 
+ * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
  */
 /*
  * To avoid the PPP packet out of sequence problem.
@@ -65,7 +67,7 @@
 	    abort(); \
 	}
 #else
-#define	MPPE_DBG(x)	
+#define	MPPE_DBG(x)
 #define MPPE_ASSERT(x)
 #endif
 
@@ -246,7 +248,7 @@ mppe_start(mppe *_this)
 
 
 /**
- * creating the mppe bits. In case of first proposal, it specifies the 
+ * creating the mppe bits. In case of first proposal, it specifies the
  * peer_bits as 0 value. If it specifies the peer_bits, it returns the
  * value as peer's proposal.
  */
@@ -285,10 +287,10 @@ mppe_create_our_bits(mppe *_this, uint32_t peer_bits)
 		if (peer_bits == 0) {
 			/*
 			 * It proposes stateless mode in first time. Windows 9x has
-			 * a bug that it is reverse to stateful and stateless in 
+			 * a bug that it is reverse to stateful and stateless in
 			 * sending and receiving packets.
 			 * Windows 9x is prior to negotiate in stateless mode, so
-			 * it will avoid the Windows bug to be prior to negotiate 
+			 * it will avoid the Windows bug to be prior to negotiate
 			 * in stateless mode.
 			 *
 			 * Even if this bug doesn't exists, the stateful mode is high
@@ -359,7 +361,7 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	/*
 	 * In L2TP/IPsec implementation, in case that the ppp frame sequence
 	 * is not able to reconstruct and the ppp frame is out of sequence, it
-	 * is unable to identify with many packets losing. If it does so, MPPE 
+	 * is unable to identify with many packets losing. If it does so, MPPE
 	 * key is out of place.
 	 * To avoid this problem, when it seems that more than 4096-256 packets
 	 * drops, it assumes that the packet doesn't lose but the packet is out
@@ -425,9 +427,9 @@ mppe_input(mppe *_this, u_char *pktp, int len)
 	if (pktloss > 1000) {
 		/*
 		 * In case of many packets losing or out of sequence.
-		 * The latter is not able to communicate because the key is 
+		 * The latter is not able to communicate because the key is
 		 * out of place soon.
-		 * 
+		 *
 		 */
 		mppe_log(_this, LOG_WARNING, "%d packets loss", pktloss);
 	}
@@ -538,7 +540,7 @@ mppe_bits_to_string(uint32_t bits)
 	, ((CCP_MPPE_NT_128bit& bits) != 0)?	",128bit" : ""
 	, ((CCP_MPPE_NT_56bit& bits) != 0)?	",56bit" : ""
 	, ((CCP_MPPE_STATELESS& bits) != 0)?	",stateless" : ",stateful");
-	
+
 	if (buf[0] == '\0')
 		return "";
 

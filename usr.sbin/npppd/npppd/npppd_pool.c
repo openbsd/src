@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_pool.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -64,7 +66,7 @@
 	    abort(); 						\
 	}
 #else
-#define	NPPPD_POOL_ASSERT(cond)			
+#define	NPPPD_POOL_ASSERT(cond)
 #define	NPPPD_POOL_DBG(x)
 #endif
 #define	A(v) ((0xff000000 & (v)) >> 24), ((0x00ff0000 & (v)) >> 16),	\
@@ -175,7 +177,7 @@ npppd_pool_reload(npppd_pool *_this)
 		addrs_size++;
 	for (range = pool; range != NULL; range = range->next)
 		addrs_size++;
-	
+
 	if ((addrs = calloc(addrs_size + 1, sizeof(struct sockaddr_npppd)))
 	    == NULL) {
 		/* addr_size + 1 because of avoiding calloc(0). */
@@ -475,7 +477,7 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 	};
 
 	/*
-	 * _this == NULL the pool address is released becaus of changing 
+	 * _this == NULL the pool address is released becaus of changing
 	 * configuration.
 	 */
 	if (!ppp_ip_assigned(ppp))
@@ -496,7 +498,7 @@ npppd_pool_release_ip(npppd_pool *_this, npppd_ppp *ppp)
 
 	if (_this != NULL && ppp->assign_dynapool != 0)
 		/* return to dynamic address pool list */
-		slist_add(&((npppd_pool *)ppp->assigned_pool)->dyna_addrs, 
+		slist_add(&((npppd_pool *)ppp->assigned_pool)->dyna_addrs,
 		    (void *)ntohl(ppp->ppp_framed_ip_address.s_addr));
 
 	if (snp != NULL && snp->snp_next != NULL) {
@@ -560,14 +562,14 @@ npppd_pool_get_assignability(npppd_pool *_this, uint32_t ip4addr,
 				if (psnp != NULL)
 					*psnp = snp;
 				if (snp->snp_data_ptr == _this)
-					return  ADDRESS_OK;		
+					return  ADDRESS_OK;
 				else
 					return ADDRESS_RESERVED;
 			}
 			if (snp->snp_type == SNP_PPP) {
 				if (psnp != NULL)
 					*psnp = snp;
-				return ADDRESS_BUSY;		
+				return ADDRESS_BUSY;
 			}
 		} while (rd_match_next(SA(&sin4), _this->npppd->rd, &radish,
 		    radish));
@@ -586,7 +588,7 @@ npppd_pool_get_assignability(npppd_pool *_this, uint32_t ip4addr,
  * The issue is as follows:
  * (1) BSDs treat the following packet as it is not forwarded and
  *     is received as the packet to myself.
- * (2) The issue that Windows can't use L2TP/IPsec when Windows is assigned 
+ * (2) The issue that Windows can't use L2TP/IPsec when Windows is assigned
  *     IP address .255.</pre>
  */
 static int
@@ -618,7 +620,7 @@ npppd_pool_log(npppd_pool *_this, int prio, const char *fmt, ...)
 	 * so it can't NPPPD_POOL_ASSERT(_this != NULL).
 	 */
 	va_start(ap, fmt);
-	snprintf(logbuf, sizeof(logbuf), "pool name=%s %s", 
+	snprintf(logbuf, sizeof(logbuf), "pool name=%s %s",
 	    (_this == NULL)? "null" : _this->name, fmt);
 	status = vlog_printf(prio, logbuf, ap);
 	va_end(ap);

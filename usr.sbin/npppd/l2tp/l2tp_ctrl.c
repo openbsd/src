@@ -1,4 +1,5 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_ctrl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -244,7 +245,7 @@ l2tp_ctrl_destroy(l2tp_ctrl *_this)
  * nortify disconnection to peer
  *
  * @return 	0: all CDN and StopCCN have been sent.
- *		N: if the remaining calls which still not sent CDN exist, 
+ *		N: if the remaining calls which still not sent CDN exist,
  *		   return # of the calls.
  *		-1: when try to send of StopCCN failed.
  */
@@ -266,7 +267,7 @@ l2tp_ctrl_send_disconnect_notify(l2tp_ctrl *_this)
 	if (slist_length(&_this->call_list) != 0) {
 		ncalls = l2tp_ctrl_disconnect_all_calls(_this);
 		if (ncalls > 0) {
-			/* 
+			/*
 			 * Call l2tp_ctrl_disconnect_all_calls() to check
 			 * the send window still filled.
 			 */
@@ -325,7 +326,7 @@ l2tp_ctrl_stop(l2tp_ctrl *_this, int result)
 	case L2TP_CTRL_STATE_CLEANUP_WAIT:
 cleanup:
 		if (slist_length(&_this->call_list) != 0) {
-			if (l2tp_ctrl_disconnect_all_calls(_this) > 0) 
+			if (l2tp_ctrl_disconnect_all_calls(_this) > 0)
 				break;
 		}
 #if 0
@@ -467,7 +468,7 @@ l2tp_ctrl_timeout(int fd, short evtype, void *ctx)
 	l2tp_ctrl *_this;
 	l2tp_call *call;
 
-	/* 
+	/*
 	 * the timer must be reset, when leave this function.
 	 * MEMO: l2tp_ctrl_stop() will reset the timer in it.
 	 * and please remember that the l2tp_ctrl_stop() may free _this.
@@ -569,7 +570,7 @@ l2tp_ctrl_timeout(int fd, short evtype, void *ctx)
 		if (_this->active_closing != 0)
 			l2tp_ctrl_send_disconnect_notify(_this);
 		break;
-	default:	
+	default:
 		l2tp_ctrl_log(_this, LOG_ERR,
 		    "Internal error, timeout on illegal state=%d",
 			_this->state);
@@ -660,7 +661,7 @@ l2tp_ctrl_disconnect_all_calls(l2tp_ctrl *_this)
 	l2tp_call *call;
 
 	L2TP_CTRL_ASSERT(_this != NULL);
-	
+
 	ncalls = 0;
 	len = slist_length(&_this->call_list);
 	for (i = 0; i < len; i++) {
@@ -761,7 +762,7 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		goto bad_packet;
 	}
 	is_ctrl = (hdr.t != 0)? 1 : 0;
-	
+
 	/* calc required length */
 	reqlen = 6;		/* for Flags, Tunnel-Id, Session-Id field */
 	if (hdr.l) reqlen += 2;	/* for Length field (opt) */
@@ -841,12 +842,12 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 				    peer);
 				goto fail;
 			}
-			if (l2tpd_config_str_equal(_this, 
+			if (l2tpd_config_str_equal(_this,
 			    config_key_prefix("l2tpd.interface", ifname),
 			    "accept", 0)){
 				strlcat(phy_label, "%", sizeof(phy_label));
 				strlcat(phy_label, ifname, sizeof(phy_label));
-			} else if (l2tpd_config_str_equal(_this, 
+			} else if (l2tpd_config_str_equal(_this,
 			    config_key_prefix("l2tpd.interface", "any"),
 			    "accept", 0)){
 			} else {
@@ -874,13 +875,13 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		l2tp_ctrl_reload(ctrl);
 	} else {
 		/*
-		 * treat as an error if src address and port is not 
+		 * treat as an error if src address and port is not
 		 * match. (because it is potentially DoS attach)
 		 */
 		L2TP_CTRL_ASSERT(ctrl->peer.ss_family == peer->sa_family);
 
 		switch (peer->sa_family) {
-		case AF_INET: 
+		case AF_INET:
 		    {
 			struct sockaddr_in *peersin1;
 
@@ -935,7 +936,7 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 			    "established");
 			goto fail;
 		}
-		
+
 		if (hdr.s != 0) {
 			if (SEQ_LT(hdr.ns, call->rcv_nxt)) {
 				/* sequence number seems to rewind */
@@ -1140,7 +1141,7 @@ fail:
 	return;
 
 bad_packet:
-	l2tpd_log(_this, LOG_INFO, "Received from=%s:%u: %s", 
+	l2tpd_log(_this, LOG_INFO, "Received from=%s:%u: %s",
 	    inet_ntoa(peersin->sin_addr), ntohs(peersin->sin_port), errmsg);
 	return;
 }
@@ -1284,7 +1285,7 @@ l2tp_ctrl_recv_SCCRQ(l2tp_ctrl *_this, u_char *pkt, int pktlen, l2tpd *_l2tpd,
 			AVP_SIZE_CHECK(avp, ==, 14);
 			/*
 			 * As the implementation never send SCCRQ,
-			 * the peer is always winner 
+			 * the peer is always winner
 			 */
 			continue;
 		case L2TP_AVP_TYPE_FIRMWARE_REVISION:
@@ -1319,7 +1320,7 @@ l2tp_ctrl_recv_SCCRQ(l2tp_ctrl *_this, u_char *pkt, int pktlen, l2tpd *_l2tpd,
 			    avp->attr_type);
 #ifdef L2TP_CTRL_DEBUG
 		} else {
-			L2TP_CTRL_DBG((_this, LOG_DEBUG, 
+			L2TP_CTRL_DBG((_this, LOG_DEBUG,
 			    "AVP (%s/%d) is not handled",
 			    avp_attr_type_string(avp->attr_type),
 			    avp->attr_type));
@@ -1465,7 +1466,7 @@ l2tp_ctrl_recv_StopCCN(l2tp_ctrl *_this, u_char *pkt, int pktlen)
 				    avp->attr_type);
 #ifdef L2TP_CTRL_DEBUG
 			} else {
-				L2TP_CTRL_DBG((_this, LOG_DEBUG, 
+				L2TP_CTRL_DBG((_this, LOG_DEBUG,
 				    "AVP (%s/%d) is not handled",
 				    avp_attr_type_string(avp->attr_type),
 				    avp->attr_type));
@@ -1501,7 +1502,7 @@ size_check_failed:
 	return -1;
 }
 
-/* 
+/*
  * send SCCRP
  */
 static void

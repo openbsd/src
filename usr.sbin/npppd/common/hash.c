@@ -61,7 +61,7 @@ hash_create(cmp_func, hash_func, hsz)
 }
 
 /* hash_first - Get first item from hash table.
- * Returns a pointer of first bucket on success.  Otherwise returns 
+ * Returns a pointer of first bucket on success.  Otherwise returns
  * NULL.
  */
 hash_link *
@@ -189,7 +189,7 @@ hash_delete(htbl, k, memfree)
 }
 
 /*
- * delete all items from this hash_table. 
+ * delete all items from this hash_table.
  * If memfree != 0 then free items.
  */
 void

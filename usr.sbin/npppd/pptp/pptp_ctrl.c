@@ -1,4 +1,5 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: pptp_ctrl.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -28,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: pptp_ctrl.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -58,7 +59,7 @@
 #include "pptp_subr.h"
 
 /* periods of pptp_ctrl_timeout */
-#define PPTP_CTRL_TIMEOUT_IVAL_SEC	2	
+#define PPTP_CTRL_TIMEOUT_IVAL_SEC	2
 
 #ifdef	PPTP_CTRL_DEBUG
 #define	PPTP_CTRL_ASSERT(x)	ASSERT(x)
@@ -273,7 +274,7 @@ pptp_ctrl_reset_timeout(pptp_ctrl *_this)
 
 	switch (_this->state) {
 	case PPTP_CTRL_STATE_DISPOSING:
-		tv.tv_sec = 0;	/* call back immidiatly */ 
+		tv.tv_sec = 0;	/* call back immidiatly */
 		tv.tv_usec = 0;
 		break;
 	default:
@@ -405,12 +406,12 @@ pptp_ctrl_io_event(int fd, short evmask, void *ctx)
 		    bytebuffer_remaining(_this->recv_buf));
 		if (sz <= 0) {
 			if (errno == ECONNRESET || sz == 0) {
-				pptp_ctrl_log(_this, LOG_INFO,	
+				pptp_ctrl_log(_this, LOG_INFO,
 				    "Connection closed by foreign host");
 				pptp_ctrl_fini(_this);
 				goto fail;
 			} else if (errno != EAGAIN && errno != EINTR) {
-				pptp_ctrl_log(_this, LOG_INFO,	
+				pptp_ctrl_log(_this, LOG_INFO,
 				    "read() failed at %s(): %m", __func__);
 				pptp_ctrl_fini(_this);
 				goto fail;
@@ -742,7 +743,7 @@ pptp_ctrl_send_SCCRP(pptp_ctrl *_this, int result, int error)
 	scc->max_channels = 4;		/* XXX */
 	scc->firmware_revision = MAJOR_VERSION << 8 | MINOR_VERSION;
 
-	/* this implementation only support these strings up to 
+	/* this implementation only support these strings up to
 	 * 63 character */
 	/* host name */
 	if ((val = pptp_ctrl_config_str(_this, "pptp.host_name")) == NULL)
@@ -903,7 +904,7 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 	struct pptp_ctrl_header *hdr;
 
 	PPTP_CTRL_ASSERT(lpkt >= sizeof(struct pptp_ctrl_header));
-	
+
 	curr_time = get_monosec();
 	hdr = (struct pptp_ctrl_header *)pkt;
 
@@ -940,7 +941,7 @@ pptp_ctrl_input(pptp_ctrl *_this, u_char *pkt, int lpkt)
 		goto bad_packet;
 	}
 
-	/* As there is possibility of state conflicts, 
+	/* As there is possibility of state conflicts,
 	 * ECHO Reply requiries special care.
 	 */
 	switch (hdr->control_message_type) {
@@ -1069,7 +1070,7 @@ pptp_ctrl_call_input(pptp_ctrl *_this, int mes_type, u_char *pkt, int lpkt)
 	case PPTP_CTRL_MES_CODE_ICRP:	/* PNS => PAC */
 		/*
 		 * as this implementation never sent ICRQ, this case
-		 * should not happen. 
+		 * should not happen.
 		 * But just to make sure, pptp_call.c can handle this
 		 * message.
 		 */
@@ -1136,7 +1137,7 @@ fail:
 
 
 /*
- * utilities 
+ * utilities
  */
 
 /* logging with the label of the instance */

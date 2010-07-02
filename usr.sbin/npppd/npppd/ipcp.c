@@ -1,3 +1,5 @@
+/* $OpenBSD: ipcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -30,7 +32,7 @@
 /*
  * RFC 1332, 1877
  */
-/* $Id: ipcp.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: ipcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -51,7 +53,7 @@
 #define	IPCP_DBG(x)	fsm_log x
 #define	IPCP_ASSERT(x)	ASSERT(x)
 #else
-#define	IPCP_DBG(x)	
+#define	IPCP_DBG(x)
 #define	IPCP_ASSERT(x)
 #endif
 
@@ -320,7 +322,7 @@ do_reject:
 	}
 	if (rcode == -1)
 		rcode = CONFACK;
-	
+
 fail:
 	switch (rcode) {
 	case CONFREJ:

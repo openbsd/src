@@ -1,3 +1,5 @@
+/* $OpenBSD: lcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -57,7 +59,7 @@
 #define	LCP_DBG(x)	fsm_log x
 #define	LCP_ASSERT(x)	ASSERT(x)
 #else
-#define	LCP_DBG(x)	
+#define	LCP_DBG(x)
 #define	LCP_ASSERT(x)
 #endif
 
@@ -131,7 +133,7 @@ lcp_init(lcp *_this, npppd_ppp *ppp)
 	PPP_FSM_CONFIG(&_this->fsm, maxnakloops,	"lcp.max_nak_loop");
 
 	/*
-	 * PPTP and L2TP are able to detect lost carrier, so LCP ECHO is off 
+	 * PPTP and L2TP are able to detect lost carrier, so LCP ECHO is off
 	 * by default.
 	 */
 	_this->echo_interval = 0;
@@ -265,7 +267,7 @@ lcp_cilen(fsm *f)
 
 /**
  * selecting authentication protocols which is not rejected yet in order
- * of auth_order, and adding Authentication-Protocol options in ConfReq 
+ * of auth_order, and adding Authentication-Protocol options in ConfReq
  * packet area.
  */
 static int
@@ -424,7 +426,7 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 			goto fail;
 
 		switch (type) {
-		case PPP_LCP_MRU: 
+		case PPP_LCP_MRU:
 			if (len != 4)
 				goto fail;
 			GETSHORT(mru, inp);
@@ -448,7 +450,7 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 			} else
 				LCP_OPT_PEER_ACCEPTED(mru);
 			break;
-		case PPP_LCP_MAGICNUMBER: 
+		case PPP_LCP_MAGICNUMBER:
 			if (len != 6)
 				goto fail;
 			GETLONG(magic, inp);
@@ -459,12 +461,12 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 			_this->peer_magic_number = magic;
 			break;
 		case PPP_LCP_PFC:
-			if (len != 2) 
+			if (len != 2)
 				goto fail;
 			LCP_OPT_PEER_ACCEPTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
-			if (len != 2) 
+			if (len != 2)
 				goto fail;
 			LCP_OPT_PEER_ACCEPTED(acfc);
 			break;
@@ -533,20 +535,20 @@ lcp_ackci(fsm *f, u_char *inp, int inlen)
 
 		switch (type) {
 		case PPP_LCP_MAGICNUMBER:
-			if (len != 6) 
+			if (len != 6)
 				goto fail;
 			GETLONG(magic, inp);
 			if (f->ppp->lcp.magic_number != magic)
 				goto fail;
 			break;
 		case PPP_LCP_MRU:
-			if (len != 4) 
+			if (len != 4)
 				goto fail;
 			LCP_OPT_ACCEPTED(mru);
 			GETSHORT(mru, inp);
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
-			if (len < 4) 
+			if (len < 4)
 				goto fail;
 			GETSHORT(authproto, inp);
 			switch (authproto) {
@@ -634,7 +636,7 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 
 		switch (type) {
 		case PPP_LCP_MRU:
-			if (len < 4) 
+			if (len < 4)
 				goto fail;
 			GETSHORT(mru, inp);
 			fsm_log(f, LOG_NOTICE,
@@ -642,7 +644,7 @@ lcp_nakci(fsm *f, u_char *inp, int inlen)
 			_this->xxxmru = mru;
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
-			if (len < 4) 
+			if (len < 4)
 				goto fail;
 			switch (_this->lastauth) {
 			case PPP_AUTH_PAP:
@@ -770,7 +772,7 @@ lcp_rejci(fsm *f, u_char *inp, int inlen)
 			GETSHORT(mru, inp);
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
-			if (len < 4) 
+			if (len < 4)
 				goto fail;
 			GETSHORT(authproto, inp);
 			switch (authproto) {
@@ -994,7 +996,7 @@ lcp_ext(fsm *f, int code, int id, u_char *inp, int inlen)
 
 
 /*
- * reading some authentication settings and storing ppp_order in 
+ * reading some authentication settings and storing ppp_order in
  * order of settings.
  */
 static void
@@ -1038,7 +1040,7 @@ lcp_load_authconfig(fsm *f)
 				_this->auth_order[i++] = PPP_AUTH_CHAP_MS_V2;
 				psm_opt_set_enabled(_this,chapms_v2, 1);
 #ifdef USE_NPPPD_EAP_RADIUS
-			} else if (strcasecmp("EAP-RADIUS", authp) == 0) { 
+			} else if (strcasecmp("EAP-RADIUS", authp) == 0) {
 				_this->auth_order[i++] = PPP_AUTH_EAP;
 				psm_opt_set_enabled(_this, eap, 1);
 #endif
@@ -1061,7 +1063,7 @@ lcp_load_authconfig(fsm *f)
 /**
  * This function set LCP status following dialin proxy information.
  * This returns non-zero value when LCP status is unacceptable.
- * 
+ *
  */
 int
 lcp_dialin_proxy(lcp *_this, dialin_proxy_info *dpi, int renegotiation,
@@ -1177,7 +1179,7 @@ lcp_proxy_recv_ci(fsm *f, u_char *inp, int inlen)
 			goto fail;
 
 		switch (type) {
-		case PPP_LCP_MRU: 
+		case PPP_LCP_MRU:
 			if (len != 4)
 				goto fail;
 			GETSHORT(mru, inp);
@@ -1187,7 +1189,7 @@ lcp_proxy_recv_ci(fsm *f, u_char *inp, int inlen)
 			else
 				LCP_OPT_PEER_ACCEPTED(mru);
 			break;
-		case PPP_LCP_MAGICNUMBER: 
+		case PPP_LCP_MAGICNUMBER:
 			if (len != 6)
 				goto fail;
 			GETLONG(magic, inp);
@@ -1196,12 +1198,12 @@ lcp_proxy_recv_ci(fsm *f, u_char *inp, int inlen)
 			_this->peer_magic_number = magic;
 			break;
 		case PPP_LCP_PFC:
-			if (len != 2) 
+			if (len != 2)
 				goto fail;
 			LCP_OPT_PEER_ACCEPTED(pfc);
 			break;
 		case PPP_LCP_ACFC:
-			if (len != 2) 
+			if (len != 2)
 				goto fail;
 			LCP_OPT_PEER_ACCEPTED(acfc);
 			break;
@@ -1257,20 +1259,20 @@ lcp_proxy_sent_ci(fsm *f, u_char *inp, int inlen)
 
 		switch (type) {
 		case PPP_LCP_MAGICNUMBER:
-			if (len != 6) 
+			if (len != 6)
 				goto fail;
 			GETLONG(magic, inp);
 			f->ppp->lcp.magic_number = magic;
 			break;
 		case PPP_LCP_MRU:
-			if (len != 4) 
+			if (len != 4)
 				goto fail;
 			LCP_OPT_ACCEPTED(mru);
 			GETSHORT(mru, inp);
 			f->ppp->lcp.xxxmru = mru;
 			break;
 		case PPP_LCP_AUTH_PROTOCOL:
-			if (len < 4) 
+			if (len < 4)
 				goto fail;
 			GETSHORT(authproto, inp);
 			switch (authproto) {

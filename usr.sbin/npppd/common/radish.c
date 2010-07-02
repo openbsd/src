@@ -4,7 +4,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -140,7 +140,7 @@ rd_inithead(headp, family, slen, off, alen, match)
 			*(m + off + j) = 0xff;
 		*(m + off + j) = rd_bmask[r];
 	}
-	
+
 	head->rdh_slen = slen;
 	head->rdh_offset = off;
 	head->rdh_alen = alen;
@@ -190,7 +190,7 @@ rd_mask(m_arg, head, maskp)
 		case 0x00: break;
 		}
 	*maskp = masklen;
-	return((struct sockaddr *)(masks + slen * masklen));	
+	return((struct sockaddr *)(masks + slen * masklen));
 }
 
 int
@@ -228,7 +228,7 @@ rd_insert(d_arg, m_arg, head, rt)
 	Bzero(new, sizeof(*new) + slen);
 	new->rd_route = (struct sockaddr *)(new + 1);
 	new->rd_mask = mask;
-	new->rd_masklen = masklen;			
+	new->rd_masklen = masklen;
 	new->rd_masklim = q;
 	new->rd_bmask = rd_bmask[r];
 	new->rd_btest = rd_btest[r];
@@ -245,13 +245,13 @@ rd_insert(d_arg, m_arg, head, rt)
 	np[1] = dp[1]; /* sa_family */
 	dp += off;
 	np += off;
-	i = 0;	
+	i = 0;
 	while (i < q) {
 		np[i] = dp[i];
 		i++;
 	}
 	np[i] = dp[i] & rd_bmask[r]; /* just in case */
-	
+
 	while (cur) {
 		if (masklen == cur->rd_masklen) {
 			rp = (u_char *)cur->rd_route + off;
@@ -261,7 +261,7 @@ rd_insert(d_arg, m_arg, head, rt)
 					 * masklen == cur->rd_masklen
 					 * dest != route
 					 */
-					return rd_glue(cur, new, i, head); 
+					return rd_glue(cur, new, i, head);
 				}
 			/*
 			 * masklen == cur->rd_masklen
@@ -294,7 +294,7 @@ rd_insert(d_arg, m_arg, head, rt)
 					 * masklen > cur->rd_masklen
 					 * (dest & mask) != route
 					 */
-					return rd_glue(cur, new, i, head); 
+					return rd_glue(cur, new, i, head);
 				}
 			if (cur->rd_bmask)
 				if ((np[lim] & cur->rd_bmask) != rp[lim]) {
@@ -302,7 +302,7 @@ rd_insert(d_arg, m_arg, head, rt)
 					 * masklen > cur->rd_masklen
 					 * (dest & mask) != route
 					 */
-					return rd_glue(cur, new, lim, head); 
+					return rd_glue(cur, new, lim, head);
 				}
 			/*
 			 * masklen > cur->rd_masklen
@@ -324,12 +324,12 @@ rd_insert(d_arg, m_arg, head, rt)
 				cur->rd_l = new;
 				new->rd_p = cur;
 				return 0;
-			} 
+			}
 		}
 		/*
 		 * masklen < cur->rd_masklen
 		 */
-		
+
 		/* See if route matches with dest, be carefull!
 		 * 	dest == (route & dest_mask)
 		 */
@@ -371,7 +371,7 @@ rd_insert(d_arg, m_arg, head, rt)
 			new->rd_r = cur;
 		else
 			new->rd_l = cur;
-		
+
 		cur->rd_p = new;
 		return 0;
 	}
@@ -413,7 +413,7 @@ rd_glue(cur, new, misbyte, head)
 		xor >>= 1;
 		maskb--;
 	}
-	
+
 	glue->rd_route = (struct sockaddr *)(glue + 1);
 	glue->rd_masklen = 8 * misbyte + maskb;
 	glue->rd_masklim = misbyte;
@@ -433,7 +433,7 @@ rd_glue(cur, new, misbyte, head)
 	for(i = 0; i < misbyte; i++)
 		gp[i] = cp[i];
 	gp[misbyte] = cp[misbyte] & glue->rd_bmask;
-	
+
 	if (glue->rd_btest & cp[misbyte]) {
 		glue->rd_r = cur;
 		glue->rd_l = new;
@@ -459,11 +459,11 @@ rd_glue(cur, new, misbyte, head)
 	return 0;
 }
 
-/* 
+/*
  * Find the longest-match radish with the destination.
  * Return 1 if success, otherwise return 0.
  */
-  
+
 int
 rd_match(d_arg, head, rdp)
 	struct sockaddr *d_arg;
@@ -509,7 +509,7 @@ rd_match_next(d_arg, head, rdp, cur)
 		if (target->rd_rtent != NULL) {
 			cp = (u_char *)target->rd_route + off;
 			lim = target->rd_masklim;
-			
+
 			/* Check the edge for slight speed up */
 			if (target->rd_bmask)
 				if ((*(dp + lim) & target->rd_bmask)
@@ -517,12 +517,12 @@ rd_match_next(d_arg, head, rdp, cur)
 				nextparent:
 					continue;
 				}
-			
-			/* mask is always 0xff */		
+
+			/* mask is always 0xff */
 			for (i = 0; i < lim; i++)
 				if(dp[i] != cp[i])
 					/* to break the for loop */
-					goto nextparent; 
+					goto nextparent;
 			/* Matched to this radish! */
 			*rdp = target;
 			return 1;
@@ -532,12 +532,12 @@ rd_match_next(d_arg, head, rdp, cur)
 	return 0;
 }
 
-/* 
+/*
  * Lookup the same radish according to a pair of destination and mask.
  * Return a pointer to rtentry if exists. Otherwise, return NULL.
  */
 
-#ifndef GENERIC_USE 
+#ifndef GENERIC_USE
 struct rtentry *
 #else /* GENERIC_USE */
 void *
@@ -565,7 +565,7 @@ rd_lookup(d_arg, m_arg, head)
 					return NULL;
 			/* mask is always 0xff */
 			for (i = olim; i < lim; i++)
-				if(dp[i] != cp[i]) 
+				if(dp[i] != cp[i])
 					return NULL;
 			if (masklen == cur->rd_masklen)
 				return cur->rd_rtent;
@@ -580,14 +580,14 @@ rd_lookup(d_arg, m_arg, head)
 }
 
 /*
- * Delete the radish for dest and mask. 
+ * Delete the radish for dest and mask.
  * Return 0 if success.
  * Return ENOENT if no such radish exists.
  * Return EFAULT if try to delete intermediate radish which doesn't have route.
  */
 
 int
-#ifndef GENERIC_USE 
+#ifndef GENERIC_USE
 rd_delete(d_arg, m_arg, head, rt)
 #else /* GENERIC_USE */
 rd_delete(d_arg, m_arg, head, item)
@@ -595,7 +595,7 @@ rd_delete(d_arg, m_arg, head, item)
 	struct sockaddr *d_arg;
 	struct sockaddr *m_arg;
 	struct radish_head *head;
-#ifndef GENERIC_USE 
+#ifndef GENERIC_USE
 	struct rtentry **rt;
 #else /* GENERIC_USE */
 	void **item;
@@ -606,12 +606,12 @@ rd_delete(d_arg, m_arg, head, item)
 	u_char *dp = (u_char *)d_arg + off, *cp;
 
 	rd_mask(m_arg, head, &masklen);
-#ifndef GENERIC_USE 
+#ifndef GENERIC_USE
 	*rt = NULL; /* just in case */
 #else /* GENERIC_USE */
 	*item = NULL; /* just in case */
 #endif /* GENERIC_USE */
-		
+
 	while (cur) {
 		/* exit loop if dest does not match with the current node
 		 * 	(dest & mask) != route
@@ -622,10 +622,10 @@ rd_delete(d_arg, m_arg, head, item)
 			if ((*(dp + cur->rd_masklim) & cur->rd_bmask)
 			    != *(cp + cur->rd_masklim))
 				return ENOENT;
-		/* mask is always 0xff */		
+		/* mask is always 0xff */
 		lim = cur->rd_masklim;
 		for (i = 0; i < lim; i++)
-			if(dp[i] != cp[i]) 
+			if(dp[i] != cp[i])
 				return ENOENT;
 
 		/* See if cur is exactly what we delete */
@@ -650,7 +650,7 @@ rd_delete(d_arg, m_arg, head, item)
 			 */
 			return EFAULT;
 		}
-#ifndef GENERIC_USE 
+#ifndef GENERIC_USE
 		*rt = cur->rd_rtent;
 #else /* GENERIC_USE */
 		*item = cur->rd_rtent;
@@ -664,7 +664,7 @@ rd_delete(d_arg, m_arg, head, item)
 			u_char rl = SA_LEN(cur->rd_route);
 			u_char ml = SA_LEN(cur->rd_mask);
 #endif
-			
+
 			bcopy(cur->rd_route, rd_deleted_km, rl);
 			bcopy(cur->rd_mask, rd_deleted_km + rl, ml);
 		}
@@ -720,7 +720,7 @@ rd_unlink(cur, top)
 		parent = cur->rd_p;
 		if (parent->rd_l == cur) {
 			parent->rd_l = NULL;
-			Free(cur); 
+			Free(cur);
 		} else if (parent->rd_r == cur) {
 			parent->rd_r = NULL;
 			Free(cur);
@@ -808,7 +808,7 @@ rd_refines(m_arg, n_arg)
 			return 0;
 		if (*n++ != *m++)
 			masks_are_equal = 0;
-			
+
 	}
 	while (n < lim2)
 		if (*n++)

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: rtev_common.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: rtev_common.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 /*
  * PF_ROUTE related utility functions.
  * <p>
@@ -36,7 +36,7 @@
  *	    #include <event.h>
  *	    #include <ifaddrs.h>
  *	    #include <rtev.h>
- *	
+ *
  *	    int main()
  *	    {
  *	    	event_init();
@@ -158,7 +158,7 @@ rtev_ifa_is_primary(const char *ifname, struct sockaddr *sa)
 
 	for (count = 0, ifa = rtev_getifaddrs_by_ifname(ifname); ifa != NULL;
 	    ifa = ifa->ifa_next) {
-		
+
 		if (strcmp(ifa->ifa_name, ifname) != 0)
 			break;
 		if (ifa->ifa_addr->sa_family != sa->sa_family)
@@ -315,7 +315,7 @@ rtev_base_on_rtevent(rtev_impl *impl)
 static inline int
 rtev_update_ifa_cache(rtev_impl *impl)
 {
-	if (rtev_event_serial == rtev_ifa_cache_serial && 
+	if (rtev_event_serial == rtev_ifa_cache_serial &&
 	    rtev_cached_ifa != NULL)
 		return 0;
 
@@ -378,7 +378,7 @@ rtev_base_on_write(rtev_impl *impl, int rtsock, int npackets)
 	bytebuffer_flip(rtev_sndbuf);
 	for (i = 0; i < npackets && bytebuffer_remaining(rtev_sndbuf) > 0; i++){
 		rtm = bytebuffer_pointer(rtev_sndbuf);
-		if (send(rtsock, rtm, rtm->rtm_msglen, 0) <= 0 && 
+		if (send(rtsock, rtm, rtm->rtm_msglen, 0) <= 0 &&
 		    !(rtm->rtm_type == RTM_DELETE && errno == ESRCH) &&
 		    !(rtm->rtm_type == RTM_ADD    && errno == EEXIST)) {
 			rval = 1;
@@ -422,7 +422,7 @@ static void
 ifa_rbentry_fini(void)
 {
 	struct ifa_rbentry *e, *n;
-	
+
 	for (e = RB_MIN(ifa_rb_ifacenam, &ifa_rb_ifacenam); e; e = n) {
 		n = RB_NEXT(ifa_rb_ifacenam, &ifa_rb_ifacenam, e);
 		RB_REMOVE(ifa_rb_ifacenam, &ifa_rb_ifacenam, e);

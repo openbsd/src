@@ -1,3 +1,5 @@
+/* $OpenBSD: chap_ms.h,v 1.2 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 1997        Gabor Kincses <gabor@acm.org>
  *               1997 - 2001 Brian Somers <brian@Awfulhak.org>
@@ -32,7 +34,7 @@
 /* Max # of (Unicode) chars in an NT password */
 #define MAX_NT_PASSWORD	256
 
-/* Don't rely on sizeof(MS_ChapResponse) in case of struct padding */  
+/* Don't rely on sizeof(MS_ChapResponse) in case of struct padding */
 #define MS_CHAP_RESPONSE_LEN    49
 #define CHAP81_RESPONSE_LEN     49
 #define CHAP81_NTRESPONSE_LEN   24

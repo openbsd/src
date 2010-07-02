@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_subr.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +28,7 @@
 /**@file
  * This file provides helper functions for npppd.
  */
-/* $Id: npppd_subr.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: npppd_subr.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/cdefs.h>
 #ifndef LINT
 __COPYRIGHT(
@@ -301,7 +303,7 @@ fail:
 	if (sock >= 0)
 		close(sock);
 #endif
-	
+
 	return 1;
 }
 
@@ -511,7 +513,7 @@ in_addr_range_delete_route(struct in_addr_range *range)
 
 /**
  * Adjust mss to make IP packet be shorter than or equal MTU.
- * 
+ *
  * @param	pktp	pointer that indicates IP packet
  * @param	lpktp	length
  * @param	mtu	MTU

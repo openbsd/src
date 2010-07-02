@@ -37,7 +37,7 @@
 	    abort(); 						\
 	}
 #else
-#define	RTEV_ASSERT(cond)			
+#define	RTEV_ASSERT(cond)
 #define	RTEV_DBG(x)
 #define	log_printf	syslog
 #endif

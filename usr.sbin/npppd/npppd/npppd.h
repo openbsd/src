@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd.h,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -28,7 +30,7 @@
 
 #define	NPPPD_USER			"_npppd"
 
-#ifndef	NPPPD_DEFAULT_TUN_IFNAME	
+#ifndef	NPPPD_DEFAULT_TUN_IFNAME
 #define	NPPPD_DEFAULT_TUN_IFNAME	"tun0"
 #endif
 

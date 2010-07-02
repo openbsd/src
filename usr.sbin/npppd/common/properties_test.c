@@ -24,9 +24,9 @@
  * SUCH DAMAGE.
  */
 /*
- * cc -o properties_test -DNO_KANJI=1 properties_test.c properties.c hash.c 
+ * cc -o properties_test -DNO_KANJI=1 properties_test.c properties.c hash.c
  *
- * ./properties_test 
+ * ./properties_test
  */
 #include <sys/types.h>
 #include <stdio.h>

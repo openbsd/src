@@ -1,4 +1,5 @@
-/*	$OpenBSD: pptp_call.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: pptp_call.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptp_call.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: pptp_call.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 /**@file PPTP Call */
 /* currently it supports PAC mode only */
 #include <sys/types.h>
@@ -275,7 +276,7 @@ pptp_call_recv_SLI(pptp_call *_this, u_char *pkt, int lpkt)
 }
 
 #if 0
-/* Some route implementation which has "PPTP pass-through" function 
+/* Some route implementation which has "PPTP pass-through" function
  * will discard 1723/tcp packet between PAC and PNS, when it recognize
  * SLI from PAC. (for example, FLASHWAVE by Fujitsu).
  *
@@ -642,11 +643,11 @@ pptp_call_gre_output(pptp_call *_this, int fseq, int fack, u_char *pkt,
 	return (sz > 0)? 0 : 1;
 }
 
-/* 
+/*
  * npppd physical layer functions
  */
 
-/* notify to ppp that the PPTP physical layer is already downed */ 
+/* notify to ppp that the PPTP physical layer is already downed */
 static void
 pptp_call_notify_down(pptp_call *_this)
 {
@@ -794,7 +795,7 @@ pptp_call_log(pptp_call *_this, int prio, const char *fmt, ...)
 /* convert Outgoing-Call-Request packet to strings */
 static void
 pptp_call_OCRQ_string(struct pptp_ocrq *ocrq, char *buf, int lbuf)
-{	
+{
 	snprintf(buf, lbuf,
 	    "call_id=%u call_serial_number=%u max_bps=%u min_bps=%u bearer=%s "
 	    "framing=%s recv_winsz=%u packet_proccessing_delay=%u "
@@ -809,7 +810,7 @@ pptp_call_OCRQ_string(struct pptp_ocrq *ocrq, char *buf, int lbuf)
 /* convert Outgoing-Call-Reply packet to strings */
 void
 pptp_call_OCRP_string(struct pptp_ocrp *ocrp, char *buf, int lbuf)
-{	
+{
 	snprintf(buf, lbuf,
 	    "call_id=%u peers_call_id=%u result=%u error=%u cause=%u "
 	    "conn_speed=%u recv_winsz=%u packet_proccessing_delay=%u "

@@ -1,3 +1,5 @@
+/* $OpenBSD: ppp.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.3 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.4 2010/07/02 21:20:57 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -65,7 +67,7 @@
 	    abort(); 						\
 	}
 #else
-#define	PPP_ASSERT(cond)			
+#define	PPP_ASSERT(cond)
 #define	PPP_DBG(x)
 #endif
 
@@ -253,7 +255,7 @@ ppp_dialin_proxy_prepare(npppd_ppp *_this, dialin_proxy_info *dpi)
 		renego = 1;
 
 	if (lcp_dialin_proxy(&_this->lcp, dpi, renego, renego_force) != 0) {
-		ppp_log(_this, LOG_ERR, 
+		ppp_log(_this, LOG_ERR,
 		    "Failed to proxy-dialin, proxied lcp is broken.");
 		return 1;
 	}
@@ -272,7 +274,7 @@ ppp_down_others(npppd_ppp *_this)
 		pap_stop(&_this->pap);
 	if (AUTH_IS_CHAP(_this))
 		chap_stop(&_this->chap);
-#ifdef USE_NPPPD_EAP_RADIUS 
+#ifdef USE_NPPPD_EAP_RADIUS
 	if (AUTH_IS_EAP(_this))
 		eap_stop(&_this->eap);
 #endif
@@ -325,7 +327,7 @@ ppp_stop0(npppd_ppp *_this)
 	_this->phy_close = NULL;
 
 	/*
-	 * NAT/Blackhole detection for PPTP(GRE) 
+	 * NAT/Blackhole detection for PPTP(GRE)
 	 */
 	if (_this->lcp.dialin_proxy != 0 &&
 	    _this->lcp.dialin_proxy_lcp_renegotiation == 0) {
@@ -914,17 +916,17 @@ ppp_output(npppd_ppp *_this, uint16_t proto, u_char code, u_char id,
 		 * needed on this link or ACFC is negotiated.
 		 */
 	} else {
-		PUTCHAR(PPP_ALLSTATIONS, outp); 
-		PUTCHAR(PPP_UI, outp); 
+		PUTCHAR(PPP_ALLSTATIONS, outp);
+		PUTCHAR(PPP_UI, outp);
 	}
 	if (!is_lcp && proto <= 0xff &&
 	    psm_peer_opt_is_accepted(&_this->lcp, pfc)) {
 		/*
 		 * Protocol Field Compression
 		 */
-		PUTCHAR(proto, outp); 
+		PUTCHAR(proto, outp);
 	} else {
-		PUTSHORT(proto, outp); 
+		PUTSHORT(proto, outp);
 	}
 	hlen = outp - _this->outpacket_buf;
 
@@ -1011,12 +1013,12 @@ ppp_log(npppd_ppp *_this, int prio, const char *fmt, ...)
 /**
  * Process the Framed-IP-Address attribute and the Framed-IP-Netmask
  * attribute of given RADIUS packet.
- */ 
+ */
 void
 ppp_process_radius_framed_ip(npppd_ppp *_this, RADIUS_PACKET *pkt)
 {
 	struct in_addr ip4;
-	
+
 	if (radius_get_ipv4_attr(pkt, RADIUS_TYPE_FRAMED_IP_ADDRESS, &ip4)
 	    == 0)
 		_this->realm_framed_ip_address = ip4;
@@ -1045,7 +1047,7 @@ ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
 		goto fail;
 
 	/* RFC 2865 "5.7. Framed-Protocol" */
-	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_FRAMED_PROTOCOL, 
+	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_FRAMED_PROTOCOL,
 	    RADIUS_FRAMED_PROTOCOL_PPP) != 0)
 		goto fail;
 
@@ -1066,7 +1068,7 @@ static void
 ppp_on_network_pipex(npppd_ppp *_this)
 {
 	if (_this->use_pipex == 0)
-		return;	
+		return;
 	if (_this->tunnel_type != PPP_TUNNEL_PPTP &&
 	    _this->tunnel_type != PPP_TUNNEL_PPPOE)
 		return;

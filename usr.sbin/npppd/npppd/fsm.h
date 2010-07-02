@@ -1,5 +1,4 @@
-#ifndef	FSM_H
-#define	FSM_H 1
+/* $OpenBSD: fsm.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 /*	$NetBSD: fsm.h,v 1.10 2000/09/23 22:39:35 christos Exp $	*/
 
 /*
@@ -20,8 +19,10 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: fsm.h,v 1.8 1999/11/15 01:51:50 paulus Exp 
+ * Id: fsm.h,v 1.8 1999/11/15 01:51:50 paulus Exp
  */
+#ifndef	FSM_H
+#define	FSM_H 1
 
 /*
  * Packet header = Code, id, length.
@@ -40,7 +41,7 @@
 #define TERMACK		6	/* Termination Ack */
 #define CODEREJ		7	/* Code Reject */
 
-struct evtimer_wrap { 
+struct evtimer_wrap {
 	void *ctx;
 	void (*func)(void *);
 	struct event ev;

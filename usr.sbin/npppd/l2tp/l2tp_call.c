@@ -1,4 +1,5 @@
-/*	$OpenBSD: l2tp_call.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: l2tp_call.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_call.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: l2tp_call.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
 /**@file L2TP LNS call */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +112,7 @@ l2tp_call_destroy(l2tp_call *_this, int from_l2tp_ctrl)
 /*
  * l2tp disconnect will occur when
  *      1) disconnect request issued from nppdctl command
- *      2) npppd is terminated 
+ *      2) npppd is terminated
  * in case 1) ppp_stop() is used to terminal. (PPP LCP TermReq)
  * and in case 2) l2tp_call_disconnect() is used (L2TP CDN)
  */
@@ -276,7 +277,7 @@ l2tp_call_recv_packet(l2tp_ctrl *ctrl, l2tp_call *_this, int mestype,
  * @return	return 0 if the ICRQ is acceptable.
  *		other values means fail to receive, and
  *		CDN was sent and status was updated.
- */		
+ */
 static int
 l2tp_call_recv_ICRQ(l2tp_call *_this, u_char *pkt, int pktlen)
 {
@@ -351,7 +352,7 @@ l2tp_call_recv_ICRQ(l2tp_call *_this, u_char *pkt, int pktlen)
 				}
 #ifdef L2TP_CALL_DEBUG
 			} else {
-				L2TP_CALL_DBG((_this, LOG_DEBUG, 
+				L2TP_CALL_DBG((_this, LOG_DEBUG,
 				    "AVP (%s/%d) is not handled",
 				    avp_attr_type_string(avp->attr_type),
 				    avp->attr_type));
@@ -413,7 +414,7 @@ l2tp_call_send_ICRP(l2tp_call *_this)
 		l2tp_call_log(_this, LOG_ERR, "failed to SendICRP: %m");
 		return 1;
 	}
-	l2tp_call_log(_this, LOG_INFO, "SendICRP session_id=%u", 
+	l2tp_call_log(_this, LOG_INFO, "SendICRP session_id=%u",
 	    _this->session_id);
 	return 0;
 }
@@ -528,7 +529,7 @@ l2tp_call_recv_ICCN(l2tp_call *_this, u_char *pkt, int pktlen,
 			dpi->last_recv_lcp.ldata = avp_attr_length(avp);
 			break;
 		case L2TP_AVP_TYPE_PROXY_AUTHEN_CHALLENGE:
-			memcpy(dpi->auth_chall, avp->attr_value, 
+			memcpy(dpi->auth_chall, avp->attr_value,
 			    MIN(avp_attr_length(avp), sizeof(dpi->auth_chall)));
 			dpi->lauth_chall = avp_attr_length(avp);
 			break;
@@ -541,7 +542,7 @@ l2tp_call_recv_ICCN(l2tp_call *_this, u_char *pkt, int pktlen,
 			    avp_attr_length(avp)));
 			break;
 		case L2TP_AVP_TYPE_PROXY_AUTHEN_RESPONSE:
-			memcpy(dpi->auth_resp, avp->attr_value, 
+			memcpy(dpi->auth_resp, avp->attr_value,
 			    MIN(avp_attr_length(avp), sizeof(dpi->auth_resp)));
 			dpi->lauth_resp = avp_attr_length(avp);
 			break;
@@ -581,7 +582,7 @@ l2tp_call_recv_ICCN(l2tp_call *_this, u_char *pkt, int pktlen,
 				return 1;
 #ifdef L2TP_CALL_DEBUG
 			} else {
-				L2TP_CALL_DBG((_this, LOG_DEBUG, 
+				L2TP_CALL_DBG((_this, LOG_DEBUG,
 				    "AVP (%s/%d) is not handled",
 				    avp_attr_type_string(avp->attr_type),
 				    avp->attr_type));
@@ -681,7 +682,7 @@ l2tp_recv_CDN(l2tp_call *_this, u_char *pkt, int pktlen)
 				}
 #ifdef L2TP_CALL_DEBUG
 			} else {
-				L2TP_CALL_DBG((_this, LOG_DEBUG, 
+				L2TP_CALL_DBG((_this, LOG_DEBUG,
 				    "AVP (%s/%d) is not handled",
 				    avp_attr_type_string(avp->attr_type),
 				    avp->attr_type));
@@ -711,7 +712,7 @@ size_check_failed:
 
 /* send CDN */
 static int
-l2tp_call_send_CDN(l2tp_call *_this, int result_code, int error_code, const 
+l2tp_call_send_CDN(l2tp_call *_this, int result_code, int error_code, const
     char *errmes, struct l2tp_avp *addavp[], int naddavp)
 {
 	uint32_t val32;
@@ -742,7 +743,7 @@ l2tp_call_send_CDN(l2tp_call *_this, int result_code, int error_code, const
 #if 0
 /*
  * Windows 2000 work around:
- * Windows 2000 will return "2 - Length is wrong" in StopCCN, 
+ * Windows 2000 will return "2 - Length is wrong" in StopCCN,
  * when it received "length = 8 and no error code AVP".
  * Avoid the error, use AVP length = 10.
  */

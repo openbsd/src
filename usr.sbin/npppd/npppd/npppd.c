@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -27,14 +29,14 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $
+ * $Id: npppd.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $
  */
 #include <sys/cdefs.h>
 #include "version.h"
 #ifndef LINT
 __COPYRIGHT(
 "@(#) npppd - PPP daemon for PPP Access Concentrators\n"
-"@(#) Version " VERSION "\n" 
+"@(#) Version " VERSION "\n"
 "@(#) \n"
 "@(#) Copyright 2005-2008\n"
 "@(#) 	Internet Initiative Japan Inc.  All rights reserved.\n"
@@ -137,7 +139,7 @@ static void pipex_periodic(npppd *);
 #define NPPPD_DBG(x) 	log_printf x
 #define NPPPD_ASSERT(x) ASSERT(x)
 #else
-#define NPPPD_DBG(x) 
+#define NPPPD_DBG(x)
 #define NPPPD_ASSERT(x)
 #endif
 
@@ -367,7 +369,7 @@ npppd_init(npppd *_this, const char *config_file)
 		return -1;
 
 	/*
-	 * If the npppd can start(open) interfaces successfully, it can 
+	 * If the npppd can start(open) interfaces successfully, it can
 	 * act as only one npppd process on the system and overwrite the pid
 	 * file.
 	 */
@@ -575,7 +577,7 @@ npppd_timer(int fd, short evtype, void *ctx)
 
 #ifdef USE_NPPPD_PIPEX
 	pipex_periodic(_this);
-#endif	
+#endif
 #ifdef NPPPD_USE_RT_ZEBRA
 	if (!rt_zebra_is_running(rt_zebra_get_instance())) {
 		rt_zebra_start(rt_zebra_get_instance());
@@ -631,7 +633,7 @@ npppd_reset_routing_table(npppd *_this, int pool_only)
 					    ppp_framed_ip_address,
 					    &ppp->ppp_framed_ip_netmask,
 					    &ppp_iface(ppp)->ip4addr,
-					    ppp_iface(ppp)->ifname, 0, 
+					    ppp_iface(ppp)->ifname, 0,
 					    MRU_IPMTU(ppp->peer_mru));
 				}
 				break;
@@ -756,7 +758,7 @@ npppd_check_calling_number(npppd *_this, npppd_ppp *ppp)
 
 /**
  * This function finds a {@link npppd_ppp} instance that is assigned the
- * specified ip address and returns it 
+ * specified ip address and returns it
  * @param ipaddr	IP Address(Specify in network byte order)
  */
 npppd_ppp *
@@ -896,7 +898,7 @@ npppd_network_output(npppd *_this, npppd_ppp *ppp, int proto, u_char *pktp,
 	}
 
 #ifndef	NO_INGRES_FILTER
-	if ((pip->ip_src.s_addr & ppp->ppp_framed_ip_netmask.s_addr) != 
+	if ((pip->ip_src.s_addr & ppp->ppp_framed_ip_netmask.s_addr) !=
 	    (ppp->ppp_framed_ip_address.s_addr &
 		    ppp->ppp_framed_ip_netmask.s_addr)) {
 		char logbuf[80];
@@ -1033,10 +1035,10 @@ npppd_ppp_pipex_enable(npppd *_this, npppd_ppp *ppp)
 		req.pr_proto.pptp.peer_maxwinsz = call->peers_maxwinsz;
 
 		NPPPD_ASSERT(call->ctrl->peer.ss_family == AF_INET);
-		req.pr_proto.pptp.peer_address = 
+		req.pr_proto.pptp.peer_address =
 		    ((struct sockaddr_in *)&call->ctrl->peer)->sin_addr;
 		NPPPD_ASSERT(call->ctrl->our.ss_family == AF_INET);
-		req.pr_proto.pptp.our_address = 
+		req.pr_proto.pptp.our_address =
 		    ((struct sockaddr_in *)&call->ctrl->our)->sin_addr;
 		break;
 #endif
@@ -1296,7 +1298,7 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 	 * makes many programs will wake up and do heavy operations, it causes
 	 * system overload, so we refrain useless changing route.
 	 */
-	enabled = (enabled)? 1 : 0;	
+	enabled = (enabled)? 1 : 0;
 	was_enabled = (ppp->assigned_ip4_enabled != 0)? 1 : 0;
 	if (enabled == was_enabled)
 		return;
@@ -1330,7 +1332,7 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 			 * There is a blackhole route that has same
 			 * address/mask.
 			 */
-			in_route_delete(&ppp->ppp_framed_ip_address, 
+			in_route_delete(&ppp->ppp_framed_ip_address,
 			    &ppp->ppp_framed_ip_netmask, &loop, RTF_BLACKHOLE);
 		/* See the comment for MRU_IPMTU() on ppp.h */
 		if (ppp->ppp_framed_ip_netmask.s_addr == 0xffffffffL) {
@@ -1431,7 +1433,7 @@ npppd_assign_ip_addr(npppd *_this, npppd_ppp *ppp, uint32_t req_ip4)
 	npppd_pool *pool;
 	npppd_auth_base *realm;
 
-	NPPPD_DBG((LOG_DEBUG, "%s() assigned=%s", __func__, 
+	NPPPD_DBG((LOG_DEBUG, "%s() assigned=%s", __func__,
 	    (ppp_ip_assigned(ppp))? "true" : "false"));
 	if (ppp_ip_assigned(ppp))
 		return 0;
@@ -1549,7 +1551,7 @@ dyna_assign:
 }
 
 static void *
-rtlist_remove(slist *prtlist, struct radish *radish) 
+rtlist_remove(slist *prtlist, struct radish *radish)
 {
 	struct radish *r;
 
@@ -1667,7 +1669,7 @@ npppd_set_radish(npppd *_this, void *radish_head)
 			if (rval != 0) {
 				errno = rval;
 				ppp_log(((npppd_ppp *)snp->snp_data_ptr),
-				    LOG_ERR, 
+				    LOG_ERR,
 				    "Fatal error on %s, cannot continue "
 				    "this ppp session: %m", __func__);
 				if (!delppp0)
@@ -1748,7 +1750,7 @@ npppd_get_all_users(npppd *_this, slist *users)
 		snp = rd->rd_rtent;
 		if (snp->snp_type == SNP_PPP) {
 			if (slist_add(users, snp->snp_data_ptr) == NULL) {
-				log_printf(LOG_ERR, 
+				log_printf(LOG_ERR,
 				    "slist_add() failed in %s: %m", __func__);
 				goto fail;
 			}
@@ -1763,7 +1765,7 @@ fail:
 	return 1;
 }
 
-static int 
+static int
 rd2slist_walk(struct radish *rd, void *list0)
 {
 	slist *list = list0;
@@ -1860,7 +1862,7 @@ str_hash(const void *ptr, int sz)
 }
 
 /**
- * Select a authentication realm that is for given {@link ::npppd_ppp PPP}.  
+ * Select a authentication realm that is for given {@link ::npppd_ppp PPP}.
  * Return 0 on success.
  */
 int
@@ -1928,7 +1930,7 @@ npppd_ppp_bind_realm(npppd *_this, npppd_ppp *ppp, const char *username, int
 				if (!npppd_auth_is_usable(realm1))
 					continue;
 				if (eap_required &&
-				    !npppd_auth_is_eap_capable(realm1)) 
+				    !npppd_auth_is_eap_capable(realm1))
 					continue;
 				if (strcmp(npppd_auth_get_label(realm1), tok)
 				    == 0) {
@@ -2181,7 +2183,7 @@ npppd_auth_finalizer_periodic(npppd *_this)
 
 	/*
 	 * For the realms with disposing flag, if the realm has assigned PPPs,
-	 * disconnect them.  If all PPPs are disconnected then free the realm. 
+	 * disconnect them.  If all PPPs are disconnected then free the realm.
 	 */
 	NPPPD_DBG((DEBUG_LEVEL_2, "%s() called", __func__));
 	slist_itr_first(&_this->realms);

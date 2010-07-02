@@ -1,3 +1,5 @@
+/* $OpenBSD: l2tp.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -28,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -220,7 +222,7 @@
 #define	L2TPD_DIALIN_LAYER2_LABEL		"DialIn"
 #define	L2TPD_CONFIG_BUFSIZ			65535
 #define	L2TP_CTRL_WINDOW_SIZE			8
-#ifndef	L2TPD_VENDOR_NAME				
+#ifndef	L2TPD_VENDOR_NAME
 #define	L2TPD_VENDOR_NAME			"IIJ"
 #endif
 #define L2TPD_DEFAULT_UDP_PORT			1701
@@ -382,9 +384,9 @@ typedef struct _l2tp_ctrl {
 	bytebuffer *zlb_buffer;
 
 	/** the time when last control message sent */
-	time_t	last_snd_ctrl;	
+	time_t	last_snd_ctrl;
 	/** the time when last packet received */
-	time_t	last_rcv;	
+	time_t	last_rcv;
 
 	/**
 	 * If we are on active close and have not sent a StopCCN message yet,
@@ -404,7 +406,7 @@ typedef struct _l2tp_ctrl {
 	/** number of calls established */
 	int	ncalls;
 
-	int	
+	int
 	    /** use sequence number in L2TP Data Message? */
 	    data_use_seq:1,
 	    /** waiting to acknowledge HELLO? */
@@ -434,7 +436,7 @@ typedef struct _l2tp_call {
 	uint16_t	rcv_nxt;
 	/** calling number */
 	char		calling_number[32];
-	
+
 	uint32_t	/** Sequencing required */
 			seq_required:1,
 			/** Use sequencing in the data connection */

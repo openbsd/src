@@ -1,4 +1,5 @@
-/*	$OpenBSD: pptpd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: pptpd.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.4 2010/07/01 03:38:17 yasuoka Exp $
+ * $Id: pptpd.c,v 1.5 2010/07/02 21:20:57 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,7 +109,7 @@ pptpd_init(pptpd *_this)
 	memset(&sin0, 0, sizeof(sin0));
 	sin0.sin_len = sizeof(sin0);
 	sin0.sin_family = AF_INET;
-	if (pptpd_add_listener(_this, 0, PPTPD_DEFAULT_LAYER2_LABEL, 
+	if (pptpd_add_listener(_this, 0, PPTPD_DEFAULT_LAYER2_LABEL,
 	    (struct sockaddr *)&sin0) != 0) {
 		return 1;
 	}
@@ -180,8 +181,8 @@ pptpd_add_listener(pptpd *_this, int idx, const char *label,
 	if (plistener->bind_sin.sin_port == 0)
 		plistener->bind_sin.sin_port = htons(PPTPD_DEFAULT_TCP_PORT);
 
-	/* When a raw socket binds both of an INADDR_ANY and specific IP 
-	 * address sockets, packets will be recieved by those sockets 
+	/* When a raw socket binds both of an INADDR_ANY and specific IP
+	 * address sockets, packets will be recieved by those sockets
 	 * simultaneously. To avoid this duplicate receives, not
 	 * permit such kind of configuration */
 	inaddr_any = 0;
@@ -602,10 +603,10 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 
 	_this->config = config;
 	do_start = 0;
-	if (pptpd_config_str_equal(_this, CFG_KEY(name, "enabled"), "true", 
+	if (pptpd_config_str_equal(_this, CFG_KEY(name, "enabled"), "true",
 	    default_enabled)) {
 		/* avoid false-true flap */
-		if (pptpd_is_shutting_down(_this)) 
+		if (pptpd_is_shutting_down(_this))
 			pptpd_stop_immediatly(_this);
 		if (pptpd_is_stopped(_this))
 			do_start = 1;
@@ -669,8 +670,8 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 			strlcpy(buf, val, sizeof(buf));
 
 			label = NULL;
-			/* it can accept multple velues with tab/space 
-			 * separation */ 
+			/* it can accept multple velues with tab/space
+			 * separation */
 			for (i = 0, cp = buf;
 			    (tok = strsep(&cp, VAL_SEP)) != NULL;) {
 				if (*tok == '\0')
@@ -684,7 +685,7 @@ pptpd_reload(pptpd *_this, struct properties *config, const char *name,
 					pptpd_log(_this, LOG_ERR,
 					    "configuration error at "
 					    "%s: %s: %s",
-					    CFG_KEY(name, "listener_in"), tok, 
+					    CFG_KEY(name, "listener_in"), tok,
 					    gai_strerror(aierr));
 					return 1;
 				}
@@ -1001,11 +1002,11 @@ pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
 			    "could not get interface informations", peer);
 			goto fail;
 		}
-		if (pptpd_config_str_equal(_this, 
+		if (pptpd_config_str_equal(_this,
 		    config_key_prefix("pptpd.interface", ifname), "accept", 0)){
 			snprintf(ctrl->phy_label, sizeof(ctrl->phy_label),
 			    "%s%%%s", PPTP_CTRL_LISTENER_LABEL(ctrl), ifname);
-		} else if (pptpd_config_str_equal(_this, 
+		} else if (pptpd_config_str_equal(_this,
 		    config_key_prefix("pptpd.interface", "any"), "accept", 0)){
 			snprintf(ctrl->phy_label, sizeof(ctrl->phy_label),
 			    "%s", PPTP_CTRL_LISTENER_LABEL(ctrl));
@@ -1016,7 +1017,7 @@ pptp_ctrl_start_by_pptpd(pptpd *_this, int sock, int listener_index,
 			pptpd_log_access_deny(_this, msgbuf, peer);
 			goto fail;
 		}
-	} else 
+	} else
 		strlcpy(ctrl->phy_label, PPTP_CTRL_LISTENER_LABEL(ctrl),
 		    sizeof(ctrl->phy_label));
 

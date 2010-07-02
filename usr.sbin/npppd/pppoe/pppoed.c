@@ -1,4 +1,5 @@
-/*	$OpenBSD: pppoed.c,v 1.5 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: pppoed.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -27,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.5 2010/07/01 03:38:17 yasuoka Exp $
+ * $Id: pppoed.c,v 1.6 2010/07/02 21:20:57 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,7 +169,7 @@ fail:
 }
 
 static void
-pppoed_listener_init(pppoed *_this, pppoed_listener *listener) 
+pppoed_listener_init(pppoed *_this, pppoed_listener *listener)
 {
 	memset(listener, 0, sizeof(pppoed_listener));
 	listener->bpf = -1;
@@ -233,7 +234,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 		    ETHER_LAST_SHORT(_this->ether_addr), 0, 1),
 		BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
 		BPF_STMT(BPF_RET+BPF_K, (u_int)0),
-#endif 
+#endif
 	};
 	struct bpf_program bf_filter = {
 		.bf_len = countof(insns),
@@ -399,7 +400,7 @@ pppoed_stop(pppoed *_this)
 {
 	pppoed_listener *plistener;
 	hash_link *hl;
-	pppoe_session *session; 
+	pppoe_session *session;
 
 	if (!pppoed_is_running(_this))
 		return;
@@ -492,7 +493,7 @@ pppoed_reload(pppoed *_this, struct properties *config, const char *name,
 	do_start = 0;
 
 	_this->config = config;
-	if (pppoed_config_str_equal(_this, CFG_KEY(name, "enabled"), "true", 
+	if (pppoed_config_str_equal(_this, CFG_KEY(name, "enabled"), "true",
 	    default_enabled)) {
 		/* avoid false->true flapping */
 		if (pppoed_is_stopped(_this) || !pppoed_is_running(_this))
@@ -751,7 +752,7 @@ pppoed_input(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN], int is_disc,
 	if (is_disc) {
 		PPPOED_DBG((_this->self, DEBUG_LEVEL_1,
 		    "Recv%s(%02x) ver=%d type=%d session-id=%d if=%s",
-		    pppoe_code_string(pppoe->code), pppoe->code, 
+		    pppoe_code_string(pppoe->code), pppoe->code,
 		    pppoe->ver, pppoe->type, pppoe->session_id,
 		    _this->listen_ifname));
 	}
@@ -890,7 +891,7 @@ pppoed_output(pppoed_listener *_this, u_char *dhost, u_char *pkt, int lpkt)
 
 static void
 pppoed_recv_PADR(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
-    slist *tag_list) 
+    slist *tag_list)
 {
 	int session_id, shuffle_cnt;
 	pppoe_session *session;
@@ -943,7 +944,7 @@ fail:
 
 static void
 pppoed_recv_PADI(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
-    slist *tag_list) 
+    slist *tag_list)
 {
 	int len, accept_any_service_req;
 	const char *val, *service_name, *ac_name;
@@ -1201,7 +1202,7 @@ static uint32_t
 session_id_hash(void *a, size_t siz)
 {
 	int ia;
-	
+
 	ia = (int)a;
 
 	return ia % siz;

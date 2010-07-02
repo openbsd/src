@@ -1,3 +1,5 @@
+/* $OpenBSD: chap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -34,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: chap.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -102,8 +104,8 @@
 	    abort(); 						\
 	}
 #else
-#define	CHAP_ASSERT(cond)			
-#define	CHAP_DBG(x)	
+#define	CHAP_ASSERT(cond)
+#define	CHAP_DBG(x)
 #endif
 
 static void        chap_authenticate(chap *_this, u_char *, int);
@@ -355,7 +357,7 @@ chap_failure(chap *_this, const char *msg, int mschapv2err)
 }
 
 static void
-chap_authenticate(chap *_this, u_char *response, int lresponse) 
+chap_authenticate(chap *_this, u_char *response, int lresponse)
 {
 
 	switch(_this->type) {
@@ -629,7 +631,7 @@ mschapv2_send_error(chap *_this, int error, int can_retry)
 	/*
 	 * We don't use "M=<msg>"
 	 *  - pppd on Mac OS 10.4 hungs up if it received a failure packet
-	 *    with "M=<msg>".   
+	 *    with "M=<msg>".
 	 *  - RRAS on windows server 2003 never uses "M=".
 	 */
 	snprintf(pkt, lpkt, "E=%d R=%d C=%02x%02x%02x%02x%02x%02x%02x%02x"
@@ -777,10 +779,10 @@ chap_radius_authenticate(chap *_this, int id, char *username,
 
 		md5response[0] = _this->challid;
 		memcpy(&md5response[1], response, 16);
-		if (radius_put_raw_attr(radpkt, 
+		if (radius_put_raw_attr(radpkt,
 		    RADIUS_TYPE_CHAP_PASSWORD, md5response, 17) != 0)
 			goto fail;
-		if (radius_put_raw_attr(radpkt, 
+		if (radius_put_raw_attr(radpkt,
 		    RADIUS_TYPE_CHAP_CHALLENGE, challenge, 16) != 0)
 			goto fail;
 		break;

@@ -1,3 +1,5 @@
+/* $OpenBSD: fsm.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /**@file
  * This file was adapted from NetBSD:/usr/src/usr.sbin/pppd/pppd/fsm.c
  */
@@ -72,7 +74,7 @@ __RCSID("$NetBSD: fsm.c,v 1.13 2000/09/23 22:39:35 christos Exp $");
 #define	FSMDEBUG(x)	fsm_log x
 #define	FSM_ASSERT(x)	ASSERT(x)
 #else
-#define	FSMDEBUG(x)	
+#define	FSMDEBUG(x)
 #define	FSM_ASSERT(x)
 #endif
 
@@ -383,28 +385,28 @@ fsm_input(f, inpacket, l)
     case CONFREQ:
 	fsm_rconfreq(f, id, inp, len);
 	break;
-    
+
     case CONFACK:
 	fsm_rconfack(f, id, inp, len);
 	break;
-    
+
     case CONFNAK:
     case CONFREJ:
 	fsm_rconfnakrej(f, code, id, inp, len);
 	break;
-    
+
     case TERMREQ:
 	fsm_rtermreq(f, id, inp, len);
 	break;
-    
+
     case TERMACK:
 	fsm_rtermack(f);
 	break;
-    
+
     case CODEREJ:
 	fsm_rcoderej(f, inp, len);
 	break;
-    
+
     default:
 	if( !f->callbacks->extcode
 	   || !(*f->callbacks->extcode)(f, code, id, inp, len) )
@@ -778,7 +780,7 @@ fsm_sconfreq(f, retransmit)
 	if (f->callbacks->addci)
 	    (*f->callbacks->addci)(f, outp, &cilen);
     } else
-	cilen = 0; 
+	cilen = 0;
 
     /* send the request to our peer */
     fsm_sdata(f, CONFREQ, f->reqid, outp, cilen);

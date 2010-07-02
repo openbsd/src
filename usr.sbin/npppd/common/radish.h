@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -68,7 +68,7 @@ struct radish {
 };
 
 struct radish_head {
-	int 	rdh_slen;	/* socket address length */	
+	int 	rdh_slen;	/* socket address length */
 	int 	rdh_offset;	/* address start byte */
 	int 	rdh_alen;	/* address length */
 	void 	*rdh_masks;
@@ -110,7 +110,7 @@ int rd_insert __P((struct sockaddr *, struct sockaddr *,
 int rd_glue __P((struct radish *, struct radish *, int, struct radish_head *));
 int rd_match __P((struct sockaddr *, struct radish_head *, struct radish **));
 int rd_match_next __P((struct sockaddr *, struct radish_head *, struct radish **, struct radish *));
-#ifndef GENERIC_USE 
+#ifndef GENERIC_USE
 struct rtentry *rd_lookup __P((struct sockaddr *,
 			      struct sockaddr *, struct radish_head *));
 int rd_delete __P((struct sockaddr *, struct sockaddr *,

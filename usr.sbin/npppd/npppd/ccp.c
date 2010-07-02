@@ -1,3 +1,5 @@
+/* $OpenBSD: ccp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +28,7 @@
 /**@file
  * This file provides functions for CCP (Compression Control Protocol).
  * MPPE is supported as a CCP option.
- * $Id: ccp.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $
+ * $Id: ccp.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,7 +49,7 @@
 #define	CCPDEBUG(x)	fsm_log(x)
 #define	CCP_ASSERT(x)	ASSERT(x)
 #else
-#define	CCPDEBUG(x)	
+#define	CCPDEBUG(x)
 #define	CCP_ASSERT(x)
 #endif
 
@@ -250,7 +252,7 @@ ccp_addci(fsm *f, u_char *pktp, int *lpktp)
 		PUTLONG(f->ppp->ccp.mppe_o_bits, pktp);
 
 		*lpktp = pktp - pktp0;
-	} else 
+	} else
 		*lpktp = 0;
 }
 
@@ -309,8 +311,8 @@ ccp_nackackci(fsm *f, u_char *pktp, int lpkt, int is_nak, int is_rej)
 			}
 			GETLONG(peer_bits, pktp);
 			/*
-			 * With Yamaha RTX-1000 that is configured as 
-			 * "ppp ccp mppe-any", 
+			 * With Yamaha RTX-1000 that is configured as
+			 * "ppp ccp mppe-any",
 			 *
 			 *	npppd ConfReq (40,56,128) => RTX 1000
 			 *	npppd <= (40,128) ConfNAK    RTX 1000
@@ -321,7 +323,7 @@ ccp_nackackci(fsm *f, u_char *pktp, int lpkt, int is_nak, int is_rej)
 			 * the longest bit if our request is nacked.
 			 */
 			our_bits = mppe_create_our_bits(&ppp->mppe, peer_bits);
-			if (peer_bits == our_bits || is_nak) 
+			if (peer_bits == our_bits || is_nak)
 				ppp->ccp.mppe_o_bits = our_bits;
 
 			break;

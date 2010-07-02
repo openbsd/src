@@ -1,4 +1,5 @@
-/*	$OpenBSD: pptp.h,v 1.3 2010/07/01 03:38:17 yasuoka Exp $	*/
+/* $OpenBSD: pptp.h,v 1.4 2010/07/02 21:20:57 yasuoka Exp $	*/
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.

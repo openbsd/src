@@ -1,3 +1,5 @@
+/* $OpenBSD: npppd_tun.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -186,7 +188,7 @@ npppd_tundev_io_event_handler(int fd, short evtype, void *data)
 				    _this->tun_minor);
 			else if (errno == EAGAIN)
 				break;
-			else 
+			else
 				log_printf(LOG_ERR, "tun%d file is closed",
 				    _this->tun_minor);
 			npppd_tundev_stop(_this);
@@ -212,6 +214,6 @@ npppd_tundev_write(npppd *_this, uint8_t *pktp, int lpktp)
 	err = write(_this->tun_file, pktp, lpktp);
 
 	if (err != lpktp)
-		log_printf(LOG_ERR, "tun%d write failed in %s(): %m", 
+		log_printf(LOG_ERR, "tun%d write failed in %s(): %m",
 		    _this->tun_minor, __func__);
 }

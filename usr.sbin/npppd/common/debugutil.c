@@ -195,7 +195,7 @@ copy_loop:
 	    && LOG_PRI(prio) < countof(prio_name_idx)
 	    && prio_name_idx[LOG_PRI(prio)] != NULL);
 	ftell(debugfp);
-	fprintf(debugfp, 
+	fprintf(debugfp,
 	    "%04d-%02d-%02d %02d:%02d:%02d:%s: "
 	    , lt->tm_year + 1900
 	    , lt->tm_mon + 1
@@ -275,7 +275,7 @@ show_hd(FILE *file, const u_char *buf, int len)
 				    asciibuf);
 			else
 				syslog(LOG_ERR, "%-47s  |%s|\n", linebuf,
-				    asciibuf); 
+				    asciibuf);
 			memset(asciibuf, ' ', sizeof(asciibuf));
 			asciibuf[sizeof(asciibuf)-1] = '\0';
 			o = 0;
@@ -299,7 +299,7 @@ show_hd(FILE *file, const u_char *buf, int len)
 		if (file)
 			fprintf(file, "\t%-47s  |%s|\n", linebuf, asciibuf);
 		else
-			syslog(LOG_ERR, "%-47s  |%s|\n", linebuf, asciibuf); 
+			syslog(LOG_ERR, "%-47s  |%s|\n", linebuf, asciibuf);
 	}
 	if (file)
 		fflush(file);

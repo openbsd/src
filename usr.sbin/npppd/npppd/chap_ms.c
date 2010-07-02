@@ -1,3 +1,5 @@
+/* $OpenBSD: chap_ms.c,v 1.3 2010/07/02 21:20:57 yasuoka Exp $ */
+
 /*-
  * Copyright (c) 1997        Gabor Kincses <gabor@acm.org>
  *               1997 - 2001 Brian Somers <brian@Awfulhak.org>
@@ -145,7 +147,7 @@ ChallengeResponse(u_char *challenge, u_char *pwHash, u_char *response)
 
 void
 NtPasswordHash(char *key, int keylen, char *hash)
-{ 
+{
   MD4_CTX MD4context;
 
   MD4Init(&MD4context);
@@ -155,7 +157,7 @@ NtPasswordHash(char *key, int keylen, char *hash)
 
 void
 HashNtPasswordHash(char *hash, char *hashhash)
-{ 
+{
   MD4_CTX MD4context;
 
   MD4Init(&MD4context);
@@ -172,14 +174,14 @@ ChallengeHash(char *PeerChallenge, char *AuthenticatorChallenge,
   char *Name;
 
   Name = strrchr(UserName, '\\');
-  if(NULL == Name) 
+  if(NULL == Name)
     Name = UserName;
   else
     Name++;
 
   SHA1_Init(&Context);
 
-  SHA1_Update(&Context, PeerChallenge, 16); 
+  SHA1_Update(&Context, PeerChallenge, 16);
   SHA1_Update(&Context, AuthenticatorChallenge, 16);
   SHA1_Update(&Context, Name, strlen(Name));
 
@@ -268,7 +270,7 @@ GenerateAuthenticatorResponse(char *Password, int PasswordLen,
   SHA1_Update(&Context, NTResponse, 24);
   SHA1_Update(&Context, Magic1, 39);
   SHA1_Final(Digest, &Context);
-  ChallengeHash(PeerChallenge, AuthenticatorChallenge, UserName, UserNameLen, 
+  ChallengeHash(PeerChallenge, AuthenticatorChallenge, UserName, UserNameLen,
                 Challenge);
   SHA1_Init(&Context);
   SHA1_Update(&Context, Digest, 20);
@@ -289,7 +291,7 @@ GenerateAuthenticatorResponse(char *Password, int PasswordLen,
     AuthenticatorResponse[i] = toupper((unsigned char)AuthenticatorResponse[i]);
 
 }
- 
+
 void
 GetMasterKey(char *PasswordHashHash, char *NTResponse, char *MasterKey)
 {
