@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.82 2010/07/02 01:25:06 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.83 2010/07/02 23:12:38 thib Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -795,7 +795,7 @@ uvm_km_thread(void *arg)
 
 		/* Cleanup left-over pages (if any). */
 		for (; i < nitems(pg); i++)
-			uvm_km_free_wakeup(kernel_map, pg[i], PAGE_SIZE);
+			uvm_km_free(kernel_map, pg[i], PAGE_SIZE);
 	}
 }
 #endif
@@ -885,7 +885,7 @@ uvm_km_putpage(void *v)
 	mtx_leave(&uvm_km_pages.mtx);
 
 	if (freeva)
-		uvm_km_free_wakeup(kernel_map, va, PAGE_SIZE);
+		uvm_km_free(kernel_map, va, PAGE_SIZE);
 #endif	/* !__HAVE_PMAP_DIRECT */
 
 	uvm_pagefree(pg);
