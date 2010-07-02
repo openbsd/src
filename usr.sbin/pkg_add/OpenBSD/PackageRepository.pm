@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.83 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.84 2010/07/02 11:17:46 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -39,8 +39,8 @@ sub baseurl
 
 sub new
 {
-	my ($class, $baseurl) = @_;
-	my $o = $class->parse(\$baseurl);
+	my ($class, $baseurl, $state) = @_;
+	my $o = $class->parse(\$baseurl, $state);
 	if ($baseurl ne '') {
 		return undef;
 	}
@@ -73,40 +73,49 @@ OpenBSD::Handler->register($cleanup);
 
 sub parse_fullurl
 {
-	my ($class, $r) = @_;
+	my ($class, $r, $state) = @_;
 
 	$class->strip_urlscheme($r) or return undef;
-	return $class->unique($class->parse_url($r));
+	return $class->unique($class->parse_url($r, $state));
 }
+
+sub ftp() { 'OpenBSD::PackageRepository::FTP' }
+sub http() { 'OpenBSD::PackageRepository::HTTP' }
+sub https() { 'OpenBSD::PackageRepository::HTTPS' }
+sub scp() { 'OpenBSD::PackageRepository::SCP' }
+sub source() { 'OpenBSD::PackageRepository::Source' }
+sub file() { 'OpenBSD::PackageRepository::Local' }
+sub installed() { 'OpenBSD::PackageRepository::Installed' }
+sub pipe() { 'OpenBSD::PackageRepository::Local::Pipe' }
 
 sub parse
 {
-	my ($class, $r) = @_;
+	my ($class, $r, $state) = @_;
 	my $_ = $$r;
 	return undef if $_ eq '';
 
 	if (m/^ftp\:/io) {
-		return OpenBSD::PackageRepository::FTP->parse_fullurl($r);
+		return $class->ftp->parse_fullurl($r, $state);
 	} elsif (m/^http\:/io) {
-		return OpenBSD::PackageRepository::HTTP->parse_fullurl($r);
+		return $class->http->parse_fullurl($r, $state);
 	} elsif (m/^https\:/io) {
-		return OpenBSD::PackageRepository::HTTPS->parse_fullurl($r);
+		return $class->https->parse_fullurl($r, $state);
 	} elsif (m/^scp\:/io) {
 		require OpenBSD::PackageRepository::SCP;
 
-		return OpenBSD::PackageRepository::SCP->parse_fullurl($r);
+		return $class->scp->parse_fullurl($r, $state);
 	} elsif (m/^src\:/io) {
 		require OpenBSD::PackageRepository::Source;
 
-		return OpenBSD::PackageRepository::Source->parse_fullurl($r);
+		return $class->source->parse_fullurl($r, $state);
 	} elsif (m/^file\:/io) {
-		return OpenBSD::PackageRepository::Local->parse_fullurl($r);
+		return $class->file->parse_fullurl($r, $state);
 	} elsif (m/^inst\:$/io) {
-		return OpenBSD::PackageRepository::Installed->parse_fullurl($r);
+		return $class->installed->parse_fullurl($r, $state);
 	} elsif (m/^pipe\:$/io) {
-		return OpenBSD::PackageRepository::Local::Pipe->parse_fullurl($r);
+		return $class->pipe->parse_fullurl($r, $state);
 	} else {
-		return OpenBSD::PackageRepository::Local->parse_fullurl($r);
+		return $class->file->parse_fullurl($r, $state);
 	}
 }
 
@@ -283,12 +292,12 @@ sub pkg_db
 
 sub parse_fullurl
 {
-	my ($class, $r) = @_;
+	my ($class, $r, $state) = @_;
 
 	my $ok = $class->strip_urlscheme($r);
-	my $o = $class->parse_url($r);
-	if (!$ok && $o->{path} eq $class->pkg_db()."/") {
-		return OpenBSD::PackageRepository::Installed->new;
+	my $o = $class->parse_url($r, $state);
+	if (!$ok && $o->{path} eq $class->pkg_db."/") {
+		return $class->installed->new(0, $state);
 	} else {
 		return $class->unique($o);
 	}
@@ -378,11 +387,10 @@ sub may_exist
 	return 1;
 }
 
-my $s = bless {}, __PACKAGE__;
-
 sub new
 {
-	return $s;
+	my ($class, $state) = @_;
+	return bless { state => $state}, $class;
 }
 
 sub open_pipe
@@ -419,13 +427,13 @@ sub baseurl
 
 sub parse_url
 {
-	my ($class, $r) = @_;
+	my ($class, $r, $state) = @_;
 	# same heuristics as ftp(1):
 	# find host part, rest is parsed as a local url
 	if (my ($host, $path) = $$r =~ m/^\/\/(.*?)(\/.*)$/) {
 
 		$$r = $path;
-		my $o = $class->SUPER::parse_url($r);
+		my $o = $class->SUPER::parse_url($r, $state);
 		$o->{host} = $host;
 		return $o;
 	} else {

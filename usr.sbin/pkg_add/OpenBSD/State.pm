@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.10 2010/06/30 11:32:20 espie Exp $
+# $OpenBSD: State.pm,v 1.11 2010/07/02 11:17:46 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -31,7 +31,7 @@ sub installed
 	my ($self, $all) = @_;
 	require OpenBSD::PackageRepository::Installed;
 
-	return OpenBSD::PackageRepository::Installed->new($all);
+	return OpenBSD::PackageRepository::Installed->new($all, $self->{state});
 }
 
 sub path_parse
@@ -39,7 +39,7 @@ sub path_parse
 	my ($self, $pkgname) = @_;
 	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->path_parse($pkgname);
+	return OpenBSD::PackageLocator->path_parse($pkgname, $self->{state});
 }
 
 sub find
@@ -47,7 +47,7 @@ sub find
 	my ($self, $pkg, $arch) = @_;
 	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->find($pkg, $arch);
+	return OpenBSD::PackageLocator->find($pkg, $arch, $self->{state});
 }
 
 sub match_locations
@@ -55,15 +55,15 @@ sub match_locations
 	my $self = shift;
 	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->match_locations(@_);
+	return OpenBSD::PackageLocator->match_locations(@_, $self->{state});
 }
 
 sub grabPlist
 {
-	my $self = shift;
+	my ($self, $url, $arch, $code) = @_;
 	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->grabPlist(@_);
+	return OpenBSD::PackageLocator->grabPlist($url, $arch, $code, $self->{state});
 }
 
 sub path
@@ -71,7 +71,7 @@ sub path
 	my $self = shift;
 	require OpenBSD::PackageRepositoryList;
 
-	return OpenBSD::PackageRepositoryList->new;
+	return OpenBSD::PackageRepositoryList->new($self->{state});
 }
 
 # common routines to everything state.

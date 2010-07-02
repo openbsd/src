@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.92 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.93 2010/07/02 11:17:46 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -28,71 +28,64 @@ my $default_path;
 sub default_path
 {
 	if (!defined $default_path) {
-		$default_path = OpenBSD::PackageRepositoryList->new;
+		my $state = shift;
+		$default_path = OpenBSD::PackageRepositoryList->new($state);
 
 		if (defined $ENV{PKG_PATH}) {
 			my $v = $ENV{PKG_PATH};
 			$v =~ s/^\:+//o;
 			$v =~ s/\:+$//o;
-			while (my $o = OpenBSD::PackageRepository->parse(\$v)) {
+			while (my $o = OpenBSD::PackageRepository->parse(\$v, $state)) {
 				$default_path->add($o);
 			}
 		} else {
-			$default_path->add(OpenBSD::PackageRepository->new("./"));
+			$default_path->add(OpenBSD::PackageRepository->new("./", $state));
 		}
 
 	}
 	return $default_path;
 }
 
-my $singleton;
-
-sub new
-{
-	my ($class, $state) = @_;
-	return $singleton //= bless { state => $state }, $class;
-}
-
 sub path_parse
 {
-	my ($self, $pkgname, $path) = (@_, './');
+	my ($self, $pkgname, $path, $state) = (@_, './');
 	if ($pkgname =~ m/^(.*[\/\:])(.*)/) {
 		($pkgname, $path) = ($2, $1);
 	}
 
-	return (OpenBSD::PackageRepository->new($path), $pkgname);
+	return (OpenBSD::PackageRepository->new($path, $state), $pkgname);
 }
 
 sub find
 {
-	my ($self, $_, $arch) = @_;
+	my ($self, $_, $arch, $state) = @_;
 
 	my $package;
 	if (m/[\/\:]/o) {
-		my ($repository, $pkgname) = $self->path_parse($_);
+		my ($repository, $pkgname) = $self->path_parse($_, $state);
 		$package = $repository->find($pkgname, $arch);
 		if (defined $package) {
-			$self->default_path->add($repository);
+			$self->default_path($state)->add($repository);
 		}
 	} else {
-		$package = $self->default_path->find($_, $arch);
+		$package = $self->default_path($state)->find($_, $arch);
 	}
 	return $package;
 }
 
 sub grabPlist
 {
-	my ($self, $_, $arch, $code) = @_;
+	my ($self, $_, $arch, $code, $state) = @_;
 
 	my $plist;
 	if (m/[\/\:]/o) {
-		my ($repository, $pkgname) = $self->path_parse($_);
+		my ($repository, $pkgname) = $self->path_parse($_, $state);
 		$plist = $repository->grabPlist($pkgname, $arch, $code);
 		if (defined $plist) {
-			$self->default_path->add($repository);
+			$self->default_path($state)->add($repository);
 		}
 	} else {
-		$plist = $self->default_path->grabPlist($_, $arch, $code);
+		$plist = $self->default_path($state)->grabPlist($_, $arch, $code);
 	}
 	return $plist;
 }
@@ -100,7 +93,8 @@ sub grabPlist
 sub match_locations
 {
 	my ($self, @search) = @_;
-	return $self->default_path->match_locations(@search);
+	my $state = pop @search;
+	return $self->default_path($state)->match_locations(@search);
 }
 
 1;

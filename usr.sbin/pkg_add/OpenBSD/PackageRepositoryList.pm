@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.25 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.26 2010/07/02 11:17:46 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -22,8 +22,8 @@ package OpenBSD::PackageRepositoryList;
 
 sub new
 {
-	my $class = shift;
-	return bless {l => [], k => {}}, $class;
+	my ($class, $state) = @_;
+	return bless {l => [], k => {}, state => $state}, $class;
 }
 
 sub filter_new
@@ -54,7 +54,7 @@ sub do_something
 {
 	my ($self, $do, $pkgname, @args) = @_;
 	if ($pkgname eq '-') {
-		return OpenBSD::PackageRepository::Local::Pipe->new->$do($pkgname, @args);
+		return OpenBSD::PackageRepository->pipe->new($self->{state})->$do($pkgname, @args);
 	}
 	for my $repo (@{$self->{l}}) {
 		my $r = $repo->$do($pkgname, @args);
