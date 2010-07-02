@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.52 2010/07/01 03:00:14 maja Exp $ */
+/*	$OpenBSD: util.c,v 1.53 2010/07/02 15:47:58 chl Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -30,6 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
