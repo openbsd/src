@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.h,v 1.3 2010/07/01 18:37:12 martinh Exp $ */
+/*	$OpenBSD: schema.h,v 1.4 2010/07/02 05:23:40 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -117,7 +117,7 @@ struct schema
 	struct oidname_tree	 attr_names;
 	struct object_tree	 objects;
 	struct oidname_tree	 object_names;
-	struct symoid_tree		 symbolic_oids;
+	struct symoid_tree	 symbolic_oids;
 
 	FILE			*fp;
 	const char		*filename;
@@ -130,6 +130,10 @@ struct schema
 struct schema		*schema_new(void);
 int			 schema_parse(struct schema *schema,
 			    const char *filename);
+int			 schema_dump_object(struct object *obj,
+			    char *buf, size_t size);
+int			 schema_dump_attribute(struct attr_type *obj,
+			    char *buf, size_t size);
 
 struct attr_type	*lookup_attribute_by_oid(struct schema *schema, char *oid);
 struct attr_type	*lookup_attribute_by_name(struct schema *schema, char *name);

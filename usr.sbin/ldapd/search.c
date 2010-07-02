@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.9 2010/07/01 02:19:11 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.10 2010/07/02 05:23:40 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -65,13 +65,10 @@ is_operational(char *adesc)
 /* Return true if attr should be included in search entry.
  */
 static int
-should_include_attribute(struct ber_element *attr, struct search *search)
+should_include_attribute(char *adesc, struct search *search, int explicit)
 {
-	char			*adesc, *fdesc;
+	char			*fdesc;
 	struct ber_element	*elm;
-
-	if (ber_get_string(attr->be_sub, &adesc) != 0)
-		return 0;
 
 	if (search->attrlist->be_sub->be_encoding == BER_TYPE_EOC) {
 		/* An empty list with no attributes requests the return of
@@ -86,7 +83,8 @@ should_include_attribute(struct ber_element *attr, struct search *search)
 			return 1;
 		if (strcmp(fdesc, "*") == 0 && !is_operational(adesc))
 			return 1;
-		if (strcmp(fdesc, "+") == 0 && is_operational(adesc))
+		if (strcmp(fdesc, "+") == 0 && is_operational(adesc) &&
+		    !explicit)
 			return 1;
 	}
 
@@ -101,6 +99,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	struct conn		*conn = search->conn;
 	struct ber_element	*root, *elm, *filtered_attrs = NULL, *link, *a;
 	struct ber_element	*prev, *next;
+	char			*adesc;
 	void			*buf;
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
@@ -111,7 +110,9 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	link = filtered_attrs;
 
 	for (prev = NULL, a = attrs->be_sub; a; a = next) {
-		if (should_include_attribute(a, search)) {
+		if (ber_get_string(a->be_sub, &adesc) != 0)
+			goto fail;
+		if (should_include_attribute(adesc, search, 0)) {
 			next = a->be_next;
 			if (prev != NULL)
 				prev->be_next = a->be_next;	/* unlink a */
@@ -525,7 +526,11 @@ ldap_search_root_dse(struct search *search)
 static void
 ldap_search_subschema(struct search *search)
 {
+	char			buf[1024];
 	struct ber_element	*root, *elm, *key, *val;
+	struct object		*obj;
+	struct attr_type	*at;
+	int			 rc;
 
 	if ((root = ber_add_sequence(NULL)) == NULL) {
 		return;
@@ -552,10 +557,41 @@ ldap_search_subschema(struct search *search)
 	val = ber_add_set(key);
 	ber_add_string(val, "cn=schema");
 
+	if (should_include_attribute("objectClasses", search, 1)) {
+		elm = ber_add_sequence(elm);
+		key = ber_add_string(elm, "objectClasses");
+		val = ber_add_set(key);
+
+		RB_FOREACH(obj, object_tree, &conf->schema->objects) {
+			if (schema_dump_object(obj, buf, sizeof(buf)) != 0) {
+				rc = LDAP_OTHER;
+				goto done;
+			}
+			val = ber_add_string(val, buf);
+		}
+	}
+
+	if (should_include_attribute("attributeTypes", search, 1)) {
+		elm = ber_add_sequence(elm);
+		key = ber_add_string(elm, "attributeTypes");
+		val = ber_add_set(key);
+
+		RB_FOREACH(at, attr_type_tree, &conf->schema->attr_types) {
+			if (schema_dump_attribute(at, buf, sizeof(buf)) != 0) {
+				rc = LDAP_OTHER;
+				goto done;
+			}
+			val = ber_add_string(val, buf);
+		}
+	}
+
 	search_result("cn=schema", 9, root, search);
+	rc = LDAP_SUCCESS;
+
+done:
 	ber_free_elements(root);
 	send_ldap_result(search->conn, search->req->msgid,
-	    LDAP_RES_SEARCH_RESULT, LDAP_SUCCESS);
+	    LDAP_RES_SEARCH_RESULT, rc);
 	search_close(search);
 }
 
@@ -734,8 +770,7 @@ ldap_search(struct request *req)
 	    &search->tmlim,
 	    &search->typesonly,
 	    &search->filter,
-	    &search->attrlist) != 0)
-	{
+	    &search->attrlist) != 0) {
 		log_warnx("failed to parse search request");
 		reason = LDAP_PROTOCOL_ERROR;
 		goto done;

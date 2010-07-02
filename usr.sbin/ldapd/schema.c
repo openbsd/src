@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.7 2010/07/02 00:42:50 martinh Exp $ */
+/*	$OpenBSD: schema.c,v 1.8 2010/07/02 05:23:40 martinh Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -681,6 +681,7 @@ schema_parse_attributetype(struct schema *schema)
 		log_warn("calloc");
 		goto fail;
 	}
+	attr->usage = USAGE_USER_APP;
 
 	if (is_oidstr(kw))
 		attr->oid = kw;
@@ -997,5 +998,241 @@ schema_parse(struct schema *schema, const char *filename)
 	schema->filename = NULL;
 
 	return ret;
+}
+
+static int
+schema_dump_names(const char *desc, struct name_list *nlist,
+    char *buf, size_t size)
+{
+	struct name	*name;
+
+	if (nlist == NULL || SLIST_EMPTY(nlist))
+		return 0;
+
+	if (strlcat(buf, " ", size) >= size ||
+	    strlcat(buf, desc, size) >= size)
+		return -1;
+
+	name = SLIST_FIRST(nlist);
+	if (SLIST_NEXT(name, next) == NULL) {
+		/* single name, no parenthesis */
+		if (strlcat(buf, " '", size) >= size ||
+		    strlcat(buf, name->name, size) >= size ||
+		    strlcat(buf, "'", size) >= size)
+			return -1;
+	} else {
+		if (strlcat(buf, " ( ", size) >= size)
+			return -1;
+		SLIST_FOREACH(name, nlist, next)
+			if (strlcat(buf, "'", size) >= size ||
+			    strlcat(buf, name->name, size) >= size ||
+			    strlcat(buf, "' ", size) >= size)
+				return -1;
+		if (strlcat(buf, ")", size) >= size)
+			return -1;
+	}
+
+	return 0;
+}
+
+static int
+schema_dump_attrlist(const char *desc, struct attr_list *alist,
+    char *buf, size_t size)
+{
+	struct attr_ptr		*aptr;
+
+	if (alist == NULL || SLIST_EMPTY(alist))
+		return 0;
+
+	if (strlcat(buf, " ", size) >= size ||
+	    strlcat(buf, desc, size) >= size)
+		return -1;
+
+	aptr = SLIST_FIRST(alist);
+	if (SLIST_NEXT(aptr, next) == NULL) {
+		/* single attribute, no parenthesis */
+		if (strlcat(buf, " ", size) >= size ||
+		    strlcat(buf, ATTR_NAME(aptr->attr_type), size) >= size)
+			return -1;
+	} else {
+		if (strlcat(buf, " ( ", size) >= size)
+			return -1;
+		SLIST_FOREACH(aptr, alist, next) {
+			if (strlcat(buf, ATTR_NAME(aptr->attr_type),
+			    size) >= size ||
+			    strlcat(buf, " ", size) >= size)
+				return -1;
+			if (SLIST_NEXT(aptr, next) != NULL &&
+			    strlcat(buf, "$ ", size) >= size)
+				return -1;
+		}
+		if (strlcat(buf, ")", size) >= size)
+			return -1;
+	}
+
+	return 0;
+}
+
+static int
+schema_dump_objlist(const char *desc, struct obj_list *olist,
+    char *buf, size_t size)
+{
+	struct obj_ptr		*optr;
+
+	if (olist == NULL || SLIST_EMPTY(olist))
+		return 0;
+
+	if (strlcat(buf, " ", size) >= size ||
+	    strlcat(buf, desc, size) >= size)
+		return -1;
+
+	optr = SLIST_FIRST(olist);
+	if (SLIST_NEXT(optr, next) == NULL) {
+		/* single attribute, no parenthesis */
+		if (strlcat(buf, " ", size) >= size ||
+		    strlcat(buf, OBJ_NAME(optr->object), size) >= size)
+			return -1;
+	} else {
+		if (strlcat(buf, " ( ", size) >= size)
+			return -1;
+		SLIST_FOREACH(optr, olist, next) {
+			if (strlcat(buf, OBJ_NAME(optr->object), size) >= size ||
+			    strlcat(buf, " ", size) >= size)
+				return -1;
+			if (SLIST_NEXT(optr, next) != NULL &&
+			    strlcat(buf, "$ ", size) >= size)
+				return -1;
+		}
+		if (strlcat(buf, ")", size) >= size)
+			return -1;
+	}
+
+	return 0;
+}
+
+int
+schema_dump_object(struct object *obj, char *buf, size_t size)
+{
+	if (strlcpy(buf, "( ", size) >= size ||
+	    strlcat(buf, obj->oid, size) >= size)
+		return -1;
+
+	if (schema_dump_names("NAME", obj->names, buf, size) != 0)
+		return -1;
+
+	if (obj->desc != NULL)
+		if (strlcat(buf, " DESC '", size) >= size ||
+		    strlcat(buf, obj->desc, size) >= size ||
+		    strlcat(buf, "'", size) >= size)
+			return -1;
+
+	switch (obj->kind) {
+	case KIND_STRUCTURAL:
+		if (strlcat(buf, " STRUCTURAL", size) >= size)
+			return -1;
+		break;
+	case KIND_ABSTRACT:
+		if (strlcat(buf, " ABSTRACT", size) >= size)
+			return -1;
+		break;
+	case KIND_AUXILIARY:
+		if (strlcat(buf, " AUXILIARY", size) >= size)
+			return -1;
+		break;
+	}
+
+	if (schema_dump_objlist("SUP", obj->sup, buf, size) != 0)
+		return -1;
+
+	if (obj->obsolete && strlcat(buf, " OBSOLETE", size) >= size)
+		return -1;
+
+	if (schema_dump_attrlist("MUST", obj->must, buf, size) != 0)
+		return -1;
+
+	if (schema_dump_attrlist("MAY", obj->may, buf, size) != 0)
+		return -1;
+
+	if (strlcat(buf, " )", size) >= size)
+		return -1;
+
+	return 0;
+}
+
+int
+schema_dump_attribute(struct attr_type *at, char *buf, size_t size)
+{
+	if (strlcpy(buf, "( ", size) >= size ||
+	    strlcat(buf, at->oid, size) >= size)
+		return -1;
+
+	if (schema_dump_names("NAME", at->names, buf, size) != 0)
+		return -1;
+
+	if (at->desc != NULL)
+		if (strlcat(buf, " DESC ", size) >= size ||
+		    strlcat(buf, at->desc, size) >= size ||
+		    strlcat(buf, "'", size) >= size)
+			return -1;
+
+	if (at->obsolete && strlcat(buf, " OBSOLETE", size) >= size)
+		return -1;
+
+	if (at->sup != NULL)
+		if (strlcat(buf, " SUP ", size) >= size ||
+		    strlcat(buf, ATTR_NAME(at->sup), size) >= size)
+			return -1;
+
+	if (at->equality != NULL)
+		if (strlcat(buf, " EQUALITY ", size) >= size ||
+		    strlcat(buf, at->equality, size) >= size)
+			return -1;
+
+	if (at->ordering != NULL)
+		if (strlcat(buf, " ORDERING ", size) >= size ||
+		    strlcat(buf, at->ordering, size) >= size)
+			return -1;
+
+	if (at->substr != NULL)
+		if (strlcat(buf, " SUBSTR ", size) >= size ||
+		    strlcat(buf, at->substr, size) >= size)
+			return -1;
+
+	if (at->syntax != NULL)
+		if (strlcat(buf, " SYNTAX ", size) >= size ||
+		    strlcat(buf, at->syntax, size) >= size)
+			return -1;
+
+	if (at->single && strlcat(buf, " SINGLE-VALUE", size) >= size)
+		return -1;
+
+	if (at->collective && strlcat(buf, " COLLECTIVE", size) >= size)
+		return -1;
+
+	if (at->immutable && strlcat(buf, " NO-USER-MODIFICATION", size) >= size)
+		return -1;
+
+	switch (at->usage) {
+	case USAGE_USER_APP:
+		/* User application usage is the default. */
+		break;
+	case USAGE_DIR_OP:
+		if (strlcat(buf, " USAGE directoryOperation", size) >= size)
+			return -1;
+		break;
+	case USAGE_DIST_OP:
+		if (strlcat(buf, " USAGE distributedOperation", size) >= size)
+			return -1;
+		break;
+	case USAGE_DSA_OP:
+		if (strlcat(buf, " USAGE dSAOperation", size) >= size)
+			return -1;
+		break;
+	}
+
+	if (strlcat(buf, " )", size) >= size)
+		return -1;
+
+	return 0;
 }
 
