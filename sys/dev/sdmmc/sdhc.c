@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.26 2010/07/02 09:21:58 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.27 2010/07/02 18:05:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -272,6 +272,8 @@ sdhc_power(int why, void *arg)
 			for (i = 0; i < sizeof hp->regs; i++)
 				hp->regs[i] = HREAD1(hp, i);
 		}
+		config_activate_children((struct device *)sc,
+		    DVACT_SUSPEND);
 		break;
 
 	case PWR_RESUME:

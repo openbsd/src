@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.21 2010/07/02 09:21:58 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.22 2010/07/02 18:05:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -150,8 +150,12 @@ sdmmc_activate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_SUSPEND:
+		/* If card in slot, cause a detach/re-attach */
+		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT))
+			sc->sc_dying = -1;
+		break;
 	case DVACT_RESUME:
-		sc->sc_dying = -1;	/* "bump" the task for a retry */
 		wakeup(&sc->sc_tskq);
 		break;
 	}
