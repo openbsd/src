@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.505 2010/07/01 03:31:08 jsg Exp $
+$OpenBSD: usbdevs,v 1.506 2010/07/02 15:32:28 sobrado Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1874,6 +1874,7 @@ product HYUNDAI UM175		0x3714	UM175 EVDO
 
 /* IBM Corporation */
 product IBM OPTTRAVELMOUSE	0x3107	Optical
+product IBM OPTWHEELMOUSE	0x310b	Wheel
 product IBM USBCDROMDRIVE	0x4427	CD-ROM 
 product IBM THINKPADHUB		0x4484	Hub
 
