@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.93 2010/07/02 11:17:46 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.94 2010/07/02 11:41:30 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -28,7 +28,7 @@ my $default_path;
 sub default_path
 {
 	if (!defined $default_path) {
-		my $state = shift;
+		my ($self, $state) = @_;
 		$default_path = OpenBSD::PackageRepositoryList->new($state);
 
 		if (defined $ENV{PKG_PATH}) {
