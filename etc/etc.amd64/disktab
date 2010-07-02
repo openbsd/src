@@ -1,40 +1,4 @@
-#	$OpenBSD: disktab,v 1.9 2010/04/06 03:54:42 deraadt Exp $
-
-# Disk geometry and partition layout tables.
-# Key:
-#	dt	controller type
-#	ty	type of disk (fixed, removable, simulated)
-#	d[0-4]	drive-type-dependent parameters
-#	ns	#sectors/track
-#	nt	#tracks/cylinder
-#	nc	#cylinders/disk
-#	sc	#sectors/cylinder, ns*nt default
-#	su	#sectors/unit, sc*nc default
-#	se	sector size, DEV_BSIZE default
-#	rm	rpm, 3600 default
-#	sf	supports bad144-style bad sector forwarding
-#	sk	sector skew per track, default 0
-#	cs	sector skew per cylinder, default 0
-#	hs	headswitch time, default 0
-#	ts	one-cylinder seek time, default 0
-#	il	sector interleave (n:1), 1 default
-#	bs	boot block size, default BBSIZE
-#	sb	superblock size, default SBSIZE
-#	o[a-p]	partition offsets in sectors
-#	p[a-p]	partition sizes in sectors
-#	b[a-p]	partition block sizes in bytes
-#	f[a-p]	partition fragment sizes in bytes
-#	t[a-p]	partition types (filesystem, swap, etc)
-#
-# All partition sizes reserve space for bad sector tables.
-# (5 cylinders needed for maintenance + replacement sectors)
-#
-
-floppy576|3in|3.5in High Density Floppy, 5.76MB:\
-	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#160:\
-	:pa#11520:oa#0:ba#4096:fa#512:ta=4.2BSD: \
-	:pb#11520:ob#0:\
-	:pc#11520:oc#0:
+#	$OpenBSD: disktab,v 1.10 2010/07/02 20:33:54 tedu Exp $
 
 floppy288|3in|3.5in High Density Floppy, 2.88MB:\
 	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
@@ -47,12 +11,6 @@ floppy|floppy3|3in|3.5in High Density Floppy:\
 	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD: \
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
-
-floppy5|5in|5.25in High Density Floppy:\
-	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#15:nc#80:\
-	:pa#2400:oa#0:ba#4096:fa#512:ta=4.2BSD: \
-	:pb#2400:ob#0:bb#4096:fb#512:\
-	:pc#2400:oc#0:bc#4096:fc#512:
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=ramdisk:se#512:nt#2:ns#140:nc#16:\
