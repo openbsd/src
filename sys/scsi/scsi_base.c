@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.179 2010/07/01 22:20:01 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.180 2010/07/02 00:04:11 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -628,8 +628,8 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 {
 	struct scsi_read_capacity_16 rc16;
 	struct scsi_read_capacity rc;
-	struct scsi_read_cap_data_16 *rdcap16 = NULL;
-	struct scsi_read_cap_data *rdcap = NULL;
+	struct scsi_read_cap_data_16 *rdcap16;
+	struct scsi_read_cap_data *rdcap;
 	daddr64_t max_addr;
 	int error;
 
@@ -647,7 +647,8 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	rdcap = malloc(sizeof(*rdcap), M_TEMP, M_NOWAIT|M_ZERO);
+	rdcap = malloc(sizeof(*rdcap), M_TEMP, ((flags & SCSI_NOSLEEP) ? M_NOWAIT :
+	    M_WAITOK) | M_ZERO);
 	if (rdcap == NULL)
 		return (0);
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc, sizeof(rc),
@@ -677,7 +678,8 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	 rc16.byte2 = SRC16_SERVICE_ACTION;
 	 _lto4b(sizeof(*rdcap16), rc16.length);
 
-	rdcap16 = malloc(sizeof(*rdcap16), M_TEMP, M_NOWAIT|M_ZERO);
+	rdcap16 = malloc(sizeof(*rdcap16), M_TEMP, ((flags & SCSI_NOSLEEP) ?
+	    M_NOWAIT : M_WAITOK) | M_ZERO);
 	if (rdcap16 == NULL)
 		return (0);
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc16,
