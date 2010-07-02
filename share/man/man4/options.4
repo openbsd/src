@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.200 2010/07/01 17:26:52 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.201 2010/07/02 20:00:54 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 1 2010 $
+.Dd $Mdocdate: July 2 2010 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -130,14 +130,6 @@ and
 system calls which were replaced in
 .Ox 4.4
 when struct stat was expanded.
-.It Cd option COMPAT_SUNOS
-On those architectures that support it, this enables binary
-compatibility with
-.Em SunOS 4.x
-applications built for the same architecture.
-This option is supported on sparc and all m68k architectures.
-See
-.Xr compat_sunos 8 .
 .It Cd option COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
