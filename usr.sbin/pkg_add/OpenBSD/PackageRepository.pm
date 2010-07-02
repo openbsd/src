@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.84 2010/07/02 11:17:46 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.85 2010/07/02 11:44:14 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -270,6 +270,26 @@ sub add_to_list
 	}
 }
 
+sub did_it_fork
+{
+	my ($self, $pid) = @_;
+	if (!defined $pid) {
+		$self->{state}->fatal("Cannot fork: #1", $!);
+	}
+}
+
+sub exec_gunzip
+{
+	my $self = shift;
+	exec {OpenBSD::Paths->gzip}
+	    ("gzip",
+	    "-d",
+	    "-c",
+	    "-q",
+	    @_)
+	or $self->{state}->fatal("Can't run gzip: #1", $!);
+}
+
 package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
 use OpenBSD::Error;
@@ -331,21 +351,12 @@ sub open_pipe
 		$self->may_copy($object, $ENV{'PKG_CACHE'});
 	}
 	my $pid = open(my $fh, "-|");
-	if (!defined $pid) {
-		die "Cannot fork: $!";
-	}
+	$self->did_it_fork($pid);
 	if ($pid) {
 		return $fh;
 	} else {
 		open STDERR, ">/dev/null";
-		exec {OpenBSD::Paths->gzip}
-		    "gzip",
-		    "-d",
-		    "-c",
-		    "-q",
-		    "-f",
-		    $self->relative_url($object->{name})
-		or die "Can't run gzip";
+		$self->exec_gunzip("-f", $self->relative_url($object->{name}));
 	}
 }
 
@@ -397,21 +408,12 @@ sub open_pipe
 {
 	my ($self, $object) = @_;
 	my $pid = open(my $fh, "-|");
-	if (!defined $pid) {
-		die "Cannot fork: $!";
-	}
+	$self->did_it_fork($pid);
 	if ($pid) {
 		return $fh;
 	} else {
 		open STDERR, ">/dev/null";
-		exec {OpenBSD::Paths->gzip}
-		    "gzip",
-		    "-d",
-		    "-c",
-		    "-q",
-		    "-f",
-		    "-"
-		or die "can't run gzip";
+		$self->exec_gunzip("-f", "-");
 	}
 }
 
@@ -478,7 +480,7 @@ sub pkg_copy
 	do {
 		$n = sysread($in, $buffer, $buffsize);
 		if (!defined $n) {
-			die "Error reading: $!";
+			$self->{state}->fatal("Error reading: #1", $!);
 		}
 		if ($n > 0) {
 			$nonempty = 1;
@@ -515,41 +517,31 @@ sub open_pipe
 	pipe($rdfh, $wrfh);
 
 	my $pid = open(my $fh, "-|");
-	if (!defined $pid) {
-		die "Cannot fork: $!";
-	}
+	$self->did_it_fork($pid);
 	if ($pid) {
 		$object->{pid} = $pid;
 	} else {
-		open(STDIN, '<&', $rdfh) or die "Bad dup";
+		open(STDIN, '<&', $rdfh) or 
+		    $self->{state}->fatal("Bad dup: #1", $!);
 		close($rdfh);
 		close($wrfh);
-		exec {OpenBSD::Paths->gzip}
-		    "gzip",
-		    "-d",
-		    "-c",
-		    "-q",
-		    "-"
-		or die "can't run gzip";
+		$self->exec_gunzip("-f", "-");
 	}
 	my $pid2 = fork();
 
-	if (!defined $pid2) {
-		die "Cannot fork: $!";
-	}
+	$self->did_it_fork($pid2);
 	if ($pid2) {
 		$object->{pid2} = $pid2;
 	} else {
 		open STDERR, '>', $object->{errors};
-		open(STDOUT, '>&', $wrfh) or die "Bad dup";
+		open(STDOUT, '>&', $wrfh) or 
+		    $self->{state}->fatal("Bad dup: #1", $!);
 		close($rdfh);
 		close($wrfh);
 		close($fh);
 		if (defined $object->{cache_dir}) {
 			my $pid3 = open(my $in, "-|");
-			if (!defined $pid3) {
-				die "Cannot fork: $!";
-			}
+			$self->did_it_fork($pid3);
 			if ($pid3) {
 				$self->pkg_copy($in, $object);
 			} else {
@@ -590,7 +582,7 @@ sub grab_object
 	    @extra,
 	    "-o",
 	    "-", $self->url($object->{name})
-	or die "can't run ".OpenBSD::Paths->ftp;
+	or $self->{state}->fatal("Can't run ".OpenBSD::Paths->ftp.": #1", $!);
 }
 
 sub maxcount
@@ -633,7 +625,8 @@ sub try_until_success
 			last;
 		}
 		if ($self->should_have($pkgname)) {
-			print STDERR "Temporary error, sleeping $retry seconds\n";
+			$self->errsay("Temporary error, sleeping #1 seconds",
+				$retry);
 			sleep($retry);
 		}
 	}
@@ -717,9 +710,9 @@ sub list
 		$self->{list} = $self->obtain_list($error);
 		$self->parse_problems($error);
 		if ($self->{no_such_dir}) {
-			print STDERR $self->{path},
-			    ": Directory does not exist on ", $self->{host},
-			    "\n";
+			$self->{state}->errsay(
+			    "#1: Directory does not exist on #2",
+			    $self->{path}, $self->{host});
 		    	$self->{lasterror} = 404;
 		}
 	}
