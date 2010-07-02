@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.31 2010/06/28 14:13:32 deraadt Exp $	*/
+/*	$OpenBSD: cy.c,v 1.32 2010/07/02 17:27:01 nicm Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -621,17 +621,9 @@ cystart(tp)
 #endif
 
 	if (!ISSET(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) {
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (ISSET(tp->t_state, TS_ASLEEP)) {
-				CLR(tp->t_state, TS_ASLEEP);
-				wakeup(&tp->t_outq);
-			}
-
-			selwakeup(&tp->t_wsel);
-
-			if (tp->t_outq.c_cc == 0)
-				goto out;
-		}
+		ttwakeupwr(tp);
+		if (tp->t_outq.c_cc == 0)
+			goto out;
 
 		SET(tp->t_state, TS_BUSY);
 		cy_enable_transmitter(cy);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.34 2010/06/28 14:13:27 deraadt Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.35 2010/07/02 17:27:01 nicm Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1171,13 +1171,7 @@ dcmstart(tp)
 #endif
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttwakeupwr(tp);
 	if (tp->t_outq.c_cc == 0) {
 #ifdef DCMSTATS
 		dsp->xempty++;

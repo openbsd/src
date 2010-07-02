@@ -1,4 +1,4 @@
-/* $OpenBSD: scc.c,v 1.28 2010/06/28 14:13:26 deraadt Exp $ */
+/* $OpenBSD: scc.c,v 1.29 2010/07/02 17:27:01 nicm Exp $ */
 /* $NetBSD: scc.c,v 1.58 2002/03/17 19:40:27 atatat Exp $ */
 
 /*
@@ -923,13 +923,7 @@ sccstart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttwakeupwr(tp);
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
@@ -942,13 +936,7 @@ sccstart(tp)
 		 * After we flush the output queue we may need to wake
 		 * up the process that made the output.
 		 */
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t)&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
+		ttwakeupwr(tp);
 		goto out;
 	}
 	cc = ndqb(&tp->t_outq, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: promcons.c,v 1.15 2010/06/28 14:13:25 deraadt Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.16 2010/07/02 17:27:01 nicm Exp $	*/
 /*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
 
 /*
@@ -184,13 +184,7 @@ promstart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttwakeupwr(tp);
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
 		promcnputc(tp->t_dev, getc(&tp->t_outq));

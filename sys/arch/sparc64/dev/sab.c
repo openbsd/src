@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.29 2010/06/28 14:13:31 deraadt Exp $	*/
+/*	$OpenBSD: sab.c,v 1.30 2010/07/02 17:27:01 nicm Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -1093,13 +1093,7 @@ sabtty_start(tp)
 
 	s = spltty();
 	if ((tp->t_state & (TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) == 0) {
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup(&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
+		ttwakeupwr(tp);
 		if (tp->t_outq.c_cc) {
 			sc->sc_txc = ndqb(&tp->t_outq, 0);
 			sc->sc_txp = tp->t_outq.c_cf;

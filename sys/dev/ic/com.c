@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.141 2010/06/28 14:13:32 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.142 2010/07/02 17:27:01 nicm Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -884,15 +884,9 @@ comstart(struct tty *tp)
 		goto stopped;
 	if (ISSET(tp->t_cflag, CRTSCTS) && !ISSET(sc->sc_msr, MSR_CTS))
 		goto stopped;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto stopped;
-	}
+	ttwakeupwr(tp);
+	if (tp->t_outq.c_cc == 0)
+		goto stopped;
 	SET(tp->t_state, TS_BUSY);
 
 #ifdef COM_PXA2X0

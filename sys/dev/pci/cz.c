@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.17 2010/06/28 14:13:33 deraadt Exp $ */
+/*	$OpenBSD: cz.c,v 1.18 2010/07/02 17:27:01 nicm Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -1480,15 +1480,9 @@ czttystart(struct tty *tp)
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	ttwakeupwr(tp);
+	if (tp->t_outq.c_cc == 0)
+		goto out;
 
 	cztty_transmit(sc, tp);
  out:

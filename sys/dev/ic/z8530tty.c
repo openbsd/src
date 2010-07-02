@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.22 2010/06/28 14:13:33 deraadt Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.23 2010/07/02 17:27:01 nicm Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*
@@ -600,13 +600,7 @@ zsstart(tp)
 	 * If there are sleepers, and output has drained below low
 	 * water mark, awaken.
 	 */
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttwakeupwr(tp);
 
 	nch = ndqb(&tp->t_outq, 0);	/* XXX */
 	(void) splzs();

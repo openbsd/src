@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.33 2010/06/28 14:13:29 deraadt Exp $ */
+/*	$OpenBSD: zs.c,v 1.34 2010/07/02 17:27:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -557,13 +557,7 @@ zsstop(tp, flag)
 		tp->t_state &= ~TS_BUSY;
 		spltty();
 		ndflush(&tp->t_outq, n);
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t) & tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
+		ttwakeupwr(tp);
 	}
 	splx(s);
 	return (0);
@@ -905,13 +899,7 @@ zs_softint(arg)
 			 && (tp->t_state & TS_BUSY) != 0) {
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 			ndflush(&tp->t_outq, zp->sent_count);
-			if (tp->t_outq.c_cc <= tp->t_lowat) {
-				if (tp->t_state & TS_ASLEEP) {
-					tp->t_state &= ~TS_ASLEEP;
-					wakeup((caddr_t) & tp->t_outq);
-				}
-				selwakeup(&tp->t_wsel);
-			}
+			ttwakeupwr(tp);
 			if (tp->t_line != 0)
 				(*linesw[tp->t_line].l_start) (tp);
 			else

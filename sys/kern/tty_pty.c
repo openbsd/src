@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.46 2010/06/28 14:13:36 deraadt Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.47 2010/07/02 17:27:01 nicm Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -502,13 +502,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 			break;
 		error = uiomove(buf, cc, uio);
 	}
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttwakeupwr(tp);
 	if (bufcc)
 		bzero(buf, bufcc);
 	return (error);

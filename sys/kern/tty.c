@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.86 2010/06/28 14:13:35 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.87 2010/07/02 17:27:01 nicm Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2007,6 +2007,22 @@ ttyecho(int c, struct tty *tp)
 			c += 'A' - 1;
 	}
 	(void)ttyoutput(c, tp);
+}
+
+/*
+ * Wakeup any writers if necessary.
+ */
+void
+ttwakeupwr(struct tty *tp)
+{
+
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		if (ISSET(tp->t_state, TS_ASLEEP)) {
+			CLR(tp->t_state, TS_ASLEEP);
+			wakeup(&tp->t_outq);
+		}
+		selwakeup(&tp->t_wsel);
+	}
 }
 
 /*

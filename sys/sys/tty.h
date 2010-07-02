@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.26 2010/06/30 20:38:50 tedu Exp $	*/
+/*	$OpenBSD: tty.h,v 1.27 2010/07/02 17:27:01 nicm Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -274,6 +274,7 @@ int	 ttkqfilter(dev_t dev, struct knote *kn);
 void	 ttsetwater(struct tty *tp);
 int	 ttspeedtab(int speed, const struct speedtab *table);
 int	 ttstart(struct tty *tp);
+void	 ttwakeupwr(struct tty *tp);
 void	 ttwakeup(struct tty *tp);
 int	 ttwrite(struct tty *tp, struct uio *uio, int flag);
 void	 ttychars(struct tty *tp);

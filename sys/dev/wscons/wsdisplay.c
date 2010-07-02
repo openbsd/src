@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.101 2010/07/01 02:33:05 maja Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.102 2010/07/02 17:27:01 nicm Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1506,14 +1506,8 @@ wsdisplaystart(struct tty *tp)
 		tp->t_state |= TS_TIMEOUT;
 		timeout_add(&tp->t_rstrt_to, (hz > 128) ? (hz / 128) : 1);
 	}
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
 low:
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttwakeupwr(tp);
 	splx(s);
 }
 

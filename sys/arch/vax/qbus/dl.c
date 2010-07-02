@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.11 2010/06/28 14:13:31 deraadt Exp $	*/
+/*	$OpenBSD: dl.c,v 1.12 2010/07/02 17:27:01 nicm Exp $	*/
 /*	$NetBSD: dl.c,v 1.11 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -456,18 +456,11 @@ dlstart(tp)
 	sc = dl_cd.cd_devs[unit];
 
 	s = spltty();
-        if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
-                goto out;
-        if (tp->t_outq.c_cc <= tp->t_lowat) {
-                if (tp->t_state & TS_ASLEEP) {
-                        tp->t_state &= ~TS_ASLEEP;
-                        wakeup((caddr_t)&tp->t_outq);
-                }
-                selwakeup(&tp->t_wsel);
-        }
-        if (tp->t_outq.c_cc == 0)
-                goto out;
-
+	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+		goto out;
+	ttwakeupwr(tp);
+	if (tp->t_outq.c_cc == 0)
+		goto out;
 
 	if (DL_READ_WORD(DL_UBA_XCSR) & DL_XCSR_TX_READY) {
 		tp->t_state |= TS_BUSY;
