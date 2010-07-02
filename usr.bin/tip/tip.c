@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.51 2010/07/02 07:32:16 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.52 2010/07/02 07:40:03 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -103,10 +103,12 @@ main(int argc, char *argv[])
 	(void)signal(SIGTERM, cleanup);
 	(void)signal(SIGCHLD, SIG_DFL);
 
+	vinit();
+
 	FD = hunt(sys);
 	setbuf(stdout, NULL);
+
 	loginit();
-	vinit();				/* init variables */
 	setparity("none");			/* set the parity table */
 
 	if (ttysetup(vgetnum(BAUDRATE))) {

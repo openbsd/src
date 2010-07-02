@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.29 2010/07/02 07:09:57 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.30 2010/07/02 07:40:03 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -30,11 +30,53 @@
  * SUCH DAMAGE.
  */
 
+#include <paths.h>
+
 #include "tip.h"
 
 /*
  * Variable manipulation.
  */
+
+value_t vtable[] = {
+	{ "beautify",	  V_BOOL,	       "be",     NULL, 0 },
+	{ "baudrate",	  V_NUMBER,	       "ba",     NULL, 0 },
+	{ "connect",      V_STRING|V_READONLY, "cm",     NULL, 0 },
+	{ "device",       V_STRING|V_READONLY, "dv",     NULL, 0 },
+	{ "eofread",	  V_STRING,	       "eofr",   NULL, 0 },
+	{ "eofwrite",	  V_STRING,	       "eofw",   NULL, 0 },
+	{ "eol",	  V_STRING,	       NULL,     NULL, 0 },
+	{ "escape",	  V_CHAR,	       "es",     NULL, 0 },
+	{ "exceptions",	  V_STRING,	       "ex",     NULL, 0 },
+	{ "force",	  V_CHAR,	       "fo",     NULL, 0 },
+	{ "framesize",	  V_NUMBER,	       "fr",     NULL, 0 },
+	{ "host",	  V_STRING|V_READONLY, "ho",     NULL, 0 },
+	{ "log",	  V_STRING,	       NULL,     NULL, 0 },
+	{ "prompt",	  V_CHAR,	       "pr",     NULL, 0 },
+	{ "raise",	  V_BOOL,	       "ra",     NULL, 0 },
+	{ "raisechar",	  V_CHAR,	       "rc",     NULL, 0 },
+	{ "record",	  V_STRING,	       "rec",    NULL, 0 },
+	{ "remote",	  V_STRING|V_READONLY, NULL,     NULL, 0 },
+	{ "script",	  V_BOOL,	       "sc",     NULL, 0 },
+	{ "tabexpand",	  V_BOOL,	       "tab",    NULL, 0 },
+	{ "verbose",	  V_BOOL,	       "verb",   NULL, 0 },
+	{ "SHELL",	  V_STRING,	       NULL,     NULL, 0 },
+	{ "HOME",	  V_STRING,	       NULL,	 NULL, 0 },
+	{ "echocheck",	  V_BOOL,	       "ec",	 NULL, 0 },
+	{ "disconnect",	  V_STRING,	       "di",	 NULL, 0 },
+	{ "tandem",	  V_BOOL,	       "ta",	 NULL, 0 },
+	{ "linedelay",	  V_NUMBER,	       "ldelay", NULL, 0 },
+	{ "chardelay",	  V_NUMBER,	       "cdelay", NULL, 0 },
+	{ "etimeout",	  V_NUMBER,	       "et",	 NULL, 0 },
+	{ "rawftp",	  V_BOOL,	       "raw",	 NULL, 0 },
+	{ "halfduplex",	  V_BOOL,	       "hdx",	 NULL, 0 },
+	{ "localecho",	  V_BOOL,	       "le",	 NULL, 0 },
+	{ "parity",	  V_STRING,	       "par",	 NULL, 0 },
+	{ "hardwareflow", V_BOOL,	       "hf",	 NULL, 0 },
+	{ "linedisc",	  V_NUMBER,	       "ld",	 NULL, 0 },
+	{ "direct",	  V_BOOL,	       "dc",	 NULL, 0 },
+	{ NULL,           0,	                NULL,    NULL, 0 },
+};
 
 #define MIDDLE	35
 
@@ -85,15 +127,13 @@ vsetstr(int value, char *string)
 	if (value == RECORD && string != NULL)
 		string = expand(string);
 
-	if (!(vp->v_flags & V_INIT))
-		free(vp->v_string);
+	free(vp->v_string);
 	if (string != NULL) {
 		vp->v_string = strdup(string);
 		if (vp->v_string == NULL)
 			err(1, "strdup");
 	} else
 		vp->v_string = NULL;
-	vp->v_flags &= ~V_INIT;
 }
 
 /* Set a number value. */
@@ -129,15 +169,39 @@ vlookup(char *s)
 void
 vinit(void)
 {
-	char file[FILENAME_MAX], *cp;
-	int written;
-	FILE *fp;
+	struct passwd	*pw;
+	value_t		*vp;
+	char		 file[FILENAME_MAX], *cp;
+	int		 written;
+	FILE		*fp;
 
 	/* Read environment variables. */
-	if ((cp = getenv("HOME")))
+	if ((cp = getenv("HOME")) != NULL)
 		vsetstr(HOME, cp);
-	if ((cp = getenv("SHELL")))
+	else {
+		pw = getpwuid(getuid());
+		if (pw != NULL && pw->pw_dir != NULL)
+			vsetstr(HOME, pw->pw_dir);
+		else
+			vsetstr(HOME, "/");
+	}
+	if ((cp = getenv("SHELL")) != NULL)
 		vsetstr(SHELL, cp);
+	else
+		vsetstr(SHELL, _PATH_BSHELL);
+
+	/* Clear the table and set the defaults. */
+	for (vp = vtable; vp->v_name != NULL; vp++) {
+		vp->v_string = NULL;
+		vp->v_number = 0;
+	}
+	vsetnum(BEAUTIFY, 1);
+	vsetnum(ESCAPE, '~');
+	vsetnum(FORCE, CTRL('p'));
+	vsetnum(PROMPT, '\n');
+	vsetnum(TAND, 1);
+	vsetnum(VERBOSE, 1);
+	vsetstr(LOG, _PATH_ACULOG);
 
 	/* Read the .tiprc file in the HOME directory. */
 	written = snprintf(file, sizeof(file), "%s/.tiprc", vgetstr(HOME));

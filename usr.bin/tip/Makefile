@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2010/06/29 20:09:39 nicm Exp $
+#	$OpenBSD: Makefile,v 1.15 2010/07/02 07:40:03 nicm Exp $
 
 PROG=	tip
 LINKS=	${BINDIR}/tip ${BINDIR}/cu
@@ -9,6 +9,6 @@ LDADD=  -lutil
 DPADD=  ${LIBUTIL}
 
 SRCS=	cmds.c cmdtab.c cu.c hunt.c log.c partab.c remote.c tip.c \
-	tipout.c value.c vars.c
+	tipout.c value.c
 
 .include <bsd.prog.mk>

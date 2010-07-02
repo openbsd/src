@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.35 2010/07/02 05:52:48 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.36 2010/07/02 07:40:03 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -148,15 +148,18 @@ getopt:
 	signal(SIGTERM, cleanup);
 	signal(SIGCHLD, SIG_DFL);
 
+	vinit();
+
 	/*
 	 * The "cu" host name is used to define the
 	 * attributes of the generic dialer.
 	 */
-	(void)snprintf(sbuf, sizeof(sbuf), "cu%d", vgetnum(BAUDRATE));
+	snprintf(sbuf, sizeof(sbuf), "cu%d", vgetnum(BAUDRATE));
 	FD = hunt(sbuf);
 	setbuf(stdout, NULL);
+
 	loginit();
-	vinit();
+
 	switch (parity) {
 	case -1:
 		setparity("even");
