@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.28 2010/07/02 05:56:29 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.29 2010/07/02 07:09:57 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -38,11 +38,10 @@
 
 #define MIDDLE	35
 
-static value_t *vlookup(char *);
-static void vassign(value_t *, char *);
-static void vtoken(char *);
-static void vprint(value_t *);
-static char *vinterp(char *, int);
+static int	vlookup(char *);
+static void	vtoken(char *);
+static void	vprint(value_t *);
+static char    *vinterp(char *, int);
 
 static size_t col = 0;
 
@@ -111,6 +110,22 @@ vsetnum(int value, int number)
 	vp->v_number = number;
 }
 
+/* Find index of variable by name or abbreviation. */
+static int
+vlookup(char *s)
+{
+	value_t *vp;
+	u_int	 i;
+
+	for (i = 0; vtable[i].v_name != NULL; i++) {
+		vp = &vtable[i];
+		if (strcmp(vp->v_name, s) == 0 ||
+		    (vp->v_abbrev != NULL && strcmp(vp->v_abbrev, s) == 0))
+			return (i);
+	}
+	return (-1);
+}
+
 void
 vinit(void)
 {
@@ -145,46 +160,6 @@ vinit(void)
 	}
 }
 
-/*VARARGS1*/
-static void
-vassign(value_t *p, char *v)
-{
-	if (p->v_flags & V_READONLY) {
-		printf("access denied\r\n");
-		return;
-	}
-
-	switch (p->v_flags & V_TYPEMASK) {
-	case V_STRING:
-		if (p->v_string && strcmp(p->v_string, v) == 0)
-			return;
-		if (!(p->v_flags & V_INIT))
-			free(p->v_string);
-		if ((p->v_string = strdup(v)) == NULL) {
-			printf("out of core\r\n");
-			return;
-		}
-		p->v_flags &= ~V_INIT;
-		break;
-	case V_NUMBER:
-		if (p->v_number == (int)(long)v)
-			return;
-		p->v_number = (int)(long)v;
-		break;
-	case V_BOOL:
-		if (p->v_number == (*v != '!'))
-			return;
-		p->v_number = (*v != '!');
-		break;
-	case V_CHAR:
-		if (p->v_number == *v)
-			return;
-		p->v_number = *v;
-		break;
-	}
-	p->v_flags |= V_CHANGED;
-}
-
 void
 vlex(char *s)
 {
@@ -208,38 +183,72 @@ vlex(char *s)
 	}
 }
 
+/* Set a variable from a token. */
 static void
 vtoken(char *s)
 {
-	value_t *p;
-	char *cp;
+	value_t 	*vp;
+	int	 	i, value;
+	char		*cp;
+	const char	*cause;
 
 	if ((cp = strchr(s, '='))) {
 		*cp = '\0';
-		if ((p = vlookup(s))) {
-			cp++;
-			if ((p->v_flags & V_TYPEMASK) == V_NUMBER)
-				vassign(p, (char *)(long)atoi(cp));
-			else {
-				if (strcmp(s, "record") == 0)
-					cp = expand(cp);
-				vassign(p, cp);
+		if ((i = vlookup(s)) != -1) {
+			vp = &vtable[i];
+			if (vp->v_flags & V_READONLY) {
+				printf("access denied\r\n");
+				return;
 			}
+			cp++;
+			switch (vp->v_flags & V_TYPEMASK) {
+			case V_STRING:
+				vsetstr(i, cp);
+				break;
+			case V_BOOL:
+				vsetnum(i, 1);
+				break;
+			case V_NUMBER:
+				value = strtonum(cp, 0, INT_MAX, &cause);
+				if (cause != NULL) {
+					printf("%s: number %s\r\n", s, cause);
+					return;
+				}
+				vsetnum(i, value);
+				break;
+			case V_CHAR:
+				if (cp[0] != '\0' && cp[1] != '\0') {
+					printf("%s: character too big\r\n", s);
+					return;
+				}
+				vsetnum(i, *cp);
+			}
+			vp->v_flags |= V_CHANGED;
 			return;
 		}
 	} else if ((cp = strchr(s, '?'))) {
 		*cp = '\0';
-		if ((p = vlookup(s))) {
-			vprint(p);
+		if ((i = vlookup(s)) != -1) {
+			vprint(&vtable[i]);
 			return;
 		}
 	} else {
 		if (*s != '!')
-			p = vlookup(s);
+			i = vlookup(s);
 		else
-			p = vlookup(s+1);
-		if (p != NULL) {
-			vassign(p, s);
+			i = vlookup(s + 1);
+		if (i != -1) {
+			vp = &vtable[i];
+			if (vp->v_flags & V_READONLY) {
+				printf("%s: access denied\r\n", s);
+				return;
+			}
+			if ((vp->v_flags & V_TYPEMASK) != V_BOOL) {
+				printf("%s: not a boolean\r\n", s);
+				return;
+			}
+			vsetnum(i, *s != '!');
+			vp->v_flags |= V_CHANGED;
 			return;
 		}
 	}
@@ -295,19 +304,6 @@ vprint(value_t *p)
 		printf("\r\n");
 		return;
 	}
-}
-
-static value_t *
-vlookup(char *s)
-{
-	value_t *p;
-
-	for (p = vtable; p->v_name; p++) {
-		if (strcmp(p->v_name, s) == 0 ||
-		    (p->v_abbrev && strcmp(p->v_abbrev, s) == 0))
-			return (p);
-	}
-	return (NULL);
 }
 
 static char *
