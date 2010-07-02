@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.237 2010/06/26 19:51:12 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.238 2010/07/02 22:03:40 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4686,23 +4686,23 @@ in6_getprefix(const char *plen, int which)
 int
 prefix(void *val, int size)
 {
-	u_char *name = (u_char *)val;
+	u_char *nam = (u_char *)val;
 	int byte, bit, plen = 0;
 
 	for (byte = 0; byte < size; byte++, plen += 8)
-		if (name[byte] != 0xff)
+		if (nam[byte] != 0xff)
 			break;
 	if (byte == size)
 		return (plen);
 	for (bit = 7; bit != 0; bit--, plen++)
-		if (!(name[byte] & (1 << bit)))
+		if (!(nam[byte] & (1 << bit)))
 			break;
 	for (; bit != 0; bit--)
-		if (name[byte] & (1 << bit))
+		if (nam[byte] & (1 << bit))
 			return (0);
 	byte++;
 	for (; byte < size; byte++)
-		if (name[byte])
+		if (nam[byte])
 			return (0);
 	return (plen);
 }
@@ -4808,6 +4808,7 @@ sec2str(time_t total)
 }
 #endif /* INET6 */
 
+/*ARGSUSED*/
 void
 setiflladdr(const char *addr, int param)
 {
