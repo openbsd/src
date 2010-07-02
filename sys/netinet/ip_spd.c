@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.60 2010/01/15 18:20:23 chl Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.61 2010/07/02 03:58:48 david Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -599,10 +599,10 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	if (ipo->ipo_local_auth)
 		ipsp_reffree(ipo->ipo_local_auth);
 
-	pool_put(&ipsec_policy_pool, ipo);
-
 	if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
 		ipsec_in_use--;
+
+	pool_put(&ipsec_policy_pool, ipo);
 
 	return err;
 }
