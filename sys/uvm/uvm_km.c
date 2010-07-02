@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.80 2010/06/29 20:39:27 thib Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.81 2010/07/02 01:13:59 thib Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -866,6 +866,7 @@ uvm_km_putpage(void *v)
 #ifdef __HAVE_PMAP_DIRECT
 	pg = pmap_unmap_direct(va);
 #else	/* !__HAVE_PMAP_DIRECT */
+	int	freeva = 1;
 	paddr_t pa;
 	if (!pmap_extract(pmap_kernel(), va, &pa))
 		panic("lost pa");
@@ -877,11 +878,14 @@ uvm_km_putpage(void *v)
 	pmap_update(kernel_map->pmap);
 
 	mtx_enter(&uvm_km_pages.mtx);
-	if (uvm_km_pages.free < uvm_km_pages.hiwat)
+	if (uvm_km_pages.free < uvm_km_pages.hiwat) {
 		uvm_km_pages.page[uvm_km_pages.free++] = va;
-	else
-		uvm_km_free_wakeup(kernel_map, va, PAGE_SIZE);
+		freeva = 0;
+	}
 	mtx_leave(&uvm_km_pages.mtx);
+
+	if (freeva)
+		uvm_km_free_wakeup(kernel_map, va, PAGE_SIZE);
 #endif	/* !__HAVE_PMAP_DIRECT */
 
 	uvm_pagefree(pg);
