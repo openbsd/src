@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.16 2010/07/01 19:31:04 thib Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.17 2010/07/02 15:49:25 krw Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -382,7 +382,8 @@ sr_send_aoe_chunk(struct sr_workunit *wu, daddr64_t blk, int i)
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, rv);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
-	timeout_add_sec(&ar->to, 10);
+	if (rv == 0)
+		timeout_add_sec(&ar->to, 10);
 	splx(s);
 
 	if (rv) {
