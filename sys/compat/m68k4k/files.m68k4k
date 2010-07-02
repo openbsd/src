@@ -1,7 +1,0 @@
-#	$OpenBSD: files.m68k4k,v 1.1 1997/01/13 11:07:51 niklas Exp $
-#	$NetBSD: files.m68k4k,v 1.1 1996/09/10 22:01:20 thorpej Exp $
-#
-# Config.new file description for m68k4k compat code.  Included by
-# sys/arch/m68k/conf/files.m68k
-
-file	compat/m68k4k/m68k4k_exec.c		compat_m68k4k
