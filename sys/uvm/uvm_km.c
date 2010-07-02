@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.81 2010/07/02 01:13:59 thib Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.82 2010/07/02 01:25:06 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -346,8 +346,8 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 
 vaddr_t
 uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
-    int flags, paddr_t low, paddr_t high, paddr_t alignment, paddr_t boundary,
-    int nsegs)
+    vsize_t valign, int flags, paddr_t low, paddr_t high, paddr_t alignment,
+    paddr_t boundary, int nsegs)
 {
 	vaddr_t kva, loopva;
 	voff_t offset;
@@ -377,7 +377,7 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	 */
 
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
-	      0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
+	      valign, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 			  UVM_ADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) != 0)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.118 2010/06/30 21:01:45 thib Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.119 2010/07/02 01:25:05 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -242,7 +242,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		return (EAGAIN);
 	}
 
-	uaddr = uvm_km_alloc1(kernel_map, USPACE, USPACE_ALIGN, 1);
+	uaddr = uvm_km_kmemalloc_pla(kernel_map, uvm.kernel_object, USPACE,
+	    USPACE_ALIGN, 0, dma_constraint.ucr_low, dma_constraint.ucr_high,
+	    0, 0, USPACE/PAGE_SIZE);
 	if (uaddr == 0) {
 		chgproccnt(uid, -1);
 		nprocs--;

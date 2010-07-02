@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.94 2010/06/29 20:39:27 thib Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.95 2010/07/02 01:25:05 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1491,8 +1491,8 @@ pool_large_alloc(struct pool *pp, int flags, int *slowdown)
 	int s;
 
 	s = splvm();
-	va = uvm_km_kmemalloc_pla(kmem_map, NULL, pp->pr_alloc->pa_pagesz, kfl,
-	    pp->pr_crange->ucr_low, pp->pr_crange->ucr_high,
+	va = uvm_km_kmemalloc_pla(kmem_map, NULL, pp->pr_alloc->pa_pagesz, 0,
+	    kfl, pp->pr_crange->ucr_low, pp->pr_crange->ucr_high,
 	    0, 0, pp->pr_pa_nsegs);
 	splx(s);
 
@@ -1515,7 +1515,7 @@ pool_large_alloc_ni(struct pool *pp, int flags, int *slowdown)
 	int kfl = (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT;
 
 	return ((void *)uvm_km_kmemalloc_pla(kernel_map, uvm.kernel_object,
-	    pp->pr_alloc->pa_pagesz, kfl,
+	    pp->pr_alloc->pa_pagesz, 0, kfl,
 	    pp->pr_crange->ucr_low, pp->pr_crange->ucr_high,
 	    0, 0, pp->pr_pa_nsegs));
 }
