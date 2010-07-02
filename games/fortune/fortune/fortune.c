@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.28 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.29 2010/07/02 23:43:42 tedu Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 # include	<stdlib.h>
 # include	<string.h>
 # include	<limits.h>
+# include	<regex.h>
 # include	"strfile.h"
 # include	"pathnames.h"
 
@@ -149,23 +150,7 @@ int	 find_matches(void);
 void	 matches_in_list(FILEDESC *);
 int	 maxlen_in_list(FILEDESC *);
 int	 minlen_in_list(FILEDESC *);
-#endif
-
-#ifndef NO_REGEX
-#ifdef REGCMP
-# define	RE_COMP(p)	(Re_pat = regcmp(p, NULL))
-# define	BAD_COMP(f)	((f) == NULL)
-# define	RE_EXEC(p)	regex(Re_pat, (p))
-
-char	*Re_pat;
-
-char	*regcmp(), *regex();
-#else
-# define	RE_COMP(p)	(p = re_comp(p))
-# define	BAD_COMP(f)	((f) != NULL)
-# define	RE_EXEC(p)	re_exec(p)
-
-#endif
+regex_t regex;
 #endif
 
 int
@@ -357,12 +342,8 @@ getargs(int argc, char *argv[])
 	if (pat != NULL) {
 		if (ignore_case)
 			pat = conv_pat(pat);
-		if (BAD_COMP(RE_COMP(pat))) {
-#ifndef REGCMP
-			fprintf(stderr, "%s\n", pat);
-#else	/* REGCMP */
+		if (regcomp(&regex, pat, 0)) {
 			fprintf(stderr, "bad pattern: %s\n", pat);
-#endif	/* REGCMP */
 		}
 	}
 # endif	/* NO_REGEX */
@@ -1339,7 +1320,7 @@ matches_in_list(FILEDESC *list)
 				sp += strlen(sp);
 			else {
 				*sp = '\0';
-				if (RE_EXEC(Fortbuf)) {
+				if (regexec(&regex, Fortbuf, 0, NULL, 0) == 0) {
 					printf("%c%c", fp->tbl.str_delim,
 					    fp->tbl.str_delim);
 					if (!in_file) {
