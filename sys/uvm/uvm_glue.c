@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.52 2010/07/01 21:27:39 art Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.53 2010/07/02 18:26:58 art Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -256,6 +256,7 @@ uvm_vslock_device(struct proc *p, void *addr, size_t len,
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
 		va += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 	KASSERT(va == sva + sz);
 	*retp = (void *)(sva + off);
 
@@ -285,6 +286,7 @@ uvm_vsunlock_device(struct proc *p, void *addr, size_t len, void *map)
 
 	kva = trunc_page((vaddr_t)map);
 	pmap_kremove(kva, sz);
+	pmap_update(pmap_kernel());
 	uvm_km_pgremove_intrsafe(kva, kva + sz);
 	uvm_km_free(kernel_map, kva, sz);
 }
