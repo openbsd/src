@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.68 2010/06/07 20:46:21 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.69 2010/07/02 19:57:15 tedu Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -38,8 +38,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDBDEV=0xc01	# kgdb device number (dev_t)
 #option		KGDBRATE=38400	# baud rate
 
-# Options for SPARCstation hardware
-#option		COMPAT_SUNOS	# compatibility with SunOS binaries
 #option		COMPAT_SVR4	# compatibility with SVR4 binaries
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required

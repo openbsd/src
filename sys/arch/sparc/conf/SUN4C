@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.60 2009/06/24 11:38:40 deraadt Exp $
+#	$OpenBSD: SUN4C,v 1.61 2010/07/02 19:57:15 tedu Exp $
 #	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -14,7 +14,6 @@ option		SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 #option		KGDBRATE=38400	# baud rate
 
 # Options for SPARCstation hardware
-option		COMPAT_SUNOS	# compatibility with SunOS binaries
 option		COMPAT_SVR4	# compatibility with SVR4 binaries
 option		PROCFS		# /proc
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.81 2010/07/01 18:47:45 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.82 2010/07/02 19:57:15 tedu Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -125,13 +125,6 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		splx(s);
 		return (error);
 	}
-#ifdef COMPAT_SUNOS
-	{
-		extern struct emul emul_sunos;
-		if (p->p_emul == &emul_sunos && type == SOCK_DGRAM)
-			so->so_options |= SO_BROADCAST;
-	}
-#endif
 	splx(s);
 	*aso = so;
 	return (0);

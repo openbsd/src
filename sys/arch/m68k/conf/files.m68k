@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m68k,v 1.20 2009/03/15 20:40:25 miod Exp $
+#	$OpenBSD: files.m68k,v 1.21 2010/07/02 19:57:14 tedu Exp $
 #	$NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
 file	arch/m68k/m68k/bcopy.s
@@ -18,17 +18,6 @@ file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/regdump.c
 file	arch/m68k/m68k/sig_machdep.c
 file	arch/m68k/m68k/softintr.c
-
-#
-# Older m68k4k executables binary compatibility
-#
-include	"compat/m68k4k/files.m68k4k"
-
-#
-# SunOS binary compatibility
-#
-include	"compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
 
 # quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c

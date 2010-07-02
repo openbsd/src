@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.95 2010/06/07 19:54:32 miod Exp $
+#	$OpenBSD: GENERIC,v 1.96 2010/07/02 19:57:14 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -25,8 +25,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDBDEV=0xc01	# kgdb device number (dev_t)
 #option		KGDBRATE=38400	# baud rate
 
-# Options for SPARCstation hardware
-option		COMPAT_SUNOS	# compatibility with SunOS binaries
 option		COMPAT_SVR4	# compatibility with SVR4 binaries
 option		PROCFS		# /proc
 

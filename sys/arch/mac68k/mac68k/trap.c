@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2010/07/02 19:57:14 tedu Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -72,11 +72,6 @@
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmap.h>
-
-#ifdef COMPAT_SUNOS
-#include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
-#endif
 
 int	astpending;
 
@@ -437,20 +432,6 @@ copyfault:
 		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
-#ifdef COMPAT_SUNOS
-		/*
-		 * SunOS uses Trap #2 for a "CPU cache flush"
-		 * Just flush the on-chip caches and return.
-		 * XXX - Too bad OpenBSD uses trap 2...
-		 */
-		if (p->p_emul == &emul_sunos) {
-			ICIA();
-			DCIU();
-			/* get out fast */
-			return;
-		}
-#endif
-		/* FALLTHROUGH */
 	case T_TRACE:		/* Kernel trace trap */
 	case T_TRAP15|T_USER:	/* Sun user trace trap */
 		frame.f_sr &= ~PSL_T;
@@ -962,38 +943,6 @@ syscall(code, frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-#ifdef COMPAT_SUNOS
-	if (p->p_emul == &emul_sunos) {
-		/*
-		 * SunOS passes the syscall-number on the stack, whereas
-		 * BSD passes it in D0. So, we have to get the real "code"
-		 * from the stack, and clean up the stack, as SunOS glue
-		 * code assumes the kernel pops the syscall argument the
-		 * glue pushed on the stack. Sigh...
-		 */
-		if (copyin((caddr_t)frame.f_regs[SP], &code,
-		   sizeof(register_t)) != 0)
-			code = -1;
-
-		/*
-		 * XXX
-		 * Don't do this for sunos_sigreturn, as there's no stored pc
-		 * on the stack to skip, the argument follows the syscall
-		 * number without a gap.
-		 */
-		if (code != SUNOS_SYS_sigreturn) {
-			frame.f_regs[SP] += sizeof (int);
-			/*
-			 * remember that we adjusted the SP, 
-			 * might have to undo this if the system call
-			 * returns ERESTART.
-			 */
-			p->p_md.md_flags |= MDP_STACKADJ;
-		} else
-			p->p_md.md_flags &= ~MDP_STACKADJ;
-	}
-#endif
-
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 
 	switch (code) {
@@ -1080,11 +1029,6 @@ bad:
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
-#endif
-#ifdef COMPAT_SUNOS
-	/* need new p-value for this */
-	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
-		frame.f_regs[SP] -= sizeof (int);
 #endif
 	userret(p);
 #ifdef KTRACE

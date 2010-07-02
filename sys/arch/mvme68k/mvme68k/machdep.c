@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.122 2010/06/27 12:41:23 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.123 2010/07/02 19:57:14 tedu Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -149,10 +149,6 @@ struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
  * during autoconfiguration or after a panic.
  */
 int   safepri = PSL_LOWIPL;
-
-#ifdef COMPAT_SUNOS
-extern struct emul emul_sunos;
-#endif
 
 void dumpsys(void);
 void initvectors(void);
@@ -830,30 +826,6 @@ nmihand(frame)
 	if (db_console)
 		Debugger();
 #endif
-}
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- * 
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	int error = ENOEXEC;
-
-#ifdef COMPAT_SUNOS
-	{
-		extern int sunos_exec_aout_makecmds(struct proc *, struct exec_package *);
-		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-			return (0);
-	}
-#endif
-	return (error);
 }
 
 u_char   myea[6] = { 0x08, 0x00, 0x3e, 0xff, 0xff, 0xff};

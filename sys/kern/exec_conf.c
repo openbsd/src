@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.23 2010/07/01 17:30:25 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.24 2010/07/02 19:57:15 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -59,10 +59,6 @@
 #include <compat/freebsd/freebsd_exec.h>
 #endif
 
-#ifdef COMPAT_M68K4K
-#include <compat/m68k4k/m68k4k_exec.h>
-#endif
-
 #ifdef COMPAT_VAX1K
 #include <compat/vax1k/vax1k_exec.h>
 #endif
@@ -101,17 +97,11 @@ struct execsw execsw[] = {
 	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, &emul_freebsd_aout },	/* freebsd */
 	{ sizeof(Elf32_Ehdr), exec_freebsd_elf32_makecmds, &emul_freebsd_elf },
 #endif
-#ifdef COMPAT_M68K4K
-	{ sizeof(struct exec), exec_m68k4k_makecmds, &emul_native },	/* m68k4k a.out */
-#endif
 #ifdef COMPAT_VAX1K
 	{ sizeof(struct exec), exec_vax1k_makecmds, &emul_native },	/* vax1k a.out */
 #endif
 #ifdef COMPAT_SVR4
 	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, &emul_svr4 },	/* elf binaries */
-#endif
-#ifdef COMPAT_SUNOS
-	{ sizeof(struct exec), exec_aout_makecmds, &emul_sunos },
 #endif
 #ifdef LKM
 	{ 0, NULL, NULL },				/* entries for LKMs */

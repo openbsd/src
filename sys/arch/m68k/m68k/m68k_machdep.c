@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.13 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.14 2010/07/02 19:57:14 tedu Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -54,9 +54,6 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-#ifdef COMPAT_SUNOS
-	extern struct emul emul_sunos;
-#endif
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
 	frame->f_sr = PSL_USERSET;
@@ -70,18 +67,6 @@ setregs(p, pack, stack, retval)
 	if (fputype != FPU_NONE) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
-
-#ifdef COMPAT_SUNOS
-	/*
-	 * SunOS' ld.so does self-modifying code without knowing
-	 * about the 040's cache purging needs.  So we need to uncache
-	 * writeable executable pages.
-	 */
-	if (p->p_emul == &emul_sunos)
-		p->p_md.md_flags |= MDP_UNCACHE_WX;
-	else
-		p->p_md.md_flags &= ~MDP_UNCACHE_WX;
-#endif
 
 	retval[1] = 0;
 }

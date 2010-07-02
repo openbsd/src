@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.114 2010/07/01 02:41:12 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.115 2010/07/02 19:57:15 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -313,17 +313,6 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 		ps->ps_sigonstack |= bit;
 	else
 		ps->ps_sigonstack &= ~bit;
-#ifdef COMPAT_SUNOS
-	{
-		extern struct emul emul_sunos;
-		if (p->p_emul == &emul_sunos) {
-			if (sa->sa_flags & SA_USERTRAMP)
-				ps->ps_usertramp |= bit;
-			else
-				ps->ps_usertramp &= ~bit;
-		}
-	}
-#endif
 	/*
 	 * Set bit in p_sigignore for signals that are set to SIG_IGN,
 	 * and for signals set to SIG_DFL where the default is to ignore.

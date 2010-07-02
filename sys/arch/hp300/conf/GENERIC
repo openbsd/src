@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2010/06/29 20:30:32 guenther Exp $
+#	$OpenBSD: GENERIC,v 1.49 2010/07/02 19:57:14 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -34,9 +34,6 @@ option		USELEDS		# make the lights twinkle
 				# for SGC devices
 
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
-
-option		COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
-option		COMPAT_SUNOS	# SunOS/sun3 binaries
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)

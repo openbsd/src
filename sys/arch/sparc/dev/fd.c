@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.70 2010/05/23 10:49:19 dlg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.71 2010/07/02 19:57:15 tedu Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1795,9 +1795,6 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (((struct mtop *)addr)->mt_op != MTOFFL)
 			return EIO;
 
-#ifdef COMPAT_SUNOS
-	case SUNOS_FDIOCEJECT:
-#endif
 	case DIOCEJECT:
 		fd_do_eject(fd);
 		return (0);
