@@ -1,4 +1,4 @@
-/*	$OpenBSD: modify.c,v 1.7 2010/07/01 00:43:56 martinh Exp $ */
+/*	$OpenBSD: modify.c,v 1.8 2010/07/02 01:44:45 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -30,9 +30,11 @@
 int
 ldap_delete(struct request *req)
 {
+	struct btval		 key;
 	char			*dn;
 	struct namespace	*ns;
 	struct referrals	*refs;
+	struct cursor		*cursor;
 
 	++stats.req_mod;
 
@@ -62,16 +64,36 @@ ldap_delete(struct request *req)
 		return ldap_respond(req, LDAP_OTHER);
 	}
 
+	/* Check that this is a leaf node by getting a cursor to the DN
+	 * we're about to delete. If there is a next entry with the DN
+	 * as suffix (ie, a child node), the DN can't be deleted.
+	 */
+	if ((cursor = btree_txn_cursor_open(NULL, ns->data_txn)) == NULL)
+		goto fail;
+
+	bzero(&key, sizeof(key));
+	key.data = dn;
+	key.size = strlen(dn);
+	if (btree_cursor_get(cursor, &key, NULL, BT_CURSOR_EXACT) != 0)
+		goto fail;
+	if (btree_cursor_get(cursor, &key, NULL, BT_NEXT) != 0) {
+		if (errno != ENOENT)
+			goto fail;
+	} else if (has_suffix(&key, dn)) {
+		namespace_abort(ns);
+		return ldap_respond(req, LDAP_NOT_ALLOWED_ON_NONLEAF);
+	}
+
 	if (namespace_del(ns, dn) == 0) {
 		namespace_commit(ns);
 		return ldap_respond(req, LDAP_SUCCESS);
-	} else {
-		namespace_abort(ns);
-		if (errno == ENOENT)
-			return ldap_respond(req, LDAP_NO_SUCH_OBJECT);
-		else
-			return ldap_respond(req, LDAP_OTHER);
 	}
+
+fail:
+	namespace_abort(ns);
+	if (errno == ENOENT)
+		return ldap_respond(req, LDAP_NO_SUCH_OBJECT);
+	return ldap_respond(req, LDAP_OTHER);
 }
 
 int
