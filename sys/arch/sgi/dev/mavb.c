@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.11 2009/11/18 21:13:17 jakemsr Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.12 2010/07/02 03:24:50 blambert Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -1216,8 +1216,8 @@ mavb_button_repeat(void *hdl)
 		value |= (right << AD1843_RDA1G_SHIFT);
 		ad1843_reg_write(sc, AD1843_DAC1_ANALOG_GAIN, value);
 
-		timeout_add(&sc->sc_volume_button_to,
-		    (hz * MAVB_VOLUME_BUTTON_REPEAT_DELN) / 1000);
+		timeout_add_msec(&sc->sc_volume_button_to,
+		    MAVB_VOLUME_BUTTON_REPEAT_DELN);
 	} else {
 		/* Enable volume button interrupts again.  */
 		intmask = bus_space_read_8(sc->sc_st, sc->sc_isash,
@@ -1244,8 +1244,8 @@ mavb_intr(void *arg)
 		bus_space_write_8(sc->sc_st, sc->sc_isash, MACE_ISA_INT_MASK,
 		     intmask & ~MACE_ISA_INT_AUDIO_SC);
 
-		timeout_add(&sc->sc_volume_button_to,
-		    (hz * MAVB_VOLUME_BUTTON_REPEAT_DEL1) / 1000);
+		timeout_add_msec(&sc->sc_volume_button_to,
+		    MAVB_VOLUME_BUTTON_REPEAT_DEL1);
 	}
 
 	if (intstat & MACE_ISA_INT_AUDIO_DMA1)
