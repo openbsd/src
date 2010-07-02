@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.2 2010/07/01 05:33:32 jsing Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.3 2010/07/02 00:00:45 jsing Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -29,5 +29,6 @@ struct hppa_fpstate {
 
 void	fpu_proc_flush(struct proc *);
 void	fpu_proc_save(struct proc *);
+void	fpu_cpu_save(int);
 
 #endif /* _MACHINE_FPU_H_ */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ipi.c,v 1.2 2010/07/02 00:00:45 jsing Exp $	*/
+
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -14,22 +16,28 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/fpu.h>
 #include <machine/iomod.h>
 #include <machine/intr.h>
 #include <machine/mutex.h>
 #include <machine/reg.h>
 
 void hppa_ipi_nop(void);
+void hppa_ipi_fpu_save(void);
+void hppa_ipi_fpu_flush(void);
 
 void (*ipifunc[HPPA_NIPI])(void) =
 {
-	hppa_ipi_nop
+	hppa_ipi_nop,
+	hppa_ipi_fpu_save,
+	hppa_ipi_fpu_flush
 };
 
 void
@@ -87,4 +95,16 @@ hppa_ipi_send(struct cpu_info *ci, u_long ipi)
 void
 hppa_ipi_nop(void)
 {
+}
+
+void
+hppa_ipi_fpu_save(void)
+{
+	fpu_cpu_save(1);
+}
+
+void
+hppa_ipi_fpu_flush(void)
+{
+	fpu_cpu_save(0);
 }
