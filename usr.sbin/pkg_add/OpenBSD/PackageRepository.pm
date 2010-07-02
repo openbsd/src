@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.85 2010/07/02 11:44:14 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.86 2010/07/02 12:41:43 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -45,6 +45,13 @@ sub new
 		return undef;
 	}
 	return $o;
+}
+
+sub can_be_empty
+{
+	my $self = shift;
+	$self->{empty_okay} = 1;
+	return $self;
 }
 
 my $cache = {};
@@ -131,8 +138,11 @@ sub stemlist
 	my $self = shift;
 	if (!defined $self->{stemlist}) {
 		require OpenBSD::PackageName;
-
-		$self->{stemlist} = OpenBSD::PackageName::avail2stems($self->available);
+		my @l = $self->available;
+		if (@l == 0 && !$self->{empty_okay}) {
+			$self->{state}->errsay("#1 is empty", $self->url);
+		}
+		$self->{stemlist} = OpenBSD::PackageName::avail2stems(@l);
 	}
 	return $self->{stemlist};
 }
