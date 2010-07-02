@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.20 2010/05/31 11:46:02 claudio Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.21 2010/07/02 02:40:16 blambert Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -248,7 +248,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		}
 		*mtod(m, sa_family_t *) = AF_INET;
 		m_copyback(m, sizeof(sa_family_t), sizeof(in_addr_t),
-		    (caddr_t)&((satosin(dst)->sin_addr)));
+		    (caddr_t)&((satosin(dst)->sin_addr)), M_NOWAIT);
 		break;
 #endif
 	default:
@@ -257,7 +257,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		goto out;
 	}
 
-	m_copyback(m, off, sizeof(shim), (caddr_t)&shim);
+	m_copyback(m, off, sizeof(shim), (caddr_t)&shim, M_NOWAIT);
 
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);

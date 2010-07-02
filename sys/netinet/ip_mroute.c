@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.57 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.58 2010/07/02 02:40:16 blambert Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -2475,8 +2475,9 @@ bw_upcalls_send(void)
 	}
 
 	m->m_len = m->m_pkthdr.len = 0;
-	m_copyback(m, 0, sizeof(struct igmpmsg), (caddr_t)&igmpmsg);
-	m_copyback(m, sizeof(struct igmpmsg), len, (caddr_t)&bw_upcalls[0]);
+	m_copyback(m, 0, sizeof(struct igmpmsg), (caddr_t)&igmpmsg, M_NOWAIT);
+	m_copyback(m, sizeof(struct igmpmsg), len, (caddr_t)&bw_upcalls[0],
+	    M_NOWAIT);
 
 	/*
 	 * Send the upcalls

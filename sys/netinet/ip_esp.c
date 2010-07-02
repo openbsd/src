@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.108 2010/07/01 02:09:45 reyk Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.109 2010/07/02 02:40:16 blambert Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -695,7 +695,7 @@ esp_input_cb(void *op)
 	m_adj(m, -(lastthree[1] + 2));
 
 	/* Restore the Next Protocol field */
-	m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2);
+	m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
 	error = ipsec_common_input_cb(m, tdb, skip, protoff, mtag);
@@ -906,7 +906,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	/* Fix Next Protocol in IPv4/IPv6 header. */
 	prot = IPPROTO_ESP;
-	m_copyback(m, protoff, sizeof(u_int8_t), &prot);
+	m_copyback(m, protoff, sizeof(u_int8_t), &prot, M_NOWAIT);
 
 	/* Get crypto descriptors. */
 	crp = crypto_getreq(esph && espx ? 2 : 1);
@@ -931,7 +931,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if (tdb->tdb_flags & TDBF_HALFIV) {
 			/* Copy half-iv in the packet. */
 			m_copyback(m, crde->crd_inject, tdb->tdb_ivlen,
-			    tdb->tdb_iv);
+			    tdb->tdb_iv, M_NOWAIT);
 
 			/* Cook half-iv. */
 			bcopy(tdb->tdb_iv, crde->crd_iv, tdb->tdb_ivlen);

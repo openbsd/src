@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.14 2010/02/11 10:12:19 claudio Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.15 2010/07/02 02:40:16 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -372,7 +372,7 @@ sbt_intr(void *arg)
 	}
 
 	m->m_pkthdr.len = m->m_len = MHLEN;
-	m_copyback(m, 0, len, sc->sc_buf);
+	m_copyback(m, 0, len, sc->sc_buf, M_NOWAIT);
 	if (m->m_pkthdr.len == MAX(MHLEN, len)) {
 		m->m_pkthdr.len = len;
 		m->m_len = MIN(MHLEN, m->m_pkthdr.len);

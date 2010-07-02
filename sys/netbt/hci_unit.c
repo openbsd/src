@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.10 2008/11/22 16:56:39 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.11 2010/07/02 02:40:16 blambert Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.12 2008/06/26 14:17:27 plunky Exp $	*/
 
 /*-
@@ -316,7 +316,7 @@ hci_send_cmd(struct hci_unit *unit, uint16_t opcode, void *buf, uint8_t len)
 	if (len) {
 		KASSERT(buf != NULL);
 
-		m_copyback(m, sizeof(hci_cmd_hdr_t), len, buf);
+		m_copyback(m, sizeof(hci_cmd_hdr_t), len, buf, M_NOWAIT);
 		if (m->m_pkthdr.len != (sizeof(hci_cmd_hdr_t) + len)) {
 			m_freem(m);
 			return ENOMEM;

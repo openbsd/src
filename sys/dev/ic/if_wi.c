@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.147 2010/05/20 14:03:05 nicm Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.148 2010/07/02 02:40:15 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -805,7 +805,8 @@ wi_rxeof(struct wi_softc *sc)
 				    (len - WI_SNAPHDR_LEN),
 				    sc->wi_rxbuf + sizeof(struct ether_header) +
 				    IEEE80211_WEP_IVLEN +
-				    IEEE80211_WEP_KIDLEN + WI_SNAPHDR_LEN);
+				    IEEE80211_WEP_KIDLEN + WI_SNAPHDR_LEN,
+				    M_NOWAIT);
 				m_adj(m, -(WI_ETHERTYPE_LEN +
 				    IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
 				    WI_SNAPHDR_LEN));

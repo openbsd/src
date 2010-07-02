@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.95 2010/07/01 02:09:45 reyk Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.96 2010/07/02 02:40:16 blambert Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -369,7 +369,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 			ip6.ip6_dst.s6_addr16[1] = 0;
 
 		/* Done with IPv6 header. */
-		m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6);
+		m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6, M_NOWAIT);
 
 		/* Let's deal with the remaining headers (if any). */
 		if (skip - sizeof(struct ip6_hdr) > 0) {
@@ -496,7 +496,8 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 					    (caddr_t)&ip6);
 					addr[0] = ip6.ip6_dst;
 					ip6.ip6_dst = finaldst;
-					m_copyback(m, 0, sizeof(ip6), &ip6);
+					m_copyback(m, 0, sizeof(ip6), &ip6,
+					    M_NOWAIT);
 
 					rh0->ip6r0_segleft = 0;
 				}
@@ -521,7 +522,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		/* Copyback and free, if we allocated. */
 		if (alloc) {
 			m_copyback(m, sizeof(struct ip6_hdr),
-			    skip - sizeof(struct ip6_hdr), ptr);
+			    skip - sizeof(struct ip6_hdr), ptr, M_NOWAIT);
 			free(ptr, M_XDATA);
 		}
 
@@ -693,7 +694,8 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    (caddr_t) (tc + 1));
 
 		/* Zeroize the authenticator on the packet. */
-		m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes);
+		m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes,
+		    M_NOWAIT);
 
 		/* "Massage" the packet headers for crypto processing. */
 		if ((btsx = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family,
@@ -827,11 +829,11 @@ ah_input_cb(void *op)
 		((u_int8_t *) ptr)[protoff] = ((u_int8_t *) ptr)[skip];
 
 		/* Copyback the saved (uncooked) network headers. */
-		m_copyback(m, 0, skip, ptr);
+		m_copyback(m, 0, skip, ptr, M_NOWAIT);
 	} else {
 		/* Fix the Next Protocol field. */
 		m_copydata(m, skip, sizeof(u_int8_t), &prot);
-		m_copyback(m, protoff, sizeof(u_int8_t), &prot);
+		m_copyback(m, protoff, sizeof(u_int8_t), &prot, M_NOWAIT);
 	}
 
 	free(tc, M_XDATA);
@@ -1137,7 +1139,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	ah->ah_spi = tdb->tdb_spi;
 
 	/* Zeroize authenticator. */
-	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes);
+	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
 
 	if (!(tdb->tdb_flags & TDBF_NOREPLAY)) {
 		ah->ah_rpl = htonl(tdb->tdb_rpl++);
@@ -1197,7 +1199,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			    (caddr_t) &iplen, sizeof(u_int16_t));
 			iplen = htons(ntohs(iplen) + rplen + ahx->authsize);
 			m_copyback(m, offsetof(struct ip, ip_len),
-			    sizeof(u_int16_t), &iplen);
+			    sizeof(u_int16_t), &iplen, M_NOWAIT);
 			break;
 #endif /* INET */
 
@@ -1208,7 +1210,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			    (caddr_t) &iplen, sizeof(u_int16_t));
 			iplen = htons(ntohs(iplen) + rplen + ahx->authsize);
 			m_copyback(m, offsetof(struct ip6_hdr, ip6_plen),
-			    sizeof(u_int16_t), &iplen);
+			    sizeof(u_int16_t), &iplen, M_NOWAIT);
 			break;
 #endif /* INET6 */
 		}
@@ -1218,7 +1220,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 		/* Update the Next Protocol field in the IP header. */
 		prot = IPPROTO_AH;
-		m_copyback(m, protoff, sizeof(u_int8_t), &prot);
+		m_copyback(m, protoff, sizeof(u_int8_t), &prot, M_NOWAIT);
 
 		/* "Massage" the packet headers for crypto processing. */
 		if ((len = ah_massage_headers(&m, tdb->tdb_dst.sa.sa_family,
@@ -1231,7 +1233,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	} else {
 		/* Update the Next Protocol field in the IP header. */
 		prot = IPPROTO_AH;
-		m_copyback(m, protoff, sizeof(u_int8_t), &prot);
+		m_copyback(m, protoff, sizeof(u_int8_t), &prot, M_NOWAIT);
 	}
 
 	/* Crypto operation descriptor. */
@@ -1317,7 +1319,7 @@ ah_output_cb(void *op)
 	 * in place.
 	 */
 	if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
-		m_copyback(m, 0, skip, ptr);
+		m_copyback(m, 0, skip, ptr, M_NOWAIT);
 
 	free(tc, M_XDATA);
 

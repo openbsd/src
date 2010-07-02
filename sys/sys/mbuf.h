@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.140 2010/01/11 03:50:56 yasuoka Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.141 2010/07/02 02:40:17 blambert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -410,7 +410,7 @@ void	m_clcount(struct ifnet *, int);
 void	m_cluncount(struct mbuf *, int);
 void	m_clinitifp(struct ifnet *);
 void	m_adj(struct mbuf *, int);
-void	m_copyback(struct mbuf *, int, int, const void *);
+int	m_copyback(struct mbuf *, int, int, const void *, int);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	m_copydata(struct mbuf *, int, int, caddr_t);

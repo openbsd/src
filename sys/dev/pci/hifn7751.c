@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.160 2010/05/19 15:27:35 oga Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.161 2010/07/02 02:40:16 blambert Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -2082,7 +2082,7 @@ hifn_process(struct cryptop *crp)
 					if (crp->crp_flags & CRYPTO_F_IMBUF)
 						m_copyback(cmd->srcu.src_m,
 						    enccrd->crd_inject,
-						    ivlen, cmd->iv);
+						    ivlen, cmd->iv, M_NOWAIT);
 					else if (crp->crp_flags & CRYPTO_F_IOV)
 						cuio_copyback(cmd->srcu.src_io,
 						    enccrd->crd_inject,
@@ -2293,7 +2293,8 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
-			    cmd->sloplen, &dma->slop[cmd->slopidx]);
+			    cmd->sloplen, &dma->slop[cmd->slopidx],
+			    M_NOWAIT);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			cuio_copyback((struct uio *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
@@ -2366,7 +2367,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copyback((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, len, macbuf);
+				    crd->crd_inject, len, macbuf, M_NOWAIT);
 			else if ((crp->crp_flags & CRYPTO_F_IOV) && crp->crp_mac)
 				bcopy((caddr_t)macbuf, crp->crp_mac, len);
 			break;

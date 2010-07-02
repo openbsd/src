@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.96 2009/10/19 22:24:18 jsg Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.97 2010/07/02 02:40:17 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1406,7 +1406,7 @@ nfs_realign(struct mbuf **pm, int hsiz)
 	if (n != NULL) {
 		++nfs_realign_count;
 		while (m) {
-			m_copyback(n, off, m->m_len, mtod(m, caddr_t));
+			m_copyback(n, off, m->m_len, mtod(m, caddr_t), M_WAIT);
 
 			/*
 			 * If an unaligned amount of memory was copied, fix up

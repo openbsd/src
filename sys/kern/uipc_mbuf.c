@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.139 2010/07/01 19:23:51 beck Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.140 2010/07/02 02:40:16 blambert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -726,26 +726,30 @@ m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
  * chain if necessary. The mbuf needs to be properly initialized
  * including the setting of m_len.
  */
-void
-m_copyback(struct mbuf *m0, int off, int len, const void *_cp)
+int
+m_copyback(struct mbuf *m0, int off, int len, const void *_cp, int wait)
 {
 	int mlen, totlen = 0;
 	struct mbuf *m = m0, *n;
 	caddr_t cp = (caddr_t)_cp;
+	int error = 0;
 
 	if (m0 == NULL)
-		return;
+		return (0);
 	while (off > (mlen = m->m_len)) {
 		off -= mlen;
 		totlen += mlen;
 		if (m->m_next == NULL) {
-			if ((n = m_get(M_DONTWAIT, m->m_type)) == NULL)
+			if ((n = m_get(wait, m->m_type)) == NULL) {
+				error = ENOBUFS;
 				goto out;
+			}
 
 			if (off + len > MLEN) {
-				MCLGETI(n, M_DONTWAIT, NULL, off + len);
+				MCLGETI(n, wait, NULL, off + len);
 				if (!(n->m_flags & M_EXT)) {
 					m_free(n);
+					error = ENOBUFS;
 					goto out;
 				}
 			}
@@ -770,13 +774,16 @@ m_copyback(struct mbuf *m0, int off, int len, const void *_cp)
 		off = 0;
 
 		if (m->m_next == NULL) {
-			if ((n = m_get(M_DONTWAIT, m->m_type)) == NULL)
+			if ((n = m_get(wait, m->m_type)) == NULL) {
+				error = ENOBUFS;
 				goto out;
+			}
 
 			if (len > MLEN) {
-				MCLGETI(n, M_DONTWAIT, NULL, len);
+				MCLGETI(n, wait, NULL, len);
 				if (!(n->m_flags & M_EXT)) {
 					m_free(n);
+					error = ENOBUFS;
 					goto out;
 				}
 			}
@@ -788,6 +795,8 @@ m_copyback(struct mbuf *m0, int off, int len, const void *_cp)
 out:
 	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
 		m->m_pkthdr.len = totlen;
+
+	return (error);
 }
 
 /*

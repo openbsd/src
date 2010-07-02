@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.70 2010/05/19 15:27:35 oga Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.71 2010/07/02 02:40:16 blambert Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -655,7 +655,7 @@ rl_rxeof(struct rl_softc *sc)
 			m = m_devget(rxbufpos, wrap, ETHER_ALIGN, ifp, NULL);
 			if (m != NULL) {
 				m_copyback(m, wrap, total_len - wrap,
-				    sc->rl_cdata.rl_rx_buf);
+				    sc->rl_cdata.rl_rx_buf, M_NOWAIT);
 				if (m->m_pkthdr.len < total_len) {
 					m_freem(m);
 					m = NULL;

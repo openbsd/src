@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.84 2010/06/03 16:15:00 naddy Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.85 2010/07/02 02:40:16 blambert Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -243,7 +243,7 @@ vlan_start(struct ifnet *ifp)
 				continue;
 			}
 
-			m_copyback(m, 0, sizeof(evh), &evh);
+			m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_session.c,v 1.5 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: rfcomm_session.c,v 1.6 2010/07/02 02:40:16 blambert Exp $	*/
 /*	$NetBSD: rfcomm_session.c,v 1.14 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -1580,7 +1580,7 @@ rfcomm_session_send_uih(struct rfcomm_session *rs, struct rfcomm_dlc *dlc,
 	/* Append FCS */
 	fcs = 0xff - fcs;	/* ones complement */
 	len = m0->m_pkthdr.len;
-	m_copyback(m0, len, sizeof(fcs), &fcs);
+	m_copyback(m0, len, sizeof(fcs), &fcs, M_NOWAIT);
 	if (m0->m_pkthdr.len != len + sizeof(fcs))
 		goto nomem;
 
@@ -1668,7 +1668,7 @@ rfcomm_session_send_mcc(struct rfcomm_session *rs, int cr,
 
 	if (len > 0) {
 		m->m_pkthdr.len = m->m_len = MHLEN;
-		m_copyback(m, hlen, len, data);
+		m_copyback(m, hlen, len, data, M_NOWAIT);
 		if (m->m_pkthdr.len != max(MHLEN, hlen + len)) {
 			m_freem(m);
 			return ENOMEM;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.5 2010/06/29 22:42:14 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.6 2010/07/02 02:40:15 blambert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -379,7 +379,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copyback((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, 16, sc->op_iv);
+				    crd->crd_inject, 16, sc->op_iv, M_NOWAIT);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copyback((struct uio *)crp->crp_buf,
 				    crd->crd_inject, 16, sc->op_iv);
@@ -420,7 +420,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		m_copyback((struct mbuf *)crp->crp_buf,
-		    crd->crd_skip, crd->crd_len, sc->op_buf);
+		    crd->crd_skip, crd->crd_len, sc->op_buf, M_NOWAIT);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		cuio_copyback((struct uio *)crp->crp_buf,
 		    crd->crd_skip, crd->crd_len, sc->op_buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.20 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: noct.c,v 1.21 2010/07/02 02:40:16 blambert Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -911,7 +911,7 @@ noct_ea_thread(vsc)
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback((struct mbuf *)crp->crp_buf,
 					    crd->crd_inject, len,
-					    q->q_macbuf);
+					    q->q_macbuf, M_NOWAIT);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					bcopy(q->q_macbuf, crp->crp_mac, len);
 			}
@@ -921,7 +921,7 @@ noct_ea_thread(vsc)
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback((struct mbuf *)crp->crp_buf,
 					    crd->crd_skip, crd->crd_len,
-					    q->q_buf);
+					    q->q_buf, M_NOWAIT);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copyback((struct uio *)crp->crp_buf,
 					    crd->crd_skip, crd->crd_len,
@@ -1144,7 +1144,7 @@ noct_ea_start_des(sc, q, crp, crd)
 		if (!(crd->crd_flags & CRD_F_IV_PRESENT)) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copyback((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, 8, iv);
+				    crd->crd_inject, 8, iv, M_NOWAIT);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copyback((struct uio *)crp->crp_buf,
 				    crd->crd_inject, 8, iv);

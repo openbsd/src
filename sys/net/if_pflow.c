@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.13 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.14 2010/07/02 02:40:16 blambert Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -325,7 +325,7 @@ pflow_get_mbuf(struct pflow_softc *sc)
 	h.flow_sequence = htonl(sc->sc_gcounter);
 	h.engine_type = PFLOW_ENGINE_TYPE;
 	h.engine_id = PFLOW_ENGINE_ID;
-	m_copyback(m, 0, PFLOW_HDRLEN, &h);
+	m_copyback(m, 0, PFLOW_HDRLEN, &h, M_NOWAIT);
 
 	sc->sc_count = 0;
 	timeout_add_sec(&sc->sc_tmo, PFLOW_TIMEOUT);
@@ -442,7 +442,7 @@ copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc)
 	}
 	m_copyback(sc->sc_mbuf, PFLOW_HDRLEN +
 	    (sc->sc_count * sizeof (struct pflow_flow)),
-	    sizeof (struct pflow_flow), flow);
+	    sizeof (struct pflow_flow), flow, M_NOWAIT);
 
 	if (pflowstats.pflow_flows == sc->sc_gcounter)
 		pflowstats.pflow_flows++;

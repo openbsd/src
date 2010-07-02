@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.53 2010/04/20 22:05:41 tedu Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.54 2010/07/02 02:40:15 blambert Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -81,7 +81,7 @@ u_int32_t swcr_sesnum = 0;
 int32_t swcr_id = -1;
 
 #define COPYBACK(x, a, b, c, d) \
-	(x) == CRYPTO_BUF_MBUF ? m_copyback((struct mbuf *)a,b,c,d) \
+	(x) == CRYPTO_BUF_MBUF ? m_copyback((struct mbuf *)a,b,c,d,M_NOWAIT) \
 	: cuio_copyback((struct uio *)a,b,c,d)
 #define COPYDATA(x, a, b, c, d) \
 	(x) == CRYPTO_BUF_MBUF ? m_copydata((struct mbuf *)a,b,c,d) \
@@ -207,7 +207,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 				}
 
 				/* Copy back decrypted block */
-				m_copyback(m, k, blks, blk);
+				m_copyback(m, k, blks, blk, M_NOWAIT);
 
 				/* Advance pointer */
 				m = m_getptr(m, k + blks, &k);

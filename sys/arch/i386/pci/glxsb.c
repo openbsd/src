@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.18 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.19 2010/07/02 02:40:15 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -653,7 +653,8 @@ glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copyback((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, sizeof(op_iv), op_iv);
+				    crd->crd_inject, sizeof(op_iv), op_iv,
+				    M_NOWAIT);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copyback((struct uio *)crp->crp_buf,
 				    crd->crd_inject, sizeof(op_iv), op_iv);
@@ -705,7 +706,7 @@ glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + offset, len, op_dst);
+			    crd->crd_skip + offset, len, op_dst, M_NOWAIT);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			cuio_copyback((struct uio *)crp->crp_buf,
 			    crd->crd_skip + offset, len, op_dst);

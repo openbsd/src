@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_signal.c,v 1.5 2009/01/14 08:10:05 grange Exp $	*/
+/*	$OpenBSD: l2cap_signal.c,v 1.6 2010/07/02 02:40:16 blambert Exp $	*/
 /*	$NetBSD: l2cap_signal.c,v 1.9 2007/11/10 23:12:23 plunky Exp $	*/
 
 /*-
@@ -959,7 +959,8 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
 
 	/* Command Data */
 	if (length > 0)
-		m_copyback(m, sizeof(*hdr) + sizeof(*cmd), length, data);
+		m_copyback(m, sizeof(*hdr) + sizeof(*cmd), length, data,
+		    M_NOWAIT);
 
 	/* Command Header */
 	cmd->code = code;
