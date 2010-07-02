@@ -13,8 +13,6 @@
 
 #define	WHITESP(c)	((c)==' ' || (c)=='\t')
 
-#if TAGS
-
 public char *tags = "tags";
 
 static int total;
@@ -754,5 +752,4 @@ getentry(buf, tag, file, line)
 		return (0);
 	return (-1);
 }
-  
-#endif
+
