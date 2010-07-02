@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.54 2010/07/02 20:40:16 thib Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.55 2010/07/02 22:38:32 thib Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -235,17 +235,17 @@ uvm_vslock_device(struct proc *p, void *addr, size_t len,
 	if ((va = uvm_km_valloc(kernel_map, sz)) == 0) {
 		return (ENOMEM);
 	}
+
 	TAILQ_INIT(&pgl);
-	if (uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
-	    dma_constraint.ucr_high, 0, 0, &pgl, npages, UVM_PLA_WAITOK)) {
-		uvm_km_free(kernel_map, va, sz);
-		return (ENOMEM);
-	}
+	error = uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high, 0, 0, &pgl, npages, UVM_PLA_WAITOK);
+	KASSERT(error == 0);
 
 	sva = va;
 	while ((pg = TAILQ_FIRST(&pgl)) != NULL) {
 		TAILQ_REMOVE(&pgl, pg, pageq);
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ|VM_PROT_WRITE);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
