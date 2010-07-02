@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.36 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.37 2010/07/02 02:29:45 tedu Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -844,7 +844,7 @@ wds_find(ia, sc)
 	struct wds_softc *sc;
 {
 	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh = ia->ia_ioh;
 	u_char c;
 	int i;
 

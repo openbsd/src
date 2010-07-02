@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.35 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.36 2010/07/02 02:29:45 tedu Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -564,7 +564,7 @@ ex_intr(void *arg)
 	struct ex_softc *sc = arg;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int int_status, send_pkts;
-	int handled;
+	int handled = 0;
 
 	DODEBUG(Start_End, printf("exintr: start\n"););
 
@@ -585,8 +585,7 @@ ex_intr(void *arg)
 			handled = 1;
 			ex_tx_intr(sc);
 			send_pkts = 1;
-  		} else
-			handled = 0;
+		}
    	}
 
   	/*

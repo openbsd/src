@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.71 2010/06/28 18:31:02 krw Exp $	*/
+/*	$OpenBSD: aha.c,v 1.72 2010/07/02 02:29:45 tedu Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1400,11 +1400,11 @@ aha_timeout(arg)
 	int s;
 
 	s = splbio();
-	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmam, 0,
-	    ccb->ccb_dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	xs = ccb->xs;
 	sc_link = xs->sc_link;
 	sc = sc_link->adapter_softc;
+	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmam, 0,
+	    ccb->ccb_dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	sc_print_addr(sc_link);
 	printf("timed out");
