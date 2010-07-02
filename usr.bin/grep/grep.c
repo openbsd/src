@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.41 2010/04/20 15:58:08 jacekm Exp $	*/
+/*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -444,13 +444,23 @@ main(int argc, char *argv[])
 
 	if (Eflag)
 		cflags |= REG_EXTENDED;
+	if (Fflag)
+		cflags |= REG_NOSPEC;
+#ifdef SMALL
+	/* Sorry, this won't work */
+	if (Fflag && wflag)
+		errx(1, "Can't use small fgrep with -w");
+#endif
 	fg_pattern = grep_calloc(patterns, sizeof(*fg_pattern));
 	r_pattern = grep_calloc(patterns, sizeof(*r_pattern));
 	for (i = 0; i < patterns; ++i) {
 		/* Check if cheating is allowed (always is for fgrep). */
+#ifndef SMALL
 		if (Fflag) {
 			fgrepcomp(&fg_pattern[i], pattern[i]);
-		} else {
+		} else
+#endif
+		{
 			if (fastcomp(&fg_pattern[i], pattern[i])) {
 				/* Fall back to full regex library */
 				c = regcomp(&r_pattern[i], pattern[i], cflags);
