@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.59 2010/07/01 16:24:37 deraadt Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.60 2010/07/02 08:12:17 matthew Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -399,8 +399,7 @@ ciss_attach(struct ciss_softc *sc)
 
 		strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensordev.xname));
-		for (i = 0; i < sc->maxunits;
-		    sensor_attach(&sc->sensordev, &sc->sensors[i++])) {
+		for (i = 0; i < sc->maxunits; i++) {
 			sc->sensors[i].type = SENSOR_DRIVE;
 			sc->sensors[i].status = SENSOR_S_UNKNOWN;
 			dev = scsi_get_link(scsibus, i, 0)->device_softc;
@@ -408,6 +407,7 @@ ciss_attach(struct ciss_softc *sc)
 			    sizeof(sc->sensors[i].desc));
 			strlcpy(sc->sc_lds[i]->xname, dev->dv_xname,
 			    sizeof(sc->sc_lds[i]->xname));
+			sensor_attach(&sc->sensordev, &sc->sensors[i]);
 		}
 		if (sensor_task_register(sc, ciss_sensors, 10) == NULL)
 			free(sc->sensors, M_DEVBUF);
