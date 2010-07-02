@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.52 2010/07/02 00:09:37 pirofti Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.53 2010/07/02 00:23:42 pirofti Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -170,6 +170,11 @@ static const struct vga_device_description vga_devs[] = {
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
 	    	0x17aa, 0x215a },
 	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
+	},
+	{	/* Lenovo ThinkPad X100e */
+	    {	PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3200_2,
+		0x17aa, 0x21b2 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff}, 1, 0
 	}
 };
 #endif
