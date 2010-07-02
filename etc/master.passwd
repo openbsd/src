@@ -1,7 +1,7 @@
 root::0:0:daemon:0:0:Charlie &:/root:/bin/ksh
 daemon:*:1:1::0:0:The devil himself:/root:/sbin/nologin
 operator:*:2:5::0:0:System &:/operator:/sbin/nologin
-bin:*:3:7::0:0:Binaries Commands and Source,,,:/:/sbin/nologin
+bin:*:3:7::0:0:Binaries Commands and Source:/:/sbin/nologin
 smmsp:*:25:25::0:0:Sendmail Message Submission Program:/nonexistent:/sbin/nologin
 popa3d:*:26:26::0:0:POP3 Server:/var/empty:/sbin/nologin
 sshd:*:27:27::0:0:sshd privsep:/var/empty:/sbin/nologin
