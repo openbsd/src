@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.88 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.89 2010/07/02 03:13:42 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1991,6 +1991,7 @@ rum_init(struct ifnet *ifp)
 	if (ntries == 1000) {
 		printf("%s: timeout waiting for BBP/RF to wakeup\n",
 		    sc->sc_dev.dv_xname);
+		error = ENODEV;
 		goto fail;
 	}
 

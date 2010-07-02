@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.40 2010/05/19 18:50:02 nicm Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.41 2010/07/02 03:13:42 tedu Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -1211,6 +1211,8 @@ ray_intr_start(struct ray_softc *sc)
 		} else if (et > ETHERMTU) {
 			/* adjust for LLC/SNAP header */
 			tmplen= sizeof(struct ieee80211_frame) - ETHER_ADDR_LEN;
+		} else {
+			tmplen = 0;
 		}
 		/* now get our space for the 802.11 frame */
 		M_PREPEND(m0, tmplen, M_DONTWAIT);

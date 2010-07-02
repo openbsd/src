@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.39 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.40 2010/07/02 03:13:42 tedu Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -425,7 +425,7 @@ usbd_status
 uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
     struct uvisor_palm_connection_info *cpi)
 {
-	usbd_status err;
+	usbd_status err = 0;
 	usb_device_request_t req;
 	int actlen;
 	uWord avail;

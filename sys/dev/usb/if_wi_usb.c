@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.46 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.47 2010/07/02 03:13:42 tedu Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -459,7 +459,7 @@ wi_usb_detach(struct device *self, int flags)
 		sc->wi_usb_ep[WI_USB_ENDPT_INTR] = NULL;
 	}
 	if (sc->wi_usb_ep[WI_USB_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_TX]);
+		err = usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_TX]);
 		if (err) {
 			printf("%s: abort tx pipe failed: %s\n",
 			    sc->wi_usb_dev.dv_xname, usbd_errstr(err));
@@ -472,7 +472,7 @@ wi_usb_detach(struct device *self, int flags)
 		sc->wi_usb_ep[WI_USB_ENDPT_TX] = NULL;
 	}
 	if (sc->wi_usb_ep[WI_USB_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_RX]);
+		err = usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_RX]);
 		if (err) {
 			printf("%s: abort rx pipe failed: %s\n",
 			    sc->wi_usb_dev.dv_xname, usbd_errstr(err));
@@ -657,7 +657,7 @@ wi_read_record_usb(struct wi_softc *wsc, struct wi_ltv_gen *ltv)
 	struct wi_rridreq	*prid;
 	int			total_len, rnd_len;
 	int			err;
-	struct wi_ltv_gen	*oltv, p2ltv;
+	struct wi_ltv_gen	*oltv = NULL, p2ltv;
 
 	DPRINTFN(5,("%s: %s: enter rid=%x\n",
 	    sc->wi_usb_dev.dv_xname, __func__, ltv->wi_type));
