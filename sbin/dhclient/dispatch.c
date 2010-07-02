@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.46 2010/06/02 09:57:16 phessler Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.47 2010/07/02 22:03:27 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -255,33 +255,6 @@ interface_link_forceup(char *ifname)
 	}
 	close(sock);
 	return (1);
-}
-
-void
-interface_link_forcedown(char *ifname)
-{
-	struct ifreq ifr;
-	int sock;
-
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		error("Can't create socket");
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
-		close(sock);
-		return;
-	}
-
-	if ((ifr.ifr_flags & IFF_UP) == IFF_UP) {
-		ifr.ifr_flags &= ~IFF_UP;
-		if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-			close(sock);
-			return;
-		}
-	}
-
-	close(sock);
 }
 
 int
