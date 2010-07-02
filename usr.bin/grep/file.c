@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.10 2008/10/16 22:56:32 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -140,11 +140,13 @@ grep_open(char *path, char *mode)
 	} else
 #endif
 	{
+#ifndef SMALL
 		/* try mmap first; if it fails, try stdio */
 		if ((f->mmf = mmopen(fname, mode)) != NULL) {
 			f->type = FILE_MMAP;
 			return f;
 		}
+#endif
 		f->type = FILE_STDIO;
 		if ((f->f = fopen(path, mode)) != NULL)
 			return f;
@@ -163,8 +165,10 @@ grep_bin_file(file_t *f)
 	switch (f->type) {
 	case FILE_STDIO:
 		return bin_file(f->f);
+#ifndef SMALL
 	case FILE_MMAP:
 		return mmbin_file(f->mmf);
+#endif
 #ifndef NOZ
 	case FILE_GZIP:
 		return gzbin_file(f->gzf);
@@ -181,8 +185,10 @@ grep_fgetln(file_t *f, size_t *l)
 	switch (f->type) {
 	case FILE_STDIO:
 		return fgetln(f->f, l);
+#ifndef SMALL
 	case FILE_MMAP:
 		return mmfgetln(f->mmf, l);
+#endif
 #ifndef NOZ
 	case FILE_GZIP:
 		return gzfgetln(f->gzf, l);
@@ -200,9 +206,11 @@ grep_close(file_t *f)
 	case FILE_STDIO:
 		fclose(f->f);
 		break;
+#ifndef SMALL
 	case FILE_MMAP:
 		mmclose(f->mmf);
 		break;
+#endif
 #ifndef NOZ
 	case FILE_GZIP:
 		gzclose(f->gzf);

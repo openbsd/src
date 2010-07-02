@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.12 2006/09/20 14:29:03 otto Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.13 2010/07/02 20:48:48 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -36,6 +36,8 @@
 #include <unistd.h>
 
 #include "grep.h"
+
+#ifndef SMALL
 
 #define MAX_MAP_LEN 1048576
 
@@ -96,3 +98,5 @@ mmfgetln(mmf_t *mmf, size_t *l)
 	++mmf->ptr;
 	return p;
 }
+
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: binary.c,v 1.15 2005/04/25 08:21:20 otto Exp $	*/
+/*	$OpenBSD: binary.c,v 1.16 2010/07/02 20:48:48 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -84,6 +84,7 @@ gzbin_file(gzFile *f)
 }
 #endif
 
+#ifndef SMALL
 int
 mmbin_file(mmf_t *f)
 {
@@ -95,3 +96,4 @@ mmbin_file(mmf_t *f)
 			return 1;
 	return 0;
 }
+#endif
