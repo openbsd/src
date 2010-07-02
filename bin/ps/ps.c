@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.47 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.48 2010/07/02 15:43:15 guenther Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -264,7 +264,7 @@ main(int argc, char *argv[])
 	} else {
 		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
 	}
-	if (kd == NULL && (nlistf != NULL || memf != NULL || swapf != NULL))
+	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
 	if (!fmt)
@@ -313,34 +313,10 @@ main(int argc, char *argv[])
 	/*
 	 * select procs
 	 */
-	if (kd != NULL) {
-		kp = kvm_getproc2(kd, what, flag, sizeof(*kp), &nentries);
-		if (kp == NULL)
-			errx(1, "%s", kvm_geterr(kd));
-	} else {
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROC2;
-		mib[2] = what;
-		mib[3] = flag;
-		mib[4] = sizeof(struct kinfo_proc2);
-		mib[5] = 0;
-	    retry:
-		if (sysctl(mib, 6, NULL, &size, NULL, 0) < 0)
-			err(1, "could not get kern.proc2 size");
-		size = 5 * size / 4;		/* extra slop */
-		if ((kp = malloc(size)) == NULL)
-			err(1,
-			    "failed to allocate memory for proc structures");
-		mib[5] = (int)(size / sizeof(struct kinfo_proc2));
-		if (sysctl(mib, 6, kp, &size, NULL, 0) < 0) {
-			if (errno == ENOMEM) {
-				free(kp);
-				goto retry;
-			}
-			err(1, "could not read kern.proc2");
-		}
-		nentries = (int)(size / sizeof(struct kinfo_proc2));
-	}
+	kp = kvm_getproc2(kd, what, flag, sizeof(*kp), &nentries);
+	if (kp == NULL)
+		errx(1, "%s", kvm_geterr(kd));
+
 	/*
 	 * print header
 	 */
