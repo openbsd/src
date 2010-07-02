@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sedtest.sh,v 1.3 2010/07/01 17:04:24 naddy Exp $
+#	$OpenBSD: sedtest.sh,v 1.4 2010/07/02 02:45:02 naddy Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -417,7 +417,7 @@ u2/g' lines1
 	mark '8.19' ; sed 's/l/[/' lines1 | $SED -e 's[\[.[X\[['
 	echo '\ in y command'
 	mark '8.20'
-	printf 'a\\b(c' |
+	printf 'a\\b(c\n' |
 	$SED 'y%ABCDEFGHIJKLMNOPQRSTUVWXYZ, /\\()"%abcdefghijklmnopqrstuvwxyz,------%'
 }
 
