@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.14 2009/03/03 16:52:25 deraadt Exp $	*/
+/*	$OpenBSD: puc.c,v 1.15 2010/07/02 01:07:20 pirofti Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -349,22 +349,13 @@ puc_find_description(u_int16_t vend, u_int16_t prod,
 {
 	int i;
 
-#define checkreg(val, index) \
-    (((val) & puc_devices[i].rmask[(index)]) == puc_devices[i].rval[(index)])
-#define pucdevdone(idx) \
-    (puc_devices[idx].rval[0] == 0 && puc_devices[idx].rval[1] == 0 \
-	&& puc_devices[idx].rval[2] == 0 && puc_devices[idx].rval[3] == 0)
-
-	for (i = 0; !pucdevdone(i); i++) {
-		if (checkreg(vend, PUC_REG_VEND) &&
-		    checkreg(prod, PUC_REG_PROD) &&
-		    checkreg(svend, PUC_REG_SVEND) &&
-		    checkreg(sprod, PUC_REG_SPROD))
-			return (&puc_devices[i]);
-	}
-
-#undef devdone
-#undef checkreg
+	for (i = 0; puc_devs[i].rval[0] && puc_devs[i].rval[1] &&
+	    puc_devs[i].rval[2] && puc_devs[i].rval[3]; i++)
+		if ((vend & puc_devs[i].rmask[0]) == puc_devs[i].rval[0] &&
+		    (prod & puc_devs[i].rmask[1]) == puc_devs[i].rval[1] &&
+		    (svend & puc_devs[i].rmask[2]) == puc_devs[i].rval[2] &&
+		    (sprod & puc_devs[i].rmask[3]) == puc_devs[i].rval[3])
+			return (&puc_devs[i]);
 
 	return (NULL);
 }
