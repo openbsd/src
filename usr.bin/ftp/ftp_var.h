@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.30 2010/04/30 19:29:01 jsg Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.31 2010/07/02 22:01:10 deraadt Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -110,11 +110,12 @@ int	verbose;		/* print messages coming back from server */
 int	connected;		/* 1 = connected to server, -1 = logged in */
 int	fromatty;		/* input is from a terminal */
 int	interactive;		/* interactively prompt on m* cmds */
-int	confirmrest;		/* confirm rest of current m* cmd */
 #ifndef SMALL
+int	confirmrest;		/* confirm rest of current m* cmd */
 int	debug;			/* debugging level */
-#endif /* !SMALL */
 int	bell;			/* ring bell on cmd completion */
+char   *altarg;			/* argv[1] with no shell-like preprocessing  */
+#endif /* !SMALL */
 int	doglob;			/* glob local file names */
 int	autologin;		/* establish user account on connection */
 int	proxy;			/* proxy server connection active */
@@ -133,7 +134,6 @@ int	crflag;			/* if 1, strip car. rets. on ascii gets */
 char	pasv[BUFSIZ];		/* passive port for proxy data connection */
 int	passivemode;		/* passive mode enabled */
 int	activefallback;		/* fall back to active mode if passive fails */
-char   *altarg;			/* argv[1] with no shell-like preprocessing  */
 char	ntin[17];		/* input translation table */
 char	ntout[17];		/* output translation table */
 char	mapin[MAXPATHLEN];	/* input map template */
@@ -184,19 +184,19 @@ char *gateport;			/* port number to use for gateftp connections */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
 
+#ifndef SMALL
 char	line[FTPBUFLEN];	/* input line buffer */
+char	*argbase;		/* current storage point in arg buffer */
 char	*stringbase;		/* current scan point in line buffer */
 char	argbuf[FTPBUFLEN];	/* argument storage buffer */
-char	*argbase;		/* current storage point in arg buffer */
-#ifndef SMALL
 StringList *marg_sl;		/* stringlist containing margv */
-#endif /* !SMALL */
 int	margc;			/* count of arguments on input line */
+int	options;		/* used during socket creation */
+#endif /* !SMALL */
+
 #define margv (marg_sl->sl_str)	/* args parsed from input line */
 int     cpend;                  /* flag: if != 0, then pending server reply */
 int	mflag;			/* flag: if != 0, then active multi command */
-
-int	options;		/* used during socket creation */
 
 /*
  * Format of command table.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.79 2009/06/06 23:14:44 martynas Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.80 2010/07/02 22:01:10 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -1907,6 +1907,7 @@ abort:
 	(void)signal(SIGINT, oldintr);
 }
 
+#ifndef SMALL
 /* ARGSUSED */
 void
 reset(int argc, char *argv[])
@@ -1926,6 +1927,7 @@ reset(int argc, char *argv[])
 		}
 	}
 }
+#endif
 
 char *
 gunique(const char *local)
