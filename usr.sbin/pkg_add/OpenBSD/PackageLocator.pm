@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.94 2010/07/02 11:41:30 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.95 2010/07/02 12:42:49 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -25,23 +25,30 @@ use OpenBSD::PackageRepository;
 
 my $default_path;
 
+sub build_default_path
+{
+	my ($self, $state) = @_;
+	$default_path = OpenBSD::PackageRepositoryList->new($state);
+
+	if (defined $ENV{PKG_PATH}) {
+		my $v = $ENV{PKG_PATH};
+		$v =~ s/^\:+//o;
+		$v =~ s/\:+$//o;
+		while (my $o = OpenBSD::PackageRepository->parse(\$v, $state)) {
+			$default_path->add($o);
+		}
+		return;
+	}
+	$default_path->add(OpenBSD::PackageRepository->new("./", $state)->can_be_empty);
+	if (my $i = $state->config->value("installpath")) {
+		$default_path->add(OpenBSD::PackageRepository->new($i, $state));
+	}
+}
+
 sub default_path
 {
 	if (!defined $default_path) {
-		my ($self, $state) = @_;
-		$default_path = OpenBSD::PackageRepositoryList->new($state);
-
-		if (defined $ENV{PKG_PATH}) {
-			my $v = $ENV{PKG_PATH};
-			$v =~ s/^\:+//o;
-			$v =~ s/\:+$//o;
-			while (my $o = OpenBSD::PackageRepository->parse(\$v, $state)) {
-				$default_path->add($o);
-			}
-		} else {
-			$default_path->add(OpenBSD::PackageRepository->new("./", $state));
-		}
-
+		&build_default_path;
 	}
 	return $default_path;
 }
