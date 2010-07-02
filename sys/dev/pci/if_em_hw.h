@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.43 2010/06/29 19:14:09 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.44 2010/07/02 21:41:59 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -3561,6 +3561,13 @@ union ich8_hws_flash_regacc {
 #define BM_CS_STATUS_RESOLVED             0x0800
 #define BM_CS_STATUS_SPEED_MASK           0xC000
 #define BM_CS_STATUS_SPEED_1000           0x8000
+
+/* 82577 Mobile Phy Status Register */
+#define HV_M_STATUS                       26
+#define HV_M_STATUS_AUTONEG_COMPLETE      0x1000
+#define HV_M_STATUS_SPEED_MASK            0x0300
+#define HV_M_STATUS_SPEED_1000            0x0200
+#define HV_M_STATUS_LINK_UP               0x0040
 
 #define PHY_UPPER_SHIFT                   21
 #define BM_PHY_REG(page, reg) \

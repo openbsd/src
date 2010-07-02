@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.53 2010/06/29 19:14:09 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.54 2010/07/02 21:41:59 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -167,6 +167,7 @@ static int32_t	em_set_pciex_completion_timeout(struct em_hw *hw);
 static int32_t	em_set_mdio_slow_mode_hv(struct em_hw *);
 int32_t		em_hv_phy_workarounds_ich8lan(struct em_hw *);
 int32_t		em_link_stall_workaround_hv(struct em_hw *);
+int32_t		em_k1_gig_workaround_hv(struct em_hw *, boolean_t);
 int32_t		em_configure_k1_ich8lan(struct em_hw *, boolean_t);
 int32_t		em_access_phy_wakeup_reg_bm(struct em_hw *, uint32_t,
 		    uint16_t *, boolean_t);
@@ -3423,19 +3424,28 @@ em_check_for_link(struct em_hw *hw)
 
 		hw->icp_xxxx_is_link_up = (phy_data & MII_SR_LINK_STATUS) != 0;
 
-		if (hw->phy_type == em_phy_82578) {
-			ret_val = em_link_stall_workaround_hv(hw);
+		if (hw->mac_type == em_pchlan) {
+			ret_val = em_k1_gig_workaround_hv(hw,
+			    hw->icp_xxxx_is_link_up);
 			if (ret_val)
 				return ret_val;
 		}
 
 		if (phy_data & MII_SR_LINK_STATUS) {
 			hw->get_link_status = FALSE;
+
+			if (hw->phy_type == em_phy_82578) {
+				ret_val = em_link_stall_workaround_hv(hw);
+				if (ret_val)
+					return ret_val;
+			}
+
 			/*
 			 * Check if there was DownShift, must be checked
 			 * immediately after link-up
 			 */
 			em_check_downshift(hw);
+
 			/*
 			 * If we are on 82544 or 82543 silicon and
 			 * speed/duplex are forced to 10H or 10F, then we
@@ -3446,7 +3456,6 @@ em_check_for_link(struct em_hw *hw)
 			 * which will happen due to the execution of this
 			 * workaround.
 			 */
-
 			if ((hw->mac_type == em_82544 ||
 			    hw->mac_type == em_82543) && (!hw->autoneg) &&
 			    (hw->forced_speed_duplex == em_10_full ||
@@ -3962,6 +3971,14 @@ em_swfw_sync_release(struct em_hw *hw, uint16_t mask)
 	em_put_hw_eeprom_semaphore(hw);
 }
 
+/****************************************************************************
+ *  Read BM PHY wakeup register.  It works as such:
+ *  1) Set page 769, register 17, bit 2 = 1
+ *  2) Set page to 800 for host (801 if we were manageability)
+ *  3) Write the address using the address opcode (0x11)
+ *  4) Read or write the data using the data opcode (0x12)
+ *  5) Restore 769_17.2 to its original value
+ ****************************************************************************/
 int32_t
 em_access_phy_wakeup_reg_bm(struct em_hw *hw, uint32_t reg_addr,
     uint16_t *phy_data, boolean_t read)
@@ -3969,11 +3986,6 @@ em_access_phy_wakeup_reg_bm(struct em_hw *hw, uint32_t reg_addr,
 	int32_t ret_val;
 	uint16_t reg = BM_PHY_REG_NUM(reg_addr);
 	uint16_t phy_reg = 0;
-
-	/* Gig must be disabled for MDIO accesses to page 800 */
-	if ((hw->mac_type == em_pchlan) &&
-	    (!(E1000_READ_REG(hw, PHY_CTRL) & E1000_PHY_CTRL_GBE_DISABLE)))
-		printf("Attempting to access page 800 while gig enabled.\n");
 
 	/* All operations in this function are phy address 1 */
 	hw->phy_addr = 1;
@@ -3983,26 +3995,20 @@ em_access_phy_wakeup_reg_bm(struct em_hw *hw, uint32_t reg_addr,
 	    (BM_WUC_ENABLE_PAGE << PHY_PAGE_SHIFT));
 
 	ret_val = em_read_phy_reg_ex(hw, BM_WUC_ENABLE_REG, &phy_reg);
-	if (ret_val) {
-		printf("Could not read PHY page 769\n");
+	if (ret_val)
 		goto out;
-	}
 
 	/* First clear bit 4 to avoid a power state change */
 	phy_reg &= ~(BM_WUC_HOST_WU_BIT);
 	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ENABLE_REG, phy_reg);
-	if (ret_val) {
-		printf("Could not clear PHY page 769 bit 4\n");
+	if (ret_val)
 		goto out;
-	}
 
 	/* Write bit 2 = 1, and clear bit 4 to 769_17 */
 	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ENABLE_REG,
 	    phy_reg | BM_WUC_ENABLE_BIT);
-	if (ret_val) {
-		printf("Could not write PHY page 769 bit 2\n");
+	if (ret_val)
 		goto out;
-	}
 
 	/* Select page 800 */
 	ret_val = em_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
@@ -4010,10 +4016,8 @@ em_access_phy_wakeup_reg_bm(struct em_hw *hw, uint32_t reg_addr,
 
 	/* Write the page 800 offset value using opcode 0x11 */
 	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ADDRESS_OPCODE, reg);
-	if (ret_val) {
-		printf("Could not write address opcode to page 800\n");
+	if (ret_val)
 		goto out;
-	}
 
 	if (read)
 	        /* Read the page 800 value using opcode 0x12 */
@@ -4024,10 +4028,8 @@ em_access_phy_wakeup_reg_bm(struct em_hw *hw, uint32_t reg_addr,
 		ret_val = em_write_phy_reg_ex(hw, BM_WUC_DATA_OPCODE,
 		    *phy_data);
 
-	if (ret_val) {
-		printf("Could not access data value from page 800\n");
+	if (ret_val)
 		goto out;
-	}
 
 	/*
 	 * Restore 769_17.2 to its original value
@@ -4038,15 +4040,16 @@ em_access_phy_wakeup_reg_bm(struct em_hw *hw, uint32_t reg_addr,
 
 	/* Clear 769_17.2 */
 	ret_val = em_write_phy_reg_ex(hw, BM_WUC_ENABLE_REG, phy_reg);
-	if (ret_val) {
-		printf("Could not clear PHY page 769 bit 2\n");
+	if (ret_val)
 		goto out;
-	}
 
 out:
 	return ret_val;
 }
 
+/***************************************************************************
+ *  Read HV PHY vendor specific high registers
+ ***************************************************************************/
 int32_t
 em_access_phy_debug_regs_hv(struct em_hw *hw, uint32_t reg_addr,
     uint16_t *phy_data, boolean_t read)
@@ -4619,6 +4622,12 @@ em_phy_hw_reset(struct em_hw *hw)
 	return ret_val;
 }
 
+/*****************************************************************************
+ *  SW-based LCD Configuration.
+ *  SW will configure Gbe Disable and LPLU based on the NVM. The four bits are
+ *  collectively called OEM bits.  The OEM Write Enable bit and SW Config bit
+ *  in NVM determines whether HW should configure LPLU and Gbe Disable.
+ *****************************************************************************/
 int32_t
 em_oem_bits_config_pchlan(struct em_hw *hw, boolean_t d0_state)
 {
@@ -7886,17 +7895,15 @@ em_set_d0_lplu_state(struct em_hw *hw, boolean_t active)
 	return E1000_SUCCESS;
 }
 
-/**
- *  em_set_lplu_state_pchlan - Set Low Power Link Up state
- *  @hw: pointer to the HW structure
- *  @active: TRUE to enable LPLU, FALSE to disable
+/***************************************************************************
+ *  Set Low Power Link Up state
  *
  *  Sets the LPLU state according to the active flag.  For PCH, if OEM write
  *  bit are disabled in the NVM, writing the LPLU bits in the MAC will not set
  *  the phy speed. This function will manually set the LPLU bit and restart
  *  auto-neg as hw would do. D3 and D0 LPLU will call the same function
  *  since it configures the same bit.
- **/
+ ***************************************************************************/
 int32_t
 em_set_lplu_state_pchlan(struct em_hw *hw, boolean_t active)
 {
@@ -9437,10 +9444,9 @@ out:
 	return ret_val;
 }
 
-/**
- *  e1000_set_mdio_slow_mode_hv - Set slow MDIO access mode
- *  @hw:   pointer to the HW structure
- **/
+/***************************************************************************
+ *  Set slow MDIO access mode
+ ***************************************************************************/
 static int32_t
 em_set_mdio_slow_mode_hv(struct em_hw *hw)
 {
@@ -9458,10 +9464,9 @@ em_set_mdio_slow_mode_hv(struct em_hw *hw)
 	return ret_val;
 }
 
-/**
- *  em_hv_phy_workarounds_ich8lan - A series of Phy workarounds to be
- *  done after every PHY reset.
- **/
+/***************************************************************************
+ *  A series of Phy workarounds to be done after every PHY reset.
+ ***************************************************************************/
 int32_t
 em_hv_phy_workarounds_ich8lan(struct em_hw *hw)
 {
@@ -9588,9 +9593,8 @@ out:
 }
 
 
-/**
- *  em_link_stall_workaround_hv - Si workaround
- *  @hw: pointer to the HW structure
+/***************************************************************************
+ *  Si workaround
  *
  *  This function works around a Si bug where the link partner can get
  *  a link up indication before the PHY does.  If small packets are sent
@@ -9598,7 +9602,7 @@ out:
  *  being properly accounted for by the PHY and will stall preventing
  *  further packets from being received.  The workaround is to clear the
  *  packet buffer after the PHY detects link up.
- **/
+ ***************************************************************************/
 int32_t
 em_link_stall_workaround_hv(struct em_hw *hw)
 {
@@ -9642,16 +9646,93 @@ out:
 	return ret_val;
 }
 
-/**
- *  e1000_configure_k1_ich8lan - Configure K1 power state
- *  @hw: pointer to the HW structure
- *  @enable: K1 state to configure
+/****************************************************************************
+ *  K1 Si workaround
+ *
+ *  If K1 is enabled for 1Gbps, the MAC might stall when transitioning
+ *  from a lower speed.  This workaround disables K1 whenever link is at 1Gig.
+ *  If link is down, the function will restore the default K1 setting located
+ *  in the NVM.
+ ****************************************************************************/
+int32_t
+em_k1_gig_workaround_hv(struct em_hw *hw, boolean_t link)
+{
+	int32_t ret_val;
+	uint16_t phy_data;
+	boolean_t k1_enable;
+
+	DEBUGFUNC("em_k1_gig_workaround_hv");
+
+	if (hw->mac_type != em_pchlan)
+		return E1000_SUCCESS;
+
+	ret_val = em_read_eeprom_ich8(hw, E1000_NVM_K1_CONFIG, 1, &phy_data);
+	if (ret_val)
+		return ret_val;
+
+	k1_enable = phy_data & E1000_NVM_K1_ENABLE ? TRUE : FALSE;
+
+	/* Disable K1 when link is 1Gbps, otherwise use the NVM setting */
+	if (link) {
+		if (hw->phy_type == em_phy_82578) {
+			ret_val = em_read_phy_reg(hw, BM_CS_STATUS,
+			    &phy_data);
+			if (ret_val)
+				return ret_val;
+
+			phy_data &= BM_CS_STATUS_LINK_UP |
+				    BM_CS_STATUS_RESOLVED |
+				    BM_CS_STATUS_SPEED_MASK;
+
+			if (phy_data == (BM_CS_STATUS_LINK_UP |
+					 BM_CS_STATUS_RESOLVED |
+					 BM_CS_STATUS_SPEED_1000))
+				k1_enable = FALSE;
+		}
+
+		if (hw->phy_type == em_phy_82577) {
+			ret_val = em_read_phy_reg(hw, HV_M_STATUS,
+			    &phy_data);
+			if (ret_val)
+				return ret_val;
+
+			phy_data &= HV_M_STATUS_LINK_UP |
+				    HV_M_STATUS_AUTONEG_COMPLETE |
+				    HV_M_STATUS_SPEED_MASK;
+
+			if (phy_data == (HV_M_STATUS_LINK_UP |
+					 HV_M_STATUS_AUTONEG_COMPLETE |
+					 HV_M_STATUS_SPEED_1000))
+				k1_enable = FALSE;
+		}
+
+		/* Link stall fix for link up */
+		ret_val = em_write_phy_reg(hw, PHY_REG(770, 19),
+		    0x0100);
+		if (ret_val)
+			return ret_val;
+
+	} else {
+		/* Link stall fix for link down */
+		ret_val = em_write_phy_reg(hw, PHY_REG(770, 19),
+		    0x4100);
+		if (ret_val)
+			return ret_val;
+	}
+
+	ret_val = em_configure_k1_ich8lan(hw, k1_enable);
+
+	return ret_val;
+}
+
+/***************************************************************************
+ *  Configure K1 power state
  *
  *  Configure the K1 power state based on the provided parameter.
  *  Assumes semaphore already acquired.
  *
  *  Success returns 0, Failure returns -E1000_ERR_PHY (-2)
- **/
+ ***************************************************************************/
 int32_t
 em_configure_k1_ich8lan(struct em_hw *hw, boolean_t k1_enable)
 {
@@ -9661,9 +9742,8 @@ em_configure_k1_ich8lan(struct em_hw *hw, boolean_t k1_enable)
 	uint32_t reg = 0;
 	uint16_t kmrn_reg = 0;
 
-	ret_val = em_read_kmrn_reg(hw,
-	                                     E1000_KMRNCTRLSTA_K1_CONFIG,
-	                                     &kmrn_reg);
+	ret_val = em_read_kmrn_reg(hw, E1000_KMRNCTRLSTA_K1_CONFIG,
+	    &kmrn_reg);
 	if (ret_val)
 		goto out;
 
@@ -9672,9 +9752,8 @@ em_configure_k1_ich8lan(struct em_hw *hw, boolean_t k1_enable)
 	else
 		kmrn_reg &= ~E1000_KMRNCTRLSTA_K1_ENABLE;
 
-	ret_val = em_write_kmrn_reg(hw,
-	                                      E1000_KMRNCTRLSTA_K1_CONFIG,
-	                                      kmrn_reg);
+	ret_val = em_write_kmrn_reg(hw, E1000_KMRNCTRLSTA_K1_CONFIG,
+	    kmrn_reg);
 	if (ret_val)
 		goto out;
 
@@ -9695,5 +9774,3 @@ em_configure_k1_ich8lan(struct em_hw *hw, boolean_t k1_enable)
 out:
 	return ret_val;
 }
-
-
