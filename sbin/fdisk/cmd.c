@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.44 2009/12/24 10:06:35 sobrado Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.45 2010/07/02 02:54:09 halex Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
+#include <limits.h>
 #include "disk.h"
 #include "misc.h"
 #include "user.h"
@@ -199,22 +200,33 @@ Xedit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		PRT_fix_CHS(disk, pp);
 	} else {
 		u_int m;
+		u_int32_t d;
 
 		/* Get data */
-		pp->bs = getuint(disk, "offset",
-		   "Starting sector for this partition.", pp->bs,
-		   disk->real->size, 0, DO_CONVERSIONS |
-		   (pp->id == FS_BSDFFS ? DO_ROUNDING : 0));
+		d = pp->bs;
+		do {
+			pp->bs = getuint(disk, "offset",
+			   "Starting sector for this partition.", d,
+			   disk->real->size, 0, DO_CONVERSIONS |
+			   (pp->id == FS_BSDFFS ? DO_ROUNDING : 0));
+			if (pp->bs == UINT_MAX)
+				printf("Invalid offset.\n");
+		} while (pp->bs == UINT_MAX);
 
 		m = MAX(pp->ns, disk->real->size - pp->bs);
 		if ( m > disk->real->size - pp->bs) {
 			/* dont have default value extend beyond end of disk */
 			m = disk->real->size - pp->bs;
 		}
-		pp->ns = getuint(disk, "size", "Size of the partition.",
-		    pp->ns, m, pp->bs , DO_CONVERSIONS |
-		    ((pp->id == FS_BSDFFS || pp->id == FS_SWAP) ?
-		    DO_ROUNDING : 0));
+		d = pp->ns;
+		do {
+			pp->ns = getuint(disk, "size", "Size of the partition.",
+			    d, m, pp->bs , DO_CONVERSIONS |
+			    ((pp->id == FS_BSDFFS || pp->id == FS_SWAP) ?
+			    DO_ROUNDING : 0));
+			if (pp->ns == UINT_MAX)
+				printf("Invalid size.\n");
+		} while (pp->ns == UINT_MAX);
 
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
