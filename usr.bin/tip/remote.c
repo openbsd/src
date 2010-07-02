@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.29 2010/07/02 05:52:48 nicm Exp $	*/
+/*	$OpenBSD: remote.c,v 1.30 2010/07/02 05:56:29 nicm Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -119,13 +119,13 @@ getremote(char *host)
 	vsetstr(PARITY, strval);
 
 	if (cgetstr(bp, "es", &strval) >= 0 && strval != NULL)
-		vstring("es", strval);
+		vsetstr(ESCAPE, strval);
 	if (cgetstr(bp, "fo", &strval) >= 0 && strval != NULL)
-		vstring("fo", strval);
+		vsetstr(FORCE, strval);
 	if (cgetstr(bp, "pr", &strval) >= 0 && strval != NULL)
-		vstring("pr", strval);
+		vsetstr(PROMPT, strval);
 	if (cgetstr(bp, "rc", &strval) >= 0 && strval != NULL)
-		vstring("rc", strval);
+		vsetstr(RECORD, strval);
 
 	if (!vgetnum(BAUDRATE)) {
 		if (cgetnum(bp, "br", &val) == -1)

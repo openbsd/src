@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.27 2010/07/01 21:47:09 nicm Exp $	*/
+/*	$OpenBSD: value.c,v 1.28 2010/07/02 05:56:29 nicm Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -50,28 +50,65 @@ static size_t col = 0;
 char *
 vgetstr(int value)
 {
-	return (vtable[value].v_string);
+	value_t	*vp = &vtable[value];
+	int	 type;
+
+	type = vp->v_flags & V_TYPEMASK;
+	if (type != V_STRING)
+		errx(1, "variable %s not a string", vp->v_name);
+	return (vp->v_string);
 }
 
 /* Get a number value. */
 int
 vgetnum(int value)
 {
-	return (vtable[value].v_number);
+	value_t	*vp = &vtable[value];
+	int	 type;
+
+	type = vp->v_flags & V_TYPEMASK;
+	if (type != V_NUMBER && type != V_BOOL && type != V_CHAR)
+		errx(1, "variable %s not a number", vp->v_name);
+	return (vp->v_number);
 }
 
 /* Set a string value. */
 void
 vsetstr(int value, char *string)
 {
-	vtable[value].v_string = string;
+	value_t	*vp = &vtable[value];
+	int	 type;
+
+	type = vp->v_flags & V_TYPEMASK;
+	if (type != V_STRING)
+		errx(1, "variable %s not a string", vp->v_name);
+
+	if (value == RECORD && string != NULL)
+		string = expand(string);
+
+	if (!(vp->v_flags & V_INIT))
+		free(vp->v_string);
+	if (string != NULL) {
+		vp->v_string = strdup(string);
+		if (vp->v_string == NULL)
+			err(1, "strdup");
+	} else
+		vp->v_string = NULL;
+	vp->v_flags &= ~V_INIT;
 }
 
 /* Set a number value. */
 void
 vsetnum(int value, int number)
 {
-	vtable[value].v_number = number;
+	value_t	*vp = &vtable[value];
+	int	 type;
+
+	type = vp->v_flags & V_TYPEMASK;
+	if (type != V_NUMBER && type != V_BOOL && type != V_CHAR)
+		errx(1, "variable %s not a number", vp->v_name);
+
+	vp->v_number = number;
 }
 
 void
@@ -323,25 +360,4 @@ vinterp(char *s, int stop)
 	}
 	*p = '\0';
 	return (c == stop ? s-1 : NULL);
-}
-
-/*
- * assign variable s with value v (for NUMBER or STRING or CHAR types)
- */
-int
-vstring(char *s, char *v)
-{
-	value_t *p;
-
-	p = vlookup(s);
-	if (p == 0)
-		return (1);
-	if ((p->v_flags & V_TYPEMASK) == V_NUMBER)
-		vassign(p, (char *)(long)atoi(v));
-	else {
-		if (strcmp(s, "record") == 0)
-			v = expand(v);
-		vassign(p, v);
-	}
-	return (0);
 }
