@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.63 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.64 2010/07/02 17:41:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1067,9 +1067,6 @@ post_it(POST_ARGS)
 		if (NULL == mdoc->last->head->child)
 			if ( ! mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOARGS))
 				return(0);
-		if (NULL == mdoc->last->body->child)
-			if ( ! mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOBODY))
-				return(0);
 		break;
 	case (LIST_bullet):
 		/* FALLTHROUGH */
@@ -1078,13 +1075,13 @@ post_it(POST_ARGS)
 	case (LIST_enum):
 		/* FALLTHROUGH */
 	case (LIST_hyphen):
+		if (NULL == mdoc->last->body->child)
+			if ( ! mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOBODY))
+				return(0);
 		/* FALLTHROUGH */
 	case (LIST_item):
 		if (mdoc->last->head->child)
 			if ( ! mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_ARGSLOST))
-				return(0);
-		if (NULL == mdoc->last->body->child)
-			if ( ! mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_NOBODY))
 				return(0);
 		break;
 	case (LIST_column):
