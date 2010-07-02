@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.88 2010/07/02 20:52:14 mk Exp $ */
+/*	$OpenBSD: arc.c,v 1.89 2010/07/02 20:54:36 mk Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -378,6 +378,7 @@ struct arc_softc {
 	struct arc_ccb_list	sc_ccb_free;
 	struct mutex		sc_ccb_mtx;
 
+	struct scsi_iopool	sc_iopool;
 	struct scsibus_softc	*sc_scsibus;
 
 	struct rwlock		sc_lock;
@@ -598,6 +599,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_target = ARC_MAX_TARGET;
 	sc->sc_link.adapter_buswidth = ARC_MAX_TARGET;
 	sc->sc_link.openings = sc->sc_req_count / ARC_MAX_TARGET;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -725,18 +727,11 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	ccb = arc_get_ccb(sc);
-	if (ccb == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
-		return;
-	}
-
+	ccb = xs->io;
 	ccb->ccb_xs = xs;
 
 	if (arc_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		arc_put_ccb(sc, ccb);
 		scsi_done(xs);
 		return;
 	}
@@ -862,7 +857,6 @@ arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, u_int32_t reg)
 		xs->resid = 0;
 	}
 
-	arc_put_ccb(sc, ccb);
 	scsi_done(xs);
 }
 
@@ -1931,6 +1925,10 @@ arc_alloc_ccbs(struct arc_softc *sc)
 
 		arc_put_ccb(sc, ccb);
 	}
+
+	scsi_iopool_init(&sc->sc_iopool, sc,
+	    (void *(*)(void *))arc_get_ccb,
+	    (void (*)(void *, void *))arc_put_ccb);
 
 	return (0);
 
