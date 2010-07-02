@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.29 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.30 2010/07/02 15:02:38 blambert Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ pfslowtimo(void *arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
-	timeout_add(to, hz/2);
+	timeout_add_msec(to, 500);
 }
 
 void
@@ -266,5 +266,5 @@ pffasttimo(void *arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
-	timeout_add(to, hz/5);
+	timeout_add_msec(to, 200);
 }
