@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.h,v 1.5 2010/06/23 13:10:14 martinh Exp $ */
+/*	$OpenBSD: btree.h,v 1.6 2010/07/02 01:43:00 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -42,6 +42,7 @@ typedef void		 (*bt_prefix_func)(const struct btval *a,
 
 enum cursor_op {				/* cursor operations */
 	BT_CURSOR,				/* position at given key */
+	BT_CURSOR_EXACT,			/* position at key, or fail */
 	BT_FIRST,
 	BT_NEXT,
 	BT_LAST,				/* not implemented */

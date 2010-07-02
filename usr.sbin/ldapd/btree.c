@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.21 2010/07/02 01:08:35 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.22 2010/07/02 01:43:00 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -284,7 +284,7 @@ static int		 btree_sibling(struct cursor *cursor, int move_right);
 static int		 btree_cursor_next(struct cursor *cursor,
 			    struct btval *key, struct btval *data);
 static int		 btree_cursor_set(struct cursor *cursor,
-			    struct btval *key, struct btval *data);
+			    struct btval *key, struct btval *data, int *exactp);
 static int		 btree_cursor_first(struct cursor *cursor,
 			    struct btval *key, struct btval *data);
 
@@ -1709,7 +1709,8 @@ btree_cursor_next(struct cursor *cursor, struct btval *key, struct btval *data)
 }
 
 static int
-btree_cursor_set(struct cursor *cursor, struct btval *key, struct btval *data)
+btree_cursor_set(struct cursor *cursor, struct btval *key, struct btval *data,
+    int *exactp)
 {
 	int		 rc;
 	struct node	*leaf;
@@ -1726,7 +1727,13 @@ btree_cursor_set(struct cursor *cursor, struct btval *key, struct btval *data)
 	assert(IS_LEAF(mp));
 
 	top = CURSOR_TOP(cursor);
-	leaf = btree_search_node(cursor->bt, mp, key, NULL, &top->ki);
+	leaf = btree_search_node(cursor->bt, mp, key, exactp, &top->ki);
+	if (exactp != NULL && !*exactp) {
+		/* BT_CURSOR_EXACT specified and not an exact match. */
+		errno = ENOENT;
+		return BT_FAIL;
+	}
+
 	if (leaf == NULL) {
 		DPRINTF("===> inexact leaf not found, goto sibling");
 		if (btree_sibling(cursor, 1) != BT_SUCCESS)
@@ -1782,18 +1789,22 @@ btree_cursor_get(struct cursor *cursor, struct btval *key, struct btval *data,
     enum cursor_op op)
 {
 	int		 rc;
+	int		 exact = 0;
 
 	assert(cursor);
 
 	switch (op) {
 	case BT_CURSOR:
+	case BT_CURSOR_EXACT:
 		while (CURSOR_TOP(cursor) != NULL)
 			cursor_pop_page(cursor);
 		if (key == NULL || key->size == 0 || key->size > MAXKEYSIZE) {
 			errno = EINVAL;
 			rc = BT_FAIL;
-		} else
-			rc = btree_cursor_set(cursor, key, data);
+		} else if (op == BT_CURSOR_EXACT)
+			rc = btree_cursor_set(cursor, key, data, &exact);
+		else
+			rc = btree_cursor_set(cursor, key, data, NULL);
 		break;
 	case BT_NEXT:
 		if (!cursor->initialized)
