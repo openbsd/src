@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.53 2010/07/02 09:20:26 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.54 2010/07/02 09:26:05 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -731,7 +731,7 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 	sm->ssdi.ssd_magic = SR_MAGIC;
 	sm->ssdi.ssd_version = SR_META_VERSION;
 	sm->ssd_ondisk = 0;
-	sm->ssdi.ssd_flags = 0;
+	sm->ssdi.ssd_vol_flags = 0;
 	bcopy(&sd->sd_meta->ssdi.ssd_uuid, &sm->ssdi.ssd_uuid,
 	    sizeof(struct sr_uuid));
 	sm->ssdi.ssd_chunk_no = 1;

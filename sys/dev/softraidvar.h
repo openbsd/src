@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.93 2010/07/02 09:20:26 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.94 2010/07/02 09:26:05 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -59,7 +59,7 @@ struct sr_metadata {
 		u_int64_t	ssd_magic;	/* magic id */
 #define	SR_MAGIC		0x4d4152436372616dLLU
 		u_int32_t	ssd_version; 	/* meta data version */
-		u_int32_t	ssd_flags;
+		u_int32_t	ssd_vol_flags;	/* volume specific flags. */
 		struct sr_uuid	ssd_uuid;	/* unique identifier */
 
 		/* chunks */
