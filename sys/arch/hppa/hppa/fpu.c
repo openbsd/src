@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.2 2010/07/02 00:00:45 jsing Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.3 2010/07/02 04:51:13 jsing Exp $	*/
 
 /*
  * Copyright (c) 2010 Joel Sing <jsing@openbsd.org>
@@ -65,7 +65,7 @@ fpu_proc(struct proc *p, int save)
 			panic("FPU shootdown failed!\n");
 
 		while (hfp->hfp_cpu != NULL)
-			;
+			asm volatile ("sync" ::: "memory");
 
 	} else if (p->p_md.md_regs->tf_cr30 == ci->ci_fpu_state) {
 
