@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.47 2010/07/01 17:20:48 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.48 2010/07/02 00:11:39 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -491,9 +491,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 		unp3->unp_flags |= UNP_FEIDS;
 		so2 = so3;
 		if (unp2->unp_flags & UNP_FEIDSBIND) {
-			unp->unp_connid.uid = unp2->unp_connid.uid;
-			unp->unp_connid.gid = unp2->unp_connid.gid;
-			unp->unp_connid.pid = unp2->unp_connid.pid;
+			unp->unp_connid = unp2->unp_connid;
 			unp->unp_flags |= UNP_FEIDS;
 		}
 	}
