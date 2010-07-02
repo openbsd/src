@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.20 2010/07/01 06:11:59 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.21 2010/07/02 01:08:35 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -944,6 +944,8 @@ btree_write_meta(struct btree *bt, pgno_t root, unsigned int flags)
 	bcopy(&bt->meta, meta, sizeof(*meta));
 
 	rc = write(bt->fd, mp->page, bt->head.psize);
+	mp->dirty = 0;
+	SIMPLEQ_REMOVE_HEAD(bt->txn->dirty_queue, next);
 	if (rc != (ssize_t)bt->head.psize) {
 		if (rc > 0)
 			DPRINTF("short write, filesystem full?");
