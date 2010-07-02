@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.60 2010/06/28 18:31:02 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.61 2010/07/02 15:10:48 blambert Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1572,7 +1572,6 @@ siop_start(sc)
 	struct siop_lun *siop_lun;
 	struct siop_xfer *siop_xfer;
 	u_int32_t dsa;
-	int timeout;
 	int target, lun, tag, slot;
 	int newcmd = 0; 
 	int doingready = 0;
@@ -1722,11 +1721,8 @@ again:
 		if (siop_cmd->cmd_c.status == CMDST_ACTIVE) {
 			if ((siop_cmd->cmd_c.xs->flags & SCSI_POLL) == 0) {
 				/* start expire timer */
-				timeout = (u_int64_t) siop_cmd->cmd_c.xs->timeout *
-				    (u_int64_t)hz / 1000;
-				if (timeout == 0)
-					timeout = 1;
-				timeout_add(&siop_cmd->cmd_c.xs->stimeout, timeout);
+				timeout_add_msec(&siop_cmd->cmd_c.xs->stimeout,
+				    siop_cmd->cmd_c.xs->timeout);
 			}
 		}
 		/*
