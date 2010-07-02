@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.20 2009/04/07 16:35:52 blambert Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.21 2010/07/02 09:21:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -50,6 +50,8 @@
 int	sdmmc_match(struct device *, void *, void *);
 void	sdmmc_attach(struct device *, struct device *, void *);
 int	sdmmc_detach(struct device *, int);
+int	sdmmc_activate(struct device *, int);
+
 void	sdmmc_create_thread(void *);
 void	sdmmc_task_thread(void *);
 void	sdmmc_discover_task(void *);
@@ -76,7 +78,8 @@ void sdmmc_dump_command(struct sdmmc_softc *, struct sdmmc_command *);
 #endif
 
 struct cfattach sdmmc_ca = {
-	sizeof(struct sdmmc_softc), sdmmc_match, sdmmc_attach, sdmmc_detach
+	sizeof(struct sdmmc_softc), sdmmc_match, sdmmc_attach, sdmmc_detach,
+	sdmmc_activate
 };
 
 struct cfdriver sdmmc_cd = {
@@ -140,6 +143,21 @@ sdmmc_detach(struct device *self, int flags)
 	return 0;
 }
 
+int
+sdmmc_activate(struct device *self, int act)
+{
+	struct sdmmc_softc *sc = (struct sdmmc_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_RESUME:
+		sc->sc_dying = -1;	/* "bump" the task for a retry */
+		wakeup(&sc->sc_tskq);
+		break;
+	}
+	return (rv);
+}
+
 void
 sdmmc_create_thread(void *arg)
 {
@@ -161,6 +179,7 @@ sdmmc_task_thread(void *arg)
 	struct sdmmc_task *task;
 	int s;
 
+restart:
 	sdmmc_needs_discover(&sc->sc_dev);
 
 	s = splsdmmc();
@@ -182,6 +201,15 @@ sdmmc_task_thread(void *arg)
 		SDMMC_UNLOCK(sc);
 	}
 
+	/*
+	 * During a suspend, the card is detached since we do not know
+	 * if it is the same upon wakeup.  Go re-discover the bus.
+	 */
+	if (sc->sc_dying == -1) {
+		CLR(sc->sc_flags, SMF_CARD_PRESENT);
+		sc->sc_dying = 0;
+		goto restart;
+	}
 	sc->sc_task_thread = NULL;
 	wakeup(sc);
 	kthread_exit(0);
