@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.51 2010/07/01 23:38:29 mlarkin Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.52 2010/07/02 00:09:37 pirofti Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -170,11 +170,6 @@ static const struct vga_device_description vga_devs[] = {
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
 	    	0x17aa, 0x215a },
 	    {	0xffff, 0xffff, 0xffff, 0xffff }, 1, 0
-	},
-	{
-		/* NULL */
-	    {	0,	0,	0,	0     },
-	    {	0,	0,	0,	0     }, 0, 0
 	}
 };
 #endif
@@ -252,8 +247,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	subvend = PCI_VENDOR(subid);
 	subprod = PCI_PRODUCT(subid);
 
-	for (i = 0; vga_devs[i].rval[0] && vga_devs[i].rval[1] &&
-	    vga_devs[i].rval[2] && vga_devs[i].rval[3]; i++)
+	for (i = 0; i < nitems(vga_devs); i++)
 		if ((vend & vga_devs[i].rmask[0]) == vga_devs[i].rval[0] &&
 		    (prod & vga_devs[i].rmask[1]) == vga_devs[i].rval[1] &&
 		    (subvend & vga_devs[i].rmask[2]) == vga_devs[i].rval[2] &&
