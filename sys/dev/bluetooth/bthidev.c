@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthidev.c,v 1.6 2009/11/21 13:05:32 guenther Exp $	*/
+/*	$OpenBSD: bthidev.c,v 1.7 2010/07/02 15:01:10 blambert Exp $	*/
 /*	$NetBSD: bthidev.c,v 1.16 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -642,8 +642,8 @@ bthidev_ctl_disconnected(void *arg, int err)
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
-			timeout_add(&sc->sc_reconnect,
-			    BTHID_RETRY_INTERVAL * hz);
+			timeout_add_sec(&sc->sc_reconnect,
+			    BTHID_RETRY_INTERVAL);
 		else
 			sc->sc_state = BTHID_WAIT_CTL;
 	} else {
@@ -674,8 +674,8 @@ bthidev_int_disconnected(void *arg, int err)
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
-			timeout_add(&sc->sc_reconnect,
-			    BTHID_RETRY_INTERVAL * hz);
+			timeout_add_sec(&sc->sc_reconnect,
+			    BTHID_RETRY_INTERVAL);
 		else
 			sc->sc_state = BTHID_WAIT_CTL;
 	} else {
