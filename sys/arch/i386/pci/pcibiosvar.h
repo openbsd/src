@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.17 2007/03/19 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.18 2010/07/02 16:11:19 jsg Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -144,7 +144,6 @@ typedef const struct pciintr_icu *pciintr_icu_tag_t;
 
 #define	PCIADDR_SEARCH_IO	0
 #define	PCIADDR_SEARCH_MEM	1
-struct extent *pciaddr_search(int, bus_addr_t *, bus_size_t);
 
 #define	PCI_INT_VIA_ISA		0x20000000 /* XXX see APIC_INT_VIA_APIC */
 
