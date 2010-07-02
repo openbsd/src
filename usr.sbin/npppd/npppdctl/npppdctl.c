@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppdctl.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: npppdctl.c,v 1.3 2010/07/02 19:05:20 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -330,7 +330,7 @@ print_who(struct npppd_who *w)
 		    LLADDR((struct sockaddr_dl *)sa)[3] & 0xff,
 		    LLADDR((struct sockaddr_dl *)sa)[4] & 0xff,
 		    LLADDR((struct sockaddr_dl *)sa)[5] & 0xff);
-	} if (sa->sa_family < AF_MAX) {
+	} else if (sa->sa_family < AF_MAX) {
 		getnameinfo((const struct sockaddr *)&w->phy_info,
 		    sa->sa_len, hoststr, sizeof(hoststr), servstr,
 		    sizeof(servstr),

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.2 2010/07/01 03:38:17 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.3 2010/07/02 19:05:20 yasuoka Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4).
@@ -504,7 +504,6 @@ npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
 #ifdef NPPPD_DEBUG
 		log_printf(LOG_INFO, "%s received a packet to unknown "
 		    "%s.", _this->ifname, inet_ntoa(iphdr->ip_dst));
-		show_hd(debug_get_debugfp(), pktp, lpktp);
 #endif
 		return;
 	}
