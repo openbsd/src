@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.20 2009/08/10 20:29:52 deraadt Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.21 2010/07/02 06:08:38 reyk Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -91,12 +91,14 @@ struct ath_pci_softc {
 int	 ath_pci_match(struct device *, void *, void *);
 void	 ath_pci_attach(struct device *, struct device *, void *);
 int	 ath_pci_detach(struct device *, int);
+int	 ath_pci_activate(struct device *, int);
 
 struct cfattach ath_pci_ca = {
 	sizeof(struct ath_pci_softc),
 	ath_pci_match,
 	ath_pci_attach,
-	ath_pci_detach
+	ath_pci_detach,
+	ath_pci_activate
 };
 
 int
@@ -203,5 +205,23 @@ ath_pci_detach(struct device *self, int flags)
 		sc->sc_ss = 0;
 	}
 
+	return (0);
+}
+
+int
+ath_pci_activate(struct device *self, int act)
+{
+	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
+	struct ath_softc *sc = &psc->sc_sc;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		/* It is safe to call ath's power hooks */
+		ath_power(PWR_SUSPEND, sc);
+		break;
+	case DVACT_RESUME:
+		ath_power(PWR_RESUME, sc);
+		break;
+	}
 	return (0);
 }
