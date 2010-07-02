@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.17 2010/07/01 21:43:38 nicm Exp $	*/
+/*	$OpenBSD: vars.c,v 1.18 2010/07/02 07:32:16 nicm Exp $	*/
 /*	$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $	*/
 
 /*
@@ -31,7 +31,8 @@
  */
 
 #include "tip.h"
-#include "pathnames.h"
+
+#include <paths.h>
 
 /*
  * Definition of variables

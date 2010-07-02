@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.51 2010/07/02 05:56:29 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.52 2010/07/02 07:32:16 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -55,6 +55,10 @@
 #include <errno.h>
 #include <err.h>
 #include <limits.h>
+
+/* tip paths. */
+#define _PATH_ACULOG "/var/log/aculog"
+#define _PATH_REMOTE "/etc/remote"
 
 /* Variable table entry. */
 typedef	struct {
@@ -142,7 +146,6 @@ int	gotdefterm;
 FILE	*fscript;		/* FILE for scripting */
 
 int	FD;			/* open file descriptor to remote host */
-int	AC;			/* open file descriptor to dialer (v831 only) */
 int	vflag;			/* print .tiprc initialization sequence */
 int	noesc;			/* no `~' escape char */
 int	sfd;			/* for ~< operation */

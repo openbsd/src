@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.50 2010/07/02 05:52:48 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.51 2010/07/02 07:32:16 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <util.h>
 
 #include "tip.h"
-#include "pathnames.h"
 
 static void	intprompt(int);
 static void	tipin(void);
