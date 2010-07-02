@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.53 2010/07/02 18:26:58 art Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.54 2010/07/02 20:40:16 thib Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -85,14 +85,6 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
-
-/*
- * XXXCDC: do these really belong here?
- */
-
-int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
-				/* XXX: see uvm_kernacc */
-
 
 /*
  * uvm_kernacc: can the kernel access a region of memory
