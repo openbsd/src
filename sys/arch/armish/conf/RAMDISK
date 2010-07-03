@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.14 2010/04/26 20:51:51 deraadt Exp $ 
+# $OpenBSD: RAMDISK,v 1.15 2010/07/03 01:48:18 matthew Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -111,11 +111,11 @@ uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
 umsm*	at uhub?		# Qualcomm MSM EVDO
 ucom*	at umsm?
-uaudio* at uhub?		# USB Audio
-audio*	at uaudio?
-umidi*	at uhub?		# USB MIDI
-midi*	at umidi?
-ulpt*	at uhub?		# USB Printers
+#uaudio* at uhub?		# USB Audio
+#audio*	at uaudio?
+#umidi*	at uhub?		# USB MIDI
+#midi*	at umidi?
+#ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
 atapiscsi* at umass?
@@ -135,13 +135,13 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
-urio*	at uhub?		# Diamond Multimedia Rio 500
-uscanner* at uhub?		# USB Scanners
-usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
-scsibus* at usscanner?
+#urio*	at uhub?		# Diamond Multimedia Rio 500
+#uscanner* at uhub?		# USB Scanners
+#usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
+#scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
-udsbr*	at uhub?		# D-Link DSB-R100 radio
-radio*	at udsbr?		# USB radio
+#udsbr*	at uhub?		# D-Link DSB-R100 radio
+#radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500

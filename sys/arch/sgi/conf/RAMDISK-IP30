@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP30,v 1.17 2010/03/31 19:44:35 miod Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.18 2010/07/03 01:48:18 matthew Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
@@ -101,7 +101,7 @@ uvscom*		at uhub?	# SUNTAC Slipper U VS-10U serial
 ucom*		at uvscom?
 ubsa*		at uhub?	# Belkin serial adapter
 ucom*		at ubsa?
-ulpt*		at uhub?	# USB Printers	
+#ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
 atapiscsi*	at umass?
 scsibus*	at atapiscsi?

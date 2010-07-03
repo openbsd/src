@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 2010/04/26 20:51:51 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.6 2010/07/03 01:48:18 matthew Exp $
 
 machine	palm	arm
 
@@ -67,7 +67,7 @@ ukbd*		at uhidev?		# USB HID Keyboard devices
 wskbd*		at ukbd? mux 1
 #ums*		at uhub?		# USB Mice
 #wsmouse*	at ums? mux 0
-ulpt*		at uhub?		# USB Printer
+#ulpt*		at uhub?		# USB Printer
 atu*		at uhub?		# Atmel AT76C50x based 802.11b
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
@@ -79,10 +79,10 @@ ural*		at uhub?		# Ralink RT2500
 #url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
-uscanner*	at uhub?		# USB Scanner driver
-usscanner*	at uhub?		# USB SCSI scanners
-scsibus*	at usscanner?
-uyap*		at uhub?		# Y@P firmware loader
+#uscanner*	at uhub?		# USB Scanner driver
+#usscanner*	at uhub?		# USB SCSI scanners
+#scsibus*	at usscanner?
+#uyap*		at uhub?		# Y@P firmware loader
 ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?

@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.12 2009/05/17 04:58:07 deraadt Exp $
+# $OpenBSD: RAMDISK,v 1.13 2010/07/03 01:48:18 matthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -104,7 +104,7 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
-urio*	at uhub?		# Diamond Multimedia Rio 500
+#urio*	at uhub?		# Diamond Multimedia Rio 500
 #uyap*	at uhub?		# Y@P firmware loader
 ugen*	at uhub?		# USB Generic driver
 #uath*	at uhub?		# Atheros AR5005UG/AR5005UX
@@ -113,7 +113,7 @@ rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 zyd*	at uhub?		# Zydas ZD1211
 #option	NATM
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
-udcf*	at uhub?		# Gude Expert mouseCLOCK
+#udcf*	at uhub?		# Gude Expert mouseCLOCK
 #uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 #onewire* at uow?
 
