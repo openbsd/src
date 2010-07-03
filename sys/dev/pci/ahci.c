@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.167 2010/07/02 05:20:17 jsg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.168 2010/07/03 00:23:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -543,13 +543,17 @@ int			ahci_wait_ne(struct ahci_softc *, bus_size_t,
 u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
 void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
 int			ahci_pwait_eq(struct ahci_port *, bus_size_t,
-			    u_int32_t, u_int32_t);
+			    u_int32_t, u_int32_t, int);
 
 /* Wait for all bits in _b to be cleared */
-#define ahci_pwait_clr(_ap, _r, _b) ahci_pwait_eq((_ap), (_r), (_b), 0)
+#define ahci_pwait_clr(_ap, _r, _b, _n) \
+   ahci_pwait_eq((_ap), (_r), (_b), 0, (_n))
 
 /* Wait for all bits in _b to be set */
-#define ahci_pwait_set(_ap, _r, _b) ahci_pwait_eq((_ap), (_r), (_b), (_b))
+#define ahci_pwait_set(_ap, _r, _b, _n) \
+   ahci_pwait_eq((_ap), (_r), (_b), (_b), (_n))
+
+
 
 /* provide methods for atascsi to call */
 int			ahci_ata_probe(void *, int);
@@ -1128,7 +1132,7 @@ nomem:
 	}
 
 	/* Wait for ICC change to complete */
-	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC);
+	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC, 1);
 
 	/* Reset port */
 	rc = ahci_port_portreset(ap);
@@ -1293,7 +1297,7 @@ ahci_port_init(struct ahci_softc *sc, u_int port)
 	ahci_pwrite(ap, AHCI_PREG_CLB, (u_int32_t)dva);
 
 	/* Wait for ICC change to complete */
-	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC);
+	ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_ICC, 1);
 
 	/* Reset port */
 	rc = ahci_port_portreset(ap);
@@ -1385,12 +1389,13 @@ ahci_port_start(struct ahci_port *ap, int fre_only)
 
 	if (!(ap->ap_sc->sc_flags & AHCI_F_IGN_FR)) {
 		/* Wait for FR to come on */
-		if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
+		if (ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR, 1))
 			return (2);
 	}
 
 	/* Wait for CR to come on */
-	if (!fre_only && ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR))
+	if (!fre_only &&
+	    ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR, 1))
 		return (1);
 
 	return (0);
@@ -1418,11 +1423,12 @@ ahci_port_stop(struct ahci_port *ap, int stop_fis_rx)
 	ahci_pwrite(ap, AHCI_PREG_CMD, r);
 
 	/* Wait for CR to go off */
-	if (ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR))
+	if (ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR, 1))
 		return (1);
 
 	/* Wait for FR to go off */
-	if (stop_fis_rx && ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR))
+	if (stop_fis_rx &&
+	    ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR, 1))
 		return (2);
 
 	return (0);
@@ -1448,7 +1454,7 @@ ahci_port_clo(struct ahci_port *ap)
 	ahci_pwrite(ap, AHCI_PREG_CMD, cmd | AHCI_PREG_CMD_CLO);
 
 	/* Wait for completion */
-	if (ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CLO)) {
+	if (ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CLO, 1)) {
 		printf("%s: CLO did not complete\n", PORTNAME(ap));
 		return (1);
 	}
@@ -1497,7 +1503,7 @@ ahci_port_softreset(struct ahci_port *ap)
 
 	/* Check whether CLO worked */
 	if (ahci_pwait_clr(ap, AHCI_PREG_TFD,
-	    AHCI_PREG_TFD_STS_BSY | AHCI_PREG_TFD_STS_DRQ)) {
+	    AHCI_PREG_TFD_STS_BSY | AHCI_PREG_TFD_STS_DRQ, 1)) {
 		printf("%s: CLO %s, need port reset\n", PORTNAME(ap),
 		    ISSET(ahci_read(ap->ap_sc, AHCI_REG_CAP), AHCI_REG_CAP_SCLO)
 		    ? "failed" : "unsupported");
@@ -1537,7 +1543,7 @@ ahci_port_softreset(struct ahci_port *ap)
 		goto err;
 
 	if (ahci_pwait_clr(ap, AHCI_PREG_TFD, AHCI_PREG_TFD_STS_BSY |
-	    AHCI_PREG_TFD_STS_DRQ | AHCI_PREG_TFD_STS_ERR)) {
+	    AHCI_PREG_TFD_STS_DRQ | AHCI_PREG_TFD_STS_ERR, 1)) {
 		printf("%s: device didn't come ready after reset, TFD: 0x%b\n",
 		    PORTNAME(ap), ahci_pread(ap, AHCI_PREG_TFD),
 		    AHCI_PFMT_TFD_STS);
@@ -1599,19 +1605,17 @@ ahci_port_portreset(struct ahci_port *ap)
 
 	/* Wait for device to be detected and communications established */
 	if (ahci_pwait_eq(ap, AHCI_PREG_SSTS, AHCI_PREG_SSTS_DET,
-	    AHCI_PREG_SSTS_DET_DEV)) {
+	    AHCI_PREG_SSTS_DET_DEV, 1)) {
 		rc = ENODEV;
 		goto err;
 	}
 
 	/* Clear SERR (incl X bit), so TFD can update */
 	ahci_pwrite(ap, AHCI_PREG_SERR, ahci_pread(ap, AHCI_PREG_SERR));
-	delay(1000000);
 
 	/* Wait for device to become ready */
-	/* XXX maybe more than the default wait is appropriate here? */
 	if (ahci_pwait_clr(ap, AHCI_PREG_TFD, AHCI_PREG_TFD_STS_BSY |
-	    AHCI_PREG_TFD_STS_DRQ | AHCI_PREG_TFD_STS_ERR)) {
+	    AHCI_PREG_TFD_STS_DRQ | AHCI_PREG_TFD_STS_ERR, 3)) {
 		rc = EBUSY;
 		goto err;
 	}
@@ -2452,11 +2456,11 @@ ahci_pwrite(struct ahci_port *ap, bus_size_t r, u_int32_t v)
 
 int
 ahci_pwait_eq(struct ahci_port *ap, bus_size_t r, u_int32_t mask,
-    u_int32_t target)
+    u_int32_t target, int n)
 {
 	int				i;
 
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < n * 1000; i++) {
 		if ((ahci_pread(ap, r) & mask) == target)
 			return (0);
 		delay(1000);
