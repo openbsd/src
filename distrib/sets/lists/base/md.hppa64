@@ -1761,7 +1761,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/float.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/frame.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/hil_machdep.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/hpux_machdep.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/ieee.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/ieeefp.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/internal_types.ph

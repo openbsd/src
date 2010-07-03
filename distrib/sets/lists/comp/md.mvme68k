@@ -163,7 +163,6 @@
 ./usr/include/mvme68k/exec.h
 ./usr/include/mvme68k/float.h
 ./usr/include/mvme68k/frame.h
-./usr/include/mvme68k/hpux_machdep.h
 ./usr/include/mvme68k/ieee.h
 ./usr/include/mvme68k/ieeefp.h
 ./usr/include/mvme68k/internal_types.h

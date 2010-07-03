@@ -169,7 +169,6 @@
 ./usr/include/hppa64/float.h
 ./usr/include/hppa64/frame.h
 ./usr/include/hppa64/hil_machdep.h
-./usr/include/hppa64/hpux_machdep.h
 ./usr/include/hppa64/ieee.h
 ./usr/include/hppa64/ieeefp.h
 ./usr/include/hppa64/internal_types.h

@@ -126,7 +126,6 @@
 ./usr/include/hp300/frame.h
 ./usr/include/hp300/hil_machdep.h
 ./usr/include/hp300/hp300spu.h
-./usr/include/hp300/hpux_machdep.h
 ./usr/include/hp300/ieee.h
 ./usr/include/hp300/ieeefp.h
 ./usr/include/hp300/internal_types.h

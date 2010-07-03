@@ -1447,7 +1447,6 @@
 ./usr/share/man/cat4/acpimadt.0
 ./usr/share/man/cat4/acpiprt.0
 ./usr/share/man/cat4/acpipwrres.0
-./usr/share/man/cat4/itherm.0
 ./usr/share/man/cat4/acpithinkpad.0
 ./usr/share/man/cat4/acpitimer.0
 ./usr/share/man/cat4/acpitz.0
@@ -1784,6 +1783,7 @@
 ./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/it.0
+./usr/share/man/cat4/itherm.0
 ./usr/share/man/cat4/iwi.0
 ./usr/share/man/cat4/iwn.0
 ./usr/share/man/cat4/ix.0

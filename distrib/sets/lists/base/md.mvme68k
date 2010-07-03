@@ -1800,7 +1800,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/frame.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/hpux_machdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/internal_types.ph
