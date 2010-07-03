@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.93 2010/07/01 19:48:05 oga Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.94 2010/07/03 20:28:51 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1336,6 +1336,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		nbp->vb_buf.b_bufsize  = sz;
 		nbp->vb_buf.b_error    = 0;
 		nbp->vb_buf.b_data     = addr;
+		nbp->vb_buf.b_bq       = NULL;
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_proc     = bp->b_proc;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
@@ -1949,6 +1950,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		bp->b_data = (caddr_t)bouncekva;
 	else
 		bp->b_data = (caddr_t)kva;
+	bp->b_bq = NULL;
 	bp->b_blkno = startblk;
 	LIST_INIT(&bp->b_dep);
 	s = splbio();
