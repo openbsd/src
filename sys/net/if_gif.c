@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.54 2010/05/11 09:36:07 claudio Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.55 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -649,7 +649,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
-	case SIOCSLIFPHYRTABLEID:
+	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
 		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
 		    !rtable_exists(ifr->ifr_rdomainid)) {
@@ -658,7 +658,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		sc->gif_rtableid = ifr->ifr_rdomainid;
 		break;
-	case SIOCGLIFPHYRTABLEID:
+	case SIOCGLIFPHYRTABLE:
 		ifr->ifr_rdomainid = sc->gif_rtableid;
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.15 2009/06/05 00:20:46 claudio Exp $	*/
+/*	$OpenBSD: externs.h,v 1.16 2010/07/03 04:44:51 guenther Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -108,7 +108,7 @@ extern void (*encrypt_output) (unsigned char *, int);
 extern int (*decrypt_input) (int);
 #endif
 
-extern u_int	rdomain;	/* routing domain to use */
+extern u_int	rtableid;	/* routing table to use */
 
 /*
  * We keep track of each side of the option negotiation.

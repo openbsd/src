@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.44 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.45 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -213,14 +213,14 @@ tcp_timer_rexmt(void *arg)
 		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
 		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
 		icmpsrc.sin_addr = tp->t_inpcb->inp_faddr;
-		icmp_mtudisc(&icmp, tp->t_inpcb->inp_rdomain);
+		icmp_mtudisc(&icmp, tp->t_inpcb->inp_rtableid);
 
 		/*
 		 * Notify all connections to the same peer about
 		 * new mss and trigger retransmit.
 		 */
 		in_pcbnotifyall(&tcbtable, sintosa(&icmpsrc),
-		    tp->t_inpcb->inp_rdomain, EMSGSIZE, tcp_mtudisc);
+		    tp->t_inpcb->inp_rtableid, EMSGSIZE, tcp_mtudisc);
 		splx(s);
 		return;
 	}
@@ -286,7 +286,7 @@ tcp_timer_rexmt(void *arg)
 			sin.sin_len = sizeof(struct sockaddr_in);
 			sin.sin_addr = inp->inp_faddr;
 			rt = icmp_mtudisc_clone(sintosa(&sin), 
-			    inp->inp_rdomain);
+			    inp->inp_rtableid);
 			break;
 		}
 		if (rt != NULL) {

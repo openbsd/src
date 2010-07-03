@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.113 2010/07/01 23:11:11 tedu Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.114 2010/07/03 04:44:51 guenther Exp $	*/
 
 /*
  * System call numbers.
@@ -682,10 +682,10 @@
 /* syscall: "fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs *" */
 #define	SYS_fhstatfs	309
 
-/* syscall: "setrdomain" ret: "int" args: "int" */
-#define	SYS_setrdomain	310
+/* syscall: "setrtable" ret: "int" args: "int" */
+#define	SYS_setrtable	310
 
-/* syscall: "getrdomain" ret: "int" args: */
-#define	SYS_getrdomain	311
+/* syscall: "getrtable" ret: "int" args: */
+#define	SYS_getrtable	311
 
 #define	SYS_MAXSYSCALL	312

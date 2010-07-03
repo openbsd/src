@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.68 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: socket.h,v 1.69 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
 #define	SO_NETPROC	0x1020		/* multiplex; network processing */
-#define	SO_RDOMAIN	0x1021		/* routing domain socket belongs to */
+#define	SO_RTABLE	0x1021		/* routing table to be used */
 #define	SO_PEERCRED	0x1022		/* get connect-time credentials */
 
 /*
@@ -498,8 +498,8 @@ int	setsockopt(int, int, int, const void *, socklen_t);
 int	shutdown(int, int);
 int	socket(int, int, int);
 int	socketpair(int, int, int, int *);
-int	getrdomain(void);
-int	setrdomain(int);
+int	getrtable(void);
+int	setrtable(int);
 __END_DECLS
 #else
 # if defined(COMPAT_43) || defined(COMPAT_LINUX) || \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.110 2010/01/15 18:20:23 chl Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.111 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -318,13 +318,8 @@ tcp_template(tp)
 /* This function looks hairy, because it was so IPv4-dependent. */
 #endif /* INET6 */
 void
-tcp_respond(tp, template, th0, ack, seq, flags, rdomain)
-	struct tcpcb *tp;
-	caddr_t template;
-	struct tcphdr *th0;
-	tcp_seq ack, seq;
-	int flags;
-	u_int rdomain;
+tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
+    tcp_seq ack, tcp_seq seq, int flags, u_int rtableid)
 {
 	int tlen;
 	int win = 0;
@@ -412,9 +407,9 @@ tcp_respond(tp, template, th0, ack, seq, flags, rdomain)
 
 	/* force routing domain */
 	if (tp)
-		m->m_pkthdr.rdomain = tp->t_inpcb->inp_rdomain;
+		m->m_pkthdr.rdomain = tp->t_inpcb->inp_rtableid;
 	else
-		m->m_pkthdr.rdomain = rdomain;
+		m->m_pkthdr.rdomain = rtableid;
 
 	switch (af) {
 #ifdef INET6
@@ -774,11 +769,7 @@ tcp6_ctlinput(cmd, sa, d)
 #endif
 
 void *
-tcp_ctlinput(cmd, sa, rdomain, v)
-	int cmd;
-	struct sockaddr *sa;
-	u_int rdomain;
-	void *v;
+tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	struct ip *ip = v;
 	struct tcphdr *th;
@@ -839,7 +830,7 @@ tcp_ctlinput(cmd, sa, rdomain, v)
 				 * route (traditional PMTUD).
 				 */
 				tp->t_flags &= ~TF_PMTUD_PEND;
-				icmp_mtudisc(icp, inp->inp_rdomain);
+				icmp_mtudisc(icp, inp->inp_rtableid);
 			} else {
 				/*
 				 * Record the information got in the ICMP

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.113 2010/07/01 23:11:11 tedu Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.114 2010/07/03 04:44:51 guenther Exp $	*/
 
 /*
  * System call switch table.
@@ -811,9 +811,9 @@ struct sysent sysent[] = {
 	    sys_fstatfs },			/* 308 = fstatfs */
 	{ 2, s(struct sys_fhstatfs_args), 0,
 	    sys_fhstatfs },			/* 309 = fhstatfs */
-	{ 1, s(struct sys_setrdomain_args), 0,
-	    sys_setrdomain },			/* 310 = setrdomain */
+	{ 1, s(struct sys_setrtable_args), 0,
+	    sys_setrtable },			/* 310 = setrtable */
 	{ 0, 0, 0,
-	    sys_getrdomain },			/* 311 = getrdomain */
+	    sys_getrtable },			/* 311 = getrtable */
 };
 

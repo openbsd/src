@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.134 2010/04/20 22:05:43 tedu Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.135 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -444,7 +444,8 @@ udp_input(struct mbuf *m, ...)
 			if (!ip6 && (inp->inp_flags & INP_IPV6))
 				continue;
 #endif
-			if (inp->inp_rdomain != rtable_l2(m->m_pkthdr.rdomain))
+			if (rtable_l2(inp->inp_rtableid) !=
+			    rtable_l2(m->m_pkthdr.rdomain))
 				continue;
 			if (inp->inp_lport != uh->uh_dport)
 				continue;
@@ -1011,7 +1012,7 @@ udp_output(struct mbuf *m, ...)
 	udpstat.udps_opackets++;
 
 	/* force routing domain */
-	m->m_pkthdr.rdomain = inp->inp_rdomain;
+	m->m_pkthdr.rdomain = inp->inp_rtableid;
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options &

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.114 2010/07/01 23:11:11 tedu Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.115 2010/07/03 04:44:51 guenther Exp $	*/
 
 /*
  * System call names.
@@ -419,6 +419,6 @@ char *syscallnames[] = {
 	"statfs",			/* 307 = statfs */
 	"fstatfs",			/* 308 = fstatfs */
 	"fhstatfs",			/* 309 = fhstatfs */
-	"setrdomain",			/* 310 = setrdomain */
-	"getrdomain",			/* 311 = getrdomain */
+	"setrtable",			/* 310 = setrtable */
+	"getrtable",			/* 311 = getrtable */
 };

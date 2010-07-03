@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.238 2010/07/02 22:03:40 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.239 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -808,7 +808,7 @@ getinfo(struct ifreq *ifr, int create)
 		mtu = 0;
 	else
 		mtu = ifr->ifr_mtu;
-	if (ioctl(s, SIOCGIFRTABLEID, (caddr_t)ifr) < 0)
+	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)ifr) < 0)
 		rdomainid = 0;
 	else
 		rdomainid = ifr->ifr_rdomainid;
@@ -2671,7 +2671,7 @@ phys_status(int force)
 	printf("\tphysical address inet%s %s --> %s", ver,
 	    psrcaddr, pdstaddr);
 
-	if (ioctl(s, SIOCGLIFPHYRTABLEID, (caddr_t)&ifr) == 0 &&
+	if (ioctl(s, SIOCGLIFPHYRTABLE, (caddr_t)&ifr) == 0 &&
 	    (rdomainid != 0 || ifr.ifr_rdomainid != 0))
 		printf(" rdomain %d", ifr.ifr_rdomainid);
 	printf("\n");
@@ -3129,8 +3129,8 @@ settunnelinst(const char *id, int param)
 
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_rdomainid = rdomainid;
-	if (ioctl(s, SIOCSLIFPHYRTABLEID, (caddr_t)&ifr) < 0)
-		warn("SIOCSLIFPHYRTABLEID");
+	if (ioctl(s, SIOCSLIFPHYRTABLE, (caddr_t)&ifr) < 0)
+		warn("SIOCSLIFPHYRTABLE");
 }
 
 void
@@ -4847,7 +4847,7 @@ setinstance(const char *id, int param)
 
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_rdomainid = rdomainid;
-	if (ioctl(s, SIOCSIFRTABLEID, (caddr_t)&ifr) < 0)
-		warn("SIOCSIFRTABLEID");
+	if (ioctl(s, SIOCSIFRDOMAIN, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFRDOMAIN");
 }
 #endif

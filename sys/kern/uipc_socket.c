@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.82 2010/07/02 19:57:15 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.83 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -981,7 +981,6 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 	} else {
 		switch (optname) {
 		case SO_BINDANY:
-		case SO_RDOMAIN:
 			if ((error = suser(curproc, 0)) != 0)	/* XXX */
 				goto bad;
 			break;

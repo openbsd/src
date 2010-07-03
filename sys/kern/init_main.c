@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.168 2010/06/29 20:25:57 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.169 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -265,8 +265,8 @@ main(void *framep)
 	process0.ps_refcnt = 1;
 	p->p_p = &process0;
 
-	/* Set the default routing domain. */
-	process0.ps_rdomain = 0;
+	/* Set the default routing table/domain. */
+	process0.ps_rtableid = 0;
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	p->p_pgrp = &pgrp0;

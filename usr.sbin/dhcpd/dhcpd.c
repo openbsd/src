@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.39 2010/04/19 12:22:09 claudio Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.40 2010/07/03 04:44:51 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -172,8 +172,8 @@ main(int argc, char *argv[])
 	discover_interfaces(&rdomain);
 
 	if (rdomain != -1)
-		if (setrdomain(rdomain) == -1)
-			error("setrdomain (%m)");
+		if (setrtable(rdomain) == -1)
+			error("setrtable (%m)");
 
 	icmp_startup(1, lease_pinged);
 

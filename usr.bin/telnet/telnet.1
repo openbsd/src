@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.42 2009/06/05 06:47:12 jmc Exp $
+.\"	$OpenBSD: telnet.1,v 1.43 2010/07/03 04:44:51 guenther Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: July 3 2010 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ protocol
 .Op Fl k Ar realm
 .Op Fl l Ar user
 .Op Fl n Ar tracefile
-.Op Fl V Ar rdomain
+.Op Fl V Ar rtable
 .Op Fl X Ar authtype
 .Oo
 .Ar host
@@ -186,8 +186,8 @@ mode, the escape character is set to the tilde (~) character,
 unless modified by the
 .Fl e
 option.
-.It Fl V Ar rdomain
-Set the routing domain.
+.It Fl V Ar rtable
+Set the routing table to be used.
 The default is 0.
 .It Fl X Ar authtype
 Disables the

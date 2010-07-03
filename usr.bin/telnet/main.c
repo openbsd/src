@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ static int default_forward=0;
 #endif
 
 int family = AF_UNSPEC;
-u_int rdomain;
+u_int rtableid;
 
 /*
  * Initialize variables.
@@ -86,7 +86,7 @@ usage()
 # else
 	    "usage: %s [-468acdEFfKLrx] [-b hostalias] [-e escapechar] "
 	    "[-k realm]\n"
-	    "\t[-l user] [-n tracefile] [-V rdomain] [-X authtype] "
+	    "\t[-l user] [-n tracefile] [-V rtable] [-X authtype] "
 	    "[host [port]]\n",
 #endif
 	    __progname);
@@ -326,11 +326,11 @@ main(argc, argv)
 #endif
 			break;
 		case 'V':
-			rdomain = (unsigned int)strtonum(optarg, 0,
+			rtableid = (unsigned int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr) {
-				fprintf(stderr, 
-				    "%s: Warning: -R ignored, rdomain %s: %s\n",
+				fprintf(stderr, "%s: Warning: "
+				    "-V ignored, rtable %s: %s\n",
 				    prompt, errstr, optarg);
 			}
 			break;

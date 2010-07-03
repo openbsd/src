@@ -56,7 +56,7 @@
 sig_atomic_t done = 0;
 sig_atomic_t proc_slice = 0;
 
-static u_int  rdomain;
+static u_int  rtableid;
 static char **kflag;
 static size_t Bflag;
 static int    Sflag;
@@ -137,9 +137,9 @@ usage(void)
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
 	    "       tcpbench [-v] [-B buf] [-k kvars] [-n connections] [-p port]\n"
-	    "                [-r rate] [-S space] [-V rdomain] hostname\n"
+	    "                [-r rate] [-S space] [-V rtable] hostname\n"
 	    "       tcpbench -s [-v] [-B buf] [-k kvars] [-p port]\n"
-	    "                [-r rate] [-S space] [-V rdomain]\n");
+	    "                [-r rate] [-S space] [-V rtable]\n");
 	exit(1);
 }
 
@@ -552,12 +552,12 @@ serverbind(struct pollfd *pfd, nfds_t max_nfds, struct addrinfo *aitop)
 				warn("socket");
 			continue;
 		}
-		if (rdomain && ai->ai_family == AF_INET) {
-			if (setsockopt(sock, IPPROTO_IP, SO_RDOMAIN,
-			    &rdomain, sizeof(rdomain)) == -1)
-				err(1, "setsockopt SO_RDOMAIN");
-		} else if (rdomain)
-			warnx("rdomain only supported on AF_INET");
+		if (rtableid && ai->ai_family == AF_INET) {
+			if (setsockopt(sock, IPPROTO_IP, SO_RTABLE,
+			    &rtableid, sizeof(rtableid)) == -1)
+				err(1, "setsockopt SO_RTABLE");
+		} else if (rtableid)
+			warnx("rtable only supported on AF_INET");
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		    &on, sizeof(on)) == -1)
 			warn("reuse port");
@@ -757,12 +757,12 @@ clientconnect(struct addrinfo *aitop, struct pollfd *pfd, int nconn)
 					warn("socket");
 				continue;
 			}
-			if (rdomain && ai->ai_family == AF_INET) {
-				if (setsockopt(sock, IPPROTO_IP, SO_RDOMAIN,
-				    &rdomain, sizeof(rdomain)) == -1)
-					err(1, "setsockopt SO_RDOMAIN");
-			} else if (rdomain)
-				warnx("rdomain only supported on AF_INET");
+			if (rtableid && ai->ai_family == AF_INET) {
+				if (setsockopt(sock, IPPROTO_IP, SO_RTABLE,
+				    &rtableid, sizeof(rtableid)) == -1)
+					err(1, "setsockopt SO_RTABLE");
+			} else if (rtableid)
+				warnx("rtable only supported on AF_INET");
 			if (Sflag) {
 				if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
 				    &Sflag, sizeof(Sflag)) == -1)
@@ -891,7 +891,7 @@ main(int argc, char **argv)
 	int nconn = 1;
 
 	Bflag = DEFAULT_BUF;
-	Sflag = sflag = vflag = rdomain = 0;
+	Sflag = sflag = vflag = rtableid = 0;
 	kflag = NULL;
 	rflag = DEFAULT_STATS_INTERVAL;
 
@@ -937,10 +937,10 @@ main(int argc, char **argv)
 			vflag++;
 			break;
 		case 'V':
-			rdomain = (unsigned int)strtonum(optarg, 0,
+			rtableid = (unsigned int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
-				errx(1, "rdomain value is %s: %s",
+				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
 			break;
 		case 'n':

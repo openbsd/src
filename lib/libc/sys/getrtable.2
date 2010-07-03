@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrdomain.2,v 1.2 2009/11/27 22:02:55 jmc Exp $
+.\" $OpenBSD: getrtable.2,v 1.1 2010/07/03 04:44:51 guenther Exp $
 .\"
 .\" Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,25 +14,26 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2009 $
-.Dt GETRDOMAIN 2
+.Dd $Mdocdate: July 3 2010 $
+.Dt GETRTABLE 2
 .Os
 .Sh NAME
-.Nm getrdomain ,
-.Nm setrdomain
+.Nm getrtable ,
+.Nm setrtable
 .Nd "get and set the default routing domain of the current process"
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn getrdomain "void"
+.Fn getrtable "void"
 .Ft int
-.Fn setrdomain "int rdomain"
+.Fn setrtable "int rtableid"
 .Sh DESCRIPTION
-.Fn getrdomain
+.Fn getrtable
 and
-.Fn setrdomain
-manipulate the routing domain associated with the current process.
+.Fn setrtable
+manipulate the routing table and routing domain associated with the current
+process.
 .Pp
 Only the superuser is allowed to change the process routing domain if
 it is already set to a non-zero value.
@@ -43,8 +44,8 @@ The call succeeds unless:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The value of the
-.Fa rdomain
-argument is not a valid routing domain.
+.Fa rtableid
+argument is not a valid routing table.
 .It Bq Er EPERM
 The user is not the superuser and the routing domain of the
 calling process is already set to a non-zero value.
@@ -55,8 +56,8 @@ calling process is already set to a non-zero value.
 .Xr route 8
 .Sh HISTORY
 The
-.Fn getrdomain
+.Fn getrtable
 and
-.Fn setrdomain
+.Fn setrtable
 system calls appeared in
-.Ox 4.7 .
+.Ox 4.8 .

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.50 2010/06/26 22:11:51 claudio Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.51 2010/07/03 04:44:51 guenther Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -637,7 +637,7 @@ recompute:
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
 		memcpy(&lifr->dstaddr, &si, sizeof(si));
 		break;
-	case SIOCSLIFPHYRTABLEID:
+	case SIOCSLIFPHYRTABLE:
 		if ((error = suser(prc, 0)) != 0)
 			break;
 		if (ifr->ifr_rdomainid < 0 ||
@@ -648,7 +648,7 @@ recompute:
 		}
 		sc->g_rtableid = ifr->ifr_rdomainid;
 		goto recompute;
-	case SIOCGLIFPHYRTABLEID:
+	case SIOCGLIFPHYRTABLE:
 		ifr->ifr_rdomainid = sc->g_rtableid;
 		break;
 	default:

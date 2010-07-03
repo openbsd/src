@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.47 2010/06/26 19:49:54 claudio Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.48 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -173,11 +173,11 @@
 #define	SIOCSIFXFLAGS	 _IOW('i', 157, struct ifreq)	/* set ifnet xflags */
 #define	SIOCGIFXFLAGS	_IOWR('i', 158, struct ifreq)	/* get ifnet xflags */
 
-#define	SIOCSIFRTABLEID	 _IOW('i', 159, struct ifreq)	/* set ifnet VRF id */
-#define	SIOCGIFRTABLEID	_IOWR('i', 160, struct ifreq)	/* get ifnet VRF id */
+#define	SIOCSIFRDOMAIN	 _IOW('i', 159, struct ifreq)	/* set ifnet VRF id */
+#define	SIOCGIFRDOMAIN	_IOWR('i', 160, struct ifreq)	/* get ifnet VRF id */
 
-#define	SIOCSLIFPHYRTABLEID _IOW('i', 161, struct ifreq) /* set tunnel VRF id */
-#define	SIOCGLIFPHYRTABLEID _IOWR('i', 162, struct ifreq) /* get tunnel id */
+#define	SIOCSLIFPHYRTABLE _IOW('i', 161, struct ifreq) /* set tunnel VRF id */
+#define	SIOCGLIFPHYRTABLE _IOWR('i', 162, struct ifreq) /* get tunnel VRF id */
 
 #define SIOCSETKALIVE	_IOW('i', 163, struct ifkalivereq)
 #define SIOCGETKALIVE	_IOWR('i', 164, struct ifkalivereq)

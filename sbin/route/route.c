@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.145 2010/06/27 07:57:59 guenther Exp $	*/
+/*	$OpenBSD: route.c,v 1.146 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1618,8 +1618,8 @@ rdomain(int argc, char **argv)
 {
 	if (!argc)
 		usage(NULL);
-	if (setrdomain(tableid) == -1)
-		err(1, "setrdomain");
+	if (setrtable(tableid) == -1)
+		err(1, "setrtable");
 	execvp(*argv, argv);
 	warn("%s", argv[0]);
 	return (errno == ENOENT ? 127 : 126);

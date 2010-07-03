@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.75 2010/06/30 19:57:05 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.76 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1096,30 +1096,30 @@ getsock(struct filedesc *fdp, int fdes, struct file **fpp)
 
 /* ARGSUSED */
 int
-sys_setrdomain(struct proc *p, void *v, register_t *retval)
+sys_setrtable(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_setrdomain_args /* {
-		syscallarg(int) rdomain;
+	struct sys_setrtable_args /* {
+		syscallarg(int) rtableid;
 	} */ *uap = v;
-	int rdomain, error;
+	int rtableid, error;
 
-	rdomain = SCARG(uap, rdomain);
+	rtableid = SCARG(uap, rtableid);
 
-	if (p->p_p->ps_rdomain == (u_int)rdomain)
+	if (p->p_p->ps_rtableid == (u_int)rtableid)
 		return (0);
-	if (p->p_p->ps_rdomain != 0 && (error = suser(p, 0)) != 0)
+	if (p->p_p->ps_rtableid != 0 && (error = suser(p, 0)) != 0)
 		return (error);
-	if (rdomain < 0 || !rtable_exists((u_int)rdomain))
+	if (rtableid < 0 || !rtable_exists((u_int)rtableid))
 		return (EINVAL);
 
-	p->p_p->ps_rdomain = (u_int)rdomain;
+	p->p_p->ps_rtableid = (u_int)rtableid;
 	return (0);
 }
 
 /* ARGSUSED */
 int
-sys_getrdomain(struct proc *p, void *v, register_t *retval)
+sys_getrtable(struct proc *p, void *v, register_t *retval)
 {
-	*retval = (int)p->p_p->ps_rdomain;
+	*retval = (int)p->p_p->ps_rtableid;
 	return (0);
 }

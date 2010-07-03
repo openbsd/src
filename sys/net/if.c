@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.217 2010/06/29 21:28:37 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.218 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1409,7 +1409,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFPHYADDR_IN6:
 #endif
 	case SIOCSLIFPHYADDR:
-	case SIOCSLIFPHYRTABLEID:
+	case SIOCSLIFPHYRTABLE:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
@@ -1419,7 +1419,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCGIFPSRCADDR:
 	case SIOCGIFPDSTADDR:
 	case SIOCGLIFPHYADDR:
-	case SIOCGLIFPHYRTABLEID:
+	case SIOCGLIFPHYRTABLE:
 	case SIOCGIFMEDIA:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
@@ -1476,11 +1476,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		ifp->if_priority = ifr->ifr_metric;
 		break;
 
-	case SIOCGIFRTABLEID:
+	case SIOCGIFRDOMAIN:
 		ifr->ifr_rdomainid = ifp->if_rdomain;
 		break;
 
-	case SIOCSIFRTABLEID:
+	case SIOCSIFRDOMAIN:
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		if (ifr->ifr_rdomainid < 0 ||

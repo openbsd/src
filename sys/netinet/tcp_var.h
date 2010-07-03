@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.93 2009/11/13 20:54:05 claudio Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.94 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ struct syn_cache {
 	union syn_cache_sa sc_dst;
 	tcp_seq sc_irs;
 	tcp_seq sc_iss;
-	u_int sc_rdomain;
+	u_int sc_rtableid;
 	u_int sc_rxtcur;			/* current rxt timeout */
 	u_int sc_rxttot;			/* total time spend on queues */
 	u_short sc_rxtshift;			/* for computing backoff */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.68 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.69 2010/07/03 04:44:52 guenther Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -295,7 +295,8 @@ main(int argc, char *argv[])
 	char *ep;
 	const char *errstr;
 	long l;
-	uid_t uid, rdomain;
+	uid_t uid;
+	u_int rtableid;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -424,16 +425,16 @@ main(int argc, char *argv[])
 			verbose++;
 			break;
 		case 'V':
-			rdomain = (unsigned int)strtonum(optarg, 0,
+			rtableid = (unsigned int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
-				errx(1, "rdomain value is %s: %s",
+				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
-			if (setsockopt(sndsock, IPPROTO_IP, SO_RDOMAIN,
-			    &rdomain, sizeof(rdomain)) == -1)
+			if (setsockopt(sndsock, IPPROTO_IP, SO_RTABLE,
+			    &rtableid, sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RDOMAIN");
-			if (setsockopt(s, IPPROTO_IP, SO_RDOMAIN,
-			    &rdomain, sizeof(rdomain)) == -1)
+			if (setsockopt(s, IPPROTO_IP, SO_RTABLE,
+			    &rtableid, sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RDOMAIN");
 			break;
 		case 'w':
@@ -1041,6 +1042,6 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-cDdIlnrSv] [-f first_ttl] [-g gateway_addr] [-m max_ttl]\n"
 	    "\t[-P proto] [-p port] [-q nqueries] [-s src_addr] [-t tos]\n"
-	    "\t[-V rdomain] [-w waittime] host [packetsize]\n", __progname);
+	    "\t[-V rtable] [-w waittime] host [packetsize]\n", __progname);
 	exit(1);
 }

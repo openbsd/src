@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.48 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.49 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -132,7 +132,8 @@ rip_input(struct mbuf *m, ...)
 		if (inp->inp_flags & INP_IPV6)
 			continue;
 #endif
-		if (inp->inp_rdomain != rtable_l2(m->m_pkthdr.rdomain))
+		if (rtable_l2(inp->inp_rtableid) !=
+		    rtable_l2(m->m_pkthdr.rdomain))
 			continue;
 
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
@@ -272,7 +273,7 @@ rip_output(struct mbuf *m, ...)
 	 */
 #endif
 	/* force routing domain */
-	m->m_pkthdr.rdomain = inp->inp_rdomain;
+	m->m_pkthdr.rdomain = inp->inp_rtableid;
 
 	return (ip_output(m, inp->inp_options, &inp->inp_route, flags,
 	    inp->inp_moptions, inp));
@@ -418,7 +419,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		     (addr->sin_family != AF_IMPLINK)) ||
 		    (addr->sin_addr.s_addr &&
 		     (!(so->so_options & SO_BINDANY) &&
-		     in_iawithaddr(addr->sin_addr, NULL, inp->inp_rdomain) ==
+		     in_iawithaddr(addr->sin_addr, NULL, inp->inp_rtableid) ==
 		     0))) {
 			error = EADDRNOTAVAIL;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.87 2010/06/26 18:30:03 phessler Exp $	*/
+/*	$OpenBSD: ping.c,v 1.88 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
 	fd_set *fdmaskp;
 	size_t fdmasks;
 	uid_t uid;
-	u_int rdomain;
+	u_int rtableid;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "socket");
@@ -306,15 +306,15 @@ main(int argc, char *argv[])
 				errx(1, "ttl value is %s: %s", errstr, optarg);
 			break;
 		case 'V':
-			rdomain = (unsigned int)strtonum(optarg, 0,
+			rtableid = (unsigned int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
-				errx(1, "rdomain value is %s: %s",
+				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
 
-			if (setsockopt(s, IPPROTO_IP, SO_RDOMAIN, &rdomain,
-			    sizeof(rdomain)) == -1)
-				err(1, "setsockopt SO_RDOMAIN");
+			if (setsockopt(s, IPPROTO_IP, SO_RTABLE, &rtableid,
+			    sizeof(rtableid)) == -1)
+				err(1, "setsockopt SO_RTABLE");
 			break;
 		case 'v':
 			options |= F_VERBOSE;
@@ -1365,6 +1365,6 @@ usage(void)
 	(void)fprintf(stderr,
 	    "usage: ping [-DdEefLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
 	    "\t[-l preload] [-p pattern] [-s packetsize] [-T tos] [-t ttl]\n"
-	    "\t[-V rdomain] [-w maxwait] host\n");
+	    "\t[-V rtable] [-w maxwait] host\n");
 	exit(1);
 }

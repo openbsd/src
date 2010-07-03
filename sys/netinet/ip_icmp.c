@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.89 2010/05/07 13:33:16 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.90 2010/07/03 04:44:51 guenther Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -999,6 +999,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		info.rti_flags = rt->rt_flags;   
 
 		sa = *(struct sockaddr_in *)rt_key(rt);
+		/* XXX this needs the rtableid */
 		rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
 
 		/* Notify TCP layer of increased Path MTU estimate */
