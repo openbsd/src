@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.213 2010/07/01 22:26:26 phessler Exp $
+# $OpenBSD: Makefile,v 1.214 2010/07/03 02:32:45 phessler Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -10,28 +10,30 @@
 # pfload: load ruleset into anchor regress and verify pfctl -vvsr
 # pfoptimize: as pfload, with -o flag to pfctl
 # pfopt: as target pf, but supply extra command line options
+# pfcmd: test pfctl command line parsing
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
 PFTESTS+=51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73
 PFTESTS+=74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96
-PFTESTS+=97 98 99
+PFTESTS+=97 98 99 100
 PFFAIL=1 2 3 4 5 6 7 8 11 12 13 14 15 16 17 18 19 20 23 25 27
 PFFAIL+=29 30 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 52 53
 PFSIMPLE=1 2
 PFSETUP=1 2 3 4
 PFLOAD=1 2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 23 24 25 26 27 28 29
 PFLOAD+=30 31 32 34 36 38 39 40 44 46 47 48 49 54 56 60 61 65 66 67 68 69 70 71
-PFLOAD+=72 73 74 75 76 77 78 79 80 81 82 84 87 88 89 90 91 92 99
+PFLOAD+=72 73 74 75 76 77 78 79 80 81 82 84 87 88 89 90 91 92 99 100
 PFALTQ=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 # disabled; no altq in anchors
 # PFLOAD+=33 35 37 42 43 45 51 58 59 62 63 64
 # only testing parser, load test would be useless
 # PFLOAD+=6 22 41 50 52 53 55 57 83 85 86
-PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12 13
+PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 PFOPT=1 2 3 6
 PFIF2IP=1 2 3
 PFCHKSUM=1 2 3
+PFCMD=1
 
 SHELL=/bin/sh
 
@@ -228,6 +230,28 @@ pfopt:		${PFOPT_TARGETS}
 pfopt-update:	${PFOPT_UPDATES}
 REGRESS_TARGETS+=pfopt
 UPDATE_TARGETS+=pfopt-update
+
+.for n in ${PFCMD}
+PFCMD_TARGETS+=pfcmd${n}
+PFCMD_UPDATES+=pfcmd${n}-update
+
+pfcmd${n}:
+	${SUDO} pfctl `cat ${.CURDIR}/pfcmd${n}.opts` \
+	    -f ${.CURDIR}/pfcmd${n}.in
+
+pfcmd${n}-update:
+	${SUDO} pfctl -f - `cat ${.CURDIR}/pfcmd${n}.opts` \
+	    < ${.CURDIR}/pfcmd${n}.in > ${.CURDIR}/pfcmd${n}.ok
+
+.endfor
+
+pfcmd:		${PFCMD_TARGETS}
+pfcmd-update:	${PFCMD_UPDATES}
+NODEFAULT_TARGETS+=pfcmd
+REGRESS_TARGETS+=pfcmd
+
+REGRESS_ROOT_TARGETS+=pfcmd
+UPDATE_TARGETS+=pfcmd-update
 
 .for n in ${PFSETUP}
 PFSETUP_TARGETS+=pfsetup${n}

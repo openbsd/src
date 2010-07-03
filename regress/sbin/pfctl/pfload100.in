@@ -1,0 +1,3 @@
+# load tables from file
+load anchor relayd/r1 from "DIR/pfr14.include" # just 'pass'
+load anchor relayd/r2 from "DIR/pfr14.include"
