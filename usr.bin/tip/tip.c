@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.52 2010/07/02 07:40:03 nicm Exp $	*/
+/*	$OpenBSD: tip.c,v 1.53 2010/07/03 03:33:12 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -54,6 +54,8 @@ main(int argc, char *argv[])
 	char *sys = NULL;
 	int i, pair[2];
 
+	vinit();
+
 	/* XXX preserve previous braindamaged behavior */
 	vsetnum(DC, 1);
 
@@ -102,8 +104,6 @@ main(int argc, char *argv[])
 	(void)signal(SIGHUP, cleanup);
 	(void)signal(SIGTERM, cleanup);
 	(void)signal(SIGCHLD, SIG_DFL);
-
-	vinit();
 
 	FD = hunt(sys);
 	setbuf(stdout, NULL);

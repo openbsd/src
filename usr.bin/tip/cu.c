@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.36 2010/07/02 07:40:03 nicm Exp $	*/
+/*	$OpenBSD: cu.c,v 1.37 2010/07/03 03:33:12 nicm Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -147,8 +147,6 @@ getopt:
 	signal(SIGHUP, cleanup);
 	signal(SIGTERM, cleanup);
 	signal(SIGCHLD, SIG_DFL);
-
-	vinit();
 
 	/*
 	 * The "cu" host name is used to define the
