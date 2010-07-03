@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.5 2010/06/26 18:32:34 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.6 2010/07/03 16:59:35 reyk Exp $	*/
 /*	$vantronix: ikev2.h,v 1.27 2010/05/19 12:20:30 reyk Exp $	*/
 
 /*
@@ -69,8 +69,8 @@ extern size_t ikev2_default_nesp_transforms;
 #define IKEV2_STATE_AUTH_SUCCESS	5	/* authenticated */
 #define IKEV2_STATE_VALID		6	/* validated peer certs */
 #define IKEV2_STATE_EAP_VALID		7	/* EAP validated */
-#define IKEV2_STATE_RUNNING		8	/* active IKE SA */
-#define IKEV2_STATE_DELETE		9	/* delete this SA */
+#define IKEV2_STATE_ESTABLISHED		8	/* active IKE SA */
+#define IKEV2_STATE_CLOSED		9	/* delete this SA */
 
 extern struct iked_constmap ikev2_state_map[];
 

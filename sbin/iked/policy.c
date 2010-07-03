@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.10 2010/06/27 00:32:42 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.11 2010/07/03 16:59:35 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -132,7 +132,22 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 	a = print_map(sa->sa_state, ikev2_state_map);
 	b = print_map(state, ikev2_state_map);
 
-	log_info("%s: %s -> %s", __func__, a, b);
+	if (state > sa->sa_state) {
+		switch (state) {
+		case IKEV2_STATE_ESTABLISHED:
+		case IKEV2_STATE_CLOSED:
+			log_info("%s: %s -> %s from %s to %s policy '%s'",
+			    __func__, a, b,
+			    print_host(&sa->sa_peer.addr, NULL, 0),
+			    print_host(&sa->sa_local.addr, NULL, 0),
+			    sa->sa_policy->pol_name);
+			break;
+		default:
+			log_debug("%s: %s -> %s", __func__, a, b);
+			break;
+		}
+	}
+
 	sa->sa_state = state;
 }
 

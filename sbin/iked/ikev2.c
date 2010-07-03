@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.20 2010/06/27 05:40:49 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.21 2010/07/03 16:59:35 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	else
 		ikev2_resp_recv(env, msg, hdr);
 
-	if (sa != NULL && sa->sa_state == IKEV2_STATE_DELETE)
+	if (sa != NULL && sa->sa_state == IKEV2_STATE_CLOSED)
 		sa_free(env, sa);
 }
 
@@ -881,7 +881,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 	if (ret == 0)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0)
-		sa_state(env, sa, IKEV2_STATE_RUNNING);
+		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
 
 	return (ret);
 }
@@ -1510,7 +1510,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	case IKEV2_EXCHANGE_IKE_SA_INIT:
 		if (ikev2_sa_responder(env, sa, msg) != 0) {
 			log_debug("%s: failed to get IKE SA keys", __func__);
-			sa_state(env, sa, IKEV2_STATE_DELETE);
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
 		if (ikev2_resp_ike_sa_init(env, msg) != 0) {
@@ -1521,7 +1521,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	case IKEV2_EXCHANGE_IKE_AUTH:
 		if (!sa_stateok(sa, IKEV2_STATE_SA_INIT)) {
 			log_debug("%s: state mismatch", __func__);
-			sa_state(env, sa, IKEV2_STATE_DELETE);
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
 
@@ -1829,7 +1829,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	if (ret == 0)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0)
-		sa_state(env, sa, IKEV2_STATE_RUNNING);
+		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
 
  done:
 	ibuf_release(e);

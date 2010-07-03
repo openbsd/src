@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.12 2010/06/27 05:49:05 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.13 2010/07/03 16:59:35 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -747,7 +747,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	default:
 		if (ikev2_msg_frompeer(msg) &&
 		    del->del_protoid == IKEV2_SAPROTO_IKE) {
-			sa_state(env, sa, IKEV2_STATE_DELETE);
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return (0);
 		}
 		log_debug("%s: invalid SPI size", __func__);
