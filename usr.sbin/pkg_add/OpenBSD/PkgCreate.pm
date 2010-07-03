@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.19 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.20 2010/07/03 01:52:09 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -181,6 +181,8 @@ sub compute_checksum
 			$result->add_digest($self->compute_digest($fname));
 			$result->add_size($size);
 		}
+	} elsif (-d _) {
+		$state->error("#1 should be a file and not a directory", $fname);
 	} else {
 		$state->error("#1 does not exist", $fname);
 	}
