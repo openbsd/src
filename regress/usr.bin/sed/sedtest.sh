@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sedtest.sh,v 1.4 2010/07/02 02:45:02 naddy Exp $
+#	$OpenBSD: sedtest.sh,v 1.5 2010/07/03 02:34:36 phessler Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@ main()
 	TESTLOG=${2-sed.out}
 	DICT=${3-/usr/share/dict/words}
 
+	ulimit -n 256
 	rm -f lines1 lines2
 	i=1
 	while [ $i -lt 15 ]; do
