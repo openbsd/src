@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.16 2010/06/29 04:09:32 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.17 2010/07/03 00:12:31 krw Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -335,7 +335,9 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	ncount = vcount(devvp);
 	if (ncount > 1 && devvp != rootvp)
 		return (EBUSY);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
+	VOP_UNLOCK(devvp, 0, p);
 	if (error)
 		return (error);
 
@@ -561,15 +563,15 @@ ntfs_unmount(
 	if (ntmp->ntm_devvp->v_type != VBAD)
 		ntmp->ntm_devvp->v_specmountpoint = NULL;
 
-	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
-
 	/* lock the device vnode before calling VOP_CLOSE() */
 	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
+
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	VOP__UNLOCK(ntmp->ntm_devvp, 0, p);
 
-	vrele(ntmp->ntm_devvp);
+	vput(ntmp->ntm_devvp);
 
 	/* free the toupper table, if this has been last mounted ntfs volume */
 	ntfs_toupper_unuse(p);
