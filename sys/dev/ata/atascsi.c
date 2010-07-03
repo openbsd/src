@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.87 2010/06/28 18:31:01 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.88 2010/07/03 00:41:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -89,6 +89,8 @@ void		atascsi_disk_capacity16(struct scsi_xfer *);
 void		atascsi_disk_sync(struct scsi_xfer *);
 void		atascsi_disk_sync_done(struct ata_xfer *);
 void		atascsi_disk_sense(struct scsi_xfer *);
+void		atascsi_disk_start_stop(struct scsi_xfer *);
+void		atascsi_disk_start_stop_done(struct ata_xfer *);
 
 void		atascsi_atapi_cmd(struct scsi_xfer *);
 void		atascsi_atapi_cmd_done(struct ata_xfer *);
@@ -404,8 +406,11 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 		atascsi_passthru_16(xs);
 		return;
 
-	case TEST_UNIT_READY:
 	case START_STOP:
+		atascsi_disk_start_stop(xs);
+		return;
+
+	case TEST_UNIT_READY:
 	case PREVENT_ALLOW:
 		atascsi_done(xs, XS_NOERROR);
 		return;
@@ -1040,6 +1045,84 @@ atascsi_disk_sense(struct scsi_xfer *xs)
 	sd->flags = SKEY_NO_SENSE;
 
 	atascsi_done(xs, XS_NOERROR);
+}
+
+void
+atascsi_disk_start_stop(struct scsi_xfer *xs)
+{
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+	struct ata_xfer		*xa = xs->io;
+	struct scsi_start_stop	*ss = (struct scsi_start_stop *)xs->cmd;
+
+	if (ss->how != SSS_STOP) {
+		atascsi_done(xs, XS_NOERROR);
+		return;
+	}
+
+	/*
+	 * A SCSI START_STOP UNIT command with the START bit set to
+	 * zero gets translated into an ATA FLUSH CACHE command
+	 * followed by an ATA STANDBY IMMEDIATE command.
+	 */
+	xa->datalen = 0;
+	xa->flags = ATA_F_READ;
+	xa->complete = atascsi_disk_start_stop_done;
+	/* Spec says flush cache can take >30 sec, so give it at least 45. */
+	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
+	xa->atascsi_private = xs;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+
+	xa->fis->flags = ATA_H2D_FLAGS_CMD;
+	xa->fis->command = ATA_C_FLUSH_CACHE;
+	xa->fis->device = 0;
+
+	ata_exec(as, xa);
+}
+
+void
+atascsi_disk_start_stop_done(struct ata_xfer *xa)
+{
+	struct scsi_xfer	*xs = xa->atascsi_private;
+	struct scsi_link	*link = xs->sc_link;
+	struct atascsi		*as = link->adapter_softc;
+
+	switch (xa->state) {
+	case ATA_S_COMPLETE:
+		break;
+
+	case ATA_S_ERROR:
+	case ATA_S_TIMEOUT:
+		xs->error = (xa->state == ATA_S_TIMEOUT ? XS_TIMEOUT :
+		    XS_DRIVER_STUFFUP);
+		xs->resid = xa->resid;
+		scsi_done(xs);
+		return;
+
+	default:
+		panic("atascsi_disk_start_stop_done: unexpected ata_xfer state (%d)",
+		    xa->state);
+	}
+
+	/*
+	 * The FLUSH CACHE command completed succesfully; now issue
+	 * the STANDBY IMMEDATE command.
+	 */
+	xa->datalen = 0;
+	xa->flags = ATA_F_READ;
+	xa->complete = atascsi_disk_cmd_done;
+	/* Spec says flush cache can take >30 sec, so give it at least 45. */
+	xa->timeout = (xs->timeout < 45000) ? 45000 : xs->timeout;
+	xa->atascsi_private = xs;
+	if (xs->flags & SCSI_POLL)
+		xa->flags |= ATA_F_POLL;
+
+	xa->fis->flags = ATA_H2D_FLAGS_CMD;
+	xa->fis->command = ATA_C_STANDBY_IMMED;
+	xa->fis->device = 0;
+
+	ata_exec(as, xa);
 }
 
 void

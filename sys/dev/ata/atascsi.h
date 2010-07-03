@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.41 2010/05/05 11:33:26 dlg Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.42 2010/07/03 00:41:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -32,6 +32,7 @@ struct scsi_link;
 #define ATA_C_IDENTIFY_PACKET	0xa1
 #define ATA_C_READDMA		0xc8
 #define ATA_C_WRITEDMA		0xca
+#define ATA_C_STANDBY_IMMED	0xe0
 #define ATA_C_FLUSH_CACHE	0xe7
 #define ATA_C_FLUSH_CACHE_EXT	0xea /* lba48 */
 #define ATA_C_IDENTIFY		0xec
