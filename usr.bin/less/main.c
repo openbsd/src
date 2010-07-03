@@ -324,6 +324,7 @@ skipsp(s)
 	return (s);
 }
 
+#ifndef SMALL_PROGRAM
 /*
  * See how many characters of two strings are identical.
  * If uppercase is true, the first string must begin with an uppercase
@@ -358,6 +359,7 @@ sprefix(ps, s, uppercase)
 	}
 	return (len);
 }
+#endif /* SMALL_PROGRAM */
 
 /*
  * Exit the program.

@@ -115,6 +115,7 @@ forw_textlist(tlist, prev)
 	return (s);
 }
 
+#ifndef SMALL_PROGRAM
 	public char *
 back_textlist(tlist, prev)
 	struct textlist *tlist;
@@ -140,6 +141,7 @@ back_textlist(tlist, prev)
 		s--;
 	return (s);
 }
+#endif /* SMALL_PROGRAM */
 
 /*
  * Close the current input file.
@@ -401,6 +403,7 @@ edit_ifile(ifile)
 	return (0);
 }
 
+#ifndef SMALL_PROGRAM
 /*
  * Edit a space-separated list of files.
  * For each filename in the list, enter it into the ifile list.
@@ -460,6 +463,7 @@ edit_list(filelist)
 	reedit_ifile(save_ifile);
 	return (edit(good_filename));
 }
+#endif /* SMALL_PROGRAM */
 
 /*
  * Edit the first file in the command line (ifile) list.

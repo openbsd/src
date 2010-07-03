@@ -307,12 +307,14 @@ hold_ifile(ifile, incr)
 	int_ifile(ifile)->h_hold += incr;
 }
 
+#ifndef SMALL_PROGRAM
 	public int
 held_ifile(ifile)
 	IFILE ifile;
 {
 	return (int_ifile(ifile)->h_hold);
 }
+#endif /* SMALL_PROGRAM */
 
 	public void *
 get_filestate(ifile)

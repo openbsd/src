@@ -256,6 +256,7 @@ dirfile(dirname, filename)
 	return (pathname);
 }
 
+#ifndef SMALL_PROGRAM
 /*
  * Return the full pathname of the given file in the "home directory".
  */
@@ -301,6 +302,7 @@ homefile(filename)
 #endif
 	return (NULL);
 }
+#endif /* SMALL_PROGRAM */
 
 #ifdef HELPFILE
 /*

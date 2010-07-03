@@ -28,7 +28,9 @@
 #include "less.h"
 #include "option.h"
 
+#ifndef SMALL_PROGRAM
 extern int nbufs;
+#endif
 extern int bufspace;
 extern int pr_type;
 extern int nohelp;
