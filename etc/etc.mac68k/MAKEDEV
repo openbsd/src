@@ -3,10 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.32 2010/06/26 23:49:50 jsing Exp 
-#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.33 2010/07/03 03:59:15 krw Exp 
+#	OpenBSD: MAKEDEV.common,v 1.48 2010/06/14 14:07:49 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -59,7 +59,6 @@
 #	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
-#	ss*	SCSI scanners
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
@@ -255,14 +254,6 @@ systrace)
 	M systrace c 50 0 644
 	;;
 
-ss*)
-	M ss$U c 33 $(($U*16)) 640 operator
-	M nss$U c 33 $(($(($U*16))+1)) 640 operator
-	M enss$U c 33 $(($(($U*16))+3)) 640 operator
-	RMlist[${#RMlist[*]}]="scan$U"
-	MKlist[${#MKlist[*]}]=";umask 77;ln -s ss$U scan$U"
-	;;
-
 *random)
 	n=0
 	for pre in " " s u a
@@ -401,9 +392,9 @@ ramdisk)
 all)
 	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap
-	R vscsi0 nnpfs0 ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2
-	R sd3 sd4 bio ptm local wscons asc0 uk0 random lkm tty00 tty01
-	R pf systrace std st0 st1 fd
+	R vscsi0 nnpfs0 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
+	R bio ptm local wscons asc0 uk0 random lkm tty00 tty01 pf
+	R systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

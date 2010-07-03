@@ -3,10 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.58 2010/06/26 23:49:50 jsing Exp 
-#	OpenBSD: MAKEDEV.common,v 1.47 2010/06/09 16:10:24 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.59 2010/07/03 03:59:15 krw Exp 
+#	OpenBSD: MAKEDEV.common,v 1.48 2010/06/14 14:07:49 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -88,7 +88,6 @@
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
-#	ss*	SCSI scanners
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
@@ -279,14 +278,6 @@ tun*)
 
 systrace)
 	M systrace c 50 0 644
-	;;
-
-ss*)
-	M ss$U c 59 $(($U*16)) 640 operator
-	M nss$U c 59 $(($(($U*16))+1)) 640 operator
-	M enss$U c 59 $(($(($U*16))+3)) 640 operator
-	RMlist[${#RMlist[*]}]="scan$U"
-	MKlist[${#MKlist[*]}]=";umask 77;ln -s ss$U scan$U"
 	;;
 
 *random)
@@ -620,12 +611,12 @@ all)
 	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2
 	R tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
-	R fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ss0 ss1 ch0
-	R ccd0 ccd1 ccd2 ccd3 hotplug ptm local wscons pci0 pci1 pci2
-	R pci3 uall video0 audio0 audio1 audio2 uk0 random lpa0 lpa1
-	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1
-	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
-	R std st0 st1 fd
+	R fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 nnpfs0 ch0 ccd0 ccd1
+	R ccd2 ccd3 hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
+	R video0 audio0 audio1 audio2 uk0 random lpa0 lpa1 lpa2 lpt0
+	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1 crypto pf
+	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
+	R fd
 	;;
 
 wd*|sd*|raid*|ccd*)
