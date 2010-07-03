@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.43 2010/06/20 17:57:09 phessler Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.44 2010/07/03 03:04:55 tedu Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -1102,7 +1102,8 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 	}
 
  alloc:
-	rp = pool_get(&ex_region_pl, (flags & EX_WAITOK) ? PR_WAITOK : 0);
+	rp = pool_get(&ex_region_pl, (flags & EX_WAITOK) ? PR_WAITOK :
+	    PR_NOWAIT);
 	if (rp != NULL)
 		rp->er_flags = ER_ALLOC;
 

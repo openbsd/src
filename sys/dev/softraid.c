@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.209 2010/07/02 09:26:05 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.210 2010/07/03 03:04:55 tedu Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -219,7 +219,7 @@ sr_meta_attach(struct sr_discipline *sd, int chunk_no, int force)
 	DNPRINTF(SR_D_META, "%s: sr_meta_attach(%d)\n", DEVNAME(sc));
 
 	/* in memory copy of metadata */
-	sd->sd_meta = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
+	sd->sd_meta = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (!sd->sd_meta) {
 		printf("%s: could not allocate memory for metadata\n",
 		    DEVNAME(sc));
@@ -229,7 +229,7 @@ sr_meta_attach(struct sr_discipline *sd, int chunk_no, int force)
 	if (sd->sd_meta_type != SR_META_F_NATIVE) {
 		/* in memory copy of foreign metadata */
 		sd->sd_meta_foreign = malloc(smd[sd->sd_meta_type].smd_size,
-		    M_DEVBUF, M_ZERO);
+		    M_DEVBUF, M_ZERO | M_NOWAIT);
 		if (!sd->sd_meta_foreign) {
 			/* unwind frees sd_meta */
 			printf("%s: could not allocate memory for foreign "
@@ -606,7 +606,7 @@ sr_meta_save(struct sr_discipline *sd, u_int32_t flags)
 
 	/* meta scratchpad */
 	s = &smd[sd->sd_meta_type];
-	m = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
+	m = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (!m) {
 		printf("%s: could not allocate metadata scratch area\n",
 		    DEVNAME(sc));
@@ -934,7 +934,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	}
 	vput(vn);
 
-	md = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
+	md = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (md == NULL) {
 		printf("%s: not enough memory for metadata buffer\n",
 		    DEVNAME(sc));
@@ -942,7 +942,8 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	}
 
 	/* create fake sd to use utility functions */
-	fake_sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_ZERO);
+	fake_sd = malloc(sizeof(struct sr_discipline), M_DEVBUF,
+	    M_ZERO | M_NOWAIT);
 	if (fake_sd == NULL) {
 		printf("%s: not enough memory for fake discipline\n",
 		    DEVNAME(sc));
@@ -1390,7 +1391,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_native_attach\n", DEVNAME(sc));
 
-	md = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
+	md = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (md == NULL) {
 		printf("%s: not enough memory for metadata buffer\n",
 		    DEVNAME(sc));

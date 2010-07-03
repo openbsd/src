@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.44 2009/03/25 20:00:18 oga Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.45 2010/07/03 03:04:55 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -185,7 +185,8 @@ amap_alloc1(int slots, int padslots, int waitf)
 	struct vm_amap *amap;
 	int totalslots;
 
-	amap = pool_get(&uvm_amap_pool, (waitf == M_WAITOK) ? PR_WAITOK : 0);
+	amap = pool_get(&uvm_amap_pool, (waitf == M_WAITOK) ? PR_WAITOK
+	    : PR_NOWAIT);
 	if (amap == NULL)
 		return(NULL);
 
