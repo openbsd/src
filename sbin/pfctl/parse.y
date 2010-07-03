@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.589 2010/03/23 13:31:29 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.590 2010/07/03 02:28:57 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -769,7 +769,12 @@ pfa_anchor	: '{'
 			pf->bn++;
 			pf->brace = 1;
 
-			/* create a holding ruleset in the root */
+			/*
+			 * Anchor contents are parsed before the anchor rule
+			 * production completes, so we don't know the real
+			 * location yet. Create a holding ruleset in the root;
+			 * contents will be moved afterwards.
+			 */
 			snprintf(ta, PF_ANCHOR_NAME_SIZE, "_%d", pf->bn);
 			rs = pf_find_or_create_ruleset(ta);
 			if (rs == NULL)
@@ -806,7 +811,14 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			memset(&r, 0, sizeof(r));
 			if (pf->astack[pf->asd + 1]) {
-				/* move inline rules into relative location */
+				if ($2 && strchr($2, '/') != NULL) {
+					free($2);
+					yyerror("anchor paths containing '/' "
+				    	    "cannot be used for inline anchors.");
+					YYERROR;
+				}
+
+				/* Move inline rules into relative location. */
 				pf_anchor_setup(&r,
 				    &pf->astack[pf->asd]->ruleset,
 				    $2 ? $2 : pf->alast->name);
