@@ -1,6 +1,6 @@
 define(MACHINE,luna88k)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.14 2010/06/26 23:49:50 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.15 2010/07/03 03:59:15 krw Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -36,7 +36,6 @@ dnl all)
 dnl
 dnl
 target(all, ch, 0)dnl
-target(all, ss, 0)dnl
 target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl
@@ -95,7 +94,6 @@ _DEV(lcd, 10)
 _DEV(lkm, 24)
 _DEV(pf, 39)
 _DEV(rnd, 40)
-_DEV(ss, 42)
 _DEV(systrace, 50)
 _DEV(tun, 23)
 _DEV(uk, 41)

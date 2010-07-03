@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.77 2010/07/02 19:57:15 tedu Exp $
+#	$OpenBSD: SUN4M,v 1.78 2010/07/03 03:59:17 krw Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -242,7 +242,6 @@ sd*	at scsibus?		# SCSI disks
 st*	at scsibus?		# SCSI tapes
 cd*	at scsibus?		# SCSI CD-ROMs
 ch*	at scsibus?		# SCSI changer devices
-ss*	at scsibus?		# SCSI scanners
 uk*	at scsibus?		# unknown SCSI devices
 
 # Floppy controller and drive found on SPARCstations.

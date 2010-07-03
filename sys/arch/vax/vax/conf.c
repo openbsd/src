@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.59 2010/06/09 15:25:33 jsing Exp $ */
+/*	$OpenBSD: conf.c,v 1.60 2010/07/03 03:59:17 krw Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -339,7 +339,6 @@ cdev_decl(ii);
 
 #include "tun.h" 
 #include "ch.h"
-#include "ss.h"
 #include "uk.h"
 
 #ifdef NNPFS
@@ -423,7 +422,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 61: SCSI CD-ROM */
 	cdev_disk_init(NRD,rd),		/* 62: memory disk driver */
 	cdev_ch_init(NCH,ch),		/* 63: SCSI autochanger */
-	cdev_scanner_init(NSS,ss),	/* 64: SCSI scanner */
+	cdev_notdef(),			/* 64 */
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
 	cdev_tty_init(NDL,dl),		/* 66: DL11 */
 	cdev_random_init(1,random),	/* 67: random data source */

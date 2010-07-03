@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.89 2009/06/24 15:02:18 todd Exp $
+#	$OpenBSD: RAMDISK,v 1.90 2010/07/03 03:59:16 krw Exp $
 #
 # Diskless kernel config
 #
@@ -154,8 +154,6 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #urio*	at uhub?		# Diamond Multimedia Rio 500
 #uscanner* at uhub?		# USB Scanners
-#usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
-#scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 #udsbr*	at uhub?		# D-Link DSB-R100 radio
 #radio*	at udsbr?		# USB radio
@@ -336,7 +334,6 @@ sd*	at scsibus?
 st*	at scsibus?
 cd*	at scsibus?
 #ch*	at scsibus?
-#ss*	at scsibus?
 #uk*	at scsibus?
 
 pseudo-device	rd	1	# ramdisk

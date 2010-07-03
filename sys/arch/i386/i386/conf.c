@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.133 2010/06/09 15:25:32 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.134 2010/07/03 03:59:16 krw Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ cdev_decl(wd);
 #include "com.h"
 cdev_decl(com);
 cdev_decl(fd);
-#include "ss.h"
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"
@@ -217,7 +216,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
-	cdev_ss_init(NSS,ss),           /* 19: SCSI scanner */
+	cdev_notdef(),			/* 19 */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_acpiapm_init(1,acpiapm),	/* 21: Power Management stuff */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */

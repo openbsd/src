@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.47 2010/06/09 15:25:32 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.48 2010/07/03 03:59:16 krw Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@ bdev_decl(mt);
 bdev_decl(hd);
 #include "rd.h"
 #include "sd.h"
-#include "ss.h"
 #include "st.h"
 #include "uk.h"
 #include "vnd.h"
@@ -155,7 +154,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NAPCI,apci),	/* 35: Apollo APCI UARTs */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 36: Kernel symbols device */
 	cdev_uk_init(NUK,uk),		/* 37 */
-	cdev_ss_init(NSS,ss),		/* 38 */
+	cdev_notdef(),			/* 38 */
 	cdev_ch_init(NCH,ch),		/* 39 */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 40: frame buffers */
 	cdev_mouse_init(NWSKBD,wskbd),	/* 41: keyboards */

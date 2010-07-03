@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.2 2010/06/27 20:15:11 drahn Exp $
+# $OpenBSD: GENERIC,v 1.3 2010/07/03 03:59:16 krw Exp $
 #
 # GENERIC machine description file
 #
@@ -141,8 +141,6 @@ url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 urio*		at uhub?		# Diamond Multimedia Rio 500
 uscanner*	at uhub?		# USB Scanners
-usscanner*	at uhub?		# USB SCSI scanners, e.g., HP5300
-scsibus*	at usscanner?
 #uyap*		at uhub?		# Y@P firmware loader
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
@@ -155,7 +153,6 @@ sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?
-ss*		at scsibus?
 uk*		at scsibus?
 
 # onboard uarts

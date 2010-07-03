@@ -1,4 +1,4 @@
-#	$OpenBSD: M187,v 1.36 2009/02/14 17:42:00 miod Exp $
+#	$OpenBSD: M187,v 1.37 2010/07/03 03:59:17 krw Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -74,7 +74,6 @@ sd*	at scsibus?
 st*	at scsibus?
 cd*	at scsibus?
 ch*	at scsibus?
-ss*	at scsibus?
 safte*	at scsibus?
 ses*	at scsibus?
 uk*	at scsibus?

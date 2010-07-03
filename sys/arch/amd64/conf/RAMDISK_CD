@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.113 2010/04/06 03:55:47 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.114 2010/07/03 03:59:16 krw Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -118,8 +118,6 @@ wi*	at uhub?		# WaveLAN IEEE 802.11DS
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #urio*	at uhub?		# Diamond Multimedia Rio 500
 #uscanner* at uhub?		# USB Scanners
-#usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
-#scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 #ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500

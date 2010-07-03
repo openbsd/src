@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2010/06/09 15:25:32 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2010/07/03 03:59:16 krw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -47,7 +47,6 @@
 #include "st.h"
 #include "cd.h"
 #include "ch.h"
-#include "ss.h"
 #include "uk.h"
 #include "wd.h"
 bdev_decl(wd);
@@ -133,7 +132,7 @@ struct cdevsw   cdevsw[] =
 	cdev_tape_init(NST,st),		/* 11: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 12: SCSI cd-rom */
 	cdev_ch_init(NCH,ch),		/* 13: SCSI changer */
-	cdev_ss_init(NSS,ss),		/* 14: SCSI scanner */
+	cdev_notdef(),			/* 14 */
 	cdev_uk_init(NUK,uk),		/* 15: SCSI unknown */
 	cdev_fd_init(1,filedesc),	/* 16: file descriptor pseudo-device */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 17: Berkeley packet filter */

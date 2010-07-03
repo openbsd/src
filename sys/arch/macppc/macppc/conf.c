@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.41 2010/06/09 15:25:33 jsing Exp $ */
+/*	$OpenBSD: conf.c,v 1.42 2010/07/03 03:59:16 krw Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -44,7 +44,6 @@
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
-#include "ss.h"
 #include "uk.h"
 #include "rd.h"
 #include "wd.h"
@@ -187,7 +186,7 @@ struct cdevsw cdevsw[] = {
 	cdev_pf_init(NPF,pf),		/* 39: packet filter */
 	cdev_random_init(1,random),	/* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
-	cdev_ss_init(NSS,ss),		/* 42: SCSI scanner */
+	cdev_notdef(),			/* 42 */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
 	cdev_audio_init(NAUDIO,audio),	/* 44: generic audio I/O */
 	cdev_video_init(NVIDEO,video),	/* 45: generic video I/O */

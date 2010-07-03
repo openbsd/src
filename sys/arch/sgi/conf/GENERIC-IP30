@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.28 2010/03/28 17:15:24 miod Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.29 2010/07/03 03:59:17 krw Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -233,7 +233,6 @@ sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?
-ss*		at scsibus?
 safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?

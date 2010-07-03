@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2010/07/03 01:48:18 matthew Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2010/07/03 03:59:17 krw Exp $
 
 machine	palm	arm
 
@@ -80,8 +80,6 @@ ural*		at uhub?		# Ralink RT2500
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 #uscanner*	at uhub?		# USB Scanner driver
-#usscanner*	at uhub?		# USB SCSI scanners
-#scsibus*	at usscanner?
 #uyap*		at uhub?		# Y@P firmware loader
 ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
@@ -98,7 +96,6 @@ sd*		at scsibus?
 #st*		at scsibus?
 cd*		at scsibus?
 #ch*		at scsibus?
-#ss*		at scsibus?
 #uk*		at scsibus?
 
 # integrated 16550 UARTs

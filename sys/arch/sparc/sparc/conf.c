@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.51 2010/06/09 15:25:33 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.52 2010/07/03 03:59:17 krw Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -60,7 +60,6 @@
 #include "ccd.h"
 #include "raid.h"
 #include "ch.h"
-#include "ss.h"
 #include "uk.h"
 #include "sd.h"
 #include "st.h"
@@ -262,7 +261,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 118 */
 	cdev_random_init(1,random),	/* 119: random generator */
 	cdev_uk_init(NUK,uk),		/* 120: unknown SCSI */
-	cdev_ss_init(NSS,ss),           /* 121: SCSI scanner */
+	cdev_notdef(),			/* 121 */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 122: Kernel symbols device */
 	cdev_disk_init(NRAID,raid),     /* 123: RAIDframe disk driver */
 	cdev_bio_init(NBIO,bio),	/* 124: ioctl tunnel */

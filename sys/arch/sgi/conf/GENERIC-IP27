@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.34 2010/03/28 17:15:24 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.35 2010/07/03 03:59:17 krw Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -241,7 +241,6 @@ sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?
-ss*		at scsibus?
 safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?

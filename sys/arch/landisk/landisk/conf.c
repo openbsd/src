@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2010/06/09 15:25:32 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2010/07/03 03:59:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -111,7 +111,6 @@ cdev_decl(pci);
 #include "cd.h"
 #include "ch.h"
 #include "uk.h"
-#include "ss.h"
 
 /*
  * Audio devices
@@ -308,7 +307,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NCD,cd),			/* 26: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),	 		/* 27: SCSI autochanger */
 	cdev_uk_init(NUK,uk),	 		/* 28: SCSI unknown */
-	cdev_scanner_init(NSS,ss),		/* 29: SCSI scanner */
+	cdev_notdef(),				/* 29: */
 	cdev_lkm_dummy(),			/* 30: */
 	cdev_lkm_dummy(),			/* 31: */
 	cdev_lkm_dummy(),			/* 32: */

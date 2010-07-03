@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.11 2005/05/27 02:08:14 martin Exp $
+#	$OpenBSD: RAMDISK,v 1.12 2010/07/03 03:59:17 krw Exp $
 #
 # MVMEPPC GENERIC config file
 #
@@ -81,7 +81,6 @@ sd0		at scsibus? target 0 lun 0
 #st*		at scsibus?
 #cd*		at scsibus?
 #ch*		at scsibus?
-#ss*		at scsibus?
 #uk*		at scsibus?
 
 pseudo-device	rd		1	# ram disk

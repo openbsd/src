@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.32 2010/06/26 23:49:50 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.33 2010/07/03 03:59:15 krw Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -434,16 +434,6 @@ uk*)
 	chmod 640 uk$unit
 	;;
 
-ss*)
-	unit=${i##*[a-z]}
-	rm -f ss$unit
-	mknod ss$unit c 42 $unit
-	chown root:operator ss$unit
-	chmod 440 ss$unit
-#	backwards compatibility with older PINTs
-	rm -f scan$unit
-	ln -s ss$unit scan$unit
-	;;
 wscons)
 	sh $this wskbd0 wskbd1 wskbd2 wskbd3
 	sh $this wsmouse0 wsmouse1 wsmouse2 wsmouse3
@@ -516,7 +506,6 @@ dnl
 dnl *** mvmeppc specific devices
 dnl
 target(all, ch, 0)dnl
-target(all, ss, 0, 1)dnl
 target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl

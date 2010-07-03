@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.104 2009/10/02 18:01:45 miod Exp $
+dnl	$OpenBSD: hardware,v 1.105 2010/07/03 03:59:15 krw Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run OpenBSD,
 or if you are able to run OpenBSD on hardware not listed here, please
@@ -553,7 +553,7 @@ Supported Peripherals:
 		USB Mice (umouse) [-]
 		USB Modems (umodem) [-]
 		USB Printers (ulpt) [-]
-		USB Scanners (uscanner, usscanner) [-]
+		USB Scanners (uscanner) [-]
 		USB-USB cables (upl) [-]
 	FDDI Adapters [*]
 		Digital DEFEA EISA FDDI adapters (fea)

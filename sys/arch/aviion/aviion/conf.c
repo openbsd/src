@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2010/06/09 15:25:32 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2010/07/03 03:59:16 krw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -52,7 +52,6 @@
 #include "pty.h"
 #include "rd.h"
 #include "sd.h"
-#include "ss.h"
 #include "st.h"
 #include "systrace.h"
 #include "tun.h"
@@ -133,7 +132,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pf_init(NPF,pf),		/* 39: packet filter */
 	cdev_random_init(1,random),	/* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41 */
-	cdev_ss_init(NSS,ss),		/* 42 */
+	cdev_notdef(),			/* 42 */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
 	cdev_ch_init(NCH,ch),		/* 44: SCSI autochanger */
 	cdev_notdef(),			/* 45 */

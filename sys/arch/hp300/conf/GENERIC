@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2010/07/02 19:57:14 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.50 2010/07/03 03:59:16 krw Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -125,7 +125,6 @@ sd*		at scsibus?			# SCSI disks
 st*		at scsibus?			# SCSI tapes
 cd*		at scsibus?			# SCSI CD-ROMs
 ch*		at scsibus?			# SCSI changer devices
-ss*		at scsibus?			# SCSI scanners
 safte*		at scsibus?			# SCSI AF-TE
 ses*		at scsibus?			# SCSI enclosure services
 uk*		at scsibus?			# unknown SCSI devices

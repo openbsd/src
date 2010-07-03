@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.686 2010/07/03 01:02:25 mlarkin Exp $
+#	$OpenBSD: GENERIC,v 1.687 2010/07/03 03:59:16 krw Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -283,8 +283,6 @@ url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 urio*	at uhub?		# Diamond Multimedia Rio 500
 uscanner* at uhub?		# USB Scanners
-usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
-scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
@@ -519,7 +517,6 @@ sd*	at scsibus?		# SCSI disk drives
 st*	at scsibus?		# SCSI tape drives
 cd*	at scsibus?		# SCSI CD-ROM drives
 ch*	at scsibus?		# SCSI autochangers
-ss*	at scsibus?		# SCSI scanners
 safte*	at scsibus?		# SCSI accessed fault-tolerant enclosures
 ses*	at scsibus?		# SCSI enclosure services
 uk*	at scsibus?		# unknown SCSI

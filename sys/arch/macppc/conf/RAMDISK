@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.89 2009/06/24 11:38:40 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.90 2010/07/03 03:59:16 krw Exp $
 #
 # PPC GENERIC config file
 #
@@ -199,8 +199,6 @@ zyd*		at uhub?		# Zydas ZD1211
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #uscanner*	at uhub?		# USB Scanner driver
-#usscanner*	at uhub?		# USB SCSI scanners
-#scsibus*	at usscanner?
 #uyap*		at uhub?		# Y@P firmware loader
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
@@ -226,7 +224,6 @@ sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
 #ch*		at scsibus?
-#ss*		at scsibus?
 #uk*		at scsibus?
 
 pseudo-device	loop	1	# network loopback

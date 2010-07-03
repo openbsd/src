@@ -1,6 +1,6 @@
 define(MACHINE,hppa)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.42 2010/06/26 23:49:50 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.43 2010/07/03 03:59:15 krw Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -71,7 +71,6 @@ _DEV(pci, 31)
 _DEV(pdc, 22)
 _DEV(pf, 21)
 _DEV(rnd, 20)
-_DEV(ss, 14)
 _DEV(systrace, 34)
 _DEV(tun, 18)
 _DEV(uk, 15)
@@ -96,7 +95,6 @@ dnl *** hppa specific devices
 dnl
 target(all, ch, 0)dnl
 target(all, bio)dnl
-target(all, ss, 0, 1)dnl
 target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl

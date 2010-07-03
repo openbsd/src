@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.7 2010/06/27 20:15:11 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.8 2010/07/03 03:59:16 krw Exp $
 #
 # GENERIC machine description file
 #
@@ -146,8 +146,6 @@ ommmc0		at ahb? addr 0x4809c000 intr 83
 # wi*		at uhub?		# WaveLAN IEEE 802.11DS
 # urio*		at uhub?		# Diamond Multimedia Rio 500
 # uscanner*	at uhub?		# USB Scanners
-# usscanner*	at uhub?		# USB SCSI scanners, e.g., HP5300
-# scsibus*	at usscanner?
 # #uyap*		at uhub?		# Y@P firmware loader
 # udsbr*		at uhub?		# D-Link DSB-R100 radio
 # radio*		at udsbr?		# USB radio
@@ -160,7 +158,6 @@ sd*		at scsibus?
 st*		at scsibus?
 cd*		at scsibus?
 ch*		at scsibus?
-ss*		at scsibus?
 uk*		at scsibus?
 
 

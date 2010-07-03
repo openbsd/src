@@ -1,6 +1,6 @@
 define(MACHINE,hp300)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.38 2010/06/26 23:49:50 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.39 2010/07/03 03:59:15 krw Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -86,7 +86,6 @@ _DEV(fdesc, 21)
 _DEV(lkm, 24)
 _DEV(pf, 33)
 _DEV(rnd, 32)
-_DEV(ss, 38)
 _DEV(systrace, 50)
 _DEV(tun, 23)
 _DEV(uk, 37)
@@ -168,7 +167,6 @@ ppi*)
 
 dnl
 target(all, ch, 0)dnl
-target(all, ss, 0)dnl
 target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl

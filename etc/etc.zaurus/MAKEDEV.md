@@ -1,6 +1,6 @@
 define(MACHINE,zaurus)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.25 2010/06/26 23:49:50 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.26 2010/07/03 03:59:16 krw Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -83,7 +83,6 @@ _DEV(rmidi, 57)
 _DEV(rnd, 40)
 _DEV(tun, 33)
 _DEV(uk, 28)
-_DEV(ss, 29)
 _DEV(systrace, 50)
 _DEV(tuner, 75)
 _DEV(vi, 38)
@@ -105,7 +104,6 @@ dnl
 dnl *** zaurus specific targets
 dnl
 target(all, ch, 0)dnl
-target(all, ss, 0, 1)dnl
 target(all, nnpfs, 0)dnl
 target(all, vscsi, 0)dnl
 target(all, diskmap)dnl

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.80 2009/09/27 19:30:38 sthen Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.81 2010/07/03 03:59:16 krw Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -294,7 +294,6 @@ ahc*	at eisa?			# Adaptec 274x, aic7770 SCSI
 # SCSI devices
 cd*	at scsibus?
 sd*	at scsibus?
-ss*	at scsibus?
 st*	at scsibus?
 ch*	at scsibus?
 uk*	at scsibus?
