@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.476 2010/07/01 23:05:50 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.477 2010/07/03 04:54:32 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2178,8 +2178,8 @@ void
 sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
     union sigval val)
 {
-	extern char sigcode, sigcode_xmm;
 	struct proc *p = curproc;
+	union savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
@@ -2201,11 +2201,23 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	} else
 		sp = tf->tf_esp;
 
-	frame.sf_fpstate = NULL;
+	frame.sf_sc.sc_fpstate = NULL;
 	if (p->p_md.md_flags & MDP_USEDFPU) {
+		npxsave_proc(p, 1);
 		sp -= sizeof(union savefpu);
 		sp &= ~0xf;	/* for XMM regs */
-		frame.sf_fpstate = (void *)sp;
+		frame.sf_sc.sc_fpstate = (void *)sp;
+		if (copyout(&p->p_addr->u_pcb.pcb_savefpu,
+		    (void *)sp, sizeof(union savefpu)))
+			sigexit(p, SIGILL);
+
+		/* Signal handlers get a completely clean FP state */
+		p->p_md.md_flags &= ~MDP_USEDFPU;
+		if (i386_use_fxsave) {
+			sfp->sv_xmm.sv_env.en_cw = __OpenBSD_NPXCW__;
+			sfp->sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+		} else
+			sfp->sv_87.sv_env.en_cw = __OpenBSD_NPXCW__;
 	}
 
 	fp = (struct sigframe *)sp - 1;
@@ -2276,8 +2288,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	if (i386_use_fxsave)
-		tf->tf_eip += &sigcode_xmm - &sigcode;
 	tf->tf_eflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
@@ -2300,9 +2310,8 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;
-	struct trapframe *tf;
-
-	tf = p->p_md.md_regs;
+	struct trapframe *tf = p->p_md.md_regs;
+	int error;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -2353,6 +2362,16 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf->tf_cs = context.sc_cs;
 	tf->tf_esp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
+
+	if (p->p_md.md_flags & MDP_USEDFPU)
+		npxsave_proc(p, 0);
+
+	if (context.sc_fpstate) {
+		if ((error = copyin(context.sc_fpstate,
+		    &p->p_addr->u_pcb.pcb_savefpu, sizeof (union savefpu))))
+			return (error);
+		p->p_md.md_flags |= MDP_USEDFPU;
+	}
 
 	if (context.sc_onstack & 01)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
