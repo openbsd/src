@@ -1,4 +1,4 @@
-/*	$Id: roff.c,v 1.6 2010/06/27 21:54:42 schwarze Exp $ */
+/*	$Id: roff.c,v 1.7 2010/07/03 15:59:05 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -100,6 +100,12 @@ struct	roffmac {
 	struct roffmac	*next;
 };
 
+struct roffstr {
+	char		*name;
+	char		*string;
+	struct roffstr	*next;
+} *first_string;
+
 static	enum rofferr	 roff_block(ROFF_ARGS);
 static	enum rofferr	 roff_block_text(ROFF_ARGS);
 static	enum rofferr	 roff_block_sub(ROFF_ARGS);
@@ -108,6 +114,7 @@ static	enum rofferr	 roff_ccond(ROFF_ARGS);
 static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
+static	enum rofferr	 roff_ds(ROFF_ARGS);
 static	enum rofferr	 roff_line(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	enum roffrule	 roff_evalcond(const char *, int *);
@@ -127,7 +134,7 @@ static	struct roffmac	 roffs[ROFF_MAX] = {
 	{ "de", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "dei", roff_block, roff_block_text, roff_block_sub, 0, NULL },
 	{ "de1", roff_block, roff_block_text, roff_block_sub, 0, NULL },
-	{ "ds", roff_line, NULL, NULL, 0, NULL },
+	{ "ds", roff_ds, NULL, NULL, 0, NULL },
 	{ "el", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "ie", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
 	{ "if", roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT, NULL },
@@ -260,6 +267,7 @@ roff_free1(struct roff *r)
 
 	while (r->last)
 		roffnode_pop(r);
+	roff_freestr();
 }
 
 
@@ -846,6 +854,39 @@ roff_cond(ROFF_ARGS)
 
 /* ARGSUSED */
 static enum rofferr
+roff_ds(ROFF_ARGS)
+{
+	char *name, *string, *end;
+
+	name = *bufp + pos;
+	if ('\0' == *name)
+		return(ROFF_IGN);
+
+	string = name;
+	while (*string && ' ' != *string)
+		string++;
+	if (*string)
+		*(string++) = NULL;
+	if (*string && '"' == *string)
+		string++;
+	while (*string && ' ' == *string)
+		string++;
+	end = string;
+	while (*end)
+		end++;
+	if (string < end) {
+		end--;
+		if (*end == '"')
+			*end = '\0';
+	}
+
+	roff_setstr(name, string);
+	return(ROFF_IGN);
+}
+
+
+/* ARGSUSED */
+static enum rofferr
 roff_nr(ROFF_ARGS)
 {
 	const char	*key, *val;
@@ -880,4 +921,76 @@ roff_nr(ROFF_ARGS)
 	}
 
 	return(ROFF_IGN);
+}
+
+
+char *
+roff_setstr(const char *name, const char *string)
+{
+	struct roffstr	 *n;
+	char		 *namecopy;
+
+	n = first_string;
+	while (n && strcmp(name, n->name))
+		n = n->next;
+	if (n) {
+		free(n->string);
+	} else {
+		if (NULL == (namecopy = strdup(name)))
+			return(NULL);
+		if (NULL == (n = malloc(sizeof(struct roffstr)))) {
+			free(n);
+			return(NULL);
+		}
+		n->name = namecopy;
+		n->next = first_string;
+		first_string = n;
+	}
+	if (string)
+		n->string = strdup(string);
+	else
+		n->string = NULL;
+	return(n->string);
+}
+
+char *
+roff_getstr(const char *name)
+{
+	struct roffstr	 *n;
+
+	n = first_string;
+	while (n && strcmp(name, n->name))
+		n = n->next;
+	if (n)
+		return(n->string);
+	else
+		return(NULL);
+}
+
+char *
+roff_getstrn(const char *name, size_t len)
+{
+	struct roffstr	 *n;
+
+	n = first_string;
+	while (n && (strncmp(name, n->name, len) || '\0' != n->name[len]))
+		n = n->next;
+	if (n)
+		return(n->string);
+	else
+		return(NULL);
+}
+
+void
+roff_freestr(void)
+{
+	struct roffstr	 *n, *nn;
+
+	for (n = first_string; n; n = nn) {
+		free(n->name);
+		free(n->string);
+		nn = n->next;
+		free(n);
+	}
+	first_string = NULL;
 }

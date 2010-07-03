@@ -1,4 +1,4 @@
-.\"	$Id: roff.3,v 1.2 2010/06/27 21:54:42 schwarze Exp $
+.\"	$Id: roff.3,v 1.3 2010/07/03 15:59:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2010 $
+.Dd $Mdocdate: July 3 2010 $
 .Dt ROFF 3
 .Os
 .Sh NAME
@@ -50,6 +50,15 @@
 .Fc
 .Ft void
 .Fn roff_reset "struct roff *roff"
+.In regs.h
+.Ft "char *"
+.Fn roff_setstr "const char *name" "const char *string"
+.Ft "char *"
+.Fn roff_getstr "const char *name"
+.Ft "char *"
+.Fn roff_getstrn "const char *name" "size_t len"
+.Ft void
+.Fn roff_freestr void
 .Sh DESCRIPTION
 The
 .Nm
@@ -145,6 +154,52 @@ Returns 0 on failure, 1 on success.
 Signals that the parse is complete.
 Returns 0 on failure, 1 on success.
 .El
+.Sh USER-DEFINED STRINGS
+Strings defined by the
+.Xr roff 7
+.Sx \&ds
+instruction are saved using the
+.Fn roff_setstr
+function and retrieved using the
+.Fn roff_getstr
+and
+.Fn roff_getstrn
+functions.
+.Pp
+These functions take the name of the string to be accessed
+as their first argument.
+While
+.Fn roff_getstr
+requires the name to be null-terminated,
+.Fn roff_getstrn
+accepts non-terminated strings, but requires the length of the name
+to be specified.
+.Pp
+The second argument to
+.Fn roff_setstr
+is the new value of the string.
+It will be copied to internal storage, so both pointers to constant
+strings and pointers to volatile storage are acceptable.
+.Pp
+All of these functions return a pointer to the new value of the string
+in internal storage, which should be considered read-only, so use
+.Xr strdup 3
+on it as appropriate.
+The read functions return NULL when a string of the specified name
+is not available or empty, and
+.Fn roff_setstr
+returns NULL when memory allocation fails.
+In the latter case, the string will remain unset.
+.Pp
+The function
+.Fn roff_freestr
+clears all user-defined strings.
+It always succeeds.
+Both
+.Fn roff_reset
+and
+.Fn roff_free
+call it.
 .Sh EXAMPLES
 See
 .Pa main.c
@@ -159,3 +214,15 @@ The
 .Nm
 library was written by
 .An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.Sh BUGS
+The implementation of user-defined strings needs improvement:
+.Bl -dash
+.It
+String values are taken literally and are not interpreted.
+.It
+Parsing of quoted strings is incomplete.
+.It
+The stings are stored internally using a singly linked list,
+which is fine for small numbers of strings,
+but ineffient when handling many strings.
+.El
