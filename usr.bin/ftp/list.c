@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.4 2010/06/27 20:00:58 phessler Exp $	*/
+/*	$OpenBSD: list.c,v 1.5 2010/07/03 00:21:14 halex Exp $	*/
 
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
@@ -75,9 +75,9 @@ void
 parse_list(char **line, char *type)
 {
 	if (**line >= '0' && **line <= '9')
-		return parse_windows(line, type);
-
-	return parse_unix(line, type);
+		parse_windows(line, type);
+	else
+		parse_unix(line, type);
 }
 
 #endif /* !SMALL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.100 2010/06/29 23:12:33 halex Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.101 2010/07/03 00:21:14 halex Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -682,6 +682,7 @@ again:
 			warnx("Server does not support resume.");
 			restart_point = resume = 0;
 		}
+		/* FALLTHROUGH */
 	case 206:	/* Partial Content */
 #endif /* !SMALL */
 		break;
