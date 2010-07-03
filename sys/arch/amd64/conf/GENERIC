@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.290 2010/06/27 21:00:22 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.291 2010/07/03 01:02:25 mlarkin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -113,6 +113,7 @@ iic*	at nviic?
 amdpm*	at pci?			# AMD-7xx/8111 and NForce SMBus controller
 iic*	at amdpm?
 
+itherm*	at pci?			# Intel 3400 Thermal Sensor
 adc*	at iic?			# Analog Devices AD7416/AD7417/7418
 adl*	at iic?			# Andigilog aSC7621
 admtemp* at iic?		# Analog Devices ADM1021

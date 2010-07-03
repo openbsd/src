@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.272 2010/06/27 01:47:36 dlg Exp $
+#	$OpenBSD: files.pci,v 1.273 2010/07/03 01:02:25 mlarkin Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -805,4 +805,9 @@ file	dev/pci/gcu.c			gcu
 device	auglx: audio, ac97
 attach	auglx at pci
 file	dev/pci/auglx.c			auglx
+
+# Intel 3400 Thermal 
+device	itherm
+attach	itherm at pci
+file	dev/pci/itherm.c		itherm
 
