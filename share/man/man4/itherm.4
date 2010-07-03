@@ -1,3 +1,4 @@
+.\"	$OpenBSD: itherm.4,v 1.2 2010/07/03 07:09:26 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -18,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm itherm
-.Nd Intel 3400 Thermal Sensor
+.Nd Intel 3400 temperature sensor
 .Sh SYNOPSIS
 .Cd "itherm* at pci?"
 .Sh DESCRIPTION
@@ -60,9 +61,9 @@ driver was written by
 .An Mike Larkin Aq mlarkin@openbsd.org .
 .Sh CAVEATS
 Not all sensors are wired on every machine, so the list of
-sensors shown in 
+sensors shown in
 .Xr sysctl 8
 may not show all the sensors listed above.
-Further, the
+Furthermore, the
 .Nm
 driver will flag sensors as invalid if they report bogus data.
