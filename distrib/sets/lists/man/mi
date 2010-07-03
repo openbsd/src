@@ -1447,6 +1447,7 @@
 ./usr/share/man/cat4/acpimadt.0
 ./usr/share/man/cat4/acpiprt.0
 ./usr/share/man/cat4/acpipwrres.0
+./usr/share/man/cat4/itherm.0
 ./usr/share/man/cat4/acpithinkpad.0
 ./usr/share/man/cat4/acpitimer.0
 ./usr/share/man/cat4/acpitz.0
@@ -2240,7 +2241,6 @@
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/srandom.0
-./usr/share/man/cat4/ss.0
 ./usr/share/man/cat4/st.0
 ./usr/share/man/cat4/stderr.0
 ./usr/share/man/cat4/stdin.0
@@ -2324,7 +2324,6 @@
 ./usr/share/man/cat4/usbf.0
 ./usr/share/man/cat4/uscanner.0
 ./usr/share/man/cat4/uslcom.0
-./usr/share/man/cat4/usscanner.0
 ./usr/share/man/cat4/uthum.0
 ./usr/share/man/cat4/uticom.0
 ./usr/share/man/cat4/utrh.0
