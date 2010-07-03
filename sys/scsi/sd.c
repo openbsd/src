@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.201 2010/07/01 05:11:18 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.202 2010/07/03 01:40:12 kettenis Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -281,22 +281,27 @@ sdactivate(struct device *self, int act)
 		sc->flags |= SDF_DYING;
 		bufq_drain(sc->sc_bufq);
 		break;
+
 	case DVACT_SUSPEND:
 		/*
-		 * If the disk cache needs to be flushed, and the disk
-		 * supports it, flush it.  We're cold at this point,
-		 * so we poll for completion.
+		 * Stop the disk.  Stopping the disk should flush the
+		 * cache, but we are paranoid so we flush the cache
+		 * first.
 		 */
 		if ((sc->flags & SDF_DIRTY) != 0)
 			sd_flush(sc, SCSI_AUTOCONF);
+		scsi_start(sc->sc_link, SSS_STOP,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
 		break;
+
 	case DVACT_RESUME:
+		scsi_start(sc->sc_link, SSS_START,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_AUTOCONF);
 		break;
 	}
 
 	return (rv);
 }
-
 
 int
 sddetach(struct device *self, int flags)
