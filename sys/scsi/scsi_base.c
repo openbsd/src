@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.181 2010/07/02 23:57:46 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.182 2010/07/03 01:55:28 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1232,21 +1232,18 @@ scsi_scsi_cmd(struct scsi_link *link, struct scsi_generic *scsi_cmd,
 
 	error = scsi_xs_sync(xs);
 
-	if (error != EAGAIN) {
-		if (bp != NULL) {
-			if (error) {
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
-				bp->b_resid = bp->b_bcount;
-			} else {  
-				bp->b_error = 0;
-				bp->b_resid = xs->resid;
-			}
-	
-			s = splbio();
-			biodone(bp);
-			splx(s);
+	if (bp != NULL) {
+		bp->b_error = error;
+		if (bp->b_error) {
+			SET(bp->b_flags, B_ERROR);
+			bp->b_resid = bp->b_bcount;
+		} else {
+			CLR(bp->b_flags, B_ERROR);
+			bp->b_resid = xs->resid;
 		}
+		s = splbio();
+		biodone(bp);
+		splx(s);
 	}
 
 	scsi_xs_put(xs);
@@ -1270,10 +1267,6 @@ scsi_xs_error(struct scsi_xfer *xs)
 		error = 0;
 		break;
 
-	case XS_NO_CCB:
-		error = EAGAIN;
-		break;
-
 	case XS_SENSE:
 	case XS_SHORTSENSE:
 #ifdef SCSIDEBUG
@@ -1284,6 +1277,7 @@ scsi_xs_error(struct scsi_xfer *xs)
 		    ("scsi_interpret_sense returned %#x\n", error));
 		break;
 
+	case XS_NO_CCB:
 	case XS_BUSY:
 		error = scsi_delay(xs, 1);
 		break;
