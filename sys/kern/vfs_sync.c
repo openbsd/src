@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.45 2009/08/13 15:00:14 jasper Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.46 2010/07/03 03:45:16 thib Exp $  */
 
 /*
  *  Portions of this code are:
@@ -62,13 +62,13 @@ int   softdep_process_worklist(struct mount *);
 #define SYNCER_MAXDELAY	32		/* maximum sync delay time */
 #define SYNCER_DEFAULT 30		/* default sync delay time */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
-time_t syncdelay = SYNCER_DEFAULT;	/* time to delay syncing vnodes */
+int syncdelay = SYNCER_DEFAULT;		/* time to delay syncing vnodes */
 
 int rushjob = 0;			/* number of slots to run ASAP */
 int stat_rush_requests = 0;		/* number of rush requests */
 
-static int syncer_delayno = 0;
-static long syncer_mask;
+int syncer_delayno = 0;
+long syncer_mask;
 LIST_HEAD(synclist, vnode);
 static struct synclist *syncer_workitem_pending;
 
