@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_merge,v 1.19 2010/06/30 11:22:23 espie Exp $
+# $OpenBSD: pkg_merge,v 1.20 2010/07/04 19:34:06 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -44,10 +44,11 @@ sub mark_tocopy
 
 sub copy_over
 {
-	my ($self, $wrarc, $prefix, $pkg) = @_;
+	my ($self, $wrarc, $prefix, $pkg, $state) = @_;
 	my $e = $pkg->{pkg}->next;
 	if (!$e->check_name($self)) {
-		die "Names don't match: ", $e->{name}, " ", $self->{name};
+		$state->fatal("Names don't match: #1 vs #2", 
+		    $e->{name}, $self->{name});
 	}
 	$e->{name} = $prefix."/".$e->{name};
 	$e->copy_long($wrarc);
@@ -55,10 +56,11 @@ sub copy_over
 
 sub make_alias
 {
-	my ($self, $wrarc, $prefix, $pkg, $alias) = @_;
+	my ($self, $wrarc, $prefix, $pkg, $alias, $state) = @_;
 	my $e = $pkg->{pkg}->next;
 	if (!$e->check_name($self)) {
-		die "Names don't match: ", $e->{name}, " ", $self->{name};
+		$state->fatal("Names don't match: #1 vs #2", 
+		    $e->{name}, $self->{name});
 	}
 	$e->{name} = $prefix."/".$e->{name};
 	$e->alias($wrarc, "$prefix/$alias");
@@ -74,7 +76,7 @@ sub mark_tocopy
 }
 sub copy_over
 {
-	my ($self, $wrarc, $prefix, $pkg) = @_;
+	my ($self, $wrarc, $prefix, $pkg, $state) = @_;
 	if (defined $wrarc) {
 		$wrarc->destdir($pkg->{dir});
 		my $e = $wrarc->prepare($self->{name});
@@ -148,7 +150,7 @@ my @tomerge;
 
 my $prefix = 'a';
 my $allprefix = '';
-open( my $outfh, "|-", OpenBSD::Paths->gzip, "-o", $out);
+open(my $outfh, "|-", OpenBSD::Paths->gzip, "-o", $out);
 
 my $wrarc = OpenBSD::Ustar->new($outfh, ".");
 for my $pkgname (@ARGV) {
@@ -165,7 +167,7 @@ for my $pkgname (@ARGV) {
 			pkg => $true_package
 		};
 	my $e = OpenBSD::PackingElement::FCONTENTS->new(CONTENTS);
-	$e->copy_over($wrarc, $prefix, $true_package);
+	$e->copy_over($wrarc, $prefix, $true_package, $ui);
 	$plist->mark_tocopy($in->{tocopy});
 	push(@tomerge, $in);
 	$prefix++;
@@ -240,7 +242,7 @@ while(1) {
 		$all_copies += $copies;
 		for my $pkg2 (@merged) {
 			my $i = shift @{$pkg2->{tocopy}};
-			$i->make_alias($wrarc, $currentprefix, $pkg2, $name);
+			$i->make_alias($wrarc, $currentprefix, $pkg2, $name, $ui);
 		}
 	}
 	if ($verbose) {
