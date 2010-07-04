@@ -1,0 +1,96 @@
+.\"	$OpenBSD: pkg.conf.5,v 1.1 2010/07/04 18:30:28 espie Exp $
+.\"
+.\" Copyright (c) 2010 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: July 4 2010 $
+.Dt PKG.CONF 5
+.Os
+.Sh NAME
+.Nm pkg.conf
+.Nd system-wide package system configuration
+.Sh DESCRIPTION
+The file 
+.Pa /etc/pkg.conf
+contains system-wide options related to package handling, as a list of
+.Sq keyword=value 
+lines.
+.Pp
+In particular, the base system
+.Dq installation-and-update
+shell scripts record the URL used for the installation as
+.Ar installpath .
+.Xr pkg_add 1
+can then add or replace packages from the same location straight after 
+the install.
+.Pp
+Currently defined options are as follows:
+.Pp
+.Bl -tag -width fullkeyword -compact
+.It Ar installpath
+URL to package repository updated during installation.
+Used for accessing packages if the environment variable
+.Ev PKG_PATH
+is not defined and no further options are defined.
+.It Ar nochecksum
+Set to 
+.Ar yes
+to waive MD5 checksums during package deletions.
+.It Ar ntogo
+Set to 
+.Ar yes
+to display (done/total) number of package messages.
+.El
+.Pp
+Each option uses a separate line, and follows the following template:
+.Bd -literal -offset indent
+keyword = value
+.Ed
+.Pp
+A list of values can also be specified over several lines using the variation:
+.Bd -literal -offset indent
+keyword += value
+keyword += value
+\&...
+.Ed
+.Pp
+Keywords are case-insensitive.
+.Pp
+Blank lines and comment lines (introduced by a #) are ignored.
+.Pp
+Unknown keywords are ignored.
+.Pp
+.Sh FILES
+.Pa /etc/pkg.conf
+.Sh SEE ALSO
+.Xr pkg_add 1 ,
+.Xr pkg_create 1 ,
+.Xr pkg_delete 1 ,
+.Xr pkg_info 1 ,
+.Xr pkg_check 8
+.Sh HISTORY
+The
+.Nm
+mechanism and format first appeared in
+.Ox 4.8 .
