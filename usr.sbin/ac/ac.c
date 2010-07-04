@@ -55,9 +55,6 @@ struct tty_list {
 /*
  * globals - yes yuk
  */
-#ifdef CONSOLE_TTY
-static char	*Console = CONSOLE_TTY;
-#endif
 static time_t	Total = 0;
 static time_t	FirstTime = 0;
 static int	Flags = 0;
@@ -155,24 +152,6 @@ do_tty(char *name)
 	return def_ret;
 }
 
-#ifdef CONSOLE_TTY
-/*
- * is someone logged in on Console?
- */
-int
-on_console(struct utmp_list *head)
-{
-	struct utmp_list *up;
-
-	for (up = head; up; up = up->next) {
-		if (strncmp(up->usr.ut_line, Console,
-		    sizeof (up->usr.ut_line)) == 0)
-			return 1;
-	}
-	return 0;
-}
-#endif
-
 /*
  * update user's login time
  */
@@ -210,20 +189,13 @@ main(int argc, char *argv[])
 	int c;
 
 	fp = NULL;
-	while ((c = getopt(argc, argv, "Dc:dpt:w:")) != -1) {
+	while ((c = getopt(argc, argv, "Ddpt:w:")) != -1) {
 		switch (c) {
 #ifdef DEBUG
 		case 'D':
 			Debug++;
 			break;
 #endif
-		case 'c':
-#ifdef CONSOLE_TTY
-			Console = optarg;
-#else
-			usage();		/* XXX */
-#endif
-			break;
 		case 'd':
 			Flags |= AC_D;
 			break;
@@ -378,25 +350,6 @@ log_in(struct utmp_list *head, struct utmp *up)
 	 * logged in, at the start of the wtmp file.
 	 */
 
-#ifdef CONSOLE_TTY
-	if (up->ut_host[0] == ':') {
-		/*
-		 * SunOS 4.0.2 does not treat ":0.0" as special but we
-		 * do.
-		 */
-		if (on_console(head))
-			return head;
-		/*
-		 * ok, no recorded login, so they were here when wtmp
-		 * started!  Adjust ut_time!
-		 */
-		up->ut_time = FirstTime;
-		/*
-		 * this allows us to pick the right logout
-		 */
-		strlcpy(up->ut_line, Console, sizeof (up->ut_line));
-	}
-#endif
 	/*
 	 * If we are doing specified ttys only, we ignore
 	 * anything else.
@@ -525,11 +478,6 @@ usage(void)
 {
 	extern char *__progname;
 	(void)fprintf(stderr, "usage: "
-#ifdef CONSOLE_TTY
-	    "%s [-dp] [-c console] [-t tty] [-w wtmp] [user ...]\n",
-	    __progname);
-#else
 	    "%s [-dp] [-t tty] [-w wtmp] [user ...]\n", __progname);
-#endif
 	exit(1);
 }
