@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.10 2008/07/15 11:10:51 espie Exp $
+.\" $OpenBSD: packages-specs.7,v 1.11 2010/07/04 17:30:31 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 15 2008 $
+.Dd $Mdocdate: July 4 2010 $
 .Dt PACKAGES-SPECS 7
 .Os
 .Sh NAME
@@ -117,7 +117,22 @@ and
 .Qq qt2-3.0 .
 .Sh DEPENDENCIES
 Packages may depend on other packages, as specified by their port's
-Makefile.
+Makefile, in a
+.Ev BUILD_DEPENDS ,
+.Ev LIB_DEPENDS ,
+.Ev REGRESS_DEPENDS
+or
+.Ev RUN_DEPENDS .
+All those conform to
+.Bd -literal -offset indent
+[legacy]:[pkgspec]:directory,[-multi],[flavor...]
+.Ed
+.Pp
+The
+.Ar [legacy]
+part of the dependency corresponds to older semantics that have been
+deprecated.
+.Pp
 The
 .Ar directory,[-multi],[flavor...]
 part of the dependency is always used to obtain the default dependency for
@@ -125,6 +140,12 @@ the given package (the package that will be built and installed if no package
 is found).
 The corresponding package name is also used as a package specification,
 after removing any version and flavor requirements.
+.Pp
+If the
+.Sq pkgspec
+part is left empty, any package will the right stem will do: in effect,
+the pkgspec used is
+.Sq stem-* .
 .Pp
 An explicit specification such as
 .Qq ghostscript-*
@@ -143,7 +164,7 @@ Note that most default package names don't contain flavor specification,
 which means that any flavor will do.
 For instance, in
 .Bd -literal -offset indent
-LIB_DEPENDS=aa.1.2::graphics/aalib
+LIB_DEPENDS=::graphics/aalib
 .Ed
 .Pp
 both
@@ -161,7 +182,7 @@ append
 .Sq -!f .
 In the preceding case, one may use
 .Bd -literal -offset indent
-LIB_DEPENDS=aa.1.2:aalib-*-!no_x11:graphics/aalib
+LIB_DEPENDS=:aalib-*-!no_x11:graphics/aalib
 .Ed
 .Pp
 to ensure the no_x11 flavor is not picked.

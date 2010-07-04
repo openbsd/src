@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.249 2010/06/20 07:59:53 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.250 2010/07/04 17:30:30 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 20 2010 $
+.Dd $Mdocdate: July 4 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1245,21 +1245,27 @@ to package installation time.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Each item has the form
-.Sq lib_specs:[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
-Similar to BUILD_DEPENDS, except for
-.Sq lib_specs ,
-which is a comma-separated list of
-.Sq lib_spec
-of the form:
-.Sq libname.[version.[subversion]] .
-See
-.Xr library-specs 7
-for more details.
+.Sq [legacy]:[pkgspec]:directory[,-subpackage][,flavor ...] .
+Similar to
+.Ev BUILD_DEPENDS
+and
+.Ev RUN_DEPENDS ,
+but with specific rules:
+.Ev LIB_DEPENDS
+always turn into
+.Ev BUILD_DEPENDS .
 .Pp
 On architectures that use dynamic libraries,
 .Ev LIB_DEPENDS
 is also used as a run-time dependency, and recorded in the package as
-such.
+such, if any of the libraries mentioned in
+.Ev WANTLIB
+is a shared library that originates within the dependant port.
+.Pp
+See
+.Xr library-specs 7
+for more details.
+.Pp
 .It Ev LIBTOOL
 Location of the libtool binary for ports that set
 .Ev USE_LIBTOOL
@@ -1969,6 +1975,9 @@ with the default process limits.
 .It Ev WANTLIB
 Extra list of library specifications that a package will need.
 May include system and X11 libraries.
+See
+.Xr library-specs 7
+for more details.
 .Pp
 As a special extension,
 .Ev WANTLIB
