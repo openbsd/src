@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.12 2010/07/02 12:42:49 espie Exp $
+# $OpenBSD: State.pm,v 1.13 2010/07/04 19:27:26 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -80,6 +80,17 @@ sub value
 		return @$r;
 	} else {
 		return $r->[0];
+	}
+}
+
+sub istrue
+{
+	my ($self, $k) = @_;
+	my $v = $self->value($k);
+	if (defined $v && $v =~ /^(?:1|yes|y|on|true|t)$/) {
+		return 1;
+	} else {
+		return 0;
 	}
 }
 
