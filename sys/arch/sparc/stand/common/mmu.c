@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.c,v 1.1 2010/06/29 21:33:54 miod Exp $	*/
+/*	$OpenBSD: mmu.c,v 1.2 2010/07/04 22:40:29 deraadt Exp $	*/
 /*	$NetBSD: mmu.c,v 1.8 2008/04/28 20:23:36 martin Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ mmu_init(void)
 		 */
 		rcookie = 2;
 		scookie = 17;
-	} else if (CPU_ISSUN4M || CPU_ISSUN4D) {
+	} else if (CPU_ISSUN4M) {
 		char buf[32];
 		pmap_map = pmap_map_srmmu;
 		pmap_extract = pmap_extract_srmmu;
