@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.22 2009/07/24 23:28:00 halex Exp $	*/
+/*	$OpenBSD: misc.c,v 1.23 2010/07/04 22:15:31 halex Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -220,14 +220,8 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 	buf[0] = '\0';
 	do {
 		printf("%s: [%u] ", prompt, oval);
-		if (fgets(buf, sizeof(buf), stdin) == NULL) {
-			buf[0] = '\0';
-			if (feof(stdin)) {
-				clearerr(stdin);
-				putchar('\n');
-				return(UINT_MAX - 1);
-			}
-		}
+		if (fgets(buf, sizeof(buf), stdin) == NULL)
+			errx(1, "eof");
 		n = strlen(buf);
 		if (n > 0 && buf[n-1] == '\n')
 			buf[--n] = '\0';
