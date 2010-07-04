@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg.conf.5,v 1.1 2010/07/04 18:30:28 espie Exp $
+.\"	$OpenBSD: pkg.conf.5,v 1.2 2010/07/04 19:41:33 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie
 .\"
@@ -31,10 +31,10 @@
 .Nm pkg.conf
 .Nd system-wide package system configuration
 .Sh DESCRIPTION
-The file 
+The file
 .Pa /etc/pkg.conf
 contains system-wide options related to package handling, as a list of
-.Sq keyword=value 
+.Sq keyword=value
 lines.
 .Pp
 In particular, the base system
@@ -42,7 +42,7 @@ In particular, the base system
 shell scripts record the URL used for the installation as
 .Ar installpath .
 .Xr pkg_add 1
-can then add or replace packages from the same location straight after 
+can then add or replace packages from the same location straight after
 the install.
 .Pp
 Currently defined options are as follows:
@@ -54,11 +54,11 @@ Used for accessing packages if the environment variable
 .Ev PKG_PATH
 is not defined and no further options are defined.
 .It Ar nochecksum
-Set to 
+Set to
 .Ar yes
 to waive MD5 checksums during package deletions.
 .It Ar ntogo
-Set to 
+Set to
 .Ar yes
 to display (done/total) number of package messages.
 .El
@@ -80,7 +80,6 @@ Keywords are case-insensitive.
 Blank lines and comment lines (introduced by a #) are ignored.
 .Pp
 Unknown keywords are ignored.
-.Pp
 .Sh FILES
 .Pa /etc/pkg.conf
 .Sh SEE ALSO
