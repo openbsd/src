@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.59 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.60 2010/07/04 19:34:47 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -55,11 +55,15 @@ my $buffsize = 2 * 1024 * 1024;
 
 sub new
 {
-    my ($class, $fh, $destdir) = @_;
+	my ($class, $fh, $destdir) = @_;
 
-    $destdir = '' unless defined $destdir;
+	$destdir = '' unless defined $destdir;
 
-    return bless { fh => $fh, swallow => 0, key => {}, destdir => $destdir} , $class;
+	return bless { 
+	    fh => $fh, 
+	    swallow => 0, 
+	    key => {}, 
+	    destdir => $destdir} , $class;
 }
 
 
@@ -73,106 +77,106 @@ sub new_object
 
 sub skip
 {
-    my $self = shift;
-    my $temp;
+	my $self = shift;
+	my $temp;
 
-    while ($self->{swallow} > 0) {
-    	my $toread = $self->{swallow};
-	if ($toread >$buffsize) {
-		$toread = $buffsize;
+	while ($self->{swallow} > 0) {
+		my $toread = $self->{swallow};
+		if ($toread >$buffsize) {
+			$toread = $buffsize;
+		}
+		my $actual = read($self->{fh}, $temp, $toread);
+		if (!defined $actual) {
+			die "Error while skipping archive: $!";
+		}
+		if ($actual == 0) {
+			die "Premature end of archive in header: $!";
+		}
+		$self->{swallow} -= $actual;
 	}
-    	my $actual = read($self->{fh}, $temp, $toread);
-	if (!defined $actual) {
-		die "Error while skipping archive: $!";
-	}
-	if ($actual == 0) {
-		die "Premature end of archive in header: $!";
-	}
-	$self->{swallow} -= $actual;
-    }
 }
 
 my $types = {
-    DIR , 'OpenBSD::Ustar::Dir',
-    HARDLINK , 'OpenBSD::Ustar::HardLink',
-    SOFTLINK , 'OpenBSD::Ustar::SoftLink',
-    FILE , 'OpenBSD::Ustar::File',
-    FILE1 , 'OpenBSD::Ustar::File',
-    FIFO , 'OpenBSD::Ustar::Fifo',
-    CHARDEVICE , 'OpenBSD::Ustar::CharDevice',
-    BLOCKDEVICE , 'OpenBSD::Ustar::BlockDevice',
+	DIR , 'OpenBSD::Ustar::Dir',
+	HARDLINK , 'OpenBSD::Ustar::HardLink',
+	SOFTLINK , 'OpenBSD::Ustar::SoftLink',
+	FILE , 'OpenBSD::Ustar::File',
+	FILE1 , 'OpenBSD::Ustar::File',
+	FIFO , 'OpenBSD::Ustar::Fifo',
+	CHARDEVICE , 'OpenBSD::Ustar::CharDevice',
+	BLOCKDEVICE , 'OpenBSD::Ustar::BlockDevice',
 };
 
 sub next
 {
-    my $self = shift;
-    # get rid of the current object
-    $self->skip;
-    my $header;
-    my $n = read $self->{fh}, $header, 512;
-    return if (defined $n) and $n == 0;
-    die "Error while reading header"
-	unless defined $n and $n == 512;
-    if ($header eq "\0"x512) {
-	return $self->next;
-    }
-    # decode header
-    my ($name, $mode, $uid, $gid, $size, $mtime, $chksum, $type,
-    $linkname, $magic, $version, $uname, $gname, $major, $minor,
-    $prefix, $pad) = unpack(USTAR_HEADER, $header);
-    if ($magic ne "ustar\0" || $version ne '00') {
-	die "Not an ustar archive header";
-    }
-    # verify checksum
-    my $value = $header;
-    substr($value, 148, 8) = " "x8;
-    my $ck2 = unpack("%C*", $value);
-    if ($ck2 != oct($chksum)) {
-	die "Bad archive checksum";
-    }
-    $name =~ s/\0*$//o;
-    $mode = oct($mode) & 0xfff;
-    $uname =~ s/\0*$//o;
-    $gname =~ s/\0*$//o;
-    $linkname =~ s/\0*$//o;
-    $major = oct($major);
-    $minor = oct($minor);
-    $uid = oct($uid);
-    $gid = oct($gid);
-    $uid = $uidcache->lookup($uname, $uid);
-    $gid = $gidcache->lookup($gname, $gid);
-    $mtime = oct($mtime);
-    unless ($prefix =~ m/^\0/o) {
-	$prefix =~ s/\0*$//o;
-	$name = "$prefix/$name";
-    }
+	my $self = shift;
+	# get rid of the current object
+	$self->skip;
+	my $header;
+	my $n = read $self->{fh}, $header, 512;
+	return if (defined $n) and $n == 0;
+	die "Error while reading header"
+	    unless defined $n and $n == 512;
+	if ($header eq "\0"x512) {
+		return $self->next;
+	}
+	# decode header
+	my ($name, $mode, $uid, $gid, $size, $mtime, $chksum, $type,
+	$linkname, $magic, $version, $uname, $gname, $major, $minor,
+	$prefix, $pad) = unpack(USTAR_HEADER, $header);
+	if ($magic ne "ustar\0" || $version ne '00') {
+		die "Not an ustar archive header";
+	}
+	# verify checksum
+	my $value = $header;
+	substr($value, 148, 8) = " "x8;
+	my $ck2 = unpack("%C*", $value);
+	if ($ck2 != oct($chksum)) {
+		die "Bad archive checksum";
+	}
+	$name =~ s/\0*$//o;
+	$mode = oct($mode) & 0xfff;
+	$uname =~ s/\0*$//o;
+	$gname =~ s/\0*$//o;
+	$linkname =~ s/\0*$//o;
+	$major = oct($major);
+	$minor = oct($minor);
+	$uid = oct($uid);
+	$gid = oct($gid);
+	$uid = $uidcache->lookup($uname, $uid);
+	$gid = $gidcache->lookup($gname, $gid);
+	$mtime = oct($mtime);
+	unless ($prefix =~ m/^\0/o) {
+		$prefix =~ s/\0*$//o;
+		$name = "$prefix/$name";
+	}
 
-    $size = oct($size);
-    my $result= $self->new_object({
-	name => $name,
-	mode => $mode,
-	mtime=> $mtime,
-	linkname=> $linkname,
-	uname => $uname,
-	uid => $uid,
-	gname => $gname,
-	gid => $gid,
-	size => $size,
-	major => $major,
-	minor => $minor,
-    });
-    if (defined $types->{$type}) {
-    	$types->{$type}->new($result);
-    } else {
-    	die "Unsupported type $type";
-    }
-    # adjust swallow
-    $self->{swallow} = $size;
-    if ($size % 512) {
-	$self->{swallow} += 512 - $size % 512;
-    }
-    $self->{cachename} = $name;
-    return $result;
+	$size = oct($size);
+	my $result= $self->new_object({
+	    name => $name,
+	    mode => $mode,
+	    mtime=> $mtime,
+	    linkname=> $linkname,
+	    uname => $uname,
+	    uid => $uid,
+	    gname => $gname,
+	    gid => $gid,
+	    size => $size,
+	    major => $major,
+	    minor => $minor,
+	});
+	if (defined $types->{$type}) {
+		$types->{$type}->new($result);
+	} else {
+		die "Unsupported type $type";
+	}
+	# adjust swallow
+	$self->{swallow} = $size;
+	if ($size % 512) {
+		$self->{swallow} += 512 - $size % 512;
+	}
+	$self->{cachename} = $name;
+	return $result;
 }
 
 sub split_name
@@ -194,7 +198,7 @@ sub split_name
 
 sub mkheader
 {
-	my ($entry, $type) = @_;
+	my ($archive, $entry, $type) = @_;
 	my ($prefix, $name) = split_name($entry->name);
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
@@ -395,7 +399,7 @@ sub write
 	my $out = $arc->{fh};
 
 	$arc->{padout} = 1;
-	my $header = OpenBSD::Ustar::mkheader($self, $self->type);
+	my $header = $arc->mkheader($self, $self->type);
 	print $out $header or die "Error writing to archive: $!";
 	$self->write_contents($arc);
 	my $k = $self->{key};
@@ -435,7 +439,7 @@ sub copy
 	my $out = $wrarc->{fh};
 	$self->resolve_links($wrarc);
 	$wrarc->{padout} = 1;
-	my $header = OpenBSD::Ustar::mkheader($self, $self->type);
+	my $header = $wrarc->mkheader($self, $self->type);
 	print $out $header or die "Error writing to archive: $!";
 
 	$self->copy_contents($wrarc);
