@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.33 2010/07/01 19:15:59 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.34 2010/07/04 18:21:03 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -156,7 +156,7 @@ sub handle_options
 	$state->{interactive} = $state->opt('i');
 	$state->{localbase} = $state->opt('L') // OpenBSD::Paths->localbase;
 	$state->{size_only} = $state->opt('s');
-	$state->{quick} = $state->opt('q');
+	$state->{quick} = $state->opt('q') || $state->config->istrue("nochecksum");
 	$state->{extra} = $state->opt('c');
 	$state->{dont_run_scripts} = $state->opt('I');
 	$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
@@ -170,6 +170,7 @@ sub init
 	$self->{status} = OpenBSD::Status->new;
 	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	$self->{v} = 0;
+	$self->{wantntogo} = $self->config->istrue("ntogo");
 	$self->SUPER::init(@_);
 }
 
@@ -177,7 +178,7 @@ sub ntogo
 {
 	my ($self, $offset) = @_;
 
-	return $self->progress->ntogo($self, $offset);
+	return $self->{wantntogo} ? $self->progress->ntogo($self, $offset) : "";
 }
 
 sub ntogo_string
