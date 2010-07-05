@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.495 2010/07/01 17:30:25 tedu Exp $
+#	$OpenBSD: files,v 1.496 2010/07/05 23:10:16 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1063,16 +1063,13 @@ file compat/common/compat_exec.c	!small_kernel
 file compat/common/compat_util.c	!small_kernel
 file compat/common/compat_dir.c		!small_kernel
 file compat/common/compat_vm.c		!small_kernel &
-	(compat_freebsd | compat_bsdos | compat_sunos | compat_linux)
+	(compat_freebsd | compat_linux)
 file compat/common/kern_info_09.c	!small_kernel &
-	(compat_freebsd | compat_sunos | 
-	compat_osf1 | compat_linux)
-file compat/common/kern_ipc_10.c	!small_kernel &
-	(compat_freebsd | compat_sunos | compat_bsdos)
-file compat/common/vfs_syscalls_25.c	!small_kernel &
-	(compat_freebsd | compat_bsdos | compat_sunos)
+	(compat_freebsd | compat_linux)
+file compat/common/kern_ipc_10.c	!small_kernel & compat_freebsd
+file compat/common/vfs_syscalls_25.c	!small_kernel & compat_freebsd
 file compat/common/vfs_syscalls_35.c	!small_kernel & (compat_35 |
-	compat_freebsd | compat_bsdos | compat_sunos)
+	compat_freebsd )
 file compat/common/kern_ipc_35.c	!small_kernel & compat_35
 file compat/common/kern_exit_43.c	!small_kernel
 file compat/common/kern_info_43.c	!small_kernel
