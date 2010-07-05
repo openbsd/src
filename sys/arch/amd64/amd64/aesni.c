@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.4 2010/06/30 17:14:36 thib Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.5 2010/07/05 16:33:36 thib Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -345,10 +345,13 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 		/* Do we need to write the IV */
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
-			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copyback((struct mbuf *)crp->crp_buf,
-				    crd->crd_inject, ivlen, iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV)
+			if (crp->crp_flags & CRYPTO_F_IMBUF) {
+				if (m_copyback((struct mbuf *)crp->crp_buf,
+				    crd->crd_inject, ivlen, iv, M_NOWAIT)) {
+				    err = ENOMEM;
+				    goto out;
+				}
+			} else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copyback((struct uio *)crp->crp_buf,
 				    crd->crd_inject, ivlen, iv);
 			else
@@ -394,10 +397,13 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	aesni_ops++;
 
 	/* Copy back the result */
-	if (crp->crp_flags & CRYPTO_F_IMBUF)
-		m_copyback((struct mbuf *)crp->crp_buf, crd->crd_skip,
-		    crd->crd_len, buf);
-	else if (crp->crp_flags & CRYPTO_F_IOV)
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		if (m_copyback((struct mbuf *)crp->crp_buf, crd->crd_skip,
+		    crd->crd_len, buf, M_NOWAIT)) {
+			err = ENOMEM;
+			goto out;
+		}
+	} else if (crp->crp_flags & CRYPTO_F_IOV)
 		cuio_copyback((struct uio *)crp->crp_buf, crd->crd_skip,
 		    crd->crd_len, buf);
 	else
@@ -425,6 +431,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	}
 	*/
 
+out:
 	bzero(buf, crd->crd_len);
 	return (err);
 }
