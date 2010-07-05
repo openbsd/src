@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.45 2010/07/01 21:19:57 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.46 2010/07/05 22:59:51 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -67,7 +67,6 @@ struct lsa	*orig_intra_lsa_net(struct iface *, struct vertex *);
 struct lsa	*orig_intra_lsa_rtr(struct area *, struct vertex *);
 void		 append_prefix_lsa(struct lsa **, u_int16_t *,
 		    struct lsa_prefix *);
-int		 link_lsa_from_full_nbr(struct lsa *, struct iface *);
 
 /* A 32-bit value != any ifindex.
  * We assume ifindex is bound by [1, USHRT_MAX] inclusive. */
@@ -1300,40 +1299,16 @@ prefix_tree_add(struct prefix_tree *tree, struct lsa_link *lsa)
 
 RB_GENERATE(prefix_tree, prefix_node, entry, prefix_compare)
 
-/* Return non-zero if Link LSA was originated from an adjacent neighbor. */
-int
-link_lsa_from_full_nbr(struct lsa *lsa, struct iface *iface)
-{
-	struct rde_nbr	*nbr;
-	struct area	*area;
-
-	if ((area = area_find(rdeconf, iface->area_id)) == NULL)
-		fatalx("interface lost area");
-
-	LIST_FOREACH(nbr, &area->nbr_list, entry) {
-		if (nbr->self || nbr->iface->ifindex != iface->ifindex)
-			continue;
-		if (lsa->hdr.adv_rtr == nbr->id.s_addr)
-			break;
-	}
-	if (!nbr)
-		return 0;
-
-	if (nbr->state & NBR_STA_FULL &&
-	    ntohl(lsa->hdr.ls_id) == nbr->iface_id)
-		return 1;
-
-	return 0;
-}
-
 struct lsa *
 orig_intra_lsa_net(struct iface *iface, struct vertex *old)
 {
 	struct lsa		*lsa;
 	struct vertex		*v;
 	struct area		*area;
+	struct rde_nbr		*nbr;
 	struct prefix_node	*node;
 	struct prefix_tree	 tree;
+	int			 num_full_nbr;
 	u_int16_t		 len;
 	u_int16_t		 numprefix;
 
@@ -1346,13 +1321,19 @@ orig_intra_lsa_net(struct iface *iface, struct vertex *old)
 	RB_INIT(&tree);
 
 	if (iface->state & IF_STA_DR) {
-		RB_FOREACH(v, lsa_tree, &iface->lsa_tree) {
-			if (v->type != LSA_TYPE_LINK)
+		num_full_nbr = 0;
+		LIST_FOREACH(nbr, &area->nbr_list, entry) {
+			if (nbr->self ||
+			    nbr->iface->ifindex != iface->ifindex ||
+			    (nbr->state & NBR_STA_FULL) == 0)
 				continue;
-			if (link_lsa_from_full_nbr(v->lsa, iface))
+			num_full_nbr++;
+			v = lsa_find(iface, htons(LSA_TYPE_LINK),
+			    htonl(nbr->iface_id), nbr->id.s_addr);
+			if (v)
 				prefix_tree_add(&tree, &v->lsa->data.link);
 		}
-		if (RB_EMPTY(&tree)) {
+		if (num_full_nbr == 0) {
 			/* There are no adjacent neighbors on link.
 			 * If a copy of this LSA already exists in DB,
 			 * it needs to be flushed. orig_intra_lsa_rtr()
