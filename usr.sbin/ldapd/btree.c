@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.22 2010/07/02 01:43:00 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.23 2010/07/05 17:11:41 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -705,6 +705,7 @@ btree_txn_abort(struct btree_txn *txn)
 			assert(mp->ref == 0);	/* cursors should be closed */
 			mpage_del(bt, mp);
 			SIMPLEQ_REMOVE_HEAD(txn->dirty_queue, next);
+			mpage_free(mp);
 		}
 
 		DPRINTF("releasing write lock on txn %p", txn);
