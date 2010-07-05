@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.14 2010/07/02 17:27:01 nicm Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.15 2010/07/05 10:41:35 blambert Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*-
@@ -1408,7 +1408,7 @@ zstty_rxsoft(struct zstty_softc *zst, struct tty *tp)
 	if (cc == zstty_rbuf_size) {
 		zst->zst_floods++;
 		if (zst->zst_errors++ == 0)
-			timeout_add(&zst->zst_diag_ch, 60 * hz);
+			timeout_add_sec(&zst->zst_diag_ch, 60);
 	}
 
 	/* If not yet open, drop the entire buffer content here */
