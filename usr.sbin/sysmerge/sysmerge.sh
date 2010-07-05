@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.58 2010/06/27 00:07:22 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.59 2010/07/05 08:30:28 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -21,8 +21,8 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
-unset NEED_REBOOT OBSOLETE_FILES SRCDIR SRCSUM TGZ TGZURL XETCSUM XTGZ
-unset XTGZURL
+unset NEWGRP NEWUSR NEED_REBOOT OBSOLETE_FILES SRCDIR SRCSUM TGZ TGZURL
+unset XETCSUM XTGZ XTGZURL
 
 WRKDIR=`mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
@@ -412,6 +412,57 @@ diff_loop() {
 					fi
 					return
 				fi
+				# automatically install missing users
+				if [ "${COMPFILE}" = "./etc/master.passwd" ]; then
+					local _merge_pwd
+					while read l; do
+						_u=`echo ${l} | awk -F ':' '{ print $1 }'`
+						if [ "${_u}" != "root" ]; then
+							if [ -z "`grep -E "^${_u}:" ${DESTDIR}${COMPFILE#.}`" ]; then
+								echo "===> Adding the ${_u} user"
+								if [ "${DESTDIR}" ]; then
+									chroot ${DESTDIR} chpass -la "${l}"
+								else
+									chpass -la "${l}"
+								fi
+								if [ $? -eq 0 ]; then
+									set -A NEWUSR -- ${NEWUSR[@]} ${_u}
+								else
+									_merge_pwd=1
+								fi
+							fi
+						fi
+					done < ${COMPFILE}
+					if [ -z ${_merge_pwd} ]; then
+						rm "${TEMPROOT}${COMPFILE#.}"
+						return
+					fi
+				fi
+				# automatically install missing groups
+				if [ "${COMPFILE}" = "./etc/group" ]; then
+					local _merge_grp
+					while read l; do
+						_g=`echo ${l} | awk -F ':' '{ print $1 }'`
+						_gid=`echo ${l} | awk -F ':' '{ print $3 }'`
+						if [ -z "`grep -E "^${_g}:" ${DESTDIR}${COMPFILE#.}`" ]; then
+							echo "===> Adding the ${_g} group"
+							if [ "${DESTDIR}" ]; then
+								chroot ${DESTDIR} groupadd -g "${_gid}" "${_g}"
+							else
+								groupadd -g "${_gid}" "${_g}"
+							fi
+							if [ $? -eq 0 ]; then
+								set -A NEWGRP -- ${NEWGRP[@]} ${_g}
+							else
+								_merge_grp=1
+							fi
+						fi
+					done < ${COMPFILE}
+					if [ -z ${_merge_grp} ]; then
+						rm "${TEMPROOT}${COMPFILE#.}"
+						return
+					fi
+				fi
 			fi
 			if [ "${HANDLE_COMPFILE}" = "v" ]; then
 				(
@@ -605,6 +656,16 @@ do_post() {
 	if [ "${OBSOLETE_FILES}" ]; then
 		echo "===> File(s) removed from previous source (maybe obsolete)" >> ${REPORT}
 		echo "${OBSOLETE_FILES}" >> ${REPORT}
+	fi
+	if [ "${NEWUSR}" -o "${NEWGRP}" ]; then
+		echo "===> The following user(s)/group(s) have been added" >> ${REPORT}
+		if [ "${NEWUSR}" ]; then
+			echo -n "user(s): ${NEWUSR[@]}\n" >> ${REPORT}
+		fi
+		if [ "${NEWGRP}" ]; then
+			echo -n "group(s): ${NEWGRP[@]}\n" >> ${REPORT}
+		fi
+		echo "" >> ${REPORT}
 	fi
 	if [ "${FILES_IN_TEMPROOT}" ]; then
 		echo "===> File(s) remaining for you to merge by hand" >> ${REPORT}
