@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.161 2010/07/02 02:40:16 blambert Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.162 2010/07/05 11:07:56 blambert Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -314,7 +314,7 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 		hifn_init_pubrng(sc);
 
 	timeout_set(&sc->sc_tickto, hifn_tick, sc);
-	timeout_add(&sc->sc_tickto, hz);
+	timeout_add_sec(&sc->sc_tickto, 1);
 
 	return;
 
@@ -1674,7 +1674,7 @@ hifn_tick(void *vsc)
 	else
 		sc->sc_active--;
 	splx(s);
-	timeout_add(&sc->sc_tickto, hz);
+	timeout_add_sec(&sc->sc_tickto, 1);
 }
 
 int 
