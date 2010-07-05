@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.687 2010/07/03 03:59:16 krw Exp $
+#	$OpenBSD: GENERIC,v 1.688 2010/07/05 22:20:22 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -26,7 +26,6 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 option		COMPAT_SVR4	# binary compatibility with SVR4
 option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
-option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 option		COMPAT_AOUT	# a.out binaries are emulated
 
 option		PROCFS		# /proc

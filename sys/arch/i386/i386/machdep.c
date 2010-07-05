@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.477 2010/07/03 04:54:32 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.478 2010/07/05 22:20:22 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2931,12 +2931,6 @@ init386(paddr_t first_avail)
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
 	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 0, 0);
-
-	/* make ldt gates and memory segments */
-#ifdef COMPAT_BSDOS
-	setgate(&ldt[LBSDICALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
-	    SEL_UPL, GCODE_SEL);
-#endif
 
 	/* exceptions */
 	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
