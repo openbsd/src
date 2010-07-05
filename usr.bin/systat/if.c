@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.17 2009/11/23 01:51:41 canacar Exp $ */
+/*	$OpenBSD: if.c,v 1.18 2010/07/05 14:31:44 lum Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -53,6 +53,7 @@ int if_keyboard_callback(int);
 void fetchifstat(void);
 static void showifstat(struct ifstat *);
 static void showtotal(void);
+static void rt_getaddrinfo(struct sockaddr *, int, struct sockaddr **);
 
 
 /* Define fields */
@@ -187,7 +188,6 @@ fetchifstat(void)
 	struct sockaddr *info[RTAX_MAX];
 	struct sockaddr_dl *sdl;
 	char *buf, *next, *lim;
-	static int s = -1;
 	int mib[6], i;
 	size_t need;
 
