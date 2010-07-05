@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.5 2010/07/05 16:33:36 thib Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.6 2010/07/05 16:53:08 thib Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -93,7 +93,6 @@ void
 aesni_setup(void)
 {
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
-	int flags = 0;	/* CRYPTOCAP_F_SOFTWARE */
 
 	aesni_sc = malloc(sizeof(*aesni_sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (aesni_sc == NULL)
@@ -111,7 +110,7 @@ aesni_setup(void)
 	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 
-	aesni_sc->sc_cid = crypto_get_driverid(flags);
+	aesni_sc->sc_cid = crypto_get_driverid(0);
 	if (aesni_sc->sc_cid < 0) {
 		free(aesni_sc, M_DEVBUF);
 		return;
@@ -155,9 +154,6 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	}
 
 	ses->ses_used = 1;
-
-	if ((uint64_t)ses % 16 != 0)
-		panic("aesni: unaligned address %p\n", ses);
 
 	fpu_kernel_enter();
 	for (c = cri; c != NULL; c = c->cri_next) {
