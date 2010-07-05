@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.23 2010/07/05 17:11:41 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.24 2010/07/05 21:06:45 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -147,7 +147,7 @@ static void		 mpage_flush(struct btree *bt);
 static struct mpage	*mpage_copy(struct btree *bt, struct mpage *mp);
 static void		 mpage_prune(struct btree *bt);
 static void		 mpage_dirty(struct btree *bt, struct mpage *mp);
-static void		 mpage_touch(struct btree *bt, struct mpage *mp);
+static struct mpage	*mpage_touch(struct btree *bt, struct mpage *mp);
 
 RB_PROTOTYPE(page_cache, mpage, entry, mpage_cmp);
 RB_GENERATE(page_cache, mpage, entry, mpage_cmp);
@@ -573,7 +573,7 @@ mpage_dirty(struct btree *bt, struct mpage *mp)
 
 /* Touch a page: make it dirty and re-insert into tree with updated pgno.
  */
-static void
+static struct mpage *
 mpage_touch(struct btree *bt, struct mpage *mp)
 {
 	assert(bt != NULL);
@@ -584,8 +584,10 @@ mpage_touch(struct btree *bt, struct mpage *mp)
 		DPRINTF("touching page %u -> %u", mp->pgno, bt->txn->next_pgno);
 		if (mp->ref == 0)
 			mpage_del(bt, mp);
-		else
-			mp = mpage_copy(bt, mp);
+		else {
+			if ((mp = mpage_copy(bt, mp)) == NULL)
+				return NULL;
+		}
 		mp->pgno = mp->page->pgno = bt->txn->next_pgno++;
 		mpage_dirty(bt, mp);
 		mpage_add(bt, mp);
@@ -595,6 +597,8 @@ mpage_touch(struct btree *bt, struct mpage *mp)
 			NODEPGNO(NODEPTR(mp->parent,
 			    mp->parent_index)) = mp->pgno;
 	}
+
+	return mp;
 }
 
 static int
@@ -1409,8 +1413,8 @@ btree_search_page_root(struct btree *bt, struct mpage *root, struct btval *key,
 		if (cursor && cursor_push_page(cursor, mp) == NULL)
 			return BT_FAIL;
 
-		if (modify)
-			mpage_touch(bt, mp);
+		if (modify && (mp = mpage_touch(bt, mp)) == NULL)
+			return BT_FAIL;
 	}
 
 	if (!IS_LEAF(mp)) {
@@ -1476,7 +1480,8 @@ btree_search_page(struct btree *bt, struct btree_txn *txn, struct btval *key,
 	assert(mp->prefix.len == 0);
 
 	if (modify && !mp->dirty) {
-		mpage_touch(bt, mp);
+		if ((mp = mpage_touch(bt, mp)) == NULL)
+			return BT_FAIL;
 		txn->root = mp->pgno;
 	}
 
@@ -2224,8 +2229,9 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 	}
 
 	/* Mark src and dst as dirty. */
-	mpage_touch(bt, src);
-	mpage_touch(bt, dst);
+	if ((src = mpage_touch(bt, src)) == NULL ||
+	    (dst = mpage_touch(bt, dst)) == NULL)
+		return BT_FAIL;
 
 	find_common_prefix(bt, dst);
 
@@ -2346,7 +2352,8 @@ btree_move_node(struct btree *bt, struct mpage *src, indx_t srcindx,
 		find_common_prefix(bt, mp);
 		if (mp->prefix.len != mp_pfxlen) {
 			DPRINTF("moved branch node has changed prefix");
-			mpage_touch(bt, mp);
+			if ((mp = mpage_touch(bt, mp)) == NULL)
+				return BT_FAIL;
 			if (btree_adjust_prefix(bt, mp,
 			    mp->prefix.len - mp_pfxlen) != BT_SUCCESS)
 				return BT_FAIL;
@@ -2373,8 +2380,9 @@ btree_merge(struct btree *bt, struct mpage *src, struct mpage *dst)
 	assert(bt->txn != NULL);
 
 	/* Mark src and dst as dirty. */
-	mpage_touch(bt, src);
-	mpage_touch(bt, dst);
+	if ((src = mpage_touch(bt, src)) == NULL ||
+	    (dst = mpage_touch(bt, dst)) == NULL)
+		return BT_FAIL;
 
 	find_common_prefix(bt, src);
 	find_common_prefix(bt, dst);
