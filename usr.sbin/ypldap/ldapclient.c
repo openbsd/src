@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.16 2010/06/12 09:08:56 zinovik Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.17 2010/07/05 18:54:33 zinovik Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -121,13 +121,15 @@ client_addr_init(struct idm *idm)
 int
 client_addr_free(struct idm *idm)
 {
-        struct ypldap_addr         *h;
+        struct ypldap_addr         *h, *p;
 
 	if (idm->idm_addr == NULL)
 		return (-1);
 
-	for (h = idm->idm_addr; h != NULL; h = h->next)
+	for (h = idm->idm_addr; h != NULL; h = p) {
+		p = h->next;
 		free(h);
+	}
 
 	idm->idm_addr = NULL;
 
