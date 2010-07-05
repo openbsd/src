@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.97 2010/07/02 02:40:17 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.98 2010/07/05 16:32:07 deraadt Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1391,7 +1391,8 @@ nfs_realign(struct mbuf **pm, int hsiz)
 		if (!ALIGNED_POINTER(m->m_data, void *) ||
 		    !ALIGNED_POINTER(m->m_len,  void *)) {
 			MGET(n, M_WAIT, MT_DATA);
-			if (ALIGN(m->m_len) >= MINCLSIZE) {
+#define ALIGN_POINTER(n) ((u_int)(((n) + sizeof(void *)) & ~sizeof(void *)))
+			if (ALIGN_POINTER(m->m_len) >= MINCLSIZE) {
 				MCLGET(n, M_WAIT);
 			}
 			n->m_len = 0;
