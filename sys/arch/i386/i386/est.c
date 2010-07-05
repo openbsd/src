@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.35 2010/04/20 22:05:41 tedu Exp $ */
+/*	$OpenBSD: est.c,v 1.36 2010/07/05 22:47:41 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1062,12 +1062,6 @@ est_init(const char *cpu_device, int vendor)
 	if ((cpu_ecxfeature & CPUIDECX_EST) == 0)
 		return;
 
-	if (bus_clock == 0) {
-		printf("%s: EST: PSS not yet available for this processor\n",
-		    cpu_device);
-		return;
-	}
-
 	msr = rdmsr(MSR_PERF_STATUS);
 	idhi = (msr >> 32) & 0xffff;
 	idlo = (msr >> 48) & 0xffff;
@@ -1080,7 +1074,11 @@ est_init(const char *cpu_device, int vendor)
 	est_fqlist = est_acpi_init();
 #endif
 
-	if (est_fqlist == NULL) {
+	/*
+	 * Interpreting the values of PERF_STATUS is not valid
+	 * on recent processors so don't do it on anything unknown
+	 */
+	if (est_fqlist == NULL && bus_clock != 0) {
 		/*
 		 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 		 */
@@ -1095,12 +1093,7 @@ est_init(const char *cpu_device, int vendor)
 		}
 	}
 
-	if (est_fqlist == NULL) {
-		if (bus_clock == 0) {
-			printf("%s: EST: unknown system bus clock\n",
-			    cpu_device);
-			return;
-		}
+	if (est_fqlist == NULL && bus_clock != 0) {
 		if (crhi == 0 || crcur == 0 || crlo > crhi ||
 		    crcur < crlo || crcur > crhi) {
 			/*
