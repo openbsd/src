@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.169 2010/07/01 16:23:46 thib Exp $ */
+/* $OpenBSD: acpi.c,v 1.170 2010/07/05 05:59:01 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1928,6 +1928,9 @@ acpi_resume(struct acpi_softc *sc, int state)
 	memset(&env, 0, sizeof(env));
 	env.type = AML_OBJTYPE_INTEGER;
 	env.v_integer = sc->sc_state;
+
+	/* Force SCI_EN on resume to fix horribly broken machines */
+	acpi_write_pmreg(sc, ACPIREG_PM1_CNT, 0, ACPI_PM1_SCI_EN);
 
 	if (sc->sc_bfs)
 		if (aml_evalnode(sc, sc->sc_bfs, 1, &env, NULL) != 0) {
