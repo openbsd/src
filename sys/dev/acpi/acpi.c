@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.170 2010/07/05 05:59:01 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.171 2010/07/06 20:14:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -978,13 +978,8 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case APM_IOC_SUSPEND:
 	case APM_IOC_STANDBY:
-		/*
-		 * Must use a workq to get out of this process's address
-		 * space and into a kernel thread which has the kernel
-		 * address space (with the ACPI trampoline way low).
-		 */
-		workq_add_task(NULL, 0, (workq_fn)acpi_sleep_state,
-		    acpi_softc, (void *)ACPI_STATE_S3);
+		sc->sc_sleepmode = ACPI_STATE_S3;
+		acpi_wakeup(sc);
 		break;
 	case APM_IOC_GETPOWER:
 		/* A/C */
@@ -2122,7 +2117,14 @@ fail:
 	return (error);
 }
 
+void
+acpi_wakeup(void *arg)
+{
+	struct acpi_softc  *sc = (struct acpi_softc *)arg;
 
+	sc->sc_wakeup = 0;
+	wakeup(sc);
+}
 
 void
 acpi_powerdown(void)
@@ -2216,6 +2218,16 @@ acpi_isr_thread(void *arg)
 			sc->sc_poll = 0;
 			acpi_poll_notify();
 		}
+
+#ifndef SMALL_KERNEL
+		if (sc->sc_sleepmode) {
+			int sleepmode = sc->sc_sleepmode;
+
+			sc->sc_sleepmode = 0;
+			acpi_sleep_state(sc, sleepmode);
+			continue;
+		}
+#endif /* SMALL_KERNEL */
 	}
 	free(thread, M_DEVBUF);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.26 2010/03/31 19:21:19 kettenis Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.27 2010/07/06 20:14:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -112,6 +112,9 @@ acpibtn_getsta(struct acpibtn_softc *sc)
 	return (0);
 }
 
+/* XXX tie this to a sysctl later */
+int	acpi_lid_suspend = 0;
+
 int
 acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 {
@@ -125,24 +128,24 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 
 	switch (sc->sc_btn_type) {
 	case ACPIBTN_LID:
+#ifndef SMALL_KERNEL
 		/*
 		 * Notification of 0x80 for lid opens or closes.  We
 		 * need to check the current status by calling the
-		 * _LID method.  Zero means the lid is closed and we
+		 * _LID method.  0 means the lid is closed and we
 		 * should go to sleep.
 		 */
-#ifndef SMALL_KERNEL
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
 		    "_LID", 0, NULL, &lid))
 			return (0);
-#if 0
-		if (lid == 0) {
-			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
-				acpi_sleep_state(sc->sc_acpi, ACPI_STATE_S3);
+		if (acpi_lid_suspend && lid == 0) {
+			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ)) {
+				sc->sc_acpi->sc_sleepmode = ACPI_STATE_S3;
+				acpi_wakeup(sc->sc_acpi);
+			}
 		}
-#endif
-		break;
 #endif /* SMALL_KERNEL */
+		break;
 	case ACPIBTN_SLEEP:
 #ifndef SMALL_KERNEL
 		switch (notify_type) {
@@ -151,8 +154,10 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case 0x80:
 			/* Request to go to sleep */
-			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
-				acpi_sleep_state(sc->sc_acpi, ACPI_STATE_S3);
+			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ)) {
+				sc->sc_acpi->sc_sleepmode = ACPI_STATE_S3;
+				acpi_wakeup(sc->sc_acpi);
+			}
 			break;
 		}
 #endif /* SMALL_KERNEL */
