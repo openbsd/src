@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.90 2010/07/01 03:20:38 matthew Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.91 2010/07/06 20:40:01 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -280,7 +280,7 @@ bootstrap()
 		setpte4m(SI_INTR_VA, pte);
 
 		/* Now disable interrupts */
-		ienab_bis(SINTR_MA);
+		intreg_set_4m(SINTR_MA);
 
 		/* Send all interrupts to primary processor */
 		*((u_int *)ICR_ITR) = 0;
@@ -312,8 +312,13 @@ bootstrap()
 	}
 #endif /* SUN4M */
 
+#if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C) {
 		/* Map Interrupt Enable Register */
+		/*
+		 * XXX on non-Sun4, we ought to get the address from
+		 * XXX the `interrupt-enable' node.
+		 */
 		pmap_kenter_pa(INTRREG_VA,
 			   INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
 			   VM_PROT_READ | VM_PROT_WRITE);
@@ -321,6 +326,7 @@ bootstrap()
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
 	}
+#endif
 }
 
 /*
@@ -811,11 +817,11 @@ cpu_configure()
 	/* Enable device interrupts */
 #if defined(SUN4M)
 	if (CPU_ISSUN4M)
-		ienab_bic(SINTR_MA);
+		intreg_clr_4m(SINTR_MA);
 #endif
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C)
-		ienab_bis(IE_ALLIE);
+		intreg_set_44c(IE_ALLIE);
 #endif
 	(void)spl0();
 

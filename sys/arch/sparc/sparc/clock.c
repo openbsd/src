@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.24 2006/12/10 16:12:41 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.25 2010/07/06 20:40:01 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -252,7 +252,7 @@ oclockattach(parent, self, aux)
 	/* 
 	 * calibrate delay() 
 	 */
-	ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
+	intreg_clr_44c(IE_L14 | IE_L10);	/* disable all clock intrs */
 	for (timerblurb = 1; ; timerblurb++) {
 		volatile register char *ireg = &i7->clk_intr_reg;
 		int ival;
@@ -611,10 +611,10 @@ cpu_initclocks()
 
 		i7->clk_intr_reg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
 
-		ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
+		intreg_clr_44c(IE_L14 | IE_L10);/* disable all clock intrs */
 		intersil_disable(i7);		/* disable clock */
 		dummy = intersil_clear(i7);	/* clear interrupts */
-		ienab_bis(IE_L10);		/* enable l10 interrupt */
+		intreg_set_44c(IE_L10);		/* enable l10 interrupt */
 		intersil_enable(i7);		/* enable clock */
 
 		return;
@@ -653,12 +653,13 @@ cpu_initclocks()
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M)
-		ienab_bic(SINTR_T);
+		intreg_clr_4m(SINTR_T);
 #endif
 
+#if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C)
-		ienab_bis(IE_L14 | IE_L10);
-
+		intreg_set_44c(IE_L14 | IE_L10);
+#endif
 }
 
 /*
@@ -673,9 +674,7 @@ setstatclockrate(newhz)
 }
 
 /*
- * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
- * console input, we need to check for that here as well, and generate
- * a software interrupt to read it.
+ * Level 10 (clock) interrupts.
  */
 int
 clockintr(cap)
@@ -695,8 +694,8 @@ clockintr(cap)
 #if defined(SUN4)
 	if (oldclk) {
 		discard = intersil_clear(i7);
-		ienab_bic(IE_L10);  /* clear interrupt */
-		ienab_bis(IE_L10);  /* enable interrupt */
+		intreg_clr_44c(IE_L10);	/* clear interrupt */
+		intreg_set_44c(IE_L10);	/* enable interrupt */
 		goto forward;
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.32 2009/04/10 20:53:54 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.33 2010/07/06 20:40:01 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -465,7 +465,7 @@ softintr_establish(int level, void (*fn)(void *), void *arg)
 	 * to be passed to raise().
 	 * On a sun4 or sun4c, the appropriate bit to set
 	 * in the interrupt enable register is stored, to be
-	 * passed to ienab_bis().
+	 * passed to intreg_set_44c().
 	 */
 	ipl = hw = level;
 #if defined(SUN4) || defined(SUN4C)
@@ -533,18 +533,25 @@ softintr_schedule(void *arg)
 	if (sih->sih_pending == 0) {
 		sih->sih_pending++;
 
+		switch (cputyp) {
+		default:
 #if defined(SUN4M)
-		if (CPU_ISSUN4M)
+		case CPU_SUN4M:
 			raise(0, sih->sih_hw);
+			break;
 #endif
 #if defined(SUN4) || defined(SUN4C)
-		if (CPU_ISSUN4OR4C)
-			ienab_bis(sih->sih_hw);
+		case CPU_SUN4:
+		case CPU_SUN4C:
+			intreg_set_44c(sih->sih_hw);
+			break;
 #endif
 #if defined(solbourne)
-		if (CPU_ISKAP)
+		case CPU_KAP:
 			ienab_bis(sih->sih_hw);
+			break;
 #endif
+		}
 	}
 	splx(s);
 }

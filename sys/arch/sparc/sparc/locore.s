@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.86 2010/06/29 21:28:11 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.87 2010/07/06 20:40:01 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -1840,7 +1840,7 @@ memfault_sun4c:
 	 * This code is essentially the same as that at `nmi' below,
 	 * but the register usage is different and we cannot merge.
 	 */
-	sethi	%hi(INTRREG_VA), %l5	! ienab_bic(IE_ALLIE);
+	sethi	%hi(INTRREG_VA), %l5	! intreg_clr_44c(IE_ALLIE);
 	ldub	[%l5 + %lo(INTRREG_VA)], %o0
 	andn	%o0, IE_ALLIE, %o0
 	stb	%o0, [%l5 + %lo(INTRREG_VA)]
@@ -2286,7 +2286,7 @@ return_from_syscall:
 
 /*
  * Interrupts.  Software interrupts must be cleared from the software
- * interrupt enable register.  Rather than calling ienab_bic for each,
+ * interrupt enable register.  Rather than calling intreg_clr_* for each,
  * we do them in-line before enabling traps.
  *
  * After preliminary setup work, the interrupt is passed to each
@@ -3851,8 +3851,6 @@ Lgandul:	nop
 	MUNGE(NOP_ON_4M_10)
 	MUNGE(NOP_ON_4M_11)
 	MUNGE(NOP_ON_4M_12)
-	MUNGE(NOP_ON_4M_13)
-	MUNGE(NOP_ON_4M_14)
 	b,a	2f
 
 1:
@@ -5384,34 +5382,18 @@ ENTRY(loadfpstate)
 	 ld	[%o0 + FS_FSR], %fsr	! setfsr(f->fs_fsr);
 
 /*
- * ienab_bis(bis) int bis;
- * ienab_bic(bic) int bic;
+ * intreg_set_44c(int bis);
+ * intreg_clr_44c(int bic);
  *
  * Set and clear bits in the interrupt register.
  */
-
-#if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
-ENTRY(ienab_bis)
-NOP_ON_4M_13:
-	b,a	_C_LABEL(ienab_bis_4_4c)
-	b,a	_C_LABEL(ienab_bis_4m)
-
-ENTRY(ienab_bic)
-NOP_ON_4M_14:
-	b,a	_C_LABEL(ienab_bic_4_4c)
-	b,a	_C_LABEL(ienab_bic_4m)
-#endif
 
 #if defined(SUN4) || defined(SUN4C)
 /*
  * Since there are no read-modify-write instructions for this,
  * and one of the interrupts is nonmaskable, we must disable traps.
  */
-#if defined(SUN4M)
-ENTRY(ienab_bis_4_4c)
-#else
-ENTRY(ienab_bis)
-#endif
+ENTRY(intreg_set_44c)
 	! %o0 = bits to set
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -5425,11 +5407,7 @@ ENTRY(ienab_bis)
 	retl
 	 nop
 
-#if defined(SUN4M)
-ENTRY(ienab_bic_4_4c)
-#else
-ENTRY(ienab_bic)
-#endif
+ENTRY(intreg_clr_44c)
 	! %o0 = bits to clear
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -5442,26 +5420,18 @@ ENTRY(ienab_bic)
 	nop
 	retl
 	 nop
-#endif
+#endif	/* SUN4 || SUN4C */
 
 #if defined(SUN4M)
 /*
  * sun4m has separate registers for clearing/setting the interrupt mask.
  */
-#if defined(SUN4) || defined(SUN4C)
-ENTRY(ienab_bis_4m)
-#else
-ENTRY(ienab_bis)
-#endif
+ENTRY(intreg_set_4m)
 	set	ICR_SI_SET, %o1
 	retl
 	 st	%o0, [%o1]
 
-#if defined(SUN4) || defined(SUN4C)
-ENTRY(ienab_bic_4m)
-#else
-ENTRY(ienab_bic)
-#endif
+ENTRY(intreg_clr_4m)
 	set	ICR_SI_CLR, %o1
 	retl
 	 st	%o0, [%o1]
