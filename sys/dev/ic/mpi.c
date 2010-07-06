@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.153 2010/07/01 03:20:38 matthew Exp $ */
+/*	$OpenBSD: mpi.c,v 1.154 2010/07/06 06:50:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -736,7 +736,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	inq.opcode = INQUIRY;
 	_lto2b(sizeof(struct scsi_inquiry_data), inq.length);
 
-	ccb = mpi_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL)
 		return (1);
 
@@ -790,7 +790,7 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	if (ccb->ccb_rcb != NULL)
 		mpi_push_reply(sc, ccb->ccb_rcb);
 
-	mpi_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (0);
 }
@@ -2066,7 +2066,7 @@ mpi_portfacts(struct mpi_softc *sc)
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_portfacts\n", DEVNAME(sc));
 
-	ccb = mpi_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
 		DNPRINTF(MPI_D_MISC, "%s: mpi_portfacts ccb_get\n",
 		    DEVNAME(sc));
@@ -2123,7 +2123,7 @@ mpi_portfacts(struct mpi_softc *sc)
 	mpi_push_reply(sc, ccb->ccb_rcb);
 	rv = 0;
 err:
-	mpi_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (rv);
 }
@@ -2175,7 +2175,7 @@ mpi_eventnotify(struct mpi_softc *sc)
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_event_request		*enq;
 
-	ccb = mpi_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
 		DNPRINTF(MPI_D_MISC, "%s: mpi_eventnotify ccb_get\n",
 		    DEVNAME(sc));
@@ -2245,7 +2245,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 #if 0
 	/* fc hbas have a bad habit of setting this without meaning it. */
 	if ((enp->msg_flags & MPI_EVENT_FLAGS_REPLY_KEPT) == 0) {
-		mpi_put_ccb(sc, ccb);
+		scsi_io_put(&sc->sc_iopool, ccb);
 	}
 #endif
 }
@@ -2298,7 +2298,7 @@ mpi_eventack(struct mpi_softc *sc, struct mpi_msg_event_reply *enp)
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_eventack_request		*eaq;
 
-	ccb = mpi_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
 		DNPRINTF(MPI_D_EVT, "%s: mpi_eventack ccb_get\n", DEVNAME(sc));
 		return;
@@ -2325,7 +2325,7 @@ mpi_eventack_done(struct mpi_ccb *ccb)
 	DNPRINTF(MPI_D_EVT, "%s: event ack done\n", DEVNAME(sc));
 
 	mpi_push_reply(sc, ccb->ccb_rcb);
-	mpi_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 }
 
 int
@@ -2337,7 +2337,7 @@ mpi_portenable(struct mpi_softc *sc)
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_portenable\n", DEVNAME(sc));
 
-	ccb = mpi_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
 		DNPRINTF(MPI_D_MISC, "%s: mpi_portenable ccb_get\n",
 		    DEVNAME(sc));
@@ -2363,7 +2363,7 @@ mpi_portenable(struct mpi_softc *sc)
 	} else
 		mpi_push_reply(sc, ccb->ccb_rcb);
 
-	mpi_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (rv);
 }
@@ -2392,7 +2392,7 @@ mpi_fwupload(struct mpi_softc *sc)
 		return (1);
 	}
 
-	ccb = mpi_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
 		DNPRINTF(MPI_D_MISC, "%s: mpi_fwupload ccb_get\n",
 		    DEVNAME(sc));
@@ -2430,7 +2430,7 @@ mpi_fwupload(struct mpi_softc *sc)
 		rv = 1;
 
 	mpi_push_reply(sc, ccb->ccb_rcb);
-	mpi_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (rv);
 
@@ -2663,7 +2663,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 		mpi_wait(sc, ccb);
 
 	if (ccb->ccb_rcb == NULL) {
-		mpi_put_ccb(sc, ccb);
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (1);
 	}
 	cp = ccb->ccb_rcb->rcb_reply;
