@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.23 2010/07/02 02:40:15 blambert Exp $	*/
+/*	$OpenBSD: via.c,v 1.24 2010/07/06 09:49:47 blambert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -565,5 +565,5 @@ viac3_rnd(void *v)
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
 		add_true_randomness(*p);
 
-	timeout_add(tmo, (hz > 100) ? (hz / 100) : 1);
+	timeout_add_msec(tmo, 10);
 }
