@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.27 2010/06/05 16:05:17 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.28 2010/07/06 01:12:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -95,7 +95,7 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	while (itodo > 0) {
 		if (!ABUF_WOK(obuf)) {
 #ifdef DEBUG
-			if (debug_level >= 4) {
+			if (debug_level >= 3) {
 				aproc_dbg(p);
 				dbg_puts(": overrun, discarding ");
 				dbg_putu(obuf->used);
@@ -140,7 +140,7 @@ thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
 		return;
 	if (!ABUF_WOK(obuf)) {
 #ifdef DEBUG
-		if (debug_level >= 4) {
+		if (debug_level >= 3) {
 			aproc_dbg(p);
 			dbg_puts(": overrun, discarding ");
 			dbg_putu(obuf->used);
@@ -400,7 +400,7 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 		while (itodo > 0) {
 			if (!ABUF_WOK(i)) {
 #ifdef DEBUG
-				if (debug_level >= 4) {
+				if (debug_level >= 3) {
 					abuf_dbg(i);
 					dbg_puts(": overrun, discarding ");
 					dbg_putu(i->used);

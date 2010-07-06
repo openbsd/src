@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.9 2010/06/04 06:15:28 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.10 2010/07/06 01:12:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "dev.h"
 #include "conf.h"
 #include "opt.h"
 #ifdef DEBUG
@@ -72,6 +73,8 @@ opt_new(char *name, struct dev *d, struct aparams *wpar, struct aparams *rpar,
 #ifdef DEBUG
 	if (debug_level >= 2) {
 		dbg_puts(o->name);
+		dbg_puts("@");
+		dbg_puts(o->dev->path);
 		dbg_puts(":");
 		if (mode & MODE_REC) {
 			dbg_puts(" rec=");

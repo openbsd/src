@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.97 2010/06/29 06:48:39 jakemsr Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.98 2010/07/06 01:12:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -434,6 +434,7 @@ aucat_main(int argc, char **argv)
 	int autostart, legacy;
 	struct dev *d, *dnext;
 	unsigned active;
+	unsigned nsock, nfile;
 
 	/*
 	 * global options defaults
@@ -446,6 +447,7 @@ aucat_main(int argc, char **argv)
 	legacy = 1;
 	legacy_path = NULL;
 	SLIST_INIT(&cfdevs);
+	nfile = nsock = 0;
 
 	/*
 	 * default stream params
@@ -561,14 +563,17 @@ aucat_main(int argc, char **argv)
 		case 'i':
 			legacy = 0;
 			cfstr_add(&cd->ins, cs, optarg);
+			nfile++;
 			break;
 		case 'o':
 			legacy = 0;
 			cfstr_add(&cd->outs, cs, optarg);
+			nfile++;
 			break;
 		case 's':
 			legacy = 0;
 			cfstr_add(&cd->opts, cs, optarg);
+			nsock++;
 			break;
 		case 'a':
 			legacy = 0;
@@ -593,6 +598,12 @@ aucat_main(int argc, char **argv)
 		case 'f':
 			legacy = 0;
 			legacy_path = optarg;
+			if (SLIST_EMPTY(&cd->opts) &&
+			    SLIST_EMPTY(&cd->ins) &&
+			    SLIST_EMPTY(&cd->outs)) {
+				cfstr_add(&cd->opts, cs, DEFAULT_OPT);
+				nsock++;
+			}
 			cfdev_add(&cfdevs, cd, optarg);
 			break;
 		case 'l':
@@ -624,36 +635,37 @@ aucat_main(int argc, char **argv)
 		exit(0);
 	}
 
-	if (!l_flag && unit >= 0)
-		errx(1, "can't use -U without -l");
+	/*
+	 * Check constraints specific to -n option
+	 */
 	if (n_flag) {
-		if (!SLIST_EMPTY(&cfdevs) || l_flag ||
-		    !SLIST_EMPTY(&cd->opts) || !SLIST_EMPTY(&cd->mids))
-			errx(1, "can't use -n with -l, -f, -q or -s");
+		if (!SLIST_EMPTY(&cfdevs) ||
+		    !SLIST_EMPTY(&cd->mids) ||
+		    !SLIST_EMPTY(&cd->opts))
+			errx(1, "-f, -s, and -q not allowed in loopback mode");
 		if (SLIST_EMPTY(&cd->ins) || SLIST_EMPTY(&cd->outs))
-			errx(1, "both -i and -o are required with -n");
+			errx(1, "-i and -o are required in loopback mode");
 	}
 
 	/*
-	 * if no device is given, add the default one
+	 * If there's no device specified, do as if the default
+	 * device is specified as last argument.
 	 */
 	if (SLIST_EMPTY(&cfdevs)) {
+		if (SLIST_EMPTY(&cd->opts) &&
+		    SLIST_EMPTY(&cd->ins) &&
+		    SLIST_EMPTY(&cd->outs)) {
+			cfstr_add(&cd->opts, cs, DEFAULT_OPT);
+			nsock++;
+		}
 		if (!cd->hold)
-			errx(1, "-a not compatible with default device");
+			errx(1, "-a off not compatible with default device");
 		cfdev_add(&cfdevs, cd, "default");
 	}
-
-	/*
-	 * If there are no sockets paths provided use the default.
-	 */
-	if (l_flag) {
-		SLIST_FOREACH(cd, &cfdevs, entry) {
-			if (!SLIST_EMPTY(&cd->opts))
-				continue;
-			cfstr_add(&cd->opts, cs, DEFAULT_OPT);
-			break;
-		}
-	}
+	if ((cs = SLIST_FIRST(&cd->opts)) ||
+	    (cs = SLIST_FIRST(&cd->ins)) ||
+	    (cs = SLIST_FIRST(&cd->outs)))
+		errx(1, "%s: no device to attach the stream to", cs->path);
 
 	/*
 	 * Check modes and calculate "best" device parameters. Iterate over all
@@ -687,14 +699,10 @@ aucat_main(int argc, char **argv)
 				aparams_grow(&cd->ipar, &cs->opar);
 			}
 		}
-		if (l_flag && SLIST_EMPTY(&cd->opts))
-			errx(1, "%s: no subdevs for this device", cd->path);
-		if (!l_flag && SLIST_EMPTY(&cd->ins) && SLIST_EMPTY(&cd->outs))
-			errx(1, "%s: no files for this device", cd->path);
-		if (n_flag && (mode & MODE_MON))
-			errx(1, "monitoring not allowed in loopback mode");
 		if ((mode & MODE_MON) && !(mode & MODE_PLAY))
 			errx(1, "no playback stream to monitor");
+		if (n_flag && (mode & MODE_MON))
+			errx(1, "-m mon not allowed in loopback mode");	
 		rate = (mode & MODE_REC) ? cd->ipar.rate : cd->opar.rate;
 		if (!cd->round)
 			cd->round = rate / 15;
@@ -702,8 +710,7 @@ aucat_main(int argc, char **argv)
 			cd->bufsz = rate / 15 * 4;
 		cd->mode = mode;
 	}
-
-	if (l_flag) {
+	if (nsock > 0) {
 		getbasepath(base, sizeof(base));
 		if (unit < 0)
 			unit = 0;
@@ -781,15 +788,19 @@ aucat_main(int argc, char **argv)
 			ctl_start(d->midi);
 		}
 	}
-	if (l_flag) {
+	if (nsock > 0) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_SOFTAUDIO, unit);
 		listen = listen_new(&listen_ops, path);
-		if (listen == 0)
+		if (listen == NULL)
 			exit(1);
-		if (geteuid() == 0)
-			privdrop();
-		if (!d_flag && daemon(0, 0) < 0)
+	}
+	if (geteuid() == 0)
+		privdrop();
+	if (l_flag) {
+		debug_level = 0;
+		dbg_flush();
+		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
 
@@ -809,13 +820,13 @@ aucat_main(int argc, char **argv)
 		}
 		if (dev_list == NULL)
 			break;
-		if (!l_flag && !active)
+		if (nsock == 0 && !active)
 			break;
 		if (!file_poll())
 			break;
 	}
   fatal:
-	if (l_flag)
+	if (nsock > 0)
 		file_close(&listen->file);
 	/*
 	 * give a chance to drain
@@ -828,7 +839,7 @@ aucat_main(int argc, char **argv)
 	while (dev_list)
 		dev_del(dev_list);
 	filelist_done();
-	if (l_flag) {
+	if (nsock > 0) {
 		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)
 			warn("rmdir(\"%s\")", base);
 	}
@@ -847,8 +858,10 @@ midicat_usage(void)
 int
 midicat_main(int argc, char **argv)
 {
-	struct cfmidlist mids, ins, outs;
+	struct cfdevlist cfdevs;
 	struct cfmid *cm;
+	struct cfstr *cs;
+	struct cfdev *cd;
 	struct listen *listen = NULL;
 	int c, d_flag, l_flag, unit, fd;
 	char base[PATH_MAX], path[PATH_MAX];
@@ -856,7 +869,8 @@ midicat_main(int argc, char **argv)
 	struct aproc *p;
 	struct abuf *buf;
 	const char *str;
-	struct dev *d;
+	struct dev *d, *dnext;
+	unsigned nsock;
 
 	/*
 	 * global options defaults
@@ -864,11 +878,35 @@ midicat_main(int argc, char **argv)
 	unit = -1;
 	d_flag = 0;
 	l_flag = 0;
-	SLIST_INIT(&mids);
-	SLIST_INIT(&ins);
-	SLIST_INIT(&outs);
+	SLIST_INIT(&cfdevs);
+	nsock = 0;
+	
+	/*
+	 * default stream params
+	 */
+	cs = malloc(sizeof(struct cfstr));
+	if (cs == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+	cs->hdr = HDR_RAW;
 
-	while ((c = getopt(argc, argv, "di:o:lf:q:U:")) != -1) {
+	/*
+	 * default device
+	 */
+	cd = malloc(sizeof(struct cfdev));
+	if (cd == NULL) {
+		perror("malloc");
+		exit(1);
+	}
+	SLIST_INIT(&cd->ins);
+	SLIST_INIT(&cd->outs);
+	SLIST_INIT(&cd->opts);
+	SLIST_INIT(&cd->mids);
+	cd->path = NULL;
+
+
+	while ((c = getopt(argc, argv, "di:o:ls:q:U:")) != -1) {
 		switch (c) {
 		case 'd':
 #ifdef DEBUG
@@ -878,15 +916,18 @@ midicat_main(int argc, char **argv)
 			d_flag = 1;
 			break;
 		case 'i':
-			cfmid_add(&ins, optarg);
+			cfstr_add(&cd->ins, cs, optarg);
 			break;
 		case 'o':
-			cfmid_add(&outs, optarg);
+			cfstr_add(&cd->outs, cs, optarg);
 			break;
-			/* XXX: backward compat, remove this */
-		case 'f':	
 		case 'q':
-			cfmid_add(&mids, optarg);
+			cfmid_add(&cd->mids, optarg);
+			break;
+		case 's':
+			cfstr_add(&cd->opts, cs, optarg);
+			cfdev_add(&cfdevs, cd, optarg);
+			nsock++;
 			break;
 		case 'l':
 			l_flag = 1;
@@ -904,15 +945,37 @@ midicat_main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0 || (SLIST_EMPTY(&ins) && SLIST_EMPTY(&outs) && !l_flag)) {
+#ifdef DEBUG
+	if (debug_level == 0)
+		debug_level = 1;
+#endif
+	if (argc > 0) {
 		midicat_usage();
 		exit(1);
 	}
-	if (!l_flag && unit >= 0)
-		errx(1, "can't use -U without -l");
-	if (l_flag) {
-		if (!SLIST_EMPTY(&ins) || !SLIST_EMPTY(&outs))
-			errx(1, "can't use -i or -o with -l");
+
+	/*
+	 * If there's no device specified (-s), then create one with
+	 * reasonable defaults:
+	 *
+	 *  - if there are no streams (-ioq) defined, assume server mode
+	 *    and expose the "defaut" option
+	 *
+	 *  - if there are files (-io) but no ports (-q) to send/receive
+	 *    from, add the default sndio(7) MIDI port
+	 */
+	if (SLIST_EMPTY(&cfdevs)) {
+		if (SLIST_EMPTY(&cd->mids)) {
+			if (SLIST_EMPTY(&cd->ins) && SLIST_EMPTY(&cd->outs))
+			    	cfmid_add(&cd->mids, "default");
+			else {
+				cfstr_add(&cd->opts, cs, DEFAULT_OPT);
+				nsock++;
+			}
+		}
+		cfdev_add(&cfdevs, cd, "default");
+	}
+	if (nsock > 0) {
 		getbasepath(base, sizeof(path));
 		if (unit < 0)
 			unit = 0;
@@ -920,95 +983,124 @@ midicat_main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
-	d = dev_new_thru();
-	if (!dev_ref(d))
-		errx(1, "couldn't open midi thru box");
-	if (!l_flag && APROC_OK(d->midi))
-		d->midi->flags |= APROC_QUIT;
-	if ((!SLIST_EMPTY(&ins) || !SLIST_EMPTY(&outs)) && SLIST_EMPTY(&mids)) {
-	    	cfmid_add(&mids, "default");
-	}
-	while (!SLIST_EMPTY(&mids)) {
-		cm = SLIST_FIRST(&mids);
-		SLIST_REMOVE_HEAD(&mids, entry);
-		if (!dev_thruadd(d, cm->path,
-			!SLIST_EMPTY(&outs) || l_flag,
-			!SLIST_EMPTY(&ins) || l_flag)) {
-			errx(1, "%s: can't open device", cm->path);
+	while (!SLIST_EMPTY(&cfdevs)) {
+		cd = SLIST_FIRST(&cfdevs);
+		SLIST_REMOVE_HEAD(&cfdevs, entry);
+
+		d = dev_new_thru();
+		if (d == NULL)
+			errx(1, "%s: can't open device", cd->path);
+		if (!dev_ref(d))
+			errx(1, "couldn't open midi thru box");
+		if (!SLIST_EMPTY(&cd->opts) && APROC_OK(d->midi))
+			d->midi->flags |= APROC_QUIT;
+
+		/*
+		 * register midi ports
+		 */
+		while (!SLIST_EMPTY(&cd->mids)) {
+			cm = SLIST_FIRST(&cd->mids);
+			SLIST_REMOVE_HEAD(&cd->mids, entry);
+			if (!dev_thruadd(d, cm->path, 1, 1))
+				errx(1, "%s: can't open device", cm->path);
+			free(cm);
 		}
-		free(cm);
+
+		/*
+		 * register files
+		 */
+		while (!SLIST_EMPTY(&cd->ins)) {
+			cs = SLIST_FIRST(&cd->ins);
+			SLIST_REMOVE_HEAD(&cd->ins, entry);
+			if (strcmp(cs->path, "-") == 0) {
+				fd = STDIN_FILENO;
+				if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+					warn("stdin");
+			} else {
+				fd = open(cs->path, O_RDONLY | O_NONBLOCK, 0666);
+				if (fd < 0)
+					err(1, "%s", cs->path);
+			}
+			stdx = (struct file *)pipe_new(&pipe_ops, fd, cs->path);
+			p = rfile_new(stdx);
+			buf = abuf_new(MIDI_BUFSZ, &aparams_none);
+			aproc_setout(p, buf);
+			dev_midiattach(d, buf, NULL);
+			free(cs);
+		}
+		while (!SLIST_EMPTY(&cd->outs)) {
+			cs = SLIST_FIRST(&cd->outs);
+			SLIST_REMOVE_HEAD(&cd->outs, entry);
+			if (strcmp(cs->path, "-") == 0) {
+				fd = STDOUT_FILENO;
+				if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+					warn("stdout");
+			} else {
+				fd = open(cs->path,
+				    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
+				if (fd < 0)
+					err(1, "%s", cs->path);
+			}
+			stdx = (struct file *)pipe_new(&pipe_ops, fd, cs->path);
+			p = wfile_new(stdx);
+			buf = abuf_new(MIDI_BUFSZ, &aparams_none);
+			aproc_setin(p, buf);
+			dev_midiattach(d, NULL, buf);
+			free(cs);
+		}
+		while (!SLIST_EMPTY(&cd->opts)) {
+			cs = SLIST_FIRST(&cd->opts);
+			SLIST_REMOVE_HEAD(&cd->opts, entry);
+			opt_new(cs->path, d, NULL, NULL, 0, 0, 0, 0);
+			free(cs);
+		}
+		free(cd);
 	}
-	if (l_flag) {
-		opt_new(DEFAULT_OPT, d, NULL, NULL, 0, 0, 0, 0);
+	if (nsock > 0) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_MIDITHRU, unit);
 		listen = listen_new(&listen_ops, path);
-		if (geteuid() == 0)
-			privdrop();
-		if (!d_flag && daemon(0, 0) < 0)
+		if (listen == NULL)
+			exit(1);
+	}
+	if (geteuid() == 0)
+		privdrop();
+	if (l_flag) {
+		debug_level = 0;
+		dbg_flush();
+		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
-	while (!SLIST_EMPTY(&ins)) {
-		cm = SLIST_FIRST(&ins);
-		SLIST_REMOVE_HEAD(&ins, entry);
-		if (strcmp(cm->path, "-") == 0) {
-			fd = STDIN_FILENO;
-			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-				warn("stdin");
-		} else {
-			fd = open(cm->path, O_RDONLY | O_NONBLOCK, 0666);
-			if (fd < 0)
-				err(1, "%s", cm->path);
-		}
-		stdx = (struct file *)pipe_new(&pipe_ops, fd, cm->path);
-		p = rfile_new(stdx);
-		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
-		aproc_setout(p, buf);
-		dev_midiattach(d, buf, NULL);
-		free(cm);
-	}
-	while (!SLIST_EMPTY(&outs)) {
-		cm = SLIST_FIRST(&outs);
-		SLIST_REMOVE_HEAD(&outs, entry);
-		if (strcmp(cm->path, "-") == 0) {
-			fd = STDOUT_FILENO;
-			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-				warn("stdout");
-		} else {
-			fd = open(cm->path,
-			    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
-			if (fd < 0)
-				err(1, "%s", cm->path);
-		}
-		stdx = (struct file *)pipe_new(&pipe_ops, fd, cm->path);
-		p = wfile_new(stdx);
-		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
-		aproc_setin(p, buf);
-		dev_midiattach(d, NULL, buf);
-		free(cm);
-	}
+
 	/*
 	 * loop, start processing
 	 */
 	for (;;) {
 		if (quit_flag)
 			break;
-		if (!dev_run(d))
-			break;
+		for (d = dev_list; d != NULL; d = dnext) {
+			dnext = d->next;
+			if (!dev_run(d))
+				goto fatal;
+		}
 		if (!file_poll())
 			break;
 	}
-	if (l_flag)
+  fatal:
+	if (nsock > 0)
 		file_close(&listen->file);
-	dev_unref(d);
-	dev_del(d);
 	/*
-	 * drain
+	 * give a chance to drain
 	 */
+	for (d = dev_list; d != NULL; d = d->next)
+		dev_drain(d);
 	while (file_poll())
 		; /* nothing */
+
+	while (dev_list)
+		dev_del(dev_list);
 	filelist_done();
-	if (l_flag) {
+	if (nsock > 0) {
 		if (rmdir(base) < 0 && errno != ENOTEMPTY && errno != EPERM)
 			warn("rmdir(\"%s\")", base);
 	}

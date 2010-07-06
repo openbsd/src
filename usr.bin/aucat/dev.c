@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.61 2010/06/29 06:57:00 jakemsr Exp $	*/
+/*	$OpenBSD: dev.c,v 1.62 2010/07/06 01:12:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -169,6 +169,7 @@ dev_new_loop(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	d->reqmode = MODE_PLAY | MODE_REC | MODE_LOOP;
 	d->pstate = DEV_CLOSED;
 	d->hold = 0;
+	d->path = "loop";
 	d->next = dev_list;
 	dev_list = d;
 	return d;
@@ -190,6 +191,7 @@ dev_new_thru(void)
 	d->reqmode = 0;
 	d->pstate = DEV_CLOSED;
 	d->hold = 0;
+	d->path = "midithru";
 	d->next = dev_list;
 	dev_list = d;
 	return d;
@@ -237,7 +239,7 @@ dev_open(struct dev *d)
 		if (f == NULL) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
-				dbg_puts(d->path ? d->path : "default");
+				dbg_puts(d->path);
 				dbg_puts(": failed to open audio device\n");
 			}
 #endif
@@ -250,7 +252,7 @@ dev_open(struct dev *d)
 		if ((d->mode & (MODE_PLAY | MODE_REC)) == 0) {
 #ifdef DEBUG
 			if (debug_level >= 1) {
-				dbg_puts(d->path ? d->path : "default");
+				dbg_puts(d->path);
 				dbg_puts(": mode not supported by device\n");
 			}
 #endif
@@ -260,12 +262,14 @@ dev_open(struct dev *d)
 #ifdef DEBUG
 		if (debug_level >= 2) {
 			if (d->mode & MODE_REC) {
-				dbg_puts("hw recording ");
+				dbg_puts(d->path);
+				dbg_puts(": recording ");
 				aparams_dbg(&d->ipar);
 				dbg_puts("\n");
 			}
 			if (d->mode & MODE_PLAY) {
-				dbg_puts("hw playing ");
+				dbg_puts(d->path);
+				dbg_puts(": playing ");
 				aparams_dbg(&d->opar);
 				dbg_puts("\n");
 			}
@@ -381,7 +385,8 @@ dev_open(struct dev *d)
 #ifdef DEBUG
 	if (debug_level >= 2) { 
 		if (d->mode & (MODE_PLAY | MODE_RECMASK)) {
-			dbg_puts("device block size is ");
+			dbg_puts(d->path);
+			dbg_puts(": block size is ");
 			dbg_putu(d->round);
 			dbg_puts(" frames, using ");
 			dbg_putu(d->bufsz / d->round);

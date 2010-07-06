@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.11 2010/04/22 18:27:19 jmc Exp $
+.\"	$OpenBSD: midicat.1,v 1.12 2010/07/06 01:12:45 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2010 $
+.Dd $Mdocdate: July 6 2010 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -25,57 +25,92 @@
 .Op Fl dl
 .Op Fl i Ar file
 .Op Fl o Ar file
-.Op Fl q Ar device
+.Op Fl q Ar port
+.Op Fl s Ar name
 .Op Fl U Ar unit
 .Sh DESCRIPTION
 The
 .Nm
-utility is used to manipulate MIDI data.
-It can send and receive MIDI data from MIDI ports,
-or it can create software MIDI thru boxes,
-allowing any MIDI-capable application to
-send MIDI messages to MIDI hardware
-or to another application in a uniform way.
+utility can merge any number of MIDI inputs and broadcast the result
+to any number of MIDI outputs, similarly to a hardware MIDI thru box.
+MIDI streams are typically MIDI ports or plain files containing raw MIDI
+data.
+.Pp
+The
+.Nm
+utility can also act as a MIDI server in which case MIDI streams
+correspond to client connections.
+The server capability
+allows any MIDI-capable application to send MIDI messages to
+MIDI hardware or to another application in a uniform way.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
-Do not daemonize.
-If this option is specified,
+Increase log verbosity.
 .Nm
-will run in the foreground and log to
-.Em stderr .
+logs on stderr until it daemonizes.
 .It Fl i Ar file
-Send contents of this file to the device.
+Read data to send from this file.
 If the option argument is
 .Sq -
 then standard input will be used.
 .It Fl l
-Listen for incoming connections on
-.Ux Ns -domain
-sockets.
-This allows clients to use
-.Nm
-instead of the regular
-.Xr midi 4
-device as a software MIDI thru box.
+Detach and become a daemon.
 .It Fl o Ar file
-Store received data from the device into this file.
+Write received data into this file.
 If the option argument is
 .Sq -
 then standard output will be used.
 .It Fl q Ar device
-The
+Send and receive data from this
 .Xr sndio 7
-MIDI device to use for MIDI input/output.
-In server mode, devices are subscribed to the MIDI thru box.
+MIDI port.
+.It Fl s Ar name
+Expose a MIDI thru box to which MIDI programs
+can connect.
+Preceding streams
+.Pq Fl ioq
+are subscribed to this thru box.
+The given
+.Ar name
+corresponds to the
+.Dq option
+part of the
+.Xr sndio 7
+device name string.
 .It Fl U Ar unit
-Use the given unit number when creating a software MIDI thru box.
-Only one
+Unit number to use when running in server mode.
+Each
 .Nm
-process can expose a unit number at a given time.
+server instance has an unique unit number,
+used in
+.Xr sndio 7
+device names.
 The default is 0.
 .El
+.Pp
+If files
+.Pq Fl io
+are specified but no ports
+.Pq Fl q
+are specified, the default
+.Xr sndio 7
+port is used.
+If no streams
+.Pq Fl ioq
+are specified, server mode is assumed and a thru box is created
+as if
+.Fl s Ar default
+was used as last argument.
+.Pp
+Generally MIDI applications are real-time.
+To reduce jitter, especially on busy machines,
+the server can be started by the super-user,
+in which case it will run with higher priority.
+Any user will still be able to connect to it, but
+for privacy reasons, only one user may have connections to
+it at a given time.
 .Pp
 If
 .Nm
@@ -85,52 +120,47 @@ is sent
 or
 .Dv SIGTERM ,
 then processing terminates.
-.Sh SERVER MODE
-.Nm
-can be used in server mode
-.Pq Fl l
-to create MIDI thru boxes.
-A MIDI thru box allows multiple receivers
-to receive data from a single source.
-Additionaly,
-.Nm
-software thru boxes allow multiple sources to be connected
-to them; in this case MIDI byte-streams are merged,
-preserving MIDI message integrity.
-This feature is provided to allow multiple applications
-acting as sources to keep their connection open while
-idling; it does not replace a fully featured MIDI merger.
-.Pp
-A
-.Nm
-process may be started by the super-user,
-in which case any user will be able to connect to it.
-For privacy reasons, only one user may have connections to
-it at a given time.
-.Pp
-Alternatively, each user may start its own
-.Nm
-process.
-It is generally not desirable to have multiple instances of
-.Nm
-running in server mode, so it is good practice to start it thus:
+.Sh EXAMPLES
+The following dumps MIDI data received from the default port:
 .Bd -literal -offset indent
-$ pgrep -x midicat || midicat -l
+$ midicat -o - | hexdump -e '1/1 "%x"'
 .Ed
 .Pp
-Generally MIDI applications are real-time.
-To reduce jitter, especially on busy machines, the
-.Xr renice 8
-command can be used to give a higher priority to the
-.Nm
-process.
-Superuser privileges are required.
-For example:
+The following sends raw MIDI data to the
+.Pa rmidi:5
+port:
+.Bd -literal -offset indent
+$ midicat -i sysexfile -q rmidi:5
+.Ed
+.Pp
+The following connects
+.Pa rmidi:5
+and
+.Pa rmidi:6
+ports:
+.Bd -literal -offset indent
+$ midicat -q rmidi:5 -q rmidi:6
+.Ed
+.Pp
+The following creates a MIDI thru box and daemonizes,
+allowing MIDI programs to send data to each other instead of
+using hardware MIDI ports:
 .Bd -literal -offset indent
 $ midicat -l
-$ sudo renice -n -20 -p `pgrep -x midicat`
+.Ed
+.Pp
+The following creates a MIDI thru box and subscribes the
+.Pa rmidi:5
+port, allowing multiple MIDI programs to use the port
+simultaneously:
+.Bd -literal -offset indent
+$ midicat -q rmidi:5 -s default
 .Ed
 .Sh SEE ALSO
 .Xr aucat 1 ,
 .Xr midi 4 ,
 .Xr sndio 7
+.Sh BUGS
+The ability to merge multiple inputs is provided to allow multiple
+applications producing MIDI data to keep their connection open while
+idling; it does not replace a fully featured MIDI merger.
