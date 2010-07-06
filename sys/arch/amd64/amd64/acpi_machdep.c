@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.39 2010/07/01 21:45:03 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.40 2010/07/06 06:25:56 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -235,7 +235,7 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 #ifdef MULTIPROCESSOR
 		x86_broadcast_ipi(X86_IPI_SYNCH_FPU);
 		x86_broadcast_ipi(X86_IPI_HALT);
-#endif 
+#endif
 		wbinvd();
 		acpi_enter_sleep_state(sc, state);
 		panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
@@ -274,7 +274,7 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	return (0);
 }
 
-void    	cpu_start_secondary(struct cpu_info *ci);
+void		cpu_start_secondary(struct cpu_info *ci);
 
 void
 acpi_resume_machdep(void)
@@ -298,7 +298,7 @@ acpi_resume_machdep(void)
 		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
 		KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
-		
+
 		p = ci->ci_schedstate.spc_idleproc;
 		pcb = &p->p_addr->u_pcb;
 
