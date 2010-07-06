@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.19 2010/05/02 10:43:30 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.20 2010/07/06 20:06:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -362,6 +362,16 @@ file_poll(void)
 			continue;
 		}
 		revents = f->ops->revents(f, f->pfd);
+#ifdef DEBUG
+		if (revents) {
+			f->cycles++;
+			if (f->cycles > FILE_MAXCYCLES) {
+				file_dbg(f);
+				dbg_puts(": busy loop, disconnecting\n");
+				revents = POLLHUP;
+			}
+		}
+#endif
 		if (!(f->state & FILE_ZOMB) && (revents & POLLIN)) {
 			revents &= ~POLLIN;
 #ifdef DEBUG
@@ -570,6 +580,8 @@ file_read(struct file *f, unsigned char *data, unsigned count)
 #endif
 	n = f->ops->read(f, data, count);
 #ifdef DEBUG
+	if (n > 0)
+		f->cycles = 0;
 	clock_gettime(CLOCK_MONOTONIC, &ts1);
 	us = 1000000L * (ts1.tv_sec - ts0.tv_sec);
 	us += (ts1.tv_nsec - ts0.tv_nsec) / 1000;
@@ -602,6 +614,8 @@ file_write(struct file *f, unsigned char *data, unsigned count)
 #endif
 	n = f->ops->write(f, data, count);
 #ifdef DEBUG
+	if (n > 0)
+		f->cycles = 0;
 	clock_gettime(CLOCK_MONOTONIC, &ts1);
 	us = 1000000L * (ts1.tv_sec - ts0.tv_sec);
 	us += (ts1.tv_nsec - ts0.tv_nsec) / 1000;
