@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.25 2010/07/01 03:20:38 matthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.26 2010/07/06 09:42:46 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1815,6 +1815,8 @@ struct mpii_softc {
 	struct mpii_ccb_list	sc_ccb_free;
 	struct mutex		sc_ccb_free_mtx;
 
+	struct scsi_iopool	sc_iopool;
+
 	struct mpii_dmamem	*sc_requests;
 
 	struct mpii_dmamem	*sc_replies;
@@ -1876,8 +1878,8 @@ struct mpii_dmamem 	*mpii_dmamem_alloc(struct mpii_softc *, size_t);
 void		mpii_dmamem_free(struct mpii_softc *,
 		    struct mpii_dmamem *);
 int		mpii_alloc_ccbs(struct mpii_softc *);
-struct mpii_ccb *mpii_get_ccb(struct mpii_softc *);
-void		mpii_put_ccb(struct mpii_softc *, struct mpii_ccb *);
+void *		mpii_get_ccb(void *);
+void		mpii_put_ccb(void *, void *);
 int		mpii_alloc_replies(struct mpii_softc *);
 int		mpii_alloc_queues(struct mpii_softc *);
 void		mpii_push_reply(struct mpii_softc *, struct mpii_rcb *);
@@ -2151,6 +2153,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = sc->sc_max_devices;
 	sc->sc_link.luns = 1;
 	sc->sc_link.openings = sc->sc_request_depth - 1;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -4036,6 +4039,8 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 		mpii_put_ccb(sc, ccb);
 	}
 
+	scsi_iopool_init(&sc->sc_iopool, sc, mpii_get_ccb, mpii_put_ccb);
+
 	return (0);
 
 free_maps:
@@ -4050,8 +4055,11 @@ free_ccbs:
 }
 
 void
-mpii_put_ccb(struct mpii_softc *sc, struct mpii_ccb *ccb)
+mpii_put_ccb(void *cookie, void *io)
 {
+	struct mpii_softc	*sc = cookie;
+	struct mpii_ccb		*ccb = io;
+
 	DNPRINTF(MPII_D_CCB, "%s: mpii_put_ccb %#x\n", DEVNAME(sc), ccb);
 
 	ccb->ccb_state = MPII_CCB_FREE;
@@ -4065,9 +4073,10 @@ mpii_put_ccb(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	mtx_leave(&sc->sc_ccb_free_mtx);
 }
 
-struct mpii_ccb *
-mpii_get_ccb(struct mpii_softc *sc)
+void *
+mpii_get_ccb(void *cookie)
 {
+	struct mpii_softc	*sc = cookie;
 	struct mpii_ccb		*ccb;
 
 	mtx_enter(&sc->sc_ccb_free_mtx);
@@ -4299,7 +4308,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
 	struct mpii_softc	*sc = link->adapter_softc;
-	struct mpii_ccb		*ccb;
+	struct mpii_ccb		*ccb = xs->io;
 	struct mpii_ccb_bundle	*mcb;
 	struct mpii_msg_scsi_io	*io;
 	struct mpii_device	*dev;
@@ -4322,13 +4331,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	if ((dev = sc->sc_devs[link->target]) == NULL) {
 		/* device no longer exists */
 		xs->error = XS_SELTIMEOUT;
-		scsi_done(xs);
-		return;
-	}
-
-	ccb = mpii_get_ccb(sc);
-	if (ccb == NULL) {
-		xs->error = XS_NO_CCB;
 		scsi_done(xs);
 		return;
 	}
@@ -4372,7 +4374,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	if (mpii_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		mpii_put_ccb(sc, ccb);
 		scsi_done(xs);
 		return;
 	}
@@ -4393,7 +4394,6 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->flags & SCSI_POLL) {
 		if (mpii_poll(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
-			mpii_put_ccb(sc, ccb);
 			scsi_done(xs);
 		}
 		return;
@@ -4430,7 +4430,6 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	if (ccb->ccb_rcb == NULL) {
 		/* no scsi error, we're ok so drop out early */
 		xs->status = SCSI_OK;
-		mpii_put_ccb(sc, ccb);
 		scsi_done(xs);
 		return;
 	}
@@ -4514,7 +4513,6 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	    xs->error, xs->status);
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
-	mpii_put_ccb(sc, ccb);
 	scsi_done(xs);
 }
 
