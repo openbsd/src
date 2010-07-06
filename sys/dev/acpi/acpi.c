@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.171 2010/07/06 20:14:17 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.172 2010/07/06 20:15:31 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -127,9 +127,6 @@ int	acpi_gpe_level(struct acpi_softc *, int, void *);
 int	acpi_gpe_edge(struct acpi_softc *, int, void *);
 
 struct gpe_block *acpi_find_gpe(struct acpi_softc *, int);
-
-#define	ACPI_LOCK(sc)
-#define	ACPI_UNLOCK(sc)
 
 /* XXX move this into dsdt softc at some point */
 extern struct aml_node aml_root;
@@ -891,12 +888,13 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 	int error = 0;
 #ifndef SMALL_KERNEL
 	struct acpi_softc *sc;
+	int s;
 
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
-	ACPI_LOCK(sc);
+	s = spltty();
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		if (!(flag & FWRITE)) {
@@ -920,7 +918,7 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 		error = ENXIO;
 		break;
 	}
-	ACPI_UNLOCK(sc);
+	splx(s);
 #else
 	error = ENXIO;
 #endif
@@ -933,12 +931,13 @@ acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 	int error = 0;
 #ifndef SMALL_KERNEL
 	struct acpi_softc *sc;
+	int s;
 
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
-	ACPI_LOCK(sc);
+	s = spltty();
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		sc->sc_flags &= ~SCFLAG_OWRITE;
@@ -950,7 +949,7 @@ acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 		error = ENXIO;
 		break;
 	}
-	ACPI_UNLOCK(sc);
+	splx(s);
 #else
 	error = ENXIO;
 #endif
@@ -968,12 +967,13 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct apm_power_info *pi = (struct apm_power_info *)data;
 	int bats;
 	unsigned int remaining, rem, minutes, rate;
+	int s;
 
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
-	ACPI_LOCK(sc);
+	s = spltty();
 	/* fake APM */
 	switch (cmd) {
 	case APM_IOC_SUSPEND:
@@ -1049,7 +1049,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = ENOTTY;
 	}
 
-	ACPI_UNLOCK(sc);
+	splx(s);
 #else
 	error = ENXIO;
 #endif /* SMALL_KERNEL */
@@ -1061,10 +1061,11 @@ acpi_filtdetach(struct knote *kn)
 {
 #ifndef SMALL_KERNEL
 	struct acpi_softc *sc = kn->kn_hook;
+	int s;
 
-	ACPI_LOCK(sc);
+	s = spltty();
 	SLIST_REMOVE(sc->sc_note, kn, knote, kn_selnext);
-	ACPI_UNLOCK(sc);
+	splx(s);
 #endif
 }
 
@@ -1084,6 +1085,7 @@ acpikqfilter(dev_t dev, struct knote *kn)
 {
 #ifndef SMALL_KERNEL
 	struct acpi_softc *sc;
+	int s;
 
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
@@ -1099,9 +1101,9 @@ acpikqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = sc;
 
-	ACPI_LOCK(sc);
+	s = spltty();
 	SLIST_INSERT_HEAD(sc->sc_note, kn, kn_selnext);
-	ACPI_UNLOCK(sc);
+	splx(s);
 
 	return (0);
 #else
