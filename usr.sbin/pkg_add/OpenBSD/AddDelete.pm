@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.34 2010/07/04 18:21:03 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.35 2010/07/06 12:12:37 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -178,7 +178,9 @@ sub ntogo
 {
 	my ($self, $offset) = @_;
 
-	return $self->{wantntogo} ? $self->progress->ntogo($self, $offset) : "";
+	return $self->{wantntogo} ? 
+	    $self->progress->ntogo($self, $offset) : 
+	    $self->f("ok");
 }
 
 sub ntogo_string
