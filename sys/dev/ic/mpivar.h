@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.31 2010/04/06 01:24:43 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.32 2010/07/06 07:18:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -134,6 +134,7 @@ struct mpi_softc {
 	int			sc_repq;
 
 	struct mpi_ccb		*sc_evt_ccb;
+	struct scsi_iohandler	sc_evt_ack;
 
 	size_t			sc_fw_len;
 	struct mpi_dmamem	*sc_fw;

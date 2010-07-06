@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.154 2010/07/06 06:50:42 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.155 2010/07/06 07:18:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -137,8 +137,7 @@ int			mpi_scsi_probe_virtual(struct scsi_link *);
 
 int			mpi_eventnotify(struct mpi_softc *);
 void			mpi_eventnotify_done(struct mpi_ccb *);
-void			mpi_eventack(struct mpi_softc *,
-			    struct mpi_msg_event_reply *);
+void			mpi_eventack(void *, void *);
 void			mpi_eventack_done(struct mpi_ccb *);
 void			mpi_evt_sas(struct mpi_softc *, struct mpi_rcb *);
 
@@ -2191,6 +2190,7 @@ mpi_eventnotify(struct mpi_softc *sc)
 	enq->msg_context = htole32(ccb->ccb_id);
 
 	sc->sc_evt_ccb = ccb;
+	scsi_ioh_set(&sc->sc_evt_ack, &sc->sc_iopool, mpi_eventack, sc);
 	mpi_start(sc, ccb);
 	return (0);
 }
@@ -2239,15 +2239,9 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 	}
 
 	if (enp->ack_required)
-		mpi_eventack(sc, enp);
-	mpi_push_reply(sc, ccb->ccb_rcb);
-
-#if 0
-	/* fc hbas have a bad habit of setting this without meaning it. */
-	if ((enp->msg_flags & MPI_EVENT_FLAGS_REPLY_KEPT) == 0) {
-		scsi_io_put(&sc->sc_iopool, ccb);
-	}
-#endif
+		scsi_ioh_add(&sc->sc_evt_ack);
+	else
+		mpi_push_reply(sc, ccb->ccb_rcb);
 }
 
 void
@@ -2293,16 +2287,15 @@ mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 }
 
 void
-mpi_eventack(struct mpi_softc *sc, struct mpi_msg_event_reply *enp)
+mpi_eventack(void *cookie, void *io)
 {
-	struct mpi_ccb				*ccb;
+	struct mpi_softc			*sc = cookie;
+	struct mpi_ccb				*ccb = io;
+	struct mpi_ccb				*eccb = sc->sc_evt_ccb;
+	struct mpi_msg_event_reply		*enp = eccb->ccb_rcb->rcb_reply;
 	struct mpi_msg_eventack_request		*eaq;
 
-	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
-	if (ccb == NULL) {
-		DNPRINTF(MPI_D_EVT, "%s: mpi_eventack ccb_get\n", DEVNAME(sc));
-		return;
-	}
+	DNPRINTF(MPI_D_EVT, "%s: event ack\n", DEVNAME(sc));
 
 	ccb->ccb_done = mpi_eventack_done;
 	eaq = ccb->ccb_cmd;
@@ -2313,8 +2306,8 @@ mpi_eventack(struct mpi_softc *sc, struct mpi_msg_event_reply *enp)
 	eaq->event = enp->event;
 	eaq->event_context = enp->event_context;
 
+	mpi_push_reply(sc, eccb->ccb_rcb);
 	mpi_start(sc, ccb);
-	return;
 }
 
 void
