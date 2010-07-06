@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.59 2010/07/05 08:30:28 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.60 2010/07/06 12:02:54 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009, 2010 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -656,6 +656,7 @@ do_post() {
 	if [ "${OBSOLETE_FILES}" ]; then
 		echo "===> File(s) removed from previous source (maybe obsolete)" >> ${REPORT}
 		echo "${OBSOLETE_FILES}" >> ${REPORT}
+		echo "" >> ${REPORT}
 	fi
 	if [ "${NEWUSR}" -o "${NEWGRP}" ]; then
 		echo "===> The following user(s)/group(s) have been added" >> ${REPORT}
