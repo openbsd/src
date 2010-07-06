@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.17 2009/03/15 11:26:38 miod Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.18 2010/07/06 20:37:33 miod Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -222,62 +222,20 @@ struct cpu_softc {
 };
 
 /*
- * CPU architectures
- */
-#define CPUARCH_UNKNOWN		0
-#define CPUARCH_SUN4		1
-#define CPUARCH_SUN4C		2
-#define CPUARCH_SUN4M		3
-#define	CPUARCH_SUN4D		4
-#define CPUARCH_SUN4U		5
-
-/*
- * CPU classes
- */
-#define CPUCLS_UNKNOWN		0
-
-#if defined(SUN4)
-#define CPUCLS_SUN4		1
-#endif
-
-#if defined(SUN4C)
-#define CPUCLS_SUN4C		5
-#endif
-
-#if defined(SUN4M)
-#define CPUCLS_MICROSPARC	10	/* MicroSPARC-II */
-#define CPUCLS_SUPERSPARC	11	/* Generic SuperSPARC */
-#define CPUCLS_HYPERSPARC	12	/* Ross HyperSPARC RT620 */
-#endif
-
-/*
- * CPU types. Each of these should uniquely identify one platform/type of
- * system, i.e. "MBus-based 75 MHz SuperSPARC-II with ECache" is
- * CPUTYP_SS2_MBUS_MXCC. The general form is
+ * CPU types. When nonzero, these enable system-specific behaviour.
+ * The general form is
  * 	CPUTYP_proctype_bustype_cachetype_etc_etc
- *
- * XXX: This is far from complete/comprehensive
- * XXX: ADD SUN4, SUN4C TYPES
  */
 #define CPUTYP_UNKNOWN		0
 
+/* sun4 models */
 #define CPUTYP_4_100		1 	/* Sun4/100 */
 #define CPUTYP_4_200		2	/* Sun4/200 */
 #define CPUTYP_4_300		3	/* Sun4/300 */
 #define CPUTYP_4_400		4	/* Sun4/400 */
 
-#define CPUTYP_SLC		10	/* SPARCstation SLC */
-#define CPUTYP_ELC		11	/* SPARCstation ELC */
-#define CPUTYP_IPX		12	/* SPARCstation IPX */
-#define CPUTYP_IPC		13	/* SPARCstation IPC */
-#define CPUTYP_1		14	/* SPARCstation 1 */
-#define CPUTYP_1P		15	/* SPARCstation 1+ */
-#define CPUTYP_2		16	/* SPARCstation 2 */
-
-/* We classify the Sun4m's by feature, not by model (XXX: do same for 4/4c) */
-#define	CPUTYP_SS2_MBUS_MXCC	20 	/* SuperSPARC-II, MBus, MXCC (SS20) */
+/* rough sun4m families; not really used */
 #define CPUTYP_SS1_MBUS_MXCC	21	/* SuperSPARC-I, MBus, MXCC (SS10) */
-#define CPUTYP_SS2_MBUS_NOMXCC	22	/* SuperSPARC-II, on MBus w/o MXCC */
 #define CPUTYP_SS1_MBUS_NOMXCC	23	/* SuperSPARC-I, on MBus w/o MXCC */
 #define CPUTYP_MS2		24	/* MicroSPARC-2 */
 #define CPUTYP_MS1		25 	/* MicroSPARC-1 */
