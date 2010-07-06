@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.8 2008/11/06 23:41:28 marco Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.9 2010/07/06 06:26:25 deraadt Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -56,7 +56,7 @@ struct acpiasus_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	void 			*sc_powerhook;
+	void			*sc_powerhook;
 };
 
 #define ASUS_NOTIFY_WIRELESSON		0x10
@@ -238,7 +238,6 @@ acpiasus_power(int why, void *arg)
 			printf("%s: no SDSP\n", DEVNAME(sc));
 		else
 			aml_freevalue(&ret);
-
 		break;
 	}
 }
