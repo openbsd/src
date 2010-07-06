@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.12 2010/07/06 01:12:45 ratchov Exp $
+.\"	$OpenBSD: midicat.1,v 1.13 2010/07/06 10:45:01 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -62,7 +62,7 @@ Write received data into this file.
 If the option argument is
 .Sq -
 then standard output will be used.
-.It Fl q Ar device
+.It Fl q Ar port
 Send and receive data from this
 .Xr sndio 7
 MIDI port.
@@ -102,14 +102,14 @@ If no streams
 are specified, server mode is assumed and a thru box is created
 as if
 .Fl s Ar default
-was used as last argument.
+was used as the last argument.
 .Pp
 Generally MIDI applications are real-time.
 To reduce jitter, especially on busy machines,
 the server can be started by the super-user,
 in which case it will run with higher priority.
-Any user will still be able to connect to it, but
-for privacy reasons, only one user may have connections to
+Any user will still be able to connect to it,
+but for privacy reasons only one user may have connections to
 it at a given time.
 .Pp
 If

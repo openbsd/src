@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.98 2010/07/06 01:12:45 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.99 2010/07/06 10:45:01 jmc Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -851,7 +851,7 @@ void
 midicat_usage(void)
 {
 	(void)fputs("usage: " PROG_MIDICAT " [-dl] "
-	    "[-i file] [-o file] [-q device] [-U unit]\n",
+	    "[-i file] [-o file] [-q port] [-s name] [-U unit]\n",
 	    stderr);
 }
 

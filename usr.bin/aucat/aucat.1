@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.71 2010/07/06 01:12:45 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.72 2010/07/06 10:45:01 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -92,7 +92,8 @@ and thus controls the playback latency.
 .Fl C Ar min : Ns Ar max ,
 .Fl c Ar min : Ns Ar max
 .Xc
-The range of stream channel numbers for recording and playback directions, respectively.
+The range of stream channel numbers for recording and playback directions,
+respectively.
 The default is 0:1, i.e. stereo.
 .It Fl d
 Increase log verbosity.
@@ -246,7 +247,8 @@ is
 and samples that cannot be read are replaced by silence.
 If the policy is
 .Dq sync
-then recorded samples are discarded, but the same amount of silence will be written
+then recorded samples are discarded,
+but the same amount of silence will be written
 once the stream is unblocked, in order to reach the right position in time.
 Similarly silence is played, but the same amount of samples will be discarded
 once the stream is unblocked.
@@ -418,8 +420,8 @@ require a low latency audio setup.
 To reduce the probability of buffer underruns or overruns, especially
 on busy machines, the server can be started by the super-user, in which
 case it will run with higher priority.
-Any user will still be able to
-connect to it, but for privacy reasons, only one user may have
+Any user will still be able to connect to it,
+but for privacy reasons only one user may have
 connections to it at a given time.
 .Sh MIDI CONTROL
 .Nm
@@ -461,7 +463,8 @@ In this mode,
 .Nm
 waits for all streams to become ready
 to start, and then starts them synchronously.
-Once started, new streams can be created (server mode), but they will be blocked
+Once started, new streams can be created (server mode)
+but they will be blocked
 until the next stop-to-start transition.
 .It stop
 Put all streams in stopped mode (the default).
@@ -609,8 +612,8 @@ $ aucat -l -v 65 -s default -v 127 -s max
 The following will start
 .Nm
 in server mode configuring the audio device to use
-48kHz sample frequency, 240-frame block size,
-and a 2-block buffers.
+a 48kHz sample frequency, 240-frame block size,
+and 2-block buffers.
 The corresponding latency is 10ms, which is
 the time it takes the sound to propagate 3.5 meters.
 .Bd -literal -offset indent
@@ -643,9 +646,10 @@ thus samples with more than 16 bits are rounded.
 .Pp
 If
 .Fl a Ar off
-option is used in server mode,
+is used in server mode,
 .Nm
-creates sub-devices to expose first and then opens the audio hardware on demand.
+creates sub-devices to expose first
+and then opens the audio hardware on demand.
 Technically, this allows
 .Nm
 to attempt to use one of the sub-devices it exposes as audio device,
