@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.250 2010/07/04 17:30:30 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.251 2010/07/06 12:42:55 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 4 2010 $
+.Dd $Mdocdate: July 6 2010 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2641,6 +2641,8 @@ The following variables are subpackage dependent:
 .Ev RUN_DEPENDS ,
 .Ev WANTLIB ,
 .Ev LIB_DEPENDS ,
+.Ev ONLY_FOR_ARCHS ,
+.Ev NOT_FOR_ARCHS ,
 .Ev PREFIX ,
 .Ev CATEGORIES ,
 .Ev MESSAGE ,
@@ -2708,6 +2710,18 @@ and invoking
 is the same as invoking
 subupdate
 for all subpackages.
+.Pp
+.Ev ONLY_FOR_ARCHS
+and
+.Ev NOT_FOR_ARCHS
+interact with
+.Ev MULTI_PACKAGES .
+The infrastructure will automatically filter subpackages that are not suitable for the 
+current architecture.
+Thus,
+.Ev MULTI_PACKAGES
+should list all subpackages, even things not buildable on the current architecture,
+for indexing purposes.
 .Sh THE GENERATION OF PACKAGE INFORMATION
 Starting after
 .Ox 4.1
