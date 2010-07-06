@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewirevar.h,v 1.5 2008/04/07 22:50:41 miod Exp $	*/
+/*	$OpenBSD: onewirevar.h,v 1.6 2010/07/06 19:59:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -77,6 +77,7 @@ struct onewire_matchfam {
 
 /* Miscellaneous routines */
 int		onewire_crc(const void *, int);
+u_int16_t	onewire_crc16(u_int16_t, u_int8_t);
 const char *	onewire_famname(int);
 int		onewire_matchbyfam(struct onewire_attach_args *,
 		    const struct onewire_matchfam *, int);
