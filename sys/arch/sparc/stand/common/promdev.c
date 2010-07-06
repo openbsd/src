@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.10 2010/06/29 21:33:54 miod Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.11 2010/07/06 20:41:06 miod Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -770,31 +770,64 @@ prom_init()
 	 *
 	 * This process is actually started in srt0.S, which has discovered
 	 * the minimal set of machine specific parameters for the 1st-level
-	 * boot program (bootxx) to run. The page size has already been set
-	 * and the CPU type is either CPU_SUN4 or CPU_SUN4C.
+	 * boot program (bootxx) to run. The CPU type is either CPU_SUN4 or
+	 * CPU_SUN4C at this point; we need to figure out the exact cpu type
+	 * and our page size.
 	 */
 
-	if (cputyp == CPU_SUN4)
-		return;
+	if (cputyp == CPU_SUN4) {
+		pgshift = SUN4_PGSHIFT;
+	} else {
+		/*
+		 * We are either SUN4C, SUN4D, SUN4E or SUN4M.
+		 * Use the PROM `compatible' property to determine which.
+		 * Absence of the `compatible' property means either sun4c
+		 * or sun4e; these can be told apart by checking for the
+		 * page size.
+		 */
 
-	/*
-	 * We have SUN4C, SUN4M or SUN4D.
-	 * Use the PROM `compatible' property to determine which.
-	 * Absence of the `compatible' property means `sun4c'.
-	 */
+#ifdef BOOTXX
+		char tmpstr[24];
 
-	node = prom_findroot();
-	cp = prom_getpropstring(node, "compatible");
-	if (*cp == '\0' || strcmp(cp, "sun4c") == 0)
-		cputyp = CPU_SUN4C;
-	else if (strcmp(cp, "sun4m") == 0)
-		cputyp = CPU_SUN4M;
+		snprintf(tmpstr, sizeof tmpstr, "pagesize %x l!",
+		    (u_long)&nbpg);
+		prom_interpret(tmpstr);
+		if (nbpg == 1 << SUN4_PGSHIFT)
+			pgshift = SUN4_PGSHIFT;
+		else
+			pgshift = SUN4CM_PGSHIFT;
+#else
+		node = prom_findroot();
+		cp = prom_getpropstring(node, "compatible");
+		if (*cp == '\0' || strcmp(cp, "sun4c") == 0) {
+			char tmpstr[24];
+
+			snprintf(tmpstr, sizeof tmpstr, "pagesize %x l!",
+			    (u_long)&nbpg);
+			prom_interpret(tmpstr);
+			if (nbpg == 1 << SUN4_PGSHIFT) {
+				pgshift = SUN4_PGSHIFT;
+				/* if netbooted, PROM won't output a cr */
+				printf("\n");
+			} else
+				pgshift = SUN4CM_PGSHIFT;
+			/* note that we don't bother telling 4e apart from 4c */
+			cputyp = CPU_SUN4C;
+		} else if (strcmp(cp, "sun4m") == 0) {
+			cputyp = CPU_SUN4M;
+			pgshift = SUN4CM_PGSHIFT;
 #ifdef CPU_SUN4D
-	else if (strcmp(cp, "sun4d") == 0)
-		cputyp = CPU_SUN4D;
+		} else if (strcmp(cp, "sun4d") == 0) {
+			cputyp = CPU_SUN4D;
+			pgshift = SUN4CM_PGSHIFT;
 #endif
-	else
-		printf("Unknown CPU type (compatible=`%s')\n", cp);
+		} else
+			panic("Unknown CPU type (compatible=`%s')", cp);
+#endif	/* BOOTXX */
+	}
+
+	nbpg = 1 << pgshift;
+	pgofset = nbpg - 1;
 #endif
 }
 

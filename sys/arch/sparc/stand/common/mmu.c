@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.c,v 1.2 2010/07/04 22:40:29 deraadt Exp $	*/
+/*	$OpenBSD: mmu.c,v 1.3 2010/07/06 20:41:06 miod Exp $	*/
 /*	$NetBSD: mmu.c,v 1.8 2008/04/28 20:23:36 martin Exp $	*/
 
 /*-
@@ -51,6 +51,10 @@ static int pmap_extract_srmmu(vaddr_t va, paddr_t *ppa);
 int (*pmap_map)(vaddr_t va, paddr_t pa, psize_t size);
 int (*pmap_extract)(vaddr_t va, paddr_t *ppa);
 
+#ifndef CPU_SUN4D
+#define	CPU_ISSUN4D	0
+#endif
+
 int
 mmu_init(void)
 {
@@ -71,7 +75,7 @@ mmu_init(void)
 		 */
 		rcookie = 2;
 		scookie = 17;
-	} else if (CPU_ISSUN4M) {
+	} else if (CPU_ISSUN4M || CPU_ISSUN4D) {
 		char buf[32];
 		pmap_map = pmap_map_srmmu;
 		pmap_extract = pmap_extract_srmmu;

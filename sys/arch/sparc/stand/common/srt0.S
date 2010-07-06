@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.3 2010/06/29 21:33:54 miod Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.4 2010/07/06 20:41:06 miod Exp $	*/
 /*	$NetBSD: srt0.S,v 1.5.4.2 1996/07/17 01:51:46 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 	.global	_C_LABEL(cputyp), _C_LABEL(nbpg), _C_LABEL(pgofset)
 	.global _C_LABEL(pgshift)
 _C_LABEL(cputyp):
-	.word	1
+	.word	CPU_SUN4C
 _C_LABEL(nbpg):
 	.word	1
 _C_LABEL(pgofset):
@@ -147,27 +147,13 @@ start:
 	st	%i0, [%o1 + %lo(_C_LABEL(promvec))]
 
 	mov	CPU_SUN4C, %g4
-	mov	SUN4CM_PGSHIFT, %g5
 	b,a	6f
 
 5:
 	mov	CPU_SUN4, %g4
-	mov	SUN4_PGSHIFT, %g5
 
 6:
 	st	%g4, [%o0 + %lo(_C_LABEL(cputyp))]
-	sethi	%hi(_C_LABEL(pgshift)), %o0	! pgshift = log2(nbpg)
-	st	%g5, [%o0 + %lo(_C_LABEL(pgshift))]
-
-	mov	1, %o0				! nbpg = 1 << pgshift
-	sll	%o0, %g5, %g5
-	sethi	%hi(_C_LABEL(nbpg)), %o0	! nbpg = bytes in a page
-	st	%g5, [%o0 + %lo(_C_LABEL(nbpg))]
-
-	sub	%g5, 1, %g5
-	sethi	%hi(_C_LABEL(pgofset)), %o0	! page offset = bytes in a page - 1
-	st	%g5, [%o0 + %lo(_C_LABEL(pgofset))]
-
 	call	_C_LABEL(main)
 	 mov	%i0, %o0
 

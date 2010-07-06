@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2010/06/29 21:33:54 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.8 2010/07/06 20:41:04 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -42,7 +42,11 @@
 int debug;
 int netif_debug;
 
-#define	FOURMB	0x400000
+#define	FOURMB		0x400000
+#ifndef	RELOC2
+#define	RELOC2		(RELOC + 0x40000)
+#endif
+#define	LOWSTACK	(16 * 1024)
 
 /*
  * Boot device is derived from ROM provided information.
@@ -50,11 +54,9 @@ int netif_debug;
 #define	DEFAULT_KERNEL	"bsd"
 
 extern char	*version;
-extern vaddr_t	esym;
 char		fbuf[80], dbuf[128];
 
 paddr_t	bstart, bend;	/* physical start & end address of the boot program */
-u_long	loadaddrmask = -1UL;
 int	compat = 1;	/* try to load in compat mode */
 
 typedef void (*entry_t)(u_long, int, int, int, long, long);
@@ -146,6 +148,17 @@ loadk(char *file, u_long *marks)
 	vaddr_t va;
 	paddr_t pa;
 	u_long minsize, size;
+	vaddr_t extra;
+
+	/*
+	 * Regardless of the address where we load the kernel, we need to
+	 * make sure it has enough valid space to use during pmap_bootstrap;
+	 * 4/4c picks it in locore, 4m needs it now.
+	 */
+	if (cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
+		extra = 0;
+	else
+		extra = 512 * 1024;
 
 	if ((fd = open(file, 0)) < 0)
 		return (errno ? errno : ENOENT);
@@ -157,14 +170,14 @@ loadk(char *file, u_long *marks)
 
 	if (files[fd].f_flags & F_RAW) {
 		flags = (COUNT_KERNEL & ~COUNT_SYM) | (LOAD_KERNEL & ~LOAD_SYM);
-		minsize = RELOC + 0x40000;	/* RELOC2 */
+		minsize = RELOC2 - LOWSTACK;
 		va = 0xf8000000;		/* KERNBASE */
 #ifdef DEBUG
 		printf("Tape boot: expecting a bsd.rd kernel smaller than %p\n",
 		    minsize);
 #endif
 		/* compensate for extra room below */
-		minsize -= 512 * 1024;
+		minsize -= extra;
 	} else {
 		flags = LOAD_KERNEL;
 		marks[MARK_START] = 0;
@@ -202,33 +215,26 @@ loadk(char *file, u_long *marks)
 	 * breathing room after it.
 	 */
 	if (compat != 0) {
-		if (minsize < bstart)
-			size = minsize;
+		if (minsize + extra <= RELOC2 - LOWSTACK)
+			size = RELOC2 - LOWSTACK;
 		else
 			compat = 0;
 	}
-
-	/*
-	 * If we are not loading the kernel in low physical addresses,
-	 * we need to make sure it has enough valid space to use during
-	 * pmap_bootstrap; 512KB ought to be enough.
-	 */
-	if (compat == 0) {
-		size = minsize + 512 * 1024;
-#ifdef DEBUG
-		printf("kernel footprint %p, requesting %p\n", minsize, size);
-#endif
-	}
+	if (compat == 0)
+		size = minsize + extra;
 
 	/* Get a physical load address */
+#ifdef DEBUG
+	printf("kernel footprint %p, requesting %p\n", minsize, size);
+#endif
 	pa = getphysmem(size);
 	if (pa == (paddr_t)-1) {
 		/*
-		 * That 512KB extra might have been too much, if physical
-		 * memory doesn't have any contiguous large chunks (e.g.
-		 * on sun4c systems with 4MB regions).
-		 * If that 512KB increase caused us to cross a 4MB
-		 * boundary, try to limit ourselves to a 4MB multiple.
+		 * The extra bootstrap memory estimate might have been
+		 * too much, if physical memory doesn't have any contiguous
+		 * large chunks (e.g. on sun4c systems with 4MB regions).
+		 * If that increase caused us to cross a 4MB boundary, try
+		 * to limit ourselves to a 4MB multiple.
 		 */
 		if (compat == 0 && size / FOURMB != minsize / FOURMB) {
 			size = roundup(minsize, FOURMB);
@@ -250,7 +256,7 @@ loadk(char *file, u_long *marks)
 	}
 
 	/* try and double-map at VA 0 for compatibility */
-	if (pa + size >= bstart) {
+	if (pa + size > bstart) {
 		printf("WARNING: %s is too large for compat mode.\n"
 		    "If your kernel is too old, it will not run correctly.\n",
 		    file);
@@ -259,7 +265,6 @@ loadk(char *file, u_long *marks)
 			error = EFAULT;
 			goto out;
 		}
-		loadaddrmask = 0x07ffffffUL;
 	}
 
 	marks[MARK_START] = 0;
@@ -289,7 +294,7 @@ main(int argc, char *argv[])
 	 * than 16K of stack space.
 	 * The top of the boot loader is the next 4MB boundary.
 	 */
-	bstart_va = (vaddr_t)start - 16 * 1024;
+	bstart_va = (vaddr_t)start - LOWSTACK;
 	if (pmap_extract(bstart_va, &bstart) != 0)
 		panic("can't figure out where we have been loaded");
 
@@ -330,7 +335,7 @@ main(int argc, char *argv[])
 	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
 	(*(entry_t)marks[MARK_ENTRY])(cputyp == CPU_SUN4 ?
 	    PROM_LOADADDR : (u_long)promvec, 0, 0, 0,
-	    marks[MARK_END] & loadaddrmask, DDB_MAGIC1);
+	    marks[MARK_END], DDB_MAGIC1);
 
 	_rtt();
 }
