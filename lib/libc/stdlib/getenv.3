@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.14 2010/03/10 20:46:16 kili Exp $
+.\"	$OpenBSD: getenv.3,v 1.15 2010/07/06 20:52:00 naddy Exp $
 .\"
-.Dd $Mdocdate: March 10 2010 $
+.Dd $Mdocdate: July 6 2010 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -128,6 +128,12 @@ function was passed a
 containing an
 .Sq =
 character.
+.Pp
+The
+.Fn unsetenv
+function was passed an empty
+.Ar name
+or a NULL pointer.
 .Pp
 The
 .Fn putenv
