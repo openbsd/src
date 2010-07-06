@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.31 2010/07/01 19:47:04 bluhm Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.32 2010/07/06 13:15:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -249,15 +249,15 @@ void
 ospfe_dispatch_main(int fd, short event, void *bula)
 {
 	static struct area	*narea;
-	static struct iface	*niface;
+	struct area		*area;
+	struct iface		*iface, *ifp;
 	struct ifaddrchange	*ifc;
 	struct iface_addr	*ia, *nia;
-	struct imsg	 imsg;
-	struct imsgev	*iev = bula;
-	struct imsgbuf	*ibuf = &iev->ibuf;
-	struct iface	*iface, *ifp;
-	int		 n, stub_changed, shut = 0;
-	unsigned int	 ifindex;
+	struct imsg		 imsg;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	int			 n, stub_changed, shut = 0;
+	unsigned int		 ifindex;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -299,16 +299,16 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_IFADD:
-			if ((niface = malloc(sizeof(struct iface))) == NULL)
+			if ((iface = malloc(sizeof(struct iface))) == NULL)
 				fatal(NULL);
-			memcpy(niface, imsg.data, sizeof(struct iface));
+			memcpy(iface, imsg.data, sizeof(struct iface));
 
-			LIST_INIT(&niface->nbr_list);
-			TAILQ_INIT(&niface->ls_ack_list);
-			RB_INIT(&niface->lsa_tree);
+			LIST_INIT(&iface->nbr_list);
+			TAILQ_INIT(&iface->ls_ack_list);
+			RB_INIT(&iface->lsa_tree);
 
-			narea = area_find(oeconf, niface->area_id);
-			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
+			area = area_find(oeconf, iface->area_id);
+			LIST_INSERT_HEAD(&area->iface_list, iface, entry);
 			break;
 		case IMSG_IFDELETE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +

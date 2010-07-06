@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.46 2010/07/05 22:59:51 bluhm Exp $ */
+/*	$OpenBSD: rde.c,v 1.47 2010/07/06 13:15:33 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -623,7 +623,8 @@ void
 rde_dispatch_parent(int fd, short event, void *bula)
 {
 	static struct area	*narea;
-	struct iface		*niface, *iface;
+	struct area		*area;
+	struct iface		*iface;
 	struct imsg		 imsg;
 	struct kroute		 kr;
 	struct rroute		 rr;
@@ -708,16 +709,16 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				    0, -1, &kr, sizeof(kr));
 			break;
 		case IMSG_IFADD:
-			if ((niface = malloc(sizeof(struct iface))) == NULL)
+			if ((iface = malloc(sizeof(struct iface))) == NULL)
 				fatal(NULL);
-			memcpy(niface, imsg.data, sizeof(struct iface));
+			memcpy(iface, imsg.data, sizeof(struct iface));
 
-			LIST_INIT(&niface->nbr_list);
-			TAILQ_INIT(&niface->ls_ack_list);
-			RB_INIT(&niface->lsa_tree);
+			LIST_INIT(&iface->nbr_list);
+			TAILQ_INIT(&iface->ls_ack_list);
+			RB_INIT(&iface->lsa_tree);
 
-			narea = area_find(rdeconf, niface->area_id);
-			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
+			area = area_find(rdeconf, iface->area_id);
+			LIST_INSERT_HEAD(&area->iface_list, iface, entry);
 			break;
 		case IMSG_IFDELETE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
