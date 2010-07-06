@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.24 2010/07/01 19:47:04 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.25 2010/07/06 13:24:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -906,6 +906,7 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	ifc.prefixlen = ia->prefixlen;
 	ifc.ifindex = ifindex;
 	main_imsg_compose_ospfe(IMSG_IFADDRNEW, 0, &ifc, sizeof(ifc));
+	main_imsg_compose_rde(IMSG_IFADDRNEW, 0, &ifc, sizeof(ifc));
 }
 
 void
@@ -950,6 +951,8 @@ if_deladdr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 			ifc.prefixlen = ia->prefixlen;
 			ifc.ifindex = ifindex;
 			main_imsg_compose_ospfe(IMSG_IFADDRDEL, 0, &ifc,
+			    sizeof(ifc));
+			main_imsg_compose_rde(IMSG_IFADDRDEL, 0, &ifc,
 			    sizeof(ifc));
 			free(ia);
 			return;
