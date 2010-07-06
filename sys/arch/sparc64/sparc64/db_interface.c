@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.28 2010/06/27 13:28:47 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.29 2010/07/06 02:26:32 guenther Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -887,7 +887,7 @@ db_setpcb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct proc *p, *pp;
+	struct proc *p;
 
 	if (!have_addr) {
 		db_printf("What PID do you want to map in?\n");
@@ -895,7 +895,6 @@ db_setpcb(addr, have_addr, count, modif)
 	}
     
 	LIST_FOREACH(p, &allproc, p_list) {
-		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 			curproc = p;
 			curpcb = (struct pcb*)p->p_addr;
