@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2010/06/30 17:16:09 martinh Exp $	*/
+/*	$OpenBSD: control.c,v 1.5 2010/07/06 20:10:57 martinh Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -193,12 +193,13 @@ send_stats(struct imsgev *iev)
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
 		if (namespace_has_referrals(ns))
 			continue;
+		bzero(&nss, sizeof(nss));
 		strlcpy(nss.suffix, ns->suffix, sizeof(nss.suffix));
-		st = btree_stat(ns->data_db);
-		bcopy(st, &nss.data_stat, sizeof(nss.data_stat));
+		if ((st = btree_stat(ns->data_db)) != NULL)
+			bcopy(st, &nss.data_stat, sizeof(nss.data_stat));
 
-		st = btree_stat(ns->indx_db);
-		bcopy(st, &nss.indx_stat, sizeof(nss.indx_stat));
+		if ((st = btree_stat(ns->indx_db)) != NULL)
+			bcopy(st, &nss.indx_stat, sizeof(nss.indx_stat));
 
 		imsg_compose(&iev->ibuf, IMSG_CTL_NSSTATS, 0, iev->ibuf.pid, -1,
 		    &nss, sizeof(nss));

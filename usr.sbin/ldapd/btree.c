@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.26 2010/07/06 13:28:35 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.27 2010/07/06 20:10:57 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -3157,6 +3157,9 @@ btree_get_path(struct btree *bt)
 const struct btree_stat *
 btree_stat(struct btree *bt)
 {
+	if (bt == NULL)
+		return NULL;
+
 	bt->stat.branch_pages = bt->meta.branch_pages;
 	bt->stat.leaf_pages = bt->meta.leaf_pages;
 	bt->stat.overflow_pages = bt->meta.overflow_pages;
