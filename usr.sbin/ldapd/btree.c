@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.24 2010/07/05 21:06:45 martinh Exp $ */
+/*	$OpenBSD: btree.c,v 1.25 2010/07/06 13:05:35 martinh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -2546,8 +2546,7 @@ btree_rebalance(struct btree *bt, struct mpage *mp)
 	 * possible, even if both are below threshold, as prefix expansion
 	 * might make keys larger. FIXME: detect this
 	 */
-	if (PAGEFILL(bt, neighbor) >= FILL_THRESHOLD &&
-	    NUMKEYS(neighbor) >= NUMKEYS(mp) + 2)
+	if (PAGEFILL(bt, neighbor) >= FILL_THRESHOLD && NUMKEYS(neighbor) >= 2)
 		return btree_move_node(bt, neighbor, si, mp, di);
 	else { /* FIXME: if (has_enough_room()) */
 		if (mp->parent_index == 0)
