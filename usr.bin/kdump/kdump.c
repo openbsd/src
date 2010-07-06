@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.46 2010/07/02 20:00:54 tedu Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.47 2010/07/06 00:31:02 oga Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -62,7 +62,6 @@ pid_t pid = -1;
 
 #include <sys/syscall.h>
 
-#include <compat/bsdos/bsdos_syscall.h>
 #include <compat/freebsd/freebsd_syscall.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/svr4/svr4_syscall.h>
@@ -78,7 +77,6 @@ pid_t pid = -1;
 #define RTHREADS
 #include <kern/syscalls.c>
 
-#include <compat/bsdos/bsdos_syscalls.c>
 #include <compat/freebsd/freebsd_syscalls.c>
 #include <compat/linux/linux_syscalls.c>
 #include <compat/svr4/svr4_syscalls.c>
@@ -102,7 +100,6 @@ static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
 	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },
-	{ "bsdos",	bsdos_syscallnames,	BSDOS_SYS_MAXSYSCALL },
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL },
 	{ NULL,		NULL,			NULL }
 };
