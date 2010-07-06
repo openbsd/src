@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.182 2010/07/03 01:55:28 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.183 2010/07/06 01:07:28 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -636,6 +636,8 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	if (blksize != NULL)
 		*blksize = 0;
 
+	CLR(flags, SCSI_IGNORE_ILLEGAL_REQUEST);
+
 	/*
 	 * Start with a READ CAPACITY(10).
 	 */
@@ -649,7 +651,7 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 		return (0);
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc, sizeof(rc),
 	    (u_char *)rdcap, sizeof(*rdcap), SCSI_RETRIES, 20000, NULL,
-	    flags | SCSI_DATA_IN);
+	    flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (error) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY error (%#x)\n",
 		    error));
@@ -681,7 +683,7 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 		goto exit;
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc16,
 	    sizeof(rc16), (u_char *)rdcap16, sizeof(*rdcap16), SCSI_RETRIES,
-	    20000, NULL, flags | SCSI_DATA_IN);
+	    20000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT);
 	if (error) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY 16 error (%#x)\n",
 		    error));
@@ -692,7 +694,7 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	max_addr = _8btol(rdcap16->addr);
 	if (blksize != NULL)
 		*blksize = _4btol(rdcap16->length);
-	/* XXX The other READ CAPACITY(16) info could be stored away somewhere. */
+	/* XXX The other READ CAPACITY(16) info could be stored away. */
 	free(rdcap16, M_TEMP);
 
 	return (max_addr + 1);
