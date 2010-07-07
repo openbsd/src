@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.37 2010/06/07 15:14:22 deraadt Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.38 2010/07/07 21:52:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -269,7 +269,7 @@ external_exec(struct ifsd_external *external, int async)
 	int s;
 
 	if (external->pid > 0) {
-		log_info("previous command %s [%d] still running, killing it",
+		log_debug("previous command %s [%d] still running, killing it",
 		    external->command, external->pid);
 		kill(external->pid, SIGKILL);
 		waitpid(external->pid, &s, 0);
@@ -561,7 +561,7 @@ do_action(struct ifsd_action *action)
 
 	switch (action->type) {
 	case IFSD_ACTION_COMMAND:
-		log_info("running %s", action->act.command);
+		log_debug("running %s", action->act.command);
 		system(action->act.command);
 		break;
 	case IFSD_ACTION_CHANGESTATE:
