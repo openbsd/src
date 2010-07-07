@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.27 2010/06/09 11:40:36 claudio Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.28 2010/07/07 20:58:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -80,7 +80,7 @@ mplsintr(void)
 			return;
 #ifdef DIAGNOSTIC
 		if ((m->m_flags & M_PKTHDR) == 0)
-			panic("ipintr no HDR");
+			panic("mplsintr no HDR");
 #endif
 		mpls_input(m);
 	}
