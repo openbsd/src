@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.46 2010/05/29 16:43:54 damien Exp $
+.\"     $OpenBSD: mbuf.9,v 1.47 2010/07/07 09:16:36 blambert Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 29 2010 $
+.Dd $Mdocdate: July 7 2010 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -65,8 +65,8 @@
 .Fn m_getptr "struct mbuf *m" "int loc" "int *off"
 .Ft void
 .Fn m_adj "struct mbuf *mp" "int req_len"
-.Ft void
-.Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
+.Ft int
+.Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp" "int wait"
 .Ft void
 .Fn m_freem "struct mbuf *m"
 .Ft void
@@ -541,7 +541,7 @@ If
 is positive, the data will be trimmed from the head of the mbuf chain
 and if it is negative, it will be trimmed from the tail of the mbuf
 chain.
-.It Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
+.It Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp" "int wait"
 Copy data from a buffer pointed to by
 .Fa cp
 back into the mbuf chain pointed to by
@@ -549,7 +549,16 @@ back into the mbuf chain pointed to by
 starting at
 .Fa off
 bytes from the beginning, extending the mbuf chain if
-necessary.
+necessary, sleeping for mbufs if
+.Fa wait
+is
+.Fa M_WAIT .
+If
+.Fa M_NOWAIT
+is set and no mbufs are available,
+.Fn m_copyback
+returns
+.Er ENOBUFS .
 The mbuf chain must be initialized properly, including setting
 .Fa m_len .
 .It Fn m_freem "struct mbuf *m"
