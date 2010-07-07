@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.29 2010/07/07 06:00:01 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.30 2010/07/07 06:08:57 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1743,7 +1743,7 @@ struct mpii_ccb {
 	struct mpii_softc	*ccb_sc;
 	int			ccb_smid;
 
-	struct scsi_xfer	*ccb_xs;
+	void *			ccb_cookie;
 	bus_dmamap_t		ccb_dmamap;
 
 	bus_addr_t		ccb_offset;
@@ -2280,7 +2280,7 @@ int
 mpii_load_xs(struct mpii_ccb *ccb)
 {
 	struct mpii_softc	*sc = ccb->ccb_sc;
-	struct scsi_xfer	*xs = ccb->ccb_xs;
+	struct scsi_xfer	*xs = ccb->ccb_cookie;
 	struct mpii_ccb_bundle	*mcb = ccb->ccb_cmd;
 	struct mpii_msg_scsi_io	*io = &mcb->mcb_io;
 	struct mpii_sge		*sge = NULL, *nsge = &mcb->mcb_sgl[0];
@@ -4065,7 +4065,7 @@ mpii_put_ccb(void *cookie, void *io)
 	DNPRINTF(MPII_D_CCB, "%s: mpii_put_ccb %#x\n", DEVNAME(sc), ccb);
 
 	ccb->ccb_state = MPII_CCB_FREE;
-	ccb->ccb_xs = NULL;
+	ccb->ccb_cookie = NULL;
 	ccb->ccb_done = NULL;
 	ccb->ccb_rcb = NULL;
 	bzero(ccb->ccb_cmd, MPII_REQUEST_SIZE);
@@ -4341,7 +4341,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(MPII_D_CMD, "%s: ccb_smid: %d xs->flags: 0x%x\n",
 	    DEVNAME(sc), ccb->ccb_smid, xs->flags);
 
-	ccb->ccb_xs = xs;
+	ccb->ccb_cookie = xs;
 	ccb->ccb_done = mpii_scsi_cmd_done;
 	ccb->ccb_dev_handle = dev->dev_handle;
 
@@ -4413,7 +4413,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 {
 	struct mpii_msg_scsi_io_error	*sie;
 	struct mpii_softc	*sc = ccb->ccb_sc;
-	struct scsi_xfer	*xs = ccb->ccb_xs;
+	struct scsi_xfer	*xs = ccb->ccb_cookie;
 	struct mpii_ccb_bundle	*mcb = ccb->ccb_cmd;
 	bus_dmamap_t		dmap = ccb->ccb_dmamap;
 
