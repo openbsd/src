@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.60 2010/07/02 08:12:17 matthew Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.61 2010/07/07 10:12:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -364,7 +364,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
+	sc->sc_link.openings = sc->maxcmd;
 	sc->sc_link.adapter = &ciss_switch;
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = sc->maxunits;
