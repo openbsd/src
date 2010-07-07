@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.27 2010/07/07 05:25:53 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.28 2010/07/07 05:35:48 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -3613,7 +3613,8 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	    "address: 0x%08x flags: 0x%b\n", DEVNAME(sc), type, number,
 	    address, flags, MPII_PG_FMT);
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	ccb = scsi_io_get(&sc->sc_iopool,
+	    ISSET(flags, MPII_PG_POLL) ? SCSI_NOSLEEP : 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_header ccb_get\n",
 		    DEVNAME(sc));
@@ -3725,7 +3726,8 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
     	    len < page_length * 4)
 		return (1);
 
-	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	ccb = scsi_io_get(&sc->sc_iopool,
+	    ISSET(flags, MPII_PG_POLL) ? SCSI_NOSLEEP : 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_page ccb_get\n",
 		    DEVNAME(sc));
