@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.203 2010/07/06 16:16:48 marco Exp $	*/
+/*	$OpenBSD: sd.c,v 1.204 2010/07/07 03:53:07 marco Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -175,11 +175,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_dk.dk_driver = &sddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-
-	if (SCSISPC(sc_link->inqdata.version) >= 2)
-		sc->sc_bufq = bufq_init(BUFQ_FIFO);
-	else
-		sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
+	sc->sc_bufq = bufq_init(BUFQ_DEFAULT);
 
 	if ((sc_link->flags & SDEV_ATAPI) && (sc_link->flags & SDEV_REMOVABLE))
 		sc_link->quirks |= SDEV_NOSYNCCACHE;
