@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.26 2010/07/06 09:42:46 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.27 2010/07/07 05:25:53 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -2954,7 +2954,7 @@ mpii_portfacts(struct mpii_softc *sc)
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_portfacts\n", DEVNAME(sc));
 
-	ccb = mpii_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_portfacts mpii_get_ccb fail\n",
 		    DEVNAME(sc));
@@ -3008,7 +3008,7 @@ mpii_portfacts(struct mpii_softc *sc)
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	rv = 0;
 err:
-	mpii_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (rv);
 }
@@ -3019,7 +3019,7 @@ mpii_eventack(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 	struct mpii_msg_eventack_request	*eaq;
 	struct mpii_ccb				*ccb;
 
-	ccb = mpii_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_EVT, "%s: mpii_eventack ccb_get\n",
 		    DEVNAME(sc));
@@ -3046,7 +3046,7 @@ mpii_eventack_done(struct mpii_ccb *ccb)
 	DNPRINTF(MPII_D_EVT, "%s: event ack done\n", DEVNAME(sc));
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
-	mpii_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 }
 
 int
@@ -3058,7 +3058,7 @@ mpii_portenable(struct mpii_softc *sc)
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_portenable\n", DEVNAME(sc));
 
-	ccb = mpii_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_portenable ccb_get\n",
 		    DEVNAME(sc));
@@ -3085,7 +3085,7 @@ mpii_portenable(struct mpii_softc *sc)
 	pep = ccb->ccb_rcb->rcb_reply;
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
-	mpii_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (0);
 }
@@ -3148,7 +3148,7 @@ mpii_eventnotify(struct mpii_softc *sc)
 	struct mpii_msg_event_request		*enq;
 	struct mpii_ccb				*ccb;
 
-	ccb = mpii_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_eventnotify ccb_get\n",
 		    DEVNAME(sc));
@@ -3198,7 +3198,7 @@ mpii_eventnotify_done(struct mpii_ccb *ccb)
 	mpii_event_process(sc, ccb->ccb_rcb->rcb_reply);
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
-	mpii_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 }
 
 void
@@ -3487,7 +3487,7 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	struct mpii_ccb				*ccb;
 	int					s;
 
-	ccb = mpii_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
 		return;
 
@@ -3613,7 +3613,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	    "address: 0x%08x flags: 0x%b\n", DEVNAME(sc), type, number,
 	    address, flags, MPII_PG_FMT);
 
-	ccb = mpii_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_header ccb_get\n",
 		    DEVNAME(sc));
@@ -3655,7 +3655,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	}
 
 	if (ccb->ccb_rcb == NULL) {
-		mpii_put_ccb(sc, ccb);
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (1);
 	}
 	cp = ccb->ccb_rcb->rcb_reply;
@@ -3695,7 +3695,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	s = splbio();
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	splx(s);
-	mpii_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (rv);
 }
@@ -3725,7 +3725,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
     	    len < page_length * 4)
 		return (1);
 
-	ccb = mpii_get_ccb(sc);
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL) {
 		DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_page ccb_get\n",
 		    DEVNAME(sc));
@@ -3783,7 +3783,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	}
 
 	if (ccb->ccb_rcb == NULL) {
-		mpii_put_ccb(sc, ccb);
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (1);
 	}
 	cp = ccb->ccb_rcb->rcb_reply;
@@ -3816,7 +3816,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	s = splbio();
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	splx(s);
-	mpii_put_ccb(sc, ccb);
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (rv);
 }
