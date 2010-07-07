@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.8 2010/07/02 01:07:20 pirofti Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.9 2010/07/07 21:32:50 sthen Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -51,6 +51,11 @@ struct puc_device_description {
 	}			ports[PUC_MAX_PORTS];
 };
 
+#define	PUC_REG_VEND		0
+#define	PUC_REG_PROD		1
+#define	PUC_REG_SVEND		2
+#define	PUC_REG_SPROD		3
+
 #define	PUC_PORT_TYPE_NONE	0
 #define	PUC_PORT_TYPE_COM	1
 #define	PUC_PORT_TYPE_LPT	2
@@ -80,7 +85,7 @@ struct puc_attach_args {
 	void (*intr_disestablish)(struct puc_attach_args *, void *);
 };
 
-extern const struct puc_device_description puc_devs[];
+extern const struct puc_device_description puc_devices[];
 
 #define	PUC_NBARS	6
 struct puc_softc {
