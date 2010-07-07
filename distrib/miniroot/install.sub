@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.612 2010/07/04 22:51:05 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.613 2010/07/07 07:15:00 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1837,7 +1837,6 @@ finish_up() {
 		grep -v '^[ 	]*installpath[ 	]*=' /mnt/etc/pkg.conf 2>&- > /tmp/pkgconf
 		print -r -- "installpath = $package_path" >> /tmp/pkgconf
 		cp /tmp/pkgconf /mnt/etc/pkg.conf
-		chmod 600 /mnt/etc/pkg.conf
 	fi
 
 	echo -n "Making all device nodes..."
