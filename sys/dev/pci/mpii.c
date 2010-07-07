@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.30 2010/07/07 06:08:57 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.31 2010/07/07 10:29:17 dlg Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
  * Copyright (c) 2009 James Giannoules
@@ -1897,6 +1897,9 @@ int		mpii_complete(struct mpii_softc *, struct mpii_ccb *, int);
 int		mpii_poll(struct mpii_softc *, struct mpii_ccb *, int);
 int		mpii_reply(struct mpii_softc *, struct mpii_reply_descr *);
 
+void		mpii_wait(struct mpii_softc *, struct mpii_ccb *);
+void		mpii_wait_done(struct mpii_ccb *);
+
 void		mpii_init_queues(struct mpii_softc *);
 
 int		mpii_load_xs(struct mpii_ccb *);
@@ -3489,7 +3492,6 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
  	struct mpii_msg_scsi_task_request	*stq;
 	struct mpii_msg_sas_oper_request	*soq;
 	struct mpii_ccb				*ccb;
-	int					s;
 
 	ccb = scsi_io_get(&sc->sc_iopool, 0);
 	if (ccb == NULL)
@@ -3500,12 +3502,9 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	stq->task_type = MPII_SCSI_TASK_TARGET_RESET;
 	stq->dev_handle = htole16(handle);
 
-	ccb->ccb_done = (void (*)(struct mpii_ccb *))wakeup;
-	mpii_start(sc, ccb);
-	s = splbio();
-	while (ccb->ccb_state != MPII_CCB_READY)
-		tsleep(ccb, PRIBIO, "mpiitskmgmt", 0);
-	splx(s);
+	ccb->ccb_done = mpii_empty_done;
+	mpii_wait(sc, ccb);
+
 	if (ccb->ccb_rcb != NULL)
 		mpii_push_reply(sc, ccb->ccb_rcb);
 
@@ -3519,12 +3518,8 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	soq->operation = MPII_SAS_OP_REMOVE_DEVICE;
 	soq->dev_handle = htole16(handle);
 
-	ccb->ccb_done = (void (*)(struct mpii_ccb *))wakeup;
-	mpii_start(sc, ccb);
-	s = splbio();
-	while (ccb->ccb_state != MPII_CCB_READY)
-		tsleep(ccb, PRIBIO, "mpiisasop", 0);
-	splx(s);
+	ccb->ccb_done = mpii_empty_done;
+	mpii_wait(sc, ccb);
 	if (ccb->ccb_rcb != NULL)
 		mpii_push_reply(sc, ccb->ccb_rcb);
 }
@@ -3611,7 +3606,6 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	struct mpii_ecfg_hdr	*ehdr = p;
 	int			etype = 0;
 	int			rv = 0;
-	int			s;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_req_cfg_header type: %#x number: %x "
 	    "address: 0x%08x flags: 0x%b\n", DEVNAME(sc), type, number,
@@ -3643,21 +3637,15 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	cq->page_buffer.sg_hdr = htole32(MPII_SGE_FL_TYPE_SIMPLE |
 	    MPII_SGE_FL_LAST | MPII_SGE_FL_EOB | MPII_SGE_FL_EOL);
 
+	ccb->ccb_done = mpii_empty_done;
 	if (ISSET(flags, MPII_PG_POLL)) {
-		ccb->ccb_done = mpii_empty_done;
 		if (mpii_poll(sc, ccb, 5000) != 0) {
 			DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_header poll\n",
 			    DEVNAME(sc));
 			return (1);
 		}
-	} else {
-		ccb->ccb_done = (void (*)(struct mpii_ccb *))wakeup;
-		mpii_start(sc, ccb);
-		s = splbio();
-		while (ccb->ccb_state != MPII_CCB_READY)
-			tsleep(ccb, PRIBIO, "mpiipghdr", 0);
-		splx(s);
-	}
+	} else
+		mpii_wait(sc, ccb);
 
 	if (ccb->ccb_rcb == NULL) {
 		scsi_io_put(&sc->sc_iopool, ccb);
@@ -3716,7 +3704,6 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	char			*kva;
 	int			page_length;
 	int			rv = 0;
-	int			s;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_page address: %d read: %d "
 	    "type: %x\n", DEVNAME(sc), address, read, hdr->page_type);
@@ -3770,21 +3757,15 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	if (!read)
 		bcopy(page, kva, len);
 
+	ccb->ccb_done = mpii_empty_done;
 	if (ISSET(flags, MPII_PG_POLL)) {
-		ccb->ccb_done = mpii_empty_done;
 		if (mpii_poll(sc, ccb, 5000) != 0) {
 			DNPRINTF(MPII_D_MISC, "%s: mpii_cfg_header poll\n",
 			    DEVNAME(sc));
 			return (1);
 		}
-	} else {
-		ccb->ccb_done = (void (*)(struct mpii_ccb *))wakeup;
-		mpii_start(sc, ccb);
-		s = splbio();
-		while (ccb->ccb_state != MPII_CCB_READY)
-			tsleep(ccb, PRIBIO, "mpiipghdr", 0);
-		splx(s);
-	}
+	} else
+		mpii_wait(sc, ccb);
 
 	if (ccb->ccb_rcb == NULL) {
 		scsi_io_put(&sc->sc_iopool, ccb);
@@ -4305,6 +4286,43 @@ mpii_poll(struct mpii_softc *sc, struct mpii_ccb *ccb, int timeout)
 	splx(s);
 
 	return (error);
+}
+
+void
+mpii_wait(struct mpii_softc *sc, struct mpii_ccb *ccb)
+{
+	struct mutex		mtx = MUTEX_INITIALIZER(IPL_BIO);
+	void			(*done)(struct mpii_ccb *);
+	void			*cookie;
+
+	done = ccb->ccb_done;
+	cookie = ccb->ccb_cookie;
+
+	ccb->ccb_done = mpii_wait_done;
+	ccb->ccb_cookie = &mtx;
+
+	/* XXX this will wait forever for the ccb to complete */
+
+	mpii_start(sc, ccb);
+
+	mtx_enter(&mtx);
+	while (ccb->ccb_cookie != NULL)
+		msleep(ccb, &mtx, PRIBIO, "mpiiwait", 0);
+	mtx_leave(&mtx);
+
+	ccb->ccb_cookie = cookie;
+	done(ccb);
+}
+
+void
+mpii_wait_done(struct mpii_ccb *ccb)
+{
+	struct mutex		*mtx = ccb->ccb_cookie;
+
+	mtx_enter(mtx);
+	ccb->ccb_cookie = NULL;
+	wakeup_one(ccb);
+	mtx_leave(mtx);
 }
 
 void
