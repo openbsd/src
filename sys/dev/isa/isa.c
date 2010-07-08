@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.39 2003/06/03 21:09:02 deraadt Exp $	*/
+/*	$OpenBSD: isa.c,v 1.40 2010/07/08 20:18:32 deraadt Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,8 @@ void isaattach(struct device *, struct device *, void *);
 extern int autoconf_verbose;
 
 struct cfattach isa_ca = {
-	sizeof(struct isa_softc), isamatch, isaattach
+	sizeof(struct isa_softc), isamatch, isaattach, NULL,
+	config_activate_children
 };
 
 struct cfdriver isa_cd = {
