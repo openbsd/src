@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.21 2010/06/30 10:51:04 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.22 2010/07/08 10:16:13 sthen Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -344,7 +344,7 @@ sub adjust
 			@todo = grep {!/^\.libs/} @todo;
 		}
 		if (@todo != 0) {
-			$state->errsay("#1 is having too many #2",
+			$state->errsay("#1 has too many #2",
 			    $self->{name}, $state->safe($self->string(@todo)));
 			$self->ask_delete_deps($state, \@todo);
 		}
@@ -367,11 +367,7 @@ use OpenBSD::RequiredBy;
 sub string
 {
 	my $self = shift;
-	if (@_ == 1) {
-		return "dependency: ".$_[0];
-	} else {
-		return "dependencies: ". join(' ', @_);
-	}
+	return "dependencies: ". join(' ', @_);
 }
 
 sub new
@@ -387,11 +383,7 @@ use OpenBSD::RequiredBy;
 sub string
 {
 	my $self = shift;
-	if (@_ == 1) {
-		return "reverse dependency: @_";
-	} else {
-		return "reverse dependencies: ". join(' ', @_);
-	}
+	return "reverse dependencies: ". join(' ', @_);
 }
 
 sub new
